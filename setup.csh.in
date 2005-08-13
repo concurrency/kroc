@@ -1,0 +1,4 @@
+set path=(@prefix@/bin $path)
+setenv OCSEARCH @prefix@/lib
+setenv KROC @prefix@
+setenv MANPATH :@prefix@/doc:$MANPATH

@@ -1,0 +1,4 @@
+PATH=@prefix@/bin:$PATH
+OCSEARCH=@prefix@/lib; export OCSEARCH
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:@prefix@/lib;export LD_LIBRARY_PATH
+MANPATH=:@prefix@/doc:$MANPATH; export MANPATH
