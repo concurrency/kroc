@@ -1,0 +1,8 @@
+
+Known Bugs / Errata
+===================
+
+  *	compiler sometimes generates spurious/excessive undefined variable warnings
+  *	inherited protocols sometimes incorrectly adjusted when tag-values are specified
+
+

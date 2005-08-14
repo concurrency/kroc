@@ -1,0 +1,1567 @@
+#! /bin/sh
+
+if [ "$BASH_VERSION" = "" ]; then
+	BASH=
+	# search for "bash" in the PATH environment
+	for dir in `printf '%s' "$PATH" | tr ':' '\n'`; do
+		if [ -f $dir/bash ] && [ -x $dir/bash ]; then
+			BASH=$dir/bash
+			break
+		fi
+	done
+
+	if [ "$BASH" = "" ]; then
+		printf 'could not find bash!\n'
+		exit 1
+	fi
+
+	exec $BASH "$0" "$@"
+fi
+
+#
+# should be in a bash environment when we get here!
+#
+
+#
+#	build -- KRoC/Linux configuration/installation script
+#	Copyright (C) 2001-2005 Fred Barnes <frmb@kent.ac.uk>
+#
+#	This program is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; either version 2 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program; if not, write to the Free Software
+#	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+
+#
+#	This is a re-write of what was in version 1.2.x
+#
+
+
+# unset any undesirables
+unset KROC
+unset INSTALL_DIR
+unset DIST_DIR
+unset OCSEARCH			# this is used to determine if a KROC environment is present
+unset MAKEFLAGS
+
+CCSP_SRC=src/ccsp-1.6
+CPUTIMERUTILS_SRC=src/cputimer-utils-0.9
+MKOCCDEPS_SRC=src/mkoccdeps-0.9
+OCC21_SRC=src/occ21-1.3
+ILIBR_SRC=src/ilibr-1.1
+TRANX86_SRC=src/tranx86-0.9
+KROC_SRC=src/kroc-1.3
+INMOSLIBS_SRC=src/inmoslibs-1.0
+BSCLIB_SRC=src/bsclib-1.0
+BSCLIB_EXAMPLES_SRC=src/bsclib-examples-1.0
+COURSE_SRC=course/libsrc
+COURSE_EXAMPLES_SRC=course/examples
+COURSE_ANSWERS_SRC=course/answers
+SYNCS_SRC=syncs/libsrc
+SYNCS_EXAMPLES_SRC=syncs/examples
+DYNPROC_SRC=dynproc/libsrc
+DYNPROC_EXAMPLES_SRC=dynproc/examples
+DEMO_BAR_SRC=demos/bar
+UDC_SRC=udc/libsrc
+UDC_EXAMPLES_SRC=udc/examples
+SDLRASTER_SRC=sdlraster/libsrc
+SDLRASTER_EXAMPLES_SRC=sdlraster/examples
+DXRASTER_SRC=dxraster/libsrc
+DXRASTER_EXAMPLES_SRC=dxraster/examples
+CIF_SRC=cif/libsrc
+CIF_EXAMPLES_SRC=cif/examples
+CGTESTS_SRC=src/cgtests-1.3
+MANPAGE_LIST="kroc.1 kmakef.1 cputimerutil.1 mkoccdeps.1 occ21.1 \
+		libcourse-utils.3 libcourse-cycles.3 libcourse-nets.3 \
+		libconvert-inmos.3 libhostio-inmos.3 libmath-inmos.3 libstreamio-inmos.3 libstring-inmos.3 \
+		libsock.3 libfile.3 libproc.3"
+MANPAGE_SECTIONS="1 3"
+
+ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
+	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
+	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC \
+	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $DXRASTER_SRC $DXRASTER_EXAMPLES_SRC"
+FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $DXRASTER_SRC $DXRASTER_EXAMPLES_SRC"
+
+DUMPOUT=
+DUMPMAIL="frmb@kent.ac.uk"
+VERSION="1.4.0-pre1"
+PRERELEASE=0
+NEXTPATCH="1.4.0-pre2"
+PATCHINFOFILE="update-info-$NEXTPATCH"
+PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
+# things set in typescript_head are: SED, AWK, MAKE, WGET
+
+ACTIONLIST=
+FORCECONFIGURE=
+DISABLEPRIORITY=
+DISABLECPUTIMERS=
+USEPTHREADS=
+USECTTD=
+USEPONY=
+
+KROCHOST_ARCH=
+KROCHOST_VENDOR=
+KROCHOST_OS=
+DEFERRED_INSTALL_ERROR=
+
+FAILED_PRECONFIGURES=
+FAILED_CONFIGURES=
+FAILED_MAKES=
+FAILED_INSTALLS=
+
+
+#
+#	functions
+#
+
+#{{{  usage ()
+usage ()
+{
+	cat 1>&2 << EOF
+Usage: $0 [options] [action] [action] ...
+where options are:
+  --install-dir=<path>         target installation path
+  --prefix=<path>              equivilant to --install-dir
+  --dry-run                    just print what is going to be done, without doing it
+  --force-configure            re-configure packages, even they look configured
+  --no-priority                disable process priority
+  --no-cputimers               disable CPU timer support (required for accurate timing on variable-frequency hardware)
+  --no-pthreads                build without pthreads support
+  --with-cttd                  build with channel-type type-description support
+  -h | --help                  this help text
+  -V | --version               print version and exit
+and actions are:
+  build                        build everything (default if not specified)
+  update                       attempt to download source-code update
+  preconfigure-<pkg>           pre-configure <pkg> (only needed for ccsp)
+  configure-<pkg>              configure <pkg> (see below for list of packages)
+  make-<pkg>                   make <pkg>
+  install-<pkg>                install <pkg>
+  clean-<pkg>                  clean <pkg>
+  distclean-<pkg>              clean <pkg> (for a distribution)
+  clean                        clean all packages
+  distclean                    clean all packages (for a distribution)
+  examples                     configure and compile example programs
+  cgtests                      configure and compile compiler test-suite programs
+  all                          builds everything: build examples cgtests
+choices for <pkg> are:
+  ccsp                         CCSP (run-time occam/transputer kernel)
+  cputimerutils                CPU timer clock calibration utility
+  mkoccdeps                    occam dependency generator
+  occ21                        inmos occam compiler
+  ilibr                        inmos librarian
+  tranx86                      ETC to i386 translator
+  kroc                         kroc script, kmakef and setup files
+  inmoslibs                    inmos libraries
+  bsclib                       blocking system call libraries
+  course                       UKC course library
+  syncs                        additional synchronisation primatives
+  dynproc                      dynamic occam processes
+  udc                          user-defined channels
+  manpages                     man-page based documentation
+  cgtests                      compiler test suite
+  examples                     all example programs, which are:
+    bsclib_examples            blocking system calls example programs
+    course_examples            UKC course example programs
+    course_answers             UKC course sample answers
+    syncs_examples             additional synchronistaion example programs
+    dynproc_examples           dynamic occam process examples
+    udc_examples               user-defined channels examples
+    bar_demo                   animated ALT demonstrator
+EOF
+}
+#}}}
+#{{{  deferred_install_error ()
+deferred_install_error ()
+{
+	DEFERRED_INSTALL_ERROR=1
+}
+#}}}
+#{{{  install_error ()
+install_error ()
+{
+	tee -a "$DUMPOUT" << EOF
+
+***********************************************************
+*                     INSTALLATION ERROR                  *
+***********************************************************
+
+The KRoC installation failed.  Ensure that you have the
+relevant development packages for your system installed.
+For more information see the KRoC web-page at:
+
+    http://www.cs.kent.ac.uk/projects/ofa/kroc/
+
+If the above link doesn't help, please mail:
+
+    ofa-bugs@kent.ac.uk
+
+with the "typescript" file and a description of your
+system (e.g. architecture, distribution, etc.)
+
+
+EOF
+}
+#}}}
+#{{{  software_missing (name)
+software_missing ()
+{
+	if [ "$1" = "" ]; then
+		printf 'software_missing() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		install_error
+		exit 1
+	fi
+	if [ "$1" = "tee" ]; then
+		printf '%s: faulty tee, might have problems later on..\n' "$0" | tee -a "$DUMPOUT" 1>&2
+	else
+		printf '%s: unable to run %s --version.\n' "$0" "$prog" | tee -a "$DUMPOUT" 1>&2
+		install_error
+		exit 1
+	fi
+}
+#}}}
+#{{{  guess_software ()
+guess_software ()
+{
+	# sort out SED, AWK and WGET variables (take from the environment first if they exist)
+	SED=${SED:-}
+	AWK=${AWK:-}
+	MAKE=${MAKE:-}
+	WGET=${WGET:-}
+	if [ "$SED" = "" ] || [ "$AWK" = "" ] || [ "$MAKE" = "" ] || [ "$WGET" = "" ]; then
+		for pth in $(printf '%s' "$PATH" | tr ':' ' '); do
+			if [ -x "$pth"/gnused ] && [ "$SED" = "" ]; then
+				SED="$pth"/gnused
+			fi
+			if [ -x "$pth"/gawk ] && [ "$AWK" = "" ]; then
+				AWK="$pth"/gawk
+			fi
+			if [ -x "$pth"/wget ] && [ "$WGET" = "" ]; then
+				WGET="$pth"/wget
+			fi
+			if [ -x "$pth"/gnumake ] && [ "$MAKE" = "" ]; then
+				MAKE="$pth"/gnumake
+			fi
+		done
+	fi
+	if [ "$SED" = "" ] || [ "$AWK" = "" ] || [ "$MAKE" = "" ]; then
+		for pth in $(printf '%s' "$PATH" | tr ':' ' '); do
+			if [ -x "$pth/sed" ] && [ "$SED" = "" ]; then
+				SED="$pth"/sed
+			fi
+			if [ -x "$pth/awk" ] && [ "$AWK" = "" ]; then
+				AWK="$pth"/awk
+			fi
+			if [ -x "$pth"/gmake ] && [ "$MAKE" = "" ]; then
+				MAKE="$pth"/gmake
+			fi
+		done
+	fi
+	if [ "$MAKE" = "" ]; then
+		for pth in $(printf '%s' "$PATH" | tr ':' ' '); do
+			if [ -x "$pth"/make ] && [ "$MAKE" = "" ]; then
+				MAKE="$pth"/make
+			fi
+		done
+	fi
+
+}
+#}}}
+#{{{  typescript_head ()
+typescript_head ()
+{
+	if [ -f $DUMPOUT ]; then
+		mv $DUMPOUT $DUMPOUT.old
+	fi
+	printf 'Install of KRoC/Linux source distribution @ %s\n' "$(date)" > $DUMPOUT
+	printf 'Version %s\n' "$VERSION" >> $DUMPOUT
+	printf 'Distribution path: %s\n' "$DIST_DIR" >> $DUMPOUT
+	printf 'Installation path: %s\n\n' "$INSTALL_DIR" >> $DUMPOUT
+	printf 'Various software versions:\n' >> "$DUMPOUT"
+	# for BSD, tee doesn't much like our --version argument (GNU fileutils wanted really)
+	uname | grep BSD 1> /dev/null && XX_PROGRAMS="as ${CC:-gcc}" || XX_PROGRAMS="as ${CC:-gcc} tee"
+	for prog in $XX_PROGRAMS; do
+		printf '        %s\n' "$prog" >> "$DUMPOUT"
+		$prog --version >> "$DUMPOUT" || software_missing "$prog"
+	done
+	printf '\n' >> "$DUMPOUT"
+
+	# sed, awk and friends have already been guessed earlier  (just check + report here)
+	if [ "$SED" = "" ] || [ ! -x "$SED" ]; then
+		printf '%s: missing \"sed\"\n' "$0"
+		install_error
+		exit 1
+	elif [ "$AWK" = "" ] || [ ! -x "$AWK" ]; then
+		printf '%s: missing \"awk\"\n' "$0"
+		install_error
+		exit 1
+	elif [ "$MAKE" = "" ] || [ ! -x "$MAKE" ]; then
+		printf '%s: missing \"make\"\n' "$0"
+		install_error
+		exit 1
+	fi
+
+	printf 'sed is: %s\n' "$SED" >> "$DUMPOUT"
+	printf 'awk is: %s\n' "$AWK" >> "$DUMPOUT"
+	printf 'make is: %s\n' "$MAKE" >> "$DUMPOUT"
+	if [ "$WGET" != "" ]; then
+		printf 'wget is: %s\n' "$WGET" >> "$DUMPOUT"
+	fi
+
+}
+#}}}
+#{{{ preconfigure_pkg (prefix-dir, dist-dir, package-src-dir)
+preconfigure_pkg ()
+{
+	if [ "$1" = "" ] || [ "$2" = "" ] || [ "$3" = "" ]; then
+		printf 'preconfigure_pkg() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		install_error
+		exit 1
+	fi
+	CURRENT_DIR="$(pwd)"
+	cd "$2/$3"
+	if [ "$4" = "" ]; then
+		(./preconfigure 2>&1 && touch .success) | tee -a "$DUMPOUT"
+	else
+		(./preconfigure $4 2>&1 && touch .success) | tee -a "$DUMPOUT"
+	fi
+	if [ -f .success ]; then
+		rm .success
+	else
+		printf 'error while pre-configuring %s\n' $3 | tee -a "$DUMPOUT" 1>&2
+		deferred_install_error
+		return 1
+	fi
+	cd "$CURRENT_DIR"
+	return 0
+}
+#}}}
+#{{{  configure_pkg (prefix-dir, dist-dir, ackage-src-dir [, additional configure options])
+configure_pkg ()
+{
+	if [ "$1" = "" ] || [ "$2" = "" ] || [ "$3" = "" ]; then
+		printf 'configure_pkg() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		install_error
+		exit 1
+	fi
+	CURRENT_DIR="$(pwd)"
+	cd "$2/$3"
+	# already configured ?
+	if [ -f Makefile.in ] && [ -f Makefile ] && [ "$FORCECONFIGURE" = "" ]; then
+		printf '%s: package in %s looks configured, not re-configuring\n' "$0" $3 | tee -a "$DUMPOUT"
+	else
+		if [ "$4" = "" ]; then
+			(./configure --prefix=$1 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		else
+			(./configure --prefix=$1 $4 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		fi
+		if [ -f .success ]; then
+			rm .success
+		else
+			printf 'error while configuring in %s' "$3" | tee -a "$DUMPOUT" 1>&2
+			deferred_install_error
+			return 1
+		fi
+	fi
+	cd "$CURRENT_DIR"
+	return 0
+}
+#}}}
+#{{{  make_pkg (dist-dir, package-src-dir [, additional make options])
+make_pkg ()
+{
+	if [ "$1" = "" ] || [ "$2" = "" ]; then
+		printf 'make_pkg() called incorrectly\n' 1>&2
+		install_error
+		exit 1
+	fi
+	CURRENT_DIR="$(pwd)"
+	cd "$1/$2"
+	if [ "$3" = "" ]; then
+		($MAKE 2>&1 && touch .success) | tee -a "$DUMPOUT"
+	else
+		($MAKE $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+	fi
+	if [ -f .success ]; then
+		rm .success
+	else
+		printf 'error while making in %s\n' "$2" | tee -a "$DUMPOUT" 1>&2
+		deferred_install_error
+		return 1
+	fi
+	cd "$CURRENT_DIR"
+	return 0
+}
+#}}}
+#{{{  install_pkg (dist-dir, ackage-src-dir [, additional make-install options])
+install_pkg ()
+{
+	if [ "$1" = "" ] || [ "$2" = "" ]; then
+		printf 'install_pkg() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		install_error
+		exit 1
+	fi
+	CURRENT_DIR="$(pwd)"
+	cd "$1/$2"
+	if [ "$3" = "" ]; then
+		($MAKE install 2>&1 && touch .success) | tee -a "$DUMPOUT"
+	else
+		($MAKE install $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+	fi
+	if [ -f .success ]; then
+		rm .success
+	else
+		printf 'error while installing in %s\n' "$2" | tee -a "$DUMPOUT" 1>&2
+		deferred_install_error
+		return 1
+	fi
+	cd "$CURRENT_DIR"
+	return 0
+}
+#}}}
+#{{{  clean_pkg (dist-dir, package-src-dir [,additional make options])
+clean_pkg ()
+{
+	if [ "$1" = "" ] || [ "$2" = "" ]; then
+		printf 'clean_pkg() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		install_error
+		exit 1
+	fi
+	CURRENT_DIR="$(pwd)"
+	cd "$1/$2"
+	if [ "$3" = "" ]; then
+		($MAKE clean 2>&1 && touch .success) | tee -a "$DUMPOUT"
+	else
+		($MAKE clean $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+	fi
+	if [ -f .success ]; then
+		rm .success
+	else
+		printf 'error while cleaning in %s (continuing anyway)\n' "$2" | tee -a "$DUMPOUT" 1>&2
+	fi
+	cd "$CURRENT_DIR"
+	return 0
+}
+#}}}
+#{{{  distclean_pkg (dist-dir, package-src-dir [, additional make options])
+distclean_pkg ()
+{
+	if [ "$1" = "" ] || [ "$2" = "" ]; then
+		printf 'distclean_pkg() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		install_error
+		exit 1
+	fi
+	CURRENT_DIR="$(pwd)"
+	cd "$1/$2"
+	if [ "$3" = "" ]; then
+		($MAKE distclean 2>&1 && touch .success) | tee -a "$DUMPOUT"
+	else
+		($MAKE distclean $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+	fi
+	if [ -f .success ]; then
+		rm .success
+	else
+		printf 'error while dist-cleaning %s (continuing anyway)\n' "$2" | tee -a "$DUMPOUT" 1>&2
+	fi
+	cd $CURRENT_DIR
+	return 0
+}
+#}}}
+#{{{  prepare_patch (info-file)
+prepare_patch ()
+{
+	if [ "$1" = "" ]; then
+		printf 'prepare_patch() called incorrectly\n' 1>&2
+		install_error
+		exit 1
+	fi
+	if [ ! -f $1 ]; then
+		printf 'prepare_patch(): no such file %s\n' "$1" 1>&2
+		install_error
+		exit 1
+	fi
+	FIRSTLINE=$(cat $1 | head -1)
+	SECONDLINE=$(cat $1 | head -2 | tail -1)
+	# this is a noddy check, but will prevent things going bad if the download messes up
+	EXPSNDLINE=$(printf '# KRoC/Linux update (%s %s)' "$VERSION" "$NEXTPATCH")
+
+	if [ "$FIRSTLINE" != "#! /bin/sh" ] && [ "$FIRSTLINE" != "#! /bin/bash" ]; then
+		printf '%s: bad patch file %s, removing it.  Assuming latest code version (%s)\n' "$0" "$1" "$VERSION" | tee -a "$DUMPOUT"
+		rm -f "$1"
+		exit 1
+	elif [ "$SECONDLINE" != "$EXPSNDLINE" ]; then
+		printf '%s: bad patch file %s, removing it.  Assuming latest code version (%s)\n' "$0" "$1" "$VERSION" | tee -a "$DUMPOUT"
+		rm -f "$1"
+		exit 1
+	fi
+	CURRENT_DIR="$(pwd)"
+	cd /tmp
+	# shitty way to get the patch script, but it'll work
+	printf '%s: preparing patch from %s to %s\n' "$0" "$VERSION" "$NEXTPATCH" | tee -a "$DUMPOUT"
+	if [ ! -x $1 ]; then
+		chmod +x $1
+	fi
+	printf '%s: extracted patch script to %s, will apply in %s\n' "$0" "$1" "$DIST_DIR" | tee -a "$DUMPOUT"
+	rm -f $DIST_DIR/.success
+	($1 $DIST_DIR 2>&1 && touch $DIST_DIR/.success) | tee -a "$DUMPOUT"
+	if [ -f $DIST_DIR/.success ]; then
+		rm -f $DIST_DIR/.success
+		printf '%s: patch script ran successfully.  Use \"%s\" to compile+install changes.\n' "$0" "$0" | tee -a "$DUMPOUT"
+	else
+		printf '%s: patch script failed to run successfully.\n' "$0" | tee -a "$DUMPOUT"
+	fi
+	cd $CURRENT_DIR
+}
+#}}}
+#{{{  setopts_host (host-arch, host-vendor, host-os)
+setopts_host ()
+{
+	if [ "$1" = "" ] || [ "$2" = "" ] || [ "$3" = "" ]; then
+		printf 'setopts_host() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		install_error
+		exit 1
+	fi
+
+	# setup any arch/vendor/os specific options
+
+	case "$3" in
+	cygwin)
+		printf '  cygwin: enabling pthreads\n'
+		USEPTHREADS=1
+		;;
+	solaris*)
+		printf '  solaris: enabling pthreads\n'
+		USEPTHREADS=1
+		;;
+	*bsd* | *BSD*)
+		printf '  *BSD: enabling pthreads\n'
+		USEPTHREADS=2
+		;;
+	linux* | Linux*)
+		printf '  linux: enabling pthreads\n'
+		USEPTHREADS=1
+		;;
+	esac
+}
+#}}}
+#{{{  package_status (dist-dir, package-src-dir)
+package_status ()
+{
+	if [ "$1" = "" ] || [ "$2" = "" ]; then
+		printf 'package_status() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		install_error
+		exit 1
+	fi
+
+	printf 'package: %-30s' "$2"
+	if [ -f $1/$2/configure.in ] || [ -f $1/$2/configure.ac ]; then
+		if [ -f $1/$2/config.status ]; then
+			printf 'AC* '
+		else
+			printf 'AC- '
+		fi
+	else
+		printf '    '
+	fi
+	if [ -f $1/$2/Makefile.am ]; then
+		if [ -f $1/$2/Makefile ]; then
+			printf 'AM* '
+		else
+			printf 'AM  '
+		fi
+	elif [ -f $1/$2/Makefile.in ]; then
+		if [ -f $1/$2/Makefile ]; then
+			printf 'MK* '
+		else
+			printf 'MK- '
+		fi
+	elif [ -f $1/$2/Makefile ]; then
+		printf 'MK  '
+	else
+		printf '    '
+	fi
+	if [ -f $1/$2/config.guess ] && [ -f $1/$2/config.sub ]; then
+		printf '[autofiles] '
+	else
+		printf '            '
+	fi
+	TEMPCPKG=$(find $1/$2 -name '*.[ch]' | head -1)
+	if [ "$TEMPCPKG" != "" ]; then
+		printf 'C '
+	else
+		printf '  '
+	fi
+	TEMPOPKG=$(find $1/$2 -name '*.occ' | head -1)
+	if [ "$TEMPOPKG" != "" ]; then
+		printf 'occam '
+	else
+		printf '      '
+	fi
+	printf '\n'
+
+}
+#}}}
+
+
+#
+#	*****************************
+#	** REAL SCRIPT STARTS HERE **
+#	*****************************
+#
+
+if [ -f .install_dir ]; then
+	INSTALL_DIR=$(cat .install_dir)
+else
+	INSTALL_DIR=
+fi
+DIST_DIR=
+DRYRUN=
+
+# do this first!
+guess_software
+
+
+# process args
+while [ $# -ge 1 ]
+do
+	case X$1 in
+	X--help | X-h)
+		usage
+		exit 0
+		;;
+	X--version | X-V)
+		printf '%s: KRoC/Linux source release version %s\n' "$0" "$VERSION"
+		exit 0
+		;;
+	X--copyright)
+		printf '%s: KRoC/Linux Version %s Copyright (C) 1995-2002 KRoC Authors.\n' "$0" "$VERSION"
+		if [ -f AUTHORS ]; then
+			cat ./AUTHORS
+		fi
+		exit 0
+		;;
+	X--install-dir)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --install-dir requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		INSTALL_DIR=$1
+		;;
+	X--install-dir=*)
+		INSTALL_DIR=$(printf '%s\n' $1 | $SED -e 's/^[^=]*=//')
+		;;
+	X--prefix)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --prefix requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		INSTALL_DIR=$1
+		;;
+	X--force-configure)
+		FORCECONFIGURE=1
+		;;
+	X--no-priority)
+		DISABLEPRIORITY=1
+		;;
+	X--no-cputimers)
+		DISABLECPUTIMERS=1
+		;;
+	X--no-pthreads)
+		USEPTHREADS=1
+		;;
+	X--with-cttd)
+		USECTTD=1
+		;;
+	X--with-pony)
+		USEPONY=1
+		;;
+	X--prefix=*)
+		INSTALL_DIR=$(printf '%s\n' $1 | $SED -e 's/^[^=]*=//')
+		;;
+	X--dry-run)
+		DRYRUN=1
+		;;
+	X*)
+		# must be an action
+		if [ "$ACTIONLIST" = "" ]; then
+			ACTIONLIST=$1
+		else
+			ACTIONLIST="$ACTIONLIST $1"
+		fi
+		;;
+	esac
+	shift
+done
+
+
+if [ "$INSTALL_DIR" = "" ]; then
+	DEF_INST_DIR="$(pwd)"
+	printf 'Directory to install KRoC/Linux %s under [%s]: ' "$VERSION" "$DEF_INST_DIR"
+	read REPLY
+	if [ "$REPLY" = "" ]; then
+		INSTALL_DIR="$DEF_INST_DIR"
+	else
+		INSTALL_DIR="$REPLY"
+	fi
+	# must be absolute path
+	printf '%s\n' "$INSTALL_DIR" | grep '^/' > /dev/null || INSTALL_DIR="$DEF_INST_DIR/$INSTALL_DIR"
+	# save for next time
+	printf '%s\n' "$INSTALL_DIR" > .install_dir
+fi
+
+if [ "$PRERELEASE" = "1" ]; then
+	cat << EOF
+*****************************************************
+**                      NOTE!                      **
+**  this is a pre-release version of KRoC/Linux    **
+**  and may contain bugs.  Known bugs are listed   **
+**  in the BUGS file included in the distribution  **
+**                                                 **
+**  please report new bugs / suspicious behaviour  **
+**  to: frmb@kent.ac.uk  or  ofa-bugs@kent.ac.uk   **
+**                                                 **
+*****************************************************
+EOF
+	printf 'sleeping for 1 second..\n'
+	sleep 1
+elif [ "$PRERELEASE" = "2" ]; then
+	cat << EOF
+*********************************************************
+**                         NOTE!                       **
+**  this is a final-prerelease version of KRoC/Linux   **
+**  and should not contain bugs in "stable" features.  **
+**                                                     **
+**  known bugs are listed in the included BUGS file.   **
+**                                                     **
+**  please report new-bugs and suspicious behaviour    **
+**  to:  frmb@kent.ac.uk   or  ofa-bugs@kent.ac.uk     **
+**                                                     **
+*********************************************************
+EOF
+	printf 'sleeping for 1 second..\n'
+	sleep 1
+fi
+
+printf 'Installing KRoC/Linux in %s\n' "$INSTALL_DIR"
+
+if [ "$DIST_DIR" = "" ]; then
+	DIST_DIR="$(pwd)"
+fi
+
+SHOWBANNER=0
+
+if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "all" ]; then
+	# place install process in ACTIONLIST
+	if [ "$ACTIONLIST" = "all" ]; then
+		FULLINSTALL=1
+	else
+		FULLINSTALL=
+	fi
+	SHOWBANNER=1
+	ACTIONLIST="setbuildtarget \
+		preconfigure-ccsp configure-ccsp make-ccsp install-ccsp \
+		bsyscalls-support cputimers-support dynproc-support \
+		configure-cputimerutils make-cputimerutils install-cputimerutils \
+		configure-mkoccdeps make-mkoccdeps install-mkoccdeps \
+		configure-occ21 make-occ21 install-occ21 \
+		configure-ilibr make-ilibr install-ilibr \
+		configure-tranx86 make-tranx86 install-tranx86 \
+		configure-kroc make-kroc install-kroc \
+		initial-kroc-setup \
+		configure-inmoslibs make-inmoslibs install-inmoslibs \
+		configure-bsclib make-bsclib install-bsclib \
+		configure-course make-course install-course \
+		configure-udc make-udc install-udc \
+		configure-cif make-cif install-cif \
+		configure-sdlraster make-sdlraster install-sdlraster \
+		configure-dxraster make-dxraster install-dxraster \
+		install-syncs install-dynproc install-manpages \
+		calibrate-clock"
+else
+	FULLINSTALL=
+fi
+
+EXAMPLEINSTALL=
+CGTESTSINSTALL=
+
+# some transformations
+EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-support dynproc-support \
+		configure-bsclib_examples make-bsclib_examples make-course_examples \
+		make-course_answers make-syncs_examples make-dynproc_examples \
+		make-udc_examples make-cif_examples make-bar_demo \
+		configure-sdlraster_examples make-sdlraster_examples \
+		configure-dxraster_examples make-dxraster_examples"
+CGTESTS_ACTIONS="building-cgtests initial-kroc-setup configure-cgtests make-cgtests"
+
+if [ "$FULLINSTALL" = "1" ]; then
+	ACTIONLIST="$ACTIONLIST examples cgtests"
+fi
+NEWACTIONLIST=
+
+for action in $ACTIONLIST; do
+	case X$action in
+	Xexamples)
+		if [ "$NEWACTIONLIST" = "" ]; then
+			NEWACTIONLIST="$EXAMPLE_ACTIONS"
+		else
+			NEWACTIONLIST="$NEWACTIONLIST $EXAMPLE_ACTIONS"
+		fi
+		;;
+	Xcgtests)
+		if [ "$NEWACTIONLIST" = "" ]; then
+			NEWACTIONLIST="$CGTESTS_ACTIONS"
+		else
+			NEWACTIONLIST="$NEWACTIONLIST $CGTESTS_ACTIONS"
+		fi
+		;;
+	X*)
+		if [ "$NEWACTIONLIST" = "" ]; then
+			NEWACTIONLIST="$action"
+		else
+			NEWACTIONLIST="$NEWACTIONLIST $action"
+		fi
+		;;
+	esac
+done
+ACTIONLIST=$NEWACTIONLIST
+
+DUMPOUT=$DIST_DIR/typescript
+# start installation
+typescript_head
+
+HAVE_BSYSCALLS_SUPPORT=
+HAVE_CPUTIMERS_SUPPORT=
+HAVE_DYNPROC_SUPPORT=
+HAVE_SCHEDSTRUCT_SUPPORT=
+
+# run through ACTIONLIST and do whatever!
+for action in $ACTIONLIST; do
+	case X$action in
+		#{{{  setbuildtarget: guesses the host system type and sets KROCHOST_ARCH, KROCHOST_VENDOR and KROCHOST_OS
+	Xsetbuildtarget)
+		if [ ! -x $DIST_DIR/$CCSP_SRC/config.guess ]; then
+			printf '%s: missing config.guess in CCSP source tree!\n' "$0"  1>&2
+			# this is pretty bad..
+			install_error
+			exit 1
+		else
+			printf 'guessing host system type... '
+			KROCHOSTSTR=$($DIST_DIR/$CCSP_SRC/config.guess || printf 'unknown-unknown-unknown\n')
+
+			KROCHOST_ARCH=$(printf '%s' "$KROCHOSTSTR" | cut -d - -f -1)
+			KROCHOST_VENDOR=$(printf '%s' "$KROCHOSTSTR" | cut -d - -f 2-2)
+			KROCHOST_OS=$(printf '%s' "$KROCHOSTSTR" | cut -d - -f 3-)
+
+			printf '%s\n' "$KROCHOSTSTR"
+
+			# then set any build-specific options
+			setopts_host "$KROCHOST_ARCH" "$KROCHOST_VENDOR" "$KROCHOST_OS"
+		fi
+		# set HAVE_SCHEDSTRUCT_SUPPORT, based on gcc version
+		# already decided that we do have a gcc..
+		GCC_VERSION=$(${CC:-gcc} --version | grep '[1-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*' | tr ' ' '\n' | grep '^[1-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$')
+		if [ "$GCC_VERSION" = "" ]; then
+			printf '%s: failed to extract gcc version!\n' "$0" | tee -a "$DUMPOUT"
+			tee -a "$DUMPOUT" << EOF
+***
+***  installation will continue, without certain optimisations
+***  please consider mailing ofa-bugs@kent.ac.uk with the output
+***  of "gcc --version" to fix this for future releases.
+***
+EOF
+			printf 'press return to continue..'
+			read
+		else
+			printf 'gcc version is %s\n' "$GCC_VERSION" | tee -a "$DUMPOUT"
+			case $GCC_VERSION in
+			3.3.4 | 3.3.5)
+				HAVE_SCHEDSTRUCT_SUPPORT=1
+				;;
+			esac
+		fi
+		if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
+			printf 'enabling scheduler-var structure support\n' | tee -a "$DUMPOUT"
+		fi
+		;;
+		#}}}
+		#{{{  update: does a source update from the distribution site
+	Xupdate)
+		if [ "$WGET" = "" ]; then
+			printf '%s: cannot update, no wget\n' "$0" | tee -a "$DUMPOUT"
+		else
+			CURRENT_DIR=$(pwd)
+			cd /tmp
+			if [ ! -f "$PATCHINFOFILE" ]; then
+				FAILED=
+				printf '%s: trying to wget %s\n' "$0" "$PATCHINFOURL" | tee -a "$DUMPOUT"
+				$WGET -q "$PATCHINFOURL" || FAILED=1
+				if [ "$FAILED" = "1" ]; then
+					rm -f "$PATCHINFOFILE"
+					cd "$CURRENT_DIR"
+					printf '%s: unable to get %s, assuming latest version (%s)\n' "$0" "$PATCHINFOURL" "$VERSION" | tee -a "$DUMPOUT"
+				else
+					cd "$CURRENT_DIR"
+					prepare_patch /tmp/"$PATCHINFOFILE" && exit 0
+				fi
+			else
+				# file already here
+				cd $CURRENT_DIR
+				printf '%s: file /tmp/%s already exists, using it\n' "$0" "$PATCHINFOFILE" | tee -a "$DUMPOUT"
+				prepare_patch /tmp/"$PATCHINFOFILE" && exit 0
+			fi
+		fi
+		;;
+		#}}}
+		#{{{  status: shows individual package status
+	Xstatus)
+		printf 'installation directory: %s\n' "$INSTALL_DIR"
+		printf 'distribution directory: %s\n' "$DIST_DIR"
+		printf 'sed: %s\n' "$SED"
+		printf 'awk: %s\n' "$AWK"
+		printf 'make: %s\n' "$MAKE"
+		printf 'wget: %s\n' "$WGET"
+		for PKG in $ALL_PKGS; do
+			package_status $DIST_DIR $PKG
+		done
+		;;
+		#}}}
+		#{{{  autoupdate: updates autoconf/automake files
+	Xautoupdate)
+		printf 'distribution directory: %s\n' "$DIST_DIR"
+		printf 'auto-file update, path to default files [/usr/share/automake]: '
+		read REPLY
+		if [ "$REPLY" = "" ]; then
+			AUTOPATH=/usr/share/automake
+		else
+			AUTOPATH="$REPLY"
+		fi
+		if [ ! -r $AUTOPATH/config.guess ]; then
+			printf 'that directory does not appear to contain config.guess, aborting.\n'
+			exit 1
+		fi
+		AUTOFILES="config.guess config.sub depcomp missing mkinstalldirs install-sh"
+		for PKG in $ALL_PKGS; do
+			PKGSTAT=$(package_status $DIST_DIR $PKG | grep autofiles)
+			if [ "$PKGSTAT" != "" ]; then
+				printf 'updating autofiles in %-24s: ' "$DIST_DIR" "$PKG"
+				for file in $AUTOFILES; do
+					if [ -f $DIST_DIR/$PKG/$file ]; then
+						cp $AUTOPATH/$file $DIST_DIR/$PKG/$file
+						printf '%s ' "$file"
+					fi
+				done
+				printf '\n'
+			fi
+		done
+		;;
+		#}}}
+		#{{{  building-examples: set example build
+	Xbuilding-examples)
+		EXAMPLEINSTALL=1
+		;;
+		#}}}
+		#{{{  building-cgtests: set cgtests build
+	Xbuilding-cgtests)
+		CGTESTSINSTALL=1
+		;;
+		#}}}
+		#{{{  initial-kroc-setup: does what setup.sh would have done
+	Xinitial-kroc-setup)
+		if [ "X$OCSEARCH" = "X" ]; then
+			PATH=$INSTALL_DIR/bin:$PATH
+			OCSEARCH=$INSTALL_DIR/lib; export OCSEARCH
+			LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR/lib; export LD_LIBRARY_PATH
+		fi
+		;;
+		#}}}
+		#{{{  bsyscalls-support: attempts to determine whether or not support for blocking system calls is present
+	Xbsyscalls-support)
+		nm $INSTALL_DIR/lib/libkroc.so | grep "scheduler_can_do_bsyscalls" 1> /dev/null && HAVE_BSYSCALLS_SUPPORT=1
+		printf "%s: checking for blocking system calls support... " $0 | tee -a "$DUMPOUT"
+		if [ "$HAVE_BSYSCALLS_SUPPORT" != "" ]; then
+			printf "yes\n" | tee -a "$DUMPOUT"
+		else
+			printf "no\n" | tee -a "$DUMPOUT"
+		fi
+		;;
+		#}}}
+		#{{{  cputimers-support: attempts to determine whether or not support for CPU timers is present
+	Xcputimers-support)
+		nm $INSTALL_DIR/lib/libkroc.so | grep "scheduler_can_do_cputimers" 1> /dev/null && HAVE_CPUTIMERS_SUPPORT=1
+		printf "%s: checking for cpu-timers support... " $0 | tee -a "$DUMPOUT"
+		if [ "$HAVE_CPUTIMERS_SUPPORT" != "" ]; then
+			printf "yes\n" | tee -a "$DUMPOUT"
+		else
+			printf "no\n" | tee -a "$DUMPOUT"
+		fi
+		;;
+		#}}}
+		#{{{  dynproc_support: attempts to determine whether or not support for dynamic processes is present
+	Xdynproc-support)
+		nm $INSTALL_DIR/lib/libkroc.so | grep "scheduler_can_do_dynproc" 1> /dev/null && HAVE_DYNPROC_SUPPORT=1
+		printf "%s: checking for dynamic process support... " $0 | tee -a "$DUMPOUT"
+		if [ "$HAVE_DYNPROC_SUPPORT" != "" ]; then
+			printf "yes\n" | tee -a "$DUMPOUT"
+		else
+			printf "no\n" | tee -a "$DUMPOUT"
+		fi
+		;;
+		#}}}
+		#{{{  clean: clean all packages
+	Xclean)
+		# clean all packages
+		for PKG in $ALL_PKGS; do
+			clean_pkg $DIST_DIR $PKG
+		done
+		;;
+		#}}}
+		#{{{  distclean: clean for distribution
+	Xdistclean)
+		# clean for distribution
+		for PKG in $ALL_PKGS; do
+			distclean_pkg $DIST_DIR $PKG
+		done
+		rm -f .install_dir
+		for sec in $MANPAGE_SECTIONS; do
+			if [ -d $DIST_DIR/doc/man$sec ]; then
+				printf 'cleaning up local man-pages (section %d)..\n' "$sec" | tee -a "$DUMPOUT"
+				rm -rf $DIST_DIR/doc/man$sec
+			fi
+		done
+		printf 'cleaning up any index.bt files..\n' | tee -a "$DUMPOUT"
+		find $DIST_DIR/doc -name index.bt | xargs rm -f
+		printf 'cleaning up any index.db files..\n' | tee -a "$DUMPOUT"
+		find $DIST_DIR/doc -name index.db | xargs rm -f
+
+		# better remove symbolic-links created by ccsp pre-configure (!)
+		if [ -L $DIST_DIR/$CCSP_SRC/arch/arch ] || [ -L $DIST_DIR/$CCSP_SRC/include/arch ]; then
+			printf 'cleaning up ccsp pre-configure symbolic links\n' | tee -a "$DUMPOUT"
+			test -L $DIST_DIR/$CCSP_SRC/arch/arch && rm -f $DIST_DIR/$CCSP_SRC/arch/arch
+			test -L $DIST_DIR/$CCSP_SRC/include/arch && rm -f $DIST_DIR/$CCSP_SRC/include/arch
+		fi
+		if [ -L $DIST_DIR/$CCSP_SRC/include/config.h ]; then
+			printf 'cleaning up ccsp configure symbolic links\n' | tee -a "$DUMPOUT"
+			test -L $DIST_DIR/$CCSP_SRC/include/config.h && rm -f $DIST_DIR/$CCSP_SRC/include/config.h
+		fi
+		# better clean-up any tilde temp. files
+		find $DIST_DIR/ -name '*~' | xargs rm -f
+		;;
+		#}}}
+		#{{{  calibrate-clock: performs kroc clock calibration
+	Xcalibrate-clock)
+		# need CPU-timers
+		if [ "$HAVE_CPUTIMERS_SUPPORT" != "" ]; then
+			# if we can, put kroc_clock in etc
+			CAN_WRITE_ETC=
+			if [ -w /etc ] || [ -w /etc/kroc_clock ]; then
+				CAN_WRITE_ETC=1
+			fi
+
+			if [ "$CAN_WRITE_ETC" = "1" ]; then
+				printf '%s: putting CPU clock speed in /etc/kroc_clock\n' "$0" | tee -a "$DUMPOUT"
+				cputimerutil > /etc/kroc_clock
+				KROC_CLOCK_FILE=/etc/kroc_clock
+			else
+				printf '%s: putting CPU clock speed in %s/.kroc_clock\n' "$0" "$HOME" | tee -a "$DUMPOUT"
+				cputimerutil > "$HOME"/.kroc_clock
+				KROC_CLOCK_FILE="$HOME"/.kroc_clock
+			fi
+		fi
+		;;
+		#}}}
+		#{{{  install-manages: put the manual pages in $INSTALL_DIR/doc/man1, and point MANPATH at $INSTALL_DIR/doc
+	Xinstall-manpages)
+		# put the manual pages in $INSTALL_DIR/doc/man1, and point MANPATH at $INSTALL_DIR/doc
+		for msec in 1 3; do
+			install -d -v $INSTALL_DIR/doc/man$msec | tee -a "$DUMPOUT"
+		done
+		for manpage in $MANPAGE_LIST; do
+			case X$manpage in
+				X*.1)
+					msec=1
+					;;
+				X*.3)
+					msec=3
+					;;
+			esac
+			install -m 0644 -v $DIST_DIR/doc/$manpage $INSTALL_DIR/doc/man$msec | tee -a "$DUMPOUT"
+		done
+		# if "mandb" exists, run it to create the manpage index
+		MANDB=$(type mandb 2>&1 | $SED -e 's/^'mandb' is hashed (\([^)]*\))/\1/g' -e 's/^'mandb' is //g' -e '/not found/d')
+		if [ "$MANDB" = "" ]; then
+			printf '%s: could not find mandb, will not build manpage index\n' "$0" | tee -a "$DUMPOUT"
+		else
+			printf 'building manpage index..\n'
+			mandb $INSTALL_DIR/doc/ 2>&1 | tee -a "$DUMPOUT"
+		fi
+		;;
+		#}}}
+	X*-*)
+		what=$(printf '%s\n' $action | $SED -e 's/-.*$//')
+		pkg=$(printf '%s\n'  $action | $SED -e 's/^[^-]*-//')
+		NEED_KROC_ENV=
+		ABORT_ACTION=
+		CONF_SPECOPTS=
+		PRECONF_SPECOPTS=
+		# turn pkg into PKG_SRC
+		case X$pkg in
+			#{{{  ccsp: run-time kernel
+		Xccsp)
+			PKG_SRC=$CCSP_SRC
+			if [ "$DISABLEPRIORITY" != "" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-process-priority"
+			fi
+			if [ "$DISABLECPUTIMERS" != "" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-cpu-timers"
+			fi
+			if [ "$USEPTHREADS" != "" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pthreads"
+			fi
+			if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-schedstruct"
+				PRECONF_SPECOPTS="$PRECONF_SPECOPTS --enable-schedstruct"
+			fi
+			;;
+			#}}}
+			#{{{  cputimerutils: clock calibration utility
+		Xcputimerutils)
+			PKG_SRC=$CPUTIMERUTILS_SRC
+			;;
+			#}}}
+			#{{{  mkoccdeps: occam dependency generator
+		Xmkoccdeps)
+			PKG_SRC=$MKOCCDEPS_SRC
+			;;
+			#}}}
+			#{{{  occ21: occam-pi compiler
+		Xocc21)
+			PKG_SRC=$OCC21_SRC
+			if [ "$DISABLEPRIORITY" != "" ]; then
+				CONF_SPECOPTS="--disable-process-priority"
+			fi
+			;;
+			#}}}
+			#{{{  cgtests: compiler test suite
+		Xcgtests)
+			PKG_SRC=$CGTESTS_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  ilibr: inmos librarian
+		Xilibr)
+			PKG_SRC=$ILIBR_SRC
+			;;
+			#}}}
+			#{{{  tranx86: native code translator
+		Xtranx86)
+			PKG_SRC=$TRANX86_SRC
+			if [ "$DISABLEPRIORITY" != "" ]; then
+				CONF_SPECOPTS="--disable-process-priority"
+			fi
+			;;
+			#}}}
+			#{{{  kroc: wrapper script
+		Xkroc)
+			if [ "$USEPTHREADS" != "" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pthreads"
+			fi
+			if [ "$USECTTD" != "" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-cttd"
+			fi
+			if [ "$USEPONY" != "" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pony"
+			fi
+			if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-schedstruct"
+			fi
+			PKG_SRC=$KROC_SRC
+			;;
+			#}}}
+			#{{{  inmoslibs: inmos libraries
+		Xinmoslibs)
+			PKG_SRC=$INMOSLIBS_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  bsclib_examples: blocking sys-call examples
+		Xbsclib_examples)
+			if [ "$HAVE_BSYSCALLS_SUPPORT" = "1" ]; then
+				PKG_SRC=$BSCLIB_EXAMPLES_SRC
+				NEED_KROC_ENV=1
+			else
+				ABORT_ACTION=1
+			fi
+			;;
+			#}}}
+			#{{{  course_examples: course examples
+		Xcourse_examples)
+			PKG_SRC=$COURSE_EXAMPLES_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  course_answers: course model answers
+		Xcourse_answers)
+			PKG_SRC=$COURSE_ANSWERS_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  syncs_examples: synchronisation examples
+		Xsyncs_examples)
+			PKG_SRC=$SYNCS_EXAMPLES_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  dynproc_examples: dynamic loadable process examples
+		Xdynproc_examples)
+			if [ "$HAVE_DYNPROC_SUPPORT" = "1" ]; then
+				PKG_SRC=$DYNPROC_EXAMPLES_SRC
+				NEED_KROC_ENV=1
+			else
+				ABORT_ACTION=1
+			fi
+			;;
+			#}}}
+			#{{{  udc_examples: user-defined channel examples
+		Xudc_examples)
+			PKG_SRC=$UDC_EXAMPLES_SRC
+			NEED_KROC_ENV=1
+			if [ "$HAVE_BSYSCALLS_SUPPORT" != "1" ]; then
+				# better make sure we don't try and build things requiring bsyscalls..
+				CONF_SPECOPTS="--disable-bsyscalls"
+			fi
+			;;
+			#}}}
+			#{{{  cif_examples: C-interface examples
+		Xcif_examples)
+			PKG_SRC=$CIF_EXAMPLES_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  sdlraster_examples: SDLRaster example programs
+		Xsdlraster_examples)
+			PKG_SRC=$SDLRASTER_EXAMPLES_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  dxraster_examples: DXRaster example programs
+		Xdxraster_examples)
+			PKG_SRC=$DXRASTER_EXAMPLES_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  bar_demo: the "better-bar" demonstrator
+		Xbar_demo)
+			PKG_SRC=$DEMO_BAR_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  bsclib: blocking system-calls library
+		Xbsclib)
+			if [ "$HAVE_BSYSCALLS_SUPPORT" = "1" ]; then
+				PKG_SRC=$BSCLIB_SRC
+				NEED_KROC_ENV=1
+			else
+				ABORT_ACTION=1
+			fi
+			;;
+			#}}}
+			#{{{  course: course library
+		Xcourse)
+			PKG_SRC=$COURSE_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  syncs: additional synchronisations
+		Xsyncs)
+			PKG_SRC=$SYNCS_SRC
+			;;
+			#}}}
+			#{{{  dynproc: dynamic loadable processes
+		Xdynproc)
+			if [ "$HAVE_DYNPROC_SUPPORT" = "1" ]; then
+				PKG_SRC=$DYNPROC_SRC
+			else
+				ABORT_ACTION=1
+			fi
+			;;
+			#}}}
+			#{{{  udc: user-defined channels
+		Xudc)
+			PKG_SRC=$UDC_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  cif: C-interface
+		Xcif)
+			PKG_SRC=$CIF_SRC
+			NEED_KROC_ENV=0
+			;;
+			#}}}
+			#{{{  sdlraster: raster-based graphics with MIT-SHM
+		Xsdlraster)
+			PKG_SRC=$SDLRASTER_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  dxraster: raster-based graphics with MIT-SHM
+		Xdxraster)
+			PKG_SRC=$DXRASTER_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+		X*)
+			(printf 'error: unknown package %s\n' "$pkg" | tee -a "$DUMPOUT") 1>&2
+			install_error
+			exit 1
+			;;
+		esac
+		if [ "$NEED_KROC_ENV" != "" ] && [ "$OCSEARCH" = "" ]; then
+			# does what setup.sh should have done (also done by initial-kroc-setup
+			PATH=$INSTALL_DIR/bin:$PATH
+			OCSEARCH=$INSTALL_DIR/lib; export OCSEARCH
+			LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR/lib; export LD_LIBRARY_PATH
+		fi
+		if [ "$ABORT_ACTION" != "" ]; then
+			continue		# to "for .. in .." loop
+		fi
+		# special handling for funny packages
+		case X$action in
+			#{{{  install-syncs, install-dynproc: just copy files (all headers)
+		Xinstall-syncs | Xinstall-dynproc)
+			cp -v "$DIST_DIR"/"$PKG_SRC"/*.inc "$INSTALL_DIR"/lib | tee -a "$DUMPOUT"
+			;;
+			#}}}
+			#{{{  *-syncs, *-dynproc: do-nothing
+		X*-syncs | X*-dynproc)
+			# can only install syncs + dynproc..
+			;;
+			#}}}
+		X*)
+			# all default actions
+			printf '%s: performing action %s on %s (in %s/%s)\n' "$0" "$what" "$pkg" "$DIST_DIR" "$PKG_SRC" | tee -a "$DUMPOUT"
+			if [ "$DRYRUN" = "" ]; then
+				# actually do it
+				case X$what in
+					#{{{  preconfigure: pre-configure package
+				Xpreconfigure)
+					if [ "$PRECONF_SPECOPTS" = "" ]; then
+						preconfigure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC"
+					else
+						preconfigure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC" "$PRECONF_SPECOPTS"
+					fi
+					;;
+					#}}}
+					#{{{  configure: configure package
+				Xconfigure)
+					if [ "$CONF_SPECOPTS" = "" ]; then
+						configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC"
+					else
+						configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC" "$CONF_SPECOPTS"
+					fi
+					;;
+					#}}}
+					#{{{  make: compile package
+				Xmake)
+					# maybe need to skip a make, if failed to configure
+					LCL_DO_MAKE=1
+					for pp in $FAILED_CONFIGURES; do
+						if [ "$pp" = "$pkg" ]; then
+							printf '%s: skip make on %s (failed to configure)\n' "$0" "$pkg" | tee -a "$DUMPOUT"
+							FAILED_MAKES="$FAILED_MAKES $pkg"
+							LCL_DO_MAKE=0
+						fi
+					done
+					if [ $LCL_DO_MAKE -eq 1 ]; then
+						make_pkg $DIST_DIR $PKG_SRC
+					fi
+					;;
+					#}}}
+					#{{{  install: install package
+				Xinstall)
+					LCL_DO_INSTALL=1
+					for pp in $FAILED_MAKES; do
+						if [ "$pp" = "$pkg" ]; then
+							printf '%s: skip install on %s (failed to make)\n' "$0" "$pkg" | tee -a "$DUMPOUT"
+							FAILED_INSTALLS="$FAILED_INSTALLS $pkg"
+							LCL_DO_INSTALL=0
+						fi
+					done
+					if [ $LCL_DO_INSTALL -eq 1 ]; then
+						install_pkg "$DIST_DIR" "$PKG_SRC"
+					fi
+					;;
+					#}}}
+					#{{{  clean: clean package
+				Xclean)
+					clean_pkg "$DIST_DIR" "$PKG_SRC"
+					;;
+					#}}}
+					#{{{  distclean: clean package for distribution
+				Xdistclean)
+					distclean_pkg "$DIST_DIR" "$PKG_SRC"
+					;;
+					#}}}
+				esac
+
+				# check for failure and failable packages
+				if [ "$DEFERRED_INSTALL_ERROR" != "" ]; then
+					for pp in $FAILABLE_PKGS; do
+						if [ "$pp" = "$PKG_SRC" ]; then
+							# allowed to fail this one
+							DEFERRED_INSTALL_ERROR=""
+
+							case X$what in
+							Xpreconfigure)
+								FAILED_PRECONFIGURES="$FAILED_PRECONFIGURES $pkg"
+								;;
+							Xconfigure)
+								FAILED_CONFIGURES="$FAILED_CONFIGURES $pkg"
+								;;
+							Xmake)
+								FAILED_MAKES="$FAILED_MAKES $pkg"
+								;;
+							Xinstall)
+								FAILED_INSTALLS="$FAILED_INSTALLS $pkg"
+								;;
+							esac
+
+							break
+						fi
+					done
+				fi
+				if [ "$DEFERRED_INSTALL_ERROR" != "" ]; then
+					install_error
+					exit 1
+				fi
+			fi
+			;;
+		esac
+		;;
+	X*)
+		(printf 'error: unknown action %s.  use --help for help.\n' "$action" | tee -a "$DUMPOUT") 1>&2
+		exit 1
+		;;
+	esac
+done
+
+
+cat >> "$DUMPOUT" << EOF
+
+##  BUILD ENDS
+
+EOF
+
+# final message(s) before exiting
+
+if [ $SHOWBANNER -eq 1 ]; then
+	tee -a "$DUMPOUT" << EOF
+
+***********************************************************
+*                          READ ME!                       *
+***********************************************************
+
+The KRoC distribution should now be installed.  Remember to source
+the relevant file (.sh for bash, .csh for csh):
+$INSTALL_DIR/bin/setup..
+
+This installation does not attempt to be perfect, but it should work
+for the most part.
+
+You can navigate through the distribution via the README files.  It
+is recommended that you read the docs/essentially-kroc.txt file.
+
+To build the example programs, run:
+    $0 examples
+
+To build the compiler test-suite, run:
+    $0 cgtests
+
+To remove all intermediary files created during the build, run:
+    $0 clean
+..or..
+    $0 distclean
+Note: clean and distclean will delete any compiled example programs
+EOF
+
+	if [ "$HAVE_CPUTIMERS_SUPPORT" != "" ]; then
+		printf '\nCPU timers have been enabled and the file %s has been created.\n' "$KROC_CLOCK_FILE" | tee -a "$DUMPOUT"
+		printf 'This contains your CPU speed in MHz:\n' | tee -a "$DUMPOUT"
+		cat $KROC_CLOCK_FILE | tee -a "$DUMPOUT"
+		if [ "$CAN_WRITE_ETC" = "" ]; then
+			tee -a "$DUMPOUT" << EOF
+To make this universally available, please copy the file to /etc/kroc_clock
+(you need to be root to do this).
+EOF
+		fi
+	fi
+	cat << EOF
+
+Enjoy,
+
+Fred.  (frmb@kent.ac.uk)
+
+EOF
+fi
+
+if [ "$EXAMPLEINSTALL" != "" ]; then
+	tee -a "$DUMPOUT" << EOF
+
+The available example programs should have been compiled and left in
+the following directories:
+    $DIST_DIR/$COURSE_EXAMPLES_SRC/
+    $DIST_DIR/$COURSE_ANSWERS_SRC/
+    $DIST_DIR/$SYNCS_EXAMPLES_SRC/
+    $DIST_DIR/$UDC_EXAMPLES_SRC/
+    $DIST_DIR/$CIF_EXAMPLES_SRC/
+    $DIST_DIR/$DEMO_BAR_SRC/
+EOF
+
+	BUILT_DXRASTER_EXAMPLES="1"
+	BUILT_SDLRASTER_EXAMPLES="1"
+	for pp in $FAILED_MAKES; do
+		if [ "$pp" = "dxraster_examples" ]; then
+			BUILT_DXRASTER_EXAMPLES=""
+			break
+		elif [ "$pp" = "sdlraster_examples" ]; then
+			BUILT_SDLRASTER_EXAMPLES=""
+			break
+		fi
+	done
+
+	if [ "$BUILT_SDLRASTER_EXAMPLES" != "" ]; then
+		printf '    %s/%s/\n' "$DIST_DIR" "$SDLRASTER_EXAMPLES_SRC"
+	fi
+	if [ "$BUILT_DXRASTER_EXAMPLES" != "" ]; then
+		printf '    %s/%s/\n' "$DIST_DIR" "$DXRASTER_EXAMPLES_SRC"
+	fi
+	if [ "$HAVE_BSYSCALLS_SUPPORT" != "" ]; then
+		printf '    %s/%s/\n' "$DIST_DIR" "$BSCLIB_EXAMPLES_SRC" | tee -a "$DUMPOUT"
+	fi
+	if [ "$HAVE_DYNPROC_SUPPORT" != "" ]; then
+		printf '    %s/%s/\n' "$DIST_DIR" "$DYNPROC_EXAMPLES_SRC" | tee -a "$DUMPOUT"
+	fi
+fi
+
+if [ "$CGTESTSINSTALL" != "" ]; then
+	tee -a "$DUMPOUT" << EOF
+
+The compiler test-suite (cgtests) should have been compiled and left
+in the following directory:
+    $DIST_DIR/$CGTESTS_SRC/
+EOF
+fi
+
+
