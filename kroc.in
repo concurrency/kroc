@@ -163,20 +163,36 @@ asflags="$asflags --defsym A1=4 --defsym A2=2 -W"
 
 ocspath=
 if [ "X$OCSEARCH" != "X" ]; then
-  ocspath=$OCSEARCH
+  ocspath="$OCSEARCH:$ocrtsdir"
+else
+  ocspath="$ocrtsdir"
 fi
-ocspath="$ocspath $ocrtsdir"
 
 oclibpath=
 ocsearch=
 clincludepath=
 
+# ocspath is a COLON-SEPARATED list now, better process slightly differently
+
+
+XIFS="$IFS"
+IFS=':'
+
 for dir in $ocspath; do
 	dir=$(printf '%s' "$dir" | $SED -e 's:/$::')
 	oclibpath="$oclibpath -L$dir"
-	ocsearch="$ocsearch $dir"
+	ocsearch="$ocsearch:$dir"
 	cincludepath="$cincludepath -I$dir"
 done
+
+IFS="$XIFS"
+
+# for dir in $ocspath; do
+# 	dir=$(printf '%s' "$dir" | $SED -e 's:/$::')
+# 	oclibpath="$oclibpath -L$dir"
+# 	ocsearch="$ocsearch $dir"
+# 	cincludepath="$cincludepath -I$dir"
+# done
 
 use_occ21_revalt=1
 use_occ21_zen=1
@@ -225,7 +241,7 @@ do
 		;;
 	# These options have mandatory values.  Since we didn't find an = sign,
 	# the value must be in the next argument
-	--octran-opts | --oc-opts | --cc-opts)
+	--octran-opts | --oc-opts | --cc-opts | --nocc-opts)
 		optarg=$1
 		shift
 		;;
@@ -300,6 +316,9 @@ do
 	--cc-opts*)
 		ccopts="$ccopts $optarg"
 		;;
+	--nocc-opts*)
+		noccopts="$noccopts $optarg"
+		;;
 	-nd | --no-dynmem)
 		occopts="$occopts -ndm"
 		octranopts="$octranopts -nd"
@@ -316,11 +335,11 @@ do
 	-L*)
 		dir=$(printf '%s' $option | $SED -e 's:/$::' -e 's:^..::')
 		oclibpath="-L$dir $oclibpath"
-		ocsearch="$dir $ocsearch"
+		ocsearch="$dir:$ocsearch"
 		;;
 	-I*)
 		dir=$(printf '%s' "$option" | $SED -e 's:/$::' -e 's:^..::')
-		ocsearch="$dir $ocsearch"
+		ocsearch="$dir:$ocsearch"
 		cincludepath="-I$dir $cincludepath"
 		;;
 	-v | --verbose | --v | --verb*)
@@ -488,7 +507,7 @@ fi
 
 # Add current directory first, always
 oclibpath="-L. $oclibpath"
-ocsearch=". $ocsearch"
+ocsearch=".:$ocsearch"
 cincludepath="-I. $cincludepath"
 procopts="-$proc_class"
 occopts="$procopts $occopts"
