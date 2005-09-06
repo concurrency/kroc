@@ -2,6 +2,8 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+06/09/2005	frmb	changed default path separator to ':' (OCSEARCH + ISEARCH environment vars)
+04/09/2005	frmb	more tranx86 updates for NOCC
 12/07/2005	frmb	kroc wrapper option for NOCC (--nocc), experimental
 11/07/2005	frmb	tranx86 updates for NOCC
 09/07/2005	frmb	put 1.4.0-pre0 together
