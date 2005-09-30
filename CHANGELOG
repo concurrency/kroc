@@ -2,6 +2,11 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+30/09/2005	frmb	put 1.4.0-pre1 together
+30/09/2005	frmb	fixed one or C mishaps in occ21 (old gcc fails to compile them, ack
+			to Sourav Guchhait for spotting it)
+30/09/2005	frmb	semi-fixed small bug in back-end related to CASE generation (ack to clj)
+16/09/2005	frmb	more tranx86 updates for NOCC (arithmetic instructions)
 06/09/2005	frmb	changed default path separator to ':' (OCSEARCH + ISEARCH environment vars)
 04/09/2005	frmb	more tranx86 updates for NOCC
 12/07/2005	frmb	kroc wrapper option for NOCC (--nocc), experimental
