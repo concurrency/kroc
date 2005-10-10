@@ -95,9 +95,9 @@ FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $DXRASTER_SRC $DXRASTER_EX
 
 DUMPOUT=
 DUMPMAIL="frmb@kent.ac.uk"
-VERSION="1.4.0-pre1"
+VERSION="1.4.0-pre2"
 PRERELEASE=0
-NEXTPATCH="1.4.0-pre2"
+NEXTPATCH="1.4.0-pre3"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 # things set in typescript_head are: SED, AWK, MAKE, WGET
