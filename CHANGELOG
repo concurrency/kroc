@@ -2,6 +2,10 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+10/10/2005	frmb	fixed a small bug related to type-checks on forward-declared channel-types
+10/10/2005	frmb	fixed DEFINED operator bug with MOBILE.CHANs (ack to Mario for finding)
+10/10/2005	frmb	fixed a small bug with allocation of zero-sized dynamic arrays of mobile
+			channels (ack to Mario for finding it)
 30/09/2005	frmb	put 1.4.0-pre1 together
 30/09/2005	frmb	fixed one or C mishaps in occ21 (old gcc fails to compile them, ack
 			to Sourav Guchhait for spotting it)
