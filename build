@@ -171,6 +171,9 @@ choices for <pkg> are:
   udc                          user-defined channels
   manpages                     man-page based documentation
   cgtests                      compiler test suite
+  cif                          occam-pi/C interface
+  dxraster                     DXRaster MIT-SHM based raster graphics
+  sdlraster                    SDLRaster SDL based raster graphics
   examples                     all example programs, which are:
     bsclib_examples            blocking system calls example programs
     course_examples            UKC course example programs
@@ -179,6 +182,9 @@ choices for <pkg> are:
     dynproc_examples           dynamic occam process examples
     udc_examples               user-defined channels examples
     bar_demo                   animated ALT demonstrator
+    cif_examples               C interface examples
+    dxraster_examples          DXRaster example programs
+    sdlraster_examples         SDLRaster example programs
 EOF
 }
 #}}}
@@ -1310,7 +1316,7 @@ EOF
 			NEED_KROC_ENV=0
 			;;
 			#}}}
-			#{{{  sdlraster: raster-based graphics with MIT-SHM
+			#{{{  sdlraster: raster-based graphics with SDL
 		Xsdlraster)
 			PKG_SRC=$SDLRASTER_SRC
 			NEED_KROC_ENV=1
