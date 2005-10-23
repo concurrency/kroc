@@ -84,7 +84,7 @@ CGTESTS_SRC=src/cgtests-1.3
 MANPAGE_LIST="kroc.1 kmakef.1 cputimerutil.1 mkoccdeps.1 occ21.1 \
 		libcourse-utils.3 libcourse-cycles.3 libcourse-nets.3 \
 		libconvert-inmos.3 libhostio-inmos.3 libmath-inmos.3 libstreamio-inmos.3 libstring-inmos.3 \
-		libsock.3 libfile.3 libproc.3"
+		libsock.3 libfile.3 libproc.3 libsdlraster.3"
 MANPAGE_SECTIONS="1 3"
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \

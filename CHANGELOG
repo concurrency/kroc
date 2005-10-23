@@ -2,6 +2,8 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+23/10/2005	frmb	support for CLAIM-ing mobile arrays of mobile channel-ends
+23/10/2005	frmb	added manpage for SDLRaster
 19/10/2005	frmb	some small updates to the SDLRaster library (also on-line documentation)
 10/10/2005	frmb	fixed a small bug related to type-checks on forward-declared channel-types
 10/10/2005	frmb	fixed DEFINED operator bug with MOBILE.CHANs (ack to Mario for finding)
