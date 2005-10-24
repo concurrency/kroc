@@ -731,13 +731,18 @@ svn_update ()
 			nfiles=0
 			ndirs=0
 			nunhandled=0
+			nolder=0
 
 			REPOSFILES=".svn $($SVN ls --recursive --username "$SVNUSER" --password "$SVNPASS" "$SVNHOST${SVN_REPOSS[i]}/trunk/")"
 			for rfile in $REPOSFILES; do
 				if [ -f "$TMPPATH/$rfile" ]; then
-					# file, copy it over
-					nfiles=$((nfiles+1))
-					cp "$TMPPATH/$rfile" "$DIST_DIR/${SVN_SRCS[i]}/$rfile"
+					# file, copy it over if does not exist or is newer
+					if [ ! -f "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ] || [ "$TMPPATH/$rfile" -nt "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ]; then
+						nfiles=$((nfiles+1))
+						cp "$TMPPATH/$rfile" "$DIST_DIR/${SVN_SRCS[i]}/$rfile"
+					else
+						nolder=$((nolder+1))
+					fi
 				elif [ -d "$TMPPATH/$rfile" ] && [ ! -d "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ]; then
 					# directory that does not exist locally, move it (will get .svn with this too)
 					ndirs=$((ndirs+1))
@@ -756,7 +761,7 @@ svn_update ()
 				fi
 			done
 
-			printf '%d files, %d dirs, %d ignored ' $nfiles $ndirs $nunhandled
+			printf '%d files, %d dirs, %d ignored, %d older ' $nfiles $ndirs $nunhandled $nolder
 
 			# remove temp-dir
 			rm -rf $TMPPATH
