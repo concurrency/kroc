@@ -2,6 +2,7 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+24/10/2005	frmb	updated the build script to support live-updates from the subversion repository
 23/10/2005	frmb	support for CLAIM-ing mobile arrays of mobile channel-ends
 23/10/2005	frmb	added manpage for SDLRaster
 19/10/2005	frmb	some small updates to the SDLRaster library (also on-line documentation)
