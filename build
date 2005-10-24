@@ -741,6 +741,7 @@ svn_update ()
 						nfiles=$((nfiles+1))
 						cp "$TMPPATH/$rfile" "$DIST_DIR/${SVN_SRCS[i]}/$rfile"
 					else
+						# in practice we probably don't get any of these..
 						nolder=$((nolder+1))
 					fi
 				elif [ -d "$TMPPATH/$rfile" ] && [ ! -d "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ]; then
@@ -786,6 +787,9 @@ svn_update ()
 		printf '\n'
 		i=$((i+1))
 	done
+
+	printf '\ntree updated to match subversion repository on %s\n' "$SVNHOST"
+	printf 're-run the build script to compile/install changes\n'
 }
 #}}}
 
