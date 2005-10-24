@@ -152,6 +152,7 @@ where options are:
   -h | --help                  this help text
   -V | --version               print version and exit
   --svn-version                attempt to display the latest version available in the subversion repository
+  --svn-status                 check subversioned source packages for changes against repository
   --svn-update                 update source packages to latest versions available via subversion
 
 and actions are:
@@ -683,6 +684,55 @@ package_status ()
 
 }
 #}}}
+#{{{  svn_status ()
+svn_status ()
+{
+	if [ $GOT_SVN_VERSION -eq 0 ]; then
+		svn_version
+	fi
+	
+	if [ "$DIST_DIR" = "" ]; then
+		DIST_DIR="$(pwd)"
+	fi
+
+	if [ ${#SVN_SRCS[@]} -ne ${#SVN_REPOSS[@]} ]; then
+		printf '%s: broken build! (%d SVN sources, %d repositories)\n' "$0" ${#SVN_SRCS[@]} ${#SVN_REPOSS[@]}
+		exit 1
+	fi
+	i=0
+	while [ $i -lt ${#SVN_SRCS[@]} ]; do
+		printf 'checking %s: ' "${SVN_SRCS[i]}"
+		if [ -d $DIST_DIR/${SVN_SRCS[i]}/.svn ]; then
+			CURPATH=$(pwd)
+			cd "$DIST_DIR/${SVN_SRCS[i]}"
+
+			TEMPSVNST=/tmp/.svn.${SVN_REPOSS[i]}.$$
+
+			STATUS_FAILED=0
+			$SVN st --show-updates --verbose --username "$SVNUSER" --password "$SVNPASS" --quiet > "$TEMPSVNST" || STATUS_FAILED=1
+
+			REVISION=$(grep '^[sS]tatus against revision' < "$TEMPSVNST" | $SED -e 's/[^:]*:[ ]*//g')
+			printf 'revision %s\n' "$REVISION"
+
+			if [ $STATUS_FAILED -eq 1 ]; then
+				# probably aborted
+				printf '%s: abort\n' "$0"
+				rm -f "$TEMPSVNST"
+				exit 1
+			fi
+
+			cd "$CURPATH"
+
+			grep -v '^        ' < "$TEMPSVNST" | grep -v '^[sS]tatus against revision'
+			rm -f "$TEMPSVNST"
+		else
+			printf 'not under version control\n'
+		fi
+		i=$((i+1))
+	done
+
+}
+#}}}
 #{{{  svn_update ()
 svn_update ()
 {
@@ -830,6 +880,10 @@ do
 		;;
 	X--svn-update)
 		svn_update
+		exit 0
+		;;
+	X--svn-status)
+		svn_status
 		exit 0
 		;;
 	X--copyright)
