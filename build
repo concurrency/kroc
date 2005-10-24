@@ -3,12 +3,16 @@
 if [ "$BASH_VERSION" = "" ]; then
 	BASH=
 	# search for "bash" in the PATH environment
-	for dir in `printf '%s' "$PATH" | tr ':' '\n'`; do
+	XIFS="$IFS"
+	IFS=':'
+	for dir in $PATH; do
 		if [ -f $dir/bash ] && [ -x $dir/bash ]; then
 			BASH=$dir/bash
 			break
 		fi
 	done
+
+	IFS="$XIFS"
 
 	if [ "$BASH" = "" ]; then
 		printf 'could not find bash!\n'
@@ -86,6 +90,8 @@ MANPAGE_LIST="kroc.1 kmakef.1 cputimerutil.1 mkoccdeps.1 occ21.1 \
 		libconvert-inmos.3 libhostio-inmos.3 libmath-inmos.3 libstreamio-inmos.3 libstring-inmos.3 \
 		libsock.3 libfile.3 libproc.3 libsdlraster.3"
 MANPAGE_SECTIONS="1 3"
+SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster dxraster cif doc $CGTESTS_SRC)
+SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster kroc-dxraster cif kroc-doc cgtests)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
@@ -100,7 +106,10 @@ PRERELEASE=0
 NEXTPATCH="1.4.0-pre3"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
-# things set in typescript_head are: SED, AWK, MAKE, WGET
+SVNUSER="krocuser"
+SVNPASS="krocuser"
+SVNHOST="https://subversion.frmb.org/svn/"
+# things set in typescript_head are: SED, AWK, MAKE, WGET, SVN
 
 ACTIONLIST=
 FORCECONFIGURE=
@@ -109,6 +118,7 @@ DISABLECPUTIMERS=
 USEPTHREADS=
 USECTTD=
 USEPONY=
+GOT_SVN_VERSION=0
 
 KROCHOST_ARCH=
 KROCHOST_VENDOR=
@@ -141,6 +151,9 @@ where options are:
   --with-cttd                  build with channel-type type-description support
   -h | --help                  this help text
   -V | --version               print version and exit
+  --svn-version                attempt to display the latest version available in the subversion repository
+  --svn-update                 update source packages to latest versions available via subversion
+
 and actions are:
   build                        build everything (default if not specified)
   update                       attempt to download source-code update
@@ -155,6 +168,7 @@ and actions are:
   examples                     configure and compile example programs
   cgtests                      configure and compile compiler test-suite programs
   all                          builds everything: build examples cgtests
+
 choices for <pkg> are:
   ccsp                         CCSP (run-time occam/transputer kernel)
   cputimerutils                CPU timer clock calibration utility
@@ -186,6 +200,44 @@ choices for <pkg> are:
     dxraster_examples          DXRaster example programs
     sdlraster_examples         SDLRaster example programs
 EOF
+}
+#}}}
+#{{{  svn_version ()
+svn_version ()
+{
+	if [ "$SVN" = "" ]; then
+		printf '%s: subversion not installed! (set SVN environment variable to be explicit)\n' "$0"
+		exit 1
+	fi
+	if [ "$WGET" = "" ]; then
+		printf '%s: wget not installed! (set WGET environment variable to be explicit)\n' "$0"
+		exit 1
+	fi
+	SVN_DOES_HTTPS=0
+
+	$SVN --version | grep "'https'" 1> /dev/null && SVN_DOES_HTTPS=1
+	if [ $SVN_DOES_HTTPS -eq 0 ]; then
+		printf '%s: installed subversion does not support https\n' "$0"
+		exit 1
+	fi
+
+	# attempt to get SVN-VERSION file from the "kroc-srcpkg" repository
+
+	printf 'checking for subversion server %s: ' "$SVNHOST"
+	$WGET -O - --quiet --user="$SVNUSER" --password="$SVNPASS" --no-check-certificate "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION' 1> /dev/null && GOT_SVN_VERSION=1
+
+	if [ $GOT_SVN_VERSION -eq 0 ]; then
+		printf 'failed\n'
+		exit 1
+	else
+		printf 'ok\n'
+	fi
+
+	printf 'checking for latest version: '
+	PKG_SVN_VERSION=$($WGET -O - --quiet --user="$SVNUSER" --password="$SVNPASS" --no-check-certificate "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION')
+	printf '%s\n' "$PKG_SVN_VERSION"
+	printf 'this version: %s\n' "$VERSION"
+
 }
 #}}}
 #{{{  deferred_install_error ()
@@ -245,8 +297,13 @@ guess_software ()
 	AWK=${AWK:-}
 	MAKE=${MAKE:-}
 	WGET=${WGET:-}
-	if [ "$SED" = "" ] || [ "$AWK" = "" ] || [ "$MAKE" = "" ] || [ "$WGET" = "" ]; then
-		for pth in $(printf '%s' "$PATH" | tr ':' ' '); do
+	SVN=${SVN:-}
+
+	XIFS="$IFS"
+	IFS=':'
+
+	if [ "$SED" = "" ] || [ "$AWK" = "" ] || [ "$MAKE" = "" ] || [ "$WGET" = "" ] || [ "$SVN" = "" ]; then
+		for pth in $PATH; do
 			if [ -x "$pth"/gnused ] && [ "$SED" = "" ]; then
 				SED="$pth"/gnused
 			fi
@@ -259,10 +316,13 @@ guess_software ()
 			if [ -x "$pth"/gnumake ] && [ "$MAKE" = "" ]; then
 				MAKE="$pth"/gnumake
 			fi
+			if [ -x "$pth"/svn ] && [ "$SVN" = "" ]; then
+				SVN="$pth"/svn
+			fi
 		done
 	fi
 	if [ "$SED" = "" ] || [ "$AWK" = "" ] || [ "$MAKE" = "" ]; then
-		for pth in $(printf '%s' "$PATH" | tr ':' ' '); do
+		for pth in $PATH; do
 			if [ -x "$pth/sed" ] && [ "$SED" = "" ]; then
 				SED="$pth"/sed
 			fi
@@ -275,12 +335,14 @@ guess_software ()
 		done
 	fi
 	if [ "$MAKE" = "" ]; then
-		for pth in $(printf '%s' "$PATH" | tr ':' ' '); do
+		for pth in $PATH; do
 			if [ -x "$pth"/make ] && [ "$MAKE" = "" ]; then
 				MAKE="$pth"/make
 			fi
 		done
 	fi
+
+	IFS="$XIFS"
 
 }
 #}}}
@@ -323,6 +385,9 @@ typescript_head ()
 	printf 'make is: %s\n' "$MAKE" >> "$DUMPOUT"
 	if [ "$WGET" != "" ]; then
 		printf 'wget is: %s\n' "$WGET" >> "$DUMPOUT"
+	fi
+	if [ "$SVN" != "" ]; then
+		printf 'svn is: %s\n"' "$SVN" >> "$DUMPOUT"
 	fi
 
 }
@@ -618,6 +683,103 @@ package_status ()
 
 }
 #}}}
+#{{{  svn_update ()
+svn_update ()
+{
+	if [ $GOT_SVN_VERSION -eq 0 ]; then
+		svn_version
+	fi
+	
+	if [ "$DIST_DIR" = "" ]; then
+		DIST_DIR="$(pwd)"
+	fi
+
+	if [ ${#SVN_SRCS[@]} -ne ${#SVN_REPOSS[@]} ]; then
+		printf '%s: broken build! (%d SVN sources, %d repositories)\n' "$0" ${#SVN_SRCS[@]} ${#SVN_REPOSS[@]}
+		exit 1
+	fi
+	i=0
+	while [ $i -lt ${#SVN_SRCS[@]} ]; do
+		printf 'checking %s: ' "${SVN_SRCS[i]}"
+		if [ -d $DIST_DIR/${SVN_SRCS[i]}/.svn ]; then
+			printf 'versioned-%s ' ${SVN_REPOSS[i]}
+		else
+			#{{{  not under version control, check it out
+			printf 'checkout-%s ' ${SVN_REPOSS[i]}
+
+			if [ "${SVN_SRCS[i]}" = "." ]; then
+				TMPPATH="$DIST_DIR/THISDIR.svntmp"
+			else
+				TMPPATH="$DIST_DIR/${SVN_SRCS[i]}.svntmp"
+			fi
+			CHECKOUT_FAILED=0
+
+			# this is a bit ugly..:
+			#   checkout into temporary directory
+			#   do subversion listing on repository
+			#     copy anything over that's either a file, or a directory that doesn't exist in the source tree
+			#
+
+			$SVN checkout --quiet --username "$SVNUSER" --password "$SVNPASS" "$SVNHOST${SVN_REPOSS[i]}/trunk/" "$TMPPATH" || CHECKOUT_FAILED=1
+
+			if [ "$CHECKOUT_FAILED" -eq 1 ]; then
+				printf 'checkout-failed\n'
+				exit 1
+			fi
+
+			printf 'checked-out '
+			nfiles=0
+			ndirs=0
+			nunhandled=0
+
+			REPOSFILES=".svn $($SVN ls --recursive --username "$SVNUSER" --password "$SVNPASS" "$SVNHOST${SVN_REPOSS[i]}/trunk/")"
+			for rfile in $REPOSFILES; do
+				if [ -f "$TMPPATH/$rfile" ]; then
+					# file, copy it over
+					nfiles=$((nfiles+1))
+					cp "$TMPPATH/$rfile" "$DIST_DIR/${SVN_SRCS[i]}/$rfile"
+				elif [ -d "$TMPPATH/$rfile" ] && [ ! -d "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ]; then
+					# directory that does not exist locally, move it (will get .svn with this too)
+					ndirs=$((ndirs+1))
+					mv "$TMPPATH/$rfile" "$DIST_DIR/${SVN_SRCS[i]}/$rfile"
+				elif [ -d "$TMPPATH/$rfile" ]; then
+					# directory, ignore it
+					true
+				elif [ ! -e "$TMPPATH/$rfile" ]; then
+					# something that does not exist -- probably in a directory that we moved
+					true
+				else
+					nunhandled=$((nunhandled + 1))
+				fi
+			done
+
+			printf '%d files, %d dirs, %d ignored ' $nfiles $ndirs $nunhandled
+
+			# remove temp-dir
+			rm -rf $TMPPATH
+			#}}}
+		fi
+
+		# check out any updates
+		CURPATH=$(pwd)
+		cd "$DIST_DIR/${SVN_SRCS[i]}"
+
+		UPDATE_FAILED=0
+		$SVN up --username "$SVNUSER" --password "$SVNPASS" --quiet || UPDATE_FAILED=1
+
+		if [ $UPDATE_FAILED -eq 1 ]; then
+			printf 'update-failed '
+		else
+			printf 'updated '
+		fi
+
+		cd "$CURPATH"
+
+		printf '\n'
+		i=$((i+1))
+	done
+}
+#}}}
 
 
 #
@@ -648,6 +810,14 @@ do
 		;;
 	X--version | X-V)
 		printf '%s: KRoC/Linux source release version %s\n' "$0" "$VERSION"
+		exit 0
+		;;
+	X--svn-version)
+		svn_version
+		exit 0
+		;;
+	X--svn-update)
+		svn_update
 		exit 0
 		;;
 	X--copyright)
