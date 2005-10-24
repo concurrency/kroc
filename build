@@ -743,8 +743,11 @@ svn_update ()
 					ndirs=$((ndirs+1))
 					mv "$TMPPATH/$rfile" "$DIST_DIR/${SVN_SRCS[i]}/$rfile"
 				elif [ -d "$TMPPATH/$rfile" ]; then
-					# directory, ignore it
-					true
+					# directory, ignore it -- do get .svn if present
+					if [ -d "$TMPPATH/$rfile/.svn" ] && [ ! -d "$TMPPATH/${SVN_SRCS[i]}/$rfile/.svn" ]; then
+						ndirs=$((ndirs+1))
+						mv "$TMPPATH/$rfile/.svn" "$DIST_DIR/${SVN_SRCS[i]}/$rfile/.svn"
+					fi
 				elif [ ! -e "$TMPPATH/$rfile" ]; then
 					# something that does not exist -- probably in a directory that we moved
 					true
