@@ -1664,7 +1664,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=kroc
- VERSION=1.4.0-pre2
+ VERSION=1.4.0-pre3
 
 
 cat >>confdefs.h <<_ACEOF
