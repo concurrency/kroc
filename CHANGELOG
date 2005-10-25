@@ -2,6 +2,7 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+25/10/2005	frmb	initial framework for PowerPC target in CCSP and tranx86
 25/10/2005	frmb	improved support for getting code from the subversion repository
 24/10/2005	frmb	put 1.4.0-pre2 together
 24/10/2005	frmb	updated the build script to support live-updates from the subversion repository
