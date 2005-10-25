@@ -101,9 +101,9 @@ FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $DXRASTER_SRC $DXRASTER_EX
 
 DUMPOUT=
 DUMPMAIL="frmb@kent.ac.uk"
-VERSION="1.4.0-pre2"
+VERSION="1.4.0-pre3"
 PRERELEASE=0
-NEXTPATCH="1.4.0-pre3"
+NEXTPATCH="1.4.0-final"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 SVNUSER="krocuser"
@@ -154,10 +154,13 @@ where options are:
   --svn-version                attempt to display the latest version available in the subversion repository
   --svn-status                 check subversioned source packages for changes against repository
   --svn-update                 update source packages to latest versions available via subversion
+  --svn-list                   list all files under version control
 
 and actions are:
   build                        build everything (default if not specified)
   update                       attempt to download source-code update
+  svnst-<svnpkg>               query subversion repository for <svnpkg> status
+  svnup-<svnpkg>               update local copy of <svnpkg> from subversion repository
   preconfigure-<pkg>           pre-configure <pkg> (only needed for ccsp)
   configure-<pkg>              configure <pkg> (see below for list of packages)
   make-<pkg>                   make <pkg>
@@ -687,6 +690,14 @@ package_status ()
 #{{{  svn_status ()
 svn_status ()
 {
+	if [ "$1" = "--full" ]; then
+		QFLAGS=""
+		shift
+	else
+		QFLAGS="--quiet"
+	fi
+	PKGSEL="$1"
+
 	if [ $GOT_SVN_VERSION -eq 0 ]; then
 		svn_version
 	fi
@@ -701,32 +712,93 @@ svn_status ()
 	fi
 	i=0
 	while [ $i -lt ${#SVN_SRCS[@]} ]; do
-		printf 'checking %s: ' "${SVN_SRCS[i]}"
-		if [ -d $DIST_DIR/${SVN_SRCS[i]}/.svn ]; then
-			CURPATH=$(pwd)
-			cd "$DIST_DIR/${SVN_SRCS[i]}"
+		if [ "$PKGSEL" = "" ] || [ "$PKGSEL" = ${SVN_REPOSS[i]} ]; then
+			printf 'checking %s: ' "${SVN_SRCS[i]}"
+			if [ -d $DIST_DIR/${SVN_SRCS[i]}/.svn ]; then
+				CURPATH=$(pwd)
+				cd "$DIST_DIR/${SVN_SRCS[i]}"
 
-			TEMPSVNST=/tmp/.svn.${SVN_REPOSS[i]}.$$
+				TEMPSVNST=/tmp/.svn.${SVN_REPOSS[i]}.$$
 
-			STATUS_FAILED=0
-			$SVN st --show-updates --verbose --username "$SVNUSER" --password "$SVNPASS" --quiet > "$TEMPSVNST" || STATUS_FAILED=1
+				STATUS_FAILED=0
+				$SVN st --show-updates --verbose --username "$SVNUSER" --password "$SVNPASS" $QFLAGS > "$TEMPSVNST" || STATUS_FAILED=1
 
-			REVISION=$(grep '^[sS]tatus against revision' < "$TEMPSVNST" | $SED -e 's/[^:]*:[ ]*//g')
-			printf 'revision %s\n' "$REVISION"
+				REVISION=$(grep '^[sS]tatus against revision' < "$TEMPSVNST" | $SED -e 's/[^:]*:[ ]*//g')
+				printf 'revision %s\n' "$REVISION"
 
-			if [ $STATUS_FAILED -eq 1 ]; then
-				# probably aborted
-				printf '%s: abort\n' "$0"
+				if [ $STATUS_FAILED -eq 1 ]; then
+					# probably aborted
+					printf '%s: abort\n' "$0"
+					rm -f "$TEMPSVNST"
+					exit 1
+				fi
+
+				cd "$CURPATH"
+
+				grep -v '^[\? ]        ' < "$TEMPSVNST" | grep -v '^[sS]tatus against revision'
 				rm -f "$TEMPSVNST"
-				exit 1
+			else
+				printf 'not under version control\n'
 			fi
+		fi
+		i=$((i+1))
+	done
 
-			cd "$CURPATH"
+}
+#}}}
+#{{{  svn_list ()
+svn_list ()
+{
+	if [ "$1" = "--full" ]; then
+		QFLAGS=""
+		shift
+	else
+		QFLAGS="--quiet"
+	fi
+	PKGSEL="$1"
 
-			grep -v '^        ' < "$TEMPSVNST" | grep -v '^[sS]tatus against revision'
-			rm -f "$TEMPSVNST"
-		else
-			printf 'not under version control\n'
+	if [ "$SVN" = "" ]; then
+		printf '%s: subversion not intalled? (or set SVN environment variable)\n' "$0"
+		exit 1
+	fi
+	
+	if [ "$DIST_DIR" = "" ]; then
+		DIST_DIR="$(pwd)"
+	fi
+
+	if [ ${#SVN_SRCS[@]} -ne ${#SVN_REPOSS[@]} ]; then
+		printf '%s: broken build! (%d SVN sources, %d repositories)\n' "$0" ${#SVN_SRCS[@]} ${#SVN_REPOSS[@]}
+		exit 1
+	fi
+	i=0
+	while [ $i -lt ${#SVN_SRCS[@]} ]; do
+		if [ "$PKGSEL" = "" ] || [ "$PKGSEL" = ${SVN_REPOSS[i]} ]; then
+			printf 'checking %s: ' "${SVN_SRCS[i]}"
+			if [ -d $DIST_DIR/${SVN_SRCS[i]}/.svn ]; then
+				CURPATH=$(pwd)
+				cd "$DIST_DIR/${SVN_SRCS[i]}"
+
+				TEMPSVNST=/tmp/.svn.${SVN_REPOSS[i]}.$$
+
+				STATUS_FAILED=0
+				$SVN st --verbose $QFLAGS > "$TEMPSVNST" || STATUS_FAILED=1
+
+				printf '\n'
+
+				if [ $STATUS_FAILED -eq 1 ]; then
+					# probably aborted
+					printf '%s: abort\n' "$0"
+					rm -f "$TEMPSVNST"
+					exit 1
+				fi
+
+				cd "$CURPATH"
+
+				grep -v '^\?' < "$TEMPSVNST"
+				rm -f "$TEMPSVNST"
+			else
+				printf 'not under version control\n'
+			fi
 		fi
 		i=$((i+1))
 	done
@@ -736,6 +808,15 @@ svn_status ()
 #{{{  svn_update ()
 svn_update ()
 {
+	if [ "$1" = "--full" ]; then
+		QFLAGS=""
+		shift
+	else
+		QFLAGS="--quiet"
+	fi
+	PKGSEL="$1"
+
+
 	if [ $GOT_SVN_VERSION -eq 0 ]; then
 		svn_version
 	fi
@@ -750,91 +831,93 @@ svn_update ()
 	fi
 	i=0
 	while [ $i -lt ${#SVN_SRCS[@]} ]; do
-		printf 'checking %s: ' "${SVN_SRCS[i]}"
-		if [ -d $DIST_DIR/${SVN_SRCS[i]}/.svn ]; then
-			printf 'versioned-%s ' ${SVN_REPOSS[i]}
-		else
-			#{{{  not under version control, check it out
-			printf 'checkout-%s ' ${SVN_REPOSS[i]}
-
-			if [ "${SVN_SRCS[i]}" = "." ]; then
-				TMPPATH="$DIST_DIR/THISDIR.svntmp"
+		if [ "$PKGSEL" = "" ] || [ "$PKGSEL" = ${SVN_REPOSS[i]} ]; then
+			printf 'checking %s: ' "${SVN_SRCS[i]}"
+			if [ -d $DIST_DIR/${SVN_SRCS[i]}/.svn ]; then
+				printf 'versioned-%s ' ${SVN_REPOSS[i]}
 			else
-				TMPPATH="$DIST_DIR/${SVN_SRCS[i]}.svntmp"
-			fi
-			CHECKOUT_FAILED=0
+				#{{{  not under version control, check it out
+				printf 'checkout-%s ' ${SVN_REPOSS[i]}
 
-			# this is a bit ugly..:
-			#   checkout into temporary directory
-			#   do subversion listing on repository
-			#     copy anything over that's either a file, or a directory that doesn't exist in the source tree
-			#
-
-			$SVN checkout --quiet --username "$SVNUSER" --password "$SVNPASS" "$SVNHOST${SVN_REPOSS[i]}/trunk/" "$TMPPATH" || CHECKOUT_FAILED=1
-
-			if [ "$CHECKOUT_FAILED" -eq 1 ]; then
-				printf 'checkout-failed\n'
-				exit 1
-			fi
-
-			printf 'checked-out '
-			nfiles=0
-			ndirs=0
-			nunhandled=0
-			nolder=0
-
-			REPOSFILES=".svn $($SVN ls --recursive --username "$SVNUSER" --password "$SVNPASS" "$SVNHOST${SVN_REPOSS[i]}/trunk/")"
-			for rfile in $REPOSFILES; do
-				if [ -f "$TMPPATH/$rfile" ]; then
-					# file, copy it over if does not exist or is newer
-					if [ ! -f "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ] || [ "$TMPPATH/$rfile" -nt "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ]; then
-						nfiles=$((nfiles+1))
-						cp "$TMPPATH/$rfile" "$DIST_DIR/${SVN_SRCS[i]}/$rfile"
-					else
-						# in practice we probably don't get any of these..
-						nolder=$((nolder+1))
-					fi
-				elif [ -d "$TMPPATH/$rfile" ] && [ ! -d "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ]; then
-					# directory that does not exist locally, move it (will get .svn with this too)
-					ndirs=$((ndirs+1))
-					mv "$TMPPATH/$rfile" "$DIST_DIR/${SVN_SRCS[i]}/$rfile"
-				elif [ -d "$TMPPATH/$rfile" ]; then
-					# directory, ignore it -- do get .svn if present
-					if [ -d "$TMPPATH/$rfile/.svn" ] && [ ! -d "$TMPPATH/${SVN_SRCS[i]}/$rfile/.svn" ]; then
-						ndirs=$((ndirs+1))
-						mv "$TMPPATH/$rfile/.svn" "$DIST_DIR/${SVN_SRCS[i]}/$rfile/.svn"
-					fi
-				elif [ ! -e "$TMPPATH/$rfile" ]; then
-					# something that does not exist -- probably in a directory that we moved
-					true
+				if [ "${SVN_SRCS[i]}" = "." ]; then
+					TMPPATH="$DIST_DIR/THISDIR.svntmp"
 				else
-					nunhandled=$((nunhandled + 1))
+					TMPPATH="$DIST_DIR/${SVN_SRCS[i]}.svntmp"
 				fi
-			done
+				CHECKOUT_FAILED=0
 
-			printf '%d files, %d dirs, %d ignored, %d older ' $nfiles $ndirs $nunhandled $nolder
+				# this is a bit ugly..:
+				#   checkout into temporary directory
+				#   do subversion listing on repository
+				#     copy anything over that's either a file, or a directory that doesn't exist in the source tree
+				#
 
-			# remove temp-dir
-			rm -rf $TMPPATH
-			#}}}
+				$SVN checkout $QFLAGS --username "$SVNUSER" --password "$SVNPASS" "$SVNHOST${SVN_REPOSS[i]}/trunk/" "$TMPPATH" || CHECKOUT_FAILED=1
+
+				if [ "$CHECKOUT_FAILED" -eq 1 ]; then
+					printf 'checkout-failed\n'
+					exit 1
+				fi
+
+				printf 'checked-out '
+				nfiles=0
+				ndirs=0
+				nunhandled=0
+				nolder=0
+
+				REPOSFILES=".svn $($SVN ls --recursive --username "$SVNUSER" --password "$SVNPASS" "$SVNHOST${SVN_REPOSS[i]}/trunk/")"
+				for rfile in $REPOSFILES; do
+					if [ -f "$TMPPATH/$rfile" ]; then
+						# file, copy it over if does not exist or is newer
+						if [ ! -f "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ] || [ "$TMPPATH/$rfile" -nt "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ]; then
+							nfiles=$((nfiles+1))
+							cp "$TMPPATH/$rfile" "$DIST_DIR/${SVN_SRCS[i]}/$rfile"
+						else
+							# in practice we probably don't get any of these..
+							nolder=$((nolder+1))
+						fi
+					elif [ -d "$TMPPATH/$rfile" ] && [ ! -d "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ]; then
+						# directory that does not exist locally, move it (will get .svn with this too)
+						ndirs=$((ndirs+1))
+						mv "$TMPPATH/$rfile" "$DIST_DIR/${SVN_SRCS[i]}/$rfile"
+					elif [ -d "$TMPPATH/$rfile" ]; then
+						# directory, ignore it -- do get .svn if present
+						if [ -d "$TMPPATH/$rfile/.svn" ] && [ ! -d "$TMPPATH/${SVN_SRCS[i]}/$rfile/.svn" ]; then
+							ndirs=$((ndirs+1))
+							mv "$TMPPATH/$rfile/.svn" "$DIST_DIR/${SVN_SRCS[i]}/$rfile/.svn"
+						fi
+					elif [ ! -e "$TMPPATH/$rfile" ]; then
+						# something that does not exist -- probably in a directory that we moved
+						true
+					else
+						nunhandled=$((nunhandled + 1))
+					fi
+				done
+
+				printf '%d files, %d dirs, %d ignored, %d older ' $nfiles $ndirs $nunhandled $nolder
+
+				# remove temp-dir
+				rm -rf $TMPPATH
+				#}}}
+			fi
+
+			# check out any updates
+			CURPATH=$(pwd)
+			cd "$DIST_DIR/${SVN_SRCS[i]}"
+
+			UPDATE_FAILED=0
+			$SVN up --username "$SVNUSER" --password "$SVNPASS" $QFLAGS || UPDATE_FAILED=1
+
+			if [ $UPDATE_FAILED -eq 1 ]; then
+				printf 'update-failed '
+			else
+				printf 'updated '
+			fi
+
+			cd "$CURPATH"
+
+			printf '\n'
 		fi
-
-		# check out any updates
-		CURPATH=$(pwd)
-		cd "$DIST_DIR/${SVN_SRCS[i]}"
-
-		UPDATE_FAILED=0
-		$SVN up --username "$SVNUSER" --password "$SVNPASS" --quiet || UPDATE_FAILED=1
-
-		if [ $UPDATE_FAILED -eq 1 ]; then
-			printf 'update-failed '
-		else
-			printf 'updated '
-		fi
-
-		cd "$CURPATH"
-
-		printf '\n'
 		i=$((i+1))
 	done
 
@@ -884,6 +967,10 @@ do
 		;;
 	X--svn-status)
 		svn_status
+		exit 0
+		;;
+	X--svn-list)
+		svn_list
 		exit 0
 		;;
 	X--copyright)
@@ -1178,6 +1265,18 @@ EOF
 		for PKG in $ALL_PKGS; do
 			package_status $DIST_DIR $PKG
 		done
+		;;
+		#}}}
+		#{{{  svnst-*: subversion-status
+	Xsvnst-*)
+		svnpkg=$(printf '%s\n' $action | $SED -e 's/^[^-]*-//')
+		svn_status --full $svnpkg
+		;;
+		#}}}
+		#{{{  svnup-*: subversion-update
+	Xsvnup-*)
+		svnpkg=$(printf '%s\n' $action | $SED -e 's/^[^-]*-//')
+		svn_update --full $svnpkg
 		;;
 		#}}}
 		#{{{  autoupdate: updates autoconf/automake files
