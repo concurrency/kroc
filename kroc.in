@@ -522,12 +522,12 @@ else
 fi
 
 if [ $showlibpath ]; then
-	printf '%s\n' "$oclibpath" | $SED -e 's:-L::g'
+	printf '%s\n' "$oclibpath" | $SED -e 's:-L::g' -e 's/ /:/g' -e 's/::/:/g'
 	exit 0
 fi
 
 if [ $showincpath ]; then
-	printf '%s \n' "$ocsearch" | $SED -e 's:^ ::' -e 's: $::'
+	printf '%s \n' "$ocsearch" | $SED -e 's:^ ::' -e 's: $::' -e 's/ /:/g' -e 's/::/:/g'
 	exit 0
 fi
 
