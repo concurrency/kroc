@@ -60,7 +60,7 @@ CC=@CC@
 PATH=$KROC/bin:$PATH
 
 package_version=@VERSION@
-dversion='1.46'
+dversion='1.5'
 host_canonical=@KROC_CANONICAL_TARGET@
 host_os=@KROC_HOST_OS@
 host_cpu=@KROC_HOST_CPU@
@@ -210,6 +210,7 @@ dorun=yes
 showversion=
 showlibpath=
 showincpath=
+showascc=
 showcflags=
 showcc=
 delete_temp=yes
@@ -358,6 +359,14 @@ do
 		;;
 	--incpath)
 		showincpath=yes
+		;;
+	--cclibpath)
+		showlibpath=yes
+		showascc=yes
+		;;
+	--ccincpath)
+		showincpath=yes
+		showascc=yes
 		;;
 	--cflags)
 		showcflags=yes
@@ -522,12 +531,20 @@ else
 fi
 
 if [ $showlibpath ]; then
-	printf '%s\n' "$oclibpath" | $SED -e 's:-L::g' -e 's/ /:/g' -e 's/::/:/g'
+	if [ $showascc ]; then
+		printf '%s\n' "$oclibpath"
+	else
+		printf '%s\n' "$oclibpath" | $SED -e 's:-L::g' -e 's/ /:/g' -e 's/::/:/g'
+	fi
 	exit 0
 fi
 
 if [ $showincpath ]; then
-	printf '%s \n' "$ocsearch" | $SED -e 's:^ ::' -e 's: $::' -e 's/ /:/g' -e 's/::/:/g'
+	if [ $showascc ]; then
+		printf '%s\n' "$cincludepath"
+	else
+		printf '%s \n' "$ocsearch" | $SED -e 's:^ ::' -e 's: $::' -e 's/ /:/g' -e 's/::/:/g'
+	fi
 	exit 0
 fi
 
@@ -624,6 +641,8 @@ Exclusive options:
   --tranflags            Print translator flags
   --libpath              Print path to occam libraries
   --incpath              Print path to occam include files
+  --cclibpath            Print path to occam libraries in CC -L.. form
+  --ccincpath            Print path to occam include files in CC -I.. form
 Additional options:
   -di                    Enable insert debugging
   -dm                    Enable dynamic memory debugging
