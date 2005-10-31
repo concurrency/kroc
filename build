@@ -149,6 +149,7 @@ where options are:
   --no-cputimers               disable CPU timer support (required for accurate timing on variable-frequency hardware)
   --no-pthreads                build without pthreads support
   --with-cttd                  build with channel-type type-description support
+  --with-pony                  build with support for KRoC.net/pony
   -h | --help                  this help text
   -V | --version               print version and exit
   --svn-version                attempt to display the latest version available in the subversion repository
