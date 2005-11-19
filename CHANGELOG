@@ -2,6 +2,27 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+17/11/2005	frmb	initial support for mobile process library loading and unloading
+14/11/2005	frmb	small bug fix for non-PAR mobile processes, support for serialising flat dynamic mobile arrays
+14/11/2005	frmb	initial support for object-space in serialised mobile processes
+13/11/2005	frmb	fixed a small bug with small constant constructors assigned to mobiles (ack
+			to Carl Ritson for spotting it)
+13/11/2005	frmb	additional checking in mobile process deserialisation
+12/11/2005	frmb	updates support for process groups, made mobile-process code more RMoX friendly
+12/11/2005	frmb	more MOBILE.PROC support in the compiler (comms and assignment)
+12/11/2005	frmb	mostly working support for mobile-process serialise and deserialise
+12/11/2005	frmb	small bug-fix with hidden-types in compiler back-end
+10/11/2005	frmb	more updates to mobile-process serialisation
+09/11/2005	frmb	updated SUSPEND implementation with workspace and code mapping information
+08/11/2005	frmb	disabled CC-checks in tranx86 when debugging is enabled (checks get complex)
+08/11/2005	frmb	fixed a small bug with CC-related code in tranx86 (ack to Mario for spotting it)
+07/11/2005	frmb	compiler updates for code-map generation and corresponding tranx86 support
+06/11/2005	frmb	various updates for mobile processes
+04/11/2005	frmb	more PowerPC code, simple programs now work ok (libraries wonky, cgtests bust)
+02/11/2005	frmb	small fix to new control split/join handling in tranx86
+01/11/2005	ats	fixed a couple of small bugs in CCSP (related to broken debugging)
+31/10/2005	frmb	fixed a small bug in occ21 preventing variable constructor assignment to dynamic mobile
+			arrays (ack to Adam for spotting it)
 31/10/2005	frmb	fixed CONTRJOIN/CONTRSPLIT handling in tranx86, was a bit broken.  Ack to Adam
 			for pinning the bug down.
 30/10/2005	frmb	various compiler updates for KRoC.net/pony
