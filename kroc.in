@@ -125,11 +125,17 @@ occwopts=
 occopts="-etc -w -y -znd -znec -udo -zncc -init -xin -mobiles -zrpe @OCCEXTRAOPTS@"
 
 case "$host_cpu" in
+	i386 | i486 | i586 | i686)
+		occopts="$occopts -zcxdiv -zcxrem -zzs"
+		;;
 	sparc*)
 		occopts="$occopts -tbe"
 		;;
-	i386 | i486 | i586 | i686)
-		occopts="$occopts -zcxdiv -zcxrem"
+	powerpc64)
+		occopts="$occopts -zzs"
+		;;
+	mips|mipsbe|mipsle)
+		occopts="$occopts"
 		;;
 esac
 
