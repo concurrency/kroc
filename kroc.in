@@ -132,7 +132,7 @@ case "$host_cpu" in
 		occopts="$occopts -tbe"
 		;;
 	powerpc64)
-		occopts="$occopts -zzs"
+		occopts="$occopts"
 		;;
 	mips|mipsbe|mipsle)
 		occopts="$occopts"
