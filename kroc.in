@@ -843,7 +843,7 @@ if [ "X${fatal}" != "X" -o "X$srcs" = "X" -o "X$showversion" != "X" ]; then
 		showversion=yes
 	fi
 	if [ $showversion ]; then
-		cat $kroc_krocdir/doc/AUTHORS
+		cat $kroc_krocdir/doc/txt/AUTHORS
 		exit 0
 	fi
 
