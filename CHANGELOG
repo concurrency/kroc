@@ -2,6 +2,8 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+05/12/2005	frmb	tidied up AUTHORS file, copied old stuff to OLD-AUTHORS
+05/12/2005	frmb	put 1.4.0-pre3 together
 05/12/2005	frmb	removed DXRaster from the distribution (superseded by SDLRaster)
 05/12/2005	frmb	restructured install layout for KRoC 1.4.0, moved manpages into source packages
 04/12/2005	frmb	added a kroc run-time configuration file, "kroc.conf"
