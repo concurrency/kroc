@@ -84,6 +84,7 @@ AC_ARG_ENABLE([pthreads], AS_HELP_STRING([--enable-pthreads], [enable pthreads s
 AC_ARG_ENABLE([schedstruct], AS_HELP_STRING([--enable-schedstruct], [enable scheduler-var structure support (requires schedstruct run-time kernel support) (default disabled)]), [enable_schedstruct=$enableval], [enable_schedstruct=no])
 AC_ARG_ENABLE([cttd], AS_HELP_STRING([--enable-cttd], [enable chan-type type-description support (default disabled)]), [enable_cttd=$enableval], [enable_cttd=no])
 AC_ARG_ENABLE([pony], AS_HELP_STRING([--enable-pony], [enable KRoC transparent networking (pony) support (default disabled)]), [enable_pony=$enableval], [enable_pony=no])
+AC_ARG_ENABLE([user-install], AS_HELP_STRING([--enable-user-install], [install configuration file(s) as dotfiles]), [enable_user_install=$enableval], [enable_user_install=no])
 
 AC_ARG_WITH([nocc], AS_HELP_STRING([--with-nocc=...], [location of NOCC (experimental!)]), [nocc_dir=$withval], [nocc_dir=])
 
@@ -203,18 +204,38 @@ dnl  fi
 dnl fi
 dnl 
 
+if test "$enable_user_install" = yes; then
+ CONFFILEPREFIX="."
+else
+ CONFFILEPREFIX=""
+fi
+
 
 AC_SUBST(DMOPTLIB)
 AC_SUBST(DEXTLIB)
 AC_SUBST(DSYSOPTS)
-KROC=$prefix
-AC_SUBST(KROC)
 AC_SUBST(TSCHEDSTRUCT)
 AC_SUBST(OCCEXTRAOPTS)
 AC_SUBST(TRANEXTRAOPTS)
 AC_SUBST(EXTCCEXTRAOPTS)
 AC_SUBST(NOCCHOME)
 
-AC_OUTPUT([kroc setup.sh setup.csh Makefile])
+dnl new settings for kroc.conf
+KROC_ARCHBINDIR="$bindir"
+KROC_ARCHLIBDIR="$libdir"
+KROC_ARCHINCDIR="$includedir"
+KROC_MANDIR="$mandir"
+KROC_KROCDIR="$datadir"
+KROC_CONFIGDIR="$sysconfdir"
+
+AC_SUBST(KROC_ARCHBINDIR)
+AC_SUBST(KROC_ARCHLIBDIR)
+AC_SUBST(KROC_ARCHINCDIR)
+AC_SUBST(KROC_MANDIR)
+AC_SUBST(KROC_KROCDIR)
+AC_SUBST(KROC_CONFIGDIR)
+AC_SUBST(CONFFILEPREFIX)
+
+AC_OUTPUT([kroc kroc.conf setup.sh setup.csh Makefile])
 
 
