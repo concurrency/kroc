@@ -41,23 +41,14 @@ startup files (e.g.  /etc/profile  and  /etc/csh.cshrc  or
 Directories
 -----------
 
-  bin/
+  install/
 
-    This contains the utility binaries (after system `build').
+    This is the default installation base for KRoC.
 
   doc/
 
     This contains various items of documentation.  Essential reading is
     the `essentially-kroc.txt' file.
-
-  lib/
-
-    This holds the KRoC release libraries -- both the byte code (e.g. xyz.lib)
-    and native code (e.g. libxyz.a) versions.
-
-  lib/inc/
-
-    This holds the KRoC release include files (e.g. xyz.inc).
 
   src/
 

@@ -2,6 +2,10 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+05/12/2005	frmb	removed DXRaster from the distribution (superseded by SDLRaster)
+05/12/2005	frmb	restructured install layout for KRoC 1.4.0, moved manpages into source packages
+04/12/2005	frmb	added a kroc run-time configuration file, "kroc.conf"
+02/12/2005	frmb	did a bit more support for floating-point on PowerPC
 01/12/2005	frmb	added support for sin/cos instructions where the hardware supports it
 29/11/2005	frmb	added entry-points for deep mobile type handling (under construction)
 27/11/2005	frmb	fixed a small bug in the ProcFork() code
