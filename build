@@ -116,9 +116,9 @@ FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 #{{{  release/install settings
 DUMPOUT=
 DUMPMAIL="frmb@kent.ac.uk"
-VERSION="1.4.0-pre3"
+VERSION="1.4.0-final"
 PRERELEASE=1
-NEXTPATCH="1.4.0-final"
+NEXTPATCH="1.4.0-final2"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 SVNUSER="krocuser"
@@ -163,7 +163,7 @@ usage ()
 	cat 1>&2 << EOF
 Usage: $0 [options] [action] [action] ...
 where options are:
-  --install-dir=<path>         target installation path
+  --install-dir=<path>         target installation path [PREFIX]
   --prefix=<path>              equivilant to --install-dir
   --configdir=<path>           install path for configuration file [/etc or home-dir]
   --bindir=<path>              install path for binaries [PREFIX/bin]
@@ -1264,12 +1264,16 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 		ANSIOFF1=$(printf '\033[0m')
 		ANSION2=$(printf '\033[1;34m')
 		ANSIOFF2=$(printf '\033[0m')
+		ANSION3=$(printf '\033[1m')
+		ANSIOFF3=$(printf '\033[0m')
 		;;
 	*)
 		ANSION1=""
 		ANSIOFF1=""
 		ANSION2=""
 		ANSIOFF2=""
+		ANSION3=""
+		ANSIOFF3=""
 		;;
 	esac
 	printf '\nKRoC %s installation configuration\n'
@@ -1286,10 +1290,12 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 		printf ' %s7%s.  kroc configuration: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_configdir" "$ANSIOFF1"
 		printf '\n'
 		printf 'Features:\n\n'
-		printf ' %sA%s.  process priority: ' "$ANSION2" "$ANSIOFF2"; if [ "$USEPRIORITY" -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
-		printf ' %sB%s.  CPU timers: ' "$ANSION2" "$ANSIOFF2"; if [ "$USECPUTIMERS" -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
-		printf ' %sC%s.  user-defined channels: ' "$ANSION2" "$ANSIOFF2"; if [ "$USEUDC" -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
-		printf ' %sD%s.  channel-type descriptors: ' "$ANSION2" "$ANSIOFF2"; if [ "$USECTTD" -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+		printf ' %sA%s.  process priority: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPRIORITY -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+		printf ' %sB%s.  CPU timers: ' "$ANSION2" "$ANSIOFF2"; if [ $USECPUTIMERS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+		printf ' %sC%s.  user-defined channels: ' "$ANSION2" "$ANSIOFF2"; if [ $USEUDC -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+		printf ' %sD%s.  channel-type descriptors: ' "$ANSION2" "$ANSIOFF2"; if [ $USECTTD -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+		printf ' %sE%s.  blocking syscalls use POSIX threads: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPTHREADS -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3"
+				elif [ $USEPTHREADS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 		#printf ' D.  support for PONY: '; if [ "$USEPONY" -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 
 		printf '\n1-7 to change path, A-D to toggle feature, Ctrl-C to abort, return to confirm and install: '
@@ -1331,6 +1337,14 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 			USEUDC=$((1 - USEUDC))
 		elif [ "$REPLY" = "D" ] || [ "$REPLY" = "d" ]; then
 			USECTTD=$((1 - USECTTD))
+		elif [ "$REPLY" = "E" ] || [ "$REPLY" = "e" ]; then
+			if [ $USEPTHREADS -eq 42 ]; then
+				USEPTHREADS=1
+			elif [ $USEPTHREADS -eq 1 ]; then
+				USEPTHREADS=0
+			else
+				USEPTHREADS=42
+			fi
 		else
 			printf '\nunrecognised option: %s\n' "$REPLY"
 		fi
