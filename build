@@ -58,6 +58,22 @@ unset DIST_DIR
 unset OCSEARCH			# this is used to determine if a KROC environment is present
 unset MAKEFLAGS
 
+#{{{  installation directories
+kroc_configdir=""
+kroc_archbindir=""
+kroc_archlibdir=""
+kroc_archincdir=""
+kroc_mandir=""
+kroc_krocdir=""
+kroc_kroc_examples=""
+kroc_kroc_vtlib=""
+kroc_kroc_vtinclude=""
+kroc_kroc_doc=""
+kroc_kroc_cgtests=""
+
+
+#}}}
+#{{{  source packages
 CCSP_SRC=src/ccsp-1.6
 CPUTIMERUTILS_SRC=src/cputimer-utils-0.9
 MKOCCDEPS_SRC=src/mkoccdeps-0.9
@@ -80,29 +96,28 @@ UDC_SRC=udc/libsrc
 UDC_EXAMPLES_SRC=udc/examples
 SDLRASTER_SRC=sdlraster/libsrc
 SDLRASTER_EXAMPLES_SRC=sdlraster/examples
-DXRASTER_SRC=dxraster/libsrc
-DXRASTER_EXAMPLES_SRC=dxraster/examples
 CIF_SRC=cif/libsrc
 CIF_EXAMPLES_SRC=cif/examples
 CGTESTS_SRC=src/cgtests-1.3
-MANPAGE_LIST="kroc.1 kmakef.1 cputimerutil.1 mkoccdeps.1 occ21.1 \
-		libcourse-utils.3 libcourse-cycles.3 libcourse-nets.3 \
-		libconvert-inmos.3 libhostio-inmos.3 libmath-inmos.3 libstreamio-inmos.3 libstring-inmos.3 \
-		libsock.3 libfile.3 libproc.3 libsdlraster.3"
-MANPAGE_SECTIONS="1 3"
-SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster dxraster cif doc $CGTESTS_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster kroc-dxraster cif kroc-doc cgtests)
+MANPAGE_LIST=""
+MANPAGE_SECTIONS=""
+DOC_SRC=doc
+SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster cif $DOC_SRC $CGTESTS_SRC)
+SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster cif kroc-doc cgtests)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC \
-	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $DXRASTER_SRC $DXRASTER_EXAMPLES_SRC"
-FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $DXRASTER_SRC $DXRASTER_EXAMPLES_SRC"
+	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
+FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 
+
+#}}}
+#{{{  release/install settings
 DUMPOUT=
 DUMPMAIL="frmb@kent.ac.uk"
 VERSION="1.4.0-pre3"
-PRERELEASE=0
+PRERELEASE=1
 NEXTPATCH="1.4.0-final"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
@@ -111,14 +126,20 @@ SVNPASS="krocuser"
 SVNHOST="https://subversion.frmb.org/svn/"
 # things set in typescript_head are: SED, AWK, MAKE, WGET, SVN
 
+#}}}
+#{{{  various local variables
+# 42 means unset
+BUILDRECONF=0
 ACTIONLIST=
 FORCECONFIGURE=
-DISABLEPRIORITY=
-DISABLECPUTIMERS=
-USEPTHREADS=
-USECTTD=
-USEPONY=
+USEPRIORITY=42
+USECPUTIMERS=42
+USEPTHREADS=42
+USECTTD=42
+USEPONY=42
+USEUDC=42
 GOT_SVN_VERSION=0
+USER_INSTALL=0
 
 KROCHOST_ARCH=
 KROCHOST_VENDOR=
@@ -130,6 +151,7 @@ FAILED_CONFIGURES=
 FAILED_MAKES=
 FAILED_INSTALLS=
 
+#}}}
 
 #
 #	functions
@@ -143,15 +165,27 @@ Usage: $0 [options] [action] [action] ...
 where options are:
   --install-dir=<path>         target installation path
   --prefix=<path>              equivilant to --install-dir
+  --configdir=<path>           install path for configuration file [/etc or home-dir]
+  --bindir=<path>              install path for binaries [PREFIX/bin]
+  --libdir=<path>              install path for libraries [PREFIX/lib/kroc]
+  --incdir=<path>              install path for includes [PREFIX/include/kroc]
+  --mandir=<path>              install path for manual pages [PREFIX/share/man]
+  --krocdir=<path>             install path for kroc-specific files [PREFIX/share/kroc]
+  --reconf                     edit configuration
+
   --dry-run                    just print what is going to be done, without doing it
   --force-configure            re-configure packages, even they look configured
+
   --no-priority                disable process priority
   --no-cputimers               disable CPU timer support (required for accurate timing on variable-frequency hardware)
   --no-pthreads                build without pthreads support
+  --no-udc                     build without user defined channels support
   --with-cttd                  build with channel-type type-description support
   --with-pony                  build with support for KRoC.net/pony
+
   -h | --help                  this help text
   -V | --version               print version and exit
+
   --svn-version                attempt to display the latest version available in the subversion repository
   --svn-status                 check subversioned source packages for changes against repository
   --svn-update                 update source packages to latest versions available via subversion
@@ -191,8 +225,8 @@ choices for <pkg> are:
   manpages                     man-page based documentation
   cgtests                      compiler test suite
   cif                          occam-pi/C interface
-  dxraster                     DXRaster MIT-SHM based raster graphics
   sdlraster                    SDLRaster SDL based raster graphics
+  doc                          documentation
   examples                     all example programs, which are:
     bsclib_examples            blocking system calls example programs
     course_examples            UKC course example programs
@@ -202,7 +236,6 @@ choices for <pkg> are:
     udc_examples               user-defined channels examples
     bar_demo                   animated ALT demonstrator
     cif_examples               C interface examples
-    dxraster_examples          DXRaster example programs
     sdlraster_examples         SDLRaster example programs
 EOF
 }
@@ -360,7 +393,18 @@ typescript_head ()
 	printf 'Install of KRoC/Linux source distribution @ %s\n' "$(date)" > $DUMPOUT
 	printf 'Version %s\n' "$VERSION" >> $DUMPOUT
 	printf 'Distribution path: %s\n' "$DIST_DIR" >> $DUMPOUT
-	printf 'Installation path: %s\n\n' "$INSTALL_DIR" >> $DUMPOUT
+	printf 'Installation path: %s\n' "$INSTALL_DIR" >> $DUMPOUT
+	printf '    kroc config install:    %s\n' "$kroc_configdir" >> $DUMPOUT
+	printf '    arch-binaries install:  %s\n' "$kroc_archbindir" >> $DUMPOUT
+	printf '    arch-libraries install: %s\n' "$kroc_archlibdir" >> $DUMPOUT
+	printf '    arch-includes install:  %s\n' "$kroc_archincdir" >> $DUMPOUT
+	printf '    manpages install:       %s\n' "$kroc_mandir" >> $DUMPOUT
+	printf '    kroc-specific install:  %s\n' "$kroc_krocdir" >> $DUMPOUT
+	printf '        examples install:      %s\n' "$kroc_kroc_examples" >> $DUMPOUT
+	printf '        VT libraries install:  %s\n' "$kroc_kroc_vtlib" >> $DUMPOUT
+	printf '        VT includes install:   %s\n' "$kroc_kroc_vtinclude" >> $DUMPOUT
+	printf '        documentation install: %s\n' "$kroc_kroc_doc" >> $DUMPOUT
+	printf '        cgtests install:       %s\n' "$kroc_kroc_cgtests" >> $DUMPOUT
 	printf 'Various software versions:\n' >> "$DUMPOUT"
 	# for BSD, tee doesn't much like our --version argument (GNU fileutils wanted really)
 	uname | grep BSD 1> /dev/null && XX_PROGRAMS="${AS:-as} ${CC:-gcc}" || XX_PROGRAMS="${AS:-as} ${CC:-gcc} tee"
@@ -397,7 +441,7 @@ typescript_head ()
 
 }
 #}}}
-#{{{ preconfigure_pkg (prefix-dir, dist-dir, package-src-dir)
+#{{{ preconfigure_pkg (prefix-dir, dist-dir, package-src-dir [, preconf-opt])
 preconfigure_pkg ()
 {
 	if [ "$1" = "" ] || [ "$2" = "" ] || [ "$3" = "" ]; then
@@ -423,7 +467,7 @@ preconfigure_pkg ()
 	return 0
 }
 #}}}
-#{{{  configure_pkg (prefix-dir, dist-dir, ackage-src-dir [, additional configure options])
+#{{{  configure_pkg (prefix-dir, dist-dir, package-src-dir [, additional configure options])
 configure_pkg ()
 {
 	if [ "$1" = "" ] || [ "$2" = "" ] || [ "$3" = "" ]; then
@@ -438,9 +482,11 @@ configure_pkg ()
 		printf '%s: package in %s looks configured, not re-configuring\n' "$0" $3 | tee -a "$DUMPOUT"
 	else
 		if [ "$4" = "" ]; then
-			(./configure --prefix=$1 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			(./configure --prefix="$1" --bindir="$kroc_archbindir" --datadir="$kroc_krocdir" --mandir="$kroc_mandir" --libdir="$kroc_archlibdir" \
+				--includedir="$kroc_archincdir" --sysconfdir="$kroc_configdir" 2>&1 && touch .success) | tee -a "$DUMPOUT"
 		else
-			(./configure --prefix=$1 $4 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			(./configure --prefix="$1" --bindir="$kroc_archbindir" --datadir="$kroc_krocdir" --mandir="$kroc_mandir" --libdir="$kroc_archlibdir" \
+				--includedir="$kroc_archincdir" --sysconfdir="$kroc_configdir" $4 2>&1 && touch .success) | tee -a "$DUMPOUT"
 		fi
 		if [ -f .success ]; then
 			rm .success
@@ -613,20 +659,28 @@ setopts_host ()
 
 	case "$3" in
 	cygwin)
-		printf '  cygwin: enabling pthreads\n'
-		USEPTHREADS=1
+		if [ $USEPTHREADS -eq 42 ]; then
+			printf '  cygwin: enabling pthreads\n'
+			USEPTHREADS=1
+		fi
 		;;
 	solaris*)
-		printf '  solaris: enabling pthreads\n'
-		USEPTHREADS=1
+		if [ $USEPTHREADS -eq 42 ]; then
+			printf '  solaris: enabling pthreads\n'
+			USEPTHREADS=1
+		fi
 		;;
 	*bsd* | *BSD*)
-		printf '  *BSD: enabling pthreads\n'
-		USEPTHREADS=2
+		if [ $USEPTHREADS -eq 42 ]; then
+			printf '  *BSD: enabling pthreads\n'
+			USEPTHREADS=2
+		fi
 		;;
 	linux* | Linux*)
-		printf '  linux: enabling pthreads\n'
-		USEPTHREADS=1
+		if [ $USEPTHREADS -eq 42 ]; then
+			printf '  linux: enabling pthreads\n'
+			USEPTHREADS=1
+		fi
 		;;
 	esac
 }
@@ -935,7 +989,16 @@ svn_update ()
 #
 
 if [ -f .install_dir ]; then
-	INSTALL_DIR=$(cat .install_dir)
+	# in transition, may have an old .install_dir
+	FAILEDSRC=0
+	source .install_dir || FAILEDSRC=1
+
+	if [ $FAILEDSRC -eq 1 ]; then
+		INSTALL_DIR=$(cat .install_dir)
+		# force the questions to be asked again
+		printf '\n*** NOTE ***: found possible old .install_dir, check install paths carefully\n'
+		BUILDRECONF=1
+	fi
 else
 	INSTALL_DIR=
 fi
@@ -945,8 +1008,7 @@ DRYRUN=
 # do this first!
 guess_software
 
-
-# process args
+#{{{  process command-line arguments
 while [ $# -ge 1 ]
 do
 	case X$1 in
@@ -957,6 +1019,9 @@ do
 	X--version | X-V)
 		printf '%s: KRoC/Linux source release version %s\n' "$0" "$VERSION"
 		exit 0
+		;;
+	X--reconf)
+		BUILDRECONF=1
 		;;
 	X--svn-version)
 		svn_version
@@ -987,10 +1052,10 @@ do
 			printf '%s: --install-dir requires an argument\n' "$0" 1>&2
 			exit 1
 		fi
-		INSTALL_DIR=$1
+		INSTALL_DIR="$1"
 		;;
 	X--install-dir=*)
-		INSTALL_DIR=$(printf '%s\n' $1 | $SED -e 's/^[^=]*=//')
+		INSTALL_DIR=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
 		;;
 	X--prefix)
 		shift
@@ -998,25 +1063,115 @@ do
 			printf '%s: --prefix requires an argument\n' "$0" 1>&2
 			exit 1
 		fi
-		INSTALL_DIR=$1
+		INSTALL_DIR="$1"
+		;;
+	X--prefix=*)
+		INSTALL_DIR=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
+		;;
+	X--configdir)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --configdir requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		kroc_configdir="$1"
+		;;
+	X--configdir=*)
+		kroc_configdir=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
+		;;
+	X--bindir)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --bindir requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		kroc_archbindir="$1"
+		;;
+	X--bindir=*)
+		kroc_archbindir=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
+		;;
+	X--libdir)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --libdir requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		kroc_archlibdir="$1"
+		;;
+	X--libdir=*)
+		kroc_archlibdir=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
+		;;
+	X--incdir)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --incdir requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		kroc_archincdir="$1"
+		;;
+	X--incdir=*)
+		kroc_archincdir=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
+		;;
+	X--mandir)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --mandir requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		kroc_mandir="$1"
+		;;
+	X--mandir=*)
+		kroc_mandir=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
+		;;
+	X--krocdir)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --krocdir requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		kroc_krocdir="$1"
+		;;
+	X--krocdir=*)
+		kroc_krocdir=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
 		;;
 	X--force-configure)
 		FORCECONFIGURE=1
 		;;
+	X--with-priority)
+		USEPRIORITY=1
+		;;
 	X--no-priority)
-		DISABLEPRIORITY=1
+		USEPRIORITY=0
+		;;
+	X--with-cputimers)
+		USECPUTIMERS=1
 		;;
 	X--no-cputimers)
-		DISABLECPUTIMERS=1
+		USECPUTIMERS=0
+		;;
+	X--with-pthreads)
+		USEPTHREADS=1
 		;;
 	X--no-pthreads)
-		USEPTHREADS=1
+		USEPTHREADS=0
 		;;
 	X--with-cttd)
 		USECTTD=1
 		;;
+	X--no-cttd)
+		USECTTD=0
+		;;
 	X--with-pony)
 		USEPONY=1
+		;;
+	X--no-pony)
+		USEPONY=0
+		;;
+	X--with-udc)
+		USEUDC=1
+		;;
+	X--no-udc)
+		USEUDC=0
 		;;
 	X--prefix=*)
 		INSTALL_DIR=$(printf '%s\n' $1 | $SED -e 's/^[^=]*=//')
@@ -1037,23 +1192,188 @@ do
 done
 
 
+#}}}
+
 if [ "$INSTALL_DIR" = "" ]; then
-	DEF_INST_DIR="$(pwd)"
-	printf 'Directory to install KRoC/Linux %s under [%s]: ' "$VERSION" "$DEF_INST_DIR"
-	read REPLY
-	if [ "$REPLY" = "" ]; then
-		INSTALL_DIR="$DEF_INST_DIR"
+	if [ "$USER" = "root" ] || [ "$UID" = "0" ]; then
+		# if running as root, use /usr/local by default
+		INSTALL_DIR="/usr/local"
 	else
-		INSTALL_DIR="$REPLY"
+		# use install/ in the source path by default
+		INSTALL_DIR="$(pwd)/install"
 	fi
-	# must be absolute path
-	printf '%s\n' "$INSTALL_DIR" | grep '^/' > /dev/null || INSTALL_DIR="$DEF_INST_DIR/$INSTALL_DIR"
-	# save for next time
-	printf '%s\n' "$INSTALL_DIR" > .install_dir
+fi
+#{{{  set the various kroc_... directories (pre-config)
+if [ "$kroc_configdir" = "" ]; then
+	if [ "$USER" = "root" ] || [ "$UID" = "0" ]; then
+		# use /etc/ as the configuration directory
+		kroc_configdir="/etc"
+	elif [ "$HOME" != "" ]; then
+		# use the user's home-directory
+		kroc_configdir="$HOME"
+		USER_INSTALL=1
+	else
+		# use the installation tree
+		kroc_configdir="$INSTALL_DIR"
+	fi
+fi
+if [ "$kroc_configdir" = "$HOME" ]; then
+	USER_INSTALL=1
+fi
+if [ "$kroc_archbindir" = "" ]; then
+	kroc_archbindir="/bin"
+fi
+if [ "$kroc_archlibdir" = "" ]; then
+	kroc_archlibdir="/lib/kroc"
+fi
+if [ "$kroc_archincdir" = "" ]; then
+	kroc_archincdir="/include/kroc"
+fi
+if [ "$kroc_mandir" = "" ]; then
+	kroc_mandir="/share/man"
+fi
+if [ "$kroc_krocdir" = "" ]; then
+	kroc_krocdir="/share/kroc"
 fi
 
+#}}}
+#{{{  make some decisions about default features, _except_ POSIX threads
+if [ $USEPRIORITY -eq 42 ]; then
+	USEPRIORITY=1
+fi
+if [ $USECPUTIMERS -eq 42 ]; then
+	USECPUTIMERS=1
+fi
+if [ $USEUDC -eq 42 ]; then
+	USEUDC=1
+fi
+if [ $USECTTD -eq 42 ]; then
+	USECTTD=0
+fi
+if [ $USEPONY -eq 42 ]; then
+	USEPONY=0
+fi
+
+
+#}}}
+if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
+	#{{{  no defaults set, show menu
+	case "X$TERM" in
+	"Xxterm" | "Xvt100" | "Xvt220" | "Xlinux")
+		ANSION1=$(printf '\033[1m')
+		ANSIOFF1=$(printf '\033[0m')
+		ANSION2=$(printf '\033[1;34m')
+		ANSIOFF2=$(printf '\033[0m')
+		;;
+	*)
+		ANSION1=""
+		ANSIOFF1=""
+		ANSION2=""
+		ANSIOFF2=""
+		;;
+	esac
+	printf '\nKRoC %s installation configuration\n'
+	printf -- '---------------------------------------------------------------------------\n\n'
+	while [ : ]; do
+		printf '\n'
+		printf 'KRoC installation directories:\n\n'
+		printf ' %s1%s.  install base: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$INSTALL_DIR" "$ANSIOFF1"
+		printf ' %s2%s.  architecture-specific binaries: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_archbindir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_archbindir"
+		printf ' %s3%s.  architecture-specific libraries: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_archlibdir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_archlibdir"
+		printf ' %s4%s.  architecture-specific includes: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_archincdir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_archincdir"
+		printf ' %s5%s.  manual pages: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_mandir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_mandir"
+		printf ' %s6%s.  kroc specific files: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_krocdir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_krocdir"
+		printf ' %s7%s.  kroc configuration: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_configdir" "$ANSIOFF1"
+		printf '\n'
+		printf 'Features:\n\n'
+		printf ' %sA%s.  process priority: ' "$ANSION2" "$ANSIOFF2"; if [ "$USEPRIORITY" -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+		printf ' %sB%s.  CPU timers: ' "$ANSION2" "$ANSIOFF2"; if [ "$USECPUTIMERS" -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+		printf ' %sC%s.  user-defined channels: ' "$ANSION2" "$ANSIOFF2"; if [ "$USEUDC" -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+		printf ' %sD%s.  channel-type descriptors: ' "$ANSION2" "$ANSIOFF2"; if [ "$USECTTD" -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+		#printf ' D.  support for PONY: '; if [ "$USEPONY" -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+
+		printf '\n1-7 to change path, A-D to toggle feature, Ctrl-C to abort, return to confirm and install: '
+		read REPLY || REPLY="abort"
+		if [ "$REPLY" = "abort" ]; then
+			printf '\naborting KRoC install.\n'
+			exit 1
+		elif [ "$REPLY" = "" ]; then
+			break		# from while
+		elif [ "$REPLY" = "1" ]; then
+			printf '\ninstall base: '
+			read INSTALL_DIR
+			if [ "$INSTALL_DIR" = "" ]; then
+				printf 'warning: install base will be the root directory\n'
+			fi
+		elif [ "$REPLY" = "2" ]; then
+			printf '\narchitecture-specific binaries: '
+			read kroc_archbindir
+		elif [ "$REPLY" = "3" ]; then
+			printf '\narchitecture-specific libraries: '
+			read kroc_archlibdir
+		elif [ "$REPLY" = "4" ]; then
+			printf '\narchitecture-specific include files: '
+			read kroc_archincdir
+		elif [ "$REPLY" = "5" ]; then
+			printf '\nmanual pages: '
+			read kroc_mandir
+		elif [ "$REPLY" = "6" ]; then
+			printf '\nkroc-specific files: '
+			read kroc_krocdir
+		elif [ "$REPLY" = "7" ]; then
+			printf '\nkroc configuration: '
+			read kroc_configdir
+		elif [ "$REPLY" = "A" ] || [ "$REPLY" = "a" ]; then
+			USEPRIORITY=$((1 - USEPRIORITY))
+		elif [ "$REPLY" = "B" ] || [ "$REPLY" = "b" ]; then
+			USECPUTIMERS=$((1 - USECPUTIMERS))
+		elif [ "$REPLY" = "C" ] || [ "$REPLY" = "c" ]; then
+			USEUDC=$((1 - USEUDC))
+		elif [ "$REPLY" = "D" ] || [ "$REPLY" = "d" ]; then
+			USECTTD=$((1 - USECTTD))
+		else
+			printf '\nunrecognised option: %s\n' "$REPLY"
+		fi
+	done
+
+	#}}}
+	#{{{  write out to .install_dir file something that can be sourced
+	printf 'writing configuration to .install_dir\n'
+
+	printf '\n# KRoC .install_dir file\n# this is an autogenerated file, edit at your own risk!\n#\n' > .install_dir
+	printf 'INSTALL_DIR="%s"\n' "$INSTALL_DIR" >> .install_dir
+	printf 'kroc_configdir="%s"\n' "$kroc_configdir" >> .install_dir
+	printf 'kroc_archbindir="%s"\n' "$kroc_archbindir" >> .install_dir
+	printf 'kroc_archlibdir="%s"\n' "$kroc_archlibdir" >> .install_dir
+	printf 'kroc_archincdir="%s"\n' "$kroc_archincdir" >> .install_dir
+	printf 'kroc_mandir="%s"\n' "$kroc_mandir" >> .install_dir
+	printf 'kroc_krocdir="%s"\n' "$kroc_krocdir" >> .install_dir
+	printf 'USEPTHREADS=%d\n' "$USEPTHREADS" >> .install_dir
+	printf 'USEPRIORITY=%d\n' "$USEPRIORITY" >> .install_dir
+	printf 'USECPUTIMERS=%d\n' "$USECPUTIMERS" >> .install_dir
+	printf 'USECTTD=%d\n' "$USECTTD" >> .install_dir
+	printf 'USEPONY=%d\n ' "$USEPONY" >> .install_dir
+	printf '\n\n' >> .install_dir
+
+	#}}}
+fi
+#{{{  finalise kroc_... directories for real paths based on INSTALL_DIR
+kroc_archbindir="$INSTALL_DIR$kroc_archbindir"
+kroc_archlibdir="$INSTALL_DIR$kroc_archlibdir"
+kroc_archincdir="$INSTALL_DIR$kroc_archincdir"
+kroc_mandir="$INSTALL_DIR$kroc_mandir"
+kroc_krocdir="$INSTALL_DIR$kroc_krocdir"
+kroc_kroc_examples="$kroc_krocdir/examples"
+kroc_kroc_vtlib="$kroc_krocdir/vtlib"
+kroc_kroc_vtinclude="$kroc_krocdir/vtinclude"
+kroc_kroc_doc="$kroc_krocdir/doc"
+kroc_kroc_cgtests="$kroc_krocdir/cgtests"
+
+#}}}
+#{{{  pre-release messages
 if [ "$PRERELEASE" = "1" ]; then
 	cat << EOF
+
 *****************************************************
 **                      NOTE!                      **
 **  this is a pre-release version of KRoC/Linux    **
@@ -1069,6 +1389,7 @@ EOF
 	sleep 1
 elif [ "$PRERELEASE" = "2" ]; then
 	cat << EOF
+
 *********************************************************
 **                         NOTE!                       **
 **  this is a final-prerelease version of KRoC/Linux   **
@@ -1085,12 +1406,31 @@ EOF
 	sleep 1
 fi
 
-printf 'Installing KRoC/Linux in %s\n' "$INSTALL_DIR"
 
+#}}}
+
+printf 'Installing KRoC/Linux in %s\n' "$INSTALL_DIR"
+printf '   configuration: %s\n' "$kroc_configdir"
+printf '   architecture-specific binaries: %s\n' "$kroc_archbindir"
+printf '   architecture-specific libraries: %s\n' "$kroc_archlibdir"
+printf '   architecture-specific includes: %s\n' "$kroc_archincdir"
+printf '   manual pages: %s\n' "$kroc_mandir"
+printf '   kroc-specific files: %s\n' "$kroc_krocdir"
+printf '   examples: %s\n' "$kroc_kroc_examples"
+printf '   virtual-transputer libraries: %s\n' "$kroc_kroc_vtlib"
+printf '   virtual-transputer includes: %s\n' "$kroc_kroc_vtinclude"
+printf '   kroc documentation: %s\n' "$kroc_kroc_doc"
+printf '   compiler test suite: %s\n' "$kroc_kroc_cgtests"
+printf '\n'
+
+
+#{{{  set distribution directory
 if [ "$DIST_DIR" = "" ]; then
 	DIST_DIR="$(pwd)"
 fi
 
+#}}}
+#{{{  sort out the ACTIONLIST
 SHOWBANNER=0
 
 if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "all" ]; then
@@ -1117,8 +1457,8 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-udc make-udc install-udc \
 		configure-cif make-cif install-cif \
 		configure-sdlraster make-sdlraster install-sdlraster \
-		configure-dxraster make-dxraster install-dxraster \
 		install-syncs install-dynproc install-manpages \
+		configure-doc make-doc install-doc \
 		calibrate-clock"
 else
 	FULLINSTALL=
@@ -1128,13 +1468,17 @@ EXAMPLEINSTALL=
 CGTESTSINSTALL=
 
 # some transformations
-EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-support dynproc-support \
-		configure-bsclib_examples make-bsclib_examples make-course_examples \
-		make-course_answers make-syncs_examples make-dynproc_examples \
-		make-udc_examples make-cif_examples make-bar_demo \
-		configure-sdlraster_examples make-sdlraster_examples \
-		configure-dxraster_examples make-dxraster_examples"
-CGTESTS_ACTIONS="building-cgtests initial-kroc-setup configure-cgtests make-cgtests"
+EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-support cputimers-support dynproc-support \
+		configure-bsclib_examples make-bsclib_examples install-bsclib_examples \
+		configure-course_examples make-course_examples install-course_examples \
+		configure-course_answers make-course_answers install-course_answers \
+		configure-syncs_examples make-syncs_examples install-syncs_examples \
+		configure-dynproc_examples make-dynproc_examples install-dynproc_examples \
+		configure-udc_examples make-udc_examples install-udc_examples \
+		configure-cif_examples make-cif_examples install-cif_examples \
+		configure-bar_demo make-bar_demo install-bar_demo \
+		configure-sdlraster_examples make-sdlraster_examples install-sdlraster_examples"
+CGTESTS_ACTIONS="setbuildtarget building-cgtests initial-kroc-setup configure-cgtests make-cgtests install-cgtests"
 
 if [ "$FULLINSTALL" = "1" ]; then
 	ACTIONLIST="$ACTIONLIST examples cgtests"
@@ -1168,7 +1512,19 @@ for action in $ACTIONLIST; do
 done
 ACTIONLIST=$NEWACTIONLIST
 
+# the first action must always be "setbuildtarget" (since this decides final settings)
+for action in $ACTIONLIST; do
+	if [ "$action" != "setbuildtarget" ]; then
+		ACTIONLIST="setbuildtarget $ACTIONLIST"
+	fi
+	break
+done
+
+
+#}}}
+
 DUMPOUT=$DIST_DIR/typescript
+
 # start installation
 typescript_head
 
@@ -1323,15 +1679,15 @@ EOF
 		#{{{  initial-kroc-setup: does what setup.sh would have done
 	Xinitial-kroc-setup)
 		if [ "X$OCSEARCH" = "X" ]; then
-			PATH=$INSTALL_DIR/bin:$PATH
-			OCSEARCH=$INSTALL_DIR/lib; export OCSEARCH
-			LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR/lib; export LD_LIBRARY_PATH
+			PATH="$kroc_archbindir:$PATH"
+			#OCSEARCH="$kroc_kroc_vtlib:$kroc_kroc_vtinclude"; export OCSEARCH
+			LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$kroc_archlibdir"; export LD_LIBRARY_PATH
 		fi
 		;;
 		#}}}
 		#{{{  bsyscalls-support: attempts to determine whether or not support for blocking system calls is present
 	Xbsyscalls-support)
-		nm $INSTALL_DIR/lib/libkroc.so | grep "scheduler_can_do_bsyscalls" 1> /dev/null && HAVE_BSYSCALLS_SUPPORT=1
+		nm "$kroc_archlibdir/libkroc.so" | grep "scheduler_can_do_bsyscalls" 1> /dev/null && HAVE_BSYSCALLS_SUPPORT=1
 		printf "%s: checking for blocking system calls support... " $0 | tee -a "$DUMPOUT"
 		if [ "$HAVE_BSYSCALLS_SUPPORT" != "" ]; then
 			printf "yes\n" | tee -a "$DUMPOUT"
@@ -1342,7 +1698,7 @@ EOF
 		#}}}
 		#{{{  cputimers-support: attempts to determine whether or not support for CPU timers is present
 	Xcputimers-support)
-		nm $INSTALL_DIR/lib/libkroc.so | grep "scheduler_can_do_cputimers" 1> /dev/null && HAVE_CPUTIMERS_SUPPORT=1
+		nm "$kroc_archlibdir/libkroc.so" | grep "scheduler_can_do_cputimers" 1> /dev/null && HAVE_CPUTIMERS_SUPPORT=1
 		printf "%s: checking for cpu-timers support... " $0 | tee -a "$DUMPOUT"
 		if [ "$HAVE_CPUTIMERS_SUPPORT" != "" ]; then
 			printf "yes\n" | tee -a "$DUMPOUT"
@@ -1353,7 +1709,7 @@ EOF
 		#}}}
 		#{{{  dynproc_support: attempts to determine whether or not support for dynamic processes is present
 	Xdynproc-support)
-		nm $INSTALL_DIR/lib/libkroc.so | grep "scheduler_can_do_dynproc" 1> /dev/null && HAVE_DYNPROC_SUPPORT=1
+		nm "$kroc_archlibdir/libkroc.so" | grep "scheduler_can_do_dynproc" 1> /dev/null && HAVE_DYNPROC_SUPPORT=1
 		printf "%s: checking for dynamic process support... " $0 | tee -a "$DUMPOUT"
 		if [ "$HAVE_DYNPROC_SUPPORT" != "" ]; then
 			printf "yes\n" | tee -a "$DUMPOUT"
@@ -1426,9 +1782,9 @@ EOF
 		#}}}
 		#{{{  install-manages: put the manual pages in $INSTALL_DIR/doc/man1, and point MANPATH at $INSTALL_DIR/doc
 	Xinstall-manpages)
-		# put the manual pages in $INSTALL_DIR/doc/man1, and point MANPATH at $INSTALL_DIR/doc
-		for msec in 1 3; do
-			install -d -v $INSTALL_DIR/doc/man$msec | tee -a "$DUMPOUT"
+		# put the manual pages in $kroc_mandir/man[1..8], and point MANPATH at it
+		for msec in $MANPAGE_SECTIONS; do
+			install -d -v "$kroc_mandir/man$msec" | tee -a "$DUMPOUT"
 		done
 		for manpage in $MANPAGE_LIST; do
 			case X$manpage in
@@ -1439,7 +1795,7 @@ EOF
 					msec=3
 					;;
 			esac
-			install -m 0644 -v $DIST_DIR/doc/$manpage $INSTALL_DIR/doc/man$msec | tee -a "$DUMPOUT"
+			install -m 0644 -v "$DIST_DIR/doc/$manpage" "$kroc_mandir/man$msec" | tee -a "$DUMPOUT"
 		done
 		# if "mandb" exists, run it to create the manpage index
 		MANDB=$(type mandb 2>&1 | $SED -e 's/^'mandb' is hashed (\([^)]*\))/\1/g' -e 's/^'mandb' is //g' -e '/not found/d')
@@ -1447,7 +1803,7 @@ EOF
 			printf '%s: could not find mandb, will not build manpage index\n' "$0" | tee -a "$DUMPOUT"
 		else
 			printf 'building manpage index..\n'
-			mandb $INSTALL_DIR/doc/ 2>&1 | tee -a "$DUMPOUT"
+			mandb "$kroc_mandir" 2>&1 | tee -a "$DUMPOUT"
 		fi
 		;;
 		#}}}
@@ -1463,15 +1819,31 @@ EOF
 			#{{{  ccsp: run-time kernel
 		Xccsp)
 			PKG_SRC=$CCSP_SRC
-			if [ "$DISABLEPRIORITY" != "" ]; then
+
+			if [ $USEPRIORITY -eq 0 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --disable-process-priority"
+			elif [ $USEPRIORITY -eq 1 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-process-priority"
 			fi
-			if [ "$DISABLECPUTIMERS" != "" ]; then
+
+			if [ $USECPUTIMERS -eq 0 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --disable-cpu-timers"
+			elif [ $USECPUTIMERS -eq 1 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-cpu-timers"
 			fi
-			if [ "$USEPTHREADS" != "" ]; then
+
+			if [ $USEPTHREADS -eq 1 ] || [ $USEPTHREADS -eq 2 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pthreads"
+			elif [ $USEPTHREADS -eq 0 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-pthreads"
 			fi
+
+			if [ $USEUDC -eq 1 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-udc"
+			elif [ $USEUDC -eq 0 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-udc"
+			fi
+
 			if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-schedstruct"
 				PRECONF_SPECOPTS="$PRECONF_SPECOPTS --enable-schedstruct"
@@ -1491,7 +1863,7 @@ EOF
 			#{{{  occ21: occam-pi compiler
 		Xocc21)
 			PKG_SRC=$OCC21_SRC
-			if [ "$DISABLEPRIORITY" != "" ]; then
+			if [ $USEPRIORITY -eq 0 ]; then
 				CONF_SPECOPTS="--disable-process-priority"
 			fi
 			;;
@@ -1510,20 +1882,23 @@ EOF
 			#{{{  tranx86: native code translator
 		Xtranx86)
 			PKG_SRC=$TRANX86_SRC
-			if [ "$DISABLEPRIORITY" != "" ]; then
+			if [ $USEPRIORITY -eq 0 ]; then
 				CONF_SPECOPTS="--disable-process-priority"
 			fi
 			;;
 			#}}}
 			#{{{  kroc: wrapper script
 		Xkroc)
-			if [ "$USEPTHREADS" != "" ]; then
+			if [ $USER_INSTALL -eq 1 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-user-install"
+			fi
+			if [ $USEPTHREADS -eq 1 ] || [ $USEPTHREADS -eq 2 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pthreads"
 			fi
-			if [ "$USECTTD" != "" ]; then
+			if [ $USECTTD -eq 1 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-cttd"
 			fi
-			if [ "$USEPONY" != "" ]; then
+			if [ $USEPONY -eq 1 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pony"
 			fi
 			if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
@@ -1598,12 +1973,6 @@ EOF
 			NEED_KROC_ENV=1
 			;;
 			#}}}
-			#{{{  dxraster_examples: DXRaster example programs
-		Xdxraster_examples)
-			PKG_SRC=$DXRASTER_EXAMPLES_SRC
-			NEED_KROC_ENV=1
-			;;
-			#}}}
 			#{{{  bar_demo: the "better-bar" demonstrator
 		Xbar_demo)
 			PKG_SRC=$DEMO_BAR_SRC
@@ -1658,10 +2027,9 @@ EOF
 			NEED_KROC_ENV=1
 			;;
 			#}}}
-			#{{{  dxraster: raster-based graphics with MIT-SHM
-		Xdxraster)
-			PKG_SRC=$DXRASTER_SRC
-			NEED_KROC_ENV=1
+			#{{{  doc: documentation
+		Xdoc)
+			PKG_SRC=$DOC_SRC
 			;;
 			#}}}
 		X*)
@@ -1670,11 +2038,11 @@ EOF
 			exit 1
 			;;
 		esac
-		if [ "$NEED_KROC_ENV" != "" ] && [ "$OCSEARCH" = "" ]; then
-			# does what setup.sh should have done (also done by initial-kroc-setup
-			PATH=$INSTALL_DIR/bin:$PATH
-			OCSEARCH=$INSTALL_DIR/lib; export OCSEARCH
-			LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_DIR/lib; export LD_LIBRARY_PATH
+		if [ "$NEED_KROC_ENV" != "" ] && [ "X$OCSEARCH" = "X" ]; then
+			# does what setup.sh would have done
+			PATH="$kroc_archbindir:$PATH"
+			#OCSEARCH="$kroc_kroc_vtlib:$kroc_kroc_vtinclude"; export OCSEARCH
+			LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$kroc_archlibdir"; export LD_LIBRARY_PATH
 		fi
 		if [ "$ABORT_ACTION" != "" ]; then
 			continue		# to "for .. in .." loop
@@ -1683,7 +2051,7 @@ EOF
 		case X$action in
 			#{{{  install-syncs, install-dynproc: just copy files (all headers)
 		Xinstall-syncs | Xinstall-dynproc)
-			cp -v "$DIST_DIR"/"$PKG_SRC"/*.inc "$INSTALL_DIR"/lib | tee -a "$DUMPOUT"
+			cp -v "$DIST_DIR"/"$PKG_SRC"/*.inc "$kroc_kroc_vtinclude" | tee -a "$DUMPOUT"
 			;;
 			#}}}
 			#{{{  *-syncs, *-dynproc: do-nothing
@@ -1831,11 +2199,8 @@ To build the example programs, run:
 To build the compiler test-suite, run:
     $0 cgtests
 
-To remove all intermediary files created during the build, run:
-    $0 clean
-..or..
-    $0 distclean
-Note: clean and distclean will delete any compiled example programs
+To clean the source tree, run:
+    $0 clean    ..or..    $0 distclean
 EOF
 
 	if [ "$HAVE_CPUTIMERS_SUPPORT" != "" ]; then
@@ -1859,51 +2224,13 @@ EOF
 fi
 
 if [ "$EXAMPLEINSTALL" != "" ]; then
-	tee -a "$DUMPOUT" << EOF
-
-The available example programs should have been compiled and left in
-the following directories:
-    $DIST_DIR/$COURSE_EXAMPLES_SRC/
-    $DIST_DIR/$COURSE_ANSWERS_SRC/
-    $DIST_DIR/$SYNCS_EXAMPLES_SRC/
-    $DIST_DIR/$UDC_EXAMPLES_SRC/
-    $DIST_DIR/$CIF_EXAMPLES_SRC/
-    $DIST_DIR/$DEMO_BAR_SRC/
-EOF
-
-	BUILT_DXRASTER_EXAMPLES="1"
-	BUILT_SDLRASTER_EXAMPLES="1"
-	for pp in $FAILED_MAKES; do
-		if [ "$pp" = "dxraster_examples" ]; then
-			BUILT_DXRASTER_EXAMPLES=""
-			break
-		elif [ "$pp" = "sdlraster_examples" ]; then
-			BUILT_SDLRASTER_EXAMPLES=""
-			break
-		fi
-	done
-
-	if [ "$BUILT_SDLRASTER_EXAMPLES" != "" ]; then
-		printf '    %s/%s/\n' "$DIST_DIR" "$SDLRASTER_EXAMPLES_SRC"
-	fi
-	if [ "$BUILT_DXRASTER_EXAMPLES" != "" ]; then
-		printf '    %s/%s/\n' "$DIST_DIR" "$DXRASTER_EXAMPLES_SRC"
-	fi
-	if [ "$HAVE_BSYSCALLS_SUPPORT" != "" ]; then
-		printf '    %s/%s/\n' "$DIST_DIR" "$BSCLIB_EXAMPLES_SRC" | tee -a "$DUMPOUT"
-	fi
-	if [ "$HAVE_DYNPROC_SUPPORT" != "" ]; then
-		printf '    %s/%s/\n' "$DIST_DIR" "$DYNPROC_EXAMPLES_SRC" | tee -a "$DUMPOUT"
-	fi
+	printf 'Available example programs have been installed into:\n' | tee -a "$DUMPOUT"
+	printf '    %s\n' "$kroc_kroc_examples" | tee -a "$DUMPOUT"
 fi
 
 if [ "$CGTESTSINSTALL" != "" ]; then
-	tee -a "$DUMPOUT" << EOF
-
-The compiler test-suite (cgtests) should have been compiled and left
-in the following directory:
-    $DIST_DIR/$CGTESTS_SRC/
-EOF
+	printf 'The compiler test-suite has been installed into:\n' | tee -a "$DUMPOUT"
+	printf '    %s\n' "$kroc_kroc_cgtests" | tee -a "$DUMPOUT"
 fi
 
 
