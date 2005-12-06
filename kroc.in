@@ -70,7 +70,7 @@ KROCCONFIG=""
 #
 
 if [ -r "./.kroc.conf" ]; then
-	KROCCONFIG="./.kroc_conf"
+	KROCCONFIG="./.kroc.conf"
 elif [ -r "$KROC_CONFIGDIR/kroc.conf" ]; then
 	KROCCONFIG="$KROC_CONFIGDIR/kroc.conf"
 elif [ -r "$KROC_CONFIGDIR/.kroc.conf" ]; then
