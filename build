@@ -108,7 +108,7 @@ SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc i
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC \
-	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
+	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $DOC_SRC"
 FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 
 
@@ -1004,6 +1004,7 @@ else
 fi
 DIST_DIR=
 DRYRUN=
+SKIPMENU=0
 
 # do this first!
 guess_software
@@ -1053,9 +1054,11 @@ do
 			exit 1
 		fi
 		INSTALL_DIR="$1"
+		SKIPMENU=1
 		;;
 	X--install-dir=*)
 		INSTALL_DIR=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
+		SKIPMENU=1
 		;;
 	X--prefix)
 		shift
@@ -1064,9 +1067,11 @@ do
 			exit 1
 		fi
 		INSTALL_DIR="$1"
+		SKIPMENU=1
 		;;
 	X--prefix=*)
 		INSTALL_DIR=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
+		SKIPMENU=1
 		;;
 	X--configdir)
 		shift
@@ -1257,100 +1262,103 @@ fi
 
 #}}}
 if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
-	#{{{  no defaults set, show menu
-	case "X$TERM" in
-	"Xxterm" | "Xvt100" | "Xvt220" | "Xlinux")
-		ANSION1=$(printf '\033[1m')
-		ANSIOFF1=$(printf '\033[0m')
-		ANSION2=$(printf '\033[1;34m')
-		ANSIOFF2=$(printf '\033[0m')
-		ANSION3=$(printf '\033[1m')
-		ANSIOFF3=$(printf '\033[0m')
-		;;
-	*)
-		ANSION1=""
-		ANSIOFF1=""
-		ANSION2=""
-		ANSIOFF2=""
-		ANSION3=""
-		ANSIOFF3=""
-		;;
-	esac
-	printf '\nKRoC %s installation configuration\n'
-	printf -- '---------------------------------------------------------------------------\n\n'
-	while [ : ]; do
-		printf '\n'
-		printf 'KRoC installation directories:\n\n'
-		printf ' %s1%s.  install base: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$INSTALL_DIR" "$ANSIOFF1"
-		printf ' %s2%s.  architecture-specific binaries: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_archbindir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_archbindir"
-		printf ' %s3%s.  architecture-specific libraries: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_archlibdir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_archlibdir"
-		printf ' %s4%s.  architecture-specific includes: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_archincdir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_archincdir"
-		printf ' %s5%s.  manual pages: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_mandir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_mandir"
-		printf ' %s6%s.  kroc specific files: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_krocdir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_krocdir"
-		printf ' %s7%s.  kroc configuration: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_configdir" "$ANSIOFF1"
-		printf '\n'
-		printf 'Features:\n\n'
-		printf ' %sA%s.  process priority: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPRIORITY -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
-		printf ' %sB%s.  CPU timers: ' "$ANSION2" "$ANSIOFF2"; if [ $USECPUTIMERS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
-		printf ' %sC%s.  user-defined channels: ' "$ANSION2" "$ANSIOFF2"; if [ $USEUDC -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
-		printf ' %sD%s.  channel-type descriptors: ' "$ANSION2" "$ANSIOFF2"; if [ $USECTTD -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
-		printf ' %sE%s.  blocking syscalls use POSIX threads: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPTHREADS -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3"
-				elif [ $USEPTHREADS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
-		#printf ' D.  support for PONY: '; if [ "$USEPONY" -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+	if [ $SKIPMENU -eq 0 ] || [ $BUILDRECONF -eq 1 ]; then
+		#{{{  no defaults set, show menu
+		case "X$TERM" in
+		"Xxterm" | "Xvt100" | "Xvt220" | "Xlinux")
+			ANSION1=$(printf '\033[1m')
+			ANSIOFF1=$(printf '\033[0m')
+			ANSION2=$(printf '\033[1;34m')
+			ANSIOFF2=$(printf '\033[0m')
+			ANSION3=$(printf '\033[1m')
+			ANSIOFF3=$(printf '\033[0m')
+			;;
+		*)
+			ANSION1=""
+			ANSIOFF1=""
+			ANSION2=""
+			ANSIOFF2=""
+			ANSION3=""
+			ANSIOFF3=""
+			;;
+		esac
+		printf '\nKRoC %s installation configuration\n'
+		printf -- '---------------------------------------------------------------------------\n\n'
+		while [ : ]; do
+			printf '\n'
+			printf 'KRoC installation directories:\n\n'
+			printf ' %s1%s.  install base: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$INSTALL_DIR" "$ANSIOFF1"
+			printf ' %s2%s.  architecture-specific binaries: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_archbindir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_archbindir"
+			printf ' %s3%s.  architecture-specific libraries: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_archlibdir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_archlibdir"
+			printf ' %s4%s.  architecture-specific includes: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_archincdir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_archincdir"
+			printf ' %s5%s.  manual pages: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_mandir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_mandir"
+			printf ' %s6%s.  kroc specific files: %s%s%s  (%s%s)\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_krocdir" "$ANSIOFF1" "$INSTALL_DIR" "$kroc_krocdir"
+			printf ' %s7%s.  kroc configuration: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$kroc_configdir" "$ANSIOFF1"
+			printf '\n'
+			printf 'Features:\n\n'
+			printf ' %sA%s.  process priority: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPRIORITY -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+			printf ' %sB%s.  CPU timers: ' "$ANSION2" "$ANSIOFF2"; if [ $USECPUTIMERS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+			printf ' %sC%s.  user-defined channels: ' "$ANSION2" "$ANSIOFF2"; if [ $USEUDC -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+			printf ' %sD%s.  channel-type descriptors: ' "$ANSION2" "$ANSIOFF2"; if [ $USECTTD -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+			printf ' %sE%s.  blocking syscalls use POSIX threads: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPTHREADS -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3"
+					elif [ $USEPTHREADS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+			#printf ' F.  support for PONY: '; if [ $USEPONY -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+			#printf ' %sG%s.  specific run-time configuration\n' "$ANSION2" "$ANSIOFF2"
 
-		printf '\n1-7 to change path, A-D to toggle feature, Ctrl-C to abort, return to confirm and install: '
-		read REPLY || REPLY="abort"
-		if [ "$REPLY" = "abort" ]; then
-			printf '\naborting KRoC install.\n'
-			exit 1
-		elif [ "$REPLY" = "" ]; then
-			break		# from while
-		elif [ "$REPLY" = "1" ]; then
-			printf '\ninstall base: '
-			read INSTALL_DIR
-			if [ "$INSTALL_DIR" = "" ]; then
-				printf 'warning: install base will be the root directory\n'
-			fi
-		elif [ "$REPLY" = "2" ]; then
-			printf '\narchitecture-specific binaries: '
-			read kroc_archbindir
-		elif [ "$REPLY" = "3" ]; then
-			printf '\narchitecture-specific libraries: '
-			read kroc_archlibdir
-		elif [ "$REPLY" = "4" ]; then
-			printf '\narchitecture-specific include files: '
-			read kroc_archincdir
-		elif [ "$REPLY" = "5" ]; then
-			printf '\nmanual pages: '
-			read kroc_mandir
-		elif [ "$REPLY" = "6" ]; then
-			printf '\nkroc-specific files: '
-			read kroc_krocdir
-		elif [ "$REPLY" = "7" ]; then
-			printf '\nkroc configuration: '
-			read kroc_configdir
-		elif [ "$REPLY" = "A" ] || [ "$REPLY" = "a" ]; then
-			USEPRIORITY=$((1 - USEPRIORITY))
-		elif [ "$REPLY" = "B" ] || [ "$REPLY" = "b" ]; then
-			USECPUTIMERS=$((1 - USECPUTIMERS))
-		elif [ "$REPLY" = "C" ] || [ "$REPLY" = "c" ]; then
-			USEUDC=$((1 - USEUDC))
-		elif [ "$REPLY" = "D" ] || [ "$REPLY" = "d" ]; then
-			USECTTD=$((1 - USECTTD))
-		elif [ "$REPLY" = "E" ] || [ "$REPLY" = "e" ]; then
-			if [ $USEPTHREADS -eq 42 ]; then
-				USEPTHREADS=1
-			elif [ $USEPTHREADS -eq 1 ]; then
-				USEPTHREADS=0
+			printf '\n1-7 to change path, A-E to toggle/set feature, Ctrl-C to abort, return to confirm and install: '
+			read REPLY || REPLY="abort"
+			if [ "$REPLY" = "abort" ]; then
+				printf '\naborting KRoC install.\n'
+				exit 1
+			elif [ "$REPLY" = "" ]; then
+				break		# from while
+			elif [ "$REPLY" = "1" ]; then
+				printf '\ninstall base: '
+				read INSTALL_DIR
+				if [ "$INSTALL_DIR" = "" ]; then
+					printf 'warning: install base will be the root directory\n'
+				fi
+			elif [ "$REPLY" = "2" ]; then
+				printf '\narchitecture-specific binaries: '
+				read kroc_archbindir
+			elif [ "$REPLY" = "3" ]; then
+				printf '\narchitecture-specific libraries: '
+				read kroc_archlibdir
+			elif [ "$REPLY" = "4" ]; then
+				printf '\narchitecture-specific include files: '
+				read kroc_archincdir
+			elif [ "$REPLY" = "5" ]; then
+				printf '\nmanual pages: '
+				read kroc_mandir
+			elif [ "$REPLY" = "6" ]; then
+				printf '\nkroc-specific files: '
+				read kroc_krocdir
+			elif [ "$REPLY" = "7" ]; then
+				printf '\nkroc configuration: '
+				read kroc_configdir
+			elif [ "$REPLY" = "A" ] || [ "$REPLY" = "a" ]; then
+				USEPRIORITY=$((1 - USEPRIORITY))
+			elif [ "$REPLY" = "B" ] || [ "$REPLY" = "b" ]; then
+				USECPUTIMERS=$((1 - USECPUTIMERS))
+			elif [ "$REPLY" = "C" ] || [ "$REPLY" = "c" ]; then
+				USEUDC=$((1 - USEUDC))
+			elif [ "$REPLY" = "D" ] || [ "$REPLY" = "d" ]; then
+				USECTTD=$((1 - USECTTD))
+			elif [ "$REPLY" = "E" ] || [ "$REPLY" = "e" ]; then
+				if [ $USEPTHREADS -eq 42 ]; then
+					USEPTHREADS=1
+				elif [ $USEPTHREADS -eq 1 ]; then
+					USEPTHREADS=0
+				else
+					USEPTHREADS=42
+				fi
 			else
-				USEPTHREADS=42
+				printf '\nunrecognised option: %s\n' "$REPLY"
 			fi
-		else
-			printf '\nunrecognised option: %s\n' "$REPLY"
-		fi
-	done
+		done
 
-	#}}}
+		#}}}
+	fi
 	#{{{  write out to .install_dir file something that can be sourced
 	printf 'writing configuration to .install_dir\n'
 

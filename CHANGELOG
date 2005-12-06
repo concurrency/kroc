@@ -2,6 +2,10 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+06/12/2005	frmb	small change to the build script so it skips the config menu
+			if --prefix/--install-dir is given, --reconf overrides
+06/12/2005	frmb	fixed missing distclean action on doc/ sub-dir (configured stuff escaped in 1.4.0-pre3)
+06/12/2005	frmb	fixed FPU initialisation problem on i386 (still more to do possibly)
 06/12/2005	frmb	updated tranx86 and KRoC to 1.4.0 versions in the source tree
 05/12/2005	frmb	rolled over to 1.4.0-final (next to 1.4.0-final2)
 05/12/2005	frmb	tidied up AUTHORS file, copied old stuff to OLD-AUTHORS
