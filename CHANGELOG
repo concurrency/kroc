@@ -2,6 +2,11 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+14/12/2005	frmb	moved occ21 version to 1.4.0
+14/12/2005	frmb	fixed a small problem with -o argument to occ21 w/ ETC output (ack to Carl Ritson
+			for spotting it)
+07/12/2005	frmb	various small changes to support RMoX
+07/12/2005	frmb	fixed a small bug with empty arrays in channel-parameter checking, ack to Adam for spotting it
 06/12/2005	frmb	small change to the build script so it skips the config menu
 			if --prefix/--install-dir is given, --reconf overrides
 06/12/2005	frmb	fixed missing distclean action on doc/ sub-dir (configured stuff escaped in 1.4.0-pre3)
