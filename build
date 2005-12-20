@@ -143,6 +143,7 @@ USEPGROUPS=0
 GOT_SVN_VERSION=0
 USER_INSTALL=0
 ALL_SETTINGS=0
+EXTRA_CCSP_CONFIGURE_OPTS=""
 
 KROCHOST_ARCH=
 KROCHOST_VENDOR=
@@ -1350,6 +1351,7 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				printf ' %sUH%s. subversion-update source: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNHOST" "$ANSIOFF1"
 				printf ' %sUU%s. subversion-update username: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNUSER" "$ANSIOFF1"
 				printf ' %sU%s.  do subversion update\n' "$ANSION2" "$ANSIOFF2"
+				printf ' %sXC%s. extra CCSP configuration options: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$EXTRA_CCSP_CONFIGURE_OPTS" "$ANSIOFF1"
 				EXTRAMENUSETTINGS=", F-U"
 			fi
 
@@ -1416,6 +1418,12 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				if [ "$tmp_SVNUSER" ]; then
 					SVNUSER="$tmp_SVNUSER"
 				fi
+			elif [ "$REPLY" = "XC" ] || [ "$REPLY" = "xc" ] && [ $ALL_SETTINGS -eq 1 ]; then
+				printf '\nextra CCSP options: '
+				read tmp_EXTRA_CCSP_CONFIGURE_OPTS
+				if [ "$tmp_EXTRA_CCSP_CONFIGURE_OPTS" ]; then
+					EXTRA_CCSP_CONFIGURE_OPTS="$tmp_EXTRA_CCSP_CONFIGURE_OPTS"
+				fi
 			elif [ "$REPLY" = "U" ] || [ "$REPLY" = "u" ]; then
 				# do subversion update without checks
 				svn_update --full
@@ -1444,6 +1452,7 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 	printf 'USEPONY=%d\n' "$USEPONY" >> .install_dir
 	printf 'SVNHOST=%s\n' "$SVNHOST" >> .install_dir
 	printf 'SVNUSER=%s\n' "$SVNUSER" >> .install_dir
+	printf 'EXTRA_CCSP_CONFIGURE_OPTS=%s\n' "$EXTRA_CCSP_CONFIGURE_OPTS" >> .install_dir
 
 	printf '\n\n' >> .install_dir
 
@@ -1945,6 +1954,10 @@ EOF
 			if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-schedstruct"
 				PRECONF_SPECOPTS="$PRECONF_SPECOPTS --enable-schedstruct"
+			fi
+
+			if [ "$EXTRA_CCSP_CONFIGURE_OPTS" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS $EXTRA_CCSP_CONFIGURE_OPTS"
 			fi
 			;;
 			#}}}
