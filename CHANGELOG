@@ -2,6 +2,9 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+29/12/2005	frmb	churned out 1.4.0-final
+29/12/2005	frmb	minor SDLRaster examples fix for FreeBSD
+29/12/2005	frmb	put 1.4.0-final together (first cut)
 23/12/2005	frmb	various updates for NOCC
 20/12/2005	frmb	more updates to SDLRaster to support control-keys
 19/12/2005	frmb	added support in CCSP for outputting ALTs (used by CIF)
