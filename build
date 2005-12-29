@@ -1352,7 +1352,7 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				printf ' %sUU%s. subversion-update username: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNUSER" "$ANSIOFF1"
 				printf ' %sU%s.  do subversion update\n' "$ANSION2" "$ANSIOFF2"
 				printf ' %sXC%s. extra CCSP configuration options: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$EXTRA_CCSP_CONFIGURE_OPTS" "$ANSIOFF1"
-				EXTRAMENUSETTINGS=", F-U"
+				EXTRAMENUSETTINGS=", F-XC"
 			fi
 
 			printf '\n1-7 to change path, A-E%s to toggle/set feature, Ctrl-C to abort, return to confirm and install: ' "$EXTRAMENUSETTINGS"
