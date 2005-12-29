@@ -94,6 +94,7 @@ package_version="@VERSION@"
 dversion='2.0'
 host_canonical="@KROC_CANONICAL_TARGET@"
 host_cpu="@KROC_HOST_CPU@"
+host_os="@KROC_HOST_OS@"
 # -kf : use fast CCSP interface
 octranopts="-kf @TSCHEDSTRUCT@ @TRANEXTRAOPTS@"
 ccopts=""
@@ -1191,7 +1192,13 @@ else
 		local_ocllibs=""
 		local_ocrts=""
 		foundrts=
-		for lib in $ocllibs $ocrts; do
+
+		looklibpaths="$ocllibs $ocrts"
+
+		#SAVEDIFS="$IFS"
+		#IFS=';'
+
+		for lib in $looklibpaths; do
 			# if it looks like -lname, search for it in oclibpath
 
 			case "X$lib" in
@@ -1237,6 +1244,9 @@ else
 			esac
 
 		done
+
+		#IFS="$SAVEDIFS"
+
 		if [ "$foundrts" = "" ]; then
 			printf '%s: (warning) cannot find run-time kernel: %s\n' "$progname" "$ocrts" 1>&2
 		fi
