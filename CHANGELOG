@@ -2,6 +2,10 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+23/12/2005	frmb	various updates for NOCC
+20/12/2005	frmb	more updates to SDLRaster to support control-keys
+19/12/2005	frmb	added support in CCSP for outputting ALTs (used by CIF)
+19/12/2005	frmb	modified SDLRaster to use CIF instead of user-defined channels
 14/12/2005	frmb	moved occ21 version to 1.4.0
 14/12/2005	frmb	fixed a small problem with -o argument to occ21 w/ ETC output (ack to Carl Ritson
 			for spotting it)
