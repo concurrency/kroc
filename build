@@ -288,12 +288,19 @@ svn_version ()
 	printf 'checking for latest version: '
 	if [ -z "$(printf '%s' "$SVNHOST" | $SED -e 's/svn+ssh:.*//g')" ]; then
 		# cannot WGET this ;)
-		$SVN cat "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION' 1> /dev/null && GOT_SVN_VERSION=1
+		PKG_SVN_VERSION=$($SVN cat "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION')
+		if [ "$PKG_SVN_VERSION" ]; then
+			GOT_SVN_VERSION=1
+		fi
 	else
+		# this is now versioned, so better svn-get it
 		if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-			PKG_SVN_VERSION=$($WGET -O - --quiet --user="$SVNUSER" --password="$DFL_SVNPASS" --no-check-certificate "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION')
+			PKG_SVN_VERSION=$($SVN cat --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION')
 		else
-			PKG_SVN_VERSION=$($WGET -O - --quiet "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION')
+			PKG_SVN_VERSION=$($SVN cat "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION')
+		fi
+		if [ "$PKG_SVN_VERSION" ]; then
+			GOT_SVN_VERSION=1
 		fi
 	fi
 	printf '%s\n' "$PKG_SVN_VERSION"
