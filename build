@@ -115,10 +115,10 @@ FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 #}}}
 #{{{  release/install settings
 DUMPOUT=
-DUMPMAIL="frmb@kent.ac.uk"
-VERSION="1.4.0-final"
-PRERELEASE=1
-NEXTPATCH="1.4.0-final2"
+DUMPMAIL="ofa-bugs@kent.ac.uk"
+VERSION="1.4.0-final2"
+PRERELEASE=2
+NEXTPATCH="1.4.0"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 DFL_SVNUSER="krocuser"
