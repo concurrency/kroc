@@ -2,6 +2,7 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+30/12/2005	frmb	added kroc configuration options to extra build config, kroc manpage update
 30/12/2005	frmb	put 1.4.0-final2 together
 30/12/2005	frmb	various manpage updates, added kroc.conf manpage
 29/12/2005	frmb	rolled versions over to 1.4.0-final2, various minor updates for cygwin

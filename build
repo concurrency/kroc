@@ -116,9 +116,9 @@ FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 #{{{  release/install settings
 DUMPOUT=
 DUMPMAIL="ofa-bugs@kent.ac.uk"
-VERSION="1.4.0-final2"
+VERSION="1.4.0"
 PRERELEASE=2
-NEXTPATCH="1.4.0"
+NEXTPATCH="1.4.1-pre1"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 DFL_SVNUSER="krocuser"
@@ -144,6 +144,7 @@ GOT_SVN_VERSION=0
 USER_INSTALL=0
 ALL_SETTINGS=0
 EXTRA_CCSP_CONFIGURE_OPTS=""
+EXTRA_KROC_CONFIGURE_OPTS=""
 
 KROCHOST_ARCH=
 KROCHOST_VENDOR=
@@ -175,6 +176,8 @@ where options are:
   --incdir=<path>              install path for includes [PREFIX/include/kroc]
   --mandir=<path>              install path for manual pages [PREFIX/share/man]
   --krocdir=<path>             install path for kroc-specific files [PREFIX/share/kroc]
+  --extra-ccsp-opts=<opts>     extra CCSP configuration options []
+  --extra-kroc-opts=<opts>     extra kroc configuration options []
   --reconf                     edit configuration
   -A | --all-settings          show all settings in configuration menu
 
@@ -1188,6 +1191,28 @@ do
 	X--krocdir=*)
 		kroc_krocdir=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
 		;;
+	X--extra-ccsp-opts=*)
+		EXTRA_CCSP_CONFIGURE_OPTS=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
+		;;
+	X--extra-ccsp-opts)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --extra-ccsp-opts requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		EXTRA_CCSP_CONFIGURE_OPTS="$1"
+		;;
+	X--extra-kroc-opts=*)
+		EXTRA_KROC_CONFIGURE_OPTS=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
+		;;
+	X--extra-kroc-opts)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --extra-kroc-opts requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		EXTRA_KROC_CONFIGURE_OPTS="$1"
+		;;
 	X--force-configure)
 		FORCECONFIGURE=1
 		;;
@@ -1359,7 +1384,8 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				printf ' %sUU%s. subversion-update username: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNUSER" "$ANSIOFF1"
 				printf ' %sU%s.  do subversion update\n' "$ANSION2" "$ANSIOFF2"
 				printf ' %sXC%s. extra CCSP configuration options: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$EXTRA_CCSP_CONFIGURE_OPTS" "$ANSIOFF1"
-				EXTRAMENUSETTINGS=", F-XC"
+				printf ' %sXK%s. extra kroc configuration options: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$EXTRA_KROC_CONFIGURE_OPTS" "$ANSIOFF1"
+				EXTRAMENUSETTINGS=", F-XK"
 			fi
 
 			printf '\n1-7 to change path, A-E%s to toggle/set feature, Ctrl-C to abort, return to confirm and install: ' "$EXTRAMENUSETTINGS"
@@ -1431,6 +1457,12 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				if [ "$tmp_EXTRA_CCSP_CONFIGURE_OPTS" ]; then
 					EXTRA_CCSP_CONFIGURE_OPTS="$tmp_EXTRA_CCSP_CONFIGURE_OPTS"
 				fi
+			elif [ "$REPLY" = "XK" ] || [ "$REPLY" = "xk" ] && [ $ALL_SETTINGS -eq 1 ]; then
+				printf '\nextra kroc options: '
+				read tmp_EXTRA_KROC_CONFIGURE_OPTS
+				if [ "$tmp_EXTRA_KROC_CONFIGURE_OPTS" ]; then
+					EXTRA_KROC_CONFIGURE_OPTS="$tmp_EXTRA_KROC_CONFIGURE_OPTS"
+				fi
 			elif [ "$REPLY" = "U" ] || [ "$REPLY" = "u" ]; then
 				# do subversion update without checks
 				svn_update --full
@@ -1460,6 +1492,7 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 	printf 'SVNHOST=%s\n' "$SVNHOST" >> .install_dir
 	printf 'SVNUSER=%s\n' "$SVNUSER" >> .install_dir
 	printf 'EXTRA_CCSP_CONFIGURE_OPTS=%s\n' "$EXTRA_CCSP_CONFIGURE_OPTS" >> .install_dir
+	printf 'EXTRA_KROC_CONFIGURE_OPTS=%s\n' "$EXTRA_KROC_CONFIGURE_OPTS" >> .install_dir
 
 	printf '\n\n' >> .install_dir
 
@@ -2021,6 +2054,9 @@ EOF
 			fi
 			if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-schedstruct"
+			fi
+			if [ "$EXTRA_KROC_CONFIGURE_OPTS" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS $EXTRA_KROC_CONFIGURE_OPTS"
 			fi
 			PKG_SRC=$KROC_SRC
 			;;
