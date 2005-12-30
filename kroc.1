@@ -4,7 +4,7 @@
 kroc \- KRoC occam system main driver program
 .SH SYNOPSIS
 .B kroc
-[\fIOPTION\fR]... [\fIFILE\fR]...
+[\-C \fICONFIG-FILE\fR] [\fIOPTION\fR]... [\fIFILE\fR]...
 .SH DESCRIPTION
 .PP
 Compiles occam source FILEs and optionally links with other object FILEs
@@ -23,6 +23,8 @@ linking in the bits and the course library, something like the following would b
 	kroc -c bits2.occ
 .br
 	kroc main.occ bits1.o bits2.o -lcourse
+.PP
+A path to a specific KRoC configuration file can be specified using the \fB-C\fR option.
 
 .SH DEBUGGING
 .PP
@@ -187,16 +189,47 @@ disable ALT pre-enabling (enabled by default)
 \fB\-\-use\-zep\fR
 enable ALT pre-enabling (default)
 .TP
+\fB\-\-ncl\fR
+do not link in default compiler libraries
+.TP
+\fB\-\-xml\fR
+generate XML tree-dump from the compiler
+.TP
 \fB\-H\fR, \fB\-\-halterror\fR
 use HALT error-mode (default).  This option is only effective on the top-level process
 (i.e., one compiled without \fI\-c\fR).
+.TP
+\fB\-\-cc\fR
+print compiler for use with external C code
+.TP
+\fB\-\-cflags\fR
+print compiler flags to be used when compiling external C code (e.g. CIF processes)
+.TP
+\fB\-\-tran\fR
+print the path to the translator for .tce/.etc files
+.TP
+\fB\-\-tranflags\fR
+print the flags given to the translator
+.TP
+\fB\-\-libpath\fR
+print path to occam libraries
+.TP
+\fB\-\-incpath\fR
+print path to occam includes
+.TP
+\fB\-\-cclibpath\fR
+print path to host libraries in -L.. form
+.TP
+\fB\-\-ccincpath\fR
+print path to host includes in -I.. form
 
 .PP
 .SH AUTHOR
 See the file AUTHORS in the distribution for the list of contributors to KRoC.  This
 manual page is maintained by Fred Barnes <F.R.M.Barnes@kent.ac.uk>
 .SH "SEE ALSO"
-kmakef(1)
+.BR kmakef (1),
+.BR kroc.conf (5)
 .SH "REPORTING BUGS"
 Please report bugs to <ofa-bugs@kent.ac.uk>
 .SH COPYRIGHT
