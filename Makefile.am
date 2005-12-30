@@ -11,6 +11,7 @@ install-exec-local: kroc.conf
 	$(INSTALL_DATA) "kroc.conf" "$(DESTDIR)$(sysconfdir)/@CONFFILEPREFIX@kroc.conf"
 
 dist_man1_MANS=kroc.1 kmakef.1
+dist_man5_MANS=kroc.conf.5
 
 DISTCLEANFILES=kroc setup.sh setup.csh kroc.conf
 EXTRA_DIST=kroc.conf.in setup.sh.in setup.csh.in kroc.in
