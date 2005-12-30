@@ -1,4 +1,4 @@
-.\" kroc command man page, last updated 05/12/2005 by Fred Barnes
+.\" kroc command man page, last updated 30/12/2005 by Fred Barnes
 .TH KROC "1" "December 2005" "kroc 1.4.0" KRoC
 .SH NAME
 kroc \- KRoC occam system main driver program
@@ -148,7 +148,7 @@ enable mobile processes (experimental).
 do not wait for globally forked processes when terminating.
 .TP
 \fB\-\-new\fR
-do not wait for unfinished blocking system-calls when terminating
+do not wait for unfinished blocking system-calls when terminating.
 .SH ADDITIONAL OPTIONS
 .TP
 \fB\-di\fR
@@ -167,61 +167,67 @@ set occ21 processor compilation class (only t8 (extended), default, is fully sup
 \fB\-\-oos\fR
 compile for OOS (experimental).
 .TP
+\fB\-\-nocc\fR
+use the new occam-pi compiler (experimental).
+.TP
+\fB\-\-nocc\-opts\fR=\fIopts\fR
+pass these options to the new occam-pi compiler (experimental).
+.TP
 \fB\-\-force\-tlp\fR
 force top-level PROC interface to be `(CHAN BYTE kyb?, scr!, err!)', regardless of
 whether it actually is or not.
 .TP
 \fB\-\-no\-revalt\fR
-disable reversed ALT disabling sequences (enabled by default)
+disable reversed ALT disabling sequences (enabled by default).
 .TP
 \fB\-\-use\-revalt\fR
-enable reversed ALT disabling sequences (default)
+enable reversed ALT disabling sequences (default).
 .TP
 \fB\-\-no\-zen\fR
-disable enhanced ALT enabling (enabled by default)
+disable enhanced ALT enabling (enabled by default).
 .TP
 \fB\-\-use\-zen\fR
-enable enhanced ALT enabling (default)
+enable enhanced ALT enabling (default).
 .TP
 \fB\-\-no\-zep\fR
-disable ALT pre-enabling (enabled by default)
+disable ALT pre-enabling (enabled by default).
 .TP
 \fB\-\-use\-zep\fR
-enable ALT pre-enabling (default)
+enable ALT pre-enabling (default).
 .TP
 \fB\-\-ncl\fR
-do not link in default compiler libraries
+do not link in default compiler libraries.
 .TP
 \fB\-\-xml\fR
-generate XML tree-dump from the compiler
+generate XML tree-dump from the compiler.
 .TP
 \fB\-H\fR, \fB\-\-halterror\fR
 use HALT error-mode (default).  This option is only effective on the top-level process
 (i.e., one compiled without \fI\-c\fR).
 .TP
 \fB\-\-cc\fR
-print compiler for use with external C code
+print compiler for use with external C code.
 .TP
 \fB\-\-cflags\fR
-print compiler flags to be used when compiling external C code (e.g. CIF processes)
+print compiler flags to be used when compiling external C code (e.g. CIF processes).
 .TP
 \fB\-\-tran\fR
-print the path to the translator for .tce/.etc files
+print the path to the translator for .tce/.etc files.
 .TP
 \fB\-\-tranflags\fR
-print the flags given to the translator
+print the flags given to the translator.
 .TP
 \fB\-\-libpath\fR
-print path to occam libraries
+print path to occam libraries.
 .TP
 \fB\-\-incpath\fR
-print path to occam includes
+print path to occam includes.
 .TP
 \fB\-\-cclibpath\fR
-print path to host libraries in -L.. form
+print path to host libraries in -L.. form.
 .TP
 \fB\-\-ccincpath\fR
-print path to host includes in -I.. form
+print path to host includes in -I.. form.
 
 .PP
 .SH AUTHOR
