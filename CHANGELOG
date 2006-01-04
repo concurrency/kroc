@@ -2,6 +2,7 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+04/01/2006	frmb	some small MOBILE.CHAN fixes
 30/12/2005	frmb	added kroc configuration options to extra build config, kroc manpage update
 30/12/2005	frmb	put 1.4.0-final2 together
 30/12/2005	frmb	various manpage updates, added kroc.conf manpage
