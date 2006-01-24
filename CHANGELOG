@@ -2,6 +2,13 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+22/01/2006	frmb	multiway sync support in the run-time (not for regular occam-pi yet)
+14/01/2006	frmb	support for ENROLL instead of BARRIER for doing PAR barrier extension
+14/01/2006	frmb	added checks for null mobile barriers on sync/enroll/resign
+14/01/2006	frmb	put 1.4.0 together
+14/01/2006	frmb	minor updates to the compiler and translator
+13/01/2006	frmb	various updates to SDLRaster
+12/01/2006	frmb	fix to FORKed mobilespace, ack to Carl Ritson for spotting it
 04/01/2006	frmb	some small MOBILE.CHAN fixes
 30/12/2005	frmb	added kroc configuration options to extra build config, kroc manpage update
 30/12/2005	frmb	put 1.4.0-final2 together
