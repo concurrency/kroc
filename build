@@ -117,7 +117,7 @@ FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 DUMPOUT=
 DUMPMAIL="ofa-bugs@kent.ac.uk"
 VERSION="1.4.0"
-PRERELEASE=2
+PRERELEASE=0
 NEXTPATCH="1.4.1-pre1"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
@@ -1336,6 +1336,9 @@ fi
 
 #}}}
 if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
+
+	WRITEANDEXIT=0
+
 	if [ $SKIPMENU -eq 0 ] || [ $BUILDRECONF -eq 1 ]; then
 		#{{{  no defaults set, show menu
 		case "X$TERM" in
@@ -1388,11 +1391,16 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				EXTRAMENUSETTINGS=", F-XK"
 			fi
 
-			printf '\n1-7 to change path, A-E%s to toggle/set feature, Ctrl-C to abort, return to confirm and install: ' "$EXTRAMENUSETTINGS"
+			printf '\n1-7 to change path, A-E%s to toggle/set feature, Ctrl-C to abort,' "$EXTRAMENUSETTINGS"
+			printf '\n    ! to write config and exit, return to confirm and install: '
+
 			read REPLY || REPLY="abort"
 			if [ "$REPLY" = "abort" ]; then
 				printf '\naborting KRoC install.\n'
 				exit 1
+			elif [ "$REPLY" = "!" ]; then
+				WRITEANDEXIT=1
+				break		# from while
 			elif [ "$REPLY" = "" ]; then
 				break		# from while
 			elif [ "$REPLY" = "1" ]; then
@@ -1495,6 +1503,10 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 	printf 'EXTRA_KROC_CONFIGURE_OPTS=%s\n' "$EXTRA_KROC_CONFIGURE_OPTS" >> .install_dir
 
 	printf '\n\n' >> .install_dir
+
+	if [ $WRITEANDEXIT -eq 1 ]; then
+		exit 0
+	fi
 
 	#}}}
 fi
