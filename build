@@ -1454,21 +1454,27 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 					SVNHOST="$tmp_SVNHOST"
 				fi
 			elif [ "$REPLY" = "UU" ] || [ "$REPLY" = "uu" ] && [ $ALL_SETTINGS -eq 1 ]; then
-				printf '\nsubversion-update username: '
+				printf '\nsubversion-update username (-- for no user): '
 				read tmp_SVNUSER
-				if [ "$tmp_SVNUSER" ]; then
+				if [ "$tmp_SVNUSER" = "--" ]; then
+					SVNUSER=""
+				elif [ "$tmp_SVNUSER" ]; then
 					SVNUSER="$tmp_SVNUSER"
 				fi
 			elif [ "$REPLY" = "XC" ] || [ "$REPLY" = "xc" ] && [ $ALL_SETTINGS -eq 1 ]; then
-				printf '\nextra CCSP options: '
+				printf '\nextra CCSP options (-- to clear): '
 				read tmp_EXTRA_CCSP_CONFIGURE_OPTS
-				if [ "$tmp_EXTRA_CCSP_CONFIGURE_OPTS" ]; then
+				if [ "$tmp_EXTRA_CCSP_CONFIGURE_OPTS" = "--" ]; then
+					EXTRA_CCSP_CONFIGURE_OPTS=""
+				elif [ "$tmp_EXTRA_CCSP_CONFIGURE_OPTS" ]; then
 					EXTRA_CCSP_CONFIGURE_OPTS="$tmp_EXTRA_CCSP_CONFIGURE_OPTS"
 				fi
 			elif [ "$REPLY" = "XK" ] || [ "$REPLY" = "xk" ] && [ $ALL_SETTINGS -eq 1 ]; then
-				printf '\nextra kroc options: '
+				printf '\nextra kroc options (-- to clear): '
 				read tmp_EXTRA_KROC_CONFIGURE_OPTS
-				if [ "$tmp_EXTRA_KROC_CONFIGURE_OPTS" ]; then
+				if [ "$tmp_EXTRA_KROC_CONFIGURE_OPTS" = "--" ]; then
+					EXTRA_KROC_CONFIGURE_OPTS=""
+				elif [ "$tmp_EXTRA_KROC_CONFIGURE_OPTS" ]; then
 					EXTRA_KROC_CONFIGURE_OPTS="$tmp_EXTRA_KROC_CONFIGURE_OPTS"
 				fi
 			elif [ "$REPLY" = "U" ] || [ "$REPLY" = "u" ]; then
