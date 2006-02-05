@@ -1004,7 +1004,7 @@ for src in $srcs; do
 
 
 	# Using pre-compiled file?   FIXME: Handle this better
-	if [ $suffix = "etc" -o $suffix = "kt2" -o $suffix = "kt4" -o $suffix = "kt8" -o $suffix = "kt9" ]; then
+	if [ $suffix = "etc" ] || [ $suffix = "kt2" ] || [ $suffix = "kt4" ] || [ $suffix = "kt8" ] || [ $suffix = "kt9" ]; then
 		compile=
 		tfile="$dir$base.$suffix"
 		tcefile="$dir$base.tce"
@@ -1019,13 +1019,15 @@ for src in $srcs; do
 		fi
 	fi
 
-	if [ $suffix != "occ" -a $suffix != "co" -a "X$compile" != "X" ]; then
+	if [ $suffix != "occ" ] && [ $suffix != "co" ] && [ $suffix != "mcsp" ] && [ "X$compile" != "X" ]; then
 		objs="$objs $origsrc"
 		continue
 	fi
 
 	if [ $suffix = "co" ]; then
 		src="$dir$base.co"
+	elif [ $suffix = "mcsp" ]; then
+		src="$dir$base.mcsp"
 	else
 		src="$dir$base.occ"
 	fi
