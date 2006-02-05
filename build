@@ -139,7 +139,7 @@ USEPTHREADS=42
 USECTTD=42
 USEPONY=42
 USEUDC=42
-USEPGROUPS=0
+USEPGROUPS=42
 GOT_SVN_VERSION=0
 USER_INSTALL=0
 ALL_SETTINGS=0
@@ -1332,6 +1332,29 @@ fi
 if [ $USEPONY -eq 42 ]; then
 	USEPONY=0
 fi
+if [ $USEPGROUPS -eq 42 ]; then
+	USEPGROUPS=0
+fi
+
+
+#}}}
+#{{{  remember certain settings -- may need to know if they changed
+preset_INSTALL_DIR="$INSTALL_DIR"
+preset_archbindir="$kroc_archbindir"
+preset_archlibdir="$kroc_archlibdir"
+preset_archincdir="$kroc_archincdir"
+preset_mandir="$kroc_mandir"
+preset_krocdir="$kroc_krocdir"
+preset_configdir="$kroc_configdir"
+preset_USEPRIORITY=$USEPRIORITY
+preset_USECPUTIMERS=$USECPUTIMERS
+preset_USEUDC=$USEUDC
+preset_USECTTD=$USECTTD
+preset_USEPONY=$USEPONY
+preset_USEPTHREADS=$USEPTHREADS
+preset_USEPGROUPS=$USEPGROUPS
+preset_EXTRA_CCSP_CONFIGURE_OPTS="$EXTRA_CCSP_CONFIGURE_OPTS"
+preset_EXTRA_KROC_CONFIGURE_OPTS="$EXTRA_KROC_CONFIGURE_OPTS"
 
 
 #}}}
@@ -1340,7 +1363,8 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 	WRITEANDEXIT=0
 
 	if [ $SKIPMENU -eq 0 ] || [ $BUILDRECONF -eq 1 ]; then
-		#{{{  no defaults set, show menu
+		#{{{  no defaults set, show menu -- or reconfiguring
+		#{{{  ANSI colour setup
 		case "X$TERM" in
 		"Xxterm" | "Xvt100" | "Xvt220" | "Xlinux")
 			ANSION1=$(printf '\033[1m')
@@ -1359,9 +1383,11 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 			ANSIOFF3=""
 			;;
 		esac
+		#}}}
 		printf '\nKRoC %s installation configuration\n'
 		printf -- '---------------------------------------------------------------------------\n\n'
 		while [ : ]; do
+			#{{{  display menu
 			EXTRAMENUSETTINGS=""
 			printf '\n'
 			printf 'KRoC installation directories:\n\n'
@@ -1393,7 +1419,8 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 
 			printf '\n1-7 to change path, A-E%s to toggle/set feature, Ctrl-C to abort,' "$EXTRAMENUSETTINGS"
 			printf '\n    ! to write config and exit, return to confirm and install: '
-
+			#}}}
+			#{{{  read reply and process
 			read REPLY || REPLY="abort"
 			if [ "$REPLY" = "abort" ]; then
 				printf '\naborting KRoC install.\n'
@@ -1483,6 +1510,7 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 			else
 				printf '\nunrecognised option: %s\n' "$REPLY"
 			fi
+			#}}}
 		done
 
 		#}}}
@@ -1563,6 +1591,55 @@ elif [ "$PRERELEASE" = "2" ]; then
 EOF
 	printf 'sleeping for 1 second..\n'
 	sleep 1
+fi
+
+
+#}}}
+#{{{  if any important configure options changed, force reconfiguration of packages
+if [ "$INSTALL_DIR" != "$preset_INSTALL_DIR" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$kroc_archbindir" != "$preset_archbindir" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$kroc_archlibdir" != "$preset_archlibdir" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$kroc_archincdir" != "$preset_archincdir" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$kroc_mandir" != "$preset_mandir" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$kroc_configdir" != "$preset_configdir" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$USEPRIORITY" != "$preset_USEPRIORITY" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$USECPUTIMERS" != "$preset_USECPUTIMERS" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$USEUDC" != "$preset_USEUDC" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$USECTTD" != "$preset_USECTTD" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$USEPONY" != "$preset_USEPONY" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$USEPTHREADS" != "$preset_USEPTHREADS" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$USEPGROUPS" != "$preset_USEPGROUPS" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$EXTRA_CCSP_CONFIGURE_OPTS" != "$preset_EXTRA_CCSP_CONFIGURE_OPTS" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$EXTRA_KROC_CONFIGURE_OPTS" != "$preset_EXTRA_KROC_CONFIGURE_OPTS" ]; then
+	FORCECONFIGURE=1
 fi
 
 
