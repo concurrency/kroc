@@ -2,6 +2,8 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+05/02/2006	frmb	various fixes for channel-type type descriptions
+01/02/2006	frmb	fixed a small memory-leak in non-freeing of dynamic channel types
 22/01/2006	frmb	multiway sync support in the run-time (not for regular occam-pi yet)
 14/01/2006	frmb	support for ENROLL instead of BARRIER for doing PAR barrier extension
 14/01/2006	frmb	added checks for null mobile barriers on sync/enroll/resign
