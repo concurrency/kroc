@@ -101,6 +101,7 @@ ccopts=""
 ocllibs=""
 ocrtslibs="-lm @DLOPTLIB@ @DEXTLIB@"
 extcflags="@DSYSOPTS@ @EXTCCEXTRAOPTS@"
+dtraces=0
 
 case "$host_os" in
 	cygwin )
@@ -538,6 +539,14 @@ do
 		octranopts="$octranopts -dX"
 		;;
 		#}}}
+		#{{{  -dt, --dtraces  enable debugging traces
+	-dt | --dtraces)
+		printf '%s: Enabling debugging traces\n' "$progname" 1>&2
+		dtraces=1
+		occopts="$occopts -dtraces"
+		octranopts="$octranopts -dt"
+		;;
+		#}}}
 		#{{{  -di  insert debugging
 	-di )
 		printf '%s: Selecting insert debugging\n' "$progname" 1>&2
@@ -688,7 +697,12 @@ fi
 
 occ21="$kroc_archbindir/occ21"
 octran="$kroc_archbindir/tranx86"
-ocrts="-lkroc"
+
+if [ $dtraces -eq 1 ]; then
+	ocrts="-lkroctrace"
+else
+	ocrts="-lkroc"
+fi
 
 
 #}}}
@@ -863,6 +877,7 @@ EOF
 	fi
 	cat << EOF
   -d                     Enable post-mortem debugging
+  -dt                    Enable debugging traces
   -e                     Enable user-defined channels
   -h,  --help            Print this message and exit
   -IDIRECTORY            Search DIRECTORY for occam libs & includes, C headers
