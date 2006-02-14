@@ -116,9 +116,9 @@ FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 #{{{  release/install settings
 DUMPOUT=
 DUMPMAIL="ofa-bugs@kent.ac.uk"
-VERSION="1.4.0"
+VERSION="1.4.1-pre1"
 PRERELEASE=0
-NEXTPATCH="1.4.1-pre1"
+NEXTPATCH="1.4.1-pre2"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 DFL_SVNUSER="krocuser"
@@ -206,6 +206,7 @@ and actions are:
   svnup-<svnpkg>               update local copy of <svnpkg> from subversion repository
   preconfigure-<pkg>           pre-configure <pkg> (only needed for ccsp)
   configure-<pkg>              configure <pkg> (see below for list of packages)
+  fconfigure-<pkg>             force configure of <pkg>
   make-<pkg>                   make <pkg>
   install-<pkg>                install <pkg>
   clean-<pkg>                  clean <pkg>
@@ -218,6 +219,7 @@ and actions are:
 
 choices for <pkg> are:
   ccsp                         CCSP (run-time occam/transputer kernel)
+  ccspt                        CCSP with debugging trace support
   cputimerutils                CPU timer clock calibration utility
   mkoccdeps                    occam dependency generator
   occ21                        inmos occam compiler
@@ -1678,7 +1680,9 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 	fi
 	SHOWBANNER=1
 	ACTIONLIST="setbuildtarget \
-		preconfigure-ccsp configure-ccsp make-ccsp install-ccsp \
+		preconfigure-ccsp \
+		fconfigure-ccspt make-ccspt install-ccspt \
+		fconfigure-ccsp make-ccsp install-ccsp \
 		bsyscalls-support cputimers-support dynproc-support \
 		configure-cputimerutils make-cputimerutils install-cputimerutils \
 		configure-mkoccdeps make-mkoccdeps install-mkoccdeps \
@@ -2096,6 +2100,52 @@ EOF
 			fi
 			;;
 			#}}}
+			#{{{  ccspt: run-time kernel with debugging trace support
+		Xccspt)
+			PKG_SRC=$CCSP_SRC
+
+			if [ $USEPRIORITY -eq 0 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-process-priority"
+			elif [ $USEPRIORITY -eq 1 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-process-priority"
+			fi
+
+			if [ $USECPUTIMERS -eq 0 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-cpu-timers"
+			elif [ $USECPUTIMERS -eq 1 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-cpu-timers"
+			fi
+
+			if [ $USEPTHREADS -eq 1 ] || [ $USEPTHREADS -eq 2 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pthreads"
+			elif [ $USEPTHREADS -eq 0 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-pthreads"
+			fi
+
+			if [ $USEPGROUPS -eq 1 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pgroups"
+			elif [ $USEPGROUPS -eq 0 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-pgroups"
+			fi
+
+			if [ $USEUDC -eq 1 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-udc"
+			elif [ $USEUDC -eq 0 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-udc"
+			fi
+
+			if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-schedstruct"
+				PRECONF_SPECOPTS="$PRECONF_SPECOPTS --enable-schedstruct"
+			fi
+
+			if [ "$EXTRA_CCSP_CONFIGURE_OPTS" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS $EXTRA_CCSP_CONFIGURE_OPTS"
+			fi
+			CONF_SPECOPTS="$CONF_SPECOPTS --enable-dtraces"
+
+			;;
+			#}}}
 			#{{{  cputimerutils: clock calibration utility
 		Xcputimerutils)
 			PKG_SRC=$CPUTIMERUTILS_SRC
@@ -2330,6 +2380,18 @@ EOF
 					else
 						configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC" "$CONF_SPECOPTS"
 					fi
+					;;
+					#}}}
+					#{{{  fconfigure: configure package (forced)
+				Xfconfigure)
+					SAVED_FORCECONFIGURE=$FORCECONFIGURE
+					FORCECONFIGURE=1
+					if [ "$CONF_SPECOPTS" = "" ]; then
+						configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC"
+					else
+						configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC" "$CONF_SPECOPTS"
+					fi
+					FORCECONFIGURE=$SAVED_FORCECONFIGURE
 					;;
 					#}}}
 					#{{{  make: compile package
