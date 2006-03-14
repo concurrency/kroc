@@ -259,7 +259,7 @@ do
 		;;
 	# These options have mandatory values.  Since we didn't find an = sign,
 	# the value must be in the next argument
-	--octran-opts | --oc-opts | --cc-opts | --nocc-opts | -C)
+	--octran-opts | --oc-opts | --cc-opts | --nocc-opts | -C | --linkcc)
 		optarg=$1
 		shift
 		;;
@@ -376,6 +376,11 @@ do
 		#{{{  --cc-opts*  options for the C compiler
 	--cc-opts*)
 		ccopts="$ccopts $optarg"
+		;;
+		#}}}
+		#{{{  --linkcc*  compiler (for linking)
+	--linkcc*)
+		cc="$optarg"
 		;;
 		#}}}
 		#{{{  --nocc-opts*  options for NOCC
@@ -929,6 +934,7 @@ Additional options:
   --ncl                  Do not link in default compiler libraries
   --xml                  Generate XML tree
   --nocc                 Use NOCC compiler (experimental)
+  --linkcc <prog>        Use <prog> to link instead of $cc
 EOF
 	if [ $use_occ21_revalt -eq 1 ]; then
 		printf '       --no-revalt       Do not use reversed ALT disabling sequence (default enabled)\n'
