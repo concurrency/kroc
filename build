@@ -719,8 +719,20 @@ setopts_host ()
 			USEPTHREADS=1
 		fi
 		if [ $USEMP -eq 42 ]; then
-			printf '  linux: enabling multi-processor support (experimental/incomplete)\n'
-			USEMP=1
+			# auto-detect, means we check for multiple processors
+			if [ ! -f /proc/cpuinfo ]; then
+				printf '  linux: no /proc/cpuinfo, not enabling multi-processor support\n'
+				USEMP=0
+			else
+				NUMCPUS=$(($AWK 'BEGIN { i=0; } /^processor[ 	:]/ {i++} END {print(i);}' < /proc/cpuinfo))
+				if [ $NUMCPUS -ge 2 ]; then
+					printf '  linux: %d logical processors, enabling multi-processor support (experimental/incomplete)\n' "$NUMCPUS"
+					USEMP=1
+				else
+					printf '  linux: single CPU system, not enabling multi-processor support\n'
+					USEMP=0
+				fi
+			fi
 		fi
 		;;
 	esac
@@ -1795,7 +1807,6 @@ typescript_head
 HAVE_BSYSCALLS_SUPPORT=
 HAVE_CPUTIMERS_SUPPORT=
 HAVE_DYNPROC_SUPPORT=
-HAVE_SCHEDSTRUCT_SUPPORT=
 
 # run through ACTIONLIST and do whatever!
 for action in $ACTIONLIST; do
@@ -1820,31 +1831,7 @@ for action in $ACTIONLIST; do
 			# then set any build-specific options
 			setopts_host "$KROCHOST_ARCH" "$KROCHOST_VENDOR" "$KROCHOST_OS"
 		fi
-		# set HAVE_SCHEDSTRUCT_SUPPORT, based on gcc version
-		# already decided that we do have a gcc..
-		GCC_VERSION=$(${CC:-gcc} --version | grep '[1-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*' | tr ' ' '\n' | grep '^[1-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$')
-		if [ "$GCC_VERSION" = "" ]; then
-			printf '%s: failed to extract gcc version!\n' "$0" | tee -a "$DUMPOUT"
-			tee -a "$DUMPOUT" << EOF
-***
-***  installation will continue, without certain optimisations
-***  please consider mailing ofa-bugs@kent.ac.uk with the output
-***  of "gcc --version" to fix this for future releases.
-***
-EOF
-			printf 'press return to continue..'
-			read
-		else
-			printf 'gcc version is %s\n' "$GCC_VERSION" | tee -a "$DUMPOUT"
-			case $GCC_VERSION in
-			3.3.4 | 3.3.5)
-				HAVE_SCHEDSTRUCT_SUPPORT=1
-				;;
-			esac
-		fi
-		if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
-			printf 'enabling scheduler-var structure support\n' | tee -a "$DUMPOUT"
-		fi
+		# frmb: removed scheduler-structure support, there is a better way to do this..
 		;;
 		#}}}
 		#{{{  update: does a source update from the distribution site
@@ -2120,11 +2107,6 @@ EOF
 				CONF_SPECOPTS="$CONF_SPECOPTS --disable-udc"
 			fi
 
-			if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
-				CONF_SPECOPTS="$CONF_SPECOPTS --enable-schedstruct"
-				PRECONF_SPECOPTS="$PRECONF_SPECOPTS --enable-schedstruct"
-			fi
-
 			if [ "$EXTRA_CCSP_CONFIGURE_OPTS" ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS $EXTRA_CCSP_CONFIGURE_OPTS"
 			fi
@@ -2168,11 +2150,6 @@ EOF
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-udc"
 			elif [ $USEUDC -eq 0 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --disable-udc"
-			fi
-
-			if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
-				CONF_SPECOPTS="$CONF_SPECOPTS --enable-schedstruct"
-				PRECONF_SPECOPTS="$PRECONF_SPECOPTS --enable-schedstruct"
 			fi
 
 			if [ "$EXTRA_CCSP_CONFIGURE_OPTS" ]; then
@@ -2241,9 +2218,6 @@ EOF
 			fi
 			if [ $USEPONY -eq 1 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pony"
-			fi
-			if [ "$HAVE_SCHEDSTRUCT_SUPPORT" != "" ]; then
-				CONF_SPECOPTS="$CONF_SPECOPTS --enable-schedstruct"
 			fi
 			if [ "$EXTRA_KROC_CONFIGURE_OPTS" ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS $EXTRA_KROC_CONFIGURE_OPTS"
