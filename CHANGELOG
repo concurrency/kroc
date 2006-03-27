@@ -2,6 +2,15 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+28/03/2006	frmb	started adding some support for multi-processor machines
+27/03/2006	frmb	started removing support for scheduler-structures (for a better way)
+26/03/2006	frmb	a couple more fixes for pony
+25/03/2006	frmb	added some checks in CCSP for invalid mobile processes
+25/03/2006	frmb	various updates for pony
+22/03/2006	frmb	small fix for compiler crash with missing parameter types, ack to Christian/CO631-students for spotting it
+22/03/2006	frmb	fix for a missing check in mobile channel-end communication, ack to Adam for spotting it
+21/03/2006	frmb	fixed some more bugs in the usage checker and undefinedness checker
+19/03/2006	frmb	fixed a small bug in the undefinedness checker, ack to Adam for finding it
 18/03/2006	frmb	put 1.4.1-pre1 together
 18/03/2006	frmb	fixed some UDO bugs in the compiler, tidied up other code
 18/03/2006	frmb	minor compiler fixes/updates in error paths
