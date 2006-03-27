@@ -116,9 +116,9 @@ FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 #{{{  release/install settings
 DUMPOUT=
 DUMPMAIL="ofa-bugs@kent.ac.uk"
-VERSION="1.4.1-pre1"
+VERSION="1.4.1-pre2"
 PRERELEASE=1
-NEXTPATCH="1.4.1-pre2"
+NEXTPATCH="1.4.1-pre3"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 DFL_SVNUSER="krocuser"
@@ -129,7 +129,7 @@ SVNHOST="https://subversion.frmb.org/svn/"
 
 #}}}
 #{{{  various local variables
-# 42 means unset
+# 42 means unset or auto-detect
 BUILDRECONF=0
 ACTIONLIST=
 FORCECONFIGURE=
@@ -140,6 +140,7 @@ USECTTD=42
 USEPONY=42
 USEUDC=42
 USEPGROUPS=42
+USEMP=0
 GOT_SVN_VERSION=0
 USER_INSTALL=0
 ALL_SETTINGS=0
@@ -188,6 +189,7 @@ where options are:
   --no-cputimers               disable CPU timer support (required for accurate timing on variable-frequency hardware)
   --no-pthreads                build without pthreads support
   --no-udc                     build without user defined channels support
+  --no-mp                      build without multi-processing support
   --with-cttd                  build with channel-type type-description support
   --with-pony                  build with support for KRoC.net/pony
 
@@ -716,6 +718,10 @@ setopts_host ()
 			printf '  linux: enabling pthreads\n'
 			USEPTHREADS=1
 		fi
+		if [ $USEMP -eq 42 ]; then
+			printf '  linux: enabling multi-processor support (experimental/incomplete)\n'
+			USEMP=1
+		fi
 		;;
 	esac
 }
@@ -1224,6 +1230,9 @@ do
 	X--no-priority)
 		USEPRIORITY=0
 		;;
+	X--no-mp)
+		USEMP=0
+		;;
 	X--with-cputimers)
 		USECPUTIMERS=1
 		;;
@@ -1318,7 +1327,7 @@ if [ "$kroc_krocdir" = "" ]; then
 fi
 
 #}}}
-#{{{  make some decisions about default features, _except_ POSIX threads
+#{{{  make some decisions about default features, _except_ POSIX threads and MP support
 if [ $USEPRIORITY -eq 42 ]; then
 	USEPRIORITY=1
 fi
@@ -1354,6 +1363,7 @@ preset_USEUDC=$USEUDC
 preset_USECTTD=$USECTTD
 preset_USEPONY=$USEPONY
 preset_USEPTHREADS=$USEPTHREADS
+preset_USEMP=$USEMP
 preset_USEPGROUPS=$USEPGROUPS
 preset_EXTRA_CCSP_CONFIGURE_OPTS="$EXTRA_CCSP_CONFIGURE_OPTS"
 preset_EXTRA_KROC_CONFIGURE_OPTS="$EXTRA_KROC_CONFIGURE_OPTS"
@@ -1411,6 +1421,8 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 			if [ $ALL_SETTINGS -eq 1 ]; then
 				printf ' %sF%s.  support for PONY: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPONY -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 				printf ' %sG%s.  support for process groups: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPGROUPS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+				printf ' %sH%s.  support for multi-processor machines: ' "$ANSION2" "$ANSIOFF2"; if [ $USEMP -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3"
+						elif [ $USEMP -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 				printf ' %sUH%s. subversion-update source: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNHOST" "$ANSIOFF1"
 				printf ' %sUU%s. subversion-update username: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNUSER" "$ANSIOFF1"
 				printf ' %sU%s.  do subversion update\n' "$ANSION2" "$ANSIOFF2"
@@ -1476,6 +1488,14 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				USEPONY=$((1 - USEPONY))
 			elif [ "$REPLY" = "G" ] || [ "$REPLY" = "g" ] && [ $ALL_SETTINGS -eq 1 ]; then
 				USEPGROUPS=$((1 - USEPGROUPS))
+			elif [ "$REPLY" = "H" ] || [ "$REPLY" = "h" ] && [ $ALL_SETTINGS -eq 1 ]; then
+				if [ $USEMP -eq 42 ]; then
+					USEMP=1
+				elif [ $USEMP -eq 1 ]; then
+					USEMP=0
+				else
+					USEMP=42
+				fi
 			elif [ "$REPLY" = "UH" ] || [ "$REPLY" = "uh" ] && [ $ALL_SETTINGS -eq 1 ]; then
 				printf '\nsubversion-update source (URL): '
 				read tmp_SVNHOST
@@ -1529,6 +1549,7 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 	printf 'kroc_mandir="%s"\n' "$kroc_mandir" >> .install_dir
 	printf 'kroc_krocdir="%s"\n' "$kroc_krocdir" >> .install_dir
 	printf 'USEPTHREADS=%d\n' "$USEPTHREADS" >> .install_dir
+	printf 'USEMP=%d\n' "$USEMP" >> .install_dir
 	printf 'USEPRIORITY=%d\n' "$USEPRIORITY" >> .install_dir
 	printf 'USECPUTIMERS=%d\n' "$USECPUTIMERS" >> .install_dir
 	printf 'USECTTD=%d\n' "$USECTTD" >> .install_dir
@@ -1632,6 +1653,9 @@ if [ "$USEPONY" != "$preset_USEPONY" ]; then
 	FORCECONFIGURE=1
 fi
 if [ "$USEPTHREADS" != "$preset_USEPTHREADS" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$USEMP" != "$preset_USEMP" ]; then
 	FORCECONFIGURE=1
 fi
 if [ "$USEPGROUPS" != "$preset_USEPGROUPS" ]; then
@@ -2078,6 +2102,12 @@ EOF
 				CONF_SPECOPTS="$CONF_SPECOPTS --disable-pthreads"
 			fi
 
+			if [ $USEMP -eq 1 ] || [ $USEMP -eq 42 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-mp"
+			elif [ $USEMP -eq 0 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-mp"
+			fi
+
 			if [ $USEPGROUPS -eq 1 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pgroups"
 			elif [ $USEPGROUPS -eq 0 ]; then
@@ -2120,6 +2150,12 @@ EOF
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pthreads"
 			elif [ $USEPTHREADS -eq 0 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --disable-pthreads"
+			fi
+
+			if [ $USEMP -eq 1 ] || [ $USEMP -eq 42 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-mp"
+			elif [ $USEMP -eq 0 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-mp"
 			fi
 
 			if [ $USEPGROUPS -eq 1 ]; then
@@ -2181,6 +2217,12 @@ EOF
 			if [ $USEPRIORITY -eq 0 ]; then
 				CONF_SPECOPTS="--disable-process-priority"
 			fi
+			if [ $USEMP -eq 1 ] || [ $USEMP -eq 42 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-mp"
+			elif [ $USEMP -eq 0 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --disable-mp"
+			fi
+
 			;;
 			#}}}
 			#{{{  kroc: wrapper script
@@ -2190,6 +2232,9 @@ EOF
 			fi
 			if [ $USEPTHREADS -eq 1 ] || [ $USEPTHREADS -eq 2 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-pthreads"
+			fi
+			if [ $USEMP -eq 1 ] || [ $USEMP -eq 42 ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --enable-mp"
 			fi
 			if [ $USECTTD -eq 1 ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS --enable-cttd"
