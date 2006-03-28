@@ -96,7 +96,7 @@ host_canonical="@KROC_CANONICAL_TARGET@"
 host_cpu="@KROC_HOST_CPU@"
 host_os="@KROC_HOST_OS@"
 # -kf : use fast CCSP interface
-octranopts="-kf @TSCHEDSTRUCT@ @TRANEXTRAOPTS@"
+octranopts="-kf @TRANEXTRAOPTS@ @TENABLEMP@"
 ccopts=""
 ocllibs=""
 ocrtslibs="-lm @DLOPTLIB@ @DEXTLIB@"

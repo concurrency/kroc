@@ -4,11 +4,11 @@ dnl Process this file with autoconf to produce a configure script.
 dnl
 
 AC_REVISION($Revision: 1.1 $)
-AC_INIT([kroc.in],[1.4.1-pre1],[ofa-bugs@kent.ac.uk])
+AC_INIT([kroc.in],[1.4.1-pre2],[ofa-bugs@kent.ac.uk])
 AC_PREREQ(2.12)
 
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(kroc,1.4.1-pre1)
+AM_INIT_AUTOMAKE(kroc,1.4.1-pre2)
 
 KROC_CANONICAL_TARGET=$target
 AC_SUBST(KROC_CANONICAL_TARGET)
@@ -81,10 +81,10 @@ case "$host_os" in
 esac
 
 AC_ARG_ENABLE([pthreads], AS_HELP_STRING([--enable-pthreads], [enable pthreads support (requires pthreads run-time kernel support) (default disabled)]), [enable_pthreads=$enableval], [enable_pthreads=no])
-AC_ARG_ENABLE([schedstruct], AS_HELP_STRING([--enable-schedstruct], [enable scheduler-var structure support (requires schedstruct run-time kernel support) (default disabled)]), [enable_schedstruct=$enableval], [enable_schedstruct=no])
 AC_ARG_ENABLE([cttd], AS_HELP_STRING([--enable-cttd], [enable chan-type type-description support (default disabled)]), [enable_cttd=$enableval], [enable_cttd=no])
 AC_ARG_ENABLE([pony], AS_HELP_STRING([--enable-pony], [enable KRoC transparent networking (pony) support (default disabled)]), [enable_pony=$enableval], [enable_pony=no])
 AC_ARG_ENABLE([user-install], AS_HELP_STRING([--enable-user-install], [install configuration file(s) as dotfiles]), [enable_user_install=$enableval], [enable_user_install=no])
+AC_ARG_ENABLE([mp], AS_HELP_STRING([--enable-mp], [enable multi-processor support (default disabled)]), [enable_mp=$enableval], [enable_mp=no])
 
 AC_ARG_WITH([nocc], AS_HELP_STRING([--with-nocc=...], [location of NOCC (experimental)]), [nocc_dir=$withval], [nocc_dir=])
 
@@ -152,13 +152,13 @@ else
  AC_MSG_RESULT(no)
 fi
 
-AC_MSG_CHECKING([whether to use scheduler-var structures])
-if test "$enable_schedstruct" = yes; then
+AC_MSG_CHECKING([whether to use multi-processor support])
+if test "$enable_mp" = yes; then
  dnl This ends up as an option to tranx86
- TSCHEDSTRUCT="--schedstruct"
+ TENABLEMP="-mp"
  AC_MSG_RESULT(yes)
 else
- TSCHEDSTRUCT=""
+ TENABLEMP=""
  AC_MSG_RESULT(no)
 fi
 
@@ -214,7 +214,7 @@ fi
 AC_SUBST(DMOPTLIB)
 AC_SUBST(DEXTLIB)
 AC_SUBST(DSYSOPTS)
-AC_SUBST(TSCHEDSTRUCT)
+AC_SUBST(TENABLEMP)
 AC_SUBST(OCCEXTRAOPTS)
 AC_SUBST(TRANEXTRAOPTS)
 AC_SUBST(EXTCCEXTRAOPTS)
