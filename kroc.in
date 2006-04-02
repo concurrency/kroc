@@ -704,9 +704,9 @@ occ21="$kroc_archbindir/occ21"
 octran="$kroc_archbindir/tranx86"
 
 if [ $dtraces -eq 1 ]; then
-	ocrts="-lkroctrace"
+	ocrts="-lkroctrace -lkrocif"
 else
-	ocrts="-lkroc"
+	ocrts="-lkroc -lkrocif"
 fi
 
 
