@@ -81,6 +81,7 @@ OCC21_SRC=src/occ21-1.4
 ILIBR_SRC=src/ilibr-1.1
 TRANX86_SRC=src/tranx86-1.4
 KROC_SRC=src/kroc-1.4
+KROCIF_SRC=src/libkrocif-1.4
 INMOSLIBS_SRC=src/inmoslibs-1.0
 BSCLIB_SRC=src/bsclib-1.0
 BSCLIB_EXAMPLES_SRC=src/bsclib-examples-1.0
@@ -102,10 +103,10 @@ CGTESTS_SRC=src/cgtests-1.3
 MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
-SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster cif $DOC_SRC $CGTESTS_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster cif kroc-doc cgtests)
+SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster cif $DOC_SRC $CGTESTS_SRC)
+SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster cif kroc-doc cgtests)
 
-ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
+ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC \
 	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $DOC_SRC"
@@ -115,7 +116,7 @@ FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 #}}}
 #{{{  release/install settings
 DUMPOUT=
-DUMPMAIL="ofa-bugs@kent.ac.uk"
+DUMPMAIL="kroc-bugs@kent.ac.uk"
 VERSION="1.4.1-pre2"
 PRERELEASE=1
 NEXTPATCH="1.4.1-pre3"
@@ -228,6 +229,7 @@ choices for <pkg> are:
   ilibr                        inmos librarian
   tranx86                      ETC to i386 translator
   kroc                         kroc script, kmakef and setup files
+  krocif                       kroc interface library
   inmoslibs                    inmos libraries
   bsclib                       blocking system call libraries
   course                       UKC course library
@@ -338,7 +340,7 @@ For more information see the KRoC web-page at:
 
 If the above link doesn't help, please mail:
 
-    ofa-bugs@kent.ac.uk
+    kroc-bugs@kent.ac.uk
 
 with the "typescript" file and a description of your
 system (e.g. architecture, distribution, etc.)
@@ -1603,7 +1605,7 @@ if [ "$PRERELEASE" = "1" ]; then
 **  in the BUGS file included in the distribution  **
 **                                                 **
 **  please report new bugs / suspicious behaviour  **
-**  to: frmb@kent.ac.uk  or  ofa-bugs@kent.ac.uk   **
+**  to: frmb@kent.ac.uk  or  kroc-bugs@kent.ac.u   **
 **                                                 **
 *****************************************************
 EOF
@@ -1620,7 +1622,7 @@ elif [ "$PRERELEASE" = "2" ]; then
 **  known bugs are listed in the included BUGS file.   **
 **                                                     **
 **  please report new-bugs and suspicious behaviour    **
-**  to:  frmb@kent.ac.uk   or  ofa-bugs@kent.ac.uk     **
+**  to:  frmb@kent.ac.uk   or  kroc-bugs@kent.ac.uk    **
 **                                                     **
 *********************************************************
 EOF
@@ -1727,6 +1729,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-tranx86 make-tranx86 install-tranx86 \
 		configure-kroc make-kroc install-kroc \
 		initial-kroc-setup \
+		configure-krocif make-krocif install-krocif \
 		configure-inmoslibs make-inmoslibs install-inmoslibs \
 		configure-bsclib make-bsclib install-bsclib \
 		configure-course make-course install-course \
@@ -2223,6 +2226,12 @@ for action in $ACTIONLIST; do
 				CONF_SPECOPTS="$CONF_SPECOPTS $EXTRA_KROC_CONFIGURE_OPTS"
 			fi
 			PKG_SRC=$KROC_SRC
+			;;
+			#}}}
+			#{{{  krocif: kroc interface library
+		Xkrocif)
+			PKG_SRC=$KROCIF_SRC
+			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  inmoslibs: inmos libraries
