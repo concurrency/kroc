@@ -28,7 +28,7 @@ fi
 
 #
 #	build -- KRoC/Linux configuration/installation script
-#	Copyright (C) 2001-2005 Fred Barnes <frmb@kent.ac.uk>
+#	Copyright (C) 2001-2006 Fred Barnes <frmb@kent.ac.uk>
 #
 #	This program is free software; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -97,19 +97,21 @@ UDC_SRC=udc/libsrc
 UDC_EXAMPLES_SRC=udc/examples
 SDLRASTER_SRC=sdlraster/libsrc
 SDLRASTER_EXAMPLES_SRC=sdlraster/examples
+PONY_SRC=pony/libsrc
+PONY_EXAMPLES_SRC=pony/examples
 CIF_SRC=cif/libsrc
 CIF_EXAMPLES_SRC=cif/examples
 CGTESTS_SRC=src/cgtests-1.3
 MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
-SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster cif $DOC_SRC $CGTESTS_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster cif kroc-doc cgtests)
+SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster pony cif $DOC_SRC $CGTESTS_SRC)
+SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster pony cif kroc-doc cgtests)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC \
-	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $DOC_SRC"
+	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC"
 FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 
 
@@ -240,6 +242,7 @@ choices for <pkg> are:
   cgtests                      compiler test suite
   cif                          occam-pi/C interface
   sdlraster                    SDLRaster SDL based raster graphics
+  pony                         pony (kroc-net) networking infrastructure
   doc                          documentation
   examples                     all example programs, which are:
     bsclib_examples            blocking system calls example programs
@@ -1568,6 +1571,7 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 	printf 'USECPUTIMERS=%d\n' "$USECPUTIMERS" >> .install_dir
 	printf 'USECTTD=%d\n' "$USECTTD" >> .install_dir
 	printf 'USEPONY=%d\n' "$USEPONY" >> .install_dir
+	printf 'USEPGROUPS=%d\n' "$USEPGROUPS" >> .install_dir
 	printf 'SVNHOST=%s\n' "$SVNHOST" >> .install_dir
 	printf 'SVNUSER=%s\n' "$SVNUSER" >> .install_dir
 	printf 'EXTRA_CCSP_CONFIGURE_OPTS=%s\n' "$EXTRA_CCSP_CONFIGURE_OPTS" >> .install_dir
@@ -1735,7 +1739,13 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-course make-course install-course \
 		configure-udc make-udc install-udc \
 		configure-cif make-cif install-cif \
-		configure-sdlraster make-sdlraster install-sdlraster \
+		configure-sdlraster make-sdlraster install-sdlraster"
+	if [ "$USEPONY" -eq 1 ]; then
+		# conditional on the "--with-pony" flag being given
+		ACTIONLIST="$ACTIONLIST \
+			configure-pony make-pony install-pony"
+	fi
+	ACTIONLIST="$ACTIONLIST \
 		install-syncs install-dynproc install-manpages \
 		configure-doc make-doc install-doc \
 		calibrate-clock"
@@ -1757,6 +1767,10 @@ EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-s
 		configure-cif_examples make-cif_examples install-cif_examples \
 		configure-bar_demo make-bar_demo install-bar_demo \
 		configure-sdlraster_examples make-sdlraster_examples install-sdlraster_examples"
+if [ "$USEPONY" -eq 1 ]; then
+	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
+		configure-pony_examples make-pony_examples"
+fi
 CGTESTS_ACTIONS="setbuildtarget building-cgtests initial-kroc-setup configure-cgtests make-cgtests install-cgtests"
 
 if [ "$FULLINSTALL" = "1" ]; then
@@ -2300,6 +2314,12 @@ for action in $ACTIONLIST; do
 			NEED_KROC_ENV=1
 			;;
 			#}}}
+			#{{{  pony_examples: kroc-net/pony example programs
+		Xpony_examples)
+			PKG_SRC=$PONY_EXAMPLES_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
 			#{{{  bar_demo: the "better-bar" demonstrator
 		Xbar_demo)
 			PKG_SRC=$DEMO_BAR_SRC
@@ -2351,6 +2371,12 @@ for action in $ACTIONLIST; do
 			#{{{  sdlraster: raster-based graphics with SDL
 		Xsdlraster)
 			PKG_SRC=$SDLRASTER_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  pony: kroc-net/pony network infrastructure
+		Xpony)
+			PKG_SRC=$PONY_SRC
 			NEED_KROC_ENV=1
 			;;
 			#}}}
@@ -2565,6 +2591,11 @@ fi
 if [ "$EXAMPLEINSTALL" != "" ]; then
 	printf 'Available example programs have been installed into:\n' | tee -a "$DUMPOUT"
 	printf '    %s\n' "$kroc_kroc_examples" | tee -a "$DUMPOUT"
+
+	if [ "$USEPONY" -eq 1 ]; then
+		printf 'pony/kroc-net example programs have been left in:\n' | tee -a "$DUMPOUT"
+		printf '    %s\n' "$PONY_EXAMPLES_SRC"
+	fi
 fi
 
 if [ "$CGTESTSINSTALL" != "" ]; then
