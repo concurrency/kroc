@@ -2,6 +2,18 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+10/04/2006	frmb	put 1.4.1-pre2 together
+09/04/2006	frmb	added the pony/kroc-net infrastructure to the distribution (experimental)
+09/04/2006	frmb	follow-up fix for a related bug
+08/04/2006	frmb	fixed a PLACED array bug in occ21, ack to Sergiu Dumitriu for spotting it
+06/04/2006	frmb	more interface changes, more multi-processor code
+06/04/2006	frmb	fixed a small bug in occ21 (dynamic mobile arrays)
+04/04/2006	frmb	changed interface mechanism for some run-time kernel calls
+04/04/2006	frmb	fixed a small register colouring problem in tranx86
+02/04/2006	frmb	some tidy-ups, more multi-processor code
+02/04/2006	frmb	separated out top-level interface processes into libkrocif
+02/04/2006	frmb	changed bug-reporting address to kroc-bugs@kent.ac.uk (RT queue)
+29/03/2006	frmb	various CCSP tidy-ups, removed old keyboard support
 28/03/2006	frmb	started adding some support for multi-processor machines
 27/03/2006	frmb	started removing support for scheduler-structures (for a better way)
 26/03/2006	frmb	a couple more fixes for pony
