@@ -102,16 +102,17 @@ PONY_EXAMPLES_SRC=pony/examples
 CIF_SRC=cif/libsrc
 CIF_EXAMPLES_SRC=cif/examples
 CGTESTS_SRC=src/cgtests-1.3
+CONTRIB_SRC=contrib
 MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
-SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster pony cif $DOC_SRC $CGTESTS_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster pony cif kroc-doc cgtests)
+SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster pony cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC)
+SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster pony cif kroc-doc cgtests kroc-contrib)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC \
-	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC"
+	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $CONTRIB_SRC"
 FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 
 
@@ -244,6 +245,7 @@ choices for <pkg> are:
   sdlraster                    SDLRaster SDL based raster graphics
   pony                         pony (kroc-net) networking infrastructure
   doc                          documentation
+  contrib                      contributed programs/libraries/documentation
   examples                     all example programs, which are:
     bsclib_examples            blocking system calls example programs
     course_examples            UKC course example programs
@@ -491,21 +493,33 @@ preconfigure_pkg ()
 		install_error
 		exit 1
 	fi
-	CURRENT_DIR="$(pwd)"
-	cd "$2/$3"
-	if [ "$4" = "" ]; then
-		(./preconfigure 2>&1 && touch .success) | tee -a "$DUMPOUT"
+
+	if [ -r "$2/$3/.builddata" ]; then
+		# means this is a directory of sub-packages which get preconfigured together
+		source "$2/$3/.builddata"
+		for subpkg in $SUBPKGS; do
+			# do appropriate test for preconfiguring this sub-package
+			if [ -x "$2/$3/$subpkg/preconfigure" ]; then
+				preconfigure_pkg "$1" "$2" "$3/$subpkg" "$4"
+			fi
+		done
 	else
-		(./preconfigure $4 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		CURRENT_DIR="$(pwd)"
+		cd "$2/$3"
+		if [ "$4" = "" ]; then
+			(./preconfigure 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		else
+			(./preconfigure $4 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		fi
+		if [ -f .success ]; then
+			rm .success
+		else
+			printf 'error while pre-configuring %s\n' $3 | tee -a "$DUMPOUT" 1>&2
+			deferred_install_error
+			return 1
+		fi
+		cd "$CURRENT_DIR"
 	fi
-	if [ -f .success ]; then
-		rm .success
-	else
-		printf 'error while pre-configuring %s\n' $3 | tee -a "$DUMPOUT" 1>&2
-		deferred_install_error
-		return 1
-	fi
-	cd "$CURRENT_DIR"
 	return 0
 }
 #}}}
@@ -517,28 +531,40 @@ configure_pkg ()
 		install_error
 		exit 1
 	fi
-	CURRENT_DIR="$(pwd)"
-	cd "$2/$3"
-	# already configured ?
-	if [ -f Makefile.in ] && [ -f Makefile ] && [ "$FORCECONFIGURE" = "" ]; then
-		printf '%s: package in %s looks configured, not re-configuring\n' "$0" $3 | tee -a "$DUMPOUT"
+
+	if [ -r "$2/$3/.builddata" ]; then
+		# means this is a directory of sub-packages which get configured together
+		source "$2/$3/.builddata"
+		for subpkg in $SUBPKGS; do
+			# do appropriate test for configuring this sub-package
+			if [ -x "$2/$3/$subpkg/configure" ]; then
+				configure_pkg "$1" "$2" "$3/$subpkg" "$4"
+			fi
+		done
 	else
-		if [ "$4" = "" ]; then
-			(./configure --prefix="$1" --bindir="$kroc_archbindir" --datadir="$kroc_krocdir" --mandir="$kroc_mandir" --libdir="$kroc_archlibdir" \
-				--includedir="$kroc_archincdir" --sysconfdir="$kroc_configdir" 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		CURRENT_DIR="$(pwd)"
+		cd "$2/$3"
+		# already configured ?
+		if [ -f Makefile.in ] && [ -f Makefile ] && [ "$FORCECONFIGURE" = "" ]; then
+			printf '%s: package in %s looks configured, not re-configuring\n' "$0" $3 | tee -a "$DUMPOUT"
 		else
-			(./configure --prefix="$1" --bindir="$kroc_archbindir" --datadir="$kroc_krocdir" --mandir="$kroc_mandir" --libdir="$kroc_archlibdir" \
-				--includedir="$kroc_archincdir" --sysconfdir="$kroc_configdir" $4 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			if [ "$4" = "" ]; then
+				(./configure --prefix="$1" --bindir="$kroc_archbindir" --datadir="$kroc_krocdir" --mandir="$kroc_mandir" --libdir="$kroc_archlibdir" \
+					--includedir="$kroc_archincdir" --sysconfdir="$kroc_configdir" 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			else
+				(./configure --prefix="$1" --bindir="$kroc_archbindir" --datadir="$kroc_krocdir" --mandir="$kroc_mandir" --libdir="$kroc_archlibdir" \
+					--includedir="$kroc_archincdir" --sysconfdir="$kroc_configdir" $4 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			fi
+			if [ -f .success ]; then
+				rm .success
+			else
+				printf 'error while configuring in %s' "$3" | tee -a "$DUMPOUT" 1>&2
+				deferred_install_error
+				return 1
+			fi
 		fi
-		if [ -f .success ]; then
-			rm .success
-		else
-			printf 'error while configuring in %s' "$3" | tee -a "$DUMPOUT" 1>&2
-			deferred_install_error
-			return 1
-		fi
+		cd "$CURRENT_DIR"
 	fi
-	cd "$CURRENT_DIR"
 	return 0
 }
 #}}}
@@ -550,21 +576,33 @@ make_pkg ()
 		install_error
 		exit 1
 	fi
-	CURRENT_DIR="$(pwd)"
-	cd "$1/$2"
-	if [ "$3" = "" ]; then
-		($MAKE 2>&1 && touch .success) | tee -a "$DUMPOUT"
+
+	if [ -r "$1/$2/.builddata" ]; then
+		# means this is a directory of sub-packages which get made together
+		source "$1/$2/.builddata"
+		for subpkg in $SUBPKGS; do
+			# do appropriate test for making this sub-package
+			if [ -r "$1/$2/$subpkg/Makefile" ] || [ -r "$1/$2/$subpkg/GNUmakefile" ]; then
+				make_pkg "$1" "$2/$subpkg" "$3"
+			fi
+		done
 	else
-		($MAKE $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		CURRENT_DIR="$(pwd)"
+		cd "$1/$2"
+		if [ "$3" = "" ]; then
+			($MAKE 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		else
+			($MAKE $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		fi
+		if [ -f .success ]; then
+			rm .success
+		else
+			printf 'error while making in %s\n' "$2" | tee -a "$DUMPOUT" 1>&2
+			deferred_install_error
+			return 1
+		fi
+		cd "$CURRENT_DIR"
 	fi
-	if [ -f .success ]; then
-		rm .success
-	else
-		printf 'error while making in %s\n' "$2" | tee -a "$DUMPOUT" 1>&2
-		deferred_install_error
-		return 1
-	fi
-	cd "$CURRENT_DIR"
 	return 0
 }
 #}}}
@@ -576,21 +614,31 @@ install_pkg ()
 		install_error
 		exit 1
 	fi
-	CURRENT_DIR="$(pwd)"
-	cd "$1/$2"
-	if [ "$3" = "" ]; then
-		($MAKE install 2>&1 && touch .success) | tee -a "$DUMPOUT"
+
+	if [ -r "$1/$2/.builddata" ]; then
+		# means this is a directory of sub-packages which get installed together
+		source "$1/$2/.builddata"
+		for subpkg in $SUBPKGS; do
+			install_pkg "$1" "$2/$subpkg" "$3"
+		done
 	else
-		($MAKE install $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		CURRENT_DIR="$(pwd)"
+		cd "$1/$2"
+		if [ "$3" = "" ]; then
+			($MAKE install 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		else
+			($MAKE install $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		fi
+		if [ -f .success ]; then
+			rm .success
+		else
+			printf 'error while installing in %s\n' "$2" | tee -a "$DUMPOUT" 1>&2
+			deferred_install_error
+			return 1
+		fi
+		cd "$CURRENT_DIR"
 	fi
-	if [ -f .success ]; then
-		rm .success
-	else
-		printf 'error while installing in %s\n' "$2" | tee -a "$DUMPOUT" 1>&2
-		deferred_install_error
-		return 1
-	fi
-	cd "$CURRENT_DIR"
+
 	return 0
 }
 #}}}
@@ -602,19 +650,28 @@ clean_pkg ()
 		install_error
 		exit 1
 	fi
-	CURRENT_DIR="$(pwd)"
-	cd "$1/$2"
-	if [ "$3" = "" ]; then
-		($MAKE clean 2>&1 && touch .success) | tee -a "$DUMPOUT"
+
+	if [ -r "$1/$2/.builddata" ]; then
+		# means this is a directory of sub-packages which get cleaned together
+		source "$1/$2/.builddata"
+		for subpkg in $SUBPKGS; do
+			clean_pkg "$1" "$2/$subpkg" "$3"
+		done
 	else
-		($MAKE clean $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		CURRENT_DIR="$(pwd)"
+		cd "$1/$2"
+		if [ "$3" = "" ]; then
+			($MAKE clean 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		else
+			($MAKE clean $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		fi
+		if [ -f .success ]; then
+			rm .success
+		else
+			printf 'error while cleaning in %s (continuing anyway)\n' "$2" | tee -a "$DUMPOUT" 1>&2
+		fi
+		cd "$CURRENT_DIR"
 	fi
-	if [ -f .success ]; then
-		rm .success
-	else
-		printf 'error while cleaning in %s (continuing anyway)\n' "$2" | tee -a "$DUMPOUT" 1>&2
-	fi
-	cd "$CURRENT_DIR"
 	return 0
 }
 #}}}
@@ -626,19 +683,28 @@ distclean_pkg ()
 		install_error
 		exit 1
 	fi
-	CURRENT_DIR="$(pwd)"
-	cd "$1/$2"
-	if [ "$3" = "" ]; then
-		($MAKE distclean 2>&1 && touch .success) | tee -a "$DUMPOUT"
+
+	if [ -r "$1/$2/.builddata" ]; then
+		# means this is a directory of sub-packages which get distcleaned together
+		source "$1/$2/.builddata"
+		for subpkg in $SUBPKGS; do
+			distclean_pkg "$1" "$2/$subpkg" "$3"
+		done
 	else
-		($MAKE distclean $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		CURRENT_DIR="$(pwd)"
+		cd "$1/$2"
+		if [ "$3" = "" ]; then
+			($MAKE distclean 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		else
+			($MAKE distclean $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+		fi
+		if [ -f .success ]; then
+			rm .success
+		else
+			printf 'error while dist-cleaning %s (continuing anyway)\n' "$2" | tee -a "$DUMPOUT" 1>&2
+		fi
+		cd $CURRENT_DIR
 	fi
-	if [ -f .success ]; then
-		rm .success
-	else
-		printf 'error while dist-cleaning %s (continuing anyway)\n' "$2" | tee -a "$DUMPOUT" 1>&2
-	fi
-	cd $CURRENT_DIR
 	return 0
 }
 #}}}
@@ -752,52 +818,59 @@ package_status ()
 		exit 1
 	fi
 
-	printf 'package: %-30s' "$2"
-	if [ -f $1/$2/configure.in ] || [ -f $1/$2/configure.ac ]; then
-		if [ -f $1/$2/config.status ]; then
-			printf 'AC* '
+	if [ -r "$1/$2/.builddata" ]; then
+		# means this is a directory of sub-packages which get their status reported together
+		source "$1/$2/.builddata"
+		for subpkg in $SUBPKGS; do
+			package_status "$1" "$2/$subpkg"
+		done
+	else
+		printf 'package: %-30s' "$2"
+		if [ -f $1/$2/configure.in ] || [ -f $1/$2/configure.ac ]; then
+			if [ -f $1/$2/config.status ]; then
+				printf 'AC* '
+			else
+				printf 'AC- '
+			fi
 		else
-			printf 'AC- '
+			printf '    '
 		fi
-	else
-		printf '    '
-	fi
-	if [ -f $1/$2/Makefile.am ]; then
-		if [ -f $1/$2/Makefile ]; then
-			printf 'AM* '
+		if [ -f $1/$2/Makefile.am ]; then
+			if [ -f $1/$2/Makefile ]; then
+				printf 'AM* '
+			else
+				printf 'AM  '
+			fi
+		elif [ -f $1/$2/Makefile.in ]; then
+			if [ -f $1/$2/Makefile ]; then
+				printf 'MK* '
+			else
+				printf 'MK- '
+			fi
+		elif [ -f $1/$2/Makefile ]; then
+			printf 'MK  '
 		else
-			printf 'AM  '
+			printf '    '
 		fi
-	elif [ -f $1/$2/Makefile.in ]; then
-		if [ -f $1/$2/Makefile ]; then
-			printf 'MK* '
+		if [ -f $1/$2/config.guess ] && [ -f $1/$2/config.sub ]; then
+			printf '[autofiles] '
 		else
-			printf 'MK- '
+			printf '            '
 		fi
-	elif [ -f $1/$2/Makefile ]; then
-		printf 'MK  '
-	else
-		printf '    '
+		TEMPCPKG=$(find $1/$2 -name '*.[ch]' | head -1)
+		if [ "$TEMPCPKG" != "" ]; then
+			printf 'C '
+		else
+			printf '  '
+		fi
+		TEMPOPKG=$(find $1/$2 -name '*.occ' | head -1)
+		if [ "$TEMPOPKG" != "" ]; then
+			printf 'occam '
+		else
+			printf '      '
+		fi
+		printf '\n'
 	fi
-	if [ -f $1/$2/config.guess ] && [ -f $1/$2/config.sub ]; then
-		printf '[autofiles] '
-	else
-		printf '            '
-	fi
-	TEMPCPKG=$(find $1/$2 -name '*.[ch]' | head -1)
-	if [ "$TEMPCPKG" != "" ]; then
-		printf 'C '
-	else
-		printf '  '
-	fi
-	TEMPOPKG=$(find $1/$2 -name '*.occ' | head -1)
-	if [ "$TEMPOPKG" != "" ]; then
-		printf 'occam '
-	else
-		printf '      '
-	fi
-	printf '\n'
-
 }
 #}}}
 #{{{  svn_status ()
@@ -1739,14 +1812,16 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-course make-course install-course \
 		configure-udc make-udc install-udc \
 		configure-cif make-cif install-cif \
-		configure-sdlraster make-sdlraster install-sdlraster"
+		configure-sdlraster make-sdlraster install-sdlraster \
+		install-syncs"
 	if [ "$USEPONY" -eq 1 ]; then
 		# conditional on the "--with-pony" flag being given
 		ACTIONLIST="$ACTIONLIST \
 			configure-pony make-pony install-pony"
 	fi
 	ACTIONLIST="$ACTIONLIST \
-		install-syncs install-dynproc install-manpages \
+		preconfigure-contrib configure-contrib make-contrib install-contrib \
+		install-dynproc install-manpages \
 		configure-doc make-doc install-doc \
 		calibrate-clock"
 else
@@ -2015,12 +2090,18 @@ for action in $ACTIONLIST; do
 		# better remove symbolic-links created by ccsp pre-configure (!)
 		if [ -L $DIST_DIR/$CCSP_SRC/arch/arch ] || [ -L $DIST_DIR/$CCSP_SRC/include/arch ]; then
 			printf 'cleaning up ccsp pre-configure symbolic links\n' | tee -a "$DUMPOUT"
+			test -L $DIST_DIR/$CCSP_SRC/arch/arch/mpsched.S && rm -f $DIST_DIR/$CCSP_SRC/arch/arch/mpsched.S
+			test -L $DIST_DIR/$CCSP_SRC/arch/arch/schedvars.S && rm -f $DIST_DIR/$CCSP_SRC/arch/arch/schedvars.S
 			test -L $DIST_DIR/$CCSP_SRC/arch/arch && rm -f $DIST_DIR/$CCSP_SRC/arch/arch
 			test -L $DIST_DIR/$CCSP_SRC/include/arch && rm -f $DIST_DIR/$CCSP_SRC/include/arch
 		fi
 		if [ -L $DIST_DIR/$CCSP_SRC/include/config.h ]; then
 			printf 'cleaning up ccsp configure symbolic links\n' | tee -a "$DUMPOUT"
 			test -L $DIST_DIR/$CCSP_SRC/include/config.h && rm -f $DIST_DIR/$CCSP_SRC/include/config.h
+		fi
+		if [ -L $DIST_DIR/$KROCIF_SRC/jumpstubs.S ]; then
+			printf 'cleaning up KRoC interface preconfigure symbolic links\n' | tee -a "$DUMPOUT"
+			test -L $DIST_DIR/$KROCIF_SRC/jumpstubs.S && rm -f $DIST_DIR/$KROCIF_SRC/jumpstubs.S
 		fi
 		# better clean-up any tilde temp. files
 		find $DIST_DIR/ -name '*~' | xargs rm -f
@@ -2377,6 +2458,13 @@ for action in $ACTIONLIST; do
 			#{{{  pony: kroc-net/pony network infrastructure
 		Xpony)
 			PKG_SRC=$PONY_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  contrib: contributions
+		Xcontrib)
+			# this is a bit special -- relies on some metadata in the contrib directory to work
+			PKG_SRC=$CONTRIB_SRC
 			NEED_KROC_ENV=1
 			;;
 			#}}}
