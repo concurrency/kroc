@@ -2,6 +2,12 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+13/04/2006	frmb	added --svn-user option to the build script
+11/04/2006	ats	added command-line option handling to the file library
+11/04/2006	ats	small fix for a memory leak in blocking sys-calls handling
+10/04/2006	frmb	put 1.4.1-pre3 together
+10/04/2006	ats	various updates/fixes for pony
+10/04/2006	frmb	added the "cluster DX viewer" to contributed software
 10/04/2006	frmb	added Adrian Cockcroft's formatted output library to contributed software
 10/04/2006	frmb	put in mechanisms to handle contributed software
 10/04/2006	frmb	put 1.4.1-pre2 together

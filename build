@@ -204,6 +204,7 @@ where options are:
   --svn-status                 check subversioned source packages for changes against repository
   --svn-update                 update source packages to latest versions available via subversion
   --svn-list                   list all files under version control
+  --svn-user=<name>            set username for subversion repository access
 
 and actions are:
   build                        build everything (default if not specified)
@@ -654,7 +655,7 @@ clean_pkg ()
 	if [ -r "$1/$2/.builddata" ]; then
 		# means this is a directory of sub-packages which get cleaned together
 		source "$1/$2/.builddata"
-		for subpkg in $SUBPKGS; do
+		for subpkg in $CLEANSUBPKGS; do
 			clean_pkg "$1" "$2/$subpkg" "$3"
 		done
 	else
@@ -687,7 +688,7 @@ distclean_pkg ()
 	if [ -r "$1/$2/.builddata" ]; then
 		# means this is a directory of sub-packages which get distcleaned together
 		source "$1/$2/.builddata"
-		for subpkg in $SUBPKGS; do
+		for subpkg in $CLEANSUBPKGS; do
 			distclean_pkg "$1" "$2/$subpkg" "$3"
 		done
 	else
@@ -1358,6 +1359,17 @@ do
 		;;
 	X--dry-run)
 		DRYRUN=1
+		;;
+	X--svn-user=*)
+		SVNUSER=$(printf '%s\n' $1 | $SED -e 's/^[^=]*=//')
+		;;
+	X--svn-user)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --svn-user requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		SVNUSER="$1"
 		;;
 	X*)
 		# must be an action
