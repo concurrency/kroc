@@ -105,6 +105,10 @@ Directories
 
     Contributed documentation, libraries and examples.
 
+  occamdoc/
+
+    The occam documentation tool.
+
 
 Note: most directories contain further README files.
 
