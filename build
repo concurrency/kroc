@@ -106,13 +106,14 @@ CONTRIB_SRC=contrib
 MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
-SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster pony cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster pony cif kroc-doc cgtests kroc-contrib)
+OCCAMDOC_SRC=occamdoc
+SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster pony cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
+SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster pony cif kroc-doc cgtests kroc-contrib occamdoc)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC \
-	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $CONTRIB_SRC"
+	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $CONTRIB_SRC $OCCAMDOC_SRC"
 FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
 
 
@@ -246,6 +247,7 @@ choices for <pkg> are:
   sdlraster                    SDLRaster SDL based raster graphics
   pony                         pony (kroc-net) networking infrastructure
   doc                          documentation
+  occamdoc                     occam documentation tool
   contrib                      contributed programs/libraries/documentation
   examples                     all example programs, which are:
     bsclib_examples            blocking system calls example programs
@@ -1043,10 +1045,17 @@ svn_update ()
 				#     copy anything over that's either a file, or a directory that doesn't exist in the source tree
 				#
 
-				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-					$SVN checkout $QFLAGS --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNHOST${SVN_REPOSS[i]}/trunk/" "$TMPPATH" || CHECKOUT_FAILED=1
+				if [ "${SVN_RESPOSS[i]}" = "occamdoc" ]; then
+					# slightly special, no trunk/ branch
+					TRUNKSTR=""
 				else
-					$SVN checkout $QFLAGS "$SVNHOST${SVN_REPOSS[i]}/trunk/" "$TMPPATH" || CHECKOUT_FAILED=1
+					TRUNKSTR="/trunk"
+				fi
+
+				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
+					$SVN checkout $QFLAGS --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNHOST${SVN_REPOSS[i]}$TRUNKSTR/" "$TMPPATH" || CHECKOUT_FAILED=1
+				else
+					$SVN checkout $QFLAGS "$SVNHOST${SVN_REPOSS[i]}$TRUNKSTR/" "$TMPPATH" || CHECKOUT_FAILED=1
 				fi
 
 				if [ "$CHECKOUT_FAILED" -eq 1 ]; then
@@ -1061,9 +1070,9 @@ svn_update ()
 				nolder=0
 
 				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-					REPOSFILES=".svn $($SVN ls --recursive --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNHOST${SVN_REPOSS[i]}/trunk/")"
+					REPOSFILES=".svn $($SVN ls --recursive --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNHOST${SVN_REPOSS[i]}$TRUNKSTR/")"
 				else
-					REPOSFILES=".svn $($SVN ls --recursive "$SVNHOST${SVN_REPOSS[i]}/trunk/")"
+					REPOSFILES=".svn $($SVN ls --recursive "$SVNHOST${SVN_REPOSS[i]}$TRUNKSTR/")"
 				fi
 				for rfile in $REPOSFILES; do
 					if [ -f "$TMPPATH/$rfile" ]; then
@@ -1833,6 +1842,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 	fi
 	ACTIONLIST="$ACTIONLIST \
 		preconfigure-contrib configure-contrib make-contrib install-contrib \
+		configure-occamdoc make-occamdoc install-occamdoc \
 		install-dynproc install-manpages \
 		configure-doc make-doc install-doc \
 		calibrate-clock"
@@ -2483,6 +2493,11 @@ for action in $ACTIONLIST; do
 			#{{{  doc: documentation
 		Xdoc)
 			PKG_SRC=$DOC_SRC
+			;;
+			#}}}
+			#{{{  occamdoc: occamdoc tool
+		Xoccamdoc)
+			PKG_SRC=$OCCAMDOC_SRC
 			;;
 			#}}}
 		X*)
