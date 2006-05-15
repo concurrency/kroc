@@ -2,6 +2,8 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+15/05/2006	ats	occamdoc moved within repository, build script updated
+15/05/2006	frmb	put 1.4.1-pre4 together
 15/05/2006	frmb	merged in Adam's occamdoc tool
 14/05/2006	frmb	fixed some of the interfacing code in CCSP, normalised a bit
 09/05/2006	frmb	added some priority-free calls to CCSP
