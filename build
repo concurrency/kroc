@@ -1031,6 +1031,7 @@ svn_update ()
 			else
 				#{{{  not under version control, check it out
 				printf 'checkout-%s ' ${SVN_REPOSS[i]}
+				mkdir -p $DIST_DIR/${SVN_SRCS[i]}
 
 				if [ "${SVN_SRCS[i]}" = "." ]; then
 					TMPPATH="$DIST_DIR/THISDIR.svntmp"
@@ -1045,13 +1046,7 @@ svn_update ()
 				#     copy anything over that's either a file, or a directory that doesn't exist in the source tree
 				#
 
-				if [ "${SVN_RESPOSS[i]}" = "occamdoc" ]; then
-					# slightly special, no trunk/ branch
-					TRUNKSTR=""
-				else
-					TRUNKSTR="/trunk"
-				fi
-
+				TRUNKSTR="/trunk"
 				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
 					$SVN checkout $QFLAGS --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNHOST${SVN_REPOSS[i]}$TRUNKSTR/" "$TMPPATH" || CHECKOUT_FAILED=1
 				else
