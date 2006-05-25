@@ -542,13 +542,34 @@ configure_pkg ()
 		source "$2/$3/.builddata"
 		for subpkg in $SUBPKGS; do
 			# do appropriate test for configuring this sub-package
-			if [ -x "$2/$3/$subpkg/configure" ]; then
+			if [ -f "$2/$3/$subpkg/configure.in" ] || [ -f "$2/$3/$subpkg/configure.ac" ]; then
 				configure_pkg "$1" "$2" "$3/$subpkg" "$4"
 			fi
 		done
 	else
 		CURRENT_DIR="$(pwd)"
 		cd "$2/$3"
+		# configure files not present or out of date ?
+		if [ -f configure.in ]; then
+			CONFIG_IN="configure.in"
+		elif [ -f configure.ac ]; then
+			CONFIG_IN="configure.ac"
+		else
+			CONFIG_IN=""
+		fi
+		if [ "$CONFIG_IN" != "" ]; then
+			if [ ! -f Makefile.in ] || [ ! -f configure ] || [ Makefile.in -ot Makefile.am ] || [ configure -ot $CONFIG_IN ]; then
+				printf '%s: package in %s needs automake files updating\n' "$0" $3 | tee -a "$DUMPOUT"
+				(autoreconf -f -i 2>&1 && touch .success) | tee -a "$DUMPOUT"
+				if [ -f .success ]; then
+					rm .success
+				else
+					printf 'error while autoreconfing in %s' "$3" | tee -a "$DUMPOUT" 1>&2
+					deferred_install_error
+					return 1
+				fi
+			fi
+		fi
 		# already configured ?
 		if [ -f Makefile.in ] && [ -f Makefile ] && [ "$FORCECONFIGURE" = "" ]; then
 			printf '%s: package in %s looks configured, not re-configuring\n' "$0" $3 | tee -a "$DUMPOUT"
