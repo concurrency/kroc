@@ -128,6 +128,7 @@ PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 DFL_SVNUSER="krocuser"
 DFL_SVNPASS="krocuser"
+SVNREV="HEAD"
 SVNUSER="$DFL_SVNUSER"
 SVNHOST="https://subversion.frmb.org/svn/"
 # things set in typescript_head are: SED, AWK, MAKE, WGET, SVN
@@ -206,6 +207,7 @@ where options are:
   --svn-update                 update source packages to latest versions available via subversion
   --svn-list                   list all files under version control
   --svn-user=<name>            set username for subversion repository access
+  --svn-rev=<rev>              set revision number for subversion updates
 
 and actions are:
   build                        build everything (default if not specified)
@@ -1110,9 +1112,9 @@ svn_update ()
 
 			UPDATE_FAILED=0
 			if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-				$SVN up --username "$SVNUSER" --password "$DFL_SVNPASS" $QFLAGS || UPDATE_FAILED=1
+				$SVN up -r "$SVNREV" --username "$SVNUSER" --password "$DFL_SVNPASS" $QFLAGS || UPDATE_FAILED=1
 			else
-				$SVN up $QFLAGS || UPDATE_FAILED=1
+				$SVN up -r "$SVNREV" $QFLAGS || UPDATE_FAILED=1
 			fi
 
 			if [ $UPDATE_FAILED -eq 1 ]; then
@@ -1374,6 +1376,17 @@ do
 			exit 1
 		fi
 		SVNUSER="$1"
+		;;
+	X--svn-rev=*)
+		SVNREV=$(printf '%s\n' $1 | $SED -e 's/^[^=]*=//')
+		;;
+	X--svn-rev)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --svn-rev requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		SVNREV="$1"
 		;;
 	X*)
 		# must be an action
