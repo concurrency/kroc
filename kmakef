@@ -124,6 +124,7 @@ sub path_search ($$$) {
 
   my $dir;
   foreach $dir (@path) {
+print "checking for $file in $dir\n";
     my $this_dir=$dir;
     $this_dir.="/" if $this_dir !~ m%/$%;
     $this_dir='' if $this_dir eq './';
@@ -310,14 +311,17 @@ sub get_lib_inc_real_path ($$$) {
 }
 
 
-sub rename_to_native (@) {
+sub rename_to_native ($$) {
+  my($names_ref, $cclib_search_ref)=@_;
   my(@result);
   my $name;
-  for $name (@_) {
+  for $name (@$names_ref) {
     my $original_name=$name;
-    $name=  "$1.o" if $name =~ /^(.+)\.tce$/;
-    $name=~ s%^(.+)/([^/]+)\.lib$%$1/lib$2.so%;
-    $name=~ s%^([^/]+)\.lib$%lib$1.so%;
+    if ($name =~ /^(.+)\.tce$/) {
+      $name="$1.o";
+    } elsif ($name =~ m%([^/]+)\.lib$%) {
+      $name=path_search("lib$1.so", $cclib_search_ref, 1);
+    }
     warn "$::prog_name:     Renamed dependency $original_name to $name\n" if $::verbose and $name ne $original_name;
     push(@result, $name);
   }
@@ -325,8 +329,8 @@ sub rename_to_native (@) {
 }
 
 
-sub build_kmakefile ($$$$$$$) {
-  my($targets_ref, $kmakefile, $inc_search_ref, $lib_search_ref,
+sub build_kmakefile ($$$$$$$$) {
+  my($targets_ref, $kmakefile, $inc_search_ref, $lib_search_ref, $cclib_search_ref,
      $extra_inc_search_ref, $extra_lib_search_ref, $cmdline)=@_;
 
   my $targets_str="@$targets_ref";
@@ -473,20 +477,20 @@ sub build_kmakefile ($$$$$$$) {
 	@dep_files=();
 	my $dep;
 	foreach $dep (@full_dep_files) {
-	  my $new_name=rename_to_native($dep);
+	  my $new_name=rename_to_native([$dep], $cclib_search_ref);
 	  push(@dep_files, $new_name);
 	  warn "$::prog_name:     Added $new_name to dependencies\n" if $::verbose;
 	}
 
-	$file=rename_to_native($file);
+	$file=rename_to_native([$file], $cclib_search_ref);
 
 	# Only make targets of executables, libraries and objects
 	push(@native_order, $file);
 
       } else {
 	warn "$::prog_name:   Renaming dependencies for $file\n" if $::verbose;
-	@dep_files=rename_to_native(@dep_files);	
-	$file=rename_to_native($file);
+	@dep_files=rename_to_native(\@dep_files, $cclib_search_ref);	
+	$file=rename_to_native([$file], $cclib_search_ref);
       } # if ($suffix ...)
 
       $native_depends_on{$file}="@dep_files";
@@ -569,14 +573,19 @@ sub main {
 
   my $path;
   chop($path=`kroc --incpath`);
-  my(@inc_search)=(split(/ /,$path));
+  my(@inc_search)=(split(/:/,$path));
   # Remove current directory, always first
   shift(@inc_search);
 
   chop($path=`kroc --libpath`);
-  my(@lib_search)=(split(/ /,$path));
+  my(@lib_search)=(split(/:/,$path));
   # Remove current directory, always first
   shift(@lib_search);
+
+  chop($path=`kroc --cclibpath`);
+  my(@cclib_search)=grep(s/^-L//, split(/ /,$path));
+  # Remove current directory, always first
+  shift(@cclib_search);
 
   my $cmdline="@args";
 
@@ -635,6 +644,7 @@ EOT
 
   unshift(@inc_search, @extra_inc_search) if @extra_inc_search;
   unshift(@lib_search, @extra_lib_search) if @extra_lib_search;
+  unshift(@cclib_search, @extra_lib_search) if @extra_lib_search;
 
   if ($::verbose) {
     warn "$::prog_name: Search paths being used are:\n";
@@ -687,7 +697,7 @@ EOT
   }
   exit 0 unless @targets;
 
-  build_kmakefile(\@targets, $outfile, \@inc_search, \@lib_search,
+  build_kmakefile(\@targets, $outfile, \@inc_search, \@lib_search, \@cclib_search,
                   \@extra_inc_search, \@extra_lib_search, $cmdline);
 }
 
