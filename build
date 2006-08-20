@@ -103,6 +103,8 @@ CIF_SRC=cif/libsrc
 CIF_EXAMPLES_SRC=cif/examples
 CGTESTS_SRC=src/cgtests-1.3
 CONTRIB_SRC=contrib
+CONTRIB_MOA_LIBSRC=contrib/moa/libsrc
+CONTRIB_MOA_EXAMPLES=contrib/moa/examples
 MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
@@ -114,7 +116,7 @@ ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRA
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC \
 	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $CONTRIB_SRC $OCCAMDOC_SRC"
-FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC"
+FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $CONTRIB_MOA_LIBSRC $CONTRIB_MOA_EXAMPLES"
 
 
 #}}}
@@ -1920,6 +1922,11 @@ for action in $ACTIONLIST; do
 			NEWACTIONLIST="$NEWACTIONLIST $CGTESTS_ACTIONS"
 		fi
 		;;
+	Xcontrib-moa)
+		# exclusive
+		NEWACTIONLIST="configure-contrib_moa_libsrc make-contrib_moa_libsrc install-contrib_moa_libsrc \
+			configure-contrib_moa_examples make-contrib_moa_examples install-contrib_moa_examples"
+		;;
 	X*)
 		if [ "$NEWACTIONLIST" = "" ]; then
 			NEWACTIONLIST="$action"
@@ -2516,6 +2523,16 @@ for action in $ACTIONLIST; do
 		Xcontrib)
 			# this is a bit special -- relies on some metadata in the contrib directory to work
 			PKG_SRC=$CONTRIB_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  contrib-*: contrib-specific packages
+		Xcontrib_moa_libsrc)
+			PKG_SRC=$CONTRIB_MOA_LIBSRC
+			NEED_KROC_ENV=1
+			;;
+		Xcontrib_moa_examples)
+			PKG_SRC=$CONTRIB_MOA_EXAMPLES
 			NEED_KROC_ENV=1
 			;;
 			#}}}
