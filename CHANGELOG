@@ -2,6 +2,7 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+20/08/2006	frmb	added MySQL occam API (moa) to the contrib area
 15/05/2006	ats	occamdoc moved within repository, build script updated
 15/05/2006	frmb	put 1.4.1-pre4 together
 15/05/2006	frmb	merged in Adam's occamdoc tool
