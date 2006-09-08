@@ -42,15 +42,22 @@ else
   DMOPTLIB=
 fi
 
+dnl check for the dynamic linker (just so we can report it in KRoC really)
+AC_CHECK_TOOL(LD,ld)
+
+ARCH_LDFLAGS=""
 ARCH_DEFS=""
 
 case "${target_cpu}" in
  x86_64)
+  # 32-bit mode please
   ARCH_DEFS="-m32"
+  ARCH_LDFLAGS="-melf_i386"
   ;;
 esac
 
 AC_SUBST(ARCH_DEFS)
+AC_SUBST(ARCH_LDFLAGS)
 
 needlibrt=
 

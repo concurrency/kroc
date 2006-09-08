@@ -86,6 +86,8 @@ fi
 #{{{  setup various variables
 
 CC=@CC@
+LD=@LD@
+ARCH_LDFLAGS="@ARCH_LDFLAGS@"
 
 # Only the 'kroc' program need be in the users path
 #PATH=$KROC/bin:$PATH
@@ -227,6 +229,8 @@ showincpath=
 showascc=
 showcflags=
 showcc=
+showld=
+showldflags=
 delete_temp=yes
 enable_udc=
 skip_link=
@@ -466,6 +470,16 @@ do
 		#{{{  --cc  show C compiler
 	--cc)
 		showcc=yes
+		;;
+		#}}}
+		#{{{  --ld  show dynamic linker
+	--ld)
+		showld=yes
+		;;
+		#}}}
+		#{{{  --ldflags  show dynamic linker flags
+	--ldflags)
+		showldflags=yes
 		;;
 		#}}}
 		#{{{  --tranflags  show translator flags
@@ -843,6 +857,14 @@ if [ $showtran ]; then
 	printf '%s\n' "$octran"
 	exit 0
 fi
+if [ $showld ]; then
+	printf '%s\n' "$ld"
+	exit 0
+fi
+if [ $showldflags ]; then
+	printf '%s\n' "$ARCH_LDFLAGS"
+	exit 0
+fi
 
 if [ $makelib ]
 then
@@ -923,6 +945,8 @@ Exclusive options:
   --incpath              Print path to occam include files
   --cclibpath            Print path to occam libraries in CC -L.. form
   --ccincpath            Print path to occam include files in CC -I.. form
+  --ld                   Print path to dynamic linker (for generating shared libraries)
+  --ldflags              Print linker flags to be used when building shared libraries
 Additional options:
   -di                    Enable insert debugging
   -dm                    Enable dynamic memory debugging
@@ -1207,7 +1231,7 @@ fi
 
 if [ $makelib ]; then
 	efile=$efile".so"
-	cmd="$ld $ldopts -o $efile $objs"
+	cmd="$ld $ARCH_LDFLAGS $ldopts -o $efile $objs"
 elif [ $skip_link ]; then
 	test
 else
