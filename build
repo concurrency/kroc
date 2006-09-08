@@ -1927,6 +1927,12 @@ for action in $ACTIONLIST; do
 		NEWACTIONLIST="configure-contrib_moa_libsrc make-contrib_moa_libsrc install-contrib_moa_libsrc \
 			configure-contrib_moa_examples make-contrib_moa_examples install-contrib_moa_examples"
 		;;
+	Xccsp)
+		NEWACTIONLIST="$NEWACTIONLIST preconfigure-ccsp configure-ccsp make-ccsp install-ccsp"
+		;;
+	Xtranx86)
+		NEWACTIONLIST="$NEWACTIONLIST configure-tranx86 make-tranx86 install-tranx86"
+		;;
 	X*)
 		if [ "$NEWACTIONLIST" = "" ]; then
 			NEWACTIONLIST="$action"
