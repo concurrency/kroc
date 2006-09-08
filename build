@@ -1927,11 +1927,32 @@ for action in $ACTIONLIST; do
 		NEWACTIONLIST="configure-contrib_moa_libsrc make-contrib_moa_libsrc install-contrib_moa_libsrc \
 			configure-contrib_moa_examples make-contrib_moa_examples install-contrib_moa_examples"
 		;;
+	Xccspt)
+		NEWACTIONLIST="$NEWACTIONLIST preconfigure-ccsp configure-ccspt make-ccspt install-ccspt"
+		;;
 	Xccsp)
 		NEWACTIONLIST="$NEWACTIONLIST preconfigure-ccsp configure-ccsp make-ccsp install-ccsp"
 		;;
+	Xcputimerutils)
+		NEWACTIONLIST="$NEWACTIONLIST configure-cputimerutils make-cputimerutils install-cputimerutils"
+		;;
+	Xmkoccdeps)
+		NEWACTIONLIST="$NEWACTIONLIST configure-mkoccdeps make-mkoccdeps install-mkoccdeps"
+		;;
+	Xocc21)
+		NEWACTIONLIST="$NEWACTIONLIST configure-occ21 make-occ21 install-occ21"
+		;;
+	Xilibr)
+		NEWACTIONLIST="$NEWACTIONLIST configure-ilibr make-ilibr install-ilibr"
+		;;
 	Xtranx86)
 		NEWACTIONLIST="$NEWACTIONLIST configure-tranx86 make-tranx86 install-tranx86"
+		;;
+	Xkroc)
+		NEWACTIONLIST="$NEWACTIONLIST configure-kroc make-kroc install-kroc"
+		;;
+	Xkrocif)
+		NEWACTIONLIST="$NEWACTIONLIST preconfigure-krocif configure-krocif make-krocif install-krocif"
 		;;
 	X*)
 		if [ "$NEWACTIONLIST" = "" ]; then
