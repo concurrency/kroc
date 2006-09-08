@@ -97,10 +97,10 @@ host_cpu="@KROC_HOST_CPU@"
 host_os="@KROC_HOST_OS@"
 # -kf : use fast CCSP interface
 octranopts="-kf @TRANEXTRAOPTS@ @TENABLEMP@"
-ccopts=""
+ccopts="@ARCH_DEFS@"
 ocllibs=""
 ocrtslibs="-lm @DLOPTLIB@ @DEXTLIB@"
-extcflags="@DSYSOPTS@ @EXTCCEXTRAOPTS@"
+extcflags="@ARCH_DEFS@ @DSYSOPTS@ @EXTCCEXTRAOPTS@"
 dtraces=0
 
 case "$host_os" in
@@ -157,7 +157,7 @@ occwopts=
 occopts="-etc -w -y -znd -znec -udo -zncc -init -xin -mobiles -zrpe @OCCEXTRAOPTS@"
 
 case "$host_cpu" in
-	i386 | i486 | i586 | i686)
+	i386 | i486 | i586 | i686 | x86_64)
 		occopts="$occopts -zcxdiv -zcxrem -zzs"
 		;;
 	sparc*)

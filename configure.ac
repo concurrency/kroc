@@ -42,6 +42,16 @@ else
   DMOPTLIB=
 fi
 
+ARCH_DEFS=""
+
+case "${target_cpu}" in
+ x86_64)
+  ARCH_DEFS="-m32"
+  ;;
+esac
+
+AC_SUBST(ARCH_DEFS)
+
 needlibrt=
 
 case "$host_os" in
@@ -74,7 +84,7 @@ AC_CHECK_LIB(rt,sem_init,[have_librt=yes],[have_librt=no])
 case "$host_os" in
 *bsd* | *BSD*)
  SAVED_CFLAGS="$CFLAGS"
- CFLAGS="$CFLAGS -pthread"
+ CFLAGS="$ARCH_DEFS $CFLAGS -pthread"
  AC_CHECK_FUNC(pthread_create,[have_pthread_libcr=yes],[have_pthread_libcr=no])
  CFLAGS="$SAVED_CFLAGS"
  ;;
