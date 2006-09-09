@@ -1934,7 +1934,7 @@ for action in $ACTIONLIST; do
 		NEWACTIONLIST="$NEWACTIONLIST preconfigure-ccsp configure-ccsp make-ccsp install-ccsp"
 		;;
 	Xcputimerutils)
-		NEWACTIONLIST="$NEWACTIONLIST configure-cputimerutils make-cputimerutils install-cputimerutils"
+		NEWACTIONLIST="$NEWACTIONLIST cputimers-support configure-cputimerutils make-cputimerutils install-cputimerutils"
 		;;
 	Xmkoccdeps)
 		NEWACTIONLIST="$NEWACTIONLIST configure-mkoccdeps make-mkoccdeps install-mkoccdeps"
@@ -1946,13 +1946,31 @@ for action in $ACTIONLIST; do
 		NEWACTIONLIST="$NEWACTIONLIST configure-ilibr make-ilibr install-ilibr"
 		;;
 	Xtranx86)
-		NEWACTIONLIST="$NEWACTIONLIST configure-tranx86 make-tranx86 install-tranx86"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-tranx86 make-tranx86 install-tranx86"
 		;;
 	Xkroc)
-		NEWACTIONLIST="$NEWACTIONLIST configure-kroc make-kroc install-kroc"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-kroc make-kroc install-kroc"
 		;;
 	Xkrocif)
-		NEWACTIONLIST="$NEWACTIONLIST preconfigure-krocif configure-krocif make-krocif install-krocif"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup preconfigure-krocif configure-krocif make-krocif install-krocif"
+		;;
+	Xinmoslibs)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-inmoslibs make-inmoslibs install-inmoslibs"
+		;;
+	Xbsclib)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-bsclib make-bsclib install-bsclib"
+		;;
+	Xcourse)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-course make-course install-course"
+		;;
+	Xudc)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-udc make-udc install-udc"
+		;;
+	Xcif)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-cif make-cif install-cif"
+		;;
+	Xsdlraster)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-sdlraster make-sdlraster install-sdlraster"
 		;;
 	X*)
 		if [ "$NEWACTIONLIST" = "" ]; then
