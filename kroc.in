@@ -88,6 +88,7 @@ fi
 CC=@CC@
 LD=@LD@
 ARCH_LDFLAGS="@ARCH_LDFLAGS@"
+ARCH_ASFLAGS="@ARCH_ASFLAGS@"
 
 # Only the 'kroc' program need be in the users path
 #PATH=$KROC/bin:$PATH
@@ -230,7 +231,9 @@ showascc=
 showcflags=
 showcc=
 showld=
+showas=
 showldflags=
+showasflags=
 delete_temp=yes
 enable_udc=
 skip_link=
@@ -480,6 +483,16 @@ do
 		#{{{  --ldflags  show dynamic linker flags
 	--ldflags)
 		showldflags=yes
+		;;
+		#}}}
+		#{{{  --as  show assembler
+	--as)
+		showas=yes
+		;;
+		#}}}
+		#{{{  --asflags  show assembler flags
+	--asflags)
+		showasflags=yes
 		;;
 		#}}}
 		#{{{  --tranflags  show translator flags
@@ -865,6 +878,14 @@ if [ $showldflags ]; then
 	printf '%s\n' "$ARCH_LDFLAGS"
 	exit 0
 fi
+if [ $showas ]; then
+	printf '%s\n' "$as"
+	exit 0
+fi
+if [ $showasflags ]; then
+	printf '%s\n' "$ARCH_ASFLAGS"
+	exit 0
+fi
 
 if [ $makelib ]
 then
@@ -1236,6 +1257,7 @@ elif [ $skip_link ]; then
 	test
 else
 	if [ "$host_os" = "cygwin" ]; then
+		#{{{  fudge libraries for cygwin
 		local_ocllibs=""
 		local_ocrts=""
 		foundrts=
@@ -1297,6 +1319,7 @@ else
 		if [ "$foundrts" = "" ]; then
 			printf '%s: (warning) cannot find run-time kernel: %s\n' "$progname" "$ocrts" 1>&2
 		fi
+		#}}}
 	else
 		local_ocllibs="$ocllibs"
 		local_ocrts="$ocrts"
