@@ -1107,6 +1107,7 @@ svn_update ()
 					elif [ -d "$TMPPATH/$rfile" ] && [ ! -d "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ]; then
 						# directory that does not exist locally, move it (will get .svn with this too)
 						ndirs=$((ndirs+1))
+						mkdir -p "$(dirname "$DIST_DIR/${SVN_SRCS[i]}/$rfile")"
 						mv "$TMPPATH/$rfile" "$DIST_DIR/${SVN_SRCS[i]}/$rfile"
 					elif [ -d "$TMPPATH/$rfile" ]; then
 						# directory, ignore it -- do get .svn if present
