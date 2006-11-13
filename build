@@ -2383,6 +2383,7 @@ for action in $ACTIONLIST; do
 		Xcgtests)
 			PKG_SRC=$CGTESTS_SRC
 			NEED_KROC_ENV=1
+			CONF_SPECOPTS="--with-kroc"
 			;;
 			#}}}
 			#{{{  ilibr: inmos librarian
