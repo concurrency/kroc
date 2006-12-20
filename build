@@ -93,6 +93,7 @@ SYNCS_EXAMPLES_SRC=syncs/examples
 DYNPROC_SRC=dynproc/libsrc
 DYNPROC_EXAMPLES_SRC=dynproc/examples
 DEMO_BAR_SRC=demos/bar
+DEMO_GAME_SRC=demos/game
 UDC_SRC=udc/libsrc
 UDC_EXAMPLES_SRC=udc/examples
 SDLRASTER_SRC=sdlraster/libsrc
@@ -114,7 +115,7 @@ SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc l
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
-	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC \
+	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC $DEMO_GAME_SRC \
 	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $CONTRIB_SRC $OCCAMDOC_SRC"
 FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $CONTRIB_MOA_LIBSRC $CONTRIB_MOA_EXAMPLES"
 
@@ -123,9 +124,9 @@ FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $CONTRIB_MOA_LIBSRC $CONTR
 #{{{  release/install settings
 DUMPOUT=
 DUMPMAIL="kroc-bugs@kent.ac.uk"
-VERSION="1.4.1-pre5"
+VERSION="1.4.1-pre6"
 PRERELEASE=1
-NEXTPATCH="1.4.1-pre6"
+NEXTPATCH="1.4.1-pre7"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 DFL_SVNUSER="krocuser"
@@ -261,6 +262,7 @@ choices for <pkg> are:
     dynproc_examples           dynamic occam process examples
     udc_examples               user-defined channels examples
     bar_demo                   animated ALT demonstrator
+    game_demo                  text-based adventure game
     cif_examples               C interface examples
     sdlraster_examples         SDLRaster example programs
 EOF
@@ -1895,6 +1897,7 @@ EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-s
 		configure-udc_examples make-udc_examples install-udc_examples \
 		configure-cif_examples make-cif_examples install-cif_examples \
 		configure-bar_demo make-bar_demo install-bar_demo \
+		configure-game_demo make-game_demo install-game_demo \
 		configure-sdlraster_examples make-sdlraster_examples install-sdlraster_examples"
 if [ "$USEPONY" -eq 1 ]; then
 	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
@@ -2509,6 +2512,12 @@ for action in $ACTIONLIST; do
 			#{{{  bar_demo: the "better-bar" demonstrator
 		Xbar_demo)
 			PKG_SRC=$DEMO_BAR_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  game_demo: the "occam-pi adventure game" demonstrator
+		Xgame_demo)
+			PKG_SRC=$DEMO_GAME_SRC
 			NEED_KROC_ENV=1
 			;;
 			#}}}
