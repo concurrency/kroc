@@ -2,6 +2,11 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+20/12/2006	frmb	added occam-pi adventure game to the distribution
+16/12/2006	frmb	put 1.4.1-pre5 together
+01/12/2006	frmb	various updates to occamdoc and some packages
+08/09/2006	frmb	partial updates to support building on 64-bit AMD Opteron / Linux machines
+02/09/2006	frmb	various updates to tranx86 and CCSP
 20/08/2006	frmb	added MySQL occam API (moa) to the contrib area
 15/05/2006	ats	occamdoc moved within repository, build script updated
 15/05/2006	frmb	put 1.4.1-pre4 together
