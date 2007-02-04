@@ -2,6 +2,10 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+03/02/2006	phw	updates to course sort-pump examples
+19/01/2006	frmb	fixed a small bug in occ21 (ack to db99 for spotting it)
+18/01/2006	ats	occamdoc updates
+28/12/2006	frmb	added MoinMoin Wiki occam-pi parser to the distribution (in doc/)
 20/12/2006	frmb	added occam-pi adventure game to the distribution
 16/12/2006	frmb	put 1.4.1-pre5 together
 01/12/2006	frmb	various updates to occamdoc and some packages
