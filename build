@@ -155,6 +155,7 @@ USER_INSTALL=0
 ALL_SETTINGS=0
 EXTRA_CCSP_CONFIGURE_OPTS=""
 EXTRA_KROC_CONFIGURE_OPTS=""
+NOCC_INSTALL=""
 
 KROCHOST_ARCH=
 KROCHOST_VENDOR=
@@ -188,6 +189,7 @@ where options are:
   --krocdir=<path>             install path for kroc-specific files [PREFIX/share/kroc]
   --extra-ccsp-opts=<opts>     extra CCSP configuration options []
   --extra-kroc-opts=<opts>     extra kroc configuration options []
+  --nocc-install=<path>        path to NOCC install []
   --reconf                     edit configuration
   -A | --all-settings          show all settings in configuration menu
 
@@ -1344,6 +1346,17 @@ do
 		fi
 		EXTRA_KROC_CONFIGURE_OPTS="$1"
 		;;
+	X--nocc-install=*)
+		NOCC_INSTALL=$(printf '%s\n' "$1" | $SED -e 's/^[^=]*=//')
+		;;
+	X--nocc-install)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --nocc-install requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		NOCC_INSTALL="$1"
+		;;
 	X--force-configure)
 		FORCECONFIGURE=1
 		;;
@@ -1512,6 +1525,7 @@ preset_USEMP=$USEMP
 preset_USEPGROUPS=$USEPGROUPS
 preset_EXTRA_CCSP_CONFIGURE_OPTS="$EXTRA_CCSP_CONFIGURE_OPTS"
 preset_EXTRA_KROC_CONFIGURE_OPTS="$EXTRA_KROC_CONFIGURE_OPTS"
+preset_NOCC_INSTALL="$NOCC_INSTALL"
 
 
 #}}}
@@ -1568,6 +1582,7 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				printf ' %sG%s.  support for process groups: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPGROUPS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 				printf ' %sH%s.  support for multi-processor machines: ' "$ANSION2" "$ANSIOFF2"; if [ $USEMP -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3"
 						elif [ $USEMP -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+				printf ' %sI%s.  path to NOCC install: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$NOCC_INSTALL" "$ANSIOFF1"
 				printf ' %sUH%s. subversion-update source: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNHOST" "$ANSIOFF1"
 				printf ' %sUU%s. subversion-update username: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNUSER" "$ANSIOFF1"
 				printf ' %sU%s.  do subversion update\n' "$ANSION2" "$ANSIOFF2"
@@ -1641,6 +1656,14 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				else
 					USEMP=42
 				fi
+			elif [ "$REPLY" = "I" ] || [ "$REPLY" = "i" ] && [ $ALL_SETTINGS -eq 1 ]; then
+				printf '\nlocation of NOCC install (-- to clear): '
+				read tmp_NOCC_INSTALL
+				if [ "$tmp_NOCC_INSTALL" = "--" ]; then
+					NOCC_INSTALL=""
+				elif [ "$tmp_NOCC_INSTALL" ]; then
+					NOCC_INSTALL="$tmp_NOCC_INSTALL"
+				fi
 			elif [ "$REPLY" = "UH" ] || [ "$REPLY" = "uh" ] && [ $ALL_SETTINGS -eq 1 ]; then
 				printf '\nsubversion-update source (URL): '
 				read tmp_SVNHOST
@@ -1704,6 +1727,7 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 	printf 'SVNUSER=%s\n' "$SVNUSER" >> .install_dir
 	printf 'EXTRA_CCSP_CONFIGURE_OPTS=%s\n' "$EXTRA_CCSP_CONFIGURE_OPTS" >> .install_dir
 	printf 'EXTRA_KROC_CONFIGURE_OPTS=%s\n' "$EXTRA_KROC_CONFIGURE_OPTS" >> .install_dir
+	printf 'NOCC_INSTALL=%s\n' "$NOCC_INSTALL" >> .install_dir
 
 	printf '\n\n' >> .install_dir
 
@@ -1811,6 +1835,9 @@ if [ "$EXTRA_CCSP_CONFIGURE_OPTS" != "$preset_EXTRA_CCSP_CONFIGURE_OPTS" ]; then
 	FORCECONFIGURE=1
 fi
 if [ "$EXTRA_KROC_CONFIGURE_OPTS" != "$preset_EXTRA_KROC_CONFIGURE_OPTS" ]; then
+	FORCECONFIGURE=1
+fi
+if [ "$NOCC_INSTALL" != "$preset_NOCC_INSTALL" ]; then
 	FORCECONFIGURE=1
 fi
 
@@ -2427,6 +2454,9 @@ for action in $ACTIONLIST; do
 			fi
 			if [ "$EXTRA_KROC_CONFIGURE_OPTS" ]; then
 				CONF_SPECOPTS="$CONF_SPECOPTS $EXTRA_KROC_CONFIGURE_OPTS"
+			fi
+			if [ "$NOCC_INSTALL" ]; then
+				CONF_SPECOPTS="$CONF_SPECOPTS --with-nocc=$NOCC_INSTALL"
 			fi
 			PKG_SRC=$KROC_SRC
 			;;
