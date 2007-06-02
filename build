@@ -2040,6 +2040,10 @@ for action in $ACTIONLIST; do
 		#{{{  setbuildtarget: guesses the host system type and sets KROCHOST_ARCH, KROCHOST_VENDOR and KROCHOST_OS
 	Xsetbuildtarget)
 		if [ ! -x $DIST_DIR/$CCSP_SRC/config.guess ]; then
+			printf '%s: generating config.guess in CCSP source tree...\n' "$0" 1>&2
+			(cd $DIST_DIR/$CCSP_SRC && autoreconf -f -i 2>&1)
+		fi
+		if [ ! -x $DIST_DIR/$CCSP_SRC/config.guess ]; then
 			printf '%s: missing config.guess in CCSP source tree!\n' "$0"  1>&2
 			# this is pretty bad..
 			install_error
