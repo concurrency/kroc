@@ -496,6 +496,36 @@ typescript_head ()
 
 }
 #}}}
+#{{{ check_autoconf (dist-dir, package-src-dir)
+# Ensure that the autoconf scripts in a package have been built.
+check_autoconf ()
+{
+	CURRENT_DIR="$(pwd)"
+	cd "$1/$2"
+	# configure files not present or out of date ?
+	if [ -f configure.in ]; then
+		CONFIG_IN="configure.in"
+	elif [ -f configure.ac ]; then
+		CONFIG_IN="configure.ac"
+	else
+		CONFIG_IN=""
+	fi
+	if [ "$CONFIG_IN" != "" ]; then
+		if [ ! -f Makefile.in ] || [ ! -f configure ] || [ Makefile.in -ot Makefile.am ] || [ configure -ot $CONFIG_IN ]; then
+			printf '%s: package in %s needs automake files updating\n' "$0" "$2" | tee -a "$DUMPOUT"
+			(autoreconf -f -i 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			if [ -f .success ]; then
+				rm .success
+			else
+				printf 'error while autoreconfing in %s' "$2" | tee -a "$DUMPOUT" 1>&2
+				deferred_install_error
+				return 1
+			fi
+		fi
+	fi
+	cd "$CURRENT_DIR"
+}
+#}}}
 #{{{ preconfigure_pkg (prefix-dir, dist-dir, package-src-dir [, preconf-opt])
 preconfigure_pkg ()
 {
@@ -515,6 +545,7 @@ preconfigure_pkg ()
 			fi
 		done
 	else
+		check_autoconf "$2" "$3"
 		CURRENT_DIR="$(pwd)"
 		cd "$2/$3"
 		if [ "$4" = "" ]; then
@@ -553,29 +584,9 @@ configure_pkg ()
 			fi
 		done
 	else
+		check_autoconf "$2" "$3"
 		CURRENT_DIR="$(pwd)"
 		cd "$2/$3"
-		# configure files not present or out of date ?
-		if [ -f configure.in ]; then
-			CONFIG_IN="configure.in"
-		elif [ -f configure.ac ]; then
-			CONFIG_IN="configure.ac"
-		else
-			CONFIG_IN=""
-		fi
-		if [ "$CONFIG_IN" != "" ]; then
-			if [ ! -f Makefile.in ] || [ ! -f configure ] || [ Makefile.in -ot Makefile.am ] || [ configure -ot $CONFIG_IN ]; then
-				printf '%s: package in %s needs automake files updating\n' "$0" $3 | tee -a "$DUMPOUT"
-				(autoreconf -f -i 2>&1 && touch .success) | tee -a "$DUMPOUT"
-				if [ -f .success ]; then
-					rm .success
-				else
-					printf 'error while autoreconfing in %s' "$3" | tee -a "$DUMPOUT" 1>&2
-					deferred_install_error
-					return 1
-				fi
-			fi
-		fi
 		# already configured ?
 		if [ -f Makefile.in ] && [ -f Makefile ] && [ "$FORCECONFIGURE" = "" ]; then
 			printf '%s: package in %s looks configured, not re-configuring\n' "$0" $3 | tee -a "$DUMPOUT"
@@ -2039,10 +2050,7 @@ for action in $ACTIONLIST; do
 	case X$action in
 		#{{{  setbuildtarget: guesses the host system type and sets KROCHOST_ARCH, KROCHOST_VENDOR and KROCHOST_OS
 	Xsetbuildtarget)
-		if [ ! -x $DIST_DIR/$CCSP_SRC/config.guess ]; then
-			printf '%s: generating config.guess in CCSP source tree...\n' "$0" 1>&2
-			(cd $DIST_DIR/$CCSP_SRC && autoreconf -f -i 2>&1)
-		fi
+		check_autoconf "$DIST_DIR" "$CCSP_SRC"
 		if [ ! -x $DIST_DIR/$CCSP_SRC/config.guess ]; then
 			printf '%s: missing config.guess in CCSP source tree!\n' "$0"  1>&2
 			# this is pretty bad..
