@@ -1772,7 +1772,7 @@ if [ "$PRERELEASE" = "1" ]; then
 **  in the BUGS file included in the distribution  **
 **                                                 **
 **  please report new bugs / suspicious behaviour  **
-**  to: frmb@kent.ac.uk  or  kroc-bugs@kent.ac.u   **
+**  to: frmb@kent.ac.uk  or  kroc-bugs@kent.ac.uk  **
 **                                                 **
 *****************************************************
 EOF
