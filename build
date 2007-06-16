@@ -465,7 +465,7 @@ typescript_head ()
 	uname | grep BSD 1> /dev/null && XX_PROGRAMS="${AS:-as} ${CC:-gcc}" || XX_PROGRAMS="${AS:-as} ${CC:-gcc} tee"
 	for prog in $XX_PROGRAMS; do
 		printf '        %s\n' "$prog" >> "$DUMPOUT"
-		$prog --version >> "$DUMPOUT" || software_missing "$prog"
+		"$prog" --version >> "$DUMPOUT" || software_missing "$prog"
 	done
 	printf '\n' >> "$DUMPOUT"
 
