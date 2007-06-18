@@ -1005,6 +1005,32 @@ EOF
 	exit 0
 fi
 
+#{{{ parse_uselibs
+# Search an ETC file for #PRAGMA COMMENT ".USELIB libname" directives, and add
+# the referenced libraries to $ocllibs if they're not already there.
+parse_uselibs () {
+	local tcefile="$1" libs lib opt add
+
+	libs=$($octran -C "$tcefile" | awk '/^\.USELIB / { print $2 }')
+	for lib in $libs; do
+		opt="-l$lib"
+
+		add=1
+		for used in $ocllibs; do
+			if [ "$used" = "$opt" ] ; then
+				add=0
+			fi
+		done
+		if [ "$add" = "1" ] ; then
+			if [ "$verbose" ] ; then
+				printf '%s: Using library %s\n' "$progname" "$lib" 1>&2
+			fi
+			ocllibs="$ocllibs $opt"
+		fi
+	done
+}
+#}}}
+
 objs=
 tmp_objs=
 efile=
@@ -1087,6 +1113,17 @@ for src in $srcs; do
 
 	if [ $suffix != "occ" ] && [ $suffix != "co" ] && [ $suffix != "mcsp" ] && [ "X$compile" != "X" ]; then
 		objs="$objs $origsrc"
+
+		if [ "$suffix" = "o" ] ; then
+			# Look for a corresponding .tce/.etc file.
+			for tcesuffix in .tce .etc; do
+				tcefile="$base$tcesuffix"
+				if [ -e "$tcefile" ] ; then
+					parse_uselibs "$tcefile"
+				fi
+			done
+		fi
+
 		continue
 	fi
 
@@ -1233,6 +1270,8 @@ for src in $srcs; do
 			fi
 		fi
 	fi
+
+	parse_uselibs "$tcefile"
 
 done
 
