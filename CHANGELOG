@@ -2,6 +2,10 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+19/06/2007	ats	various package updates for module mechanism
+19/06/2007	ats	updates to KRoC wrapper script
+18/06/2007	ats	added -C option to tranx86 to dump #PRAGMA COMMENTs
+17/06/2007	frmb	minor updates for NOCC
 14/04/2007	cgr	CCSP fixes for RMoX
 04/04/2007	ats	occam-doc updates and mechanical occam-doc-ifying of inmos libraries
 06/03/2007	frmb	added NOCC path to build configuration (passed to kroc script configure)
