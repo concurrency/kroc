@@ -4,7 +4,7 @@
 
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
-bin_SCRIPTS=kroc kmakef setup.sh setup.csh
+bin_SCRIPTS=kroc kmakef kmakemodule setup.sh setup.csh
 
 install-exec-local: kroc.conf
 	$(mkdir_p) "$(DESTDIR)$(sysconfdir)"
@@ -14,6 +14,6 @@ dist_man1_MANS=kroc.1 kmakef.1
 dist_man5_MANS=kroc.conf.5
 
 DISTCLEANFILES=kroc setup.sh setup.csh kroc.conf
-EXTRA_DIST=kroc.conf.in setup.sh.in setup.csh.in kroc.in
+EXTRA_DIST=kroc.conf.in setup.sh.in setup.csh.in kroc.in kmakemodule.in
 
 
