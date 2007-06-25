@@ -13,6 +13,9 @@ install-exec-local: kroc.conf
 dist_man1_MANS=kroc.1 kmakef.1
 dist_man5_MANS=kroc.conf.5
 
+aclocaldir = $(prefix)/share/aclocal
+aclocal_DATA = occbuild.m4
+
 DISTCLEANFILES=kroc setup.sh setup.csh kroc.conf
 EXTRA_DIST=kroc.conf.in setup.sh.in setup.csh.in kroc.in kmakemodule.in occbuild.in
 
