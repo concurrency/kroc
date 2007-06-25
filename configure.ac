@@ -256,6 +256,6 @@ AC_SUBST(KROC_KROCDIR)
 AC_SUBST(KROC_CONFIGDIR)
 AC_SUBST(CONFFILEPREFIX)
 
-AC_OUTPUT([kroc kmakemodule kroc.conf setup.sh setup.csh Makefile])
+AC_OUTPUT([kroc kmakemodule occbuild kroc.conf setup.sh setup.csh Makefile])
 
 
