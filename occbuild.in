@@ -93,13 +93,6 @@ def capture(cmd):
 
 	return data
 
-def make_lbb(lbb, objs):
-	"""Make a .lbb file that lists the given objects."""
-	f = open(lbb, "w")
-	for object in objs:
-		f.write("%s\n" % object)
-	f.close()
-
 def make_shared(library, objs):
 	"""Link a bunch of native objects into a shared library."""
 	run(programs["gcc"] + ["-shared", "-o", library] + objs + linker_opts)
@@ -174,8 +167,7 @@ class KRoCToolchain:
 		objs = [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs
 		make_shared("lib%s.so" % base, objs)
 
-		make_lbb(base + ".lbb", occam_objs)
-		run(programs["ilibr"] + ["-f", base + ".lbb", "-o", base + ".lib"])
+		run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
 
 	def program(self, occam_objs, native_objs, base):
 		run(programs["kroc"] + [base + ".occ"] + occam_objs + native_objs)
@@ -228,8 +220,7 @@ class TVMToolchain:
 		if native_objs != []:
 			make_shared(base + ".so", native_objs)
 
-		make_lbb(base + ".lbb", occam_objs)
-		run(programs["skroc"] + ["--library", base + ".lbb"])
+		run(programs["skroc"] + ["-f", base, "--library"] + occam_objs)
 
 	def program(self, occam_objs, native_objs, base):
 		if native_objs != []:
