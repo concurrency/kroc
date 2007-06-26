@@ -194,7 +194,7 @@ class KRoCToolchain:
 			delete(base + ".lbb")
 			delete("lib%s.so" % base)
 		elif ext == "":
-			pass
+			self.clean(base + ".tce")
 
 	def cflags(self):
 		cflags = "-DOCCBUILD_KROC"
@@ -263,6 +263,7 @@ class TVMToolchain:
 			delete(base + ".precomp")
 			delete(base + ".so")
 		elif ext == "":
+			self.clean(base + ".tce")
 			delete(base + ".tbc")
 
 	def cflags(self):
