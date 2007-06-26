@@ -95,7 +95,7 @@ def capture(cmd):
 
 def make_shared(library, objs):
 	"""Link a bunch of native objects into a shared library."""
-	run(programs["gcc"] + ["-shared", "-o", library] + objs + linker_opts)
+	run(programs["cc"] + ["-shared", "-o", library] + objs + linker_opts)
 
 def make_module(name, custom):
 	"""Generate a .module file, calling the provided function to fill in
@@ -318,7 +318,7 @@ Report bugs to <kroc-bugs@kent.ac.uk>."""
 
 def main(args):
 	# Get default program locations and arguments from the environment.
-	for prog in ("gcc", "kroc", "ilibr", "install", "skroc", "tvm"):
+	for prog in ("cc", "kroc", "ilibr", "install", "skroc", "tvm"):
 		programs[prog] = split_options(os.getenv(prog.upper(), prog))
 
 	long_opts = [
@@ -392,7 +392,7 @@ def main(args):
 		toolchain = toolchains["kroc"]()
 
 	for dir in search_path:
-		programs["gcc"] += ["-L" + dir]
+		programs["cc"] += ["-L" + dir]
 		programs["kroc"] += ["-I" + dir, "-L" + dir]
 		programs["skroc"] += ["-L", dir]
 
