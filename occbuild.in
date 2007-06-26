@@ -249,7 +249,7 @@ class TVMToolchain:
 			install(file, tvmdir, False)
 			install(base + ".precomp", tvmdir, False)
 			install(base + ".so", tvmdir, True)
-			install(base + ".module", tvmdir, True)
+			install(base + ".module", tvmdir, False)
 		elif ext == "inc":
 			install(file, tvmdir, False)
 
