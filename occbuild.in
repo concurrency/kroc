@@ -237,7 +237,7 @@ class TVMToolchain:
 		f = open(base, "w")
 		f.write("#!/bin/sh\n")
 		f.write("# %s\n" % autogen_message)
-		f.write("exec %s %s\n" % (" ".join(programs["tvm"]), base + ".tbc"))
+		f.write("exec %s $0.tbc \"$@\"\n" % (" ".join(programs["tvm"])))
 		f.close()
 		os.chmod(base, 0755)
 
