@@ -38,4 +38,25 @@ AC_MSG_CHECKING([for flags needed when compiling FFI objects])
 OCCBUILD_CFLAGS=$($OCCBUILD --cflags)
 AC_MSG_RESULT([$OCCBUILD_CFLAGS])
 AC_SUBST(OCCBUILD_CFLAGS)
-])
+])dnl
+dnl
+dnl OCCAM_INCLUDE(FILES, [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+AC_DEFUN([OCCAM_INCLUDE],
+[dnl
+AC_REQUIRE([OCCAM_OCCBUILD])
+AC_MSG_CHECKING([for occam include files $1])
+: >conftest.occ
+for file in $1; do
+	printf >>conftest.occ '#INCLUDE "%s"\n' "$file"
+done
+printf >>conftest.occ 'PROC main ()\n  SKIP\n:\n'
+if AC_RUN_LOG([$OCCBUILD --object conftest.occ >/dev/null]); then
+	AC_MSG_RESULT([yes])
+	$2
+else
+	AC_MSG_RESULT([no])
+	$3
+fi
+AC_RUN_LOG([$OCCBUILD --clean conftest.tce])
+rm -f conftest.occ
+])dnl
