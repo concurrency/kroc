@@ -2171,6 +2171,7 @@ for action in $ACTIONLIST; do
 			PATH="$kroc_archbindir:$PATH"
 			#OCSEARCH="$kroc_kroc_vtlib:$kroc_kroc_vtinclude"; export OCSEARCH
 			LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$kroc_archlibdir"; export LD_LIBRARY_PATH
+			ACLOCAL="${ACLOCAL:-aclocal} -I $INSTALL_DIR/share/aclocal"; export ACLOCAL
 		fi
 		;;
 		#}}}
