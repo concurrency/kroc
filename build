@@ -1900,7 +1900,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-tranx86 make-tranx86 install-tranx86 \
 		configure-kroc make-kroc install-kroc \
 		initial-kroc-setup \
-		preconfigure-krocif configure-krocif make-krocif install-krocif \
+		configure-krocif make-krocif install-krocif \
 		configure-inmoslibs make-inmoslibs install-inmoslibs \
 		configure-bsclib make-bsclib install-bsclib \
 		configure-course make-course install-course \
