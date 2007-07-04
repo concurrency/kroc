@@ -1110,6 +1110,7 @@ svn_update ()
 					REPOSFILES=".svn $($SVN ls --recursive "$SVNHOST${SVN_REPOSS[i]}$TRUNKSTR/")"
 				fi
 				for rfile in $REPOSFILES; do
+					rfile=${rfile%/}
 					if [ -f "$TMPPATH/$rfile" ]; then
 						# file, copy it over if does not exist or is newer
 						if [ ! -f "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ] || [ "$TMPPATH/$rfile" -nt "$DIST_DIR/${SVN_SRCS[i]}/$rfile" ]; then
