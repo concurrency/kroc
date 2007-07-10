@@ -122,7 +122,6 @@ def make_module(name, custom):
 
 	do_list('#INCLUDE "%s.module"\n', needs)
 	do_list('#INCLUDE "%s"\n', includes)
-	do_list('#USE "%s.lib"\n', [name])
 	custom(f)
 
 	f.write("#ENDIF\n")
@@ -131,6 +130,15 @@ def make_module(name, custom):
 def exists(file):
 	"""Does a file or directory exist?"""
 	return os.access(file, os.F_OK)
+
+def make_stub(file):
+	"""Make a stub file to serve as a placeholder."""
+	f = open(file, "w")
+	f.close()
+
+def is_stub(file):
+	"""Is a file an empty stub?"""
+	return os.stat(file).st_size == 0
 
 def delete(file):
 	"""Delete a file, if it exists."""
@@ -162,6 +170,8 @@ class KRoCToolchain:
 
 	def library(self, occam_objs, native_objs, base):
 		def custom(f):
+			if occam_objs != []:
+				f.write('#USE "%s.lib"\n' % base)
 			f.write('#PRAGMA COMMENT ".USELIB %s"\n' % base)
 			f.write('\n')
 		make_module(base, custom)
@@ -169,7 +179,10 @@ class KRoCToolchain:
 		objs = [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs
 		make_shared("lib%s.so" % base, objs)
 
-		run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
+		if occam_objs == []:
+			make_stub(base + ".lib")
+		else:
+			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
 
 	def program(self, occam_objs, native_objs, base):
 		run(programs["kroc"] + [base + ".occ"] + occam_objs + native_objs)
@@ -181,7 +194,8 @@ class KRoCToolchain:
 
 		(base, ext) = split_ext(file)
 		if ext == "lib":
-			install(file, vtlibdir, False)
+			if not is_stub(file):
+				install(file, vtlibdir, False)
 			install("lib%s.so" % base, libdir, True)
 			install(base + ".module", vtincludedir, False)
 		elif ext == "inc":
@@ -213,6 +227,8 @@ class TVMToolchain:
 
 	def library(self, occam_objs, native_objs, base):
 		def custom(f):
+			if occam_objs != []:
+				f.write('#USE "%s.lib"\n' % base)
 			f.write("#PRAGMA COMMENT \"(spragma (uselib %s))\"\n" % base)
 			if native_objs != []:
 				f.write("#PRAGMA COMMENT \"(spragma (dynlib %s))\"\n" % base)
@@ -222,7 +238,10 @@ class TVMToolchain:
 		if native_objs != []:
 			make_shared(base + ".so", native_objs)
 
-		run(programs["skroc"] + ["-f", base, "--library"] + occam_objs)
+		if occam_objs == []:
+			make_stub(base + ".lib")
+		else:
+			run(programs["skroc"] + ["-f", base, "--library"] + occam_objs)
 
 	def program(self, occam_objs, native_objs, base):
 		if native_objs != []:
@@ -248,8 +267,9 @@ class TVMToolchain:
 
 		(base, ext) = split_ext(file)
 		if ext == "lib":
-			install(file, tvmdir, False)
-			install(base + ".precomp", tvmdir, False)
+			if not is_stub(file):
+				install(file, tvmdir, False)
+				install(base + ".precomp", tvmdir, False)
 			install(base + ".so", tvmdir, True)
 			install(base + ".module", tvmdir, False)
 		elif ext == "inc":
