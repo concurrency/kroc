@@ -185,7 +185,7 @@ class KRoCToolchain:
 			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
 
 	def program(self, occam_objs, native_objs, base):
-		run(programs["kroc"] + [base + ".occ"] + occam_objs + native_objs)
+		run(programs["kroc"] + [base + ".occ"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs)
 
 	def install(self, file):
 		vtlibdir = "%s%s/share/kroc/vtlib" % (destdir, prefix)
