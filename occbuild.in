@@ -209,6 +209,7 @@ class KRoCToolchain:
 		elif ext == "lib":
 			delete(base + ".lbb")
 			delete("lib%s.so" % base)
+			delete(base + ".module")
 		elif ext == "":
 			self.clean(base + ".tce")
 
@@ -284,6 +285,7 @@ class TVMToolchain:
 			delete(base + ".lbb")
 			delete(base + ".precomp")
 			delete(base + ".so")
+			delete(base + ".module")
 		elif ext == "":
 			self.clean(base + ".tce")
 			delete(base + ".tbc")
