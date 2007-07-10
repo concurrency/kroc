@@ -395,7 +395,7 @@ def main(args):
 		elif o == "-D":
 			occ21_opts += ["-DEF", a]
 		elif o in ("-l", "-L", "-W"):
-			linker_opts.append("-%s%s" % (o, a))
+			linker_opts.append("%s%s" % (o, a))
 		elif o == "--need":
 			needs.append(a)
 		elif o == "--include":
