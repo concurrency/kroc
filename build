@@ -115,7 +115,7 @@ MANPAGE_SECTIONS=""
 DOC_SRC=doc
 OCCAMDOC_SRC=occamdoc
 SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC course syncs dynproc demos udc sdlraster modules/occSDL modules/occade pony cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occsdl occade pony cif kroc-doc cgtests kroc-contrib occamdoc)
+SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib bsclib-examples kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occade pony cif kroc-doc cgtests kroc-contrib occamdoc)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
