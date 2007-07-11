@@ -60,3 +60,27 @@ fi
 AC_RUN_LOG([$OCCBUILD --clean conftest.tce])
 rm -f conftest.occ
 ])dnl
+dnl
+AC_DEFUN([OCCAM_SWIG],
+[dnl
+HAVE_SWIG_OCCAM=no
+AC_CHECK_PROG(SWIG, swig, swig, no)
+if test $SWIG != no; then
+	SWIG_OCCAM="$SWIG -occampi"
+	AC_SUBST([SWIG_OCCAM])
+	dnl
+	# Check if the -occampi flag is supported
+	AC_MSG_CHECKING([for SWIG occam-pi support])
+	touch conftest.i
+	if $SWIG_OCCAM -module conftest conftest.i >/dev/null 2>&1; then
+		AC_MSG_RESULT([yes])
+		HAVE_SWIG_OCCAM=yes
+		$1
+	else
+		AC_MSG_RESULT([no])
+		$2
+	fi
+fi
+AM_CONDITIONAL(HAVE_SWIG_OCCAM, test "x$HAVE_SWIG_OCCAM" = "xyes")
+rm -f conftest.i
+])dnl
