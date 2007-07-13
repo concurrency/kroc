@@ -109,6 +109,10 @@ Directories
 
     The occam documentation tool.
 
+  modules/
+
+    Various additional modules.
+
 
 Note: most directories contain further README files.
 
