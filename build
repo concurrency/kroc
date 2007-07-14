@@ -474,7 +474,7 @@ typescript_head ()
 	uname | grep BSD 1> /dev/null && XX_PROGRAMS="${AS:-as} ${CC:-gcc}" || XX_PROGRAMS="${AS:-as} ${CC:-gcc} tee"
 	for prog in $XX_PROGRAMS; do
 		printf '        %s\n' "$prog" >> "$DUMPOUT"
-		"$prog" --version >> "$DUMPOUT" || software_missing "$prog"
+		echo | "$prog" --version >> "$DUMPOUT" 2>&1 || software_missing "$prog"
 	done
 	printf '\n' >> "$DUMPOUT"
 
@@ -824,6 +824,16 @@ setopts_host ()
 			USEPTHREADS=1
 		fi
 		;;
+	darwin* | Darwin*)
+		if [ $USEPTHREADS -eq 42 ]; then
+			printf '  darwin: enabling pthreads\n'
+			USEPTHREADS=1
+		fi
+		if [ $USEMP -eq 42 ]; then
+			printf '  darwin: enabling multi-processor support\n'
+			USEMP=1
+		fi
+		;;
 	solaris*)
 		if [ $USEPTHREADS -eq 42 ]; then
 			printf '  solaris: enabling pthreads\n'
@@ -849,7 +859,7 @@ setopts_host ()
 			else
 				NUMCPUS=$(($AWK 'BEGIN { i=0; } /^processor[ 	:]/ {i++} END {print(i);}' < /proc/cpuinfo))
 				if [ $NUMCPUS -ge 2 ]; then
-					printf '  linux: %d logical processors, enabling multi-processor support (experimental/incomplete)\n' "$NUMCPUS"
+					printf '  linux: %d logical processors, enabling multi-processor support\n' "$NUMCPUS"
 					USEMP=1
 				else
 					printf '  linux: single CPU system, not enabling multi-processor support\n'
