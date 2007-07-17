@@ -1938,8 +1938,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		preconfigure-contrib configure-contrib make-contrib install-contrib \
 		configure-occamdoc make-occamdoc install-occamdoc \
 		install-dynproc install-manpages \
-		configure-doc make-doc install-doc \
-		calibrate-clock"
+		configure-doc make-doc install-doc"
 else
 	FULLINSTALL=
 fi
@@ -2282,28 +2281,6 @@ for action in $ACTIONLIST; do
 		fi
 		# better clean-up any tilde temp. files
 		find $DIST_DIR/ -name '*~' | xargs rm -f
-		;;
-		#}}}
-		#{{{  calibrate-clock: performs kroc clock calibration
-	Xcalibrate-clock)
-		# need CPU-timers
-		if [ "$HAVE_CPUTIMERS_SUPPORT" != "" ]; then
-			# if we can, put kroc_clock in etc
-			CAN_WRITE_ETC=
-			if [ -w /etc ] || [ -w /etc/kroc_clock ]; then
-				CAN_WRITE_ETC=1
-			fi
-
-			if [ "$CAN_WRITE_ETC" = "1" ]; then
-				printf '%s: putting CPU clock speed in /etc/kroc_clock\n' "$0" | tee -a "$DUMPOUT"
-				cputimerutil > /etc/kroc_clock
-				KROC_CLOCK_FILE=/etc/kroc_clock
-			else
-				printf '%s: putting CPU clock speed in %s/.kroc_clock\n' "$0" "$HOME" | tee -a "$DUMPOUT"
-				cputimerutil > "$HOME"/.kroc_clock
-				KROC_CLOCK_FILE="$HOME"/.kroc_clock
-			fi
-		fi
 		;;
 		#}}}
 		#{{{  install-manpages: put the manual pages in $INSTALL_DIR/doc/man1, and point MANPATH at $INSTALL_DIR/doc
@@ -2880,20 +2857,6 @@ To build the compiler test-suite, run:
 
 To clean the source tree, run:
     $0 clean    ..or..    $0 distclean
-EOF
-
-	if [ "$HAVE_CPUTIMERS_SUPPORT" != "" ]; then
-		printf '\nCPU timers have been enabled and the file %s has been created.\n' "$KROC_CLOCK_FILE" | tee -a "$DUMPOUT"
-		printf 'This contains your CPU speed in MHz:\n' | tee -a "$DUMPOUT"
-		cat $KROC_CLOCK_FILE | tee -a "$DUMPOUT"
-		if [ "$CAN_WRITE_ETC" = "" ]; then
-			tee -a "$DUMPOUT" << EOF
-To make this universally available, please copy the file to /etc/kroc_clock
-(you need to be root to do this).
-EOF
-		fi
-	fi
-	cat << EOF
 
 Enjoy,
 
