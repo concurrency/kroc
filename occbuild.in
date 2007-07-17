@@ -174,12 +174,14 @@ class KRoCToolchain:
 		def custom(f):
 			if occam_objs != []:
 				f.write('#USE "%s.lib"\n' % base)
-			f.write('#PRAGMA COMMENT ".USELIB %s"\n' % base)
+			if occam_objs != [] or native_objs != []:
+				f.write('#PRAGMA COMMENT ".USELIB %s"\n' % base)
 			f.write('\n')
 		make_module(base, custom)
 
 		objs = [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs
-		make_shared("lib%s.so" % base, objs)
+		if objs != []:
+			make_shared("lib%s.so" % base, objs)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")
@@ -232,7 +234,7 @@ class TVMToolchain:
 		def custom(f):
 			if occam_objs != []:
 				f.write('#USE "%s.lib"\n' % base)
-			f.write("#PRAGMA COMMENT \"(spragma (uselib %s))\"\n" % base)
+				f.write("#PRAGMA COMMENT \"(spragma (uselib %s))\"\n" % base)
 			if native_objs != []:
 				f.write("#PRAGMA COMMENT \"(spragma (dynlib %s))\"\n" % base)
 			f.write('\n')
