@@ -29,7 +29,8 @@ programs = {}
 occ21_opts = []
 linker_opts = []
 needs = []
-includes = []
+includes_before = []
+includes_after = []
 prefix = None
 destdir = ""
 
@@ -121,8 +122,9 @@ def make_module(name, custom):
 			f.write('\n')
 
 	do_list('#INCLUDE "%s.module"\n', needs)
-	do_list('#INCLUDE "%s"\n', includes)
+	do_list('#INCLUDE "%s"\n', includes_before)
 	custom(f)
+	do_list('#INCLUDE "%s"\n', includes_after)
 
 	f.write("#ENDIF\n")
 	f.close()
@@ -336,6 +338,8 @@ Options for --library mode:
   -W OPTION           }
   --need MODULE       Module depends on other module MODULE
   --include INCLUDE   Module uses include file INCLUDE
+  --include-after INCLUDE
+                      Module uses include file INCLUDE after library is loaded
 
 Options for --install mode:
   --prefix PREFIX     Select installation prefix PREFIX (mandatory)
@@ -352,7 +356,7 @@ def main(args):
 		"object", "library=", "program=",
 		"install", "clean", "cflags", "help", "verbose",
 		"toolchain=", "search=",
-		"occ21-opts=", "need=", "include=", "prefix=", "destdir="
+		"occ21-opts=", "need=", "include=", "include-after=", "prefix=", "destdir="
 		]
 	for prog in programs.keys():
 		long_opts += [prog + "=", prog + "-opts="]
@@ -371,7 +375,8 @@ def main(args):
 	target = None
 	toolchain = None
 	search_path = []
-	global verbose, occ21_opts, linker_opts, needs, includes, prefix, destdir
+	global verbose, occ21_opts, linker_opts, needs, includes_before, includes_after
+	global prefix, destdir
 	for (o, a) in opts:
 		if o in ("--object", "--library", "--program", "--install", "--clean",
 		         "--cflags"):
@@ -401,7 +406,9 @@ def main(args):
 		elif o == "--need":
 			needs.append(a)
 		elif o == "--include":
-			includes.append(a)
+			includes_before.append(a)
+		elif o == "--include-after":
+			includes_after.append(a)
 		elif o == "--prefix":
 			prefix = a
 		elif o == "--destdir":
