@@ -147,16 +147,16 @@ def delete(file):
 	if exists(file):
 		os.unlink(file)
 
-def install(file, dir, is_library):
+def install(file, dir, is_exec):
 	"""Install a file (if it exists) into a directory. Make the directory
-	if it doesn't already exist. If is_library, then make the file
+	if it doesn't already exist. If is_exec, then make the file
 	executable."""
 	if not exists(file):
 		return
 	if not exists(dir):
 		os.makedirs(dir)
 	cmd = programs["install"] + []
-	if is_library:
+	if is_exec:
 		cmd += ["-m755"]
 	else:
 		cmd += ["-m644"]
@@ -192,6 +192,7 @@ class KRoCToolchain:
 		run(programs["kroc"] + [base + ".occ"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs)
 
 	def install(self, file):
+		bindir = "%s%s/bin" % (destdir, prefix)
 		vtlibdir = "%s%s/share/kroc/vtlib" % (destdir, prefix)
 		libdir = "%s%s/lib/kroc" % (destdir, prefix)
 		vtincludedir = "%s%s/share/kroc/vtinclude" % (destdir, prefix)
@@ -204,6 +205,8 @@ class KRoCToolchain:
 			install(base + ".module", vtincludedir, False)
 		elif ext == "inc":
 			install(file, vtincludedir, False)
+		elif ext == "":
+			install(file, bindir, True)
 
 	def clean(self, file):
 		delete(file)
@@ -268,6 +271,7 @@ class TVMToolchain:
 		os.chmod(base, 0755)
 
 	def install(self, file):
+		bindir = "%s%s/bin" % (destdir, prefix)
 		tvmdir = "%s%s/lib/transterpreter" % (destdir, prefix)
 
 		(base, ext) = split_ext(file)
@@ -279,6 +283,9 @@ class TVMToolchain:
 			install(base + ".module", tvmdir, False)
 		elif ext == "inc":
 			install(file, tvmdir, False)
+		elif ext == "":
+			install(file, bindir, True)
+			install(base + ".tbc", bindir, False)
 
 	def clean(self, file):
 		delete(file)
