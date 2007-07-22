@@ -33,6 +33,7 @@ includes_before = []
 includes_after = []
 prefix = None
 destdir = ""
+demos = False
 
 def warn(*s):
 	print >>sys.stderr, "occbuild: " + "".join(map(str, s))
@@ -193,6 +194,7 @@ class KRoCToolchain:
 
 	def install(self, file):
 		bindir = "%s%s/bin" % (destdir, prefix)
+		demosdir = "%s%s/lib/kroc/demos" % (destdir, prefix)
 		vtlibdir = "%s%s/share/kroc/vtlib" % (destdir, prefix)
 		libdir = "%s%s/lib/kroc" % (destdir, prefix)
 		vtincludedir = "%s%s/share/kroc/vtinclude" % (destdir, prefix)
@@ -206,7 +208,11 @@ class KRoCToolchain:
 		elif ext == "inc":
 			install(file, vtincludedir, False)
 		elif ext == "":
-			install(file, bindir, True)
+			if demos:
+				dir = demosdir
+			else:
+				dir = bindir
+			install(file, dir, True)
 
 	def clean(self, file):
 		delete(file)
@@ -272,6 +278,7 @@ class TVMToolchain:
 
 	def install(self, file):
 		bindir = "%s%s/bin" % (destdir, prefix)
+		demosdir = "%s%s/lib/transterpreter/demos" % (destdir, prefix)
 		tvmdir = "%s%s/lib/transterpreter" % (destdir, prefix)
 
 		(base, ext) = split_ext(file)
@@ -284,8 +291,12 @@ class TVMToolchain:
 		elif ext == "inc":
 			install(file, tvmdir, False)
 		elif ext == "":
-			install(file, bindir, True)
-			install(base + ".tbc", bindir, False)
+			if demos:
+				dir = demosdir
+			else:
+				dir = bindir
+			install(file, dir, True)
+			install(base + ".tbc", dir, False)
 
 	def clean(self, file):
 		delete(file)
@@ -353,6 +364,7 @@ Options for --library mode:
 Options for --install mode:
   --prefix PREFIX     Select installation prefix PREFIX (mandatory)
   --destdir DESTDIR   Use staging directory DESTDIR
+  --demos             Install binaries as demos rather than tools
 
 Report bugs to <""" + CONTACT + """>."""
 
@@ -365,7 +377,7 @@ def main(args):
 		"object", "library=", "program=",
 		"install", "clean", "cflags", "help", "verbose",
 		"toolchain=", "search=",
-		"occ21-opts=", "need=", "include=", "include-after=", "prefix=", "destdir="
+		"occ21-opts=", "need=", "include=", "include-after=", "prefix=", "destdir=", "demos"
 		]
 	for prog in programs.keys():
 		long_opts += [prog + "=", prog + "-opts="]
@@ -385,7 +397,7 @@ def main(args):
 	toolchain = None
 	search_path = []
 	global verbose, occ21_opts, linker_opts, needs, includes_before, includes_after
-	global prefix, destdir
+	global prefix, destdir, demos
 	for (o, a) in opts:
 		if o in ("--object", "--library", "--program", "--install", "--clean",
 		         "--cflags"):
@@ -422,6 +434,8 @@ def main(args):
 			prefix = a
 		elif o == "--destdir":
 			destdir = a
+		elif o == "--demos":
+			demos = True
 		else:
 			for prog in programs.keys():
 				if o == "--" + prog:
