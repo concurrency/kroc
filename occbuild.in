@@ -155,7 +155,10 @@ def install(file, dir, is_exec):
 	if not exists(file):
 		return
 	if not exists(dir):
-		os.makedirs(dir)
+		try:
+			os.makedirs(dir)
+		except OSError:
+			die("Unable to create directory: ", dir)
 	cmd = programs["install"] + []
 	if is_exec:
 		cmd += ["-m755"]
