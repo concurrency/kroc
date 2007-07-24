@@ -88,10 +88,10 @@ BSCLIB_EXAMPLES_SRC=modules/bsclib/examples
 COURSE_SRC=modules/course/libsrc
 COURSE_EXAMPLES_SRC=modules/course/examples
 COURSE_ANSWERS_SRC=modules/course/answers
-SYNCS_SRC=syncs/libsrc
-SYNCS_EXAMPLES_SRC=syncs/examples
-DYNPROC_SRC=dynproc/libsrc
-DYNPROC_EXAMPLES_SRC=dynproc/examples
+SYNCS_SRC=modules/syncs/libsrc
+SYNCS_EXAMPLES_SRC=modules/syncs/examples
+DYNPROC_SRC=modules/dynproc/libsrc
+DYNPROC_EXAMPLES_SRC=modules/dynproc/examples
 DEMO_BAR_SRC=demos/bar
 DEMO_GAME_SRC=demos/game
 UDC_SRC=udc/libsrc
@@ -114,7 +114,7 @@ MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
 OCCAMDOC_SRC=occamdoc
-SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC modules/bsclib modules/course syncs dynproc demos udc sdlraster modules/occSDL modules/occade modules/pony cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
+SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC modules/bsclib modules/course modules/syncs modules/dynproc demos udc sdlraster modules/occSDL modules/occade modules/pony cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
 SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occade pony cif kroc-doc cgtests kroc-contrib occamdoc)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
@@ -1928,7 +1928,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-sdlraster make-sdlraster install-sdlraster \
 		configure-occsdl make-occsdl install-occsdl \
 		configure-occade make-occade install-occade \
-		install-syncs"
+		configure-syncs make-syncs install-syncs"
 	if [ "$USEPONY" -eq 1 ]; then
 		# conditional on the "--with-pony" flag being given
 		ACTIONLIST="$ACTIONLIST \
@@ -1937,7 +1937,8 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 	ACTIONLIST="$ACTIONLIST \
 		preconfigure-contrib configure-contrib make-contrib install-contrib \
 		configure-occamdoc make-occamdoc install-occamdoc \
-		install-dynproc install-manpages \
+		configure-dynproc make-dynproc install-dynproc \
+		install-manpages \
 		configure-doc make-doc install-doc"
 else
 	FULLINSTALL=
@@ -2602,12 +2603,14 @@ for action in $ACTIONLIST; do
 			#{{{  syncs: additional synchronisations
 		Xsyncs)
 			PKG_SRC=$SYNCS_SRC
+			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  dynproc: dynamic loadable processes
 		Xdynproc)
 			if [ "$HAVE_DYNPROC_SUPPORT" = "1" ]; then
 				PKG_SRC=$DYNPROC_SRC
+				NEED_KROC_ENV=1
 			else
 				ABORT_ACTION=1
 			fi
@@ -2691,130 +2694,115 @@ for action in $ACTIONLIST; do
 		if [ "$ABORT_ACTION" != "" ]; then
 			continue		# to "for .. in .." loop
 		fi
-		# special handling for funny packages
-		case X$action in
-			#{{{  install-syncs, install-dynproc: just copy files (all headers)
-		Xinstall-syncs | Xinstall-dynproc)
-			cp -v "$DIST_DIR"/"$PKG_SRC"/*.inc "$kroc_kroc_vtinclude" | tee -a "$DUMPOUT"
-			;;
-			#}}}
-			#{{{  *-syncs, *-dynproc: do-nothing
-		X*-syncs | X*-dynproc)
-			# can only install syncs + dynproc..
-			;;
-			#}}}
-		X*)
-			# all default actions
-			printf '%s: performing action %s on %s (in %s/%s)\n' "$0" "$what" "$pkg" "$DIST_DIR" "$PKG_SRC" | tee -a "$DUMPOUT"
-			if [ "$DRYRUN" = "" ]; then
-				# actually do it
-				case X$what in
-					#{{{  preconfigure: pre-configure package
-				Xpreconfigure)
-					if [ "$PRECONF_SPECOPTS" = "" ]; then
-						preconfigure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC"
-					else
-						preconfigure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC" "$PRECONF_SPECOPTS"
+		# all default actions
+		printf '%s: performing action %s on %s (in %s/%s)\n' "$0" "$what" "$pkg" "$DIST_DIR" "$PKG_SRC" | tee -a "$DUMPOUT"
+		if [ "$DRYRUN" = "" ]; then
+			# actually do it
+			case X$what in
+				#{{{  preconfigure: pre-configure package
+			Xpreconfigure)
+				if [ "$PRECONF_SPECOPTS" = "" ]; then
+					preconfigure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC"
+				else
+					preconfigure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC" "$PRECONF_SPECOPTS"
+				fi
+				;;
+				#}}}
+				#{{{  configure: configure package
+			Xconfigure)
+				if [ "$CONF_SPECOPTS" = "" ]; then
+					configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC"
+				else
+					configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC" "$CONF_SPECOPTS"
+				fi
+				;;
+				#}}}
+				#{{{  fconfigure: configure package (forced)
+			Xfconfigure)
+				SAVED_FORCECONFIGURE=$FORCECONFIGURE
+				FORCECONFIGURE=1
+				if [ "$CONF_SPECOPTS" = "" ]; then
+					configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC"
+				else
+					configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC" "$CONF_SPECOPTS"
+				fi
+				FORCECONFIGURE=$SAVED_FORCECONFIGURE
+				;;
+				#}}}
+				#{{{  make: compile package
+			Xmake)
+				# maybe need to skip a make, if failed to configure
+				LCL_DO_MAKE=1
+				for pp in $FAILED_CONFIGURES; do
+					if [ "$pp" = "$pkg" ]; then
+						printf '%s: skip make on %s (failed to configure)\n' "$0" "$pkg" | tee -a "$DUMPOUT"
+						FAILED_MAKES="$FAILED_MAKES $pkg"
+						LCL_DO_MAKE=0
 					fi
-					;;
-					#}}}
-					#{{{  configure: configure package
-				Xconfigure)
-					if [ "$CONF_SPECOPTS" = "" ]; then
-						configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC"
-					else
-						configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC" "$CONF_SPECOPTS"
+				done
+				if [ $LCL_DO_MAKE -eq 1 ]; then
+					make_pkg $DIST_DIR $PKG_SRC
+				fi
+				;;
+				#}}}
+				#{{{  install: install package
+			Xinstall)
+				LCL_DO_INSTALL=1
+				for pp in $FAILED_MAKES; do
+					if [ "$pp" = "$pkg" ]; then
+						printf '%s: skip install on %s (failed to make)\n' "$0" "$pkg" | tee -a "$DUMPOUT"
+						FAILED_INSTALLS="$FAILED_INSTALLS $pkg"
+						LCL_DO_INSTALL=0
 					fi
-					;;
-					#}}}
-					#{{{  fconfigure: configure package (forced)
-				Xfconfigure)
-					SAVED_FORCECONFIGURE=$FORCECONFIGURE
-					FORCECONFIGURE=1
-					if [ "$CONF_SPECOPTS" = "" ]; then
-						configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC"
-					else
-						configure_pkg "$INSTALL_DIR" "$DIST_DIR" "$PKG_SRC" "$CONF_SPECOPTS"
-					fi
-					FORCECONFIGURE=$SAVED_FORCECONFIGURE
-					;;
-					#}}}
-					#{{{  make: compile package
-				Xmake)
-					# maybe need to skip a make, if failed to configure
-					LCL_DO_MAKE=1
-					for pp in $FAILED_CONFIGURES; do
-						if [ "$pp" = "$pkg" ]; then
-							printf '%s: skip make on %s (failed to configure)\n' "$0" "$pkg" | tee -a "$DUMPOUT"
+				done
+				if [ $LCL_DO_INSTALL -eq 1 ]; then
+					install_pkg "$DIST_DIR" "$PKG_SRC"
+				fi
+				;;
+				#}}}
+				#{{{  clean: clean package
+			Xclean)
+				clean_pkg "$DIST_DIR" "$PKG_SRC"
+				;;
+				#}}}
+				#{{{  distclean: clean package for distribution
+			Xdistclean)
+				distclean_pkg "$DIST_DIR" "$PKG_SRC"
+				;;
+				#}}}
+			esac
+
+			# check for failure and failable packages
+			if [ "$DEFERRED_INSTALL_ERROR" != "" ]; then
+				for pp in $FAILABLE_PKGS; do
+					if [ "$pp" = "$PKG_SRC" ]; then
+						# allowed to fail this one
+						DEFERRED_INSTALL_ERROR=""
+
+						case X$what in
+						Xpreconfigure)
+							FAILED_PRECONFIGURES="$FAILED_PRECONFIGURES $pkg"
+							;;
+						Xconfigure)
+							FAILED_CONFIGURES="$FAILED_CONFIGURES $pkg"
+							;;
+						Xmake)
 							FAILED_MAKES="$FAILED_MAKES $pkg"
-							LCL_DO_MAKE=0
-						fi
-					done
-					if [ $LCL_DO_MAKE -eq 1 ]; then
-						make_pkg $DIST_DIR $PKG_SRC
-					fi
-					;;
-					#}}}
-					#{{{  install: install package
-				Xinstall)
-					LCL_DO_INSTALL=1
-					for pp in $FAILED_MAKES; do
-						if [ "$pp" = "$pkg" ]; then
-							printf '%s: skip install on %s (failed to make)\n' "$0" "$pkg" | tee -a "$DUMPOUT"
+							;;
+						Xinstall)
 							FAILED_INSTALLS="$FAILED_INSTALLS $pkg"
-							LCL_DO_INSTALL=0
-						fi
-					done
-					if [ $LCL_DO_INSTALL -eq 1 ]; then
-						install_pkg "$DIST_DIR" "$PKG_SRC"
+							;;
+						esac
+
+						break
 					fi
-					;;
-					#}}}
-					#{{{  clean: clean package
-				Xclean)
-					clean_pkg "$DIST_DIR" "$PKG_SRC"
-					;;
-					#}}}
-					#{{{  distclean: clean package for distribution
-				Xdistclean)
-					distclean_pkg "$DIST_DIR" "$PKG_SRC"
-					;;
-					#}}}
-				esac
-
-				# check for failure and failable packages
-				if [ "$DEFERRED_INSTALL_ERROR" != "" ]; then
-					for pp in $FAILABLE_PKGS; do
-						if [ "$pp" = "$PKG_SRC" ]; then
-							# allowed to fail this one
-							DEFERRED_INSTALL_ERROR=""
-
-							case X$what in
-							Xpreconfigure)
-								FAILED_PRECONFIGURES="$FAILED_PRECONFIGURES $pkg"
-								;;
-							Xconfigure)
-								FAILED_CONFIGURES="$FAILED_CONFIGURES $pkg"
-								;;
-							Xmake)
-								FAILED_MAKES="$FAILED_MAKES $pkg"
-								;;
-							Xinstall)
-								FAILED_INSTALLS="$FAILED_INSTALLS $pkg"
-								;;
-							esac
-
-							break
-						fi
-					done
-				fi
-				if [ "$DEFERRED_INSTALL_ERROR" != "" ]; then
-					install_error
-					exit 1
-				fi
+				done
 			fi
-			;;
-		esac
+			if [ "$DEFERRED_INSTALL_ERROR" != "" ]; then
+				install_error
+				exit 1
+			fi
+		fi
 		;;
 	X*)
 		(printf 'error: unknown action %s.  use --help for help.\n' "$action" | tee -a "$DUMPOUT") 1>&2
