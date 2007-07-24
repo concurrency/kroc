@@ -443,7 +443,7 @@ def main(args):
 			for prog in programs.keys():
 				if o == "--" + prog:
 					programs[prog][0] = a
-				elif o == "--" + prog + "--opts":
+				elif o == "--" + prog + "-opts":
 					programs[prog] += split_options(a)
 
 	if mode is None:
