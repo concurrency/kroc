@@ -466,8 +466,6 @@ def main(args):
 				die("Source filenames must end in .occ: ", source)
 			toolchain.object(source)
 	elif mode == "library":
-		if args == []:
-			die("No object files specified")
 		occam_objs = []
 		native_objs = []
 		for object in args:
