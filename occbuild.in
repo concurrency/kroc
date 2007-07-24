@@ -33,7 +33,6 @@ includes_before = []
 includes_after = []
 prefix = None
 destdir = ""
-demos = False
 
 def warn(*s):
 	print >>sys.stderr, "occbuild: " + "".join(map(str, s))
@@ -197,7 +196,6 @@ class KRoCToolchain:
 
 	def install(self, file):
 		bindir = "%s%s/bin" % (destdir, prefix)
-		demosdir = "%s%s/lib/kroc/demos" % (destdir, prefix)
 		vtlibdir = "%s%s/share/kroc/vtlib" % (destdir, prefix)
 		libdir = "%s%s/lib/kroc" % (destdir, prefix)
 		vtincludedir = "%s%s/share/kroc/vtinclude" % (destdir, prefix)
@@ -211,11 +209,13 @@ class KRoCToolchain:
 		elif ext == "inc":
 			install(file, vtincludedir, False)
 		elif ext == "":
-			if demos:
-				dir = demosdir
-			else:
-				dir = bindir
-			install(file, dir, True)
+			install(file, bindir, True)
+
+	def install_examples(self, package, file):
+		bindir = "%s%s/lib/kroc/examples/%s" % (destdir, prefix, package)
+		(base, ext) = split_ext(file)
+		if ext == "":
+			install(file, bindir, True)
 
 	def clean(self, file):
 		delete(file)
@@ -281,7 +281,6 @@ class TVMToolchain:
 
 	def install(self, file):
 		bindir = "%s%s/bin" % (destdir, prefix)
-		demosdir = "%s%s/lib/transterpreter/demos" % (destdir, prefix)
 		tvmdir = "%s%s/lib/transterpreter" % (destdir, prefix)
 
 		(base, ext) = split_ext(file)
@@ -294,12 +293,14 @@ class TVMToolchain:
 		elif ext == "inc":
 			install(file, tvmdir, False)
 		elif ext == "":
-			if demos:
-				dir = demosdir
-			else:
-				dir = bindir
-			install(file, dir, True)
-			install(base + ".tbc", dir, False)
+			install(file, bindir, True)
+			install(base + ".tbc", bindir, False)
+
+	def install_examples(self, package, file):
+		bindir = "%s%s/lib/transterpreter/examples/%s" % (destdir, prefix, package)
+		(base, ext) = split_ext(file)
+		if ext == "":
+			install(file, bindir, True)
 
 	def clean(self, file):
 		delete(file)
@@ -326,7 +327,7 @@ Usage:
   occbuild [OPTIONS] --object NAME.occ
     Compile source file NAME.occ to produce NAME.tce
 
-  occbuild [OPTIONS] --library LIBNAME.lib OBJECT ...
+  occbuild [OPTIONS] --library LIBNAME.lib [OBJECT ...]
     Link object files (.tce or .o) to produce LIBNAME.lib
 
   occbuild [OPTIONS] --program PROGNAME.occ [OBJECT ...]
@@ -334,6 +335,9 @@ Usage:
 
   occbuild [OPTIONS] --install FILE ...
     Install files (.inc or .lib) to system locations
+
+  occbuild [OPTIONS] --install-examples PACKAGE PROGRAM ...
+    Install PROGRAMs as examples for PACKAGE
 
   occbuild [OPTIONS] --clean FILE ...
     Remove generated files
@@ -364,10 +368,9 @@ Options for --library mode:
   --include-after INCLUDE
                       Module uses include file INCLUDE after library is loaded
 
-Options for --install mode:
+Options for --install/--install-examples mode:
   --prefix PREFIX     Select installation prefix PREFIX (mandatory)
   --destdir DESTDIR   Use staging directory DESTDIR
-  --demos             Install binaries as demos rather than tools
 
 Report bugs to <""" + CONTACT + """>."""
 
@@ -378,9 +381,11 @@ def main(args):
 
 	long_opts = [
 		"object", "library=", "program=",
-		"install", "clean", "cflags", "help", "verbose",
+		"install", "install-examples=", "clean", "cflags",
+		"help", "verbose",
 		"toolchain=", "search=",
-		"occ21-opts=", "need=", "include=", "include-after=", "prefix=", "destdir=", "demos"
+		"occ21-opts=", "need=", "include=", "include-after=",
+		"prefix=", "destdir=",
 		]
 	for prog in programs.keys():
 		long_opts += [prog + "=", prog + "-opts="]
@@ -400,10 +405,10 @@ def main(args):
 	toolchain = None
 	search_path = []
 	global verbose, occ21_opts, linker_opts, needs, includes_before, includes_after
-	global prefix, destdir, demos
+	global prefix, destdir, examples
 	for (o, a) in opts:
-		if o in ("--object", "--library", "--program", "--install", "--clean",
-		         "--cflags"):
+		if o in ("--object", "--library", "--program", "--install",
+		         "--install-examples", "--clean", "--cflags"):
 			if mode is not None:
 				die("Multiple modes specified")
 			mode = o[2:]
@@ -437,8 +442,6 @@ def main(args):
 			prefix = a
 		elif o == "--destdir":
 			destdir = a
-		elif o == "--demos":
-			demos = True
 		else:
 			for prog in programs.keys():
 				if o == "--" + prog:
@@ -500,6 +503,11 @@ def main(args):
 			die("When using --install mode, you must give --prefix")
 		for file in args:
 			toolchain.install(file)
+	elif mode == "install-examples":
+		if prefix is None:
+			die("When using --install-examples mode, you must give --prefix")
+		for file in args:
+			toolchain.install_examples(target, file)
 	elif mode == "clean":
 		for file in args:
 			toolchain.clean(file)
