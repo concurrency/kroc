@@ -82,7 +82,7 @@ ILIBR_SRC=src/ilibr-1.1
 TRANX86_SRC=src/tranx86-1.4
 KROC_SRC=src/kroc-1.4
 KROCIF_SRC=src/libkrocif-1.4
-INMOSLIBS_SRC=src/inmoslibs-1.0
+INMOSLIBS_SRC=modules/inmoslibs/libsrc
 BSCLIB_SRC=modules/bsclib/libsrc
 BSCLIB_EXAMPLES_SRC=modules/bsclib/examples
 COURSE_SRC=modules/course/libsrc
@@ -114,7 +114,7 @@ MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
 OCCAMDOC_SRC=occamdoc
-SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occade modules/pony cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
+SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occade modules/pony cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
 SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occade pony cif kroc-doc cgtests kroc-contrib occamdoc)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
