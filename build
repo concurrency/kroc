@@ -100,6 +100,8 @@ SDLRASTER_SRC=modules/sdlraster/libsrc
 SDLRASTER_EXAMPLES_SRC=modules/sdlraster/examples
 OCCSDL_SRC=modules/occSDL/libsrc
 OCCSDL_EXAMPLES_SRC=modules/occSDL/examples
+OCCGL_SRC=modules/occGL/libsrc
+OCCGL_EXAMPLES_SRC=modules/occGL/examples
 OCCADE_SRC=modules/occade/libsrc
 OCCADE_EXAMPLES_SRC=modules/occade/examples
 PONY_SRC=modules/pony/libsrc
@@ -114,15 +116,15 @@ MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
 OCCAMDOC_SRC=occamdoc
-SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occade modules/pony cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occade pony cif kroc-doc cgtests kroc-contrib occamdoc)
+SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occGL modules/occade modules/pony cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
+SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occGL occade pony cif kroc-doc cgtests kroc-contrib occamdoc)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC $DEMO_GAME_SRC \
 	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $CONTRIB_SRC $OCCAMDOC_SRC \
-	$OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC"
-FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $CONTRIB_MOA_LIBSRC $CONTRIB_MOA_EXAMPLES $OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC"
+	$OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC"
+FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $CONTRIB_MOA_LIBSRC $CONTRIB_MOA_EXAMPLES $OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC"
 
 
 #}}}
@@ -258,6 +260,7 @@ choices for <pkg> are:
   cif                          occam-pi/C interface
   sdlraster                    SDLRaster SDL based raster graphics
   occsdl                       SDL bindings module
+  occgl                        OpenGL bindings module
   occade                       arcade game development module
   pony                         pony (kroc-net) networking infrastructure
   doc                          documentation
@@ -275,6 +278,7 @@ choices for <pkg> are:
     cif_examples               C interface examples
     sdlraster_examples         SDLRaster example programs
     occsdl_examples            occSDL example programs
+    occgl_examples             occGL example programs
     occade_examples            Occade example programs
 EOF
 }
@@ -1927,6 +1931,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-cif make-cif install-cif \
 		configure-sdlraster make-sdlraster install-sdlraster \
 		configure-occsdl make-occsdl install-occsdl \
+		configure-occgl make-occgl install-occgl \
 		configure-occade make-occade install-occade \
 		configure-syncs make-syncs install-syncs"
 	if [ "$USEPONY" -eq 1 ]; then
@@ -1960,6 +1965,7 @@ EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-s
 		configure-game_demo make-game_demo install-game_demo \
 		configure-sdlraster_examples make-sdlraster_examples install-sdlraster_examples \
 		configure-occsdl_examples make-occsdl_examples install-occsdl_examples \
+		configure-occgl_examples make-occgl_examples install-occgl_examples \
 		configure-occade_examples make-occade_examples install-occade_examples"
 if [ "$USEPONY" -eq 1 ]; then
 	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
@@ -2040,6 +2046,9 @@ for action in $ACTIONLIST; do
 		;;
 	Xoccsdl)
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-occsdl make-occsdl install-occsdl"
+		;;
+	Xoccgl)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-occgl make-occgl install-occgl"
 		;;
 	Xoccade)
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-occade make-occade install-occade"
@@ -2560,6 +2569,12 @@ for action in $ACTIONLIST; do
 			NEED_KROC_ENV=1
 			;;
 			#}}}
+			#{{{  occgl_examples: occGL example programs
+		Xoccgl_examples)
+			PKG_SRC=$OCCGL_EXAMPLES_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
 			#{{{  occade_examples: Occade example programs
 		Xoccade_examples)
 			PKG_SRC=$OCCADE_EXAMPLES_SRC
@@ -2637,6 +2652,12 @@ for action in $ACTIONLIST; do
 			#{{{  occsdl: SDL bindings
 		Xoccsdl)
 			PKG_SRC=$OCCSDL_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  occgl: OpenGL bindings
+		Xoccgl)
+			PKG_SRC=$OCCGL_SRC
 			NEED_KROC_ENV=1
 			;;
 			#}}}
