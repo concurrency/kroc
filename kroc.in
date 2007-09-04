@@ -98,8 +98,8 @@ dversion='2.0'
 host_canonical="@KROC_CANONICAL_TARGET@"
 host_cpu="@KROC_HOST_CPU@"
 host_os="@KROC_HOST_OS@"
-# -kf : use fast CCSP interface
-octranopts="-kf @TRANEXTRAOPTS@ @TENABLEMP@"
+# -kc : cgr-mp CCSP interface
+octranopts="-kc @TRANEXTRAOPTS@ @TENABLEMP@"
 ccopts="@ARCH_DEFS@"
 ocllibs=""
 ocrtslibs="-lm @DLOPTLIB@ @DEXTLIB@"
