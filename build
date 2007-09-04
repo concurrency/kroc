@@ -208,8 +208,8 @@ where options are:
   --no-cputimers               disable CPU timer support (required for accurate timing on variable-frequency hardware)
   --no-pthreads                build without pthreads support
   --no-udc                     build without user defined channels support
-  --no-mp                      build without multi-processing support
   --with-cttd                  build with channel-type type-description support
+  --with-mp                    build with multi-processing support
   --with-pony                  build with support for KRoC.net/pony
 
   -h | --help                  this help text
@@ -863,7 +863,7 @@ setopts_host ()
 				printf '  linux: no /proc/cpuinfo, not enabling multi-processor support\n'
 				USEMP=0
 			else
-				NUMCPUS=$(($AWK 'BEGIN { i=0; } /^processor[ 	:]/ {i++} END {print(i);}' < /proc/cpuinfo))
+				NUMCPUS=$(($AWK 'BEGIN { i=0; } /^processor[ :\t]/ {i++} END {print(i);}' < /proc/cpuinfo))
 				if [ $NUMCPUS -ge 2 ]; then
 					printf '  linux: %d logical processors, enabling multi-processor support\n' "$NUMCPUS"
 					USEMP=1
@@ -1423,8 +1423,8 @@ do
 	X--no-priority)
 		USEPRIORITY=0
 		;;
-	X--no-mp)
-		USEMP=0
+	X--with-mp)
+		USEMP=1
 		;;
 	X--with-cputimers)
 		USECPUTIMERS=1
