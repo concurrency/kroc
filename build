@@ -141,6 +141,7 @@ DFL_SVNPASS="krocuser"
 SVNREV="HEAD"
 SVNUSER="$DFL_SVNUSER"
 SVNHOST="https://subversion.frmb.org/svn/"
+SVNBRANCH="trunk"
 # things set in typescript_head are: SED, AWK, MAKE, WGET, SVN
 
 #}}}
@@ -220,6 +221,7 @@ where options are:
   --svn-list                   list all files under version control
   --svn-user=<name>            set username for subversion repository access
   --svn-rev=<rev>              set revision number for subversion updates
+  --svn-branch=<branch>        attempt to use a branch for subversion updates
 
 and actions are:
   build                        build everything (default if not specified)
@@ -1103,17 +1105,37 @@ svn_update ()
 				fi
 				CHECKOUT_FAILED=0
 
+				# if branch is selected, make sure it exists
+				
+				REPOS="${SVN_REPOSS[i]}"
+
+				if [ "$SVNBRANCH" = "trunk" ]; then
+					SVNPATH="$SVNHOST$REPOS/trunk/"
+				else
+					SVNPATH="$SVNHOST$REPOS/branches/$SVNBRANCH/"
+					BRANCH_OK=1
+					if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
+						$SVN list --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNPATH" 1> /dev/null 2> /dev/null || BRANCH_OK=0
+					else
+						$SVN list "$SVNPATH" 1> /dev/null 2> /dev/null || BRANCH_OK=0
+					fi
+					if [ "$BRANCH_OK" -eq 1 ]; then
+						printf '(branch: %s) ' "$SVNBRANCH"
+					else
+						SVNPATH="$SVNHOST$REPOS/trunk/"
+					fi
+				fi
+
 				# this is a bit ugly..:
 				#   checkout into temporary directory
 				#   do subversion listing on repository
 				#     copy anything over that's either a file, or a directory that doesn't exist in the source tree
 				#
 
-				TRUNKSTR="/trunk"
 				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-					$SVN checkout $QFLAGS --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNHOST${SVN_REPOSS[i]}$TRUNKSTR/" "$TMPPATH" || CHECKOUT_FAILED=1
+					$SVN checkout $QFLAGS --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNPATH" "$TMPPATH" || CHECKOUT_FAILED=1
 				else
-					$SVN checkout $QFLAGS "$SVNHOST${SVN_REPOSS[i]}$TRUNKSTR/" "$TMPPATH" || CHECKOUT_FAILED=1
+					$SVN checkout $QFLAGS "$SVNPATH" "$TMPPATH" || CHECKOUT_FAILED=1
 				fi
 
 				if [ "$CHECKOUT_FAILED" -eq 1 ]; then
@@ -1128,9 +1150,9 @@ svn_update ()
 				nolder=0
 
 				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-					REPOSFILES=".svn $($SVN ls --recursive --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNHOST${SVN_REPOSS[i]}$TRUNKSTR/")"
+					REPOSFILES=".svn $($SVN ls --recursive --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNPATH")"
 				else
-					REPOSFILES=".svn $($SVN ls --recursive "$SVNHOST${SVN_REPOSS[i]}$TRUNKSTR/")"
+					REPOSFILES=".svn $($SVN ls --recursive "$SVNPATH")"
 				fi
 				for rfile in $REPOSFILES; do
 					rfile=${rfile%/}
@@ -1461,6 +1483,17 @@ do
 			exit 1
 		fi
 		SVNREV="$1"
+		;;
+	X--svn-branch=*)
+		SVNBRANCH=$(printf '%s\n' $1 | $SED -e 's/^[^=]*=//')
+		;;
+	X--svn-branch)
+		shift
+		if [ "$1" = "" ]; then
+			printf '%s: --svn-branch requires an argument\n' "$0" 1>&2
+			exit 1
+		fi
+		SVNBRANCH="$1"
 		;;
 	X*)
 		# must be an action
