@@ -1954,8 +1954,8 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-occ21 make-occ21 install-occ21 \
 		configure-ilibr make-ilibr install-ilibr \
 		configure-kroc make-kroc install-kroc \
-		configure-tranx86 make-tranx86 install-tranx86 \
 		initial-kroc-setup \
+		configure-tranx86 make-tranx86 install-tranx86 \
 		configure-krocif make-krocif install-krocif \
 		configure-inmoslibs make-inmoslibs install-inmoslibs \
 		configure-bsclib make-bsclib install-bsclib \
