@@ -559,7 +559,7 @@ preconfigure_pkg ()
 				preconfigure_pkg "$1" "$2" "$3/$subpkg" "$4"
 			fi
 		done
-	else
+	elif [ -f "$2/$3/preconfigure" ]; then
 		check_autoconf "$2" "$3"
 		CURRENT_DIR="$(pwd)"
 		cd "$2/$3"
@@ -1960,15 +1960,19 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-inmoslibs make-inmoslibs install-inmoslibs \
 		configure-bsclib make-bsclib install-bsclib \
 		configure-course make-course install-course \
-		configure-udc make-udc install-udc \
 		configure-cif make-cif install-cif \
 		configure-sdlraster make-sdlraster install-sdlraster \
 		configure-occsdl make-occsdl install-occsdl \
 		configure-occgl make-occgl install-occgl \
 		configure-occade make-occade install-occade \
 		configure-syncs make-syncs install-syncs"
+	if [ "$USEUDC" -eq 1 ]; then
+		# conditional on the "--with-udc" flag
+		ACTIONLIST="$ACTIONLIST \
+			configure-udc make-udc install-udc"
+	fi
 	if [ "$USEPONY" -eq 1 ]; then
-		# conditional on the "--with-pony" flag being given
+		# conditional on the "--with-pony" flag
 		ACTIONLIST="$ACTIONLIST \
 			configure-pony make-pony install-pony"
 	fi
