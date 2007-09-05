@@ -2003,7 +2003,7 @@ EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-s
 		configure-occsdl_examples make-occsdl_examples install-occsdl_examples \
 		configure-occgl_examples make-occgl_examples install-occgl_examples \
 		configure-occade_examples make-occade_examples install-occade_examples"
-if [ "$USEUDC" -eq 1]; then
+if [ "$USEUDC" -eq 1 ]; then
 	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
 		configure-udc_examples make-udc_examples install-udc_examples"
 fi
