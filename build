@@ -1996,7 +1996,6 @@ EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-s
 		configure-course_answers make-course_answers install-course_answers \
 		configure-syncs_examples make-syncs_examples install-syncs_examples \
 		configure-dynproc_examples make-dynproc_examples install-dynproc_examples \
-		configure-udc_examples make-udc_examples install-udc_examples \
 		configure-cif_examples make-cif_examples install-cif_examples \
 		configure-bar_demo make-bar_demo install-bar_demo \
 		configure-game_demo make-game_demo install-game_demo \
@@ -2004,6 +2003,10 @@ EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-s
 		configure-occsdl_examples make-occsdl_examples install-occsdl_examples \
 		configure-occgl_examples make-occgl_examples install-occgl_examples \
 		configure-occade_examples make-occade_examples install-occade_examples"
+if [ "$USEUDC" -eq 1]; then
+	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
+		configure-udc_examples make-udc_examples install-udc_examples"
+fi
 if [ "$USEPONY" -eq 1 ]; then
 	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
 		configure-pony_examples make-pony_examples"
