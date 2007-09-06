@@ -199,6 +199,7 @@ class KRoCToolchain:
 		vtlibdir = "%s%s/share/kroc/vtlib" % (destdir, prefix)
 		libdir = "%s%s/lib/kroc" % (destdir, prefix)
 		vtincludedir = "%s%s/share/kroc/vtinclude" % (destdir, prefix)
+		includedir = "%s%s/include/kroc" % (destdir, prefix)
 
 		(base, ext) = split_ext(file)
 		if ext == "lib":
@@ -208,6 +209,8 @@ class KRoCToolchain:
 			install(base + ".module", vtincludedir, False)
 		elif ext == "inc":
 			install(file, vtincludedir, False)
+		elif ext == "h":
+			install(file, includedir, False)
 		elif ext == "":
 			install(file, bindir, True)
 
@@ -292,6 +295,8 @@ class TVMToolchain:
 			install(base + ".module", tvmdir, False)
 		elif ext == "inc":
 			install(file, tvmdir, False)
+		elif ext == "h":
+			install(file, tvmdir, False)
 		elif ext == "":
 			install(file, bindir, True)
 			install(base + ".tbc", bindir, False)
@@ -318,6 +323,7 @@ class TVMToolchain:
 
 	def cflags(self):
 		print "-DOCCBUILD_TVM"
+		# FIXME: skroc doesn't currently have a cflags mode
 
 def usage(f):
 	print >>f, """occbuild, version """ + VERSION + """
@@ -334,7 +340,7 @@ Usage:
     Compile PROGNAME.occ with additional OBJECTs to produce PROGNAME
 
   occbuild [OPTIONS] --install FILE ...
-    Install files (.inc or .lib) to system locations
+    Install files (.inc, .lib, .h or programs) to system locations
 
   occbuild [OPTIONS] --install-examples PACKAGE PROGRAM ...
     Install PROGRAMs as examples for PACKAGE
