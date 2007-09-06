@@ -2256,7 +2256,8 @@ for action in $ACTIONLIST; do
 		#}}}
 		#{{{  bsyscalls-support: attempts to determine whether or not support for blocking system calls is present
 	Xbsyscalls-support)
-		nm "$kroc_archlibdir/libkroc.so" | grep "scheduler_can_do_bsyscalls" 1> /dev/null && HAVE_BSYSCALLS_SUPPORT=1
+		nm "$kroc_archlibdir/libkroc.so" 2> /dev/null | grep "scheduler_can_do_bsyscalls" 1> /dev/null && HAVE_BSYSCALLS_SUPPORT=1
+		grep "^#define BLOCKING_SYSCALLS 1" "$kroc_archincdir/ccsp_config.h" 1> /dev/null && HAVE_BSYSCALLS_SUPPORT=1
 		printf "%s: checking for blocking system calls support... " $0 | tee -a "$DUMPOUT"
 		if [ "$HAVE_BSYSCALLS_SUPPORT" != "" ]; then
 			printf "yes\n" | tee -a "$DUMPOUT"
@@ -2267,7 +2268,8 @@ for action in $ACTIONLIST; do
 		#}}}
 		#{{{  cputimers-support: attempts to determine whether or not support for CPU timers is present
 	Xcputimers-support)
-		nm "$kroc_archlibdir/libkroc.so" | grep "scheduler_can_do_cputimers" 1> /dev/null && HAVE_CPUTIMERS_SUPPORT=1
+		nm "$kroc_archlibdir/libkroc.so" 2> /dev/null | grep "scheduler_can_do_cputimers" 1> /dev/null && HAVE_CPUTIMERS_SUPPORT=1
+		grep "^#define ENABLE_CPU_TIMERS 1" "$kroc_archincdir/ccsp_config.h" 1> /dev/null && HAVE_CPUTIMERS_SUPPORT=1
 		printf "%s: checking for cpu-timers support... " $0 | tee -a "$DUMPOUT"
 		if [ "$HAVE_CPUTIMERS_SUPPORT" != "" ]; then
 			printf "yes\n" | tee -a "$DUMPOUT"
@@ -2278,7 +2280,8 @@ for action in $ACTIONLIST; do
 		#}}}
 		#{{{  dynproc_support: attempts to determine whether or not support for dynamic processes is present
 	Xdynproc-support)
-		nm "$kroc_archlibdir/libkroc.so" | grep "scheduler_can_do_dynproc" 1> /dev/null && HAVE_DYNPROC_SUPPORT=1
+		nm "$kroc_archlibdir/libkroc.so" 2> /dev/null | grep "scheduler_can_do_dynproc" 1> /dev/null && HAVE_DYNPROC_SUPPORT=1
+		grep "^#define DYNAMIC_PROCS 1" "$kroc_archincdir/ccsp_config.h" 1> /dev/null && HAVE_DYNPROC_SUPPORT=1
 		printf "%s: checking for dynamic process support... " $0 | tee -a "$DUMPOUT"
 		if [ "$HAVE_DYNPROC_SUPPORT" != "" ]; then
 			printf "yes\n" | tee -a "$DUMPOUT"
