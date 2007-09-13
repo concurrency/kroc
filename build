@@ -29,6 +29,7 @@ fi
 #
 #	build -- KRoC/Linux configuration/installation script
 #	Copyright (C) 2001-2006 Fred Barnes <frmb@kent.ac.uk>
+#	Copyright (C) 2007 University of Kent
 #
 #	This program is free software; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -74,13 +75,13 @@ kroc_kroc_cgtests=""
 
 #}}}
 #{{{  source packages
-CCSP_SRC=src/ccsp-1.6
-MKOCCDEPS_SRC=src/mkoccdeps-0.9
-OCC21_SRC=src/occ21-1.4
-ILIBR_SRC=src/ilibr-1.1
-TRANX86_SRC=src/tranx86-1.4
-KROC_SRC=src/kroc-1.4
-KROCIF_SRC=src/libkrocif-1.4
+CCSP_SRC=runtime/ccsp
+MKOCCDEPS_SRC=tools/mkoccdeps
+OCC21_SRC=tools/occ21
+ILIBR_SRC=tools/ilibr
+TRANX86_SRC=tools/tranx86
+KROC_SRC=tools/kroc
+KROCIF_SRC=runtime/libkrocif
 INMOSLIBS_SRC=modules/inmoslibs/libsrc
 BSCLIB_SRC=modules/bsclib/libsrc
 BSCLIB_EXAMPLES_SRC=modules/bsclib/examples
@@ -107,14 +108,14 @@ PONY_SRC=modules/pony/libsrc
 PONY_EXAMPLES_SRC=modules/pony/examples
 CIF_SRC=modules/cif/libsrc
 CIF_EXAMPLES_SRC=modules/cif/examples
-CGTESTS_SRC=src/cgtests-1.3
+CGTESTS_SRC=tests/cgtests
 CONTRIB_SRC=contrib
 CONTRIB_MOA_LIBSRC=contrib/moa/libsrc
 CONTRIB_MOA_EXAMPLES=contrib/moa/examples
 MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
-OCCAMDOC_SRC=occamdoc
+OCCAMDOC_SRC=tools/occamdoc
 SVN_SRCS=(. $CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occGL modules/occade modules/pony modules/cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
 SVN_REPOSS=(kroc-srcpkg ccsp mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occGL occade pony cif kroc-doc cgtests kroc-contrib occamdoc)
 
