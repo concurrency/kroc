@@ -1,141 +1,123 @@
 
-KRoC Linux -- Source Distribution
-=================================
+KRoC -- Source Distribution
+===========================
+
+
+Prerequisites
+-------------
+
+To compile and use KRoC, you will need to have the following already
+installed on your machine:
+
+ - the bash shell
+
+ - the GNU toolchain -- i.e. GCC 2.95.2 or later, binutils 2.0 or later,
+   GNU awk, GNU make
+
+ - the C development headers
+
+ - Python 2.2 or later
+
+Some occam-pi modules can optionally make use of other libraries if
+available, such as SDL and OpenGL.
+
+On Debian-based systems, we suggest installing the following packages:
+
+  bash gcc binutils gawk make libc6-dev libsdl1.2-dev
+  libsdl-sound1.2-dev libgl1-mesa-dev
 
 
 Installation
 ------------
 
-To  install  the  source  distribution,  unpack  the  .tar
-archive,  cd   to   the   directory   where   it  unpacked
-(cd .../kroc/),  and run  the 'build' script.  The  script
-will configure,  compile and setup  the KRoC distribution.
-Calling the  script with the --help option will bring up a
+To install the source distribution, unpack the tar archive, cd to the
+directory that unpacking it produced, and run the "./build" script.
+The script will configure, compile and install all the parts of the KRoC
+distribution. Calling the script with the "--help" option will bring up a
 list of available options.
 
-In order  to compile  KRoC, you  will need  the relevant C
-development  packages for  your  system.  In  Debian,  for
-example, these are "libc6-dev" and "linux-kernel-headers".
-You will also need the GNU C compiler (gcc).
+We recommend that you install KRoC into a directory outside the source
+directory. This can be specified using the "--prefix <directory>" option
+to the build script. The first time the script is run, it will prompt
+for this (with a directory inside the source-tree as the default
+installation directory); to enter the interactive configuration mode
+again, use "./build --reconf".
 
-It is possible to  install  the run-time  software  into a
-directory other than where the sources are kept.  This can
-be set using the '--install-dir <directory>' option to the
-'build' script.  The first time the script is run, it will
-prompt  for  this  (with  the  source-tree as  the default
-installation directory).  To re-configure the KRoC install
-use "./build --reconf".
+Once you have installed KRoC, you can clean out the source tree using
+"./build clean", or even remove it entirely.
 
 
 Configuration
 -------------
 
-Before using  KRoC, remember  to source the relevant setup
-file  (bin/setup.sh  for  sh/bash,  or  bin/setup.csh  for
-csh/tcsh).  It may  be convenient to include this `source'
-command  in the start-up  file for shell being used  (e.g.
-~/.bash_profile,  ~/.cshrc),  or in the  system-wide shell
-startup files (e.g.  /etc/profile  and  /etc/csh.cshrc  or
-/etc/.login).
+Before using KRoC, remember to source the relevant setup file:
+
+  - ". PREFIX/bin/setup.sh" for Bourne-style shells such as bash
+
+  - "source PREFIX/bin/setup.csh" for C-style shells such as csh/tcsh
+
+It may be convenient to include this command in your shell's startup
+file (e.g. "~/.bash_profile", "~/.cshrc", or "/etc/profile").
 
 
 Directories
 -----------
 
-  install/
+  demos/
 
-    This is the default installation base for KRoC.
+    Some standalone demo programs written in occam-pi.
 
   doc/
 
-    This contains various items of documentation.  Essential reading is
-    the `essentially-kroc.txt' file.
+    Various items of documentation. The "essentially-kroc.txt" file is a
+    good place to start.
 
-  src/
+  install/
 
-    This holds all the source files for this release and may be deleted if
-    you wish.  Please note that everything is under either the GNU GPL or LGPL.
-
-  syncs/
-
-    This holds the sources for the extra synchronisation primitives (BARRIER,
-    BUCKET, SEMAPHORE and CREW) supported by this release.  There are also
-    some demonstration examples.  Documentation for these is in the `docs/'
-    directory.
-
-  course/
-
-    This contains material for the course at the University of Kent.
-    This includes the sources for its course library (#USE "course.lib"),
-    which are compiled into the KRoC library during the `build' operation
-    for this release.
-
-  dynproc/
-
-    This contains the occam interface and example programs for dynamic occam
-    processes.
-
-  udc/
-
-    This contains the occam interface and example programs for user-defined
-    channels.
-
-  cif/
-
-    This contains the CIF (C interface) libraries and examples.
-
-  sdlraster/
-
-    This contains the SDLRaster (SDL based raster graphics) libraries and
-    examples.
-
-  demos/
-
-    Various extra demo programs.
-
-  licenses/
-
-    This contains the GNU GPL and LGPL licenses.
-
-  pony/
-
-    The KRoC networked infrastructure libraries and examples.
-
-  contrib/
-
-    Contributed documentation, libraries and examples.
-
-  occamdoc/
-
-    The occam documentation tool.
+    This is the default installation directory for KRoC.
 
   modules/
 
-    Various additional modules.
+    Reusable modules that can be used in occam-pi programs. Each module
+    contains a "libsrc" directory with the module's source code, and an
+    "examples" directory with demonstration and test programs.
 
+    The "modules/course" directory will probably be of particular
+    interest, since it contains the examples and exercises used to teach
+    occam-pi at the University of Kent.
+
+  runtime/
+
+    Low-level runtime support code for the occam-pi environment.
+
+  tests/
+
+    Functional test programs for occam-pi systems.
+
+  tools/
+
+    Tools for compiling, debugging, packaging and documenting occam-pi
+    programs.
 
 Note: most directories contain further README files.
 
 
-Copyleft
---------
+Licensing
+---------
 
-Information about the GNU public license can be found at:
+KRoC is free software. In general, tools are made available under the
+GNU General Public License (v2 or later), and libraries are made
+available under the GNU Lesser General Public License (v2 or later).
+Information about the GNU licenses can be found at:
 
-        http://www.gnu.org/copyleft/
-
-The two licenses this distribution uses are provided (GPL and LGPL).
+	http://www.fsf.org/licensing/
 
 
-Problems / Bugs
----------------
+Reporting problems
+------------------
 
-Known bugs are given in the top-level BUGS file.  If the package
-fails to  build,  mail  'F.R.M.Barnes@kent.ac.uk'  with a  brief
-description of the  problem and a copy of the  'typescript' file
-generated by 'build'.
-
-Problems with  individual  occam programs should be  sent to the
-relevant author (usually mentioned in the source code),  or more
-generally to 'kroc-bugs@kent.ac.uk'.
+Known bugs are given in the top-level BUGS file. If KRoC fails to
+compile or work correctly on your system, please mail our bug tracking
+system at <kroc-bugs@kent.ac.uk>, including a brief description of the
+problem and a copy of the "typescript" file generated by "build".
 
