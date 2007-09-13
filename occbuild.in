@@ -99,7 +99,7 @@ def capture(cmd):
 
 def make_shared(library, objs):
 	"""Link a bunch of native objects into a shared library."""
-	run(programs["cc"] + ["-shared"] + ["-l%s" % l for l in needs] + ["-o", library] + objs + linker_opts)
+	run(programs["cc"] + linker_opts + ["-shared"] + ["-l%s" % l for l in needs] + ["-o", library] + objs)
 
 def make_module(name, custom):
 	"""Generate a .module file, calling the provided function to fill in
@@ -188,6 +188,12 @@ class KRoCToolchain:
 
 		objs = [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs
 		if objs != []:
+			if prefix is None:
+				linker_opts.extend(split_options(capture(programs["kroc"] + ["--cclibpath"])))
+			else:
+				linker_opts.append("-L.")
+				linker_opts.append("-L%s/lib/kroc" % prefix)
+
 			needs.insert(0, "kroc")
 			make_shared("lib%s.so" % base, objs)
 
