@@ -809,7 +809,7 @@ if [ $use_occ21_zep -eq 1 ]; then
 fi
 
 if [ $defaultlibraries -eq 1 ]; then
-	ocllibs="-loccam8 -loccamutl $ocllibs"
+	ocllibs="-loccam8 $ocllibs"
 fi
 
 #}}}
