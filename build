@@ -75,7 +75,6 @@ kroc_kroc_cgtests=""
 #}}}
 #{{{  source packages
 CCSP_SRC=src/ccsp-1.6
-CPUTIMERUTILS_SRC=src/cputimer-utils-0.9
 MKOCCDEPS_SRC=src/mkoccdeps-0.9
 OCC21_SRC=src/occ21-1.4
 ILIBR_SRC=src/ilibr-1.1
@@ -116,10 +115,10 @@ MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
 OCCAMDOC_SRC=occamdoc
-SVN_SRCS=(. $CCSP_SRC $CPUTIMERUTILS_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occGL modules/occade modules/pony modules/cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp cputimer-utils mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occGL occade pony cif kroc-doc cgtests kroc-contrib occamdoc)
+SVN_SRCS=(. $CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occGL modules/occade modules/pony modules/cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
+SVN_REPOSS=(kroc-srcpkg ccsp mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occGL occade pony cif kroc-doc cgtests kroc-contrib occamdoc)
 
-ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $CPUTIMERUTILS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
+ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC $DEMO_GAME_SRC \
 	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $CONTRIB_SRC $OCCAMDOC_SRC \
@@ -244,7 +243,6 @@ and actions are:
 choices for <pkg> are:
   ccsp                         CCSP (run-time occam/transputer kernel)
   ccspt                        CCSP with debugging trace support
-  cputimerutils                CPU timer clock calibration utility
   mkoccdeps                    occam dependency generator
   occ21                        inmos occam compiler
   ilibr                        inmos librarian
@@ -1949,7 +1947,6 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		fconfigure-ccspt make-ccspt install-ccspt \
 		fconfigure-ccsp make-ccsp install-ccsp \
 		bsyscalls-support cputimers-support dynproc-support \
-		configure-cputimerutils make-cputimerutils install-cputimerutils \
 		configure-mkoccdeps make-mkoccdeps install-mkoccdeps \
 		configure-occ21 make-occ21 install-occ21 \
 		configure-ilibr make-ilibr install-ilibr \
@@ -2044,9 +2041,6 @@ for action in $ACTIONLIST; do
 		;;
 	Xccsp)
 		NEWACTIONLIST="$NEWACTIONLIST preconfigure-ccsp configure-ccsp make-ccsp install-ccsp"
-		;;
-	Xcputimerutils)
-		NEWACTIONLIST="$NEWACTIONLIST cputimers-support configure-cputimerutils make-cputimerutils install-cputimerutils"
 		;;
 	Xmkoccdeps)
 		NEWACTIONLIST="$NEWACTIONLIST configure-mkoccdeps make-mkoccdeps install-mkoccdeps"
@@ -2462,11 +2456,6 @@ for action in $ACTIONLIST; do
 			fi
 			CONF_SPECOPTS="$CONF_SPECOPTS --enable-dtraces"
 
-			;;
-			#}}}
-			#{{{  cputimerutils: clock calibration utility
-		Xcputimerutils)
-			PKG_SRC=$CPUTIMERUTILS_SRC
 			;;
 			#}}}
 			#{{{  mkoccdeps: occam dependency generator
