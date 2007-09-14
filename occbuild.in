@@ -202,6 +202,8 @@ class KRoCToolchain:
 				linker_opts.append("-L.")
 				linker_opts.append("-L%s/lib/kroc" % prefix)
 
+			if std_libs:
+				needs.insert(0, "krocif")
 			needs.insert(0, "kroc")
 			make_shared("lib%s.%s" % (base, extensions["so"]), objs)
 
