@@ -109,7 +109,7 @@ def make_shared(library, objs):
 	libs = ["-l%s" % l for l in needs]
 	opts = []
 	if target_os == "Darwin":
-		opts = ["-dynamiclib", "-flat_namespace", "-read_only_relocs", "suppress"]
+		opts = ["-dynamiclib", "-read_only_relocs", "suppress"]
 	else:
 		opts = ["-shared"]
 	run(programs["cc"] + linker_opts + libs + opts + ["-o", library] + objs)
