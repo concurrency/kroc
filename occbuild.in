@@ -34,6 +34,7 @@ includes_before = []
 includes_after = []
 prefix = None
 destdir = ""
+target_os = os.uname()[0]
 
 def warn(*s):
 	print >>sys.stderr, "occbuild: " + "".join(map(str, s))
@@ -99,7 +100,13 @@ def capture(cmd):
 
 def make_shared(library, objs):
 	"""Link a bunch of native objects into a shared library."""
-	run(programs["cc"] + linker_opts + ["-shared"] + ["-l%s" % l for l in needs] + ["-o", library] + objs)
+	libs = ["-l%s" % l for l in needs]
+	opts = []
+	if target_os == "Darwin":
+		opts = ["-dynamiclib", "-flat_namespace", "-read_only_relocs", "suppress"]
+	else:
+		opts = ["-shared"]
+	run(programs["cc"] + linker_opts + libs + opts + ["-o", library] + objs)
 
 def make_module(name, custom):
 	"""Generate a .module file, calling the provided function to fill in
@@ -367,6 +374,7 @@ Options for all modes:
   --help              Show usage
   --toolchain CHAIN   Use toolchain CHAIN (kroc or tvm, default kroc)
   --search DIR        Add DIR to search path for include files and libraries
+  --target-os OS      Override OS target for binaries, e.g. Darwin or Linux
 
 For each program prog of """ + ", ".join(sorted(programs.keys())) + """:
   --prog PATH         Path to prog (or set PROG=PATH in the environment)
@@ -403,7 +411,7 @@ def main(args):
 		"help", "no-std-libs", "verbose",
 		"toolchain=", "search=",
 		"occ21-opts=", "need=", "include=", "include-after=",
-		"prefix=", "destdir=",
+		"prefix=", "destdir=", "target-os="
 		]
 	for prog in programs.keys():
 		long_opts += [prog + "=", prog + "-opts="]
@@ -423,7 +431,7 @@ def main(args):
 	toolchain = None
 	search_path = []
 	global std_libs, verbose, occ21_opts, linker_opts, needs, includes_before, includes_after
-	global prefix, destdir, examples
+	global prefix, destdir, examples, target_os
 	for (o, a) in opts:
 		if o in ("--object", "--library", "--program", "--install",
 		         "--install-examples", "--clean", "--cflags"):
@@ -462,6 +470,8 @@ def main(args):
 			destdir = a
 		elif o == "--no-std-libs":
 			std_libs = False
+		elif o == "--target-os":
+			target_os = a
 		else:
 			for prog in programs.keys():
 				if o == "--" + prog:
