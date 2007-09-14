@@ -44,6 +44,11 @@ def die(*s):
 	warn(*s)
 	sys.exit(1)
 
+def safe_sorted(l):
+	l = l[:]
+	l.sort(cmp)
+	return l
+
 def tidy_spaces(string):
 	"""Remove leading and trailing whitespace, and collapse all interior
 	whitespace into single spaces."""
@@ -379,7 +384,7 @@ Options for all modes:
   --search DIR        Add DIR to search path for include files and libraries
   --target-os OS      Override OS target for binaries, e.g. Darwin or Linux
 
-For each program prog of """ + ", ".join(sorted(programs.keys())) + """:
+For each program prog of """ + ", ".join(safe_sorted(programs.keys())) + """:
   --prog PATH         Path to prog (or set PROG=PATH in the environment)
   --prog-opts OPTS    Additional options for prog
 
