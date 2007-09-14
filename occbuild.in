@@ -46,7 +46,7 @@ def die(*s):
 
 def safe_sorted(l):
 	l = l[:]
-	l.sort(cmp)
+	l.sort()
 	return l
 
 def tidy_spaces(string):
