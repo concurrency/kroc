@@ -2081,13 +2081,13 @@ for action in $ACTIONLIST; do
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-sdlraster make-sdlraster install-sdlraster"
 		;;
 	Xoccsdl)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-occsdl make-occsdl install-occsdl"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-occsdl make-occsdl install-occsdl"
 		;;
 	Xoccgl)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-occgl make-occgl install-occgl"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-occgl make-occgl install-occgl"
 		;;
 	Xoccade)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-occade make-occade install-occade"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-occade make-occade install-occade"
 		;;
 	Xfmtoutlib)
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-fmtoutlib make-fmtoutlib install-fmtoutlib"
