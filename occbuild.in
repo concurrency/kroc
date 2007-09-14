@@ -202,7 +202,7 @@ class KRoCToolchain:
 				linker_opts.append("-L.")
 				linker_opts.append("-L%s/lib/kroc" % prefix)
 
-			needs.insert(0, "kroc")
+			needs.insert(0, "ccsp")
 			make_shared("lib%s.%s" % (base, extensions["so"]), objs)
 
 		if occam_objs == []:
