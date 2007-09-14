@@ -186,7 +186,7 @@ esac
 
 case "$host_os" in
 	darwin*)
-		extraccopts=${EXTRACCOPTS:-}
+		extraccopts=${EXTRACCOPTS:--read_only_relocs suppress}
 		;;
 	solaris*)
 		extraccopts=${EXTRACCOPTS:-}
