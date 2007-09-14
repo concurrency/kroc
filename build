@@ -109,22 +109,23 @@ PONY_EXAMPLES_SRC=modules/pony/examples
 CIF_SRC=modules/cif/libsrc
 CIF_EXAMPLES_SRC=modules/cif/examples
 CGTESTS_SRC=tests/cgtests
-CONTRIB_SRC=contrib
-CONTRIB_MOA_LIBSRC=contrib/moa/libsrc
-CONTRIB_MOA_EXAMPLES=contrib/moa/examples
+FMTOUTLIB_SRC=modules/fmtoutlib/libsrc
+MOA_SRC=modules/moa/libsrc
+MOA_EXAMPLES_SRC=modules/moa/examples
 MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
 OCCAMDOC_SRC=tools/occamdoc
-SVN_SRCS=(. $CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occGL modules/occade modules/pony modules/cif $DOC_SRC $CGTESTS_SRC $CONTRIB_SRC $OCCAMDOC_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occGL occade pony cif kroc-doc cgtests kroc-contrib occamdoc)
+SVN_SRCS=(. $CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occGL modules/occade modules/pony modules/cif modules/cdx modules/fmtoutlib modules/moa $DOC_SRC $CGTESTS_SRC $OCCAMDOC_SRC)
+SVN_REPOSS=(kroc-srcpkg ccsp mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occGL occade pony cif cdx fmtoutlib moa kroc-doc cgtests occamdoc)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC $DEMO_GAME_SRC \
-	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $CONTRIB_SRC $OCCAMDOC_SRC \
-	$OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC"
-FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $CONTRIB_MOA_LIBSRC $CONTRIB_MOA_EXAMPLES $OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC"
+	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $OCCAMDOC_SRC \
+	$OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC \
+	$FMTOUTLIB_SRC $MOA_SRC $MOA_EXAMPLES_SRC"
+FAILABLE_PKGS="$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $MOA_SRC $MOA_EXAMPLES_SRC $OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC"
 
 
 #}}}
@@ -264,9 +265,10 @@ choices for <pkg> are:
   occgl                        OpenGL bindings module
   occade                       arcade game development module
   pony                         pony (kroc-net) networking infrastructure
+  fmtoutlib                    formatted output module
+  moa                          MySQL bindings module
   doc                          documentation
   occamdoc                     occam documentation tool
-  contrib                      contributed programs/libraries/documentation
   examples                     all example programs, which are:
     bsclib_examples            blocking system calls example programs
     course_examples            UKC course example programs
@@ -281,6 +283,8 @@ choices for <pkg> are:
     occsdl_examples            occSDL example programs
     occgl_examples             occGL example programs
     occade_examples            Occade example programs
+    pony_examples              pony example programs
+    moa_examples               moa example programs
 EOF
 }
 #}}}
@@ -1963,6 +1967,8 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-occsdl make-occsdl install-occsdl \
 		configure-occgl make-occgl install-occgl \
 		configure-occade make-occade install-occade \
+		configure-fmtoutlib make-fmtoutlib install-fmtoutlib \
+		configure-moa make-moa install-moa \
 		configure-syncs make-syncs install-syncs"
 	if [ "$USEUDC" -eq 1 ]; then
 		# conditional on the "--with-udc" flag
@@ -1975,7 +1981,6 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 			configure-pony make-pony install-pony"
 	fi
 	ACTIONLIST="$ACTIONLIST \
-		preconfigure-contrib configure-contrib make-contrib install-contrib \
 		configure-occamdoc make-occamdoc install-occamdoc \
 		configure-dynproc make-dynproc install-dynproc \
 		install-manpages \
@@ -2000,7 +2005,8 @@ EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-s
 		configure-sdlraster_examples make-sdlraster_examples install-sdlraster_examples \
 		configure-occsdl_examples make-occsdl_examples install-occsdl_examples \
 		configure-occgl_examples make-occgl_examples install-occgl_examples \
-		configure-occade_examples make-occade_examples install-occade_examples"
+		configure-occade_examples make-occade_examples install-occade_examples \
+		configure-moa_examples make-moa_examples install-moa_examples"
 if [ "$USEUDC" -eq 1 ]; then
 	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
 		configure-udc_examples make-udc_examples install-udc_examples"
@@ -2031,11 +2037,6 @@ for action in $ACTIONLIST; do
 		else
 			NEWACTIONLIST="$NEWACTIONLIST $CGTESTS_ACTIONS"
 		fi
-		;;
-	Xcontrib-moa)
-		# exclusive
-		NEWACTIONLIST="configure-contrib_moa_libsrc make-contrib_moa_libsrc install-contrib_moa_libsrc \
-			configure-contrib_moa_examples make-contrib_moa_examples install-contrib_moa_examples"
 		;;
 	Xccspt)
 		NEWACTIONLIST="$NEWACTIONLIST preconfigure-ccsp configure-ccspt make-ccspt install-ccspt"
@@ -2087,6 +2088,12 @@ for action in $ACTIONLIST; do
 		;;
 	Xoccade)
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-occade make-occade install-occade"
+		;;
+	Xfmtoutlib)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-fmtoutlib make-fmtoutlib install-fmtoutlib"
+		;;
+	Xmoa)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-moa make-moa install-moa"
 		;;
 	X*)
 		if [ "$NEWACTIONLIST" = "" ]; then
@@ -2627,6 +2634,12 @@ for action in $ACTIONLIST; do
 			NEED_KROC_ENV=1
 			;;
 			#}}}
+			#{{{  moa_examples: moa example programs
+		Xmoa_examples)
+			PKG_SRC=$MOA_EXAMPLES_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
 			#{{{  bar_demo: the "better-bar" demonstrator
 		Xbar_demo)
 			PKG_SRC=$DEMO_BAR_SRC
@@ -2713,20 +2726,15 @@ for action in $ACTIONLIST; do
 			NEED_KROC_ENV=1
 			;;
 			#}}}
-			#{{{  contrib: contributions
-		Xcontrib)
-			# this is a bit special -- relies on some metadata in the contrib directory to work
-			PKG_SRC=$CONTRIB_SRC
+			#{{{  fmtoutlib: formatted output library
+		Xfmtoutlib)
+			PKG_SRC=$FMTOUTLIB_SRC
 			NEED_KROC_ENV=1
 			;;
 			#}}}
-			#{{{  contrib-*: contrib-specific packages
-		Xcontrib_moa_libsrc)
-			PKG_SRC=$CONTRIB_MOA_LIBSRC
-			NEED_KROC_ENV=1
-			;;
-		Xcontrib_moa_examples)
-			PKG_SRC=$CONTRIB_MOA_EXAMPLES
+			#{{{  moa: MySQL bindings
+		Xmoa)
+			PKG_SRC=$MOA_SRC
 			NEED_KROC_ENV=1
 			;;
 			#}}}
