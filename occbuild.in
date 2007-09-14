@@ -35,6 +35,7 @@ includes_after = []
 prefix = None
 destdir = ""
 target_os = os.uname()[0]
+extensions = {"so": "so"}
 
 def warn(*s):
 	print >>sys.stderr, "occbuild: " + "".join(map(str, s))
@@ -202,7 +203,7 @@ class KRoCToolchain:
 				linker_opts.append("-L%s/lib/kroc" % prefix)
 
 			needs.insert(0, "kroc")
-			make_shared("lib%s.so" % base, objs)
+			make_shared("lib%s.%s" % (base, extensions["so"]), objs)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")
@@ -223,7 +224,7 @@ class KRoCToolchain:
 		if ext == "lib":
 			if not is_stub(file):
 				install(file, vtlibdir, False)
-			install("lib%s.so" % base, libdir, True)
+			install("lib%s.%s" % (base, extensions["so"]), libdir, True)
 			install(base + ".module", vtincludedir, False)
 		elif ext == "inc":
 			install(file, vtincludedir, False)
@@ -245,7 +246,7 @@ class KRoCToolchain:
 			delete(base + ".o")
 		elif ext == "lib":
 			delete(base + ".lbb")
-			delete("lib%s.so" % base)
+			delete("lib%s.%s" % (base, extensions["so"]))
 			delete(base + ".module")
 		elif ext == "":
 			self.clean(base + ".tce")
@@ -274,7 +275,7 @@ class TVMToolchain:
 		make_module(base, custom)
 
 		if native_objs != []:
-			make_shared(base + ".so", native_objs)
+			make_shared(base + "." + extensions["so"], native_objs)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")
@@ -309,7 +310,7 @@ class TVMToolchain:
 			if not is_stub(file):
 				install(file, tvmdir, False)
 				install(base + ".precomp", tvmdir, False)
-			install(base + ".so", tvmdir, True)
+			install(base + "." + extensions["so"], tvmdir, True)
 			install(base + ".module", tvmdir, False)
 		elif ext == "inc":
 			install(file, tvmdir, False)
@@ -333,7 +334,7 @@ class TVMToolchain:
 		elif ext == "lib":
 			delete(base + ".lbb")
 			delete(base + ".precomp")
-			delete(base + ".so")
+			delete(base + "." + extensions["so"])
 			delete(base + ".module")
 		elif ext == "":
 			self.clean(base + ".tce")
@@ -490,6 +491,9 @@ def main(args):
 		programs["cc"] += ["-L" + dir]
 		programs["kroc"] += ["-I" + dir, "-L" + dir]
 		programs["skroc"] += ["-L", dir]
+	
+	if target_os == "Darwin":
+		extensions["so"] = "dylib"
 
 	if mode == "object":
 		if args == []:
