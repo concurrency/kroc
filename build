@@ -2543,13 +2543,6 @@ for action in $ACTIONLIST; do
 			NEED_KROC_ENV=1
 			;;
 			#}}}
-		Xbsclib)
-			#{{{  bsclib: blocking sys-call library
-			if [ $USEUDC -eq 1 ]; then
-				CONF_SPECOPTS="$CONF_SPECOPTS --enable-cspdrvlib"
-			fi
-			;;
-			#}}}
 			#{{{  bsclib_examples: blocking sys-call examples
 		Xbsclib_examples)
 			if [ "$HAVE_BSYSCALLS_SUPPORT" = "1" ]; then
@@ -2657,6 +2650,9 @@ for action in $ACTIONLIST; do
 			if [ "$HAVE_BSYSCALLS_SUPPORT" = "1" ]; then
 				PKG_SRC=$BSCLIB_SRC
 				NEED_KROC_ENV=1
+				if [ $USEUDC -eq 1 ]; then
+					CONF_SPECOPTS="$CONF_SPECOPTS --enable-cspdrvlib"
+				fi
 			else
 				ABORT_ACTION=1
 			fi
