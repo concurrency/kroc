@@ -1818,7 +1818,7 @@ kroc_kroc_examples="$kroc_krocdir/examples"
 kroc_kroc_vtlib="$kroc_krocdir/vtlib"
 kroc_kroc_vtinclude="$kroc_krocdir/vtinclude"
 kroc_kroc_doc="$kroc_krocdir/doc"
-kroc_kroc_cgtests="$kroc_krocdir/cgtests"
+kroc_kroc_cgtests="${INSTALL_DIR}lib/kroc/examples/cgtests"
 
 #}}}
 #{{{  pre-release messages
