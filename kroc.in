@@ -1316,7 +1316,7 @@ fi
 
 if [ $makelib ]; then
 	efile=$efile$libext
-	cmd="$cc $ccopts $oclibpath $local_ocllibs $local_ocrts $ocrtslibs $extraccopts $ARCH_LDFLAGS $ldopts -o $efile $objs"
+	cmd="$cc $ccopts $oclibpath $ocrtslibs $ocllibs $ocrts $extraccopts $ARCH_LDFLAGS $ldopts -o $efile $objs"
 elif [ $skip_link ]; then
 	test
 else
