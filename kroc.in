@@ -1306,8 +1306,17 @@ if [ $dorun ]; then
 fi
 
 if [ $makelib ]; then
-	efile=$efile".so"
-	cmd="$ld $ARCH_LDFLAGS $ldopts -o $efile $objs"
+	case "$host_os" in
+		darwin*)
+			dylibflags="-dynamiclib"
+			efile=$efile".dylib"
+			;;
+		*)
+			dylibflags="-shared"
+			efile=$efile".so"
+			;;
+	esac
+	cmd="$cc $ccopts $oclibpath $local_ocllibs $local_ocrts $ocrtslibs $extraccopts $ARCH_LDFLAGS $ldopts $dylibflags -o $efile $objs"
 elif [ $skip_link ]; then
 	test
 else
