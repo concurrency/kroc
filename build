@@ -2095,8 +2095,21 @@ for action in $ACTIONLIST; do
 	Xmoa)
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-moa make-moa install-moa"
 		;;
+	Xcourse_answers)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-course_answers make-course_answers install-course_answers"
+		;;
 	X*)
-		if [ "$NEWACTIONLIST" = "" ]; then
+		FOUND=0
+		for x in bsclib course course syncs dynproc udc bar game cif sdlraster occsdl occgl occade pony moa; do
+			if [ "X${x}_examples" = "X$action" ]; then
+				NEWACTION="initial-kroc-setup bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
+				FOUND=1
+			fi
+		done
+
+		if [ $FOUND -eq 1 ]; then
+			NEWACTIONLIST="$NEWACTIONLIST $NEWACTION"
+		elif [ "$NEWACTIONLIST" = "" ]; then
 			NEWACTIONLIST="$action"
 		else
 			NEWACTIONLIST="$NEWACTIONLIST $action"
