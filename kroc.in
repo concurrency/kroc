@@ -203,7 +203,16 @@ cc=${CC:-gcc}
 as=${AS:-as}
 asflags=""
 ld=${LD:-ld}
-ldopts="-shared"
+case "$host_os" in
+	darwin*)
+		ldopts="-dynamiclib"
+		libext=".dylib"
+		;;
+	*)
+		ldopts="-shared"
+		libext=".so"
+		;;
+esac
 
 # Assembler options needed A1 and A2 are used to define alignment.
 # Different versions of the gnu assembler require different values:
@@ -1306,17 +1315,8 @@ if [ $dorun ]; then
 fi
 
 if [ $makelib ]; then
-	case "$host_os" in
-		darwin*)
-			dylibflags="-dynamiclib"
-			efile=$efile".dylib"
-			;;
-		*)
-			dylibflags="-shared"
-			efile=$efile".so"
-			;;
-	esac
-	cmd="$cc $ccopts $oclibpath $local_ocllibs $local_ocrts $ocrtslibs $extraccopts $ARCH_LDFLAGS $ldopts $dylibflags -o $efile $objs"
+	efile=$efile$libext
+	cmd="$cc $ccopts $oclibpath $local_ocllibs $local_ocrts $ocrtslibs $extraccopts $ARCH_LDFLAGS $ldopts -o $efile $objs"
 elif [ $skip_link ]; then
 	test
 else
