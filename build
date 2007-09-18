@@ -360,7 +360,7 @@ deferred_install_error ()
 #{{{  install_error ()
 install_error ()
 {
-	tee -a "$DUMPOUT" << EOF
+	$TEE -a "$DUMPOUT" << EOF
 
 ***********************************************************
 *                     INSTALLATION ERROR                  *
@@ -409,11 +409,12 @@ guess_software ()
 	MAKE=${MAKE:-}
 	WGET=${WGET:-}
 	SVN=${SVN:-}
+	TEE=${TEE:-}
 
 	XIFS="$IFS"
 	IFS=':'
 
-	if [ "$SED" = "" ] || [ "$AWK" = "" ] || [ "$MAKE" = "" ] || [ "$WGET" = "" ] || [ "$SVN" = "" ]; then
+	if [ "$SED" = "" ] || [ "$AWK" = "" ] || [ "$MAKE" = "" ] || [ "$WGET" = "" ] || [ "$SVN" = "" ] || [ "$TEE" = "" ]; then
 		for pth in $PATH; do
 			if [ -x "$pth"/gnused ] && [ "$SED" = "" ]; then
 				SED="$pth"/gnused
@@ -430,9 +431,12 @@ guess_software ()
 			if [ -x "$pth"/svn ] && [ "$SVN" = "" ]; then
 				SVN="$pth"/svn
 			fi
+			if [ -x "$pth"/gnutee ] && [ "$TEE" = "" ]; then
+				TEE="$pth"/gnutee
+			fi
 		done
 	fi
-	if [ "$SED" = "" ] || [ "$AWK" = "" ] || [ "$MAKE" = "" ]; then
+	if [ "$SED" = "" ] || [ "$AWK" = "" ] || [ "$MAKE" = "" ] || [ "$TEE" = "" ]; then
 		for pth in $PATH; do
 			if [ -x "$pth/sed" ] && [ "$SED" = "" ]; then
 				SED="$pth"/sed
@@ -443,12 +447,18 @@ guess_software ()
 			if [ -x "$pth"/gmake ] && [ "$MAKE" = "" ]; then
 				MAKE="$pth"/gmake
 			fi
+			if [ -x "$pth"/gtee ] && [ "$TEE" = "" ]; then
+				TEE="$pth"/gtee
+			fi
 		done
 	fi
-	if [ "$MAKE" = "" ]; then
+	if [ "$MAKE" = "" ] || [ "$TEE" = "" ]; then
 		for pth in $PATH; do
 			if [ -x "$pth"/make ] && [ "$MAKE" = "" ]; then
 				MAKE="$pth"/make
+			fi
+			if [ -x "$pth"/tee ] && [ "$TEE" = "" ]; then
+				TEE="$pth"/tee
 			fi
 		done
 	fi
@@ -480,7 +490,8 @@ typescript_head ()
 	printf '        cgtests install:       %s\n' "$kroc_kroc_cgtests" >> $DUMPOUT
 	printf 'Various software versions:\n' >> "$DUMPOUT"
 	# for BSD, tee doesn't much like our --version argument (GNU fileutils wanted really)
-	uname | grep BSD 1> /dev/null && XX_PROGRAMS="${AS:-as} ${CC:-gcc}" || XX_PROGRAMS="${AS:-as} ${CC:-gcc} tee"
+	uname | grep BSD 1> /dev/null && XX_PROGRAMS="${AS:-as} ${CC:-gcc}" || XX_PROGRAMS="${AS:-as} ${CC:-gcc} ${TEE:-tee}"
+	uname | grep Darwin 1> /dev/null && XX_PROGRAMS="${AS:-as} ${CC:-gcc}" || XX_PROGRAMS="${AS:-as} ${CC:-gcc} ${TEE:-tee}"
 	for prog in $XX_PROGRAMS; do
 		printf '        %s\n' "$prog" >> "$DUMPOUT"
 		echo | "$prog" --version >> "$DUMPOUT" 2>&1 || software_missing "$prog"
@@ -502,6 +513,7 @@ typescript_head ()
 		exit 1
 	fi
 
+	printf 'tee is: %s\n' "$TEE" >> "$DUMPOUT"
 	printf 'sed is: %s\n' "$SED" >> "$DUMPOUT"
 	printf 'awk is: %s\n' "$AWK" >> "$DUMPOUT"
 	printf 'make is: %s\n' "$MAKE" >> "$DUMPOUT"
@@ -511,7 +523,6 @@ typescript_head ()
 	if [ "$SVN" != "" ]; then
 		printf 'svn is: %s\n"' "$SVN" >> "$DUMPOUT"
 	fi
-
 }
 #}}}
 #{{{ check_autoconf (dist-dir, package-src-dir)
@@ -530,12 +541,12 @@ check_autoconf ()
 	fi
 	if [ "$CONFIG_IN" != "" ]; then
 		if [ ! -f Makefile.in ] || [ ! -f configure ] || [ Makefile.in -ot Makefile.am ] || [ configure -ot $CONFIG_IN ]; then
-			printf '%s: package in %s needs automake files updating\n' "$0" "$2" | tee -a "$DUMPOUT"
-			(autoreconf -f -i 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			printf '%s: package in %s needs automake files updating\n' "$0" "$2" | $TEE -a "$DUMPOUT"
+			(autoreconf -f -i 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 			if [ -f .success ]; then
 				rm .success
 			else
-				printf 'error while autoreconfing in %s' "$2" | tee -a "$DUMPOUT" 1>&2
+				printf 'error while autoreconfing in %s' "$2" | $TEE -a "$DUMPOUT" 1>&2
 				deferred_install_error
 				return 1
 			fi
@@ -548,7 +559,7 @@ check_autoconf ()
 preconfigure_pkg ()
 {
 	if [ "$1" = "" ] || [ "$2" = "" ] || [ "$3" = "" ]; then
-		printf 'preconfigure_pkg() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		printf 'preconfigure_pkg() called incorrectly\n' | $TEE -a "$DUMPOUT" 1>&2
 		install_error
 		exit 1
 	fi
@@ -567,14 +578,14 @@ preconfigure_pkg ()
 		CURRENT_DIR="$(pwd)"
 		cd "$2/$3"
 		if [ "$4" = "" ]; then
-			(./preconfigure 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			(./preconfigure 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		else
-			(./preconfigure $4 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			(./preconfigure $4 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		fi
 		if [ -f .success ]; then
 			rm .success
 		else
-			printf 'error while pre-configuring %s\n' $3 | tee -a "$DUMPOUT" 1>&2
+			printf 'error while pre-configuring %s\n' $3 | $TEE -a "$DUMPOUT" 1>&2
 			deferred_install_error
 			return 1
 		fi
@@ -587,7 +598,7 @@ preconfigure_pkg ()
 configure_pkg ()
 {
 	if [ "$1" = "" ] || [ "$2" = "" ] || [ "$3" = "" ]; then
-		printf 'configure_pkg() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		printf 'configure_pkg() called incorrectly\n' | $TEE -a "$DUMPOUT" 1>&2
 		install_error
 		exit 1
 	fi
@@ -607,19 +618,19 @@ configure_pkg ()
 		cd "$2/$3"
 		# already configured ?
 		if [ -f Makefile.in ] && [ -f Makefile ] && [ "$FORCECONFIGURE" = "" ]; then
-			printf '%s: package in %s looks configured, not re-configuring\n' "$0" $3 | tee -a "$DUMPOUT"
+			printf '%s: package in %s looks configured, not re-configuring\n' "$0" $3 | $TEE -a "$DUMPOUT"
 		else
 			if [ "$4" = "" ]; then
 				(./configure --prefix="$1" --bindir="$kroc_archbindir" --datadir="$kroc_krocdir" --mandir="$kroc_mandir" --libdir="$kroc_archlibdir" \
-					--includedir="$kroc_archincdir" --sysconfdir="$kroc_configdir" 2>&1 && touch .success) | tee -a "$DUMPOUT"
+					--includedir="$kroc_archincdir" --sysconfdir="$kroc_configdir" 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 			else
 				(./configure --prefix="$1" --bindir="$kroc_archbindir" --datadir="$kroc_krocdir" --mandir="$kroc_mandir" --libdir="$kroc_archlibdir" \
-					--includedir="$kroc_archincdir" --sysconfdir="$kroc_configdir" $4 2>&1 && touch .success) | tee -a "$DUMPOUT"
+					--includedir="$kroc_archincdir" --sysconfdir="$kroc_configdir" $4 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 			fi
 			if [ -f .success ]; then
 				rm .success
 			else
-				printf 'error while configuring in %s\n' "$3" | tee -a "$DUMPOUT" 1>&2
+				printf 'error while configuring in %s\n' "$3" | $TEE -a "$DUMPOUT" 1>&2
 				deferred_install_error
 				return 1
 			fi
@@ -651,14 +662,14 @@ make_pkg ()
 		CURRENT_DIR="$(pwd)"
 		cd "$1/$2"
 		if [ "$3" = "" ]; then
-			($MAKE 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			($MAKE 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		else
-			($MAKE $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			($MAKE $3 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		fi
 		if [ -f .success ]; then
 			rm .success
 		else
-			printf 'error while making in %s\n' "$2" | tee -a "$DUMPOUT" 1>&2
+			printf 'error while making in %s\n' "$2" | $TEE -a "$DUMPOUT" 1>&2
 			deferred_install_error
 			return 1
 		fi
@@ -671,7 +682,7 @@ make_pkg ()
 install_pkg ()
 {
 	if [ "$1" = "" ] || [ "$2" = "" ]; then
-		printf 'install_pkg() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		printf 'install_pkg() called incorrectly\n' | $TEE -a "$DUMPOUT" 1>&2
 		install_error
 		exit 1
 	fi
@@ -686,14 +697,14 @@ install_pkg ()
 		CURRENT_DIR="$(pwd)"
 		cd "$1/$2"
 		if [ "$3" = "" ]; then
-			($MAKE install 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			($MAKE install 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		else
-			($MAKE install $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			($MAKE install $3 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		fi
 		if [ -f .success ]; then
 			rm .success
 		else
-			printf 'error while installing in %s\n' "$2" | tee -a "$DUMPOUT" 1>&2
+			printf 'error while installing in %s\n' "$2" | $TEE -a "$DUMPOUT" 1>&2
 			deferred_install_error
 			return 1
 		fi
@@ -707,7 +718,7 @@ install_pkg ()
 clean_pkg ()
 {
 	if [ "$1" = "" ] || [ "$2" = "" ]; then
-		printf 'clean_pkg() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		printf 'clean_pkg() called incorrectly\n' | $TEE -a "$DUMPOUT" 1>&2
 		install_error
 		exit 1
 	fi
@@ -722,14 +733,14 @@ clean_pkg ()
 		CURRENT_DIR="$(pwd)"
 		cd "$1/$2"
 		if [ "$3" = "" ]; then
-			($MAKE clean 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			($MAKE clean 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		else
-			($MAKE clean $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			($MAKE clean $3 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		fi
 		if [ -f .success ]; then
 			rm .success
 		else
-			printf 'error while cleaning in %s (continuing anyway)\n' "$2" | tee -a "$DUMPOUT" 1>&2
+			printf 'error while cleaning in %s (continuing anyway)\n' "$2" | $TEE -a "$DUMPOUT" 1>&2
 		fi
 		cd "$CURRENT_DIR"
 	fi
@@ -740,7 +751,7 @@ clean_pkg ()
 distclean_pkg ()
 {
 	if [ "$1" = "" ] || [ "$2" = "" ]; then
-		printf 'distclean_pkg() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		printf 'distclean_pkg() called incorrectly\n' | $TEE -a "$DUMPOUT" 1>&2
 		install_error
 		exit 1
 	fi
@@ -755,14 +766,14 @@ distclean_pkg ()
 		CURRENT_DIR="$(pwd)"
 		cd "$1/$2"
 		if [ "$3" = "" ]; then
-			($MAKE distclean 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			($MAKE distclean 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		else
-			($MAKE distclean $3 2>&1 && touch .success) | tee -a "$DUMPOUT"
+			($MAKE distclean $3 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		fi
 		if [ -f .success ]; then
 			rm .success
 		else
-			printf 'error while dist-cleaning %s (continuing anyway)\n' "$2" | tee -a "$DUMPOUT" 1>&2
+			printf 'error while dist-cleaning %s (continuing anyway)\n' "$2" | $TEE -a "$DUMPOUT" 1>&2
 		fi
 		cd $CURRENT_DIR
 	fi
@@ -788,29 +799,29 @@ prepare_patch ()
 	EXPSNDLINE=$(printf '# KRoC/Linux update (%s %s)' "$VERSION" "$NEXTPATCH")
 
 	if [ "$FIRSTLINE" != "#! /bin/sh" ] && [ "$FIRSTLINE" != "#! /bin/bash" ]; then
-		printf '%s: bad patch file %s, removing it.  Assuming latest code version (%s)\n' "$0" "$1" "$VERSION" | tee -a "$DUMPOUT"
+		printf '%s: bad patch file %s, removing it.  Assuming latest code version (%s)\n' "$0" "$1" "$VERSION" | $TEE -a "$DUMPOUT"
 		rm -f "$1"
 		exit 1
 	elif [ "$SECONDLINE" != "$EXPSNDLINE" ]; then
-		printf '%s: bad patch file %s, removing it.  Assuming latest code version (%s)\n' "$0" "$1" "$VERSION" | tee -a "$DUMPOUT"
+		printf '%s: bad patch file %s, removing it.  Assuming latest code version (%s)\n' "$0" "$1" "$VERSION" | $TEE -a "$DUMPOUT"
 		rm -f "$1"
 		exit 1
 	fi
 	CURRENT_DIR="$(pwd)"
 	cd /tmp
 	# shitty way to get the patch script, but it'll work
-	printf '%s: preparing patch from %s to %s\n' "$0" "$VERSION" "$NEXTPATCH" | tee -a "$DUMPOUT"
+	printf '%s: preparing patch from %s to %s\n' "$0" "$VERSION" "$NEXTPATCH" | $TEE -a "$DUMPOUT"
 	if [ ! -x $1 ]; then
 		chmod +x $1
 	fi
-	printf '%s: extracted patch script to %s, will apply in %s\n' "$0" "$1" "$DIST_DIR" | tee -a "$DUMPOUT"
+	printf '%s: extracted patch script to %s, will apply in %s\n' "$0" "$1" "$DIST_DIR" | $TEE -a "$DUMPOUT"
 	rm -f $DIST_DIR/.success
-	($1 $DIST_DIR 2>&1 && touch $DIST_DIR/.success) | tee -a "$DUMPOUT"
+	($1 $DIST_DIR 2>&1 && touch $DIST_DIR/.success) | $TEE -a "$DUMPOUT"
 	if [ -f $DIST_DIR/.success ]; then
 		rm -f $DIST_DIR/.success
-		printf '%s: patch script ran successfully.  Use \"%s\" to compile+install changes.\n' "$0" "$0" | tee -a "$DUMPOUT"
+		printf '%s: patch script ran successfully.  Use \"%s\" to compile+install changes.\n' "$0" "$0" | $TEE -a "$DUMPOUT"
 	else
-		printf '%s: patch script failed to run successfully.\n' "$0" | tee -a "$DUMPOUT"
+		printf '%s: patch script failed to run successfully.\n' "$0" | $TEE -a "$DUMPOUT"
 	fi
 	cd $CURRENT_DIR
 }
@@ -819,7 +830,7 @@ prepare_patch ()
 setopts_host ()
 {
 	if [ "$1" = "" ] || [ "$2" = "" ] || [ "$3" = "" ]; then
-		printf 'setopts_host() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		printf 'setopts_host() called incorrectly\n' | $TEE -a "$DUMPOUT" 1>&2
 		install_error
 		exit 1
 	fi
@@ -884,7 +895,7 @@ setopts_host ()
 package_status ()
 {
 	if [ "$1" = "" ] || [ "$2" = "" ]; then
-		printf 'package_status() called incorrectly\n' | tee -a "$DUMPOUT" 1>&2
+		printf 'package_status() called incorrectly\n' | $TEE -a "$DUMPOUT" 1>&2
 		install_error
 		exit 1
 	fi
@@ -2167,18 +2178,18 @@ for action in $ACTIONLIST; do
 		#{{{  update: does a source update from the distribution site
 	Xupdate)
 		if [ "$WGET" = "" ]; then
-			printf '%s: cannot update, no wget\n' "$0" | tee -a "$DUMPOUT"
+			printf '%s: cannot update, no wget\n' "$0" | $TEE -a "$DUMPOUT"
 		else
 			CURRENT_DIR=$(pwd)
 			cd /tmp
 			if [ ! -f "$PATCHINFOFILE" ]; then
 				FAILED=
-				printf '%s: trying to wget %s\n' "$0" "$PATCHINFOURL" | tee -a "$DUMPOUT"
+				printf '%s: trying to wget %s\n' "$0" "$PATCHINFOURL" | $TEE -a "$DUMPOUT"
 				$WGET -q "$PATCHINFOURL" || FAILED=1
 				if [ "$FAILED" = "1" ]; then
 					rm -f "$PATCHINFOFILE"
 					cd "$CURRENT_DIR"
-					printf '%s: unable to get %s, assuming latest version (%s)\n' "$0" "$PATCHINFOURL" "$VERSION" | tee -a "$DUMPOUT"
+					printf '%s: unable to get %s, assuming latest version (%s)\n' "$0" "$PATCHINFOURL" "$VERSION" | $TEE -a "$DUMPOUT"
 				else
 					cd "$CURRENT_DIR"
 					prepare_patch /tmp/"$PATCHINFOFILE" && exit 0
@@ -2186,7 +2197,7 @@ for action in $ACTIONLIST; do
 			else
 				# file already here
 				cd $CURRENT_DIR
-				printf '%s: file /tmp/%s already exists, using it\n' "$0" "$PATCHINFOFILE" | tee -a "$DUMPOUT"
+				printf '%s: file /tmp/%s already exists, using it\n' "$0" "$PATCHINFOFILE" | $TEE -a "$DUMPOUT"
 				prepare_patch /tmp/"$PATCHINFOFILE" && exit 0
 			fi
 		fi
@@ -2271,11 +2282,11 @@ for action in $ACTIONLIST; do
 	Xbsyscalls-support)
 		nm "$kroc_archlibdir/libkroc.so" 2> /dev/null | grep "scheduler_can_do_bsyscalls" 1> /dev/null && HAVE_BSYSCALLS_SUPPORT=1
 		grep "^#define BLOCKING_SYSCALLS 1" "$kroc_archincdir/ccsp_config.h" 1> /dev/null && HAVE_BSYSCALLS_SUPPORT=1
-		printf "%s: checking for blocking system calls support... " $0 | tee -a "$DUMPOUT"
+		printf "%s: checking for blocking system calls support... " $0 | $TEE -a "$DUMPOUT"
 		if [ "$HAVE_BSYSCALLS_SUPPORT" != "" ]; then
-			printf "yes\n" | tee -a "$DUMPOUT"
+			printf "yes\n" | $TEE -a "$DUMPOUT"
 		else
-			printf "no\n" | tee -a "$DUMPOUT"
+			printf "no\n" | $TEE -a "$DUMPOUT"
 		fi
 		;;
 		#}}}
@@ -2283,11 +2294,11 @@ for action in $ACTIONLIST; do
 	Xcputimers-support)
 		nm "$kroc_archlibdir/libkroc.so" 2> /dev/null | grep "scheduler_can_do_cputimers" 1> /dev/null && HAVE_CPUTIMERS_SUPPORT=1
 		grep "^#define ENABLE_CPU_TIMERS 1" "$kroc_archincdir/ccsp_config.h" 1> /dev/null && HAVE_CPUTIMERS_SUPPORT=1
-		printf "%s: checking for cpu-timers support... " $0 | tee -a "$DUMPOUT"
+		printf "%s: checking for cpu-timers support... " $0 | $TEE -a "$DUMPOUT"
 		if [ "$HAVE_CPUTIMERS_SUPPORT" != "" ]; then
-			printf "yes\n" | tee -a "$DUMPOUT"
+			printf "yes\n" | $TEE -a "$DUMPOUT"
 		else
-			printf "no\n" | tee -a "$DUMPOUT"
+			printf "no\n" | $TEE -a "$DUMPOUT"
 		fi
 		;;
 		#}}}
@@ -2295,11 +2306,11 @@ for action in $ACTIONLIST; do
 	Xdynproc-support)
 		nm "$kroc_archlibdir/libkroc.so" 2> /dev/null | grep "scheduler_can_do_dynproc" 1> /dev/null && HAVE_DYNPROC_SUPPORT=1
 		grep "^#define DYNAMIC_PROCS 1" "$kroc_archincdir/ccsp_config.h" 1> /dev/null && HAVE_DYNPROC_SUPPORT=1
-		printf "%s: checking for dynamic process support... " $0 | tee -a "$DUMPOUT"
+		printf "%s: checking for dynamic process support... " $0 | $TEE -a "$DUMPOUT"
 		if [ "$HAVE_DYNPROC_SUPPORT" != "" ]; then
-			printf "yes\n" | tee -a "$DUMPOUT"
+			printf "yes\n" | $TEE -a "$DUMPOUT"
 		else
-			printf "no\n" | tee -a "$DUMPOUT"
+			printf "no\n" | $TEE -a "$DUMPOUT"
 		fi
 		;;
 		#}}}
@@ -2320,29 +2331,29 @@ for action in $ACTIONLIST; do
 		rm -f .install_dir
 		for sec in $MANPAGE_SECTIONS; do
 			if [ -d $DIST_DIR/doc/man$sec ]; then
-				printf 'cleaning up local man-pages (section %d)..\n' "$sec" | tee -a "$DUMPOUT"
+				printf 'cleaning up local man-pages (section %d)..\n' "$sec" | $TEE -a "$DUMPOUT"
 				rm -rf $DIST_DIR/doc/man$sec
 			fi
 		done
-		printf 'cleaning up any index.bt files..\n' | tee -a "$DUMPOUT"
+		printf 'cleaning up any index.bt files..\n' | $TEE -a "$DUMPOUT"
 		find $DIST_DIR/doc -name index.bt | xargs rm -f
-		printf 'cleaning up any index.db files..\n' | tee -a "$DUMPOUT"
+		printf 'cleaning up any index.db files..\n' | $TEE -a "$DUMPOUT"
 		find $DIST_DIR/doc -name index.db | xargs rm -f
 
 		# better remove symbolic-links created by ccsp pre-configure (!)
 		if [ -L $DIST_DIR/$CCSP_SRC/arch/arch ] || [ -L $DIST_DIR/$CCSP_SRC/include/arch ]; then
-			printf 'cleaning up ccsp pre-configure symbolic links\n' | tee -a "$DUMPOUT"
+			printf 'cleaning up ccsp pre-configure symbolic links\n' | $TEE -a "$DUMPOUT"
 			test -L $DIST_DIR/$CCSP_SRC/arch/arch/mpsched.S && rm -f $DIST_DIR/$CCSP_SRC/arch/arch/mpsched.S
 			test -L $DIST_DIR/$CCSP_SRC/arch/arch/schedvars.S && rm -f $DIST_DIR/$CCSP_SRC/arch/arch/schedvars.S
 			test -L $DIST_DIR/$CCSP_SRC/arch/arch && rm -f $DIST_DIR/$CCSP_SRC/arch/arch
 			test -L $DIST_DIR/$CCSP_SRC/include/arch && rm -f $DIST_DIR/$CCSP_SRC/include/arch
 		fi
 		if [ -L $DIST_DIR/$CCSP_SRC/include/config.h ]; then
-			printf 'cleaning up ccsp configure symbolic links\n' | tee -a "$DUMPOUT"
+			printf 'cleaning up ccsp configure symbolic links\n' | $TEE -a "$DUMPOUT"
 			test -L $DIST_DIR/$CCSP_SRC/include/config.h && rm -f $DIST_DIR/$CCSP_SRC/include/config.h
 		fi
 		if [ -L $DIST_DIR/$KROCIF_SRC/jumpstubs.S ]; then
-			printf 'cleaning up KRoC interface preconfigure symbolic links\n' | tee -a "$DUMPOUT"
+			printf 'cleaning up KRoC interface preconfigure symbolic links\n' | $TEE -a "$DUMPOUT"
 			test -L $DIST_DIR/$KROCIF_SRC/jumpstubs.S && rm -f $DIST_DIR/$KROCIF_SRC/jumpstubs.S
 		fi
 		# better clean-up any tilde temp. files
@@ -2353,7 +2364,7 @@ for action in $ACTIONLIST; do
 	Xinstall-manpages)
 		# put the manual pages in $kroc_mandir/man[1..8], and point MANPATH at it
 		for msec in $MANPAGE_SECTIONS; do
-			install -d -v "$kroc_mandir/man$msec" | tee -a "$DUMPOUT"
+			install -d -v "$kroc_mandir/man$msec" | $TEE -a "$DUMPOUT"
 		done
 		for manpage in $MANPAGE_LIST; do
 			case X$manpage in
@@ -2364,15 +2375,15 @@ for action in $ACTIONLIST; do
 					msec=3
 					;;
 			esac
-			install -m 0644 -v "$DIST_DIR/doc/$manpage" "$kroc_mandir/man$msec" | tee -a "$DUMPOUT"
+			install -m 0644 -v "$DIST_DIR/doc/$manpage" "$kroc_mandir/man$msec" | $TEE -a "$DUMPOUT"
 		done
 		# if "mandb" exists, run it to create the manpage index
 		MANDB=$(type mandb 2>&1 | $SED -e 's/^'mandb' is hashed (\([^)]*\))/\1/g' -e 's/^'mandb' is //g' -e '/not found/d')
 		if [ "$MANDB" = "" ]; then
-			printf '%s: could not find mandb, will not build manpage index\n' "$0" | tee -a "$DUMPOUT"
+			printf '%s: could not find mandb, will not build manpage index\n' "$0" | $TEE -a "$DUMPOUT"
 		else
 			printf 'building manpage index..\n'
-			mandb "$kroc_mandir" 2>&1 | tee -a "$DUMPOUT"
+			mandb "$kroc_mandir" 2>&1 | $TEE -a "$DUMPOUT"
 		fi
 		;;
 		#}}}
@@ -2753,7 +2764,7 @@ for action in $ACTIONLIST; do
 			;;
 			#}}}
 		X*)
-			(printf 'error: unknown package %s\n' "$pkg" | tee -a "$DUMPOUT") 1>&2
+			(printf 'error: unknown package %s\n' "$pkg" | $TEE -a "$DUMPOUT") 1>&2
 			install_error
 			exit 1
 			;;
@@ -2768,7 +2779,7 @@ for action in $ACTIONLIST; do
 			continue		# to "for .. in .." loop
 		fi
 		# all default actions
-		printf '%s: performing action %s on %s (in %s/%s)\n' "$0" "$what" "$pkg" "$DIST_DIR" "$PKG_SRC" | tee -a "$DUMPOUT"
+		printf '%s: performing action %s on %s (in %s/%s)\n' "$0" "$what" "$pkg" "$DIST_DIR" "$PKG_SRC" | $TEE -a "$DUMPOUT"
 		if [ "$DRYRUN" = "" ]; then
 			# actually do it
 			case X$what in
@@ -2808,7 +2819,7 @@ for action in $ACTIONLIST; do
 				LCL_DO_MAKE=1
 				for pp in $FAILED_CONFIGURES; do
 					if [ "$pp" = "$pkg" ]; then
-						printf '%s: skip make on %s (failed to configure)\n' "$0" "$pkg" | tee -a "$DUMPOUT"
+						printf '%s: skip make on %s (failed to configure)\n' "$0" "$pkg" | $TEE -a "$DUMPOUT"
 						FAILED_MAKES="$FAILED_MAKES $pkg"
 						LCL_DO_MAKE=0
 					fi
@@ -2823,7 +2834,7 @@ for action in $ACTIONLIST; do
 				LCL_DO_INSTALL=1
 				for pp in $FAILED_MAKES; do
 					if [ "$pp" = "$pkg" ]; then
-						printf '%s: skip install on %s (failed to make)\n' "$0" "$pkg" | tee -a "$DUMPOUT"
+						printf '%s: skip install on %s (failed to make)\n' "$0" "$pkg" | $TEE -a "$DUMPOUT"
 						FAILED_INSTALLS="$FAILED_INSTALLS $pkg"
 						LCL_DO_INSTALL=0
 					fi
@@ -2878,7 +2889,7 @@ for action in $ACTIONLIST; do
 		fi
 		;;
 	X*)
-		(printf 'error: unknown action %s.  use --help for help.\n' "$action" | tee -a "$DUMPOUT") 1>&2
+		(printf 'error: unknown action %s.  use --help for help.\n' "$action" | $TEE -a "$DUMPOUT") 1>&2
 		exit 1
 		;;
 	esac
@@ -2894,7 +2905,7 @@ EOF
 # final message(s) before exiting
 
 if [ $SHOWBANNER -eq 1 ]; then
-	tee -a "$DUMPOUT" << EOF
+	$TEE -a "$DUMPOUT" << EOF
 
 ***********************************************************
 *                          READ ME!                       *
@@ -2927,18 +2938,18 @@ EOF
 fi
 
 if [ "$EXAMPLEINSTALL" != "" ]; then
-	printf 'Available example programs have been installed into:\n' | tee -a "$DUMPOUT"
-	printf '    %s\n' "$kroc_kroc_examples" | tee -a "$DUMPOUT"
+	printf 'Available example programs have been installed into:\n' | $TEE -a "$DUMPOUT"
+	printf '    %s\n' "$kroc_kroc_examples" | $TEE -a "$DUMPOUT"
 
 	if [ "$USEPONY" -eq 1 ]; then
-		printf 'pony/kroc-net example programs have been left in:\n' | tee -a "$DUMPOUT"
+		printf 'pony/kroc-net example programs have been left in:\n' | $TEE -a "$DUMPOUT"
 		printf '    %s\n' "$PONY_EXAMPLES_SRC"
 	fi
 fi
 
 if [ "$CGTESTSINSTALL" != "" ]; then
-	printf 'The compiler test-suite has been installed into:\n' | tee -a "$DUMPOUT"
-	printf '    %s\n' "$kroc_kroc_cgtests" | tee -a "$DUMPOUT"
+	printf 'The compiler test-suite has been installed into:\n' | $TEE -a "$DUMPOUT"
+	printf '    %s\n' "$kroc_kroc_cgtests" | $TEE -a "$DUMPOUT"
 fi
 
 
