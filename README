@@ -18,13 +18,15 @@ installed on your machine:
 
  - Python 2.2 or later
 
+ - xsltproc
+
 Some occam-pi modules can optionally make use of other libraries if
 available, such as SDL and OpenGL.
 
 On Debian-based systems, we suggest installing the following packages:
 
   bash gcc binutils gawk make libc6-dev libsdl1.2-dev
-  libsdl-sound1.2-dev libgl1-mesa-dev
+  libsdl-sound1.2-dev libgl1-mesa-dev python xsltproc
 
 
 Installation
