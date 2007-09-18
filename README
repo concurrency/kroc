@@ -12,7 +12,7 @@ installed on your machine:
  - the bash shell
 
  - the GNU toolchain -- i.e. GCC 2.95.2 or later, binutils 2.0 or later,
-   GNU awk, GNU make, automake 1.8 or later, autoconf 2.52 or later
+   GNU awk, GNU make
 
  - the C development headers
 
@@ -23,11 +23,18 @@ installed on your machine:
 Some occam-pi modules can optionally make use of other libraries if
 available, such as SDL and OpenGL.
 
+To check out and update KRoC from the Subversion repository, you will
+also need:
+
+ - Subversion
+
+ - automake 1.8 or later, autoconf 2.52 or later
+
 On Debian-based systems, we suggest installing the following packages:
 
   bash gcc binutils gawk make automake autoconf
   libc6-dev libsdl1.2-dev libsdl-sound1.2-dev libgl1-mesa-dev
-  python xsltproc
+  python xsltproc subversion
 
 
 Installation
