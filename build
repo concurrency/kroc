@@ -1560,9 +1560,6 @@ fi
 if [ $USEPRIORITY -eq 42 ]; then
 	USEPRIORITY=1
 fi
-if [ $USECPUTIMERS -eq 42 ]; then
-	USECPUTIMERS=1
-fi
 if [ $USEUDC -eq 42 ]; then
 	USEUDC=1
 fi
@@ -1643,7 +1640,8 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 			printf '\n'
 			printf 'Features:\n\n'
 			printf ' %sA%s.  process priority: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPRIORITY -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
-			printf ' %sB%s.  CPU timers: ' "$ANSION2" "$ANSIOFF2"; if [ $USECPUTIMERS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+			printf ' %sB%s.  CPU timers: ' "$ANSION2" "$ANSIOFF2"; if [ $USECPUTIMERS -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3"; 
+					elif [ $USECPUTIMERS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 			printf ' %sC%s.  user-defined channels: ' "$ANSION2" "$ANSIOFF2"; if [ $USEUDC -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 			printf ' %sD%s.  channel-type descriptors: ' "$ANSION2" "$ANSIOFF2"; if [ $USECTTD -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 			printf ' %sE%s.  blocking syscalls use POSIX threads: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPTHREADS -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3"
