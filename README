@@ -12,7 +12,7 @@ installed on your machine:
  - the bash shell
 
  - the GNU toolchain -- i.e. GCC 2.95.2 or later, binutils 2.0 or later,
-   GNU awk, GNU make
+   GNU awk, GNU make, automake 1.8 or later, autoconf 2.52 or later
 
  - the C development headers
 
@@ -25,8 +25,9 @@ available, such as SDL and OpenGL.
 
 On Debian-based systems, we suggest installing the following packages:
 
-  bash gcc binutils gawk make libc6-dev libsdl1.2-dev
-  libsdl-sound1.2-dev libgl1-mesa-dev python xsltproc
+  bash gcc binutils gawk make automake autoconf
+  libc6-dev libsdl1.2-dev libsdl-sound1.2-dev libgl1-mesa-dev
+  python xsltproc
 
 
 Installation
