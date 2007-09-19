@@ -450,9 +450,8 @@ guess_software ()
 	IFS="$XIFS"
 
 	# make sure that 'cut' in the path is GNU to prevent autotools breakage
-	cut --version | grep "GNU" 1>/dev/null 2>&1 && bad_cut=0 || bad_cut=1
+	cut --version 2>&1 | grep "GNU" 1>/dev/null && bad_cut=0 || bad_cut=1
 	if [ $bad_cut -eq 1 ]; then
-		echo "bad cut"
 		if [ -x "$CUT" ] && [ ! -e "$DIST_DIR/cut" ]; then
 			ln -s "$CUT" "$DIST_DIR/cut"
 		fi
@@ -965,10 +964,6 @@ svn_status ()
 		svn_version
 	fi
 	
-	if [ "$DIST_DIR" = "" ]; then
-		DIST_DIR="$(pwd)"
-	fi
-
 	if [ ${#SVN_SRCS[@]} -ne ${#SVN_REPOSS[@]} ]; then
 		printf '%s: broken build! (%d SVN sources, %d repositories)\n' "$0" ${#SVN_SRCS[@]} ${#SVN_REPOSS[@]}
 		exit 1
@@ -1029,10 +1024,6 @@ svn_list ()
 		exit 1
 	fi
 	
-	if [ "$DIST_DIR" = "" ]; then
-		DIST_DIR="$(pwd)"
-	fi
-
 	if [ ${#SVN_SRCS[@]} -ne ${#SVN_REPOSS[@]} ]; then
 		printf '%s: broken build! (%d SVN sources, %d repositories)\n' "$0" ${#SVN_SRCS[@]} ${#SVN_REPOSS[@]}
 		exit 1
@@ -1088,10 +1079,6 @@ svn_update ()
 		svn_version
 	fi
 	
-	if [ "$DIST_DIR" = "" ]; then
-		DIST_DIR="$(pwd)"
-	fi
-
 	if [ ${#SVN_SRCS[@]} -ne ${#SVN_REPOSS[@]} ]; then
 		printf '%s: broken build! (%d SVN sources, %d repositories)\n' "$0" ${#SVN_SRCS[@]} ${#SVN_REPOSS[@]}
 		exit 1
@@ -1250,9 +1237,14 @@ if [ -f .install_dir ]; then
 else
 	INSTALL_DIR=
 fi
-DIST_DIR=
 DRYRUN=
 SKIPMENU=0
+
+#{{{  set distribution directory
+if [ "$DIST_DIR" = "" ]; then
+	DIST_DIR="$(pwd)"
+fi
+#}}}
 
 # do this first!
 guess_software
@@ -1934,12 +1926,6 @@ printf '   compiler test suite: %s\n' "$kroc_kroc_cgtests"
 printf '\n'
 
 
-#{{{  set distribution directory
-if [ "$DIST_DIR" = "" ]; then
-	DIST_DIR="$(pwd)"
-fi
-
-#}}}
 #{{{  sort out the ACTIONLIST
 SHOWBANNER=0
 
