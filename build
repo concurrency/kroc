@@ -410,61 +410,56 @@ guess_software ()
 	WGET=${WGET:-}
 	SVN=${SVN:-}
 	TEE=${TEE:-}
+	CUT=${CUT:-}
 
 	XIFS="$IFS"
 	IFS=':'
 
-	if [ "$SED" = "" ] || [ "$AWK" = "" ] || [ "$MAKE" = "" ] || [ "$WGET" = "" ] || [ "$SVN" = "" ] || [ "$TEE" = "" ]; then
+	PREFIXES="gnu:g:none"
+
+	for pfix in $PREFIXES; do
+		if [ "$pfix" = "none" ]; then
+			pfix=""
+		fi
 		for pth in $PATH; do
-			if [ -x "$pth"/gnused ] && [ "$SED" = "" ]; then
-				SED="$pth"/gnused
+			this_pth="$pth/$pfix"
+			if [ -x "$this_pth""sed" ] && [ "$SED" = "" ]; then
+				SED="$this_pth""sed"
 			fi
-			if [ -x "$pth"/gawk ] && [ "$AWK" = "" ]; then
-				AWK="$pth"/gawk
+			if [ -x "$this_pth""awk" ] && [ "$AWK" = "" ]; then
+				AWK="$this_pth""awk"
 			fi
-			if [ -x "$pth"/wget ] && [ "$WGET" = "" ]; then
-				WGET="$pth"/wget
+			if [ -x "$this_pth""wget" ] && [ "$WGET" = "" ]; then
+				WGET="$this_pth""wget"
 			fi
-			if [ -x "$pth"/gnumake ] && [ "$MAKE" = "" ]; then
-				MAKE="$pth"/gnumake
+			if [ -x "$this_pth""make" ] && [ "$MAKE" = "" ]; then
+				MAKE="$this_pth""make"
 			fi
-			if [ -x "$pth"/svn ] && [ "$SVN" = "" ]; then
-				SVN="$pth"/svn
+			if [ -x "$this_pth""svn" ] && [ "$SVN" = "" ]; then
+				SVN="$this_pth""svn"
 			fi
-			if [ -x "$pth"/gnutee ] && [ "$TEE" = "" ]; then
-				TEE="$pth"/gnutee
+			if [ -x "$this_pth""tee" ] && [ "$TEE" = "" ]; then
+				TEE="$this_pth""tee"
+			fi
+			if [ -x "$this_pth""cut" ] && [ "$CUT" = "" ]; then
+				CUT="$this_pth""cut"
 			fi
 		done
-	fi
-	if [ "$SED" = "" ] || [ "$AWK" = "" ] || [ "$MAKE" = "" ] || [ "$TEE" = "" ]; then
-		for pth in $PATH; do
-			if [ -x "$pth/sed" ] && [ "$SED" = "" ]; then
-				SED="$pth"/sed
-			fi
-			if [ -x "$pth/awk" ] && [ "$AWK" = "" ]; then
-				AWK="$pth"/awk
-			fi
-			if [ -x "$pth"/gmake ] && [ "$MAKE" = "" ]; then
-				MAKE="$pth"/gmake
-			fi
-			if [ -x "$pth"/gtee ] && [ "$TEE" = "" ]; then
-				TEE="$pth"/gtee
-			fi
-		done
-	fi
-	if [ "$MAKE" = "" ] || [ "$TEE" = "" ]; then
-		for pth in $PATH; do
-			if [ -x "$pth"/make ] && [ "$MAKE" = "" ]; then
-				MAKE="$pth"/make
-			fi
-			if [ -x "$pth"/tee ] && [ "$TEE" = "" ]; then
-				TEE="$pth"/tee
-			fi
-		done
-	fi
+	done
 
 	IFS="$XIFS"
 
+	# make sure that 'cut' in the path is GNU to prevent autotools breakage
+	cut --version | grep "GNU" 1>/dev/null 2>&1 && bad_cut=0 || bad_cut=1
+	if [ $bad_cut -eq 1 ]; then
+		echo "bad cut"
+		if [ -x "$CUT" ] && [ ! -e "$DIST_DIR/cut" ]; then
+			ln -s "$CUT" "$DIST_DIR/cut"
+		fi
+		if [ -x "$DIST_DIR/cut" ]; then
+			PATH=$DIST_DIR:$PATH
+		fi
+	fi
 }
 #}}}
 #{{{  typescript_head ()
