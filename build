@@ -448,17 +448,6 @@ guess_software ()
 	done
 
 	IFS="$XIFS"
-
-	# make sure that 'cut' in the path is GNU to prevent autotools breakage
-	#cut --version 2>&1 | grep "GNU" 1>/dev/null && bad_cut=0 || bad_cut=1
-	#if [ $bad_cut -eq 1 ]; then
-	#	if [ -x "$CUT" ] && [ ! -e "$DIST_DIR/cut" ]; then
-	#		ln -s "$CUT" "$DIST_DIR/cut"
-	#	fi
-	#	if [ -x "$DIST_DIR/cut" ]; then
-	#		PATH=$DIST_DIR:$PATH
-	#	fi
-	#fi
 }
 #}}}
 #{{{  typescript_head ()
@@ -848,9 +837,9 @@ setopts_host ()
 			USEMP=1
 		fi
 		# tweak some paths to make things go smoothly
-		CPATH="/usr/X11R6/include:/sw/include:$CPATH"
-		LIBRARY_PATH="/usr/X11R6/lib:/sw/lib:$LIBRARY_PATH"
-		PKG_CONFIG_PATH="/sw/lib:$PKG_CONFIG_PATH"
+		CPATH="/usr/X11R6/include:/sw/include:$CPATH"; export CPATH
+		LIBRARY_PATH="/usr/X11R6/lib:/sw/lib:$LIBRARY_PATH"; export LIBRARY_PATH
+		PKG_CONFIG_PATH="/sw/lib:$PKG_CONFIG_PATH"; export PKG_CONFIG_PATH
 		;;
 	solaris*)
 		if [ $USEPTHREADS -eq 42 ]; then
