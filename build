@@ -450,15 +450,15 @@ guess_software ()
 	IFS="$XIFS"
 
 	# make sure that 'cut' in the path is GNU to prevent autotools breakage
-	cut --version 2>&1 | grep "GNU" 1>/dev/null && bad_cut=0 || bad_cut=1
-	if [ $bad_cut -eq 1 ]; then
-		if [ -x "$CUT" ] && [ ! -e "$DIST_DIR/cut" ]; then
-			ln -s "$CUT" "$DIST_DIR/cut"
-		fi
-		if [ -x "$DIST_DIR/cut" ]; then
-			PATH=$DIST_DIR:$PATH
-		fi
-	fi
+	#cut --version 2>&1 | grep "GNU" 1>/dev/null && bad_cut=0 || bad_cut=1
+	#if [ $bad_cut -eq 1 ]; then
+	#	if [ -x "$CUT" ] && [ ! -e "$DIST_DIR/cut" ]; then
+	#		ln -s "$CUT" "$DIST_DIR/cut"
+	#	fi
+	#	if [ -x "$DIST_DIR/cut" ]; then
+	#		PATH=$DIST_DIR:$PATH
+	#	fi
+	#fi
 }
 #}}}
 #{{{  typescript_head ()
@@ -847,6 +847,10 @@ setopts_host ()
 			printf '  darwin: enabling multi-processor support\n'
 			USEMP=1
 		fi
+		# tweak some paths to make things go smoothly
+		CPATH="/usr/X11R6/include:/sw/include:$CPATH"
+		LIBRARY_PATH="/usr/X11R6/lib:/sw/lib:$LIBRARY_PATH"
+		PKG_CONFIG_PATH="/sw/lib:$PKG_CONFIG_PATH"
 		;;
 	solaris*)
 		if [ $USEPTHREADS -eq 42 ]; then
@@ -2144,9 +2148,9 @@ for action in $ACTIONLIST; do
 			printf 'guessing host system type... '
 			KROCHOSTSTR=$($DIST_DIR/$CCSP_SRC/config.guess || printf 'unknown-unknown-unknown\n')
 
-			KROCHOST_ARCH=$(printf '%s' "$KROCHOSTSTR" | cut -d - -f -1)
-			KROCHOST_VENDOR=$(printf '%s' "$KROCHOSTSTR" | cut -d - -f 2-2)
-			KROCHOST_OS=$(printf '%s' "$KROCHOSTSTR" | cut -d - -f 3-)
+			KROCHOST_ARCH=$(printf '%s' "$KROCHOSTSTR" | $CUT -d - -f -1)
+			KROCHOST_VENDOR=$(printf '%s' "$KROCHOSTSTR" | $CUT -d - -f 2-2)
+			KROCHOST_OS=$(printf '%s' "$KROCHOSTSTR" | $CUT -d - -f 3-)
 
 			printf '%s\n' "$KROCHOSTSTR"
 
