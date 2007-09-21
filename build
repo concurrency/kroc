@@ -1953,8 +1953,8 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-bsclib make-bsclib install-bsclib \
 		configure-course make-course install-course \
 		configure-cif make-cif install-cif \
-		configure-sdlraster make-sdlraster install-sdlraster \
 		configure-occsdl make-occsdl install-occsdl \
+		configure-sdlraster make-sdlraster install-sdlraster \
 		configure-occgl make-occgl install-occgl \
 		configure-occade make-occade install-occade \
 		configure-fmtoutlib make-fmtoutlib install-fmtoutlib \
