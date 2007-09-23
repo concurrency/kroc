@@ -109,6 +109,10 @@ Directories
     Tools for compiling, debugging, packaging and documenting occam-pi
     programs.
 
+  licenses/
+
+    Copies of relevant software licenses (see Licensing below).
+
 Note: most directories contain further README files.
 
 

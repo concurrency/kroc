@@ -2,6 +2,11 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+23/09/2007	frmb	version-up to 1.5.0 pre-releases
+21/09/2007	ats	restructured distribution tree
+21/09/2007	cgr	various updates
+25/07/2007	ats	various restructuring of the source tree
+14/07/2007	cgr	some work towards darwin support (for Mac OS X on Intel)
 12/07/2007	frmb	put 1.4.1-pre6 together
 11/07/2007	ats	added occSDL library and occade to the distribution
 19/06/2007	ats	various package updates for module mechanism
