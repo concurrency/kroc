@@ -108,7 +108,7 @@ dtraces=0
 
 case "$host_os" in
 	cygwin*)
-		octranopts="$octranopts --cnpfx _"
+		octranopts="$octranopts -nsymops --cnpfx _"
 		extcflags="$extcflags -DHOSTOS_CYGWIN"
 		;;
 	darwin*)
