@@ -35,7 +35,7 @@ includes_after = []
 prefix = None
 destdir = ""
 target_os = os.uname()[0]
-extensions = {"so": "so"}
+patterns = None
 
 def warn(*s):
 	print >>sys.stderr, "occbuild: " + "".join(map(str, s))
@@ -210,7 +210,7 @@ class KRoCToolchain:
 			if std_libs:
 				needs.insert(0, "krocif")
 			needs.insert(0, "ccsp")
-			make_shared("lib%s.%s" % (base, extensions["so"]), objs)
+			make_shared(patterns["so"] % base, objs)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")
@@ -231,7 +231,7 @@ class KRoCToolchain:
 		if ext == "lib":
 			if not is_stub(file):
 				install(file, vtlibdir, False)
-			install("lib%s.%s" % (base, extensions["so"]), libdir, True)
+			install(patterns["so"] % base, libdir, True)
 			install(base + ".module", vtincludedir, False)
 		elif ext == "inc":
 			install(file, vtincludedir, False)
@@ -253,7 +253,7 @@ class KRoCToolchain:
 			delete(base + ".o")
 		elif ext == "lib":
 			delete(base + ".lbb")
-			delete("lib%s.%s" % (base, extensions["so"]))
+			delete(patterns["so"] % base)
 			delete(base + ".module")
 		elif ext == "":
 			self.clean(base + ".tce")
@@ -271,6 +271,15 @@ class TVMToolchain:
 		cmd += ["--tce", source]
 		run(cmd)
 
+	def libname(self, base):
+		"""Return the name of a shared library.
+		This is necessary because the Transterpreter doesn't follow the
+		normal convention on Unix machines (yet)."""
+		s = patterns["so"] % base
+		if s.startswith("lib"):
+			s = s[3:]
+		return s
+
 	def library(self, occam_objs, native_objs, base):
 		def custom(f):
 			if occam_objs != []:
@@ -282,7 +291,7 @@ class TVMToolchain:
 		make_module(base, custom)
 
 		if native_objs != []:
-			make_shared(base + "." + extensions["so"], native_objs)
+			make_shared(self.libname(base), native_objs)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")
@@ -317,7 +326,7 @@ class TVMToolchain:
 			if not is_stub(file):
 				install(file, tvmdir, False)
 				install(base + ".precomp", tvmdir, False)
-			install(base + "." + extensions["so"], tvmdir, True)
+			install(self.libname(base), tvmdir, True)
 			install(base + ".module", tvmdir, False)
 		elif ext == "inc":
 			install(file, tvmdir, False)
@@ -341,7 +350,7 @@ class TVMToolchain:
 		elif ext == "lib":
 			delete(base + ".lbb")
 			delete(base + ".precomp")
-			delete(base + "." + extensions["so"])
+			delete(self.libname(base))
 			delete(base + ".module")
 		elif ext == "":
 			self.clean(base + ".tce")
@@ -499,8 +508,13 @@ def main(args):
 		programs["kroc"] += ["-I" + dir, "-L" + dir]
 		programs["skroc"] += ["-L", dir]
 	
-	if target_os == "Darwin":
-		extensions["so"] = "dylib"
+	global patterns
+	if target_os.startswith("CYGWIN"):
+		patterns = {"so": "%s.dll"}
+	elif target_os == "Darwin":
+		patterns = {"so": "lib%s.dylib"}
+	else:
+		patterns = {"so": "lib%s.so"}
 
 	if mode == "object":
 		if args == []:
