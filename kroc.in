@@ -1323,66 +1323,12 @@ else
 	if [ "$host_os" = "cygwin" ]; then
 		#{{{  fudge libraries for cygwin
 		local_ocllibs=""
-		local_ocrts=""
-		foundrts=
-
-		looklibpaths="$ocllibs $ocrts"
-
-		#SAVEDIFS="$IFS"
-		#IFS=';'
-
-		for lib in $looklibpaths; do
-			# if it looks like -lname, search for it in oclibpath
-
-			case "X$lib" in
-			X-l*)
-				foundlib=
-				libname=$(printf '%s' "$lib" | $SED -e 's/^-l//g')
-				# search
-				for lpath in $oclibpath; do
-					case "X$lpath" in
-					X-L*)
-						libpath=$(printf '%s' "$lpath" | $SED -e 's/^-L//g')
-
-						# is it here ?
-						if [ -f $libpath/lib$libname.so ]; then
-							foundlib=1
-							local_ocllibs="$local_ocllibs $libpath/lib$libname.so"
-						elif [ -f $libpath/lib$libname.a ]; then
-							foundlib=1
-							local_ocllibs="$local_ocllibs $libpath/$libname.a"
-						elif [ -f $libpath/$libname.o ]; then
-							printf '%s: (warning) using object-file %s for library: %s\n' "$progname" "$libpath/$libname.o" "$libname" 1>&2
-							foundlib=1
-							local_ocllibs="$local_ocllibs $libpath/$libname.o"
-						fi
-						;;
-					*)
-						;;
-					esac
-					if [ "$foundlib" != "" ]; then
-						break
-					fi
-				done
-
-				if [ "$foundlib" = "" ]; then
-					printf '%s: (warning) cannot find library: %s\n' "$progname" "$libname" 1>&2
-				elif [ "$lib" = "$ocrts" ]; then
-					foundrts=1
-				fi
-
-				;;
-			*)
-				;;
-			esac
-
+		for lib in $ocllibs; do
+			libname=$(printf '%s' "$lib" | $SED -e 's/^-l//g')
+			local_ocllibs="$local_ocllibs -lvt$libname"
 		done
 
-		#IFS="$SAVEDIFS"
-
-		if [ "$foundrts" = "" ]; then
-			printf '%s: (warning) cannot find run-time kernel: %s\n' "$progname" "$ocrts" 1>&2
-		fi
+		local_ocrts="$ocrts"
 		#}}}
 	else
 		local_ocllibs="$ocllibs"
