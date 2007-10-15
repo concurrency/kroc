@@ -7,7 +7,7 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 bin_SCRIPTS=kroc kmakef kmakemodule occbuild setup.sh setup.csh
 
 install-exec-local: kroc.conf
-	$(mkdir_p) "$(DESTDIR)$(sysconfdir)"
+	$(mkinstalldirs) "$(DESTDIR)$(sysconfdir)"
 	$(INSTALL_DATA) "kroc.conf" "$(DESTDIR)$(sysconfdir)/@CONFFILEPREFIX@kroc.conf"
 
 dist_man1_MANS=kroc.1 kmakef.1
