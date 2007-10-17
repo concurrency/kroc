@@ -524,9 +524,14 @@ check_autoconf ()
 	fi
 	if [ "$CONFIG_IN" != "" ]; then
 		if [ ! -f Makefile.in ] || [ ! -f configure ] || [ Makefile.in -ot Makefile.am ] || [ configure -ot $CONFIG_IN ]; then
+			#{{{  add our aclocal dir to the path, if it exists
 			old_aclocal="$ACLOCAL"
-			ACLOCAL="${ACLOCAL:-aclocal} -I $INSTALL_DIR/share/aclocal"
+			aclocal_dir="$INSTALL_DIR/share/aclocal"
+			if [ -d "$aclocal_dir" ] ; then
+				ACLOCAL="${ACLOCAL:-aclocal} -I $aclocal_dir"
+			fi
 			export ACLOCAL
+			#}}}
 
 			printf '%s: package in %s needs automake files updating\n' "$0" "$2" | $TEE -a "$DUMPOUT"
 			(autoreconf -f -i 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
@@ -546,7 +551,9 @@ check_autoconf ()
 				return 1
 			fi
 
+			#{{{  restore original ACLOCAL
 			ACLOCAL="$old_aclocal"
+			#}}}
 		fi
 	fi
 	cd "$CURRENT_DIR"
