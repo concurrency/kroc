@@ -524,15 +524,29 @@ check_autoconf ()
 	fi
 	if [ "$CONFIG_IN" != "" ]; then
 		if [ ! -f Makefile.in ] || [ ! -f configure ] || [ Makefile.in -ot Makefile.am ] || [ configure -ot $CONFIG_IN ]; then
+			old_aclocal="$ACLOCAL"
+			ACLOCAL="${ACLOCAL:-aclocal} -I $INSTALL_DIR/share/aclocal"
+			export ACLOCAL
+
 			printf '%s: package in %s needs automake files updating\n' "$0" "$2" | $TEE -a "$DUMPOUT"
 			(autoreconf -f -i 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
+
+			#{{{  check for unexpanded macros in configure
+			if grep '^OCCAM_OCCBUILD' configure >/dev/null 2>/dev/null; then
+				printf 'error: autoreconf in %s was unable to find occbuild.m4\nYou must install the "tools/kroc" subdirectory before building occam code.\n' | $TEE -a "$DUMPOUT" 1>&2
+				rm -f .success configure Makefile.in
+			fi
+			#}}}
+
 			if [ -f .success ]; then
 				rm .success
 			else
-				printf 'error while autoreconfing in %s' "$2" | $TEE -a "$DUMPOUT" 1>&2
+				printf 'error while autoreconfing in %s\n' "$2" | $TEE -a "$DUMPOUT" 1>&2
 				deferred_install_error
 				return 1
 			fi
+
+			ACLOCAL="$old_aclocal"
 		fi
 	fi
 	cd "$CURRENT_DIR"
@@ -2248,7 +2262,6 @@ for action in $ACTIONLIST; do
 			PATH="$kroc_archbindir:$PATH"
 			#OCSEARCH="$kroc_kroc_vtlib:$kroc_kroc_vtinclude"; export OCSEARCH
 			LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$kroc_archlibdir"; export LD_LIBRARY_PATH
-			ACLOCAL="${ACLOCAL:-aclocal} -I $INSTALL_DIR/share/aclocal"; export ACLOCAL
 		fi
 		;;
 		#}}}
