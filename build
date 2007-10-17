@@ -104,6 +104,8 @@ OCCGL_SRC=modules/occGL/libsrc
 OCCGL_EXAMPLES_SRC=modules/occGL/examples
 OCCADE_SRC=modules/occade/libsrc
 OCCADE_EXAMPLES_SRC=modules/occade/examples
+BUTTON_SRC=modules/button/libsrc
+BUTTON_EXAMPLES_SRC=modules/button/examples
 PONY_SRC=modules/pony/libsrc
 PONY_EXAMPLES_SRC=modules/pony/examples
 CIF_SRC=modules/cif/libsrc
@@ -116,16 +118,17 @@ MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
 OCCAMDOC_SRC=tools/occamdoc
-SVN_SRCS=(. $CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occGL modules/occade modules/pony modules/cif modules/cdx modules/fmtoutlib modules/moa $DOC_SRC $CGTESTS_SRC $OCCAMDOC_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occGL occade pony cif cdx fmtoutlib moa kroc-doc cgtests occamdoc)
+SVN_SRCS=(. $CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occGL modules/occade modules/button modules/pony modules/cif modules/cdx modules/fmtoutlib modules/moa $DOC_SRC $CGTESTS_SRC $OCCAMDOC_SRC)
+SVN_REPOSS=(kroc-srcpkg ccsp mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occGL occade button pony cif cdx fmtoutlib moa kroc-doc cgtests occamdoc)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC $DEMO_GAME_SRC \
 	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $OCCAMDOC_SRC \
 	$OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC \
+	$BUTTON_SRC $BUTTON_EXAMPLES_SRC \
 	$FMTOUTLIB_SRC $MOA_SRC $MOA_EXAMPLES_SRC"
-FAILABLE_PKGS="$UDC_SRC $UDC_EXAMPLES_SRC $SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $MOA_SRC $MOA_EXAMPLES_SRC $OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC"
+FAILABLE_PKGS="$UDC_SRC $UDC_EXAMPLES_SRC $SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $MOA_SRC $MOA_EXAMPLES_SRC $OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC $BUTTON_SRC $BUTTON_EXAMPLES_SRC"
 
 
 #}}}
@@ -264,6 +267,7 @@ choices for <pkg> are:
   occsdl                       SDL bindings module
   occgl                        OpenGL bindings module
   occade                       arcade game development module
+  button                       OpenGL buttons module
   pony                         pony (kroc-net) networking infrastructure
   fmtoutlib                    formatted output module
   moa                          MySQL bindings module
@@ -283,6 +287,7 @@ choices for <pkg> are:
     occsdl_examples            occSDL example programs
     occgl_examples             occGL example programs
     occade_examples            Occade example programs
+    button_examples            button example programs
     pony_examples              pony example programs
     moa_examples               moa example programs
 EOF
@@ -1971,6 +1976,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-sdlraster make-sdlraster install-sdlraster \
 		configure-occgl make-occgl install-occgl \
 		configure-occade make-occade install-occade \
+		configure-button make-button install-button \
 		configure-fmtoutlib make-fmtoutlib install-fmtoutlib \
 		configure-moa make-moa install-moa \
 		configure-syncs make-syncs install-syncs"
@@ -2010,6 +2016,7 @@ EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-s
 		configure-occsdl_examples make-occsdl_examples install-occsdl_examples \
 		configure-occgl_examples make-occgl_examples install-occgl_examples \
 		configure-occade_examples make-occade_examples install-occade_examples \
+		configure-button_examples make-button_examples install-button_examples \
 		configure-moa_examples make-moa_examples install-moa_examples"
 if [ "$USEUDC" -eq 1 ]; then
 	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
@@ -2093,6 +2100,9 @@ for action in $ACTIONLIST; do
 	Xoccade)
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-occade make-occade install-occade"
 		;;
+	Xbutton)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-button make-button install-button"
+		;;
 	Xfmtoutlib)
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-fmtoutlib make-fmtoutlib install-fmtoutlib"
 		;;
@@ -2104,7 +2114,7 @@ for action in $ACTIONLIST; do
 		;;
 	X*)
 		FOUND=0
-		for x in bsclib course course syncs dynproc udc bar game cif sdlraster occsdl occgl occade pony moa; do
+		for x in bsclib course course syncs dynproc udc bar game cif sdlraster occsdl occgl occade button pony moa; do
 			if [ "X${x}_examples" = "X$action" ]; then
 				NEWACTION="initial-kroc-setup bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
@@ -2637,6 +2647,12 @@ for action in $ACTIONLIST; do
 			NEED_KROC_ENV=1
 			;;
 			#}}}
+			#{{{  button_examples: button example programs
+		Xbutton_examples)
+			PKG_SRC=$BUTTON_EXAMPLES_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
 			#{{{  pony_examples: kroc-net/pony example programs
 		Xpony_examples)
 			PKG_SRC=$PONY_EXAMPLES_SRC
@@ -2726,6 +2742,12 @@ for action in $ACTIONLIST; do
 			#{{{  occade: arcade games development
 		Xoccade)
 			PKG_SRC=$OCCADE_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  button: OpenGL buttons library
+		Xbutton)
+			PKG_SRC=$BUTTON_SRC
 			NEED_KROC_ENV=1
 			;;
 			#}}}
