@@ -181,11 +181,13 @@ def install(file, dir, is_exec):
 	run(cmd)
 
 class KRoCToolchain:
-	def object(self, source):
+	def kroc_cmd(self):
 		cmd = programs["kroc"] + []
 		cmd += ["--oc-opts", " ".join(occ21_opts + ["-DEF", "OCCBUILD.KROC"])]
-		cmd += ["-c", source]
-		run(cmd)
+		return cmd
+
+	def object(self, source):
+		run(self.kroc_cmd() + ["-c", source])
 
 	def library(self, occam_objs, native_objs, base):
 		def custom(f):
@@ -219,7 +221,7 @@ class KRoCToolchain:
 			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
 
 	def program(self, occam_objs, native_objs, base):
-		run(programs["kroc"] + [base + ".occ"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs)
+		run(self.kroc_cmd() + [base + ".occ"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs)
 
 	def install(self, file):
 		bindir = "%s%s/bin" % (destdir, prefix)
@@ -266,11 +268,13 @@ class KRoCToolchain:
 		print tidy_spaces(cflags)
 
 class TVMToolchain:
-	def object(self, source):
+	def skroc_cmd(self):
 		cmd = programs["skroc"] + []
 		cmd += ["--occ21-opts", " ".join(occ21_opts + ["-DEF", "OCCBUILD.TVM"])]
-		cmd += ["--tce", source]
-		run(cmd)
+		return cmd
+
+	def object(self, source):
+		run(self.skroc_cmd() + ["--tce", source])
 
 	def libname(self, base):
 		"""Return the name of a shared library.
@@ -307,7 +311,7 @@ class TVMToolchain:
 			# and a stub that invokes the right #PRAGMA here, but
 			# the slinker currently won't do the right thing if you
 			# use a .tce file that you haven't actually #USEd.
-		run(programs["skroc"] + [base + ".occ"] + occam_objs)
+		run(self.skroc_cmd() + [base + ".occ"] + occam_objs)
 
 		# Generate a wrapper script (because we have to produce
 		# something with the target name, and it might as well be
