@@ -276,15 +276,6 @@ class TVMToolchain:
 	def object(self, source):
 		run(self.skroc_cmd() + ["--tce", source])
 
-	def libname(self, base):
-		"""Return the name of a shared library.
-		This is necessary because the Transterpreter doesn't follow the
-		normal convention on Unix machines (yet)."""
-		s = patterns["so"] % base
-		if s.startswith("lib"):
-			s = s[3:]
-		return s
-
 	def library(self, occam_objs, native_objs, base):
 		def custom(f):
 			if occam_objs != []:
@@ -297,7 +288,7 @@ class TVMToolchain:
 		make_module(base, custom)
 
 		if native_objs != []:
-			make_shared(self.libname(base), native_objs)
+			make_shared(patterns["so"] % base, native_objs)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")
@@ -332,7 +323,7 @@ class TVMToolchain:
 			if not is_stub(file):
 				install(file, tvmdir, False)
 				install(base + ".precomp", tvmdir, False)
-			install(self.libname(base), tvmdir, True)
+			install(patterns["so"] % base, tvmdir, True)
 			install(base + ".module", tvmdir, False)
 		elif ext == "inc":
 			install(file, tvmdir, False)
@@ -356,7 +347,7 @@ class TVMToolchain:
 		elif ext == "lib":
 			delete(base + ".lbb")
 			delete(base + ".precomp")
-			delete(self.libname(base))
+			delete(patterns["so"] % base)
 			delete(base + ".module")
 		elif ext == "":
 			self.clean(base + ".tce")
