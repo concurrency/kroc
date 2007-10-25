@@ -195,7 +195,7 @@ class KRoCToolchain:
 				f.write('#USE "%s.lib"\n' % base)
 			if occam_objs != [] or native_objs != []:
 				f.write('#PRAGMA COMMENT ".USELIB %s"\n'
-				        % (patterns["libname"] % base))
+				        % base)
 			f.write('\n')
 		make_module(base, custom)
 
