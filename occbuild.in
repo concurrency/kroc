@@ -211,7 +211,7 @@ class KRoCToolchain:
 			rt_opts = []
 			if std_libs:
 				rt_opts.append(patterns["rtlink"] % "krocif")
-			rt_opts.append(patterns["link"] % "occam8")
+				rt_opts.append(patterns["link"] % "occam8")
 			rt_opts.append(patterns["rtlink"] % "ccsp")
 			make_shared(patterns["so"] % base, objs, rt_opts)
 
