@@ -94,6 +94,7 @@ DYNPROC_SRC=modules/dynproc/libsrc
 DYNPROC_EXAMPLES_SRC=modules/dynproc/examples
 DEMO_BAR_SRC=demos/bar
 DEMO_GAME_SRC=demos/game
+DEMO_ROBOTS_SRC=demos/robots
 UDC_SRC=modules/udc/libsrc
 UDC_EXAMPLES_SRC=modules/udc/examples
 SDLRASTER_SRC=modules/sdlraster/libsrc
@@ -123,7 +124,7 @@ SVN_REPOSS=(kroc-srcpkg ccsp mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmosl
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
-	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC $DEMO_GAME_SRC \
+	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC $DEMO_GAME_SRC $DEMO_ROBOTS_SRC \
 	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $OCCAMDOC_SRC \
 	$OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC \
 	$BUTTON_SRC $BUTTON_EXAMPLES_SRC \
@@ -135,9 +136,9 @@ FAILABLE_PKGS="$UDC_SRC $UDC_EXAMPLES_SRC $SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC
 #{{{  release/install settings
 DUMPOUT=
 DUMPMAIL="kroc-bugs@kent.ac.uk"
-VERSION="1.4.1-pre6"
+VERSION="1.5.1-pre2"
 PRERELEASE=1
-NEXTPATCH="1.4.1-pre7"
+NEXTPATCH="1.5.1-pre3"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 DFL_SVNUSER="anonymous"
@@ -284,6 +285,7 @@ choices for <pkg> are:
     udc_examples               user-defined channels examples
     bar_demo                   animated ALT demonstrator
     game_demo                  text-based adventure game
+    robots_demo                robots and particle demonstrators
     cif_examples               C interface examples
     sdlraster_examples         SDLRaster example programs
     occsdl_examples            occSDL example programs
@@ -2761,6 +2763,12 @@ for action in $ACTIONLIST; do
 			#{{{  game_demo: the "occam-pi adventure game" demonstrator
 		Xgame_demo)
 			PKG_SRC=$DEMO_GAME_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
+			#{{{  robots_demo: the "robots" demonstrator
+		Xrobots_demo)
+			PKG_SRC=$DEMO_ROBOTS_SRC
 			NEED_KROC_ENV=1
 			;;
 			#}}}
