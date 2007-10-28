@@ -2095,6 +2095,7 @@ EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-s
 		configure-cif_examples make-cif_examples install-cif_examples \
 		configure-bar_demo make-bar_demo install-bar_demo \
 		configure-game_demo make-game_demo install-game_demo \
+		configure-robots_demo make-robots_demo install-robots_demo \
 		configure-sdlraster_examples make-sdlraster_examples install-sdlraster_examples \
 		configure-occsdl_examples make-occsdl_examples install-occsdl_examples \
 		configure-occgl_examples make-occgl_examples install-occgl_examples \
