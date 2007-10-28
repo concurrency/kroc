@@ -2,6 +2,8 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+28/10/2007	frmb	small fix for remembering UDC build option
+28/10/2007	frmb	moved source code repository to CSProjects, http://projects.cs.kent.ac.uk/
 23/09/2007	frmb	version-up to 1.5.0 pre-releases
 21/09/2007	ats	restructured distribution tree
 21/09/2007	cgr	various updates

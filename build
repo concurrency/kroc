@@ -140,11 +140,11 @@ PRERELEASE=1
 NEXTPATCH="1.4.1-pre7"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
-DFL_SVNUSER="krocuser"
-DFL_SVNPASS="krocuser"
+DFL_SVNUSER="anonymous"
+DFL_SVNPASS=""
 SVNREV="HEAD"
 SVNUSER="$DFL_SVNUSER"
-SVNHOST="https://subversion.frmb.org/svn/"
+SVNHOST="https://projects.cs.kent.ac.uk/projects/kroc/svn/"
 SVNBRANCH="trunk"
 # things set in typescript_head are: SED, AWK, MAKE, WGET, SVN
 
@@ -324,7 +324,7 @@ svn_version ()
 		if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
 			$WGET -O - --quiet --user="$SVNUSER" --password="$DFL_SVNPASS" --no-check-certificate "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION' 1> /dev/null && GOT_SVN_VERSION=1
 		else
-			$WGET -O - --quiet "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION' 1> /dev/null && GOT_SVN_VERSION=1
+			$WGET -O - --quiet "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION' --no-check-certificate 1> /dev/null && GOT_SVN_VERSION=1
 		fi
 	fi
 
@@ -1883,6 +1883,7 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 	printf 'kroc_krocdir="%s"\n' "$kroc_krocdir" >> .install_dir
 	printf 'USEPTHREADS=%d\n' "$USEPTHREADS" >> .install_dir
 	printf 'USEMP=%d\n' "$USEMP" >> .install_dir
+	printf 'USEUDC=%d\n' "$USEUDC" >> .install_dir
 	printf 'USEPRIORITY=%d\n' "$USEPRIORITY" >> .install_dir
 	printf 'USECPUTIMERS=%d\n' "$USECPUTIMERS" >> .install_dir
 	printf 'USECTTD=%d\n' "$USECTTD" >> .install_dir
