@@ -142,10 +142,11 @@ NEXTPATCH="1.5.1-pre3"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 DFL_SVNUSER="anonymous"
-DFL_SVNPASS=""
+DFL_SVNHOST="http://projects.cs.kent.ac.uk/projects/kroc/svn/"
+DFL_SVNAUTHHOST="https://projects.cs.kent.ac.uk/projects/kroc/svn/"
 SVNREV="HEAD"
 SVNUSER="$DFL_SVNUSER"
-SVNHOST="https://projects.cs.kent.ac.uk/projects/kroc/svn/"
+SVNHOST="$DFL_SVNHOST"
 SVNBRANCH="trunk"
 # things set in typescript_head are: SED, AWK, MAKE, WGET, SVN
 
@@ -304,60 +305,32 @@ svn_version ()
 		printf '%s: subversion not installed! (set SVN environment variable to be explicit)\n' "$0"
 		exit 1
 	fi
-	if [ "$WGET" = "" ]; then
-		printf '%s: wget not installed! (set WGET environment variable to be explicit)\n' "$0"
-		exit 1
-	fi
-	SVN_DOES_HTTPS=0
 
+	SVN_DOES_HTTPS=0
 	$SVN --version | grep "'https'" 1> /dev/null && SVN_DOES_HTTPS=1
-	if [ $SVN_DOES_HTTPS -eq 0 ]; then
+	if [ $SVN_DOES_HTTPS -eq 0 ] && [[ "$SVNHOST" =~ ^https: ]]; then
 		printf '%s: installed subversion does not support https\n' "$0"
 		exit 1
 	fi
 
 	# attempt to get SVN-VERSION file from the "kroc-srcpkg" repository
-
-	printf 'checking for subversion server %s: ' "$SVNHOST"
-	if [ -z "$(printf '%s' "$SVNHOST" | $SED -e 's/svn+ssh:.*//g')" ]; then
-		# cannot WGET this ;)
-		$SVN cat "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION' 1> /dev/null && GOT_SVN_VERSION=1
+	printf 'checking for latest version: '
+	path="$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION'
+	if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
+		PKG_SVN_VERSION=$($SVN cat "$path")
 	else
-		if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-			$WGET -O - --quiet --user="$SVNUSER" --password="$DFL_SVNPASS" --no-check-certificate "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION' 1> /dev/null && GOT_SVN_VERSION=1
-		else
-			$WGET -O - --quiet "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION' --no-check-certificate 1> /dev/null && GOT_SVN_VERSION=1
-		fi
+		PKG_SVN_VERSION=$($SVN --username "$SVNUSER" cat "$path")
 	fi
 
-	if [ $GOT_SVN_VERSION -eq 0 ]; then
+	if [ -z "$PKG_SVN_VERSION" ]; then
+		GOT_SVN_VERSION=0
 		printf 'failed\n'
 		exit 1
-	else
-		printf 'ok\n'
 	fi
+	GOT_SVN_VERSION=1
 
-	printf 'checking for latest version: '
-	if [ -z "$(printf '%s' "$SVNHOST" | $SED -e 's/svn+ssh:.*//g')" ]; then
-		# cannot WGET this ;)
-		PKG_SVN_VERSION=$($SVN cat "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION')
-		if [ "$PKG_SVN_VERSION" ]; then
-			GOT_SVN_VERSION=1
-		fi
-	else
-		# this is now versioned, so better svn-get it
-		if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-			PKG_SVN_VERSION=$($SVN cat --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION')
-		else
-			PKG_SVN_VERSION=$($SVN cat "$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION')
-		fi
-		if [ "$PKG_SVN_VERSION" ]; then
-			GOT_SVN_VERSION=1
-		fi
-	fi
 	printf '%s\n' "$PKG_SVN_VERSION"
 	printf 'this version: %s\n' "$VERSION"
-
 }
 #}}}
 #{{{  deferred_install_error ()
@@ -1003,9 +976,9 @@ svn_status ()
 
 				STATUS_FAILED=0
 				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-					$SVN st --show-updates --verbose --username "$SVNUSER" --password "$DFL_SVNPASS" $QFLAGS > "$TEMPSVNST" || STATUS_FAILED=1
-				else
 					$SVN st --show-updates --verbose $QFLAGS > "$TEMPSVNST" || STATUS_FAILED=1
+				else
+					$SVN st --show-updates --verbose --username "$SVNUSER" $QFLAGS > "$TEMPSVNST" || STATUS_FAILED=1
 				fi
 
 				REVISION=$(grep '^[sS]tatus against revision' < "$TEMPSVNST" | $SED -e 's/[^:]*:[ ]*//g')
@@ -1120,9 +1093,9 @@ svn_switch ()
 					SVNPATH="$SVNHOST$REPOS/branches/$SVNBRANCH/"
 					BRANCH_OK=1
 					if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-						$SVN list --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNPATH" 1> /dev/null 2> /dev/null || BRANCH_OK=0
-					else
 						$SVN list "$SVNPATH" 1> /dev/null 2> /dev/null || BRANCH_OK=0
+					else
+						$SVN list --username "$SVNUSER" "$SVNPATH" 1> /dev/null 2> /dev/null || BRANCH_OK=0
 					fi
 					if [ "$BRANCH_OK" -eq 1 ]; then
 						printf '(branch: %s) ' "$SVNBRANCH"
@@ -1133,9 +1106,9 @@ svn_switch ()
 
 				SWITCH_FAILED=0
 				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-					$SVN switch -r "$SVNREV" --username "$SVNUSER" --password "$DFL_SVNPASS" $QFLAGS "$SVNPATH" || SWITCH_FAILED=1
-				else
 					$SVN switch -r "$SVNREV" $QFLAGS "$SVNPATH" || SWITCH_FAILED=1
+				else
+					$SVN switch -r "$SVNREV" --username "$SVNUSER" $QFLAGS "$SVNPATH" || SWITCH_FAILED=1
 				fi
 
 				if [ $SWITCH_FAILED -eq 1 ]; then
@@ -1204,9 +1177,9 @@ svn_update ()
 					SVNPATH="$SVNHOST$REPOS/branches/$SVNBRANCH/"
 					BRANCH_OK=1
 					if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-						$SVN list --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNPATH" 1> /dev/null 2> /dev/null || BRANCH_OK=0
-					else
 						$SVN list "$SVNPATH" 1> /dev/null 2> /dev/null || BRANCH_OK=0
+					else
+						$SVN list --username "$SVNUSER" "$SVNPATH" 1> /dev/null 2> /dev/null || BRANCH_OK=0
 					fi
 					if [ "$BRANCH_OK" -eq 1 ]; then
 						printf '(branch: %s) ' "$SVNBRANCH"
@@ -1222,9 +1195,9 @@ svn_update ()
 				#
 
 				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-					$SVN checkout $QFLAGS --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNPATH" "$TMPPATH" || CHECKOUT_FAILED=1
-				else
 					$SVN checkout $QFLAGS "$SVNPATH" "$TMPPATH" || CHECKOUT_FAILED=1
+				else
+					$SVN checkout $QFLAGS --username "$SVNUSER" "$SVNPATH" "$TMPPATH" || CHECKOUT_FAILED=1
 				fi
 
 				if [ "$CHECKOUT_FAILED" -eq 1 ]; then
@@ -1239,9 +1212,9 @@ svn_update ()
 				nolder=0
 
 				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-					REPOSFILES=".svn $($SVN ls --recursive --username "$SVNUSER" --password "$DFL_SVNPASS" "$SVNPATH")"
-				else
 					REPOSFILES=".svn $($SVN ls --recursive "$SVNPATH")"
+				else
+					REPOSFILES=".svn $($SVN ls --recursive --username "$SVNUSER" "$SVNPATH")"
 				fi
 				for rfile in $REPOSFILES; do
 					rfile=${rfile%/}
@@ -1286,9 +1259,9 @@ svn_update ()
 
 			UPDATE_FAILED=0
 			if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-				$SVN up -r "$SVNREV" --username "$SVNUSER" --password "$DFL_SVNPASS" $QFLAGS || UPDATE_FAILED=1
-			else
 				$SVN up -r "$SVNREV" $QFLAGS || UPDATE_FAILED=1
+			else
+				$SVN up -r "$SVNREV" --username "$SVNUSER" $QFLAGS || UPDATE_FAILED=1
 			fi
 
 			if [ $UPDATE_FAILED -eq 1 ]; then
@@ -1343,6 +1316,7 @@ fi
 guess_software
 
 #{{{  process command-line arguments
+SPECIAL_ACTION=none
 while [ $# -ge 1 ]
 do
 	case X$1 in
@@ -1358,20 +1332,16 @@ do
 		BUILDRECONF=1
 		;;
 	X--svn-version)
-		svn_version
-		exit 0
+		SPECIAL_ACTION=svn_version
 		;;
 	X--svn-update)
-		svn_update
-		exit 0
+		SPECIAL_ACTION=svn_update
 		;;
 	X--svn-status)
-		svn_status
-		exit 0
+		SPECIAL_ACTION=svn_status
 		;;
 	X--svn-list)
-		svn_list
-		exit 0
+		SPECIAL_ACTION=svn_list
 		;;
 	X--copyright)
 		printf '%s: KRoC/Linux Version %s Copyright (C) 1995-2007 KRoC Authors.\n' "$0" "$VERSION"
@@ -1602,6 +1572,21 @@ do
 done
 
 
+#}}}
+#{{{  pick the right Subversion path
+if [ "$SVNHOST" = "$DFL_SVNHOST" -o "$SVNHOST" = "$DFL_SVNAUTHHOST" ]; then
+	if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
+		SVNHOST="$DFL_SVNHOST"
+	else
+		SVNHOST="$DFL_SVNAUTHHOST"
+	fi
+fi
+#}}}
+#{{{  if we're doing something unusual, do it instead of the normal build
+if [ "$SPECIAL_ACTION" != "none" ]; then
+	$SPECIAL_ACTION
+	exit 0
+fi
 #}}}
 
 if [ "$INSTALL_DIR" = "" ]; then
