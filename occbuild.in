@@ -104,9 +104,12 @@ def capture(cmd):
 
 	return data
 
-def make_shared(library, objs, runtime_opts = []):
+def make_shared(library, objs, runtime_opts = [], no_native_needs = False):
 	"""Link a bunch of native objects into a shared library."""
-	libs = [patterns["link"] % l for l in needs]
+	if no_native_needs:
+		libs = []
+	else:
+		libs = [patterns["link"] % l for l in needs]
 	opts = []
 	if target_os == "Darwin":
 		opts = ["-dynamiclib", "-read_only_relocs", "suppress"]
@@ -288,7 +291,7 @@ class TVMToolchain:
 		make_module(base, custom)
 
 		if native_objs != []:
-			make_shared(patterns["so"] % base, native_objs)
+			make_shared(patterns["so"] % base, native_objs, no_native_needs = True)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")
