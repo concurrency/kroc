@@ -104,17 +104,31 @@ def capture(cmd):
 
 	return data
 
-def make_shared(library, objs, runtime_opts = [], no_native_needs = False):
+def find_in_path(file, path):
+	"""Search for file in all the directories listed in path."""
+	for dir in path:
+		fn = dir + "/" + file
+		if exists(fn):
+			return fn
+	return None
+
+def make_shared(library, objs, runtime_opts = [], lib_path = []):
 	"""Link a bunch of native objects into a shared library."""
-	if no_native_needs:
-		libs = []
-	else:
-		libs = [patterns["link"] % l for l in needs]
+
+	# Only link against native versions of occam libraries if they exist.
+	# FIXME: This is a hack: occbuild should store this information in the
+	# .module files.
+	libs = []
+	for l in needs:
+		if find_in_path(patterns["so"] % l, lib_path) is not None:
+			libs.append(patterns["link"] % l)
+
 	opts = []
 	if target_os == "Darwin":
 		opts = ["-dynamiclib", "-read_only_relocs", "suppress"]
 	else:
 		opts = ["-shared"]
+
 	run(programs["cc"] + linker_opts + opts + ["-o", library] + objs + libs + runtime_opts)
 
 def make_module(name, custom):
@@ -216,7 +230,8 @@ class KRoCToolchain:
 				rt_opts.append(patterns["rtlink"] % "krocif")
 				rt_opts.append(patterns["link"] % "occam8")
 			rt_opts.append(patterns["rtlink"] % "ccsp")
-			make_shared(patterns["so"] % base, objs, rt_opts)
+			lib_path = [l[2:] for l in capture(programs["kroc"] + ["--cclibpath"]).strip().split() if l.startswith("-L")]
+			make_shared(patterns["so"] % base, objs, rt_opts, lib_path)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")
@@ -291,7 +306,7 @@ class TVMToolchain:
 		make_module(base, custom)
 
 		if native_objs != []:
-			make_shared(patterns["so"] % base, native_objs, no_native_needs = True)
+			make_shared(patterns["so"] % base, native_objs)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")
