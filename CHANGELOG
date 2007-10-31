@@ -2,6 +2,8 @@
 KRoC/Linux Change-log (most recent first)
 =========================================
 
+31/10/2007	frmb	put 1.5.0-pre2 together (MP version, auto-detected)
+31/10/2007	frmb	various build script updates
 28/10/2007	frmb	version up to 1.5.0-pre2, added David Wood's robot programs
 28/10/2007	frmb	small fix for remembering UDC build option
 28/10/2007	frmb	moved source code repository to CSProjects, http://projects.cs.kent.ac.uk/
