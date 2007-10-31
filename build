@@ -328,8 +328,12 @@ svn_version ()
 	fi
 
 	SVN_DOES_HTTPS=0
+	SVNHOST_IS_HTTPS=0
+
 	$SVN --version | grep "'https'" 1> /dev/null && SVN_DOES_HTTPS=1
-	if [ $SVN_DOES_HTTPS -eq 0 ] && [[ "$SVNHOST" =~ ^https: ]]; then
+	printf '%s' "$SVNHOST" | grep '^https:' > /dev/null && SVNHOST_IS_HTTPS=1
+
+	if [ $SVN_DOES_HTTPS -eq 0 ] && [ $SVNHOST_IS_HTTPS -eq 1 ]; then
 		printf '%s: installed subversion does not support https\n' "$0"
 		exit 1
 	fi
