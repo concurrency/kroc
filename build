@@ -97,6 +97,8 @@ DEMO_GAME_SRC=demos/game
 DEMO_ROBOTS_SRC=demos/robots
 UDC_SRC=modules/udc/libsrc
 UDC_EXAMPLES_SRC=modules/udc/examples
+RASTER_SRC=modules/raster/libsrc
+RASTER_EXAMPLES_SRC=modules/raster/examples
 SDLRASTER_SRC=modules/sdlraster/libsrc
 SDLRASTER_EXAMPLES_SRC=modules/sdlraster/examples
 OCCSDL_SRC=modules/occSDL/libsrc
@@ -119,16 +121,29 @@ MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
 OCCAMDOC_SRC=tools/occamdoc
-SVN_SRCS=(. $CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/sdlraster modules/occSDL modules/occGL modules/occade modules/button modules/pony modules/cif modules/cdx modules/fmtoutlib modules/moa $DOC_SRC $CGTESTS_SRC $OCCAMDOC_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc kroc-sdlraster occSDL occGL occade button pony cif cdx fmtoutlib moa kroc-doc cgtests occamdoc)
+SVN_SRCS=(. $CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/raster modules/sdlraster modules/occSDL modules/occGL modules/occade modules/button modules/pony modules/cif modules/cdx modules/fmtoutlib modules/moa $DOC_SRC $CGTESTS_SRC $OCCAMDOC_SRC)
+SVN_REPOSS=(kroc-srcpkg ccsp mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc raster kroc-sdlraster occSDL occGL occade button pony cif cdx fmtoutlib moa kroc-doc cgtests occamdoc)
 
-ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $INMOSLIBS_SRC $BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
-	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC $SYNCS_SRC $SYNCS_EXAMPLES_SRC \
-	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC $UDC_SRC $UDC_EXAMPLES_SRC $CIF_SRC $CIF_EXAMPLES_SRC $CGTESTS_SRC $DEMO_BAR_SRC $DEMO_GAME_SRC $DEMO_ROBOTS_SRC \
-	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $PONY_SRC $PONY_EXAMPLES_SRC $DOC_SRC $OCCAMDOC_SRC \
-	$OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC \
+ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $OCCAMDOC_SRC \
+	$DOC_SRC \
+	$INMOSLIBS_SRC \
+	$BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
+	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC \
+	$SYNCS_SRC $SYNCS_EXAMPLES_SRC \
+	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC \
+	$UDC_SRC $UDC_EXAMPLES_SRC \
+	$CIF_SRC $CIF_EXAMPLES_SRC \
+	$CGTESTS_SRC \
+	$DEMO_BAR_SRC $DEMO_GAME_SRC $DEMO_ROBOTS_SRC \
+	$RASTER_SRC $RASTER_EXAMPLES_SRC \
+	$SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC \
+	$PONY_SRC $PONY_EXAMPLES_SRC \
+	$OCCSDL_SRC $OCCSDL_EXAMPLES_SRC \
+	$OCCGL_SRC $OCCGL_EXAMPLES_SRC \
+	$OCCADE_SRC $OCCADE_EXAMPLES_SRC \
 	$BUTTON_SRC $BUTTON_EXAMPLES_SRC \
-	$FMTOUTLIB_SRC $MOA_SRC $MOA_EXAMPLES_SRC"
+	$FMTOUTLIB_SRC \
+	$MOA_SRC $MOA_EXAMPLES_SRC"
 FAILABLE_PKGS="$UDC_SRC $UDC_EXAMPLES_SRC $SDLRASTER_SRC $SDLRASTER_EXAMPLES_SRC $MOA_SRC $MOA_EXAMPLES_SRC $OCCSDL_SRC $OCCSDL_EXAMPLES_SRC $OCCGL_SRC $OCCGL_EXAMPLES_SRC $OCCADE_SRC $OCCADE_EXAMPLES_SRC $BUTTON_SRC $BUTTON_EXAMPLES_SRC"
 
 
@@ -271,6 +286,7 @@ choices for <pkg> are:
   manpages                     man-page based documentation
   cgtests                      compiler test suite
   cif                          occam-pi/C interface
+  raster                       raster graphics support
   sdlraster                    SDLRaster SDL based raster graphics
   occsdl                       SDL bindings module
   occgl                        OpenGL bindings module
@@ -292,6 +308,7 @@ choices for <pkg> are:
     game_demo                  text-based adventure game
     robots_demo                robots and particle demonstrators
     cif_examples               C interface examples
+    raster_examples            raster example programs
     sdlraster_examples         SDLRaster example programs
     occsdl_examples            occSDL example programs
     occgl_examples             occGL example programs
@@ -2124,6 +2141,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-course make-course install-course \
 		configure-cif make-cif install-cif \
 		configure-occsdl make-occsdl install-occsdl \
+		configure-raster make-raster install-raster \
 		configure-sdlraster make-sdlraster install-sdlraster \
 		configure-occgl make-occgl install-occgl \
 		configure-occade make-occade install-occade \
@@ -2164,6 +2182,7 @@ EXAMPLE_ACTIONS="setbuildtarget setbuildoptions building-examples initial-kroc-s
 		configure-bar_demo make-bar_demo install-bar_demo \
 		configure-game_demo make-game_demo install-game_demo \
 		configure-robots_demo make-robots_demo install-robots_demo \
+		configure-raster_examples make-raster_examples install-raster_examples \
 		configure-sdlraster_examples make-sdlraster_examples install-sdlraster_examples \
 		configure-occsdl_examples make-occsdl_examples install-occsdl_examples \
 		configure-occgl_examples make-occgl_examples install-occgl_examples \
@@ -2240,6 +2259,9 @@ for action in $ACTIONLIST; do
 	Xcif)
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-cif make-cif install-cif"
 		;;
+	Xraster)
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-raster make-raster install-raster"
+		;;
 	Xsdlraster)
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-sdlraster make-sdlraster install-sdlraster"
 		;;
@@ -2266,7 +2288,7 @@ for action in $ACTIONLIST; do
 		;;
 	X*)
 		FOUND=0
-		for x in bsclib course course syncs dynproc udc bar game cif sdlraster occsdl occgl occade button pony moa; do
+		for x in bsclib course course syncs dynproc udc bar game cif raster sdlraster occsdl occgl occade button pony moa; do
 			if [ "X${x}_examples" = "X$action" ]; then
 				NEWACTION="initial-kroc-setup bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
@@ -2786,6 +2808,12 @@ for action in $ACTIONLIST; do
 			NEED_KROC_ENV=1
 			;;
 			#}}}
+			#{{{  raster_examples: raster example programs
+		Xraster_examples)
+			PKG_SRC=$RASTER_EXAMPLES_SRC
+			NEED_KROC_ENV=1
+			;;
+			#}}}
 			#{{{  sdlraster_examples: SDLRaster example programs
 		Xsdlraster_examples)
 			PKG_SRC=$SDLRASTER_EXAMPLES_SRC
@@ -2888,6 +2916,12 @@ for action in $ACTIONLIST; do
 		Xcif)
 			PKG_SRC=$CIF_SRC
 			NEED_KROC_ENV=0
+			;;
+			#}}}
+			#{{{  raster: raster-based graphics
+		Xraster)
+			PKG_SRC=$RASTER_SRC
+			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  sdlraster: raster-based graphics with SDL
