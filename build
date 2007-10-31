@@ -156,6 +156,7 @@ SVNBRANCH="trunk"
 BUILDRECONF=0
 ACTIONLIST=
 FORCECONFIGURE=
+FORCESINGLEBUILD=1
 USEPRIORITY=42
 USECPUTIMERS=42
 USEPTHREADS=42
@@ -163,13 +164,15 @@ USECTTD=42
 USEPONY=42
 USEUDC=42
 USEPGROUPS=42
-USEMP=0
+USEMP=42
 GOT_SVN_VERSION=0
 USER_INSTALL=0
 ALL_SETTINGS=0
 EXTRA_CCSP_CONFIGURE_OPTS=""
 EXTRA_KROC_CONFIGURE_OPTS=""
 NOCC_INSTALL=""
+BUILD_NUMCPUS=1
+MAKE_COMPILEOPTS=""
 
 KROCHOST_ARCH=
 KROCHOST_VENDOR=
@@ -209,6 +212,7 @@ where options are:
 
   --dry-run                    just print what is going to be done, without doing it
   --force-configure            re-configure packages, even they look configured
+  --force-single-build         do not attempt to use make speedup on a multiprocessor
 
   --no-priority                disable process priority
   --no-cputimers               disable CPU timer support (required for accurate timing on variable-frequency hardware)
@@ -648,9 +652,9 @@ make_pkg ()
 		CURRENT_DIR="$(pwd)"
 		cd "$1/$2"
 		if [ "$3" = "" ]; then
-			($MAKE 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
+			($MAKE $MAKE_COMPILEOPTS 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		else
-			($MAKE $3 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
+			($MAKE $MAKE_COMPILEOPTS $3 2>&1 && touch .success) | $TEE -a "$DUMPOUT"
 		fi
 		if [ -f .success ]; then
 			rm .success
@@ -829,6 +833,14 @@ setopts_host ()
 			printf '  cygwin: enabling pthreads\n'
 			USEPTHREADS=1
 		fi
+		if [ $USEMP -eq 42 ]; then	
+			printf '  cygwin: disabling MP support\n'
+			USEMP=0
+		fi
+		if [ $USEUDC -eq 42 ]; then	
+			printf '  cygwin: enabling user-defined channel support\n'
+			USEUDC=1
+		fi
 		;;
 	darwin* | Darwin*)
 		if [ $USEPTHREADS -eq 42 ]; then
@@ -838,6 +850,16 @@ setopts_host ()
 		if [ $USEMP -eq 42 ]; then
 			printf '  darwin: enabling multi-processor support\n'
 			USEMP=1
+
+			# cannot support UDC with MP currently
+			if [ $USEUDC -eq 42 ]; then
+				printf '  darwin: disabling user-defined channel support\n'
+				USEUDC=0
+			fi
+		fi
+		if [ $USEUDC -eq 42 ]; then	
+			printf '  darwin: enabling user-defined channel support\n'
+			USEUDC=1
 		fi
 		# tweak some paths to make things go smoothly
 		CPATH="/usr/X11R6/include:/sw/include:$CPATH"; export CPATH
@@ -849,11 +871,27 @@ setopts_host ()
 			printf '  solaris: enabling pthreads\n'
 			USEPTHREADS=1
 		fi
+		if [ $USEMP -eq 42 ]; then	
+			printf '  solaris: disabling multi-processor support\n'
+			USEMP=1
+		fi
+		if [ $USEUDC -eq 42 ]; then	
+			printf '  solaris: enabling user-defined channel support\n'
+			USEUDC=1
+		fi
 		;;
 	*bsd* | *BSD*)
 		if [ $USEPTHREADS -eq 42 ]; then
 			printf '  *BSD: enabling pthreads\n'
 			USEPTHREADS=2
+		fi
+		if [ $USEMP -eq 42 ]; then	
+			printf '  *BSD: disabling multi-processor support\n'
+			USEMP=0
+		fi
+		if [ $USEUDC -eq 42 ]; then	
+			printf '  *BSD: enabling user-defined channel support\n'
+			USEUDC=1
 		fi
 		;;
 	linux* | Linux*)
@@ -867,18 +905,54 @@ setopts_host ()
 				printf '  linux: no /proc/cpuinfo, not enabling multi-processor support\n'
 				USEMP=0
 			else
-				NUMCPUS=$(($AWK 'BEGIN { i=0; } /^processor[ :\t]/ {i++} END {print(i);}' < /proc/cpuinfo))
+				NUMCPUS=$($AWK 'BEGIN { i=0; } /^processor[ :\t]/ {i++} END {print(i);}' < /proc/cpuinfo)
 				if [ $NUMCPUS -ge 2 ]; then
 					printf '  linux: %d logical processors, enabling multi-processor support\n' "$NUMCPUS"
 					USEMP=1
+
+					# also, instruct to build with this many
+					BUILD_NUMCPUS=$NUMCPUS
+
+					# cannot support UDC with MP currently
+					if [ $USEUDC -eq 42 ]; then
+						printf '  linux: disabling user-defined channel support\n'
+						USEUDC=0
+					fi
 				else
 					printf '  linux: single CPU system, not enabling multi-processor support\n'
 					USEMP=0
 				fi
 			fi
 		fi
+		if [ $USEUDC -eq 42 ]; then
+			printf '  linux: enabling user-defined channel support\n'
+			USEUDC=1
+		fi
 		;;
 	esac
+}
+#}}}
+#{{{  setopts_build
+setopts_build ()
+{
+	if [ $BUILD_NUMCPUS -le 1 ]; then
+		# only 1 CPU anyway
+		return 1
+	fi
+	if [ $FORCESINGLEBUILD -eq 1 ]; then
+		# told not to probe this
+		return 1
+	fi
+
+	# now, check that we have a make which understands how we want to do this! (ask for version)
+	rm -f .success
+	($MAKE -j$BUILD_NUMCPUS --version 2>&1 && touch .success) > /dev/null
+	if [ -f .success ]; then
+		rm .success
+		printf 'build: using make option -j%d\n' "$BUILD_NUMCPUS" | $TEE -a "$DUMPOUT"
+		MAKE_COMPILEOPTS="-j$BUILD_NUMCPUS"
+	fi
+	return 0
 }
 #}}}
 #{{{  package_status (dist-dir, package-src-dir)
@@ -1481,6 +1555,9 @@ do
 	X--force-configure)
 		FORCECONFIGURE=1
 		;;
+	X--force-single-build)
+		FORCESINGLEBUILD=1
+		;;
 	X--with-priority)
 		USEPRIORITY=1
 		;;
@@ -1632,12 +1709,9 @@ if [ "$kroc_krocdir" = "" ]; then
 fi
 
 #}}}
-#{{{  make some decisions about default features, _except_ POSIX threads and MP support
+#{{{  make some decisions about default features, _except_ POSIX threads, UDC and MP support
 if [ $USEPRIORITY -eq 42 ]; then
 	USEPRIORITY=1
-fi
-if [ $USEUDC -eq 42 ]; then
-	USEUDC=1
 fi
 if [ $USECTTD -eq 42 ]; then
 	USECTTD=0
@@ -1718,15 +1792,18 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 			printf ' %sA%s.  process priority: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPRIORITY -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 			printf ' %sB%s.  CPU timers: ' "$ANSION2" "$ANSIOFF2"; if [ $USECPUTIMERS -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3"; 
 					elif [ $USECPUTIMERS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
-			printf ' %sC%s.  user-defined channels: ' "$ANSION2" "$ANSIOFF2"; if [ $USEUDC -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+			printf ' %sC%s.  user-defined channels: ' "$ANSION2" "$ANSIOFF2"; if [ $USEUDC -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3";
+					elif [ $USEUDC -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 			printf ' %sD%s.  channel-type descriptors: ' "$ANSION2" "$ANSIOFF2"; if [ $USECTTD -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 			printf ' %sE%s.  blocking syscalls use POSIX threads: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPTHREADS -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3"
 					elif [ $USEPTHREADS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 			if [ $ALL_SETTINGS -eq 1 ]; then
 				printf ' %sF%s.  support for PONY: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPONY -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 				printf ' %sG%s.  support for process groups: ' "$ANSION2" "$ANSIOFF2"; if [ $USEPGROUPS -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
-				printf ' %sH%s.  support for multi-processor machines: ' "$ANSION2" "$ANSIOFF2"; if [ $USEMP -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3"
-						elif [ $USEMP -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+			fi
+			printf ' %sH%s.  support for multi-processor machines: ' "$ANSION2" "$ANSIOFF2"; if [ $USEMP -eq 42 ]; then printf '%sauto-detect%s' "$ANSION3" "$ANSIOFF3"
+					elif [ $USEMP -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
+			if [ $ALL_SETTINGS -eq 1 ]; then
 				printf ' %sI%s.  path to NOCC install: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$NOCC_INSTALL" "$ANSIOFF1"
 				printf ' %sUB%s. subversion-branch: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNBRANCH" "$ANSIOFF1"
 				printf ' %sUH%s. subversion-update source: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNHOST" "$ANSIOFF1"
@@ -1779,7 +1856,13 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 			elif [ "$REPLY" = "B" ] || [ "$REPLY" = "b" ]; then
 				USECPUTIMERS=$((1 - USECPUTIMERS))
 			elif [ "$REPLY" = "C" ] || [ "$REPLY" = "c" ]; then
-				USEUDC=$((1 - USEUDC))
+				if [ $USEUDC -eq 42 ]; then
+					USEUDC=1
+				elif [ $USEUDC -eq 1 ]; then
+					USEUDC=0
+				else
+					USEUDC=42
+				fi
 			elif [ "$REPLY" = "D" ] || [ "$REPLY" = "d" ]; then
 				USECTTD=$((1 - USECTTD))
 			elif [ "$REPLY" = "E" ] || [ "$REPLY" = "e" ]; then
@@ -1794,7 +1877,7 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				USEPONY=$((1 - USEPONY))
 			elif [ "$REPLY" = "G" ] || [ "$REPLY" = "g" ] && [ $ALL_SETTINGS -eq 1 ]; then
 				USEPGROUPS=$((1 - USEPGROUPS))
-			elif [ "$REPLY" = "H" ] || [ "$REPLY" = "h" ] && [ $ALL_SETTINGS -eq 1 ]; then
+			elif [ "$REPLY" = "H" ] || [ "$REPLY" = "h" ]; then
 				if [ $USEMP -eq 42 ]; then
 					USEMP=1
 				elif [ $USEMP -eq 1 ]; then
@@ -2024,7 +2107,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		FULLINSTALL=
 	fi
 	SHOWBANNER=1
-	ACTIONLIST="setbuildtarget \
+	ACTIONLIST="setbuildtarget setbuildoptions \
 		preconfigure-ccsp \
 		fconfigure-ccspt make-ccspt install-ccspt \
 		fconfigure-ccsp make-ccsp install-ccsp \
@@ -2071,7 +2154,7 @@ EXAMPLEINSTALL=
 CGTESTSINSTALL=
 
 # some transformations
-EXAMPLE_ACTIONS="setbuildtarget building-examples initial-kroc-setup bsyscalls-support cputimers-support dynproc-support \
+EXAMPLE_ACTIONS="setbuildtarget setbuildoptions building-examples initial-kroc-setup bsyscalls-support cputimers-support dynproc-support \
 		configure-bsclib_examples make-bsclib_examples install-bsclib_examples \
 		configure-course_examples make-course_examples install-course_examples \
 		configure-course_answers make-course_answers install-course_answers \
@@ -2095,7 +2178,7 @@ if [ "$USEPONY" -eq 1 ]; then
 	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
 		configure-pony_examples make-pony_examples"
 fi
-CGTESTS_ACTIONS="setbuildtarget building-cgtests initial-kroc-setup configure-cgtests make-cgtests install-cgtests"
+CGTESTS_ACTIONS="setbuildtarget setbuildoptions building-cgtests initial-kroc-setup configure-cgtests make-cgtests install-cgtests"
 
 if [ "$FULLINSTALL" = "1" ]; then
 	ACTIONLIST="$ACTIONLIST examples cgtests"
@@ -2202,10 +2285,10 @@ for action in $ACTIONLIST; do
 done
 ACTIONLIST=$NEWACTIONLIST
 
-# the first action must always be "setbuildtarget" (since this decides final settings)
+# the first action must always be "setbuildtarget" (since this decides final settings), and then "setbuildoptions"
 for action in $ACTIONLIST; do
 	if [ "$action" != "setbuildtarget" ]; then
-		ACTIONLIST="setbuildtarget $ACTIONLIST"
+		ACTIONLIST="setbuildtarget setbuildoptions $ACTIONLIST"
 	fi
 	break
 done
@@ -2247,6 +2330,11 @@ for action in $ACTIONLIST; do
 			setopts_host "$KROCHOST_ARCH" "$KROCHOST_VENDOR" "$KROCHOST_OS"
 		fi
 		# frmb: removed scheduler-structure support, there is a better way to do this..
+		;;
+		#}}}
+		#{{{  setbuildoptions: if this is a multiprocessor build (decided by setbuildtarget), set BUILD_NUMCPUS in MAKE_COMPILEOPTS
+	Xsetbuildoptions)
+		setopts_build
 		;;
 		#}}}
 		#{{{  update: does a source update from the distribution site
