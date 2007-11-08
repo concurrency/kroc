@@ -488,8 +488,9 @@ def main(args):
 			occ21_opts += split_options(a)
 		elif o == "-D":
 			occ21_opts += ["-DEF", a]
-		elif o in ("-l", "-L", "-W"):
+		elif o in ("-l", "-L", "-W", "-framework"):
 			linker_opts.append("%s%s" % (o, a))
+			print("%s%s" % (o, a))
 		elif o == "--need":
 			needs.append(a)
 		elif o == "--include":
