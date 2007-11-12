@@ -163,7 +163,7 @@ DFL_SVNAUTHHOST="https://projects.cs.kent.ac.uk/projects/kroc/svn/"
 SVNREV="HEAD"
 SVNUSER="$DFL_SVNUSER"
 SVNHOST="$DFL_SVNHOST"
-SVNBRANCH="cgr-mp"
+SVNBRANCH="trunk"
 # things set in typescript_head are: SED, AWK, MAKE, WGET, SVN
 
 #}}}
