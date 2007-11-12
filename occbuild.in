@@ -35,7 +35,7 @@ includes_after = []
 prefix = None
 destdir = ""
 target_os = os.uname()[0]
-extensions = {"so": "so"}
+patterns = None
 
 def warn(*s):
 	print >>sys.stderr, "occbuild: " + "".join(map(str, s))
@@ -104,15 +104,32 @@ def capture(cmd):
 
 	return data
 
-def make_shared(library, objs):
+def find_in_path(file, path):
+	"""Search for file in all the directories listed in path."""
+	for dir in path:
+		fn = dir + "/" + file
+		if exists(fn):
+			return fn
+	return None
+
+def make_shared(library, objs, runtime_opts = [], lib_path = []):
 	"""Link a bunch of native objects into a shared library."""
-	libs = ["-l%s" % l for l in needs]
+
+	# Only link against native versions of occam libraries if they exist.
+	# FIXME: This is a hack: occbuild should store this information in the
+	# .module files.
+	libs = []
+	for l in needs:
+		if find_in_path(patterns["so"] % l, lib_path) is not None:
+			libs.append(patterns["link"] % l)
+
 	opts = []
 	if target_os == "Darwin":
 		opts = ["-dynamiclib", "-read_only_relocs", "suppress"]
 	else:
 		opts = ["-shared"]
-	run(programs["cc"] + linker_opts + libs + opts + ["-o", library] + objs)
+
+	run(programs["cc"] + linker_opts + opts + ["-o", library] + objs + libs + runtime_opts)
 
 def make_module(name, custom):
 	"""Generate a .module file, calling the provided function to fill in
@@ -181,36 +198,40 @@ def install(file, dir, is_exec):
 	run(cmd)
 
 class KRoCToolchain:
-	def object(self, source):
+	def kroc_cmd(self):
 		cmd = programs["kroc"] + []
 		cmd += ["--oc-opts", " ".join(occ21_opts + ["-DEF", "OCCBUILD.KROC"])]
-		cmd += ["-c", source]
-		run(cmd)
+		return cmd
+
+	def object(self, source):
+		run(self.kroc_cmd() + ["-c", source])
 
 	def library(self, occam_objs, native_objs, base):
-		if std_libs:
-			needs.insert(0, "occam8")
-
 		def custom(f):
 			if occam_objs != []:
 				f.write('#USE "%s.lib"\n' % base)
 			if occam_objs != [] or native_objs != []:
-				f.write('#PRAGMA COMMENT ".USELIB %s"\n' % base)
+				f.write('#PRAGMA COMMENT ".USELIB %s"\n'
+				        % base)
 			f.write('\n')
 		make_module(base, custom)
 
 		objs = [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs
 		if objs != []:
+			global linker_opts
+
 			if prefix is None:
 				linker_opts.extend(split_options(capture(programs["kroc"] + ["--cclibpath"])))
 			else:
-				linker_opts.append("-L.")
-				linker_opts.append("-L%s/lib/kroc" % prefix)
+				linker_opts += ["-L.", "-L%s/lib/kroc" % prefix]
 
+			rt_opts = []
 			if std_libs:
-				needs.insert(0, "krocif")
-			needs.insert(0, "kroc")
-			make_shared("lib%s.%s" % (base, extensions["so"]), objs)
+				rt_opts.append(patterns["rtlink"] % "krocif")
+				rt_opts.append(patterns["link"] % "occam8")
+			rt_opts.append(patterns["rtlink"] % "ccsp")
+			lib_path = [l[2:] for l in capture(programs["kroc"] + ["--cclibpath"]).strip().split() if l.startswith("-L")]
+			make_shared(patterns["so"] % base, objs, rt_opts, lib_path)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")
@@ -218,7 +239,7 @@ class KRoCToolchain:
 			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
 
 	def program(self, occam_objs, native_objs, base):
-		run(programs["kroc"] + [base + ".occ"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs)
+		run(self.kroc_cmd() + [base + ".occ"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs)
 
 	def install(self, file):
 		bindir = "%s%s/bin" % (destdir, prefix)
@@ -231,7 +252,7 @@ class KRoCToolchain:
 		if ext == "lib":
 			if not is_stub(file):
 				install(file, vtlibdir, False)
-			install("lib%s.%s" % (base, extensions["so"]), libdir, True)
+			install(patterns["so"] % base, libdir, True)
 			install(base + ".module", vtincludedir, False)
 		elif ext == "inc":
 			install(file, vtincludedir, False)
@@ -253,7 +274,7 @@ class KRoCToolchain:
 			delete(base + ".o")
 		elif ext == "lib":
 			delete(base + ".lbb")
-			delete("lib%s.%s" % (base, extensions["so"]))
+			delete(patterns["so"] % base)
 			delete(base + ".module")
 		elif ext == "":
 			self.clean(base + ".tce")
@@ -265,11 +286,13 @@ class KRoCToolchain:
 		print tidy_spaces(cflags)
 
 class TVMToolchain:
-	def object(self, source):
+	def skroc_cmd(self):
 		cmd = programs["skroc"] + []
 		cmd += ["--occ21-opts", " ".join(occ21_opts + ["-DEF", "OCCBUILD.TVM"])]
-		cmd += ["--tce", source]
-		run(cmd)
+		return cmd
+
+	def object(self, source):
+		run(self.skroc_cmd() + ["--tce", source])
 
 	def library(self, occam_objs, native_objs, base):
 		def custom(f):
@@ -277,12 +300,13 @@ class TVMToolchain:
 				f.write('#USE "%s.lib"\n' % base)
 				f.write("#PRAGMA COMMENT \"(spragma (uselib %s))\"\n" % base)
 			if native_objs != []:
-				f.write("#PRAGMA COMMENT \"(spragma (dynlib %s))\"\n" % base)
+				f.write("#PRAGMA COMMENT \"(spragma (dynlib %s))\"\n"
+				        % (patterns["libname"] % base))
 			f.write('\n')
 		make_module(base, custom)
 
 		if native_objs != []:
-			make_shared(base + "." + extensions["so"], native_objs)
+			make_shared(patterns["so"] % base, native_objs)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")
@@ -296,7 +320,7 @@ class TVMToolchain:
 			# and a stub that invokes the right #PRAGMA here, but
 			# the slinker currently won't do the right thing if you
 			# use a .tce file that you haven't actually #USEd.
-		run(programs["skroc"] + [base + ".occ"] + occam_objs)
+		run(self.skroc_cmd() + [base + ".occ"] + occam_objs)
 
 		# Generate a wrapper script (because we have to produce
 		# something with the target name, and it might as well be
@@ -317,7 +341,7 @@ class TVMToolchain:
 			if not is_stub(file):
 				install(file, tvmdir, False)
 				install(base + ".precomp", tvmdir, False)
-			install(base + "." + extensions["so"], tvmdir, True)
+			install(patterns["so"] % base, tvmdir, True)
 			install(base + ".module", tvmdir, False)
 		elif ext == "inc":
 			install(file, tvmdir, False)
@@ -341,7 +365,7 @@ class TVMToolchain:
 		elif ext == "lib":
 			delete(base + ".lbb")
 			delete(base + ".precomp")
-			delete(base + "." + extensions["so"])
+			delete(patterns["so"] % base)
 			delete(base + ".module")
 		elif ext == "":
 			self.clean(base + ".tce")
@@ -464,7 +488,7 @@ def main(args):
 			occ21_opts += split_options(a)
 		elif o == "-D":
 			occ21_opts += ["-DEF", a]
-		elif o in ("-l", "-L", "-W"):
+		elif o in ("-l", "-L", "-W", "-framework"):
 			linker_opts.append("%s%s" % (o, a))
 		elif o == "--need":
 			needs.append(a)
@@ -499,8 +523,22 @@ def main(args):
 		programs["kroc"] += ["-I" + dir, "-L" + dir]
 		programs["skroc"] += ["-L", dir]
 	
-	if target_os == "Darwin":
-		extensions["so"] = "dylib"
+	global patterns
+	patterns = {
+		"libname": "%s",
+		"link": "-l%s",
+		"rtlink": "-l%s",
+		"so": "lib%s.so",
+		}
+	if target_os.startswith("CYGWIN"):
+		# On Cygwin we must make sure that the DLL name is not the same
+		# as the occam library, since the Cygwin linker will get
+		# confused about having both a .lib and a .dll.
+		patterns["libname"] = "vt%s"
+		patterns["link"] = "-lvt%s"
+		patterns["so"] = "vt%s.dll"
+	elif target_os == "Darwin":
+		patterns["so"] = "lib%s.dylib"
 
 	if mode == "object":
 		if args == []:
