@@ -4,11 +4,11 @@ dnl Process this file with autoconf to produce a configure script.
 dnl
 
 AC_REVISION($Revision: 1.1 $)
-AC_INIT([kroc.in],[1.5.0-pre1],[kroc-bugs@kent.ac.uk])
+AC_INIT([kroc.in],[1.5.0-pre3],[kroc-bugs@kent.ac.uk])
 AC_PREREQ(2.12)
 
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(kroc,1.5.0-pre1)
+AM_INIT_AUTOMAKE(kroc,1.5.0-pre3)
 
 KROC_CANONICAL_TARGET=$target
 AC_SUBST(KROC_CANONICAL_TARGET)
@@ -224,12 +224,20 @@ dnl  fi
 dnl fi
 dnl 
 
+case "$host_os" in
+*Darwin* | *darwin*)
+ ENV_LIBRARY_PATH="DYLD_LIBRARY_PATH"
+ ;;
+*)
+ ENV_LIBRARY_PATH="LD_LIBRARY_PATH"
+ ;;
+esac
+
 if test "$enable_user_install" = yes; then
  CONFFILEPREFIX="."
 else
  CONFFILEPREFIX=""
 fi
-
 
 AC_SUBST(DMOPTLIB)
 AC_SUBST(DEXTLIB)
@@ -257,6 +265,7 @@ AC_SUBST(KROC_KROCDIR)
 AC_SUBST(KROC_CONFIGDIR)
 AC_SUBST(ACLOCALDIR)
 AC_SUBST(CONFFILEPREFIX)
+AC_SUBST(ENV_LIBRARY_PATH)
 
 AC_OUTPUT([kroc kmakemodule occbuild kroc.conf setup.sh setup.csh Makefile])
 

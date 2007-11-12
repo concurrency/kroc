@@ -98,8 +98,8 @@ dversion='2.0'
 host_canonical="@KROC_CANONICAL_TARGET@"
 host_cpu="@KROC_HOST_CPU@"
 host_os="@KROC_HOST_OS@"
-# -kf : use fast CCSP interface
-octranopts="-kf @TRANEXTRAOPTS@ @TENABLEMP@"
+# -kc : cgr-mp CCSP interface
+octranopts="-kc @TRANEXTRAOPTS@ @TENABLEMP@"
 ccopts="@ARCH_DEFS@"
 ocllibs=""
 ocrtslibs="-lm @DLOPTLIB@ @DEXTLIB@"
@@ -107,11 +107,15 @@ extcflags="@ARCH_DEFS@ @DSYSOPTS@ @EXTCCEXTRAOPTS@"
 dtraces=0
 
 case "$host_os" in
-	cygwin )
-		octranopts="$octranopts --cnpfx _"
+	cygwin*)
+		octranopts="$octranopts -nsymops --cnpfx _"
 		extcflags="$extcflags -DHOSTOS_CYGWIN"
 		;;
-	solaris* )
+	darwin*)
+		octranopts="$octranopts -nsymops --cnpfx _"
+		extcflags="$extcflags -DHOSTOS_DARWIN -mdynamic-no-pic"
+		;;
+	solaris*)
 		# solaris stock assembler doesn't eat from stdin (go via tempfile)
 		octranopts="$octranopts -es"
 		;;
@@ -181,6 +185,9 @@ esac
 # necessary for dynamic procs (makes all synbols appear in the dynamic symbol table)
 
 case "$host_os" in
+	darwin*)
+		extraccopts=${EXTRACCOPTS:--read_only_relocs suppress}
+		;;
 	solaris*)
 		extraccopts=${EXTRACCOPTS:-}
 		;;
@@ -196,7 +203,16 @@ cc=${CC:-gcc}
 as=${AS:-as}
 asflags=""
 ld=${LD:-ld}
-ldopts="-shared"
+case "$host_os" in
+	darwin*)
+		ldopts="-dynamiclib"
+		libext=".dylib"
+		;;
+	*)
+		ldopts="-shared"
+		libext=".so"
+		;;
+esac
 
 # Assembler options needed A1 and A2 are used to define alignment.
 # Different versions of the gnu assembler require different values:
@@ -736,9 +752,9 @@ occ21="$kroc_archbindir/occ21"
 octran="$kroc_archbindir/tranx86"
 
 if [ $dtraces -eq 1 ]; then
-	ocrts="-lkroctrace -lkrocif"
+	ocrts="-lccsptrace -lkrocif"
 else
-	ocrts="-lkroc -lkrocif"
+	ocrts="-lccsp -lkrocif"
 fi
 
 
@@ -1299,74 +1315,20 @@ if [ $dorun ]; then
 fi
 
 if [ $makelib ]; then
-	efile=$efile".so"
-	cmd="$ld $ARCH_LDFLAGS $ldopts -o $efile $objs"
+	efile=$efile$libext
+	cmd="$cc $ccopts $oclibpath $ocrtslibs $ocllibs $ocrts $extraccopts $ARCH_LDFLAGS $ldopts -o $efile $objs"
 elif [ $skip_link ]; then
 	test
 else
 	if [ "$host_os" = "cygwin" ]; then
 		#{{{  fudge libraries for cygwin
 		local_ocllibs=""
-		local_ocrts=""
-		foundrts=
-
-		looklibpaths="$ocllibs $ocrts"
-
-		#SAVEDIFS="$IFS"
-		#IFS=';'
-
-		for lib in $looklibpaths; do
-			# if it looks like -lname, search for it in oclibpath
-
-			case "X$lib" in
-			X-l*)
-				foundlib=
-				libname=$(printf '%s' "$lib" | $SED -e 's/^-l//g')
-				# search
-				for lpath in $oclibpath; do
-					case "X$lpath" in
-					X-L*)
-						libpath=$(printf '%s' "$lpath" | $SED -e 's/^-L//g')
-
-						# is it here ?
-						if [ -f $libpath/lib$libname.so ]; then
-							foundlib=1
-							local_ocllibs="$local_ocllibs $libpath/lib$libname.so"
-						elif [ -f $libpath/lib$libname.a ]; then
-							foundlib=1
-							local_ocllibs="$local_ocllibs $libpath/$libname.a"
-						elif [ -f $libpath/$libname.o ]; then
-							printf '%s: (warning) using object-file %s for library: %s\n' "$progname" "$libpath/$libname.o" "$libname" 1>&2
-							foundlib=1
-							local_ocllibs="$local_ocllibs $libpath/$libname.o"
-						fi
-						;;
-					*)
-						;;
-					esac
-					if [ "$foundlib" != "" ]; then
-						break
-					fi
-				done
-
-				if [ "$foundlib" = "" ]; then
-					printf '%s: (warning) cannot find library: %s\n' "$progname" "$libname" 1>&2
-				elif [ "$lib" = "$ocrts" ]; then
-					foundrts=1
-				fi
-
-				;;
-			*)
-				;;
-			esac
-
+		for lib in $ocllibs; do
+			libname=$(printf '%s' "$lib" | $SED -e 's/^-l//g')
+			local_ocllibs="$local_ocllibs -lvt$libname"
 		done
 
-		#IFS="$SAVEDIFS"
-
-		if [ "$foundrts" = "" ]; then
-			printf '%s: (warning) cannot find run-time kernel: %s\n' "$progname" "$ocrts" 1>&2
-		fi
+		local_ocrts="$ocrts"
 		#}}}
 	else
 		local_ocllibs="$ocllibs"
