@@ -1,0 +1,75 @@
+--
+--	buffered.occ -- buffered user-defined channel example
+--	Copyright (C) 2002 Fred Barnes <frmb2@ukc.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+
+--{{{  includes, uses
+#INCLUDE "udc.module"
+#INCLUDE "course.module"
+--}}}  
+
+--{{{  PROC outputter (VAL INT rate, CHAN INT out!)
+PROC outputter (VAL INT rate, CHAN INT out!)
+  INITIAL INT v IS 0:
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    t := (t PLUS (rate / 2))
+    WHILE TRUE
+      SEQ
+        out ! v
+        v := (v + 1)
+        tim ? AFTER t
+        t := (t PLUS rate)
+:
+--}}}  
+
+--{{{  PROC inputter (CHAN INT in?, CHAN BYTE out!)
+PROC inputter (CHAN INT in?, CHAN BYTE out!)
+  WHILE TRUE
+    TIMER tim:
+    INT t, x:
+    SEQ
+      -- fast read some things
+      SEQ i = 0 FOR 8
+        SEQ
+          in ? x
+          out.int (x, 0, out!)
+          out ! '*n'
+      out.string ("quick rest..*n", 0, out!)
+      tim ? t
+      t := (t PLUS 1000000)
+      tim ? AFTER t
+:
+--}}}  
+
+--{{{  PROC buffered (CHAN BYTE kyb?, scr!, err!)
+PROC buffered (CHAN BYTE kyb?, scr!, err!)
+
+  INT addr:
+  SEQ
+    udc.bufchan.alloc (10, addr)
+
+    PLACED CHAN INT c addr:
+    PAR
+      outputter (200000, c!)
+      inputter (c?, scr!)
+:
+--}}}  
+
