@@ -1,5 +1,5 @@
 --
---	mrevents.occ -- miniraster events tester
+--	mrevents.occ -- sdlraster events tester
 --	Copyright (C) 2007  University of Kent
 --
 --	This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
 --
 
 #INCLUDE "course.module"
-#INCLUDE "miniraster.module"
+#INCLUDE "sdlraster.module"
 
 PROC dump.events (CHAN RASTER.EVENT in?, CHAN BYTE out!)
   INITIAL BOOL running IS TRUE:
@@ -50,7 +50,7 @@ PROC draw.rubbish (CHAN RASTER in?, out!)
       INT c:
       SEQ
         c, seed := random (#1000000, seed)
-        clear.raster (r, c)
+        raster.clear (r, c)
         SEQ i = 0 FOR 1000
           INT y, x:
           SEQ
@@ -71,7 +71,7 @@ PROC mrevents (CHAN BYTE out!)
   CHAN RASTER c0, c1:
   CHAN RASTER.EVENT events:
   PAR
-    miniraster ("Raster events test", 640, 480, 1, c0?, c1!, events!)
+    raster.display ("Raster events test", 640, 480, 1, c0?, c1!, events!)
     dump.events (events?, out!)
     draw.rubbish (c1?, c0!)
 :

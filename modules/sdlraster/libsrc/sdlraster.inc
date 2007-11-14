@@ -1,6 +1,7 @@
 --
---	miniraster: SDLRaster-like interface on top of occSDL
+--	sdlraster: SDL-based raster display
 --	Copyright (C) 2007  University of Kent
+--	Copyright (C) 2007  Adam Sampson <ats@offog.org>
 --
 --	This library is free software; you can redistribute it and/or
 --	modify it under the terms of the GNU Lesser General Public
@@ -17,8 +18,9 @@
 --	<http://www.gnu.org/licenses/>.
 --
 
---** @module miniraster
+--** @module sdlraster
 
+--{{{  DATA TYPE RASTER.EVENT
 --* An input event.
 -- This is a more occam-ish repackaging of SDL events.
 DATA TYPE RASTER.EVENT
@@ -40,6 +42,7 @@ DATA TYPE RASTER.EVENT
     -- [@item] For mouse events, this is the pointer position.
     INT16 x, y:
 :
+--}}}
 
 --*{{{ RASTER.ET Input event types.
 

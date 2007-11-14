@@ -18,7 +18,7 @@
 --
 
 #INCLUDE "course.module"
-#INCLUDE "miniraster.module"
+#INCLUDE "sdlraster.module"
 
 #INCLUDE "complex.inc"
 #INCLUDE "complex_inline.inc"
@@ -165,7 +165,7 @@ PROC main (CHAN OF BYTE kyb, scr, err)
   CHAN RASTER c.bufchan1, c.bufchan2:
   CHAN INT control:
   PAR
-    miniraster.simple ("xraster shadebob", XRASTER.WIDTH, XRASTER.HEIGHT, 2, c.to.disp?, c.bufchan1!)
+    raster.display.simple ("xraster shadebob", XRASTER.WIDTH, XRASTER.HEIGHT, 2, c.to.disp?, c.bufchan1!)
     raster.buffer (c.bufchan1?, c.bufchan2!)
     raster.buffer (c.bufchan2?, c.from.disp!)
     app.network (c.from.disp, c.to.disp)

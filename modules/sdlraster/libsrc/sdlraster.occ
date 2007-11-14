@@ -1,6 +1,7 @@
 --
---	miniraster: SDLRaster-like interface on top of occSDL
+--	sdlraster: SDL-based raster display
 --	Copyright (C) 2007  University of Kent
+--	Copyright (C) 2007  Adam Sampson <ats@offog.org>
 --
 --	This library is free software; you can redistribute it and/or
 --	modify it under the terms of the GNU Lesser General Public
@@ -17,14 +18,13 @@
 --	<http://www.gnu.org/licenses/>.
 --
 
---** Simple raster interface.
+--** SDL raster interface.
 --
 -- This module provides an SDL-based portable bitmap ("raster") display.
--- It's intended as a future replacement for [@ref sdlraster].
 --
--- miniraster uses the ring pattern.
+-- sdlraster uses the ring pattern.
 -- [@ref RASTER] arrays cycle around a ring of processes.
--- One of the processes is [@ref miniraster] (or [@ref miniraster.simple]),
+-- One of the processes is [@ref raster.display] (or [@ref raster.display.simple]),
 -- which generates fresh rasters on startup, and draws rasters it receives to
 -- the display before passing them around the ring again.
 -- The other processes in the ring can do whatever they like to the rasters
@@ -34,26 +34,30 @@
 -- ring, replacing one of the existing rasters.
 -- Each process passes it on and then exits, aside from the process that sent
 -- it which just waits to receive it again before exiting.
--- (You can use [@ref miniraster.shutdown] to do this.)
+-- (You can use [@ref raster.shutdown] to do this.)
 --
 -- To avoid races with multiple shutdown messages, only one process is permitted
--- to initiate shutdown; that is, if you're using [@ref miniraster.simple],
+-- to initiate shutdown; that is, if you're using [@ref raster.display.simple],
 -- then you mustn't try to shut down the ring from any other process.
 --
 -- Programs that don't care about input events can use [@ref
--- miniraster.simple], which simply shuts down the ring when the user closes
+-- raster.display.simple], which simply shuts down the ring when the user closes
 -- the window.
--- If you want to handle keyboard or mouse input, [@ref miniraster] provides an
+-- If you want to handle keyboard or mouse input, [@ref raster.display] provides an
 -- extra channel which delivers SDL events as [@ref RASTER.EVENT]
 -- structures; in that case, you must shut down the ring using [@ref
--- miniraster.shutdown] when you want to exit.
+-- raster.shutdown] when you want to exit.
 --
--- @module miniraster
+-- (This module also provides the old [@code SDLRaster] and [@code miniraster]
+-- interfaces for backwards compatibility, but you should not use them in new
+-- code.)
+--
+-- @module sdlraster
 
 --{{{  includes
 #INCLUDE "occSDL.module"
 #INCLUDE "raster.module"
-#INCLUDE "miniraster.inc"
+#INCLUDE "sdlraster.inc"
 --}}}
 
 --{{{  constants
@@ -65,9 +69,9 @@ VAL INT EVENT.CHECK.TIME IS 10000:
 --}}}
 
 --{{{  raster utilities
---{{{  PROC clear.raster
+--{{{  PROC raster.clear
 --* Clear a raster to a solid colour.
-PROC clear.raster (RASTER r, VAL INT colour)
+PROC raster.clear (RASTER r, VAL INT colour)
   SDL.Surface box:
   INT result:
   SEQ
@@ -88,7 +92,7 @@ PROC clear.raster (RASTER r, VAL INT colour)
 PROC raster.buffer (CHAN RASTER in?, out!, VAL INT width, height)
   INITIAL RASTER r IS MOBILE [height][width]INT:
   SEQ
-    clear.raster (r, #000000)
+    raster.clear (r, #000000)
 
     WHILE (SIZE r) > 0
       SEQ
@@ -252,7 +256,7 @@ PROC raster.events (SDL.Surface screen, CHAN RASTER.EVENT out!, CHAN BOOL kill?)
 :
 --}}}
 
---{{{  PROC miniraster
+--{{{  PROC raster.display
 --* Raster display process.
 -- Generate a number of rasters on startup, and draw incoming rasters to the
 -- display. In addition, report any events received on the display.
@@ -270,7 +274,7 @@ PROC raster.events (SDL.Surface screen, CHAN RASTER.EVENT out!, CHAN BOOL kill?)
 -- @param events Input events.
 --   When it shuts down, the raster will send a [@ref RASTER.ET.SHUTDOWN] event
 --   as its last message, so you know when to stop reading from this channel.
-PROC miniraster (VAL []BYTE title, VAL INT width, height, num.rasters,
+PROC raster.display (VAL []BYTE title, VAL INT width, height, num.rasters,
                  CHAN RASTER in?, out!, CHAN RASTER.EVENT events!)
   SDL.Surface screen:
   #PRAGMA SHARED screen
@@ -340,12 +344,12 @@ PROC miniraster (VAL []BYTE title, VAL INT width, height, num.rasters,
 :
 --}}}
 
---{{{  PROC miniraster.shutdown
---* Shut down a miniraster ring.
+--{{{  PROC raster.shutdown
+--* Shut down a raster ring.
 -- You must have read a raster from the ring yourself before calling this.
 -- This outputs an empty raster, and then discards incoming rasters until the
 -- empty one's received again.
-PROC miniraster.shutdown (CHAN RASTER in?, out!)
+PROC raster.shutdown (CHAN RASTER in?, out!)
   INITIAL RASTER r IS MOBILE [0][0]INT:
   SEQ
     out ! r
@@ -357,11 +361,11 @@ PROC miniraster.shutdown (CHAN RASTER in?, out!)
 :
 --}}}
 
---{{{  PROC miniraster.autoclose
+--{{{  PROC raster.autoclose
 --* Respond to [@ref EVENT.QUIT] messages by shutting down the ring;
 -- otherwise just pass rasters through.
 -- @private
-PROC miniraster.autoclose (CHAN RASTER in?, out!, CHAN RASTER.EVENT events?)
+PROC raster.autoclose (CHAN RASTER in?, out!, CHAN RASTER.EVENT events?)
   INITIAL BOOL running IS TRUE:
   INITIAL BOOL quitting IS FALSE:
   WHILE running
@@ -383,7 +387,7 @@ PROC miniraster.autoclose (CHAN RASTER in?, out!, CHAN RASTER.EVENT events?)
             quitting
               SEQ
                 PAR
-                  miniraster.shutdown (in?, out!)
+                  raster.shutdown (in?, out!)
                   --{{{  wait for the final event
                   INITIAL BOOL waiting IS TRUE:
                   WHILE waiting
@@ -402,17 +406,17 @@ PROC miniraster.autoclose (CHAN RASTER in?, out!, CHAN RASTER.EVENT events?)
 :
 --}}}
 
---{{{  PROC miniraster.simple
+--{{{  PROC raster.display.simple
 --* Simple interface for programs that don't need to handle events.
 -- This automatically shuts down the ring when the window is closed;
--- otherwise it behaves like [@ref miniraster].
-PROC miniraster.simple (VAL []BYTE title, VAL INT width, height, num.buffers,
+-- otherwise it behaves like [@ref raster.display].
+PROC raster.display.simple (VAL []BYTE title, VAL INT width, height, num.buffers,
                         CHAN RASTER in?, out!)
   CHAN RASTER.EVENT events:
   CHAN RASTER thru:
   PAR
-    miniraster (title, width, height, num.buffers, in?, thru!, events!)
-    miniraster.autoclose (thru?, out!, events?)
+    raster.display (title, width, height, num.buffers, in?, thru!, events!)
+    raster.autoclose (thru?, out!, events?)
 :
 --}}}
 
