@@ -20,13 +20,13 @@ static char *read_string(Workspace wptr, Channel *args){
 	MTChanIn(wptr, args, &ma);
 	
 	if(ma) {
-		int size = ma->dimension[0];
+		int size = ma->dimensions[0];
 		
 		str = (char*) malloc(sizeof(char) * (size + 1));
 		memcpy(str, ma->data, size);
 		str[size] = '\0';
 
-		MTRelease (ma);
+		MTRelease (wptr, ma);
 	}
 
 	return str;
@@ -106,8 +106,8 @@ void MySQL_connector(Workspace wptr){
 			break;
 		case MYSQL_QUERY:
 			MTChanIn(wptr, args, &ma);
-			if(!mysql_real_query(db, (char *) ma->data, (int) ma->dimension[0]))
-				ChanOutInt(wprtr, out_status, SUCCESS);
+			if(!mysql_real_query(db, (char *) ma->data, (int) ma->dimensions[0]))
+				ChanOutInt(wptr, out_status, SUCCESS);
 			else
 				report_error(wptr, out_status, out_data, db);
 			MTRelease(wptr, ma);
@@ -153,7 +153,7 @@ void MySQL_connector(Workspace wptr){
 					((char*) ma->data)[i] = !(row[i]);
 				MTChanOut(wptr, out_data, &ma);
 			}
-			else write_null(out_data);
+			else write_null(wptr, out_data);
 			break;
 		case MYSQL_FREE_RESULT:
 			mysql_free_result(result);
@@ -274,7 +274,7 @@ void MySQL_connector(Workspace wptr){
 			break;
 		default:
 			printf("\nMoA: MySQL_connector internal error - unknown command\n");
-			SetErr(wptr);
+			SetErr();
 			return;
 		}
 	}
