@@ -1,0 +1,133 @@
+--
+--	cgtest81.occ -- testing STEP in various replicators
+--	Copyright (C) 2001 Fred Barnes <frmb2@ukc.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+
+
+PROC cgtest81 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+
+  --{{{  in SEQs
+  PROC test0 ()
+    INT x, y:
+    SEQ
+      SEQ i = 0 FOR 10 STEP 2
+        IF
+          (i < 10)
+            x := i
+          (i < 15)
+            y := i
+          TRUE
+            SKIP
+      check.INT (x, 8, "test0.0")
+      check.INT (y, 14, "test0.1")
+  :
+  PROC test1 ()
+    INT x, y:
+    SEQ
+      SEQ i = 9 FOR 10 STEP -1
+        IF
+          i > 5
+            x := i
+          TRUE
+            y := i
+      check.INT (x, 6, "test1.0")
+      check.INT (y, 0, "test1.1")
+  :
+  PROC test2 ()
+    INT x, y:
+    SEQ
+      x := 0
+      y := 0
+      SEQ i = 2 FOR 10 STEP 2
+        SEQ j = 10 FOR 10 STEP 10
+          SEQ k = 2 FOR 5 STEP -1
+            PAR
+              VAL INT z IS ((j * k) \ i):
+              x := (x + z)
+              y := y + ((i * k) \ j)
+      check.INT (x, 0, "test2.0")
+      check.INT (y, 0, "test2.1")
+  :
+  --}}}  
+  --{{{  in IFs
+  PROC test3 ()
+    [4]INT a:
+    SEQ
+      a := [v = 0 FOR SIZE a | (v * 5)]
+      IF
+        IF i = 1 FOR SIZE a STEP 3
+          i < (SIZE a)
+            check.INT ((a[i] / 5), i, "test3.0x")
+        TRUE
+          SKIP
+      IF
+        IF i = ((SIZE a) - 1) FOR (SIZE a) STEP -1
+          (i < (SIZE a)) AND (i >= 0)
+            check.INT ((a[i] / 5), i, "test3.1x")
+        TRUE
+          SKIP
+  :
+  --}}}  
+  --{{{  in PARs and ALTs
+  PROC test4 ()
+    INT x, y:
+    SEQ
+      x := 0
+      y := 0
+      [16]CHAN INT c:
+      #PRAGMA SHARED c		-- the usage checker gets a tad confused here..
+      PAR
+        --{{{  even channels
+        SEQ n = 0 FOR ((SIZE c) / 2)
+          ALT i = 0 FOR ((SIZE c) / 2) STEP 2
+            INT v:
+            c[i] ? v
+              x := (x + v)
+        --}}}  
+        --{{{  odd channels backwards
+        SEQ n = 0 FOR ((SIZE c) - ((SIZE c) / 2))
+          PRI ALT i = ((SIZE c) - 1) FOR ((SIZE c) - ((SIZE c) / 2)) STEP -2
+            INT w:
+            c[i] ? w
+              y := (y + w)
+        --}}}  
+        --{{{  processes
+        PAR i = (-1) FOR ((SIZE c) / 4) STEP 4
+          PAR j = (((SIZE c) / 4) + i) FOR ((SIZE c) / 4) STEP -1
+            c[j] ! i
+        --}}}  
+      check.INT (x, 40, "test4.0")
+      check.INT (y, 40, "test4.1")
+  :
+  --}}}  
+  SEQ
+    init ("CG test 81", "STEP in replicators")
+    title ("STEP in SEQ")
+    test0 ()
+    test1 ()
+    test2 ()
+    title ("STEP in IF")
+    test3 ()
+    title ("STEP in PAR and ALT")
+    test4 ()
+    finish ()
+:
+
+

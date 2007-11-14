@@ -1,0 +1,818 @@
+-- version control marker $Id: cg50myr.occ,v 1.1 1995/10/11 10:22:32 djb1 Exp $
+PROC do.MYREAL ()
+  MYREAL a, b :
+  SEQ
+    b := 8.6 (MYREAL)
+    --{{{  output message
+    title (title.str)
+    --}}} 
+    --{{{  check arithmetic operators              (MY-001 to 099)
+    a := b + 2.3 (MYREAL)
+    check.MYREAL (a, 8.6(MYREAL) + 2.3(MYREAL), "MY-001")
+    a := b - 2.3 (MYREAL)
+    check.MYREAL (a, 8.6(MYREAL) - 2.3(MYREAL), "MY-002")
+    a := b * 2.3 (MYREAL)
+    check.MYREAL (a, 8.6(MYREAL) * 2.3(MYREAL), "MY-003")
+    a := b / 2.3 (MYREAL)
+    check.MYREAL (a, 8.6(MYREAL) / 2.3(MYREAL), "MY-004")
+    a := b \ 2.3 (MYREAL)
+    check.MYREAL (a, 8.6(MYREAL) \ 2.3(MYREAL), "MY-005")
+    a := (- b)
+    check.MYREAL (a, -8.6(MYREAL), "MY-006")
+    --}}} 
+    --{{{  check comparison operators              (MY-200 to 299)
+    a := 4.7(MYREAL)
+    x := a = b
+    check.BOOL (x, FALSE, "MY-206")
+    x := a > b
+    check.BOOL (x, FALSE, "MY-207")
+    x := a >= b
+    check.BOOL (x, FALSE, "MY-208")
+    x := a < b
+    check.BOOL (x, TRUE, "MY-209")
+    x := a <= b
+    check.BOOL (x, TRUE, "MY-210")
+    x := a <> b
+    check.BOOL (x, TRUE, "MY-211")
+    --}}} 
+    --{{{  check conversions                       (MY-300 to 399)
+    --{{{  variables for comparison
+    REAL64 r64 :
+    REAL32 r32 :
+    INT64 i64 :
+    INT32 i32 :
+    INT16 i16 :
+    INT i :
+    --}}} 
+    SEQ
+      r64 := REAL64 TRUNC b
+      check.REAL64 (r64, REAL64 TRUNC 8.6(MYREAL), "MY-312")
+      r64 := REAL64 ROUND b
+      check.REAL64 (r64, REAL64 ROUND 8.6(MYREAL), "MY-313")
+      r32 := REAL32 TRUNC b
+      check.REAL32 (r32, REAL32 TRUNC 8.6(MYREAL), "MY-314")
+      r32 := REAL32 ROUND b
+      check.REAL32 (r32, REAL32 ROUND 8.6(MYREAL), "MY-315")
+      i64 := INT64 TRUNC b
+      check.INT64 (i64, INT64 TRUNC 8.6(MYREAL), "MY-316")
+      check.INT64 (i64, 8(INT64), "MY-330")
+      i64 := INT64 ROUND b
+      check.INT64 (i64, INT64 ROUND 8.6(MYREAL), "MY-317")
+      check.INT64 (i64, 9(INT64), "MY-331")
+      i32 := INT32 TRUNC b
+      check.INT32 (i32, INT32 TRUNC 8.6(MYREAL), "MY-318")
+      check.INT32 (i32, 8(INT32), "MY-332")
+      i32 := INT32 ROUND b
+      check.INT32 (i32, INT32 ROUND 8.6(MYREAL), "MY-319")
+      check.INT32 (i32, 9(INT32), "MY-333")
+      i16 := INT16 TRUNC b
+      check.INT16 (i16, INT16 TRUNC 8.6(MYREAL), "MY-320")
+      check.INT16 (i16, 8(INT16), "MY-334")
+      i16 := INT16 ROUND b
+      check.INT16 (i16, INT16 ROUND 8.6(MYREAL), "MY-321")
+      check.INT16 (i16, 9(INT16), "MY-335")
+      i := INT TRUNC b
+      check.INT (i, INT TRUNC 8.6(MYREAL), "MY-322")
+      check.INT (i, 8(INT), "MY-336")
+      i := INT ROUND b
+      check.INT (i, INT ROUND 8.6(MYREAL), "MY-323")
+      check.INT (i, 9(INT), "MY-337")
+    --}}} 
+    --{{{  hefty calculations                      (MY-500 to 599)
+    --{{{  declarations
+    MYREAL x, y, z, a, b, c, d :
+    VAL n1 IS 1.0(MYREAL) :
+    VAL n2 IS 2.0(MYREAL) :
+    VAL n3 IS 3.0(MYREAL) :
+    VAL n4 IS 1.0(MYREAL) / 3.0(MYREAL) :
+    VAL eight.seven IS 2097152.0(MYREAL) : -- 8 to the power 7 (= 2 to the 21)
+    VAL one.sixteenth IS 1.0(MYREAL) / 16.0(MYREAL) :
+    --}}} 
+    SEQ
+      --{{{  initialisation
+      x := 8.0(MYREAL)
+      y := x + x
+      z := y - x
+      a := 1.11111(MYREAL)
+      b := 2.22222(MYREAL)
+      c := a * 2.0(MYREAL)
+      --}}} 
+      check.MYREAL (y, 16.0(MYREAL), "MY-500")
+      check.MYREAL (z,  8.0(MYREAL), "MY-501")
+      check.MYREAL (c,  b, "MY-502")
+      check.MYREAL (((x + y) + (n3 * z)) + ((n2 * a) - b), 48.0(MYREAL), "MY-503")
+      check.MYREAL (x + (x + (x + (x + (x + (x + x))))), 56.0(MYREAL), "MY-504")
+      check.MYREAL (x * (x * (x * (x * (x * (x * x))))), eight.seven, "MY-505")
+      check.MYREAL (x * (x * (n2* (y * (y * (x * x))))), eight.seven, "MY-506")
+      x := 1.0 (MYREAL)
+      y := 3.0 (MYREAL)
+      d := 2.0 (MYREAL)
+      check.MYREAL (x / y, n4, "MY-507")
+      c := ((d/(d*d)) * (d/(d*d))) * ((d/(d*d)) * (d/(d*d)))
+      check.MYREAL (c, one.sixteenth, "MY-508")
+      c := ((d * y) * (d * y)) * ((d * y) * (d * y))
+      check.MYREAL (c, 1296.0(MYREAL), "MY-509")
+      c := ((((d * y) * (d * y)) * (d * y)) * (d * y)) * (d * y)
+      check.MYREAL (c, 7776.0(MYREAL), "MY-510")
+    --}}} 
+    --{{{  passing as parameters                   (MY-600 to 699)
+    --{{{  copy.MYREAL and add.MYREAL
+    PROC copy.MYREAL (VAL MYREAL x, MYREAL y)
+      y := x
+    :
+    PROC add.MYREAL (VAL MYREAL x, y, MYREAL z)
+      z := x + y
+    :
+    --}}} 
+    MYREAL x, y, z :
+    VAL n1 IS 2.0(MYREAL) :
+    VAL n2 IS 500000.0(MYREAL) :
+    SEQ
+      copy.MYREAL (n1, x)
+      check.MYREAL (x, 2.0(MYREAL), "MY-600")
+      copy.MYREAL (n2, x)
+      check.MYREAL (x, 500000.0(MYREAL), "MY-601")
+      y := 5.7 (MYREAL)
+      copy.MYREAL (y, x)
+      check.MYREAL (x, 5.7(MYREAL), "MY-602")
+      add.MYREAL (n1, n2, x)
+      check.MYREAL (x, 500002.0(MYREAL), "MY-603")
+      y := n1
+      z := n2
+      add.MYREAL (y, z, x)
+      check.MYREAL (x, 500002.0(MYREAL), "MY-604")
+      check.MYREAL (z, 500000.0(MYREAL), "MY-605")
+    --}}} 
+    --{{{  arrays                                  (MY-700 to 799)
+    VAL n IS 1.0(MYREAL) :
+    VAL m IS 1.5(MYREAL) :
+    VAL t1 IS [n, n, n, n, m] :
+    VAL t2 IS [t1, t1, t1, t1 ] :
+    VAL t3 IS [t2, t2, t2 ] :
+    BOOL b :
+    INT x :
+    MYREAL tot :
+    SEQ
+      check.MYREAL (t1 [0], n  , "MY-700")
+      check.MYREAL (t1 [4], m, "MY-701")
+      check.MYREAL (t2 [2] [4], m, "MY-702")
+      check.MYREAL (t3 [1] [2] [4], m, "MY-703")
+      --{{{  test individual access
+      b := TRUE
+      x := 4
+      tot := 0.0(MYREAL)
+      SEQ i = 0 FOR SIZE t3
+        SEQ j = 0 FOR SIZE t2
+          SEQ k = 0 FOR SIZE t1
+            SEQ
+              IF
+                (k = 4) AND (t3 [i] [j] [k] = m)
+                  SKIP
+                (k < 4) AND (t3 [i] [j] [k] = n)
+                  SKIP
+                TRUE
+                  b := FALSE
+              tot := tot + t3 [i] [j] [k]
+              x := INT ROUND t3 [i] [j] [x]      -- sets it to 1
+              x := 4                       -- resets it again
+      check.BOOL (b, TRUE, "MY-704")
+      VAL correct.value IS (48.0(MYREAL) * n) + (12.0(MYREAL) * m) :
+      check.MYREAL (tot, correct.value, "MY-705")
+      --}}} 
+      --{{{  test nested array access
+      INT a, b, c :
+      SEQ
+        a := 2
+        b := 1
+        c := 3
+        tot := t3[a][b][c] + ( t3[b][a][c] + ( t3[0][1][4] + ( t3[b][a+b][b+(a+b)] +
+               t1[(a+b)+b] ) ) )
+        VAL correct.value IS (2.0(MYREAL) * n) + (3.0(MYREAL) * m) :
+        check.MYREAL (tot, correct.value, "MY-706")
+        tot := t3 [a] [ INT ROUND t3 [a] [b] [INT ROUND t3 [b +
+                        b] [a + b] [b + (a + b)] ] ] [(INT ROUND t3 [a] [c] [c +
+                        (b - a)]) + (3 * (INT ROUND t3 [a] [c] [b])) ]
+        check.MYREAL (tot, m, "MY-707")
+      --}}} 
+      --{{{  test individual access using aliasing
+      b := TRUE
+      x := 4
+      tot := 0.0(MYREAL)
+      SEQ i = 0 FOR SIZE t3
+        VAL a2 IS t3 [i] :
+        SEQ j = 0 FOR SIZE t2
+          VAL a1 IS a2 [j] :
+          SEQ k = 0 FOR SIZE t1
+            VAL a0 IS a1 [k] :
+            SEQ
+              IF
+                (k = 4) AND (a0 = m)
+                  SKIP
+                (k < 4) AND (a0 = n)
+                  SKIP
+                TRUE
+                  b := FALSE
+              tot := tot + a0
+              x := INT ROUND a1 [x]              -- sets it to 1
+              x := 4                       -- resets it again
+      check.BOOL (b, TRUE, "MY-708")
+      VAL correct.value IS (48.0(MYREAL) * n) + (12.0(MYREAL) * m) :
+      check.MYREAL (tot, correct.value, "MY-709")
+      --}}} 
+      --{{{  test livermore loop                   (MY-710 to 711)
+      VAL n IS 10 :
+      VAL r IS 7.0(MYREAL) :
+      VAL t IS 13.0(MYREAL) :
+      [n + 6] MYREAL u :
+      [n] MYREAL x, y, z :
+      SEQ
+        SEQ k = 0 FOR n + 6
+          u [k] := 3.0(MYREAL)
+        SEQ k = 0 FOR n
+          SEQ
+            y [k] := 11.0(MYREAL)
+            z [k] :=  5.0(MYREAL)
+      
+        SEQ k = 0 FOR n
+          x [k] := u[k] + ((( r * (z[k] + (r * y[k]))) +
+                            (t * ((u[k+3] + (r * (u[k+2] + (r * u[k+1]))))))) +
+                            (t * ((u[k+6] + (r * (u[k+5] + (r * u[k+4])))))))
+      
+        check.MYREAL (x[0],     5023.0(MYREAL), "MY-710")
+        check.MYREAL (x[n - 1], 5023.0(MYREAL), "MY-711")
+      --}}} 
+      --{{{  test some bugs that were found        (MY-712 to 716)
+      --{{{  bug1                                  (MY-712)
+      [2][2]MYREAL arr :
+      MYREAL A :
+      INT i :
+      SEQ
+        i := 0
+        arr[i][i] := 0.0(MYREAL)
+        A := ((arr[i][i]+arr[i][i]) + (arr[i][i]+arr[i][i])) / 4.0(MYREAL)
+        check.MYREAL (A, 0.0(MYREAL), "MY-712")
+      --}}} 
+      --{{{  bug3                                  (MY-713 to 714)
+      PROC Complex.Subst ([]MYREAL a, b)
+        SEQ
+          check.MYREAL (a[0], 2.0(MYREAL), "MY-713")
+          check.MYREAL (b[1], 4.0(MYREAL), "MY-714")
+      :
+      
+      [2][2][2]MYREAL g.plus, g.minus :
+      MYREAL i, j :
+      SEQ
+        i := 1.0(MYREAL)
+        j := 0.0(MYREAL)
+        g.plus [INT ROUND i][INT ROUND j][0] := 2.0(MYREAL)
+        g.minus[INT ROUND i][INT ROUND j][1] := 4.0(MYREAL)
+        Complex.Subst (g.plus[INT ROUND i][INT ROUND j],
+                       g.minus[INT ROUND i][INT ROUND j])
+      --}}} 
+      --{{{  bug4                                  (MY-715)
+      [10][10]MYREAL c :
+      INT i :
+      MYREAL A:
+      SEQ
+        i := 1
+        SEQ i = 0 FOR 10
+          SEQ j = 0 FOR 10
+            VAL tmp IS MYREAL ROUND j :
+            c [i][j] := tmp
+        A := ((c[i][i] * c [i*i][i+2])) / (c[(i*i)+i][(i*i)+i] + c[i][i])
+        check.MYREAL (A, 1.0(MYREAL), "MY-715")
+      --}}} 
+      --{{{  test2                                 (MY-716)
+      MYREAL u :
+      [4] MYREAL ai :
+      [3] [4] MYREAL x, Gb :
+      INT i, j, k :
+      SEQ
+        SEQ i = 0 FOR 4
+          SEQ
+            ai [i] := 5.0(MYREAL)
+            SEQ j = 0 FOR 3
+              SEQ
+                x [j] [i] := 2.0(MYREAL)
+                Gb[j] [i] := 24.0(MYREAL)
+        u := 4.0(MYREAL)
+        i := 1
+        j := 2
+        k := 3
+        u := u + (ai [j] * x [j][k])
+        x [i][k] := (Gb [i][k] - u) / ai[i]
+        check.MYREAL (x [i][k], 2.0(MYREAL), "MY-716")
+      --}}} 
+      --}}} 
+    --}}} 
+    --{{{  more conversion tests
+    INT FUNCTION id(VAL INT i) IS i :
+    VAL n IS 5 :
+    VAL m IS 7 :
+    [n][m]INT64 i64arr :
+    [n][m]INT32 i32arr :
+    [n][m]INT16 i16arr :
+    [n][m]INT   iarr :
+    [n][m]REAL32 r32arr :
+    [n][m]REAL64 r64arr :
+    [n][m]MYREAL myarr :
+    INT i, j :
+    VAL ans IS (n / 2) + (m / 2) :
+    SEQ
+      i, j := n / 2, m / 2
+      SEQ k = 0 FOR n
+        SEQ l = 0 FOR m
+          myarr[k][l] := MYREAL ROUND (k + l)
+    
+      r64arr[i][j] := REAL64 ROUND myarr[i][j]
+      check.REAL64(r64arr[i][j], REAL64 ROUND ans, "MY-R64-1")
+      r64arr[id(i)][j] := REAL64 ROUND myarr[id(i)][j]
+      check.REAL64(r64arr[i][j], REAL64 ROUND ans, "MY-R64-2")
+      r64arr[i][j] := REAL64 TRUNC myarr[i][j]
+      check.REAL64(r64arr[i][j], REAL64 TRUNC ans, "MY-R64-3")
+      r64arr[id(i)][j] := REAL64 TRUNC myarr[id(i)][j]
+      check.REAL64(r64arr[i][j], REAL64 TRUNC ans, "MY-R64-4")
+    
+      r32arr[i][j] := REAL32 ROUND myarr[i][j]
+      check.REAL32(r32arr[i][j], REAL32 ROUND ans, "MY-R32-1")
+      r32arr[id(i)][j] := REAL32 ROUND myarr[id(i)][j]
+      check.REAL32(r32arr[i][j], REAL32 ROUND ans, "MY-R32-2")
+      r32arr[i][j] := REAL32 TRUNC myarr[i][j]
+      check.REAL32(r32arr[i][j], REAL32 TRUNC ans, "MY-R32-3")
+      r32arr[id(i)][j] := REAL32 TRUNC myarr[id(i)][j]
+      check.REAL32(r32arr[i][j], REAL32 TRUNC ans, "MY-R32-4")
+    
+      i64arr[i][j] := INT64 ROUND myarr[i][j]
+      check.INT64(i64arr[i][j], INT64 ans, "MY-I64-1")
+      i64arr[id(i)][j] := INT64 ROUND myarr[id(i)][j]
+      check.INT64(i64arr[i][j], INT64 ans, "MY-I64-2")
+      i64arr[i][j] := INT64 TRUNC myarr[i][j]
+      check.INT64(i64arr[i][j], INT64 ans, "MY-I64-3")
+      i64arr[id(i)][j] := INT64 TRUNC myarr[id(i)][j]
+      check.INT64(i64arr[i][j], INT64 ans, "MY-I64-4")
+    
+      i32arr[i][j] := INT32 ROUND myarr[i][j]
+      check.INT32(i32arr[i][j], INT32 ans, "MY-I32-1")
+      i32arr[id(i)][j] := INT32 ROUND myarr[id(i)][j]
+      check.INT32(i32arr[i][j], INT32 ans, "MY-I32-2")
+      i32arr[i][j] := INT32 TRUNC myarr[i][j]
+      check.INT32(i32arr[i][j], INT32 ans, "MY-I32-3")
+      i32arr[id(i)][j] := INT32 TRUNC myarr[id(i)][j]
+      check.INT32(i32arr[i][j], INT32 ans, "MY-I32-4")
+    
+      i16arr[i][j] := INT16 ROUND myarr[i][j]
+      check.INT16(i16arr[i][j], INT16 ans, "MY-I16-1")
+      i16arr[id(i)][j] := INT16 ROUND myarr[id(i)][j]
+      check.INT16(i16arr[i][j], INT16 ans, "MY-I16-2")
+      i16arr[i][j] := INT16 TRUNC myarr[i][j]
+      check.INT16(i16arr[i][j], INT16 ans, "MY-I16-3")
+      i16arr[id(i)][j] := INT16 TRUNC myarr[id(i)][j]
+      check.INT16(i16arr[i][j], INT16 ans, "MY-I16-4")
+    
+      iarr[i][j] := INT ROUND myarr[i][j]
+      check.INT(iarr[i][j], INT ans, "MY-INT-1")
+      iarr[id(i)][j] := INT ROUND myarr[id(i)][j]
+      check.INT(iarr[i][j], INT ans, "MY-INT-2")
+      iarr[i][j] := INT TRUNC myarr[i][j]
+      check.INT(iarr[i][j], INT ans, "MY-INT-3")
+      iarr[id(i)][j] := INT TRUNC myarr[id(i)][j]
+      check.INT(iarr[i][j], INT ans, "MY-INT-4")
+    
+    --}}}
+    --{{{  bug 739
+    PROC bug.739()
+      INT FUNCTION f(VAL INT i) IS i :
+      INT FUNCTION fr(VAL MYREAL r)
+        MYREAL temp :
+        VALOF
+          SEQ
+            temp := r
+            -- saturate the FPU stack
+            temp := ((r + temp) + (r - temp)) + ((r * temp) + (r + temp))
+          RESULT INT ROUND r
+      :
+      INT64 i64 :
+      [2]INT64 a64 :
+      INT32 i32 :
+      [2]INT32 a32 :
+      INT i :
+      MYREAL r32, r1, r2 :
+      VAL ans64 IS 100(INT64) :
+      VAL ans32 IS 100(INT32) :
+      SEQ
+        i := 1
+        r1, r2, r32 := 1.0(MYREAL), 1.0(MYREAL), 99.9(MYREAL)
+        i64 := INT64 ROUND r32
+        check.INT64(i64,    ans64, "B739sa")
+        a64[i] := INT64 ROUND r32
+        check.INT64(a64[1], ans64, "B739sb")
+        a64[f(i)] := INT64 ROUND r32
+        check.INT64(a64[1], ans64, "B739sc")
+        a64[fr(r1)] := INT64 ROUND r32
+        check.INT64(a64[1], ans64, "B739sd")
+        a64[INT ROUND ((r1+r2)-(r2+r1))] := INT64 ROUND r32
+        check.INT64(a64[0], ans64, "B739se")
+    
+        i32 := INT32 ROUND r32
+        check.INT32(i32,    ans32, "B739sf")
+        a32[i] := INT32 ROUND r32
+        check.INT32(a32[1], ans32, "B739sg")
+        a32[f(i)] := INT32 ROUND r32
+        check.INT32(a32[1], ans32, "B739sh")
+        a32[fr(r1)] := INT32 ROUND r32
+        check.INT32(a32[1], ans32, "B739si")
+        a32[INT ROUND ((r1+r2)-(r2+r1))] := INT32 ROUND r32
+        check.INT32(a32[0], ans32, "B739sj")
+    :
+    bug.739()
+    --}}}
+    --{{{  bug 1071
+    PROC bug.1071()
+      VAL [2][2]MYREAL src IS [[1.0(MYREAL), 2.0(MYREAL)],
+                               [3.0(MYREAL), 4.0(MYREAL)]] :
+      PROC test(VAL MYREAL a, b, c, d)
+        check.MYREAL(d, 4.0(MYREAL), "B1071a")
+      :
+      INT i :
+      MYREAL a :
+      SEQ
+        i, a := 1, 1.0(MYREAL)
+        -- Note that the complicated expression must not go onto the stack
+        -- or the test wouldn't fail!
+        test(a, a, a, src[i][1])
+    :
+    bug.1071()
+    --}}}
+    --{{{  bug 1206
+    PROC bug.1206()
+      INT i, j :
+      MYREAL r :
+      BOOL b :
+      SEQ
+        b := TRUE
+        i := 88
+        r := 77.0(MYREAL)
+        WHILE b
+          SEQ
+            -- this MUST be the first statement in a "basic block"!
+            j := i + (INT ROUND r)
+            -- The bug would turn the value i into either 0 or 1.
+    
+            b := FALSE
+        check(j, 165, "B1206-2")
+    :
+    bug.1206()
+    --}}}
+    --{{{  bug 1405
+    PROC bug.1405()
+      VAL MYREAL KA IS 1.0(MYREAL) :
+      MYREAL x,y :
+      MYREAL w03 :
+      SEQ
+        x,y := KA, KA
+        w03 :=   ( ((KA*x)*y) - (x*KA) ) +( (x*x)   + (y*y)  )
+        check.MYREAL(w03, 2.0(MYREAL), "B1405a32")  
+    :
+    bug.1405()
+    --}}}
+    --{{{  bug 1492
+    PROC bug.1492()
+      [1]INT16 store :
+      MYREAL sum, mean :
+      INT ptr :
+      SEQ
+        ptr := 0
+        store[0] := 99(INT16)
+        sum, mean := 0.0(MYREAL), 27.0(MYREAL)
+        sum := sum + (((MYREAL ROUND store[ptr])-mean)*
+                      ((MYREAL ROUND store[ptr])-mean))
+        check.MYREAL(sum, 5184.0(MYREAL), "B1492a")
+    :
+    bug.1492()
+    --}}}
+    --{{{  bug 1632
+    PROC bug.1632()
+      
+      MYREAL a,b,c,e,f,g,h,two,result:
+    
+      SEQ
+    
+        a := 1.0 (MYREAL)
+        b := 3.0 (MYREAL)
+        c := 5.0 (MYREAL)
+        --d := 3.0 (MYREAL)
+        e := 1.0 (MYREAL)
+        f := 5.0 (MYREAL)
+        g := 1.0 (MYREAL)
+        h := 1.0 (MYREAL)
+        two := 2.0 (MYREAL)
+    
+        result :=
+        (( (-two)*c) * ((c+b)-a)) *
+        ((((-two)*c) + (g*e)) - ((two*h)*f))
+    
+        check.MYREAL(result, 1330.0(MYREAL), "B1632b")
+    :
+    bug.1632()
+    
+    --}}}
+    --{{{  bug INSdi02195
+    PROC bug.INSdi02195()
+      --{{{  functions
+      --BOOL   FUNCTION BOOL.fn   (VAL INT x) IS BOOL  x :
+      --BYTE   FUNCTION BYTE.fn   (VAL INT x) IS BYTE  x :
+      INT16  FUNCTION INT16.fn  (VAL INT x) IS INT16 x :
+      INT    FUNCTION INT.fn    (VAL INT x) IS x :
+      INT32  FUNCTION INT32.fn  (VAL INT x) IS INT32 x :
+      INT64  FUNCTION INT64.fn  (VAL INT x) IS INT64 x :
+      REAL32 FUNCTION REAL32.fn (VAL INT x) IS REAL32 ROUND x :
+      REAL64 FUNCTION REAL64.fn (VAL INT x) IS REAL64 ROUND x :
+      MYREAL FUNCTION MYREAL.fn (VAL INT x) IS MYREAL ROUND x :
+      
+      --}}}
+      --{{{  variables
+      --BOOL bool.var :
+      --BYTE byte.var :
+      INT16 i16.var :
+      INT32 i32.var :
+      INT64 i64.var :
+      INT   int.var :
+      REAL32 r32.var :
+      REAL64 r64.var :
+      INT zero, int :
+      --}}}
+      MYREAL local.i, local.j, local.k :
+      SEQ
+        zero := id(0)
+        int := id(77)
+        --{{{  MYREAL var -> type -> MYREAL         00 - 09
+        local.j := id.MYREAL(1.0(MYREAL))
+        
+        --local.i := MYREAL ROUND (BOOL ROUND local.j)
+        --check.MYREAL(local.i, 1.0(MYREAL), "MYREAL-00")
+        
+        local.j := id.MYREAL(77.0(MYREAL))
+        
+        --local.i := MYREAL ROUND (BYTE ROUND local.j)
+        --check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-01")
+        local.i := MYREAL ROUND (INT ROUND local.j)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-02")
+        local.i := MYREAL ROUND (INT16 ROUND local.j)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-03")
+        local.i := MYREAL ROUND (INT32 ROUND local.j)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-04")
+        local.i := MYREAL ROUND (INT64 ROUND local.j)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-05")
+        local.i := MYREAL ROUND (REAL32 ROUND local.j)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-06")
+        local.i := MYREAL ROUND (REAL64 ROUND local.j)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-07")
+        --}}}
+        --{{{  MYREAL FUNCTION -> type -> MYREAL    10 - 19
+        local.j := id.MYREAL(1.0(MYREAL))
+        
+        --local.i := MYREAL ROUND (BOOL MYREAL.fn(INT ROUND local.j))
+        --check.MYREAL(local.i, 1.0(MYREAL), "MYREAL-10")
+        
+        local.j := id.MYREAL(77.0(MYREAL))
+        
+        --local.i := MYREAL ROUND (BYTE ROUND MYREAL.fn(INT ROUND local.j))
+        --check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-11")
+        local.i := MYREAL ROUND (INT ROUND MYREAL.fn(INT ROUND local.j))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-12")
+        local.i := MYREAL ROUND (INT16 ROUND MYREAL.fn(INT ROUND local.j))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-13")
+        local.i := MYREAL ROUND (INT32 ROUND MYREAL.fn(INT ROUND local.j))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-14")
+        local.i := MYREAL ROUND (INT64 ROUND MYREAL.fn(INT ROUND local.j))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-15")
+        local.i := MYREAL ROUND (REAL32 ROUND (MYREAL.fn(INT ROUND local.j)))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-16")
+        local.i := MYREAL ROUND (REAL64 ROUND (MYREAL.fn(INT ROUND local.j)))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-17")
+        --}}}
+        --{{{  MYREAL exp -> type -> MYREAL         20 - 29
+        local.k := id.MYREAL(0.0(MYREAL))
+        
+        local.j := id.MYREAL(1.0(MYREAL))
+        
+        --local.i := MYREAL ROUND (BOOL ROUND (local.j + local.k))
+        --check.MYREAL(local.i, 1.0(MYREAL), "MYREAL-20")
+        
+        local.j := id.MYREAL(77.0(MYREAL))
+        
+        --local.i := MYREAL ROUND (BYTE ROUND (local.j + local.k))
+        --check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-21")
+        local.i := MYREAL ROUND (INT ROUND (local.j + local.k))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-22")
+        local.i := MYREAL ROUND (INT16 ROUND (local.j + local.k))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-23")
+        local.i := MYREAL ROUND (INT32 ROUND (local.j + local.k))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-24")
+        local.i := MYREAL ROUND (INT64 ROUND (local.j + local.k))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-25")
+        local.i := MYREAL ROUND (REAL32 ROUND (local.j + local.k))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-26")
+        local.i := MYREAL ROUND (REAL64 ROUND (local.j + local.k))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-27")
+        --}}}
+        --{{{  type var -> MYREAL                  30 - 39
+        --bool.var := BOOL id(1)
+        --local.i := MYREAL ROUND bool.var
+        --check.MYREAL(local.i, 1.0(MYREAL), "MYREAL-30")
+        --byte.var := BYTE id(77)
+        --local.i := MYREAL ROUND byte.var
+        --check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-31")
+        int.var := id.INT(77(INT))
+        local.i := MYREAL ROUND int.var
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-32")
+        i16.var := id.INT16(77(INT16))
+        local.i := MYREAL ROUND i16.var
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-33")
+        i32.var := id.INT32(77(INT32))
+        local.i := MYREAL ROUND i32.var
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-34")
+        i64.var := id.INT64(77(INT64))
+        local.i := MYREAL ROUND i64.var
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-35")
+        r32.var := id.REAL32(77.0(REAL32))
+        local.i := MYREAL ROUND r32.var
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-36")
+        r64.var := id.REAL64(77.0(REAL64))
+        local.i := MYREAL ROUND r64.var
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-37")
+        --}}}
+        --{{{  type FUNCTION -> MYREAL             40 - 49
+        --local.i := MYREAL ROUND BOOL.fn(zero)
+        --check.MYREAL(local.i, 0.0(MYREAL), "MYREAL-40")
+        --local.i := MYREAL ROUND BYTE.fn(int)
+        --check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-41")
+        local.i := MYREAL ROUND INT.fn(int)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-42")
+        local.i := MYREAL ROUND INT16.fn(int)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-43")
+        local.i := MYREAL ROUND INT32.fn(int)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-44")
+        local.i := MYREAL ROUND INT64.fn(int)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-45")
+        local.i := MYREAL ROUND REAL32.fn(int)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-46")
+        local.i := MYREAL ROUND REAL64.fn(int)
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-47")
+        --}}}
+        --{{{  type exp -> MYREAL                  50 - 59
+        --bool.var := BOOL id(1)
+        --local.i := MYREAL ROUND (bool.var = bool.var)
+        --check.MYREAL(local.i, 1.0(MYREAL), "MYREAL-50")
+        --byte.var := BYTE id(77)
+        --local.i := MYREAL byte.var
+        --check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-51")
+        int.var := id.INT(77(INT))
+        local.i := MYREAL ROUND (int.var + (INT   zero))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-52")
+        i16.var := id.INT16(77(INT16))
+        local.i := MYREAL ROUND (i16.var + (INT16 zero))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-53")
+        i32.var := id.INT32(77(INT32))
+        local.i := MYREAL ROUND (i32.var + (INT32 zero))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-54")
+        i64.var := id.INT64(77(INT64))
+        local.i := MYREAL ROUND (i64.var + (INT64 zero))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-55")
+        r32.var := id.REAL32(77.0(REAL32))
+        local.i := MYREAL ROUND (r32.var + (REAL32 ROUND zero))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-56")
+        r64.var := id.REAL64(77.0(REAL64))
+        local.i := MYREAL ROUND (r64.var + (REAL64 ROUND zero))
+        check.MYREAL(local.i, 77.0(MYREAL), "MYREAL-57")
+        --}}}
+    :
+    bug.INSdi02195()
+    --}}}
+    --{{{  bug INSdi02423
+    PROC bug.INSdi02423()
+    
+      PROC CheckOverflow ( VAL MYREAL address, MYREAL result)
+        result := address
+      :  
+    
+      PROC local(VAL INT Areg, Breg, VAL MYREAL expected0, expected1, VAL []BYTE msg)
+        MYREAL XBreg, XAreg, Xtimes :
+        MYREAL result0, result1 :
+        SEQ
+          CheckOverflow ( (MYREAL ROUND Breg) * (MYREAL ROUND Areg), result0 )
+          XBreg := (MYREAL ROUND Breg)
+          XAreg := (MYREAL ROUND Areg)
+          Xtimes := XAreg * XBreg
+          CheckOverflow (Xtimes, result1)
+          check.MYREAL(result0, expected0, msg)
+          check.MYREAL(result1, expected0, msg)
+    
+          CheckOverflow ( (MYREAL ROUND Breg)+(MYREAL ROUND Areg), result0 )
+          Xtimes := XAreg + XBreg
+          CheckOverflow (Xtimes, result1)
+          check.MYREAL(result0, expected1, msg)
+          check.MYREAL(result1, expected1, msg)
+      :
+      SEQ
+        local(    1,     2,     2.0(MYREAL),  3.0(MYREAL), "di2423a")
+        local(    2,     1,     2.0(MYREAL),  3.0(MYREAL), "di2423b")
+        local(   -1,     2,    -2.0(MYREAL),  1.0(MYREAL), "di2423c")
+        local(    1,    -2,    -2.0(MYREAL), -1.0(MYREAL), "di2423d")
+        local(   -1,     1,    -1.0(MYREAL),  0.0(MYREAL), "di2423e")
+        local(    1,    -1,    -1.0(MYREAL),  0.0(MYREAL), "di2423f")
+        local(    1,     0,     0.0(MYREAL),  1.0(MYREAL), "di2423g")
+        local(    0,     1,     0.0(MYREAL),  1.0(MYREAL), "di2423h")
+        local(    0,    -1,     0.0(MYREAL), -1.0(MYREAL), "di2423i")
+        local(   -1,     0,     0.0(MYREAL), -1.0(MYREAL), "di2423j")
+    :
+    bug.INSdi02423()
+    --}}}
+    --{{{  bug INSdi02439
+    PROC bug.INSdi02439()
+      SEQ
+        PROTOCOL CONTROL  IS  INT; MYREAL :
+        CHAN OF CONTROL ControlToMonitor:
+        PAR
+          SEQ
+            SEQ i = 0 FOR 4
+              INT   ii :
+              MYREAL j :
+              SEQ
+                ControlToMonitor ? ii; j
+                check(i, INT ROUND j, "di2439a")
+                check(i, ii,          "di2439b")
+          SEQ i = 0 FOR 4
+            ControlToMonitor ! i; MYREAL ROUND i
+    :
+    bug.INSdi02439()
+    --}}}
+    --{{{  abbrs of function results and params
+    PROC abbrs.of.function.results.and.params()
+      MYREAL FUNCTION f(VAL MYREAL x)
+        MYREAL res :
+        VALOF
+          rres   IS res :
+          VAL xx IS x :
+          rres := xx
+          RESULT res
+      :
+      MYREAL FUNCTION g(VAL MYREAL x)
+        MYREAL res :
+        VALOF
+          []BYTE rres   RETYPES res :
+          VAL []BYTE xx RETYPES x :
+          rres := xx
+          RESULT res
+      :
+      MYREAL x, y :
+      SEQ
+        x := id.MYREAL(88.0(MYREAL))
+        y := f(x)
+        check.MYREAL(y, 88.0(MYREAL), "ABBR00")
+        x := id.MYREAL(77.0(MYREAL))
+        y := g(x)
+        check.MYREAL(y, 77.0(MYREAL), "ABBR01")
+    :
+    abbrs.of.function.results.and.params()
+    --}}}
+    --{{{  bug INSdi03306
+    PROC bug.INSdi03306()
+      PROC calc(VAL MYREAL a, b, c, d, e, f, r, z)
+        MYREAL t, t1, t2 :
+        SEQ
+          t := ((-a)*(f*c))+((a*b)*(d*e))
+          check.MYREAL(t, 10.0(MYREAL), "di3306a")
+          t := ((-r)*(f*c))+((a*b)*(d*e))
+          check.MYREAL(t, 10.0(MYREAL), "di3306b")
+          t := ((z-a)*(f*c))+((a*b)*(d*e))
+          check.MYREAL(t, 10.0(MYREAL), "di3306c")
+          t := ((z-r)*(f*c))+((a*b)*(d*e))
+          check.MYREAL(t, 10.0(MYREAL), "di3306d")
+          t1 := (a*b)*(d*e)
+          t2 := (-a)*(f*c)
+          t := t1 + t2
+          check.MYREAL(t, 10.0(MYREAL), "di3306e")
+          t1 := (a*b)*(d*e)
+          t2 := (-r)*(f*c)
+          t := t1 + t2
+          check.MYREAL(t, 10.0(MYREAL), "di3306f")
+    
+      :
+      MYREAL a,b,c,d,e,f,r :
+      SEQ
+        a := -1.0(MYREAL)
+        b := -1.0(MYREAL)
+        c :=  1.0(MYREAL)
+        d :=  2.0(MYREAL)
+        e :=  3.0(MYREAL)
+        f :=  4.0(MYREAL)
+        r := -1.0(MYREAL)
+        calc(id.MYREAL(a), id.MYREAL(b), id.MYREAL(c),
+             id.MYREAL(d), id.MYREAL(e), id.MYREAL(f),
+             id.MYREAL(r), id.MYREAL(0.0(MYREAL)))
+    :
+    bug.INSdi03306()
+    --}}}
+:
+do.MYREAL ()

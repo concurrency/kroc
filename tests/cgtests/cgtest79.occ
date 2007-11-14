@@ -1,0 +1,898 @@
+-- version control marker $Id: cgtest79.occ,v 1.1 1997/03/31 09:08:03 djb1 Exp $
+-- User Defined Operators tests by Jim Moores <jm40@ukc.ac.uk>
+
+
+PROC cgtest79 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+  DATA TYPE BLUE IS INT:
+  DATA TYPE COMPLEX
+    RECORD
+      REAL32 i:
+  :
+
+  PROC test0 ()
+    BLUE FUNCTION "-" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := - a
+      check.INT (INT(c),2,"test0")
+  :
+
+  PROC test1 ()
+    BLUE FUNCTION "-" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := - a
+      check.INT (INT(c),2,"test1")
+  :
+
+  PROC test2 ()
+    COMPLEX FUNCTION "-" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := - a
+      check.REAL32 (c[i],2.0,"test2")
+  :
+
+  PROC test3 ()
+    COMPLEX FUNCTION "-" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := - a
+      check.REAL32 (c[i],2.0,"test3")
+  :
+
+  PROC test4 ()
+    BLUE FUNCTION "NOT" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := NOT a
+      check.INT (INT(c),2,"test4")
+  :
+
+  PROC test5 ()
+    BLUE FUNCTION "NOT" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := NOT a
+      check.INT (INT(c),2,"test5")
+  :
+
+  PROC test6 ()
+    COMPLEX FUNCTION "NOT" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := NOT a
+      check.REAL32 (c[i],2.0,"test6")
+  :
+
+  PROC test7 ()
+    COMPLEX FUNCTION "NOT" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := NOT a
+      check.REAL32 (c[i],2.0,"test7")
+  :
+
+  PROC test8 ()
+    BLUE FUNCTION "~" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := ~ a
+      check.INT (INT(c),2,"test8")
+  :
+
+  PROC test9 ()
+    BLUE FUNCTION "~" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := ~ a
+      check.INT (INT(c),2,"test9")
+  :
+
+  PROC test10 ()
+    COMPLEX FUNCTION "~" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := ~ a
+      check.REAL32 (c[i],2.0,"test10")
+  :
+
+  PROC test11 ()
+    COMPLEX FUNCTION "~" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := ~ a
+      check.REAL32 (c[i],2.0,"test11")
+  :
+
+  PROC test12 ()
+    BLUE FUNCTION "??" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := ?? a
+      check.INT (INT(c),2,"test12")
+  :
+
+  PROC test13 ()
+    BLUE FUNCTION "??" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := ?? a
+      check.INT (INT(c),2,"test13")
+  :
+
+  PROC test14 ()
+    COMPLEX FUNCTION "??" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := ?? a
+      check.REAL32 (c[i],2.0,"test14")
+  :
+
+  PROC test15 ()
+    COMPLEX FUNCTION "??" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := ?? a
+      check.REAL32 (c[i],2.0,"test15")
+  :
+
+  PROC test16 ()
+    BLUE FUNCTION "@@" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := @@ a
+      check.INT (INT(c),2,"test16")
+  :
+
+  PROC test17 ()
+    BLUE FUNCTION "@@" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := @@ a
+      check.INT (INT(c),2,"test17")
+  :
+
+  PROC test18 ()
+    COMPLEX FUNCTION "@@" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := @@ a
+      check.REAL32 (c[i],2.0,"test18")
+  :
+
+  PROC test19 ()
+    COMPLEX FUNCTION "@@" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := @@ a
+      check.REAL32 (c[i],2.0,"test19")
+  :
+
+  PROC test20 ()
+    BLUE FUNCTION "$$" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := $$ a
+      check.INT (INT(c),2,"test20")
+  :
+
+  PROC test21 ()
+    BLUE FUNCTION "$$" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := $$ a
+      check.INT (INT(c),2,"test21")
+  :
+
+  PROC test22 ()
+    COMPLEX FUNCTION "$$" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := $$ a
+      check.REAL32 (c[i],2.0,"test22")
+  :
+
+  PROC test23 ()
+    COMPLEX FUNCTION "$$" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := $$ a
+      check.REAL32 (c[i],2.0,"test23")
+  :
+
+  PROC test24 ()
+    BLUE FUNCTION "%" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := % a
+      check.INT (INT(c),2,"test24")
+  :
+
+  PROC test25 ()
+    BLUE FUNCTION "%" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := % a
+      check.INT (INT(c),2,"test25")
+  :
+
+  PROC test26 ()
+    COMPLEX FUNCTION "%" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := % a
+      check.REAL32 (c[i],2.0,"test26")
+  :
+
+  PROC test27 ()
+    COMPLEX FUNCTION "%" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := % a
+      check.REAL32 (c[i],2.0,"test27")
+  :
+
+  PROC test28 ()
+    BLUE FUNCTION "%%" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := %% a
+      check.INT (INT(c),2,"test28")
+  :
+
+  PROC test29 ()
+    BLUE FUNCTION "%%" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := %% a
+      check.INT (INT(c),2,"test29")
+  :
+
+  PROC test30 ()
+    COMPLEX FUNCTION "%%" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := %% a
+      check.REAL32 (c[i],2.0,"test30")
+  :
+
+  PROC test31 ()
+    COMPLEX FUNCTION "%%" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := %% a
+      check.REAL32 (c[i],2.0,"test31")
+  :
+
+  PROC test32 ()
+    BLUE FUNCTION "&&" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := && a
+      check.INT (INT(c),2,"test32")
+  :
+
+  PROC test33 ()
+    BLUE FUNCTION "&&" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := && a
+      check.INT (INT(c),2,"test33")
+  :
+
+  PROC test34 ()
+    COMPLEX FUNCTION "&&" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := && a
+      check.REAL32 (c[i],2.0,"test34")
+  :
+
+  PROC test35 ()
+    COMPLEX FUNCTION "&&" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := && a
+      check.REAL32 (c[i],2.0,"test35")
+  :
+
+  PROC test36 ()
+    BLUE FUNCTION "<%" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := <% a
+      check.INT (INT(c),2,"test36")
+  :
+
+  PROC test37 ()
+    BLUE FUNCTION "<%" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := <% a
+      check.INT (INT(c),2,"test37")
+  :
+
+  PROC test38 ()
+    COMPLEX FUNCTION "<%" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := <% a
+      check.REAL32 (c[i],2.0,"test38")
+  :
+
+  PROC test39 ()
+    COMPLEX FUNCTION "<%" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := <% a
+      check.REAL32 (c[i],2.0,"test39")
+  :
+
+  PROC test40 ()
+    BLUE FUNCTION "%>" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := %> a
+      check.INT (INT(c),2,"test40")
+  :
+
+  PROC test41 ()
+    BLUE FUNCTION "%>" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := %> a
+      check.INT (INT(c),2,"test41")
+  :
+
+  PROC test42 ()
+    COMPLEX FUNCTION "%>" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := %> a
+      check.REAL32 (c[i],2.0,"test42")
+  :
+
+  PROC test43 ()
+    COMPLEX FUNCTION "%>" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := %> a
+      check.REAL32 (c[i],2.0,"test43")
+  :
+
+  PROC test44 ()
+    BLUE FUNCTION "&>" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := &> a
+      check.INT (INT(c),2,"test44")
+  :
+
+  PROC test45 ()
+    BLUE FUNCTION "&>" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := &> a
+      check.INT (INT(c),2,"test45")
+  :
+
+  PROC test46 ()
+    COMPLEX FUNCTION "&>" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := &> a
+      check.REAL32 (c[i],2.0,"test46")
+  :
+
+  PROC test47 ()
+    COMPLEX FUNCTION "&>" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := &> a
+      check.REAL32 (c[i],2.0,"test47")
+  :
+
+  PROC test48 ()
+    BLUE FUNCTION "<&" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := <& a
+      check.INT (INT(c),2,"test48")
+  :
+
+  PROC test49 ()
+    BLUE FUNCTION "<&" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := <& a
+      check.INT (INT(c),2,"test49")
+  :
+
+  PROC test50 ()
+    COMPLEX FUNCTION "<&" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := <& a
+      check.REAL32 (c[i],2.0,"test50")
+  :
+
+  PROC test51 ()
+    COMPLEX FUNCTION "<&" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := <& a
+      check.REAL32 (c[i],2.0,"test51")
+  :
+
+  PROC test52 ()
+    BLUE FUNCTION "<]" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := <] a
+      check.INT (INT(c),2,"test52")
+  :
+
+  PROC test53 ()
+    BLUE FUNCTION "<]" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := <] a
+      check.INT (INT(c),2,"test53")
+  :
+
+  PROC test54 ()
+    COMPLEX FUNCTION "<]" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := <] a
+      check.REAL32 (c[i],2.0,"test54")
+  :
+
+  PROC test55 ()
+    COMPLEX FUNCTION "<]" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := <] a
+      check.REAL32 (c[i],2.0,"test55")
+  :
+
+  PROC test56 ()
+    BLUE FUNCTION "[>" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := [> a
+      check.INT (INT(c),2,"test56")
+  :
+
+  PROC test57 ()
+    BLUE FUNCTION "[>" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := [> a
+      check.INT (INT(c),2,"test57")
+  :
+
+  PROC test58 ()
+    COMPLEX FUNCTION "[>" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := [> a
+      check.REAL32 (c[i],2.0,"test58")
+  :
+
+  PROC test59 ()
+    COMPLEX FUNCTION "[>" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := [> a
+      check.REAL32 (c[i],2.0,"test59")
+  :
+
+  PROC test60 ()
+    BLUE FUNCTION "++" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := ++ a
+      check.INT (INT(c),2,"test60")
+  :
+
+  PROC test61 ()
+    BLUE FUNCTION "++" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := ++ a
+      check.INT (INT(c),2,"test61")
+  :
+
+  PROC test62 ()
+    COMPLEX FUNCTION "++" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := ++ a
+      check.REAL32 (c[i],2.0,"test62")
+  :
+
+  PROC test63 ()
+    COMPLEX FUNCTION "++" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := ++ a
+      check.REAL32 (c[i],2.0,"test63")
+  :
+
+  PROC test64 ()
+    BLUE FUNCTION "^" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := ^ a
+      check.INT (INT(c),2,"test64")
+  :
+
+  PROC test65 ()
+    BLUE FUNCTION "^" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := ^ a
+      check.INT (INT(c),2,"test65")
+  :
+
+  PROC test66 ()
+    COMPLEX FUNCTION "^" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := ^ a
+      check.REAL32 (c[i],2.0,"test66")
+  :
+
+  PROC test67 ()
+    COMPLEX FUNCTION "^" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := ^ a
+      check.REAL32 (c[i],2.0,"test67")
+  :
+
+  PROC test68 ()
+    BLUE FUNCTION "!!" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := !! a
+      check.INT (INT(c),2,"test68")
+  :
+
+  PROC test69 ()
+    BLUE FUNCTION "!!" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := !! a
+      check.INT (INT(c),2,"test69")
+  :
+
+  PROC test70 ()
+    COMPLEX FUNCTION "!!" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := !! a
+      check.REAL32 (c[i],2.0,"test70")
+  :
+
+  PROC test71 ()
+    COMPLEX FUNCTION "!!" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := !! a
+      check.REAL32 (c[i],2.0,"test71")
+  :
+
+  PROC test72 ()
+    BLUE FUNCTION "==" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := == a
+      check.INT (INT(c),2,"test72")
+  :
+
+  PROC test73 ()
+    BLUE FUNCTION "==" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := == a
+      check.INT (INT(c),2,"test73")
+  :
+
+  PROC test74 ()
+    COMPLEX FUNCTION "==" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := == a
+      check.REAL32 (c[i],2.0,"test74")
+  :
+
+  PROC test75 ()
+    COMPLEX FUNCTION "==" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := == a
+      check.REAL32 (c[i],2.0,"test75")
+  :
+
+  PROC test76 ()
+    BLUE FUNCTION "<@" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := <@ a
+      check.INT (INT(c),2,"test76")
+  :
+
+  PROC test77 ()
+    BLUE FUNCTION "<@" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := <@ a
+      check.INT (INT(c),2,"test77")
+  :
+
+  PROC test78 ()
+    COMPLEX FUNCTION "<@" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := <@ a
+      check.REAL32 (c[i],2.0,"test78")
+  :
+
+  PROC test79 ()
+    COMPLEX FUNCTION "<@" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := <@ a
+      check.REAL32 (c[i],2.0,"test79")
+  :
+
+  PROC test80 ()
+    BLUE FUNCTION "@>" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := @> a
+      check.INT (INT(c),2,"test80")
+  :
+
+  PROC test81 ()
+    BLUE FUNCTION "@>" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := @> a
+      check.INT (INT(c),2,"test81")
+  :
+
+  PROC test82 ()
+    COMPLEX FUNCTION "@>" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := @> a
+      check.REAL32 (c[i],2.0,"test82")
+  :
+
+  PROC test83 ()
+    COMPLEX FUNCTION "@>" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := @> a
+      check.REAL32 (c[i],2.0,"test83")
+  :
+
+  PROC test84 ()
+    BLUE FUNCTION "@" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := @ a
+      check.INT (INT(c),2,"test84")
+  :
+
+  PROC test85 ()
+    BLUE FUNCTION "@" (VAL BLUE a) IS 2:
+    BLUE a:
+    BLUE c:
+    SEQ
+      c := @ a
+      check.INT (INT(c),2,"test85")
+  :
+
+  PROC test86 ()
+    COMPLEX FUNCTION "@" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := @ a
+      check.REAL32 (c[i],2.0,"test86")
+  :
+
+  PROC test87 ()
+    COMPLEX FUNCTION "@" (VAL COMPLEX a) IS [2.0]:
+    COMPLEX a:
+    COMPLEX c:
+    SEQ
+      c := @ a
+      check.REAL32 (c[i],2.0,"test87")
+  :
+  SEQ
+    init ("CG test 79","User Defined Operators 10")
+    title("Testing User defined types (with monadic operators)")
+    test0()
+    test1()
+    test2()
+    test3()
+    test4()
+    test5()
+    test6()
+    test7()
+    test8()
+    test9()
+    test10()
+    test11()
+    test12()
+    test13()
+    test14()
+    test15()
+    test16()
+    test17()
+    test18()
+    test19()
+    test20()
+    test21()
+    test22()
+    test23()
+    test24()
+    test25()
+    test26()
+    test27()
+    test28()
+    test29()
+    test30()
+    test31()
+    test32()
+    test33()
+    test34()
+    test35()
+    test36()
+    test37()
+    test38()
+    test39()
+    test40()
+    test41()
+    test42()
+    test43()
+    test44()
+    test45()
+    test46()
+    test47()
+    test48()
+    test49()
+    test50()
+    test51()
+    test52()
+    test53()
+    test54()
+    test55()
+    test56()
+    test57()
+    test58()
+    test59()
+    test60()
+    test61()
+    test62()
+    test63()
+    test64()
+    test65()
+    test66()
+    test67()
+    test68()
+    test69()
+    test70()
+    test71()
+    test72()
+    test73()
+    test74()
+    test75()
+    test76()
+    test77()
+    test78()
+    test79()
+    test80()
+    test81()
+    test82()
+    test83()
+    test84()
+    test85()
+    test86()
+    test87()
+    finish ()
+:

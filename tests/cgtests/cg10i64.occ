@@ -1,0 +1,1314 @@
+-- version control marker $Id: cg10i64.occ,v 1.3 1995/10/09 16:42:33 phw Exp $
+PROC do.INT64 ()
+  INT64 a, b, c :
+  SEQ
+    b := id.INT64(85 (INT64))
+    --{{{  output message
+    title ("INT64 arithmetic")
+    --}}} 
+    --{{{  check arithmetic and logical operators  (I64-000 to 099)
+    a := b + 23 (INT64)
+    check.INT64 (a, 85(INT64) + 23(INT64), "I64-001")
+    a := b PLUS 23 (INT64)
+    check.INT64 (a, 85(INT64) PLUS 23(INT64), "I64-002")
+    a := b - 23 (INT64)
+    check.INT64 (a, 85(INT64) - 23(INT64), "I64-003")
+    a := b MINUS 23 (INT64)
+    check.INT64 (a, 85(INT64) MINUS 23(INT64), "I64-004")
+    a := b * 23 (INT64)
+    check.INT64 (a, 85(INT64) * 23(INT64), "I64-005")
+    a := b TIMES 23 (INT64)
+    check.INT64 (a, 85(INT64) TIMES 23(INT64), "I64-006")
+    a := b / 23 (INT64)
+    check.INT64 (a, 85(INT64) / 23(INT64), "I64-007")
+    a := b \ 23 (INT64)
+    check.INT64 (a, 85(INT64) \ 23(INT64), "I64-008")
+    --{{{  check logical operators                 (I64-009 to 014)
+    a := b << 3
+    check.INT64 (a, 85(INT64) << 3, "I64-009")
+    a := b >> 3
+    check.INT64 (a, 85(INT64) >> 3, "I64-010")
+    a := b /\ 23 (INT64)
+    check.INT64 (a, 85(INT64) /\ 23(INT64), "I64-011")
+    a := b \/ 23 (INT64)
+    check.INT64 (a, 85(INT64) \/ 23(INT64), "I64-012")
+    a := b >< 23 (INT64)
+    check.INT64 (a, 85(INT64) >< 23(INT64), "I64-013")
+    a := ~b
+    check.INT64 (a, ~85(INT64), "I64-014")
+    --}}} 
+    --{{{  unary minus                             (I64-015 to 018)
+    a := (- b)
+    check.INT64 (a, -85(INT64), "I64-015")
+    a := (MINUS b)
+    check.INT64 (a, MINUS 85(INT64), "I64-016")
+    --{{{  constant folding
+    a := MINUS (MOSTNEG INT64)
+    check.INT64 (a, MOSTNEG INT64, "I64-017")
+    --}}} 
+    c := MOSTNEG INT64
+    a := MINUS c
+    check.INT64 (a, c, "I64-018")
+    --}}} 
+    --{{{  sign extension                          (I64-019 to 029)
+    PROC extension()
+      PROC local(VAL INT64 w, x, y, z, INT i)
+        i := ((INT w) + (INT x)) + ((INT y) + (INT z))
+      :
+      INT i :
+      SEQ
+        local(-1(INT64), -1(INT64), -1(INT64), -1(INT64), i)
+        check(i, -4, "I64-019")
+        local(1(INT64), 1(INT64), 1(INT64), 1(INT64), i)
+        check(i, 4, "I64-020")
+    :
+    extension()
+    --}}}
+    --{{{  overflow checks on logical operators    (I64-030 to 039)
+    INT64 p, q, r :
+    SEQ
+      p := id.INT64(MOSTPOS INT64)
+      q := p PLUS 256(INT64)
+      check.INT64(q, (MOSTNEG INT64) + 255(INT64), "I64-030")
+    
+      p := id.INT64(MOSTNEG INT64)
+      q := p PLUS (-256(INT64))
+      check.INT64(q, (MOSTPOS INT64) - 255(INT64), "I64-031")
+    
+      p := id.INT64(MOSTPOS INT64)
+      q := p MINUS (-256(INT64))
+      check.INT64(q, (MOSTNEG INT64) + 255(INT64), "I64-032")
+    
+      p := id.INT64(MOSTNEG INT64)
+      q := p MINUS 256(INT64)
+      check.INT64(q, (MOSTPOS INT64) - 255(INT64), "I64-033")
+    
+      p := id.INT64(MOSTPOS INT64)
+      q := p TIMES 2(INT64)
+      check.INT64(q, (MOSTPOS INT64) TIMES 2(INT64), "I64-034")
+      check.INT64(q, (MOSTPOS INT64) << 1,           "I64-035")
+    
+      p := id.INT64(MOSTPOS INT64)
+      q := MINUS p
+      check.INT64(q, 0(INT64) MINUS (MOSTPOS INT64), "I64-036")
+      check.INT64(q, (MOSTNEG INT64) + 1(INT64),     "I64-037")
+    
+      r := id.INT64(0(INT64))
+      p := id.INT64(MOSTPOS INT64)
+      q := (p PLUS 256(INT64)) + r
+      check.INT64(q, (MOSTNEG INT64) + 255(INT64), "I64-038")
+    
+    --}}}
+    
+    --}}} 
+    --{{{  check constant folding                  (I64-100 to 199)
+    INT64 a, b :
+    INT c :
+    SEQ
+      b := id.INT64(5 (INT64))
+      c := 3
+      --{{{  +        (I64-100)
+      a := 2 (INT64) + b               -- 7
+      a := (1 (INT64) + b    ) + a     -- 6
+      a := (0 (INT64) + b    ) + a     -- 5
+      a := ((-1 (INT64)) + b ) + a     -- 4
+      a := ((-2 (INT64)) + b ) + a     -- 3
+      a := (b + 2 (INT64)    ) + a     -- 7
+      a := (b + 1 (INT64)    ) + a     -- 6
+      a := (b + 0 (INT64)    ) + a     -- 5
+      a := (b + (-1 (INT64)) ) + a     -- 4
+      a := (b + (-2 (INT64)) ) + a     -- 3
+      check.INT64 (a, 50 (INT64), "I64-100")
+      --}}} 
+      --{{{  -        (I64-101)
+      a := 2 (INT64) - b               --  -3
+      a := (1 (INT64) - b    ) + a     --  -4
+      a := (0 (INT64) - b    ) + a     --  -5
+      a := ((-1 (INT64)) - b ) + a     --  -6
+      a := ((-2 (INT64)) - b ) + a     --  -7
+      a := (b - 2 (INT64)    ) + a     --   3
+      a := (b - 1 (INT64)    ) + a     --   4
+      a := (b - 0 (INT64)    ) + a     --   5
+      a := (b - (-1 (INT64)) ) + a     --   6
+      a := (b - (-2 (INT64)) ) + a     --   7
+      check.INT64 (a, 0 (INT64), "I64-101")
+      --}}} 
+      --{{{  *        (I64-102)
+      a := 2 (INT64) * b                 --  10
+      a := (1 (INT64) * b      ) + a     --   5
+      a := (0 (INT64) * b      ) + a     --   0
+      a := ((-1 (INT64)) * b   ) + a     --  -5
+      a := ((-2 (INT64)) * b   ) + a     -- -10
+      a := (b * 2 (INT64)      ) + a     --  10
+      a := (b * 1 (INT64)      ) + a     --   5
+      a := (b * 0 (INT64)      ) + a     --   0
+      a := (b * (-1 (INT64))   ) + a     --  -5
+      a := (b * (-2 (INT64))   ) + a     -- -10
+      check.INT64 (a, 0 (INT64), "I64-102")
+      --}}} 
+      --{{{  /        (I64-103)
+      a := 2 (INT64) / b                 -- 0
+      a := (1 (INT64) / b      ) + a     -- 0
+      a := (0 (INT64) / b      ) + a     -- 0
+      a := ((-1 (INT64)) / b   ) + a     -- 0
+      a := ((-2 (INT64)) / b   ) + a     -- 0
+      a := (b / 2 (INT64)      ) + a     -- 2
+      a := (b / 1 (INT64)      ) + a     -- 5
+      --a := b / 0 (INT64)  --should give error
+      a := (b / (-1 (INT64))   ) + a     -- -5
+      a := (b / (-2 (INT64))   ) + a     -- -2
+      check.INT64 (a, 0 (INT64), "I64-103")
+      --}}} 
+      --{{{  \        (I64-104)
+      a := 2 (INT64) \ b                 --  2
+      a := (1 (INT64) \ b      ) + a     --  1
+      a := (0 (INT64) \ b      ) + a     --  0
+      a := ((-1 (INT64)) \ b   ) + a     -- -1
+      a := ((-2 (INT64)) \ b   ) + a     -- -2
+      a := (b \ 2 (INT64)      ) + a     --  1
+      a := (b \ 1 (INT64)      ) + a     --  0
+      --a := b \ 0 (INT64)  --should give error
+      a := (b \ (-1 (INT64))   ) + a     --  0
+      a := (b \ (-2 (INT64))   ) + a     --  1
+      check.INT64 (a, 2 (INT64), "I64-104")
+      --}}} 
+      --{{{  PLUS     (I64-105)
+      a := 2 (INT64) PLUS b                 -- 7
+      a := (1 (INT64) PLUS b      ) + a     -- 6
+      a := (0 (INT64) PLUS b      ) + a     -- 5
+      a := ((-1 (INT64)) PLUS b   ) + a     -- 4
+      a := ((-2 (INT64)) PLUS b   ) + a     -- 3
+      a := (b PLUS 2 (INT64)      ) + a     -- 7
+      a := (b PLUS 1 (INT64)      ) + a     -- 6
+      a := (b PLUS 0 (INT64)      ) + a     -- 5
+      a := (b PLUS (-1 (INT64))   ) + a     -- 4
+      a := (b PLUS (-2 (INT64))   ) + a     -- 3
+      check.INT64 (a, 50 (INT64), "I64-105")
+      --}}} 
+      --{{{  MINUS    (I64-106)
+      a := 2 (INT64) MINUS b                  --  -3
+      a := (1 (INT64) MINUS b       ) + a     --  -4
+      a := (0 (INT64) MINUS b       ) + a     --  -5
+      a := ((-1 (INT64)) MINUS b    ) + a     --  -6
+      a := ((-2 (INT64)) MINUS b    ) + a     --  -7
+      a := (b MINUS 2 (INT64)       ) + a     --   3
+      a := (b MINUS 1 (INT64)       ) + a     --   4
+      a := (b MINUS 0 (INT64)       ) + a     --   5
+      a := (b MINUS (-1 (INT64))    ) + a     --   6
+      a := (b MINUS (-2 (INT64))    ) + a     --   7
+      check.INT64 (a, 0 (INT64), "I64-106")
+      --}}} 
+      --{{{  TIMES    (I64-107)
+      a := 2 (INT64) TIMES b                --  10
+      a := (1 (INT64) TIMES b     ) + a     --   5
+      a := (0 (INT64) TIMES b     ) + a     --   0
+      a := ((-1 (INT64)) TIMES b  ) + a     --  -5
+      a := ((-2 (INT64)) TIMES b  ) + a     -- -10
+      a := (b TIMES 2 (INT64)     ) + a     --  10
+      a := (b TIMES 1 (INT64)     ) + a     --   5
+      a := (b TIMES 0 (INT64)     ) + a     --   0
+      a := (b TIMES (-1 (INT64))  ) + a     --  -5
+      a := (b TIMES (-2 (INT64))  ) + a     -- -10
+      check.INT64 (a, 0 (INT64), "I64-107")
+      --}}} 
+      --{{{  /\       (I64-108)
+      a := 2 (INT64) /\ b                   -- 0
+      a := (1 (INT64) /\ b        ) + a     -- 1
+      a := (0 (INT64) /\ b        ) + a     -- 0
+      a := ((-1 (INT64)) /\ b     ) + a     -- 5
+      a := ((-2 (INT64)) /\ b     ) + a     -- 4
+      a := (b /\ 2 (INT64)        ) + a     -- 0
+      a := (b /\ 1 (INT64)        ) + a     -- 1
+      a := (b /\ 0 (INT64)        ) + a     -- 0
+      a := (b /\ (-1 (INT64))     ) + a     -- 5
+      a := (b /\ (-2 (INT64))     ) + a     -- 4
+      check.INT64 (a, 20 (INT64), "I64-108")
+      a := b /\ 0(INT64)
+      check.INT64 (a, 0(INT64), "I64-108a")
+      a := b /\ (-1(INT64))
+      check.INT64 (a, 5(INT64), "I64-108b")
+      a := b /\ b
+      check.INT64 (a, 5(INT64), "I64-108c")
+      INT64 bb :
+      SEQ
+        bb := id.INT64(#00010001FFFF0005(INT64))
+        a := bb /\ 0(INT64)
+        check.INT64 (a, 0(INT64), "I64-108d")
+        a := bb /\ (-1(INT64))
+        check.INT64 (a, #00010001FFFF0005(INT64), "I64-108e")
+        a := bb /\ #00010001FFFF0005(INT64)
+        check.INT64 (a, #00010001FFFF0005(INT64), "I64-108f")
+        a := bb /\ #00000000FFFFFFFF(INT64)
+        check.INT64 (a, #00000000FFFF0005(INT64), "I64-108g")
+        a := bb /\ #FFFFFFFF00000000(INT64)
+        check.INT64 (a, #0001000100000000(INT64), "I64-108h")
+      
+      --}}} 
+      --{{{  \/       (I64-109)
+      a := 2 (INT64) \/ b                 --  7
+      a := (1 (INT64) \/ b      ) + a     --  5
+      a := (0 (INT64) \/ b      ) + a     --  5
+      a := ((-1 (INT64)) \/ b   ) + a     -- -1
+      a := ((-2 (INT64)) \/ b   ) + a     -- -1
+      a := (b \/ 2 (INT64)      ) + a     --  7
+      a := (b \/ 1 (INT64)      ) + a     --  5
+      a := (b \/ 0 (INT64)      ) + a     --  5
+      a := (b \/ (-1 (INT64))   ) + a     -- -1
+      a := (b \/ (-2 (INT64))   ) + a     -- -1
+      check.INT64 (a, 30 (INT64), "I64-109")
+      a := b \/ 0(INT64)
+      check.INT64 (a, 5(INT64), "I64-109a")
+      a := b \/ (-1(INT64))
+      check.INT64 (a, -1(INT64), "I64-109b")
+      a := b \/ b
+      check.INT64 (a, 5(INT64), "I64-109c")
+      INT64 bb :
+      SEQ
+        bb := id.INT64(#00010001FFFF0005(INT64))
+        a := bb \/ 0(INT64)
+        check.INT64 (a, #00010001FFFF0005(INT64), "I64-109d")
+        a := bb \/ (-1(INT64))
+        check.INT64 (a, -1(INT64), "I64-109e")
+        a := bb \/ #00010001FFFF0005(INT64)
+        check.INT64 (a, #00010001FFFF0005(INT64), "I64-109f")
+        a := bb \/ #00000000FFFFFFFF(INT64)
+        check.INT64 (a, #00010001FFFFFFFF(INT64), "I64-109g")
+        a := bb \/ #FFFFFFFF00000000(INT64)
+        check.INT64 (a, #FFFFFFFFFFFF0005(INT64), "I64-109h")
+      
+      --}}} 
+      --{{{  ><       (I64-110)
+      a := 2 (INT64) >< b                  --  7
+      a := (1 (INT64) >< b       ) + a     --  4
+      a := (0 (INT64) >< b       ) + a     --  5
+      a := ((-1 (INT64)) >< b    ) + a     -- -6
+      a := ((-2 (INT64)) >< b    ) + a     -- -5
+      a := (b >< 2 (INT64)       ) + a     --  7
+      a := (b >< 1 (INT64)       ) + a     --  4
+      a := (b >< 0 (INT64)       ) + a     --  5
+      a := (b >< (-1 (INT64))    ) + a     -- -6
+      a := (b >< (-2 (INT64))    ) + a     -- -5
+      check.INT64 (a, 10 (INT64), "I64-110")
+      a := b >< 0(INT64)
+      check.INT64 (a, 5(INT64), "I64-110a")
+      a := b >< (-1(INT64))
+      check.INT64 (a, -6(INT64), "I64-110b")
+      a := b >< b
+      check.INT64 (a, 0(INT64), "I64-110c")
+      INT64 bb :
+      SEQ
+        bb := id.INT64(#00010001FFFF0005(INT64))
+        a := bb >< 0(INT64)
+        check.INT64 (a, #00010001FFFF0005(INT64), "I64-110d")
+        a := bb >< (-1(INT64))
+        check.INT64 (a, #FFFEFFFE0000FFFA(INT64), "I64-110e")
+        a := bb >< #00010001FFFF0005(INT64)
+        check.INT64 (a, 0(INT64), "I64-110f")
+        a := bb >< #00000000FFFFFFFF(INT64)
+        check.INT64 (a, #000100010000FFFA(INT64), "I64-110g")
+        a := bb >< #FFFFFFFF00000000(INT64)
+        check.INT64 (a, #FFFEFFFEFFFF0005(INT64), "I64-110h")
+      
+      --}}} 
+      --{{{  <<       (I64-111)
+      a := 64 (INT64) << c                 --  512
+      a := (32 (INT64) << c      ) + a     --  256
+      a := (0 (INT64) << c       ) + a     --    0
+      a := ((-64 (INT64)) << c   ) + a     -- -256
+      a := ((-32 (INT64)) << c   ) + a     -- -512
+      a := (b << 64              ) + a     --    0
+      a := (b << 32              ) + a     --   (5 << 32)
+      a := (b << 16              ) + a     --   (5 << 16)
+      a := (b << 8               ) + a     --   (5 << 8)
+      a := (b << 0               ) + a     --    5
+      --a := b << (-64) --should give error
+      --a := b << (-32) --should give error
+      VAL correct.result IS ( 5(INT64)        + (5(INT64) << 32) ) +
+                            ((5(INT64) << 16) + (5(INT64) <<  8) ) :
+      check.INT64 (a, correct.result, "I64-111")
+      --}}} 
+      --{{{  >>       (I64-112)
+      a := 64 (INT64) >> c                --  8
+      a := (32 (INT64) >> c     ) + a     --  4
+      a := (0 (INT64) >> c      ) + a     --  0
+      a := ((-64 (INT64)) >> c  ) + a     --  (-64 >> 3)
+      a := ((-32 (INT64)) >> c  ) + a     --  (-32 >> 3)
+      a := (b >> 64             ) + a     --  0
+      a := (b >> 32             ) + a     --  0
+      a := (b >> 16             ) + a     --  0
+      a := (b >> 8              ) + a     --  0
+      a := (b >> 0              ) + a     --  5
+      --a := b >> (-64) --should give error
+      --a := b >> (-32) --should give error
+      VAL correct.result IS 17 (INT64) +
+                 ( ( (-64(INT64)) >> 3) + ( (-32(INT64)) >> 3) ) :
+      check.INT64 (a, correct.result, "I64-112")
+      --}}} 
+    --}}} 
+    --{{{  check comparison operators              (I64-200 to 299)
+    a := id.INT64(47(INT64))
+    x := a = b
+    check.BOOL (x, FALSE, "I64-205")
+    x := a > b
+    check.BOOL (x, FALSE, "I64-206")
+    x := a >= b
+    check.BOOL (x, FALSE, "I64-207")
+    x := a < b
+    check.BOOL (x, TRUE, "I64-208")
+    x := a <= b
+    check.BOOL (x, TRUE, "I64-209")
+    x := a <> b
+    check.BOOL (x, TRUE, "I64-210")
+    x := a AFTER b
+    check.BOOL (x, FALSE, "I64-211")
+    
+    --}}} 
+    --{{{  check conversions                       (I64-300 to 399)
+    --{{{  variable declarations for conversion tests
+    REAL64 r64 :
+    REAL32 r32 :
+    INT64 i64 :
+    INT32 i32 :
+    INT16 i16 :
+    BYTE byte :
+    BOOL bool :
+    --}}} 
+    SEQ
+      r64 := REAL64 TRUNC b
+      check.REAL64 (r64, REAL64 TRUNC 85(INT64), "I64-301")
+      r64 := REAL64 TRUNC (b + 1(INT64))
+      check.REAL64 (r64, REAL64 TRUNC 86(INT64), "I64-301a")
+      r64 := REAL64 TRUNC (b + b)
+      check.REAL64 (r64, REAL64 TRUNC 170(INT64), "I64-301b")
+      r64 := REAL64 ROUND b
+      check.REAL64 (r64, REAL64 ROUND 85(INT64), "I64-302")
+      r64 := REAL64 ROUND (b + 1(INT64))
+      check.REAL64 (r64, REAL64 ROUND 86(INT64), "I64-302a")
+      r64 := REAL64 ROUND (b + b)
+      check.REAL64 (r64, REAL64 ROUND 170(INT64), "I64-302b")
+      r32 := REAL32 TRUNC b
+      check.REAL32 (r32, REAL32 TRUNC 85(INT64), "I64-303")
+      r32 := REAL32 TRUNC (b + 1(INT64))
+      check.REAL32 (r32, REAL32 TRUNC 86(INT64), "I64-303a")
+      r32 := REAL32 TRUNC (b + b)
+      check.REAL32 (r32, REAL32 TRUNC 170(INT64), "I64-303b")
+      r32 := REAL32 ROUND b
+      check.REAL32 (r32, REAL32 ROUND 85(INT64), "I64-304")
+      r32 := REAL32 ROUND (b + 1(INT64))
+      check.REAL32 (r32, REAL32 ROUND 86(INT64), "I64-304a")
+      r32 := REAL32 ROUND (b + b)
+      check.REAL32 (r32, REAL32 ROUND 170(INT64), "I64-304b")
+      i64 := INT64 b
+      check.INT64 (i64, INT64 85(INT64), "I64-305")
+      i32 := INT32 b
+      check.INT32 (i32, INT32 85(INT64), "I64-306")
+      i16 := INT16 b
+      check.INT16 (i16, INT16 85(INT64), "I64-307")
+      byte := BYTE b
+      check.BYTE (byte, BYTE 85(INT64), "I64-308")
+      c := 1(INT64)
+      bool := BOOL c
+      check.BOOL (bool, BOOL 1(INT64), "I64-309")
+    
+    --}}} 
+    --{{{  check 'remainder identity'              (I64-400 to 499)
+    a := ( 23(INT64) * ( b / 23(INT64) ) ) + ( b \ 23(INT64) )
+    check.INT64 (a,
+      ( 23(INT64) * ( 85(INT64) / 23(INT64) ) ) + ( 85(INT64) \ 23(INT64) ),
+      "I64-400")
+    check.INT64 (a, b, "I64-401")
+    --}}} 
+    --{{{  hefty calculations                      (I64-500 to 599)
+    --{{{  declarations
+    INT64 x, y, z, a, b, c, d :
+    VAL n1 IS 1(INT64) :
+    VAL n2 IS 2(INT64) :
+    VAL n3 IS 3(INT64) :
+    VAL n4 IS 1(INT64) / 3(INT64) :
+    VAL eight.seven IS 2097152(INT64) : -- 8 to the power 7 (= 2 to the 21)
+    --}}} 
+    SEQ
+      --{{{  initialisation
+      x := 8(INT64)
+      y := x + x
+      z := y - x
+      a := 111111(INT64)
+      b := 222222(INT64)
+      c := a * 2(INT64)
+      --}}} 
+      check.INT64 (y, 16(INT64), "I64-500")
+      check.INT64 (z,  8(INT64), "I64-501")
+      check.INT64 (c,  b, "I64-502")
+      check.INT64 (((x + y) + (n3 * z)) + ((n2 * a) - b), 48(INT64), "I64-503")
+      check.INT64 (((x PLUS y) PLUS (n3 TIMES z)) PLUS ((n2 TIMES a) MINUS b), 48(INT64), "I64-503a")
+      check.INT64 (x + (x + (x + (x + (x + (x + x))))), 56(INT64), "I64-504")
+      check.INT64 (x PLUS (x PLUS (x PLUS (x PLUS (x PLUS (x PLUS x))))), 56(INT64), "I64-504a")
+      check.INT64 (x * (x * (x * (x * (x * (x * x))))), eight.seven, "I64-505")
+      check.INT64 (x TIMES (x TIMES (x TIMES (x TIMES (x TIMES (x TIMES x))))), eight.seven, "I64-505a")
+      check.INT64 (x * (x * (n2 * (y * (y * (x * x))))), eight.seven, "I64-506")
+      check.INT64 (x TIMES (x TIMES (n2 TIMES (y TIMES (y TIMES (x TIMES x))))), eight.seven, "I64-506a")
+      x := 1 (INT64)
+      y := 3 (INT64)
+      d := 2 (INT64)
+      check.INT64 (x / y, n4, "I64-507")
+      c := ((d * y) * (d * y)) * ((d * y) * (d * y))
+      check.INT64 (c, 1296 (INT64), "I64-509")
+      c := ((d TIMES y) TIMES (d TIMES y)) TIMES ((d TIMES y) TIMES (d TIMES y))
+      check.INT64 (c, 1296 (INT64), "I64-509a")
+      c := ((((d * y) * (d * y)) * (d * y)) * (d * y)) * (d * y)
+      check.INT64 (c, 7776 (INT64), "I64-510")
+      c := ((((d TIMES y) TIMES (d TIMES y)) TIMES (d TIMES y)) TIMES (d TIMES y)) TIMES (d TIMES y)
+      check.INT64 (c, 7776 (INT64), "I64-510a")
+    
+    --}}} 
+    --{{{  passing as parameters                   (I64-600 to 699)
+    --{{{  copy.int64 and add.int64
+    PROC copy.int64 (VAL INT64 x, INT64 y)
+      y := x
+    :
+    PROC add.int64 (VAL INT64 x, y, INT64 z)
+      z := x + y
+    :
+    --}}} 
+    INT64 x, y, z :
+    VAL n1 IS 2(INT64) :
+    VAL n2 IS 500000(INT64) :
+    SEQ
+      copy.int64 (n1, x)
+      check.INT64 (x, 2(INT64), "I64-600")
+      copy.int64 (n2, x)
+      check.INT64 (x, 500000(INT64), "I64-601")
+      y := 57 (INT64)
+      copy.int64 (y, x)
+      check.INT64 (x, 57(INT64), "I64-602")
+      add.int64 (n1, n2, x)
+      check.INT64 (x, 500002(INT64), "I64-603")
+      y := n1
+      z := n2
+      add.int64 (y, z, x)
+      check.INT64 (x, 500002(INT64), "I64-604")
+      check.INT64 (z, 500000(INT64), "I64-605")
+    --}}} 
+    --{{{  arrays                                  (I64-700 to 799)
+    VAL n IS 1(INT64) :
+    VAL m IS 2(INT64) :
+    VAL t1 IS [n, n, n, n, m] :
+    VAL t2 IS [t1, t1, t1, t1 ] :
+    VAL t3 IS [t2, t2, t2 ] :
+    BOOL b :
+    INT x :
+    INT64 tot :
+    SEQ
+      check.INT64 (t1 [0], n,         "I64-700")
+      check.INT64 (t1 [4], m,         "I64-701")
+      check.INT64 (t2 [2] [4], m,     "I64-702")
+      check.INT64 (t3 [1] [2] [4], m, "I64-703")
+      --{{{  test individual access
+      b := TRUE
+      x := 4
+      tot := 0(INT64)
+      SEQ i = 0 FOR SIZE t3
+        SEQ j = 0 FOR SIZE t2
+          SEQ k = 0 FOR SIZE t1
+            SEQ
+              IF
+                (k = 4) AND (t3 [i] [j] [k] = m)
+                  SKIP
+                (k < 4) AND (t3 [i] [j] [k] = n)
+                  SKIP
+                TRUE
+                  b := FALSE
+              tot := tot + t3 [i] [j] [k]
+              x := INT t3 [i] [j] [x]      -- sets it to 1
+              x := 4                       -- resets it again
+      check.BOOL (b, TRUE, "I64-704")
+      VAL correct.value IS (48(INT64) * n) + (12(INT64) * m) :
+      check.INT64 (tot, correct.value, "I64-705")
+      --}}} 
+      --{{{  test nested array access              (I64-706 to 707)
+      INT a, b, c :
+      SEQ
+        a := 2
+        b := 1
+        c := 3
+        tot := t3[a][b][c] + ( t3[b][a][c] + ( t3[0][1][4] + ( t3[b][a+b][b+(a+b)] +
+               t1[(a+b)+b] ) ) )
+        VAL correct.value IS (2(INT64) * n) + (3(INT64) * m) :
+        check.INT64 (tot, correct.value, "I64-706")
+        tot := t3 [a] [ INT t3 [a] [b] [INT t3 [b + b] [a +
+                        b] [b + (a + b)] ] ] [(INT t3 [a] [c] [c +
+                        (b - a)]) + (3 * (INT t3 [a] [c] [b])) ]
+        check.INT64 (tot, m, "I64-707")
+      --}}} 
+      --{{{  test individual access using abbreviations
+      b := TRUE
+      x := 4
+      tot := 0(INT64)
+      SEQ i = 0 FOR SIZE t3
+        VAL a2 IS t3 [i] :
+        SEQ j = 0 FOR SIZE t2
+          VAL a1 IS a2 [j] :
+          SEQ k = 0 FOR SIZE t1
+            VAL a0 IS a1 [k] :
+            SEQ
+              IF
+                (k = 4) AND (a0 = m)
+                  SKIP
+                (k < 4) AND (a0 = n)
+                  SKIP
+                TRUE
+                  b := FALSE
+              tot := tot + a0
+              x := INT a1 [x]              -- sets it to 1
+              x := 4                       -- resets it again
+      check.BOOL (b, TRUE, "I64-708")
+      VAL correct.value IS (48(INT64) * n) + (12(INT64) * m) :
+      check.INT64 (tot, correct.value, "I64-709")
+      --}}} 
+      --{{{  test livermore loop                   (I64-710 to 711)
+      PROC livermore()
+        VAL n IS 10 :
+        VAL r IS 7(INT64) :
+        VAL t IS 13(INT64) :
+        [n + 6] INT64 u :
+        [n] INT64 x, y, z :
+        SEQ
+          SEQ k = 0 FOR n + 6
+            u [k] := 3(INT64)
+          SEQ k = 0 FOR n
+            SEQ
+              y [k] := 11(INT64)
+              z [k] :=  5(INT64)
+        
+          SEQ k = 0 FOR n
+            x [k] := u[k] + ((( r * (z[k] + (r * y[k]))) +
+                              (t * ((u[k+3] + (r * (u[k+2] + (r * u[k+1]))))))) +
+                              (t * ((u[k+6] + (r * (u[k+5] + (r * u[k+4])))))))
+        
+          check.INT64 (x[0],     5023(INT64), "I64-710")
+          check.INT64 (x[n - 1], 5023(INT64), "I64-711")
+      :
+      livermore()
+      --}}} 
+      --{{{  test some bugs that were found        (I64-712 to 717)
+      PROC bug.tests()
+        SEQ
+          --{{{  bug1                                  (I64-712)
+          [2][2]INT64 arr :
+          INT64 A :
+          INT i :
+          SEQ
+            i := 0
+            arr[i][i] := 0(INT64)
+            A := ((arr[i][i]+arr[i][i]) + (arr[i][i]+arr[i][i])) / 4(INT64)
+            check.INT64 (A, 0(INT64), "I64-712")
+          --}}} 
+          --{{{  bug3                                  (I64-713 to 714)
+          PROC Complex.Subst ([]INT64 a, b)
+            SEQ
+              check.INT64 (a[0], 2(INT64), "I64-713")
+              check.INT64 (b[1], 4(INT64), "I64-714")
+          :
+          
+          [2][2][2]INT64 g.plus, g.minus :
+          INT64 i, j :
+          SEQ
+            i := 1(INT64)
+            j := 0(INT64)
+            g.plus [INT i][INT j][0] := 2(INT64)
+            g.minus[INT i][INT j][1] := 4(INT64)
+            Complex.Subst (g.plus[INT i][INT j],
+                           g.minus[INT i][INT j])
+          --}}} 
+          --{{{  bug4                                  (I64-715)
+          [10][10]INT64 c, b :
+          INT i :
+          INT64 A:
+          SEQ
+            i := 1
+            SEQ i = 0 FOR 10
+              SEQ j = 0 FOR 10
+                VAL tmp IS INT64 j :
+                c [i][j] := tmp
+            A := ((c[i][i] * c [i*i][i+2])) / (c[(i*i)+i][(i*i)+i] + c[i][i])
+            check.INT64 (A, 1(INT64), "I64-715")
+          --}}} 
+          --{{{  test2                                 (I64-716 to 717)
+          INT64 u :
+          [4] INT64 ai :
+          [3] [4] INT64 x, Gb :
+          INT i, j, k :
+          SEQ
+            SEQ i = 0 FOR 4
+              SEQ
+                ai [i] := 5(INT64)
+                SEQ j = 0 FOR 3
+                  SEQ
+                    x [j] [i] := 2(INT64)
+                    Gb[j] [i] := 24(INT64)
+            u := 4(INT64)
+            i := 1
+            j := 2
+            k := 3
+            u := u + (ai [j] * x [j][k])
+            x [i][k] := (Gb [i][k] - u) / ai[i]
+            check.INT64 (x [i][k], 2(INT64), "I64-716")
+          
+            u := 4(INT64)
+            u := u PLUS (ai [j] TIMES x [j][k])
+            x [i][k] := (Gb [i][k] MINUS u) / ai[i]
+            check.INT64 (x [i][k], 2(INT64), "I64-717")
+          
+          --}}} 
+      :
+      bug.tests()
+      --}}} 
+    --}}} 
+    --{{{  miscellaneous bug checks                (I64-800 to 899)
+    BOOL x :
+    SEQ
+      x := (MOSTPOS INT64) < 0(INT64)
+      check.BOOL (x, FALSE, "I64-800")
+    INT64 y :
+    VAL start IS #123456789ABCDEF0 (INT64) :
+    #IF DEFINED(TARGET.BIGENDIAN)
+    VAL t IS [ #9ABC(INT16), #DEF0(INT16), #1234(INT16), #5678(INT16) ] :
+    #ELSE
+    VAL t IS [ #DEF0(INT16), #9ABC(INT16), #5678(INT16), #1234(INT16) ] :
+    #ENDIF
+    SEQ
+      y := start
+      [4]INT16 x RETYPES y :
+      SEQ i = 0 FOR 4
+        check.INT16 (x[i], t[i], "I64-801")
+    --}}} 
+    --{{{  more conversion tests
+    INT FUNCTION id(VAL INT i) IS i :
+    VAL n IS 5 :
+    VAL m IS 7 :
+    [n]REAL64 ar64 :
+    [n]INT64  ai64 :
+    [n][m]INT64 i64arr :
+    [n][m]INT32 i32arr :
+    [n][m]INT16 i16arr :
+    [n][m]INT   iarr :
+    [n][m]REAL32 r32arr :
+    [n][m]REAL64 r64arr :
+    INT i, j :
+    VAL ans IS (n / 2) + (m / 2) :
+    VAL ans2 IS n / 2 :
+    SEQ
+      i, j := n / 2, m / 2
+      SEQ k = 0 FOR n
+        SEQ
+          ai64[k] := INT64 k
+          temp IS i64arr[k] :
+          SEQ l = 0 FOR m
+            temp[l] := INT64(k + l)
+    
+      r64arr[i][j] := REAL64 ROUND i64arr[i][j]
+      check.REAL64(r64arr[i][j], REAL64 ROUND ans, "I64-R64-1")
+      r64arr[id(i)][j] := REAL64 ROUND i64arr[id(i)][j]
+      check.REAL64(r64arr[i][j], REAL64 ROUND ans, "I64-R64-2")
+      r64arr[i][j] := REAL64 TRUNC i64arr[i][j]
+      check.REAL64(r64arr[i][j], REAL64 TRUNC ans, "I64-R64-3")
+      r64arr[id(i)][j] := REAL64 TRUNC i64arr[id(i)][j]
+      check.REAL64(r64arr[i][j], REAL64 TRUNC ans, "I64-R64-4")
+    
+      ar64[i] := REAL64 ROUND ai64[i]
+      check.REAL64(ar64[i], REAL64 ROUND ans2, "I64-R64-5") -- bug 1315 etc
+      ar64[id(i)] := REAL64 ROUND ai64[id(i)]
+      check.REAL64(ar64[i], REAL64 ROUND ans2, "I64-R64-6")
+      ar64[i] := REAL64 TRUNC ai64[i]
+      check.REAL64(ar64[i], REAL64 TRUNC ans2, "I64-R64-7")
+      ar64[id(i)] := REAL64 TRUNC ai64[id(i)]
+      check.REAL64(ar64[i], REAL64 TRUNC ans2, "I64-R64-8")
+    
+      r32arr[i][j] := REAL32 ROUND i64arr[i][j]
+      check.REAL32(r32arr[i][j], REAL32 ROUND ans, "I64-R32-1")
+      r32arr[id(i)][j] := REAL32 ROUND i64arr[id(i)][j]
+      check.REAL32(r32arr[i][j], REAL32 ROUND ans, "I64-R32-2")
+      r32arr[i][j] := REAL32 TRUNC i64arr[i][j]
+      check.REAL32(r32arr[i][j], REAL32 TRUNC ans, "I64-R32-3")
+      r32arr[id(i)][j] := REAL32 TRUNC i64arr[id(i)][j]
+      check.REAL32(r32arr[i][j], REAL32 TRUNC ans, "I64-R32-4")
+    
+      i64arr[i][j] := INT64 i64arr[i][j]
+      check.INT64(i64arr[i][j], INT64 ans, "I64-I64-1")
+      i64arr[id(i)][j] := INT64 i64arr[id(i)][j]
+      check.INT64(i64arr[i][j], INT64 ans, "I64-I64-2")
+    
+      i32arr[i][j] := INT32 i64arr[i][j]
+      check.INT32(i32arr[i][j], INT32 ans, "I64-I32-1")
+      i32arr[id(i)][j] := INT32 i64arr[id(i)][j]
+      check.INT32(i32arr[i][j], INT32 ans, "I64-I32-2")
+    
+      i16arr[i][j] := INT16 i64arr[i][j]
+      check.INT16(i16arr[i][j], INT16 ans, "I64-I16-1")
+      i16arr[id(i)][j] := INT16 i64arr[id(i)][j]
+      check.INT16(i16arr[i][j], INT16 ans, "I64-I16-2")
+    
+      iarr[i][j] := INT i64arr[i][j]
+      check.INT(iarr[i][j], INT ans, "I64-INT-1")
+      iarr[id(i)][j] := INT i64arr[id(i)][j]
+      check.INT(iarr[i][j], INT ans, "I64-INT-2")
+    --}}}
+    --{{{  more constant folding (bug INSdi02215, INSdi01895)
+    PROC constant.TIMES(VAL INT64 y)
+    
+      VAL zero.zero IS          0(INT64) :
+      VAL zero.one  IS          1(INT64) :
+      VAL zero.any  IS          2(INT64) :
+      VAL one.zero  IS #100000000(INT64) :
+      VAL one.one   IS #100000001(INT64) :
+      VAL one.any   IS #100000002(INT64) :
+      VAL any.zero  IS #200000000(INT64) :
+      VAL any.one   IS #200000001(INT64) :
+      VAL any.any   IS #200000002(INT64) :
+      VAL table IS [0(INT64), 1(INT64), 2(INT64), -1(INT64), -2(INT64),
+                    MOSTNEG INT64, MOSTPOS INT64, 10(INT64),
+                    zero.any,
+                    one.zero, one.one, one.any,
+                    any.zero, any.one, any.any,
+                    -zero.any,
+                    -one.zero, -one.one, -one.any,
+                    -any.zero, -any.one, -any.any ] :
+      SEQ
+        SEQ z = 0 FOR SIZE table
+          PROC local.check(VAL INT64 x, y, VAL []BYTE msg)
+            check.INT64(x, y TIMES table[z], msg)
+          :
+          INT64 res, x :
+          SEQ
+            x := id.INT64(table[z])
+    
+            res := x TIMES zero.zero
+            local.check(res, zero.zero, "INT64-a")
+            res := x TIMES zero.one
+            local.check(res, zero.one, "INT64-b")
+            res := x TIMES zero.any
+            local.check(res, zero.any, "INT64-c")
+          
+            res := x TIMES one.zero
+            local.check(res, one.zero, "INT64-d")
+            res := x TIMES one.one
+            local.check(res, one.one, "INT64-e")
+            res := x TIMES one.any
+            local.check(res, one.any, "INT64-f")
+          
+            res := x TIMES any.zero
+            local.check(res, any.zero, "INT64-g")
+            res := x TIMES any.one
+            local.check(res, any.one, "INT64-h")
+            res := x TIMES any.any
+            local.check(res, any.any, "INT64-i")
+          
+            res := zero.zero TIMES x
+            local.check(res, zero.zero, "INT64-j")
+            res := zero.one  TIMES x
+            local.check(res, zero.one, "INT64-k")
+            res := zero.any  TIMES x
+            local.check(res, zero.any, "INT64-l")
+          
+            res := one.zero  TIMES x
+            local.check(res, one.zero, "INT64-m")
+            res := one.one   TIMES x
+            local.check(res, one.one, "INT64-n")
+            res := one.any   TIMES x
+            local.check(res, one.any, "INT64-o")
+          
+            res := any.zero  TIMES x
+            local.check(res, any.zero, "INT64-p")
+            res := any.one   TIMES x
+            local.check(res, any.one, "INT64-q")
+            res := any.any   TIMES x
+            local.check(res, any.any, "INT64-r")
+    
+            res := y         TIMES x
+            local.check(res, y, "INT64-s")
+    :
+    constant.TIMES(27(INT64))
+    --}}}
+    --{{{  bug 334
+    PROC bug.334()
+      INT64 a, x, z :
+      SEQ
+        x, z := 99(INT64), -1(INT64)
+        VAL y IS (INT64 x) :  -- null conversion
+        SEQ
+          a := y
+          check.INT64(a, 99(INT64), "B334a")
+          check.INT64(y, 99(INT64), "B334b")
+        VAL y IS z * (INT64 x) :
+        SEQ
+          a := y
+          check.INT64(a, -99(INT64), "B334c")
+          check.INT64(y, -99(INT64), "B334d")
+    :
+    bug.334()
+    --}}}
+    --{{{  bug 670
+    PROC bug.670()
+      INT64 a,b :
+      SEQ
+        a := 2(INT64)
+        b := (a + 3(INT64)) TIMES 3(INT64)
+        check.INT64(b, 15(INT64), "B670a")
+    :
+    bug.670()
+    --}}}
+    --{{{  bug 1000
+    PROC bug.1000()
+      PROC q (VAL INT64 a0, a1, a2, a3, a4, INT64 b0, b1, b2, b3, b4)
+        b0, b1, b2, b3, b4 := a0, a1, a2, a3, a4
+      :
+      [5]INT64 z0, z1 :
+      SEQ
+        SEQ i = 0 FOR SIZE z0
+          z0[i], z1[i] := INT64 (-i), INT64 0
+        q(z0[0],z0[1],z0[2],z0[3],z0[4],z1[0],z1[1],z1[2],z1[3],z1[4])
+        SEQ i = 0 FOR SIZE z1
+          check(INT z1[i], -i, "B1000a")
+    :
+    bug.1000()
+    --}}}
+    --{{{  bug 1150
+    PROC bug.1150()
+      INT64 x, y :
+      VAL INT64 c IS   1(INT64) :
+      VAL INT64 d IS 100(INT64) :
+      SEQ
+        x, y := c, d
+        x := (x + x) + (y + y)
+        check.INT64(x, (c+c)+(d+d), "B1150a")
+        x, y := c, d
+        x := (x + x) - (y + y)
+        check.INT64(x, (c+c)-(d+d), "B1150b")
+        x, y := c, d
+        x := (x + x) + (x + x)
+        check.INT64(x, (c+c)+(c+c), "B1150c")
+        x, y := c, d
+        x := (x + x) - (x + x)
+        check.INT64(x, (c+c)-(c+c), "B1150d")
+        x, y := c, d
+        x := (y + y) + (x + x)
+        check.INT64(x, (d+d)+(c+c), "B1150e")
+        x, y := c, d
+        x := (y + y) - (x + x)
+        check.INT64(x, (d+d)-(c+c), "B1150f")
+        x := #1234567812345678(INT64)
+        y := 1(INT64)
+        x := (x /\ #000FFFFFFFFFFFFF(INT64))\/(((x>>52)+(y+1(INT64)))<<52)
+        check.INT64(x, #1254567812345678(INT64), "B1150g")
+    :
+    bug.1150()
+    --}}}
+    --{{{  bug 1274
+    PROC bug.1274()
+      INT64 x, y :
+      VAL c IS 10(INT64) :
+      VAL d IS 20(INT64) :
+      SEQ
+        y := c
+    
+        VAL a IS (c * c) + (c * d) :
+        SEQ
+          x := c
+          x := (y * c) + (y * d)
+          check.INT64(x, a, "B1274-6a+")
+          x := c
+          x := (x * c) + (y * d)
+          check.INT64(x, a, "B1274-6b+")
+          x := c
+          x := (y * c) + (x * d)
+          check.INT64(x, a, "B1274-6c+")
+          x := c
+          x := (x * c) + (x * d)
+          check.INT64(x, a, "B1274-6d+")
+    
+        VAL a IS (c * c) PLUS (c * d) :
+        SEQ
+          x := c
+          x := (y * c) PLUS (y * d)
+          check.INT64(x, a, "B1274-6aP")
+          x := c
+          x := (x * c) PLUS (y * d)
+          check.INT64(x, a, "B1274-6bP")
+          x := c
+          x := (y * c) PLUS (x * d)
+          check.INT64(x, a, "B1274-6cP")
+          x := c
+          x := (x * c) PLUS (x * d)
+          check.INT64(x, a, "B1274-6dP")
+    
+        VAL a IS (c * c) * (c * d) :
+        SEQ
+          x := c
+          x := (y * c) * (y * d)
+          check.INT64(x, a, "B1274-6a**")
+          x := c
+          x := (x * c) * (y * d)
+          check.INT64(x, a, "B1274-6b**")
+          x := c
+          x := (y * c) * (x * d)
+          check.INT64(x, a, "B1274-6c**")
+          x := c
+          x := (x * c) * (x * d)
+          check.INT64(x, a, "B1274-6d**")
+    
+        VAL a IS (c * c) TIMES (c * d) :
+        SEQ
+          x := c
+          x := (y * c) TIMES (y * d)
+          check.INT64(x, a, "B1274-6aT")
+          x := c
+          x := (x * c) TIMES (y * d)
+          check.INT64(x, a, "B1274-6bT")
+          x := c
+          x := (y * c) TIMES (x * d)
+          check.INT64(x, a, "B1274-6cT")
+          x := c
+          x := (x * c) TIMES (x * d)
+          check.INT64(x, a, "B1274-6dT")
+    
+    :
+    bug.1274()
+    --}}}
+    --{{{  bug 1333
+    PROC bug.1333()
+      INT64 x :
+      BOOL b :
+      SEQ
+        x := 27(INT64)
+        b := x < #FFFFFFFF80000000(INT64)
+        check(INT b, INT FALSE, "B1333a6")
+        b := x < #FFFFFFFF80000001(INT64)
+        check(INT b, INT FALSE, "B1333b6")
+        b := x < #FFFFFFFFFFFFFFFF(INT64)
+        check(INT b, INT FALSE, "B1333c6")
+        b := x < #FFFFFFFF7FFFFFFF(INT64)
+        check(INT b, INT FALSE, "B1333d6")
+        b := x < #0000000080000000(INT64)
+        check(INT b, INT TRUE, "B1333e6")
+        b := x < #0000000080000001(INT64)
+        check(INT b, INT TRUE, "B1333f6")
+        b := x < #00000000FFFFFFFF(INT64)
+        check(INT b, INT TRUE, "B1333g6")
+        b := x < #000000007FFFFFFF(INT64)
+        check(INT b, INT TRUE, "B1333h6")
+    :
+    bug.1333()
+    --}}}
+    --{{{  bug 1546
+    PROC bug.1546a()
+      INT64 x, y :
+      INT places :
+      SEQ
+        x, places := ~#F(INT64), 2
+        y := (x >> places) \/ ((- (INT64 (x < 0(INT64)))) << (64-places))
+        check.INT64(y, ~#3(INT64), "B1546a")
+    :
+    bug.1546a()
+    --}}}
+    --{{{  bug TS/2020
+    PROC bug.TS.2020()
+      INT64 i64, mostneg, mostpos :
+      SEQ
+        i64 := (MOSTNEG INT64) REM (-1(INT64))
+        check.INT64(i64, 0(INT64), "B2020ca")
+        i64 := (MOSTNEG INT64) REM ( 1(INT64))
+        check.INT64(i64, 0(INT64), "B2020cb")
+        i64 := (MOSTPOS INT64) REM (-1(INT64))
+        check.INT64(i64, 0(INT64), "B2020cc")
+        i64 := (MOSTPOS INT64) REM ( 1(INT64))
+        check.INT64(i64, 0(INT64), "B2020cd")
+        i64 := (MOSTNEG INT64) /   ( 1(INT64))
+        check.INT64(i64, MOSTNEG INT64, "B2020ce")
+        i64 := (MOSTPOS INT64) /   (-1(INT64))
+        check.INT64(i64, (MOSTNEG INT64) + 1(INT64), "B2020cf")
+        i64 := (MOSTPOS INT64) /   ( 1(INT64))
+        check.INT64(i64, MOSTPOS INT64, "B2020cg")
+    
+        mostneg, mostpos := MOSTNEG INT64, MOSTPOS INT64
+    
+        i64 := (mostneg) REM (-1(INT64))
+        check.INT64(i64, 0(INT64), "B2020ch")
+        i64 := (mostneg) REM ( 1(INT64))
+        check.INT64(i64, 0(INT64), "B2020ci")
+        i64 := (mostpos) REM (-1(INT64))
+        check.INT64(i64, 0(INT64), "B2020cj")
+        i64 := (mostpos) REM ( 1(INT64))
+        check.INT64(i64, 0(INT64), "B2020ck")
+        i64 := (mostneg) /   ( 1(INT64))
+        check.INT64(i64, MOSTNEG INT64, "B2020cl")
+        i64 := (mostpos) /   (-1(INT64))
+        check.INT64(i64, (MOSTNEG INT64) + 1(INT64), "B2020cm")
+        i64 := (mostpos) /   ( 1(INT64))
+        check.INT64(i64, MOSTPOS INT64, "B2020cn")
+    :
+    bug.TS.2020()
+    --}}}
+    --{{{  bug INSdi02195
+    PROC bug.INSdi02195()
+      --{{{  functions
+      BOOL   FUNCTION BOOL.fn   (VAL INT x) IS BOOL  x :
+      BYTE   FUNCTION BYTE.fn   (VAL INT x) IS BYTE  x :
+      INT16  FUNCTION INT16.fn  (VAL INT x) IS INT16 x :
+      INT    FUNCTION INT.fn    (VAL INT x) IS x :
+      INT32  FUNCTION INT32.fn  (VAL INT x) IS INT32 x :
+      INT64  FUNCTION INT64.fn  (VAL INT x) IS INT64 x :
+      REAL32 FUNCTION REAL32.fn (VAL INT x) IS REAL32 ROUND x :
+      REAL64 FUNCTION REAL64.fn (VAL INT x) IS REAL64 ROUND x :
+      --}}}
+      --{{{  variables
+      BOOL bool.var :
+      BYTE byte.var :
+      INT16 i16.var :
+      INT32 i32.var :
+      INT64 i64.var :
+      INT   int.var :
+      REAL32 r32.var :
+      REAL64 r64.var :
+      INT zero, int :
+      --}}}
+      INT64 local.i, local.j, local.k :
+      SEQ
+        zero := id(0)
+        int := id(77)
+        --{{{  INT64 var -> type -> INT64         00 - 09
+        local.j := id.INT64(1(INT64))
+        
+        local.i := INT64 (BOOL local.j)
+        check.INT64(local.i, 1(INT64), "INT64-00")
+        
+        local.j := id.INT64(77(INT64))
+        
+        local.i := INT64 (BYTE local.j)
+        check.INT64(local.i, 77(INT64), "INT64-01")
+        local.i := INT64 (INT local.j)
+        check.INT64(local.i, 77(INT64), "INT64-02")
+        local.i := INT64 (INT16 local.j)
+        check.INT64(local.i, 77(INT64), "INT64-03")
+        local.i := INT64 (INT32 local.j)
+        check.INT64(local.i, 77(INT64), "INT64-04")
+        local.i := INT64 (INT64 local.j)
+        check.INT64(local.i, 77(INT64), "INT64-05")
+        local.i := INT64 ROUND (REAL32 ROUND local.j)
+        check.INT64(local.i, 77(INT64), "INT64-06")
+        local.i := INT64 ROUND (REAL64 ROUND local.j)
+        check.INT64(local.i, 77(INT64), "INT64-07")
+        --}}}
+        --{{{  INT64 FUNCTION -> type -> INT64    10 - 19
+        local.j := id.INT64(1(INT64))
+        
+        local.i := INT64 (BOOL INT64.fn(INT local.j))
+        check.INT64(local.i, 1(INT64), "INT64-10")
+        
+        local.j := id.INT64(77(INT64))
+        
+        local.i := INT64 (BYTE INT64.fn(INT local.j))
+        check.INT64(local.i, 77(INT64), "INT64-11")
+        local.i := INT64 (INT INT64.fn(INT local.j))
+        check.INT64(local.i, 77(INT64), "INT64-12")
+        local.i := INT64 (INT16 INT64.fn(INT local.j))
+        check.INT64(local.i, 77(INT64), "INT64-13")
+        local.i := INT64 (INT32 INT64.fn(INT local.j))
+        check.INT64(local.i, 77(INT64), "INT64-14")
+        local.i := INT64 (INT64 INT64.fn(INT local.j))
+        check.INT64(local.i, 77(INT64), "INT64-15")
+        local.i := INT64 ROUND (REAL32 ROUND (INT64.fn(INT local.j)))
+        check.INT64(local.i, 77(INT64), "INT64-16")
+        local.i := INT64 ROUND (REAL64 ROUND (INT64.fn(INT local.j)))
+        check.INT64(local.i, 77(INT64), "INT64-17")
+        --}}}
+        --{{{  INT64 exp -> type -> INT64         20 - 29
+        local.k := id.INT64(0(INT64))
+        
+        local.j := id.INT64(1(INT64))
+        
+        local.i := INT64 (BOOL (local.j + local.k))
+        check.INT64(local.i, 1(INT64), "INT64-20")
+        
+        local.j := id.INT64(77(INT64))
+        
+        local.i := INT64 (BYTE (local.j + local.k))
+        check.INT64(local.i, 77(INT64), "INT64-21")
+        local.i := INT64 (INT (local.j + local.k))
+        check.INT64(local.i, 77(INT64), "INT64-22")
+        local.i := INT64 (INT16 (local.j + local.k))
+        check.INT64(local.i, 77(INT64), "INT64-23")
+        local.i := INT64 (INT32 (local.j + local.k))
+        check.INT64(local.i, 77(INT64), "INT64-24")
+        local.i := INT64 (INT64 (local.j + local.k))
+        check.INT64(local.i, 77(INT64), "INT64-25")
+        local.i := INT64 ROUND (REAL32 ROUND (local.j + local.k))
+        check.INT64(local.i, 77(INT64), "INT64-26")
+        local.i := INT64 ROUND (REAL64 ROUND (local.j + local.k))
+        check.INT64(local.i, 77(INT64), "INT64-27")
+        --}}}
+        --{{{  type var -> INT64                  30 - 39
+        bool.var := BOOL id(1)
+        local.i := INT64 bool.var
+        check.INT64(local.i, 1(INT64), "INT64-30")
+        byte.var := BYTE id(77)
+        local.i := INT64 byte.var
+        check.INT64(local.i, 77(INT64), "INT64-31")
+        int.var := id.INT(77(INT))
+        local.i := INT64 int.var
+        check.INT64(local.i, 77(INT64), "INT64-32")
+        i16.var := id.INT16(77(INT16))
+        local.i := INT64 i16.var
+        check.INT64(local.i, 77(INT64), "INT64-33")
+        i32.var := id.INT32(77(INT32))
+        local.i := INT64 i32.var
+        check.INT64(local.i, 77(INT64), "INT64-34")
+        i64.var := id.INT64(77(INT64))
+        local.i := INT64 i64.var
+        check.INT64(local.i, 77(INT64), "INT64-35")
+        r32.var := id.REAL32(77.0(REAL32))
+        local.i := INT64 ROUND r32.var
+        check.INT64(local.i, 77(INT64), "INT64-36")
+        r64.var := id.REAL64(77.0(REAL64))
+        local.i := INT64 ROUND r64.var
+        check.INT64(local.i, 77(INT64), "INT64-37")
+        --}}}
+        --{{{  type FUNCTION -> INT64             40 - 49
+        local.i := INT64 BOOL.fn(zero)
+        check.INT64(local.i, 0(INT64), "INT64-40")
+        local.i := INT64 BYTE.fn(int)
+        check.INT64(local.i, 77(INT64), "INT64-41")
+        local.i := INT64 INT.fn(int)
+        check.INT64(local.i, 77(INT64), "INT64-42")
+        local.i := INT64 INT16.fn(int)
+        check.INT64(local.i, 77(INT64), "INT64-43")
+        local.i := INT64 INT32.fn(int)
+        check.INT64(local.i, 77(INT64), "INT64-44")
+        local.i := INT64 INT64.fn(int)
+        check.INT64(local.i, 77(INT64), "INT64-45")
+        local.i := INT64 ROUND REAL32.fn(int)
+        check.INT64(local.i, 77(INT64), "INT64-46")
+        local.i := INT64 ROUND REAL64.fn(int)
+        check.INT64(local.i, 77(INT64), "INT64-47")
+        --}}}
+        --{{{  type exp -> INT64                  50 - 59
+        bool.var := BOOL id(1)
+        local.i := INT64 (bool.var = bool.var)
+        check.INT64(local.i, 1(INT64), "INT64-50")
+        byte.var := BYTE id(77)
+        local.i := INT64 byte.var
+        check.INT64(local.i, 77(INT64), "INT64-51")
+        int.var := id.INT(77(INT))
+        local.i := INT64 (int.var + (INT   zero))
+        check.INT64(local.i, 77(INT64), "INT64-52")
+        i16.var := id.INT16(77(INT16))
+        local.i := INT64 (i16.var + (INT16 zero))
+        check.INT64(local.i, 77(INT64), "INT64-53")
+        i32.var := id.INT32(77(INT32))
+        local.i := INT64 (i32.var + (INT32 zero))
+        check.INT64(local.i, 77(INT64), "INT64-54")
+        i64.var := id.INT64(77(INT64))
+        local.i := INT64 (i64.var + (INT64 zero))
+        check.INT64(local.i, 77(INT64), "INT64-55")
+        r32.var := id.REAL32(77.0(REAL32))
+        local.i := INT64 ROUND (r32.var + (REAL32 ROUND zero))
+        check.INT64(local.i, 77(INT64), "INT64-56")
+        r64.var := id.REAL64(77.0(REAL64))
+        local.i := INT64 ROUND (r64.var + (REAL64 ROUND zero))
+        check.INT64(local.i, 77(INT64), "INT64-57")
+        --}}}
+    :
+    bug.INSdi02195()
+    --}}}
+    --{{{  bug INSdi02423
+    PROC bug.INSdi02423()
+    
+      PROC CheckOverflow ( VAL INT64 address, INT64 result)
+        result := address
+      :  
+    
+      PROC local(VAL INT Areg, Breg, VAL INT64 expected0, expected1, VAL []BYTE msg)
+        INT64 XBreg, XAreg, Xtimes :
+        INT64 result0, result1 :
+        SEQ
+          CheckOverflow ( (INT64 Breg)TIMES(INT64 Areg), result0 )
+          XBreg := (INT64 Breg)
+          XAreg := (INT64 Areg)
+          Xtimes := XAreg TIMES XBreg
+          CheckOverflow (Xtimes, result1)
+          check.INT64(result0, expected0, msg)
+          check.INT64(result1, expected0, msg)
+    
+          CheckOverflow ( (INT64 Breg)*(INT64 Areg), result0 )
+          Xtimes := XAreg * XBreg
+          CheckOverflow (Xtimes, result1)
+          check.INT64(result0, expected0, msg)
+          check.INT64(result1, expected0, msg)
+    
+          CheckOverflow ( (INT64 Breg)+(INT64 Areg), result0 )
+          Xtimes := XAreg + XBreg
+          CheckOverflow (Xtimes, result1)
+          check.INT64(result0, expected1, msg)
+          check.INT64(result1, expected1, msg)
+    
+          CheckOverflow ( (INT64 Breg)PLUS(INT64 Areg), result0 )
+          Xtimes := XAreg PLUS XBreg
+          CheckOverflow (Xtimes, result1)
+          check.INT64(result0, expected1, msg)
+          check.INT64(result1, expected1, msg)
+      :
+      SEQ
+        local(    1,     2,     2(INT64),  3(INT64), "di2423a")
+        local(    2,     1,     2(INT64),  3(INT64), "di2423b")
+        local(   -1,     2,    -2(INT64),  1(INT64), "di2423c")
+        local(    1,    -2,    -2(INT64), -1(INT64), "di2423d")
+        local(   -1,     1,    -1(INT64),  0(INT64), "di2423e")
+        local(    1,    -1,    -1(INT64),  0(INT64), "di2423f")
+        local(    1,     0,     0(INT64),  1(INT64), "di2423g")
+        local(    0,     1,     0(INT64),  1(INT64), "di2423h")
+        local(    0,    -1,     0(INT64), -1(INT64), "di2423i")
+        local(   -1,     0,     0(INT64), -1(INT64), "di2423j")
+    :
+    bug.INSdi02423()
+    --}}}
+    --{{{  bug INSdi02439
+    PROC bug.INSdi02439()
+      SEQ
+        PROTOCOL CONTROL  IS  INT; INT64 :
+        CHAN OF CONTROL ControlToMonitor:
+        PAR
+          SEQ
+            SEQ i = 0 FOR 4
+              INT   ii :
+              INT64 j :
+              SEQ
+                ControlToMonitor ? ii; j
+                check(i, INT j, "di2439a")
+                check(i, ii,    "di2439b")
+          SEQ i = 0 FOR 4
+            ControlToMonitor ! i; INT64 i
+    :
+    bug.INSdi02439()
+    --}}}
+    --{{{  bug INSdi03354
+    PROC bug.INSdi03354()
+      INT v1a, v1b :
+      INT64 v2, v3 :
+      SEQ
+        v1a := id(835)
+        v2 := (INT64 v1a) TIMES 100000(INT64)
+        check.INT64(v2, 83500000(INT64), "di03354a")
+    
+        v1b := id(v1a)
+        v3 := (INT64 v1b) * 100000(INT64)
+        check.INT64(v3, 83500000(INT64), "di03354b")
+    
+        v2 := id.INT64(835(INT64)) TIMES 100000(INT64)
+        check.INT64(v2, 83500000(INT64), "di03354c")
+    
+        v3 := id.INT64(835(INT64)) * 100000(INT64)
+        check.INT64(v3, 83500000(INT64), "di03354d")
+    :
+    bug.INSdi03354()
+    --}}}
+:
+do.INT64 ()

@@ -1,0 +1,119 @@
+-- version control marker $Id: cg57type.occ,v 1.1 1995/10/11 10:22:41 djb1 Exp $
+-- This file is included many times from 'cgtest57'.
+-- The idea is that 'type' is parameterised to various different types,
+-- and this file is compiled for these different types
+PROC local.set()
+  --{{{  helful routines
+  PROC init.type (type x)
+    x := init.value
+  :
+  PROC zero.type (type x)
+    x := zero.value
+  :
+  type FUNCTION id.type(VAL type x) IS x :
+  type, type FUNCTION swap(VAL type x, y) IS y, x :
+  type FUNCTION add.3(VAL type x, y, z) IS add(add(x, y), z) :
+  type FUNCTION add.4(VAL type w, x, y, z) IS add(add(w, x), add(y, z)) :
+  
+  --}}}
+  --{{{  code which exercises functions returning 'type'
+  type a, w, x, y, z :
+  SEQ
+    title(type.string)
+  
+    --{{{  initialisations
+    zero.type(x)
+    check.type(x, zero.value, "FNARR00")
+    init.type(x)
+    check.type(x, init.value, "FNARR01")
+    --}}}
+    --{{{  simple fn calls
+    y := double(x)
+    check.type(y, double.value, "FNARR10")
+    z := add(x, y)
+    check.type(z, treble.value, "FNARR11")
+    z := add(x, z)
+    check.type(z, quad.value, "FNARR12")
+    z := add(z, minus.value)
+    check.type(z, treble.value, "FNARR13")
+    check.type(x, double(half.value), "FNARR14")
+    
+    --}}}
+    --{{{  nested fn calls
+    init.type(x)
+    init.type(y)
+    z := add(double(x), double(y))
+    check.type(z, quad.value, "FNARR20")
+    y := z
+    check.type(y, quad.value, "FNARR21")
+    x := add(negate(y), z)
+    check.type(x, zero.value, "FNARR22")
+    x := add(y, negate(z))
+    check.type(x, zero.value, "FNARR23")
+    y := add(negate(y), z)
+    check.type(y, zero.value, "FNARR24")
+    x := add(negate(y), z)
+    check.type(x, quad.value, "FNARR25")
+    --}}}
+    --{{{  multi nested fn calls
+    init.type(x)
+    init.type(y)
+    check.type(add(double(x), double(y)), quad.value, "FNARR30")
+    --}}}
+    --{{{  ditto passed as params
+    z := add(double(negate(x)), double(negate(y)))
+    check.type(z, negate(quad.value), "FNARR40")
+    check.type(add(double(negate(x)), double(negate(y))), negate(quad.value), "FNARR41")
+    --}}}
+    --{{{  swapping
+    y := double(y)
+    x, y := swap(x, y)
+    check.type(x, double.value, "FNARR50")
+    check.type(y,   init.value, "FNARR51")
+    x, y := swap(double(x), double(y))
+    check.type(x, double.value, "FNARR52")
+    check.type(y,   quad.value, "FNARR53")
+    
+    init.type(x)
+    init.type(y)
+    y := double(y)
+    x, y := swap(y, x)
+    check.type(y, double.value, "FNARR54")
+    check.type(x,   init.value, "FNARR55")
+    x, y := swap(double(y), double(x))
+    check.type(x, double.value, "FNARR56")
+    check.type(y,   quad.value, "FNARR57")
+    --}}}
+    --{{{  multiple params
+    init.type(w)
+    init.type(x)
+    init.type(y)
+    init.type(z)
+    
+    a := add.4(w, x, y, z)
+    check.type(a, quad.value, "FNARR60")
+    check.type(add.4(w, x, y, z), quad.value, "FNARR61")
+    a := add.3(w, x, add(y, z))
+    check.type(a, quad.value, "FNARR62")
+    check.type(add.3(w, x, add(y, z)), quad.value, "FNARR63")
+    
+    --}}}
+    --{{{  multiple assignment
+    x, y := init.value, double.value
+    check.type(x, init.value, "FNARR70")
+    check.type(y, double.value, "FNARR71")
+    w, z := id.type(y), id.type(x)
+    check.type(z, init.value, "FNARR72")
+    check.type(w, double.value, "FNARR73")
+    x, y := id.type(y), id.type(x)
+    check.type(y, init.value, "FNARR74")
+    check.type(x, double.value, "FNARR75")
+    
+    x, y, z := add(x, y), add(y, z), add(x, z)
+    check.type(x, treble.value, "FNARR76")
+    check.type(y, double.value, "FNARR77")
+    check.type(z, treble.value, "FNARR78")
+    --}}}
+  --}}}
+:
+local.set()

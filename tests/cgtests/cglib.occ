@@ -1,0 +1,176 @@
+-- version control marker $Id: cglib.occ,v 1.6 1997/01/30 12:31:09 dcw Exp $
+--
+-- Cut-down version of the output utilities from the course library
+
+--{{{  some constants
+VAL BYTE BELL IS 7(BYTE):
+VAL BYTE NULL IS 0(BYTE):
+VAL BYTE BACK IS 8(BYTE):
+VAL BYTE DELETE IS 127(BYTE):
+--}}}
+
+--{{{  out stuff
+PROC out.repeat (VAL BYTE ch,  VAL INT n,  CHAN OF BYTE out)
+  --{{{
+  IF
+    n > 0
+      SEQ i = 0 FOR n
+        SEQ
+          out ! ch
+    TRUE
+      SKIP
+  --}}}
+:
+
+PROC out.ch (VAL BYTE ch,  VAL INT field,  CHAN OF BYTE out)
+  --{{{
+  SEQ
+    out.repeat (' ', field - 1, out)
+    out ! ch
+  --}}}
+:
+
+PROC out.ch.funny (VAL BYTE ch,  VAL INT field,  CHAN OF [1]BYTE out)
+  --{{{
+  SEQ
+    VAL [1]BYTE thing RETYPES ch:
+    out ! thing
+  --}}}
+:
+
+PROC out.nl (CHAN OF BYTE out)
+  SEQ
+    out ! '*c'
+    out ! '*n'
+:
+
+PROC in.ch (BYTE ch, CHAN OF BYTE in)
+  --{{{
+  in ? ch
+  --}}}
+:
+
+PROC out.bell (CHAN OF BYTE out)
+  --{{{
+  out.ch (BELL, 1, out)
+  --}}}
+:
+
+PROC out.string (VAL []BYTE s,  VAL INT field,  CHAN OF BYTE out)
+  --{{{
+  VAL length IS SIZE s:
+  SEQ
+    out.repeat (' ', field - length, out)
+    SEQ i = 0 FOR length
+      SEQ
+        out ! s [i]
+  --}}}
+:
+
+PROC out.number (VAL INT n,  VAL INT field,  CHAN OF BYTE out)
+  --{{{
+  VAL max.digits IS 20:
+  [max.digits]INT D:
+  INT x, i:
+  IF
+    (n = 0)
+      --{{{  zero
+      SEQ
+        IF
+          (1 < field)
+            out.repeat (' ', field - 1, out)
+          (TRUE)
+            SKIP
+        out ! '0'
+      --}}}
+    (TRUE)
+      SEQ
+        i := 0     --  bring this line up here,   Vedat
+        --{{{  check negative
+        IF
+          (n < 0)
+            SEQ        -- this one can handle MOSTNEG INT as well
+              D [i] := -(n\10)
+              x := -(n/10)
+              i:= i + 1
+          (TRUE)         -- (n > 0)
+            x := n
+        --}}}
+        --{{{  decompose
+        -- i := 0   -- this line goes up in order to handle MOSTNEG INT
+        WHILE x > 0
+          SEQ
+            D [i] := x\10
+            x := x/10
+            i := i + 1
+        --}}}
+        --{{{  pad
+        IF
+          (n > 0)
+            out.repeat (' ', field - i, out)
+          (TRUE)
+            SEQ
+              out.repeat (' ', (field - 1) - i, out)
+              out ! '-'
+        --}}}
+        --{{{  output
+        WHILE i > 0
+          SEQ
+            i := i - 1
+            out ! BYTE (D [i] + (INT '0'))
+        --}}}
+  --}}}
+:
+
+PROC out.bool (VAL BOOL b,  VAL INT field,  CHAN OF BYTE out)
+  --{{{
+  IF
+    (b = TRUE)
+      out.ch ('1', field, out)
+    (b = FALSE)
+      out.ch ('0', field, out)
+    (TRUE)
+      out.ch ('.', field, out)
+  --}}}
+:
+
+PROC out.yes.no (VAL BOOL b,  VAL INT field,  CHAN OF BYTE out)
+  --{{{
+  IF
+    b
+      out.string ("yes", field, out)
+    TRUE
+      out.string ("no", field, out)
+  --}}}
+:
+
+PROC out.hex.int (VAL INT x, l, CHAN OF BYTE out)
+  --{{{  body of cg.write.hex.int
+  -- this procedure ignores the field length parameter 'l'
+  -- independent of endianism - DCW
+  VAL INT nibble          IS #F:
+  VAL INT hex.dig.per.int IS 8:
+  VAL INT bit.per.hex.dig IS 4:
+  VAL hex.dig             IS "0123456789ABCDEF":
+  INT digit, mask, shift:
+  [12]BYTE s:
+  SEQ
+    s[0]:= '#'
+    SEQ i = 1 FOR hex.dig.per.int
+      SEQ
+        shift :=  (hex.dig.per.int - i) * bit.per.hex.dig
+        digit := (x >> shift) /\ nibble
+        s[i]:= hex.dig[digit]
+  
+    out.string ([s FROM 0 FOR (hex.dig.per.int + 1)], 0, out)
+  --}}}
+:
+
+PROC black.hole (CHAN OF BYTE in)
+  --{{{
+  WHILE TRUE
+    BYTE any:
+    in ? any
+  --}}}
+:
+--}}}
