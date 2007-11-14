@@ -1,0 +1,131 @@
+--
+--	cgtest87.occ -- channel direction specifiers
+--	Copyright (C) 2002 Fred Barnes <frmb2@ukc.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+
+
+PROC cgtest87 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  --{{{  tests
+  --{{{  test0 -- parameters, some abbreviations
+  PROC test0 ()
+
+    PROC reader (INT x, CHAN INT in?)
+      in ? x
+    :
+
+    PROC writer (VAL INT x, CHAN INT out!)
+      out ! x
+    :
+
+    SEQ
+
+      CHAN INT c:
+      PAR
+        writer (42, c!)
+        INT x:
+        SEQ
+          reader (x, c?)
+          check.INT (id.INT (x), 42, "test0.0")
+
+      CHAN INT c:
+      PAR
+        CHAN INT d! IS c!:
+        writer (1234, d!)
+        INT x:
+        CHAN INT d? IS c?:
+        SEQ
+          reader (x, d?)
+          check.INT (id.INT (x), 1234, "test0.1")
+
+  :
+  --}}}
+  --{{{  test1 -- array parameters, some abbreviations
+  PROC test1 ()
+
+    PROC a.reader (INT x, VAL INT idx, []CHAN INT in?)
+      IF
+        (idx < 0) OR (idx >= (SIZE in?))
+          STOP
+        TRUE
+          in[idx] ? x
+    :
+
+    PROC a.writer (VAL INT x, idx, []CHAN INT out!)
+      IF
+        (idx < 0) OR (idx >= (SIZE out!))
+          STOP
+        TRUE
+          out[idx] ! x
+    :
+
+    SEQ
+      
+      [1]CHAN INT ca:
+      PAR
+        a.writer (99, 0, ca!)
+        INT x:
+        SEQ
+          a.reader (x, 0, ca?)
+          check.INT (id.INT (x), 99, "test1.0")
+
+      [1]CHAN INT ca:
+      PAR
+        []CHAN INT da! IS ca!:
+        a.writer (4321, 0, da!)
+        INT x:
+        []CHAN INT da? IS ca?:
+        SEQ
+          a.reader (x, 0, da?)
+          check.INT (id.INT (x), 4321, "test1.1")
+
+      [1]CHAN INT ca:
+      INT n:
+      SEQ
+        n := 1
+        PAR
+          []CHAN INT da! IS [ca! FOR n]:
+          a.writer (777, n-1, da!)
+
+          INT x:
+          []CHAN INT da? IS [ca? FOR n]:
+          SEQ
+            a.reader (x, n-1, da?)
+            check.INT (id.INT (x), 777, "test1.2")
+  :
+  --}}}
+  --{{{  test2 -- abbreviations
+  PROC test2 ()
+    SKIP
+  :
+  --}}}
+  --}}}
+
+  SEQ
+    init ("CG test 87", "channel direction specifiers")
+    title ("parameters and abbreviations")
+    test0 ()
+    test1 ()
+    test2 ()
+    finish ()
+:
+
+

@@ -1,0 +1,135 @@
+-- version control marker $Id: cgtest16.occ,v 1.4 1995/10/10 12:57:33 djb1 Exp $
+-- Multiple assignment of arrays
+
+PROC cgtest16 (CHAN OF BYTE keyb, scr, err)
+  #INCLUDE "cgmain.occ"
+
+  --{{{  PROC check.byte.array(VAL []BYTE is, should.be, where)
+  PROC check.byte.array(VAL []BYTE is, should.be, where)
+    SEQ
+      IF
+        IF i = 0 FOR SIZE is
+          is[i] <> should.be[i]
+            check.BYTE (is[i], should.be[i], where)
+        TRUE
+          check.BYTE ('a', 'a', where)
+  :
+  --}}}
+  --{{{  PROC check.2d.byte.array(VAL [2][2]BYTE is, should.be, VAL []BYTE where)
+  PROC check.2d.byte.array(VAL [2][2]BYTE is, should.be, VAL []BYTE where)
+    SEQ
+      IF
+        IF i = 0 FOR SIZE is
+          IF j = 0 FOR SIZE is[0]
+            is[i][j] <> should.be[i][j]
+              check.BYTE (is[i][j], should.be[i][j], where)
+        TRUE
+          check.BYTE ('a', 'a', where)
+  :
+  --}}}
+  INT key :
+  SEQ
+    init ("CG test 16", "Multi-assignment of arrays")
+    --{{{  test
+    PROC main.test()
+      [5]BYTE a, b, c, d, e:
+      [5]INT x:
+      INT i, j:
+      SEQ
+        a := "hello"
+        b := "world"
+        a, b := b, a
+        check.byte.array(a, "world", "AM01")
+        check.byte.array(b, "hello", "AM02")
+        SEQ
+          a := "hello"
+          b := "world"
+          c := "what "
+          d := "a to "
+          e := "do!!!"
+          a, b, c, d := d, c, b, a
+          check.byte.array (a, "a to ", "AM03")
+          check.byte.array (b, "what ", "AM04")
+          check.byte.array (c, "world", "AM05")
+          check.byte.array (d, "hello", "AM06")
+        a, b := "hello", "world"
+        i, j := 1, 2
+        a, b, i, j := b, a, j, i
+        check.byte.array (a, "world", "AM07")
+        check.byte.array (b, "hello", "AM08")
+        check(i, 2, "AM09")
+        check(j, 1, "AM10")
+        BYTE i, j, k, l, m, v, w, x, y, z :
+        SEQ
+          i, j, k, l, m := 'i', 'j', 'k', 'l', 'm'
+          v, w, x, y, z := 'v', 'w', 'x', 'y', 'z'
+          VAL c1 IS [v, w, x, y, z]:
+          VAL c2 IS [i, j, k, l, m]:
+          SEQ
+            a, b := c1, c2
+            check.byte.array(a, c1, "AM11")
+            check.byte.array(b, c2, "AM12")
+        BYTE i, j, k, l, m, v, w, x, y, z :
+        SEQ
+          i, j, k, l, m := 'i', 'j', 'k', 'l', 'm'
+          v, w, x, y, z := 'v', 'w', 'x', 'y', 'z'
+          SEQ
+            a, b := [v, w, x, y, z], [i, j, k, l, m]
+            check.byte.array(a, [v, w, x, y, z], "AM13")
+            check.byte.array(b, [i, j, k, l, m], "AM14")
+        BYTE a, b, c, d, e, f, g, h :
+        [2][2]BYTE ar, br :
+        SEQ
+          a, b, c, d, e, f, g, h := 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'
+          ar, br := [[a, b], [c, d]], [[e, f], [g, h]]
+          check.2d.byte.array(ar, [[a, b], [c, d]], "AM15")
+          check.2d.byte.array(br, [[e, f], [g, h]], "AM16")
+        SKIP
+    :
+    main.test()
+    --}}}
+    --{{{  bug INSdi03379
+    PROC bug.INSdi03379()
+      PROC init([2]BYTE hdr)
+        hdr := "AB"
+      :
+      PROC my.check(VAL [2]BYTE hdr, VAL []BYTE msg)
+        SEQ
+          check.BYTE(hdr[0], 'B', msg)
+          check.BYTE(hdr[1], 'A', msg)
+      :
+      PROC swap(BYTE b1, b2)
+        b1, b2 := b2, b1
+      :
+      INLINE PROC inline.swap(BYTE b1, b2)
+        b1, b2 := b2, b1
+      :
+      [2]BYTE hdr :
+      SEQ
+        init(hdr)
+        hdr[0], hdr[1] := hdr[1], hdr[0]
+        my.check(hdr, "di3379a")
+    
+        init(hdr)
+        hdr := [hdr[1], hdr[0]]
+        my.check(hdr, "di3379b")
+    
+        init(hdr)
+        [2]BYTE t :
+        SEQ
+          t := [hdr[1], hdr[0]]
+          hdr := t
+        my.check(hdr, "di3379c")
+    
+        init(hdr)
+        swap(hdr[0], hdr[1])
+        my.check(hdr, "di3379d")
+    
+        init(hdr)
+        inline.swap(hdr[0], hdr[1])
+        my.check(hdr, "di3379e")
+    :
+    bug.INSdi03379()
+    --}}}
+    finish ()
+:

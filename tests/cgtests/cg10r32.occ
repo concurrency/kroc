@@ -1,0 +1,786 @@
+-- version control marker $Id: cg10r32.occ,v 1.2 1995/10/09 16:43:35 svd Exp $
+PROC do.REAL32 ()
+  REAL32 a, b :
+  SEQ
+    b := 8.6 (REAL32)
+    --{{{  output message
+    title ("REAL32 arithmetic")
+    --}}}
+    --{{{  check arithmetic operators              (R32-001 to 099)
+    a := b + 2.3 (REAL32)
+    check.REAL32 (a, 8.6(REAL32) + 2.3(REAL32), "R32-001")
+    a := b - 2.3 (REAL32)
+    check.REAL32 (a, 8.6(REAL32) - 2.3(REAL32), "R32-002")
+    a := b * 2.3 (REAL32)
+    check.REAL32 (a, 8.6(REAL32) * 2.3(REAL32), "R32-003")
+    a := b / 2.3 (REAL32)
+    check.REAL32 (a, 8.6(REAL32) / 2.3(REAL32), "R32-004")
+    a := b \ 2.3 (REAL32)
+    check.REAL32 (a, 8.6(REAL32) \ 2.3(REAL32), "R32-005")
+    a := (- b)
+    check.REAL32 (a, -8.6(REAL32), "R32-006")
+    --}}}
+    --{{{  check comparison operators              (R32-200 to 299)
+    a := 4.7(REAL32)
+    x := a = b
+    check.BOOL (x, FALSE, "R32-206")
+    x := a > b
+    check.BOOL (x, FALSE, "R32-207")
+    x := a >= b
+    check.BOOL (x, FALSE, "R32-208")
+    x := a < b
+    check.BOOL (x, TRUE, "R32-209")
+    x := a <= b
+    check.BOOL (x, TRUE, "R32-210")
+    x := a <> b
+    check.BOOL (x, TRUE, "R32-211")
+    --}}}
+    --{{{  check conversions                       (R32-300 to 399)
+    --{{{  variables for comparison
+    REAL64 r64 :
+    REAL32 r32 :
+    INT64 i64 :
+    INT32 i32 :
+    INT16 i16 :
+    INT i :
+    --}}}
+    SEQ
+      r64 := REAL64 TRUNC b
+      check.REAL64 (r64, REAL64 TRUNC 8.6(REAL32), "R32-312")
+      r64 := REAL64 ROUND b
+      check.REAL64 (r64, REAL64 ROUND 8.6(REAL32), "R32-313")
+      r32 := REAL32 TRUNC b
+      check.REAL32 (r32, REAL32 TRUNC 8.6(REAL32), "R32-314")
+      r32 := REAL32 ROUND b
+      check.REAL32 (r32, REAL32 ROUND 8.6(REAL32), "R32-315")
+      i64 := INT64 TRUNC b
+      check.INT64 (i64, INT64 TRUNC 8.6(REAL32), "R32-316")
+      check.INT64 (i64, 8(INT64), "R32-330")
+      i64 := INT64 ROUND b
+      check.INT64 (i64, INT64 ROUND 8.6(REAL32), "R32-317")
+      check.INT64 (i64, 9(INT64), "R32-331")
+      i32 := INT32 TRUNC b
+      check.INT32 (i32, INT32 TRUNC 8.6(REAL32), "R32-318")
+      check.INT32 (i32, 8(INT32), "R32-332")
+      i32 := INT32 ROUND b
+      check.INT32 (i32, INT32 ROUND 8.6(REAL32), "R32-319")
+      check.INT32 (i32, 9(INT32), "R32-333")
+      i16 := INT16 TRUNC b
+      check.INT16 (i16, INT16 TRUNC 8.6(REAL32), "R32-320")
+      check.INT16 (i16, 8(INT16), "R32-334")
+      i16 := INT16 ROUND b
+      check.INT16 (i16, INT16 ROUND 8.6(REAL32), "R32-321")
+      check.INT16 (i16, 9(INT16), "R32-335")
+      i := INT TRUNC b
+      check.INT (i, INT TRUNC 8.6(REAL32), "R32-322")
+      check.INT (i, 8(INT), "R32-336")
+      i := INT ROUND b
+      check.INT (i, INT ROUND 8.6(REAL32), "R32-323")
+      check.INT (i, 9(INT), "R32-337")
+    --}}}
+    --{{{  hefty calculations                      (R32-500 to 599)
+    --{{{  declarations
+    REAL32 x, y, z, a, b, c, d :
+    VAL n1 IS 1.0(REAL32) :
+    VAL n2 IS 2.0(REAL32) :
+    VAL n3 IS 3.0(REAL32) :
+    VAL n4 IS 1.0(REAL32) / 3.0(REAL32) :
+    VAL eight.seven IS 2097152.0(REAL32) : -- 8 to the power 7 (= 2 to the 21)
+    VAL one.sixteenth IS 1.0(REAL32) / 16.0(REAL32) :
+    --}}}
+    SEQ
+      --{{{  initialisation
+      x := 8.0(REAL32)
+      y := x + x
+      z := y - x
+      a := 1.11111(REAL32)
+      b := 2.22222(REAL32)
+      c := a * 2.0(REAL32)
+      --}}}
+      check.REAL32 (y, 16.0(REAL32), "R32-500")
+      check.REAL32 (z,  8.0(REAL32), "R32-501")
+      check.REAL32 (c,  b, "R32-502")
+      check.REAL32 (((x + y) + (n3 * z)) + ((n2 * a) - b), 48.0(REAL32), "R32-503")
+      check.REAL32 (x + (x + (x + (x + (x + (x + x))))), 56.0(REAL32), "R32-504")
+      check.REAL32 (x * (x * (x * (x * (x * (x * x))))), eight.seven, "R32-505")
+      check.REAL32 (x * (x * (n2* (y * (y * (x * x))))), eight.seven, "R32-506")
+      x := 1.0 (REAL32)
+      y := 3.0 (REAL32)
+      d := 2.0 (REAL32)
+      check.REAL32 (x / y, n4, "R32-507")
+      c := ((d/(d*d)) * (d/(d*d))) * ((d/(d*d)) * (d/(d*d)))
+      check.REAL32 (c, one.sixteenth, "R32-508")
+      c := ((d * y) * (d * y)) * ((d * y) * (d * y))
+      check.REAL32 (c, 1296.0(REAL32), "R32-509")
+      c := ((((d * y) * (d * y)) * (d * y)) * (d * y)) * (d * y)
+      check.REAL32 (c, 7776.0(REAL32), "R32-510")
+    --}}}
+    --{{{  passing as parameters                   (R32-600 to 699)
+    --{{{  copy.REAL32 and add.REAL32
+    PROC copy.REAL32 (VAL REAL32 x, REAL32 y)
+      y := x
+    :
+    PROC add.REAL32 (VAL REAL32 x, y, REAL32 z)
+      z := x + y
+    :
+    --}}}
+    REAL32 x, y, z :
+    VAL n1 IS 2.0(REAL32) :
+    VAL n2 IS 500000.0(REAL32) :
+    SEQ
+      copy.REAL32 (n1, x)
+      check.REAL32 (x, 2.0(REAL32), "R32-600")
+      copy.REAL32 (n2, x)
+      check.REAL32 (x, 500000.0(REAL32), "R32-601")
+      y := 5.7 (REAL32)
+      copy.REAL32 (y, x)
+      check.REAL32 (x, 5.7(REAL32), "R32-602")
+      add.REAL32 (n1, n2, x)
+      check.REAL32 (x, 500002.0(REAL32), "R32-603")
+      y := n1
+      z := n2
+      add.REAL32 (y, z, x)
+      check.REAL32 (x, 500002.0(REAL32), "R32-604")
+      check.REAL32 (z, 500000.0(REAL32), "R32-605")
+    --}}}
+    --{{{  arrays                                  (R32-700 to 799)
+    VAL n IS 1.0(REAL32) :
+    VAL m IS 1.5(REAL32) :
+    VAL t1 IS [n, n, n, n, m] :
+    VAL t2 IS [t1, t1, t1, t1 ] :
+    VAL t3 IS [t2, t2, t2 ] :
+    BOOL b :
+    INT x :
+    REAL32 tot :
+    SEQ
+      check.REAL32 (t1 [0], n  , "R32-700")
+      check.REAL32 (t1 [4], m, "R32-701")
+      check.REAL32 (t2 [2] [4], m, "R32-702")
+      check.REAL32 (t3 [1] [2] [4], m, "R32-703")
+      --{{{  test individual access
+      b := TRUE
+      x := 4
+      tot := 0.0(REAL32)
+      SEQ i = 0 FOR SIZE t3
+        SEQ j = 0 FOR SIZE t2
+          SEQ k = 0 FOR SIZE t1
+            SEQ
+              IF
+                (k = 4) AND (t3 [i] [j] [k] = m)
+                  SKIP
+                (k < 4) AND (t3 [i] [j] [k] = n)
+                  SKIP
+                TRUE
+                  b := FALSE
+              tot := tot + t3 [i] [j] [k]
+              x := INT ROUND t3 [i] [j] [x]      -- sets it to 1
+              x := 4                       -- resets it again
+      check.BOOL (b, TRUE, "R32-704")
+      VAL correct.value IS (48.0(REAL32) * n) + (12.0(REAL32) * m) :
+      check.REAL32 (tot, correct.value, "R32-705")
+      --}}}
+      --{{{  test nested array access
+      INT a, b, c :
+      SEQ
+        a := 2
+        b := 1
+        c := 3
+        tot := t3[a][b][c] + ( t3[b][a][c] + ( t3[0][1][4] + ( t3[b][a+b][b+(a+b)] +
+               t1[(a+b)+b] ) ) )
+        VAL correct.value IS (2.0(REAL32) * n) + (3.0(REAL32) * m) :
+        check.REAL32 (tot, correct.value, "R32-706")
+        tot := t3 [a] [ INT ROUND t3 [a] [b] [INT ROUND t3 [b +
+                        b] [a + b] [b + (a + b)] ] ] [(INT ROUND t3 [a] [c] [c +
+                        (b - a)]) + (3 * (INT ROUND t3 [a] [c] [b])) ]
+        check.REAL32 (tot, m, "R32-707")
+      --}}}
+      --{{{  test individual access using aliasing
+      b := TRUE
+      x := 4
+      tot := 0.0(REAL32)
+      SEQ i = 0 FOR SIZE t3
+        VAL a2 IS t3 [i] :
+        SEQ j = 0 FOR SIZE t2
+          VAL a1 IS a2 [j] :
+          SEQ k = 0 FOR SIZE t1
+            VAL a0 IS a1 [k] :
+            SEQ
+              IF
+                (k = 4) AND (a0 = m)
+                  SKIP
+                (k < 4) AND (a0 = n)
+                  SKIP
+                TRUE
+                  b := FALSE
+              tot := tot + a0
+              x := INT ROUND a1 [x]              -- sets it to 1
+              x := 4                       -- resets it again
+      check.BOOL (b, TRUE, "R32-708")
+      VAL correct.value IS (48.0(REAL32) * n) + (12.0(REAL32) * m) :
+      check.REAL32 (tot, correct.value, "R32-709")
+      --}}}
+      --{{{  test livermore loop                   (R32-710 to 711)
+      VAL n IS 10 :
+      VAL r IS 7.0(REAL32) :
+      VAL t IS 13.0(REAL32) :
+      [n + 6] REAL32 u :
+      [n] REAL32 x, y, z :
+      SEQ
+        SEQ k = 0 FOR n + 6
+          u [k] := 3.0(REAL32)
+        SEQ k = 0 FOR n
+          SEQ
+            y [k] := 11.0(REAL32)
+            z [k] :=  5.0(REAL32)
+      
+        SEQ k = 0 FOR n
+          x [k] := u[k] + ((( r * (z[k] + (r * y[k]))) +
+                            (t * ((u[k+3] + (r * (u[k+2] + (r * u[k+1]))))))) +
+                            (t * ((u[k+6] + (r * (u[k+5] + (r * u[k+4])))))))
+      
+        check.REAL32 (x[0],     5023.0(REAL32), "R32-710")
+        check.REAL32 (x[n - 1], 5023.0(REAL32), "R32-711")
+      --}}}
+      --{{{  test some bugs that were found        (R32-712 to 716)
+      --{{{  bug1                                  (R32-712)
+      [2][2]REAL32 arr :
+      REAL32 A :
+      INT i :
+      SEQ
+        i := 0
+        arr[i][i] := 0.0(REAL32)
+        A := ((arr[i][i]+arr[i][i]) + (arr[i][i]+arr[i][i])) / 4.0(REAL32)
+        check.REAL32 (A, 0.0(REAL32), "R32-712")
+      --}}}
+      --{{{  bug3                                  (R32-713 to 714)
+      PROC Complex.Subst ([]REAL32 a, b)
+        SEQ
+          check.REAL32 (a[0], 2.0(REAL32), "R32-713")
+          check.REAL32 (b[1], 4.0(REAL32), "R32-714")
+      :
+      
+      [2][2][2]REAL32 g.plus, g.minus :
+      REAL32 i, j :
+      SEQ
+        i := 1.0(REAL32)
+        j := 0.0(REAL32)
+        g.plus [INT ROUND i][INT ROUND j][0] := 2.0(REAL32)
+        g.minus[INT ROUND i][INT ROUND j][1] := 4.0(REAL32)
+        Complex.Subst (g.plus[INT ROUND i][INT ROUND j],
+                       g.minus[INT ROUND i][INT ROUND j])
+      --}}}
+      --{{{  bug4                                  (R32-715)
+      [10][10]REAL32 c, b :
+      INT i :
+      REAL32 A:
+      SEQ
+        i := 1
+        SEQ i = 0 FOR 10
+          SEQ j = 0 FOR 10
+            VAL tmp IS REAL32 ROUND j :
+            c [i][j] := tmp
+        A := ((c[i][i] * c [i*i][i+2])) / (c[(i*i)+i][(i*i)+i] + c[i][i])
+        check.REAL32 (A, 1.0(REAL32), "R32-715")
+      --}}}
+      --{{{  test2                                 (R32-716)
+      REAL32 u :
+      [4] REAL32 ai :
+      [3] [4] REAL32 x, Gb :
+      INT i, j, k :
+      SEQ
+        SEQ i = 0 FOR 4
+          SEQ
+            ai [i] := 5.0(REAL32)
+            SEQ j = 0 FOR 3
+              SEQ
+                x [j] [i] := 2.0(REAL32)
+                Gb[j] [i] := 24.0(REAL32)
+        u := 4.0(REAL32)
+        i := 1
+        j := 2
+        k := 3
+        u := u + (ai [j] * x [j][k])
+        x [i][k] := (Gb [i][k] - u) / ai[i]
+        check.REAL32 (x [i][k], 2.0(REAL32), "R32-716")
+      --}}}
+      --}}}
+    --}}}
+    --{{{  more conversion tests
+    INT FUNCTION id(VAL INT i) IS i :
+    VAL n IS 5 :
+    VAL m IS 7 :
+    [n][m]INT64 i64arr :
+    [n][m]INT32 i32arr :
+    [n][m]INT16 i16arr :
+    [n][m]INT   iarr :
+    [n][m]REAL32 r32arr :
+    [n][m]REAL64 r64arr :
+    INT i, j :
+    VAL ans IS (n / 2) + (m / 2) :
+    SEQ
+      i, j := n / 2, m / 2
+      SEQ k = 0 FOR n
+        SEQ l = 0 FOR m
+          r32arr[k][l] := REAL32 ROUND (k + l)
+    
+      r64arr[i][j] := REAL64 ROUND r32arr[i][j]
+      check.REAL64(r64arr[i][j], REAL64 ROUND ans, "R32-R64-1")
+      r64arr[id(i)][j] := REAL64 ROUND r32arr[id(i)][j]
+      check.REAL64(r64arr[i][j], REAL64 ROUND ans, "R32-R64-2")
+      r64arr[i][j] := REAL64 TRUNC r32arr[i][j]
+      check.REAL64(r64arr[i][j], REAL64 TRUNC ans, "R32-R64-3")
+      r64arr[id(i)][j] := REAL64 TRUNC r32arr[id(i)][j]
+      check.REAL64(r64arr[i][j], REAL64 TRUNC ans, "R32-R64-4")
+    
+      r32arr[i][j] := REAL32 ROUND r32arr[i][j]
+      check.REAL32(r32arr[i][j], REAL32 ROUND ans, "R32-R32-1")
+      r32arr[id(i)][j] := REAL32 ROUND r32arr[id(i)][j]
+      check.REAL32(r32arr[i][j], REAL32 ROUND ans, "R32-R32-2")
+      r32arr[i][j] := REAL32 TRUNC r32arr[i][j]
+      check.REAL32(r32arr[i][j], REAL32 TRUNC ans, "R32-R32-3")
+      r32arr[id(i)][j] := REAL32 TRUNC r32arr[id(i)][j]
+      check.REAL32(r32arr[i][j], REAL32 TRUNC ans, "R32-R32-4")
+    
+      i64arr[i][j] := INT64 ROUND r32arr[i][j]
+      check.INT64(i64arr[i][j], INT64 ans, "R32-I64-1")
+      i64arr[id(i)][j] := INT64 ROUND r32arr[id(i)][j]
+      check.INT64(i64arr[i][j], INT64 ans, "R32-I64-2")
+      i64arr[i][j] := INT64 TRUNC r32arr[i][j]
+      check.INT64(i64arr[i][j], INT64 ans, "R32-I64-3")
+      i64arr[id(i)][j] := INT64 TRUNC r32arr[id(i)][j]
+      check.INT64(i64arr[i][j], INT64 ans, "R32-I64-4")
+    
+      i32arr[i][j] := INT32 ROUND r32arr[i][j]
+      check.INT32(i32arr[i][j], INT32 ans, "R32-I32-1")
+      i32arr[id(i)][j] := INT32 ROUND r32arr[id(i)][j]
+      check.INT32(i32arr[i][j], INT32 ans, "R32-I32-2")
+      i32arr[i][j] := INT32 TRUNC r32arr[i][j]
+      check.INT32(i32arr[i][j], INT32 ans, "R32-I32-3")
+      i32arr[id(i)][j] := INT32 TRUNC r32arr[id(i)][j]
+      check.INT32(i32arr[i][j], INT32 ans, "R32-I32-4")
+    
+      i16arr[i][j] := INT16 ROUND r32arr[i][j]
+      check.INT16(i16arr[i][j], INT16 ans, "R32-I16-1")
+      i16arr[id(i)][j] := INT16 ROUND r32arr[id(i)][j]
+      check.INT16(i16arr[i][j], INT16 ans, "R32-I16-2")
+      i16arr[i][j] := INT16 TRUNC r32arr[i][j]
+      check.INT16(i16arr[i][j], INT16 ans, "R32-I16-3")
+      i16arr[id(i)][j] := INT16 TRUNC r32arr[id(i)][j]
+      check.INT16(i16arr[i][j], INT16 ans, "R32-I16-4")
+    
+      iarr[i][j] := INT ROUND r32arr[i][j]
+      check.INT(iarr[i][j], INT ans, "R32-INT-1")
+      iarr[id(i)][j] := INT ROUND r32arr[id(i)][j]
+      check.INT(iarr[i][j], INT ans, "R32-INT-2")
+      iarr[i][j] := INT TRUNC r32arr[i][j]
+      check.INT(iarr[i][j], INT ans, "R32-INT-3")
+      iarr[id(i)][j] := INT TRUNC r32arr[id(i)][j]
+      check.INT(iarr[i][j], INT ans, "R32-INT-4")
+    
+    --}}}
+    --{{{  bug 739
+    PROC bug.739()
+      INT FUNCTION f(VAL INT i) IS i :
+      INT FUNCTION fr(VAL REAL32 r)
+        REAL32 temp :
+        VALOF
+          SEQ
+            temp := r
+            -- saturate the FPU stack
+            temp := ((r + temp) + (r - temp)) + ((r * temp) + (r + temp))
+          RESULT INT ROUND r
+      :
+      INT64 i64 :
+      [2]INT64 a64 :
+      INT32 i32 :
+      [2]INT32 a32 :
+      INT i :
+      REAL32 r32, r1, r2 :
+      VAL ans64 IS 100(INT64) :
+      VAL ans32 IS 100(INT32) :
+      SEQ
+        i := 1
+        r1, r2, r32 := 1.0(REAL32), 1.0(REAL32), 99.9(REAL32)
+        i64 := INT64 ROUND r32
+        check.INT64(i64,    ans64, "B739sa")
+        a64[i] := INT64 ROUND r32
+        check.INT64(a64[1], ans64, "B739sb")
+        a64[f(i)] := INT64 ROUND r32
+        check.INT64(a64[1], ans64, "B739sc")
+        a64[fr(r1)] := INT64 ROUND r32
+        check.INT64(a64[1], ans64, "B739sd")
+        a64[INT ROUND ((r1+r2)-(r2+r1))] := INT64 ROUND r32
+        check.INT64(a64[0], ans64, "B739se")
+    
+        i32 := INT32 ROUND r32
+        check.INT32(i32,    ans32, "B739sf")
+        a32[i] := INT32 ROUND r32
+        check.INT32(a32[1], ans32, "B739sg")
+        a32[f(i)] := INT32 ROUND r32
+        check.INT32(a32[1], ans32, "B739sh")
+        a32[fr(r1)] := INT32 ROUND r32
+        check.INT32(a32[1], ans32, "B739si")
+        a32[INT ROUND ((r1+r2)-(r2+r1))] := INT32 ROUND r32
+        check.INT32(a32[0], ans32, "B739sj")
+    :
+    bug.739()
+    --}}}
+    --{{{  bug 1071
+    PROC bug.1071()
+      VAL [2][2]REAL32 src IS [[1.0(REAL32), 2.0(REAL32)],
+                               [3.0(REAL32), 4.0(REAL32)]] :
+      PROC test(VAL REAL32 a, b, c, d)
+        check.REAL32(d, 4.0(REAL32), "B1071a")
+      :
+      INT i :
+      REAL32 a :
+      SEQ
+        i, a := 1, 1.0(REAL32)
+        -- Note that the complicated expression must not go onto the stack
+        -- or the test wouldn't fail!
+        test(a, a, a, src[i][1])
+    :
+    bug.1071()
+    --}}}
+    --{{{  bug 1206
+    PROC bug.1206()
+      INT i, j :
+      REAL32 r :
+      BOOL b :
+      SEQ
+        b := TRUE
+        i := 88
+        r := 77.0(REAL32)
+        WHILE b
+          SEQ
+            -- this MUST be the first statement in a "basic block"!
+            j := i + (INT ROUND r)
+            -- The bug would turn the value i into either 0 or 1.
+    
+            b := FALSE
+        check(j, 165, "B1206-2")
+    :
+    bug.1206()
+    --}}}
+    --{{{  bug 1405
+    PROC bug.1405()
+      VAL REAL32 KA IS 1.0(REAL32) :
+      REAL32 x,y :
+      REAL32 w03 :
+      SEQ
+        x,y := KA, KA
+        w03 :=   ( ((KA*x)*y) - (x*KA) ) +( (x*x)   + (y*y)  )
+        check.REAL32(w03, 2.0(REAL32), "B1405a32")
+    :
+    bug.1405()
+    --}}}
+    --{{{  bug 1492
+    PROC bug.1492()
+      [1]INT16 store :
+      REAL32 sum, mean :
+      INT ptr :
+      SEQ
+        ptr := 0
+        store[0] := 99(INT16)
+        sum, mean := 0.0(REAL32), 27.0(REAL32)
+        sum := sum + (((REAL32 ROUND store[ptr])-mean)*
+                      ((REAL32 ROUND store[ptr])-mean))
+        check.REAL32(sum, 5184.0(REAL32), "B1492a")
+    :
+    bug.1492()
+    --}}}
+    --{{{  bug 1632
+    PROC bug.1632()
+    
+      REAL32 a,b,c,e,f,g,h,two,result:
+    
+      SEQ
+    
+        a := 1.0 (REAL32)
+        b := 3.0 (REAL32)
+        c := 5.0 (REAL32)
+        --d := 3.0 (REAL32)
+        e := 1.0 (REAL32)
+        f := 5.0 (REAL32)
+        g := 1.0 (REAL32)
+        h := 1.0 (REAL32)
+        two := 2.0 (REAL32)
+    
+        result :=
+        (( (-two)*c) * ((c+b)-a)) *
+        ((((-two)*c) + (g*e)) - ((two*h)*f))
+    
+        check.REAL32(result, 1330.0(REAL32), "B1632b")
+    :
+    bug.1632()
+    
+    --}}}
+    --{{{  bug INSdi02195
+    PROC bug.INSdi02195()
+      --{{{  functions
+      BOOL   FUNCTION BOOL.fn   (VAL INT x) IS BOOL  x :
+      BYTE   FUNCTION BYTE.fn   (VAL INT x) IS BYTE  x :
+      INT16  FUNCTION INT16.fn  (VAL INT x) IS INT16 x :
+      INT    FUNCTION INT.fn    (VAL INT x) IS x :
+      INT32  FUNCTION INT32.fn  (VAL INT x) IS INT32 x :
+      INT64  FUNCTION INT64.fn  (VAL INT x) IS INT64 x :
+      REAL32 FUNCTION REAL32.fn (VAL INT x) IS REAL32 ROUND x :
+      REAL64 FUNCTION REAL64.fn (VAL INT x) IS REAL64 ROUND x :
+      --}}}
+      --{{{  variables
+      BOOL bool.var :
+      BYTE byte.var :
+      INT16 i16.var :
+      INT32 i32.var :
+      INT64 i64.var :
+      INT   int.var :
+      REAL32 r32.var :
+      REAL64 r64.var :
+      INT zero, int :
+      --}}}
+      REAL32 local.i, local.j, local.k :
+      SEQ
+        zero := id(0)
+        int := id(77)
+        --{{{  REAL32 var -> type -> REAL32         00 - 09
+        local.j := id.REAL32(1.0(REAL32))
+        
+        --local.i := REAL32 ROUND (BOOL ROUND local.j)
+        --check.REAL32(local.i, 1.0(REAL32), "REAL32-00")
+        
+        local.j := id.REAL32(77.0(REAL32))
+        
+        --local.i := REAL32 ROUND (BYTE ROUND local.j)
+        --check.REAL32(local.i, 77.0(REAL32), "REAL32-01")
+        local.i := REAL32 ROUND (INT ROUND local.j)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-02")
+        local.i := REAL32 ROUND (INT16 ROUND local.j)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-03")
+        local.i := REAL32 ROUND (INT32 ROUND local.j)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-04")
+        local.i := REAL32 ROUND (INT64 ROUND local.j)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-05")
+        local.i := REAL32 ROUND (REAL32 ROUND local.j)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-06")
+        local.i := REAL32 ROUND (REAL64 ROUND local.j)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-07")
+        --}}}
+        --{{{  REAL32 FUNCTION -> type -> REAL32    10 - 19
+        local.j := id.REAL32(1.0(REAL32))
+        
+        --local.i := REAL32 ROUND (BOOL REAL32.fn(INT ROUND local.j))
+        --check.REAL32(local.i, 1.0(REAL32), "REAL32-10")
+        
+        local.j := id.REAL32(77.0(REAL32))
+        
+        --local.i := REAL32 ROUND (BYTE ROUND REAL32.fn(INT ROUND local.j))
+        --check.REAL32(local.i, 77.0(REAL32), "REAL32-11")
+        local.i := REAL32 ROUND (INT ROUND REAL32.fn(INT ROUND local.j))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-12")
+        local.i := REAL32 ROUND (INT16 ROUND REAL32.fn(INT ROUND local.j))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-13")
+        local.i := REAL32 ROUND (INT32 ROUND REAL32.fn(INT ROUND local.j))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-14")
+        local.i := REAL32 ROUND (INT64 ROUND REAL32.fn(INT ROUND local.j))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-15")
+        local.i := REAL32 ROUND (REAL32 ROUND (REAL32.fn(INT ROUND local.j)))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-16")
+        local.i := REAL32 ROUND (REAL64 ROUND (REAL32.fn(INT ROUND local.j)))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-17")
+        --}}}
+        --{{{  REAL32 exp -> type -> REAL32         20 - 29
+        local.k := id.REAL32(0.0(REAL32))
+        
+        local.j := id.REAL32(1.0(REAL32))
+        
+        --local.i := REAL32 ROUND (BOOL ROUND (local.j + local.k))
+        --check.REAL32(local.i, 1.0(REAL32), "REAL32-20")
+        
+        local.j := id.REAL32(77.0(REAL32))
+        
+        --local.i := REAL32 ROUND (BYTE ROUND (local.j + local.k))
+        --check.REAL32(local.i, 77.0(REAL32), "REAL32-21")
+        local.i := REAL32 ROUND (INT ROUND (local.j + local.k))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-22")
+        local.i := REAL32 ROUND (INT16 ROUND (local.j + local.k))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-23")
+        local.i := REAL32 ROUND (INT32 ROUND (local.j + local.k))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-24")
+        local.i := REAL32 ROUND (INT64 ROUND (local.j + local.k))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-25")
+        local.i := REAL32 ROUND (REAL32 ROUND (local.j + local.k))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-26")
+        local.i := REAL32 ROUND (REAL64 ROUND (local.j + local.k))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-27")
+        --}}}
+        --{{{  type var -> REAL32                  30 - 39
+        --bool.var := BOOL id(1)
+        --local.i := REAL32 ROUND bool.var
+        --check.REAL32(local.i, 1.0(REAL32), "REAL32-30")
+        --byte.var := BYTE id(77)
+        --local.i := REAL32 ROUND byte.var
+        --check.REAL32(local.i, 77.0(REAL32), "REAL32-31")
+        int.var := id.INT(77(INT))
+        local.i := REAL32 ROUND int.var
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-32")
+        i16.var := id.INT16(77(INT16))
+        local.i := REAL32 ROUND i16.var
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-33")
+        i32.var := id.INT32(77(INT32))
+        local.i := REAL32 ROUND i32.var
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-34")
+        i64.var := id.INT64(77(INT64))
+        local.i := REAL32 ROUND i64.var
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-35")
+        r32.var := id.REAL32(77.0(REAL32))
+        local.i := REAL32 ROUND r32.var
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-36")
+        r64.var := id.REAL64(77.0(REAL64))
+        local.i := REAL32 ROUND r64.var
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-37")
+        --}}}
+        --{{{  type FUNCTION -> REAL32             40 - 49
+        --local.i := REAL32 ROUND BOOL.fn(zero)
+        --check.REAL32(local.i, 0.0(REAL32), "REAL32-40")
+        --local.i := REAL32 ROUND BYTE.fn(int)
+        --check.REAL32(local.i, 77.0(REAL32), "REAL32-41")
+        local.i := REAL32 ROUND INT.fn(int)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-42")
+        local.i := REAL32 ROUND INT16.fn(int)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-43")
+        local.i := REAL32 ROUND INT32.fn(int)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-44")
+        local.i := REAL32 ROUND INT64.fn(int)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-45")
+        local.i := REAL32 ROUND REAL32.fn(int)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-46")
+        local.i := REAL32 ROUND REAL64.fn(int)
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-47")
+        --}}}
+        --{{{  type exp -> REAL32                  50 - 59
+        --bool.var := BOOL id(1)
+        --local.i := REAL32 ROUND (bool.var = bool.var)
+        --check.REAL32(local.i, 1.0(REAL32), "REAL32-50")
+        --byte.var := BYTE id(77)
+        --local.i := REAL32 byte.var
+        --check.REAL32(local.i, 77.0(REAL32), "REAL32-51")
+        int.var := id.INT(77(INT))
+        local.i := REAL32 ROUND (int.var + (INT   zero))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-52")
+        i16.var := id.INT16(77(INT16))
+        local.i := REAL32 ROUND (i16.var + (INT16 zero))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-53")
+        i32.var := id.INT32(77(INT32))
+        local.i := REAL32 ROUND (i32.var + (INT32 zero))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-54")
+        i64.var := id.INT64(77(INT64))
+        local.i := REAL32 ROUND (i64.var + (INT64 zero))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-55")
+        r32.var := id.REAL32(77.0(REAL32))
+        local.i := REAL32 ROUND (r32.var + (REAL32 ROUND zero))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-56")
+        r64.var := id.REAL64(77.0(REAL64))
+        local.i := REAL32 ROUND (r64.var + (REAL64 ROUND zero))
+        check.REAL32(local.i, 77.0(REAL32), "REAL32-57")
+        --}}}
+    :
+    bug.INSdi02195()
+    --}}}
+    --{{{  bug INSdi02423
+    PROC bug.INSdi02423()
+    
+      PROC CheckOverflow ( VAL REAL32 address, REAL32 result)
+        result := address
+      :
+    
+      PROC local(VAL INT Areg, Breg, VAL REAL32 expected0, expected1, VAL []BYTE msg)
+        REAL32 XBreg, XAreg, Xtimes :
+        REAL32 result0, result1 :
+        SEQ
+          CheckOverflow ( (REAL32 ROUND Breg) * (REAL32 ROUND Areg), result0 )
+          XBreg := (REAL32 ROUND Breg)
+          XAreg := (REAL32 ROUND Areg)
+          Xtimes := XAreg * XBreg
+          CheckOverflow (Xtimes, result1)
+          check.REAL32(result0, expected0, msg)
+          check.REAL32(result1, expected0, msg)
+    
+          CheckOverflow ( (REAL32 ROUND Breg)+(REAL32 ROUND Areg), result0 )
+          Xtimes := XAreg + XBreg
+          CheckOverflow (Xtimes, result1)
+          check.REAL32(result0, expected1, msg)
+          check.REAL32(result1, expected1, msg)
+      :
+      SEQ
+        local(    1,     2,     2.0(REAL32),  3.0(REAL32), "di2423a")
+        local(    2,     1,     2.0(REAL32),  3.0(REAL32), "di2423b")
+        local(   -1,     2,    -2.0(REAL32),  1.0(REAL32), "di2423c")
+        local(    1,    -2,    -2.0(REAL32), -1.0(REAL32), "di2423d")
+        local(   -1,     1,    -1.0(REAL32),  0.0(REAL32), "di2423e")
+        local(    1,    -1,    -1.0(REAL32),  0.0(REAL32), "di2423f")
+        local(    1,     0,     0.0(REAL32),  1.0(REAL32), "di2423g")
+        local(    0,     1,     0.0(REAL32),  1.0(REAL32), "di2423h")
+        local(    0,    -1,     0.0(REAL32), -1.0(REAL32), "di2423i")
+        local(   -1,     0,     0.0(REAL32), -1.0(REAL32), "di2423j")
+    :
+    bug.INSdi02423()
+    --}}}
+    --{{{  bug INSdi02439
+    PROC bug.INSdi02439()
+      SEQ
+        PROTOCOL CONTROL  IS  INT; REAL32 :
+        CHAN OF CONTROL ControlToMonitor:
+        PAR
+          SEQ
+            SEQ i = 0 FOR 4
+              INT   ii :
+              REAL32 j :
+              SEQ
+                ControlToMonitor ? ii; j
+                check(i, INT ROUND j, "di2439a")
+                check(i, ii,          "di2439b")
+          SEQ i = 0 FOR 4
+            ControlToMonitor ! i; REAL32 ROUND i
+    :
+    bug.INSdi02439()
+    --}}}
+    --{{{  bug INSdi03306
+    PROC bug.INSdi03306()
+      PROC calc(VAL REAL32 a, b, c, d, e, f, r, z)
+        REAL32 t, t1, t2 :
+        SEQ
+          t := ((-a)*(f*c))+((a*b)*(d*e))
+          check.REAL32(t, 10.0(REAL32), "di3306a")
+          t := ((-r)*(f*c))+((a*b)*(d*e))
+          check.REAL32(t, 10.0(REAL32), "di3306b")
+          t := ((z-a)*(f*c))+((a*b)*(d*e))
+          check.REAL32(t, 10.0(REAL32), "di3306c")
+          t := ((z-r)*(f*c))+((a*b)*(d*e))
+          check.REAL32(t, 10.0(REAL32), "di3306d")
+          t1 := (a*b)*(d*e)
+          t2 := (-a)*(f*c)
+          t := t1 + t2
+          check.REAL32(t, 10.0(REAL32), "di3306e")
+          t1 := (a*b)*(d*e)
+          t2 := (-r)*(f*c)
+          t := t1 + t2
+          check.REAL32(t, 10.0(REAL32), "di3306f")
+    
+      :
+      REAL32 a,b,c,d,e,f,r,s,t :
+      SEQ
+        a := -1.0(REAL32)
+        b := -1.0(REAL32)
+        c :=  1.0(REAL32)
+        d :=  2.0(REAL32)
+        e :=  3.0(REAL32)
+        f :=  4.0(REAL32)
+        r := -1.0(REAL32)
+        calc(id.REAL32(a), id.REAL32(b), id.REAL32(c),
+             id.REAL32(d), id.REAL32(e), id.REAL32(f),
+             id.REAL32(r), id.REAL32(0.0(REAL32)))
+    :
+    bug.INSdi03306()
+    --}}}
+:
+do.REAL32 ()

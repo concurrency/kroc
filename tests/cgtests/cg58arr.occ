@@ -1,0 +1,37 @@
+-- version control marker $Id: cg58arr.occ,v 1.1 1995/10/11 10:22:54 djb1 Exp $
+PROC local.set()
+  --{{{  common declarations
+  type FUNCTION identity(VAL type x) IS x :
+  
+  --}}}
+  type x, y :
+  sub.type s :
+  INT i :
+  SEQ
+    title(title.str)
+    i := id(1)
+    x := zero.value
+    x := identity(x)
+    check.type(x, zero.value, "SUB00")
+    y := identity(x)
+    check.type(x, zero.value, "SUB01")
+  
+    s := identity(x)[0]
+    check.sub.type(s, zero.subvalue, "SUB02")
+    check.sub.type(s, x[0], "SUB03")
+    s := identity(x)[i]
+    check.sub.type(s, zero.subvalue, "SUB04")
+    check.sub.type(s, x[i], "SUB05")
+  
+    x := init.value
+    y := double(x)
+    check.type(y, dbl.value, "SUB06")
+    s := double(x)[1]
+    check.sub.type(s, dbl.subvalue, "SUB07")
+    s := double(x)[i]
+    check.sub.type(s, dbl.subvalue, "SUB08")
+  
+    SEQ k = 0 FOR SIZE x
+      check.sub.type(double(x)[i], dbl.subvalue, "SUB09")
+:
+local.set()

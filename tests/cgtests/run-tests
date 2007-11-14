@@ -1,0 +1,133 @@
+#!/usr/bin/python
+#
+#	run-tests -- run the CG tests and produce a report
+#	Copyright (C) 2006 Adam Sampson <ats@offog.org>
+#
+#	This program is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; either version 2 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program; if not, write to the Free Software
+#	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+import sys, os, re, getopt
+
+def status(s):
+	sys.stderr.write(s)
+	sys.stderr.flush()
+
+def run_test(name, verbose, interpreter):
+	status("%-10s ... " % name)
+
+	if interpreter is not None:
+		path = "%s.tbc" % name
+		cmd = [interpreter, path]
+	else:
+		path = name
+		cmd = ["./%s" % path]
+	if not os.access(path, os.F_OK):
+		status("%s has not been compiled\n" % path)
+		return False
+
+	null = os.open("/dev/null", os.O_RDWR)
+	(pr, pw) = os.pipe()
+
+	pid = os.fork()
+	if pid == 0:
+		os.close(pr)
+		os.dup2(null, 0)
+		os.dup2(pw, 1)
+		os.dup2(pw, 2)
+		os.execvp(cmd[0], cmd)
+		os._exit(111)
+	os.close(null)
+	os.close(pw)
+
+	buf = []
+	while 1:
+		s = os.read(pr, 4096)
+		if s == "":
+			break
+		buf.append(s)
+	lines = [s.rstrip() for s in "".join(buf).split("\n")]
+
+	(pid, code) = os.waitpid(pid, 0)
+	code = os.WEXITSTATUS(code)
+
+	passed = False
+	ntests = 0
+	for line in lines:
+		m = re.match('^\^\^\^ Passed : .*: All (\d+) tests', line)
+		if m is not None:
+			passed = True
+			ntests = int(m.group(1))
+	if code != 0:
+		passed = False
+
+	if passed:
+		status("ok (%d tests)" % ntests)
+		if verbose:
+			status("\n")
+		else:
+			status("\r\033[K")
+		return True
+	else:
+		status("failed\n")
+		status("  Exit code %d\n" % code)
+		status("  Output:\n")
+		for line in lines:
+			status("  > " + line + "\n")
+		return False
+
+if __name__ == "__main__":
+	try:
+		(opts, args) = getopt.getopt(sys.argv[1:], "v", ["tvm="])
+	except getopt.GetoptError:
+		status("Usage: run-tests [-v] [--tvm=PATH] [TEST ...]\n")
+		sys.exit(1)
+
+	verbose = False
+	interpreter = None
+	for (o, a) in opts:
+		if o == "-v":
+			verbose = True
+		elif o == "--tvm":
+			interpreter = a
+
+	if interpreter is not None and interpreter.startswith("./"):
+		interpreter = os.path.join(os.getcwd(), interpreter)
+	os.chdir(sys.path[0])
+	cmd = ["make", "--quiet"]
+	if os.spawnvp(os.P_WAIT, cmd[0], cmd) != 0:
+		status("Make failed\n")
+		sys.exit(1)
+
+	if args == []:
+		tests = ["cgtest%02d" % n for n in range(100)]
+		tests = [t for t in tests if os.access("%s.occ" % t, os.F_OK)]
+	else:
+		tests = [re.sub('\..*', '', a) for a in args]
+		for t in tests:
+			if not os.access("%s.occ" % t, os.F_OK):
+				status("Test %s does not exist\n" % t)
+				sys.exit(1)
+
+	tests.sort()
+
+	failed = []
+	for test in tests:
+		if not run_test(test, verbose, interpreter):
+			failed.append(test)
+
+	status("Tests complete; passed %d of %d\n" % (len(tests) - len(failed), len(tests)))
+	if failed != []:
+		status("Failed: %s\n" % " ".join(failed))
+

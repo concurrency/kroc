@@ -1,0 +1,1377 @@
+-- version control marker $Id: cg50myi.occ,v 1.1 1995/10/11 10:22:26 djb1 Exp $
+PROC do.MYINT ()
+  MYINT a, b, c :
+  SEQ
+    b := id.MYINT(85 (MYINT))
+    --{{{  output message
+    title (title.str)
+    --}}}
+    writes ("*c*noutput message*c*n")
+    --{{{  check arithmetic and logical operators  (MY-000 to 099)
+    a := b + 23 (MYINT)
+    check.MYINT (a, 85(MYINT) + 23(MYINT), "MY-001")
+    a := b PLUS 23 (MYINT)
+    check.MYINT (a, 85(MYINT) PLUS 23(MYINT), "MY-002")
+    a := b - 23 (MYINT)
+    check.MYINT (a, 85(MYINT) - 23(MYINT), "MY-003")
+    a := b MINUS 23 (MYINT)
+    check.MYINT (a, 85(MYINT) MINUS 23(MYINT), "MY-004")
+    a := b * 23 (MYINT)
+    check.MYINT (a, 85(MYINT) * 23(MYINT), "MY-005")
+    a := b TIMES 23 (MYINT)
+    check.MYINT (a, 85(MYINT) TIMES 23(MYINT), "MY-006")
+    a := b / 23 (MYINT)
+    check.MYINT (a, 85(MYINT) / 23(MYINT), "MY-007")
+    a := b \ 23 (MYINT)
+    check.MYINT (a, 85(MYINT) \ 23(MYINT), "MY-008")
+    --{{{  check logical operators                 (MY-009 to 014)
+    a := b << 3
+    check.MYINT (a, 85(MYINT) << 3, "MY-009")
+    a := b >> 3
+    check.MYINT (a, 85(MYINT) >> 3, "MY-010")
+    a := b /\ 23 (MYINT)
+    check.MYINT (a, 85(MYINT) /\ 23(MYINT), "MY-011")
+    a := b \/ 23 (MYINT)
+    check.MYINT (a, 85(MYINT) \/ 23(MYINT), "MY-012")
+    a := b >< 23 (MYINT)
+    check.MYINT (a, 85(MYINT) >< 23(MYINT), "MY-013")
+    a := ~b
+    check.MYINT (a, ~85(MYINT), "MY-014")
+    --}}}
+    --{{{  unary minus                             (MY-015 to 018)
+    a := (- b)
+    check.MYINT (a, -85(MYINT), "MY-015")
+    a := (MINUS b)
+    check.MYINT (a, MINUS 85(MYINT), "MY-016")
+    --{{{
+    a := MINUS (MOSTNEG MYINT)
+    check.MYINT (a, MOSTNEG MYINT, "MY-017")
+    --}}}
+    --{{{
+    c := MOSTNEG MYINT
+    a := MINUS c
+    check.MYINT (a, c, "MY-018")
+    --}}}
+    --}}}
+    --{{{  sign extension                          (MY-019 to 029)
+    PROC extension()
+      PROC local(VAL MYINT w, x, y, z, INT i)
+        i := ((INT w) + (INT x)) + ((INT y) + (INT z))
+      :
+      INT i :
+      SEQ
+        local(-1(MYINT), -1(MYINT), -1(MYINT), -1(MYINT), i)
+        check(i, -4, "MY-019")
+        local(1(MYINT), 1(MYINT), 1(MYINT), 1(MYINT), i)
+        check(i, 4, "MY-020")
+    :
+    extension()
+    --}}}
+    --{{{  overflow checks on logical operators    (MY-030 to 039)
+    MYINT p, q, r :
+    SEQ
+      p := id.MYINT(MOSTPOS MYINT)
+      q := p PLUS 256(MYINT)
+      check.MYINT(q, (MOSTNEG MYINT) + 255(MYINT), "MY-030")
+    
+      p := id.MYINT(MOSTNEG MYINT)
+      q := p PLUS (-256(MYINT))
+      check.MYINT(q, (MOSTPOS MYINT) - 255(MYINT), "MY-031")
+    
+      p := id.MYINT(MOSTPOS MYINT)
+      q := p MINUS (-256(MYINT))
+      check.MYINT(q, (MOSTNEG MYINT) + 255(MYINT), "MY-032")
+    
+      p := id.MYINT(MOSTNEG MYINT)
+      q := p MINUS 256(MYINT)
+      check.MYINT(q, (MOSTPOS MYINT) - 255(MYINT), "MY-033")
+    
+      p := id.MYINT(MOSTPOS MYINT)
+      q := p TIMES 2(MYINT)
+      check.MYINT(q, (MOSTPOS MYINT) TIMES 2(MYINT), "MY-034")
+      check.MYINT(q, (MOSTPOS MYINT) << 1,           "MY-035")
+    
+      p := id.MYINT(MOSTPOS MYINT)
+      q := MINUS p
+      check.MYINT(q, 0(MYINT) MINUS (MOSTPOS MYINT), "MY-036")
+      check.MYINT(q, (MOSTNEG MYINT) + 1(MYINT),     "MY-037")
+    
+      r := id.MYINT(0(MYINT))
+      p := id.MYINT(MOSTPOS MYINT)
+      q := (p PLUS 256(MYINT)) + r
+      check.MYINT(q, (MOSTNEG MYINT) + 255(MYINT), "MY-038")
+    
+    --}}}
+    
+    --}}}
+    writes ("*c*ncheck arithmetic and logical operators*c*n")
+    --{{{  check constant folding                  (MY-100 to 199)
+    MYINT a, b :
+    INT c :
+    SEQ
+      b := id.MYINT(5 (MYINT))
+      c := id(3)
+      --{{{  +        (MY-100)
+      a := 2 (MYINT) + b               -- 7
+      a := (1 (MYINT) + b    ) + a     -- 6
+      a := (0 (MYINT) + b    ) + a     -- 5
+      a := ((-1 (MYINT)) + b ) + a     -- 4
+      a := ((-2 (MYINT)) + b ) + a     -- 3
+      a := (b + 2 (MYINT)    ) + a     -- 7
+      a := (b + 1 (MYINT)    ) + a     -- 6
+      a := (b + 0 (MYINT)    ) + a     -- 5
+      a := (b + (-1 (MYINT)) ) + a     -- 4
+      a := (b + (-2 (MYINT)) ) + a     -- 3
+      check.MYINT (a, 50 (MYINT), "MY-100")
+      --}}}
+      --{{{  -        (MY-101)
+      a := 2 (MYINT) - b               --  -3
+      a := (1 (MYINT) - b    ) + a     --  -4
+      a := (0 (MYINT) - b    ) + a     --  -5
+      a := ((-1 (MYINT)) - b ) + a     --  -6
+      a := ((-2 (MYINT)) - b ) + a     --  -7
+      a := (b - 2 (MYINT)    ) + a     --   3
+      a := (b - 1 (MYINT)    ) + a     --   4
+      a := (b - 0 (MYINT)    ) + a     --   5
+      a := (b - (-1 (MYINT)) ) + a     --   6
+      a := (b - (-2 (MYINT)) ) + a     --   7
+      check.MYINT (a, 0 (MYINT), "MY-101")
+      --}}}
+      --{{{  *        (MY-102)
+      a := 2 (MYINT) * b                 --  10
+      a := (1 (MYINT) * b      ) + a     --   5
+      a := (0 (MYINT) * b      ) + a     --   0
+      a := ((-1 (MYINT)) * b   ) + a     --  -5
+      a := ((-2 (MYINT)) * b   ) + a     -- -10
+      a := (b * 2 (MYINT)      ) + a     --  10
+      a := (b * 1 (MYINT)      ) + a     --   5
+      a := (b * 0 (MYINT)      ) + a     --   0
+      a := (b * (-1 (MYINT))   ) + a     --  -5
+      a := (b * (-2 (MYINT))   ) + a     -- -10
+      check.MYINT (a, 0 (MYINT), "MY-102")
+      --}}}
+      --{{{  /        (MY-103)
+      a := 2 (MYINT) / b                 -- 0
+      a := (1 (MYINT) / b      ) + a     -- 0
+      a := (0 (MYINT) / b      ) + a     -- 0
+      a := ((-1 (MYINT)) / b   ) + a     -- 0
+      a := ((-2 (MYINT)) / b   ) + a     -- 0
+      a := (b / 2 (MYINT)      ) + a     -- 2
+      a := (b / 1 (MYINT)      ) + a     -- 5
+      --a := b / 0 (MYINT)  --should give error
+      a := (b / (-1 (MYINT))   ) + a     -- -5
+      a := (b / (-2 (MYINT))   ) + a     -- -2
+      check.MYINT (a, 0 (MYINT), "MY-103")
+      --}}}
+      --{{{  \        (MY-104)
+      a := 2 (MYINT) \ b                 --  2
+      a := (1 (MYINT) \ b      ) + a     --  1
+      a := (0 (MYINT) \ b      ) + a     --  0
+      a := ((-1 (MYINT)) \ b   ) + a     -- -1
+      a := ((-2 (MYINT)) \ b   ) + a     -- -2
+      a := (b \ 2 (MYINT)      ) + a     --  1
+      a := (b \ 1 (MYINT)      ) + a     --  0
+      --a := b \ 0 (MYINT)  --should give error
+      a := (b \ (-1 (MYINT))   ) + a     --  0
+      a := (b \ (-2 (MYINT))   ) + a     --  1
+      check.MYINT (a, 2 (MYINT), "MY-104")
+      --}}}
+      --{{{  PLUS     (MY-105)
+      a := 2 (MYINT) PLUS b                 -- 7
+      a := (1 (MYINT) PLUS b      ) + a     -- 6
+      a := (0 (MYINT) PLUS b      ) + a     -- 5
+      a := ((-1 (MYINT)) PLUS b   ) + a     -- 4
+      a := ((-2 (MYINT)) PLUS b   ) + a     -- 3
+      a := (b PLUS 2 (MYINT)      ) + a     -- 7
+      a := (b PLUS 1 (MYINT)      ) + a     -- 6
+      a := (b PLUS 0 (MYINT)      ) + a     -- 5
+      a := (b PLUS (-1 (MYINT))   ) + a     -- 4
+      a := (b PLUS (-2 (MYINT))   ) + a     -- 3
+      check.MYINT (a, 50 (MYINT), "MY-105")
+      --}}}
+      --{{{  MINUS    (MY-106)
+      a := 2 (MYINT) MINUS b                  --  -3
+      a := (1 (MYINT) MINUS b       ) + a     --  -4
+      a := (0 (MYINT) MINUS b       ) + a     --  -5
+      a := ((-1 (MYINT)) MINUS b    ) + a     --  -6
+      a := ((-2 (MYINT)) MINUS b    ) + a     --  -7
+      a := (b MINUS 2 (MYINT)       ) + a     --   3
+      a := (b MINUS 1 (MYINT)       ) + a     --   4
+      a := (b MINUS 0 (MYINT)       ) + a     --   5
+      a := (b MINUS (-1 (MYINT))    ) + a     --   6
+      a := (b MINUS (-2 (MYINT))    ) + a     --   7
+      check.MYINT (a, 0 (MYINT), "MY-106")
+      --}}}
+      --{{{  TIMES    (MY-107)
+      a := 2 (MYINT) TIMES b                --  10
+      a := (1 (MYINT) TIMES b     ) + a     --   5
+      a := (0 (MYINT) TIMES b     ) + a     --   0
+      a := ((-1 (MYINT)) TIMES b  ) + a     --  -5
+      a := ((-2 (MYINT)) TIMES b  ) + a     -- -10
+      a := (b TIMES 2 (MYINT)     ) + a     --  10
+      a := (b TIMES 1 (MYINT)     ) + a     --   5
+      a := (b TIMES 0 (MYINT)     ) + a     --   0
+      a := (b TIMES (-1 (MYINT))  ) + a     --  -5
+      a := (b TIMES (-2 (MYINT))  ) + a     -- -10
+      check.MYINT (a, 0 (MYINT), "MY-107")
+      --}}}
+      --{{{  /\       (MY-108)
+      a := 2 (MYINT) /\ b                   -- 0
+      a := (1 (MYINT) /\ b        ) + a     -- 1
+      a := (0 (MYINT) /\ b        ) + a     -- 0
+      a := ((-1 (MYINT)) /\ b     ) + a     -- 5
+      a := ((-2 (MYINT)) /\ b     ) + a     -- 4
+      a := (b /\ 2 (MYINT)        ) + a     -- 0
+      a := (b /\ 1 (MYINT)        ) + a     -- 1
+      a := (b /\ 0 (MYINT)        ) + a     -- 0
+      a := (b /\ (-1 (MYINT))     ) + a     -- 5
+      a := (b /\ (-2 (MYINT))     ) + a     -- 4
+      check.MYINT (a, 20 (MYINT), "MY-108")
+      a := b /\ 0(MYINT)
+      check.MYINT (a, 0(MYINT), "MY-108a")
+      a := b /\ (-1(MYINT))
+      check.MYINT (a, 5(MYINT), "MY-108b")
+      a := b /\ b
+      check.MYINT (a, 5(MYINT), "MY-108c")
+      MYINT bb :
+      SEQ
+        bb := id.MYINT(#11F5(MYINT))
+        a := bb /\ 0(MYINT)
+        check.MYINT (a, 0(MYINT), "MY-108d")
+        a := bb /\ (-1(MYINT))
+        check.MYINT (a, #11F5(MYINT), "MY-108e")
+        a := bb /\ #11F5(MYINT)
+        check.MYINT (a, #11F5(MYINT), "MY-108f")
+        a := bb /\ #00FF(MYINT)
+        check.MYINT (a, #00F5(MYINT), "MY-108g")
+        a := bb /\ #FF00(MYINT)
+        check.MYINT (a, #1100(MYINT), "MY-108h")
+      
+      --}}}
+      --{{{  \/       (MY-109)
+      a := 2 (MYINT) \/ b                 --  7
+      a := (1 (MYINT) \/ b      ) + a     --  5
+      a := (0 (MYINT) \/ b      ) + a     --  5
+      a := ((-1 (MYINT)) \/ b   ) + a     -- -1
+      a := ((-2 (MYINT)) \/ b   ) + a     -- -1
+      a := (b \/ 2 (MYINT)      ) + a     --  7
+      a := (b \/ 1 (MYINT)      ) + a     --  5
+      a := (b \/ 0 (MYINT)      ) + a     --  5
+      a := (b \/ (-1 (MYINT))   ) + a     -- -1
+      a := (b \/ (-2 (MYINT))   ) + a     -- -1
+      check.MYINT (a, 30 (MYINT), "MY-109")
+      a := b \/ 0(MYINT)
+      check.MYINT (a, 5(MYINT), "MY-109a")
+      a := b \/ (-1(MYINT))
+      check.MYINT (a, -1(MYINT), "MY-109b")
+      a := b \/ b
+      check.MYINT (a, 5(MYINT), "MY-109c")
+      MYINT bb :
+      SEQ
+        bb := id.MYINT(#11F5(MYINT))
+        a := bb \/ 0(MYINT)
+        check.MYINT (a, #11F5(MYINT), "MY-109d")
+        a := bb \/ (-1(MYINT))
+        check.MYINT (a, -1(MYINT), "MY-109e")
+        a := bb \/ #11F5(MYINT)
+        check.MYINT (a, #11F5(MYINT), "MY-109f")
+        a := bb \/ #00FF(MYINT)
+        check.MYINT (a, #11FF(MYINT), "MY-109g")
+        a := bb \/ #FF00(MYINT)
+        check.MYINT (a, #FFF5(MYINT), "MY-109h")
+      
+      --}}}
+      --{{{  ><       (MY-110)
+      a := 2 (MYINT) >< b                  --  7
+      a := (1 (MYINT) >< b       ) + a     --  4
+      a := (0 (MYINT) >< b       ) + a     --  5
+      a := ((-1 (MYINT)) >< b    ) + a     -- -6
+      a := ((-2 (MYINT)) >< b    ) + a     -- -5
+      a := (b >< 2 (MYINT)       ) + a     --  7
+      a := (b >< 1 (MYINT)       ) + a     --  4
+      a := (b >< 0 (MYINT)       ) + a     --  5
+      a := (b >< (-1 (MYINT))    ) + a     -- -6
+      a := (b >< (-2 (MYINT))    ) + a     -- -5
+      check.MYINT (a, 10 (MYINT), "MY-110")
+      a := b >< 0(MYINT)
+      check.MYINT (a, 5(MYINT), "MY-110a")
+      a := b >< (-1(MYINT))
+      check.MYINT (a, -6(MYINT), "MY-110b")
+      a := b >< b
+      check.MYINT (a, 0(MYINT), "MY-110c")
+      MYINT bb :
+      SEQ
+        bb := id.MYINT(#11F5(MYINT))
+        a := bb >< 0(MYINT)
+        check.MYINT (a, #11F5(MYINT), "MY-110d")
+        a := bb >< #FFFF(MYINT)
+        check.MYINT (a, #EE0A(MYINT), "MY-110e")
+        a := bb >< #11F5(MYINT)
+        check.MYINT (a, 0(MYINT), "MY-110f")
+        a := bb >< #00FF(MYINT)
+        check.MYINT (a, #110A(MYINT), "MY-110g")
+        a := bb >< #FF00(MYINT)
+        check.MYINT (a, #EEF5(MYINT), "MY-110h")
+      
+      --}}}
+      --{{{  <<       (MY-111)
+      a := 64 (MYINT) << c                 --  512
+      a := (32 (MYINT) << c      ) + a     --  256
+      a := (0 (MYINT) << c       ) + a     --    0
+      a := ((-64 (MYINT)) << c   ) + a     -- -256
+      a := ((-32 (MYINT)) << c   ) + a     -- -512
+      --a := (b << 64              ) + a     --    0
+      --a := (b << 32              ) + a     --    0
+      a := (b << 16              ) + a     --   (5 << 16)
+      a := (b << 8               ) + a     --   (5 << 8)
+      a := (b << 0               ) + a     --    5
+      --a := b << (-64) --should give error
+      --a := b << (-32) --should give error
+      check.MYINT (a, 5(MYINT) + ((5(MYINT) << 16) + (5(MYINT) << 8)), "MY-111")
+      --}}}
+      --{{{  >>       (MY-112)
+      a := 64 (MYINT) >> c                --  8
+      a := (32 (MYINT) >> c     ) + a     --  4
+      a := (0 (MYINT) >> c      ) + a     --  0
+      a := ((-64 (MYINT)) >> c  ) + a     --  (-64 >> 3)
+      a := ((-32 (MYINT)) >> c  ) + a     --  (-32 >> 3)
+      --a := (b >> 64             ) + a     --  0
+      --a := (b >> 32             ) + a     --  0
+      a := (b >> 16             ) + a     --  0
+      a := (b >> 8              ) + a     --  0
+      a := (b >> 0              ) + a     --  5
+      --a := b >> (-64) --should give error
+      --a := b >> (-32) --should give error
+      VAL correct.result IS 17 (MYINT) +
+                 ( ( (-64(MYINT)) >> 3) + ( (-32(MYINT)) >> 3) ) :
+      check.MYINT (a, correct.result, "MY-112")
+      --}}}
+    --}}}
+    writes ("*c*ncheck constant folding*c*n")
+    --{{{  check comparison operators              (MY-200 to 299)
+    a := id.MYINT(47(MYINT))
+    x := a = b
+    check.BOOL (x, FALSE, "MY-205")
+    x := a > b
+    check.BOOL (x, FALSE, "MY-206")
+    x := a >= b
+    check.BOOL (x, FALSE, "MY-207")
+    x := a < b
+    check.BOOL (x, TRUE, "MY-208")
+    x := a <= b
+    check.BOOL (x, TRUE, "MY-209")
+    x := a <> b
+    check.BOOL (x, TRUE, "MY-210")
+    x := a AFTER b
+    check.BOOL (x, FALSE, "MY-211")
+    
+    --}}}
+    writes ("*c*ncheck comparison operators*c*n")
+    --{{{  check conversions                       (MY-300 to 399)
+    --{{{  variables for conversion tests
+    REAL64 r64 :
+    REAL32 r32 :
+    INT64 i64 :
+    INT32 i32 :
+    INT16 i16 :
+    BYTE byte :
+    BOOL bool :
+    --}}}
+    SEQ
+      r64 := REAL64 TRUNC b
+      check.REAL64 (r64, REAL64 TRUNC 85(MYINT), "MY-301")
+      r64 := REAL64 TRUNC (b + 1(MYINT))
+      check.REAL64 (r64, REAL64 TRUNC 86(MYINT), "MY-301a")
+      r64 := REAL64 TRUNC (b+b)
+      check.REAL64 (r64, REAL64 TRUNC 170(MYINT), "MY-301b")
+      r64 := REAL64 ROUND b
+      check.REAL64 (r64, REAL64 ROUND 85(MYINT), "MY-302")
+      r64 := REAL64 ROUND (b + 1(MYINT))
+      check.REAL64 (r64, REAL64 ROUND 86(MYINT), "MY-302a")
+      r64 := REAL64 ROUND (b+b)
+      check.REAL64 (r64, REAL64 ROUND 170(MYINT), "MY-302b")
+      r32 := REAL32 TRUNC b
+      check.REAL32 (r32, REAL32 TRUNC 85(MYINT), "MY-303")
+      r32 := REAL32 TRUNC (b + 1(MYINT))
+      check.REAL32 (r32, REAL32 TRUNC 86(MYINT), "MY-303a")
+      r32 := REAL32 TRUNC (b+b)
+      check.REAL32 (r32, REAL32 TRUNC 170(MYINT), "MY-303b")
+      r32 := REAL32 ROUND b
+      check.REAL32 (r32, REAL32 ROUND 85(MYINT), "MY-304")
+      r32 := REAL32 ROUND (b + 1(MYINT))
+      check.REAL32 (r32, REAL32 ROUND 86(MYINT), "MY-304a")
+      r32 := REAL32 ROUND (b+b)
+      check.REAL32 (r32, REAL32 ROUND 170(MYINT), "MY-304b")
+      i64 := INT64 b
+      check.INT64 (i64, INT64 85(MYINT), "MY-305")
+      i32 := INT32 b
+      check.INT32 (i32, INT32 85(MYINT), "MY-306")
+      i16 := INT16 b
+      check.INT16 (i16, INT16 85(MYINT), "MY-307")
+      byte := BYTE b
+      check.BYTE (byte, BYTE 85(MYINT), "MY-308")
+      c := 1(MYINT)
+      bool := BOOL c
+      check.BOOL (bool, BOOL 1(MYINT), "MY-309")
+    --}}}
+    writes ("*c*ncheck conversions*c*n")
+    --{{{  check 'remainder identity'              (MY-400 to 499)
+    a := ( 23(MYINT) * ( b / 23(MYINT) ) ) + ( b \ 23(MYINT) )
+    check.MYINT (a,
+      ( 23(MYINT) * ( 85(MYINT) / 23(MYINT) ) ) + ( 85(MYINT) \ 23(MYINT) ),
+      "MY-400")
+    check.MYINT (a, b, "MY-401")
+    --}}}
+    writes ("*c*ncheck remainder identity*c*n")
+    --{{{  hefty calculations                      (MY-500 to 599)
+    --{{{  declarations
+    MYINT x, y, z, a, b, c, d :
+    VAL n1 IS 1(MYINT) :
+    VAL n2 IS 2(MYINT) :
+    VAL n3 IS 3(MYINT) :
+    VAL n4 IS 1(MYINT) / 3(MYINT) :
+    VAL twice.eight.four IS 8192(MYINT) : -- twice 8 to the power 4 (= 2 to the 13)
+    --}}}
+    SEQ
+      --{{{  initialisation
+      x := 8(MYINT)
+      y := x + x
+      z := y - x
+      a := 11111(MYINT)
+      b := 22222(MYINT)
+      c := a * 2(MYINT)
+      --}}}
+      check.MYINT (y, 16(MYINT), "MY-500")
+      check.MYINT (z,  8(MYINT), "MY-501")
+      check.MYINT (c,  b, "MY-502")
+    
+      check.MYINT (((x + y) + (n3 * z)) + ((n2 * a) - b), 48(MYINT), "MY-503")
+      check.MYINT (((x PLUS y) PLUS (n3 TIMES z)) PLUS ((n2 TIMES a) MINUS b), 48(MYINT), "MY-503a")
+      check.MYINT (x + (x + (x + (x + (x + (x + x))))), 56(MYINT), "MY-504")
+      check.MYINT (x PLUS (x PLUS (x PLUS (x PLUS (x PLUS (x PLUS x))))), 56(MYINT), "MY-504a")
+      check.MYINT ((x * (x * (x * x))) + (x * (x * (x * x))),
+                   twice.eight.four, "MY-505")
+      check.MYINT ((x TIMES (x TIMES (x TIMES x))) PLUS (x TIMES (x TIMES (x TIMES x))),
+                   twice.eight.four, "MY-505a")
+      check.MYINT ((n2 * (y * (y * x))) + (n2 * (y * (y * x))),
+                   twice.eight.four, "MY-506")
+      check.MYINT ((n2 TIMES (y TIMES (y TIMES x))) PLUS (n2 TIMES (y TIMES (y TIMES x))),
+                   twice.eight.four, "MY-506a")
+      x := 1 (MYINT)
+      y := 3 (MYINT)
+      d := 2 (MYINT)
+      check.MYINT (x / y, n4, "MY-507")
+      c := ((d * y) * (d * y)) * ((d * y) * (d * y))
+      check.MYINT (c, 1296 (MYINT), "MY-509")
+      c := ((d TIMES y) TIMES (d TIMES y)) TIMES ((d TIMES y) TIMES (d TIMES y))
+      check.MYINT (c, 1296 (MYINT), "MY-509a")
+      c := ((((d * y) * (d * y)) * (d * y)) * (d * y)) * (d * y)
+      check.MYINT (c, 7776 (MYINT), "MY-510")
+      c := ((((d TIMES y) TIMES (d TIMES y)) TIMES (d TIMES y)) TIMES (d TIMES y)) TIMES (d TIMES y)
+      check.MYINT (c, 7776 (MYINT), "MY-510a")
+    
+    
+    --}}}
+    writes ("*c*nhefty calculations*c*n")
+    --{{{  passing as parameters                   (MY-600 to 699)
+    --{{{  copy.MYINT and add.MYINT
+    PROC copy.MYINT (VAL MYINT x, MYINT y)
+      y := x
+    :
+    PROC add.MYINT (VAL MYINT x, y, MYINT z)
+      z := x + y
+    :
+    --}}}
+    MYINT x, y, z :
+    VAL n1 IS 2(MYINT) :
+    VAL n2 IS 5000(MYINT) :
+    SEQ
+      copy.MYINT (n1, x)
+      check.MYINT (x, 2(MYINT), "MY-600")
+      copy.MYINT (n2, x)
+      check.MYINT (x, 5000(MYINT), "MY-601")
+      y := 57 (MYINT)
+      copy.MYINT (y, x)
+      check.MYINT (x, 57(MYINT), "MY-602")
+      add.MYINT (n1, n2, x)
+      check.MYINT (x, 5002(MYINT), "MY-603")
+      y := n1
+      z := n2
+      add.MYINT (y, z, x)
+      check.MYINT (x, 5002(MYINT), "MY-604")
+      check.MYINT (z, 5000(MYINT), "MY-605")
+    --}}}
+    writes ("*c*npassing as parameters*c*n")
+    --{{{  arrays                                  (MY-700 to 799)
+    VAL n IS 1(MYINT) :
+    VAL m IS 2(MYINT) :
+    VAL t1 IS [n, n, n, n, m] :
+    VAL t2 IS [t1, t1, t1, t1 ] :
+    VAL t3 IS [t2, t2, t2 ] :
+    BOOL b :
+    INT x :
+    MYINT tot :
+    SEQ
+      check.MYINT (t1 [0], n,         "MY-700")
+      check.MYINT (t1 [4], m,         "MY-701")
+      check.MYINT (t2 [2] [4], m,     "MY-702")
+      check.MYINT (t3 [1] [2] [4], m, "MY-703")
+      --{{{  test individual access
+      b := TRUE
+      x := 4
+      tot := 0(MYINT)
+      SEQ i = 0 FOR SIZE t3
+        SEQ j = 0 FOR SIZE t2
+          SEQ k = 0 FOR SIZE t1
+            SEQ
+              IF
+                (k = 4) AND (t3 [i] [j] [k] = m)
+                  SKIP
+                (k < 4) AND (t3 [i] [j] [k] = n)
+                  SKIP
+                TRUE
+                  b := FALSE
+              tot := tot + t3 [i] [j] [k]
+              x := INT t3 [i] [j] [x]      -- sets it to 1
+              x := 4                       -- resets it again
+      check.BOOL (b, TRUE, "MY-704")
+      VAL correct.value IS (48(MYINT) * n) + (12(MYINT) * m) :
+      check.MYINT (tot, correct.value, "MY-705")
+      --}}}
+      --{{{  test nested array access
+      INT a, b, c :
+      SEQ
+        a := 2
+        b := 1
+        c := 3
+        tot := t3[a][b][c] + ( t3[b][a][c] + ( t3[0][1][4] + ( t3[b][a+b][b+(a+b)] +
+               t1[(a+b)+b] ) ) )
+        VAL correct.value IS (2(MYINT) * n) + (3(MYINT) * m) :
+        check.MYINT (tot, correct.value, "MY-706")
+        tot := t3 [a] [ INT t3 [a] [b] [INT t3 [b + b] [a +
+                        b] [b + (a + b)] ] ] [(INT t3 [a] [c] [c +
+                        (b - a)]) +(3 * (INT t3 [a] [c] [b])) ]
+        check.MYINT (tot, m, "MY-707")
+      --}}}
+      --{{{  test individual access using abbreviations
+      b := TRUE
+      x := 4
+      tot := 0(MYINT)
+      SEQ i = 0 FOR SIZE t3
+        VAL a2 IS t3 [i] :
+        SEQ j = 0 FOR SIZE t2
+          VAL a1 IS a2 [j] :
+          SEQ k = 0 FOR SIZE t1
+            VAL a0 IS a1 [k] :
+            SEQ
+              IF
+                (k = 4) AND (a0 = m)
+                  SKIP
+                (k < 4) AND (a0 = n)
+                  SKIP
+                TRUE
+                  b := FALSE
+              tot := tot + a0
+              x := INT a1 [x]              -- sets it to 1
+              x := 4                       -- resets it again
+      check.BOOL (b, TRUE, "MY-708")
+      VAL correct.value IS (48(MYINT) * n) + (12(MYINT) * m) :
+      check.MYINT (tot, correct.value, "MY-709")
+      --}}}
+      --{{{  test livermore loop                   (MY-710 to 711)
+      PROC livermore()
+        VAL n IS 10 :
+        VAL r IS 7(MYINT) :
+        VAL t IS 13(MYINT) :
+        [n + 6] MYINT u :
+        [n] MYINT x, y, z :
+        SEQ
+          SEQ k = 0 FOR n + 6
+            u [k] := 3(MYINT)
+          SEQ k = 0 FOR n
+            SEQ
+              y [k] := 11(MYINT)
+              z [k] :=  5(MYINT)
+      
+          SEQ k = 0 FOR n
+            x [k] := u[k] + ((( r * (z[k] + (r * y[k]))) +
+                              (t * ((u[k+3] + (r * (u[k+2] + (r * u[k+1]))))))) +
+                              (t * ((u[k+6] + (r * (u[k+5] + (r * u[k+4])))))))
+      
+          check.MYINT (x[0],     5023(MYINT), "MY-710")
+          check.MYINT (x[n - 1], 5023(MYINT), "MY-711")
+      :
+      livermore()
+      --}}}
+      --{{{  test some bugs that were found        (MY-712 to 717)
+      PROC bug.tests()
+        SEQ
+          --{{{  bug1                                  (MY-712)
+          [2][2]MYINT arr :
+          MYINT A :
+          INT i :
+          SEQ
+            i := 0
+            arr[i][i] := 0(MYINT)
+            A := ((arr[i][i]+arr[i][i]) + (arr[i][i]+arr[i][i])) / 4(MYINT)
+            check.MYINT (A, 0(MYINT), "MY-712")
+          --}}}
+          --{{{  bug3                                  (MY-713 to 714)
+          PROC Complex.Subst ([]MYINT a, b)
+            SEQ
+              check.MYINT (a[0], 2(MYINT), "MY-713")
+              check.MYINT (b[1], 4(MYINT), "MY-714")
+          :
+          
+          [2][2][2]MYINT g.plus, g.minus :
+          MYINT i, j :
+          SEQ
+            i := 1(MYINT)
+            j := 0(MYINT)
+            g.plus [INT i][INT j][0] := 2(MYINT)
+            g.minus[INT i][INT j][1] := 4(MYINT)
+            Complex.Subst (g.plus[INT i][INT j],
+                           g.minus[INT i][INT j])
+          --}}}
+          --{{{  bug4                                  (MY-715)
+          [10][10]MYINT c :
+          INT i :
+          MYINT A:
+          SEQ
+            i := 1
+            SEQ i = 0 FOR 10
+              SEQ j = 0 FOR 10
+                VAL tmp IS MYINT j :
+                c [i][j] := tmp
+            A := ((c[i][i] * c [i*i][i+2])) / (c[(i*i)+i][(i*i)+i] + c[i][i])
+            check.MYINT (A, 1(MYINT), "MY-715")
+          --}}}
+          --{{{  test2                                 (MY-716 to 717)
+          MYINT u :
+          [4] MYINT ai :
+          [3] [4] MYINT x, Gb :
+          INT i, j, k :
+          SEQ
+            SEQ i = 0 FOR 4
+              SEQ
+                ai [i] := 5(MYINT)
+                SEQ j = 0 FOR 3
+                  SEQ
+                    x [j] [i] := 2(MYINT)
+                    Gb[j] [i] := 24(MYINT)
+            u := 4(MYINT)
+            i := 1
+            j := 2
+            k := 3
+            u := u + (ai [j] * x [j][k])
+            x [i][k] := (Gb [i][k] - u) / ai[i]
+            check.MYINT (x [i][k], 2(MYINT), "MY-716")
+          
+            u := 4(MYINT)
+            u := u PLUS (ai [j] TIMES x [j][k])
+            x [i][k] := (Gb [i][k] MINUS u) / ai[i]
+            check.MYINT (x [i][k], 2(MYINT), "MY-717")
+          
+          --}}}
+      :
+      bug.tests()
+      --}}}
+    --}}}
+    writes ("*c*narrays*c*n")
+    --{{{  more conversion tests
+    INT FUNCTION id(VAL INT i) IS i :
+    VAL n IS 5 :
+    VAL m IS 7 :
+    [n][m]INT64 i64arr :
+    [n][m]INT32 i32arr :
+    [n][m]INT16 i16arr :
+    [n][m]INT   iarr :
+    [n][m]REAL32 r32arr :
+    [n][m]REAL64 r64arr :
+    [n][m]MYINT myarr :
+    INT i, j :
+    VAL ans IS (n / 2) + (m / 2) :
+    SEQ
+      i, j := n / 2, m / 2
+      SEQ k = 0 FOR n
+        SEQ l = 0 FOR m
+          myarr[k][l] := MYINT(k + l)
+    
+      r64arr[i][j] := REAL64 ROUND myarr[i][j]
+      check.REAL64(r64arr[i][j], REAL64 ROUND ans, "MY-R64-1")
+      r64arr[id(i)][j] := REAL64 ROUND myarr[id(i)][j]
+      check.REAL64(r64arr[i][j], REAL64 ROUND ans, "MY-R64-2")
+      r64arr[i][j] := REAL64 TRUNC myarr[i][j]
+      check.REAL64(r64arr[i][j], REAL64 TRUNC ans, "MY-R64-3")
+      r64arr[id(i)][j] := REAL64 TRUNC myarr[id(i)][j]
+      check.REAL64(r64arr[i][j], REAL64 TRUNC ans, "MY-R64-4")
+    
+      r32arr[i][j] := REAL32 ROUND myarr[i][j]
+      check.REAL32(r32arr[i][j], REAL32 ROUND ans, "MY-R32-1")
+      r32arr[id(i)][j] := REAL32 ROUND myarr[id(i)][j]
+      check.REAL32(r32arr[i][j], REAL32 ROUND ans, "MY-R32-2")
+      r32arr[i][j] := REAL32 TRUNC myarr[i][j]
+      check.REAL32(r32arr[i][j], REAL32 TRUNC ans, "MY-R32-3")
+      r32arr[id(i)][j] := REAL32 TRUNC myarr[id(i)][j]
+      check.REAL32(r32arr[i][j], REAL32 TRUNC ans, "MY-R32-4")
+    
+      i64arr[i][j] := INT64 myarr[i][j]
+      check.INT64(i64arr[i][j], INT64 ans, "MY-I64-1")
+      i64arr[id(i)][j] := INT64 myarr[id(i)][j]
+      check.INT64(i64arr[i][j], INT64 ans, "MY-I64-2")
+    
+      i32arr[i][j] := INT32 myarr[i][j]
+      check.INT32(i32arr[i][j], INT32 ans, "MY-I32-1")
+      i32arr[id(i)][j] := INT32 myarr[id(i)][j]
+      check.INT32(i32arr[i][j], INT32 ans, "MY-I32-2")
+    
+      i16arr[i][j] := INT16 myarr[i][j]
+      check.INT16(i16arr[i][j], INT16 ans, "MY-I16-1")
+      i16arr[id(i)][j] := INT16 myarr[id(i)][j]
+      check.INT16(i16arr[i][j], INT16 ans, "MY-I16-2")
+    
+      iarr[i][j] := INT myarr[i][j]
+      check.INT(iarr[i][j], INT ans, "MY-INT-1")
+      iarr[id(i)][j] := INT myarr[id(i)][j]
+      check.INT(iarr[i][j], INT ans, "MY-INT-2")
+    --}}}
+    writes ("*c*nmore conversion tests*c*n")
+    --{{{  more constant folding (bug INSdi02215, INSdi01895)
+    PROC constant.TIMES(VAL MYINT y)
+    
+      VAL zero.zero IS          0(MYINT) :
+      VAL zero.one  IS          1(MYINT) :
+      VAL zero.any  IS          2(MYINT) :
+      VAL one.zero  IS #100(MYINT) :
+      VAL one.one   IS #101(MYINT) :
+      VAL one.any   IS #102(MYINT) :
+      VAL any.zero  IS #200(MYINT) :
+      VAL any.one   IS #201(MYINT) :
+      VAL any.any   IS #202(MYINT) :
+      VAL table IS [0(MYINT), 1(MYINT), 2(MYINT), -1(MYINT), -2(MYINT),
+                    MOSTNEG MYINT, MOSTPOS MYINT, 10(MYINT),
+                    zero.any,
+                    one.zero, one.one, one.any,
+                    any.zero, any.one, any.any,
+                    -zero.any,
+                    -one.zero, -one.one, -one.any,
+                    -any.zero, -any.one, -any.any ] :
+      SEQ
+        SEQ z = 0 FOR SIZE table
+          PROC local.check(VAL MYINT x, y, VAL []BYTE msg)
+            check.MYINT(x, y TIMES table[z], msg)
+          :
+          MYINT res, x :
+          SEQ
+            x := id.MYINT(table[z])
+    
+            res := x TIMES zero.zero
+            local.check(res, zero.zero, "MY-a")
+            res := x TIMES zero.one
+            local.check(res, zero.one, "MY-b")
+            res := x TIMES zero.any
+            local.check(res, zero.any, "MY-c")
+    
+            res := x TIMES one.zero
+            local.check(res, one.zero, "MY-d")
+            res := x TIMES one.one
+            local.check(res, one.one, "MY-e")
+            res := x TIMES one.any
+            local.check(res, one.any, "MY-f")
+    
+            res := x TIMES any.zero
+            local.check(res, any.zero, "MY-g")
+            res := x TIMES any.one
+            local.check(res, any.one, "MY-h")
+            res := x TIMES any.any
+            local.check(res, any.any, "MY-i")
+    
+            res := zero.zero TIMES x
+            local.check(res, zero.zero, "MY-j")
+            res := zero.one  TIMES x
+            local.check(res, zero.one, "MY-k")
+            res := zero.any  TIMES x
+            local.check(res, zero.any, "MY-l")
+    
+            res := one.zero  TIMES x
+            local.check(res, one.zero, "MY-m")
+            res := one.one   TIMES x
+            local.check(res, one.one, "MY-n")
+            res := one.any   TIMES x
+            local.check(res, one.any, "MY-o")
+    
+            res := any.zero  TIMES x
+            local.check(res, any.zero, "MY-p")
+            res := any.one   TIMES x
+            local.check(res, any.one, "MY-q")
+            res := any.any   TIMES x
+            local.check(res, any.any, "MY-r")
+    
+            res := y         TIMES x
+            local.check(res, y, "MY-s")
+    :
+    constant.TIMES(27(MYINT))
+    --}}}
+    writes ("*c*nmore constant folding*c*n")
+    --{{{  bug 334
+    PROC bug.334()
+      MYINT a, x, z :
+      SEQ
+        x, z := 99(MYINT), -1(MYINT)
+        VAL y IS (MYINT x) :  -- null conversion
+        SEQ
+          a := y
+          check.MYINT(a, 99(MYINT), "B334p")
+          check.MYINT(y, 99(MYINT), "B334q")
+        VAL y IS z * (MYINT x) :
+        SEQ
+          a := y
+          check.MYINT(a, -99(MYINT), "B334r")
+          check.MYINT(y, -99(MYINT), "B334s")
+    :
+    bug.334()
+    --}}}
+    writes ("*c*nbug 334*c*n")
+    --{{{  bug 670
+    PROC bug.670()
+      MYINT a,b :
+      SEQ
+        a := 2(MYINT)
+        b := (a + 3(MYINT)) TIMES 3(MYINT)
+        check.MYINT(b, 15(MYINT), "B670a")
+    :
+    bug.670()
+    --}}}
+    writes ("*c*nbug 670*c*n")
+    --{{{  bug 1000
+    PROC bug.1000()
+      PROC q (VAL MYINT a0, a1, a2, a3, a4, MYINT b0, b1, b2, b3, b4)
+        b0, b1, b2, b3, b4 := a0, a1, a2, a3, a4
+      :
+      [5]MYINT z0, z1 :
+      SEQ
+        SEQ i = 0 FOR SIZE z0
+          z0[i], z1[i] := MYINT (-i), MYINT 0
+        q(z0[0],z0[1],z0[2],z0[3],z0[4],z1[0],z1[1],z1[2],z1[3],z1[4])
+        SEQ i = 0 FOR SIZE z1
+          check(INT z1[i], -i, "B1000a")
+    :
+    bug.1000()
+    --}}}
+    writes ("*c*nbug 1000*c*n")
+    --{{{  bug 1150
+    PROC bug.1150()
+      MYINT x, y :
+      VAL MYINT c IS   1(MYINT) :
+      VAL MYINT d IS 100(MYINT) :
+      SEQ
+        x, y := c, d
+        x := (x + x) + (y + y)
+        check.MYINT(x, (c+c)+(d+d), "B1150a")
+        x, y := c, d
+        x := (x + x) - (y + y)
+        check.MYINT(x, (c+c)-(d+d), "B1150b")
+        x, y := c, d
+        x := (x + x) + (x + x)
+        check.MYINT(x, (c+c)+(c+c), "B1150c")
+        x, y := c, d
+        x := (x + x) - (x + x)
+        check.MYINT(x, (c+c)-(c+c), "B1150d")
+        x, y := c, d
+        x := (y + y) + (x + x)
+        check.MYINT(x, (d+d)+(c+c), "B1150e")
+        x, y := c, d
+        x := (y + y) - (x + x)
+        check.MYINT(x, (d+d)-(c+c), "B1150f")
+        --x := #1234(MYINT)
+        --y := 1(MYINT)
+        --x := (x /\ #0FFF(MYINT))\/(((x>>20)+(y+1(MYINT)))<<20)
+        --check.MYINT(x, #12545678(MYINT), "B1150g")
+    :
+    bug.1150()
+    --}}}
+    writes ("*c*nbug 1150*c*n")
+    --{{{  bug 1274
+    PROC bug.1274()
+      MYINT x, y :
+      VAL c IS 10(MYINT) :
+      VAL d IS 20(MYINT) :
+      SEQ
+        y := c
+    
+        VAL a IS (c * c) + (c * d) :
+        SEQ
+          x := c
+          x := (y * c) + (y * d)
+          check.MYINT(x, a, "B1274-3a+")
+          x := c
+          x := (x * c) + (y * d)
+          check.MYINT(x, a, "B1274-3b+")
+          x := c
+          x := (y * c) + (x * d)
+          check.MYINT(x, a, "B1274-3c+")
+          x := c
+          x := (x * c) + (x * d)
+          check.MYINT(x, a, "B1274-3d+")
+    
+        VAL a IS (c * c) PLUS (c * d) :
+        SEQ
+          x := c
+          x := (y * c) PLUS (y * d)
+          check.MYINT(x, a, "B1274-3aP")
+          x := c
+          x := (x * c) PLUS (y * d)
+          check.MYINT(x, a, "B1274-3bP")
+          x := c
+          x := (y * c) PLUS (x * d)
+          check.MYINT(x, a, "B1274-3cP")
+          x := c
+          x := (x * c) PLUS (x * d)
+          check.MYINT(x, a, "B1274-3dP")
+    
+        VAL a IS (c * c) * (c * d) :
+        SEQ
+          x := c
+          x := (y * c) * (y * d)
+          check.MYINT(x, a, "B1274-3a**")
+          x := c
+          x := (x * c) * (y * d)
+          check.MYINT(x, a, "B1274-3b**")
+          x := c
+          x := (y * c) * (x * d)
+          check.MYINT(x, a, "B1274-3c**")
+          x := c
+          x := (x * c) * (x * d)
+          check.MYINT(x, a, "B1274-3d**")
+    
+        VAL a IS (c * c) TIMES (c * d) :
+        SEQ
+          x := c
+          x := (y * c) TIMES (y * d)
+          check.MYINT(x, a, "B1274-3aT")
+          x := c
+          x := (x * c) TIMES (y * d)
+          check.MYINT(x, a, "B1274-3bT")
+          x := c
+          x := (y * c) TIMES (x * d)
+          check.MYINT(x, a, "B1274-3cT")
+          x := c
+          x := (x * c) TIMES (x * d)
+          check.MYINT(x, a, "B1274-3dT")
+    
+    :
+    bug.1274()
+    --}}}
+    writes ("*c*nbug 1274*c*n")
+    --{{{  bug 1351
+    PROC bug.1351()
+      PROC p (VAL []INT buf)
+        MYINT a, b :
+        SEQ
+          a,b := 1(MYINT), 2(MYINT)
+          a := (MYINT (SIZE buf)) + (a + b)
+          check.MYINT(a, 4(MYINT), "B1351a")
+      :
+      p ([55])
+    :
+    bug.1351()
+    --}}}
+    writes ("*c*nbug 1351*c*n")
+    --{{{  bug 1333
+    --PROC bug.1333()
+    --  MYINT x :
+    --  BOOL b :
+    --  SEQ
+    --    x := 27(MYINT)
+    --    b := x < #FFFF8000(MYINT)
+    --    check(INT b, INT FALSE, "B1333a3")
+    --    b := x < #FFFF8001(MYINT)
+    --    check(INT b, INT FALSE, "B1333b3")
+    --    b := x < #FFFFFFFF(MYINT)
+    --    check(INT b, INT FALSE, "B1333c3")
+    --    b := x < #FFFF7FFF(MYINT)
+    --    check(INT b, INT FALSE, "B1333d3")
+    --    b := x < #8000(MYINT)
+    --    check(INT b, INT TRUE, "B1333e3")
+    --    b := x < #8001(MYINT)
+    --    check(INT b, INT TRUE, "B1333f3")
+    --    b := x < #FFFF(MYINT)
+    --    check(INT b, INT TRUE, "B1333g3")
+    --    b := x < #7FFF(MYINT)
+    --    check(INT b, INT TRUE, "B1333h3")
+    --:
+    --bug.1333()
+    --}}}
+    writes ("*c*nbug 1333*c*n")
+    --{{{  bug 1546
+    PROC bug.1546c()
+      MYINT x, y :
+      INT places :
+      SEQ
+        x, places := ~#F(MYINT), id(2)
+        VAL []BYTE b.x RETYPES x :
+        VAL MY.bpw IS (SIZE b.x) * 8 :
+        y := (x >> places) \/ ((- (MYINT (x < 0(MYINT)))) << (MY.bpw-places))
+        check.MYINT(y, ~#3(MYINT), "B1546c")
+    :
+    bug.1546c()
+    --}}}
+    writes ("*c*nbug 1546*c*n")
+    --{{{  bug TS/2020
+    PROC bug.TS.2020()
+      MYINT i32, mostneg, mostpos :
+      SEQ
+        i32 := (MOSTNEG MYINT) REM (-1(MYINT))
+        check.MYINT(i32, 0(MYINT), "B2020ba")
+        i32 := (MOSTNEG MYINT) REM ( 1(MYINT))
+        check.MYINT(i32, 0(MYINT), "B2020bb")
+        i32 := (MOSTPOS MYINT) REM (-1(MYINT))
+        check.MYINT(i32, 0(MYINT), "B2020bc")
+        i32 := (MOSTPOS MYINT) REM ( 1(MYINT))
+        check.MYINT(i32, 0(MYINT), "B2020bd")
+        i32 := (MOSTNEG MYINT) /   ( 1(MYINT))
+        check.MYINT(i32, MOSTNEG MYINT, "B2020be")
+        i32 := (MOSTPOS MYINT) /   (-1(MYINT))
+        check.MYINT(i32, (MOSTNEG MYINT) + 1(MYINT), "B2020bf")
+        i32 := (MOSTPOS MYINT) /   ( 1(MYINT))
+        check.MYINT(i32, MOSTPOS MYINT, "B2020bg")
+    
+        mostneg, mostpos := MOSTNEG MYINT, MOSTPOS MYINT
+    
+        i32 := (mostneg) REM (-1(MYINT))
+        check.MYINT(i32, 0(MYINT), "B2020bh")
+        i32 := (mostneg) REM ( 1(MYINT))
+        check.MYINT(i32, 0(MYINT), "B2020bi")
+        i32 := (mostpos) REM (-1(MYINT))
+        check.MYINT(i32, 0(MYINT), "B2020bj")
+        i32 := (mostpos) REM ( 1(MYINT))
+        check.MYINT(i32, 0(MYINT), "B2020bk")
+        i32 := (mostneg) /   ( 1(MYINT))
+        check.MYINT(i32, MOSTNEG MYINT, "B2020bl")
+        i32 := (mostpos) /   (-1(MYINT))
+        check.MYINT(i32, (MOSTNEG MYINT) + 1(MYINT), "B2020bm")
+        i32 := (mostpos) /   ( 1(MYINT))
+        check.MYINT(i32, MOSTPOS MYINT, "B2020bn")
+    :
+    bug.TS.2020()
+    --}}}
+    writes ("*c*nbug TS/2020*c*n")
+    --{{{  bug INSdi02195
+    PROC bug.INSdi02195()
+      --{{{  functions
+      BOOL   FUNCTION BOOL.fn   (VAL INT x) IS BOOL  x :
+      BYTE   FUNCTION BYTE.fn   (VAL INT x) IS BYTE  x :
+      INT16  FUNCTION INT16.fn  (VAL INT x) IS INT16 x :
+      INT    FUNCTION INT.fn    (VAL INT x) IS x :
+      INT32  FUNCTION INT32.fn  (VAL INT x) IS INT32 x :
+      INT64  FUNCTION INT64.fn  (VAL INT x) IS INT64 x :
+      REAL32 FUNCTION REAL32.fn (VAL INT x) IS REAL32 ROUND x :
+      REAL64 FUNCTION REAL64.fn (VAL INT x) IS REAL64 ROUND x :
+      MYINT  FUNCTION MYINT.fn  (VAL INT x) IS MYINT x :
+      --}}}
+      --{{{  variables
+      BOOL bool.var :
+      BYTE byte.var :
+      INT16 i16.var :
+      INT32 i32.var :
+      INT64 i64.var :
+      INT   int.var :
+      REAL32 r32.var :
+      REAL64 r64.var :
+      INT zero, int :
+      --}}}
+      MYINT local.i, local.j, local.k :
+      SEQ
+        zero := id(0)
+        int := id(77)
+        --{{{  MYINT var -> type -> MYINT         00 - 09
+        local.j := id.MYINT(1(MYINT))
+        
+        local.i := MYINT (BOOL local.j)
+        check.MYINT(local.i, 1(MYINT), "MY-00")
+        
+        local.j := id.MYINT(77(MYINT))
+        
+        local.i := MYINT (BYTE local.j)
+        check.MYINT(local.i, 77(MYINT), "MY-01")
+        local.i := MYINT (INT local.j)
+        check.MYINT(local.i, 77(MYINT), "MY-02")
+        local.i := MYINT (INT16 local.j)
+        check.MYINT(local.i, 77(MYINT), "MY-03")
+        local.i := MYINT (INT32 local.j)
+        check.MYINT(local.i, 77(MYINT), "MY-04")
+        local.i := MYINT (INT64 local.j)
+        check.MYINT(local.i, 77(MYINT), "MY-05")
+        local.i := MYINT ROUND (REAL32 ROUND local.j)
+        check.MYINT(local.i, 77(MYINT), "MY-06")
+        local.i := MYINT ROUND (REAL64 ROUND local.j)
+        check.MYINT(local.i, 77(MYINT), "MY-07")
+        --}}}
+        --{{{  MYINT FUNCTION -> type -> MYINT    10 - 19
+        local.j := id.MYINT(1(MYINT))
+        
+        local.i := MYINT (BOOL MYINT.fn(INT local.j))
+        check.MYINT(local.i, 1(MYINT), "MY-10")
+        
+        local.j := id.MYINT(77(MYINT))
+        
+        local.i := MYINT (BYTE MYINT.fn(INT local.j))
+        check.MYINT(local.i, 77(MYINT), "MY-11")
+        local.i := MYINT (INT MYINT.fn(INT local.j))
+        check.MYINT(local.i, 77(MYINT), "MY-12")
+        local.i := MYINT (INT16 MYINT.fn(INT local.j))
+        check.MYINT(local.i, 77(MYINT), "MY-13")
+        local.i := MYINT (INT32 MYINT.fn(INT local.j))
+        check.MYINT(local.i, 77(MYINT), "MY-14")
+        local.i := MYINT (INT64 MYINT.fn(INT local.j))
+        check.MYINT(local.i, 77(MYINT), "MY-15")
+        local.i := MYINT ROUND (REAL32 ROUND (MYINT.fn(INT local.j)))
+        check.MYINT(local.i, 77(MYINT), "MY-16")
+        local.i := MYINT ROUND (REAL64 ROUND (MYINT.fn(INT local.j)))
+        check.MYINT(local.i, 77(MYINT), "MY-17")
+        --}}}
+        --{{{  MYINT exp -> type -> MYINT         20 - 29
+        local.k := id.MYINT(0(MYINT))
+        
+        local.j := id.MYINT(1(MYINT))
+        
+        local.i := MYINT (BOOL (local.j + local.k))
+        check.MYINT(local.i, 1(MYINT), "MY-20")
+        
+        local.j := id.MYINT(77(MYINT))
+        
+        local.i := MYINT (BYTE (local.j + local.k))
+        check.MYINT(local.i, 77(MYINT), "MY-21")
+        local.i := MYINT (INT (local.j + local.k))
+        check.MYINT(local.i, 77(MYINT), "MY-22")
+        local.i := MYINT (INT16 (local.j + local.k))
+        check.MYINT(local.i, 77(MYINT), "MY-23")
+        local.i := MYINT (INT32 (local.j + local.k))
+        check.MYINT(local.i, 77(MYINT), "MY-24")
+        local.i := MYINT (INT64 (local.j + local.k))
+        check.MYINT(local.i, 77(MYINT), "MY-25")
+        local.i := MYINT ROUND (REAL32 ROUND (local.j + local.k))
+        check.MYINT(local.i, 77(MYINT), "MY-26")
+        local.i := MYINT ROUND (REAL64 ROUND (local.j + local.k))
+        check.MYINT(local.i, 77(MYINT), "MY-27")
+        --}}}
+        --{{{  type var -> MYINT                  30 - 39
+        bool.var := BOOL id(1)
+        local.i := MYINT bool.var
+        check.MYINT(local.i, 1(MYINT), "MY-30")
+        byte.var := BYTE id(77)
+        local.i := MYINT byte.var
+        check.MYINT(local.i, 77(MYINT), "MY-31")
+        int.var := id.INT(77(INT))
+        local.i := MYINT int.var
+        check.MYINT(local.i, 77(MYINT), "MY-32")
+        i16.var := id.INT16(77(INT16))
+        local.i := MYINT i16.var
+        check.MYINT(local.i, 77(MYINT), "MY-33")
+        i32.var := id.INT32(77(INT32))
+        local.i := MYINT i32.var
+        check.MYINT(local.i, 77(MYINT), "MY-34")
+        i64.var := id.INT64(77(INT64))
+        local.i := MYINT i64.var
+        check.MYINT(local.i, 77(MYINT), "MY-35")
+        r32.var := id.REAL32(77.0(REAL32))
+        local.i := MYINT ROUND r32.var
+        check.MYINT(local.i, 77(MYINT), "MY-36")
+        r64.var := id.REAL64(77.0(REAL64))
+        local.i := MYINT ROUND r64.var
+        check.MYINT(local.i, 77(MYINT), "MY-37")
+        --}}}
+        --{{{  type FUNCTION -> MYINT             40 - 49
+        local.i := MYINT BOOL.fn(zero)
+        check.MYINT(local.i, 0(MYINT), "MY-40")
+        local.i := MYINT BYTE.fn(int)
+        check.MYINT(local.i, 77(MYINT), "MY-41")
+        local.i := MYINT INT.fn(int)
+        check.MYINT(local.i, 77(MYINT), "MY-42")
+        local.i := MYINT INT16.fn(int)
+        check.MYINT(local.i, 77(MYINT), "MY-43")
+        local.i := MYINT INT32.fn(int)
+        check.MYINT(local.i, 77(MYINT), "MY-44")
+        local.i := MYINT INT64.fn(int)
+        check.MYINT(local.i, 77(MYINT), "MY-45")
+        local.i := MYINT ROUND REAL32.fn(int)
+        check.MYINT(local.i, 77(MYINT), "MY-46")
+        local.i := MYINT ROUND REAL64.fn(int)
+        check.MYINT(local.i, 77(MYINT), "MY-47")
+        --}}}
+        --{{{  type exp -> MYINT                  50 - 59
+        bool.var := BOOL id(1)
+        local.i := MYINT (bool.var = bool.var)
+        check.MYINT(local.i, 1(MYINT), "MY-50")
+        byte.var := BYTE id(77)
+        local.i := MYINT byte.var
+        check.MYINT(local.i, 77(MYINT), "MY-51")
+        int.var := id.INT(77(INT))
+        local.i := MYINT (int.var + (INT   zero))
+        check.MYINT(local.i, 77(MYINT), "MY-52")
+        i16.var := id.INT16(77(INT16))
+        local.i := MYINT (i16.var + (INT16 zero))
+        check.MYINT(local.i, 77(MYINT), "MY-53")
+        i32.var := id.INT32(77(INT32))
+        local.i := MYINT (i32.var + (INT32 zero))
+        check.MYINT(local.i, 77(MYINT), "MY-54")
+        i64.var := id.INT64(77(INT64))
+        local.i := MYINT (i64.var + (INT64 zero))
+        check.MYINT(local.i, 77(MYINT), "MY-55")
+        r32.var := id.REAL32(77.0(REAL32))
+        local.i := MYINT ROUND (r32.var + (REAL32 ROUND zero))
+        check.MYINT(local.i, 77(MYINT), "MY-56")
+        r64.var := id.REAL64(77.0(REAL64))
+        local.i := MYINT ROUND (r64.var + (REAL64 ROUND zero))
+        check.MYINT(local.i, 77(MYINT), "MY-57")
+        --}}}
+    :
+    bug.INSdi02195()
+    --}}}
+    writes ("*c*nbug INSdi02195*c*n")
+    --{{{  bug INSdi02423
+    PROC bug.INSdi02423()
+    
+      PROC CheckOverflow ( VAL MYINT address, MYINT result)
+        result := address
+      :
+    
+      PROC local(VAL INT Areg, Breg, VAL MYINT expected0, expected1, VAL []BYTE msg)
+        MYINT XBreg, XAreg, Xtimes :
+        MYINT result0, result1 :
+        SEQ
+          CheckOverflow ( (MYINT Breg)TIMES(MYINT Areg), result0 )
+          XBreg := (MYINT Breg)
+          XAreg := (MYINT Areg)
+          Xtimes := XAreg TIMES XBreg
+          CheckOverflow (Xtimes, result1)
+          check.MYINT(result0, expected0, msg)
+          check.MYINT(result1, expected0, msg)
+    
+          CheckOverflow ( (MYINT Breg)*(MYINT Areg), result0 )
+          Xtimes := XAreg * XBreg
+          CheckOverflow (Xtimes, result1)
+          check.MYINT(result0, expected0, msg)
+          check.MYINT(result1, expected0, msg)
+    
+          CheckOverflow ( (MYINT Breg)+(MYINT Areg), result0 )
+          Xtimes := XAreg + XBreg
+          CheckOverflow (Xtimes, result1)
+          check.MYINT(result0, expected1, msg)
+          check.MYINT(result1, expected1, msg)
+    
+          CheckOverflow ( (MYINT Breg)PLUS(MYINT Areg), result0 )
+          Xtimes := XAreg PLUS XBreg
+          CheckOverflow (Xtimes, result1)
+          check.MYINT(result0, expected1, msg)
+          check.MYINT(result1, expected1, msg)
+      :
+      SEQ
+        local(    1,     2,     2(MYINT),  3(MYINT), "di2423a")
+        local(    2,     1,     2(MYINT),  3(MYINT), "di2423b")
+        local(   -1,     2,    -2(MYINT),  1(MYINT), "di2423c")
+        local(    1,    -2,    -2(MYINT), -1(MYINT), "di2423d")
+        local(   -1,     1,    -1(MYINT),  0(MYINT), "di2423e")
+        local(    1,    -1,    -1(MYINT),  0(MYINT), "di2423f")
+        local(    1,     0,     0(MYINT),  1(MYINT), "di2423g")
+        local(    0,     1,     0(MYINT),  1(MYINT), "di2423h")
+        local(    0,    -1,     0(MYINT), -1(MYINT), "di2423i")
+        local(   -1,     0,     0(MYINT), -1(MYINT), "di2423j")
+    :
+    bug.INSdi02423()
+    --}}}
+    writes ("*c*nbug INSdi02423*c*n")
+    --{{{  bug INSdi02439
+    PROC bug.INSdi02439()
+      SEQ
+        PROTOCOL CONTROL  IS  INT; MYINT :
+        CHAN OF CONTROL ControlToMonitor:
+        PAR
+          SEQ
+            SEQ i = 0 FOR 4
+              INT   ii :
+              MYINT j :
+              SEQ
+                ControlToMonitor ? ii; j
+                check(i, INT j, "di2439a")
+                check(i, ii,    "di2439b")
+          SEQ i = 0 FOR 4
+            ControlToMonitor ! i; MYINT i
+    :
+    bug.INSdi02439()
+    --}}}
+    writes ("*c*nbug INSdi02439*c*n")
+    --{{{  arrays of user defined types
+    PROC arrays.of.user.types()
+      DATA TYPE arrtype IS [10]MYINT :
+      arrtype a :
+      DATA TYPE intarr  IS [SIZE a]INT :
+      intarr  b :
+      MYINT x :
+      INT i :
+      PROC add(arrtype xx, VAL MYINT y)
+        SEQ i = 0 FOR SIZE xx
+          xx[i] := xx[i] + y
+      :
+      SEQ
+        i := id(27)
+        x := MYINT i
+        SEQ j = 0 FOR SIZE a
+          a[j] := (MYINT j) + x
+        SEQ k = 0 FOR SIZE b
+          b[k] := k
+        SEQ l = 0 FOR SIZE a
+          check.BOOL(a[l] = (MYINT (b[l] + i)), TRUE, "MY-ARR-01")
+        add(a, -x)
+        SEQ l = 0 FOR SIZE a
+          check.BOOL(a[l] = (MYINT b[l]), TRUE, "MY-ARR-02")
+    :
+    arrays.of.user.types()
+    --}}}
+    writes ("*c*narrays of user defined types*c*n")
+    --{{{  abbrs of function results and params
+    PROC abbrs.of.function.results.and.params()
+      MYINT FUNCTION f(VAL MYINT x)
+        MYINT res :
+        VALOF
+          rres   IS res :
+          VAL xx IS x :
+          rres := xx
+          RESULT res
+      :
+      MYINT FUNCTION g(VAL MYINT x)
+        MYINT res :
+        VALOF
+          []BYTE rres   RETYPES res :
+          VAL []BYTE xx RETYPES x :
+          rres := xx
+          RESULT res
+      :
+      MYINT x, y :
+      SEQ
+        x := id.MYINT(88(MYINT))
+        y := f(x)
+        check.MYINT(y, 88(MYINT), "ABBR00")
+        x := id.MYINT(77(MYINT))
+        y := g(x)
+        check.MYINT(y, 77(MYINT), "ABBR01")
+    :
+    abbrs.of.function.results.and.params()
+    --}}}
+    writes ("*c*nabbrs of function results and params*c*n")
+    --{{{  CASE statements
+    PROC CASE.statements()
+      MYINT x :
+      SEQ
+        x := id.MYINT(27(MYINT))
+        CASE x
+          27(MYINT)
+            check.MYINT(x, 27(MYINT), "CASE00")
+          ELSE
+            check.MYINT(x, -x, "CASE01")
+    :
+    CASE.statements()
+    --}}}
+    writes ("*c*nCASE statements*c*n")
+:
+do.MYINT ()

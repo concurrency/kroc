@@ -1,0 +1,1404 @@
+
+-- version control marker $Id: cgtest13.occ,v 1.5 1996/11/05 12:16:59 svd Exp $
+
+PROC cgtest13 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+
+  SEQ
+    init ("CG test 13", "CASE statements")
+
+    --{{{  simple cases                  (C000 to C059)
+    PROC simple.cases()
+      SEQ
+        --{{{  INT                         (C000 to C010)
+        SEQ i = 0 FOR 11
+          CASE i
+            0
+              check (i, 0, "C000")
+            1
+              check (i, 1, "C001")
+            2
+              check (i, 2, "C002")
+            3
+              check (i, 3, "C003")
+            4
+              check (i, 4, "C004")
+            5
+              check (i, 5, "C005")
+            6
+              check (i, 6, "C006")
+            7
+              check (i, 7, "C007")
+            8
+              check (i, 8, "C008")
+            9
+              check (i, 9, "C009")
+            ELSE
+              check (i, 10, "C010")
+        --}}}
+        --{{{  INT with multiple choices   (C011 to C019)
+        INT a :
+        SEQ
+          a := 0
+          SEQ i = 0 FOR 10
+            CASE i
+              0, 1, 2
+                SEQ
+                  check (i, a, "C011")
+                  a := a + 1
+              4
+                check (i, 4, "C012")
+              5
+                check (i, 5, "C013")
+              6, 3
+                SEQ
+                  check (i, a, "C014")
+                  a := a + 3
+              7
+                check (i, 7, "C015")
+              8
+                check (i, 8, "C016")
+              ELSE
+                check (i, 9, "C017")
+        --}}}
+        --{{{  BYTE                        (C020 to C039)
+        SEQ i = 0 FOR 11
+          CASE BYTE (i + (INT 'A'))
+            'A'
+              check (i, 0, "C020")
+            'B'
+              check (i, 1, "C021")
+            'C'
+              check (i, 2, "C022")
+            'D'
+              check (i, 3, "C023")
+            'E'
+              check (i, 4, "C024")
+            'F'
+              check (i, 5, "C025")
+            'G'
+              check (i, 6, "C026")
+            'H'
+              check (i, 7, "C027")
+            'I'
+              check (i, 8, "C028")
+            'J'
+              check (i, 9, "C029")
+            ELSE
+              check (i, 10, "C030")
+        --}}}
+        --{{{  INT with no ELSE            (C040 to C049)
+        SEQ i = 0 FOR 10
+          CASE i
+            0
+              check (i, 0, "C040")
+            1
+              check (i, 1, "C041")
+            2
+              check (i, 2, "C042")
+            3
+              check (i, 3, "C043")
+            4
+              check (i, 4, "C044")
+            5
+              check (i, 5, "C045")
+            6
+              check (i, 6, "C046")
+            7
+              check (i, 7, "C047")
+            8
+              check (i, 8, "C048")
+            --ELSE
+            --  check (i, 10, "C010")
+            9
+              check (i, 9, "C049")
+        --}}}
+        --{{{  INT with uneven spacing     (C050 to C059)
+        VAL [10]INT value IS [MOSTPOS INT, -1234, 6789, -1, 0, 1, MOSTNEG INT,
+                              42, -999, 43] :
+        INT a :
+        SEQ i = 0 FOR 10
+          SEQ
+            a := value[i]
+            CASE a
+              value[0]
+                check(a, value[0], "C050")
+              value[1]
+                check(a, value[1], "C051")
+              value[2]
+                check(a, value[2], "C052")
+              value[3]
+                check(a, value[3], "C053")
+              value[4]
+                check(a, value[4], "C054")
+              value[5]
+                check(a, value[5], "C055")
+              value[6]
+                check(a, value[6], "C056")
+              value[7]
+                check(a, value[7], "C057")
+              value[8]
+                check(a, value[8], "C058")
+              value[9]
+                check(a, value[9], "C059")
+              ELSE
+                SKIP -- check(1, 0, "C050E") -- bug 1011
+        --}}}
+    :
+    simple.cases()
+    --}}}
+    --{{{  simple cases with jump tables (C060 to C119)
+    PROC simple.with.jump()
+      SEQ
+        --{{{  INT with a jump table       (C060 to C079)
+        SEQ i = 0 FOR 20
+          CASE i
+            0
+              check (i, 0, "C060")
+            1
+              check (i, 1, "C061")
+            2
+              check (i, 2, "C062")
+            3
+              check (i, 3, "C063")
+            4
+              check (i, 4, "C064")
+            5
+              check (i, 5, "C065")
+            6
+              check (i, 6, "C066")
+            7
+              check (i, 7, "C067")
+            8
+              check (i, 8, "C068")
+            9
+              check (i, 9, "C069")
+            10
+              check (i, 10, "C070")
+            11
+              check (i, 11, "C071")
+            12
+              check (i, 12, "C072")
+            13
+              check (i, 13, "C073")
+            14
+              check (i, 14, "C074")
+            15
+              check (i, 15, "C075")
+            16
+              check (i, 16, "C076")
+            17
+              check (i, 17, "C077")
+            18
+              check (i, 18, "C078")
+            ELSE
+              check (i, 19, "C080")
+        --}}}
+        --{{{  BYTE with a jump table      (C080 to C099)
+        SEQ i = 0 FOR 20
+          CASE BYTE (i + (INT 'A'))
+            'A'
+              check (i, 0, "C080")
+            'B'
+              check (i, 1, "C081")
+            'C'
+              check (i, 2, "C082")
+            'D'
+              check (i, 3, "C083")
+            'E'
+              check (i, 4, "C084")
+            'F'
+              check (i, 5, "C085")
+            'G'
+              check (i, 6, "C086")
+            'H'
+              check (i, 7, "C087")
+            'I'
+              check (i, 8, "C088")
+            'J'
+              check (i, 9, "C089")
+            'K'
+              check (i, 10, "C090")
+            'L'
+              check (i, 11, "C091")
+            'M'
+              check (i, 12, "C092")
+            'N'
+              check (i, 13, "C093")
+            'O'
+              check (i, 14, "C094")
+            'P'
+              check (i, 15, "C095")
+            'Q'
+              check (i, 16, "C096")
+            'R'
+              check (i, 17, "C097")
+            'S'
+              check (i, 18, "C098")
+            ELSE
+              check (i, 19, "C099")
+        --}}}
+        --{{{  INT with no ELSE with a jump table  (C100 to C119)
+        SEQ i = 0 FOR 20
+          CASE i
+            0
+              check (i, 0, "C100")
+            1
+              check (i, 1, "C101")
+            2
+              check (i, 2, "C102")
+            3
+              check (i, 3, "C103")
+            4
+              check (i, 4, "C104")
+            5
+              check (i, 5, "C105")
+            6
+              check (i, 6, "C106")
+            7
+              check (i, 7, "C107")
+            8
+              check (i, 8, "C108")
+            9
+              check (i, 9, "C109")
+            10
+              check (i, 10, "C110")
+            11
+              check (i, 11, "C111")
+            12
+              check (i, 12, "C112")
+            13
+              check (i, 13, "C113")
+            14
+              check (i, 14, "C114")
+            15
+              check (i, 15, "C115")
+            16
+              check (i, 16, "C116")
+            17
+              check (i, 17, "C117")
+            18
+              check (i, 18, "C118")
+            19
+              check (i, 19, "C119")
+        --}}}
+    :
+    simple.with.jump()
+    --}}}
+    --{{{  nested cases                  (C120 to C159)
+    PROC nested()
+      SEQ
+        --{{{  INT                         (C120 to C139)
+        SEQ i = 0 FOR 5
+          SEQ j = 0 FOR 5
+            SEQ k = 0 FOR 5
+              CASE i
+                0
+                  IF
+                    (j = 0) AND (k = 0)
+                      check (i, 0, "C120")
+                    TRUE
+                      SKIP
+                1
+                  IF
+                    (j = 1) AND (k = 1)
+                      check (i, 1, "C121")
+                    TRUE
+                      SKIP
+                2
+                  IF
+                    (j = 2) AND (k = 2)
+                      check (i, 2, "C122")
+                    TRUE
+                      SKIP
+                3
+                  CASE j
+                    0
+                      IF
+                        k = j
+                          check (j, 0, "C123")
+                        TRUE
+                          SKIP
+                    1
+                      IF
+                        k = j
+                          check (j, 1, "C124")
+                        TRUE
+                          SKIP
+                    2
+                      IF
+                        k = j
+                          check (j, 2, "C125")
+                        TRUE
+                          SKIP
+                    3
+                      IF
+                        k = j
+                          check (j, 3, "C126")
+                        TRUE
+                          SKIP
+                    4
+                      SEQ
+                        CASE k
+                          0
+                            SEQ
+                              check (i, 3, "C127")
+                              check (j, 4, "C128")
+                              check (k, 0, "C129")
+                          1
+                            SEQ
+                              check (k, 1, "C130")
+                              check (j, 4, "C131")
+                              check (i, 3, "C132")
+                          2
+                            check (k, 2, "C133")
+                          3
+                            check (k, 3, "C134")
+                          ELSE
+                            check (k, 4, "C135")
+                        check (i, 3, "C136")
+                        check (j, 4, "C137")
+                ELSE
+                  SKIP
+        --}}}
+        --{{{  BYTE                        (C140 to C159)
+        SEQ i = 0 FOR 5
+          SEQ j = 0 FOR 5
+            SEQ k = 0 FOR 5
+              CASE BYTE (i + (INT 'A'))
+                'A'
+                  IF
+                    (j = 0) AND (k = 0)
+                      check (i, 0, "C140")
+                    TRUE
+                      SKIP
+                'B'
+                  IF
+                    (j = 0) AND (k = 0)
+                      check (i, 1, "C141")
+                    TRUE
+                      SKIP
+                'C'
+                  IF
+                    (j = 0) AND (k = 0)
+                      check (i, 2, "C142")
+                    TRUE
+                      SKIP
+                'D'
+                  CASE BYTE (j + (INT 'A'))
+                    'A'
+                      IF
+                        k = j
+                          check (j, 0, "C143")
+                        TRUE
+                          SKIP
+                    'B'
+                      IF
+                        k = j
+                          check (j, 1, "C144")
+                        TRUE
+                          SKIP
+                    'C'
+                      IF
+                        k = j
+                          check (j, 2, "C145")
+                        TRUE
+                          SKIP
+                    'D'
+                      IF
+                        k = j
+                          check (j, 3, "C146")
+                        TRUE
+                          SKIP
+                    'E'
+                      SEQ
+                        CASE BYTE (k + (INT 'A'))
+                          'A'
+                            SEQ
+                              check (i, 3, "C147")
+                              check (j, 4, "C148")
+                              check (k, 0, "C149")
+                          'B'
+                            SEQ
+                              check (k, 1, "C150")
+                              check (j, 4, "C151")
+                              check (i, 3, "C152")
+                          'C'
+                            check (k, 2, "C153")
+                          'D'
+                            check (k, 3, "C154")
+                          ELSE
+                            check (k, 4, "C155")
+                        check (i, 3, "C156")
+                        check (j, 4, "C157")
+                ELSE
+                  SKIP
+        --}}}
+    :
+    nested()
+    --}}}
+    --{{{  nested cases with jump tables (C160 to C199)
+    PROC nested.with.jump()
+      SEQ
+        --{{{  INT                         (C160 to C179)
+        SEQ i = 0 FOR 20
+          SEQ j = 0 FOR 20
+            SEQ k = 0 FOR 20
+              CASE i
+                16, 17, 18, 19
+                  SKIP
+                0
+                  IF
+                    (k = 0) AND (j = 0)
+                      check (i, 0, "C160")
+                    TRUE
+                      SKIP
+                1, 2, 3, 4
+                  SKIP
+                5
+                  IF
+                    (k = 0) AND (j = 0)
+                      check (i, 5, "C161")
+                    TRUE
+                      SKIP
+                6, 7, 8, 9
+                  SKIP
+                10
+                  IF
+                    (k = 0) AND (j = 0)
+                      check (i, 10, "C162")
+                    TRUE
+                      SKIP
+                11, 12, 13, 14
+                  SKIP
+                15
+                  CASE j
+                    1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15, 17, 18, 19
+                      SKIP
+                    0
+                      IF
+                        k = j
+                          check (j, 0, "C163")
+                        TRUE
+                          SKIP
+                    4
+                      IF
+                        k = j
+                          check (j, 4, "C164")
+                        TRUE
+                          SKIP
+                    8
+                      IF
+                        k = j
+                          check (j, 8, "C165")
+                        TRUE
+                          SKIP
+                    12
+                      IF
+                        k = j
+                          check (j, 12, "C166")
+                        TRUE
+                          SKIP
+                    16
+                      SEQ
+                        CASE k
+                          1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 19
+                            SKIP
+                          0
+                            SEQ
+                              check (i, 15, "C167")
+                              check (j, 16, "C168")
+                              check (k, 0, "C169")
+                          6
+                            SEQ
+                              check (k, 6, "C170")
+                              check (j, 16, "C171")
+                              check (i, 15, "C172")
+                          12
+                            check (k, 12, "C173")
+                          18
+                            check (k, 18, "C174")
+        --}}}
+        --{{{  BYTE                        (C180 to C199)
+        SEQ i = 0 FOR ((INT 'T') - (INT 'A')) + 1
+          SEQ j = 0 FOR ((INT 'T') - (INT 'A')) + 1
+            SEQ k = 0 FOR ((INT 'T') - (INT 'A')) + 1
+              CASE BYTE (i + (INT 'A'))
+                'Q', 'R', 'S', 'T'
+                  SKIP
+                'A'
+                  IF
+                    (k = 0) AND (j = 0)
+                      check (i, 0, "C180")
+                    TRUE
+                      SKIP
+                'B', 'C', 'D', 'E'
+                  SKIP
+                'F'
+                  IF
+                    (k = 0) AND (j = 0)
+                      check (i, 5, "C181")
+                    TRUE
+                      SKIP
+                'G', 'H', 'I', 'J'
+                  SKIP
+                'K'
+                  IF
+                    (k = 0) AND (j = 0)
+                      check (i, 10, "C182")
+                    TRUE
+                      SKIP
+                'L', 'M', 'N', 'O'
+                  SKIP
+                'P'
+                  CASE BYTE (j + (INT 'A'))
+                    'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M',
+                      'O', 'P', 'R', 'S', 'T'
+                      SKIP
+                    'A'
+                      IF
+                        j = k
+                          check (j, 0, "C183")
+                        TRUE
+                          SKIP
+                    'E'
+                      IF
+                        j = k
+                          check (j, 4, "C184")
+                        TRUE
+                          SKIP
+                    'I'
+                      IF
+                        j = k
+                          check (j, 8, "C185")
+                        TRUE
+                          SKIP
+                    'N'
+                      IF
+                        j = k
+                          check (j, (INT 'N') - (INT 'A'), "C186")
+                        TRUE
+                          SKIP
+                    'Q'
+                      CASE BYTE (k + (INT 'A'))
+                        'B', 'C', 'D', 'E', 'G', 'H', 'I', 'J', 'K',
+                          'M', 'N', 'O', 'P', 'Q', 'R', 'T'
+                          SKIP
+                        'A'
+                          SEQ
+                            check (i, (INT 'P') - (INT 'A'), "C187")
+                            check (j, (INT 'Q') - (INT 'A'), "C188")
+                            check (k, 0, "C189")
+                        'F'
+                          SEQ
+                            check (k, (INT 'F') - (INT 'A'), "C190")
+                            check (j, (INT 'Q') - (INT 'A'), "C191")
+                            check (i, (INT 'P') - (INT 'A'), "C192")
+                        'L'
+                          check (k, (INT 'L') - (INT 'A'), "C193")
+                        'S'
+                          check (k, (INT 'S') - (INT 'A'), "C194")
+        --}}}
+    :
+    nested.with.jump()
+    --}}}
+    --{{{  Roger's special               (C200 to C219)
+    PROC roger.special()
+      SEQ i = MOSTNEG INT FOR 20
+        INT j :
+        SEQ
+          CASE i
+            ELSE
+              j := i
+            19
+              j := 0
+            20
+              j := MOSTPOS INT
+          CASE j
+            ELSE
+              SKIP
+            --{{{  MOSTNEG + 0 ... MOSTNEG + 15
+            MOSTNEG INT
+              check (j, MOSTNEG INT, "C200")
+            (MOSTNEG INT) + 1
+              check (j, (MOSTNEG INT) + 1, "C201")
+            (MOSTNEG INT) + 2
+              check (j, (MOSTNEG INT) + 2, "C202")
+            (MOSTNEG INT) + 3
+              check (j, (MOSTNEG INT) + 3, "C203")
+            (MOSTNEG INT) + 4
+              check (j, (MOSTNEG INT) + 4, "C204")
+            (MOSTNEG INT) + 5
+              check (j, (MOSTNEG INT) + 5, "C205")
+            (MOSTNEG INT) + 6
+              check (j, (MOSTNEG INT) + 6, "C206")
+            (MOSTNEG INT) + 7
+              check (j, (MOSTNEG INT) + 7, "C207")
+            (MOSTNEG INT) + 8
+              check (j, (MOSTNEG INT) + 8, "C208")
+            (MOSTNEG INT) + 9
+              check (j, (MOSTNEG INT) + 9, "C209")
+            (MOSTNEG INT) + 10
+              check (j, (MOSTNEG INT) + 10, "C210")
+            (MOSTNEG INT) + 11
+              check (j, (MOSTNEG INT) + 11, "C211")
+            (MOSTNEG INT) + 12
+              check (j, (MOSTNEG INT) + 12, "C212")
+            (MOSTNEG INT) + 13
+              check (j, (MOSTNEG INT) + 13, "C213")
+            (MOSTNEG INT) + 14
+              check (j, (MOSTNEG INT) + 14, "C214")
+            (MOSTNEG INT) + 15
+              check (j, (MOSTNEG INT) + 15, "C215")
+            --}}}
+            0
+              SEQ
+                check (j, 0, "C216")
+                check (i, 19, "C217")
+            MOSTPOS INT
+              SEQ
+                check (j, MOSTPOS INT, "C218")
+                check (i, 20, "C219")
+    :
+    roger.special()
+    --}}}
+    --{{{  parsing problems
+    PROC parsing.problems()
+      VAL one IS 1 :
+      VAL two IS 2 :
+      VAL three IS 3 :
+      VAL four IS 4 :
+      VAL five IS 5 :
+      SEQ i = 0 FOR 6
+        CASE i
+          0, one
+            check(i, i, "C300")
+          two, three
+            check(i, i, "C301")
+          four, 5
+            check(i, i, "C302")
+          ELSE
+            check(i, -1, "C304")
+    :
+    parsing.problems()
+    --}}}
+
+    -- The following sets of tests are identical; replace INT16 with INT32 etc
+    --{{{  INT16
+    PROC INT16.tests()
+      --{{{  basic
+      INT16 i16 :
+      VAL x IS [MOSTNEG INT16, (MOSTNEG INT16) + 1(INT16),
+                (-32767(INT16)) + 2(INT16),
+                (-32767(INT16)) + 3(INT16),
+                -5(INT16), 0(INT16), 5(INT16),
+                1(INT16), 2(INT16), 3(INT16), 4(INT16),
+                32767(INT16) - 2(INT16),
+                MOSTPOS INT16, (MOSTPOS INT16) - 1(INT16)] :
+      SEQ
+        SEQ i = 0 FOR SIZE x
+          --{{{  local.check.INT16                  99
+          PROC local.check.INT16(VAL INT16 required, VAL []BYTE msg)
+            SEQ
+              check.BOOL(x[i] = required, TRUE, msg)
+              IF
+                x[i] <> required
+                  check(i, -99, "INT16-99")
+                TRUE
+                  SKIP
+          :
+          --}}}
+          SEQ
+            --{{{  each target written explicitly   00 - 13
+            CASE x[id(i)]
+              MOSTNEG INT16
+                local.check.INT16(MOSTNEG INT16, "INT16-00")
+              (MOSTNEG INT16) + 1(INT16)
+                local.check.INT16((MOSTNEG INT16) + 1(INT16), "INT16-01")
+              (-32767(INT16)) + 2(INT16)
+                local.check.INT16((-32767(INT16)) + 2(INT16), "INT16-02")
+              (-32767(INT16)) + 3(INT16)
+                local.check.INT16((-32767(INT16)) + 3(INT16), "INT16-03")
+              -5(INT16)
+                local.check.INT16(-5(INT16), "INT16-04")
+              0(INT16)
+                local.check.INT16(0(INT16), "INT16-05")
+              5(INT16)
+                local.check.INT16(5(INT16), "INT16-06")
+              1(INT16)
+                local.check.INT16(1(INT16), "INT16-07")
+              2(INT16)
+                local.check.INT16(2(INT16), "INT16-08")
+              3(INT16)
+                local.check.INT16(3(INT16), "INT16-09")
+              4(INT16)
+                local.check.INT16(4(INT16), "INT16-10")
+              32767(INT16) - 2(INT16)
+                local.check.INT16(32767(INT16) - 2(INT16), "INT16-11")
+              MOSTPOS INT16
+                local.check.INT16(MOSTPOS INT16, "INT16-12")
+              (MOSTPOS INT16) - 1(INT16)
+                local.check.INT16((MOSTPOS INT16) - 1(INT16), "INT16-13")
+              ELSE
+                check(i, -99, "INT16-14")
+            --}}}
+            --{{{  bundled up slightly              20 - 29
+            CASE x[id(i)]
+              MOSTNEG INT16,
+              (MOSTNEG INT16) + 1(INT16),
+              ((-32767(INT16)) + 2(INT16)),
+              (-32767(INT16)) + 3(INT16)
+                local.check.INT16(x[id(i)], "INT16-20")
+              -5(INT16),
+              0(INT16),
+              5(INT16),
+              1(INT16),
+              2(INT16),
+              3(INT16),
+              4(INT16)
+                local.check.INT16(x[id(i)], "INT16-21")
+              32767(INT16) - 2(INT16),
+              MOSTPOS INT16
+                local.check.INT16(x[id(i)], "INT16-22")
+              ELSE -- (MOSTPOS INT16) - 1(INT16)
+                local.check.INT16((MOSTPOS INT16) - 1(INT16), "INT16-23")
+            --}}}
+            --{{{  bundled up together              30 - 39
+            CASE x[id(i)]
+              MOSTNEG INT16,
+              (MOSTNEG INT16) + 1(INT16),
+              ((-32767(INT16)) + 2(INT16)),
+              (-32767(INT16)) + 3(INT16),
+              -5(INT16),
+              0(INT16),
+              5(INT16),
+              1(INT16),
+              3(INT16),
+              4(INT16),
+              32767(INT16) - 2(INT16),
+              MOSTPOS INT16,
+              (MOSTPOS INT16) - 1(INT16)
+                local.check.INT16(x[id(i)], "INT16-30")
+              ELSE -- 2(INT16),
+                local.check.INT16(2(INT16), "INT16-31")
+            --}}}
+      
+      --}}}
+    :
+    INT16.tests()
+    --}}}
+    --{{{  INT32
+    PROC INT32.tests()
+      --{{{  basic
+      INT32 i16 :
+      VAL x IS [MOSTNEG INT32, (MOSTNEG INT32) + 1(INT32),
+                (-32767(INT32)) + 2(INT32),
+                (-32767(INT32)) + 3(INT32),
+                -5(INT32), 0(INT32), 5(INT32),
+                1(INT32), 2(INT32), 3(INT32), 4(INT32),
+                32767(INT32) - 2(INT32),
+                MOSTPOS INT32, (MOSTPOS INT32) - 1(INT32)] :
+      SEQ
+        SEQ i = 0 FOR SIZE x
+          --{{{  local.check.INT32                  99
+          PROC local.check.INT32(VAL INT32 required, VAL []BYTE msg)
+            SEQ
+              check.BOOL(x[i] = required, TRUE, msg)
+              IF
+                x[i] <> required
+                  check(i, -99, "INT32-99")
+                TRUE
+                  SKIP
+          :
+          --}}}
+          SEQ
+            --{{{  each target written explicitly   00 - 13
+            CASE x[id(i)]
+              MOSTNEG INT32
+                local.check.INT32(MOSTNEG INT32, "INT32-00")
+              (MOSTNEG INT32) + 1(INT32)
+                local.check.INT32((MOSTNEG INT32) + 1(INT32), "INT32-01")
+              (-32767(INT32)) + 2(INT32)
+                local.check.INT32((-32767(INT32)) + 2(INT32), "INT32-02")
+              (-32767(INT32)) + 3(INT32)
+                local.check.INT32((-32767(INT32)) + 3(INT32), "INT32-03")
+              -5(INT32)
+                local.check.INT32(-5(INT32), "INT32-04")
+              0(INT32)
+                local.check.INT32(0(INT32), "INT32-05")
+              5(INT32)
+                local.check.INT32(5(INT32), "INT32-06")
+              1(INT32)
+                local.check.INT32(1(INT32), "INT32-07")
+              2(INT32)
+                local.check.INT32(2(INT32), "INT32-08")
+              3(INT32)
+                local.check.INT32(3(INT32), "INT32-09")
+              4(INT32)
+                local.check.INT32(4(INT32), "INT32-10")
+              32767(INT32) - 2(INT32)
+                local.check.INT32(32767(INT32) - 2(INT32), "INT32-11")
+              MOSTPOS INT32
+                local.check.INT32(MOSTPOS INT32, "INT32-12")
+              (MOSTPOS INT32) - 1(INT32)
+                local.check.INT32((MOSTPOS INT32) - 1(INT32), "INT32-13")
+              ELSE
+                check(i, -99, "INT32-14")
+            --}}}
+            --{{{  bundled up slightly              20 - 29
+            CASE x[id(i)]
+              MOSTNEG INT32,
+              (MOSTNEG INT32) + 1(INT32),
+              ((-32767(INT32)) + 2(INT32)),
+              (-32767(INT32)) + 3(INT32)
+                local.check.INT32(x[id(i)], "INT32-20")
+              -5(INT32),
+              0(INT32),
+              5(INT32),
+              1(INT32),
+              2(INT32),
+              3(INT32),
+              4(INT32)
+                local.check.INT32(x[id(i)], "INT32-21")
+              32767(INT32) - 2(INT32),
+              MOSTPOS INT32
+                local.check.INT32(x[id(i)], "INT32-22")
+              ELSE -- (MOSTPOS INT32) - 1(INT32)
+                local.check.INT32((MOSTPOS INT32) - 1(INT32), "INT32-23")
+            --}}}
+            --{{{  bundled up together              30 - 39
+            CASE x[id(i)]
+              MOSTNEG INT32,
+              (MOSTNEG INT32) + 1(INT32),
+              ((-32767(INT32)) + 2(INT32)),
+              (-32767(INT32)) + 3(INT32),
+              -5(INT32),
+              0(INT32),
+              5(INT32),
+              1(INT32),
+              3(INT32),
+              4(INT32),
+              32767(INT32) - 2(INT32),
+              MOSTPOS INT32,
+              (MOSTPOS INT32) - 1(INT32)
+                local.check.INT32(x[id(i)], "INT32-30")
+              ELSE -- 2(INT32),
+                local.check.INT32(2(INT32), "INT32-31")
+            --}}}
+      
+      --}}}
+    :
+    INT32.tests()
+    --}}}
+    --{{{  INT64
+    PROC INT64.tests()
+      --{{{  basic
+      INT64 i16 :
+      VAL x IS [MOSTNEG INT64, (MOSTNEG INT64) + 1(INT64),
+                (-32767(INT64)) + 2(INT64),
+                (-32767(INT64)) + 3(INT64),
+                -5(INT64), 0(INT64), 5(INT64),
+                1(INT64), 2(INT64), 3(INT64), 4(INT64),
+                32767(INT64) - 2(INT64),
+                MOSTPOS INT64, (MOSTPOS INT64) - 1(INT64)] :
+      SEQ
+        SEQ i = 0 FOR SIZE x
+          --{{{  local.check.INT64                  99
+          PROC local.check.INT64(VAL INT64 required, VAL []BYTE msg)
+            SEQ
+              check.BOOL(x[i] = required, TRUE, msg)
+              IF
+                x[i] <> required
+                  check(i, -99, "INT64-99")
+                TRUE
+                  SKIP
+          :
+          --}}}
+          SEQ
+            --{{{  each target written explicitly   00 - 13
+            CASE x[id(i)]
+              MOSTNEG INT64
+                local.check.INT64(MOSTNEG INT64, "INT64-00")
+              (MOSTNEG INT64) + 1(INT64)
+                local.check.INT64((MOSTNEG INT64) + 1(INT64), "INT64-01")
+              (-32767(INT64)) + 2(INT64)
+                local.check.INT64((-32767(INT64)) + 2(INT64), "INT64-02")
+              (-32767(INT64)) + 3(INT64)
+                local.check.INT64((-32767(INT64)) + 3(INT64), "INT64-03")
+              -5(INT64)
+                local.check.INT64(-5(INT64), "INT64-04")
+              0(INT64)
+                local.check.INT64(0(INT64), "INT64-05")
+              5(INT64)
+                local.check.INT64(5(INT64), "INT64-06")
+              1(INT64)
+                local.check.INT64(1(INT64), "INT64-07")
+              2(INT64)
+                local.check.INT64(2(INT64), "INT64-08")
+              3(INT64)
+                local.check.INT64(3(INT64), "INT64-09")
+              4(INT64)
+                local.check.INT64(4(INT64), "INT64-10")
+              32767(INT64) - 2(INT64)
+                local.check.INT64(32767(INT64) - 2(INT64), "INT64-11")
+              MOSTPOS INT64
+                local.check.INT64(MOSTPOS INT64, "INT64-12")
+              (MOSTPOS INT64) - 1(INT64)
+                local.check.INT64((MOSTPOS INT64) - 1(INT64), "INT64-13")
+              ELSE
+                check(i, -99, "INT64-14")
+            --}}}
+            --{{{  bundled up slightly              20 - 29
+            CASE x[id(i)]
+              MOSTNEG INT64,
+              (MOSTNEG INT64) + 1(INT64),
+              ((-32767(INT64)) + 2(INT64)),
+              (-32767(INT64)) + 3(INT64)
+                local.check.INT64(x[id(i)], "INT64-20")
+              -5(INT64),
+              0(INT64),
+              5(INT64),
+              1(INT64),
+              2(INT64),
+              3(INT64),
+              4(INT64)
+                local.check.INT64(x[id(i)], "INT64-21")
+              32767(INT64) - 2(INT64),
+              MOSTPOS INT64
+                local.check.INT64(x[id(i)], "INT64-22")
+              ELSE -- (MOSTPOS INT64) - 1(INT64)
+                local.check.INT64((MOSTPOS INT64) - 1(INT64), "INT64-23")
+            --}}}
+            --{{{  bundled up together              30 - 39
+            CASE x[id(i)]
+              MOSTNEG INT64,
+              (MOSTNEG INT64) + 1(INT64),
+              ((-32767(INT64)) + 2(INT64)),
+              (-32767(INT64)) + 3(INT64),
+              -5(INT64),
+              0(INT64),
+              5(INT64),
+              1(INT64),
+              3(INT64),
+              4(INT64),
+              32767(INT64) - 2(INT64),
+              MOSTPOS INT64,
+              (MOSTPOS INT64) - 1(INT64)
+                local.check.INT64(x[id(i)], "INT64-30")
+              ELSE -- 2(INT64),
+                local.check.INT64(2(INT64), "INT64-31")
+            --}}}
+      
+      --}}}
+    :
+    INT64.tests()
+    --}}}
+    --{{{  INT
+    PROC INT.tests()
+      --{{{  basic
+      INT i16 :
+      VAL x IS [MOSTNEG INT, (MOSTNEG INT) + 1(INT),
+                (-32767(INT)) + 2(INT),
+                (-32767(INT)) + 3(INT),
+                -5(INT), 0(INT), 5(INT),
+                1(INT), 2(INT), 3(INT), 4(INT),
+                32767(INT) - 2(INT),
+                MOSTPOS INT, (MOSTPOS INT) - 1(INT)] :
+      SEQ
+        SEQ i = 0 FOR SIZE x
+          --{{{  local.check.INT                    99
+          PROC local.check.INT(VAL INT required, VAL []BYTE msg)
+            SEQ
+              check.BOOL(x[i] = required, TRUE, msg)
+              IF
+                x[i] <> required
+                  check(i, -99, "INT-99")
+                TRUE
+                  SKIP
+          :
+          --}}}
+          SEQ
+            --{{{  each target written explicitly   00 - 13
+            CASE x[id(i)]
+              MOSTNEG INT
+                local.check.INT(MOSTNEG INT, "INT-00")
+              (MOSTNEG INT) + 1(INT)
+                local.check.INT((MOSTNEG INT) + 1(INT), "INT-01")
+              (-32767(INT)) + 2(INT)
+                local.check.INT((-32767(INT)) + 2(INT), "INT-02")
+              (-32767(INT)) + 3(INT)
+                local.check.INT((-32767(INT)) + 3(INT), "INT-03")
+              -5(INT)
+                local.check.INT(-5(INT), "INT-04")
+              0(INT)
+                local.check.INT(0(INT), "INT-05")
+              5(INT)
+                local.check.INT(5(INT), "INT-06")
+              1(INT)
+                local.check.INT(1(INT), "INT-07")
+              2(INT)
+                local.check.INT(2(INT), "INT-08")
+              3(INT)
+                local.check.INT(3(INT), "INT-09")
+              4(INT)
+                local.check.INT(4(INT), "INT-10")
+              32767(INT) - 2(INT)
+                local.check.INT(32767(INT) - 2(INT), "INT-11")
+              MOSTPOS INT
+                local.check.INT(MOSTPOS INT, "INT-12")
+              (MOSTPOS INT) - 1(INT)
+                local.check.INT((MOSTPOS INT) - 1(INT), "INT-13")
+              ELSE
+                check(i, -99, "INT-14")
+            --}}}
+            --{{{  bundled up slightly              20 - 29
+            CASE x[id(i)]
+              MOSTNEG INT,
+              (MOSTNEG INT) + 1(INT),
+              ((-32767(INT)) + 2(INT)),
+              (-32767(INT)) + 3(INT)
+                local.check.INT(x[id(i)], "INT-20")
+              -5(INT),
+              0(INT),
+              5(INT),
+              1(INT),
+              2(INT),
+              3(INT),
+              4(INT)
+                local.check.INT(x[id(i)], "INT-21")
+              32767(INT) - 2(INT),
+              MOSTPOS INT
+                local.check.INT(x[id(i)], "INT-22")
+              ELSE -- (MOSTPOS INT) - 1(INT)
+                local.check.INT((MOSTPOS INT) - 1(INT), "INT-23")
+            --}}}
+            --{{{  bundled up together              30 - 39
+            CASE x[id(i)]
+              MOSTNEG INT,
+              (MOSTNEG INT) + 1(INT),
+              ((-32767(INT)) + 2(INT)),
+              (-32767(INT)) + 3(INT),
+              -5(INT),
+              0(INT),
+              5(INT),
+              1(INT),
+              3(INT),
+              4(INT),
+              32767(INT) - 2(INT),
+              MOSTPOS INT,
+              (MOSTPOS INT) - 1(INT)
+                local.check.INT(x[id(i)], "INT-30")
+              ELSE -- 2(INT),
+                local.check.INT(2(INT), "INT-31")
+            --}}}
+      
+      --}}}
+    :
+    INT.tests()
+    --}}}
+
+    --{{{  bug 261
+    PROC bug.261()
+      -- bug 261 from buglist
+      INT x :
+      SEQ
+        x := 1
+        CASE x
+          ELSE
+            check (x, 1, "B261a")
+    :
+    bug.261()
+    --}}}
+    --{{{  bug 1052
+    PROC bug.1052()
+      INT16 x :
+      VAL value IS -7(INT16) :
+      PROC modify (INT16 var)
+        var := value
+      :
+      SEQ
+        x := 0(INT16)
+        modify(x)
+        CASE x
+          value
+            check(INT x, INT value, "B1052a")
+          ELSE
+            check(0, 1, "B1052b")
+    :
+    bug.1052()
+    --}}}
+    --{{{  bug TS/1461 (BOOL cases)
+    PROC bug.TS.1461()
+      BOOL first.pass :
+      SEQ pass = 0 FOR 2
+        PROC check.both(VAL BOOL here.first, VAL BOOL here.second,
+                        VAL []BYTE string)
+          SEQ
+            IF
+              pass = 0
+                check.BOOL(here.first, TRUE, string)
+              TRUE
+                check.BOOL(here.second, TRUE, string)
+        :
+        SEQ
+          first.pass := pass = 0
+          --{{{  singles
+          IF
+            pass = 0
+              SEQ
+                --{{{  T
+                CASE first.pass
+                  TRUE
+                    check.both(TRUE, FALSE, "B1461t_a")
+                --}}}
+            TRUE
+              SEQ
+                --{{{  F
+                CASE first.pass
+                  FALSE
+                    check.both(FALSE, TRUE, "B1461f_a")
+                --}}}
+          --{{{  E
+          CASE first.pass
+            ELSE
+              check.both(TRUE, TRUE, "B1461e_a")
+          --}}}
+          --}}}
+    
+          --{{{  doubles
+          --{{{  TE
+          CASE first.pass
+            TRUE
+              check.both(TRUE, FALSE, "B1461te_a")
+            ELSE
+              check.both(FALSE, TRUE, "B1461te_b")
+          --}}}
+          --{{{  FE
+          CASE first.pass
+            FALSE
+              check.both(FALSE, TRUE, "B1461fe_a")
+            ELSE
+              check.both(TRUE, FALSE, "B1461fe_b")
+          --}}}
+          
+          --{{{  ET
+          CASE first.pass
+            ELSE
+              check.both(FALSE, TRUE, "B1461et_a")
+            TRUE
+              check.both(TRUE, FALSE, "B1461et_b")
+          --}}}
+          --{{{  EF
+          CASE first.pass
+            ELSE
+              check.both(TRUE, FALSE, "B1461ef_a")
+            FALSE
+              check.both(FALSE, TRUE, "B1461ef_b")
+          --}}}
+          
+          --{{{  TF
+          CASE first.pass
+            TRUE
+              check.both(TRUE, FALSE, "B1461tf_a")
+            FALSE
+              check.both(FALSE, TRUE, "B1461tf_b")
+          --}}}
+          --{{{  FT
+          CASE first.pass
+            FALSE
+              check.both(FALSE, TRUE, "B1461ft_a")
+            TRUE
+              check.both(TRUE, FALSE, "B1461ft_b")
+          --}}}
+          --}}}
+    
+          --{{{  triples
+          --{{{  TFE
+          CASE first.pass
+            TRUE, FALSE
+              check.both(TRUE, TRUE, "B1461tfe_a")
+            ELSE
+              check.both(FALSE, FALSE, "B1461tfe_b")
+          CASE first.pass
+            TRUE
+              check.both(TRUE, FALSE, "B1461tfe_c")
+            FALSE
+              check.both(FALSE, TRUE, "B1461tfe_d")
+            ELSE
+              check.both(FALSE, FALSE, "B1461tfe_e")
+          --}}}
+          
+          --{{{  FTE
+          CASE first.pass
+            FALSE, TRUE
+              check.both(TRUE, TRUE, "B1461fte_a")
+            ELSE
+              check.both(FALSE, FALSE, "B1461fte_b")
+          CASE first.pass
+            FALSE
+              check.both(FALSE, TRUE, "B1461fte_d")
+            TRUE
+              check.both(TRUE, FALSE, "B1461fte_c")
+            ELSE
+              check.both(FALSE, FALSE, "B1461fte_e")
+          --}}}
+          
+          --{{{  ETF
+          CASE first.pass
+            ELSE
+              check.both(FALSE, FALSE, "B1461etf_b")
+            TRUE, FALSE
+              check.both(TRUE, TRUE, "B1461etf_a")
+          CASE first.pass
+            ELSE
+              check.both(FALSE, FALSE, "B1461etf_e")
+            TRUE
+              check.both(TRUE, FALSE, "B1461etf_c")
+            FALSE
+              check.both(FALSE, TRUE, "B1461etf_d")
+          --}}}
+          
+          --{{{  EFT
+          CASE first.pass
+            ELSE
+              check.both(FALSE, FALSE, "B1461eft_b")
+            FALSE, TRUE
+              check.both(TRUE, TRUE, "B1461eft_a")
+          CASE first.pass
+            ELSE
+              check.both(FALSE, FALSE, "B1461eft_e")
+            FALSE
+              check.both(FALSE, TRUE, "B1461eft_d")
+            TRUE
+              check.both(TRUE, FALSE, "B1461eft_c")
+          --}}}
+          
+          --{{{  TEF
+          CASE first.pass
+            TRUE
+              check.both(TRUE, FALSE, "B1461tef_a")
+            ELSE
+              check.both(FALSE, FALSE, "B1461tef_b")
+            FALSE
+              check.both(FALSE, TRUE, "B1461tef_c")
+          --}}}
+          
+          --{{{  FET
+          CASE first.pass
+            FALSE
+              check.both(FALSE, TRUE, "B1461fet_a")
+            ELSE
+              check.both(FALSE, FALSE, "B1461fet_b")
+            TRUE
+              check.both(TRUE, FALSE, "B1461fet_c")
+          --}}}
+          --}}}
+    :
+    bug.TS.1461()
+    --}}}
+    --{{{  bug INSdi01959
+    PROC bug.INSdi01959(VAL INT i)
+      SEQ
+        [3]INT element :
+        PLACE element IN WORKSPACE :
+        SEQ
+          element[i] := 0
+          CASE element[0]
+            0
+              check(0, 0, "B1959a")
+            ELSE
+              check(1, 0, "B1959b")
+        --{{{  
+        [3]INT element :
+        PLACE element IN VECSPACE :
+        SEQ
+          element[i] := 0
+          CASE element[0]
+            0
+              check(0, 0, "B1959c")
+            ELSE
+              check(1, 0, "B1959d")
+        --}}}
+    :
+    bug.INSdi01959(0)
+    --}}}
+    --{{{  bug INSdi01959e
+    PROC bug.INSdi01959e()
+      PROTOCOL NUT.CMND.REP
+        CASE
+          cmnd.rep.initialise; INT
+          cmnd.rep.input; INT
+          cmnd.rep.output; INT
+          cmnd.rep.result; INT; INT
+      :
+      -- Buffers for the command link eager reading processes
+      VAL CMDBUF.ENTRY.SIZE      IS 3:
+      VAL CMDBUF.ENTRIES         IS 16:
+      VAL CMDBUF.SIZE            IS CMDBUF.ENTRY.SIZE TIMES CMDBUF.ENTRIES:
+    
+      -- Field offsets within entries
+      VAL CMDBUF.ENTRY.CMD       IS 0:
+      VAL CMDBUF.ENTRY.VAL1      IS 1:
+      VAL CMDBUF.ENTRY.VAL2      IS 2:
+    
+      -- Entry values
+      VAL CMDBUF.ENTRY.INIT      IS 0:
+      VAL CMDBUF.ENTRY.IPUT      IS 1:
+      VAL CMDBUF.ENTRY.OPUT      IS 2:
+      VAL CMDBUF.ENTRY.RSLT      IS 3:
+    
+      INT FUNCTION buffer.used.bytes (VAL []BYTE b) IS 1 :
+    
+      PROC buffer.get.block(VAL []BYTE output.buffer, []BYTE entry, INT len, BOOL fail)
+        [entry FROM 0 FOR 2] := [#99(BYTE), #98(BYTE)]
+      :
+    
+      PROC reader(CHAN OF BOOL from.writer,
+                  CHAN OF NUT.CMND.REP   to.writer)
+    
+        BOOL fail, read.requested, read.signal :
+        INT  len :
+        [48 PLUS 9]BYTE output.buffer:
+        [3]INT entry:
+        PLACE entry IN WORKSPACE :
+    
+        BOOL running :
+        SEQ
+          running := TRUE
+          WHILE running --THE.COWS.ARE.NOT.HOME
+            --SEQ
+            PRI ALT
+              from.writer ? read.signal
+                SEQ
+                  IF
+                    buffer.used.bytes(output.buffer) = 0
+                      SKIP --read.requested := TRUE
+                    TRUE
+                      SEQ
+                        []BYTE entry RETYPES entry:
+                        buffer.get.block(output.buffer, entry, len, fail)
+                        CASE entry[CMDBUF.ENTRY.CMD]
+                          CMDBUF.ENTRY.INIT
+                            to.writer ! cmnd.rep.initialise; entry[CMDBUF.ENTRY.VAL1]
+                          --CMDBUF.ENTRY.IPUT
+                          --  to.writer ! cmnd.rep.input; entry[CMDBUF.ENTRY.VAL1]
+                          --CMDBUF.ENTRY.OPUT
+                          --  to.writer ! cmnd.rep.output; entry[CMDBUF.ENTRY.VAL1]
+                          --CMDBUF.ENTRY.RSLT
+                          --  to.writer ! cmnd.rep.result; entry[CMDBUF.ENTRY.VAL1]; entry[CMDBUF.ENTRY.VAL2]
+                          ELSE
+                            running := FALSE
+      :
+      CHAN OF BOOL from.writer :
+      CHAN OF NUT.CMND.REP   to.writer :
+      PAR
+        reader(from.writer, to.writer)
+        SEQ
+          from.writer ! TRUE
+          check(0, 0, "B1959e")
+    :
+    bug.INSdi01959e()
+    --}}}
+    finish ()
+:

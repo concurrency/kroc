@@ -1,0 +1,409 @@
+-- version control marker $Id: cgtest70.occ,v 1.1 1997/03/31 09:06:20 djb1 Exp $
+-- User Defined Operators tests by Jim Moores <jm40@ukc.ac.uk>
+
+
+PROC cgtest70 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  PROC test0 ()
+    INT FUNCTION "+" (VAL INT a, VAL INT32 b) IS INT(1):
+    INT a:
+    INT32 b:
+    INT c:
+    SEQ
+      c := a + b
+      check.INT (c,INT(1),"test0")
+  :
+
+  PROC test1 ()
+    INT FUNCTION "+" (VAL INT32 a, VAL INT64 b) IS INT(1):
+    INT32 a:
+    INT64 b:
+    INT c:
+    SEQ
+      c := a + b
+      check.INT (c,INT(1),"test1")
+  :
+
+  PROC test2 ()
+    INT FUNCTION "+" (VAL INT64 a, VAL REAL32 b) IS INT(1):
+    INT64 a:
+    REAL32 b:
+    INT c:
+    SEQ
+      c := a + b
+      check.INT (c,INT(1),"test2")
+  :
+
+  PROC test3 ()
+    INT FUNCTION "+" (VAL REAL32 a, VAL REAL64 b) IS INT(1):
+    REAL32 a:
+    REAL64 b:
+    INT c:
+    SEQ
+      c := a + b
+      check.INT (c,INT(1),"test3")
+  :
+
+  PROC test4 ()
+    INT FUNCTION "+" (VAL REAL64 a, VAL BOOL b) IS INT(1):
+    REAL64 a:
+    BOOL b:
+    INT c:
+    SEQ
+      c := a + b
+      check.INT (c,INT(1),"test4")
+  :
+
+  PROC test5 ()
+    INT FUNCTION "+" (VAL BOOL a, VAL INT b) IS INT(1):
+    BOOL a:
+    INT b:
+    INT c:
+    SEQ
+      c := a + b
+      check.INT (c,INT(1),"test5")
+  :
+
+  PROC test6 ()
+    INT32 FUNCTION "+" (VAL INT a, VAL INT32 b) IS INT32(2):
+    INT a:
+    INT32 b:
+    INT32 c:
+    SEQ
+      c := a + b
+      check.INT32 (c,INT32(2),"test6")
+  :
+
+  PROC test7 ()
+    INT32 FUNCTION "+" (VAL INT32 a, VAL INT64 b) IS INT32(2):
+    INT32 a:
+    INT64 b:
+    INT32 c:
+    SEQ
+      c := a + b
+      check.INT32 (c,INT32(2),"test7")
+  :
+
+  PROC test8 ()
+    INT32 FUNCTION "+" (VAL INT64 a, VAL REAL32 b) IS INT32(2):
+    INT64 a:
+    REAL32 b:
+    INT32 c:
+    SEQ
+      c := a + b
+      check.INT32 (c,INT32(2),"test8")
+  :
+
+  PROC test9 ()
+    INT32 FUNCTION "+" (VAL REAL32 a, VAL REAL64 b) IS INT32(2):
+    REAL32 a:
+    REAL64 b:
+    INT32 c:
+    SEQ
+      c := a + b
+      check.INT32 (c,INT32(2),"test9")
+  :
+
+  PROC test10 ()
+    INT32 FUNCTION "+" (VAL REAL64 a, VAL BOOL b) IS INT32(2):
+    REAL64 a:
+    BOOL b:
+    INT32 c:
+    SEQ
+      c := a + b
+      check.INT32 (c,INT32(2),"test10")
+  :
+
+  PROC test11 ()
+    INT32 FUNCTION "+" (VAL BOOL a, VAL INT b) IS INT32(2):
+    BOOL a:
+    INT b:
+    INT32 c:
+    SEQ
+      c := a + b
+      check.INT32 (c,INT32(2),"test11")
+  :
+
+  PROC test12 ()
+    INT64 FUNCTION "+" (VAL INT a, VAL INT32 b) IS INT64(3):
+    INT a:
+    INT32 b:
+    INT64 c:
+    SEQ
+      c := a + b
+      check.INT64 (c,INT64(3),"test12")
+  :
+
+  PROC test13 ()
+    INT64 FUNCTION "+" (VAL INT32 a, VAL INT64 b) IS INT64(3):
+    INT32 a:
+    INT64 b:
+    INT64 c:
+    SEQ
+      c := a + b
+      check.INT64 (c,INT64(3),"test13")
+  :
+
+  PROC test14 ()
+    INT64 FUNCTION "+" (VAL INT64 a, VAL REAL32 b) IS INT64(3):
+    INT64 a:
+    REAL32 b:
+    INT64 c:
+    SEQ
+      c := a + b
+      check.INT64 (c,INT64(3),"test14")
+  :
+
+  PROC test15 ()
+    INT64 FUNCTION "+" (VAL REAL32 a, VAL REAL64 b) IS INT64(3):
+    REAL32 a:
+    REAL64 b:
+    INT64 c:
+    SEQ
+      c := a + b
+      check.INT64 (c,INT64(3),"test15")
+  :
+
+  PROC test16 ()
+    INT64 FUNCTION "+" (VAL REAL64 a, VAL BOOL b) IS INT64(3):
+    REAL64 a:
+    BOOL b:
+    INT64 c:
+    SEQ
+      c := a + b
+      check.INT64 (c,INT64(3),"test16")
+  :
+
+  PROC test17 ()
+    INT64 FUNCTION "+" (VAL BOOL a, VAL INT b) IS INT64(3):
+    BOOL a:
+    INT b:
+    INT64 c:
+    SEQ
+      c := a + b
+      check.INT64 (c,INT64(3),"test17")
+  :
+
+  PROC test18 ()
+    REAL32 FUNCTION "+" (VAL INT a, VAL INT32 b) IS REAL32 TRUNC(4):
+    INT a:
+    INT32 b:
+    REAL32 c:
+    SEQ
+      c := a + b
+      check.REAL32 (c,REAL32 TRUNC(4),"test18")
+  :
+
+  PROC test19 ()
+    REAL32 FUNCTION "+" (VAL INT32 a, VAL INT64 b) IS REAL32 TRUNC(4):
+    INT32 a:
+    INT64 b:
+    REAL32 c:
+    SEQ
+      c := a + b
+      check.REAL32 (c,REAL32 TRUNC(4),"test19")
+  :
+
+  PROC test20 ()
+    REAL32 FUNCTION "+" (VAL INT64 a, VAL REAL32 b) IS REAL32 TRUNC(4):
+    INT64 a:
+    REAL32 b:
+    REAL32 c:
+    SEQ
+      c := a + b
+      check.REAL32 (c,REAL32 TRUNC(4),"test20")
+  :
+
+  PROC test21 ()
+    REAL32 FUNCTION "+" (VAL REAL32 a, VAL REAL64 b) IS REAL32 TRUNC(4):
+    REAL32 a:
+    REAL64 b:
+    REAL32 c:
+    SEQ
+      c := a + b
+      check.REAL32 (c,REAL32 TRUNC(4),"test21")
+  :
+
+  PROC test22 ()
+    REAL32 FUNCTION "+" (VAL REAL64 a, VAL BOOL b) IS REAL32 TRUNC(4):
+    REAL64 a:
+    BOOL b:
+    REAL32 c:
+    SEQ
+      c := a + b
+      check.REAL32 (c,REAL32 TRUNC(4),"test22")
+  :
+
+  PROC test23 ()
+    REAL32 FUNCTION "+" (VAL BOOL a, VAL INT b) IS REAL32 TRUNC(4):
+    BOOL a:
+    INT b:
+    REAL32 c:
+    SEQ
+      c := a + b
+      check.REAL32 (c,REAL32 TRUNC(4),"test23")
+  :
+
+  PROC test24 ()
+    REAL64 FUNCTION "+" (VAL INT a, VAL INT32 b) IS REAL64 TRUNC(5):
+    INT a:
+    INT32 b:
+    REAL64 c:
+    SEQ
+      c := a + b
+      check.REAL64 (c,REAL64 TRUNC(5),"test24")
+  :
+
+  PROC test25 ()
+    REAL64 FUNCTION "+" (VAL INT32 a, VAL INT64 b) IS REAL64 TRUNC(5):
+    INT32 a:
+    INT64 b:
+    REAL64 c:
+    SEQ
+      c := a + b
+      check.REAL64 (c,REAL64 TRUNC(5),"test25")
+  :
+
+  PROC test26 ()
+    REAL64 FUNCTION "+" (VAL INT64 a, VAL REAL32 b) IS REAL64 TRUNC(5):
+    INT64 a:
+    REAL32 b:
+    REAL64 c:
+    SEQ
+      c := a + b
+      check.REAL64 (c,REAL64 TRUNC(5),"test26")
+  :
+
+  PROC test27 ()
+    REAL64 FUNCTION "+" (VAL REAL32 a, VAL REAL64 b) IS REAL64 TRUNC(5):
+    REAL32 a:
+    REAL64 b:
+    REAL64 c:
+    SEQ
+      c := a + b
+      check.REAL64 (c,REAL64 TRUNC(5),"test27")
+  :
+
+  PROC test28 ()
+    REAL64 FUNCTION "+" (VAL REAL64 a, VAL BOOL b) IS REAL64 TRUNC(5):
+    REAL64 a:
+    BOOL b:
+    REAL64 c:
+    SEQ
+      c := a + b
+      check.REAL64 (c,REAL64 TRUNC(5),"test28")
+  :
+
+  PROC test29 ()
+    REAL64 FUNCTION "+" (VAL BOOL a, VAL INT b) IS REAL64 TRUNC(5):
+    BOOL a:
+    INT b:
+    REAL64 c:
+    SEQ
+      c := a + b
+      check.REAL64 (c,REAL64 TRUNC(5),"test29")
+  :
+
+  PROC test30 ()
+    BOOL FUNCTION "+" (VAL INT a, VAL INT32 b) IS TRUE:
+    INT a:
+    INT32 b:
+    BOOL c:
+    SEQ
+      c := a + b
+      check.BOOL (c,TRUE,"test30")
+  :
+
+  PROC test31 ()
+    BOOL FUNCTION "+" (VAL INT32 a, VAL INT64 b) IS TRUE:
+    INT32 a:
+    INT64 b:
+    BOOL c:
+    SEQ
+      c := a + b
+      check.BOOL (c,TRUE,"test31")
+  :
+
+  PROC test32 ()
+    BOOL FUNCTION "+" (VAL INT64 a, VAL REAL32 b) IS TRUE:
+    INT64 a:
+    REAL32 b:
+    BOOL c:
+    SEQ
+      c := a + b
+      check.BOOL (c,TRUE,"test32")
+  :
+
+  PROC test33 ()
+    BOOL FUNCTION "+" (VAL REAL32 a, VAL REAL64 b) IS TRUE:
+    REAL32 a:
+    REAL64 b:
+    BOOL c:
+    SEQ
+      c := a + b
+      check.BOOL (c,TRUE,"test33")
+  :
+
+  PROC test34 ()
+    BOOL FUNCTION "+" (VAL REAL64 a, VAL BOOL b) IS TRUE:
+    REAL64 a:
+    BOOL b:
+    BOOL c:
+    SEQ
+      c := a + b
+      check.BOOL (c,TRUE,"test34")
+  :
+
+  PROC test35 ()
+    BOOL FUNCTION "+" (VAL BOOL a, VAL INT b) IS TRUE:
+    BOOL a:
+    INT b:
+    BOOL c:
+    SEQ
+      c := a + b
+      check.BOOL (c,TRUE,"test35")
+  :
+  SEQ
+    init ("CG test 70","User Defined Operators 1")
+    title("Testing basic types (INT, BOOL, BYTE, etc..)")
+    test0()
+    test1()
+    test2()
+    test3()
+    test4()
+    test5()
+    test6()
+    test7()
+    test8()
+    test9()
+    test10()
+    test11()
+    test12()
+    test13()
+    test14()
+    test15()
+    test16()
+    test17()
+    test18()
+    test19()
+    test20()
+    test21()
+    test22()
+    test23()
+    test24()
+    test25()
+    test26()
+    test27()
+    test28()
+    test29()
+    test30()
+    test31()
+    test32()
+    test33()
+    test34()
+    test35()
+    finish ()
+:
