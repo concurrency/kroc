@@ -1,0 +1,350 @@
+
+#USE "convert.lib" 
+
+-- routines used to build up versions of sprintf 
+-- Written by Adrian Cockcroft - adrian.cockcroft@gmail.com
+-- Originally coded in 1988, updated in 2005
+
+--{{{  module documentation
+--** Formatted output utilities.
+-- @module fmtout
+
+--}}}
+
+--{{{ this routine formats an int into result according to the format 
+PROC doprnt.i(VAL []BYTE format, INT flen, []BYTE result, INT rlen, 
+  VAL INT value) 
+  INT  width: 
+  BOOL left, done: 
+  BYTE pad: 
+  SEQ 
+    pad := ' '    -- default pad character 
+    left := FALSE -- don't left justify 
+    done := FALSE -- set true after int has been done and another % found 
+    width := 0 
+    WHILE (NOT done) AND ((flen < (SIZE format)) AND ((rlen+1) < (SIZE result))) 
+      SEQ 
+        IF 
+          format[flen] = '%' 
+            WHILE (NOT done) AND ( ((flen+1) < (SIZE format)) AND 
+              ((rlen+1) < (SIZE result)) ) 
+              SEQ 
+                flen := flen + 1 
+                IF 
+                  -- "%12" field width specifier or "%0" zero pad 
+                  ((format[flen] >= '0') AND (format[flen] <= '9')) 
+                    IF 
+                      -- "%0" pad with zeroes 
+                      (format[flen] = '0') AND (format[flen-1] = '%') 
+                        pad := '0' 
+                      TRUE 
+                        width := (width * 10) + ((INT format[flen]) - (INT '0')) 
+                  -- "%-" left justify 
+                  format[flen] = '-' 
+                    left := TRUE 
+                  -- "%%" insert % 
+                  format[flen] = '%' 
+                    SEQ 
+                      result[rlen] := '%' 
+                      rlen := rlen + 1 
+                      flen := flen + 1 
+                  -- "%d" "%12d" "%012d" "%-12d" "%-012d" decimal options 
+                  -- "%x" "%12x" "%012x" "%-12x" "%-012x" hexadecimal options 
+                  (format[flen] = 'd') OR (format[flen] = 'x') 
+                    [12]BYTE buf: -- big enough for any 32bit int 
+                    INT l: 
+                    SEQ 
+                      IF 
+                        format[flen] = 'd' 
+                          INTTOSTRING(l,buf,value) 
+                        format[flen] = 'x' 
+                          HEXTOSTRING(l,buf,value) 
+                      IF 
+                        (rlen + l) > (SIZE result)    -- doesn't fit 
+                          SKIP 
+                        width <= l     -- width may be too small so grow a bit 
+                          SEQ 
+                            [result FROM rlen FOR l] := [buf FROM 0 FOR l] 
+                            rlen := rlen + l 
+                        left 
+                          SEQ 
+                            [result FROM rlen FOR l] := [buf FROM 0 FOR l] 
+                            rlen := rlen + l 
+                            WHILE l < width 
+                              SEQ 
+                                result[rlen] := ' ' 
+                                rlen := rlen + 1 
+                                width := width - 1 
+                        NOT left 
+                          SEQ 
+                            WHILE l < width 
+                              SEQ 
+                                result[rlen] := pad 
+                                rlen := rlen + 1 
+                                width := width - 1 
+                            [result FROM rlen FOR l] := [buf FROM 0 FOR l] 
+                            rlen := rlen + l 
+                        TRUE 
+                          SKIP 
+                      flen := flen + 1 -- skip over d or x 
+                      -- skip over format until another %? is seen or end 
+                      WHILE (NOT done) AND ( (flen < (SIZE format)) AND 
+                        (rlen < (SIZE result)) ) 
+                        IF 
+                          format[flen] = '%' 
+                            IF 
+                              (flen+1) >= (SIZE format) 
+                                SEQ -- % was the last thing in format 
+                                  result[rlen] := format[flen] 
+                                  rlen := rlen + 1 
+                                  done := TRUE 
+                              format[flen+1] = '%' 
+                                SEQ -- allow %% for % in string 
+                                  result[rlen] := '%' 
+                                  rlen := rlen + 1 
+                                  flen := flen + 2 
+                              TRUE  -- %? seen so quit with format[flen] = '%' 
+                                done := TRUE 
+                          TRUE 
+                            SEQ -- anything else is copied 
+                              result[rlen] := format[flen] 
+                              rlen := rlen + 1 
+                              flen := flen + 1 
+                  TRUE -- "%<something else>" so quit 
+                    SEQ 
+                      flen := flen - 1 -- wind back so % is next char 
+                      done := TRUE     -- for another call to doprnt.? 
+          TRUE -- an initial "%" has not been seen 
+            SEQ 
+              result[rlen] := format[flen] 
+              flen := flen + 1 
+              rlen := rlen + 1 
+: 
+--}}} 
+--{{{ this routine formats a string into result according to the format 
+PROC doprnt.s(VAL []BYTE format, INT flen, []BYTE result, INT rlen, 
+  VAL []BYTE value) 
+  INT  width: 
+  BOOL left, done: 
+  SEQ 
+    left := FALSE -- don't left justify 
+    done := FALSE -- set true after int has been done and another % found 
+    width := 0 
+    WHILE (NOT done) AND ((flen < (SIZE format)) AND ((rlen+1) < (SIZE result))) 
+      SEQ 
+        IF 
+          format[flen] = '%' 
+            WHILE (NOT done) AND ( ((flen+1) < (SIZE format)) AND 
+              ((rlen+1) < (SIZE result)) ) 
+              SEQ 
+                flen := flen + 1 
+                IF 
+                  -- "%12" field width specifier 
+                  ((format[flen] >= '0') AND (format[flen] <= '9')) 
+                    width := (width * 10) + ((INT format[flen]) - (INT '0')) 
+                  -- "%-" left justify 
+                  format[flen] = '-' 
+                    left := TRUE 
+                  -- "%%" insert % 
+                  format[flen] = '%' 
+                    SEQ 
+                      result[rlen] := '%' 
+                      rlen := rlen + 1 
+                      flen := flen + 1 
+                  -- "%s" "%12s" "%-12" string options 
+                  format[flen] = 's' 
+                    INT l: 
+                    SEQ 
+                      l := SIZE value 
+                      IF 
+                        (rlen + l) > (SIZE result)    -- doesn't fit 
+                          SKIP 
+                        width <= l     -- width may be too small so grow a bit 
+                          SEQ 
+                            [result FROM rlen FOR l] := value 
+                            rlen := rlen + l 
+                        left 
+                          SEQ 
+                            [result FROM rlen FOR l] := value 
+                            rlen := rlen + l 
+                            WHILE l < width 
+                              SEQ 
+                                result[rlen] := ' ' 
+                                rlen := rlen + 1 
+                                width := width - 1 
+                        NOT left 
+                          SEQ 
+                            WHILE l < width 
+                              SEQ 
+                                result[rlen] := ' ' 
+                                rlen := rlen + 1 
+                                width := width - 1 
+                            [result FROM rlen FOR l] := value 
+                            rlen := rlen + l 
+                        TRUE 
+                          SKIP 
+                      flen := flen + 1 -- skip over s 
+                      -- skip over format until another %? is seen or end 
+                      WHILE (NOT done) AND ( (flen < (SIZE format)) AND 
+                        ((rlen+1) < (SIZE result)) ) 
+                        IF 
+                          format[flen] = '%' 
+                            IF 
+                              (flen+1) >= (SIZE format) 
+                                SEQ -- % was the last thing in format 
+                                  result[rlen] := format[flen] 
+                                  rlen := rlen + 1 
+                                  done := TRUE 
+                              format[flen+1] = '%' 
+                                SEQ -- allow %% for % in string 
+                                  result[rlen] := '%' 
+                                  rlen := rlen + 1 
+                                  flen := flen + 2 
+                              TRUE  -- %? seen so quit 
+                                done := TRUE 
+                          TRUE 
+                            SEQ -- anything else is copied 
+                              result[rlen] := format[flen] 
+                              rlen := rlen + 1 
+                              flen := flen + 1 
+                  TRUE -- "%<something else>" so quit 
+                    SEQ 
+                      flen := flen - 1 -- wind back so % is next char 
+                      done := TRUE     -- for another call to doprnt.? 
+          TRUE -- an initial "%" has not been seen 
+            SEQ 
+              result[rlen] := format[flen] 
+              flen := flen + 1 
+              rlen := rlen + 1 
+: 
+--}}} 
+--{{{ this routine formats a REAL64 into result according to the format 
+-- sometimes %f will print with E+000, or %e will miss out E+000 
+-- this is due to the conversion routine seeing a silly width/value 
+PROC doprnt.d(VAL []BYTE format, INT flen, []BYTE result, INT rlen, 
+  VAL REAL64 value) 
+  INT  widthi,widthf: -- width of integer and fractional parts 
+  BOOL left, done, dot: 
+  BYTE pad: 
+  SEQ 
+    pad := ' '    -- default pad character 
+    left := FALSE -- don't left justify 
+    dot := FALSE  -- haven't seen dot yet 
+    done := FALSE -- set true after one has been done and another % found 
+    widthi := 0 
+    widthf := 0 
+    WHILE (NOT done) AND ((flen < (SIZE format)) AND ((rlen+1) < (SIZE result))) 
+      SEQ 
+        IF 
+          format[flen] = '%' 
+            WHILE (NOT done) AND ( ((flen+1) < (SIZE format)) AND 
+              ((rlen+1) < (SIZE result)) ) 
+              SEQ 
+                flen := flen + 1 
+                IF 
+                  -- "%12" field width specifier or "%0" zero pad 
+                  ((format[flen] >= '0') AND (format[flen] <= '9')) 
+                    IF 
+                      NOT dot -- integer part 
+                        widthi := (widthi*10) + ((INT format[flen]) - (INT '0')) 
+                      dot     -- fract part 
+                        widthf := (widthf*10) + ((INT format[flen]) - (INT '0')) 
+                  -- "%4.3f" look for the "." 
+                  format[flen] = '.' 
+                    dot := TRUE 
+                  -- "%-" left justify 
+                  format[flen] = '-' 
+                    left := TRUE 
+                  -- "%%" insert % 
+                  format[flen] = '%' 
+                    SEQ 
+                      result[rlen] := '%' 
+                      rlen := rlen + 1 
+                      flen := flen + 1 
+                  -- "%f" "%12f" "%.4f" "%3.4f" "%-3.4f" 123.456 options 
+                  -- "%e" "%12e" "%.4e" "%3.4e" "%-3.4e" 1.23456E+002 options 
+                  (format[flen] = 'f') OR (format[flen] = 'e') -- floating point 
+                    [30]BYTE buf: -- big enough for any 64bit real 
+                    INT l,wi,wf,width: 
+                    SEQ 
+                      IF 
+                        widthi > 13 
+                          wi := 13 
+                        TRUE 
+                          wi := widthi 
+                      IF 
+                        widthf > 17 
+                          wf := 17 
+                        (format[flen] = 'e') AND (widthf = 0) 
+                          wf := 17  -- otherwise we dont get E+000 
+                        TRUE 
+                          wf := widthf 
+                      IF 
+                        format[flen] = 'f' 
+                          SEQ 
+                            REAL64TOSTRING(l,buf,value,wi,wf) 
+                            width := (widthi+widthf)+2 -- "-." 
+                        format[flen] = 'e' 
+                          SEQ 
+                            REAL64TOSTRING(l,buf,value,0,wf) 
+                            width := (widthi+widthf)+7 -- "-.E+000" 
+                      IF 
+                        (rlen + l) > (SIZE result)    -- doesn't fit 
+                          SKIP 
+                        left 
+                          SEQ 
+                            [result FROM rlen FOR l] := [buf FROM 0 FOR l] 
+                            rlen := rlen + l 
+                            WHILE l < width 
+                              SEQ 
+                                result[rlen] := ' ' 
+                                rlen := rlen + 1 
+                                width := width - 1 
+                        NOT left 
+                          SEQ 
+                            WHILE l < width 
+                              SEQ 
+                                result[rlen] := pad 
+                                rlen := rlen + 1 
+                                width := width - 1 
+                            [result FROM rlen FOR l] := [buf FROM 0 FOR l] 
+                            rlen := rlen + l 
+                        TRUE 
+                          SKIP 
+                      flen := flen + 1 -- skip over f or e 
+                      -- skip over format until another %? is seen or end 
+                      WHILE (NOT done) AND ( (flen < (SIZE format)) AND 
+                        (rlen < (SIZE result)) ) 
+                        IF 
+                          format[flen] = '%' 
+                            IF 
+                              (flen+1) >= (SIZE format) 
+                                SEQ -- % was the last thing in format 
+                                  result[rlen] := format[flen] 
+                                  rlen := rlen + 1 
+                                  done := TRUE 
+                              format[flen+1] = '%' 
+                                SEQ -- allow %% for % in string 
+                                  result[rlen] := '%' 
+                                  rlen := rlen + 1 
+                                  flen := flen + 2 
+                              TRUE  -- %? seen so quit with format[flen] = '%' 
+                                done := TRUE 
+                          TRUE 
+                            SEQ -- anything else is copied 
+                              result[rlen] := format[flen] 
+                              rlen := rlen + 1 
+                              flen := flen + 1 
+                  TRUE -- "%<something else>" so quit 
+                    SEQ 
+                      flen := flen - 1 -- wind back so % is next char 
+                      done := TRUE     -- for another call to doprnt.? 
+          TRUE -- an initial "%" has not been seen 
+            SEQ 
+              result[rlen] := format[flen] 
+              flen := flen + 1 
+              rlen := rlen + 1 
+: 
+--}}} 
+
+
