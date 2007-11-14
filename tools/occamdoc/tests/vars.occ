@@ -1,0 +1,35 @@
+--** Tests for various kinds of variables.
+
+--* Simple
+INT a:
+
+--* Multiword type
+MOBILE []INT b:
+
+--* Multiple vars
+INT c, d, e:
+
+--* Multiword type, multiple vars
+MOBILE []INT f, g, h:
+
+INT xa: --* EOL simple
+MOBILE []INT xb: --* EOL multiword type
+INT xc, xd, de: --* EOL multiple vars
+MOBILE []INT xf, xg, xh: --* EOL multiword type, multiple vars
+
+--* Record with these in
+DATA TYPE FOO
+  RECORD
+    --* Before single
+    INT a:
+    --* Before multiple
+    INT b, c, d:
+    INT e: --* EOL single
+    INT f, g, h: --* EOL multiple
+:
+
+--* Weird spacing
+INT cc,dd,ee:
+--* Weird spacing 2
+INT    ccc  ,  ddd  ,  eee   :
+

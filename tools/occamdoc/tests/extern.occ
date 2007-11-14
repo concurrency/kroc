@@ -1,0 +1,12 @@
+--** EXTERNAL PROCs
+
+--* PROC declared in C
+-- @param key Key
+-- @param size Size
+-- @param address Address
+#PRAGMA EXTERNAL "PROC C.shared.memory.alloc(VAL INT key, VAL INT size, INT address) = 0"
+#PRAGMA EXTERNAL "PROC C.shared.memory.alloc.again(VAL INT key, VAL INT size, INT address) = 0"
+
+--* PROC declared in C with allocation
+#PRAGMA EXTERNAL "PROC C.foo () = 42"
+
