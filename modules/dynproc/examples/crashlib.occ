@@ -1,0 +1,31 @@
+#INCLUDE "course.module"
+#INCLUDE "dynproc.module"
+
+#INCLUDE "crashproto.inc"
+
+PROC testcrash (VAL DPROCESS me, []CHAN ANY in, out)
+  CHAN CRASHPROTO in RETYPES in[0]:
+  CHAN BYTE scr RETYPES out[0]:
+
+  SEQ
+    in ? CASE
+      empty1
+        SKIP
+      array.bounds
+        CHAN BYTE oops RETYPES out[1]:
+        oops ! 'X'
+      int.overflow
+        INITIAL INT x IS MOSTPOS INT:
+        INT y:
+        SEQ
+          y := x + 42
+      fpu.error
+        INITIAL REAL64 small IS 0.0 (REAL64):
+        INITIAL REAL64 dividend IS 42.0 (REAL64):
+        REAL64 y:
+        SEQ
+          y := dividend / small
+:
+
+
+
