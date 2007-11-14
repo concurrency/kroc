@@ -1,0 +1,927 @@
+Sun May 27 04:45:58 2001  Fred Barnes  <frmb2@ukc.ac.uk>
+
+	* discovered this ChangeLog.  Have done _major_ compiler mods over
+	the last year or so.  Notably MOBILE data types, including the mobilespace
+	allocation stuff (be/bind3.c).  Also added STEP to replicator expressions.
+	See the KRoC top-level CHANGELOG, and the doc/occ21-extensions.html file
+	for more information.
+
+Thu Jun 11 10:16:40 1998  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* maplib/Makefile.am, misc/Makefile.am, suplib/Makefile.am,
+	tcofflib/Makefile.am, arglib/Makefile.am, fnilib/Makefile.am,
+	include/Makefile.am, extlib/Makefile.am, fe/Makefile.am,
+	be/Makefile.am:  Initial revision
+
+Thu Jun  4 16:05:09 1998  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* include/occompfe.h:
+	Added new field suppress_compat, needed to compile.
+
+Thu Jun  4 15:13:45 1998  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* tcofflib/error.c: Added #ifdef HAVE_CONFIG_H
+
+	* configure.in: Make target_os_ replace -s with _s
+
+Thu Apr  2 08:49:49 1998  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* misc/harness.c:
+	if compiled for 386 target force use of library PROC for FMUL
+
+Fri Mar 13 14:15:16 1998  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* misc/harness.c:
+	change target 386 stuff not to generate FPU instructions if called with /TA, etc
+
+Mon Feb  9 14:52:21 1998  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c: Fix that actually works - 1.26 should really be deleted.
+
+	* fe/chk1.c:  Generalised previous fix so that all invalid uses
+	of operators are handled by the compiler normally instead of my
+	catchall.  This should catch use of channel names and protocol
+	names etc.
+
+Fri Feb  6 12:43:55 1998  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c:  included handling for channels in
+	generate_typename_strings() - found by a student.
+
+Mon Jan 26 11:47:35 1998  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/syn2.c:  Removed support for operators "--" (because its a
+	comment start), "$" and "<$" because they cannot be separated
+	from hexidecimal numbers ($ is a synonmyn for #), and "$>
+	because it would be out of place.  These operators were only
+	ever `supported' in that you could define functions for them,
+	not actually use them in expressions, which was rather
+	unfortunate!  From a bug reported by dcw showing $> and <$.
+
+Mon Jan 12 14:12:02 1998  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1ka.c: add dummy genfppop
+
+	* be/code1k.c:  add genfppop to faciltate fp stack management
+	(PaulZ's problem on 386, etc)
+
+	* be/code1.c: add dummy genfppop
+
+	* include/code1def.h:
+	add genfppop for PaulZ's correction to 386 code, etc
+
+	* misc/harness.c:
+	add settings of fprem etc for etc-code for 386 variant
+
+Fri Dec 12 16:51:26 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen8.c:  add calls of genfppop where compiler allowed
+	fpstack to overflow, which is not acceptable on all possible
+	targets.
+
+	* be/gen1.c:  move generation of "====" message for redefined
+	PROCs to before line number comment
+
+Thu Dec  4 15:00:07 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* include/code1def.h:  remove control_split (never used),
+	normalise.split, etc and add gencontrolsplit/join
+
+	* be/gen7.c:  change normalise.split etc into gencontrolsplit
+	etc (merge with adjacent CJ or setlab)
+
+	* be/gen5.c:  change normalise.split etc into gencontrolsplit
+	etc (merge with adjacent CJ or setlab) allow for possible
+	future optimisation of longshifts with immediate operand
+
+	* be/code1.c:  change normalise.split etc into gencontrolsplit
+	etc to harmonise with code1.c
+
+	* be/code1ka.c:  change normalise.split etc into
+	gencontrolsplit etc to harmonise with code1k.c
+
+	* be/code1k.c: change condition for generating SPE_I64TOR
+	change normalise.split etc into gencontrolsplit etc to localise
+	future use of new ETC code add notes on ETC encodings
+
+	* be/gen4.c: no significant change
+
+Thu Nov 27 17:16:53 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1k.c:  correct decoding of NOTPROCESS etc code into
+	.etc text file when -zasm set
+
+Fri Nov 21 17:46:58 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1ka.c, be/code1k.c: insert i64tor stuff that was in
+	gen12/gen9 insert table jump into genstarttable
+
+	* be/code1.c: insert i64tor stuff that was in gen12 (or was it gen9)
+	insert table jump into genstarttable
+
+	* misc/harness.c: support -ZNCC option
+
+	* misc/occompfe.c: support -ZNCC option with suppress. booleans
+
+	* include/occamfe.h: support the -ZNCC option with a boolean
+
+	* include/code1def.h:
+	modify prototypes of geni64tor and genstarttable functions
+
+	* fe/objlib.c:
+	support option of not doing call compatibility check (-ZNCC)
+
+	* be/gen9.c:
+	move jump to case jump table into starttable stuff in code1
+
+	* be/gen12.c: move geni64tor stuff from here into code1
+
+Wed Nov  5 17:37:54 1997  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* Makefile.am:
+	Recompile version.c every time another module is compiled.
+
+Tue Oct  7 14:15:04 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* include/objwrt.h: extend argument list of write_library_calls
+
+	* be/objwrt.c:  Allow write_library_calls to reverse list or
+	not according to caller's wishes
+
+	* be/code1ka.c: extend call to write_library_calls
+
+	* be/code1k.c:  extend call to write_library_calls to not
+	reverse the list in etc_output
+
+	* be/code1.c: extend call to write_library_calls
+
+Fri Oct  3 14:40:38 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1k.c: correct error in commenting zer64 option
+	generate SPE_NOTPROCESS in etc code output instead of I_MINT
+
+Thu Oct  2 14:17:30 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1.c:  call gennotprocess instead of I_MINT in
+	init_chanarray code
+	* be/gen1.c:  call gennotprocess instead of I_MINT in channel
+	initialisation so code1 may treat this specially for etc-code
+	output or whatever
+
+	* be/gen11.c:  comment out special treatment of loadconstant -
+	optimisations now in code1 if needed
+
+	* be/gen5.c:  change EQC_0 to genboolinvert to facilitate more
+	optimisations
+
+
+Wed Sep 24 11:01:07 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen7.c:
+	change genprimary (I_EQC, 0) to genboolinvert() wherever appropriate
+	to enable possible optimisatrion of following CJ instruction
+
+Fri Sep 19 16:05:20 1997  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* configure.in: Bump version to 1.1
+
+	Snapshotted all sources to occ21 1.1 (RCS V1_1)
+
+Fri Sep 19 14:46:19 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1k.c: minor adjustments to etc code generation
+	add control-split and control-join comments where stack survives cj
+
+	* include/debugdef.h: regenerate the prototype for get_from_index_table
+
+	* be/debug.c: make the function get_from_index_table PUBLIC for code1k
+
+Fri Sep 19 09:34:42 1997  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* configure.in: Removed annoying configure warnings.
+
+	* configure.in: Enable INITIAL declarations by default.
+
+Thu Sep 18 15:12:24 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen7.c: add calls of normalise_split and normalise_join in
+ 	jumpcond
+
+	* be/gen5.c: add calls of normalise_split and normalise_join in
+ 	trellop
+
+	* be/code1.c, be/code1ka.c: add dummy normalise_split and
+ 	normalise_join
+
+	* be/code1k.c: add normalise_split and normalise_join with ETC
+ 	code outputs
+
+	* include/code1def.h: add normalise_split and normalise_join
+
+Wed Sep 17 08:31:43 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/syn3.c: changed name of temporary variables used in INITIAL
+ 	declaration transformation so that they are invisible to the
+ 	programmer.  This is done by using a normally illegal character,
+ 	in this case $ in the name: tmp$1, tmp$2 etc.  This shouldn't
+ 	cause the linking problems that it did with UDO's (any symbol
+ 	table imports (#USEd files) are stripped on any il variables to be
+ 	visible outside their transformation anyway.
+
+	* misc/harness.c: Added sections to cope with new INITIAL
+ 	declaration.  Implemented a compiler switch (-init) to turn on the
+ 	global variable initial_decl.  All also conditionally compiled in
+ 	used #ifdef INITIAL_DECL.
+
+Tue Sep 16 15:58:52 1997  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* fe/lex1.c: Declare user_defined_operators as extern.
+
+	* be/bind1.c: Declare profile_table as extern.
+
+	* fe/chk1.c: Declare user_defined_operators as extern.
+
+Thu Sep  4 13:48:12 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* include/synerror.h, include/syn3def.h, include/syn2def.h:
+	*** empty log message ***
+
+	* include/lexhdr.h: Don't know
+
+Wed Sep  3 13:06:09 1997  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* configure.in:
+	Added --enable-init for INITIAL_DECL and tidied --disable-udo
+
+	* acconfig.h: Added INITIAL_DECL
+
+Tue Aug 26 15:28:36 1997  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* acconfig.h: Initial revision
+
+	* configure.in: Maybe define COMPILER_IS_GCC
+
+Fri Aug 22 12:49:28 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/debug.c: reimplement ALTSTART and ALTGO debug records as in
+ 	PC occam reimplement end of PROC/FUNCTION body codemark debug
+ 	records as in PC occam (to enable better implementation of locate
+ 	and disocc)
+
+	* be/code1ka.c: add genstartconstblock and genendconstblock remove
+ 	unprotected diag_write_nl in throw_away_nested
+
+	* be/code1k.c, be/code1.c: add genstartconstblock and
+ 	genendconstblock
+
+	* be/disalpha.c: change name of argument to
+ 	look_at_alpha_instruction to avoid reserved word "asm"
+
+	* be/gen1.c: generate debug info for final colon of FUNCTION
+ 	definition generate fold creases around constant blocks in asm
+ 	file
+
+	* include/code1def.h: add prototypes for genstartconstblock and
+ 	genendconstblock to enable embedding in folds
+
+Fri Aug 22 11:06:30 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c: added #ifdef USER_DEFINED_OPERATOR's around new code
+ 	- Michael couldn't compile without them switched on, so reverted
+ 	version
+
+Fri Aug 22 11:05:36 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* include/nameshdr.h: added access to n_endposn
+
+	* include/treedef.h: added n_endposn to n_loc in n_proc in n_un in
+ 	namenode
+
+	* include/disalpha.h: change argument name not to clash with
+ 	reserved word "asm"
+
+	* fe/syn2.c: add new parse tree field for position of final colon
+ 	in PROC/FUNCTION to enable extended debug information which can
+ 	locate to end of proc body
+
+	* fnilib/fni.c: change #elsif to #elif so can be preprocessed on
+ 	PC with DJGPP V2 version of gcc, ok on unix
+
+Wed Aug 20 15:49:19 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c: Changed error checking in S_UINTLIT and S_UREALLIT
+ 	sections of typecheck_main() so that they let through literals
+ 	coersed to _all_ types rather than just the usual plus records and
+ 	arrays.  This meant that having an integer on the LHS of an
+ 	operator coersed a REAL32 to try and be too, and reported an
+ 	error.  Error checking is done later by post_udo_check() after
+ 	udo's have been dealt with.
+
+Wed Aug 20 13:03:29 1997  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* configure.in: Make user defined operators default enabled
+
+Fri Aug 15 10:56:58 1997  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* configure.in: Updated for latest auotmake 2.1
+
+	* Makefile.am: Updated for latest automake 2.1
+
+Wed Aug  6 13:27:40 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* include/debughdr.h: add RTL_ALTSTART and RTL_ALTGO (for disocc)
+
+Thu Jun 12 16:16:03 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen11.c: ensure $temp is pre-annotated with its type when
+ 	commenting ldl or stl
+
+	* be/gen11.c: add INIT comment to zero_local_var
+
+Fri Jun  6 14:22:51 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen10.c: remove some spurious gencomment0("PTR")'s from ALT
+ 	guard checking code
+
+	* be/gen8.c: remove some spurious gencomment0("PTR")'s from
+ 	KERNEL.RUN code sequence
+
+Wed Apr 30 11:21:30 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c: No changes, but checking in just in case.
+
+	* fe/vti2.c: added the keyword INITIAL to the keywords table
+
+	* fe/syn3.c: This is where the bulk of the code for implementing
+ 	initial declarations is kept - the "entry" point is in rprocess -
+ 	it is parsed like a process instead of a declaration, although it
+ 	behaves as it should.
+
+	* fe/syn2.c: added rinitialspec() which is like rspec() but
+ 	outlaws the use of ports and channels in initial declarations.  It
+ 	is PUBLIC, so syn2def.h was c changed to make it externally
+ 	visible to syn3.c.
+
+	* fe/err2.c: Added an error code for initial declarations
+ 	(concerning open arrays, which are outlawed in initial decls)
+
+Wed Apr  9 09:12:52 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c: Changed action of checksamenew() with regard to
+ 	undeclared variables - the problem caused a core dump when a udo
+ 	was used with an undeclared variable.  Problem line was (is)
+ 	followed by the comment: (I hope :-), so
+	
+	I didn't think about it hard enough.
+
+Tue Mar 25 16:49:30 1997  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* configure.in: Use case rather than if for alignment check
+
+Tue Mar 25 14:52:40 1997  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* arglib/arg.c, arglib/arg0.h, arglib/argcmn.c, arglib/argnew.c,
+ 	be/bind1.c, be/bind2.c, be/bind3.c, be/code1.c, be/code1k.c,
+ 	be/code1ka.c, be/debug.c, be/disalpha.c, be/gen1.c, be/gen10.c,
+ 	be/gen11.c, be/gen12.c, be/gen2.c, be/gen3.c, be/gen4.c,
+ 	be/gen5.c, be/gen7.c, be/gen8.c, be/gen9.c, be/generror.c,
+ 	be/objwrt.c, be/profile.c, extlib/extconv.c, extlib/exti16.c,
+ 	extlib/exti32.c, extlib/exti64.c, extlib/exti8.c,
+ 	extlib/extlong.c, extlib/extr32.c, extlib/extr64.c,
+ 	extlib/extstr.c, extlib/extui16.c, extlib/extui32.c,
+ 	extlib/extui8.c, fe/chk1.c, fe/chk2.c, fe/chk4.c, fe/const1.c,
+ 	fe/err1.c, fe/err2.c, fe/lex1.c, fe/list.c, fe/objlib.c,
+ 	fe/objrdr.c, fe/objtrans.c, fe/occamfe.c, fe/ocmisc.c,
+ 	fe/strpool.c, fe/syn1.c, fe/syn2.c, fe/syn3.c, fe/use1.c,
+ 	fe/use2.c, fe/use3.c, fe/vti1.c, fe/vti2.c, fe/vti3.c, fe/vti4.c,
+ 	fnilib/fni.c, include/chk2def.h, include/code1def.h,
+ 	include/generror.h, include/imsmisc.h, include/imsopen.h,
+ 	include/imsstd.h, include/imstype.h, include/maplib.h,
+ 	include/occompfe.h, include/ochdr.h, include/ocmisc.h,
+ 	include/suplib.h, include/toolkit.h, include/version.h,
+ 	include/vti.h, maplib/mapwrt1.c, misc/harness.c, misc/inst.c,
+ 	misc/occompfe.c, misc/tran1.c, misc/tran2.c, misc/tran3.c,
+ 	misc/txlib.c, misc/version.c, tcofflib/alloc1.c,
+ 	tcofflib/alloc2.c, tcofflib/error.c, tcofflib/lff_io.c,
+ 	tcofflib/strutil3.c, tcofflib/strutil4.c, tcofflib/strutil5.c,
+ 	tcofflib/strutil7.c, tcofflib/tcoff_io.c: Changes for new
+ 	configuration
+
+Tue Mar 25 12:33:30 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c: made unary MINUS actually _work_ by adding a case in
+ 	construct_mop_name()
+
+	* fe/syn2.c: changed MINUS from a binary to a unary or binary
+ 	operator.
+
+Mon Mar 24 13:31:45 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c: fixed some #ifdef's etc so it compiles without udo
+ 	stuff in.  Added modify_check = TRUE before calls to
+ 	typecheck_main().
+
+Sun Mar 23 18:44:15 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c: removed a missed diagnostic (printstring())
+
+	* fe/syn2.c: changed error message reference to J.Moores to
+ 	ofa-bugs@ukc.ac.uk
+
+	* fe/chk1.c: missed a couple of J.Moores@ukc.ac.uk 's
+
+	* fe/chk1.c: Removed debugging messages - changed contact address
+ 	for default errors to ofa-bugs
+
+	* fe/chk1.c: Included handling for constructor (ie array/records
+ 	 literals).  This is done by modifying the S_CONSTRUCTOR handling
+ 	 code in typecheck_main() to operate in two modes - the mode is
+ 	 indicated by the setting of a global variable modify_check before
+ 	 calling typecheck_main() (it should really be a parameter but
+ 	 this would mean modifying all references to typecheck_main())
+ 	 modify_check is then copied into modify_check_for_udo (a local
+ 	 variable) and modify_check set to false (so it does not propagate
+ 	 with recursion (although this may be desirable in expressions,
+ 	 need to check this)).  This flag then forces the type coersion
+ 	 code to not assume anything about the type of the constructor
+	(ie ignore default_type), and work it out from scratch - this only
+ 	happens if the type is not specified (with a decoration).  This
+ 	means that if a constructor is used with a user defined operator
+ 	(as one of the operands), then if no decoration is included we try
+ 	to resolve it as an array, (if any of the types in the array are
+ 	known, an attempt is made to match all in the array to that type),
+ 	if a decoration is included (eg the name of a record type) then it
+ 	is resolved as before.
+
+	Also found major bug in checksamenew() where the global variables
+ 	are modified between sucessing calls to typecheck_main() (global
+ 	vars left_type and right_type) if there is any recursion - the
+ 	solution is not to update their values until after both calls
+	(store them in local variables inbetween so they are not
+ 	corrupted)
+
+	Lastly included some code that makes unresolvable REAL literals
+ 	default to REAL32 - currently only when used around a user defined
+ 	operator - but easy to extend - needs some debate.
+
+Wed Mar 19 15:10:03 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* fe/chk2.c: standardise fold creases with fto
+
+	* fe/chk2.c: add follow_user_type when folding the initialiser of
+ 	a VAL RETYPE (in cdeclaration)
+
+Tue Mar 18 14:21:35 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* misc/occompfe.c: standardise fold creases
+
+Mon Mar 17 12:34:54 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c: COMMENT folds did cause problems - needed to be
+ 	edited by hand.  Also eliminated some unused parameters and
+ 	variables - which got rid of some warnings.
+
+Fri Mar 14 16:48:56 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c: Moved the modify_check flag setting from
+ 	newcheckdop() to checksamenew(), because needs to be set before
+ 	every call to typecheck_main() and not just the first.  Also
+ 	commented checksamenew() and literal modifications quite heavily -
+ 	tidied up some folding problems around checksamenew() too.  Using
+ 	COMMENT folds in origami for comments now is that ok?
+
+	* fe/chk1.c: small modification to typecheck_main() prevent
+ 	propagation of TRUE value of the global variable modify_check to
+ 	subexpressions (by typecheck_main()) recursively calling itself.)
+  	by copying the value of modify_check into a local (to
+ 	typecheck_main()) variable modify_check_for_udo.  modify_check is
+ 	then set to FALSE so that it doesn't propagate further.  The
+ 	upshot is that if a modified check is required: modify_check =
+ 	TRUE; type = typecheck_main(typetree); the check will only be
+ 	modified if the _top_ of typetree is an untyped literal, before
+ 	the modification propagated to subexpressions.
+
+Tue Mar 11 16:25:38 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1k.c: initcode: remove use of diag_write_nl in opening
+ 	remark(s)
+
+	* be/gen8.c, be/bind3.c: standardise fold crease representation
+ 	with fto
+
+	* be/bind1.c: standardise fold creases with fto
+
+Tue Mar 11 15:20:20 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* fe/chk1.c, fe/syn2.c: changed string output when generating
+ 	array type -> string conversions for user defined operators
+ 	ARRAY_OF_<type> was preventing the #USEing of user defined
+ 	operators that operated on arrays across modules (you could
+ 	#INCLUDE the file fine).  This is because the compiler seems not
+ 	to care about underscores (_), and percents (%) within a module,
+ 	(and because they're internally generated, they are not subject to
+ 	the usual action of the parser), but it _does_ matter if that
+ 	identifier is in a seperately compiled module - in which case it
+ 	won't incorperate the name into the symbol table (for an unknown
+ 	reason)
+
+	* fe/chk1.c: added literal node tagging (with new macros in vti.h,
+ 	treedef.h, vti1.c which defined the supporting data structures and
+ 	functions (new etc)) to REAL untyped literals as well as INT and
+ 	BYTE (I forgot).
+
+Tue Mar 11 14:13:20 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* fe/use3.c: dcwbug cure, avoid visiting SStartExp and SLengthExp
+ 	when they are still NULL
+
+Tue Mar 11 05:04:53 1997  Jim Moores  <jm40@ukc.ac.uk>
+
+	* include/vti.h: changed litnode macros to include new ones to
+ 	modify new field thatt indicates if type was specified in code (ie
+ 	cast) even after it was coersed to the default_type (which may be
+ 	wrong for udo's) - see chk1.c for implementation details.
+
+	* include/treedef.h: changed structure of litnode for udo handling
+ 	of literals (a flag is added to indicate if literal was typed when
+ 	specified (ie cast) - even after the type has been resolved
+ 	(possibly incorrectly)
+
+	* fe/vti1.c: changed newlitnode to set new field (that indicates
+ 	if type was given
+	(ie as a cast), even after it has been resolved.  This is used for
+ 	udo's to decide whether or not to coerse type to its basic form
+
+	* fe/chk1.c: Changed way literals are handled by udo code -
+ 	changed litnode to include a flag to indicate if type was
+ 	specified (ie by a cast) so that udo code knows whether or not to
+ 	coerse type to its basic form (ie 6 -> INT, 6.0 -> REAL 32 etc) -
+ 	needs to have array constructor code changed as well though.
+  	cleaned up some folding problems too.
+
+Mon Mar 10 18:10:31 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* fe/vti4.c: SK's bug fix applied also to dimexpaddrof fold
+ 	creases standardised with fto
+
+	* fe/syn3.c: force bad process error for mal-formed multiple
+ 	assignments (rprocess)
+
+	* fe/syn2.c: rprocdef: move pbody == NULL test to after the if
+ 	(separately-compiled)
+
+Fri Mar  7 16:40:19 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* misc/harness.c: restore etc output file definition stuff
+ 	inadvertently thrown away add support for -UDO option for Jim's
+ 	stuff standardise fold crease representation by using fto
+
+	* fe/syn3.c: standardise fold crease representation by fto tidy up
+ 	folding of rspecorelementlist
+
+Tue Mar  4 16:50:15 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen4.c: another go at standardising the creases
+
+	* be/gen4.c: standardised creases with fto
+
+Mon Mar  3 10:30:57 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen1.c, be/gen10.c, be/gen11.c, be/gen5.c, be/gen7.c,
+ 	be/gen9.c: standardise fold creases by using fto
+
+	* be/gen3.c, be/gen2.c: fold creases standardised by fto
+
+Fri Feb 28 17:31:43 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen12.c: standardised representation with fto
+
+Tue Feb 25 18:51:32 1997  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* configure.in, Makefile.am: Initial revision
+
+	* fe/chk1.c (newcheckdop): Only define with
+ 	USER_DEFINED_OPERATORS.
+
+	* include/casemops.h, include/casedops.h: Initial revision
+
+	* fe/lex1.c: Folding.
+	(nextsymb): Fixed bug concerning lexing of @ so that it does not
+ 	require a ' ' after it in an expression.
+
+	* fe/const1.c: *.inc -> *.h
+
+	* fe/chk1.c: Folding.  Resolution of untyped literals changed so
+ 	that if used with UDOs, they revert to default types.  Checks are
+ 	done after initial type check to report on literals being typed as
+ 	records or arrays.
+
+	* fe/syn2.c: Folding + name generation changed %% -> udo.
+
+	* fe/vti2.c: Symbol table entries ftagstring() copes with %% as
+ 	for % symbols
+
+Thu Feb 20 16:28:25 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen1.c: eliminate some spurious newlines which sometimes go
+ 	to screen
+
+Fri Feb 14 16:35:54 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* fe/chk1.c, fe/const1.c, fe/err2.c, fe/lex1.c, fe/strpool.c,
+ 	fe/syn2.c, fe/vti1.c, fe/vti2.c: extend for Jim's user defined
+ 	operator language extensions
+
+	* fe/chk4.c: make more functions public for the udo extension stop
+ 	change of chklocn when node is a NAMENODE (bug 26)
+
+	* include/chk4def.h, include/chkerror.h, include/lexdef.h,
+ 	include/lexhdr.h, include/strpool.h, include/synerror.h: extended
+ 	for Jim's user defined operators extension
+
+Thu Feb  6 15:24:30 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1.c: output of loopend was spuriously suppressed unles
+ 	-zasm used, now ok
+
+Tue Feb  4 16:12:45 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1k.c: eliminate warning re absent const in parameter list
+ 	of gentypecomment
+
+Wed Jan 29 18:10:38 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* fe/syn2.c: correct parsing error in CASE PROTOCOL to allow
+ 	newlines with -znec
+
+Thu Jan 23 09:47:03 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* tcofflib/com.c: not known
+
+	* be/code1.c: reinsert code removed from gen modules for code1k
+ 	extended parameter list for add_const_block for type annotation
+
+Tue Jan 14 17:41:45 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen1.c: add PTR to comments about wstemp (replicated PAR)
+
+Sat Jan 11 14:41:23 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* include/code1def.h: add const qualifier to final argument of
+ 	add-const_block
+
+Tue Jan  7 14:06:30 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* tcofflib/com.c, tcofflib/lff_io.c, tcofflib/tcoff_io.c: make
+ 	compatible with defective fputc in 3L C library on alpha
+
+Mon Jan  6 15:46:00 1997  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1k.c: really merge the etc-code stuff - previous version
+ 	was not the new one!
+
+	* be/gen8.c: zer64: correct bug in implementation of DMINUSX by
+ 	flipping a bit
+
+	* be/gen2.c: more conservative reuse of constants when zer64 may
+ 	change order of words
+
+	* misc/harness.c: change initialisation of has_i64tor
+
+	* fe/const1.c: correct bug in handling of REAL64 constants with
+ 	zer64
+
+Tue Dec  3 15:13:02 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1.c, be/code1e.c: extended add_const_block for type name
+ 	decorations
+
+	* be/code1k.c: merge in all the etc-code generating stuff from
+ 	code1e.c switchable by booleans set in harness.c extended
+ 	add-const_block for type name decorations
+
+	* be/code1ka.c: obsolescent as all functionality now merged into
+ 	code1k.c
+
+	* be/gen1.c: revised comment for renamed PROCs call extended
+ 	add_const_block and related type decoration things
+
+	* fe/const1.c, fe/chk1.c: more support for constant table type
+ 	annotation
+
+	* misc/harness.c: add support for -ETC option flag
+
+	* include/code1def.h: remove obsolete function prototypes
+ 	get_padlen, genpadding extend parameter list of add_const_block
+ 	for type annotation
+
+Tue Nov  5 11:55:10 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* include/harndef.h: add etc_output as aglobal variable
+
+	* be/gen8.c: throw away result of each check before move2dinit
+
+	* be/objwrt.c: modify asm_descriptor
+
+Wed Oct 30 12:27:19 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1e.c: work towards merging code1e and code1k
+
+Mon Oct 28 14:41:49 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* include/txlib.h: add i64opsbyfunc
+
+	* be/code1k.c: extended type information in initchanarray and
+ 	similar code sequences
+
+	* be/gen10.c, be/gen11.c: extended type information in comments
+
+	* be/gen8.c: extended type information in various comments
+
+	* be/gen1.c: new function gentypecomment extended type information
+ 	in various other comments
+
+	* misc/tran2.c: extend function ispointer so it can be used to
+ 	generate PTR comments in .t file
+
+	* fe/vti2.c: extended printout of constant table type info
+
+	* fe/const1.c: work towards bigendian constant tables
+
+	* fe/chk1.c: additional type information into tree for constant
+ 	tables (incomplete)
+
+Thu Oct  3 14:40:02 1996  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* include/imstype.h: Don't do SUN and GNU
+
+Mon Jul  8 14:36:44 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* misc/harness.c: change default extensions ifdef OFAETC to
+ 	.tce,.etc
+
+Tue Jun 18 14:24:31 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1.c: add genboolinvert and gencompare so gen modules may
+ 	call them
+
+	* be/code1e.c: add etc_leinst and improve genloopend to use it
+ 	improve output of filename info
+
+	* be/bind1.c: ensure maxwsp is rounded up for quadalign where
+ 	necessary
+
+	* be/gen7.c: calls to generate eqc,0 changed to use genboolinvert
+ 	where possible
+
+	* be/gen8.c: ensure altadjust is rounded up for quadalign
+
+	* be/gen5.c: optimise some eqc 0's by calling genboolinvert
+
+	* be/gen1.c: modify to use genloophead, genreplicatorcheck and
+ 	genloopend additional roundings up of workspace frame sizes for
+ 	quadalign
+
+Mon Jun 10 11:16:31 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1.c: add to genstartjumptable the code that used to
+ 	precede its call in gen9
+
+Tue Jun  4 14:32:48 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1e.c: first fully working version
+
+	* be/code1ka.c: correct the translation of FPNAN
+
+	* be/code1k.c: corrections to ts_diff entries for nfix, pop,
+ 	fpi32tor32, fpi32tor64
+
+	* be/code1.c: add declarations of genloadlabptr and
+ 	genshiftimmediate to reproduce original effects
+
+	* be/gen11.c: change some uses of genlabeldiff to use
+ 	genloadlabptr instead
+
+	* be/gen4.c: call genshiftimmediate where appropriate to allow
+ 	optimisation of this case
+
+	* be/gen1.c: change uses of genlabeldiff into corresponding uses
+ 	of genloadlabptr
+
+	* misc/harness.c: add an ifdef OFAETC to define some properties of
+ 	simplified transputer used by ETC code
+
+Tue May 14 15:22:55 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* misc/harness.c: if OFAALPHA make default path OSEARCH to match
+ 	OLINK
+
+Fri May 10 14:32:33 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1ka.c: change implementation of GCALL to use REGRETURN
+ 	rather than RegA for return link
+
+	* misc/txlib.c: add ATTRIB_WORD_64 bit for AXP processor type
+
+	* misc/harness.c: modify setting of needs_quadalign
+
+	* include/generror.h: add GEN_NOTALPHA error code
+
+	* include/imstype.h: changes to 3L / ALPHA specific types
+
+Tue May  7 14:00:17 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/code1ka.c: correct coding error in setting fs_depth at
+ 	function return
+
+	* be/gen1.c: call endsectionalign so that code1 decides what
+ 	alignment is needed
+
+Fri May  3 16:33:40 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* fe/objrdr.c: use feof instead of EOF as required by 3lC
+
+	* be/code1ka.c: corrections to fs_width stuff
+
+	* be/generror.c: protect GENNOTALPHA with #ifdef OFAALPHA
+
+	* misc/harness.c: harmonise errfile setting with PC versions
+
+	* be/code1ka.c: added fs_width to force correct floating length of
+ 	operations corrected coding of truncated conversion from real to
+ 	int
+
+Thu May  2 14:57:16 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen12.c: ensure fp result in reg is noted even when assembly
+ 	output is false
+
+Fri Apr 26 08:07:42 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* fe/vti4.c: added case S_RECORDITEM as suggested by SK to cure
+ 	bug in dimexpof
+
+Mon Apr 15 14:43:01 1996  Michael Poole  <M.D.Poole@ukc.ac.uk>
+
+	* be/gen5.c: call throw_nested_result_away to get rid of borrow
+ 	after LDIFF for int64 gt
+
+Mon Apr 15 10:54:19 1996  Dave Beckett  <D.J.Beckett@ukc.ac.uk>
+
+	* tcofflib/strutil5.c, tcofflib/strutil6.c, tcofflib/strutil7.c,
+ 	tcofflib/tcoff_io.c, tcofflib/lff_io.c, tcofflib/strutil3.c,
+ 	tcofflib/strutil4.c, tcofflib/disassem.c, tcofflib/error.c,
+ 	tcofflib/heap.c, tcofflib/hexdump.c, tcofflib/command2.c,
+ 	tcofflib/command3.c, tcofflib/command4.c, tcofflib/command6.c,
+ 	tcofflib/alloc2.c, tcofflib/com.c, tcofflib/command1.c,
+ 	tcofflib/alloc1.c, suplib/sort.c, suplib/strlwr.c,
+ 	suplib/strupr.c, maplib/mapwrt1.c, fnilib/popen.c, fnilib/fni.c,
+ 	fnilib/fnidef.h, fnilib/host_os.h, extlib/extui16.c,
+ 	extlib/extui32.c, extlib/extui8.c, extlib/extr32.c,
+ 	extlib/extr64.c, extlib/extstr.c, extlib/exti64.c, extlib/exti8.c,
+ 	extlib/extlong.c, extlib/extconv.c, extlib/exti16.c,
+ 	extlib/exti32.c, arglib/argcmn.c, arglib/argnew.c,
+ 	arglib/host_os.h, arglib/arg.c, arglib/arg0.h, misc/versione.c,
+ 	misc/tran3.c, misc/txlib.c, misc/version.c, misc/tran1.c,
+ 	misc/tran2.c, misc/inst.c, misc/occompfe.c, misc/harness.c,
+ 	include/vtierror.h, include/version.h, include/vti.h,
+ 	include/use2def.h, include/usedef.h, include/useerror.h,
+ 	include/usehdr.h, include/treedef.h, include/txlib.h,
+ 	include/use1def.h, include/tcofflib.h, include/toolkit.h,
+ 	include/tran1def.h, include/trandef.h, include/synerror.h,
+ 	include/tcof2lib.h, include/tcoff.h, include/syn1def.h,
+ 	include/syn2def.h, include/syn3def.h, include/syndef.h,
+ 	include/proflib.h, include/strpool.h, include/suplib.h,
+ 	include/popen.h, include/popen_re.h, include/predefhd.h,
+ 	include/profile.h, include/ocmisc.h, include/pdata.h,
+ 	include/pdefs.h, include/occamfe.h, include/occompfe.h,
+ 	include/ochdr.h, include/objlib.h, include/objrdr.h,
+ 	include/objtrans.h, include/objwrt.h, include/midinc.h,
+ 	include/mmmlib.h, include/nameshdr.h, include/localfe.h,
+ 	include/maplib.h, include/memlib.h, include/lexdef.h,
+ 	include/lexerror.h, include/lexhdr.h, include/listhdr.h,
+ 	include/includes.h, include/instdef.h, include/instruct.h,
+ 	include/imsstd.h, include/imstype.h, include/imsvals.h,
+ 	include/harndef.h, include/hdblib.h, include/imsmisc.h,
+ 	include/imsopen.h, include/generror.h, include/genhdr.h,
+ 	include/h1defs.h, include/gen7def.h, include/gen8def.h,
+ 	include/gen9def.h, include/gendeca.h, include/gen2def.h,
+ 	include/gen4def.h, include/gen5def.h, include/gen11def.h,
+ 	include/gen12def.h, include/gen1def.h, include/feinc.h,
+ 	include/fnilib.h, include/gen10def.h, include/disalpha.h,
+ 	include/err2.h, include/errhdr.h, include/extlib.h,
+ 	include/dbgdef.h, include/debugdef.h, include/debughdr.h,
+ 	include/compharn.h, include/confdef.h, include/constdef.h,
+ 	include/chkdef.h, include/chkerror.h, include/code1def.h,
+ 	include/chk1def.h, include/chk2def.h, include/chk4def.h,
+ 	include/bind1def.h, include/bind2def.h, include/bind3def.h,
+ 	include/cfbdefs.h, include/arg.h, fe/vti4.c, fe/vti2.c, fe/vti3.c,
+ 	fe/use3.c, fe/vti1.c, fe/use1.c, fe/use2.c, fe/syn2.c, fe/syn3.c,
+ 	fe/occamfe.c, fe/ocmisc.c, fe/strpool.c, fe/syn1.c, fe/objrdr.c,
+ 	fe/objtrans.c, fe/lex1.c, fe/list.c, fe/objlib.c, fe/const1.c,
+ 	fe/err1.c, fe/err2.c, fe/chk4.c, fe/chk1.c, fe/chk2.c,
+ 	be/objwrt.c, be/profile.c, be/gen9.c, be/generror.c, be/gen7.c,
+ 	be/gen8.c, be/gen3.c, be/gen4.c, be/gen5.c, be/gen12.c, be/gen2.c,
+ 	be/gen10.c, be/gen11.c, be/disalpha.c, be/gen1.c, be/debug.c,
+ 	be/code1k.c, be/code1ka.c, be/code1.c, be/code1e.c, be/bind2.c,
+ 	be/bind3.c, be/bind1.c: Initial revision
