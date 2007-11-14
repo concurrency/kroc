@@ -14,7 +14,7 @@ occade_lib_objs = \
 all-local: occade.lib
 
 occade.lib: $(occade_lib_objs)
-	$(OCCBUILD) --library occade.lib --need occSDL --need file --need course --include occade.inc $(occade_lib_objs)
+	$(OCCBUILD) --library occade.lib --need occSDL --need file --need course --need sdlraster --include occade.inc $(occade_lib_objs)
 
 install-exec-local: occade.lib occade.inc
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" occade.lib occade.inc

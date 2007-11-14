@@ -25,6 +25,7 @@
 #INCLUDE "occSDL.module"
 #INCLUDE "file.module"
 #INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
 
 #INCLUDE "occade.inc"
 
@@ -287,6 +288,17 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
   INITIAL INT num.filters IS 0:
   INITIAL INT filter.id.counter IS 0:
 
+  INITIAL BOOL is.fullscreen IS FALSE:
+  --{{{  PROC toggle.fullscreen
+  PROC toggle.fullscreen ()
+    SEQ
+      -- Ignore the error; this won't work on all displays.
+      INT result:
+      SDL.WM.ToggleFullScreen (result, screen)
+      is.fullscreen := NOT is.fullscreen
+  :
+  --}}}
+
   --{{{ PROC process.input.events
   PROC process.input.events ()
     INITIAL BOOL running IS TRUE:
@@ -298,75 +310,37 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
             running := FALSE
           TRUE
             --{{{ got an event
-            BYTE type:
-            SDL.keysym sym:
-            INT key, mod:
-            OCCADE.INPUT.EVENT ie:
-            INITIAL BOOL transmit IS TRUE:
+            RASTER.EVENT ev:
+            INITIAL BOOL transmit IS FALSE:
             SEQ
-              get.SDL.Event.type (type, event)
-              --{{{ check for special keys
-              CASE INT type
-                SDL.KEYDOWN
+              raster.convert.event (event, ev)              
+              --{{{  check for special keys
+              VAL INT ANY.ALT IS (KMOD.LALT \/ KMOD.RALT) \/ (KMOD.LMETA \/ KMOD.RMETA):
+              IF
+                (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = SDLK.RETURN) AND ((ev[mod] /\ ANY.ALT) <> 0)
+                  --{{{  Alt-Enter: toggle full-screen mode
+                  toggle.fullscreen ()
+                  --}}}
+                (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = SDLK.BACKSPACE) AND ((ev[mod] /\ ANY.ALT) <> 0)
+                  --{{{  Alt-Backspace: STOP
                   SEQ
-                    INITIAL SDL.KeyboardEvent ke IS SDL.KeyboardEvent event:
-                    get.SDL.KeyboardEvent.keysym (sym, ke)
-                    get.SDL.keysym.sym (key, sym)
-                    get.SDL.keysym.mod (mod, sym)
-                    VAL INT ANY.ALT IS (KMOD.LALT \/ KMOD.RALT) \/ (KMOD.LMETA \/ KMOD.RMETA):
+                    --{{{  leave full-screen mode first
                     IF
-                      (key = SDLK.RETURN) AND ((mod /\ ANY.ALT) <> 0)
-                        --{{{ Alt-Return: toggle full screen
-                        -- Ignore the error; this won't work on all displays.
-                        SDL.WM.ToggleFullScreen (result, screen)
-                        --}}}
-                      (key = SDLK.BACKSPACE) AND ((mod /\ ANY.ALT) <> 0)
-                        --{{{ Alt-Backspace: STOP
-                        STOP
-                        --}}}
+                      is.fullscreen
+                        toggle.fullscreen ()
                       TRUE
                         SKIP
-                ELSE
-                  SKIP
-              --}}}
-              --{{{ translate the event to our format
-              CASE INT type
-                SDL.QUIT
-                  ie[type], ie[id] := OCCADE.EVENT.SYSTEM, OCCADE.SYSTEM.QUIT
-                SDL.KEYDOWN, SDL.KEYUP
-                  SEQ
-                    CASE INT type
-                      SDL.KEYDOWN
-                        ie[type] := OCCADE.EVENT.KEY.DOWN
-                      SDL.KEYUP
-                        ie[type] := OCCADE.EVENT.KEY.UP
-                    INITIAL SDL.KeyboardEvent ke IS SDL.KeyboardEvent event:
-                    get.SDL.KeyboardEvent.keysym (sym, ke)
-                    get.SDL.keysym.sym (key, sym)
-                    CASE key
-                      SDLK.LEFT
-                        ie[id] := OCCADE.KEY.LEFT
-                      SDLK.RIGHT
-                        ie[id] := OCCADE.KEY.RIGHT
-                      SDLK.UP
-                        ie[id] := OCCADE.KEY.UP
-                      SDLK.DOWN
-                        ie[id] := OCCADE.KEY.DOWN
-                      ELSE
-                        --{{{ otherwise just pass the value through
-                        -- Regular keys are ASCII in SDL.
-                        ie[id] := key
-                        --}}}
-                ELSE
-                  --{{{ unhandled type; ignore it
-                  transmit := FALSE
+                    --}}}
+                    STOP
                   --}}}
+                TRUE
+                  transmit := TRUE
               --}}}
               --{{{ send it to all the filters
               IF
                 transmit
                   PAR i = 0 FOR num.filters
-                    filter.clis[i][events] ! ie
+                    filter.clis[i][events] ! ev
                 TRUE
                   SKIP
               --}}}
@@ -967,10 +941,10 @@ PROC occade.finish.sprite (OCCADE.SPRITE! sprite)
 --{{{ PROC occade.input.buffer (CHAN OCCADE.INPUT.EVENT in?, out!, CHAN BOOL kill?)
 --* Overwriting N-place buffer of input events.
 -- @private
-PROC occade.input.buffer (CHAN OCCADE.INPUT.EVENT in?, out!, CHAN BOOL kill?)
+PROC occade.input.buffer (CHAN RASTER.EVENT in?, out!, CHAN BOOL kill?)
   VAL INT BUFFER.SIZE IS 100:
 
-  DATA TYPE ITEM IS OCCADE.INPUT.EVENT:
+  DATA TYPE ITEM IS RASTER.EVENT:
   #INCLUDE "overwriting-buffer.inc"
 
   CHAN ITEM in.r? RETYPES in?:
@@ -999,7 +973,7 @@ PROC occade.input.filter (SHARED OCCADE! handle, OCCADE.INPUT? svr)
         handle[req] ! attach.filter; internal.cli
         handle[resp] ? CASE attach.filter; id
     --}}}
-    CHAN OCCADE.INPUT.EVENT events.thru:
+    CHAN RASTER.EVENT events.thru:
     CHAN BOOL kill:
     PAR
       --{{{ handle requests
@@ -1017,7 +991,7 @@ PROC occade.input.filter (SHARED OCCADE! handle, OCCADE.INPUT? svr)
                 kill ! TRUE
                 running := FALSE
               --}}}
-          OCCADE.INPUT.EVENT event:
+          RASTER.EVENT event:
           internal.svr[events] ? event
             IF
               (event[type] /\ interesting) <> 0
@@ -1059,7 +1033,7 @@ PROC occade.finish.input (OCCADE.INPUT! input)
     INITIAL BOOL eating IS TRUE:
     WHILE eating
       PRI ALT
-        OCCADE.INPUT.EVENT event:
+        RASTER.EVENT event:
         input[events] ? event
           SKIP
         SKIP

@@ -167,46 +167,11 @@ CHAN TYPE OCCADE.SPRITE
 --}}}
 
 --{{{ input events
---*{{{ OCCADE.EVENT Types of event.
-VAL INT OCCADE.EVENT.SYSTEM IS 1 << 0: --* System events.
-VAL INT OCCADE.EVENT.KEY.DOWN IS 1 << 1: --* Key pressed on the keyboard.
-VAL INT OCCADE.EVENT.KEY.UP IS 1 << 2: --* Key released on the keyboard.
---*}}}
-
---*{{{ OCCADE.SYSTEM System events.
-VAL INT OCCADE.SYSTEM.QUIT IS 1: --* The application is being closed.
---*}}}
-
---*{{{ OCCADE.KEY Key symbols.
-VAL INT OCCADE.KEY.LEFT IS 1001: --* Left arrow.
-VAL INT OCCADE.KEY.RIGHT IS 1002: --* Right arrow.
-VAL INT OCCADE.KEY.UP IS 1003: --* Up arrow.
-VAL INT OCCADE.KEY.DOWN IS 1004: --* Down arrow.
---*}}}
-
---* An input event.
-DATA TYPE OCCADE.INPUT.EVENT
-  RECORD
-    --* The type of the event.
-    -- This must be one of the [@ref OCCADE.EVENT] values.
-    --
-    -- If it's [@ref OCCADE.EVENT.SYSTEM], then [@code id] is one of the
-    -- [@ref OCCADE.SYSTEM] values indicating which system event happened.
-    --
-    -- If it's [@ref OCCADE.EVENT.KEY.DOWN] or
-    -- [@ref OCCADE.EVENT.KEY.UP], then [@code id] is an ASCII
-    -- character or one of the [@ref OCCADE.KEY] values.
-    INT type:
-
-    --* Which of several things caused the event. (See [@code type] for more details.)
-    INT id:
-:
-
 --* Commands that can be sent to the event filter
 PROTOCOL OCCADE.INPUT.REQ
   CASE
     --* Pick the types of events you're interested in.
-    -- This should be the bitwise OR of values from [@ref OCCADE.EVENT].
+    -- This should be the bitwise OR of values from [@ref RASTER.ET].
     enable; INT
     --* Close this event filter.
     -- Use [@ref occade.finish.input] rather than sending this by hand, since
@@ -230,7 +195,7 @@ CHAN TYPE OCCADE.INPUT
     -- You won't receive any events until you turn some on using the
     -- [@code enable; N] command. Once you've done that, events can arrive at
     -- any time.
-    CHAN OCCADE.INPUT.EVENT events!:
+    CHAN RASTER.EVENT events!:
 :
 --}}}
 
@@ -246,7 +211,7 @@ CHAN TYPE OCCADE.SPRITE.INTERNAL
 -- @private
 CHAN TYPE OCCADE.FILTER.INTERNAL
   MOBILE RECORD
-    CHAN OCCADE.INPUT.EVENT events?:
+    CHAN RASTER.EVENT events?:
 :
 
 --* Commands that can be sent to the display.

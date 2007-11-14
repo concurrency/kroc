@@ -24,6 +24,7 @@
 --
 -- @module raster
 
+--{{{  DATA TYPE RASTER
 --* A bitmap image.
 --
 -- This is really a [@code MOBILE [][]INT], with the first dimension being the
@@ -41,3 +42,41 @@
 -- used for this purpose ([@code MOBILE [0][0]INT]).
 -- 
 DATA TYPE RASTER IS MOBILE [][]INT:
+--}}}
+
+--{{{  DATA TYPE RASTER.EVENT
+--* An input event.
+DATA TYPE RASTER.EVENT
+  RECORD
+    --* What type of event this is -- one of [@ref RASTER.ET].
+    INT type:
+    --* Identifier.
+    -- [@item] For keyboard events, this is the key symbol -- a Unicode
+    -- character, or one of the SDL constants for special keys ([@ref
+    -- SDLK.LEFT], etc.).
+    -- [@item] For mouse button events, this is the mouse button number ([@ref
+    -- SDL.BUTTON.LEFT], etc.).
+    INT id:
+    --* Modifier keys.
+    -- [@item] For keyboard and mouse button events, this is the modifier state
+    -- -- a combination of the SDL modifier constants ([@ref KMOD.LALT], etc.).
+    INT mod:
+    --* Pointer coordinates.
+    -- [@item] For mouse events, this is the pointer position.
+    INT16 x, y:
+:
+--}}}
+
+--*{{{ RASTER.ET Input event types.
+
+--* The event channel is shutting down.
+-- This will always be the last event you receive.
+VAL INT RASTER.ET.SHUTDOWN IS 1 << 1:
+VAL INT RASTER.ET.QUIT IS 1 << 2: --* Window closed
+VAL INT RASTER.ET.KEYDOWN IS 1 << 3: --* Key down
+VAL INT RASTER.ET.KEYUP IS 1 << 4: --* Key up
+VAL INT RASTER.ET.MOUSEBUTTONDOWN IS 1 << 5: --* Mouse button down
+VAL INT RASTER.ET.MOUSEBUTTONUP IS 1 << 6: --* Mouse button up
+VAL INT RASTER.ET.MOUSEMOTION IS 1 << 7: --* Mouse motion
+VAL INT RASTER.ET.EXPOSE IS 1 << 8: --* Window exposure
+--*}}}
