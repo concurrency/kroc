@@ -1,0 +1,136 @@
+--
+--	sdlsim1.occ -- simulation test for SDLRaster
+--	Copyright (C) 2003-2006 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+--{{{  options/includes
+#OPTION "A"
+
+#INCLUDE "sdlraster.module"
+#INCLUDE "course.module"
+
+--}}}
+--{{{  simulation size (fixed here)
+VAL INT SIM.WIDTH IS 256:
+VAL INT SIM.HEIGHT IS 256:
+
+--}}}
+
+--{{{  PROC cell (VAL INT x, y, INT pixel, CHAN INT left?, bot?, right!, top!, CHAN INT signal!)
+PROC cell (VAL INT x, y, INT pixel, CHAN INT left?, bot?, right!, top!, CHAN INT signal!)
+  SEQ
+    pixel := x * y
+
+    WHILE TRUE
+      INT lv, bv:
+      SEQ
+        IF
+          (x = 0) AND (y = 0)
+            signal ! 0
+          TRUE
+            SKIP
+        IF
+          x = 0
+            SEQ
+              VAL INT temp IS pixel MINUS 2:
+              right ! temp
+              left ? lv
+          TRUE
+            SEQ
+              left ? lv
+              VAL INT temp IS pixel MINUS 2:
+              right ! temp
+        IF
+          y = 0
+            SEQ
+              VAL INT temp IS pixel PLUS 1:
+              top ! temp
+              bot ? bv
+          TRUE
+            SEQ
+              bot ? bv
+              VAL INT temp IS pixel PLUS 1:
+              top ! temp
+        pixel := ((bv PLUS lv) >> 1) PLUS 2
+:
+--}}}
+--{{{  PROC sim1 (CHAN BYTE scr!, err!)
+PROC sim1 (CHAN BYTE scr!, err!)
+  SEQ
+    out.string ("sim1: cell simulation thing with SDLRaster.*n", 0, scr!)
+    out.string ("Running gridlink in parallel...*n", 0, scr!)
+
+    CHAN RASTER c, d:
+    CHAN INT stimer, control:
+    CHAN SDLEVENT events:
+    PAR
+      SDLRaster ("sim1", SIM.WIDTH, SIM.HEIGHT, 1, d?, c!, events!, control?)
+      SDLRasterAutoClose (events?, control!)
+
+      RASTER r:
+      #PRAGMA SHARED r
+      SEQ
+        out.string ("sim1: oki, reading raster...*n", 0, scr!)
+        c ? r
+        out.string ("sim1: raster height is: ", 0, scr!)
+        out.int (SIZE r, 0, scr!)
+        out.string (" width is: ", 0, scr!)
+        out.int (SIZE r[0], 0, scr!)
+        scr ! '*n'
+        out.string ("sim1: woo..  right, then, go!*n", 0, scr!)
+
+        [SIM.HEIGHT][SIM.WIDTH]CHAN INT links.h:
+        [SIM.HEIGHT][SIM.WIDTH]CHAN INT links.v:
+        CHAN INT dummy:
+        #PRAGMA SHARED dummy
+        PAR i = 0 FOR SIM.HEIGHT
+          PAR j = 0 FOR SIM.WIDTH
+            VAL INT next.i IS (i+1) \ SIM.HEIGHT:
+            VAL INT next.j IS (j+1) \ SIM.WIDTH:
+            IF
+              (i = 0) AND (j = 0)
+                cell (j, i, r[i][j], links.h[i][j]?, links.v[i][j]?,
+                  links.h[i][next.j], links.v[next.i][j], stimer!)
+              TRUE
+                cell (j, i, r[i][j], links.h[i][j]?, links.v[i][j]?,
+                  links.h[i][next.j], links.v[next.i][j], dummy!)
+        STOP
+
+      TIMER tim:
+      INT t, v, nf:
+      SEQ
+        tim ? t
+        nf := 0
+        WHILE TRUE
+          INT t2:
+          SEQ
+            stimer ? v
+            SDLRasterUpdateBuf (0)
+            nf := nf + 1
+            tim ? t2
+            IF
+              (t2 MINUS t) > 1000000
+                SEQ
+                  t := t PLUS 1000000
+                  out.int (nf, 0, err!)
+                  out.string (" f/s*n", 0, err!)
+                  nf := 0
+              TRUE
+                SKIP
+:
+--/*}}}*/
+

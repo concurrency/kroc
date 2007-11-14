@@ -1,0 +1,311 @@
+--
+--	sdltest.occ -- simple test program for SDLRaster
+--	Copyright (C) 2003-2006 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+--{{{  includes
+#INCLUDE "sdlraster.module"
+#INCLUDE "course.module"
+
+--}}}
+
+
+--{{{  PROC sdltest.proper (VAL INT w, h, CHAN RASTER old!, new?, CHAN INT control?, CHAN BYTE scr!)
+PROC sdltest.proper (VAL INT w, h, CHAN RASTER old!, new?, CHAN INT control?, CHAN BYTE scr!)
+  RASTER r:
+  TIMER tim:
+  INT t, seed:
+  SEQ
+    tim ? t
+    tim ? seed
+    seed := (seed >> 2) + 1
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      SEQ
+        RESCHEDULE ()
+        new ? r
+        --{{{  debugging
+        #IF FALSE
+        SEQ
+          out.string ("got raster [", 0, scr!)
+          out.int (SIZE r, 0, scr!)
+          out.string (",", 0, scr!)
+          IF
+            (SIZE r) > 0
+              out.int (SIZE r[0], 0, scr!)
+            TRUE
+              out.string ("?", 0, scr!)
+          out.string ("]*n", 0, scr!)
+        #ENDIF
+        --}}}
+        --SDLRasterClear (r)
+        SEQ i = 0 FOR 10
+          INT x, y, v:
+          SEQ
+            x, seed := random (w, seed)
+            y, seed := random (h, seed)
+            v, seed := random (#00FFFFFF, seed)
+            --{{{  debugging
+            #IF FALSE
+            SEQ
+              out.string ("setting pixel [", 0, scr!)
+              out.int (x, 0, scr!)
+              out.string (",", 0, scr!)
+              out.int (y, 0, scr!)
+              out.string ("]*n", 0, scr!)
+            #ENDIF
+            --}}}
+            r[y][x] := v
+        old ! r
+
+        t := t PLUS 40000
+        tim ? AFTER t
+
+        PRI ALT
+          INT ctl:
+          control ? ctl
+            CASE ctl
+              CTL.SHUTDOWN
+                running := FALSE
+              ELSE
+                SKIP
+          SKIP
+            SKIP
+            
+:
+--}}}
+--{{{  PROC out.control.key (VAL INT key, align, CHAN BYTE out!)
+PROC out.control.key (VAL INT key, align, CHAN BYTE out!)
+  CASE key
+    CKEY.UNKNOWN
+      out.string ("unknown", align, out!)
+    CKEY.BACKSPACE
+      out.string ("backspace", align, out!)
+    CKEY.NUMLOCK
+      out.string ("numlock", align, out!)
+    CKEY.CAPSLOCK
+      out.string ("capslock", align, out!)
+    CKEY.SCROLLOCK
+      out.string ("scrollock", align, out!)
+    CKEY.RSHIFT
+      out.string ("rshift", align, out!)
+    CKEY.LSHIFT
+      out.string ("lshift", align, out!)
+    CKEY.RCTRL
+      out.string ("rctrl", align, out!)
+    CKEY.LCTRL
+      out.string ("lctrl", align, out!)
+    CKEY.RALT
+      out.string ("ralt", align, out!)
+    CKEY.LALT
+      out.string ("lalt", align, out!)
+    CKEY.RMETA
+      out.string ("rmeta", align, out!)
+    CKEY.LMETA
+      out.string ("lmeta", align, out!)
+    CKEY.RSUPER
+      out.string ("rsuper", align, out!)
+    CKEY.LSUPER
+      out.string ("lsuper", align, out!)
+    CKEY.SYSREQ
+      out.string ("sysreq", align, out!)
+    CKEY.MENU
+      out.string ("menu", align, out!)
+    CKEY.MODE
+      out.string ("mode", align, out!)
+    CKEY.UP
+      out.string ("up", align, out!)
+    CKEY.DOWN
+      out.string ("down", align, out!)
+    CKEY.LEFT
+      out.string ("left", align, out!)
+    CKEY.RIGHT
+      out.string ("right", align, out!)
+    CKEY.HOME
+      out.string ("home", align, out!)
+    CKEY.END
+      out.string ("end", align, out!)
+    CKEY.PAGEUP
+      out.string ("pageup", align, out!)
+    CKEY.PAGEDOWN
+      out.string ("pagedown", align, out!)
+    CKEY.INSERT
+      out.string ("insert", align, out!)
+    CKEY.DELETE
+      out.string ("delete", align, out!)
+    ELSE
+      SEQ
+        out.string ("unknown ", align, out!)
+        out.int (key, align - 8, out!)
+:
+--}}}
+--{{{  PROC event.handler (CHAN SDLEVENT events?, CHAN INT control!, CHAN BYTE out!)
+PROC event.handler (CHAN SDLEVENT events?, CHAN INT control!, CHAN BYTE out!)
+  SDLEVENT ev:
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    SEQ
+      events ? ev
+      CASE ev[type]
+        EVENT.EXPOSE
+          out.string ("expose event*n", 0, out!)
+        EVENT.BUTTON.PRESS
+          INT x, y, b, ks:
+          SEQ
+            x := SDLEVENT.XPOS (ev)
+            y := SDLEVENT.YPOS (ev)
+            b := SDLEVENT.BUTTON (ev)
+            ks := SDLEVENT.KSTATE (ev)
+
+            out.string ("button press,   b = ", 0, out!)
+            out.int (b, 0, out!)
+            out.string (", x = ", 0, out!)
+            out.int (x, 0, out!)
+            out.string (", y = ", 0, out!)
+            out.int (y, 0, out!)
+            out.string (", ks = ", 0, out!)
+            out.int (ks, 0, out!)
+            out.string ("*n", 0, out!)
+        EVENT.BUTTON.RELEASE
+          INT x, y, b, ks:
+          SEQ
+            x := SDLEVENT.XPOS (ev)
+            y := SDLEVENT.YPOS (ev)
+            b := SDLEVENT.BUTTON (ev)
+            ks := SDLEVENT.KSTATE (ev)
+
+            out.string ("button release, b = ", 0, out!)
+            out.int (b, 0, out!)
+            out.string (", x = ", 0, out!)
+            out.int (x, 0, out!)
+            out.string (", y = ", 0, out!)
+            out.int (y, 0, out!)
+            out.string (", ks = ", 0, out!)
+            out.int (ks, 0, out!)
+            out.string ("*n", 0, out!)
+        EVENT.MOTION
+          INT x, y, bs, ks:
+          SEQ
+            x := SDLEVENT.XPOS (ev)
+            y := SDLEVENT.YPOS (ev)
+            bs := SDLEVENT.BSTATE (ev)
+            ks := SDLEVENT.KSTATE (ev)
+
+            out.string ("mouse motion, bs = ", 0, out!)
+            out.int (bs, 0, out!)
+            out.string (", x = ", 0, out!)
+            out.int (x, 0, out!)
+            out.string (", y = ", 0, out!)
+            out.int (y, 0, out!)
+            out.string (", ks = ", 0, out!)
+            out.int (ks, 0, out!)
+            out.string ("*n", 0, out!)
+        EVENT.KEY.PRESS
+          SEQ
+            out.string ("key press: ", 0, out!)
+            IF
+              (ev[data] /\ #FF80) = #0000
+                out ! BYTE (ev[data] /\ #FF)
+              TRUE
+                SEQ
+                  out.string ("unicode #", 0, out!)
+                  out.hex (ev[data], 0, out!)
+            out ! '*n'
+        EVENT.KEY.RELEASE
+          SEQ
+            out.string ("key release: ", 0, out!)
+            IF
+              (ev[data] /\ #FF80) = #0000
+                out ! BYTE (ev[data] /\ #FF)
+              TRUE
+                SEQ
+                  out.string ("unicode #", 0, out!)
+                  out.hex (ev[data], 0, out!)
+            out ! '*n'
+        EVENT.QUIT
+          SEQ
+            out.string ("quit event*n", 0, out!)
+            control ! CTL.SHUTDOWN
+            running := FALSE
+        EVENT.UNKNOWN
+          out.string ("unknown event!*n", 0, out!)
+        EVENT.CKEY.PRESS
+          SEQ
+            out.string ("control-key press: ", 0, out!)
+            out.control.key (ev[data], 0, out!)
+            out.string ("*n", 0, out!)
+        EVENT.CKEY.RELEASE
+          SEQ
+            out.string ("control-key release: ", 0, out!)
+            out.control.key (ev[data], 0, out!)
+            out.string ("*n", 0, out!)
+        ELSE
+          SEQ
+            out.string ("unknown event: ", 0, out!)
+            out.int (ev[type], 0, out!)
+            out ! '*n'
+:
+--}}}
+--{{{  PROC control.delta (CHAN INT in?, out0!, out1!)
+PROC control.delta (CHAN INT in?, out0!, out1!)
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    INT v:
+    SEQ
+      in ? v
+      PAR
+        out0 ! v
+        out1 ! v
+      CASE v
+        CTL.SHUTDOWN
+          running := FALSE
+        ELSE
+          SKIP
+:
+--}}}
+--{{{  PROC sdltest (CHAN BYTE kyb?, scr!, err!)
+PROC sdltest (CHAN BYTE kyb?, scr!, err!)
+  INT width, height:
+  INT nbufs:
+  -- BOOL delay:
+  SEQ
+    ask.int ("raster width?: ", width, 4, kyb?, scr!)
+    ask.int ("raster height?: ", height, 4, kyb?, scr!)
+    ask.int ("num buffers?: ", nbufs, 2, kyb?, scr!)
+    -- ask.bool ("do delay? ", delay, kyb?, scr!)
+
+    IF
+      nbufs > 16
+        nbufs := 16
+      nbufs <= 0
+        nbufs := 1
+      TRUE
+        SKIP
+    -- SDLRaster ("", width, height, nbufs, ic.addr, oc.addr)
+
+    CHAN RASTER in, out:
+    CHAN SDLEVENT events:
+    CHAN INT control, ctl2, ctl1:
+    PAR
+      SDLRaster ("test", width, height, nbufs, in?, out!, events!, ctl1?)
+      sdltest.proper (width, height, in!, out?, ctl2?, scr!)
+      event.handler (events?, control!, err!)
+      control.delta (control?, ctl1!, ctl2!)
+:
+--}}}
+
+
