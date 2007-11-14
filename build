@@ -123,7 +123,7 @@ MANPAGE_SECTIONS=""
 DOC_SRC=doc
 OCCAMDOC_SRC=tools/occamdoc
 SVN_SRCS=(. $CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/raster modules/sdlraster modules/occSDL modules/occGL modules/occade modules/button modules/pony modules/cif modules/cdx modules/fmtoutlib modules/moa $DOC_SRC $CGTESTS_SRC $OCCAMDOC_SRC)
-SVN_REPOSS=(kroc-srcpkg ccsp mkoccdeps occ21 ilibr tranx86 kroc libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc raster kroc-sdlraster occSDL occGL occade button pony cif cdx fmtoutlib moa kroc-doc cgtests occamdoc)
+SVN_REPOSS=(kroc ccsp mkoccdeps occ21 ilibr tranx86 kroc-wrapper libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc raster kroc-sdlraster occSDL occGL occade button pony cif cdx fmtoutlib moa kroc-doc cgtests occamdoc)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $OCCAMDOC_SRC \
 	$DOC_SRC \
@@ -340,9 +340,9 @@ svn_version ()
 		exit 1
 	fi
 
-	# attempt to get SVN-VERSION file from the "kroc-srcpkg" repository
+	# attempt to get SVN-VERSION file from the "kroc" repository
 	printf 'checking for latest version: '
-	path="$SVNHOST"'kroc-srcpkg/trunk/SVN-VERSION'
+	path="$SVNHOST"'kroc/trunk/SVN-VERSION'
 	if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
 		PKG_SVN_VERSION=$($SVN cat "$path")
 	else
