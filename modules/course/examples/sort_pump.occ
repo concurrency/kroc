@@ -1,0 +1,297 @@
+#INCLUDE "course.module"
+
+-- COPYRIGHT    : P.H.Welch, 1984
+-- MODIFICATION : T.Curtis, 1988
+-- MODIFICATION : P.H.Welch, 2007
+
+--{{{  COMMENT documentation
+--
+                    --The Sort Pump
+                    ---------------
+--
+--This demonstrates the functional behaviour of the sort pump.
+--
+--Characters from the keyboard are buffered through a "window"
+--display process before being fed into the pump.  On leaving
+--the pump, they are buffered through another "window" before
+--being layed out on the screen.  Each "window" reports its
+--contents whenever it changes.  The end-markers separating
+--the character groups being sorted are represented by dots.
+--Initially, both "windows" and all the cells in the sort
+--pump contain these end-markers.
+--
+--The screen is controlled by a simple de-multiplexer of its
+--vector of input channels.
+--
+--Since the pump is only 15 cells long, the keyboard process
+--does not allow groups of more than 16 characters to be sent.
+--
+--}}}
+
+--{{{  global constants
+VAL BYTE end.char    IS '.':
+VAL BYTE end.marker  IS 255:
+VAL BYTE end.message IS 252:
+VAL  INT total       IS 16:
+--}}}
+
+--{{{  sort cycles
+
+-- printable ::= ' '..'~'
+
+--{{{  PROC cell (CHAN BYTE in?, out!)
+PROC cell (CHAN BYTE in?, out!)
+  --{{{  COMMENT some documentation on the traffic carried by in and out
+  --
+  --in ? {{printable}* end.marker}*
+  --out ! {{printable}* end.marker}*
+  --
+  --ASSUME : end.marker > {printable}
+  --
+  --}}}  
+  WHILE TRUE
+    BYTE largest:
+    SEQ
+      in ? largest
+      out ! end.marker
+      WHILE largest <> end.marker
+        BYTE next:
+        SEQ
+          in ? next
+          IF
+            largest >= next
+              out ! next
+            TRUE
+              SEQ
+                out ! largest
+                largest := next
+:
+--}}}
+
+--{{{  PROC sort (CHAN BYTE in?, out!)
+PROC sort (CHAN BYTE in?, out!)
+  --{{{  COMMENT some documentation on the traffic carried by in and out
+  --
+  --in ? {{printable}* end.marker}*
+  --out ! {{printable}* end.marker}*
+  --
+  --ASSUME : end.marker > {printable}
+  --
+  --}}}
+  [total - 2]CHAN BYTE c:
+  PAR
+    cell (in?, c[0]!)
+    PAR p = 1 FOR total - 3
+      cell (c[p - 1]?, c[p]!)
+    cell (c[total - 3]?, out!)
+:
+--}}}
+
+--}}}
+
+--{{{  test.rig
+
+--{{{  PROC decode.escape (CHAN BYTE in?, BYTE ch)
+PROC decode.escape (CHAN BYTE in?, BYTE ch)
+  SKIP -- should process <ESC>-sequence generated from keyboard
+:
+--}}}
+
+--{{{  PROC keyboard.manage (CHAN BYTE in?, echo!, out!)
+PROC keyboard.manage (CHAN BYTE in?, echo!, out!)
+  --{{{  local constants
+  VAL BYTE lo IS ' ':
+  VAL BYTE hi IS '~':
+  --}}}
+  --{{{  state variables
+  INT count:
+  --}}}
+  SEQ
+    --{{{  initialise
+    count := 0
+    --}}}
+    --{{{  main cycle
+    WHILE TRUE
+      BYTE ch:
+      SEQ
+        in ? ch
+        IF
+          ch = end.char
+            --{{{  
+            SEQ
+              out ! end.marker
+              count := 0
+            --}}}
+          (lo <= ch) AND (ch <= hi)
+            --{{{  
+            IF
+              (count = total)
+                SEQ
+                  echo ! BELL
+                  echo ! end.message
+                  out ! end.marker
+                  out ! ch
+                  count := 1
+              (TRUE)
+                SEQ
+                  out ! ch
+                  count := count + 1
+            --}}}
+          ch = ESCAPE
+            --{{{  
+            SEQ
+              decode.escape (in?, ch)   -- does nothing right now, :(
+              echo ! BELL
+              echo ! end.message
+            --}}}
+          TRUE
+            --{{{  
+            SEQ
+              echo ! BELL
+              echo ! end.message
+            --}}}
+    --}}}
+:
+--}}}
+
+--{{{  PROC screen.plex (VAL INT n.inputs,  []CHAN BYTE in?,  CHAN BYTE out!)
+PROC screen.plex (VAL INT n.inputs,  []CHAN BYTE in?,  CHAN BYTE out!)
+  SEQ
+    --{{{  initialise (clear screen)
+    SEQ
+      cursor.x.y (1, 1, out!)
+      erase.eos (out!)
+      flush (out!)
+    --}}}
+    --{{{  main cycle
+    WHILE TRUE
+      ALT i = 0 FOR n.inputs
+        BYTE ch:
+        in[i] ? ch
+          --{{{  lock on to this channel for the whole message
+          SEQ
+            WHILE ch <> end.message
+              SEQ
+                --{{{  end.marker --> end.char
+                IF
+                  ch = end.marker
+                    ch := end.char
+                  TRUE
+                    SKIP
+                --}}}
+                out ! ch
+                in[i] ? ch
+            flush (out!)
+          --}}}
+    --}}}
+:
+--}}}
+
+--{{{  PROC window (VAL INT x, y,  CHAN BYTE in?, screen!, out!)
+PROC window (VAL INT x, y,  CHAN BYTE in?, screen!, out!) 
+  VAL INT buff.max IS 16:
+  [buff.max]BYTE buffer:
+  INT ptr:
+  SEQ
+    --{{{  initialise
+    SEQ
+      SEQ i = 0 FOR buff.max
+        buffer[i] := end.marker
+      ptr := 0
+    --}}}
+    --{{{  main cycle
+    WHILE TRUE
+      SEQ
+        --{{{  display buffer
+        SEQ
+          cursor.x.y (BYTE x, BYTE y, screen!)
+          SEQ i = ptr FOR (buff.max - ptr)
+            screen ! buffer[i]
+          SEQ i = 0 FOR ptr
+            screen ! buffer[i]
+          screen ! end.message
+        --}}}
+        --{{{  update buffer
+        BYTE ch:
+        SEQ
+          in ? ch
+          IF
+            (ptr = 0)
+              ptr := buff.max - 1
+            TRUE
+              ptr := ptr - 1
+          out ! buffer[ptr]
+          buffer[ptr] := ch
+        --}}}
+    --}}}
+:
+--}}}
+
+--{{{  PROC history CHAN BYTE in?, out!)
+PROC history (CHAN BYTE in?, out!)
+  VAL BYTE first.line IS 6:
+  VAL BYTE last.line IS 23:
+  VAL BYTE first.col IS 1:
+  BYTE xx, yy:
+  SEQ
+    --{{{  initialise
+    SEQ
+      xx := first.col
+      yy := first.line
+    --}}}
+    --{{{  main cycle
+    WHILE TRUE
+      BYTE ch:
+      SEQ
+        in ? ch
+        IF
+          ch <> end.marker
+            --{{{  
+            SEQ
+              cursor.x.y (xx, yy, out!)
+              out ! ch
+              out ! end.message
+              xx := xx + 1
+            --}}}
+          xx > first.col
+            --{{{  
+            SEQ
+              xx := first.col
+              IF
+                (yy < last.line)
+                  yy := yy + 1
+                (TRUE)
+                  yy := first.line
+              cursor.x.y (xx, yy, out!)
+              erase.eol (out!)
+              out ! end.message
+            --}}}
+          TRUE
+            SKIP
+    --}}}
+:
+--}}}
+
+--{{{  PROC test.rig (CHAN BYTE in?, out!, probe.in?, probe.out!)
+PROC test.rig (CHAN BYTE in?, out!, probe.in?, probe.out!)
+  VAL INT n.screen.inputs IS 4:
+  [n.screen.inputs]CHAN BYTE mess:
+  CHAN BYTE a, b:
+  PAR
+    keyboard.manage (in?, mess[0]!, a!)
+    window (16, 2, a?, mess[1]!, probe.out!)
+    window (48, 2, probe.in?, mess[2]!, b!)
+    history (b?, mess[3]!)
+    screen.plex (n.screen.inputs, mess?, out!)
+:
+--}}}
+
+--}}}
+
+PROC sort.pump (CHAN BYTE keyboard?, screen!, error!)
+  CHAN BYTE a, b:
+  PAR
+    sort (a?, b!)
+    test.rig (keyboard?, screen!, b?, a!)
+:
+

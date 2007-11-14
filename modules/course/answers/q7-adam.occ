@@ -1,0 +1,8 @@
+
+
+PROC philadam (CHAN BYTE keyboard?, screen!, error!)
+  #USE "q7-adam-1"
+  dining.philosophers( keyboard?, screen!, error! )
+:
+
+

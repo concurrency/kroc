@@ -1,0 +1,76 @@
+From: P.H.Welch@ukc.ac.uk (phw)
+Newsgroups: ukc.courses2,ukc.courses3
+Subject: Co502 classes this week
+Summary: 
+Followup-To: 
+Distribution: ukc
+Organization: University of Kent at Canterbury, UK.
+Keywords: 
+
+
+Please remember to come to the terminal classes supporting the course this
+week (and every week!).
+
+I enclose the notes given to the class supervisors for this week's class -
+I don't see why you shouldn't see them and they may help!
+
+Peter Welch.
+
+===========================================================================
+
+
+Notes for Supervisors - week 7 class (Co502)
+--------------------------------------------
+
+In the lecture, I talked through slides 4-22, 4-27 and 4-28 (after lots of
+motivating preliminaries!).  These slides introduce the notion of a process
+as a piece of hardware (e.g. chip) with wires.  Also, simple variable
+declarations, a PROC declaration, a network of 2 processes and the
+synchronising comms primitves (! and ?).
+
+Get them to read the README file in their occam/examples directory and do
+what it says.  This file explains the top-level KRoC occam process header,
+summarises the examples and shows how to use the kroc command to compile
+and, then, run a program.
+
+Get them to look at hello_world.occ by using "more" and "origami".  Same for
+the other two hello examples: hello_seq_world.occ and hello_raw_world.occ.
+Explain to them (as you go around) the difference between the two views -
+the "more" view is plain text with funny comment lines, the "origami" view
+interprets those funny comment lines as folds.
+
+Can they follow the code in hello_raw_world.occ?  Same for hello_world.occ?
+The hello_seq_world.occ has a replicated SEQ - tell them it's just a for-loop
+(only better :-) ...
+
+Get them to squint at some of the others - but not spend much time on them
+just yet (about 2 mins is enough).
+
+OK - now get them to change dircteory to occam/exercises, read the README file
+and origami (or PFE) bugs.occ.  Tell them what it's supposed to do:
+
+  - type in a capital letter and it gets echoed back;
+  - type in a lower-case letter and it's echoed twice;
+  - type in a digit and it's echoed five times;
+  - type in anything else and it's ignored.
+
+except, of course, that it won't compile and, even when its syntax is
+corrected to let it compile, it won't work!
+
+Their task is to fix it ...
+
+To do this, they need their "OCCAM2 CHECKLIST" from the NOTES.19 (now
+available in Reception).  I've posted news asking them to get this and
+bring it along to their classes.  The news also says how to get hold of
+the checklist if they don't purchase the notes - but that's not a very
+sensible plan - they need those notes!
+
+Most will flounder helplessly to begin with - but they should be able
+to get the idea with a little coaxing.  Tell them about consistent naming
+errors in the bugs.occ code, strong typing errors, layout errors, logical
+errors (e.g. WHILE FALSE).  The key pages from the "OCCAM2 CHECKLIST"
+are 2, 3, 4 and 6 (layout of the IF).  Get them krocking ...
+
+Good luck!
+
+Peter.

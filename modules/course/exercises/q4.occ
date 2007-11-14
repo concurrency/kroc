@@ -1,0 +1,324 @@
+#INCLUDE "course.module"
+
+--{{{  COMMENT documentation
+--
+--{{{  start from here
+--
+--The squares pipeline from the `legoland demonstration' (see "demo_nets.occ"
+--in the "libsrc" directory) is:
+--
+-->     _______________________________________________
+-->    |                                               |
+-->    |   _________       ___________       _______   |
+-->    |  |         |     |           |     |       |  |  out
+-->    |  | numbers |-->--| integrate |-->--| pairs |------>---
+-->    |  |_________|     |___________|     |_______|  |
+-->    |                                               |
+-->    |                                       squares |
+-->    |_______________________________________________|
+-->
+--
+--The numbers, integrate and pairs processes are defined in "demo_cycles.occ"
+--in the same directory.
+--
+--{{{  note about accessing these processes
+--
+--We don't need to redefine any of the processes defined in these files.  They
+--have already been pre-compiled.  The "#USE course.lib", at the start of this
+--file, gives us access to them.
+--
+--}}}
+--
+--}}}
+--{{{  first modification
+--
+--Tap into the internal channels, using delta processes to duplicate lanes
+--out to a printstreams multiplexor -- so that we can see what's happening
+--at each stage in the pipeline:
+--
+-->   ________________________________________________________________
+-->  |                                                                |
+-->  |   _________     /|    ___________     /|    _______            | keyboard
+-->  |  |         |   / |   |           |   / |   |       |         ------<--
+-->  |  | numbers |->-  |->-| integrate |->-  |->-| pairs |\          |
+-->  |  |_________|   \ |   |___________|   \ |   |_______| \         |
+-->  |                 \|\                   \|\             \        | error
+-->  |                    \________             \             \     ------>--
+-->  |                             v             v             v      |
+-->  |                            __\_____________\_____________\__   |
+-->  |                           |                                 |  | screen
+-->  |                           |          print.streams          |------>--
+-->  | q4                        |_________________________________|  |
+-->  |________________________________________________________________|
+--
+--}}}
+--{{{  second modification
+--
+--The first modification let us watch internal data-flows in a machine that
+--is continually driving its environment.  We now want to provide interactive
+--control of that machine through run-time adjustment of its compnent parts.
+--
+--Add a process to monitor the keyboard channel.  Respond to input as follows:
+--
+-->  'n' ==> reset the numbers process to start counting from zero again;
+-->  'i' ==> reset the running sum in the feedback loop of the integrate
+-->          process back to zero.
+--
+--Ignore other characters.
+--
+--{{{  data-flow diagram
+--
+-->                               |
+-->                               v keyboard
+-->   ____________________________|___________________________________
+-->  |                            |                                   |
+-->  |                       _____|_____                              |
+-->  |            __________|           |                             |
+-->  |           /      'n' |  monitor  |                             |
+-->  |          /           |___________|                             |
+-->  |         v                  | 'i'                               |
+-->  |        /                   v                                   |
+-->  |   ____/____     /|    _____|_____     /|    _______            |
+-->  |  |         |   / |   |           |   / |   |       |           |
+-->  |  | numbers |->-  |->-| integrate |->-  |->-| pairs |\          |
+-->  |  |_________|   \ |   |___________|   \ |   |_______| \         |
+-->  |                 \|\                   \|\             \        | error
+-->  |                    \________             \             \     ------>--
+-->  |                             v             v             v      |
+-->  |                            __\_____________\_____________\__   |
+-->  |                           |                                 |  | screen
+-->  |                           |          print.streams          |------>--
+-->  | q4                        |_________________________________|  |
+-->  |________________________________________________________________|
+--
+--}}}
+--
+--{{{  hints
+--
+--Get the monitor to send a `reset' signal to numbers or integrate if the
+--appropriate character is input.  Generalise the concept of a `reset' for
+--these components so that they may be reset to any number -- in which case,
+--the proper signal to both of them, for this exercise, is a zero.
+--
+--Clearly, numbers and integrate have to be reimplemented since a reset
+--channel has to be added to their interfaces:
+--
+--{{{  numbers with a reset channel
+--
+-->                                 |
+-->                           reset v
+-->       __________________________|_____________________
+-->      |                          |                     |
+-->      |    ____________                         /|     |
+-->      |   |            |                       / |     |  out
+-->      |   | prefix (0) |--------->-------------  |--------->---
+-->      |   |____________|                       \ |     |
+-->      |         |                               \|\    |
+-->      |         |                                  \   |
+-->      |         |             ________             |   |
+-->      |          \           |        |           /    |
+-->      |           \----<-----|  succ  |----<-----/     |
+-->      |                      |________|                |
+-->      |                                  numbers.reset |
+-->      |________________________________________________|
+--
+--Note: this diagram is incomplete!
+--
+--}}}
+--
+--Keep to the same style as in the above diagram (i.e. don't modify numbers
+--to a serial implementation.  Don't modify any of the parallel sub-components
+---- add an extra one to perform the reset.  Consider using the "PROC replace"
+--defined below and described in the course slides.
+--
+--Same hints for the integrate process.
+--
+--}}}
+--
+--}}}
+--{{{  third modification
+--
+--Extend the functionality of monitor so that it responds to characters:
+--
+-->  'n' ==> reset the numbers process to start counting from zero again;
+-->  'i' ==> reset the running sum in the feedback loop of the integrate
+-->          process back to zero;
+-->  'p' ==> the first 'p' zaps the adder process within pairs so that it
+-->          becomes a subtractor, taking the numbers arriving from the tail
+-->          process from those arriving directly from the delta.  In this
+-->          state, the modified pairs becomes a `differentiator', undoing
+-->          the `integration' effect of the process immediately upstream so
+-->          that we see the natural numbers sequence.  A second 'p' toggles
+-->          the process back to its original state.  Subsequent 'p's toggle
+-->          between the two states.
+--
+--
+--Ignore other characters.
+--
+--{{{  data-flow diagram
+--
+-->                               |
+-->                               v keyboard
+-->   ____________________________|___________________________________
+-->  |                            |                                   |
+-->  |                       _____|_____                              |
+-->  |            __________|           |_________                    |
+-->  |           /      'n' |  monitor  | 'p'     \                   |
+-->  |          /           |___________|          \                  |
+-->  |         v                  | 'i'             v                 |
+-->  |        /                   v                  \                |
+-->  |   ____/____     /|    _____|_____     /|    ___\___            |
+-->  |  |         |   / |   |           |   / |   |       |           |
+-->  |  | numbers |->-  |->-| integrate |->-  |->-| pairs |\          |
+-->  |  |_________|   \ |   |___________|   \ |   |_______| \         |
+-->  |                 \|\                   \|\             \        | error
+-->  |                    \________             \             \     ------>--
+-->  |                             v             v             v      |
+-->  |                            __\_____________\_____________\__   |
+-->  |                           |                                 |  | screen
+-->  |                           |          print.streams          |------>--
+-->  | q4                        |_________________________________|  |
+-->  |________________________________________________________________|
+--
+--}}}
+--
+--}}}
+--{{{  fourth modification
+--
+--Extend the range of characters responded to by monitor as follows:
+--
+-->  'n' ==> reset the numbers process to start counting from zero again;
+-->  'i' ==> reset the running sum in the feedback loop of the integrate
+-->          process back to zero;
+-->  'p' ==> the first 'p' zaps the adder process within pairs so that it
+-->          becomes a subtractor, taking the numbers arriving from the tail
+-->          process from those arriving directly from the delta.  In this
+-->          state, the modified pairs becomes a `differentiator', undoing
+-->          the `integration' effect of the process immediately upstream so
+-->          that we see the natural numbers sequence.  A second 'p' toggles
+-->          the process back to its original state.  Subsequent 'p's toggle
+-->          between the two states.
+-->  's' ==> suspends output to the screen.  Output is resumed by the next
+-->          keypress (which is NOT processed according to the above rules
+-->          -- it is merely the signal to resume output).
+--
+--Any other character is an error and is processed by bleeping the screen.
+--
+--{{{  data-flow diagram
+--
+--Sorry ... you're on your own here.
+--
+--}}}
+--
+--{{{  WARNING: deadlock
+--
+--An incorrect design for the fourth modification ('s') can cause intermittent
+--deadlock in your system's response to the other commands ('n', 'i', 'p')..
+--
+--}}}
+--
+--}}}
+--{{{  fifth modification
+--
+--The full control we want is:
+--
+-->  'n' ==> reset the numbers process to start counting from zero again;
+-->  'i' ==> reset the running sum in the feedback loop of the integrate
+-->          process back to zero;
+-->  'p' ==> the first 'p' zaps the adder process within pairs so that it
+-->          becomes a subtractor, taking the numbers arriving from the tail
+-->          process from those arriving directly from the delta.  In this
+-->          state, the modified pairs becomes a `differentiator', undoing
+-->          the `integration' effect of the process immediately upstream so
+-->          that we see the natural numbers sequence.  A second 'p' toggles
+-->          the process back to its original state.  Subsequent 'p's toggle
+-->          between the two states.
+-->  's' ==> suspends output to the screen.  Output is resumed by the next
+-->          keypress (which is NOT processed according to the above rules
+-->          -- it is merely the signal to resume output).
+-->  'q' ==> quit the program.  Note: this is not easy to do cleanly - see
+-->          the "Graceful Termination - Graceful Resetting" paper in the
+-->          course book.  However, do not attempt that for this assignment!
+-->          Just cause the system to freeze (i.e. deadlock) in response to
+-->          this 'q'.
+--
+--Any other character is an error and is processed by bleeping the screen.
+--
+--{{{  data-flow diagram
+--
+--Sorry ... you're on your own here.
+--
+--}}}
+--
+--}}}
+--
+--}}}
+
+--{{{  these declarations may be useful ...
+
+
+--* This pauses execution of the invoking process by delay microseconds.
+--* Other processes are unaffected.
+--*
+--* @param delay : the length of the pause (in microseconds)
+--*
+PROC pause (VAL INT delay)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS delay
+:
+
+
+--* This merges an array of INT input streams to a single text output stream.
+--* It tabulates one number from each stream across one line of output.
+--* Then, it pauses for delay microseconds.  It repeats this for ever.
+--*
+--* @param delay : the length of the pause (in microseconds)
+--*
+PROC print.streams (VAL INT delay, []CHAN INT in?, CHAN BYTE out!)
+  INITIAL MOBILE []INT n IS MOBILE [SIZE in?]INT:
+  -- Above is the rather complex way we have to declare an array whose size
+  -- in not known until runtime.  This will be made simple in future versions
+  -- of occam-pi.
+  WHILE TRUE
+    SEQ
+      PAR i = 0 FOR SIZE n
+        in[i] ? n[i]
+      SEQ i = 0 FOR SIZE n
+        out.int (n[i], 15, out!)        -- out.int is from "course.lib"
+      out.string ("*c*n", 0, out!)      -- out.string is from "course.lib"
+      pause (delay)
+:
+
+
+--{{{  PROC replace (CHAN INT in?, control?, out!)
+PROC replace (CHAN INT in?, control?, out!)
+  WHILE TRUE
+    PRI ALT
+      INT x:
+      control ? x
+        PAR
+          INT any:
+          in ? any
+          out ! x
+      INT x:
+      in ? x
+        out ! x
+:
+--}}}
+
+--}}}
+
+--{{{  you will need to declare various other PROCs (here is a good place)
+--}}}
+
+--{{{  PROC q4 (CHAN BYTE keyboard?, screen!, error!)
+PROC q4 (CHAN BYTE keyboard?, screen!, error!)
+  --{{{  declare channels & construct your network here
+  SKIP
+  --}}}
+:
+--}}}
+

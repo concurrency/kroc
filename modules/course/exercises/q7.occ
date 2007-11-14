@@ -1,0 +1,103 @@
+#INCLUDE "course.module"
+
+--{{{  COMMENT documentation
+--
+--The folds below contain the code given in the notes for modelling
+--the dining philosophers -- modulo one small change to make the
+--channel communications boolean (rather than integer).
+--
+--Your task is to animate this demonstration.  Links will need to
+--be made from the college to its external environment, through
+--which the philsophers (and, maybe, the forks and the security guard)
+--report their state.  These links are gathered by a fair-ALTing server
+--that drives a screen display in response to incoming information
+--from the college.  Thinking and eating by the philosphers should
+--be modelled by random (but finite!) delays.  The animated display
+--should reflect the round table in the dining room ...
+--
+--}}}
+
+--{{{  PROC philosopher (CHAN BOOL left!, right!, down!, up!)
+PROC philosopher (CHAN BOOL left!, right!, down!, up!)
+  WHILE TRUE
+    SEQ
+      --{{{  think
+      SKIP
+      --}}}
+      --{{{  get permission to sit down
+      down ! TRUE
+      --}}}
+      --{{{  pick up the forks
+      PAR
+        left ! TRUE
+        right ! TRUE
+      --}}}
+      --{{{  eat
+      SKIP
+      --}}}
+      --{{{  put down the forks
+      PAR
+        left ! TRUE
+        right ! TRUE
+      --}}}
+      --{{{  notify security you have finished
+      up ! TRUE
+      --}}}
+:
+--}}}
+
+--{{{  PROC fork (CHAN BOOL left?, right?)
+PROC fork (CHAN BOOL left?, right?)
+  WHILE TRUE
+    ALT
+      BOOL any:
+      left ? any     -- philosopher left picks up fork
+        left ? any   -- philosopher left puts down fork
+      BOOL any:
+      right ? any    -- philosopher right picks up fork
+        right ? any  -- philosopher right puts down fork
+:
+--}}}
+
+--{{{  PROC security ([]CHAN BOOL down?, up?)
+PROC security ([]CHAN BOOL down?, up?)
+  VAL INT max IS 4:
+  INT n.sat.down:
+  SEQ
+    n.sat.down := 0
+    WHILE TRUE
+      ALT i = 0 FOR 5
+        ALT
+          --{{{  philosopher wanting to sit down
+          BOOL any:
+          (n.sat.down < max) & down[i] ? any  -- don't allow max at a time
+            n.sat.down := n.sat.down + 1
+          --}}}
+          --{{{  philosopher wanting to stand up
+          BOOL any:
+          up[i] ? any                         -- always allow this
+            n.sat.down := n.sat.down - 1
+          --}}}
+:
+--}}}
+
+--{{{  PROC secure.college ()
+PROC secure.college ()
+  [5]CHAN BOOL left, right, up, down:
+  PAR
+    security (down?, up?)
+    PAR i = 0 FOR 5
+      PAR
+        philosopher (left[i]!, right[i]!, down[i]!, up[i]!)
+        fork (left[i]?, right[(i+1)\5]?)
+:
+--}}}
+
+--{{{  PROC q7 (CHAN BYTE keyboard?, screen!, error!)
+PROC q7 (CHAN BYTE keyboard?, screen!, error!)
+  --{{{  network -- needs expanding
+  secure.college ()
+  --}}}
+:
+--}}}
+

@@ -1,0 +1,131 @@
+#INCLUDE "course.module"
+
+--{{{  COMMENT documentation
+--
+--This is an exercise on modifying the way we interact with a component
+--without modifying the component itself - i.e. treating the component
+--as a `black box'.  In this case, the black box is the main process in
+--the demo.occ example (see /usr/work/kroc/examples):
+--
+-->                   -------------------
+-->                   |                 |    in
+-->                   |                 --<--------
+-->                   |                 |
+-->                   |                 |    out
+-->                   |      demo       -->--------
+-->                   |                 |
+-->                   |                 |    error
+-->                   |                 -->--------
+-->                   |                 |
+-->                   -------------------
+--
+--Now, demo only uses its out channel.  We have to produce a new component
+--whose (standard) output is identical to that from demo, but which responds
+--to keystrokes (on its standard input channel) by:
+--
+--| o suspending output if the character input was anything bar 'Q' and
+--|   resuming output only when another character is input;
+--|
+--| o STOPing if the character input was 'Q'.
+--
+--To do this without modifying the internals of demo means adding something
+--between the interface pins of demo and the outside world:
+--
+-->     -----------------------------------------------
+-->     |                                              |
+-->     |    -------------------     ---------------   |
+-->     |    |                 |     |             |   |    keyboard
+-->     |    |                 ---<---             ------<----------
+-->     |    |                 |     |             |   |
+-->     |    |                 |     |             |   |    screen
+-->     |    |      demo       --->---     ???     ------>----------
+-->     |    |                 |     |             |   |
+-->     |    |                 |     |             |   |    error
+-->     |    |                 --->---             ------>----------
+-->     |    |                 |     |             |   |
+-->     |    -------------------     ---------------   |
+-->     | q3                                           |
+-->     ------------------------------------------------
+--
+--Since demo does not use its keyboard input or error output channels, we
+--can simplify the ??? above so that it only intervenes where necessary:
+--
+-->     -----------------------------------------------
+-->     |                                              |
+-->     |    -------------------  |  ---------------   |
+-->     |    |                 |  |  |             |   |    keyboard
+-->     |    |                 --<-  |             ------<----------
+-->     |    |                 |     |     ???     |   |
+-->     |    |                 |     |             |   |    screen
+-->     |    |      demo       --->---             ------>----------
+-->     |    |                 |     |             |   |
+-->     |    |                 |     ---------------   |    error
+-->     |    |                 --->---------------------->----------
+-->     |    |                 |                       |
+-->     |    -------------------                       |
+-->     | q3                                           |
+-->     ------------------------------------------------
+--
+--The unused input channel for demo still has to be declared but should not
+--be connected to anything other than demo.  The unused error channel from
+--demo might as well be connected to the external error pin (as shown).
+--
+--The PROC declaration for demo has been included below for convenience.
+--Please do NOT make any modifications to its body!
+--
+--}}}
+
+
+--* This pauses execution of the invoking process by delay microseconds.
+--* Other processes are unaffected.
+--*
+--* @param delay : the length of the pause (in microseconds)
+--*
+PROC pause (VAL INT delay)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS delay
+:
+
+
+--* This merges an array of INT input streams to a single text output stream.
+--* It tabulates one number from each stream across one line of output.
+--* Then, it pauses for delay microseconds.  It repeats this for ever.
+--*
+--* @param delay : the length of the pause (in microseconds)
+--*
+PROC print.streams (VAL INT delay, []CHAN INT in?, CHAN BYTE out!)
+  INITIAL MOBILE []INT n IS MOBILE [SIZE in?]INT:
+  -- Above is the rather complex way we have to declare an array whose size
+  -- in not known until runtime.  This will be made simple in future versions
+  -- of occam-pi.
+  WHILE TRUE
+    SEQ
+      PAR i = 0 FOR SIZE n
+        in[i] ? n[i]
+      SEQ i = 0 FOR SIZE n
+        out.int (n[i], 15, out!)        -- out.int is from "course.lib"
+      out.string ("*c*n", 0, out!)      -- out.string is from "course.lib"
+      pause (delay)
+:
+
+
+--{{{  PROC demo (CHAN BYTE in?, out!, error!)
+PROC demo (CHAN BYTE in?, out!, error!)
+  [4]CHAN INT c:
+  PAR
+    numbers (c[0]!)
+    squares (c[1]!)
+    fibonacci (c[2]!)
+    times (c[3]!)
+    print.streams (100000, c?, out!)    -- max output: 10 lines per second
+:
+--}}}
+
+--{{{  PROC q3 (CHAN BYTE keyboard?, screen!, error!)
+PROC q3 (CHAN BYTE keyboard?, screen!, error!)
+  SKIP  -- replace this!
+:
+--}}}

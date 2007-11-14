@@ -1,0 +1,106 @@
+
+This directory contains example main occam processes.  kroc provides
+a simple interface to UNIX stdin, stdout and stderr file descriptors.
+The main kroc process must have the form:
+
+  PROC foo (CHAN BYTE stdin?, stdout!, stderr!)
+
+Inside the body of foo, inputs from stdin take single characters
+from `UNIX stdin'.  Outputs to stdout or stderr send single
+characters to `UNIX stdout' or `UNIX stderr' respectively.
+
+kroc runs stdin in `raw' mode without echoing - i.e. individual
+keystrokes are supplied to the occam process immediately (and not
+buffered up until a carraige-return is typed).  If we need echoing
+of keyboard input, the occam process will have to be programmed to
+do that by outputting down stdout.  However, kroc runs stdout and
+stderr in line-buffered mode - i.e. characters are not normally
+delivered to the screen until a carriage-return is output.  To
+overcome this, kroc forces buffered characters to be flushed if
+the BYTE value 255 is output to stdout (or, respectively, stderr).
+An example of this is given in the echoing.occ file.
+
+Note that the identifier names foo, stdin, stdout, stderr in the
+above main PROC declaration are user-defined.  Just as good is:
+
+  PROC my.thing (CHAN BYTE keyboard?, screen!, error!)
+
+All three parameters do not have to be present.  Where used, they
+should be included in the above order.  The first one is mapped to
+`UNIX stdin', the second to `UNIX stdout' and the third to `UNIX stderr'.
+
+The example processes are in the files:
+
+  hello_raw_world.occ
+
+    This just outputs the expected message to stdout.  It uses no
+    libraries and some very primitive occam.
+
+  hello_seq_world.occ
+
+    This also outputs the expected message.  However, it declares
+    the message as a string constant and uses a simple SEQ-loop
+    (which corresponds to a for-loop in Modula-3) to output the
+    characters in sequence.  It also uses no libraries.
+
+  hello_world.occ
+
+    This uses a library procedure to output the string.
+
+  double_echo.occ
+
+    This is a simple process to echo characters from stdin to stdout.
+    To make it slightly interesting, each character is echoed twice.
+    Note the use of the FLUSH character (which is defined in the
+    #INCLUDEd file consts.inc - see the kroc/course/libsrc directory).
+    The process terminates after echoing the character 'Z'.
+
+  cast.occ
+
+    This demonstrates the rules for casting between types.
+
+  test_utils.occ
+
+    This is a process that shows how to use all the procedures and
+    functions provided by the utils.occ library (whose source code
+    and documentation are in the kroc/course/libsrc directory).
+
+  demo.occ
+
+    This process will be explained in the course.  It demonstrates
+    the `legoland' components defined in the demo_cycles.occ and
+    demo_nets libraries (sources in kroc/course/libsrc).
+
+  sort_pump.occ
+
+    This process will be explained in the course.  It demonstrates
+    the functionality of a parallel `sort pump', viewed as a black box.
+
+  sort_inside.occ
+
+    This process will be explained in the course.  It demonstrates
+    the internal workings of the parallel sort pump.
+
+  commstime.occ
+
+    This is a classic benchmark to measure the basic context-switch
+    overhead (under favourable conditions - everything easilly fits
+    into primary cache).
+
+  bar.occ
+
+    This is an animated example of fair ALTing.
+
+Take your own copies of all these processes.  Once in your directory
+space, you may compile any of these files by applying `kroc' - e.g.
+
+  % kroc sort_inside.occ -lcourse
+
+which produces an executable called sort_inside.  Run this - i.e.
+
+  % ./sort_inside
+
+and you are in business!
+
+
+Peter Welch.

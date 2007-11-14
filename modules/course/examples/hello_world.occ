@@ -1,0 +1,7 @@
+#INCLUDE "course.module"
+
+PROC hello.world (CHAN BYTE keyboard?, screen!, error!)
+  --{{{
+  out.string ("Hello World*c*n", 0, screen!)
+  --}}}
+:

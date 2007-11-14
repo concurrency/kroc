@@ -1,0 +1,6 @@
+
+PROC q5 (CHAN BYTE keyboard?, screen!, error!)
+  #USE "q5-1"
+  real.q5 (keyboard?, screen!, error!)
+:
+

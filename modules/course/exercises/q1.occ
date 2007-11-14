@@ -1,0 +1,49 @@
+#INCLUDE "course.module"
+
+--* This outputs even numbers from 0 upwards
+PROC S0 (CHAN INT out!)
+  SKIP  -- replace with your own code
+:
+
+--* This outputs odd numbers from 1 upwards
+PROC S1 (CHAN INT out!)
+  SKIP  -- replace with your own code
+:
+
+--* This pauses execution of the invoking process by delay microseconds.
+-- Other processes are unaffected.
+-- @param delay The length of the pause (in microseconds)
+PROC pause (VAL INT delay)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS delay
+:
+
+--* This inputs a number and tabulates it on a single line of output.
+-- Then, it pauses for delay microseconds.  It repeats this for ever.
+-- @param delay The length of the pause (in microseconds)
+-- @param in Numbers coming in
+-- @param out Characters going out
+PROC print.stream (VAL INT delay, CHAN INT in?, CHAN BYTE out!)
+  WHILE TRUE
+    INT n:
+    SEQ
+      in ? n
+      out.int (n, 10, out!)             -- out.int is from "course.lib"
+      out.string ("*c*n", 0, out!)      -- out.string is from "course.lib"
+      pause (delay)
+:
+
+--* This multiplexes numbers from its two input channels to its output channel.
+-- It alternates taking one number from one channel and forwarding it - then
+-- from the other channel and forwarding it.  It continues doing this for ever.
+-- It assumes numbers will always be offered to both input channels.
+PROC alternate (CHAN INT in0?, in1?, out!)
+  SKIP  -- replace with your own code
+:
+
+PROC q1 (CHAN BYTE keyboard?, screen!, error!)
+  SKIP  -- replace with your own code
+:

@@ -1,0 +1,115 @@
+#INCLUDE "course.module"
+
+--{{{  COMMENT documentation
+--
+--{{{  opening remarks
+--
+--You have to implement a `overflow' buffer and demonstrate it.  Note
+--that this was called a `type-ahead' buffer in the course slides.
+--
+--A demonstration is described in slide 6-19.  The diagram below makes
+--a small modification to that slide by including an `auto.prompter'
+--alongside the `type.ahead' buffer.  This relieves the `slow.process'
+--process from the need to make requests for input data.
+--
+--}}}
+--
+--{{{  diagram
+--
+-->             _____________________________________________________________
+-->            |                                                             |
+-->            |    ____________________                 _________________   |
+-->            |   |                    |    request    |                 |  |
+-->   keyboard |   |                    |-------<-------|                 |  |
+-->  ------>-------|  overflow.buffer   |               |  auto.prompter  |  |
+-->            |   |                    |------->-------|                 |  |
+-->            |   |____________________|   character   |_________________|  |
+-->            |             |                                   |           |
+-->      error |             |                                   |           |
+-->  ------<---|---          v overflow                          v           |
+-->            |             |                                   |           |
+-->            |    _________|_________                  ________|_________  |
+-->     screen |   |                   |                |                 |  |
+-->  ------<---|---|     bell.plex     |-------<--------|   slow.process  |  |
+-->            |   |___________________|                |_________________|  |
+-->            |                                                             |
+-->            | q5                                                          |
+-->            |_____________________________________________________________|
+--
+--}}}
+--
+--{{{  the `overflow' buffer
+--
+--Choose a buffer size around ten, so that you don't have to type too long
+--(in this demonstration) before it fills up and overflows.
+--
+--}}}
+--
+--{{{  the `slow.process'
+--
+--For this demonstration, the `slow.process' should be a simple process that
+--inputs a character, outputs the character (converting lower case letters
+--to upper case), flushes the output (otherwise UNIX buffers up a complete
+--line before displaying it) and then waits for one second (or half-a-second)
+--before looping to input the next character.  You should, therefore, be
+--able to supply input data faster than `slow.process' can consume it,
+--even when that supply depends on your typing speed!
+--
+--}}}
+--
+--{{{  the `bell.plex' process
+--
+--This process listens to both its input channels, giving higher priority
+--to its `overflow' line.  Normal input is passed straight through.  If
+--a signal arrives from `overflow', it responds by outputting a `BELL'
+--character, followed by a `FLUSH' (to ensure immediate feedback to the
+--typist).
+--
+--}}}
+--
+--{{{  what should happen
+--
+--When this program is run, keyboard characters are echoed (slowly) back
+--to the screen at whatever rate you chose in `slow.process' (say, every
+--half-second).  Lower-case chacters are converted to upper-case, but
+--otherwise no changes are made.  You may build up a type-ahead up to
+--the buffer size you chose in `type-ahead.buffer' (say ten), after
+--which characters are rejected and the screen is bleeped.  As soon as
+--the buffer has some room, further keystrokes will be accepted.
+--
+--}}}
+--
+--}}}
+
+--{{{  PROC overflow.buffer ()
+PROC overflow.buffer ()          -- needs some parameters
+  SKIP                           -- and a body
+:
+--}}}
+
+--{{{  PROC auto.prompter ()
+PROC auto.prompter ()            -- needs some parameters
+  SKIP                           -- and a body
+:
+--}}}
+
+--{{{  PROC bell.plex ()
+PROC bell.plex ()                -- needs some parameters
+  SKIP                           -- and a body
+:
+--}}}
+
+--{{{  PROC slow.process ()
+PROC slow.process ()             -- needs some parameters
+  SKIP                           -- and a body
+:
+--}}}
+
+--{{{  PROC q5 (CHAN BYTE keyboard?, screen!, error!)
+PROC q5 (CHAN BYTE keyboard?, screen!, error!)
+  --{{{  build your network here
+  SKIP
+  --}}}
+:
+--}}}
+
