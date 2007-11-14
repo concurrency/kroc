@@ -5,25 +5,25 @@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
 OCCBUILD = @OCCBUILD@
-CFLAGS = @CFLAGS@ @SDL_CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
+CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 
 EXTRA_DIST = \
 	miniraster.inc \
 	miniraster.occ \
-	sdlc.c \
-	sdlraster.inc \
-	sdlraster.occ
+	sdlrcompat-c.c \
+	sdlrcompat.inc \
+	sdlrcompat.occ
 
 sdlraster_lib_objs = \
-	sdlc.o \
-	sdlraster.tce
+	sdlrcompat-c.o \
+	sdlrcompat.tce
 
 miniraster_lib_objs = \
 	miniraster.tce
 
 # FIXME: This package should be buildable without sdlraster.
 sdlraster_libs = sdlraster.lib
-sdlraster_includes = sdlraster.inc
+sdlraster_includes = sdlrcompat.inc
 miniraster_libs = miniraster.lib
 miniraster_includes = miniraster.inc
 libs = $(sdlraster_libs) $(miniraster_libs)
@@ -34,7 +34,7 @@ all-local: $(libs) $(includes)
 sdlraster.tce: miniraster.lib
 
 sdlraster.lib: $(sdlraster_lib_objs)  
-	$(OCCBUILD) --library sdlraster.lib --need occSDL --need miniraster --include sdlraster.inc @SDL_LIBS@ $(sdlraster_lib_objs)
+	$(OCCBUILD) --library sdlraster.lib --need occSDL --need miniraster --include sdlrcompat.inc $(sdlraster_lib_objs)
 
 miniraster.lib: $(miniraster_lib_objs)
 	$(OCCBUILD) --library miniraster.lib --need occSDL --need raster --include miniraster.inc $(miniraster_lib_objs)
