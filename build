@@ -2285,13 +2285,13 @@ for action in $ACTIONLIST; do
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-button make-button install-button"
 		;;
 	Xfmtoutlib)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-fmtoutlib make-fmtoutlib install-fmtoutlib"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-fmtoutlib make-fmtoutlib install-fmtoutlib"
 		;;
 	Xmoa)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-moa make-moa install-moa"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-moa make-moa install-moa"
 		;;
 	Xcourse_answers)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynprocs-support initial-kroc-setup configure-course_answers make-course_answers install-course_answers"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-course_answers make-course_answers install-course_answers"
 		;;
 	X*)
 		FOUND=0
