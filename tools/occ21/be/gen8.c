@@ -3413,9 +3413,9 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			/*}}}*/
 			/*{{{  WAIT.FOR.INTERRUPT  for RMoX interrupt handling */
 		case PD_WAIT_FOR_INTERRUPT:
-			mapexp (param[0]);
 			mapexp (param[1]);
-			mapexp (param[2]);
+			mapexp (param[0]);
+			mapstoreinopd (P_EXP, param[2]);
 			break;
 			/*}}}*/
 		default:
@@ -4366,11 +4366,12 @@ printtreenl (stderr, 4, param[0]);
 		/*}}}*/
 		/*{{{  WAIT.FOR.INTERRUPT */
 	case PD_WAIT_FOR_INTERRUPT:
-		texpopd (P_PTR, param[1], MANY_REGS);
-		texpopd (P_PTR, param[0], MANY_REGS - 1);
+		texp (param[1], MANY_REGS);
+		texp (param[0], MANY_REGS);
 		genwaitint ();
 		texpopd (P_PTR, param[2], MANY_REGS - 1);
 		genprimary (I_STNL, 0);
+		break;
 		/*}}}*/
 	default:
 		badtag (LocnOf (tptr), TagOf (tptr), "tpredef");
