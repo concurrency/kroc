@@ -1,0 +1,23 @@
+
+CIF Example Programs
+--------------------
+
+cift1	basic process creation and C channel communication tests
+cift2	C processes with occam wiring
+cift3	parallel processes in C
+cift4	external calls and alting in C
+cift5	external calls in C
+cift6	blocking system-calls in C
+cift7	blocking calls and timeouts in C
+cift8	dynamic mobile communication between C and occam
+cift9	mobile channel-type usage in C
+cift10	mobile channel-type communication between C and occam
+cift11	shared mobile channel-type usage in C and occam
+cift12	process forking in C
+cift13	killable blocking system-calls in C
+cift14	raw ALT interface
+cift15	starting CIF code without occam
+cift16	barriers in C
+cift17	calling occam from C
+cif-commstime	commstime benchmark
+

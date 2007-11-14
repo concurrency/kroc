@@ -1,0 +1,18 @@
+
+-- cift17.occ -- CIF test 17, occam bits
+
+#INCLUDE "cif.module"
+#INCLUDE "course.module"
+
+#PRAGMA EXTERNAL "PROC CIF.my.process (CHAN BYTE out!) = 4096"
+
+PROC do.stuff (VAL INT n, CHAN BYTE out!)
+  SEQ i = 0 FOR 3
+    out ! 'a' + (BYTE (n + i))
+:
+
+PROC cift17 (CHAN BYTE kyb?, scr!, err!)
+  CIF.my.process (scr!)
+:
+
+
