@@ -274,6 +274,9 @@ pdinlines[] =
 		/*{{{  blocking system calls*/
 	, { &trueval, 0}		/* KILLCALL */
 		/*}}}*/
+		/*{{{  RMoX interrupt handling*/
+	, { &trueval, 0}		/* WAIT.FOR.INTERRUPT */
+		/*}}}*/
 };
 
 /*}}}*/
