@@ -1,0 +1,12 @@
+
+This directory contains the following sub-directories:
+
+  examples/
+
+    SDLRaster example programs
+
+
+  libsrc/
+  
+    SDLRaster library sources
+
