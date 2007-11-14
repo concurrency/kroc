@@ -2,8 +2,11 @@
 
 --** @module occSDL
 
+--{{{  externals
 #PRAGMA EXTERNAL "PROC C.occ.SDL.make.surface ([][]INT pixels, RESULT SDL.Surface surface) = 0"
+--}}}
 
+--{{{  PROC occ.SDL.make.surface
 --* Turn an occam array into an SDL surface.
 -- This is a wrapper around [@ref SDL.CreateRGBSurfaceFrom].
 --
@@ -17,3 +20,4 @@
 INLINE PROC occ.SDL.make.surface ([][]INT pixels, RESULT SDL.Surface surface)
   C.occ.SDL.make.surface (pixels, surface)
 :
+--}}}

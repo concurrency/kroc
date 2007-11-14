@@ -21,6 +21,7 @@
 
 #INCLUDE "occSDL.inc"
 
+--{{{  PROC occ.SDL.zero.terminate
 --* Zero-terminate a string.
 -- This works around a bug in SWIG: strings passed to C functions aren't
 -- currently terminated properly.
@@ -30,7 +31,8 @@ PROC occ.SDL.zero.terminate (VAL []BYTE in, RESULT MOBILE []BYTE out)
     [out FOR SIZE in] := in
     out[SIZE in] := '*#00'
 :
-
+--}}}
+--{{{  PROC occ.SDL.set.rect
 --* Set the values in an SDL.Rect structure.
 PROC occ.SDL.set.rect (SDL.Rect rect, VAL INT x, y, w, h)
   SEQ
@@ -39,7 +41,8 @@ PROC occ.SDL.set.rect (SDL.Rect rect, VAL INT x, y, w, h)
     set.SDL.Rect.w (INT16 w, rect)
     set.SDL.Rect.h (INT16 h, rect)
 :
-
+--}}}
+--{{{  PROC occ.SDL.blit
 --* Blit a rectangle from one surface to another.
 PROC occ.SDL.blit (SDL.Surface from, VAL INT from.x, from.y, w, h,
                    SDL.Surface to, VAL INT to.x, to.y)
@@ -55,4 +58,4 @@ PROC occ.SDL.blit (SDL.Surface from, VAL INT from.x, from.y, w, h,
     delete.SDL.Rect (rect1)
     delete.SDL.Rect (rect2)
 :
-
+--}}}
