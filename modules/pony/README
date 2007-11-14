@@ -1,0 +1,13 @@
+
+This directory contains the following sub-directories:
+
+
+  libsrc/
+  
+    pony network infrastructure libraries and application
+    name server.
+
+  examples/
+
+    pony network infrastructure examples and tests.
+
