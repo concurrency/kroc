@@ -101,13 +101,9 @@
 
 /*{{{  PUBLIC variables that are used elsewhere in the run time system */
 #if defined(OOS_BUILD)
-	int *inttab[OOS_NUM_INTERRUPTS];			/* interrupt process linkage (Wptr of waiting process) */
-	volatile int intcount[OOS_NUM_INTERRUPTS];		/* count of interrupts received */
-	volatile int intlast;			/* last interrupt received */
-	volatile int *iq_fptr, *iq_bptr;	/* queue where awoken listeners sit */
-	volatile long long ticount;		/* total number of interrupts */
-
-	extern void no_dynamic_process_support (void);
+word *inttab[OOS_NUM_INTERRUPTS];			/* interrupt process linkage (Wptr of waiting process) */
+volatile word intcount[OOS_NUM_INTERRUPTS];		/* count of interrupts received */
+extern void no_dynamic_process_support (void);
 #endif
 /*}}}*/
 /*{{{  global variables*/
@@ -5797,70 +5793,58 @@ void ccsp_next_timeout (int *us, int *valid)
  */
 void ccsp_interrupt_handler (int irq)
 {
-	sched_t *sched = _local_scheduler;
-	ticount++;
-	intlast = irq;
-
-	if (inttab[irq]) {
-		/* process waiting, move it onto another queue */
-		if (iq_fptr) {
-			((word *)iq_bptr)[Link] = (word)(inttab[irq]);
-			iq_bptr = inttab[irq];
-		} else {
-			iq_fptr = iq_bptr = inttab[irq];
-		}
-		((word *)iq_bptr)[Link] = NotProcess_p;
+	if (inttab[irq] != NotProcess_p) {
+		word *Wptr = inttab[irq];
+		mail_process (PAffinity (Wptr[Priofinity]), Wptr);
 		inttab[irq] = NotProcess_p;
-		/* tell the run-time kernel */
-		att_or (&(sched->sync), SYNC_INTR); /* CGR FIXME: this whole function is to change */
 	} else {
 		intcount[irq]++;
 	}
 }
 /*}}}*/
-/*{{{  void kernel_Y_ooswaitint (void)*/
+/*{{{  void kernel_Y_wait_int (void)*/
 /*
- *	entry-point for an OOS process to wait for an interrupt
- *	called from C.oos.wait.int (VAL INT intr, op, RESULT INT count)
- *	intr is at Wptr[1], count at Wptr[2]
+ *	entry-point for an RMoX process to wait for an interrupt
  *
- *	@SYMBOL:	Y_ooswaitint
- *	@TYPE:		LCR
- *	@INPUT:		NONE
+ *	@SYMBOL:	Y_wait_int
+ *	@TYPE:		SR
+ *	@INPUT:		REG(2)
  *	@OUTPUT: 	NONE
- *	@CALL: 		K_OOS_WAIT_INT
+ *	@CALL: 		K_WAIT_INT
  *	@PRIO:		50
  *	@DEPEND:	OOS_BUILD
  */
 void kernel_Y_ooswaitint (void)
 {
-	K_SETGLABEL_ZERO_IN_LCR (Y_ooswaitint);
+	word number, mask;
 
-	ENTRY_TRACE (Y_ooswaitint, "0x%8.8X", (unsigned int)Wptr + 4);
+	K_SETGLABEL_TWO_IN_SR (Y_wait_int, number, mask);
 
-	if (inttab[Wptr[1]]) {
+	ENTRY_TRACE (Y_ooswaitint, "0x%8.8X", number);
+
+	if (inttab[number]) {
 		MESSAGE ("scheduler: ieee, someone already waiting for this interrupt!\n");
 		/* blind reschedule */
 		RESCHEDULE;
 	}
+	
 	cli ();
-	if (!intcount[Wptr[1]]) {
+
+	if (!intcount[number]) {
 		/* no interrupt yet */
-		int interrupt = Wptr[1];
-		Wptr[Iptr] = return_address;
 		save_priofinity (sched, Wptr);
-		inttab[interrupt] = (int *)Wptr;
-		*(int *)(Wptr[2]) = 0;
+		Wptr[Temp] = 0;
+		inttab[number] = Wptr;
 		sti ();
+		
 		RESCHEDULE;
 	} else {
-		int interrupt = Wptr[1];
-		*(int *)(Wptr[2]) = intcount[interrupt];
-		intcount[interrupt] = 0;
+		Wptr[Temp] = intcount[number];
+		intcount[number] = 0;
 		sti ();
-	}
 
-	K_ZERO_OUT ();
+		K_ZERO_OUT_JRET ();
+	}
 }
 /*}}}*/
 #endif	/* defined(OOS_BUILD) */
