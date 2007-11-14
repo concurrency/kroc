@@ -580,6 +580,9 @@ predeflines[] =
 	  /*{{{  blocking system calls */
 	  { CC, PD_KILLCALL, "P(C,I):KILLCALL"}
 	, /*}}}*/
+	  /*{{{  RMoX interrupt handling by CGR */
+	  { CC, PD_WAIT_FOR_INTERRUPT, "P(VI,VI,I):WAIT.FOR.INTERRUPT"}
+	, /*}}}*/
 		/*{{{  configurer attributes */
 	  { CN, PD_ATTR_LINK, ". [4]E :link"}
 	, { CN, PD_ATTR_TYPE, ". []Y :type"}

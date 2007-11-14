@@ -296,6 +296,7 @@ PRIVATE int assemble_instruction (const INT32 instruction, INT32 operand)
 #define SPE_R64COS 33
 #define SPE_DTRACE 34
 #define SPE_KILLCALL 35
+#define SPE_WAIT_FOR_INTERRUPT 36
 
 #define TSDEPTH 1
 #define FUNCRESULTS 2
@@ -589,7 +590,8 @@ PRIVATE void etc_specop (const int specinst)
 		"R32COS",
 		"R64COS",
 		"DTRACE",
-		"KILLCALL"
+		"KILLCALL",
+		"WAIT_FOR_INTERRUPT"
 	};
 	add_code (0x6f);
 	add_code (0xf0);
@@ -3375,6 +3377,24 @@ PUBLIC void genkillcall (void)
 		etc_specop (SPE_KILLCALL);
 	}
 	BETRACE ("code1: genkillcall (leave)");
+	return;
+}
+/*}}}*/
+/*{{{  PUBLIC void genwaitint (void)*/
+/*
+ *	generates a "wait for interrupt" special
+ *	expects Areg to contain interrupt number,
+ *	Breg to contain processor mask,
+ *	returns in Areg the result
+ */
+PUBLIC void genwaitint (void)
+{
+	BETRACE ("code1: genwaitint (enter)");
+	if (!dead) {
+		etc_specop (SPE_WAIT_FOR_INTERRUPT);
+		ts_depth--;
+	}
+	BETRACE ("code1: genwaitint (leave)");
 	return;
 }
 /*}}}*/

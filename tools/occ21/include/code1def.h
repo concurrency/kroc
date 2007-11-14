@@ -154,6 +154,7 @@ void genfbarenroll (void);
 void genmobiletypedescription (treenode *const mtype);
 void gendtrace (void);
 void genkillcall (void);
+void genwaitint (void);
 /*}}}*/
 
 /*{{{  aditional MOBILE stuff */

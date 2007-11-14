@@ -167,6 +167,9 @@
 /*{{{  blocking system calls */
 #define PD_KILLCALL		109
 /*}}}*/
+/*{{{  RMoX interrupt handling */
+#define PD_WAIT_FOR_INTERRUPT	110
+/*}}}*/
 
 /*{{{  Predefines for the configuration stuff */
 /*{{{  Predefines for the configurer */
