@@ -1,0 +1,37 @@
+--* Multiple arguments.
+-- @param a First arg
+-- @param b, c Second and third args
+-- @param d Fourth arg
+-- @param e,f   ,     g, h Fifth to eighth args (with odd spacing)
+-- @param i Ninth arg
+PROC multi.args (VAL INT a, b, c, d, e, f, g, h, i)
+  SKIP
+:
+
+--* Multiple returns.
+-- @returns a, b One, two
+-- @returns c Three
+INT, INT, INT FUNCTION multi.return () IS 1, 2, 3:
+
+--* Regular return, just to check we haven't broken it.
+-- @return Nothing much
+INT FUNCTION single.return () IS 1:
+
+--* Mixed regular and multiple returns.
+-- @return First
+-- @returns b, c, d Second to fourth
+-- @return Fifth
+-- @returns f Sixth
+INT, INT, INT, INT, INT, INT FUNCTION mixed.returns () IS 1, 2, 3, 4, 5, 6:
+
+--* Multiple protocol items.
+-- @item a First
+-- @item b, c Second, third
+-- @item d, e, f Fourth through sixth
+PROTOCOL MULTI.PROTO IS INT; BOOL; BOOL; INT; INT; INT:
+
+--* Anonymous protocol items.
+-- @item - First
+-- @item - Second
+PROTOCOL ANON.PROTO IS INT; BOOL:
+
