@@ -1,0 +1,145 @@
+.\" KRoC socket library overview page.  Last updated December 2005 Fred Barnes  <frmb@kent.ac.uk>
+.TH LIBSOCK "3" "December 2005" "kroc 1.4.0" KRoC
+.SH NAME
+socket.accept, socket.bind, socket.close, socket.connect, socket.create,
+socket.error, socket.fullread, socket.fullwrite, socket.fullwrite.addr,
+socket.listen, socket.read, socket.recvfrom, socket.sendto, socket.shutdown,
+socket.write, socket.write.addr, socket.getdomainname, socket.gethostname,
+socket.getpeername, socket.getsockname, socket.getsockopt, socket.setdomainname,
+socket.sethostname, socket.setsockopt, socket.addr.of.host, socket.addrs.of.host,
+socket.host.of.addr, socket.ip.of.addr, socket.naddrs.of.host,
+socket.create.connect.tcp, socket.create.listen.tcp, socket.create.listen.udp,
+socket.create.tcp, socket.create.udp,
+socket.altable.accept, socket.altable.fullread, socket.altable.fullwrite,
+socket.altable.read, socket.altable.write \- KRoC socket library
+.SH SYNOPSIS
+.B #INCLUDE \fB"sock.module\fB"\fR
+.PP
+.BI "PROC socket.accept (SOCKET " sock ", RESULT SOCKET " client ", RESULT INT " result ")"
+.br
+.BI "PROC socket.bind (SOCKET " sock ", RESULT INT " result ")"
+.br
+.BI "PROC socket.close (SOCKET " sock ")"
+.br
+.BI "PROC socket.connect (SOCKET " sock ", RESULT INT " result ")"
+.br
+.BI "PROC socket.create (RESULT SOCKET " sock ", VAL INT " domain ", VAL INT " type ", VAL INT " protocol ")"
+.br
+.BI "PROC socket.error (SOCKET " sock ", []BYTE " buffer ", RESULT INT " length ")"
+.br
+.BI "PROC socket.fullread (SOCKET " sock ", []BYTE " buffer ", VAL INT " count ", RESULT INT " result ")"
+.br
+.BI "PROC socket.fullwrite (SOCKET " sock ", VAL []BYTE " buffer ", RESULT INT " result ")"
+.br
+.BI "PROC socket.fullwrite.addr (SOCKET " sock ", VAL INT " addr ", " size ", INT " result ")"
+.br
+.BI "PROC socket.listen (SOCKET " sock ", VAL INT " backlog ", RESULT INT " result ")"
+.br
+.BI "PROC socket.read (SOCKET " sock ", []BYTE " buffer ", VAL INT " count ", RESULT INT " result ")"
+.br
+.BI "PROC socket.recvfrom (SOCKET " sock ", []BYTE " message ", VAL INT " flags ", RESULT INT " result ")"
+.br
+.BI "PROC socket.sendto (SOCKET " sock ", VAL []BYTE " message ", VAL INT " flags ", RESULT INT " result ")"
+.br
+.BI "PROC socket.shutdown (SOCKET " sock ", VAL INT " how ", RESULT INT " result ")"
+.br
+.BI "PROC socket.write (SOCKET " sock ", VAL []BYTE " buffer ", RESULT INT " result ")"
+.br
+.BI "PROC socket.write.addr (SOCKET " sock ", VAL INT " addr ", size, INT " result ")"
+.PP
+.BI "PROC socket.getdomainname (RESULT []BYTE " name ", RESULT INT " result ")"
+.br
+.BI "PROC socket.gethostname (RESULT []BYTE " name ", RESULT INT " result ")"
+.br
+.BI "PROC socket.getpeername (SOCKET " sock ", RESULT INT " result ")"
+.br
+.BI "PROC socket.getsockname (SOCKET " sock ", RESULT INT " result ")"
+.br
+.BI "PROC socket.getsockopt (SOCKET " sock ", VAL INT " level ", VAL INT " option ", RESULT INT " value ", RESULT INT " result ")"
+.br
+.BI "PROC socket.setdomainname (VAL []BYTE " name ", RESULT INT " result ")"
+.br
+.BI "PROC socket.sethostname (VAL []BYTE " name ", RESULT INT " result ")"
+.br
+.BI "PROC socket.setsockopt (SOCKET " sock ", VAL INT " level ", VAL INT " option ", VAL INT " value ", RESULT INT " result ")"
+.PP
+.BI "PROC socket.addr.of.host (VAL []BYTE " hostname ", RESULT INT " addr ", RESULT INT " result ")"
+.br
+.BI "PROC socket.addrs.of.host (VAL []BYTE " hostname ", RESULT []INT " addrs ", RESULT INT " result ")"
+.br
+.BI "PROC socket.host.of.addr (VAL INT " addr ", []BYTE " hostname ", INT " length ", INT " result ")"
+.br
+.BI "PROC socket.ip.of.addr (VAL INT " addr ", []BYTE " ip.addr ", INT " length ", INT " result ")"
+.br
+.BI "PROC socket.naddrs.of.host (VAL []BYTE " hostname ", RESULT INT " result ")"
+.PP
+.BI "PROC socket.create.connect.tcp (SOCKET " sock ", VAL INT " addr ", VAL INT " port ", INT " result ")"
+.br
+.BI "PROC socket.create.listen.tcp (SOCKET " sock ", VAL INT " addr ", VAL INT " port ", INT " result ")"
+.br
+.BI "PROC socket.create.listen.udp (SOCKET " sock ", VAL INT " addr ", VAL INT " port ", INT " result ")"
+.br
+.BI "PROC socket.create.tcp (SOCKET " sock ")"
+.br
+.BI "PROC socket.create.udp (SOCKET " sock ")"
+.PP
+.BI "PROC socket.altable.accept (CHAN OF BOOL " kill ", CHAN OF INT " response ", SOCKET " sock ", SOCKET " client ", INT " result ")"
+.br
+.BI "PROC socket.altable.fullread (CHAN OF BOOL " kill ", CHAN OF INT " response ", SOCKET " sock ", []BYTE " buffer ", VAL INT " count ", INT " result ")"
+.br
+.BI "PROC socket.altable.fullwrite (CHAN OF BOOL " kill ", CHAN OF INT " response ", SOCKET " sock ", VAL []BYTE " buffer ", INT " result ")"
+.br
+.BI "PROC socket.altable.read (CHAN OF BOOL " kill ", CHAN OF INT " response ", SOCKET " sock ", []BYTE " buffer ", VAL INT " count ", INT " result ")"
+.br
+.BI "PROC socket.altable.recvfrom (CHAN OF BOOL " kill ", CHAN OF INT " response ", SOCKET " sock ", []BYTE " message ", VAL INT " flags ", INT " result ")"
+.br
+.BI "PROC socket.altable.write (CHAN OF BOOL " kill ", CHAN OF INT " response ", SOCKET " sock ", VAL []BYTE " buffer ", INT " result ")"
+.SH DESCRIPTION
+The occam socket library uses the blocking system call functionality within KRoC
+to allow socket operations to be performed asynchronously.  A rich set of occam
+PROCs provide most of the socket functionality, as is available from the C world.
+.PP
+The following structure shows the information kept about a socket:
+.TS
+lf(CR).
+DATA TYPE SOCKET
+  PACKED RECORD
+    INT fd:
+    INT local.port:
+    INT remote.port:
+    INT local.addr:
+    INT remote.addr:
+    INT s.family:
+    INT s.type:
+    INT s.proto:
+    INT error:
+:
+.TE
+.PP
+For a given .\fBSOCKET\fR s:
+.PP
+s[\fIfd\fR] is the file-descritor of the socket.  s[\fIlocal.port\fR] and s[\fIremote.port\fR]
+are the port numbers of the local and remote ends of the socket.  s[\fIlocal.addr\fR] and
+s[\fIremote.addr\fR] are the addresses.  These are stored as host-ordered `packed' IP
+addresses.  s[\fIs.family\fR] is the socket family used for this socket.  Most of the time,
+this will be \fBPF.INET\fR, specifying a normal network socket.  s[\fIs.type\fR] specifies
+the socket type.  The two common ones are stream based sockets, specified with \fBSOCK.STREAM\fR,
+and datagram based sockets, specified with \fBSOCK.DGRAM\fR.  s[\fIs.proto\fR] specifies the
+protocol which is being used.  More often than not, this depends on the socket type.
+\fBIPPROTO.TCP\fR is normally specified for \fBSOCK.STREAM\fR sockets, and \fBIPPROTO.UDP\fR
+for \fBSOCK.DGRAM\fR sockets.  s[\fIerror\fR] contains the error code of the last operation
+on this socket, if it failed.
+.PP
+This structure does not accurately reflect the true types of the two `\fIport\fR' and `\fIaddr\fR'
+fields.  Ports are typically unsigned 16-bit numbers, while addresses are unsigned 32-bit numbers
+(for IPV4 at least).  They are incorrect for ease of compatability with the corresponding
+structure in the C code, in addition, occam does not provide unsigned 16-bit or 32-bit types.
+.SH AUTHOR
+This manual page is maintained by Fred Barnes <frmb@kent.ac.uk>
+
+.SH "SEE ALSO"
+.BR kroc (1)
+.br
+doc/bsclib.ps, doc/bsclib/index.html  in the KRoC distribution
+
+
