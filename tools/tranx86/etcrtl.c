@@ -1029,7 +1029,7 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 					arch->compose_kcall (ts, K_WAIT_INT, 2, 0);
 					ts->stack->ts_depth = 1;
 					
-					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGIND, REG_WPTR, ARG_REG, ts->stack->old_a_reg);
+					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGIND, REG_WPTR, ARG_REG, ts->stack->old_a_reg));
 					#else
 					fprintf (stderr, "%s: fatal: must have OOS compiled into tranx86, update KRoC/CCSP and rebuild\n", progname);
 					exit (EXIT_FAILURE);
