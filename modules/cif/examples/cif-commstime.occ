@@ -1,0 +1,11 @@
+
+-- cif-commstime.occ -- commstime in C
+
+#INCLUDE "cif.module"
+
+#PRAGMA EXTERNAL "PROC CIF.commstime (CHAN BYTE out!) = 16384"
+
+PROC cif.commstime (CHAN BYTE kyb?, scr!, err!)
+  CIF.commstime (scr!)
+:
+

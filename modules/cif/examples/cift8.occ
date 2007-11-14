@@ -1,0 +1,40 @@
+
+-- cift8.occ -- CIF test 8, occam bits
+
+#INCLUDE "cif.module"
+#INCLUDE "course.module"
+
+#PRAGMA EXTERNAL "PROC CIF.my.process (CHAN MOBILE []BYTE in?, out!) = 1024"
+
+
+PROC cift8 (CHAN BYTE kyb?, scr!, err!)
+
+  CHAN MOBILE []BYTE to.c, from.c:
+  PAR
+    CIF.my.process (to.c?, from.c!)
+    --{{{  source
+    TIMER tim:
+    INT t:
+    SEQ
+      tim ? t
+      SEQ i = 0 FOR 5
+        MOBILE []BYTE x:
+        SEQ
+          tim ? AFTER t
+          x := "Hello world at  "
+          x[(SIZE x) - 1] := '0' PLUS (BYTE i)
+          to.c ! x
+          t := t PLUS 500000
+    --}}}
+    --{{{  sink
+    SEQ i = 0 FOR 5
+      MOBILE []BYTE v:
+      SEQ
+        from.c ? v
+
+        out.string ("got back [", 0, scr!)
+        out.string (v, 0, scr!)
+        out.string ("]*n", 0, scr!)
+    --}}}
+:
+

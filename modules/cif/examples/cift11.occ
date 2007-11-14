@@ -1,0 +1,57 @@
+
+-- cift11.occ -- CIF test 11, occam bits
+
+#INCLUDE "cif.module"
+#INCLUDE "course.module"
+
+CHAN TYPE LINK
+  MOBILE RECORD
+    CHAN INT in?:
+    CHAN INT out!:
+:
+
+#PRAGMA EXTERNAL "PROC CIF.my.process (SHARED LINK! sh.cli) = 1024"
+
+PROC link.server (LINK? in, CHAN BYTE out!)
+  SEQ i = 0 FOR 13   -- greedy.client sends 8, my_process sends 5
+    INT v:
+    SEQ
+      in[in] ? v
+      
+      out.string ("occam got back ", 0, out!)
+      out.int (v, 0, out!)
+      out.string ("*n", 0, out!)
+:
+
+PROC greedy.client (SHARED LINK! out)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    SEQ i = 0 FOR 8
+      SEQ
+        CLAIM out
+          SEQ
+            t := t PLUS 100000
+            tim ? AFTER t
+            out[in] ! i
+        t := t PLUS 10000
+        tim ? AFTER t
+:
+
+
+PROC cift11 (CHAN BYTE kyb?, scr!)
+  SHARED LINK! l.cli:
+  LINK? l.svr:
+  SEQ
+    l.svr, l.cli := MOBILE LINK
+    PAR
+      CIF.my.process (l.cli)
+      --{{{  server process
+      link.server (l.svr, scr!)
+      --}}}
+      --{{{  greedy client
+      greedy.client (l.cli)
+      --}}}
+:
+
