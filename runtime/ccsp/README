@@ -1,0 +1,35 @@
+The CCSP package 
+================
+
+Copyright (C) Jim Moores 1998, 1999.
+Modifications copyright (C) Fred Barnes 1999-2004.
+
+
+The CCSP run-time kernel has the following components:
+
+  common/
+    common files which can be shared by (hopefully) most CPU architectures.
+    Things like the non-blocking keyboard input process and tty handling
+    live here.
+
+  arch/
+    architecture-dependant base.
+
+  arch/linux
+    architecture files for the linux version of CCSP.  This includes things
+    like the scheduler, CPU timers, blocking-syscalls, etc.
+
+  include/
+    common include files used by most bits of the distribution.  Also
+    contains include files which application developers can link to in
+    order to access CCSP run-time stuff.
+
+  include/i386
+    architecture dependant include files for the i386 CPU family.  This
+    contains things like the vast amounts of scheduler assembler macros.
+
+  include/mips
+    architecture dependant include files for the MIPS family of processors.
+    This is highly experimental.
+
+
