@@ -12,7 +12,9 @@ EXTRA_DIST = \
 	sdlstar.occ \
 	sdlstar8.occ \
 	sdltest.occ \
-	starfield.occ
+	starfield.occ \
+	mrshadebob.occ \
+	mrtestprog.occ
 
 examples = \
 	mrevents \
@@ -23,7 +25,9 @@ examples = \
 	sdlstar \
 	sdlstar8 \
 	sdltest \
-	starfield
+	starfield \
+	mrshadebob \
+	mrtestprog
 
 all-local: $(examples)
 
