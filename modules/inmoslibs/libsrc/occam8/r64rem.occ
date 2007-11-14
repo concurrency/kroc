@@ -1,0 +1,38 @@
+--{{{  #options and #comments
+
+--** @module occam8
+
+#OPTION "E W V"  -- no compiler libs, full ASMs, no vector space
+#COMMENT "T8 compiler library, V1.2 12/02/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE REAL64REM "REAL64REM%O"
+
+--{{{  
+REAL64 FUNCTION REAL64REM (VAL REAL64 X, Y)
+
+  --{{{  history
+  -- V1.1, 21-Feb-89
+  -- Port to new compiler ( oc ): ASM replaces GUY; 12-Feb-90 SRH
+  --}}}
+
+  REAL64 result:
+  VALOF
+    ASM
+      LD ADDRESSOF  X
+      FPLDNLDB
+      LD ADDRESSOF  Y
+      FPLDNLDB
+      FPREMFIRST
+      EQC      0
+      CJ       :next
+      :loop
+      FPREMSTEP
+      CJ       :loop
+      :next
+      LD ADDRESSOF result
+      FPSTNLDB
+    RESULT result
+:
+--}}}

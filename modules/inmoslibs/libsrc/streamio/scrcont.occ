@@ -1,0 +1,66 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module streamio
+
+#OPTION "E"  -- no compliler libs
+#COMMENT "Stream i/o library, V0.01 23/12/88"
+#COMMENT "(c) Copyright INMOS Limited, 1988"
+#INCLUDE "streamio.inc"
+PROC ss.goto.xy (CHAN OF SS scrn, VAL INT x, y)
+  scrn ! st.goto; INT32 x; INT32 y
+:
+PROC ss.clear.eol (CHAN OF SS scrn)
+  scrn ! st.clear.eol
+:
+PROC ss.clear.eos (CHAN OF SS scrn)
+  scrn ! st.clear.eos
+:
+PROC ss.beep (CHAN OF SS scrn)
+  scrn ! st.beep
+:
+PROC ss.up (CHAN OF SS scrn)
+  scrn ! st.up
+:
+PROC ss.down (CHAN OF SS scrn)
+  scrn ! st.down
+:
+PROC ss.left (CHAN OF SS scrn)
+  scrn ! st.left
+:
+PROC ss.right (CHAN OF SS scrn)
+  scrn ! st.right
+:
+PROC ss.insert.char (CHAN OF SS scrn, VAL BYTE ch)
+  scrn ! st.ins.char; ch
+:
+PROC ss.delete.chr (CHAN OF SS scrn)
+  scrn ! st.del.char
+:
+PROC ss.delete.chl (CHAN OF SS scrn)
+  SEQ
+    scrn ! st.left
+    scrn ! st.del.char
+:
+PROC ss.ins.line (CHAN OF SS scrn)
+  scrn ! st.ins.line
+:
+PROC ss.del.line (CHAN OF SS scrn)
+  scrn ! st.del.line
+:

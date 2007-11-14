@@ -1,0 +1,98 @@
+'\" t
+.\"
+.\" Manual page for convert.lib - INMOS occam toolset type conversion library
+.\"
+.\" $Source: /u0/src/local/bin/oc2man/RCS/convert-lib.man,v $
+.\"
+.\" $Id: convert-lib.man,v 1.2 1993/03/10 16:34:29 djb1 Exp $
+.\"
+.\" Copyright (C) 1993 David Beckett, University of Kent at Canterbury
+.\"
+.\" This was derived from convert.lib (the library) using ilist and the
+.\" perl program fixilist.pl which cleaned up the output.
+.\"
+.\" Modified slightly by Fred Barnes, 2004-2005  <frmb@kent.ac.uk>
+.TH LIBCONVERT-INMOS "3" "March 1993" "kroc 1.4.0" KRoC
+.SH NAME
+BOOLTOSTRING, HEX16TOSTRING, HEX32TOSTRING, HEX64TOSTIRNG, HEXTOSTRING,
+INT16TOSTRING, INT32TOSTRING, INT64TOSTRING, INTTOSTRING,
+REAL32TOSTRING, REAL64TOSTRING,
+STRINGTOBOOL, STRINGTOHEX, STRINGTOHEX16, STRINGTOHEX32, STRINGTOHEX64,
+STRINGTOINT, STRINGTOINT16, STRINGTOINT32, STRINGTOINT64,
+STRINGTOREAL32, STRINGTOREAL64
+\- KRoC INMOS occam toolset type conversion library
+.SH SYNOPSIS
+.B #INCLUDE \fB"convert.module\fB"\fR
+.PP
+.BI "PROC BOOLTOSTRING (INT " len ", []BYTE " string ", VAL BOOL " b ")"
+.br
+.BI "PROC HEX16TOSTRING (INT " len ", []BYTE " string ", VAL INT16 " n ")"
+.br
+.BI "PROC HEX32TOSTRING (INT " len ", []BYTE " string ", VAL INT32 " n ")"
+.br
+.BI "PROC HEX64TOSTRING (INT " len ", []BYTE " string ", VAL INT64 " n ")"
+.br
+.BI "PROC HEXTOSTRING (INT " len ", []BYTE " string ", VAL INT " n ")"
+.br
+.BI "PROC INT16TOSTRING (INT " len ", []BYTE " string ", VAL INT16 " n ")"
+.br
+.BI "PROC INT32TOSTRING (INT " len ", []BYTE " string ", VAL INT32 " n ")"
+.br
+.BI "PROC INT64TOSTRING (INT " len ", []BYTE " string ", VAL INT64 " n ")"
+.br
+.BI "PROC INTTOSTRING (INT " len ", []BYTE " string ", VAL INT " n ")"
+.br
+.BI "PROC REAL32TOSTRING (INT " len ", []BYTE " string ", VAL REAL32 " X ", VAL INT " Ip ", VAL INT " Dp ")"
+.br
+.BI "PROC REAL64TOSTRING (INT " len ", []BYTE " string ", VAL REAL64 " X ", VAL INT " Ip ", VAL INT " Dp ")"
+.PP
+.BI "PROC STRINGTOBOOL (BOOL " Error ", BOOL " b ", VAL []BYTE " string ")"
+.br
+.BI "PROC STRINGTOHEX (BOOL " Error ", INT " n ", VAL []BYTE " string ")"
+.br
+.BI "PROC STRINGTOHEX16 (BOOL " Error ", INT16 " n ", VAL []BYTE " string ")"
+.br
+.BI "PROC STRINGTOHEX32 (BOOL " Error ", INT32 " n ", VAL []BYTE " string ")"
+.br
+.BI "PROC STRINGTOHEX64 (BOOL " Error ", INT64 " n ", VAL []BYTE " string ")"
+.br
+.BI "PROC STRINGTOINT (BOOL " Error ", INT " n ", VAL []BYTE " string ")"
+.br
+.BI "PROC STRINGTOINT16 (BOOL " Error ", INT16 " n ", VAL []BYTE " string ")"
+.br
+.BI "PROC STRINGTOINT32 (BOOL " Error ", INT32 " n ", VAL []BYTE " string ")"
+.br
+.BI "PROC STRINGTOINT64 (BOOL " Error ", INT64 " n ", VAL []BYTE " string ")"
+.br
+.BI "PROC STRINGTOREAL32 (BOOL " Error ", REAL32 " X ", VAL []BYTE " string ")"
+.br
+.BI "PROC STRINGTOREAL64 (BOOL " Error ", REAL64 " X ", VAL []BYTE " string ")"
+.PP
+.SH SUMMARY
+The occam toolset library convert.lib provides conversion procedures
+that format data types into strings and parse strings to give the
+data types.
+.PP
+.SH TO-STRING CONVERSION
+Format the given data type into the \fIstring\fR possibly padding
+with spaces to a given field \fIwidth\fR or printing \fIIp\fR
+integer places and \fIDp\fR decimal places for \fIREAL32\fR and
+\fIREAL64\fR types. Hex numbers are written with leading zeros.
+\fIlen\fR is returns the length of the formatted data.
+.PP
+.SH FROM-STRING CONVERSION
+Convert the given string to the data type.  If \fIError\fR is
+\fBTRUE\fR then the conversion failed.  No '#' or lower case
+letters are allowed for hex numbers.
+.PP
+.SH SEE ALSO
+kroc(1)
+.br
+INMOS  occam 2 toolset user manual - part 2 (occam libraries and
+appendices) INMOS document number 72 TDS 276 02.
+.SH AUTHOR
+This document is Copyright (C) 1993 David Beckett, University of Kent
+at Canterbury.
+This manual page is maintained by Fred Barnes <frmb@kent.ac.uk>
+.PP
+The library contents are Copyright (C) 1991 INMOS Limited.

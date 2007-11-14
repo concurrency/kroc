@@ -1,0 +1,197 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.3, 06/02/91"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#INCLUDE "hostio.inc"
+#USE "splib.lib"
+
+--{{{  history
+-- 09-JAN-90 SRH corrected so that so.write.string, so.fwrite.string,
+-- so.write.string.nl and so.fwrite.string.nl place no restriction of the
+-- length of string written. V1.1
+-- 29-JUN-90 SRH changed the implementation of so.write.string.nl and
+-- so.fwrite.string.nl so that the newline is not sent separately via
+-- an sp.puts with null string ( "" ), but is appended by the server
+-- via use of sp.puts with the last part of the string to send ( which
+-- unless it is large will be the whole string ).  This makes these
+-- routines appear to send a string and newline as an atomic unit, which
+-- is the idea that their names convey. V1.2
+-- 06-FEB-91 SRH took the 'f' routines out of the file wstring.occ and
+-- put them into this file ( fwstring.occ ), so as to reduce the code
+-- pulled into a program if only the spid.stdout stream is used or
+-- equally if only streamid is used. V1.3
+--}}}
+
+--{{{  so.fwrite.string
+--* Write a string to a stream.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param streamid the identification number of the stream to write the
+--   string to
+-- @param string the string to be written, which can be any length
+-- @param result spr.ok if the string was written; spr.notok if not all
+--   of the string was written
+PROC so.fwrite.string (CHAN OF SP fs, ts, VAL INT32 streamid,
+                       VAL []BYTE string, BYTE result)
+  --{{{  more information
+  -- Notes:    If more than a packet's worth of data is to be written
+  --           to a file then one cannot guarantee that all of the data
+  --           will be written to the file before any other process
+  --           accesses the same file.
+  --}}}
+  --{{{  history
+  -- Removed the unnecessary tests of (result = spr.ok) because
+  -- sp.write always returns result as spr.ok ( if it is not given
+  -- a packet larger than sp.max.write.buffer.size ). SRH 29/06/90
+  --}}}
+
+  INT string.size, length :
+  BOOL writing :
+
+  SEQ
+    writing     := TRUE
+    length      := 0
+    result      := spr.ok
+    string.size := (SIZE string)
+    WHILE writing AND (length < string.size) -- AND (result = spr.ok)
+      INT length.to.write, length.written :
+      SEQ
+        IF
+          (string.size - length) > sp.max.writebuffer.size
+            length.to.write := sp.max.writebuffer.size
+          TRUE
+            length.to.write := (string.size - length)
+
+        sp.write (fs, ts, streamid, [string FROM length FOR length.to.write],
+                  length.written, result)
+        writing := (length.to.write = length.written)
+        length  := length + length.written
+
+    -- now check that operation was ok
+    IF
+      (length <> string.size) -- AND (result = spr.ok)
+        result := spr.notok
+      TRUE
+        SKIP
+:
+--}}}
+--{{{  so.fwrite.char
+--* Write a single character to a stream.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param streamid the identification number of the stream to write to
+-- @param char the single character to write
+-- @param result spr.ok if the character was written; otherwise
+--   spr.notok
+PROC so.fwrite.char (CHAN OF SP fs, ts, VAL INT32 streamid, VAL BYTE char,
+                     BYTE result)
+  --{{{  history
+  -- Removed test of result = spr.ok because sp.write will return
+  -- spr.ok.  29/06/90 SRH
+  --}}}
+
+  INT length :
+  SEQ
+    sp.write (fs, ts, streamid, [char], length, result)
+    -- check operation was ok
+    IF
+      (length <> 1) -- AND (result = spr.ok)
+        result := spr.notok
+      TRUE
+        SKIP
+:
+--}}}
+--{{{  so.fwrite.string.nl
+--* Write a string appended by a newline to a stream.
+--
+-- The newline sequence is appended by this routine.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param streamid the identification number of the stream to write the
+--   string to
+-- @param string the string to be written, which can be any length
+-- @param result spr.ok if the string was successfully written;
+--   spr.notok if not all of the string was written; if >=
+--   spr.operation.failed refer to hostio.inc or iserver documentation
+--   for further details
+PROC so.fwrite.string.nl (CHAN OF SP fs, ts, VAL INT32 streamid,
+                          VAL []BYTE string, BYTE result)
+  --{{{  more information
+  --           If more than a packet's worth of data is to be written
+  --           to a file then one cannot guarantee that all of the data
+  --           will be written to the file before any other process
+  --           accesses the same file.
+  -- The present implementation relies on the fact that the maximum
+  -- size for the data that sp.write and sp.puts can handle is the
+  -- same. 29/06/90 SRH
+  --}}}
+
+  BOOL writing :
+  INT  length :
+  SEQ
+    writing := TRUE
+    length  := 0
+    WHILE writing AND (length < ( (SIZE string) - sp.max.writebuffer.size ))
+      INT length.written :
+      SEQ
+        sp.write (fs, ts, streamid,
+                  [string FROM length FOR sp.max.writebuffer.size],
+                  length.written, result)
+        writing := (length.written = sp.max.writebuffer.size)
+        length  := length + length.written
+
+    -- if writing is now FALSE then an error occurred whilst
+    -- writing the string, so do not attempt further writing
+
+    IF
+      writing
+        SEQ
+          -- use sp.puts so as to have the newline appended directly to
+          -- the end of the string by the server; the server also sees to
+          -- the host dependency of the newline
+          sp.puts (fs, ts, streamid,
+            [string FROM length FOR ((SIZE string) - length)], result)
+          IF
+            result <> spr.ok
+              result := spr.notok
+            TRUE
+              SKIP  -- result is spr.ok
+      TRUE
+        result := spr.notok
+:
+--}}}
+--{{{  so.fwrite.nl
+--* Write a newline to a stream.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param streamid the identification number of the stream to write to
+-- @param result spr.ok if the newline was successfully written;
+--   otherwise >= spr.operation.failed - refer to hostio.inc or iserver
+--   documentation for further details
+PROC so.fwrite.nl (CHAN OF SP fs, ts, VAL INT32 streamid, BYTE result)
+  sp.puts (fs, ts, streamid, "", result)
+:
+--}}}

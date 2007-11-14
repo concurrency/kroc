@@ -1,0 +1,169 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.1, 22/06/90"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#INCLUDE "hostio.inc"
+--{{{  history
+-- Made unequal sizes of from.user and to.user an error; introduced
+-- PRI over ALT of from.user in order to escape from compiler
+-- dependency, but leave the functionallity as before ( because
+-- the old compiler gave a relative priority amongst the inputs
+-- the same for ALT's as for PRI ALT's ); made SIZE queue valid; 
+-- these routines used to be called sp/so.overlapped.multiplexor,
+-- but we changed their names on the introduction of the fairer
+-- multiplexors. V1.1, 22-June-90 SRH
+--}}}
+--{{{  sp.overlapped.pri.multiplexor
+--* Multiplex any number of pairs of SP protocol channels onto a single
+-- pair of SP protocol channels, where the multiplexing is overlapped
+-- so that output through this routine can continue independently of
+-- the receipt of replies.
+--
+-- There is a relative priority to the input channels: from.user[ i ]
+-- is of higher priority than from.user[ j ] where i < j.
+--
+-- It is an error if the size of from.user is different to that of
+-- to.user. It is permissible for the size of from.user ( and hence
+-- to.user ) to be zero. The maximum number of bytes that can be
+-- channelled through this routine in each direction is
+-- sp.max.packet.data.size. It is assumed that replies for messages are
+-- received in the same sequence as the messages are sent.
+--
+-- @param fs input to this routine
+-- @param ts output from this routine
+-- @param from.user input to this routine
+-- @param to.user output from this routine
+-- @param stopper input to this routine: TRUE or FALSE received on this
+--   channel will cause the routine to stop listening on the from.user
+--   channels and wait until all replies have been received before
+--   terminating; this channel has the highest priority of all input
+--   channels
+-- @param queue the values in queue on entry are irrelevant but the
+--   size of it is the maximum number of communications that can be
+--   output through this routine before a reply is received and to be
+--   passed back; the values in queue on termination are equally
+--   irrelevant; queue is used for storage only; if it is of zero
+--   length then no communication can be done and the routine simply
+--   waits on stopper for an input which immediately causes termination
+--   of this routine
+PROC sp.overlapped.pri.multiplexor (CHAN OF SP fs, ts,
+                                    []CHAN OF SP from.user, to.user,
+                                    CHAN OF BOOL stopper,
+                                    []INT queue)
+  --{{{  more info
+  --           The idea is that the ts channel will arrive at the server, after
+  --           perhaps having gone through other processes, and that the fs
+  --           channel has come from the server, perhaps via other processes.
+  --           This will reduce latency time in communications if a process
+  --           has to talk to the server through other processes.
+  --}}}
+
+  IF
+    ( SIZE from.user ) <> ( SIZE to.user )
+      STOP
+    ( ( SIZE from.user ) = 0 ) OR ( ( SIZE queue ) = 0 )
+      BOOL stop :
+      stopper ? stop
+    TRUE
+      CHAN OF INT stop.replies, done.one.reply, reply.to.channel :
+      PAR
+        --{{{  from user to server
+        [sp.max.packet.data.size]BYTE buffer :
+        INT16 len :
+        BOOL  running :
+        INT   replies.outstanding :
+        SEQ
+          running := TRUE
+          replies.outstanding := 0
+          --{{{  copy to server until stopped, counting the replies
+          WHILE running
+            PRI ALT
+              stopper ? running
+                running := FALSE
+          
+              INT any :
+              done.one.reply ? any
+                replies.outstanding := replies.outstanding - 1
+          
+              PRI ALT i = 0 FOR SIZE from.user
+                from.user[i] ? len :: buffer
+                  SEQ
+                    PAR
+                      ts ! len :: buffer
+                      reply.to.channel ! i
+                    replies.outstanding := replies.outstanding + 1
+          --}}}copy to server until stopped, counting the replies
+          --{{{  wait for any outstanding replies
+          SEQ i = 0 FOR replies.outstanding
+            INT any :
+            done.one.reply ? any
+          --}}}wait for any outstanding replies
+          stop.replies ! 0
+        --}}}from user to server
+        --{{{  from server to user
+        [sp.max.packet.data.size]BYTE buffer :
+        INT16 len :
+        INT   fptr, bptr : -- queue pointers
+        BOOL  running, queue.not.full :
+        SEQ
+          running := TRUE
+          fptr := 0
+          bptr := 0
+          queue.not.full := TRUE
+          --{{{  copy from server until stopped
+          WHILE running
+            PRI ALT
+              queue.not.full & reply.to.channel ? queue [bptr]
+                SEQ
+                  bptr := (bptr + 1) \ (SIZE queue)
+                  queue.not.full := bptr <> fptr
+          
+              fs ? len :: buffer
+                PAR
+                  done.one.reply ! 0  -- anything
+                  SEQ
+                    to.user [queue[fptr]] ! len :: buffer
+                    fptr := (fptr + 1) \ (SIZE queue)
+                    PRI ALT    -- to prevent deadlock if sender has just input
+                      reply.to.channel ? queue [bptr]
+                        SEQ
+                          bptr := (bptr + 1) \ (SIZE queue)
+                          queue.not.full := bptr <> fptr
+                      TRUE & SKIP
+                        queue.not.full := TRUE
+          
+              INT any :
+              stop.replies ? any
+                running := FALSE
+          --}}}copy from server until stopped
+        --}}}from server to user
+:
+--}}}sp.overlapped.multiplexor
+--{{{  so.overlapped.pri.multiplexor
+PROC so.overlapped.pri.multiplexor (CHAN OF SP fs, ts,
+                                    []CHAN OF SP from.user, to.user,
+                                    CHAN OF BOOL stopper,
+                                    []INT queue)
+
+  sp.overlapped.pri.multiplexor (fs, ts, from.user, to.user, stopper, queue)
+:
+--}}}so.overlapped.multiplexor

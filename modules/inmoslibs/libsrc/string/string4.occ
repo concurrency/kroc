@@ -1,0 +1,143 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module string
+
+#OPTION "E V" -- no compiler libraries, no vector space
+#COMMENT "String library V1.4 16/06/93"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#USE "convert.lib"
+--{{{  history
+-- V1.0,  1-Jul-88
+-- V1.1, 05-Jun-90 SRH
+-- V1.2, 21-Aug-90; negative value for the field width made an explicit
+-- error. SRH
+-- V1.3, 16-Oct-92; in append.int, parameter 'field' -> 'width', for
+-- consistency.  SRH
+-- V1.4, 16-Jun-93: nibbles.per.word now better named as nibbles.per.int64,
+-- with its definition better given as the number of bits in the integer
+-- divided by the number of bits in a nibble.  SRH
+--}}}
+--{{{  append.int64
+--* Convert a 64-bit integer into its representation as ASCII decimal
+-- digits, with leading spaces if desired, and write this into a given
+-- string.
+--
+-- If str overflows then this routine acts as an invalid process. The
+-- conversion of number will include a minus sign if applicable.
+--
+-- @param len on entry: the index of str at which the first character
+--   of the ASCII conversion of number is to be written; on exit: the
+--   index of str immediately after where the last character of the
+--   ASCII conversion of number was written, or SIZE str if this last
+--   character was written into the last positon of str
+-- @param str the string into which the ASCII conversion of number is
+--   to be written
+-- @param number the 64-bit integer to be converted to an ASCII
+--   representation and then written into str
+-- @param width the field width of the ASCII representation of number:
+--   if number cannot be represented in width characters then the
+--   representation is widened as necessary; if width is larger than
+--   necessary then padding spaces are added on the left; it is an
+--   error for width to be negative
+PROC append.int64 (INT len, []BYTE str, VAL INT64 number, VAL INT width)
+  IF
+    width < 0
+      STOP
+    TRUE
+      [ 20 ] BYTE digits: -- 20 characters in MOSTNEG INT64 = -9223372036854775808
+      INT length:
+      SEQ
+        INT64TOSTRING (length, digits, number)
+        IF
+          length < width
+            SEQ
+              SEQ i = len FOR (width - length)
+                str[i] := ' '
+              len := len + width
+          TRUE
+            len := len + length
+        SEQ i = 1 FOR length
+          str[len - i] := digits[length - i]
+:
+--}}}
+--{{{  append.hex.int64
+--* Convert a 64-bit integer into its representation as ASCII
+-- hexadecimal characters and write this into a given string.
+--
+-- If str overflows then this routine acts as an invalid process. The
+-- conversion of number includes a # as the first character, so that
+-- the representation is always ( width + 1 ) characters. Any
+-- hexadecimal characters which are letters will be in upper case.
+--
+-- @param len on entry: the index of str at which the first character
+--   of the ASCII hexadecimal of number is to be written; on exit: the
+--   index of str immediately after where the last character of the
+--   ASCII hexadecimal of number was written, or SIZE str if this last
+--   character was written into the last positon of str
+-- @param str the string into which the hexadecimal ASCII form of
+--   number is to be written
+-- @param number the 64-bit integer to be converted to an ASCII
+--   hexadecimal representation and then written into str
+-- @param width the field width of the ASCII hexadecimal representation
+--   of number: if number cannot be represented in width characters
+--   then the representation is truncated at the left as necessary;
+--   otherwise the representation is padded on the left with 0's or F's
+--   to make up width characters; a negative value for width is an
+--   error
+PROC append.hex.int64 (INT len, []BYTE str, VAL INT64 number, VAL INT width)
+  IF
+    width < 0
+      STOP
+    TRUE
+      VAL nibbles.per.int64 IS (64 / 4): -- a nibble is 4 bits (one hex digit)
+      [nibbles.per.int64]BYTE digits:
+      INT length, pos, sig.digits:
+      SEQ
+        HEX64TOSTRING (length, digits, number)
+        str [len] := '#'
+        --{{{  leading digit fill
+        IF
+          width <= length
+            SEQ
+              pos := 1
+              sig.digits := width
+          TRUE
+            --{{{  pad at left
+            BYTE fill.digit:
+            SEQ
+              VAL [ 2 ]INT32 num RETYPES number : -- 5-Jun-90 SRH
+              IF
+                num[ 1 ] < 0(INT32)  -- save doing the INT64 comparison number < 0(INT64)
+                  fill.digit := 'F'
+                TRUE
+                  fill.digit := '0'
+              pos := width - length
+              SEQ i = 1 FOR pos
+                str [len + i] := fill.digit
+              pos := pos + 1
+              sig.digits := length
+            --}}}
+        --}}}
+      
+        [str FROM (len + pos) FOR sig.digits] := [digits FROM (length -
+                            sig.digits) FOR sig.digits]
+        len := len + (width + 1)
+:
+--}}}

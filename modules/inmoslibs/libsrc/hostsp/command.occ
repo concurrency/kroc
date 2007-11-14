@@ -1,0 +1,89 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostsp
+
+#COMMENT "Host i/o library, V1.00, 10/03/89"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#COMMENT "KROC hostsp version 1996"
+#INCLUDE "hostio.inc"
+--{{{  sp.commandline
+--* Return the command line passed to the server on invocation.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param all either sp.short.commandline, remove the server's own
+--   name, its recognised options and their parameters or
+--   sp.whole.commandline, the entire command line
+-- @param length the number of bytes returned in string, starting from
+--   string[ 0 ], being zero in the case of result >=
+--   spr.operation.failed
+-- @param string contains the requested command line if result =
+--   spr.ok; contains a truncation of the requested command line if
+--   result = spr.buffer.overflow; is undefined otherwise.  There is no
+--   restriction on the size of string.
+-- @param result equal to spr.ok if the command line was successfully
+--   returned; otherwise takes on a value indicating what went wrong:
+--   spr.buffer.overflow   string is not long enough to contain the
+--   command line, but the latter has been truncated to fit
+--   >=spr.operation.failed  the operation failed - refer to hostio.inc
+--   or iserver documentation for further details
+PROC sp.commandline (CHAN OF SP fs, ts, VAL BYTE all,
+                     INT length, []BYTE string, BYTE result)
+  [sp.max.packet.data.size]BYTE buffer :
+  INT16 temp.INT16 :
+  SEQ
+    --{{{  pack the data into the buffer (2 bytes)
+    buffer [0] := sp.commandline.tag
+    buffer [1] := all
+    --}}}
+    --{{{  send and receive the buffer
+    ts ! INT16 sp.min.packet.data.size :: buffer
+    fs ? temp.INT16 :: buffer
+    --}}}
+    --{{{  unpack the data               (1, or 3 bytes plus data)
+    result := buffer [0]
+
+    IF
+      result = spr.ok
+        SEQ
+          [2]BYTE b.temp RETYPES temp.INT16 :
+          b.temp := [buffer FROM 1 FOR 2]
+          length := INT temp.INT16
+
+          IF
+            length > (SIZE string)
+              SEQ
+                length := SIZE string
+                result := spr.buffer.overflow
+            TRUE
+              SKIP
+          [string FROM 0 FOR length] := [buffer FROM 3 FOR length]
+      TRUE
+        length := 0
+    --}}}unpack the data               (1, or 3 bytes plus data)
+:
+--}}}sp.commandline
+--{{{  so.commandline
+PROC so.commandline (CHAN OF SP fs, ts, VAL BYTE all,
+                     INT length, []BYTE string, BYTE result)
+
+  sp.commandline (fs, ts, all, length, string, result)
+:
+--}}}so.commandline

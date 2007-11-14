@@ -1,0 +1,143 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module streamio
+
+#COMMENT "Stream i/o library, V1.1, 11/06/90"
+#COMMENT "(c) Copyright INMOS Limited, 1988, 1990"
+#INCLUDE "streamio.inc"
+#USE "convert.lib"
+
+--* Read a single precision real number from the given keystream.
+--
+-- A distinction must be made here between a character held in a byte
+-- and a character held in a word length quantity. Here the former is
+-- referred to as a character and the latter as a 'character' ( note
+-- the quotes ). All input up to a plus sign, a minus sign or a decimal
+-- digit is skipped. The real is terminated when anything other than a
+-- valid real 'character' is encountered, and it is this 'character'
+-- that is returned in char if char is not set to ft.number.error.
+--
+-- @param source for input
+-- @param number if char on exit is not ft.number.error or less than
+--   zero then the real number read in single precision IEEE format;
+--   otherwise undefined
+-- @param char on entry: the first 'character' from the input to be
+--   read; on exit: ft.number.error if the 'characters' read did not
+--   form an occam syntax real number ( with optional plus or minus
+--   sign as first 'character', and permissible INT 'e' rather than INT
+--   'E' ) or there were more than 24 'characters' read or the
+--   'characters' formed an infinity; less than zero ( other than
+--   ft.number.error ) if there was an input error ( eg end of file
+--   read ); otherwise it is the 'character' that terminated the
+--   sequence of 'characters' read
+PROC ks.read.real32 (CHAN OF KS source, REAL32 number, INT char)
+  --{{{  history
+  -- Introduced check on the index of the array str in get.real.string
+  -- so that char is set to ft.number.error rather than the error flag
+  -- being set if str overflows.  Cleaned up code whilst I was about
+  -- it.  Reduced max.rep.size from 40 to 24.  New version is 1.1
+  -- ( old version was 0.01, 23-Dec-88 ) 11-June-90 SRH
+  --}}}
+
+  --{{{  get.real.string
+  --* Read a string representing a real number from the given
+  -- keystream.
+  --
+  -- All input up to a plus sign, a minus sign, or a decimal digit is
+  -- skipped. The string representing the real is terminated by a word
+  -- length quantity that cannot form part of a real number. A lower
+  -- case exponential symbol ( 'e' ) is alllowed.
+  --
+  -- @param in for input
+  -- @param len the number of characters in str
+  -- @param str the characters read, after initial skipping, are in the
+  --   first len bytes of this variable, further bytes being undefined
+  -- @param char on entry: the first word length quantity of the input
+  --   to be read; on exit: ft.number.error if the array str would have
+  --   overflown; less than zero ( other than ft.number.error ) if
+  --   there was an input error; otherwise the word length quantity
+  --   that terminated the real number string
+  PROC get.real.string (CHAN OF KS in, INT len, []BYTE str, INT char)
+    -- Allows more than one '.', '+' or '-' but only one 'E' or 'e'.
+  
+    INT ch, j, alphamask :
+    BOOL error :
+    SEQ
+      error := FALSE
+      alphamask := #5F
+      ch := char
+      WHILE (ch <> (INT '+')) AND (ch <> (INT '-')) AND
+            (NOT (((INT '0') <= ch) AND (ch <= (INT '9')))) AND
+            (ch >= 0)
+        in ? ch
+      j := 0
+      IF
+        ch < 0
+          SKIP -- input error (not number error)
+        TRUE
+          SEQ
+            WHILE (((INT '0') <= ch) AND (ch <= (INT '9'))) OR
+                  (ch = (INT '.')) OR
+                  (ch = (INT '+')) OR (ch = (INT '-')) OR
+                  ((ch /\ alphamask) = (INT 'E'))
+              SEQ
+                IF
+                  (ch /\ alphamask) = (INT 'E')
+                    SEQ
+                      alphamask := 0     -- ensure another e or E terminates
+                      ch := INT 'E'      -- force echo 'E'
+                  TRUE
+                    SKIP
+                IF
+                  j < (SIZE str)
+                    SEQ
+                      str[j] := BYTE ch
+                      j := j + 1
+                  TRUE
+                    error := TRUE
+                in ? ch
+      IF
+        error
+          char := ft.number.error
+        TRUE
+          char := ch
+      len := j
+  :
+  --}}}
+
+  VAL max.rep.size IS 24:
+  [max.rep.size]BYTE string:
+  INT length:
+  SEQ
+    get.real.string (source, length, string, char)
+    IF
+      (char < 0) OR (char = ft.number.error)
+        SKIP
+      TRUE
+        BOOL error:
+        SEQ
+          #PRAGMA DEFINED string
+          STRINGTOREAL32 (error, number, [string FROM 0 FOR length])
+          IF
+            error OR NOTFINITE(number)
+              char := ft.number.error
+            TRUE
+              SKIP
+:

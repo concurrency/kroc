@@ -1,0 +1,370 @@
+--
+--	occampi.occ -- occam-pi related support routines (partially KRoC specific)
+--	Copyright (C) 2004-2006 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+--** @module occam8
+
+--{{{  options and comments
+#OPTION "E V"
+#COMMENT "occam-pi support routines, Copyright (C) 2004-2005 Fred Barnes"
+--}}}
+
+#PRAGMA TRANSLATE MPBARSYNC "MPBARSYNC%O"
+#PRAGMA TRANSLATE MPBARRESIGN "MPBARRESIGN%O"
+
+
+-- these are entry-points in the run-time system (common/mobproc.c)
+#PRAGMA EXTERNAL "PROC C.do.mpp.serialise (MOBILE.PROC p, RESULT MOBILE []BYTE r) = 0"
+#PRAGMA EXTERNAL "PROC C.do.mpp.deserialise (MOBILE []BYTE r, RESULT MOBILE.PROC p) = 0"
+#PRAGMA EXTERNAL "PROC C.do.mpp.checkroutine (VAL []BYTE n, RESULT BOOL a) = 0"
+#PRAGMA EXTERNAL "PROC C.do.mpp.loadlibrary (VAL []BYTE l, RESULT BOOL r) = 0"
+#PRAGMA EXTERNAL "PROC C.do.mpp.unloadlibrary (VAL []BYTE l, RESULT BOOL r) = 0"
+
+-- these are in the run-time (common/pgroup.c)
+#PRAGMA EXTERNAL "PROC C.do.pgrp.newgrp () = 0"
+#PRAGMA EXTERNAL "PROC C.do.pgrp.info ([]INT r) = 0"
+
+
+--{{{  MPBARSYNC ()
+--
+--  used to synchronise on the MOBILE process barrier
+--
+PROC MPBARSYNC () SUSPEND
+  DATA TYPE QUEUE
+    RECORD
+      INT Fptr, Bptr:
+  :
+  INT saved:
+  QUEUE tq:
+  ASM
+    -- save return-address
+    LDL 0
+    ST saved
+
+    RESERVELOWWS 4          -- damaged ..?
+
+    LDL .MPPTR
+    CJ :doerr
+    J :skip
+    :doerr
+    SETERR
+    :skip
+
+    -- decrement BCNT
+    LDL .MPPTR
+    DUP
+    LDNL ##MPP.BCNT
+    ADC -1
+    REV
+    STNL ##MPP.BCNT
+
+    -- if BCNT zero, switch back to activator
+    LDL .MPPTR
+    LDNL ##MPP.BCNT
+    CJ :wakeup
+
+    -- else add to queue and stop process
+    LDL .MPPTR
+    LDNL ##MPP.BFPTR
+    CJ :qempty
+    
+    LDLP 0
+    LDL .MPPTR
+    LDNL ##MPP.BBPTR   -- load barrier[Bptr]
+    STNL -2            -- attach
+    J :addtail
+
+    :qempty
+    LDLP 0
+    LDL .MPPTR
+    STNL ##MPP.BFPTR
+
+    :addtail
+    LDLP 0
+    LDL .MPPTR
+    STNL ##MPP.BBPTR
+    NULL
+    STL -2
+
+    -- this will leave a CODEPTR in the workspace (offset -1)
+    WSMAP -1, 15        -- code pointer
+    WSMAP -2, 5         -- general pointer
+    CODEMAP
+    STOPP
+    J :out
+
+    -- switch back to activator
+    :wakeup
+    LDL .MPPTR
+    DUP
+    DUP
+    LDNL ##MPP.WPTR
+    GAJW
+    REV
+    STNL ##MPP.WPTR
+    STL ##MPA.TEMP.VS
+    LDLABELP :cont
+    LDL ##MPA.TEMP.VS
+    STNL ##MPP.IPTR
+    LDL ##MPA.TEMP.VS
+    LDNL ##MPP.AIPTR
+    GCALL
+    THROWAWAY
+
+    -- re-activated, reset BCNT and reschedule processes
+    CODEMAP
+    :cont
+    LDL 0
+    LDL .MPPTR
+    STNL ##MPP.AIPTR
+
+    LDL .MPPTR
+    LDNL ##MPP.BECNT
+    LDL .MPPTR
+    STNL ##MPP.BCNT
+
+    -- don't bother queuing if no processes
+    LDL .MPPTR
+    LDNL ##MPP.BFPTR
+    CJ :out
+
+    LD ADDRESSOF tq
+    SAVEL
+    LD tq[Fptr]
+    CJ :rqempty
+
+    -- run-queue not empty
+    LDL .MPPTR
+    LDNL ##MPP.BFPTR
+    LD tq[Bptr]
+    STNL -2
+    J :rqtail
+
+    :rqempty
+    LDL .MPPTR
+    LDNL ##MPP.BFPTR
+    STLF
+
+    :rqtail
+    LDL .MPPTR
+    LDNL ##MPP.BBPTR
+    STLB
+
+    -- better zero out queue Fptr and Bptr
+    NULL
+    LDL .MPPTR
+    STNL ##MPP.BFPTR
+    NULL
+    LDL .MPPTR
+    STNL ##MPP.BBPTR
+
+    -- restore and return
+    :out
+    LD saved
+    STL 0
+    
+:
+--}}}
+--{{{  PROC MPBARRESIGN () SUSPEND
+--
+--  used to resign a parallel process from a MOBILE process barrier
+--
+PROC MPBARRESIGN () SUSPEND
+  DATA TYPE QUEUE
+    RECORD
+      INT Fptr, Bptr:
+  :
+  INT saved:
+  QUEUE tq:
+  ASM
+    -- save return-address
+    LDL 0
+    ST saved
+
+    RESERVELOWWS 4          -- damaged ...?
+
+    LDL .MPPTR
+    CJ :skip
+    THROWAWAY
+
+    -- decrement BECNT
+    LDL .MPPTR
+    DUP
+    LDNL ##MPP.BECNT
+    ADC -1
+    REV
+    STNL ##MPP.BECNT
+
+    -- decrement BCNT
+    LDL .MPPTR
+    DUP
+    LDNL ##MPP.BCNT
+    ADC -1
+    REV
+    STNL ##MPP.BCNT
+
+    -- if BCNT zero, switch back to activator
+    LDL .MPPTR
+    LDNL ##MPP.BCNT
+    CJ :wakeup
+
+    -- else still more, return
+    J :skip
+
+    -- switch back to activator
+    :wakeup
+    LDL .MPPTR
+    DUP
+    DUP
+    LDNL ##MPP.WPTR
+    GAJW
+    REV
+    STNL ##MPP.WPTR
+    STL ##MPA.TEMP.VS
+    LDLABELP :cont
+    LDL ##MPA.TEMP.VS
+    STNL ##MPP.IPTR
+    LDL ##MPA.TEMP.VS
+    LDNL ##MPP.AIPTR
+    GCALL
+    THROWAWAY
+
+    -- re-activated, reset BCNT and reschedule processes
+    :cont
+    LDL 0
+    LDL .MPPTR
+    STNL ##MPP.AIPTR
+
+    LDL .MPPTR
+    LDNL ##MPP.BECNT
+    LDL .MPPTR
+    STNL ##MPP.BCNT
+
+    -- don't bother queuing if no processes
+    LDL .MPPTR
+    LDNL ##MPP.BFPTR
+    CJ :skip
+
+    LD ADDRESSOF tq
+    SAVEL
+    LD tq[Fptr]
+    CJ :rqempty
+
+    -- run-queue not empty
+    LDL .MPPTR
+    LDNL ##MPP.BFPTR
+    LD tq[Bptr]
+    STNL -2
+    J :rqtail
+
+    :rqempty
+    LDL .MPPTR
+    LDNL ##MPP.BFPTR
+    STLF
+
+    :rqtail
+    LDL .MPPTR
+    LDNL ##MPP.BBPTR
+    STLB
+
+    -- better zero out queue Fptr and Bptr
+    NULL
+    LDL .MPPTR
+    STNL ##MPP.BFPTR
+    NULL
+    LDL .MPPTR
+    STNL ##MPP.BBPTR
+
+    -- restore and return
+    :skip
+    LD saved
+    STL 0
+:
+--}}}
+
+--{{{  PROC MPP.SERIALISE (MOBILE.PROC p, RESULT MOBILE []BYTE r)
+--
+--  used to serialise a mobile process
+--
+PROC MPP.SERIALISE (MOBILE.PROC p, RESULT MOBILE []BYTE r)
+  SEQ
+    C.do.mpp.serialise (p, r)
+:
+--}}}
+--{{{  PROC MPP.DESERIALISE (MOBILE []BYTE r, RESULT MOBILE.PROC p)
+--
+--  used to de-serialise a mobile process
+--
+PROC MPP.DESERIALISE (MOBILE []BYTE r, RESULT MOBILE.PROC p)
+  SEQ
+    C.do.mpp.deserialise (r, p)
+:
+--}}}
+--{{{  PROC MPP.CHECKROUTINE (VAL []BYTE n, RESULT BOOL a)
+--
+--  this is used to find out whether the code for a mobile process is
+--  available.
+--
+PROC MPP.CHECKROUTINE (VAL []BYTE n, RESULT BOOL a)
+  SEQ
+    C.do.mpp.checkroutine (n, a)
+:
+--}}}
+--{{{  PROC MPP.LOADLIBRARY (VAL []BYTE l, RESULT BOOL r)
+--
+--  this is used to load code at run-time; KRoC run-time interprets
+--  the string to get at routines
+--
+PROC MPP.LOADLIBRARY (VAL []BYTE l, RESULT BOOL r)
+  SEQ
+    C.do.mpp.loadlibrary (l, r)
+:
+--}}}
+--{{{  PROC MPP.UNLOADLIBRARY (VAL []BYTE l, RESULT BOOL r)
+--
+--  this is used to unload code at run-time
+--
+PROC MPP.UNLOADLIBRARY (VAL []BYTE l, RESULT BOOL r)
+  SEQ
+    C.do.mpp.unloadlibrary (l, r)
+:
+--}}}
+
+--{{{  PROC PGRP.NEWGRP ()
+--
+--  creates a new process group and moves the current process into it
+--
+PROC PGRP.NEWGRP ()
+  SEQ
+    C.do.pgrp.newgrp ()
+:
+--}}}
+--{{{  PROC PGRP.INFO (RESULT []INT r)
+--
+--  returns information about the current process group in an integer array,
+--  [group-id, nprocs]
+--
+PROC PGRP.INFO (RESULT []INT r)
+  SEQ
+    C.do.pgrp.info (r)
+:
+--}}}
+
+
+
+

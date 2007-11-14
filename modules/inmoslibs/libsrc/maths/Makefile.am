@@ -1,0 +1,93 @@
+@SET_MAKE@
+
+AUTOMAKE_OPTIONS = foreign no-dependencies
+OCCBUILD = @OCCBUILD@ --search ../occam8
+
+libs = \
+	snglmath.lib \
+	dblmath.lib \
+	maths.lib
+includes = \
+	mathhdr.inc \
+	mathvals.inc
+
+EXTRA_DIST = \
+	acosfl.occ \
+	alogfl.occ \
+	asinfl.occ \
+	atanfl.occ \
+	dacosfl.occ \
+	dalogfl.occ \
+	dasinfl.occ \
+	datanfl.occ \
+	dexpfl.occ \
+	dhyperfl.occ \
+	dpowfl.occ \
+	dranfl.occ \
+	expfl.occ \
+	hyperfl.occ \
+	powfl.occ \
+	ranfl.occ \
+	tanfl.occ \
+	$(includes)
+
+snglmath_lib_objs = \
+	acosfl.tce \
+	alogfl.tce \
+	asinfl.tce \
+	atanfl.tce \
+	expfl.tce \
+	hyperfl.tce \
+	powfl.tce \
+	ranfl.tce \
+	tanfl.tce
+
+dblmath_lib_objs = \
+	dacosfl.tce \
+	dalogfl.tce \
+	dasinfl.tce \
+	datanfl.tce \
+	dexpfl.tce \
+	dhyperfl.tce \
+	dpowfl.tce \
+	dranfl.tce
+
+all-local: $(libs)
+
+snglmath.lib: $(snglmath_lib_objs)
+	$(OCCBUILD) --library snglmath.lib $(snglmath_lib_objs)
+
+dblmath.lib: $(dblmath_lib_objs)
+	$(OCCBUILD) --library dblmath.lib $(dblmath_lib_objs)
+
+maths.lib:
+	$(OCCBUILD) --library maths.lib --include mathhdr.inc --include mathvals.inc --need snglmath --need dblmath
+
+install-exec-local: $(libs) $(includes)
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
+
+clean-local:
+	$(OCCBUILD) --clean $(libs) $(snglmath_lib_objs) $(dblmath_lib_objs)
+
+SUFFIXES = .occ .tce .lib
+
+.occ.tce:
+	$(OCCBUILD) --object $<
+
+## begin pideps dependencies
+acosfl.tce: $(srcdir)/mathhdr.inc
+alogfl.tce: $(srcdir)/mathhdr.inc
+asinfl.tce: $(srcdir)/mathhdr.inc
+atanfl.tce: $(srcdir)/mathhdr.inc
+dacosfl.tce: $(srcdir)/mathhdr.inc
+dalogfl.tce: $(srcdir)/mathhdr.inc
+dasinfl.tce: $(srcdir)/mathhdr.inc
+datanfl.tce: $(srcdir)/mathhdr.inc
+dexpfl.tce: $(srcdir)/mathhdr.inc
+dhyperfl.tce: $(srcdir)/mathhdr.inc
+dpowfl.tce: $(srcdir)/mathhdr.inc
+expfl.tce: $(srcdir)/mathhdr.inc
+hyperfl.tce: $(srcdir)/mathhdr.inc
+powfl.tce: $(srcdir)/mathhdr.inc
+tanfl.tce: $(srcdir)/mathhdr.inc
+## end pideps dependencies
