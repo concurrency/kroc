@@ -1,0 +1,21 @@
+
+This directory contains the following sub-directories
+
+
+  bar/
+
+    the "better-bar" simulation.  An animated ALT demonstrator,
+    with added extras.
+
+  game/
+
+    an interactive multi-user text based adventure game.
+
+  robots/
+
+    David Wood's robot demonstrators and Sam's particle demo.
+
+  ttygames/
+
+    A collection of text-based games written in occam-pi.
+

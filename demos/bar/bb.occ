@@ -1,0 +1,4212 @@
+--
+--	bb.occ -- a better bar simulation
+--	Copyright (C) 2002-2005 Fred Barnes <frmb@kent.ac.uk>
+--	Course library components Copyright (C) Peter Welch, David Wood and David Morse
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#INCLUDE "course.module"
+
+--{{{  top-level
+PROC bb (CHAN BYTE kyb?, scr!)
+
+  --{{{  constant tables
+  VAL [][]BYTE screen IS
+  --"0        1         2         3         4         5         6         7        ",
+  --"123456789012345678901234567890123456789012345678901234567890123456789012345678"
+   ["  [BARSTAT]  ||      |ooo| |          | |ooo|                         |       ", -- 01
+    "   ----      ||  ----      M---<##>---M                   :(          @@      ", --  2
+    "             ||                 :(                      ,----.         |      ", --  3
+    "   ====      @@  ====                                   |    |        @@      ", --  4
+    "             @@                           :(          :(|    |:(      |       ",--  5
+    "cc           ||                         ,----.          |    |        | de-tox", --  6
+    "cc           ||                         |    |          `----*'        |       ", --  7
+    "cc           ||                       :(|    |:(          :(          @@      ", --  8
+    "cc           ||                         |    |                         |      ", --  9
+    "cc  :(       ||                         `----*'                        @@      ",-- 10
+    "cc           ||                           :(                          |       ", --  1
+    "cc           ||                                                       `-XX-XX-", --  2
+    "cc           ||                :(                                             ", --  3
+    "cc           ||              ,----.              o--------o--------o          ", --  4
+    "cc  :(       ||              |    |              |              o  |          ", --  5
+    "cc           ||            :(|    |:(          :(|   c         o o |          ", --  6
+    "cc           ||              |    |              |              o  |          ", --  7
+    "cc           ||              `----*'              o--------o--------o          ", --  8
+    "cc           ||                :(                                             ", --  9
+    "             @@                                                               ", -- 20
+    "-@----@-+----@@-[INFORMATION LINE INFORMATION LINE INF]-[1P START]-[2P START]-", --  1
+    "        |()()||                                                               ", --  2
+    " cellar |()()||                                                               ", --  3
+    "        |()()||                                                               "]:--  4
+  --"123456789012345678901234567890123456789012345678901234567890123456789012345678"
+  VAL []BYTE screen.points IS [1,1,78,24]:
+  VAL [][4]BYTE bad.regions IS [[14,1,15,24],[28,1,39,2],[22,1,45,1],[57,3,62,7],[41,6,46,10],
+                                [50,14,68,18],[30,14,35,18],[1,21,9,24],[3,1,11,1],
+                                [10,21,13,24],[16,21,78,24],[1,6,2,20],[72,1,78,12],[71,1,71,2],
+                                [71,4,71,8],[71,10,71,12],[4,2,7,2],[4,4,7,4],
+                                [16,2,21,2],[18,4,21,4]]:
+  VAL [][2]BYTE sprites IS [":)",":|",":(",":}","8)","8]",":D",":O","|)","8D","  ","X("]:
+  VAL [][2]BYTE phil.origin IS [[59,2],[63,5],[55,5],[59,8],[43,5],[47,8],[43,11],[39,8],
+                                [32,13],[32,19],[36,16],[28,16],[33,3],[48,16]]:
+  VAL [][4]BYTE table.points IS [[30,14,35,18],[41,6,46,10],[57,3,62,7]]:
+  VAL [2][]BYTE game.if.points IS [[57,21,66,21], [68,21,77,21]]:
+  VAL [2][]BYTE game.entry.points IS [[41,2,45,3], [22,2,26,3]]:
+  VAL [2][]BYTE teleport.points IS [[4,2,7,4],[18,2,21,4]]:
+  VAL [][2]BYTE scorekeeper.points IS [[73,12],[76,12]]:
+  VAL INT jukebox.phil IS 12:
+  VAL INT pool.phil IS 13:
+  VAL []BYTE infoline.points IS [16,21,78,21]:
+  VAL []BYTE infotext.points IS [18,21,54,21]:
+  VAL [][2]BYTE att.origin IS [[5,10],[5,15]]:
+  VAL []BYTE jukebox.points IS [28,1,39,2]:
+  VAL []BYTE jukebox.credit.points IS [33,2]:
+  VAL [][2]BYTE jukebox.speaker.points IS [[23,1],[42,1]]:
+  VAL []BYTE pool.points IS [50,14,68,18]:
+  VAL []BYTE bar.points IS [14,1,15,24]:
+  VAL []BYTE bar.supports.y IS [4,5,20,21]:
+  VAL []BYTE barstat.points IS [4,1,10,1]:
+  VAL []BYTE cellar.points IS [1,21,9,24]:
+  VAL []BYTE cellar.door.points IS [3,21]:
+  VAL []BYTE depot.points IS [10,21,13,24]:
+  VAL []BYTE beer.truck.points IS [16,22,78,24]:
+  VAL []BYTE detox.points IS [71,1,78,12]:
+  VAL []BYTE detox.in.door IS [70,3]:
+  VAL []BYTE detox.out.door IS [70,9]:
+  VAL BYTE phil.queue.y IS 6:          -- where the philosophers start to queue
+  VAL INT pints.per.barrel IS 20:
+  --}}}  
+  --{{{  constants
+  VAL INT MAX.SPRITES IS 16:
+  VAL INT NUM.PHILS IS 14:
+  VAL INT NUM.ATTENDANTS IS 2:
+  VAL INT NUM.TAB.PHILS IS 12:
+  VAL INT NUM.TABLES IS 3:
+  VAL INT MAX.BULLETS IS 30:
+  VAL [NUM.PHILS]INT TABLE.MAP IS [9,10,8,11,5,6,7,4,1,3,2,0,-1,-1]:	-- phil<->table connection
+
+  VAL INT SPR.HAPPY IS 0:
+  VAL INT SPR.BORED IS 1:
+  VAL INT SPR.SAD IS 2:
+  VAL INT SPR.ILL IS 3:
+  VAL INT SPR.DRUNK.HAPPY IS 4:
+  VAL INT SPR.DRUNK.ILL IS 5:
+  VAL INT SPR.TALK IS 6:
+  VAL INT SPR.SHOCKED IS 7:
+  VAL INT SPR.SLEEPY IS 8:
+  VAL INT SPR.DRUNK.TALK IS 9:
+  VAL INT SPR.CLEAR IS 10:
+  VAL INT SPR.DEAD IS 11:
+
+  VAL BYTE ANSI.NORMAL IS 0:
+  VAL BYTE ANSI.BOLD IS 1:
+  VAL BYTE ANSI.FG.BLACK IS 30:
+  VAL BYTE ANSI.FG.RED IS 31:
+  VAL BYTE ANSI.FG.GREEN IS 32:
+  VAL BYTE ANSI.FG.YELLOW IS 33:
+  VAL BYTE ANSI.FG.BLUE IS 34:
+  VAL BYTE ANSI.FG.MAGENTA IS 35:
+  VAL BYTE ANSI.FG.CYAN IS 36:
+  VAL BYTE ANSI.FG.WHITE IS 37:
+  --}}}  
+  --{{{  protocols
+  --{{{  PROTOCOL SPROTO  (screen updates)
+  PROTOCOL SPROTO
+    CASE
+      clear.screen
+      string.x.y; BYTE; BYTE; BYTE::[]BYTE
+      int.x.y; BYTE; BYTE; INT
+      char.x.y; BYTE; BYTE; BYTE
+      hex8.x.y; BYTE; BYTE; BYTE
+      sprite.x.y; BYTE; BYTE; INT
+      colour; BYTE
+  :
+  --}}}
+  --{{{  PROTOCOL COLL.REQ  (collision detector request)
+  PROTOCOL COLL.REQ
+    CASE
+      init.sprite; BYTE; BYTE; BYTE		-- "i am here"/init: x; y; id
+      clear.sprite; BYTE; BYTE; BYTE		-- "i am not here": x; y; id
+      reserve.x.y; BYTE; BYTE; BYTE		-- where can i go from here ?:  x; y; id
+      move.x.y; BYTE; BYTE; BYTE		-- move: x; y; id
+      region.reserve; BYTE; BYTE; BYTE; BYTE	-- reserve this region ?
+      region.set; BYTE; BYTE; BYTE; BYTE	-- invalidate this region
+      region.clear; BYTE; BYTE; BYTE; BYTE	-- clear this region
+      query.x.y; BYTE; BYTE			-- what's at:  x; y
+  :
+  --}}}
+  --{{{  PROTOCOL COLL.REP  (collision detector reply)
+  PROTOCOL COLL.REP
+    CASE
+      reserved; [4]BYTE				-- these are the directions you can go
+      region.reply; BOOL			-- yes/no to reserve
+      query.reply; BYTE				-- BYTE value at square
+  :
+  --}}}
+  --{{{  PROTOCOL CIF.PROTO  (character interface)
+  PROTOCOL CIF.PROTO
+    CASE
+      set.x.y; BYTE; BYTE			-- x; y
+      move.x.y; BYTE; BYTE; BYTE; BYTE		-- cur-x; cur-y; new-x; new-y
+      set.sprite; BYTE; BYTE; INT		-- x; y; spr
+      set.attr; BYTE; BYTE; BYTE		-- x; y; attr
+      draw.at; BYTE; BYTE; BYTE; BYTE		-- cur-x; cur-y; new-x; new-y
+      hide; BYTE; BYTE				-- x; y
+      show; BYTE; BYTE				-- x; y
+      offboard; BYTE; BYTE; BOOL		-- x; y; off/on
+      n.random; INT				-- randomness
+      hiding.sprite; INT			-- spr
+      hiding.attr; BYTE				-- attr
+  :
+  --}}}
+  --{{{  PROTOCOL SCR.CTRL  (scrolly text control)
+  PROTOCOL SCR.CTRL
+    CASE
+      set.attr; BYTE
+      set.text; BYTE::[]BYTE
+      set.speed; INT
+      reset
+      wait
+  :
+  --}}}
+  --{{{  PROTOCOL JUKEBOX.CTRL  (juke-box control)
+  PROTOCOL JUKEBOX.CTRL
+    CASE
+      coin					-- 1 credit
+      song; BYTE; BYTE				-- disc; track
+  :
+  --}}}
+  --{{{  PROTOCOL PHIL.TAB  (philosopher -> table)
+  PROTOCOL PHIL.TAB
+    CASE
+      sit.down; INT				-- philosopher sitting down; pint state (0-3)
+      stand.up					-- philosopher standing up
+      glass.down				-- philosopher puts glass down
+      how.many					-- how many here ?
+      pint.update; INT				-- pint state update (1-3)
+  :
+  --}}}
+  --{{{  PROTOCOL TAB.PHIL  (table -> philosopher)
+  PROTOCOL TAB.PHIL
+    CASE
+      n.here; INT				-- number of others here
+  :
+  --}}}
+  --{{{  PROTOCOL TELE.REQ  (teleporter request)
+  PROTOCOL TELE.REQ
+    CASE
+      activate; BYTE; BYTE; BYTE; BYTE; INT	-- start teleport at: x; y; id; attr; sprite
+  :
+  --}}}
+  --{{{  PROTOCOL TELE.REP  (teleporter reply)
+  PROTOCOL TELE.REP
+    CASE
+      done; BYTE; BYTE				-- teleported to position: x; y
+  :
+  --}}}
+  --{{{  PROTOCOL FAST.CTRL  (fast scrolling text)
+  PROTOCOL FAST.CTRL
+    CASE
+      set.fast; BOOL                            -- turn fast-mode on/off
+      set.text; BYTE::[]BYTE                    -- set text
+      set.attr; BYTE                            -- set attribute
+  :
+  --}}}
+  --{{{  BULLET.OUT, BULLET.IN, HIT.IN, HIT.INFO, TAGGED.HIT.IN
+  PROTOCOL BULLET.OUT IS BYTE; BYTE; BYTE; BYTE; INT:	-- x; y; direction; attribute; player-id
+  PROTOCOL BULLET.IN IS INT; INT:			-- hit indicator: attribute; player-id
+  PROTOCOL HIT.IN IS BYTE; INT:                         -- attr; player-id
+  PROTOCOL HIT.INFO IS BYTE; BYTE; INT:                 -- for the scoring process: phil-id; fg-attr; player-id
+  --}}}
+  --}}}  
+  --{{{  channel-types
+  CHAN TYPE COLL.LINK
+    MOBILE RECORD
+      CHAN COLL.REQ req?:
+      CHAN COLL.REP rep!:
+  :
+  CHAN TYPE DETOX.LINK
+    MOBILE RECORD
+      CHAN INT req?:
+      CHAN INT rep!:
+  :
+  CHAN TYPE BEERCORP.LINK
+    MOBILE RECORD
+      CHAN INT req?:
+      CHAN INT rep!:
+  :
+  CHAN TYPE NHS.LINK
+    MOBILE RECORD
+      CHAN INT req?:
+      CHAN INT rep!:
+  :
+  CHAN TYPE TELEPORT.LINK
+    MOBILE RECORD
+      CHAN TELE.REQ req?:
+      CHAN TELE.REP rep!:
+  :
+  CHAN TYPE BAR.REPLY
+    MOBILE RECORD
+      CHAN INT rep?:
+  :
+  CHAN TYPE BAR.SERVICE
+    MOBILE RECORD
+      CHAN INT req?:
+      CHAN BAR.REPLY! reply?:
+  :
+  --}}}
+  --{{{  higher-level protocols/constants
+  PROTOCOL BAR.REQUEST IS INT; BAR.REPLY!:      -- y-position and reply channel-type end
+  VAL []BYTE player.bullet.attr IS [ANSI.FG.GREEN, ANSI.FG.RED]:
+  --}}}
+  --{{{ PROC out.hexbyte (VAL BYTE n, VAL INT field, CHAN BYTE out!)
+  PROC out.hexbyte (VAL BYTE n, VAL INT field, CHAN BYTE out!)
+    VAL []BYTE hextab IS "0123456789ABCDEF":
+    SEQ
+      out ! hextab[(INT (n >> 4))]
+      out ! hextab[(INT (n /\ #0F))]
+  :
+  --}}}
+  --{{{  INT FUNCTION gen.seed.from.time (...)
+  INT FUNCTION gen.seed.from.time (VAL INT t) IS ((t /\ #7FFFFFFF) >> 1) + 1:
+  --}}}  
+  --{{{  PROC rand.delay (...)
+  PROC rand.delay (VAL INT min, max, INT seed)
+    #PRAGMA DEFINED seed
+    TIMER tim:
+    INT t:
+    INT d:
+    SEQ
+      tim ? t
+      d, seed := random ((max - min) + 1, seed)
+      tim ? AFTER (t PLUS (min + d))
+  :
+  --}}}  
+  --{{{  INT FUNCTION IABS (...)
+  INT FUNCTION IABS (VAL INT n)
+    INT r:
+    VALOF
+      IF
+        n < 0
+          r := -n
+        TRUE
+          r := n
+      RESULT r
+  :
+  --}}}  
+  --{{{  PROC init.screen (...)
+  PROC init.screen (SHARED CHAN SPROTO out!)
+    CLAIM out!
+      SEQ
+        out ! clear.screen
+        out ! colour; ANSI.FG.WHITE
+        SEQ y = 0 FOR SIZE screen
+          out ! string.x.y; 1; ((BYTE y) + 1); BYTE (SIZE screen[y])::screen[y]
+  :
+  --}}}  
+  --{{{  PROC text.scrolly (...)
+  PROC text.scrolly (VAL BYTE x, y, width, SHARED CHAN SPROTO out!, CHAN SCR.CTRL ctrl.in?, CHAN FAST.CTRL fast.in?)
+    [255]BYTE text:
+    BYTE text.len:
+    BYTE attr:
+    INT delay, t:
+    TIMER tim:
+    SEQ
+      --{{{  get some initial values
+      SEQ
+        ctrl.in ? CASE set.attr; attr
+        ctrl.in ? CASE set.text; text.len::text
+        ctrl.in ? CASE set.speed; delay
+      --}}}  
+      --{{{  main loop
+      SEQ
+        tim ? t
+        t := t PLUS delay
+
+        VAL []BYTE spaces IS "                                                                       ":
+        INITIAL INT idx IS (INT text.len):
+        INITIAL BOOL suspend.input IS FALSE:
+        WHILE TRUE
+          SEQ
+            --{{{  draw text
+            CLAIM out!
+              SEQ
+                out ! colour; attr
+                IF
+                  idx = (INT text.len)
+                    idx := -(INT width)
+                  TRUE
+                    SKIP
+                IF
+                  idx < 0
+                    VAL BYTE n.spaces IS BYTE (-idx):
+                    SEQ
+                      out ! string.x.y; x; y; n.spaces::spaces
+                      out ! string.x.y; x + n.spaces; y; (width - n.spaces)::text
+                  (idx + (INT width)) > (INT text.len)
+                    BYTE n.chars:
+                    SEQ
+                      n.chars := width - (((BYTE idx) + width) - text.len)
+                      out ! string.x.y; x; y; n.chars::[text FROM idx]
+                      out ! string.x.y; x + n.chars; y; (width - n.chars)::spaces
+                  TRUE
+                    out ! string.x.y; x; y; width::[text FROM idx]
+            --}}}  
+            --{{{  alt for control or timeout
+            PRI ALT
+              fast.in ? CASE
+                BOOL do.fast:
+                set.fast; do.fast
+                  --{{{  fast mode on, takes over until off
+                  [255]BYTE fastbuf:
+                  BYTE fastlen, fastattr:
+                  INT fastidx, fastleft:
+                  BOOL fast.timeout:
+                  SEQ
+                    fastlen := 0
+                    fastidx := 0
+                    fastleft := 0
+                    fast.timeout := FALSE
+                    fastattr := ANSI.FG.WHITE
+
+                    --{{{  pretty-initialise fast (clears any existing scrolly text)
+                    --tim ? t
+                    --SEQ i = 2 FOR ((INT width) >> 1) + 1 STEP 2
+                    --  SEQ
+                    --    CLAIM out!
+                    --      VAL INT tx IS (INT width) - i:
+                    --      SEQ
+                    --        out ! colour; ANSI.FG.WHITE
+                    --        IF
+                    --          tx < 0
+                    --            out ! string.x.y; x; y; width::spaces
+                    --          TRUE
+                    --            SEQ
+                    --              out ! string.x.y; x + (BYTE tx); y; 2::"****"
+                    --              IF
+                    --                (tx + 2) < (INT width)
+                    --                  out ! string.x.y; x + ((BYTE tx) + 2); y; 2::"  "
+                    --                TRUE
+                    --                  SKIP
+                    --    t := t PLUS 30000
+                    --    tim ? AFTER t
+                    --}}}
+                    --{{{  main loop
+                    WHILE do.fast
+                      PRI ALT
+                        fast.in ? CASE
+                          set.fast; do.fast
+                            SKIP
+                          set.text; fastlen::fastbuf
+                            --{{{  set fast text and reset
+                            SEQ
+                              fastidx := 1
+                              fastleft := (INT width) - fastidx
+                              tim ? t
+                              t := t PLUS 30000
+                              fast.timeout := TRUE
+                              IF
+                                fastlen < width
+                                  --{{{  pad left-over with blanks
+                                  VAL INT left IS INT (width - fastlen):
+                                  [fastbuf FROM INT fastlen FOR left] := [spaces FOR left]
+                                  --}}}
+                                TRUE
+                                  SKIP
+                            --}}}
+                          set.attr; fastattr
+                            --{{{  set attribute
+                            SKIP
+                            --}}}
+                        fast.timeout & tim ? AFTER t
+                          --{{{  fast timeout, redraw
+                          SEQ
+                            IF
+                              fastleft > 2
+                                --{{{  draw some stars in front of it
+                                CLAIM out!
+                                  SEQ
+                                    out ! colour; ANSI.FG.WHITE
+                                    out ! string.x.y; x + (BYTE (fastleft - 3)); y; 3::"**** "
+                                --}}}
+                              TRUE
+                                SKIP
+                            CLAIM out!
+                              SEQ
+                                out ! colour; fastattr
+                                out ! string.x.y; x + (BYTE fastleft); y; (BYTE fastidx)::fastbuf
+                            IF
+                              fastleft = 0
+                                --{{{  text got to the end
+                                SEQ
+                                  fast.timeout := FALSE
+                                --}}}
+                              TRUE
+                                --{{{  update for next time
+                                SEQ
+                                  fastidx := fastidx + 2
+                                  fastleft := (INT width) - fastidx
+                                  IF
+                                    fastleft < 0
+                                      SEQ
+                                        fastidx := (INT width)
+                                        fastleft := 0
+                                    TRUE
+                                      SKIP
+                                  t := t PLUS 30000
+                                --}}}
+                          --}}}
+                    --}}}
+                    --{{{  update anim delay for higher-level
+                    tim ? t
+                    t := t PLUS delay
+                    --}}}
+                  --}}}
+              (NOT suspend.input) & ctrl.in ? CASE
+                set.attr; attr
+                  SKIP
+                set.speed; delay
+                  SKIP
+                set.text; text.len::text
+                  IF
+                    idx > (INT text.len)
+                      idx := -(INT width)
+                    TRUE
+                      SKIP
+                reset
+                  idx := -(INT width)
+                wait
+                  suspend.input := TRUE
+              tim ? AFTER t
+                SEQ
+                  idx := idx + 1
+                  IF
+                    (idx = ((INT text.len) - 1)) AND suspend.input
+                      suspend.input := FALSE
+                    TRUE
+                      SKIP
+                  tim ? t
+                  t := t PLUS delay
+            --}}}  
+      --}}}  
+  :
+  --}}}  
+  --{{{  PROC detox (...)
+  PROC detox (SHARED CHAN SPROTO out!, DETOX.LINK? link)
+    --{{{  note
+    -- clients hold a semaphore when using the machine, so communication on drunk/sober
+    -- can be fairly arbitary.
+    --}}}  
+    --{{{  constant data, etc.
+    VAL [][]BYTE detox.station IS ["|       ", "@@      ", " |      ", "@@      ", "|       ",
+                                   "| de-tox", "|       ", "@@      ", " |      ", "@@      ",
+                                   "|       ", "`-------"]:
+    VAL BYTE detox.text.x IS detox.points[0] + 2:
+    VAL BYTE detox.text.y IS detox.points[1] + 5:
+    --}}}  
+    INT seed:
+    SEQ
+      --{{{  init
+      SEQ
+        CLAIM out!
+          SEQ
+            out ! colour; ANSI.FG.MAGENTA
+            SEQ y = 0 FOR INT ((detox.points[3] - detox.points[1]) + 1)
+              VAL BYTE sy IS (BYTE y) + detox.points[1]:
+              out ! string.x.y; detox.points[0]; sy; BYTE (SIZE detox.station[y])::detox.station[y]
+            out ! colour; ANSI.FG.CYAN
+            out ! string.x.y; detox.text.x; detox.text.y; 6::"de-tox"
+        TIMER tim:
+        tim ? seed
+        seed := gen.seed.from.time (seed)
+      --}}}  
+      --{{{  main loop
+      WHILE TRUE
+        INT c:
+        SEQ
+          --{{{  wait for client
+          SEQ
+            link[req] ? c
+          --}}}  
+          --{{{  process
+          SEQ
+            SEQ i = 0 FOR 5
+              VAL BYTE y1 IS detox.points[1] + (BYTE i):
+              VAL BYTE y2 IS detox.points[3] - ((BYTE i) + 1):
+              SEQ
+                CLAIM out!
+                  SEQ
+                    IF
+                      i < 2
+                        out ! colour; ANSI.FG.RED
+                      i < 4
+                        out ! colour; ANSI.FG.YELLOW
+                      TRUE
+                        out ! colour; ANSI.FG.GREEN
+                    out ! string.x.y; detox.points[0] + 3; y1; 4::"===="
+                    out ! string.x.y; detox.points[0] + 3; y2; 4::"===="
+                rand.delay (400000, 600000, seed)
+                CLAIM out!
+                  SEQ
+                    out ! string.x.y; detox.points[0] + 3; y1; 4::"    "
+                    out ! string.x.y; detox.points[0] + 3; y2; 4::"    "
+          --}}}  
+          --{{{  let out
+          SEQ
+            link[rep] ! c
+          --}}}  
+      --}}}  
+  :
+  --}}}  
+  --{{{  PROC cellar (...)
+  PROC cellar (SHARED CHAN SPROTO out!, CHAN INT door?, use.barrel?, beer.out!,
+              BEERCORP.LINK! beer.corp, VAL INT init.barrels)
+
+    --{{{  private procs, etc.
+    VAL [2]INT door.anim.delay IS [30000,40000]:
+    PROC cellar.door (SHARED CHAN SPROTO out!, CHAN INT door?, door.done!)
+      INT seed:
+      VAL [][4]BYTE door.bits IS ["----","--- ","--  ","-   ","    "]:
+      SEQ
+        --{{{  init
+        TIMER tim:
+        tim ? seed
+        seed := gen.seed.from.time (seed)
+        --}}}  
+        --{{{  draw door in pretty colours
+        CLAIM out!
+          SEQ
+            out ! colour; ANSI.FG.RED
+            out ! string.x.y; cellar.door.points[0]; cellar.door.points[1]; 4::door.bits[0]
+        --}}}  
+        --{{{  main loop
+        INITIAL BOOL open IS FALSE:
+        WHILE TRUE
+          INT start, step:
+          INT v:
+          SEQ
+            door ? v
+            IF
+              NOT open
+                start, step := 0, 1
+              TRUE
+                start, step := (SIZE door.bits) - 1, -1
+            SEQ i = start FOR SIZE door.bits STEP step
+              SEQ
+                CLAIM out!
+                  SEQ
+                    out ! colour; ANSI.FG.RED
+                    out ! string.x.y; cellar.door.points[0]; cellar.door.points[1]; 4::door.bits[i]
+                rand.delay (door.anim.delay[0], door.anim.delay[1], seed)
+            open := NOT open
+            door.done ! v
+        --}}}  
+    :
+    PROC barrel.display (SHARED CHAN SPROTO out!, CHAN INT n.in?, VAL INT i.n)
+      INT n:
+      SEQ
+        --{{{  initialise
+        CLAIM out!
+          SEQ
+            out ! colour; ANSI.FG.MAGENTA
+            out ! string.x.y; depot.points[0]; depot.points[1]; 4::"----"
+        --}}}  
+        n := i.n
+        VAL [][4]BYTE lines IS ["    ","  ()","()()"]:
+        VAL [][3]INT itab IS [[0,0,0],[0,0,1],[0,0,2],[0,1,2],[0,2,2],[1,2,2],[2,2,2]]:
+        WHILE TRUE
+          SEQ
+            CLAIM out!
+              SEQ
+                out ! colour; ANSI.FG.WHITE
+                SEQ y = 0 FOR 3
+                  out ! string.x.y; depot.points[0]; (depot.points[1] + 1) + (BYTE y);
+                                    4::lines[itab[n][y]]
+            n.in ? n
+    :
+    --}}}  
+    --{{{  main cellar code
+    SEQ
+      --{{{  draw in pretty colours
+      CLAIM out!
+        SEQ
+          out ! colour; ANSI.FG.MAGENTA
+          out ! string.x.y; cellar.points[0]; cellar.points[1]; 9::"-@----@-+"
+          SEQ iy = (INT cellar.points[1]) + 1 FOR (INT cellar.points[3]) - (INT cellar.points[1])
+            out ! char.x.y; cellar.points[2]; BYTE iy; '|'
+          out ! colour; ANSI.FG.CYAN
+          out ! string.x.y; cellar.points[0] + 1; cellar.points[1] + 2; 6::"cellar"
+      --}}}  
+      --{{{  network
+      CHAN INT local.door, local.door.done, bd.update:
+      PAR
+        cellar.door (out!, local.door?, local.door.done!)
+        barrel.display (out!, bd.update?, init.barrels)
+        INITIAL INT n.barrels IS init.barrels:
+        WHILE TRUE
+          SEQ
+            --{{{  wait for dude at door or ambulance call
+            INT v:
+            door ?? v
+              --{{{  extended process, open door
+              SEQ
+                local.door ! 0
+                INT any:
+                local.door.done ? any
+              --}}}  
+            --}}}  
+            --{{{  out of booze ?
+            IF
+              n.barrels = 0
+                SEQ
+                  beer.corp[req] ! 0
+                  INITIAL BOOL done IS FALSE:
+                  WHILE NOT done
+                    INT n:
+                    SEQ
+                      beer.corp[rep] ? n
+                      IF
+                        n = 0
+                          done := TRUE
+                        TRUE
+                          SEQ
+                            n.barrels := n.barrels + n
+                            bd.update ! n.barrels
+              TRUE
+                SKIP
+            --}}}  
+            --{{{  wait for barrel change
+            INT any:
+            use.barrel ?? any
+              SEQ
+                --{{{  consume barrel and report more beer available
+                n.barrels := n.barrels - 1
+                beer.out ! pints.per.barrel
+                bd.update ! n.barrels
+                --}}}  
+            --}}}  
+            --{{{  wait for close door
+            SEQ
+              INT v:
+              door ? v
+              local.door ! 0
+              INT any:
+              local.door.done ? any
+            --}}}  
+      --}}}  
+    --}}}  
+  :
+  --}}}  
+  --{{{  PROC jukebox (...)
+  PROC jukebox (CHAN JUKEBOX.CTRL in?, SHARED CHAN SPROTO out!)
+
+    --{{{  local procs, etc.
+    PROC credits.song.display (CHAN INT credit?, song?, SHARED CHAN SPROTO out!)
+      TIMER tim:
+      INITIAL INT t IS 0:
+      INITIAL [2]BYTE dpy IS "##":
+      INITIAL BYTE attr IS ANSI.FG.RED:
+      INITIAL INT credit.flash IS 0:
+      INITIAL INT current.song IS -1:
+      WHILE TRUE
+        SEQ
+          CLAIM out!
+            SEQ
+              IF
+                (credit.flash > 0) AND ((credit.flash /\ 1) = 1)
+                  out ! string.x.y; jukebox.credit.points[0]; jukebox.credit.points[1]; 2::"  "
+                TRUE
+                  SEQ
+                    out ! colour; attr
+                    out ! string.x.y; jukebox.credit.points[0]; jukebox.credit.points[1]; 2::dpy
+
+          PRI ALT
+            --{{{  incomming credit
+            INT c:
+            credit ? c
+              SEQ
+                dpy[0] := '0' + (BYTE ((c / 10) \ 10))
+                dpy[1] := '0' + (BYTE (c \ 10))
+                attr := ANSI.FG.GREEN
+                credit.flash := 6
+                tim ? t
+                t := (t PLUS 600000)
+            --}}}  
+            --{{{  incomming song
+            song ? current.song
+              IF
+                (credit.flash = 0) AND (current.song = (-1))
+                  SEQ
+                    attr := ANSI.FG.RED
+                    dpy := "##"
+                credit.flash = 0
+                  SEQ
+                    attr := ANSI.FG.RED
+                    dpy[0] := '0' + (BYTE ((current.song / 10) \ 10))
+                    dpy[1] := '0' + (BYTE (current.song \ 10))
+                TRUE
+                  SKIP
+            --}}} 
+            --{{{  timeout
+            (credit.flash > 0) & tim ? AFTER t
+              SEQ
+                t := (t PLUS 600000)
+                credit.flash := credit.flash - 1
+                IF
+                  --{{{  put song back
+                  (credit.flash = 0) AND (current.song = (-1))
+                    SEQ
+                      attr := ANSI.FG.RED
+                      dpy := "##"
+                  credit.flash = 0
+                    SEQ
+                      attr := ANSI.FG.RED
+                      dpy[0] := '0' + (BYTE ((current.song / 10) \ 10))
+                      dpy[1] := '0' + (BYTE (current.song \ 10))
+                  --}}}  
+                  TRUE
+                    SKIP
+            --}}}  
+    :
+    PROC speaker (VAL BYTE x, y, SHARED CHAN SPROTO out!, CHAN BOOL ctrl?)
+      INT seed:
+      VAL [][3]BYTE states IS ["---","ooo","000","OOO"]:
+      SEQ
+        CLAIM out!
+          SEQ
+            out ! colour; ANSI.FG.RED
+            out ! string.x.y; x - 1; y; 5::"|---|"
+        TIMER tim:
+        tim ? seed
+        seed := gen.seed.from.time (seed)
+
+        TIMER tim:
+        INITIAL INT t IS 0:
+        INITIAL BOOL running IS FALSE:
+        INITIAL INT state IS 0:
+        WHILE TRUE
+          PRI ALT
+            ctrl ? running
+              IF
+                running = TRUE
+                  INT v:
+                  SEQ
+                    tim ? t
+                    v, seed := random (400000, seed)
+                    t := t PLUS (200000 + v)
+                TRUE
+                  SEQ
+                    state := 0
+                    CLAIM out!
+                      SEQ
+                        out ! colour; ANSI.FG.RED
+                        out ! string.x.y; x; y; 3::states[state]
+            running & tim ? AFTER t
+              INT v:
+              SEQ
+                state := (state + 1) \ (SIZE states)
+                CLAIM out!
+                  SEQ
+                    out ! colour; ANSI.FG.RED
+                    out ! string.x.y; x; y; 3::states[state]
+                tim ? t
+                v, seed := random (300000, seed)
+                t := t PLUS (150000 + v)
+    :
+    --}}}  
+    SEQ
+      --{{{  draw jukebox in technicolour
+      CLAIM out!
+        SEQ
+          out ! colour; ANSI.FG.RED
+          out ! string.x.y; jukebox.points[0]; jukebox.points[1]; 12::"|          |"
+          out ! string.x.y; jukebox.points[0] + 1; jukebox.points[3]; 10::"---<##>---"
+          out ! colour; ANSI.FG.BLUE
+          out ! char.x.y; jukebox.points[0]; jukebox.points[3]; 'M'
+          out ! char.x.y; jukebox.points[2]; jukebox.points[3]; 'M'
+      CHAN SCR.CTRL scr.ctrl:
+      CHAN INT upd.cred, upd.song:
+      [2]CHAN BOOL to.speakers:
+      PAR
+        credits.song.display (upd.cred?, upd.song?, out!)
+        CHAN FAST.CTRL dummy:
+        text.scrolly (jukebox.points[0] + 1, jukebox.points[1],
+                      (jukebox.points[2] - jukebox.points[0]) - 1,
+                      out!, scr.ctrl?, dummy?)
+        speaker (jukebox.speaker.points[0][0], jukebox.speaker.points[0][1],
+                 out!, to.speakers[0]?)
+        speaker (jukebox.speaker.points[1][0], jukebox.speaker.points[1][1],
+                 out!, to.speakers[1]?)
+        --{{{  main process
+        [255]BYTE dpy.text:
+        BYTE dpy.text.len:
+        --{{{  PROC default.text ()
+        PROC default.text ()
+          VAL []BYTE text IS "welcome to the jukebox, please insert coin to play":
+          SEQ
+            dpy.text.len := BYTE (SIZE text)
+            [dpy.text FOR SIZE text] := text
+        :
+        --}}}
+        --{{{  PROC credit.text (VAL INT c)
+        PROC credit.text (VAL INT c)
+          VAL []BYTE text IS "00 credits, please select song":
+          SEQ
+            dpy.text.len := BYTE (SIZE text)
+            [dpy.text FOR SIZE text] := text
+            dpy.text[0] := '0' + (BYTE ((c / 10) \ 10))
+            dpy.text[1] := '0' + (BYTE (c \ 10))
+        :
+        --}}}
+        --{{{  PROC song.text (VAL BYTE disc, track, INT time)
+        PROC song.text (VAL BYTE disc, BYTE track, INT time)
+          VAL []BYTE leading IS "now playing *"":
+          VAL []BYTE trailing IS "*"":
+          VAL [][][]BYTE song.names IS [["python -- the philosopher*'s song                  ",
+                                         "python -- always look on the bright side of life  ",
+                                         "python -- camalot sing-song                       ",
+                                         "python -- eric the half-a-bee                     ",
+                                         "toto -- rosanna                                   ",
+                                         "toto -- pamela                                    ",
+                                         "toto -- africa                                    "]]:
+          VAL [][]INT song.name.lengths IS [[32,48, 27, 29, 15, 14, 14]]:
+          VAL [][]INT song.times IS [[8500000, 8000000, 7000000, 9000000, 8000000, 7500000, 5000000]]:
+          VAL []BYTE invalid.song IS "synthesizer -- white noise":
+          VAL INT invalid.song.time IS 10000000:
+          VAL []BYTE n.tracks IS [BYTE (SIZE song.names[0]), 0, 0, 0, 0]:
+          INITIAL INT i IS SIZE leading:
+          SEQ
+            [dpy.text FOR SIZE leading] := leading
+            IF
+              disc <> 0
+                SEQ
+                  [dpy.text FROM i FOR SIZE invalid.song] := invalid.song
+                  time := invalid.song.time
+                  i := i + (SIZE invalid.song)
+              track = #FF
+                INT seed:
+                SEQ
+                  TIMER tim:
+                  tim ? seed
+                  seed := (seed >> 2) + 1
+                  -- random track
+                  INT ttrk:
+                  SEQ
+                    ttrk, seed := random (INT n.tracks[INT disc], seed)
+                    track := BYTE ttrk
+
+                  [dpy.text FROM i FOR song.name.lengths[INT disc][INT track]] :=
+                    [song.names[INT disc][INT track] FOR song.name.lengths[INT disc][INT track]]
+                  time := song.times[INT disc][INT track]
+                  i := i + (song.name.lengths[INT disc][INT track])
+              track > n.tracks[INT disc]
+                SEQ
+                  [dpy.text FROM i FOR SIZE invalid.song] := invalid.song
+                  time := invalid.song.time
+                  i := i + (SIZE invalid.song)
+              TRUE
+                SEQ
+                  [dpy.text FROM i FOR song.name.lengths[INT disc][INT track]] :=
+                    [song.names[INT disc][INT track] FOR song.name.lengths[INT disc][INT track]]
+                  time := song.times[INT disc][INT track]
+                  i := i + (song.name.lengths[INT disc][INT track])
+            [dpy.text FROM i FOR SIZE trailing] := trailing
+            i := i + (SIZE trailing)
+            dpy.text.len := BYTE i
+        :
+        --}}}
+        --{{{
+        PROC maxcredit.text ()
+          VAL []BYTE text IS "maxed at 99 credits!  eating your money :)":
+          SEQ
+            dpy.text.len := BYTE (SIZE text)
+            [dpy.text FOR SIZE text] := text
+        :
+        --}}}
+        INITIAL INT t IS 0:
+        TIMER tim:
+        SEQ
+          default.text ()
+          scr.ctrl ! set.attr; ANSI.FG.CYAN
+          scr.ctrl ! set.text; dpy.text.len::dpy.text
+          scr.ctrl ! set.speed; 100000
+          INITIAL INT credits IS 0:
+          INITIAL BOOL playing IS FALSE:
+          WHILE TRUE
+            PRI ALT
+              in ? CASE
+                --{{{  coin
+                coin
+                  IF
+                    credits = 20
+                      IF
+                        NOT playing
+                          SEQ
+                            maxcredit.text ()
+                            scr.ctrl ! set.text; dpy.text.len::dpy.text
+                            scr.ctrl ! reset
+                        TRUE
+                          SKIP
+                    TRUE
+                      SEQ
+                        credits := credits + 1
+                        upd.cred ! credits
+                        IF
+                          NOT playing
+                            SEQ
+                              credit.text (credits)
+                              scr.ctrl ! set.text; dpy.text.len::dpy.text
+                              scr.ctrl ! reset
+                          TRUE
+                            SKIP
+                --}}}  
+                --{{{  song
+                BYTE disc, track:
+                song; disc; track
+                  IF
+                    playing
+                      SKIP
+                    credits = 0
+                      SEQ
+                        default.text ()
+                        scr.ctrl ! set.text; dpy.text.len::dpy.text
+                        scr.ctrl ! reset
+                    TRUE
+                      INT time:
+                      SEQ
+                        credits := credits - 1
+                        song.text (disc, track, time)
+                        upd.song ! (INT track)
+                        tim ? t
+                        t := t PLUS time
+                        playing := TRUE
+                        scr.ctrl ! set.text; dpy.text.len::dpy.text
+                        scr.ctrl ! reset
+                        PAR i = 0 FOR 2
+                          to.speakers[i] ! TRUE
+                --}}}  
+              playing & tim ? AFTER t
+                --{{{  timeout for playing song
+                SEQ
+                  playing := FALSE
+                  upd.song ! (-1)
+                  upd.cred ! credits
+                  IF
+                    credits = 0
+                      default.text ()
+                    TRUE
+                      credit.text (credits)
+                  scr.ctrl ! set.text; dpy.text.len::dpy.text
+                  scr.ctrl ! reset
+                  PAR i = 0 FOR 2
+                    to.speakers[i] ! FALSE
+                --}}}  
+        --}}}  
+      --}}}  
+  :
+  --}}}  
+  --{{{  PROC pool.table (...)
+  PROC pool.table (SHARED CHAN SPROTO out!)
+    --{{{  sub-procs
+    --{{{  constants
+    VAL [2]BYTE cue.ball.origin IS [pool.points[0] + 4, pool.points[1] + 2]:
+    VAL [][2]BYTE ry.ball.origin IS [[pool.points[2] - 4, pool.points[1] + 2],
+                                     [pool.points[2] - 2, pool.points[1] + 2],
+                                     [pool.points[2] - 3, pool.points[1] + 1],
+                                     [pool.points[2] - 3, pool.points[1] + 3]]:
+    --}}}  
+    --{{{  PROC cue.ball (...)
+    PROC cue.ball (SHARED CHAN SPROTO out!)
+      SEQ
+        CLAIM out!
+          SEQ
+            out ! colour; ANSI.FG.WHITE
+            out ! char.x.y; cue.ball.origin[0]; cue.ball.origin[1]; 'c'
+    :
+    --}}}  
+    --{{{  PROC ry.ball (...)
+    PROC ry.ball (VAL INT id, SHARED CHAN SPROTO out!)
+      SEQ
+        CLAIM out!
+          SEQ
+            IF
+              (id /\ 1) = 0
+                out ! colour; ANSI.FG.RED
+              TRUE
+                out ! colour; ANSI.FG.YELLOW
+            out ! char.x.y; ry.ball.origin[id][0]; ry.ball.origin[id][1]; 'o'
+    :
+    --}}}  
+    --}}}  
+
+    SEQ
+      --{{{  draw table in colour
+      CLAIM out!
+        SEQ
+          out ! colour; ANSI.FG.GREEN
+          out ! string.x.y; pool.points[0]; pool.points[1]; 19::"o--------o--------o"
+          out ! string.x.y; pool.points[0]; pool.points[3]; 19::"o--------o--------o"
+          SEQ y = (INT pool.points[1]) + 1 FOR INT ((pool.points[3] - pool.points[1]) - 1)
+            out ! string.x.y; pool.points[0]; BYTE y; 19::"|                 |"
+      --}}}  
+      --{{{  run processes
+      PAR
+        cue.ball (out!)
+        PAR i = 0 FOR SIZE ry.ball.origin
+          ry.ball (i, out!)
+      --}}}  
+  :
+  --}}}  
+  --{{{  PROC common.ifcode (...)
+  PROC common.ifcode (VAL BYTE id, CHAN CIF.PROTO in?, SHARED CHAN SPROTO disp.out!,
+                    SHARED COLL.LINK! c.link,
+                    VAL BYTE init.attr, VAL INT init.sprite, VAL [2]INT anim.delay,
+                    CHAN HIT.IN ch.attr.in?, SHARED CHAN HIT.INFO score!)
+    BYTE x, y:
+    INT seed:
+    in ?? CASE set.x.y; x; y
+      SEQ
+        TIMER tim:
+        tim ? seed
+        seed := gen.seed.from.time (seed TIMES ((INT id) + 1))
+        CLAIM c.link
+          c.link[req] ! init.sprite; x; y; id
+        CLAIM disp.out!
+          SEQ
+            disp.out ! colour; init.attr
+            disp.out ! sprite.x.y; x; y; init.sprite
+      SEQ
+        --{{{  
+        INLINE PROC swab (BYTE b1, BYTE b2)
+          INITIAL BYTE t IS b1:
+          SEQ
+            b1 := b2
+            b2 := t
+        :
+        --}}}  
+        VAL BYTE starting.attr IS init.attr:
+        INITIAL BYTE init.attr IS init.attr:
+        INITIAL INT init.sprite IS init.sprite:
+        INITIAL INT n.random IS 8:
+        INITIAL BOOL hiding IS FALSE:
+        INITIAL BYTE last.known.x IS x:
+        INITIAL BYTE last.known.y IS y:
+        INITIAL BOOL timed.attr IS FALSE:
+        INITIAL INT timed.attr.at IS 0:
+        TIMER tim:
+        WHILE TRUE
+          PRI ALT
+            BYTE new.attr:
+            INT player.id:
+            ch.attr.in ? new.attr; player.id
+              --{{{  update colour
+              SEQ
+                IF
+                  init.attr <> new.attr
+                    --{{{  valid hit
+                    SEQ
+                      CLAIM score!
+                        score ! id; new.attr; player.id
+                    --}}}
+                  TRUE
+                    SKIP
+                init.attr := new.attr
+                IF
+                  NOT hiding
+                    SEQ
+                      CLAIM disp.out!
+                        SEQ
+                          disp.out ! colour; init.attr
+                          disp.out ! sprite.x.y; last.known.x; last.known.y; SPR.SHOCKED
+                  TRUE
+                    SKIP
+                timed.attr := TRUE
+                tim ? timed.attr.at
+                timed.attr.at := timed.attr.at PLUS 10000000		-- 10 seconds
+              --}}}  
+            timed.attr & tim ? AFTER timed.attr.at
+              --{{{  update colour
+              SEQ
+                init.attr := starting.attr
+                IF
+                  NOT hiding
+                    SEQ
+                      CLAIM disp.out!
+                        SEQ
+                          disp.out ! colour; init.attr
+                          disp.out ! sprite.x.y; last.known.x; last.known.y; init.sprite
+                  TRUE
+                    SKIP
+                timed.attr := FALSE
+              --}}}  
+            in ?? CASE
+              --{{{  move.x.y; BYTE; BYTE:  move to position
+              BYTE tx, ty:
+              BYTE x, y:
+              move.x.y; x; y; tx; ty
+                INITIAL INT lockedin IS 0:
+                WHILE NOT ((x = tx) AND (y = ty))
+                  INT x.diff, y.diff:
+                  BYTE nx, ny:
+                  [4]BYTE prefdir:		-- 0 = left, 1 = up, 2 = right, 3 = down
+                  SEQ
+                    CLAIM c.link
+                      SEQ
+                        --{{{  where can we go ?  (reserves all available targets)
+                        c.link[req] ! reserve.x.y; x; y; id
+                        c.link[rep] ? CASE reserved; prefdir
+                        --}}}  
+                        --{{{  uh, more complicated than expected..
+                        INITIAL INT i IS -1:
+                        BYTE ideal:
+                        SEQ
+                          x.diff := (INT tx) - (INT x)
+                          y.diff := (INT ty) - (INT y)
+                          --{{{  work out ideal direction
+                          IF
+                            (x.diff <= 0) AND (y.diff <= 0)
+                              IF
+                                IABS (x.diff) > IABS (y.diff)
+                                  ideal := 0
+                                TRUE
+                                  ideal := 1
+                            (x.diff <= 0) AND (y.diff > 0)
+                              IF
+                                IABS (x.diff) > IABS (y.diff)
+                                  ideal := 0
+                                TRUE
+                                  ideal := 3
+                            (x.diff > 0) AND (y.diff <= 0)
+                              IF
+                                IABS (x.diff) > IABS (y.diff)
+                                  ideal := 2
+                                TRUE
+                                  ideal := 1
+                            TRUE
+                              IF
+                                IABS (x.diff) > IABS (y.diff)
+                                  ideal := 2
+                                TRUE
+                                  ideal := 3
+                          --}}}  
+                          --{{{  find direction to go in
+                          IF
+                            IF k = 0 FOR SIZE prefdir
+                              (lockedin <> 1) AND (prefdir[k] = ideal)
+                                SEQ
+                                  i := k
+                                  lockedin := 0
+                            TRUE
+                              --{{{  can't go in the "ideal" way, try and go round
+                              BYTE alternative:
+                              SEQ
+                                CASE ideal
+                                  0
+                                    alternative := 3
+                                  1
+                                    alternative := 0
+                                  2
+                                    alternative := 1
+                                  3
+                                    alternative := 2
+                                IF
+                                  IF k = 0 FOR SIZE prefdir
+                                    ((lockedin = 0) OR (lockedin = 1)) AND (prefdir[k] = alternative)
+                                      i, lockedin := k, 1
+                                  TRUE
+                                    --{{{  can't go that way either, try the other way round
+                                    BYTE alt2:
+                                    SEQ
+                                      CASE ideal
+                                        0
+                                          alt2 := 1
+                                        1
+                                          alt2 := 2
+                                        2
+                                          alt2 := 3
+                                        3
+                                          alt2 := 0
+                                      IF
+                                        IF k = 0 FOR SIZE prefdir
+                                          prefdir[k] = alt2
+                                            i, lockedin := k, 2
+                                        TRUE
+                                          SKIP
+                                    --}}}  
+                              --}}}  
+                          --}}}  
+                          IF
+                            i > 0
+                              swab (prefdir[i], prefdir[0])
+                            TRUE
+                              SKIP
+      
+                        --}}}  
+                        -- oki, should have a good selection of things in "prefdir"
+                        IF
+                          prefdir[0] = #FF
+                            --{{{  nowhere to go at the moment
+                            SEQ
+                              CLAIM disp.out!
+                                SEQ
+                                  disp.out ! colour; init.attr
+                                  disp.out ! sprite.x.y; x; y; SPR.SAD
+                              -- tell collision that we're not moving..
+                              c.link[req] ! move.x.y; x; y; id
+                            --}}}  
+                          TRUE
+                            --{{{  move in prefdir[0] direction
+                            SEQ
+                              --{{{  
+                              -- maybe swap first and second directions, randomness ;)
+                              INT v:
+                              SEQ
+                                v, seed := random (n.random, seed)
+                                IF
+                                  (v = 0) AND ((prefdir[0] < #04) AND (prefdir[1] < #04))
+                                    swab (prefdir[0], prefdir[1])
+                                  TRUE
+                                    SKIP
+                              --}}}  
+                              CASE prefdir[0]
+                                0
+                                  nx, ny := x - 1, y
+                                1
+                                  nx, ny := x, y - 1
+                                2
+                                  nx, ny := x + 1, y
+                                3
+                                  nx, ny := x, y + 1
+                              --{{{  update display
+                              CLAIM disp.out!
+                                SEQ
+                                  PRI ALT
+                                    BYTE new.attr:
+                                    INT player.id:
+                                    ch.attr.in ? new.attr; player.id
+                                      SEQ
+                                        IF
+                                          new.attr <> init.attr
+                                            --{{{  valid hit
+                                            CLAIM score!
+                                              score ! id; new.attr; player.id
+                                            --}}}
+                                          TRUE
+                                            SKIP
+                                        init.attr := new.attr
+                                        disp.out ! colour; init.attr
+                                        disp.out ! sprite.x.y; nx; ny; SPR.SHOCKED
+                                        timed.attr := TRUE
+                                        tim ? timed.attr.at
+                                        timed.attr.at := timed.attr.at PLUS 10000000	-- 10 seconds
+                                    #PRAGMA DEFINED timed.attr.at
+                                    timed.attr & tim ? AFTER timed.attr.at
+                                      SEQ
+                                        timed.attr := FALSE
+                                        init.attr := starting.attr
+                                        disp.out ! colour; init.attr
+                                        disp.out ! sprite.x.y; nx; ny; init.sprite
+                                    TRUE & SKIP
+                                      SEQ
+                                        disp.out ! colour; init.attr
+                                        disp.out ! sprite.x.y; nx; ny; init.sprite
+                                  CASE prefdir[0]
+                                    0
+                                      disp.out ! char.x.y; (x+1); y; ' '
+                                    1, 3
+                                      disp.out ! sprite.x.y; x; y; SPR.CLEAR
+                                    2
+                                      disp.out ! char.x.y; x; y; ' '
+                                  x, y := nx, ny
+                              --}}}  
+                              --{{{  tell collision we've moved
+                              SEQ
+                                c.link[req] ! move.x.y; x; y; id
+                                c.link[req] ! init.sprite; x; y; id
+                              --}}}  
+                            --}}}  
+                    IF
+                      prefdir[0] = #FF
+                        --{{{  nowhere to go at the moment
+                        SEQ
+                          -- delay before trying again
+                          rand.delay (500000, 1500000, seed)
+                        --}}}
+                      TRUE
+                        --{{{  move in prefdir[0] direction
+                        SEQ
+                          rand.delay (anim.delay[0], anim.delay[1], seed)
+                          last.known.x := x
+                          last.known.y := y
+                        --}}}
+              --}}}  
+              --{{{  n.random; INT:  random ?
+              n.random; n.random
+                SKIP
+              --}}}  
+              --{{{  hiding.sprite; BYTE:  set hiding sprite
+              hiding.sprite; init.sprite
+                SKIP
+              --}}}  
+              --{{{  hiding.attr; BYTE:  set hiding attr
+              hiding.attr; init.attr
+                SKIP
+              --}}}  
+              --{{{  offboard; BYTE; BYTE; BOOL:  set off-board
+              BYTE x, y:
+              BOOL off:
+              offboard; x; y; off
+                IF
+                  off
+                    SEQ
+                      hiding := TRUE
+                      CLAIM disp.out!
+                        SEQ
+                          disp.out ! colour; init.attr
+                          disp.out ! sprite.x.y; x; y; SPR.CLEAR
+                      CLAIM c.link
+                        c.link[req] ! clear.sprite; x; y; id
+                  TRUE
+                    SEQ
+                      hiding := FALSE
+                      CLAIM c.link
+                        c.link[req] ! init.sprite; x; y; id
+                      CLAIM disp.out!
+                        SEQ
+                          disp.out ! colour; init.attr
+                          disp.out ! sprite.x.y; x; y; init.sprite
+              --}}}  
+              --{{{  set.sprite; BYTE; BYTE; BYTE:  set sprite
+              BYTE x, y:
+              set.sprite; x; y; init.sprite
+                SEQ
+                  CLAIM disp.out!
+                    SEQ
+                      disp.out ! colour; init.attr
+                      disp.out ! sprite.x.y; x; y; init.sprite
+                  last.known.x := x
+                  last.known.y := y
+              --}}}  
+              --{{{  set.attr; BYTE; BYTE; BYTE:  set sprite attribute
+              BYTE x, y:
+              set.attr; x; y; init.attr
+                SEQ
+                  CLAIM disp.out!
+                    SEQ
+                      disp.out ! colour; init.attr
+                      disp.out ! sprite.x.y; x; y; init.sprite
+                  last.known.x := x
+                  last.known.y := y
+              --}}}  
+              --{{{  v.move
+              BYTE x, y, c.x, c.y:
+              draw.at; c.x; c.y; x; y
+                SEQ
+                  CLAIM disp.out!
+                    SEQ
+                      disp.out ! colour; init.attr
+                      disp.out ! sprite.x.y; x; y; init.sprite
+                      disp.out ! sprite.x.y; c.x; c.y; SPR.CLEAR
+                  last.known.x := x
+                  last.known.y := y
+              --}}}  
+              --{{{  hide
+              BYTE x, y:
+              hide; x; y
+                SEQ
+                  hiding := TRUE
+                  CLAIM disp.out!
+                    disp.out ! sprite.x.y; x; y; SPR.CLEAR
+                  last.known.x := x
+                  last.known.y := y
+              --}}}  
+              --{{{  show
+              BYTE x, y:
+              show; x; y
+                SEQ
+                  hiding := FALSE
+                  CLAIM disp.out!
+                    SEQ
+                      disp.out ! colour; init.attr
+                      disp.out ! sprite.x.y; x; y; init.sprite
+                  last.known.x := x
+                  last.known.y := y
+              --}}}  
+  :
+  --}}}  
+  --{{{  PROC philosopher (...)
+  PROC philosopher (VAL INT id, SHARED CHAN SPROTO out!,
+                    SHARED COLL.LINK! c.link,
+                    CHAN BAR.REQUEST beer.req!, SHARED CHAN JUKEBOX.CTRL juke.out!,
+                    SHARED DETOX.LINK! detox, CHAN HIT.IN ch.attr.in?,
+                    CHAN PHIL.TAB to.table!, CHAN TAB.PHIL from.table?,
+                    SHARED CHAN HIT.INFO score!)
+
+    --{{{  protocols/consts
+    VAL [2]INT phil.anim.delay IS [50000,80000]:
+    --}}}  
+    --{{{  PROC phil.maincode (...)
+    PROC phil.maincode (VAL INT id, CHAN CIF.PROTO out!, SHARED CHAN JUKEBOX.CTRL juke.out!,
+                        SHARED CHAN SPROTO dpy.out!,
+                        SHARED DETOX.LINK! detox,
+                        CHAN PHIL.TAB to.table!, CHAN TAB.PHIL from.table?)
+      INITIAL BYTE x IS phil.origin[id][0]:
+      INITIAL BYTE y IS phil.origin[id][1]:
+      INT seed:
+      INITIAL INT n.beers IS 0:
+      [2]BYTE n.btext:
+
+      PROC set.n.btext ()
+        IF
+          n.beers > 9
+            SEQ
+              n.btext[0] := '0' + (BYTE ((n.beers / 10) \ 10))
+              n.btext[1] := '0' + (BYTE (n.beers \ 10))
+          TRUE
+            SEQ
+              n.btext[0] := '0' + (BYTE (n.beers \ 10))
+              n.btext[1] := ' '
+      :
+      SEQ
+        TIMER tim:
+        tim ? seed
+        seed := gen.seed.from.time (seed TIMES (id + 1))
+        out ! set.x.y; x; y
+        set.n.btext ()
+        CLAIM dpy.out!
+          SEQ
+            dpy.out ! colour; ANSI.FG.GREEN
+            dpy.out ! string.x.y; 1; phil.queue.y + (BYTE id); 2::n.btext
+        BYTE t.x, t.y:
+        INITIAL INT def.sprite IS SPR.HAPPY:
+        INITIAL INT current.sprite IS SPR.HAPPY:
+        INITIAL INT pint.state IS 0:	-- no pint
+        VAL BOOL table.phil IS (id <> jukebox.phil) AND (id <> pool.phil):
+        INITIAL BOOL had.pint IS FALSE:
+        WHILE TRUE
+          SEQ
+            --{{{  sit down at table
+            SEQ
+              IF
+                table.phil
+                  SEQ
+                    to.table ! sit.down; pint.state
+                    IF
+                      pint.state > 0
+                        had.pint := TRUE
+                      TRUE
+                        had.pint := FALSE
+                TRUE
+                  SKIP
+            --}}}  
+            --{{{  think/talk
+            SEQ
+              IF
+                table.phil
+                  BOOL talking:
+                  TIMER tim:
+                  INT long.timeout, v, rel.timeout:
+                  SEQ
+                    v, seed := random (2000000, seed)
+                    tim ? long.timeout
+                    long.timeout := long.timeout PLUS (2000000 + v)
+                    rel.timeout := 2000000 + v
+                    talking := TRUE
+                    VAL INT high.third IS (rel.timeout * 2) / 3:
+                    VAL INT low.third IS rel.timeout / 3:
+                    WHILE talking
+                      INT n.here:
+                      SEQ
+                        --{{{  ask table how many
+                        to.table ! how.many
+                        from.table ? CASE n.here; n.here
+                        --}}}  
+                        --{{{  maybe update pint status (time related)
+                        INT left:
+                        SEQ
+                          tim ? left
+                          left := long.timeout MINUS left
+                          IF
+                            left > high.third
+                              SKIP
+                            left > low.third
+                              IF
+                                pint.state > 0
+                                  SEQ
+                                    pint.state := 2
+                                    to.table ! pint.update; pint.state
+                                TRUE
+                                  SKIP
+                            pint.state > 1
+                              SEQ
+                                pint.state := 1
+                                to.table ! pint.update; pint.state
+                            TRUE
+                              SKIP
+                        --}}}  
+                        PRI ALT
+                          tim ? AFTER long.timeout
+                            talking := FALSE
+                          (n.here > 1) & SKIP
+                            INT t.sprite:
+                            SEQ
+                              IF
+                                (current.sprite = SPR.HAPPY) OR (current.sprite = SPR.ILL)
+                                  t.sprite := SPR.TALK
+                                TRUE
+                                  t.sprite := SPR.DRUNK.TALK
+                              rand.delay (50000, 100000, seed)
+                              out ! set.sprite; x; y; t.sprite
+                              rand.delay (50000, 100000, seed)
+                              out ! set.sprite; x; y; current.sprite
+                              rand.delay (100000, 300000, seed)
+                          TRUE & SKIP
+                            SEQ
+                              rand.delay (50000, 100000, seed)
+                              out ! set.sprite; x; y; SPR.BORED
+                              rand.delay (150000, 300000, seed)
+                    out ! set.sprite; x; y; current.sprite
+                TRUE
+                  SEQ
+                    rand.delay (2000000, 4000000, seed)
+                    pint.state := 0
+            --}}}  
+            --{{{  get thirsty and stand up
+            SEQ
+              SKIP
+              IF
+                table.phil
+                  SEQ
+                    IF
+                      had.pint
+                        to.table ! glass.down
+                      TRUE
+                        SKIP
+                    to.table ! stand.up
+                TRUE
+                  SKIP
+            --}}}  
+            --{{{  pool philosopher wants to put music on :)
+            IF
+              id = pool.phil
+                --{{{  move to jukebox and select song
+                SEQ
+                  t.x := phil.origin[jukebox.phil][0]
+                  t.y := phil.origin[jukebox.phil][1]
+                  rand.delay (1000000, 2000000, seed)
+                  out ! move.x.y; x; y; t.x; t.y
+                  x, y := t.x, t.y
+                  CLAIM juke.out!
+                    juke.out ! song; 0; #FF
+                --}}}  
+              TRUE
+                SKIP
+            --}}}  
+            --{{{  move to bar
+            SEQ
+              t.x := 16
+              t.y := phil.queue.y + (BYTE id)
+              out ! move.x.y; x; y; t.x; t.y
+              x, y := t.x, t.y
+            --}}}  
+            --{{{  get beer
+            BAR.REPLY! r.cli:
+            BAR.REPLY? r.svr:
+            SEQ
+              r.cli, r.svr := MOBILE BAR.REPLY          -- used to get reply back from bar
+
+              current.sprite := SPR.SAD
+              out ! set.sprite; x; y; current.sprite
+              beer.req ! INT y; r.cli
+              current.sprite := SPR.BORED
+              out ! set.sprite; x; y; current.sprite
+              INT any:
+              r.svr[rep] ? any
+              n.beers := n.beers + 1
+              set.n.btext ()
+              CLAIM dpy.out!
+                SEQ
+                  IF
+                    n.beers < 5
+                      dpy.out ! colour; ANSI.FG.GREEN
+                    n.beers < 10
+                      dpy.out ! colour; ANSI.FG.YELLOW
+                    TRUE
+                      dpy.out ! colour; ANSI.FG.RED
+                  dpy.out ! string.x.y; 1; phil.queue.y + (BYTE id); 2::n.btext
+              IF
+                n.beers < 3
+                  SEQ
+                    out ! n.random; 8
+                    def.sprite := SPR.HAPPY
+                n.beers < 6
+                  SEQ
+                    out ! n.random; 6
+                    def.sprite := SPR.DRUNK.HAPPY
+                n.beers < 9
+                  SEQ
+                    out ! n.random; 5
+                    def.sprite := SPR.ILL
+                TRUE
+                  SEQ
+                    out ! n.random; 4
+                    def.sprite := SPR.DRUNK.ILL
+              IF
+                current.sprite <> def.sprite
+                  SEQ
+                    current.sprite := def.sprite
+                    out ! set.sprite; x; y; current.sprite
+                TRUE
+                  SKIP
+              pint.state := 3
+            --}}}  
+            --{{{  philosophers 6, 8 and 10 want to play a song
+            IF
+              ((id = 6) OR (id = 10)) OR (id = 8)
+                SEQ
+                  t.x := phil.origin[jukebox.phil][0]
+                  t.y := phil.origin[jukebox.phil][1]
+                  rand.delay (1000000, 2000000, seed)
+                  out ! move.x.y; x; y; t.x; t.y
+                  x, y := t.x, t.y
+                  CLAIM juke.out!
+                    IF
+                      id = 6
+                        juke.out ! song; 0; 1
+                      id = 8
+                        juke.out ! song; 0; 2
+                      TRUE
+                        juke.out ! song; 0; #FF
+                  rand.delay (1000000, 2000000, seed)
+              TRUE
+                SKIP
+            --}}}  
+            t.x, t.y := phil.origin[id][0], phil.origin[id][1]
+            out ! move.x.y; x; y; t.x; t.y
+            x, y := t.x, t.y
+            --{{{  anything special ?
+            IF
+              id = jukebox.phil
+                CLAIM juke.out!
+                  juke.out ! coin
+              TRUE
+                SKIP
+            --}}}  
+            --{{{  if too much beer, go and de-toxify
+            IF
+              n.beers >= 11
+                SEQ
+                  --{{{  walk to detox
+                  SEQ
+                    t.x, t.y := detox.in.door[0], detox.in.door[1]
+                    out ! move.x.y; x; y; t.x; t.y
+                    x, y := t.x, t.y
+                  --}}}  
+                  --{{{  do detox
+                  SEQ
+                    CLAIM detox
+                      SEQ
+                        detox[req] ! (INT id)
+                        out ! offboard; x; y; TRUE		-- remove from arena
+                        INT any:
+                        detox[rep] ? any
+                        x, y := detox.out.door[0], detox.out.door[1]
+                        out ! hiding.sprite; SPR.HAPPY
+                        out ! offboard; x; y; FALSE		-- put back on board
+                        rand.delay (500000, 600000, seed)
+                        t.x, t.y := x - 2, y
+                        out ! move.x.y; x; y; t.x; t.y
+                    x, y := t.x, t.y
+                  --}}}  
+                  --{{{  update beer count
+                  SEQ
+                    n.beers := 0
+                    set.n.btext ()
+                    CLAIM dpy.out!
+                      SEQ
+                        dpy.out ! colour; ANSI.FG.GREEN
+                        dpy.out ! string.x.y; 1; phil.queue.y + (BYTE id); 2::n.btext
+                  --{{{  walk back to table
+                  SEQ
+                    t.x, t.y := phil.origin[id][0], phil.origin[id][1]
+                    out ! move.x.y; x; y; t.x; t.y
+                    x, y := t.x, t.y
+                  --}}}  
+                  pint.state := 0
+              TRUE
+                SKIP
+            --}}}  
+    :
+    --}}}  
+    --}}}  
+    --{{{  philosopher network
+    CHAN CIF.PROTO local:
+    PAR
+      phil.maincode (id, local!, juke.out!, out!, detox,
+                     to.table!, from.table?)
+      common.ifcode (BYTE id, local?, out!, c.link,
+                     ANSI.FG.YELLOW, SPR.HAPPY, [50000,80000], ch.attr.in?, score!)
+    --}}}  
+  :
+  --}}}  
+  --{{{  PROC infoline (SHARED CHAN SPROTO out!, CHAN FAST.CTRL fast.in?)
+  PROC infoline (SHARED CHAN SPROTO out!, CHAN FAST.CTRL fast.in?)
+    SEQ
+      CLAIM out!
+        SEQ
+          out ! colour; ANSI.FG.MAGENTA
+          out ! string.x.y; infoline.points[0]; infoline.points[1]; 1::"-"
+          out ! string.x.y; infoline.points[2] - 22; infoline.points[1]; 23::"------------------------"
+          out ! char.x.y; infoline.points[0] + 1; infoline.points[1]; '['
+          out ! char.x.y; infoline.points[2] - 23; infoline.points[1]; ']'
+
+      CHAN SCR.CTRL to.scrolly:
+      PAR
+        text.scrolly (infotext.points[0], infotext.points[1],
+                      (infotext.points[2] - infotext.points[0]) + 1, out!, to.scrolly?, fast.in?)
+        VAL [][]BYTE text IS
+            ["welcome to the upgraded bar simulation.    now featuring an additional bar-tender, pool-table, jukebox and built-in game. ",
+             "beer supplied by beer corp., purveyors of fine ale.    songs provided by monty-python.                                    ",
+             "copyright (C) 2002-2005 Fred Barnes <frmb@kent.ac.uk>.  released under the GNU general public license.                    ",
+             "player 1 controls are h,j,k,l or cursor-keys to move, / or . to fire/start.                                               ",
+             "player 2 controls are q,a,r,t to move and space to fire/start.                                                            ",
+             "to change the way the bar-tenders behave: 0 = plain ALT, 1 = looping ALT, 2 = fair ALT.                                   "]:
+        VAL []BYTE text.lengths IS [121,86,112,75,62,87]:
+        VAL []BYTE text.attrs IS [ANSI.FG.CYAN, ANSI.FG.GREEN, ANSI.FG.RED,
+                                  ANSI.FG.YELLOW, ANSI.FG.CYAN, ANSI.FG.GREEN]:
+        WHILE TRUE
+          SEQ i = 0 FOR SIZE text.lengths
+            SEQ
+              to.scrolly ! set.attr; text.attrs[i]
+              to.scrolly ! set.text; text.lengths[i]::text[i]
+              to.scrolly ! set.speed; 80000
+              to.scrolly ! reset
+              to.scrolly ! wait
+  :
+  --}}}  
+  --{{{  PROC table (...)
+  PROC table (VAL INT id, SHARED CHAN SPROTO dpy!,
+              []CHAN PHIL.TAB in?, []CHAN TAB.PHIL out!, CHAN INT from.barkeep?, to.barkeep!)
+    --{{{  local PROC
+    PROC update.glass.count (VAL INT n)
+      SEQ
+        CLAIM dpy!
+          SEQ
+            dpy ! colour; ANSI.FG.MAGENTA
+            dpy ! char.x.y; table.points[id][0] + 2; table.points[id][1] + 2; '0' + (BYTE ((n / 10) \ 10))
+            dpy ! char.x.y; table.points[id][0] + 3; table.points[id][1] + 2; '0' + (BYTE (n \ 10))
+    :
+    --}}}  
+    --{{{  main table process
+    SEQ
+      ASSERT ((SIZE in) = 4)
+      ASSERT ((SIZE out) = 4)
+
+      --{{{  setup table
+      SEQ
+        update.glass.count (0)
+      --}}}  
+
+      INITIAL INT n.sat.down IS 0:
+      INITIAL INT n.glasses IS 0:
+      INITIAL INT f IS 0:
+      WHILE TRUE
+        PRI ALT
+          --{{{  bar-keeper query/collection
+          INT n:
+          from.barkeep ? n
+            IF
+              n = 0
+                to.barkeep ! n.glasses
+              TRUE
+                SEQ
+                  n.glasses := n.glasses - n
+                  update.glass.count (n.glasses)
+          --}}}  
+          --{{{  philosopher action
+          PRI ALT i = f FOR SIZE in
+            VAL INT i IS i \ (SIZE in):
+            VAL BYTE mid.y IS (table.points[id][3] - table.points[id][1]) / 2:
+            in[i] ? CASE
+              --{{{  sitting down
+              INT pint.state:		-- 0 = no pint, 3 = full pint
+              sit.down; pint.state
+                SEQ
+                  n.sat.down := n.sat.down + 1
+                  f := i + 1
+                  CLAIM dpy!
+                    SEQ
+                      CASE pint.state
+                        0
+                          dpy ! colour; ANSI.FG.BLACK
+                        1
+                          dpy ! colour; ANSI.FG.RED
+                        2
+                          dpy ! colour; ANSI.FG.YELLOW
+                        3
+                          dpy ! colour; ANSI.FG.GREEN
+                      CASE i
+                        0
+                          dpy ! char.x.y; table.points[id][0] + 1; table.points[id][1] + mid.y; 'B'
+                        1
+                          dpy ! char.x.y; table.points[id][0] + 2; table.points[id][1] + 1; 'B'
+                        2
+                          dpy ! char.x.y; table.points[id][2] - 1; table.points[id][1] + mid.y; 'B'
+                        3
+                          dpy ! char.x.y; table.points[id][2] - 2; table.points[id][3] - 1; 'B'
+              --}}}  
+              --{{{  pint update
+              INT pint.state:
+              pint.update; pint.state
+                SEQ
+                  f := i + 1
+                  CLAIM dpy!
+                    SEQ
+                      CASE pint.state
+                        1
+                          dpy ! colour; ANSI.FG.RED
+                        2
+                          dpy ! colour; ANSI.FG.YELLOW
+                        3
+                          dpy ! colour; ANSI.FG.GREEN
+                      CASE i
+                        0
+                          dpy ! char.x.y; table.points[id][0] + 1; table.points[id][1] + mid.y; 'B'
+                        1
+                          dpy ! char.x.y; table.points[id][0] + 2; table.points[id][1] + 1; 'B'
+                        2
+                          dpy ! char.x.y; table.points[id][2] - 1; table.points[id][1] + mid.y; 'B'
+                        3
+                          dpy ! char.x.y; table.points[id][2] - 2; table.points[id][3] - 1; 'B'
+              --}}}  
+              --{{{  standing up
+              stand.up
+                SEQ
+                  n.sat.down := n.sat.down - 1
+                  f := i + 1
+                  CLAIM dpy!
+                    SEQ
+                      CASE i
+                        0
+                          dpy ! char.x.y; table.points[id][0] + 1; table.points[id][1] + mid.y; ' '
+                        1
+                          dpy ! char.x.y; table.points[id][0] + 2; table.points[id][1] + 1; ' '
+                        2
+                          dpy ! char.x.y; table.points[id][2] - 1; table.points[id][1] + mid.y; ' '
+                        3
+                          dpy ! char.x.y; table.points[id][2] - 2; table.points[id][3] - 1; ' '
+              --}}}  
+              --{{{  empty pint down
+              glass.down
+                SEQ
+                  n.glasses := n.glasses + 1
+                  update.glass.count (n.glasses)
+                  f := i + 1
+              --}}}  
+              --{{{  how many
+              how.many
+                SEQ
+                  out[i] ! n.here; n.sat.down
+                  f := i + 1
+              --}}}  
+          --}}}  
+    --}}}  
+  :
+  --}}}  
+  --{{{  PROC teleport (...)
+  PROC teleport (SHARED CHAN SPROTO out!, TELEPORT.LINK? t.svr,
+                 SHARED COLL.LINK! c.link)
+
+    --{{{  local PROC
+    PROC teleporter.anim (SHARED CHAN SPROTO out!, CHAN BOOL ctrl?)
+      VAL INT t.delay IS 100000:
+      WHILE TRUE
+        TIMER tim:
+        INT t:
+        SEQ
+          --{{{  wait for start
+          SEQ
+            BOOL any:
+            ctrl ? any
+          --}}}  
+          --{{{  loop until signal
+          SEQ
+            tim ? t
+            t := t PLUS t.delay
+            INITIAL BOOL done IS FALSE:
+            VAL BYTE n.steps IS (teleport.points[0][2] - teleport.points[0][0]) + 1:
+            INITIAL BYTE i IS 0:
+            INITIAL BYTE last.i IS n.steps - 1:
+            WHILE NOT done
+              SEQ
+                CLAIM out!
+                  SEQ
+                    out ! colour; ANSI.FG.WHITE
+                    out ! char.x.y; teleport.points[0][0] + i; teleport.points[0][1]; '>'
+                    out ! char.x.y; teleport.points[0][2] - i; teleport.points[0][3]; '<'
+                    out ! char.x.y; teleport.points[1][0] + i; teleport.points[1][1]; '>'
+                    out ! char.x.y; teleport.points[1][2] - i; teleport.points[1][3]; '<'
+                    out ! colour; ANSI.FG.RED
+                    out ! char.x.y; teleport.points[0][0] + last.i; teleport.points[0][1]; '-'
+                    out ! char.x.y; teleport.points[0][2] - last.i; teleport.points[0][3]; '='
+                    out ! char.x.y; teleport.points[1][0] + last.i; teleport.points[1][1]; '-'
+                    out ! char.x.y; teleport.points[1][2] - last.i; teleport.points[1][3]; '='
+                last.i := i
+                i := (i + 1) \ n.steps
+                PRI ALT
+                  BOOL any:
+                  ctrl ? any
+                    done := TRUE
+                  tim ? AFTER t
+                    t := t PLUS t.delay
+          --}}}  
+          --{{{  put teleporter back together
+          SEQ
+            CLAIM out!
+              SEQ
+                out ! colour; ANSI.FG.RED
+                SEQ i = 0 FOR SIZE teleport.points
+                  SEQ
+                    out ! string.x.y; teleport.points[i][0]; teleport.points[i][1]; 4::"----"
+                    out ! string.x.y; teleport.points[i][0]; teleport.points[i][3]; 4::"===="
+          --}}}  
+    :
+    --}}}  
+
+    CHAN BOOL anim:
+    PAR
+      teleporter.anim (out!, anim?)
+
+      VAL [2]BYTE pad.x IS [teleport.points[0][0] + 1, teleport.points[1][0] + 1]:
+      VAL [2]BYTE pad.y IS [teleport.points[0][1] + 1, teleport.points[1][1] + 1]:
+      INT seed:
+      SEQ
+        --{{{  initialise
+        SEQ
+          CLAIM out!
+            SEQ
+              out ! colour; ANSI.FG.RED
+              SEQ i = 0 FOR SIZE teleport.points
+                SEQ
+                  out ! string.x.y; teleport.points[i][0]; teleport.points[i][1]; 4::"----"
+                  out ! string.x.y; teleport.points[i][0]; teleport.points[i][3]; 4::"===="
+          TIMER tim:
+          tim ? seed
+          seed := gen.seed.from.time (seed)
+        --}}}  
+        VAL [][]BYTE pad0b IS [[teleport.points[0][0], teleport.points[0][1] + 1,
+                                teleport.points[0][2], teleport.points[0][3] - 1],
+                               [teleport.points[0][0], teleport.points[0][1] + 1,
+                                teleport.points[0][0], teleport.points[0][3] - 1],
+                               [teleport.points[0][2], teleport.points[0][1] + 1,
+                                teleport.points[0][2], teleport.points[0][3] - 1]]:
+        VAL [][]BYTE pad1b IS [[teleport.points[1][0], teleport.points[1][1] + 1,
+                                teleport.points[1][2], teleport.points[1][3] - 1],
+                               [teleport.points[1][0], teleport.points[1][1] + 1,
+                                teleport.points[1][0], teleport.points[1][3] - 1],
+                               [teleport.points[1][2], teleport.points[1][1] + 1,
+                                teleport.points[1][2], teleport.points[1][3] - 1]]:
+        --{{{  main loop
+        WHILE TRUE
+          BYTE x, y:
+          BYTE t.attr, t.id:
+          INT t.sprite:
+          SEQ
+            --{{{  get request
+            SEQ
+              t.svr[req] ? CASE activate; x; y; t.id; t.attr; t.sprite
+            --}}}  
+            --{{{  shut doors
+            SEQ
+              --{{{  get space
+              INITIAL BOOL got.space IS FALSE:
+              WHILE NOT got.space
+                BOOL bit1, bit2, bit3:
+                SEQ
+                  bit1 := FALSE
+                  bit2 := FALSE
+                  bit3 := FALSE
+                  CLAIM c.link
+                    SEQ
+                      --{{{  claim other pad
+                      IF
+                        (x = pad.x[0]) AND (y = pad.y[0])
+                          c.link[req] ! region.reserve; pad1b[0][0]; pad1b[0][1]; pad1b[0][2]; pad1b[0][3]
+                        (x = pad.x[1]) AND (y = pad.y[1])
+                          c.link[req] ! region.reserve; pad0b[0][0]; pad0b[0][1]; pad0b[0][2]; pad0b[0][3]
+                      c.link[rep] ? CASE region.reply; bit1
+                      --}}}  
+                      --{{{  claim one door
+                      IF
+                        (x = pad.x[0]) AND (y = pad.y[0])
+                          c.link[req] ! region.reserve; pad0b[1][0]; pad0b[1][1]; pad0b[1][2]; pad0b[1][3]
+                        (x = pad.x[1]) AND (y = pad.y[1])
+                          c.link[req] ! region.reserve; pad1b[1][0]; pad1b[1][1]; pad1b[1][2]; pad1b[1][3]
+                      c.link[rep] ? CASE region.reply; bit2
+                      --}}}  
+                      --{{{  then the other
+                      IF
+                        (x = pad.x[0]) AND (y = pad.y[0])
+                          c.link[req] ! region.reserve; pad0b[2][0]; pad0b[2][1]; pad0b[2][2]; pad0b[2][3]
+                        (x = pad.x[1]) AND (y = pad.y[1])
+                          c.link[req] ! region.reserve; pad1b[2][0]; pad1b[2][1]; pad1b[2][2]; pad1b[2][3]
+                      c.link[rep] ? CASE region.reply; bit3
+                      --}}}  
+                  --{{{  if we have all 3 bits, good, if not, need to release the ones we do have
+                  IF
+                    (bit1 AND bit2) AND bit3
+                      got.space := TRUE
+                    TRUE
+                      SEQ
+                        CLAIM c.link
+                          SEQ
+                            IF
+                              bit1
+                                IF
+                                  (x = pad.x[0]) AND (y = pad.y[0])
+                                    c.link[req] ! region.clear; pad1b[0][0]; pad1b[0][1]; pad1b[0][2]; pad1b[0][3]
+                                  (x = pad.x[1]) AND (y = pad.y[1])
+                                    c.link[req] ! region.clear; pad0b[0][0]; pad0b[0][1]; pad0b[0][2]; pad0b[0][3]
+                              TRUE
+                                SKIP
+                            IF
+                              bit2
+                                IF
+                                  (x = pad.x[0]) AND (y = pad.y[0])
+                                    c.link[req] ! region.clear; pad0b[1][0]; pad0b[1][1]; pad0b[1][2]; pad0b[1][3]
+                                  (x = pad.x[1]) AND (y = pad.y[1])
+                                    c.link[req] ! region.clear; pad1b[1][0]; pad1b[1][1]; pad1b[1][2]; pad1b[1][3]
+                              TRUE
+                                SKIP
+                            IF
+                              bit3
+                                IF
+                                  (x = pad.x[0]) AND (y = pad.y[0])
+                                    c.link[req] ! region.clear; pad0b[2][0]; pad0b[2][1]; pad0b[2][2]; pad0b[2][3]
+                                  (x = pad.x[1]) AND (y = pad.y[1])
+                                    c.link[req] ! region.clear; pad1b[2][0]; pad1b[2][1]; pad1b[2][2]; pad1b[2][3]
+                              TRUE
+                                SKIP
+                  --}}}  
+              --}}}  
+              --{{{  claim space
+              SEQ
+                CLAIM c.link!
+                  SEQ
+                    -- only need to claim the doors and clear the other pad
+                    c.link[req] ! region.set; pad0b[1][0]; pad0b[1][1]; pad0b[1][2]; pad0b[1][3]
+                    c.link[req] ! region.set; pad0b[2][0]; pad0b[2][1]; pad0b[2][2]; pad0b[2][3]
+                    c.link[req] ! region.set; pad1b[1][0]; pad1b[1][1]; pad1b[1][2]; pad1b[1][3]
+                    c.link[req] ! region.set; pad1b[2][0]; pad1b[2][1]; pad1b[2][2]; pad1b[2][3]
+                    IF
+                      (x = pad.x[0]) AND (y = pad.y[0])
+                        c.link[req] ! region.clear; pad.x[1]; pad.y[1]; pad.x[1] + 1; pad.y[1]
+                      (x = pad.x[1]) AND (y = pad.y[1])
+                        c.link[req] ! region.clear; pad.x[0]; pad.y[0]; pad.x[0] + 1; pad.y[0]
+              --}}}  
+              --{{{  draw in doors
+              SEQ
+                CLAIM out!
+                  SEQ
+                    out ! colour; ANSI.FG.RED
+                    out ! char.x.y; pad0b[1][0]; pad0b[1][1]; '['
+                    out ! char.x.y; pad0b[2][0]; pad0b[2][1]; ']'
+                    out ! char.x.y; pad1b[1][0]; pad1b[1][1]; '['
+                    out ! char.x.y; pad1b[2][0]; pad1b[2][1]; ']'
+                anim ! TRUE
+                rand.delay (800000, 1200000, seed)
+              --}}}  
+            --}}}  
+            --{{{  teleport
+            VAL INT teleport.count IS 17:
+            SEQ i = 0 FOR teleport.count
+              SEQ
+                rand.delay (200000 - (i * 10000), 300000 - (i * 14000), seed)
+                CLAIM out!
+                  SEQ
+                    IF
+                      (x = pad.x[0]) AND (y = pad.y[0])
+                        SEQ
+                          out ! colour; t.attr
+                          out ! sprite.x.y; pad.x[0]; pad.y[0]; SPR.CLEAR
+                          IF
+                            i = (teleport.count - 1)
+                              out ! sprite.x.y; pad.x[1]; pad.y[1]; t.sprite
+                            TRUE
+                              out ! sprite.x.y; pad.x[1]; pad.y[1]; SPR.SHOCKED
+                          x, y := pad.x[1], pad.y[1]
+                      (x = pad.x[1]) AND (y = pad.y[1])
+                        SEQ
+                          out ! colour; t.attr
+                          out ! sprite.x.y; pad.x[1]; pad.y[1]; SPR.CLEAR
+                          IF
+                            i = (teleport.count - 1)
+                              out ! sprite.x.y; pad.x[0]; pad.y[0]; t.sprite
+                            TRUE
+                              out ! sprite.x.y; pad.x[0]; pad.y[0]; SPR.SHOCKED
+                          x, y := pad.x[0], pad.y[0]
+            --}}}  
+            --{{{  move sprite in the eyes of the collision detector
+            SEQ
+              CLAIM c.link
+                SEQ
+                  IF
+                    (x = pad.x[0]) AND (y = pad.y[0])
+                      SEQ
+                        c.link[req] ! clear.sprite; pad.x[1]; pad.y[1]; t.id
+                        c.link[req] ! init.sprite; pad.x[0]; pad.y[0]; t.id
+                    (x = pad.x[1]) AND (y = pad.y[1])
+                      SEQ
+                        c.link[req] ! clear.sprite; pad.x[0]; pad.y[0]; t.id
+                        c.link[req] ! init.sprite; pad.x[1]; pad.y[1]; t.id
+            --}}}  
+            --{{{  open doors
+            SEQ
+              rand.delay (800000, 1200000, seed)
+              anim ! TRUE
+              CLAIM out!
+                SEQ
+                  out ! char.x.y; pad0b[1][0]; pad0b[1][1]; ' '
+                  out ! char.x.y; pad0b[2][0]; pad0b[2][1]; ' '
+                  out ! char.x.y; pad1b[1][0]; pad1b[1][1]; ' '
+                  out ! char.x.y; pad1b[2][0]; pad1b[2][1]; ' '
+              CLAIM c.link
+                SEQ
+                  c.link[req] ! region.clear;  pad0b[1][0]; pad0b[1][1]; pad0b[1][2]; pad0b[1][3]
+                  c.link[req] ! region.clear;  pad0b[2][0]; pad0b[2][1]; pad0b[2][2]; pad0b[2][3]
+                  c.link[req] ! region.clear;  pad1b[1][0]; pad1b[1][1]; pad1b[1][2]; pad1b[1][3]
+                  c.link[req] ! region.clear;  pad1b[2][0]; pad1b[2][1]; pad1b[2][2]; pad1b[2][3]
+            --}}}  
+            --{{{  let sprite continue
+            SEQ
+              t.svr[rep] ! done; x; y
+            --}}}  
+        --}}}  
+  :
+  --}}}  
+  --{{{  PROC bar (...)
+  PROC bar (SHARED CHAN SPROTO out!, []CHAN BAR.REQUEST req.in?,
+            SHARED COLL.LINK! c.link,
+            CHAN INT to.cellar.door!, SHARED CHAN INT to.cellar.barrel!,
+            CHAN INT beer.in?, CHAN INT c.altmode?, []CHAN INT to.tables!, from.tables?,
+            SHARED TELEPORT.LINK! tele.link)
+    #PRAGMA SHARED to.cellar.door
+    #PRAGMA SHARED to.tables, from.tables
+
+    --{{{  local procs/etc.
+    --{{{  PROC attendant (...)
+    PROC attendant (VAL INT id, CHAN CIF.PROTO out!, SHARED BAR.SERVICE? req,
+                    CHAN INT to.cellar.door!,
+                    SHARED CHAN INT to.cellar.barrel!,
+                    []CHAN INT to.tables!, from.tables?,
+                    SHARED TELEPORT.LINK! tele.link)
+      INITIAL BYTE x IS att.origin[id][0]:
+      INITIAL BYTE y IS att.origin[id][1]:
+      VAL [2]BYTE pad.x IS [teleport.points[0][0] + 1, teleport.points[1][0] + 1]:
+      VAL [2]BYTE pad.y IS [teleport.points[0][1] + 1, teleport.points[1][1] + 1]:
+      INT seed:
+      SEQ
+        --{{{  initialise
+        TIMER tim:
+        tim ? seed
+        seed := gen.seed.from.time (seed TIMES (id + 1))
+        out ! set.x.y; x; y
+        --}}}  
+        VAL INT collect.max IS 50:
+        INITIAL INT collect.count IS (collect.max / 2) * (id + 1):
+        WHILE TRUE
+          INT cust:
+          BAR.REPLY! yp:
+          SEQ
+            --{{{  get job
+            SEQ
+              CLAIM req
+                SEQ
+                  req[req] ? cust
+
+                  IF
+                    cust = (-1)
+                      --{{{  means go to the cellar and add barrel (20 pints here! -- 288 really..)
+                      SEQ
+                        --{{{  move to cellar and open door
+                        SEQ
+                          out ! move.x.y; x; y; cellar.door.points[0] + 1; cellar.door.points[1] - 1
+                          x, y := cellar.door.points[0] + 1, cellar.door.points[1] - 1
+                          to.cellar.door ! 0
+                        --}}}  
+                        --{{{  hide from screen
+                        SEQ
+                          out ! draw.at; x; y; x; y+1
+                          rand.delay (200000, 400000, seed)
+                          out ! hide; x; y+1
+                          rand.delay (1000000, 1000010, seed)
+                        --}}}  
+                        --{{{  add barrel
+                        CLAIM to.cellar.barrel!
+                          to.cellar.barrel ! 1
+                        --}}}  
+                      --}}}  
+                    TRUE
+                      SEQ
+                        req[reply] ? yp
+              IF
+                cust = (-1)
+                  SEQ
+                    --{{{  make visible
+                    SEQ
+                      rand.delay (1000000, 1000010, seed)
+                      out ! show; x; y+1
+                      rand.delay (200000, 400000, seed)
+                      out ! draw.at; x; y+1; x; y
+                    --}}}  
+                    --{{{  shut door
+                    SEQ
+                      to.cellar.door ! 0
+                    --}}}  
+                TRUE
+                  SKIP
+            --}}}  
+            --{{{  maybe move to customer + serve
+            IF
+              cust = (-1)
+                SKIP
+              TRUE
+                --{{{  move to customer and serve
+                SEQ
+                  #PRAGMA DEFINED yp
+                  -- cust is Y location
+                  out ! move.x.y; x; y; 12; BYTE cust
+                  x, y := 12, BYTE cust
+                  rand.delay (200000, 400000, seed)
+                  yp[rep] ! cust
+                --}}}  
+            --}}}  
+            --{{{  maybe done serving
+            IF
+              cust = (-1)
+                SKIP
+              TRUE
+                SEQ
+                  --{{{  move back a bit
+                  SEQ
+                    out ! move.x.y; x; y; x - 6; y
+                    x := x - 6
+                  --}}}  
+                  --{{{  breif pause
+                  SEQ
+                    rand.delay (200000, 300000, seed)
+                  --}}}  
+            --}}}  
+            --{{{  maybe go and collect glasses
+            IF
+              collect.count = 0
+                SEQ
+                  --{{{  move to just outside the first pad
+                  out ! move.x.y; x; y; pad.x[0] + 5; pad.y[0]
+                  x, y := pad.x[0] + 5, pad.y[0]
+                  --}}}  
+                  CLAIM tele.link
+                    SEQ
+                      --{{{  move onto pad
+                      out ! move.x.y; x; y; pad.x[0]; pad.y[0]
+                      x, y := pad.x[0], pad.y[0]
+                      --}}}  
+                      --{{{  activate teleporter
+                      SEQ
+                        tele.link[req] ! activate; x; y; BYTE (NUM.PHILS + id); ANSI.FG.CYAN; SPR.HAPPY
+                        tele.link[rep] ? CASE done; x; y
+                      --}}}  
+                      --{{{  move off pad
+                      out ! move.x.y; x; y; pad.x[1] + 3; pad.y[1]
+                      x, y := pad.x[1] + 3, pad.y[1]
+                      --}}}  
+                  --{{{  go and collect glasses
+                  SEQ
+                    SEQ i = 0 FOR SIZE table.points
+                      INT n:
+                      SEQ
+                        out ! move.x.y; x; y; table.points[i][0] - 2; table.points[i][1] - 1
+                        x, y := table.points[i][0] - 2, table.points[i][1] - 1
+                        to.tables[i] ! 0
+                        from.tables[i] ? n
+                        WHILE n > 0
+                          SEQ
+                            rand.delay (50000, 60000, seed)
+                            to.tables[i] ! 1
+                            n := (n - 1)
+                  --}}}  
+                  --{{{  move back to pad
+                  out ! move.x.y; x; y; pad.x[1] + 5; pad.y[1]
+                  x, y := pad.x[1] + 5, pad.y[1]
+                  --}}}  
+                  CLAIM tele.link
+                    SEQ
+                      --{{{  move onto pad
+                      out ! move.x.y; x; y; pad.x[1]; pad.y[1]
+                      x, y := pad.x[1], pad.y[1]
+                      --}}}  
+                      --{{{  activate teleporter
+                      SEQ
+                        tele.link[req] ! activate; x; y; BYTE (NUM.PHILS + id); ANSI.FG.CYAN; SPR.HAPPY
+                        tele.link[rep] ? CASE done; x; y
+                      --}}}  
+                      --{{{  move off pad
+                      out ! move.x.y; x; y; pad.x[0] + 3; pad.y[0]
+                      x, y := pad.x[0] + 3, pad.y[0]
+                      --}}}  
+                  collect.count := collect.max
+              TRUE
+                collect.count := collect.count - 1
+            --}}}  
+    :
+    --}}}
+    --{{{  PROC beer.tank (...)
+    PROC beer.tank (CHAN INT req?, resp!, get?, put?, CHAN SCR.CTRL to.scrolly!)
+      --{{{  PROC mkmsg ([]BYTE msg, VAL INT n)
+      PROC mkmsg ([]BYTE msg, VAL INT n)
+        SEQ
+          IF
+            n = 1
+              msg[7] := ' '
+            TRUE
+              msg[7] := 's'
+          IF
+            n < 10
+              [msg FOR 2] := [' ', '0' + (BYTE n)]
+            TRUE
+              [msg FOR 2] := ['0' + (BYTE (n / 10)), '0' + (BYTE (n \ 10))]
+      :
+      --}}}  
+      INT n.beers:
+      [8]BYTE beer.msg:
+      SEQ
+        --{{{  initialise
+        SEQ
+          n.beers := 0
+          beer.msg := " 0 pints"
+          mkmsg (beer.msg, n.beers)
+          to.scrolly ! set.attr; ANSI.FG.CYAN
+          to.scrolly ! set.text; 8::beer.msg
+          to.scrolly ! set.speed; 80000
+        --}}}  
+        --{{{  main loop
+        WHILE TRUE
+          PRI ALT
+            --{{{  requesting beer availability
+            INT v:
+            req ? v
+              resp ! n.beers
+            --}}}  
+            --{{{  add or remove beer
+            INT any:
+            (n.beers > 0) & get ? any
+              SEQ
+                n.beers := n.beers - 1
+                mkmsg (beer.msg, n.beers)
+                to.scrolly ! set.text; 8::beer.msg
+            INT n:
+            put ? n
+              SEQ
+                n.beers := n.beers + n
+                mkmsg (beer.msg, n.beers)
+                to.scrolly ! set.text; 8::beer.msg
+            --}}}  
+        --}}}  
+    :
+    --}}}
+
+    --}}}  
+    --{{{  main bar code
+    SEQ
+      --{{{  initialise with pretty colours
+      CLAIM out!
+        SEQ
+          out ! colour; ANSI.FG.MAGENTA
+          SEQ y = 1 FOR INT ((bar.points[3] - bar.points[1]) + 1)
+            out ! string.x.y; bar.points[0]; BYTE y; 2::"||"
+          out ! char.x.y; barstat.points[0] - 1; barstat.points[1]; '['
+          out ! char.x.y; barstat.points[2] + 1; barstat.points[3]; ']'
+          out ! colour; ANSI.FG.WHITE
+          SEQ i = 0 FOR SIZE bar.supports.y
+            out ! string.x.y; bar.points[0]; bar.supports.y[i]; 2::"@@"
+      --}}}  
+      --{{{  run attendant processes
+      SHARED BAR.SERVICE? attend.svr:
+      BAR.SERVICE! attend.cli:
+      SEQ
+        attend.svr, attend.cli := MOBILE BAR.SERVICE
+        CHAN INT beer.req, beer.repl, beer.get:
+        PAR
+          --{{{  attendants
+          PAR i = 0 FOR NUM.ATTENDANTS
+            CHAN CIF.PROTO local:
+            PAR
+              attendant (i, local!, attend.svr, to.cellar.door!,
+                         to.cellar.barrel!, to.tables!, from.tables?,
+                         tele.link)
+              CHAN HIT.IN dummy:
+              SHARED! CHAN HIT.INFO dummy2:
+              common.ifcode (BYTE (NUM.PHILS + i), local?, out!, c.link,
+                             ANSI.FG.CYAN, SPR.HAPPY, [40000,60000], dummy?, dummy2!)
+          --}}}  
+          --{{{  bar status and beer
+          CHAN SCR.CTRL local:
+          PAR
+            CHAN FAST.CTRL dummy:
+            text.scrolly (barstat.points[0], barstat.points[1],
+                          (barstat.points[2] - barstat.points[0]) + 1, out!, local?, dummy?)
+            beer.tank (beer.req?, beer.repl!, beer.get?, beer.in?, local!)
+          --}}}  
+          --{{{  arbitrator
+          INITIAL INT altmode IS 0:		-- regular ALT
+          INITIAL INT fav IS 0:			-- for fair ALT(s)
+          WHILE TRUE
+            INITIAL BOOL do.service IS TRUE:
+            INT y:
+            BAR.REPLY! r.link:
+            SEQ
+              CASE altmode
+                0
+                  PRI ALT
+                    c.altmode ? altmode
+                      do.service := FALSE
+                    ALT i = 0 FOR SIZE req.in
+                      req.in[i] ? y; r.link
+                        SKIP
+                1
+                  PRI ALT
+                    c.altmode ? altmode
+                      do.service := FALSE
+                    PRI ALT i = fav FOR SIZE req.in
+                      VAL INT i IS i \ (SIZE req.in):
+                      req.in[i] ? y; r.link
+                        fav := (fav + 1) \ (SIZE req.in)
+                2
+                  PRI ALT
+                    c.altmode ? altmode
+                      do.service := FALSE
+                    PRI ALT i = fav FOR SIZE req.in
+                      VAL INT i IS i \ (SIZE req.in):
+                      req.in[i] ? y; r.link
+                        fav := i + 1
+              IF
+                #PRAGMA DEFINED y
+                do.service
+                  SEQ
+                    --{{{  check for available beers
+                    INT n:
+                    SEQ
+                      beer.req ! -1
+                      beer.repl ? n
+                      IF
+                        n = 0
+                          --{{{  no beer, tell attendant to go get some
+                          attend.cli[req] ! -1
+                          --}}}  
+                        TRUE
+                          SKIP
+                    --}}}  
+                    --{{{  tell attendant to serve customer
+                    SEQ
+                      attend.cli[req] ! y
+                      attend.cli[reply] ! r.link
+                    --}}}  
+                    --{{{  use beer
+                    SEQ
+                      beer.get ! 1
+                    --}}}  
+                TRUE
+                  SKIP
+          --}}}  
+      --}}}  
+    --}}}  
+  :
+  --}}}  
+  --{{{  PROC nhs (...)
+  PROC nhs (SHARED CHAN SPROTO out!, NHS.LINK? link, CHAN INT low.reserve!)
+    -- note: this re-uses beer.truck.points, since they go in the same space
+    VAL [3][]BYTE ambulance IS [".-----  -.  ",
+                                "|  +  |A__\ ",
+                                "`O-O`--*'O`-*""]:
+    VAL BYTE flash.offset IS 6:
+    INT flash.state:
+    VAL []BYTE empty.string IS "               ":
+    INT seed:
+    VAL [2]INT nhs.delay IS [35000,40000]:
+    SEQ
+      TIMER tim:
+      tim ? seed
+      seed := gen.seed.from.time (seed)
+      flash.state := 0
+
+      WHILE TRUE
+        SEQ
+          --{{{  wait for call
+          INT any:
+          link[req] ? any
+          --}}}  
+          --{{{  lock bottom of display
+          low.reserve ! 0
+          --}}}
+          --{{{  animate to pub
+          SEQ i = 0 FOR SIZE ambulance[0]
+            SEQ
+              CLAIM out!
+                SEQ
+                  out ! colour; ANSI.FG.CYAN
+                  SEQ y = 0 FOR 3
+                    out ! string.x.y; beer.truck.points[2] - (BYTE i); beer.truck.points[1] + (BYTE y);
+                                      ((BYTE i)+1)::ambulance[y]
+                  -- flashy lights
+                  IF
+                    (BYTE i) > flash.offset
+                      SEQ
+                        IF
+                          flash.state < 4
+                            out ! colour; ANSI.FG.BLUE
+                          flash.state < 8
+                            out ! colour; ANSI.FG.WHITE
+                          TRUE
+                            SEQ
+                              out ! colour; ANSI.FG.BLUE
+                              flash.state := 0
+                        flash.state := flash.state + 1
+                        out ! string.x.y; (beer.truck.points[2] - (BYTE i)) + flash.offset; beer.truck.points[1]; 2::"$$"
+                    TRUE
+                      SKIP
+              rand.delay (nhs.delay[0], nhs.delay[1], seed)
+          INITIAL INT anim.start IS INT ((beer.truck.points[2] - (BYTE (SIZE ambulance[0]))) - 0):
+          INITIAL INT anim.len IS INT (((BYTE anim.start) - beer.truck.points[0]) + 1):
+          SEQ x = anim.start FOR anim.len STEP -1
+            SEQ
+              CLAIM out!
+                SEQ
+                  out ! colour; ANSI.FG.CYAN
+                  SEQ y = 0 FOR 3
+                    out ! string.x.y; BYTE x; beer.truck.points[1] + (BYTE y);
+                                      BYTE (SIZE ambulance[y])::ambulance[y]
+                  SEQ y = 0 FOR 3
+                    out ! char.x.y; (BYTE x) + (BYTE (SIZE ambulance[y])); beer.truck.points[1] + (BYTE y); ' '
+
+                  -- flashy lights
+                  IF
+                    flash.state < 4
+                      out ! colour; ANSI.FG.BLUE
+                    flash.state < 8
+                      out ! colour; ANSI.FG.WHITE
+                    TRUE
+                      SEQ
+                        out ! colour; ANSI.FG.BLUE
+                        flash.state := 0
+                  flash.state := flash.state + 1
+                  out ! string.x.y; (BYTE x) + flash.offset; beer.truck.points[1]; 2::"$$"
+              rand.delay (nhs.delay[0], nhs.delay[1], seed)
+          --}}}  
+          --{{{  fixup dead philosopher
+          TIMER tim:
+          INT t:
+          SEQ
+            -- hang around a little while
+            SEQ i = 0 FOR 25
+              SEQ
+                tim ? t
+                tim ? AFTER (t PLUS nhs.delay[0])
+                CLAIM out!
+                  SEQ
+                    -- flashy lights
+                    IF
+                      flash.state < 4
+                        out ! colour; ANSI.FG.BLUE
+                      flash.state < 8
+                        out ! colour; ANSI.FG.WHITE
+                      TRUE
+                        SEQ
+                          out ! colour; ANSI.FG.BLUE
+                          flash.state := 0
+                    flash.state := flash.state + 1
+                    out ! string.x.y; beer.truck.points[0] + flash.offset; beer.truck.points[1]; 2::"$$"
+
+            -- FIXME: to be completed..
+          --}}}  
+          --{{{  drive off
+          INITIAL INT anim.start IS INT (beer.truck.points[0] + 1):
+          INITIAL INT anim.len IS INT (beer.truck.points[2] - ((BYTE (anim.start - 1)) + (BYTE (SIZE ambulance[0])))):
+          SEQ x = anim.start FOR anim.len
+            SEQ
+              CLAIM out!
+                SEQ
+                  out ! colour; ANSI.FG.CYAN
+                  SEQ y = 0 FOR 3
+                    out ! string.x.y; BYTE x; beer.truck.points[1] + (BYTE y);
+                                      BYTE (SIZE ambulance[y])::ambulance[y]
+                  SEQ y = 0 FOR 3
+                    out ! char.x.y; (BYTE x) - 1; beer.truck.points[1] + (BYTE y); ' '
+
+                  out ! colour; ANSI.FG.WHITE
+                  out ! string.x.y; (BYTE x) + flash.offset; beer.truck.points[1]; 2::"$$"
+
+              rand.delay (nhs.delay[0], nhs.delay[1], seed)
+          SEQ i = 0 FOR SIZE ambulance[0]
+            VAL BYTE x IS (beer.truck.points[2] - (BYTE (SIZE ambulance[0]))) + ((BYTE i) + 1):
+            SEQ
+              CLAIM out!
+                SEQ
+                  out ! colour; ANSI.FG.CYAN
+                  SEQ y = 0 FOR 3
+                    SEQ
+                      out ! char.x.y; x - 1; beer.truck.points[1] + (BYTE y); ' '
+                      out ! string.x.y; x; beer.truck.points[1] + (BYTE y);
+                                      (BYTE ((SIZE ambulance[0]) - i))::ambulance[y]
+                  IF
+                    (BYTE i) < (((BYTE (SIZE ambulance[0])) - flash.offset) - 1)
+                      SEQ
+                        out ! colour; ANSI.FG.WHITE
+                        out ! string.x.y; x + flash.offset; beer.truck.points[1]; 2::"$$"
+                    TRUE
+                      SKIP
+              rand.delay (nhs.delay[0], nhs.delay[1], seed)
+          CLAIM out!
+            SEQ y = 0 FOR 3
+              out ! char.x.y; beer.truck.points[2]; beer.truck.points[1] + (BYTE y); ' '
+          --}}}  
+          --{{{  unlock bottom of display
+          low.reserve ! 0
+          --}}}
+          --{{{  resume whoever called
+          SEQ
+            link[rep] ! 0
+          --}}}
+
+  :
+  --}}}  
+  --{{{  PROC nhs.call (CHAN INT call?, NHS.LINK! nhs)
+  PROC nhs.call (CHAN INT call?, NHS.LINK! nhs)
+    WHILE TRUE
+      INT c:
+      SEQ
+        call ? c
+        nhs[req] ! 0
+
+        INITIAL BOOL loop IS TRUE:
+        WHILE loop
+          PRI ALT
+            INT any:
+            nhs[rep] ? any
+              loop := FALSE
+            call ? c
+              SKIP
+  :
+  --}}}
+  --{{{  PROC beer.corp (...)
+  PROC beer.corp (SHARED CHAN SPROTO out!, BEERCORP.LINK? link, CHAN INT low.reserve!)
+    VAL [3][]BYTE lorry IS
+      ["|( beer )|@@\  ",
+       "|( corp )|__ \.",
+       "*"*'O*'O`---=*'O`-*""]:
+    VAL []BYTE empty.string IS "               ":
+    INT seed:
+    VAL [2]INT beer.truck.delay IS [50000,70000]:
+    SEQ
+      TIMER tim:
+      tim ? seed
+      seed := gen.seed.from.time (seed)
+      WHILE TRUE
+        SEQ
+          --{{{  wait for call
+          INT any:
+          link[req] ? any
+          --}}}  
+          --{{{  lock bottom of display
+          low.reserve ! 0
+          --}}}
+          --{{{  animate to pub
+          SEQ i = 0 FOR SIZE lorry[0]
+            SEQ
+              CLAIM out!
+                SEQ
+                  out ! colour; ANSI.FG.YELLOW
+                  SEQ y = 0 FOR 3
+                    out ! string.x.y; beer.truck.points[2] - (BYTE i); beer.truck.points[1] + (BYTE y);
+                                      ((BYTE i)+1)::lorry[y]
+              rand.delay (beer.truck.delay[0], beer.truck.delay[1], seed)
+          INITIAL INT anim.start IS INT ((beer.truck.points[2] - (BYTE (SIZE lorry[0]))) - 0):
+          INITIAL INT anim.len IS INT (((BYTE anim.start) - beer.truck.points[0]) + 1):
+          SEQ x = anim.start FOR anim.len STEP -1
+            SEQ
+              CLAIM out!
+                SEQ
+                  out ! colour; ANSI.FG.YELLOW
+                  SEQ y = 0 FOR 3
+                    out ! string.x.y; BYTE x; beer.truck.points[1] + (BYTE y);
+                                      BYTE (SIZE lorry[y])::lorry[y]
+                  SEQ y = 0 FOR 3
+                    out ! char.x.y; (BYTE x) + (BYTE (SIZE lorry[y])); beer.truck.points[1] + (BYTE y); ' '
+              rand.delay (beer.truck.delay[0], beer.truck.delay[1], seed)
+          --}}}  
+          --{{{  load up beer
+          TIMER tim:
+          INT t:
+          SEQ
+            SEQ i = 0 FOR 6
+              SEQ
+                tim ? t
+                tim ? AFTER (t PLUS 200000)
+                link[rep] ! 1
+            link[rep] ! 0
+            tim ? t
+            tim ? AFTER (t PLUS 200000)
+          --}}}  
+          --{{{  drive off
+          INITIAL INT anim.start IS INT (beer.truck.points[0] + 1):
+          INITIAL INT anim.len IS INT (beer.truck.points[2] - ((BYTE (anim.start - 1)) + (BYTE (SIZE lorry[0])))):
+          SEQ x = anim.start FOR anim.len
+            SEQ
+              CLAIM out!
+                SEQ
+                  out ! colour; ANSI.FG.YELLOW
+                  SEQ y = 0 FOR 3
+                    out ! string.x.y; BYTE x; beer.truck.points[1] + (BYTE y);
+                                      BYTE (SIZE lorry[y])::lorry[y]
+                  SEQ y = 0 FOR 3
+                    out ! char.x.y; (BYTE x) - 1; beer.truck.points[1] + (BYTE y); ' '
+              rand.delay (beer.truck.delay[0], beer.truck.delay[1], seed)
+          SEQ i = 0 FOR SIZE lorry[0]
+            VAL BYTE x IS (beer.truck.points[2] - (BYTE (SIZE lorry[0]))) + ((BYTE i) + 1):
+            SEQ
+              CLAIM out!
+                SEQ
+                  out ! colour; ANSI.FG.YELLOW
+                  SEQ y = 0 FOR 3
+                    SEQ
+                      out ! char.x.y; x - 1; beer.truck.points[1] + (BYTE y); ' '
+                      out ! string.x.y; x; beer.truck.points[1] + (BYTE y);
+                                      (BYTE ((SIZE lorry[0]) - i))::lorry[y]
+              rand.delay (beer.truck.delay[0], beer.truck.delay[1], seed)
+          CLAIM out!
+            SEQ y = 0 FOR 3
+              out ! char.x.y; beer.truck.points[2]; beer.truck.points[1] + (BYTE y); ' '
+          --}}}  
+          --{{{  unlock bottom of display
+          low.reserve ! 0
+          --}}}
+  :
+  --}}}  
+  --{{{  PROC set.player.message (VAL INT player, msgnum, []BYTE imsgbuf, BYTE imsglen)
+  PROC set.player.message (VAL INT player, msgnum, []BYTE imsgbuf, BYTE imsglen)
+    VAL [][]BYTE player.msgs IS ["player X gets out the big guns",
+                                 "player X shoots up the scenery",
+                                 "two player mode go!           ",
+                                 "let*'s go player X!            ",
+                                 "player X is outta here!       ",
+                                 "get ready player X!           "]:
+    VAL []BYTE player.msg.size IS [30, 30, 19, 18, 23, 19]:
+    VAL []INT player.charpos IS [7, 7, -1, 16, 7, 17]:
+    SEQ
+      imsglen := player.msg.size[msgnum]
+      [imsgbuf FOR INT imsglen] := [player.msgs[msgnum] FOR INT imsglen]
+      IF
+        player.charpos[msgnum] >= 0
+          imsgbuf[player.charpos[msgnum]] := '1' + (BYTE player)
+        TRUE
+          SKIP
+  :
+  --}}}
+  --{{{  PROC game.if (...)
+  PROC game.if (VAL INT player, CHAN BYTE kyb?, SHARED CHAN SPROTO out!,
+                SHARED COLL.LINK! c.link,
+                CHAN BULLET.OUT b.out!, CHAN BULLET.IN b.in?,
+                SHARED CHAN HIT.INFO ch.attr.out!,
+                SHARED CHAN INT score.start.stop!, SHARED CHAN FAST.CTRL fast.out!)
+
+    --{{{  constants/tables
+    VAL [][][][]BYTE buggy IS [[["|1~@\", "`O-O*""], ["/@~1|", "*"O-O*'"],
+                                ["0/~\0", "0|1|0"], ["0|1|0", "0\_/0"],
+                                ["|1x@\", "`^~^*""], ["/@x1|", "*"^~^*'"],
+                                ["^/x\^", "^|1|^"], ["^|1|^", "^\x/^"]],
+                               [["|2~@\", "`O-O*""], ["/@~2|", "*"O-O*'"],
+                                ["0/~\0", "0|2|0"], ["0|2|0", "0\_/0"],
+                                ["|2x@\", "`^~^*""], ["/@x2|", "*"^~^*'"],
+                                ["^/x\^", "^|2|^"], ["^|2|^", "^\x/^"]]]:
+    VAL [][]BYTE init.strips IS ["> INIT <"," >INIT< ","  >NI<  ","   ><   ","        "]:
+    VAL BYTE buggy.width IS 5:
+    VAL BYTE buggy.height IS 2:
+    VAL INT DIR.RIGHT IS 0:
+    VAL INT DIR.LEFT IS 1:
+    VAL INT DIR.UP IS 2:
+    VAL INT DIR.DOWN IS 3:
+    --}}}
+    INT seed:
+    SEQ
+      --{{{  initialise
+      SEQ
+        CLAIM out!
+          SEQ
+            out ! colour; ANSI.FG.MAGENTA
+            out ! string.x.y; game.if.points[player][0]; game.if.points[player][1];
+                              ((game.if.points[player][2] - game.if.points[player][0]) + 1)::"[        ]"
+            TIMER tim:
+            tim ? seed
+        seed := gen.seed.from.time (seed)
+      --}}}  
+      --{{{  game loop
+      INITIAL INT in.game IS 0:
+      INITIAL BOOL flash.on IS TRUE:
+      INITIAL BYTE b.x IS 0:
+      INITIAL BYTE b.y IS 0:
+      INITIAL INT b.dir IS 0:
+      INITIAL INT p.outstanding IS 0:		-- bullets sent whose status isn't known
+      [128]BYTE imsgbuf:
+      BYTE imsglen:
+      WHILE TRUE
+        CASE in.game
+          0
+            --{{{  flash waiting for game
+            TIMER tim:
+            INT t:
+            SEQ
+              CLAIM out!
+                SEQ
+                  out ! colour; ANSI.FG.MAGENTA
+                  IF
+                    flash.on AND (player = 0)
+                      out ! string.x.y; game.if.points[player][0] + 1; game.if.points[player][1]; 8::"1P START"
+                    flash.on AND (player = 1)
+                      out ! string.x.y; game.if.points[player][0] + 1; game.if.points[player][1]; 8::"2P START"
+                    TRUE
+                      out ! string.x.y; game.if.points[player][0] + 1; game.if.points[player][1]; 8::"        "
+              flash.on := NOT flash.on
+              tim ? t
+              t := t /\ #FFF00000
+              PRI ALT
+                tim ? AFTER (t PLUS #100000)
+                  SKIP
+                BYTE any:
+                kyb ? any
+                  CASE any
+                    '.', '/', ' ', '*n', '*c'
+                      in.game := 1
+                    ELSE
+                      SKIP
+            --}}}
+          1
+            --{{{  game starting
+            SEQ
+              b.x := game.entry.points[player][0]
+              b.y := game.entry.points[player][1]
+              b.dir := DIR.LEFT
+              --{{{  start scoring
+              CLAIM score.start.stop!
+                score.start.stop ! player
+              --}}}
+              --{{{  try and reserve space on board
+              INITIAL INT c IS 0:
+              INITIAL BOOL reserved IS FALSE:
+              WHILE NOT reserved
+                SEQ
+                  CLAIM out!
+                    SEQ
+                      out ! colour; ANSI.FG.CYAN
+                      out ! string.x.y; game.if.points[player][0] + 1; game.if.points[player][1]; 8::init.strips[c]
+                  rand.delay (500000, 700000, seed)
+                  c := (c + 1) \ (SIZE init.strips)
+                  CLAIM c.link
+                    SEQ
+                      c.link[req] ! region.reserve; b.x; b.y; b.x + (buggy.width - 1); b.y + (buggy.height - 1)
+                      c.link[rep] ? CASE region.reply; reserved
+              --}}}  
+              --{{{  flash some "get ready" text
+              VAL [][]BYTE ready.strings IS ["ready 2!", "        ", "ready 1!", "        "]:
+              SEQ n = 0 FOR SIZE ready.strings
+                TIMER tim:
+                INT t:
+                SEQ
+                  tim ? t
+                  CLAIM out!
+                    SEQ
+                      out ! colour; ANSI.FG.YELLOW
+                      out ! string.x.y; game.if.points[player][0] + 1; game.if.points[player][1]; 8::ready.strings[n]
+                  tim ? AFTER (t PLUS 750000)
+              --}}}  
+              --{{{  claim space and pop in buggy
+              SEQ
+                CLAIM c.link
+                  SEQ
+                    c.link[req] ! region.set; b.x; b.y; b.x + (buggy.width - 1); b.y + (buggy.height - 1)
+                CLAIM out!
+                  SEQ
+                    out ! colour; ANSI.FG.CYAN
+                    SEQ i = 0 FOR INT buggy.height
+                      out ! string.x.y; b.x; b.y + (BYTE i); buggy.width::buggy[player][b.dir][i]
+              --}}}  
+              --{{{  report start
+              CLAIM fast.out!
+                SEQ
+                  fast.out ! set.fast; TRUE
+                  fast.out ! set.attr; ANSI.FG.YELLOW
+                  set.player.message (player, 3, imsgbuf, imsglen)
+                  fast.out ! set.text; imsglen::imsgbuf
+              --}}}
+              in.game := 2
+            --}}}
+          2
+            --{{{  main game loop
+            --{{{  PROC update.timer (VAL INT time)
+            PROC update.timer (VAL INT time)
+              SEQ
+                CLAIM out!
+                  SEQ
+                    out ! colour; ANSI.FG.RED
+                    SEQ i = 0 FOR 2
+                      IF
+                        i < time
+                          out ! char.x.y; game.if.points[player][0] + (1 + (BYTE i)); game.if.points[player][1]; '='
+                        TRUE
+                          out ! char.x.y; game.if.points[player][0] + (1 + (BYTE i)); game.if.points[player][1]; ' '
+                    out ! colour; ANSI.FG.YELLOW
+                    SEQ i = 2 FOR 2
+                      IF
+                        i < time
+                          out ! char.x.y; game.if.points[player][0] + (1 + (BYTE i)); game.if.points[player][1]; '='
+                        TRUE
+                          out ! char.x.y; game.if.points[player][0] + (1 + (BYTE i)); game.if.points[player][1]; ' '
+                    out ! colour; ANSI.FG.GREEN
+                    SEQ i = 4 FOR 4
+                      IF
+                        i < time
+                          out ! char.x.y; game.if.points[player][0] + (1 + (BYTE i)); game.if.points[player][1]; '='
+                        TRUE
+                          out ! char.x.y; game.if.points[player][0] + (1 + (BYTE i)); game.if.points[player][1]; ' '
+            :
+            --}}}  
+            SEQ
+              --{{{  main loop
+              TIMER tim:
+              INT t:
+              INITIAL INT seconds.left IS 8:
+              INITIAL INT scencount IS 0:
+              WHILE seconds.left >= 0
+                SEQ
+                  update.timer (seconds.left)
+                  --{{{  inner loop
+                  tim ? t
+                  t := t PLUS 1000000
+
+                  INITIAL BOOL timed.out IS FALSE:
+                  WHILE NOT timed.out
+                    PRI ALT
+                      tim ? AFTER t
+                        timed.out := TRUE
+                      INT status, player:
+                      b.in ? status; player
+                        SEQ
+                          p.outstanding := p.outstanding - 1
+                          IF
+                            status >= 0
+                              --{{{  hit something worthy
+                              SEQ
+                                -- CLAIM out!
+                                --   SEQ
+                                --     out ! colour; ANSI.FG.WHITE
+                                --     out ! string.x.y; 1; 28; 20::"b.in                "
+                                --     out ! hex8.x.y; 6; 28; (BYTE (status /\ #FF))
+                                --     out ! hex8.x.y; 10; 28; (BYTE ((status >> 8) /\ #FF))
+                                --     out ! hex8.x.y; 14; 28; (BYTE player)
+                                scencount := 0
+                                seconds.left := 8
+                                update.timer (seconds.left)
+                                tim ? t
+                                t := t PLUS 1000000
+                                CLAIM ch.attr.out!
+                                  ch.attr.out ! BYTE (status /\ #FF); BYTE (status >> 8); player
+                              --}}}  
+                            status = (-1)
+                              --{{{  shooting up the scenery
+                              SEQ
+                                scencount := scencount + 1
+                                IF
+                                  scencount = 3
+                                    CLAIM fast.out!
+                                      SEQ
+                                        fast.out ! set.fast; TRUE
+                                        fast.out ! set.attr; ANSI.FG.GREEN
+                                        set.player.message (player, 1, imsgbuf, imsglen)
+                                        fast.out ! set.text; imsglen::imsgbuf
+                                  scencount = 6
+                                    CLAIM fast.out!
+                                      VAL []BYTE str IS "try shooting a philosopher!":
+                                      SEQ
+                                        fast.out ! set.fast; TRUE
+                                        fast.out ! set.attr; ANSI.FG.WHITE
+                                        fast.out ! set.text; (BYTE (SIZE str))::str
+                                  TRUE
+                                    SKIP
+                              --}}}
+                            TRUE
+                              SKIP
+                      BYTE key:
+                      kyb ? key
+                        INITIAL BOOL redraw IS FALSE:
+                        INITIAL INT target.dir IS (-1):
+                        INITIAL BOOL reserved IS FALSE:
+                        INITIAL BOOL fire IS FALSE:
+                        SEQ
+                          --{{{  process key-press
+                          CASE key
+                            '/','.',' '			-- fire!
+                              IF
+                                p.outstanding >= MAX.BULLETS
+                                  SKIP
+                                TRUE
+                                  fire := TRUE
+                            'h','r'			-- left
+                              IF
+                                b.dir = DIR.RIGHT
+                                  b.dir, redraw := DIR.LEFT, TRUE
+                                TRUE
+                                  b.dir, target.dir := DIR.LEFT, 0
+                            'j','q'			-- up
+                              IF
+                                b.dir = DIR.DOWN
+                                  b.dir, redraw := DIR.UP, TRUE
+                                TRUE
+                                  b.dir, target.dir := DIR.UP, 1
+                            'k','a'			-- down
+                              IF
+                                b.dir = DIR.UP
+                                  b.dir, redraw := DIR.DOWN, TRUE
+                                TRUE
+                                  b.dir, target.dir := DIR.DOWN, 3
+                            'l','t'			-- right
+                              IF
+                                b.dir = DIR.LEFT
+                                  b.dir, redraw := DIR.RIGHT, TRUE
+                                TRUE
+                                  b.dir, target.dir := DIR.RIGHT, 2
+                            #1B
+                              --{{{  could be cursor-key
+                              SEQ
+                                kyb ? key
+                                IF
+                                  key = #5B
+                                    SEQ
+                                      kyb ? key
+                                      CASE key
+                                        #44		-- left
+                                          IF
+                                            b.dir = DIR.RIGHT
+                                              b.dir, redraw := DIR.LEFT, TRUE
+                                            TRUE
+                                              b.dir, target.dir := DIR.LEFT, 0
+                                        #41		-- up
+                                          IF
+                                            b.dir = DIR.DOWN
+                                              b.dir, redraw := DIR.UP, TRUE
+                                            TRUE
+                                              b.dir, target.dir := DIR.UP, 1
+                                        #43		-- right
+                                          IF
+                                            b.dir = DIR.LEFT
+                                              b.dir, redraw := DIR.RIGHT, TRUE
+                                            TRUE
+                                              b.dir, target.dir := DIR.RIGHT, 2
+                                        #42		-- down
+                                          IF
+                                            b.dir = DIR.UP
+                                              b.dir, redraw := DIR.DOWN, TRUE
+                                            TRUE
+                                              b.dir, target.dir := DIR.DOWN, 3
+                                        ELSE
+                                          SKIP
+                                  TRUE
+                                    SKIP
+                              --}}}  
+                            ELSE
+                              SKIP
+                          --}}}  
+                          --{{{  check target direction if any
+                          PROC local.reserve (VAL BYTE x1, y1, x2, y2)
+                            SEQ
+                              CLAIM c.link
+                                SEQ
+                                  c.link[req] ! region.reserve; x1; y1; x2; y2
+                                  c.link[rep] ? CASE region.reply; reserved
+                          :
+                          CASE target.dir
+                            0
+                              --{{{  want to go left
+                              local.reserve (b.x - 1, b.y, b.x - 1, b.y + (buggy.height - 1))
+                              --}}}  
+                            1
+                              --{{{  want to go up
+                              local.reserve (b.x, b.y - 1, b.x + (buggy.width - 1), b.y - 1)
+                              --}}}  
+                            2
+                              --{{{  want to go right
+                              local.reserve (b.x + buggy.width, b.y,
+                                             b.x + buggy.width, b.y + (buggy.height - 1))
+                              --}}}  
+                            3
+                              --{{{  want to go down
+                              local.reserve (b.x, b.y + buggy.height,
+                                             b.x + (buggy.width - 1), b.y + buggy.height)
+                              --}}}  
+                            ELSE
+                              SKIP
+                          --}}}  
+                          --{{{  if reserved, claim new space
+                          IF
+                            reserved
+                              PROC local.set (VAL BYTE x1, y1, x2, y2)
+                                SEQ
+                                  CLAIM c.link
+                                    SEQ
+                                      c.link[req] ! region.set; x1; y1; x2; y2
+                              :
+                              CASE target.dir
+                                0
+                                  --{{{  going left
+                                  SEQ
+                                    local.set (b.x - 1, b.y, b.x - 1, b.y + (buggy.height - 1))
+                                    b.x := b.x - 1
+                                    redraw := TRUE
+                                  --}}}  
+                                1
+                                  --{{{  going up
+                                  SEQ
+                                    local.set (b.x, b.y - 1, b.x + (buggy.width - 1), b.y - 1)
+                                    b.y := b.y - 1
+                                    redraw := TRUE
+                                  --}}}  
+                                2
+                                  --{{{  going right
+                                  SEQ
+                                    local.set (b.x + buggy.width, b.y,
+                                               b.x + buggy.width, b.y + (buggy.height - 1))
+                                    b.x := b.x + 1
+                                    redraw := TRUE
+                                  --}}}  
+                                3
+                                  --{{{  going down
+                                  SEQ
+                                    local.set (b.x, b.y + buggy.height,
+                                               b.x + (buggy.width - 1), b.y + buggy.height)
+                                    b.y := b.y + 1
+                                    redraw := TRUE
+                                  --}}}  
+                            TRUE
+                              SKIP
+                          --}}}  
+                          --{{{  if firing, dispatch projectile
+                          IF
+                            fire
+                              BYTE attr:
+                              SEQ
+                                attr := player.bullet.attr[player]
+                                CASE b.dir
+                                  DIR.LEFT
+                                    b.out ! b.x - 1; b.y + (buggy.height - 1); 0; attr; player
+                                  DIR.UP
+                                    b.out ! b.x + (buggy.width / 2); b.y - 1; 1; attr; player
+                                  DIR.RIGHT
+                                    b.out ! b.x + buggy.width; b.y + (buggy.height - 1); 2; attr; player
+                                  DIR.DOWN
+                                    b.out ! b.x + (buggy.width / 2); b.y + buggy.height; 3; attr; player
+                                p.outstanding := p.outstanding + 1
+                            TRUE
+                              SKIP
+                          --}}}  
+                          --{{{  re-draw buggy if needed
+                          IF
+                            redraw
+                              --{{{  redraw buggy
+                              SEQ
+                                CLAIM out!
+                                  SEQ
+                                    out ! colour; ANSI.FG.CYAN
+                                    SEQ i = 0 FOR INT buggy.height
+                                      out ! string.x.y; b.x; b.y + (BYTE i); buggy.width::buggy[player][b.dir][i]
+                              --}}}  
+                            TRUE
+                              SKIP
+                          --}}}  
+                          --{{{  if reserved, clear and free old space
+                          IF
+                            reserved
+                              PROC local.clear (VAL BYTE x1, y1, x2, y2)
+                                SEQ
+                                  CLAIM out!
+                                    SEQ
+                                      IF
+                                        x1 = x2
+                                          SEQ y = INT y1 FOR INT ((y2 - y1) + 1)
+                                            out ! char.x.y; x1; BYTE y; ' '
+                                        TRUE
+                                          out ! string.x.y; x1; y1; ((x2 - x1) + 1)::"     "
+                                  CLAIM c.link
+                                    SEQ
+                                      c.link[req] ! region.clear; x1; y1; x2; y2
+                              :
+                              CASE target.dir
+                                0
+                                  --{{{  clear bit on right
+                                  local.clear (b.x + buggy.width, b.y,
+                                               b.x + buggy.width, b.y + (buggy.height - 1))
+                                  --}}}  
+                                1
+                                  --{{{  clear bit on bottom
+                                  local.clear (b.x, b.y + buggy.height,
+                                               b.x + (buggy.width - 1), b.y + buggy.height)
+                                  --}}}  
+                                2
+                                  --{{{  clear bit on left
+                                  local.clear (b.x - 1, b.y, b.x - 1, b.y + (buggy.height - 1))
+                                  --}}}  
+                                3
+                                  --{{{  clear bit on top
+                                  local.clear (b.x, b.y - 1, b.x + (buggy.width - 1), b.y - 1)
+                                  --}}}  
+                            TRUE
+                              SKIP
+                          --}}}  
+                  --}}}  
+                  seconds.left := seconds.left - 1
+              --}}}  
+              in.game := 3
+            --}}}
+          3
+            --{{{  flash game over
+            SEQ
+              --{{{  notify about game-over
+              TIMER tim:
+              INT t:
+              SEQ
+                tim ? t
+                CLAIM out!
+                  SEQ
+                    out ! colour; ANSI.FG.CYAN
+                    SEQ i = 0 FOR INT buggy.height
+                      out ! string.x.y; b.x; b.y + (BYTE i); buggy.width::buggy[player][b.dir + 4][i]
+                    out ! string.x.y; game.if.points[player][0] + 1; game.if.points[player][1]; 8::"- GAME -"
+                tim ? AFTER (t PLUS 2000000)
+                t := t PLUS 4000000
+                CLAIM out!
+                  SEQ
+                    out ! colour; ANSI.FG.CYAN
+                    out ! string.x.y; game.if.points[player][0] + 1; game.if.points[player][1]; 8::"- OVER -"
+                tim ? AFTER t
+              --}}}  
+              --{{{  collect remaining projectile status's
+              WHILE p.outstanding > 0
+                SEQ
+                  INT any, player:
+                  b.in ? any; player
+                  p.outstanding := p.outstanding - 1
+              --}}}  
+              --{{{  soak up any keys
+              INITIAL BOOL nowt IS FALSE:
+              WHILE NOT nowt
+                PRI ALT
+                  BYTE any:
+                  kyb ? any
+                    SKIP
+                  TRUE & SKIP
+                    nowt := TRUE
+              --}}}  
+              --{{{  stop scoring
+              CLAIM score.start.stop!
+                score.start.stop ! player
+              --}}}
+              in.game := 4
+            --}}}
+          4
+            --{{{  end-game
+            SEQ
+              --{{{  remove buggy from screen
+              CLAIM out!
+                SEQ
+                  SEQ i = 0 FOR INT buggy.height
+                    out ! string.x.y; b.x; b.y + (BYTE i); buggy.width::"     "
+              --}}}  
+              --{{{  remove from board
+              CLAIM c.link
+                SEQ
+                  c.link[req] ! region.clear; b.x; b.y; b.x + (buggy.width - 1); b.y + (buggy.height - 1)
+              --}}}  
+              in.game := 0
+            --}}}
+          ELSE
+            STOP
+      --}}}  
+  :
+  --}}}  
+  --{{{  PROC score.keeper (SHARED CHAN SPROTO out!, CHAN HIT.INFO in?, SHARED CHAN FAST.CTRL fast.out!)
+  PROC score.keeper (SHARED CHAN SPROTO out!, CHAN INT start.stop?, CHAN HIT.INFO in?, SHARED CHAN FAST.CTRL fast.out!)
+    --{{{  messages
+    [128]BYTE imsgbuf:
+    BYTE imsglen:
+    --}}}
+    --{{{  local PROCs
+    --}}}
+    [2]BOOL scoring:
+    [2]INT score:
+    BOOL any.score:
+    SEQ
+      --{{{  initialise
+      scoring[0] := FALSE
+      scoring[1] := FALSE
+      score[0] := 0
+      score[1] := 0
+      any.score := FALSE
+      --}}}
+      --{{{  main loop
+      INITIAL BOOL do.redraw IS TRUE:
+      WHILE TRUE
+        PRI ALT
+          do.redraw & SKIP
+            --{{{  redraw scores
+            SEQ
+              CLAIM out!
+                SEQ i = 0 FOR 2
+                  IF
+                    scoring[i]
+                      SEQ
+                        out ! colour; player.bullet.attr[i]
+                        out ! hex8.x.y; scorekeeper.points[i][0]; scorekeeper.points[i][1]; (BYTE score[i])
+                    TRUE
+                      SEQ
+                        out ! colour; ANSI.FG.MAGENTA
+                        out ! string.x.y; scorekeeper.points[i][0]; scorekeeper.points[i][1]; 2::"--"
+              do.redraw := FALSE
+            --}}}
+          INT player:
+          start.stop ? player
+            --{{{  player start/stop
+            SEQ
+              scoring[player] := NOT scoring[player]
+              score[player] := 0
+              do.redraw := TRUE
+
+              IF
+                (NOT any.score) AND (scoring[0] OR scoring[1])
+                  --{{{  effectively game start
+                  CLAIM fast.out!
+                    SEQ
+                      fast.out ! set.fast; TRUE
+                      fast.out ! set.attr; ANSI.FG.CYAN
+                      set.player.message (player, 5, imsgbuf, imsglen)
+                      fast.out ! set.text; imsglen::imsgbuf
+                  --}}}
+                any.score AND scoring[0] AND scoring[1]
+                  --{{{  player joining the action
+                  CLAIM fast.out!
+                    SEQ
+                      fast.out ! set.attr; ANSI.FG.CYAN
+                      set.player.message (player, 3, imsgbuf, imsglen)
+                      fast.out ! set.text; imsglen::imsgbuf
+                  --}}}
+                any.score AND (NOT scoring[0]) AND (NOT scoring[1])
+                  --{{{  effectively game end
+                  CLAIM fast.out!
+                    fast.out ! set.fast; FALSE
+                  --}}}
+                any.score AND ((NOT scoring[0]) OR (NOT scoring[1]))
+                  --{{{  player leaving the action
+                  CLAIM fast.out!
+                    SEQ
+                      fast.out ! set.attr; ANSI.FG.GREEN
+                      set.player.message (player, 4, imsgbuf, imsglen)
+                      fast.out ! set.text; imsglen::imsgbuf
+                  --}}}
+                TRUE
+                  SKIP
+
+              any.score := scoring[0] OR scoring[1]
+            --}}}
+          BYTE id, attr:
+          INT player:
+          in ? id; attr; player
+            --{{{  got hit
+            SEQ
+              score[player] := score[player] + 1
+              IF
+                score[player] > 255
+                  score[player] := 255
+                TRUE
+                  SKIP
+              do.redraw := TRUE
+            --}}}
+      --}}}
+  :
+  --}}}
+  --{{{  PROC display (...)
+  PROC display (CHAN SPROTO in?, CHAN BYTE out!)
+    INITIAL BYTE last.colour IS ANSI.FG.WHITE:
+    WHILE TRUE
+      PRI ALT
+        in ? CASE
+          --{{{  colour
+          BYTE c:
+          colour; c
+            IF
+              c <> last.colour
+                SEQ
+                  out.string ("*#1B[", 0, out!)
+                  out.byte (c, 0, out!)
+                  out.string ("m*#FF", 0, out!)
+                  last.colour := c
+              TRUE
+                SKIP
+          --}}}  
+          --{{{  clear.screen
+          clear.screen
+            out.string ("*#1B[2J*#FF", 0, out!)
+          --}}}  
+          --{{{  string.x.y
+          BYTE x, y, len:
+          [255]BYTE data:
+          string.x.y; x; y; len::data
+            SEQ
+              cursor.x.y (x, y, out!)
+              out.string ([data FOR (INT len)], 0, out!)
+              out ! #FF
+          --}}}  
+          --{{{  int.x.y
+          BYTE x, y:
+          INT v:
+          int.x.y; x; y; v
+            SEQ
+              cursor.x.y (x, y, out!)
+              out.int (v, 0, out!)
+              out ! #FF
+          --}}}  
+          --{{{  hex8.x.y
+          BYTE x, y, v:
+          hex8.x.y; x; y; v
+            SEQ
+              cursor.x.y (x, y, out!)
+              out.hexbyte (v, 0, out!)
+              out ! #FF
+          --}}}  
+          --{{{  char.x.y
+          BYTE x, y, ch:
+          char.x.y; x; y; ch
+            SEQ
+              cursor.x.y (x, y, out!)
+              out ! ch
+              out ! #FF
+          --}}}  
+          --{{{  sprite.x.y
+          BYTE x, y:
+          INT spr:
+          sprite.x.y; x; y; spr
+            SEQ
+              cursor.x.y (x, y, out!)
+              out.string (sprites[spr], 0, out!)
+              out ! #FF
+          --}}}  
+        (last.colour <> ANSI.FG.WHITE) & SKIP
+          SEQ
+            out.string ("*#1B[37m*#FF", 0, out!)
+            last.colour := ANSI.FG.WHITE
+  :
+  --}}}  
+  --{{{  PROC collision.detector (...)
+  PROC collision.detector (COLL.LINK? link, SHARED CHAN SPROTO disp.chan!)
+    VAL INT scr.width IS (INT (screen.points[2] - screen.points[0])) + 1:
+    VAL INT scr.height IS (INT (screen.points[3] - screen.points[1])) + 1:
+    [scr.height][scr.width]BYTE array:
+    -- the "array" is BYTEs for each location:
+    --  #80     invalid/scenary
+    --  #40     reserved by sprite
+    --  #20     space occupied by sprite
+    --  #1F     sprite number
+    [MAX.SPRITES][2]BYTE spr.xy:
+    VAL BOOL DEBUG.COLL IS FALSE:
+    SEQ
+      --{{{  clear array
+      SEQ y = 0 FOR scr.height
+        SEQ x = 0 FOR scr.width
+          array[y][x] := #00
+      --}}}  
+      --{{{  put in invalid regions
+      SEQ z = 0 FOR SIZE bad.regions
+        VAL INT region.x IS INT (bad.regions[z][0]):
+        VAL INT region.y IS INT (bad.regions[z][1]):
+        VAL INT region.width IS INT ((bad.regions[z][2] - bad.regions[z][0]) + 1):
+        VAL INT region.height IS INT ((bad.regions[z][3] - bad.regions[z][1]) + 1):
+        SEQ y = (region.y - 1) FOR region.height
+          SEQ x = (region.x - 1) FOR region.width
+            SEQ
+              array[y][x] := #80
+              CLAIM disp.chan!
+                SEQ
+                  SKIP
+                  -- disp.chan ! char.x.y; BYTE (x + 1); BYTE (y + 1); 'R'
+      --}}}  
+      --{{{  clear sprite positions
+      SEQ i = 0 FOR MAX.SPRITES
+        spr.xy[i] := [0, 0]
+      --}}}  
+      --{{{  loop processing stuff
+      BYTE FUNCTION id.to.ar (VAL BYTE id) IS ((id /\ #1F) \/ #20):
+      WHILE TRUE
+        link[req] ? CASE
+          --{{{  initialise sprite
+          BYTE x, y, id:
+          init.sprite; x; y; id
+            VAL INT ar.x IS INT (x - 1):
+            VAL INT ar.y IS INT (y - 1):
+            SEQ
+              array[ar.y][ar.x] := id.to.ar (id)
+              array[ar.y][ar.x + 1] := id.to.ar (id)
+              spr.xy[INT id] := [BYTE ar.x, BYTE ar.y]
+              --{{{  DEBUG
+              IF
+                DEBUG.COLL
+                  SEQ
+                    CLAIM disp.chan!
+                      SEQ
+                        disp.chan ! char.x.y; BYTE (ar.x + 1); BYTE (ar.y + 1); 'I'
+                        disp.chan ! char.x.y; BYTE (ar.x + 2); BYTE (ar.y + 1); 'I'
+                TRUE
+                  SKIP
+              --}}}  
+          --}}}  
+          --{{{  clear sprite
+          BYTE x, y, id:
+          clear.sprite; x; y; id
+            VAL INT ar.x IS INT (x - 1):
+            VAL INT ar.y IS INT (y - 1):
+            SEQ
+              array[ar.y][ar.x] := #00
+              array[ar.y][ar.x + 1] := #00
+              spr.xy[INT id] := [0, 0]
+          --}}}  
+          --{{{  reserve region
+          BYTE x1, y1, x2, y2:
+          region.reserve; x1; y1; x2; y2
+            VAL INT ar.x IS (INT x1) - 1:
+            VAL INT ar.y IS (INT y1) - 1:
+            VAL INT ar.width IS INT ((x2 - x1) + 1):
+            VAL INT ar.height IS INT ((y2 - y1) + 1):
+            BOOL can.reserve:
+            SEQ
+              --{{{  check availability
+              IF
+                (ar.y < 0) OR ((ar.y + ar.height) >= scr.height)
+                  can.reserve := FALSE
+                (ar.x < 0) OR ((ar.x + ar.width) >= scr.width)
+                  can.reserve := FALSE
+                IF y = ar.y FOR ar.height
+                  IF x = ar.x FOR ar.width
+                    array[y][x] <> #00
+                      can.reserve := FALSE
+                TRUE
+                  SEQ
+                    can.reserve := TRUE
+                    SEQ y = ar.y FOR ar.height
+                      SEQ x = ar.x FOR ar.width
+                        array[y][x] := #40
+              --}}}  
+              --{{{  reply
+              link[rep] ! region.reply; can.reserve
+              --}}}  
+          --}}}  
+          --{{{  region set (sets to #80 -- invalid scenary type)
+          BYTE x1, y1, x2, y2:
+          region.set; x1; y1; x2; y2
+            VAL INT ar.x IS INT (x1 - 1):
+            VAL INT ar.y IS INT (y1 - 1):
+            VAL INT ar.width IS INT ((x2 - x1) + 1):
+            VAL INT ar.height IS INT ((y2 - y1) + 1):
+            SEQ y = ar.y FOR ar.height
+              SEQ x = ar.x FOR ar.width
+                array[y][x] := #80
+          --}}}  
+          --{{{  region clear (sets to #00 -- open space type)
+          BYTE x1, y1, x2, y2:
+          region.clear; x1; y1; x2; y2
+            VAL INT ar.x IS INT (x1 - 1):
+            VAL INT ar.y IS INT (y1 - 1):
+            VAL INT ar.width IS INT ((x2 - x1) + 1):
+            VAL INT ar.height IS INT ((y2 - y1) + 1):
+            SEQ y = ar.y FOR ar.height
+              SEQ x = ar.x FOR ar.width
+                array[y][x] := #00
+          --}}}  
+          --{{{  query
+          BYTE x, y:
+          query.x.y; x; y
+            VAL INT ar.x IS (INT x) - 1:
+            VAL INT ar.y IS (INT y) - 1:
+            SEQ
+              IF
+                ((ar.x < 0) OR (ar.y < 0)) OR ((ar.x >= scr.width) OR (ar.y >= scr.height))
+                  link[rep] ! query.reply; #FF
+                TRUE
+                  link[rep] ! query.reply; array[ar.y][ar.x]
+          --}}}  
+          --{{{  reserve location for possible move
+          BYTE x, y, id:
+          reserve.x.y; x; y; id
+            VAL INT ar.x IS (INT x) - 1:
+            VAL INT ar.y IS (INT y) - 1:
+            [4]BYTE result:
+            -- possibly locations are left, right, up and down
+            INITIAL INT i IS 0:
+            SEQ
+              --{{{  can go left ?
+              IF
+                (ar.x > 0) AND (array[ar.y][ar.x - 1] = 0)
+                  SEQ
+                    result[i] := 0
+                    i := i + 1
+                    array[ar.y][ar.x - 1] := #40
+                    --{{{  DEBUG
+                    IF
+                      DEBUG.COLL
+                        SEQ
+                          CLAIM disp.chan!
+                            SEQ
+                              disp.chan ! char.x.y; BYTE ar.x; BYTE (ar.y + 1); 'R'
+                      TRUE
+                        SKIP
+                    --}}}  
+                TRUE
+                  SKIP
+              --}}}  
+              --{{{  can go up ?
+              IF
+                (ar.y > 0) AND ((array[ar.y - 1][ar.x] = 0) AND (array[ar.y - 1][ar.x + 1] = 0))
+                  SEQ
+                    result[i] := 1
+                    i := i + 1
+                    array[ar.y - 1][ar.x] := #40
+                    array[ar.y - 1][ar.x + 1] := #40
+                    --{{{  DEBUG
+                    IF
+                      DEBUG.COLL
+                        SEQ
+                          CLAIM disp.chan!
+                            SEQ
+                              disp.chan ! char.x.y; BYTE (ar.x + 1); BYTE ar.y; 'R'
+                              disp.chan ! char.x.y; BYTE (ar.x + 2); BYTE ar.y; 'R'
+                      TRUE
+                        SKIP
+                    --}}}  
+                TRUE
+                  SKIP
+              --}}}  
+              --{{{  can go right ?
+              IF
+                (ar.x < (scr.width - 2)) AND (array[ar.y][ar.x + 2] = 0)
+                  SEQ
+                    result[i] := 2
+                    i := i + 1
+                    array[ar.y][ar.x + 2] := #40
+                    --{{{  DEBUG
+                    IF
+                      DEBUG.COLL
+                        SEQ
+                          CLAIM disp.chan!
+                            SEQ
+                              disp.chan ! char.x.y; BYTE (ar.x + 3); BYTE (ar.y + 1); 'R'
+                      TRUE
+                        SKIP
+                    --}}}  
+                TRUE
+                  SKIP
+              --}}}  
+              --{{{  can go down ?
+              IF
+                (ar.y < (scr.height - 2)) AND ((array[ar.y + 1][ar.x] = 0) AND (array[ar.y + 1][ar.x + 1] = 0))
+                  SEQ
+                    result[i] := 3
+                    i := i + 1
+                    array[ar.y + 1][ar.x] := #40
+                    array[ar.y + 1][ar.x + 1] := #40
+                    --{{{  DEBUG
+                    IF
+                      DEBUG.COLL
+                        SEQ
+                          CLAIM disp.chan!
+                            SEQ
+                              disp.chan ! char.x.y; BYTE (ar.x + 1); BYTE (ar.y + 2); 'R'
+                              disp.chan ! char.x.y; BYTE (ar.x + 2); BYTE (ar.y + 2); 'R'
+                      TRUE
+                        SKIP
+                    --}}}  
+                TRUE
+                  SKIP
+              --}}}  
+              SEQ i = i FOR (SIZE result) - i
+                result[i] := #FF
+              link[rep] ! reserved; result
+          --}}}  
+          --{{{  move to location
+          BYTE x, y, id:
+          move.x.y; x; y; id
+            VAL INT ar.x IS INT (x - 1):
+            VAL INT ar.y IS INT (y - 1):
+            INT c.ar.x, c.ar.y:
+
+            --{{{  local PROC to help with clearing reserved spaces
+            PROC clear.reserved (VAL INT x, y, VAL BYTE dirn)
+              CASE dirn
+                0
+                  --{{{  un-reserve left
+                  IF
+                    (x > 0) AND (array[y][x-1] = #40)
+                      SEQ
+                        array[y][x-1] := #00
+                        --{{{  DEBUG
+                        IF
+                          DEBUG.COLL
+                            SEQ
+                              CLAIM disp.chan!
+                                SEQ
+                                  disp.chan ! char.x.y; BYTE x; BYTE (y + 1); ' '
+                          TRUE
+                            SKIP
+                        --}}}  
+                    TRUE
+                      SKIP
+                  --}}}  
+                1
+                  --{{{  un-reserve up
+                  IF
+                    (y > 0) AND ((array[y-1][x] = #40) AND (array[y-1][x+1] = #40))
+                      SEQ
+                        array[y-1][x] := #00
+                        array[y-1][x+1] := #00
+                        --{{{  DEBUG
+                        IF
+                          DEBUG.COLL
+                            SEQ
+                              CLAIM disp.chan!
+                                SEQ
+                                  disp.chan ! char.x.y; BYTE (x + 1); BYTE y; ' '
+                                  disp.chan ! char.x.y; BYTE (x + 2); BYTE y; ' '
+                          TRUE
+                            SKIP
+                        --}}}  
+                    TRUE
+                      SKIP
+                  --}}}  
+                2
+                  --{{{  un-reserve right
+                  IF
+                    (x < (scr.width - 2)) AND (array[y][x+2] = #40)
+                      SEQ
+                        array[y][x+2] := #00
+                        --{{{  DEBUG
+                        IF
+                          DEBUG.COLL
+                            SEQ
+                              CLAIM disp.chan!
+                                disp.chan ! char.x.y; BYTE (x + 3); BYTE (y + 1); ' '
+                          TRUE
+                            SKIP
+                        --}}}  
+                    TRUE
+                      SKIP
+                  --}}}  
+                3
+                  --{{{  un-reserve down
+                  IF
+                    (y < (scr.height - 2)) AND ((array[y+1][x] = #40) AND (array[y+1][x+1] = #40))
+                      SEQ
+                        array[y+1][x] := #00
+                        array[y+1][x+1] := #00
+                        --{{{  DEBUG
+                        IF
+                          DEBUG.COLL
+                            SEQ
+                              CLAIM disp.chan!
+                                SEQ
+                                  disp.chan ! char.x.y; BYTE (x + 1); BYTE (y + 2); ' '
+                                  disp.chan ! char.x.y; BYTE (x + 2); BYTE (y + 2); ' '
+                          TRUE
+                            SKIP
+                        --}}}  
+                    TRUE
+                      SKIP
+                  --}}}  
+            :
+            PROC verify.dirn (VAL INT x, y, VAL BYTE dirn)
+              CASE dirn
+                0
+                  --{{{  check left
+                  IF
+                    array[y][x-1] = #40
+                      SKIP
+                  --}}}  
+                1
+                  --{{{  check up
+                  IF
+                    (array[y-1][x] = #40) AND (array[y-1][x+1] = #40)
+                      SKIP
+                  --}}}  
+                2
+                  --{{{  check right
+                  IF
+                    array[y][x+2] = #40
+                      SKIP
+                  --}}}  
+                3
+                  --{{{  check down
+                  IF
+                    (array[y+1][x] = #40) AND (array[y+1][x+1] = #40)
+                      SKIP
+                  --}}}  
+            :
+            --}}}  
+
+            SEQ
+              c.ar.x := INT spr.xy[INT id][0]
+              c.ar.y := INT spr.xy[INT id][1]
+              --{{{  only invoked if been granted (sprites must behave!)
+              IF
+                (ar.x = c.ar.x) AND (ar.y = c.ar.y)
+                  --{{{  decided not to move
+                  SEQ i = 0 FOR 4
+                    clear.reserved (c.ar.x, c.ar.y, BYTE i)
+                  --}}}  
+                (ar.x = (c.ar.x - 1)) AND (ar.y = c.ar.y)
+                  --{{{  moving left
+                  SEQ
+                    verify.dirn (c.ar.x, c.ar.y, 0)
+                    SEQ i = 1 FOR 3
+                      clear.reserved (c.ar.x, c.ar.y, BYTE i)
+                    array[ar.y][ar.x] := id.to.ar (id)
+                    array[c.ar.y][c.ar.x + 1] := #00
+                  --}}}  
+                (ar.x = c.ar.x) AND (ar.y = (c.ar.y - 1))
+                  --{{{  moving up
+                  SEQ
+                    clear.reserved (c.ar.x, c.ar.y, 0)
+                    verify.dirn (c.ar.x, c.ar.y, 1)
+                    SEQ i = 2 FOR 2
+                      clear.reserved (c.ar.x, c.ar.y, BYTE i)
+                    array[ar.y][ar.x] := id.to.ar (id)
+                    array[ar.y][ar.x + 1] := id.to.ar (id)
+                    array[c.ar.y][c.ar.x] := #00
+                    array[c.ar.y][c.ar.x + 1] := #00
+                  --}}}  
+                (ar.x = (c.ar.x + 1)) AND (ar.y = c.ar.y)
+                  --{{{  moving right
+                  SEQ
+                    SEQ i = 0 FOR 2
+                      clear.reserved (c.ar.x, c.ar.y, BYTE i)
+                    verify.dirn (c.ar.x, c.ar.y, 2)
+                    clear.reserved (c.ar.x, c.ar.y, 3)
+                    array[ar.y][ar.x + 1] := id.to.ar (id)
+                    array[c.ar.y][c.ar.x] := #00
+                  --}}}  
+                (ar.x = c.ar.x) AND (ar.y = (c.ar.y + 1))
+                  --{{{  moving down
+                  SEQ
+                    SEQ i = 0 FOR 3
+                      clear.reserved (c.ar.x, c.ar.y, BYTE i)
+                    verify.dirn (c.ar.x, c.ar.y, 3)
+                    array[ar.y][ar.x] := id.to.ar (id)
+                    array[ar.y][ar.x + 1] := id.to.ar (id)
+                    array[c.ar.y][c.ar.x] := #00
+                    array[c.ar.y][c.ar.x + 1] := #00
+                  --}}}  
+              --}}}  
+              --{{{  update sprite location
+              spr.xy[INT id] := [BYTE ar.x, BYTE ar.y]
+              --}}}  
+          --}}}  
+      --}}}  
+  :
+  --}}}  
+  --{{{  PROC projectile.network (...)
+  PROC projectile.network (SHARED CHAN SPROTO out!, SHARED COLL.LINK! c.link,
+                           SHARED CHAN BULLET.OUT req?, SHARED CHAN BULLET.IN rep!)
+
+    --{{{  local PROCs
+    PROC bullet (VAL INT id, SHARED CHAN SPROTO out!, SHARED COLL.LINK! c.link,
+                 SHARED CHAN BULLET.OUT job?, SHARED CHAN BULLET.IN done!)
+      INT seed:
+      TIMER tim:
+      SEQ
+        tim ? seed
+        seed := gen.seed.from.time (seed PLUS (id * 34673))
+        WHILE TRUE
+          BYTE x, y, dir:
+          INT t:
+          BYTE tile:
+          BYTE attr:
+          INT player:
+          SEQ
+            --{{{  get job
+            SEQ
+              CLAIM job?
+                job ? x; y; dir; attr; player
+              tim ? t
+            --}}}  
+            --{{{  check/anim loop
+            SEQ
+              INITIAL BOOL done IS FALSE:
+              INITIAL BYTE old.x IS 0:
+              INITIAL BYTE old.y IS 0:
+              WHILE NOT done
+                SEQ
+                  --{{{  check if we can go here, or if something has been hit
+                  -- this will loop if the tile is "reserved", inhabit if 0 or stop
+                  -- if there is a sprite in the tile
+                  INITIAL BOOL tile.busy IS TRUE:
+                  WHILE tile.busy
+                    SEQ
+                      CLAIM c.link
+                        SEQ
+                          c.link[req] ! query.x.y; x; y
+                          c.link[rep] ? CASE query.reply; tile
+                          IF
+                            tile = #00
+                              --{{{  inhabit
+                              c.link[req] ! region.set; x; y; x; y
+                              --}}}  
+                            TRUE
+                              SKIP
+                      IF
+                        tile <> #40
+                          tile.busy := FALSE
+                        TRUE
+                          SKIP
+                  --}}}  
+                  --{{{  is the bullet there, or is there a sprite there ?
+                  #PRAGMA DEFINED tile
+                  IF
+                    tile = #00
+                      --{{{  draw in bullet, maybe erase old one
+                      SEQ
+                        CLAIM out!
+                          SEQ
+                            out ! colour; attr
+                            out ! char.x.y; x; y; '**'
+                            IF
+                              (old.x > 0) AND (old.y > 0)
+                                out ! char.x.y; old.x; old.y; ' '
+                              TRUE
+                                SKIP
+                      --}}}  
+                    TRUE
+                      SEQ
+                        --{{{  maybe erase old bullet
+                        IF
+                          (old.x > 0) AND (old.y > 0)
+                            SEQ
+                              CLAIM out!
+                                out ! char.x.y; old.x; old.y; ' '
+                          TRUE
+                            SKIP
+                        --}}}  
+                        --{{{  hit something
+                        SEQ
+                          -- CLAIM out!
+                          --   SEQ
+                          --     out ! colour; ANSI.FG.WHITE
+                          --     out ! string.x.y; 1; 27; 15::"hit            "
+                          --     out ! hex8.x.y; 5; 27; tile
+                          --     out ! hex8.x.y; 9; 27; attr
+                          done := TRUE
+                        --}}}  
+                  --}}}  
+                  --{{{  maybe clear old region
+                  IF
+                    (old.x > 0) AND (old.y > 0)
+                      SEQ
+                        CLAIM c.link
+                          SEQ
+                            c.link[req] ! region.clear; old.x; old.y; old.x; old.y
+                    TRUE
+                      SKIP
+                  --}}}  
+                  --{{{  if not done, update old.x/y, x/y and delay
+                  IF
+                    NOT done
+                      SEQ
+                        old.x, old.y := x, y
+                        CASE dir
+                          0
+                            x, t := x - 1, t PLUS 40000
+                          1
+                            y, t := y - 1, t PLUS 80000
+                          2
+                            x, t := x + 1, t PLUS 40000
+                          3
+                            y, t := y + 1, t PLUS 80000
+                        tim ? AFTER t
+                    TRUE
+                      SKIP
+                  --}}}  
+            --}}}  
+            --{{{  reply
+            SEQ
+              #PRAGMA DEFINED tile
+              CLAIM done!
+                IF
+                  (tile /\ #80) = #80
+                    done ! -1; player
+                  (tile /\ #20) = #20
+                    done ! (INT (tile /\ #1F)) \/ ((INT attr) << 8); player
+                  TRUE
+                    done ! -2; player
+            --}}}  
+    :
+    --}}}  
+    --{{{  network
+    PAR i = 0 FOR MAX.BULLETS
+      bullet (i, out!, c.link, req?, rep!)
+    --}}}  
+  :
+  --}}}  
+  --{{{  PROC keyboard.if (...)
+  PROC keyboard.if (CHAN BYTE in?, out.0!, out.1!, CHAN INT change.alt!, debug.ctrl!)
+    WHILE TRUE
+      BYTE ch:
+      SEQ
+        in ? ch
+        CASE ch
+          '0', '1', '2'
+            change.alt ! INT (ch - '0')
+          '#'
+            debug.ctrl ! 0
+          'q','a','r','t',' '
+            out.1 ! ch
+          ELSE
+            out.0 ! ch
+  :
+  --}}}  
+  --{{{  PROC simple.semaphore ([]CHAN INT in?)
+  PROC simple.semaphore ([]CHAN INT in?)
+    INITIAL INT f IS 0:
+    WHILE TRUE
+      ALT i = f FOR SIZE in
+        VAL INT i IS i \ (SIZE in):
+        INT any:
+        in[i] ? any       -- lock
+          SEQ
+            in[i] ? any   -- unlock
+            f := i + 1
+  :
+  --}}}
+  --{{{  PROC philosopher.attr.plex (CHAN HIT.INFO in?, []CHAN HIT.IN out!)
+  PROC philosopher.attr.plex (CHAN HIT.INFO in?, []CHAN HIT.IN out!)
+    WHILE TRUE
+      INT player.id:
+      BYTE phil.id, attr:
+      in ?? phil.id; attr; player.id
+        IF
+          (INT phil.id) < (SIZE out)
+            out[INT phil.id] ! attr; player.id
+          TRUE
+            SKIP
+  :
+  --}}}
+
+  --{{{  main process
+  SHARED! CHAN SPROTO dpy.chan:
+  SHARED COLL.LINK! coll.cli:
+  COLL.LINK? coll.svr:
+
+  SHARED! CHAN INT barrel.chan:
+  SEQ
+    coll.svr, coll.cli := MOBILE COLL.LINK
+    cursor.invisible (scr!)
+
+    [NUM.PHILS]CHAN BAR.REQUEST beer.req:
+    CHAN INT cellar.door, beer:
+    SHARED! CHAN JUKEBOX.CTRL juke.ctrl:
+    -- philosopher/whoever needs to be standing in front of the jukebox to control it
+    [2]CHAN INT low.reserve:      -- used to let beer.corp and nhs share the bottom of the display nicely
+    PAR
+      display (dpy.chan?, scr!)
+
+      SHARED DETOX.LINK! detox.cli:
+      DETOX.LINK? detox.svr:
+      BEERCORP.LINK! beercorp.cli:
+      BEERCORP.LINK? beercorp.svr:
+      NHS.LINK! nhs.cli:
+      NHS.LINK? nhs.svr:
+      SHARED TELEPORT.LINK! tele.cli:
+      TELEPORT.LINK? tele.svr:
+      SEQ
+        init.screen (dpy.chan!)
+        detox.cli, detox.svr := MOBILE DETOX.LINK
+        beercorp.cli, beercorp.svr := MOBILE BEERCORP.LINK
+        nhs.cli, nhs.svr := MOBILE NHS.LINK
+        tele.cli, tele.svr := MOBILE TELEPORT.LINK
+
+        [NUM.PHILS]CHAN HIT.IN ch.attr.chans:
+        [NUM.TAB.PHILS]CHAN PHIL.TAB phil.to.table:
+        [NUM.TAB.PHILS]CHAN TAB.PHIL table.to.phil:
+        [NUM.TABLES]CHAN INT bar.to.table, table.to.bar:
+        SHARED! CHAN HIT.INFO ch.attr.plex:
+        SHARED! CHAN HIT.INFO score.in:
+        SHARED! CHAN INT score.start.stop:
+
+        CHAN INT c.alt, debug.chan:
+        [2]CHAN BYTE kyb.to.game:
+        SHARED! CHAN FAST.CTRL fast.ctrl:
+        PAR
+          philosopher.attr.plex (ch.attr.plex?, ch.attr.chans!)
+          PAR i = 0 FOR NUM.PHILS
+            IF
+              TABLE.MAP[i] < 0
+                CHAN PHIL.TAB dummy.out:
+                CHAN TAB.PHIL dummy.in:
+                philosopher (i, dpy.chan!, coll.cli,
+                             beer.req[i]!, juke.ctrl!, detox.cli,
+                             ch.attr.chans[i]?, dummy.out!, dummy.in?,
+                             score.in!)
+              TRUE
+                philosopher (i, dpy.chan!, coll.cli,
+                             beer.req[i]!, juke.ctrl!, detox.cli,
+                             ch.attr.chans[i]?,
+                             phil.to.table[TABLE.MAP[i]]!, table.to.phil[TABLE.MAP[i]]?,
+                             score.in!)
+          PAR i = 0 FOR NUM.TABLES
+            table (i, dpy.chan!, [phil.to.table? FROM i * 4 FOR 4],
+                   [table.to.phil! FROM i * 4 FOR 4], bar.to.table[i]?, table.to.bar[i]!)
+          jukebox (juke.ctrl?, dpy.chan!)
+          pool.table (dpy.chan!)
+          bar (dpy.chan!, beer.req?, coll.cli, cellar.door!, barrel.chan!, beer?,
+               c.alt?, bar.to.table!, table.to.bar?, tele.cli)
+          cellar (dpy.chan!, cellar.door?, barrel.chan?, beer!, beercorp.cli, 1)
+          beer.corp (dpy.chan!, beercorp.svr, low.reserve[0]!)
+          nhs (dpy.chan!, nhs.svr, low.reserve[1]!)
+          simple.semaphore (low.reserve?)
+          nhs.call (debug.chan?, nhs.cli)
+          collision.detector (coll.svr, dpy.chan!)
+          infoline (dpy.chan!, fast.ctrl?)
+          detox (dpy.chan!, detox.svr)
+          keyboard.if (kyb?, kyb.to.game[0]!, kyb.to.game[1]!, c.alt!, debug.chan!)
+          PAR i = 0 FOR 2
+            SHARED? CHAN BULLET.OUT b.dispatch:
+            SHARED! CHAN BULLET.IN b.return:
+            PAR
+              game.if (i, kyb.to.game[i]?, dpy.chan!, coll.cli,
+                       b.dispatch!, b.return?, ch.attr.plex!, score.start.stop!, fast.ctrl!)
+              projectile.network (dpy.chan!, coll.cli, b.dispatch?, b.return!)
+          score.keeper (dpy.chan!, score.start.stop?, score.in?, fast.ctrl!)
+          teleport (dpy.chan!, tele.svr, coll.cli)
+  --}}}  
+:
+--}}}  
+
