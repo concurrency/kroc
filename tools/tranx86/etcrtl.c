@@ -138,9 +138,6 @@ static void generate_call (tstate *ts, etc_chain *etc_code, arch_t *arch, int st
 		if (d_str[1] == '.') {
 			i = 1;
 		}
-		if (!strcmp (d_str, "C.oos.wait.int")) {
-			i = 5;			/* special for OOS */
-		}
 		if ((strlen (d_str) >= 5) && (!strncmp (d_str, "CIF.", 4))) {
 			i = 6;
 		}
@@ -175,23 +172,6 @@ static void generate_call (tstate *ts, etc_chain *etc_code, arch_t *arch, int st
 		/* external B (blocking), BX (killable blocking) or KR (kernel-run) call */
 		arch->compose_bcall (ts, i, kernel_call, stub, d_str, &st_first, &st_last);
 
-		break;
-	case 5:
-		/* C.oos.wait.int(VAL INT i, RESULT INT count) */
-		if (options.kernel_interface & KRNLIFACE_OOS) {
-#if 0
-			tmp_reg = tstack_newreg (ts->stack);
-			st_first = compose_ins (INS_LEA, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, 4, ARG_REG, tmp_reg);
-			add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, tmp_reg));		/* push address of first argument */
-#endif
-			st_first = compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup ((kif_entry (K_OOS_WAIT_INT))->entrypoint));
-			add_to_ins_chain (st_first);
-			st_last = compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR);
-			add_to_ins_chain (st_last);
-		} else {
-			fprintf (stderr, "%s: fatal: must have OOS kernel-interface support in order to use C.oss.wait.int()\n", progname);
-			exit (EXIT_FAILURE);
-		}
 		break;
 	case 6:
 		arch->compose_cif_call (ts, stub, d_str, &st_first, &st_last);
@@ -412,6 +392,9 @@ rtl_chain *etc_to_rtl (etc_chain *etc_code, arch_t *arch)
 						break;
 					case KILLCALL:
 						strcpy (sbuffer, ".KILLCALL");
+						break;
+					case WAIT_FOR_INTERRUPT:
+						strcpy (sbuffer, ".WAIT_FOR_INTERRUPT");
 						break;
 					default:
 						strcpy (sbuffer, "<unknown>");
@@ -1029,6 +1012,28 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 					arch->compose_kcall (ts, K_BX_KILL, 1, 1);
 					
 					ts->stack->ts_depth = 1;
+					break;
+					/*}}}*/
+					/*{{{  WAIT_FOR_INTERRUPT*/
+				case WAIT_FOR_INTERRUPT:
+					#ifdef K_WAIT_INT
+					if (!(options.kernel_interface & KRNLIFACE_OOS)) {
+						fprintf (stderr, "%s: fatal: must have OOS kernel-interface support in order to use WAIT.FOR.INTERRUPT()\n", progname);
+						exit (EXIT_FAILURE);
+					}
+
+					glob_in_icount++;
+					ts->stack->old_a_reg = ts->stack->a_reg;
+					ts->stack->old_b_reg = ts->stack->b_reg;
+
+					arch->compose_kcall (ts, K_WAIT_INT, 2, 0);
+					ts->stack->ts_depth = 1;
+					
+					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGIND, REG_WPTR, ARG_REG, ts->stack->old_a_reg);
+					#else
+					fprintf (stderr, "%s: fatal: must have OOS compiled into tranx86, update KRoC/CCSP and rebuild\n", progname);
+					exit (EXIT_FAILURE);
+					#endif
 					break;
 					/*}}}*/
 					/*{{{  default (special message)*/
