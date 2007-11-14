@@ -1,0 +1,200 @@
+-- Copyright: Mario Schweigler (C) 2005-2006
+-- Institution: Computing Laboratory, University of Kent, Canterbury, UK
+-- Description: Testcase for pony: startup, shutdown, error-, message-handling
+
+-- This program is free software; you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation; either version 2 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program; if not, write to the Free Software
+-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+-- MA 02110-1301, USA.
+
+#INCLUDE "course.module"
+#INCLUDE "pony.module"
+
+PROC startuptest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
+  MOBILE []BYTE ans.name, app.name, node.name:
+  INT node.type, own.node.id, result:
+  SHARED PONY.NETHANDLE! net.handle:
+  PONY.ERRHANDLE! err.handle:
+  INT err.point:
+  PONY.MSGHANDLE! msg.handle:
+  SEQ
+    ans.name := ""
+    CLAIM scr!
+      SEQ
+        --{{{  Get application-name
+        out.string ("APP-Name startuptest-[1..5] (default 1): ", 0, scr!)
+        scr ! 255
+        BYTE any:
+        SEQ
+          key ? any
+          scr ! any
+          scr ! '*n'
+          CASE any
+            '2'
+              app.name := "startuptest-2"
+            '3'
+              app.name := "startuptest-3"
+            '4'
+              app.name := "startuptest-4"
+            '5'
+              app.name := "startuptest-5"
+            ELSE
+              app.name := "startuptest-1"
+        --}}}
+        --{{{  Get node-name
+        out.string ("NODE-Name [empty or 1..9] (default empty): ", 0, scr!)
+        scr ! 255
+        BYTE any:
+        SEQ
+          key ? any
+          scr ! any
+          scr ! '*n'
+          CASE any
+            '1'
+              node.name := "1"
+            '2'
+              node.name := "2"
+            '3'
+              node.name := "3"
+            '4'
+              node.name := "4"
+            '5'
+              node.name := "5"
+            '6'
+              node.name := "6"
+            '7'
+              node.name := "7"
+            '8'
+              node.name := "8"
+            '9'
+              node.name := "9"
+            ELSE
+              node.name := ""
+        --}}}
+        --{{{  Get node-type
+        out.string ("NODE-Type [m]aster [r]eset [s]lave [w]ait (default master): ", 0, scr!)
+        scr ! 255
+        BYTE any:
+        SEQ
+          key ? any
+          scr ! any
+          scr ! '*n'
+          CASE any
+            'r'
+              node.type := PONYC.NODETYPE.MASTERRESET
+            's'
+              node.type := PONYC.NODETYPE.SLAVE
+            'w'
+              node.type := PONYC.NODETYPE.SLAVEWAIT
+            ELSE
+              node.type := PONYC.NODETYPE.MASTER
+        --}}}
+    --{{{  Startup
+    pony.startup.snh.ueh.iep.mh (PONYC.MSGTYPE.STATUSERR,
+                                 PONYC.NETTYPE.TCPIP, ans.name,
+                                 app.name, node.name, node.type,
+                                 own.node.id,
+                                 net.handle,
+                                 err.handle, err.point,
+                                 msg.handle, result)
+    CLAIM scr!
+      SEQ
+        out.string ("Result: ", 0, scr!)
+        out.int (result, 0, scr!)
+        out.string ("*n", 0, scr!)
+    --}}}
+    IF
+      result = PONYC.RESULT.STARTUP.OK
+        PAR
+          --{{{  Message outputter
+          SEQ
+            CLAIM scr!
+              out.string ("Starting message outputter.*n", 0, scr!)
+            pony.msg.out.so.ue (msg.handle, scr!, err!)
+            CLAIM scr!
+              out.string ("Message outputter finished.*n", 0, scr!)
+          --}}}
+          SEQ
+            --{{{  Wait for keyboard signal
+            CLAIM scr!
+              SEQ
+                out.string ("Own node-ID: ", 0, scr!)
+                out.int (own.node.id, 0, scr!)
+                out.string ("*n", 0, scr!)
+                out.string ("Press any key for shutdown.*n", 0, scr!)
+            BYTE any:
+            key ? any
+            --}}}
+            CHAN BOOL sync:
+            PAR
+              --{{{  Shutdown
+              SEQ
+                CLAIM scr!
+                  out.string ("Calling shutdown process.*n", 0, scr!)
+                CLAIM net.handle
+                  pony.shutdown (net.handle)
+                CLAIM scr!
+                  out.string ("Shutdown process finished.*n", 0, scr!)
+                sync ! TRUE
+              --}}}
+              --{{{  Errors and shutdown of error-handler
+              TIMER tim:
+              INT t, result:
+              MOBILE []PONY.ERROR err.array:
+              SEQ
+                tim ? t
+                PRI ALT
+                  BOOL any:
+                  sync ? any
+                    CLAIM scr!
+                      out.string ("Shutdown sync.*n", 0, scr!)
+                  tim ? AFTER t PLUS 50000000
+                    CLAIM scr!
+                      out.string ("Shutdown timeout.*n", 0, scr!)
+                CLAIM scr!
+                  out.string ("Getting errors after initial error-point.*n", 0, scr!)
+                INITIAL MOBILE []INT null.int.array IS MOBILE [0]INT:
+                pony.err.get.errs.after (err.handle, err.point,
+                                         TRUE, TRUE, TRUE, null.int.array,
+                                         err.array, result)
+                CLAIM scr!
+                  SEQ
+                    out.string ("Number of errors: ", 0, scr!)
+                    out.int ((SIZE err.array), 0, scr!)
+                    out.string ("*n", 0, scr!)
+                    SEQ i = 0 FOR (SIZE err.array)
+                      SEQ
+                        out.string ("error: ans.concerned:         ", 0, scr!)
+                        out.bool (err.array[i][ans.concerned], 0, scr!)
+                        out.string ("*n       master.concerned:      ", 0, scr!)
+                        out.bool (err.array[i][master.concerned], 0, scr!)
+                        out.string ("*n       remote.node.concerned: ", 0, scr!)
+                        out.bool (err.array[i][remote.node.concerned], 0, scr!)
+                        out.string ("*n       remote.node.id:        ", 0, scr!)
+                        out.int (err.array[i][remote.node.id], 0, scr!)
+                        out.string ("*n       err.code:              ", 0, scr!)
+                        out.int (err.array[i][err.code], 0, scr!)
+                        out.string ("*n", 0, scr!)
+                    out.string ("Shutting down error-handler.*n", 0, scr!)
+                pony.err.shutdown (err.handle)
+                CLAIM scr!
+                  out.string ("Error-handler shutdown finished.*n", 0, scr!)
+              --}}}
+      TRUE
+        SKIP
+    --{{{  Exit message
+    CLAIM scr!
+      out.string ("Finished! :)*n", 0, scr!)
+    --}}}
+:
+
