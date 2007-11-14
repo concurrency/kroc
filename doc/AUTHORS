@@ -1,0 +1,20 @@
+CCSP runtime kernel, Copyright (C) 1999 Jim Moores, University of Kent
+Modifications (C) 1999-2006 Fred Barnes, University of Kent;
+                  2006-2007 Fred Barnes, Carl Ritson, University of Kent
+
+tranx86 ETC to IA32, MIPS, Sparc and PPC converter,
+Copyright (C) 2000-2006 Fred Barnes, University of Kent.
+Modifications (C) 2006-2007 Fred Barnes, Carl Ritson, University of Kent
+
+occ21 compiler and libraries, Copyright (C) 1995,1996,1997 SGS-Thompson Microelectronics.
+Modifications (C) 1998-2000 Jim Moores, Michael Poole and David Wood.
+Modifications (C) 2000-2006 Fred Barnes, University of Kent.
+Modifications (C) 2006-2007 Fred Barnes, Carl Ritson, University of Kent.
+
+KRoC libraries, utilities, demonstrators and other programs,
+Copyright (C) 2003-2007 Fred Barnes, Carl Ritson, Adam Sampson, Peter Welch,
+                        David Wood, University of Kent, and others.
+
+This release is maintained by Fred Barnes  <F.R.M.Barnes@kent.ac.uk>.
+Please report bugs to  <kroc-bugs@kent.ac.uk>.
+

@@ -1,0 +1,184 @@
+<HTML>
+<HEAD>
+	<TITLE>KRoC Frequently Asked Questions (FAQ)</TITLE>
+	<META NAME="author" CONTENT="Fred Barnes (frmb2@ukc.ac.uk)">
+	<META NAME="keywords" CONTENT="occam kroc kroc/linux">
+</HEAD>
+<BODY BGCOLOR="white" TEXT="black" LINK="blue" VLINK="blue" ALINK="blue">
+<H1 ALIGN="CENTER">KRoC Frequently Asked Questions</H1>
+<P>
+	<CENTER>
+		<I>Maintained by: <A HREF="http://www.cs.ukc.ac.uk/people/rpg/frmb2/">Fred Barnes</A> (frmb2@ukc.ac.uk)</I>
+	<P>
+		<I>Last Modified 7th April 2002</I>
+	</CENTER>
+<HR>
+<P>
+	<UL>
+		<LI><A HREF="#5">I get a ``KRoC: bsyscalls: unable to create semaphores: ...'' type error.  Uh ?</A></LI>
+		<LI><A HREF="#4">How do I pause a process for a specific amount of time ?</A></LI>
+		<LI><A HREF="#3">How do I setup/use a shared channel ?</A></LI>
+		<LI><A HREF="#2">How do I use the random function ?</A></LI>
+		<LI><A HREF="#1">My program deadlocked or range/STOP errored.  Uh ?</A></LI>
+	</UL>
+<P>
+<HR>
+<P>
+	<H3><A NAME="1">My program deadlocked or range/STOP errored.  Uh ?</A></H3>
+	<I>added 17/02/2002</I>
+<P>
+	On KRoC/Linux, use the `<TT>-d</TT>' flag to the `<TT>kroc</TT>' command to turn on debugging.  You'll need to
+	re-compile all the various bits of code used in order to get useful debug information.  When the program crashes
+	now, it will report where the error happened.  If the program deadlocks, KRoC will print information about any
+	processes which were blocked, either on channel I/O or an ALT.
+<P>
+<HR>
+<P>
+	<H3><A NAME="2">How do I use the random function ?</A></H3>
+	<I>added 18/02/2002</I>
+<P>
+	A random number generator is provided in the course library.  It's header (interface) reads:
+	<PRE>
+    INT, INT FUNCTION random (VAL INT upto, seed)
+</PRE>
+	This returns an integer in the range 0 to `(<TT>upto</TT> - 1)' inclusive as the first result and a new seed as
+	the second result.  One would normally use this in the following way:
+	<PRE>
+    INT v, seed:
+    SEQ
+      ...  initialise seed correctly
+
+      v, seed := random (20, seed)
+
+      ...  use v (in the range 0-19 inclusive)
+</PRE>
+	The seed must be initialised to an integer between 1 and `((<TT>MOSTPOS INT</TT>) - 1)' inclusive.  A useful
+	method is to get an initial seed from a <TT>TIMER</TT> then adjust to make it a valid seed.
+<P>
+<HR>
+<P>
+	<H3><A NAME="3">How do I setup/use a shared channel ?</A></H3>
+	<I>added 18/02/2002</I>
+<P>
+	A channel can be made shared in one of three ways:
+	<UL>
+		<LI>any-to-one, multiple writers and one reader (multiplex).  Semaphore required for the writers.</LI>
+		<LI>one-to-any, one writer and multiple readers (farmer/worker).  Semaphore required for the readers.</LI>
+		<LI>any-to-any, multiple writers and multiple readers (farmers/workers).  Two semaphores required, one for the readers and one for the writers.</LI>
+	</UL>
+	To use semaphores, you need to include the file ``semaphore.inc'' in your occam program:
+	<PRE>
+    #INCLUDE "semaphore.inc"
+</PRE>
+	Since standard occam doesn't permit automatic sharing of channel-ends, you need to make explicit the shared nature of channels and data (semaphores):
+	<PRE>
+    CHAN OF INT shared.chan:
+    #PRAGMA SHARED shared.chan
+    SEMAPHORE chan.sem:
+    #PRAGMA SHARED chan.sem
+</PRE>
+	The `<TT>#PRAGMA SHARED</TT>' declaration must immediately follow the declaration.  You can in a similar way share parameters and abbreviations:
+	<PRE>
+    PROC foo (CHAN OF INT to.harvester, SEMAPHORE harvester.sem)
+      #PRAGMA SHARED to.harvester, harvester.sem
+
+      ...
+    :
+</PRE>
+	As a working example, the following code shows a simple multiplexing channel (of <TT>INT</TT>s), where multiple workers feed into a single harvester:
+	<PRE>
+    #USE "course.lib"
+    #INCLUDE "semaphore.inc"
+
+    PROC worker (VAL INT id, CHAN OF INT out, SEMAPHORE out.sem)
+      SEQ i = 0 FOR 10
+        INT v:
+        SEQ
+          v := (id + 1) * i
+          ...  compute some more
+
+          -- need to claim semaphore before using shared channel
+          claim.semaphore (out.sem)
+
+          out ! v
+
+          -- and release again afterwards
+          release.semaphore (out.sem)
+    :
+
+    PROC harvester (CHAN OF INT in, CHAN OF BYTE out)
+      WHILE TRUE
+        INT v:
+        SEQ
+          in ? v
+          out.int (v, 0, out)
+          out ! '*n'
+    :
+
+    PROC farm (CHAN OF BYTE keyboard, screen, error)
+      CHAN OF INT work.done:
+      #PRAGMA SHARED work.done
+      SEMAPHORE work.sem:
+      #PRAGMA SHARED work.sem:
+      SEQ
+
+        -- initialise the semaphore to 1 (binary semaphore/mutex)
+        initialise.semaphore (work.sem, 1)
+
+        -- do network
+        PAR
+          harvester (work.done, screen)
+          PAR i = 0 FOR 20
+            worker (i, work.done, work.sem)
+    :
+</PRE>
+<P>
+<HR>
+<P>
+	<H3><A NAME="4">How do I pause a process for a specific amount of time ?</A></H3>
+	<I>added 21/02/2002</I>
+<P>
+	Time in occam is absolute, ie, there is no direct way to say ``<I>sleep for n micro-seconds</I>''.  The two things available are:
+	<UL>
+		<LI>read the current time, eg, ``<TT>tim ? t</TT>''</LI>
+		<LI>wait until after a particular time, eg, ``<TT>tim ? AFTER t</TT>''</LI>
+	</UL>
+	Using both of these provides the mechanism to sleep for a certain amount of time.  The following <TT>PROC</TT> defines a procedure which
+	sleeps for the specified period of time (given as a parameter in micro-seconds (one millionth of a second)), then returns:
+	<PRE>
+    PROC udelay (VAL INT usecs)
+      TIMER tim:
+      INT t:
+      SEQ
+        tim ? t
+        tim ? AFTER (t PLUS usecs)
+    :
+</PRE>
+	The value of `<TT>usecs</TT>' can be any valid integer.  Negative numbers cause no delay, since that time has already passed.  The maximum
+	delay is ``<TT>MOSTPOS INT</TT>'' (2,147,483,647), but using value this big is unlikely to work, due to the wrap-around caused by the very
+	slight delay between reading the time and waiting for `<TT>t PLUS usecs</TT>'.  The maximum delay turns out to be about 35 minutes.
+<P>
+<HR>
+<P>
+	<H3><A NAME="5">I get a ``KRoC: bsyscalls: unable to create semaphores: ...'' type error.  Uh ?</A></H3>
+	<I>added 07/04/2002</I>
+<P>
+	This error happens when the system runs out of (system-V) style semaphores, which are used in the handling of blocking system-calls.
+	Sometimes when programs exit they leave behind semaphores, usually if the program crashes in an unexpected way.  KRoC sometimes leaves
+	behind semaphores, but efforts are made to clean-up after itself.  However, semaphores sometimes get left behind if KRoC exits without
+	the opportunity to clean-up the blocking system calls (if sent a KILL signal or if it segfaults internally).
+<P>
+	The fix is to delete the semaphores which are no longer needed.  On most modern systems, <TT>/proc/sysvipc/sem</TT> exists which can
+	be consulted for any specific offending semaphore identifiers.  Care should be taken not to remove semaphores which are in use by other
+	programs (sane programs should use the semaphore permission bits to stop others intefering, but some don't).  A little utility to
+	remove semaphore identifiers can be <A HREF="download/rmsem.c">downloaded here</A> (2.1k).  To compile it, do:
+	<PRE>
+    gcc -o rmsem rmsem.c
+</PRE>
+	This (rmsem) can be run without arguments in which case it will try and delete all semaphore identifiers, or with specific identifiers
+	as arguments.  Removing a semaphore which a program is using will probably cause the program to exit with an error.
+<P>
+<HR>
+</BODY>
+</HTML>
+

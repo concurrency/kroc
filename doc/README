@@ -1,0 +1,87 @@
+
+This directory contains:
+
+
+  about-kroc.txt
+
+    This contains basic information about KRoC.  (a bit out
+    of date currently) -- see the essentially-kroc.txt file.
+
+  essentially-kroc.txt
+
+    This document describes how to use the basic KRoC utilities
+    (kroc, ilibr, kmakef).  ** Essential reading **
+
+  occ21-extensions.html
+
+    This document describes various additions to the occ21
+    occam compiler -- the text version has now been abandoned.
+
+  kroc-faq.html
+
+    This document attempts to answer some frequently asked
+    questions.
+
+  native-call.ps
+
+    This document describes how to make external calls to C
+    functions (or any other language which uses the same
+    parameter passing conventions as C).
+
+  blocking-native.ps
+
+    This document describes how to make an external C call
+    which may block -- without blocking the occam kernel.
+
+  bsclib.ps
+
+    This document describes how to use the occam socket, file
+    and process libraries.  These libraries rely on blocking
+    system calls being available.  [updated 03/2003].
+
+  o2cl.ps, o2cl.txt
+
+    "An occam2.1 Checklist": a 17-page Postscript document
+    covering most of occam2 by Peter Welch <P.H.Welch@ukc.ac.uk>.
+
+  hlps.txt
+
+    "Higher Levels of Process Synchronisation": this is a
+    research note that documents and motivates the extra
+    synchronisation primatives provided in this release.
+    See the kroc/syncs/ directory.
+
+  udo.ps, udo.html
+
+    This describes the extension to KRoC occam2.1 which enables
+    user defined operators.
+
+  hostio.txt
+
+    This document describes how to use the Inmos Toolset
+    hostio and hostsp libraries.
+
+  pragmas.txt
+
+    This provides a quick run-down of the common compiler
+    #PRAGMA directives available.
+
+  sc/
+  lib/
+
+    These directories contain examples referred to in the
+    'essentially-kroc.txt' document.
+
+  udc.ps
+
+    This is the documentation for user-defined channels.  This
+    extension allows arbitrary C code to be run when operations
+    are invoked on `PLACED CHAN's.
+
+  moinmoinwiki-occampi.py
+
+    This is a MoinMoin Wiki parser for syntax-highlighting
+    occam-pi code.  Copy it into your Wiki's parser directory,
+    renaming as occampi.py, and use with "#!occampi" on pre-
+    formatted text (immediately after the opening braces).
+

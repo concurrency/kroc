@@ -1,0 +1,30 @@
+occam/C runtime system, libraries and package modification.
+Copyright (C) 1999 Jim Moores, Computing Lab, University of Kent
+Modifications (C) 1999, 2000-2005 Fred Barnes <frmb@kent.ac.uk> or <fred@frmb.org>
+
+TRANPC ETC code to 386 converter.
+Copyright (C) 1997-1999 Michael Poole
+Modifications (C) 1999, 2000 Fred Barnes
+
+tranx86 ETC to Intel x86, MIPS, Sparc and PPC converter
+Copyright (C) 2000-2005 Fred Barnes
+
+occam 2.1 compiler/compiler tools.
+(c) Copyright SGS-THOMSON Microelectronics Limited 1995,1996,1997
+compiler extensions by Jim Moores, Michael Poole, David Wood
+and Fred Barnes.
+occam-pi extensions Copyright (C) 2000-2005 Fred Barnes.
+
+GNU style packaging - Copyright (C) Dave Beckett 1997-1999.
+
+Source release packaging - Copyright (C) 1999-2005 Fred Barnes, University of Kent.
+
+Blocking system call libraries - Copyright (C) 1999-2004 Fred Barnes
+
+MIPS specific code - Copyright (C) 2002-2004 Christian Jacobsen and Fred Barnes
+
+Original KRoC system authored by David Wood and Peter Welch from a student
+project by Kneale Rothwell, Graham Shaw, and Andrew Smith.
+
+Please report bugs to kroc-bugs@kent.ac.uk
+
