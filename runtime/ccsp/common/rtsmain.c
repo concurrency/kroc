@@ -137,7 +137,7 @@ void ccsp_set_external_event_hook (bool bsc, bool (*blocked)(void), bool (*ready
 void ccsp_default_exit_handler (int status, bool core)
 {
 	#if defined(GENERATE_CORES)
-	if (dump_core) {
+	if (core) {
 		MESSAGE ("fatal error code %d, core dumped\n", exit_status);
 		FFLUSH (stderr);
 		abort ();
@@ -146,6 +146,8 @@ void ccsp_default_exit_handler (int status, bool core)
 
 	#if !defined(OOS_BUILD)
 	_exit (status);
+	#else
+	panic ("exiting CCSP");
 	#endif
 }
 /*}}}*/
