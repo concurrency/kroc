@@ -1,0 +1,87 @@
+--
+--	suspendable.occ -- example of suspending/resuming dynamic processes
+--	Copyright (C) 2001 Fred Barnes <frmb2@ukc.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#INCLUDE "course.module"
+#INCLUDE "dynproc.module"
+
+#INCLUDE "clockproto.inc"
+
+
+PROC test.process (VAL DPROCESS me, []CHAN OF ANY in, out)
+  CHAN OF CLOCK.PROTO c.in RETYPES in[0]:
+  CHAN OF BYTE c.out RETYPES out[0]:
+  CHAN OF BOOL sync.out RETYPES out[1]:
+  INITIAL BOOL running IS TRUE:
+  INITIAL BOOL timer.running IS FALSE:
+  TIMER tim:
+  INT t:
+  INT speed:
+  SEQ
+    -- running for the first time, sync.
+    sync.out ! TRUE
+    out.string ("test.process: hello world!*n", 0, c.out)
+    WHILE running
+      PRI ALT
+        c.in ? CASE
+          bounds
+            [8]BYTE temp:
+            SEQ i = 1 FOR SIZE temp
+              temp[i] := #00
+          overflow
+            INT x, y:
+            SEQ
+              x := 2000000000
+              y := (x * 2)
+          reset; speed
+            SEQ
+              tim ? t
+              t := t PLUS speed
+              timer.running := TRUE
+          stop
+            SEQ
+              out.string ("test.process: got stop signal!*n", 0, c.out)
+              running := FALSE
+          suspend
+            INT result:
+            SEQ
+              out.string ("test.process: suspending!*n", 0, c.out)
+              ccsp.suspendproc (me, result)
+              IF
+                result = DPROCESS.RESUMED
+                  SEQ
+                    -- resumed, send sync
+                    sync.out ! TRUE
+                    out.string ("resumed!*n", 0, c.out)
+                    -- reset timer
+                    tim ? t
+                TRUE
+                  SEQ
+                    out.string ("erk -- ccsp.suspendproc() returned ", 0, c.out)
+                    out.int (result, 0, c.out)
+                    c.out ! '*n'
+                    timer.running := FALSE
+                    running := FALSE
+        timer.running & tim ? AFTER t
+          SEQ
+            out.string ("tick!*n", 0, c.out)
+            t := t PLUS speed
+    out.string ("test.process exiting!*n", 0, c.out)
+:
+
+

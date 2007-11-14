@@ -1,0 +1,72 @@
+
+#INCLUDE "course.module"
+#INCLUDE "dynproc.module"
+
+VAL n.processes IS 5:
+
+PROC testdyn (CHAN OF BYTE kyb, scr, err)
+
+  PROC n.way.plex ([]CHAN OF BYTE in, CHAN OF BYTE out, CHAN OF BOOL terminate)
+    INITIAL INT fav IS 0:
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ALT i = fav FOR SIZE in
+          BYTE temp:
+          VAL INT i.mod.s IS (i \ (SIZE in)):
+          in[i.mod.s] ? temp
+            SEQ
+              out ! temp
+              fav := (i.mod.s + 1)
+        BOOL any:
+        terminate ? any
+          running := FALSE
+  :
+
+  PROC n.way.delta (CHAN OF BYTE in, []CHAN OF BYTE out, CHAN OF BOOL terminate)
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        BYTE ch:
+        in ? ch
+          PAR i = 0 FOR n.processes
+            out[i] ! ch
+        BOOL any:
+        terminate ? any
+          running := FALSE
+  :
+
+  PROC do.processes (VAL INT libhandle, VAL []BYTE proc, CHAN OF BYTE x.kyb, x.scr, x.err)
+    [n.processes]CHAN OF BYTE kyb.array, scr.array, err.array:
+    [3]CHAN OF BOOL term:
+    SEQ
+      PAR
+        n.way.delta (x.kyb, kyb.array, term[0])
+        n.way.plex (scr.array, x.scr, term[1])
+        n.way.plex (err.array, x.err, term[2])
+        SEQ
+          PAR i = 0 FOR n.processes
+            [1]CHAN OF ANY tmp.in RETYPES [kyb.array[i]]:
+            [2]CHAN OF ANY tmp.out RETYPES [scr.array[i], err.array[i]]:
+            INT res:
+            ccsp.run (proc, libhandle, tmp.in, tmp.out, res)
+          PAR i = 0 FOR 3
+            term[i] ! TRUE
+      x.scr ! FLUSH
+  :
+
+  INT handle:
+  SEQ
+    out.string ("about to start*n", 0, scr)
+    ccsp.openlib ("./testlib.so", handle)
+    IF
+      handle = 0
+        out.string ("unable to open testlib.so :(*n", 0, scr)
+      TRUE
+        SEQ
+          do.processes (handle, "testlib", kyb, scr, err)
+          ccsp.closelib (handle)
+    out.string ("all done*n", 0, scr)
+:
+
+
