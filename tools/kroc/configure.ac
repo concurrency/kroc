@@ -248,7 +248,7 @@ AC_SUBST(TRANEXTRAOPTS)
 AC_SUBST(EXTCCEXTRAOPTS)
 AC_SUBST(NOCCHOME)
 
-dnl new settings for kroc.conf
+dnl new settings for kroc
 KROC_ARCHBINDIR="$bindir"
 KROC_ARCHLIBDIR="$libdir"
 KROC_ARCHINCDIR="$includedir"
@@ -267,6 +267,6 @@ AC_SUBST(ACLOCALDIR)
 AC_SUBST(CONFFILEPREFIX)
 AC_SUBST(ENV_LIBRARY_PATH)
 
-AC_OUTPUT([kroc kmakemodule occbuild kroc.conf setup.sh setup.csh Makefile])
+AC_OUTPUT([kroc kmakemodule occbuild setup.sh setup.csh Makefile])
 
 
