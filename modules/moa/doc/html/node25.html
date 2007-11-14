@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>query.all; MOBILE []BYTE</TITLE>
+<META NAME="description" CONTENT="query.all; MOBILE []BYTE">
+<META NAME="keywords" CONTENT="moa">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="moa.css">
+
+<LINK REL="next" HREF="node26.html">
+<LINK REL="previous" HREF="node24.html">
+<LINK REL="up" HREF="node22.html">
+<LINK REL="next" HREF="node26.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html468"
+  HREF="node26.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html464"
+  HREF="node22.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html458"
+  HREF="node24.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html466"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html469"
+  HREF="node26.html">next.row</A>
+<B> Up:</B> <A NAME="tex2html465"
+  HREF="node22.html">Communication with the MySQL</A>
+<B> Previous:</B> <A NAME="tex2html459"
+  HREF="node24.html">query.row; MOBILE []BYTE</A>
+ &nbsp; <B>  <A NAME="tex2html467"
+  HREF="node1.html">Contents</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL>
+<LI><A NAME="tex2html470"
+  HREF="node25.html#SECTION00097310000000000000">Answer</A>
+<LI><A NAME="tex2html471"
+  HREF="node25.html#SECTION00097320000000000000">Errors</A>
+</UL>
+<!--End of Table of Child-Links-->
+<HR>
+
+<H3><A NAME="SECTION00097300000000000000">
+<TT>query.all; MOBILE []BYTE</TT></A>
+</H3><FONT SIZE="-1">
+This message is similar to <TT>query</TT>, but when the query has executed the process will retrieve all the rows of the result set without being prompted. As such, <TT>query.all</TT> achieves almost the same effect as <TT>query</TT> followed by <TT>remaining.rows</TT>.
+</FONT>
+<H4><A NAME="SECTION00097310000000000000">
+Answer</A>
+</H4><FONT SIZE="-1">
+<TT>data.ready</TT> followed by a number of <TT>data.row</TT> messages and finally an <TT>end.of.data</TT> message. If the query didn't return any data, the answer will just be <TT>data.ready</TT> followed by <TT>end.of.data</TT>.
+</FONT>
+<H4><A NAME="SECTION00097320000000000000">
+Errors</A>
+</H4><FONT SIZE="-1">
+The same as for <TT>query</TT>.
+</FONT>
+<P>
+<BR><HR>
+<ADDRESS>
+Espen Suenson
+2006-07-07
+</ADDRESS>
+</BODY>
+</HTML>

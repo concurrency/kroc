@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>The occam- programming language</TITLE>
+<META NAME="description" CONTENT="The occam- programming language">
+<META NAME="keywords" CONTENT="moa">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="moa.css">
+
+<LINK REL="next" HREF="node4.html">
+<LINK REL="previous" HREF="node2.html">
+<LINK REL="up" HREF="moa.html">
+<LINK REL="next" HREF="node4.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html116"
+  HREF="node4.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html112"
+  HREF="moa.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html106"
+  HREF="node2.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html114"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html117"
+  HREF="node4.html">Design</A>
+<B> Up:</B> <A NAME="tex2html113"
+  HREF="moa.html">MySQL occam- API</A>
+<B> Previous:</B> <A NAME="tex2html107"
+  HREF="node2.html">Introduction</A>
+ &nbsp; <B>  <A NAME="tex2html115"
+  HREF="node1.html">Contents</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00030000000000000000">
+The occam-<IMG
+ WIDTH="14" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+ SRC="img1.png"
+ ALT="$ \pi $">
+ programming language</A>
+</H1>
+occam is a highly parallel safe language based on Hoares Communicating Sequential Processes, a calculus that provides a sound semantic foundation for concurrent execution.
+
+<P>
+The language was originally developed by the company Inmos in the 80's for their parallel transputer chip. It has since been further developed mainly by a group of researchers at the University of Kent. Notably, the language has been fused with some of the <IMG
+ WIDTH="14" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+ SRC="img1.png"
+ ALT="$ \pi $">
+-calculus for allowing a more dynamic treatment of processes. This is why the language today is called occam-<IMG
+ WIDTH="14" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+ SRC="img1.png"
+ ALT="$ \pi $">
+.
+
+<P>
+Central to occam is the notion of <I>processes</I>. Processes can execute concurrently and possess their own internal data. They can only communicate via. well-defined messages over <I>channels</I>. Thus, there is no shared memory in occam, and all communication must be done via. channels. This is the main reason that occam is a very safe and easy language: There are no nasty aliasing effects or surprising concurrent behaviour due to the inappropriate use of the usual concurrency constructs (semaphores etc). 
+
+<P>
+In addition, the compiler is able to check and disallow a variety of unwanted behaviour such as race conditions and out-of-bounds array assignment.
+
+<P>
+In short, occam is an excellent choice of language for every parallel programming task. The only drawback is that the current compiler onlys supports single-CPU architectures. But even for single-CPU applications occam is worth a thought due to the increased clarity and safety obtained. In addition, efforts are being made continually to further develop occam-<IMG
+ WIDTH="14" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+ SRC="img1.png"
+ ALT="$ \pi $">
+.
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html116"
+  HREF="node4.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html112"
+  HREF="moa.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html106"
+  HREF="node2.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html114"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html117"
+  HREF="node4.html">Design</A>
+<B> Up:</B> <A NAME="tex2html113"
+  HREF="moa.html">MySQL occam- API</A>
+<B> Previous:</B> <A NAME="tex2html107"
+  HREF="node2.html">Introduction</A>
+ &nbsp; <B>  <A NAME="tex2html115"
+  HREF="node1.html">Contents</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Espen Suenson
+2006-07-07
+</ADDRESS>
+</BODY>
+</HTML>

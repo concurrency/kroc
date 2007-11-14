@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Implementation</TITLE>
+<META NAME="description" CONTENT="Implementation">
+<META NAME="keywords" CONTENT="moa">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="moa.css">
+
+<LINK REL="next" HREF="node6.html">
+<LINK REL="previous" HREF="node4.html">
+<LINK REL="up" HREF="moa.html">
+<LINK REL="next" HREF="node6.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html140"
+  HREF="node6.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html136"
+  HREF="moa.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html130"
+  HREF="node4.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html138"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html141"
+  HREF="node6.html">Applications</A>
+<B> Up:</B> <A NAME="tex2html137"
+  HREF="moa.html">MySQL occam- API</A>
+<B> Previous:</B> <A NAME="tex2html131"
+  HREF="node4.html">Design</A>
+ &nbsp; <B>  <A NAME="tex2html139"
+  HREF="node1.html">Contents</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00050000000000000000">
+Implementation</A>
+</H1>
+To lower the development workload, MoA will communicate with MySQL by way of the existing MySQL C API. Thus, MoA is basically built on top of an occam C interface (CIF) process calling the MySQL C API.
+
+<P>
+As occam is a much safer language than C, as much of the logic as possible should be handled in occam. However, there are some things that are handled in C which could have been handled in occam. It would have been possible to just have occam use blocking C calls to the MySQL C API, and thus avoid having a CIF process running C code altogether. However, that would make it necessary to store the necessary C data structures as byte arrays in occam, which is not very nice. 
+
+<P>
+Instead, we have a C process where the necessary data structures are stored. The communication between the occam and C process is quite low level since channels to C processes are limited in type. Five channels are used to communicate between occam and C. <TT>control</TT>, <TT>argi</TT> and <TT>args</TT> goes from occam to C and <TT>status</TT> and <TT>data</TT> goes from C to occam. <TT>control, argi</TT> and <TT>status</TT> carry type <TT>INT</TT> while <TT>args</TT> and <TT>data</TT> carry type <TT>MOBILE []BYTE</TT>. 
+
+<P>
+<TT>control</TT> is used to  send commands to the C process to signal which function in the C API should be called. Subsequently, integer arguments are sent on <TT>argi</TT> and string arguments on <TT>args</TT>, the number and type of arguments being dependent on the command.
+
+<P>
+If the command can fail, a value is sent back via. the <TT>status</TT> channel indicating success or failure. If any values are returned they are sent back  sequentially via. the <TT>status</TT> and <TT>data</TT> channels depending on the type.
+
+<P>
+All error handling is done in occam, so the only functionality residing in the C process is converting the various C strings and other data types to <TT>MOBILE []BYTE</TT>s and values that occam understands. 
+
+<P>
+It should be okay to have several MySQL processes running in parallel if the MySQL C client library is compiled thread-safe. However, the initialisation call to the API is not thread-safe. For this reason, it is provided in MoA as a process that should terminate before starting any MySQL processes in parallel. This is the only way to provide this functionality, as there is no way for the MySQL processes to atomically check if they are the first MySQL process to run.
+
+<P>
+Some of the commands to the MySQL process are very similar, so to avoid code duplication we want the same piece of code to handle these. For this reason, a wrapper process translates the commands for the application programmer before they are passed to the main process of the API for processing. To be really neat, we should translate from the API protocol to an internal protocol, but the translation is so simple that we just re-use the API protocol.
+
+<P>
+It would have been nice to provide the various field names as part of the <TT>MYSQL.FIELD.INFO</TT> record instead of selecting with a control byte (see section <A HREF="node31.html#field.info">8.7.9</A>), but the current version of KRoC (1.4.0) doesn't seem to support mobile arrays of mobile records.
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html140"
+  HREF="node6.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html136"
+  HREF="moa.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html130"
+  HREF="node4.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html138"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html141"
+  HREF="node6.html">Applications</A>
+<B> Up:</B> <A NAME="tex2html137"
+  HREF="moa.html">MySQL occam- API</A>
+<B> Previous:</B> <A NAME="tex2html131"
+  HREF="node4.html">Design</A>
+ &nbsp; <B>  <A NAME="tex2html139"
+  HREF="node1.html">Contents</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Espen Suenson
+2006-07-07
+</ADDRESS>
+</BODY>
+</HTML>
