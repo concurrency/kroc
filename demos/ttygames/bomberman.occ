@@ -1,0 +1,1869 @@
+--
+--	bomberman.occ -- implementation of bomber-man in occam-pi
+--	Copyright (C) 2007 Scott Congreve, University of Kent
+--
+
+#INCLUDE "course.module"
+#INCLUDE "ss.module"
+
+-- {{{ CONSTANTS FOR  BOARD DEFINITION
+VAL INT WIDTH IS 25:
+VAL INT HEIGHT IS 25:
+VAL [WIDTH][HEIGHT]BYTE BOARD IS ["@@@@@@@@@@@@-@@@@@@@@@@@@","@1###   ####   ####  #M X","@ @#@ @#@ @#@ @#@ @#@#@ @","@ #######M #3###   ## ##@","@#@ @#@#@ @#@ @#@#@#@M@#@","@#   ###  ###   #1##   #@","@#@ @#@5@#@ @#@#@#@ @#@#@","@### M ###   ##4## M #  @","@ @#@ @#@#@#@#@#@#@ @#@ @","@  ########  ##   ###2##@","@2@#@#@ @#@ @#@ @ @#@#@ @","@## M #  ##  ### ####   @","@#@ @#@1@ @2@ @#@#@#@#@ @","@ ##  ###  ##  ##  M#2##@","@ @#@4@#@ @#@ @#@#@ @ @#@","@###   ###  #1##  ###  #@","@#@ @ @#@ @#@#@#@ @#@#@ @","@#   ###  M 3###   ##   @","@#@#@2@#@ @#@#@#@#@#@#@#@","@### #### ##  #5## M####@","@#@#@#@#@#@1@#@#@#@ @#@#@","@ ###1### M#  #1### ##  @","@ @#@#@#@#@ @ @#@#@ @#@#@","@S  2###1##### # ##  ##2@","@@@@@@@@@@@@-@@@@@@@@@@@@"]:
+--}}}
+
+-- {{{ CONSTANTS DEFINING BONUSES
+VAL BYTE BOMB.UP    IS 1:
+VAL BYTE FIRE.UP    IS 2:
+VAL BYTE BOMB.DOWN  IS 3:
+VAL BYTE FIRE.DOWN  IS 4:
+VAL BYTE LIFE.UP    IS 5:
+-- }}}
+
+-- {{{ CHANNEL DEFINITIONS 
+
+-- {{{ GROUND->PLAYER COMMUNICATION
+
+-- {{{ Channel from ground to player to notify player when one of its bombs has detonated
+CHAN TYPE BOMB.LINK
+  MOBILE RECORD
+    CHAN BOOL detonate?: -- Simple 'ping' when bomb detonates
+:
+-- }}}
+
+-- {{{ Channel for ground to player communication
+CHAN TYPE PLAYER.LINK
+  MOBILE RECORD
+    CHAN BOOL lose.life?: -- Request to deduct one from life
+    CHAN BOOL dead!:      -- Response to lose.life - send TRUE if no lifes left -> otherwise send FALSE
+:
+-- }}}
+
+-- {{{ Protocol for updating the player's point score
+PROTOCOL POINT.SCORE
+  CASE
+    point; INT -- Modify the players point score by specified amount
+    end.game    -- Game finished - terminate points process
+:
+-- }}}
+
+-- }}}
+
+-- {{{ GROUND->CREATURE COMMUNICATION
+
+-- {{{ Protocol for communication from ground to creature
+PROTOCOL CREATURE.IN
+  CASE
+    kill     -- Request to kill the creature
+    end.game -- Request to end the game (kill process)
+:
+-- }}}
+
+-- {{{ Channel for ground to creature communication
+CHAN TYPE CREATURE.LINK
+  MOBILE RECORD
+    CHAN CREATURE.IN  req?:   -- Requests from ground to creature
+:
+-- }}}
+
+-- }}}
+
+-- {{{ GROUND COMMUNICATION
+
+-- {{{ Channel to link ground square to process from previous square that an explosion came from
+CHAN TYPE EXPLOSION
+  MOBILE RECORD
+    CHAN BOOL reply?: -- Send 'ping' when square has finished detonating
+:
+-- }}}
+
+CHAN TYPE SQUARE.LINK:
+
+-- {{{ Protocol to request things from ground squares
+PROTOCOL SQUARE.REQUEST
+  CASE
+    up; BOOL                                 -- Request link to square above (send TRUE if creature process)
+    down; BOOL                               -- Request link to square below (send TRUE if creature process)
+    left; BOOL                               -- Request link to square left (send TRUE if creature process)
+    right; BOOL                              -- Request link to square right (send TRUE if creature process)
+    drop.bomb; INT; SHARED BOMB.LINK!        -- Request to drop bomb - pass size of bomb & channel to use to notify of detonation
+    register.player; SHARED PLAYER.LINK!     -- Request to move given player to square
+    register.creature; SHARED CREATURE.LINK! -- Request to move given creature to square
+    moved.player                             -- Notify square that player has left it
+    moved.creature                           -- Notify square that creature has left it
+    explode; EXPLOSION!; INT; BYTE           -- Request to 'detonate' square - pass channel to use to notify explosion finished,  size of explosion and direction explosion going (0=up,1=down,2=left,3=right)
+    end.game                                 -- Square sends this to its neighbour squares when game finishes to terminate game
+    player.finished                          -- Player sends this to square when player terminates gracefully after reaching end square
+:
+-- }}}
+
+-- {{{ Protocol for responses to SQUARE.REQUEST messages
+PROTOCOL SQUARE.REPLY
+  CASE
+    ok                          -- creature or player move successful
+    player.move.ok; BYTE        -- player move successful - pass bonus square contains (or 0 if no bonus)
+    square; SHARED SQUARE.LINK! -- Reply to up,down,left,right
+    fail                        -- request failed
+    end.game                    -- send to player to indicate to shutdown player processes
+:
+-- }}}
+
+-- {{{ Channel for communication to ground squares
+RECURSIVE CHAN TYPE SQUARE.LINK
+  MOBILE RECORD
+    CHAN SQUARE.REQUEST req?:   -- Request
+    CHAN SQUARE.REPLY   reply!: -- Reply
+:
+-- }}}
+
+-- }}}
+
+-- {{{ Protocol for screen updates
+PROTOCOL SCREEN.DRAW
+  CASE
+    block; BYTE; BYTE          -- Draw a breakable wall at coordinates (x,y)
+    block.unbreak; BYTE; BYTE  -- Draw an unbreakable wall at coordinates (x,y)
+    exit; BYTE; BYTE           -- Draw the exit at coordinates (x,y)
+    clear; BOOL; BYTE; BYTE    -- Draw empty ground at coordinates (x,y) passing if 'secret door'
+    bomb; BYTE; BYTE; BYTE     -- Draw bomb with given countdown time at coordinates (x,y)
+    explosion; BYTE; BYTE      -- Draw explosion at coordinates (x,y)
+    bonus; BYTE; BYTE; BYTE    -- Draw given bonus (given by constants) at coordinates (x,y)
+    creature; BOOL; BYTE; BYTE -- Draw crearure at coordinates (x,y) indicating if in explosion
+    man; BOOL; BYTE; BYTE      -- Draw crearure at coordinates (x,y) indicating if in explosion
+    game.over                  -- Draw game over message & terminate
+    game.complete              -- Draw game complete message & terminate 
+    lifes; INT                 -- Update information to show given many lives left
+    status; INT; INT; INT      -- Update information: number of bombs left to drop; maximum number of bombs, explosion size
+    score; INT                 -- Update score to given amount
+    error                      -- Send bell character
+:
+-- }}}
+
+-- }}}
+
+-- {{{ PROCESSES
+
+-- {{{ PROCESSES FOR DRAWING
+
+-- {{{ Process to draw given string to the screen at x,y in the given colour
+PROC screen.draw.square( VAL BYTE x, y, VAL COLOUR col, VAL [2]BYTE value, CHAN BYTE scn! )
+  SEQ
+    cursor.x.y( (x * 2) + 1, y + 1, scn! )
+    fg.col( col, scn! )
+    out.string( value, 2, scn! )
+    flush( scn )
+:
+-- }}}
+
+-- {{{ Screen display process to listen to display messages and update display
+PROC screen.plex( CHAN SCREEN.DRAW? in, CHAN BYTE scn! )
+  BOOL running:
+  SEQ
+    -- {{{ Initial Screen Setup
+    erase.screen( scn )
+    cursor.invisible( scn )
+    fg.col( bold.white, scn! )
+    cursor.x.y( 52, 2, scn! )
+    out.string( "Lifes Left: ", 12, scn! )
+    cursor.x.y( 52, 3, scn! )
+    out.string( "Bombs:      ", 12, scn! )
+    cursor.x.y( 52, 4, scn! )
+    out.string( "Bomb Radius:", 12, scn! )
+    cursor.x.y( 52, 5, scn! )
+    out.string( "Points:     ", 12, scn! )
+    cursor.x.y( 52, 7, scn! )
+    out.string( "Key:                  ", 16, scn! )
+    cursor.x.y( 54, 8, scn! )
+    fg.col( bold.green, scn! )
+    out.string( ":)    - Player        ", 16, scn! )
+    cursor.x.y( 54, 9, scn! )
+    out.string( "><    - Exit          ", 16, scn! )
+    cursor.x.y( 54, 10, scn! )
+    fg.col( bold.blue, scn! )
+    out.string( ":{    - Monster       ", 16, scn! )
+    cursor.x.y( 54, 11, scn! )
+    fg.col( bold.white, scn! )
+    out.string( "@@    - Solid Wall    ", 16, scn! )
+    cursor.x.y( 54, 12, scn! )
+    fg.col( bold.magenta, scn! )
+    out.string( "[]    - Breakable Wall", 16, scn! )
+    cursor.x.y( 54, 13, scn! )
+    fg.col( bold.red, scn! )
+    out.string( "x5    - Bomb          ", 16, scn! )
+    cursor.x.y( 54, 14, scn! )
+    out.string( "##    - Explosion     ", 16, scn! )
+    fg.col( bold.yellow, scn! )
+    cursor.x.y( 52, 16, scn! )
+    out.string( "Bonuses:              ", 16, scn! )
+    cursor.x.y( 54, 17, scn! )
+    out.string( "+B    - Extra Bomb    ", 16, scn! )
+    cursor.x.y( 54, 18, scn! )
+    out.string( "+F    - Increase Blast", 16, scn! )
+    cursor.x.y( 54, 19, scn! )
+    out.string( "-B    - Lose Bomb     ", 16, scn! )
+    cursor.x.y( 54, 20, scn! )
+    out.string( "-F   - Decrease Blast", 16, scn! )
+    cursor.x.y( 54, 21, scn! )
+    out.string( "+L    - Bonus Life    ", 16, scn! )
+    fg.col( bold.white, scn! )
+    cursor.x.y( 52, 23, scn! )
+    out.string( "Use arrows to move &    ", 18, scn! )
+    cursor.x.y( 52, 24, scn! )
+    out.string( "  spacebar to drop bombs", 18, scn! )
+    -- }}}
+
+    running := TRUE
+    WHILE running
+      BYTE x, y:
+      in ? CASE
+        block; x; y
+          -- {{{ Draw breakable block at x,y
+          screen.draw.square( x, y, bold.magenta, "[]", scn )
+          -- }}}
+        block.unbreak; x; y
+          -- {{{ Draw unbreakable block at x,y
+          screen.draw.square( x, y, bold.white, "@@", scn )
+          -- }}}
+        exit; x; y
+          -- {{{ Draw exit at x,y
+          screen.draw.square( x, y, bold.green, "><", scn )
+          -- }}}
+        BOOL secret.door:
+        clear; secret.door; x; y
+          IF
+            secret.door
+              -- {{{ Draw secret door as x,y
+              screen.draw.square( x, y, bold.white, "@@", scn )
+              -- }}}
+            TRUE
+              -- {{{ Draw empty square at x,y
+              screen.draw.square( x, y, bold.white, "  ", scn )
+              -- }}}
+        BYTE count:
+        bomb; count; x; y
+          -- {{{ Draw bomb at x,y with specified count
+          [2]BYTE str:
+          SEQ
+            str[0] := 'x'
+            str[1] := '0' + count
+            screen.draw.square( x, y, bold.red, str, scn )
+          -- }}}
+        explosion; x; y
+          -- {{{ Draw explosion at x,y
+          screen.draw.square( x, y, bold.red, "##", scn )
+          -- }}}
+        BYTE bonus.type:
+        bonus; bonus.type; x; y
+          -- {{{ Draw bonus (specified by constants) at x,y
+          INITIAL [2]BYTE str IS "  ":
+          SEQ
+            CASE bonus.type
+              BOMB.UP
+                str := "+B"
+              FIRE.UP
+                str := "+F"
+              BOMB.DOWN
+                str := "-B"
+              FIRE.DOWN
+                str := "-F"
+              LIFE.UP
+                str := "+L"
+            screen.draw.square( x, y, bold.yellow, str, scn )
+          -- }}}
+        BOOL in.blast:
+        creature; in.blast; x; y
+          -- {{{ Draw creature at x,y (if in blast draw in red with different smiley)
+          IF
+            in.blast
+              screen.draw.square( x, y, bold.red, ":0", scn )
+            TRUE
+              screen.draw.square( x, y, bold.blue, ":{", scn )
+          -- }}}
+        BOOL in.blast:
+        man; in.blast; x; y
+          -- {{{ Draw player at x,y (if in blast draw in red with different smiley)
+          IF
+            in.blast
+              screen.draw.square( x, y, bold.red, ":(", scn )
+            TRUE
+              screen.draw.square( x, y, bold.green, ":)", scn )
+          -- }}}
+        game.over
+          -- {{{ Draw the game over message  & terminate
+          SEQ
+            fg.col( bold.red, scn! )
+            cursor.x.y( 13, 11, scn! )
+            out.string( "                         ", 25, scn! )
+            cursor.x.y( 13, 12, scn! )
+            out.string( "  +-------------------+  ", 25, scn! )
+            cursor.x.y( 13, 13, scn! )
+            out.string( "  | G A M E   O V E R |  ", 25, scn! )
+            cursor.x.y( 13, 14, scn! )
+            out.string( "  +-------------------+  ", 25, scn! )
+            cursor.x.y( 13, 15, scn! )
+            out.string( "                         ", 25, scn! )
+            cursor.x.y( 1, 26, scn! )
+            fg.col( bold.white, scn! )
+            flush( scn )
+            running := FALSE
+          -- }}}
+        game.complete
+          -- {{{ Draw the game complete message  & terminate
+          SEQ
+            fg.col( bold.green, scn! )
+            cursor.x.y( 8, 11, scn! )
+            out.string( "                                 ", 33, scn! )
+            cursor.x.y( 8, 12, scn! )
+            out.string( "  +---------------------------+  ", 33, scn! )
+            cursor.x.y( 8, 13, scn! )
+            out.string( "  | G A M E   C O M P L E T E |  ", 33, scn! )
+            cursor.x.y( 8, 14, scn! )
+            out.string( "  +---------------------------+  ", 33, scn! )
+            cursor.x.y( 8, 15, scn! )
+            out.string( "                                 ", 33, scn! )
+            cursor.x.y( 1, 26, scn! )
+            fg.col( bold.white, scn! )
+            flush( scn )
+            running := FALSE
+          -- }}}
+        INT life:
+        lifes; life
+          -- {{{ Draw number of lifes left
+          SEQ
+            cursor.x.y( 65, 2, scn! )
+            fg.col( bold.green, scn! )
+            out.int( life, 8, scn! )
+            flush( scn )
+          -- }}}
+        INT avail.bombs, max.bombs, fire:
+        status; avail.bombs; max.bombs; fire
+          -- {{{ Draw number of available bombs to drop, max number of bombs & size of explosiom
+          SEQ
+            fg.col( bold.green, scn! )
+            cursor.x.y( 65, 3, scn! )
+            out.int( avail.bombs, 6, scn! )
+            scn ! '/'
+            out.int( max.bombs, 1, scn! )
+            cursor.x.y( 65, 4, scn! )
+            out.int( fire, 8, scn! )
+            flush( scn )
+          -- }}}
+        INT points:
+        score; points
+          -- {{{ Draw number of points player has
+          SEQ
+            fg.col( bold.green, scn! )
+            cursor.x.y( 65, 5, scn! )
+            out.int( points, 8, scn! )
+            flush( scn )
+          -- }}}:
+        error
+          -- {{{ Output 'bell'
+          scn ! BELL
+          -- }}}
+:
+-- }}}
+
+-- }}}
+
+-- {{{ PROCESSES FOR PLAYER
+
+-- {{{ Process to deal with the number of lifes a player has
+PROC player.life( PLAYER.LINK? player.svr, CHAN BOOL player.terminated?, terminate.player!, add.life?, SHARED CHAN POINT.SCORE points!, SHARED CHAN SCREEN.DRAW scn! )
+  INT life:
+  BOOL running:
+  SEQ
+    life := 3
+    running := TRUE
+    WHILE running
+      SEQ
+        -- {{{ update display
+        CLAIM scn!
+          scn ! lifes; life
+        -- }}}
+        BOOL b:
+        PRI ALT
+          add.life ? b
+            -- {{{ Received message that player has gained a life
+            life := life + 1
+            -- }}}
+          player.svr[lose.life] ? b
+            -- {{{ Received message that player has lost a life (deduct points from score)
+            SEQ
+              life := life - 1
+              CLAIM points!
+                points ! point; -5000
+              IF
+                life = 0
+                  -- {{{ Player is dead -> terminate player processes
+                  SEQ
+                    CLAIM scn!
+                      scn ! lifes; 0
+                    terminate.player ! TRUE
+                    player.svr[dead] ! TRUE
+                    running := FALSE
+                  -- }}}
+                TRUE
+                  player.svr[dead] ! FALSE
+              -- }}}
+          player.terminated ? b
+            -- {{{ Received message to kill process (game finished)
+            running := FALSE
+            -- }}}
+:
+-- }}}
+
+-- {{{ Process to handle the response to a move request
+PROC player.handle.bonus( VAL BYTE powerup, CHAN BOOL add.life!, INT avail.bombs, max.bombs, fire, SHARED CHAN POINT.SCORE points!, SHARED CHAN SCREEN.DRAW scn! )
+  SEQ
+    IF
+      powerup = BOMB.UP
+        -- {{{ Increase number of available bombs by 1 (max 5) & add points
+        SEQ
+          CLAIM points!
+            points ! point; 10000
+          IF
+            max.bombs < 5
+              SEQ
+                avail.bombs := avail.bombs + 1
+                max.bombs := max.bombs + 1
+            TRUE
+              SKIP
+      -- }}}
+      powerup = FIRE.UP
+        -- {{{ Increase range of bombs (max 5) & add points
+        SEQ
+          CLAIM points!
+            points ! point; 10000
+          IF
+            fire < 5
+              fire := fire + 1
+            TRUE
+              SKIP
+        -- }}}
+      powerup = BOMB.DOWN
+        -- {{{ Decrease number of available bombs by 1 (min 1) & deduct points
+        SEQ
+          CLAIM points!
+            points ! point;  -1000
+          IF
+            max.bombs > 1
+              SEQ
+                max.bombs := max.bombs - 1
+                IF
+                  avail.bombs > max.bombs
+                    avail.bombs := max.bombs
+                  TRUE
+                    SKIP
+            TRUE
+              SKIP
+        -- }}}
+      powerup = FIRE.DOWN
+        -- {{{ Decrease range of bombs (min 1) & deduct points
+        SEQ
+          CLAIM points!
+            points ! point; -1000
+          IF
+            fire > 1
+              fire := fire - 1
+            TRUE
+              SKIP
+        -- }}}
+      powerup = LIFE.UP
+        -- {{{ Add a bonus life & add points
+        SEQ
+          CLAIM points!
+            points ! point; 50000
+          add.life ! TRUE
+        -- }}}
+      TRUE
+        -- No bonus
+        SKIP
+    -- {{{ Update status display
+    CLAIM scn!
+      scn ! status; avail.bombs; max.bombs; fire
+    -- }}}
+:
+-- }}}
+
+-- {{{ Main player process - listen to keyboard
+PROC player.kyb( SHARED SQUARE.LINK! square.initial, SHARED PLAYER.LINK! player.cli, CHAN BYTE kyb?, CHAN BOOL player.terminated?, terminate.player!, add.life!, SHARED CHAN POINT.SCORE points!, SHARED CHAN SCREEN.DRAW scn! )
+  SHARED SQUARE.LINK! square.link:
+  BOMB.LINK? bomb.svr:              -- Channel to listen for bomb detonations on
+  SHARED BOMB.LINK! bomb.cli:       -- Client end of above channel to give to ground squares
+  INT avail.bombs, fire, max.bombs, dropped.bombs: -- State of player: available bombs, maximum bombs, bomb radius & dropped bombs count
+  BOOL running:
+  SEQ
+    -- {{{ Initialise player state & update status display
+    square.link := square.initial
+    avail.bombs := 1
+    max.bombs := 1
+    dropped.bombs := 0
+    fire := 1
+    bomb.cli, bomb.svr := MOBILE BOMB.LINK
+    CLAIM scn!
+      scn ! status; avail.bombs; max.bombs; fire
+    -- }}}
+    running := TRUE
+    WHILE running
+      PRI ALT
+        BOOL b:
+        bomb.svr[detonate] ? b
+          -- {{{ One of the player's bombs has detonate - increase number available (if not at max)
+          SEQ
+            dropped.bombs := dropped.bombs - 1
+            IF
+              avail.bombs < max.bombs
+                avail.bombs := avail.bombs + 1
+              TRUE
+                SKIP
+            CLAIM scn!
+              scn ! status; avail.bombs; max.bombs; fire
+          -- }}}
+        BOOL b:
+        player.terminated ? b
+          -- {{{ Player has died - terminate process
+          running := FALSE
+          -- }}}
+        BYTE b:
+        kyb ? b
+          -- {{{ Key pressed on keyboard
+          IF
+            b = 65
+              -- {{{ Send request to move up
+              SHARED SQUARE.LINK! link:
+              BOOL has.link, update.link:
+              SEQ
+                has.link := FALSE
+                update.link := FALSE
+                CLAIM square.link
+                  SEQ
+                    square.link[req] ! up; FALSE
+                    square.link[reply] ? CASE
+                      square; link
+                        has.link := TRUE
+                      fail
+                        SKIP
+                IF
+                  has.link
+                    -- {{{ Try to move direction has link for
+                    CLAIM link
+                      SEQ
+                        link[req] ! register.player; player.cli
+                        link[reply] ? CASE
+                          BYTE bonus:
+                          player.move.ok; bonus
+                            SEQ
+                              player.handle.bonus( bonus, add.life, avail.bombs, max.bombs, fire, points!, scn! )
+                              CLAIM square.link
+                                square.link[req] ! moved.player
+                              update.link := TRUE
+                          end.game
+                            SEQ
+                              CLAIM square.link
+                                square.link[req] ! moved.player
+                              update.link := TRUE
+                              running := FALSE
+                          fail
+                            CLAIM scn!
+                              scn ! error
+                    -- }}}
+                  TRUE
+                    SKIP
+                IF
+                  update.link
+                    square.link := link
+                  TRUE
+                    SKIP
+                IF
+                  running
+                    SKIP
+                  TRUE
+                    -- {{{ Terminate processes
+                    SEQ
+                      terminate.player ! TRUE
+                      CLAIM square.link
+                        square.link[req] ! player.finished
+                    -- }}}
+              -- }}}
+            b = 68
+              -- {{{ Send request to move left
+              SHARED SQUARE.LINK! link:
+              BOOL has.link, update.link:
+              SEQ
+                has.link := FALSE
+                update.link := FALSE
+                CLAIM square.link
+                  SEQ
+                    square.link[req] ! left; FALSE
+                    square.link[reply] ? CASE
+                      square; link
+                        has.link := TRUE
+                      fail
+                        SKIP
+                IF
+                  has.link
+                    -- {{{ Try to move direction has link for
+                    CLAIM link
+                      SEQ
+                        link[req] ! register.player; player.cli
+                        link[reply] ? CASE
+                          BYTE bonus:
+                          player.move.ok; bonus
+                            SEQ
+                              player.handle.bonus( bonus, add.life, avail.bombs, max.bombs, fire, points!, scn! )
+                              CLAIM square.link
+                                square.link[req] ! moved.player
+                              update.link := TRUE
+                          end.game
+                            SEQ
+                              CLAIM square.link
+                                square.link[req] ! moved.player
+                              update.link := TRUE
+                              running := FALSE
+                          fail
+                            CLAIM scn!
+                              scn ! error
+                    -- }}}
+                  TRUE
+                    SKIP
+                IF
+                  update.link
+                    square.link := link
+                  TRUE
+                    SKIP
+                IF
+                  running
+                    SKIP
+                  TRUE
+                    -- {{{ Terminate 
+                    SEQ
+                      terminate.player ! TRUE
+                      CLAIM square.link
+                        square.link[req] ! player.finished
+                    -- }}}
+              -- }}}
+            b = 66
+              -- {{{ Send request to move down
+              SHARED SQUARE.LINK! link:
+              BOOL has.link, update.link:
+              SEQ
+                has.link := FALSE
+                update.link := FALSE
+                CLAIM square.link
+                  SEQ
+                    square.link[req] ! down; FALSE
+                    square.link[reply] ? CASE
+                      square; link
+                        has.link := TRUE
+                      fail
+                        SKIP
+                IF
+                  has.link
+                    -- {{{ Try to move direction has link for
+                    CLAIM link
+                      SEQ
+                        link[req] ! register.player; player.cli
+                        link[reply] ? CASE
+                          BYTE bonus:
+                          player.move.ok; bonus
+                            SEQ
+                              player.handle.bonus( bonus, add.life, avail.bombs, max.bombs, fire, points!, scn! )
+                              CLAIM square.link
+                                square.link[req] ! moved.player
+                              update.link := TRUE
+                          end.game
+                            SEQ
+                              CLAIM square.link
+                                square.link[req] ! moved.player
+                              update.link := TRUE
+                              running := FALSE
+                          fail
+                            CLAIM scn!
+                              scn ! error
+                    -- }}}
+                  TRUE
+                    SKIP
+                IF
+                  update.link
+                    square.link := link
+                  TRUE
+                    SKIP
+                IF
+                  running
+                    SKIP
+                  TRUE
+                    -- {{{ Terminate 
+                    SEQ
+                      terminate.player ! TRUE
+                      CLAIM square.link
+                        square.link[req] ! player.finished
+                    -- }}}
+              -- }}}
+            b = 67
+              -- {{{ Send request to move right
+              SHARED SQUARE.LINK! link:
+              BOOL has.link, update.link:
+              SEQ
+                has.link := FALSE
+                update.link := FALSE
+                CLAIM square.link
+                  SEQ
+                    square.link[req] ! right; FALSE
+                    square.link[reply] ? CASE
+                      square; link
+                        has.link := TRUE
+                      fail
+                        SKIP
+                IF
+                  has.link
+                    -- {{{ Try to move direction has link for
+                    CLAIM link
+                      SEQ
+                        link[req] ! register.player; player.cli
+                        link[reply] ? CASE
+                          BYTE bonus:
+                          player.move.ok; bonus
+                            SEQ
+                              player.handle.bonus( bonus, add.life, avail.bombs, max.bombs, fire, points!, scn! )
+                              CLAIM square.link
+                                square.link[req] ! moved.player
+                              update.link := TRUE
+                          end.game
+                            SEQ
+                              CLAIM square.link
+                                square.link[req] ! moved.player
+                              update.link := TRUE
+                              running := FALSE
+                          fail
+                            CLAIM scn!
+                              scn ! error
+                    -- }}}
+                  TRUE
+                    SKIP
+                IF
+                  update.link
+                    square.link := link
+                  TRUE
+                    SKIP
+                IF
+                  running
+                    SKIP
+                  TRUE
+                    -- {{{ Terminate 
+                    SEQ
+                      terminate.player ! TRUE
+                      CLAIM square.link
+                        square.link[req] ! player.finished
+                    -- }}}
+              -- }}}
+            b = 32
+              -- {{{ Send request to drop bomb (if player some some available
+              -- to drop - if successful decrement amount available to player
+              IF
+                avail.bombs > 0
+                  CLAIM square.link
+                    SEQ
+                      square.link[req] ! drop.bomb; fire; bomb.cli
+                      square.link[reply] ? CASE
+                        ok
+                          SEQ
+                            avail.bombs := avail.bombs - 1
+                            dropped.bombs := dropped.bombs + 1
+                            CLAIM scn!
+                              scn ! status; avail.bombs; max.bombs; fire
+                        fail
+                          SKIP
+                TRUE
+                  SKIP
+              -- }}}
+            TRUE
+              SKIP
+          -- }}}
+    WHILE (dropped.bombs > 0)
+      -- {{{ Wait for all bombs to finish detonation
+      BOOL b:
+      SEQ
+        bomb.svr[detonate] ? b
+        dropped.bombs := dropped.bombs - 1
+      -- }}}
+:
+-- }}}
+
+-- {{{ Process for keeping track of number of points player has
+PROC player.points( CHAN POINT.SCORE points?, SHARED CHAN SCREEN.DRAW scn! )
+  INT total.points:
+  BOOL running:
+  SEQ
+    total.points := 10000
+    running := TRUE
+    WHILE running
+      SEQ
+        -- {{{ Update display of how many points player has
+        CLAIM scn!
+          scn ! score; total.points
+        -- }}}
+        points ? CASE
+          INT add.points:
+          point; add.points
+            -- {{{ Modify point score
+            total.points := total.points PLUS add.points
+            -- }}}
+          end.game
+            -- {{{ Terminate process
+            running := FALSE
+            -- }}}
+:
+-- }}}
+
+-- {{{ Player process (Wraps all other player processes)
+PROC player( SHARED SQUARE.LINK! initial, CHAN BYTE kyb?, SHARED CHAN POINT.SCORE points.in!, CHAN POINT.SCORE points.out?, SHARED CHAN SCREEN.DRAW scn! )
+  PLAYER.LINK? player.svr:
+  SHARED PLAYER.LINK! player.cli:
+  CHAN BOOL add.life, terminate.kyb, terminate.life:
+  SEQ
+    player.svr, player.cli := MOBILE PLAYER.LINK
+    -- {{{ Register player with the initial starting square
+    CLAIM initial!
+      SEQ
+        initial[req] ! register.player; player.cli
+        initial[reply] ? CASE
+          BYTE n:
+          player.move.ok; n
+            SKIP
+    -- }}}
+    PAR
+      player.kyb( initial, player.cli, kyb?, terminate.kyb?, terminate.life!, add.life!, points.in!, scn! )
+      player.life( player.svr, terminate.life?, terminate.kyb!,add.life?, points.in!, scn! )
+      player.points( points.out?, scn! )
+:
+-- }}}
+
+-- }}}
+
+-- {{{ Creature process
+PROC creature( VAL INT i, SHARED SQUARE.LINK! initial )
+  SHARED SQUARE.LINK! square.link:
+  CREATURE.LINK? creature.svr:
+  SHARED CREATURE.LINK! creature.cli:
+  BOOL alive:
+  TIMER tim:
+  INT t, direction, seed: -- direction = direction moving (0=Not moving, 1=up, 2=down, 3=left, 4=right)
+  SEQ
+    creature.svr, creature.cli := MOBILE CREATURE.LINK
+    -- {{{ Register monster with the initial starting square
+    square.link := initial
+    CLAIM square.link!
+      SEQ
+        square.link[req] ! register.creature; creature.cli
+        square.link[reply] ? CASE
+          ok
+            SKIP
+    -- }}}
+    -- {{{ Set initial state - if alive, direction moving & a seed for random number generator
+    alive := TRUE
+    direction := 0
+    tim ? t
+    seed := t TIMES i
+    -- }}}
+    -- Only loop while creature is 'alive'
+    WHILE alive
+      PRI ALT
+        creature.svr[req] ? CASE
+          kill
+            -- {{{ 'kill' message received - set to no longer alive
+            alive := FALSE
+            -- }}}
+          end.game
+            -- {{{ 'end game' message received - set to no longer alive
+            alive := FALSE
+            -- }}}
+        tim ? AFTER (t PLUS 600000)
+          -- {{{ After a short delay move creature
+          BOOL still.to.move:
+          [4]BOOL tried:
+          INT remainder.count:
+          SEQ
+            IF
+              direction = 0
+                -- {{{ Not yet moved - randomise direction
+                SEQ
+                  direction, seed := random( 4, seed )
+                  direction := direction + 1
+                -- }}}
+              TRUE
+                -- {{{ If already moved then 40% change direction else move same direction
+                INT change:
+                SEQ
+                  change, seed := random( 5, seed )
+                  IF
+                    change > 2
+                      SEQ
+                        direction, seed := random( 4, seed )
+                        direction := direction + 1
+                    TRUE
+                      SKIP
+                -- }}}
+            -- {{{ Initialise array for the four directions to say not tried moving that direction
+            tried[0] := FALSE -- Up
+            tried[1] := FALSE -- Down
+            tried[2] := FALSE -- Left
+            tried[3] := FALSE -- Right
+            remainder.count := 4 -- Number of directions not yet tried
+            still.to.move := TRUE
+            -- }}}
+            SHARED SQUARE.LINK! link:
+            BOOL has.link:
+            WHILE still.to.move
+              SEQ
+                CLAIM square.link
+                  SEQ
+                    CASE direction
+                      1
+                        -- {{{ Try to move up & update array to say tried to moved that direction
+                        SEQ
+                          square.link[req] ! up; TRUE
+                          tried[0] := TRUE
+                        -- }}}
+                      2
+                        -- {{{ Try to move down & update array to say tried to moved that direction
+                        SEQ
+                          square.link[req] ! down; TRUE
+                          tried[1] := TRUE
+                        -- }}}
+                      3
+                        -- {{{ Try to move left & update array to say tried to moved that direction
+                        SEQ
+                          square.link[req] ! left; TRUE
+                          tried[2] := TRUE
+                        -- }}}
+                      4
+                        -- {{{ Try to move right & update array to say tried to moved that direction
+                        SEQ
+                          square.link[req] ! right; TRUE
+                          tried[3] := TRUE
+                        -- }}}
+                    square.link[reply] ? CASE
+                      square; link
+                        has.link := TRUE
+                      fail
+                        has.link := FALSE
+                IF
+                  has.link
+                    -- {{{ Try to move in direction have link for
+                    SEQ
+                      CLAIM link
+                        SEQ
+                          link[req] ! register.creature; creature.cli
+                          link[reply] ? CASE
+                            ok
+                              -- {{{ Moved successfully (dont need to try another direction)
+                              SEQ
+                                still.to.move := FALSE
+                                CLAIM square.link
+                                  square.link[req] ! moved.creature
+                              -- }}}
+                            fail
+                              SKIP
+                      IF
+                        still.to.move
+                          -- {{{ Failed to move - randomise a new direction
+                          SEQ
+                            -- One less direction to try
+                            remainder.count := remainder.count - 1
+                            IF
+                              remainder.count = 0
+                                -- {{{ Moved every direction possible - must be trapped
+                                still.to.move := FALSE
+                                -- }}}
+                              TRUE
+                                -- {{{ Randomise new direction from the ones not tried yet
+                                INT i:
+                                SEQ
+                                  direction, seed := random( remainder.count, seed )
+                                  direction := direction + 1
+                                  i := 0
+                                  WHILE i <> direction
+                                    SEQ
+                                      IF
+                                        tried[i]
+                                          direction := direction + 1
+                                        TRUE
+                                          SKIP
+                                      i := i + 1
+                                -- }}}
+                          -- }}}
+                        TRUE
+                          square.link := link
+                    -- }}}
+                  TRUE
+                    SKIP
+            tim ? t
+          -- }}}
+:
+-- }}}
+
+-- {{{ BOARD PROCESSES
+
+-- {{{ PROCESSES TO TERMINATE BOARD
+
+-- {{{ Process to listen to ground server channel & swallow messages -
+-- recording how many 'end.game' messages received
+PROC terminate( INT terminate.count, BOOL player.terminated, SQUARE.LINK? link )
+  link[req] ? CASE
+    BOOL is.creature:
+    up; is.creature
+      link[reply] ! fail
+    BOOL is.creature:
+    down; is.creature
+      link[reply] ! fail
+    BOOL is.creature:
+    left; is.creature
+      link[reply] ! fail
+    BOOL is.creature:
+    right; is.creature
+      link[reply] ! fail
+    INT size:
+    SHARED BOMB.LINK! bomb:
+    drop.bomb; size; bomb
+      link[reply] ! fail
+    SHARED PLAYER.LINK! player:
+    register.player; player
+      link[reply] ! fail
+    SHARED CREATURE.LINK! player:
+    register.creature; player
+      link[reply] ! fail
+    moved.player
+      SKIP
+    moved.creature
+      SKIP
+    INT size:
+    BYTE dir:
+    EXPLOSION! explosion:
+    explode; explosion; size; dir
+      explosion[reply] ! TRUE
+    end.game
+      terminate.count := terminate.count + 1
+    player.finished
+      player.terminated := TRUE
+:
+-- }}}
+
+-- {{{ Process to run waiting for 'end game' signals from all its neighbours
+PROC terminate.square( VAL BOOL start.square, is.player.terminated, SQUARE.LINK? link, SHARED SQUARE.LINK! left.sq, right.sq, top.sq, bottom.sq )
+  INT terminate.count:
+  INT loop.stop.condition:
+  BOOL player.terminated:
+  SEQ
+    player.terminated := is.player.terminated
+    IF
+      start.square
+        -- {{{ This is the ground square where the 'end game' signals start
+        SEQ
+          terminate.count := 0
+          loop.stop.condition := 2
+        -- }}}
+      TRUE
+        -- {{{ This is any other square => already received one -'end game' message
+        SEQ
+          terminate.count := 1
+          loop.stop.condition := 3
+        -- }}}
+    PAR
+      -- {{{ Send end.game signal to square on top & left & wait for two more 'end game' signals swallowing messages
+      CLAIM left.sq
+        left.sq[req] ! end.game
+      CLAIM top.sq
+        top.sq[req] ! end.game
+      WHILE (terminate.count <> loop.stop.condition)
+        terminate( terminate.count, player.terminated, link )
+      -- }}}
+    PAR
+      -- {{{ Send end.game signal to square on bottom & right & wait for all (4) 'end game' signals swallowing messages
+      CLAIM bottom.sq
+        bottom.sq[req] ! end.game
+      CLAIM right.sq
+        right.sq[req] ! end.game
+      WHILE (terminate.count <> 4) OR (start.square AND (NOT player.terminated) )
+        terminate( terminate.count, player.terminated, link )
+      -- }}}
+:
+-- }}}
+
+-- }}}
+
+-- {{{ PROCESSES FOR GROUND SQUARE
+
+-- {{{ Detonator the square passed in (with specified size) going in direction (0=up,1=down,2=left,3=right)
+PROC detonator( VAL INT size, VAL BYTE dir, SHARED SQUARE.LINK! square )
+  EXPLOSION! explosion.cli:
+  EXPLOSION? explosion.svr:
+  BOOL ex.reply:
+  SEQ
+    explosion.cli, explosion.svr := MOBILE EXPLOSION
+    CLAIM square
+      square[req] ! explode; explosion.cli; size; dir
+    -- wait for square to finish detonation
+    explosion.svr[reply] ? ex.reply
+:
+-- }}}
+
+-- {{{ Detonator all the squares attached to the current square (at x,y)
+-- - This process is FORKed from main ground process to ensure two ground
+-- process are not trying to talk to each other simultaneously (deadlock)
+PROC explosion.all( VAL INT size, SHARED SQUARE.LINK! left.sq, right.sq, top.sq, bottom.sq, SHARED CHAN BOOL finished! )
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER (t PLUS 200000)
+    PAR
+      detonator( size, 2, left.sq )
+      detonator( size, 3, right.sq )
+      detonator( size, 0, top.sq )
+      detonator( size, 1, bottom.sq )
+    tim ? t
+    tim ? AFTER (t PLUS 200000)
+    -- Notify ground process that explosion has finished
+    CLAIM finished!
+      finished! TRUE
+:
+-- }}}
+
+-- {{{ Detonator all the squares attached to the current square (at x,y) -
+-- then inform the 'detonator' process the explosion came from that detonation
+-- has finished
+-- - This process is FORKed from main ground process to ensure two ground
+-- process are not trying to talk to each other simultaneously (deadlock)
+PROC explosion.all.reply( VAL INT size, SHARED SQUARE.LINK! left.sq, right.sq, top.sq, bottom.sq, SHARED CHAN BOOL finished!, EXPLOSION! reply )
+  SEQ
+    explosion.all( size, left.sq, right.sq, top.sq, bottom.sq, finished! )
+    reply[reply] ! TRUE
+:
+-- }}}
+
+-- {{{ Detonator the specified square attached to the current square (at x,y) -
+-- then inform the 'detonator' process the explosion came from that detonation
+-- has finished
+-- - This process is FORKed from main ground process to ensure two ground
+-- process are not trying to talk to each other simultaneously (deadlock)
+PROC explosion.dir( VAL INT size, VAL BYTE dir, SHARED SQUARE.LINK! square, SHARED CHAN BOOL finished!, EXPLOSION! reply )
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER (t PLUS 200000)
+    detonator( size, dir, square )
+    tim ? t
+    tim ? AFTER (t PLUS 200000)
+    CLAIM finished!
+      finished! TRUE
+    reply[reply] ! TRUE
+:
+-- }}}
+
+-- {{{ Notify player that one if its bombs has detonated (so can drop another)
+-- - This process is FORKed from main ground process to ensure ground & player
+-- processes are not trying to talk to each other simultaneously (deadlock)
+PROC notify.player( SHARED BOMB.LINK! bomb.player )
+  CLAIM bomb.player!
+    bomb.player[detonate] ! TRUE
+:
+-- }}}
+
+-- {{{ Notify creature that it is dead
+-- - This process is FORKed from main ground process to ensure ground & creature
+-- processes are not trying to talk to each other simultaneously (deadlock)
+PROC kill.creature( SHARED CREATURE.LINK! creature.cli )
+  CLAIM creature.cli
+    creature.cli[req] ! kill
+:
+-- }}}
+
+-- {{{ Main ground square
+PROC ground( VAL BOOL is.block, secret.door, VAL BYTE powerup, VAL BYTE x, y, SQUARE.LINK? link, SHARED SQUARE.LINK! left.sq, right.sq, top.sq, bottom.sq, SHARED CHAN POINT.SCORE points!, SHARED CHAN SCREEN.DRAW scn! )
+  BOOL has.block, has.player, has.bomb, has.creature, is.kill.source, running:
+  BYTE bomb.countdown, bonus.type:
+  INT bomb.size, explosion.count, t:
+  SHARED BOMB.LINK! bomb.player:
+  SHARED PLAYER.LINK! player.cli:
+  SHARED CREATURE.LINK! creature.cli:
+  SHARED! CHAN BOOL finished.explode:
+  TIMER tim:
+  SEQ
+    -- {{{ Initialise state
+    is.kill.source := FALSE
+    t := 0
+    explosion.count := 0
+    bonus.type := powerup
+    has.block  := is.block
+    has.player := FALSE
+    has.bomb   := FALSE
+    bomb.countdown := 0
+    bomb.size := 0
+    has.creature := FALSE
+    -- }}}
+    -- {{{ Draw initial state
+    IF
+      has.block OR ((powerup > 0 ) AND (powerup < 9))
+        CLAIM scn!
+          scn ! block; x; y
+      TRUE 
+        CLAIM scn!
+          scn ! clear; secret.door; x; y
+    -- }}}
+    running := TRUE
+    WHILE running
+      PRI ALT 
+        BOOL b:
+        finished.explode ? b
+          -- {{{ Received message from a 'detonator' process that a bomb has finished detonating
+          SEQ
+            explosion.count := explosion.count - 1
+            IF
+              explosion.count = 0
+                -- {{{ All explosions have finished - update screen
+                SEQ
+                  has.bomb := FALSE
+                  IF 
+                    has.player
+                      CLAIM scn!
+                        scn ! man; FALSE; x; y
+                    bonus.type > 0
+                      CLAIM scn!
+                        scn ! bonus; bonus.type; x; y
+                    TRUE
+                      CLAIM scn!
+                        scn ! clear; secret.door; x; y
+                -- }}}
+              TRUE
+                SKIP
+          -- }}}
+        (has.bomb AND (explosion.count = 0)) & tim ? AFTER t
+          -- {{{ Bomb countdown - decrement bomb counter
+          SEQ
+            t := t PLUS 800000
+            bomb.countdown := bomb.countdown - 1
+            -- {{{ Update display
+            CLAIM scn!
+              scn ! bomb; bomb.countdown; x; y
+            -- }}}
+            IF
+              bomb.countdown = 0
+                -- {{{ Bomb detonates
+                SEQ
+                  FORK notify.player( bomb.player! )
+                  IF
+                    has.player
+                      -- {{{ Player in blast -> send message to player
+                      BOOL result:
+                      SEQ
+                        result := FALSE
+                        CLAIM player.cli
+                          SEQ
+                            player.cli[lose.life] ! TRUE
+                            player.cli[dead] ? result
+                        IF
+                          result
+                            -- {{{ Player is dead -> terminate application
+                            SEQ
+                              is.kill.source := TRUE
+                              running := FALSE
+                            -- }}}
+                          TRUE
+                            SKIP
+                      -- }}}
+                    has.creature
+                      -- {{{ Creature in blast -> send message to creature &
+                      -- increase point score
+                      SEQ
+                        has.creature := FALSE
+                        CLAIM points!
+                          points ! point; 10000
+                        FORK kill.creature( creature.cli )
+                      -- }}}
+                    TRUE
+                      SKIP
+                  IF
+                    running
+                      -- {{{ Still running - so detonate adjacent squares
+                      SEQ
+                        explosion.count := explosion.count + 1
+                        FORK explosion.all( bomb.size, left.sq, right.sq, top.sq, bottom.sq, finished.explode! )
+                      -- }}}
+                    TRUE
+                      SKIP
+                -- }}}
+              TRUE
+                SKIP
+          -- }}}
+        link[req] ? CASE
+          moved.creature
+            -- {{{ Received message that a creature has left this square
+            SEQ
+              has.creature := FALSE
+              CLAIM scn!
+                IF
+                  has.bomb
+                    scn ! bomb; bomb.countdown; x; y
+                  explosion.count > 0
+                    scn ! explosion; x; y
+                  bonus.type > 0
+                    scn ! bonus; bonus.type; x; y
+                  TRUE
+                    scn ! clear; secret.door; x; y
+            -- }}}
+          moved.player
+            -- {{{ Received message that the player has left this square
+            SEQ
+              has.player := FALSE
+              CLAIM scn!
+                IF
+                  has.bomb
+                    scn ! bomb; bomb.countdown; x; y
+                  explosion.count > 0
+                    scn ! explosion; x; y
+                  TRUE
+                    scn ! clear; secret.door; x; y
+            -- }}}
+          SHARED PLAYER.LINK! player:
+          register.player; player
+            -- {{{ Player is attempting to move into this square
+            IF
+              has.player OR has.block OR has.bomb
+                -- {{{ Obstacle in the way - fail
+                link[reply] ! fail
+                -- }}}
+              TRUE
+                SEQ
+                  player.cli := player
+                  has.player := TRUE
+                  CLAIM scn!
+                    scn ! man; (explosion.count <> 0); x; y
+                  link[reply] ! player.move.ok; bonus.type
+                  bonus.type := 0
+                  IF
+                    explosion.count <> 0
+                      -- {{{ Square is on fire - send message to player to lose life
+                      BOOL result:
+                      SEQ
+                        result := FALSE
+                        CLAIM player.cli
+                          SEQ
+                            player.cli[lose.life] ! TRUE
+                            player.cli[dead] ? result
+                        IF
+                          result
+                            -- {{{ Player is dead - terminate
+                            SEQ
+                              is.kill.source := TRUE
+                              running := FALSE
+                            -- }}}
+                          TRUE
+                            SKIP
+                      -- }}}
+                    has.creature
+                      -- {{{ Square contains creature - send message to player to lose life
+                      BOOL result:
+                      SEQ
+                        result := FALSE
+                        CLAIM player.cli
+                          SEQ
+                            player.cli[lose.life] ! TRUE
+                            CLAIM scn!
+                              scn ! man; TRUE; x; y
+                            player.cli[dead] ? result
+                        has.creature := FALSE
+                        FORK kill.creature( creature.cli )
+                        IF
+                          result
+                            -- {{{ Player is dead - terminate
+                            SEQ
+                              is.kill.source := TRUE
+                              running := FALSE
+                            -- }}}
+                          TIMER tim:
+                          INT t:
+                          TRUE
+                            SEQ
+                              -- {{{ Not dead - wait a short time then redraw man normally
+                              tim ? t
+                              tim ? AFTER (t PLUS 500000)
+                              CLAIM scn!
+                                scn ! man; FALSE; x; y
+                              -- }}}
+                      -- }}}
+                    TRUE
+                      SKIP
+            -- }}}
+          SHARED CREATURE.LINK! creature:
+          register.creature; creature
+            -- {{{ Crearure is trying to move into square
+            IF
+              has.creature OR has.block OR has.bomb
+                -- {{{ Obstacle -> fail
+                link[reply] ! fail
+                -- }}}
+              TRUE
+                SEQ
+                  creature.cli := creature
+                  CLAIM scn!
+                    scn ! creature; (explosion.count <> 0); x; y
+                  link[reply] ! ok
+                  IF
+                    explosion.count <> 0
+                      -- {{{ Square is on fire - kill crearure & increase points
+                      SEQ
+                        CLAIM points!
+                          points ! point; 10000
+                        FORK kill.creature( creature.cli )
+                      -- }}}
+                    has.player
+                      -- {{{ Square contains player - player loses life
+                      BOOL result:
+                      SEQ
+                        result := FALSE
+                        CLAIM player.cli
+                          SEQ
+                            player.cli[lose.life] ! TRUE
+                            CLAIM scn!
+                              scn ! man; TRUE; x; y
+                            player.cli[dead] ? result
+                        FORK kill.creature( creature.cli )
+                        IF
+                          result
+                            -- {{{ Player is dead - terminate
+                            SEQ
+                              is.kill.source := TRUE
+                              running := FALSE
+                            -- }}}
+                          TIMER tim:
+                          INT t:
+                          TRUE
+                            -- {{{ Not dead - wait a short time then redraw man normally
+                            SEQ
+                              tim ? t
+                              tim ? AFTER (t PLUS 500000)
+                              CLAIM scn!
+                                scn ! man; FALSE; x; y
+                            -- }}}
+                      -- }}}
+                    TRUE
+                      has.creature := TRUE
+            -- }}}
+          INT size:
+          BYTE dir:
+          EXPLOSION! explosion.reply:
+          explode; explosion.reply; size; dir
+            -- {{{ Message from another square -> fire from bomb
+            SEQ
+              -- Decrease bomb size
+              size := size - 1
+              IF
+                has.player AND (explosion.count = 0)
+                  -- {{{ Square contains player - send message to lose life
+                  BOOL result:
+                  SEQ
+                    CLAIM scn!
+                      scn ! man; TRUE; x; y
+                    result := FALSE
+                    CLAIM player.cli
+                      SEQ
+                        player.cli[lose.life] ! TRUE
+                        player.cli[dead] ? result
+                    IF
+                      result
+                        -- {{{ Player is dead -> terminate
+                        SEQ
+                          is.kill.source := TRUE
+                          running := FALSE
+                        -- }}}
+                      TRUE
+                        SKIP
+                  -- }}}
+                has.creature
+                  -- {{{ Square contains creature -> kill
+                  SEQ
+                    CLAIM scn!
+                      scn ! creature; TRUE; x; y
+                    CLAIM points!
+                      points ! point; 10000
+                    has.creature := FALSE
+                    FORK kill.creature( creature.cli )
+                  -- }}}
+                TRUE
+                  -- {{{ Display explosion
+                  CLAIM scn!
+                    scn ! explosion; x; y
+                  -- }}}
+              IF
+                has.bomb
+                  -- {{{ Sqaure includes bomb -> detonate
+                  IF
+                    explosion.count = 0
+                      SEQ
+                        FORK notify.player( bomb.player! )
+                        CLAIM scn!
+                          scn ! bomb; 0; x; y
+                        CLAIM points!
+                          points ! point; 1000
+                        explosion.count := explosion.count + 1
+                        FORK explosion.all.reply( bomb.size, left.sq, right.sq, top.sq, bottom.sq, finished.explode!, explosion.reply )
+                    TRUE -- Already detonated bomb
+                      explosion.reply[reply] ! TRUE
+                  -- }}}
+                has.block
+                  -- {{{ Square contains block -> destroy & display bonus (if exists)
+                  TIMER tim:
+                  INT t:
+                  SEQ
+                    has.block := FALSE
+                    CLAIM points!
+                      points ! point; 1000
+                    -- Wait short period then respond that detonated
+                    tim ? t
+                    tim ? AFTER (t PLUS 200000)
+                    explosion.reply[reply] ! TRUE
+                    IF 
+                      has.player
+                        CLAIM scn!
+                          scn ! man; FALSE; x; y
+                      bonus.type > 0
+                        CLAIM scn!
+                          scn ! bonus; bonus.type; x; y
+                      TRUE
+                        CLAIM scn!
+                          scn ! clear; secret.door; x; y
+                  -- }}}
+                size > 0
+                  -- {{{ If not last square in bombs radius detonate next square
+                  SEQ
+                    bonus.type := 0
+                    CASE dir
+                      0
+                        -- {{{ Explosion going up
+                        SEQ
+                          explosion.count := explosion.count + 1
+                          FORK explosion.dir( size, 0, top.sq, finished.explode!, explosion.reply )
+                        -- }}}
+                      1
+                        -- {{{ Explosion going down
+                        SEQ
+                          explosion.count := explosion.count + 1
+                          FORK explosion.dir( size, 1, bottom.sq, finished.explode!, explosion.reply )
+                        -- }}}
+                      2
+                        -- {{{ Explosion going left
+                        SEQ
+                          explosion.count := explosion.count + 1
+                          FORK explosion.dir( size, 2, left.sq, finished.explode!, explosion.reply )
+                        -- }}}
+                      3
+                        -- {{{ Explosion going right
+                        SEQ
+                          explosion.count := explosion.count + 1
+                          FORK explosion.dir( size, 3, right.sq, finished.explode!, explosion.reply )
+                        -- }}}
+                  -- }}}
+                TRUE
+                  -- {{{ Last square in radius - wait short period then reply that detonated
+                  TIMER tim:
+                  INT t:
+                  SEQ
+                    tim ? t
+                    tim ? AFTER (t PLUS 200000)
+                    explosion.reply[reply] ! TRUE
+                    IF 
+                      has.player
+                        CLAIM scn!
+                          scn ! man; FALSE; x; y
+                      bonus.type > 0
+                        CLAIM scn!
+                          scn ! bonus; bonus.type; x; y
+                      TRUE
+                        CLAIM scn!
+                          scn ! clear; secret.door; x; y
+                  -- }}}
+            -- }}}
+          BOOL is.creature:
+          up; is.creature
+            -- {{{ Received request for link to square above
+            -- refuse if not sensible (from unregister creature or player)
+            IF
+              (is.creature AND (NOT has.creature)) OR ((NOT is.creature) AND (NOT has.player))
+                link[reply] ! fail
+              TRUE
+                link[reply] ! square; top.sq
+            -- }}}
+          BOOL is.creature:
+          down; is.creature
+            -- {{{ Received request for link to square below
+            -- refuse if not sensible (from unregister creature or player)
+            IF
+              (is.creature AND (NOT has.creature)) OR ((NOT is.creature) AND (NOT has.player))
+                link[reply] ! fail
+              TRUE
+                link[reply] ! square; bottom.sq
+            -- }}}
+          BOOL is.creature:
+          left; is.creature
+            -- {{{ Received request for link to square left
+            -- refuse if not sensible (from unregister creature or player)
+            IF
+              (is.creature AND (NOT has.creature)) OR ((NOT is.creature) AND (NOT has.player))
+                link[reply] ! fail
+              TRUE
+                link[reply] ! square; left.sq
+            -- }}}
+          BOOL is.creature:
+          right; is.creature
+            -- {{{ Received request for link to square right
+            -- refuse if not sensible (from unregister creature or player)
+            IF
+              (is.creature AND (NOT has.creature)) OR ((NOT is.creature) AND (NOT has.player))
+                link[reply] ! fail
+              TRUE
+                link[reply] ! square; right.sq
+            -- }}}
+          SHARED BOMB.LINK! new.bomb:
+          drop.bomb; bomb.size; new.bomb
+            -- {{{ Request to drop bomb of specified size
+            IF
+              has.bomb OR (explosion.count > 0)
+                -- {{{ Square contains bomb/fire -> fail
+                link[reply] ! fail
+                -- }}}
+              TRUE
+                -- {{{ Drop bomb
+                SEQ
+                  CLAIM points!
+                    points ! point; -1000
+                  bomb.player := new.bomb
+                  has.bomb := TRUE
+                  bomb.countdown := 5
+                  CLAIM scn!
+                    scn ! bomb; 5; x; y
+                  link[reply] ! ok
+                  tim ? t
+                  t := t PLUS 800000
+                -- }}}
+            -- }}}
+          end.game
+            running := FALSE
+    -- {{{ Wait until all detonations have completed before termination
+    WHILE (explosion.count > 0)
+      BOOL b:
+      SEQ
+        finished.explode ? b
+        explosion.count := explosion.count - 1
+    -- }}}
+    -- {{{ Wait for neighbouring squares to confirm shutdown
+    terminate.square( is.kill.source, TRUE, link, left.sq, right.sq, top.sq, bottom.sq )
+    -- }}}
+    -- {{{ Wait for creature to terminate
+    IF
+      has.creature
+        CLAIM creature.cli
+          creature.cli[req] ! end.game
+      TRUE
+        SKIP
+    -- }}}
+    IF
+      is.kill.source
+        -- {{{ This square is source of 'end game' signal -> print "game over"
+        -- & terminate points process
+        TIMER tim:
+        INT t:
+        SEQ
+          tim ? t
+          tim ? AFTER (t PLUS 500000)
+          CLAIM scn!
+            scn ! game.over
+          CLAIM points!
+            points ! end.game
+        -- }}}
+      TRUE
+        SKIP
+:
+-- }}}
+
+-- }}}
+
+-- {{{ Process for an unbreakable wall
+PROC wall( VAL BYTE x, y, SQUARE.LINK? link, SHARED SQUARE.LINK! left.sq, right.sq, top.sq, bottom.sq, SHARED CHAN SCREEN.DRAW scn! )
+--PROC wall( VAL BYTE x, y, SQUARE.LINK? link, SHARED CHAN SCREEN.DRAW scn! )
+  BOOL running:
+  SEQ
+    -- {{{ Draw initial state
+    CLAIM scn!
+      scn ! block.unbreak; x; y
+    -- }}}
+    running := TRUE
+    WHILE running
+      link[req] ? CASE
+        SHARED PLAYER.LINK! player:
+        register.player; player
+          -- {{{ Refuse move request from player
+          link[reply] ! fail
+          -- }}}
+        SHARED CREATURE.LINK! creature:
+        register.creature; creature
+          -- {{{ Refuse move request from creature
+          link[reply] ! fail
+          -- }}}
+        INT size:
+        BYTE dir:
+        EXPLOSION! explosion:
+        explode; explosion; size; dir
+          -- {{{ Explosion - respond straight away that detonation has completed
+          explosion[reply] ! TRUE
+          -- }}}
+        end.game
+          -- {{{ Wait for neighbouring squares to confirm shutdown
+          SEQ
+            terminate.square( FALSE, TRUE, link, left.sq, right.sq, top.sq, bottom.sq )
+            running := FALSE
+          -- }}}
+:
+-- }}}
+
+-- {{{ Process for the exit square
+PROC exit( VAL BYTE x, y, SQUARE.LINK? link, SHARED SQUARE.LINK! left.sq, right.sq, top.sq, bottom.sq, SHARED CHAN POINT.SCORE points!, SHARED CHAN SCREEN.DRAW scn! )
+--PROC exit( VAL BYTE x, y, SQUARE.LINK? link, SHARED CHAN POINT.SCORE points!, SHARED CHAN SCREEN.DRAW scn! )
+  BOOL running:
+  SEQ
+    -- {{{ Draw initial state
+    CLAIM scn!
+      scn ! exit; x; y
+    -- }}}
+    running := TRUE
+    WHILE running
+      link[req] ? CASE
+        SHARED PLAYER.LINK! player:
+        register.player; player
+          -- {{{ Move request from player -> accept then terminate with 'game complete' message
+          TIMER tim:
+          INT t:
+          SEQ
+            link[reply] ! end.game
+            CLAIM scn!
+              scn ! man; FALSE; x; y
+            CLAIM points!
+              points ! point; 100000
+            terminate.square( TRUE, FALSE, link, left.sq, right.sq, top.sq, bottom.sq )
+            running := FALSE
+            -- {{{ Terminate points process
+            CLAIM points!
+              points ! end.game
+            -- }}}
+            -- {{{ Short delay then "game complete" message
+            tim ? t
+            tim ? AFTER (t PLUS 500000)
+            CLAIM scn!
+              scn ! game.complete
+            -- }}}
+          -- }}}
+        SHARED CREATURE.LINK! creature:
+        register.creature; creature
+          -- {{{ Refuse move request from creature
+          link[reply] ! fail
+          -- }}}
+        INT size:
+        BYTE dir:
+        EXPLOSION! explosion:
+        explode; explosion; size; dir
+          -- {{{ Explosion - respond straight away that detonation has completed
+          explosion[reply] ! TRUE
+          -- }}}
+        end.game
+          -- {{{ Wait for neighbouring squares to confirm shutdown
+          SEQ
+            terminate.square( FALSE, TRUE, link, left.sq, right.sq, top.sq, bottom.sq )
+            running := FALSE
+          -- }}}
+:
+-- }}}
+
+-- }}}
+
+-- {{{ Main process
+PROC bomberman( CHAN BYTE kyb?, scn!, err!)
+  SHARED! CHAN SCREEN.DRAW scn.plex:
+  MOBILE []SHARED SQUARE.LINK! matrix.links:
+  MOBILE []SQUARE.LINK? matrix.svrs:
+  INT player.location, creature.count:
+  SHARED! CHAN POINT.SCORE points:
+  SEQ
+    -- {{{ Initalise channels
+    creature.count := 0
+    matrix.links := MOBILE [WIDTH*HEIGHT]SHARED SQUARE.LINK!
+    matrix.svrs := MOBILE [WIDTH*HEIGHT]SQUARE.LINK?
+    SEQ i = 0 FOR WIDTH * HEIGHT
+      matrix.links[i], matrix.svrs[i] := MOBILE SQUARE.LINK
+    -- }}}
+    -- {{{ Set up board matrix
+    SEQ i = 0 FOR WIDTH
+      SEQ j = 0 FOR HEIGHT
+        BYTE x, y:
+        INT left, right, top, bottom, current:
+        SEQ
+          left := (j * WIDTH) + (((i-1) + WIDTH) \ WIDTH)
+          right := (j * WIDTH) + ((i+1) \ WIDTH)
+          top := ((((j-1) + HEIGHT) \ HEIGHT) * WIDTH) + i
+          bottom := (((j+1) \ HEIGHT) * WIDTH) + i
+          current := (j * WIDTH) + i
+          x := BYTE i
+          y := BYTE j
+          out.int( current, 8, scn! )
+          out.int( left, 8, scn! )
+          out.int( top, 8, scn! )
+          out.int( bottom, 8, scn! )
+          out.int( right, 8, scn! )
+          scn ! '*n'
+          IF
+            BOARD[i][j] = '@'
+              -- {{{ Solid wall
+              FORK wall( x, y, matrix.svrs[current], matrix.links[left], matrix.links[right], matrix.links[top], matrix.links[bottom], scn.plex! )
+              -- }}}
+            BOARD[i][j] = '#'
+              -- {{{ Breakable Wall
+              FORK ground( TRUE, FALSE, 0, x, y, matrix.svrs[current], matrix.links[left], matrix.links[right], matrix.links[top], matrix.links[bottom], points!, scn.plex! )
+              -- }}}
+            BOARD[i][j] = '-'
+              -- {{{ Secret Door
+              FORK ground( FALSE, TRUE, 0, x, y, matrix.svrs[current], matrix.links[left], matrix.links[right], matrix.links[top], matrix.links[bottom], points!, scn.plex! )
+              -- }}}
+            BOARD[i][j] = 'X'
+              -- {{{ Exit
+              FORK exit( x, y, matrix.svrs[current], matrix.links[left], matrix.links[right], matrix.links[top], matrix.links[bottom], points!, scn.plex! )
+              -- }}}
+            BOARD[i][j] = 'S'
+              -- {{{ Player on a normal square
+              SEQ
+                FORK ground( FALSE, FALSE, 0, x, y, matrix.svrs[current], matrix.links[left], matrix.links[right], matrix.links[top], matrix.links[bottom], points!, scn.plex! )
+                player.location := current
+              -- }}}
+            BOARD[i][j] = 'M'
+              -- {{{ Creature on a normal square
+              SEQ
+                FORK ground( FALSE, FALSE, 0, x, y, matrix.svrs[current], matrix.links[left], matrix.links[right], matrix.links[top], matrix.links[bottom], points!, scn.plex! )
+                FORK creature( creature.count, matrix.links[current] )
+                creature.count := creature.count + 1
+              -- }}}
+            (BOARD[i][j] > '0') AND (BOARD[i][j] < '9')
+              -- {{{ Bonus inside a breakable wall
+              FORK ground( TRUE, FALSE, BOARD[i][j] - '0', x, y, matrix.svrs[current], matrix.links[left], matrix.links[right], matrix.links[top], matrix.links[bottom], points!, scn.plex! )
+              -- }}}
+            TRUE
+              -- {{{ Ground
+              FORK ground( FALSE, FALSE, 0, x, y, matrix.svrs[current], matrix.links[left], matrix.links[right], matrix.links[top], matrix.links[bottom]!, points!, scn.plex! )
+              -- }}}
+    -- }}}
+    PAR
+      screen.plex( scn.plex?, scn! )
+      player( matrix.links[player.location], kyb?, points!, points?, scn.plex! )
+:
+-- }}}
+
+-- }}}
+

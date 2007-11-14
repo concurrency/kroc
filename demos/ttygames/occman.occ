@@ -1,0 +1,722 @@
+--
+--  occman.occ -- occam-pi implementation of "pacman"
+--  Copyright (C) 2007 Ryan Jones, University of Kent
+--
+
+
+#INCLUDE "course.module"
+#INCLUDE "ss.module"
+
+-- Direction:
+VAL INT UP IS 0:
+VAL INT DOWN IS 1:
+VAL INT LEFT IS 2:
+VAL INT RIGHT IS 3:
+
+
+-- the welcome screen
+VAL [][]BYTE welcome IS ["Welcome to....            ",
+                         " _   __  __               ",
+                         "/ \ / / / / |\/|  /\  |\ |",
+                         "\_/ \_\ \_\ |  | /  \ | \|",
+                         "Controls: w - up          ",
+                         "          s - down        ",
+                         "          a - left        ",
+                         "          d - right       "]:
+VAL INT welcomelength IS 8:
+
+-- w = wall, h = hallway.
+VAL BOOL w IS TRUE:
+VAL BOOL h IS FALSE:
+
+
+--the values for the map 'game1'
+VAL [][]BOOL game1.map IS [[w,w,w,w,w,w,w,w,w,w,w,w,w,w,w],
+                           [w,h,h,h,h,h,h,h,h,h,h,h,h,h,w],
+                           [w,h,w,h,w,h,w,h,w,h,w,h,w,h,w],
+                           [w,h,w,h,w,h,w,h,w,h,w,h,w,h,w],
+                           [w,h,w,h,w,h,h,h,w,h,w,h,w,h,w],
+                           [w,h,w,h,w,w,w,w,w,h,w,h,w,h,w],
+                           [w,h,w,h,h,h,h,h,h,h,w,h,w,h,w],
+                           [w,h,w,w,w,w,w,w,w,h,w,h,w,h,w],
+                           [w,h,h,h,w,h,h,h,h,h,h,h,h,h,w],
+                           [w,h,w,h,w,h,w,w,w,w,w,w,w,h,w],
+                           [w,h,w,h,w,h,w,h,h,h,h,h,h,h,w],
+                           [w,h,w,h,w,h,w,h,w,w,w,w,w,h,w],
+                           [w,h,w,h,h,h,h,h,h,h,h,h,h,h,w],
+                           [w,w,w,w,w,w,w,w,w,w,w,w,w,w,w]]:
+VAL INT game1.start IS 26:  -- the cell pacman starts at
+VAL INT game1.height IS 14: -- the height of the map
+VAL INT game1.width IS 15:  -- the width of the map
+VAL INT game1.pills IS 97:  -- the number of pills in the map
+VAL INT game1.gspawn IS 114:-- the spawn point for the ghosts
+VAL INT game1.ghosts IS 3:  -- the number of ghosts
+
+--the values for the map 'game2'
+VAL [][]BOOL game2.map IS [[w,w,w,w,w],
+                           [w,h,h,h,w],
+                           [w,h,h,h,w],
+                           [w,h,h,h,w],
+                           [w,w,w,w,w]]:
+VAL INT game2.start IS 13:
+VAL INT game2.height IS 5:
+VAL INT game2.width IS 5:
+VAL INT game2.pills IS 9:
+VAL INT game2.ghosts IS 0:
+VAL INT game2.gspawn IS 0:
+
+--the values for the map 'game3'
+VAL [][]BOOL game3.map IS[[w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w],
+                          [w,h,h,h,h,h,h,h,h,h,h,h,h,w,w,h,h,h,h,h,h,h,h,h,h,h,h,w], 
+                          [w,h,w,w,w,w,h,w,w,w,w,w,h,w,w,h,w,w,w,w,h,w,w,w,w,w,h,w], 
+                          [w,h,w,w,w,w,h,w,w,w,w,w,h,w,w,h,w,w,w,w,h,w,w,w,w,w,h,w],
+                          [h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h,h],
+                          [w,h,w,w,w,w,h,w,w,h,w,w,w,h,h,w,w,w,h,w,w,h,w,w,w,w,h,w], 
+                          [w,h,w,w,w,w,h,w,w,h,w,w,w,h,h,w,w,w,h,w,w,h,w,w,w,w,h,w], 
+                          [w,h,w,w,w,w,h,w,w,h,h,w,w,w,w,w,w,h,h,w,w,h,w,w,w,w,h,w],
+                          [w,h,w,w,w,w,h,w,w,w,h,w,w,w,w,w,w,h,w,w,w,h,w,w,w,w,h,w],
+                          [w,h,h,h,h,h,h,h,h,h,h,w,w,w,w,w,w,h,h,h,h,h,h,h,h,h,h,w],
+                          [w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w,w]]:
+VAL INT game3.start IS 29:
+VAL INT game3.width IS 28:
+VAL INT game3.height IS 11:
+VAL INT game3.pills IS 114:
+VAL INT game3.gspawn IS 181:
+VAL INT game3.ghosts IS 4:
+ 
+                      
+
+
+-- protocol used between occman/ghost and a node
+PROTOCOL NODE.IN
+  CASE
+    inquire            -- is it possible to come in?
+    arriveoccman; INT  -- arriving at a node; pacman's ID
+    arriveghost; INT   -- arriving at a node; ghost's ID
+    leaveoccman; INT   -- leaving a node; pacman's ID
+    leaveghost; INT    -- leaving a node; pacman's ID
+    nextlink; INT; INT -- requesting next link; pacman's ID; direction
+:
+
+-- protocol used between a node and occman/ghost
+
+CHAN TYPE LINK:               -- forward declaration ..
+
+
+PROTOCOL NODE.OUT
+  CASE
+    hello; BYTE; BYTE; BOOL -- welcome to the node - x co-ord; y co-ord; Pill present 
+    link; SHARED LINK!; INT -- link to next node; direction
+    wall                    -- sorry I'm a wall you can't come here :(
+    space                   -- I'm a space, wou are welcome here
+    die; BYTE; BYTE         -- x co-ord; y co-ord; you have run into a ghost... time to die :(
+    bye                     -- you can go, no problem:'
+:
+
+-- this channel-type is what's used to plumb the system
+RECURSIVE CHAN TYPE LINK
+  MOBILE RECORD
+    CHAN NODE.IN req?:        -- tarzan inquires
+    CHAN NODE.OUT resp!:      -- maybe gets a response
+:
+
+PROTOCOL SCREEN
+  CASE
+    writewall; BYTE; BYTE        -- xco-ord, yco-ord of wall to draw
+    writespace; BYTE; BYTE; BOOL -- xco-ord, yco-ord of space to draw, hasPill
+    writeoccman; BYTE; BYTE; INT -- xco-ord, yco-ord of occman to draw, Direction
+    writeghost; BYTE; BYTE       -- xco-ord, yco-ord of ghost to draw
+    writescore; INT; INT         -- score; target score
+    win                          -- we won, tell the user                
+    lose                         -- we lost tell the user
+:
+
+-- The wall proc simply draws itself and then constantly tells ghosts/occman they can't come in.
+PROC wall (VAL BYTE idx, idy, LINK? link, SHARED LINK! left, right, up, down, SHARED CHAN SCREEN display!)
+  SEQ
+    CLAIM display!
+      display ! writewall; idx; idy 
+    WHILE TRUE
+      SEQ
+        link[req] ? CASE inquire
+        link[resp] ! wall
+:
+
+-- The space process is the sections of the grid in which occman/ghosts can travel.
+-- The space originally starts will a pill which occman can eat by passing through.
+-- It can hold one occman and many ghosts.
+-- The first two bytes are the x and y co,ordinates of the space.
+-- link is the channel bundle the cell uses to talk to pacman/ghosts
+-- left, right, up and down are links to other cells
+-- display is a link to the display process which allows updates to this cell to be shown on screen
+PROC space (VAL BYTE idx, idy, LINK? link, SHARED LINK! left, right, up, down, SHARED CHAN SCREEN display!)
+  INITIAL BOOL pill IS TRUE:
+  INITIAL INT ghost.count IS 0:
+  INITIAL BOOL gotOccman IS FALSE:
+  SEQ
+    -- first we write tell the display process we are here
+    CLAIM display!
+      display ! writespace; idx; idy; pill
+    INT p.id: 
+    WHILE TRUE
+      -- we now loop forever.  
+      -- reading from the link[req] channel then 
+      -- responding down the link[resp] channel
+      link[req] ? CASE
+        arriveoccman; p.id -- occman arriving at this node
+          SEQ
+            IF
+              ghost.count > 0 -- we have ghosts here. Time for occman to die :(
+                link[resp] ! die; idx; idy
+              TRUE
+                SEQ -- we dont have ghosts so let occman eat the pill if we have one.
+                  link[resp] ! hello; idx; idy; pill
+                  PAR
+                    pill := FALSE          
+                    gotOccman := TRUE
+        arriveghost; p.id -- ghost arriving at this node
+          PAR --say hello and increment our ghost count
+            link[resp] ! hello; idx; idy; pill
+            ghost.count := ghost.count + 1
+        inquire -- occman/ghost asking if we are a wall
+          link[resp] ! space  -- no, we are a space
+        INT direction:
+        nextlink; p.id; direction -- occman/ghost requesting a link
+          IF -- pass them the diretcion they specified.
+            direction = UP
+              link[resp] ! link; up;    direction
+            direction = DOWN
+              link[resp] ! link; down;  direction
+            direction = LEFT
+              link[resp] ! link; left;  direction
+            direction = RIGHT
+              link[resp] ! link; right; direction
+            TRUE
+              STOP
+        leaveghost; p.id -- a ghost is leaving
+          PAR  -- decrement the ghost count and update the display if we are empty.
+            SEQ
+              ghost.count := ghost.count - 1
+              link[resp] ! bye
+              IF
+                (ghost.count = 0) AND (FALSE = gotOccman)
+                  CLAIM display!
+                    display ! writespace; idx; idy; pill
+                TRUE
+                  SKIP
+        leaveoccman; p.id -- occman is leaving.
+          IF -- if we have some ghosts here
+            ghost.count > 0
+              link[resp] ! die; idx; idy -- time for occman to die
+            TRUE
+              PAR  -- if we havent got ghosts let occman go
+                gotOccman := FALSE 
+                IF
+                  ghost.count = 0 -- update the screen if everyone has left.
+                    CLAIM display!
+                      display ! writespace; idx; idy; pill
+                  TRUE
+                    SKIP
+                link[resp] ! bye                  
+:
+
+-- this node process spawns either walls or spaces depending on the BOOL given as its first argument.
+PROC node (VAL BOOL isWall ,VAL BYTE idx, idy, LINK? link, SHARED LINK! left, right, up, down, SHARED CHAN SCREEN display!)
+  IF
+    isWall
+      wall(idx, idy, link, left, right, up, down, display!)
+    TRUE      
+      space(idx, idy, link, left, right, up, down, display!)
+:
+
+-- The occman process
+-- id is the id of this occman - this is not used but could allow multiple occman support
+-- initDirection is the direction that occman initially travels in.
+-- node is the link to the current node occman is in.
+-- control is a channel, controlled by the keyboard specifiings which direction occman should travel in.
+-- display is a link to the display process, allowing occman to communicate where he is.
+PROC occman (VAL INT id, initDirection, totalPills, SHARED LINK! node, CHAN INT control?, SHARED CHAN SCREEN display!)
+  VAL INT turntime IS 500000: 
+  INITIAL INT numpills IS 0:
+  INITIAL INT direction IS initDirection:
+  INITIAL BOOL alive IS TRUE:
+  INITIAL BOOL playing IS TRUE:
+  BYTE x, y:
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    t := t PLUS turntime
+    WHILE alive AND playing  --loop until we die or win.
+      SHARED LINK! next:
+      INITIAL BOOL pill IS FALSE:
+      INITIAL BOOL move IS FALSE:
+      SEQ
+        -- announce arrival and find out where we are
+        CLAIM node
+          SEQ
+            node[req] ! arriveoccman; id
+            node[resp] ? CASE 
+              hello; x; y; pill -- we have been welcomed into the node
+                SKIP
+              die; x; y  -- we got told to die... how rude... we had better die
+                alive := FALSE
+        IF
+          alive
+            SKIP
+          TRUE -- if we have just died we shuld tell the screen
+            CLAIM display!
+              display ! lose  
+
+        -- eat the pill if there is one
+        IF
+          pill
+            SEQ
+              numpills := numpills + 1
+              -- check to see if we have got all the pills 
+              IF 
+                numpills = totalPills -- we have all the pills 
+                  CLAIM display!
+                    SEQ
+                      display ! writescore; numpills; totalPills
+                      display ! win -- we win!
+                      playing := FALSE
+                TRUE -- we have more pills to get, update the score on the screen
+                  CLAIM display!
+                    display ! writescore; numpills; totalPills
+          TRUE
+            SKIP
+
+        
+        -- interact with node and get end of next cell we hope to reach
+        CLAIM node
+          SEQ
+            node[req] ! nextlink; id; direction
+            node[resp] ? CASE link; next; direction
+
+        --update screen
+        CLAIM display!
+          display ! writeoccman; x; y; direction
+        
+        INITIAL BOOL waiting IS TRUE:
+	WHILE waiting -- now wait until the next tick.
+	  PRI ALT
+            tim ? AFTER t -- we have waited long enough... let's get out of this loop
+              PAR
+                t:= t PLUS turntime
+                waiting := FALSE
+            control ? direction -- read new directions from the keyboard.
+              SKIP
+ 
+        -- change cell if we can
+        CLAIM next
+          SEQ
+            next[req] ! inquire
+            next[resp] ? CASE
+              wall -- we cant go there. I guess we'll stay still this turn.
+                SKIP
+              space -- we can move this turn!
+                move := TRUE
+        IF
+          move  -- if we can move
+            SEQ
+              CLAIM node
+                SEQ 
+                  node[req] ! leaveoccman; id -- say goodbye to the noe we are in
+                  node[resp] ? CASE 
+                    bye -- lets get out of here
+                      SKIP
+                    BYTE x, y:
+                    die; x; y -- unfortunately we died :(
+                      IF 
+                        playing -- we had better tell the screen we died.
+                          PAR
+                            CLAIM display! 
+                              display ! lose
+                            alive := FALSE
+                        TRUE -- Ha! We were captured by a ghost but we won before they got us!
+                          SKIP
+          TRUE -- we cant move: do nothing
+            SKIP
+        IF
+          move --we can move, grab hold of the next node
+            node := next
+          TRUE
+            SKIP
+:
+
+
+-- The ghost process
+-- The ghost's walk around the bored randomishly eating/killing/stamping on occman when they are in the same cell
+-- Move ment of the ghost: Randomly pick a direction; if this is a wall attempt to go in the direction the ghost just has; if that is still a wall then randomly pick directions until the ghost finds one it can travel in.
+-- id is the id of this ghost.
+-- node is the link to the node this ghost is currently in
+-- display is the link to the display process allowing the ghost to announce where it is.
+PROC ghost (VAL INT id, SHARED LINK! node, SHARED CHAN SCREEN display!)
+  VAL INT turntime IS 500000:
+  INT direction, seed, newdir:
+  BYTE x, y:
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    t := t PLUS turntime
+    direction, seed := random(4, t + id) -- we need to have a direction before we start the loop
+    WHILE TRUE
+      SHARED LINK! next:
+      INITIAL BOOL cantmove IS TRUE:
+      SEQ
+        -- announce arrival and find out where we are
+        CLAIM node
+          BOOL pill:
+          SEQ
+            node[req] ! arriveghost; id
+            node[resp] ? CASE hello; x; y; pill
+
+        -- pick a random direction and get a link to the cell in that direction
+        newdir, seed := random(4, seed)
+        CLAIM node
+          SEQ
+            node[req] ! nextlink; id; newdir
+            node[resp] ? CASE link; next; newdir
+
+        --can we travel in the new direction?
+        CLAIM next
+          SEQ
+            next[req] ! inquire
+            next[resp] ? CASE
+              wall
+                SKIP
+              space
+                cantmove := FALSE        
+
+        IF -- if we couldn't move in that direction
+          cantmove
+            SEQ -- attempt to carry on in the same direction
+              CLAIM node
+                SEQ
+                  node[req] ! nextlink; id; direction
+                  node[resp] ? CASE link; next; newdir
+              --can we travel in the same direction?
+              CLAIM next
+                SEQ
+                  next[req] ! inquire
+                  next[resp] ? CASE
+                    wall
+                      SKIP
+                    space
+                      cantmove := FALSE
+          TRUE
+            SKIP
+
+        WHILE cantmove -- we still cant move
+          SEQ -- attempt to carry on in the same direction
+            newdir, seed := random(4, seed)
+            CLAIM node
+              SEQ
+                node[req] ! nextlink; id; newdir
+                node[resp] ? CASE link; next; newdir
+            --can we travel in the new direction?
+            CLAIM next
+              SEQ
+                next[req] ! inquire
+                next[resp] ? CASE
+                  wall
+                    SKIP
+                  space
+                    cantmove := FALSE        
+
+        direction := newdir
+
+        --update screen
+        CLAIM display!
+          display ! writeghost; x; y
+        
+        -- wait till we can go again
+        tim ? AFTER t
+        t:= t PLUS turntime
+ 
+        -- say goodbye to the last node and move to the next.
+        CLAIM node
+          SEQ
+            node[req] ! leaveghost; id
+            node[resp] ? CASE bye
+        node := next
+:
+
+
+-- This PROC forms part of a overwriting bufferd keyboard reader
+-- This asks the buffer for a keypress and if the keypress is 'w' 'a' 's' 'd'
+-- sends the appropriate direction to occman
+-- If it is not one of the desired letters it discards it
+-- Then go back to the top and ask for another letter.
+-- req - the channel used to request bytes
+-- rep - the channel where the byte is received
+-- control - where this process sends direction commands to occman
+PROC KBD.READER (CHAN BOOL req!, CHAN BYTE rep?, CHAN INT control!)
+  BYTE char:
+  WHILE TRUE
+    SEQ
+      req ! TRUE
+      rep ? char
+      IF
+        char = 'w'
+          control ! UP
+        char = 's'
+          control ! DOWN
+        char = 'a'
+          control ! LEFT
+        char = 'd'
+          control ! RIGHT
+        TRUE
+          SKIP         
+:
+
+-- This PROC forms part of a overwriting bufferd keyboard reader
+-- This PROC constantly reads from the keyboard overwriting the same BYTE variable
+-- If a ping is received on the req channel and the buffer is full
+-- the letter currently in the buffer is sent down the channel and the buffer is marked as clear.
+PROC KBD.BUFFER (CHAN BYTE kbd?, CHAN BOOL req?, CHAN BYTE rep!)
+  INITIAL BOOL full IS FALSE:
+  INITIAL BYTE buffer IS '|': -- something rubbish
+  WHILE TRUE
+    IF
+      full
+        PRI ALT
+          BOOL ping:
+          req ? ping
+            PAR
+              rep ! buffer
+              full := FALSE
+          kbd ? buffer
+            full := TRUE 
+      TRUE
+        PAR
+          kbd ? buffer
+          full := TRUE
+          
+:
+-- The overwriting buffered keyboard reader process.
+-- reads from the keyboard, sends control messages to occman
+PROC CONTROL (CHAN BYTE kbd?, CHAN INT control!)
+  CHAN BOOL req:
+  CHAN BYTE rep:
+  PAR
+    KBD.BUFFER(kbd?, req?, rep!)
+    KBD.READER(req!, rep?, control!)
+:
+
+
+-- the display process.
+-- Reads from in channel and displays data on the screen.
+-- colour either 'w' or 'b' indicating whether the terminal has a white or black background
+-- scr - link to the screen
+-- in? - where update messages are received from
+PROC display (VAL BYTE colour, CHAN BYTE scr!, CHAN SCREEN in?)
+  VAL BYTE wall.ch IS '#':
+  VAL BYTE ghost.ch IS '@':
+  VAL BYTE space.pill.ch IS '.':
+  VAL BYTE space.empty.ch IS ' ':
+  VAL BYTE up.ch IS 'V':
+  VAL BYTE down.ch IS '^':
+  VAL BYTE left.ch IS '>':
+  VAL BYTE right.ch IS '<':
+  BYTE x, y:
+
+  VAL COLOUR ghost IS bold.blue:
+  COLOUR wall:
+  COLOUR space:
+  COLOUR occman:
+  COLOUR text:
+
+  SEQ
+    IF -- set the colours depending on the background colour
+      colour = 'b'
+        PAR
+          wall := bold.white
+          space := white
+          occman := bold.yellow
+          text := white
+      colour = 'w'
+        PAR
+          wall := bold.black
+          space := black
+          occman := bold.red
+          text := black
+
+    -- clear the screen and set the cursor to invisible
+    erase.screen (scr!)
+    cursor.invisible(scr!)
+    WHILE TRUE
+      SEQ
+        in ? CASE
+          writewall; x; y -- display a wall at x,y
+            SEQ
+              cursor.x.y (x+2, y+2, scr!)
+              fg.col(wall, scr!)
+              out.ch (wall.ch, 1, scr!)
+          BOOL pill:
+          writespace; x; y; pill --display a space with/wothout pill at x,y
+            SEQ 
+              cursor.x.y (x+2, y+2, scr!)
+              fg.col(space, scr!)
+              IF
+                pill
+                  out.ch (space.pill.ch, 1, scr!)
+                TRUE
+                  out.ch (space.empty.ch, 1, scr!)
+          INT direction: 
+          writeoccman; x; y; direction -- display occman at x,y facing direction
+            SEQ
+              cursor.x.y (x+2, y+2, scr!)
+              fg.col(occman, scr!)
+              IF
+                direction = UP
+                  out.ch (up.ch, 1, scr!)
+                direction = DOWN
+                  out.ch (down.ch, 1, scr!)
+                direction = LEFT
+                  out.ch (left.ch, 1, scr!)
+                direction = RIGHT
+                  out.ch (right.ch, 1, scr!)
+          writeghost; x; y -- display ghost at x,y
+            SEQ
+              cursor.x.y (x+2, y+2, scr!)
+              fg.col(ghost, scr!)
+              out.ch (ghost.ch, 1, scr!)
+          INT a, b:
+          writescore; a; b -- display the score
+            SEQ
+              cursor.x.y (0,0, scr!)
+              fg.col(text, scr!)
+              out.int (a, 5, scr!)
+              out.ch('/', 2, scr!)
+              out.int (b, 5, scr!)
+          win -- we have won.... tell the world
+            SEQ
+              cursor.x.y( 1, 1, scr!)
+              fg.col(text, scr!)
+              out.string("YOU WIN!!!!!!11111!!!111", 25, scr!)
+              cursor.x.y(10,10, scr!)
+          lose -- we lost :( suppose we had better say so
+            SEQ
+              cursor.x.y( 1, 1, scr!)
+              fg.col(text, scr!)
+              out.string("YOU LOSE :(", 25, scr!)
+              cursor.x.y(10,10, scr!)
+        flush(scr!) -- get on the screen NOW!
+:
+
+
+-- the main proc
+-- asks the user which map (s)he wants
+-- asks the user whether the background of the terminal is while to black
+-- starts up the appropriate proces network.
+PROC main(CHAN BYTE kbd?, scr!, err!)
+  INT height: -- y
+  INT width:  -- x
+  INT start:
+  INT pills:
+  INT gspawn:
+  INT ghosts:
+  INT total:
+  
+  MOBILE [] LINK? svrs:
+  MOBILE [] SHARED LINK! clis:
+  CHAN INT control:
+  SHARED! CHAN SCREEN to.screen:
+
+  INITIAL INT n IS -1:
+  INITIAL BYTE colour IS '0':
+  SEQ
+    erase.screen (scr!) -- start with a clean slate
+    SEQ i = 0 FOR welcomelength -- print thewelcome screen
+      SEQ
+        out.string(welcome[i], 0,scr!)
+        out.string("*c*n", 0, scr!)
+    WHILE (n < 1) OR (n > 3) -- keep asking for a map selection untill a good answer has been given
+      ask.int ("Select map 1,2 or 3:", n, 1, kbd?, scr!)
+    WHILE (colour <> 'b') AND (colour <> 'w') -- keep asking for a terminal bg colour until 'w' or 'b' has been entered
+      [1]BYTE input:
+      INT length:
+      SEQ
+        ask.string("What colour is your terminal background?*c*n Press *'b*' for BLACK and *'w*' for WHITE:", input, length, 1, kbd?, scr!)
+        IF
+          length > 0 
+            colour:= input[0]
+          TRUE
+            SKIP
+    IF -- select the right data for the chosen map
+      n = 1
+        PAR
+          height := game1.height
+          width := game1.width
+          start := game1.start
+          pills := game1.pills
+          gspawn := game1.gspawn
+          ghosts := game1.ghosts
+      n = 2
+        PAR
+          height := game2.height
+          width := game2.width
+          start := game2.start
+          pills := game2.pills
+          gspawn := game2.gspawn
+          ghosts := game2.ghosts
+      n = 3
+        PAR
+          height := game3.height
+          width := game3.width
+          start := game3.start
+          pills := game3.pills
+          gspawn := game3.gspawn
+          ghosts := game3.ghosts
+
+    total := height * width -- x*y
+
+
+    -- allocate client and server channel-end arrays
+    
+    svrs := MOBILE [total] LINK?
+    clis := MOBILE [total] SHARED LINK!
+
+    -- allocate individual channel bundles
+    SEQ i = 0 FOR (width * height)
+      svrs[i], clis[i] := MOBILE LINK
+
+    -- in parallel:
+
+    PAR
+      -- individual nodes
+      PAR y = 0 FOR height
+        PAR x = 0 FOR width
+          -- I could calcuate these below but it looks pretty messy... 
+          --I'm not too worried about a little more memory usage.'
+          VAL INT yplus IS (y + 1) \ height:
+          VAL INT xplus IS (x + 1) \ width:
+          VAL INT xminus IS ((x - 1) + width) \ width:
+          VAL INT yminus IS ((y - 1) +height) \ height:
+          -- this node is ((y * width) + x)
+          IF
+            n = 1
+              node (game1.map[y][x], BYTE x, BYTE y, svrs[((y * width) + x)], clis[((y * width) + xminus)], clis[((y * width) + xplus)], clis[((yminus * width) + x)], clis[((yplus * width) + x)], to.screen!) 
+            n = 2
+              node (game2.map[y][x], BYTE x, BYTE y, svrs[((y * width) + x)], clis[((y * width) + xminus)], clis[((y * width) + xplus)], clis[((yminus * width) + x)], clis[((yplus * width) + x)], to.screen!) 
+            n = 3
+              node (game3.map[y][x], BYTE x, BYTE y, svrs[((y * width) + x)], clis[((y * width) + xminus)], clis[((y * width) + xplus)], clis[((yminus * width) + x)], clis[((yplus * width) + x)], to.screen!) 
+
+      -- and an occman (starting on node clis[start])
+      occman (1, LEFT, pills, clis[start], control?, to.screen!)
+ 
+      -- spawn (ghosts) number of ghosts
+      PAR i=0 FOR ghosts
+        ghost(i+2, clis[gspawn], to.screen!)
+
+      -- connection to screen
+      display(colour, scr!, to.screen?)
+
+      -- keyboard listener
+      CONTROL(kbd?, control!)
+:
+
+
