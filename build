@@ -122,8 +122,8 @@ MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
 OCCAMDOC_SRC=tools/occamdoc
-SVN_SRCS=(. $CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC modules/inmoslibs modules/bsclib modules/course modules/syncs modules/dynproc demos modules/udc modules/raster modules/sdlraster modules/occSDL modules/occGL modules/occade modules/button modules/pony modules/cif modules/cdx modules/fmtoutlib modules/moa $DOC_SRC $CGTESTS_SRC $OCCAMDOC_SRC)
-SVN_REPOSS=(kroc ccsp mkoccdeps occ21 ilibr tranx86 kroc-wrapper libkrocif inmoslibs bsclib kroc-course kroc-syncs kroc-dynproc kroc-demos kroc-udc raster kroc-sdlraster occSDL occGL occade button pony cif cdx fmtoutlib moa kroc-doc cgtests occamdoc)
+SVN_SRCS=(.)
+SVN_REPOSS=(kroc)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $OCCAMDOC_SRC \
 	$DOC_SRC \
