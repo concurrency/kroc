@@ -1,0 +1,80 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module occam8
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T8 compiler library, V1.2 17/04/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE FLOATING.UNPACK "FLOATING.UNPACK%O"
+
+--{{{  T8 and TA code the same
+INT, REAL32 FUNCTION FLOATING.UNPACK (VAL REAL32 Y)
+
+  -- V1.1, 21-Feb-89
+  -- Merged TA and T8 code, thus introducing missing CAUSEERRORs to
+  -- checked TA code; V1.2, 17-Apr-90 SRH
+
+  INT    n :
+  REAL32 X :
+  VALOF
+    --{{{  VALS
+    VAL RealShift     IS         8 :
+    VAL RealExp       IS       255 :
+    VAL undefined.NaN IS #7F800010 :
+    VAL Bias          IS       127 :
+    --}}}
+    INT X RETYPES X:
+    VAL INT Y RETYPES Y:
+    INT exp, frac:
+    SEQ
+      exp, frac := SHIFTLEFT (0,  Y << 1, RealShift)
+      IF
+        exp = RealExp  -- inf or NaN
+          SEQ
+            n := RealExp - Bias
+            IF
+              frac = 0 -- inf
+                X := undefined.NaN
+              TRUE            -- NaN
+                X := Y
+            CAUSEERROR()
+        (Y << 1)= 0    -- 0
+          SEQ
+            n := RealExp - Bias
+            X := undefined.NaN
+            CAUSEERROR()
+        TRUE
+          SEQ
+            IF
+              exp = 0
+                INT places:
+                SEQ
+                  places, frac, exp := NORMALISE (frac, 0)
+                  n := - (Bias + places)
+                  frac := frac << 1
+              TRUE
+                n := exp - Bias
+            exp, X := SHIFTRIGHT (Bias, frac, RealShift + 1)
+    RESULT n, X
+:
+--}}}

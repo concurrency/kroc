@@ -1,0 +1,38 @@
+--{{{  #options and #comments
+
+--** @module occam8
+
+#OPTION "E W V"  -- no compiler libs, full ASMs, no vector space
+#COMMENT "T8 compiler library, V1.2 12/02/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE REAL32REM "REAL32REM%O"
+
+--{{{  
+REAL32 FUNCTION REAL32REM (VAL REAL32 X, Y)
+
+  --{{{  history
+  -- V1.1, 21-Feb-89
+  -- Port to new compiler ( oc ); V1.2, 12-Feb-90 SRH
+  --}}}
+
+  REAL32 result:
+  VALOF
+    ASM
+      LD ADDRESSOF  X
+      FPLDNLSN
+      LD ADDRESSOF  Y
+      FPLDNLSN
+      FPREMFIRST
+      EQC      0
+      CJ       :next
+      :loop
+      FPREMSTEP
+      CJ       :loop
+      :next
+      LD ADDRESSOF result
+      FPSTNLSN
+    RESULT result
+:
+--}}}

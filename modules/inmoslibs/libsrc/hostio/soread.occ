@@ -1,0 +1,74 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.2, 16/08/90"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#INCLUDE "hostio.inc"
+#USE "spread"
+--{{{  so.read
+--* Read an unlimited number of bytes from a stream.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param streamid the identification number of the open stream to be
+--   read from
+-- @param bytes.read this gives the number of bytes read from the file;
+--   these bytes will be [data FROM 0 FOR bytes.read]; if bytes.read <>
+--   (SIZE data) then either an error occurred or the end of the file
+--   was reached.
+-- @param data this contains the bytes read from the file; the number
+--   of bytes requested to be read is (SIZE data).
+PROC so.read (CHAN OF SP fs, ts, VAL INT32 streamid,
+              INT bytes.read, []BYTE data)
+  --{{{  more information
+  -- Notes:    If more than a packet's worth of data is to be read
+  --           from a file then one cannot guarantee that all of the data
+  --           will be read from the file before any other process
+  --           accesses the same file.
+  --}}}
+  --{{{  history
+  -- Removed unnecessary use of test (result = spr.ok) from WHILE loop
+  -- condition since present implementation of sp.read always returns
+  -- spr.ok; V1.1, SRH 14-May-90
+  -- Altered one of the WHILE loop conditions from ( length.got <> 0 )
+  -- to, effectively, ( length.got = length.to.get ); V1.2, SRH 16-Aug-90
+  --}}}
+
+  BOOL reading :
+  SEQ
+    bytes.read := 0
+    reading := TRUE
+    WHILE reading AND (bytes.read < (SIZE data))
+      INT length.got, length.to.get :
+      SEQ
+        IF
+          ((SIZE data) - bytes.read) > sp.max.readbuffer.size
+            length.to.get := sp.max.readbuffer.size
+          TRUE
+            length.to.get := ((SIZE data) - bytes.read)
+
+        BYTE result :  -- a dummy in this routine
+        sp.read (fs, ts, streamid, length.got,
+                 [data FROM bytes.read FOR length.to.get], result)
+        bytes.read := bytes.read + length.got
+        reading := ( length.got = length.to.get )
+:
+--}}}so.read

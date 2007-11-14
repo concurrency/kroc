@@ -1,0 +1,97 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module streamio
+
+#OPTION "E"  -- no compliler libs
+#COMMENT "Stream i/o library, V1.1, 13/06/90"
+#COMMENT "(c) Copyright INMOS Limited, 1988"
+#INCLUDE "streamio.inc"
+--* Ignore all but st.endstream of screen stream protocol, and to
+-- terminate when it does receive st.endstream.
+--
+-- @param scrn for input
+PROC ss.scrstream.sink (CHAN OF SS scrn)
+  --{{{  history
+  -- Inserted st.help and st.initialise which were missing.  New version
+  -- is 1.1 ( old version was 0.01, 23-Dec-88 ); 13-June-90 SRH
+  --}}}
+
+  BOOL going:
+  SEQ
+    going := TRUE
+    WHILE going
+      SEQ
+        scrn ? CASE
+          st.reset
+            SKIP
+          st.up
+            SKIP
+          st.down
+            SKIP
+          st.left
+            SKIP
+          st.right
+            SKIP
+          INT32 x, y:
+          st.goto; x; y
+            SKIP
+          BYTE st.char :
+          st.ins.char; st.char
+            SKIP
+          st.del.char
+            SKIP
+          [st.max.string.size]BYTE buffer:
+          INT32 len:
+          st.out.string; len::buffer
+            SKIP
+          st.clear.eol
+            SKIP
+          st.clear.eos
+            SKIP
+          st.ins.line
+            SKIP
+          st.del.line
+            SKIP
+          st.beep
+            SKIP
+          st.terminate
+            SKIP
+          st.help
+            SKIP
+          st.initialise
+            SKIP
+          BYTE st.char :
+          st.out.byte; st.char
+            SKIP
+          INT32 x :
+          st.out.int; x
+            SKIP
+          st.key.raw
+            SKIP
+          st.key.cooked
+            SKIP
+          st.release
+            SKIP
+          st.claim
+            SKIP
+          st.endstream
+            going := FALSE
+          -- if st.spare is seen then something is wrong => STOP
+:

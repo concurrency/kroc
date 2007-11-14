@@ -1,0 +1,60 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.1, 11/06/90"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#INCLUDE "hostio.inc"
+#USE "solib.lib"
+#USE "convert.lib"
+
+--* Read a string containing a representation of a double precision
+-- real in occam syntax ( though a + or - is allowed as first character
+-- ) from the keyboard and to echo it to standard out.
+--
+-- The number typed at the keyboard must be terminated by pressing
+-- 'RETURN'.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param n if error is FALSE, the IEEE double precision format of the
+--   real that was read, otherwise undefined
+-- @param error FALSE if the real was read and converted to binary
+--   without problem; TRUE otherwise - if the string read does not
+--   conform to the syntax of an occam real number, other than the fact
+--   that a plus or minus sign is allowed as the first character
+PROC so.read.echo.real64 (CHAN OF SP fs, ts, REAL64 n, BOOL error)
+  --{{{  history
+  -- Increased the size of string from 24 to 30 so that it is the
+  -- same size as in so.fwrite.real64; new version is 1.1. 11-June-90 SRH
+  --}}}
+
+  [30]BYTE string :
+  INT len :
+  BYTE result :
+
+  SEQ
+    so.read.echo.line (fs, ts, len, string, result)
+    IF
+      result = spr.ok
+        STRINGTOREAL64 (error, n, [string FROM 0 FOR len])
+      TRUE
+        error := TRUE
+:

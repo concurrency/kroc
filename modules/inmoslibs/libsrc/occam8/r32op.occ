@@ -1,0 +1,52 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module occam8
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "TA compiler library, V1.0 29/01/90"
+#COMMENT "(c) Copyright INMOS Limited 1990"
+--}}}
+
+#PRAGMA TRANSLATE REAL32OP "REAL32OP%O"
+--{{{  comments
+--
+-- This function evaluates X Op Y according to the ANSI/IEEE 754-1985 standard
+-- without error checking, using the conventional rounding mode ( that is
+-- round to nearest ).  The various operations are coded in Op where
+--   Op  =  0  +
+--       =  1  -
+--       =  2  *
+--       =  3  /
+--
+--}}}
+--{{{  
+REAL32 FUNCTION REAL32OP (VAL REAL32 X, VAL INT Op, VAL REAL32 Y)
+
+  -- Unoptimised version for TA compiler libraries; V1.0, 29-Jan-90 SRH
+  -- Range check on Op should be done by IEEE32OP.
+
+  REAL32 answer :
+  VALOF
+    BOOL dummy :
+    dummy, answer := IEEE32OP( X, 1, Op, Y )  -- 1 signifies round-to-nearest
+    RESULT answer
+:
+--}}}

@@ -1,0 +1,79 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.1, 28/05/90"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#INCLUDE "hostio.inc"
+#USE "splib.lib"
+#USE "convert.lib"
+--{{{  so.fwrite.real64
+--* Write a double precision real as decimal ASCII characters to a
+-- stream.
+--
+-- Behaves as an invalid process if the string to write is longer than
+-- 30 characters.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param streamid the identification number of the stream to write the
+--   real to
+-- @param r a double precision real
+-- @param Ip, Dp formatting values; see REAL64TOSTRING for their effect
+-- @param result spr.ok if the string representing the real was
+--   written; otherwise not all of the characters were written in which
+--   case spr.notok
+PROC so.fwrite.real64 (CHAN OF SP fs, ts, VAL INT32 streamid,
+                       VAL REAL64 r, VAL INT Ip, Dp, BYTE result)
+  [ 30 ]BYTE string : -- free format ( Ip = 0, Dp = 0 ) gives a maximum
+                      -- of 24 characters; allow for a few more, but note
+                      -- that there will always be a combination of Ip and
+                      -- Dp that will cause the string to overflow and
+                      -- thus set the error flag
+  INT len, len.done :
+
+  SEQ
+    REAL64TOSTRING (len, string, r, Ip, Dp)
+    sp.write (fs, ts, streamid, [string FROM 0 FOR len], len.done, result)
+    --{{{  check operation was ok
+    IF
+      (len.done <> len) AND (result = spr.ok)
+        result := spr.notok
+      TRUE
+        SKIP
+    --}}}check operation was ok
+:
+--}}}so.fwrite.real64
+--{{{  so.write.real64
+--* Write a double precision real as decimal ASCII characters to
+-- standard out.
+--
+-- Behaves as an invalid process if the string to write is longer than
+-- 30 characters.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param r a double precision real
+-- @param Ip, Dp formatting values; see REAL64TOSTRING for their effect
+PROC so.write.real64 (CHAN OF SP fs, ts, VAL REAL64 r, VAL INT Ip, Dp)
+  BYTE result :
+  so.fwrite.real64 (fs, ts, spid.stdout, r, Ip, Dp, result)
+:
+--}}}so.write.real64

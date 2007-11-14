@@ -1,0 +1,57 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.00, 10/03/89"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#INCLUDE "hostio.inc"
+--{{{  sp.ferror
+--* Test for the occurrence of an error on the specified stream.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param streamid the identification number of the stream to be tested
+--   for error
+-- @param error.no a host defined error number
+-- @param length the number of bytes in message.  Equal to zero if
+--   result >= spr.operation.failed.
+-- @param message if result is not spr.operation.failed then this
+--   contains a ( possibly null ) message corresponding to the last
+--   file error on the specified stream; this message is [message FROM
+--   0 FOR length]
+-- @param result equals spr.ok if there was an error on the specified
+--   stream and the message corresponding to it fits into message;
+--   equals spr.buffer.overflow if there was an error on the specified
+--   stream but the message corresponding to it is too large to fit
+--   into message, in which case it is truncated to fit; >=
+--   spr.operation.failed if there was no error on the specified stream
+PROC sp.ferror (CHAN OF SP fs, ts, VAL INT32 streamid,
+                INT32 error.no, INT length, []BYTE message, BYTE result)
+  SEQ
+    result := spr.operation.failed
+:
+--}}}  sp.ferror
+--{{{  so.ferror
+PROC so.ferror (CHAN OF SP fs, ts, VAL INT32 streamid,
+                INT32 error.no, INT length, []BYTE message, BYTE result)
+
+  sp.ferror (fs, ts, streamid, error.no, length, message, result)
+:
+--}}}  so.ferror

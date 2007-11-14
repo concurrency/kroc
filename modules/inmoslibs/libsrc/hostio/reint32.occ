@@ -1,0 +1,54 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.0, 25/05/90"
+#COMMENT "(c) Copyright INMOS Limited 1990"
+#INCLUDE "hostio.inc"
+#USE "solib.lib"
+#USE "convert.lib"
+
+--* Read a string containing a representation of a 32-bit decimal
+-- integer from the keyboard, and to echo it to standard out.
+--
+-- The integer may commence with a + or a - sign. The number typed at
+-- the keyboard must be terminated by pressing 'RETURN'.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param n if error is FALSE, the value of the integer read; undefined
+--   otherwise
+-- @param error FALSE if nothing went wrong in the operation; otherwise
+--   TRUE: 1) if the integer read overflows the INT32 range 2) if a
+--   non-numeric character is found in the input string ( other than a
+--   + or - in the first character position )
+PROC so.read.echo.int32 (CHAN OF SP fs, ts, INT32 n, BOOL error)
+  [11]BYTE string : -- 11 digits in -2147483648 = MOSTNEG INT32
+  INT len :
+  BYTE result :
+
+  SEQ
+    so.read.echo.line (fs, ts, len, string, result)
+    IF
+      result = spr.ok
+        STRINGTOINT32 (error, n, [string FROM 0 FOR len])
+      TRUE
+        error := TRUE
+:

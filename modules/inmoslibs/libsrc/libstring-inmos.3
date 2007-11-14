@@ -1,0 +1,164 @@
+'\" t
+.\"
+.\" Manual page for string.lib - INMOS occam toolset string library
+.\"
+.\" $Source: /u0/src/local/bin/oc2man/RCS/string-lib.man,v $
+.\"
+.\" $Id: string-lib.man,v 1.3 1993/03/09 11:03:26 djb1 Exp $
+.\"
+.\" Copyright (C) 1993 David Beckett, University of Kent at Canterbury
+.\"
+.\" This was derived from string.lib (the library) using ilist and the
+.\" perl program fixilist.pl which cleaned up the output.
+.\"
+.\" Modified July 2004, 2005 by Fred Barnes  <frmb@kent.ac.uk>
+.\"
+.TH LIBSTRING-INMOS "3" "March 1993" "kroc 1.4.0" KRoC
+.SH NAME
+append.char, append.hex.int, append.hex.int64, append.int, append.int64,
+append.real32, append.real64, append.text, char.pos, compare.strings, delete.string,
+eqstr, insert.string, is.digit, is.hex.digit, is.id.char, is.in.range, is.lower, is.upper,
+next.int.from.line, next.word.from.line, search.match, search.no.match, str.shift,
+string.pos, to.lower.case, to.uppwer.case
+\- KRoC INMOS occam toolset string library
+.SH SYNOPSIS
+.B #INCLUDE \fB"string.module\fB"\fR
+.PP
+.BI "PROC append.char (INT " len ", []BYTE " str ", VAL BYTE " char ")"
+.br
+.BI "PROC append.hex.int (INT " len ", []BYTE " str ", VAL INT " number ", VAL INT " width ")"
+.br
+.BI "PROC append.hex.int64 (INT " len ", []BYTE " str ", VAL INT64 " number ", VAL INT " width ")"
+.br
+.BI "PROC append.int (INT " len ", []BYTE " str ", VAL INT " number ", VAL INT " field ")"
+.br
+.BI "PROC append.int64 (INT " len ", []BYTE " str ", VAL INT64 " number ", VAL INT " field ")"
+.br
+.BI "PROC append.real32 (INT " len ", []BYTE " str ", VAL REAL32 " number ", VAL INT " Ip ", VAL INT " Dp ")"
+.br
+.BI "PROC append.real64 (INT " len ", []BYTE " str ", VAL REAL64 " number ", VAL INT " Ip ", VAL INT " Dp ")"
+.br
+.BI "PROC append.text (INT " len ", []BYTE " str ", VAL []BYTE " text ")"
+.PP
+.br
+.BI "INT FUNCTION char.pos (VAL BYTE " search ", VAL []BYTE " str ")"
+.br
+.BI "INT FUNCTION compare.strings (VAL []BYTE " str1 ", VAL []BYTE " str2 ")"
+.br
+.BI "PROC delete.string (INT " len ", []BYTE " str ", VAL INT " start ", VAL INT " size ", BOOL " not.done ")"
+.br
+.BI "BOOL FUNCTION eqstr (VAL []BYTE " s1 ", VAL []BYTE " s2 ")"
+.br
+.BI "PROC insert.string (VAL []BYTE " new.str ", INT " len ", []BYTE " str ", VAL INT " start ", BOOL " not.done ")"
+.PP
+.BI "BOOL FUNCTION is.digit (VAL BYTE " char ")"
+.br
+.BI "BOOL FUNCTION is.hex.digit (VAL BYTE " char ")"
+.br
+.BI "BOOL FUNCTION is.id.char (VAL BYTE " char ")"
+.br
+.BI "BOOL FUNCTION is.in.range (VAL BYTE " char ", VAL BYTE " bottom ", VAL BYTE " top ")"
+.br
+.BI "BOOL FUNCTION is.lower (VAL BYTE " char ")"
+.br
+.BI "BOOL FUNCTION is.upper (VAL BYTE " char ")"
+.PP
+.BI "PROC next.int.from.line (VAL []BYTE " line ", INT " ptr ", INT " number ", BOOL " ok ")"
+.br
+.BI "PROC next.word.from.line (VAL []BYTE " line ", INT " ptr ", INT " len ", []BYTE " word ", BOOL " ok ")"
+.br
+.BI "INT,BYTE FUNCTION search.match (VAL []BYTE " possibles ", VAL []BYTE " str ")"
+.br
+.BI "INT,BYTE FUNCTION search.no.match (VAL []BYTE " possibles ", VAL []BYTE " str ")"
+.br
+.BI "PROC str.shift ([]BYTE " str ", VAL INT " start ", VAL INT " len ", VAL INT " shift ", BOOL " not.done ")"
+.br
+.BI "INT FUNCTION string.pos (VAL []BYTE " search ", VAL []BYTE " str ")"
+.br
+.BI "PROC to.lower.case ([]BYTE " str ")"
+.br
+.BI "PROC to.upper.case ([]BYTE " str ")"
+.PP
+.SH SUMMARY
+The occam toolset library string.lib provides various string handling
+functions and procedures.
+.PP
+.SH DESCRIPTION
+\fBappend.char\fR, \fBappend.hex.int\fR, \fBappend.hex.int64\fR, \fBappend.int\fR,
+\fBappend.int64\fR, \fBappend.real32\fR, \fBappend.real64\fR and \fBappend.text\fR
+append the given data type to an array \fIstr\fR at position
+\fIlen\fR using formatting where necessary and possibly padding
+with spaces to a given field \fIwidth\fR or printing \fIIp\fR
+integer places and \fIDp\fR decimal places for \fBREAL32\fR and
+\fBREAL64\fR types.  Hex numbers are formatted prefixed by a '#'.
+STOPs if the array overflows.  \fIlen\fR is updated to the new
+position.
+.PP
+\fBchar.pos\fR returns the position of the first occurence of character
+\fIsearch\fR in \fIstr\fR or -1 if not found.  See also \fIstring.pos\fR.
+.PP
+\fBcompare.strings\fR compares two strings and returns the result of the comparison:
+.TS
+rf(CR) l.
+-2	if str1 is earlier than str2
+-1	if str1 is a leading substring of str2
+ 0	if the strings are identical
+ 1	if str2 is a leading substring of str1
+ 2	if str2 is earlier than str1
+.TE
+.PP
+\fBdelete.string\fR deletes \fIsize\fR characters from position \fIstart\fR of string
+\fIstr\fR of size \fIlen\fR characters.  \fInot.done\fR is
+\fBTRUE\fR if the range is invalid.  See also \fBstr.shift\fR.
+.PP
+\fBeqstr\fR returns \fBTRUE\fR if the strings are identical.
+.PP
+\fBinsert.string\fR inserts \fInew.str\fR into \fIstr\fR of size \fIlen\fR
+characters at position \fIstart\fR. \fInot.done\fR is
+\fBTRUE\fR if the range is invalid.  See also \fBstr.shift\fR.
+.PP
+\fBis.digit\fR and \fBis.hex.digit\fR return \fBTRUE\fR if the given character
+is a valid decimal or hex digit respectively.
+.PP
+\fBis.id.char\fR returns \fBTRUE\fR if the given character can be part of an occam identifier.
+.LP
+\fBis.in.range\fR returns \fBTRUE\fR if \fIbottom\fR <= \fIchar\fR <= \fItop\fR.
+.LP
+\fBis.lower\fR and \fBis.upper\fR return \fBTRUE\fR if the given character is an
+upper or lower case letter.
+.PP
+\fBnext.int.from.line\fR and \fBnext.word.from.line\fR return the next white-space
+separated integer/word from the array \fIline\fR, using \fIptr\fR as a index into it.  Updates
+\fIptr\fR and sets \fIok\fR to \fBFALSE\fR if the operation
+fails.  \fIlen\fR is the returned length of \fIword\fR or zero
+on end of line.
+.PP
+\fBsearch.match\fR searches \fIstr\fR for any of the characters in \fIpossibles\fR.
+Return the position and character or -1,255\fB(BYTE)\fR if none are
+found.
+.PP
+Return the position and character or -1,255\fB(BYTE)\fR if none are found.
+.PP
+\fBstr.shift\fR moves the substring \fB[str FROM start FOR len\fR right
+\fIshift\fR places. \fInot.done\fR is \fBTRUE\fR if the
+operation is invalid.  See also \fBdelete.string\fI and
+\fBinsert.string\fI. 
+.PP
+\fBstring.pos\fR returns the position of the string \fIsearch\fR in \fIstr\fR or -1
+if not found.  See also \fBchar.pos\fR.
+.PP
+\fBto.lower.case\fR and \fBto.upper.case\fR convert the given string to
+lower/upper case respectively.
+.PP
+.SH "SEE ALSO"
+kroc(1)
+.br
+INMOS  occam 2 toolset user manual - part 2 (occam libraries and
+appendices) INMOS document number 72 TDS 276 02.
+.SH AUTHOR
+This document is Copyright (C) 1993 David Beckett, University of Kent
+at Canterbury.  Thie manual page is maintained by Fred Barnes  <frmb@kent.ac.uk>
+.PP
+The library contents are Copyright (C) 1991 INMOS Limited.
+
+

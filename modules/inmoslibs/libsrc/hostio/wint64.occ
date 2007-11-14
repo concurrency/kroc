@@ -1,0 +1,99 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.1, 25/05/90"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#INCLUDE "hostio.inc"
+#USE "splib.lib"
+#USE "convert.lib"
+--{{{  so.fwrite.int64
+--* Write to the specified file stream a 64-bit integer as decimal
+-- ASCII digits, padded out with leading spaces and an optional sign to
+-- the specified field width.
+--
+-- If the field width is too small for the number, then it is widened
+-- as necessary; a zero value for the field width will give minimum
+-- width; a negative field width is an error.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param streamid the identification number of the stream to which the
+--   string representing the integer is to be sent
+-- @param n the 64-bit integer that is desired to be written
+-- @param width the desired field width of the string
+-- @param result equal to spr.ok if the string was written all right;
+--   otherwise not all of the string could be written, in which case
+--   result takes on a value of spr.notok
+PROC so.fwrite.int64 (CHAN OF SP fs, ts, VAL INT32 streamid,
+                      VAL INT64 n, VAL INT width, BYTE result)
+  IF
+    width < 0
+      STOP
+    TRUE
+      [20]BYTE string : -- 20 characters in -9223372036854775808 = MOSTNEG INT64
+      INT len, len.done :
+      SEQ
+        INT64TOSTRING (len, string, n)
+        --{{{  output any necessary spaces
+        VAL spaces IS "                    " :  -- 20 spaces
+        INT number.of.spaces, fill.this.time :
+        SEQ
+          number.of.spaces := width - len
+          WHILE number.of.spaces > 0
+            SEQ
+              IF
+                number.of.spaces > (SIZE spaces)
+                  fill.this.time := SIZE spaces
+                TRUE
+                  fill.this.time := number.of.spaces
+        
+              sp.write (fs, ts, streamid, [spaces FROM 0 FOR fill.this.time],
+                        len.done, result)
+              number.of.spaces := number.of.spaces - fill.this.time
+        --}}}output any necessary spaces
+        sp.write (fs, ts, streamid, [string FROM 0 FOR len], len.done, result)
+        --{{{  check operation was ok
+        IF
+          (result = spr.ok) AND (len.done <> len)
+            result := spr.notok
+          TRUE
+            SKIP
+        --}}}check operation was ok
+:
+--}}}so.fwrite.int64
+--{{{  so.write.int64
+--* Write to standard out a 64-bit integer as decimal ASCII digits,
+-- padded out with leading spaces and an optional sign to the specified
+-- field width.
+--
+-- If the field width is too small for the number, then it is widened
+-- as necessary; a zero value for the field width will give minimum
+-- width; a negative field width is an error.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param n the 64-bit integer that is desired to be written
+-- @param width the desired field width of the string
+PROC so.write.int64 (CHAN OF SP fs, ts, VAL INT64 n, VAL INT width)
+  BYTE result :
+  so.fwrite.int64 (fs, ts, spid.stdout, n, width, result)
+:
+--}}}so.write.int64

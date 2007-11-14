@@ -1,0 +1,85 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module streamio
+
+#OPTION "E"  -- no compliler libs
+#COMMENT "Stream i/o library, V0.01 23/12/88"
+#COMMENT "(c) Copyright INMOS Limited, 1988"
+#INCLUDE "streamio.inc"
+
+--{{{  ss.write.char
+--* Send a character to the given screen stream.
+--
+-- @param scrn for output
+-- @param char the byte to send on the channel
+PROC ss.write.char (CHAN OF SS scrn, VAL BYTE char)
+  -- Lines must be terminated by '*c'.
+
+  scrn ! st.out.byte; char
+:
+--}}}
+--{{{  ss.write.string
+--* Send the given string on the given screen stream.
+--
+-- @param scrn for output
+-- @param str a string all the characters of which are sent on scrn.
+PROC ss.write.string (CHAN OF SS scrn, VAL []BYTE str)
+  scrn ! st.out.string; INT32 (SIZE str) :: str
+:
+--}}}
+--{{{  ss.write.nl
+--* Send "*c*n" on the given screen stream.
+--
+-- @param scrn for output
+PROC ss.write.nl (CHAN OF SS scrn)
+  -- Notes:    *c*n is the 'newline' sequence on DOS
+
+  VAL newline.string IS "*c*n" :
+  scrn ! st.out.string; INT32(SIZE newline.string) :: newline.string
+:
+--}}}
+--{{{  ss.write.endstream
+--* Write a st.endstream tag on the given screen stream
+--
+-- @param scrn for output
+PROC ss.write.endstream (CHAN OF SS scrn)
+  -- Notes:    Needed if scrn is a file interface, should be innocuous
+  --           otherwise.
+
+  scrn ! st.endstream
+:
+--}}}
+--{{{  ss.write.text.line
+--* Send a text line on the given screen stream.
+--
+-- @param scrn for output
+-- @param str the string of characters to send.  This string may be
+--   terminated by '*c' or not, but in either case, the last two
+--   characters written are "*c*n".
+PROC ss.write.text.line (CHAN OF SS scrn, VAL []BYTE str)
+  SEQ
+    IF
+      ((SIZE str) > 0) AND (str[(SIZE str) - 1] = '*c')
+        ss.write.string( scrn, [str FROM 0 FOR (SIZE str) - 1] )
+      TRUE
+        ss.write.string( scrn, str )
+    ss.write.nl( scrn )
+:
+--}}}

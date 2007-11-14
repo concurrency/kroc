@@ -1,0 +1,242 @@
+'\" t
+.\"
+.\" Manual page for streamio.lib - INMOS occam toolset stream file library
+.\"
+.\" $Source: /u0/src/local/bin/oc2man/RCS/streamio-lib.man,v $
+.\"
+.\" $Id: streamio-lib.man,v 1.2 1993/02/24 14:58:31 djb1 Exp $
+.\"
+.\" Copyright (C) 1993 David Beckett, University of Kent at Canterbury
+.\"
+.\" This was derived from streamio.lib (the library) using ilist and the
+.\" perl program fixilist.pl which cleaned up the output.
+.\"
+.\" Modified 2005 by Fred Barnes  <frmb@kent.ac.uk>
+.\"
+.TH LIBSTREAMIO-INMOS "3" "February 1993" "kroc 1.4.0" KRoC
+.SH NAME
+ks.keystream.sink, ks.keystream.to.scrstream, ks.read.char, ks.read.int,
+ks.read.int64, ks.read.line, ks.read.real32, ks.read.real64,
+so.keystream.from.file, so.keystream.from.kbd, so.keystream.from.stdin,
+so.scrstream.to.ANSI, so.scrstream.to.TVI920, so.scrstream.to.file, so.scrstream.to.stdout,
+ss.beep, ss.clear.eol, ss.clear.eos, ss.del.line, ss.delete.chl, ss.delete.chr, ss.down,
+ss.goto.xy, ss.ins.line, ss.insert.char, ss.left, ss.right, ss.scrstream.copy,
+ss.scrstream.fan.out, ss.scrstream.from.array, ss.scrstream.multiplexor, ss.scrstream.sink,
+ss.scrstream.to.array, ss.up,
+ww.write.char, ss.write.endstream, ss.write.hex.int, ss.write.hex.int64,
+ss.write.int, ss.write.int64, ss.write.nl, ss.write.real32, ss.write.real64,
+ss.write.string, ss.write.text.line
+\- KRoC INMOS occam toolset stream file library
+.SH SYNOPSIS
+.B #INCLUDE \fB"streamio.inc\fB"\fR
+.B #USE \fB"streamio.lib\fB"\fR
+.B kroc -lstreamio
+.PP
+.BI "PROC ks.keystream.sink (CHAN OF KS " keys ")"
+.br
+.BI "PROC ks.keystream.to.scrstream (CHAN OF KS " keyboard ", CHAN OF SS " scrn ")"
+.br
+.BI "PROC ks.read.char (CHAN OF KS " source ", INT " char ")"
+.br
+.BI "PROC ks.read.int (CHAN OF KS " source ", INT " number ", INT " char ")"
+.br
+.BI "PROC ks.read.int64 (CHAN OF KS " source ", INT64 " number ", INT " char ")"
+.br
+.BI "PROC ks.read.line (CHAN OF KS " source ", INT " len ", []BYTE " line ", INT " char ")"
+.br
+.BI "PROC ks.read.real32 (CHAN OF KS " source ", REAL32 " number ", INT " char ")"
+.br
+.BI "PROC ks.read.real64 (CHAN OF KS " source ", REAL64 " number ", INT " char ")"
+.PP
+.BI "PROC so.keystream.from.file (CHAN OF SP " fs ", " ts ", CHAN OF KS " keys.out ", VAL []BYTE " filename ", BYTE " result ")"
+.br
+.BI "PROC so.keystream.from.kbd (CHAN OF SP " fs ", " ts ", CHAN OF KS " keys.out ", CHAN OF BOOL " stopper ", VAL INT " ticks.per.poll ")"
+.br
+.BI "PROC so.keystream.from.stdin (CHAN OF SP " fs ", " ts ", CHAN OF KS " keys.out ", BYTE " result ")"
+.br
+.BI "PROC so.scrstream.to.ANSI (CHAN OF SP " fs ", " ts ", CHAN OF SS " scrn ")"
+.br
+.BI "PROC so.scrstream.to.TVI920 (CHAN OF SP " fs ", " ts ", CHAN OF SS " scrn ")"
+.br
+.BI "PROC so.scrstream.to.file (CHAN OF SP " fs ", " ts ", CHAN OF SS " scrn ", VAL []BYTE " filename ", BYTE " result ")"
+.br
+.BI "PROC so.scrstream.to.stdout (CHAN OF SP " fs ", " ts ", CHAN OF SS " scrn ", BYTE " result ")"
+.PP
+.BI "PROC ss.beep (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.clear.eol (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.clear.eos (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.del.line (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.delete.chl (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.delete.chr (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.down (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.goto.xy (CHAN OF SS " scrn ", VAL INT " x ", " y ")"
+.br
+.BI "PROC ss.ins.line (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.insert.char (CHAN OF SS " scrn ", VAL BYTE " ch ")"
+.br
+.BI "PROC ss.left (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.right (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.scrstream.copy (CHAN OF SS " scrn.in ", " scrn.out ")"
+.br
+.BI "PROC ss.scrstream.fan.out (CHAN OF SS " scrn ", CHAN OF SS " screen.out1 ", " screen.out2 ")"
+.br
+.BI "PROC ss.scrstream.from.array (CHAN OF SS " scrn ", VAL []BYTE " buffer ")"
+.br
+.BI "PROC ss.scrstream.multiplexor ([]CHAN OF SS " screen.in ", CHAN OF SS " screen.out ", CHAN OF INT " stopper ")"
+.br
+.BI "PROC ss.scrstream.sink (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.scrstream.to.array (CHAN OF SS " scrn ", []BYTE " buffer ")"
+.br
+.BI "PROC ss.up (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.write.char (CHAN OF SS " scrn ", VAL BYTE " char ")"
+.br
+.BI "PROC ss.write.endstream (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.write.hex.int (CHAN OF SS " scrn ", VAL INT " number ", VAL INT " field ")"
+.br
+.BI "PROC ss.write.hex.int64 (CHAN OF SS " scrn ", VAL INT64 " number ", VAL INT " field ")"
+.br
+.BI "PROC ss.write.int (CHAN OF SS " scrn ", VAL INT " number ", VAL INT " field ")"
+.br
+.BI "PROC ss.write.int64 (CHAN OF SS " scrn ", VAL INT64 " number ", VAL INT " field ")"
+.br
+.BI "PROC ss.write.nl (CHAN OF SS " scrn ")"
+.br
+.BI "PROC ss.write.real32 (CHAN OF SS " scrn ", VAL REAL32 " number ", VAL INT " Ip ", VAL INT " Dp ")"
+.br
+.BI "PROC ss.write.real64 (CHAN OF SS " scrn ", VAL REAL64 " number ", VAL INT " Ip ", VAL INT " Dp ")"
+.br
+.BI "PROC ss.write.string (CHAN OF SS " scrn ", VAL []BYTE " str ")"
+.br
+.BI "PROC ss.write.text.line (CHAN OF SS " scrn ", VAL []BYTE " str ")"
+.PP
+.SH SUMMARY
+The occam toolset library streamio.lib provides a stream file interface
+between the host and the transputer network.
+.PP
+The functions in this library have three protocols in general.
+.PP
+The first is \fBCHAN OF SP fs, ts\fR which is the protocol to and
+from the host server and refers to most procedures in
+\fBhostio.lib\fR.
+.PP
+The second is \fBCHAN OF KS\fR which is the \fIkeystream\fR or
+\fIkey stream\fR protocol, providing input from the keyboard.
+.PP
+The third is \fBCHAN OF SS\fR which is the \fIscrstream\fR or
+\fIscreen stream\fR protocol which provides output to the screen.
+.PP
+Error returns from procedures are passed out a variable called
+\fIresult\fR which can take the following values:
+.TS
+lf(CR) lw(5i).
+spr.ok	The operation was successful
+spr.bad.name	Invalid name parameter
+spr.bad.packet.size	Some data was larger than the built in buffer
+>=spr.operation.failed	Server returned a failure
+.TE
+.PP
+.SH "KEY STREAM PROCEDURES"
+\fBks.keystream.sink\fR throws away the \fIkey stream\fR (\fBKS\fR) input until a termination.
+.PP
+\fBks.keystream.to.scrstream\fR converts a \fIkey stream\fR (\fBKS\fR) protocol to a \fIscreen stream\fR
+(\fBSS\fR) protocol.
+.PP
+\fBks.read.char\fR, \fBks.read.int\fR, \fBks.read.int64\fR, \fBks.read.line\fR,
+\fBks.read.real32\fR, and \fBks.read.real64\fR read data from the keyboard using a
+\fIkey stream\fR (\fBKS\fR) protocol.
+.PP
+
+.SH "SCREEN OUTPUT PROCEDURES"
+\fBso.keystream.from.file\fR, \fBso.keystream.from.kbd\fR and \fBso.keystream.from.stdin\fR
+read characters from a file, the keyboard or standard input respectively and convert
+to the \fIkey stream\fR (\fBKS\fR) protocol.
+Termination for the file and standard input is on end of file but the keyboard handler
+must be terminated by sending any \fBBOOL\fR along \fIstopper\fR.
+.PP
+\fBso.scrstream.to.ANSI\fR, \fBso.scrstream.to.TVI920\fR, \fBso.scrstream.to.file\fR and
+\fBso.scrstream.to.stdout\fR convert the \fIscreen stream\fR (\fBSS\fR) protocol to output on an
+ANSI terminal, TVI920 terminal, a file or to standard output
+respectively.
+.PP
+
+.SH "SCREEN STREAM PROCEDURES"
+\fBss.beep\fR outputs a terminal bell/beep.
+.PP
+\fBss.clear.eol\fR makes the terminal clear to the end of line.
+.PP
+\fBss.clear.eos\fR makes the terminal clear to end of the screen.
+.PP
+\fBss.del.line\fR makes the terminal delete the current line.
+.PP
+\fBss.delete.chl\fR makes the terminal delete the character to the left of the cursor.
+.PP
+\fBss.delete.chr\fR makes the terminal delete the character to the right of the cursor.
+.PP
+\fBss.down\fR moves the terminal cursor down.
+.PP
+\fBss.goto.xy\fR moves the terminal cursor to the given x,y coordinate (from top left).
+.PP
+\fBss.ins.line\fR makes the terminal insert a new line at the cursor position.
+.PP
+\fBss.insert.char\fR makes the terminal insert a new character at the cursor position.
+.PP
+\fBss.left\fR moves the terminal cursor left.
+.PP
+\fBss.right\fR moves the terminal cursor right.
+.PP
+\fBss.scrstream.copy\fR copies the output of one \fIscreen stream\fR onto another.
+.PP
+\fBss.scrstream.fan.out\fR copies the output of one \fIscreen stream\fR onto two others.
+.PP
+\fBss.scrstream.from.array\fR provides a \fIscreen stream\fR from the given array.
+.PP
+\fBss.scrstream.multiplexor\fR multiplexes several \fIscreen streams\fR onto one until any
+\fBBOOL\fR is received along \fIstopper\fR.
+.PP
+\fBss.scrstream.sink\fR throws away the \fIscreen stream\fR until a terminate is received.
+.PP
+\fBss.scrstream.to.array\fR outputs a \fIscreen stream\fR to the given array.
+.PP
+\fBss.up\fR moves the terminal cursor up.
+.PP
+\fBss.write.char\fR writes a character to the terminal.
+.PP
+\fBss.write.endstream\fR terminates a \fIscreen stream\fR (\fBSS\fR).
+.PP
+\fBss.write.hex.int\fR, \fBss.write.hex.int64\fR, \fBss.write.int\fR, \fBss.write.int64\fR,
+\fBss.write.nl\fR, \fBss.write.real32\fR, \fBss.write.real64\fR, \fBss.write.string\fR and
+\fBss.write.text.line\fR write the given data type to a screen stream formatting
+where necessary and possibly padding with spaces to a given field
+\fIwidth\fR or printing \fIIp\fR integer places and \fIDp\fR
+decimal places for \fBREAL32\fR and \fBREAL64\fR types. Hex
+numbers are written prefixed by a '#'. PROCedures ending in
+\fB.nl\fR write a newline sequence.
+.PP
+
+.SH "SEE ALSO"
+kroc(1)
+.br
+INMOS  occam 2 toolset user manual - part 2 (occam libraries and
+appendices) INMOS document number 72 TDS 276 02.
+.SH AUTHOR
+This document is Copyright (C) 1993 David Beckett, University of Kent
+at Canterbury.  This manual page is maintained by Fred Barnes  <frmb@kent.ac.uk>
+.PP
+The library contents are Copyright (C) 1991 INMOS Limited.
+.SH NOTES
+The streamio library is deprecated in favour of the POSIX flavoured libraries
+provided with KRoC.
+
