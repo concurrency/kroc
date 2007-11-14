@@ -3234,7 +3234,7 @@ void kernel_Y_mt_dclone (void)
 		dst = mt_alloc_data (sched->allocator, type, bytes);
 		memcpy (dst, src, bytes);
 	} else {
-		if (!bytes) {
+		if (bytes) {
 			mobile_type_error ();
 		}
 		dst = NULL;
