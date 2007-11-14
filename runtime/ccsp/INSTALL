@@ -1,0 +1,61 @@
+UKCThreads Installation guide Copyright (C) 1998 Jim Moores.
+
+Installation
+============
+After unpacking the package needs to be configured.  It uses GNU autoconf and 
+automake.  To do this type:
+
+  ./configure
+
+this will build a system with all optional components enabled.  There are 
+several options to allow selective features to be enabled and disabled.
+The main options are listed by typeing:
+
+  ./configure --help
+
+when the system is configured type:
+
+  make
+ 
+or perhaps
+
+  make install
+
+to do the latter you will need write permission on /usr/local/lib, 
+/usr/local/bin, and /usr/local/include.  This will also install the
+demos in usr/loca/bin (which I should get round to chaning really). 
+This (more importantly) should make [and install] all the libraries. 
+The package produces three user visible libraries at present.  These will
+probably combined into one at a later date: 
+
+  libcrts.a - the kernel/run-time system.
+
+  libcsp.a  - C support library.
+
+  libexcomm.a - external communications.
+
+They are separate because it is then possible to build systems to do the
+following:
+
+  purely support occam. (just libcrts.a)
+
+  support csplib without external communications. (libcrts.a and libcsp.a)
+
+  support csplib with external communications. (all three)
+
+Distributions can be built with:
+
+  make dist
+
+The installations can be cleaned with:
+
+  make clean
+
+If working in individual directories 'make' should do all the necessary work.
+
+PROBLEMS
+--------
+There may be problems building the files in crts/ (the UNIX interface).  In
+this case try enabling some of the #ifdef'ed sections of code by #defining
+the appropriate variable before the #ifdef.  If having real problems please 
+contact ofa-bugs@ukc.ac.uk.
