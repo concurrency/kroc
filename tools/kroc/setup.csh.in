@@ -1,0 +1,6 @@
+set path=(@KROC_ARCHBINDIR@ $path)
+#setenv OCSEARCH @KROC_KROCDIR@/vtlib:@KROC_KROCDIR@/vtinclude
+setenv MANPATH :@KROC_MANDIR@:$MANPATH
+setenv @ENV_LIBRARY_PATH@ $@ENV_LIBRARY_PATH@:@KROC_ARCHLIBDIR@
+setenv ACLOCAL "aclocal -I @ACLOCALDIR@"
+

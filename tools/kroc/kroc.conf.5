@@ -1,0 +1,61 @@
+.\" kroc.conf reference, last updated 05/12/2005 by Fred Barnes
+.TH KROC.CONF "5" "December 2005" "kroc 1.4.0" KRoC
+.SH NAME
+kroc.conf \- KRoC system configuration file
+.SH SYNOPSIS
+.B ~/.kroc.conf
+.B /etc/kroc.conf
+.SH DESCRIPTION
+.PP
+The kroc.conf file is a shell-script (sourced by the kroc driver program)
+giving details of where the various KRoC components live.  The relevant settings are:
+.TP
+.B kroc_archbindir
+location of architecture-specific binaries, specifically the compiler, translator and other utilities.
+.TP
+.B kroc_archlibdir
+location of architecture-specific ELF libraries, covering the run-time system (libkroc.so) and compiled
+occam libraries (libcourse.so).
+.TP
+.B kroc_archincdir
+location of architecture-specific header files, used by C components to interface with the run-time system.
+.TP
+.B kroc_mandir
+location of installed manual-pages (for reference only).
+.TP
+.B kroc_krocdir
+location of KRoC-specific files, including the virtual-transputer libraries and headers.
+.PP
+The build process creates a default kroc.conf, which will usually be found by the kroc wrapper without
+any problems.
+.PP
+.SH AUTHOR
+This manual page is maintained by Fred Barnes <F.R.M.Barnes@kent.ac.uk>
+.SH FILES
+.I ~/.kroc.conf
+.I /etc/kroc.conf
+.SH "SEE ALSO"
+.BR kroc (1),
+.SH "REPORTING BUGS"
+Please report bugs to <kroc-bugs@kent.ac.uk>
+.SH COPYRIGHT
+Copyright \(co 2005 KRoC AUTHORS
+.PP
+This program is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation;
+either version 2 of the License, or (at your option) any
+later version.
+.PP
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more
+details.
+.PP
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the Free
+Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+02139, USA.
+.PP
+
