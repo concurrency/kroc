@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Communication with the MySQL process</TITLE>
+<META NAME="description" CONTENT="Communication with the MySQL process">
+<META NAME="keywords" CONTENT="moa">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="moa.css">
+
+<LINK REL="previous" HREF="node19.html">
+<LINK REL="up" HREF="node9.html">
+<LINK REL="next" HREF="node23.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html396"
+  HREF="node23.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html392"
+  HREF="node9.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html388"
+  HREF="node21.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html394"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html397"
+  HREF="node23.html">query; MOBILE []BYTE</A>
+<B> Up:</B> <A NAME="tex2html393"
+  HREF="node9.html">Documentation of the API</A>
+<B> Previous:</B> <A NAME="tex2html389"
+  HREF="node21.html">Usage</A>
+ &nbsp; <B>  <A NAME="tex2html395"
+  HREF="node1.html">Contents</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H2><A NAME="SECTION00097000000000000000">
+Communication with the <TT>MySQL</TT> process</A>
+</H2>
+<BR><HR>
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL>
+<LI><A NAME="tex2html398"
+  HREF="node23.html"><TT>query; MOBILE []BYTE</TT></A>
+<UL>
+<LI><A NAME="tex2html399"
+  HREF="node23.html#SECTION00097110000000000000">Answer</A>
+<LI><A NAME="tex2html400"
+  HREF="node23.html#SECTION00097120000000000000">Errors</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html401"
+  HREF="node24.html"><TT>query.row; MOBILE []BYTE</TT></A>
+<UL>
+<LI><A NAME="tex2html402"
+  HREF="node24.html#SECTION00097210000000000000">Answer</A>
+<LI><A NAME="tex2html403"
+  HREF="node24.html#SECTION00097220000000000000">Errors</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html404"
+  HREF="node25.html"><TT>query.all; MOBILE []BYTE</TT></A>
+<UL>
+<LI><A NAME="tex2html405"
+  HREF="node25.html#SECTION00097310000000000000">Answer</A>
+<LI><A NAME="tex2html406"
+  HREF="node25.html#SECTION00097320000000000000">Errors</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html407"
+  HREF="node26.html"><TT>next.row</TT></A>
+<UL>
+<LI><A NAME="tex2html408"
+  HREF="node26.html#SECTION00097410000000000000">Answer</A>
+<LI><A NAME="tex2html409"
+  HREF="node26.html#SECTION00097420000000000000">Errors</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html410"
+  HREF="node27.html"><TT>remaining.rows</TT></A>
+<UL>
+<LI><A NAME="tex2html411"
+  HREF="node27.html#SECTION00097510000000000000">Answer</A>
+<LI><A NAME="tex2html412"
+  HREF="node27.html#SECTION00097520000000000000">Errors</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html413"
+  HREF="node28.html"><TT>affected.rows</TT></A>
+<UL>
+<LI><A NAME="tex2html414"
+  HREF="node28.html#SECTION00097610000000000000">Answer</A>
+<LI><A NAME="tex2html415"
+  HREF="node28.html#SECTION00097620000000000000">Errors</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html416"
+  HREF="node29.html"><TT>null.values</TT></A>
+<UL>
+<LI><A NAME="tex2html417"
+  HREF="node29.html#SECTION00097710000000000000">Answer</A>
+<LI><A NAME="tex2html418"
+  HREF="node29.html#SECTION00097720000000000000">Errors</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html419"
+  HREF="node30.html"><TT>field.names</TT></A>
+<UL>
+<LI><A NAME="tex2html420"
+  HREF="node30.html#SECTION00097810000000000000">Answer</A>
+<LI><A NAME="tex2html421"
+  HREF="node30.html#SECTION00097820000000000000">Errors</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html422"
+  HREF="node31.html"><TT>field.info; BYTE</TT></A>
+<UL>
+<LI><A NAME="tex2html423"
+  HREF="node31.html#SECTION00097910000000000000">Answer</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html424"
+  HREF="node32.html"><TT>reconnect</TT></A>
+<UL>
+<LI><A NAME="tex2html425"
+  HREF="node32.html#SECTION000971010000000000000">Answer</A>
+<LI><A NAME="tex2html426"
+  HREF="node32.html#SECTION000971020000000000000">Errors</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html427"
+  HREF="node33.html"><TT>quit</TT></A>
+<UL>
+<LI><A NAME="tex2html428"
+  HREF="node33.html#SECTION000971110000000000000">Answer</A>
+<LI><A NAME="tex2html429"
+  HREF="node33.html#SECTION000971120000000000000">Errors</A>
+</UL></UL>
+<!--End of Table of Child-Links-->
+<BR><HR>
+<ADDRESS>
+Espen Suenson
+2006-07-07
+</ADDRESS>
+</BODY>
+</HTML>

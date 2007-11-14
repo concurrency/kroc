@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Applications</TITLE>
+<META NAME="description" CONTENT="Applications">
+<META NAME="keywords" CONTENT="moa">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="moa.css">
+
+<LINK REL="next" HREF="node7.html">
+<LINK REL="previous" HREF="node5.html">
+<LINK REL="up" HREF="moa.html">
+<LINK REL="next" HREF="node7.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html152"
+  HREF="node7.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html148"
+  HREF="moa.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html142"
+  HREF="node5.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html150"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html153"
+  HREF="node7.html">Benchmark</A>
+<B> Up:</B> <A NAME="tex2html149"
+  HREF="moa.html">MySQL occam- API</A>
+<B> Previous:</B> <A NAME="tex2html143"
+  HREF="node5.html">Implementation</A>
+ &nbsp; <B>  <A NAME="tex2html151"
+  HREF="node1.html">Contents</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00060000000000000000">
+Applications</A>
+</H1>
+This section will describe ways of using MoA in design of CSP applications.
+The first one is a simple model, shown on figure <A HREF="#fig-app1">1</A>, with only 3 processes. An input, the MoA and an output. An input process reads commands from an interface and then communicates a command to a MoA process. The results from MoA are displayed on an output device.
+
+<DIV ALIGN="CENTER"><A NAME="fig-app1"></A><A NAME="149"></A>
+<TABLE>
+<CAPTION ALIGN="BOTTOM"><STRONG>Figure 1:</STRONG>
+CSP-model for a very simple application.</CAPTION>
+<TR><TD>
+<DIV ALIGN="CENTER"><IMG
+ WIDTH="627" HEIGHT="71" ALIGN="BOTTOM" BORDER="0"
+ SRC="img4.png"
+ ALT="\includegraphics{gfx/app1.eps}">
+</DIV></TD></TR>
+</TABLE>
+</DIV>
+The applications as such cannot interact with the MoA process i.e. respond intelligent if an error occurs etc.
+This lead to a another but still simple model. A database process or process network is responsible for intelligent interaction with MoA an then outputs some data. The <TT>mysqlclient</TT> program (see section <A HREF="node8.html#test">7</A>) can be described with this model, as it consists of an input process, an output process and a MoA process. The input and output processes communicate with the MoA process and with each other.
+
+<DIV ALIGN="CENTER"><A NAME="fig-app2"></A><A NAME="150"></A>
+<TABLE>
+<CAPTION ALIGN="BOTTOM"><STRONG>Figure 2:</STRONG>
+A process called data will now control MoA, receive input and send output.</CAPTION>
+<TR><TD>
+<DIV ALIGN="CENTER"><IMG
+ WIDTH="595" HEIGHT="195" ALIGN="BOTTOM" BORDER="0"
+ SRC="img5.png"
+ ALT="\includegraphics{gfx/app2.eps}">
+ 
+These two models can be a part of a larger CSP network, and of course many MoA processes can run simultaneously.
+</DIV></TD></TR>
+</TABLE>
+</DIV>
+ 
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html152"
+  HREF="node7.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html148"
+  HREF="moa.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html142"
+  HREF="node5.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html150"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html153"
+  HREF="node7.html">Benchmark</A>
+<B> Up:</B> <A NAME="tex2html149"
+  HREF="moa.html">MySQL occam- API</A>
+<B> Previous:</B> <A NAME="tex2html143"
+  HREF="node5.html">Implementation</A>
+ &nbsp; <B>  <A NAME="tex2html151"
+  HREF="node1.html">Contents</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Espen Suenson
+2006-07-07
+</ADDRESS>
+</BODY>
+</HTML>

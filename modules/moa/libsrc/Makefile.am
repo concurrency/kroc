@@ -1,0 +1,41 @@
+@SET_MAKE@
+
+AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I m4
+OCCBUILD = @OCCBUILD@
+CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@ @MYSQLCLIENT_CFLAGS@
+
+EXTRA_DIST = \
+	m4/mysqlclient.m4 \
+	moa.inc \
+	mysql.occ \
+	mysql_connector.c
+
+moa_lib_objs = \
+	mysql.tce \
+	mysql_connector.o
+
+moa_libs = moa.lib
+moa_includes = moa.inc
+libs = $(moa_libs)
+includes = $(moa_includes)
+
+all-local: $(libs) $(includes)
+
+moa.lib: $(moa_lib_objs)
+	$(OCCBUILD) --library moa.lib --include moa.inc @MYSQLCLIENT_LIBS@ $(moa_lib_objs)
+
+install-exec-local: $(libs) $(includes)
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
+
+clean-local:
+	$(OCCBUILD) --clean $(libs) $(moa_lib_objs)
+
+SUFFIXES = .occ .tce .lib
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+.occ.tce:
+	$(OCCBUILD) --object $<
+

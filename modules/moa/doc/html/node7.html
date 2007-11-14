@@ -1,0 +1,185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Benchmark</TITLE>
+<META NAME="description" CONTENT="Benchmark">
+<META NAME="keywords" CONTENT="moa">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="moa.css">
+
+<LINK REL="next" HREF="node8.html">
+<LINK REL="previous" HREF="node6.html">
+<LINK REL="up" HREF="moa.html">
+<LINK REL="next" HREF="node8.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html164"
+  HREF="node8.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html160"
+  HREF="moa.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html154"
+  HREF="node6.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html162"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html165"
+  HREF="node8.html">Tests and examples</A>
+<B> Up:</B> <A NAME="tex2html161"
+  HREF="moa.html">MySQL occam- API</A>
+<B> Previous:</B> <A NAME="tex2html155"
+  HREF="node6.html">Applications</A>
+ &nbsp; <B>  <A NAME="tex2html163"
+  HREF="node1.html">Contents</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00070000000000000000">
+Benchmark</A>
+</H1>
+
+<P>
+Operations as <TT>INSERT</TT>, <TT>UPDATE</TT> etc. is not of interest to benchmark, because the workload is on the server side. The most used time consuming operation on the client side is to retrieve larger set of rows with the <TT>SELECT</TT> statement.
+
+<P>
+The benchmark can be described as follows:
+
+<OL>
+<LI>Start timer.
+</LI>
+<LI>Query the server: <TT>INSERT INTO t1 (SELECT * FROM s2)</TT> - This will increase the number of rows in <TT>t1</TT> by <IMG
+ WIDTH="25" HEIGHT="14" ALIGN="BOTTOM" BORDER="0"
+ SRC="img6.png"
+ ALT="$ \Delta r$">
+
+</LI>
+<LI>Query the server: <TT>SELECT * FROM t1</TT>.
+</LI>
+<LI>Retrieve <IMG
+ WIDTH="12" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+ SRC="img7.png"
+ ALT="$ r$">
+ rows  by iterating through the result.
+</LI>
+<LI>Plot <IMG
+ WIDTH="12" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+ SRC="img7.png"
+ ALT="$ r$">
+ and timer value. Reset timer.
+</LI>
+<LI>Go to 1.
+</LI>
+</OL>
+
+<P>
+In this case <!-- MATH
+ $\Delta r = 10000$
+ -->
+<IMG
+ WIDTH="86" HEIGHT="14" ALIGN="BOTTOM" BORDER="0"
+ SRC="img8.png"
+ ALT="$ \Delta r = 10000$">
+. Both the server and client ran on a Intel Pentium 4 CPU running 3 GHz with 3GB of memory. The machine was running Linux 2.6.12.
+
+<P>
+As can be seen form figure <A HREF="#fig-compare">3</A>, the difference in performance seems to be linear. This is confirmed by figure <A HREF="#fig-quotient">4</A>, where the quotient of the performances is drawn. While not perfectly a straight line, the graph suggests that the overhead of using MoA is not above a factor 1.5 for large data sets, less for small sets.
+
+<P>
+Building an API on top on another API has a price, but in this case the price is a constant.
+
+<P>
+
+<DIV ALIGN="CENTER"><A NAME="fig-compare"></A><A NAME="180"></A>
+<TABLE>
+<CAPTION ALIGN="BOTTOM"><STRONG>Figure 3:</STRONG>
+MoA(upper line) compared to the C API. The x-axis is the number of rows the SQL query selected (<IMG
+ WIDTH="52" HEIGHT="13" ALIGN="BOTTOM" BORDER="0"
+ SRC="img2.png"
+ ALT="$ *10000$">
+) and the y-axis is the time in seconds.
+The peaks where queries took up to 14 seconds are caused by disk-caching on the server side either by the operating system or the MySQL-server.</CAPTION>
+<TR><TD>
+<DIV ALIGN="CENTER"><IMG
+ WIDTH="560" HEIGHT="388" ALIGN="BOTTOM" BORDER="0"
+ SRC="img9.png"
+ ALT="\includegraphics{gfx/compare.eps}">
+</DIV></TD></TR>
+</TABLE>
+</DIV>
+
+<DIV ALIGN="CENTER"><A NAME="fig-quotient"></A><A NAME="181"></A>
+<TABLE>
+<CAPTION ALIGN="BOTTOM"><STRONG>Figure 4:</STRONG>
+The quotient of the performance of <!-- MATH
+ $\frac{MoA}{C\  API}$
+ -->
+<IMG
+ WIDTH="49" HEIGHT="36" ALIGN="MIDDLE" BORDER="0"
+ SRC="img3.png"
+ ALT="$ \frac {MoA}{C\ API}$">
+</CAPTION>
+<TR><TD>
+<DIV ALIGN="CENTER"><IMG
+ WIDTH="560" HEIGHT="392" ALIGN="BOTTOM" BORDER="0"
+ SRC="img10.png"
+ ALT="\includegraphics{gfx/q.eps}">
+.
+</DIV></TD></TR>
+</TABLE>
+</DIV>
+
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html164"
+  HREF="node8.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html160"
+  HREF="moa.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html154"
+  HREF="node6.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html162"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html165"
+  HREF="node8.html">Tests and examples</A>
+<B> Up:</B> <A NAME="tex2html161"
+  HREF="moa.html">MySQL occam- API</A>
+<B> Previous:</B> <A NAME="tex2html155"
+  HREF="node6.html">Applications</A>
+ &nbsp; <B>  <A NAME="tex2html163"
+  HREF="node1.html">Contents</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Espen Suenson
+2006-07-07
+</ADDRESS>
+</BODY>
+</HTML>

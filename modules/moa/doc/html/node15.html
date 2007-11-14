@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Usage</TITLE>
+<META NAME="description" CONTENT="Usage">
+<META NAME="keywords" CONTENT="moa">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="moa.css">
+
+<LINK REL="previous" HREF="node14.html">
+<LINK REL="up" HREF="node13.html">
+<LINK REL="next" HREF="node16.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html309"
+  HREF="node16.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html305"
+  HREF="node13.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html301"
+  HREF="node14.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html307"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html310"
+  HREF="node16.html">The MySQL.end process</A>
+<B> Up:</B> <A NAME="tex2html306"
+  HREF="node13.html">The MySQL.init process</A>
+<B> Previous:</B> <A NAME="tex2html302"
+  HREF="node14.html">Signature</A>
+ &nbsp; <B>  <A NAME="tex2html308"
+  HREF="node1.html">Contents</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL>
+<LI><A NAME="tex2html311"
+  HREF="node15.html#SECTION00094210000000000000">Errors</A>
+</UL>
+<!--End of Table of Child-Links-->
+<HR>
+
+<H3><A NAME="SECTION00094200000000000000">
+Usage</A>
+</H3><FONT SIZE="-1">
+This process initialises the underlying C API for MySQL. If you have only one <TT>MySQL</TT> process in your application you need not call this function, as it will be called automatically. However, if you plan on having several <TT>MySQL</TT> processes running in parallel, this process should be called and allowed to terminate prior to creating any <TT>MySQL</TT> process, as the underlying C function call is not reentrant. In this case, you should also make sure that the C client API is compiled in thread-safe mode (see the MySQL C API documentation for details on this).
+</FONT>
+<H4><A NAME="SECTION00094210000000000000">
+Errors</A>
+</H4><FONT SIZE="-1">
+Upon termination, <TT>error</TT> will be set to <TT>TRUE</TT> if any error occured, <TT>FALSE</TT> otherwise.
+</FONT>
+<P>
+<BR><HR>
+<ADDRESS>
+Espen Suenson
+2006-07-07
+</ADDRESS>
+</BODY>
+</HTML>

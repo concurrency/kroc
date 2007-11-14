@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>field.names</TITLE>
+<META NAME="description" CONTENT="field.names">
+<META NAME="keywords" CONTENT="moa">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="moa.css">
+
+<LINK REL="next" HREF="node31.html">
+<LINK REL="previous" HREF="node29.html">
+<LINK REL="up" HREF="node22.html">
+<LINK REL="next" HREF="node31.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html538"
+  HREF="node31.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html534"
+  HREF="node22.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html528"
+  HREF="node29.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html536"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html539"
+  HREF="node31.html">field.info; BYTE</A>
+<B> Up:</B> <A NAME="tex2html535"
+  HREF="node22.html">Communication with the MySQL</A>
+<B> Previous:</B> <A NAME="tex2html529"
+  HREF="node29.html">null.values</A>
+ &nbsp; <B>  <A NAME="tex2html537"
+  HREF="node1.html">Contents</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL>
+<LI><A NAME="tex2html540"
+  HREF="node30.html#SECTION00097810000000000000">Answer</A>
+<LI><A NAME="tex2html541"
+  HREF="node30.html#SECTION00097820000000000000">Errors</A>
+</UL>
+<!--End of Table of Child-Links-->
+<HR>
+
+<H3><A NAME="SECTION00097800000000000000">
+<TT>field.names</TT></A>
+</H3><FONT SIZE="-1">
+Provides the names of the fields of the current result set. This message is just a shorthand for <TT>field.info; field.name</TT>.
+</FONT>
+<H4><A NAME="SECTION00097810000000000000">
+Answer</A>
+</H4><FONT SIZE="-1">
+<TT>data.field.names; MOBILE []MOBILE []BYTE</TT> containing the names of the fields. If the field was given an alias with an AS clause, the alias is given as name.
+</FONT>
+<H4><A NAME="SECTION00097820000000000000">
+Errors</A>
+</H4><FONT SIZE="-1">
+<TT>no.data.error</TT> if there is no current result set, that is, if the last query didn't return any rows, if the last query caused a <TT>mysql.error</TT> or if no query has been executed yet.
+</FONT>
+<P>
+<BR><HR>
+<ADDRESS>
+Espen Suenson
+2006-07-07
+</ADDRESS>
+</BODY>
+</HTML>
