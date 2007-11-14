@@ -57,32 +57,6 @@ SED="@SED@"
 progname=$(printf '%s' "$0" | $SED 's/^.*\///')
 
 #}}}
-#{{{  first task is to find the configuration file
-KROC_CONFIGDIR="@KROC_CONFIGDIR@"
-KROCCONFIG=""
-
-#
-#  search-order for KRoC configuration is:
-#	.kroc.conf
-#	<config-dir>/{kroc.conf,.kroc.conf}
-#	/etc/kroc.conf
-#	/usr/local/etc/kroc.conf
-#
-
-if [ -r "./.kroc.conf" ]; then
-	KROCCONFIG="./.kroc.conf"
-elif [ -r "$KROC_CONFIGDIR/kroc.conf" ]; then
-	KROCCONFIG="$KROC_CONFIGDIR/kroc.conf"
-elif [ -r "$KROC_CONFIGDIR/.kroc.conf" ]; then
-	KROCCONFIG="$KROC_CONFIGDIR/.kroc.conf"
-elif [ -r "/etc/kroc.conf" ]; then
-	KROCCONFIG="/etc/kroc.conf"
-elif [ -r "/usr/local/etc/kroc.conf" ]; then
-	KROCCONFIG="/usr/local/etc/kroc.conf"
-fi
-
-
-#}}}
 #{{{  setup various variables
 
 CC=@CC@
@@ -277,12 +251,12 @@ do
 
 	# Split out the argument for options that take them
 	case $option in
-	--*=* | -C=*)
+	--*=*)
 		optarg=$(printf '%s' "$option" | $SED -e 's/^[^=]*=//')
 		;;
 	# These options have mandatory values.  Since we didn't find an = sign,
 	# the value must be in the next argument
-	--octran-opts | --oc-opts | --cc-opts | --nocc-opts | -C | --linkcc)
+	--octran-opts | --oc-opts | --cc-opts | --nocc-opts | --linkcc)
 		optarg=$1
 		shift
 		;;
@@ -290,12 +264,6 @@ do
 
 
 	case "$option" in
-		#{{{  -C <file>  configuration file
-	-C)
-		KROCCONFIG="$optarg"
-		printf '%s: using configuration from %s\n' "$progname" "$KROCCONFIG"
-		;;
-		#}}}
 		#{{{  -b, --brief  brief warnings
 	-b | --brief)
 		occopts="$occopts -b"
@@ -722,29 +690,12 @@ done
 
 
 #}}}
-#{{{  source configuration
-
-if [ "$KROCCONFIG" = "" ]; then
-	# no configuration file found, use build/install defaults
-	kroc_archbindir="@KROC_ARCHBINDIR@"
-	kroc_archlibdir="@KROC_ARCHLIBDIR@"
-	kroc_archincdir="@KROC_ARCHINCDIR@"
-	kroc_mandir="@KROC_MANDIR@"
-	kroc_krocdir="@KROC_KROCDIR@"
-elif [ -r "$KROCCONFIG" ]; then
-	FAILEDSRC=0
-	source "$KROCCONFIG" 1> /dev/null 2>&1 || FAILEDSRC=1
-
-	if [ $FAILEDSRC -eq 1 ]; then
-		printf '%s: serious: failed to source configuration in %s\n' "$progname" "$KROCCONFIG"
-		exit 1
-	fi
-else
-	printf '%s: serious: cannot read configuration from %s\n' "$progname" "$KROCCONFIG"
-	exit 1
-fi
-
-		
+#{{{  directory configuration
+kroc_archbindir="@KROC_ARCHBINDIR@"
+kroc_archlibdir="@KROC_ARCHLIBDIR@"
+kroc_archincdir="@KROC_ARCHINCDIR@"
+kroc_mandir="@KROC_MANDIR@"
+kroc_krocdir="@KROC_KROCDIR@"
 #}}}
 #{{{  path-dependant options
 
@@ -936,7 +887,7 @@ if [ "X${fatal}" != "X" -o "X$srcs" = "X" -o "X$showversion" != "X" ]; then
 	fi
 
 	exec 1>&2
-	printf 'Usage: %s [-C config-file] [options] [occam sources/pre-compiled sources]\n' "$progname"
+	printf 'Usage: %s [options] [occam sources/pre-compiled sources]\n' "$progname"
 	cat << EOF
 Options:
   -b,  --brief           Give brief occ21 error messages
