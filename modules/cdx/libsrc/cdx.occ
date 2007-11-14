@@ -1,0 +1,33 @@
+--
+--	cdx.occ -- occam side of occam bindings for cdxclient
+--	Copyright (C) 2005 Fred Barnes <frmb@kent.ac.uk>
+--	                   Adam Sampson <ats1@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#PRAGMA EXTERNAL "PROC C.cdxclient.new (VAL []BYTE host, VAL INT port, width, height, RESULT INT handle) = 0"
+#PRAGMA EXTERNAL "PROC C.cdxclient.send (VAL INT handle, VAL INT frame, offset, VAL []INT data, RESULT INT rc) = 0"
+#PRAGMA EXTERNAL "PROC C.cdxclient.close (VAL INT handle, RESULT INT rc) = 0"
+
+PROC cdxclient.new (VAL []BYTE host, VAL INT port, width, height, RESULT INT handle)
+  C.cdxclient.new (host, port, width, height, handle)
+:
+PROC cdxclient.send (VAL INT handle, VAL INT frame, offset, VAL []INT data, RESULT INT rc)
+  C.cdxclient.send (handle, frame, offset, data, rc)
+:
+PROC cdxclient.close (VAL INT handle, RESULT INT rc)
+  C.cdxclient.close (handle, rc)
+:
