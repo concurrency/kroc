@@ -1,0 +1,43 @@
+--
+--	raster: basic raster graphics support
+--	Copyright (C) 2007  University of Kent
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** Basic raster graphics support.
+-- This module provides basic data types for two-dimensional bitmap ("raster")
+-- graphics.
+-- To display graphics, you'll want to use a module like [@ref sdlraster].
+--
+-- @module raster
+
+--* A bitmap image.
+--
+-- This is really a [@code MOBILE [][]INT], with the first dimension being the
+-- Y coordinate and the second the X coordinate.
+-- Each element represents an RGB-colourspace pixel in [@code #AARRGGBB]
+-- format, with eight bits for each of red, green, blue and alpha. (Most things
+-- ignore the alpha component.)
+--
+-- The pixel representation uses the native endianism, so if you retype it to
+-- an array of [@code BYTE]s then the order of the components will vary between
+-- platforms.
+--
+-- It's sometimes useful to have a sentinel value of this type (for example, to
+-- use as a poison value in process networks); a zero-by-zero raster can be
+-- used for this purpose ([@code MOBILE [0][0]INT]).
+-- 
+DATA TYPE RASTER IS MOBILE [][]INT:

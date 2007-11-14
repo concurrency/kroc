@@ -1,0 +1,125 @@
+--
+--	rastergraphics: raster graphics primitives
+--	Copyright (C) 2007  David Wood <dcw@kent.ac.uk>
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** @module rastergraphics
+
+--* Draws a circle.
+--
+--  Clips as necessary.
+--
+--  Based on Foley & van Dam, Computer Graphics Principles and Practice,
+--  Second Edition in C, Fig. 3.16.
+--
+--  @param x.0, y.0 Centre
+--  @param radius Radius
+--  @param colour Colour
+--  @param raster Raster
+
+PROC draw.circle (VAL INT x.0, y.0, radius, VAL INT colour, [][]INT raster)
+
+  VAL INT W IS SIZE raster[0]:
+  VAL INT H IS SIZE raster:
+
+  --* Plots eight points at [@code (+/-x, +/-y)] relative to centre [@code (x.0, y0)],
+  --  all within raster (fast).
+
+  INLINE PROC points.1 (VAL INT x, y)
+
+    SEQ					-- 8-fold symmetry
+      raster[y.0 PLUS  y][x.0 PLUS  x] := colour
+      raster[y.0 PLUS  y][x.0 MINUS x] := colour
+      raster[y.0 MINUS y][x.0 PLUS  x] := colour
+      raster[y.0 MINUS y][x.0 MINUS x] := colour
+
+      raster[y.0 PLUS  x][x.0 PLUS  y] := colour
+      raster[y.0 PLUS  x][x.0 MINUS y] := colour
+      raster[y.0 MINUS x][x.0 PLUS  y] := colour
+      raster[y.0 MINUS x][x.0 MINUS y] := colour
+  :
+
+  --* Plots eight points at [@code (+/-x, +/-y)] relative to centre [@code (x.0, y0)],
+  --  some outside raster (slow).
+
+  PROC points.2 (VAL INT x, y)
+
+    --* Plot point if inside raster
+    --
+    --  @param x, y Coordinates
+
+    PROC point (VAL INT x, y)
+
+      VAL INT W IS SIZE raster[0]:
+      VAL INT H IS SIZE raster:
+      IF
+        (x < 0) OR (x >= W) OR (y < 0) OR (y >= H)
+          SKIP
+        TRUE
+          raster[y][x] := colour
+    :
+
+    SEQ					-- 8-fold symmetry
+      point (x.0 PLUS  x, y.0 PLUS  y)
+      point (x.0 MINUS x, y.0 PLUS  y)
+      point (x.0 PLUS  x, y.0 MINUS y)
+      point (x.0 MINUS x, y.0 MINUS y)
+
+      point (x.0 PLUS  y, y.0 PLUS  x)
+      point (x.0 MINUS y, y.0 PLUS  x)
+      point (x.0 PLUS  y, y.0 MINUS x)
+      point (x.0 MINUS y, y.0 MINUS x)
+  :
+
+  --* Decide how to plot points
+  --
+  --  @param x, y Coordinates
+  --  @param b How to plot
+
+  INLINE PROC points (VAL INT x, y, VAL BOOL b)
+
+    IF
+      b
+        points.2 (x, y)			-- the hard way
+      TRUE
+        points.1 (x, y)			-- easy
+  :
+
+  IF
+    (radius < 0) OR
+    ((x.0 PLUS radius) < 0) OR ((x.0 MINUS radius) >= W) OR
+    ((y.0 PLUS radius) < 0) OR ((y.0 MINUS radius) >= H)
+      SKIP				-- all outside raster
+    TRUE
+      INT x, y, d:
+      VAL BOOL b IS ((x.0 MINUS radius) < 0) OR
+                    ((x.0 PLUS radius) >= W) OR
+                    ((y.0 MINUS radius) < 0) OR
+                    ((y.0 PLUS radius) >= H):
+      SEQ
+        x, y, d := 0, radius, 1 MINUS radius
+        points (x, y, b)
+        WHILE x < y
+          SEQ
+            IF
+              d > 0
+                y, d := y MINUS 1, d PLUS (5 PLUS (2*(x MINUS y)))
+              TRUE
+                d := d PLUS (3 PLUS (2*x))
+            x := x PLUS 1
+            points (x, y, b)
+:
