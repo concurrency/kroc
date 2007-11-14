@@ -1,0 +1,649 @@
+--
+--	CREW demonstration
+--	Copyright (C) 1999, 2000  P.H. Selch
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#INCLUDE "semaphore.module"
+#INCLUDE "crew.module"
+#INCLUDE "course.module"
+
+--{{{  COMMENT documentation
+--|
+--| This program shows a use of a shared data structure (the "blackboard"),
+--| protected by CREW synchronisation.  The "blackboard" is shared between
+--| 10 philosophers.  To read/write the "blackboard", philosophers must obtain
+--| the corresponding CREW lock.  That lock allows concurrent readers but
+--| only one reader/writer at a time.  Readers and writers are strictly
+--| queued - no reader is delayed by later arriving writers and vice-versa.
+--|
+--| The CREW-shared "blackboard", for this example, consists only of a single
+--| character (a BYTE).  This could, of course, be any data structure.
+--|
+--| A further example is the CREW-shared "control.info".  This contains
+--| run-time parameters used by the philosophers (their view of how long
+--| a second is and the percentage of time they read, as opposed to write,
+--| the "blackboard").  This is updated by the controller, in response to
+--| keyboard input, and observed by the philosophers and display process.
+--|
+--| The use of "control.info" shows CREW synchronisation in real use - to share
+--| information and provide useful control over the running animation.
+--| On the other hand, the use of "blackboard" is simply to demonstrate
+--| how it is done and provide the subject for the animation.
+--|
+--| The philosophers also report to a display process via a shared channel.
+--| So, also, does a timekeeper.  Here is their college (crew.test), which
+--| has the standard KRoC channel interface to the outside world:
+--|
+--|  _______________________________________________________________________
+--| |                                                                       |
+--| |                                               _____________________   |
+--| |                                              |                     |  |
+--| |  --------------------------------------------|  (CREW) blackboard  |  |
+--| |      |           |               |           |_____________________|  |
+--| |     r|w         r|w             r|w                                   |
+--| |   ___|___     ___|___         ___|___                                 |
+--| |  |       |   |       |       |       |                                |
+--| |  | :-) 0 |   | :-) 1 |  ...  | :-) 9 |                                |
+--| |  |_______|   |_______|       |_______|                                |
+--| |    |   |       |   |           |   |                                  |
+--| |    v  r|       v  r|           v  r|          _____________________   |
+--| |    |   |       |   |           |   |         |                     |  |
+--| |  --|-----------|---------------|-------------| (CREW) control.info |  |
+--| |    |           |         |     |        |    |_____________________|  |
+--| |    |           |         |     |       r|                             |
+--| |    |           |         |     |    ____|____                         |
+--| |    |           |         |     |   |         |                        |
+--| |  ------------------------|---------| display |                        |
+--| |         |            |   |         |_________|                        |
+--| |         ^            ^  r|w             |                             |
+--| |   ______|_____    ___|___|____          |                             |
+--| |  |            |  |            |         |                             |
+--| |  | timekeeper |  | controller |         |                             |
+--| |  |____________|  |____________|         |                             |
+--| |                         |               |                             |
+--| |                         |               |                 crew.test   |
+--| |_________|_______________|_______________|_____________________________|
+--|           |               |               |
+--|    error  v     keyboard  ^               v screen
+--|           |               |               |
+--|
+--}}}
+
+--{{{  DATA TYPE CREW.BLACKBOARD
+DATA TYPE CREW.BLACKBOARD
+  RECORD
+    CREW crew:
+    BYTE value:   -- this could be anything
+:
+--}}}
+
+--{{{  DATA TYPE CREW.CONTROL.INFO
+DATA TYPE CREW.CONTROL.INFO
+  RECORD
+    CREW crew:
+    INT seconds:              -- number of microseconds per `second'
+    INT read.percentage:      -- %age of cycles philosopher reads
+:
+--}}}
+
+--{{{  PROTOCOL DISPLAY
+PROTOCOL DISPLAY
+  CASE
+    thinking; BYTE            -- phil.id
+    wanna.read; BYTE          -- phil.id
+    reading; BYTE             -- phil.id
+    done.read; BYTE; BYTE     -- phil.id; what.was.read
+    wanna.write; BYTE; BYTE   -- phil.id; what.we.wanna.write
+    writing; BYTE; BYTE       -- phil.id; what.we.are.writing
+    done.write; BYTE; BYTE    -- phil.id; what.was.written
+    time; INT                 -- the time
+    control                   -- philosopher parameters have changed
+    special; BYTE; INT        -- reserved
+:
+--}}}
+
+--{{{  PROC display (CHAN OF DISPLAY in, CREW.CONTROL.INFO control.info, CHAN OF BYTE out)
+PROC display (CHAN OF DISPLAY in, CREW.CONTROL.INFO control.info, CHAN OF BYTE out)
+
+  VAL INT thinking IS 0:      -- indices into the col array (see below)
+  VAL INT wanna.read IS 1:
+  VAL INT reading IS 2:
+  VAL INT done.read IS 3:
+  VAL INT wanna.write IS 4:
+  VAL INT writing IS 5:
+  VAL INT done.write IS 6:
+  VAL INT time IS 7:
+  VAL INT second IS 8:
+  VAL INT read.percent IS 9:
+
+  VAL []BYTE col IS [4, 19, 31, 72, 45, 59, 72, 50, 12, 36]:
+
+  VAL BYTE row.shift IS 5:
+  VAL BYTE row.info IS 16:
+
+  SEQ
+
+    --{{{  initialise
+    
+    INT seconds, read.percentage:
+    
+    SEQ
+    
+      claim.read.crew (control.info[crew])
+      seconds := control.info[seconds]
+      read.percentage := control.info[read.percentage]
+      release.read.crew (control.info[crew])
+    
+      cursor.x.y (1, 1, out)
+      erase.eos (out)
+      cursor.x.y (2, 2, out)
+      out.string ("Thinking     Wanna Read    Reading     *
+                  *Wanna Write     Writing    Local View", 0, out)
+      cursor.x.y (2, 3, out)
+      out.string ("========     ==========    =======     *
+                  *===========     =======    ==========", 0, out)
+      cursor.x.y (2, row.info, out)
+      out.string ("Seconds = ", 0, out)
+      out.int (seconds, 7, out)
+      cursor.x.y (24, row.info, out)
+      out.string ("Read %age = ", 0, out)
+      out.int (read.percentage, 3, out)
+      cursor.x.y (col[done.read], row.info, out)
+      cursor.x.y (43, row.info, out)
+      out.string ("Time = ", 0, out)
+      cursor.x.y (59, row.info, out)
+      out.string ("Blackboard = ", 0, out)
+      cursor.x.y (col[done.read], row.info, out)
+      out ! '?'
+      out ! '?'
+      out ! '?'
+      out ! FLUSH
+    
+      cursor.x.y (1, row.info + 2, out)
+      out.string ("=============================================================================", 0, out)
+      cursor.x.y (7, row.info + 4, out)
+      out.string ("Keyboard controls:", 0, out)
+      cursor.x.y (7, row.info + 6, out)
+      out.string ("  S : increment philosophers*' second (slows down the action)", 0, out)
+      cursor.x.y (7, row.info + 7, out)
+      out.string ("  s : decrement philosophers*' second (speeds up the action)", 0, out)
+      cursor.x.y (7, row.info + 8, out)
+      out.string ("  R : increment philosophers*' read (as opposed to write) %age", 0, out)
+      cursor.x.y (7, row.info + 9, out)
+      out.string ("  r : decrement philosophers*' read (as opposed to write) %age", 0, out)
+      cursor.x.y (7, row.info + 10, out)
+      out.string ("  f : freeze action (next keystroke releases)",  0, out)
+      cursor.x.y (1, row.info + 12, out)
+      out.string ("=============================================================================", 0, out)
+      out ! FLUSH
+    
+    --}}}
+
+    --{{{  main cycle
+    WHILE TRUE
+      in ? CASE
+        --{{{  thinking; id
+        BYTE id:
+        thinking; id
+          SEQ
+            cursor.x.y (col[writing], id + row.shift, out)
+            out.string ("   ", 0, out)
+            cursor.x.y (col[reading], id + row.shift, out)
+            out.string ("   ", 0, out)
+            cursor.x.y (col[thinking], id + row.shift, out)
+            out.string (":-)", 0, out)
+            out ! FLUSH
+        --}}}
+        --{{{  wanna.read; id
+        BYTE id:
+        wanna.read; id
+          SEQ
+            cursor.x.y (col[thinking], id + row.shift, out)
+            out.string ("   ", 0, out)
+            cursor.x.y (col[wanna.read], id + row.shift, out)
+            out.string (":-(", 0, out)
+            out ! FLUSH
+        --}}}
+        --{{{  reading; id
+        BYTE id:
+        reading; id
+          SEQ
+            cursor.x.y (col[wanna.read], id + row.shift, out)
+            out.string ("   ", 0, out)
+            cursor.x.y (col[reading], id + row.shift, out)
+            out.string (":-)", 0, out)
+            out ! FLUSH
+        --}}}
+        --{{{  done.read; id; scribble
+        BYTE id:
+        BYTE scribble:
+        done.read; id; scribble
+          SEQ
+            cursor.x.y (col[done.read], id + row.shift, out)
+            out ! scribble
+            out ! scribble
+            out ! scribble
+            out ! FLUSH
+        --}}}
+        --{{{  wanna.write; id
+        BYTE id:
+        BYTE scribble:
+        wanna.write; id; scribble
+          SEQ
+            cursor.x.y (col[thinking], id + row.shift, out)
+            out.string ("   ", 0, out)
+            cursor.x.y (col[wanna.write], id + row.shift, out)
+            out ! scribble
+            out ! scribble
+            out ! scribble
+            out ! FLUSH
+        --}}}
+        --{{{  writing; id; scribble
+        BYTE id:
+        BYTE scribble:
+        writing; id; scribble
+          SEQ
+            cursor.x.y (col[wanna.write], id + row.shift, out)
+            out.string ("   ", 0, out)
+            cursor.x.y (col[writing], id + row.shift, out)
+            out ! scribble
+            out ! scribble
+            out ! scribble
+            out ! FLUSH
+        --}}}
+        --{{{  done.write; id; scribble
+        BYTE id:
+        BYTE scribble:
+        done.write; id; scribble
+          SEQ
+            cursor.x.y (col[done.write], id + row.shift, out)
+            out ! scribble
+            out ! scribble
+            out ! scribble
+            cursor.x.y (col[done.read], row.info, out)
+            out ! scribble
+            out ! scribble
+            out ! scribble
+            out ! FLUSH
+        --}}}
+        --{{{  time; now
+        INT now:
+        time; now
+          SEQ
+            cursor.x.y (col[time], row.info, out)
+            out.int (now, 0, out)
+            out ! FLUSH
+        --}}}
+        --{{{  control
+        control
+          INT seconds, read.percentage:
+          SEQ
+            claim.read.crew (control.info[crew])
+            seconds := control.info[seconds]
+            read.percentage := control.info[read.percentage]
+            release.read.crew (control.info[crew])
+            cursor.x.y (col[second], row.info, out)
+            out.int (seconds, 7, out)
+            cursor.x.y (col[read.percent], row.info, out)
+            out.int (read.percentage, 3, out)
+            out ! FLUSH
+        --}}}
+        --{{{  special; id; n
+        BYTE id:
+        INT n:
+        special; id; n
+          SEQ
+            cursor.x.y (col[thinking], id + 20, out)
+            out.int (n, 10, out)
+            out ! FLUSH
+        --}}}
+    --}}}
+
+:
+--}}}
+
+--{{{  PROC philosopher (VAL INT id, VAL INT seed,
+PROC philosopher (VAL BYTE id, VAL INT initial.seed,
+                  CREW.CONTROL.INFO control.info,
+                  CREW.BLACKBOARD blackboard,
+                  CHAN OF DISPLAY out, SEMAPHORE out.s)
+
+  VAL BYTE my.scribble IS '0' + id:
+
+  --{{{  DATA TYPE PHIL.INFO
+  DATA TYPE PHIL.INFO
+    RECORD
+      INT seconds:
+      INT min.think, max.think, span.think:
+      INT min.read, max.read, span.read:
+      INT min.write, max.write, span.write:
+      INT read.percentage:
+  :
+  --}}}
+
+  PHIL.INFO phil.info:
+
+  --{{{  PROC check.control (CREW.CONTROL.INFO control.info, PHIL.INFO phil.info)
+  PROC check.control (CREW.CONTROL.INFO control.info, PHIL.INFO phil.info)
+    INT new.seconds:
+    SEQ
+      claim.read.crew (control.info[crew])
+      new.seconds := control.info[seconds]
+      phil.info[read.percentage] := control.info[read.percentage]
+      release.read.crew (control.info[crew])
+      IF
+        phil.info[seconds] <> new.seconds
+          SEQ
+            phil.info[seconds] := new.seconds
+            phil.info[min.think] := 2*new.seconds
+            phil.info[max.think] := 10*new.seconds
+            phil.info[span.think] := phil.info[max.think] - phil.info[min.think]
+            phil.info[min.read]  := 5*new.seconds
+            phil.info[max.read]  := 10*new.seconds
+            phil.info[span.read] := phil.info[max.read] - phil.info[min.read]
+            phil.info[min.write] := 5*new.seconds
+            phil.info[max.write] := 10*new.seconds
+            phil.info[span.write] := phil.info[max.write] - phil.info[min.write]
+        TRUE
+          SKIP
+  :
+  --}}}
+
+  INT seed:
+
+  BOOL reading:
+
+  SEQ
+    --{{{  initialise info
+    SEQ
+      phil.info[seconds] := -1                  -- force the update below
+      check.control (control.info, phil.info)
+    --}}}
+    --{{{  initialise seed
+    INT dummy:
+    SEQ
+      seed := initial.seed
+      dummy, seed := random (phil.info[span.think], seed)
+    --}}}
+    WHILE TRUE
+      SEQ
+        --{{{  think-a-while
+        TIMER tim:
+        INT t, i:
+        SEQ
+          claim.semaphore (out.s)
+          out ! thinking; id
+          release.semaphore (out.s)
+          tim ? t
+          check.control (control.info, phil.info)
+          i, seed := random (phil.info[span.think], seed)
+          tim ? AFTER t PLUS (phil.info[min.think] + i)
+        --}}}
+        --{{{  reading or writing?
+        INT i:
+        SEQ
+          i, seed := random (100, seed)
+          reading := (i < phil.info[read.percentage])
+        --}}}
+        IF
+          reading
+            --{{{  read-a-while
+            TIMER tim:
+            INT t, i:
+            SEQ
+              --{{{  say want to read
+              SEQ
+                claim.semaphore (out.s)
+                out ! wanna.read; id
+                release.semaphore (out.s)
+              --}}}
+              claim.read.crew (blackboard[crew])
+              --{{{  say we are reading
+              SEQ
+                claim.semaphore (out.s)
+                out ! reading; id
+                release.semaphore (out.s)
+              --}}}
+              tim ? t
+              check.control (control.info, phil.info)
+              i, seed := random (phil.info[span.read], seed)
+              tim ? AFTER t PLUS (phil.info[min.read] + i)
+              --{{{  say what we have read
+              SEQ
+                claim.semaphore (out.s)
+                out ! done.read; id; blackboard[value]
+                release.semaphore (out.s)
+              --}}}
+              release.read.crew (blackboard[crew])
+            --}}}
+          TRUE
+            --{{{  write-a-while
+            TIMER tim:
+            INT t, i:
+            SEQ
+              --{{{  say want to write
+              SEQ
+                claim.semaphore (out.s)
+                out ! wanna.write; id; my.scribble
+                release.semaphore (out.s)
+              --}}}
+              claim.write.crew (blackboard[crew])
+              --{{{  say we are writing
+              SEQ
+                claim.semaphore (out.s)
+                out ! writing; id; my.scribble
+                release.semaphore (out.s)
+              --}}}
+              tim ? t
+              check.control (control.info, phil.info)
+              i, seed := random (phil.info[span.write], seed)
+              tim ? AFTER t PLUS (phil.info[min.write] + i)
+              blackboard[value] := my.scribble
+              --{{{  say what we have written
+              SEQ
+                claim.semaphore (out.s)
+                out ! done.write; id; blackboard[value]
+                release.semaphore (out.s)
+              --}}}
+              release.write.crew (blackboard[crew])
+            --}}}
+
+:
+--}}}
+
+--{{{  PROC controller (CHAN OF BYTE in, CREW.CONTROL.INFO control.info,
+PROC controller (CHAN OF BYTE in, CREW.CONTROL.INFO control.info,
+                 CHAN OF DISPLAY out, SEMAPHORE out.s)
+
+  VAL INT max.seconds IS 1000000:
+  VAL INT min.seconds IS 10:
+  VAL INT shift.seconds IS 1:
+
+  VAL INT max.read.percentage IS 100:
+  VAL INT min.read.percentage IS 0:
+  VAL INT delta.read.percentage IS 10:
+
+  WHILE TRUE
+    INITIAL BOOL change IS TRUE:
+    BYTE ch:
+    SEQ
+      in ? ch
+      CASE ch
+        --{{{  'S'
+        'S'
+          SEQ
+            claim.write.crew (control.info[crew])
+            control.info[seconds] := control.info[seconds] << shift.seconds
+            IF
+              control.info[seconds] > max.seconds
+                control.info[seconds] := max.seconds
+              TRUE
+                SKIP
+            release.write.crew (control.info[crew])
+        --}}}
+        --{{{  's'
+        's'
+          SEQ
+            claim.write.crew (control.info[crew])
+            control.info[seconds] := control.info[seconds] >> shift.seconds
+            IF
+              control.info[seconds] < min.seconds
+                control.info[seconds] := min.seconds
+              TRUE
+                SKIP
+            release.write.crew (control.info[crew])
+        --}}}
+        --{{{  'R'
+        'R'
+          SEQ
+            claim.write.crew (control.info[crew])
+            IF
+              control.info[read.percentage] < max.read.percentage
+                control.info[read.percentage] := control.info[read.percentage] +
+                                                 delta.read.percentage
+              TRUE
+                SKIP
+            release.write.crew (control.info[crew])
+        --}}}
+        --{{{  'r'
+        'r'
+          SEQ
+            claim.write.crew (control.info[crew])
+            IF
+              control.info[read.percentage] > min.read.percentage
+                control.info[read.percentage] := control.info[read.percentage] -
+                                                 delta.read.percentage
+              TRUE
+                SKIP
+            release.write.crew (control.info[crew])
+        --}}}
+        --{{{  'f', 'F'
+        'f', 'F'
+          SEQ
+            claim.semaphore (out.s)
+            in ? ch
+            release.semaphore (out.s)
+        --}}}
+        ELSE
+          change := FALSE
+      IF
+        change
+          SEQ
+            claim.semaphore (out.s)
+            out ! control
+            release.semaphore (out.s)
+        TRUE
+          SKIP
+
+:
+--}}}
+
+--{{{  PROC timekeeper (CHAN OF DISPLAY out, SEMAPHORE out.s)
+PROC timekeeper (CHAN OF DISPLAY out, SEMAPHORE out.s)
+
+  VAL INT second IS 1000000:
+
+  TIMER tim:
+  INT t:
+
+  INT count:
+
+  SEQ
+
+    count := 0
+    tim ? t
+
+    WHILE TRUE
+      SEQ
+        claim.semaphore (out.s)
+        out ! time; count
+        release.semaphore (out.s)
+        count := count PLUS 1
+        t := t PLUS second
+        tim ? AFTER t
+
+:
+--}}}
+
+--{{{  PROC crew.test (CHAN OF BYTE keyboard, screen, error)
+PROC crew.test (CHAN OF BYTE keyboard, screen, error)
+
+  --{{{  CREW.BLACKBOARD blackboard:
+  CREW.BLACKBOARD blackboard:
+  #PRAGMA SHARED blackboard
+  --}}}
+
+  --{{{  CREW.CONTROL.INFO control.info:
+  CREW.CONTROL.INFO control.info:
+  #PRAGMA SHARED control.info
+  --}}}
+
+  --{{{  SHARED CHAN OF DISPLAY to.display:
+  CHAN OF DISPLAY to.display:
+  #PRAGMA SHARED to.display
+  
+  SEMAPHORE to.display.s:
+  #PRAGMA SHARED to.display.s
+  --}}}
+
+  VAL INT n.philosophers IS 10:
+
+  VAL INT initial.seconds IS 10000:
+  VAL INT initial.read.percentage IS 80:
+
+  INT seed:
+
+  SEQ
+
+    initialise.crew (blackboard[crew])
+    blackboard[value] := '?'
+
+    initialise.crew (control.info[crew])
+    control.info[seconds] := initial.seconds
+    control.info[read.percentage] := initial.read.percentage
+
+    initialise.semaphore (to.display.s, 1)
+
+    --{{{  initialise random number seed
+    TIMER tim:
+    SEQ
+      tim ? seed
+      IF
+        (seed = (MOSTNEG INT)) OR (seed = 0)
+          seed := 42
+        seed < 0
+          seed := -seed
+        TRUE
+          SKIP
+      IF
+        (seed PLUS n.philosophers) < 0
+          seed := seed MINUS n.philosophers
+        TRUE
+          SKIP
+    --}}}
+
+    PAR
+      controller (keyboard, control.info, to.display, to.display.s)
+      PAR i = 0 FOR n.philosophers
+        philosopher (BYTE i, i + seed, control.info,
+                     blackboard, to.display, to.display.s)
+      display (to.display, control.info, screen)
+      timekeeper (to.display, to.display.s)
+
+:
+--}}}
+

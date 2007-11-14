@@ -1,0 +1,19 @@
+
+This directory contains sub-directories:
+
+  examples/
+
+    Sources of example programs demonstrating the synchronisation
+    primatives defined in libsrc/ directory.
+
+  libsrc/
+
+    Sources for the extra synchronisation primitives (BARRIER,
+    BUCKET, CREW and SEMAPHORE).
+
+Note: documentation for BARRIER, BUCKET and SEMAPHORE can be found
+in ../docs/hlps.txt.  See examples/crew_test.occ for illustration of
+what the CREW primitive does and how it should be used. 
+
+
+Peter Welch
