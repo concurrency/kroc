@@ -806,7 +806,7 @@ bool ccsp_user_process_init (void)
 	}
 	#elif defined(HZ) || defined(SOLARIS_TIMER_BUG)
 	quantum = 1000000U / HZ;
-	#else
+	#elif !defined(OOS_BUILD)
 	quantum = 0;
 	#endif
 
