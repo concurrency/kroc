@@ -1,0 +1,568 @@
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 3.2//EN'>
+<HTML>
+  <HEAD>
+    <TITLE>User Defined Operators for occam2.x</TITLE>
+    <!-- $Id: udo.html,v 1.1 1997/03/31 09:55:45 djb1 Exp $ -->
+    <!-- $Source: /proj/kroc/develop/docs/udo/RCS/udo.html,v $ -->
+    <META NAME="description" CONTENT="User Defined Operators for occam2.x">
+    <META NAME="keywords" CONTENT="udo">
+    <META NAME="resource-type" CONTENT="document">
+    <META NAME="distribution" CONTENT="global">
+    <LINK REL=STYLESHEET HREF="udo.css">
+  </HEAD>
+  
+  <BODY LANG="EN">
+    <H1 ALIGN=CENTER>User Defined Operators for occam2.x</H1>
+
+    <P ALIGN=CENTER>
+      <STRONG>James Moores <A HREF="mailto:jm40@ukc.ac.uk"><I>jm40@ukc.ac.uk</I></A><BR>
+	<I>Computing Laboratory, University of Kent at Canterbury, CT2 7NF</I></STRONG></P>
+    
+
+    <H3>Abstract:</H3>
+
+    <P>This document is intended as a supplement to the online
+      occam2.1 extension documentation at
+      <A NAME="tex2html1" HREF="#13">(1)</A> via the
+      IPCA<A HREF="#IPCA">(2)</A>.  It describes the first in a
+      series of new additions to the SGS-Thompson occam compiler.
+      These extensions are only available as part of the KRoC
+      compiler package, and not for the original toolset
+      compiler.</P>
+
+
+    <H2><A NAME="SECTION00010000000000000000">Introduction</A></H2>
+
+    <P>This paper documents the extension to the <I>occam2.1</I>
+      multi-processing language made in the <I>KRoC</I> 0.9beta
+      release<A NAME="tex2html4" HREF="#18">(3)</A>.</P>
+
+    <P>This extension provides user-defined operators over any
+      <I>occam2.1</I> primitive or user-defined types.  It allows
+      further overloading of the existing set of operators:</P>
+
+    <P ALIGN=center> <!-- Netscape table bug -->
+    <TABLE ALIGN=center WIDTH=2 BORDER=1>
+      <CAPTION ALIGN=bottom><A NAME="figexistingoperators"><STRONG>Figure 1:</STRONG> Existing occam2.1 operators</A></CAPTION>
+      <TR ALIGN=center>
+	<TH><I>binary</I></TH>       <TH><I>unary</I></TH>
+      </TR>
+      <TR ALIGN=left>
+	<TD><TT>+  -</TT></TD>       <TD><TT>-</TT></TD>
+	</TR>
+      <TR ALIGN=left>
+	<TD><TT>*  /  \</TT></TD>    <TD><TT>MINUS</TT></TD>
+      </TR>
+      <TR ALIGN=left>
+	<TD><TT>PLUS</TT></TD>       <TD><TT>~</TT></TD>
+      </TR>
+      <TR ALIGN=left>
+	<TD><TT>MINUS</TT></TD>      <TD><TT>NOT</TT></TD>
+      </TR>
+      <TR ALIGN=left>
+	<TD><TT>TIMES</TT></TD>
+      </TR>
+      <TR ALIGN=left>
+	<TD><TT>AFTER</TT></TD>
+      </TR>
+      <TR ALIGN=left>
+	<TD><TT>/\  \/</TT></TD>
+      </TR>
+      <TR ALIGN=left>
+	<TD><TT>&gt;&lt;</TT></TD>
+      </TR>
+      <TR ALIGN=left>
+	<TD><TT>AND</TT></TD>
+      </TR>
+      <TR ALIGN=left>
+	<TD><TT>OR</TT></TD>
+      </TR>
+      <TR ALIGN=left>
+	<TD><TT>=  &lt;&gt;</TT></TD>
+      </TR>
+      <TR ALIGN=left>
+	<TD><TT>&lt;=  &gt;=</TT></TD>
+      </TR>
+    </TABLE>
+  </P>
+
+    <P>and introduces some new ones:</P>
+
+    <P ALIGN=center> <!-- Netscape table bug -->
+    <TABLE ALIGN=center WIDTH=1 BORDER=1>
+      <CAPTION ALIGN=bottom><A NAME="fignewoperators"><STRONG>Figure 2:</STRONG> New occam2.x operators</A></caption>
+      <TR ALIGN=center>
+	<TH><EM>binary</EM> or <EM>unary</EM></TH>
+      </TR>
+      <TR ALIGN=left>
+	<TD>
+	  <PRE>
+	    ??  @@  $$  %   %%  &amp;&amp;  &lt;%  %&gt;  &lt;&amp;  &amp;&gt;
+	    &lt;]  [&gt;  &lt;@  @&gt;  @   ++  !!  ==  ^
+	  </PRE>
+	</TD>
+      </TR>
+    </TABLE>
+  </P>
+
+    <H2><A NAME="SECTION00020000000000000000">Syntax and semantics</A></H2>
+
+    <P>The syntax for declaring a new operator is identical to a
+      <TT>FUNCTION</TT> except that:</P>
+
+    <UL>
+      <LI> instead of a user-defined name, there is a user-defined string
+	containing the sequences of characters making up the desired operator.
+	Note that this sequence must be one of those listed in
+	Figures 1 or 2 - we
+	are not allowed to make up our own symbols.  Note also that since
+	<TT>*</TT> is an escape character in <I>occam</I> strings, that
+	operator has to be quoted as <TT>"**"</TT>.
+	
+      <LI> there must be either two arguments (for a <I>binary</I> operator)
+	or one argument (for a <I>unary</I> operator).  Note that, as for
+	<TT>FUNCTION</TT>s, these arguments must be <TT>VAL</TT> data
+	types.  Henceforth, we shall use the term <I>operands</I> for these
+	arguments.
+
+      <LI> there may only be one return type (not a list) from these operators.
+
+    </UL>
+
+    <P>All the semantic rules for <TT>FUNCTION</TT>s are inherited
+      for operators.  So, operator bodies may cause no side-effects,
+      either through modifying global data-structures or through
+      communication.  This is checked by the compiler.</P>
+
+    <P>Operators may be <TT>INLINE</TT>d.  Their bodies may be
+      <I>one-liners</I>, using the <TT>IS</TT> syntax for
+      <TT>FUNCTION</TT>s, or they may be <TT>VALOF</TT>
+      expressions.</P>
+
+    <P>Operators may be defined for any <I>occam2.1</I> types,
+      including array types.  The operand types (for <I>binary</I>
+      operators) do not have to be the same.  Formal operand arrays
+      may be <I>open</I> (i.e. unsized) or closed (i.e. sized).
+      However, because of the normal rules for <I>occam</I>
+      <TT>FUNCTION</TT>s, any array result type must be sized.</P>
+
+
+    <H2><A NAME="SECTION00030000000000000000">A simple example</A></H2>
+
+    <P>Suppose we define:</P>
+
+    <PRE>
+  DATA TYPE COMPLEX64 IS
+    RECORD
+      REAL64 real, imag:
+  :
+    </PRE>
+
+    <PRE>
+  COMPLEX64 INLINE FUNCTION "+" (VAL COMPLEX64 a, b) IS
+    [a[real] + b[real], a[imag] + b[imag]]:
+    </PRE>
+
+    <P>We may then start using them like:</P>
+
+    <PRE>
+  COMPLEX64 a, b, c:
+  SEQ
+    a := [42.0, 99.7]
+    b := [-123.456, 78.0]
+    c := a + b
+    ...  etc
+    </PRE>
+
+
+    <H2><A NAME="SECTION00040000000000000000">Operator resolution and overriding</A></H2>
+
+    <P>When resolving which operator function is intended for any
+      particular use of an operator symbol, only the operand types
+      are used.  We considered making the result type significant,
+      but that leads very quickly to nested expressions whose
+      operators cannot be resolved (because they have equally valid
+      alternative interpretations).</P>
+
+    <P>So, operators may be uniquely overloaded up to the types of
+      their operands.  However, this means that if we define the
+      following two operators:</P>
+
+    <PRE>
+  THING FUNCTION "+" (VAL FOO a, VAL BAR b) IS ...
+
+  THONG FUNCTION "+" (VAL FOO a, VAL BAR b) IS ...
+    </PRE>
+
+    <P>the later definition will <I>override</I> the first one.
+      Thus, if <TT>x</TT> is of type <TT>FOO</TT> and <TT>y</TT> is
+      of type <TT>BAR</TT>, the expression <TT>x + y</TT> will be
+      evaluated using the later definition and will yield a value of
+      type <TT>THONG</TT>.</P>
+
+    <P>Note also that, because the compiler generates operator names
+      made up from the operator symbol and its operand types, having
+      the above two definitions compiled into some library (or even
+      separate libraries) will cause a UNIX linking error.</P>
+
+    <P>The current compiler is also blind to the <I>size</I> (or
+      <I>un-size</I>) of operand arrays.  Thus, the following two
+      definitions will suffer the same fate as the above:</P>
+
+    <PRE>
+  THING FUNCTION "[&gt;" (VAL [16]INT a, VAL [4]INT b) IS ...
+
+  THONG FUNCTION "[&gt;" (VAL []INT a, b) IS ...
+    </PRE>
+
+    <P>However, note that <I>unary</I> operators cannot get
+      overridden by <I>binary</I> operators.  So that the following
+      two operators can be declared in any order and co-exist:</P>
+
+    <PRE>
+  COMPLEX64 INLINE FUNCTION "-" (VAL COMPLEX64 a) IS
+    [-a[real], -a[imag]]:
+
+  COMPLEX64 INLINE FUNCTION "-" (VAL COMPLEX64 a, b) IS
+    [a[real] - b[real], a[imag] - b[imag]]:
+    </PRE>
+
+    <P>Generally, we deprecate the overriding of previously defined
+      operators.  For example, a really twisted user may declare:</P>
+
+    <PRE>
+  INT INLINE FUNCTION "+" (VAL INT a, b) IS a - b:
+    </PRE>
+
+    <P>with somewhat opaque consequences for the remaining code!</P>
+
+
+    <H2><A NAME="SECTION00050000000000000000">Unary and binary operators</A></H2>
+
+    <P>The standard operators may only be overloaded provided their
+      <I>binary-ness</I> or <I>unary-ness</I> is maintained.  Thus,
+      <TT>+</TT> may only be used as a <I>binary</I> operator,
+      <TT>NOT</TT> may only be used as a <I>unary</I> operator, but
+      <TT>-</TT> may only be used as both.</P>
+
+    <P>All the new operator symbols may be used for both
+      <I>binary</I> and <I>unary</I> operators - for example:</P>
+
+    <PRE>
+  INT FUNCTION "$$" (VAL []INT a)  -- sum the array
+    INT result:
+    VALOF
+      SEQ
+        result := 0
+        SEQ i = 0 FOR SIZE a
+          result := result + a[i]
+      RESULT result
+  :
+    </PRE>
+
+    <P>And, then:</P>
+
+    <PRE>
+  [42]INT X, Y:
+  [99]INT Z:
+  SEQ
+    ...  set up arrays X, Y, Z
+    out.string ("The sum of X, Y and Z is ", 0, screen)
+    out.number (($$ X) + (($$ Y) + ($$ Z)), 0, screen)
+    out.string ("*n", 0, screen)
+    </PRE>
+
+
+
+    <H2><A NAME="SECTION00060000000000000000">Operator inheritance</A></H2>
+
+    <P><I>occam2.1</I> has a feature of inheriting the use of the
+      standard operators on user-defined types that are defined
+      directly in terms of the basic types.  For example, if we
+      had:</P>
+
+    <PRE>
+  DATA TYPE BLUE.INT IS INT:
+    </PRE>
+
+    <P>then we could have:</P>
+
+    <PRE>
+  BLUE.INT a, b, c:
+  SEQ
+    ...  set up a and b
+    c := a + b
+    </PRE>
+
+    <P>This was presumably done to allow operator usage over these
+      types.  Whether this inheritance should be retained now that
+      user-defined operators are available for such types is
+      debatable.  [Note that <TT>INLINE</TT>d operators defining the
+      standard arithmetic operators for <TT>BLUE.INT</TT>s (via casts
+      into <TT>INT</TT>s) generates exactly the same code as direct
+      use of the standard operators - there is no run-time overhead.]
+      Anyway, this operator inheritance is preserved in the current
+      <I>KRoC</I> 0.9beta release.</P>
+
+    <P>However, there leads to an inconsistency.  If we were to define:</P>
+
+    <PRE>
+  DATA TYPE BLUE.COMPLEX64 IS COMPLEX64:
+    </PRE>
+
+    <P>where <TT>COMPLEX64</TT> is as defined earlier,
+      <TT>BLUE.COMPLEX64</TT> does <I>not</I> inherit any
+      user-defined operators for <TT>COMPLEX64</TT>.  Feedback on
+      which way this incosistency should be resolved is welcome.</P>
+
+    <P>The inheritance behaviour does raise a problem for types that
+      are defined directly from the basic ones.  For instance, in the
+      0.9beta release, we provide an example string library that
+      manages dynamically allocated strings in the <I>C</I>-world.
+      The <I>occam</I> type just holds a pointer to space in that
+      <I>C</I>-world and the obvious type declaration is:</P>
+
+    <PRE>
+  DATA TYPE DSTRING IS INT:  -- dynamic string
+    </PRE>
+
+    <P>We can then define an <TT>++</TT> operator for concatenation
+      and so on.  However, <TT>DSTRING</TT> automatically inherits
+      all the standard arithmetic operaors on <TT>INT</TT>s which
+      will enable arithmetic on pointers - <I>not</I> a good thing!
+      To avoid this, we define <TT>DSTRING</TT> as a
+      <TT>RECORD</TT>:</P>
+
+    <PRE>
+  DATA TYPE DSTRING          -- dynamic string
+    RECORD
+      INT pointer:
+  :
+    </PRE>
+
+    <P>and the problem goes away.
+
+
+    <H2><A NAME="SECTION00070000000000000000">Scope rules</A></H2>
+
+    <P>The compiler follows the normal scoping rules as far as user
+      defined operators are concerned - their scope is just like any
+      other declaration.</P>
+
+
+    <H2><A NAME="SECTION00080000000000000000">Separate compilation</A></H2>
+
+    <P>Operator definitions can be separately compiled and linked in
+      the same way as <TT>FUNCTION</TT>s and <TT>PROC</TT>s.
+      <TT>INLINE</TT>d operators, of course, cannot be separately
+      compiled and we have to use the <TT>#INCLUDE</TT> mechanism,
+      rather than <TT>#USE</TT>, for libraries that contain them.</P>
+
+
+    <H2><A NAME="SECTION00090000000000000000">Literal constants</A></H2>
+
+    <P><I>occam2.1</I> untyped literals are resolved according to the
+      data type to which they are being assigned (or passed).  For
+      example:</P>
+
+    <PRE>
+  INT x:
+  BYTE y:
+  SEQ
+    x := 6
+    y := 6
+    </PRE>
+
+    <P>In the first case, the literal <TT>6</TT> is resolved to be of
+      type <TT>INT</TT> and, in the second case, it is resolved as
+      type <TT>BYTE</TT>.</P>
+
+    <P>This presents a problem for user defined operators.  Given the
+      code:</P>
+
+    <PRE>
+  INT FUNCTION "&amp;&amp;" (VAL INT x, y) IS x:
+  INT FUNCTION "&amp;&amp;" (VAL BYTE x, y) IS INT y:
+  INT z:
+  SEQ
+    z := 3 &amp;&amp; 4
+    </PRE>
+
+    <P>which version do we use?  The solution is to reduce untyped
+      literals to a default state - but only when used within an
+      operand for a user-defined operator (so as not to change the
+      semantics of <I>occam2.1</I>).  The rules we have adopted are
+      that undecorated literals, appearing in operand expressions for
+      user-defined operators, are interpreted as follows:</P>
+
+    <PRE>
+      6  -&gt;  INT
+    'b'  -&gt;  BYTE
+    6.0  -&gt;  REAL32
+    </PRE>
+
+    <P>Thus, <TT>z</TT> will be assigned the value <TT>3</TT> in the
+    above.</P>
+
+
+    <H2><A NAME="SECTION000100000000000000000">Array and record constructors</A></H2>
+
+    <P>There is a similar problem with array and record literals (or
+      <I>constructors</I>).  In <I>occam2.1</I>, if the type of a
+      constructor is not clear - the type of variable (or parameter)
+      to which it is being assigned (or passed) is used to resolve
+      the type.  For example:</P>
+
+    <PRE>
+  DATA TYPE BLUE.INT IS INT:
+  [3]BLUE.INT a:
+  a := [0, 1, 3]
+    </PRE>
+
+    <P>If the type of <TT>a</TT> had not been known, then the
+      <TT>0</TT>, <TT>1</TT> and <TT>3</TT> could not have been
+      resolved to <TT>BLUE.INT</TT>.  This resolution problem occurs
+      normally in <I>occam2</I> when we have untyped abbreviations.
+      For example:</P>
+
+    <PRE>
+  VAL a IS [1, 2, 3]:
+    </PRE>
+
+    <P>in which case, <TT>a</TT> is resolved to the type <TT>[3]INT</TT>.</P>
+
+    <P>This resoution problem also occurs when using constructors
+      with user defined operators.  For example, consider:</P>
+
+    <PRE>
+  DATA TYPE THING
+    RECORD
+      INT count:
+      REAL32 value:
+  :
+
+  INT FUNCTION "^" (VAL THING x, y) IS x[count] + y[count]:
+
+  INT result:
+  result := [12, 1.2] ^ [1, 3.1]
+    </PRE>
+
+    <P>This will not compile because there is no way to determine the
+      types of the two operands (the compiler could search all the
+      definitions of user defined operators, searching for a match
+      for the types, but this raises many other complicating issues).
+      The solution is to decorate the record constructors with the
+      typename - replacing the last line as follows solves the
+      problem and will compile correctly:</P>
+
+    <PRE>
+  result := [12, 1.2](THING) ^ [1, 3.1](THING)
+    </PRE>
+
+    <P>If no type is specified then the compiler will try to resolve
+      the constructor as an array.  It will first search the
+      constructor for a known type and then attempt to make each
+      other (possibly type not specified) elements in the array match
+      this type.  If sucessful, the constructor gets typed as an
+      array.  For example:</P>
+
+    <PRE>
+  INT FUNCTION "@" (VAL [6]BLUE.INT x) IS (INT x[0]):
+
+  INT res:
+  res := @ [1, 2, 3, 4, 5(BLUE.INT)]
+    </PRE>
+
+    <P>will resolve all elements in the constructor to type
+      <TT>BLUE.INT</TT>, and then to <TT>[6]BLUE.INT</TT>.  If the
+      last line had been:</P>
+
+    <PRE>
+  res := @ [1, 2, 3, 4, 5]
+    </PRE>
+
+    <P>the constructor would have been resolved to <TT>[6]INT</TT>
+      and no match for the <TT>@</TT> operator would have been
+      found.</P>
+
+    <P>There is one other slight modification - if a real literal is
+      used as an operand to a user defined operator then it is
+      resolved to <TT>REAL32</TT> - normal <I>occam</I> rules in this
+      situation would throw it out without any decoration
+      (e.g. <TT>3.2(REAL32)</TT>).</P>
+
+    <P>Note that none of these new rules effect the normal rules of
+      <I>occam2.1</I>.  Much care was taken not to damage the current
+      type resolution system, so these new rules are only applicable
+      when used with user defined operators.</P>
+
+
+    <H2><A NAME="SECTION000110000000000000000">Example libraries</A></H2>
+
+    <P>Some example libraries are included with the 0.9beta release -
+      firstly a complex number library that supports the use of the
+      standard operators on a complex type.  Please see the documents
+      by David Wood on this and other similar libraries, including
+      <TT>INT128</TT>s, <TT>REAL128</TT>s, <TT>REAL80</TT>s,
+      <TT>REAL40</TT>s, sets, and a rational numbers library.</P>
+
+    <P>There is also a new dynamic string library that actually
+      allocates memory for strings in the <I>C</I> world, using
+      <I>occam</I> types to hold pointers to them.  Strings can be
+      created and deallocated (no automatic garbage collection is
+      provided), converted to and from <I>occam</I> strings, and
+      compared both for pointer equality (two variables of type
+      STRING pointing at the same string), and textual equality (two
+      strings textually equivalent).  All the other comparison
+      operators are also available.  Concatenation of two strings is
+      also supported using the new <TT>++</TT> operator.
+      Documentation is included with the release.</P>
+
+
+    <H2><A NAME="SECTION000120000000000000000">Using user defined operators in KRoC</A></H2>
+
+    <P>By default user defined operators are disabled in the current
+      release of <I>KRoC</I>, so a compiler flag must be set to
+      enable their use:</P>
+
+    <PRE>
+  kroc -X2 prog.occ
+    </PRE>
+
+    <P>This will compile prog.occ with the experimental compiler
+      additions enabled.</P>
+
+
+    <H2><A NAME="SECTION000130000000000000000">Bugs</A></H2>
+
+    <P>Please send bug reports to 
+      <A HREF="mailto:ofa-bugs@ukc.ac.uk"><I>ofa-bugs@ukc.ac.uk</I></A>.</P>
+
+
+    <H2>Footnotes</H2>
+    <DL>
+      <DT><A NAME="13">(1)<I>The <I>occam2.1</I> language documentation on IPCA</A> at<BR>
+      <DD>&lt;URL:<A HREF="http://www.hensa.ac.uk/parallel/occam/documentation/">http://www.hensa.ac.uk/parallel/occam/documentation/</A>&gt;
+      
+      <DT><A NAME="IPCA">(2)<I>The Internet Parallel Computing Archive</I> (IPCA)</A> at<BR>
+      <DD>&lt;URL:<A HREF="http://www.hensa.ac.uk/parallel/">http://www.hensa.ac.uk/parallel/</A>&gt;
+	(mirror sites are also available).
+      
+      <DT><A NAME="18">(3)<I>KROC Area on IPCA</I></A> at<BR>
+      <DD>&lt;URL:<A HREF="http://www.hensa.ac.uk/parallel/occam/projects/occam-for-all/kroc/">http://www.hensa.ac.uk/parallel/occam/projects/occam-for-all/kroc/</A>&gt;
+    </DL>
+
+
+    <H2><A NAME="SECTION000140000000000000000">About this document ... </A></H2>
+
+    <P><STRONG>User Defined Operators for occam2.x</STRONG></P>
+
+    <P>This origininal version of this document was generated using the <A HREF="http://www-dsed.llnl.gov/files/programs/unix/latex2html/manual/"><STRONG>LaTeX</STRONG>2<tt>HTML</tt></A> translator Version 96.1 (Feb 5, 1996) Copyright &#169; 1993, 1994, 1995, 1996,  <A HREF="http://cbl.leeds.ac.uk/nikos/personal.html">Nikos Drakos</A>, Computer Based Learning Unit, University of Leeds.</P>
+    
+    <P>The command line arguments were: <BR>
+      <STRONG>latex2html</STRONG> <tt>-split 0 udo.tex</tt>.</P>
+
+    <P>It was then edited by Dave Beckett to be better HTML.</P>
+
+</BODY>
+</HTML>

@@ -1,0 +1,2776 @@
+
+--{{{  READ.ME
+
+IMPORTANT NOTE
+
+      This document was intended just as documentation for the SEMAPHORE,
+      RESOURCE, BARRIER and BUCKET process synchronisation primitives that
+      were released in the KRoC 0.8beta occam system.  Motivation for the
+      primitives was added, together with numerous examples of their use,
+      so that it has now grown into a draft paper (that will eventually
+      be submitted somewhere for publication).  It is released now since
+      documentation for the new primitives is needed.  Please copy freely
+      but please respect the copyright.
+
+This document is `folded' for best viewing with a folding editor (such
+as Origami or F).  However, it should be quite readable with a flat editor
+or in printed form.
+
+Many thanks,
+
+Peter Welch.
+(5th. December, 1996)
+
+===============================================================================
+
+A paper based on this document appeared in the WoTUG-20 proceedings:
+
+  "Higher Levels of Process Synchronisation", P.H.Welch and D.C.Wood,
+  in `Parallel Programming and Java(TM)', edited by A.Bakkers,
+  Proceedings of WoTUG-20, pp. 104-129, IOS Press (Amsterdam),
+  April 1997.
+
+Not everything from this document has yet been submitted for publication.
+
+From KRoC version 1.0, the EVENT data type in the above paper has been
+rechristened BARRIER.  This change has been made in this document.  The
+RESOURCE primitive, described in this document, is not currently included
+in the KRoC release.  It can easily be added if requested.
+
+Sources for these synchronisation primitves may be found in:
+
+  <wherever-kroc-has-been-installed>/kroc/syncs/libsrc
+
+Examples of their use are in:
+
+  <wherever-kroc-has-been-installed>/kroc/syncs/examples
+
+These primitives also include CREW synchronisation, which is not docemented
+here.  However, CREW (= Concurrent Read Exclusive Write) locks on a shared
+resource have a very simple and obvious API - see the example in:
+
+  <wherever-kroc-has-been-installed>/kroc/syncs/examples/crew_test.occ
+
+
+Peter Welch.
+(9th. February, 2000)
+
+--}}}
+
+--{{{  Title
+
+SEMAPHOREs, RESOURCEs, BARRIERs and BUCKETs
+(formerly: Higher Levels of Process Synchronisation in occam)
+
+--}}}
+
+--{{{  Authors
+
+P.H.Welch and D.C.Wood
+Computing Laboratory
+The University
+Canterbury
+KENT -- CT2 7NF
+ENGLAND
+
+P.H.Welch@ukc.ac.uk and D.C.Wood@ukc.ac.uk
+
+Copyright (1996) P.H.Welch and D.C.Wood.
+
+--}}}
+
+--{{{  Introduction
+
+This document details the extra synchronisation primitives introduced in the
+KRoC 0.8beta release of occam for SPARC (SunOS/Solaris) and Alpha (OSF/1) UNIX
+workstations [1, 2].
+
+The new primitives are experimental -- we would like feedback on their use.
+They are designed to support higher-level mechanisms of SHARING between
+parallel processes that give us greater powers of expression.  They will
+also let greater levels of concurrency be safely exploited from future
+parallel architectures, such as those providing (virtual) shared-memory.
+They demonstrate that occam is neutral in any debate between the merits of
+message-passing versus shared-memory parallelism, enabling applications to
+take advantage of whichever paradigm (or mixture of paradigms) is the most
+appropriate.
+
+The new primitives could be (but are not) implemented in terms of traditional
+channels, but only at the expense of increased complexity and computational
+overhead.  The primitives are immediately useful even for uni-processors --
+for example, the cost of a `fair' ALT can be reduced from O(n) to O(1).
+In fact, all the operations associated with new primitives have constant
+space and time complexities; and the constants are very low.
+
+Direct use of these primitives enables the user to misuse them.  They must be
+used in the ways prescribed below else their semantics become unpredictable.
+No tool is provided to check correct usage at this level.
+
+The intention is to bind those primitives found to be useful into higher
+level versions of occam.  Some of the primitives (e.g. SEMAPHOREs) may never
+themselves be made visible in the language, but may be used to implement
+bindings of higher-level paradigms (such as SHARED channels and BLACKBOARDs).
+The compiler will perform the relevant usage checking on all new language
+bindings, closing the security loopholes opened by raw use of the primitives.
+
+--}}}
+
+--{{{  Channels are not enough ...
+
+An occam channel is a primitive combining communication and synchronisation.
+As a synchronisation primitive, it applies to two processes at a time.  Some
+applications require many processes to synchronise before any can continue --
+for example, the barrier synchronisations used by common shared-memory parallel
+algorithms.
+
+Multi-way synchronisation is a fundamental idea in CSP, but is not implemented
+in occam.  The computational arrangements for allowing any of the synchronising
+processes to back off (which CSP allows) is even more costly than allowing
+both parties to back off during channel synchronisation.  However, just as
+allowing only the receiver to back off an offer to communicate enabled an
+efficient channel implementation in occam, a similarly drastic rule -- allowing
+no parties to back off a multi-way synchronisation -- makes possible an
+efficient implementation of the (CSP) `event'.  Does such a restriction still
+leave a useful primitive?  Just as for occam channels, the answer seems to be
+yes, but we would like to hear from potential users.  The restricted `event'
+is rechristened here as BARRIER.
+
+Another way of looking at channels is that they provide a peg on which to hang
+a blocked process.  If we have lots of processes we wish to suspend for some
+common reason (e.g. they are waiting on a common event or for some shared
+resource, access to which is restricted by some rules), we either have to have
+lots of channels on which to hang them (and, later, organise their release)
+or we put them on a timer queue.  Neither of these may be convenient or
+computationally light.
+
+What are needed are different kinds of peg on which we may hang arbitrary
+numbers of processes ... plus the ability to retrieve them one at a time
+(SEMAPHOREs and RESOURCEs) ... or all at once (BARRIERs and BUCKETs) ... or
+some other way ...
+
+--}}}
+
+--{{{  Abstract Data Types
+
+Each new primitive is presented as an Abstract Data Type.  Each is implemented
+as an occam2.1 DATA TYPE, together with a set of operations defined through
+INLINEd occam2.1 PROCs and FUNCTIONs.  Full source code is provided for each
+primitive in a separate #INCLUDE file.
+
+Although users have visibility of the data structures used for each primitive,
+advantage must *not* be taken of this visibility.  Components of the data
+structures must *not* be accessed directly by user programs.  Instances of
+the primitives may *only* be operated on by calling the PROCs and FUNCTIONs
+provided.
+
+--}}}
+
+--{{{  SEMAPHOREs
+
+--{{{  SEMAPHORE Abstract Data Type (documentation)
+
+These implement classic counting semaphores:
+
+  DATA TYPE SEMAPHORE
+
+    Users may declare their own SEMAPHORE variables and pass them as reference
+    parameters.  One SEMAPHORE should be declared to control access to each
+    shared resource (which could be a data or channel structure).  SEMAPHOREs
+    must not be duplicated by assignment or communication through channels.
+
+  PROC initialise.semaphore (SEMAPHORE s, VAL INT count)
+
+    Each SEMAPHORE must be initialised with this routine before it is used.
+    The `count' value is the number of processes allowed simultaneous access
+    to the shared resource.  For exclusive access, set this to 1.
+
+  PROC claim.semaphore (SEMAPHORE s)
+
+    Before accessing the shared resource, a process must call this routine
+    to claim the associated SEMAPHORE.  If there are less than `count' (where
+    `count' is the value with which the SEMAPHORE was initialised) processes
+    using the shared resource, this process will be allowed through -- i.e.
+    the call will return immediately.  Otherwise, the process will be blocked
+    and put on the queue of processes associated with the SEMAPHORE.
+
+  PROC release.semaphore (SEMAPHORE s)
+
+    When a process has finished with the shared resource, it must call this
+    routine to register its release of the associated SEMAPHORE.  If there are
+    processes waiting to claim that SEMAPHORE, the first process on that queue
+    is re-scheduled -- i.e. allowed through to use the resource.
+
+--}}}
+
+--{{{  Normal pattern of use
+
+So, the normal pattern of use is:
+
+  ...  thing declaration (where thing is to be SHARED by many processes)
+  #PRAGMA SHARED thing     -- suppress parallel usage checking
+  SEMAPHORE thing.s:
+  #PRAGMA SHARED thing.s   -- suppress parallel usage checking
+
+  SEQ
+    initialise.semaphore (thing.s, 1)   -- for exclusive access (for example)
+    PAR
+      ...  process using thing
+      ...  another process using thing
+      ...  another process using thing
+      ...  another process using thing
+      ...  etc.
+
+Within each `process using thing', each use must be protected within a `claim'
+and `release':
+
+  SEQ
+    claim.semaphore (thing.s)
+    ...  now use thing
+    release.semaphore (thing.s)
+
+Footnote: in the literature, `claim' is sometimes referred to as `wait' (or
+`P') and `release' is sometimes called `signal' (or `V').
+
+--}}}
+
+--{{{  occam3 SHARED channels (via SEMAPHOREs)
+
+The main motivation for implementing SEMAPHOREs is to support the occam3
+SHARED channel [3].  This is a language construct to describe client-server
+applications, where multiple clients compete for exclusive access to a single
+server.  In occam2, this has to be implemented through an array of channels
+(or channel-pairs for two-way interaction) over which the server performs a
+"fair" ALT.  The problems with this are:
+
+  o the array of channels has to be declared and made visible to the server,
+    which means that the number of clients has to be known at the point
+    where the server is installed;
+
+  o the computational complexity of the server ALT is O(n), where n is
+    the number of clients.  For not very large n, especially in a hard
+    real-time application, this can become prohibitive.
+
+On the other hand, with the SEMAPHORE implementation of a SHARED channel:
+
+  o there is a fixed-sized space overhead (3 words), regardless of the
+    number of clients;
+
+  o the computational complexity of setting up and closing down each
+    client-server transaction is O(1) -- i.e. independent of the number
+    of clients and the same order of magnitude as an ordinary context
+    switch (sub-microsecond);
+
+  o the server does not know that the client end is SHARED -- it sees
+    an ordinary channel (or channel-pair).  This means that a server may
+    ALT over a set of SHARED (or ordinary) channels using normal mechanisms.
+
+An occam3 SHARED channel (or channel-pair) connects any number of client
+processes with a server process.  To use the SHARED channel, the client
+process must first claim it:
+
+  CLAIM c
+    ...  use any of the channels within c
+
+occam3 has a CHAN TYPE structure that allows us to group a collection of
+channels (each with differing PROTOCOLs and directions of use) as fields
+in a record.  So, a typical transaction might look like:
+
+  CLAIM c
+    --{{{  use any of the channels within c
+    SEQ
+      c[request] ! some.request
+      c[reply] ? some.reply
+      ...   follow-up questions and answers
+    --}}}
+
+Note that any attempted use of `c' outside a CLAIM body would be jumped on
+by the compiler.  occam3 also forbids any synchronisation attempts inside
+the CLAIM body other than those involving `c'.  In particular, a process is
+not allowed to accumulate resources through nested CLAIMs (which eliminates
+the classic danger of deadlock through partially acquired resources).
+
+The occam3 declaration of the SHARED channel looks like:
+
+  CHAN TYPE CONNECT   -- CONNECT is the user-chosen name for this channel type
+    CHAN OF REQUEST request:
+    CHAN OF REPLY reply:
+  :
+
+  SHARED CONNECT c:
+
+In occam2.1, the channel components need to be declared separately, together
+with a controlling semaphore:
+
+  CHAN OF REQUEST c.request:
+  #PRAGMA SHARED c.request      -- suppress parallel usage checking
+  CHAN OF REPLY c.reply:
+  #PRAGMA SHARED c.reply        -- suppress parallel usage checking
+  SEMAPHORE c.s:
+  #PRAGMA SHARED c.s            -- suppress parallel usage checking
+
+The client transaction becomes:
+
+  SEQ
+    claim.semaphore (c.s)
+    --{{{  use any of the channels within c
+    SEQ
+      c.request ! some.request
+      c.reply ? some.reply
+      ...   follow-up questions and answers
+    --}}}
+    release.semaphore (c.s)
+
+At the server end, occam3 establishes the client connection with an explicit:
+
+  GRANT c
+    ...  use any of the channels within c
+
+As for the clients, the server is not allowed to use `c' outside a GRANT body
+and any attempt would be disallowed by the compiler.  However, servers *are*
+allowed to make further synchronisations (e.g. CLAIMs or other GRANTs) within
+a GRANT body.
+
+In this example, a transaction matching the client CLAIM might be:
+
+  GRANT c
+    --{{{  use any of the channels within c
+    ...  local declarations
+    SEQ
+      c[request] ? some.request
+      ...  compute the correct response
+      c[reply] ! some.reply
+      ...   follow-up questions and answers
+    --}}}
+
+The occam2.1 implementation for this GRANT is null.  It simply maps to:
+
+  --{{{  use any of the channels within c
+  ...  local declarations
+  SEQ
+    c.request ? some.request
+    ...  compute the correct response
+    c.reply ! some.reply
+    ...   follow-up questions and answers
+  --}}}
+
+Note that, provided each CLAIM opens with a communication to the server,
+ALTing between the SHARED channel and any other ALT guard (SHARED or not)
+is immediately possible by the server.  If the transaction opens with a
+communication in the other direction, a dummy `request' will need to be
+added to allow the server to ALT.
+
+Finally, some transaction bodies may contain no communications at all!  For
+example, the server may be a SHARED signal-handler (where the signal is raised
+by a client simply making a claim with a SKIP body).  In this case again,
+a dummy `request' will need to be added to synchronise the client with the
+server.
+
+--}}}
+
+--{{{  Dining Philosophers (via SEMAPHOREs)
+
+Sometimes, SEMAPHOREs can be used to represent objects in their own right.
+
+For example, the forks in Dijkstra's classic Dining Philosophers system
+are simply binary SEMAPHOREs shared by the two philosophers whose place
+settings are on either side of the fork.  In classic occam, they are simply
+modelled by a fork process such as:
+
+  PROC fork (CHAN OF BOOL left, right)
+    --{{{  
+    WHILE TRUE
+      ALT                              -- should be a `fair' ALT
+        BOOL any:
+        left ? any                     -- philosopher left picks up fork
+          left ? any                   -- philosopher left puts down fork
+        right ? any                    -- philosopher right picks up fork
+          right ? any                  -- philosopher right puts down fork
+    --}}}
+  :
+
+Similarly, the security guard (or butler), who only allows into the dining
+room up to four philosophers at a time, is a counting semaphore initialised
+to four.  In classic occam, this is modelled:
+
+  PROC security ([5]CHAN OF BOOL down, up)
+    --{{{  
+    VAL BYTE max IS 4:
+    INITIAL BYTE n.sat.down IS 0:
+    WHILE TRUE
+      ALT i = 0 FOR 5      -- should be a `fair' ALT
+        ALT
+          --{{{  philosopher i wants to sit down
+          BOOL any:
+          (n.sat.down < max) & down[i] ? any  -- don't allow more than max at a time
+            n.sat.down := n.sat.down + 1
+          --}}}
+          --{{{  philosopher i wants to stand up
+          BOOL any:
+          up[i] ? any                         -- always allow this
+            n.sat.down := n.sat.down - 1
+          --}}}
+    --}}}
+  :
+
+A philosopher interacts with two forks and the security guard:
+
+  PROC philosopher (CHAN OF BOOL left, right,            -- forks
+                    CHAN OF BOOL down, up)               -- security guard
+    --{{{  
+    WHILE TRUE
+      SEQ
+        ...  think-a-while
+        --{{{  get past the security guard
+        down ! TRUE
+        --}}}
+        --{{{  pick up the forks
+        PAR
+          left ! TRUE       -- pick up left fork
+          right ! TRUE      -- pick up right fork
+        --}}}
+        ...  eat-a-while
+        --{{{  put down the forks
+        PAR
+          left ! TRUE       -- put down left fork (no wait)
+          right ! TRUE      -- put down right fork (no wait)
+        --}}}
+        --{{{  notify security you have finished
+        up ! TRUE
+        --}}}
+    --}}}
+  :
+
+The college consists of 5 philosophers, 5 forks and the security guard:
+
+  PROC college ()
+    --{{{  
+    [5]CHAN OF BOOL left, right, down, up:
+    PAR
+      security (down, up)
+      PAR i = 0 FOR 5
+        PAR
+          philosopher (left[i], right[i], down[i], up[i])
+          fork (left[i], right[(i + 1)\5])
+    --}}}
+  :
+
+With real SEMAPHOREs, there is no need for the fork and security processes.
+The college becomes:
+
+  PROC college ()
+    --{{{  
+    [5]SEMAPHORE fork:
+    #PRAGMA SHARED fork             -- suppress parallel usage checking
+    
+    SEMAPHORE security:
+    #PRAGMA SHARED security         -- suppress parallel usage checking
+    
+    SEQ
+      --{{{  initialise semaphores
+      SEQ
+        SEQ i = 0 FOR 5
+          initialise.semaphore (fork[i], 1)      -- forks are used exclusively
+        initialise.semaphore (security, 4)       -- security allows four at a time
+      --}}}
+      PAR i = 0 FOR 5
+        philosopher (fork[i], fork[(i + 1)\5], security)
+    --}}}
+  :
+
+where the philosopher still interacts with two forks and the security guard:
+
+  PROC philosopher (SEMAPHORE left, right,               -- forks
+                    SEMAPHORE security)                  -- security guard
+    --{{{  
+    WHILE TRUE
+      SEQ
+        ...  think-a-while
+        --{{{  get past the security guard
+        claim.semaphore (security)
+        --}}}
+        --{{{  pick up the forks
+        PAR
+          claim.semaphore (left)    -- pick up left fork
+          claim.semaphore (right)   -- pick up right fork
+        --}}}
+        ...  eat-a-while
+        --{{{  put down the forks
+        PAR
+          release.semaphore (left)    -- put down left fork (no wait)
+          release.semaphore (right)   -- put down right fork (no wait)
+        --}}}
+        --{{{  notify security you have finished
+        release.semaphore (security)
+        --}}}
+    --}}}
+  :
+
+The SEMAPHORE implementations of the forks and security guard give us `fair'
+sharing -- i.e. no philosopher can get locked out indefinitely by un-thinking
+neighbours racing back to the dining room and grabbing forks.  The SEMAPHORE
+implementations don't need programming; they just need initialising!  They
+give us more functionality and execute far faster than the original processes.
+However, their use in the above has nothing to do with occam3 SHARED channels,
+so such application requires care.
+
+--}}}
+
+--{{{  Instrumenting parallel systems (via SEMAPHOREs)
+
+One common problem solved by SHARED channels is multiplexing data streams
+to single devices.  For example, when animating the behaviour of a network
+of processes (for diagnostic or demonstration purposes), we want to print
+information to some display or file.  Writing, installing and wiring up the
+necessary multiplexor to route the information coming from all the processes
+under inspection can be daunting ... we can't just put in print statements!
+
+Or, at least, that used to be the case!!  By making, for example, the screen
+channel SHARED, we *can* just-put-in-print-statements and we can do it within
+any number of parallel processes and have full control over the atomicity of
+any particular message.
+
+The dining philosophers' college (from the previous section) will compile and
+run without deadlock, but is somewhat unexciting to watch -- all the action is
+internal and we can't see it.  The following modification connects the college
+to the (KRoC) screen (= UNIX stdout) and shares this channel amongst all its
+internal processes (15 in all, of which the number active simultaneously varies
+dynamically between 5 and 10).  It is wrapped in a complete (KRoC) occam2.1
+program:
+
+  #INCLUDE "semaphore.inc"
+  #USE "utils"               -- in the course directory of the KRoC release
+
+  PROC dining.philosophers (CHAN OF BYTE keyboard, screen, error)
+    --{{{  
+    
+    --{{{  PROC philosopher (VAL INT id,
+    PROC philosopher (VAL INT id,
+                      SEMAPHORE left, right,                     -- forks
+                      SEMAPHORE security,                        -- security guard
+                      CHAN OF BYTE screen, SEMAPHORE screen.s)   -- shared screen
+      --{{{  
+      #PRAGMA SHARED screen
+      #PRAGMA SHARED screen.s
+      
+      VAL INT field.width IS 14:
+      
+      WHILE TRUE
+        SEQ
+          --{{{  think-a-while
+          SEQ
+            claim.semaphore (screen.s)
+            out.string ("#", field.width*id, screen)
+            out.number (id, 0, screen)
+            out.string (" thinking*n", 0, screen)
+            release.semaphore (screen.s)
+          --}}}
+          --{{{  get past the security guard
+          SEQ
+            --{{{  trace
+            SEQ
+              claim.semaphore (screen.s)
+              out.string ("#", field.width*id, screen)
+              out.number (id, 0, screen)
+              out.string (" lemme in!!!*n", 0, screen)
+              release.semaphore (screen.s)
+            --}}}
+            claim.semaphore (security)
+            --{{{  trace
+            SEQ
+              claim.semaphore (screen.s)
+              out.string ("#", field.width*id, screen)
+              out.number (id, 0, screen)
+              out.string (" I*'m in ... *n", 0, screen)
+              out.string ("#", field.width*id, screen)
+              out.number (id, 0, screen)
+              out.string (" gimme my forks!!!*n", 0, screen)
+              release.semaphore (screen.s)
+            --}}}
+          --}}}
+          --{{{  pick up the forks
+          PAR
+            --{{{  pick up left fork
+            SEQ
+              claim.semaphore (left)
+              --{{{  trace
+              SEQ
+                claim.semaphore (screen.s)
+                out.string ("#", field.width*id, screen)
+                out.number (id, 0, screen)
+                out.string (" got left fork*n", 0, screen)
+                release.semaphore (screen.s)
+              --}}}
+            --}}}
+            --{{{  pick up right fork
+            SEQ
+              claim.semaphore (right)
+              --{{{  trace
+              SEQ
+                claim.semaphore (screen.s)
+                out.string ("#", field.width*id, screen)
+                out.number (id, 0, screen)
+                out.string (" got right fork*n", 0, screen)
+                release.semaphore (screen.s)
+              --}}}
+            --}}}
+          --}}}
+          --{{{  eat-a-while
+          SEQ
+            claim.semaphore (screen.s)
+            out.string ("#", field.width*id, screen)
+            out.number (id, 0, screen)
+            out.string (" eating*n", 0, screen)
+            release.semaphore (screen.s)
+          --}}}
+          --{{{  put down the forks
+          PAR
+            --{{{  put down left fork (no wait)
+            SEQ
+              --{{{  trace
+              SEQ
+                claim.semaphore (screen.s)
+                out.string ("#", field.width*id, screen)
+                out.number (id, 0, screen)
+                out.string (" done with left fork*n", 0, screen)
+                release.semaphore (screen.s)
+              --}}}
+              release.semaphore (left)
+            --}}}
+            --{{{  put down right fork (no wait)
+            SEQ
+              --{{{  trace
+              SEQ
+                claim.semaphore (screen.s)
+                out.string ("#", field.width*id, screen)
+                out.number (id, 0, screen)
+                out.string (" done with right fork*n", 0, screen)
+                release.semaphore (screen.s)
+              --}}}
+              release.semaphore (right)
+            --}}}
+          --}}}
+          --{{{  notify security you have finished
+          SEQ
+            --{{{  trace
+            SEQ
+              claim.semaphore (screen.s)
+              out.string ("#", field.width*id, screen)
+              out.number (id, 0, screen)
+              out.string (" lemme out !!!*n", 0, screen)
+              release.semaphore (screen.s)
+            --}}}
+            release.semaphore (security)
+          --}}}
+      --}}}
+    :
+    --}}}
+    
+    --{{{  PROC college (CHAN OF BYTE screen)
+    PROC college (CHAN OF BYTE screen)
+      --{{{  
+      #PRAGMA SHARED screen
+      
+      SEMAPHORE screen.s:
+      #PRAGMA SHARED screen.s
+      
+      [5]SEMAPHORE fork:
+      #PRAGMA SHARED fork
+      
+      SEMAPHORE security:
+      #PRAGMA SHARED security
+      
+      SEQ
+        --{{{  initialise semaphores
+        SEQ
+          SEQ i = 0 FOR 5
+            initialise.semaphore (fork[i], 1)      -- forks are used exclusively
+          initialise.semaphore (security, 4)       -- security allows four at a time
+          initialise.semaphore (screen.s, 1)       -- screen is used exclusively
+        --}}}
+        PAR i = 0 FOR 5
+          philosopher (i, fork[i], fork[(i + 1)\5], security, screen, screen.s)
+      --}}}
+    :
+    --}}}
+    
+    college (screen)
+    --}}}
+  :
+
+This is not the most interesting animation of the dining philosophers life,
+but it illustrates how easy it has become to instrument parallel processes
+so that they can report their state.  A more exciting animation is on:
+
+  <URL:http://www.hensa.ac.uk/parallel/occam/projects/occam-for-all/hlps/>
+  <URL:ftp://unix.hensa.ac.uk/pub/parallel/occam/projects/occam-for-all/hlps/>
+
+This was designed by a second year undergraduate at Kent.  The system contains
+some 52 processes (42 to 47 simultaneously active), with 25 drawing on the
+screen via a single SHARED channel.
+
+--}}}
+
+--}}}
+
+--{{{  RESOURCEs
+
+--{{{  RESOURCEs and SHARED channels
+
+RESOURCEs and RESOURCE.CHANNELs are concepts designed into the instruction
+set of the T9000 transputer.  They were, probably, intended just to implement
+occam3 SHARED channels and we only consider them for that purpose here.
+Their advantage over SEMAPHOREs is that they directly yield a distributed
+implementation for a SHARED channel over a non-shared-memory MIMD parallel
+computer (such as a transputer network or cluster of workstations).  Their
+disadvantage is that they are more complex to understand and use.  A good
+description may be found in chapter 2 of [4].
+
+[Note: there is a way to implement a distributed SHARED channel that just uses
+SEMAPHOREs and holds waiting clients on a distributed `weak-FIFO' queue.  This
+will be described in a separate report.]
+
+Anyway, for this method of implementing a SHARED channel (or channel-pair),
+we need:
+
+  o an array of channels (or channel-pairs): a separate element connecting
+    each client to the server;
+
+  o an array of RESOURCE.NODEs: one for each client;
+
+  o a RESOURCE data structure.
+
+Note that the first item above is just what we use for the standard occam2
+method -- communications over the SHARED channel travel courtesy of ordinary
+channels that are not physically shared at all!
+
+Note also that in the T9000 implementation, the channel and RESOURCE.NODE
+arrays are combined into a single `RESOURCE.CHANNEL' array.  We have separated
+them (for this prototype implementation) because occam2.1 does not directly
+support the mixing of channel fields with data fields in a single structure.
+
+There are other differences between this and the T9000 implementation that
+will be explained later.
+
+--}}}
+
+--{{{  RESOURCE Abstract Data Type (documentation)
+
+The current KRoC release implements:
+
+  DATA TYPE RESOURCE
+
+    Users may declare their own RESOURCE variables and pass them as reference
+    parameters.  One RESOURCE should be declared to control access to each
+    SHARED channel.  RESOURCE data-structures must not be duplicated by
+    assignment or communication through channels.
+
+    Only the server process for the shared resource sees the RESOURCE.
+
+    A RESOURCE is an occam2.1 RECORD with one public field [channel.id].
+    This must only be read by the server, immediately after executing a GRANT.
+
+    [This public field breaks the Abstract Data Type rules and will be removed
+    in the next release.]
+
+  DATA TYPE RESOURCE.NODE
+
+    Users may declare their own RESOURCE.NODE variables and pass them as
+    parameters.  One RESOURCE.NODE should be declared for each client that
+    wishes to access each SHARED channel.  RESOURCE.NODEs must not be
+    duplicated by assignment or communication through channels.
+
+    Each client process for the shared resource has one RESOURCE.NODE.
+
+  PROC initialise.resource (RESOURCE resource)
+
+    The RESOURCE structure used by the server for the SHARED channel must
+    be initialised with this routine.
+
+  PROC mark.resource.node (RESOURCE.NODE node, VAL INT chan.id, RESOURCE resource)
+
+    Each client must have a channel (or channel-pair) connection to the server,
+    as well as a RESOURCE.NODE.  Each RESOURCE.NODE must be initialised using
+    this routine to associate it with this channel (or channel-pair), as well
+    as with the main RESOURCE data-structure held by the server.  The `chan.id'
+    value is either an index into the channel array implementing the SHARED
+    channel or is a direct pointer to the corresponding channel.
+
+    This routine is not normally called directly.  Instead, one of the two
+    following routines would be called to initialise *all* the RESOURCE.NODEs.
+
+  PROC mark.resource.indices ([]RESOURCE.NODE node, RESOURCE resource)
+
+    This routine calls `mark.resource.node' to initialise all the elements
+    of the RESOURCE.NODE array, using each element's index for the `chan.id'.
+
+    It assumes there is a matching array of channels (or channel-pairs) and
+    that each RESOURCE.NODE is to be associated with the corresponding element
+    of that array.  This will be the usual case.
+
+    [This routine is an alternative to `mark.resource.pointers'.]
+
+  PROC mark.resource.pointers ([]RESOURCE.NODE node, VAL []INT pointer,
+                               RESOURCE resource)
+
+    This routine calls `mark.resource.node' to initialise all the elements
+    of the RESOURCE.NODE array.  It uses the corresponding element from the
+    `pointer' array for the `chan.id' associated with each RESOURCE.NODE.
+
+    The `pointer' array must, of course, be set to the addresses of the
+    channels we wish to associate with the corresponding RESOURCE.NODEs.
+    The channel addresses can be found through RETYPEs to VAL INTs.
+
+    [This routine is an alternative to `mark.resource.indices'.]
+
+  PROC claim.resource (RESOURCE.NODE node)
+
+    A client process must claim its RESOURCE.NODE before using its channel
+    (or channel-pair) to transact business over the SHARED channel.  The
+    client will be queued (behind other clients) until the server can deal
+    with it.
+
+  PROC grant.resource (RESOURCE resource)
+
+    The server must grant its RESOURCE before it can transact business over
+    the SHARED channel.  The server will be blocked until at least one client
+    is waiting.  The channel identifier of the first waiting client will be
+    found in `resource[channel.id]' when the server is re-scheduled and this
+    procedure terminates.
+
+    [Note: from KRoC 0.9beta onwards, this routine will have an extra INT
+    parameter, passed by reference, into which this channel identifier will
+    be written.  This will maintain a proper Abstract Data Type interface
+    for the RESOURCE.]
+
+--}}}
+
+--{{{  Implementation of CLAIM and GRANT
+
+The earlier occam3 example of a client transaction over a SHARED channel was:
+
+  CLAIM c
+    --{{{  use any of the channels within c
+    SEQ
+      c[request] ! some.request
+      c[reply] ? some.reply
+      ...   follow-up questions and answers
+    --}}}
+
+In occam2.1, the client will have its (unshared) pair of channels, `c.request'
+and `c.reply', together with its own RESOURCE.NODE `c.rn'.  Then, the above
+translates into:
+
+  SEQ
+    claim.resource (c.rn)
+    --{{{  use any of the channels within c
+    SEQ
+      c.request ! some.request
+      c.reply ? some.reply
+      ...   follow-up questions and answers
+    --}}}
+
+The matching server transaction in occam3 looks like:
+
+  GRANT c
+    --{{{  use any of the channels within c
+    ...  local declarations
+    SEQ
+      c[request] ? some.request
+      ...  compute the correct response
+      c[reply] ! some.reply
+      ...   follow-up questions and answers
+    --}}}
+
+In occam2.1, the server sees an array of `c.request' and `c.reply' channels
+plus the RESOURCE `c.r' (managing the SHARED channel-pair).  The above code
+becomes:
+
+  SEQ
+    grant.resource (c.r)
+    --{{{  use any of the channels within c
+    CHAN OF REQUEST client.request IS c.request[c.r[channel.id]]:
+    CHAN OF REQUEST client.reply IS c.reply[c.r[channel.id]]:
+    ...  local declarations
+    SEQ
+      client.request ? some.request
+      ...  compute the correct response
+      client.reply ! some.reply
+      ...   follow-up questions and answers
+    --}}}
+
+--}}}
+
+--{{{  Example client-server application
+
+The following example is a complete (KRoC) occam2.1 program demonstrating the
+RESOURCE method for implementing a SHARED channel connection.
+
+There are ten clients and one server.  A client-server transaction is the
+transmission of one line of text over a BYTE stream.  Clients are numbered
+1 through 10.  Client `n' tries to send its message every `n' seconds and
+all clients start (approximately) together.  On second 10, clients 1, 2, 5
+and 10 compete for the channel.  For prime numbered seconds above 10, only
+client 1 is active.  On second 30240 (5 hours, 24 minutes), all clients are
+active ... if you want to wait to see them:
+
+  #INCLUDE "resource.inc"
+  #USE "utils"
+
+  PROC resource.test (CHAN OF BYTE keyboard, screen, error)
+    --{{{  
+    
+    --{{{  client
+    PROC client (VAL INT n, TIMER tim, VAL INT start.time,
+                 RESOURCE.NODE out.rn, CHAN OF BYTE out)
+      --{{{  
+      VAL INT seconds IS 1000000:
+      INT real.time, logical.time:
+      SEQ
+        logical.time, real.time := 0, start.time
+        WHILE TRUE
+          SEQ
+            --{{{  wait for next time slot (one every n seconds)
+            SEQ
+              logical.time := logical.time PLUS n
+              real.time := real.time PLUS (n*seconds)
+              tim ? AFTER real.time
+            --}}}
+            claim.resource (out.rn)
+            --{{{  transact with server
+            SEQ
+              out.number (logical.time, 0, out)
+              out.string (": Hello resource world from ", 0, out)
+              out.number (n, 0, out)
+              out.string ("*c*n", 0, out)
+            --}}}
+      --}}}
+    :
+    --}}}
+    
+    --{{{  server
+    PROC server (RESOURCE in.r, []CHAN OF BYTE in, CHAN OF BYTE screen)
+      --{{{  
+      WHILE TRUE
+        SEQ
+          grant.resource (in.r)
+          --{{{  transact with client
+          CHAN OF BYTE client IS in[in.r[channel.id]]:
+          BYTE ch:
+          SEQ
+            ch := 0
+            WHILE ch <> '*n'
+              SEQ
+                client ? ch
+                screen ! ch
+          --}}}
+      --}}}
+    :
+    --}}}
+    
+    VAL INT n.clients IS 10:
+    
+    --{{{  SHARED CHAN OF BYTE c
+    RESOURCE c.r:
+    [n.clients]RESOURCE.NODE c.rn:
+    [n.clients]CHAN OF BYTE c:
+    --}}}
+    
+    --{{{  SHARED TIMER tim
+    TIMER tim:
+    INT start.time:
+    --}}}
+    
+    SEQ
+      --{{{  initialise
+      SEQ
+        initialise.resource (c.r)
+        mark.resource.indices (c.rn, c.r)
+        tim ? start.time
+      --}}}
+      --{{{  client-server network
+      PAR
+        --{{{  clients
+        PAR n = 0 FOR n.clients
+          client (n + 1, tim, start.time, c.rn[n], c[n])
+        --}}}
+        --{{{  server
+        server (c.r, c, screen)
+        --}}}
+      --}}}
+    
+    --}}}
+  :
+
+--}}}
+
+--{{{  Differences between this prototype and T9000 RESOURCEs
+
+In this prototype implementation of SHARED channels via RESOURCEs, both sides
+have to be aware of the sharing.  The clients have to make a CLAIM on their
+RESOURCE.NODEs and the server has to GRANT its RESOURCE.  This is in line
+with the occam3 model for a SHARED channel.
+
+However, the T9000 implementation is crucially different.  Only the server
+is aware of the sharing and it's this that enables the direct implementation
+of a distributed shared channel.
+
+As previously mentioned, the T9000 combines the channel and RESOURCE.NODE
+arrays into a single RESOURCE.CHANNEL array.  Its `mark.resource.channel'
+operation (which includes the `mark.resource.node' initialisation) also marks
+the channel -- it changes the normal `MOSTNEG INT' flag, which signifies an
+empty channel, into `(MOSTNEG INT) + 2'.
+
+Now, the client process need only output to its channel to start its server
+transaction.  The T9000 microcode implementing that output detects the special
+flag in the channel and calls the `claim.resource' operation on the adjacent
+RESOURCE.NODE automatically.  KRoC could do the same, but its kernel (that
+implements channel communication) would have to be modified and we didn't want
+to do that for this prototype.
+
+For a distributed SHARED channel, client processes on remote processors see
+only ordinary (virtual) channels and use them taking no special precaution
+(other than starting each transaction with an output).  On the processor
+containing the server process, the incoming (virtual) channels are implemented
+by the array of RESOURCE.CHANNELs.  The server processor also contains the
+RESOURCE data structure that manages the queue of waiting RESOURCE.CHANNELs
+as clients try to output to them.  After the server completes a GRANT, it
+communicates over the selected (virtual) channel connection(s) to the client
+in the normal way.
+
+--}}}
+
+--{{{  RESOURCEs versus SEMAPHOREs for SHARED channels
+
+There are four disadvantages with this RESOURCE mechanism for SHARED channels:
+
+  o At the end of a transaction, the server must re-mark the client channel
+    used to open transactions with the special flag indicating that it is
+    a RESOURCE.CHANNEL.  This means that the client must synchronise with
+    the server one more time at the end of each transaction -- the client
+    cannot be released until the server has re-marked its channel.
+
+    This final synchronisation is not needed for this prototype implementation
+    of SHARED channels via RESOURCEs; nor is it needed for the SEMAPHORE
+    implementation ... nor for the distributed SEMAPHORE implementation.
+
+  o In the SEMAPHORE mechanism for SHARED channels, the clients are aware of
+    the sharing but the server is not -- this means the server can ALT between
+    the SHARED channel and other guards using normal mechanisms.
+
+    In the RESOURCE mechanism for SHARED channels, the clients are not aware
+    of the sharing but the server is -- this means the server cannot ALT
+    between the SHARED channel and other guards using normal mechanisms.
+
+    This means that new mechanisms are need for ALTing over SHARED channels.
+    In the T9000, these are implemented by `enable.grant' and `disable.grant'
+    instructions.  These are not implemented in our prototype.
+
+  o The computational load for managing the queue of waiting clients takes
+    place just on the processor containing the server.  In the distributed
+    SEMAPHORE implementation, this load is shared between the server and
+    all client processors.  In particular, clients on separate processors
+    can join the distributed queue simultaneously.
+
+  o The SHARED channel isn't actually shared!  We still have to define and
+    wire up a private channel between each client and the server.
+
+There are two advantages with this RESOURCE mechanism for SHARED channels:
+
+  o The clients are held in a single queue and, hence, are fairly served
+    in a FIFO manner.  In the distributed SEMAPHORE implementation, the
+    clients are held in a distributed `weak-FIFO' queue, which still
+    guarantees service ... but might not be completely `fair'.
+
+  o We haven't outlined the distributed SEMAPHORE mechanism in this document!
+    The current scheme involves one extra communication (of one word) between
+    the remote client and the server at the start of each transaction.  This
+    matches the cost of the final synchronisation between the client and server
+    that is needed by the RESOURCE mechanism.
+
+--}}}
+
+--}}}
+
+--{{{  BARRIERs
+
+--{{{  Barrier synchronisation
+
+Barrier synchronisation is a common primitive in many models of parallel
+computing -- in some cases, it is an essential element.  In SIMD parallelism,
+there is global synchronisation between all processors after each instruction.
+In the slightly more flexible SPMD model, there is still just one barrier on
+which all processors synchronise; however, the point at which synchronisation
+takes place is application dependent and has to be programmed explicitly (and,
+usually, cyclically).
+
+For example, SPMD parallelism has the general form:
+
+  ...  shared global data
+  PAR i = 0 FOR n.processors
+    WHILE TRUE                -- one identical serial process per processor
+      SEQ
+        ...  do something
+        SYNC                  -- barrier: wait for all processors to get here
+
+occam already imposes an implicit barrier synchronisation at the end of each
+PAR construct.  This can be exploited to obtain the above model by moving the
+external PAR inside the serial control structure:
+
+  ...  shared global data
+  WHILE TRUE
+    PAR i = 0 FOR n.processors
+      ...  do something
+
+We now have a loop of parallel processes, each of which has to terminate,
+instead of a parallel set of loops that have to synchronise once per cycle.
+This would be disadvantageous if the start-up/shut-down overheads for
+parallel processes were large in comparison to their compute times, but
+this would not normally be the case for occam.  A more serious problem
+arises if the processors use local state that has to survive the barrier:
+
+  ...  shared global data
+  PAR i = 0 FOR n.processors
+    INITIAL INT x IS 0:       -- local state
+    WHILE TRUE
+      SEQ
+        ...  do something
+        SYNC
+
+This is, of course, a very common requirement.  Bringing the parallelism
+inside the loop forces the set of local states into the global data space:
+
+  ...  shared global data
+  INITIAL [n.processors]INT X IS [0 | i = 0 FOR n.processors]:
+  WHILE TRUE
+    PAR i = 0 FOR n.processors
+      INT x IS X[i]:
+      ...  do something
+
+which is not very pretty and threatens unnecessary run-time overhead!  It also
+breaks the natural object-oriented encapsulation of local state that occam
+processes normally provide.
+
+So, we need to introduce an explicit SYNC primitive to regain simplicity.
+
+However, occam is a MIMD parallel language and we don't want to be constrained
+by SPMD thinking.  In particular, we want to obtain a structured and dynamic
+form of barrier synchronisation.  For example, we want to allow our system
+to be composed of multiple sets of processes, each set with its own local
+barriers.  We also want the flexibility of allowing the number of processes
+synchronising on any particular barrier to grow and shrink at run-time.
+
+To achieve this, we need to be able to name barriers and associate them with
+particular sets of processes.  A named barrier is simply a CSP event and its
+association with a set of processes is just its inclusion in their alphabets.
+Barrier synchronisation is event synchronisation, but with the restriction
+that processes cannot use it as a guard in a choice operator (i.e. an ALT
+guard in occam terms).  There is no semantic problem in allowing the number
+of processes interested in an event to change dynamically.
+
+There is no pragmatic problem either for an extended occam:
+
+  ...  shared global data
+  PAR i = 0 FOR n.processors BARRIER e
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      SEQ
+        ...  do something
+        SYNC e                -- named barrier
+
+The named BARRIER is declared explicitly by the above PAR construct.  This is
+the only place where BARRIERs can be declared.  The BARRIER is automatically in
+the alphabet of all components of the PAR (which means that when one component
+SYNCs on it, all components have to SYNC on it).
+
+[Note that declaring items in constructors already takes place in occam -- for
+example, the control value `i' in the above PAR.]
+
+Since the BARRIER is named, it can be passed as a parameter to PROCs that are
+called in the body of the declaring PAR.  Among other benefits, this allows
+the separate compilation of processes that are later instanced to synchronise
+on any BARRIERs the installer chooses.
+
+Note that processes sharing the same BARRIER may terminate at different times
+-- see the above example.  Terminated processes do not block the barrier SYNCs
+of those that are still running.  An elegant application of this principle is
+given later.
+
+Since this is occam, we are not restricted to the replicated PAR of SPMD.  For,
+example, the following system has three different processes synchronising on
+the named barrier:
+
+  ...  shared global data
+  PAR BARRIER e
+    ...  process A
+    ...  process B
+    ...  process C
+
+And the following system has different groups of processes synchronising on
+different barriers:
+
+  ...  shared global data
+  PAR
+    PAR BARRIER e
+      ...  process A
+      ...  process B
+      ...  process C
+    PAR BARRIER f
+      ...  process P
+      ...  process Q
+      ...  process R
+
+Finally, an BARRIER synchronising process may contain parallel sub-processes.
+Normal scoping rules imply that the sub-processes can see the BARRIER and may,
+therefore, SYNC on it.  A logical policy would be to say that the number of
+processes taking part in the barrier automatically grows for the duration of
+those sub-processes.  However, it would be more flexible to be able to specify
+which sub-processes included the existing BARRIER in their alphabet (and were,
+therefore, obliged to SYNC if the barrier represented by the BARRIER needs to
+be overcome during their lifetime).  There are two ways to get this: introduce
+either a `hiding' operator or an `enrolling' operator into the PAR construct.
+There are arguments both ways but, for now, we prefer the positive approach:
+
+  ...  shared global data
+  PAR i = 0 FOR n.processors BARRIER e
+    IF
+      need.more.parallelism (i)
+        --{{{  
+        PAR j = 0 FOR more ENROLL e
+          ...  inner processes can (and, probably, better had) SYNC on e
+        --}}}
+      TRUE
+        --{{{  as before
+        INITIAL BOOL running IS TRUE:
+        WHILE running
+          SEQ
+            ...  do something
+            SYNC e                -- named barrier
+        --}}}
+
+Alternatively, components of inner PARs may be enrolled individually in an
+outer BARRIER:
+
+  ...  shared global data
+  PAR i = 0 FOR n.processors BARRIER e
+    IF
+      need.more.parallelism (i)
+        --{{{  
+        PAR
+          ENROLL e
+            ...  process A (includes e in its alphabet)
+          ENROLL e
+            ...  process B (includes e in its alphabet)
+          ...  process C (does not include e in its alphabet)
+        --}}}
+      TRUE
+        --{{{  as before
+        INITIAL BOOL running IS TRUE:
+        WHILE running
+          SEQ
+            ...  do something
+            SYNC e                -- named barrier
+        --}}}
+
+Processes `A' and `B' in the above have to partake in `SYNC e', but process
+`C' does not and cannot!
+
+Explicit enrollment means that un-enrolled BARRIERs are automatically hidden
+from sub-components of the PAR and that any attempt to SYNC on them would be
+rejected by the compiler.
+
+Finally, we note that:
+
+  PAR ENROLL e
+    ...  process A
+    ...  process B
+    ...  process C
+
+is equivalent to:
+
+  PAR
+    ENROLL e
+      ...  process A
+    ENROLL e
+      ...  process B
+    ENROLL e
+      ...  process C
+
+--}}}
+
+--{{{  BARRIER Abstract Data Type (documentation)
+
+The current KRoC release implements:
+
+  DATA TYPE BARRIER
+
+    Users may declare their own BARRIER variables and pass them as reference
+    parameters.  They should only be declared in association with the PAR
+    construct that sets up the processes that synchronise on them.  BARRIERs
+    must not be duplicated by assignment or communication through channels.
+
+  PROC initialise.event (BARRIER e, VAL INT count)
+
+    Each BARRIER must be initialised with this routine before starting the
+    associated PAR construct.  The `count' value is the number of processes
+    in that PAR.
+
+  PROC resign.event (BARRIER e)
+
+    Each process in the associated PAR construct must execute this routine
+    just before it terminates.
+
+  PROC synchronise.event (BARRIER e)
+
+    This may be called by any process in the associated PAR construct.  The
+    calling process will be blocked until all its sibling processes (in the
+    PAR) have also called it or have resigned.
+
+  PROC enroll.event (BARRIER e, VAL INT count)
+
+    This needs to be called before and after nested PAR constructs, whose
+    components are being enrolled on the BARRIER.  Before the PAR, the `count'
+    value is one less than the number of components being enrolled.  After
+    the PAR, the `count' is one.
+
+[Note: these routines exposed a bug in the KRoC implementation of a transputer
+instruction (SAVEL) not previously exercised.  This bug does not affect occam
+programs unless they contain ASM blocks that generate SAVEL explicitly.  This
+bug has been corrected but the fix will not be available until the 0.9beta
+release of KRoC.  Meanwhile, routines `resign.event' and `synchronise.event',
+as released in 0.8beta and 0.81beta, do not work reliably.  For KRoC releases
+up to 0.81beta, a temporary version of this BARRIER abstract data type, that
+compensates for the bad implementation of SAVEL, can be obtained from:
+
+  <URL:http://www.hensa.ac.uk/parallel/occam/projects/occam-for-all/kroc/event_patch.inc>
+  <URL:ftp://unix.hensa.ac.uk/pub/parallel/occam/projects/occam-for-all/kroc/event_patch.inc>
+
+This temporary version must *not* be used following KRoC release 0.9beta.]
+
+[Note: `enroll.event' is not included in the 0.8beta/0.81beta releases, but
+will be in the 0.9beta release.  However, its implementation is so trivial:
+
+  INLINE PROC enroll.event (BARRIER e, VAL INT count)
+    --{{{  
+    SEQ
+      e[active] := e[active] + count
+      e[count] := e[count] + count
+    --}}}
+  :
+
+that we include it here for those who can't wait.]
+
+--}}}
+
+--{{{  Implementation of proposed barriers
+
+Barrier synchronisation is normally intended to support physical concurrency.
+The syntax and semantics with which we have been experimenting are aimed at
+(virtual) shared-memory multi-processors.
+
+The current implementation is only for uni-processors.  Nevertheless, the
+event synchronisation may still prove useful ...
+
+Anyway, the following system:
+
+  ...  shared global data
+  PAR i = 0 FOR n.processors BARRIER e
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      SEQ
+        ...  do something
+        SYNC e                -- named barrier
+
+is implemented as follows:
+
+  ...  shared global data
+  --{{{  SHARED BARRIER e
+  BARRIER e:
+  #PRAGMA SHARED e
+  --}}}
+  SEQ
+    initialise.event (e, n.processors)
+    PAR i = 0 FOR n.processors
+      SEQ
+        INITIAL BOOL running IS TRUE:
+        WHILE running
+          SEQ
+            ...  do something
+            synchronise.event (e)
+        resign.event (e)
+
+The MIMD system:
+
+  ...  shared global data
+  PAR
+    PAR BARRIER e
+      ...  process A
+      ...  process B
+      ...  process C
+    PAR BARRIER f
+      ...  process P
+      ...  process Q
+      ...  process R
+
+translates to:
+
+  ...  shared global data
+  PAR
+    --{{{  SHARED BARRIER e
+    BARRIER e:
+    #PRAGMA SHARED e
+    --}}}
+    SEQ
+      initialise.event (e, 3)
+      PAR
+        SEQ
+          ...  process A
+          resign.event (e)
+        SEQ
+          ...  process B
+          resign.event (e)
+        SEQ
+          ...  process C
+          resign.event (e)
+    --{{{  SHARED BARRIER f
+    BARRIER f:
+    #PRAGMA SHARED f
+    --}}}
+    SEQ
+      initialise.event (f, 3)
+      PAR
+        SEQ
+          ...  process P
+          resign.event (f)
+        SEQ
+          ...  process Q
+          resign.event (f)
+        SEQ
+          ...  process R
+          resign.event (f)
+
+Nested enrollment:
+
+  PAR ENROLL e
+    ...  process A
+    ...  process B
+    ...  process C
+
+maps to:
+
+  SEQ
+    enroll.event (e, 2)
+    PAR
+      SEQ
+        ...  process A
+        resign.event (e)
+      SEQ
+        ...  process B
+        resign.event (e)
+      SEQ
+        ...  process C
+        resign.event (e)
+    enroll.event (e, 1)
+
+However, there is one loose end to be tied!  The last enrolled sub-process to
+resign should not really do so (as this may complete an external barrier that
+is not warranted).  The last resignation should be folded with the subsequent
+re-enrollment and nothing should happen.  With this prototype implementation,
+we don't know when resigning whether we are the last resignation.  With an
+implementation via the run-time kernel, we will have this information and the
+loose end can be tied.
+
+--}}}
+
+--{{{  A simple example
+
+The following is a complete (KRoC) occam2.1 program demonstrating a simple
+SPMD network of processes synchronising on an BARRIER barrier.  Each process
+is cyclic, waiting for a variable amount of time before synchronising once
+per cycle.  Each process is a `client' of the SHARED `screen' channel, which
+is protected by a SEMAPHORE.  Each process announces to the `screen' when it
+tries to synchronise and when it succeeds in synchronising.
+
+  #INCLUDE "semaphore.inc"
+  #INCLUDE "event.inc"
+  #USE "utils"
+
+  PROC event.test (CHAN OF BYTE keyboard, screen, error)
+    --{{{  
+    
+    --{{{  SHARED screen
+    #PRAGMA SHARED screen
+    
+    SEMAPHORE screen.s:
+    #PRAGMA SHARED screen.s
+    --}}}
+    
+    --{{{  client
+    PROC client (VAL INT id, n.clients, BARRIER e,
+                 SEMAPHORE out.s, CHAN OF BYTE out)
+      --{{{  
+      INT n:
+      SEQ
+        n := id
+        WHILE TRUE
+          SEQ
+            --{{{  wait n seconds
+            VAL INT seconds IS 1000000:
+            TIMER tim:
+            INT t:
+            SEQ
+              tim ? t
+              tim ? AFTER t PLUS (n*seconds)
+            --}}}
+            --{{{  say ready to synchronise
+            SEQ
+              claim.semaphore (out.s)
+              out.number (id, 0, out)
+              out.string (" ready to synchronise*c*n", 0, out)
+              release.semaphore (out.s)
+            --}}}
+            synchronise.event (e)
+            --{{{  tell the world
+            SEQ
+              claim.semaphore (out.s)
+              out.string ("==> ", 40, out)
+              out.number (id, 0, out)
+              out.string (" over the barrier ...*c*n", 0, out)
+              release.semaphore (out.s)
+            --}}}
+            n := (n.clients + 1) - n         -- simple variation for the timeout
+      --}}}
+    :
+    --}}}
+    
+    VAL INT n.clients IS 10:
+    
+    --{{{  SHARED BARRIER e
+    BARRIER e:
+    #PRAGMA SHARED e
+    --}}}
+    
+    SEQ
+      --{{{  initialise
+      SEQ
+        initialise.semaphore (screen.s, 1)
+        initialise.event (e, n.clients)
+      --}}}
+      --{{{  client network (serviced by the screen channel)
+      PAR n = 0 FOR n.clients
+        client (n + 1, n.clients, e, screen.s, screen)
+      --}}}
+    
+    --}}}
+  :
+
+It is hard to resist (and, so, we don't) turning this into its higher-level
+form:
+
+  #USE "utils"
+
+  PROC event.test (CHAN OF BYTE keyboard, SHARED CHAN OF BYTE screen, error)
+    --{{{  
+    
+    --{{{  client
+    PROC client (VAL INT id, n.clients, BARRIER e, SHARED CHAN OF BYTE out)
+      --{{{  
+      INT n:
+      SEQ
+        n := id
+        WHILE TRUE
+          SEQ
+            ...  wait n seconds
+            --{{{  say ready to synchronise
+            CLAIM out
+              SEQ
+                out.number (id, 0, out)
+                out.string (" ready to synchronise*c*n", 0, out)
+            --}}}
+            SYNC e
+            --{{{  tell the world
+            CLAIM out
+              SEQ
+                out.string ("==> ", 40, out)
+                out.number (id, 0, out)
+                out.string (" over the barrier ...*c*n", 0, out)
+            --}}}
+            n := (n.clients + 1) - n         -- simple variation for the timeout
+      --}}}
+    :
+    --}}}
+    
+    VAL INT n.clients IS 10:
+    
+    --{{{  client network (serviced by the screen channel)
+    PAR n = 0 FOR n.clients BARRIER e
+      client (n + 1, n.clients, e, screen)
+    --}}}
+    
+    --}}}
+  :
+
+The point is not the modest reduction in code length but the absence of special
+#PRAGMAs, explicit SEMAPHOREs and explicit SEMAPHORE and BARRIER initialisation.
+It is these absences, the automatic initialisation (by the compiler) of all
+necessary primitives, the prevention (by the compiler) of any attempted BARRIER
+duplication via assignment or communication and the mandatory use of the CLAIM
+mechanism for the SHARED channel (by the compiler) that makes the high-level
+bindings secure and, hence, desirable.
+
+--}}}
+
+--{{{  A shared accumulator (and implicitly parallel recursive lazy functional occam)
+
+occam2 has a formal denotational semantics in terms of the traces, failures
+and divergences model of CSP [5, 6].  This can be extended, in a natural way,
+to cover all the language extensions discussed here.
+
+Otherwise, the state-of-the-art in parallel languages is somewhat bleak.  There
+are no formal semantics on offer for `lightweight' threads libraries (even
+though they are becoming standardised) nor for Java threads (where, at least,
+the concept is bound into the language).  Indeed, it is very difficult to find
+even informal descriptions -- their semantics are mainly given by example.
+
+Reference [7] describes ParC, a language extension for C giving explicit
+parallelism and synchronisation (with primitives not too far from those in
+the extended occam).  In a section titled `The Meaning of Parallelism',
+after analysing the issues for nearly one page, it reaches the following
+depressing conclusion:
+
+  ``As a consequence, distinct execution of the same program may lead to
+    different results, and even to different behaviours.  For example,
+    one execution may spawn many more activities than another, or one
+    execution may terminate with a result while another enters an infinite
+    loop.  It is therefore impossible to specify the exact semantics of
+    ParC programs.  In the absence of formal semantics, we make do with
+    a set of rules to guide the implementation of a ParC system.''
+
+Such conclusions give no optimism for a sound engineering basis for parallel
+computing and raise fundamental questions as to its viability.  Fortunately,
+the scientific insights of occam and CSP, along with those of BSP, are
+becoming available to a wider audience.  Unfortunately, resistance to the
+concept of sound engineering is hard to underestimate in today's mainstream
+computer culture.
+
+Anyway, this example is taken from [7] but expressed now in terms of occam.
+The problem is to add up the elements of an array in O(log n) time.
+
+The first solution is expressed in only modestly upgraded occam, making use
+of the natural barriers marking the termination of PAR constructs:
+
+  PROC sum ([]INT A)              -- with implicit barrier sync
+    --{{{  COMMENT specification
+    --assume : (SIZE A) = (2**N), for some N >= 0
+    --spec : A'[0] = SIGMA {A[i] | i = 0 FOR SIZE A}
+    --}}}
+    --{{{  implementation
+    INITIAL INT n IS SIZE A:  -- INVARIANT:
+    INITIAL INT stride IS 1:  -- (n*stride) = (SIZE A)
+    WHILE n > 1
+      SEQ
+        n, stride := n >> 1, stride << 1
+        PAR i = 0 STEP stride FOR n
+          A[i] := A[i] + A[i + (stride >> 1)]
+    --}}}
+  :
+
+The `modest' extensions are the INITIALising declarations (of occam3 and used
+previously), the STEP in the replicator (very convenient for numeric algorithms
+and straightforward to implement) and the variable number of replications in
+the PAR construct (no semantic but a serious implementation problem, although
+a unified virtual shared-memory address space simplifies matters considerably).
+
+The algorithm is simple.  In the first loop, a process is spawned for all the
+even elements in the array (`stride' is 2 and `n' is half the array size);
+this process adds into its element the value of its odd (senior) neighbour.
+In the second loop, a process is spawned for every fourth element (stride = 4)
+that accumulates the contents of their neighbour two (i.e. half-a-`stride')
+above them; every fourth element now holds the sum of all the elements within
+its `stride'.  This continues until `stride' reaches the size of the array
+(and `n' drops to 1); after which `A[0]' holds the complete sum and the loop
+terminates.
+
+A slight drawback is that the array size must be a power of two.  Other sizes
+could be handled but the simplicity of the code would be damaged.
+
+Parallel security is easy to establish.  Each parallel process updates element
+`A[i]', where each `i' is different (so no race-hazard there).  The process
+updating `A[i]' uses the value in an element half-a-`stride' away.  But no
+other process is looking at these half-`stride' values since they are all
+separated by a `stride' (so no race-hazard there).  QED.  Getting such proofs
+checked mechanically (e.g. by the compiler) looks possible and will ultimately
+be necessary.
+
+Of course, the fine granularity of the parallelism in the above example would
+scuttle any hoped-for performance gain from current parallel architectures,
+although future designs (such as the `ParaPC' [8, 9]) could lap it up.  In the
+meantime, the example serves as a model for combining operators richer than
+addition and which current architectures may be able to exploit.
+
+The second solution commutes the PAR and the WHILE constructs, catering for
+those who fear the costs of starting up and shutting down processes.  The
+result is an SPMD-like algorithm with explicit barrier synchronisation,
+which occam can now comfortably express:
+
+  PROC sum ([]INT A)              -- with explicit barrier sync
+    --{{{  COMMENT specification
+    --assume : (SIZE A) = (2**N), for some N >= 0
+    --spec : A'[0] = SIGMA {A[i] | i = 0 FOR SIZE A}
+    --}}}
+    --{{{  implementation
+    PAR i = 0 FOR SIZE A BARRIER e
+      INT accumulate IS A[i]:
+      INITIAL INT n IS (i = 0) -> SIZE A, i:
+      INITIAL INT stride IS 1:
+      WHILE (n /\ 1) = 0          -- even (n)
+        SEQ
+          accumulate := accumulate + A[i + stride]
+          n, stride := n >> 1, stride << 1
+          SYNC e
+    --}}}
+  :
+
+We have sneaked conditional expressions into the language (since they simplify
+one of the initialising declarations above).  The syntax used is just that
+already implemented for the occam configuration language in the SGS-Thomson
+Toolset:
+
+  boolean-expression -> expression, expression
+
+which simply yields the first or second `expression', depending on the value
+of the `boolean-expression'.  Both `expression's must, of course, yield the same
+type.  Note that occam2 already can express the above:
+
+  [expression, expression][INT boolean-expression]
+
+although it is not quite so understandable!  The order of the `expression's
+must be reversed since FALSE and TRUE map (under INT) to 0 and 1 respectively.
+Also, the current implementation will evaluate both `expression's at run-time
+before discarding the unselected one (unless `boolean-expression' is constant).
+
+The conditional expression is a distraction ... forget them!  Please compare
+the new version of `sum' with the old.  This time processes are set up once
+for each element of the array (abbreviated locally to `accumulate').  The
+odd processes immediately terminate.  That leaves the even processes adding
+their odd (senior) neighbours to themselves, exactly as before.  At the end
+of each loop, the active processes synchronise on the barrier and half of
+them drop out.  Recall that that does not prevent the remaining processes
+synchronising on their next loop.  Events continue until there is only one
+process left, which accumulates the final answer into `A[0]' and terminates.
+There are now no processes left and the outer PAR construct terminates and
+the PROC returns.
+
+Security against race-hazards is somewhat harder to prove than before.  An
+elegant way to establish this would be to find some semantic-preserving
+transformations (that can be mechanised) to change the first version into
+the second.  This is left as an exercise for the reader.
+
+One optimising transformation on the second version that is too tempting
+to resist is as follows.  Since the odd processes terminate without ever
+doing anything, don't set them up in the first place!  This is achieved
+simply by changing the PAR constructor:
+
+  PROC sum ([]INT A)              -- with explicit barrier sync
+    ...  COMMENT specification
+    --{{{  implementation
+    PAR i = 0 STEP 2 FOR (SIZE A) >> 1
+      ...  as before
+    --}}}
+  :
+
+Finally, for those who find barrier synchronisation a little unnatural, here
+is a taste of some much wilder ideas.  The following code also sums its array
+in O(log n) time but:
+
+  o is (first order) functional, relying on the compiler and run-time system
+    to extract the parallelism that is always implicit in occam expressions
+    (which are free from side-effects and can, therefore, be executed in any
+    order or concurrently);
+
+  o is recursive -- however, implementation techniques that enable variable
+    PAR replication also enable recursion;
+
+  o has no global synchronisations, only local synchronisations implied by
+    (add) operators requiring the (two) processes computing their operands
+    to terminate before they can operate;
+
+  o is efficient in that the (parallel) execution tree for small array
+    fragments has been preset by standard loop unrolling -- however, the
+    implementation of table lookup at run-time needs to be made lazy for the
+    way we have chosen to express the unravelled loop to work sensibly;
+
+  o has automatic parallel security, derived from the semantics of occam
+    expressions;
+
+  o handles arrays of any size -- not just powers of two.
+
+It's also pretty neat:
+
+  INT FUNCTION sum (VAL []INT A) IS
+    --{{{  COMMENT specification
+    --spec : returns SIGMA {A[i] | i = 0 FOR SIZE A}
+    --}}}
+    --{{{  implementation
+    
+    (SIZE A) <= 8) ->
+    
+      [A[0],
+       A[0] + A[1],
+       A[0] + (A[1] + A[2]),
+       (A[0] + A[1]) + (A[2] + A[3]),
+       (A[0] + A[1]) + (A[2] + (A[3] + A[4])),
+       (A[0] + (A[1] + A[2])) + (A[3] + (A[4] + A[5])),
+       (A[0] + (A[1] + A[2])) + ((A[3] + A[4]) + (A[5] + A[6])),
+       ((A[0] + A[1]) + (A[2] + A[3])) + ((A[4] + A[5]) + (A[6] + A[7]))]
+       [(SIZE A) - 1],
+    
+      sum ([A FOR (SIZE A) >> 1]) + sum ([A FROM (SIZE A) >> 1 ])]:
+    
+    --}}}
+
+Now, all we need is a ParaPC on which to run it.
+
+--}}}
+
+--}}}
+
+--{{{  BUCKETs
+
+--{{{  Bucket synchronisation
+
+This is an idea from Jon Kerridge of Napier University ... we are not to blame!
+He was working on large scale discrete event simulation and we give a hint as
+to why he wanted BUCKETs presently.
+
+Bucket synchronisation is a small variation on barrier synchronisation.  With
+barrier synchronisation, processes are not released until all processes have
+reached the barrier.  With bucket synchronisation, processes are released
+by explicit command, which can happen at any time.  There is no automatic
+release when `all' processes have synchronised.  It opens up some interesting
+control applications.
+
+The bucket effect can be achieved using channel synchronisation and arrays.
+However, pre-determined array sizes, wiring problems and computational overhead
+(linear with the number of processes involved) make this pretty uncomfortable.
+
+Our BUCKETs have a fixed space overhead (4 words), regardless of the number of
+processes `falling' into them, and a fixed (very low) time overhead for each
+`fall' and each `flush', regardless of the number of processes being released.
+
+--}}}
+
+--{{{  BUCKET Abstract Data Type (documentation)
+
+The current KRoC release implements:
+
+  DATA TYPE BUCKET
+
+    Users may declare their own BUCKET variables and pass them as parameters.
+    They should only be declared in association with the PAR construct that
+    sets up the processes that synchronise on them.  BUCKETs must not be
+    duplicated by assignment or communication through channels.
+
+  PROC initialise.bucket (BUCKET b)
+
+    Each BUCKET must be initialised with this routine before starting the
+    associated PAR construct.
+
+  PROC fall.into.bucket (BUCKET b)
+
+    This may be called by any process in the associated PAR construct.  The
+    calling process will be blocked until the bucket is flushed.
+
+  PROC flush.bucket (BUCKET b)
+
+    This should be called by just one process (the BUCKET manager) in the
+    associated PAR construct.  It reschedules all processes in the BUCKET.
+
+  INT FUNCTION number.in.bucket (VAL BUCKET b)
+
+    This returns the number of processes currently in the bucket.
+
+    [Although this `function' causes no side-effect, its argument is not
+    really a `value'.  BUCKET variables (like CHAN, PORT, TIMER, SEMAPHORE,
+    RESOURCE, RESOURCE.NODE and BARRIER variables) do not have the simple
+    semantics of data variables.  They are passive, but volatile, objects
+    whose `values' can be changed under our feet by activities elsewhere.
+    They have no place in expressions.  KRoC 0.9beta will, probably, change
+    this into a PROC returning its answer through a reference parameter.]
+
+    [Also, this operation yields information that may have no use; in which
+    case, it will be withdrawn from future releases (because its maintenance
+    imposes a small space and time overhead for the other operations).  We
+    would like feedback on this.]
+
+[Note: this abstract data type is currently implemented using BARRIER.  It is,
+therefore, affected by the same bug (in the KRoC implementation of SAVEL)
+previously reported.  For KRoC versions before 0.9beta, the temporary version
+of BARRIER must be obtained -- please see the note at the end of the BARRIER
+documentation.]
+
+--}}}
+
+--{{{  A simple example
+
+
+The following is a complete (KRoC) occam2.1 program demonstrating a simple
+application of BUCKETs.  There are ten clients, one bucket and one flusher.
+The clients are numbered 1 through 10.  Client `i' waits `i' seconds and,
+then, falls into the bucket; when released it repeats this behaviour.  The
+flusher flushes the bucket whenever the keyboard delivers a character (i.e.
+when most keys are pressed).  Each client shares the screen channel and
+reports what is happening.
+
+  #INCLUDE "semaphore.inc"
+  #INCLUDE "event.inc"         -- buckets are currently implemented
+  #INCLUDE "bucket.inc"        -- in terms of events
+  #USE "utils"
+
+  PROC bucket.test (CHAN OF BYTE keyboard, screen, error)
+    --{{{  
+    
+    --{{{  SHARED screen
+    #PRAGMA SHARED screen
+    
+    SEMAPHORE screen.s:
+    #PRAGMA SHARED screen.s
+    --}}}
+    
+    --{{{  client
+    PROC client (VAL INT id, BUCKET b,
+                 SEMAPHORE out.s, CHAN OF BYTE out)
+      --{{{  
+      WHILE TRUE
+        SEQ
+          --{{{  wait id seconds
+          VAL INT seconds IS 1000000:
+          TIMER tim:
+          INT t:
+          SEQ
+            tim ? t
+            tim ? AFTER t PLUS (id*seconds)
+          --}}}
+          --{{{  say we are ready to synchronise
+          SEQ
+            claim.semaphore (out.s)
+            out.number (id, 0, out)
+            out.string (" falling into bucket*c*n", 0, out)
+            release.semaphore (out.s)
+          --}}}
+          fall.into.bucket (b)
+          --{{{  tell the world we are back
+          SEQ
+            claim.semaphore (out.s)
+            out.string ("==> ", 40, out)
+            out.number (id, 0, out)
+            out.string (" flushed ...*c*n", 0, out)
+            release.semaphore (out.s)
+          --}}}
+      --}}}
+    :
+    --}}}
+    
+    --{{{  flusher
+    PROC flusher (CHAN OF BYTE in, BUCKET b)
+      --{{{  
+      WHILE TRUE
+        SEQ
+          --{{{  wait for signal
+          BYTE ch:
+          in ? ch
+          --}}}
+          flush.bucket (b)
+      --}}}
+    :
+    --}}}
+    
+    VAL INT n.clients IS 10:
+    
+    --{{{  SHARED BUCKET b
+    BUCKET b:
+    #PRAGMA SHARED b
+    --}}}
+    
+    SEQ
+      --{{{  explain
+      out.string ("*nPress a key to flush the bucket ...*n*n", 0, screen)
+      --}}}
+      --{{{  initialise
+      SEQ
+        initialise.semaphore (screen.s, 1)
+        initialise.bucket (b)
+      --}}}
+      --{{{  client-flusher network
+      PAR
+        PAR n = 0 FOR n.clients
+          client (n + 1, b, screen.s, screen)
+        flusher (keyboard, b)
+      --}}}
+    
+    --}}}
+  :
+
+There is an obvious high-level language binding for buckets:
+
+  #USE "utils"
+
+  PROC bucket.test (CHAN OF BYTE keyboard, SHARED CHAN OF BYTE screen, error)
+    --{{{  
+    
+    --{{{  client
+    PROC client (VAL INT id, BUCKET b, SHARED CHAN OF BYTE out)
+      --{{{  
+      WHILE TRUE
+        SEQ
+          ...  wait id seconds
+          --{{{  say we are ready to synchronise
+          CLAIM out
+            SEQ
+              out.number (id, 0, out)
+              out.string (" falling into bucket*c*n", 0, out)
+          --}}}
+          FALL b
+          --{{{  tell the world we are back
+          CLAIM out
+            SEQ
+              out.string ("==> ", 40, out)
+              out.number (id, 0, out)
+              out.string (" flushed ...*c*n", 0, out)
+          --}}}
+      --}}}
+    :
+    --}}}
+    
+    --{{{  flusher
+    PROC flusher (CHAN OF BYTE in, BUCKET b)
+      --{{{  
+      WHILE TRUE
+        SEQ
+          --{{{  wait for signal
+          BYTE ch:
+          in ? ch
+          --}}}
+          FLUSH b
+      --}}}
+    :
+    --}}}
+    
+    VAL INT n.clients IS 10:
+    
+    SEQ
+      --{{{  explain
+      CLAIM out
+        out.string ("*nPress a key to flush the bucket ...*n*n", 0, screen)
+      --}}}
+      --{{{  initialise
+      SEQ
+        initialise.semaphore (screen.s, 1)
+        initialise.bucket (b)
+      --}}}
+      --{{{  client-flusher network
+      PAR BUCKET b
+        PAR n = 0 FOR n.clients
+          client (n + 1, b, screen.s, screen)
+        flusher (keyboard, b)
+      --}}}
+    
+    --}}}
+  :
+
+However, the number of new keywords is growing and we need to pay attention
+to Occam's Razor!  No language extensions have yet been implemented; the new
+facilities have been prototyped through abstract data types.  For security
+reasons, this is unsatisfactory in the long term.  We need to enforce correct
+rules of use and the rules have been different for each of the primitives
+introduced so far.  Also, all the new primitives (along with CHANs, PORTs
+and TIMERs) do not have the same rights as `data' -- for example, they are
+not assignable or communicable -- so they should not be declared as `data'
+variables.
+
+SEMAPHOREs and RESOURCEs may just be alternative implementation techniques
+for SHARED channels; neither appears explicitly in any proposed language
+bindings.  One of these ideas, therefore, may be able to be removed.
+
+BUCKETs and BARRIERs, although they share many implementation details, cannot
+be merged into a single concept.  For one thing, BARRIERs (like CHANs) do not
+introduce non-determinism into a system (and may, for example, be freely used
+within FUNCTIONS).  BUCKETs (like SEMAPHOREs, RESOURCEs, PORTs, TIMERs and
+ALTing over CHANs) do introduce non-determinism and are intended to support
+applications that require it.
+
+--}}}
+
+--{{{  Discrete event simulation
+
+We go back to `resource.test', which was the example client-server application
+used earlier to demonstrate the RESOURCE implementation of SHARED channels.
+This contains ten `client' processes, each of which works for a while and,
+then, has to wait for a specific time-event.  Time is discretised into some
+particular granularity (in this case, seconds).  The specific time-events
+are regularly spaced for each process, but in general could be determined
+by what is happening in the model at run-time.
+
+Anyway, first we re-present this system, simplifying the RESOURCE mechanism
+for the SHARED screen channel to one using SEMAPHOREs:
+
+  #INCLUDE "semaphore.inc"
+  #USE "utils"
+
+  PROC discrete (CHAN OF BYTE keyboard, screen, error)
+    --{{{  
+    
+    --{{{  SHARED screen
+    #PRAGMA SHARED screen
+    
+    SEMAPHORE screen.s:
+    #PRAGMA SHARED screen.s
+    --}}}
+    
+    --{{{  client
+    PROC client (VAL INT n, TIMER tim, VAL INT start.time,
+                 SEMAPHORE out.s, CHAN OF BYTE out)
+      --{{{  
+      VAL INT seconds IS 1000000:
+      INT real.time, logical.time:
+      SEQ
+        logical.time, real.time := 0, start.time
+        WHILE TRUE
+          SEQ
+            --{{{  wait for next time slot (one every n seconds)
+            SEQ
+              logical.time := logical.time PLUS n
+              real.time := real.time PLUS (n*seconds)
+              tim ? AFTER real.time
+            --}}}
+            --{{{  write to the SHARED screen
+            SEQ
+              claim.semaphore (out.s)
+              out.number (logical.time, 0, out)
+              out.string (": Hello discrete world from ", 0, out)
+              out.number (n, 0, out)
+              out.string ("*c*n", 0, out)
+              release.semaphore (out.s)
+            --}}}
+      --}}}
+    :
+    --}}}
+    
+    VAL INT n.clients IS 10:
+    
+    --{{{  SHARED TIMER
+    TIMER tim:
+    INT start.time:
+    --}}}
+    
+    SEQ
+      --{{{  initialise
+      SEQ
+        initialise.semaphore (screen.s, 1)
+        tim ? start.time
+      --}}}
+      --{{{  clients
+      PAR n = 0 FOR n.clients
+        client (n + 1, tim, start.time, screen.s, screen)
+      --}}}
+    
+    --}}}
+  :
+
+The problem lies in the harmless-looking time-out within the `client':
+
+              tim ? AFTER real.time
+
+Attaching a process to the timer queue is an O(n) operation, where n is the
+number of processes in the queue.  Releasing a bunch of processes that are
+all queued on the same time-out (or within some discrete time interval)
+depends on the number of processes in that bunch -- they are scheduled on
+the run-queue individually.  If the numbers of processes are large (and
+they can easily reach thousands for modest simulations), the overheads can
+become damaging.
+
+If, instead, we represent time with a row of BUCKETs (one for each discrete
+time interval in the model), we can achieve the required time-out by falling
+into the BUCKET representing the desired wake-up time slot (a constant time
+operation).  We also need one `time.keeper', who sleeps through each time
+interval, wakes up and kicks over the next BUCKET in the row, flushing out
+the bunch of processes inside (a constant time operation).  The `time.keeper'
+is now the only process that ever sets real time-outs and, so, its timer
+queue operations are also constant time.
+
+We can't have an infinite row of BUCKETs and so make do with a finite number,
+arranged in a circle:
+
+  #INCLUDE "semaphore.inc"
+  #INCLUDE "event.inc"
+  #INCLUDE "bucket.inc"
+  #USE "utils"
+
+  PROC discrete (CHAN OF BYTE keyboard, screen, error)
+    --{{{  
+    
+    --{{{  SHARED screen
+    #PRAGMA SHARED screen
+    
+    SEMAPHORE screen.s:
+    #PRAGMA SHARED screen.s
+    --}}}
+    
+    --{{{  client
+    PROC client (VAL INT n, TIMER tim, VAL INT start.time, []BUCKET b,
+                 SEMAPHORE out.s, CHAN OF BYTE out)
+      --{{{  
+      VAL INT seconds IS 1000000:
+      INT real.time, logical.time:
+      SEQ
+        logical.time, real.time := 0, start.time
+        WHILE TRUE
+          SEQ
+            --{{{  wait for next time slot (one every n seconds)
+            INT t:
+            SEQ
+              logical.time := logical.time PLUS n
+              real.time := real.time PLUS (n*seconds)
+              --{{{  fall into the right bucket and wait for the right flush
+              BUCKET target IS b[logical.time \ (SIZE b)]:
+              SEQ
+                tim ? t
+                WHILE NOT (t AFTER real.time)
+                  SEQ
+                    fall.into.bucket (target)
+                    tim ? t
+              --}}}
+            --}}}
+            --{{{  write to the SHARED screen
+            SEQ
+              claim.semaphore (out.s)
+              out.number (logical.time, 0, out)
+              out.string (": Hello discrete world from ", 0, out)
+              out.number (n, 0, out)
+              out.string ("*c*n", 0, out)
+              release.semaphore (out.s)
+            --}}}
+      --}}}
+    :
+    --}}}
+    
+    --{{{  time.keeper
+    PROC time.keeper (TIMER tim, VAL INT start.time, []BUCKET b)
+      --{{{  
+      VAL INT seconds IS 1000000:
+      INT real.time, logical.time:
+      SEQ
+        logical.time, real.time := 0, start.time
+        WHILE TRUE
+          SEQ
+            --{{{  wait one second
+            SEQ
+              logical.time := logical.time PLUS 1
+              real.time := real.time PLUS (1*seconds)
+              tim ? AFTER real.time
+            --}}}
+            flush.bucket (b[logical.time \ (SIZE b)])
+      --}}}
+    :
+    --}}}
+    
+    VAL INT n.clients IS 10:  -- it is coincidental for this system
+    VAL INT n.buckets IS 10:  -- that these two values are equal.
+    
+    --{{{  SHARED BUCKETs b
+    [n.buckets]BUCKET b:
+    #PRAGMA SHARED b
+    --}}}
+    --{{{  SHARED TIMER
+    TIMER tim:
+    INT start.time:
+    --}}}
+    
+    SEQ
+      --{{{  initialise
+      SEQ
+        initialise.semaphore (screen.s, 1)
+        SEQ i = 0 FOR SIZE b
+          initialise.bucket (b[i])
+        tim ? start.time
+      --}}}
+      --{{{  client-time.keeper network
+      PAR
+        PAR n = 0 FOR n.clients
+          client (n + 1, tim, start.time, b, screen.s, screen)
+        time.keeper (tim, start.time, b)
+      --}}}
+    
+    --}}}
+  :
+
+The `time.keeper' just wanders around the circle of BUCKETs, kicking one over
+each second.  The `client's still check their watches on each BUCKET operation:
+
+  --{{{  fall into the right bucket and wait for the right flush
+  BUCKET target IS b[logical.time \ (SIZE b)]:
+  SEQ
+    tim ? t
+    WHILE NOT (t AFTER real.time)
+      SEQ
+        fall.into.bucket (target)
+        tim ? t
+  --}}}
+
+If the number of BUCKETs is at least the same as the largest required time-out
+(measured in discrete time intervals), each `client' will only fall into its
+target BUCKET once.  Otherwise, the above loop may go around several times
+before the correct timeout is reached.
+
+In the above system, the number of BUCKETs is set the same as the number of
+`client's.  This is because the largest (logical) time-out is equal to the
+number of `client's.  The system will work correctly with *any* number of
+BUCKETs, but will incur unnecessary (though minor) execution overheads if
+there are less than ten and unnecessary (though minor) space overheads if
+there are more.
+
+The high-level binding of the system contains no surprises and is mostly
+folded out below:
+
+  #USE "utils"
+
+  PROC discrete (CHAN OF BYTE keyboard, SHARED CHAN OF BYTE screen, error)
+    --{{{  
+    
+    ...  client
+    
+    ...  time.keeper
+    
+    VAL INT n.clients IS 10:  -- it is coincidental for this system
+    VAL INT n.buckets IS 10:  -- that these two values are equal.
+    
+    ...  SHARED TIMER
+    
+    SEQ
+      --{{{  initialise
+      tim ? start.time
+      --}}}
+      --{{{  client-time.keeper network
+      PAR [n.buckets]BUCKET b
+        PAR n = 0 FOR n.clients
+          client (n + 1, tim, start.time, b, screen.s, screen)
+        time.keeper (tim, start.time, b)
+      --}}}
+    
+    --}}}
+  :
+
+The only differences within the `client' and `time.keeper' codes are the
+replacement of their respective BUCKET procedure calls with FALL and FLUSH.
+The only new point of interest is the declaration of the BUCKET array in the
+PAR constructor that sets up the network.
+
+--}}}
+
+--}}}
+
+--{{{  Implementation overview and platform independence
+
+The new primitives have been introduced as abstract data types and with no
+changes to the KRoC kernel.  This means they will automatically run on any
+KRoC system (that correctly translates transputer instructions!).  Currently,
+this means KRoC 0.9beta for SPARC (SunOS/Solaris) and Alpha (OSF/1) UNIX
+workstations.  For earlier KRoC versions, you will need to obtain the patched
+version of the BARRIER routines (that compensate for the bug in implementing
+SAVEL -- see the documentation on BARRIERs above).
+
+The routines operating on the primitives are programmed as INLINE PROCs and
+use transputer ASM blocks.  This means that, with certain restrictions, they
+will also run on real transputers (using standard occam Toolsets).
+
+--{{{  SEMAPHOREs
+
+A SEMAPHORE is an occam2.1 RECORD with three fields: one holds a count and
+the others hold front and back pointers to a process queue.  Processes are
+held on this queue using the same workspace link fields that hold them on
+the run-queue (a process can never be on a SEMAPHORE-queue and the run-queue
+at the same time).  This means that no space needs to be reserved to manage
+this queue (other than the front and back pointers).
+
+A process claiming a SEMAPHORE will be put on its queue (and blocked) if its
+count is zero.  Otherwise the count is decremented.
+
+A process releasing a SEMAPHORE will re-schedule the first process from its
+queue if that queue is not null.  Otherwise, it increments the count.
+
+Both these operations work in constant time.
+
+--{{{  Transputer restrictions
+
+Scheduling of processes on and off the run-queue is managed using the normal
+transputer scheduling instructions -- run-queue registers are not modified
+directly.  This means they will be secure on a transputer even in the presence
+of high-priority process pre-emption (caused by transputer link, event or
+timer interrupts).
+
+However, manipulation of the SEMAPHORE queues themselves (or their counters)
+can be corrupted by  process pre-emption.  No danger arises if all processes
+sharing the same SEMAPHORE also share the same transputer priority.  Otherwise,
+the low-priority processes must protect their claims and releases by first
+popping into high-priority -- for example:
+
+  PRI PAR
+    claim.semaphore (s)
+    SKIP
+
+T9000 and ST20-derived transputers have extended instruction sets that include
+SEMAPHORE operations (SIGNAL and WAIT) that provide identical functionality to
+`claim.semapohre' and `release.semaphore'.  If asked, we can provide a special
+version of the SEMAPHORE abstract data type that exploits them.  In that case,
+the above work-around will not be necessary.
+
+--}}}
+
+--}}}
+
+--{{{  RESOURCEs
+
+A RESOURCE is an occam2.1 RECORD with four fields: a process descriptor for
+a waiting GRANT process, front and back pointers for a queue of RESOURCE.NODEs
+and a channel identifier of the selected CLAIMant (following a GRANT).
+
+A RESOURCE.NODE is an occam2.1 RECORD with three fields: an identifier (i.e.
+an array index or pointer) for the associated channel, a link either to the
+controlling RESOURCE or to the next RESOURCE.NODE in the RESOURCE-queue
+(initialised to the former) and the process descriptor of a waiting CLAIMant.
+
+A process claiming a RESOURCE.NODE checks the status of the GRANTer field in
+the controlling RESOURCE.  If there is no waiting GRANT process, it writes its
+descriptor into the RESOURCE.NODE, attaches this to the RESOURCE-queue and
+blocks.  Otherwise, it copies the channel identifier from the RESOURCE.NODE
+to the RESOURCE and re-schedules the blocked GRANTer.
+
+A process granting a RESOURCE checks the RESOURCE-queue.  If this is empty,
+it writes its descriptor into the RESOURCE and blocks.  Otherwise, it copies
+the channel identifier from the first RESOURCE.NODE in the queue into the
+RESOURCE, removes that RESOURCE.NODE from the queue, resets its link to point
+back to the RESOURCE and re-schedules the waiting CLAIMant.
+
+Both the above operations work in constant time.
+
+Regardless as to whether CLAIMants have to form a queue (boom) or a GRANTer
+has to block (recession), the channel identifier of a waiting CLAIMant will
+be in the RESOURCE upon termination of a GRANT.
+
+--{{{  Transputer restrictions
+
+These are the same as for SEMAPHOREs.  If one of the CLAIMing processes (or
+the GRANTing process) runs at high-priority, all low-priority processes must
+protect the claims and grants associated with that RESOURCE by popping into
+high-priority.
+
+T9000 transputers have a RESOURCE/RESOURCE.CHANNEL mechanism slightly different
+from the RESOURCE/RESOURCE.NODE abstract data type we have implemented.  As
+discussed above, occam2.1 does not quite give us all the structures necessary
+to model the T9000 RESOURCE instructions -- their direct exploitation will
+probably have to await a proper language binding.
+
+--}}}
+
+--}}}
+
+--{{{  BARRIERs
+
+An BARRIER is an occam2.1 RECORD with four fields: two integer counts (for the
+number of processes registered and the number that have not yet synchronised)
+and the front and back pointers to a process queue.
+
+A process synchronising on an BARRIER decrements its synchronisation count.  If
+this has not reached zero, it attaches itself to the BARRIER-queue and blocks.
+Otherwise, it releases *all* the processes on the BARRIER-queue (by simply
+concatenating it on to the run-queue) and resets the synchronisation count
+back to the number currently registered.  This is a constant time operation.
+
+A process resigning an BARRIER decrements both its registration count and its
+synchronisation count.  If the latter has reached zero, it releases *all* the
+processes on the BARRIER-queue (just like a synchronising process) and resets
+the synchronisation count.  Again, this is a constant time operation.
+
+--{{{  Transputer restrictions
+
+Transputers have no atomic (non-preemptable) instructions for concatenating
+a process queue on to a run-queue.  Therefore, to implement BARRIER operations,
+we have been updating run-queue registers through a sequence of instructions.
+Transputer link, event and timer interrupts may preempt this sequence and try
+to schedule processes on to the same run-queue -- with bad consequences!
+
+Therefore, our BARRIERs may be used safely on transputers provided:
+
+  o only low-priority processes use BARRIERs and they protect `synchronise.event'
+    and `resign.event' operations by popping into high-priority;
+
+  o only high-priority processes handle transputer link, event or timer
+    interrupts.  [NB: the term `transputer event' refers to the electronic
+    assertion of its event pin by some external device, which has nothing
+    to do with the `BARRIER' primitive in this document.]
+
+These are not severe restrictions -- the second point above should properly
+be a design rule in any case.  Of course, if the application had no need for
+interrupt handling (which implies that it is uni-processor), the first point
+can be ignored (unless, of course, the BARRIER is shared between high and low
+priority processes).
+
+--}}}
+
+--}}}
+
+--{{{  BUCKETs
+
+A BUCKET is an occam2.1 DATA TYPE currently implemented by an BARRIER.  It is
+initialised by initialising the BARRIER with a count of (MOSTPOS INT).  Finding
+the number of processes in the BUCKET is simply subtracting one of the BARRIER
+counts from the other.  KRoC 0.9beta will implement BUCKETs independently from
+BARRIERs and only have one (or, possibly, no) count field.
+
+A process falling into a BUCKET simply synchronises on the implementing BARRIER.
+[Warning: this implementation restricts the number of processes synchronising
+on each BUCKET to (MOSTPOS INT) - 1.  Otherwise, when (MOSTPOS INT) processes
+have jumped in, they will be prematurely released.]
+
+A process flushing a BUCKET concatenates the BUCKET-queue on to the run-queue.
+Currently, this is implemented by setting the BARRIER synchronisation count to
+one and synchronising.
+
+Both these operations work in constant time.
+
+--{{{  Transputer restrictions
+
+These are the same as for BARRIERs.  BUCKETs may be used safely on transputers
+provided:
+
+  o only low-priority processes use BUCKETs and they protect `fall.into.bucket'
+    and `flush.bucket' operations by popping into high-priority;
+
+  o only high-priority processes handle transputer link, event or timer
+    interrupts.
+
+If the application has no interrupt-handling needs (which implies that it is
+uni-processor), the first point can be ignored (unless the BUCKET is shared
+between high and low priority processes).
+
+--}}}
+
+--}}}
+
+--}}}
+
+--{{{  Postscript
+
+--{{{  Summary
+
+This document has described some new synchronisation primitives for occam and
+some higher-level language bindings that make them secure.  The new primitives
+are directly usable within occam2.1 through the abstract data types released
+from KRoC 0.8beta onwards.  The primitives complement, but do not replace,
+the traditional concept of channel communication for networks of synchronising
+processes.  In particular, they provide an implementation for SHARED channels
+(as proposed for occam3), as well as a range of higher-level and relaxed forms
+of safely SHARED resource that will allow more parallelism to be extracted
+from applications.  Details of these higher-level mechanisms for sharing will
+be reported separately.
+
+--}}}
+
+--{{{  Performance and optimisation
+
+The released primitives have not yet been benchmarked, but we believe that none
+of the operations cost more in time than about two or three context-switches
+(i.e. between one and two micro-seconds on a SPARC-20).  For portability, the
+prototypes have not been burnt into the KRoC kernel, but have been implemented
+with transputer instructions (which KRoC uses as an abstract intermediate code).
+It is straightforward to move the implementation of the primitives into the KRoC
+kernel and this will be done later for those that prove useful.  This should
+reduce the overheads for each operation towards a single context-switch.  It
+will also nail down the loose end currently exposing a minor security problem
+in BARRIERs (when the number of processes engaged in a barrier synchronisation
+grows temporarily).
+
+--}}}
+
+--{{{  Virtual transputers
+
+Working with virtual transputers has its benefits over working with real ones:
+modern micro-processors mean they run faster and we *can* experiment with new
+instructions with relative ease.  For example, to move the primitives into the
+kernel, the abstract (or virtual) transputer machine used by KRoC will have to
+extended with new instructions for the manipulation of process queues.  We want
+to do this anyway for other reasons -- such as a full implementation of PRI PAR
+(that allows any number of prioritised components).
+
+When KRoC goes multi-priority and multi-processor (:-), we want no constraints
+on our use of the primitives (such as are necessary on real transputers).  With
+control over the virtual architecture, this should be possible to arrange.
+
+The long-term (medium-term?) architectural goal, for which the new primitives
+would give major benefit, is shared-memory (real or virtual) multi-processing.
+To support this further, we are investigating a richer form of BARRIER that
+implements the contradictory-sounding `non-blocking barrier synchronisation',
+recently proposed for MPI-2.  This is a two-phase event synchronisation,
+where the first phase registers that the process is ready to synchronise (but
+doesn't block) and the second phase does block (unless and until all the other
+processes in the barrier have registered their first phase).  With the right
+algorithm, processes may be able to sail through most such barriers without
+ever blocking!  Implementation looks easy within KRoC and we *may* try out a
+version in the 0.9beta release to enable anyone to experiment with the ideas.
+
+We also want to extend the instruction set to provide type information that
+will allow KRoC to target Java Byte Code.  Additionally, this type information
+makes possible a Transputer Byte Code verifier that enables the distribution
+of occam processes as compact binaries (`occlets') with the same object-level
+security as Java.  Note that KRoC compiles these Byte Codes to target object
+code for execution -- it doesn't interpret them at run-time.  In that sense,
+it already provides `just-in-time' compilation (but we do realise there is a
+little bit more involved than that).
+
+--}}}
+
+--{{{  Microcode, methods and objects
+
+The algorithms underlying the new synchronisation primitives correspond to new
+`micro-code' for the virtual transputer.  Just like the real micro-code that
+implements channel synchronisation on real transputers, great care has to be
+taken in its design -- these algorithms are significantly harder to get right
+than algorithms of a similar size at the occam application level.
+
+The reason for this is that algorithms within occam processes are easy to make
+object-oriented -- in the `true' sense of the term.  By this, we mean that
+they directly express the behaviour of objects from their own point of view --
+not as a set of procedure calls that are made by (and, therefore, oriented
+towards) external agents.  This is achieved through implementing objects as
+processes that run concurrently with other objects, each with their own threads
+of control.  Of course, this is something for which occam was specifically
+designed.
+
+Most `object-oriented' programming languages allow the encapsulation of object
+data and algorithms, but only provide for the expression of those algorithms
+through a set of `methods' (which are no different to procedures).  Objects
+interact by calling each other's methods and, as far as algorithm design is
+concerned, there is no paradigm shift from traditional procedural programming.
+
+The problem is that expressing the behaviour of an object through a set of
+externally-called methods is unnatural (it's not object-oriented!), and it
+gets especially hard in a multi-threaded (or multi-processing) environment.
+The reason is that method semantics in these circumstances do not compose.
+This means that in order to design/understand two methods of some object, we
+have to design/understand both at the same time.  Of course, this gets worse
+the more methods an object contains and puts a limit on the complexity of what
+can be done this way.
+
+Unfortunately, we cannot build a system purely from active objects!  An active
+object cannot directly interfere with another active object (this would break
+the principle of data abstraction and introduce all manner of semantic chaos)
+and it cannot directly call on it (because active objects are active and don't
+provide passive facilities).  So, we need some passive medium through which
+they can interact.
+
+Fortunately, we only need a small variety of passive objects to construct this
+medium and these can be hidden in `micro-code' or burnt into a high-level
+language.  Then, the system engineer only needs to work with active (truly
+object-oriented) objects, whose semantics do compose and put no limit on the
+complexity of the design.
+
+Hence, we have occam and the virtual transputer, where the necessary (but hard
+to program) passive objects are its CHANnels, SEMAPHOREs, RESOURCEs, BARRIERs
+and BUCKETs and, hopefully, not too many more!
+
+The most complex in this list is the RESOURCE.  See how the non-compositional
+nature of its semantics bites as we are obliged to think simultaneously about
+its `claim' and `release' algorithms -- they cannot be understood individually.
+The same is true for the original occam CHANnel, whose `input' and `output'
+methods (especially in the context of ALTs) are so elegant, but are completely
+inter-dependent.  It is an immense relief we don't have to understand this, or
+program like this, at the occam level.
+
+--}}}
+
+--{{{  Java threads and occam
+
+These ideas were examined in the context of Java at the Java Threads Workshop,
+which took place at the University of Kent last September (1996).  Java allows
+both passive and active objects at the user-program level, with passive being
+the default mechanism everyone learns first.  Java threads are not based upon
+CSP, but on the earlier concept of `monitors'.  Thread synchronisation can only
+be achieved through calling `synchronized' methods.  These methods belong to
+passive objects and have to be programmed -- which is hard.
+
+The workshop has stimulated the development (by at least three research groups)
+of CSP class libraries that provide a range of passive hard-to-program objects
+(like channels, shared channels, buffers, shared buffers, events and buckets).
+Multi-threaded Java applications can now be developed that interact with each
+other in the occam/CSP style and use only active easy-to-program objects.
+
+Details from this workshop can be found on:
+
+  <URL:http://www.hensa.ac.uk/parallel/groups/wotug/java/>
+
+--}}}
+
+--{{{  If only ...
+
+These ideas could have been introduced at low cost over ten years ago -- they
+do not depend on any hardware technology.  They remain vital today (we suspect)
+because they enhance any multi-processing (or multi-threaded) technology that
+doesn't have them -- and that seems to include most everything (?) available.
+
+But if only we had had them since 1986, ...
+
+--}}}
+
+--}}}
+
+--{{{  References
+
+[1] D.C.Wood and P.H.Welch: The Kent Retargetable occam Compiler.
+
+    In Parallel Processing Developments, Proceedings of the 19th. WoTUG
+    Technical Conference, Nottingham-Trent University; edited by B. O'Neill;
+    pp. 143-166; IOS Press (Netherlands); ISBN 90-5199-261-0; March, 1996.
+
+[2] occam-for-all group: Beta-release WWW site for KRoC.
+
+    <URL:http://www.hensa.ac.uk/parallel/occam/projects/occam-for-all/kroc/>
+
+[3] G.Barrett: occam3 reference manual (March 31 1992 draft).
+
+    INMOS Ltd.; <URL:http://www.hensa.ac.uk/parallel/occam/documentation/>
+
+[4] M.D.May, P.W.Thompson and P.H.Welch: Networks, Routers and Transputers.
+
+    IOS Press (Netherlands); ISBN 90 5199 1290 1993.
+
+[5] M.H.Goldsmith and A.W.Roscoe and B.G.O.Scott: Denotational Semantics
+    for occam2 (Part 1).
+
+    Transputer Communications, vol.1(2), pp. 65-91. John Wiley & Sons Ltd.;
+    ISSN 1070-454X; November, 1993.
+
+[6] M.H.Goldsmith and A.W.Roscoe and B.G.O.Scott: Denotational Semantics
+    for occam2 (Part 2).
+
+    Transputer Communications, vol.2(1), pp. 25-67. John Wiley & Sons Ltd.;
+    ISSN 1070-454X; March, 1994.
+
+[7] Y.Ben-Asher, D.G.Feitelson and L.Rudolf: ParC -- an Extension of C for
+    Shared Memory Parallel Processing.
+
+    In Software -- Practice and Experience, Vol. 26(5); pp. 581-612;
+    John Wiley & Sons Ltd.; ISSN 0038-0644; May, 1996.
+
+[8] P.H.Welch: Parallel Hardware and Parallel Software: a Reconciliation.
+
+    In Proceedings of the ZEUS'95 and NTUG'95 Conference,
+    University of Linkoping, Sweden; pp. 287-301; IOS Press (Netherlands);
+    ISBN 90-5199-22-7; May, 1995.
+
+[9] B.M.Cook and R.M.A.Peel: The Para-PC, an Analysis.
+
+    In Parallel Processing Developments, Proceedings of the 19th. WoTUG
+    Technical Conference, Nottingham-Trent University; edited by B.O'Neill;
+    pp. 89-102; IOS Press (Netherlands); ISBN 90-5199-261-0; March, 1996.
+
+--}}}
+

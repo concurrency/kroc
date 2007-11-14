@@ -1,0 +1,140 @@
+
+           ================================================
+           |   How to Use Toolset Libraries with KRoC     |
+           |                                              |
+           | Michael Poole (mdp@michaelpoole.demon.co.uk) |
+           ================================================
+
+
+Changelog:
+
+  20/03/2002 frmb, bringing more in-line with KRoC/Linux
+
+Description:
+
+  This describes the implementation of the occam toolset libraries and shows
+  how to use them when occam programs are moved to a KRoC system.
+
+This note assumes familiarity with the INMOS occam toolset libraries.
+
+The following libraries are included in the Sparc and Alpha and Pentium
+versions of the KRoC system:
+
+occam8 and occamutl
+  needed to support the language fully
+
+convert, string, hostio and hostsp
+  needed for most toolset programs
+
+snglmath and dblmath
+   needed for many programs doing REAL arithmetic
+
+streamio
+   needed for many programs originating from the TDS
+
+Each library (e.g hostio) is compiled into two library files - the
+TCOFF hostio.lib file and the Unix libhostio.a file.  The hostio.lib
+file is referenced by #USE "hostio.lib" in each calling occam module
+and only contains interface information.  The Unix libhostio.a file
+must be provided to the linker (e.g. via the `kroc' command line).  At
+present there is no automatic way to ensure that those ".a" files that
+are needed are requested but the `kmakef' makefile builder can do some
+of the work.
+
+As library file searching must be done in the order modules are needed,
+the `kroc' command should list those that it needs in the following order:
+
+              libhostio.a
+libstreamio.a      OR     libstring.a libconvert.a libsnglmath.a libdblmath.a
+              libhostsp.a
+
+NOTE: liboccam8.a and liboccamutl.a are automatically called by `kroc'.
+
+
+Using hostio.lib
+================
+
+The routines in the hostio.lib library perform the transactions that
+would be done in INMOS toolsets via communications with the host
+computer's ISERVER.  These routines have been rewritten to do normal
+blocking calls to appropriate Unix functions.  The SP protocol
+channel parameters of these PROCs thus are not used and are dummies.
+
+These routines provides adequate filing system and host access for
+many occam programs but not necessarily for those that multiplex host
+accesses from several processes running in parallel.  For these, the
+hostsp.lib would be the correct choice (see below).
+
+The KROC distribution includes a single example programs using some
+of these library PROCs. This will be extended in future releases.
+
+Consider for example the test program dtoday.occ:
+
+  #INCLUDE "hostio.inc"
+  #USE "hostio.lib"
+
+  PROC today (CHAN OF BYTE stdin, stdout, stderr)
+
+    CHAN OF SP fs, ts:
+    [80]BYTE textline:
+    SEQ
+      [textline FOR 18] := "The date/time is: "
+      so.today.ascii (fs, ts, FALSE, TRUE, [textline FROM 18 FOR 19])
+      so.write.string.nl (fs, ts, [textline FOR 35])
+  :
+
+compile and run it thus:
+
+  unix% kroc dtoday.occ -lhostio -lconvert
+  unix% dtoday
+
+The "convert" library is needed for various conversion routines used
+by hostio.
+
+
+Using hostsp.lib
+================
+
+The routines in the hostsp.lib library are versions of the hostio.lib
+routines but actually use the SP protocol channel parameters of these
+PROCs.  Thus the SP channel parameters must be connected in the
+standard fashion but with the spserver() process handling the
+standard ISERVER actions (file and terminal I/O etc.)
+
+Consider for example the test program dtodaysp.occ
+
+  #INCLUDE "hostio.inc"
+  #USE "hostsp.lib"
+
+  PROC today (CHAN OF BYTE stdin, stdout, stderr)
+
+    PROC main (CHAN OF SP fs, ts, []INT mem)
+      [80]BYTE textline:
+      SEQ
+        [textline FOR 18] := "The date/time is: "
+        so.today.ascii (fs, ts, FALSE, TRUE, [textline FROM 18 FOR 19])
+        so.write.string.nl (fs, ts, [textline FOR 35])
+        so.exit (fs, ts, sps.success)
+    :
+
+    CHAN OF SP fs, ts:
+    INT32 status:
+    PAR
+      spserver (ts, fs, status)
+      [1]INT mem:
+      main (fs, ts, mem)
+  :
+
+compile and run it thus:
+
+  unix% kroc dtodaysp.occ -lhostsp -lconvert
+  unix% dtodaysp
+
+The "convert" library is needed for various conversion routines used
+by hostsp.
+
+Note that PROC main() has the standard INMOS toolset signature.  It only
+needed a few lines of wrappers around to form this into a top-level KRoC
+program that uses hostsp.lib
+
+
