@@ -4140,7 +4140,9 @@ void kernel_X_scheduler (void)
 							else
 							#endif
 							if (ccsp_blocked_on_external_event ()) {
+								#if !defined(OOS_BUILD)
 								ccsp_safe_pause (sched);
+								#endif
 							} else {
 								unsigned int idle;
 
@@ -5777,8 +5779,9 @@ void kernel_Y_mt_enroll (void)
  */
 void ccsp_next_timeout (int *us, int *valid)
 {
-	if (Tptr != NotProcess_p) {
-		*us = GetTimeField(Tptr);
+	sched_t *sched = _local_scheduler;
+	if (sched->tq_fptr != NULL) {
+		*us = sched->tq_fptr->time;
 		*valid = 1;
 	} else {
 		*valid = 0;
@@ -5794,6 +5797,7 @@ void ccsp_next_timeout (int *us, int *valid)
  */
 void ccsp_interrupt_handler (int irq)
 {
+	sched_t *sched = _local_scheduler;
 	ticount++;
 	intlast = irq;
 

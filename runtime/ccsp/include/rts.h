@@ -127,10 +127,10 @@ void ccsp_kernel_exit (int exit_status, int iptr);
 void ccsp_bad_exit (void);
 void ccsp_dead (int erfl);
 void ccsp_dead_quiet (int erfl);
+void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs);
 #if !defined(OOS_BUILD)
 void ccsp_wake_thread (sched_t *scheduler, int sync_bit);
 unsigned int ccsp_rtime (void);
-void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs);
 void ccsp_init_signal_pipe (sched_t *sched);
 void ccsp_safe_pause (sched_t *sched);
 void ccsp_safe_pause_timeout (sched_t *sched);
