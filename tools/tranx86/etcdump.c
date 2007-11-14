@@ -240,6 +240,9 @@ int dump_textual_etc (etc_chain *chain, char *filename)
 				case KILLCALL:
 					fprintf (outstream, ".KILLCALL\n");
 					break;
+				case WAIT_FOR_INTERRUPT:
+					fprintf (outstream, ".WAIT_FOR_INTERRUPT\n");
+					break;
 				default:
 					fprintf (outstream, ".SPECIAL\n");
 					break;

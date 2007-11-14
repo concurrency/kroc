@@ -128,6 +128,7 @@
 #define R64COS 33
 #define DTRACE 34
 #define KILLCALL 35
+#define WAIT_FOR_INTERRUPT 36
 
 #define FINISH_OP -1
 
