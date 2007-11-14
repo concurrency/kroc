@@ -1,0 +1,72 @@
+
+                      Co502 : current practical work
+                      ==============================
+
+This file is <wherever-is-installed>/kroc/news/5.txt.
+
+Things to be doing:
+
+  (1) finish getting bugs.occ to compile and run correctly;
+
+  (2) make sure you know the deliberate mistake on slide 4-26 (that's the
+      slide giving the occam code for the PQRRST network);
+
+  (3) do the first question from the "Paper Exercises", which should be the
+      last two pages in your notes.  You have to write the occam for another
+      network involving P, Q, R, S and T (same ones as defined on slides 4-23
+      and 4-24).  Do this only on *paper* and be prepared to show it to your
+      terminal class supervisor.
+
+  (4) Work out question 2 from the "Paper Exercises" as well - this is
+      the opposite of question 1 - you have to draw a network diagram from
+      the code.  The network introduces a new process, M, together with 6
+      instances of the Q from slide 4-23.  The code has a certain reguarity
+      ... so the drawing should have some regular pattern to it.
+
+  (5) implement the A-par-B two process system (question 1 from the "OCCAM
+      EXAMPLE SHEET" and also described in slides 4-16 through 4-20).  There
+      is a smudge in the printing of slide 4-17: in the definition of "f",
+      something that looks like ".000" is meant to be "1000".
+
+      You might like to try this exercise in Java first!  This is not
+      compulsory, but some may like to do it.  Compulsory, and much simpler,
+      is to do this in occam as a network of two processes, A and B,
+      connected by a CHAN OF INT.  A starter file for this is:
+
+        <wherever-is-installed>/kroc/course/exercises/q1.occ
+
+      This contains only the main PROC header for q1.  Its body consists only
+      of explanatory documentation and a SKIP.  It will compile as it stands,
+      but will do nothing when run (except terminate).
+
+      The documentation draws a picture of q1 (wired up to external channels
+      keyboard, screen amd error - only one of which is used).  Inside q1,
+      is a two process network (A and B).
+
+      You need to replace the "SKIP" in the body of q1 with:
+
+        1. the declaration of PROC A (complete with all necessary channel
+           parameters and its code body - note this code body consists of
+           local declarations, initialisation and a WHILE loop);
+        2. same for PROC B;
+        3. the code that sets up the two process sub-network drawn in the
+           documentation.
+
+      Note that in order to code process B, you will have to learn and use
+      the out.int and out.string procedures.  To find out about these,
+      look at examples of their use in:
+
+        <wherever-is-installed>/kroc/course/examples/hello_world.occ
+        <wherever-is-installed>/kroc/course/examples/test_utils.occ
+
+      as well as documentation in:
+
+        <wherever-is-installed>/kroc/libsrc/README
+        <wherever-is-installed>/kroc/libsrc/utils.doc
+
+      For the really keen, the full sources are in:
+
+        <wherever-is-installed>/kroc/libsrc/utils.occ
+
+
+Peter Welch.

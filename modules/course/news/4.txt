@@ -1,0 +1,83 @@
+
+Here are some questions/answers that may be of general interest.  A copy of
+this file may be found at:
+
+  <wherever-is-installed>/kroc/news/4.txt
+
+Peter Welch.
+
+=============================================================================
+
+> How can I cast an INT to a BYTE?
+
+If x is an INT variable whoose value is between 0 and 255 inclusive, then
+(BYTE x) is its BYTE equivalent.  If x were outside the BYTE range, then
+(BYTE x) would give a run-time error.
+
+[The next bit refers to process B from question 1 of the OCCAM EXERCISE SHEET]
+
+> I have got the program to work by using the function out.int(xx,xx,xx),
+> however I was wondering if there is any way to do it without using
+> out.int.
+
+No!  Suppose x were the INT 65.  What I want to do is output the ASCII codes
+for the characters '6' and '5' to the screen - this is what the out.int
+PROC does.  If I cast x into a BYTE as above and sent that to the screen,
+what I would see is the character 'A'!
+
+Note: see <wherever-is-installed>/kroc/course/examples/test_utils.occ for
+examples of the use of out.int.
+
+Also, look in <wherever-is-installed>/kroc/libsrc/utils.doc for documentation
+of the I/O utilities available from the course library ("course.lib").
+
+I have added a new file that explains and demonstrates the use of casts:
+
+  <wherever-is-installed>/kroc/course/examples/cast.occ
+
+=============================================================================
+
+> When I compile some occam and the compiler generates loads of error messages,
+> they flash past too fast for me to read them.
+
+There are 3 solutions to this.  First, get a scroll bar on your window.  For
+normal eXceed unix windows, just do <CTL>&<LEFT_MOUSE_CLICK>.  A scroll bar
+should appear.  To operate it, point and drag with the MIDDLE mouse button.
+
+Secondly, the kroc compiler outputs any error messages to the unix standard
+error channel.  This can be grabbed and piped into "more" by the command:
+
+  kroc q1.occ |& more
+
+where q1.occ is the file containing the occam program to be compiled.  Now,
+if the compiler generates more than a screenful of error messages, it stops
+after the first screenful.  Press <RETURN> to get another line or <SPACE>
+to get another screenful.
+
+Thirdly, the error messages may be diverted to a file which can be looked
+at later (using an editor or "more" or "less"):
+
+  kroc q1.occ >& tmp
+
+and any error messages will be written to tmp.
+
+=============================================================================
+
+> How do I see the <wherever-is-installed>/kroc/ files from Windows?  I want
+to print some of them and I know how to do that from Windows ...
+
+I assume you can see your home directory (and below) from Windows.  Set up
+a unix `soft link' as follows.  In Unix, change to your home directory.  Then:
+
+  ln -s <wherever-is-installed>/kroc co502
+
+will create a file (in your home directory) called co502.  This file acts
+like a directory.  If you "cd" to it, you will find you are taken to the
+<wherever-is-installed>/kroc directory.
+
+What's more, it will look like a sub-directory when you view your home
+directory from Windows.  Double-click on it and you are also in the
+<wherever-is-installed>/kroc area.
+
+=============================================================================
+

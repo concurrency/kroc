@@ -1,0 +1,98 @@
+--
+--	Demo cycles
+--	Copyright (C) 1984 P.H. Welch
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** Demonstration cycles.
+--
+-- This is part of the course library. To use this library:
+--
+-- [@code
+-- #INCLUDE "course.module"]
+--
+-- @module course.cycles
+
+-- COPYRIGHT : P.H.Welch, 1984
+
+--{{{  basic cycles
+--* Copy input to output.
+PROC id (CHAN INT in?, out!)
+  --{{{
+  WHILE TRUE
+    INT x:
+    SEQ
+      in ? x
+      out ! x
+  --}}}
+:
+
+--* Add one to input numbers.
+PROC succ (CHAN INT in?, out!)
+  --{{{
+  WHILE TRUE
+    INT x:
+    SEQ
+      in ? x
+      out ! x PLUS 1  -- let's ignore overflow
+  --}}}
+:
+
+--* Add two streams of numbers together.
+PROC plus (CHAN INT in.1?, in.2?, out!)
+  --{{{
+  WHILE TRUE
+    INT x.1, x.2:
+    SEQ
+      PAR
+        in.1 ? x.1
+        in.2 ? x.2
+      out ! x.1 PLUS x.2  -- let's ignore overflow
+  --}}}
+:
+
+--* Duplicate a stream of numbers.
+PROC delta (CHAN INT in?, out.1!, out.2!)
+  --{{{
+  WHILE TRUE
+    INT x:
+    SEQ
+      in ? x
+      PAR
+        out.1 ! x
+        out.2 ! x
+  --}}}
+:
+
+--* Output a fixed number, then copy input to output.
+PROC prefix (VAL INT n, CHAN INT in?, out!)
+  --{{{
+  SEQ
+    out ! n
+    id (in?, out!)
+  --}}}
+:
+
+--* Drop the first input number, then copy input to output.
+PROC tail (CHAN INT in?, out!)
+  --{{{
+  SEQ
+    INT any:
+    in ? any
+    id (in?, out!)
+  --}}}
+:
+--}}}

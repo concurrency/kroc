@@ -1,0 +1,1131 @@
+--
+--	Utilities
+--	Copyright (C) 1997  P.H. Welch
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module course
+
+#COMMENT "Copyright: P.H.Welch, 1997"
+
+#INCLUDE "consts.inc"
+
+--{{{  out stuff
+--{{{  PROC out.repeat (VAL BYTE ch, VAL INT n, CHAN BYTE out!)
+--* Write a character repeatedly to a channel.
+-- This outputs [@code ch] down the channel [@code out] [@code n] times. If
+-- [@code n] is negative, nothing happens.
+-- @param ch Character
+-- @param n Number of times to output (negative values result in no output)
+-- @param out Channel to write to
+PROC out.repeat (VAL BYTE ch, VAL INT n, CHAN BYTE out!)
+  --{{{  
+  IF
+    n > 0
+      SEQ i = 0 FOR n
+        out ! ch
+    TRUE
+      SKIP
+  --}}}
+:
+--}}}
+--{{{  PROC out.ch (VAL BYTE ch, VAL INT field, CHAN BYTE out!)
+--* Write a character to a channel.
+-- This outputs [@code ch] in a fieldwidth [@code field] down [@code out].  If
+-- the fieldwidth is too wide for [@code ch], it right-justifies [@code ch]
+-- with spaces on the left.  If the field is not wide enough, it prints the
+-- [@code ch] anyway.  These rules for fieldwidth are the same as those used by
+-- the Pascal [@text write] procedure.
+-- @param ch Character
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.ch (VAL BYTE ch, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out.repeat (' ', field - 1, out!)
+    out ! ch
+  --}}}
+:
+--}}}
+--{{{  PROC out.string (VAL []BYTE s, VAL INT field, CHAN BYTE out!)
+--* Write a string to a channel.
+-- This outputs [@code s] in a fieldwidth [@code field] down [@code out].
+-- @param s String
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.string (VAL []BYTE s, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  VAL INT length IS SIZE s:
+  SEQ
+    out.repeat (' ', field - length, out!)
+    SEQ i = 0 FOR length
+      out ! s[i]
+  --}}}
+:
+--}}}
+--{{{  PROC out.byte (VAL BYTE b, VAL INT field, CHAN BYTE out!)
+--* Write a byte in decimal to a channel.
+-- This outputs [@code b] in a fieldwidth [@code field] down [@code out].  If
+-- the fieldwidth is too wide for [@code b], it right-justifies [@code b] with
+-- spaces on the left.  If the field is not wide enough, it prints the [@code
+-- b] anyway.  These rules for fieldwidth are the same as those used by the
+-- Pascal [@text write] procedure.
+-- @param b Byte
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.byte (VAL BYTE b, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  VAL BYTE hundreds IS b/100:
+  VAL BYTE rest IS b\100:
+  VAL BYTE tens IS rest/10:
+  VAL BYTE ones IS rest\10:
+  IF
+    hundreds > 0
+      SEQ
+        out.repeat (' ', field - 3, out!)
+        out ! hundreds + '0'
+        out ! tens + '0'
+        out ! ones + '0'
+    tens > 0
+      SEQ
+        out.repeat (' ', field - 2, out!)
+        out ! tens + '0'
+        out ! ones + '0'
+    TRUE
+      SEQ
+        out.repeat (' ', field - 1, out!)
+        out ! ones + '0'
+  --}}}
+:
+--}}}
+--{{{  PROC out.int (VAL INT n, VAL INT field, CHAN BYTE out!)
+--* Write an integer in decimal to a channel.
+-- This outputs [@code n] in a fieldwidth [@code field] down [@code out].  The
+-- rules for fieldwidth are as [@ref out.byte].
+-- @param n Integer
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.int (VAL INT n, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  IF
+    n = (MOSTNEG INT)
+      --{{{  minint
+      out.string ("-2147483648", field, out!)
+      --}}}
+    n = 0
+      --{{{  zero
+      SEQ
+        IF
+          1 < field
+            out.repeat (' ', field - 1, out!)
+          TRUE
+            SKIP
+        out ! '0'
+      --}}}
+    TRUE
+      --{{{  anything else
+      VAL INT max.digits IS 20:
+      [max.digits]INT D:
+      INT x, i:
+      SEQ
+        --{{{  check negative
+        IF
+          n < 0
+            x := -n
+          TRUE         -- (n > 0)
+            x := n
+        --}}}
+        --{{{  decompose
+        SEQ
+          i := 0
+          WHILE x > 0
+            SEQ
+              D[i] := x\10
+              x := x/10
+              i := i + 1
+        --}}}
+        --{{{  pad
+        IF
+          n > 0
+            out.repeat (' ', field - i, out!)
+          TRUE
+            SEQ
+              out.repeat (' ', (field - 1) - i, out!)
+              out ! '-'
+        --}}}
+        --{{{  output
+        #PRAGMA DEFINED D
+        WHILE i > 0
+          SEQ
+            i := i - 1
+            out ! BYTE (D[i] + (INT '0'))
+        --}}}
+      --}}}
+  --}}}
+:
+--}}}
+--{{{  PROC out.hex (VAL INT n, VAL INT field, CHAN BYTE out!)
+--* Write an integer in hexadecimal to a channel.
+-- Aside from the output base, this behaves like [@ref out.int].
+-- @param n Integer
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.hex (VAL INT n, VAL INT field, CHAN BYTE out!)
+  IF
+    n = (MOSTNEG INT)
+      out.string ("#80000000", field, out!)
+    n = 0
+      out.string ("#00000000", field, out!)
+    TRUE
+      --{{{  anything else
+      VAL []BYTE cmap IS "0123456789ABCDEF":
+      INT x, i:
+      SEQ
+        x := n
+        IF
+          field = 0
+            i := 8
+          TRUE
+            i := (field - 1)
+        IF
+          i > 0
+            SEQ
+              out ! '#'
+              WHILE i > 0
+                SEQ
+                  out ! cmap[((x >> ((i - 1) << 2)) /\ #0000000F)]
+                  i := i - 1
+          TRUE
+            SKIP
+      --}}}  
+:
+--}}}  
+--{{{  PROC out.bool (VAL BOOL b, VAL INT field, CHAN BYTE out!)
+--* Write a Boolean value to a channel (as [@text TRUE]/[@text FALSE]).
+-- This outputs [@code b] as the string [@text TRUE] or [@text FALSE] in a
+-- fieldwidth [@code field] down [@code out].
+-- @param b Boolean
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.bool (VAL BOOL b, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  IF
+    b
+      out.string ("TRUE", field, out!)
+    TRUE
+      out.string ("FALSE", field, out!)
+  --}}}
+:
+--}}}
+--{{{  PROC out.yes.no (VAL BOOL b, VAL INT field, CHAN BYTE out!)
+--* Write a Boolean value to a channel (as [@text yes]/[@text no]).
+-- This outputs [@code b] as the string [@text yes] or [@text no] in a
+-- fieldwidth [@code field] down [@code out].
+-- @param b Boolean
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.yes.no (VAL BOOL b, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  IF
+    b
+      out.string ("yes", field, out!)
+    TRUE
+      out.string ("no", field, out!)
+  --}}}
+:
+--}}}
+--{{{  PROC flush (CHAN BYTE out!)
+--* Flush an output channel.
+-- If [@code out] is (ultimately) connected to the external [@text stdout] or
+-- [@text stderr] channel, this forces UNIX to flush all outstanding output to
+-- that file descriptor.  UNIX normally buffers this character output on a
+-- line-by-line basis.
+-- @param out Channel to write to
+PROC flush (CHAN BYTE out!)
+  --{{{  
+  out ! FLUSH
+  --}}}
+:
+--}}}
+--}}}
+--{{{  in stuff
+--{{{  PROC in.skip (BYTE ch, CHAN BYTE in?)
+--* Discard whitespace.
+-- This inputs from [@code in] until a non-space character is found.  The
+-- non-space character is returned in [@code ch].
+-- @param ch The non-whitespace character
+-- @param in Channel to read from
+PROC in.skip (BYTE ch, CHAN BYTE in?)
+  --{{{  
+  SEQ
+    ch := ' '
+    WHILE ch = ' '
+      in ? ch
+  --}}}
+:
+--}}}
+--{{{  PROC in.digit (BYTE d, CHAN BYTE in?, out!)
+--* Read a digit.
+-- This inputs a digit from [@code in] into [@code d].  Non-digit characters
+-- are ignored and the [@code out] channel is beeped.  The accepted digit is
+-- not echoed down [@code out].
+-- @param d The digit read
+-- @param in Channel to read from
+-- @param out Channel to write to
+PROC in.digit (BYTE d, CHAN BYTE in?, out!)
+  --{{{  
+  SEQ
+    in ? d
+    WHILE (d < '0') OR ('9' < d)
+      SEQ
+        out ! BELL
+        out ! FLUSH
+        in ? d
+  --}}}
+:
+--}}}
+--{{{  PROC in.string ([]BYTE s, INT length, VAL INT max, CHAN BYTE in?, out!)
+--* Read a string.
+-- This inputs a string of up to [@code max] characters from [@code in] into
+-- [@code s].  Input is terminated by a carriage-return or new-line (which is
+-- not included in [@code s].  The number of characters actually input is
+-- recorded in [@code length].  The string [@code s] is padded on the right
+-- with [@ref NULL]s if necessary.  All characters are echoed on [@code out].
+-- The backspace ([@ref BACK]) and delete ([@ref DELETE]) characters are
+-- processed sensibly.
+-- @param s Buffer to read into
+-- @param length Number of bytes read
+-- @param max Maximum number of bytes to read
+-- @param in Channel to read from
+-- @param out Channel to write to
+PROC in.string ([]BYTE s, INT length, VAL INT max, CHAN BYTE in?, out!)
+  --{{{  interactive input of s (maximum of max characters)
+  INT cut.max:
+  BYTE ch:
+  SEQ
+    --{{{  initialise
+    SEQ
+      IF
+        max > (SIZE s)
+          cut.max := SIZE s
+        TRUE
+          cut.max := max
+      length := 0
+      in ? ch
+    --}}}
+    --{{{  main cycle
+    WHILE (ch <> '*c') AND (ch <> '*n')
+      SEQ
+        --{{{  process ch
+        IF
+          (ch = BACK) OR (ch = DELETE)
+            --{{{  
+            IF
+              length > 0
+                SEQ
+                  length := length - 1
+                  out ! BACK
+                  out ! ' '
+                  out ! BACK
+                  out ! FLUSH
+              length = 0
+                SEQ
+                  out ! BELL
+                  out ! FLUSH
+            --}}}
+          length = cut.max
+            --{{{  
+            SEQ
+              out ! BELL
+              out ! FLUSH
+            --}}}
+          (' ' <= ch) AND (ch <= '~')
+            --{{{  
+            SEQ
+              s[length] := ch
+              length := length + 1
+              out ! ch
+              out ! FLUSH
+            --}}}
+          TRUE
+            --{{{  
+            SEQ
+              out ! BELL
+              out ! FLUSH
+            --}}}
+        --}}}
+        in ? ch
+    --}}}
+    --{{{  finalisation
+    SEQ i = length FOR (SIZE s) - length
+      s[i] := NULL
+    --}}}
+  --}}}
+:
+--}}}
+--{{{  PROC in.bool (BOOL b, CHAN BYTE in?, out!)
+--* Read a boolean.
+-- This reads a Boolean value as the characters [@text y] or [@text n]
+-- (or [@text Y] or [@text N]).
+-- Any other characters result in a [@ref BELL] being sent to [@code out].
+-- The value read is echoed as [@text yes] or [@text no].
+-- @param b The Boolean read
+-- @param in Channel to read from
+-- @param out Channel to write to
+PROC in.bool (BOOL b, CHAN BYTE in?, out!)
+  --{{{  interactive input of b (type 'y' or 'n')
+  BYTE ch:
+  SEQ
+    in ? ch
+    WHILE NOT ((ch = 'y') OR (ch = 'Y') OR (ch = 'n') OR (ch = 'N'))
+      PAR
+        SEQ
+          out ! BELL
+          out ! FLUSH
+        in ? ch
+    b := (ch = 'y') OR (ch = 'Y')
+    IF
+      b
+        out.string ("yes", 0, out!)
+      TRUE
+        out.string ("no", 0, out!)
+    out ! FLUSH
+  --}}}
+:
+--}}}
+--{{{  PROC in.byte.chars ([]BYTE s, INT length, CHAN BYTE in?, out!)
+--* Read a byte value as a string.
+-- This routine is used for inputting a BYTE value expressed as decimal digits.
+-- It inputs a string of up to 3 digits from [@code in] into [@code s].  It
+-- works just like [@ref in.string] except that only digits are accepted --
+-- anything else is bleeped.  Input is terminated by a carriage-return,
+-- new-line or space (none of which characters are recorded). This is a
+-- low-level routine used by [@ref in.byte].
+-- @param s Buffer to read into
+-- @param length Number of bytes read
+-- @param in Channel to read from
+-- @param out Channel to write to
+-- @private
+PROC in.byte.chars ([]BYTE s, INT length, CHAN BYTE in?, out!)
+  --{{{  
+  VAL INT max IS 3:
+  INT cut.max:
+  BYTE ch:
+  SEQ
+    --{{{  cut.max := min (max, SIZE s)
+    IF
+      max > (SIZE s)
+        cut.max := SIZE s
+      TRUE
+        cut.max := max
+    length := 0
+    --}}}
+    in ? ch
+    WHILE (ch <> '*c') AND (ch <> '*n') AND (ch <> ' ')
+      SEQ
+        --{{{  process ch
+        IF
+          (ch = BACK) OR (ch = DELETE)
+            --{{{  
+            IF
+              length > 0
+                SEQ
+                  length := length - 1
+                  out ! BACK
+                  out ! ' '
+                  out ! BACK
+                  out ! FLUSH
+              length = 0
+                SEQ
+                  out ! BELL
+                  out ! FLUSH
+            --}}}
+          length = cut.max
+            --{{{  
+            SEQ
+              out ! BELL
+              out ! FLUSH
+            --}}}
+          ('0' <= ch) AND (ch <= '9')
+            --{{{  
+            SEQ
+              s[length] := ch
+              length := length + 1
+              out ! ch
+              out ! FLUSH
+            --}}}
+          TRUE
+            --{{{  
+            SEQ
+              out ! BELL
+              out ! FLUSH
+            --}}}
+        --}}}
+        in ? ch
+  --}}}
+:
+--}}}
+--{{{  INT FUNCTION convert.byte.chars (VAL []BYTE s, VAL INT length)
+--* Parse a byte value stored in decimal.
+-- This assumes that [@code s] has only digits.  It converts that string into
+-- an integer and returns it.  It does not guard against overflow.
+-- This is a low-level routine used by [@ref in.byte].
+-- @param s Buffer to read from
+-- @param length Number of bytes in buffer
+-- @return Value in buffer
+-- @private
+INT FUNCTION convert.byte.chars (VAL []BYTE s, VAL INT length)
+  --{{{  
+  INT number:
+  VALOF
+    --{{{  compute number
+    SEQ
+      number := 0
+      SEQ i = 0 FOR length
+        number := (10*number) + ((INT s[i]) - (INT '0'))
+    --}}}
+    RESULT number
+  --}}}
+:
+--}}}
+--{{{  PROC in.byte (BYTE b, VAL INT max, CHAN BYTE in?, out!)
+--* Read a byte value in decimal.
+-- This routine is used for inputting a BYTE value expressed as decimal digits.
+-- It inputs a string of up to [@code max] digits from [@code in] into
+-- [@code s].  If [@code max] is more than 3, it is truncated to 3.  Input is
+-- terminated by a carriage-return, new-line or space.  Input strings
+-- converting to values greater than 255 are rejected.
+-- @param b Value read
+-- @param max Maximum number of bytes to read
+-- @param in Channel to read from
+-- @param out Channel to write to
+PROC in.byte (BYTE b, VAL INT max, CHAN BYTE in?, out!)
+  --{{{  interactive input of b (up to max digits)
+  INT number:
+  VAL INT max.byte.digits IS 3:
+  [max.byte.digits]BYTE s:
+  INT length, cut.max:
+  SEQ
+    --{{{  cut.max := min (max, max.byte.digits)
+    IF
+      max > max.byte.digits
+        cut.max := max.byte.digits
+      TRUE
+        cut.max := max
+    --}}}
+    in.byte.chars ([s FOR cut.max], length, in?, out!)
+    #PRAGMA DEFINED s
+    number := convert.byte.chars ([s FOR cut.max], length)
+    WHILE number > 255
+      SEQ
+        --{{{  erase bad byte
+        SEQ
+          SEQ i = 0 FOR length
+            SEQ
+              out ! BACK
+              out ! ' '
+              out ! BACK
+          out ! BELL
+          out ! FLUSH
+        --}}}
+        in.byte.chars ([s FOR cut.max], length, in?, out!)
+        number := convert.byte.chars (s, length)
+    b := BYTE number
+  --}}}
+:
+--}}}
+--{{{  PROC in.num.chars ([]BYTE s, INT length, VAL INT max, CHAN BYTE in?, out!)
+--* Read an integer value as a string.
+-- This inputs a string of up to [@code max] characters from [@code in] into
+-- [@code s].  The number input is recorded in [@code length].  It works just
+-- like [@ref in.string] except that only digits and [@text +] or [@text -] are
+-- accepted -- any non-numeric characters are bleeped.  Input is terminated by
+-- a carriage-return, new-line or space.  This is a low-level routine used by
+-- [@ref in.int].
+-- @param s Buffer to read into
+-- @param length Number of bytes read
+-- @param max Maximum number of bytes to read
+-- @param in Channel to read from
+-- @param out Channel to write to
+-- @private
+PROC in.num.chars ([]BYTE s, INT length, VAL INT max, CHAN BYTE in?, out!)
+  --{{{  
+  INT cut.max:
+  BYTE ch:
+  SEQ
+    --{{{  initialise
+    SEQ
+      IF
+        max > (SIZE s)
+          cut.max := SIZE s
+        TRUE
+          cut.max := max
+      length := 0
+      in ? ch
+    --}}}
+    --{{{  main cycle
+    WHILE (ch <> '*c') AND (ch <> '*n') AND (ch <> ' ')
+      SEQ
+        --{{{  process ch
+        IF
+          (ch = BACK) OR (ch = DELETE)
+            --{{{  
+            IF
+              length > 0
+                SEQ
+                  length := length - 1
+                  out ! BACK
+                  out ! ' '
+                  out ! BACK
+                  out ! FLUSH
+              length = 0
+                SEQ
+                  out ! BELL
+                  out ! FLUSH
+            --}}}
+          length = cut.max
+            --{{{  
+            SEQ
+              out ! BELL
+              out ! FLUSH
+            --}}}
+          (('0' <= ch) AND (ch <= '9')) OR (ch = '+') OR (ch = '-')
+            --{{{  
+            SEQ
+              s[length] := ch
+              length := length + 1
+              out ! ch
+              out ! FLUSH
+            --}}}
+          TRUE
+            --{{{  
+            SEQ
+              out ! BELL
+              out ! FLUSH
+            --}}}
+        --}}}
+        in ? ch
+    --}}}
+  --}}}
+:
+--}}}
+--{{{  BOOL FUNCTION check.num.chars (VAL []BYTE s, VAL INT length)
+--* Check the format of an integer.
+-- This returns whether the string [@code s] has the format of a legal integer.
+-- It assumes [@code s] consists only of decimal digits or [@text +]/[@text -]
+-- symbols (e.g. having been input using [@ref in.num.chars] above).  This is a
+-- low-level routine used by [@ref in.int].
+-- @param s Buffer to read from
+-- @param length Number of bytes in buffer
+-- @return Whether the buffer represents a legal integer
+-- @private
+BOOL FUNCTION check.num.chars (VAL []BYTE s, VAL INT length)
+  --{{{  
+  BOOL ok:
+  VALOF
+    --{{{  is it ok?
+    IF
+      length = 0
+        ok := FALSE
+      IF i = 1 FOR length - 1
+        (s[i] = '+') OR (s[i] = '-')
+          ok := FALSE
+      length > 1
+        ok := TRUE
+      length = 1
+        ok := ('0' <= s[0]) AND (s[0] <= '9')
+      TRUE
+        ok := FALSE
+    --}}}
+    RESULT ok
+  --}}}
+:
+--}}}
+--{{{  BOOL, INT FUNCTION convert.num.chars (VAL []BYTE s)
+--* Parse an integer value stored in decimal.
+-- This assumes that [@code s] has the format of a legal integer.  It computes
+-- that integer and returns it.  It guards against overflow, returning
+-- success in the BOOL result.  This is a low-level routine used
+-- by [@ref in.int].
+-- @param s Buffer to read from
+-- @return Whether the conversion was successful
+-- @return Value in the buffer
+-- @private
+BOOL, INT FUNCTION convert.num.chars (VAL []BYTE s)
+  --{{{  
+  BOOL ok:
+  INT x:
+  VALOF
+    --{{{  convert to x
+    VAL INT length IS SIZE s:
+    INT start, n.digits:
+    BOOL positive:
+    SEQ
+      --{{{  check for sign
+      IF
+        s[0] = '+'
+          --{{{  
+          SEQ
+            positive := TRUE
+            start := 1
+            n.digits := length - 1
+          --}}}
+        s[0] = '-'
+          --{{{  
+          SEQ
+            positive := FALSE
+            start := 1
+            n.digits := length - 1
+          --}}}
+        TRUE
+          --{{{  
+          SEQ
+            positive := TRUE
+            start := 0
+            n.digits := length
+          --}}}
+      --}}}
+      --{{{  compute number
+      SEQ
+        x := 0
+        ok := TRUE
+        SEQ i = start FOR n.digits
+          SEQ
+            x := (10 TIMES x) PLUS ((INT s[i]) - (INT '0'))
+            ok := ok AND (x >= 0)
+      --}}}
+      --{{{  set the sign
+      IF
+        positive
+          SKIP
+        x = (MOSTNEG INT)
+          ok := TRUE
+        TRUE
+          x := MINUS x
+      --}}}
+    --}}}
+    RESULT ok, x
+  --}}}
+:
+--}}}
+--{{{  PROC in.int (INT n, VAL INT max, CHAN BYTE in?, out!)
+--* Read an integer value in decimal.
+-- This routine is used for inputting an INT value expressed as decimal digits.
+-- It inputs a string of up to [@code max] characters from [@code in] into
+-- [@code s].  If [@code max] is more than 20, it is truncated to 20.  The
+-- first character may be [@text +] or [@text -].  Input is terminated by a
+-- carriage-return, new-line or space.  It does guard against overflow.
+-- @param n Value read
+-- @param max Maximum number of bytes to read
+-- @param in Channel to read from
+-- @param out Channel to write to
+PROC in.int (INT n, VAL INT max, CHAN BYTE in?, out!)
+  --{{{  interactive input of n (up to max digits)
+  VAL INT max.num.digits IS 20:
+  [max.num.digits]BYTE s:
+  INT length, cut.max:
+  BOOL ok:
+  SEQ
+    --{{{  cut.max := min (max, max.num.digits)
+    IF
+      max > max.num.digits
+        cut.max := max.num.digits
+      TRUE
+        cut.max := max
+    --}}}
+    in.num.chars (s, length, cut.max, in?, out!)
+    ok := FALSE
+    #PRAGMA DEFINED s
+    WHILE NOT ok
+      SEQ
+        WHILE NOT check.num.chars (s, length)
+          SEQ
+            --{{{  erase bad number
+            SEQ
+              SEQ i = 0 FOR length
+                SEQ
+                  out ! BACK
+                  out ! ' '
+                  out ! BACK
+              out ! BELL
+              out ! FLUSH
+            --}}}
+            in.num.chars (s, length, cut.max, in?, out!)
+        ok, n := convert.num.chars ([s FOR length])
+        --{{{  fix if bad
+        IF
+          ok
+            SKIP
+          TRUE
+            s[1] := '+'
+        --}}}
+  --}}}
+:
+--}}}
+--{{{  PROC black.hole (CHAN BYTE in?)
+--* Discard characters forever.
+-- This inputs characters from [@code in] forever.  It is used to mask off
+-- unwanted [@code BYTE] streams.
+-- @param in Channel to read from
+PROC black.hole (CHAN BYTE in?)
+  --{{{  
+  WHILE TRUE
+    BYTE any:
+    in ? any
+  --}}}
+:
+--}}}
+--}}}
+--{{{  ask stuff
+--{{{  PROC ask.string (VAL []BYTE prompt, []BYTE s, INT length,
+--* Read a string with a prompt.
+-- This prints a prompt, calls [@ref in.string], then prints a newline.
+-- @param prompt Prompt to print
+-- @param s Buffer to read into
+-- @param length Number of bytes read
+-- @param max Maximum number of bytes to read
+-- @param in Channel to read from
+-- @param out Channel to write to
+PROC ask.string (VAL []BYTE prompt, []BYTE s, INT length,
+                 VAL INT max, CHAN BYTE in?, out!)
+  --{{{  interactive input of s using in & out (maximum of max characters)
+  SEQ
+    out.string (prompt, 0, out!)
+    out ! FLUSH
+    in.string (s, length, max, in?, out!)
+    out ! '*c'
+    out ! '*n'
+    out ! FLUSH
+  --}}}
+:
+--}}}
+--{{{  PROC ask.bool (VAL []BYTE prompt, BOOL b, CHAN BYTE in?, out!)
+--* Read a boolean with a prompt.
+-- This prints a prompt, calls [@ref in.bool], then prints a newline.
+-- @param prompt Prompt to print
+-- @param b The Boolean read
+-- @param in Channel to read from
+-- @param out Channel to write to
+PROC ask.bool (VAL []BYTE prompt, BOOL b, CHAN BYTE in?, out!)
+  --{{{  interactive input of b using in & out (input 'y'/'Y' or 'n'/'N')
+  SEQ
+    out.string (prompt, 0, out!)
+    out ! FLUSH
+    in.bool (b, in?, out!)
+    out ! '*c'
+    out ! '*n'
+    out ! FLUSH
+  --}}}
+:
+--}}}
+--{{{  PROC ask.byte (VAL []BYTE prompt, BYTE b, VAL INT max, CHAN BYTE in?, out!)
+--* Read a byte value in decimal with a prompt.
+-- This prints a prompt, calls [@ref in.byte], then prints a newline.
+-- @param prompt Prompt to print
+-- @param b Value read
+-- @param max Maximum number of bytes to read
+-- @param in Channel to read from
+-- @param out Channel to write to
+PROC ask.byte (VAL []BYTE prompt, BYTE b, VAL INT max, CHAN BYTE in?, out!)
+  --{{{  interactive input of b using in & out (up to max digits)
+  SEQ
+    out.string (prompt, 0, out!)
+    out ! FLUSH
+    in.byte (b, max, in?, out!)
+    out ! '*c'
+    out ! '*n'
+  --}}}
+:
+--}}}
+--{{{  PROC ask.int (VAL []BYTE prompt, INT n, VAL INT max, CHAN BYTE in?, out!)
+--* Read an integer value in decimal with a prompt.
+-- This prints a prompt, calls [@ref in.int], then prints a newline.
+-- @param prompt Prompt to print
+-- @param n Value read
+-- @param max Maximum number of bytes to read
+-- @param in Channel to read from
+-- @param out Channel to write to
+PROC ask.int (VAL []BYTE prompt, INT n, VAL INT max, CHAN BYTE in?, out!)
+  --{{{  interactive input of n using in & out (up to max digits)
+  SEQ
+    out.string (prompt, 0, out!)
+    out ! FLUSH
+    in.int (n, max, in?, out!)
+    out ! '*c'
+    out ! '*n'
+  --}}}
+:
+--}}}
+--}}}
+--{{{  screen stuff (VT220 protocol)
+--{{{  PROC cursor.x.y (VAL BYTE x, y, CHAN BYTE out!)
+--* Place the cursor.
+-- This outputs a VT220 control sequence down channel [@code out] to place the
+-- cursor at screen coordinates ([@code x], [@code y]).
+-- @param x X coordinate
+-- @param y Y coordinate
+-- @param out Channel to write to
+PROC cursor.x.y (VAL BYTE x, y, CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out.byte (y, 0, out!)
+    out ! ';'
+    out.byte (x, 0, out!)
+    out ! 'H'
+  --}}}
+:
+--}}}
+--{{{  PROC cursor.up (VAL BYTE n, CHAN BYTE out!)
+--* Move the cursor up.
+-- This outputs a VT220 control sequence down channel [@code out] to move the
+-- cursor up [@code n] positions.
+-- @param n Number of positions to move
+-- @param out Channel to write to
+PROC cursor.up (VAL BYTE n, CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out.byte (n, 0, out!)
+    out ! 'A'
+  --}}}
+:
+--}}}
+--{{{  PROC cursor.down (VAL BYTE n, CHAN BYTE out!)
+--* Move the cursor down.
+-- This outputs a VT220 control sequence down channel [@code out] to move the
+-- cursor down [@code n] positions.
+-- @param n Number of positions to move
+-- @param out Channel to write to
+PROC cursor.down (VAL BYTE n, CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out.byte (n, 0, out!)
+    out ! 'B'
+  --}}}
+:
+--}}}
+--{{{  PROC cursor.right (VAL BYTE n, CHAN BYTE out!)
+--* Move the cursor right.
+-- This outputs a VT220 control sequence down channel [@code out] to move the
+-- cursor right [@code n] positions.
+-- @param n Number of positions to move
+-- @param out Channel to write to
+PROC cursor.right (VAL BYTE n, CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out.byte (n, 0, out!)
+    out ! 'C'
+  --}}}
+:
+--}}}
+--{{{  PROC cursor.left (VAL BYTE n, CHAN BYTE out!)
+--* Move the cursor left.
+-- This outputs a VT220 control sequence down channel [@code out] to move the
+-- cursor left [@code n] positions.
+-- @param n Number of positions to move
+-- @param out Channel to write to
+PROC cursor.left (VAL BYTE n, CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out.byte (n, 0, out!)
+    out ! 'D'
+  --}}}
+:
+--}}}
+--{{{  PROC erase.eol (CHAN BYTE out!)
+--* Erase to end of line.
+-- This outputs a VT220 control sequence to erase characters from the
+-- current cursor position to the end of the screen line.
+-- @param out Channel to write to
+PROC erase.eol (CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out ! '0'
+    out ! 'K'
+  --}}}
+:
+--}}}
+--{{{  PROC erase.bol (CHAN BYTE out!)
+--* Erase to beginning of line.
+-- This outputs a VT220 control sequence to erase characters from the
+-- current cursor position to the beginning of the screen line.
+-- @param out Channel to write to
+PROC erase.bol (CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out ! '1'
+    out ! 'K'
+  --}}}
+:
+--}}}
+--{{{  PROC erase.line (CHAN BYTE out!)
+--* Erase whole line.
+-- This outputs a VT220 control sequence to erase all characters on the
+-- current screen line.
+-- @param out Channel to write to
+PROC erase.line (CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out ! '2'
+    out ! 'K'
+  --}}}
+:
+--}}}
+--{{{  PROC erase.eos (CHAN BYTE out!)
+--* Erase to end of screen.
+-- This outputs a VT220 control sequence to erase characters from the
+-- current cursor position to the end of the screen.
+-- @param out Channel to write to
+PROC erase.eos (CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out ! '0'
+    out ! 'J'
+  --}}}
+:
+--}}}
+--{{{  PROC erase.bos (CHAN BYTE out!)
+--* Erase to beginning of screen.
+-- This outputs a VT220 control sequence to erase characters from the
+-- current cursor position backwards to the start of the screen.
+-- @param out Channel to write to
+PROC erase.bos (CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out ! '1'
+    out ! 'J'
+  --}}}
+:
+--}}}
+--{{{  PROC erase.screen (CHAN BYTE out!)
+--* Erase whole screen.
+-- This outputs a VT220 control sequence to erase all characters from the
+-- screen.
+-- @param out Channel to write to
+PROC erase.screen (CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out ! '2'
+    out ! 'J'
+  --}}}
+:
+--}}}
+--{{{  PROC cursor.visible (CHAN BYTE out!)
+--* Make cursor visible.
+-- This outputs a VT220 control sequence to make the cursor visible.
+-- @param out Channel to write to
+PROC cursor.visible (CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out ! '?'
+    out ! '2'
+    out ! '5'
+    out ! 'h'
+  --}}}
+:
+--}}}
+--{{{  PROC cursor.invisible (CHAN BYTE out!)
+--* Make cursor invisible.
+-- This outputs a VT220 control sequence to make the cursor invisible.
+-- @param out Channel to write to
+PROC cursor.invisible (CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out ! ESCAPE
+    out ! '['
+    out ! '?'
+    out ! '2'
+    out ! '5'
+    out ! 'l'
+  --}}}
+:
+--}}}
+--{{{  PROC pos.int (VAL INT col, row, n, field, CHAN BYTE out!)
+--* Move cursor and write an integer.
+-- This outputs a VT220 control sequence to place the cursor at screen
+-- coordinates ([@code col], [@code row]) and output [@code n] in a fieldwidth
+-- of [@code field].
+-- @param col X coordinate
+-- @param row Y coordinate
+-- @param n Integer
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC pos.int (VAL INT col, row, n, field, CHAN BYTE out!)
+  --{{{  
+  SEQ
+    cursor.x.y (BYTE col, BYTE row, out!)
+    out.int (n, field, out!)
+  --}}}
+:
+--}}}
+--{{{  PROC pos.yes.no (VAL INT col, row, VAL BOOL b,
+--* Move cursor and write a Boolean value (as yes/no).
+-- This outputs a VT220 control sequence to place the cursor at screen
+-- coordinates ([@code col], [@code row]) and output [@code b] in a fieldwidth
+-- of [@code field].
+-- @param col X coordinate
+-- @param row Y coordinate
+-- @param b Boolean
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC pos.yes.no (VAL INT col, row, VAL BOOL b,
+                 VAL INT field, CHAN BYTE out!)
+  --{{{  
+  SEQ
+    cursor.x.y (BYTE col, BYTE row, out!)
+    out.yes.no (b, field, out!)
+  --}}}
+:
+--}}}
+--}}}
+
+
+--{{{  deprecated stuff
+--* Synonym for [@ref out.int].
+-- @deprecated
+PROC out.number (VAL INT n, w, CHAN BYTE o!)
+  out.int (n, w, o!)
+:
+--* Synonym for [@ref cursor.x.y].
+-- @deprecated
+PROC goto.x.y (VAL INT x, y, CHAN BYTE o!)
+  cursor.x.y (BYTE x, BYTE y, o!)
+:
+--}}}  
+

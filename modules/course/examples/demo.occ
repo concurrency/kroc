@@ -1,0 +1,50 @@
+-- COPYRIGHT : P.H.Welch, 1984
+
+#INCLUDE "course.module"
+
+
+--* This pauses execution of the invoking process by delay microseconds.
+--* Other processes are unaffected.
+--*
+--* @param delay : the length of the pause (in microseconds)
+--*
+PROC pause (VAL INT delay)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS delay
+:
+
+
+--* This merges an array of INT input streams to a single text output stream.
+--* It tabulates one number from each stream across one line of output.
+--* Then, it pauses for delay microseconds.  It repeats this for ever.
+--*
+--* @param delay : the length of the pause (in microseconds)
+--*
+PROC print.streams (VAL INT delay, []CHAN INT in?, CHAN BYTE out!)
+  INITIAL MOBILE []INT n IS MOBILE [SIZE in?]INT:
+  -- Above is the rather complex way we have to declare an array whose size
+  -- in not known until runtime.  This will be made simple in future versions
+  -- of occam-pi.
+  WHILE TRUE
+    SEQ
+      PAR i = 0 FOR SIZE n
+        in[i] ? n[i]
+      SEQ i = 0 FOR SIZE n
+        out.int (n[i], 15, out!)        -- out.int is from "course.lib"
+      out.string ("*c*n", 0, out!)      -- out.string is from "course.lib"
+      pause (delay)
+:
+
+
+PROC demo (CHAN BYTE keyboard?, screen!, error!)
+  [4] CHAN INT c:
+  PAR
+    numbers (c[0]!)
+    squares (c[1]!)
+    fibonacci (c[2]!)
+    times (c[3]!)
+    print.streams (100000, c?, screen!)    -- max output: 10 lines per second
+:
