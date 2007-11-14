@@ -63,12 +63,8 @@ void show_last_debug_insert (void);
 #define DEFAULT_SCHED_POLICY SCHED_POLICY_US
 
 #if defined(OOS_BUILD)
-	extern int *inttab[OOS_NUM_INTERRUPTS];
-	extern volatile int intflags[OOS_NUM_INTERRUPTS];
-	extern volatile int intcount[OOS_NUM_INTERRUPTS];
-	extern volatile int intlast;
-	extern volatile int *iq_fptr, *iq_bptr;
-	extern volatile long long ticount;
+extern word *inttab[OOS_NUM_INTERRUPTS];
+extern volatile word intcount[OOS_NUM_INTERRUPTS];
 #endif
 
 #endif	/* !__KERNEL_H */
