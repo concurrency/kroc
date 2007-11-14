@@ -1,5 +1,5 @@
 --
---	mrstar8.occ -- miniraster starfall demo (8 star version)
+--	mrstar8.occ -- sdlraster starfall demo (8 star version)
 --	Copyright (C) 2005-2006 Fred Barnes <frmb@kent.ac.uk>
 --	Copyright (C) 2007  University of Kent
 --
@@ -19,7 +19,7 @@
 --
 
 --{{{  includes
-#INCLUDE "miniraster.module"
+#INCLUDE "sdlraster.module"
 #INCLUDE "course.module"
 #INCLUDE "maths.module"
 
@@ -465,7 +465,7 @@ PROC mrstar8 (CHAN BYTE kyb?, scr!, err!)
     CHAN RASTER.EVENT events:
     CHAN INT control:
     PAR
-      miniraster.simple ("mrstar8", width, height, nbufs, d?, c!)
+      raster.display.simple ("mrstar8", width, height, nbufs, d?, c!)
       mrstar.proper (c?, d!, scr!)
 :
 

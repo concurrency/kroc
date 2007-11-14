@@ -1,7 +1,8 @@
 --
---	sdlraster.occ -- occam X raster UDC / SDL raster
+--	sdlrcompat.occ -- backwards compatibility for sdlraster
 --	Copyright (C) 2005-2006 Fred Barnes  <frmb@kent.ac.uk>
 --	Copyright (C) 2007 Carl Ritson <cgr@kent.ac.uk>
+--	Copyright (C) 2007 Adam Sampson <ats@offog.org>
 --
 --	This program is free software; you can redistribute it and/or modify
 --	it under the terms of the GNU General Public License as published by
@@ -18,15 +19,15 @@
 --	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 --
 
+--** @module sdlraster
+
+#INCLUDE "raster.module"
+#INCLUDE "occSDL.module"
 #INCLUDE "sdlraster.inc"
+#INCLUDE "sdlrcompat.inc"
+#USE "sdlraster"
 
---{{{  module documentation
---** Simple bitmap display using SDL.
---
--- @module sdlraster
-
---}}}
-
+--{{{  sdlraster 0.1 compatibility
 #PRAGMA EXTERNAL "PROC C.sdlraster.set.buffer (VAL INT n, VAL [][]INT r) = 0"
 #PRAGMA EXTERNAL "PROC C.sdlraster.set.update.buffer (VAL [][]INT r) = 0"
 #PRAGMA EXTERNAL "PROC C.sdlraster.clear ([][]INT r) = 0"
@@ -54,12 +55,14 @@ VAL INT REFRESH.US IS 20000:
 -- @param out Raster output
 -- @param events Input events
 -- @param control Control messages
+-- @deprecated
+-- @private
 PROC SDLRaster (VAL []BYTE dispname, VAL INT width, height, nbuffers, CHAN RASTER in?, out!, CHAN SDLEVENT events!, CHAN INT control?)
   CHAN RASTER.EVENT r.events:
   CHAN RASTER loop.in, loop.out, buffer:
   CHAN BOOL ready, shutdown:
   PAR
-    miniraster (dispname, width, height, nbuffers + 2, loop.in?, loop.out!, r.events!)
+    raster.display (dispname, width, height, nbuffers + 2, loop.in?, loop.out!, r.events!)
     SEQ
       SEQ i = 0 FOR nbuffers + 2
         RASTER r:
@@ -104,7 +107,7 @@ PROC SDLRaster (VAL []BYTE dispname, VAL INT width, height, nbuffers, CHAN RASTE
                   RESCHEDULE ()
 
           PAR
-            miniraster.shutdown (loop.out?, loop.in!)
+            raster.shutdown (loop.out?, loop.in!)
             shutdown ! TRUE
             BOOL b:
             SEQ
@@ -144,6 +147,8 @@ PROC SDLRaster (VAL []BYTE dispname, VAL INT width, height, nbuffers, CHAN RASTE
 --}}}
 --{{{  PROC SDLRasterClear ([][]INT r)
 --* Clear a raster.
+-- @deprecated
+-- @private
 PROC SDLRasterClear ([][]INT r)
   SEQ
     C.sdlraster.clear (r)
@@ -153,6 +158,8 @@ PROC SDLRasterClear ([][]INT r)
 --* Force a raster to be drawn on the screen.
 -- (This cheats a bit, since you don't actually need to return the raster to
 -- the [@ref SDLRaster] process to get it redrawn.)
+-- @deprecated
+-- @private
 PROC SDLRasterUpdate ([][]INT r)
   SEQ
     C.sdlraster.update (r)
@@ -160,6 +167,8 @@ PROC SDLRasterUpdate ([][]INT r)
 --}}}
 --{{{  PROC SDLRasterUpdateBuf (VAL INT bufnum)
 --* Force a particular display buffer to be drawn on the screen.
+-- @deprecated
+-- @private
 PROC SDLRasterUpdateBuf (VAL INT bufnum)
   SEQ
     C.sdlraster.update.n (bufnum)
@@ -168,6 +177,8 @@ PROC SDLRasterUpdateBuf (VAL INT bufnum)
 --{{{  PROC SDLRasterAutoClose (CHAN SDLEVENT events?, CHAN INT control!)
 --* Respond to [@ref EVENT.QUIT] messages with [@ref CTL.SHUTDOWN].
 -- This can be used in trivial programs to handle closing the window.
+-- @deprecated
+-- @private
 PROC SDLRasterAutoClose (CHAN SDLEVENT events?, CHAN INT control!)
   INITIAL BOOL running IS TRUE:
   WHILE running
@@ -183,4 +194,28 @@ PROC SDLRasterAutoClose (CHAN SDLEVENT events?, CHAN INT control!)
           SKIP
 :
 --}}}
-
+--}}}
+--{{{  miniraster compatibility
+--* @deprecated
+-- @private
+PROC clear.raster (RASTER r, VAL INT colour)
+  raster.clear (r, colour)
+:
+--* @deprecated
+-- @private
+PROC miniraster (VAL []BYTE title, VAL INT width, height, num.rasters,
+                 CHAN RASTER in?, out!, CHAN RASTER.EVENT events!)
+  raster.display (title, width, height, num.rasters, in?, out!, events!)
+:
+--* @deprecated
+-- @private
+PROC miniraster.shutdown (CHAN RASTER in?, out!)
+  raster.shutdown (in?, out!)
+:
+--* @deprecated
+-- @private
+PROC miniraster.simple (VAL []BYTE title, VAL INT width, height, num.buffers,
+                        CHAN RASTER in?, out!)
+  raster.display.simple (title, width, height, num.buffers, in?, out!)
+:
+--}}}

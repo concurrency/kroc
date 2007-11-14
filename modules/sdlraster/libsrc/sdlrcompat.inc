@@ -1,6 +1,7 @@
 --
---	sdlraster.inc -- constants/types for dynamic X raster thing
+--	sdlrcompat.inc -- backwards compatibility for sdlraster
 --	Copyright (C) 2005 Fred Barnes  <frmb@kent.ac.uk>
+--	Copyright (C) 2007 Adam Sampson <ats@offog.org>
 --
 --	This program is free software; you can redistribute it and/or modify
 --	it under the terms of the GNU General Public License as published by
@@ -19,8 +20,7 @@
 
 --** @module sdlraster
 
-#INCLUDE "miniraster.module"
-
+--{{{  sdlraster 0.1 compatibility
 --* An input event.
 -- Button press and release event data are encoded as
 -- [@code ((x /\ #FFF) << 20) \/ ((y /\ #FFF) << 8) \/ (button /\ #FF)].
@@ -30,6 +30,9 @@
 --
 -- Motion events are encoded as:
 -- [@code ((x /\ #FFF) << 20) \/ ((y /\ #FFF) << 8) \/ (state /\ #FF)].
+--
+-- @deprecated
+-- @private
 DATA TYPE SDLEVENT
   RECORD
     INT type:
@@ -81,4 +84,4 @@ VAL CKEY.DELETE IS SDLK.DELETE:
 
 VAL CTL.UNKNOWN IS 0:
 VAL CTL.SHUTDOWN IS 1:
-
+--}}}

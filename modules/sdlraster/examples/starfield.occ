@@ -1,7 +1,7 @@
 --** Starfield demo.
 
 #INCLUDE "course.module"
-#INCLUDE "miniraster.module"
+#INCLUDE "sdlraster.module"
 
 VAL INT WIDTH IS 800:
 VAL INT HEIGHT IS 600:
@@ -21,7 +21,7 @@ PROC clear (CHAN RASTER in?, out!)
         t := t PLUS (1000000 / 10)
         tim ? AFTER t
         --}}}
-        clear.raster (r, #000000)
+        raster.clear (r, #000000)
         out ! r
 :
 
@@ -54,7 +54,7 @@ PROC starfield ()
     CHAN RASTER c:
     [NUM.STARS + 1]CHAN RASTER cs:
     PAR
-      miniraster.simple ("Starfield", WIDTH, HEIGHT, 2, cs[NUM.STARS]?, c!)
+      raster.display.simple ("Starfield", WIDTH, HEIGHT, 2, cs[NUM.STARS]?, c!)
       clear (c?, cs[0]!)
       PAR i = 0 FOR NUM.STARS
         star (cs[i]?, cs[i + 1]!, x[i], y[i], col[i], speed[i])
