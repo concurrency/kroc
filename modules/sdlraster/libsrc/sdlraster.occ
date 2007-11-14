@@ -102,6 +102,82 @@ PROC raster.buffer (CHAN RASTER in?, out!, VAL INT width, height)
 :
 --}}}
 
+--{{{  PROC raster.convert.event
+--* Convert an [@ref SDL.Event] into a [@ref RASTER.EVENT].
+PROC raster.convert.event (SDL.Event event, RESULT RASTER.EVENT ev)
+  BYTE type:
+  SEQ
+    ev := [-1, 0, 0, 0, 0]
+    get.SDL.Event.type (type, event)
+    CASE INT type
+      SDL.QUIT
+        --{{{  quit event
+        ev[type] := RASTER.ET.QUIT
+        --}}}
+      SDL.KEYDOWN, SDL.KEYUP
+        --{{{  keyboard event
+        SDL.keysym sym:
+        INT n:
+        SEQ
+          CASE INT type
+            SDL.KEYDOWN
+              ev[type] := RASTER.ET.KEYDOWN
+            SDL.KEYUP
+              ev[type] := RASTER.ET.KEYUP
+          INITIAL SDL.KeyboardEvent ke IS SDL.KeyboardEvent event:
+          get.SDL.KeyboardEvent.keysym (sym, ke)
+          -- Temporary variable used here to avoid a KRoC bug.
+          get.SDL.keysym.sym (n, sym)
+          ev[id] := n
+          get.SDL.keysym.mod (n, sym)
+          ev[mod] := n
+        --}}}
+      SDL.MOUSEBUTTONDOWN, SDL.MOUSEBUTTONUP
+        --{{{  mouse button event
+        SEQ
+          CASE INT type
+            SDL.MOUSEBUTTONDOWN
+              ev[type] := RASTER.ET.MOUSEBUTTONDOWN
+            SDL.MOUSEBUTTONUP
+              ev[type] := RASTER.ET.MOUSEBUTTONUP
+          INITIAL SDL.MouseButtonEvent me IS SDL.MouseButtonEvent event:
+          BYTE b:
+          INT16 n:
+          SEQ
+            get.SDL.MouseButtonEvent.button (b, me)
+            ev[id] := INT b
+            -- Temporary variable used here to avoid a KRoC
+            -- bug.
+            get.SDL.MouseButtonEvent.x (n, me)
+            ev[x] := n
+            get.SDL.MouseButtonEvent.y (n, me)
+            ev[y] := n
+          SDLMod mod:
+          SEQ
+            SDL.GetModState (mod)
+            ev[mod] := INT mod
+        --}}}
+      SDL.MOUSEMOTION
+        --{{{  mouse motion event
+        SEQ
+          ev[type] := RASTER.ET.MOUSEMOTION
+          INITIAL SDL.MouseMotionEvent me IS SDL.MouseMotionEvent event:
+          INT16 n:
+          SEQ
+            get.SDL.MouseMotionEvent.x (n, me)
+            ev[x] := n
+            get.SDL.MouseMotionEvent.y (n, me)
+            ev[y] := n
+        --}}}
+      SDL.VIDEOEXPOSE
+        --{{{  window exposure
+        ev[type] := RASTER.ET.EXPOSE
+        --}}}
+      ELSE
+        SKIP
+:
+--}}}
+
 --{{{  PROC raster.events
 --* Fetch events from SDL.
 -- @private
@@ -141,104 +217,31 @@ PROC raster.events (SDL.Surface screen, CHAN RASTER.EVENT out!, CHAN BOOL kill?)
                 IF
                   result > 0
                     --{{{  decode event
-                    INITIAL RASTER.EVENT ev IS [-1, 0, 0, 0, 0]:
-                    BYTE type:
+                    RASTER.EVENT ev:
                     SEQ
-                      get.SDL.Event.type (type, event)
-                      CASE INT type
-                        SDL.QUIT
-                          --{{{  quit event
-                          SEQ
-                            ev[type] := RASTER.ET.QUIT
-                            out ! ev
+                      raster.convert.event (event, ev)
+                      --{{{  check for special keys
+                      VAL INT ANY.ALT IS (KMOD.LALT \/ KMOD.RALT) \/ (KMOD.LMETA \/ KMOD.RMETA):
+                      IF
+                        (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = SDLK.RETURN) AND ((ev[mod] /\ ANY.ALT) <> 0)
+                          --{{{  Alt-Enter: toggle full-screen mode
+                          toggle.fullscreen ()
                           --}}}
-                        SDL.KEYDOWN, SDL.KEYUP
-                          --{{{  keyboard event
-                          SDL.keysym sym:
-                          INT n:
+                        (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = SDLK.BACKSPACE) AND ((ev[mod] /\ ANY.ALT) <> 0)
+                          --{{{  Alt-Backspace: STOP
                           SEQ
-                            CASE INT type
-                              SDL.KEYDOWN
-                                ev[type] := RASTER.ET.KEYDOWN
-                              SDL.KEYUP
-                                ev[type] := RASTER.ET.KEYUP
-                            INITIAL SDL.KeyboardEvent ke IS SDL.KeyboardEvent event:
-                            get.SDL.KeyboardEvent.keysym (sym, ke)
-                            -- Temporary variable used here to avoid a KRoC bug.
-                            get.SDL.keysym.sym (n, sym)
-                            ev[id] := n
-                            get.SDL.keysym.mod (n, sym)
-                            ev[mod] := n
-                            --{{{  check for special keys
-                            VAL INT ANY.ALT IS (KMOD.LALT \/ KMOD.RALT) \/ (KMOD.LMETA \/ KMOD.RMETA):
+                            --{{{  leave full-screen mode first
                             IF
-                              (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = SDLK.RETURN) AND ((ev[mod] /\ ANY.ALT) <> 0)
-                                --{{{  Alt-Enter: toggle full-screen mode
+                              is.fullscreen
                                 toggle.fullscreen ()
-                                --}}}
-                              (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = SDLK.BACKSPACE) AND ((ev[mod] /\ ANY.ALT) <> 0)
-                                --{{{  Alt-Backspace: STOP
-                                SEQ
-                                  --{{{  leave full-screen mode first
-                                  IF
-                                    is.fullscreen
-                                      toggle.fullscreen ()
-                                    TRUE
-                                      SKIP
-                                  --}}}
-                                  STOP
-                                --}}}
                               TRUE
-                                out ! ev
+                                SKIP
                             --}}}
+                            STOP
                           --}}}
-                        SDL.MOUSEBUTTONDOWN, SDL.MOUSEBUTTONUP
-                          --{{{  mouse button event
-                          SEQ
-                            CASE INT type
-                              SDL.MOUSEBUTTONDOWN
-                                ev[type] := RASTER.ET.MOUSEBUTTONDOWN
-                              SDL.MOUSEBUTTONUP
-                                ev[type] := RASTER.ET.MOUSEBUTTONUP
-                            INITIAL SDL.MouseButtonEvent me IS SDL.MouseButtonEvent event:
-                            BYTE b:
-                            INT16 n:
-                            SEQ
-                              get.SDL.MouseButtonEvent.button (b, me)
-                              ev[id] := INT b
-                              -- Temporary variable used here to avoid a KRoC
-                              -- bug.
-                              get.SDL.MouseButtonEvent.x (n, me)
-                              ev[x] := n
-                              get.SDL.MouseButtonEvent.y (n, me)
-                              ev[y] := n
-                            SDLMod mod:
-                            SEQ
-                              SDL.GetModState (mod)
-                              ev[mod] := INT mod
-                            out ! ev
-                          --}}}
-                        SDL.MOUSEMOTION
-                          --{{{  mouse motion event
-                          SEQ
-                            ev[type] := RASTER.ET.MOUSEMOTION
-                            INITIAL SDL.MouseMotionEvent me IS SDL.MouseMotionEvent event:
-                            INT16 n:
-                            SEQ
-                              get.SDL.MouseMotionEvent.x (n, me)
-                              ev[x] := n
-                              get.SDL.MouseMotionEvent.y (n, me)
-                              ev[y] := n
-                            out ! ev
-                          --}}}
-                        SDL.VIDEOEXPOSE
-                          --{{{  window exposure
-                          SEQ
-                            ev[type] := RASTER.ET.EXPOSE
-                            out ! ev
-                          --}}}
-                        ELSE
-                          SKIP
+                        TRUE
+                          out ! ev
+                      --}}}
                     --}}}
                   TRUE
                     checking := FALSE

@@ -212,11 +212,11 @@ PROC input.handler (SHARED OCCADE! occade)
   OCCADE.INPUT! input:
   SEQ
     occade.start.input (occade, input)
-    input[req] ! enable; (OCCADE.EVENT.KEY.DOWN \/ OCCADE.EVENT.KEY.UP) \/ OCCADE.EVENT.SYSTEM
+    input[req] ! enable; (RASTER.ET.KEYDOWN \/ RASTER.ET.KEYUP) \/ RASTER.ET.QUIT
 
     INITIAL BOOL running IS TRUE:
     WHILE running
-      OCCADE.INPUT.EVENT event:
+      RASTER.EVENT event:
       SEQ
         input[events] ? event
         occade.write ("got event: ")
