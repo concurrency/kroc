@@ -2718,9 +2718,12 @@ static INLINE word *mt_alloc_data (void *allocator, word type, word size)
 static void mt_release (sched_t *sched, word *ptr);
 static void mt_release_simple (sched_t *sched, word *ptr, word type)
 {
+	void *allocator = sched != NULL ? sched->allocator : NULL;
+
 	switch (MT_TYPE(type)) {
 		case MT_ARRAY:
 			{
+				
 				mt_array_internal_t *ma = (mt_array_internal_t *) 
 					(ptr - MT_ARRAY_PTR_OFFSET);
 				word inner_type = MT_ARRAY_INNER_TYPE(type);
@@ -2739,7 +2742,7 @@ static void mt_release_simple (sched_t *sched, word *ptr, word type)
 					}
 				}
 
-				dmem_thread_release (sched->allocator, ma);
+				dmem_thread_release (allocator, ma);
 			}
 			break;
 		case MT_CB:
@@ -2749,11 +2752,11 @@ static void mt_release_simple (sched_t *sched, word *ptr, word type)
 				if (atw_dec_z (&(cb->ref_count))) {
 					if (type & MT_CB_SHARED) {
 						dmem_thread_release (
-							sched->allocator, 
+							allocator, 
 							ptr - MT_CB_SHARED_PTR_OFFSET
 						);
 					} else {
-						dmem_thread_release (sched->allocator, cb);
+						dmem_thread_release (allocator, cb);
 					}
 				}
 			}
@@ -2763,11 +2766,14 @@ static void mt_release_simple (sched_t *sched, word *ptr, word type)
 				mt_barrier_internal_t *mb = (mt_barrier_internal_t *)
 					(ptr - MT_BARRIER_PTR_OFFSET);
 				
+				if (sched == NULL)
+					mobile_type_error ();
+
 				if (atw_dec_z (&(mb->ref_count))) {
 					if (MT_BARRIER_TYPE(mb->type) == MT_BARRIER_FORKING) {
 						fork_bar_complete (sched, (word *) &(mb->barrier.data));
 					}
-					dmem_thread_release (sched->allocator, mb);
+					dmem_thread_release (allocator, mb);
 				} else {
 					mb->barrier.resign (sched, &(mb->barrier.data), 1);
 				}
@@ -2777,7 +2783,7 @@ static void mt_release_simple (sched_t *sched, word *ptr, word type)
 			{
 				mt_data_internal_t *md = (mt_data_internal_t *)
 					(ptr - MT_DATA_PTR_OFFSET);
-				dmem_thread_release (sched->allocator, md);
+				dmem_thread_release (allocator, md);
 			}
 			break;
 		default:
@@ -3015,13 +3021,21 @@ static HOT word *mt_alloc (void *allocator, word type, word size)
 	return NULL;
 }
 /*}}}*/
-/*{{{  static void *ccsp_mt_alloc (word type, word size)*/
+/*{{{  void *ccsp_mt_alloc (word type, word size)*/
 void *ccsp_mt_alloc (word type, word size)
 {
 	sched_t *sched = _local_scheduler;
 	void *allocator = sched != NULL ? sched->allocator : NULL;
 	
 	return mt_alloc (allocator, type, size);
+}
+/*}}}*/
+/*{{{  void ccsp_mt_release (void *ptr)*/
+void ccsp_mt_release (void *ptr)
+{
+	sched_t *sched = _local_scheduler;
+	
+	mt_release (sched, (word *) ptr);
 }
 /*}}}*/
 /*}}}*/
