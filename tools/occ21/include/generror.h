@@ -82,6 +82,7 @@
 #define GEN_NO_MOBILESPACE		60	/* tried to use mobilespace, but not enabled */
 #define GEN_BAD_MOBILE_SLICE		61	/* tried to copy a slice containing mobiles */
 #define GEN_BARRIER_CLONE		62	/* tried to clone a (mobile) barrier */
+#define GEN_BAD_ALIGNMENT		63	/* bad alignment expression */
 /*}}}*/
 
 /*{{{  error macros */

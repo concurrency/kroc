@@ -3681,6 +3681,9 @@ printtreenl (stderr, 4, *tptr);
 					return;
 				case S_NEW_ARRAY:
 					scopeandcheck (ARTypeAddr (t));
+					if (TypeAttrOf (t) & TypeAttr_aligned) {
+						scopeandcheck (ARAlignmentAddr (t));
+					}
 					tptr = ARDimLengthAddr (t);
 					break;
 				case S_ALLOC_PROC:

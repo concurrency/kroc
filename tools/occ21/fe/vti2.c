@@ -586,6 +586,8 @@ PRIVATE const vti_keyword_t vti_keyword_table[] =
 	, {S_ENROLL, "ENROLL", NULL, "ENROLL", NULL, NONODE, CC}
 	, {S_BUFFERED, "BUFFERED", NULL, "BUFFERED", NULL, TYPENODE, CC}
 	, {S_PARAM_WS, NULL, NULL, "WS.SIZE", NULL, /*LEAFNODE*/ NAMENODE, NONE}
+	, {S_ALIGNMENT, "ALIGNMENT", NULL, "ALIGMENT", NULL, TYPENODE, CC}
+	, {S_DMA, "DMA", NULL, "DMA", NULL, TYPENODE, CC}
 };
 
 #define MAX_TAG ((int)(sizeof(vti_keyword_table)/sizeof(vti_keyword_table[0])))

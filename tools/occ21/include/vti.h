@@ -655,6 +655,7 @@ const treenode *checkread_fn(const treenode *tptr, nodetypeoftag_t nodetype, con
 #define MTypeOf(T)          ARTypeOf(T)
 #define TypeTracesOf(T)     (CHECKREAD(T,TYPENODE)->n_u.ar_s.ar_traces)
 #define MTDLabOf(T)         (CHECKREAD(T,TYPENODE)->n_u.ar_s.ar_tdlab)
+#define ARAlignmentOf(T)    (CHECKREAD(T,TYPENODE)->n_u.ar_s.ar_alignment)
 
 #define SetARDimLength(T,V) (CHECKNODE(T,TYPENODE)->n_u.ar_s.ar_dimlength = (V))
 #define SetARType(T,V)      (CHECKNODE(T,TYPENODE)->n_u.ar_s.ar_type = (V))
@@ -664,6 +665,7 @@ const treenode *checkread_fn(const treenode *tptr, nodetypeoftag_t nodetype, con
 #define SetMType(T,V)       SetARType(T,V)
 #define SetTypeTraces(T,V)  (CHECKNODE(T,TYPENODE)->n_u.ar_s.ar_traces = (V))
 #define SetMTDLab(T,V)      (CHECKNODE(T,TYPENODE)->n_u.ar_s.ar_tdlab = (V))
+#define SetARAlignment(T,V) (CHECKNODE(T,TYPENODE)->n_u.ar_s.ar_alignment = (V))
 
 #define ARDimLengthAddr(T) (&(CHECKNODE(T,TYPENODE)->n_u.ar_s.ar_dimlength))
 #define ARTypeAddr(T)      (&(CHECKNODE(T,TYPENODE)->n_u.ar_s.ar_type))
@@ -672,6 +674,7 @@ const treenode *checkread_fn(const treenode *tptr, nodetypeoftag_t nodetype, con
 #define MTypeAddr(T)       ARTypeAddr(T)
 #define TypeTracesAddr(T)  (&(CHECKNODE(T,TYPENODE)->n_u.ar_s.ar_traces))
 #define MTDLabAddr(T)      (&(CHECKNODE(T,TYPENODE)->n_u.ar_s.ar_tdlab))
+#define ARAlignmentAddr(T) (&(CHECKNODE(T,TYPENODE)->n_u.ar_s.ar_alignment))
 
 /* Bit patterns to be OR-ed together: */
 #define TypeAttr_default    (0x0)
@@ -692,6 +695,8 @@ const treenode *checkread_fn(const treenode *tptr, nodetypeoftag_t nodetype, con
 					 * also used on MOBILE formal paramter nodes (N_PARAM, ..) to indicate that they don't get "moved" */
 #define TypeAttr_ufixed    (0x4000)	/* used on MOBILE formal parameter nodes (N_PARAM, ..) to indicate a user-specified "FIXED" */
 #define TypeAttr_resigned  (0x8000)	/* used on BARRIERs during type-check to indicate it's been resigned (i.e. may not be used) */
+#define TypeAttr_aligned   (0x10000)    /* used on MOBILE arrays, to indicate alignment set */
+#define TypeAttr_dma       (0x20000)    /* used on MOBILE arrays, to request DMA capable memory */
 
 /*}}}*/
 /*{{{  valofnode*/

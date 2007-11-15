@@ -1227,6 +1227,9 @@ PUBLIC void prewalktree (treenode *tptr, int (*f1)(treenode *, void *), void *co
 			tptr = OpOf (tptr);
 			break;
 		case S_NEW_ARRAY:
+			if (TypeAttrOf (tptr) & TypeAttr_aligned) {
+				prewalktree (ARAlignmentOf (tptr), f1, voidptr);
+			}
 			tptr = ARDimLengthOf (tptr);
 			break;
 #endif

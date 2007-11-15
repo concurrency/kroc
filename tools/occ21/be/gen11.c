@@ -945,6 +945,23 @@ printtreenl (stderr, 4, dest);
 		if (shift) {
 			genshiftimmediate (I_SHR, shift);
 		}
+		if (TypeAttrOf (src) & (TypeAttr_aligned | TypeAttr_dma)) {
+			int alignment = 0, flags = 0;
+
+			if (TypeAttrOf (src) & TypeAttr_dma) {
+				flags = MT_ARRAY_OPTS_DMA;
+			}
+			if (TypeAttrOf (src) & TypeAttr_aligned) {
+				treenode *exp = ARAlignmentOf (src);
+				if (TagOf (exp) != S_CONSTEXP) {
+					generr (GEN_BAD_ALIGNMENT);
+				}
+				alignment = LoValOf (exp);
+			}
+
+			i_type = MT_MAKE_ARRAY_OPTS (flags, alignment, i_type);
+		}
+
 		loadconstant (MT_MAKE_ARRAY_TYPE (dimcount, i_type));
 		gensecondary (I_MT_ALLOC);
 	}

@@ -2922,6 +2922,10 @@ fprintf (stderr, "sub_transexp: NEW_ARRAY of dynmobilearray type.  dynmobiledime
 					}
 					SetARDimLength (t, newsize);
 					tptr = ARDimLengthAddr (t);
+
+					if (TypeAttrOf (t) & TypeAttr_aligned) {
+						sub_transexp (ARAlignmentAddr (t), is_sub_expression);
+					}
 				}
 				break;
 				/*}}}  */
