@@ -5,10 +5,12 @@ OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
 	drawstuff.occ \
+	imagetool.occ \
 	justraster.occ
 
 examples = \
 	drawstuff \
+	imagetool \
 	justraster
 
 all-local: $(examples)

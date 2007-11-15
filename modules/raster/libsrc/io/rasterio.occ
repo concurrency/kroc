@@ -20,16 +20,41 @@
 #INCLUDE "course.module"
 #INCLUDE "raster.module"
 
+#IF DEFINED (HAVE.LIBPNG)
+#USE "png.tce"
+#ENDIF
 #USE "ppmwrite.tce"
+
+--{{{  PROC read.raster
+--* Load an image file as a raster, with the format determined automatically
+-- based on the extension.
+--
+-- The following extensions are currently supported:
+-- [@item] [@text .png]
+PROC read.raster (VAL []BYTE filename, RESULT RASTER raster)
+  IF
+    #IF DEFINED (HAVE.LIBPNG)
+    ends.with.string (".png", filename)
+      read.raster.png (filename, raster)
+    #ENDIF
+    TRUE
+      CAUSEERROR ()
+:
+--}}}
 
 --{{{  PROC write.raster
 --* Write a raster to a file, with the format determined automatically based on
 -- the extension.
 --
 -- The following extensions are currently supported:
+-- [@item] [@text .png]
 -- [@item] [@text .ppm]
 PROC write.raster (VAL []BYTE filename, VAL [][]INT raster)
   IF
+    #IF DEFINED (HAVE.LIBPNG)
+    ends.with.string (".png", filename)
+      write.raster.png (filename, raster)
+    #ENDIF
     ends.with.string (".ppm", filename)
       write.raster.ppm (filename, raster)
     TRUE
