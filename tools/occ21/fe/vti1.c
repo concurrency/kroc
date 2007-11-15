@@ -1286,6 +1286,7 @@ treenode *newtypenode (int t, SOURCEPOSN ln, treenode * d, treenode * tp)
 	SetMTDLab (nptr, -1);
 	SetTypeAttr (nptr, TypeAttr_default);
 	SetTypeTraces (nptr, NULL);
+	SetARAlignment (nptr, NULL);
 #ifdef DEBUG
 	node_count[t]++;
 #endif

@@ -161,6 +161,8 @@ PUBLIC const char *genmessagestring (const int n)
 		return "Tried to copy a slice containing mobiles -- this is not supported, please use a SEQ loop";
 	case GEN_BARRIER_CLONE:
 		return "Tried to clone a barrier";
+	case GEN_BAD_ALIGNMENT:
+		return "Bad alignment expression (non-constant?)";
 		/*}}}*/
 	default:
 		return (NULL);

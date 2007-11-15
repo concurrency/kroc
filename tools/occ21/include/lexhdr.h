@@ -457,4 +457,6 @@
 #define S_ENROLL			366 /* for enrolling BARRIERs (S_BAREXTEND) */
 #define S_BUFFERED			367 /* for buffered channels */
 #define S_PARAM_WS			368 /* CIF workspace size */
+#define S_ALIGNMENT			369 /* ALIGNMENT type decorator */
+#define S_DMA				370 /* DMA type decorator */
 

@@ -1463,6 +1463,29 @@ PUBLIC treenode *rexp (void)
 				nextsymb ();
 				op = newtypenode (S_NEW_BARRIER, locn, NULL, newleafnode (S_FULLBARRIER, locn));
 			} else {
+				BOOL dma = FALSE;
+				treenode *alignment = NULL;
+
+				while (symb == S_ALIGNMENT || symb == S_DMA) {
+					if (symb == S_ALIGNMENT) {
+						nextsymb ();
+						if (symb == S_LPAREN) {
+							nextsymb ();
+							alignment = roperand ();
+						} else {
+							synerr_e (SYN_E_LPAREN, locn, symb);
+							return NULL;
+						}
+						if (symb != S_RPAREN) {
+							synerr_e (SYN_E_RPAREN, locn, symb);
+							return NULL;
+						}
+						nextsymb ();
+					} else if (symb == S_DMA) {
+						nextsymb ();
+						dma = TRUE;
+					}
+				}
 				if (symb != S_LBOX) {
 					synerr_e (SYN_E_EXPR, locn, symb);
 					return NULL;
@@ -1630,6 +1653,17 @@ PUBLIC treenode *rexp (void)
 					synerr_e (SYN_E_PTYPE, locn, symb);
 					op = NULL;
 					break;
+				}
+				/*}}}*/
+				/*{{{  attributes */
+				if (op != NULL) {
+					if (alignment != NULL) {
+						SetTypeAttr (op, TypeAttrOf (op) | TypeAttr_aligned);
+						SetARAlignment (op, alignment);
+					}
+					if (dma) {
+						SetTypeAttr (op, TypeAttrOf (op) | TypeAttr_dma);
+					}
 				}
 				/*}}}*/
 			}

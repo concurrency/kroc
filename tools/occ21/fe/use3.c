@@ -957,6 +957,11 @@ PRIVATE void aliascheckexp (treenode *n, use_mode_t use_mode)
 					aliascheckexp (ThisItem (list), EXP_READ);
 					list = NextItem (list);
 				}
+				
+				if (TypeAttrOf (n) & TypeAttr_aligned) {
+					aliascheckexp (ARAlignmentOf (n), EXP_READ);
+				}
+
 				return;
 			}
 		case S_ALLOC_PROC:

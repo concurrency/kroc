@@ -319,6 +319,7 @@ struct typenode_s
          offset of the variable containing the array length */
     BIT32           ar_attr;         /* Attributes of the type */
     int             ar_tdlab;        /* type-descriptor label, for MOBILE channel-types */
+    struct tnode_s *ar_alignment;    /* Holds alignment when allocating aligned mobile arrays */
   };
 /*}}}*/
 /*{{{  struct valofnode_s            valof instance*/

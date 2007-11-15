@@ -2988,6 +2988,10 @@ PUBLIC treenode *foldexp (treenode * tptr)
 				NewItem (foldexp (ThisItem (list)), list);
 				list = NextItem (list);
 			}
+
+			if (TypeAttrOf (tptr) & TypeAttr_aligned) {
+				SetARAlignment (tptr, foldexp (ARAlignmentOf (tptr)));
+			}
 		}
 		break;
 	case S_ALLOC_PROC:
