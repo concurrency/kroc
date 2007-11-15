@@ -486,7 +486,7 @@ typescript_head ()
 	uname | grep Darwin 1> /dev/null && XX_PROGRAMS="${AS:-as} ${CC:-gcc}" || XX_PROGRAMS="${AS:-as} ${CC:-gcc} ${TEE:-tee}"
 	for prog in $XX_PROGRAMS; do
 		printf '        %s\n' "$prog" >> "$DUMPOUT"
-		echo | "$prog" --version >> "$DUMPOUT" 2>&1 || software_missing "$prog"
+		echo | "$prog" --version >> "$DUMPOUT" 2>&1 || echo | "$prog" -v >> "$DUMPOUT" 2>&1 || software_missing "$prog"
 	done
 	printf '\n' >> "$DUMPOUT"
 
