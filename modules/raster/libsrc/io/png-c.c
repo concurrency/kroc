@@ -85,7 +85,6 @@ void _read_raster_png (int *w)
 	png_read_info (png, info);
 	png_get_IHDR (png, info, &width, &height, &bit_depth, &color_type,
 	              &interlace_method, &compression_method, &filter_method);
-	printf ("width = %d, height = %d\n", width, height);
 	/*}}}*/
 
 	/*{{{  set up transformations to #AARRGGBB */
