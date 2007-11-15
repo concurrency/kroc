@@ -48,6 +48,7 @@ extern void ccsp_cif_proc_stub (void);
 extern void ccsp_show_last_debug_insert (void);
 
 extern void *ccsp_mt_alloc (word type, word size);
+extern void ccsp_mt_release (void *ptr);
 extern word *ccsp_proc_alloc (word flags, word stack);
 
 #endif	/* !__CCSP_IF_H */
