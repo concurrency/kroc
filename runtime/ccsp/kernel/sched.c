@@ -2581,27 +2581,33 @@ static INLINE mt_array_internal_t *mt_alloc_array_internal (void *allocator, wor
 	word dimensions		= MT_ARRAY_DIM(type);
 	word inner_type		= MT_ARRAY_INNER_TYPE(type);
 	word meta_words		= dimensions + MT_ARRAY_PTR_OFFSET + 1;
-	word pad_words		= 0;
+	word alignment		= 0;
 	word bytes;
 
 	ASSERT ( inner_type & MT_SIMPLE );
 
+	if (MT_TYPE(inner_type) == MT_ARRAY_OPTS) {
+		alignment	= (1 << MT_ARRAY_OPTS_ALIGN(inner_type)) - 1;
+		inner_type	= MT_ARRAY_OPTS_INNER(inner_type);
+	}
+
 	if (MT_TYPE(inner_type) == MT_NUM) {
 		*size_shift = mt_num_size_shift (MT_NUM_TYPE(inner_type));
 
-		if (*size_shift > WSH) {
-			word unit = (1 << (*size_shift - WSH));
-			pad_words = unit - (meta_words & (unit - 1));
+		if ((*size_shift > WSH) && !alignment) {
+			alignment = (1 << *size_shift) - 1;
 		}
 	} else {
 		*size_shift = WSH;
 	}
 
-	bytes		= (size << *size_shift) + ((meta_words + pad_words) << WSH);
+	bytes		= (size << *size_shift) + alignment + (meta_words << WSH);
 	ma		= (mt_array_internal_t *) dmem_thread_alloc (allocator, bytes);
 	ma->size	= size;
 	ma->type	= type;
-	ma->array.data	= (void *) (((word *) ma) + meta_words + pad_words);
+	ma->array.data	= (void *) (
+		(word) ((((byte *) ma) + (meta_words << WSH) + alignment)) & (~alignment)
+	);
 
 	if (init && MT_TYPE(inner_type) != MT_NUM) {
 		word **walk = (word **) ma->array.data;
@@ -2730,6 +2736,10 @@ static void mt_release_simple (sched_t *sched, word *ptr, word type)
 
 				ASSERT ( inner_type & MT_SIMPLE );
 
+				if (MT_TYPE(inner_type) == MT_ARRAY_OPTS) {
+					inner_type = MT_ARRAY_OPTS_INNER(inner_type);
+				}
+
 				if (MT_TYPE(inner_type) != MT_NUM) {
 					word size	= ma->size;
 					word **walk	= (word **) ma->array.data;
@@ -2819,6 +2829,10 @@ static INLINE word *mt_clone_array (sched_t *sched, word *ptr, word type)
 
 	for (i = 0; i < dimensions; ++i) {
 		dst->array.dimensions[i] = src->array.dimensions[i];
+	}
+
+	if (MT_TYPE(inner_type) == MT_ARRAY_OPTS) {
+		inner_type = MT_ARRAY_OPTS_INNER(inner_type);
 	}
 
 	if (MT_TYPE(inner_type) == MT_NUM) {
@@ -2970,9 +2984,12 @@ static HOT bool mt_io_update (sched_t *sched, word **pptr)
 
 			do {
 				temp = MT_ARRAY_INNER_TYPE (temp);
+				if (MT_TYPE(temp) == MT_ARRAY_OPTS) {
+					temp = MT_ARRAY_OPTS_INNER(temp);
+				}
 				if (MT_TYPE(temp) == MT_NUM) {
 					return true;
-				}	
+				}
 			} while (MT_TYPE(temp) == MT_ARRAY);
 
 			mt_io_update_array (sched, pptr, MT_ARRAY_INNER_TYPE(type));
