@@ -25,7 +25,7 @@
 PROC write.raster.ppm (VAL []BYTE filename, VAL [][]INT raster)
   INT fd, result:
   SEQ
-    file.open3 (filename, O.WRONLY \/ O.CREAT, S.I644, fd)
+    file.open3 (filename, (O.WRONLY \/ O.CREAT) \/ O.TRUNC, S.I644, fd)
     ASSERT (fd <> (-1))
     CHAN BYTE out:
     CHAN BOOL kill:
