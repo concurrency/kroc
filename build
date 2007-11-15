@@ -547,7 +547,7 @@ check_autoconf ()
 
 			#{{{  check for unexpanded macros in configure
 			if grep '^OCCAM_OCCBUILD' configure >/dev/null 2>/dev/null; then
-				printf 'error: autoreconf in %s was unable to find occbuild.m4\nYou must install the "tools/kroc" subdirectory before building occam code.\n' | $TEE -a "$DUMPOUT" 1>&2
+				printf 'error: autoreconf in %s was unable to find occbuild.m4\nYou must install the "tools/kroc" subdirectory before building occam code.\n' "$2" | $TEE -a "$DUMPOUT" 1>&2
 				rm -f .success configure Makefile.in
 			fi
 			#}}}
