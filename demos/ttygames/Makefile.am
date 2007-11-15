@@ -4,11 +4,15 @@ AUTOMAKE_OPTIONS = foreign no-dependencies
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
-	bomberman.occ
+	bomberman.occ \
+	occman.occ \
+	mandelbrot.occ
+
 
 examples = \
 	bomberman \
-	occman
+	occman \
+	mandelbrot
 
 all-local: $(examples)
 
@@ -16,6 +20,9 @@ bomberman: bomberman.occ
 	$(OCCBUILD) --program $<
 
 occman: occman.occ
+	$(OCCBUILD) --program $<
+
+mandelbrot: mandelbrot.occ
 	$(OCCBUILD) --program $<
 
 install-exec-local: $(examples)
