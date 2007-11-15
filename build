@@ -213,7 +213,7 @@ usage ()
 Usage: $0 [options] [action] [action] ...
 where options are:
   --install-dir=<path>         target installation path [PREFIX]
-  --prefix=<path>              equivilant to --install-dir
+  --prefix=<path>              equivalent to --install-dir
   --configdir=<path>           install path for configuration file [/etc or home-dir]
   --bindir=<path>              install path for binaries [PREFIX/bin]
   --libdir=<path>              install path for libraries [PREFIX/lib/kroc]
