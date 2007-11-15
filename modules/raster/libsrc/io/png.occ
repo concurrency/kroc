@@ -1,0 +1,47 @@
+--
+--	rasterio: libpng interface
+--	Copyright (C) 2007  Adam Sampson <ats@offog.org>
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+#INCLUDE "raster.module"
+
+--{{{  externals
+#PRAGMA EXTERNAL "PROC C.read.raster.png (VAL []BYTE filename, RESULT RASTER r, INT rc) = 0"
+#PRAGMA EXTERNAL "PROC C.write.raster.png (VAL []BYTE filename, VAL [][]INT raster, RESULT INT rc) = 0"
+--}}}
+
+--{{{  PROC read.raster.png
+--* Load a PNG file as a raster.
+PROC read.raster.png (VAL []BYTE filename, RESULT RASTER raster)
+  INT rc:
+  SEQ
+    rc := SIZE filename
+    raster := MOBILE [123][456]INT
+    C.read.raster.png (filename, raster, rc)
+    ASSERT (rc = 0)
+:
+--}}}
+
+--{{{  PROC write.raster.png
+--* Write a raster out as a PNG file.
+PROC write.raster.png (VAL []BYTE filename, VAL [][]INT raster)
+  INT rc:
+  SEQ
+    C.write.raster.png (filename, raster, rc)
+    ASSERT (rc = 0)
+:
+--}}}

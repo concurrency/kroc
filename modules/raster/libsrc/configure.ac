@@ -11,6 +11,14 @@ dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
 
+dnl Checks for libraries.
+PKG_CHECK_MODULES([LIBPNG], [libpng], [have_libpng=yes], [have_libpng=no])
+if ! test $OCCBUILD_TOOLCHAIN = kroc; then
+	# FIXME: PNG support currently requires CCSP's interface.
+	have_libpng=no
+fi
+AM_CONDITIONAL(HAVE_LIBPNG, [test $have_libpng = yes])
+
 dnl Checks for occam modules.
 OCCAM_INCLUDE([course.module file.module], ,
               [AC_MSG_ERROR(Required modules not found)])

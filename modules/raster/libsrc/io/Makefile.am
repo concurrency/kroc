@@ -4,14 +4,27 @@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
-OCCBUILD = @OCCBUILD@ --search ../base
-CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
+if HAVE_LIBPNG
+png_flags = -DHAVE.LIBPNG
+endif
+
+OCCBUILD = @OCCBUILD@ --search ../base $(png_flags)
+CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@ @LIBPNG_CFLAGS@
 
 EXTRA_DIST = \
+	png-c.c \
+	png.occ \
 	ppmwrite.occ \
 	rasterio.occ
 
+if HAVE_LIBPNG
+png_objs = \
+	png-c.o \
+	png.tce
+endif
+
 rasterio_lib_objs = \
+	$(png_objs) \
 	ppmwrite.tce \
 	rasterio.tce
 
@@ -23,7 +36,7 @@ includes = $(rasterio_includes)
 all-local: $(libs) $(includes)
 
 rasterio.lib: $(rasterio_lib_objs)  
-	$(OCCBUILD) --library rasterio.lib --need raster --need course --need file $(rasterio_lib_objs)
+	$(OCCBUILD) --library rasterio.lib --need raster --need course --need file @LIBPNG_LIBS@ $(rasterio_lib_objs)
 
 install-exec-local: $(libs) $(includes)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
