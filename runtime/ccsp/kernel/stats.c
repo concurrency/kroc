@@ -67,3 +67,16 @@ int ccsp_get_stats (int version, ccsp_stats_t *stats) {
 	}
 }
 
+/* #PRAGMA EXTERNAL "C.ccsp.get.process.count (INT count) = 0" */
+void _ccsp_get_process_count (int ws[]) {
+	int *count = (int *) ws[0];
+
+	ccsp_stats_t stats;
+
+	if (ccsp_get_stats (CCSP_STATS_VERSION_1_00, &stats) == -1) {
+		*count = -1;
+	} else {
+		*count = (stats.proc_start - stats.proc_end)
+		         + (stats.startp - stats.endp);
+	}
+}

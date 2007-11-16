@@ -3540,9 +3540,9 @@ void kernel_Y_endp (void)
 		ptr[Iptr]	= ptr[IptrSucc]; /* copy Iptr from top of workspace */
 
 		enqueue_process (sched, ptr);
+	} else {
+		sched->stats.endp++;
 	}
-
-	sched->stats.endp++;
 
 	RESCHEDULE;
 }
