@@ -405,14 +405,14 @@ static int deadlock_debug (int *iws_ptr, int bytes, int *did_print)
  */
 void ccsp_kernel_deadlock (void)
 {
-	int did_print = 0;
-
 	if (att_val (&(ccsp_shutdown))) {
 		ccsp_kernel_exit (0, 0);
 	}
 
 #if !defined(OOS_BUILD)
 	if (debug_dead) {
+		int did_print = 0;
+
 		if (att_cas (&deadlock_output, 0, 1)) {
 			int found = 0;
 			int i;

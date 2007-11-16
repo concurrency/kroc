@@ -36,7 +36,8 @@ libccsp_a_LIBADD = \
 	kernel/deadlock.o \
 	kernel/dynproc.o \
 	kernel/entry.o \
-	kernel/sched.o
+	kernel/sched.o \
+	kernel/stats.o
 
 include_HEADERS = \
 	include/ccsp.h \
@@ -45,6 +46,7 @@ include_HEADERS = \
 	include/ccsp_if.h \
 	include/ccsp_cif.h \
 	include/ccsp_cif_stubs.h \
+	include/ccsp_stats.h \
 	include/ccsp_timer.h \
 	include/dmem_if.h \
 	include/kiface.h \
