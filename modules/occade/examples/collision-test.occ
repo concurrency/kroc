@@ -43,13 +43,13 @@ PROC main ()
       occade.start (occade, params, "Occade collision test")
 
       occade.start.sprite (occade, big, 1)
-      big[req] ! load.image; "images/red-spot.bmp"
+      big[req] ! load.image; "images/red-spot.png"
       big[req] ! visible; TRUE
       big[req] ! collisions; TRUE
       big[req] ! move; 320; 240; TRUE
 
       occade.start.sprite (occade, little, 2)
-      little[req] ! load.image; "images/green-ball.bmp"
+      little[req] ! load.image; "images/green-ball.png"
       little[req] ! visible; TRUE
       little[req] ! collisions; TRUE
 

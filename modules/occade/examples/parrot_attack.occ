@@ -101,7 +101,7 @@ PROC scorekeeper (SHARED OCCADE! occade, CHAN SCORE in?, INT score)
       SEQ
         s := "Score: "
         occade.append.int (s, score)
-        score.display[req] ! load.text; s; "images/font10x20.bmp"
+        score.display[req] ! load.text; s; "images/font10x20.png"
 
         in ? CASE
           INT n:
@@ -142,7 +142,7 @@ PROC process.meter (SHARED OCCADE! occade)
         occade.append.int (s, count)
         occade.append.string (s, " processes")
         process.display[req] ! move; (WIDTH - 10) - (10 * (SIZE s)); 10; FALSE
-        process.display[req] ! load.text; s; "images/font10x20.bmp"
+        process.display[req] ! load.text; s; "images/font10x20.png"
 
         tim ? AFTER t
         t := t PLUS UPDATE.TIME
@@ -165,7 +165,7 @@ PROC starfield (SHARED OCCADE! occade)
         SEQ
           SEQ x = 0 FOR (WIDTH / STARS.W) + 1
             SEQ y = -1 FOR (HEIGHT / STARS.H) + 2
-              occade.load.playfield (occade, "images/stars.bmp", x * STARS.W, (y * STARS.H) + i)
+              occade.load.playfield (occade, "images/stars.png", x * STARS.W, (y * STARS.H) + i)
           t := t PLUS 50000
           tim ? AFTER t
 :
@@ -183,7 +183,7 @@ PROC spark (SHARED OCCADE! occade, VAL INT init.x, init.y, init.dx, init.dy)
   INITIAL REAL32 dy IS (((REAL32 ROUND init.dy) / 99.0) - 0.5) * 2.0:
   SEQ
     occade.start.sprite (occade, sprite, -1)
-    sprite[req] ! load.image; "images/spark.bmp"
+    sprite[req] ! load.image; "images/spark.png"
     sprite[req] ! visible; TRUE
 
     tim ? t
@@ -228,7 +228,7 @@ PROC feather (SHARED OCCADE! occade, VAL INT init.x, init.y, init.dx, init.dy)
     INT f:
     SEQ
       occade.random (occade, 2, f)
-      INITIAL [19]BYTE s IS "images/featherX.bmp":
+      INITIAL [19]BYTE s IS "images/featherX.png":
       SEQ
         s[14] := '1' + (BYTE f)
         sprite[req] ! load.image; s
@@ -368,7 +368,7 @@ PROC bomb (SHARED OCCADE! occade, VAL INT init.x, init.y)
     SETPRI (PRI.MISSILES)
 
     occade.start.sprite (occade, sprite, BOMB.ID)
-    sprite[req] ! load.image; "images/egg.bmp"
+    sprite[req] ! load.image; "images/egg.png"
     sprite[req] ! visible; TRUE
     sprite[req] ! collisions; TRUE
 
@@ -419,15 +419,15 @@ PROC set.alien.shape (OCCADE.SPRITE! sprite, INT shape, VAL BOOL right)
       right
         CASE shape
           0
-            sprite[req] ! load.image; "images/parrot1.bmp"
+            sprite[req] ! load.image; "images/parrot1.png"
           1
-            sprite[req] ! load.image; "images/parrot2.bmp"
+            sprite[req] ! load.image; "images/parrot2.png"
       TRUE
         CASE shape
           0
-            sprite[req] ! load.image; "images/parrot3.bmp"
+            sprite[req] ! load.image; "images/parrot3.png"
           1
-            sprite[req] ! load.image; "images/parrot4.bmp"
+            sprite[req] ! load.image; "images/parrot4.png"
     shape := (shape + 1) \ 2
 :
 --}}}
@@ -550,7 +550,7 @@ PROC missile (SHARED OCCADE! occade, VAL INT init.x, init.y)
     SETPRI (PRI.MISSILES)
 
     occade.start.sprite (occade, sprite, MISSILE.ID)
-    sprite[req] ! load.image; "images/missile.bmp"
+    sprite[req] ! load.image; "images/missile.png"
     sprite[req] ! visible; TRUE
     sprite[req] ! collisions; TRUE
 
@@ -607,7 +607,7 @@ PROC ship (SHARED OCCADE! occade, SHARED SHUTDOWN.CTL! shutdown)
     input[req] ! enable; RASTER.ET.KEYDOWN \/ RASTER.ET.KEYUP
 
     occade.start.sprite (occade, sprite, SHIP.ID)
-    sprite[req] ! load.image; "images/ship.bmp"
+    sprite[req] ! load.image; "images/ship.png"
     sprite[req] ! visible; TRUE
     sprite[req] ! collisions; TRUE
 
@@ -637,7 +637,7 @@ PROC ship (SHARED OCCADE! occade, SHARED SHUTDOWN.CTL! shutdown)
                 s := "Shields: "
                 occade.append.int (s, shields)
                 occade.append.string (s, "%")
-                shield.display[req] ! load.text; s; "images/font10x20.bmp"
+                shield.display[req] ! load.text; s; "images/font10x20.png"
                 shield.display[req] ! move; WIDTH / 2; 20; TRUE
                 last.shields := shields
             TRUE
@@ -748,7 +748,7 @@ PROC wait.for.key (SHARED OCCADE! occade, VAL INT key, VAL []BYTE message)
   OCCADE.SPRITE! sprite:
   SEQ
     start.text (occade, sprite, message,
-                "images/font10x20.bmp", WIDTH / 2, (HEIGHT * 7) / 8)
+                "images/font10x20.png", WIDTH / 2, (HEIGHT * 7) / 8)
 
     occade.start.input (occade, input)
     input[req] ! enable; RASTER.ET.KEYDOWN
@@ -771,18 +771,18 @@ PROC title.screen (SHARED OCCADE! occade)
   INITIAL INT shape IS 0:
   SEQ
     start.text (occade, title, "P A R R O T   A T T A C K",
-                "images/font10x20.bmp", WIDTH / 2, (HEIGHT / 4) - 12)
+                "images/font10x20.png", WIDTH / 2, (HEIGHT / 4) - 12)
     start.text (occade, byline, "Concurrent programming with occam-pi",
-                "images/font10x20.bmp", WIDTH / 2, (HEIGHT / 4) + 12)
+                "images/font10x20.png", WIDTH / 2, (HEIGHT / 4) + 12)
     start.text (occade, keys, "Left and right to move - Space bar to fire",
-                "images/font10x20.bmp", WIDTH / 2, (HEIGHT * 5) / 8)
+                "images/font10x20.png", WIDTH / 2, (HEIGHT * 5) / 8)
 
     occade.start.sprite (occade, alien, -1)
     set.alien.shape (alien, shape, TRUE)
     alien[req] ! visible; TRUE
 
     occade.start.sprite (occade, ship, -1)
-    ship[req] ! load.image; "images/ship.bmp"
+    ship[req] ! load.image; "images/ship.png"
     ship[req] ! visible; TRUE
 
     CHAN BOOL stop:
@@ -846,7 +846,7 @@ PROC level.screen (SHARED OCCADE! occade, VAL INT level)
     s := "Level "
     occade.append.int (s, level)
     start.text (occade, text, s,
-                "images/font10x20.bmp", WIDTH / 2, HEIGHT / 2)
+                "images/font10x20.png", WIDTH / 2, HEIGHT / 2)
     occade.delay (500000)
     occade.finish.sprite (text)
 :
@@ -860,13 +860,13 @@ PROC death.screen (SHARED OCCADE! occade, VAL INT score)
   MOBILE []BYTE s:
   SEQ
     start.text (occade, message, "The alien invasion was successful.",
-                "images/font10x20.bmp", WIDTH / 2, HEIGHT / 4)
+                "images/font10x20.png", WIDTH / 2, HEIGHT / 4)
 
     s := "You scored "
     occade.append.int (s, score)
     occade.append.string (s, " points")
     start.text (occade, score.display, s,
-                "images/font10x20.bmp", WIDTH / 2, (HEIGHT * 5) / 8)
+                "images/font10x20.png", WIDTH / 2, (HEIGHT * 5) / 8)
 
     explosion (occade, WIDTH / 2, HEIGHT / 2, 200)
 

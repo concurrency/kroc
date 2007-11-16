@@ -59,7 +59,7 @@ PROC ball (SHARED OCCADE! occade, VAL OCCADE.PARAMS params, VAL INT id,
   INT start, t:
   SEQ
     occade.start.sprite (occade, sprite, id)
-    sprite[req] ! load.image; "images/green-ball.bmp"
+    sprite[req] ! load.image; "images/green-ball.png"
     sprite[req] ! visible; TRUE
     sprite[req] ! collisions; TRUE
 
@@ -83,7 +83,7 @@ PROC ball (SHARED OCCADE! occade, VAL OCCADE.PARAMS params, VAL INT id,
             IF
               remaining < 5000000
                 SEQ
-                  sprite[req] ! load.image; "images/orange-ball.bmp"
+                  sprite[req] ! load.image; "images/orange-ball.png"
                   stage := 1
               TRUE
                 SKIP
@@ -91,7 +91,7 @@ PROC ball (SHARED OCCADE! occade, VAL OCCADE.PARAMS params, VAL INT id,
             IF
               remaining < 2000000
                 SEQ
-                  sprite[req] ! load.image; "images/red-ball.bmp"
+                  sprite[req] ! load.image; "images/red-ball.png"
                   stage := 2
               TRUE
                 SKIP
@@ -149,7 +149,7 @@ PROC ball (SHARED OCCADE! occade, VAL OCCADE.PARAMS params, VAL INT id,
       n = 0
         SEQ
           sprite[req] ! move; INT ROUND x; INT ROUND y; TRUE
-          sprite[req] ! load.image; "images/bang.bmp"
+          sprite[req] ! load.image; "images/bang.png"
           tim ? t
           tim ? AFTER t PLUS 500000
           --{{{ ... and fire off some new balls
@@ -176,7 +176,7 @@ PROC ball.factory (SHARED OCCADE! occade, VAL OCCADE.PARAMS params,
   OCCADE.SPRITE! count:
   SEQ
     occade.start.sprite (occade, count, -1)
-    count[req] ! load.text; "Hello!"; "images/font10x20.bmp"
+    count[req] ! load.text; "Hello!"; "images/font10x20.png"
     count[req] ! move; 10; 10; FALSE
     count[req] ! visible; TRUE
 
@@ -199,7 +199,7 @@ PROC ball.factory (SHARED OCCADE! occade, VAL OCCADE.PARAMS params,
         s := ""
         occade.append.int (s, num.balls)
         occade.append.string (s, " balls")
-        count[req] ! load.text; s; "images/font10x20.bmp"
+        count[req] ! load.text; s; "images/font10x20.png"
 
         running := num.balls > 0
 
@@ -237,9 +237,9 @@ PROC main ()
     params[height] := 480
     occade.start (occade, params, "Occade demo")
 
-    occade.load.playfield (occade, "images/sky.bmp", 0, 0)
+    occade.load.playfield (occade, "images/sky.png", 0, 0)
     SEQ x = 75 FOR 5 STEP 60
-      occade.load.playfield (occade, "images/red-spot.bmp", 100 + x, x)
+      occade.load.playfield (occade, "images/red-spot.png", 100 + x, x)
 
     FORKING
       SHARED! CHAN BALL new.ball:

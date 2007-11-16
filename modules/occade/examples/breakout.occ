@@ -125,7 +125,7 @@ PROC wait.for.key (SHARED OCCADE! occade, VAL INT key, VAL []BYTE message)
   OCCADE.SPRITE! sprite:
   SEQ
     start.text (occade, sprite, message,
-                "images/font10x20.bmp", WIDTH / 2, (HEIGHT * 7) / 8)
+                "images/font10x20.png", WIDTH / 2, (HEIGHT * 7) / 8)
 
     occade.start.input (occade, input)
     input[req] ! enable; RASTER.ET.KEYDOWN
@@ -147,18 +147,18 @@ PROC title.screen (SHARED OCCADE! occade)
   OCCADE.SPRITE! title, byline, keys, bar, ball:
   SEQ
     start.text (occade, title, "B R E A K O U T",
-                "images/font10x20.bmp", WIDTH / 2, (HEIGHT / 4) - 12)
+                "images/font10x20.png", WIDTH / 2, (HEIGHT / 4) - 12)
     start.text (occade, byline, "Concurrent programming with occam-pi",
-                "images/font10x20.bmp", WIDTH / 2, (HEIGHT / 4) + 12)
+                "images/font10x20.png", WIDTH / 2, (HEIGHT / 4) + 12)
     start.text (occade, keys, "Left and right to move",
-                "images/font10x20.bmp", WIDTH / 2, (HEIGHT * 5) / 8)
+                "images/font10x20.png", WIDTH / 2, (HEIGHT * 5) / 8)
 
     occade.start.sprite (occade, bar, -1)
-    bar[req] ! load.image; "images/bar.bmp"
+    bar[req] ! load.image; "images/bar.png"
     bar[req] ! visible; TRUE
 
     occade.start.sprite (occade, ball, -1)
-    ball[req] ! load.image; "images/ball.bmp"
+    ball[req] ! load.image; "images/ball.png"
     ball[req] ! visible; TRUE
 
     CHAN BOOL stop:
@@ -216,7 +216,7 @@ PROC level.screen (SHARED OCCADE! occade, VAL INT level)
   SEQ
     s := "Level "
     occade.append.int (s, level)
-    start.text (occade, text, s, "images/font10x20.bmp", WIDTH / 2, HEIGHT / 2)
+    start.text (occade, text, s, "images/font10x20.png", WIDTH / 2, HEIGHT / 2)
     occade.delay (500000)
     occade.finish.sprite (text)
 :
@@ -229,13 +229,13 @@ PROC death.screen (SHARED OCCADE! occade, VAL INT score)
   MOBILE []BYTE s:
   SEQ
     start.text (occade, message, "You ran out of lives.",
-                "images/font10x20.bmp", WIDTH / 2, HEIGHT / 4)
+                "images/font10x20.png", WIDTH / 2, HEIGHT / 4)
 
     s := "You scored "
     occade.append.int (s, score)
     occade.append.string (s, " points")
     start.text (occade, score.display, s,
-                "images/font10x20.bmp", WIDTH / 2, (HEIGHT * 5) / 8)
+                "images/font10x20.png", WIDTH / 2, (HEIGHT * 5) / 8)
 
     --explosion (occade, WIDTH / 2, HEIGHT / 2, 200)
 
@@ -262,7 +262,7 @@ PROC scorekeeper (SHARED OCCADE! occade, CHAN SCORE in?, INT score)
       SEQ
         s := "Score: "
         occade.append.int (s, score)
-        score.display[req] ! load.text; s; "images/font10x20.bmp"
+        score.display[req] ! load.text; s; "images/font10x20.png"
 
         in ? CASE
           INT n:
@@ -288,9 +288,9 @@ PROC lives.counter (SHARED OCCADE! occade, LIVES? in)
         sprite[i][req] ! visible; TRUE
         IF
           i < cur.lives
-            sprite[i][req] ! load.image; "images/lifeyes.bmp"
+            sprite[i][req] ! load.image; "images/lifeyes.png"
           TRUE
-            sprite[i][req] ! load.image; "images/lifeno.bmp"
+            sprite[i][req] ! load.image; "images/lifeno.png"
 
     INITIAL BOOL running IS TRUE:
     WHILE running
@@ -303,14 +303,14 @@ PROC lives.counter (SHARED OCCADE! occade, LIVES? in)
               cur.lives > 0
                 SEQ
                   cur.lives := cur.lives - 1
-                  sprite[cur.lives][req] ! load.image; "images/lifeno.bmp"
+                  sprite[cur.lives][req] ! load.image; "images/lifeno.png"
               TRUE
                 cur.lives := -1
           increment
             IF
               cur.lives < MAX.LIVES
                 SEQ
-                  sprite[cur.lives][req] ! load.image; "images/lifeyes.bmp"
+                  sprite[cur.lives][req] ! load.image; "images/lifeyes.png"
                   cur.lives := cur.lives + 1
               TRUE
                 SKIP
@@ -343,7 +343,7 @@ PROC ball (SHARED OCCADE! occade, SHARED SHUTDOWN.CTL! shutdown,
   INT t:
   SEQ
     occade.start.sprite (occade, sprite, id)
-    sprite[req] ! load.image; "images/ball.bmp"
+    sprite[req] ! load.image; "images/ball.png"
     sprite[req] ! visible; TRUE
     sprite[req] ! collisions; TRUE
 
@@ -509,7 +509,7 @@ PROC bar (SHARED OCCADE! occade, CHAN BOOL quit?)
     input[req] ! enable; RASTER.ET.KEYDOWN \/ RASTER.ET.KEYUP
 
     occade.start.sprite (occade, sprite, BAR.ID)
-    sprite[req] ! load.image; "images/bar.bmp"
+    sprite[req] ! load.image; "images/bar.png"
     sprite[req] ! visible; TRUE
     sprite[req] ! collisions; FALSE
 
@@ -585,7 +585,7 @@ PROC block (SHARED OCCADE! occade, SHARED SHUTDOWN.CTL! shutdown,
   OCCADE.SPRITE! sprite:
   SEQ
     occade.start.sprite (occade, sprite, BLOCK.ID)
-    sprite[req] ! load.image; "images/block.bmp"
+    sprite[req] ! load.image; "images/block.png"
     sprite[req] ! visible; TRUE
     sprite[req] ! collisions; TRUE
     sprite[req] ! move; x; y; FALSE
@@ -723,7 +723,7 @@ PROC main ()
     params[height] := HEIGHT
     occade.start (occade, params, "Occade demo")
 
-    occade.load.playfield (occade, "images/breakoutbg.bmp", 0, 0)
+    occade.load.playfield (occade, "images/breakoutbg.png", 0, 0)
 
     FORKING
       WHILE TRUE
