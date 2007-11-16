@@ -25,6 +25,8 @@
 #INCLUDE "occSDL.module"
 #INCLUDE "file.module"
 #INCLUDE "course.module"
+#INCLUDE "raster.module"
+#INCLUDE "rasterio.module"
 #INCLUDE "sdlraster.module"
 
 #INCLUDE "occade.inc"
@@ -249,10 +251,25 @@ PROC occade.image.cache (CHAN OCCADE.TO.IMAGE.CACHE in?, CHAN SDL.Surface out!)
                 surface := surfaces[i]
             num.loaded < MAX.IMAGES
               --{{{ load image
-              MOBILE []BYTE namez:
               SEQ
-                occ.SDL.zero.terminate (name, namez)
-                occ.SDL.LoadBMP (surface, namez)
+                IF
+                  ends.with.string (".bmp", name)
+                    --{{{  use SDL's BMP loader
+                    MOBILE []BYTE namez:
+                    SEQ
+                      occ.SDL.zero.terminate (name, namez)
+                      occ.SDL.LoadBMP (surface, namez)
+                    --}}}
+                  TRUE
+                    --{{{  use rasterio
+                    RASTER r:
+                    SEQ
+                      read.raster (name, r)
+                      SDL.CreateRGBSurface (surface, SDL.HWSURFACE,
+                                            SIZE r[0], SIZE r, 24, 0, 0, 0, 0)
+                      occade.check.sdl (surface <> 0, "Creating raster image surface failed")
+                      occ.SDL.blit.raster (r, 0, 0, SIZE r[0], SIZE r, surface, 0, 0)
+                    --}}}
                 surfaces[num.loaded] := surface
                 names[num.loaded] := name
                 num.loaded := num.loaded + 1
@@ -580,6 +597,15 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
 
                   need.update := need.update \/ UPDATE.ALL
                 --}}}
+              RASTER r:
+              INT x, y:
+              draw.playfield; r; x; y
+                --{{{
+                SEQ
+                  occ.SDL.blit.raster (r, 0, 0, SIZE r[0], SIZE r, playfield, x, y)
+                  need.update := need.update \/ UPDATE.ALL
+                  svr[resp] ! return.raster; r
+                --}}}
               INT user.id:
               OCCADE.SPRITE.INTERNAL! cli:
               new.sprite; user.id; cli
@@ -632,6 +658,29 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
                       get.SDL.Surface.h (n, s[surface])
                       s[h] := n
                       need.update := need.update \/ UPDATE.SPRITES
+                --}}}
+              INT id:
+              RASTER r:
+              load.sprite.raster; id; r
+                --{{{
+                IF
+                  IF i = 0 FOR num.sprites
+                    sprites[i][id] = id
+                      SPRITE s IS sprites[i]:
+                      SEQ
+                        free.sprite (s)
+                        --{{{ create a new surface
+                        s[w] := SIZE r[0]
+                        s[h] := SIZE r
+                        SDL.CreateRGBSurface (s[surface], SDL.HWSURFACE,
+                                              s[w], s[h], 24, 0, 0, 0, 0)
+                        occade.check.sdl (s[surface] <> 0, "Creating raster surface failed")
+                        s[free.surface] := TRUE
+                        --}}}
+                        occ.SDL.blit.raster (r, 0, 0, SIZE r[0], SIZE r, s[surface], 0, 0)
+                        occade.make.transparent (s[surface])
+                        need.update := need.update \/ UPDATE.SPRITES
+                        svr[resp] ! return.raster; r
                 --}}}
               INT id:
               MOBILE []BYTE text:
@@ -792,6 +841,19 @@ PROC occade.load.playfield (SHARED OCCADE! handle, VAL []BYTE name, VAL INT x, y
 :
 --}}}
 
+--{{{ PROC occade.draw.playfield (SHARED OCCADE! handle, RASTER raster, VAL INT x, y)
+--* Draw a raster image onto the playfield at the given position.
+-- @param handle Occade handle
+-- @param raster Raster image
+-- @param x, y Top left corner coordinates
+PROC occade.draw.playfield (SHARED OCCADE! handle, RASTER raster, VAL INT x, y)
+  CLAIM handle
+    SEQ
+      handle[req] ! draw.playfield; raster; x; y
+      handle[resp] ? CASE return.raster; raster
+:
+--}}}
+
 --{{{ PROC occade.collision.buffer (CHAN OCCADE.COLLISION in?, out!, CHAN BOOL kill?)
 --* Overwriting N-place buffer of collisions.
 -- @private
@@ -845,6 +907,15 @@ PROC occade.sprite.server (SHARED OCCADE! handle, OCCADE.SPRITE? svr, VAL INT us
               --{{{
               CLAIM handle
                 handle[req] ! load.sprite.image; id; name
+              --}}}
+            RASTER r:
+            load.raster; r
+              --{{{
+              CLAIM handle
+                SEQ
+                  handle[req] ! load.sprite.raster; id; r
+                  handle[resp] ? CASE return.raster; r
+                  svr[resp] ! return.raster; r
               --}}}
             MOBILE []BYTE text:
             MOBILE []BYTE font:

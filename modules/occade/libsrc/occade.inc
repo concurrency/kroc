@@ -109,6 +109,9 @@ PROTOCOL OCCADE.SPRITE.REQ
     --* Set the sprite's image from a file.
     -- @item name Image filename
     load.image; MOBILE []BYTE
+    --* Set the sprite's image from a raster. Returns [@code return.raster].
+    -- @item raster Raster image
+    load.raster; RASTER
     --* Set the sprite's image by rendering text.
     -- @item text String to render
     -- @item font Font image filename
@@ -134,6 +137,8 @@ PROTOCOL OCCADE.SPRITE.REQ
 --* Responses from the sprite.
 PROTOCOL OCCADE.SPRITE.RESP
   CASE
+    --* Returning a used raster.
+    return.raster; RASTER
     --* The size of the sprite.
     -- @item w, h Width and height in pixels
     get.size; INT; INT
@@ -222,6 +227,10 @@ PROTOCOL OCCADE.REQ
     -- @item name Image filename
     -- @item x, y Top left corner coordinates
     load.playfield; MOBILE []BYTE; INT; INT
+    --* Draw a raster image onto the playfield. Returns [@code return.raster].
+    -- @item raster Raster image
+    -- @item x, y Top left corner coordinates
+    draw.playfield; RASTER; INT; INT
     --* Create a new sprite. Returns [@code new.sprite].
     -- @item id User-visible ID
     -- @item cli Internal channel bundle client end
@@ -231,6 +240,8 @@ PROTOCOL OCCADE.REQ
     delete.sprite; INT
     --* Load a new image for a sprite.
     load.sprite.image; INT; MOBILE []BYTE
+    --* Set a sprite's image from a raster. Returns [@code return.raster].
+    load.sprite.raster; INT; RASTER
     --* Render a new sprite image from a string.
     load.sprite.text; INT; MOBILE []BYTE; MOBILE []BYTE
     --* Update a sprite's information.
@@ -257,6 +268,8 @@ PROTOCOL OCCADE.RESP
     --* New sprite created.
     -- @item id Sprite ID
     new.sprite; INT
+    --* Returning a used raster.
+    return.raster; RASTER
     --* A sprite's size.
     get.sprite.size; INT; INT
     --* New event filter attached.
