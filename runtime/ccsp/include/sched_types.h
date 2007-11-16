@@ -234,6 +234,12 @@ struct _sched_t {
 
 	batch_t		curb			CACHELINE_ALIGN;
 	runqueue_t 	rq[MAX_PRIORITY_LEVELS];
+	struct {
+		word proc_start;
+		word proc_end;
+		word startp;
+		word endp;
+	} stats;
 	word		pad2[CACHELINE_WORDS];
 
 	/** globally accessed scheduling state **/
@@ -290,6 +296,11 @@ static inline void init_sched_t (sched_t *sched) {
 	for (i = 0; i < MAX_PRIORITY_LEVELS; ++i) {
 		init_runqueue_t (&(sched->rq[i]));
 	}
+
+	sched->stats.proc_start	= 0;
+	sched->stats.proc_end	= 0;
+	sched->stats.startp	= 0;
+	sched->stats.endp	= 0;
 
 	att_init (&(sched->sync), 0);
 

@@ -36,6 +36,7 @@
 #include "dmem_if.h"
 #include "kiface.h"
 #include "ccsp_if.h"
+#include "ccsp_stats.h"
 
 typedef struct _ccsp_sched_t {
 	void		*calltable[K_MAX_SUPPORTED];

@@ -3431,6 +3431,7 @@ void kernel_Y_startp (void)
 	save_priofinity (sched, workspace);
 	workspace[Iptr] = return_address + start_offset;
 	enqueue_process_nopri (sched, workspace);
+	sched->stats.startp++;
 
 	SAFETY { verify_batch_integrity (&(sched->curb)); }
 
@@ -3540,6 +3541,8 @@ void kernel_Y_endp (void)
 
 		enqueue_process (sched, ptr);
 	}
+
+	sched->stats.endp++;
 
 	RESCHEDULE;
 }
@@ -3722,6 +3725,7 @@ void kernel_Y_proc_start (void)
 	ws[Iptr] = code;
 
 	enqueue_process_nopri (sched, ws);
+	sched->stats.proc_start++;
 
 	SAFETY { verify_batch_integrity (&(sched->curb)); }
 
@@ -3756,6 +3760,7 @@ void kernel_Y_proc_end (void)
 	ENTRY_TRACE (Y_proc_end, "%p", ws);
 
 	mt_release_simple (sched, ws, MT_MAKE_TYPE (MT_DATA));
+	sched->stats.proc_end++;
 
 	RESCHEDULE;
 }
@@ -3950,6 +3955,7 @@ void kernel_Y_rtthreadinit (void)
 		word *next = (word *) fptr[Link];
 		fptr[Priofinity] = sched->priofinity;
 		enqueue_process_nopri (sched, fptr);
+		sched->stats.startp++;
 		fptr = next;
 	}
 
@@ -3995,7 +4001,8 @@ void kernel_Y_rtthreadinit (void)
 		att_set_bit (&enabled_threads, sched->index);
 	}
 
-	if (Wptr) {
+	if (Wptr != NotProcess_p) {
+		sched->stats.startp++;
 		K_ZERO_OUT_JRET ();
 	} else {
 		RESCHEDULE;
