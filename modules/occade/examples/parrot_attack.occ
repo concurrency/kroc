@@ -26,8 +26,8 @@
 #INCLUDE "shutdown.inc"
 #USE "shutdown"
 
--- Define this if you've got the CCSP process meter patch installed.
---#DEFINE USE.PROCESS.METER
+-- Define this if you're using CCSP.
+#DEFINE USE.PROCESS.METER
 
 --*{{{ PRI Process priorities
 VAL INT PRI.BUFFERS IS 10:
