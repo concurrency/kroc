@@ -325,15 +325,7 @@ PROC raster.display (VAL []BYTE title, VAL INT width, height, num.rasters,
               TRUE
                 --{{{  update screen
                 SEQ
-                  --{{{  blit raster to screen
-                  SDL.Surface box:
-                  SEQ
-                    occ.SDL.make.surface (r, box)
-                    ASSERT (box <> 0)
-                    occ.SDL.blit (box, 0, 0, width, height, screen, 0, 0)
-                    SDL.FreeSurface (box)
-                  --}}}
-
+                  occ.SDL.blit.raster (r, 0, 0, SIZE r[0], SIZE r, screen, 0, 0)
                   SDL.Flip (result, screen)
                   ASSERT (result = 0)
                 --}}}
