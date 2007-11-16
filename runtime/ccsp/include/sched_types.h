@@ -373,7 +373,7 @@ static inline void init_ccsp_global_t (ccsp_global_t *ccsp) {
 	att_init (&(ccsp->shutdown), 0);
 
 	for (i = 0; i < MAX_RUNTIME_THREADS; ++i) {
-		ccsp->schedulers[0] = NULL;
+		ccsp->schedulers[i] = NULL;
 	}
 }
 /*}}}*/
