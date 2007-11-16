@@ -11,7 +11,7 @@ dnl Checks for programs.
 OCCAM_OCCBUILD
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([sdlraster.module miniraster.module course.module maths.module], ,
+OCCAM_INCLUDE([sdlraster.module rasterio.module miniraster.module course.module maths.module], ,
               [AC_MSG_ERROR(Required modules were not found)])
 
 AC_OUTPUT([Makefile])
