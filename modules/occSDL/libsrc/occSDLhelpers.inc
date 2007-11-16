@@ -3,7 +3,7 @@
 --** @module occSDL
 
 --{{{  externals
-#PRAGMA EXTERNAL "PROC C.occ.SDL.make.surface ([][]INT pixels, RESULT SDL.Surface surface) = 0"
+#PRAGMA EXTERNAL "PROC C.occ.SDL.make.surface (VAL [][]INT pixels, RESULT SDL.Surface surface) = 0"
 --}}}
 
 --{{{  PROC occ.SDL.make.surface
@@ -17,7 +17,7 @@
 --   This contains a pointer to [@code pixels], so you must free it with
 --   [@ref SDL.FreeSurface] before whatever you passed as [@code pixels] goes
 --   out of scope.
-INLINE PROC occ.SDL.make.surface ([][]INT pixels, RESULT SDL.Surface surface)
+INLINE PROC occ.SDL.make.surface (VAL [][]INT pixels, RESULT SDL.Surface surface)
   C.occ.SDL.make.surface (pixels, surface)
 :
 --}}}

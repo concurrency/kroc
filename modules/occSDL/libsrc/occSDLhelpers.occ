@@ -20,6 +20,7 @@
 --** @module occSDL
 
 #INCLUDE "occSDL.inc"
+#INCLUDE "occSDLhelpers.inc"
 
 --{{{  PROC occ.SDL.zero.terminate
 --* Zero-terminate a string.
@@ -57,5 +58,17 @@ PROC occ.SDL.blit (SDL.Surface from, VAL INT from.x, from.y, w, h,
     ASSERT (result = 0)
     delete.SDL.Rect (rect1)
     delete.SDL.Rect (rect2)
+:
+--}}}
+--{{{  PROC occ.SDL.blit.raster
+--* Blit a rectangle from a raster onto a surface.
+PROC occ.SDL.blit.raster (VAL [][]INT raster, VAL INT from.x, from.y, w, h,
+                          SDL.Surface surface, VAL INT to.x, to.y)
+  SDL.Surface src:
+  SEQ
+    occ.SDL.make.surface (raster, src)
+    ASSERT (src <> 0)
+    occ.SDL.blit (src, from.x, from.y, w, h, surface, to.x, to.y)
+    SDL.FreeSurface (src)
 :
 --}}}

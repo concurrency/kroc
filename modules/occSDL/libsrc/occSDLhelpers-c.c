@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <SDL.h>
 
-/* C.occ.SDL.make.surface ([][]INT pixels, RESULT SDL.Surface surface) */
+/* C.occ.SDL.make.surface (VAL [][]INT pixels, RESULT SDL.Surface surface) */
 void _occ_SDL_make_surface (int w[])
 {
 	int *pixels = (int *) w[0];
