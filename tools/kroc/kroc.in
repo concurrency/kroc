@@ -598,8 +598,14 @@ do
 		octranopts="$octranopts -p"
 		;;
 		#}}}
+		#{{{  -H  halt error-mode
+	-H | --halterror )
+		printf '%s: Compiling in HALT error mode\n' "$progname" 1>&2
+		octranopts="$octranopts -H"
+		;;
+		#}}}
 		#{{{  -S  stop error-mode
-	-S )
+	-S | --stoperror )
 		printf '%s: Compiling in STOP error mode\n' "$progname" 1>&2
 		octranopts="$octranopts -S"
 		;;
