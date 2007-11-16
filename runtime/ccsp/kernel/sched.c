@@ -2566,6 +2566,40 @@ static void fork_bar_sync (sched_t *sched, word *bar, word *Wptr)
 }
 /*}}}*/
 /*}}}*/
+/*{{{  mobile process barrier operations */
+#if !defined(OOS_BUILD) && defined(DYNAMIC_PROCS)
+/*{{{  static void mproc_bar_init (mproc_bar_t *bar, word initial_count)*/
+static void mproc_bar_init (mproc_bar_t *bar, word initial_count)
+{
+	/* CGR FIXME: complete */
+}
+/*}}}*/
+/*{{{  static void mproc_bar_complete (sched_t *sched, mproc_bar_t *bar)*/
+static void mproc_bar_complete (sched_t *sched, mproc_bar_t *bar)
+{
+	/* CGR FIXME: complete */
+}
+/*}}}*/
+/*{{{  static void mproc_bar_enroll (sched_t *sched, mproc_bar_t *bar, word count)*/
+static void mproc_bar_enroll (sched_t *sched, mproc_bar_t *bar, word count)
+{
+	/* CGR FIXME: complete */
+}
+/*}}}*/
+/*{{{  static void mproc_bar_resign (sched_t *sched, mproc_bar_t *bar, word count)*/
+static void mproc_bar_resign (sched_t *sched, mproc_bar_t *bar, word count)
+{
+	/* CGR FIXME: complete */
+}
+/*}}}*/
+/*{{{  static void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)*/
+static void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)
+{
+	/* CGR FIXME: complete */
+}
+/*}}}*/
+#endif
+/*}}}*/
 /*{{{  mobile type operations */
 /*{{{ mobile_type_error() */
 #define mobile_type_error() \
@@ -2692,7 +2726,17 @@ static INLINE word *mt_alloc_barrier (void *allocator, word type)
 			mb->barrier.enroll	= (ccsp_barrier_enroll_t) fork_bar_enroll;
 			mb->barrier.resign	= (ccsp_barrier_resign_t) fork_bar_resign;
 			mb->barrier.data[0]	= NotProcess_p;
+	  		break;
+		#if !defined(OOS_BUILD) && defined(DYNAMIC_PROCS)
+		case MT_BARRIER_MPROC:
+			bytes 	+= sizeof (mproc_bar_t);
+			mb 	= (mt_barrier_internal_t *) dmem_thread_alloc (allocator, bytes);
+			mb->barrier.sync	= (ccsp_barrier_sync_t) mproc_bar_sync;
+			mb->barrier.enroll	= (ccsp_barrier_enroll_t) mproc_bar_enroll;
+			mb->barrier.resign	= (ccsp_barrier_resign_t) mproc_bar_resign;
+			mproc_bar_init ((mproc_bar_t *) &(mb->barrier.data), 1);
 			break;
+		#endif /* !defined(OOS_BUILD) && defined(DYNAMIC_PROCS) */
 		default:
 			mobile_type_error ();
 			mb = NULL;
@@ -5996,7 +6040,6 @@ void kernel_X_dynproc_exit (void)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-#endif	/* defined(OOS_BUILD) || !defined(DYNAMIC_PROCS) */
 /*{{{  void kernel_Y_ldwsmap (void)*/
 /*
  *	load workspace-map
@@ -6007,6 +6050,8 @@ void kernel_X_dynproc_exit (void)
  *	@OUTPUT: 	NONE
  *	@CALL: 		K_LDWSMAP
  *	@PRIO:		0
+ *	@DEPEND:	DYNAMIC_PROCS
+ *	@INCOMPATIBLE:	OOS_BUILD
  */
 void kernel_Y_ldwsmap (void)
 {
@@ -6029,6 +6074,8 @@ void kernel_Y_ldwsmap (void)
  *	@OUTPUT: 	NONE
  *	@CALL: 		K_ULWSMAP
  *	@PRIO:		0
+ *	@DEPEND:	DYNAMIC_PROCS
+ *	@INCOMPATIBLE:	OOS_BUILD
  */
 void kernel_Y_ulwsmap (void)
 {
@@ -6051,6 +6098,8 @@ void kernel_Y_ulwsmap (void)
  *	@OUTPUT: 	NONE
  *	@CALL: 		K_RMWSMAP
  *	@PRIO:		0
+ *	@DEPEND:	DYNAMIC_PROCS
+ *	@INCOMPATIBLE:	OOS_BUILD
  */
 void kernel_Y_rmwsmap (void)
 {
@@ -6073,6 +6122,8 @@ void kernel_Y_rmwsmap (void)
  *	@OUTPUT: 	STACK(1)
  *	@CALL: 		K_MPPCLONE
  *	@PRIO:		20
+ *	@DEPEND:	DYNAMIC_PROCS
+ *	@INCOMPATIBLE:	OOS_BUILD
  */
 void kernel_Y_mppclone (void)
 {
@@ -6103,6 +6154,8 @@ void kernel_Y_mppclone (void)
  *	@OUTPUT: 	NONE
  *	@CALL: 		K_MPPSERIALISE
  *	@PRIO:		20
+ *	@DEPEND:	DYNAMIC_PROCS
+ *	@INCOMPATIBLE:	OOS_BUILD
  */
 void kernel_Y_mppserialise (void)
 {
@@ -6136,6 +6189,8 @@ void kernel_Y_mppserialise (void)
  *	@OUTPUT: 	NONE
  *	@CALL: 		K_MPPDESERIALISE
  *	@PRIO:		20
+ *	@DEPEND:	DYNAMIC_PROCS
+ *	@INCOMPATIBLE:	OOS_BUILD
  */
 void kernel_Y_mppdeserialise (void)
 {
@@ -6159,6 +6214,7 @@ void kernel_Y_mppdeserialise (void)
 	K_ZERO_OUT ();
 }
 /*}}}*/
+#endif	/* defined(OOS_BUILD) || !defined(DYNAMIC_PROCS) */
 /*}}}*/
 /*{{{  MWS barriers */
 #if 0
