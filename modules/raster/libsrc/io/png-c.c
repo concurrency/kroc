@@ -88,29 +88,21 @@ void _read_raster_png (int *w)
 	/*}}}*/
 
 	/*{{{  set up transformations to #AARRGGBB */
-	if (color_type == PNG_COLOR_TYPE_PALETTE)
-		png_set_palette_to_rgb (png);
-	if (bit_depth == 16)
-		png_set_strip_16 (png);
+	png_set_palette_to_rgb (png);
+	png_set_strip_16 (png);
 	png_set_invert_alpha (png);
-	if (bit_depth < 8)
-		png_set_packing (png);
-	if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
-		png_set_gray_to_rgb (png);
+	png_set_packing (png);
+	png_set_gray_to_rgb (png);
 
 	i = 1;
 	if (((char *) &i)[0] == 0) {
 		/* Big-endian machine -- ARGB. */
-		if (color_type == PNG_COLOR_TYPE_RGB)
-			png_set_filler (png, 0, PNG_FILLER_BEFORE);
-		if (color_type == PNG_COLOR_TYPE_RGB_ALPHA)
-			png_set_swap_alpha (png);
+		png_set_filler (png, 0, PNG_FILLER_BEFORE);
+		png_set_swap_alpha (png);
 	} else {
 		/* Little-endian machine -- BGRA */
-		if (color_type == PNG_COLOR_TYPE_RGB)
-			png_set_filler (png, 0, PNG_FILLER_AFTER);
-		if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_RGBA)
-			png_set_bgr (png);
+		png_set_filler (png, 0, PNG_FILLER_AFTER);
+		png_set_bgr (png);
 	}
 	/* FIXME: Do gamma correction? */
 	/*}}}*/
