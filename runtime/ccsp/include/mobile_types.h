@@ -240,6 +240,7 @@ typedef struct _mt_cb_shared_internal_t {
 	(MT_SIMPLE | MT_MAKE_TYPE (MT_BARRIER) | (T) << MT_FLAGS_SHIFT)
 #define MT_BARRIER_FULL		0
 #define MT_BARRIER_FORKING	1
+#define MT_BARRIER_MPROC	2
 
 #ifdef MT_DEFINES
 

@@ -352,6 +352,15 @@ typedef struct _bar_t {
 } _PACK_STRUCT bar_t;
 /*}}}*/
 
+/*{{{  mproc_bar_t (mobile process barrier) */
+typedef struct _mproc_bar_t {
+	word state;
+	word count;
+	word *Fptr;
+	word *Bptr;
+} _PACK_STRUCT mproc_bar_t;
+/*}}}*/
+
 /*{{{  ccsp_global_t (global data) */
 typedef struct _ccsp_global_t {
 	atomic_t	enabled_threads;
