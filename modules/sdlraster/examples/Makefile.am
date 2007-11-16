@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS = foreign no-dependencies
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
+	imageviewer.occ \
 	mrevents.occ \
 	mrstar8.occ \
 	sdlmatrix.occ \
@@ -17,6 +18,7 @@ EXTRA_DIST = \
 	mrtestprog.occ
 
 examples = \
+	imageviewer \
 	mrevents \
 	mrstar8 \
 	sdlmatrix \
