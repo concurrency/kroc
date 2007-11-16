@@ -330,10 +330,14 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
             RASTER.EVENT ev:
             INITIAL BOOL transmit IS FALSE:
             SEQ
-              raster.convert.event (event, ev)              
+              raster.convert.event (event, ev)
               --{{{  check for special keys
               VAL INT ANY.ALT IS (KMOD.LALT \/ KMOD.RALT) \/ (KMOD.LMETA \/ KMOD.RMETA):
               IF
+                ev[type] = (-1)
+                  --{{{  unknown event
+                  SKIP
+                  --}}}
                 (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = SDLK.RETURN) AND ((ev[mod] /\ ANY.ALT) <> 0)
                   --{{{  Alt-Enter: toggle full-screen mode
                   toggle.fullscreen ()
