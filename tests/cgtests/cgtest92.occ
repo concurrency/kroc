@@ -1,5 +1,6 @@
 --
 --	cgtest92.occ -- PROC TYPEs
+--	Copyright (C) 2004 Fred Barnes <frmb@kent.ac.uk>
 --	Copyright (C) 2007 University of Kent
 --
 --	This procram is free software; you can redistribute it and/or modify
@@ -65,6 +66,77 @@ MOBILE PROC various (CHAN INT c!, SHARED CHAN INT cs!, CT.1! cli, SHARED CT.1? s
       SEQ
         ssvr[i] ? v
         ssvr[back] ! v / 10
+:
+--}}}
+--{{{  definitions for test2
+-- This test is based on the "mobprocex1.occ" example.
+
+PROC plus (CHAN INT in.0?, in.1?, out!)
+  WHILE TRUE
+    ALT
+      INT v:
+      in.0 ? v
+        IF
+          v = (MOSTNEG INT)
+            SEQ
+              out ! v
+              SUSPEND
+          TRUE
+            INT w:
+            SEQ
+              in.1 ? w
+              out ! v + w
+      INT v:
+      in.1 ? v
+        INT w:
+        SEQ
+          in.0 ? w
+          WHILE w = (MOSTNEG INT)
+            SEQ
+              out ! w
+              SUSPEND
+              in.0 ? w
+          out ! v + w
+:
+
+PROC delta (CHAN INT in?, out.0!, out.1!)
+  WHILE TRUE
+    INT v:
+    SEQ
+      in ? v
+      IF
+        v = (MOSTNEG INT)
+          SEQ
+            out.0 ! v
+            SUSPEND
+        TRUE
+          SEQ
+            out.0 ! v
+            out.1 ! v
+:
+
+PROC prefix (VAL INT n, CHAN INT in?, out!)
+  SEQ
+    out ! n
+    WHILE TRUE
+      INT v:
+      SEQ
+        in ? v
+        IF
+          v = (MOSTNEG INT)
+            SUSPEND
+          TRUE
+            out ! v
+:
+
+PROC TYPE PT.2 IS (CHAN INT in?, out!):
+
+MOBILE PROC integrate (CHAN INT in?, out!) IMPLEMENTS PT.2
+  CHAN INT a, b, c:
+  PAR
+    plus (in?, c?, a!)
+    delta (a?, b!, out!)
+    prefix (0, b?, c!)
 :
 --}}}
 --}}}
@@ -138,12 +210,36 @@ PROC cgtest92 (CHAN OF BYTE keyb?, scr!, err!)
           check.INT (ssvr.v, 41234, "t1 SHARED MY.CT arg")
   :
   --}}}
+  --{{{  test2 -- with internal parallelism
+  PROC test2 ()
+    MOBILE PT.2 x:
+    INITIAL INT cycles IS 0:
+    SEQ
+      x := MOBILE integrate
+
+      SEQ i = 0 FOR 10
+        INT v:
+        SEQ
+          CHAN INT c, d:
+          PAR
+            SEQ
+              c ! 1
+              c ! MOSTNEG INT
+            d ? v
+            x (c?, d!)
+
+          cycles := cycles + 1
+
+      check.INT (cycles, 10, "t2 number of cycles")
+  :
+  --}}}
   --}}}
 
   SEQ
     init ("CG test 92", "PROC TYPEs")
     test0 ()
     test1 ()
+    test2 ()
     finish ()
 :
 
