@@ -32,9 +32,8 @@ typedef struct mp_filehdr_struct {
 
 	unsigned int iptr;	/* index into codemap */
 	unsigned int wsptr;	/* byte offset into workspace */
-	unsigned int bfptr;	/* byte offset into workspace */
-	unsigned int bbptr;	/* byte offset into workspace */
-	unsigned int becnt;	/* enrolled count for barrier */
+	unsigned int barrier;	/* byte offset into workspace */
+	unsigned int unused[2];	/* unused */
 
 	unsigned int pname_offs;	/* offset of process name from the base of this structure */
 	unsigned int wsdata_offs;	/* offset of workspace data from the base of this structure */
@@ -65,10 +64,8 @@ struct mp_ctrlblk_struct {
 	void *vsbase;		/* vectorspace base */
 	void *msbase;		/* mobilespace base */
 	/* 8-13 */
-	void *bfptr;		/* barrier Fptr */
-	void *bbptr;		/* barrier Bptr */
-	int becnt;		/* barrier enroll count */
-	int bcnt;		/* barrier count */
+	mproc_bar_t *barrier;	/* barrier */
+	int unused[3];		/* unused */
 	unsigned int typehash;	/* typehash for this process */
 	char *codemap;		/* pointer to the compiled-in code map */
 	/* 14-17 */
