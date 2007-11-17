@@ -353,11 +353,14 @@ typedef struct _bar_t {
 /*}}}*/
 
 /*{{{  mproc_bar_t (mobile process barrier) */
+#define MPROC_BAR_PHASE_BIT	((sizeof (word) * 8) - 1)
+#define MPROC_BAR_PHASE		(1 << MPROC_BAR_PHASE_BIT)
+#define MPROC_BAR_COUNT		(~MPROC_BAR_PHASE)
 typedef struct _mproc_bar_t {
+	word enrolled;
 	word state;
-	word count;
-	word *Fptr;
-	word *Bptr;
+	word *fptr;
+	word *bptr;
 } _PACK_STRUCT mproc_bar_t;
 /*}}}*/
 

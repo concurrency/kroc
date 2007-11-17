@@ -2571,31 +2571,140 @@ static void fork_bar_sync (sched_t *sched, word *bar, word *Wptr)
 /*{{{  static void mproc_bar_init (mproc_bar_t *bar, word initial_count)*/
 static void mproc_bar_init (mproc_bar_t *bar, word initial_count)
 {
-	/* CGR FIXME: complete */
+	ASSERT (initial_count > 0);
+	bar->enrolled	= initial_count;
+	bar->state	= initial_count - 1;
+	bar->fptr	= NotProcess_p;
+	bar->bptr	= NotProcess_p;
 }
 /*}}}*/
 /*{{{  static void mproc_bar_complete (sched_t *sched, mproc_bar_t *bar)*/
 static void mproc_bar_complete (sched_t *sched, mproc_bar_t *bar)
 {
-	/* CGR FIXME: complete */
+	word enrolled = atw_val (&(bar->enrolled));
+	word *ws = (word *) atw_val (&(bar->fptr));
+
+	atw_set (&(bar->state), enrolled - 1);
+	atw_set ((word *) &(bar->fptr), NotProcess_p);
+	atw_set ((word *) &(bar->bptr), NotProcess_p);
+
+	weak_write_barrier ();
+
+	while (ws != NotProcess_p) {
+		word *next = (word *) ws[Link];
+		enqueue_process (sched, ws);
+		ws = next;
+	}
 }
 /*}}}*/
 /*{{{  static void mproc_bar_enroll (sched_t *sched, mproc_bar_t *bar, word count)*/
 static void mproc_bar_enroll (sched_t *sched, mproc_bar_t *bar, word count)
 {
-	/* CGR FIXME: complete */
+	atw_add (&(bar->enrolled), count);
+	atw_add (&(bar->state), count);
 }
 /*}}}*/
 /*{{{  static void mproc_bar_resign (sched_t *sched, mproc_bar_t *bar, word count)*/
 static void mproc_bar_resign (sched_t *sched, mproc_bar_t *bar, word count)
 {
-	/* CGR FIXME: complete */
+	
+	atw_sub (&(bar->enrolled), count);
+
+	for (;;) {
+		word state = atw_val (&(bar->state));
+		if ((state & MPROC_BAR_COUNT) < count) {
+			/* completed barrier: re-schedule a process */
+			word *Wptr = (word *) atw_val (&(bar->fptr));
+			
+			if ((state & MPROC_BAR_PHASE) || (Wptr == NotProcess_p)) {
+				BMESSAGE ("mobile process barrier inconsistent (state: %08x, resign: %d\n)", state, count);
+				ccsp_kernel_exit (1, 0);
+			}
+			
+			atw_set (&(bar->state), MPROC_BAR_PHASE);
+			atw_set (&(Wptr[Temp]), 1);
+
+			weak_write_barrier ();
+
+			enqueue_process (sched, Wptr);
+
+			return;
+		} else if (atw_cas (&(bar->state), state, state - count)) {
+			return;
+		}	
+	}	
 }
 /*}}}*/
 /*{{{  static void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)*/
 static void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)
 {
-	/* CGR FIXME: complete */
+	word retry = false;
+	
+	for (;;) {
+		word state = atw_val (&(bar->state));
+
+		if ((state & MPROC_BAR_COUNT) == 0) {
+			/* last process */
+			if (retry) {
+				/* special case: remove ourselves from queue */
+				word *prev = NotProcess_p;
+				word *ws;
+				
+				strong_read_barrier ();
+
+				for (ws = bar->fptr; ws != Wptr; ws = (word *) ws[Link]) {
+					prev = ws;
+				}
+
+				if (prev == NotProcess_p) {
+					bar->fptr = (word *) ws[Link];
+				} else {
+					prev[Link] = ws[Link];
+				}
+				if (ws[Link] == NotProcess_p) {
+					bar->bptr = prev;
+				}
+
+				weak_write_barrier ();
+			}
+
+			if ((state & MPROC_BAR_PHASE) == 0) {
+				/* phase 0: re-schedule just this process */
+				atw_set (&(bar->state), MPROC_BAR_PHASE);
+				atw_set (&(Wptr[Temp]), 1);
+			} else {
+				/* phase 1: re-schedule all processes, reset barrier */
+				mproc_bar_complete (sched, bar);
+			}
+			
+			K_ZERO_OUT_JRET ();
+			return;
+		} else {
+			/* not last process: queue */
+			word *bptr;
+
+			atw_set (&(Wptr[Link]), NotProcess_p);
+			atw_set (&(Wptr[Temp]), 0);
+			
+			weak_write_barrier ();
+			
+			bptr = (word *) atw_swap ((word *) &(bar->bptr), (word) Wptr);
+
+			if (bptr == NotProcess_p) {
+				atw_set ((word *) &(bar->fptr), (word) Wptr);
+			} else {
+				atw_set ((word *) &(bptr[Link]), (word) Wptr);
+			}
+
+			if (atw_cas (&(bar->state), state, state - 1)) {
+				RESCHEDULE;
+				return;
+			}
+
+			/* retry: loop */
+			retry = true;
+		}
+	}
 }
 /*}}}*/
 #endif
