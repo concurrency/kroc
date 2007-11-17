@@ -1,0 +1,1461 @@
+--
+--      hereticc.occ - Hereticc: a non-commstime occam-pi runtime benchmark.
+--        Copyright (C) 2007  Carl G. Ritson <cgr@kent.ac.uk>
+--
+--	Where marked, code take from course.lib:
+--        Copyright (C) 1997  P.H. Welch
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+VAL []BYTE VERSION IS "20070920.10":
+
+PROTOCOL P.SETUP IS INT; INT; INT: -- runs, workers, ops.per.run
+
+DATA TYPE RESULTS
+  RECORD
+    REAL64 min:
+    REAL64 max:
+    REAL64 avg:
+    REAL64 score:
+:
+
+DATA TYPE SCORES
+  RECORD
+    REAL64 score:
+    REAL64 total:
+:
+
+--{{{  course.lib
+--{{{  PROC out.repeat (VAL BYTE ch, VAL INT n, CHAN BYTE out!)
+--* Write a character repeatedly to a channel.
+-- This outputs [@code ch] down the channel [@code out] [@code n] times. If
+-- [@code n] is negative, nothing happens.
+-- @param ch Character
+-- @param n Number of times to output (negative values result in no output)
+-- @param out Channel to write to
+PROC out.repeat (VAL BYTE ch, VAL INT n, CHAN BYTE out!)
+  --{{{  
+  IF
+    n > 0
+      SEQ i = 0 FOR n
+        out ! ch
+    TRUE
+      SKIP
+  --}}}
+:
+--}}}
+--{{{  PROC out.ch (VAL BYTE ch, VAL INT field, CHAN BYTE out!)
+--* Write a character to a channel.
+-- This outputs [@code ch] in a fieldwidth [@code field] down [@code out].  If
+-- the fieldwidth is too wide for [@code ch], it right-justifies [@code ch]
+-- with spaces on the left.  If the field is not wide enough, it prints the
+-- [@code ch] anyway.  These rules for fieldwidth are the same as those used by
+-- the Pascal [@text write] procedure.
+-- @param ch Character
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.ch (VAL BYTE ch, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out.repeat (' ', field - 1, out!)
+    out ! ch
+  --}}}
+:
+--}}}
+--{{{  PROC out.string (VAL []BYTE s, VAL INT field, CHAN BYTE out!)
+--* Write a string to a channel.
+-- This outputs [@code s] in a fieldwidth [@code field] down [@code out].
+-- @param s String
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.string (VAL []BYTE s, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  VAL INT length IS SIZE s:
+  SEQ
+    out.repeat (' ', field - length, out!)
+    SEQ i = 0 FOR length
+      out ! s[i]
+  --}}}
+:
+--}}}
+--{{{  PROC out.int (VAL INT n, VAL INT field, CHAN BYTE out!)
+--* Write an integer in decimal to a channel.
+-- This outputs [@code n] in a fieldwidth [@code field] down [@code out].  The
+-- rules for fieldwidth are as [@ref out.byte].
+-- @param n Integer
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.int (VAL INT n, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  IF
+    n = (MOSTNEG INT)
+      --{{{  minint
+      out.string ("-2147483648", field, out!)
+      --}}}
+    n = 0
+      --{{{  zero
+      SEQ
+        IF
+          1 < field
+            out.repeat (' ', field - 1, out!)
+          TRUE
+            SKIP
+        out ! '0'
+      --}}}
+    TRUE
+      --{{{  anything else
+      VAL INT max.digits IS 20:
+      [max.digits]INT D:
+      INT x, i:
+      SEQ
+        --{{{  check negative
+        IF
+          n < 0
+            x := -n
+          TRUE         -- (n > 0)
+            x := n
+        --}}}
+        --{{{  decompose
+        SEQ
+          i := 0
+          WHILE x > 0
+            SEQ
+              D[i] := x\10
+              x := x/10
+              i := i + 1
+        --}}}
+        --{{{  pad
+        IF
+          n > 0
+            out.repeat (' ', field - i, out!)
+          TRUE
+            SEQ
+              out.repeat (' ', (field - 1) - i, out!)
+              out ! '-'
+        --}}}
+        --{{{  output
+        #PRAGMA DEFINED D
+        WHILE i > 0
+          SEQ
+            i := i - 1
+            out ! BYTE (D[i] + (INT '0'))
+        --}}}
+      --}}}
+  --}}}
+:
+--}}}
+--}}}
+
+VAL INT BASIC.COMMS         IS 0:
+VAL INT ECHO.COMMS          IS 1:
+VAL INT PRI.COMMS.LOW.HIGH  IS 2:
+VAL INT PRI.COMMS.HIGH.LOW  IS 3:
+VAL INT STATIC.MOBILE.COMMS IS 4:
+VAL INT DYN.MOBILE.COMMS    IS 5:
+VAL INT ALT.2GUARD          IS 6:
+VAL INT ALT.4GUARD          IS 7:
+VAL INT ALT.NGUARD          IS 8:
+VAL INT PRI.ALT.2GUARD      IS 9:
+VAL INT PRI.ALT.4GUARD      IS 10:
+VAL INT PRI.ALT.NGUARD      IS 11:
+VAL INT READ.TIMER          IS 12:
+VAL INT TIMER.ALT           IS 13:
+VAL INT TIMER.PRI.ALT       IS 14:
+VAL INT START.END.PROC      IS 15:
+VAL INT FORK.PROC           IS 16:
+VAL INT SEMAPHORE.CLAIM     IS 17:
+VAL INT BAR.SYNC            IS 18:
+VAL INT MOBILE.ALLOC        IS 19:
+VAL INT MOBILE.CLONE        IS 20:
+VAL INT RESCHED             IS 21:
+VAL INT CACHE.THRASH        IS 22:
+VAL INT SEMAPHORE.USE       IS 23:
+VAL INT AFF.BASIC.COMMS     IS 24:
+VAL INT AFF.ECHO.COMMS      IS 25:
+VAL INT AFF.SWITCH          IS 26:
+VAL INT XIN.BASIC.COMMS     IS 27:
+VAL INT PRI.BAR.SYNC        IS 28:
+
+VAL [][20]BYTE TEST.NAME IS [ "basic.comms         ",
+                              "echo.comms          ",
+                              "pri.comms.low.high  ",
+                              "pri.comms.high.low  ",
+                              "static.mobile.comms ",
+                              "dyn.mobile.comms    ",
+                              "alt.2guard          ",
+                              "alt.4guard          ",
+                              "alt.nguard          ",
+                              "pri.alt.2guard      ",
+                              "pri.alt.4guard      ",
+                              "pri.alt.nguard      ",
+                              "read.timer          ",
+                              "timer.alt           ",
+                              "timer.pri.alt       ",
+                              "start.end.proc      ",
+                              "fork.proc           ",
+                              "semaphore.claim     ",
+                              "bar.sync            ",
+                              "mobile.alloc        ",
+                              "mobile.clone        ",
+                              "resched             ",
+                              "cache.thrash        ",
+                              "semaphore.use       ",
+                              "aff.basic.comms     ",
+                              "aff.echo.comms      ",
+                              "aff.switch          ",
+                              "xin.basic.comms     ",
+                              "pri.bar.sync        " ]:
+
+PROC basic.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      CHAN INT chan:
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          chan ? buffer 
+        -- sender
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            chan ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC echo.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  VAL INT cycles IS cycles / 2:
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      CHAN INT c1, c2:
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          SEQ
+            c1 ? buffer 
+            c2 ! buffer
+        -- sender
+        INITIAL INT data IS #A1B2C3D4:
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ
+              c1 ! data
+              c2 ? data
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC pri.comms.low.high (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      SETPRI (1)
+
+      CHAN INT chan:
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          chan ? buffer 
+        -- sender
+        SEQ
+          SETPRI (2)
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            chan ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC pri.comms.high.low (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      SETPRI (2)
+
+      CHAN INT chan:
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          chan ? buffer 
+        -- sender
+        SEQ
+          SETPRI (1)
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            chan ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+#IF DEFINED (PROCESSOR.AFFINITY)
+PROC aff.basic.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      CHAN INT chan:
+      PAR
+        -- receiver
+        SEQ
+          SETAFF (2)
+          INT buffer:
+          SEQ i = 0 FOR cycles
+            chan ? buffer 
+        -- sender
+        SEQ
+          SETAFF (1)
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            chan ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+#ENDIF
+
+#IF DEFINED (PROCESSOR.AFFINITY)
+PROC aff.echo.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  VAL INT cycles IS cycles / 2:
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      CHAN INT c1, c2:
+      PAR
+        -- receiver
+        SEQ
+          SETAFF (2)
+          INT buffer:
+          SEQ i = 0 FOR cycles
+            SEQ
+              c1 ? buffer 
+              c2 ! buffer
+        -- sender
+        INITIAL INT data IS #A1B2C3D4:
+        SEQ
+          SETAFF (1)
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ
+              c1 ! data
+              c2 ? data
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+#ENDIF
+
+PROC xin.basic.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      CHAN INT chan:
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          chan ?? buffer
+            SKIP
+        -- sender
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            chan ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC static.mobile.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  DATA TYPE THING
+    PACKED RECORD
+      [128]BYTE x:
+  :
+
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      CHAN MOBILE THING chan:
+      PAR
+        -- receiver
+        MOBILE THING buffer:
+        SEQ i = 0 FOR cycles
+          chan ? buffer 
+        -- sender
+        MOBILE THING data:
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ
+              #PRAGMA DEFINED data
+              chan ! data
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC dyn.mobile.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  DATA TYPE THING
+    PACKED RECORD
+      [128]BYTE x:
+  :
+
+  VAL INT cycles IS cycles / 2:
+  
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      CHAN MOBILE []BYTE c1, c2:
+      PAR
+        -- receiver
+        MOBILE []BYTE buffer:
+        SEQ i = 0 FOR cycles
+          SEQ
+            c1 ? buffer 
+            c2 ! buffer
+        -- sender
+        MOBILE []BYTE data:
+        SEQ
+          data := MOBILE [128]BYTE
+          #PRAGMA DEFINED data
+
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ
+              c1 ! data
+              c2 ? data
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC alt.2guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    CHAN INT c1, c2:
+    SEQ
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          ALT
+            c1 ? buffer
+              SKIP
+            c2 ? buffer
+              SKIP
+        -- sender
+        VAL INT cycles IS cycles / 2:
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ
+              c1 ! #A1B2C3D4
+              c2 ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC alt.4guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    CHAN INT c1, c2, c3, c4:
+    SEQ
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          ALT
+            c1 ? buffer
+              SKIP
+            c2 ? buffer
+              SKIP
+            c3 ? buffer
+              SKIP
+            c4 ? buffer
+              SKIP
+        -- sender
+        VAL INT cycles IS cycles / 4:
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ
+              c1 ! #A1B2C3D4
+              c2 ! #A1B2C3D4
+              c3 ! #A1B2C3D4
+              c4 ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC alt.nguard (VAL INT runs, cycles, guards, MOBILE BARRIER b, SHARED CHAN INT results!)
+  CHAN TYPE CT.INT
+    MOBILE RECORD
+      CHAN INT in?:
+  :
+
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    MOBILE []CT.INT! c.cli:
+    MOBILE []CT.INT? c.svr:
+    SEQ
+      c.cli := MOBILE [guards]CT.INT!
+      #PRAGMA DEFINED c.cli
+      c.svr := MOBILE [guards]CT.INT?
+      #PRAGMA DEFINED c.svr
+      SEQ i = 0 FOR guards
+        c.cli[i], c.svr[i] := MOBILE CT.INT
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          ALT i = 0 FOR guards
+            c.svr[i][in] ? buffer
+              SKIP
+        -- sender
+        VAL INT cycles IS cycles / guards:
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ i = 0 FOR guards
+              c.cli[i][in] ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC pri.alt.2guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    CHAN INT c1, c2:
+    SEQ
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          PRI ALT
+            c1 ? buffer
+              SKIP
+            c2 ? buffer
+              SKIP
+        -- sender
+        VAL INT cycles IS cycles / 2:
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ
+              c1 ! #A1B2C3D4
+              c2 ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC pri.alt.4guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    CHAN INT c1, c2, c3, c4:
+    SEQ
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          PRI ALT
+            c1 ? buffer
+              SKIP
+            c2 ? buffer
+              SKIP
+            c3 ? buffer
+              SKIP
+            c4 ? buffer
+              SKIP
+        -- sender
+        VAL INT cycles IS cycles / 4:
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ
+              c1 ! #A1B2C3D4
+              c2 ! #A1B2C3D4
+              c3 ! #A1B2C3D4
+              c4 ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC pri.alt.nguard (VAL INT runs, cycles, guards, MOBILE BARRIER b, SHARED CHAN INT results!)
+  CHAN TYPE CT.INT
+    MOBILE RECORD
+      CHAN INT in?:
+  :
+
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    MOBILE []CT.INT! c.cli:
+    MOBILE []CT.INT? c.svr:
+    SEQ
+      c.cli := MOBILE [guards]CT.INT!
+      #PRAGMA DEFINED c.cli
+      c.svr := MOBILE [guards]CT.INT?
+      #PRAGMA DEFINED c.svr
+      SEQ i = 0 FOR guards
+        c.cli[i], c.svr[i] := MOBILE CT.INT
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          PRI ALT i = 0 FOR guards
+            c.svr[i][in] ? buffer
+              SKIP
+        -- sender
+        VAL INT cycles IS cycles / guards:
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ i = 0 FOR guards
+              c.cli[i][in] ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC read.timer (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    INT buffer:
+    SEQ
+      SYNC b
+      time ? start
+      SEQ i = 0 FOR cycles
+        time ? buffer
+      time ? end
+      SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC timer.alt (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    CHAN INT c1, c2:
+    INT timeout:
+    SEQ
+      time ? timeout
+      timeout := timeout PLUS ((60 * 1000000) \/ (timeout /\ #FFF))
+
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          ALT
+            c1 ? buffer
+              SKIP
+            c2 ? buffer
+              SKIP
+            time ? AFTER timeout
+              SKIP
+        -- sender
+        VAL INT cycles IS cycles / 2:
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ
+              c1 ! #A1B2C3D4
+              c2 ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC timer.pri.alt (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    CHAN INT c1, c2:
+    INT timeout:
+    SEQ
+      time ? timeout
+      timeout := timeout PLUS ((60 * 1000000) \/ (timeout /\ #FFF))
+
+      PAR
+        -- receiver
+        INT buffer:
+        SEQ i = 0 FOR cycles
+          PRI ALT
+            c1 ? buffer
+              SKIP
+            c2 ? buffer
+              SKIP
+            time ? AFTER timeout
+              SKIP
+        -- sender
+        VAL INT cycles IS cycles / 2:
+        SEQ
+          SYNC b
+          time ? start
+          SEQ i = 0 FOR cycles
+            SEQ
+              c1 ! #A1B2C3D4
+              c2 ! #A1B2C3D4
+          time ? end
+          SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC start.end.proc (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      SYNC b
+      time ? start
+      PAR i = 0 FOR cycles
+        SKIP
+      time ? end
+      SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC fork.proc (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  PROC process ()
+    SKIP
+  :
+
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    FORKING
+      SEQ
+        SYNC b
+        time ? start
+        SEQ i = 0 FOR cycles
+          FORK process ()
+        time ? end
+        SYNC b
+
+        CLAIM results!
+          results ! (end MINUS start)
+
+        SYNC b
+:
+
+PROC semaphore.claim (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SHARED! CHAN INT x:
+    SEQ
+      SYNC b
+      time ? start
+      SEQ i = 0 FOR cycles
+        CLAIM x!
+          SKIP
+      time ? end
+      SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC bar.sync (VAL INT runs, cycles, procs, MOBILE BARRIER b, SHARED CHAN INT results!)
+  PROC syncer (VAL INT cycles, BARRIER bar, start)
+    SEQ
+      SYNC start
+      SEQ i = 0 FOR cycles
+        SYNC bar
+  :
+
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    FORKING
+      INITIAL MOBILE BARRIER bar IS MOBILE BARRIER:
+      SEQ
+        SEQ i = 0 FOR procs - 1
+          FORK syncer (cycles, bar, b)
+
+        SYNC b
+        time ? start
+        SEQ i = 0 FOR cycles
+          SYNC bar
+        time ? end
+        SYNC b
+
+        CLAIM results!
+          results ! (end MINUS start)
+
+        SYNC b
+:
+
+PROC mobile.alloc (VAL INT runs, cycles, size, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      SYNC b
+      time ? start
+      SEQ i = 0 FOR cycles
+        MOBILE []BYTE m:
+        SEQ
+          m := MOBILE [size]BYTE
+          #PRAGMA DEFINED m
+          SKIP
+          -- falls out of scope
+      time ? end
+      SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC mobile.clone (VAL INT runs, cycles, size, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    MOBILE []BYTE data:
+    SEQ
+      data := MOBILE [size]BYTE
+      #PRAGMA DEFINED data
+
+      SYNC b
+      time ? start
+      SEQ i = 0 FOR cycles
+        MOBILE []BYTE m:
+        SEQ
+          m := CLONE data
+          -- falls out of scope
+      time ? end
+      SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC resched (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SEQ
+      SYNC b
+      time ? start
+      SEQ i = 0 FOR cycles
+        RESCHEDULE ()
+      time ? end
+      SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC cache.thrash (VAL INT runs, cycles, procs, MOBILE BARRIER b, SHARED CHAN INT results!)
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    MOBILE []INT data:
+    SEQ
+      data := MOBILE [128 * 1024]INT
+      SEQ i = 0 FOR SIZE data
+        data[i] := 0
+
+      SYNC b
+      time ? start
+
+      VAL INT slice.len IS (SIZE data) / procs:
+      PAR i = 0 FOR procs
+        []INT slice IS [ data FROM (i * slice.len) FOR slice.len ]:
+        SEQ j = 0 FOR cycles
+          SEQ
+            SEQ k = 0 FOR slice.len
+              slice[k] := slice[k] + 1
+            RESCHEDULE ()
+        
+      #IF FALSE
+      PAR i = 0 FOR granularity
+        VAL INT slice.len IS (SIZE data) / granularity:
+        []INT slice IS [ data FROM (slice.len * i) FOR slice.len ]:
+        SEQ k = 0 FOR SIZE slice
+          SEQ
+            slice[k] := slice[k] + 1
+            RESCHEDULE ()
+      #ENDIF
+
+      time ? end
+      SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+PROC semaphore.use (VAL INT runs, cycles, competition, MOBILE BARRIER b, SHARED CHAN INT results!)
+  VAL INT cycles IS cycles / competition:
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    SHARED! CHAN INT x:
+    SEQ
+      SYNC b
+      time ? start
+      PAR i = 0 FOR competition
+        SEQ i = 0 FOR cycles
+          CLAIM x!
+            RESCHEDULE ()
+      time ? end
+      SYNC b
+
+      CLAIM results!
+        results ! (end MINUS start)
+
+      SYNC b
+:
+
+#IF DEFINED (PROCESSOR.AFFINITY)
+PROC aff.switch (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
+  MOBILE []INT affinity:
+  TIMER time:
+  INT start, end:
+  SEQ
+    INITIAL INT count IS 0:
+    INT aff:
+    SEQ
+      --{{{ calculate available affinities
+      SEQ i = 0 FOR BYTESIN(INT) * 8
+        SEQ
+          SETAFF (1 << i)
+          aff := GETAFF ()
+          IF
+            aff <> 0
+              count := count + 1
+            TRUE
+              SKIP
+      affinity  := MOBILE [count]INT
+      count     := 0
+      SEQ i = 0 FOR BYTESIN(INT) * 8
+        SEQ
+          SETAFF (1 << i)
+          aff := GETAFF ()
+          IF
+            aff <> 0
+              SEQ
+                affinity[count] := (1 << i)
+                count           := count + 1
+            TRUE
+              SKIP
+    --}}}
+
+    SEQ i = 0 FOR runs
+      SEQ
+        SYNC b
+        time ? start
+        SEQ i = 0 FOR cycles
+          INT aff:
+          SEQ
+            aff := affinity[i \ (SIZE affinity)]
+            SETAFF (aff)
+        time ? end
+        SETAFF (0)
+        SYNC b
+
+        CLAIM results!
+          results ! (end MINUS start)
+
+        SYNC b
+:
+#ENDIF
+
+PROC pri.bar.sync (VAL INT runs, cycles, procs, MOBILE BARRIER b, SHARED CHAN INT results!)
+  PROC syncer (VAL INT cycles, priority, BARRIER bar, start)
+    SEQ
+      SETPRI (priority)
+      SYNC start
+      SEQ i = 0 FOR cycles
+        SYNC bar
+  :
+
+  TIMER time:
+  INT start, end:
+  SEQ i = 0 FOR runs
+    FORKING
+      INITIAL MOBILE BARRIER bar IS MOBILE BARRIER:
+      SEQ
+        SEQ i = 0 FOR procs - 1
+          VAL INT priority IS i \ 32:
+          FORK syncer (cycles, priority, bar, b)
+
+        SYNC b
+        time ? start
+        SEQ i = 0 FOR cycles
+          SYNC bar
+        time ? end
+        SYNC b
+
+        CLAIM results!
+          results ! (end MINUS start)
+
+        SYNC b
+:
+
+--{{{ PROC worker (VAL INT test, runs, cycles, arg, MOBILE BARRIER b, SHARED CHAN INT results!)
+PROC worker (VAL INT test, runs, cycles, arg, MOBILE BARRIER b, SHARED CHAN INT results!)
+  CASE test
+    BASIC.COMMS
+      basic.comms (runs, cycles, b, results!)
+    ECHO.COMMS
+      echo.comms (runs, cycles, b, results!)
+    PRI.COMMS.LOW.HIGH
+      pri.comms.low.high (runs, cycles, b, results!)
+    PRI.COMMS.HIGH.LOW
+      pri.comms.high.low (runs, cycles, b, results!)
+    STATIC.MOBILE.COMMS
+      static.mobile.comms (runs, cycles, b, results!)
+    DYN.MOBILE.COMMS
+      dyn.mobile.comms (runs, cycles, b, results!)
+    ALT.2GUARD
+      alt.2guard (runs, cycles, b, results!)
+    ALT.4GUARD
+      alt.4guard (runs, cycles, b, results!)
+    ALT.NGUARD
+      alt.nguard (runs, cycles, arg, b, results!)
+    PRI.ALT.2GUARD
+      pri.alt.2guard (runs, cycles, b, results!)
+    PRI.ALT.4GUARD
+      pri.alt.4guard (runs, cycles, b, results!)
+    PRI.ALT.NGUARD
+      pri.alt.nguard (runs, cycles, arg, b, results!)
+    READ.TIMER
+      read.timer (runs, cycles, b, results!)
+    TIMER.ALT
+      timer.alt (runs, cycles, b, results!)
+    TIMER.PRI.ALT
+      timer.pri.alt (runs, cycles, b, results!)
+    START.END.PROC
+      start.end.proc (runs, cycles, b, results!)
+    FORK.PROC
+      fork.proc (runs, cycles, b, results!)
+    SEMAPHORE.CLAIM
+      semaphore.claim (runs, cycles, b, results!)
+    BAR.SYNC
+      bar.sync (runs, cycles, arg, b, results!)
+    MOBILE.ALLOC
+      mobile.alloc (runs, cycles, arg, b, results!)
+    MOBILE.CLONE
+      mobile.clone (runs, cycles, arg, b, results!)
+    RESCHED
+      resched (runs, cycles, b, results!)
+    CACHE.THRASH
+      cache.thrash (runs, cycles, arg, b, results!)
+    SEMAPHORE.USE
+      semaphore.use (runs, cycles, arg, b, results!)
+    #IF DEFINED (PROCESSOR.AFFINITY)
+    AFF.BASIC.COMMS
+      aff.basic.comms (runs, cycles, b, results!)
+    AFF.ECHO.COMMS
+      aff.echo.comms (runs, cycles, b, results!)
+    AFF.SWITCH
+      aff.switch (runs, cycles, b, results!)
+    #ENDIF
+    XIN.BASIC.COMMS
+      xin.basic.comms (runs, cycles, b, results!)
+    PRI.BAR.SYNC
+      pri.bar.sync (runs, cycles, arg, b, results!)
+:
+--}}} 
+--{{{ PROC results (CHAN INT in?, CHAN P.SETUP setup?, CHAN RESULTS out!, CHAN BYTE debug!)
+PROC results (CHAN INT in?, CHAN P.SETUP setup?, CHAN RESULTS out!, CHAN BYTE debug!)
+  RESULTS score:
+  SEQ
+    score[min], score[max], score[avg], score[score] := 0.0, 0.0, 0.0, 0.0
+    
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      INT runs, workers, ops.per.run:
+      SEQ
+        setup ? runs; workers; ops.per.run
+        IF
+          runs <= 0
+            done := TRUE
+          TRUE
+            RESULTS r:
+            SEQ
+              -- init
+              r[min] := 1000000000.0 -- 1s as ns
+              r[max] := 0.0
+              r[avg] := 0.0
+              -- collect results
+              SEQ i = 0 FOR runs
+                INITIAL REAL64 rval IS 0.0:
+                SEQ
+                  -- synchronise
+                  INT sync:
+                  in ? sync
+                  -- collect
+                  SEQ i = 0 FOR workers
+                    INT val:
+                    SEQ
+                      in ? val
+                      rval := rval + (REAL64 TRUNC val)
+                  -- calculate per-op time in ns
+                  rval := (rval * 1000.0) / (REAL64 TRUNC ops.per.run)
+                  -- update min/max
+                  IF
+                    rval < r[min]
+                      r[min] := rval
+                    TRUE
+                      SKIP
+                  IF
+                    rval > r[max]
+                      r[max] := rval
+                    TRUE
+                      SKIP
+                  -- update total
+                  r[avg] := r[avg] + rval
+              -- calculate average
+              r[avg] := r[avg] / (REAL64 TRUNC runs)
+              r[score] := 100.0 - ((DLOGB (1.0 + (r[avg] / (REAL64 TRUNC workers))) * 10.0) / 7.0)
+              score[score] := score[score] + r[score]
+              score[max] := score[max] + 100.0
+              -- output
+              out ! r
+    out ! score
+:
+--}}}
+--{{{ PROC announce.start (VAL INT test, workers, arg, CHAN BYTE scr!)
+PROC announce.start (VAL INT test, workers, arg, CHAN BYTE scr!)
+  VAL []BYTE name IS TEST.NAME[test]:
+  INT name.len, name.size:
+  SEQ
+    IF
+      IF i = 0 FOR SIZE name
+        name[i] = ' '
+          name.len := i
+      TRUE
+        name.len := SIZE name
+
+    IF
+      arg = 0
+        name.size := 20
+      TRUE
+        SEQ
+          name.size := 18
+          INITIAL INT arg IS arg:
+          WHILE arg >= 10
+            arg, name.size := arg / 10, name.size - 1
+
+    out.string ([ name FOR name.len ], name.size, scr!)
+
+    IF
+      arg = 0
+        SKIP
+      TRUE
+        SEQ
+          scr ! '.'
+          out.int (arg, 0, scr!)
+
+    out.string (" [", 0, scr!)
+    out.int (workers, 2, scr!)
+    out.string ("] ", 0, scr!)
+
+    scr ! #FF
+:
+--}}}
+--{{{ PROC announce.results (VAL RESULTS results, CHAN BYTE scr!)
+PROC announce.results (VAL RESULTS results, CHAN BYTE scr!)
+  SEQ
+    scr ! ' '
+    out.int (INT ROUND results[min], 8, scr!)
+    out.string ("ns", 0, scr!)
+    scr ! ' '
+    out.int (INT ROUND results[avg], 8, scr!)
+    out.string ("ns", 0, scr!)
+    scr ! ' '
+    out.int (INT ROUND results[max], 8, scr!)
+    out.string ("ns", 0, scr!)
+    scr ! ' '
+    out.int (INT TRUNC results[score], 8, scr!)
+    scr ! '*n'
+:
+--}}}
+--{{{ PROC run.test (VAL INT test, runs, cycles, workers, arg, ...)
+PROC run.test (VAL INT test, runs, cycles, workers, arg, CHAN RESULTS r.out?, CHAN P.SETUP setup!, SHARED CHAN INT r.in!, CHAN BYTE scr!)
+  INITIAL MOBILE BARRIER b IS MOBILE BARRIER:
+  FORKING
+    VAL INT ops IS (cycles / workers) /\ (~#F):
+    SEQ
+      announce.start (test, workers, arg, scr!)
+      setup ! runs; workers; ops * workers
+      SEQ i = 0 FOR workers
+        FORK worker (test, runs, ops, arg, b, r.in!)
+      SEQ i = 0 FOR runs
+        SEQ
+          CLAIM r.in!
+            r.in ! 0 -- sync
+          SYNC b
+          SYNC b
+          SYNC b
+      RESULTS results:
+      SEQ
+        r.out ? results
+        announce.results (results, scr!)
+:
+--}}}
+--{{{ PROC run.scaling.test (VAL INT test, runs, cycles, ...)
+PROC run.scaling.test (VAL INT test, runs, cycles, VAL INT start, steps, factor, VAL []INT args, CHAN RESULTS r.out?, CHAN P.SETUP setup!, SHARED CHAN INT r.in!, CHAN BYTE scr!)
+  INITIAL INT workers IS start:
+  RESULTS results:
+  SEQ
+    SEQ i = 0 FOR steps
+      SEQ
+        IF
+          (SIZE args) = 0
+            run.test (test, runs, cycles, workers, 0, r.out?, setup!, r.in!, scr!)
+          TRUE
+            SEQ i = 0 FOR SIZE args
+              run.test (test, runs, cycles, workers, args[i], r.out?, setup!, r.in!, scr!)
+        IF
+          factor > 1
+            workers := workers * factor
+          TRUE
+            workers := workers + factor
+    scr ! '*n'
+:
+--}}}
+
+PROC hereticc (CHAN BYTE kyb?, scr!, err!)
+  WHILE TRUE
+    SEQ
+      SHARED! CHAN INT results.in:
+      CHAN RESULTS results.out:
+      CHAN P.SETUP setup:
+      PAR
+        results (results.in?, setup?, results.out!, err!)
+        VAL INT runs IS 10:
+        VAL INT comms.cycles IS 1024 * 1024:
+        VAL INT mem.cycles IS 1024 * 32:
+        VAL INT proc.cycles IS 1024 * 16:
+        VAL INT sched.cycles IS 1024 * 1024:
+        VAL INT work.steps IS 4:
+        VAL INT work.factor IS 1:
+        SEQ
+          SEQ
+            scr ! '*n'
+            out.string ("   Hereticc: a non-commstime occam-pi runtime benchmark.*n", 0, scr!)
+            out.string ("   ^~^~^~^~*n", 0, scr!)
+            out.string ("                                 Version: ", 0, scr!)
+            out.string (VERSION, 0, scr!)
+            scr ! '*n'
+            scr ! '*n'
+
+            out.string ("Test", 20, scr!)
+            out.repeat (' ', 6, scr!)
+            out.string ("Min", 11, scr!)
+            out.string ("Avg", 11, scr!)
+            out.string ("Max", 11, scr!)
+            out.string ("Score", 9, scr!)
+            scr ! '*n'
+            out.repeat ('-', 78, scr!)
+            scr ! '*n'
+          
+          run.scaling.test (BASIC.COMMS, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (ECHO.COMMS, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (PRI.COMMS.LOW.HIGH, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (PRI.COMMS.HIGH.LOW, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          #IF DEFINED (PROCESSOR.AFFINITY)
+          run.scaling.test (AFF.BASIC.COMMS, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (AFF.ECHO.COMMS, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          #ENDIF
+          run.scaling.test (STATIC.MOBILE.COMMS, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (DYN.MOBILE.COMMS, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (XIN.BASIC.COMMS, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+
+          run.scaling.test (ALT.2GUARD, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (ALT.4GUARD, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (ALT.NGUARD, runs, comms.cycles, 1, work.steps, work.factor, [2, 4, 8], results.out?, setup!, results.in!, scr!)
+
+          run.scaling.test (PRI.ALT.2GUARD, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (PRI.ALT.4GUARD, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (PRI.ALT.NGUARD, runs, comms.cycles, 1, work.steps, work.factor, [2, 4, 8], results.out?, setup!, results.in!, scr!)
+
+          run.scaling.test (READ.TIMER, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (TIMER.ALT, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (TIMER.PRI.ALT, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+
+          run.scaling.test (START.END.PROC, runs, proc.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (FORK.PROC, runs, proc.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (RESCHED, runs, sched.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          #IF DEFINED (PROCESSOR.AFFINITY)
+          run.scaling.test (AFF.SWITCH, runs, sched.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          #ENDIF
+
+          run.scaling.test (SEMAPHORE.CLAIM, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (SEMAPHORE.USE, runs, comms.cycles, 1, work.steps, work.factor, [1, 2, 4, 32], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (BAR.SYNC, runs, mem.cycles, 1, work.steps, work.factor, [1, 2, 32, 128, 1024], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (PRI.BAR.SYNC, runs, mem.cycles, 1, work.steps, work.factor, [1, 2, 32, 128, 1024], results.out?, setup!, results.in!, scr!)
+
+          run.scaling.test (MOBILE.ALLOC, runs, mem.cycles, 1, work.steps, work.factor, [32, 1024, 4096, 65536], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (MOBILE.CLONE, runs, mem.cycles, 1, work.steps, work.factor, [32, 1024, 4096, 65536], results.out?, setup!, results.in!, scr!)
+          run.scaling.test (CACHE.THRASH, runs, 128, 1, work.steps, work.factor, [1, 32, 128, 1024], results.out?, setup!, results.in!, scr!)
+
+          RESULTS scores:
+          SEQ
+            setup ! 0; 0; 0
+            results.out ? scores
+
+            out.repeat ('-', 78, scr!)
+            scr ! '*n'
+            out.string ("Score = ", 0, scr!)
+            out.int (INT TRUNC scores[score], 0, scr!)
+            out.string (" / ", 0, scr!)
+            out.int (INT TRUNC scores[max], 0, scr!)
+            out.string (" (", 0, scr!)
+            IF
+              scores[max] > 0.0
+                out.int (INT TRUNC ((scores[score] / scores[max]) * 100.0), 0, scr!)
+              TRUE
+                scr ! '0'
+            out.string ("%)", 0, scr!)
+            scr ! '*n'
+          
+          scr ! '*n'
+:
+
