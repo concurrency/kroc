@@ -35,22 +35,13 @@
 #PRAGMA EXTERNAL "PROC C.do.mpp.loadlibrary (VAL []BYTE l, RESULT BOOL r) = 0"
 #PRAGMA EXTERNAL "PROC C.do.mpp.unloadlibrary (VAL []BYTE l, RESULT BOOL r) = 0"
 
--- these are in the run-time (common/pgroup.c)
-#PRAGMA EXTERNAL "PROC C.do.pgrp.newgrp () = 0"
-#PRAGMA EXTERNAL "PROC C.do.pgrp.info ([]INT r) = 0"
-
 
 --{{{  MPBARSYNC ()
 --
 --  used to synchronise on the MOBILE process barrier
 --
 PROC MPBARSYNC () SUSPEND
-  DATA TYPE QUEUE
-    RECORD
-      INT Fptr, Bptr:
-  :
   INT saved:
-  QUEUE tq:
   ASM
     -- save return-address
     LDL 0
@@ -67,48 +58,18 @@ PROC MPBARSYNC () SUSPEND
 
     -- decrement BCNT
     LDL .MPPTR
-    DUP
-    LDNL ##MPP.BCNT
-    ADC -1
-    REV
-    STNL ##MPP.BCNT
-
-    -- if BCNT zero, switch back to activator
-    LDL .MPPTR
-    LDNL ##MPP.BCNT
-    CJ :wakeup
-
-    -- else add to queue and stop process
-    LDL .MPPTR
-    LDNL ##MPP.BFPTR
-    CJ :qempty
-    
-    LDLP 0
-    LDL .MPPTR
-    LDNL ##MPP.BBPTR   -- load barrier[Bptr]
-    STNL -2            -- attach
-    J :addtail
-
-    :qempty
-    LDLP 0
-    LDL .MPPTR
-    STNL ##MPP.BFPTR
-
-    :addtail
-    LDLP 0
-    LDL .MPPTR
-    STNL ##MPP.BBPTR
-    NULL
-    STL -2
-
-    -- this will leave a CODEPTR in the workspace (offset -1)
+    LDNL ##MPP.BARRIER
     WSMAP -1, 15        -- code pointer
     WSMAP -2, 5         -- general pointer
     CODEMAP
-    STOPP
-    J :out
+    MT.SYNC
 
-    -- switch back to activator
+    -- are we the last process ?
+    LDL 0
+    CJ :out
+    THROWAWAY
+
+    -- yes; switch back to activator
     :wakeup
     LDL .MPPTR
     DUP
@@ -126,7 +87,7 @@ PROC MPBARSYNC () SUSPEND
     GCALL
     THROWAWAY
 
-    -- re-activated, reset BCNT and reschedule processes
+    -- re-activated, reset barrier and reschedule processes
     CODEMAP
     :cont
     LDL 0
@@ -134,50 +95,13 @@ PROC MPBARSYNC () SUSPEND
     STNL ##MPP.AIPTR
 
     LDL .MPPTR
-    LDNL ##MPP.BECNT
-    LDL .MPPTR
-    STNL ##MPP.BCNT
-
-    -- don't bother queuing if no processes
-    LDL .MPPTR
-    LDNL ##MPP.BFPTR
-    CJ :out
-
-    LD ADDRESSOF tq
-    SAVEL
-    LD tq[Fptr]
-    CJ :rqempty
-
-    -- run-queue not empty
-    LDL .MPPTR
-    LDNL ##MPP.BFPTR
-    LD tq[Bptr]
-    STNL -2
-    J :rqtail
-
-    :rqempty
-    LDL .MPPTR
-    LDNL ##MPP.BFPTR
-    STLF
-
-    :rqtail
-    LDL .MPPTR
-    LDNL ##MPP.BBPTR
-    STLB
-
-    -- better zero out queue Fptr and Bptr
-    NULL
-    LDL .MPPTR
-    STNL ##MPP.BFPTR
-    NULL
-    LDL .MPPTR
-    STNL ##MPP.BBPTR
+    LDNL ##MPP.BARRIER
+    MT.SYNC
 
     -- restore and return
     :out
     LD saved
     STL 0
-    
 :
 --}}}
 --{{{  PROC MPBARRESIGN () SUSPEND
@@ -185,12 +109,7 @@ PROC MPBARSYNC () SUSPEND
 --  used to resign a parallel process from a MOBILE process barrier
 --
 PROC MPBARRESIGN () SUSPEND
-  DATA TYPE QUEUE
-    RECORD
-      INT Fptr, Bptr:
-  :
   INT saved:
-  QUEUE tq:
   ASM
     -- save return-address
     LDL 0
@@ -199,96 +118,11 @@ PROC MPBARRESIGN () SUSPEND
     RESERVELOWWS 4          -- damaged ...?
 
     LDL .MPPTR
+    DUP
     CJ :skip
-    THROWAWAY
-
-    -- decrement BECNT
-    LDL .MPPTR
-    DUP
-    LDNL ##MPP.BECNT
-    ADC -1
-    REV
-    STNL ##MPP.BECNT
-
-    -- decrement BCNT
-    LDL .MPPTR
-    DUP
-    LDNL ##MPP.BCNT
-    ADC -1
-    REV
-    STNL ##MPP.BCNT
-
-    -- if BCNT zero, switch back to activator
-    LDL .MPPTR
-    LDNL ##MPP.BCNT
-    CJ :wakeup
-
-    -- else still more, return
-    J :skip
-
-    -- switch back to activator
-    :wakeup
-    LDL .MPPTR
-    DUP
-    DUP
-    LDNL ##MPP.WPTR
-    GAJW
-    REV
-    STNL ##MPP.WPTR
-    STL ##MPA.TEMP.VS
-    LDLABELP :cont
-    LDL ##MPA.TEMP.VS
-    STNL ##MPP.IPTR
-    LDL ##MPA.TEMP.VS
-    LDNL ##MPP.AIPTR
-    GCALL
-    THROWAWAY
-
-    -- re-activated, reset BCNT and reschedule processes
-    :cont
-    LDL 0
-    LDL .MPPTR
-    STNL ##MPP.AIPTR
-
-    LDL .MPPTR
-    LDNL ##MPP.BECNT
-    LDL .MPPTR
-    STNL ##MPP.BCNT
-
-    -- don't bother queuing if no processes
-    LDL .MPPTR
-    LDNL ##MPP.BFPTR
-    CJ :skip
-
-    LD ADDRESSOF tq
-    SAVEL
-    LD tq[Fptr]
-    CJ :rqempty
-
-    -- run-queue not empty
-    LDL .MPPTR
-    LDNL ##MPP.BFPTR
-    LD tq[Bptr]
-    STNL -2
-    J :rqtail
-
-    :rqempty
-    LDL .MPPTR
-    LDNL ##MPP.BFPTR
-    STLF
-
-    :rqtail
-    LDL .MPPTR
-    LDNL ##MPP.BBPTR
-    STLB
-
-    -- better zero out queue Fptr and Bptr
-    NULL
-    LDL .MPPTR
-    STNL ##MPP.BFPTR
-    NULL
-    LDL .MPPTR
-    STNL ##MPP.BBPTR
+    LDNL ##MPP.BARRIER
+    LDC 1
+    MT.RESIGN
 
     -- restore and return
     :skip
@@ -344,27 +178,4 @@ PROC MPP.UNLOADLIBRARY (VAL []BYTE l, RESULT BOOL r)
     C.do.mpp.unloadlibrary (l, r)
 :
 --}}}
-
---{{{  PROC PGRP.NEWGRP ()
---
---  creates a new process group and moves the current process into it
---
-PROC PGRP.NEWGRP ()
-  SEQ
-    C.do.pgrp.newgrp ()
-:
---}}}
---{{{  PROC PGRP.INFO (RESULT []INT r)
---
---  returns information about the current process group in an integer array,
---  [group-id, nprocs]
---
-PROC PGRP.INFO (RESULT []INT r)
-  SEQ
-    C.do.pgrp.info (r)
-:
---}}}
-
-
-
 

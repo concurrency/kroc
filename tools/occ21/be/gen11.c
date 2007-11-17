@@ -1457,6 +1457,7 @@ printtreenl (stderr, 4, NTypeOf (pname));
 	genprimary (I_STNL, MPP_MSBASE);
 	gencomment0 ("MPP_MSBASE");
 
+	#if 0
 	/* initialise barrier (NotProcess, NotProcess, 1, 1) */
 	gensecondary (I_NULL);
 	genprimary (I_LDL, 0);
@@ -1474,6 +1475,14 @@ printtreenl (stderr, 4, NTypeOf (pname));
 	genprimary (I_LDL, 0);
 	genprimary (I_STNL, MPP_BCNT);
 	gencomment0 ("MPP_BCNT");
+	#endif
+
+	/* initialise barrier */
+	genprimary (I_LDC, 0);
+	genprimary (I_LDC, MT_MAKE_BARRIER (MT_BARRIER_MPROC));
+	gensecondary (I_MT_ALLOC);
+	genprimary (I_LDL, 0);
+	genprimary (I_STNL, MPP_BARRIER);
 
 	/* nullify workspace-map chain */
 	gensecondary (I_NULL);
@@ -2290,6 +2299,11 @@ PUBLIC void gencondfreedynproctype (treenode *nptr)
 	/* free workspace-map (regardless) */
 	loadmobile_int (nptr, TRUE);
 	genrmwsmap ();
+
+	/* free barrier */
+	loadmobile_int (nptr, TRUE);
+	genprimary (I_LDNL, MPP_BARRIER);
+	gensecondary (I_MT_RELEASE);
 
 	/* free workspace first */
 	loadmobile_int (nptr, TRUE);

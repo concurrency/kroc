@@ -563,8 +563,6 @@ predeflines[] =
 	, { CC, PD_MPPCHECKROUTINE, "P(V[]Y,B):MPP.CHECKROUTINE"}
 	, { CC, PD_MPPLOADLIBRARY, "P(V[]Y,B):MPP.LOADLIBRARY"}
 	, { CC, PD_MPPUNLOADLIBRARY, "P(V[]Y,B):MPP.UNLOADLIBRARY"}
-	, { CC, PD_PGRP_NEWGRP, "P():PGRP.NEWGRP"}
-	, { CC, PD_PGRP_INFO, "P(=[]I):PGRP.INFO"}
 	, { CC, PD_LOAD_TYPE_DESC, "FI(C):LOAD.TYPE.DESC"}		/* will accept any mobile name/type, channel just used for plugging */
 	, /*}}}*/
 	  /*{{{  more floating-point*/
@@ -2843,9 +2841,9 @@ PRIVATE void preproc_builtin (void)
 	}
 	/* load in back-end MPP constants */
 	{
-		static char *mppnames[] = {"MPP.WPTR", "MPP.IPTR", "MPP.AIPTR", "MPP.MAPCHAIN", "MPP.BFPTR", "MPP.BBPTR", "MPP.BECNT", "MPP.BCNT", "MPP.TYPEHASH", "MPP.CODEMAP", "MPA.TEMP.VS", NULL};
-		static int mppnlens[] = {8, 8, 9, 9, 9, 9, 9, 8, 12, 11, 11};
-		static int mppvals[] = {MPP_WPTR, MPP_IPTR, MPP_AIPTR, MPP_MAPCHAIN, MPP_BFPTR, MPP_BBPTR, MPP_BECNT, MPP_BCNT, MPP_TYPEHASH, MPP_CODEMAP, MPA_SETUP_TEMP_VS};
+		static char *mppnames[] = {"MPP.WPTR", "MPP.IPTR", "MPP.AIPTR", "MPP.MAPCHAIN", "MPP.BARRIER", "MPP.TYPEHASH", "MPP.CODEMAP", "MPA.TEMP.VS", NULL};
+		static int mppnlens[] = {8, 8, 9, 12, 11, 12, 11, 11};
+		static int mppvals[] = {MPP_WPTR, MPP_IPTR, MPP_AIPTR, MPP_MAPCHAIN, MPP_BARRIER, MPP_TYPEHASH, MPP_CODEMAP, MPA_SETUP_TEMP_VS};
 		int i;
 
 		for (i=0; mppnames[i]; i++) {

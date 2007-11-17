@@ -128,10 +128,13 @@ extern int genhdr_w_time_slot (void);
 #define MPP_WSSIZE 5		/* WS size (bytes) */
 #define MPP_VSBASE 6		/* VS base */
 #define MPP_MSBASE 7		/* MS base */
+#define MPP_BARRIER 8		/* barrier: mobile type pointer */
+#if 0
 #define MPP_BFPTR 8		/* barrier: suspended processes queue (Fptr) */
 #define MPP_BBPTR 9		/* barrier: Bptr */
 #define MPP_BECNT 10		/* barrier: enrolled-process count */
 #define MPP_BCNT 11		/* barrier: count */
+#endif
 #define MPP_TYPEHASH 12		/* typehash for the process type */
 #define MPP_CODEMAP 13		/* statically created map that describes code used by the process */
 

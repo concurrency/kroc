@@ -929,6 +929,8 @@ MESSAGE ("mpcb_mpp_clone(): remapping from wsbase=%p to wsbase=%p..\n", mp->wsba
 	}
 
 	/*}}}*/
+	/* FIXME: mp->barrier */
+	#if 0
 	/*{{{  repair the list of suspended processes*/
 	tmp->becnt = mp->becnt;
 	tmp->bcnt = mp->bcnt;
@@ -949,8 +951,8 @@ MESSAGE ("mpcb_mpp_clone(): remapping from wsbase=%p to wsbase=%p..\n", mp->wsba
 		tmp->bfptr = NULL;
 		tmp->bbptr = NULL;
 	}
-
 	/*}}}*/
+	#endif
 #if 0
 dump_workspace (stderr, (void **)(mp->wsbase), mp->wssize, mp->mapchain);
 dump_workspace (stderr, (void **)(tmp->wsbase), tmp->wssize, tmp->mapchain);
@@ -1257,9 +1259,11 @@ MESSAGE ("mpcb_mpp_serialise(): mapchain %d at %p offset %d, (%d entries, %d byt
 	fhdr->objbytes = objspacebytes;
 	fhdr->iptr = 0;
 	fhdr->wsptr = 0;
-	fhdr->bfptr = 0;
+	fhdr->barrier = 0;
+	#if 0
 	fhdr->bbptr = 0;
 	fhdr->becnt = blk->becnt;
+	#endif
 	fhdr->pname_offs = (unsigned int)(sizeof (mp_filehdr));
 	fhdr->wsdata_offs = fhdr->pname_offs + nlen;
 	fhdr->vsdata_offs = fhdr->wsdata_offs + fhdr->wsbytes;
@@ -1270,22 +1274,22 @@ MESSAGE ("mpcb_mpp_serialise(): mapchain %d at %p offset %d, (%d entries, %d byt
 
 	/*}}}*/
 	/*{{{  copy name, workspace and vectorspace, setup for data into objectspace*/
-	memcpy ((void *)fhdr + fhdr->pname_offs, cmaplabels[0], strlen (cmaplabels[0]) + 1);
+	memcpy ((byte *)fhdr + fhdr->pname_offs, cmaplabels[0], strlen (cmaplabels[0]) + 1);
 
 	rws = blk->wsbase;
-	sws = (unsigned int *)((void *)fhdr + fhdr->wsdata_offs);
+	sws = (unsigned int *)((byte *)fhdr + fhdr->wsdata_offs);
 	memcpy (sws, blk->wsbase, fhdr->wsbytes);
 
 	if (fhdr->vsbytes) {
-		svs = (unsigned int *)((void *)fhdr + fhdr->vsdata_offs);
+		svs = (unsigned int *)((byte *)fhdr + fhdr->vsdata_offs);
 		memcpy (svs, blk->vsbase, fhdr->vsbytes);
 		rvs = blk->vsbase;
 	}
 
 	/* from here, objspacebytes is the offset from the start of objectspace */
 	objspacebytes = ((objspaceents + 1) * sizeof (unsigned int));
-	objspacebiptr = (unsigned int *)((void *)fhdr + fhdr->obj_offs);		/* point at where we do [count, offs_0, offs_1, ...] */
-	objspaceptr = (char *)((void *)objspacebiptr + objspacebytes);			/* point at where objectspace data starts */
+	objspacebiptr = (unsigned int *)((byte *)fhdr + fhdr->obj_offs);		/* point at where we do [count, offs_0, offs_1, ...] */
+	objspaceptr = (char *)((byte *)objspacebiptr + objspacebytes);			/* point at where objectspace data starts */
 	*objspacebiptr = objspaceents;
 	objspacebiptr++;
 	objspaceents = 0;
@@ -1308,6 +1312,8 @@ MESSAGE ("mpcb_mpp_serialise(): mapchain %d at %p offset %d, (%d entries, %d byt
 			BMESSAGE ("error: iptr [%p] not found in code-map\n", blk->iptr);
 		}
 	}
+	/* FIXME: handle blk->barrier */
+	#if 0
 	if (blk->bfptr == NotProcess_p) {
 		/* nothing on the barrier queue */
 		fhdr->bfptr = (unsigned int)ENCODED_NOTPROCESS;
@@ -1316,9 +1322,10 @@ MESSAGE ("mpcb_mpp_serialise(): mapchain %d at %p offset %d, (%d entries, %d byt
 		fhdr->bfptr = (unsigned int)((int)blk->bfptr - (int)blk->wsbase);
 		fhdr->bbptr = (unsigned int)((int)blk->bbptr - (int)blk->wsbase);
 	}
+	#endif
 	/*}}}*/
 	/*{{{  go through workspace map-chain and fixup workspace, also copy map-data into local (for output) and any dynamic stuffs into objectspace*/
-	swsmap = (unsigned int *)((void *)fhdr + fhdr->wsmap_offs);		/* points at space for [count, offset.0, offset.., offset.(n-1)] ++ [ws-offs, (raw map data)] */
+	swsmap = (unsigned int *)((byte *)fhdr + fhdr->wsmap_offs);		/* points at space for [count, offset.0, offset.., offset.(n-1)] ++ [ws-offs, (raw map data)] */
 	swsmap[0] = wsmblks;
 	wsmblks = 0;
 
@@ -1335,7 +1342,7 @@ MESSAGE ("mpcb_mpp_serialise(): storing wsmap %d, swsoffs=%d\n", wsmblks, swsoff
 		swsmap[wsmblks+1] = swsoffs;
 		swsmap[(swsoffs >> 2)] = mc->wsoffset;
 		/* copy map data */
-		memcpy ((void *)swsmap + swsoffs + sizeof (unsigned int), mapptr, maplen + sizeof (unsigned int));
+		memcpy ((byte *)swsmap + swsoffs + sizeof (unsigned int), mapptr, maplen + sizeof (unsigned int));
 
 		mapptr += 4;		/* point at data start */
 		while (mapptr < mapmax) {
@@ -1363,9 +1370,9 @@ MESSAGE ("mpcb_mpp_serialise(): storing wsmap %d, swsoffs=%d\n", wsmblks, swsoff
 				/*}}}*/
 				/*{{{  WSMAP_GENPTR*/
 			case WSMAP_GENPTR:
-				if ((orgws[offset] >= (void *)rws) && (orgws[offset] < ((void *)rws + fhdr->wsbytes))) {
+				if (((byte *)orgws[offset] >= (byte *)rws) && ((byte *)orgws[offset] < ((byte *)rws + fhdr->wsbytes))) {
 					relws[offset] = (void *)((int)orgws[offset] - (int)rws);
-				} else if (fhdr->vsbytes && (orgws[offset] >= (void *)rvs) && (orgws[offset] < ((void *)rvs + fhdr->vsbytes)) && (type & WSMAP_FLAG_VS)) {
+				} else if (fhdr->vsbytes && ((byte *)orgws[offset] >= (byte *)rvs) && ((byte *)orgws[offset] < ((byte *)rvs + fhdr->vsbytes)) && (type & WSMAP_FLAG_VS)) {
 					relws[offset] = (void *)((int)orgws[offset] - (int)rvs);
 				} else if (orgws[offset] == NotProcess_p) {
 					relws[offset] = (void *)ENCODED_NOTPROCESS;		/* flag as notprocess */
@@ -1590,10 +1597,7 @@ int mpcb_mpp_deserialise (int addr, int size, mp_ctrlblk **mpp, unsigned int *th
 		blk->vsbase = NULL;
 		blk->msbase = NULL;
 
-		blk->bfptr = (void *)NotProcess_p;
-		blk->bbptr = (void *)NotProcess_p;
-		blk->becnt = 0;
-		blk->bcnt = 0;
+		blk->barrier = NULL;
 		if (!thashp) {
 			blk->typehash = 0;
 		} else {
@@ -1636,7 +1640,7 @@ int mpcb_mpp_deserialise (int addr, int size, mp_ctrlblk **mpp, unsigned int *th
 
 	/*}}}*/
 	/*{{{  lookup entry-point and workspace map for this process*/
-	pname = (char *)((void *)fhdr + fhdr->pname_offs);
+	pname = (char *)((byte *)fhdr + fhdr->pname_offs);
 	pname = make_c_name (pname, strlen (pname));
 #if 0
 MESSAGE ("mpcb_mpp_deserialise(): process name [%s]\n", pname);
@@ -1649,7 +1653,7 @@ MESSAGE ("mpcb_mpp_deserialise(): process name [%s]\n", pname);
 	dlclose (dlhandle);
 
 	if (!ep_addr || !map_addr) {
-		BMESSAGE ("no code for \"%s\"\n", (char *)((void *)fhdr + fhdr->pname_offs));
+		BMESSAGE ("no code for \"%s\"\n", (char *)((byte *)fhdr + fhdr->pname_offs));
 		return 0;
 	}
 
@@ -1674,7 +1678,7 @@ MESSAGE ("mpcb_mpp_deserialise(): process name [%s]\n", pname);
 	blk->wsbase = dmem_alloc (blk->wssize);
 	
 	memcpy (blk->wsbase, (unsigned char *)fhdr + fhdr->wsdata_offs, blk->wssize);
-	sws = (unsigned int *)((void *)fhdr + fhdr->wsdata_offs);
+	sws = (unsigned int *)((byte *)fhdr + fhdr->wsdata_offs);
 	rws = (unsigned int *)blk->wsbase;
 
 	if (fhdr->vsbytes) {
@@ -1687,7 +1691,7 @@ MESSAGE ("mpcb_mpp_deserialise(): process name [%s]\n", pname);
 		rvs = NULL;
 	}
 
-	objspacebiptr = (unsigned int *)((void *)fhdr + fhdr->obj_offs);
+	objspacebiptr = (unsigned int *)((byte *)fhdr + fhdr->obj_offs);
 	objspaceents = *objspacebiptr;
 	objspacebiptr++;
 	objspaceptr = (char *)fhdr + fhdr->obj_offs;
@@ -1697,10 +1701,10 @@ MESSAGE ("mpcb_mpp_deserialise(): process name [%s]\n", pname);
 	/*}}}*/
 	/* FIXME: rebuild mobilespace */
 	/*{{{  rebuild workspace-map chain and process*/
-	nchains = *(unsigned int *)((void *)fhdr + fhdr->wsmap_offs);
+	nchains = *(unsigned int *)((byte *)fhdr + fhdr->wsmap_offs);
 	chainp = &blk->mapchain;
 	for (i=0; i<nchains; i++) {
-		unsigned int chainoffs = ((unsigned int *)((void *)fhdr + fhdr->wsmap_offs))[i+1];
+		unsigned int chainoffs = ((unsigned int *)((byte *)fhdr + fhdr->wsmap_offs))[i+1];
 		unsigned char *chaindata;
 		int chainlen, wsoffs;
 
@@ -1708,7 +1712,7 @@ MESSAGE ("mpcb_mpp_deserialise(): process name [%s]\n", pname);
 			BMESSAGE ("damaged mobile process\n");
 			return 0;
 		}
-		chaindata = (unsigned char *)((void *)fhdr + fhdr->wsmap_offs + chainoffs);
+		chaindata = (unsigned char *)((byte *)fhdr + fhdr->wsmap_offs + chainoffs);
 		wsoffs = *(int *)chaindata;
 		chaindata += sizeof (int);		/* skip ws-offset */
 		chainlen = (int)((chaindata[2] << 8) | chaindata[3]);
@@ -1922,7 +1926,7 @@ MESSAGE ("re-serialised dynamic mobile array, pointer at %p for %d bytes (nslots
 	}
 	/*}}}*/
 	/*{{{  fixup specials*/
-	blk->wptr = (void *)blk->wsbase + fhdr->wsptr;
+	blk->wptr = (byte *)blk->wsbase + fhdr->wsptr;
 	if (fhdr->iptr == (unsigned int)ENCODED_NOTPROCESS) {
 		blk->iptr = NotProcess_p;
 	} else {
@@ -1934,6 +1938,8 @@ MESSAGE ("re-serialised dynamic mobile array, pointer at %p for %d bytes (nslots
 			blk->iptr = cmapentries[cinum];
 		}
 	}
+	/* FIXME: fhdr->barrier */
+	#if 0
 	if (fhdr->bfptr == (unsigned int)ENCODED_NOTPROCESS) {
 		blk->bfptr = NotProcess_p;
 		blk->bbptr = NotProcess_p;
@@ -1942,6 +1948,7 @@ MESSAGE ("re-serialised dynamic mobile array, pointer at %p for %d bytes (nslots
 		blk->bbptr = (void *)blk->wsbase + fhdr->bbptr;
 	}
 	blk->becnt = fhdr->becnt;
+	#endif
 	/*}}}*/
 #if 0
 MESSAGE ("mpcb_mpp_deserialise (mpp = %p, *mpp = %p, addr = %p, size = %p)\n", mpp, *mpp, (void *)addr, (void *)size);
@@ -2082,7 +2089,7 @@ void mpcb_dump_process (mp_ctrlblk *mp)
 	MESSAGE ("mobile process block at %p:\n", mp);
 	MESSAGE ("    wptr=%p, iptr=%p, aiptr=%p, mapchain=%p\n", mp->wptr, mp->iptr, mp->aiptr, mp->mapchain);
 	MESSAGE ("    wsbase=%p, wssize=%d, vsbase=%p, msbase=%p\n", mp->wsbase, mp->wssize, mp->vsbase, mp->msbase);
-	MESSAGE ("    bfptr=%p, bbptr=%p, becnt=%d, bcnt=%d\n", mp->bfptr, mp->bbptr, mp->becnt, mp->bcnt);
+	MESSAGE ("    barrier=%p\n", mp->barrier);
 	MESSAGE ("    typehash=0x%8.8x, codemap=%p\n", mp->typehash, mp->codemap);
 	dump_workspace (stderr, (void **)(mp->wsbase), mp->wssize, mp->mapchain);
 	if (mp->codemap) {

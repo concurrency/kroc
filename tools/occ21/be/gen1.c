@@ -1921,6 +1921,11 @@ fprintf (stderr, "gen1: tsetpar: parcount = %d\n", (int)parcount);
 	/* if we have an MPP, enroll on the barrier (by parcount-1) */
 	if (inside_suspends) {
 		loadmpp ();
+		genprimary (I_LDNL, MPP_BARRIER);
+		genprimary (I_LDC, parcount - 1);
+		gensecondary (I_MT_ENROLL);
+		#if 0
+		loadmpp ();
 		genprimary (I_LDNL, MPP_BECNT);
 		genprimary (I_ADC, parcount - 1);
 		loadmpp ();
@@ -1931,6 +1936,7 @@ fprintf (stderr, "gen1: tsetpar: parcount = %d\n", (int)parcount);
 		loadmpp ();
 		genprimary (I_STNL, MPP_BCNT);
 		gencomment0 ("MPP enroll");
+		#endif
 	}
 
 	/* if this PAR declares a barrier, initialise and enroll n processes.
@@ -2007,6 +2013,13 @@ PRIVATE void tsetpar_exp (treenode *parcount, int joinlab, int skiplab, treenode
 
 	/* if we have an MPP, enroll on the barrier (by parcount-1) */
 	if (inside_suspends) {
+		loadmpp ();
+		genprimary (I_LDNL, MPP_BARRIER);
+		texp (parcount, MAXREGS - 1);
+		genprimary (I_ADC, -1);
+		gensecondary (I_MT_ENROLL);
+
+		#if 0
 		texp (parcount, MANY_REGS);
 		genprimary (I_ADC, -1);
 		loadmpp ();
@@ -2023,6 +2036,7 @@ PRIVATE void tsetpar_exp (treenode *parcount, int joinlab, int skiplab, treenode
 		loadmpp ();
 		genprimary (I_STNL, MPP_BCNT);
 		gencomment0 ("MPP enroll");
+		#endif
 	}
 
 	/* if this PAR declares a barrier, initialise and enroll n processes.
@@ -2239,7 +2253,7 @@ PRIVATE void tsubpar (treenode *proclist, int start, treenode *parnode)
 				bodyp = ThisItem (CBodyOf (bodyp));
 			}
 			if (SpWSMapOf (pprocess)) {
-				genloadwsmap (mppoffset, SpMapLabelOf (pprocess));
+				genloadwsmap (mppoffset + thisbranchadjust, SpMapLabelOf (pprocess));
 			}
 			tprocess (bodyp);
 			throw_the_result_away ();	/* in case there is dross around */
@@ -2290,7 +2304,7 @@ printtreenl (stderr, 4, ires);
 				/*}}}*/
 			}
 			if (SpWSMapOf (pprocess)) {
-				genunloadwsmap (mppoffset, SpMapLabelOf (pprocess));
+				genunloadwsmap (mppoffset + thisbranchadjust, SpMapLabelOf (pprocess));
 			}
 			genprimary (I_LDLP, thisbranchadjust);
 			gencomment0 ("joinlab");
