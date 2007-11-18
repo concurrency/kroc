@@ -96,9 +96,9 @@ extern char *ccsp_branding;
 #endif
 
 #ifdef RMOX_BUILD
-	#define MESSAGE(fmt,args...) rmox_printk(fmt,##args)
-	#define MESSAGE0(fmt) rmox_printk((fmt))
-	#define MESSAGETO(stream,fmt,args...) rmox_printk(fmt,##args)
+	#define MESSAGE(fmt,args...) printk(fmt,##args)
+	#define MESSAGE0(fmt) printk((fmt))
+	#define MESSAGETO(stream,fmt,args...) printk(fmt,##args)
 	#define FFLUSH(stream)
 #else /* !RMOX_BUILD */
 	#define MESSAGE(fmt,args...) fprintf(stderr,fmt,##args)

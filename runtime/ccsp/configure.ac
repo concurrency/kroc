@@ -542,11 +542,11 @@ else
  AC_MSG_RESULT(yes)
  AC_MSG_CHECKING(location of RMoX include files)
  AC_MSG_RESULT($rmox)
- AC_CHECK_FILE($rmox/include/rmox_funcs.h, [], AC_MSG_ERROR([RMoX include files not found]))
+ AC_CHECK_FILE($rmox/include/rmox_if.h, [], AC_MSG_ERROR([RMoX include files not found]))
 
  AC_DEFINE([RMOX_BUILD],1,[define if building for RMoX])
  RMOX_RTLIB=libccsp_rmox.a
- RMOX_CFLAGS="-nostdinc -I$rmox/include -fno-common"
+ RMOX_CFLAGS="-I$rmox/include -fno-common -nostdlib -nostartfiles -nodefaultlibs"
  enable_tls=no
 fi
 AC_SUBST(RMOX_RTLIB)
