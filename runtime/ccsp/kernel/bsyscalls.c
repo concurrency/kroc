@@ -23,21 +23,21 @@
 #include <config.h>
 #endif
 
-#if defined(OOS_BUILD)
-/*{{{  RMoX/OOS stuff*/
-#include <oos_funcs.h>
+#if defined(RMOX_BUILD)
+/*{{{  RMoX stuff*/
+#include <rmox_if.h>
 /*{{{  void _killcall (int *w)*/
 /*
- *	dummy for OOS
+ *	dummy for RMOX
  */
 void _killcall (int *w)
 {
-	oos_printk ("PANIC:: _killcall()\n");
+	rmox_printk ("PANIC:: _killcall()\n");
 	return;
 }
 /*}}}*/
 /*}}}*/
-#else	/* !OOS_BUILD */
+#else	/* !RMOX_BUILD */
 
 #ifdef BLOCKING_SYSCALLS
 /*{{{  includes*/
@@ -507,5 +507,5 @@ void *bsyscalls_set_cleanup (void (*cleanup)(void *))
 }
 /*}}}*/
 
-#endif	/* !OOS_BUILD */
+#endif	/* !RMOX_BUILD */
 

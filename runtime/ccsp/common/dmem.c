@@ -27,9 +27,9 @@
 #endif
 
 /*{{{  includes*/
-#if defined(OOS_BUILD)
-	#include <oos_funcs.h>
-#else	/* !OOS_BUILD */
+#if defined(RMOX_BUILD)
+	#include <rmox_if.h>
+#else	/* !RMOX_BUILD */
 	#include <stdio.h>
 	#if defined(HAVE_STDLIB_H)
 		#include <stdlib.h>
@@ -51,7 +51,7 @@
 	#else
 		#define TRACE(fmt,args...)
 	#endif
-#endif	/* !OOS_BUILD */
+#endif	/* !RMOX_BUILD */
 
 #include <kernel.h>
 #include <rts.h>
@@ -134,7 +134,7 @@ void dmem_release (void *ptr)
 /*}}}*/
 /*}}}*/
 
-#if defined(DM_DEBUG) && (DM_DEBUG==1) && !defined(OOS_BUILD)
+#if defined(DM_DEBUG) && (DM_DEBUG==1) && !defined(RMOX_BUILD)
 
 #if defined(DM_DEBUG_LIBELF) && (DM_DEBUG_LIBELF==1)
 	#define USING_LIBELF
@@ -589,7 +589,7 @@ void dm_debug_dump (void)
 
 
 /*}}}*/
-#endif	/* defined(DM_DEBUG) && !defined(OOS_BUILD)*/
+#endif	/* defined(DM_DEBUG) && !defined(RMOX_BUILD)*/
 
 
 /*{{{  void dmem_init (void)*/

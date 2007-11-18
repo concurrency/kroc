@@ -25,12 +25,12 @@
 #endif
 
 /*{{{  includes*/
-#ifdef OOS_BUILD
-	#include <oos_funcs.h>
-#else	/* !OOS_BUILD */
+#ifdef RMOX_BUILD
+	#include <rmox_if.h>
+#else	/* !RMOX_BUILD */
 	#include <stdlib.h>
 	#include <stdio.h>
-#endif	/* !OOS_BUILD */
+#endif	/* !RMOX_BUILD */
 
 #include <kernel.h>
 #include <arch/sched_asm_inserts.h>

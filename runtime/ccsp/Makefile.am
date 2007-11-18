@@ -25,14 +25,12 @@ EXTRA_LIBRARIES = libccsp.a
 libccsp_a_SOURCES =
 libccsp_a_LIBADD = \
 	common/dmem.o \
-	common/mobproc.o \
-	common/pgroup.o \
-	common/rtsmain.o \
-	common/userproc.o \
 	common/dtrace.o \
+	common/mobproc.o \
+	common/rtsmain.o \
 	common/timercal.o \
+	common/userproc.o \
 	kernel/bsyscalls.o \
-	kernel/cspdriver.o \
 	kernel/deadlock.o \
 	kernel/dynproc.o \
 	kernel/entry.o \
@@ -53,8 +51,8 @@ include_HEADERS = \
 	include/kitable.h \
 	include/mobile_types.h \
 	include/mobproc.h \
-	include/typedesc.h \
 	include/mwsync.h \
+	include/typedesc.h \
 	include/ukcthreads_types.h
 
 all-local: @LIBCCSP@

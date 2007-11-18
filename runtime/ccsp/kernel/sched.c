@@ -2,7 +2,7 @@
  *	Transputer style kernel in mixed C/asm
  *	Copyright (C) 1998 Jim Moores
  *	Based on the KRoC/sparc kernel Copyright (C) 1994-2000 D.C. Wood and P.H. Welch
- *	OOS hacks copyright (C) 2002 Fred Barnes and Brian Vinter
+ *	RMOX hacks copyright (C) 2002 Fred Barnes and Brian Vinter
  *	Portions copyright (C) 1999-2005 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
@@ -27,8 +27,8 @@
 #include <config.h>
 #endif
 
-#if defined(OOS_BUILD)
-	#include <oos_funcs.h>
+#if defined(RMOX_BUILD)
+	#include <rmox_if.h>
 #else
 	#include <stdio.h>
 	#ifdef HAVE_STDLIB_H
@@ -43,6 +43,7 @@
 	#include <pthread.h>
 #endif
 
+#include <inlining.h>
 #include <kernel.h>
 #include <rts.h>
 #include <ccsp_if.h>
@@ -64,22 +65,17 @@
 #include <deadlock.h>
 #include <dynproc.h>
 #include <mobproc.h>
-#include <pgroup.h>
 
 #include <mwsync.h>
 #include <mws_sync.h>
 
 #include <debug.h>
 
-#if defined(BLOCKING_SYSCALLS) && !defined(OOS_BUILD)
+#if defined(BLOCKING_SYSCALLS) && !defined(RMOX_BUILD)
 	#include <bsyscalls_if.h>
 #endif
 
-#ifdef LINUX_CSPDRIVER
-	#include <arch/cspdriver.h>
-#endif
-
-#if defined(ENABLE_DTRACES) && !defined(OOS_BUILD)
+#if defined(ENABLE_DTRACES) && !defined(RMOX_BUILD)
 	#include <dtrace.h>
 #endif
 
@@ -100,9 +96,9 @@
 /*}}}*/
 
 /*{{{  PUBLIC variables that are used elsewhere in the run time system */
-#if defined(OOS_BUILD)
-word *inttab[OOS_NUM_INTERRUPTS];			/* interrupt process linkage (Wptr of waiting process) */
-volatile word intcount[OOS_NUM_INTERRUPTS];		/* count of interrupts received */
+#if defined(RMOX_BUILD)
+word *inttab[RMOX_NUM_INTERRUPTS];			/* interrupt process linkage (Wptr of waiting process) */
+volatile word intcount[RMOX_NUM_INTERRUPTS];		/* count of interrupts received */
 extern void no_dynamic_process_support (void);
 #endif
 /*}}}*/
@@ -226,20 +222,6 @@ int ccsp_use_tls (void)
 /*}}}*/
 /*}}}*/
 
-/*{{{  inlining configuration */
-#ifdef __GNUC__
-#define INLINE __attribute__ ((always_inline)) inline
-#else
-#define INLINE inline
-#endif
-
-#define TRIVIAL	INLINE
-#define HOT	INLINE
-#define WARM	inline
-#define TEPID	
-#define COLD	
-/*}}}*/
-
 /*{{{  scheduler support defines/functions */
 /*{{{  scheduler pointer storage */
 #if defined(USE_TLS)
@@ -268,7 +250,7 @@ inline sched_t *local_scheduler (void)
 	return (sched_t *) pthread_getspecific (scheduler_key);
 }
 #else
-/* CGR FIXME: insert suitable OOS code */
+/* CGR FIXME: insert suitable RMOX code */
 static int init_local_schedulers (void) { return 0; }
 #define set_local_scheduler(X)	do { _ccsp_scheduler = (X); } while (0)
 sched_t *local_scheduler(void)
@@ -718,14 +700,14 @@ static TEPID void mail_batch (word affinity, batch_t *batch)
 	atomic_enqueue_to_runqueue (&(s->bmail), false, batch);
 
 	att_safe_set_bit (&(s->sync), SYNC_BMAIL_BIT);
-#if !defined (OOS_BUILD)
+#if !defined (RMOX_BUILD)
 	strong_read_barrier ();
 	if (att_safe_val (&sleeping_threads) & s->id) {
 		ccsp_wake_thread (s, SYNC_BMAIL_BIT);
 	}
 #else
 	/* CGR FIXME: do something... (IPI) */
-#endif /* !OOS_BUILD */
+#endif /* !RMOX_BUILD */
 }
 /*}}}*/
 /*{{{  void schedule_batch (batch_t *batch)*/
@@ -749,14 +731,14 @@ static TEPID void mail_process (word affinity, word *Wptr)
 	atomic_enqueue_to_runqueue (&(s->pmail), true, Wptr);
 	weak_write_barrier ();
 	att_safe_set_bit (&(s->sync), SYNC_PMAIL_BIT);
-#if !defined (OOS_BUILD)
+#if !defined (RMOX_BUILD)
 	strong_read_barrier ();
 	if (att_safe_val (&sleeping_threads) & s->id) {
 		ccsp_wake_thread (s, SYNC_PMAIL_BIT);
 	}
 #else
 	/* CGR FIXME: do something... (IPI) */
-#endif /* !OOS_BUILD */
+#endif /* !RMOX_BUILD */
 }
 /*}}}*/
 /*{{{  static TRIVIAL void enqueue_process_nopri (sched_t *sched, word *Wptr)*/
@@ -1277,7 +1259,7 @@ static WARM bool remove_from_timer_queue (sched_t *sched, tqnode_t *tn, word *wp
 }
 /*}}}*/
 /*{{{  static void setup_spin (sched_t *sched)*/
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 static void setup_spin (sched_t *sched)
 {
 	Time start, end;
@@ -1293,7 +1275,7 @@ static void setup_spin (sched_t *sched)
 
 	sched->spin = (1000 * ccsp_spin_us ()) / (ns ? ns : 1);
 }
-#endif /* !defined(OOS_BUILD) */
+#endif /* !defined(RMOX_BUILD) */
 /*}}}*/
 /*}}}*/
 /*{{{  error handling support functions */
@@ -1317,11 +1299,7 @@ void kernel_panic (void)
 {
 	BMESSAGE ("panic: called kernel function not implemented.\n");
 	ccsp_show_last_debug_insert ();
-#if defined(OOS_BUILD)
-	oos_exit (1);
-#else
-	exit(1);
-#endif
+	ccsp_kernel_exit (1, 0);
 }
 /*}}}*/
 /*{{{  void zerodiv_happened (unsigned int zerodiv_info, unsigned int zerodiv_info2, unsigned int filename_addr, unsigned int procedure_addr)*/
@@ -1580,7 +1558,6 @@ void err_no_bsyscalls (word *wptr, int ra)
 {
 	BMESSAGE ("blocking system calls not enabled in this kernel. (Wptr=0x%x)\n", (unsigned int)wptr);
 	ccsp_kernel_exit (1, ra);
-	return;
 }
 /*}}}*/
 /*}}}*/
@@ -1766,10 +1743,10 @@ void ccsp_kernel_init (void)
 /*{{{  static void kernel_X_common_error (...) */
 static void kernel_X_common_error (word *Wptr, sched_t *sched, unsigned int return_address, char *name)
 {
-#if defined(DYNAMIC_PROCS) && !defined(OOS_BUILD)
+#if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 	d_process *kr_dptr;
 #endif
-#if defined(DYNAMIC_PROCS) && !defined(OOS_BUILD)
+#if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 	/* check for faulting dynamic proc */
 	if (faulting_dynproc ((word **)&(Wptr), &return_address, name, &kr_dptr)) {
 		BMESSAGE ("dynamic process generated a fault, killed it.\n");
@@ -1977,7 +1954,7 @@ void dump_trap_info (word *Wptr, word *Fptr, word *Bptr, unsigned int return_add
 	return;
 }
 /*}}}*/
-#if defined(ENABLE_DTRACES) && !defined(OOS_BUILD)
+#if defined(ENABLE_DTRACES) && !defined(RMOX_BUILD)
 /*{{{  void kernel_X_dtrace (void)*/
 /*
  *	this handles debugging traces generated by tranx86
@@ -1989,7 +1966,7 @@ void dump_trap_info (word *Wptr, word *Fptr, word *Bptr, unsigned int return_add
  *	@CALL: 		K_DTRACE
  *	@PRIO:		0
  *	@DEPEND:	ENABLE_DTRACES
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_X_dtrace (void)
 {
@@ -2003,7 +1980,7 @@ void kernel_X_dtrace (void)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-#endif	/* defined(ENABLE_DTRACES) && !defined(OOS_BUILD) */
+#endif	/* defined(ENABLE_DTRACES) && !defined(RMOX_BUILD) */
 /*{{{  void kernel_X_trap (void)*/
 /*
  *	trap entry-point
@@ -2567,7 +2544,7 @@ static void fork_bar_sync (sched_t *sched, word *bar, word *Wptr)
 /*}}}*/
 /*}}}*/
 /*{{{  mobile process barrier operations */
-#if !defined(OOS_BUILD) && defined(DYNAMIC_PROCS)
+#if !defined(RMOX_BUILD) && defined(DYNAMIC_PROCS)
 /*{{{  static void mproc_bar_init (mproc_bar_t *bar, word initial_count)*/
 static void mproc_bar_init (mproc_bar_t *bar, word initial_count)
 {
@@ -2836,7 +2813,7 @@ static INLINE word *mt_alloc_barrier (void *allocator, word type)
 			mb->barrier.resign	= (ccsp_barrier_resign_t) fork_bar_resign;
 			mb->barrier.data[0]	= NotProcess_p;
 	  		break;
-		#if !defined(OOS_BUILD) && defined(DYNAMIC_PROCS)
+		#if !defined(RMOX_BUILD) && defined(DYNAMIC_PROCS)
 		case MT_BARRIER_MPROC:
 			bytes 	+= sizeof (mproc_bar_t);
 			mb 	= (mt_barrier_internal_t *) dmem_thread_alloc (allocator, bytes);
@@ -2845,7 +2822,7 @@ static INLINE word *mt_alloc_barrier (void *allocator, word type)
 			mb->barrier.resign	= (ccsp_barrier_resign_t) mproc_bar_resign;
 			mproc_bar_init ((mproc_bar_t *) &(mb->barrier.data), 1);
 			break;
-		#endif /* !defined(OOS_BUILD) && defined(DYNAMIC_PROCS) */
+		#endif /* !defined(RMOX_BUILD) && defined(DYNAMIC_PROCS) */
 		default:
 			mobile_type_error ();
 			mb = NULL;
@@ -3211,7 +3188,7 @@ void ccsp_mt_release (void *ptr)
 /*}}}*/
 
 /*{{{  blocking system calls */
-#if !defined(OOS_BUILD) && defined(BLOCKING_SYSCALLS)
+#if !defined(RMOX_BUILD) && defined(BLOCKING_SYSCALLS)
 /*{{{  static void kernel_bsc_dispatch (...)*/
 static void kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, word *Wptr, void *b_func, void *b_param, int adjust)
 {
@@ -3258,7 +3235,7 @@ static void kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, wo
  *	@CALL: 		K_B_DISPATCH
  *	@PRIO:		20
  *	@DEPEND:	BLOCKING_SYSCALLS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_X_b_dispatch (void)
 {
@@ -3281,7 +3258,7 @@ void kernel_X_b_dispatch (void)
  *	@CALL: 		K_BX_DISPATCH
  *	@PRIO:		20
  *	@DEPEND:	BLOCKING_SYSCALLS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_X_bx_dispatch (void)
 {
@@ -3304,7 +3281,7 @@ void kernel_X_bx_dispatch (void)
  *	@CALL: 		K_BX_KILL
  *	@PRIO:		20
  *	@DEPEND:	BLOCKING_SYSCALLS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_Y_bx_kill (void)
 {
@@ -3319,7 +3296,7 @@ void kernel_Y_bx_kill (void)
 	K_ONE_OUT (result);
 }
 /*}}}*/
-#endif	/* OOS_BUILD || !BLOCKING_SYSCALLS */
+#endif	/* RMOX_BUILD || !BLOCKING_SYSCALLS */
 /*}}}*/
 /*{{{  memory allocation */
 /*{{{  void kernel_Y_mt_alloc (void)*/
@@ -4095,7 +4072,7 @@ void kernel_Y_rtthreadinit (void)
 	
 	set_local_scheduler (sched);
 
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 	ccsp_init_signal_pipe (sched);
 #endif
 	allocate_to_free_list (sched, MAX_PRIORITY_LEVELS * 2);
@@ -4134,11 +4111,11 @@ void kernel_Y_rtthreadinit (void)
 		ccsp_initial_cpu_speed (&(sched->cpu_factor), &(sched->cpu_khz));
 		#endif /* defined(ENABLE_CPU_TIMERS) */
 
-		#if defined(OOS_BUILD)
+		#if defined(RMOX_BUILD)
 		sched->spin = 0;
 		#else
 		setup_spin (sched);
-		#endif /* defined (OOS_BUILD) */
+		#endif /* defined (RMOX_BUILD) */
 
 		att_set_bit (&enabled_threads, sched->index);
 		
@@ -4278,7 +4255,7 @@ void kernel_X_scheduler (void)
 				}
 
 				if (new_batch != NULL) {
-					#if !defined(OOS_BUILD)
+					#if !defined(RMOX_BUILD)
 					if (att_val (&(sched->mwstate)) && (tmp = att_val (&sleeping_threads))) {
 						ccsp_wake_thread (schedulers[bsf (tmp)], SYNC_WORK_BIT);
 					}
@@ -4308,9 +4285,9 @@ void kernel_X_scheduler (void)
 						att_set_bit (&sleeping_threads, sched->index);
 						strong_read_barrier ();
 						if (sched->tq_fptr != NULL) {
-							#if !defined(OOS_BUILD) && defined(ENABLE_CPU_TIMERS)
+							#if !defined(RMOX_BUILD) && defined(ENABLE_CPU_TIMERS)
 							ccsp_safe_pause_timeout (sched);
-							#elif !defined(OOS_BUILD)
+							#elif !defined(RMOX_BUILD)
 							ccsp_safe_pause (sched);
 							#else
 							/* spin... */
@@ -4320,14 +4297,14 @@ void kernel_X_scheduler (void)
 						else if (!att_val (&(sched->sync))) {
 							att_set_bit (&idle_threads, sched->index);
 
-							#if !defined(OOS_BUILD) && defined(BLOCKING_SYSCALLS)
+							#if !defined(RMOX_BUILD) && defined(BLOCKING_SYSCALLS)
 							if (bsyscalls_pending () > (ccsp_external_event_is_bsc () ? (ccsp_external_event_is_ready () ? 0 : 1) : 0)) {
 								ccsp_safe_pause (sched);
 							}
 							else
 							#endif
 							if (ccsp_blocked_on_external_event ()) {
-								#if !defined(OOS_BUILD)
+								#if !defined(RMOX_BUILD)
 								ccsp_safe_pause (sched);
 								#endif
 							} else {
@@ -4338,9 +4315,9 @@ void kernel_X_scheduler (void)
 								if (idle == att_val (&enabled_threads)) {
 									ccsp_kernel_deadlock ();
 								} else {
-									#if !defined(OOS_BUILD)
+									#if !defined(RMOX_BUILD)
 									ccsp_safe_pause (sched);
-									#endif /* !defined(OOS_BUILD) */
+									#endif /* !defined(RMOX_BUILD) */
 								}
 							}
 
@@ -4348,9 +4325,9 @@ void kernel_X_scheduler (void)
 						} else {
 							att_clear_bit (&sleeping_threads, sched->index);
 						}
-						#if defined(OOS_BUILD)
+						#if defined(RMOX_BUILD)
 						att_clear_bit (&sleeping_threads, sched->index);
-						#endif /* defined(OOS_BUILD) */
+						#endif /* defined(RMOX_BUILD) */
 						sched->loop = sched->spin;
 					}
 				}
@@ -5955,8 +5932,8 @@ void kernel_Y_mt_enroll (void)
 /*}}}*/
 /*}}}*/
 
-/*{{{  OOS support */
-#if defined(OOS_BUILD)
+/*{{{  RMOX support */
+#if defined(RMOX_BUILD)
 /*{{{  int ccsp_next_timeout (int *us, int *valid)*/
 /*
  * 	provide a clean access for code to check when the head of the timer 
@@ -6003,15 +5980,15 @@ void ccsp_interrupt_handler (int irq)
  *	@OUTPUT: 	NONE
  *	@CALL: 		K_WAIT_INT
  *	@PRIO:		50
- *	@DEPEND:	OOS_BUILD
+ *	@DEPEND:	RMOX_BUILD
  */
-void kernel_Y_ooswaitint (void)
+void kernel_Y_wait_int (void)
 {
 	word number, mask;
 
 	K_SETGLABEL_TWO_IN_SR (Y_wait_int, number, mask);
 
-	ENTRY_TRACE (Y_ooswaitint, "0x%8.8X", number);
+	ENTRY_TRACE (Y_wait_int, "0x%8.8X", number);
 
 	if (inttab[number]) {
 		MESSAGE ("scheduler: ieee, someone already waiting for this interrupt!\n");
@@ -6038,10 +6015,10 @@ void kernel_Y_ooswaitint (void)
 	}
 }
 /*}}}*/
-#endif	/* defined(OOS_BUILD) */
+#endif	/* defined(RMOX_BUILD) */
 /*}}}*/
 /*{{{  dynamic/mobile-processes */
-#if !defined(OOS_BUILD) && defined(DYNAMIC_PROCS)
+#if !defined(RMOX_BUILD) && defined(DYNAMIC_PROCS)
 extern void X_dynproc_exit (void);
 /*{{{  void kernel_X_kernel_run (void)*/
 /*
@@ -6054,7 +6031,7 @@ extern void X_dynproc_exit (void);
  *	@CALL: 		K_KERNEL_RUN
  *	@PRIO:		50
  *	@DEPEND:	DYNAMIC_PROCS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_X_kernel_run (void)
 {
@@ -6099,7 +6076,7 @@ void kernel_X_kernel_run (void)
  *	@CALL: 		K_DYNPROC_SUSPEND
  *	@PRIO:		0
  *	@DEPEND:	DYNAMIC_PROCS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_X_dynproc_suspend (void)
 {
@@ -6128,7 +6105,7 @@ void kernel_X_dynproc_suspend (void)
  *	@CALL: 		K_DYNPROC_EXIT
  *	@PRIO:		0
  *	@DEPEND:	DYNAMIC_PROCS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_X_dynproc_exit (void)
 {
@@ -6160,7 +6137,7 @@ void kernel_X_dynproc_exit (void)
  *	@CALL: 		K_LDWSMAP
  *	@PRIO:		0
  *	@DEPEND:	DYNAMIC_PROCS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_Y_ldwsmap (void)
 {
@@ -6184,7 +6161,7 @@ void kernel_Y_ldwsmap (void)
  *	@CALL: 		K_ULWSMAP
  *	@PRIO:		0
  *	@DEPEND:	DYNAMIC_PROCS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_Y_ulwsmap (void)
 {
@@ -6208,7 +6185,7 @@ void kernel_Y_ulwsmap (void)
  *	@CALL: 		K_RMWSMAP
  *	@PRIO:		0
  *	@DEPEND:	DYNAMIC_PROCS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_Y_rmwsmap (void)
 {
@@ -6232,7 +6209,7 @@ void kernel_Y_rmwsmap (void)
  *	@CALL: 		K_MPPCLONE
  *	@PRIO:		20
  *	@DEPEND:	DYNAMIC_PROCS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_Y_mppclone (void)
 {
@@ -6264,7 +6241,7 @@ void kernel_Y_mppclone (void)
  *	@CALL: 		K_MPPSERIALISE
  *	@PRIO:		20
  *	@DEPEND:	DYNAMIC_PROCS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_Y_mppserialise (void)
 {
@@ -6299,7 +6276,7 @@ void kernel_Y_mppserialise (void)
  *	@CALL: 		K_MPPDESERIALISE
  *	@PRIO:		20
  *	@DEPEND:	DYNAMIC_PROCS
- *	@INCOMPATIBLE:	OOS_BUILD
+ *	@INCOMPATIBLE:	RMOX_BUILD
  */
 void kernel_Y_mppdeserialise (void)
 {
@@ -6323,7 +6300,7 @@ void kernel_Y_mppdeserialise (void)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-#endif	/* defined(OOS_BUILD) || !defined(DYNAMIC_PROCS) */
+#endif	/* defined(RMOX_BUILD) || !defined(DYNAMIC_PROCS) */
 /*}}}*/
 /*{{{  MWS barriers */
 #if 0

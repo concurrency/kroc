@@ -18,6 +18,8 @@
  *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <inlining.h>
+
 #ifndef ASM_OPS_H
 #define ASM_OPS_H
 
@@ -45,9 +47,9 @@
 #endif /* MAX_RUNTIME_THREADS */
 /*}}}*/
 
-/*{{{  static inline unsigned int bsf (unsigned int v)*/
+/*{{{  static INLINE unsigned int bsf (unsigned int v)*/
 /* bit-scan forward */
-static inline unsigned int bsf (unsigned int v)
+static INLINE unsigned int bsf (unsigned int v)
 {
 	unsigned int res = 32;
 	asm ("bsf %1,%0\n" : "=r" (res) : "r" (v) : "cc");
@@ -55,9 +57,9 @@ static inline unsigned int bsf (unsigned int v)
 }
 /*}}}*/
 
-/*{{{  static inline unsigned int bsr (unsigned int v)*/
+/*{{{  static INLINE unsigned int bsr (unsigned int v)*/
 /* bit-scan reverse */
-static inline unsigned int bsr (unsigned int v)
+static INLINE unsigned int bsr (unsigned int v)
 {
 	unsigned int res = 32;
 	asm ("bsr %1,%0\n" : "=r" (res) : "r" (v) : "cc");
@@ -65,15 +67,15 @@ static inline unsigned int bsr (unsigned int v)
 }
 /*}}}*/
 
-/*{{{  static inline void cli (void)*/
-/* clear interrupts enabled (for OOS build) */
-static inline void cli (void) {
+/*{{{  static INLINE void cli (void)*/
+/* clear interrupts enabled (for RMOX build) */
+static INLINE void cli (void) {
 	__asm__ __volatile__ ("cli\n");
 }
 /*}}}*/
 
-/*{{{  static inline void idle_cpu (void)*/
-static inline void idle_cpu (void) {
+/*{{{  static INLINE void idle_cpu (void)*/
+static INLINE void idle_cpu (void) {
 	__asm__ __volatile__ ("	\n"
 		"	pause	\n"
 		"	pause	\n"
@@ -83,8 +85,8 @@ static inline void idle_cpu (void) {
 }
 /*}}}*/
 
-/*{{{  static inline unsigned int one_if_nz (unsigned int value, unsigned int mask)*/
-static inline unsigned int one_if_nz (unsigned int value, unsigned int mask) {
+/*{{{  static INLINE unsigned int one_if_nz (unsigned int value, unsigned int mask)*/
+static INLINE unsigned int one_if_nz (unsigned int value, unsigned int mask) {
 	unsigned char result;
 	asm (	"			\n"
 		"	test %1,%2	\n" 
@@ -97,8 +99,8 @@ static inline unsigned int one_if_nz (unsigned int value, unsigned int mask) {
 }
 /*}}}*/
 
-/*{{{  static inline unsigned int one_if_z (unsigned int value, unsigned int mask)*/
-static inline unsigned int one_if_z (unsigned int value, unsigned int mask) {
+/*{{{  static INLINE unsigned int one_if_z (unsigned int value, unsigned int mask)*/
+static INLINE unsigned int one_if_z (unsigned int value, unsigned int mask) {
 	unsigned char result;
 	asm (	"			\n"
 		"	test %1,%2	\n" 
@@ -111,8 +113,8 @@ static inline unsigned int one_if_z (unsigned int value, unsigned int mask) {
 }
 /*}}}*/
 
-/*{{{  static inline unsigned int pick_random_bit (unsigned int mask)*/
-static inline unsigned int pick_random_bit (unsigned int mask) {
+/*{{{  static WARM unsigned int pick_random_bit (unsigned int mask)*/
+static WARM unsigned int pick_random_bit (unsigned int mask) {
 #ifdef ENABLE_CPU_TIMERS
 	unsigned int l, r;
 
@@ -146,9 +148,9 @@ static inline unsigned int pick_random_bit (unsigned int mask) {
 }
 /*}}}*/
 
-/*{{{  static inline void serialise (void)*/
+/*{{{  static INLINE void serialise (void)*/
 /* serialises the instruction stream - the strongest form of barrier */
-static inline void serialise (void) {
+static INLINE void serialise (void) {
 	__asm__ __volatile__ ("		\n"
 		"	movl $0, %%eax	\n"
 		"	cpuid		\n"
@@ -159,15 +161,15 @@ static inline void serialise (void) {
 }
 /*}}}*/
 
-/*{{{  static inline void sti (void)*/
-/* set interrupts enabled (for OOS build) */
-static inline void sti (void) {
+/*{{{  static INLINE void sti (void)*/
+/* set interrupts enabled (for RMOX build) */
+static INLINE void sti (void) {
 	__asm__ __volatile__ ("sti\n");
 }
 /*}}}*/
 
-/*{{{  static inline void xmemcpy (void *src, void *dst, unsigned int count)*/
-static inline void xmemcpy (void *src, void *dst, unsigned int count) {
+/*{{{  static INLINE void xmemcpy (void *src, void *dst, unsigned int count)*/
+static INLINE void xmemcpy (void *src, void *dst, unsigned int count) {
 	asm (	"		\n"
     		"	cld	\n"
 		"	rep	\n"

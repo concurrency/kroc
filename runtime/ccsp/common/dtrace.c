@@ -21,7 +21,7 @@
 #include <config.h>
 #endif
 
-#if !defined(OOS_BUILD) && defined(ENABLE_DTRACES)
+#if !defined(RMOX_BUILD) && defined(ENABLE_DTRACES)
 
 /*{{{  general includes*/
 #include <stdio.h>
@@ -339,7 +339,7 @@ void rt_dtrace (void *wptr, unsigned int dta, unsigned int dtb)
 
 
 
-#else	/* defined(OOS_BUILD) || !defined(ENABLE_DTRACES) */
+#else	/* defined(RMOX_BUILD) || !defined(ENABLE_DTRACES) */
 
 /*{{{  void dtraces_not_supported (void)*/
 /*
@@ -352,7 +352,5 @@ void dtraces_not_supported (void)
 /*}}}*/
 
 
-#endif	/* defined(OOS_BUILD) || !defined(ENABLE_DTRACES) */
-
-
+#endif	/* defined(RMOX_BUILD) || !defined(ENABLE_DTRACES) */
 

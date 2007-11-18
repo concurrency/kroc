@@ -16,19 +16,19 @@ SCHED_SOURCE = $(top_srcdir)/kernel/sched.c
 MAKE_HEADER = $(top_srcdir)/utils/make-header.py
 
 noinst_HEADERS = \
-	dmem_if.h \
 	bsyscalls_if.h \
+	debug_defs.h \
+	dmem_if.h \
+	dtrace.h \
+	dynproc.h \
+	inlining.h \
+	mobproc.h \
+	mwsync.h \
+	rts.h \
 	sched_consts.h \
 	sched_types.h \
-	dynproc.h \
-	mobproc.h \
-	rts.h \
-	ukcthreads_types.h \
-	debug_defs.h \
-	pgroup.h \
 	typedesc.h \
-	mwsync.h \
-	dtrace.h
+	ukcthreads_types.h
 
 all-local: kitable.h calltable.h ccsp_cif_stubs.h
 

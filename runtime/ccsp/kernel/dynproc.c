@@ -22,21 +22,21 @@
 #include <config.h>
 #endif
 
-#ifdef OOS_BUILD
-	#include <oos_funcs.h>
-#else	/* !OOS_BUILD */
+#ifdef RMOX_BUILD
+	#include <rmox_if.h>
+#else	/* !RMOX_BUILD */
 	#include <stdio.h>
 	#include <string.h>
 	#include <sys/types.h>
 	#include <sys/fcntl.h>
 	#include <unistd.h>
-#endif	/* !OOS_BUILD */
+#endif	/* !RMOX_BUILD */
 
 #include <kernel.h>
 #include <rts.h>
 /*}}}*/
 
-#if defined(DYNAMIC_PROCS) && !defined(OOS_BUILD)
+#if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 
 /*{{{  dynproc includes/defines*/
 #include <dlfcn.h>
@@ -1150,7 +1150,7 @@ d_process *dynproc_endprocess (word *wptr)
 }
 /*}}}*/
 
-#else	/* !DYNAMIC_PROCS || OOS_BUILD */
+#else	/* !DYNAMIC_PROCS || RMOX_BUILD */
 
 /*{{{  void no_dynamic_process_support (void)*/
 /*
@@ -1164,5 +1164,5 @@ void no_dynamic_process_support (void)
 }
 /*}}}*/
 
-#endif	/* !DYNAMIC_PROCS || OOS_BUILD */
+#endif	/* !DYNAMIC_PROCS || RMOX_BUILD */
 

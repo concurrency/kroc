@@ -1,7 +1,7 @@
 /*
  *	CCSP user process
  *	Copyright (C) 1995, 1996, 1997  D.C. Wood, P.H. Welch, D.J. Beckett
- *	Modification for OOS (C) 2002 Brian Vinter / Fred Barnes
+ *	Modification for RMOX (C) 2002 Brian Vinter / Fred Barnes
  *	Modifications Copyright (C) 2000-2006 Fred Barnes
  *
  *	This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,9 @@
 	#include <config.h>
 #endif
 
-#if defined(OOS_BUILD)
-	#include <oos_funcs.h>
-#else	/* !OOS_BUILD */
+#if defined(RMOX_BUILD)
+	#include <rmox_if.h>
+#else	/* !RMOX_BUILD */
 	#include <unistd.h>
 	#ifdef HAVE_STDLIB_H
 		#include <stdlib.h>
@@ -61,16 +61,16 @@
 		#include <sys/sysctl.h>
 	#endif
 	#include <errno.h>
-#endif	/* !OOS_BUILD */
+#endif	/* !RMOX_BUILD */
 
 #include <kernel.h>
 #include <rts.h>
 
-#if (defined(USEFUL_SEGFAULT) || defined(USEFUL_FPEDEBUG)) && !defined(OOS_BUILD)
+#if (defined(USEFUL_SEGFAULT) || defined(USEFUL_FPEDEBUG)) && !defined(RMOX_BUILD)
 	#include <signal.h>
 #endif
 
-#if !defined(OOS_BUILD) && defined(ENABLE_CPU_TIMERS)
+#if !defined(RMOX_BUILD) && defined(ENABLE_CPU_TIMERS)
 	#include <sys/time.h>
 	//#include <arch/timer.h>
 #endif
@@ -81,7 +81,7 @@
 #include <arch/atomics.h>
 #include <ccsp_timer.h>
 
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 	#ifdef BLOCKING_SYSCALLS
 		#include <bsyscalls_if.h>
 	#endif	/* BLOCKING_SYSCALLS */
@@ -89,13 +89,13 @@
 /*}}}*/
 
 /*{{{  private declarations*/
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 static volatile int faulted;
 static unsigned int min_sleep; /* microseconds */
 static unsigned int quantum;
 #endif
 
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 	#ifdef USEFUL_SEGFAULT
 	static struct sigaction segv_action;
 	#endif
@@ -121,7 +121,7 @@ static void userproc_exit (int exit_status, bool dump_core)
 		FFLUSH (stderr);
 	}
 
-	#if defined(OOS_BUILD) && defined(BLOCKING_SYSCALLS)
+	#if defined(RMOX_BUILD) && defined(BLOCKING_SYSCALLS)
 	bsyscalls_destroy_clones ();
 	#endif
 
@@ -191,7 +191,7 @@ void ccsp_dead_quiet (int erfl)
 }
 /*}}}*/
 
-#ifndef OOS_BUILD
+#if !defined(RMOX_BUILD)
 /*{{{  void ccsp_wake_thread (sched_t scheduler)*/
 void ccsp_wake_thread (sched_t *scheduler, int sync_bit)
 {
@@ -456,31 +456,18 @@ static void user_tim_handler (int sig)
 /*{{{  unsigned int ccsp_rtime (void)*/
 unsigned int ccsp_rtime (void)
 {
-	/* resolution 1 usec? -- around that..  */
-#ifdef OOS_BUILD
-	struct oos_timeval tp;
-#else
 	struct timeval tp;
-#endif
 
-	#if defined(OOS_BUILD)
-		oos_gettimeofday (&tp);
-	#else
-		(void) gettimeofday (&tp, 0);
-	#endif
+	gettimeofday (&tp, 0);
+	
 	#ifdef DEBUG_RTS
 		fprintf(stderr, "ccsp_rtime: time returning is %d\n", tp.tv_sec * 1000000 + tp.tv_usec);
 	#endif
+	
 	return (tp.tv_sec * 1000000) + tp.tv_usec;
 }
 /*}}}*/
 /*{{{  void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs)*/
-#if defined(OOS_BUILD)
-void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs)
-{
-	oos_panic ("ccsp_set_next_alarm not implemented");
-}
-#else
 void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs)
 {
 	unsigned int next_alarm;
@@ -514,10 +501,8 @@ void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs)
 			((unsigned int) itv.it_value.tv_usec);
 	}
 }
-#endif
 /*}}}*/
 /*{{{  void ccsp_init_signal_pipe (sched_t *sched)*/
-#if !defined(OOS_BUILD)
 void ccsp_init_signal_pipe (sched_t *sched)
 /*
  *	Called from run-time kernel
@@ -538,10 +523,8 @@ void ccsp_init_signal_pipe (sched_t *sched)
 		userproc_exit (1, 0);
 	}
 }
-#endif
 /*}}}*/
 /*{{{  void ccsp_safe_pause (sched_t *sched)*/
-#if !defined(OOS_BUILD)
 void ccsp_safe_pause (sched_t *sched)
 {
 	unsigned int buffer, sync;
@@ -563,7 +546,6 @@ void ccsp_safe_pause (sched_t *sched)
 	fprintf(stderr, "USERPROC: ccsp_safe_pause about to exit (return 0)\n");
 	#endif
 }
-#endif
 /*}}}*/
 /*{{{  void ccsp_safe_pause_timeout (sched_t *sched)*/
 void ccsp_safe_pause_timeout (sched_t *sched)
@@ -610,7 +592,6 @@ void ccsp_safe_pause_timeout (sched_t *sched)
 	#endif
 }
 /*}}}*/
-
 /*{{{  static bool set_user_process_signals (void)*/
 /*
  *	sets up signal handling for CCSP
@@ -664,9 +645,9 @@ static bool set_user_process_signals (void)
 	return true; /* FIXME: do more checking? */
 }
 /*}}}*/
-#endif	/* !OOS_BUILD */
+#endif	/* !RMOX_BUILD */
 
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 /*{{{  static int cpu_count (void)*/
 static int cpu_count (void)
 {
@@ -731,14 +712,15 @@ static void setup_min_sleep (void)
 
 	min_sleep = quantum ? quantum / 4 : CCSP_MINIMUM_SLEEP_US;
 }
-#else /* OOS_BUILD */
+/*}}}*/
+#else /* RMOX_BUILD */
 /*{{{  unsigned int ccsp_spin_us (void)*/
 unsigned int ccsp_spin_us (void)
 {
 	return 0;
 }
 /*}}}*/
-#endif /* OOS_BUILD */
+#endif /* RMOX_BUILD */
 
 #if defined(ENABLE_MP)
 /*{{{  static void *user_thread (void *arg)*/
@@ -769,7 +751,7 @@ void _ccsp_new_thread (int *ws) {
 	ccsp_new_thread ();
 }
 /*}}}*/
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 /*{{{  void ccsp_start_threads (void)*/
 void ccsp_start_threads (void)
 {
@@ -781,14 +763,14 @@ void ccsp_start_threads (void)
 	}
 }
 /*}}}*/
-#else /* OOS_BUILD */
+#else /* RMOX_BUILD */
 /*{{{  void ccsp_start_threads (void)*/
 void ccsp_start_threads (void)
 {
 	return;
 }
 /*}}}*/
-#endif /* OOS_BUILD */
+#endif /* RMOX_BUILD */
 
 /*{{{  void ccsp_user_process_init (void)*/
 bool ccsp_user_process_init (void)
@@ -806,11 +788,11 @@ bool ccsp_user_process_init (void)
 	}
 	#elif defined(HZ) || defined(SOLARIS_TIMER_BUG)
 	quantum = 1000000U / HZ;
-	#elif !defined(OOS_BUILD)
+	#elif !defined(RMOX_BUILD)
 	quantum = 0;
 	#endif
 
-	#if !defined(OOS_BUILD)
+	#if !defined(RMOX_BUILD)
 	setup_min_sleep ();
 
 	if (!set_user_process_signals ()) {

@@ -1,11 +1,3 @@
-dnl -*- shell-script -*-
-dnl
-dnl Process this file with autoconf to produce a configure script.
-dnl
-dnl $Source:$
-dnl
-dnl $Id:$
-dnl
 
 AC_REVISION($Revision: 1.6.3$)
 AC_INIT(common/rtsmain.c)
@@ -34,7 +26,7 @@ AC_CHECK_HEADERS(stdlib.h stdarg.h malloc.h sys/param.h sys/time.h string.h stri
 RANLIB=test
 AC_SUBST(RANLIB)
 
-dnl	** OPTIONS START HERE **
+#{{{  options parsing
 
 AC_ARG_ENABLE([cpu-timers], AS_HELP_STRING([--disable-cpu-timers], [disable CPU timers (default enabled)]), [cpu_timers=$enableval],[cpu_timers=default])
 
@@ -58,84 +50,20 @@ AC_ARG_ENABLE([dynproc], AS_HELP_STRING([--disable-dynproc],[disable dynamic pro
 AC_ARG_ENABLE([debug-dynproc], AS_HELP_STRING([--enable-debug-dynproc],[enable dynamic process debugging (default disabled)]), [enable_debug_dynproc=$enableval], [enable_debug_dynproc=no])
 AC_ARG_ENABLE([mobiles], AS_HELP_STRING([--disable-mobiles],[disable MOBILE data types (default enabled)]), [enable_mobiles=$enableval], [enable_mobiles=yes])
 AC_ARG_ENABLE([xrendez], AS_HELP_STRING([--disable-xrendez],[disable extended rendezvous support (default enabled)]), [enable_xrendez=$enableval], [enable_xrendez=yes])
-dnl AC_ARG_ENABLE([cspdrv], AS_HELP_STRING([--enable-cspdrv],[enable linux CSP driver support (default disabled)]), [enable_cspdrv=$enableval], [enable_cspdrv=no])
 AC_ARG_ENABLE([process-priority], AS_HELP_STRING([--disable-process-priority],[disable process priorities (default enabled)]), [enable_process_priority=$enableval], [enable_process_priority=yes])
 AC_ARG_ENABLE([pthreads], AS_HELP_STRING([--enable-pthreads],[use pthreads library for blocking syscalls (default disabled)]), [enable_pthreads=$enableval], [enable_pthreads=no])
 AC_ARG_ENABLE([mmap], AS_HELP_STRING([--disable-mmap],[disable mmap() based allocation (default enabled)]), [enable_mmap=$enableval], [enable_mmap=yes])
-dnl AC_ARG_ENABLE([pgroups], AS_HELP_STRING([--enable-pgroups],[enable process groups (default disabled)]), [enable_pgroups=$enableval], [enable_pgroups=no])
-dnl AC_ARG_ENABLE([output-alts], AS_HELP_STRING([--disable-output-alts],[disable support for output ALTs (default enabled)]), [enable_output_alts=$enableval], [enable_output_alts=yes])
-dnl AC_ARG_ENABLE([bufchans], AS_HELP_STRING([--disable-bufchans],[disable support for buffered channels (default enabled)]), [enable_bufchans=$enableval], [enable_bufchans=yes])
 AC_ARG_ENABLE([mp], AS_HELP_STRING([--enable-mp],[enable multi-processor support (default disabled)]), [enable_mp=$enableval], [enable_mp=no])
 AC_ARG_ENABLE([tls], AS_HELP_STRING([--enable-tls],[use thread-local-storage for scheduler pointer]), [enable_tls=$enableval], [enable_tls=yes])
+AC_ARG_ENABLE([use_sse2], AS_HELP_STRING([--disable-sse2],[do not use SSE2 even if supported on build system]), [enable_sse2=$enableval], [enable_sse2=yes])
+AC_ARG_ENABLE([tuning], AS_HELP_STRING([--enable-tuning=...],[set tuning for speed or size (default speed)]), [tuning=$enableval], [tuning=default])
+AC_ARG_WITH([rmox], AS_HELP_STRING([--with-rmox=...],[location of RMoX source tree to build the RMoX version of CCSP for]), [rmox=$withval], [rmox=])
 
-AC_ARG_WITH([oos], AS_HELP_STRING([--with-oos=...],[location of RMoX source tree to build the RMoX version of CCSP for]), [oos=$withval], [oos=])
+#}}}
 
+#{{{  check for pthreads
 
-AC_MSG_CHECKING(whether to enable debug debugging messages)
-AC_MSG_RESULT($debug_debug)
-if test "$debug_debug" = yes; then
- AC_DEFINE([DEBUG_DEBUG],1,[define to enable debug debugging])
-fi
-
-AC_CHECK_HEADER(gelf.h, [have_gelf_h=yes], [have_gelf_h=no])
-AC_MSG_CHECKING(whether gelf.h is present)
-AC_MSG_RESULT($have_gelf_h)
-
-AC_CHECK_HEADER(libelf.h, [have_libelf_h=yes], [have_libelf_h=no])
-AC_MSG_CHECKING(whether libelf.h is present)
-AC_MSG_RESULT($have_libelf_h)
-
-AC_CHECK_LIB(elf, elf_begin, have_libelf=yes, have_libelf=no)
-AC_MSG_CHECKING(whether libelf is installed and has elf_begin)
-AC_MSG_RESULT($have_libelf)
-
-AC_MSG_CHECKING(whether to enable dynamic memory debugging)
-AC_MSG_RESULT($enable_dm_debug)
-
-if test "$enable_dm_debug" = yes; then
- AC_DEFINE([DM_DEBUG],1,[define to enable dynamic memory debugging])
- if test "$have_libelf_h" = yes; then
-  if test "$have_libelf" = yes; then
-   if test "$have_gelf_h" = yes; then
-    AC_DEFINE([DM_DEBUG_LIBELF],1,[define to use libelf with dynamic memory debugging])
-   fi
-  fi
- fi
-fi
-
-AC_MSG_CHECKING(whether to enable core dumps)
-AC_MSG_RESULT($generate_cores)
-if test "$generate_cores" = yes; then
- AC_DEFINE([GENERATE_CORES],1,[define to let CCSP drop core files])
-fi
-
-AC_MSG_CHECKING(whether to enable MOBILE data types)
-AC_MSG_RESULT($enable_mobiles)
-if test "$enable_mobiles" = yes; then
- AC_DEFINE([MOBILES],1,[define to support MOBILE data types])
-fi
-
-dnl Setup the library name and flags
-case "$host_os" in
-cygwin*)
- SLINKFLAGS="-shared"
- LIBCCSP="ccsp.dll"
- ;;
-*Darwin* | *darwin*)
- dnl Disable automatic PIC usage on Apple's GCC
- CFLAGS="$CFLAGS -mdynamic-no-pic"
- SLINKFLAGS="-read_only_relocs suppress -dynamiclib"
- LIBCCSP="libccsp.dylib"
- ;;
-*)
- SLINKFLAGS="-shared"
- LIBCCSP="libccsp.so"
- ;;
-esac
-
-dnl Do checks to make sure we have the necesary stuff for blocking syscalls
-
-dnl For BSD pthreads support..
+dnl For BSD pthreads support
 case "$host_os" in
 *BSD* | *bsd*)
  SAVED_CFLAGS="$CFLAGS"
@@ -148,7 +76,6 @@ case "$host_os" in
 *)
  ;;
 esac
-
 
 dnl For pthreads support..
 AC_CHECK_LIB(pthread,pthread_create,[have_libpthread=yes],[have_libpthread=no])
@@ -164,6 +91,7 @@ else
  AC_MSG_RESULT(no)
 fi
 
+#}}}
 #{{{  bsyscall reports
 AC_MSG_CHECKING(whether blocking system calls are supported)
 AC_MSG_RESULT($enable_pthreads)
@@ -197,7 +125,6 @@ if test "$blocking_stop" = yes; then
  AC_DEFINE([BLOCKING_STOP],1,[define to allow blocking calls to stop when they receive SIGSEGV])
 fi
 #}}}
-
 #{{{  check for rdtsc instruction
 dnl Do checks to make sure CPU timers can be supported (has rdtsc instruction)
 
@@ -220,15 +147,17 @@ int main (void)
  return 0;
 }], [have_ia32_sse2=yes], [have_ia32_sse2=no], [have_ia32_sse2=no])
 if test "$have_ia32_sse2" = yes; then
+ if test "$enable_sse2" = yes; then
   AC_DEFINE([HAVE_IA32_SSE2], 1, [CPU supports SSE2 instructions])
   AC_MSG_RESULT(yes)
+ else
+  AC_MSG_RESULT([yes, but disabled])
+ fi
 else
-  AC_MSG_RESULT([no; this may break on multiprocessors])
+ AC_MSG_RESULT([no; this may break multiprocessor support])
 fi
 
 #}}}
-
-
 #{{{  tests for anonymous memory-mapping
 dnl 
 dnl tests for anonymous mmap()
@@ -420,8 +349,7 @@ if test [ "$enable_mmap" = yes ]; then
 fi
 
 #}}}
-
-
+#{{{  decide CPU support
 
 AC_MSG_CHECKING(whether CPU timers are supported)
 AC_MSG_RESULT($cpu_timers_supported)
@@ -444,6 +372,47 @@ AC_MSG_CHECKING(whether to enable CPU timers)
 AC_MSG_RESULT($cpu_timers)
 if test "$cpu_timers" = yes; then
  AC_DEFINE([ENABLE_CPU_TIMERS],1,[define to support CPU timers])
+fi
+
+#}}}
+#{{{  debugging options and support
+
+AC_MSG_CHECKING(whether to enable debug debugging messages)
+AC_MSG_RESULT($debug_debug)
+if test "$debug_debug" = yes; then
+ AC_DEFINE([DEBUG_DEBUG],1,[define to enable debug debugging])
+fi
+
+AC_CHECK_HEADER(gelf.h, [have_gelf_h=yes], [have_gelf_h=no])
+AC_MSG_CHECKING(whether gelf.h is present)
+AC_MSG_RESULT($have_gelf_h)
+
+AC_CHECK_HEADER(libelf.h, [have_libelf_h=yes], [have_libelf_h=no])
+AC_MSG_CHECKING(whether libelf.h is present)
+AC_MSG_RESULT($have_libelf_h)
+
+AC_CHECK_LIB(elf, elf_begin, have_libelf=yes, have_libelf=no)
+AC_MSG_CHECKING(whether libelf is installed and has elf_begin)
+AC_MSG_RESULT($have_libelf)
+
+AC_MSG_CHECKING(whether to enable dynamic memory debugging)
+AC_MSG_RESULT($enable_dm_debug)
+
+if test "$enable_dm_debug" = yes; then
+ AC_DEFINE([DM_DEBUG],1,[define to enable dynamic memory debugging])
+ if test "$have_libelf_h" = yes; then
+  if test "$have_libelf" = yes; then
+   if test "$have_gelf_h" = yes; then
+    AC_DEFINE([DM_DEBUG_LIBELF],1,[define to use libelf with dynamic memory debugging])
+   fi
+  fi
+ fi
+fi
+
+AC_MSG_CHECKING(whether to enable core dumps)
+AC_MSG_RESULT($generate_cores)
+if test "$generate_cores" = yes; then
+ AC_DEFINE([GENERATE_CORES],1,[define to let CCSP drop core files])
 fi
 
 AC_MSG_CHECKING(whether to enable terse deadlock debugging)
@@ -470,7 +439,9 @@ if test "$useful_fpe" = yes; then
  AC_DEFINE([USEFUL_FPEDEBUG],1,[define to enable verbose FPE messages])
 fi
 
-# dynamic procs stuff
+#}}}
+#{{{  dynamic process options
+
 AC_SEARCH_LIBS(dlsym, dl, dynprocs_supported=yes, dynprocs_supported=no)
 AC_MSG_CHECKING(whether dynamic procs are supported)
 AC_MSG_RESULT($dynprocs_supported)
@@ -503,34 +474,19 @@ fi
 # LIBCCSP=libccsp.so
 #fi
 
-AC_SUBST(SLINKFLAGS)
-AC_SUBST(LIBCCSP)
+#}}}
+#{{{  misc options (scheduled for removal)
+
+AC_MSG_CHECKING(whether to enable MOBILE data types)
+AC_MSG_RESULT($enable_mobiles)
+if test "$enable_mobiles" = yes; then
+ AC_DEFINE([MOBILES],1,[define to support MOBILE data types])
+fi
 
 AC_MSG_CHECKING(whether to enable extended rendezvous)
 AC_MSG_RESULT($enable_xrendez)
 if test "$enable_xrendez" = yes; then
  AC_DEFINE([EXTENDED_RENDEZVOUS],1,[define to enable the extended rendezvous])
-fi
-
-#AC_MSG_CHECKING(whether to enable user defined channels)
-#AC_MSG_RESULT($enable_udc)
-#if test "$enable_udc" = yes; then
-# AC_DEFINE([USER_DEFINED_CHANNELS],1,[define to enable user-defined-channels])
-#fi
-
-dnl if not linux, don't bother with any cspdriver support
-case "$host_os" in
- linux*)
-  ;;
- *)
-  enable_cspdrv=no
-  ;;
-esac
-
-AC_MSG_CHECKING(whether to enable linux cspdriver support)
-AC_MSG_RESULT($enable_cspdrv)
-if test "$enable_cspdrv" = yes; then
- AC_DEFINE([LINUX_CSPDRIVER],1,[define to enable cspdriver support])
 fi
 
 AC_MSG_CHECKING(whether to enable process priorities)
@@ -539,17 +495,14 @@ if test "$enable_process_priority" = yes; then
  AC_DEFINE([PROCESS_PRIORITY],1,[define to enable process priority])
 fi
 
-#AC_MSG_CHECKING(whether to enable process groups)
-#AC_MSG_RESULT($enable_pgroups)
-#if test "$enable_pgroups" = yes; then
-# AC_DEFINE([PROCESS_GROUPS],1,[define to enable process groups])
-#fi
+#}}}
+#{{{  check and enable multi-processor support
 
 AC_MSG_CHECKING(whether multi-processor support is available)
 if test "$enable_pthreads" = yes; then
  AC_MSG_RESULT([yes])
 else
- if test "$oos" = ""; then
+ if test "$rmox" = ""; then
    AC_MSG_RESULT([no])
    enable_mp=no
  else
@@ -566,18 +519,8 @@ else
  AC_DEFINE([MAX_RUNTIME_THREADS],1,[define number of runtime threads])
 fi
 
-AC_MSG_CHECKING(whether to enable support for output ALTs)
-AC_MSG_RESULT($enable_output_alts)
-if test "$enable_output_alts" = yes; then
- AC_DEFINE([OUTPUT_ALTS],1,[define to enable output ALT support])
-fi
-
-AC_MSG_CHECKING(whether to enable support for buffered channels)
-AC_MSG_RESULT($enable_bufchans)
-if test "$enable_bufchans" = yes; then
- AC_DEFINE([BUFFERED_CHANNELS],1,[define to enable support for buffered channels])
-fi
-
+#}}}
+#{{{  check for ualarm
 
 dnl Check for presence of ualarm
 AC_CHECK_FUNC(ualarm,exist_ualarm=yes,exist_ualarm=no)
@@ -587,28 +530,32 @@ if test "$exist_ualarm" = yes; then
   AC_DEFINE([HAVE_UALARM],1,[define if this system has ualarm()])
 fi
 
+#}}}
+#{{{  setup RMoX build
 
 AC_MSG_CHECKING(whether to build the special RMoX version of CCSP)
-if test "$oos" = ""; then
+if test "$rmox" = ""; then
  AC_MSG_RESULT(no)
- OOS_RTLIB=
- OOS_CFLAGS=
+ RMOX_RTLIB=
+ RMOX_CFLAGS=
 else
  AC_MSG_RESULT(yes)
  AC_MSG_CHECKING(location of RMoX include files)
- AC_MSG_RESULT($oos)
- AC_CHECK_FILE($oos/include/oos_funcs.h, [], AC_MSG_ERROR([RMoX include files not found]))
+ AC_MSG_RESULT($rmox)
+ AC_CHECK_FILE($rmox/include/rmox_funcs.h, [], AC_MSG_ERROR([RMoX include files not found]))
 
- AC_DEFINE([OOS_BUILD],1,[define if building for RMoX])
- OOS_RTLIB=libccsp_oos.a
- OOS_CFLAGS="-nostdinc -I$oos/include -fno-common"
+ AC_DEFINE([RMOX_BUILD],1,[define if building for RMoX])
+ RMOX_RTLIB=libccsp_rmox.a
+ RMOX_CFLAGS="-nostdinc -I$rmox/include -fno-common"
  enable_tls=no
 fi
-AC_SUBST(OOS_RTLIB)
+AC_SUBST(RMOX_RTLIB)
 
+#}}}
+#{{{  check for thread-local storage 
 
 AC_MSG_CHECKING(whether to use thread-local-storage)
-if test "$enable_tls" = no || test "$enable_mp" = no; then
+if test "$enable_tls" = no || test "$enable_mp" = no || test "$rmox" != ""; then
  AC_MSG_RESULT(no)
 else
  AC_TRY_RUN([
@@ -631,6 +578,35 @@ else
   AC_MSG_RESULT(no)
  fi
 fi
+
+#}}}
+
+#{{{  library name and link flags
+
+dnl Setup the library name and flags
+case "$host_os" in
+cygwin*)
+ SLINKFLAGS="-shared"
+ LIBCCSP="ccsp.dll"
+ ;;
+*Darwin* | *darwin*)
+ dnl Disable automatic PIC usage on Apple's GCC
+ CFLAGS="$CFLAGS -mdynamic-no-pic"
+ SLINKFLAGS="-read_only_relocs suppress -dynamiclib"
+ LIBCCSP="libccsp.dylib"
+ ;;
+*)
+ SLINKFLAGS="-shared"
+ LIBCCSP="libccsp.so"
+ ;;
+esac
+
+AC_SUBST(SLINKFLAGS)
+AC_SUBST(LIBCCSP)
+
+#}}}
+
+#{{{  architecture configuration
 
 FRAMEPTR_CFLAGS="-fomit-frame-pointer"
 EXTRA_CFLAGS="-fno-strict-aliasing -Wpointer-arith -DTIME_WITH_SYS_TIME"
@@ -694,7 +670,9 @@ AM_CONDITIONAL(ARCH_DIR_SPARC, [test "$ARCH_DIR" = "sparc"])
 AM_CONDITIONAL(ARCH_DIR_MIPS, [test "$ARCH_DIR" = "mips"])
 AM_CONDITIONAL(ARCH_DIR_PPC64, [test "$ARCH_DIR" = "ppc64"])
 
-dnl OS specific configuration
+#}}}
+#{{{  OS specific configuration
+
 case "$host_os" in
 cygwin)
  AC_DEFINE([TARGET_OS_CYGWIN],1,[define if using cygwin])
@@ -711,7 +689,20 @@ cygwin)
  ;;
 esac
 
-EXTRA_DEFS="$EXTRA_CFLAGS $FRAMEPTR_CFLAGS $ARCH_CFLAGS $OOS_CFLAGS -DSIGNAL_TYPE_SYSV"
+#}}}
+#{{{  tuning
+
+AC_MSG_CHECKING(parameter tuning)
+if test "$tuning" = "size"; then
+ AC_MSG_RESULT(size)
+ AC_DEFINE([OPTIMISE_SIZE],1,[define to optimise for size over speed])
+else
+ AC_MSG_RESULT(default)
+fi
+
+#}}}
+
+EXTRA_DEFS="$EXTRA_CFLAGS $FRAMEPTR_CFLAGS $ARCH_CFLAGS $RMOX_CFLAGS -DSIGNAL_TYPE_SYSV"
 AC_SUBST(EXTRA_DEFS)
 AC_SUBST(EXTRA_LDFLAGS)
 
