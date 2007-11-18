@@ -615,6 +615,7 @@ void dmem_shutdown (void)
 }
 /*}}}*/
 
+#if 0
 /*{{{  static const char *get_insert_pos ()*/
 /*
  *	get the current insert debugging position
@@ -651,4 +652,5 @@ static const char *get_insert_pos ()
 	return s;
 }
 /*}}}*/
+#endif
 

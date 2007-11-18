@@ -32,8 +32,7 @@
  */
 void _killcall (int *w)
 {
-	rmox_printk ("PANIC:: _killcall()\n");
-	return;
+	rmox_panic ("_killcall()");
 }
 /*}}}*/
 /*}}}*/

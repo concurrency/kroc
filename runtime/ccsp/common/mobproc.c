@@ -2084,7 +2084,7 @@ static void dump_codemap (FILE *stream, void **codemap, int indent)
 void mpcb_dump_process (mp_ctrlblk *mp)
 {
 #if defined(RMOX_BUILD)
-	rmox_printk ("no dump mobile process block at %p\n", mp);
+	MESSAGE ("no dump mobile process block at %p\n", mp);
 #else
 	MESSAGE ("mobile process block at %p:\n", mp);
 	MESSAGE ("    wptr=%p, iptr=%p, aiptr=%p, mapchain=%p\n", mp->wptr, mp->iptr, mp->aiptr, mp->mapchain);
