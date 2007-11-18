@@ -1,7 +1,7 @@
 /*
  *	CCSP internal definitions and function prototypes
  *	Copyright (C) 1995, 1996, 1997 D.J. Beckett
- *	Modifications for oos (C) 2002 Brian Vinter
+ *	Modifications for RMoX (C) 2002 Brian Vinter
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
 	#include <config.h>
 #endif
 
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 	#include <stdio.h>
 	#if defined(HAVE_STRING_H)
 		#include <string.h>
@@ -95,17 +95,17 @@ extern char *ccsp_branding;
 #define RTS_TRACING 0
 #endif
 
-#ifdef OOS_BUILD
-	#define MESSAGE(fmt,args...) oos_printk(fmt,##args)
-	#define MESSAGE0(fmt) oos_printk((fmt))
-	#define MESSAGETO(stream,fmt,args...) oos_printk(fmt,##args)
+#ifdef RMOX_BUILD
+	#define MESSAGE(fmt,args...) rmox_printk(fmt,##args)
+	#define MESSAGE0(fmt) rmox_printk((fmt))
+	#define MESSAGETO(stream,fmt,args...) rmox_printk(fmt,##args)
 	#define FFLUSH(stream)
-#else /* !OOS_BUILD */
+#else /* !RMOX_BUILD */
 	#define MESSAGE(fmt,args...) fprintf(stderr,fmt,##args)
 	#define MESSAGE0(fmt) fprintf(stderr,(fmt))
 	#define MESSAGETO(stream,fmt,args...) fprintf(stream,fmt,##args)
 	#define FFLUSH(stream) fflush(stream)
-#endif /* !OOS_BUILD */
+#endif /* !RMOX_BUILD */
 
 #define BMESSAGE(fmt,args...) MESSAGE("%s: " fmt, ccsp_branding, ##args)
 #define BMESSAGE0(fmt) MESSAGE("%s: " fmt, ccsp_branding)
@@ -127,14 +127,14 @@ void ccsp_kernel_exit (int exit_status, int iptr);
 void ccsp_bad_exit (void);
 void ccsp_dead (int erfl);
 void ccsp_dead_quiet (int erfl);
+#if !defined(RMOX_BUILD)
 void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs);
-#if !defined(OOS_BUILD)
 void ccsp_wake_thread (sched_t *scheduler, int sync_bit);
 unsigned int ccsp_rtime (void);
 void ccsp_init_signal_pipe (sched_t *sched);
 void ccsp_safe_pause (sched_t *sched);
 void ccsp_safe_pause_timeout (sched_t *sched);
-#endif /* !OOS_BUILD */
+#endif /* !RMOX_BUILD */
 unsigned int ccsp_spin_us (void);
 void ccsp_new_thread (void);
 void ccsp_start_threads (void);

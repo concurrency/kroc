@@ -1,7 +1,8 @@
 /*
  *	Scheduler defintions (i386 kernel)
  *	Copyright (C) 1998 Jim Moores
- *	Modifications copyright (C) 1999-2002 Fred Barnes  <frmb2@ukc.ac.uk>
+ *	Modifications Copyright (C) 1999-2002 Fred Barnes  <frmb@kent.ac.uk>
+ *	Modifications Copyright (C) 2007 Carl Ritson <cgr@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -62,9 +63,9 @@ void show_last_debug_insert (void);
 
 #define DEFAULT_SCHED_POLICY SCHED_POLICY_US
 
-#if defined(OOS_BUILD)
-extern word *inttab[OOS_NUM_INTERRUPTS];
-extern volatile word intcount[OOS_NUM_INTERRUPTS];
+#if defined(RMOX_BUILD)
+extern word *inttab[RMOX_NUM_INTERRUPTS];
+extern volatile word intcount[RMOX_NUM_INTERRUPTS];
 #endif
 
 #endif	/* !__KERNEL_H */

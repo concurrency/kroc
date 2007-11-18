@@ -22,15 +22,15 @@
 #include <config.h>
 #endif
 
-#ifdef OOS_BUILD
-	#include <oos_funcs.h>
-#else	/* !OOS_BUILD */
+#ifdef RMOX_BUILD
+	#include <rmox_if.h>
+#else	/* !RMOX_BUILD */
 	#include <stdio.h>
 	#include <string.h>
 	#include <sys/types.h>
 	#include <sys/fcntl.h>
 	#include <unistd.h>
-#endif	/* !OOS_BUILD */
+#endif	/* !RMOX_BUILD */
 
 #include <sched_consts.h>
 #include <sched_types.h>
@@ -38,7 +38,7 @@
 #include <dmem_if.h>
 
 #ifdef DYNAMIC_PROCS
-#if defined(OOS_BUILD)
+#if defined(RMOX_BUILD)
 #warning not using dynamic processes with RMoX
 #else
 #include <dlfcn.h>
@@ -183,7 +183,7 @@ static int encode_entry (unsigned char **ptr, int val)
 }
 /*}}}*/
 #endif
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 /*{{{  static void dump_workspace (FILE *stream, void **wsptr, int wsbytes, mp_mapchain *mc)*/
 /*
  *	dumps a block of workspace
@@ -1553,10 +1553,10 @@ dump_workspace (stderr, (void **)sws, blk->wssize, blk->mapchain);
  */
 int mpcb_mpp_deserialise (int addr, int size, mp_ctrlblk **mpp, unsigned int *thashp)
 {
-#if !defined(DYNAMIC_PROCS) || defined(OOS_BUILD)
+#if !defined(DYNAMIC_PROCS) || defined(RMOX_BUILD)
 	BMESSAGE ("no dynamic process support, cannot de-serialise process.\n");
 	return 0;
-#else	/* DYNAMIC_PROCS && !OOS_BUILD*/
+#else	/* DYNAMIC_PROCS && !RMOX_BUILD*/
 	mp_ctrlblk *blk = *mpp;
 	mp_filehdr *fhdr = NULL;
 	unsigned int *sws = NULL;
@@ -1964,7 +1964,7 @@ out_bad_header:
 #endif	/* DYNAMIC_PROCS */
 }
 /*}}}*/
-#if defined(DYNAMIC_PROCS) && !defined(OOS_BUILD)
+#if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 /*{{{  static void mpcb_mpp_checkroutine (const char *saddr, int slen, int *result)*/
 /*
  *	checks whether a particular routine is available.
@@ -2047,8 +2047,8 @@ static void mpcb_mpp_unloadlibrary (const char *lname, int llen, int *result)
 	return;
 }
 /*}}}*/
-#endif	/* defined(DYNAMIC_PROCS) && !defined(OOS_BUILD)*/
-#if !defined(OOS_BUILD)
+#endif	/* defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)*/
+#if !defined(RMOX_BUILD)
 /*{{{  static void dump_codemap (FILE *stream, void **codemap, int indent)*/
 /*
  *	dumps the codemap for a process (debugging)
@@ -2083,8 +2083,8 @@ static void dump_codemap (FILE *stream, void **codemap, int indent)
  */
 void mpcb_dump_process (mp_ctrlblk *mp)
 {
-#if defined(OOS_BUILD)
-	oos_printk ("no dump mobile process block at %p\n", mp);
+#if defined(RMOX_BUILD)
+	rmox_printk ("no dump mobile process block at %p\n", mp);
 #else
 	MESSAGE ("mobile process block at %p:\n", mp);
 	MESSAGE ("    wptr=%p, iptr=%p, aiptr=%p, mapchain=%p\n", mp->wptr, mp->iptr, mp->aiptr, mp->mapchain);
@@ -2109,7 +2109,7 @@ int mpp_checkroutine (char *name)
 {
 	int r = 0;
 
-#if defined(DYNAMIC_PROCS) && !defined(OOS_BUILD)
+#if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 	mpcb_mpp_checkroutine (name, strlen (name), &r);
 #endif
 	return r;
@@ -2123,7 +2123,7 @@ int mpp_loadlibrary (char *lname)
 {
 	int r = 0;
 
-#if defined(DYNAMIC_PROCS) && !defined(OOS_BUILD)
+#if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 	mpcb_mpp_loadlibrary (lname, strlen (lname), &r);
 #endif
 	return r;
@@ -2137,7 +2137,7 @@ int mpp_unloadlibrary (char *lname)
 {
 	int r = 0;
 
-#if defined(DYNAMIC_PROCS) && !defined(OOS_BUILD)
+#if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 	mpcb_mpp_unloadlibrary (lname, strlen (lname), &r);
 #endif
 	return r;
@@ -2158,7 +2158,7 @@ void _do_mpp_deserialise (int *ws)
 
 void _do_mpp_checkroutine (int *ws)
 {
-#if defined(DYNAMIC_PROCS) && !defined(OOS_BUILD)
+#if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 	mpcb_mpp_checkroutine ((char *)(ws[0]), (int)(ws[1]), (int *)(ws[2]));
 #else
 	*(int *)(ws[2]) = 0;
@@ -2167,7 +2167,7 @@ void _do_mpp_checkroutine (int *ws)
 
 void _do_mpp_loadlibrary (int *ws)
 {
-#if defined(DYNAMIC_PROCS) && !defined(OOS_BUILD)
+#if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 	mpcb_mpp_loadlibrary ((char *)(ws[0]), (int)(ws[1]), (int *)(ws[2]));
 #else
 	*(int *)(ws[2]) = 0;
@@ -2176,7 +2176,7 @@ void _do_mpp_loadlibrary (int *ws)
 
 void _do_mpp_unloadlibrary (int *ws)
 {
-#if defined(DYNAMIC_PROCS) && !defined(OOS_BUILD)
+#if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 	mpcb_mpp_unloadlibrary ((char *)(ws[0]), (int)(ws[1]), (int *)(ws[2]));
 #else
 	*(int *)(ws[2]) = 0;

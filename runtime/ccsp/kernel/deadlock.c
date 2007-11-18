@@ -22,8 +22,8 @@
 #include <config.h>
 #endif
 
-#ifdef OOS_BUILD
-	#include <oos_funcs.h>
+#ifdef RMOX_BUILD
+	#include <rmox_if.h>
 #else
 	#include <stdio.h>
 	#include <setjmp.h>
@@ -43,10 +43,10 @@ static int 		ws_sizes[MAX_WORKSPACES];
 static int 		num_ws;
 static atomic_t 	deadlock_output;
 static int		debug_dead;
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 static jmp_buf		segenv;
 static void		(*old_segv_handler)(int);
-#endif	/* !defined(OOS_BUILD) */
+#endif	/* !defined(RMOX_BUILD) */
 
 #define INS_X86_JMPIMMS8	(0xeb)
 #define INS_X86_JMPIMMS32	(0xe9)
@@ -129,7 +129,7 @@ void ccsp_take_ws (char *ws)
 }
 /*}}}*/
 
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 /*{{{  static void segv_handler (int signum)*/
 /*
  *	SIGSEGV handler -- this is used while searching for deadlocked processes (i.e. if we get a false hit)
@@ -141,9 +141,9 @@ static void segv_handler (int signum)
 	return;
 }
 /*}}}*/
-#endif	/* !defined(OOS_BUILD) */
+#endif	/* !defined(RMOX_BUILD) */
 
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 /*{{{  static void debug_deadlock_out (FILE *stream, char *ops, char *proc, char *file, int line)*/
 /*
  * sends out debugging info on 'stream'
@@ -166,7 +166,7 @@ static void debug_deadlock_out (FILE *stream, char *ops, char *proc, char *file,
 /*}}}*/
 #endif
 
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 /*{{{  static int deadlock_debug (int *iws_ptr, int bytes, int *did_print)*/
 /*
  * Performs a WS search over `iws_ptr' for `bytes' bytes
@@ -397,7 +397,7 @@ static int deadlock_debug (int *iws_ptr, int bytes, int *did_print)
 	return found;
 }
 /*}}}*/
-#endif	/* !defined(OOS_BUILD) */
+#endif	/* !defined(RMOX_BUILD) */
 
 /*{{{  void ccsp_kernel_dead (int status)*/
 /*
@@ -409,7 +409,7 @@ void ccsp_kernel_deadlock (void)
 		ccsp_kernel_exit (0, 0);
 	}
 
-#if !defined(OOS_BUILD)
+#if !defined(RMOX_BUILD)
 	if (debug_dead) {
 		int did_print = 0;
 
@@ -430,9 +430,9 @@ void ccsp_kernel_deadlock (void)
 			}
 		}
 	}
-#else	/* defined(OOS_BUILD) */
+#else	/* defined(RMOX_BUILD) */
 	ccsp_kernel_exit (2, 0);
-#endif	/* defined(OOS_BUILD) */
+#endif	/* defined(RMOX_BUILD) */
 
 	if (!debug_dead) {
 		ccsp_dead (0);

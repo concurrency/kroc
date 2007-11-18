@@ -25,6 +25,9 @@
 #ifdef CCSP_CIF
 
 typedef word Time;
+#ifndef INLINE
+#define INLINE inline
+#endif
 
 #else /* !CCSP_CIF */
 
@@ -33,6 +36,7 @@ typedef word Time;
 #endif
 
 #include <arch/timer.h>
+#include <inlining.h>
 #include <rts.h>
 
 #endif /* !CCSP_CIF */
@@ -41,17 +45,17 @@ typedef word Time;
 #define SetTimeField(X,V) ((word *)(X))[Time_f] = (V)
 #define IncTimeField(X) (((word *)(X))[Time_f])++
 
-static inline Time Time_PLUS (Time t1, Time t2)
+static INLINE Time Time_PLUS (Time t1, Time t2)
 {
 	return (t1 + t2);
 }
 
-static inline Time Time_MINUS (Time t1, Time t2)
+static INLINE Time Time_MINUS (Time t1, Time t2)
 {
 	return (t1 - t2);
 }
 
-static inline bool Time_AFTER (Time t1, Time t2)
+static INLINE bool Time_AFTER (Time t1, Time t2)
 {
 	Time temp_time = t2 - t1;
 
@@ -64,42 +68,8 @@ static inline bool Time_AFTER (Time t1, Time t2)
 
 #ifndef CCSP_CIF
 
-static inline bool Time_PollAlarm (sched_t *sched)
-{
-	return att_val (&(sched->sync)) & SYNC_TIME ? true : false;
-}
-
-static inline void Time_SetAlarm (sched_t *sched, Time t)
-{
-	ccsp_set_next_alarm (sched, t);
-}
-
-static inline void Time_ResetAlarm (sched_t *sched)
-{
-	//ccsp_set_next_alarm (sched, 0);
-}
-
-static inline void Time_SetTimeoutN (sched_t *sched, Time now, Time timeout)
-{
-	#ifdef ENABLE_CPU_TIMERS
-	Time_SetPastTimeout (sched, Time_MINUS (timeout, now));
-	#else
-	Time_SetAlarm (sched, Time_MINUS (timeout, now));
-	#endif
-}
-
-static inline void Time_SetTimeout (sched_t *sched, Time timeout)
-{
-	Time now = Time_GetTime (sched);
-	if (Time_AFTER (timeout, now)) {
-		Time_SetTimeoutN (sched, now, timeout);
-	} else {
-		Time_SetTimeoutN (sched, now, now + 1);
-	}
-}
-
 #ifndef ENABLE_CPU_TIMERS
-static inline int Time_PastTimeout (sched_t *sched)
+static TRIVIAL int Time_PastTimeout (sched_t *sched)
 {
 	Time now 	= Time_GetTime (sched);
 	tqnode_t *tn	= sched->tq_fptr;
@@ -110,7 +80,41 @@ static inline int Time_PastTimeout (sched_t *sched)
 
 	return false;
 }
+
+static INLINE void Time_SetAlarm (sched_t *sched, Time t)
+{
+	ccsp_set_next_alarm (sched, t);
+}
 #endif /* !ENABLE_CPU_TIMERS */
+
+static INLINE bool Time_PollAlarm (sched_t *sched)
+{
+	return att_val (&(sched->sync)) & SYNC_TIME ? true : false;
+}
+
+static INLINE void Time_ResetAlarm (sched_t *sched)
+{
+	/* ccsp_set_next_alarm (sched, 0); */
+}
+
+static INLINE void Time_SetTimeoutN (sched_t *sched, Time now, Time timeout)
+{
+	#ifdef ENABLE_CPU_TIMERS
+	Time_SetPastTimeout (sched, Time_MINUS (timeout, now));
+	#else
+	Time_SetAlarm (sched, Time_MINUS (timeout, now));
+	#endif
+}
+
+static TRIVIAL void Time_SetTimeout (sched_t *sched, Time timeout)
+{
+	Time now = Time_GetTime (sched);
+	if (Time_AFTER (timeout, now)) {
+		Time_SetTimeoutN (sched, now, timeout);
+	} else {
+		Time_SetTimeoutN (sched, now, now + 1);
+	}
+}
 
 #endif /* !CCSP_CIF */
 

@@ -1,7 +1,7 @@
 /*
  *	CCSP library core interface code
  *	Copyright (C) 1995, 1996, 1997 D.C.Wood, P.H.Welch
- *	Modified for OOS by Brian Vinter, 2002
+ *	Modified for RMOX by Brian Vinter, 2002
  *	Modification Copyright (C) 2007 Carl Ritson <cgr@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@
  * Based on work by: Peter Shephard @ QMC Sept. 1984 for
  * UNIX OPS 2.0 (Release 2.0.1 : 24th. July, 1986)
  *
- * OOS hacks by Brian Vinter and Fred Barnes
+ * RMOX hacks by Brian Vinter and Fred Barnes
  */
 
 #define RTS_MAIN
@@ -40,9 +40,9 @@
 #include <config.h>
 #endif
 
-#if defined(OOS_BUILD)
-	#include <oos_funcs.h>
-#else	/* !OOS_BUILD */
+#if defined(RMOX_BUILD)
+	#include <rmox_if.h>
+#else	/* !RMOX_BUILD */
 	#include <unistd.h>
 	#ifdef HAVE_STDLIB_H
 	#include <stdlib.h>
@@ -55,14 +55,15 @@
 		#include <sys/types.h>
 	#endif
 
-#endif	/* !OOS_BUILD */
+#endif	/* !RMOX_BUILD */
 
 #include <kernel.h>
 #include <bsyscalls_if.h>
+#include <deadlock.h>
 #include <dmem_if.h>
 #include <rts.h>
 
-#if defined(ENABLE_DTRACES) && !defined(OOS_BUILD)
+#if defined(ENABLE_DTRACES) && !defined(RMOX_BUILD)
 	#include <dtrace.h>
 #endif
 
@@ -144,7 +145,7 @@ void ccsp_default_exit_handler (int status, bool core)
 	}
 	#endif
 
-	#if !defined(OOS_BUILD)
+	#if !defined(RMOX_BUILD)
 	_exit (status);
 	#else
 	panic ("exiting CCSP");

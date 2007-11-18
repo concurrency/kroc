@@ -26,12 +26,12 @@
 
 #ifdef ENABLE_CPU_TIMERS
 
-#ifdef OOS_BUILD
-/*{{{ OOS definitions */
-#include <oos_funcs.h>
+#ifdef RMOX_BUILD
+/*{{{ RMOX definitions */
+#include <rmox_if.h>
 #include <kernel.h>
 /*}}}*/
-#else /* !OOS_BUILD */
+#else /* !RMOX_BUILD */
 /*{{{ regular definitions */
 #include <stdio.h>
 #include <string.h>
@@ -55,25 +55,25 @@ typedef struct {
 
 #define TIMEINIT_COUNT 1000
 /*}}}*/
-#endif /* !OOS_BUILD */
+#endif /* !RMOX_BUILD */
 
 /*{{{ variables */
 static unsigned int cpu_factor;
 static unsigned int cpu_khz;
 /*}}}*/
 
-#ifdef OOS_BUILD
-/*{{{  static bool read_clock_from_oos (double *cpu_speed)*/
+#ifdef RMOX_BUILD
+/*{{{  static bool read_clock_from_rmox (double *cpu_speed)*/
 /*
- *	read the clock from the OOS interface
+ *	read the clock from the RMoX interface
  */
-static bool read_clock_from_oos (double *cpu_speed)
+static bool read_clock_from_rmox (double *cpu_speed)
 {
-	*cpu_speed = oos_cpu_speed_mhz ();
+	*cpu_speed = rmox_cpu_speed_mhz ();
 	return true;
 }
 /*}}}*/
-#else /* !OOS_BUILD*/
+#else /* !RMOX_BUILD*/
 /*{{{  static bool read_clock_from_proc (double *cpu_speed)*/
 /*
  *	attempts to read the clock from /proc/cpuinfo
@@ -229,7 +229,7 @@ static bool measure_clock_speed (double *cpu_speed)
 }
 /*}}}*/
 #endif /* TARGET_CPU_386 */
-#endif /* !OOS_BUILD */
+#endif /* !RMOX_BUILD */
 
 /*{{{  void ccsp_initial_cpu_speed (unsigned int *factor, unsigned int *khz)*/
 /*
@@ -251,11 +251,11 @@ bool ccsp_calibrate_timers (void)
 {
 	double clock_speed;
 
-#ifdef OOS_BUILD
-	if (read_clock_from_oos (&clock_speed)) {
+#ifdef RMOX_BUILD
+	if (read_clock_from_rmox (&clock_speed)) {
 		/* OK */
 	} else
-#else /* !OOS_BUILD*/
+#else /* !RMOX_BUILD*/
 #ifdef TARGET_OS_DARWIN
 	if (read_clock_from_sysctl (&clock_speed)) {
 		/* OK */
@@ -271,7 +271,7 @@ bool ccsp_calibrate_timers (void)
 		/* OK */
 	} else
 #endif /* TARGET_CPU_386 */
-#endif /* !OOS_BUILD */
+#endif /* !RMOX_BUILD */
 	if (true) {
 		/* Fall through */
 		return false;
