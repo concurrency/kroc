@@ -983,13 +983,14 @@ EOF
 	exit 0
 fi
 
-#{{{ parse_uselibs
-# Search an ETC file for #PRAGMA COMMENT ".USELIB libname" directives, and add
-# the referenced libraries to $ocllibs if they're not already there.
-parse_uselibs () {
-	local tcefile="$1" libs lib opt add
+#{{{ parse_pragmas
+# Search an ETC file for #PRAGMA COMMENT ..." directives.
+parse_pragmas () {
+	local tcefile="$1" libs lib opt add opts
 
-	libs=$($octran -C "$tcefile" | awk '/^\.USELIB / { print $2 }')
+	# For .USELIB directives, add the library to the list if it's not
+	# already been used.
+	libs=$($octran -C "$tcefile" | awk '/^\.USELIB / { ORS=" "; print $2 }')
 	for lib in $libs; do
 		opt="-l$lib"
 
@@ -1006,6 +1007,13 @@ parse_uselibs () {
 			ocllibs="$ocllibs $opt"
 		fi
 	done
+
+	# For .LDFLAGS directives, add the flags to the CC options.
+	opts=$($octran -C "$tcefile" | awk '/^\.LDFLAGS / { ORS=" "; for (i = 2; i <= NF; i++) { print $i } }')
+	if [ "$verbose" -a "$opts" != "" ] ; then
+		printf '%s: Using extra linker options %s\n' "$progname" "$opts" 1>&2
+	fi
+	extraccopts="$extraccopts $opts"
 }
 #}}}
 
@@ -1097,7 +1105,7 @@ for src in $srcs; do
 			for tcesuffix in .tce .etc; do
 				tcefile="$base$tcesuffix"
 				if [ -e "$tcefile" ] ; then
-					parse_uselibs "$tcefile"
+					parse_pragmas "$tcefile"
 				fi
 			done
 		fi
@@ -1249,7 +1257,7 @@ for src in $srcs; do
 		fi
 	fi
 
-	parse_uselibs "$tcefile"
+	parse_pragmas "$tcefile"
 
 done
 
