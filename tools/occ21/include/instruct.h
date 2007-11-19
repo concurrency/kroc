@@ -407,6 +407,7 @@
 #define I_MT_XOUT      0x244
 #define I_MT_XXCHG     0x245
 #define I_MT_DCLONE    0x246
+#define I_MT_BIND      0x247
 /*}}}*/
 /*{{{  negatives */
 #define I_FPSTALL     ( 0x01 | I_NEGATIVE) /* T9000 */
