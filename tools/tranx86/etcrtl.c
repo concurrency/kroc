@@ -5457,6 +5457,11 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 		arch->compose_kcall (ts, K_MT_DCLONE, 3, 1);
 		break;
 		/*}}}*/
+		/*{{{  I_MT_BIND -- mobile type binding*/
+	case I_MT_BIND:
+		arch->compose_kcall (ts, K_MT_BIND, 3, 0);
+		break;
+		/*}}}*/
 		/*{{{  default -- error*/
 	default:
 		fprintf (stderr, "%s: warning: not supported %d\n", progname, sec);
