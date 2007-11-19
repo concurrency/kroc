@@ -943,6 +943,8 @@ PRIVATE void aliascheckexp (treenode *n, use_mode_t use_mode)
 #ifdef MOBILES
 		case S_CLONE:
 		case S_DEFINED:
+		case S_ADDROF:
+		case S_HWADDROF:
 			/* things on the RHS of clone and DEFINED are always read */
 			n = OpOf (n);
 			use_mode = EXP_READ;

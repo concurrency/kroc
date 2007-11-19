@@ -774,6 +774,7 @@ PRIVATE void gendynmobilearraycreate (treenode *const dest, treenode *const src,
 	const BOOL utagged = (TagOf (dest) == S_UNDEFINED);
 	treenode *const rdest = (utagged ? OpOf (dest) : dest);
 	const BOOL dynchan = (TagOf (ARTypeOf (src)) == S_CHAN);
+	const BOOL empty = TypeAttrOf (src) & TypeAttr_empty ? TRUE : FALSE;
 	const int dimcount = dynmobiledimensioncount (dest);
 	int idim;
 	treenode *had_temp = NULL;
@@ -836,13 +837,14 @@ printtreenl (stderr, 4, src);
 fprintf (stderr, "gen11: gendynmobilearraycreate: dimcount = %d, dest = ", dimcount);
 printtreenl (stderr, 4, dest);
 #endif
-	/* if array is zero-sized, skip */
-	texp (ARDimLengthOf (src), regs);
-	genbranch (I_CJ, skiplab);
-
-	/* evaluate count (bytes) expression, (multiply by 2 for channel pointers [1]), do the MALLOC, put in target */
-	/* [1] the compiler needs to have a seperate array of addresses (above the words themselves) to be able to reference slices of channel arrays.. */
-	texp (ARDimLengthOf (src), regs);
+	
+	if (empty) {
+		genprimary (I_LDC, 0);
+	} else {
+		texp (ARDimLengthOf (src), regs);
+		gensecondary (I_DUP);
+		genbranch (I_CJ, skiplab);
+	}
 
 	if (dynchan) {
 		treenode *temp = LeftOpOf (ARDimLengthOf (src));
@@ -870,6 +872,7 @@ printtreenl (stderr, 4, dest);
 		loadconstant (MT_MAKE_ARRAY_TYPE (dimcount, MT_MAKE_NUM (i_type)));
 		gensecondary (I_MT_ALLOC);
 	} else {
+		BOOL empty = TypeAttrOf (src) & TypeAttr_empty ? TRUE : FALSE;
 		int i_type = 0, shift = 0;
 
 		if (TagOf (basetype) == S_MOBILE) {
@@ -942,7 +945,7 @@ printtreenl (stderr, 4, dest);
 			}
 			i_type = MT_MAKE_NUM (i_type);
 		}
-		if (shift) {
+		if (shift && !empty) {
 			genshiftimmediate (I_SHR, shift);
 		}
 		if (TypeAttrOf (src) & (TypeAttr_aligned | TypeAttr_dma)) {
@@ -1252,8 +1255,10 @@ printtreenl (stderr, 4, dest);
 fprintf (stderr, "src (presumably something which we need to evaluate) =");
 printtreenl (stderr, 4, src);
 #endif
-	setlab (skiplab);
-	throw_the_result_away ();
+	if (!empty) {
+		setlab (skiplab);
+		throw_the_result_away ();
+	}
 
 	gencomment0 ("}}}");
 	return;
@@ -2670,6 +2675,36 @@ printtreenl (stderr, 4, gettype_main_orig (rsrc));
 
 	return;
 }
+/*}}}*/
+/*{{{  PUBLIC void genaddrof (source) */
+PUBLIC void genaddrof (treenode *tptr)
+{
+	treenode *nptr = OpOf (tptr);
+	BOOL ok = ismobile (nptr);
+	
+	ok = ok && (!isdynmobilechantype (nptr));
+	ok = ok && (!isdynmobileproctype (nptr));
+	ok = ok && (!isdynmobilebarrier (nptr));
+
+	if (ok && (TagOf (tptr) == S_ADDROF) ) {
+		gencomment0 ("{{{  ADDROF");
+		loadmobile (nptr);
+		gencomment0 ("}}}");
+	} else if (ok && (TagOf (tptr) == S_HWADDROF) && isdynmobilearray (nptr)) {
+		const int skiplab = newlab ();
+
+		gencomment0 ("{{{  HWADDROF");
+		loadmobile_real (nptr);
+		gensecondary (I_DUP);
+		genbranch (I_CJ, skiplab);
+		genprimary (I_LDNL, 1 + dynmobiledimensioncount (nptr));
+		setlab (skiplab);
+		gencomment0 ("}}}");
+	} else {
+		generr (GEN_ADDROF_BAD_TYPE);
+	}
+}
+
 /*}}}*/
 #endif
 /*{{{  PUBLIC void loadname (nptr, w)*/

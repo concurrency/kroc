@@ -459,4 +459,7 @@
 #define S_PARAM_WS			368 /* CIF workspace size */
 #define S_ALIGNMENT			369 /* ALIGNMENT type decorator */
 #define S_DMA				370 /* DMA type decorator */
+#define S_EMPTY				371 /* EMPTY type decorator */
+#define S_ADDROF			372
+#define S_HWADDROF			373
 

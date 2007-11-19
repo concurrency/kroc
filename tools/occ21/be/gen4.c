@@ -1620,7 +1620,13 @@ printtreenl (stderr, 4, tptr);
 		}
 		break;
 		/*}}}  */
-		/*{{{  CLONE */
+		/*{{{  ADDROF HWADDROF */
+	case S_ADDROF:
+	case S_HWADDROF:
+		genaddrof (tptr);
+		break;
+		/*}}}*/
+		/*{{{  ADDROF */
 	case S_CLONE:
 		texp_main (OpOf (tptr), regs, signextend_result);
 		break;

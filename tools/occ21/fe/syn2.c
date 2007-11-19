@@ -190,6 +190,8 @@ PRIVATE BOOL mustbeexp (const int s)
 #ifdef MOBILES
 	case S_CLONE:
 	case S_DEFINED:
+	case S_ADDROF:
+	case S_HWADDROF:
 #endif
 	case S_SUBTRACT:
 	case S_MINUS:
@@ -1253,6 +1255,21 @@ printtreenl (stderr, 4, node);
 			return newleafnode (S_NULLARRAY, locn);
 		}
 		/*}}} */
+#ifdef MOBILES
+	case S_ADDROF:
+	case S_HWADDROF:
+		{
+			const int s = symb;
+			treenode *op;
+
+			nextsymb ();
+			if (checklinebreak () || checkfor (S_LPAREN) || checklinebreak () || ((op = rtypeoroperand ()) == NULL) || checkfor (S_RPAREN)) {
+				return NULL;
+			}
+			node = newmopnode (s, locn, op, 0);
+		}
+		break;
+#endif
 	default:
 		synerr_e (SYN_E_OPERAND, flocn, symb);
 		break;
@@ -1429,6 +1446,14 @@ PUBLIC treenode *rexp (void)
 		}
 		/*}}} */
 #ifdef MOBILES
+		/*{{{  case S_ADDROF S_HWADDROF */
+	case S_ADDROF:
+	case S_HWADDROF:
+		{
+			treenode *op = roperand ();
+			return (op == NULL ? NULL : rrestofexp (op, locn));
+		}
+		/*}}}*/
 		/*{{{  case S_CLONE */
 	case S_CLONE:
 		{
@@ -1464,9 +1489,10 @@ PUBLIC treenode *rexp (void)
 				op = newtypenode (S_NEW_BARRIER, locn, NULL, newleafnode (S_FULLBARRIER, locn));
 			} else {
 				BOOL dma = FALSE;
+				BOOL empty = FALSE;
 				treenode *alignment = NULL;
 
-				while (symb == S_ALIGNMENT || symb == S_DMA) {
+				while (symb == S_ALIGNMENT || symb == S_DMA || symb == S_EMPTY) {
 					if (symb == S_ALIGNMENT) {
 						nextsymb ();
 						if (symb == S_LPAREN) {
@@ -1484,6 +1510,9 @@ PUBLIC treenode *rexp (void)
 					} else if (symb == S_DMA) {
 						nextsymb ();
 						dma = TRUE;
+					} else if (symb == S_EMPTY) {
+						nextsymb ();
+						empty = TRUE;
 					}
 				}
 				if (symb != S_LBOX) {
@@ -1663,6 +1692,9 @@ PUBLIC treenode *rexp (void)
 					}
 					if (dma) {
 						SetTypeAttr (op, TypeAttrOf (op) | TypeAttr_dma);
+					}
+					if (empty) {
+						SetTypeAttr (op, TypeAttrOf (op) | TypeAttr_empty);
 					}
 				}
 				/*}}}*/

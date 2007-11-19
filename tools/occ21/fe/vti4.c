@@ -1356,6 +1356,10 @@ PUBLIC BOOL issame (treenode * t1, treenode * t2)
 #ifdef OCCAM2_5
 		case S_BYTESIN:
 #endif
+#ifdef MOBILES
+		case S_ADDROF:
+		case S_HWADDROF:
+#endif
 			t1 = OpOf (t1);
 			t2 = OpOf (t2);
 			break;

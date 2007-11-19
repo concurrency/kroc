@@ -697,6 +697,7 @@ const treenode *checkread_fn(const treenode *tptr, nodetypeoftag_t nodetype, con
 #define TypeAttr_resigned  (0x8000)	/* used on BARRIERs during type-check to indicate it's been resigned (i.e. may not be used) */
 #define TypeAttr_aligned   (0x10000)    /* used on MOBILE arrays, to indicate alignment set */
 #define TypeAttr_dma       (0x20000)    /* used on MOBILE arrays, to request DMA capable memory */
+#define TypeAttr_empty     (0x40000)	/* used on MOBILE arrays, no data memory allocation */
 
 /*}}}*/
 /*{{{  valofnode*/

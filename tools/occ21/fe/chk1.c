@@ -2876,6 +2876,24 @@ printtreenl (stderr, 4, t);
 	/*}}} */
 	/*}}} */
 #ifdef MOBILES
+	/*{{{  ADDROF/HWADDROF operator */
+	case S_ADDROF:
+	case S_HWADDROF:
+	{
+		treenode *optype = typecheck_main (OpOf (tptr), default_type);
+
+		if (TagOf (follow_user_type (optype)) != S_MOBILE) {
+			chk_invtype (chklocn, TagOf (tptr));
+			optype = undeclaredp;
+		} else {
+			optype = intnodeptr;
+		}
+
+		SetMOpType (tptr, S_INT);
+		
+		return optype;
+	}
+	/*}}}*/
 	/*{{{  CLONE operator */
 	case S_CLONE:
 	{
@@ -4769,6 +4787,8 @@ printtreenl (stderr, 4, SLengthExpOf (tptr));
 	case S_PARAM_MSP:
 	case S_HIDDEN_TYPE:
 	case S_CLONE:
+	case S_ADDROF:
+	case S_HWADDROF:
 #endif
 	case S_FNACTUALRESULT:
 		return intnodeptr;
@@ -4863,6 +4883,8 @@ PUBLIC int chk_typeof (treenode * tptr)
 		case S_UNDEFINED:
 			tptr = OpOf (tptr);
 			break;
+		case S_ADDROF:
+		case S_HWADDROF:
 		case S_NTH_DIMENSION:
 			return S_INT;
 #endif
