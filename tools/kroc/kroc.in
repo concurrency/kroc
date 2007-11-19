@@ -709,9 +709,9 @@ occ21="$kroc_archbindir/occ21"
 octran="$kroc_archbindir/tranx86"
 
 if [ $dtraces -eq 1 ]; then
-	ocrts="-lccsptrace -lkrocif"
+	ocrts="-lkrocif -lccsptrace"
 else
-	ocrts="-lccsp -lkrocif"
+	ocrts="-lkrocif -lccsp"
 fi
 
 
@@ -779,10 +779,6 @@ if [ $use_occ21_zen -eq 1 ]; then
 fi
 if [ $use_occ21_zep -eq 1 ]; then
 	occopts="$occopts -zep"
-fi
-
-if [ $defaultlibraries -eq 1 ]; then
-	ocllibs="-loccam8 $ocllibs"
 fi
 
 #}}}
@@ -1257,6 +1253,9 @@ for src in $srcs; do
 
 done
 
+if [ $defaultlibraries -eq 1 ]; then
+	ocllibs="$ocllibs -loccam8"
+fi
 
 if [ "X$link" = "X" ]; then
 	exit 0
