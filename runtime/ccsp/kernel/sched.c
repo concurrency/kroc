@@ -2698,15 +2698,21 @@ static void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)
 static INLINE mt_array_internal_t *mt_alloc_array_internal (void *allocator, word type, word size, bool init, word *size_shift)
 {
 	mt_array_internal_t *ma;
+	word alignment		= 0;
 	word dimensions		= MT_ARRAY_DIM(type);
+	word dma		= 0;
 	word inner_type		= MT_ARRAY_INNER_TYPE(type);
 	word meta_words		= dimensions + MT_ARRAY_PTR_OFFSET + 1;
-	word alignment		= 0;
 	word bytes;
 
 	ASSERT ( inner_type & MT_SIMPLE );
 
 	if (MT_TYPE(inner_type) == MT_ARRAY_OPTS) {
+		if (MT_FLAGS(inner_type) & MT_ARRAY_OPTS_DMA) {
+			/* allocate space for hardware address */
+			dma = dimensions;
+			meta_words += 1;
+		}
 		alignment	= (1 << MT_ARRAY_OPTS_ALIGN(inner_type)) - 1;
 		inner_type	= MT_ARRAY_OPTS_INNER(inner_type);
 	}
@@ -2725,9 +2731,17 @@ static INLINE mt_array_internal_t *mt_alloc_array_internal (void *allocator, wor
 	ma		= (mt_array_internal_t *) dmem_thread_alloc (allocator, bytes);
 	ma->size	= size;
 	ma->type	= type;
-	ma->array.data	= (void *) (
-		(word) ((((byte *) ma) + (meta_words << WSH) + alignment)) & (~alignment)
-	);
+	if (size) {
+		ma->array.data = (void *) (
+			(word) ((((byte *) ma) + (meta_words << WSH) + alignment)) & (~alignment)
+		);
+	} else {
+		ma->array.data = NULL;
+	}
+	if (dma) {
+		/* eventually this may need virt->phys mapping */
+		ma->array.dimensions[dma] = (word) ma->array.data;
+	}
 
 	if (init && MT_TYPE(inner_type) != MT_NUM) {
 		word **walk = (word **) ma->array.data;
@@ -3447,6 +3461,67 @@ void kernel_X_mrelease (void)
 	ENTRY_TRACE (X_mrelease, "%p", ptr);
 
 	mt_release_simple (sched, ptr, MT_MAKE_TYPE (MT_DATA));
+
+	K_ZERO_OUT ();
+}
+/*}}}*/
+/*{{{  void kernel_Y_mt_bind (void)*/
+/*
+ *	bind a mobile type in some way to a bit of data
+ *
+ *	@SYMBOL:	Y_mt_bind
+ *	@TYPE:		RR
+ *	@INPUT:		REG(3)
+ *	@OUTPUT: 	NONE
+ *	@CALL: 		K_MT_BIND
+ *	@PRIO:		50
+ */
+void kernel_Y_mt_bind (void)
+{
+	word bind_type, *data, *ptr, type;
+	
+	K_SETGLABEL_THREE_IN_RR (Y_mt_bind, bind_type, ptr, data);
+	ENTRY_TRACE (Y_mt_bind, "%08x %p %p", bind_type, ptr, data);
+
+	type = ptr[MTType];
+	if ((type & MT_SIMPLE) && (MT_TYPE(type) == MT_ARRAY)) {
+		mt_array_t *mt = (mt_array_t *) ptr;
+		word dimensions = MT_ARRAY_DIM(type);
+
+		if (bind_type == MT_BIND_VIRTUAL || bind_type == MT_BIND_PHYSICAL) {
+			void *phys_addr, *virt_addr;
+
+			if (bind_type == MT_BIND_VIRTUAL) {
+				virt_addr = (void *) data;
+				phys_addr = virt_addr; /* FIXME: translate */
+			} else {
+				phys_addr = (void *) data;
+				virt_addr = phys_addr; /* FIXME: translate */
+			}
+			
+			if (MT_ARRAY_INNER_TYPE(type) == MT_ARRAY_OPTS) {
+				word flags = MT_FLAGS(MT_ARRAY_INNER_TYPE(type));
+				
+				if (flags & MT_ARRAY_OPTS_SEPARATED) {
+					if (mt->data != NULL) {
+						mt_release (sched, mt->data);
+					}
+				}
+
+				if (flags & MT_ARRAY_OPTS_DMA) {
+					mt->dimensions[dimensions] = (word) phys_addr;
+				}
+			}
+
+			mt->data = virt_addr;
+
+			K_ZERO_OUT ();
+		} else {
+			mobile_type_error ();
+		}
+	} else {
+		mobile_type_error ();
+	}
 
 	K_ZERO_OUT ();
 }
