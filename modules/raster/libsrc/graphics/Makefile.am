@@ -4,7 +4,7 @@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
-OCCBUILD = @OCCBUILD@
+OCCBUILD = @OCCBUILD@ --search ../base
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 
 EXTRA_DIST = \
