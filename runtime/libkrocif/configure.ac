@@ -45,16 +45,18 @@ AC_SUBST(LDEXTRAOPTS)
 
 case "$host_os" in
 cygwin*)
- SLINKFLAGS="-shared"
- LIBKROCIF="krocif.dll"
+ build_shared="no"
+ LIBKROCIF=""
  ;;
 *Darwin* | *darwin*)
+ build_shared="no"
+ LIBKROCIF=""
  AC_DEFINE([TARGET_OS_DARWIN],1,[define if using Darwin])
+ dnl Disable automatic PIC usage on Apple's GCC
  CFLAGS="$CFLAGS -mdynamic-no-pic"
- SLINKFLAGS="-flat_namespace -read_only_relocs suppress -dynamiclib"
- LIBKROCIF="libkrocif.dylib"
  ;;
 *)
+ build_shared="yes"
  SLINKFLAGS="-shared"
  LIBKROCIF="libkrocif.so"
  ;;
@@ -62,6 +64,7 @@ esac
 
 AC_SUBST(SLINKFLAGS)
 AC_SUBST(LIBKROCIF)
+AM_CONDITIONAL(BUILD_SHARED, [test "$build_shared" = "yes"])
 
 dnl Checks for libraries.
 

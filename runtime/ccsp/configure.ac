@@ -586,16 +586,17 @@ fi
 dnl Setup the library name and flags
 case "$host_os" in
 cygwin*)
- SLINKFLAGS="-shared"
- LIBCCSP="ccsp.dll"
+ build_shared="no"
+ LIBCCSP=""
  ;;
 *Darwin* | *darwin*)
+ build_shared="no"
+ LIBCCSP=""
  dnl Disable automatic PIC usage on Apple's GCC
  CFLAGS="$CFLAGS -mdynamic-no-pic"
- SLINKFLAGS="-read_only_relocs suppress -dynamiclib"
- LIBCCSP="libccsp.dylib"
  ;;
 *)
+ build_shared="yes"
  SLINKFLAGS="-shared"
  LIBCCSP="libccsp.so"
  ;;
@@ -603,6 +604,7 @@ esac
 
 AC_SUBST(SLINKFLAGS)
 AC_SUBST(LIBCCSP)
+AM_CONDITIONAL(BUILD_SHARED, [test "$build_shared" = "yes"])
 
 #}}}
 

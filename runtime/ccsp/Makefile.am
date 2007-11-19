@@ -55,15 +55,16 @@ include_HEADERS = \
 	include/typedesc.h \
 	include/ukcthreads_types.h
 
-all-local: @LIBCCSP@
+all-local: libccsp.a @LIBCCSP@
 
+if BUILD_SHARED
 @LIBCCSP@: libccsp.a
 	$(CC) @SLINKFLAGS@ $(CFLAGS) $(EXTRALDFLAGS) -o @LIBCCSP@ $(libccsp_a_LIBADD)
+endif
 
-install-exec-local: @LIBCCSP@
+install-exec-local: libccsp.a @LIBCCSP@
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)"
-	$(INSTALL_DATA) "libccsp.a" "$(DESTDIR)$(libdir)/libccsp.a"
-	$(INSTALL_DATA) "@LIBCCSP@" "$(DESTDIR)$(libdir)/@LIBCCSP@"
+	for x in libccsp.a @LIBCCSP@; do $(INSTALL_DATA) $$x "$(DESTDIR)$(libdir)/$$x"; done
 
 EXTRA_DIST = README INSTALL COPYRIGHT preconfigure
 DISTCLEANFILES = libccsp.a @LIBCCSP@
