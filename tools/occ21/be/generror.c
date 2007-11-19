@@ -154,7 +154,7 @@ PUBLIC const char *genmessagestring (const int n)
 	case GEN_WARN_BADCODE:
 		return ("generating possibly bad code -- source may need simplifying, sorry");
 		/*}}}  */
-		/*{{{  cgr added errors */
+		/*{{{  cgr added errors / warnings */
 	case GEN_NO_MOBILESPACE:
 		return "Tried to use mobilespace, but mobilespace disabled -- mobilespace use in separately compiled code?";
 	case GEN_BAD_MOBILE_SLICE:
@@ -163,6 +163,8 @@ PUBLIC const char *genmessagestring (const int n)
 		return "Tried to clone a barrier";
 	case GEN_BAD_ALIGNMENT:
 		return "Bad alignment expression (non-constant?)";
+	case GEN_PRI_PAR_AS_PAR:
+		return "PRI PAR compiled as PAR";
 		/*}}}*/
 	default:
 		return (NULL);
