@@ -555,7 +555,7 @@ def main(args):
 		programs["kroc"] += ["-I" + dir, "-L" + dir]
 		programs["skroc"] += ["-L", dir]
 	
-	global patterns
+	global patterns, build_shared
 	patterns = {
 		"libname": "%s",
 		"link": "-l%s",
