@@ -3001,9 +3001,9 @@ PUBLIC treenode *foldexp (treenode * tptr)
 	case S_UNDEFINED:
 		tptr = foldexp (OpOf (tptr));
 		break;
+	case S_ADDROF:
+	case S_HWADDROF:
 	case S_CLONE:
-		SetOp (tptr, foldexp (OpOf (tptr)));
-		break;
 	case S_DEFINED:
 		SetOp (tptr, foldexp (OpOf (tptr)));
 		break;

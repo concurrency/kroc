@@ -1237,6 +1237,8 @@ PUBLIC void tpreexp (treenode * tptr)
 		case S_ROUND:
 		case S_ADDRESSOF:
 #ifdef MOBILES
+		case S_ADDROF:
+		case S_HWADDROF:
 		case S_CLONE:
 		case S_UNDEFINED:
 		case S_TYPEHASHOF:

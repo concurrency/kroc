@@ -928,6 +928,10 @@ PUBLIC void applytoexp (treenode * tptr, void (*f1) (treenode *, void *), void *
 #ifdef OCCAM2_5
 		case S_BYTESIN:
 #endif
+#ifdef MOBILES
+		case S_ADDROF:
+		case S_HWADDROF:
+#endif
 			(*f1) (OpOf (tptr), voidptr);
 			break;
 			/*}}} */
@@ -1224,6 +1228,8 @@ PUBLIC void prewalktree (treenode *tptr, int (*f1)(treenode *, void *), void *co
 			break;
 #ifdef MOBILES
 		case S_CLONE:
+		case S_ADDROF:
+		case S_HWADDROF:
 			tptr = OpOf (tptr);
 			break;
 		case S_NEW_ARRAY:

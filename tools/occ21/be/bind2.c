@@ -584,6 +584,8 @@ printtreenl (stderr, 4, t);
 			break;
 			/*}}} */
 #ifdef MOBILES
+		case S_ADDROF:
+		case S_HWADDROF:
 		case S_CLONE:
 		case S_DEFINED:
 			tptr = OpAddr (t);
@@ -921,6 +923,8 @@ PUBLIC void mapaddr (treenode ** tptr)
 		case S_UNDEFINED:
 			tptr = OpAddr (t);
 			break;
+		case S_ADDROF:
+		case S_HWADDROF:
 		case S_CLONE:
 			tptr = OpAddr (t);
 			break;

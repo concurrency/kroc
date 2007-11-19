@@ -588,6 +588,9 @@ PRIVATE const vti_keyword_t vti_keyword_table[] =
 	, {S_PARAM_WS, NULL, NULL, "WS.SIZE", NULL, /*LEAFNODE*/ NAMENODE, NONE}
 	, {S_ALIGNMENT, "ALIGNMENT", NULL, "ALIGMENT", NULL, TYPENODE, CC}
 	, {S_DMA, "DMA", NULL, "DMA", NULL, TYPENODE, CC}
+	, {S_EMPTY, "EMPTY", NULL, "EMPTY", NULL, TYPENODE, CC}
+	, {S_ADDROF, "ADDROF", NULL, NULL, NULL, MOPNODE, CC}
+	, {S_HWADDROF, "HWADDROF", NULL, NULL, NULL, MOPNODE, CC}
 };
 
 #define MAX_TAG ((int)(sizeof(vti_keyword_table)/sizeof(vti_keyword_table[0])))
@@ -1216,6 +1219,8 @@ PUBLIC void printexp (FILE * const fptr, treenode * tptr)
 		case S_ADDRESSOF:
 #ifdef MOBILES
 		case S_CLONE:
+		case S_ADDROF:
+		case S_HWADDROF:
 #endif
 			ptag (fptr, S_LPAREN);
 			ptag (fptr, TagOf (tptr));

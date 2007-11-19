@@ -165,6 +165,8 @@ PUBLIC const char *genmessagestring (const int n)
 		return "Bad alignment expression (non-constant?)";
 	case GEN_PRI_PAR_AS_PAR:
 		return "PRI PAR compiled as PAR";
+	case GEN_ADDROF_BAD_TYPE:
+		return "ADDROF/HWADDROF unsupported type";
 		/*}}}*/
 	default:
 		return (NULL);
