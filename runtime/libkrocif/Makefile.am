@@ -32,5 +32,6 @@ CLEANFILES = @LIBKROCIF@ libkrocif.a *~
 
 install-exec-local: @LIBKROCIF@
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)"
+	$(INSTALL_DATA) "libkrocif.a" "$(DESTDIR)$(libdir)/libkrocif.a"
 	$(INSTALL_DATA) "@LIBKROCIF@" "$(DESTDIR)$(libdir)/@LIBKROCIF@"
 

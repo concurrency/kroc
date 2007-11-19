@@ -62,6 +62,7 @@ all-local: @LIBCCSP@
 
 install-exec-local: @LIBCCSP@
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)"
+	$(INSTALL_DATA) "libccsp.a" "$(DESTDIR)$(libdir)/libccsp.a"
 	$(INSTALL_DATA) "@LIBCCSP@" "$(DESTDIR)$(libdir)/@LIBCCSP@"
 
 EXTRA_DIST = README INSTALL COPYRIGHT preconfigure
