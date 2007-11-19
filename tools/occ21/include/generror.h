@@ -83,6 +83,7 @@
 #define GEN_BAD_MOBILE_SLICE		61	/* tried to copy a slice containing mobiles */
 #define GEN_BARRIER_CLONE		62	/* tried to clone a (mobile) barrier */
 #define GEN_BAD_ALIGNMENT		63	/* bad alignment expression */
+#define GEN_PRI_PAR_AS_PAR		64	/* PRI PAR is compiled as PAR */
 /*}}}*/
 
 /*{{{  error macros */

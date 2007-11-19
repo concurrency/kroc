@@ -2462,6 +2462,7 @@ PRIVATE void tnormalpar (treenode *const tptr)
 }
 
 /*}}}*/
+#if 0
 /*{{{  PRIVATE void tpripar (treenode *const tptr)*/
 PRIVATE void tpripar (treenode *const tptr)
 {
@@ -2662,7 +2663,7 @@ PRIVATE void tpripar (treenode *const tptr)
 			gencomment0 ("PTR startlab");
 
 			#ifdef PROCESS_PRIORITY
-				gensecondary (I_GETPRI);
+				gensecondary (I_GETPAS);
 				genprimary (I_STL, (-wp) - 3);	/*	stl  -wp - 3	*/
 				gencomment0 ("priority");
 			#endif
@@ -2736,7 +2737,7 @@ PRIVATE void tpripar (treenode *const tptr)
 	/* if (debugoutput)
    coder_genlocate(t, FALSE); *//* bug TS/1434 10/03/92 */
 }
-
+#endif
 /*}}}*/
 /*{{{  PRIVATEPARAM void treplpar*/
 /*{{{  comment*/
@@ -3961,7 +3962,9 @@ printtreenl (stderr, 4, ct_type);
 			/*}}} */
 			/*{{{  S_PRIPAR               return */
 		case S_PRIPAR:
-			tpripar (tptr);
+			/* tpripar (tptr); */
+			genwarn (GEN_PRI_PAR_AS_PAR);
+			tnormalpar (tptr);
 			tdespecs (specsptr);
 			return;
 			/*}}} */
