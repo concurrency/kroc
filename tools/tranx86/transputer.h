@@ -436,6 +436,7 @@
 #define I_MT_XOUT	0x244
 #define I_MT_XXCHG	0x245
 #define I_MT_DCLONE	0x246
+#define I_MT_BIND	0x247
 
 /*}}}*/
 /*{{{  negative instructions (mostly T9000)*/
@@ -637,7 +638,7 @@ static int tsdiff_sec_twocodes[] = { \
 	-1, -1, 0, 16,	/* 238: mt_alloc, mt_release, mt_clone, mt_in */
 	16, 16, 16, 16,	/* 23c: mt_out, mt_xchg, mt_lock, mt_unlock */
 	-2, -2,	16, 16,	/* 240: mt_enroll, mt_resign, mt_sync, mt_xin */
-	16, 16, -2	/* 244: mt_xout, mt_xxchg, mt_dclone */
+	16, 16, -2, -3	/* 244: mt_xout, mt_xxchg, mt_dclone, mt_bind */
 };
 
 /*}}}*/

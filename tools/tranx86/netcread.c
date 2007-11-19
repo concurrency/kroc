@@ -1175,62 +1175,77 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 			tmp->opd = I_MUL;
 			add_to_chain (&hblk, &tblk, tmp);
 			/*}}}*/
-		} else if (!strcmp (bits[0], "mt_alloc")) {
-			/*{{{  allocate and initialise mobile type*/
+		} else if (!strncmp (bits[0], "mt_", 3)) {
 			tmp = new_etc_chain ();
 			tmp->fn = I_OPR;
-			tmp->opd = I_MT_ALLOC;
+			if (!strcmp (bits[0], "mt_alloc")) {
+				/*{{{  allocate and initialise mobile type*/
+				tmp->opd = I_MT_ALLOC;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_release")) {
+				/*{{{  free mobile type*/
+				tmp->opd = I_MT_RELEASE;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_clone")) {
+				/*{{{  clone mobile type*/
+				tmp->opd = I_MT_CLONE;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_in")) {
+				/*{{{  mobile type channel input*/
+				tmp->opd = I_MT_IN;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_out")) {
+				/*{{{  mobile mobile type channel output*/
+				tmp->opd = I_MT_OUT;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_xchg")) {
+				/*{{{  mobile mobile type channel exchange*/
+				tmp->opd = I_MT_XCHG;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_lock")) {
+				/*{{{  lock a mobile type*/
+				tmp->opd = I_MT_LOCK;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_unlock")) {
+				/*{{{  unlock a mobile type*/
+				tmp->opd = I_MT_UNLOCK;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_enroll")) {
+				/*{{{  increase enroll count of a mobile type*/
+				tmp->opd = I_MT_ENROLL;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_resign")) {
+				/*{{{  decrease enroll count of a mobile type*/
+				tmp->opd = I_MT_RESIGN;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_sync")) {
+				/*{{{  synchronise on a mobile type*/
+				tmp->opd = I_MT_SYNC;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_xin")) {
+				/*{{{  extended mobile type channel input*/
+				tmp->opd = I_MT_XIN;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_xout")) {
+				/*{{{  extended mobile mobile type channel output*/
+				tmp->opd = I_MT_XOUT;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_xxchg")) {
+				/*{{{  extended mobile mobile type channel exchange*/
+				tmp->opd = I_MT_XXCHG;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_dclone")) {
+				/*{{{  allocate a mobile type by cloning data*/
+				tmp->opd = I_MT_DCLONE;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_bind")) {
+				/*{{{  bind a mobile type*/
+				tmp->opd = I_MT_BIND;
+				/*}}}*/
+			} else {
+				goto bad_input_line;
+			}
 			add_to_chain (&hblk, &tblk, tmp);
-			/*}}}*/
-		} else if (!strcmp (bits[0], "mt_release")) {
-			/*{{{  free mobile type*/
-			tmp = new_etc_chain ();
-			tmp->fn = I_OPR;
-			tmp->opd = I_MT_RELEASE;
-			add_to_chain (&hblk, &tblk, tmp);
-			/*}}}*/
-		} else if (!strcmp (bits[0], "mt_clone")) {
-			/*{{{  clone mobile type*/
-			tmp = new_etc_chain ();
-			tmp->fn = I_OPR;
-			tmp->opd = I_MT_CLONE;
-			add_to_chain (&hblk, &tblk, tmp);
-			/*}}}*/
-		} else if (!strcmp (bits[0], "mt_lock")) {
-			/*{{{  lock a mobile type*/
-			tmp = new_etc_chain ();
-			tmp->fn = I_OPR;
-			tmp->opd = I_MT_LOCK;
-			add_to_chain (&hblk, &tblk, tmp);
-			/*}}}*/
-		} else if (!strcmp (bits[0], "mt_unlock")) {
-			/*{{{  unlock a mobile type*/
-			tmp = new_etc_chain ();
-			tmp->fn = I_OPR;
-			tmp->opd = I_MT_UNLOCK;
-			add_to_chain (&hblk, &tblk, tmp);
-			/*}}}*/
-		} else if (!strcmp (bits[0], "mt_enroll")) {
-			/*{{{  increase enroll count of a mobile type*/
-			tmp = new_etc_chain ();
-			tmp->fn = I_OPR;
-			tmp->opd = I_MT_ENROLL;
-			add_to_chain (&hblk, &tblk, tmp);
-			/*}}}*/
-		} else if (!strcmp (bits[0], "mt_resign")) {
-			/*{{{  decrease enroll count of a mobile type*/
-			tmp = new_etc_chain ();
-			tmp->fn = I_OPR;
-			tmp->opd = I_MT_RESIGN;
-			add_to_chain (&hblk, &tblk, tmp);
-			/*}}}*/
-		} else if (!strcmp (bits[0], "mt_sync")) {
-			/*{{{  synchronise on a mobile type*/
-			tmp = new_etc_chain ();
-			tmp->fn = I_OPR;
-			tmp->opd = I_MT_SYNC;
-			add_to_chain (&hblk, &tblk, tmp);
-			/*}}}*/
 		} else if (!strcmp (bits[0], "mwenb")) {
 			/*{{{  enable multiway sync guard*/
 			tmp = new_etc_chain ();

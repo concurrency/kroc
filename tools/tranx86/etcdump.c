@@ -1308,6 +1308,9 @@ static int dump_secondary (int esfunc, char *buffer)
 	case I_MT_DCLONE:
 		sprintf (buffer, "\tMT_DCLONE");
 		break;
+	case I_MT_BIND:
+		sprintf (buffer, "\tMT_BIND");
+		break;
 	default:
 		sprintf (buffer, "\tUnsupported %d", esfunc);
 		break;
