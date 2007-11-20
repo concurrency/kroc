@@ -86,10 +86,10 @@ PROC raster.clear (RASTER r, VAL INT colour)
 --}}}
 --}}}
 
---{{{  PROC raster.buffer
---* One-place raster buffer.
+--{{{  PROC raster.one.place.buffer
+--* One-place raster.one.place.buffer.
 -- @private
-PROC raster.buffer (CHAN RASTER in?, out!, VAL INT width, height)
+PROC raster.one.place.buffer (CHAN RASTER in?, out!, VAL INT width, height)
   INITIAL RASTER r IS MOBILE [height][width]INT:
   SEQ
     raster.clear (r, #000000)
@@ -303,10 +303,10 @@ PROC raster.display (VAL []BYTE title, VAL INT width, height, num.rasters,
     [MAX.RASTERS - 1]CHAN RASTER cs:
     CHAN BOOL kill.ev:
     PAR
-      --{{{  raster buffers
+      --{{{  raster.one.place.buffers
       PAR i = 0 FOR num.rasters - 1
-        raster.buffer (cs[i]?, cs[i + 1]!, width, height)
-      raster.buffer (cs[num.rasters - 1]?, out!, width, height)
+        raster.one.place.buffer (cs[i]?, cs[i + 1]!, width, height)
+      raster.one.place.buffer (cs[num.rasters - 1]?, out!, width, height)
       --}}}
       --{{{  event server
       raster.events (screen, events!, kill.ev?)
