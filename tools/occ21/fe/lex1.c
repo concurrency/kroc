@@ -536,7 +536,7 @@ predeflines[] =
 	  { C, PD_IMS_GET_PDATA, "FI():IMS.GET.PDATA"}
 	, /*}}} */
 	  /*{{{  priority stuff added by frmb */
-	  { CC, PD_GETPRI, "FI():GETPRI"}
+	  { CC, PD_GETPRI, "P(=I):GETPRI"}
 	, { CC, PD_SETPRI, "P(VI):SETPRI"}
 	, { CC, PD_INCPRI, "P():INCPRI"}
 	, { CC, PD_DECPRI, "P():DECPRI"}
@@ -574,14 +574,14 @@ predeflines[] =
 	, { CC, PD_REAL64COS, "FR6(VR6):DCOS"}
 	, /*}}}*/
 	  /*{{{  affinity stuff added by CGR */
-	  { CC, PD_GETAFF, "FI():GETAFF"}
+	  { CC, PD_GETAFF, "P(=I):GETAFF"}
 	, { CC, PD_SETAFF, "P(VI):SETAFF"}
 	, /*}}}  */
 	  /*{{{  blocking system calls */
 	  { CC, PD_KILLCALL, "P(C,I):KILLCALL"}
 	, /*}}}*/
 	  /*{{{  RMoX interrupt handling by CGR */
-	  { CC, PD_WAIT_FOR_INTERRUPT, "P(VI,VI,I):WAIT.FOR.INTERRUPT"}
+	  { CC, PD_WAIT_FOR_INTERRUPT, "P(VI,VI,=I):WAIT.FOR.INTERRUPT"}
 	, /*}}}*/
 	  /*{{{  mobile manipulation by CGR */
 	  { CC, PD_BIND_MOBILE, "P(a,VI):BIND.MOBILE"}
