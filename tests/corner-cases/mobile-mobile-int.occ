@@ -1,0 +1,28 @@
+#INCLUDE "course.module"
+
+PROC main(CHAN BYTE kyb?, scr!, err!)
+  MOBILE []MOBILE []INT x:
+  SEQ
+    x := MOBILE [2]MOBILE []INT
+    SEQ i = 0 FOR SIZE x
+      SEQ
+        x[i] := MOBILE [10]INT
+
+        out.string ("SIZE x[", 0, scr!)
+        out.int (i, 0, scr!)
+        out.string ("] = ", 0, scr!)
+        out.int (SIZE x[i], 0, scr!)
+        scr ! '*n'
+
+        SEQ j = 0 FOR SIZE x[i]
+          SEQ
+            scr ! #FF
+            out.int (i, 0, scr!)
+            scr ! 'x'
+            out.int (j, 0, scr!)
+            out.string (" := 0*n", 0, scr!)
+
+            x[i][j] := 0
+
+            out.string ("done*n", 0, scr!)
+:
