@@ -3483,6 +3483,8 @@ void kernel_Y_mt_bind (void)
 	K_SETGLABEL_THREE_IN_RR (Y_mt_bind, bind_type, ptr, data);
 	ENTRY_TRACE (Y_mt_bind, "%08x %p %p", bind_type, ptr, data);
 
+	ASSERT (ptr != NULL);
+
 	type = ptr[MTType];
 	if ((type & MT_SIMPLE) && (MT_TYPE(type) == MT_ARRAY)) {
 		mt_array_t *mt = (mt_array_t *) ptr;
