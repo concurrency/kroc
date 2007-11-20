@@ -53,7 +53,6 @@ CHAN TYPE CT.WORK.IN
 
 CHAN TYPE CT.WORK.OUT
   MOBILE RECORD
-    CHAN INT notify?:
     CHAN P.JOB.OUT out?:
 :
 
@@ -92,9 +91,7 @@ PROC worker (SHARED CT.WORK.IN! link.in, SHARED CT.WORK.OUT! link.out)
       INT jobid, frame:
       SEQ
         CLAIM link.in
-          SEQ
-            link.in[notify] ! 0
-            link.in[in] ? frame; jobid; job
+          link.in[in] ? frame; jobid; job
 
         IF
           (jobid = (-1)) OR (frame = (-1))
@@ -109,10 +106,10 @@ PROC worker (SHARED CT.WORK.IN! link.in, SHARED CT.WORK.OUT! link.out)
                   val := calc ([x,y](COMPLEX64)) \ 16
                   output[i*2] := BYTE (val \ 6)
                   output[(i*2)+1] := table[val]
+                  RESCHEDULE ()
 
               CLAIM link.out
-                SEQ
-                  link.out[out] ! frame; jobid; output
+                link.out[out] ! frame; jobid; output
 :
 
 PROC farmer (CT.WORK.IN? link.in, CHAN INT tick!, tock?, kill!)
@@ -140,8 +137,6 @@ PROC farmer (CT.WORK.IN? link.in, CHAN INT tick!, tock?, kill!)
                 wpacket[2] := y.drift
                 wpacket[3] := x.drift
 
-                INT any:
-                link.in[notify] ? any
                 link.in[in] ! n; j; wpacket
         --}}}
 
@@ -152,16 +147,14 @@ PROC farmer (CT.WORK.IN? link.in, CHAN INT tick!, tock?, kill!)
         SEQ
           x.drift := x.drift + (diff.x / 16.0)
           y.drift := y.drift + (diff.y / 16.0)
-    kill ! 0
 
     --{{{  gracefully shut-down workers
     SEQ n = 0 FOR N.WORKERS
       INITIAL [4]REAL64 wpacket IS [i = 0 FOR 4 | 0.0]:
-      SEQ
-        INT any:
-        link.in[notify] ? any
-        link.in[in] ! -1; -1; wpacket
+      link.in[in] ! -1; -1; wpacket
     --}}}
+
+    kill ! 0
 :
 
 PROC harvester (CT.WORK.OUT? link.out, CHAN INT tick?, tock!, kill?, CHAN BYTE scr!)
