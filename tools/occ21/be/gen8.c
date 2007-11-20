@@ -3418,6 +3418,13 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			mapstoreinopd (P_EXP, param[2]);
 			break;
 			/*}}}*/
+			/*{{{  BIND.MOBILE / BIND.MOBILE.HW for mobile manipulation */
+		case PD_BIND_MOBILE:
+		case PD_BIND_MOBILE_HW:
+			mapexp (param[1]);
+			mapexp (param[0]);
+			break;
+			/*}}}*/
 		default:
 			badtag (LocnOf (tptr), TagOf (tptr), "mappredef");
 			break;
@@ -4371,6 +4378,15 @@ printtreenl (stderr, 4, param[0]);
 		genwaitint ();
 		texpopd (P_PTR, param[2], MANY_REGS - 1);
 		genprimary (I_STNL, 0);
+		break;
+		/*}}}*/
+		/*{{{  BIND.MOBILE / BIND.MOBILE.HW */
+	case PD_BIND_MOBILE:
+	case PD_BIND_MOBILE_HW:
+		texp (param[1], MANY_REGS);
+		loadmobile_real (param[0]);
+		genprimary (I_LDC, pdno == PD_BIND_MOBILE_HW ? MT_BIND_PHYSICAL : MT_BIND_VIRTUAL);
+		gensecondary (I_MT_BIND);
 		break;
 		/*}}}*/
 	default:

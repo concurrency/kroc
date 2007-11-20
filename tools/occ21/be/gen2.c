@@ -277,6 +277,10 @@ pdinlines[] =
 		/*{{{  RMoX interrupt handling*/
 	, { &trueval, 0}		/* WAIT.FOR.INTERRUPT */
 		/*}}}*/
+		/*{{{  MOBILE manipulation*/
+	, { &trueval, 0}		/* BIND.MOBILE */
+	, { &trueval, 0}		/* BIND.MOBILE.HW */
+		/*}}}*/
 };
 
 /*}}}*/

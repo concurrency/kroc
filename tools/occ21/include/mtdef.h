@@ -342,7 +342,7 @@ typedef struct _mt_data_internal_t {
  *     alignment and flags such as DMA.
  *     Flag bits code options:
  *      bit 0 = DMA,
- *      bit 1 = unused,
+ *      bit 1 = data is separately allocated (so free as well),
  *      bit 2 = unused.
  *     With the next 4 bits coding a power of 2 
  *     alignment, after which follows the
@@ -350,6 +350,7 @@ typedef struct _mt_data_internal_t {
  */
 #define MT_ARRAY_OPTS		9
 #define MT_ARRAY_OPTS_DMA	0x1
+#define MT_ARRAY_OPTS_SEPARATED	0x2
 #define MT_ARRAY_OPTS_ALIGN(X)	((X) >> (MT_FLAGS_SHIFT + 3))
 #define MT_ARRAY_OPTS_INNER(X)	((X) >> (MT_FLAGS_SHIFT + 7))
 #define MT_MAKE_ARRAY_OPTS(F,A,I)	\
@@ -358,6 +359,11 @@ typedef struct _mt_data_internal_t {
 	 ((F) << MT_FLAGS_SHIFT)	| \
 	 ((A) << (MT_FLAGS_SHIFT + 3))	| \
 	 ((I) << (MT_FLAGS_SHIFT + 7)))
+/*}}}*/
+
+/*{{{  Constants for mobile type binding */
+#define MT_BIND_VIRTUAL		1	/* bind a physical address */
+#define MT_BIND_PHYSICAL	2	/* bind a virtual address */
 /*}}}*/
 
 /* Examples of generation 2 encoding:

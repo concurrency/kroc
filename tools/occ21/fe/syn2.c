@@ -166,6 +166,7 @@ PUBLIC BOOL mustbespec (const int s)
 		case S_FIXED:
 		case S_ANYCHANTYPE:
 		case S_ANYPROCTYPE:
+		case S_ANYMOBILETYPE:
 	#endif
 	case S_RECURSIVE:
 	case S_REC:
@@ -3232,8 +3233,9 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 			return s;
 		}
 		/*}}}*/
-		/*{{{  case S_ANYPROCTYPE*/
+		/*{{{  case S_ANYPROCTYPE S_ANYMOBILETYPE*/
 	case S_ANYPROCTYPE:
+	case S_ANYMOBILETYPE:
 		s = newleafnode (symb, locn);
 		nextsymb ();
 		return s;
@@ -3753,22 +3755,15 @@ PRIVATE treenode *rprotocol (void)
 			return (newleafnode (S_ANY, locn));
 		}
 	case S_ANYCHANTYPE:
-		{
-			const SOURCEPOSN locn = flocn;
-			treenode *node;
-
-			nextsymb ();
-			node = newleafnode (S_ANYCHANTYPE, locn);
-
-			return node;
-		}
 	case S_ANYPROCTYPE:
+	case S_ANYMOBILETYPE:
 		{
+			const int s = symb;
 			const SOURCEPOSN locn = flocn;
 			treenode *node;
 
 			nextsymb ();
-			node = newleafnode (S_ANYPROCTYPE, locn);
+			node = newleafnode (s, locn);
 
 			return node;
 		}
@@ -4595,14 +4590,16 @@ fprintf (stderr, "rspecifier: putting SHARED in TypeAttr of CHAN\n");
 			return name;
 		}
 		/*}}}*/
-		/*{{{  S_ANYPROCTYPE*/
+		/*{{{  S_ANYPROCTYPE S_ANYMOBILETYPE*/
 	case S_ANYPROCTYPE:
-		/* parsing "MOBILE.PROC name" */
+	case S_ANYMOBILETYPE:
+		/* parsing "MOBILE.PROC name" or "MOBILE.ANY" name */
 		{
+			const int s = symb;
 			treenode *name;
 
 			nextsymb ();
-			name = newleafnode (S_ANYPROCTYPE, locn);
+			name = newleafnode (s, locn);
 			return name;
 		}
 		/*}}}*/
@@ -4894,12 +4891,14 @@ printtreenl (stderr, 4, t);
 		}
 		break;
 		/*}}}*/
-		/*{{{  any mobile process*/
+		/*{{{  any mobile process / any mobile */
 	case S_ANYPROCTYPE:
+	case S_ANYMOBILETYPE:
 		{
+			const int s = symb;
 			valparam = N_PARAM;
 			nextsymb ();
-			t = newleafnode (S_ANYPROCTYPE, locn);
+			t = newleafnode (s, locn);
 		}
 		break;
 		/*}}}*/
@@ -6470,6 +6469,7 @@ fprintf (stderr, "rspecification...\n");
 #ifdef MOBILES
 	case S_ANYCHANTYPE:	/* scoop-up in rspecifier() */
 	case S_ANYPROCTYPE:
+	case S_ANYMOBILETYPE:
 #endif
 	case S_PORT:
 	case S_TIMER:
