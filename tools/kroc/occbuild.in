@@ -557,23 +557,16 @@ def main(args):
 	
 	global patterns, build_shared
 	patterns = {
-		"libname": "%s",
-		"link": "-l%s",
+		"libname": "occam_%s",
+		"link": "-loccam_%s",
 		"rtlink": "-l%s",
-		"so": "lib%s.so",
-		"a": "lib%s.a",
+		"so": "liboccam_%s.so",
+		"a": "liboccam_%s.a",
 		}
 	if target_os.startswith("CYGWIN"):
-		# On Cygwin we must make sure that the DLL name is not the same
-		# as the occam library, since the Cygwin linker will get
-		# confused about having both a .lib and a .dll.
-		patterns["libname"] = "vt%s"
-		patterns["link"] = "-lvt%s"
-		patterns["so"] = "vt%s.dll"
-		patterns["a"] = "libvt%s.a"
 		build_shared = False
 	elif target_os == "Darwin":
-		patterns["so"] = "lib%s.dylib"
+		patterns["so"] = "liboccam_%s.dylib"
 		build_shared = False
 
 	if mode == "object":
