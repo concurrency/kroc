@@ -396,7 +396,7 @@ do
 		#}}}
 		#{{{  -l*  adding library (arch-specific)
 	-l*)
-		opts_libs="$opts_libs $option"
+		opts_libs="$opts_libs ${option/-l/-loccam_}"
 		;;
 		#}}}
 		#{{{  -L*  adding path to libraries
