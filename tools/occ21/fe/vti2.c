@@ -591,6 +591,7 @@ PRIVATE const vti_keyword_t vti_keyword_table[] =
 	, {S_EMPTY, "EMPTY", NULL, "EMPTY", NULL, TYPENODE, CC}
 	, {S_ADDROF, "ADDROF", NULL, NULL, NULL, MOPNODE, CC}
 	, {S_HWADDROF, "HWADDROF", NULL, NULL, NULL, MOPNODE, CC}
+	, {S_ANYMOBILETYPE, "MOBILE.ANY", NULL, "ANYMOBILETYPE", NULL, LEAFNODE, CC}
 };
 
 #define MAX_TAG ((int)(sizeof(vti_keyword_table)/sizeof(vti_keyword_table[0])))

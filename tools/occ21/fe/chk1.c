@@ -321,7 +321,7 @@ fflush (stdout);
 			return TRUE;
 			/*}}} */
 #ifdef MOBILES
-			/*{{{  any channel-type protocol*/
+			/*{{{  any channel-type protocol */
 		case S_ANYCHANTYPE:
 			{
 				INT32 fattr = (LeafLinkOf (fprot) ? TypeAttrOf (LeafLinkOf (fprot)) : 0);
@@ -330,10 +330,11 @@ fflush (stdout);
 				return (fattr == aattr);
 			}
 			/*}}}*/
-			/*{{{  any mobile-process protocol*/
+			/*{{{  any mobile-process protocol / any mobile protocol */
 		case S_ANYPROCTYPE:
+		case S_ANYMOBILETYPE:
 			/*}}}*/
-			return 1;
+			return TRUE;
 			/*{{{  named protocol */
 #endif
 		case N_TPROTDEF:
@@ -524,6 +525,7 @@ printtreenl (stderr, 4, ftype);
 					return TRUE;
 				}
 			case S_ANYPROCTYPE:
+			case S_ANYMOBILETYPE:
 				/* always good */
 				return TRUE;
 				/*}}}*/
@@ -720,6 +722,10 @@ printtreenl (stderr, 4, atype);
 				/*}}}*/
 			} else if ((TagOf (ftype) == S_ANYPROCTYPE) && isdynmobileproctypetype (atype)) {
 				/*{{{  allow if the formal is ANYPROCTYPE (MOBILE.PROC) and the actual is a mobile process*/
+				return TRUE;
+				/*}}}*/
+			} else if ((TagOf (ftype) == S_ANYMOBILETYPE)) {
+				/*{{{  allow if the formal is ANYMOBILETYPE*/
 				return TRUE;
 				/*}}}*/
 			}
@@ -2085,7 +2091,7 @@ fprintf (stderr, "typecheck_main(): S_NEG: checking for UDO tempname = [%s]\n", 
 
 			/* extra stuff in use4 checks what sort of MOBILE it is, and does appropriate stuff */
 			primitive_type = TagOf (follow_user_type (t));
-			if ((primitive_type != S_MOBILE) && (primitive_type != S_ANYCHANTYPE) && (primitive_type != S_ANYPROCTYPE)) {
+			if ((primitive_type != S_MOBILE) && (primitive_type != S_ANYCHANTYPE) && (primitive_type != S_ANYPROCTYPE) && (primitive_type != S_ANYMOBILETYPE)) {
 				t = undeclaredp;
 				chk_invtype (chklocn, S_DEFINED);
 			} else {
@@ -4378,6 +4384,17 @@ printf ("\n");
 				return l2;
 			}
 
+			/* any-mobile-type checks */
+			if ((TagOf (l) == S_ANYMOBILETYPE) && (TagOf (l2) == S_ANYPROCTYPE)) {
+				return l;
+			} else if ((TagOf (l) == S_ANYMOBILETYPE) && (TagOf (l2_utype) == S_MOBILE)) {
+				/* assignment to any-proc-type from mobile proc-type */
+				return l;
+			} else if ((TagOf (l2) == S_ANYMOBILETYPE) && (TagOf (l_utype) == S_MOBILE)) {
+				/* assignment from any-proc-type to mobile proc-type */
+				return l2;
+			}
+
 			if ((TagOf (l_utype) == S_MOBILE) && (TagOf (l2_utype) != S_MOBILE)) {
 				/* typesequivalent doesn't do RECORDs, but they've been type-checked already */
 				if ((TagOf (MTypeOf (l_utype)) == S_RECORD) && (TagOf (l2_utype) == S_RECORD)) {
@@ -6116,9 +6133,10 @@ printtreenl (stderr, 4, typeptr);
 			return (tptr);
 			/*}}} */
 #ifdef MOBILES
-			/*{{{  ANYCHANTYPE, ANYPROCTYPE*/
+			/*{{{  ANYCHANTYPE, ANYPROCTYPE, ANYMOBILETYPE */
 		case S_ANYCHANTYPE:
 		case S_ANYPROCTYPE:
+		case S_ANYMOBILETYPE:
 			return tptr;
 			/*}}}*/
 			/*{{{  MOBILE */
@@ -6396,6 +6414,7 @@ printtreenl (stderr, 4, pptr);
 #else
 				case S_ANYCHANTYPE:
 				case S_ANYPROCTYPE:
+				case S_ANYMOBILETYPE:
 #endif
 					return (tptr);
 #ifdef MOBILES

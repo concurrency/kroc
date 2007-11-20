@@ -431,6 +431,7 @@
 #define CHK_BUFCHAN_NEGATIVE		328
 #define CHK_BUFCHAN_TOOBIG		329
 
+#define CHK_ANYMOBILETYPE_MISMATCH	330
 
 /*}}}*/
 /*{{{  error macros */

@@ -170,6 +170,10 @@
 /*{{{  RMoX interrupt handling */
 #define PD_WAIT_FOR_INTERRUPT	110
 /*}}}*/
+/*{{{  MOBILE manipulation */
+#define PD_BIND_MOBILE		111
+#define PD_BIND_MOBILE_HW	112
+/*}}}*/
 
 /*{{{  Predefines for the configuration stuff */
 /*{{{  Predefines for the configurer */

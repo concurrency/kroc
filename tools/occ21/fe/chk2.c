@@ -161,6 +161,7 @@ PRIVATE void cdefsimpleprotocol (treenode * pptr, void *voidptr)
 #ifdef MOBILES
 	case S_ANYCHANTYPE:
 	case S_ANYPROCTYPE:
+	case S_ANYMOBILETYPE:
 #endif
 		break;
 	case S_COLON2:
@@ -662,6 +663,17 @@ printtreenl (stderr, 4, iptr);
 				chkreport (CHK_ANYPROCTYPE_SIMPLEINPUT, chklocn);
 			} else if (!isdynmobileproctypetype (type)) {
 				chkreport (CHK_ANYPROCTYPE_MISMATCH, chklocn);
+			}
+			/*}}}*/
+		} else if (TagOf (pptr) == S_ANYMOBILETYPE) {
+			/*{{{  i/o on a "MOBILE.ANY" protocol*/
+			/* check that the RHS is a mobile */
+			treenode *const type = typecheck (iptr, unknownnodeptr);
+
+			if (TagOf (type) == S_ANYMOBILETYPE) {
+				/* good */
+			} else if (TagOf (follow_user_type (type)) != S_MOBILE) {
+				chkreport (CHK_ANYMOBILETYPE_MISMATCH, chklocn);
 			}
 			/*}}}*/
 		} else if ((TagOf (iptr) == N_DECL) && (TagOf (NTypeOf (iptr)) == S_MOBILE) && (TagOf (follow_user_type (pptr)) != S_MOBILE)) {

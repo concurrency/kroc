@@ -582,7 +582,9 @@ predeflines[] =
 	  { CC, PD_WAIT_FOR_INTERRUPT, "P(VI,VI,I):WAIT.FOR.INTERRUPT"}
 	, /*}}}*/
 	  /*{{{  mobile manipulation by CGR */
-	  /*}}}*/
+	  { CC, PD_BIND_MOBILE, "P(a,VI):BIND.MOBILE"}
+	, { CC, PD_BIND_MOBILE_HW, "P(a,VI):BIND.MOBILE.HW"}
+	, /*}}}*/
 		/*{{{  configurer attributes */
 	  { CN, PD_ATTR_LINK, ". [4]E :link"}
 	, { CN, PD_ATTR_TYPE, ". []Y :type"}
@@ -705,6 +707,9 @@ PRIVATE void predecode (char *l, const char *s)
 			break;
 		case 'S':
 			expand = "SUSPEND ";
+			break;
+		case 'a':
+			expand = "MOBILE.ANY";
 			break;
 #endif
 		case 'Y':

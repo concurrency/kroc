@@ -1158,6 +1158,8 @@ PUBLIC const char *chkmessagestring (const int n)
 		return ("cannot declare parameters of a PROTOCOL type");
 	case CHK_PARAM_MISSING_TYPE:
 		return ("missing type for parameter");
+	case CHK_ANYMOBILETYPE_MISMATCH:
+		return ("can only communicate mobiles on a CHAN OF MOBILE.ANY");
 		/*}}}*/
 		/*{{{  buffered channel errors*/
 	case CHK_BUFCHAN_NOTCONST:

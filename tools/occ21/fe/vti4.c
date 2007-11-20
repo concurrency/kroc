@@ -182,6 +182,7 @@ PUBLIC BOOL isscalartype (const int t)
 	case S_MOBILE:
 	case S_ANYCHANTYPE:
 	case S_ANYPROCTYPE:
+	case S_ANYMOBILETYPE:
 #endif	/* MOBILES */
 	CASE_CONFIG_TYPE case S_TIMER:
 		return (TRUE);
@@ -227,7 +228,7 @@ PUBLIC BOOL isdynamicmobiletype (treenode *const t)
 fprintf (stderr, "vti4: isdynamicmobiletype, t = ");
 printtreenl (stderr, 4, t);
 #endif
-	if ((TagOf (t) == S_ANYCHANTYPE) || (TagOf (t) == S_ANYPROCTYPE)) {
+	if ((TagOf (t) == S_ANYCHANTYPE) || (TagOf (t) == S_ANYPROCTYPE) || (TagOf (t) == S_ANYMOBILETYPE)) {
 		dynmob = TRUE;
 	} else if (TagOf (t) != S_MOBILE) {
 		dynmob = FALSE;
@@ -312,6 +313,7 @@ PUBLIC BOOL istypetag (const int tag)
 		case S_MOBILE:
 		case S_ANYCHANTYPE:
 		case S_ANYPROCTYPE:
+		case S_ANYMOBILETYPE:
 	#endif
 	case S_ARRAY:
 	case N_TYPEDECL:
@@ -343,6 +345,7 @@ PUBLIC int bytesinscalar (const int tag)
 		return 8;
 #ifdef MOBILES
 	case S_MOBILE:
+	case S_ANYMOBILETYPE:
 		/* happens if we're called from processing something like "LD x", where x is a MOBILE var.. */
 		/* only interested in the word quantity.. */
 		return (1 << WSH);

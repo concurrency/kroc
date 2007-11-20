@@ -462,4 +462,6 @@
 #define S_EMPTY				371 /* EMPTY type decorator */
 #define S_ADDROF			372
 #define S_HWADDROF			373
+#define S_ANYMOBILETYPE			374 /* special for pre-defined PROCs taking any MOBILE */
+
 

@@ -478,6 +478,11 @@ printtreenl (stderr, 4, DNameOf(ARTypeOf (MTypeOf (NTypeOf (tptr)))));
 		write_descstring ("MOBILE.PROC", line_len);
 		break;
 		/*}}}*/
+		/*{{{  MOBILE.ANY (ANYMOBILETYPE)*/
+	case S_ANYMOBILETYPE:
+		write_descstring ("MOBILE.ANY", line_len);
+		break;
+		/*}}}*/
 #endif
 		/*{{{  ARRAY */
 	case S_ARRAY:
