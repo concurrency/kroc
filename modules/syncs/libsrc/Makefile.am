@@ -39,3 +39,5 @@ clean-local:
 	$(OCCBUILD) --clean $(libs)
 
 SUFFIXES = .lib .inc
+
+crew.lib: semaphore.lib
