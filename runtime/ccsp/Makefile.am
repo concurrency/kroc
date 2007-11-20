@@ -64,7 +64,12 @@ endif
 
 install-exec-local: libccsp.a @LIBCCSP@
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)"
-	for x in libccsp.a @LIBCCSP@; do $(INSTALL_DATA) $$x "$(DESTDIR)$(libdir)/$$x"; done
+	$(INSTALL_DATA) libccsp.a "$(DESTDIR)$(libdir)/libccsp.a"
+if BUILD_SHARED
+	$(INSTALL_DATA) @LIBCCSP@ "$(DESTDIR)$(libdir)/@LIBCCSP@"
+else
+	rm -f "$(DESTDIR)$(libdir)/@LIBCCSP@"
+endif
 
 EXTRA_DIST = README INSTALL COPYRIGHT preconfigure
 DISTCLEANFILES = libccsp.a @LIBCCSP@
