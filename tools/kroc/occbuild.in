@@ -570,7 +570,7 @@ def main(args):
 		patterns["libname"] = "vt%s"
 		patterns["link"] = "-lvt%s"
 		patterns["so"] = "vt%s.dll"
-		patterns["a"] = "vt%s.a"
+		patterns["a"] = "libvt%s.a"
 		build_shared = False
 	elif target_os == "Darwin":
 		patterns["so"] = "lib%s.dylib"
