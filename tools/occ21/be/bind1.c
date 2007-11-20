@@ -1805,7 +1805,7 @@ printtreenl (stderr, 4, tptr);
 			/* Workspace requirement is : local 0 and local 1 for housekeeping,
 			   plus the space required by each branch of the PAR */
 			{
-				const BOOL priparflag = TagOf (tptr) == S_PRIPAR;
+				const BOOL priparflag = FALSE; /* TagOf (tptr) == S_PRIPAR; */
 				treenode *parlist = CBodyOf (tptr);
 				INT32 maxwsp;
 
