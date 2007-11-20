@@ -3619,10 +3619,17 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 		gensecondary (I_SETPRI);
 		break;
 	case PD_INCPRI:
-		gensecondary (I_GETPRI);
-		genprimary (I_ADC, -1);
-		gensecondary (I_SETPRI);
-		break;
+		{
+			const int skiplab = newlab ();
+			gensecondary (I_GETPRI);
+			gensecondary (I_DUP);
+			genbranch (I_CJ, skiplab);
+			genprimary (I_ADC, -1);
+			gensecondary (I_SETPRI);
+			setlab (skiplab);
+			throw_the_result_away ();
+			break;
+		}
 	case PD_DECPRI:
 		gensecondary (I_GETPRI);
 		genprimary (I_ADC, 1);

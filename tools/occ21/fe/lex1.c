@@ -540,6 +540,8 @@ predeflines[] =
 	, { CC, PD_SETPRI, "P(VI):SETPRI"}
 	, { CC, PD_INCPRI, "P():INCPRI"}
 	, { CC, PD_DECPRI, "P():DECPRI"}
+	, { CC, PD_INCPRI, "P():RAISE.PRIORITY"}
+	, { CC, PD_DECPRI, "P():LOWER.PRIORITY"}
 	, /*}}}  */
 	  /*{{{  mobile chantype allocation stuff added by frmb */
 	  { CC, PD_ALLOC_CHAN_TYPE, "P(C,C):ALLOC.CHAN.TYPE"}		/* this says CHAN, CHAN; but it's not.  real checks in chk1/chk4 */
