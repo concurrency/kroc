@@ -32,6 +32,11 @@ endif
 
 install-exec-local: libkrocif.a @LIBKROCIF@
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)"
-	for x in libkrocif.a @LIBKROCIF@; do $(INSTALL_DATA) $$x "$(DESTDIR)$(libdir)/$$x"; done
+	$(INSTALL_DATA) libkrocif.a "$(DESTDIR)$(libdir)/libkrocif.a"
+if BUILD_SHARED
+	$(INSTALL_DATA) @LIBKROCIF@ "$(DESTDIR)$(libdir)/@LIBKROCIF@"
+else
+	rm -f "$(DESTDIR)$(libdir)/@LIBKROCIF@"
+endif
 
 CLEANFILES = @LIBKROCIF@ libkrocif.a *~
