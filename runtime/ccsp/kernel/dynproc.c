@@ -632,9 +632,7 @@ MESSAGE ("debug: not one of my output channels (do_ccsp_suspendproc)\n");
 	*(tp->result) 			= DPROCESS_SUSPENDED;
 	xx_wptr 			= (word *)tp->holding_wptr;
 	xx_wptr[Iptr] 			= tp->holding_raddr;
-	#ifdef PROCESS_PRIORITY
 	xx_wptr[Priofinity] 		= tp->holding_priofinity;
-	#endif
 	do_queue_process (xx_wptr);
 	*result = 0;
 	return;
