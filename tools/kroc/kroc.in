@@ -75,6 +75,7 @@ host_os="@KROC_HOST_OS@"
 # -kc : cgr-mp CCSP interface
 octranopts="-kc @TRANEXTRAOPTS@ @TENABLEMP@"
 ccopts="@ARCH_DEFS@"
+deplibs=""
 ocllibs=""
 ocrtslibs="-lm @DLOPTLIB@ @DEXTLIB@"
 extcflags="@ARCH_DEFS@ @DSYSOPTS@ @EXTCCEXTRAOPTS@"
@@ -995,7 +996,7 @@ parse_pragmas () {
 		opt="-l$lib"
 
 		add=1
-		for used in $ocllibs; do
+		for used in $deplibs; do
 			if [ "$used" = "$opt" ] ; then
 				add=0
 			fi
@@ -1004,7 +1005,7 @@ parse_pragmas () {
 			if [ "$verbose" ] ; then
 				printf '%s: Using library %s\n' "$progname" "$lib" 1>&2
 			fi
-			ocllibs="$ocllibs $opt"
+			deplibs="$deplibs $opt"
 		fi
 	done
 
@@ -1260,6 +1261,14 @@ for src in $srcs; do
 	parse_pragmas "$tcefile"
 
 done
+
+#{{{  add deplibs to ocllibs
+# We have to add the libraries in reverse order to get the link order right on
+# platforms that care about that (such as Cygwin).
+for lib in $deplibs; do
+	ocllibs="$lib $ocllibs"
+done
+#}}}
 
 if [ $defaultlibraries -eq 1 ]; then
 	ocllibs="$ocllibs -loccam8"
