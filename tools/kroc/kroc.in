@@ -993,7 +993,7 @@ parse_pragmas () {
 	# already been used.
 	libs=$($octran -C "$tcefile" | awk '/^\.USELIB / { ORS=" "; print $2 }')
 	for lib in $libs; do
-		opt="-l$lib"
+		opt="-loccam_$lib"
 
 		add=1
 		for used in $deplibs; do
@@ -1271,7 +1271,7 @@ done
 #}}}
 
 if [ $defaultlibraries -eq 1 ]; then
-	ocllibs="$ocllibs -loccam8"
+	ocllibs="$ocllibs -loccam_occam8"
 fi
 
 if [ "X$link" = "X" ]; then
@@ -1293,21 +1293,7 @@ if [ $makelib ]; then
 elif [ $skip_link ]; then
 	test
 else
-	if [ "$host_os" = "cygwin" ]; then
-		#{{{  fudge libraries for cygwin
-		local_ocllibs=""
-		for lib in $ocllibs; do
-			libname=$(printf '%s' "$lib" | $SED -e 's/^-l//g')
-			local_ocllibs="$local_ocllibs -lvt$libname"
-		done
-
-		local_ocrts="$ocrts"
-		#}}}
-	else
-		local_ocllibs="$ocllibs"
-		local_ocrts="$ocrts"
-	fi
-	cmd="$cc $ccopts $objs $oclibpath $cincludepath $local_ocllibs $local_ocrts $ocrtslibs $extraccopts -o $efile"
+	cmd="$cc $ccopts $objs $oclibpath $cincludepath $ocllibs $ocrts $ocrtslibs $extraccopts -o $efile"
 fi
 if [ $verbose ]; then
 	printf '%s\n' "$cmd"  1>&2
