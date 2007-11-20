@@ -3423,6 +3423,7 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 		case PD_BIND_MOBILE_HW:
 			mapexp (param[1]);
 			mapexp (param[0]);
+			mapstoreinopd (P_EXP, param[0]);
 			break;
 			/*}}}*/
 		default:
@@ -4387,6 +4388,8 @@ printtreenl (stderr, 4, param[0]);
 		loadmobile_real (param[0]);
 		genprimary (I_LDC, pdno == PD_BIND_MOBILE_HW ? MT_BIND_PHYSICAL : MT_BIND_VIRTUAL);
 		gensecondary (I_MT_BIND);
+		storemobile (param[0]);
+		genmobileunpack (param[0], TRUE, FALSE);
 		break;
 		/*}}}*/
 	default:
