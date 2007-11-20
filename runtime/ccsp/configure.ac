@@ -48,9 +48,6 @@ dnl AC_ARG_ENABLE([ktraces], AS_HELP_STRING([--enable-ktraces],[enable kernel-en
 dnl AC_ARG_ENABLE([dtraces], AS_HELP_STRING([--enable-dtraces],[enable debugging traces (default disabled)]), [enable_dtraces=$enableval], [enable_dtraces=no])
 AC_ARG_ENABLE([dynproc], AS_HELP_STRING([--disable-dynproc],[disable dynamic processes (default enabled)]), [enable_dynproc=$enableval], [enable_dynproc=yes])
 AC_ARG_ENABLE([debug-dynproc], AS_HELP_STRING([--enable-debug-dynproc],[enable dynamic process debugging (default disabled)]), [enable_debug_dynproc=$enableval], [enable_debug_dynproc=no])
-AC_ARG_ENABLE([mobiles], AS_HELP_STRING([--disable-mobiles],[disable MOBILE data types (default enabled)]), [enable_mobiles=$enableval], [enable_mobiles=yes])
-AC_ARG_ENABLE([xrendez], AS_HELP_STRING([--disable-xrendez],[disable extended rendezvous support (default enabled)]), [enable_xrendez=$enableval], [enable_xrendez=yes])
-AC_ARG_ENABLE([process-priority], AS_HELP_STRING([--disable-process-priority],[disable process priorities (default enabled)]), [enable_process_priority=$enableval], [enable_process_priority=yes])
 AC_ARG_ENABLE([pthreads], AS_HELP_STRING([--enable-pthreads],[use pthreads library for blocking syscalls (default disabled)]), [enable_pthreads=$enableval], [enable_pthreads=no])
 AC_ARG_ENABLE([mmap], AS_HELP_STRING([--disable-mmap],[disable mmap() based allocation (default enabled)]), [enable_mmap=$enableval], [enable_mmap=yes])
 AC_ARG_ENABLE([mp], AS_HELP_STRING([--enable-mp],[enable multi-processor support (default disabled)]), [enable_mp=$enableval], [enable_mp=no])
@@ -476,27 +473,6 @@ fi
 #else
 # LIBCCSP=libccsp.so
 #fi
-
-#}}}
-#{{{  misc options (scheduled for removal)
-
-AC_MSG_CHECKING(whether to enable MOBILE data types)
-AC_MSG_RESULT($enable_mobiles)
-if test "$enable_mobiles" = yes; then
- AC_DEFINE([MOBILES],1,[define to support MOBILE data types])
-fi
-
-AC_MSG_CHECKING(whether to enable extended rendezvous)
-AC_MSG_RESULT($enable_xrendez)
-if test "$enable_xrendez" = yes; then
- AC_DEFINE([EXTENDED_RENDEZVOUS],1,[define to enable the extended rendezvous])
-fi
-
-AC_MSG_CHECKING(whether to enable process priorities)
-AC_MSG_RESULT($enable_process_priority)
-if test "$enable_process_priority" = yes; then
- AC_DEFINE([PROCESS_PRIORITY],1,[define to enable process priority])
-fi
 
 #}}}
 #{{{  check and enable multi-processor support

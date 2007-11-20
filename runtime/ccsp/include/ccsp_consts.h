@@ -52,19 +52,11 @@
 #define Temp 		0
 #define Iptr 		-1
 #define Link 		-2
-#ifdef PROCESS_PRIORITY
-	/* extra slot for process priority / process group */
-	#define Priofinity -3
-	#define Pointer -4
-	#define State 	-4
-	#define TLink 	-5
-	#define Time_f 	-6
-#else
-	#define Pointer -3
-	#define State 	-3
-	#define TLink 	-4
-	#define Time_f 	-5
-#endif	/* !PROCESS_PRIORITY */
+#define Priofinity	-3
+#define Pointer		-4
+#define State		-4
+#define TLink		-5
+#define Time_f		-6
 #define	StackPtr	-7	/* for CIF */
 #define BarrierPtr	-8	/* for CIF */
 #define EscapePtr	-9	/* for CIF */

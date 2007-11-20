@@ -122,26 +122,16 @@ mwsyncglock_t 		mwaltlock 			CACHELINE_ALIGN;
 
 	static word the_stackptr;
 
-	#ifdef PROCESS_PRIORITY
-		#define ENTRY_TRACE(X, FMT, args...) \
-			LOAD_ESP (the_stackptr); \
-			MESSAGE ("<enter>   "#X" [0x%x,0x%8.8x,%p,%p,%p,%p] (esp=%8.8x) [%d:%d] ", (unsigned int)PPriority, (unsigned int)PState, Wptr, Fptr, Bptr, Tptr, the_stackptr, \
-					(mdparam1 == 0xffffffff) ? 0 : ((mdparam1 >> 16) & 0xffff), (mdparam1 == 0xffffffff) ? 0 : (mdparam1 & 0xffff)); \
-			if ((MaskedPPriority < 0) || (MaskedPPriority >= MAX_PRIORITY_LEVELS)) { MESSAGE ("b0rked!\n"); ccsp_kernel_exit(0,(int)Wptr); } \
-			MESSAGE ("(" FMT ")\n", ##args)
-		#define ENTRY_TRACE0(X) \
-			LOAD_ESP (the_stackptr); \
-			MESSAGE ("<enter>   "#X" [0x%x,0x%8.8x,%p,%p,%p,%p] (esp=%8.8x) [%d:%d]\n", (unsigned int)PPriority, (unsigned int)PState, Wptr, Fptr, Bptr, Tptr, the_stackptr, \
-					(mdparam1 == 0xffffffff) ? 0 : ((mdparam1 >> 16) & 0xffff), (mdparam1 == 0xffffffff) ? 0 : (mdparam1 & 0xffff))
-	#else	/* !PROCESS_PRIORITY */
-		#define ENTRY_TRACE(X, FMT, args...) \
-			LOAD_ESP (the_stackptr); \
-			MESSAGE ("<enter>   "#X" [%p,%p,%p,%p] (esp=%8.8x) ", Wptr, Fptr, Bptr, Tptr, the_stackptr); \
-			MESSAGE ("(" FMT ")\n", ##args)
-		#define ENTRY_TRACE0(X) \
-			LOAD_ESP (the_stackptr); \
-			MESSAGE ("<enter>   "#X" [%p,%p,%p,%p] (esp=%8.8x)\n", Wptr, Fptr, Bptr, Tptr, the_stackptr)
-	#endif	/* !PROCESS_PRIORITY */
+	#define ENTRY_TRACE(X, FMT, args...) \
+		LOAD_ESP (the_stackptr); \
+		MESSAGE ("<enter>   "#X" [0x%x,0x%8.8x,%p,%p,%p,%p] (esp=%8.8x) [%d:%d] ", (unsigned int)PPriority, (unsigned int)PState, Wptr, Fptr, Bptr, Tptr, the_stackptr, \
+				(mdparam1 == 0xffffffff) ? 0 : ((mdparam1 >> 16) & 0xffff), (mdparam1 == 0xffffffff) ? 0 : (mdparam1 & 0xffff)); \
+		if ((MaskedPPriority < 0) || (MaskedPPriority >= MAX_PRIORITY_LEVELS)) { MESSAGE ("b0rked!\n"); ccsp_kernel_exit(0,(int)Wptr); } \
+		MESSAGE ("(" FMT ")\n", ##args)
+	#define ENTRY_TRACE0(X) \
+		LOAD_ESP (the_stackptr); \
+		MESSAGE ("<enter>   "#X" [0x%x,0x%8.8x,%p,%p,%p,%p] (esp=%8.8x) [%d:%d]\n", (unsigned int)PPriority, (unsigned int)PState, Wptr, Fptr, Bptr, Tptr, the_stackptr, \
+				(mdparam1 == 0xffffffff) ? 0 : ((mdparam1 >> 16) & 0xffff), (mdparam1 == 0xffffffff) ? 0 : (mdparam1 & 0xffff))
 #else	/* !ENABLE_KTRACES */
 	#define ENTRY_TRACE(X, FMT, args...)
 	#define ENTRY_TRACE0(X)
@@ -435,9 +425,7 @@ static TRIVIAL void release_tqnode (sched_t *sched, tqnode_t *tn)
 /*{{{  static TRIVIAL void save_priofinity (sched_t *sched, word *Wptr)*/
 static TRIVIAL void save_priofinity (sched_t *sched, word *Wptr)
 {
-#ifdef PROCESS_PRIORITY
 	Wptr[Priofinity] = sched->priofinity;
-#endif
 }
 /*}}}*/
 /*{{{  empty_batch(batch)*/
@@ -788,7 +776,6 @@ static TEPID void enqueue_far_process (sched_t *sched, word priofinity, word *Wp
 /*{{{  static HOT void enqueue_process (sched_t *sched, word *Wptr)*/
 static HOT void enqueue_process (sched_t *sched, word *Wptr)
 {
-#ifdef PROCESS_PRIORITY
 	word priofinity = Wptr[Priofinity];
 
 	if (sched->priofinity == priofinity) {
@@ -796,9 +783,6 @@ static HOT void enqueue_process (sched_t *sched, word *Wptr)
 	} else {
 		enqueue_far_process (sched, priofinity, Wptr);
 	}
-#else
-	enqueue_process_nopri (sched_t *sched, word *Wptr) {
-#endif
 }
 /*}}}*/
 /*{{{  static HOT int calculate_dispatches (word size)*/
@@ -817,9 +801,7 @@ static HOT void load_curb (sched_t *sched, batch_t *batch, bool remote)
 	sched->curb.size = batch->size & (~BATCH_EMPTIED);
 	
 	sched->dispatches = calculate_dispatches (sched->curb.size);
-#ifdef PROCESS_PRIORITY
 	sched->priofinity = sched->curb.Fptr[Priofinity];
-#endif 
 
 	if (!remote) {
 		reinit_batch_t (batch);
@@ -876,7 +858,6 @@ static WARM word *schedule_point (sched_t *sched, word *Wptr, word *other)
 /*{{{  static WARM word *reschedule_point (sched_t *sched, word *Wptr, word *other)*/
 static WARM word *reschedule_point (sched_t *sched, word *Wptr, word *other)
 {
-#ifdef PROCESS_PRIORITY
 	if (sched->priofinity != other[Priofinity]) {
 		if (PPriority (other[Priofinity]) < PPriority (sched->priofinity)) {
 			enqueue_process (sched, other);
@@ -888,7 +869,6 @@ static WARM word *reschedule_point (sched_t *sched, word *Wptr, word *other)
 			return Wptr;
 		}
 	}
-#endif
 	return schedule_point (sched, Wptr, other);
 }
 /*}}}*/
@@ -3739,9 +3719,7 @@ void kernel_Y_endp (void)
 	ENTRY_TRACE (Y_endp, "%p", ptr);
 
 	if (atw_dec_z (&(ptr[Count]))) {
-		#ifdef PROCESS_PRIORITY
 		ptr[Priofinity] = ptr[SavedPriority];
-		#endif
 		ptr[Iptr]	= ptr[IptrSucc]; /* copy Iptr from top of workspace */
 
 		enqueue_process (sched, ptr);
@@ -4061,7 +4039,6 @@ void kernel_Y_getpas (void)
 	K_STKONE_OUT (sched->priofinity);
 }
 /*}}}*/
-#if defined(PROCESS_PRIORITY)
 /*{{{  void kernel_X_getpri (void)*/
 /*
  *	get process priority
@@ -4072,7 +4049,6 @@ void kernel_Y_getpas (void)
  *	@OUTPUT: 	STACK(1)
  *	@CALL: 		K_GETPRI
  *	@PRIO:		30
- *	@DEPEND:	PROCESS_PRIORITY
  */
 void kernel_X_getpri (void)
 {
@@ -4091,7 +4067,6 @@ void kernel_X_getpri (void)
  *	@OUTPUT: 	NONE
  *	@CALL: 		K_SETPRI
  *	@PRIO:		30
- *	@DEPEND:	PROCESS_PRIORITY
  */
 void kernel_Y_setpri (void)
 {
@@ -4114,7 +4089,6 @@ void kernel_Y_setpri (void)
 	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
-#endif	/* PROCESS_PRIORITY */
 /*}}}*/
 /*{{{  scheduler */
 /*{{{  void kernel_Y_rtthreadinit (void)*/
@@ -4682,7 +4656,6 @@ void kernel_Y_outword (void)
 	kernel_chan_io (CIO_OUTPUT, Wptr, sched, channel_address, pointer, sizeof (word));
 }
 /*}}}*/
-#if defined(EXTENDED_RENDEZVOUS)
 /*{{{  void kernel_X_xable (void)*/
 /*
  *	called to synchronise with outputting process
@@ -4694,7 +4667,6 @@ void kernel_Y_outword (void)
  *	@OUTPUT: 	NONE
  *	@CALL: 		K_XABLE
  *	@PRIO:		70
- *	@DEPEND:	EXTENDED_RENDEZVOUS
  */
 void kernel_X_xable (void)
 {
@@ -4737,7 +4709,6 @@ void kernel_X_xable (void)
  *	@OUTPUT: 	NONE
  *	@CALL: 		K_XEND
  *	@PRIO:		70
- *	@DEPEND:	EXTENDED_RENDEZVOUS
  */
 void kernel_X_xend (void)
 {
@@ -4767,7 +4738,6 @@ void kernel_X_xend (void)
  */
 BUILD_CHANNEL_COUNTED_IO (Y_xin, 0, CIO_EXTENDED | CIO_INPUT)
 /*}}}*/
-#endif	/* EXTENDED_RENDEZVOUS */
 /*{{{  Y_mt_in */
 /*
  *	@SYMBOL:	Y_mt_in
@@ -6437,9 +6407,7 @@ fprintf (stderr, "kernel_Y_mwenb(): 0x%8.8x: bar = 0x%8.8x: rc = %d, ec = %d, dc
 				temp1 = ((mwsyncwait_t *)temp_ptr)->priority;
 				currentp = (word *)((mwsyncwait_t *)temp_ptr)->wptr;
 
-				#ifdef PROCESS_PRIORITY
 				currentp[Priofinity] = temp1; /* CGR FIXME: do something else */
-				#endif
 				enqueue_process (sched, currentp);
 
 				dmem_release (temp_ptr);

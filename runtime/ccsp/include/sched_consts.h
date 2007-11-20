@@ -88,11 +88,7 @@
 #define RUNQUEUE_PENDING 	0x2
 
 /* priority defines */
-#ifdef PROCESS_PRIORITY
-	#define MAX_PRIORITY_LEVELS (32)
-#else
-	#define MAX_PRIORITY_LEVELS (1)
-#endif
+#define MAX_PRIORITY_LEVELS 	(32)
 
 #endif	/* !__SCHED_CONSTS_H */
 

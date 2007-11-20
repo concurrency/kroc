@@ -204,9 +204,7 @@ static void bsc_cleanup_job (void *arg)
 {
 	bsc_batch_t *job = (bsc_batch_t *) arg;
 
-	#if defined (PROCESS_PRIORITY)
 	job->wptr[Priofinity] 	= job->priofinity;
-	#endif
 	job->wptr[Iptr] 	= job->bsc.iptr;
 	
 	if (job->bsc.adjust != 0) {
