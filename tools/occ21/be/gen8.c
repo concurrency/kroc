@@ -2990,6 +2990,7 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			/*}}} */
 			/*{{{  GETPRI SETPRI INCPRI DECPRI  for process priority */
 		case PD_GETPRI:
+			mapstoreinopd (P_EXP, param[0]);
 			break;
 		case PD_SETPRI:
 			mapexp (param[0]);
@@ -3399,6 +3400,7 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			/*}}}*/
 			/*{{{  GETAFF SETAFF  for processor affinity */
 		case PD_GETAFF:
+			mapstoreinopd (P_EXP, param[0]);
 			break;
 		case PD_SETAFF:
 			mapexp (param[0]);
@@ -3613,6 +3615,7 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 		/*{{{  GETPRI / SETPRI / INCPRI / DECPRI */
 	case PD_GETPRI:
 		gensecondary (I_GETPRI);
+		storeinopd (P_EXP, param[0], 0, MAXREGS - 1);
 		break;
 	case PD_SETPRI:
 		texp (param[0], MANY_REGS);
@@ -4365,6 +4368,7 @@ printtreenl (stderr, 4, param[0]);
 		/*{{{  GETAFF / SETAFF */
 	case PD_GETAFF:
 		gensecondary (I_GETAFF);
+		storeinopd (P_EXP, param[0], 0, MAXREGS - 1);
 		break;
 	case PD_SETAFF:
 		texp (param[0], MANY_REGS);
@@ -4384,8 +4388,7 @@ printtreenl (stderr, 4, param[0]);
 		texp (param[1], MANY_REGS);
 		texp (param[0], MANY_REGS);
 		genwaitint ();
-		texpopd (P_PTR, param[2], MANY_REGS - 1);
-		genprimary (I_STNL, 0);
+		storeinopd (P_EXP, param[2], 0, MAXREGS - 1);
 		break;
 		/*}}}*/
 		/*{{{  BIND.MOBILE / BIND.MOBILE.HW */

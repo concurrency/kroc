@@ -20,7 +20,7 @@
 --	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 --
 
-VAL []BYTE VERSION IS "20070920.10":
+VAL []BYTE VERSION IS "20071120.15":
 
 PROTOCOL P.SETUP IS INT; INT; INT: -- runs, workers, ops.per.run
 
@@ -1063,7 +1063,7 @@ PROC aff.switch (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results
       SEQ i = 0 FOR BYTESIN(INT) * 8
         SEQ
           SETAFF (1 << i)
-          aff := GETAFF ()
+          GETAFF (aff)
           IF
             aff <> 0
               count := count + 1
@@ -1074,7 +1074,7 @@ PROC aff.switch (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results
       SEQ i = 0 FOR BYTESIN(INT) * 8
         SEQ
           SETAFF (1 << i)
-          aff := GETAFF ()
+          GETAFF (aff)
           IF
             aff <> 0
               SEQ
