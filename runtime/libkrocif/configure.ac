@@ -47,6 +47,7 @@ case "$host_os" in
 cygwin*)
  build_shared="no"
  LIBKROCIF=""
+ AC_DEFINE([NO_WEAK_SYMBOLS],1,[define if weak symbols are unsupported])
  ;;
 *Darwin* | *darwin*)
  build_shared="no"
