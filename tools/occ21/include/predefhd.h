@@ -113,8 +113,8 @@
 /*{{{  Added by frmb for priority handling */
 #define PD_GETPRI		81	/* get process priority */
 #define PD_SETPRI		82	/* set process priority */
-#define PD_INCPRI		83	/* increment process priority */
-#define PD_DECPRI		84	/* decrement process priority */
+#define PD_INCPRI		83	/* raise process priority */
+#define PD_DECPRI		84	/* lower process priority */
 /*}}}  */
 /*{{{  Added by frmb for channel-type allocation handling */
 #define PD_ALLOC_CHAN_TYPE	85	/* manufacture a dynamic mobile chan type */
