@@ -3472,7 +3472,7 @@ void kernel_X_mrelease (void)
  *	@SYMBOL:	Y_mt_bind
  *	@TYPE:		RR
  *	@INPUT:		REG(3)
- *	@OUTPUT: 	NONE
+ *	@OUTPUT: 	REG(1)
  *	@CALL: 		K_MT_BIND
  *	@PRIO:		50
  */
@@ -3514,8 +3514,6 @@ void kernel_Y_mt_bind (void)
 			}
 
 			mt->data = virt_addr;
-
-			K_ZERO_OUT ();
 		} else {
 			mobile_type_error ();
 		}
@@ -3523,7 +3521,7 @@ void kernel_Y_mt_bind (void)
 		mobile_type_error ();
 	}
 
-	K_ZERO_OUT ();
+	K_ONE_OUT (ptr);
 }
 /*}}}*/
 /*}}}*/
