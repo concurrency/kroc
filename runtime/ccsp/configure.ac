@@ -446,6 +446,9 @@ AC_SEARCH_LIBS(dlsym, dl, dynprocs_supported=yes, dynprocs_supported=no)
 AC_MSG_CHECKING(whether dynamic procs are supported)
 AC_MSG_RESULT($dynprocs_supported)
 if test "$dynprocs_supported" = yes; then
+ if test "$rmox" != ""; then
+   enable_dynproc=no
+ fi
  AC_MSG_CHECKING(whether to enable dynamic processes)
  AC_MSG_RESULT($enable_dynproc)
  if test "$enable_dynproc" = yes; then
