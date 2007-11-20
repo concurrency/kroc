@@ -36,20 +36,29 @@
 /*}}}*/
 /*{{{  local/global vars*/
 
-#ifdef __GNUC__
-#define __WEAK __attribute__ ((weak))
-#else
+#if !defined(__GNUC__)
 #warning "Unable to define weak symbols"
-#define __WEAK
+#define NO_WEAK_SYMBOLS
 #endif
 
-__WEAK void _occam_start (void) {}	/* occam entry point */
+#ifdef NO_WEAK_SYMBOLS
+#define __EXTERN_FUNCTION(X) extern X;
+#define __EXTERN_VARIABLE(X) extern X;
+#else
+#define __WEAK __attribute__ ((weak))
+#define __EXTERN_FUNCTION(X) __WEAK X {}
+#define __EXTERN_VARIABLE(X) X __WEAK = 0;
+#endif
 
-word _wsbytes __WEAK = 0;		/* occam workspace size */
-word _vsbytes __WEAK = 0;		/* occam vectorspace size */
-word _msbytes __WEAK = 0;		/* occam mobilespace size */
-int _occam_tlp_iface __WEAK = 0;	/* translator added description of the top-level process */
-int _occam_errormode __WEAK = 0;	/* non-zero for STOP errormode */
+/* Things that will be defined by the program we're linked into. */
+
+__EXTERN_FUNCTION(void _occam_start (void))	/* occam entry point */
+
+__EXTERN_VARIABLE(word _wsbytes)		/* occam workspace size */
+__EXTERN_VARIABLE(word _vsbytes)		/* occam vectorspace size */
+__EXTERN_VARIABLE(word _msbytes)		/* occam mobilespace size */
+__EXTERN_VARIABLE(int _occam_tlp_iface)		/* translator added description of the top-level process */
+__EXTERN_VARIABLE(int _occam_errormode)		/* non-zero for STOP errormode */
 
 static byte *ws, *vs;
 static byte *ms;
