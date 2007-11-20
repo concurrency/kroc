@@ -2003,11 +2003,11 @@ kroc_archlibdir="$INSTALL_DIR$kroc_archlibdir"
 kroc_archincdir="$INSTALL_DIR$kroc_archincdir"
 kroc_mandir="$INSTALL_DIR$kroc_mandir"
 kroc_krocdir="$INSTALL_DIR$kroc_krocdir"
-kroc_kroc_examples="$kroc_krocdir/examples"
+kroc_kroc_examples="${INSTALL_DIR}/lib/kroc/examples"
 kroc_kroc_vtlib="$kroc_krocdir/vtlib"
 kroc_kroc_vtinclude="$kroc_krocdir/vtinclude"
 kroc_kroc_doc="$kroc_krocdir/doc"
-kroc_kroc_cgtests="${INSTALL_DIR}/lib/kroc/examples/cgtests"
+kroc_kroc_cgtests="$kroc_kroc_examples/cgtests"
 
 #}}}
 #{{{  pre-release messages
