@@ -19,14 +19,14 @@
 
 --** @module occam8
 
+#IF NOT DEFINED(OCCBUILD.KROC)
+
 #OPTION "V"  -- no vector space
 #COMMENT "Floating point maths library, V1.1 27/03/90"
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
-#IF DEFINED(OCCBUILD.TVM) 
 #PRAGMA TRANSLATE COS "COS%O"
-#ENDIF
 
 REAL32 FUNCTION COS (VAL REAL32 X)
 
@@ -95,3 +95,5 @@ REAL32 FUNCTION COS (VAL REAL32 X)
                 --}}}
     RESULT RWork
 :
+
+#ENDIF
