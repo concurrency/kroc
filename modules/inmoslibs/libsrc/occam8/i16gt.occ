@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD > 16)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libs, no vector space
 #COMMENT "T8 compiler library, V1.1 21/02/89"
@@ -32,3 +34,5 @@
 ---  converted to functions 26jan87 --- PWT
 BOOL FUNCTION INT16GT (VAL INT16 A, B) IS (INT A) > (INT B) :
 --}}}
+
+#ENDIF

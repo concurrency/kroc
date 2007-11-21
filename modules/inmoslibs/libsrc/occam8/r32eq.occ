@@ -19,6 +19,10 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
+#IF DEFINED(TARGET.HAS.FPU)
+
 --{{{  #options and #comments
 #OPTION "E W V"  -- no compiler libs, full ASMs, no vector space
 #COMMENT "T8 compiler library, V1.3 15/06/90"
@@ -49,3 +53,50 @@ BOOL FUNCTION REAL32EQ (VAL REAL32 X, Y)
     RESULT result
 :
 --}}}
+
+#ELSE -- !TARGET.HAS.FPU
+
+--{{{  #options and #comments
+#OPTION "W V"  -- full ASMs, no vector space
+#COMMENT "TA compiler library, V1.4 27/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE REAL32EQ "REAL32EQ%O"
+
+--{{{  
+BOOL FUNCTION REAL32EQ (VAL REAL32 X, Y)
+
+  --{{{  history
+  -- Beta-3 (11may87) --- DES
+  -- New version -- faster -- for T4 (11may87) DES
+  -- V1.1, 21-Feb-89
+  -- V1.2, 24-Feb-89
+  -- Port to new compiler (oc); V1.3, 7-Apr-90 SRH
+  -- V1.4, 27-Nov-92 SRH; bug fix TS/1962 to change behaviour when one or
+  -- both arguments is NaN - NaNs should always compare FALSE.
+  --}}}
+
+  BOOL equal.if.ordered :
+  VALOF
+    --{{{  ASM
+    ASM
+      LDAB  Y, X
+      DIFF
+      CJ :equal
+      LDAB  Y, X
+      OR
+      MINT
+      NOT
+      AND     -- now is equal to 0 <=> both zeroes - i.e. at most sign bits set
+      :equal
+      EQC 0
+      ST equal.if.ordered
+    --}}}
+    RESULT (equal.if.ordered AND ORDERED(X, Y))
+:
+--}}}
+
+#ENDIF -- !TARGET.HAS.FPU
+
+#ENDIF

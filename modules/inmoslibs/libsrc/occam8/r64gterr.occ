@@ -1,0 +1,87 @@
+
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE REAL64GTERR "REAL64GTERR%CHK"
+
+--{{{  
+BOOL FUNCTION REAL64GTERR (VAL REAL64 X, Y)
+
+  -- Beta-2 (27feb87)
+
+  BOOL bool :
+  VALOF
+    --{{{  
+    VAL [2]INT X RETYPES X :
+    VAL [2]INT Y RETYPES Y :
+    VAL low  IS 0 :
+    VAL high IS 1 :
+    INT MagX :
+    INT MagY :
+    SEQ
+      VAL DRealInf.high IS #7FF00000 :
+      IF
+        ((X [high] /\ DRealInf.high) = DRealInf.high) OR
+           ((Y [high] /\ DRealInf.high) = DRealInf.high)
+          CAUSEERROR()
+        TRUE
+          SKIP
+      MagX := X [high] /\ #7FFFFFFF
+      MagY := Y [high] /\ #7FFFFFFF
+      IF
+        --{{{  X and Y have different signs
+        (X [high] >< Y [high]) < 0       -- Still infinities but no NaNs
+          --Signs are different hence test Y < 0 and not both 0
+          bool := (Y [high] < 0) AND
+                  ((((MagX PLUS MagY) \/ X [low]) \/ Y [low]) <> 0)
+        --}}}
+        --{{{  X and Y both negative
+        X [high] < 0
+          SEQ
+            IF
+              MagY = MagX
+                --This is the equivalent of an unsigned comparison
+                bool := (Y [low] >< #80000000) > (X [low] >< #80000000)
+              TRUE
+                bool := (MagY > MagX)
+        --}}}
+        --{{{  TRUE - X and Y both positive
+        TRUE
+          SEQ
+            IF
+              MagX = MagY
+                --This is the equivalent of an unsigned comparison
+                bool := (X [low] >< #80000000) > (Y [low] >< #80000000)
+              TRUE
+                bool := (MagX > MagY)
+        --}}}
+    --}}}
+    RESULT bool
+:
+--}}}
+
+#ENDIF

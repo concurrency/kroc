@@ -24,17 +24,17 @@
 #COMMENT "occam-pi support routines, Copyright (C) 2004-2005 Fred Barnes"
 --}}}
 
+#IF DEFINED(OCCBUILD.KROC)
+
 #PRAGMA TRANSLATE MPBARSYNC "MPBARSYNC%O"
 #PRAGMA TRANSLATE MPBARRESIGN "MPBARRESIGN%O"
 
-
--- these are entry-points in the run-time system (common/mobproc.c)
+-- these are entry-points in the run-time system (ccsp/common/mobproc.c)
 #PRAGMA EXTERNAL "PROC C.do.mpp.serialise (MOBILE.PROC p, RESULT MOBILE []BYTE r) = 0"
 #PRAGMA EXTERNAL "PROC C.do.mpp.deserialise (MOBILE []BYTE r, RESULT MOBILE.PROC p) = 0"
 #PRAGMA EXTERNAL "PROC C.do.mpp.checkroutine (VAL []BYTE n, RESULT BOOL a) = 0"
 #PRAGMA EXTERNAL "PROC C.do.mpp.loadlibrary (VAL []BYTE l, RESULT BOOL r) = 0"
 #PRAGMA EXTERNAL "PROC C.do.mpp.unloadlibrary (VAL []BYTE l, RESULT BOOL r) = 0"
-
 
 --{{{  MPBARSYNC ()
 --
@@ -178,4 +178,6 @@ PROC MPP.UNLOADLIBRARY (VAL []BYTE l, RESULT BOOL r)
     C.do.mpp.unloadlibrary (l, r)
 :
 --}}}
+
+#ENDIF
 

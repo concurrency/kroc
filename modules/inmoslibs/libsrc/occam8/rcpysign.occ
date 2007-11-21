@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libs, no vector space
 #COMMENT "T8 compiler library, V1.2 07/04/90"
@@ -44,3 +46,5 @@ REAL32 FUNCTION COPYSIGN (VAL REAL32 Y, Z)
     RESULT X
 :
 --}}}
+
+#ENDIF

@@ -1,7 +1,29 @@
---{{{  #options and #comments
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
+#IF DEFINED(TARGET.HAS.FPU)
+
+--{{{  #options and #comments
 #OPTION "E W V"  -- no compiler libs, full ASMs, no vector space
 #COMMENT "T8 compiler library, V1.2 12/02/90"
 #COMMENT "(c) Copyright INMOS Limited 1988"
@@ -36,3 +58,210 @@ REAL32 FUNCTION REAL32REM (VAL REAL32 X, Y)
     RESULT result
 :
 --}}}
+
+#ELSE -- !TARGET.HAS.FPU
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.4 26/10/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32REM "REAL32REM%O"
+--}}}
+
+#INCLUDE "realvals.inc"
+
+--{{{  
+REAL32 FUNCTION REAL32REM (VAL REAL32 X, Y)
+
+  --{{{  specification
+  -- Purpose:  To calculate IEEE definition of X REM Y.
+  -- Returned: X REM Y
+  -- In:       X - numerator
+  -- In:       Y - denominator
+  -- Notes:    For the definition of REM see ANSI/IEEE 754-1985, Section 5.1:
+  --           "When Y <> 0, the remainder R = X REM Y is defined regardless
+  --           of the rounding mode by the mathematical relation R = X - Y * N,
+  --           where N is the integer nearest the exact value X/Y; whenever
+  --           | N - X/Y | = 0.5, then N is even.  Thus, the remainder is always
+  --           exact.  If R = 0, its sign shall be that of X."
+  --           The relation R = X - ( Y * nearest integer( X/Y ) ) shows that
+  --           the sign of Y cannot affect R.
+  --}}}
+  --{{{  history
+  -- Beta-3 (7may87)
+  -- HALT V1.1 21-Feb-89; STOP V1.2 24-Feb-89; UNDEFINED V1.1 21-Feb-89.
+  -- Cleaned up parts of the code ( eg lonesome SEQs -> SKIPs ) and
+  -- merged all error modes; V1.3 6-Apr-90 SRH
+  -- Changed the name of some variables to make the code clearer by avoiding
+  -- multiple use of the same variable for different meanings; also added
+  -- in extra comments. V1.4 26-Oct-90 SRH
+  --}}}
+
+  REAL32 Result:
+  VALOF
+    #INCLUDE "nan32.inc"
+    INT Result RETYPES Result :
+    VAL INT X RETYPES X :
+    VAL INT Y RETYPES Y :
+    --{{{  variables
+    INT Xexp, Xfrac, Yexp, Yfrac, Shift, Guard, Places, Ans, Borrow, dummy :
+    BOOL special.case :
+    VAL INT Sign IS SignBit :
+    --}}}
+    SEQ
+      --{{{  unpack operands
+      --{{{  unpack operands
+      Xexp,  Xfrac := SHIFTLEFT ( 0,  X << 1,  RealShift)
+      Xfrac := Xfrac >> 1                 --room for leading bit
+      Yexp,  Yfrac := SHIFTLEFT ( 0,  Y << 1,  RealShift)
+      Yfrac := Yfrac >> 1                 --room for leading bit
+      --}}}
+      --{{{  determine special cases
+      special.case := TRUE                --assume not normal case
+      IF
+        (Xexp <> RealExp) AND (Yexp <> RealExp)  --normal or zeros
+          --{{{  
+          IF
+            (Xexp <> 0) AND (Yexp <> 0)   --normal case
+              --{{{  
+              SEQ
+                special.case := FALSE
+                Xfrac := Xfrac \/ Sign
+                Yfrac := Yfrac \/ Sign
+              --}}}
+            (Yexp \/ Yfrac) = 0           --Y is zero
+              --{{{  
+              Ans := RemZeroNaN.32
+              --}}}
+            (Xexp \/ Xfrac) = 0           --X is zero
+              --{{{  
+              Ans := X
+              --}}}
+            TRUE                          --one or other denormalised
+              --{{{  
+              SEQ
+                special.case := FALSE     --work to do
+                IF
+                  Xexp <> 0               --set leading bit
+                    Xfrac := Xfrac \/ Sign
+                  TRUE                    --set correct exponent
+                    Xexp := 1
+                IF
+                  Yexp <> 0               --set leading bit
+                    Yfrac := Yfrac \/ Sign
+                  TRUE                    --set correct exponent
+                    Yexp := 1
+              --}}}
+          --}}}
+        TRUE                              --at least one is inf/NaN
+          IF
+            (Xexp = RealExp) AND (Yexp = RealExp)  --both NaN or inf
+              --{{{  
+              IF
+                (Xfrac \/ Yfrac) = 0      --both inf
+                  Ans := RemInfNaN.32
+                Yfrac > Xfrac             --one a NaN so return larger one
+                  Ans := Y
+                TRUE
+                  Ans := X
+              --}}}
+            Xexp = RealExp                --X infinity/NaN
+              --{{{  
+              IF
+                Xfrac <> 0                --X is NaN
+                  Ans := X
+                TRUE                      --rem
+                  Ans := RemInfNaN.32
+              --}}}
+            Yfrac <> 0                    --Y is NaN
+              --{{{  
+              Ans := Y                    --keep NaN
+              --}}}
+            TRUE                          --Y infinity
+              --{{{  
+              Ans := X
+              --}}}
+      --}}}
+      --}}}
+      --{{{  evaluate
+      IF
+        special.case                      --answer set up
+          --{{{  
+          Result := Ans
+          --}}}
+        TRUE
+          SEQ
+            --{{{  calculate remainder
+            IF
+              Yexp = 1                    --possible denorm RHS
+                SEQ                       --normalise RHS
+                  Places,  Yfrac,  dummy := NORMALISE ( Yfrac,  0)
+                  Yexp := Yexp - Places   --ensure LHS normal too
+                  Places,  Xfrac,  dummy := NORMALISE ( Xfrac,  0)
+                  Xexp := Xexp - Places
+              TRUE
+                SKIP
+            Ans := X /\ Sign              --note sign of X
+            Places := Xexp - Yexp
+            IF
+              Places >= 0                 --general case
+                SEQ
+                  Shift := BitsPerWord - (Places /\ (BitsPerWord - 1))
+                  Xfrac,  Guard := SHIFTRIGHT ( Xfrac,  0,  Shift)
+                  Guard,  Xfrac := LONGDIV ( Xfrac,  Guard,  Yfrac)
+                  WHILE Places >= BitsPerWord
+                    SEQ
+                      Guard,  Xfrac := LONGDIV ( Xfrac,  0,  Yfrac)
+                      Places := Places - BitsPerWord
+                  IF
+                    Xfrac = 0             --divides exactly, i.e. X = Y => answer is zero
+                      Xexp := 0
+                    TRUE
+                      SEQ                 --see if over half
+                        Borrow,  Xexp := LONGDIFF ( Yfrac >> 1,  Xfrac,  0)
+                        IF
+                          (Borrow <> 0) OR ((Xexp = 0) AND ((Guard /\ 1) <> 0))--round up
+                            SEQ
+                              Ans := Ans >< Sign --negate answer
+                              Xfrac := Yfrac MINUS Xfrac
+                          TRUE
+                            SKIP
+                        Xexp := Yexp
+              Places = (-1)               --get ans by compare
+                SEQ
+                  Borrow,  Guard := LONGDIFF ( Yfrac,  Xfrac,  0)
+                  IF
+                    Borrow = 0            --X is answer
+                      SKIP
+                    TRUE                  --Y - X is answer
+                      SEQ
+                        Ans := Ans >< Sign--invert sign
+                        Xfrac := Yfrac MINUS (Xfrac >> 1)
+                        Xexp := Yexp
+              TRUE                        --always X
+                SKIP
+            Places,  Xfrac,  dummy := NORMALISE ( Xfrac,  0)
+            Xexp := Xexp - Places
+            IF
+              Xexp <= 0                   --gone denorm
+                SEQ
+                  Xfrac,  Guard := SHIFTRIGHT ( Xfrac,  0,  1 - Xexp)
+                  Xexp := 0
+              TRUE
+                SKIP
+            --}}}
+            --{{{  pack result
+            dummy,  Xfrac := SHIFTRIGHT ( Xexp,  Xfrac << 1,  RealShift + 1)
+            Result := Ans \/ Xfrac
+            --}}}
+      --}}}
+    RESULT Result
+:
+--}}}
+
+#ENDIF -- !TARGET.HAS.FPU
+
+#ENDIF

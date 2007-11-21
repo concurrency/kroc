@@ -19,6 +19,10 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
+#IF DEFINED(TARGET.HAS.FPU)
+
 --{{{  #options and #comments
 #OPTION "E W V"  -- no compiler libs, full ASMs, no vector space
 #COMMENT "T8 compiler library, V1.3 15/06/90"
@@ -49,3 +53,64 @@ BOOL FUNCTION REAL32GT (VAL REAL32 X, Y)
     RESULT result
 :
 --}}}
+
+#ELSE -- !TARGET.HAS.FPU
+
+--{{{  #options and #comments
+#OPTION "W V"  -- full ASMs, no vector space
+#COMMENT "TA compiler library, V1.4 27/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32GT "REAL32GT%O"
+--}}}
+
+--{{{  
+BOOL FUNCTION REAL32GT (VAL REAL32 X, Y)
+
+  --{{{  history
+  -- Beta-3 (11may87) -- DES
+  -- New faster version (11may87) DES for T4
+  -- V1.1, 21-Feb-89
+  -- V1.2, 24-Feb-89
+  -- Port to new compiler (oc): ASM replaces GUY; V1.3, 7-Apr-90 SRH
+  -- V1.4 27-Nov-92 SRH; bug fix TS/1962 to change behaviour when one or
+  -- both arguments is NaN - NaNs should always compare FALSE.
+  --}}}
+
+  BOOL greater.than.if.ordered :
+  VALOF
+    ASM
+      LDL  X
+      LDL  X
+      MINT
+      AND
+      CJ  :Xpos
+      MINT       -- mint,X
+      REV        -- X,mint
+      DIFF       -- mint - X
+      LDC 0      -- 0, mint - X
+      :Xpos      -- 0, new X
+      ADD        -- eat the 0
+      LDL  Y     -- Y,X
+      MINT       -- Mint,Y,X
+      AND        -- cond,X
+      LDL  Y     -- dont overflow stack !
+      REV        -- cond,Y,X
+      CJ  :Ypos
+      MINT       -- mint,Y,X
+      REV        -- Y,mint,X
+      DIFF       -- mint - Y, X
+      LDC 0      -- 0, mint - Y,X
+      :Ypos      -- 0, new Y, X
+      ADD        -- eat the 0
+      GT         -- new Y, new X
+      ST greater.than.if.ordered
+    RESULT (greater.than.if.ordered AND ORDERED(X, Y))
+:
+--}}}
+
+#ENDIF -- !TARGET.HAS.FPU
+
+#ENDIF

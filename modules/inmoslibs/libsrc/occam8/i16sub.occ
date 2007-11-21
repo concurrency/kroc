@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD > 16)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libs, no vector space
 #COMMENT "T8 compiler library, V1.1 21/02/89"
@@ -33,3 +35,5 @@
 INT16 FUNCTION INT16SUB (VAL INT16 A, B) IS INT16 ( (INT A) - (INT B) ) :
 -- let exact conversion do range check
 --}}}
+
+#ENDIF

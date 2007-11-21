@@ -1,0 +1,163 @@
+
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space; compiler libraries not required in TB mode
+#COMMENT "TA compiler library, V1.3 07/12/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE SQRT "SQRT%O"
+
+#INCLUDE "realvals.inc"
+
+--{{{  
+REAL32 FUNCTION SQRT (VAL REAL32 X)
+
+  --{{{  history
+  -- V1.2 21/02/89
+  -- Moved position of CAUSEERRORs from ends of branches to the beginning of
+  -- them to allow compiler to do dead code elimination; V1.3, 7-Dec-92 SRH
+  --}}}
+
+  REAL32 Root :
+  VALOF
+    #INCLUDE "nan32.inc"
+    --{{{  definitions and variables
+    VAL Sign      IS #80000000(INT) :
+    VAL R2C2      IS #D413CCD0(INT) :
+    VAL R2K2      IS #4C1E24CD(INT) :
+    VAL R2C1      IS #93000000(INT) :
+    VAL R2K1      IS #6CFFFFFF(INT) :
+    INT Root.i RETYPES Root :
+    VAL INT X.i RETYPES X :
+    VAL PosX IS X.i /\ (~Sign) :
+    INT Xexp, Xfrac, Type :
+    --}}}
+    SEQ
+      Xfrac, Xexp, Type := UNPACKSN (PosX)
+      IF
+        --{{{  special cases
+        (Type = 3)                      -- NaN
+          SEQ
+            CAUSEERROR()
+            Root.i := X.i
+        (Type = 0)                      -- 0
+          Root.i := X.i
+        (X.i <> PosX)                   -- negative
+          SEQ
+            CAUSEERROR()
+            Root.i := INT root.NaN
+        (Type = 2)                      -- Inf
+          SEQ
+            CAUSEERROR()
+            Root.i := X.i
+        --}}}
+        TRUE                       --proper case
+          INT Y :
+          SEQ
+            --{{{  deal with denormal input
+            IF
+              Xexp = 1  --denormal; it is UNPACKSN that gives the 1 here
+                INT N :
+                SEQ
+                  INT Discard :
+                  N, Xfrac, Discard := NORMALISE (Xfrac, 0)
+                  Xexp :=  1 - N
+              TRUE
+                SKIP
+            --}}}
+            --{{{  adjust for power of two and make initial approximation
+            IF
+              (Xexp /\ 1) = 1               -- unbiased exponent is even
+                SEQ
+                  Xfrac := Xfrac >> 1       -- divide fractional part by 2
+                  INT Carry :
+                  Y, Carry := LONGPROD (Xfrac, R2C2, 0)  -- linear approximation
+                  INT Carry :
+                  Carry, Y := LONGSUM (Y, R2K2, 0)       -- over [1/4,1/2)
+              TRUE
+                SEQ
+                  INT Carry :
+                  Y, Carry := LONGPROD (Xfrac, R2C1, 0)   -- linear approximation
+                  INT Carry :
+                  Carry, Y := LONGSUM (Y, R2K1, 0)        -- over [1/2, 1)
+            --}}}
+            --{{{  perform Newton-Raphson iterations
+            VAL XF IS Xfrac >> 1 :              --to ensure no div overflow
+            INT Y0 :
+            SEQ
+              INT Carry :
+              Y0, Carry := LONGDIV (XF, 0, Y)     --to 14 bits
+              INT Carry :
+              Carry, Y := LONGSUM (Y >> 1, Y0, 0) --always carry into top bit
+              INT Carry :
+              Y0, Carry := LONGDIV (XF, 0, Y)     --to 28 bits
+              INT Carry :
+              Carry, Y := LONGSUM (Y >> 1, Y0, 0)
+            --}}}
+            --{{{  determine correct value
+            VAL INT mask IS #FFFFFF00 :
+            VAL INT lsbit IS #100 :
+            INT Carry, Y0 :
+            SEQ
+              Y := Y /\ mask  -- truncate
+              Y0, Carry := LONGDIV (Xfrac >> 1, 0, Y)
+              Y0 := Y0 << 1
+              INT overflow, YplusLsbit :
+              SEQ
+                overflow, YplusLsbit := LONGSUM( Y, lsbit, 0)
+                IF
+                  overflow = 0
+                    --{{{  select between Y and (Y + lsbit)
+                    IF
+                      YplusLsbit = Y0
+                        --{{{  equal so be careful
+                        IF
+                          Carry = 0
+                            --{{{  equidistant
+                            IF
+                              (Y /\ lsbit) <> 0  -- odd fraction, so round up
+                                SEQ
+                                  Y := YplusLsbit
+                              TRUE
+                                SKIP
+                            --}}}
+                          TRUE  -- truncation error
+                            SEQ
+                              Y := YplusLsbit
+                        --}}}
+                      YplusLsbit < Y0  -- stricly less than
+                        SEQ
+                          Y := YplusLsbit
+                      TRUE
+                        SKIP
+                    --}}}
+                  TRUE
+                    SKIP -- Y is the correct representation, as Y + lsbit overflows
+            --}}}
+            Root.i := ROUNDSN ((Xexp + RealXcess) >> 1, Y, 0)
+    RESULT Root
+:
+--}}}
+
+#ENDIF

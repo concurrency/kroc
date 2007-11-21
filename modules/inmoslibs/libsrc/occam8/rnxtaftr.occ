@@ -27,6 +27,8 @@
 
 #PRAGMA TRANSLATE NEXTAFTER "NEXTAFTER%O"
 
+#INCLUDE "realvals.inc"
+
 -- replaced the T8 code with the TA code because there is no good FPU
 -- implementation possible ( the previous one was wrong with -0.0 and
 -- infinities ); 10-July-90 SRH
@@ -46,9 +48,6 @@ REAL32 FUNCTION NEXTAFTER (VAL REAL32 Y, Z)
   REAL32 X :
   VALOF
     --{{{  VALS
-    VAL RealShift IS         8 :
-    VAL RealExp   IS       255 :
-    VAL RealInf   IS #7F800000 :
     VAL Bias      IS       127 :
     --}}}
     INT X RETYPES X:

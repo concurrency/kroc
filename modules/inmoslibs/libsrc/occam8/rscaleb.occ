@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libraries, no vector space
 #COMMENT "T8 compiler library, V1.1 21/02/89"
@@ -27,13 +29,14 @@
 
 #PRAGMA TRANSLATE SCALEB "SCALEB%O"
 
+#INCLUDE "realvals.inc"
+
 --{{{  T8 and TA are the same; merged 20-June-90 SRH
 REAL32 FUNCTION SCALEB (VAL REAL32 Y, VAL INT n)
 
   -- Halt version: optimised 27-jul-87 PWT
   -- Halt and undefined: Beta-2 (27feb87)
 
-  VAL RealShift IS   8 :
   VAL Bias      IS 127 :
   REAL32 X :
   VALOF
@@ -66,3 +69,5 @@ REAL32 FUNCTION SCALEB (VAL REAL32 Y, VAL INT n)
     RESULT X
 :
 --}}}
+
+#ENDIF

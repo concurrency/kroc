@@ -21,18 +21,24 @@
 
 --{{{  #options and #comments
 #OPTION "V"  -- no vector space
-#COMMENT "TA compiler library, V1.3 06/04/90"
+#COMMENT "TA compiler library, V1.4 15/05/91"
 #COMMENT "(c) Copyright INMOS Limited 1988"
 --}}}
 
 #PRAGMA TRANSLATE DARGUMENT.REDUCE "DARGUMENT.REDUCE%O"
 
---{{{  
+#INCLUDE "realvals.inc"
+
+--{{{  DARGUMENT.REDUCE for TA
 BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
 
   --{{{  history
   -- 20 Aug 87
-  -- Version using QUOTREM 20-3-1989
+  -- V1.2, version using QUOTREM 20-Mar-1989
+  -- V1.3, 6-Apr-90 SRH
+  -- Altered so that main transputer error flag is not set, and
+  -- routine acts pretty much in the way one would expect for an
+  -- IEEE implementation. Bug report TS/1252; V1.4, 15-May-91 SRH
   --}}}
 
   #INCLUDE "endian.inc" -- 4-Sep-07
@@ -41,51 +47,20 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
   INT32  N :
   REAL64 X :
   VALOF
-    --{{{  VALS
-    VAL BitsPerWord    IS             32 :
-    VAL DRealShift     IS             11 :
-    VAL DRealExp       IS           #7FF :
-    VAL Bias           IS           1023 :
-    --}}}
+    #INCLUDE "nan32.inc"
     --{{{  IEEE64QUOTREM -- returning INT32
     BOOL, INT32, REAL64 FUNCTION IEEE64QUOTREM (VAL REAL64 X, VAL REAL64 Y)
     
-      --  Beta-3 (11feb87)
-      --  Modified to produce quotient 20-3-1989 PWT
+      -- Beta-3 (11feb87)
+      -- Modified to produce quotient 20-Mar-1989 PWT
+      -- Quotient initialised to zero; 15-May-1991 SRH
     
-      BOOL Error:
-      INT32 Quotient :
+      BOOL   Error:
+      INT32  Quotient :
       REAL64 Result:
       VALOF
         #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
         #USE "ridiv"  --  13-Sep-07
-        --{{{  DEFs
-        --{{{  Word length specific values for 32 bit machine
-        VAL SignBit        IS #80000000 :
-        VAL BitsPerWord    IS        32 :
-        VAL BytesPerWord   IS         4 :
-        --}}}
-        --{{{  IEEE Double length constants for 32 bit implementation
-        VAL DRealShift  IS            11 :
-        VAL DBitsInFrac IS            53 :
-        VAL DRealExpSh  IS            20 :
-        VAL DRealExp    IS          #7FF :
-        VAL DRealXcess  IS          1023 :
-        VAL DRealRBit   IS          #400 :
-        VAL DRealInf    IS     #7FF00000 :
-        --}}}
-        --{{{  NaNs
-        --  These are the values of nans returned by the IMS T800
-        VAL ZeroZeroDivNaN.hi  IS #7FF80000 :
-        VAL InfInfDivNaN.hi    IS #7FF40000 :
-        VAL ZeroInfMulNaN.hi   IS #7FF20000 :
-        VAL AddSubInfInfNaN.hi IS #7FF10000 :
-        VAL NegSqrtNaN.hi      IS #7FF08000 :
-        VAL Real64to32NaN.hi   IS #7FF04000 :
-        VAL RemInfNaN.hi       IS #7FF00800 :
-        VAL RemZeroNaN.hi      IS #7FF00400 :
-        --}}}
-        --}}}
         --{{{  declarations
         INT Quotient RETYPES Quotient :
         [2]INT Result RETYPES Result :
@@ -104,7 +79,6 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
         SEQ
           --{{{  Unpack operands
           --{{{  Seperate mantissa and exponents
-          
           Xfrac [hi],  Xfrac [lo] := SHIFTLEFT ( X [hi],  X [lo],  DRealShift)
           Yfrac [hi],  Yfrac [lo] := SHIFTLEFT ( Y [hi],  Y [lo],  DRealShift)
           
@@ -112,16 +86,17 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
           Yexp := (Y [hi] >> DRealExpSh) /\ DRealExp
           --}}}
           
-          Ans [lo] := 0
-          Carry := 0                          --assume not normal case
-          Error := FALSE                      --assume not normal case
+          Quotient := 0
+          Ans [lo]  := 0
+          Carry    := 0                                -- assume not normal case
+          Error    := FALSE                            -- assume not normal case
           IF
             (Xexp <> DRealExp) AND (Yexp <> DRealExp)
-              --{{{  zeros or real nos
+              --{{{  zeros or real numbers
               IF
                 (Xexp <> 0) AND (Yexp <> 0)
-                  --{{{  both normal nos
-                  SEQ                                  --normal case
+                  --{{{  both normal numbers
+                  SEQ                                  -- normal case
                     Carry := 1
                     Xfrac [hi] := Xfrac [hi] \/ Sign
                     Yfrac [hi] := Yfrac [hi] \/ Sign
@@ -145,17 +120,17 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
                   -- Normalise any denormaliseds and correct their exponents if op is
                   -- multiply, divide or rem leave unormal for add and sub
                   SEQ
-                    Carry := 1                         --work to do
+                    Carry := 1                         -- work to do
                     IF
-                      Xexp <> 0                        --set leading bit
+                      Xexp <> 0                        -- set leading bit
                         Xfrac [hi] := Xfrac [hi] \/ Sign
-                      TRUE                             --set correct exponent
+                      TRUE                             -- set correct exponent
                         SEQ
                           Places,  Xfrac [hi],  Xfrac [lo] := NORMALISE ( Xfrac [hi],  Xfrac [lo])
                           Xexp := 1 - Places
                     IF
                       Yexp <> 0
-                        Yfrac [hi] := Yfrac [hi] \/ Sign
+                        Yfrac [1] := Yfrac [1] \/ Sign
                       TRUE
                         SEQ
                           Places,  Yfrac [hi],  Yfrac [lo] := NORMALISE ( Yfrac [hi],  Yfrac [lo])
@@ -163,9 +138,9 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
                   --}}}
               --}}}
             TRUE
-              --{{{  one or other inf/NAN
+              --{{{  one or other inf/NaN
               SEQ
-                Xfrac [hi] := Xfrac [hi] /\ (~Sign)      --clear top bits
+                Xfrac [hi] := Xfrac [hi] /\ (~Sign)      -- clear top bits
                 Yfrac [hi] := Yfrac [hi] /\ (~Sign)
                 Error := TRUE
                 IF
@@ -220,10 +195,10 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
                 --{{{  find remainder
                 SEQ
                   -- Denorms already normalised
-                  Ans[hi] := X[hi] /\ Sign           --set correct sign
+                  Ans[hi] := X[hi] /\ Sign               -- set correct sign
                   Places := Xexp - Yexp
                   IF
-                    Places >= 0                    --general case
+                    Places >= 0                        -- general case
                       SEQ
                         Carry := Places /\ (BitsPerWord - 1)
                         Guard,  Xexp := SHIFTLEFT ( 0,  Xfrac[hi],  Carry)
@@ -237,20 +212,20 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
                             Xfrac[lo] := 0
                             Carry,  Xexp := LONGDIFF ( Xfrac[hi],  Yfrac[hi],  0)
                             IF
-                              (Guard = 0) AND (Carry <> 0)     -- filter out some 0 quotients
+                              (Guard = 0) AND (Carry <> 0) -- filter out some 0 quotients
                                 SKIP
                               TRUE
                                 Guard,  Xfrac[hi],  Xfrac[lo] := RealIDiv (Guard,  Xfrac[hi],  Xfrac[lo],  Yfrac)
                             Places := Places - BitsPerWord
                         IF
-                          (Xfrac[hi] \/ Xfrac[lo]) = 0     --divides exactly
+                          (Xfrac[hi] \/ Xfrac[lo]) = 0   -- divides exactly
                             SEQ
                               Xexp := 0
                               Quotient := Guard
                           TRUE
                             SEQ
                               Ans[hi],  Ans[lo] := SHIFTRIGHT (Yfrac[hi],  Yfrac[lo],  1)
-                              Carry,  Ans[lo] := LONGDIFF ( Ans[lo],  Xfrac[lo],  0)
+                              Carry,  Ans[lo] := LONGDIFF ( Ans[lo], Xfrac[lo],  0)
                               Carry,  Ans[hi] := LONGDIFF ( Ans[hi], Xfrac[hi],  Carry)
                               IF
                                 (Carry <> 0) OR (((Ans[hi] \/ Ans[lo]) = 0) AND
@@ -263,31 +238,31 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
                                     Quotient := Guard + 1
                                 TRUE
                                   SEQ
-                                    Ans[hi] := X[hi] /\ Sign        --reset sign
+                                    Ans[hi] := X[hi] /\ Sign  -- reset sign
                                     Quotient := Guard
                               Xexp := Yexp
-                    Places = (-1)                  --half to nearly one
+                    Places = (-1)                      -- half to nearly one
                       SEQ
                         Carry,  Guard := LONGDIFF ( Yfrac[lo],  Xfrac[lo],  0)
                         Carry,  Guard := LONGDIFF ( Yfrac[hi],  Xfrac[hi],  Carry)
                         IF
-                          Carry = 0                --X is answer
+                          Carry = 0                    -- X is answer
                             Quotient := 0
-                          TRUE                     --Y-X is answer
+                          TRUE                         -- Y-X is answer
                             SEQ
-                              Ans[hi] := Ans[hi] >< Sign   --invert sign
+                              Ans[hi] := Ans[hi] >< Sign -- invert sign
                               Xfrac[hi],  Xfrac[lo] := SHIFTRIGHT (Xfrac[hi],  Xfrac[lo],  1)
                               Carry,  Xfrac[lo] := LONGDIFF ( Yfrac[lo], Xfrac[lo],  0)
                               Carry,  Xfrac[hi] := LONGDIFF ( Yfrac[hi], Xfrac[hi],  Carry)
                               Xexp := Yexp
                               Quotient := 1
-                    TRUE                           --less than half
+                    TRUE                               -- less than half
                       Quotient := 0
                   Guard := 0
                   Places,  Xfrac[hi],  Xfrac[lo] := NORMALISE ( Xfrac[hi],  Xfrac[lo])
-                  Xexp := Xexp - Places            --ensure normalised
+                  Xexp := Xexp - Places                -- ensure normalised
                   IF
-                    Xexp <= 0                      --gone denorm
+                    Xexp <= 0                          -- gone denorm
                       SEQ
                         Xfrac[hi],  Xfrac[lo] := SHIFTRIGHT (Xfrac[hi],  Xfrac[lo],  1 - Xexp)
                         Xexp := 0
@@ -295,7 +270,7 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
                       SKIP
                 --}}}
                 --{{{  pack result
-                Places := Xfrac[lo]              --save round bits
+                Places := Xfrac[lo]                     -- save round bits
                 Xfrac[hi],  Xfrac[lo] := SHIFTRIGHT (Xfrac[hi] /\ (~Sign),  Xfrac[lo],  DRealShift)
                 Carry,  Xexp := SHIFTRIGHT ( Xexp,  0,  DRealShift + 1)
                 Xfrac[hi] := Xfrac[hi] \/ Xexp
@@ -305,7 +280,7 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
                 --}}}
                 --{{{  adjust sign of quotient
                 IF
-                  ((X[hi] >< Y[hi]) /\ Sign) <> 0 -- signs differ
+                  ((X[hi] >< Y[hi]) /\ Sign) <> 0        -- signs differ
                     Quotient := MINUS Quotient
                   TRUE
                     SKIP
@@ -328,9 +303,13 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
       IF
         (exp1 - exp2) <= Max.Diff
           SEQ
+            #IF DEFINED(TARGET.HAS.FPU)
             X := X - ((REAL64 ROUND N) * Z.err)
+            #ELSE
+            X := REAL64OP( X, sub, REAL64OP( (REAL64 ROUND N), mul, Z.err ) )
+            #ENDIF
             INT32 Nprimed :
-            BOOL bprimed :
+            BOOL  bprimed :
             SEQ
               -- take another remainder in case the correction has taken us
               -- out of range :
@@ -338,7 +317,18 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
               b := NOT (b OR bprimed) -- true unless an error
               N := N + Nprimed
         TRUE
-          b := FALSE
+          SEQ
+            b := FALSE
+            -- Y and Z may be normal, but a non-finite Z.err must then be
+            -- invalid so now check for such an occurrence.
+            IF
+              DNOTFINITE( Z.err )
+                [2]INT X RETYPES X:
+                SEQ
+                  X[hi] := InvalidOperandsNaN.hi
+                  X[lo] := 0
+              TRUE
+                SKIP
     RESULT b, N, X
 :
 --}}}

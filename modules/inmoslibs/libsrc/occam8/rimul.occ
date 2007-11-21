@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libs, no vector space
 #COMMENT "Support routines library, V1.2, 10/03/90"
@@ -60,3 +62,5 @@ INT, INT, INT FUNCTION RealIMul (VAL [2]INT X, Y)
     RESULT R.hi, R.lo, Guard
 :
 --}}}
+
+#ENDIF

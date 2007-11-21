@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
 --{{{  #options and #comments
 #OPTION "V"  -- no vector space
 #COMMENT "TA compiler library, V1.0 29/01/90"
@@ -37,6 +39,9 @@
 --       =  3  /
 --
 --}}}
+
+#INCLUDE "realvals.inc"
+
 --{{{  
 REAL32 FUNCTION REAL32OP (VAL REAL32 X, VAL INT Op, VAL REAL32 Y)
 
@@ -46,7 +51,9 @@ REAL32 FUNCTION REAL32OP (VAL REAL32 X, VAL INT Op, VAL REAL32 Y)
   REAL32 answer :
   VALOF
     BOOL dummy :
-    dummy, answer := IEEE32OP( X, 1, Op, Y )  -- 1 signifies round-to-nearest
+    dummy, answer := IEEE32OP( X, RN, Op, Y )  -- RN signifies round-to-nearest
     RESULT answer
 :
 --}}}
+
+#ENDIF

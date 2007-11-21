@@ -19,6 +19,10 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
+#IF DEFINED(TARGET.HAS.FPU)
+
 --{{{  #options and #comments
 #OPTION "E W V"  -- no compiler libs, full ASMs, no vector space
 #COMMENT "T8 compiler library, V1.3 15/06/90"
@@ -49,3 +53,75 @@ BOOL FUNCTION REAL64GT (VAL REAL64 X, Y)
     RESULT result
 :
 --}}}
+
+#ELSE -- !TARGET.HAS.FPU
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "TA compiler library, V1.2 27/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL64GT "REAL64GT%O"
+--}}}
+
+--{{{  
+BOOL FUNCTION REAL64GT (VAL REAL64 X, Y)
+
+  --{{{  history
+  -- Beta-2 (27feb87)
+  -- V1.1 21/02/89
+  -- V1.2 27-Nov-92 SRH; bug fix TS/1962 to change behaviour when one or
+  -- both arguments is NaN - NaNs should always compare FALSE.
+  --}}}
+
+  #INCLUDE "endian.inc"
+
+  BOOL greater.than.if.ordered :
+  VALOF
+    --{{{  
+    VAL [2]INT X RETYPES X :
+    VAL [2]INT Y RETYPES Y :
+    VAL low  IS lo :
+    VAL high IS hi :
+    INT MagX :
+    INT MagY :
+    SEQ
+      MagX := X [high] /\ #7FFFFFFF
+      MagY := Y [high] /\ #7FFFFFFF
+      IF
+        --{{{  X and Y have different signs
+        (X [high] >< Y [high]) < 0       -- Still infinities but no NaNs
+          --Signs are different hence test Y < 0 and not both 0
+          greater.than.if.ordered := (Y [high] < 0) AND
+                  ((((MagX PLUS MagY) \/ X [low]) \/ Y [low]) <> 0)
+        --}}}
+        --{{{  X and Y both negative
+        X [high] < 0
+          SEQ
+            IF
+              MagY = MagX
+                --This is the equivalent of an unsigned comparison
+                greater.than.if.ordered := (Y [low] >< #80000000) > (X [low] >< #80000000)
+              TRUE
+                greater.than.if.ordered := (MagY > MagX)
+        --}}}
+        --{{{  TRUE - X and Y both positive
+        TRUE
+          SEQ
+            IF
+              MagX = MagY
+                --This is the equivalent of an unsigned comparison
+                greater.than.if.ordered := (X [low] >< #80000000) > (Y [low] >< #80000000)
+              TRUE
+                greater.than.if.ordered := (MagX > MagY)
+        --}}}
+    --}}}
+    RESULT (greater.than.if.ordered AND DORDERED(X, Y))
+:
+--}}}
+
+#ENDIF -- !TARGET.HAS.FPU
+
+#ENDIF

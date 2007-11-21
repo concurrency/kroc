@@ -19,28 +19,34 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libs, no vector space
-#COMMENT "T8 compiler library, V1.2 17/04/90"
+#COMMENT "TA compiler library, V1.3 07/12/92"
 #COMMENT "(c) Copyright INMOS Limited 1988"
 --}}}
 
 #PRAGMA TRANSLATE FLOATING.UNPACK "FLOATING.UNPACK%O"
 
---{{{  T8 and TA code the same
+#INCLUDE "realvals.inc"
+
+--{{{  TA, T8, T9000
 INT, REAL32 FUNCTION FLOATING.UNPACK (VAL REAL32 Y)
 
+  --{{{  history
   -- V1.1, 21-Feb-89
   -- Merged TA and T8 code, thus introducing missing CAUSEERRORs to
   -- checked TA code; V1.2, 17-Apr-90 SRH
+  -- Moved position of CAUSEERRORs from ends of branches to the beginning of
+  -- them to allow compiler to do dead code elimination; V1.3, 7-Dec-92 SRH
+  --}}}
 
   INT    n :
   REAL32 X :
   VALOF
+    #INCLUDE "nan32.inc"
     --{{{  VALS
-    VAL RealShift     IS         8 :
-    VAL RealExp       IS       255 :
-    VAL undefined.NaN IS #7F800010 :
     VAL Bias          IS       127 :
     --}}}
     INT X RETYPES X:
@@ -51,18 +57,18 @@ INT, REAL32 FUNCTION FLOATING.UNPACK (VAL REAL32 Y)
       IF
         exp = RealExp  -- inf or NaN
           SEQ
+            CAUSEERROR()
             n := RealExp - Bias
             IF
               frac = 0 -- inf
-                X := undefined.NaN
+                X := INT undefined.NaN
               TRUE            -- NaN
                 X := Y
-            CAUSEERROR()
         (Y << 1)= 0    -- 0
           SEQ
-            n := RealExp - Bias
-            X := undefined.NaN
             CAUSEERROR()
+            n := RealExp - Bias
+            X := INT undefined.NaN
         TRUE
           SEQ
             IF
@@ -78,3 +84,5 @@ INT, REAL32 FUNCTION FLOATING.UNPACK (VAL REAL32 Y)
     RESULT n, X
 :
 --}}}
+
+#ENDIF

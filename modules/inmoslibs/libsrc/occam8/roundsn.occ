@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libraries, no vector space
 #COMMENT "T8 compiler library, V1.0 28/03/90"
@@ -26,6 +28,8 @@
 --}}}
 
 #PRAGMA TRANSLATE ROUNDSN "ROUNDSN%O"
+
+#INCLUDE "realvals.inc"
 
 INT FUNCTION ROUNDSN ( VAL INT Yexp, Yfrac, Yguard )
 
@@ -40,24 +44,7 @@ INT FUNCTION ROUNDSN ( VAL INT Yexp, Yfrac, Yguard )
   --          The rounding mode is round-to-nearest.
   --}}}
 
-  --{{{  Word length specific values for 32 bit machine
-  VAL SignBit        IS #80000000 :
-  VAL BitsPerWord    IS        32 :
-  VAL BytesPerWord   IS         4 :
-  --}}}
-  --{{{  IEEE Single length constants for 32 bit implementation
-  VAL RealShift     IS         8 :
-  VAL BitsInFrac    IS        24 :
-  VAL RealExpSh     IS        23 :
-  VAL RealExp       IS       255 :
-  VAL RealXcess     IS       127 :
-  VAL RealRBit      IS       128 :
-  VAL RealInf       IS #7F800000 :
-  VAL BiggestFinite IS #7F7FFFFF :
-  --}}}
   --{{{  declarations
-  -- set up for a 32 bit machine
-  VAL INT RealInf   IS #7F800000 :
   VAL INT WordSize  IS BitsPerWord :
   
   INT X :  -- the destination of the construction
@@ -110,3 +97,5 @@ INT FUNCTION ROUNDSN ( VAL INT Yexp, Yfrac, Yguard )
     --}}}
     RESULT X
 :
+
+#ENDIF

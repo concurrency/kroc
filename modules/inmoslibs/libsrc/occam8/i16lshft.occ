@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF DEFINED(TARGET.HAS.FPU)
+
 --{{{  #options and #comments
 #OPTION "E V W"  -- no compiler libs, no vector space, full ASMs
 #COMMENT "T8 compiler library, V2.0 01/10/90"
@@ -70,3 +72,5 @@ INT16 FUNCTION INT16LSHIFT (VAL INT16 A, VAL INT B)
     RESULT 0( INT16 ) -- dummy
 :
 --}}}
+
+#ENDIF

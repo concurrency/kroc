@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libs, no vector space
 #COMMENT "TA compiler library, V1.2 06/04/90"
@@ -26,6 +28,8 @@
 --}}}
 
 #PRAGMA TRANSLATE IEEE64OP "IEEE64OP%O"
+
+#INCLUDE "realvals.inc"
 
 --{{{  IEEE64OP   -- TA
 BOOL,REAL64 FUNCTION IEEE64OP (VAL REAL64 X, VAL INT RoundMode, Op,
@@ -43,30 +47,7 @@ BOOL,REAL64 FUNCTION IEEE64OP (VAL REAL64 X, VAL INT RoundMode, Op,
     #USE "ridiv"  --  13-Sep-07
     #INCLUDE "endian.inc"  --  4-Sep-07
     --{{{  DEFs
-    --{{{  Operation codes for real and integer arithmetic
-    VAL Add IS 0 :                      --op code for add
-    VAL Sub IS 1 :                      --op code for subtract
-    VAL Mul IS 2 :                      --op code for multiply
-    VAL Div IS 3 :                      --op code for divide
-    
-    VAL RZ IS 0 :
-    VAL RN IS 1 :
-    VAL RP IS 2 :
-    VAL RM IS 3 :
-    --}}}
-    --{{{  Word length specific values for 32 bit machine
-    VAL SignBit        IS #80000000 :
-    VAL BitsPerWord    IS        32 :
-    VAL BytesPerWord   IS         4 :
-    --}}}
     --{{{  IEEE Double length constants for 32 bit implementation
-    VAL DRealShift  IS        11 :
-    VAL DBitsInFrac IS        53 :
-    VAL DRealExpSh  IS        20 :
-    VAL DRealExp    IS      #7FF :
-    VAL DRealXcess  IS      1023 :
-    VAL DRealRBit   IS      #400 :
-    VAL DRealInf    IS #7FF00000 :
     VAL DBiggestFinite.hi IS #7FEFFFFF :
     VAL DBiggestFinite.lo IS #FFFFFFFF :
     --}}}
@@ -615,3 +596,5 @@ BOOL,REAL64 FUNCTION IEEE64OP (VAL REAL64 X, VAL INT RoundMode, Op,
     RESULT Error, Result
 :
 --}}}
+
+#ENDIF
