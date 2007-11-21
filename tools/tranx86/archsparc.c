@@ -369,7 +369,7 @@ static void compose_inline_quick_reschedule_sparc (tstate *ts)
 {
 	int tmp_reg;
 
-	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		/* more processes ? */
 		add_to_ins_chain (compose_ins (INS_CMP, 2, 1, ARG_CONST, NOT_PROCESS, ARG_REG, REG_FPTR, ARG_REG | ARG_IMP, REG_CC));
 		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_Z, ARG_NAMEDLABEL, string_dup ("_X_occscheduler")));
@@ -494,14 +494,14 @@ static void compose_inline_stlx_sparc (tstate *ts, int ins)
 	add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0));
 	switch (ins) {
 	case I_STLB:
-		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 			add_to_ins_chain  (compose_ins (INS_MOVE, 1, 1, ARG_REG, ts->stack->old_a_reg, ARG_REG, REG_BPTR));
 		} else {
 			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, ts->stack->old_a_reg, ARG_NAMEDLABEL, string_dup ("&Bptr")));
 		}
 		break;
 	case I_STLF:
-		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, ts->stack->old_a_reg, ARG_REG, REG_FPTR));
 		} else {
 			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, ts->stack->old_a_reg, ARG_NAMEDLABEL, string_dup ("&Fptr")));
@@ -1382,7 +1382,7 @@ static void compose_external_ccall_sparc (tstate *ts, int inlined, char *name, i
 	add_to_ins_chain (*pst_first);
 #if 0
 	add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_CONST | ARG_ISCONST, 8, ARG_REG, REG_ALT_L4, ARG_REG, REG_ALT_L4));
-	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_FPTR, ARG_NAMEDLABEL, string_dup ("&Fptr")));
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_BPTR, ARG_NAMEDLABEL, string_dup ("&Bptr")));
 	}
@@ -1399,7 +1399,7 @@ static void compose_external_ccall_sparc (tstate *ts, int inlined, char *name, i
 	}
 #if 0
 	add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 4, ARG_REG, REG_ALT_L4, ARG_REG, REG_ALT_L4));
-	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_NAMEDLABEL, string_dup ("&Fptr"), ARG_REG, REG_FPTR));
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_NAMEDLABEL, string_dup ("&Bptr"), ARG_REG, REG_BPTR));
 	}
@@ -1414,7 +1414,7 @@ static void compose_external_ccall_sparc (tstate *ts, int inlined, char *name, i
 		add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR));
 		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, tmp_reg));
 		kernel_call = K_DYNPROC_SUSPEND;
-		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 			*pst_last = compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup ((kif_entry (kernel_call))->entrypoint));
 		} else if (options.kernel_interface & KRNLIFACE_MESH) {
 			fprintf (stderr, "%s: error: do not have dynamic process support for MESH yet\n", progname);

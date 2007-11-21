@@ -1017,8 +1017,8 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 					/*{{{  WAIT_FOR_INTERRUPT*/
 				case WAIT_FOR_INTERRUPT:
 					#ifdef K_WAIT_INT
-					if (!(options.kernel_interface & KRNLIFACE_OOS)) {
-						fprintf (stderr, "%s: fatal: must have OOS kernel-interface support in order to use WAIT.FOR.INTERRUPT()\n", progname);
+					if (!(options.kernel_interface & KRNLIFACE_RMOX)) {
+						fprintf (stderr, "%s: fatal: must have RMOX kernel-interface support in order to use WAIT.FOR.INTERRUPT()\n", progname);
 						exit (EXIT_FAILURE);
 					}
 
@@ -1033,7 +1033,7 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 					ts->stack->ts_depth = 1;
 
 					#else
-					fprintf (stderr, "%s: fatal: must have OOS compiled into tranx86, update KRoC/CCSP and rebuild\n", progname);
+					fprintf (stderr, "%s: fatal: must have RMOX compiled into tranx86, update KRoC/CCSP and rebuild\n", progname);
 					exit (EXIT_FAILURE);
 					#endif
 					break;
@@ -1956,7 +1956,7 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 								pidx++;
 							}
 							if (!failed && !strncmp (ts->jentry_name, pname, (pidx - psidx)) && (strlen (ts->jentry_name) == (pidx - psidx)) &&
-								!(options.kernel_interface & KRNLIFACE_OOS)) {
+								!(options.kernel_interface & KRNLIFACE_RMOX)) {
 								int tlp_type;
 
 								/* found relevant PROC */
@@ -5066,7 +5066,7 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 	case I_STLB:
 		if (options.kernel_interface & KRNLIFACE_MP) {
 			fprintf (stderr, "%s: warning: not translatable %d\n", progname, sec);
-		} else if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+		} else if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 			/* Bptr is now in REG_BPTR */
 			add_to_ins_chain (compose_ins (INS_CMP, 2, 1, ARG_CONST, 0x80000000, ARG_REG, ts->stack->old_a_reg, ARG_REG | ARG_IMP, REG_CC));
 			add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_NZ, ARG_FLABEL, 0));
@@ -5084,7 +5084,7 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 	case I_STLF:
 		if (options.kernel_interface & KRNLIFACE_MP) {
 			fprintf (stderr, "%s: warning: not translatable %d\n", progname, sec);
-		} else if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+		} else if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 			/* Fptr is now in REG_FPTR */
 			add_to_ins_chain (compose_ins (INS_CMP, 2, 1, ARG_CONST, 0x80000000, ARG_REG, ts->stack->old_a_reg, ARG_REG | ARG_IMP, REG_CC));
 			add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_NZ, ARG_FLABEL, 0));

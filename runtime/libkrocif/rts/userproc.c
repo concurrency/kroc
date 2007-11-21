@@ -58,7 +58,7 @@
 
 #include <rts.h>
 
-#if (defined(USEFUL_SEGFAULT) || defined(USEFUL_FPEDEBUG)) && !defined(OOS_BUILD)
+#if (defined(USEFUL_SEGFAULT) || defined(USEFUL_FPEDEBUG))
 	#include <signal.h>
 #endif
 

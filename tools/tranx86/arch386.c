@@ -148,7 +148,7 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 	xregs[2] = REG_ECX;
 	xregs[3] = REG_EDX;
 	for (i = (r_in - 1); i >= 0; i--) {
-		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 			/* some things still require the operands to be pushed.. */
 			switch (entry->input_mode) {
 			case ARGS_ON_STACK:
@@ -185,7 +185,7 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 	/* generate call */
 	tmp_ins = NULL;			/* used for adding implied regs later */
 	tmp_ins2 = NULL;
-	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		if (options.annotate_output) {
 			char sbuf[128];
 
@@ -376,7 +376,7 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 	ts->stack_drift = 0;
 
 	/*{{{  unconstrain registers*/
-	if ((options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) && (entry->input_mode == ARGS_IN_REGS)) {
+	if ((options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) && (entry->input_mode == ARGS_IN_REGS)) {
 		for (i=0; i<r_in; i++) {
 			add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, cregs[i]));
 		}
@@ -410,7 +410,7 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 		}
 		/* constrain into registers */
 		for (i=0; i<r_out; i++) {
-			if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+			if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 				switch (entry->output_mode) {
 					/*{{{  ARGS_ON_STACK -- results given back on the stack*/
 				case ARGS_ON_STACK:
@@ -618,7 +618,7 @@ static void compose_inline_ldtimer_i386 (tstate *ts)
  */
 static void compose_inline_quick_reschedule_i386 (tstate *ts)
 {
-	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		/* more processes ? */
 		add_to_ins_chain (compose_ins (INS_CMP, 2, 1, ARG_CONST, NOT_PROCESS, ARG_REG, REG_FPTR, ARG_REG | ARG_IMP, REG_CC));
 		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_NZ, ARG_FLABEL, 2));
@@ -787,7 +787,7 @@ static void compose_inline_enqueue_i386 (tstate *ts, int preg, int nflab)
 {
 	int tmp_reg;
 
-	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		/* P[Link] = NotProcess; run-queue empty ? */
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, NOT_PROCESS, ARG_REGIND | ARG_DISP, preg, W_LINK));
 		add_to_ins_chain (compose_ins (INS_CMP, 2, 1, ARG_CONST, NOT_PROCESS, ARG_REG, REG_FPTR, ARG_REG | ARG_IMP, REG_CC));
@@ -1822,14 +1822,14 @@ static void compose_inline_stlx_i386 (tstate *ts, int ins)
 	add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0));
 	switch (ins) {
 	case I_STLB:
-		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 			add_to_ins_chain  (compose_ins (INS_MOVE, 1, 1, ARG_REG, ts->stack->old_a_reg, ARG_REG, REG_BPTR));
 		} else {
 			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, ts->stack->old_a_reg, ARG_NAMEDLABEL, string_dup (Bptr_name)));
 		}
 		break;
 	case I_STLF:
-		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, ts->stack->old_a_reg, ARG_REG, REG_FPTR));
 		} else {
 			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, ts->stack->old_a_reg, ARG_NAMEDLABEL, string_dup (Fptr_name)));
@@ -3243,7 +3243,7 @@ static void compose_external_ccall_i386 (tstate *ts, int inlined, char *name, in
 		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_SCHED));
 	}
 	add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_CONST | ARG_ISCONST, kernliface_mp ? 4 : 8, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
-	if (!kernliface_mp && (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS))) {
+	if (!kernliface_mp && (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX))) {
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_FPTR, ARG_NAMEDLABEL, string_dup (Fptr_name)));
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_BPTR, ARG_NAMEDLABEL, string_dup (Bptr_name)));
 	}
@@ -3258,7 +3258,7 @@ static void compose_external_ccall_i386 (tstate *ts, int inlined, char *name, in
 		add_to_ins_chain (compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup (name + 1)));
 	}
 	add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 4, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
-	if (!kernliface_mp && (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS))) {
+	if (!kernliface_mp && (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX))) {
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_NAMEDLABEL, string_dup (Fptr_name), ARG_REG, REG_FPTR));
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_NAMEDLABEL, string_dup (Bptr_name), ARG_REG, REG_BPTR));
 	}
@@ -3275,7 +3275,7 @@ static void compose_external_ccall_i386 (tstate *ts, int inlined, char *name, in
 		add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR));
 		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, tmp_reg));
 		kernel_call = K_DYNPROC_SUSPEND;
-		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 			*pst_last = compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup ((kif_entry (kernel_call))->entrypoint));
 		} else if (options.kernel_interface & KRNLIFACE_MESH) {
 			fprintf (stderr, "%s: error: do not have dynamic process support for MESH yet\n", progname);
@@ -3315,7 +3315,7 @@ static void compose_bcall_i386 (tstate *ts, int i, int kernel_call, int inlined,
 			add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_NAMEDLABEL | ARG_ISCONST, string_dup (name + ((i == 2) ? 1 : 2))));
 		}
 	}
-	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (kernel_call)));
 	} else if (options.kernel_interface & KRNLIFACE_MESH) {
 		fprintf (stderr, "%s: error: do not have blocking call support in MESH yet\n", progname);
