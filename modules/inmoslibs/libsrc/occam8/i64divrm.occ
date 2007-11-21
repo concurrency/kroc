@@ -19,9 +19,11 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libs, no vector space
-#COMMENT "T8 compiler library, V1.1 21/02/89"
+#COMMENT "TA compiler library, V1.2 11/01/93"
 #COMMENT "(c) Copyright INMOS Limited 1988"
 --}}}
 
@@ -30,11 +32,31 @@
 #PRAGMA TRANSLATE INT64REM "INT64REM%CHK"
 
 --{{{  INT64DIVREM
---{{{  INT64DIVREM -- TA & T8
+--{{{  INT64DIVREM -- TA, T8, T9000
 INT64, INT64 FUNCTION INT64DIVREM (VAL INT64 Dvd, VAL INT64 Dvsr)
 
+  --{{{  comments
+  -- Calculates the quotient and remainder from Dvd and Dvsr.  Note
+  -- that Dvd is the dividend and Dvsr is the divisor, and in a fraction
+  -- it is the dividend that is the numerator and the divisor that is the
+  -- denominator.
+  
+  -- NOTE:  Because (MOSTNEG INT64) REM (-1(INT64)) is valid (and equal to 0),
+  -- but (MOSTNEG INT64) / (-1(INT64)) is invalid, this routine, as it is
+  -- asked for both quotient and remainder, must leave it to the caller to
+  -- fault the division: if given the arguments MOSTNEG INT64 and -1, then
+  -- this routine will give the correct answer for the remainder, but rubbish
+  -- for the quotient.
+  --}}}
+
+  --{{{  history
   -- Integer Arithmetic (9oct86) DES
   -- Converted to functions (26jan87) PWT
+  -- V1.1 21/02/89
+  -- V1.2 11/01/93 SRH: bug fix TS/2020 - moved check for
+  -- (MOSTNEG INT64) / (-1(INT64)) from INT64DIVREM into INT64DIV so that
+  -- remainder can be calculated correctly.
+  --}}}
 
   -- Signed divide from Knuth (algorithm D, section 4.3.1 - vol 2, pp 257).
 
@@ -64,7 +86,7 @@ INT64, INT64 FUNCTION INT64DIVREM (VAL INT64 Dvd, VAL INT64 Dvsr)
         --{{{  Dvsr = 0
         (Dvsr [0] = 0) AND (Dvsr [1] = 0) --divide by zero
           --{{{  Handle error
-          CAUSEERROR ()
+          CAUSEERROR()
           --}}}
         --}}}
         --{{{  Dvsr [1] = 0
@@ -153,10 +175,10 @@ INT64, INT64 FUNCTION INT64DIVREM (VAL INT64 Dvd, VAL INT64 Dvsr)
         (Dvd [1] /\ SignBit) <> 0          --sort out signs
           SEQ
             NegRem := TRUE
-            U [1], U [0] := LONGDIFF (0, Dvd [0], 0)
-            Borrow, U [1] := LONGDIFF (0, Dvd [1], U [1])
+            Borrow, U [0] := LONGDIFF (0, Dvd [0], 0)
+            Borrow, U [1] := LONGDIFF (0, Dvd [1], Borrow)
         --}}}
-        --{{{  TRUE
+        --{{{  Dvd zero or positive
         TRUE
           SEQ
             NegRem := FALSE
@@ -170,10 +192,10 @@ INT64, INT64 FUNCTION INT64DIVREM (VAL INT64 Dvd, VAL INT64 Dvsr)
         (Dvsr [1] /\ SignBit) <> 0
           SEQ
             NegQuot := NOT NegRem
-            V [1], V [0] := LONGDIFF (0, Dvsr [0], 0)
-            Borrow, V [1] := LONGDIFF (0, Dvsr [1], V [1])
+            Borrow, V [0] := LONGDIFF (0, Dvsr [0], 0)
+            Borrow, V [1] := LONGDIFF (0, Dvsr [1], Borrow)
         --}}}
-        --{{{  TRUE
+        --{{{  Dvsr is zero or positive
         TRUE
           SEQ
             NegQuot := NegRem
@@ -182,19 +204,6 @@ INT64, INT64 FUNCTION INT64DIVREM (VAL INT64 Dvd, VAL INT64 Dvsr)
         --}}}
       --}}}
       INT64UnsDiv (Quot, Rem, U, V)
-      #PRAGMA DEFINED Borrow
-      #PRAGMA DEFINED Quot, Rem
-      --{{{  Check for -MaxInt / -1
-      IF
-        --{{{  -MaxInt / -1
-        ((Quot [1] /\ SignBit) <> 0) AND (NOT NegQuot)  --is -MaxInt/-1
-          CAUSEERROR ()
-        --}}}
-        --{{{  TRUE
-        TRUE
-          SKIP
-        --}}}
-      --}}}
       --{{{  Check if result has negative quotient
       IF
         --{{{  NegQuot
@@ -234,26 +243,33 @@ INT64 FUNCTION INT64DIV (VAL INT64 Dvd, VAL INT64 Dvsr)
 
   INT64 Quot :
   VALOF
-    INT64 Rem :
-    Quot, Rem := INT64DIVREM (Dvd, Dvsr)
+    SEQ
+      --{{{  CAUSEERROR if overflow (MinInt/-1)
+      IF
+        --{{{  CAUSEERROR if overflow: (MOSTNEG INT64) / -1
+        (Dvd = (MOSTNEG INT64)) AND (Dvsr = (-1(INT64)))
+          CAUSEERROR() -- answer not expressible in two's complement
+        --}}}
+        --{{{  TRUE
+        TRUE
+          SKIP
+        --}}}
+      --}}}
+      INT64 Dummy :
+      Quot, Dummy := INT64DIVREM (Dvd, Dvsr)
     RESULT Quot
 :
 --}}}
 --{{{  INT64REM
 INT64 FUNCTION INT64REM (VAL INT64 Dvd, VAL INT64 Dvsr)
 
-  -- INT64REM%CHK
-  -- avoid INT64DIVREM (MOSTNEG INT64, -1) (9 Feb 95) DCW
-
   INT64 Rem :
   VALOF
-    IF
-      Dvsr = (-1)
-        Rem := 0
-      TRUE
-        INT64 Dummy :
-        Dummy, Rem := INT64DIVREM (Dvd, Dvsr)
+    INT64 Dummy :
+    Dummy, Rem := INT64DIVREM (Dvd, Dvsr)
     RESULT Rem
 :
 --}}}
 --}}}
+
+#ENDIF

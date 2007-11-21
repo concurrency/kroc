@@ -1,0 +1,56 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.2 27/02/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE CRCBYTE "CRCBYTE%O"
+
+--{{{  CRCBYTE in occam
+INT FUNCTION CRCBYTE (VAL INT data, CRCIn, generator)
+
+  -- Assumes data is in most significant 8 bits of the word.
+  --{{{  history
+  -- V1.1, 21/02/1989
+  -- V1.2, 27/02/1992, SRH; textual cleanup
+  --}}}
+
+  INT CRCOut :
+  VALOF
+    VAL BitsPerByte IS 8 :
+    INT MyData :
+    SEQ
+      MyData := data
+      CRCOut := CRCIn
+      SEQ i = 0 FOR BitsPerByte
+        INT OldCRC :
+        SEQ
+          OldCRC := CRCOut
+          CRCOut, MyData := SHIFTLEFT (CRCOut, MyData, 1)
+          IF
+            OldCRC < 0 -- msb of CRC = 1
+              CRCOut := CRCOut >< generator
+            TRUE
+              SKIP
+    RESULT CRCOut
+:
+--}}}

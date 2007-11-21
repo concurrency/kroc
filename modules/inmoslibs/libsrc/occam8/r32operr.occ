@@ -1,0 +1,67 @@
+
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+
+--{{{  #comments and #options
+#OPTION "V"  -- no vector space
+#COMMENT "TA compiler library, V1.1 29/01/90"
+#COMMENT "(c) Copyright INMOS Limited 1990"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32OPERR "REAL32OPERR%CHK"
+--}}}
+
+--{{{  comments
+--
+-- This function evaluates X Op Y using occam error checking rather than the
+-- IEEE method of using infinities and Not-a-Numbers.  The various operations
+-- are coded in Op where
+--   Op  =  0  +
+--       =  1  -
+--       =  2  *
+--       =  3  /
+--
+--}}}
+
+#INCLUDE "realvals.inc"
+
+--{{{  REAL32OPERR    TA
+REAL32 FUNCTION REAL32OPERR (VAL REAL32 X, VAL INT Op, VAL REAL32 Yp )
+
+  -- unoptimised version for TA compiler libraries; V1.0, 29-Jan-90 SRH
+  -- The routine IEEE32OP should range check Op.
+
+  REAL32 answer :
+  VALOF
+    BOOL error :
+    SEQ
+      error, answer := IEEE32OP( X, RN, Op, Yp )
+      IF
+        error
+          CAUSEERROR()
+        TRUE
+          SKIP
+    RESULT answer
+:
+--}}}
+
+#ENDIF

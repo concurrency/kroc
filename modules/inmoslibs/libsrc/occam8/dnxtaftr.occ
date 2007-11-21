@@ -27,6 +27,8 @@
 
 #PRAGMA TRANSLATE DNEXTAFTER "DNEXTAFTER%O"
 
+#INCLUDE "realvals.inc"
+
 -- replaced the T8 code with the TA code because there is no good FPU
 -- implementation possible ( the previous one was wrong with -0.0 and
 -- infinities ); 10-July-90 SRH
@@ -53,12 +55,6 @@ REAL64 FUNCTION DNEXTAFTER (VAL REAL64 Y, Z)
 
   REAL64 X :
   VALOF
-    --{{{  VALS
-    VAL DRealShift IS        11 :
-    VAL DRealExp   IS      #7FF :
-    VAL DRealInf   IS #7FF00000 :
-    VAL Bias       IS      1023 :
-    --}}}
     [2]INT X RETYPES X:
     VAL [2]INT Y RETYPES Y:
     VAL [2]INT Z RETYPES Z:

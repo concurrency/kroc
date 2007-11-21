@@ -1,0 +1,140 @@
+
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.2 07/04/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL64TOINT64 "REAL64TOINT64%CHK"
+--}}}
+
+#INCLUDE "realvals.inc"
+
+--{{{  REAL64TOINT64
+INT64 FUNCTION REAL64TOINT64 (VAL INT Mode, VAL REAL64 X)
+
+  -- Round real value double length integer (round to nearest or zero),
+  -- returns an integer result. Error flag is set if an error occurs.
+  --   ErrorFlag : 0 if ok, 1 if error
+  --   N         : destination double integer
+  --   Mode      : Truncate or Nearest (rounding mode)
+  --   X         : source real
+  -- Beta-2 (27feb87)
+
+  -- from here to the end of the routine is almost identical to the idebug
+  -- version -- a change in one should be reflected in the other
+
+  INT64 N:
+  VALOF
+    --{{{  DEFs
+    VAL INT REAL64MININT64.Hi IS #C3E00000 :
+    --}}}
+    [2]INT N RETYPES N :
+    VAL [2]INT X RETYPES X :
+    INT Carry, Dump, Guard, Xexp :
+    [2] INT Xfrac :
+    PLACE Xfrac IN WORKSPACE :
+    INT Xsign :
+    INT Sign :
+    SEQ
+      Sign := SignBit
+      Xexp,  Dump := SHIFTLEFT ( 0,  X [1] /\ (~Sign),  DRealShift + 1)
+      Xfrac [1],  Xfrac [0] := SHIFTLEFT ( X [1],  X [0],  DRealShift + 1)
+      IF
+        Xexp = DRealExp                    --not valid
+          CAUSEERROR()
+        (X [1] = REAL64MININT64.Hi) AND (X [0] = 0)  -- MinInt
+          SEQ
+            N [1] := Sign
+            N [0] := 0
+        Xexp < (DRealXcess - 1)            --less than half
+          SEQ
+            N [1] := 0
+            N [0] := 0
+        Xexp < DRealXcess                  --0.5 to 0.9*
+          --{{{  
+          IF
+            (Mode = Truncate) OR ((Xfrac [1] \/ Xfrac [0]) = 0)
+              SEQ
+                N [1] := 0
+                N [0] := 0
+            (X [1] /\ Sign) = 0            --round up
+              SEQ
+                N [1] := 0
+                N [0] := 1
+            TRUE
+              SEQ
+                N [1] := -1
+                N [0] := -1
+          --}}}
+        TRUE
+          --{{{  
+          SEQ
+            Xsign := X [1] /\ Sign
+            Xexp := Xexp - DRealXcess
+            IF
+              Xexp < BitsPerWord        --not past word shift
+                SEQ
+                  Carry := Xfrac [0]
+                  Xfrac [0] := Xfrac [1]
+                  Xfrac [1] := 1
+                  Guard := 0
+              TRUE
+                SEQ
+                  Xexp := Xexp - BitsPerWord
+                  Carry := 0
+                  Guard := 1               --set top bit
+                  IF
+                    Xexp > (BitsPerWord - 2)  --losing bits
+                      CAUSEERROR()
+                    TRUE
+                      SKIP
+            Guard,  Dump := SHIFTLEFT ( Guard,  Xfrac [1],  Xexp)
+            Xfrac [1],  Dump := SHIFTLEFT ( Xfrac [1],  Xfrac [0],  Xexp)
+            Xfrac [0],  Carry := SHIFTLEFT ( Xfrac [0],  Carry,  Xexp)
+            IF
+              (Mode = Truncate) OR ((Xfrac [0] /\ Sign) = 0)
+                SKIP
+              (((Xfrac [0] /\ (~Sign)) \/ Carry) \/ (Xfrac [1] /\ 1)) = 0--round down
+                SKIP
+              TRUE                           --round up/even
+                SEQ
+                  Carry,  Xfrac [1] := LONGSUM ( Xfrac [1],  1,  0)
+                  Carry,  Guard := LONGSUM ( Guard,  0,  Carry)
+            N [1] := Guard /\ (~Sign)        --dump excess top bits
+            N [0] := Xfrac [1]
+            IF
+              Xsign = 0                      --positive
+                SKIP
+              TRUE
+                SEQ
+                  Carry,  N [0] := LONGDIFF ( 0,  N [0],  0)
+                  Carry,  N [1] := LONGDIFF ( 0,  N [1],  Carry)
+          --}}}
+    RESULT N
+:
+--}}}
+
+#ENDIF

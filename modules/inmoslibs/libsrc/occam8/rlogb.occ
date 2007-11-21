@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libraries, no vector space
 #COMMENT "T8 compiler library, V1.1 21/02/89"
@@ -27,15 +29,14 @@
 
 #PRAGMA TRANSLATE LOGB "LOGB%O"
 
---{{{  T8 and TA code the same; merged 20-June-90 SRH
+#INCLUDE "realvals.inc"
+
+--{{{  TA, T8, T9000; TA and T8 code merged 20-June-90 SRH
 REAL32 FUNCTION LOGB (VAL REAL32 Y)
 
   REAL32 X :
   VALOF
     --{{{  IEEE single precision VALS for 32-bit processor
-    VAL RealShift IS         8 :
-    VAL RealExp   IS       255 :
-    VAL RealInf   IS #7F800000 :
     VAL Bias      IS       127 :
     --}}}
     VAL INT Y RETYPES Y:
@@ -56,3 +57,5 @@ REAL32 FUNCTION LOGB (VAL REAL32 Y)
     RESULT X
 :
 --}}}
+
+#ENDIF

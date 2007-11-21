@@ -7,17 +7,30 @@ libs = \
 	occam8.lib
 
 EXTRA_DIST = \
-	bitops.occ \
+	bitcount.occ \
+	brevnbit.occ \
+	brevword.occ \
+	clip2d.occ \
 	cosfl.occ \
-	crcops.occ \
+	crcbyte.occ \
+	crcword.occ \
+	dabsfint.occ \
+	danalyse.occ \
 	dargred.occ \
+	ddivby2.occ \
 	dcosfl.occ \
 	dcpysign.occ \
 	dfunpack.occ \
 	dlogb.occ \
+	dminusx.occ \
+	dmulby2.occ \
+	dnotfnte.occ \
 	dnxtaftr.occ \
+	draw2d.occ \
 	dscaleb.occ \
 	dsinfl.occ \
+	dsqrt.occ \
+	fracmul.occ \
 	i16add.occ \
 	i16band.occ \
 	i16bnot.occ \
@@ -34,31 +47,58 @@ EXTRA_DIST = \
 	i16sub.occ \
 	i16times.occ \
 	i16xor.occ \
+	i32tor32.occ \
+	i32tor64.occ \
 	i64divrm.occ \
+	i64gt.occ \
 	i64mul.occ \
+	i64tor32.occ \
+	i64tor64.occ \
 	ie32comp.occ \
 	ie32op.occ \
 	ie32rem.occ \
 	ie64comp.occ \
 	ie64op.occ \
 	ie64rem.occ \
+	move2d.occ \
+	nan32.inc \
 	occampi.occ \
 	r32eq.occ \
+	r32eqerr.occ \
 	r32gt.occ \
+	r32gterr.occ \
 	r32op.occ \
+	r32operr.occ \
 	r32rem.occ \
+	r32remer.occ \
+	r32toi32.occ \
+	r32toi64.occ \
+	r32tor64.occ \
 	r64eq.occ \
+	r64eqerr.occ \
 	r64gt.occ \
+	r64gterr.occ \
 	r64op.occ \
+	r64operr.occ \
 	r64rem.occ \
+	r64remer.occ \
+	r64toi32.occ \
+	r64toi64.occ \
+	r64tor32.occ \
+	rabsfint.occ \
 	rargred.occ \
+	ranalyse.occ \
 	rcpysign.occ \
+	rdivby2.occ \
+	realvals.inc \
 	rfunpack.occ \
 	ridiv.occ \
 	rimul.occ \
 	rlogb.occ \
+	rmulby2.occ \
 	rnxtaftr.occ \
 	roundsn.occ \
+	rsqrt.occ \
 	rscaleb.occ \
 	sinfl.occ \
 	unpacksn.occ
@@ -69,6 +109,7 @@ occam8_early_objs = \
 	ridiv.tce \
 	rimul.tce \
 	dargred.tce \
+	rargred.tce \
 	ie32op.tce \
 	ie64op.tce \
 	r32eq.tce \
@@ -78,16 +119,29 @@ occam8_early_objs = \
 
 occam8_lib_objs = \
 	$(occam8_early_objs) \
-	bitops.tce \
+	bitcount.tce \
+	brevnbit.tce \
+	brevword.tce \
+	clip2d.tce \
 	cosfl.tce \
-	crcops.tce \
+	crcbyte.tce \
+	crcword.tce \
+	dabsfint.tce \
+	danalyse.tce \
+	ddivby2.tce \
 	dcosfl.tce \
 	dcpysign.tce \
 	dfunpack.tce \
 	dlogb.tce \
+	dminusx.tce \
+	dmulby2.tce \
+	dnotfnte.tce \
 	dnxtaftr.tce \
+	draw2d.tce \
 	dscaleb.tce \
 	dsinfl.tce \
+	dsqrt.tce \
+	fracmul.tce \
 	i16add.tce \
 	i16band.tce \
 	i16bnot.tce \
@@ -104,23 +158,47 @@ occam8_lib_objs = \
 	i16sub.tce \
 	i16times.tce \
 	i16xor.tce \
+	i32tor32.tce \
+	i32tor64.tce \
 	i64divrm.tce \
+	i64gt.tce \
 	i64mul.tce \
+	i64tor32.tce \
+	i64tor64.tce \
 	ie32comp.tce \
 	ie32rem.tce \
 	ie64comp.tce \
 	ie64rem.tce \
+	move2d.tce \
 	occampi.tce \
+	r32eqerr.tce \
+	r32gterr.tce \
 	r32op.tce \
+	r32operr.tce \
 	r32rem.tce \
+	r32remer.tce \
+	r32toi32.tce \
+	r32toi64.tce \
+	r32tor64.tce \
+	r64eqerr.tce \
+	r64gterr.tce \
 	r64op.tce \
+	r64operr.tce \
 	r64rem.tce \
-	rargred.tce \
+	r64remer.tce \
+	r64toi32.tce \
+	r64toi64.tce \
+	r64tor32.tce \
+	rabsfint.tce \
+	ranalyse.tce \
 	rcpysign.tce \
+	rdivby2.tce \
 	rfunpack.tce \
 	rlogb.tce \
+	rmulby2.tce \
 	rnxtaftr.tce \
 	roundsn.tce \
+	rsqrt.tce \
 	rscaleb.tce \
 	sinfl.tce \
 	unpacksn.tce

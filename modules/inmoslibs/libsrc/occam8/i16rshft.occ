@@ -19,9 +19,11 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD > 16)
+
 --{{{  #options and #comments
 #OPTION "E V W"  -- no compiler libs, no vector space, full ASMs
-#COMMENT "T8 compiler library, V2.0 01/10/90"
+#COMMENT "TA compiler library, V2.1 24/11/92"
 #COMMENT "(c) Copyright INMOS Limited 1988, 1990"
 --}}}
 
@@ -58,19 +60,36 @@ INT16 FUNCTION INT16RSHIFT (VAL INT16 A, VAL INT B)
   -- INT16s on 32-bit transputers are held in lowest two bytes of word;
   -- the upper two bytes of a word containing an INT16 are undefined.
   -- TS/0723; V2.0; 1 Oct 90  SRH
+  -- V2.1, 24 Nov 92, SRH; TS/1270.  Compiler ensures that B is in range.
+  -- Modified by MDP for OFA to avoid premature exit avoiding RESULT
   --}}}
 
-  INT16 res:
+  INT16 R:
   VALOF
     ASM
+      --{{{  V2.0 code
+      --LDAB #0000FFFF, A
+      --AND                -- zero bits are to be shifted in
+      --LDL    B           -- B is a local because it is a
+      --VAL parameter
+      --LDC   17
+      --CSUB0              -- IF ( ( B < 0 ) OR ( 16 < B ) ) THEN set error flag
+      --SHR
+      --AJW  .WSSIZE
+      --RET                -- leave result in Areg, upper two bytes are irrelevant
+      --}}}
+      --{{{  V2.1 code
       LDAB #0000FFFF, A
       AND                -- zero bits are to be shifted in
       LDL    B           -- B is a local because it is a VAL parameter
-      LDC   17
-      CSUB0              -- IF ( ( B < 0 ) OR ( 16 < B ) ) THEN set error flag
       SHR
-      AJW  .WSSIZE
-      ST res
-    RESULT res
+      ST     R
+      --AJW  .WSSIZE
+      --RET                -- leave result in Areg, upper two bytes are irrelevant
+      --}}}  
+    --RESULT 0( INT16 )    -- dummy
+    RESULT R
 :
 --}}}
+
+#ENDIF

@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD > 16)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libs, no vector space
 #COMMENT "TA compiler library, V1.3 06/04/90"
@@ -27,6 +29,8 @@
 --}}}
 
 #PRAGMA TRANSLATE IEEE32OP "IEEE32OP%O"
+
+#INCLUDE "realvals.inc"
 
 --{{{  IEEE32OP   -- TA
 BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,
@@ -43,49 +47,15 @@ BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,
   BOOL   Error :
   REAL32 Result:
   VALOF
+    #INCLUDE "nan32.inc"
     --{{{  
     INT Result RETYPES Result :
     VAL INT X RETYPES X :
     VAL INT Yp RETYPES Yp :
-    --{{{  constants
-    --{{{  Operation codes for real and integer arithmetic
-    VAL INT Add IS 0 :                      --op code for add
-    VAL INT Sub IS 1 :                      --op code for subtract
-    VAL INT Mul IS 2 :                      --op code for multiply
-    VAL INT Div IS 3 :                      --op code for divide
-    
-    -- rounding modes
-    VAL INT RZ  IS 0 :
-    VAL INT RN  IS 1 :
-    VAL INT RP  IS 2 :
-    VAL INT RM  IS 3 :
-    --}}}
-    --{{{  Word length specific values for 32 bit machine
-    VAL SignBit        IS #80000000 :
-    VAL BitsPerWord    IS        32 :
-    VAL BytesPerWord   IS         4 :
-    --}}}
     --{{{  IEEE Single length constants for 32 bit implementation
-    VAL RealShift     IS         8 :
-    VAL BitsInFrac    IS        24 :
     VAL RealExpSh     IS        23 :
-    VAL RealExp       IS       255 :
-    VAL RealXcess     IS       127 :
-    VAL RealRBit      IS       128 :
     VAL RealInf       IS #7F800000 :
     VAL BiggestFinite IS #7F7FFFFF :
-    --}}}
-    --{{{  NaNs
-    --  These are the values of nans returned by the IMS T800
-    VAL INT ZeroZeroDivNaN  IS #7FC00000 :
-    VAL INT InfInfDivNaN    IS #7FA00000 :
-    VAL INT ZeroInfMulNaN   IS #7F900000 :
-    VAL INT AddSubInfInfNaN IS #7F880000 :
-    VAL INT NegSqrtNaN      IS #7F840000 :
-    VAL INT Real64to32NaN   IS #7F820000 :
-    VAL INT RemInfNaN       IS #7F804000 :
-    VAL INT RemZeroNaN      IS #7F802000 :
-    --}}}
     --}}}
     --{{{  comment/variables
     --compute floating point value :-
@@ -147,7 +117,7 @@ BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,
                       Ans := X >< Y     --signed zero
                     TRUE                --div
                       SEQ
-                        Ans := ZeroZeroDivNaN
+                        Ans := ZeroZeroDivNaN.32
                         Error := TRUE
                 Op < Mul                --result is Y
                   Ans := Y
@@ -208,9 +178,9 @@ BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,
                   TRUE                          --add/sub/div and inf inf
                     IF
                       Op = Div
-                        Ans := InfInfDivNaN
+                        Ans := InfInfDivNaN.32
                       TRUE
-                        Ans := AddSubInfInfNaN
+                        Ans := AddSubInfInfNaN.32
                 --}}}
               Xexp = RealExp
                 --{{{  X infinity or NaN
@@ -222,7 +192,7 @@ BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,
                   Op = Mul
                     IF
                       (Yexp \/ Yfrac) = 0       --mul by zero
-                        Ans := ZeroInfMulNaN
+                        Ans := ZeroInfMulNaN.32
                       TRUE                      --inf times normal
                         Ans := ((X >< Y) /\ Sign) \/ RealInf--infinity
                   TRUE                          --div
@@ -244,7 +214,7 @@ BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,
                   Op = Mul
                     IF
                       (Xexp \/ Xfrac) = 0       --mul by zero
-                        Ans := ZeroInfMulNaN
+                        Ans := ZeroInfMulNaN.32
                       TRUE                      --inf times normal
                         Ans := ((X >< Y) /\ Sign) \/ RealInf--infinity
                   TRUE                          --div
@@ -447,3 +417,5 @@ BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,
     RESULT Error, Result
 :
 --}}}
+
+#ENDIF

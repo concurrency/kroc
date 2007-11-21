@@ -27,6 +27,8 @@
 
 #PRAGMA TRANSLATE DLOGB "DLOGB%O"
 
+#INCLUDE "realvals.inc"
+
 --{{{  T8 and TA code the same; merged 20-June-90 SRH
 REAL64 FUNCTION DLOGB (VAL REAL64 Y)
 
@@ -35,8 +37,6 @@ REAL64 FUNCTION DLOGB (VAL REAL64 Y)
   REAL64 X :
   VALOF
     --{{{  VALS
-    VAL DRealShift IS        11 :
-    VAL DRealExp   IS      #7FF :
     VAL DRealInf   IS #7FF00000 :
     VAL Bias       IS      1023 :
     --}}}

@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libs, no vector space
 #COMMENT "TA compiler library, V1.3 27/06/90"
@@ -26,6 +28,8 @@
 --}}}
 
 #PRAGMA TRANSLATE REAL64OP "REAL64OP%O"
+
+#INCLUDE "realvals.inc"
 
 --{{{  
 REAL64 FUNCTION REAL64OP (VAL REAL64 X, VAL INT Op, VAL REAL64 Yp)
@@ -45,39 +49,11 @@ REAL64 FUNCTION REAL64OP (VAL REAL64 X, VAL INT Op, VAL REAL64 Yp)
     #USE "rimul"  --  13-Sep-07
     #USE "ridiv"  --  13-Sep-07
     #INCLUDE "endian.inc"  --  4-Sep-07
+    #INCLUDE "nan32.inc"
     --{{{  DEFs
-    --{{{  Operation codes for real and integer arithmetic
-    VAL Add IS 0 :                      --op code for add
-    VAL Sub IS 1 :                      --op code for subtract
-    VAL Mul IS 2 :                      --op code for multiply
-    VAL Div IS 3 :                      --op code for divide
-    --}}}
-    --{{{  Word length specific values for 32 bit machine
-    VAL SignBit      IS #80000000 :
-    VAL BitsPerWord  IS        32 :
-    VAL BytesPerWord IS         4 :
-    --}}}
     --{{{  IEEE Double length constants for 32 bit implementation
-    VAL DRealShift  IS        11 :
-    VAL DBitsInFrac IS        53 :
-    VAL DRealExpSh  IS        20 :
-    VAL DRealExp    IS      #7FF :
-    VAL DRealXcess  IS      1023 :
-    VAL DRealRBit   IS      #400 :
-    VAL DRealInf    IS #7FF00000 :
     VAL DBiggestFinite.hi IS #7FEFFFFF :
     VAL DBiggestFinite.lo IS #FFFFFFFF :
-    --}}}
-    --{{{  NaNs
-    --  These are the values of nans returned by the IMS T800
-    VAL ZeroZeroDivNaN.hi  IS #7FF80000 :
-    VAL InfInfDivNaN.hi    IS #7FF40000 :
-    VAL ZeroInfMulNaN.hi   IS #7FF20000 :
-    VAL AddSubInfInfNaN.hi IS #7FF10000 :
-    VAL NegSqrtNaN.hi      IS #7FF08000 :
-    VAL Real64to32NaN.hi   IS #7FF04000 :
-    VAL RemInfNaN.hi       IS #7FF00800 :
-    VAL RemZeroNaN.hi      IS #7FF00400 :
     --}}}
     --}}}
     [2]INT Result RETYPES Result :
@@ -570,3 +546,5 @@ REAL64 FUNCTION REAL64OP (VAL REAL64 X, VAL INT Op, VAL REAL64 Yp)
     RESULT Result
 :
 --}}}
+
+#ENDIF

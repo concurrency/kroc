@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD >= 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libraries, no vector space
 #COMMENT "T8 compiler library, V1.1 18/12/90"
@@ -26,6 +28,8 @@
 --}}}
 
 #PRAGMA TRANSLATE UNPACKSN "UNPACKSN%O"
+
+#INCLUDE "realvals.inc"
 
 --* Unpack a real number in IEEE single precision format
 --
@@ -44,9 +48,6 @@ INT, INT, INT FUNCTION UNPACKSN ( VAL INT X )
   --}}}
 
   --{{{  declarations
-  -- set up for a 32 bit machine
-  VAL INT RealShift IS 8 :
-  VAL INT RealExp   IS #FF :   -- 255, value of biased exponent of an infinity
   VAL INT FirstBit  IS #80000000 :
   
   INT Xfrac, Xexp, Type :
@@ -94,3 +95,5 @@ INT, INT, INT FUNCTION UNPACKSN ( VAL INT X )
     --}}}
     RESULT Xfrac, Xexp, Type
 :
+
+#ENDIF

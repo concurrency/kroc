@@ -21,11 +21,13 @@
 
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libraries, no vector space
-#COMMENT "T8 compiler library, V1.2 17/04/90"
+#COMMENT "TA compiler library, V1.3 07/12/92"
 #COMMENT "(c) Copyright INMOS Limited 1988"
 --}}}
 
 #PRAGMA TRANSLATE DFLOATING.UNPACK "DFLOATING.UNPACK%O"
+
+#INCLUDE "realvals.inc"
 
 --{{{  T8 and TA code the same
 INT, REAL64 FUNCTION DFLOATING.UNPACK (VAL REAL64 Y)
@@ -35,6 +37,8 @@ INT, REAL64 FUNCTION DFLOATING.UNPACK (VAL REAL64 Y)
   -- V1.1, 21-Feb-89
   -- Merged TA and T8 code, thus introducing missing CAUSEERRORs to
   -- checked TA code; V1.2, 17-Apr-90 SRH
+  -- Moved position of CAUSEERRORs from ends of branches to the beginning of
+  -- them to allow compiler to do dead code elimination; V1.3, 7-Dec-92 SRH
   --}}}
 
   #INCLUDE "endian.inc" -- 4-Sep-07
@@ -42,11 +46,8 @@ INT, REAL64 FUNCTION DFLOATING.UNPACK (VAL REAL64 Y)
   INT    n :
   REAL64 X :
   VALOF
+    #INCLUDE "nan32.inc"
     --{{{  VALS
-    VAL DRealShift     IS             11 :
-    VAL DRealExp       IS           #7FF :
-    VAL Dundefined.NaN.hi IS   #7FF00002 :
-    VAL Dundefined.NaN.lo IS           0 :
     VAL Bias           IS           1023 :
     --}}}
     [2]INT X RETYPES X:
@@ -58,6 +59,7 @@ INT, REAL64 FUNCTION DFLOATING.UNPACK (VAL REAL64 Y)
       IF
         exp = DRealExp  -- inf or NaN
           SEQ
+            CAUSEERROR()
             n := DRealExp - Bias
             IF
               (X[hi] \/ X[lo]) = 0 -- inf
@@ -66,13 +68,12 @@ INT, REAL64 FUNCTION DFLOATING.UNPACK (VAL REAL64 Y)
                   X [lo] := Dundefined.NaN.lo
               TRUE            -- NaN
                 X := Y
-            CAUSEERROR()
         (((Y [hi] << 1) \/ Y[lo])= 0) -- 0
           SEQ
+            CAUSEERROR()
             n := DRealExp - Bias
             X [hi] := Dundefined.NaN.hi
             X [lo] := Dundefined.NaN.lo
-            CAUSEERROR()
         TRUE
           SEQ
             IF
