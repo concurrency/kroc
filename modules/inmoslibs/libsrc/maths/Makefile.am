@@ -16,18 +16,22 @@ EXTRA_DIST = \
 	alogfl.occ \
 	asinfl.occ \
 	atanfl.occ \
+	cosfl.occ \
 	dacosfl.occ \
 	dalogfl.occ \
 	dasinfl.occ \
 	datanfl.occ \
+	dcosfl.occ \
 	dexpfl.occ \
 	dhyperfl.occ \
 	dpowfl.occ \
 	dranfl.occ \
+	dsinfl.occ \
 	expfl.occ \
 	hyperfl.occ \
 	powfl.occ \
 	ranfl.occ \
+	sinfl.occ \
 	tanfl.occ \
 	$(includes)
 
@@ -36,10 +40,12 @@ snglmath_lib_objs = \
 	alogfl.tce \
 	asinfl.tce \
 	atanfl.tce \
+	cosfl.tce \
 	expfl.tce \
 	hyperfl.tce \
 	powfl.tce \
 	ranfl.tce \
+	sinfl.tce \
 	tanfl.tce
 
 dblmath_lib_objs = \
@@ -47,10 +53,12 @@ dblmath_lib_objs = \
 	dalogfl.tce \
 	dasinfl.tce \
 	datanfl.tce \
+	dcosfl.tce \
 	dexpfl.tce \
 	dhyperfl.tce \
 	dpowfl.tce \
-	dranfl.tce
+	dranfl.tce \
+	dsinfl.tce
 
 all-local: $(libs)
 

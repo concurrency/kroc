@@ -19,16 +19,16 @@
 
 --** @module occam8
 
+#IF NOT DEFINED(OCCBUILD.KROC)
+
 #OPTION "V"  -- no vector space
 #COMMENT "Floating point maths library, V1.1 27/03/90"
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
-#IF DEFINED(OCCBUILD.TVM) 
-#PRAGMA TRANSLATE DSIN "DSIN%O"
-#ENDIF
+#PRAGMA TRANSLATE DCOS "DCOS%O"
 
-REAL64 FUNCTION DSIN (VAL REAL64 X)
+REAL64 FUNCTION DCOS (VAL REAL64 X)
 
   --{{{  history
   -- V1.0 1-Jul-88
@@ -47,16 +47,30 @@ REAL64 FUNCTION DSIN (VAL REAL64 X)
             RWork := Dundefined.NaN
         --}}}
       TRUE
-        --{{{  variables
+        --{{{  definitions and variables
+        -- Limit on X is Pi * 2**(ManBits/2). See C&W p134.
+        -- XMax is 210828714.13315653800964355468750
+        VAL REAL64 XMax RETYPES #41A921FB54442D18(INT64) :
+        -- C1 + C2 = Pi to extra precision
+        VAL REAL64 C1   RETYPES #4009220000000000(INT64) :
+        VAL REAL64 C2   RETYPES #BEE2AEEF4B9EE59E(INT64) :
         REAL64 XWork :
-        INT32 N :
-        BOOL ok :
         --}}}
         SEQ
-          ok, N, XWork := DARGUMENT.REDUCE (X, DPi, DPi.err)
+          XWork := DABS (X)
           IF
-            ok    -- argument reduction was accurate
+            --{{{  special case
+            XWork > XMax
+              RWork := Dinexact.NaN
+            --}}}
+            TRUE
+              INT32 N :
               SEQ
+                --{{{  reduce argument
+                N := INT32 ROUND ((X + DPiBy2) * DInvPi)
+                VAL XN  IS (REAL64 ROUND N) - DHalf :
+                XWork := (X - (XN * C1)) - (XN * C2) -- reduce argument
+                --}}}
                 --{{{  approximation in primary range
                 IF
                   DABS(XWork) > Nearly.DPiBy2 -- cutoff to ensure result <= 1.0
@@ -91,7 +105,7 @@ REAL64 FUNCTION DSIN (VAL REAL64 X)
                   TRUE
                     SKIP
                 --}}}
-            TRUE  -- argument reduction inaccurate
-              RWork := Dinexact.NaN
     RESULT RWork
 :
+
+#ENDIF

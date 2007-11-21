@@ -11,14 +11,12 @@ EXTRA_DIST = \
 	brevnbit.occ \
 	brevword.occ \
 	clip2d.occ \
-	cosfl.occ \
 	crcbyte.occ \
 	crcword.occ \
 	dabsfint.occ \
 	danalyse.occ \
 	dargred.occ \
 	ddivby2.occ \
-	dcosfl.occ \
 	dcpysign.occ \
 	dfunpack.occ \
 	dlogb.occ \
@@ -28,7 +26,6 @@ EXTRA_DIST = \
 	dnxtaftr.occ \
 	draw2d.occ \
 	dscaleb.occ \
-	dsinfl.occ \
 	dsqrt.occ \
 	fracmul.occ \
 	i16add.occ \
@@ -100,7 +97,6 @@ EXTRA_DIST = \
 	roundsn.occ \
 	rsqrt.occ \
 	rscaleb.occ \
-	sinfl.occ \
 	unpacksn.occ
 
 # We have to build some objects before the bulk of the library, because the
@@ -123,13 +119,11 @@ occam8_lib_objs = \
 	brevnbit.tce \
 	brevword.tce \
 	clip2d.tce \
-	cosfl.tce \
 	crcbyte.tce \
 	crcword.tce \
 	dabsfint.tce \
 	danalyse.tce \
 	ddivby2.tce \
-	dcosfl.tce \
 	dcpysign.tce \
 	dfunpack.tce \
 	dlogb.tce \
@@ -139,7 +133,6 @@ occam8_lib_objs = \
 	dnxtaftr.tce \
 	draw2d.tce \
 	dscaleb.tce \
-	dsinfl.tce \
 	dsqrt.tce \
 	fracmul.tce \
 	i16add.tce \
@@ -200,7 +193,6 @@ occam8_lib_objs = \
 	roundsn.tce \
 	rsqrt.tce \
 	rscaleb.tce \
-	sinfl.tce \
 	unpacksn.tce
 
 all-local: occam8-real $(libs)
