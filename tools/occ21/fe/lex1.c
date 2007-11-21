@@ -2836,10 +2836,10 @@ PRIVATE void preproc_builtin (void)
 	tw = lookupword ("TARGET.VENDOR", 13);
 	preproc_add_define (tw, 13, PP_VAL_STRING, new_string (TARGET_VENDOR));
 #endif
-	tw = lookupword ("TARGET.BYTES.PER.WORD", 24);
-	preproc_add_define (tw, 24, PP_VAL_INT, (void *)bytesperword);
-	tw = lookupword ("TARGET.BITS.PER.WORD", 23);
-	preproc_add_define (tw, 23, PP_VAL_INT, (void *)(bytesperword * 8));
+	tw = lookupword ("TARGET.BYTES.PER.WORD", 21);
+	preproc_add_define (tw, 21, PP_VAL_INT, (void *)bytesperword);
+	tw = lookupword ("TARGET.BITS.PER.WORD", 20);
+	preproc_add_define (tw, 20, PP_VAL_INT, (void *)(bytesperword * 8));
 	if (target_bigendian) {
 		tw = lookupword ("TARGET.BIGENDIAN", 16);
 		preproc_add_define (tw, 16, PP_VAL_NONE, NULL);
