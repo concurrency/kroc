@@ -662,7 +662,7 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 			/* jump to somewhere, but poll scheduler and see if a reschedule is needed.  
 			 * The synch-flags 0(sf) and Tptr 4(sf) are checked for activity.
 			 * We know that (a) the tstack is empty and (b) we have two/three words below Wptr for stuff */
-			if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+			if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 				fprintf (outstream, ";! generating PJUMP code\n");
 			#if 0	/* CMPXCHG8B version */
 				fprintf (outstream, "\tmovl\t$0, %%eax\n");

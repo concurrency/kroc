@@ -340,9 +340,9 @@ do
 		occopts="$occopts -strict"
 		;;
 		#}}}
-		#{{{  --oos  building for RMoX
-	--oos)
-		octranopts="$octranopts -ko"
+		#{{{  --rmox  building for RMoX
+	--rmox)
+		octranopts="$octranopts -kr"
 		;;
 		#}}}
 		#{{{  --nfw  no wait for globally FORKed processes
@@ -953,7 +953,7 @@ Additional options:
   -ds                    Enable memory usage summary
   -t2, -t4, -t8, -t9     Set processor compilation class (default $proc_class)
   -O   --optimise        Enable optimisations [now default]
-       --oos             Compile for OOS (experimental)
+       --rmox            Compile for RMoX
        --force-tlp       Force top-level PROC interface to (CHAN BYTE kyb?, scr!, err!)
   --ncl                  Do not link in default compiler libraries
   --xml                  Generate XML tree

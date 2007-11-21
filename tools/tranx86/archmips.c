@@ -149,7 +149,7 @@ static void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
 	xregs[2] = 6; /* REG_ECX */
 	xregs[3] = 7; /* REG_EDX */
 	for (i = (r_in - 1); i >= 0; i--) {
-		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 			/* some things still require the operands to be pushed.. */
 			switch (entry->input_mode) {
 			case ARGS_ON_STACK:
@@ -184,7 +184,7 @@ static void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
 	/* generate call */
 	tmp_ins = NULL;			/* used for adding implied regs later */
 	tmp_ins2 = NULL;
-	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		switch (entry->call_mode) {
 		case KCALL_CALL:
 			/* call the function by name */
@@ -237,7 +237,7 @@ static void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
 		/* unsupported as yet */
 		fprintf (stderr, "%s: warning: CSP/Linux kernel interface not supported yet (ungenerated kernel call %d)\n", progname, call);
 	}
-	if ((options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) && (entry->input_mode == ARGS_IN_REGS)) {
+	if ((options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) && (entry->input_mode == ARGS_IN_REGS)) {
 		/* unconstrain regs */
 		for (i=0; i<r_in; i++) {
 			add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, cregs[i]));
@@ -264,7 +264,7 @@ static void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
 		}
 		/* constrain into registers */
 		for (i=0; i<r_out; i++) {
-			if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+			if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 				switch (entry->output_mode) {
 				case ARGS_ON_STACK:
 					add_to_ins_chain (compose_ins (INS_POP, 0, 1, ARG_REG, oregs[i]));
@@ -2027,7 +2027,7 @@ static void compose_external_ccall_mips (tstate *ts, int inlined, char *name, in
 {
 	*pst_first = compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_WPTR);
 	add_to_ins_chain (*pst_first);
-	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_FPTR, ARG_NAMEDLABEL, string_dup ("&Fptr")));
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_BPTR, ARG_NAMEDLABEL, string_dup ("&Bptr")));
 	}
@@ -2042,7 +2042,7 @@ static void compose_external_ccall_mips (tstate *ts, int inlined, char *name, in
 	add_to_ins_chain (compose_ins (INS_CALL, 1, 0, ARG_REG, 25));
 	/* Remove space for args */
 	add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, MIPS_REG_SP, ARG_REG, MIPS_REG_SP));
-	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_NAMEDLABEL, string_dup ("&Fptr"), ARG_REG, REG_FPTR));
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_NAMEDLABEL, string_dup ("&Bptr"), ARG_REG, REG_BPTR));
 	}
@@ -2078,7 +2078,7 @@ static void compose_bcall_mips (tstate *ts, int i, int kernel_call, int inlined,
 		/*
 		add_to_ins_chain (compose_ins (INS_LEA, 1, 1, ARG_NAMEDLABEL | ARG_ISCONST, string_dup (name + ((i == 2) ? 1 : 2)), ARG_REG, MIPS_REG_V1)); */
 	}
-	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_OOS)) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		add_to_ins_chain (compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup ((kif_entry (kernel_call))->entrypoint)));
 	} else if (options.kernel_interface & KRNLIFACE_MESH) {
 		fprintf (stderr, "%s: error: do not have blocking call support in MESH yet\n", progname);

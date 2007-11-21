@@ -121,7 +121,7 @@ void _occ_enter (void)
 			((word *) ws)[i] = MostNeg;
 		}
 		
-		#if !defined (OOS_BUILD) && defined(DM_DEBUG) && (DM_DEBUG == 1)
+		#if defined(DM_DEBUG) && (DM_DEBUG == 1)
 		extadd_ord_mem (ws, _wsbytes + INITIAL_WS_SEP, MODE_READ | MODE_WRITE);
 		if (_vsbytes) {
 			extadd_ord_mem (ws + (_wsbytes + INITIAL_WS_SEP + 128), _vsbytes, MODE_READ | MODE_WRITE);

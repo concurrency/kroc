@@ -366,8 +366,8 @@ int main (int argc, char **argv)
 			case 'l':
 				options.kernel_interface |= KRNLIFACE_CSPLINUX;
 				break;
-			case 'o':
-				options.kernel_interface |= KRNLIFACE_OOS;
+			case 'r':
+				options.kernel_interface |= KRNLIFACE_RMOX;
 				break;
 			case 'i':
 				options.kernel_interface |= KRNLIFACE_IX;
@@ -1078,7 +1078,7 @@ static void usage (FILE *stream)
 	fprintf (stream, "\t-kf  fast CCSP kernel interface (required for inlining) (UP default)\n");
 	fprintf (stream, "\t-km  MESH kernel interface\n");
 	fprintf (stream, "\t-kl  CSP/Linux interface\n");
-	fprintf (stream, "\t-ko  OOS interface\n");
+	fprintf (stream, "\t-kr  RMoX interface\n");
 	fprintf (stream, "\t-ki  inline-kernel interface (experimental)\n");
 	/* inlining things */
 	fprintf (stream, "\t-ii  inline IN instructions\n");
