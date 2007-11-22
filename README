@@ -33,8 +33,9 @@ also need:
 On Debian-based systems, we suggest installing the following packages:
 
   bash gcc binutils gawk make automake autoconf pkg-config
+  python xsltproc subversion
   libc6-dev libsdl1.2-dev libsdl-sound1.2-dev libgl1-mesa-dev
-  libmysqlclient15-dev libpng12-dev python xsltproc subversion
+  libmysqlclient15-dev libpng12-dev libxmu-dev
 
 
 Installation
