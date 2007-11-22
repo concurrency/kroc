@@ -1,6 +1,6 @@
 -- Based on particles4 -- ported to miniraster by ats
 
-#INCLUDE "miniraster.module"
+#INCLUDE "sdlraster.module"
 #INCLUDE "course.module"
 #INCLUDE "disc.inc"
 
@@ -253,7 +253,7 @@ PROC particle.main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
      
 
     PAR  -- run the gridlink, and the G process similtaneoulsy. 
-      miniraster.simple ("Particles", screen.width, screen.height, 2, raster.1?, raster.0!)
+      raster.display.simple ("Particles", screen.width, screen.height, 2, raster.1?, raster.0!)
       drawing (draw?, raster.0?, raster.1!, screen!)
       SEQ
         SETPRI (5)
