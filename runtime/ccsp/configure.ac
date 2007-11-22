@@ -566,11 +566,11 @@ dnl Setup the library name and flags
 case "$host_os" in
 cygwin*)
  build_shared="no"
- LIBCCSP=""
+ LIBCCSP="ccsp.dll"
  ;;
 *Darwin* | *darwin*)
  build_shared="no"
- LIBCCSP=""
+ LIBCCSP="libccsp.dylib"
  dnl Disable automatic PIC usage on Apple's GCC
  CFLAGS="$CFLAGS -mdynamic-no-pic"
  ;;
