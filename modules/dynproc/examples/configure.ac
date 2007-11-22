@@ -15,5 +15,16 @@ dnl Checks for occam modules.
 OCCAM_INCLUDE([dynproc.module course.module file.module semaphore.module], ,
               [AC_MSG_ERROR(Required modules not found)])
 
+dnl Checks for operating system features.
+case "$host_os" in
+  Darwin* | darwin* | cygwin)
+    build_shared=no
+    ;;
+  *)
+    build_shared=yes
+    ;;
+esac
+AM_CONDITIONAL(BUILD_SHARED, [test "$build_shared" = "yes"])
+
 AC_OUTPUT([Makefile])
 
