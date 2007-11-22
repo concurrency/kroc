@@ -56,7 +56,6 @@ fi
 unset KROC
 unset INSTALL_DIR
 unset DIST_DIR
-unset OCSEARCH			# this is used to determine if a KROC environment is present
 unset MAKEFLAGS
 
 #{{{  installation directories
@@ -2120,7 +2119,11 @@ printf '   kroc documentation: %s\n' "$kroc_kroc_doc"
 printf '   compiler test suite: %s\n' "$kroc_kroc_cgtests"
 printf '\n'
 
-
+#{{{  set up environment
+# This should be the same as setup.sh.
+PATH="$kroc_archbindir:$PATH"
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$kroc_archlibdir"; export LD_LIBRARY_PATH
+#}}}
 #{{{  sort out the ACTIONLIST
 SHOWBANNER=0
 
@@ -2141,7 +2144,6 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-occ21 make-occ21 install-occ21 \
 		configure-ilibr make-ilibr install-ilibr \
 		configure-kroc make-kroc install-kroc \
-		initial-kroc-setup \
 		configure-tranx86 make-tranx86 install-tranx86 \
 		configure-krocif make-krocif install-krocif \
 		configure-inmoslibs make-inmoslibs install-inmoslibs \
@@ -2180,7 +2182,7 @@ EXAMPLEINSTALL=
 CGTESTSINSTALL=
 
 # some transformations
-EXAMPLE_ACTIONS="setbuildtarget setbuildoptions building-examples initial-kroc-setup bsyscalls-support cputimers-support dynproc-support \
+EXAMPLE_ACTIONS="setbuildtarget setbuildoptions building-examples bsyscalls-support cputimers-support dynproc-support \
 		configure-bsclib_examples make-bsclib_examples install-bsclib_examples \
 		configure-course_examples make-course_examples install-course_examples \
 		configure-course_answers make-course_answers install-course_answers \
@@ -2206,7 +2208,7 @@ if [ "$USEPONY" -eq 1 ]; then
 	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
 		configure-pony_examples make-pony_examples"
 fi
-CGTESTS_ACTIONS="setbuildtarget setbuildoptions building-cgtests initial-kroc-setup configure-cgtests make-cgtests install-cgtests"
+CGTESTS_ACTIONS="setbuildtarget setbuildoptions building-cgtests configure-cgtests make-cgtests install-cgtests"
 
 if [ "$FULLINSTALL" = "1" ]; then
 	ACTIONLIST="$ACTIONLIST examples cgtests"
@@ -2251,55 +2253,55 @@ for action in $ACTIONLIST; do
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-kroc make-kroc install-kroc"
 		;;
 	Xkrocif)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup preconfigure-krocif configure-krocif make-krocif install-krocif"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support preconfigure-krocif configure-krocif make-krocif install-krocif"
 		;;
 	Xinmoslibs)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-inmoslibs make-inmoslibs install-inmoslibs"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-inmoslibs make-inmoslibs install-inmoslibs"
 		;;
 	Xbsclib)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-bsclib make-bsclib install-bsclib"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-bsclib make-bsclib install-bsclib"
 		;;
 	Xcourse)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-course make-course install-course"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-course make-course install-course"
 		;;
 	Xudc)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-udc make-udc install-udc"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-udc make-udc install-udc"
 		;;
 	Xcif)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-cif make-cif install-cif"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-cif make-cif install-cif"
 		;;
 	Xraster)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-raster make-raster install-raster"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-raster make-raster install-raster"
 		;;
 	Xsdlraster)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-sdlraster make-sdlraster install-sdlraster"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-sdlraster make-sdlraster install-sdlraster"
 		;;
 	Xoccsdl)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-occsdl make-occsdl install-occsdl"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-occsdl make-occsdl install-occsdl"
 		;;
 	Xoccgl)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-occgl make-occgl install-occgl"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-occgl make-occgl install-occgl"
 		;;
 	Xoccade)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-occade make-occade install-occade"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-occade make-occade install-occade"
 		;;
 	Xbutton)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-button make-button install-button"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-button make-button install-button"
 		;;
 	Xfmtoutlib)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-fmtoutlib make-fmtoutlib install-fmtoutlib"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-fmtoutlib make-fmtoutlib install-fmtoutlib"
 		;;
 	Xmoa)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-moa make-moa install-moa"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-moa make-moa install-moa"
 		;;
 	Xcourse_answers)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support initial-kroc-setup configure-course_answers make-course_answers install-course_answers"
+		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-course_answers make-course_answers install-course_answers"
 		;;
 	X*)
 		FOUND=0
 		for x in bsclib course course syncs dynproc udc bar game cif raster sdlraster occsdl occgl occade button pony moa; do
 			if [ "X${x}_examples" = "X$action" ]; then
-				NEWACTION="initial-kroc-setup bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
+				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
 			fi
 		done
@@ -2467,15 +2469,6 @@ for action in $ACTIONLIST; do
 		CGTESTSINSTALL=1
 		;;
 		#}}}
-		#{{{  initial-kroc-setup: does what setup.sh would have done
-	Xinitial-kroc-setup)
-		if [ "X$OCSEARCH" = "X" ]; then
-			PATH="$kroc_archbindir:$PATH"
-			#OCSEARCH="$kroc_kroc_vtlib:$kroc_kroc_vtinclude"; export OCSEARCH
-			LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$kroc_archlibdir"; export LD_LIBRARY_PATH
-		fi
-		;;
-		#}}}
 		#{{{  bsyscalls-support: attempts to determine whether or not support for blocking system calls is present
 	Xbsyscalls-support)
 		nm "$kroc_archlibdir/libkroc.so" 2> /dev/null | grep "scheduler_can_do_bsyscalls" 1> /dev/null && HAVE_BSYSCALLS_SUPPORT=1
@@ -2588,7 +2581,6 @@ for action in $ACTIONLIST; do
 	X*-*)
 		what=$(printf '%s\n' $action | $SED -e 's/-.*$//')
 		pkg=$(printf '%s\n'  $action | $SED -e 's/^[^-]*-//')
-		NEED_KROC_ENV=
 		ABORT_ACTION=
 		CONF_SPECOPTS=
 		PRECONF_SPECOPTS=
@@ -2702,7 +2694,6 @@ for action in $ACTIONLIST; do
 			#{{{  cgtests: compiler test suite
 		Xcgtests)
 			PKG_SRC=$CGTESTS_SRC
-			NEED_KROC_ENV=1
 			CONF_SPECOPTS="--with-kroc"
 			;;
 			#}}}
@@ -2754,20 +2745,17 @@ for action in $ACTIONLIST; do
 			#{{{  krocif: kroc interface library
 		Xkrocif)
 			PKG_SRC=$KROCIF_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  inmoslibs: inmos libraries
 		Xinmoslibs)
 			PKG_SRC=$INMOSLIBS_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  bsclib_examples: blocking sys-call examples
 		Xbsclib_examples)
 			if [ "$HAVE_BSYSCALLS_SUPPORT" = "1" ]; then
 				PKG_SRC=$BSCLIB_EXAMPLES_SRC
-				NEED_KROC_ENV=1
 			else
 				ABORT_ACTION=1
 			fi
@@ -2776,26 +2764,22 @@ for action in $ACTIONLIST; do
 			#{{{  course_examples: course examples
 		Xcourse_examples)
 			PKG_SRC=$COURSE_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  course_answers: course model answers
 		Xcourse_answers)
 			PKG_SRC=$COURSE_ANSWERS_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  syncs_examples: synchronisation examples
 		Xsyncs_examples)
 			PKG_SRC=$SYNCS_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  dynproc_examples: dynamic loadable process examples
 		Xdynproc_examples)
 			if [ "$HAVE_DYNPROC_SUPPORT" = "1" ]; then
 				PKG_SRC=$DYNPROC_EXAMPLES_SRC
-				NEED_KROC_ENV=1
 			else
 				ABORT_ACTION=1
 			fi
@@ -2804,7 +2788,6 @@ for action in $ACTIONLIST; do
 			#{{{  udc_examples: user-defined channel examples
 		Xudc_examples)
 			PKG_SRC=$UDC_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			if [ "$HAVE_BSYSCALLS_SUPPORT" != "1" ]; then
 				# better make sure we don't try and build things requiring bsyscalls..
 				CONF_SPECOPTS="--disable-bsyscalls"
@@ -2814,86 +2797,72 @@ for action in $ACTIONLIST; do
 			#{{{  cif_examples: C-interface examples
 		Xcif_examples)
 			PKG_SRC=$CIF_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  raster_examples: raster example programs
 		Xraster_examples)
 			PKG_SRC=$RASTER_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  sdlraster_examples: SDLRaster example programs
 		Xsdlraster_examples)
 			PKG_SRC=$SDLRASTER_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  occsdl_examples: occSDL example programs
 		Xoccsdl_examples)
 			PKG_SRC=$OCCSDL_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  occgl_examples: occGL example programs
 		Xoccgl_examples)
 			PKG_SRC=$OCCGL_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  occade_examples: Occade example programs
 		Xoccade_examples)
 			PKG_SRC=$OCCADE_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  button_examples: button example programs
 		Xbutton_examples)
 			PKG_SRC=$BUTTON_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  pony_examples: kroc-net/pony example programs
 		Xpony_examples)
 			PKG_SRC=$PONY_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  moa_examples: moa example programs
 		Xmoa_examples)
 			PKG_SRC=$MOA_EXAMPLES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  bar_demo: the "better-bar" demonstrator
 		Xbar_demo)
 			PKG_SRC=$DEMO_BAR_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  game_demo: the "occam-pi adventure game" demonstrator
 		Xgame_demo)
 			PKG_SRC=$DEMO_GAME_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  robots_demo: the "robots" demonstrator
 		Xrobots_demo)
 			PKG_SRC=$DEMO_ROBOTS_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  ttygames_demo: the tty-games demonstrators
 		Xttygames_demo)
 			PKG_SRC=$DEMO_TTYGAMES_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  bsclib: blocking system-calls library
 		Xbsclib)
 			if [ "$HAVE_BSYSCALLS_SUPPORT" = "1" ]; then
 				PKG_SRC=$BSCLIB_SRC
-				NEED_KROC_ENV=1
 			else
 				ABORT_ACTION=1
 			fi
@@ -2902,20 +2871,17 @@ for action in $ACTIONLIST; do
 			#{{{  course: course library
 		Xcourse)
 			PKG_SRC=$COURSE_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  syncs: additional synchronisations
 		Xsyncs)
 			PKG_SRC=$SYNCS_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  dynproc: dynamic loadable processes
 		Xdynproc)
 			if [ "$HAVE_DYNPROC_SUPPORT" = "1" ]; then
 				PKG_SRC=$DYNPROC_SRC
-				NEED_KROC_ENV=1
 			else
 				ABORT_ACTION=1
 			fi
@@ -2924,67 +2890,56 @@ for action in $ACTIONLIST; do
 			#{{{  udc: user-defined channels
 		Xudc)
 			PKG_SRC=$UDC_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  cif: C-interface
 		Xcif)
 			PKG_SRC=$CIF_SRC
-			NEED_KROC_ENV=0
 			;;
 			#}}}
 			#{{{  raster: raster-based graphics
 		Xraster)
 			PKG_SRC=$RASTER_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  sdlraster: raster-based graphics with SDL
 		Xsdlraster)
 			PKG_SRC=$SDLRASTER_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  occsdl: SDL bindings
 		Xoccsdl)
 			PKG_SRC=$OCCSDL_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  occgl: OpenGL bindings
 		Xoccgl)
 			PKG_SRC=$OCCGL_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  occade: arcade games development
 		Xoccade)
 			PKG_SRC=$OCCADE_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  button: OpenGL buttons library
 		Xbutton)
 			PKG_SRC=$BUTTON_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  pony: kroc-net/pony network infrastructure
 		Xpony)
 			PKG_SRC=$PONY_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  fmtoutlib: formatted output library
 		Xfmtoutlib)
 			PKG_SRC=$FMTOUTLIB_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  moa: MySQL bindings
 		Xmoa)
 			PKG_SRC=$MOA_SRC
-			NEED_KROC_ENV=1
 			;;
 			#}}}
 			#{{{  doc: documentation
@@ -3003,12 +2958,6 @@ for action in $ACTIONLIST; do
 			exit 1
 			;;
 		esac
-		if [ "$NEED_KROC_ENV" != "" ] && [ "X$OCSEARCH" = "X" ]; then
-			# does what setup.sh would have done
-			PATH="$kroc_archbindir:$PATH"
-			#OCSEARCH="$kroc_kroc_vtlib:$kroc_kroc_vtinclude"; export OCSEARCH
-			LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$kroc_archlibdir"; export LD_LIBRARY_PATH
-		fi
 		if [ "$ABORT_ACTION" != "" ]; then
 			continue		# to "for .. in .." loop
 		fi
