@@ -21,6 +21,9 @@ EXTRALDFLAGS=@EXTRA_LDFLAGS@
 # decided that we shouldn't be allowed to do that any more.)
 
 EXTRA_LIBRARIES = libccsp.a
+if BUILD_SHARED
+shared_libs = @LIBCCSP@
+endif
 
 libccsp_a_SOURCES =
 libccsp_a_LIBADD = \
@@ -55,14 +58,14 @@ include_HEADERS = \
 	include/typedesc.h \
 	include/ukcthreads_types.h
 
-all-local: libccsp.a @LIBCCSP@
+all-local: libccsp.a $(shared_libs)
 
 if BUILD_SHARED
 @LIBCCSP@: libccsp.a
 	$(CC) @SLINKFLAGS@ $(CFLAGS) $(EXTRALDFLAGS) -o @LIBCCSP@ $(libccsp_a_LIBADD)
 endif
 
-install-exec-local: libccsp.a @LIBCCSP@
+install-exec-local: libccsp.a $(shared_libs)
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)"
 	$(INSTALL_DATA) libccsp.a "$(DESTDIR)$(libdir)/libccsp.a"
 if BUILD_SHARED
@@ -72,5 +75,5 @@ else
 endif
 
 EXTRA_DIST = README INSTALL COPYRIGHT preconfigure
-DISTCLEANFILES = libccsp.a @LIBCCSP@
+DISTCLEANFILES = libccsp.a $(shared_libs)
 

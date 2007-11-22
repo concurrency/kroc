@@ -16,6 +16,9 @@ EXTRALDFLAGS=@LDEXTRAOPTS@ @CCLIBPATH@
 SUBDIRS = include io rts support
 
 EXTRA_LIBRARIES = libkrocif.a
+if BUILD_SHARED
+shared_libs = @LIBKROCIF@
+endif
 
 libkrocif_a_SOURCES =
 libkrocif_a_LIBADD = \
@@ -23,14 +26,14 @@ libkrocif_a_LIBADD = \
 	rts/occam_entry.o rts/rtsmain.o rts/tty.o rts/userproc.o \
 	support/spinterf.o support/spunix.o
 
-all-local: libkrocif.a @LIBKROCIF@
+all-local: libkrocif.a $(shared_libs)
 
 if BUILD_SHARED
 @LIBKROCIF@: libkrocif.a
 	$(CC) @SLINKFLAGS@ $(CFLAGS) $(EXTRALDFLAGS) -lccsp -o @LIBKROCIF@ $(libkrocif_a_LIBADD)
 endif
 
-install-exec-local: libkrocif.a @LIBKROCIF@
+install-exec-local: libkrocif.a $(shared_libs)
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)"
 	$(INSTALL_DATA) libkrocif.a "$(DESTDIR)$(libdir)/libkrocif.a"
 if BUILD_SHARED
@@ -39,4 +42,4 @@ else
 	rm -f "$(DESTDIR)$(libdir)/@LIBKROCIF@"
 endif
 
-CLEANFILES = @LIBKROCIF@ libkrocif.a *~
+CLEANFILES = libkrocif.a $(shared_libs) *~
