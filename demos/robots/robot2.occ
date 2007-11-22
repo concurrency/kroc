@@ -30,7 +30,7 @@
 --  * Different Auto algorithms
 
 #INCLUDE "course.module"
-#INCLUDE "miniraster.module"
+#INCLUDE "sdlraster.module"
 
 #INCLUDE "graphics.inc"
 #INCLUDE "hit.inc"
@@ -845,7 +845,7 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
     [ROBOTS]CHAN UPDATE h:
     [ROBOTS]CHAN INFO j:
     PAR
-      miniraster ("Robots", WIDTH, DEPTH, RASTERS, return?, source!, events!)
+      raster.display ("Robots", WIDTH, DEPTH, RASTERS, return?, source!, events!)
       Scene (source?, b!)
       Head (b?, e?, c!)
       Drone (h[0]?, j[0]!, c?, d[0]!, screen!)
