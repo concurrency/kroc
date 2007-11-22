@@ -2122,7 +2122,7 @@ printf '\n'
 #{{{  set up environment
 # This should be the same as setup.sh.
 PATH="$kroc_archbindir:$PATH"
-LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$kroc_archlibdir"; export LD_LIBRARY_PATH
+LD_LIBRARY_PATH="$kroc_archlibdir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"; export LD_LIBRARY_PATH
 #}}}
 #{{{  sort out the ACTIONLIST
 SHOWBANNER=0
