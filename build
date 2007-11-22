@@ -505,7 +505,9 @@ typescript_head ()
 		exit 1
 	fi
 
+	printf 'operating system is: %s\n' "$(uname -a)" >> "$DUMPOUT"
 	printf 'tee is: %s\n' "$TEE" >> "$DUMPOUT"
+	printf 'cut is: %s\n' "$CUT" >> "$DUMPOUT"
 	printf 'sed is: %s\n' "$SED" >> "$DUMPOUT"
 	printf 'awk is: %s\n' "$AWK" >> "$DUMPOUT"
 	printf 'make is: %s\n' "$MAKE" >> "$DUMPOUT"
