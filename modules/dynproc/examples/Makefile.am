@@ -30,12 +30,14 @@ examples = \
 	testpump \
 	testsuspend \
 	testcrash
+if BUILD_SHARED
 dynprocs = \
 	sieve.so \
 	testlib.so \
 	sort_pump.so \
 	suspendable.so \
 	crashlib.so
+endif
 
 all-local: $(examples) $(dynprocs)
 
