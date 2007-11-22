@@ -422,8 +422,6 @@ def gen_i386_header(f):
 	f.line("do {")
 	
 	f.indent()
-	f.line("const word t1 = (top * sizeof(word));")
-	f.line("const word t2 = ((top - 4) * sizeof(word));")
 	f.line("word d0, d1, d2;")
 	f.line("__asm__ __volatile__ (\"\\n\"")
 	f.indent()
@@ -443,7 +441,9 @@ def gen_i386_header(f):
 	f.line("\tpopl %%ebp")
 	f.end_asm()
 	f.line(": \"=d\" (d0), \"=S\" (sched), \"=D\" (d1), \"=a\" (d2)")
-	f.line(": \"i\" (t1), \"i\" (t2), \"0\" (ws), \"1\" (sched), \"2\" (stack), \"3\" (func)")
+	f.line(": \"i\" (top * sizeof(word)),")
+	f.line("  \"i\" ((top - 4) * sizeof(word)),")
+	f.line("  \"0\" (ws), \"1\" (sched), \"2\" (stack), \"3\" (func)")
 	f.line(": \"cc\", \"memory\", \"ebx\", \"ecx\"")
 
 	f.outdent()
