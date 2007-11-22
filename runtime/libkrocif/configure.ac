@@ -46,12 +46,12 @@ AC_SUBST(LDEXTRAOPTS)
 case "$host_os" in
 cygwin*)
  build_shared="no"
- LIBKROCIF=""
+ LIBKROCIF="krocif.dll"
  AC_DEFINE([NO_WEAK_SYMBOLS],1,[define if weak symbols are unsupported])
  ;;
 *Darwin* | *darwin*)
  build_shared="no"
- LIBKROCIF=""
+ LIBKROCIF="libkrocif.dylib"
  AC_DEFINE([TARGET_OS_DARWIN],1,[define if using Darwin])
  dnl Disable automatic PIC usage on Apple's GCC
  CFLAGS="$CFLAGS -mdynamic-no-pic"
