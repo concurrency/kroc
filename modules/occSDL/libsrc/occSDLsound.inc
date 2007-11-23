@@ -10,9 +10,6 @@
 -- the SWIG interface file instead.
 -- ----------------------------------------------------------------------------- 
 
--- This tells the slinker and the transterpreter which dynamic lib to load.
-#PRAGMA COMMENT "(spragma (dynlib occSDLsound))"
-
 #IF NOT DEFINED (WRAPPERS.occSDLsound.INC)
 #DEFINE WRAPPERS.occSDLsound.INC
 --* Foreign [@text int] constant [@text SOUND_VER_MAJOR].

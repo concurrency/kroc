@@ -10,9 +10,6 @@
 -- the SWIG interface file instead.
 -- ----------------------------------------------------------------------------- 
 
--- This tells the slinker and the transterpreter which dynamic lib to load.
-#PRAGMA COMMENT "(spragma (dynlib occSDL))"
-
 #IF NOT DEFINED (WRAPPERS.occSDL.INC)
 #DEFINE WRAPPERS.occSDL.INC
 --* Foreign [@text int] constant [@text SDL_INIT_TIMER].
