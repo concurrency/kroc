@@ -2685,13 +2685,19 @@ static INLINE mt_array_internal_t *mt_alloc_array_internal (void *allocator, wor
 	word meta_words		= dimensions + MT_ARRAY_PTR_OFFSET + 1;
 	word bytes;
 
+	#ifdef RMOX_BUILD
+	meta_words += 1; /* always allocate space for DMA pointer on RMoX */
+	#endif
+
 	ASSERT ( inner_type & MT_SIMPLE );
 
 	if (MT_TYPE(inner_type) == MT_ARRAY_OPTS) {
 		if (MT_FLAGS(inner_type) & MT_ARRAY_OPTS_DMA) {
 			/* allocate space for hardware address */
 			dma = dimensions;
-			meta_words += 1;
+			#ifndef RMOX_BUILD
+			meta_words += 1; /* only needed for non-RMoX */
+			#endif
 		}
 		alignment	= (1 << MT_ARRAY_OPTS_ALIGN(inner_type)) - 1;
 		inner_type	= MT_ARRAY_OPTS_INNER(inner_type);
@@ -3467,7 +3473,7 @@ void kernel_Y_mt_bind (void)
 
 	type = ptr[MTType];
 	if ((type & MT_SIMPLE) && (MT_TYPE(type) == MT_ARRAY)) {
-		mt_array_t *mt = (mt_array_t *) ptr;
+		mt_array_internal_t *ma = (mt_array_internal_t *) (ptr - MT_ARRAY_PTR_OFFSET);
 		word dimensions = MT_ARRAY_DIM(type);
 
 		if (bind_type == MT_BIND_VIRTUAL || bind_type == MT_BIND_PHYSICAL) {
@@ -3481,21 +3487,64 @@ void kernel_Y_mt_bind (void)
 				virt_addr = phys_addr; /* FIXME: translate */
 			}
 			
-			if (MT_ARRAY_INNER_TYPE(type) == MT_ARRAY_OPTS) {
+			if (MT_TYPE(MT_ARRAY_INNER_TYPE(type)) == MT_ARRAY_OPTS) {
 				word flags = MT_FLAGS(MT_ARRAY_INNER_TYPE(type));
 				
 				if (flags & MT_ARRAY_OPTS_SEPARATED) {
-					if (mt->data != NULL) {
-						mt_release (sched, mt->data);
+					if (ma->array.data != NULL) {
+						mt_release (sched, ma->array.data);
 					}
 				}
 
 				if (flags & MT_ARRAY_OPTS_DMA) {
-					mt->dimensions[dimensions] = (word) phys_addr;
+					ma->array.dimensions[dimensions] = (word) phys_addr;
 				}
 			}
 
-			mt->data = virt_addr;
+			ma->array.data = virt_addr;
+		} else if (bind_type == MT_BIND_DMA) {
+			word align	= 0;
+			word flags	= 0;
+			word inner	= MT_ARRAY_INNER_TYPE(type);
+			bool dma_ready;
+
+			if (MT_TYPE(inner) == MT_ARRAY_OPTS) {
+				if (MT_FLAGS(inner) & MT_ARRAY_OPTS_DMA) {
+					/* already capable */
+					K_ONE_OUT (ptr);
+					return;
+				}
+				align = MT_ARRAY_OPTS_ALIGN(inner);
+				flags = MT_FLAGS(inner);
+				inner = MT_ARRAY_OPTS_INNER(inner);
+			}
+			
+			#ifdef RMOX_BUILD
+			word low = (word) ma->array.data;
+			word high = low + ma->size;
+			if ((low | high) & 0x3fffffff) { /* FIXME: magic mask */
+				dma_ready = true;
+			} else {
+				dma_ready = false;
+			}
+			#else
+			dma_ready = false;
+			#endif
+
+			if (dma_ready) {
+				/* FIXME: translate */
+				ma->type = MT_MAKE_ARRAY_TYPE (dimensions, MT_MAKE_ARRAY_OPTS (flags | MT_ARRAY_OPTS_DMA, align, inner));
+				ma->array.dimensions[dimensions] = (word) ma->array.data;
+			} else {
+				word old_type = ma->type;
+				word *new_ptr;
+
+				ma->type = MT_MAKE_ARRAY_TYPE (dimensions, MT_MAKE_ARRAY_OPTS (flags | MT_ARRAY_OPTS_DMA, align, inner));
+				new_ptr = mt_clone (sched, ptr);
+				ma->type = old_type;
+				mt_release (sched, ptr);
+				ptr = new_ptr;
+			}
 		} else {
 			mobile_type_error ();
 		}

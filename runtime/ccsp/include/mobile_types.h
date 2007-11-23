@@ -364,6 +364,7 @@ typedef struct _mt_data_internal_t {
 /*{{{  Constants for mobile type binding */
 #define MT_BIND_VIRTUAL		1	/* bind a physical address */
 #define MT_BIND_PHYSICAL	2	/* bind a virtual address */
+#define MT_BIND_DMA		3	/* re-bind memory so it's DMA capable */
 /*}}}*/
 
 /* Examples of generation 2 encoding:
