@@ -15,9 +15,9 @@ EXTRA_DIST = \
 	sdlrcompat.occ
 
 sdlraster_lib_objs = \
+	sdlrcompat.tce \
 	sdlraster.tce \
-	sdlrcompat-c.o \
-	sdlrcompat.tce
+	sdlrcompat-c.o 
 
 sdlraster_libs = sdlraster.lib
 sdlraster_includes = sdlraster.inc sdlrcompat.inc
