@@ -25,9 +25,9 @@ examples = \
 	sockstreamcli \
 	sockstreamserv \
 	socktcpcli \
+	socktcpserv \
 	sockudpcli \
 	sockudpserv
-#	socktcpserv 
 
 if OCCBUILD_KROC
 examples += \
