@@ -27,7 +27,7 @@ examples = \
 	socktcpcli \
 	sockudpcli \
 	sockudpserv
-#	socktcpserv \
+#	socktcpserv 
 
 if OCCBUILD_KROC
 examples += \
