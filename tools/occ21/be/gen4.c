@@ -279,9 +279,9 @@ printtreenl (stderr, 4, tptr);
 	case S_ADDRESSOF:
 		return regsforaddr (OpOf (tptr));
 #ifdef MOBILES
+	case S_ADDROF:
+	case S_HWADDROF:
 	case S_CLONE:
-		/* we can only get here for CHAN TYPEs at the moment, follow through */
-		return regsfor (OpOf (tptr));
 	case S_TYPEHASHOF:
 		return regsfor (OpOf (tptr));
 #endif
