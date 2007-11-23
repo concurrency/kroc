@@ -586,6 +586,8 @@ predeflines[] =
 	  /*{{{  mobile manipulation by CGR */
 	  { CC, PD_BIND_MOBILE, "P(a,VI):BIND.MOBILE"}
 	, { CC, PD_BIND_MOBILE_HW, "P(a,VI):BIND.MOBILE.HW"}
+	, { CC, PD_DMA_CAPABLE, "FB(a):DMA.CAPABLE"}
+	, { CC, PD_MAKE_DMA_CAPABLE, "P(a):MAKE.DMA.CAPABLE"}
 	, /*}}}*/
 		/*{{{  configurer attributes */
 	  { CN, PD_ATTR_LINK, ". [4]E :link"}

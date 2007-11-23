@@ -280,6 +280,8 @@ pdinlines[] =
 		/*{{{  MOBILE manipulation*/
 	, { &trueval, 0}		/* BIND.MOBILE */
 	, { &trueval, 0}		/* BIND.MOBILE.HW */
+	, { &trueval, 0}		/* DMA.CAPABLE */
+	, { &trueval, 0}		/* MAKE.DMA.CAPABLE */
 		/*}}}*/
 };
 

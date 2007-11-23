@@ -3428,6 +3428,17 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			mapstoreinopd (P_EXP, param[0]);
 			break;
 			/*}}}*/
+			/*{{{  DMA.CAPABLE  query MOBILEs DMA capability */
+		case PD_DMA_CAPABLE:
+			mapexp (param[0]);
+			break;
+			/*}}}*/
+			/*{{{  MAKE.DMA.CAPABLE  upgrade MOBILE to DMA capability */
+		case PD_MAKE_DMA_CAPABLE:
+			mapexp (param[0]);
+			mapstoreinopd (P_EXP, param[0]);
+			break;
+			/*}}}*/
 		default:
 			badtag (LocnOf (tptr), TagOf (tptr), "mappredef");
 			break;
@@ -4397,6 +4408,37 @@ printtreenl (stderr, 4, param[0]);
 		texp (param[1], MANY_REGS);
 		loadmobile_real (param[0]);
 		genprimary (I_LDC, pdno == PD_BIND_MOBILE_HW ? MT_BIND_PHYSICAL : MT_BIND_VIRTUAL);
+		gensecondary (I_MT_BIND);
+		storemobile (param[0]);
+		genmobileunpack (param[0], TRUE, FALSE);
+		break;
+		/*}}}*/
+		/*{{{  DMA.CAPABLE */
+	case PD_DMA_CAPABLE:
+		/* loadmobile_real (param[0]); */
+		{
+			int skiplab = newlab ();
+			
+			loadmobile_real (param[0]);
+			
+			gensecondary (I_DUP);
+			genbranch (I_CJ, skiplab);
+			/* genchecknotnull (); */
+			genprimary (I_LDNL, MTType); /* load type */
+			genprimary (I_LDC, 0x1f1f | (MT_ARRAY_OPTS_DMA << MT_FLAGS_SHIFT) << 8);
+			gensecondary (I_AND);
+			genprimary (I_EQC, MT_MAKE_ARRAY_TYPE (1, MT_MAKE_ARRAY_OPTS (MT_ARRAY_OPTS_DMA, 0, 0)));
+			gensecondary (I_DUP);
+			setlab (skiplab);
+			gensecondary (I_POP);
+		}
+		break;
+		/*}}}*/
+		/*{{{  MAKE.DMA.CAPABLE */
+	case PD_MAKE_DMA_CAPABLE:
+		gensecondary (I_NULL);
+		loadmobile_real (param[0]);
+		genprimary (I_LDC, MT_BIND_DMA);
 		gensecondary (I_MT_BIND);
 		storemobile (param[0]);
 		genmobileunpack (param[0], TRUE, FALSE);
