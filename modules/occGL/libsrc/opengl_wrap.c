@@ -2949,7 +2949,7 @@ DLLPREFIX void _gluLookAt (word w[])
 DLLPREFIX void _gluNewNurbsRenderer (word w[])
 
 {
-  (w[0]) = gluNewNurbsRenderer ();
+  (w[0]) = (GLUnurbs *)gluNewNurbsRenderer ();
   return;
 }
 
@@ -2957,7 +2957,7 @@ DLLPREFIX void _gluNewNurbsRenderer (word w[])
 DLLPREFIX void _gluNewQuadric (word w[])
 
 {
-  (w[0]) = gluNewQuadric ();
+  (w[0]) = (GLUquadric *)gluNewQuadric ();
   return;
 }
 
@@ -2965,7 +2965,7 @@ DLLPREFIX void _gluNewQuadric (word w[])
 DLLPREFIX void _gluNewTess (word w[])
 
 {
-  (w[0]) = gluNewTess ();
+  (w[0]) = (GLUtesselator *)gluNewTess ();
   return;
 }
 
