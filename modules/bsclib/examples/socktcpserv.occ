@@ -20,7 +20,6 @@
 
 #INCLUDE "sock.module"
 #INCLUDE "course.module"
-#INCLUDE "semaphore.inc"
 
 --{{{  display protocol
 PROTOCOL D.PROTO
@@ -54,8 +53,8 @@ PROC socket.tcp.serv (CHAN OF BYTE kyb, scr, err)
   VAL in.buffer.size IS 32:
   --}}}  
 
-  --{{{  PROC acceptor (SOCKET sock, CHAN OF SOCKET clients, CHAN OF D.PROTO out, SEMAPHORE out.sem)
-  PROC acceptor (SOCKET sock, CHAN OF SOCKET clients, CHAN OF D.PROTO out, SEMAPHORE out.sem)
+  --{{{  PROC acceptor (SOCKET sock, CHAN OF SOCKET clients, SHARED CHAN OF D.PROTO out!)
+  PROC acceptor (SOCKET sock, CHAN OF SOCKET clients, SHARED CHAN OF D.PROTO out!)
     SOCKET client:
     INT result:
     WHILE TRUE
@@ -63,11 +62,10 @@ PROC socket.tcp.serv (CHAN OF BYTE kyb, scr, err)
         socket.accept (sock, client, result)
         IF
           result < 0
-            SEQ
-              claim.semaphore (out.sem)
-              out ! clear.eol; err.x; err.y
-              out ! string; err.x; err.y; (SIZE accept.err)::accept.err
-              release.semaphore (out.sem)
+            CLAIM out!
+              SEQ
+                out ! clear.eol; err.x; err.y
+                out ! string; err.x; err.y; (SIZE accept.err)::accept.err
           TRUE
             clients ! client
   :
@@ -107,8 +105,8 @@ PROC socket.tcp.serv (CHAN OF BYTE kyb, scr, err)
   :
   --}}}  
 
-  --{{{  PROC worker (CHAN OF SOCKET in, CHAN OF BOOL done, VAL INT me, CHAN OF D.PROTO out, SEMAPHORE out.sem)
-  PROC worker (CHAN OF SOCKET in, CHAN OF BOOL done, VAL INT me, CHAN OF D.PROTO out, SEMAPHORE out.sem)
+  --{{{  PROC worker (CHAN OF SOCKET in, CHAN OF BOOL done, VAL INT me, SHARED CHAN OF D.PROTO out!)
+  PROC worker (CHAN OF SOCKET in, CHAN OF BOOL done, VAL INT me, SHARED CHAN OF D.PROTO out!)
     SOCKET sock:
     [in.buffer.size]BYTE buffer:
     [16]BYTE client.ip:
@@ -121,11 +119,11 @@ PROC socket.tcp.serv (CHAN OF BYTE kyb, scr, err)
         --{{{  clear buffer and relevant bit on screen
         SEQ i = 0 FOR in.buffer.size
           buffer[i] := ' '
-        claim.semaphore (out.sem)
-        out ! string; data.x; (conn.start.y + me); in.buffer.size::buffer
-        out ! clear.eol; hostname.x; (conn.start.y + me)
-        out ! string; hostname.x; (conn.start.y + me); (SIZE msg.unconnected)::msg.unconnected
-        release.semaphore (out.sem)
+        CLAIM out!
+          SEQ
+            out ! string; data.x; (conn.start.y + me); in.buffer.size::buffer
+            out ! clear.eol; hostname.x; (conn.start.y + me)
+            out ! string; hostname.x; (conn.start.y + me); (SIZE msg.unconnected)::msg.unconnected
         --}}}  
         --{{{  receive client and dump info about it
         in ? sock
@@ -149,10 +147,10 @@ PROC socket.tcp.serv (CHAN OF BYTE kyb, scr, err)
         walk := (walk + client.ip.len)
         client.info[walk] := ')'
         client.info.len := (walk + 1)
-        claim.semaphore (out.sem)
-        out ! clear.eol; hostname.x; (conn.start.y + me)
-        out ! string; hostname.x; (conn.start.y + me); client.info.len::client.info
-        release.semaphore (out.sem)
+        CLAIM out!
+          SEQ
+            out ! clear.eol; hostname.x; (conn.start.y + me)
+            out ! string; hostname.x; (conn.start.y + me); client.info.len::client.info
         --}}}  
         --{{{  loop printing data received
         bytes := 1
@@ -172,9 +170,8 @@ PROC socket.tcp.serv (CHAN OF BYTE kyb, scr, err)
                         SKIP
                   SEQ i = bytes FOR (in.buffer.size - bytes)
                     buffer[i] := ' '
-                  claim.semaphore (out.sem)
-                  out ! string; data.x; (conn.start.y + me); in.buffer.size::buffer
-                  release.semaphore (out.sem)
+                  CLAIM out!
+                    out ! string; data.x; (conn.start.y + me); in.buffer.size::buffer
               TRUE
                 SKIP
         --}}}  
@@ -216,17 +213,13 @@ PROC socket.tcp.serv (CHAN OF BYTE kyb, scr, err)
   --}}}  
 
   --{{{  startup and process network
-  CHAN OF D.PROTO disp.chan:
-  #PRAGMA SHARED disp.chan
-  SEMAPHORE disp.sem:
-  #PRAGMA SHARED disp.sem
+  SHARED! CHAN OF D.PROTO disp.chan:
   [max.num.connections]CHAN OF SOCKET farmer.to.worker:
   [max.num.connections]CHAN OF BOOL worker.to.farmer:
   CHAN OF SOCKET acceptor.to.farmer:
   INT res:
   SOCKET listener:
   SEQ
-    initialise.semaphore (disp.sem, 0)
     socket.create.listen.tcp (listener, listen.addr, listen.port, res)
     IF
       res < 0
@@ -237,17 +230,17 @@ PROC socket.tcp.serv (CHAN OF BYTE kyb, scr, err)
         SKIP
     PAR
       --{{{  screen setup
-      SEQ
-        disp.chan ! clear.screen
-        SEQ i = 0 FOR max.num.connections
-          disp.chan ! string; conn.x; (conn.start.y + i); (SIZE conn.line)::conn.line
-        release.semaphore (disp.sem)
+      CLAIM disp.chan!
+        SEQ
+          disp.chan ! clear.screen
+          SEQ i = 0 FOR max.num.connections
+            disp.chan ! string; conn.x; (conn.start.y + i); (SIZE conn.line)::conn.line
       --}}}  
-      display (disp.chan, scr)
-      acceptor (listener, acceptor.to.farmer, disp.chan, disp.sem)
+      display (disp.chan?, scr)
+      acceptor (listener, acceptor.to.farmer, disp.chan!)
       farmer (acceptor.to.farmer, farmer.to.worker, worker.to.farmer)
       PAR i = 0 FOR max.num.connections
-        worker (farmer.to.worker[i], worker.to.farmer[i], i, disp.chan, disp.sem)
+        worker (farmer.to.worker[i], worker.to.farmer[i], i, disp.chan!)
   --}}}  
 
 :
