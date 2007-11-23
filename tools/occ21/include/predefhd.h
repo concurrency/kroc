@@ -173,6 +173,8 @@
 /*{{{  MOBILE manipulation */
 #define PD_BIND_MOBILE		111
 #define PD_BIND_MOBILE_HW	112
+#define PD_DMA_CAPABLE		113
+#define PD_MAKE_DMA_CAPABLE	114
 /*}}}*/
 
 /*{{{  Predefines for the configuration stuff */
