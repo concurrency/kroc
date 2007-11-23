@@ -687,6 +687,13 @@ PRIVATE int revsfor (treenode * tptr, int regs)
 	case S_NTH_DIMENSION:
 		/* no REV instrs needed, at all :) */
 		return 0;
+	case S_ADDROF:
+	case S_HWADDROF:
+		if (isdynmobilearray (OpOf (tptr))) {
+			return 0;
+		} else {
+			return revsfor (dimexpof (OpOf (tptr), 0), regs);
+		}
 #endif	/* MOBILES */
 	case S_SEGSTART:
 		return revsfor (SStartExpOf (OpOf (tptr)), regs);
