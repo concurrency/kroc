@@ -2357,6 +2357,8 @@ PUBLIC BOOL isconst (treenode * tptr)
 		case S_ADDRESSOF:
 			return FALSE;
 #ifdef MOBILES
+		case S_ADDROF:
+		case S_HWADDROF:
 		case S_CLONE:
 		case S_DEFINED:
 		case S_NTH_DIMENSION:
