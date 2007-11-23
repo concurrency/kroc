@@ -1555,6 +1555,10 @@ printtreenl (stderr, 4, tptr);
 #if 0				/* this doesn't work! */
 	case S_ARRAYITEM:	/* bug 1238 22/8/91 */
 #endif
+#ifdef MOBILES
+	case S_ADDROF:
+	case S_HWADDROF:
+#endif
 		return FALSE;
 		/*}}}  */
 	default:
