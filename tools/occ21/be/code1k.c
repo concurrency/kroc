@@ -297,6 +297,8 @@ PRIVATE int assemble_instruction (const INT32 instruction, INT32 operand)
 #define SPE_DTRACE 34
 #define SPE_KILLCALL 35
 #define SPE_WAIT_FOR_INTERRUPT 36
+#define SPE_R32TAN 37
+#define SPE_R64TAN 38
 
 #define TSDEPTH 1
 #define FUNCRESULTS 2
@@ -591,7 +593,9 @@ PRIVATE void etc_specop (const int specinst)
 		"R64COS",
 		"DTRACE",
 		"KILLCALL",
-		"WAIT_FOR_INTERRUPT"
+		"WAIT_FOR_INTERRUPT",
+		"R32TAN",
+		"R64TAN"
 	};
 	add_code (0x6f);
 	add_code (0xf0);
@@ -3443,6 +3447,12 @@ PUBLIC void genextfpop (int op)
 			break;
 		case I_REAL64COS:
 			etc_specop (SPE_R64COS);
+			break;
+		case I_REAL32TAN:
+			etc_specop (SPE_R32TAN);
+			break;
+		case I_REAL64TAN:
+			etc_specop (SPE_R64TAN);
 			break;
 		}
 	}

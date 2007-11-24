@@ -212,9 +212,10 @@ typedef struct TAG_rtl_chain {
 #define INS_INL 113		/* for IOSPACE handling */
 #define INS_OUTL 114		/* for IOSPACE handling */
 #define INS_LOCK 115		/* for i386 atomic ops */
+#define INS_FPTAN 116		/* partial tangent */
 
 #define INS_FIRST INS_MOVE
-#define INS_LAST INS_LOCK
+#define INS_LAST INS_FPTAN
 
 #define INS_START_REG 65535	/* ARG_REG */
 #define INS_END_REG 65534	/* ARG_REG */

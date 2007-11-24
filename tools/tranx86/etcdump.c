@@ -243,6 +243,12 @@ int dump_textual_etc (etc_chain *chain, char *filename)
 				case WAIT_FOR_INTERRUPT:
 					fprintf (outstream, ".WAIT_FOR_INTERRUPT\n");
 					break;
+				case R32TAN:
+					fprintf (outstream, ".R32TAN\n");
+					break;
+				case R64TAN:
+					fprintf (outstream, ".R64TAN\n");
+					break;
 				default:
 					fprintf (outstream, ".SPECIAL\n");
 					break;

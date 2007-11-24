@@ -396,6 +396,12 @@ rtl_chain *etc_to_rtl (etc_chain *etc_code, arch_t *arch)
 					case WAIT_FOR_INTERRUPT:
 						strcpy (sbuffer, ".WAIT_FOR_INTERRUPT");
 						break;
+					case R32TAN:
+						strcpy (sbuffer, ".R32TAN");
+						break;
+					case R64TAN:
+						strcpy (sbuffer, ".R64TAN");
+						break;
 					default:
 						strcpy (sbuffer, "<unknown>");
 						break;
@@ -966,11 +972,13 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 					ts->stack->ts_depth -= 2;
 					break;
 					/*}}}*/
-					/*{{{  R32SIN, R64SIN, R32COS, R64COS*/
+					/*{{{  R32SIN, R64SIN, R32COS, R64COS, R32TAN, R64TAN*/
 				case R32SIN:
 				case R64SIN:
 				case R32COS:
 				case R64COS:
+				case R32TAN:
+				case R64TAN:
 					ts->stack->old_a_reg = ts->stack->a_reg;
 					ts->stack->old_b_reg = ts->stack->b_reg;
 					ts->stack->old_c_reg = ts->stack->c_reg;
@@ -987,6 +995,12 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 						break;
 					case R64COS:
 						arch->compose_fpop (ts, I_R64COS);
+						break;
+					case R32TAN:
+						arch->compose_fpop (ts, I_R32TAN);
+						break;
+					case R64TAN:
+						arch->compose_fpop (ts, I_R64TAN);
 						break;
 					}
 					break;

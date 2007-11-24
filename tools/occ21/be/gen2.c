@@ -262,10 +262,10 @@ pdinlines[] =
 	, { &falseval, 0}		/* PGRP.INFO */
 	, { &trueval, 0}		/* LOAD.TYPE.DESC */
 		/*{{{  more floating point*/
-	, { &has_sincos, 0x211}		/* SIN */
-	, { &has_sincos, 0x221}		/* DSIN */
-	, { &has_sincos, 0x211}		/* COS */
-	, { &has_sincos, 0x221}		/* DCOS */
+	, { &has_sincostan, 0x211}	/* SIN */
+	, { &has_sincostan, 0x221}	/* DSIN */
+	, { &has_sincostan, 0x211}	/* COS */
+	, { &has_sincostan, 0x221}	/* DCOS */
 		/*}}}*/
 		/*{{{  processor affinity*/
 	, { &trueval, 0}		/* GETAFF */
@@ -282,6 +282,10 @@ pdinlines[] =
 	, { &trueval, 0}		/* BIND.MOBILE.HW */
 	, { &trueval, 0}		/* DMA.CAPABLE */
 	, { &trueval, 0}		/* MAKE.DMA.CAPABLE */
+		/*}}}*/
+		/*{{{  yet more floating point*/
+	, { &has_sincostan, 0x211}	/* TAN */
+	, { &has_sincostan, 0x221}	/* DTAN */
 		/*}}}*/
 };
 

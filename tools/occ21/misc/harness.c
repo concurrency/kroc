@@ -1825,7 +1825,7 @@ PRIVATE arg_control optzed ( const char *opt, const char *arg, void *data )
 			code_style_flags |= CODE_STYLE_ALT_PRI_PAR;
 			break;
 		case 'S':
-			has_sincos = TRUE;
+			has_sincostan = TRUE;
 			break;
 		}
 		break;
@@ -2317,7 +2317,7 @@ const arg2_descriptor cloptions[] = {
 	{"ZW",        arg2_single,    NULL,           optzed, /* used */  HELP_ZED, "do channels not by pointer"}, /* used to build debugger & bootstraps */
 	{"ZX",        arg2_single,    NULL,           optzed,             HELP_ZED, "8 byte libpatch"},
 	{"ZYPT",      arg2_single,    NULL,           optzed,             HELP_ZED, "yes: visible PROTOCOL tags"},
-	{"ZZS",       arg2_single,    NULL,           optzed,             HELP_ZED, "hardware supports fpsin/fpcos instructions"},
+	{"ZZS",       arg2_single,    NULL,           optzed,             HELP_ZED, "hardware supports fpsin/fpcos/fptan instructions"},
 	{"ZZ",        arg2_single,    NULL,           optzed,             HELP_ZED, "use ALT for PRI PAR"},
 	/*}}}*/
 	{"Z",         arg2_single,    NULL,           set_help_extended,  HELP_ZED, "display hidden option info"},
@@ -2404,7 +2404,7 @@ BOOL parse_command_line( int argc, const char *argv[] )
 	kroc_chantype_desc	= FALSE;
 	kroc_chantype_uio	= FALSE;
 	kroc_chantype_knsf	= FALSE;
-	has_sincos		= FALSE;
+	has_sincostan		= FALSE;
 	#ifdef USER_DEFINED_OPERATORS
 		user_defined_operators = FALSE;
 	#endif

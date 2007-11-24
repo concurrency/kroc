@@ -58,7 +58,8 @@ dblmath_lib_objs = \
 	dhyperfl.tce \
 	dpowfl.tce \
 	dranfl.tce \
-	dsinfl.tce
+	dsinfl.tce \
+	dtanfl.tce
 
 all-local: $(libs)
 
@@ -87,15 +88,20 @@ acosfl.tce: $(srcdir)/mathhdr.inc
 alogfl.tce: $(srcdir)/mathhdr.inc
 asinfl.tce: $(srcdir)/mathhdr.inc
 atanfl.tce: $(srcdir)/mathhdr.inc
+cosfl.tce: $(srcdir)/mathhdr.inc
 dacosfl.tce: $(srcdir)/mathhdr.inc
 dalogfl.tce: $(srcdir)/mathhdr.inc
 dasinfl.tce: $(srcdir)/mathhdr.inc
 datanfl.tce: $(srcdir)/mathhdr.inc
+dcosfl.tce: $(srcdir)/mathhdr.inc
 dexpfl.tce: $(srcdir)/mathhdr.inc
 dhyperfl.tce: $(srcdir)/mathhdr.inc
 dpowfl.tce: $(srcdir)/mathhdr.inc
+dsinfl.tce: $(srcdir)/mathhdr.inc
+dtanfl.tce: $(srcdir)/mathhdr.inc
 expfl.tce: $(srcdir)/mathhdr.inc
 hyperfl.tce: $(srcdir)/mathhdr.inc
 powfl.tce: $(srcdir)/mathhdr.inc
+sinfl.tce: $(srcdir)/mathhdr.inc
 tanfl.tce: $(srcdir)/mathhdr.inc
 ## end pideps dependencies

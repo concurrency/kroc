@@ -176,6 +176,10 @@
 #define PD_DMA_CAPABLE		113
 #define PD_MAKE_DMA_CAPABLE	114
 /*}}}*/
+/*{{{  further floating-point builtins*/
+#define PD_REAL32TAN		115	/* REAL32 FUNCTION TAN (VAL REAL32 rad) */
+#define PD_REAL64TAN		116	/* REAL64 FUNCTION DTAN (VAL REAL64 rad) */
+/*}}}*/
 
 /*{{{  Predefines for the configuration stuff */
 /*{{{  Predefines for the configurer */

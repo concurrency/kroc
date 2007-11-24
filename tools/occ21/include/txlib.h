@@ -90,7 +90,7 @@ typedef struct
     BOOL  kroc_chantype_uio;	/* whether to do user-defined operations on mobile channel-types */
     BOOL  kroc_chantype_knsf;	/* whether to allocate a state-field and semaphore above the client/server semaphore in mobile channel-types */
     /* FRMB 20/11/2005 */
-    BOOL  hassincos;		/* whether hardware has SIN/COS */
+    BOOL  hassincostan;		/* whether hardware has SIN/COS/TAN */
     /*}}}  */
     /*{{{  Configuration details */
     BOOL  specifiable_memstart; /* Added for ST20, allows memstart to be specified to configurer */
@@ -285,7 +285,7 @@ extern txlib_t tx_global;
 #define kroc_chantype_uio	tx_global.kroc_chantype_uio
 #define kroc_chantype_knsf	tx_global.kroc_chantype_knsf
 /* FRMB 30/11/2005 */
-#define has_sincos		tx_global.hassincos
+#define has_sincostan		tx_global.hassincostan
 /*}}}  */
 /*{{{  Configuration details */
 #define target_no_of_links     tx_global.links

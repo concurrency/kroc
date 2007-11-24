@@ -19,6 +19,8 @@
 
 --** @module maths
 
+#IF NOT DEFINED(OCCBUILD.KROC)
+
 #OPTION "V"  -- no vector space
 #COMMENT "Floating point maths library, V1.1 27/03/90"
 #COMMENT "(c) Copyright INMOS Limited 1988"
@@ -78,3 +80,5 @@ REAL32 FUNCTION TAN (VAL REAL32 X)
             --}}}
     RESULT RWork
 :
+
+#ENDIF

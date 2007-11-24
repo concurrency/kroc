@@ -2954,6 +2954,15 @@ static void compose_fpop_i386 (tstate *ts, int sec)
 		tstate_ctofp (ts);
 		break;
 		/*}}}*/
+		/*{{{  I_R32TAN, I_R64TAN*/
+	case I_R32TAN:
+	case I_R64TAN:
+		add_to_ins_chain (compose_ins (INS_FPTAN, 0, 0));
+		add_to_ins_chain (compose_ins (INS_FSTP, 0, 1, ARG_FREG, 0));
+		compose_fp_set_fround_i386 (ts, FPU_N);
+		tstate_ctofp (ts);
+		break;
+		/*}}}*/
 		/*{{{  I_FPI32TOR64, I_FPI32TOR32 -- integer to real conversions*/
 	case I_FPI32TOR64:
 	case I_FPI32TOR32:
@@ -3882,6 +3891,7 @@ static int rtl_validate_instr_i386 (ins_chain *ins)
 	case INS_OUTB:
 	case INS_FSIN:
 	case INS_FCOS:
+	case INS_FPTAN:
 		break;
 	case INS_START_REG:
 	case INS_END_REG:
