@@ -351,13 +351,13 @@ typedef struct _mt_data_internal_t {
 #define MT_ARRAY_OPTS		9
 #define MT_ARRAY_OPTS_DMA	0x1
 #define MT_ARRAY_OPTS_SEPARATED	0x2
-#define MT_ARRAY_OPTS_ALIGN(X)	((X) >> (MT_FLAGS_SHIFT + 3))
+#define MT_ARRAY_OPTS_ALIGN(X)	(((X) >> (MT_FLAGS_SHIFT + 3)) & 0xf)
 #define MT_ARRAY_OPTS_INNER(X)	((X) >> (MT_FLAGS_SHIFT + 7))
 #define MT_MAKE_ARRAY_OPTS(F,A,I)	\
-	(MT_SIMPLE			| \
-	 MT_MAKE_TYPE (MT_ARRAY_OPTS)	| \
-	 ((F) << MT_FLAGS_SHIFT)	| \
-	 ((A) << (MT_FLAGS_SHIFT + 3))	| \
+	(MT_SIMPLE				| \
+	 MT_MAKE_TYPE (MT_ARRAY_OPTS)		| \
+	 ((F) << MT_FLAGS_SHIFT)		| \
+	 (((A) & 0xf) << (MT_FLAGS_SHIFT + 3))	| \
 	 ((I) << (MT_FLAGS_SHIFT + 7)))
 /*}}}*/
 
