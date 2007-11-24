@@ -26,8 +26,6 @@
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
-#PRAGMA TRANSLATE COS "COS%O"
-
 REAL32 FUNCTION COS (VAL REAL32 X)
 
   --{{{  history

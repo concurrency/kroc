@@ -26,8 +26,6 @@
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
-#PRAGMA TRANSLATE DCOS "DCOS%O"
-
 REAL64 FUNCTION DCOS (VAL REAL64 X)
 
   --{{{  history
