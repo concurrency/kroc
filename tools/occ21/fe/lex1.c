@@ -783,6 +783,16 @@ fprintf (stderr, "readpredefline: line = %s", line);
 			strcpy (line, "\n");
 		}
 		pdnumber = predeflines[linecount].pnumber;	/* **SHC 5-Apr-1988 */
+		if (!has_sincos) {
+			switch (pdnumber) {
+			case PD_REAL32SIN:
+			case PD_REAL64SIN:
+			case PD_REAL32COS:
+			case PD_REAL64COS:
+				strcpy (line, "\n");
+				break;
+			}
+		}
 		if (!mobile_data_types) {
 			/* if one of these is a MOBILE procedure from the occam8 library, ignore */
 			switch (pdnumber) {

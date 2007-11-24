@@ -26,8 +26,6 @@
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
-#PRAGMA TRANSLATE SIN "SIN%O"
-
 REAL32 FUNCTION SIN (VAL REAL32 X)
 
   --{{{  history
