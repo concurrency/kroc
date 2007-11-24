@@ -741,7 +741,8 @@ static int tsdiff_sec_twocodes[] = { \
 	-1, -1, 0, 16,	/* 238: mt_alloc, mt_release, mt_clone, mt_in */
 	16, 16, 16, 16,	/* 23c: mt_out, mt_xchg, mt_lock, mt_unlock */
 	-2, -2, 16, 16,	/* 240: mt_enroll, mt_resign, mt_sync, mt_xin */
-	16, 16, -2, -2	/* 244: mt_xout, mt_xxchg, mt_dclone, mt_bind */
+	16, 16, -2, -2,	/* 244: mt_xout, mt_xxchg, mt_dclone, mt_bind */
+	0, 0, 0         /* 248: mb, rmb, wmb */
 };
 /*}}}*/
 PRIVATE char tstack[4];

@@ -287,6 +287,11 @@ pdinlines[] =
 	, { &has_sincostan, 0x211}	/* TAN */
 	, { &has_sincostan, 0x221}	/* DTAN */
 		/*}}}*/
+		/*{{{  memory barriers */
+	, { &trueval, 0}		/* MEMORY.BARRIER */
+	, { &trueval, 0}		/* READ.MEMORY.BARRIER */
+	, { &trueval, 0}		/* WRITE.MEMORY.BARRIER */
+		/*}}}*/
 };
 
 /*}}}*/

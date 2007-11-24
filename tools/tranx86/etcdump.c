@@ -1317,6 +1317,15 @@ static int dump_secondary (int esfunc, char *buffer)
 	case I_MT_BIND:
 		sprintf (buffer, "\tMT_BIND");
 		break;
+	case I_MB:
+		sprintf (buffer, "\tMB");
+		break;
+	case I_RMB:
+		sprintf (buffer, "\tRMB");
+		break;
+	case I_WMB:
+		sprintf (buffer, "\tWMB");
+		break;
 	default:
 		sprintf (buffer, "\tUnsupported %d", esfunc);
 		break;

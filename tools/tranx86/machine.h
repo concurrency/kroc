@@ -53,6 +53,7 @@
 #define OPTION_FXSR		0x10
 #define OPTION_XMM		0x20
 #define OPTION_SYSENTER		0x40
+#define OPTION_SSE2		0x80
 
 #endif	/* !__MACHINE_H */
 

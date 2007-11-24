@@ -62,7 +62,8 @@ typedef union {
 		unsigned int mmx : 1;		/* matrix maths extensions */
 		unsigned int fxsr : 1;		/* fast FP/MMX technology (fxsave, fxrstor) */
 		unsigned int xmm : 1;		/* streaming SIMD extensions */
-		unsigned int reserved3 : 6;
+		unsigned int sse2 : 1;
+		unsigned int reserved3 : 5;
 	} bits __attribute__ ((packed));
 	unsigned int val;
 } cpuid_feature;

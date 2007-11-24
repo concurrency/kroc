@@ -3441,6 +3441,12 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			mapstoreinopd (P_EXP, param[0]);
 			break;
 			/*}}}*/
+			/*{{{  MEMORY.BARRIER, READ.MEMORY.BARRIER, WRITE.MEMORY.BARRIER */
+		case PD_MEMORY_BARRIER:
+		case PD_READ_MEMORY_BARRIER:
+		case PD_WRITE_MEMORY_BARRIER:
+			break;
+			/*}}}*/
 		default:
 			badtag (LocnOf (tptr), TagOf (tptr), "mappredef");
 			break;
@@ -4452,6 +4458,21 @@ printtreenl (stderr, 4, param[0]);
 		gensecondary (I_MT_BIND);
 		storemobile (param[0]);
 		genmobileunpack (param[0], TRUE, FALSE);
+		break;
+		/*}}}*/
+		/*{{{  MEMORY.BARRIER */
+	case PD_MEMORY_BARRIER:
+		gensecondary (I_MB);
+		break;
+		/*}}}*/
+		/*{{{  READ.MEMORY.BARRIER */
+	case PD_READ_MEMORY_BARRIER:
+		gensecondary (I_RMB);
+		break;
+		/*}}*/
+		/*{{{ WRITE.MEMORY.BARRIER */
+	case PD_WRITE_MEMORY_BARRIER:
+		gensecondary (I_WMB);
 		break;
 		/*}}}*/
 	default:

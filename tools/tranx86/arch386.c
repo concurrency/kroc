@@ -55,6 +55,7 @@
 #include "etcrtl.h"
 #include "asm386.h"
 #include "kif.h"
+#include "machine.h"
 
 #ifndef EXIT_FAILURE
 	#define EXIT_FAILURE 1
@@ -3614,6 +3615,32 @@ static void compose_refcountop_i386 (tstate *ts, int op, int reg)
 }
 /*}}}*/
 #endif
+/*{{{  static void compose_memory_barrier_i386 (tstate *ts, int sec)*/
+/*
+ *	generates memory barrier instructions
+ */
+static void compose_memory_barrier_i386 (tstate *ts, int sec)
+{
+	if (options.machine_options & OPTION_SSE2) {
+		switch (sec) {
+			case I_MB:
+				add_to_ins_chain (compose_ins (INS_MB, 0, 0));
+				break;
+			case I_RMB:
+				add_to_ins_chain (compose_ins (INS_RMB, 0, 0));
+				break;
+			case I_WMB:
+				add_to_ins_chain (compose_ins (INS_WMB, 0, 0));
+				break;
+		}
+	} else {
+		add_to_ins_chain (compose_ins (INS_LOCK, 0, 0));
+		add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST | ARG_ISCONST, 0, ARG_REGIND, REG_SPTR, ARG_REGIND, REG_SPTR));
+	}
+	tstack_undefine (ts->stack);
+	constmap_clearall ();
+}
+/*}}}*/
 /*{{{  static int regcolour_special_to_real_i386 (int sreg)*/
 /*
  *	int regcolour_special_to_real_i386 (int sreg)
@@ -3892,6 +3919,9 @@ static int rtl_validate_instr_i386 (ins_chain *ins)
 	case INS_FSIN:
 	case INS_FCOS:
 	case INS_FPTAN:
+	case INS_MB:
+	case INS_RMB:
+	case INS_WMB:
 		break;
 	case INS_START_REG:
 	case INS_END_REG:
@@ -4025,6 +4055,7 @@ arch_t *init_arch_i386 (int mclass)
 	arch->compose_reset_fregs = compose_reset_fregs_i386;
 
 	/* arch->compose_refcountop = compose_refcountop_i386; */
+	arch->compose_memory_barrier = compose_memory_barrier_i386;
 
 	arch->compose_return = compose_return_i386;
 	arch->compose_nreturn = compose_nreturn_i386;

@@ -408,6 +408,11 @@
 #define I_MT_XXCHG     0x245
 #define I_MT_DCLONE    0x246
 #define I_MT_BIND      0x247
+
+
+#define I_MB           0x248
+#define I_RMB          0x249
+#define I_WMB          0x24A
 /*}}}*/
 /*{{{  negatives */
 #define I_FPSTALL     ( 0x01 | I_NEGATIVE) /* T9000 */

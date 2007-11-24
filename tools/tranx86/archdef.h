@@ -104,6 +104,8 @@ typedef struct TAG_arch_t {
 
 	void (*compose_refcountop)(tstate *, int, int);					/* state, opcode, addr reg */
 
+	void (*compose_memory_barrier)(tstate *, int);					/* state, secondary-opcode */
+
 	/* function/proc return handling */
 	void (*compose_return)(tstate *);						/* state */
 	void (*compose_nreturn)(tstate *, int);						/* state, adjustment */
