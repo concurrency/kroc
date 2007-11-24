@@ -245,7 +245,7 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 		"fxam", "fstsw", "fucom", "fucomp", "fucompp", "fcom", "fcomp", "fcompp", "frndint", "fsqrt", \
 		"fabs", "fchs", "fscale", "fprem1", "..", "movswl", "lahf", "..", "..", "..", \
 		"inb", "outb", "call", "movzwl", "movw", "..", "..", "..", "..", "fsin", \
-		"fcos", "inw", "outw", "inl", "outl", "lock"};
+		"fcos", "inw", "outw", "inl", "outl", "lock", "fptan"};
 	static int code_sizes[] = {2, 4, 3, 3, 3, 4, 4, 4, 3, 4, \
 		2, 2, 5, 4, 3, 4, 2, 3, 5, 4, \
 		4, 4, 4, 4, 4, 5, 2, 3, 4, 3, \
@@ -257,7 +257,7 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 		4, 5, 5, 6, 7, 4, 5, 6, 7, 5, \
 		4, 4, 6, 6, 2, 6, 4, 2, 2, 2, \
 		3, 4, 4, 6, 4, 2, 2, 2, 2, 4, \
-		4, 3, 4, 3, 4, 4};
+		4, 3, 4, 3, 4, 4, 5};
 	static char *setcc_tailcodes[] = {"o", "no", "b", "ae", "e", "nz", "be", "a", "s", "ns", "pe", "po", "l", "ge", "le", "g", "..", ".."};
 	ins_chain *tmp;
 	ins_arg *arg;

@@ -572,6 +572,8 @@ predeflines[] =
 	, { CC, PD_REAL64SIN, "FR6(VR6):DSIN"}
 	, { CC, PD_REAL32COS, "FR3(VR3):COS"}
 	, { CC, PD_REAL64COS, "FR6(VR6):DCOS"}
+	, { CC, PD_REAL32TAN, "FR3(VR3):TAN"}
+	, { CC, PD_REAL64TAN, "FR6(VR6):DTAN"}
 	, /*}}}*/
 	  /*{{{  affinity stuff added by CGR */
 	  { CC, PD_GETAFF, "P(=I):GETAFF"}
@@ -783,7 +785,7 @@ fprintf (stderr, "readpredefline: line = %s", line);
 			strcpy (line, "\n");
 		}
 		pdnumber = predeflines[linecount].pnumber;	/* **SHC 5-Apr-1988 */
-		if (!has_sincos) {
+		if (!has_sincostan) {
 			switch (pdnumber) {
 			case PD_REAL32SIN:
 			case PD_REAL64SIN:

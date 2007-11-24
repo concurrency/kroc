@@ -503,6 +503,8 @@
 #define I_REAL64SIN	(0x02 | I_PSEUDO_OP)
 #define I_REAL32COS	(0x03 | I_PSEUDO_OP)
 #define I_REAL64COS	(0x04 | I_PSEUDO_OP)
+#define I_REAL32TAN	(0x05 | I_PSEUDO_OP)
+#define I_REAL64TAN	(0x06 | I_PSEUDO_OP)
 
 /*}}}*/
 

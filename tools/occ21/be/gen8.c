@@ -3389,11 +3389,13 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			// mapaddr (param[0]);
 			break;
 			/*}}}*/
-			/*{{{  REAL32SIN, REAL64SIN, REAL32COS, REAL64COS*/
+			/*{{{  REAL32SIN, REAL64SIN, REAL32COS, REAL64COS, REAL32TAN, REAL64TAN */
 		case PD_REAL32SIN:
 		case PD_REAL64SIN:
 		case PD_REAL32COS:
 		case PD_REAL64COS:
+		case PD_REAL32TAN:
+		case PD_REAL64TAN:
 			mapfpexp (param[0]);
 			loadseq = 0;
 			break;
@@ -4354,11 +4356,13 @@ printtreenl (stderr, 4, param[0]);
 		}
 		break;
 		/*}}}*/
-		/*{{{  REAL32SIN, REAL64SIN, REAL32COS, REAL64COS*/
+		/*{{{  REAL32SIN, REAL64SIN, REAL32COS, REAL64COS, REAL32TAN, REAL64TAN */
 	case PD_REAL32SIN:
 	case PD_REAL64SIN:
 	case PD_REAL32COS:
 	case PD_REAL64COS:
+	case PD_REAL32TAN:
+	case PD_REAL64TAN:
 		tfpexp (param[0], MANY_REGS, MANY_REGS);
 		switch (pdno) {
 		case PD_REAL32SIN:
@@ -4372,6 +4376,12 @@ printtreenl (stderr, 4, param[0]);
 			break;
 		case PD_REAL64COS:
 			genextfpop (I_REAL64COS);
+			break;
+		case PD_REAL32TAN:
+			genextfpop (I_REAL32TAN);
+			break;
+		case PD_REAL64TAN:
+			genextfpop (I_REAL64TAN);
 			break;
 		}
 		break;

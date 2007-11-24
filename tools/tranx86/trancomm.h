@@ -129,6 +129,8 @@
 #define DTRACE 34
 #define KILLCALL 35
 #define WAIT_FOR_INTERRUPT 36
+#define R32TAN 37
+#define R64TAN 38
 
 #define FINISH_OP -1
 

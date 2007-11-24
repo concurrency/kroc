@@ -139,7 +139,7 @@ static int dump_ins (FILE *stream, ins_chain *ins, arch_t *arch)
 		"fsubp", "fmulp", "fdivp", "sahf", "ftst", "fxam", "fstsw", "fucom", "fucomp", "fucompp", "fcom", \
 		"fcomp", "fcompp", "frndint", "fsqrt", "fabs", "fchs", "fscale", "fprem1", "setflab", "movs16to32", \
 		"lahf", "rep.movel", "cmove", "pjump", "inb", "outb", "ccall", "movz16to32", "movew", "mtfsb", \
-		"mtfsi", "mffs", "mtfsf", "fsin", "fcos"};
+		"mtfsi", "mffs", "mtfsf", "fsin", "fcos", "inw", "outw", "inl", "outl", "lock", "fptan"};
 	static char *cc_names[] = {"<none>", "O", "NO", "B", "AE", "Z", "NZ", "BE", "A", "S", "NS", "PE", "PO", "LT", "GE", "LE", "GT"};
 	static char *fregs[] = {"FP0", "FP1", "FP2", "FP3", "FP4", "FP5", "FP6", "FP7", "FP8", "FP9", "FP10", "FP11", "FP12", "FP13", "FP14", "FP15",
 				"FP16", "FP17", "FP18", "FP19", "FP20", "FP21", "FP22", "FP23", "FP24", "FP25", "FP26", "FP27", "FP28", "FP29", "FP30", "FP31"};

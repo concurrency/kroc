@@ -500,6 +500,8 @@
 #define I_R64SIN	(0x02 | I_PSEUDO_OP)
 #define I_R32COS	(0x03 | I_PSEUDO_OP)
 #define I_R64COS	(0x04 | I_PSEUDO_OP)
+#define I_R32TAN	(0x05 | I_PSEUDO_OP)
+#define I_R64TAN	(0x06 | I_PSEUDO_OP)
 
 /*}}}*/
 
