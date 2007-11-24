@@ -439,6 +439,8 @@ int main (int argc, char **argv)
 				options.machine_class = CLASS_SPARCV8;
 			} else if (!strcmp (*walk + 2, "MMX")) {
 				options.machine_options |= OPTION_MMX;
+			} else if (!strcmp (*walk + 2, "SSE2")) {
+				options.machine_options |= OPTION_SSE2;
 			} else if (!strcmp (*walk + 2, "cmovc")) {
 				options.machine_options |= OPTION_CMOVC;
 			} else if (!strcmp (*walk + 2, "mips")) {
@@ -655,6 +657,9 @@ int main (int argc, char **argv)
 				fprintf (stderr, "%s: CPU features: ", progname);
 				if (m_opts & OPTION_MMX) {
 					fprintf (stderr, "mmx ");
+				}
+				if (m_opts & OPTION_SSE2) {
+					fprintf (stderr, "sse2 ");
 				}
 				if (m_opts & OPTION_CMOVC) {
 					fprintf (stderr, "cmovc ");
@@ -1142,6 +1147,7 @@ static void dump_supported_things (FILE *stream)
 	fprintf (stream, "\t-m586      select pentium target\n");
 	fprintf (stream, "\t-m686      select pentium 2/3/pro target\n");
 	fprintf (stream, "\t-mMMX      enable MMX instructions\n");
+	fprintf (stream, "\t-mSSE2     enable SSE2 instructions\n");
 	fprintf (stream, "\t-mcmovc    enable conditional move instructions\n");
 	fprintf (stream, "\t-mmips     select MIPS target (defaults to r5000)\n");
 	fprintf (stream, "\t-mr3k      select MIPS R3000 target\n");

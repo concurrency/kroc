@@ -5476,6 +5476,15 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 		arch->compose_kcall (ts, K_MT_BIND, 3, 1);
 		break;
 		/*}}}*/
+		/*{{{  I_MB, I_RMB, I_WMB -- memory barriers*/
+	case I_MB:
+	case I_RMB:
+	case I_WMB:
+		if (arch->compose_memory_barrier) {
+			arch->compose_memory_barrier (ts, sec);
+		}
+		break;
+		/*}}}*/
 		/*{{{  default -- error*/
 	default:
 		fprintf (stderr, "%s: warning: not supported %d\n", progname, sec);

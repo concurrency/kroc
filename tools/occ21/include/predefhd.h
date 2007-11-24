@@ -180,6 +180,11 @@
 #define PD_REAL32TAN		115	/* REAL32 FUNCTION TAN (VAL REAL32 rad) */
 #define PD_REAL64TAN		116	/* REAL64 FUNCTION DTAN (VAL REAL64 rad) */
 /*}}}*/
+/*{{{  memory barriers */
+#define PD_MEMORY_BARRIER	117
+#define PD_READ_MEMORY_BARRIER	118
+#define PD_WRITE_MEMORY_BARRIER	119
+/*}}}*/
 
 /*{{{  Predefines for the configuration stuff */
 /*{{{  Predefines for the configurer */

@@ -591,6 +591,11 @@ predeflines[] =
 	, { CC, PD_DMA_CAPABLE, "FB(a):DMA.CAPABLE"}
 	, { CC, PD_MAKE_DMA_CAPABLE, "P(a):MAKE.DMA.CAPABLE"}
 	, /*}}}*/
+	  /*{{{  memory barriers by CGR */
+	  { CC, PD_MEMORY_BARRIER, "P():MEMORY.BARRIER"}
+	, { CC, PD_READ_MEMORY_BARRIER, "P():READ.MEMORY.BARRIER"}
+	, { CC, PD_WRITE_MEMORY_BARRIER, "P():WRITE.MEMORY.BARRIER"}
+	, /*}}}*/
 		/*{{{  configurer attributes */
 	  { CN, PD_ATTR_LINK, ". [4]E :link"}
 	, { CN, PD_ATTR_TYPE, ". []Y :type"}

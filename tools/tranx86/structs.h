@@ -213,9 +213,12 @@ typedef struct TAG_rtl_chain {
 #define INS_OUTL 114		/* for IOSPACE handling */
 #define INS_LOCK 115		/* for i386 atomic ops */
 #define INS_FPTAN 116		/* partial tangent */
+#define INS_MB 117		/* memory barrier */
+#define INS_RMB 118		/* read memory barrier */
+#define INS_WMB 119		/* write memory barrier */
 
 #define INS_FIRST INS_MOVE
-#define INS_LAST INS_FPTAN
+#define INS_LAST INS_WMB
 
 #define INS_START_REG 65535	/* ARG_REG */
 #define INS_END_REG 65534	/* ARG_REG */

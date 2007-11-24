@@ -439,6 +439,13 @@
 #define I_MT_BIND	0x247
 
 /*}}}*/
+/*{{{  memory barrier instructions*/
+
+#define I_MB		0x248
+#define I_RMB		0x249
+#define I_WMB		0x24a
+
+/*}}}*/
 /*{{{  negative instructions (mostly T9000)*/
 #define I_NEGATIVE	0x8000
 #define I_FPSTALL	(0x01 | I_NEGATIVE)
@@ -640,7 +647,8 @@ static int tsdiff_sec_twocodes[] = { \
 	-1, -1, 0, 16,	/* 238: mt_alloc, mt_release, mt_clone, mt_in */
 	16, 16, 16, 16,	/* 23c: mt_out, mt_xchg, mt_lock, mt_unlock */
 	-2, -2,	16, 16,	/* 240: mt_enroll, mt_resign, mt_sync, mt_xin */
-	16, 16, -2, -2	/* 244: mt_xout, mt_xxchg, mt_dclone, mt_bind */
+	16, 16, -2, -2,	/* 244: mt_xout, mt_xxchg, mt_dclone, mt_bind */
+	0, 0, 0		/* 248: mb, rmb, wmb */
 };
 
 /*}}}*/

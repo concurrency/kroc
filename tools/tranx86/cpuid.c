@@ -299,6 +299,9 @@ int get_intel_options (void)
 	if (fdata.bits.sep) {
 		opts |= OPTION_SYSENTER;
 	}
+	if (fdata.bits.sse2) {
+		opts |= OPTION_SSE2;
+	}
 	return opts;
 }
 
