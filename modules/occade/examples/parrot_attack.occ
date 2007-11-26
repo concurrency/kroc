@@ -27,7 +27,9 @@
 #USE "shutdown"
 
 -- Define this if you're using CCSP.
+#IF DEFINED (OCCBUILD.KROC)
 #DEFINE USE.PROCESS.METER
+#ENDIF
 
 --*{{{ PRI Process priorities
 VAL INT PRI.BUFFERS IS 10:
