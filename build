@@ -242,7 +242,6 @@ where options are:
 
   --svn-version                attempt to display the latest version available in the subversion repository
   --svn-status                 check subversioned source packages for changes against repository
-  --svn-update                 update source packages to latest versions available via subversion
   --svn-switch                 switch to a new subversion branch (specified with --svn-branch)
   --svn-list                   list all files under version control
   --svn-user=<name>            set username for subversion repository access
@@ -1431,9 +1430,6 @@ do
 		;;
 	X--svn-version)
 		SPECIAL_ACTION=svn_version
-		;;
-	X--svn-update)
-		SPECIAL_ACTION=svn_update
 		;;
 	X--svn-status)
 		SPECIAL_ACTION=svn_status
