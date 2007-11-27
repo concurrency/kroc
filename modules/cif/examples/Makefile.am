@@ -59,7 +59,7 @@ SUFFIXES = .occ
 	$(OCCBUILD) --program $^
 
 cift15: cift15.o ciftutils.o
-	$(CC) -o $@ $^ -L$(prefix)/lib/kroc -lccsp -lpthread -ldl
+	$(CC) -o $@ $^ -L$(prefix)/lib/kroc -lccsp -lpthread @LIBDL@
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<

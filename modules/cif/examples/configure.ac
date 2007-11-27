@@ -11,6 +11,10 @@ dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
 
+dnl Checks for libraries.
+AC_CHECK_LIB(dl, dlsym, LIBDL="-ldl", LIBDL="")
+AC_SUBST(LIBDL)
+
 dnl Checks for occam modules.
 OCCAM_INCLUDE([cif.module], ,
               [AC_MSG_ERROR(Required modules not found)])
