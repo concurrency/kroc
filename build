@@ -415,9 +415,16 @@ typescript_head ()
 	printf '        documentation install: %s\n' "$kroc_kroc_doc" >> $DUMPOUT
 	printf '        cgtests install:       %s\n' "$kroc_kroc_cgtests" >> $DUMPOUT
 	printf 'Various software versions:\n' >> "$DUMPOUT"
-	# for BSD, tee doesn't much like our --version argument (GNU fileutils wanted really)
-	uname | grep BSD 1> /dev/null && XX_PROGRAMS="${AS:-as} ${CC:-gcc}" || XX_PROGRAMS="${AS:-as} ${CC:-gcc} ${TEE:-tee}"
-	uname | grep Darwin 1> /dev/null && XX_PROGRAMS="${AS:-as} ${CC:-gcc}" || XX_PROGRAMS="${AS:-as} ${CC:-gcc} ${TEE:-tee}"
+	XX_PROGRAMS="${AS:-as} ${CC:-gcc}"
+	case `uname` in
+		*BSD* | *Darwin*)
+			# Non-GNU tee -- which will break horribly if we give
+			# it --version.
+			;;
+		*)
+			XX_PROGRAMS="$XX_PROGRAMS ${TEE:-tee}"
+			;;
+	esac
 	for prog in $XX_PROGRAMS; do
 		printf '        %s\n' "$prog" >> "$DUMPOUT"
 		echo | "$prog" --version >> "$DUMPOUT" 2>&1 || echo | "$prog" -v >> "$DUMPOUT" 2>&1 || software_missing "$prog"
