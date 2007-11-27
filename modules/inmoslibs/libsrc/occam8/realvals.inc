@@ -35,7 +35,9 @@ VAL BitsInFrac IS        24 :
 VAL RealExp    IS       255 :
 VAL RealXcess  IS       127 :
 VAL RealRBit   IS       128 :
+#IF (TARGET.BITS.PER.WORD = 32)
 VAL RealInf    IS #7F800000 :
+#ENDIF
 --}}}
 --{{{  IEEE Double length constants
 VAL DRealShift  IS   11 :
@@ -44,5 +46,7 @@ VAL DRealExpSh  IS   20 :
 VAL DRealExp    IS #7FF :
 VAL DRealXcess  IS 1023 :
 VAL DRealRBit   IS #400 :
+#IF (TARGET.BITS.PER.WORD = 32)
 VAL DRealInf    IS #7FF00000 :
+#ENDIF
 --}}}

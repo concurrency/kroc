@@ -1,4 +1,3 @@
-
 --
 --	Inmos Libraries
 --	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
@@ -39,6 +38,35 @@ REAL64 FUNCTION DMINUSX (VAL REAL64 X)
       result.i[0] := X.i[0]
       result.i[1] := X.i[1] >< (MOSTNEG INT)
     RESULT result
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE DMINUSX "DMINUSX%O"
+
+--{{{  T2
+REAL64 FUNCTION DMINUSX (VAL REAL64 X)
+
+  -- Function version (10 Jun 87)
+
+  REAL64 Y :
+  VALOF
+    [4]INT Y RETYPES Y:
+    VAL [4]INT X RETYPES X:
+    SEQ
+      [Y FROM 0 FOR 3] := [X FROM 0 FOR 3]
+      Y [3] := X [3] >< (MOSTNEG INT)
+    RESULT Y
 :
 --}}}
 

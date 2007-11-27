@@ -71,3 +71,59 @@ REAL32 FUNCTION SCALEB (VAL REAL32 Y, VAL INT n)
 --}}}
 
 #ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE SCALEB "SCALEB%O"
+
+#INCLUDE "realvals.inc"
+
+--{{{  T2
+REAL32 FUNCTION SCALEB (VAL REAL32 Y, VAL INT n)
+
+  -- Beta-2 (27feb87)
+  -- 27-jul-87
+
+  VAL Bias      IS 127 :
+  REAL32 X :
+  VALOF
+    INT m :
+    INT temp:
+    VAL INT maxexp IS  126:
+    VAL INT minexp IS -126:
+    VAL REAL32 Two.to.the.maxexp RETYPES #7E800000(INT32) :
+    VAL REAL32 Two.to.the.minexp RETYPES #00800000(INT32) :
+    SEQ
+      X := Y
+      m := n
+      WHILE m <> 0
+        IF
+          m > maxexp
+            SEQ
+              X := X * Two.to.the.maxexp
+              m := m - maxexp
+          m < minexp
+            SEQ
+              X := X * Two.to.the.minexp
+              m := m - minexp
+          TRUE
+            [2]INT Z.int :
+            PLACE Z.int IN WORKSPACE :
+            SEQ
+              Z.int[0] := 0
+              temp,  Z.int[1] := SHIFTRIGHT ((m + Bias),  0,  RealShift + 1)
+              REAL32 Z RETYPES Z.int :
+              X := X * Z
+              m := 0
+    RESULT X
+:
+--}}}
+
+#ENDIF

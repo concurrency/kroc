@@ -114,3 +114,70 @@ BOOL FUNCTION REAL32GT (VAL REAL32 X, Y)
 #ENDIF -- !TARGET.HAS.FPU
 
 #ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.2 27/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32GT "REAL32GT%O"
+--}}}
+
+--{{{  
+BOOL FUNCTION REAL32GT (VAL REAL32 X, Y)
+
+  --{{{  history
+  -- Beta-3 (11may87)  Function version (10 Jun 87)
+  -- V1.1 21/02/89
+  -- V1.2 27-Nov-92 SRH; bug fix TS/1962 to change behaviour when one or
+  -- both arguments is NaN - NaNs should always compare FALSE.
+  --}}}
+
+  BOOL greater.than.if.ordered :
+  VALOF
+    VAL [2]INT X RETYPES X :
+    VAL [2]INT Y RETYPES Y :
+    VAL low IS 0 :
+    VAL high IS 1 :
+    INT MagX :
+    INT MagY :
+    SEQ
+      MagX := X [high] /\ #7FFF
+      MagY := Y [high] /\ #7FFF
+      IF
+        --{{{  X and Y have different signs
+        (X [high] >< Y [high]) < 0       -- Still infinities but no NaNs
+          --Signs are different hence test Y < 0 and not both 0
+          greater.than.if.ordered := (Y [high] < 0) AND
+                  ((((MagX PLUS MagY) \/ X [low]) \/ Y [low]) <> 0)
+        --}}}
+        --{{{  X and Y both negative
+        X [high] < 0
+          SEQ
+            IF
+              MagY = MagX
+                --This is the equivalent of an unsigned comparison
+                greater.than.if.ordered := (Y [low] >< #8000) > (X [low] >< #8000)
+              TRUE
+                greater.than.if.ordered := (MagY > MagX)
+        --}}}
+        --{{{  TRUE - X and Y both positive
+        TRUE
+          SEQ
+            IF
+              MagX = MagY
+                --This is the equivalent of an unsigned comparison
+                greater.than.if.ordered := (X [low] >< #8000) > (Y [low] >< #8000)
+              TRUE
+                greater.than.if.ordered := (MagX > MagY)
+        --}}}
+    RESULT (greater.than.if.ordered AND ORDERED(X, Y))
+:
+--}}}
+
+#ENDIF
