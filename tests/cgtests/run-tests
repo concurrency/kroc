@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 #	run-tests -- run the CG tests and produce a report
 #	Copyright (C) 2006 Adam Sampson <ats@offog.org>
