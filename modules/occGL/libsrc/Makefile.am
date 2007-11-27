@@ -25,15 +25,13 @@ includes = $(occGL_includes)
 
 all-local: $(libs) $(includes)
 
-PLATFORM_LIBS=@GL_LIBS@
-
 if HAVE_SWIG_OCCAM
 GL_wrap.c GL_wrap.h occGL.inc: $(SWIG_SOURCE_FILES)
 	$(SWIG_OCCAM) opengl.i
 endif
 
 occGL.lib: $(occGL_lib_objs)
-	$(OCCBUILD) --library occGL.lib --include occGL.inc $(PLATFORM_LIBS) $(occGL_lib_objs)
+	$(OCCBUILD) --library occGL.lib --include occGL.inc @GL_LIBS@ $(occGL_lib_objs)
 
 install-exec-local: $(libs) $(includes)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
