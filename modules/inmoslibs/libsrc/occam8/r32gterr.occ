@@ -1,4 +1,3 @@
-
 --
 --	Inmos Libraries
 --	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
@@ -98,6 +97,73 @@ BOOL FUNCTION REAL32GTERR (VAL REAL32 X, Y)
       TRUE -- cases 41, 42, 48, 49
         Xgreater.thanY := ( magnitude.of.Y > magnitude.of.X )
     RESULT Xgreater.thanY
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE REAL32GTERR "REAL32GTERR%CHK"
+
+--{{{  
+BOOL FUNCTION REAL32GTERR (VAL REAL32 X, Y)
+
+  -- Beta-3 (11may87)  Function version (10 Jun 87)
+
+  BOOL bool :
+  VALOF
+    VAL [2]INT X RETYPES X :
+    VAL [2]INT Y RETYPES Y :
+    VAL low IS 0 :
+    VAL high IS 1 :
+    INT MagX :
+    INT MagY :
+    SEQ
+      VAL INT RealInf.high IS #7F80 :
+      IF
+        ((X [high] /\ RealInf.high) = RealInf.high) OR
+            ((Y [high] /\ RealInf.high) = RealInf.high)
+          CAUSEERROR()
+        TRUE
+          SKIP
+      MagX := X [high] /\ #7FFF
+      MagY := Y [high] /\ #7FFF
+      IF
+        --{{{  X and Y have different signs
+        (X [high] >< Y [high]) < 0       -- Still infinities but no NaNs
+          --Signs are different hence test Y < 0 and not both 0
+          bool := (Y [high] < 0) AND
+                  ((((MagX PLUS MagY) \/ X [low]) \/ Y [low]) <> 0)
+        --}}}
+        --{{{  X and Y both negative
+        X [high] < 0
+          SEQ
+            IF
+              MagY = MagX
+                --This is the equivalent of an unsigned comparison
+                bool := (Y [low] >< #8000) > (X [low] >< #8000)
+              TRUE
+                bool := (MagY > MagX)
+        --}}}
+        --{{{  TRUE - X and Y both positive
+        TRUE
+          SEQ
+            IF
+              MagX = MagY
+                --This is the equivalent of an unsigned comparison
+                bool := (X [low] >< #8000) > (Y [low] >< #8000)
+              TRUE
+                bool := (MagX > MagY)
+        --}}}
+    RESULT bool
 :
 --}}}
 

@@ -62,3 +62,59 @@ REAL64 FUNCTION DLOGB (VAL REAL64 Y)
     RESULT X
 :
 --}}}
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE DLOGB "DLOGB%O"
+
+#INCLUDE "realvals.inc"
+
+--{{{  
+REAL64 FUNCTION DLOGB (VAL REAL64 Y)
+
+  -- Function version (10 Jun 87)
+
+  REAL64 X :
+  VALOF
+    --{{{  VALS
+    VAL Bias       IS      1023 :
+    --}}}
+    VAL [4]INT Y RETYPES Y:
+    [4]INT X.int RETYPES X:
+    INT exp, frac :
+    SEQ
+      exp, frac := SHIFTLEFT (0, (Y [3] << 1), DRealShift)
+      IF
+        (((Y[3] << 1) \/ Y[2]) \/ (Y[1] \/ Y[0])) = 0 -- Zero
+          --{{{  - Inf
+          SEQ
+            X.int [3] := (DRealExp << 4) \/ (MOSTNEG INT)   -- (-inf)
+            X.int [2] := 0
+            X.int [1] := 0
+            X.int [0] := 0
+          --}}}
+        exp <> DRealExp                         -- finite
+          REAL64 X RETYPES X.int :
+          X := REAL64 ROUND (exp - Bias)
+        ((Y[0] \/ Y[1]) \/ (Y[2] \/ frac)) = 0  -- inf
+          --{{{  + Inf
+          SEQ
+            X.int [3] := (DRealExp << 4)
+            X.int [2] := 0
+            X.int [1] := 0
+            X.int [0] := 0
+          --}}}
+        TRUE                                    -- NaN
+          X.int := Y
+    RESULT X
+:
+--}}}
+
+#ENDIF

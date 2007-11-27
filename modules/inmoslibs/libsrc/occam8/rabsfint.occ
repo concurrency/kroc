@@ -1,4 +1,3 @@
-
 --
 --	Inmos Libraries
 --	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
@@ -18,7 +17,7 @@
 --	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 --
 
-#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+#IF NOT DEFINED(TARGET.HAS.FPU)
 
 --{{{  #options and #comments
 #OPTION "V"  -- no vector space
@@ -31,6 +30,7 @@
 
 #INCLUDE "realvals.inc"
 
+#IF (TARGET.BITS.PER.WORD = 32)
 --{{{  ABS
 --{{{  
 REAL32 FUNCTION ABS (VAL REAL32 Y)
@@ -54,6 +54,33 @@ REAL32 FUNCTION ABS (VAL REAL32 Y)
 :
 --}}}
 --}}}
+#ENDIF -- TARGET.BITS.PER.WORD = 32
+#IF (TARGET.BITS.PER.WORD = 16)
+--{{{  ABS
+--{{{  
+REAL32 FUNCTION ABS (VAL REAL32 Y)
+
+  -- Function version (10 Jun 87)
+  -- Stop version error behaviour modified 16-sep-87
+
+  REAL32 X :
+  VALOF
+    VAL RealInf IS #7F80 :
+    [2]INT X RETYPES X:
+    VAL [2]INT Y RETYPES Y:
+    SEQ
+      X[0] := Y[0]
+      X[1] := Y[1] /\ (~(MOSTNEG INT))
+      IF
+        (X[1] /\ RealInf) = RealInf -- Inf or NaN
+          CAUSEERROR()
+        TRUE
+          SKIP
+    RESULT X
+:
+--}}}
+--}}}
+#ENDIF -- TARGET.BITS.PER.WORD = 16
 
 --{{{  FPINT
 --{{{  T2 and TA code is the same; amalgamated 9-Jul-90 SRH

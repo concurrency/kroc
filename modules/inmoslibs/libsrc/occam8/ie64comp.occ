@@ -19,8 +19,6 @@
 
 --** @module occam8
 
-#IF (TARGET.BITS.PER.WORD >= 32)
-
 --{{{  #options and #comments
 #OPTION "V"  -- no vector space
 #COMMENT "TA compiler library, V1.1 21/02/89"
@@ -55,5 +53,3 @@ INT FUNCTION DIEEECOMPARE (VAL REAL64 X, Y)
     RESULT result
 :
 --}}}
-
-#ENDIF

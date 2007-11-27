@@ -1,4 +1,3 @@
-
 --
 --	Inmos Libraries
 --	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
@@ -61,6 +60,46 @@ BOOL FUNCTION REAL32EQERR (VAL REAL32 X, Y)
       MagX := X /\ #7FFFFFFF
       MagY := Y /\ #7FFFFFFF
     RESULT ( ( X = Y ) OR ( ( MagX PLUS MagY ) = 0 ) )
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE REAL32EQERR "REAL32EQERR%CHK"
+
+--{{{  
+BOOL FUNCTION REAL32EQERR (VAL REAL32 X, Y)
+
+  -- Beta-3 (11may87)  Function version (10 Jun 87)
+
+  VAL [2]INT X RETYPES X :
+  VAL [2]INT Y RETYPES Y :
+  VAL high IS 1 :
+  VAL low  IS 0 :
+  INT MagX, MagY :
+  VALOF
+    SEQ
+      VAL INT RealInf.high IS #7F80 :
+      IF
+        ((X [high] /\ RealInf.high) = RealInf.high) OR
+            ((Y [high] /\ RealInf.high) = RealInf.high)
+          CAUSEERROR()
+        TRUE
+          SKIP
+      MagX := X [high] /\ #7FFF
+      MagY := Y [high] /\ #7FFF
+    --Either the same or both +/- 0
+    RESULT ((X [high] = Y [high]) AND (X [low] = Y [low])) OR
+              ((((MagX PLUS MagY) \/ X [low]) \/ Y [low]) = 0)
 :
 --}}}
 

@@ -99,3 +99,103 @@ INT64 FUNCTION INT64MUL (VAL INT64 U, V)
 --}}}
 
 #ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE INT64MUL "INT64MUL%CHK"
+
+--{{{  INT64MUL -- T2
+INT64 FUNCTION INT64MUL (VAL INT64 U, V)
+
+  -- Function version (10 Jun 87)
+
+  INT64 Prod :
+  VALOF
+    --{{{  16 Bit Constants
+    VAL INT MaxInt  IS  #FFFF :
+    VAL INT SignBit IS  #8000 :
+    VAL INT BitsPerWord IS 16 :
+    --}}}
+    [4]INT Prod RETYPES Prod :
+    VAL [4]INT U RETYPES U :
+    VAL [4]INT V RETYPES V :
+    INT Carry :
+    [4]INT C :
+    PLACE C IN WORKSPACE :
+    [8]INT W :
+    PLACE W IN WORKSPACE :
+    SEQ
+      --{{{  form the product
+      Carry,  W[0] := LONGPROD ( U[0],  V[0],  0)
+      Carry,  W[1] := LONGPROD ( U[1],  V[0],  Carry)
+      Carry,  W[2] := LONGPROD ( U[2],  V[0],  Carry)
+      W[4],   W[3] := LONGPROD ( U[3],  V[0],  Carry)
+      C[0],   W[1] := LONGPROD ( U[0],  V[1],  W[1])
+      C[1],   W[2] := LONGPROD ( U[1],  V[1],  W[2])
+      C[2],   W[3] := LONGPROD ( U[2],  V[1],  W[3])
+      C[3],   W[4] := LONGPROD ( U[3],  V[1],  W[4])
+      Carry,  W[2] := LONGSUM ( C[0],  W[2],  0)
+      Carry,  W[3] := LONGSUM ( C[1],  W[3],  Carry)
+      Carry,  W[4] := LONGSUM ( C[2],  W[4],  Carry)
+      W[6],   W[5] := LONGSUM ( C[3],  0,  Carry)
+      C[0],   W[2] := LONGPROD ( U[0],  V[2],  W[2])
+      C[1],   W[3] := LONGPROD ( U[1],  V[2],  W[3])
+      C[2],   W[4] := LONGPROD ( U[2],  V[2],  W[4])
+      C[3],   W[5] := LONGPROD ( U[3],  V[2],  W[5])
+      Carry,  W[3] := LONGSUM ( C[0],  W[3],  0)
+      Carry,  W[4] := LONGSUM ( C[1],  W[4],  Carry)
+      Carry,  W[5] := LONGSUM ( C[2],  W[5],  Carry)
+      W[7],   W[6] := LONGSUM ( C[3],  0,  Carry)
+      C[0],   W[3] := LONGPROD ( U[0],  V[3],  W[3])
+      C[1],   W[4] := LONGPROD ( U[1],  V[3],  W[4])
+      C[2],   W[5] := LONGPROD ( U[2],  V[3],  W[5])
+      C[3],   W[6] := LONGPROD ( U[3],  V[3],  W[6])
+      Carry,  W[4] := LONGSUM ( C[0],  W[4],  0)
+      Carry,  W[5] := LONGSUM ( C[1],  W[5],  Carry)
+      Carry,  W[6] := LONGSUM ( C[2],  W[6],  Carry)
+      Carry,  W[7] := LONGSUM ( C[3],  0,  Carry)
+      --}}}
+      --{{{  adjust if U negative
+      IF
+        U[3] < 0    -- U was negative so adjust W[7..4]
+          SEQ
+            Carry,  W[4] := LONGDIFF ( W[4],  V[0],  0)
+            Carry,  W[5] := LONGDIFF ( W[5],  V[1],  Carry)
+            Carry,  W[6] := LONGDIFF ( W[6],  V[2],  Carry)
+            Carry,  W[7] := LONGDIFF ( W[7],  V[3],  Carry)
+        TRUE
+          SKIP
+      --}}}
+      --{{{  adjust if V negative
+      IF
+        V[3] < 0    -- V was negative so adjust W[7..4]
+          SEQ
+            Carry,  W[4] := LONGDIFF ( W[4],  U[0],  0)
+            Carry,  W[5] := LONGDIFF ( W[5],  U[1],  Carry)
+            Carry,  W[6] := LONGDIFF ( W[6],  U[2],  Carry)
+            Carry,  W[7] := LONGDIFF ( W[7],  U[3],  Carry)
+        TRUE
+          SKIP
+      --}}}
+      --{{{  test for overflow
+      IF
+        (W[3] >= 0) AND ((((W[7]\/W[6])\/W[5])\/W[4]) <> 0)
+          CAUSEERROR()
+        (W[3] < 0) AND ((((W[7]/\W[6])/\W[5])/\W[4]) <> MaxInt)
+          CAUSEERROR()
+        TRUE
+          SKIP
+      --}}}
+      Prod := [W FROM 0 FOR 4]
+    RESULT Prod
+:
+--}}}
+
+#ENDIF

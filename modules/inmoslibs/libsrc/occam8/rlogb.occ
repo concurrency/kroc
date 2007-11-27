@@ -59,3 +59,50 @@ REAL32 FUNCTION LOGB (VAL REAL32 Y)
 --}}}
 
 #ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE LOGB "LOGB%O"
+
+#INCLUDE "realvals.inc"
+
+--{{{  
+REAL32 FUNCTION LOGB (VAL REAL32 Y)
+
+  -- Function version (10 Jun 87)
+
+  REAL32 X :
+  VALOF
+    --{{{  IEEE single precision VALS FOR 16 bit machine
+    VAL SignBit   IS #80000000(INT32) :
+    VAL RealInf   IS #7F800000(INT32) :
+    VAL Bias      IS       127 :
+    --}}}
+    VAL [2]INT Y RETYPES Y:
+    INT exp,frac :
+    SEQ
+      exp,  frac := SHIFTLEFT (0,  Y[1]<<1,  RealShift)
+      IF
+        ((Y[1] << 1) \/ Y[0]) = 0
+          INT32 X.int RETYPES X:
+          X.int := RealInf \/ SignBit   -- (-inf)
+        exp <> RealExp    -- finite
+          X := REAL32 ROUND (exp - Bias)
+        (frac \/ Y[0]) = 0          -- inf
+          INT32 X.int RETYPES X:
+          X.int := RealInf
+        TRUE                        -- NaN
+          VAL REAL32 Y RETYPES Y :
+          X := Y
+    RESULT X
+:
+--}}}
+
+#ENDIF

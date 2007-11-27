@@ -100,3 +100,45 @@ BOOL FUNCTION REAL32EQ (VAL REAL32 X, Y)
 #ENDIF -- !TARGET.HAS.FPU
 
 #ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.2 27/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32EQ "REAL32EQ%O"
+--}}}
+
+--{{{  
+BOOL FUNCTION REAL32EQ (VAL REAL32 X, Y)
+
+  --{{{  history
+  -- Beta-3 (11may87)  Function version (10 Jun 87)
+  -- V1.1 21-Feb-89
+  -- V1.2 27-Nov-92 SRH; bug fix TS/1962 to change behaviour when one or
+  -- both arguments is NaN - NaNs should always compare FALSE.
+  --}}}
+
+  BOOL equal.if.ordered :
+  VALOF
+    VAL [2]INT X RETYPES X :
+    VAL [2]INT Y RETYPES Y :
+    VAL high IS 1 :
+    VAL low  IS 0 :
+    INT MagX, MagY :
+    SEQ
+      MagX := X [high] /\ #7FFF
+      MagY := Y [high] /\ #7FFF
+      --Either the same or both +/- 0
+      equal.if.ordered := ((X [high] = Y [high]) AND (X [low] = Y [low])) OR
+                          ((((MagX PLUS MagY) \/ X [low]) \/ Y [low]) = 0)
+    RESULT (equal.if.ordered AND ORDERED(X, Y))
+:
+--}}}
+
+#ENDIF

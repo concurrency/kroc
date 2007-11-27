@@ -90,3 +90,120 @@ INT, REAL64 FUNCTION DFLOATING.UNPACK (VAL REAL64 Y)
     RESULT n, X
 :
 --}}}
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libraries, no vector space
+#COMMENT "T2 compiler library, V1.3 07/12/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}  
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE DFLOATING.UNPACK "DFLOATING.UNPACK%O"
+--}}}  
+
+#INCLUDE "realvals.inc"
+
+--{{{  T2
+INT, REAL64 FUNCTION DFLOATING.UNPACK (VAL REAL64 Y)
+
+  --{{{  history
+  -- Function version (21 Aug 87)
+  -- V1.1, 21-Feb-89
+  -- Introduced missing CAUSEERRORs to checked version; V1.2, 17-Apr-90 SRH
+  -- Moved position of CAUSEERRORs from ends of branches to the beginning of
+  -- them to allow compiler to do dead code elimination; V1.3, 7-Dec-92 SRH
+  --}}}  
+
+  INT    n :
+  REAL64 X :
+  VALOF
+    #INCLUDE "nan16.inc"
+    --{{{  declarations
+    [4]INT X RETYPES X:
+    VAL [4]INT Y RETYPES Y:
+    INT exp :
+    VAL Bias IS 1023 :
+    VAL UnitExponent IS Bias << 4 :
+    --}}}  
+    SEQ
+      --{{{  split off exponent
+      INT frac :
+      exp, frac  := SHIFTLEFT (0, (Y [3] << 1), DRealShift)
+      X := Y
+      X[3] := X[3] /\ #F -- remove exponent
+      --}}}  
+      IF
+        exp = DRealExp  --  inf or NaN
+          --{{{  
+          SEQ
+            CAUSEERROR()
+            --n := DRealExp - Bias
+            --IF
+              --((X[3] \/ X[2]) \/ (X[1] \/ X[0])) = 0 -- inf
+                --X := Dundefined.NaN
+              --TRUE -- NaN
+                --X := Y
+          --}}}  
+        (((Y[3] << 1) \/ Y[2]) \/ (Y[1] \/ Y[0])) = 0 -- Zero
+          --{{{  
+          SEQ
+            CAUSEERROR()
+            --n := DRealExp - Bias
+            --X := Dundefined.NaN
+          --}}}  
+        TRUE
+          SEQ
+            IF
+              exp = 0
+                --{{{  normalise
+                INT places :
+                SEQ
+                  INT carry :
+                  IF
+                    X[3] <> 0
+                      --{{{  
+                      SEQ
+                        places,  X[3],  carry := NORMALISE ( X[3],  X[2])
+                        X[2],  carry := SHIFTLEFT ( X[2],  X[1],  places)
+                        X[1],  X[0]  := SHIFTLEFT ( X[1],  X[0],  places)
+                      --}}}  
+                    X[2] <> 0
+                      --{{{  
+                      SEQ
+                        places,  X[3],  carry := NORMALISE ( X[2],  X[1])
+                        X[2],  X[1] := SHIFTLEFT ( X[1],  X[0],  places)
+                        X[0] := 0
+                        places := places + BitsPerWord
+                      --}}}  
+                    X[1] <> 0
+                      --{{{  
+                      SEQ
+                        places,  X[3],  X[2] := NORMALISE ( X[1],  X[0])
+                        X[1] := 0
+                        X[0] := 0
+                        places := places + (2*BitsPerWord)
+                      --}}}  
+                    TRUE  -- zero case already trapped
+                      --{{{  
+                      SEQ
+                        places,  X[3],  X[2] := NORMALISE ( X[0],  0)
+                        X[1] := 0
+                        X[0] := 0
+                        places := places + (3*BitsPerWord)
+                      --}}}  
+                  n := ((DRealShift + 1) - Bias) - places
+                  places, X[0] := SHIFTRIGHT (X[1], X[0], DRealShift)
+                  places, X[1] := SHIFTRIGHT (X[2], X[1], DRealShift)
+                  X[3], X[2]   := SHIFTRIGHT (X[3]/\(~(MOSTNEG INT)), X[2], DRealShift)
+                --}}}  
+              TRUE
+                n := exp - Bias
+            X[3] := X[3] \/ UnitExponent
+    RESULT n, X
+:
+--}}}  
+
+#ENDIF

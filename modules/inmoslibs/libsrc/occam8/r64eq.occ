@@ -98,3 +98,51 @@ BOOL FUNCTION REAL64EQ (VAL REAL64 X, Y)
 #ENDIF -- !TARGET.HAS.FPU
 
 #ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.2 27/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL64EQ "REAL64EQ%O"
+--}}}
+
+--{{{  
+BOOL FUNCTION REAL64EQ (VAL REAL64 X, Y)
+
+  --{{{  history
+  -- Beta-3 (11may87)  Function version (10 Jun 87)
+  -- V1.1 21-Feb-89
+  -- V1.2 27-Nov-92 SRH; bug fix TS/1962 to change behaviour when one or
+  -- both arguments is NaN - NaNs should always compare FALSE.
+  --}}}
+
+  BOOL equal.if.ordered :
+  VALOF
+    VAL [4]INT X RETYPES X :
+    VAL [4]INT Y RETYPES Y :
+    VAL INT DRealInf.high IS #7FF0 :
+    SEQ
+      equal.if.ordered := (((X [3] = Y [3]) AND (X [2] = Y [2])) AND
+                          ((X [1] = Y [1]) AND (X [0] = Y [0])))
+      IF
+        equal.if.ordered
+          SKIP
+        TRUE
+          INT MagX, MagY :
+          SEQ
+            MagX := X [3] /\ #7FFF
+            MagY := Y [3] /\ #7FFF
+            --Either the same or both +/- 0
+            equal.if.ordered := (((MagX PLUS MagY) \/ (((X [2] \/ X [1]) \/ X [0]) \/
+                                ((Y [2] \/ Y [1]) \/ Y [0]))) = 0)
+    RESULT (equal.if.ordered AND DORDERED(X, Y))
+:
+--}}}
+
+#ENDIF
