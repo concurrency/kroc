@@ -121,8 +121,6 @@ MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
 OCCAMDOC_SRC=tools/occamdoc
-SVN_SRCS=(.)
-SVN_REPOSS=(kroc)
 
 ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC $KROCIF_SRC $OCCAMDOC_SRC \
 	$DOC_SRC \
@@ -156,14 +154,7 @@ PRERELEASE=1
 NEXTPATCH="1.5.1-pre4"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
-DFL_SVNUSER="anonymous"
-DFL_SVNHOST="http://projects.cs.kent.ac.uk/projects/kroc/svn/"
-DFL_SVNAUTHHOST="https://projects.cs.kent.ac.uk/projects/kroc/svn/"
-SVNREV="HEAD"
-SVNUSER="$DFL_SVNUSER"
-SVNHOST="$DFL_SVNHOST"
-SVNBRANCH="trunk"
-# things set in typescript_head are: SED, AWK, MAKE, WGET, SVN
+# things set in typescript_head are: SED, AWK, MAKE, WGET
 
 #}}}
 #{{{  various local variables
@@ -180,7 +171,6 @@ USEPONY=42
 USEUDC=42
 USEPGROUPS=42
 USEMP=42
-GOT_SVN_VERSION=0
 USER_INSTALL=0
 ALL_SETTINGS=0
 EXTRA_CCSP_CONFIGURE_OPTS=""
@@ -240,20 +230,9 @@ where options are:
   -h | --help                  this help text
   -V | --version               print version and exit
 
-  --svn-version                attempt to display the latest version available in the subversion repository
-  --svn-status                 check subversioned source packages for changes against repository
-  --svn-switch                 switch to a new subversion branch (specified with --svn-branch)
-  --svn-list                   list all files under version control
-  --svn-user=<name>            set username for subversion repository access
-  --svn-rev=<rev>              set revision number for subversion updates
-  --svn-branch=<branch>        attempt to use a branch for subversion updates
-
 and actions are:
   build                        build everything (default if not specified)
   update                       attempt to download source-code update
-  svnst-<svnpkg>               query subversion repository for <svnpkg> status
-  svnup-<svnpkg>               update local copy of <svnpkg> from subversion repository
-  svnsw-<svnpkg>               switch to new branch of <svnpkg> from subversion repository
   preconfigure-<pkg>           pre-configure <pkg> (only needed for ccsp)
   configure-<pkg>              configure <pkg> (see below for list of packages)
   fconfigure-<pkg>             force configure of <pkg>
@@ -319,45 +298,6 @@ choices for <pkg> are:
 EOF
 }
 #}}}
-#{{{  svn_version ()
-svn_version ()
-{
-	if [ "$SVN" = "" ]; then
-		printf '%s: subversion not installed! (set SVN environment variable to be explicit)\n' "$0"
-		exit 1
-	fi
-
-	SVN_DOES_HTTPS=0
-	SVNHOST_IS_HTTPS=0
-
-	$SVN --version | grep "'https'" 1> /dev/null && SVN_DOES_HTTPS=1
-	printf '%s' "$SVNHOST" | grep '^https:' > /dev/null && SVNHOST_IS_HTTPS=1
-
-	if [ $SVN_DOES_HTTPS -eq 0 ] && [ $SVNHOST_IS_HTTPS -eq 1 ]; then
-		printf '%s: installed subversion does not support https\n' "$0"
-		exit 1
-	fi
-
-	# attempt to get SVN-VERSION file from the "kroc" repository
-	printf 'checking for latest version: '
-	path="$SVNHOST"'kroc/trunk/SVN-VERSION'
-	if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-		PKG_SVN_VERSION=$($SVN cat "$path")
-	else
-		PKG_SVN_VERSION=$($SVN --username "$SVNUSER" cat "$path")
-	fi
-
-	if [ -z "$PKG_SVN_VERSION" ]; then
-		GOT_SVN_VERSION=0
-		printf 'failed\n'
-		exit 1
-	fi
-	GOT_SVN_VERSION=1
-
-	printf '%s\n' "$PKG_SVN_VERSION"
-	printf 'this version: %s\n' "$VERSION"
-}
-#}}}
 #{{{  deferred_install_error ()
 deferred_install_error ()
 {
@@ -415,7 +355,6 @@ guess_software ()
 	AWK=${AWK:-}
 	MAKE=${MAKE:-}
 	WGET=${WGET:-}
-	SVN=${SVN:-}
 	TEE=${TEE:-}
 	CUT=${CUT:-}
 
@@ -441,9 +380,6 @@ guess_software ()
 			fi
 			if [ -x "$this_pth""make" ] && [ "$MAKE" = "" ]; then
 				MAKE="$this_pth""make"
-			fi
-			if [ -x "$this_pth""svn" ] && [ "$SVN" = "" ]; then
-				SVN="$this_pth""svn"
 			fi
 			if [ -x "$this_pth""tee" ] && [ "$TEE" = "" ]; then
 				TEE="$this_pth""tee"
@@ -511,9 +447,6 @@ typescript_head ()
 	printf 'make is: %s\n' "$MAKE" >> "$DUMPOUT"
 	if [ "$WGET" != "" ]; then
 		printf 'wget is: %s\n' "$WGET" >> "$DUMPOUT"
-	fi
-	if [ "$SVN" != "" ]; then
-		printf 'svn is: %s\n"' "$SVN" >> "$DUMPOUT"
 	fi
 }
 #}}}
@@ -1042,190 +975,6 @@ package_status ()
 	fi
 }
 #}}}
-#{{{  svn_status ()
-svn_status ()
-{
-	if [ "$1" = "--full" ]; then
-		QFLAGS=""
-		shift
-	else
-		QFLAGS="--quiet"
-	fi
-	PKGSEL="$1"
-
-	if [ $GOT_SVN_VERSION -eq 0 ]; then
-		svn_version
-	fi
-	
-	if [ ${#SVN_SRCS[@]} -ne ${#SVN_REPOSS[@]} ]; then
-		printf '%s: broken build! (%d SVN sources, %d repositories)\n' "$0" ${#SVN_SRCS[@]} ${#SVN_REPOSS[@]}
-		exit 1
-	fi
-	i=0
-	while [ $i -lt ${#SVN_SRCS[@]} ]; do
-		if [ "$PKGSEL" = "" ] || [ "$PKGSEL" = ${SVN_REPOSS[i]} ]; then
-			printf 'checking %s: ' "${SVN_SRCS[i]}"
-			if [ -d $DIST_DIR/${SVN_SRCS[i]}/.svn ]; then
-				CURPATH=$(pwd)
-				cd "$DIST_DIR/${SVN_SRCS[i]}"
-
-				TEMPSVNST=/tmp/.svn.${SVN_REPOSS[i]}.$$
-
-				STATUS_FAILED=0
-				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-					$SVN st --show-updates --verbose $QFLAGS > "$TEMPSVNST" || STATUS_FAILED=1
-				else
-					$SVN st --show-updates --verbose --username "$SVNUSER" $QFLAGS > "$TEMPSVNST" || STATUS_FAILED=1
-				fi
-
-				REVISION=$(grep '^[sS]tatus against revision' < "$TEMPSVNST" | $SED -e 's/[^:]*:[ ]*//g')
-				printf 'revision %s\n' "$REVISION"
-
-				if [ $STATUS_FAILED -eq 1 ]; then
-					# probably aborted
-					printf '%s: abort\n' "$0"
-					rm -f "$TEMPSVNST"
-					exit 1
-				fi
-
-				cd "$CURPATH"
-
-				grep -v '^[\? ]        ' < "$TEMPSVNST" | grep -v '^[sS]tatus against revision'
-				rm -f "$TEMPSVNST"
-			else
-				printf 'not under version control\n'
-			fi
-		fi
-		i=$((i+1))
-	done
-
-}
-#}}}
-#{{{  svn_list ()
-svn_list ()
-{
-	if [ "$1" = "--full" ]; then
-		QFLAGS=""
-		shift
-	else
-		QFLAGS="--quiet"
-	fi
-	PKGSEL="$1"
-
-	if [ "$SVN" = "" ]; then
-		printf '%s: subversion not intalled? (or set SVN environment variable)\n' "$0"
-		exit 1
-	fi
-	
-	if [ ${#SVN_SRCS[@]} -ne ${#SVN_REPOSS[@]} ]; then
-		printf '%s: broken build! (%d SVN sources, %d repositories)\n' "$0" ${#SVN_SRCS[@]} ${#SVN_REPOSS[@]}
-		exit 1
-	fi
-	i=0
-	while [ $i -lt ${#SVN_SRCS[@]} ]; do
-		if [ "$PKGSEL" = "" ] || [ "$PKGSEL" = ${SVN_REPOSS[i]} ]; then
-			printf 'checking %s: ' "${SVN_SRCS[i]}"
-			if [ -d $DIST_DIR/${SVN_SRCS[i]}/.svn ]; then
-				CURPATH=$(pwd)
-				cd "$DIST_DIR/${SVN_SRCS[i]}"
-
-				TEMPSVNST=/tmp/.svn.${SVN_REPOSS[i]}.$$
-
-				STATUS_FAILED=0
-				$SVN st --verbose $QFLAGS > "$TEMPSVNST" || STATUS_FAILED=1
-
-				printf '\n'
-
-				if [ $STATUS_FAILED -eq 1 ]; then
-					# probably aborted
-					printf '%s: abort\n' "$0"
-					rm -f "$TEMPSVNST"
-					exit 1
-				fi
-
-				cd "$CURPATH"
-
-				grep -v '^\?' < "$TEMPSVNST"
-				rm -f "$TEMPSVNST"
-			else
-				printf 'not under version control\n'
-			fi
-		fi
-		i=$((i+1))
-	done
-
-}
-#}}}
-#{{{  svn_switch ()
-svn_switch ()
-{
-	QFLAGS="--quiet"
-	PKGSEL="$1"
-
-	if [ $GOT_SVN_VERSION -eq 0 ]; then
-		svn_version
-	fi
-
-	if [ ${#SVN_SRCS[@]} -ne ${#SVN_REPOSS[@]} ]; then
-		printf '%s: broken build! (%d SVN sources, %d repositories)\n' "$0" ${#SVN_SRCS[@]} ${#SVN_REPOSS[@]}
-		exit 1
-	fi
-	i=0
-	while [ $i -lt ${#SVN_SRCS[@]} ]; do
-		if [ "$PKGSEL" = "" ] || [ "$PKGSEL" = ${SVN_REPOSS[i]} ]; then
-			printf 'checking %s: ' "${SVN_SRCS[i]}"
-			if [ -d $DIST_DIR/${SVN_SRCS[i]}/.svn ]; then
-				printf 'versioned-%s ' "${SVN_REPOSS[i]}"
-
-				# switch to new branch, will check out any updates
-				CURPATH=$(pwd)
-				cd "$DIST_DIR/${SVN_SRCS[i]}"
-
-				# if branch is selected, make sure it exists
-				REPOS="${SVN_REPOSS[i]}"
-
-				if [ "$SVNBRANCH" = "trunk" ]; then
-					SVNPATH="$SVNHOST$REPOS/trunk/"
-				else
-					SVNPATH="$SVNHOST$REPOS/branches/$SVNBRANCH/"
-					BRANCH_OK=1
-					if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-						$SVN list "$SVNPATH" 1> /dev/null 2> /dev/null || BRANCH_OK=0
-					else
-						$SVN list --username "$SVNUSER" "$SVNPATH" 1> /dev/null 2> /dev/null || BRANCH_OK=0
-					fi
-					if [ "$BRANCH_OK" -eq 1 ]; then
-						printf '(branch: %s) ' "$SVNBRANCH"
-					else
-						SVNPATH="$SVNHOST$REPOS/trunk/"
-					fi
-				fi
-
-				SWITCH_FAILED=0
-				if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-					$SVN switch -r "$SVNREV" $QFLAGS "$SVNPATH" || SWITCH_FAILED=1
-				else
-					$SVN switch -r "$SVNREV" --username "$SVNUSER" $QFLAGS "$SVNPATH" || SWITCH_FAILED=1
-				fi
-
-				if [ $SWITCH_FAILED -eq 1 ]; then
-					printf 'switch-failed '
-				else
-					printf 'switched '
-				fi
-
-				cd "$CURPATH"
-
-			else
-				printf 'not-in-subversion-%s' "${SVN_REPOSS[i]}"
-			fi
-
-			printf '\n'
-		fi
-		i=$((i+1))
-	done
-}
-#}}}
 
 
 #
@@ -1275,15 +1024,6 @@ do
 		;;
 	X--reconf)
 		BUILDRECONF=1
-		;;
-	X--svn-version)
-		SPECIAL_ACTION=svn_version
-		;;
-	X--svn-status)
-		SPECIAL_ACTION=svn_status
-		;;
-	X--svn-list)
-		SPECIAL_ACTION=svn_list
 		;;
 	X--copyright)
 		printf '%s: KRoC/Linux Version %s Copyright (C) 1995-2007 KRoC Authors.\n' "$0" "$VERSION"
@@ -1471,39 +1211,6 @@ do
 	X--dry-run)
 		DRYRUN=1
 		;;
-	X--svn-user=*)
-		SVNUSER=$(printf '%s\n' $1 | $SED -e 's/^[^=]*=//')
-		;;
-	X--svn-user)
-		shift
-		if [ "$1" = "" ]; then
-			printf '%s: --svn-user requires an argument\n' "$0" 1>&2
-			exit 1
-		fi
-		SVNUSER="$1"
-		;;
-	X--svn-rev=*)
-		SVNREV=$(printf '%s\n' $1 | $SED -e 's/^[^=]*=//')
-		;;
-	X--svn-rev)
-		shift
-		if [ "$1" = "" ]; then
-			printf '%s: --svn-rev requires an argument\n' "$0" 1>&2
-			exit 1
-		fi
-		SVNREV="$1"
-		;;
-	X--svn-branch=*)
-		SVNBRANCH=$(printf '%s\n' $1 | $SED -e 's/^[^=]*=//')
-		;;
-	X--svn-branch)
-		shift
-		if [ "$1" = "" ]; then
-			printf '%s: --svn-branch requires an argument\n' "$0" 1>&2
-			exit 1
-		fi
-		SVNBRANCH="$1"
-		;;
 	X*)
 		# must be an action
 		if [ "$ACTIONLIST" = "" ]; then
@@ -1517,15 +1224,6 @@ do
 done
 
 
-#}}}
-#{{{  pick the right Subversion path
-if [ "$SVNHOST" = "$DFL_SVNHOST" -o "$SVNHOST" = "$DFL_SVNAUTHHOST" ]; then
-	if [ "$SVNUSER" = "$DFL_SVNUSER" ]; then
-		SVNHOST="$DFL_SVNHOST"
-	else
-		SVNHOST="$DFL_SVNAUTHHOST"
-	fi
-fi
 #}}}
 #{{{  if we're doing something unusual, do it instead of the normal build
 if [ "$SPECIAL_ACTION" != "none" ]; then
@@ -1673,10 +1371,6 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 					elif [ $USEMP -eq 1 ]; then printf '%senabled%s' "$ANSION1" "$ANSIOFF1"; else printf 'disabled'; fi; printf '\n'
 			if [ $ALL_SETTINGS -eq 1 ]; then
 				printf ' %sI%s.  path to NOCC install: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$NOCC_INSTALL" "$ANSIOFF1"
-				printf ' %sUB%s. subversion-branch: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNBRANCH" "$ANSIOFF1"
-				printf ' %sUH%s. subversion-update source: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNHOST" "$ANSIOFF1"
-				printf ' %sUU%s. subversion-update username: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$SVNUSER" "$ANSIOFF1"
-				printf ' %sU%s.  do subversion update\n' "$ANSION2" "$ANSIOFF2"
 				printf ' %sXC%s. extra CCSP configuration options: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$EXTRA_CCSP_CONFIGURE_OPTS" "$ANSIOFF1"
 				printf ' %sXK%s. extra kroc configuration options: %s%s%s\n' "$ANSION2" "$ANSIOFF2" "$ANSION1" "$EXTRA_KROC_CONFIGURE_OPTS" "$ANSIOFF1"
 				EXTRAMENUSETTINGS=", F-XK"
@@ -1761,26 +1455,6 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				elif [ "$tmp_NOCC_INSTALL" ]; then
 					NOCC_INSTALL="$tmp_NOCC_INSTALL"
 				fi
-			elif [ "$REPLY" = "UB" ] || [ "$REPLY" = "ub" ] && [ $ALL_SETTINGS -eq 1 ]; then
-				printf '\nsubversion branch: '
-				read tmp_SVNBRANCH
-				if [ "$tmp_SVNBRANCH" ]; then
-					SVNBRANCH="$tmp_SVNBRANCH"
-				fi
-			elif [ "$REPLY" = "UH" ] || [ "$REPLY" = "uh" ] && [ $ALL_SETTINGS -eq 1 ]; then
-				printf '\nsubversion-update source (URL): '
-				read tmp_SVNHOST
-				if [ "$tmp_SVNHOST" ]; then
-					SVNHOST="$tmp_SVNHOST"
-				fi
-			elif [ "$REPLY" = "UU" ] || [ "$REPLY" = "uu" ] && [ $ALL_SETTINGS -eq 1 ]; then
-				printf '\nsubversion-update username (-- for no user): '
-				read tmp_SVNUSER
-				if [ "$tmp_SVNUSER" = "--" ]; then
-					SVNUSER=""
-				elif [ "$tmp_SVNUSER" ]; then
-					SVNUSER="$tmp_SVNUSER"
-				fi
 			elif [ "$REPLY" = "XC" ] || [ "$REPLY" = "xc" ] && [ $ALL_SETTINGS -eq 1 ]; then
 				printf '\nextra CCSP options (-- to clear): '
 				read tmp_EXTRA_CCSP_CONFIGURE_OPTS
@@ -1797,9 +1471,6 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 				elif [ "$tmp_EXTRA_KROC_CONFIGURE_OPTS" ]; then
 					EXTRA_KROC_CONFIGURE_OPTS="$tmp_EXTRA_KROC_CONFIGURE_OPTS"
 				fi
-			elif [ "$REPLY" = "U" ] || [ "$REPLY" = "u" ]; then
-				# do subversion update without checks
-				svn_update --full
 			else
 				printf '\nunrecognised option: %s\n' "$REPLY"
 			fi
@@ -1827,9 +1498,6 @@ if [ ! -f .install_dir ] || [ $BUILDRECONF -eq 1 ]; then
 	printf 'USECTTD=%d\n' "$USECTTD" >> .install_dir
 	printf 'USEPONY=%d\n' "$USEPONY" >> .install_dir
 	printf 'USEPGROUPS=%d\n' "$USEPGROUPS" >> .install_dir
-	printf 'SVNHOST=%s\n' "$SVNHOST" >> .install_dir
-	printf 'SVNUSER=%s\n' "$SVNUSER" >> .install_dir
-	printf 'SVNBRANCH=%s\n' "$SVNBRANCH" >> .install_dir
 	printf 'EXTRA_CCSP_CONFIGURE_OPTS=%s\n' "$EXTRA_CCSP_CONFIGURE_OPTS" >> .install_dir
 	printf 'EXTRA_KROC_CONFIGURE_OPTS=%s\n' "$EXTRA_KROC_CONFIGURE_OPTS" >> .install_dir
 	printf 'NOCC_INSTALL=%s\n' "$NOCC_INSTALL" >> .install_dir
@@ -2253,24 +1921,6 @@ for action in $ACTIONLIST; do
 		for PKG in $ALL_PKGS; do
 			package_status $DIST_DIR $PKG
 		done
-		;;
-		#}}}
-		#{{{  svnst-*: subversion-status
-	Xsvnst-*)
-		svnpkg=$(printf '%s\n' $action | $SED -e 's/^[^-]*-//')
-		svn_status --full $svnpkg
-		;;
-		#}}}
-		#{{{  svnup-*: subversion-update
-	Xsvnup-*)
-		svnpkg=$(printf '%s\n' $action | $SED -e 's/^[^-]*-//')
-		svn_update --full $svnpkg
-		;;
-		#}}}
-		#{{{  svnsw-*: subversion switch
-	Xsvnsw-*)
-		svnpkg=$(printf '%s\n' $action | $SED -e 's/^[^-]*-//')
-		svn_switch $svnpkg
 		;;
 		#}}}
 		#{{{  autoupdate: updates autoconf/automake files
