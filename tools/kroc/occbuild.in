@@ -446,6 +446,7 @@ Options for --library mode:
   -l LIBRARY          } Passed through to native linker
   -L PATH             }
   -W OPTION           }
+  -p option           }
   --need MODULE       Module depends on other module MODULE
   --no-std-libs       Do not link module against standard libraries
   --include INCLUDE   Module uses include file INCLUDE
@@ -478,7 +479,7 @@ def main(args):
 	for prog in programs.keys():
 		long_opts += [prog + "=", prog + "-opts="]
 	try:
-		opts, args = getopt.getopt(args, "vD:l:L:W:", long_opts)
+		opts, args = getopt.getopt(args, "vD:l:L:W:p:", long_opts)
 	except getopt.GetoptError:
 		usage(sys.stderr)
 		sys.exit(1)
@@ -518,7 +519,7 @@ def main(args):
 			occ21_opts += split_options(a)
 		elif o == "-D":
 			occ21_opts += ["-DEF", a]
-		elif o in ("-l", "-L", "-W"):
+		elif o in ("-l", "-L", "-W", "-p"):
 			linker_opts.append("%s%s" % (o, a))
 		elif o == "--need":
 			needs.append(a)
