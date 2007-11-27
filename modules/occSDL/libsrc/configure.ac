@@ -14,6 +14,7 @@ OCCAM_SWIG
 
 dnl Checks for libraries.
 AM_PATH_SDL(1.2.0, [], [AC_MSG_ERROR(SDL is required)])
+CFLAGS="$CFLAGS $SDL_CFLAGS"
 AC_CHECK_HEADERS([SDL/SDL_sound.h],
                  [have_sdl_sound=yes],
                  [have_sdl_sound=no])
