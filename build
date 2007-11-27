@@ -2079,6 +2079,16 @@ for action in $ACTIONLIST; do
 		fi
 		;;
 		#}}}
+		#{{{  tests: run tests
+	Xtests)
+		#{{{  build cgtests if not already done
+		if [ ! -e "$CGTESTS_SRC/Makefile" ]; then
+			$0 cgtests
+		fi
+		#}}}
+		(cd $CGTESTS_SRC && ./run-tests -v)
+		;;
+		#}}}
 	X*-*)
 		what=$(printf '%s\n' $action | $SED -e 's/-.*$//')
 		pkg=$(printf '%s\n'  $action | $SED -e 's/^[^-]*-//')
