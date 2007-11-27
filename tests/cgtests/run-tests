@@ -105,7 +105,7 @@ if __name__ == "__main__":
 	if interpreter is not None and interpreter.startswith("./"):
 		interpreter = os.path.join(os.getcwd(), interpreter)
 	os.chdir(sys.path[0])
-	cmd = ["make", "--quiet"]
+	cmd = ["make"]
 	if os.spawnvp(os.P_WAIT, cmd[0], cmd) != 0:
 		status("Make failed\n")
 		sys.exit(1)
