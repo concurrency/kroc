@@ -432,10 +432,10 @@ PROC cgtest8 (CHAN OF BYTE keyb, scr, err)
             guard.b := (i /\ 2) <> 0
             guard.c := (i /\ 4) <> 0
             clock ? start
-            time.a    := start PLUS ((sec / 100) * 1)
-            time.b    := start PLUS ((sec / 100) * 2)
-            time.c    := start PLUS ((sec / 100) * 3)
-            long.time := start PLUS ((sec / 100) * 4)
+            time.a    := start PLUS ((sec / 10) * 1)
+            time.b    := start PLUS ((sec / 10) * 2)
+            time.c    := start PLUS ((sec / 10) * 3)
+            long.time := start PLUS ((sec / 10) * 4)
         :
         --}}}
         --{{{  PROC check.taken
@@ -513,8 +513,8 @@ PROC cgtest8 (CHAN OF BYTE keyb, scr, err)
               SEQ
                 taken[j] := FALSE
                 guard[j] := (i /\ (1 << j)) <> 0
-                time[j]  := start PLUS ((sec / 100) * (j + 1))
-            long.time    := start PLUS ((sec / 100) * (n + 1))
+                time[j]  := start PLUS ((sec / 10) * (j + 1))
+            long.time    := start PLUS ((sec / 10) * (n + 1))
         :
         --}}}
         --{{{  check.taken.array
