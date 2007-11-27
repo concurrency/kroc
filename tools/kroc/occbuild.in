@@ -445,6 +445,7 @@ Options for --object mode:
 Options for --library mode:
   -l LIBRARY          } Passed through to native linker
   -L PATH             }
+  -R PATH             }
   -W OPTION           }
   -p option           }
   --need MODULE       Module depends on other module MODULE
@@ -479,7 +480,7 @@ def main(args):
 	for prog in programs.keys():
 		long_opts += [prog + "=", prog + "-opts="]
 	try:
-		opts, args = getopt.getopt(args, "vD:l:L:W:p:", long_opts)
+		opts, args = getopt.getopt(args, "vD:l:L:R:W:p:", long_opts)
 	except getopt.GetoptError:
 		usage(sys.stderr)
 		sys.exit(1)
@@ -519,7 +520,7 @@ def main(args):
 			occ21_opts += split_options(a)
 		elif o == "-D":
 			occ21_opts += ["-DEF", a]
-		elif o in ("-l", "-L", "-W", "-p"):
+		elif o in ("-l", "-L", "-R", "-W", "-p"):
 			linker_opts.append("%s%s" % (o, a))
 		elif o == "--need":
 			needs.append(a)
