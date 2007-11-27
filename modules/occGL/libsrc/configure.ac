@@ -12,6 +12,13 @@ AC_PROG_CC
 OCCAM_OCCBUILD
 OCCAM_SWIG
 
+dnl FreeBSD-specific hack to find the OpenGL headers.
+case "$target" in
+	*freebsd*)
+		CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+		;;
+esac
+
 dnl Checks for libraries.
 MDL_HAVE_OPENGL
 AC_CHECK_HEADERS([GL/gl.h GL/glu.h], , [AC_MSG_ERROR([OpenGL headers were not found])])
