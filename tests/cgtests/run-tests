@@ -18,7 +18,15 @@
 #	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-import sys, os, re, getopt
+import sys, os, re, getopt, time, select, signal
+
+# Give up on a test if it hasn't finished after this many seconds.
+TIMEOUT = 30.0
+
+# Tests that are known not to work.
+KNOWN_BROKEN = [
+	"cgtest90",
+	]
 
 def status(s):
 	sys.stderr.write(s)
@@ -51,8 +59,19 @@ def run_test(name, verbose, interpreter):
 	os.close(null)
 	os.close(pw)
 
+	start_time = time.time()
+
 	buf = []
 	while 1:
+		(rfds, wfds, efds) = select.select([pr], [], [], 1.0)
+		if rfds == []:
+			if time.time() - start_time > TIMEOUT:
+				os.kill(pid, signal.SIGKILL)
+				buf.append("\n(test timed out)\n")
+				break
+			else:
+				continue
+
 		s = os.read(pr, 4096)
 		if s == "":
 			break
@@ -122,12 +141,21 @@ if __name__ == "__main__":
 
 	tests.sort()
 
+	passed = []
 	failed = []
+	skipped = []
 	for test in tests:
-		if not run_test(test, verbose, interpreter):
+		if run_test(test, verbose, interpreter):
+			passed.append(test)
+		elif test in KNOWN_BROKEN:
+			skipped.append(test)
+		else:
 			failed.append(test)
 
-	status("Tests complete; passed %d of %d\n" % (len(tests) - len(failed), len(tests)))
+	status("Tests complete; ran %d; passed %d, skipped %d, failed %d\n" % (len(tests), len(passed), len(skipped), len(failed)))
+	if skipped != []:
+		status("Skipped: %s\n" % " ".join(skipped))
 	if failed != []:
 		status("Failed: %s\n" % " ".join(failed))
+		sys.exit(1)
 

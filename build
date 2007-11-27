@@ -2081,12 +2081,20 @@ for action in $ACTIONLIST; do
 		#}}}
 		#{{{  tests: run tests
 	Xtests)
+		all_ok=1
+
 		#{{{  build cgtests if not already done
 		if [ ! -e "$CGTESTS_SRC/Makefile" ]; then
 			$0 cgtests
 		fi
 		#}}}
-		(cd $CGTESTS_SRC && ./run-tests -v)
+		pushd "$CGTESTS_SRC"
+		./run-tests -v || all_ok=0
+		popd
+
+		if [ "$all_ok" == 0 ]; then
+			exit 1
+		fi
 		;;
 		#}}}
 	X*-*)
