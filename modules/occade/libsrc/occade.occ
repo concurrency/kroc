@@ -251,20 +251,33 @@ PROC occade.image.cache (CHAN OCCADE.TO.IMAGE.CACHE in?, CHAN SDL.Surface out!)
                 surface := surfaces[i]
             num.loaded < MAX.IMAGES
               --{{{ load image
+              MOBILE []BYTE real.name:
+              BOOL exists:
               SEQ
+                --{{{  find the image
+                file.check.access (name, R.OK, exists)
                 IF
-                  ends.with.string (".bmp", name)
+                  exists
+                    real.name := CLONE name
+                  TRUE
+                    SEQ
+                      real.name := ##OCCADE.DATA.DIR
+                      occade.append.string (real.name, "/")
+                      occade.append.string (real.name, name)
+                --}}}
+                IF
+                  ends.with.string (".bmp", real.name)
                     --{{{  use SDL's BMP loader
                     MOBILE []BYTE namez:
                     SEQ
-                      occ.SDL.zero.terminate (name, namez)
+                      occ.SDL.zero.terminate (real.name, namez)
                       occ.SDL.LoadBMP (surface, namez)
                     --}}}
                   TRUE
                     --{{{  use rasterio
                     RASTER r:
                     SEQ
-                      read.raster (name, r)
+                      read.raster (real.name, r)
                       SDL.CreateRGBSurface (surface, SDL.HWSURFACE,
                                             SIZE r[0], SIZE r, 24, 0, 0, 0, 0)
                       occade.check.sdl (surface <> 0, "Creating raster image surface failed")
