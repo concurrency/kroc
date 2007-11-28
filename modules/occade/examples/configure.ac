@@ -14,4 +14,4 @@ dnl Checks for occam modules.
 OCCAM_INCLUDE([occade.module maths.module], ,
               [AC_MSG_ERROR(Required modules not found)])
 
-AC_OUTPUT([Makefile])
+AC_OUTPUT([Makefile images/Makefile])

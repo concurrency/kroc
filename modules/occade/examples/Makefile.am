@@ -3,6 +3,8 @@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 OCCBUILD = @OCCBUILD@
 
+SUBDIRS = images
+
 EXTRA_DIST = \
 	bounce.occ \
 	breakout.occ \
