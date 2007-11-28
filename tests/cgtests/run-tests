@@ -78,6 +78,7 @@ def run_test(name, verbose, interpreter):
 		buf.append(s)
 	lines = [s.rstrip() for s in "".join(buf).split("\n")]
 
+	os.close(pr)
 	(pid, code) = os.waitpid(pid, 0)
 	code = os.WEXITSTATUS(code)
 
