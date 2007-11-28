@@ -11,7 +11,7 @@ dnl Checks for programs.
 OCCAM_OCCBUILD
 
 dnl Checks for occam modules.
-dnl OCCAM_INCLUDE([course.module], ,
-dnl              [AC_MSG_ERROR(Required modules were not found)])
+OCCAM_INCLUDE([course.module], ,
+              [AC_MSG_ERROR(Required modules were not found)])
 
 AC_OUTPUT([Makefile])
