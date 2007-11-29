@@ -198,6 +198,20 @@ def install(file, dir, is_exec):
 	cmd += [file, "%s/%s" % (dir, os.path.basename(file))]
 	run(cmd)
 
+def get_install_dir(default, default_suffix):
+	"""Figure out the location of an installation directory, based on how
+	occbuild was originally configured."""
+
+	default_prefix = "@prefix@"
+	if prefix is None or prefix == default_prefix:
+		dir = default
+	elif default.startswith(default_prefix):
+		dir = prefix + default[len(default_prefix):]
+	else:
+		dir = prefix + default_suffix
+
+	return destdir + dir
+
 class KRoCToolchain:
 	def kroc_cmd(self):
 		cmd = programs["kroc"] + []
@@ -265,11 +279,12 @@ class KRoCToolchain:
 		run(self.kroc_cmd() + [base + ".occ"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs)
 
 	def install(self, file):
-		bindir = "%s%s/bin" % (destdir, prefix)
-		vtlibdir = "%s%s/share/kroc/vtlib" % (destdir, prefix)
-		libdir = "%s%s/lib" % (destdir, prefix)
-		vtincludedir = "%s%s/share/kroc/vtinclude" % (destdir, prefix)
-		includedir = "%s%s/include/kroc" % (destdir, prefix)
+		bindir = get_install_dir("@KROC_ARCHBINDIR@", "/bin")
+		libdir = get_install_dir("@KROC_ARCHLIBDIR@", "/lib")
+		includedir = get_install_dir("@KROC_ARCHINCDIR@", "/include/kroc")
+		krocdir = get_install_dir("@KROC_KROCDIR@", "/share/kroc")
+		vtlibdir = krocdir + "/vtlib"
+		vtincludedir = krocdir + "/vtinclude"
 
 		(base, ext) = split_ext(file)
 		if ext == "lib":
@@ -287,10 +302,11 @@ class KRoCToolchain:
 			install(file, bindir, True)
 
 	def install_examples(self, package, file):
-		bindir = "%s%s/lib/kroc/examples/%s" % (destdir, prefix, package)
+		examplesdir = "%s/%s" % (get_install_dir("@prefix@/lib/kroc/examples", "/lib/kroc/examples"), package)
+
 		(base, ext) = split_ext(file)
 		if ext == "":
-			install(file, bindir, True)
+			install(file, examplesdir, True)
 
 	def clean(self, file):
 		delete(file)
@@ -359,8 +375,8 @@ class TVMToolchain:
 		os.chmod(base, 0755)
 
 	def install(self, file):
-		bindir = "%s%s/bin" % (destdir, prefix)
-		tvmdir = "%s%s/lib/transterpreter" % (destdir, prefix)
+		bindir = get_install_dir("@bindir@", "/bin")
+		tvmdir = get_install_dir("@libdir@", "/lib") + "/transterpreter"
 
 		(base, ext) = split_ext(file)
 		if ext == "lib":
@@ -378,10 +394,11 @@ class TVMToolchain:
 			install(base + ".tbc", bindir, False)
 
 	def install_examples(self, package, file):
-		bindir = "%s%s/lib/transterpreter/examples/%s" % (destdir, prefix, package)
+		examplesdir = "%s/transterpreter/examples/%s" % (get_install_dir("@libdir@", "/lib"), package)
+
 		(base, ext) = split_ext(file)
 		if ext == "":
-			install(file, bindir, True)
+			install(file, examplesdir, True)
 
 	def clean(self, file):
 		delete(file)
