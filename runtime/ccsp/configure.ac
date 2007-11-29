@@ -665,6 +665,10 @@ cygwin)
  AC_DEFINE([NO_ASM_TYPE_DIRECTIVE],1,[don't produce ELF symbol type directives])
  AC_DEFINE([CCSP_MINIMUM_SLEEP_US],2000,[default minimum sleep (microseconds)])
  ;;
+*freebsd*)
+ AC_DEFINE([TARGET_OS_FREEBSD],1,[define if using FreeBSD])
+ AC_DEFINE([CCSP_MINIMUM_SLEEP_US],10,[default minimum sleep (microseconds)])
+ ;;
 *)
  AC_DEFINE([CCSP_MINIMUM_SLEEP_US],10,[default minimum sleep (microseconds)])
  ;;

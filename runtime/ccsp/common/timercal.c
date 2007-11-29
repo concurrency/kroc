@@ -41,7 +41,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#ifdef TARGET_OS_DARWIN
+#if (defined TARGET_OS_DARWIN) || (defined TARGET_OS_FREEBSD)
 #include <sys/sysctl.h>
 #endif
 
@@ -132,19 +132,22 @@ static bool read_clock_from_files (double *cpu_speed)
 }
 /*}}}*/
 #ifdef TARGET_OS_DARWIN
-/*{{{  static bool read_clock_from_sysctl (double *cpu_speed)*/
+/*{{{  static bool read_clock_from_sysctl_macos (double *cpu_speed)*/
 /*
- *	read the clock via sysctl
+ *	read the clock via MacOS sysctl
  */
-static bool read_clock_from_sysctl (double *cpu_speed)
+static bool read_clock_from_sysctl_macos (double *cpu_speed)
 {
-	size_t len = sizeof(int);
-	int mib[2] = { CTL_HW, HW_CPU_FREQ }; 
+	/* Note that MacOS (at least as of 10.5) won't accept anything other
+	 * than an int here -- even though CPU speeds above 4GHz don't seem
+	 * entirely out of the question these days. */
 	int clock;
+	size_t len = sizeof clock;
+	int mib[2] = { CTL_HW, HW_CPU_FREQ };
 	
-	if (sysctl (mib, 2, &clock, &len, 0, 0) < 0) {
+	if (sysctl (mib, 2, &clock, &len, NULL, 0) < 0) {
 		return false;
-	} else if (len != sizeof(clock)) {
+	} else if (len != sizeof clock) {
 		return false;
 	} else if (!clock) {
 		return false;
@@ -156,6 +159,30 @@ static bool read_clock_from_sysctl (double *cpu_speed)
 }
 /*}}}*/
 #endif /* TARGET_OS_DARWIN */
+#ifdef TARGET_OS_FREEBSD
+/*{{{  static bool read_clock_from_sysctl_bsd (double *cpu_speed)*/
+/*
+ *	read the TSC frequency via BSD sysctl
+ */
+static bool read_clock_from_sysctl_bsd (double *cpu_speed)
+{
+	long long tsc_freq;
+	size_t len = sizeof tsc_freq;
+
+	if (sysctlbyname ("machdep.tsc_freq", &tsc_freq, &len, NULL, 0) < 0) {
+		return false;
+	} else if (len != sizeof tsc_freq) {
+		return false;
+	} else if (!tsc_freq) {
+		return false;
+	}
+
+	*cpu_speed = ((double) tsc_freq) / 1000000.0;
+
+	return true;
+}
+/*}}}*/
+#endif /* TARGET_OS_FREEBSD */
 #ifdef TARGET_CPU_386
 /*{{{  static unsigned long long read_tsc (void)*/
 /*
@@ -257,10 +284,15 @@ bool ccsp_calibrate_timers (void)
 	} else
 #else /* !RMOX_BUILD*/
 #ifdef TARGET_OS_DARWIN
-	if (read_clock_from_sysctl (&clock_speed)) {
+	if (read_clock_from_sysctl_macos (&clock_speed)) {
 		/* OK */
 	} else
 #endif /* TARGET_OS_DARWIN */
+#ifdef TARGET_OS_FREEBSD
+	if (read_clock_from_sysctl_bsd (&clock_speed)) {
+		/* OK */
+	} else
+#endif /* TARGET_OS_FREEBSD */
 	if (read_clock_from_proc (&clock_speed)) {
 		/* OK */
 	} else if (read_clock_from_files (&clock_speed)) {
