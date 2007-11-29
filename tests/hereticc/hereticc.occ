@@ -21,6 +21,7 @@
 
 VAL []BYTE VERSION IS "20071120.15":
 
+--{{{  data types
 PROTOCOL P.SETUP IS INT; INT; INT: -- runs, workers, ops.per.run
 
 DATA TYPE RESULTS
@@ -36,7 +37,9 @@ DATA TYPE SCORES
     REAL64 score:
     REAL64 total:
 :
+--}}}
 
+--{{{  test IDs and names
 VAL INT BASIC.COMMS         IS 0:
 VAL INT ECHO.COMMS          IS 1:
 VAL INT PRI.COMMS.LOW.HIGH  IS 2:
@@ -96,7 +99,10 @@ VAL [][20]BYTE TEST.NAME IS [ "basic.comms         ",
                               "aff.switch          ",
                               "xin.basic.comms     ",
                               "pri.bar.sync        " ]:
+--}}}
 
+--{{{  tests
+--{{{  PROC basic.comms
 PROC basic.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -122,7 +128,8 @@ PROC basic.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT result
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC echo.comms
 PROC echo.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   VAL INT cycles IS cycles / 2:
   TIMER time:
@@ -154,7 +161,8 @@ PROC echo.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC pri.comms.low.high
 PROC pri.comms.low.high (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -183,7 +191,8 @@ PROC pri.comms.low.high (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC pri.comms.high.low
 PROC pri.comms.high.low (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -212,8 +221,9 @@ PROC pri.comms.high.low (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT
 
       SYNC b
 :
-
+--}}}
 #IF DEFINED (PROCESSOR.AFFINITY)
+--{{{  PROC aff.basic.comms
 PROC aff.basic.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -242,9 +252,8 @@ PROC aff.basic.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT re
 
       SYNC b
 :
-#ENDIF
-
-#IF DEFINED (PROCESSOR.AFFINITY)
+--}}}
+--{{{  PROC aff.echo.comms
 PROC aff.echo.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   VAL INT cycles IS cycles / 2:
   TIMER time:
@@ -279,8 +288,9 @@ PROC aff.echo.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT res
 
       SYNC b
 :
+--}}}
 #ENDIF
-
+--{{{  PROC xin.basic.comms
 PROC xin.basic.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -307,7 +317,8 @@ PROC xin.basic.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT re
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC static.mobile.comms
 PROC static.mobile.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   DATA TYPE THING
     PACKED RECORD
@@ -341,7 +352,8 @@ PROC static.mobile.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN IN
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC dyn.mobile.comms
 PROC dyn.mobile.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   DATA TYPE THING
     PACKED RECORD
@@ -382,7 +394,8 @@ PROC dyn.mobile.comms (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT r
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC alt.2guard
 PROC alt.2guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -415,7 +428,8 @@ PROC alt.2guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC alt.4guard
 PROC alt.4guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -454,7 +468,8 @@ PROC alt.4guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC alt.nguard
 PROC alt.nguard (VAL INT runs, cycles, guards, MOBILE BARRIER b, SHARED CHAN INT results!)
   CHAN TYPE CT.INT
     MOBILE RECORD
@@ -496,7 +511,8 @@ PROC alt.nguard (VAL INT runs, cycles, guards, MOBILE BARRIER b, SHARED CHAN INT
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC pri.alt.2guard
 PROC pri.alt.2guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -529,7 +545,8 @@ PROC pri.alt.2guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT res
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC pri.alt.4guard
 PROC pri.alt.4guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -568,7 +585,8 @@ PROC pri.alt.4guard (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT res
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC pri.alt.nguard
 PROC pri.alt.nguard (VAL INT runs, cycles, guards, MOBILE BARRIER b, SHARED CHAN INT results!)
   CHAN TYPE CT.INT
     MOBILE RECORD
@@ -610,7 +628,8 @@ PROC pri.alt.nguard (VAL INT runs, cycles, guards, MOBILE BARRIER b, SHARED CHAN
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC read.timer
 PROC read.timer (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -629,7 +648,8 @@ PROC read.timer (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC timer.alt
 PROC timer.alt (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -668,7 +688,8 @@ PROC timer.alt (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC timer.pri.alt
 PROC timer.pri.alt (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -707,7 +728,8 @@ PROC timer.pri.alt (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT resu
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC start.end.proc
 PROC start.end.proc (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -725,7 +747,8 @@ PROC start.end.proc (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT res
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC fork.proc
 PROC fork.proc (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   PROC process ()
     SKIP
@@ -748,7 +771,8 @@ PROC fork.proc (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!
 
         SYNC b
 :
-
+--}}}
+--{{{  PROC semaphore.claim
 PROC semaphore.claim (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -768,7 +792,8 @@ PROC semaphore.claim (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT re
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC bar.sync
 PROC bar.sync (VAL INT runs, cycles, procs, MOBILE BARRIER b, SHARED CHAN INT results!)
   PROC syncer (VAL INT cycles, BARRIER bar, start)
     SEQ
@@ -798,7 +823,8 @@ PROC bar.sync (VAL INT runs, cycles, procs, MOBILE BARRIER b, SHARED CHAN INT re
 
         SYNC b
 :
-
+--}}}
+--{{{  PROC mobile.alloc
 PROC mobile.alloc (VAL INT runs, cycles, size, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -821,7 +847,8 @@ PROC mobile.alloc (VAL INT runs, cycles, size, MOBILE BARRIER b, SHARED CHAN INT
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC mobile.clone
 PROC mobile.clone (VAL INT runs, cycles, size, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -846,7 +873,8 @@ PROC mobile.clone (VAL INT runs, cycles, size, MOBILE BARRIER b, SHARED CHAN INT
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC resched
 PROC resched (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -864,7 +892,8 @@ PROC resched (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC cache.thrash
 PROC cache.thrash (VAL INT runs, cycles, procs, MOBILE BARRIER b, SHARED CHAN INT results!)
   TIMER time:
   INT start, end:
@@ -905,7 +934,8 @@ PROC cache.thrash (VAL INT runs, cycles, procs, MOBILE BARRIER b, SHARED CHAN IN
 
       SYNC b
 :
-
+--}}}
+--{{{  PROC semaphore.use
 PROC semaphore.use (VAL INT runs, cycles, competition, MOBILE BARRIER b, SHARED CHAN INT results!)
   VAL INT cycles IS cycles / competition:
   TIMER time:
@@ -927,8 +957,9 @@ PROC semaphore.use (VAL INT runs, cycles, competition, MOBILE BARRIER b, SHARED 
 
       SYNC b
 :
-
+--}}}
 #IF DEFINED (PROCESSOR.AFFINITY)
+--{{{  PROC aff.switch
 PROC aff.switch (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results!)
   MOBILE []INT affinity:
   TIMER time:
@@ -980,8 +1011,9 @@ PROC aff.switch (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results
 
         SYNC b
 :
+--}}}
 #ENDIF
-
+--{{{  PROC pri.bar.sync
 PROC pri.bar.sync (VAL INT runs, cycles, procs, MOBILE BARRIER b, SHARED CHAN INT results!)
   PROC syncer (VAL INT cycles, priority, BARRIER bar, start)
     SEQ
@@ -1013,6 +1045,8 @@ PROC pri.bar.sync (VAL INT runs, cycles, procs, MOBILE BARRIER b, SHARED CHAN IN
 
         SYNC b
 :
+--}}}
+--}}}
 
 --{{{ PROC worker (VAL INT test, runs, cycles, arg, MOBILE BARRIER b, SHARED CHAN INT results!)
 PROC worker (VAL INT test, runs, cycles, arg, MOBILE BARRIER b, SHARED CHAN INT results!)
@@ -1239,6 +1273,7 @@ PROC run.scaling.test (VAL INT test, runs, cycles, VAL INT start, steps, factor,
 :
 --}}}
 
+--{{{  PROC hereticc
 PROC hereticc (CHAN BYTE kyb?, scr!, err!)
   WHILE TRUE
     SEQ
@@ -1336,4 +1371,4 @@ PROC hereticc (CHAN BYTE kyb?, scr!, err!)
           
           scr ! '*n'
 :
-
+--}}}
