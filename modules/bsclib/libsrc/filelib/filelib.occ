@@ -595,17 +595,17 @@ PROC file.nth.arg (VAL INT n, RESULT []BYTE arg, RESULT INT len)
 --     BYTE o:
 --     MOBILE []BYTE a:
 --     opts ? CASE
---       opt ; o
+--       opt; o
 --         CASE o
 --           'v'
 --             ...  handle -v option
---       opt.arg ; o ; a
+--       opt.arg; o; a
 --         CASE o
 --           'h'
 --             ...  handle -h option; argument is in a
---       arg ; a
+--       arg; a
 --         ...  handle non-option argument a
---       bad
+--       bad; a
 --         ...  print usage message and exit
 --       done
 --         running := FALSE
