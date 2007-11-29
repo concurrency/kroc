@@ -744,7 +744,7 @@ PROC cgtest8 (CHAN OF BYTE keyb, scr, err)
         PRI ALT
           clock ? AFTER f([a FROM i FOR j] [k])
             i := j
-          clock ? AFTER now PLUS 100
+          clock ? AFTER now PLUS 20000
             i := j + 1
         check(i, j, "B01967a")
     
