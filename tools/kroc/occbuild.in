@@ -267,8 +267,9 @@ class KRoCToolchain:
 			make_static(patterns["a"] % base, objs)
 
 			if build_shared:
+				kroc_ldflags = split_options(capture(programs["kroc"] + ["--ldflags"]))
 				cclibpath = split_options(capture(programs["kroc"] + ["--cclibpath"]))
-				make_shared(patterns["so"] % base, objs, cclibpath + lib_opts)
+				make_shared(patterns["so"] % base, objs, kroc_ldflags + cclibpath + lib_opts)
 
 		if occam_objs == []:
 			make_stub(base + ".lib")

@@ -605,7 +605,7 @@ i386 | i486 | i586 | i686)
 x86_64)
   ARCH_DIR=i386
   ARCH_CFLAGS="-m32"
-  EXTRA_LDFLAGS="-melf_i386"
+  EXTRA_LDFLAGS="-m32 -Wl,-melf_i386"
   AC_SUBST(ARCH_DIR)
   AC_DEFINE([TARGET_CPU_386],1,[define if i386 or greater target])
   bigendian=no
