@@ -114,6 +114,7 @@ PONY_EXAMPLES_SRC=modules/pony/examples
 CIF_SRC=modules/cif/libsrc
 CIF_EXAMPLES_SRC=modules/cif/examples
 CGTESTS_SRC=tests/cgtests
+HERETICC_SRC=tests/hereticc
 FMTOUTLIB_SRC=modules/fmtoutlib/libsrc
 MOA_SRC=modules/moa/libsrc
 MOA_EXAMPLES_SRC=modules/moa/examples
@@ -251,7 +252,7 @@ and actions are:
   clean                        clean all packages
   distclean                    clean all packages (for a distribution)
   examples                     configure and compile example programs
-  cgtests                      configure and compile compiler test-suite programs
+  tests                        build and run test-suite programs
   all                          builds everything: build examples cgtests
 
 choices for <pkg> are:
@@ -271,6 +272,7 @@ choices for <pkg> are:
   udc                          user-defined channels
   manpages                     man-page based documentation
   cgtests                      compiler test suite
+  hereticc                     runtime benchmark suite
   cif                          occam-pi/C interface
   raster                       raster graphics support
   sdlraster                    SDLRaster SDL based raster graphics
@@ -1662,8 +1664,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		FULLINSTALL=
 	fi
 	SHOWBANNER=1
-	ACTIONLIST="setbuildtarget setbuildoptions \
-		preconfigure-ccsp \
+	ACTIONLIST="preconfigure-ccsp \
 		fconfigure-ccspt make-ccspt install-ccspt \
 		fconfigure-ccsp make-ccsp install-ccsp \
 		bsyscalls-support cputimers-support dynproc-support \
@@ -1709,7 +1710,7 @@ EXAMPLEINSTALL=
 CGTESTSINSTALL=
 
 # some transformations
-EXAMPLE_ACTIONS="setbuildtarget setbuildoptions building-examples bsyscalls-support cputimers-support dynproc-support \
+EXAMPLE_ACTIONS="building-examples bsyscalls-support cputimers-support dynproc-support \
 		configure-bsclib_examples make-bsclib_examples install-bsclib_examples \
 		configure-course_examples make-course_examples install-course_examples \
 		configure-course_answers make-course_answers install-course_answers \
@@ -1735,7 +1736,11 @@ if [ "$USEPONY" -eq 1 ]; then
 	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
 		configure-pony_examples make-pony_examples"
 fi
-CGTESTS_ACTIONS="setbuildtarget setbuildoptions building-cgtests configure-cgtests make-cgtests install-cgtests"
+TESTS_ACTIONS="building-cgtests \
+		bsyscalls-support cputimers-support dynproc-support \
+		configure-cgtests make-cgtests install-cgtests \
+		configure-hereticc make-hereticc install-hereticc \
+		run-tests"
 
 if [ "$FULLINSTALL" = "1" ]; then
 	ACTIONLIST="$ACTIONLIST examples cgtests"
@@ -1745,18 +1750,10 @@ NEWACTIONLIST=
 for action in $ACTIONLIST; do
 	case X$action in
 	Xexamples)
-		if [ "$NEWACTIONLIST" = "" ]; then
-			NEWACTIONLIST="$EXAMPLE_ACTIONS"
-		else
-			NEWACTIONLIST="$NEWACTIONLIST $EXAMPLE_ACTIONS"
-		fi
+		NEWACTIONLIST="$NEWACTIONLIST $EXAMPLE_ACTIONS"
 		;;
-	Xcgtests)
-		if [ "$NEWACTIONLIST" = "" ]; then
-			NEWACTIONLIST="$CGTESTS_ACTIONS"
-		else
-			NEWACTIONLIST="$NEWACTIONLIST $CGTESTS_ACTIONS"
-		fi
+	Xtests)
+		NEWACTIONLIST="$NEWACTIONLIST $TESTS_ACTIONS"
 		;;
 	Xccspt)
 		NEWACTIONLIST="$NEWACTIONLIST preconfigure-ccsp configure-ccspt make-ccspt install-ccspt"
@@ -1782,50 +1779,16 @@ for action in $ACTIONLIST; do
 	Xkrocif)
 		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support preconfigure-krocif configure-krocif make-krocif install-krocif"
 		;;
-	Xinmoslibs)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-inmoslibs make-inmoslibs install-inmoslibs"
-		;;
-	Xbsclib)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-bsclib make-bsclib install-bsclib"
-		;;
-	Xcourse)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-course make-course install-course"
-		;;
-	Xudc)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-udc make-udc install-udc"
-		;;
-	Xcif)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-cif make-cif install-cif"
-		;;
-	Xraster)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-raster make-raster install-raster"
-		;;
-	Xsdlraster)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-sdlraster make-sdlraster install-sdlraster"
-		;;
-	Xoccsdl)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-occsdl make-occsdl install-occsdl"
-		;;
-	Xoccgl)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-occgl make-occgl install-occgl"
-		;;
-	Xoccade)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-occade make-occade install-occade"
-		;;
-	Xbutton)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-button make-button install-button"
-		;;
-	Xfmtoutlib)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-fmtoutlib make-fmtoutlib install-fmtoutlib"
-		;;
-	Xmoa)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-moa make-moa install-moa"
-		;;
-	Xcourse_answers)
-		NEWACTIONLIST="$NEWACTIONLIST bsyscalls-support cputimers-support dynproc-support configure-course_answers make-course_answers install-course_answers"
-		;;
 	X*)
 		FOUND=0
+
+		for x in inmoslibs bsclib course course_answers syncs dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony fmtoutlib moa doc occamdoc; do
+			if [ "X$x" = "X$action" ]; then
+				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
+				FOUND=1
+			fi
+		done
+
 		for x in bsclib course course syncs dynproc udc bar game cif raster sdlraster occsdl occgl occade button pony moa; do
 			if [ "X${x}_examples" = "X$action" ]; then
 				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
@@ -1846,12 +1809,7 @@ done
 ACTIONLIST=$NEWACTIONLIST
 
 # the first action must always be "setbuildtarget" (since this decides final settings), and then "setbuildoptions"
-for action in $ACTIONLIST; do
-	if [ "$action" != "setbuildtarget" ]; then
-		ACTIONLIST="setbuildtarget setbuildoptions $ACTIONLIST"
-	fi
-	break
-done
+ACTIONLIST="setbuildtarget setbuildoptions $ACTIONLIST"
 
 
 #}}}
@@ -2087,15 +2045,10 @@ for action in $ACTIONLIST; do
 		fi
 		;;
 		#}}}
-		#{{{  tests: run tests
-	Xtests)
+		#{{{  run-tests: run tests
+	Xrun-tests)
 		all_ok=1
 
-		#{{{  build cgtests if not already done
-		if [ ! -e "$CGTESTS_SRC/Makefile" ]; then
-			$0 cgtests
-		fi
-		#}}}
 		pushd "$CGTESTS_SRC"
 		./run-tests -v || all_ok=0
 		popd
@@ -2222,6 +2175,11 @@ for action in $ACTIONLIST; do
 		Xcgtests)
 			PKG_SRC=$CGTESTS_SRC
 			CONF_SPECOPTS="--with-kroc"
+			;;
+			#}}}
+			#{{{  hereticc: runtime benchmark suite
+		Xhereticc)
+			PKG_SRC=$HERETICC_SRC
 			;;
 			#}}}
 			#{{{  ilibr: inmos librarian
