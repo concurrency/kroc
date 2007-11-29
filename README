@@ -37,6 +37,10 @@ On Debian-based systems, we suggest installing the following packages:
   libc6-dev libsdl1.2-dev libsdl-sound1.2-dev libgl1-mesa-dev
   libmysqlclient15-dev libpng12-dev libxmu-dev
 
+On x86-64 Debian systems, you will also need these packages:
+
+  libc6-dev-i386 lib32gcc1
+
 
 Installation
 ------------

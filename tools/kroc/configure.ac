@@ -53,7 +53,7 @@ case "${target_cpu}" in
  x86_64)
   # 32-bit mode please
   ARCH_DEFS="-m32"
-  ARCH_LDFLAGS="-melf_i386"
+  ARCH_LDFLAGS="-m32 -Wl,-melf_i386"
   ARCH_ASFLAGS="--32"
   ;;
 esac
