@@ -213,7 +213,7 @@ where options are:
   --prefix=<path>              equivalent to --install-dir
   --configdir=<path>           install path for configuration file [/etc or home-dir]
   --bindir=<path>              install path for binaries [PREFIX/bin]
-  --libdir=<path>              install path for libraries [PREFIX/lib/kroc]
+  --libdir=<path>              install path for libraries [PREFIX/lib]
   --incdir=<path>              install path for includes [PREFIX/include/kroc]
   --mandir=<path>              install path for manual pages [PREFIX/share/man]
   --krocdir=<path>             install path for kroc-specific files [PREFIX/share/kroc]
@@ -1277,7 +1277,7 @@ if [ "$kroc_archbindir" = "" ]; then
 	kroc_archbindir="/bin"
 fi
 if [ "$kroc_archlibdir" = "" ]; then
-	kroc_archlibdir="/lib/kroc"
+	kroc_archlibdir="/lib"
 fi
 if [ "$kroc_archincdir" = "" ]; then
 	kroc_archincdir="/include/kroc"
