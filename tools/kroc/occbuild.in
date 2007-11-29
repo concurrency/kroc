@@ -267,7 +267,7 @@ class KRoCToolchain:
 	def install(self, file):
 		bindir = "%s%s/bin" % (destdir, prefix)
 		vtlibdir = "%s%s/share/kroc/vtlib" % (destdir, prefix)
-		libdir = "%s%s/lib/kroc" % (destdir, prefix)
+		libdir = "%s%s/lib" % (destdir, prefix)
 		vtincludedir = "%s%s/share/kroc/vtinclude" % (destdir, prefix)
 		includedir = "%s%s/include/kroc" % (destdir, prefix)
 
