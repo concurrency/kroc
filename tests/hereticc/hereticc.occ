@@ -1287,6 +1287,7 @@ PROC run.test.set (VAL []BOOL enabled, CHAN BYTE scr!, err!)
   PAR
     results (results.in?, setup?, results.out!, err!)
     VAL INT runs IS 10:
+    VAL INT aff.cycles IS 1024 * 32:
     VAL INT comms.cycles IS 1024 * 1024:
     VAL INT mem.cycles IS 1024 * 32:
     VAL INT proc.cycles IS 1024 * 16:
@@ -1310,8 +1311,8 @@ PROC run.test.set (VAL []BOOL enabled, CHAN BYTE scr!, err!)
       run.scaling.test (PRI.COMMS.LOW.HIGH, enabled, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
       run.scaling.test (PRI.COMMS.HIGH.LOW, enabled, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
       #IF DEFINED (PROCESSOR.AFFINITY)
-      run.scaling.test (AFF.BASIC.COMMS, enabled, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
-      run.scaling.test (AFF.ECHO.COMMS, enabled, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+      run.scaling.test (AFF.BASIC.COMMS, enabled, runs, aff.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+      run.scaling.test (AFF.ECHO.COMMS, enabled, runs, aff.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
       #ENDIF
       run.scaling.test (STATIC.MOBILE.COMMS, enabled, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
       run.scaling.test (DYN.MOBILE.COMMS, enabled, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
@@ -1333,7 +1334,7 @@ PROC run.test.set (VAL []BOOL enabled, CHAN BYTE scr!, err!)
       run.scaling.test (FORK.PROC, enabled, runs, proc.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
       run.scaling.test (RESCHED, enabled, runs, sched.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
       #IF DEFINED (PROCESSOR.AFFINITY)
-      run.scaling.test (AFF.SWITCH, enabled, runs, sched.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
+      run.scaling.test (AFF.SWITCH, enabled, runs, aff.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
       #ENDIF
 
       run.scaling.test (SEMAPHORE.CLAIM, enabled, runs, comms.cycles, 1, work.steps, work.factor, [0], results.out?, setup!, results.in!, scr!)
