@@ -2702,12 +2702,24 @@ printtreenl (stderr, 4, foo);
 #endif
 	/*{{{  free memory associated with call (if recursive) */
 	if (ptype & PROC_REC) {
-		genprimary (I_LDL, RECURSIVE_WS);
-		genprimary (I_ADC, -((alloc_ws_slots - 1) << 2));
-		gensecondary (I_MRELEASE);
 		if (alloc_vs_slots) {
 			genprimary (I_LDL, RECURSIVE_VS);
+			if (TagOf (tptr) != S_FINSTANCE) {
+				gensecondary (I_MRELEASE);
+			}
+		}
+		genprimary (I_LDL, RECURSIVE_WS);
+		genprimary (I_ADC, -((alloc_ws_slots - 1) << 2));
+
+		if (TagOf (tptr) != S_FINSTANCE) {
 			gensecondary (I_MRELEASE);
+		} else {
+			if (alloc_vs_slots) {
+				gensecondary (I_DUP);
+				genprimary (I_STL, RECURSIVE_WS);
+				genprimary (I_STNL, 0);
+				genprimary (I_LDL, RECURSIVE_WS);
+			}
 		}
 	}
 	/*}}}  */

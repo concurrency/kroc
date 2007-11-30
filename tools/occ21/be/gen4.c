@@ -1871,12 +1871,49 @@ else fprintf (stderr, "\n    [NULL]\n");
 		if (TagOf (INameOf (tptr)) == N_PREDEFFUNCTION) {
 			tpredef (tptr, NULL);
 		} else {
-			int nregresults = 1;
+			const BOOL recursive = (nodetypeoftag (TagOf (tptr)) == INSTANCENODE) ? IRecursiveOf (tptr) : FALSE;
+			const int nregresults = 1;
+			const int temp = RECURSIVE_WS;
+
 			tinstance (tptr);
+
+			if (recursive) {
+				/* A=ws ptr */
+				genprimary (I_STL, temp);	/* => empty stack */
+			}
+
 			/* If assembly_output && 
 			   ((alloc_strategy & ALLOC_NOCOMMENTS) == 0 */
 			gencomment1 ("<%d reg results>", nregresults);
 			gen_func_results (nregresults);
+
+			/* clean-up recursive function ? */
+			if (recursive) {
+				treenode *const iname = INameOf (tptr);
+				INT32 proc_ws, proc_vs;
+				
+				getprocwsandvs (iname, &proc_ws, &proc_vs);
+
+				/* A=result */
+				genprimary (I_LDL, temp);	/* => A=ws ptr, B=result */
+				if (proc_vs) {
+					gensecondary (I_REV);	/* => A=ws ptr, B=result */
+					gensecondary (I_DUP);	/* => A=ws ptr, B=ws ptr, C=result */
+					genprimary (I_STL, temp);/* => A=ws ptr, B=result */
+					genprimary (I_STNL, 1);	/* => empty stack */
+					genprimary (I_LDL, temp);/* => A=ws ptr */
+					genprimary (I_LDNL, 0);	/* => A=vs ptr */
+					gensecondary (I_MRELEASE); /* => empty stack */
+					genprimary (I_LDL, temp);/* => A=ws ptr */
+					gensecondary (I_DUP);	/* => A=ws ptr, B=ws ptr */
+					genprimary (I_LDNL, 1);	/* => A=result, B=ws ptr */
+				} else {
+					gensecondary (I_REV);   /* => A=result, B=ws ptr */
+				}
+				genprimary (I_STL, temp); 	/* => A=ws ptr */
+				gensecondary (I_MRELEASE);	/* => empty stack */
+				genprimary (I_LDL, temp);	/* => A=result */
+			}
 		}
 		break;
 		/*}}} */
