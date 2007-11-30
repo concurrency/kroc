@@ -2053,6 +2053,10 @@ for action in $ACTIONLIST; do
 		./run-tests -v || all_ok=0
 		popd
 
+		pushd "$HERETICC_SRC"
+		./hereticc -n1 || all_ok=0
+		popd
+
 		if [ "$all_ok" == 0 ]; then
 			exit 1
 		fi
