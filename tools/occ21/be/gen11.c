@@ -4929,8 +4929,15 @@ fprintf (stderr, "tassign: dest=%p, source=%p\n", dest, source);
 				if (TagOf (INameOf (sourceitem)) == N_PREDEFFUNCTION) {
 					tpredef (sourceitem, dest);
 				} else {
+					const BOOL recursive = (nodetypeoftag (TagOf (sourceitem)) == INSTANCENODE) ? IRecursiveOf (sourceitem) : FALSE;
+					const int temp = RECURSIVE_WS;
+
 					tinstance (sourceitem);
-					/* store the register results */
+
+					if (recursive) {
+						genprimary (I_STL, temp);
+					}
+
 					/*{{{  store the register results */
 					{
 						treenode **regdests[MAXREGS];
@@ -4941,6 +4948,9 @@ fprintf (stderr, "tassign: dest=%p, source=%p\n", dest, source);
 							   ((alloc_strategy & ALLOC_NOCOMMENTS) == 0 */
 							gen_func_results (nregresults);
 							tstoreregs (regdests, nregresults);
+						}
+						if (recursive) {
+							gensecondary (I_MRELEASE);
 						}
 					}
 					/*}}} */

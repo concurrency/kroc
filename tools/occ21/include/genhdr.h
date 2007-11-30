@@ -104,7 +104,7 @@ extern int genhdr_w_time_slot (void);
 #endif
 
 #define RECURSIVE_SAVED_WS 0	/* in the allocated workspace */
-#define MIN_RECURSIVE_SLOTS 1	/* for the saved Wptr */
+#define MIN_RECURSIVE_SLOTS 2	/* for the saved Wptr (+ result) */
 
 #define FORK_SETUP_TEMP -1
 #define FORK_SETUP_TEMPVAL -2
