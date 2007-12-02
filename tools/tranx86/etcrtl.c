@@ -501,6 +501,7 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 					/*{{{  CONTRSPLIT*/
 				case CONTRSPLIT:
 					{
+						etc_chain *csins = etc_code->next;
 						int cslab;
 
 						/* need to peek at next instruction to find out which label it is -- expecting CJ (encoded in ETCL0)*/
@@ -508,12 +509,30 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 							fprintf (stderr, "%s: warning: CONTRSPLIT at end of chain.\n", progname);
 							break;
 						}
-						if ((etc_code->next->fn < I_OPR) || (etc_code->next->opd != ETCL0) || !etc_code->next->next ||
-								(etc_code->next->next->fn != I_CJ)) {
+
+						while (csins) {
+							if (!csins->next) {
+								/* bad */
+							} else if (csins->fn == I_OPR && csins->opd == ETCL0 && csins->next->fn == I_CJ) {
+								/* found */
+								csins = csins->next;
+								break;
+							} else if (csins->fn == I_OPR) {
+								switch (csins->opd) {
+									case I_FPCHKERR:
+										/* skip */
+										csins = csins->next;
+										continue;
+								}
+							}
+							csins = NULL;
+						}
+						
+						if (!csins) {
 							fprintf (stderr, "%s: warning: CONTRSPLIT without following CJ.\n", progname);
 							break;
 						}
-						cslab = etc_code->next->next->opd;
+						cslab = csins->opd;
 
 						if (ts->stack->ts_depth > 0) {
 							control_set_split (ts, cslab, ins_tail);

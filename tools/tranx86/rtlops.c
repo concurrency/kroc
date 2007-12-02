@@ -2108,6 +2108,21 @@ ins_chain *rtl_scan_unconstrain_backward (ins_chain *startfrom, int vreg)
 	return startfrom;
 }
 /*}}}*/
+/*{{{  ins_chain *rtl_scan_for_constrain_to (ins_chain *startfrom, ins_chain *endat, int reg)*/
+/*
+ *	scans in a range for any constraints to a reg
+ */
+ins_chain *rtl_scan_for_constrain_to (ins_chain *startfrom, ins_chain *endat, int reg)
+{
+	while (startfrom != endat) {
+		if ((startfrom->type == INS_CONSTRAIN_REG) && (startfrom->in_args[1]->regconst == reg)) {
+			break;
+		}
+		startfrom = startfrom->next;
+	}
+	return startfrom == endat ? NULL : startfrom;
+}
+/*}}}*/
 /*{{{  ins_chain *rtl_scan_start_forward (ins_chain *startfrom, int vreg)*/
 /*
  *	scans forwards for a register start
