@@ -39,6 +39,7 @@ extern ins_chain *rtl_scan_constrain_forward (ins_chain *startfrom, int vreg);
 extern ins_chain *rtl_scan_constrain_backward (ins_chain *startfrom, int vreg);
 extern ins_chain *rtl_scan_unconstrain_forward (ins_chain *startfrom, int vreg);
 extern ins_chain *rtl_scan_unconstrain_backward (ins_chain *startfrom, int vreg);
+extern ins_chain *rtl_scan_for_constrain_to (ins_chain *startfrom, ins_chain *endat, int reg);
 extern ins_chain *rtl_scan_start_forward (ins_chain *startfrom, int vreg);
 extern ins_chain *rtl_scan_start_backward (ins_chain *startfrom, int vreg);
 extern ins_chain *rtl_scan_end_forward (ins_chain *startfrom, int vreg);

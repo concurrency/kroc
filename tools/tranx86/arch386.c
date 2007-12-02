@@ -3009,46 +3009,41 @@ static void compose_fpop_i386 (tstate *ts, int sec)
 		/*}}}*/
 		/*{{{  I_FPCHKERR -- check for pending floating-point error*/
 	case I_FPCHKERR:
-		/* okay... */
-		tmp_reg = tstack_newreg (ts->stack);
 		this_lab = ++(ts->last_lab);
 
-		/* need to store current flags... (hide in stack) */
-		add_to_ins_chain (compose_ins (INS_LAHF, 0, 1, ARG_REG|ARG_IMP, tmp_reg));
-		add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, -4, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
-		add_to_ins_chain (compose_ins (INS_MOVEB, 1, 1, ARG_REG|ARG_IS8BIT|ARG_IS8HIGH, tmp_reg, ARG_REGIND, REG_ESP));
-
+		/* store current flags (in stack) */
+		tmp_reg = tstack_newreg (ts->stack);
 		add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EAX));
+		add_to_ins_chain (compose_ins (INS_LAHF, 0, 1, ARG_REG|ARG_IMP, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, tmp_reg));
+
+		/* do check */
 		add_to_ins_chain (compose_ins (INS_FSTSW, 0, 1, ARG_REG|ARG_IS16BIT, tmp_reg));
-		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST, 0x3c, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG|ARG_IS16BIT, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_CMP, 2, 1, ARG_CONST, 0x20, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
 		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_Z, ARG_LABEL, this_lab));
 		add_to_ins_chain (compose_ins (INS_FSTSW, 0, 1, ARG_REG|ARG_IS16BIT, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_AND, 2, 2, ARG_CONST, 0x3c, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_Z, ARG_LABEL, this_lab));
 
-		/* fixup stack */
-		add_to_ins_chain (compose_ins (INS_MOVEB, 1, 1, ARG_REGIND, REG_ESP, ARG_REG|ARG_IS8BIT|ARG_IS8HIGH, tmp_reg));
-		add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST | ARG_ISCONST, 4, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
-
-		/* might be a lone ineaxact-result */
+		/* error detected => fixup stack; call kernel */
+		add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 4, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
 		if (options.debug_options & DEBUG_FLOAT) {
 			compose_floaterr_jumpcode_i386 (ts);
 			/* normal execution continues */
 		} else if (!options.disable_checking) {
 			compose_kcall_i386 (ts, K_BSETERR, 0, -1);
 		}
-		add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, this_lab));
 
-#if 0
-		/* restore Areg */
-		add_to_ins_chain (compose_ins (INS_POP, 0, 1, ARG_REG, ts->stack->old_a_reg));
-#else
-		add_to_ins_chain (compose_ins (INS_MOVEB, 1, 1, ARG_REGIND, REG_ESP, ARG_REG|ARG_IS8BIT|ARG_IS8HIGH, tmp_reg));
-		add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 4, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
+		/* no error => restore flags (from stack); continue */
+		add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, this_lab));
+		tmp_reg = tstack_newreg (ts->stack);
+		add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EAX));
+		add_to_ins_chain (compose_ins (INS_POP, 0, 1, ARG_REG, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_SAHF, 1, 1, ARG_REG|ARG_IMP, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
-#endif
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
+
 		ts->stack->must_set_cmp_flags = 1;
 		break;
 		/*}}}*/

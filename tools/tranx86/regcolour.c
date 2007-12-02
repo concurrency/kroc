@@ -496,9 +496,11 @@ static int merge_multiple_constraints (ins_chain *code)
 							fprintf (stderr, "%s: error: register %d has CONSTRAIN but no matching UNCONSTRAIN\n", progname, reg);
 							return -1;
 						}
-						/* remove unconstrain/constrain (in-the-middle) pair */
-						rtl_remove_instr (reg_next_c);
-						rtl_remove_instr (reg_last_uc);
+						if (!rtl_scan_for_constrain_to (reg_last_uc, reg_next_c, c_reg)) {
+							/* remove unconstrain/constrain (in-the-middle) pair */
+							rtl_remove_instr (reg_next_c);
+							rtl_remove_instr (reg_last_uc);
+						}
 					} else if (reg_next_c) {
 						/* impending register collision */
 						if (options.verbose) {
