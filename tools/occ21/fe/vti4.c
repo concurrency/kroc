@@ -534,10 +534,13 @@ PUBLIC INT32 elementsin (treenode * const t)
 PUBLIC INT32 known_bytesin (const treenode * type)
 {
 	BIT32 bytes = 1;
-	for (type = follow_const_user_type (type); TagOf (type) == S_ARRAY || TagOf (type) == S_MOBILE; type = follow_const_user_type (ARTypeOf (type))) {
-		if (TagOf (type) == S_MOBILE) {
-			type = MTypeOf (type);
-		} else if (ARDimOf (type) != -1) {
+
+	if (TagOf (type) == S_MOBILE) {
+		type = MTypeOf (type);
+	}
+
+	for (type = follow_const_user_type (type); TagOf (type) == S_ARRAY; type = follow_const_user_type (ARTypeOf (type))) {
+		if (ARDimOf (type) != -1) {
 			bytes *= ARDimOf (type);
 		}
 	}
