@@ -19,6 +19,8 @@
 
 --** @module occam8
 
+#IF (TARGET.BITS.PER.WORD = 32)
+
 --{{{  #options and #comments
 #OPTION "V"  -- no vector space
 #COMMENT "TA compiler library, V1.4 15/05/91"
@@ -332,6 +334,8 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
     RESULT b, N, X
 :
 --}}}
+
+#ENDIF
 
 
 #IF (TARGET.BITS.PER.WORD = 16)

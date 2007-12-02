@@ -19,7 +19,7 @@
 
 --** @module occam8
 
-#IF (TARGET.BITS.PER.WORD >= 32)
+#IF (TARGET.BITS.PER.WORD = 32)
 
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libraries, no vector space
