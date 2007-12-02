@@ -19,7 +19,7 @@
 
 --** @module occam8
 
-#IF (TARGET.BITS.PER.WORD >= 32)
+#IF (TARGET.BITS.PER.WORD = 32)
 
 #IF DEFINED(TARGET.HAS.FPU)
 

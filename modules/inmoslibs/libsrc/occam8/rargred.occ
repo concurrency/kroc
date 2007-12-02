@@ -19,7 +19,7 @@
 
 --** @module occam8
 
-#IF (TARGET.BITS.PER.WORD >= 32)
+#IF (TARGET.BITS.PER.WORD = 32)
 
 --{{{  #OPTION and #COMMENT
 #OPTION "V"  -- no vector space
@@ -607,6 +607,5 @@ BOOL, INT32, REAL32 FUNCTION ARGUMENT.REDUCE (VAL REAL32 Y, Z, Z.err)
     RESULT b, N, X
 :
 --}}}
-
 
 #ENDIF
