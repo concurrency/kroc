@@ -1081,7 +1081,7 @@ PRIVATE treenode *scalesubscript (treenode * const type, treenode * t, treenode 
 	get_offset_and_subscript_bytes (&offsetunits, &subscriptunits, type, tptr);
 
 #if 0
-fprintf (stderr, "tran3: scalesubscript (in): offset = %d, byte_offset = %d, scale = %d, offsetunits = %d, subscriptunits = %d, t =", *offset, byte_offset, scale);
+fprintf (stderr, "tran3: scalesubscript (in): offset = %d, byte_offset = %d, scale = %d, offsetunits = %d, subscriptunits = %d, t =", *offset, byte_offset, scale, offsetunits, subscriptunits);
 printtreenl (stderr, 4, t);
 #endif
 	DEBUG_MSG (("scalesubscript: scale=%ld, offset=%ld, offsetunits:%d, subscriptunits:%d\n", scale, *offset, offsetunits, subscriptunits));
@@ -1097,7 +1097,19 @@ printtreenl (stderr, 4, t);
 #endif
 
 	if (t != NULL && (subscriptunits != 1)) {
-		t = divide_expression (t, subscriptunits /*, LocnOf(tptr) */ );
+		BOOL ok = TRUE;
+		if (TagOf (tptr) == S_ARRAYSUB) {
+			treenode * const base = ASBaseOf (tptr);
+			if (TagOf (base) == S_ARRAYITEM) {
+				ok = FALSE;
+			}
+		}
+		if ((TagOf (type) == S_MOBILE) && (TagOf (MTypeOf (type)) == S_ARRAY)) {
+			ok = FALSE;
+		}
+		if (ok) {
+			t = divide_expression (t, subscriptunits /*, LocnOf(tptr) */ );
+		}
 	}
 
 	/* bug INSdi03553 - ensure it is a signed divide! */
