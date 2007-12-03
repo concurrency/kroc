@@ -1146,10 +1146,11 @@ printtreenl (stderr, 4, IParamListOf (tptr));
 #ifdef MOBILES
 		/*{{{  pre-evaluate to temporaries any SIZE'd dynamic-mobile arrays*/
 		for (i = 0; i < nparams; i++) {
+			treenode **paramexp = paramtable[i].pparamexp;
 
 			/* SIZEs of dynamic-mobile arrays don't get assigned into temporaries before this, do it here */
-			if ((paramtable[i].pmode == P_EXP) && (TagOf (*(paramtable[i].pparamexp)) == S_SIZE)) {
-				treenode *sizeopd = OpOf (*(paramtable[i].pparamexp));
+			if ((paramtable[i].pmode == P_EXP) && (TagOf (*paramexp) == S_SIZE)) {
+				treenode *sizeopd = OpOf (*paramexp);
 
 				/* look for a mobile at the base */
 				while (TagOf (sizeopd) == S_ARRAYITEM) {
@@ -1157,7 +1158,6 @@ printtreenl (stderr, 4, IParamListOf (tptr));
 				}
 				if (isdynmobilearraypiece (sizeopd)) {
 					/* okay, make it into a temporary */
-					treenode **paramexp = paramtable[i].pparamexp;
 
 #if 0
 fprintf (stderr, "mapinstance: found SIZE'd dynamic mobile array in parameters.\n");
@@ -1167,6 +1167,9 @@ fprintf (stderr, "mapinstance: found SIZE'd dynamic mobile array in parameters.\
 					mapsimpleassign (S_INT, P_TEMP, paramexp, P_EXP, NDeclAddr (*paramexp));
 					/* don't set pevaluated -- need to load it first */
 				}
+			} else if ((paramtable[i].pmode == P_EXP) && (TagOf (*paramexp) == S_ARRAYITEM) && ismobile (ASBaseOf (*paramexp)) && (TagOf (ASBaseOf (*paramexp)) == S_ARRAYITEM)) {
+				
+				mapparameter (&(paramtable[i]), i, TRUE);
 			}
 		}
 		/*}}}*/
@@ -1641,6 +1644,7 @@ PRIVATE BOOL safe_fn_call (treenode * const nptr)
 PRIVATE void tpreevaltemp (paraminfo_t *const paraminfoptr, paraminfo_t *const prev)
 {
 	treenode *const exp = *(paraminfoptr->pparamexp);
+	treenode *const decl = nodetypeoftag (TagOf (exp)) == NAMENODE ? NDeclOf (exp) : exp;
 	/* This used to always simplify if preeval returned TRUE.
 	   However, this breaks when the argument was turned into a temp
 	   by something other than mapinstance.
@@ -1659,7 +1663,7 @@ fprintf (stderr, "tinstance: parameter %d about to be simplified because preeval
 		   remember to copy the temp into the actual param slot later */
 	}
 #ifdef MOBILES	/* fudged SIZE <dynamic mobile> things miss out in the above check -- pmaxparamslotsused is -1 */
-	else if (preeval (paraminfoptr->pmode, exp) && (TagOf (NDeclOf (exp)) == S_SIZE) && (isdynmobilearraypiece (OpOf (NDeclOf (exp))))) {
+	else if (preeval (paraminfoptr->pmode, exp) && (TagOf (decl) == S_SIZE) && (isdynmobilearraypiece (OpOf (NDeclOf (exp))))) {
 #if 0
 fprintf (stderr, "tinstance: parameter %d looks like a dynamic mobile array size, like we fudged earlier.  doing the simplification thing\n", i);
 #endif
@@ -1667,7 +1671,7 @@ fprintf (stderr, "tinstance: parameter %d looks like a dynamic mobile array size
 		paraminfoptr->pmode = simplify (paraminfoptr->pmode, exp);
 		paraminfoptr->pevaluated = TRUE;
 	}
-	else if (preeval (paraminfoptr->pmode, exp) && (TagOf (NDeclOf (exp)) == S_CLONE)) {
+	else if (preeval (paraminfoptr->pmode, exp) && (TagOf (decl) == S_CLONE)) {
 		loadmobile_real (OpOf (NDeclOf (exp)));
 		gensecondary (I_MT_CLONE);
 		storeinname (exp, 0);
@@ -1676,7 +1680,7 @@ fprintf (stderr, "tinstance: parameter %d looks like a dynamic mobile array size
 		paraminfoptr->pclone = TRUE;
 		temp_mark_as_evaluated (exp);
 	}
-	else if (preeval (paraminfoptr->pmode, exp) && (TagOf (NDeclOf (exp)) == S_HIDDEN_PARAM)) {
+	else if (preeval (paraminfoptr->pmode, exp) && (TagOf (decl) == S_HIDDEN_PARAM)) {
 		treenode *const pexp = *(prev->pparamexp);
 
 		loadname (pexp, 0);
@@ -1689,6 +1693,9 @@ fprintf (stderr, "tinstance: parameter %d looks like a dynamic mobile array size
 		paraminfoptr->pclone = TRUE;
 		prev->pclone = FALSE;
 		temp_mark_as_evaluated (exp);
+	} else if (preeval (paraminfoptr->pmode, exp) && (TagOf (decl) == S_ARRAYITEM) && ismobile (ASBaseOf (decl)) && (TagOf (ASBaseOf (decl)) == S_ARRAYITEM)) {
+		paraminfoptr->pmode = simplify (paraminfoptr->pmode, exp);
+		paraminfoptr->pevaluated = TRUE;
 	}
 #endif
 }
