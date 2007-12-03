@@ -1,0 +1,12 @@
+PROC main ()
+  PROC TYPE PT.0 IS (CHAN INT in?, out!):
+  MOBILE PROC double (CHAN INT in?, out!) IMPLEMENTS PT.0
+    SKIP
+  :
+
+  CHAN INT a, b:
+  MOBILE PT.0 pt:
+  SEQ
+    pt := MOBILE double
+    pt (a?, b!)
+:
