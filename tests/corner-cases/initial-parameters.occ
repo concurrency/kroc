@@ -1,0 +1,8 @@
+PROC foo (INITIAL INT n)
+  SEQ
+    n := n + 1
+:
+
+PROC main ()
+  foo (42)
+:

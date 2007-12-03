@@ -1,0 +1,10 @@
+PROC main ()
+  REC PROC foo (VAL INT n)
+    IF
+      n = 10
+        SKIP
+      TRUE
+        FORK foo (n + 1)
+  :
+  foo (0)
+:
