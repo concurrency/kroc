@@ -859,8 +859,23 @@ setopts_host ()
 			USEPTHREADS=2
 		fi
 		if [ $USEMP -eq 42 ]; then	
-			printf '  *BSD: disabling multi-processor support\n'
-			USEMP=0
+			NUMCPUS=$(/sbin/sysctl -n hw.ncpu)
+			if [ $NUMCPUS -ge 2 ]; then
+				printf '  *BSD: %d logical processors, enabling multi-processor support\n' "$NUMCPUS"
+				USEMP=1
+
+				# also, instruct to build with this many
+				BUILD_NUMCPUS=$NUMCPUS
+
+				# cannot support UDC with MP currently
+				if [ $USEUDC -eq 42 ]; then
+					printf '  *BSD: disabling user-defined channel support\n'
+					USEUDC=0
+				fi
+			else
+				printf '  *BSD: single CPU system, not enabling multi-processor support\n'
+				USEMP=0
+			fi
 		fi
 		if [ $USEUDC -eq 42 ]; then	
 			printf '  *BSD: enabling user-defined channel support\n'
