@@ -1604,7 +1604,7 @@ printtreenl (stderr, 4, var);
 		if (isdynamicmobilechantype (type)) {
 			gensecondary (I_WSUB);
 		} else {
-			gensecondary (I_BSUB);
+			gensecondary (I_WSUB);
 		}
 		/* gensecondary (I_SUM); -- changed now.. */
 	} else {
@@ -1702,6 +1702,7 @@ printtreenl (stderr, 4, type);
 				gensecondary (I_WSUB);
 				/* gensecondary (I_SUM)	*/	/* add in the offset.. */
 			} else if (isdynamicmobilearraytype (type)) {
+				const BOOL bsub = TagOf (ASExpOf (var)) == S_TIMES;
 
 				/* ASExp is the BYTE offset for these, so BSUB it .. */
 				if (regsfor (ASExpOf (var)) > 1) {
@@ -1712,7 +1713,8 @@ printtreenl (stderr, 4, type);
 					texp_main (ASExpOf (var), MAXREGS - 2, FALSE);
 					gensecondary (I_REV);
 				}
-				gensecondary (I_BSUB);
+
+				gensecondary (bsub ? I_BSUB: I_WSUB);
 				genprimary (I_LDNL, 0); 	/* first part of double dereference */
 			} else {
 				geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "loadmobile -- ARRAYITEM for unsupported MOBILE type");
@@ -1763,6 +1765,8 @@ printtreenl (stderr, 4, var);
 			if (isdynamicmobilechantype (type)) {
 				loadmobile_int (var, FALSE);
 			} else if (isdynamicmobilearraytype (type)) {
+				const BOOL bsub = TagOf (ASExpOf (var)) == S_TIMES;
+
 				/* ASExp is the BYTE offset for these, so BSUB it .. */
 				if (regsfor (ASExpOf (var)) > 1) {
 					texp_main (ASExpOf (var), MAXREGS - 1, FALSE);
@@ -1772,7 +1776,8 @@ printtreenl (stderr, 4, var);
 					texp_main (ASExpOf (var), MAXREGS - 2, FALSE);
 					gensecondary (I_REV);
 				}
-				gensecondary (I_BSUB);
+				
+				gensecondary (bsub ? I_BSUB : I_WSUB);
 				genprimary (I_LDNL, 0); /* dereference to get real pointer */
 			} else {
 				geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "loadmobile -- ARRAYITEM for unsupported MOBILE type");
@@ -1859,6 +1864,8 @@ printtreenl (stderr, 4, type);
 		int skiplab = newlab ();
 
 		if (isdynamicmobilearraytype (type)) {
+			const BOOL bsub = TagOf (ASExpOf (nptr)) == S_TIMES;
+			
 			/* ASExp is the BYTE offset for these, so BSUB it .. */
 			if (regsfor (ASExpOf (nptr)) > 1) {
 				texp_main (ASExpOf (nptr), MAXREGS - 1, FALSE);
@@ -1868,7 +1875,8 @@ printtreenl (stderr, 4, type);
 				texp_main (ASExpOf (nptr), MAXREGS - 2, FALSE);
 				gensecondary (I_REV);
 			}
-			gensecondary (I_BSUB);
+			
+			gensecondary (bsub ? I_BSUB : I_WSUB);
 		} else {
 			geninternal_is (GEN_ERROR_IN_ROUTINE, 3, "loaddynmobilesize -- unexpected MOBILE type");
 		}
@@ -1972,6 +1980,8 @@ printtreenl (stderr, 4, ASExpOf (var));
 			}
 			gensecondary (I_WSUB);		/* frmb: this should be WSUB, not BSUB.. */
 		} else if (isdynamicmobilearraytype (type)) {
+			const BOOL bsub = TagOf (ASExpOf (var)) == S_TIMES;
+			
 			if (regsfor (ASExpOf (var)) > 1) {
 				texp_main (ASExpOf (var), MAXREGS - 1, FALSE);
 				loadmobile (ASBaseOf (var));
@@ -1980,7 +1990,8 @@ printtreenl (stderr, 4, ASExpOf (var));
 				texp_main (ASExpOf (var), MAXREGS - 2, FALSE);
 				gensecondary (I_REV);
 			}
-			gensecondary (I_BSUB);
+			
+			gensecondary (bsub ? I_BSUB : I_WSUB);
 		} else {
 			geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "storemobile: unexpected MOBILE type");
 		}
@@ -2019,6 +2030,8 @@ printtreenl (stderr, 4, var);
 		treenode *type = gettype (var);
 
 		if (isdynamicmobilearraytype (type)) {
+			const BOOL bsub = TagOf (ASExpOf (var)) == S_TIMES;
+
 			if (regsfor (ASExpOf (var)) > 1) {
 				texp_main (ASExpOf (var), MAXREGS - 1, FALSE);
 				loadmobile (ASBaseOf (var));
@@ -2027,7 +2040,8 @@ printtreenl (stderr, 4, var);
 				texp_main (ASExpOf (var), MAXREGS - 2, FALSE);
 				gensecondary (I_REV);
 			}
-			gensecondary (I_BSUB);
+
+			gensecondary (bsub ? I_BSUB : I_WSUB);
 		} else {
 			geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "storemobilesize -- unexpected MOBILE type");
 		}
@@ -2911,25 +2925,42 @@ printtreenl (stderr, 4, nptr);
 		/*{{{  load a pointer */
 		if (subscriptexp != NULL) {
 			/*{{{  perform subscript calculation */
-			texp (subscriptexp, regs);
-			gencomment0 ("subscript expression");
 #if 0
 fprintf (stderr, "loadarraypointer: !directload, calling loadnamepointer (nptr, %d), nptr =", (int)offset);
 printtreenl (stderr, 4, nptr);
 #endif
-			loadnamepointer (nptr, 0);
 			/* if tptr is an ARRAYITEM of RECORDSUB, and field is dynamic MOBILE, dereference "offset" here */
 #ifdef MOBILES
-			if ((TagOf (tptr) == S_ARRAYITEM) && (TagOf (ASBaseOf (tptr)) == S_RECORDSUB)) {
-				treenode *rfield = ASIndexOf (ASBaseOf (tptr));
+			if (TagOf (tptr) == S_ARRAYITEM) {
+				treenode const *base = ASBaseOf (tptr);
 
-				if (isdynmobilearray (rfield)) {
-					genprimary (I_LDNL, (offset / bytesperword));
-					offset = 0;
+				if (TagOf (ASBaseOf (tptr)) == S_RECORDSUB) {
+					treenode *rfield = ASIndexOf (base);
+
+					texp (subscriptexp, regs);
+					loadnamepointer (nptr, 0);
+					gensecondary (isubscript);
+
+					if (isdynmobilearray (rfield)) {
+						genprimary (I_LDNL, (offset / bytesperword));
+						offset = 0;
+					}
+				} else if (TagOf (base) == S_ARRAYITEM) {
+					texp (subscriptexp, regs);
+					loadmobile (ASBaseOf (tptr));
+					gensecondary (isubscript);
+				} else {
+					texp (subscriptexp, regs);
+					loadnamepointer (nptr, 0);
+					gensecondary (isubscript);
 				}
-			}
+			} else
 #endif
-			gensecondary (isubscript);
+			{
+				texp (subscriptexp, regs);
+				loadnamepointer (nptr, 0);
+				gensecondary (isubscript);
+			}
 			/*}}} */
 		} else {
 			loadnamepointer (nptr, 0);
