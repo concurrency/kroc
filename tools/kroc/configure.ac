@@ -267,6 +267,6 @@ AC_SUBST(ACLOCALDIR)
 AC_SUBST(CONFFILEPREFIX)
 AC_SUBST(ENV_LIBRARY_PATH)
 
-AC_OUTPUT([kroc kmakemodule occbuild setup.sh setup.csh Makefile])
+AC_OUTPUT([kroc kmakemodule occbuild kroc-setup.sh kroc-setup.csh Makefile])
 
 

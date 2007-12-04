@@ -1664,7 +1664,7 @@ printf '   compiler test suite: %s\n' "$kroc_kroc_cgtests"
 printf '\n'
 
 #{{{  set up environment
-# This should be the same as setup.sh.
+# This should be the same as kroc-setup.sh.
 PATH="$kroc_archbindir:$PATH"
 LD_LIBRARY_PATH="$kroc_archlibdir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"; export LD_LIBRARY_PATH
 #}}}
@@ -2619,8 +2619,10 @@ if [ $SHOWBANNER -eq 1 ]; then
 ***********************************************************
 
 The KRoC distribution should now be installed.  Remember to source
-the relevant file (.sh for bash, .csh for csh):
-$INSTALL_DIR/bin/setup..
+the relevant file:
+
+  $INSTALL_DIR/bin/kroc-setup.sh   for sh/ksh/bash/zsh
+  $INSTALL_DIR/bin/kroc-setup.csh  for csh/tcsh
 
 EOF
 
