@@ -1,3 +1,12 @@
+Note: This document is (as of December 2007) rather out of date. You
+should consult the documentation for occbuild before following the
+advice below on building and using libraries:
+
+  https://www.cs.kent.ac.uk/research/groups/sys/wiki/OccBuild
+
+-- The KRoC team <kroc-bugs@kent.ac.uk>
+
+
 
                           =======================
                           |  Essentially KRoC   |
