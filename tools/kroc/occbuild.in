@@ -314,6 +314,8 @@ class KRoCToolchain:
 		(base, ext) = split_ext(file)
 		if ext == "tce":
 			delete(base + ".o")
+			delete(base + ".etc")
+			delete(base + ".s")
 		elif ext == "lib":
 			delete(base + ".lbb")
 			delete(patterns["a"] % base)
