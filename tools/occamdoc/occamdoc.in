@@ -1015,13 +1015,14 @@ Read occam-pi source files and extract documentation.
 -p                           Include declarations tagged @private
 -a                           Try to include undocumented declarations
                              (this won't find all declarations)
+-v                           Be verbose: say what's being done
 --help                       Display this help and exit
 
 Report bugs to <""" + CONTACT + """>."""
 
 def main(args):
 	try:
-		opts, args = getopt.getopt(args, 'd:f:pa', ["help"])
+		opts, args = getopt.getopt(args, 'd:f:pav', ["help"])
 	except getopt.GetoptError:
 		usage()
 		return 1
@@ -1030,6 +1031,7 @@ def main(args):
 	output_dir = "doc"
 	include_private = False
 	include_undocumented = False
+	verbose = False
 	for o, a in opts:
 		if o == "-d":
 			output_dir = a
@@ -1039,6 +1041,8 @@ def main(args):
 			include_private = True
 		elif o == "-a":
 			include_undocumented = True
+		elif o == "-v":
+			verbose = True
 		elif o == "--help":
 			usage()
 			return 0
@@ -1047,10 +1051,16 @@ def main(args):
 		usage()
 		return 1
 
+	def status(s):
+		if verbose:
+			sys.stderr.write(s)
+			sys.stderr.flush()
+
 	failed = False
 
 	decls = {}
 	for file in args:
+		status("Scanning %s... " % file)
 		f = InputFile(file)
 		try:
 			decl, seen = parse_file(f, include_private, include_undocumented)
@@ -1071,7 +1081,9 @@ def main(args):
 						dest.tags = decl.tags
 				else:
 					decls[ident] = decl
+			status("%d definitions\n" % len(decl.children))
 		except OccamDocException, e:
+			status("failed\n")
 			print >>sys.stderr, "Error: At " + f.pos_str() + ": " + str(e)
 			print >>sys.stderr, "  Skipping rest of " + file
 			failed = True
@@ -1086,15 +1098,19 @@ def main(args):
 		pass
 
 	xml_file = output_dir + "/docs.xml"
+	status("Writing XML to %s... " % xml_file)
 	errors = []
 	try:
 		f = open(xml_file, "w")
 		write_xml(decls.values(), f, errors)
 		f.close()
+		status("done\n")
 	except OccamDocException, e:
+		status("failed\n")
 		print >>sys.stderr, "Error: During output: " + str(e)
 		return 1
 	except IOError, e:
+		status("failed\n")
 		print >>sys.stderr, "Error writing XML file: " + str(e)
 		return 1
 	if errors != []:
@@ -1103,6 +1119,7 @@ def main(args):
 		failed = True
 
 	try:
+		status("Writing output to %s... " % output_dir)
 		if output_format == "html":
 			html_file = output_dir + "/index.html"
 			do_xslt(xml_file, html_file, "to-html.xsl",
@@ -1120,10 +1137,14 @@ def main(args):
 				        {"moduleid": moduleid, "mode": "page"})
 
 			copy_file("occamdoc.css", output_dir)
+
+			status("done\n")
 	except OccamDocException, e:
+		status("failed\n")
 		print >>sys.stderr, "Error: During conversion: " + str(e)
 		return 1
 	except IOError, e:
+		status("failed\n")
 		print >>sys.stderr, "Error: While writing output files: " + str(e)
 		return 1
 
