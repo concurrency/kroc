@@ -1714,15 +1714,14 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 	fi
 	ACTIONLIST="$ACTIONLIST \
 		configure-occamdoc make-occamdoc install-occamdoc \
-		configure-dynproc make-dynproc install-dynproc \
-		install-manpages \
-		configure-doc make-doc install-doc"
+		configure-dynproc make-dynproc install-dynproc"
 else
 	FULLINSTALL=
 fi
 
 EXAMPLEINSTALL=
 CGTESTSINSTALL=
+APIINSTALL=
 
 # some transformations
 EXAMPLE_ACTIONS="building-examples bsyscalls-support cputimers-support dynproc-support \
@@ -1756,9 +1755,14 @@ TESTS_ACTIONS="building-cgtests \
 		configure-cgtests make-cgtests install-cgtests \
 		configure-hereticc make-hereticc install-hereticc \
 		run-tests"
+DOC_ACTIONS="building-api \
+		install-manpages \
+		configure-occamdoc make-occamdoc install-occamdoc \
+		configure-doc make-doc install-doc \
+		extract-api"
 
 if [ "$FULLINSTALL" = "1" ]; then
-	ACTIONLIST="$ACTIONLIST examples cgtests"
+	ACTIONLIST="$ACTIONLIST examples cgtests doc"
 fi
 NEWACTIONLIST=
 
@@ -1769,6 +1773,9 @@ for action in $ACTIONLIST; do
 		;;
 	Xtests)
 		NEWACTIONLIST="$NEWACTIONLIST $TESTS_ACTIONS"
+		;;
+	Xdoc)
+		NEWACTIONLIST="$NEWACTIONLIST $DOC_ACTIONS"
 		;;
 	Xccspt)
 		NEWACTIONLIST="$NEWACTIONLIST preconfigure-ccsp configure-ccspt make-ccspt install-ccspt"
@@ -1797,7 +1804,7 @@ for action in $ACTIONLIST; do
 	X*)
 		FOUND=0
 
-		for x in inmoslibs bsclib course course_answers syncs dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony fmtoutlib moa doc occamdoc; do
+		for x in inmoslibs bsclib course course_answers syncs dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony fmtoutlib moa occamdoc; do
 			if [ "X$x" = "X$action" ]; then
 				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
@@ -1951,6 +1958,11 @@ for action in $ACTIONLIST; do
 		CGTESTSINSTALL=1
 		;;
 		#}}}
+		#{{{  building-api: set API build
+	Xbuilding-api)
+		APIINSTALL=1
+		;;
+		#}}}
 		#{{{  bsyscalls-support: attempts to determine whether or not support for blocking system calls is present
 	Xbsyscalls-support)
 		nm "$kroc_archlibdir/libkroc.so" 2> /dev/null | grep "scheduler_can_do_bsyscalls" 1> /dev/null && HAVE_BSYSCALLS_SUPPORT=1
@@ -2058,6 +2070,12 @@ for action in $ACTIONLIST; do
 			printf 'building manpage index..\n'
 			mandb "$kroc_mandir" 2>&1 | $TEE -a "$DUMPOUT"
 		fi
+		;;
+		#}}}
+		#{{{  extract-api: extract inline documentation from modules
+	Xextract-api)
+		docsrc="$(find modules/*/libsrc -name '*.occ' -or -name '*.inc')"
+		occamdoc -v -f html -d "$kroc_kroc_doc/api" $docsrc 2>&1 | $TEE -a "$DUMPOUT"
 		;;
 		#}}}
 		#{{{  run-tests: run tests
@@ -2639,4 +2657,8 @@ if [ "$CGTESTSINSTALL" != "" ]; then
 	printf '    %s\n' "$kroc_kroc_cgtests" | $TEE -a "$DUMPOUT"
 fi
 
+if [ "$APIINSTALL" != "" ]; then
+	printf 'The API documentation can be found here:\n' | $TEE -a "$DUMPOUT"
+	printf '    %s/api/index.html\n' "$kroc_kroc_doc" | $TEE -a "$DUMPOUT"
+fi
 
