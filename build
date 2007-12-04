@@ -2622,8 +2622,30 @@ The KRoC distribution should now be installed.  Remember to source
 the relevant file (.sh for bash, .csh for csh):
 $INSTALL_DIR/bin/setup..
 
+EOF
+
+	if [ "$FAILED_CONFIGURES" = "" ]; then
+		$TEE -a "$DUMPOUT" << EOF
 This installation does not attempt to be perfect, but it should work
 for the most part.
+EOF
+	else
+		$TEE -a "$DUMPOUT" << EOF
+However, please note that the following packages failed to build and
+have not been installed:
+
+EOF
+		for pkg in $FAILED_MAKES; do
+			printf '  - %s\n' "$pkg"
+		done
+		$TEE -a "$DUMPOUT" << EOF
+
+For more detail on why these packages could not be built, please check
+the typescript file.
+EOF
+	fi
+
+	$TEE -a "$DUMPOUT" << EOF
 
 You can navigate through the distribution via the README files.  It
 is recommended that you read the docs/essentially-kroc.txt file.
