@@ -1720,7 +1720,7 @@ else
 fi
 
 EXAMPLEINSTALL=
-CGTESTSINSTALL=
+TESTSINSTALL=
 APIINSTALL=
 
 # some transformations
@@ -1750,11 +1750,10 @@ if [ "$USEPONY" -eq 1 ]; then
 	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
 		configure-pony_examples make-pony_examples"
 fi
-TESTS_ACTIONS="building-cgtests \
+TESTS_ACTIONS="building-tests \
 		bsyscalls-support cputimers-support dynproc-support \
 		configure-cgtests make-cgtests install-cgtests \
-		configure-hereticc make-hereticc install-hereticc \
-		run-tests"
+		configure-hereticc make-hereticc install-hereticc"
 DOC_ACTIONS="building-api \
 		install-manpages \
 		configure-occamdoc make-occamdoc install-occamdoc \
@@ -1762,7 +1761,7 @@ DOC_ACTIONS="building-api \
 		extract-api"
 
 if [ "$FULLINSTALL" = "1" ]; then
-	ACTIONLIST="$ACTIONLIST examples cgtests doc"
+	ACTIONLIST="$ACTIONLIST examples buildtests doc"
 fi
 NEWACTIONLIST=
 
@@ -1771,8 +1770,11 @@ for action in $ACTIONLIST; do
 	Xexamples)
 		NEWACTIONLIST="$NEWACTIONLIST $EXAMPLE_ACTIONS"
 		;;
-	Xtests)
+	Xbuildtests)
 		NEWACTIONLIST="$NEWACTIONLIST $TESTS_ACTIONS"
+		;;
+	Xtests)
+		NEWACTIONLIST="$NEWACTIONLIST $TESTS_ACTIONS run-tests"
 		;;
 	Xdoc)
 		NEWACTIONLIST="$NEWACTIONLIST $DOC_ACTIONS"
@@ -1953,9 +1955,9 @@ for action in $ACTIONLIST; do
 		EXAMPLEINSTALL=1
 		;;
 		#}}}
-		#{{{  building-cgtests: set cgtests build
-	Xbuilding-cgtests)
-		CGTESTSINSTALL=1
+		#{{{  building-tests: set tests build
+	Xbuilding-tests)
+		TESTSINSTALL=1
 		;;
 		#}}}
 		#{{{  building-api: set API build
@@ -2652,7 +2654,7 @@ if [ "$EXAMPLEINSTALL" != "" ]; then
 	fi
 fi
 
-if [ "$CGTESTSINSTALL" != "" ]; then
+if [ "$TESTSINSTALL" != "" ]; then
 	printf 'The compiler test-suite has been installed into:\n' | $TEE -a "$DUMPOUT"
 	printf '    %s\n' "$kroc_kroc_cgtests" | $TEE -a "$DUMPOUT"
 fi
