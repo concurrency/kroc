@@ -2638,7 +2638,7 @@ have not been installed:
 
 EOF
 		for pkg in $FAILED_MAKES; do
-			printf '  - %s\n' "$pkg"
+			printf '  - %s\n' "$pkg" | $TEE -a "$DUMPOUT"
 		done
 		$TEE -a "$DUMPOUT" << EOF
 
