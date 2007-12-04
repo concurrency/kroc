@@ -734,9 +734,6 @@ printtreenl (stderr, 4, pptr);
 						chkreport_i (CHK_PTYPE_MISMATCH, chklocn, pitem);
 					}
 				}
-				if (check_isfullbarrier (iptr) && check_resignedfullbarrier (iptr)) {
-					chkreport (CHK_BARRIER_RESIGNED, chklocn);
-				}
 				/*}}}*/
 			} else {
 				/*{{{  MOBILE input*/

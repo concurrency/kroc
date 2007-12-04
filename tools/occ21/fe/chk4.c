@@ -3154,7 +3154,7 @@ printtreenl (stderr, 4, NTypeOf (param));
 								ap = ThisItem (aparam);
 								/* if the actual param is a BARRIER, make sure it's not been resigned from */
 								if (((TagOf (ap) == N_DECL) || (TagOf (ap) == N_PARAM)) && check_isfullbarrier (ap)) {
-									if (check_resignedfullbarrier (ap)) {
+									if (check_resignedfullbarrier (ap) && !IForkedOf (t)) {
 										chkreport (CHK_BARRIER_RESIGNED, chklocn);
 									}
 								}
