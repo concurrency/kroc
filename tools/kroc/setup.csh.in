@@ -1,9 +1,20 @@
-set path=(@KROC_ARCHBINDIR@ $path)
-setenv MANPATH :@KROC_MANDIR@:$MANPATH
-if ("x$@ENV_LIBRARY_PATH@" = "x") then
-	setenv @ENV_LIBRARY_PATH@ @KROC_ARCHLIBDIR@
+if ( $?PATH ) then
+	setenv PATH "@KROC_ARCHBINDIR@:$PATH"
 else
-	setenv @ENV_LIBRARY_PATH@ @KROC_ARCHLIBDIR@:$@ENV_LIBRARY_PATH@
+	setenv PATH "@KROC_ARCHBINDIR@"
 endif
-setenv ACLOCAL "aclocal -I @ACLOCALDIR@"
-
+if ( $?MANPATH ) then
+	setenv MANPATH ":@KROC_MANDIR@:$MANPATH"
+else
+	setenv MANPATH ":@KROC_MANDIR@"
+endif
+if ( $?@ENV_LIBRARY_PATH@ ) then
+	setenv @ENV_LIBRARY_PATH@ "@KROC_ARCHLIBDIR@:$@ENV_LIBRARY_PATH@"
+else
+	setenv @ENV_LIBRARY_PATH@ "@KROC_ARCHLIBDIR@"
+endif
+if ( $?ACLOCAL ) then
+	setenv ACLOCAL "$ACLOCAL -I @ACLOCALDIR@"
+else
+	setenv ACLOCAL "aclocal -I @ACLOCALDIR@"
+endif
