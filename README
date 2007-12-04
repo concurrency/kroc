@@ -67,9 +67,9 @@ Configuration
 
 Before using KRoC, remember to source the relevant setup file:
 
-  - ". PREFIX/bin/setup.sh" for Bourne-style shells such as bash
+  - ". PREFIX/bin/kroc-setup.sh" for Bourne-style shells such as bash
 
-  - "source PREFIX/bin/setup.csh" for C-style shells such as csh/tcsh
+  - "source PREFIX/bin/kroc-setup.csh" for C-style shells such as csh/tcsh
 
 It may be convenient to include this command in your shell's startup
 file (e.g. "~/.bash_profile", "~/.cshrc", or "/etc/profile").

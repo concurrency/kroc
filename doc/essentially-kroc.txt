@@ -62,8 +62,8 @@ KRoC Setup Procedure
 Before any of the KRoC utilities can be used, one of the following commands
 (depending on which shell you are using) must be run:
 
-  % source kroc/bin/setup.sh         (for sh or bash shells)
-  % source kroc/bin/setup.csh        (for csh or tcsh shells)
+  % source kroc/bin/kroc-setup.sh         (for sh or bash shells)
+  % source kroc/bin/kroc-setup.csh        (for csh or tcsh shells)
 
 (where "% " is the Unix command prompt).  It may be useful to include this
 command in your shell start-up script.
@@ -229,11 +229,11 @@ The file "course.lib" holds the byte code for this library.  The compiler
 will look for it in the current directory and, failing that, in the sequence
 of directories defined by the OCSEARCH environment variable.
 
-When `source' was run on "kroc/bin/setup.sh" (or "kroc/bin/setup.csh" - see
-the previous section), OCSEARCH was initialised to include the directories
-containing all the standard libraries provided by this KRoC release.  Since
-"course.lib" is one of those standard libraries, the compiler will be
-successful in its search.
+When `source' was run on "kroc/bin/kroc-setup.sh" (or
+"kroc/bin/kroc-setup.csh" - see the previous section), OCSEARCH was
+initialised to include the directories containing all the standard
+libraries provided by this KRoC release.  Since "course.lib" is one of
+those standard libraries, the compiler will be successful in its search.
 
 The linker has to find the native code version of the library.  Native code
 libraries are just Unix `archive' files.  It is traditional for such files
@@ -310,9 +310,9 @@ by saying:
 When compiling such a source, the compiler will look for the file "finkle.tce"
 in the current directory and, failing that, in the sequence of directories
 defined by the OCSEARCH environment variable.  OCSEARCH is initialised by the
-"kroc/bin/setup.sh" (or "kroc/bin/setup.csh") command but can be extended at
-any time - for instance, in the shell start-up script just after the `source'
-of that `setup' command.
+"kroc/bin/kroc-setup.sh" (or "kroc/bin/kroc-setup.csh") command but can
+be extended at any time - for instance, in the shell start-up script
+just after the `source' of that `kroc-setup' command.
 
 If the source code that #USEs "finkle" is not top-level (i.e. it is compiled
 with the "-c" flag), that is the end of the story.  If it is top-level source
