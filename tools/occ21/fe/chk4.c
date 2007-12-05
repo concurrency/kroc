@@ -3314,9 +3314,6 @@ fprintf (stderr, "scopeandcheck: INSTANCENODE: param checking; ctvar = NULL\n");
 						}
 					}
 
-					if ((tag == S_PINSTANCE) && IRecursiveOf (t) && IForkedOf (t)) {
-						chkerr (CHK_NO_REC_FORK, chklocn);
-					}
 					if (tag == S_PINSTANCE) {
 						*tptr = (treenode *)cinstance (t);
 					}

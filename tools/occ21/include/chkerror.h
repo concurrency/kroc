@@ -342,7 +342,7 @@
 /*{{{  more errors*/
 #define CHK_CONSTRUCTOR_BAD_CHANDIR	265
 #define CHK_BAD_CHAN_CONFLICT_ANON	266
-#define CHK_NO_REC_FORK			267
+/* #define CHK_NO_REC_FORK		267 */
 #define CHK_NO_INLINE_FORK		268
 #define CHK_NO_PREDEF_FORK		269
 #define CHK_VAR_IN_FREE_FORK		270

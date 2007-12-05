@@ -3733,7 +3733,7 @@ fprintf (stderr, "*** SetNUndef (%p, %p)\n", ThisItem (formallist), tmp);
 			}
 			/*}}}*/
 			/*{{{  remove parameters (but not if recursive...!) */
-			if (!recursive) {
+			if (forked || !recursive) {
 				formallist = revflist;
 				actuallist = revalist;
 				while (!EmptyList (formallist) && !EmptyList (actuallist)) {
