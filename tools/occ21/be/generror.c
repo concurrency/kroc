@@ -139,8 +139,6 @@ PUBLIC const char *genmessagestring (const int n)
 		/*{{{  frmb added errors */
 	case GEN_NO_DYNMEM:
 		return ("Dynamic memory support is disabled");
-	case GEN_NO_RECFORK:
-		return ("FORK\'d recursion is not handled yet!");
 	case GEN_IMPOSSIBLE:
 		return ("Impossible thing %d in code-gen");
 	case GEN_TSTACK_UNDERFLOW:

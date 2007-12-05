@@ -368,9 +368,9 @@ PRIVATE void loadparamtable (const int ptype, paraminfo_t paramtable[], int npar
 
 #if 0
 fprintf (stderr, "loadparamtable: calling proc/function %s, with %d params\n", WNameOf (translate_from_internal (NNameOf (nptr))), nparams);
-fprintf (stderr, "loadparamtable: formal parameter list is:");
+fprintf (stderr, "loadparamtable: formal parameter list is (%p) :", fparams);
 printtreenl (stderr, 4, fparams);
-fprintf (stderr, "loadparamtable: actual parameter list is:");
+fprintf (stderr, "loadparamtable: actual parameter list is (%p) :", aparams);
 printtreenl (stderr, 4, aparams);
 #endif
 	for (i = 0; i < nparams; i++) {
@@ -617,13 +617,13 @@ PUBLIC treenode *augmentparams (treenode *aptr, treenode *fptr, treenode *destli
 
 		/*{{{  debugging messages */
 #if 0
-fprintf (stderr, "gen8: augmentparams(): aptr = ");
+fprintf (stderr, "gen8: augmentparams(): aptr (%p) = ", aptr);
 printtreenl (stderr, 4, aptr);
-fprintf (stderr, "gen8: augmentparams(): fptr = ");
+fprintf (stderr, "gen8: augmentparams(): fptr (%p) = ", fptr);
 printtreenl (stderr, 4, fptr);
 fprintf (stderr, "gen8: augmentparams(): destlist = ");
 printtreenl (stderr, 4, destlist);
-fprintf (stderr, "gen8: augmentparams(): instance = ");
+fprintf (stderr, "gen8: augmentparams(): instance (%p) = ", instance);
 printtreenl (stderr, 4, instance);
 #endif
 		/*}}} */
@@ -817,7 +817,7 @@ fprintf (stderr, "augmentparams: msp\n");
 			}
 		}
 #if 0
-fprintf (stderr, "gen8: augmentparams: resultlist = ");
+fprintf (stderr, "gen8: augmentparams: resultlist = (%p) ", resultlist);
 printtreenl (stderr, 4, resultlist);
 #endif
 		return (resultlist);
@@ -907,11 +907,6 @@ fprintf (stderr, "maproutinename: name=%s, recursive=%d, forked=%d, set_wssize=%
 			ms = 0;
 			/* FIXME: might need to handle mobilespace at some point.. */
 #endif
-		}
-
-		/* FIXME: what if someone tries recursive + forked..? */
-		if ((ptype & (PROC_FORKED | PROC_REC)) == (PROC_FORKED | PROC_REC)) {
-			generr (GEN_NO_RECFORK);
 		}
 
 		if (insidealtguard) {
@@ -1057,18 +1052,12 @@ printtreenl (stderr, 4, IParamListOf (tptr));
 		}
 	}
 	/*}}}  */
-	/*{{{  parameter WS requirements are special for recursive stuff.. */
-	if (recursive) {
+	/*{{{  parameter WS requirements are special for forked and recursive stuff */
+	if (forked || recursive) {
 		saved_datasize = datasize;
-		datasize = MIN_RECURSIVE_SLOTS;
+		datasize = forked ? MIN_FORK_SLOTS : MIN_RECURSIVE_SLOTS;
 	}
 	/*}}}  */
-	/*{{{  parameter WS requirements are special for forked stuff.. */
-	if (forked) {
-		saved_datasize = datasize;
-		datasize = MIN_FORK_SLOTS;
-	}
-	/*}}}*/
 	/*{{{  for forked instances, map $fork.barrier */
 	if (forked) {
 		treenode *forking = IForkOf (tptr);
@@ -1908,19 +1897,11 @@ printtreenl (stderr, 4, tptr);
 		}
 		/*}}}*/
 #endif	/* MOBILES */
-		/*{{{  augment params here if vs/ms needed*/
-		/* for VS/WS parameters will not be augmented yet. */
-#ifdef MOBILES
-		if (alloc_vs_slots || alloc_ms_slots)
-#else
-		if (alloc_vs_slots)
-#endif
-		{
+		/*{{{  augment params here */
 #if 0
 fprintf (stderr, "tinstance: calling augmentparams()\n");
 #endif
-			SetIParamList (tptr, augmentparams (IParamListOf (tptr), NParamListOf (iname), NULL, tptr));
-		}
+		SetIParamList (tptr, augmentparams (IParamListOf (tptr), NParamListOf (iname), NULL, tptr));
 		/*}}}*/
 		/*}}}*/
 	} else if (ptype & PROC_REC) {
@@ -2708,7 +2689,7 @@ printtreenl (stderr, 4, foo);
 	/*}}}*/
 #endif
 	/*{{{  free memory associated with call (if recursive) */
-	if (ptype & PROC_REC) {
+	if ((ptype & (PROC_FORKED | PROC_REC)) == PROC_REC) {
 		if (alloc_vs_slots) {
 			genprimary (I_LDL, RECURSIVE_VS);
 			if (TagOf (tptr) != S_FINSTANCE) {

@@ -70,7 +70,7 @@
 /*}}}  */
 /*{{{  frmb added errors */
 #define GEN_NO_DYNMEM			52
-#define GEN_NO_RECFORK			53	/* FORKed recursion not supported */
+/* #define GEN_NO_RECFORK		53 */
 #define GEN_IMPOSSIBLE			54	/* largely for debugging */
 #define GEN_TSTACK_UNDERFLOW		55
 #define GEN_TSTACK_OVERFLOW		56	/* lets make these nice.. */

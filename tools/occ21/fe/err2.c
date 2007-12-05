@@ -1044,8 +1044,6 @@ PUBLIC const char *chkmessagestring (const int n)
 		return ("parameter %d must be explicitly #PRAGMA SHARED");
 	case CHK_FORK_PARAM_NOT_IMPLEMENTED:
 		return ("parameter %d type not implemented yet!");
-	case CHK_NO_REC_FORK:
-		return "FORKed recursion not implemented";
 	case CHK_NO_INLINE_FORK:
 		return "cannot FORK \"%s\", it is declared INLINE";
 	case CHK_NO_PREDEF_FORK:
