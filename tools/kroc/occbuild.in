@@ -36,7 +36,7 @@ includes_after = []
 static_link = False
 prefix = None
 destdir = ""
-target_os = os.uname()[0]
+target_os = "@KROC_HOST_OS@"
 patterns = None
 build_shared = True
 
@@ -125,7 +125,7 @@ def make_shared(library, objs, extra_opts = []):
 	"""Link a bunch of native objects into a shared library."""
 
 	opts = []
-	if target_os == "Darwin":
+	if target_os.startswith("darwin"):
 		opts = ["-dynamiclib", "-read_only_relocs", "suppress"]
 	else:
 		opts = ["-shared"]
@@ -586,9 +586,9 @@ def main(args):
 		"so": "liboccam_%s.so",
 		"a": "liboccam_%s.a",
 		}
-	if target_os.startswith("CYGWIN"):
+	if target_os.startswith("cygwin"):
 		build_shared = False
-	elif target_os == "Darwin":
+	elif target_os.startswith("darwin"):
 		patterns["so"] = "liboccam_%s.dylib"
 		build_shared = False
 
