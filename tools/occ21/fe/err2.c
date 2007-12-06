@@ -1233,7 +1233,7 @@ PUBLIC const char *usemessagestring (const int n)
 	case USE_UNSHARED_FORK_FREE_MVAR:
 		return "free MOBILE `%s' must be explicitly SHARED";
 	case USE_FORK_FREE_VARS:
-		return "use of free variables in a FORKed process requires a FORKING block";
+		return "process being FORKed uses free variable '%s', a FORKING block is required to enforce its scope";
 		/*}}} */
 	case USE_VAR_UNDEFINED:
 		return "variable `%s' is undefined here";
