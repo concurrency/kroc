@@ -2077,7 +2077,13 @@ for action in $ACTIONLIST; do
 		#{{{  extract-api: extract inline documentation from modules
 	Xextract-api)
 		docsrc="$(find modules/*/libsrc -name '*.occ' -or -name '*.inc')"
-		occamdoc -v -f html -d "$kroc_kroc_doc/api" $docsrc 2>&1 | $TEE -a "$DUMPOUT"
+		(occamdoc -v -f html -d "$kroc_kroc_doc/api" $docsrc && touch .success) 2>&1 | $TEE -a "$DUMPOUT"
+		if [ -f .success ]; then
+			rm .success
+		else
+			printf 'error while running occamdoc\n' | $TEE -a "$DUMPOUT" 1>&2
+			exit 1
+		fi
 		;;
 		#}}}
 		#{{{  run-tests: run tests
