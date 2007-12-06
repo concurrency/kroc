@@ -2263,9 +2263,14 @@ gencomment1 ("gen non-register param %d..", i);
 				} else if (isdynmobileproctype (exp) && !cloned) {
 					gencleardynproctype (exp);
 					mparam_offsets[i] = slot;
-				} else if (isdynmobilearray (exp) && isdynmobilearraytype (paraminfoptr->pformaltype) && !cloned) {
-					gencleardynarray (exp, FALSE);
-					mparam_offsets[i] = slot;
+				} else if (isdynmobilearray (exp) && isdynmobilearraytype (paraminfoptr->pformaltype)) {
+					/* Check for cloning in the next parameter, 
+					 * the hidden real pointer to the array.
+					 */
+					if (!paramtable[i+1].pclone) {
+						gencleardynarray (exp, FALSE);
+						mparam_offsets[i] = slot;
+					}
 				} else if (isdynmobilearray (exp)) {
 					/* skip */
 				} else if (ismobile (exp)) {
@@ -2445,7 +2450,7 @@ gencomment0 ("gen non-register param 2..0");
 			treenode *exp = *(paramtable[i].pparamexp);
 			int slot = paramtable[i].pslot - base_offset;
 
-			if (paramtable[i].pclone || (paramtable[i].pslot == fb_param_slot)
+			if ((paramtable[i].pslot == fb_param_slot)
 					|| isdynmobilechantype (exp) || isanychantype (exp) 
 					|| isdynmobilebarrier (exp) || isdynmobilearray (exp)) {
 				/*{{{  free dynamic mobile something */
