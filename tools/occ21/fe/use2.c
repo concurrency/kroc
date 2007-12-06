@@ -946,7 +946,7 @@ printtreenl (stderr, 4, curroutine);
 
 			if ((forking_lexlevel < 0) && freevars) {
 				/* if the FORKING is missing, disallow any free variables */
-				usereport (FALSE, USE_FORK_FREE_VARS, LocnOf (n), NULL);
+				usereport (FALSE, USE_FORK_FREE_VARS, LocnOf (n), VLNameOf (freevars));
 			} else {
 				while (freevars) {
 					treenode *free_var = VLNameOf (freevars);
