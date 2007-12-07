@@ -1,0 +1,99 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 32)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libraries, no vector space
+#COMMENT "T8 compiler library, V1.1 18/12/90"
+#COMMENT "(c) Copyright INMOS Limited 1990"
+--}}}
+
+#PRAGMA TRANSLATE UNPACKSN "UNPACKSN%O"
+
+#INCLUDE "realvals.inc"
+
+--* Unpack a real number in IEEE single precision format
+--
+-- The sign of X is ignored.
+--
+-- @param X a REAL32 which has been retyped to an INT
+-- @return the fractional part with the implicit bit before the binary
+--   point restored
+-- @return the biased exponent, i.e. the actual exponent + 127
+-- @return 0 if X is zero; 1 if X is a normalised or denormalised
+--   number; 2 if X is "infinity"; 3 if X is a Not-a-Number
+INT, INT, INT FUNCTION UNPACKSN ( VAL INT X )
+  --{{{  history
+  -- Creation; V1.0 28-Mar-90 SRH
+  -- Optimised nested IF's; V1.1 18-Dec-90 SRH
+  --}}}
+
+  --{{{  declarations
+  VAL INT FirstBit  IS #80000000 :
+  
+  INT Xfrac, Xexp, Type :
+  --}}}
+  VALOF
+    --{{{  main body
+    SEQ
+      Xexp, Xfrac := SHIFTLEFT( 0, X << 1, RealShift ) --split number, ignoring sign bit
+      Xfrac := Xfrac >> 1  -- leave room for implicit bit
+      --{{{  V1.0 IF code
+      --IF
+      --  Xexp = 0
+      --    IF
+      --      Xfrac = 0
+      --        Type := 0    -- X was 0 ( 0.0 )
+      --      TRUE
+      --        SEQ
+      --          Type := 1  -- denormalised
+      --          Xexp := 1  -- to compensate for the >> 1 above
+      --  Xexp = RealExp
+      --    IF
+      --      Xfrac = 0
+      --        Type := 2    -- Inf
+      --      TRUE
+      --        Type := 3    -- NaN
+      --  TRUE
+      --    SEQ
+      --      Type  := 1
+      --      Xfrac := Xfrac \/ FirstBit  -- restore implicit bit
+      --}}}
+    
+      -- V1.1 IF code; less clear than V1.0, but smaller and faster; it
+      -- uses fact that INT( FALSE) = 0 and INT( TRUE ) = 1
+      IF
+        Xexp = 0
+          SEQ
+            Type := INT( Xfrac <> 0 )
+            Xexp := Type
+        Xexp = RealExp
+          Type := 2 + ( INT( Xfrac <> 0 ) )
+        TRUE
+          SEQ
+            Type  := 1
+            Xfrac := Xfrac \/ FirstBit  -- restore implicit bit
+    --}}}
+    RESULT Xfrac, Xexp, Type
+:
+
+#ENDIF

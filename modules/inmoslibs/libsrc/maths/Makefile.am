@@ -1,7 +1,7 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
-OCCBUILD = @OCCBUILD@ --search ../occam8
+OCCBUILD = @OCCBUILD@ --search ../forall
 
 libs = \
 	snglmath.lib \

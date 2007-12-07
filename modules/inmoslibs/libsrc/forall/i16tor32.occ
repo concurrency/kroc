@@ -1,0 +1,94 @@
+--
+--      Inmos Libraries
+--      Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--      This library is free software; you can redistribute it and/or
+--      modify it under the terms of the GNU Lesser General Public
+--      License as published by the Free Software Foundation; either
+--      version 2 of the License, or (at your option) any later version.
+--
+--      This library is distributed in the hope that it will be useful,
+--      but WITHOUT ANY WARRANTY; without even the implied warranty of
+--      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--      Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU Lesser General Public
+--      License along with this library; if not, write to the Free Software
+--      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.3 26/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE INT16TOREAL32 "INT16TOREAL32%CHK"
+--}}}
+
+#INCLUDE "realvals.inc"
+
+--{{{  
+REAL32 FUNCTION INT16TOREAL32 (VAL INT16 N)
+
+  -- Convert INT16 to REAL32; this is always exact, i.e. TRUNC and
+  -- ROUND have the same effect.
+  --{{{  history
+  -- Function version (10 Jun 87)
+  -- V1.1, 21-Feb-89
+  -- Changed the formal parameter type from INT to INT16; V1.2, 16-Nov-89 SRH
+  -- Very slight change - moved declaration of the variables needed in the
+  -- case of Nprime = Int.  V1.3, 26-Nov-92 SRH
+  --}}}
+
+  REAL32 X :
+  VALOF
+    [2]INT X RETYPES X :
+    VAL INT Nprime RETYPES N :
+    SEQ
+      IF
+        --{{{  Nprime = 0
+        Nprime = 0
+          SEQ
+            X[1] := 0
+            X[0] := 0
+        --}}}
+        --{{{  Nprime = Int
+        TRUE
+          INT Dump, Places, Xexp, Xfrac, Xint, Xsign :
+          SEQ
+            --{{{  Get sign and positive integer
+            IF
+              Nprime < 0
+                SEQ
+                  Xsign := SignBit
+                  IF
+                    --{{{  Nprime = MinInt
+                    Nprime = SignBit -- MinInt
+                      SEQ       -- (-1) * (1.0) * 2 ^ (BitsPerWord -1)
+                        Xint := Nprime -- Positve MinInt (Unsigned)
+                    --}}}
+                    TRUE
+                      Xint := -Nprime
+              TRUE
+                SEQ
+                  Xsign := 0
+                  Xint := Nprime
+            --}}}
+            Places,  Xint,  Dump := NORMALISE ( Xint,  0)
+            Xexp := ((RealXcess - 1) + BitsPerWord) - Places
+            Xint := Xint << 1               --drop leading bit
+            Xexp,  Xfrac := SHIFTRIGHT ( Xexp,  Xint,  RealShift + 1)
+            Xexp,  X[0] := SHIFTRIGHT ( Xint,  0,  RealShift + 1)
+            X[1] := Xsign \/ Xfrac
+        --}}}
+    RESULT X
+:
+--}}}
+
+#ENDIF

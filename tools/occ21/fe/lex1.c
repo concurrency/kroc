@@ -801,7 +801,7 @@ fprintf (stderr, "readpredefline: line = %s", line);
 			}
 		}
 		if (!mobile_data_types) {
-			/* if one of these is a MOBILE procedure from the occam8 library, ignore */
+			/* if one of these is a MOBILE procedure from the forall library, ignore */
 			switch (pdnumber) {
 			case PD_MPBARSYNC:
 			case PD_MPBARRESIGN:

@@ -1271,7 +1271,7 @@ done
 #}}}
 
 if [ $defaultlibraries -eq 1 ]; then
-	ocllibs="$ocllibs -loccam_occam8"
+	ocllibs="$ocllibs -loccam_forall"
 fi
 
 if [ "X$link" = "X" ]; then

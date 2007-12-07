@@ -239,7 +239,7 @@ class KRoCToolchain:
 
 		need_mods = needs[:]
 		if std_libs:
-			need_mods.append("occam8")
+			need_mods.append("forall")
 
 		# Look for all the other modules we need.
 		full_path = search_path + capture(programs["kroc"] + ["--incpath"]).strip().split(":")
