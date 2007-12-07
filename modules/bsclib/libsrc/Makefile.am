@@ -8,7 +8,10 @@
 ## config.guess and config.sub have special exceptions
 AUTOMAKE_OPTIONS=foreign no-dependencies
 
-SUBDIRS = socklib filelib proclib httplib
+SUBDIRS = socklib filelib httplib
+if BUILD_PROCLIB
+SUBDIRS += proclib
+endif
 if BUILD_CSPDRVLIB
 SUBDIRS += cspdrvlib
 endif

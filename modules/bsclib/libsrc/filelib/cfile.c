@@ -124,6 +124,9 @@ static __inline__ void r_open3 (char *fname, int flen, int mode, int perm, int *
  */
 static __inline__ void r_pipe (int *fd_0, int *fd_1, int *result)
 {
+	#ifdef HOSTOS_MINGW
+	*result = -1;
+	#else
 	int p[2];
 
 	*result = pipe (p);
@@ -131,6 +134,7 @@ static __inline__ void r_pipe (int *fd_0, int *fd_1, int *result)
 		*fd_0 = p[0];
 		*fd_1 = p[1];
 	}
+	#endif
 }
 /*}}}*/
 /*{{{  static __inline__ void r_dup2 (int old_fd, int new_fd, int *result)*/
@@ -197,7 +201,11 @@ static __inline__ void r_mkdir (char *path, int path_len, int perm, int *result)
 	}
 	memcpy (fname, path, path_len);
 	fname[path_len] = '\0';
+	#if defined(HOSTOS_MINGW)
+	*result = mkdir (fname);
+	#else
 	*result = mkdir (fname, perm);
+	#endif
 }
 /*}}}*/
 /*{{{  static __inline__ void r_rmdir (char *path, int path_len, int *result)*/
@@ -311,24 +319,32 @@ static __inline__ void r_sendfile (int src_fd, int dst_fd, int count, int *offse
 /*{{{  PROC C.fl.fcntl0 (VAL INT fd, cmd, RESULT INT result) */
 static __inline__ void r_fcntl0 (int fd, int cmd, int *result)
 {
+	#ifdef HOSTOS_MINGW
+	*result = -1;
+	#else
 	if (fd < 0) {
 		*result = -1;
 	} else {
 		*result = fcntl (fd, cmd);
 	}
 	return;
+	#endif
 }
 void _fl_fcntl0 (int *ws) { r_fcntl0 ((int)(ws[0]), (int)(ws[1]), (int *)(ws[2])); }
 /*}}}*/
 /*{{{  PROC C.fl.fcntl1 (VAL INT fd, cmd, arg, RESULT INT result) */
 static __inline__ void r_fcntl1 (int fd, int cmd, int arg, int *result)
 {
+	#ifdef HOSTOS_MINGW
+	*result = -1;
+	#else
 	if (fd < 0) {
 		*result = -1;
 	} else {
 		*result = fcntl (fd, cmd, (long)arg);
 	}
 	return;
+	#endif
 }
 void _fl_fcntl1 (int *ws) { r_fcntl1 ((int)(ws[0]), (int)(ws[1]), (int)(ws[2]), (int *)(ws[3])); }
 /*}}}*/
@@ -336,6 +352,9 @@ void _fl_fcntl1 (int *ws) { r_fcntl1 ((int)(ws[0]), (int)(ws[1]), (int)(ws[2]), 
 static __inline__ void r_select (int *rs, int n_rs, int *ws, int n_ws, int *es, int n_es, int high_fd,
 		int timeout, int *result)
 {
+	#ifdef HOSTOS_MINGW
+	*result = -1;
+	#else
 	struct timeval tv;
 	fd_set read_set, write_set, except_set;
 	int use_timeout = 0;
@@ -389,6 +408,7 @@ static __inline__ void r_select (int *rs, int n_rs, int *ws, int n_ws, int *es, 
 		}
 	}
 	return;
+	#endif
 }
 void _fl_select (int *ws) { r_select ((int *)(ws[0]), (int)(ws[1]), (int *)(ws[2]), (int)(ws[3]), (int *)(ws[4]), (int)(ws[5]), (int)(ws[6]), (int)(ws[7]), (int *)(ws[8])); }
 /*}}}*/
@@ -457,8 +477,13 @@ static __inline__ void unpack_stat(int *dst, struct stat *buf)
 	dst[7] = AS_INT(buf->st_rdev, 0);
 	dst[8] = AS_INT(buf->st_rdev, 1);
 	dst[9] = (int) buf->st_size;
+	#ifdef HOSTOS_MINGW
+	dst[10] = -1;
+	dst[11] = -1;
+	#else
 	dst[10] = (int) buf->st_blksize;
 	dst[11] = (int) buf->st_blocks;
+	#endif
 	dst[12] = (int) buf->st_atime;
 	dst[13] = (int) buf->st_mtime;
 	dst[14] = (int) buf->st_ctime;
@@ -488,6 +513,9 @@ void _fl_stat(int *w) { r_stat((char *)(w[0]), (int)(w[1]), (int *)(w[2]), (int 
 
 static __inline__ void r_lstat(char *fname, int flen, int *stat_struct, int *res)
 {
+	#ifdef HOSTOS_MINGW
+	*res = -1;
+	#else
 	struct stat sbuf;
 	char pbuffer[FILENAME_MAX];
 	int x;
@@ -503,6 +531,7 @@ static __inline__ void r_lstat(char *fname, int flen, int *stat_struct, int *res
 	*res = lstat(pbuffer, &sbuf);
 	
 	unpack_stat(stat_struct, &sbuf);
+	#endif
 }
 
 void _fl_lstat(int *w) { r_lstat((char *)(w[0]), (int)(w[1]), (int *)(w[2]), (int *)(w[3])); }
@@ -586,7 +615,11 @@ void _fl_chmod(int *w) { r_chmod((char *)(w[0]), (int)(w[1]), (int)(w[2]), (int 
 
 static __inline__ void r_fsync(int fd, int *result)
 {
+	#ifdef HOSTOS_MINGW
+	*result = -1;
+	#else
 	*result = fsync(fd);
+	#endif
 }
 
 void _fl_fsync(int *w) { r_fsync((int)(w[0]), (int *)(w[1])); }

@@ -22,10 +22,16 @@
 
 #include <string.h>
 #include <sys/types.h>
+#ifdef HOSTOS_MINGW
+#include <winsock2.h>
+#define ENOTCONN 4242
+typedef int socklen_t;
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#endif
 #include <unistd.h>
 #include <errno.h>
 

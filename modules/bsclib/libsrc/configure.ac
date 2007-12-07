@@ -49,9 +49,19 @@ AM_CONDITIONAL(BUILD_CSPDRVLIB, test "$cspdrvlib" = yes)
 
 AC_SUBST(OCCAM_DEFS)
 
-if test "$host_os" = "cygwin"; then
- AC_DEFINE(HOSTOS_CYGWIN)
-fi
+build_proclib=yes
+SOCKET_LIBS=
+case $host_os in
+ cygwin*)
+  AC_DEFINE(HOSTOS_CYGWIN)
+  ;;
+ mingw*)
+  build_proclib=no
+  SOCKET_LIBS="-lws2_32"
+  ;;
+esac
+AC_SUBST(SOCKET_LIBS)
+AM_CONDITIONAL(BUILD_PROCLIB, test "$build_proclib" = yes)
 
 dnl Checks for libraries.
 
