@@ -602,6 +602,11 @@ void ccsp_safe_pause_timeout (sched_t *sched)
 
 				serialise ();
 			}
+
+			if (sync) {
+				/* restore detected flags */
+				att_safe_or (&(sched->sync), sync);
+			}
 		} else {
 			#ifdef TARGET_OS_MINGW
 			while (!(sync = att_safe_swap (&(sched->sync), 0))) {

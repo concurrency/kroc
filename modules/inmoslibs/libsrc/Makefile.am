@@ -4,7 +4,7 @@ AUTOMAKE_OPTIONS = foreign no-dependencies
 
 # The ordering here is significant, owing to dependencies between modules.
 SUBDIRS = \
-	occam8 \
+	forall \
 	maths \
 	convert \
 	hostio \

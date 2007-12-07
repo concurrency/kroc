@@ -767,7 +767,10 @@ PRIVATEPARAM void setprocessorattr(void)
 		use_shortintops = FALSE;
 	}
 	if (!extlibfilename_overruled) {
+		#if 0
 		const char *extlibname = H_series ? "occam9.lib" : (bytesperword == 2 ? "occam2.lib" : (has_fpu_core ? "occam8.lib" : (tx_global.hasrmccore ? "occam450.lib" : "occama.lib")));
+		#endif
+		const char *extlibname = "forall.lib";
 
 		strcpy(extlibfilename, extlibname);
 	}

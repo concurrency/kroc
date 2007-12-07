@@ -10,4 +10,4 @@ AM_INIT_AUTOMAKE(inmoslibs, 1.0)
 dnl Checks for programs.
 OCCAM_OCCBUILD
 
-AC_OUTPUT([Makefile occam8/Makefile convert/Makefile string/Makefile hostio/Makefile hostsp/Makefile streamio/Makefile maths/Makefile])
+AC_OUTPUT([Makefile forall/Makefile convert/Makefile string/Makefile hostio/Makefile hostsp/Makefile streamio/Makefile maths/Makefile])
