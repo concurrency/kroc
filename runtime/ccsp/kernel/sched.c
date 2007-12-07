@@ -2640,6 +2640,8 @@ static void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)
 			/* not last process: queue */
 			word *bptr;
 
+			save_priofinity (sched, Wptr);
+
 			atw_set (&(Wptr[Link]), NotProcess_p);
 			atw_set (&(Wptr[Temp]), 0);
 			
