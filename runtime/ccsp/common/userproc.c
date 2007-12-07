@@ -581,6 +581,11 @@ void ccsp_safe_pause_timeout (sched_t *sched)
 
 				serialise ();
 			}
+
+			if (sync) {
+				/* restore detected flags */
+				att_safe_or (&(sched->sync), sync);
+			}
 		} else {
 			ccsp_set_next_alarm (sched, usecs);
 			ccsp_safe_pause (sched);
