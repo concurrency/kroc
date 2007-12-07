@@ -201,7 +201,9 @@ void ccsp_wake_thread (sched_t *scheduler, int sync_bit)
 	weak_write_barrier ();
 	att_safe_set_bit (&(scheduler->sync), sync_bit);
 	serialise ();
+	#if !defined(TARGET_OS_MINGW)
 	write (scheduler->signal_in, &data, 1);
+	#endif
 }
 /*}}}*/
 
@@ -472,7 +474,18 @@ unsigned int ccsp_rtime (void)
 /*{{{  void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs)*/
 void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs)
 {
-	#if !defined(TARGET_OS_MINGW)
+	#if defined(TARGET_OS_MINGW)
+	#warning MinGW timer hack enabled
+	// This is nasty, and shouldn't be merged to trunk -- but it works
+	// enough to let me figure out what else is likely to be broken in
+	// KRoC. The workaround is to wait by polling the timer.
+	Time next = Time_PLUS (Time_GetTime (sched), usecs);
+
+	if (!(sched->wait_for_timeout && Time_AFTER (next, sched->next_timeout))) {
+		sched->next_timeout = next;
+	}
+	sched->wait_for_timeout = true;
+	#else
 	unsigned int next_alarm;
 	struct itimerval itv;
 	int ret;
@@ -553,6 +566,15 @@ void ccsp_safe_pause (sched_t *sched)
 	while (!(sync = att_safe_swap (&(sched->sync), 0))) {
 		serialise ();
 		#ifdef TARGET_OS_MINGW
+		if (sched->wait_for_timeout) {
+			Time now = Time_GetTime (sched);
+			if (Time_AFTER (now, sched->next_timeout)) {
+				sync |= SYNC_TIME_BIT;
+				sched->wait_for_timeout = false;
+				break;
+			}
+		}
+
 		mingw_brief_delay ();
 		#else
 		read (sched->signal_out, &buffer, 1);
@@ -608,20 +630,8 @@ void ccsp_safe_pause_timeout (sched_t *sched)
 				att_safe_or (&(sched->sync), sync);
 			}
 		} else {
-			#ifdef TARGET_OS_MINGW
-			while (!(sync = att_safe_swap (&(sched->sync), 0))) {
-				mingw_brief_delay ();
-
-				if (Time_PastTimeout (sched)) {
-					break;
-				}
-
-				serialise ();
-			}
-			#else
 			ccsp_set_next_alarm (sched, usecs);
 			ccsp_safe_pause (sched);
-			#endif
 		}
 	}
 

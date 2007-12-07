@@ -213,8 +213,13 @@ struct _sched_t {
 	unsigned int 	id; 			/* 1 << index */
 	unsigned int 	cpu_factor;
 	unsigned int 	cpu_khz;
+	#if defined(TARGET_OS_MINGW)
+	unsigned int	wait_for_timeout;
+	Time		next_timeout;
+	#else
 	int 		signal_in;
 	int		signal_out;
+	#endif
 	void		*allocator;
 	unsigned int	spin;
 	word 		pad1[CACHELINE_WORDS]	CACHELINE_ALIGN;
@@ -275,8 +280,13 @@ static inline void init_sched_t (sched_t *sched) {
 	sched->id		= 0;
 	sched->cpu_factor	= 0;
 	sched->cpu_khz		= 0;
+	#if defined(TARGET_OS_MINGW)
+	sched->wait_for_timeout	= 0;
+	sched->next_timeout	= 0;
+	#else
 	sched->signal_in	= -1;
 	sched->signal_out	= -1;
+	#endif
 	sched->allocator	= NULL;
 	sched->spin		= 0;
 
