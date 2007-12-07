@@ -22,10 +22,6 @@ AC_CHECK_TOOL(LD,ld)
 
 AC_CHECK_HEADERS(stdlib.h stdarg.h malloc.h sys/param.h sys/time.h string.h strings.h sys/ioctl.h time.h)
 
-# dirty hack..
-RANLIB=test
-AC_SUBST(RANLIB)
-
 #{{{  options parsing
 
 AC_ARG_ENABLE([cpu-timers], AS_HELP_STRING([--disable-cpu-timers], [disable CPU timers (default enabled)]), [cpu_timers=$enableval],[cpu_timers=default])
