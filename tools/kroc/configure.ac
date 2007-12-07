@@ -98,6 +98,9 @@ case "$host_os" in
  AC_CHECK_FUNC(pthread_create,[have_pthread_libcr=yes],[have_pthread_libcr=no])
  CFLAGS="$SAVED_CFLAGS"
  ;;
+mingw*)
+ AC_CHECK_LIB(pthreadGC2,pthread_create,[have_pthread_w32=yes],[have_pthread_w32=no])
+ ;;
 esac
 
 AC_ARG_ENABLE([pthreads], AS_HELP_STRING([--enable-pthreads], [enable pthreads support (requires pthreads run-time kernel support) (default disabled)]), [enable_pthreads=$enableval], [enable_pthreads=no])
@@ -146,30 +149,26 @@ dnl fi
 AC_CHECK_LIB(pthread,pthread_create,[have_libpthread=yes],[have_libpthread=no])
 AC_MSG_CHECKING([whether to use POSIX threads for blocking syscalls])
 if test "$enable_pthreads" = yes; then
- if test "$have_libpthread" = yes; then
-  DEXTLIB="-lpthread"
-  if test "$needlibrt" = yes; then
-    if test "$have_librt" = yes; then
+  DEXTLIB=""
+  DSYSOPTS="-DKROC_USES_PTHREADS"
+  if test "$have_libpthread" = yes; then
+    DEXTLIB="-lpthread"
+    if test "$needlibrt" = yes && test "$have_librt" = yes; then
       DEXTLIB="-lrt $DEXTLIB"
     fi
   fi
-  DSYSOPTS="-DKROC_USES_PTHREADS"
-  AC_MSG_RESULT(yes)
- else
   if test "$have_pthread_libcr" = yes; then
-   DEXTLIB="-pthread"
-   DSYSOPTS="-DKROC_USES_PTHREADS"
-   AC_MSG_RESULT(yes)
-  else
-   DEXTLIB=
-   DSYSOPTS=
-   AC_MSG_RESULT(no)
+    DEXTLIB="-pthread"
   fi
- fi
+  if test "$have_pthread_w32" = yes; then
+    DEXTLIB="-lpthreadGC2"
+  fi
+fi
+if test "x$DEXTLIB" = "x"; then
+  DSYSOPTS=""
+  AC_MSG_RESULT(no)
 else
- DEXTLIB=
- DSYSOPTS=
- AC_MSG_RESULT(no)
+  AC_MSG_RESULT(yes)
 fi
 
 AC_MSG_CHECKING([whether to use multi-processor support])

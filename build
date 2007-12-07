@@ -801,7 +801,7 @@ setopts_host ()
 	# setup any arch/vendor/os specific options
 
 	case "$3" in
-	cygwin)
+	cygwin* | *mingw*)
 		if [ $USEPTHREADS -eq 42 ]; then
 			printf '  cygwin: enabling pthreads\n'
 			USEPTHREADS=1

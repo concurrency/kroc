@@ -80,11 +80,18 @@ ocllibs=""
 ocrtslibs="-lm @DLOPTLIB@ @DEXTLIB@"
 extcflags="@ARCH_DEFS@ @DSYSOPTS@ @EXTCCEXTRAOPTS@"
 dtraces=0
+exesuffix=""
 
 case "$host_os" in
+	mingw*)
+		octranopts="$octranopts -nsymops --cnpfx _"
+		extcflags="$extcflags -DHOSTOS_MINGW"
+		exesuffix=".exe"
+		;;
 	cygwin*)
 		octranopts="$octranopts -nsymops --cnpfx _"
 		extcflags="$extcflags -DHOSTOS_CYGWIN"
+		exesuffix=".exe"
 		;;
 	darwin*)
 		octranopts="$octranopts -nsymops --cnpfx _"
@@ -1062,6 +1069,17 @@ for src in $srcs; do
 		else
 			efile=$outfile
 			outfile=
+		fi
+
+		# Append executable suffix if it's not already there.
+		if [ "$exesuffix" != "" ]; then
+			case $efile in
+				*$exesuffix)
+					;;
+				*)
+					efile="$efile$exesuffix"
+					;;
+			esac
 		fi
 	fi
 
