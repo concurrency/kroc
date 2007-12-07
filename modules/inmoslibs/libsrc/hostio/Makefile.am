@@ -1,7 +1,7 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
-OCCBUILD = @OCCBUILD@ --search ../occam8 --search ../convert
+OCCBUILD = @OCCBUILD@ --search ../forall --search ../convert
 
 libs = \
 	hostio.lib \

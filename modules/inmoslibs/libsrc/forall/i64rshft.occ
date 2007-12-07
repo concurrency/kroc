@@ -1,0 +1,85 @@
+--
+--      Inmos Libraries
+--      Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--      This library is free software; you can redistribute it and/or
+--      modify it under the terms of the GNU Lesser General Public
+--      License as published by the Free Software Foundation; either
+--      version 2 of the License, or (at your option) any later version.
+--
+--      This library is distributed in the hope that it will be useful,
+--      but WITHOUT ANY WARRANTY; without even the implied warranty of
+--      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--      Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU Lesser General Public
+--      License along with this library; if not, write to the Free Software
+--      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.2 24/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE INT64RSHIFT "INT64RSHIFT%CHK"
+
+--{{{  INT64RSHIFT  T2
+INT64 FUNCTION INT64RSHIFT (VAL INT64 B, VAL INT Places)
+
+  -- Function version (10 Jun 87)
+  -- V1.1, 21/02/89
+  -- V1.2, 24/11/92, SRH: version which assumes that the amount to shift
+  -- by is always in range.  TS/1270.
+
+  INT64 Result :
+  VALOF
+    --{{{  16 Bit Constants
+    VAL INT MaxInt  IS #FFFF :
+    VAL INT SignBit IS #8000 :
+    VAL INT BitsPerWord IS 16 :
+    --}}}
+    INT carry, bits :
+    [4]INT A RETYPES Result :
+    VAL [4]INT B RETYPES B :
+    SEQ
+      IF
+        --(Places < 0) OR (Places > (BitsPerWord * 4))
+        --  SEQ
+        --    A [3] := 0
+        --    A [2] := 0
+        --    A [1] := 0
+        --    A [0] := 0
+        Places < BitsPerWord
+          SEQ
+            carry,  A[0] := SHIFTRIGHT ( B[1],  B[0],  Places)
+            carry,  A[1] := SHIFTRIGHT ( B[2],  B[1],  Places)
+            A[3],  A[2]  := SHIFTRIGHT ( B[3],  B[2],  Places)
+        Places < (BitsPerWord * 2)
+          SEQ
+            bits := Places - BitsPerWord
+            carry,  A[0] := SHIFTRIGHT ( B[2],  B[1],  bits)
+            A[2],  A[1]  := SHIFTRIGHT ( B[3],  B[2],  bits)
+            A[3] := 0
+        Places < (BitsPerWord * 3)
+          SEQ
+            bits := Places - (BitsPerWord * 2)
+            A[1],  A[0]  := SHIFTRIGHT ( B[3],  B[2],  bits)
+            A[2] := 0
+            A[3] := 0
+        Places <= (BitsPerWord * 4)
+          SEQ
+            carry,  A[0] := SHIFTRIGHT ( 0,  B[3],  (Places - (BitsPerWord * 3)))
+            A[1] := 0
+            A[2] := 0
+            A[3] := 0
+    RESULT Result
+:
+--}}}
+
+#ENDIF
