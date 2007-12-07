@@ -426,7 +426,9 @@ void ccsp_kernel_deadlock (void)
 			}
 		} else {
 			for (;;) {
+				#if !defined(TARGET_OS_MINGW)
 				pause ();
+				#endif
 			}
 		}
 	}

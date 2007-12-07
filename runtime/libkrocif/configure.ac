@@ -44,6 +44,12 @@ AC_SUBST(CCLIBPATH)
 AC_SUBST(LDEXTRAOPTS)
 
 case "$host_os" in
+mingw*)
+ build_shared="no"
+ LIBKROCIF="krocif.dll"
+ AC_DEFINE([NO_WEAK_SYMBOLS],1,[define if weak symbols are unsupported])
+ AC_DEFINE([TARGET_OS_MINGW],1,[define if using MinGW])
+ ;;
 cygwin*)
  build_shared="no"
  LIBKROCIF="krocif.dll"

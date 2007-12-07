@@ -61,8 +61,10 @@
 	#include <time.h>
 #endif
 
+#if !defined(TARGET_OS_MINGW)
 #include <sys/resource.h>
 #include <sys/termios.h>
+#endif
 
 #if defined(HAVE_SYS_TIMERS_H)
 	#include <sys/timers.h>

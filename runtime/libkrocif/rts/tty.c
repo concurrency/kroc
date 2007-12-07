@@ -38,11 +38,14 @@
 #include <sys/ioctl.h>
 #endif
 
+#if !defined(TARGET_OS_MINGW)
 static struct termios saved_termios;
 static int tty_saved = FALSE;
+#endif
 
 void save_tty_state (void)
 {
+	#if !defined(TARGET_OS_MINGW)
 	struct termios term;
   
 	/*  reset termio stuff */
@@ -109,11 +112,13 @@ void save_tty_state (void)
 		fprintf (stderr, "KRoC: failed to set tty state!\r\n");
 	}
 	return;  
+	#endif
 }
   
 
 void restore_tty_state (void)
 {
+	#if !defined(TARGET_OS_MINGW)
 	if (tty_saved) {
 		/* output the VT220 "visible cursor" sequence */
 		fprintf (stdout, "\x1b[?25h");
@@ -124,5 +129,6 @@ void restore_tty_state (void)
 		tty_saved = FALSE;
 	}
 	return;
+	#endif
 }
 

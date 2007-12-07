@@ -320,7 +320,7 @@ void user_trap_handler (int sig)
 		userproc_exit (1, 1);
 	} else {
 		/* Faulted during fault.. */
-		kill (getpid(), SIGKILL);
+		raise (SIGABRT);
 	}
 } /* user_trap_handler */
 /*}}}*/
@@ -425,6 +425,7 @@ void user_fp_handler (int sig, int code, struct sigcontext *scp, char *addr)
 /*}}}*/
 #endif /* SIGNAL_TYPE */
 
+#if !defined(TARGET_OS_MINGW)
 /*{{{  static void user_tim_handler (int sig)*/
 /*
  *	timer signal (SIGALRM) handler
@@ -448,11 +449,12 @@ static void user_tim_handler (int sig)
 		ccsp_wake_thread (s, SYNC_TIME_BIT);
 	}
 	
-	#if defined(SIGNAL_TYPE_SYSV)
+	#if defined(SIGNAL_TYPE_SYSV) && !defined(TARGET_OS_MINGW)
 		signal (SIGALRM, user_tim_handler);
 	#endif /* SIGNAL_TYPE */
 }
 /*}}}*/
+#endif
 /*{{{  unsigned int ccsp_rtime (void)*/
 unsigned int ccsp_rtime (void)
 {
@@ -470,6 +472,7 @@ unsigned int ccsp_rtime (void)
 /*{{{  void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs)*/
 void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs)
 {
+	#if !defined(TARGET_OS_MINGW)
 	unsigned int next_alarm;
 	struct itimerval itv;
 	int ret;
@@ -500,8 +503,10 @@ void ccsp_set_next_alarm (sched_t *sched, unsigned int usecs)
 		usecs = ((unsigned int) (itv.it_value.tv_sec * 1000000U)) + 
 			((unsigned int) itv.it_value.tv_usec);
 	}
+	#endif
 }
 /*}}}*/
+#if !defined(TARGET_OS_MINGW)
 /*{{{  void ccsp_init_signal_pipe (sched_t *sched)*/
 void ccsp_init_signal_pipe (sched_t *sched)
 /*
@@ -524,6 +529,18 @@ void ccsp_init_signal_pipe (sched_t *sched)
 	}
 }
 /*}}}*/
+#endif
+#if defined(TARGET_OS_MINGW)
+/*{{{  static void mingw_brief_delay (void)*/
+static void mingw_brief_delay (void)
+{
+	struct timespec ts;
+	ts.tv_sec = min_sleep / 1000000;
+	ts.tv_nsec = (min_sleep % 1000000) * 1000;
+	pthread_delay_np (&ts);
+}
+/*}}}*/
+#endif
 /*{{{  void ccsp_safe_pause (sched_t *sched)*/
 void ccsp_safe_pause (sched_t *sched)
 {
@@ -535,7 +552,11 @@ void ccsp_safe_pause (sched_t *sched)
 	
 	while (!(sync = att_safe_swap (&(sched->sync), 0))) {
 		serialise ();
+		#ifdef TARGET_OS_MINGW
+		mingw_brief_delay ();
+		#else
 		read (sched->signal_out, &buffer, 1);
+		#endif
 		serialise ();
 	}
 
@@ -582,8 +603,20 @@ void ccsp_safe_pause_timeout (sched_t *sched)
 				serialise ();
 			}
 		} else {
+			#ifdef TARGET_OS_MINGW
+			while (!(sync = att_safe_swap (&(sched->sync), 0))) {
+				mingw_brief_delay ();
+
+				if (Time_PastTimeout (sched)) {
+					break;
+				}
+
+				serialise ();
+			}
+			#else
 			ccsp_set_next_alarm (sched, usecs);
 			ccsp_safe_pause (sched);
+			#endif
 		}
 	}
 
@@ -592,6 +625,7 @@ void ccsp_safe_pause_timeout (sched_t *sched)
 	#endif
 }
 /*}}}*/
+#if !defined(TARGET_OS_MINGW)
 /*{{{  static bool set_user_process_signals (void)*/
 /*
  *	sets up signal handling for CCSP
@@ -645,6 +679,7 @@ static bool set_user_process_signals (void)
 	return true; /* FIXME: do more checking? */
 }
 /*}}}*/
+#endif
 #endif	/* !RMOX_BUILD */
 
 #if !defined(RMOX_BUILD)
@@ -795,9 +830,11 @@ bool ccsp_user_process_init (void)
 	#if !defined(RMOX_BUILD)
 	setup_min_sleep ();
 
+	#if !defined(TARGET_OS_MINGW)
 	if (!set_user_process_signals ()) {
 		return false;
 	}
+	#endif
 	#endif
 
 	if (RTS_TRACING) {

@@ -71,7 +71,9 @@ FILE *kroc_out	= NULL;
 FILE *kroc_err	= NULL;
 /*}}}*/
 /*{{{  private variables*/
+#if !defined(TARGET_OS_MINGW)
 static sigjmp_buf signal_jump_buffer;
+#endif
 static int stdin_is_tty;
 /*}}}*/
 
@@ -102,6 +104,7 @@ void user_good_exit (void)
 	userproc_exit (0, 0);
 }
 /*}}}*/
+#if !defined(TARGET_OS_MINGW)
 /*{{{  static void user_signal_good_exit (int sig)*/
 /*
  *	good exit from signal handler
@@ -195,6 +198,7 @@ static void set_user_process_signals (void)
 	}
 }
 /*}}}*/
+#endif
 
 /* user-process code below here */
 
@@ -211,11 +215,13 @@ void user_process (bool is_a_tty)
 	/* user_process - run occam */
 	stdin_is_tty = is_a_tty;
 
+	#if !defined(TARGET_OS_MINGW)
 	sigjmpcode = sigsetjmp (signal_jump_buffer, 0);
 	if (sigjmpcode) {
 		goto signalled;
 	}
 	set_user_process_signals ();
+	#endif
 
 	_occ_enter ();
 

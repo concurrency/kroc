@@ -4170,7 +4170,7 @@ void kernel_Y_rtthreadinit (void)
 	
 	set_local_scheduler (sched);
 
-#if !defined(RMOX_BUILD)
+#if !defined(RMOX_BUILD) && !defined(TARGET_OS_MINGW)
 	ccsp_init_signal_pipe (sched);
 #endif
 	allocate_to_free_list (sched, MAX_PRIORITY_LEVELS * 2);

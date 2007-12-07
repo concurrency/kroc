@@ -234,6 +234,9 @@ static void *bsc_thread (void *arg)
 
 	self = pthread_self ();
 
+	#if defined(TARGET_OS_MINGW)
+	#warning No signals on MinGW
+	#else
 	/* block all signals */
 	sigemptyset (&block);
 	sigaddset (&block, SIGTERM);
@@ -247,6 +250,7 @@ static void *bsc_thread (void *arg)
 	sigaddset (&block, SIGSTOP);
 	sigaddset (&block, SIGCONT);
 	pthread_sigmask (SIG_BLOCK, &block, NULL);
+	#endif
 
 	/* set cancellation type */
 	pthread_setcanceltype (PTHREAD_CANCEL_ASYNCHRONOUS, NULL);

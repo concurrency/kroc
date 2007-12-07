@@ -67,6 +67,11 @@ case "$host_os" in
  AC_MSG_RESULT($have_pthread_libcr)
  CFLAGS="$SAVED_CFLAGS"
  ;;
+mingw*)
+ AC_CHECK_LIB(pthreadGC2,pthread_create,[have_pthread_w32=yes],[have_pthread_w32=no])
+ AC_MSG_CHECKING([whether this system has pthreads-w32 support])
+ AC_MSG_RESULT($have_pthread_w32)
+ ;;
 *)
  ;;
 esac
@@ -75,7 +80,7 @@ dnl For pthreads support..
 AC_CHECK_LIB(pthread,pthread_create,[have_libpthread=yes],[have_libpthread=no])
 AC_MSG_CHECKING([whether to use POSIX threads])
 if test "$enable_pthreads" = yes; then
- if test "$have_libpthread" = yes || test "$have_pthread_libcr" = yes; then
+ if test "$have_libpthread" = yes || test "$have_pthread_libcr" = yes || test "$have_pthread_w32" = yes; then
   AC_DEFINE([USE_PTHREADS],1,[define to use POSIX threads for blocking syscalls and multi-processor])
   AC_MSG_RESULT(yes)
  else
@@ -164,7 +169,7 @@ solaris* | sunos*)
 linux* | *bsd* | *BSD*)
 	map_membase="0x80000000"
 	;;
-cygwin*)
+cygwin* | mingw*)
 	map_membase="0x40000000"
 	;;
 *)
@@ -561,7 +566,7 @@ fi
 
 dnl Setup the library name and flags
 case "$host_os" in
-cygwin*)
+cygwin* | mingw*)
  build_shared="no"
  LIBCCSP="ccsp.dll"
  ;;
@@ -652,7 +657,12 @@ AM_CONDITIONAL(ARCH_DIR_PPC64, [test "$ARCH_DIR" = "ppc64"])
 #{{{  OS specific configuration
 
 case "$host_os" in
-cygwin)
+mingw*)
+ AC_DEFINE([TARGET_OS_MINGW],1,[define if using MinGW])
+ AC_DEFINE([NO_ASM_TYPE_DIRECTIVE],1,[don't produce ELF symbol type directives])
+ AC_DEFINE([CCSP_MINIMUM_SLEEP_US],10,[default minimum sleep (microseconds)])
+ ;;
+cygwin*)
  AC_DEFINE([TARGET_OS_CYGWIN],1,[define if using cygwin])
  AC_DEFINE([NO_ASM_TYPE_DIRECTIVE],1,[don't produce ELF symbol type directives])
  AC_DEFINE([CCSP_MINIMUM_SLEEP_US],10,[default minimum sleep (microseconds)])
