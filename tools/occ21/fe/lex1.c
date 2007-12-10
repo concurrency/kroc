@@ -3544,6 +3544,9 @@ PUBLIC void nextsymb (void)
 		if (newlineflag) {
 			/*{{{  skip leading spaces/whitespace and set lineindent */
 			newlineflag = FALSE;
+			while (ch == ' ') { 
+				ch = rch (); 
+			} 
 			lineindent = currentindent;
 #if 0
 fprintf (stderr, "nextsymb (newlineflag): lineindent set to %d\n", lineindent);
