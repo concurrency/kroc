@@ -52,10 +52,6 @@
 #define MINLEGALCH 32
 #define MAXLEGALCH 126
 
-#if defined(SUPPORT_ARBITRARY_INDENT)
-#define MAXINDENTSTOPS 40
-#endif
-
 /*{{{  filestruct_t */
 /* This is used to keep track of the nesting of #INCLUDE files */
 
@@ -79,10 +75,6 @@ PUBLIC FILE *infile;
 PUBLIC int symb;
 PUBLIC int symbindent, lineindent;
 
-#if defined(SUPPORT_ARBITRARY_INDENT)
-PUBLIC int indentadjust, indentlevel, indentstops[MAXINDENTSTOPS];
-#endif
-
 PUBLIC wordnode *lexword;
 PUBLIC char literalv[MAXSTRING_SIZE + 1];
 PUBLIC int literalp;
@@ -105,33 +97,19 @@ extern BOOL user_defined_operators;
 PRIVATE int ls_valid = 0;	/* default invalid */
 
 PRIVATE int ls_symb, ls_symbindent, ls_lineindent;
-#if defined(SUPPORT_ARBITRARY_INDENT)
-PRIVATE int ls_indentadjust, ls_indentlevel, ls_indentstops[MAXINDENTSTOPS];
-#endif
 PRIVATE wordnode *ls_lexword;
 PRIVATE char ls_literalv[MAXSTRING_SIZE + 1];
 PRIVATE int ls_literalp, ls_pdnumber;
 PRIVATE SOURCEPOSN ls_flocn;
 PRIVATE int ls_allow_asmnames;
 
-extern BOOL variable_indent;
-
 /*}}}*/
 /*{{{  PRIVATE void lex_save_global_state (void)*/
 PRIVATE void lex_save_global_state (void)
 {
-	int i;
-
 	ls_symb = symb;
 	ls_symbindent = symbindent;
 	ls_lineindent = lineindent;
-#if defined(SUPPORT_ARBITRARY_INDENT)
-	ls_indentadjust = indentadjust;
-	ls_indentlevel = indentlevel;
-	for (i = 0; i <= indentlevel; i++) {
-		ls_indentstops[i] = indentstops[i];
-	}
-#endif
 	ls_lexword = lexword;
 	memcpy (ls_literalv, literalv, MAXSTRING_SIZE + 1);
 	ls_literalp = literalp;
@@ -144,18 +122,9 @@ PRIVATE void lex_save_global_state (void)
 /*{{{  PRIVATE int lex_restore_global_state (void)*/
 PRIVATE int lex_restore_global_state (void)
 {
-	int i;
-
 	symb = ls_symb;
 	symbindent = ls_symbindent;
 	lineindent = ls_lineindent;
-#if defined(SUPPORT_ARBITRARY_INDENT)
-	indentadjust = ls_indentadjust;
-	indentlevel = ls_indentlevel;
-	for (i = 0; i <= indentlevel; i++) {
-		indentstops[i] = ls_indentstops[i];
-	}
-#endif
 	lexword = ls_lexword;
 	memcpy (literalv, ls_literalv, MAXSTRING_SIZE + 1);
 	literalp = ls_literalp;
@@ -1058,11 +1027,7 @@ PRIVATE int rch (void)
 		readline ();
 	}
 
-#if defined(SUPPORT_ARBITRARY_INDENT)
-	currentindent = linep + baseindent - (pp_relax * 2) + indentadjust;
-#else
 	currentindent = linep + baseindent - (pp_relax * 2);
-#endif
 	co_indent++;
 	return (eof ? EOF : linebuffer_ptr[linep++]);
 }
@@ -1089,11 +1054,6 @@ PRIVATE void bufinit (void)
 	readline ();
 	symbindent = 0;
 	lineindent = 0;
-#if defined(SUPPORT_ARBITRARY_INDENT)
-	indentadjust = 0;
-	indentlevel = 0;
-	indentstops[0] = 0;
-#endif
 	co_indent = 0;
 	newlineflag = TRUE;
 	stringcontinuation = FALSE;
@@ -3570,9 +3530,6 @@ fprintf (stderr, "lex1: closing brace of proc... ");
 PUBLIC void nextsymb (void)
 {
 	int temp_ch;
-#if defined(SUPPORT_ARBITRARY_INDENT)
-	int indent, nchars;
-#endif
 
 	if (lexmode == LEX_CSOURCE) {
 		nextcsymb ();
@@ -3587,53 +3544,6 @@ PUBLIC void nextsymb (void)
 		if (newlineflag) {
 			/*{{{  skip leading spaces/whitespace and set lineindent */
 			newlineflag = FALSE;
-
-#if defined(SUPPORT_ARBITRARY_INDENT)
-			indent = 0;
-			nchars = 0;
-#endif
-#if defined(SUPPORT_ARBITRARY_INDENT)
-			temp_ch = ch;
-			if (variable_indent) {
-				while ((temp_ch == ' ') || (temp_ch == '\t')) {
-					/* skip leading spaces and tabs */
-					if (temp_ch == '\t') {
-						indent += 8;
-					} else {
-						indent++;
-					}
-					nchars++;
-					temp_ch = rch ();
-				}
-				ch = temp_ch;
-
-				if (indent > indentstops[indentlevel]) {
-					if (indentlevel == MAXINDENTSTOPS) {
-						/* FIXME wrong error */
-						lexerr (LEX_BAD_INDENT, flocn);
-					}
-					indentstops[++indentlevel] = indent;
-				} else if (indent < indentstops[indentlevel]) {
-					while (indent < indentstops[indentlevel]) {
-						indentlevel--;
-					}
-					if (indent != indentstops[indentlevel]) {
-						/* FIXME wrong error */
-						lexerr (LEX_BAD_INDENT, flocn);
-					}
-				}
-
-				currentindent -= indentadjust;
-				indentadjust = (indentlevel * 2) - nchars;
-				currentindent += indentadjust;
-
-			} else {
-				while (temp_ch == ' ') {
-					temp_ch = rch ();
-				}
-				ch = temp_ch;
-			}
-#endif
 			lineindent = currentindent;
 #if 0
 fprintf (stderr, "nextsymb (newlineflag): lineindent set to %d\n", lineindent);

@@ -104,7 +104,6 @@ extern struct map_handle_s *mapfile_handle; /* NULL if no mapfile */
 
 extern BOOL mobile_size_field;	/* whether to include an extra word in MOBILE-related workspace for the underlying type size */
 
-extern BOOL variable_indent;
 extern BOOL barrier_rbpe;	/* barrier resign-before-PAR-end */
 /*}}}  */
 

@@ -159,13 +159,6 @@ AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [enable debugging (gener
 AC_ARG_ENABLE([debug-nextsymb], AS_HELP_STRING([--enable-debug-nextsymb], [enable debugging of next symbol]), [enable_debug_nextsymb=$enableval], [enable_debug_nextsymb=no])
 AC_ARG_ENABLE([process-priority], AS_HELP_STRING([--disable-process-priority], [disable process priority slot (NEW)]), [enable_process_priority=$enableval], [enable_process_priority=yes])
 AC_ARG_ENABLE([backendtrace], AS_HELP_STRING([--enable-backendtrace], [enable tracing of back-end in generated code]), [enable_backendtrace=$enableval], [enable_backendtrace=no])
-AC_ARG_ENABLE([var-indent], AS_HELP_STRING([--disable-var-indent], [disable variable indentation support (default enabled)]), [enable_varindent=$enableval], [enable_varindent=yes])
-
-AC_MSG_CHECKING([whether to enable variable indentation suport])
-AC_MSG_RESULT($enable_varindent)
-if test "$enable_varindent" = yes; then
- AC_DEFINE([SUPPORT_ARBITRARY_INDENT],1,[define to support arbitrary indentation])
-fi
 
 AC_MSG_CHECKING(whether to use user defined operators)
 AC_MSG_RESULT($enable_udo)
