@@ -357,7 +357,6 @@ PUBLIC char  virlibname[MAX_FILENAME_LENGTH] = ""; /* virtual  lib name */
 PUBLIC const BOOL configuring = FALSE;
 #endif
 
-PUBLIC BOOL variable_indent = FALSE;
 PUBLIC BOOL barrier_rbpe = FALSE;
 
 PUBLIC BOOL no_undefineness_check = FALSE;
@@ -2102,7 +2101,6 @@ const arg2_descriptor cloptions[] = {
 	#endif
 	/*{"U",         arg2_single,    NULL,           optseterrormode,    HELP_FUL, "Undefined Error Mode"}, */
 	{"U",         arg2_single,    NULL,           optnoanycheck,      HELP_FUL, "disable run-time error checking"},
-	{"VI",        arg2_single,    &variable_indent,           set_flag,		  HELP_USE, "enable variable indentation support"},
 	{"V",         arg2_single,    NULL,           optnovecspace,      HELP_USE, "disable separate vector space"},
 	{"WALIGN",    arg2_single,    NULL,           optwarnings,        HELP_FUL, "warn on alignment checks"},
 	{"WALL",      arg2_single,    NULL,           optwarnings,        HELP_USE, "enable all warnings"},
@@ -2492,9 +2490,6 @@ PRIVATE BOOL process_option (const char *const s, const int len, void (*error_fn
 		case 'Y':
 			(void)optsetymode (NULL, NULL, NULL);
 			(void)setprocessorattr ();
-			break;
-		case 'I':
-			(void)set_flag (NULL, NULL, &variable_indent);
 			break;
 		}
 	}
