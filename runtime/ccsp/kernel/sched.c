@@ -5751,13 +5751,13 @@ static INLINE word kernel_dist (word *Wptr, sched_t *sched, unsigned int process
 			} else if (set_jump) {
 				Wptr[Temp] = (word) process_address;
 			}
-
-			return fired;
 		} else {
 			atw_dec (&(Wptr[State]));
 		}
 
 		release_tqnode (sched, tn);
+		
+		return fired;
 	}
 
 	return false;
