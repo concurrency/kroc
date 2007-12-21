@@ -654,6 +654,8 @@ def free_text_to_xml(doc, descr, parent):
 		}
 
 		def do_text(doc, descr, parent):
+			descr = re.sub(r'^\n*', '', descr)
+			descr = descr.rstrip()
 			parent.appendChild(doc.createTextNode(descr))
 
 		return generic_tag_to_xml(doc, text, tags, do_text)
