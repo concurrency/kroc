@@ -507,6 +507,7 @@ check_autoconf ()
 			else
 				printf 'error while autoreconfing in %s\n' "$2" | $TEE -a "$DUMPOUT" 1>&2
 				deferred_install_error
+				cd "$CURRENT_DIR"
 				return 1
 			fi
 
@@ -595,6 +596,7 @@ configure_pkg ()
 			else
 				printf 'error while configuring in %s\n' "$3" | $TEE -a "$DUMPOUT" 1>&2
 				deferred_install_error
+				cd "$CURRENT_DIR"
 				return 1
 			fi
 		fi
@@ -634,6 +636,7 @@ make_pkg ()
 		else
 			printf 'error while making in %s\n' "$2" | $TEE -a "$DUMPOUT" 1>&2
 			deferred_install_error
+			cd "$CURRENT_DIR"
 			return 1
 		fi
 		cd "$CURRENT_DIR"
@@ -669,6 +672,7 @@ install_pkg ()
 		else
 			printf 'error while installing in %s\n' "$2" | $TEE -a "$DUMPOUT" 1>&2
 			deferred_install_error
+			cd "$CURRENT_DIR"
 			return 1
 		fi
 		cd "$CURRENT_DIR"
