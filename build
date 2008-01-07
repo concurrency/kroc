@@ -425,7 +425,7 @@ typescript_head ()
 	printf '        documentation install: %s\n' "$kroc_kroc_doc" >> $DUMPOUT
 	printf '        cgtests install:       %s\n' "$kroc_kroc_cgtests" >> $DUMPOUT
 	printf 'Various software versions:\n' >> "$DUMPOUT"
-	XX_PROGRAMS="${AS:-as} ${CC:-gcc}"
+	XX_PROGRAMS="${CC:-gcc}"
 	case `uname` in
 		*BSD* | *Darwin*)
 			# Non-GNU tee -- which will break horribly if we give
@@ -433,6 +433,14 @@ typescript_head ()
 			;;
 		*)
 			XX_PROGRAMS="$XX_PROGRAMS ${TEE:-tee}"
+			;;
+	esac
+	case `uname` in
+		*SunOS*)
+			# Non-GNU as.
+			;;
+		*)
+			XX_PROGRAMS="$XX_PROGRAMS ${AS:-as}"
 			;;
 	esac
 	for prog in $XX_PROGRAMS; do
