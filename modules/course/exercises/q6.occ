@@ -1,184 +1,228 @@
-#INCLUDE "course.module"
 
---{{{  COMMENT documentation
---
+--** Names and Marks.
+
 --{{{  the problem
 --
---A data file consists of alternating names and associated marks.  Process
---this data so that the marks associated with each same name are accumulated
---together.  A results file should be produced tabulating each name with its
---total mark.
+-- A data file consists of alternating names and associated marks.  Process
+-- this data so that the marks associated with each same name are accumulated
+-- together.  A results file should be produced tabulating each name with its
+-- total mark.
 --
---For example, if the data file held:
+-- For example, if the data file held:
 --
 --{{{  nn_small.txt
---> Alison 944
---> Fred 720
---> George 628
---> Peter 331
---> Humphrey 349
---> Ethel 564
---> Sue 715
---> Sally 900
---> Harry 79
---> Samantha 569
---> Mandy 547
---> Mandy 551
---> Mandy 976
---> Sonya 577
---> Hubert 969
---> Mandy 127
+-- 
+--   Alison 944
+--   Fred 720
+--   George 628
+--   Peter 331
+--   Humphrey 349
+--   Ethel 564
+--   Sue 715
+--   Sally 900
+--   Harry 79
+--   Samantha 569
+--   Mandy 547
+--   Mandy 551
+--   Mandy 976
+--   Sonya 577
+--   Hubert 969
+--   Mandy 127
+-- 
 --}}}
 --
---The results file should be something like:
+-- The results file should be something like:
 --
 --{{{  small_results.txt
--->
--->             Name            Mark
--->             ----            ----
--->
--->            Sally             900
--->            Harry              79
--->         Samantha             569
--->            Mandy            2201
--->            Sonya             577
--->           Hubert             969
--->           Alison             944
--->             Fred             720
--->           George             628
--->            Peter             331
--->         Humphrey             349
--->            Ethel             564
--->              Sue             715
--->
+-- 
+--              Name            Mark
+--              ----            ----
+-- 
+--             Sally             900
+--             Harry              79
+--          Samantha             569
+--             Mandy            2201
+--             Sonya             577
+--            Hubert             969
+--            Alison             944
+--              Fred             720
+--            George             628
+--             Peter             331
+--          Humphrey             349
+--             Ethel             564
+--               Sue             715
+-- 
 --}}}
 --
---A nice touch would be to tabulate the results sorted by name:
+-- A nice touch would be to tabulate the results sorted by name:
 --
 --{{{  small_results_sorted.txt
--->
--->             Name            Mark
--->             ----            ----
--->
--->           Alison             944
--->            Ethel             564
--->             Fred             720
--->           George             628
--->            Harry              79
--->           Hubert             969
--->         Humphrey             349
--->            Mandy            2201
--->            Peter             331
--->            Sally             900
--->         Samantha             569
--->            Sonya             577
--->              Sue             715
--->
+-- 
+--              Name            Mark
+--              ----            ----
+-- 
+--            Alison             944
+--             Ethel             564
+--              Fred             720
+--            George             628
+--             Harry              79
+--            Hubert             969
+--          Humphrey             349
+--             Mandy            2201
+--             Peter             331
+--             Sally             900
+--          Samantha             569
+--             Sonya             577
+--               Sue             715
+-- 
 --}}}
 --
---but this is not compulsory for this exercise.  Correctly formatted files
---for this exercise are "nn_small.txt" and "nn_data.txt" in this directory.
+-- but this is not compulsory for this exercise.  Correctly formatted files
+-- for this exercise are "nn_small.txt" and "nn_data.txt" in this directory.
 --
 --}}}
+
+--{{{  running the program
 --
+-- The starter processes given below expect input from the standard keyboard
+-- channel.  On Unix systems, this can be done through redirection of standard
+-- input to the source file:
+--
+--   ./q6 < nn_small.txt
+--
+-- There is no user-interaction is this system.  Its output can be saved by
+-- redirection of (Unix) standard output:
+--
+--   ./q6 < nn_small.txt > small_results.txt
+--
+-- Those using the Transterpreter will need to do a little more.
+--
+--}}}
+
 --{{{  the solution
 --
 --{{{  network diagram
--->   _______________________________________________________
--->  |                                                       |
--->  |    _________________                 ___________      |
--->  |   |                 |       a       |           |     |  keyboard
--->  |   |                 |-------<-------| read.data |------------<-----
--->  |   |                 |               |___________|     |
--->  |   |                 |                                 |   error
--->  |   |  collate.marks  |                               --------->-----
--->  |   |                 |                ___________      |
--->  |   |                 |       b       |           |     |   screen
--->  |   |                 |------->-------|  display  |-----|------>-----
--->  |   |_________________|               |___________|     |
--->  |                                                    q6 |
--->  |_______________________________________________________|
--->
+--    _______________________________________________________
+--   |                                                       |
+--   |    _________________                 ___________      |
+--   |   |                 |       a       |           |     |  keyboard
+--   |   |                 |-------<-------| read.data |------------<-----
+--   |   |                 |               |___________|     |
+--   |   |                 |                                 |   error
+--   |   |  collate.marks  |                                 |
+--   |   |                 |                ___________      |
+--   |   |                 |       b       |           |     |   screen
+--   |   |                 |------->-------|  display  |-----|------>-----
+--   |   |_________________|               |___________|     |
+--   |                                                    q6 |
+--   |_______________________________________________________|
+--
+-- The 'a' and 'b' channels carry the 'NAME.NUMBER' protocol, defined below. 
+-- The 'read.data' process reads raw data nytes from the file (delivered to
+-- keyboard' by redirection of UNIX standard input), parses it and outputs
+-- structured (i.e. 'NAME.NUMBER') messages.  The display process inputs such
+-- messages and formats them for tabuating on the screen (which may be
+-- redirected to an output file).
+--
+-- The 'read.data' and 'display' processes are given below, together with a
+-- simple network connecting them directly together.  So, this starter system
+-- can be compiled and run.  Your task is to implement the 'collate.marks'
+-- process that does the main work and bind it into the network shown above.
+--
+-- Hint: implement 'collate.marks' as a pipeline of cells, each of which takes
+-- responsibility for an individual name.  Recall the `sort pump'.]
+-- 
 --}}}
---
---The a and b channels carry the NAME.NUMBER protocol, defined below.  The
---read.data process reads raw data from the file (to which the keyboard
---standard input has been redirected), parses it and outputs structured
---messages.  The display process inputs such messages and formats them for
---tabuating on the screen (or redirected output file).
---
---The read.data and display processes are given below, together with a simple
---network that connects them directly together.  This system can be compiled
---and run.  Your task is to implement the collate.marks process that does
---the main work and bind it into the network shown above.
---
---[Hint: implement collate.marks as a pipeline of cells, each of which takes
---responsibility for an individual name.  Recall the `sort pump'.]
 --
 --{{{  useful routines
 --
---String-handling routines are available in "string.occ" for making, copying
---and comparing strings.  This file is part of the (#USE) "course.lib" and
---is documented in the "libsrc" directory.  Check out the documentation within
---"string.occ", in particular for its definition of a string.  The routines
---most useful for this exercise are:
+-- Crude string-handling routines for making, copying, comparing and printing
+-- strings' are part of the (#INCLUDEd) course module.  Their source file is
+-- string.occ" in the "modules/course/libsrc" directory.
 --
--->  PROC make.string ([]BYTE a,  VAL INT length)
--->  PROC copy.string (VAL []BYTE a, []BYTE b)
--->  BOOL FUNCTION equal.string (VAL []BYTE a, b)
--->  INT FUNCTION compare.string (VAL []BYTE a, b)
+-- For these routines, a `string' is the first segment of an array of bytes,
+-- excluding an optional sequence of ASCII nulls that pad out unused space.
+-- This is a simple attempt at managing variable length strings (up to a
+-- maximium size).  For classical occam, this is good enough.  For occam-pi,
+-- mobiles give us dynamically sized and allocated arrays (as in Java) and
+-- would be much better for representing strings.  Another time.
 --
---where the last one returns VAL INTs string.less, string.same or string.more,
---as defined in the (#INCLUDE) "consts.inc" file, which is in the "libsrc"
---directory.
+-- The routines most useful for this exercise are:
 --
---}}}
+--   PROC make.string ([]BYTE a,  VAL INT length)
+--   PROC copy.string (VAL []BYTE a, []BYTE b)
+--   BOOL FUNCTION equal.string (VAL []BYTE a, b)
+--   INT FUNCTION compare.string (VAL []BYTE a, b)
+--   PROC write.string (VAL []BYTE a, VAL INT field, CHAN BYTE out!)
+--
+-- where 'compare.string' returns VAL INTs 'string.less', 'string.same' or
+-- string.more', which are defined VALs in the course module.  Of course,
+-- we don't need to know their actual values.
+--
+-- Check out the (HTML) documentation for the "course" library module.
 --
 --}}}
 --
 --}}}
 
---{{{  VAL INTs max.diff.names and max.name.length
-VAL INT max.diff.names IS 20:
-VAL INT max.name.length IS 16:
---}}}
 
---{{{  PROTOCOL NAME.NUMBER
+#INCLUDE "course.module"
+
+
+--*{ max The following maxima are needed for classical occam (data and
+--   process) arrays.  [@em Note: in occam-pi, data and process arrays can
+--   be allocated dynamically (i.e. they can grow), so these maxima
+--   are not needed.  This is left for a later exercise.]
+
+VAL INT max.diff.names IS 20:     --* maximum number of different names
+VAL INT max.name.length IS 16:    --* maximum name length
+--*}
+
+
+--* Structured data stream: zero or more [@code string] messages,
+--  followed by a single [@code poison] as the final message.
 PROTOCOL NAME.NUMBER
   CASE
-    string; INT::[]BYTE; INT  -- string; name; number
-    poison                    -- sent, and only sent, as the last message
+    --* Data pair
+    -- @item - Name
+    -- @item - Mark
+    string; INT::[]BYTE; INT
+    --* Sent, and only sent, as the last message
+    poison
 :
 --}}}
 
---{{{  PROC read.data (CHAN BYTE in?, CHAN NAME.NUMBER out!)
+
+--* This process inputs a text data file on channel [@ref in] and outputs
+--  processed information on channel [@ref out] using the [@ref NAME.NUMBER]
+--  protocol.  To run this program, direct the text file to (Unix) standard
+--  input - e.g. "[@text ./a6 < nn_data.txt]".
+--
+--  This process assumes that data is correctly formatted as an alternating
+--  sequence of names with associated (integer) marks.
+--
+--  Incorrectly formatted input data will result in premature 'poison' being
+--  output (after the last correct <name> <mark> pair).
+--
+--  Following input of a correctly formatted text file, this outputs 'poison'
+--  as its last action.
+--
+--  It uses routines "file.in.token" and "file.in.int" from the course module,
+--  documented in the usual place.
+--
+-- @param in Source text file
+-- @param out Processed [@ref NAME.NUMBER] data
+--
 PROC read.data (CHAN BYTE in?, CHAN NAME.NUMBER out!)
-  --{{{  COMMENT documentation
-  --
-  --This inputs the text data file on channel "in" and outputs on channel
-  --"out" the NAME.NUMBER protocol.
-  --
-  --It assumes that data is correctly formatted as an alternating sequence
-  --of names with associated (integer) marks.
-  --
-  --Incorrectly formatted input data will result in premature "poison" being
-  --output (after the last correct <string> <number> pair).
-  --
-  --It uses routines from the "file_in.occ" library.  This file is part of
-  --the standard (#USE) "course.lib" and is documented in the "libsrc"
-  --directory.
-  --
-  --}}}
-  --{{{  variables
+  --{{{  state variables
   [max.name.length] BYTE name:
   INT name.length:
-  INT mark:
-  BOOL ok:
+  INITIAL BOOL ok IS TRUE:
   --}}}
   SEQ
     file.in.token (name, name.length, max.name.length, in?)
-    ok := TRUE
     WHILE (name.length > 0) AND ok
+      INT mark:
       SEQ
         file.in.int (mark, max.name.length, ok, in?)
         IF
@@ -190,25 +234,17 @@ PROC read.data (CHAN BYTE in?, CHAN NAME.NUMBER out!)
             SKIP
     out ! poison
 :
---}}}
 
---{{{  PROC display (CHAN NAME.NUMBER in?, CHAN BYTE out!)
+
+--* This process first prints suitable "Name" and "Mark" table headings.
+--  Then, it processes its incoming name-mark pairs ([@ref NAME.NUMBER])
+--  tabulating them under the headings in plain (ASCII) text.
+--  It terminates when [@code poison] is received.
+--  
+-- @param in Processed [@ref NAME.NUMBER] data
+-- @param out Plain (ASCII) text
+--
 PROC display (CHAN NAME.NUMBER in?, CHAN BYTE out!)
-  --{{{  COMMENT documentation
-  --
-  --This inputs names and numbers using the NAME.NUMBER protocol, tabulating
-  --each pair neatly in plain (BYTE) text.
-  --
-  --It uses string-handling routines from "string.occ" for printing strings
-  --that are embedded left-justified in a BYTE array in a left-justified
-  --manner.  This file is part of the standard (#USE) "course.lib" and is
-  --documented in the "libsrc" directory.
-  --
-  --In fact, this is not strictly needed -- we *can* use out.string as normal,
-  --but applied just to the initial slice of the array that contains the
-  --desired string.  See the COMMENT fold below.
-  --
-  --}}}
   SEQ
     --{{{  table headings
     SEQ
@@ -221,46 +257,48 @@ PROC display (CHAN NAME.NUMBER in?, CHAN BYTE out!)
       out.string ("*c*n*n", 0, out!)
     --}}}
     --{{{  main cycle
-    BOOL ok:
-    SEQ
-      ok := TRUE
-      WHILE ok
-        in? CASE
-          --{{{  string; name; number
-          --{{{  variables
-          [max.name.length] BYTE name:
-          INT name.length:
-          INT mark:
-          --}}}
-          string; name.length::name; mark
-            SEQ
-              make.string (name, name.length)
-              write.string (name, max.name.length, out!)
-              --{{{  COMMENT this is equivalent to the above two lines
-              --out.string ([name FROM 0 FOR name.length], max.name.length, out!)
-              --}}}
-              out.int (mark, max.name.length, out!)
-              out.string ("*c*n", 0, out!)
-          --}}}
-          --{{{  poison
-          poison
+    INITIAL BOOL ok IS TRUE:
+    WHILE ok
+      in? CASE
+        --{{{  string; name; number
+        --{{{  variables
+        [max.name.length] BYTE name:
+        INT name.length:
+        INT mark:
+        --}}}
+        string; name.length::name; mark
+          SEQ
+            make.string (name, name.length)
+            write.string (name, max.name.length, out!)
+            --{{{  COMMENT this is equivalent to the above two lines
+            --out.string ([name FROM 0 FOR name.length], max.name.length, out!)
+            --}}}
+            out.int (mark, max.name.length, out!)
+            out.string ("*c*n", 0, out!)
+        --}}}
+        --{{{  poison
+        poison
+          SEQ
+            out.string ("*c*n", 0, out!)
             ok := FALSE
-          --}}}
-    --}}}
-    --{{{  finish neatly
-    out.string ("*c*n", 0, out!)
+        --}}}
     --}}}
 :
---}}}
 
---{{{  PROC q6 (CHAN BYTE keyboard?, screen!, error!)
-PROC q6 (CHAN BYTE keyboard?, screen!, error!)
-  --{{{  network (needs extending)
+
+--* The main process.
+--
+--  Run this program by redirecting standard input and output to/from
+--  text files - e.g. "[@text ./q6 < nn_data.txt > my_results.txt]".
+--
+--  [Transterpreter users may have a problem here!]
+--
+-- @param keyboard The standard input channel (stdin, in Unix-speak)
+-- @param screen The standard output channel (stdout, in Unix-speak)
+--
+PROC q6 (CHAN BYTE keyboard?, screen!)
   CHAN NAME.NUMBER a:
   PAR
     read.data (keyboard?, a!)
     display (a?, screen!)
-  --}}}
 :
---}}}
-
