@@ -106,8 +106,9 @@ PROC print.stream (VAL INT delay, CHAN INT in?, CHAN BYTE out!)
 --
 -- @param keyboard The standard input channel (stdin, in Unix-speak)
 -- @param screen The standard output channel (stdout, in Unix-speak)
+-- @param error The standard error channel (stderr, in Unix-speak)
 --
-PROC q2 (CHAN BYTE keyboard?, screen!)
+PROC q2 (CHAN BYTE keyboard?, screen!, error!)
 
   --{{{  COMMENT picture
   --

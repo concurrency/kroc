@@ -295,8 +295,9 @@ PROC display (CHAN NAME.NUMBER in?, CHAN BYTE out!)
 --
 -- @param keyboard The standard input channel (stdin, in Unix-speak)
 -- @param screen The standard output channel (stdout, in Unix-speak)
+-- @param error The standard error channel (stderr, in Unix-speak)
 --
-PROC q6 (CHAN BYTE keyboard?, screen!)
+PROC q6 (CHAN BYTE keyboard?, screen!, error!)
   CHAN NAME.NUMBER a:
   PAR
     read.data (keyboard?, a!)

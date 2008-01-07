@@ -150,8 +150,9 @@ PROC secure.college ()
 --
 -- @param keyboard The standard input channel (stdin, in Unix-speak)
 -- @param screen The standard output channel (stdout, in Unix-speak)
+-- @param error The standard error channel (stderr, in Unix-speak)
 --
-PROC q7 (CHAN BYTE keyboard?, screen!)
+PROC q7 (CHAN BYTE keyboard?, screen!, error!)
   --{{{  
 
   -- You don't have to use any of the following code ...
