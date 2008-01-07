@@ -161,7 +161,8 @@ PROC bell.plex ()                -- needs some parameters
 --
 -- @param keyboard The standard input channel (stdin, in Unix-speak)
 -- @param screen The standard output channel (stdout, in Unix-speak)
+-- @param error The standard error channel (stderr, in Unix-speak)
 --
-PROC q5 (CHAN BYTE keyboard?, screen!)
+PROC q5 (CHAN BYTE keyboard?, screen!, error!)
   SKIP  -- replace with your own code
 :
