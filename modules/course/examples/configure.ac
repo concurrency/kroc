@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl
 
 AC_REVISION($Revision: 1.1 $)
-AC_INIT(README)
+AC_INIT(README.txt)
 AC_PREREQ(2.12)
 
 dnl for automake 1.1 
