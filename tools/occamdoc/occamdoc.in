@@ -484,7 +484,7 @@ def parse_file(f, include_private = False, include_undocumented = False):
 	group_end_re = re.compile(r'^\s*--\*}+')
 	# This only finds top-level declarations, and won't find tags or other
 	# hard-to-identify things.
-	likely_def_re = re.compile(r'^(?:PROC TYPE|(?:REC |RECURSIVE |INLINE )*PROC|[^ -].* (?:REC | RECURSIVE| INLINE )*FUNCTION|(?:REC |RECURSIVE |)*(?:CHAN|DATA) TYPE|PROTOCOL) ')
+	likely_def_re = re.compile(r'^(?:PROC TYPE|[^ -].* (?:REC | RECURSIVE| INLINE )*FUNCTION|(?:REC |RECURSIVE |INLINE )*(?:PROC|(?:CHAN|DATA) TYPE)|PROTOCOL) ')
 
 	# Mangle the filename into a reasonable ID for the file.
 	basename = re.sub(r'^.*/', '', f.filename)
