@@ -2,6 +2,7 @@
 #
 #	Standard interface for compiling occam-pi libraries and programs
 #	Copyright (C) 2007 University of Kent
+#	Copyright (C) 2008 Adam Sampson <ats@offog.org>
 #
 #	This program is free software; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -19,11 +20,6 @@
 #
 
 import sys, os, getopt, re
-try:
-	import subprocess
-except:
-	# Python 2.3 or earlier
-	subprocess = None
 
 VERSION = "$Revision$"[11:-2]
 CONTACT = "kroc-bugs@kent.ac.uk"
@@ -51,6 +47,16 @@ def warn(*s):
 def die(*s):
 	warn(*s)
 	sys.exit(1)
+
+def run_command(cmd):
+	"""Run a program with arguments and return the exit code.
+	Equivalent to subprocess.call, but works on Python 2.3 when os.spawnvp
+	is available."""
+	try:
+		import subprocess
+		return subprocess.call(cmd)
+	except ImportError:
+		return os.spawnvp(P.WAIT, cmd[0], cmd)
 
 def safe_sorted(l):
 	l = l[:]
@@ -80,10 +86,7 @@ def run(cmd):
 	"""Run a command, and check that it succeeded."""
 	if verbose:
 		warn("Running command: ", " ".join(cmd))
-	if subprocess is None:
-		rc = os.spawnvp(os.P_WAIT, cmd[0], cmd)
-	else:
-		rc = subprocess.call(cmd)
+	rc = run_command(cmd)
 	if rc != 0:
 		die("Command failed: ", " ".join(cmd))
 
