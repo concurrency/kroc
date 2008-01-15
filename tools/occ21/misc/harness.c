@@ -1500,7 +1500,7 @@ PRIVATE arg_control optzed ( const char *opt, const char *arg, void *data )
 		break;
 	/*}}}*/
 	/*{{{  ZMEM*/
-	#if defined(TARGET_OS_IS_UNIX)
+	#if defined(TARGET_OS_IS_UNIX) && !defined(WIN32)
 	case 'M':
 		memstats = TRUE;
 		break;
