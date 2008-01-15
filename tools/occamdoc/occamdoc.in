@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # occamdoc: extract OccamDoc documentation from occam-pi source files.
-# Adam Sampson <ats@offog.org>
 #
-# Copyright 2006, 2007 University of Kent, Canterbury, UK
+# Copyright (C) 2006, 2007 University of Kent, Canterbury, UK
+# Copyright (C) 2008 Adam Sampson <ats@offog.org>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,16 @@ if hasattr(sys, "frozen") and sys.frozen == "console_exe":
 else:
 	DATADIR = "@OCCAMDOCDATA@"
 	XSLTPROC = "@XSLTPROC@"
+
+def run_command(cmd):
+	"""Run a program with arguments and return the exit code.
+	Equivalent to subprocess.call, but works on Python 2.3 when os.spawnvp
+	is available."""
+	try:
+		import subprocess
+		return subprocess.call(cmd)
+	except ImportError:
+		return os.spawnvp(P.WAIT, cmd[0], cmd)
 
 class OccamDocException(Exception):
 	"""Problem found while parsing occam-pi source."""
@@ -986,13 +996,8 @@ def do_xslt(input, output, xslt, params = {}):
 		DATADIR + "/" + xslt,
 		input
 	]
-	try:
-		rc = os.spawnvp(os.P_WAIT, args[0], args)
-	except AttributeError:
-		# Python on Windows doesn't have spawnvp.
-		import subprocess
-		rc = subprocess.call(args)
-	if rc != 0:
+
+	if run_command(args) != 0:
 		raise OccamDocException("xsltproc failed, return code " + str(rc))
 
 def copy_file(filename, output_dir):
