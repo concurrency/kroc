@@ -10,10 +10,6 @@
 -- Do not make changes to this file unless you know what you are doing--modify
 -- the SWIG interface file instead.
 -- ----------------------------------------------------------------------------- 
-
--- This tells the slinker and the transterpreter which dynamic lib to load.
-#PRAGMA COMMENT "(spragma (dynlib occGL))"
-
 #IF NOT DEFINED (GUARD.occGL)
 #DEFINE GUARD.occGL
 --* C constant turned into a VAL INT
