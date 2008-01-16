@@ -11,7 +11,10 @@ dnl for automake 1.1
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE(occamdoc, 4.0)
 
-AC_CHECK_PROG(XSLTPROC,xsltproc,xsltproc)
+AC_CHECK_PROG(XSLTPROC, xsltproc, xsltproc, no)
+if test "$XSLTPROC" = "no"; then
+	AC_MSG_ERROR([xsltproc is required])
+fi
 AC_SUBST(XSLTPROC)
 
 AM_PROG_CC_STDC
