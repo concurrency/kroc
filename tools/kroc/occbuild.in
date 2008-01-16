@@ -141,7 +141,7 @@ def make_shared(library, objs, extra_opts = []):
 	else:
 		opts = ["-shared"]
 
-	run(programs["cc"] + linker_opts + opts + ["-o", library] + objs + extra_opts)
+	run(programs["cc"] + opts + ["-o", library] + objs + linker_opts + extra_opts)
 
 def make_module(name, custom):
 	"""Generate a .module file, calling the provided function to fill in
