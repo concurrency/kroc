@@ -18,10 +18,10 @@
  */
 
 #include <stdio.h>
-#include <SDL.h>
+#include "SDL_wrap.h"
 
 /* C.occ.SDL.make.surface (VAL [][]INT pixels, RESULT SDL.Surface surface) */
-void _occ_SDL_make_surface (int w[])
+DLLPREFIX void _occ_SDL_make_surface (int w[])
 {
 	int *pixels = (int *) w[0];
 	int height = w[1], width = w[2];
