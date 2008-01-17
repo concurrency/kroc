@@ -314,7 +314,7 @@ class KRoCToolchain:
 			install(file, bindir, True)
 
 	def install_examples(self, package, file):
-		examplesdir = "%s/%s" % (get_install_dir("@prefix@/lib/kroc/examples", "/lib/kroc/examples"), package)
+		examplesdir = "%s/%s" % (get_install_dir("@KROC_EXAMPLESDIR@", "/lib/kroc/examples"), package)
 
 		(base, ext) = split_ext(file)
 		if ext == "":
@@ -389,8 +389,8 @@ class TVMToolchain:
 		os.chmod(base, 0755)
 
 	def install(self, file):
-		bindir = get_install_dir("@bindir@", "/bin")
-		tvmdir = get_install_dir("@libdir@", "/lib") + "/transterpreter"
+		bindir = get_install_dir("@TVM_BINDIR@", "/bin")
+		tvmdir = get_install_dir("@TVM_LIBDIR@", "/lib/transterpreter")
 
 		(base, ext) = split_ext(file)
 		if ext == "lib":
@@ -408,7 +408,7 @@ class TVMToolchain:
 			install(base + ".tbc", bindir, False)
 
 	def install_examples(self, package, file):
-		examplesdir = "%s/transterpreter/examples/%s" % (get_install_dir("@libdir@", "/lib"), package)
+		examplesdir = "%s/%s" % (get_install_dir("@TVM_EXAMPLESDIR@", "/lib/transterpreter/examples"), package)
 
 		(base, ext) = split_ext(file)
 		if ext == "":
