@@ -19,7 +19,7 @@ VAL INT N.ROBOTS IS 32:
 --      v                                v                                  |          |
 --  +--------+            +-------+  +-------+  +-------+    +-------+  +-------+      |
 --  |        |            |       |  |       |  |       |    |       |  |       |      |
---  | mini.  |----------->| scene |->| head  |->| drone |..>.| drone |->| tail  |------+
+--  | mini.  |----------->| scene |->| head  |->| drone |..>.| drone |->| end   |------+
 --  | raster |            |       |  |       |  |       |    |       |  |       |
 --  +--------+            +-------+  +-------+  +-------+    +-------+  +-------+
 --    |   ^                              ^        ^   |        ^   |
@@ -425,7 +425,7 @@ PROC head (CHAN RASTER in.1?, in.2?, out!, CHAN INT freeze?)
 --  @param out.1 Send raster for next phase
 --  @param out.2 Send raster completed raster
 --
-PROC tail (CHAN RASTER in?, out.1!, out.2!)
+PROC end (CHAN RASTER in?, out.1!, out.2!)
 
   WHILE TRUE
     RASTER raster:
@@ -469,9 +469,9 @@ PROC place (INT x, y, [][]INT raster, INT seed)
 :
 
 
---* the main process (Transterpreter needs an error! channel as well)
+--* the main process
 --
-PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
+PROC main (CHAN BYTE keyboard?, screen!, error!)
 
   VAL INT SECOND IS 1000000:
   VAL INT DELAY IS SECOND / 40:
@@ -486,19 +486,17 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
   
   SEQ
 
-    CLAIM screen!
-      SEQ
-        out.string ("Robot (v3), copyleft (2007) D.C.Wood and P.H.Welch*c*n",
-                    0, screen!)
-        out.string ("==================================================*c*n*n",
-                    0, screen!)
-        ask.bool ("Two types of robot? ", mixed, keyboard?, screen!)
-        IF
-          NOT mixed
-            WHILE NOT ((version = 1) OR (version = 2))
-              ask.int ("Version number (1 or 2)? ", version, 1, keyboard?, screen!)
-          TRUE
-            SKIP
+    out.string ("Robot (v3), copyleft (2007) D.C.Wood and P.H.Welch*c*n",
+                0, screen!)
+    out.string ("==================================================*c*n*n",
+                0, screen!)
+    ask.bool ("Two types of robot? ", mixed, keyboard?, screen!)
+    IF
+      NOT mixed
+        WHILE NOT ((version = 1) OR (version = 2))
+          ask.int ("Version number (1 or 2)? ", version, 1, keyboard?, screen!)
+      TRUE
+        SKIP
 
     RASTER raster:
     SEQ
@@ -573,6 +571,6 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
             version = 2
               brain.2 (s[i], h[i]!, j[i]?)
 
-      tail (d[N.ROBOTS]?, c!, return!)
+      end (d[N.ROBOTS]?, c!, return!)
 
 :
