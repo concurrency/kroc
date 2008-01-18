@@ -60,8 +60,7 @@ __EXTERN_VARIABLE(word _msbytes)		/* occam mobilespace size */
 __EXTERN_VARIABLE(int _occam_tlp_iface)		/* translator added description of the top-level process */
 __EXTERN_VARIABLE(int _occam_errormode)		/* non-zero for STOP errormode */
 
-static byte *ws, *vs;
-static byte *ms;
+static byte *ws, *vs, *ms;
 
 static word kse_ptrs[3];	/* indirect top-level params for top-level SUSPEND */
 
@@ -214,7 +213,6 @@ void _occ_enter (void)
 		Wptr[wspptr++] = (word) vs;
 	}
 
-#if defined(MOBILES)
 	if (_msbytes) {
 		ms = (byte *) dmem_alloc (_msbytes);
 		#if defined(DM_DEBUG) && (DM_DEBUG == 1)
@@ -232,7 +230,6 @@ void _occ_enter (void)
 	#ifdef DEBUG_KERNEL
 	DEBUG_PRINT ("KRoC: passing mobilespace pointer to application (%p for %d words)\n", ms, _msbytes >> 2);
 	#endif
-#endif /* MOBILES */
 
 	/* if the FORK barrier is required, add it */
 	if (_occam_tlp_iface & TLP_FORK_BARRIER) {
@@ -257,19 +254,15 @@ void _occ_enter (void)
 	Bptr = err_workspace ();
 	Fptr[Link] = (word) Bptr;
 	Bptr[Link] = NotProcess_p;
-	#ifdef PROCESS_PRIORITY
 	Fptr[Priofinity] = 0;
 	Bptr[Priofinity] = 0;
-	#endif /* PROCESS_PRIORITY */
 
 	if (using_keyboard) {
 		/* place keyboard process on the run queue */
-		Bptr[Link] 	= (word) kbd_workspace ();
-		Bptr 		= (word *) Bptr[Link];
-		Bptr[Link]	= NotProcess_p;
-		#ifdef PROCESS_PRIORITY
-		Bptr[Priofinity] = 0;
-		#endif /* PROCESS_PRIORITY */
+		Bptr[Link] 		= (word) kbd_workspace ();
+		Bptr 			= (word *) Bptr[Link];
+		Bptr[Link]		= NotProcess_p;
+		Bptr[Priofinity]	= 0;
 	}
 
 	#ifdef DEBUG_KERNEL
@@ -287,11 +280,9 @@ void _occ_enter (void)
  */
 int _occ_exit (void)
 {
-#if defined(MOBILES)
 	if (ms) {
 		dmem_release (ms);
 	}
-#endif /* MOBILES */
 	
 	dmem_release (ws);
 
