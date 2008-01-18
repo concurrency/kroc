@@ -148,6 +148,7 @@ static void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
 	xregs[1] = 5; /* REG_EBX */
 	xregs[2] = 6; /* REG_ECX */
 	xregs[3] = 7; /* REG_EDX */
+	#if 0 /* this code is just a duplicate of i386 */
 	for (i = (r_in - 1); i >= 0; i--) {
 		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 			/* some things still require the operands to be pushed.. */
@@ -282,6 +283,8 @@ static void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
 			}
 		}
 	}
+
+	#endif
 	return;
 }
 /*}}}*/

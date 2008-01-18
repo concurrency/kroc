@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 #	Script to various CCSP headers using special comments in sched.c
-#	Copyright (C) 2007 Carl Ritson <cgr@kent.ac.uk>
+#	Copyright (C) 2007, 2008 Carl Ritson <cgr@kent.ac.uk>
 #
 #	This program is free software; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -21,18 +21,6 @@
 import sys, os, re
 
 prog_name 	= "make-header.py"
-call_type 	= {
-	"JUMP"	: "KCALL_JUMP",
-	"LCR" 	: "KCALL_CALL",
-	"RR"	: "KCALL_REGIP_JUMP",
-	"SR"	: "KCALL_STOREIP_JUMP",
-}
-input_type	= {
-	"0"	: "0",
-	"REG"	: "ARGS_IN_REGS",
-	"STACK"	: "ARGS_ON_STACK",
-}
-output_type	= input_type
 
 class HeaderWriter:
 	def __init__(self, fh):
@@ -123,7 +111,7 @@ def load_defines(defines, fn):
 
 def load_symbols(calls, symbols, fn):
 	markup_re = re.compile(r'^\s*\*\s*@(\S+)\s*:\s*(.*)')
-	params_re = re.compile(r'(.*)\s*\(\s*(\d+)\s*\)')
+	params_re = re.compile(r'(\d+)')
 
 	f = open(fn)
 
@@ -148,18 +136,7 @@ def load_symbols(calls, symbols, fn):
 					calls[handle] = current
 				current["handles"].extend(handles)
 			elif type in ("INPUT", "OUTPUT"):
-				params = params_re.match(data)
-				if params is not None:
-					param_type, param_count = params.group(1, 2)
-					current[type] = { 
-						"type" : param_type,
-						"count" : int(param_count)
-					}
-				else:
-					current[type] = {
-						"type" : "0",
-						"count" : 0
-					}
+				current[type] = int(data)
 			elif type in ("DEPEND", "INCOMPATIBLE"):
 				current[type] = re.split(r',\s*', data)
 			else:
@@ -244,19 +221,13 @@ def output_kitable(symbol_list, symbols, fn):
 	for name in symbol_list:
 		symbol		= symbols[name]
 		call_offset	= symbol["handles"][0]
-		input_mode	= input_type[symbol["INPUT"]["type"]]
-		call_mode	= call_type[symbol["TYPE"]]
-		output_mode	= output_type[symbol["OUTPUT"]["type"]]
 		support		= "KCALL_SUPPORTED"
 
 		f.write("\t{\n")
 		f.write("\t .call_offset  = %s,\n" 	% call_offset)
-		f.write("\t .entrypoint   = \"_%s\",\n"	% name)
-		f.write("\t .input_mode   = %s,\n"	% input_mode)
-		f.write("\t .call_mode    = %s,\n"	% call_mode)
-		f.write("\t .output_mode  = %s,\n"	% output_mode)
-		f.write("\t .input_count  = %d,\n"	% symbol["INPUT"]["count"])
-		f.write("\t .output_count = %d,\n"	% symbol["OUTPUT"]["count"])
+		f.write("\t .entrypoint   = \"%s\",\n"	% name)
+		f.write("\t .input        = %d,\n"	% symbol["INPUT"])
+		f.write("\t .output       = %d,\n"	% symbol["OUTPUT"])
 		f.write("\t .support      = %s\n"	% support)
 		f.write("\t},\n")
 	f.write("};\n")
@@ -269,30 +240,24 @@ def output_calltable(symbol_list, symbols, fn):
 	f = open(fn, "w")
 	output_header(f, fn, False)
 	
-	f.write ("#if defined(TARGET_OS_CYGWIN) || defined(TARGET_OS_DARWIN)\n")
-	f.write ("#define _DEFINE_SYMBOL(F) extern void F (void)\n")
-	f.write ("#define _USE_SYMBOL(F) F\n")
-	f.write ("#else\n")
-	f.write ("#define _DEFINE_SYMBOL(F) extern void _##F (void)\n")
-	f.write ("#define _USE_SYMBOL(F) _##F\n")
-	f.write ("#endif\n\n")
+	f.write ("#include <arch/sched_asm_inserts.h>\n")
 
 	for name in symbol_list:
 		if not symbols[name].get("unsupported"):
-			f.write("_DEFINE_SYMBOL(%s);\n" % name)
+			f.write("K_CALL_DEFINE (%s);\n" % name)
 	f.write("\n")
 	
-	f.write("void *ccsp_calltable[] = {\n")
-	for name in symbol_list:
+	f.write("static inline void build_calltable (void **table)\n")
+	f.write("{\n")
+	#f.write("void *ccsp_calltable[] = {\n")
+	for (i, name) in enumerate(symbol_list):
 		sname = name
 		if symbols[name].get("unsupported"):
 			sname = "Y_unsupported"
-		f.write("\t(void *) _USE_SYMBOL(%s), /* %s */\n" % (sname, name))
-	f.write("\tNULL\n")
-	f.write("};\n\n")
-
-	f.write("#undef _DEFINE_SYMBOL\n")
-	f.write("#undef _USE_SYMBOL\n")
+		f.write("\t/* %s */\n" % (name))
+		f.write("\ttable[% 3d] = K_CALL_PTR (%s);\n" % (i, sname))
+	#f.write("\tNULL\n")
+	f.write("}\n\n")
 
 	output_footer(f, fn)
 	f.close()
@@ -300,13 +265,9 @@ def output_calltable(symbol_list, symbols, fn):
 def gen_cif_stub(f, symbol, arch_generator):
 	name 		= symbol["name"]
 	arguments	= []
-	inputs		= ["i" + str(i) for i in range(symbol["INPUT"]["count"])]
-	outputs		= ["o" + str(i) for i in range(symbol["OUTPUT"]["count"])]
+	inputs		= ["i" + str(i) for i in range(symbol["INPUT"])]
+	outputs		= ["o" + str(i) for i in range(symbol["OUTPUT"])]
 	arguments	= inputs + outputs
-
-	if symbol.has_key("CIF"):
-		if symbol["CIF"] == "FORCE_SR":
-			symbol["TYPE"] = "SR"
 
 	f.begin_macro()
 
@@ -328,20 +289,9 @@ def gen_cif_stub(f, symbol, arch_generator):
 
 	f.indent()
 	f.line("ccsp_sched_t *sched = ccsp_scheduler;")
-	f.line("word *stack = (word *) sched->stack;")
-	if symbol["INPUT"]["type"] == "STACK":
-		f.line("stack -= %d;" % len(inputs))
-		for (n, i) in enumerate(inputs):
-			f.line("stack[%d] = (word) (%s);" % (n, i))
 
 	arch_generator(f, symbol, inputs, outputs)
 
-	if symbol["TYPE"] == "JUMP":
-		f.line("ccsp_cif_noreturn ();")
-	elif symbol["OUTPUT"]["type"] == "STACK":
-		for (n, o) in enumerate(outputs):
-			f.line("*((word *) (&(%s))) = stack[%d];" % (o, n))
-		f.line("__asm__ __volatile__ (\"\" : : : \"memory\");")
 	f.outdent()
 
 	f.begin_line()
@@ -456,89 +406,71 @@ def gen_i386_header(f):
 	f.outdent()
 
 def gen_i386_cif_stub(f, symbol, inputs, outputs):
-	regs	= [ "a", "b", "c" ]
-	cregs	= [ "eax", "ebx", "ecx", "edx" ]
+	regs	= [ "a", "d", "c" ]
+	cregs	= [ "eax", "edx", "ecx" ]
 	in_regs = 0
 	out_regs= 0
-	arg0	= "wptr"
 
-	if symbol["INPUT"]["type"] == "REG":
-		in_regs = len(inputs)
-	if symbol["OUTPUT"]["type"] == "REG":
-		out_regs = len(outputs)
+	in_regs = len(inputs)
+	out_regs = len(outputs)
+
+	if in_regs > 1:
+		in_regs = 1
 	
-	s_arg	= in_regs + 2
 	dummies	= []
-	if out_regs < in_regs:
+	if out_regs < 3:
 		f.line("{")
 		f.indent()
-		dummies = ["dummy" + str(i) for i in range(out_regs, in_regs)]
+		dummies = ["dummy" + str(i) for i in range(out_regs, 3)]
 		for dummy in dummies:
 			f.line("word %s;" % dummy)
+
+	if len(inputs) > 1:
+		for (n, i) in enumerate(inputs):
+			if n >= 1:
+				f.line("sched->cparam[%d] = (word) (%s);" % ((n - 1), i))
 	
 	f.line("__asm__ __volatile__ (\"\\n\"")
 	f.indent()
 
 	f.begin_asm()
+	f.line("\tpushl %%ebx")
 	f.line("\tpushl %%ebp")
-	f.line("\tmovl %0, %%ebp")
-	f.line("\tmovl %%esp, -28(%%ebp)")
+	f.line("\tmovl %%esp, -28(%%ecx)")
 	f.line("\tmovl %%edi, %%esp")
 
-	type		= symbol["TYPE"]
-	jump_offset	= 4 * symbol["offset"]
+	f.line("\tcall *%d(%%%%edx)" % ((8 * 4) + (4 * symbol["offset"])))
 	
-	if type == "LCR":
-		f.line("\tcall *%d(%%%%esi)" % jump_offset)
-	elif type == "SR":
-		f.line("\tmovl $0f, -4(%%ebp)")
-		f.line("\tjmp *%d(%%%%esi)" % jump_offset)
-		f.line("0:")
-	elif type == "RR":
-		f.line("\tmovl $0f, %%%%%s" % cregs[in_regs])
-		f.line("\tjmp *%d(%%%%esi)" % jump_offset)
-		f.line("0:")
-	elif type == "JUMP":
-		f.line("\tjmp *%d(%%%%esi)" % jump_offset)
-	else:
-		die("unknown call type: " + type)
-	
-	if symbol["OUTPUT"]["type"] == "STACK":
-		f.line("\tmovl %%esp, %%edi")
-
 	f.line("\tmovl -28(%%ebp), %%esp")
-	f.line("\tmovl %%ebp, %0")
+	f.line("\tmovl %%ebp, %%edi")
 	f.line("\tpopl %%ebp")
+	f.line("\tpopl %%ebx")
 	f.end_asm()
 
 	f.begin_line()
-	f.add(": \"=d\" (wptr), \"=S\" (sched), \"=D\" (stack)")
-	if symbol["OUTPUT"]["type"] == "REG":
-		for (idx, name) in enumerate(outputs + dummies):
-			f.add(", \"=%s\" (%s)" % (regs[idx], name))
-	else:
-		for (idx, name) in enumerate(dummies):
-			f.add(", \"=%s\" (%s)" % (regs[idx], name))
+	f.add(": \"=D\" (wptr), \"=S\" (sched)")
+	for (idx, name) in enumerate(outputs + dummies):
+		f.add(", \"=%s\" (%s)" % (regs[idx], name))
 	f.end_line()
 
 	f.begin_line()
-	f.add(": \"0\" (wptr), \"1\" (sched), \"2\" (stack)")
-	if symbol["INPUT"]["type"] == "REG":
-		for (idx, name) in enumerate(inputs):
-			f.add(", \"%d\" (%s)" % (idx + 3, name))
+	f.add(": \"0\" (sched->stack), \"3\" (sched), \"4\" (wptr)")
+	for (idx, name) in enumerate(inputs):
+		if idx < in_regs:
+			f.add(", \"%d\" (%s)" % (idx + 2, name))
 	f.end_line()
 
 	f.begin_line()
 	f.add(": \"cc\", \"memory\"")
-	for (idx, reg) in enumerate(cregs):
-		if (idx >= in_regs) and (idx >= out_regs) and (cregs[idx] != "edx"):
-			f.add(", \"%s\"" % cregs[idx])
+	#for (idx, reg) in enumerate(cregs):
+	#	if (idx >= in_regs) and (idx >= out_regs):
+	#		f.add(", \"%s\"" % cregs[idx])
 	f.end_line()
 
 	f.outdent()
 	f.line(");")
 
-	if out_regs < in_regs:
+	if len(dummies) > 0:
 		f.outdent()
 		f.line("}")
 

@@ -43,6 +43,7 @@
 	#include <pthread.h>
 #endif
 
+#include <compiler.h>
 #include <inlining.h>
 #include <kernel.h>
 #include <rts.h>
@@ -162,6 +163,46 @@ mwsyncglock_t 		mwaltlock 			CACHELINE_ALIGN;
 #endif
 /*}}}*/
 
+/*{{{  architecture independent kernel call macros */
+#define K_CALL_PARAMS_0() \
+	K_CALL_HEADER
+#define K_CALL_PARAMS_1(A) \
+	K_CALL_HEADER \
+	do { \
+		(A) = (typeof((A))) K_CALL_PARAM(0); \
+	} while (0)
+#define K_CALL_PARAMS_2(A,B) \
+	K_CALL_HEADER \
+	do { \
+		(A) = (typeof((A))) K_CALL_PARAM(0); \
+		(B) = (typeof((B))) K_CALL_PARAM(1); \
+	} while (0)
+#define K_CALL_PARAMS_3(A,B,C) \
+	K_CALL_HEADER \
+	do { \
+		(A) = (typeof((A))) K_CALL_PARAM(0); \
+		(B) = (typeof((B))) K_CALL_PARAM(1); \
+		(C) = (typeof((C))) K_CALL_PARAM(2); \
+	} while (0)
+#define K_CALL_PARAMS_4(A,B,C,D) \
+	K_CALL_HEADER \
+	do { \
+		(A) = (typeof((A))) K_CALL_PARAM(0); \
+		(B) = (typeof((B))) K_CALL_PARAM(1); \
+		(C) = (typeof((C))) K_CALL_PARAM(2); \
+		(D) = (typeof((D))) K_CALL_PARAM(3); \
+	} while (0)
+#define K_CALL_PARAMS_5(A,B,C,D,E) \
+	K_CALL_HEADER \
+	do { \
+		(A) = (typeof((A))) K_CALL_PARAM(0); \
+		(B) = (typeof((B))) K_CALL_PARAM(1); \
+		(C) = (typeof((C))) K_CALL_PARAM(2); \
+		(D) = (typeof((D))) K_CALL_PARAM(3); \
+		(E) = (typeof((E))) K_CALL_PARAM(4); \
+	} while (0)
+/*}}}*/
+
 /*{{{  compiled in flags */
 #ifdef BLOCKING_SYSCALLS
 /*{{{  int scheduler_can_do_bsyscalls (void)*/
@@ -213,6 +254,7 @@ int ccsp_use_tls (void)
 /*}}}*/
 
 /*{{{  scheduler support defines/functions */
+K_CALL_DEFINE (X_scheduler);
 /*{{{  scheduler pointer storage */
 #if defined(USE_TLS)
 static int init_local_schedulers (void) { return 0; }
@@ -426,6 +468,12 @@ static TRIVIAL void release_tqnode (sched_t *sched, tqnode_t *tn)
 static TRIVIAL void save_priofinity (sched_t *sched, word *Wptr)
 {
 	Wptr[Priofinity] = sched->priofinity;
+}
+/*}}}*/
+/*{{{  static TRIVIAL void save_return (sched_t *sched, word *Wptr, unsigned int return_address)*/
+static TRIVIAL void save_return (sched_t *sched, word *Wptr, unsigned int return_address)
+{
+	Wptr[Iptr] = (word) return_address;
 }
 /*}}}*/
 /*{{{  empty_batch(batch)*/
@@ -707,14 +755,23 @@ void schedule_batch (batch_t *batch)
 /*{{{  static TEPID void mail_process (word affinity, word *Wptr)*/
 static TEPID void mail_process (word affinity, word *Wptr)
 {
-	unsigned int n;
+	unsigned int n, targets;
 	sched_t *s;
 	
 	if (!affinity) {
 		affinity = -1; /* i.e. 0xffffffff */
 	}
-	
-	n = pick_random_bit (affinity & (att_val (&enabled_threads)));
+
+	targets = affinity & (att_val (&enabled_threads));
+	if (unlikely(!targets)) {
+		BMESSAGE (
+			"impossible affinity detected: %08x (Wptr = %p, Iptr = %p).\n", 
+			affinity, Wptr, Wptr != NULL ? (void *) Wptr[Iptr] : 0
+		);
+	        ccsp_show_last_debug_insert ();
+	        ccsp_kernel_exit (1, Wptr != NULL ? Wptr[Iptr] : 0);
+	}
+	n = pick_random_bit (targets);
 	s = schedulers[n];
 	atomic_enqueue_to_runqueue (&(s->pmail), true, Wptr);
 	weak_write_barrier ();
@@ -1259,20 +1316,6 @@ static void setup_spin (sched_t *sched)
 /*}}}*/
 /*}}}*/
 /*{{{  error handling support functions */
-/*{{{  void print_tq (void)*/
-/* print out timer queue for debugging*/
-void print_tq (sched_t *sched)
-{
-	tqnode_t *tn = sched->tq_fptr;
-
-	MESSAGE ("Timer Queue dump.\n");
-	while (tn != NULL) {
-		MESSAGE ("(Wptr = 0x%x, Wptr[Time_f] = %d, Wptr[State] = 0x%x)\n", (unsigned int)tn->wptr, tn->time, tn->wptr != NULL ? (unsigned int)tn->wptr[State] : 0);
-		tn = tn->next;
-	}
-	MESSAGE ("--- end Timer queue dump.\n");
-}
-/*}}}*/
 /*{{{  void kernel_panic(void) */
 /* kernel panic function*/
 void kernel_panic (void)
@@ -1286,7 +1329,7 @@ void kernel_panic (void)
 /*
  *	divide-by-zero handling function
  */
-void zerodiv_happened (unsigned int zerodiv_info, unsigned int zerodiv_info2, unsigned int filename_addr, unsigned int procedure_addr)
+static void zerodiv_happened (unsigned int zerodiv_info, unsigned int zerodiv_info2, unsigned int filename_addr, unsigned int procedure_addr)
 {
 	int line_num, file_num, proc_num;
 	char *div_filename, *div_procname;
@@ -1322,7 +1365,7 @@ void zerodiv_happened (unsigned int zerodiv_info, unsigned int zerodiv_info2, un
 /*
  *	overflow handling function
  */
-void overflow_happened (unsigned int overflow_info, unsigned int overflow_info2, unsigned int filename_addr, unsigned int procedure_addr)
+static void overflow_happened (unsigned int overflow_info, unsigned int overflow_info2, unsigned int filename_addr, unsigned int procedure_addr)
 {
 	static char *overflow_ops[] = { "INVALID", "add", "subtract", "multiply", "divide", "modulo", "long-add", "long-subtract", "add-constant",
 					"STOP", "long-divide", "fractional-multiply", "fp-check-int32", "fp-check-int64" };
@@ -1365,7 +1408,7 @@ void overflow_happened (unsigned int overflow_info, unsigned int overflow_info2,
 /*
  *	floating-point error handling
  **/
-void floaterr_happened (unsigned int floaterr_info, unsigned int floaterr_info2, unsigned int floaterr_fpustatus, unsigned int filename_addr, unsigned int procedure_addr)
+static void floaterr_happened (unsigned int floaterr_info, unsigned int floaterr_info2, unsigned int floaterr_fpustatus, unsigned int filename_addr, unsigned int procedure_addr)
 {
 	int line_num, file_num, proc_num;
 	char *flt_filename, *flt_procname;
@@ -1413,7 +1456,7 @@ void floaterr_happened (unsigned int floaterr_info, unsigned int floaterr_info2,
 /*}}}*/
 /*{{{  void handle_range_error (unsigned int range_info1, unsigned int range_info2, unsigned int filename_addr, unsigned int procedure_addr)*/
 /* range error handling */
-void handle_range_error (unsigned int range_info1, unsigned int range_info2, unsigned int filename_addr, unsigned int procedure_addr)
+static void handle_range_error (unsigned int range_info1, unsigned int range_info2, unsigned int filename_addr, unsigned int procedure_addr)
 {
 	static char *rangerr_ops[] = { "INVALID", "shift", "CSNGL", "CSUB0", "CCNT1", "CWORD" };
 	static int num_rangerr_ops = 6;
@@ -1453,7 +1496,7 @@ void handle_range_error (unsigned int range_info1, unsigned int range_info2, uns
 /*}}}*/
 /*{{{  void handle_seterr (unsigned int seterr_info1, unsigned int seterr_info2, unsigned int filename_addr, unsigned int procedure_addr)*/
 /* seterr error handling */
-void handle_seterr (unsigned int seterr_info1, unsigned int seterr_info2, unsigned int filename_addr, unsigned int procedure_addr)
+static void handle_seterr (unsigned int seterr_info1, unsigned int seterr_info2, unsigned int filename_addr, unsigned int procedure_addr)
 {
 	bool occam_mode = false;
 	int line_num, rt_bits;
@@ -1715,10 +1758,327 @@ void ccsp_kernel_init (void)
 
 	/* initialise run-time */
 	init_ccsp_global_t (&_ccsp);
+	build_calltable (_ccsp.calltable);
 	init_local_schedulers ();
 }
 /*}}}*/
 
+/*{{{  scheduler */
+/*{{{  void kernel_X_scheduler (void)*/
+/*
+ *	scheduler proper
+ *
+ *	This routine cannot be "call'ed" because it doesn't deal with the stack, so
+ *	it should never be called from C directly, only from assembler using a jump.
+ *	It should not be called externally anyway...
+ *	FOOTNOTE: But it is jumped to (now!) from CSPlib in ProcPar().
+ *	NOTE: [CSPlib disabled in this scheduler]
+ */
+K_CALL_DEFINE (X_scheduler)
+{
+	//fprintf (stderr, ">> S = %p, F = %p, B = %p\n", sched, BFptr, BBptr);
+
+	ENTRY_TRACE (X_scheduler, "sync=%d", att_val (&(sched->sync)));
+	
+	Wptr = NotProcess_p;
+	do {
+		if (att_val (&(sched->sync))) {
+			unsigned int sync = att_swap (&(sched->sync), 0);
+
+			#ifndef ENABLE_CPU_TIMERS
+			if (sync & SYNC_TIME) {
+				check_timer_queue (sched);
+			}
+			#endif	/* !ENABLE_CPU_TIMERS */
+			
+			while (sync & SYNC_BMAIL) {
+				batch_t *batch = (batch_t *) atomic_dequeue_from_runqueue (&(sched->bmail), false);
+				if (batch != NULL) {
+					push_batch (sched, batch->priofinity, batch);
+				} else {
+					sync &= ~SYNC_BMAIL;
+				}
+			}
+			
+			while (sync & SYNC_PMAIL) {
+				word *ptr = (word *) atomic_dequeue_from_runqueue (&(sched->pmail), true);
+				if (ptr != NULL) {
+					enqueue_process (sched, ptr);
+				} else {
+					sync &= ~SYNC_PMAIL;
+				}
+			}
+
+			if (sync & SYNC_TQ) {
+				clean_timer_queue (sched);
+				check_timer_queue (sched);
+			}
+		}
+
+		if (end_of_curb (sched)) {
+			#ifdef ENABLE_CPU_TIMERS
+			check_timer_queue (sched);
+			#endif
+
+			if (sched->curb.size > BATCH_EMPTIED && !att_val (&(sched->rqstate))) {
+				word size = sched->curb.size & (~BATCH_EMPTIED);
+				sched->dispatches = calculate_dispatches (size);
+				sched->curb.size = size;
+				Wptr = dequeue_from_curb (sched);
+			} else {
+				unsigned int tmp;
+				batch_t *new_batch = NULL;
+
+				if (!(empty_batch (&(sched->curb)))) {
+					push_curb (sched);
+				}
+
+				while (new_batch == NULL && (tmp = att_val (&(sched->rqstate)))) {
+					unsigned int rq = bsf (tmp);
+					new_batch = pick_batch (sched, rq);
+				}
+
+				if (new_batch != NULL) {
+					#if !defined(RMOX_BUILD)
+					if (att_val (&(sched->mwstate)) && (tmp = att_val (&sleeping_threads))) {
+						ccsp_wake_thread (schedulers[bsf (tmp)], SYNC_WORK_BIT);
+					}
+					#endif
+					ASSERT ( clean_batch (new_batch) );
+					load_curb (sched, new_batch, false);
+					Wptr = dequeue_from_curb (sched);
+				} else if ((new_batch = migrate_some_work (sched)) != NULL) {
+					ASSERT ( dirty_batch (new_batch) );
+					SAFETY { verify_batch_integrity (new_batch); }
+					sched->loop = sched->spin;
+					load_curb (sched, new_batch, true);
+					Wptr = dequeue_from_curb (sched);
+				} else {
+					new_curb (sched);
+
+					if ((sched->loop & 0xf) == 0) {
+						clean_timer_queue (sched);
+						do_laundry (sched);
+						release_excess_memory (sched);
+					}
+
+					if (sched->loop > 0) {
+						sched->loop--;
+						idle_cpu ();
+					} else {
+						att_set_bit (&sleeping_threads, sched->index);
+						strong_read_barrier ();
+						if (sched->tq_fptr != NULL) {
+							#if !defined(RMOX_BUILD) && defined(ENABLE_CPU_TIMERS)
+							ccsp_safe_pause_timeout (sched);
+							#elif !defined(RMOX_BUILD)
+							ccsp_safe_pause (sched);
+							#else
+							/* spin... */
+							#endif
+							check_timer_queue (sched);
+						}
+						else if (!att_val (&(sched->sync))) {
+							att_set_bit (&idle_threads, sched->index);
+
+							#if !defined(RMOX_BUILD) && defined(BLOCKING_SYSCALLS)
+							if (bsyscalls_pending () > (ccsp_external_event_is_bsc () ? (ccsp_external_event_is_ready () ? 0 : 1) : 0)) {
+								ccsp_safe_pause (sched);
+							}
+							else
+							#endif
+							if (ccsp_blocked_on_external_event ()) {
+								#if !defined(RMOX_BUILD)
+								ccsp_safe_pause (sched);
+								#endif
+							} else {
+								unsigned int idle;
+
+								strong_read_barrier ();
+								idle = att_val (&idle_threads) & att_val (&sleeping_threads);
+								if (idle == att_val (&enabled_threads)) {
+									ccsp_kernel_deadlock ();
+								} else {
+									#if !defined(RMOX_BUILD)
+									ccsp_safe_pause (sched);
+									#endif /* !defined(RMOX_BUILD) */
+								}
+							}
+
+							att_clear_bit (&idle_threads, sched->index);
+						} else {
+							att_clear_bit (&sleeping_threads, sched->index);
+						}
+						#if defined(RMOX_BUILD)
+						att_clear_bit (&sleeping_threads, sched->index);
+						#endif /* defined(RMOX_BUILD) */
+						sched->loop = sched->spin;
+					}
+				}
+			}
+		} else {
+			SAFETY { verify_batch_integrity (&(sched->curb)); }
+			sched->dispatches--;
+			Wptr = dequeue_from_curb (sched);
+		}
+	} while (Wptr == NotProcess_p);
+
+	ENTRY_TRACE (X_scheduler_dispatch, "sync=%d, raddr=0x%8.8x", att_val (&(sched->sync)), Wptr[Iptr]);
+	DTRACE ("SSW", Wptr);
+
+	//fprintf (stderr, "<< W = %p (%p), F = %p, B = %p\n", Wptr, Wptr[-1], Fptr, Bptr);
+	K_ZERO_OUT_JRET ();
+}
+/*}}}*/
+/*{{{  void kernel_Y_fastscheduler (void)*/
+/*
+ *	fast scheduler entry point -- doesn't enqueue us, just runs next process
+ *
+ *	@SYMBOL:	Y_fastscheduler
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
+ *	@CALL: 		K_FASTSCHEDULER
+ *	@PRIO:		50
+ */
+K_CALL_DEFINE (Y_fastscheduler)
+{
+	K_CALL_PARAMS_0 ();
+	ENTRY_TRACE0 (Y_fastscheduler);
+
+	Wptr = get_process_or_reschedule (sched); 
+
+	K_ZERO_OUT_JRET ();
+}
+/*}}}*/
+/*{{{  void kernel_X_occscheduler (void)*/
+/*
+ *	@SYMBOL:	X_occscheduler
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
+ *	@CALL: 		K_OCCSCHEDULER
+ *	@PRIO:		50
+ */
+K_CALL_DEFINE (X_occscheduler)
+{
+	K_CALL_PARAMS_0 ();
+	RESCHEDULE;
+}
+/*}}}*/
+/*{{{  void kernel_Y_rtthreadinit (void)*/
+/*
+ *	call-in for a run-time thread as it starts up
+ *
+ *	@SYMBOL:	Y_rtthreadinit
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
+ *	@CALL: 		K_RTTHREADINIT
+ *	@PRIO:		10
+ */
+K_CALL_DEFINE (Y_rtthreadinit)
+{
+	K_CALL_HEADER;
+
+	unsigned int stack = K_CALL_PARAM(0);
+	word *fptr = (word *) sched;
+	void *allocator;
+	word i, tried;
+	
+	/* K_THREADINIT (Y_rtthreadinit); */
+	ENTRY_TRACE (Y_rtthreadinit, "(%08x)", att_val (&enabled_threads));
+
+	allocator 		= dmem_new_allocator ();
+	sched 			= dmem_thread_alloc (allocator, sizeof(sched_t));
+	init_sched_t (sched);
+	build_calltable (sched->calltable);
+	sched->allocator 	= allocator;
+	sched->stack		= stack;
+	
+	set_local_scheduler (sched);
+
+#if !defined(RMOX_BUILD)
+	ccsp_init_signal_pipe (sched);
+#endif
+	allocate_to_free_list (sched, MAX_PRIORITY_LEVELS * 2);
+	for (i = 0; i < MAX_PRIORITY_LEVELS; ++i) {
+		sched->rq[i].pending = allocate_batch (sched);
+	}
+	new_curb (sched);
+
+	while (fptr != NotProcess_p) {
+		word *next = (word *) fptr[Link];
+		fptr[Priofinity] = sched->priofinity;
+		enqueue_process_nopri (sched, fptr);
+		sched->stats.startp++;
+		fptr = next;
+	}
+
+	tried = 0;
+	do {
+		int available = (~(att_val (&enabled_threads))) & (~tried);
+		int n = bsf (available);
+
+		if (available == 0) {
+			BMESSAGE0 ("attempted to start more runtime threads than supported\n");
+			ccsp_kernel_exit (1, (word) Wptr);
+		}
+			
+		tried 		|= (1 << n);
+		sched->index    = n;
+		sched->id 	= 1 << n;
+
+	} while (!atw_cas ((word *) &(schedulers[sched->index]), (word) NULL, (word) sched));
+
+	if (!(att_val (&enabled_threads) & (~sched->id))) {
+		/* first run-time thread setups up timing then starts the rest */
+		#if defined(ENABLE_CPU_TIMERS)
+		ccsp_initial_cpu_speed (&(sched->cpu_factor), &(sched->cpu_khz));
+		#endif /* defined(ENABLE_CPU_TIMERS) */
+
+		#if defined(RMOX_BUILD)
+		sched->spin = 0;
+		#else
+		setup_spin (sched);
+		#endif /* defined (RMOX_BUILD) */
+
+		att_set_bit (&enabled_threads, sched->index);
+		
+		ccsp_start_threads ();
+	} else {
+		/* copy calibration from another thread */
+		unsigned int other 	= bsf (att_val (&enabled_threads));
+		#if defined(ENABLE_CPU_TIMERS)
+		sched->cpu_factor 	= schedulers[other]->cpu_factor;
+		sched->cpu_khz 		= schedulers[other]->cpu_khz;
+		#endif
+		sched->spin 		= schedulers[other]->spin;
+		att_set_bit (&enabled_threads, sched->index);
+	}
+
+	if (Wptr != NotProcess_p) {
+		sched->stats.startp++;
+		K_ZERO_OUT_JRET ();
+	} else {
+		RESCHEDULE;
+	}
+}
+/*}}}*/
+/*{{{  void kernel_Y_shutdown (void)*/
+/*
+ *	@SYMBOL:	Y_shutdown
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
+ *	@CALL: 		K_SHUTDOWN
+ *	@PRIO:		10
+ */
+K_CALL_DEFINE (Y_shutdown)
+{
+	K_CALL_PARAMS_0 ();
+	ENTRY_TRACE (Y_shutdown, "");
+	att_set (&(ccsp_shutdown), true);
+	RESCHEDULE;
+}
+/*}}}*/
+/*}}}*/
 /*{{{  error entry-points */
 /*{{{  static void kernel_X_common_error (...) */
 static void kernel_X_common_error (word *Wptr, sched_t *sched, unsigned int return_address, char *name)
@@ -1749,19 +2109,17 @@ static void kernel_X_common_error (word *Wptr, sched_t *sched, unsigned int retu
  *	entry point for integer division-by-zero
  *
  *	@SYMBOL:	X_zero_div
- *	@TYPE:		LCR
- *	@INPUT:		STACK(4)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		4
+ *	@OUTPUT: 	0
  *	@CALL: 		K_ZERODIV
  *	@PRIO:		0
  */
-void kernel_X_zero_div (void)
+K_CALL_DEFINE (X_zero_div)
 {
-	unsigned int filename_addr, procedure_addr, zerodiv_info, zerodiv_info2;
-	
-	K_SETGLABEL_STKFOUR_IN_LCR (X_zero_div, zerodiv_info2, zerodiv_info, procedure_addr, filename_addr);
-	ENTRY_TRACE (X_zero_div, "%x, %x, %p, %p", zerodiv_info2, zerodiv_info, (void *)procedure_addr, (void *)filename_addr);
+	unsigned int zerodiv_info2, zerodiv_info, procedure_addr, filename_addr;
 
+	K_CALL_PARAMS_4 (zerodiv_info2, zerodiv_info, procedure_addr, filename_addr);
+	
 	zerodiv_happened (zerodiv_info, zerodiv_info2, filename_addr, procedure_addr);
 	kernel_X_common_error (Wptr, sched, return_address, "zero_div");
 }
@@ -1771,18 +2129,16 @@ void kernel_X_zero_div (void)
  *	arithmetic overflow entry point
  *
  *	@SYMBOL:	X_overflow
- *	@TYPE:		LCR
- *	@INPUT:		STACK(4)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		4
+ *	@OUTPUT: 	0
  *	@CALL: 		K_OVERFLOW
  *	@PRIO:		0
  */
-void kernel_X_overflow (void)
+K_CALL_DEFINE (X_overflow)
 {
 	unsigned int filename_addr, overflow_info, overflow_info2, procedure_addr;
 	
-	K_SETGLABEL_STKFOUR_IN_LCR (X_overflow, overflow_info2, overflow_info, procedure_addr, filename_addr);
-	ENTRY_TRACE (X_overflow, "%x, %x, %p, %p", overflow_info2, overflow_info, (void *)procedure_addr, (void *)filename_addr);
+	K_CALL_PARAMS_4 (overflow_info2, overflow_info, procedure_addr, filename_addr);
 
 	overflow_happened (overflow_info, overflow_info2, filename_addr, procedure_addr);		/* Parameters dealt with (they're visible throughout) */
 	kernel_X_common_error (Wptr, sched, return_address, "overflow");
@@ -1793,19 +2149,17 @@ void kernel_X_overflow (void)
  *	floating-point error entry point
  *
  *	@SYMBOL:	X_floaterr
- *	@TYPE:		LCR
- *	@INPUT:		STACK(5)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		5
+ *	@OUTPUT: 	0
  *	@CALL: 		K_FLOATERR
  *	@PRIO:		0
  */
-void kernel_X_floaterr (void)
+K_CALL_DEFINE (X_floaterr)
 {
 	unsigned int filename_addr, floaterr_fpustatus, floaterr_info, floaterr_info2, procedure_addr;
 	
-	K_SETGLABEL_STKFIVE_IN_LCR (X_floaterr, floaterr_info2, floaterr_info, procedure_addr, filename_addr, floaterr_fpustatus);
-	ENTRY_TRACE (X_floaterr, "%x, %x, %p, %p, %x", floaterr_info2, floaterr_info, (void *)procedure_addr, (void *)filename_addr, floaterr_fpustatus);
-
+	K_CALL_PARAMS_5 (floaterr_info2, floaterr_info, procedure_addr, filename_addr, floaterr_fpustatus);
+	
 	floaterr_happened (floaterr_info, floaterr_info2, floaterr_fpustatus, filename_addr, procedure_addr);
 	kernel_X_common_error (Wptr, sched, return_address, "floaterr");
 }
@@ -1815,17 +2169,16 @@ void kernel_X_floaterr (void)
  *	SETERR entry-point
  *
  *	@SYMBOL:	X_Seterr
- *	@TYPE:		LCR
- *	@INPUT:		STACK(4)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		4
+ *	@OUTPUT: 	0
  *	@CALL: 		K_SETERR
  *	@PRIO:		0
  */
-void kernel_X_Seterr (void)
+K_CALL_DEFINE (X_Seterr)
 {
 	unsigned int filename_addr, procedure_addr, seterr_info1, seterr_info2;
 	
-	K_SETGLABEL_STKFOUR_IN_LCR (X_Seterr, procedure_addr, filename_addr, seterr_info2, seterr_info1);
+	K_CALL_PARAMS_4 (procedure_addr, filename_addr, seterr_info2, seterr_info1);
 	ENTRY_TRACE (X_Seterr, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, seterr_info2, seterr_info1);
 	
 	handle_seterr (seterr_info1, seterr_info2, filename_addr, procedure_addr);
@@ -1837,15 +2190,14 @@ void kernel_X_Seterr (void)
  *	basic SETERR entry-point
  *
  *	@SYMBOL:	X_BSeterr
- *	@TYPE:		LCR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_BSETERR
  *	@PRIO:		0
  */
-void kernel_X_BSeterr (void)
+K_CALL_DEFINE (X_BSeterr)
 {
-	K_SETGLABEL_ZERO_IN_LCR (X_BSeterr);
+	K_CALL_PARAMS_0 ();
 
 	ENTRY_TRACE0 (X_BSeterr);
 	
@@ -1857,15 +2209,14 @@ void kernel_X_BSeterr (void)
  *	basic SETERR entry-point, but no return address expected
  *
  *	@SYMBOL:	X_BNSeterr
- *	@TYPE:		JUMP
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_BNSETERR
  *	@PRIO:		0
  */
-void kernel_X_BNSeterr (void)
+K_CALL_DEFINE (X_BNSeterr)
 {
-	K_SETGLABEL_ZERO_IN (X_BNSeterr);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_BNSeterr);
 
 	/* return_address = 0 */
@@ -1877,17 +2228,16 @@ void kernel_X_BNSeterr (void)
  *	Range error entry-point
  *
  *	@SYMBOL:	X_RangeCheckError
- *	@TYPE:		LCR
- *	@INPUT:		STACK(4)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		4
+ *	@OUTPUT: 	0
  *	@CALL: 		K_RANGERR
  *	@PRIO:		0
  */
-void kernel_X_RangeCheckError (void)
+K_CALL_DEFINE (X_RangeCheckError)
 {
 	unsigned int filename_addr, procedure_addr, range_info1, range_info2;
 	
-	K_SETGLABEL_STKFOUR_IN_LCR (X_RangeCheckError, procedure_addr, filename_addr, range_info2, range_info1);
+	K_CALL_PARAMS_4 (procedure_addr, filename_addr, range_info2, range_info1);
 	ENTRY_TRACE (X_RangeCheckError, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, range_info2, range_info1);
 
 	handle_range_error (range_info1, range_info2, filename_addr, procedure_addr);
@@ -1899,15 +2249,14 @@ void kernel_X_RangeCheckError (void)
  *	basic range error entry point
  *
  *	@SYMBOL:	X_BasicRangeError
- *	@TYPE:		LCR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_BRANGERR
  *	@PRIO:		0
  */
-void kernel_X_BasicRangeError (void)
+K_CALL_DEFINE (X_BasicRangeError)
 {
-	K_SETGLABEL_ZERO_IN_LCR (X_BasicRangeError);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_BasicRangeError);
 
 	BMESSAGE ("range error.\n");
@@ -1931,7 +2280,6 @@ void dump_trap_info (word *Wptr, word *Fptr, word *Bptr, unsigned int return_add
 	}
 	
 	ccsp_show_last_debug_insert ();
-	return;
 }
 /*}}}*/
 #if defined(ENABLE_DTRACES) && !defined(RMOX_BUILD)
@@ -1940,19 +2288,18 @@ void dump_trap_info (word *Wptr, word *Fptr, word *Bptr, unsigned int return_add
  *	this handles debugging traces generated by tranx86
  *
  *	@SYMBOL:	X_dtrace
- *	@TYPE:		LCR
- *	@INPUT:		STACK(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_DTRACE
  *	@PRIO:		0
  *	@DEPEND:	ENABLE_DTRACES
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_X_dtrace (void)
+K_CALL_DEFINE (X_dtrace)
 {
 	unsigned int trapval_A, trapval_B, trapval_C;
 	
-	K_SETGLABEL_STKTWO_IN_LCR (X_dtrace, trapval_A, trapval_B);
+	K_CALL_PARAMS_2 (trapval_A, trapval_B);
 	ENTRY_TRACE (X_dtrace, "0x8.8x, 0x8.8x", trapval_A, trapval_B);
 
 	rt_dtrace ((void *)Wptr, trapval_A, trapval_B);
@@ -1966,22 +2313,21 @@ void kernel_X_dtrace (void)
  *	trap entry-point
  *
  *	@SYMBOL:	X_trap
- *	@TYPE:		LCR
- *	@INPUT:		STACK(3)
- *	@OUTPUT: 	STACK(3)
+ *	@INPUT:		3
+ *	@OUTPUT: 	3
  *	@CALL: 		K_TRAP
  *	@PRIO:		0
  */
-void kernel_X_trap (void)
+K_CALL_DEFINE (X_trap)
 {
 	unsigned int trapval_A, trapval_B, trapval_C;
 	
-	K_SETGLABEL_STKTHREE_IN_LCR (X_trap, trapval_A, trapval_B, trapval_C);
+	K_CALL_PARAMS_3 (trapval_A, trapval_B, trapval_C);
 	ENTRY_TRACE (X_trap, "0x%x, 0x%x, 0x%x", trapval_A, trapval_B, trapval_C);
 	
 	dump_trap_info (Wptr, sched->curb.Fptr, sched->curb.Bptr, return_address, trapval_A, trapval_B, trapval_C);
 
-	K_STKTHREE_OUT (trapval_A, trapval_B, trapval_C);
+	K_THREE_OUT (trapval_A, trapval_B, trapval_C);
 }
 /*}}}*/
 /*{{{  void kernel_Y_unsupported (void)*/
@@ -1989,9 +2335,8 @@ void kernel_X_trap (void)
  *	this handles unsupported kernel calls
  *
  *	@SYMBOL:	Y_unsupported
- *	@TYPE:		LCR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_UNSUPPORTED
  *	@PRIO:		0
  *	@HANDLE:	K_UNPACKSN, K_POSTNORMSN, K_ROUNDSN
@@ -2015,9 +2360,9 @@ void kernel_X_trap (void)
  *	@HANDLE:	K_MINN, K_MOUTN, K_XMINN
  *	@HANDLE:	K_FBAR_INIT, K_FBAR_SYNC, K_FBAR_ENROLL, K_FBAR_RESIGN
  */
-void kernel_Y_unsupported (void)
+K_CALL_DEFINE (Y_unsupported)
 {
-	K_SETGLABEL_ZERO_IN_RR (Y_unsupported);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_unsupported);
 
 	if (ccsp_ignore_errors) {
@@ -2085,14 +2430,14 @@ static INLINE word *sem_dequeue (ccsp_sem_t *sem) {
 	}
 }
 /*}}}*/
-/*{{{  static INLINE void sem_claim (sched_t *sched, word *Wptr, ccsp_sem_t *sem)*/
-static INLINE void sem_claim (sched_t *sched, word *Wptr, ccsp_sem_t *sem)
+/*{{{  static INLINE void sem_claim (sched_t *sched, word *Wptr, unsigned int return_address, ccsp_sem_t *sem)*/
+static INLINE void sem_claim (sched_t *sched, word *Wptr, unsigned int return_address, ccsp_sem_t *sem)
 {
 	word *ptr, val;
 
 	if ((val = atw_val (&(sem->bptr))) == (NotProcess_p | 1)) {
 		if (atw_cas (&(sem->bptr), val, NotProcess_p)) {
-			K_ZERO_OUT_JRET ();
+			K_ZERO_OUT ();
 			return;
 		}
 		/* We could read barrier here, but because of the 
@@ -2105,6 +2450,7 @@ static INLINE void sem_claim (sched_t *sched, word *Wptr, ccsp_sem_t *sem)
 
 	save_priofinity (sched, Wptr);
 	Wptr[Link] = NotProcess_p;
+	save_return (sched, Wptr, return_address);
 	weak_write_barrier ();
 
 	while (!atw_cas (&(sem->bptr), val, (word) Wptr)) {
@@ -2252,7 +2598,7 @@ static INLINE void bar_complete_head (sched_t *sched, bar_t *bar, bool local, ba
 }
 /*}}}*/
 /*{{{  static void bar_complete (sched_t *sched, bar_t *bar, word tag)*/
-static void bar_complete (sched_t *sched, bar_t *bar, word tag)
+static REGPARM void bar_complete (sched_t *sched, bar_t *bar, word tag)
 {
 	for (;;) {
 		word heads = atw_swap (&(bar->heads), 0);
@@ -2305,13 +2651,13 @@ static void bar_complete (sched_t *sched, bar_t *bar, word tag)
 }
 /*}}}*/
 /*{{{  static void bar_enroll (sched_t *sched, bar_t *bar, word count)*/
-static void bar_enroll (sched_t *sched, bar_t *bar, word count)
+static REGPARM void bar_enroll (sched_t *sched, bar_t *bar, word count)
 {
 	atw_add (&(bar->state), count);
 }
 /*}}}*/
 /*{{{  static void bar_resign (sched_t *sched, bar_t *bar, word resign_count)*/
-static void bar_resign (sched_t *sched, bar_t *bar, word resign_count)
+static REGPARM void bar_resign (sched_t *sched, bar_t *bar, word resign_count)
 {
 	for (;;) {
 		word state = atw_val (&(bar->state));
@@ -2341,7 +2687,7 @@ static void bar_resign (sched_t *sched, bar_t *bar, word resign_count)
 }
 /*}}}*/
 /*{{{  static void bar_sync (sched_t *sched, bar_t *bar, word *Wptr)*/
-static void bar_sync (sched_t *sched, bar_t *bar, word *Wptr)
+static REGPARM void bar_sync (sched_t *sched, bar_t *bar, word *Wptr)
 {
 	bar_head_t *head;
 	word bsize, hdata, state;
@@ -2483,7 +2829,7 @@ static void bar_sync (sched_t *sched, bar_t *bar, word *Wptr)
 /*}}}*/
 /*{{{  fork barrier operations */
 /*{{{  static void fork_bar_complete (sched_t *sched, word *bar)*/
-static void fork_bar_complete (sched_t *sched, word *bar)
+static REGPARM void fork_bar_complete (sched_t *sched, word *bar)
 {
 	word *Wptr = (word *) atw_val (bar);
 
@@ -2493,19 +2839,19 @@ static void fork_bar_complete (sched_t *sched, word *bar)
 }
 /*}}}*/
 /*{{{  static void fork_bar_enroll (sched_t *sched, word *bar, word count)*/
-static void fork_bar_enroll (sched_t *sched, word *bar, word count)
+static REGPARM void fork_bar_enroll (sched_t *sched, word *bar, word count)
 {
 	/* no operation */
 }
 /*}}}*/
 /*{{{  static void fork_bar_resign (sched_t *sched, word *bar, word count)*/
-static void fork_bar_resign (sched_t *sched, word *bar, word count)
+static REGPARM void fork_bar_resign (sched_t *sched, word *bar, word count)
 {
 	/* no operation */
 }
 /*}}}*/
 /*{{{  static void fork_bar_sync (sched_t *sched, word *bar, word *Wptr)*/
-static void fork_bar_sync (sched_t *sched, word *bar, word *Wptr)
+static REGPARM void fork_bar_sync (sched_t *sched, word *bar, word *Wptr)
 {
 	mt_barrier_internal_t *mb = (mt_barrier_internal_t *)
 		(((byte *) (bar - MT_BARRIER_PTR_OFFSET)) - (3 * sizeof (void *)));
@@ -2526,7 +2872,7 @@ static void fork_bar_sync (sched_t *sched, word *bar, word *Wptr)
 /*{{{  mobile process barrier operations */
 #if !defined(RMOX_BUILD) && defined(DYNAMIC_PROCS)
 /*{{{  static void mproc_bar_init (mproc_bar_t *bar, word initial_count)*/
-static void mproc_bar_init (mproc_bar_t *bar, word initial_count)
+static REGPARM void mproc_bar_init (mproc_bar_t *bar, word initial_count)
 {
 	ASSERT (initial_count > 0);
 	bar->enrolled	= initial_count;
@@ -2536,7 +2882,7 @@ static void mproc_bar_init (mproc_bar_t *bar, word initial_count)
 }
 /*}}}*/
 /*{{{  static void mproc_bar_complete (sched_t *sched, mproc_bar_t *bar)*/
-static void mproc_bar_complete (sched_t *sched, mproc_bar_t *bar)
+static REGPARM void mproc_bar_complete (sched_t *sched, mproc_bar_t *bar)
 {
 	word enrolled = atw_val (&(bar->enrolled));
 	word *ws = (word *) atw_val (&(bar->fptr));
@@ -2555,14 +2901,14 @@ static void mproc_bar_complete (sched_t *sched, mproc_bar_t *bar)
 }
 /*}}}*/
 /*{{{  static void mproc_bar_enroll (sched_t *sched, mproc_bar_t *bar, word count)*/
-static void mproc_bar_enroll (sched_t *sched, mproc_bar_t *bar, word count)
+static REGPARM void mproc_bar_enroll (sched_t *sched, mproc_bar_t *bar, word count)
 {
 	atw_add (&(bar->enrolled), count);
 	atw_add (&(bar->state), count);
 }
 /*}}}*/
 /*{{{  static void mproc_bar_resign (sched_t *sched, mproc_bar_t *bar, word count)*/
-static void mproc_bar_resign (sched_t *sched, mproc_bar_t *bar, word count)
+static REGPARM void mproc_bar_resign (sched_t *sched, mproc_bar_t *bar, word count)
 {
 	
 	atw_sub (&(bar->enrolled), count);
@@ -2593,7 +2939,7 @@ static void mproc_bar_resign (sched_t *sched, mproc_bar_t *bar, word count)
 }
 /*}}}*/
 /*{{{  static void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)*/
-static void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)
+static REGPARM void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)
 {
 	word retry = false;
 	
@@ -3231,19 +3577,18 @@ static void kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, wo
  *	dispatches a blocking call
  *
  *	@SYMBOL:	X_b_dispatch
- *	@TYPE:		LCR
- *	@INPUT:		STACK(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_B_DISPATCH
  *	@PRIO:		20
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_X_b_dispatch (void)
+K_CALL_DEFINE (X_b_dispatch)
 {
 	void *b_func, *b_param;
 	
-	K_SETGLABEL_STKTWO_IN_LCR (X_b_dispatch, b_func, b_param);
+	K_CALL_PARAMS_2 (b_func, b_param);
 	ENTRY_TRACE (X_b_dispatch, "%p, %p", (void *)b_func, (void *)b_param);
 
 	kernel_bsc_dispatch (sched, return_address, Wptr, b_func, b_param, 0);
@@ -3254,19 +3599,18 @@ void kernel_X_b_dispatch (void)
  *	dispatches a terminateable blocking call
  *
  *	@SYMBOL:	X_bx_dispatch
- *	@TYPE:		LCR
- *	@INPUT:		STACK(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_BX_DISPATCH
  *	@PRIO:		20
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_X_bx_dispatch (void)
+K_CALL_DEFINE (X_bx_dispatch)
 {
 	void *b_func, *b_param;
 	
-	K_SETGLABEL_STKTWO_IN_LCR (X_bx_dispatch, b_func, b_param);
+	K_CALL_PARAMS_2 (b_func, b_param);
 	ENTRY_TRACE (X_bx_dispatch, "%p, %p", (void *)b_func, (void *)b_param);
 
 	kernel_bsc_dispatch (sched, return_address, Wptr, b_func, b_param, 1);
@@ -3277,20 +3621,19 @@ void kernel_X_bx_dispatch (void)
  *	dispatches a terminateable blocking call
  *
  *	@SYMBOL:	Y_bx_kill
- *	@TYPE:		RR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		1
+ *	@OUTPUT: 	1
  *	@CALL: 		K_BX_KILL
  *	@PRIO:		20
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_Y_bx_kill (void)
+K_CALL_DEFINE (Y_bx_kill)
 {
 	word *ptr;
 	int result;
 	
-	K_SETGLABEL_ONE_IN_RR (Y_bx_kill, ptr);
+	K_CALL_PARAMS_1 (ptr);
 	ENTRY_TRACE (Y_bx_kill, "%p", ptr);
 
 	result = bsyscall_kill (ptr);
@@ -3306,17 +3649,16 @@ void kernel_Y_bx_kill (void)
  *	allocates a new mobile type and initialises it
  *
  *	@SYMBOL:	Y_mt_alloc
- *	@TYPE:		RR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_MT_ALLOC
  *	@PRIO:		100
  */
-void kernel_Y_mt_alloc (void)
+K_CALL_DEFINE (Y_mt_alloc)
 {
 	word *ptr, type, size;
 	
-	K_SETGLABEL_TWO_IN_RR (Y_mt_alloc, type, size);
+	K_CALL_PARAMS_2 (type, size);
 	ENTRY_TRACE (Y_mt_alloc, "%08x %d", type, size);
 
 	ptr = mt_alloc (sched->allocator, type, size);
@@ -3329,17 +3671,16 @@ void kernel_Y_mt_alloc (void)
  *	frees a mobile type
  *
  *	@SYMBOL:	Y_mt_release
- *	@TYPE:		RR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MT_RELEASE
  *	@PRIO:		100
  */
-void kernel_Y_mt_release (void)
+K_CALL_DEFINE (Y_mt_release)
 {
 	word *ptr;
 	
-	K_SETGLABEL_ONE_IN_RR (Y_mt_release, ptr);
+	K_CALL_PARAMS_1 (ptr);
 	ENTRY_TRACE (Y_mt_release, "%p", ptr);
 
 	mt_release (sched, ptr);
@@ -3352,17 +3693,16 @@ void kernel_Y_mt_release (void)
  *	clones a mobile type
  *
  *	@SYMBOL:	Y_mt_clone
- *	@TYPE:		RR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		1
+ *	@OUTPUT: 	1
  *	@CALL: 		K_MT_CLONE
  *	@PRIO:		100
  */
-void kernel_Y_mt_clone (void)
+K_CALL_DEFINE (Y_mt_clone)
 {
 	word *dst, *src;
 	
-	K_SETGLABEL_ONE_IN_RR (Y_mt_clone, src);
+	K_CALL_PARAMS_1 (src);
 	ENTRY_TRACE (Y_mt_clone, "%p", src);
 
 	dst = mt_clone (sched, src);
@@ -3375,18 +3715,17 @@ void kernel_Y_mt_clone (void)
  *	clones some data into a new mobile type
  *
  *	@SYMBOL:	Y_mt_dclone
- *	@TYPE:		RR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		3
+ *	@OUTPUT: 	1
  *	@CALL: 		K_MT_DCLONE
  *	@PRIO:		60
  */
-void kernel_Y_mt_dclone (void)
+K_CALL_DEFINE (Y_mt_dclone)
 {
 	word bytes, *dst, type;
 	void *src;
 	
-	K_SETGLABEL_THREE_IN_RR (Y_mt_dclone, type, bytes, src);
+	K_CALL_PARAMS_3 (type, bytes, src);
 	ENTRY_TRACE (Y_mt_dclone, "%08x, %d, %p", type, bytes, src);
 	
 	if (bytes && (type == (MT_SIMPLE | MT_MAKE_TYPE (MT_DATA)))) {
@@ -3407,17 +3746,16 @@ void kernel_Y_mt_dclone (void)
  *	allocates memory of a given size
  *
  *	@SYMBOL:	X_malloc
- *	@TYPE:		RR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		1
+ *	@OUTPUT: 	1
  *	@CALL: 		K_MALLOC
  *	@PRIO:		110
  */
-void kernel_X_malloc (void)
+K_CALL_DEFINE (X_malloc)
 {
 	word *ptr, size;
 	
-	K_SETGLABEL_ONE_IN_RR (X_malloc, size);
+	K_CALL_PARAMS_1 (size);
 	ENTRY_TRACE (X_malloc, "%d", size);
 
 	if (size) {
@@ -3435,17 +3773,16 @@ void kernel_X_malloc (void)
  *	frees memory allocated from _X_malloc()
  *
  *	@SYMBOL:	X_mrelease
- *	@TYPE:		RR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MRELEASE
  *	@PRIO:		110
  */
-void kernel_X_mrelease (void)
+K_CALL_DEFINE (X_mrelease)
 {
 	word *ptr;
 	
-	K_SETGLABEL_ONE_IN_RR (X_mrelease, ptr);
+	K_CALL_PARAMS_1 (ptr);
 	ENTRY_TRACE (X_mrelease, "%p", ptr);
 
 	mt_release_simple (sched, ptr, MT_MAKE_TYPE (MT_DATA));
@@ -3458,17 +3795,16 @@ void kernel_X_mrelease (void)
  *	bind a mobile type in some way to a bit of data
  *
  *	@SYMBOL:	Y_mt_bind
- *	@TYPE:		RR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		3
+ *	@OUTPUT: 	1
  *	@CALL: 		K_MT_BIND
  *	@PRIO:		50
  */
-void kernel_Y_mt_bind (void)
+K_CALL_DEFINE (Y_mt_bind)
 {
 	word bind_type, *data, *ptr, type;
 	
-	K_SETGLABEL_THREE_IN_RR (Y_mt_bind, bind_type, ptr, data);
+	K_CALL_PARAMS_3 (bind_type, ptr, data);
 	ENTRY_TRACE (Y_mt_bind, "%08x %p %p", bind_type, ptr, data);
 
 	ASSERT (ptr != NULL);
@@ -3564,17 +3900,16 @@ void kernel_Y_mt_bind (void)
  *	normalises 64-bit double-length integer (Breg:Areg)
  *
  *	@SYMBOL:	X_norm
- *	@TYPE:		LCR
- *	@INPUT:		STACK(2)
- *	@OUTPUT: 	STACK(3)
+ *	@INPUT:		2
+ *	@OUTPUT: 	3
  *	@CALL: 		K_NORM
  *	@PRIO:		50
  */
-void kernel_X_norm (void)
+K_CALL_DEFINE (X_norm)
 {
 	unsigned int Areg, Breg, Creg;
 	
-	K_SETGLABEL_STKTWO_IN_LCR (X_norm, Areg, Breg);
+	K_CALL_PARAMS_2 (Areg, Breg);
 	ENTRY_TRACE (X_norm, "0x%x, 0x%x", Areg, Breg);
 
 	Creg = 0;
@@ -3591,7 +3926,7 @@ void kernel_X_norm (void)
 		}
 	}
 	
-	K_STKTHREE_OUT (Areg, Breg, Creg);
+	K_THREE_OUT (Areg, Breg, Creg);
 }
 /*}}}*/
 /*{{{  void kernel_X_fmul (void)*/
@@ -3599,19 +3934,18 @@ void kernel_X_norm (void)
  *	FMUL implementation (easier in C..)
  *
  *	@SYMBOL:	X_fmul
- *	@TYPE:		LCR
- *	@INPUT:		STACK(2)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_FMUL
  *	@PRIO:		50
  */
-void kernel_X_fmul (void)
+K_CALL_DEFINE (X_fmul)
 {
 	long long tmp_long;
 	int hi_word, lo_word;
 	int tmpint_a, tmpint_b, tmpint_c;
 	
-	K_SETGLABEL_STKTWO_IN_LCR (X_fmul, tmpint_a, tmpint_b);
+	K_CALL_PARAMS_2 (tmpint_a, tmpint_b);
 	ENTRY_TRACE (X_fmul, "%d, %d", tmpint_a, tmpint_b);
 
 	/* do calculation */
@@ -3633,7 +3967,7 @@ void kernel_X_fmul (void)
 		tmpint_c = hi_word;
 	}
 
-	K_STKONE_OUT (tmpint_c);
+	K_ONE_OUT (tmpint_c);
 }
 /*}}}*/
 /*}}}*/
@@ -3644,18 +3978,17 @@ void kernel_X_fmul (void)
  *	start process
  *
  *	@SYMBOL:	Y_startp
- *	@TYPE:		RR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_STARTP
  *	@PRIO:		90
  */
-void kernel_Y_startp (void)
+K_CALL_DEFINE (Y_startp)
 {
 	unsigned int start_offset;
 	word *workspace;
 
-	K_SETGLABEL_TWO_IN_RR (Y_startp, workspace, start_offset);
+	K_CALL_PARAMS_2 (workspace, start_offset);
 	ENTRY_TRACE (Y_startp, "%p, %d", workspace, start_offset);
 
 	SAFETY {
@@ -3665,21 +3998,19 @@ void kernel_Y_startp (void)
 	}
 	
 	save_priofinity (sched, workspace);
-	workspace[Iptr] = return_address + start_offset;
+	save_return (sched, workspace, return_address + start_offset);
 	enqueue_process_nopri (sched, workspace);
 	sched->stats.startp++;
 
 	SAFETY { verify_batch_integrity (&(sched->curb)); }
 
 	if ((--sched->dispatches) <= 0) {
-		Wptr[Iptr] = return_address;
 		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
 		enqueue_to_batch_front (&(sched->curb), Wptr);
 		RESCHEDULE;
-		return;
 	} else {
 		K_ZERO_OUT ();
-		return;
 	}
 }
 /*}}}*/
@@ -3688,17 +4019,16 @@ void kernel_Y_startp (void)
  *	run process (fast interface)
  *
  *	@SYMBOL:	Y_runp
- *	@TYPE:		RR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_RUNP
  *	@PRIO:		80
  */
-void kernel_Y_runp (void)
+K_CALL_DEFINE (Y_runp)
 {
 	word *other_workspace;
 	
-	K_SETGLABEL_ONE_IN_RR (Y_runp, other_workspace);
+	K_CALL_PARAMS_1 (other_workspace);
 	ENTRY_TRACE (Y_runp, "%p", other_workspace);
 
 	other_workspace = (word *)(((word)other_workspace) & (~(sizeof(word) - 1)));
@@ -3712,18 +4042,18 @@ void kernel_Y_runp (void)
  *	reschedule
  *
  *	@SYMBOL:	X_pause
- *	@TYPE:		SR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_PAUSE
  *	@PRIO:		80
  */
-void kernel_X_pause (void)
+K_CALL_DEFINE (X_pause)
 {
-	K_SETGLABEL_ZERO_IN_SR (X_pause);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_pause);
 
 	save_priofinity (sched, Wptr);
+	save_return (sched, Wptr, return_address);
 	enqueue_process_nopri (sched, Wptr);
 	
 	RESCHEDULE;
@@ -3734,18 +4064,18 @@ void kernel_X_pause (void)
  *	stop process
  *
  *	@SYMBOL:	X_stopp
- *	@TYPE:		SR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_STOPP
  *	@PRIO:		80
  */
-void kernel_X_stopp (void)
+K_CALL_DEFINE (X_stopp)
 {
-	K_SETGLABEL_ZERO_IN_SR (X_stopp);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_stopp);
 
 	save_priofinity (sched, Wptr);
+	save_return (sched, Wptr, return_address);
 
 	RESCHEDULE;
 }
@@ -3755,19 +4085,20 @@ void kernel_X_stopp (void)
  *	end process (alternate interface)
  *
  *	@SYMBOL:	Y_endp
- *	@TYPE:		JUMP
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_ENDP
  *	@PRIO:		90
- *	@CIF:		FORCE_SR
  */
-void kernel_Y_endp (void)
+K_CALL_DEFINE (Y_endp)
 {
 	word *ptr;
 	
-	K_SETGLABEL_ONE_IN (Y_endp, ptr);
+	K_CALL_PARAMS_1 (ptr);
 	ENTRY_TRACE (Y_endp, "%p", ptr);
+
+	/* save the return address for CIF */
+	save_return (sched, Wptr, return_address);
 
 	if (atw_dec_z (&(ptr[Count]))) {
 		ptr[Priofinity] = ptr[SavedPriority];
@@ -3786,17 +4117,16 @@ void kernel_Y_endp (void)
  *	end process
  *
  *	@SYMBOL:	Y_par_enroll
- *	@TYPE:		RR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_PAR_ENROLL
  *	@PRIO:		50
  */
-void kernel_Y_par_enroll (void)
+K_CALL_DEFINE (Y_par_enroll)
 {
 	word count, *ptr;
 	
-	K_SETGLABEL_TWO_IN_RR (Y_par_enroll, count, ptr);
+	K_CALL_PARAMS_2 (count, ptr);
 	ENTRY_TRACE (Y_par_enroll, "%d %p", count, ptr);
 
 	atw_add (&(ptr[Count]), count);
@@ -3809,17 +4139,16 @@ void kernel_Y_par_enroll (void)
  *	frees a process whos workspace was allocated by X_malloc, first adjusting by the parameter
  *
  *	@SYMBOL:	X_mreleasep
- *	@TYPE:		JUMP
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MRELEASEP
  *	@PRIO:		90
  */
-void kernel_X_mreleasep (void)
+K_CALL_DEFINE (X_mreleasep)
 {
 	word *ptr, adjust;
 	
-	K_SETGLABEL_ONE_IN (X_mreleasep, adjust);
+	K_CALL_PARAMS_1 (adjust);
 	ENTRY_TRACE (X_mreleasep, "%d", adjust);
 
 	ptr = (word *)(((char *) Wptr) + (((signed int) adjust) * sizeof(word)));
@@ -3839,17 +4168,16 @@ void kernel_X_mreleasep (void)
  *	allocate a process workspace
  *
  *	@SYMBOL:	Y_proc_alloc
- *	@TYPE:		RR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_PROC_ALLOC
  *	@PRIO:		90
  */
-void kernel_Y_proc_alloc (void)
+K_CALL_DEFINE (Y_proc_alloc)
 {
 	word flags, words, *ws;
 
-	K_SETGLABEL_TWO_IN_RR (Y_proc_alloc, flags, words);
+	K_CALL_PARAMS_2 (flags, words);
 	ENTRY_TRACE (Y_proc_alloc, "%d, %d", flags, words);
 
 	ws = mt_alloc_data (sched->allocator, MT_SIMPLE | MT_MAKE_TYPE (MT_DATA), words << WSH);
@@ -3862,17 +4190,16 @@ void kernel_Y_proc_alloc (void)
  *	pass a param to workspace allocated via Y_proc_alloc
  *
  *	@SYMBOL:	Y_proc_param
- *	@TYPE:		RR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		3
+ *	@OUTPUT: 	0
  *	@CALL: 		K_PROC_PARAM
  *	@PRIO:		90
  */
-void kernel_Y_proc_param (void)
+K_CALL_DEFINE (Y_proc_param)
 {
 	word offset, param, *ws;
 
-	K_SETGLABEL_THREE_IN_RR (Y_proc_param, offset, ws, param);
+	K_CALL_PARAMS_3 (offset, ws, param);
 	ENTRY_TRACE (Y_proc_param, "%d, %p, %08x", offset, ws, param);
 
 	ws[offset] = param;
@@ -3885,17 +4212,16 @@ void kernel_Y_proc_param (void)
  *	copy a mobile type to workspace allocated via Y_proc_alloc
  *
  *	@SYMBOL:	Y_proc_mt_copy
- *	@TYPE:		RR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		3
+ *	@OUTPUT: 	0
  *	@CALL: 		K_PROC_MT_COPY
  *	@PRIO:		90
  */
-void kernel_Y_proc_mt_copy (void)
+K_CALL_DEFINE (Y_proc_mt_copy)
 {
 	word offset, *ptr, *ws;
 
-	K_SETGLABEL_THREE_IN_RR (Y_proc_mt_copy, offset, ws, ptr);
+	K_CALL_PARAMS_3 (offset, ws, ptr);
 	ENTRY_TRACE (Y_proc_mt_copy, "%d, %p, %p", offset, ws, ptr);
 
 	if (ptr != NULL) {
@@ -3912,17 +4238,16 @@ void kernel_Y_proc_mt_copy (void)
  *	move a mobile type to workspace allocated via Y_proc_alloc
  *
  *	@SYMBOL:	Y_proc_mt_move
- *	@TYPE:		RR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		3
+ *	@OUTPUT: 	0
  *	@CALL: 		K_PROC_MT_MOVE
  *	@PRIO:		90
  */
-void kernel_Y_proc_mt_move (void)
+K_CALL_DEFINE (Y_proc_mt_move)
 {
 	word offset, *ptr, **pptr, *ws;
 
-	K_SETGLABEL_THREE_IN_RR (Y_proc_mt_move, offset, ws, pptr);
+	K_CALL_PARAMS_3 (offset, ws, pptr);
 	ENTRY_TRACE (Y_proc_mt_move, "%d, %p, %p (%p)", offset, ws, pptr, (word *) *pptr);
 
 	ptr = *pptr;
@@ -3941,22 +4266,21 @@ void kernel_Y_proc_mt_move (void)
  *	start a process using a workspace allocated via Y_proc_alloc
  *
  *	@SYMBOL:	Y_proc_start
- *	@TYPE:		RR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		3
+ *	@OUTPUT: 	0
  *	@CALL: 		K_PROC_START
  *	@PRIO:		90
  */
-void kernel_Y_proc_start (void)
+K_CALL_DEFINE (Y_proc_start)
 {
 	word code, offset, *ws;
 
-	K_SETGLABEL_THREE_IN_RR (Y_proc_start, offset, ws, code);
+	K_CALL_PARAMS_3 (offset, ws, code);
 	ENTRY_TRACE (Y_proc_start, "%d, %p, %08x", offset, ws, code);
 
 	ws += offset;
 	save_priofinity (sched, ws);
-	ws[Iptr] = code;
+	save_return (sched, ws, code);
 
 	enqueue_process_nopri (sched, ws);
 	sched->stats.proc_start++;
@@ -3964,14 +4288,12 @@ void kernel_Y_proc_start (void)
 	SAFETY { verify_batch_integrity (&(sched->curb)); }
 
 	if ((--sched->dispatches) <= 0) {
-		Wptr[Iptr] = return_address;
 		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
 		enqueue_to_batch_front (&(sched->curb), Wptr);
 		RESCHEDULE;
-		return;
 	} else {
 		K_ZERO_OUT ();
-		return;
 	}
 }
 /*}}}*/
@@ -3980,17 +4302,16 @@ void kernel_Y_proc_start (void)
  *	called by a process started by Y_proc_start to terminate
  *
  *	@SYMBOL:	Y_proc_end
- *	@TYPE:		JUMP
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_PROC_END
  *	@PRIO:		90
  */
-void kernel_Y_proc_end (void)
+K_CALL_DEFINE (Y_proc_end)
 {
 	word *ws;
 
-	K_SETGLABEL_ONE_IN (Y_proc_end, ws);
+	K_CALL_PARAMS_1 (ws);
 	ENTRY_TRACE (Y_proc_end, "%p", ws);
 
 	mt_release_simple (sched, ws, MT_MAKE_TYPE (MT_DATA));
@@ -4015,17 +4336,16 @@ word *ccsp_proc_alloc (word flags, word words)
  *	get processor affinity
  *
  *	@SYMBOL:	Y_getaff
- *	@TYPE:		RR
- *	@INPUT:		NONE
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		0
+ *	@OUTPUT: 	1
  *	@CALL: 		K_GETAFF
  *	@PRIO:		30
  */
-void kernel_Y_getaff (void)
+K_CALL_DEFINE (Y_getaff)
 {
-	K_SETGLABEL_ZERO_IN_RR (Y_getaff);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_getaff);
-	K_STKONE_OUT (PAffinity (sched->priofinity));
+	K_ONE_OUT (PAffinity (sched->priofinity));
 }
 /*}}}*/
 /*{{{  void kernel_Y_setaff (void)*/
@@ -4033,17 +4353,16 @@ void kernel_Y_getaff (void)
  *	set processor affinity
  *
  *	@SYMBOL:	Y_setaff
- *	@TYPE:		SR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_SETAFF
  *	@PRIO:		30
  */
-void kernel_Y_setaff (void)
+K_CALL_DEFINE (Y_setaff)
 {
 	unsigned int affinity;
 	
-	K_SETGLABEL_ONE_IN_SR (Y_setaff, affinity);
+	K_CALL_PARAMS_1 (affinity);
 	ENTRY_TRACE (Y_setaff, "%d", affinity);
 
 	if (affinity) {
@@ -4062,14 +4381,15 @@ void kernel_Y_setaff (void)
 		}
 	}
 
-	Wptr[Priofinity] = BuildPriofinity (affinity, PPriority (sched->priofinity));
-
-	if (Wptr[Priofinity] != sched->priofinity) {
+	if (affinity != PAffinity (sched->priofinity)) {
+		Wptr[Priofinity] = BuildPriofinity (affinity, PPriority (sched->priofinity));
+		save_return (sched, Wptr, return_address);
 		enqueue_process (sched, Wptr);
 		Wptr = get_process_or_reschedule (sched);
+		K_ZERO_OUT_JRET ();
+	} else {
+		K_ZERO_OUT ();
 	}
-
-	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_getpas (void)*/
@@ -4077,17 +4397,16 @@ void kernel_Y_setaff (void)
  *	get current raw priofinity
  *
  *	@SYMBOL:	Y_getpas
- *	@TYPE:		RR
- *	@INPUT:		NONE
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		0
+ *	@OUTPUT: 	1
  *	@CALL: 		K_GETPAS
  *	@PRIO:		80
  */
-void kernel_Y_getpas (void)
+K_CALL_DEFINE (Y_getpas)
 {
-	K_SETGLABEL_ZERO_IN_RR (Y_getpas);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_getpas);
-	K_STKONE_OUT (sched->priofinity);
+	K_ONE_OUT (sched->priofinity);
 }
 /*}}}*/
 /*{{{  void kernel_X_getpri (void)*/
@@ -4095,17 +4414,16 @@ void kernel_Y_getpas (void)
  *	get process priority
  *
  *	@SYMBOL:	X_getpri
- *	@TYPE:		LCR
- *	@INPUT:		NONE
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		0
+ *	@OUTPUT: 	1
  *	@CALL: 		K_GETPRI
  *	@PRIO:		30
  */
-void kernel_X_getpri (void)
+K_CALL_DEFINE (X_getpri)
 {
-	K_SETGLABEL_ZERO_IN_LCR (X_getpri);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_getpri);
-	K_STKONE_OUT (PPriority (sched->priofinity));
+	K_ONE_OUT (PPriority (sched->priofinity));
 }
 /*}}}*/
 /*{{{  void kernel_Y_setpri (void)*/
@@ -4113,17 +4431,16 @@ void kernel_X_getpri (void)
  *	set process priority
  *
  *	@SYMBOL:	Y_setpri
- *	@TYPE:		SR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_SETPRI
  *	@PRIO:		30
  */
-void kernel_Y_setpri (void)
+K_CALL_DEFINE (Y_setpri)
 {
 	int priority;
 	
-	K_SETGLABEL_ONE_IN_SR (Y_setpri, priority);
+	K_CALL_PARAMS_1 (priority);
 	ENTRY_TRACE (Y_setpri, "%d", priority);
 
 	if (priority < 0) {
@@ -4131,336 +4448,16 @@ void kernel_Y_setpri (void)
 	} else if (priority >= MAX_PRIORITY_LEVELS) {
 		priority = MAX_PRIORITY_LEVELS - 1;
 	}
+	
 	if (priority != PPriority (sched->priofinity)) {
 		Wptr[Priofinity] = BuildPriofinity (PAffinity (sched->priofinity), priority);
+		save_return (sched, Wptr, return_address);
 		enqueue_process (sched, Wptr);
 		Wptr = get_process_or_reschedule (sched);
-	}
-
-	K_ZERO_OUT_JRET ();
-}
-/*}}}*/
-/*}}}*/
-/*{{{  scheduler */
-/*{{{  void kernel_Y_rtthreadinit (void)*/
-/*
- *	call-in for a run-time thread as it starts up
- *
- *	@SYMBOL:	Y_rtthreadinit
- *	@TYPE:		RR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
- *	@CALL: 		K_RTTHREADINIT
- *	@PRIO:		10
- */
-void kernel_Y_rtthreadinit (void)
-{
-	unsigned int stack;
-	void *allocator;
-	sched_t *sched;
-	word i, *fptr, tried, *Wptr;
-	
-	K_THREADINIT (Y_rtthreadinit);
-	ENTRY_TRACE (Y_rtthreadinit, "(%08x)", att_val (&enabled_threads));
-
-	allocator 		= dmem_new_allocator ();
-	sched 			= dmem_thread_alloc (allocator, sizeof(sched_t));
-	init_sched_t (sched);
-	memcpy (sched->calltable, ccsp_calltable, sizeof (ccsp_calltable));
-	sched->allocator 	= allocator;
-	sched->stack		= stack;
-	
-	set_local_scheduler (sched);
-
-#if !defined(RMOX_BUILD)
-	ccsp_init_signal_pipe (sched);
-#endif
-	allocate_to_free_list (sched, MAX_PRIORITY_LEVELS * 2);
-	for (i = 0; i < MAX_PRIORITY_LEVELS; ++i) {
-		sched->rq[i].pending = allocate_batch (sched);
-	}
-	new_curb (sched);
-
-	while (fptr != NotProcess_p) {
-		word *next = (word *) fptr[Link];
-		fptr[Priofinity] = sched->priofinity;
-		enqueue_process_nopri (sched, fptr);
-		sched->stats.startp++;
-		fptr = next;
-	}
-
-	tried = 0;
-	do {
-		int available = (~(att_val (&enabled_threads))) & (~tried);
-		int n = bsf (available);
-
-		if (available == 0) {
-			BMESSAGE0 ("attempted to start more runtime threads than supported\n");
-			ccsp_kernel_exit (1, (word) Wptr);
-		}
-			
-		tried 		|= (1 << n);
-		sched->index    = n;
-		sched->id 	= 1 << n;
-
-	} while (!atw_cas ((word *) &(schedulers[sched->index]), (word) NULL, (word) sched));
-
-	if (!(att_val (&enabled_threads) & (~sched->id))) {
-		/* first run-time thread setups up timing then starts the rest */
-		#if defined(ENABLE_CPU_TIMERS)
-		ccsp_initial_cpu_speed (&(sched->cpu_factor), &(sched->cpu_khz));
-		#endif /* defined(ENABLE_CPU_TIMERS) */
-
-		#if defined(RMOX_BUILD)
-		sched->spin = 0;
-		#else
-		setup_spin (sched);
-		#endif /* defined (RMOX_BUILD) */
-
-		att_set_bit (&enabled_threads, sched->index);
-		
-		ccsp_start_threads ();
-	} else {
-		/* copy calibration from another thread */
-		unsigned int other 	= bsf (att_val (&enabled_threads));
-		#if defined(ENABLE_CPU_TIMERS)
-		sched->cpu_factor 	= schedulers[other]->cpu_factor;
-		sched->cpu_khz 		= schedulers[other]->cpu_khz;
-		#endif
-		sched->spin 		= schedulers[other]->spin;
-		att_set_bit (&enabled_threads, sched->index);
-	}
-
-	if (Wptr != NotProcess_p) {
-		sched->stats.startp++;
 		K_ZERO_OUT_JRET ();
 	} else {
-		RESCHEDULE;
+		K_ZERO_OUT ();
 	}
-}
-/*}}}*/
-/*{{{  void kernel_Y_fastscheduler (void)*/
-/*
- *	fast scheduler entry point -- doesn't enqueue us, just runs next process
- *
- *	@SYMBOL:	Y_fastscheduler
- *	@TYPE:		JUMP
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
- *	@CALL: 		K_FASTSCHEDULER
- *	@PRIO:		50
- */
-void kernel_Y_fastscheduler (void)
-{
-	K_SETGLABEL_ZERO_IN (Y_fastscheduler);
-	ENTRY_TRACE0 (Y_fastscheduler);
-
-	Wptr = get_process_or_reschedule (sched); 
-
-	K_ZERO_OUT_JRET ();
-}
-/*}}}*/
-/*{{{  void kernel_X_occscheduler (void)*/
-/*
- *	@SYMBOL:	X_occscheduler
- *	@TYPE:		JUMP
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
- *	@CALL: 		K_OCCSCHEDULER
- *	@PRIO:		50
- */
-void kernel_X_occscheduler (void)
-{
-	K_SETGLABEL_ZERO_IN (X_occscheduler);
-	RESCHEDULE;
-}
-/*}}}*/
-/*{{{  void kernel_X_scheduler (void)*/
-/*
- *	scheduler proper
- *
- *	This routine cannot be "call'ed" because it doesn't deal with the stack, so
- *	it should never be called from C directly, only from assembler using a jump.
- *	It should not be called externally anyway...
- *	FOOTNOTE: But it is jumped to (now!) from CSPlib in ProcPar().
- *	NOTE: [CSPlib disabled in this scheduler]
- */
-void kernel_X_scheduler (void)
-{
-	sched_t *sched;
-	word *Wptr;
-
-	K_SCHEDULER (X_scheduler);
-	
-	//fprintf (stderr, ">> S = %p, F = %p, B = %p\n", sched, BFptr, BBptr);
-
-	ENTRY_TRACE (X_scheduler, "sync=%d", att_val (&(sched->sync)));
-	
-	Wptr = NotProcess_p;
-	do {
-		if (att_val (&(sched->sync))) {
-			unsigned int sync = att_swap (&(sched->sync), 0);
-
-			#ifndef ENABLE_CPU_TIMERS
-			if (sync & SYNC_TIME) {
-				check_timer_queue (sched);
-			}
-			#endif	/* !ENABLE_CPU_TIMERS */
-			
-			while (sync & SYNC_BMAIL) {
-				batch_t *batch = (batch_t *) atomic_dequeue_from_runqueue (&(sched->bmail), false);
-				if (batch != NULL) {
-					push_batch (sched, batch->priofinity, batch);
-				} else {
-					sync &= ~SYNC_BMAIL;
-				}
-			}
-			
-			while (sync & SYNC_PMAIL) {
-				word *ptr = (word *) atomic_dequeue_from_runqueue (&(sched->pmail), true);
-				if (ptr != NULL) {
-					enqueue_process (sched, ptr);
-				} else {
-					sync &= ~SYNC_PMAIL;
-				}
-			}
-
-			if (sync & SYNC_TQ) {
-				clean_timer_queue (sched);
-				check_timer_queue (sched);
-			}
-		}
-
-		if (end_of_curb (sched)) {
-			#ifdef ENABLE_CPU_TIMERS
-			check_timer_queue (sched);
-			#endif
-
-			if (sched->curb.size > BATCH_EMPTIED && !att_val (&(sched->rqstate))) {
-				word size = sched->curb.size & (~BATCH_EMPTIED);
-				sched->dispatches = calculate_dispatches (size);
-				sched->curb.size = size;
-				Wptr = dequeue_from_curb (sched);
-			} else {
-				unsigned int tmp;
-				batch_t *new_batch = NULL;
-
-				if (!(empty_batch (&(sched->curb)))) {
-					push_curb (sched);
-				}
-
-				while (new_batch == NULL && (tmp = att_val (&(sched->rqstate)))) {
-					unsigned int rq = bsf (tmp);
-					new_batch = pick_batch (sched, rq);
-				}
-
-				if (new_batch != NULL) {
-					#if !defined(RMOX_BUILD)
-					if (att_val (&(sched->mwstate)) && (tmp = att_val (&sleeping_threads))) {
-						ccsp_wake_thread (schedulers[bsf (tmp)], SYNC_WORK_BIT);
-					}
-					#endif
-					ASSERT ( clean_batch (new_batch) );
-					load_curb (sched, new_batch, false);
-					Wptr = dequeue_from_curb (sched);
-				} else if ((new_batch = migrate_some_work (sched)) != NULL) {
-					ASSERT ( dirty_batch (new_batch) );
-					SAFETY { verify_batch_integrity (new_batch); }
-					sched->loop = sched->spin;
-					load_curb (sched, new_batch, true);
-					Wptr = dequeue_from_curb (sched);
-				} else {
-					new_curb (sched);
-
-					if ((sched->loop & 0xf) == 0) {
-						clean_timer_queue (sched);
-						do_laundry (sched);
-						release_excess_memory (sched);
-					}
-
-					if (sched->loop > 0) {
-						sched->loop--;
-						idle_cpu ();
-					} else {
-						att_set_bit (&sleeping_threads, sched->index);
-						strong_read_barrier ();
-						if (sched->tq_fptr != NULL) {
-							#if !defined(RMOX_BUILD) && defined(ENABLE_CPU_TIMERS)
-							ccsp_safe_pause_timeout (sched);
-							#elif !defined(RMOX_BUILD)
-							ccsp_safe_pause (sched);
-							#else
-							/* spin... */
-							#endif
-							check_timer_queue (sched);
-						}
-						else if (!att_val (&(sched->sync))) {
-							att_set_bit (&idle_threads, sched->index);
-
-							#if !defined(RMOX_BUILD) && defined(BLOCKING_SYSCALLS)
-							if (bsyscalls_pending () > (ccsp_external_event_is_bsc () ? (ccsp_external_event_is_ready () ? 0 : 1) : 0)) {
-								ccsp_safe_pause (sched);
-							}
-							else
-							#endif
-							if (ccsp_blocked_on_external_event ()) {
-								#if !defined(RMOX_BUILD)
-								ccsp_safe_pause (sched);
-								#endif
-							} else {
-								unsigned int idle;
-
-								strong_read_barrier ();
-								idle = att_val (&idle_threads) & att_val (&sleeping_threads);
-								if (idle == att_val (&enabled_threads)) {
-									ccsp_kernel_deadlock ();
-								} else {
-									#if !defined(RMOX_BUILD)
-									ccsp_safe_pause (sched);
-									#endif /* !defined(RMOX_BUILD) */
-								}
-							}
-
-							att_clear_bit (&idle_threads, sched->index);
-						} else {
-							att_clear_bit (&sleeping_threads, sched->index);
-						}
-						#if defined(RMOX_BUILD)
-						att_clear_bit (&sleeping_threads, sched->index);
-						#endif /* defined(RMOX_BUILD) */
-						sched->loop = sched->spin;
-					}
-				}
-			}
-		} else {
-			SAFETY { verify_batch_integrity (&(sched->curb)); }
-			sched->dispatches--;
-			Wptr = dequeue_from_curb (sched);
-		}
-	} while (Wptr == NotProcess_p);
-
-	ENTRY_TRACE (X_scheduler_dispatch, "sync=%d, raddr=0x%8.8x", att_val (&(sched->sync)), Wptr[Iptr]);
-	DTRACE ("SSW", Wptr);
-
-	//fprintf (stderr, "<< W = %p (%p), F = %p, B = %p\n", Wptr, Wptr[-1], Fptr, Bptr);
-	K_ZERO_OUT_JRET ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_shutdown (void)*/
-/*
- *	@SYMBOL:	Y_shutdown
- *	@TYPE:		JUMP
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
- *	@CALL: 		K_SHUTDOWN
- *	@PRIO:		10
- */
-void kernel_Y_shutdown (void)
-{
-	K_SETGLABEL_ZERO_IN (Y_shutdown);
-	ENTRY_TRACE (Y_shutdown, "");
-	att_set (&(ccsp_shutdown), true);
-	RESCHEDULE;
 }
 /*}}}*/
 /*}}}*/
@@ -4569,34 +4566,35 @@ static INLINE void kernel_chan_io (word flags, word *Wptr, sched_t *sched, word 
 	K_ZERO_OUT_JRET ();
 }
 #define BUILD_CHANNEL_IO(symbol,count,flags) \
-void kernel_##symbol (void) 		\
+K_CALL_DEFINE (symbol) 			\
 {					\
 	word *channel_address;		\
 	byte *pointer;			\
 					\
-	K_SETGLABEL_TWO_IN_SR (symbol, channel_address, pointer); \
+	K_CALL_PARAMS_2 (channel_address, pointer); \
+	save_return (sched, Wptr, return_address); \
 	kernel_chan_io ((flags), Wptr, sched, channel_address, pointer, count); \
 }
 
 #define BUILD_CHANNEL_COUNTED_IO(symbol,shift,flags) \
-void kernel_##symbol (void)		\
+K_CALL_DEFINE (symbol)			\
 {					\
 	word count, *channel_address;	\
 	byte *pointer;			\
 					\
-	K_SETGLABEL_THREE_IN_SR (symbol, count, channel_address, pointer); \
+	K_CALL_PARAMS_3 (count, channel_address, pointer); \
 	if ((shift)) {			\
 		count <<= (shift);	\
 	}				\
+	save_return (sched, Wptr, return_address); \
 	kernel_chan_io ((flags), Wptr, sched, channel_address, pointer, count); \
 }
 /*}}}*/
 /*{{{  Y_in8 */
 /*
  *	@SYMBOL:	Y_in8
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_IN8
  *	@PRIO:		100
  */
@@ -4605,9 +4603,8 @@ BUILD_CHANNEL_IO (Y_in8, 1, CIO_INPUT)
 /*{{{  Y_in32 */
 /*
  *	@SYMBOL:	Y_in32
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_IN32
  *	@PRIO:		100
  */
@@ -4616,9 +4613,8 @@ BUILD_CHANNEL_IO (Y_in32, 4, CIO_INPUT)
 /*{{{  Y_out8 */
 /*
  *	@SYMBOL:	Y_out8
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_OUT8
  *	@PRIO:		100
  */
@@ -4627,9 +4623,8 @@ BUILD_CHANNEL_IO (Y_out8, 1, CIO_OUTPUT)
 /*{{{  Y_out32 */
 /*
  *	@SYMBOL:	Y_out32
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_OUT32
  *	@PRIO:		100
  */
@@ -4638,9 +4633,8 @@ BUILD_CHANNEL_IO (Y_out32, 4, CIO_OUTPUT)
 /*{{{  Y_in */
 /*
  *	@SYMBOL:	Y_in
- *	@TYPE:		SR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		3
+ *	@OUTPUT: 	0
  *	@CALL: 		K_IN
  *	@PRIO:		110
  */
@@ -4649,9 +4643,8 @@ BUILD_CHANNEL_COUNTED_IO (Y_in, 0, CIO_INPUT)
 /*{{{  Y_out */
 /*
  *	@SYMBOL:	Y_out
- *	@TYPE:		SR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		3
+ *	@OUTPUT: 	0
  *	@CALL: 		K_OUT
  *	@PRIO:		110
  */
@@ -4662,19 +4655,20 @@ BUILD_CHANNEL_COUNTED_IO (Y_out, 0, CIO_OUTPUT)
  *	byte channel output
  *
  *	@SYMBOL:	Y_outbyte
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_OUTBYTE
  *	@PRIO:		100
  */
-void kernel_Y_outbyte (void)
+K_CALL_DEFINE (Y_outbyte)
 {
 	word *channel_address;
 	byte *pointer;
 	word value;
 
-	K_SETGLABEL_TWO_IN_SR (Y_outbyte, value, channel_address);
+	K_CALL_PARAMS_2 (value, channel_address);
+
+	save_return (sched, Wptr, return_address);
 
 	pointer		= (byte *) Wptr;
 	*pointer	= (byte) value;
@@ -4687,20 +4681,21 @@ void kernel_Y_outbyte (void)
  *	word channel output
  *
  *	@SYMBOL:	Y_outword
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_OUTWORD
  *	@PRIO:		100
  */
-void kernel_Y_outword (void)
+K_CALL_DEFINE (Y_outword)
 {
 	word *channel_address;
 	byte *pointer;
 	word value;
 	
-	K_SETGLABEL_TWO_IN_SR (Y_outword, value, channel_address);
+	K_CALL_PARAMS_2 (value, channel_address);
 	
+	save_return (sched, Wptr, return_address);
+
 	Wptr[0]	= value;
 	pointer	= (byte *) Wptr;
 	
@@ -4713,17 +4708,16 @@ void kernel_Y_outword (void)
  *	also works with an inputting process in the case where output ALTs are enabled
  *
  *	@SYMBOL:	X_xable
- *	@TYPE:		SR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_XABLE
  *	@PRIO:		70
  */
-void kernel_X_xable (void)
+K_CALL_DEFINE (X_xable)
 {
 	word *channel_address, temp;
 	
-	K_SETGLABEL_ONE_IN_SR (X_xable, channel_address);
+	K_CALL_PARAMS_1 (channel_address);
 	ENTRY_TRACE (X_xable, "%p", channel_address);
 
 	temp = atw_val (channel_address);
@@ -4731,6 +4725,7 @@ void kernel_X_xable (void)
 	if (temp == NotProcess_p || (temp & 1)) {
 		atw_set (&(Wptr[State]), ALT_WAITING | 1);
 		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
 		weak_write_barrier ();
 
 		temp = atw_swap (channel_address, ((word) Wptr) | 1);
@@ -4746,7 +4741,7 @@ void kernel_X_xable (void)
 		atw_set (channel_address, temp);
 	}
 
-	K_ZERO_OUT_JRET ();
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_X_xend (void)*/
@@ -4755,17 +4750,16 @@ void kernel_X_xable (void)
  *	(or inputting process if output ALTs are enabled)
  *
  *	@SYMBOL:	X_xend
- *	@TYPE:		RR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_XEND
  *	@PRIO:		70
  */
-void kernel_X_xend (void)
+K_CALL_DEFINE (X_xend)
 {
 	word *channel_address, *ptr;
 
-	K_SETGLABEL_ONE_IN_RR (X_xend, channel_address);
+	K_CALL_PARAMS_1 (channel_address);
 
 	ENTRY_TRACE (X_xend, "%p (process = %p)", channel_address, (word *)*channel_address);
 
@@ -4781,9 +4775,8 @@ void kernel_X_xend (void)
 /*{{{  Y_xin */
 /*
  *	@SYMBOL:	Y_xin
- *	@TYPE:		SR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		3
+ *	@OUTPUT: 	0
  *	@CALL: 		K_XIN
  *	@PRIO:		90
  */
@@ -4792,9 +4785,8 @@ BUILD_CHANNEL_COUNTED_IO (Y_xin, 0, CIO_EXTENDED | CIO_INPUT)
 /*{{{  Y_mt_in */
 /*
  *	@SYMBOL:	Y_mt_in
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MT_IN
  *	@PRIO:		100
  */
@@ -4803,9 +4795,8 @@ BUILD_CHANNEL_IO (Y_mt_in, 0, CIO_MOBILE | CIO_INPUT)
 /*{{{  Y_mt_out */
 /*
  *	@SYMBOL:	Y_mt_out
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0	
  *	@CALL: 		K_MT_OUT
  *	@PRIO:		100
  */
@@ -4814,9 +4805,8 @@ BUILD_CHANNEL_IO (Y_mt_out, 0, CIO_MOBILE | CIO_OUTPUT)
 /*{{{  Y_mt_xchg */
 /*
  *	@SYMBOL:	Y_mt_xchg
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MT_XCHG
  *	@PRIO:		100
  */
@@ -4825,9 +4815,8 @@ BUILD_CHANNEL_IO (Y_mt_xchg, 0, CIO_MOBILE | CIO_EXCHANGE)
 /*{{{  Y_mt_xin */
 /*
  *	@SYMBOL:	Y_mt_xin
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MT_XIN
  *	@PRIO:		100
  */
@@ -4836,9 +4825,8 @@ BUILD_CHANNEL_IO (Y_mt_xin, 0, CIO_EXTENDED | CIO_MOBILE | CIO_INPUT)
 /*{{{  Y_mt_xout */
 /*
  *	@SYMBOL:	Y_mt_xout
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MT_XOUT
  *	@PRIO:		100
  */
@@ -4847,9 +4835,8 @@ BUILD_CHANNEL_IO (Y_mt_xout, 0, CIO_EXTENDED | CIO_MOBILE | CIO_OUTPUT)
 /*{{{  Y_mt_xxchg */
 /*
  *	@SYMBOL:	Y_mt_xxchg
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MT_XXCHG
  *	@PRIO:		100
  */
@@ -4862,17 +4849,16 @@ BUILD_CHANNEL_IO (Y_mt_xxchg, 0, CIO_EXTENDED | CIO_MOBILE | CIO_EXCHANGE)
  *	load timer
  *
  *	@SYMBOL:	X_ldtimer
- *	@TYPE:		LCR
- *	@INPUT:		NONE
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		0
+ *	@OUTPUT: 	1
  *	@CALL: 		K_LDTIMER
  *	@PRIO:		90
  */
-void kernel_X_ldtimer (void)
+K_CALL_DEFINE (X_ldtimer)
 {
 	Time now;
 	
-	K_SETGLABEL_ZERO_IN_LCR (X_ldtimer);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_ldtimer);
 
 	now = Time_GetTime(sched);
@@ -4885,32 +4871,31 @@ void kernel_X_ldtimer (void)
  *	timer input (delay)
  *
  *	@SYMBOL:	X_tin
- *	@TYPE:		SR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_TIN
  *	@PRIO:		80
  */
-void kernel_X_tin (void)
+K_CALL_DEFINE (X_tin)
 {
 	Time now, wait_time;
 	
-	K_SETGLABEL_ONE_IN_SR (X_tin, wait_time);
+	K_CALL_PARAMS_1 (wait_time);
 	ENTRY_TRACE (X_tin, "%d", wait_time);
 
 	now = Time_GetTime(sched);
 
 	if (!Time_AFTER (now, wait_time)) {
 		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
 		wait_time++; /* from T9000 book... */
 		SetTimeField(Wptr, wait_time);
 		add_to_timer_queue (sched, Wptr, wait_time, false);
 		RESCHEDULE;
 		return;
-	} else {
-		K_ZERO_OUT_JRET ();
-		return;
 	}
+	
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_fasttin (void)*/
@@ -4918,20 +4903,20 @@ void kernel_X_tin (void)
  *	fast timer input
  *
  *	@SYMBOL:	Y_fasttin
- *	@TYPE:		SR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_FASTTIN
  *	@PRIO:		80
  */
-void kernel_Y_fasttin (void)
+K_CALL_DEFINE (Y_fasttin)
 {
 	Time wait_time;
 
-	K_SETGLABEL_ONE_IN_SR (Y_fasttin, wait_time);
+	K_CALL_PARAMS_1 (wait_time);
 	ENTRY_TRACE (Y_fasttin, "%d", wait_time);
 
 	save_priofinity (sched, Wptr);
+	save_return (sched, Wptr, return_address);
 	add_to_timer_queue (sched, Wptr, wait_time, false);
 
 	RESCHEDULE;
@@ -4944,15 +4929,14 @@ void kernel_Y_fasttin (void)
  *	ALT start
  *
  *	@SYMBOL:	Y_alt
- *	@TYPE:		RR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_ALT
  *	@PRIO:		70
  */
-void kernel_Y_alt (void)
+K_CALL_DEFINE (Y_alt)
 {
-	K_SETGLABEL_ZERO_IN_RR (Y_alt);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_alt);
 
 	atw_set (&(Wptr[State]), ALT_ENABLING | ALT_NOT_READY | 1);
@@ -4966,15 +4950,14 @@ void kernel_Y_alt (void)
  *	timer ALT start
  *
  *	@SYMBOL:	Y_talt
- *	@TYPE:		RR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_TALT
  *	@PRIO:		70
  */
-void kernel_Y_talt (void)
+K_CALL_DEFINE (Y_talt)
 {
-	K_SETGLABEL_ZERO_IN_RR (Y_talt);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_talt);
 
 	atw_set (&(Wptr[State]), ALT_ENABLING | ALT_NOT_READY | 1);
@@ -4992,7 +4975,7 @@ static INLINE void kernel_altend (word *Wptr, sched_t *sched, unsigned int retur
 	}
 
 	save_priofinity (sched, Wptr);
-	atw_set (&(Wptr[Iptr]), (word) return_address);
+	save_return (sched, Wptr, return_address);
 	weak_write_barrier ();
 
 	if (atw_dec_z (&(Wptr[State]))) {
@@ -5009,15 +4992,14 @@ static INLINE void kernel_altend (word *Wptr, sched_t *sched, unsigned int retur
  *	ALT end
  *
  *	@SYMBOL:	Y_altend
- *	@TYPE:		RR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_ALTEND
  *	@PRIO:		70
  */
-void kernel_Y_altend (void)
+K_CALL_DEFINE (Y_altend)
 {
-	K_SETGLABEL_ZERO_IN_RR (Y_altend);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_altend);
 
 	kernel_altend (Wptr, sched, return_address, true);
@@ -5028,15 +5010,14 @@ void kernel_Y_altend (void)
  *	CIF ALT end
  *
  *	@SYMBOL:	Y_caltend
- *	@TYPE:		RR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_CALTEND
  *	@PRIO:		70
  */
-void kernel_Y_caltend (void)
+K_CALL_DEFINE (Y_caltend)
 {
-	K_SETGLABEL_ZERO_IN_RR (Y_caltend);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_caltend);
 
 	kernel_altend (Wptr, sched, return_address, false);
@@ -5047,17 +5028,16 @@ void kernel_Y_caltend (void)
  *	ALT wait
  *
  *	@SYMBOL:	X_altwt
- *	@TYPE:		LCR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_ALTWT
  *	@PRIO:		70
  */
-void kernel_X_altwt (void)
+K_CALL_DEFINE (X_altwt)
 {
 	word state;
 
-	K_SETGLABEL_ZERO_IN_LCR (X_altwt);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_altwt);
 
 	Wptr[Temp] = NoneSelected_o;
@@ -5066,7 +5046,7 @@ void kernel_X_altwt (void)
 		word nstate = (state | ALT_WAITING) & (~(ALT_ENABLING | ALT_NOT_READY));
 		
 		save_priofinity (sched, Wptr);
-		atw_set (&(Wptr[Iptr]), (word) return_address);
+		save_return (sched, Wptr, return_address);
 		weak_write_barrier ();
 		
 		if (atw_cas (&(Wptr[State]), state, nstate)) {
@@ -5085,18 +5065,17 @@ void kernel_X_altwt (void)
  *	timer ALT wait
  *
  *	@SYMBOL:	X_taltwt
- *	@TYPE:		LCR
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_TALTWT
  *	@PRIO:		70
  */
-void kernel_X_taltwt (void)
+K_CALL_DEFINE (X_taltwt)
 {
 	Time now;
 	word state;
 
-	K_SETGLABEL_ZERO_IN_LCR (X_taltwt);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_taltwt);
 
 	Wptr[Temp] = NoneSelected_o;
@@ -5112,7 +5091,7 @@ void kernel_X_taltwt (void)
 			tqnode_t *tn = NULL;
 
 			save_priofinity (sched, Wptr);
-			atw_set (&(Wptr[Iptr]), (word) return_address);
+			save_return (sched, Wptr, return_address);
 
 			if (Wptr[TLink] == TimeSet_p) {
 				tn = add_to_timer_queue (sched, Wptr, GetTimeField(Wptr), true);
@@ -5187,27 +5166,26 @@ static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, unsigned int return_
  *	enable channel
  *
  *	@SYMBOL:	Y_enbc
- *	@TYPE:		LCR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_ENBC
  *	@PRIO:		80
  */
-void kernel_Y_enbc (void)
+K_CALL_DEFINE (Y_enbc)
 {
 	word **channel_address, guard;
 
-	K_SETGLABEL_TWO_IN_LCR (Y_enbc, guard, channel_address);
+	K_CALL_PARAMS_2 (guard, channel_address);
 	ENTRY_TRACE (Y_enbc, "%d, %p (ready = %d)", guard, channel_address, guard && (*channel_address != NotProcess_p) && (*channel_address != Wptr));
 
 	if (!guard) {
-		K_STKONE_OUT (false);
+		K_ONE_OUT (false);
 		return;
 	}
 	
 	kernel_enbc (Wptr, sched, return_address, channel_address, false, false);
 
-	K_STKONE_OUT (true);
+	K_ONE_OUT (true);
 }
 /*}}}*/
 /*{{{  void kernel_Y_enbc2 (void)*/
@@ -5215,18 +5193,17 @@ void kernel_Y_enbc (void)
  *	enable channel (2 param, with ready address)
  *
  *	@SYMBOL:	Y_enbc2
- *	@TYPE:		LCR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_ENBC2
  *	@PRIO:		80
  */
-void kernel_Y_enbc2 (void)
+K_CALL_DEFINE (Y_enbc2)
 {
 	unsigned int process_address;
 	word **channel_address;
 
-	K_SETGLABEL_TWO_IN_LCR (Y_enbc2, process_address, channel_address);
+	K_CALL_PARAMS_2 (process_address, channel_address);
 	ENTRY_TRACE (Y_enbc2, "%p (ready = %d), %p", channel_address, (*channel_address != NotProcess_p) && (*channel_address != Wptr), (void *)process_address);
 
 	kernel_enbc (Wptr, sched, process_address, channel_address, true, false);
@@ -5239,28 +5216,27 @@ void kernel_Y_enbc2 (void)
  *	enable channel (with ready address)
  *
  *	@SYMBOL:	Y_enbc3
- *	@TYPE:		LCR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		3
+ *	@OUTPUT: 	1
  *	@CALL: 		K_ENBC3
  *	@PRIO:		80
  */
-void kernel_Y_enbc3 (void)
+K_CALL_DEFINE (Y_enbc3)
 {
 	unsigned int process_address;
 	word **channel_address, guard;
 
-	K_SETGLABEL_THREE_IN_LCR (Y_enbc3, process_address, guard, channel_address);
+	K_CALL_PARAMS_3 (process_address, guard, channel_address);
 	ENTRY_TRACE (Y_enbc3, "%d, %p (ready = %d), %p", guard, channel_address, guard && (*channel_address != NotProcess_p) && (*channel_address != Wptr), (void *)process_address);
 
 	if (!guard) {
-		K_STKONE_OUT (false);
+		K_ONE_OUT (false);
 		return;
 	}
 	
 	kernel_enbc (Wptr, sched, process_address, channel_address, true, false);
 
-	K_STKONE_OUT (true);
+	K_ONE_OUT (true);
 }
 /*}}}*/
 /*{{{  void kernel_Y_cenbc (void)*/
@@ -5268,17 +5244,16 @@ void kernel_Y_enbc3 (void)
  *	CIF enable channel (2 param)
  *
  *	@SYMBOL:	Y_cenbc
- *	@TYPE:		RR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_CENBC
  *	@PRIO:		80
  */
-void kernel_Y_cenbc (void)
+K_CALL_DEFINE (Y_cenbc)
 {
 	word **channel_address, id;
 
-	K_SETGLABEL_TWO_IN_RR (Y_cenbc, id, channel_address);
+	K_CALL_PARAMS_2 (id, channel_address);
 	ENTRY_TRACE (Y_cenbc, "%d %p (ready = %d), %p", id, channel_address, (*channel_address != NotProcess_p) && (*channel_address != Wptr));
 
 	K_ONE_OUT (kernel_enbc (Wptr, sched, id, channel_address, false, true));
@@ -5305,27 +5280,26 @@ static INLINE void kernel_enbs (word *Wptr, unsigned int return_address, bool ju
  *	enable skip guard
  *
  *	@SYMBOL:	Y_enbs
- *	@TYPE:		LCR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		1
+ *	@OUTPUT: 	1
  *	@CALL: 		K_ENBS
  *	@PRIO:		60
  */
-void kernel_Y_enbs (void)
+K_CALL_DEFINE (Y_enbs)
 {
 	word guard;
 
-	K_SETGLABEL_ONE_IN_LCR (Y_enbs, guard);
+	K_CALL_PARAMS_1 (guard);
 	ENTRY_TRACE (Y_enbs, "%d", guard);
 
 	if (!guard) {
-		K_STKONE_OUT (false);
+		K_ONE_OUT (false);
 		return;
 	}
 	
 	kernel_enbs (Wptr, 0, false, false);
 
-	K_STKONE_OUT (true);
+	K_ONE_OUT (true);
 }
 /*}}}*/
 /*{{{  void kernel_Y_enbs2 (void)*/
@@ -5333,17 +5307,16 @@ void kernel_Y_enbs (void)
  *	enable skip guard (1 param, with ready address)
  *
  *	@SYMBOL:	Y_enbs2
- *	@TYPE:		LCR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_ENBS2
  *	@PRIO:		60
  */
-void kernel_Y_enbs2 (void)
+K_CALL_DEFINE (Y_enbs2)
 {
 	unsigned int process_address;
 
-	K_SETGLABEL_ONE_IN_LCR (Y_enbs2, process_address);
+	K_CALL_PARAMS_1 (process_address);
 	ENTRY_TRACE (Y_enbs2, "%p", process_address);
 
 	kernel_enbs (Wptr, 0, true, false);
@@ -5357,29 +5330,28 @@ void kernel_Y_enbs2 (void)
  *	enable skip guard (with ready address)
  *
  *	@SYMBOL:	Y_enbs3
- *	@TYPE:		LCR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_ENBS3
  *	@PRIO:		60
  */
-void kernel_Y_enbs3 (void)
+K_CALL_DEFINE (Y_enbs3)
 {
 	unsigned int process_address;
 	word guard;
 
-	K_SETGLABEL_TWO_IN_LCR (Y_enbs3, process_address, guard);
+	K_CALL_PARAMS_2 (process_address, guard);
 	ENTRY_TRACE (Y_enbs3, "%d %p", process_address, guard);
 
 	if (!guard) {
-		K_STKONE_OUT (false);
+		K_ONE_OUT (false);
 		return;
 	}
 
 	kernel_enbs (Wptr, 0, true, false);
 	return_address = process_address;
 
-	K_STKONE_OUT (true);
+	K_ONE_OUT (true);
 }
 /*}}}*/
 /*{{{  void kernel_Y_cenbs (void)*/
@@ -5387,17 +5359,16 @@ void kernel_Y_enbs3 (void)
  *	CIF enable skip guard
  *
  *	@SYMBOL:	Y_cenbs
- *	@TYPE:		RR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		1
+ *	@OUTPUT: 	1
  *	@CALL: 		K_CENBS
  *	@PRIO:		60
  */
-void kernel_Y_cenbs (void)
+K_CALL_DEFINE (Y_cenbs)
 {
 	word id;
 
-	K_SETGLABEL_ONE_IN_RR (Y_cenbs, id);
+	K_CALL_PARAMS_1 (id);
 	ENTRY_TRACE (Y_cenbs, "%d", id);
 
 	kernel_enbs (Wptr, id, false, true);
@@ -5441,28 +5412,27 @@ static INLINE bool kernel_enbt (word *Wptr, sched_t *sched, unsigned int return_
  *	enable timer
  *
  *	@SYMBOL:	X_enbt
- *	@TYPE:		LCR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_ENBT
  *	@PRIO:		70
  */
-void kernel_X_enbt (void)
+K_CALL_DEFINE (X_enbt)
 {
 	Time timeout;
 	word guard;
 
-	K_SETGLABEL_TWO_IN_LCR (X_enbt, guard, timeout);
+	K_CALL_PARAMS_2 (guard, timeout);
 	ENTRY_TRACE (X_enbt, "%d, %d", guard, timeout);
 
 	if (!guard) {
-		K_STKONE_OUT (false);
+		K_ONE_OUT (false);
 		return;
 	}
 	
 	kernel_enbt (Wptr, sched, 0, timeout, false, false, false);
 
-	K_STKONE_OUT (true);
+	K_ONE_OUT (true);
 }
 /*}}}*/
 /*{{{  void kernel_Y_enbt2 (void)*/
@@ -5470,18 +5440,17 @@ void kernel_X_enbt (void)
  *	enable timer (with ready address)
  *
  *	@SYMBOL:	Y_enbt2
- *	@TYPE:		LCR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_ENBT2
  *	@PRIO:		70
  */
-void kernel_Y_enbt2 (void)
+K_CALL_DEFINE (Y_enbt2)
 {
 	unsigned int process_address;
 	Time timeout;
 
-	K_SETGLABEL_TWO_IN_LCR (Y_enbt2, process_address, timeout);
+	K_CALL_PARAMS_2 (process_address, timeout);
 	ENTRY_TRACE (Y_enbt2, "%d, %p", timeout, (void *)process_address);
 
 	kernel_enbt (Wptr, sched, process_address, timeout, true, false, false);
@@ -5494,29 +5463,28 @@ void kernel_Y_enbt2 (void)
  *	enable timer (with ready address)
  *
  *	@SYMBOL:	Y_enbt3
- *	@TYPE:		LCR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		3
+ *	@OUTPUT: 	1
  *	@CALL: 		K_ENBT3
  *	@PRIO:		70
  */
-void kernel_Y_enbt3 (void)
+K_CALL_DEFINE (Y_enbt3)
 {
 	unsigned int process_address;
 	Time timeout;
 	word guard;
 
-	K_SETGLABEL_THREE_IN_LCR (Y_enbt3, process_address, guard, timeout);
+	K_CALL_PARAMS_3 (process_address, guard, timeout);
 	ENTRY_TRACE (Y_enbt3, "%d, %d, %p", guard, timeout, (void *)process_address);
 
 	if (!guard) {
-		K_STKONE_OUT (false);
+		K_ONE_OUT (false);
 		return;
 	}
 	
 	kernel_enbt (Wptr, sched, process_address, timeout, true, false, false);
 
-	K_STKONE_OUT (true);
+	K_ONE_OUT (true);
 }
 /*}}}*/
 /*{{{  void kernel_Y_cenbt (void)*/
@@ -5524,17 +5492,16 @@ void kernel_Y_enbt3 (void)
  *	CIF enable timer
  *
  *	@SYMBOL:	Y_cenbt
- *	@TYPE:		RR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_CENBT
  *	@PRIO:		70
  */
-void kernel_Y_cenbt (void)
+K_CALL_DEFINE (Y_cenbt)
 {
 	Time id, timeout;
 
-	K_SETGLABEL_TWO_IN_RR (Y_cenbt, id, timeout);
+	K_CALL_PARAMS_2 (id, timeout);
 	ENTRY_TRACE (Y_cenbt, "%d %d", id, timeout);
 
 	K_ONE_OUT (kernel_enbt (Wptr, sched, id, timeout, false, true, true));
@@ -5569,26 +5536,25 @@ static INLINE word kernel_disc (word *Wptr, unsigned int process_address, word *
  *	disable channel
  *
  *	@SYMBOL:	Y_disc
- *	@TYPE:		LCR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		3
+ *	@OUTPUT: 	1
  *	@CALL: 		K_DISC
  *	@PRIO:		80
  */
-void kernel_Y_disc (void)
+K_CALL_DEFINE (Y_disc)
 {
 	unsigned int process_address;
 	word **channel_address, guard;
 
-	K_SETGLABEL_THREE_IN_LCR (Y_disc, process_address, guard, channel_address);
+	K_CALL_PARAMS_3 (process_address, guard, channel_address);
 	ENTRY_TRACE (Y_disc, "%p, %d, %p", (void *)process_address, guard, channel_address);
 
 	if (!guard) {
-		K_STKONE_OUT (false);
+		K_ONE_OUT (false);
 		return;
 	}
 
-	K_STKONE_OUT (kernel_disc (Wptr, process_address, channel_address, (Wptr[Temp] == NoneSelected_o)));
+	K_ONE_OUT (kernel_disc (Wptr, process_address, channel_address, (Wptr[Temp] == NoneSelected_o)));
 }
 /*}}}*/
 /*{{{  void kernel_Y_cdisc (void)*/
@@ -5596,17 +5562,16 @@ void kernel_Y_disc (void)
  *	CIF disable channel
  *
  *	@SYMBOL:	Y_cdisc
- *	@TYPE:		RR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_CDISC
  *	@PRIO:		80
  */
-void kernel_Y_cdisc (void)
+K_CALL_DEFINE (Y_cdisc)
 {
 	word **channel_address, id;
 
-	K_SETGLABEL_TWO_IN_RR (Y_cdisc, id, channel_address);
+	K_CALL_PARAMS_2 (id, channel_address);
 	ENTRY_TRACE (Y_cdisc, "%d %p", id, channel_address);
 
 	K_ONE_OUT (kernel_disc (Wptr, id, channel_address, (Wptr[Temp] == NoneSelected_o)));
@@ -5617,26 +5582,25 @@ void kernel_Y_cdisc (void)
  *	disable channel
  *
  *	@SYMBOL:	Y_ndisc
- *	@TYPE:		LCR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		3
+ *	@OUTPUT: 	1
  *	@CALL: 		K_NDISC
  *	@PRIO:		80
  */
-void kernel_Y_ndisc (void)
+K_CALL_DEFINE (Y_ndisc)
 {
 	unsigned int process_address;
 	word **channel_address, guard;
 
-	K_SETGLABEL_THREE_IN_LCR (Y_ndisc, process_address, guard, channel_address);
+	K_CALL_PARAMS_3 (process_address, guard, channel_address);
 	ENTRY_TRACE (Y_ndisc, "%p, %d, %p", (void *)process_address, guard, channel_address);
 
 	if (!guard) {
-		K_STKONE_OUT (false);
+		K_ONE_OUT (false);
 		return;
 	}
 
-	K_STKONE_OUT (kernel_disc (Wptr, process_address, channel_address, true));
+	K_ONE_OUT (kernel_disc (Wptr, process_address, channel_address, true));
 }
 /*}}}*/
 /*{{{  void kernel_X_diss (void)*/
@@ -5644,18 +5608,17 @@ void kernel_Y_ndisc (void)
  *	disable SKIP guard
  *
  *	@SYMBOL:	X_diss
- *	@TYPE:		LCR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_DISS
  *	@PRIO:		60
  */
-void kernel_X_diss (void)
+K_CALL_DEFINE (X_diss)
 {
 	unsigned int process_address;
 	word fired, guard;
 
-	K_SETGLABEL_TWO_IN_LCR (X_diss, process_address, guard);
+	K_CALL_PARAMS_2 (process_address, guard);
 	ENTRY_TRACE (X_diss, "%p, %d", (void *)process_address, guard);
 
 	if ((fired = guard)) {
@@ -5666,7 +5629,7 @@ void kernel_X_diss (void)
 		}
 	}
 
-	K_STKONE_OUT (fired);
+	K_ONE_OUT (fired);
 }
 /*}}}*/
 /*{{{  void kernel_Y_cdiss (void)*/
@@ -5674,17 +5637,16 @@ void kernel_X_diss (void)
  *	CIF disable SKIP guard
  *
  *	@SYMBOL:	Y_cdiss
- *	@TYPE:		RR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		1
+ *	@OUTPUT: 	1
  *	@CALL: 		K_CDISS
  *	@PRIO:		60
  */
-void kernel_Y_cdiss (void)
+K_CALL_DEFINE (Y_cdiss)
 {
 	word id;
 
-	K_SETGLABEL_ONE_IN_RR (Y_cdiss, id);
+	K_CALL_PARAMS_1 (id);
 	ENTRY_TRACE (Y_cdiss, "%d", id);
 
 	if (Wptr[Temp] == NoneSelected_o) {
@@ -5700,24 +5662,23 @@ void kernel_Y_cdiss (void)
  *	disables SKIP guard
  *
  *	@SYMBOL:	X_ndiss
- *	@TYPE:		LCR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_NDISS
  *	@PRIO:		60
  */
-void kernel_X_ndiss (void)
+K_CALL_DEFINE (X_ndiss)
 {
 	unsigned int fired, guard, process_address;
 
-	K_SETGLABEL_TWO_IN_LCR (X_ndiss, process_address, guard);
+	K_CALL_PARAMS_2 (process_address, guard);
 	ENTRY_TRACE (X_ndiss, "%p, %d", (void *)process_address, guard);
 
 	if ((fired = guard)) {
 		Wptr[Temp] = process_address;
 	}
 	
-	K_STKONE_OUT (fired);
+	K_ONE_OUT (fired);
 }
 /*}}}*/
 /*{{{ static INLINE void kernel_dist (...)*/
@@ -5768,27 +5729,26 @@ static INLINE word kernel_dist (word *Wptr, sched_t *sched, unsigned int process
  *	disable timer
  *
  *	@SYMBOL:	X_dist
- *	@TYPE:		LCR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		3
+ *	@OUTPUT: 	1
  *	@CALL: 		K_DIST
  *	@PRIO:		70
  */
-void kernel_X_dist (void)
+K_CALL_DEFINE (X_dist)
 {
 	unsigned int process_address;
 	Time timeout;
 	word guard;
 	
-	K_SETGLABEL_THREE_IN_LCR (X_dist, process_address, guard, timeout);
+	K_CALL_PARAMS_3 (process_address, guard, timeout);
 	ENTRY_TRACE (X_dist, "%d, %d, %d", process_address, guard, timeout);
 
 	if (!guard) {
-		K_STKONE_OUT (false);
+		K_ONE_OUT (false);
 		return;
 	}
 	
-	K_STKONE_OUT (kernel_dist (Wptr, sched, process_address, timeout, (Wptr[Temp] == NoneSelected_o)));
+	K_ONE_OUT (kernel_dist (Wptr, sched, process_address, timeout, (Wptr[Temp] == NoneSelected_o)));
 }
 /*}}}*/
 /*{{{  void kernel_Y_cdist (void)*/
@@ -5796,17 +5756,16 @@ void kernel_X_dist (void)
  *	CIF disable timer
  *
  *	@SYMBOL:	Y_cdist
- *	@TYPE:		RR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	REG(1)
+ *	@INPUT:		2
+ *	@OUTPUT: 	1
  *	@CALL: 		K_CDIST
  *	@PRIO:		70
  */
-void kernel_Y_cdist (void)
+K_CALL_DEFINE (Y_cdist)
 {
 	Time id, timeout;
 	
-	K_SETGLABEL_TWO_IN_RR (Y_cdist, id, timeout);
+	K_CALL_PARAMS_2 (id, timeout);
 	ENTRY_TRACE (Y_cdist, "%d, %d", id, timeout);
 
 	K_ONE_OUT (kernel_dist (Wptr, sched, id, timeout, (Wptr[Temp] == NoneSelected_o)));
@@ -5817,27 +5776,26 @@ void kernel_Y_cdist (void)
  *	disable timer
  *
  *	@SYMBOL:	X_ndist
- *	@TYPE:		LCR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		3
+ *	@OUTPUT: 	1
  *	@CALL: 		K_NDIST
  *	@PRIO:		70
  */
-void kernel_X_ndist (void)
+K_CALL_DEFINE (X_ndist)
 {
 	unsigned int process_address;
 	Time timeout;
 	word guard;
 
-	K_SETGLABEL_THREE_IN_LCR (X_ndist, process_address, guard, timeout);
+	K_CALL_PARAMS_3 (process_address, guard, timeout);
 	ENTRY_TRACE (X_ndist, "%d, %d, %d", process_address, guard, timeout);
 
 	if (!guard) {
-		K_STKONE_OUT (false);
+		K_ONE_OUT (false);
 		return;
 	}
 	
-	K_STKONE_OUT (kernel_dist (Wptr, sched, process_address, timeout, true));
+	K_ONE_OUT (kernel_dist (Wptr, sched, process_address, timeout, true));
 }
 /*}}}*/
 /*}}}*/
@@ -5845,36 +5803,34 @@ void kernel_X_ndist (void)
 /*{{{  void kernel_Y_sem_claim (void)*/
 /*
  *	@SYMBOL:	Y_sem_claim
- *	@TYPE:		SR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_SEM_CLAIM
  *	@PRIO:		90
  */
-void kernel_Y_sem_claim (void)
+K_CALL_DEFINE (Y_sem_claim)
 {
 	ccsp_sem_t *sem;
 	
-	K_SETGLABEL_ONE_IN_SR (Y_sem_claim, sem);
+	K_CALL_PARAMS_1 (sem);
 	ENTRY_TRACE (Y_sem_claim, "%p", sem);
 
-	sem_claim (sched, Wptr, sem);
+	sem_claim (sched, Wptr, return_address, sem);
 }
 /*}}}*/
 /*{{{  void kernel_Y_sem_release (void)*/
 /*
  *	@SYMBOL:	Y_sem_release
- *	@TYPE:		RR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_SEM_RELEASE
  *	@PRIO:		90
  */
-void kernel_Y_sem_release (void)
+K_CALL_DEFINE (Y_sem_release)
 {
 	ccsp_sem_t *sem;
 	
-	K_SETGLABEL_ONE_IN_RR (Y_sem_release, sem);
+	K_CALL_PARAMS_1 (sem);
 	ENTRY_TRACE (Y_sem_release, "%p", sem);
 
 	sem_release (sched, sem);
@@ -5885,17 +5841,16 @@ void kernel_Y_sem_release (void)
 /*{{{  void kernel_Y_sem_init (void)*/
 /*
  *	@SYMBOL:	Y_sem_init
- *	@TYPE:		RR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_SEM_INIT
  *	@PRIO:		70
  */
-void kernel_Y_sem_init (void)
+K_CALL_DEFINE (Y_sem_init)
 {
 	ccsp_sem_t *sem;
 	
-	K_SETGLABEL_ONE_IN_RR (Y_sem_init, sem);
+	K_CALL_PARAMS_1 (sem);
 	ENTRY_TRACE (Y_sem_init, "%p", sem);
 
 	sem_init (sem);
@@ -5908,18 +5863,17 @@ void kernel_Y_sem_init (void)
  *	lock a mobile type
  *
  *	@SYMBOL:	Y_mt_lock
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MT_LOCK
  *	@PRIO:		90
  */
-void kernel_Y_mt_lock (void)
+K_CALL_DEFINE (Y_mt_lock)
 {
 	mt_cb_shared_internal_t *cb;
 	word *ptr, type;
 	
-	K_SETGLABEL_TWO_IN_SR (Y_mt_lock, type, ptr);
+	K_CALL_PARAMS_2 (type, ptr);
 	ENTRY_TRACE (Y_mt_lock, "%p, %08x", type, ptr);
 
 	cb = (mt_cb_shared_internal_t *) (ptr - MT_CB_SHARED_PTR_OFFSET);
@@ -5928,7 +5882,7 @@ void kernel_Y_mt_lock (void)
 	ASSERT ( cb->type & MT_CB_SHARED );
 	ASSERT ( type == MT_CB_CLIENT || type == MT_CB_SERVER );
 
-	sem_claim (sched, Wptr, &(cb->sem[type]));
+	sem_claim (sched, Wptr, return_address, &(cb->sem[type]));
 }
 /*}}}*/
 /*{{{  void kernel_Y_mt_unlock (void)*/
@@ -5936,18 +5890,17 @@ void kernel_Y_mt_lock (void)
  *	unlock a mobile type
  *
  *	@SYMBOL:	Y_mt_unlock
- *	@TYPE:		RR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MT_UNLOCK
  *	@PRIO:		90
  */
-void kernel_Y_mt_unlock (void)
+K_CALL_DEFINE (Y_mt_unlock)
 {
 	mt_cb_shared_internal_t *cb;
 	word *ptr, type;
 	
-	K_SETGLABEL_TWO_IN_RR (Y_mt_unlock, type, ptr);
+	K_CALL_PARAMS_2 (type, ptr);
 	ENTRY_TRACE (Y_mt_unlock, "%p", type, ptr);
 
 	cb = (mt_cb_shared_internal_t *) (ptr - MT_CB_SHARED_PTR_OFFSET);
@@ -5966,37 +5919,37 @@ void kernel_Y_mt_unlock (void)
 /*{{{  void kernel_Y_mt_sync (void)*/
 /*
  *	@SYMBOL:	Y_mt_sync
- *	@TYPE:		SR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MT_SYNC
  *	@PRIO:		90
  */
-void kernel_Y_mt_sync (void)
+K_CALL_DEFINE (Y_mt_sync)
 {
 	ccsp_barrier_t *bar;
 	
-	K_SETGLABEL_ONE_IN_SR (Y_mt_sync, bar);
+	K_CALL_PARAMS_1 (bar);
 	ENTRY_TRACE (Y_mt_sync, "%p", bar);
 	
+	save_return (sched, Wptr, return_address);
+
 	bar->sync (sched, &(bar->data), Wptr);
 }
 /*}}}*/
 /*{{{  void kernel_Y_mt_resign (void)*/
 /*
  *	@SYMBOL:	Y_mt_resign
- *	@TYPE:		RR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MT_RESIGN
  *	@PRIO:		80
  */
-void kernel_Y_mt_resign (void)
+K_CALL_DEFINE (Y_mt_resign)
 {
 	ccsp_barrier_t *bar;
 	word count;
 	
-	K_SETGLABEL_TWO_IN_RR (Y_mt_resign, count, bar);
+	K_CALL_PARAMS_2 (count, bar);
 	ENTRY_TRACE (Y_mt_resign, "%d %p", count, bar);
 
 	bar->resign (sched, &(bar->data), count);
@@ -6007,18 +5960,17 @@ void kernel_Y_mt_resign (void)
 /*{{{  void kernel_Y_mt_enroll (void)*/
 /*
  *	@SYMBOL:	Y_mt_enroll
- *	@TYPE:		RR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MT_ENROLL
  *	@PRIO:		80
  */
-void kernel_Y_mt_enroll (void)
+K_CALL_DEFINE (Y_mt_enroll)
 {
 	ccsp_barrier_t *bar;
 	word count;
 	
-	K_SETGLABEL_TWO_IN_RR (Y_mt_enroll, count, bar);
+	K_CALL_PARAMS_2 (count, bar);
 	ENTRY_TRACE (Y_mt_enroll, "%d %p", count, bar);
 
 	bar->enroll (sched, &(bar->data), count);
@@ -6071,18 +6023,17 @@ void ccsp_interrupt_handler (int irq)
  *	entry-point for an RMoX process to wait for an interrupt
  *
  *	@SYMBOL:	Y_wait_int
- *	@TYPE:		SR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_WAIT_INT
  *	@PRIO:		50
  *	@DEPEND:	RMOX_BUILD
  */
-void kernel_Y_wait_int (void)
+K_CALL_DEFINE (Y_wait_int)
 {
 	word number, mask;
 
-	K_SETGLABEL_TWO_IN_SR (Y_wait_int, number, mask);
+	K_CALL_PARAMS_2 (number, mask);
 
 	ENTRY_TRACE (Y_wait_int, "0x%8.8X", number);
 
@@ -6097,6 +6048,7 @@ void kernel_Y_wait_int (void)
 	if (!intcount[number]) {
 		/* no interrupt yet */
 		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
 		Wptr[Temp] = 0;
 		inttab[number] = Wptr;
 		sti ();
@@ -6107,7 +6059,7 @@ void kernel_Y_wait_int (void)
 		intcount[number] = 0;
 		sti ();
 
-		K_ZERO_OUT_JRET ();
+		K_ZERO_OUT ();
 	}
 }
 /*}}}*/
@@ -6115,29 +6067,27 @@ void kernel_Y_wait_int (void)
 /*}}}*/
 /*{{{  dynamic/mobile-processes */
 #if !defined(RMOX_BUILD) && defined(DYNAMIC_PROCS)
-extern void X_dynproc_exit (void);
 /*{{{  void kernel_X_kernel_run (void)*/
 /*
  *	dynamic kernel run entry point (and resume point)
  *
  *	@SYMBOL:	X_kernel_run
- *	@TYPE:		LCR
- *	@INPUT:		STACK(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_KERNEL_RUN
  *	@PRIO:		50
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_X_kernel_run (void)
+K_CALL_DEFINE (X_kernel_run)
 {
 	unsigned int kr_param;
 	d_process *kr_dptr;
 	
-	K_SETGLABEL_STKONE_IN_LCR (X_kernel_run, kr_param);
+	K_CALL_PARAMS_1 (kr_param);
 	ENTRY_TRACE (X_kernel_run, "%p", (void *)kr_param);
 
-	kr_dptr = dynproc_startprocess ((int *)kr_param, (void *)X_dynproc_exit);
+	kr_dptr = dynproc_startprocess ((int *)kr_param, K_CALL_PTR (X_dynproc_exit));
 	kr_dptr->holding_wptr 		= Wptr;
 	kr_dptr->holding_raddr 		= return_address;
 	kr_dptr->holding_priofinity 	= sched->priofinity;
@@ -6154,7 +6104,7 @@ void kernel_X_kernel_run (void)
 		#endif
 		
 		Wptr 			= kr_dptr->ws_ptr;
-		Wptr[IptrSucc]		= (word) X_dynproc_exit;
+		Wptr[IptrSucc]		= (word) K_CALL_PTR (X_dynproc_exit);
 		return_address 		= (word) kr_dptr->entrypoint;
 	}
 
@@ -6166,19 +6116,18 @@ void kernel_X_kernel_run (void)
  *	entered when a dynamic process is suspending
  *
  *	@SYMBOL:	X_dynproc_suspend
- *	@TYPE:		LCR
- *	@INPUT:		STACK(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_DYNPROC_SUSPEND
  *	@PRIO:		0
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_X_dynproc_suspend (void)
+K_CALL_DEFINE (X_dynproc_suspend)
 {
 	word *ds_param;
 	
-	K_SETGLABEL_STKONE_IN_LCR (X_dynproc_suspend, ds_param);
+	K_CALL_PARAMS_1 (ds_param);
 	ENTRY_TRACE (X_dynproc_suspend, "%p", ds_param);
 
 	/* ds_param should point at the argument-set (VAL DPROCESS p, INT result) */
@@ -6195,21 +6144,19 @@ void kernel_X_dynproc_suspend (void)
  *	entered when dynamic process finishes
  *
  *	@SYMBOL:	X_dynproc_exit
- *	@TYPE:		JUMP
- *	@INPUT:		NONE
- *	@OUTPUT: 	NONE
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
  *	@CALL: 		K_DYNPROC_EXIT
  *	@PRIO:		0
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_X_dynproc_exit (void)
+K_CALL_DEFINE (X_dynproc_exit)
 {
-	unsigned int return_address;
 	d_process *kr_dptr;
 	word *kr_wptr;
 	
-	K_SETGLABEL_ZERO_IN (X_dynproc_exit);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_dynproc_exit);
 
 	kr_wptr 		= (word *) (((word) Wptr) - (4 * sizeof(word)));
@@ -6227,19 +6174,18 @@ void kernel_X_dynproc_exit (void)
  *	load workspace-map
  *
  *	@SYMBOL:	Y_ldwsmap
- *	@TYPE:		LCR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_LDWSMAP
  *	@PRIO:		0
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_Y_ldwsmap (void)
+K_CALL_DEFINE (Y_ldwsmap)
 {
 	unsigned int code_offset, process_address;
 	
-	K_SETGLABEL_TWO_IN_LCR (Y_ldwsmap, process_address, code_offset);
+	K_CALL_PARAMS_2 (process_address, code_offset);
 
 	mpcb_add_wsmap ((mp_ctrlblk *)process_address, (unsigned char *)code_offset, Wptr);
 
@@ -6251,19 +6197,18 @@ void kernel_Y_ldwsmap (void)
  *	unload workspace-map
  *
  *	@SYMBOL:	Y_ulwsmap
- *	@TYPE:		LCR
- *	@INPUT:		REG(2)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		2
+ *	@OUTPUT: 	0
  *	@CALL: 		K_ULWSMAP
  *	@PRIO:		0
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_Y_ulwsmap (void)
+K_CALL_DEFINE (Y_ulwsmap)
 {
 	unsigned int code_offset, process_address;
 	
-	K_SETGLABEL_TWO_IN_LCR (Y_ulwsmap, process_address, code_offset);
+	K_CALL_PARAMS_2 (process_address, code_offset);
 
 	mpcb_del_wsmap ((mp_ctrlblk *)process_address, (unsigned char *)code_offset, Wptr);
 
@@ -6275,19 +6220,18 @@ void kernel_Y_ulwsmap (void)
  *	delete workspace-map
  *
  *	@SYMBOL:	Y_rmwsmap
- *	@TYPE:		LCR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		1
+ *	@OUTPUT: 	0
  *	@CALL: 		K_RMWSMAP
  *	@PRIO:		0
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_Y_rmwsmap (void)
+K_CALL_DEFINE (Y_rmwsmap)
 {
 	unsigned int process_address;
 	
-	K_SETGLABEL_ONE_IN_LCR (Y_rmwsmap, process_address);
+	K_CALL_PARAMS_1 (process_address);
 
 	mpcb_rm_wsmap ((mp_ctrlblk *)process_address);
 
@@ -6299,19 +6243,18 @@ void kernel_Y_rmwsmap (void)
  *	clone mobile process
  *
  *	@SYMBOL:	Y_mppclone
- *	@TYPE:		LCR
- *	@INPUT:		REG(1)
- *	@OUTPUT: 	STACK(1)
+ *	@INPUT:		1
+ *	@OUTPUT: 	1
  *	@CALL: 		K_MPPCLONE
  *	@PRIO:		20
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_Y_mppclone (void)
+K_CALL_DEFINE (Y_mppclone)
 {
 	unsigned int process_address;
 
-	K_SETGLABEL_ONE_IN_LCR (Y_mppclone, process_address);
+	K_CALL_PARAMS_1 (process_address);
 
 	process_address = (word)mpcb_mpp_clone ((mp_ctrlblk *)process_address);
 	if (process_address == NotProcess_p) {
@@ -6323,7 +6266,7 @@ void kernel_Y_mppclone (void)
 		}
 	}
 	
-	K_STKONE_OUT (process_address);
+	K_ONE_OUT (process_address);
 }
 /*}}}*/
 /*{{{  void kernel_Y_mppserialise (void)*/
@@ -6331,21 +6274,20 @@ void kernel_Y_mppclone (void)
  *	serialise mobile process
  *
  *	@SYMBOL:	Y_mppserialise
- *	@TYPE:		LCR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		3
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MPPSERIALISE
  *	@PRIO:		20
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_Y_mppserialise (void)
+K_CALL_DEFINE (Y_mppserialise)
 {
 	unsigned int count, process_address;
 	word **channel_address;
 	byte *destination_address;
 	
-	K_SETGLABEL_THREE_IN_LCR (Y_mppserialise, count, destination_address, channel_address);
+	K_CALL_PARAMS_3 (count, destination_address, channel_address);
 
 	/* actually pass a pointer to it, may need to nullify */
 	process_address = ((word *)(*channel_address))[Pointer];
@@ -6366,21 +6308,20 @@ void kernel_Y_mppserialise (void)
  *	deserialise mobile process
  *
  *	@SYMBOL:	Y_mppdeserialise
- *	@TYPE:		LCR
- *	@INPUT:		REG(3)
- *	@OUTPUT: 	NONE
+ *	@INPUT:		3
+ *	@OUTPUT: 	0
  *	@CALL: 		K_MPPDESERIALISE
  *	@PRIO:		20
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-void kernel_Y_mppdeserialise (void)
+K_CALL_DEFINE (Y_mppdeserialise)
 {
 	unsigned int count, process_address;
 	word **channel_address;
 	byte *source_address;
 	
-	K_SETGLABEL_THREE_IN_LCR (Y_mppdeserialise, channel_address, source_address, count);
+	K_CALL_PARAMS_3 (channel_address, source_address, count);
 
 	/* pass a pointer to the ws locn */
 	process_address = ((word *)(*channel_address))[Pointer];
@@ -6404,12 +6345,12 @@ void kernel_Y_mppdeserialise (void)
 /*
  *	enable multiway sync (with ready address)
  */
-void kernel_Y_mwenb (void)
+K_CALL_DEFINE (Y_mwenb)
 {
 	unsigned int *mwsync_address, process_address;
 	word *temp_ptr;
 
-	K_SETGLABEL_TWO_IN_LCR (Y_mwenb, process_address, mwsync_address);
+	K_CALL_PARAMS_2 (process_address, mwsync_address);
 	ENTRY_TRACE (Y_mwenb, "%p (count-down = %d), %p", mwsync_address, ((mwsync_t *)mwsync_address)->down_count, (void *)process_address);
 	DTRACE ("YEWA", Wptr, mwsync_address);
 
@@ -6480,12 +6421,12 @@ fprintf (stderr, "kernel_Y_mwenb(): 0x%8.8x: bar = 0x%8.8x: rc = %d, ec = %d, dc
 /*
  *	disable multiway synch
  */
-void kernel_Y_mwdis (void)
+K_CALL_DEFINE (Y_mwdis)
 {
 	unsigned int *mwsync_address, process_address;
 	word *temp_ptr;
 	
-	K_SETGLABEL_TWO_IN_LCR (Y_mwdis, process_address, mwsync_address);
+	K_CALL_PARAMS_2 (process_address, mwsync_address);
 	ENTRY_TRACE (Y_mwdis, "%p, %p", (void *)process_address, mwsync_address);
 	DTRACE ("YDWA", Wptr, mwsync_address);
 
@@ -6541,11 +6482,11 @@ fprintf (stderr, "kernel_Y_mwdis(): 0x%8.8x: bar = 0x%8.8x: rc = %d, ec = %d, dc
 /*
  *	multiway alt start
  */
-void kernel_Y_mwalt (void)
+K_CALL_DEFINE (Y_mwalt)
 {
 	word *temp_ptr;
 
-	K_SETGLABEL_ZERO_IN_LCR (Y_mwalt);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_mwalt);
 	DTRACE ("YAW", Wptr);
 #if 0
@@ -6584,11 +6525,11 @@ fprintf (stderr, "kernel_Y_mwalt(): \n");
  *	2nd half of multiway alt start -- get left here
  *	if we blocked at the mutex claim
  */
-void kernel_Y_mwalt2 (void)
+K_CALL_DEFINE (Y_mwalt2)
 {
 	unsigned int return_address;
 	
-	K_SETGLABEL_ZERO_IN (Y_mwalt2);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_mwalt);
 #if 0
 fprintf (stderr, "kernel_Y_mwalt2(): \n");
@@ -6604,9 +6545,9 @@ fprintf (stderr, "kernel_Y_mwalt2(): \n");
 /*
  *	multiway alt wait
  */
-void kernel_Y_mwaltwt (void)
+K_CALL_DEFINE (Y_mwaltwt)
 {
-	K_SETGLABEL_ZERO_IN_LCR (Y_mwaltwt);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_mwaltwt);
 	DTRACE ("YWW", Wptr);
 #if 0
@@ -6643,9 +6584,9 @@ fprintf (stderr, "kernel_Y_mwaltwt(): \n");
 /*
  *	multiway alt end
  */
-void kernel_Y_mwaltend (void)
+K_CALL_DEFINE (Y_mwaltend)
 {
-	K_SETGLABEL_ZERO_IN_LCR (Y_mwaltend);
+	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_mwaltend);
 	DTRACE ("YNW", Wptr);
 #if 0
@@ -6777,11 +6718,11 @@ static inline void mws_barriercomplete (word *Wptr, sched_t *sched, mws_parbarri
 /*
  *	new multiway sync barrier init
  */
-void kernel_Y_mws_binit (void)
+K_CALL_DEFINE (Y_mws_binit)
 {
 	mws_barrier_t *mws_barrier;
 	
-	K_SETGLABEL_ONE_IN_LCR (Y_mws_binit, mws_barrier);
+	K_CALL_PARAMS_1 (mws_barrier);
 
 #if (MWSDEBUG == 1)
 	MESSAGE ("Y_mws_binit: barrier at 0x%8.8x\n", (unsigned int)mws_barrier);
@@ -6800,12 +6741,12 @@ void kernel_Y_mws_binit (void)
 /*
  *	new multiway sync par-barrier init and link
  */
-void kernel_Y_mws_pbrilnk (void)
+K_CALL_DEFINE (Y_mws_pbrilnk)
 {
 	mws_parbarrier_t *mws_parbarrier;
 	mws_barrier_t *mws_barrier;
 	
-	K_SETGLABEL_TWO_IN_LCR (Y_mws_pbrilnk, mws_parbarrier, mws_barrier);
+	K_CALL_PARAMS_2 (mws_parbarrier, mws_barrier);
 
 #if (MWSDEBUG == 1)
 	MESSAGE ("Y_mws_pbrilnk: parbarrier at 0x%8.8x, barrier at 0x%8.8x\n", (unsigned int)mws_parbarrier, (unsigned int)mws_barrier);
@@ -6839,12 +6780,12 @@ void kernel_Y_mws_pbrilnk (void)
 /*
  *	new multiway sync par-barrier unlink
  */
-void kernel_Y_mws_pbrulnk (void)
+K_CALL_DEFINE (Y_mws_pbrulnk)
 {
 	mws_parbarrier_t *mws_parbarrier;
 	mws_barrier_t *mws_barrier;
 	
-	K_SETGLABEL_ONE_IN_LCR (Y_mws_pbrulnk, mws_parbarrier);
+	K_CALL_PARAMS_1 (mws_parbarrier);
 
 #if (MWSDEBUG == 1)
 	MESSAGE ("Y_mws_pbrulnk: parbarrier at 0x%8.8x\n", (unsigned int)mws_parbarrier);
@@ -6885,12 +6826,12 @@ void kernel_Y_mws_pbrulnk (void)
 /*
  *	new multiway sync proc-barrier init and link
  */
-void kernel_Y_mws_ppilnk (void)
+K_CALL_DEFINE (Y_mws_ppilnk)
 {
 	mws_procbarrier_t *mws_procbarrier;
 	mws_parbarrier_t *mws_parbarrier;
 	
-	K_SETGLABEL_TWO_IN_LCR (Y_mws_ppilnk, mws_procbarrier, mws_parbarrier);
+	K_CALL_PARAMS_2 (mws_procbarrier, mws_parbarrier);
 
 #if (MWSDEBUG == 1)
 	MESSAGE ("Y_mws_ppilnk: procbarrier at 0x%8.8x, parbarrier at 0x%8.8x\n", (unsigned int)mws_procbarrier, (unsigned int)mws_parbarrier);
@@ -6908,13 +6849,13 @@ void kernel_Y_mws_ppilnk (void)
 /*
  *	new multiway sync par-barrier enroll (and link-to-parent)
  */
-void kernel_Y_mws_pbenroll (void)
+K_CALL_DEFINE (Y_mws_pbenroll)
 {
 	mws_parbarrier_t *mws_parbarrier, *mws_parent;
 	mws_barrier_t *mws_barrier;
 	int mws_count;
 	
-	K_SETGLABEL_THREE_IN_LCR (Y_mws_pbenroll, mws_parbarrier, mws_parent, mws_count);
+	K_CALL_PARAMS_3 (mws_parbarrier, mws_parent, mws_count);
 
 #if (MWSDEBUG == 1)
 	MESSAGE ("Y_mws_pbenroll: Wptr=0x%8.8x, count = %d, parbarrier at 0x%8.8x, parent barrier at 0x%8.8x\n", (unsigned int)Wptr, mws_count, (unsigned int)mws_parbarrier, (unsigned int)mws_parent);
@@ -6965,13 +6906,13 @@ void kernel_Y_mws_pbenroll (void)
 /*
  *	new multiway sync par-barrier resign
  */
-void kernel_Y_mws_pbresign (void)
+K_CALL_DEFINE (Y_mws_pbresign)
 {
 	mws_parbarrier_t *mws_parbarrier, *mws_parent;
 	mws_barrier_t *mws_barrier;
 	int mws_count, tmpint_a, tmpint_b;
 	
-	K_SETGLABEL_TWO_IN_LCR (Y_mws_pbresign, mws_parbarrier, mws_count);
+	K_CALL_PARAMS_2 (mws_parbarrier, mws_count);
 
 	mws_barrier = mws_parbarrier->barrier_link;
 	mws_parent = mws_parbarrier->parent_set;
@@ -7039,13 +6980,13 @@ void kernel_Y_mws_pbresign (void)
 /*
  *	new multiway sync par barrier adjust
  */
-void kernel_Y_mws_pbadjsync (void)
+K_CALL_DEFINE (Y_mws_pbadjsync)
 {
 	mws_parbarrier_t *mws_parbarrier;
 	mws_barrier_t *mws_barrier;
 	int mws_count, tmpint_a, tmpint_b;
 	
-	K_SETGLABEL_TWO_IN_LCR (Y_mws_pbadjsync, mws_parbarrier, mws_count);
+	K_CALL_PARAMS_2 (mws_parbarrier, mws_count);
 
 	mws_barrier = mws_parbarrier->barrier_link;
 	tmpint_b = 0;
@@ -7108,13 +7049,13 @@ skip_to_out:
 /*
  *	new multiway sync instruction
  */
-void kernel_Y_mws_sync (void)
+K_CALL_DEFINE (Y_mws_sync)
 {
 	mws_procbarrier_t *mws_procbarrier;
 	mws_parbarrier_t *mws_parbarrier, *mws_parent;
 	mws_barrier_t *mws_barrier;
 	
-	K_SETGLABEL_ONE_IN_LCR (Y_mws_sync, mws_procbarrier);
+	K_CALL_PARAMS_1 (mws_procbarrier);
 
 	mws_parbarrier = mws_procbarrier->parbarrier_link;
 
@@ -7186,9 +7127,9 @@ void kernel_Y_mws_sync (void)
 /*
  *	new multiway sync ALT lock
  */
-void kernel_Y_mws_altlock (void)
+K_CALL_DEFINE (Y_mws_altlock)
 {
-	K_SETGLABEL_ZERO_IN_LCR (Y_mws_altlock);
+	K_CALL_PARAMS_0 ();
 
 #if (MWSDEBUG == 1)
 	BMESSAGE ("mws_altlock: here (value = %d, count = %d)\n", mwaltlock.value, mwaltlock.count);
@@ -7221,9 +7162,9 @@ void kernel_Y_mws_altlock (void)
 /*
  *	new multiway sync ALT unlock
  */
-void kernel_Y_mws_altunlock (void)
+K_CALL_DEFINE (Y_mws_altunlock)
 {
-	K_SETGLABEL_ZERO_IN_LCR (Y_mws_altunlock);
+	K_CALL_PARAMS_0 ();
 
 #if (MWSDEBUG == 1)
 	BMESSAGE ("mws_altunlock: here (value = %d, count = %d)\n", mwaltlock.value, mwaltlock.count);
@@ -7239,9 +7180,9 @@ void kernel_Y_mws_altunlock (void)
 /*
  *	new multiway sync ALT start
  */
-void kernel_Y_mws_alt (void)
+K_CALL_DEFINE (Y_mws_alt)
 {
-	K_SETGLABEL_ZERO_IN_LCR (Y_mws_alt);
+	K_CALL_PARAMS_0 ();
 
 	Wptr[MWSyncChosen] = NotProcess_p;
 	Wptr[State] = Enabling_p;
@@ -7253,9 +7194,9 @@ void kernel_Y_mws_alt (void)
 /*
  *	new multiway sync ALT end
  */
-void kernel_Y_mws_altend (void)
+K_CALL_DEFINE (Y_mws_altend)
 {
-	K_SETGLABEL_ZERO_IN_LCR (Y_mws_altend);
+	K_CALL_PARAMS_0 ();
 
 	ENTRY_TRACE0 (Y_mws_altend);
 
@@ -7284,13 +7225,13 @@ void kernel_Y_mws_altend (void)
 /*
  *	new multiway sync ALT enable
  */
-void kernel_Y_mws_enb (void)
+K_CALL_DEFINE (Y_mws_enb)
 {
 	mws_procbarrier_t *mws_procbarrier;
 	mws_parbarrier_t *mws_parbarrier, *mws_parent;
 	unsigned int process_address;
 	
-	K_SETGLABEL_TWO_IN_LCR (Y_mws_enb, process_address, mws_procbarrier);
+	K_CALL_PARAMS_2 (process_address, mws_procbarrier);
 
 #if (MWSDEBUG == 1)
 	BMESSAGE ("mws_enb: here!  mws_procbarrier = 0x%8.8x\n", (unsigned int)mws_procbarrier);
@@ -7359,14 +7300,14 @@ void kernel_Y_mws_enb (void)
 /*
  *	new multiway sync ALT disable
  */
-void kernel_Y_mws_dis (void)
+K_CALL_DEFINE (Y_mws_dis)
 {
 	mws_procbarrier_t *mws_procbarrier;
 	mws_parbarrier_t *mws_parbarrier;
 	mws_barrier_t *mws_barrier;
 	unsigned int process_address;
 	
-	K_SETGLABEL_TWO_IN_LCR (Y_mws_dis, process_address, mws_procbarrier);
+	K_CALL_PARAMS_2 (process_address, mws_procbarrier);
 
 #if 0
 	BMESSAGE ("mws_dis: here!\n");
@@ -7433,9 +7374,9 @@ void kernel_Y_mws_dis (void)
 /*
  *	new multiway sync lock-after-ALT
  */
-void kernel_Y_mws_altpostlock (void)
+K_CALL_DEFINE (Y_mws_altpostlock)
 {
-	K_SETGLABEL_ZERO_IN_LCR (Y_mws_altpostlock);
+	K_CALL_PARAMS_0 ();
 
 #if (MWSDEBUG == 1)
 	BMESSAGE ("mws_altpostlock: Wptr=0x%8.8x, Wptr[MWSyncChosen]=0x%8.8x, mwaltlock.value = %d, .count = %d\n", (unsigned int)Wptr, (unsigned int)Wptr[MWSyncChosen], mwaltlock.value, mwaltlock.count);
@@ -7470,13 +7411,13 @@ void kernel_Y_mws_altpostlock (void)
 /*
  *	turns a proc-barrier reference into a base-of-barrier reference
  */
-void kernel_Y_mws_ppbaseof (void)
+K_CALL_DEFINE (Y_mws_ppbaseof)
 {
 	mws_procbarrier_t *mws_procbarrier;
 	mws_parbarrier_t *mws_parbarrier;
 	mws_barrier_t *mws_barrier;
 	
-	K_SETGLABEL_ONE_IN_LCR (Y_mws_ppbaseof, mws_procbarrier);
+	K_CALL_PARAMS_1 (mws_procbarrier);
 	ENTRY_TRACE (Y_mws_ppbaseof, "%p", mws_procbarrier);
 
 #if (MWSDEBUG == 1)
@@ -7485,19 +7426,19 @@ void kernel_Y_mws_ppbaseof (void)
 	mws_parbarrier = mws_procbarrier->parbarrier_link;
 	mws_barrier = mws_parbarrier ? mws_parbarrier->barrier_link : NULL;
 
-	K_STKONE_OUT (mws_barrier);
+	K_ONE_OUT (mws_barrier);
 }
 /*}}}*/
 /*{{{  void kernel_Y_mws_ppparof (void)*/
 /*
  *	turns a proc-barrier reference into a par-barrier reference
  */
-void kernel_Y_mws_ppparof (void)
+K_CALL_DEFINE (Y_mws_ppparof)
 {
 	mws_procbarrier_t *mws_procbarrier;
 	mws_parbarrier_t *mws_parbarrier;
 	
-	K_SETGLABEL_ONE_IN_LCR (Y_mws_ppparof, mws_procbarrier);
+	K_CALL_PARAMS_1 (mws_procbarrier);
 	ENTRY_TRACE (Y_mws_ppparof, "%p", mws_procbarrier);
 
 #if (MWSDEBUG == 1)
@@ -7505,7 +7446,7 @@ void kernel_Y_mws_ppparof (void)
 #endif
 	mws_parbarrier = mws_procbarrier->parbarrier_link;
 
-	K_STKONE_OUT (mws_parbarrier);
+	K_ONE_OUT (mws_parbarrier);
 }
 /*}}}*/
 #endif

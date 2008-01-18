@@ -64,9 +64,9 @@ static int disassemble_data (unsigned char *bytes, int length, FILE *outstream);
 /*{{{  register names*/
 static char *intel_regs[] = {"%eax", "%ecx", "%edx", "%ebx", "%esp", "%ebp", "%esi", "%edi"};
 static char *intel_fregs[] = {"%st(0)", "%st(1)", "%st(2)", "%st(3)", "%st(4)", "%st(5)", "%st(6)", "%st(7)"};
-static char *intel_lregs[] = {"%al", "%cl", "%dl", "%bl"};
-static char *intel_hregs[] = {"%ah", "%ch", "%dh", "%bh"};
-static char *intel_xregs[] = {"%ax", "%cx", "%dx", "%bx"};
+static char *intel_lregs[] = {"%al", "%cl", "%dl", "%bl", "%bad_l0", "%bad_l1", "%bad_l2", "%bad_l3"};
+static char *intel_hregs[] = {"%ah", "%ch", "%dh", "%bh", "%bad_h0", "%bad_h1", "%bad_h2", "%bad_h3"};
+static char *intel_xregs[] = {"%ax", "%cx", "%dx", "%bx", "%sp", "%bp", "%si", "%di"};
 /*}}}*/
 
 /*{{{  memory-debug related constants*/

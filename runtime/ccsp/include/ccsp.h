@@ -39,6 +39,7 @@
 #include "ccsp_stats.h"
 
 typedef struct _ccsp_sched_t {
+	word		cparam[8];
 	void		*calltable[K_MAX_SUPPORTED];
 	word		mdparam[32];
 	unsigned int	stack;

@@ -21,16 +21,6 @@
 #ifndef __KIFACE_H
 #define __KIFACE_H
 
-/* forms of passing arguments */
-#define ARGS_ON_STACK		1
-#define ARGS_IN_REGS		2
-
-/* forms of kernel call */
-#define KCALL_CALL		1	/* plain call */
-#define KCALL_STOREIP_JUMP	2	/* store return addr in Iptr and jump */
-#define KCALL_REGIP_JUMP	3	/* store return addr in next param and jump */
-#define KCALL_JUMP 		4	/* plain jump (non-return only!) */
-
 /* support level of call */
 #define KCALL_UNDEFINED		0
 #define KCALL_SUPPORTED		1
@@ -40,16 +30,13 @@
 typedef struct {
 	int call_offset;
 	char *entrypoint;
-	int input_mode;
-	int call_mode;
-	int output_mode;
-	int input_count;
-	int output_count;
+	int input;
+	int output;
 	int support;
 } ccsp_entrytype;
 
 /* call table maximum size */
-#define K_MAX_SUPPORTED		192
+#define K_MAX_SUPPORTED		120
 
 /* include auto-generated interface */
 #include "kitable.h"
