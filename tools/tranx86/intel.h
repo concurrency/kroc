@@ -51,11 +51,12 @@
 #define REG_ESI 6
 #define REG_EDI 7
 
-/* 4 32-bit alternate register names */
+/* 32-bit alternate register names */
 #define REG_ALT_EAX -128
 #define REG_ALT_EBX -127
 #define REG_ALT_ECX -126
 #define REG_ALT_EDX -125
+#define REG_ALT_EDI -124
 
 /* segment regs */
 #define REG_ES 0

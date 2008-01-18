@@ -1,6 +1,6 @@
 /*
  *	CCSP inlining support macros
- *	Copyright (C) Carl Ritson <cgr@kent.ac.uk>
+ *	Copyright (C) 2007  Carl Ritson <cgr@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by

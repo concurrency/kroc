@@ -1,6 +1,6 @@
 /*
- *	Architecture dependent types (i386 version)
- *	Copyright (C) 2007-2008 Carl Ritson <cgr@kent.ac.uk>
+ *	CCSP compiler support macros
+ *	Copyright (C) 2008  Carl Ritson <cgr@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -17,27 +17,19 @@
  *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __I386_TYPES_H
-#define __I386_TYPES_H
-
-#if defined(HAVE_CONFIG_H)
+#ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#define REGPARM __attribute__ ((regparm(3)))
+#ifndef __COMPILER_H
+#define __COMPILER_H
 
+/*{{{  likely/unlikely optimisation */
 #ifdef __GNUC__
-#define _PACK_STRUCT __attribute__ ((packed))
-#else
-#define _PACK_STRUCT
+#define likely(X)       __builtin_expect((X),1)
+#define unlikely(X)     __builtin_expect((X),0)
 #endif
+/*}}}*/
 
-typedef int Time;
-typedef struct _cputime_t { 
-	unsigned int tsc[2]; 
-} _PACK_STRUCT cputime_t;
-
-#undef _PACK_STRUCT
-
-#endif /* !__I386_TYPES_H */
+#endif	/* !__COMPILER_H */
 

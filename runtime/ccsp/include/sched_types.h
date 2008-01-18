@@ -201,14 +201,17 @@ static inline void init_tqnode_t (tqnode_t *tn) {
 
 /*{{{  sched_t */
 struct _sched_t {
-	/** calltable - must be here at the beginning **/
+	/** params		- must be at the right offset **/
+	word		cparam[8];
+
+	/** calltable		- must be at the right offset **/
 	void		*calltable[K_MAX_SUPPORTED];
 
-	/** local debug state - must be at the right place (and right size) **/
+	/** local debug state	- must be at the right offset **/
 	word 		mdparam[32];
 
-	/** scheduler constants **/
-	unsigned int	stack			CACHELINE_ALIGN;
+	/** scheduler constants	- must be at the right offset **/
+	unsigned int	stack;
 	unsigned int 	index;
 	unsigned int 	id; 			/* 1 << index */
 	unsigned int 	cpu_factor;
@@ -322,9 +325,9 @@ typedef struct _ccsp_sem_t {
 /*}}}*/
 
 /*{{{  ccsp_barrier_t */
-typedef void (*ccsp_barrier_sync_t) (sched_t *, void *, word *);
-typedef void (*ccsp_barrier_enroll_t) (sched_t *, void *, word);
-typedef void (*ccsp_barrier_resign_t) (sched_t *, void *, word);
+typedef REGPARM void (*ccsp_barrier_sync_t) (sched_t *, void *, word *);
+typedef REGPARM void (*ccsp_barrier_enroll_t) (sched_t *, void *, word);
+typedef REGPARM void (*ccsp_barrier_resign_t) (sched_t *, void *, word);
 typedef struct _ccsp_barrier_t {
 	ccsp_barrier_sync_t	sync;
 	ccsp_barrier_enroll_t	enroll;
@@ -374,6 +377,7 @@ typedef struct _ccsp_global_t {
 
 	sched_t		*schedulers[MAX_RUNTIME_THREADS]	CACHELINE_ALIGN;
 	word		pad1[CACHELINE_WORDS]			CACHELINE_ALIGN;
+	void		*calltable[K_MAX_SUPPORTED]		CACHELINE_ALIGN;
 } _PACK_STRUCT ccsp_global_t;
 
 static inline void init_ccsp_global_t (ccsp_global_t *ccsp) {

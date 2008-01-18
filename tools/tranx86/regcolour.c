@@ -503,11 +503,11 @@ static int merge_multiple_constraints (ins_chain *code)
 						}
 					} else if (reg_next_c) {
 						/* impending register collision */
-						if (options.verbose) {
+						if (0 && options.verbose) {
 							fprintf (stderr, "%s: message: potential conflict on register %d (constrained to %d and %d)\n", progname, reg, c_reg, reg_next_c->in_args[1]->regconst);
 						}
 						tmp_reg = rtl_get_newvreg ();
-						if (options.verbose) {
+						if (0 && options.verbose) {
 							fprintf (stderr, "%s: message: spilling register %d to register %d\n", progname, reg, tmp_reg);
 						}
 						rtl_insert_instr_before (compose_ins (INS_START_REG, 1, 0, ARG_REG, tmp_reg), reg_next_c);

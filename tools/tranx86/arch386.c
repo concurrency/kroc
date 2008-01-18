@@ -57,6 +57,11 @@
 #include "kif.h"
 #include "machine.h"
 
+#include <stddef.h>
+#ifndef offsetof
+#define offsetof(t,f) ((WORD) (&((((t *)(0))->f))))
+#endif
+
 #ifndef EXIT_FAILURE
 	#define EXIT_FAILURE 1
 #endif  /* !EXIT_FAILURE */
@@ -64,7 +69,8 @@
 #define RMAX_I386 4
 #define NODEMAX_I386 32
 #define KIFACE_TABLEOFFS_I386 192
-#define KIFACE_BATCHOFFS_I386 96
+
+static const int xregs[3] = { REG_EAX, REG_EDX, REG_ECX };
 
 static void set_implied_inputs (ins_chain *instr, int n_inputs, int *i_regs);
 static void set_implied_outputs (ins_chain *instr, int n_outputs, int *o_regs);
@@ -81,13 +87,16 @@ static char *PPriority_name;
  */
 static ins_chain *compose_kjump_i386 (tstate *ts, const int type, const int cond, const kif_entrytype *entry)
 {
+	return compose_ins (INS_CALL, 1, 0, ARG_REGIND | ARG_DISP | ARG_IND, REG_SCHED, offsetof(ccsp_sched_t, calltable[entry->call_offset]));
+	#if 0
 	if (type == INS_CJUMP) {
 		return compose_ins (type, 2, 0, ARG_COND, cond, ARG_NAMEDLABEL, string_dup (entry->entrypoint));
 	} else if (options.kernel_interface & KRNLIFACE_MP) {
-		return compose_ins (type, 1, 0, ARG_REGIND | ARG_DISP | ARG_IND, REG_SCHED, entry->call_offset << 2);
+		return compose_ins (INS_CALL, 1, 0, ARG_REGIND | ARG_DISP | ARG_IND, REG_SCHED, entry->call_offset << 2);
 	} else {
 		return compose_ins (type, 1, 0, ARG_REGIND | ARG_DISP | ARG_IND, REG_SPTR, (entry->call_offset + ts->stack_drift + KIFACE_TABLEOFFS_I386) << 2);
 	}
+	#endif
 }
 /*}}}*/
 
@@ -100,9 +109,9 @@ static void compose_kcall_i386 (tstate *ts, int call, int regs_in, int regs_out)
 {
 	kif_entrytype *entry = kif_entry (call);
 	int to_preserve, r_in, r_out;
-	int i, cregs[3], xregs[4], oregs[3];
-	int tmp_reg;
-	ins_chain *tmp_ins, *tmp_ins2;
+	int i, cregs[3], oregs[3];
+	/* int tmp_reg; */
+	ins_chain *call_ins;
 #ifdef USER_DEFINED_CHANNELS
 	int target_reg = -1;
 	int target_call = -1;
@@ -144,37 +153,29 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 	cregs[0] = ts->stack->old_a_reg;
 	cregs[1] = ts->stack->old_b_reg;
 	cregs[2] = ts->stack->old_c_reg;
-	xregs[0] = REG_EAX;
-	xregs[1] = REG_EBX;
-	xregs[2] = REG_ECX;
-	xregs[3] = REG_EDX;
-	for (i = (r_in - 1); i >= 0; i--) {
+	for (i = 0; i < r_in; i++) {
 		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
-			/* some things still require the operands to be pushed.. */
-			switch (entry->input_mode) {
-			case ARGS_ON_STACK:
+			if (i > 0) {
 				switch (constmap_typeof (cregs[i])) {
 				default:
-					add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, cregs[i]));
+					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, cregs[i], ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[(i - 1)])));
 					break;
 				case VALUE_CONST:
-					add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_CONST, constmap_regconst (cregs[i])));
+					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, constmap_regconst (cregs[i]), ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[(i - 1)])));
 					break;
 				case VALUE_LABADDR:
-					add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_LABEL | ARG_ISCONST, constmap_regconst (cregs[i])));
+					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, constmap_regconst (cregs[i]), ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[(i - 1)])));
 					break;
+				/*
 				case VALUE_LOCAL:
-					add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REGIND | ARG_DISP, REG_WPTR, (constmap_regconst (cregs[i])) << WSH));
+					tmp_reg = tstack_newreg (ts->stack);
+					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, (constmap_regconst (cregs[i])) << WSH, ARG_REG, tmp_reg));
+					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, tmp_reg, ARG_REGIND | ARG_DISP, REG_SCHED, (i - 1) << WSH));
 					break;
+				*/
 				}
-				ts->stack_drift++;
-				break;
-			case ARGS_IN_REGS:
+			} else {
 				add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, cregs[i], ARG_REG, xregs[i]));
-				break;
-			default:
-				fprintf (stderr, "%s: error: call %d attempting to provide arguments to kernel call\n", progname, call);
-				break;
 			}
 		} else if (options.kernel_interface & KRNLIFACE_MESH) {
 			fprintf (stderr, "%s: warning: MESH kernel interface not supported yet (ungenerated kernel call %d)\n", progname, call);
@@ -183,189 +184,34 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 		}
 	}
 	/*}}}*/
+	
+	if (r_in < r_out) {
+		switch (r_out - r_in) {
+			case 3: cregs[r_in + 2] = ts->stack->c_reg;
+			case 2: cregs[r_in + 1] = ts->stack->b_reg;
+			case 1: cregs[r_in + 0] = ts->stack->a_reg;
+		}
+
+		for (i = r_in; i < r_out; i++) {
+			add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, cregs[i], ARG_REG, xregs[i]));
+		}
+	}
+
 	/* generate call */
-	tmp_ins = NULL;			/* used for adding implied regs later */
-	tmp_ins2 = NULL;
+	call_ins = NULL;		/* used for adding implied regs later */
 	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 		if (options.annotate_output) {
 			char sbuf[128];
 
-			sprintf (sbuf, "ccsp/rmox-call [%s]", entry->entrypoint);
+			sprintf (sbuf, "CCSP [%s]", entry->entrypoint);
 			add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
 		}
-		switch (entry->call_mode) {
-			/*{{{  KCALL_CALL -- call function by name*/
-		case KCALL_CALL:
-#ifdef USER_DEFINED_CHANNELS
-			/*{{{  check for external-channel I/O*/
-			if (!options.no_ext_chan_checks) {
-				target_reg = -1;
-				target_call = -1;
-				switch (call) {
-				case K_ENBC:
-					target_reg = ts->stack->old_b_reg;
-					target_call = K_EXTENBC;
-					break;
-				case K_NDISC:
-					target_reg = ts->stack->old_c_reg;
-					target_call = K_EXTNDISC;
-					break;
-				case K_EXTENBC:
-					/* compiler generated, just mask off the spare bit */
-					add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST | ARG_ISCONST, 0xfc, ARG_REG | ARG_IS8BIT, ts->stack->old_b_reg, ARG_REG | ARG_IS8BIT, ts->stack->old_b_reg));
-					break;
-				case K_EXTNDISC:
-					/* compiler generated, just mask off the spare bit */
-					add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST | ARG_ISCONST, 0xfc, ARG_REG | ARG_IS8BIT, ts->stack->old_c_reg, ARG_REG | ARG_IS8BIT, ts->stack->old_c_reg));
-					break;
-				}
-			}
-			if (!options.no_ext_chan_checks && (target_reg != -1) && (target_call != -1)) {
-				/*{{{  if user-defined channels, check low bit for special case, first call to regular*/
-				tmp_reg = tstack_newreg (ts->stack);
-				add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EDX));
-				add_to_ins_chain (compose_ins (INS_MOVEB, 1, 1, ARG_REG | ARG_IS8BIT, target_reg, ARG_REG | ARG_IS8BIT, tmp_reg));
-				add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST | ARG_ISCONST, 0xfc, ARG_REG | ARG_IS8BIT, target_reg, ARG_REG | ARG_IS8BIT, target_reg));	/* mask off here */
-				add_to_ins_chain (compose_ins (INS_AND, 2, 2, ARG_CONST | ARG_ISCONST, 0x03, ARG_REG | ARG_IS8BIT, tmp_reg, ARG_REG | ARG_IS8BIT, tmp_reg, ARG_REG | ARG_IMP, REG_CC));		/* mask in here */
-				add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_NZ, ARG_FLABEL, 0));
-				tmp_ins = compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup (entry->entrypoint));		/* regular */
-				add_to_ins_chain (tmp_ins);
-				add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_FLABEL, 1));
-				add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0));
-				tmp_ins2 = compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup ((kif_entry (target_call))->entrypoint));	/* special */
-				add_to_ins_chain (tmp_ins2);
-				add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 1));
-				/*}}}*/
-			} else
-			/*}}}*/
-#endif	/* USER_DEFINED_CHANNELS */
-			{
-				tmp_ins = compose_kjump_i386 (ts, INS_CALL, 0, entry);
-				/* tmp_ins = compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup (entry->entrypoint)); */
-				add_to_ins_chain (tmp_ins);
-				/* add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0)); */
-			}
-			break;
-			/*}}}*/
-			/*{{{  KCALL_STOREIP_JUMP -- store Iptr in Wptr[Iptr] and jump to entry-point*/
-		case KCALL_STOREIP_JUMP:
-			/* only for descheduling points */
-			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_FLABEL | ARG_ISCONST, 0, ARG_REGIND | ARG_DISP, REG_WPTR, -4));
-#ifdef USER_DEFINED_CHANNELS
-			/*{{{  external-channel checks*/
-			if (!options.no_ext_chan_checks) {
-				target_reg = -1;
-				target_call = -1;
-				switch (call) {
-				case K_IN:
-				case K_OUT:
-					target_reg = ts->stack->old_b_reg;
-					target_call = (call == K_IN) ? K_EXTIN : K_EXTOUT;
-					break;
-				case K_OUTBYTE:
-				case K_OUTWORD:
-					target_reg = ts->stack->old_b_reg;
-					target_call = (call == K_OUTBYTE) ? K_EXTOUTBYTE : K_EXTOUTWORD;
-					break;
-				case K_IN8:
-				case K_IN32:
-					target_reg = ts->stack->old_a_reg;
-					target_call = (call == K_IN8) ? K_EXTIN8 : K_EXTIN32;
-					break;
-				case K_OUT8:
-				case K_OUT32:
-					target_reg = ts->stack->old_a_reg;
-					target_call = (call == K_OUT8) ? K_EXTOUT8 : K_EXTOUT32;
-					break;
-				case K_EXTIN:
-				case K_EXTOUT:
-				case K_EXTVRFY:
-				case K_EXTENBC:
-				case K_EXTMINN:
-				case K_EXTMOUTN:
-					/* compiler generated, just mask off the spare bit (in Breg) */
-					add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST | ARG_ISCONST, 0xfc, ARG_REG | ARG_IS8BIT, ts->stack->old_b_reg, ARG_REG | ARG_IS8BIT, ts->stack->old_b_reg));
-					break;
-				case K_EXTNDISC:
-					/* compiler generated, just mask off the spare bit (in Creg) */
-					add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST | ARG_ISCONST, 0xfc, ARG_REG | ARG_IS8BIT, ts->stack->old_c_reg, ARG_REG | ARG_IS8BIT, ts->stack->old_c_reg));
-					break;
-				case K_EXTMIN:
-				case K_EXTMOUT:
-				case K_EXTMIN64:
-				case K_EXTMOUT64:
-					/* compiler generated, just mask off the spare bit (in Areg) */
-					add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST | ARG_ISCONST, 0xfc, ARG_REG | ARG_IS8BIT, ts->stack->old_a_reg, ARG_REG | ARG_IS8BIT, ts->stack->old_a_reg));
-					break;
-				case K_MIN:
-				case K_MIN64:
-					target_reg = ts->stack->old_a_reg;
-					target_call = (call == K_MIN) ? K_EXTMIN : K_EXTMIN64;
-					break;
-				case K_MOUT:
-				case K_MOUT64:
-					target_reg = ts->stack->old_a_reg;
-					target_call = (call == K_MOUT) ? K_EXTMOUT : K_EXTMOUT64;
-					break;
-				case K_MINN:
-				case K_MOUTN:
-					target_reg = ts->stack->old_b_reg;
-					target_call = (call == K_MINN) ? K_EXTMINN : K_EXTMOUTN;
-					break;
-				}
-			}
-			if (!options.no_ext_chan_checks && (target_reg != -1) && (target_call != -1)) {
-				/* if user-defined channels, check low bit for special case, first jump to regular */
-				tmp_reg = tstack_newreg (ts->stack);
-				add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EDX));		/* doesn't really need to be forced.. */
-				add_to_ins_chain (compose_ins (INS_MOVEB, 1, 1, ARG_REG | ARG_IS8BIT, target_reg, ARG_REG | ARG_IS8BIT, tmp_reg));
-				add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST | ARG_ISCONST, 0xfc, ARG_REG | ARG_IS8BIT, target_reg, ARG_REG | ARG_IS8BIT, target_reg));	/* mask off here */
-				add_to_ins_chain (compose_ins (INS_AND, 2, 2, ARG_CONST | ARG_ISCONST, 0x03, ARG_REG | ARG_IS8BIT, tmp_reg, ARG_REG | ARG_IS8BIT, tmp_reg, ARG_REG | ARG_IMP, REG_CC));		/* mask in here */
-				tmp_ins2 = compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_Z, ARG_NAMEDLABEL, string_dup (entry->entrypoint));
-				add_to_ins_chain (tmp_ins2);
-				add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
-				tmp_ins = compose_ins (INS_JUMP, 1, 0, ARG_NAMEDLABEL, string_dup ((kif_entry (call))->entrypoint));		/* jump special */
-				add_to_ins_chain (tmp_ins);
-			} else
-			/*}}}*/
-#endif	/* USER_DEFINED_CHANNELS */
-			{
-				tmp_ins = compose_kjump_i386 (ts, INS_JUMP, 0, entry);
-				/* tmp_ins = compose_ins (INS_JUMP, 1, 0, ARG_NAMEDLABEL, string_dup (entry->entrypoint)); */
-				add_to_ins_chain (tmp_ins);
-			}
-			add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0));
-			break;
-			/*}}}*/
-			/*{{{  KCALL_REGIP_JUMP -- store Iptr in a register and jump to entry-point*/
-		case KCALL_REGIP_JUMP:
-			/* EXPERIMENTAL */
-			tmp_reg = tstack_newreg (ts->stack);
-			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_FLABEL | ARG_ISCONST, 0, ARG_REG, tmp_reg));
-			add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, xregs[r_in]));
-			tmp_ins = compose_kjump_i386 (ts, INS_JUMP, 0, entry);
-			set_implied_inputs (tmp_ins, 1, &tmp_reg);
-			add_to_ins_chain (tmp_ins);
-			add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
-			add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0));
-			break;
-			/*}}}*/
-			/*{{{  KCALL_JUMP -- jump to the function by name*/
-		case KCALL_JUMP:
-			tmp_ins = compose_kjump_i386 (ts, INS_JUMP, 0, entry);
-			add_to_ins_chain (tmp_ins);
-			/* add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0)); */
-			break;
-			/*}}}*/
-		default:
-			fprintf (stderr, "%s: error: not supposed to be calling this (%d)\n", progname, call);
-			break;
-		}
-		if (tmp_ins && (entry->input_mode == ARGS_IN_REGS)) {
-			set_implied_inputs (tmp_ins, r_in, cregs);
-			if (tmp_ins2) {
-				set_implied_inputs (tmp_ins2, r_in, cregs);
-			}
+		call_ins = compose_kjump_i386 (ts, INS_CALL, 0, entry);
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
+		add_to_ins_chain (call_ins);
+		if (call_ins) {
+			set_implied_inputs (call_ins, r_in > r_out ? r_in : r_out, cregs);
 		}
 	} else if (options.kernel_interface & KRNLIFACE_MESH) {
 		/* unsupported as yet */
@@ -377,8 +223,8 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 	ts->stack_drift = 0;
 
 	/*{{{  unconstrain registers*/
-	if ((options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) && (entry->input_mode == ARGS_IN_REGS)) {
-		for (i=0; i<r_in; i++) {
+	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
+		for (i = 0; i < (r_in > r_out ? r_in : r_out); i++) {
 			add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, cregs[i]));
 		}
 	}
@@ -388,51 +234,31 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 	if (regs_out > 0) {
 		tstack_undefine (ts->stack);
 		constmap_clearall ();
-		/* make sure we re-use registers */
-		for (i=0; (i<r_out) && (i<r_in); i++) {
-			tstack_push (ts->stack);
-			ts->stack->must_set_cmp_flags = 1;
+		ts->stack->must_set_cmp_flags = 1;
+		ts->stack->ts_depth = r_out;
+		for (i = 0; i < r_out; i++) {
 			oregs[i] = cregs[i];
 		}
-		for (; i<r_out; i++) {
-			tstack_push (ts->stack);
-			ts->stack->must_set_cmp_flags = 1;
-			oregs[i] = ts->stack->a_reg;
-		}
-		ts->stack->ts_depth = r_out;
-		for (i=ts->stack->ts_depth; i<3; i++) {
+		for (i = ts->stack->ts_depth; i < 3; i++) {
 			oregs[i] = REG_UNDEFINED;
 		}
 		ts->stack->a_reg = oregs[0];
 		ts->stack->b_reg = oregs[1];
 		ts->stack->c_reg = oregs[2];
-		if (tmp_ins && (entry->output_mode == ARGS_IN_REGS)) {
-			set_implied_outputs (tmp_ins, r_out, oregs);
+		if (call_ins) {
+			set_implied_outputs (call_ins, r_out, oregs);
 		}
+		#if 0
 		/* constrain into registers */
-		for (i=0; i<r_out; i++) {
+		for (i = 0; i < r_out; i++) {
 			if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
-				switch (entry->output_mode) {
-					/*{{{  ARGS_ON_STACK -- results given back on the stack*/
-				case ARGS_ON_STACK:
-					add_to_ins_chain (compose_ins (INS_POP, 0, 1, ARG_REG, oregs[i]));
-					/* ignore for stack-drift concerns */
-					break;
-					/*}}}*/
-					/*{{{  ARGS_IN_REGS -- results given back in registers*/
-				case ARGS_IN_REGS:
-					add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, oregs[i], ARG_REG, xregs[i]));
-					add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, oregs[i]));
-					break;
-					/*}}}*/
-				default:
-					fprintf (stderr, "%s: error: call %d attempting to get output from kernel call\n", progname, call);
-					break;
-				}
+				add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, oregs[i], ARG_REG, xregs[i]));
+				add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, oregs[i]));
 			} else if (options.kernel_interface & KRNLIFACE_MESH) {
 				fprintf (stderr, "%s: warning: MESH kernel interface not supported yet (ungenerated kernel output from call %d)\n", progname, call);
 			}
 		}
+		#endif
 	}
 	/*}}}*/
 
@@ -953,14 +779,11 @@ static void compose_inline_stopp_i386 (tstate *ts)
  */
 static void compose_inline_in_i386 (tstate *ts, int width)
 {
-	int i, lim, cregs[3], xregs[3], count_reg, chan_reg, dest_reg;
+	int i, lim, cregs[3], count_reg, chan_reg, dest_reg;
 
 	cregs[0] = ts->stack->old_a_reg;
 	cregs[1] = ts->stack->old_b_reg;
 	cregs[2] = ts->stack->old_c_reg;
-	xregs[0] = REG_EAX;
-	xregs[1] = REG_EBX;
-	xregs[2] = REG_ECX;
 	if (width) {
 		lim = 2;
 		count_reg = -1;
@@ -1314,14 +1137,11 @@ static void compose_inline_mout_i386 (tstate *ts, int wide)
  */
 static void compose_inline_out_i386 (tstate *ts, int width)
 {
-	int i, lim, cregs[3], xregs[3], count_reg, chan_reg, src_reg;
+	int i, lim, cregs[3], count_reg, chan_reg, src_reg;
 
 	cregs[0] = ts->stack->old_a_reg;
 	cregs[1] = ts->stack->old_b_reg;
 	cregs[2] = ts->stack->old_c_reg;
-	xregs[0] = REG_EAX;
-	xregs[1] = REG_EBX;
-	xregs[2] = REG_ECX;
 	if (width) {
 		lim = 2;
 		count_reg = -1;
@@ -1880,8 +1700,8 @@ static void compose_debug_insert_i386 (tstate *ts, int mdpairid)
 			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1)])));
 			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->insert_setup_label, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1) + 1])));
 		} else {
-			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_REGIND | ARG_DISP, REG_SCHED, (192 + (mdpairid << 1)) << 2));
-			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->insert_setup_label, ARG_REGIND | ARG_DISP, REG_SCHED, (192 + ((mdpairid << 1) + 1)) << 2));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, mdparam[(mdpairid << 1)])));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->insert_setup_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, mdparam[((mdpairid << 1) + 1)])));
 		}
 	}
 	return;
@@ -1973,15 +1793,21 @@ static void compose_debug_filenames_i386 (tstate *ts)
 static void compose_debug_zero_div_i386 (tstate *ts)
 {
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->zerodiv_label));
-	/* add_to_ins_chain (compose_ins (INS_LOADLABADDR, 1, 1, ARG_LABEL, ts->filename_label, ARG_REG, REG_ALT_EAX)); */
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_LABEL | ARG_ISCONST, ts->filename_label));
-	/* add_to_ins_chain (compose_ins (INS_LOADLABADDR, 1, 1, ARG_LABEL, ts->procedure_label, ARG_REG, REG_ALT_EAX)); */
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_LABEL | ARG_ISCONST, ts->procedure_label));
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_ALT_EDX));
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_ALT_ECX));
-	ts->stack_drift += 4;
+	
+	/* argument 2 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EDX, ARG_REG, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
+	/* argument 3 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[1])));
+	/* argument 4 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[2])));
+	
+	/* argument 1 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_ECX, ARG_REG, xregs[0]));
+
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
+
 	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_ZERODIV)));
-	ts->stack_drift -= 4;
 	return;
 }
 /*}}}*/
@@ -1993,17 +1819,23 @@ static void compose_debug_zero_div_i386 (tstate *ts)
 static void compose_debug_floaterr_i386 (tstate *ts)
 {
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->floaterr_label));
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_ALT_EAX));
-	/* add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EAX, ARG_REG, REG_ESI)); */	/* put exception flags in ESI -- nah, using that now ;) */
-	/* add_to_ins_chain (compose_ins (INS_LOADLABADDR, 1, 1, ARG_LABEL, ts->filename_label, ARG_REG, REG_ALT_EAX)); */
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_LABEL | ARG_ISCONST, ts->filename_label));
-	/* add_to_ins_chain (compose_ins (INS_LOADLABADDR, 1, 1, ARG_LABEL, ts->procedure_label, ARG_REG, REG_ALT_EAX)); */
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_LABEL | ARG_ISCONST, ts->procedure_label));
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_ALT_EDX));
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_ALT_ECX));
-	ts->stack_drift += 5;
+
+	/* argument 2 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EDX, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
+	/* argument 3 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[1])));
+	/* argument 4 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[2])));
+	/* argument 5 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EAX, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[3])));
+
+	/* argument 1 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_ECX, ARG_REG, xregs[0]));
+
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
+
 	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_FLOATERR)));
-	ts->stack_drift -= 5;
 	return;
 }
 /*}}}*/
@@ -2015,15 +1847,21 @@ static void compose_debug_floaterr_i386 (tstate *ts)
 static void compose_debug_overflow_i386 (tstate *ts)
 {
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->overflow_label));
-	/* add_to_ins_chain (compose_ins (INS_LOADLABADDR, 1, 1, ARG_LABEL, ts->filename_label, ARG_REG, REG_ALT_EAX)); */
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_LABEL | ARG_ISCONST, ts->filename_label));
-	/* add_to_ins_chain (compose_ins (INS_LOADLABADDR, 1, 1, ARG_LABEL, ts->procedure_label, ARG_REG, REG_ALT_EAX)); */
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_LABEL | ARG_ISCONST, ts->procedure_label));
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_ALT_EDX));
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_ALT_ECX));
-	ts->stack_drift += 4;
+	
+	/* argument 2 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EDX, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
+	/* argument 3 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[1])));
+	/* argument 4 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[2])));
+	
+	/* argument 1 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_ECX, ARG_REG, xregs[0]));
+	
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
+
 	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_OVERFLOW)));
-	ts->stack_drift -= 4;
 	return;
 }
 /*}}}*/
@@ -2035,13 +1873,16 @@ static void compose_debug_overflow_i386 (tstate *ts)
 static void compose_debug_rangestop_i386 (tstate *ts)
 {
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->range_entry_label));
-	/* add_to_ins_chain (compose_ins (INS_LOADLABADDR, 1, 1, ARG_LABEL, ts->filename_label, ARG_REG, REG_ALT_EAX)); */
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_LABEL | ARG_ISCONST, ts->filename_label));
-	/* add_to_ins_chain (compose_ins (INS_LOADLABADDR, 1, 1, ARG_LABEL, ts->procedure_label, ARG_REG, REG_ALT_EAX)); */
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0,  ARG_LABEL | ARG_ISCONST, ts->procedure_label));
-	ts->stack_drift += 2;
+
+	/* argument 2 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1,  ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
+	/* argument 1 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REG, xregs[0]));
+
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
+
 	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_RANGERR)));
-	ts->stack_drift -= 2;
 	return;
 }
 /*}}}*/
@@ -2053,16 +1894,22 @@ static void compose_debug_seterr_i386 (tstate *ts)
 {
 	unsigned int x;
 
-	x = (0xfb00 << 16) + (ts->line_pending & 0xffff);
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_CONST, x));
+	/* argument 2 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
+	/* argument 3 */
 	x = ((ts->file_pending & 0xffff) << 16) + (ts->proc_pending & 0xffff);
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_CONST, x));
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_LABEL | ARG_ISCONST, ts->filename_label));
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_LABEL | ARG_ISCONST, ts->procedure_label));
-	ts->stack_drift += 4;
-	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_SETERR)));
-	ts->stack_drift -= 4;
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[1])));
+	/* argument 4 */
+	x = (0xfb00 << 16) + (ts->line_pending & 0xffff);
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[2])));
 
+	/* argument 1 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REG, xregs[0]));
+
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
+
+	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_SETERR)));
 	return;
 }
 /*}}}*/
@@ -2133,7 +1980,7 @@ static void compose_debug_deadlock_set_i386 (tstate *ts)
 {
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->procfile_setup_label));
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REG, REG_ALT_EAX));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REG, REG_ALT_EBX));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REG, REG_ALT_ECX));
 	add_to_ins_chain (compose_ins (INS_RET, 0, 0));
 	return;
 }
@@ -2149,7 +1996,7 @@ static void compose_debug_insert_set_i386 (tstate *ts)
 	if (!(options.kernel_interface & KRNLIFACE_MP)) {
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_NAMEDLABEL, string_dup ("&mdparam1")));
 	} else {
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label,  ARG_REGIND | ARG_DISP, REG_SCHED, 192 << 2));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label,  ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, mdparam[0])));
 	}
 	add_to_ins_chain (compose_ins (INS_RET, 0, 0));
 	return;
@@ -2543,8 +2390,8 @@ static void compose_move_i386 (tstate *ts)
 	} else {
 		add_to_ins_chain (compose_ins (INS_OR, 2, 2, ARG_REG, ts->stack->old_a_reg, ARG_REG, ts->stack->old_a_reg, ARG_REG, ts->stack->old_a_reg, ARG_REG | ARG_IMP, REG_CC));
 		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_Z, ARG_FLABEL, 0));
-		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_JPTR));
 		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_LPTR));
+		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_JPTR));
 		ts->stack_drift += 2;
 		compose_move_loadptrs_i386 (ts);
 		tmp_reg = tstack_newreg (ts->stack);
@@ -2582,8 +2429,8 @@ static void compose_move_i386 (tstate *ts)
 		}
 		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg2));
 		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
-		add_to_ins_chain (compose_ins (INS_POP, 0, 1, ARG_REG, REG_LPTR));
 		add_to_ins_chain (compose_ins (INS_POP, 0, 1, ARG_REG, REG_JPTR));
+		add_to_ins_chain (compose_ins (INS_POP, 0, 1, ARG_REG, REG_LPTR));
 		ts->stack_drift -= 2;
 		add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0));
 	}
@@ -2615,8 +2462,11 @@ static void compose_longop_i386 (tstate *ts, int sec)
 	switch (sec) {
 		/*{{{  I_LADD -- long addition*/
 	case I_LADD:
+		add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, ts->stack->old_c_reg, ARG_REG, REG_EDX));
 		add_to_ins_chain (compose_ins (INS_RCR, 2, 1, ARG_CONST, 1, ARG_REG | ARG_IS8BIT, ts->stack->old_c_reg, ARG_REG | ARG_IS8BIT, ts->stack->old_c_reg));
 		constmap_remove (ts->stack->old_c_reg);
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, ts->stack->old_c_reg));
+
 		add_to_ins_chain (compose_ins (INS_ADC, 2, 2, ARG_REG, ts->stack->old_a_reg, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_b_reg, ARG_REG | ARG_IMP, REG_CC));
 		constmap_remove (ts->stack->old_b_reg);
 		ts->stack->a_reg = ts->stack->old_b_reg;
@@ -2633,27 +2483,39 @@ static void compose_longop_i386 (tstate *ts, int sec)
 		/*}}}*/
 		/*{{{  I_LSUM -- long sum (no overflow checks)*/
 	case I_LSUM:
-		tmp_reg = tstack_newreg (ts->stack);
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, 0, ARG_REG, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, ts->stack->old_c_reg, ARG_REG, REG_ECX));
 		add_to_ins_chain (compose_ins (INS_RCR, 2, 1, ARG_CONST, 1, ARG_REG | ARG_IS8BIT, ts->stack->old_c_reg, ARG_REG | ARG_IS8BIT, ts->stack->old_c_reg));
 		constmap_remove (ts->stack->old_c_reg);
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, ts->stack->old_c_reg));
+
 		add_to_ins_chain (compose_ins (INS_ADC, 2, 1, ARG_REG, ts->stack->old_a_reg, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_b_reg));
 		constmap_remove (ts->stack->old_b_reg);
+
+		tmp_reg = tstack_newreg (ts->stack);
+		add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EDX));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, 0, ARG_REG, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_RCL, 2, 1, ARG_CONST, 1, ARG_REG | ARG_IS8BIT, tmp_reg, ARG_REG | ARG_IS8BIT, tmp_reg));
 		constmap_remove (tmp_reg);
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg));
 		ts->stack->b_reg = tmp_reg;
 		break;
 		/*}}}*/
 		/*{{{  I_LDIFF -- long difference (no overflow checks)*/
 	case I_LDIFF:
-		tmp_reg = tstack_newreg (ts->stack);
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, 0, ARG_REG, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, ts->stack->old_c_reg, ARG_REG, REG_ECX));
 		add_to_ins_chain (compose_ins (INS_RCR, 2, 1, ARG_CONST, 1, ARG_REG | ARG_IS8BIT, ts->stack->old_c_reg, ARG_REG | ARG_IS8BIT, ts->stack->old_c_reg));
 		constmap_remove (ts->stack->old_c_reg);
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, ts->stack->old_c_reg));
+		
 		add_to_ins_chain (compose_ins (INS_SBB, 2, 1, ARG_REG, ts->stack->old_a_reg, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_b_reg));
 		constmap_remove (ts->stack->old_b_reg);
+
+		tmp_reg = tstack_newreg (ts->stack);
+		add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EDX));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, 0, ARG_REG, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_RCL, 2, 1, ARG_CONST, 1, ARG_REG | ARG_IS8BIT, tmp_reg, ARG_REG | ARG_IS8BIT, tmp_reg));
 		constmap_remove (tmp_reg);
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg));
 		ts->stack->b_reg = tmp_reg;
 		break;
 		/*}}}*/
@@ -3238,22 +3100,22 @@ static void compose_fpop_i386 (tstate *ts, int sec)
  */
 static void compose_external_ccall_i386 (tstate *ts, int inlined, char *name, ins_chain **pst_first, ins_chain **pst_last)
 {
-	int kernliface_mp = (options.kernel_interface & KRNLIFACE_MP);
 	int tmp_reg, kernel_call;
 
-	tmp_reg = tstack_newreg (ts->stack);
-	*pst_first = compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_WPTR);
+	/* In the i386 ABI used by Linux, *BSD, Darwin and resumably Windows
+	 * defines EBP, ESI, EDI as private to the caller, hence we don't
+	 * need to save them.
+	 *
+	 * Hence WPTR, SCHED, FPTR, BPTR should all be safe.
+	 * - 20080113
+	 */
+
+	*pst_first = compose_ins (INS_SUB, 2, 1, ARG_CONST | ARG_ISCONST, 16, ARG_REG, REG_ESP, ARG_REG, REG_ESP);
 	add_to_ins_chain (*pst_first);
-	if (options.kernel_interface & KRNLIFACE_MP) {
-		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, REG_SCHED));
-	}
-	add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_CONST | ARG_ISCONST, kernliface_mp ? 4 : 8, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
-	if (!kernliface_mp && (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX))) {
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_FPTR, ARG_NAMEDLABEL, string_dup (Fptr_name)));
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_BPTR, ARG_NAMEDLABEL, string_dup (Bptr_name)));
-	}
+
+	tmp_reg = tstack_newreg (ts->stack);
 	add_to_ins_chain (compose_ins (INS_LEA, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, 4, ARG_REG, tmp_reg));
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, tmp_reg));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, tmp_reg, ARG_REGIND, REG_ESP));
 	if (options.extref_prefix) {
 		char sbuf[128];
 
@@ -3262,16 +3124,8 @@ static void compose_external_ccall_i386 (tstate *ts, int inlined, char *name, in
 	} else {
 		add_to_ins_chain (compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup (name + 1)));
 	}
-	add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 4, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
-	if (!kernliface_mp && (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX))) {
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_NAMEDLABEL, string_dup (Fptr_name), ARG_REG, REG_FPTR));
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_NAMEDLABEL, string_dup (Bptr_name), ARG_REG, REG_BPTR));
-	}
-	add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST | ARG_ISCONST, kernliface_mp ? 4 : 8, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
-	if (options.kernel_interface & KRNLIFACE_MP) {
-		add_to_ins_chain (compose_ins (INS_POP, 0, 1, ARG_REG, REG_SCHED));
-	}
-	add_to_ins_chain (compose_ins (INS_POP, 0, 1, ARG_REG, REG_WPTR));
+	add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
+	
 	if (!strcmp (name, "C.ccsp.suspendproc")) {
 		/* hack for dynamic process suspension -- we've done ccsp.suspendproc, now call kernel */
 		*pst_last = NULL;
@@ -3301,32 +3155,37 @@ static void compose_external_ccall_i386 (tstate *ts, int inlined, char *name, in
  */
 static void compose_bcall_i386 (tstate *ts, int i, int kernel_call, int inlined, char *name, ins_chain **pst_first, ins_chain **pst_last)
 {
-	int tmp_reg;
+	int arg_reg, tmp_reg;
 	ins_chain *st_first, *st_last;
 
+	arg_reg = tstack_newreg (ts->stack);
 	tmp_reg = tstack_newreg (ts->stack);
-	st_first = compose_ins (INS_LEA, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, 4, ARG_REG, tmp_reg);
-	add_to_ins_chain (st_first);
-	constmap_remove (tmp_reg);
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, tmp_reg));
+	add_to_ins_chain (st_first = compose_ins (INS_LEA, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, 4, ARG_REG, tmp_reg));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, tmp_reg, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
+
+	add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, arg_reg, ARG_REG, xregs[0]));
 	if (kernel_call != K_KERNEL_RUN) {
 		/* push address of function to call */
 		if (options.extref_prefix) {
 			char sbuf[128];
 
 			sprintf (sbuf, "%s%s", options.extref_prefix, name + ((i == 2) ? 1 : 2));
-			add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_NAMEDLABEL | ARG_ISCONST, string_dup (sbuf)));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_NAMEDLABEL | ARG_ISCONST, string_dup (sbuf), ARG_REG, arg_reg));
 		} else {
-			add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_NAMEDLABEL | ARG_ISCONST, string_dup (name + ((i == 2) ? 1 : 2))));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_NAMEDLABEL | ARG_ISCONST, string_dup (name + ((i == 2) ? 1 : 2)), ARG_REG, arg_reg));
 		}
 	}
 	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
 		add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (kernel_call)));
 	} else if (options.kernel_interface & KRNLIFACE_MESH) {
 		fprintf (stderr, "%s: error: do not have blocking call support in MESH yet\n", progname);
 	} else if (options.kernel_interface & KRNLIFACE_CSPLINUX) {
 		fprintf (stderr, "%s: error: support for CSP/Linux not yet implemented\n", progname);
 	}
+	add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, arg_reg));
+
 	st_last = compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR);
 	add_to_ins_chain (st_last);
 
@@ -3365,7 +3224,7 @@ static void compose_cif_call_i386 (tstate *ts, int inlined, char *name, ins_chai
 	add_to_ins_chain (compose_ins (INS_POP, 1, 0, ARG_REG, REG_WPTR));
 	add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0));
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, -32, ARG_REG, REG_SCHED));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGIND | ARG_DISP, REG_SCHED, 896, ARG_REG, REG_ESP));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, stack), ARG_REG, REG_ESP));
 	add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_CONST | ARG_ISCONST, 4, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR));
 	*pst_last = compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR);
 	add_to_ins_chain (*pst_last);
@@ -3656,6 +3515,9 @@ static int regcolour_special_to_real_i386 (int sreg)
 	case REG_ALT_EDX:
 		return REG_EDX;
 		break;
+	case REG_ALT_EDI:
+		return REG_EDI;
+		break;
 	case REG_WPTR:
 		return REG_EBP;
 		break;
@@ -3682,7 +3544,7 @@ static int regcolour_special_to_real_i386 (int sreg)
  */
 static int regcolour_get_regs_i386 (int *regs)
 {
-	static int r_names[RMAX_I386] = {REG_EAX, REG_EBX, REG_ECX, REG_EDX};
+	static int r_names[RMAX_I386] = {REG_EAX, REG_EDX, REG_ECX, REG_EDI};
 
 	memcpy (regs, r_names, RMAX_I386 * sizeof (int));
 
@@ -3696,12 +3558,12 @@ static int regcolour_get_regs_i386 (int *regs)
 static char *get_register_name_i386 (int reg)
 {
 	static char *mainregs[] = {"%eax", "%ecx", "%edx", "%ebx", "%esp", "%ebp", "%esi", "%edi"};
-	static char *altregs[] = {"%eax", "%ebx", "%ecx", "%edx"};
+	static char *altregs[] = {"%eax", "%ecx", "%edx", "%ebx", "%edi"};
 	static char *unkreg = "?";
 
 	if ((reg >= 0) && (reg <= 7)) {
 		return mainregs[reg];
-	} else if ((reg >= -128) && (reg <= -125)) {
+	} else if ((reg >= -128) && (reg <= -124)) {
 		return altregs[reg + 128];
 	} else {
 		return unkreg;

@@ -20,6 +20,7 @@
 #ifndef __KIF_H
 #define __KIF_H
 
+#include <ccsp.h>
 #include <kiface.h>
 
 typedef ccsp_entrytype kif_entrytype;
