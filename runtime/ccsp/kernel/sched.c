@@ -254,7 +254,7 @@ int ccsp_use_tls (void)
 /*}}}*/
 
 /*{{{  scheduler support defines/functions */
-K_CALL_DEFINE (X_scheduler);
+static void NO_RETURN REGPARM kernel_scheduler (sched_t *sched);
 /*{{{  scheduler pointer storage */
 #if defined(USE_TLS)
 static int init_local_schedulers (void) { return 0; }
@@ -920,7 +920,7 @@ static WARM word *reschedule_point (sched_t *sched, word *Wptr, word *other)
 			enqueue_process (sched, other);
 			save_priofinity (sched, Wptr);
 			enqueue_process_nopri (sched, Wptr);
-			RESCHEDULE;
+			kernel_scheduler (sched);
 		} else {
 			enqueue_process (sched, other);
 			return Wptr;
@@ -933,7 +933,7 @@ static WARM word *reschedule_point (sched_t *sched, word *Wptr, word *other)
 static TRIVIAL word *get_process_or_reschedule (sched_t *sched)
 {
 	if (end_of_curb (sched))
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	return dequeue_from_curb (sched);
 }
 
@@ -1764,23 +1764,14 @@ void ccsp_kernel_init (void)
 /*}}}*/
 
 /*{{{  scheduler */
-/*{{{  void kernel_X_scheduler (void)*/
-/*
- *	scheduler proper
- *
- *	This routine cannot be "call'ed" because it doesn't deal with the stack, so
- *	it should never be called from C directly, only from assembler using a jump.
- *	It should not be called externally anyway...
- *	FOOTNOTE: But it is jumped to (now!) from CSPlib in ProcPar().
- *	NOTE: [CSPlib disabled in this scheduler]
- */
-K_CALL_DEFINE (X_scheduler)
+/*{{{  void kernel_scheduler (void)*/
+static void NO_RETURN REGPARM kernel_scheduler (sched_t *sched)
 {
+	word *Wptr = NotProcess_p;
 	//fprintf (stderr, ">> S = %p, F = %p, B = %p\n", sched, BFptr, BBptr);
 
 	ENTRY_TRACE (X_scheduler, "sync=%d", att_val (&(sched->sync)));
 	
-	Wptr = NotProcess_p;
 	do {
 		if (att_val (&(sched->sync))) {
 			unsigned int sync = att_swap (&(sched->sync), 0);
@@ -1928,6 +1919,8 @@ K_CALL_DEFINE (X_scheduler)
 
 	//fprintf (stderr, "<< W = %p (%p), F = %p, B = %p\n", Wptr, Wptr[-1], Fptr, Bptr);
 	K_ZERO_OUT_JRET ();
+	
+	no_return ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_fastscheduler (void)*/
@@ -1961,7 +1954,7 @@ K_CALL_DEFINE (Y_fastscheduler)
 K_CALL_DEFINE (X_occscheduler)
 {
 	K_CALL_PARAMS_0 ();
-	RESCHEDULE;
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_Y_rtthreadinit (void)*/
@@ -2058,7 +2051,7 @@ K_CALL_DEFINE (Y_rtthreadinit)
 		sched->stats.startp++;
 		K_ZERO_OUT_JRET ();
 	} else {
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	}
 }
 /*}}}*/
@@ -2075,7 +2068,7 @@ K_CALL_DEFINE (Y_shutdown)
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE (Y_shutdown, "");
 	att_set (&(ccsp_shutdown), true);
-	RESCHEDULE;
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*}}}*/
@@ -2096,7 +2089,7 @@ static void kernel_X_common_error (word *Wptr, sched_t *sched, unsigned int retu
 #endif
 	{
 		if (ccsp_ignore_errors) {
-			RESCHEDULE;
+			kernel_scheduler (sched);
 		} else {
 			BMESSAGE ("application error, stopped.\n");
 			ccsp_kernel_exit (1, return_address);
@@ -2366,7 +2359,7 @@ K_CALL_DEFINE (Y_unsupported)
 	ENTRY_TRACE0 (Y_unsupported);
 
 	if (ccsp_ignore_errors) {
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	} else {
 		BMESSAGE ("unsupported kernel call.\n");
 		ccsp_kernel_exit (1, return_address);
@@ -2476,7 +2469,7 @@ static INLINE void sem_claim (sched_t *sched, word *Wptr, unsigned int return_ad
 		}
 	}
 
-	RESCHEDULE;
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  static INLINE void sem_release (sched_t *sched, ccsp_sem_t *sem)*/
@@ -2810,14 +2803,14 @@ static REGPARM void bar_sync (sched_t *sched, bar_t *bar, word *Wptr)
 
 			if (atw_cas (&(bar->state), state, BAR_STATE (1, tag, BAR_SYNCING))) {
 				bar_complete (sched, bar, tag);
-				RESCHEDULE;
+				kernel_scheduler (sched);
 				return;
 			}
 		} else {
 			word count = BAR_COUNT(state);
 			word new_state = BAR_STATE (count - 1, tag, state & BAR_SYNCING);
 			if (atw_cas (&(bar->state), state, new_state))  {
-				RESCHEDULE;
+				kernel_scheduler (sched);
 				return;
 			}
 		}
@@ -2864,7 +2857,7 @@ static REGPARM void fork_bar_sync (sched_t *sched, word *bar, word *Wptr)
 		dmem_thread_release (sched->allocator, mb);
 		K_ZERO_OUT_JRET ();
 	} else {
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	}
 }
 /*}}}*/
@@ -3002,7 +2995,7 @@ static REGPARM void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr
 			}
 
 			if (atw_cas (&(bar->state), state, state - 1)) {
-				RESCHEDULE;
+				kernel_scheduler (sched);
 				return;
 			}
 
@@ -3569,7 +3562,7 @@ static void kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, wo
 
 	bsyscall_dispatch (job);
 	
-	RESCHEDULE;
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_X_b_dispatch (void)*/
@@ -4008,7 +4001,7 @@ K_CALL_DEFINE (Y_startp)
 		save_priofinity (sched, Wptr);
 		save_return (sched, Wptr, return_address);
 		enqueue_to_batch_front (&(sched->curb), Wptr);
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	} else {
 		K_ZERO_OUT ();
 	}
@@ -4056,7 +4049,7 @@ K_CALL_DEFINE (X_pause)
 	save_return (sched, Wptr, return_address);
 	enqueue_process_nopri (sched, Wptr);
 	
-	RESCHEDULE;
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_X_stopp (void)*/
@@ -4077,7 +4070,7 @@ K_CALL_DEFINE (X_stopp)
 	save_priofinity (sched, Wptr);
 	save_return (sched, Wptr, return_address);
 
-	RESCHEDULE;
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_Y_endp (void)*/
@@ -4109,7 +4102,7 @@ K_CALL_DEFINE (Y_endp)
 		sched->stats.endp++;
 	}
 
-	RESCHEDULE;
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_Y_par_enroll (void)*/
@@ -4160,7 +4153,7 @@ K_CALL_DEFINE (X_mreleasep)
 		sched->mdparam[15] = (word) adjust;
 	}
 
-	RESCHEDULE;
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_Y_proc_alloc (void)*/
@@ -4291,7 +4284,7 @@ K_CALL_DEFINE (Y_proc_start)
 		save_priofinity (sched, Wptr);
 		save_return (sched, Wptr, return_address);
 		enqueue_to_batch_front (&(sched->curb), Wptr);
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	} else {
 		K_ZERO_OUT ();
 	}
@@ -4317,7 +4310,7 @@ K_CALL_DEFINE (Y_proc_end)
 	mt_release_simple (sched, ws, MT_MAKE_TYPE (MT_DATA));
 	sched->stats.proc_end++;
 
-	RESCHEDULE;
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  word *ccsp_proc_alloc (word flags, word words)*/
@@ -4526,11 +4519,11 @@ static INLINE void kernel_chan_io (word flags, word *Wptr, sched_t *sched, word 
 
 		temp = atw_swap (channel_address, (word) Wptr);
 		if (temp == NotProcess_p) {
-			RESCHEDULE;
+			kernel_scheduler (sched);
 			return;
 		} else if (temp & 1) {
 			trigger_alt_guard (sched, temp);
-			RESCHEDULE;
+			kernel_scheduler (sched);
 			return;
 		}
 	}
@@ -4730,11 +4723,11 @@ K_CALL_DEFINE (X_xable)
 
 		temp = atw_swap (channel_address, ((word) Wptr) | 1);
 		if (temp == NotProcess_p) {
-			RESCHEDULE;
+			kernel_scheduler (sched);
 			return;
 		} else if (temp & 1) {
 			trigger_alt_guard (sched, temp);
-			RESCHEDULE;
+			kernel_scheduler (sched);
 			return;
 		}
 
@@ -4891,7 +4884,7 @@ K_CALL_DEFINE (X_tin)
 		wait_time++; /* from T9000 book... */
 		SetTimeField(Wptr, wait_time);
 		add_to_timer_queue (sched, Wptr, wait_time, false);
-		RESCHEDULE;
+		kernel_scheduler (sched);
 		return;
 	}
 	
@@ -4919,7 +4912,7 @@ K_CALL_DEFINE (Y_fasttin)
 	save_return (sched, Wptr, return_address);
 	add_to_timer_queue (sched, Wptr, wait_time, false);
 
-	RESCHEDULE;
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*}}}*/
@@ -4982,7 +4975,7 @@ static INLINE void kernel_altend (word *Wptr, sched_t *sched, unsigned int retur
 		K_ZERO_OUT ();
 		return;
 	} else {
-		RESCHEDULE;
+		kernel_scheduler (sched);
 		return;
 	}
 }
@@ -5050,7 +5043,7 @@ K_CALL_DEFINE (X_altwt)
 		weak_write_barrier ();
 		
 		if (atw_cas (&(Wptr[State]), state, nstate)) {
-			RESCHEDULE;
+			kernel_scheduler (sched);
 			return;
 		}
 	}
@@ -5102,7 +5095,7 @@ K_CALL_DEFINE (X_taltwt)
 			weak_write_barrier ();
 			
 			if (atw_cas (&(Wptr[State]), state, nstate)) {
-				RESCHEDULE;
+				kernel_scheduler (sched);
 				return;
 			} else if (tn != NULL) {
 				Wptr[TLink] = TimeSet_p;
@@ -6040,7 +6033,7 @@ K_CALL_DEFINE (Y_wait_int)
 	if (inttab[number]) {
 		MESSAGE ("scheduler: ieee, someone already waiting for this interrupt!\n");
 		/* blind reschedule */
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	}
 	
 	cli ();
@@ -6053,7 +6046,7 @@ K_CALL_DEFINE (Y_wait_int)
 		inttab[number] = Wptr;
 		sti ();
 		
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	} else {
 		Wptr[Temp] = intcount[number];
 		intcount[number] = 0;
@@ -6135,7 +6128,7 @@ K_CALL_DEFINE (X_dynproc_suspend)
 		/* failed */
 		K_ZERO_OUT ();
 	} else {
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	}
 }
 /*}}}*/
@@ -6259,7 +6252,7 @@ K_CALL_DEFINE (Y_mppclone)
 	process_address = (word)mpcb_mpp_clone ((mp_ctrlblk *)process_address);
 	if (process_address == NotProcess_p) {
 		if (ccsp_ignore_errors) {
-			RESCHEDULE;
+			kernel_scheduler (sched);
 		} else {
 			BMESSAGE ("mobile process CLONE error at 0x%x, Wptr = 0x%x.\n", return_address, (unsigned int)Wptr);
 			ccsp_kernel_exit (1, return_address);
@@ -6293,7 +6286,7 @@ K_CALL_DEFINE (Y_mppserialise)
 	process_address = ((word *)(*channel_address))[Pointer];
 	if (!mpcb_mpp_serialise ((mp_ctrlblk **)process_address, (unsigned int *)process_address + 1, (int *)destination_address, (int *)count)) {
 		if (ccsp_ignore_errors) {
-			RESCHEDULE;
+			kernel_scheduler (sched);
 		} else {
 			BMESSAGE ("mobile process serialise error at 0x%x, Wptr = 0x%x.\n", return_address, (unsigned int)Wptr);
 			ccsp_kernel_exit (1, return_address);
@@ -6327,7 +6320,7 @@ K_CALL_DEFINE (Y_mppdeserialise)
 	process_address = ((word *)(*channel_address))[Pointer];
 	if (!mpcb_mpp_deserialise ((int)source_address, (int)count, (mp_ctrlblk **)process_address, (unsigned int *)process_address + 1)) {
 		if (ccsp_ignore_errors) {
-			RESCHEDULE;
+			kernel_scheduler (sched);
 		} else {
 			BMESSAGE ("mobile process serialise error at 0x%x, Wptr = 0x%x.\n", return_address, (unsigned int)Wptr);
 			ccsp_kernel_exit (1, return_address);
@@ -6510,7 +6503,7 @@ fprintf (stderr, "kernel_Y_mwalt(): \n");
 		Wptr[Iptr] = (word)temp_ptr;
 		Wptr[Link] = NotProcess_p;
 		save_priofinity (sched, Wptr);
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	} else {
 		/* do claim */
 		mwaltlock.value = 0;
@@ -7117,7 +7110,7 @@ K_CALL_DEFINE (Y_mws_sync)
 		Wptr[Iptr] = (word)return_address;
 		/* Wptr[Link] = NotProcess_p; */
 		save_priofinity (sched, Wptr);
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	}
 
 	K_ZERO_OUT ();
@@ -7148,7 +7141,7 @@ K_CALL_DEFINE (Y_mws_altlock)
 		Wptr[Iptr] = (word)return_address;
 		Wptr[Link] = NotProcess_p;
 		save_priofinity (sched, Wptr);
-		RESCHEDULE;
+		kernel_scheduler (sched);
 	} else {
 		/* do claim */
 		mwaltlock.value = 0;
@@ -7397,7 +7390,7 @@ K_CALL_DEFINE (Y_mws_altpostlock)
 			Wptr[Iptr] = (word)return_address;
 			Wptr[Link] = NotProcess_p;
 			save_priofinity (sched, Wptr);
-			RESCHEDULE;
+			kernel_scheduler (sched);
 		} else {
 			/* do claim */
 			mwaltlock.value = 0;
