@@ -60,11 +60,8 @@
 		sched->mdparam[9] = (word) (addr);	\
 		SAVE_EIP (sched->mdparam[11]);		\
 	} while (0)
-#define TRACE_RESCHEDULE \
-	SAVE_EIP (sched->mdparam[12]);
 #else
 #define	TRACE_RETURN(addr)	do { } while (0)
-#define TRACE_RESCHEDULE	do { } while (0)
 #endif /* CHECKING_MODE */
 
 /*{{{  _K_SETGLABEL - internal global label define for inside asm blocks */
@@ -167,13 +164,6 @@
 	__asm__ __volatile__ ("		\n"	\
 		_K_SETGLABEL (X)		\
 		: : : "memory", "cc")
-#define RESCHEDULE \
-	TRACE_RESCHEDULE; \
-	__asm__ __volatile__ ("		\n" \
-		"	jmp	*%0	\n" \
-		: /* no outputs */ \
-		: "r" (K_CALL_PTR (X_scheduler)), "d" (sched) \
-		: "memory")
 /*}}}*/
 
 /*{{{  CIF helpers */
