@@ -1219,6 +1219,9 @@ do
 	X--with-mp)
 		USEMP=1
 		;;
+	X--no-mp)
+		USEMP=0
+		;;
 	X--with-cputimers)
 		USECPUTIMERS=1
 		;;
