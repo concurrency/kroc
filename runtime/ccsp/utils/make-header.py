@@ -243,8 +243,10 @@ def output_calltable(symbol_list, symbols, fn):
 	f.write ("#include <arch/sched_asm_inserts.h>\n")
 
 	for name in symbol_list:
+		inputs = int(symbols[name].get("INPUT"))
+		outputs = int(symbols[name].get("OUTPUT"))
 		if not symbols[name].get("unsupported"):
-			f.write("K_CALL_DEFINE (%s);\n" % name)
+			f.write("K_CALL_DEFINE_%d_%d (%s);\n" % (inputs, outputs, name))
 	f.write("\n")
 	
 	f.write("static inline void build_calltable (void **table)\n")

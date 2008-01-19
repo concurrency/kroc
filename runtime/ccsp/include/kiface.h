@@ -36,7 +36,7 @@ typedef struct {
 } ccsp_entrytype;
 
 /* call table maximum size */
-#define K_MAX_SUPPORTED		120
+#define K_MAX_SUPPORTED		122
 
 /* include auto-generated interface */
 #include "kitable.h"
