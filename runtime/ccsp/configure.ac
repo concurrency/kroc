@@ -607,32 +607,32 @@ x86_64)
   AC_DEFINE([TARGET_CPU_386],1,[define if i386 or greater target])
   bigendian=no
   ;;
-sparc)
-  ARCH_DIR=sparc
-  AC_SUBST(ARCH_DIR)
-  AC_DEFINE([TARGET_CPU_SPARC],1,[define if SPARC target])
-  bigendian=yes
-  ;;
-powerpc64)
-  ARCH_DIR=ppc64
-  AC_SUBST(ARCH_DIR)
-  AC_DEFINE([TARGET_CPU_PPC64],1,[define if PowerPC-64 target])
-  bigendian=yes
-  ;;
-mips|mipsbe|mipsle)
-  ARCH_DIR=mips
-  ARCH_CFLAGS="-mips1 -DMIPS"
-  AC_SUBST(ARCH_DIR)
-  AC_DEFINE([TARGET_CPU_MIPS],1,[define if MIPS target])
-  dnl keep frame-pointer
-  FRAMEPTR_CFLAGS=""
-  if test "$host_cpu" = "mips"; then
-   bigendian=yes
-  fi
-  if test "$host_cpu" = "mipsbe"; then
-   bigendian=yes
-  fi
-  ;;
+#sparc)
+#  ARCH_DIR=sparc
+#  AC_SUBST(ARCH_DIR)
+#  AC_DEFINE([TARGET_CPU_SPARC],1,[define if SPARC target])
+#  bigendian=yes
+#  ;;
+#powerpc64)
+#  ARCH_DIR=ppc64
+#  AC_SUBST(ARCH_DIR)
+#  AC_DEFINE([TARGET_CPU_PPC64],1,[define if PowerPC-64 target])
+#  bigendian=yes
+#  ;;
+#mips|mipsbe|mipsle)
+#  ARCH_DIR=mips
+#  ARCH_CFLAGS="-mips1 -DMIPS"
+#  AC_SUBST(ARCH_DIR)
+#  AC_DEFINE([TARGET_CPU_MIPS],1,[define if MIPS target])
+#  dnl keep frame-pointer
+#  FRAMEPTR_CFLAGS=""
+#  if test "$host_cpu" = "mips"; then
+#   bigendian=yes
+#  fi
+#  if test "$host_cpu" = "mipsbe"; then
+#   bigendian=yes
+#  fi
+#  ;;
 *)
   echo "unsupported architecture $host_cpu"
   exit 1
@@ -644,9 +644,9 @@ if test "$bigendian" = yes; then
 fi
 
 AM_CONDITIONAL(ARCH_DIR_I386, [test "$ARCH_DIR" = "i386"])
-AM_CONDITIONAL(ARCH_DIR_SPARC, [test "$ARCH_DIR" = "sparc"])
-AM_CONDITIONAL(ARCH_DIR_MIPS, [test "$ARCH_DIR" = "mips"])
-AM_CONDITIONAL(ARCH_DIR_PPC64, [test "$ARCH_DIR" = "ppc64"])
+#AM_CONDITIONAL(ARCH_DIR_SPARC, [test "$ARCH_DIR" = "sparc"])
+#AM_CONDITIONAL(ARCH_DIR_MIPS, [test "$ARCH_DIR" = "mips"])
+#AM_CONDITIONAL(ARCH_DIR_PPC64, [test "$ARCH_DIR" = "ppc64"])
 
 #}}}
 #{{{  OS specific configuration
@@ -691,6 +691,5 @@ AC_SUBST(EXTRA_LDFLAGS)
 AC_CONFIG_LINKS([include/arch:include/$ARCH_DIR])
 
 AC_CONFIG_HEADERS([include/ccsp_config.h])
-AC_OUTPUT([Makefile common/Makefile include/Makefile include/i386/Makefile include/mips/Makefile include/sparc/Makefile include/ppc64/Makefile kernel/Makefile utils/Makefile])
-
+AC_OUTPUT([Makefile common/Makefile include/Makefile include/i386/Makefile kernel/Makefile utils/Makefile])
 
