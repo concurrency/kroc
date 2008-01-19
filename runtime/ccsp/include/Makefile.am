@@ -5,12 +5,6 @@ AUTOMAKE_OPTIONS=foreign
 if ARCH_DIR_I386
   USE_DIR=i386
 endif
-if ARCH_DIR_MIPS
-  USE_DIR=mips
-endif
-if ARCH_DIR_SPARC
-  USE_DIR=sparc
-endif
 
 SCHED_SOURCE = $(top_srcdir)/kernel/sched.c
 MAKE_HEADER = $(top_srcdir)/utils/make-header.py
