@@ -724,11 +724,22 @@ static HOT batch_t *try_pull_from_runqueue (sched_t *sched, unsigned int rq_n)
 /*{{{  static TEPID void mail_batch (word affinity, batch_t *batch)*/
 static TEPID void mail_batch (word affinity, batch_t *batch)
 {
-	unsigned int n;
+	unsigned int n, targets;
 	sched_t *s;
 	
 	if (!affinity) {
-		affinity = -1; /* i.e. 0xffffffff */
+		targets = att_val (&enabled_threads);
+	} else {
+		targets = affinity & (att_val (&enabled_threads));
+		
+		if (unlikely (targets == 0)) {
+			BMESSAGE (
+				"impossible affinity detected: %08x (batch = %p).\n", 
+				affinity, batch
+			);
+			ccsp_show_last_debug_insert ();
+			ccsp_kernel_exit (1, 0);
+		}
 	}
 	
 	n = pick_random_bit (affinity & (att_val (&enabled_threads)));
@@ -759,18 +770,21 @@ static TEPID void mail_process (word affinity, word *Wptr)
 	sched_t *s;
 	
 	if (!affinity) {
+		targets = att_val (&enabled_threads);
 		affinity = -1; /* i.e. 0xffffffff */
+	} else {
+		targets = affinity & (att_val (&enabled_threads));
+	
+		if (unlikely (targets == 0)) {
+			BMESSAGE (
+				"impossible affinity detected: %08x (Wptr = %p, Iptr = %p).\n", 
+				affinity, Wptr, Wptr != NULL ? (void *) Wptr[Iptr] : 0
+			);
+			ccsp_show_last_debug_insert ();
+			ccsp_kernel_exit (1, Wptr != NULL ? Wptr[Iptr] : 0);
+		}
 	}
-
-	targets = affinity & (att_val (&enabled_threads));
-	if (unlikely(!targets)) {
-		BMESSAGE (
-			"impossible affinity detected: %08x (Wptr = %p, Iptr = %p).\n", 
-			affinity, Wptr, Wptr != NULL ? (void *) Wptr[Iptr] : 0
-		);
-	        ccsp_show_last_debug_insert ();
-	        ccsp_kernel_exit (1, Wptr != NULL ? Wptr[Iptr] : 0);
-	}
+	
 	n = pick_random_bit (targets);
 	s = schedulers[n];
 	atomic_enqueue_to_runqueue (&(s->pmail), true, Wptr);
@@ -1768,12 +1782,11 @@ void ccsp_kernel_init (void)
 static void NO_RETURN REGPARM kernel_scheduler (sched_t *sched)
 {
 	word *Wptr = NotProcess_p;
-	//fprintf (stderr, ">> S = %p, F = %p, B = %p\n", sched, BFptr, BBptr);
-
+	
 	ENTRY_TRACE (X_scheduler, "sync=%d", att_val (&(sched->sync)));
 	
 	do {
-		if (att_val (&(sched->sync))) {
+		if (unlikely (att_val (&(sched->sync)))) {
 			unsigned int sync = att_swap (&(sched->sync), 0);
 
 			#ifndef ENABLE_CPU_TIMERS
@@ -1917,7 +1930,6 @@ static void NO_RETURN REGPARM kernel_scheduler (sched_t *sched)
 	ENTRY_TRACE (X_scheduler_dispatch, "sync=%d, raddr=0x%8.8x", att_val (&(sched->sync)), Wptr[Iptr]);
 	DTRACE ("SSW", Wptr);
 
-	//fprintf (stderr, "<< W = %p (%p), F = %p, B = %p\n", Wptr, Wptr[-1], Fptr, Bptr);
 	K_ZERO_OUT_JRET ();
 	
 	no_return ();
@@ -2796,7 +2808,7 @@ static REGPARM void bar_sync (sched_t *sched, bar_t *bar, word *Wptr)
 	for (;;) {
 		word tag = BAR_TAG(state);
 
-		if ((state & (~BAR_TAG_MASK)) == 1) {
+		if (unlikely ((state & (~BAR_TAG_MASK)) == 1)) {
 			tag = BAR_NEXT_TAG (tag);
 
 			if (atw_cas (&(bar->state), state, BAR_STATE (1, tag, BAR_SYNCING))) {
@@ -3245,7 +3257,7 @@ static void mt_release_simple (sched_t *sched, word *ptr, word type)
 				mt_barrier_internal_t *mb = (mt_barrier_internal_t *)
 					(ptr - MT_BARRIER_PTR_OFFSET);
 				
-				if (sched == NULL)
+				if (unlikely (sched == NULL))
 					mobile_type_error ();
 
 				if (atw_dec_z (&(mb->ref_count))) {
@@ -3276,7 +3288,7 @@ static void mt_release (sched_t *sched, word *ptr)
 {
 	word type = ptr[MTType];
 
-	if (type & MT_SIMPLE) {
+	if (expect (type & MT_SIMPLE, MT_SIMPLE)) {
 		mt_release_simple (sched, ptr, type);
 	} else {
 		mobile_type_error ();
@@ -3365,7 +3377,7 @@ static word *mt_clone (sched_t *sched, word *ptr)
 {
 	word type = ptr[MTType];
 
-	if (type & MT_SIMPLE) {
+	if (expect (type & MT_SIMPLE, MT_SIMPLE)) {
 		return mt_clone_simple (sched, ptr, type);
 	} else {
 		mobile_type_error ();
@@ -3447,7 +3459,7 @@ static HOT bool mt_io_update (sched_t *sched, word **pptr)
 {
 	word type = (*pptr)[MTType];
 
-	if (type & MT_SIMPLE) {
+	if (expect (type & MT_SIMPLE, MT_SIMPLE)) {
 		if (MT_TYPE(type) == MT_ARRAY) {
 			word temp = type;
 
@@ -3487,7 +3499,7 @@ static HOT bool mt_io_update (sched_t *sched, word **pptr)
 /*{{{  static HOT word *mt_alloc (void *allocator, word type, word size)*/
 static HOT word *mt_alloc (void *allocator, word type, word size)
 {
-	if (type & MT_SIMPLE) {
+	if (expect (type & MT_SIMPLE, MT_SIMPLE)) {
 		switch (MT_TYPE(type)) {
 			case MT_ARRAY:
 				return mt_alloc_array (allocator, type, size);
@@ -3501,7 +3513,7 @@ static HOT word *mt_alloc (void *allocator, word type, word size)
 				break;
 		}
 	}
-
+	
 	mobile_type_error ();
 
 	return NULL;
@@ -3723,7 +3735,7 @@ K_CALL_DEFINE_3_1 (Y_mt_dclone)
 		dst = mt_alloc_data (sched->allocator, type, bytes);
 		memcpy (dst, src, bytes);
 	} else {
-		if (bytes) {
+		if (unlikely (bytes)) {
 			mobile_type_error ();
 		}
 		dst = NULL;
@@ -4488,7 +4500,7 @@ static INLINE void kernel_chan_io_mobile (sched_t *sched, word flags, word *src,
 	} else {
 		word *ptr = (word *) *src;
 
-		if (ptr != NULL) {
+		if (likely (ptr != NULL)) {
 			if (mt_io_update (sched, &ptr)) {
 				*src = (word) NULL;
 			}
@@ -4968,7 +4980,7 @@ static INLINE void kernel_altend (word *Wptr, sched_t *sched, unsigned int retur
 	save_return (sched, Wptr, return_address);
 	weak_write_barrier ();
 
-	if (!atw_dec_z (&(Wptr[State]))) {
+	if (unlikely (!atw_dec_z (&(Wptr[State])))) {
 		kernel_scheduler (sched);
 	}
 
@@ -5037,7 +5049,7 @@ K_CALL_DEFINE_0_0 (X_altwt)
 		save_return (sched, Wptr, return_address);
 		weak_write_barrier ();
 		
-		if (atw_cas (&(Wptr[State]), state, nstate)) {
+		if (likely (atw_cas (&(Wptr[State]), state, nstate))) {
 			kernel_scheduler (sched);
 		}
 	}
@@ -5088,7 +5100,7 @@ K_CALL_DEFINE_0_0 (X_taltwt)
 			
 			weak_write_barrier ();
 			
-			if (atw_cas (&(Wptr[State]), state, nstate)) {
+			if (likely (atw_cas (&(Wptr[State]), state, nstate))) {
 				kernel_scheduler (sched);
 			} else if (tn != NULL) {
 				Wptr[TLink] = TimeSet_p;

@@ -28,6 +28,11 @@
 #ifdef __GNUC__
 #define likely(X)	__builtin_expect((X), 1)
 #define unlikely(X)	__builtin_expect((X), 0)
+#define expect(X,Y)	__builtin_expect((X), (Y))
+#else
+#define likely(X)	(X)
+#define unlikely(X)	(X)
+#define expect(X,Y)	((X) == (Y))
 #endif
 /*}}}*/
 
@@ -35,6 +40,9 @@
 #ifdef __GNUC__
 #define NO_RETURN	__attribute__ ((noreturn))
 #define no_return()	exit(0)
+#else
+#define NO_RETURN
+#define no_return()
 #endif
 /*}}}*/
 
