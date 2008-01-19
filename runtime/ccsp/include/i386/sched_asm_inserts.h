@@ -1,7 +1,6 @@
 /*
- *	Pentium/386 and GCC specific assembler inserts
- *	Copyright (C) 1998 Jim Moores
- *	Modification copyright (C) 1999-2002 Fred Barnes  <frmb2@ukc.ac.uk>
+ *	IA32 Architecture (GCC specific) Inserts
+ *	Copyright (C) 2008  Carl Ritson <cgr@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -31,8 +30,23 @@
 #define SCHED_ASM_INSERTS_H
 
 /*{{{  architecture dependent kernel call declarations */
-#define K_CALL_DEFINE(X) \
+#define _K_CALL_DEFINE(X) \
 	void __attribute__ ((regparm(3))) kernel_##X (word param0, sched_t *sched, word *Wptr)
+#define _K_CALL_DEFINE_O(X) \
+	word __attribute__ ((regparm(3))) kernel_##X (word param0, sched_t *sched, word *Wptr)
+#define K_CALL_DEFINE_0_0(X) _K_CALL_DEFINE(X)
+#define K_CALL_DEFINE_1_0(X) _K_CALL_DEFINE(X)
+#define K_CALL_DEFINE_2_0(X) _K_CALL_DEFINE(X)
+#define K_CALL_DEFINE_3_0(X) _K_CALL_DEFINE(X)
+#define K_CALL_DEFINE_4_0(X) _K_CALL_DEFINE(X)
+#define K_CALL_DEFINE_5_0(X) _K_CALL_DEFINE(X)
+#define K_CALL_DEFINE_0_1(X) _K_CALL_DEFINE_O(X)
+#define K_CALL_DEFINE_1_1(X) _K_CALL_DEFINE_O(X)
+#define K_CALL_DEFINE_2_1(X) _K_CALL_DEFINE_O(X)
+#define K_CALL_DEFINE_3_1(X) _K_CALL_DEFINE_O(X)
+#define K_CALL_DEFINE_2_3(X) _K_CALL_DEFINE_O(X)
+#define K_CALL_DEFINE_3_3(X) _K_CALL_DEFINE_O(X)
+
 #define K_CALL_PTR(X) \
 	((void *) (kernel_##X))
 
@@ -43,17 +57,22 @@
 	((N) == 0 ? param0 : sched->cparam[(N) - 1])
 /*}}}*/
 
-/* these for debugging mostly */
+/*{{{  debugging support */
 #define LOAD_ESP(X) \
-	__asm__ __volatile__ ("\n\tmovl %%esp, %0\n\t" : "=r" (X))
-
-#ifdef CHECKING_MODE
-#define SAVE_EIP(X) \
-	__asm__ __volatile__ ("		\n"		\
-		"	movl $0f, %0	\n"		\
-		"0:			\n"		\
-		: "=m" ((X))				\
+	__asm__ __volatile__ ("		\n"	\
+		"	movl %%esp, %0	\n" 	\
+		: "=g" (X)			\
 	)
+#define SAVE_EIP(X) \
+	__asm__ __volatile__ ("		\n"	\
+		"	call $0f	\n"	\
+		"0:	popl %0		\n"	\
+		: "=g" (X)			\
+	)
+/*}}}*/
+
+/*{{{  tracing support */
+#ifdef CHECKING_MODE
 #define TRACE_RETURN(addr)	\
 	do { 						\
 		sched->mdparam[8] = (word) Wptr;	\
@@ -63,6 +82,7 @@
 #else
 #define	TRACE_RETURN(addr)	do { } while (0)
 #endif /* CHECKING_MODE */
+/*}}}*/
 
 /*{{{  _K_SETGLABEL - internal global label define for inside asm blocks */
 #define LABEL_ALIGN ".p2align 4	\n"
@@ -91,57 +111,36 @@
 
 /*{{{  outgoing entry-point macros*/
 #define K_ZERO_OUT() \
-	TRACE_RETURN (return_address); \
-	__asm__ __volatile__ ("\n" \
-		"	movl	%0, %%ebp		\n" \
-		"	movl	640(%%esi), %%esp	\n" \
-		"	jmp	*%2			\n" \
-		: /* no outputs */ \
-		: "g" (Wptr), "S" (sched), "q" (return_address) \
-		: "memory")
+	return
 
 #define K_ZERO_OUT_JRET() \
-	TRACE_RETURN (Wptr[Iptr]); \
-	__asm__ __volatile__ ("				\n" \
-		"	movl	%0, %%ebp		\n" \
-		"	movl	640(%%esi), %%esp	\n" \
-		"	jmp	*-4(%%ebp)		\n" \
-		: /* no outputs */ \
-		: "g" (Wptr), "S" (sched) \
-		: "memory")
+	do { \
+		TRACE_RETURN (Wptr[Iptr]); \
+		/* use of EAX for Wptr is intentional */ \
+		__asm__ __volatile__ ("			\n" \
+			"	movl	%0, %%ebp	\n" \
+			"	movl	(%%esi), %%esp	\n" \
+			"	jmp	*-4(%%ebp)	\n" \
+			: /* no outputs */ \
+			: "a" (Wptr), "S" (sched) \
+			: "memory"); \
+	} while (0)
 
 #define K_ONE_OUT(A) \
-	TRACE_RETURN (return_address); \
-	__asm__ __volatile__ ("\n" \
-		"	movl	%0, %%ebp		\n" \
-		"	movl	640(%%esi), %%esp	\n" \
-		"	jmp	*%2			\n" \
-		: /* no outputs */ \
-		: "g" (Wptr), "S" (sched), "q" (return_address), \
-		  "a" (A) \
-		: "memory")
+	return ((word) (A))
 
 #define K_TWO_OUT(A,B) \
-	TRACE_RETURN (return_address); \
-	__asm__ __volatile__ ("\n" \
-		"	movl	%0, %%ebp		\n" \
-		"	movl	640(%%esi), %%esp	\n" \
-		"	jmp	*%2			\n" \
-		: /* no outputs */ \
-		: "g" (Wptr), "S" (sched), "q" (return_address), \
-		  "d" (B), "a" (A) \
-		: "memory")
+	do { \
+		sched->cparam[0] = (word) (B);	\
+		K_ONE_OUT (A);			\
+	} while (0)
 
 #define K_THREE_OUT(A,B,C) \
-	TRACE_RETURN (return_address); \
-	__asm__ __volatile__ ("\n" \
-		"	movl	%0, %%ebp		\n" \
-		"	movl	640(%%esi), %%esp	\n" \
-		"	jmp	*%2			\n" \
-		: /* no outputs */ \
-		: "g" (Wptr), "S" (sched), "D" (return_address), \
-		  "c" (C), "d" (B), "a" (A) \
-		: "memory")
+	do { \
+		sched->cparam[0] = (word) (B); 	\
+		sched->cparam[1] = (word) (C); 	\
+		K_ONE_OUT (A);			\
+	} while (0)
 /*}}}*/
 
 /*{{{  entry and label functions */
@@ -155,11 +154,6 @@
 		: /* no outputs */ \
 		: "a" (stack), "c" (Wptr), "d" (Fptr), "r" (init) \
 		: "memory")
-#define K_SETLABEL(X) \
-	__asm__ __volatile__ ("		\n"	\
-		".align 16		\n"	\
-		"	"#X":		\n"	\
-		: : : "memory", "cc")
 #define K_SETGLABEL(X) \
 	__asm__ __volatile__ ("		\n"	\
 		_K_SETGLABEL (X)		\

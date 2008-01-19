@@ -59,7 +59,7 @@
 
 #include <stddef.h>
 #ifndef offsetof
-#define offsetof(t,f) ((WORD) (&((((t *)(0))->f))))
+#define offsetof(t,f) ((int) (&((((t *)(0))->f))))
 #endif
 
 #ifndef EXIT_FAILURE
@@ -192,7 +192,7 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 			case 1: cregs[r_in + 0] = ts->stack->a_reg;
 		}
 
-		for (i = r_in; i < r_out; i++) {
+		for (i = r_in; i < 1; i++) {
 			add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, cregs[i], ARG_REG, xregs[i]));
 		}
 	}
@@ -224,7 +224,7 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 
 	/*{{{  unconstrain registers*/
 	if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
-		for (i = 0; i < (r_in > r_out ? r_in : r_out); i++) {
+		for (i = 0; i < (r_in >= r_out ? r_in : 1); i++) {
 			add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, cregs[i]));
 		}
 	}
@@ -238,6 +238,9 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 		ts->stack->ts_depth = r_out;
 		for (i = 0; i < r_out; i++) {
 			oregs[i] = cregs[i];
+			if (i >= 1) {
+				add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[(i - 1)]), ARG_REG, oregs[i]));
+			}
 		}
 		for (i = ts->stack->ts_depth; i < 3; i++) {
 			oregs[i] = REG_UNDEFINED;

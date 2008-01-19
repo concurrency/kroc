@@ -201,17 +201,17 @@ static inline void init_tqnode_t (tqnode_t *tn) {
 
 /*{{{  sched_t */
 struct _sched_t {
-	/** params		- must be at the right offset **/
-	word		cparam[8];
-
+	/** stack pointer	- must be at the right offset **/
+	unsigned int	stack;
+	/** call params		- must be at the right offset **/
+	word		cparam[5];
 	/** calltable		- must be at the right offset **/
 	void		*calltable[K_MAX_SUPPORTED];
 
-	/** local debug state	- must be at the right offset **/
+	/** local debug state **/
 	word 		mdparam[32];
 
-	/** scheduler constants	- must be at the right offset **/
-	unsigned int	stack;
+	/** scheduler constants	**/
 	unsigned int 	index;
 	unsigned int 	id; 			/* 1 << index */
 	unsigned int 	cpu_factor;

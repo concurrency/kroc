@@ -26,8 +26,8 @@
 
 /*{{{  likely/unlikely optimisation */
 #ifdef __GNUC__
-#define likely(X)	__builtin_expect((X),1)
-#define unlikely(X)	__builtin_expect((X),0)
+#define likely(X)	__builtin_expect((X), 1)
+#define unlikely(X)	__builtin_expect((X), 0)
 #endif
 /*}}}*/
 
@@ -35,6 +35,13 @@
 #ifdef __GNUC__
 #define NO_RETURN	__attribute__ ((noreturn))
 #define no_return()	exit(0)
+#endif
+/*}}}*/
+
+/*{{{  offsetof */
+#include <stddef.h>
+#ifndef offsetof
+#define offsetof(t,f) ((int) (&((((t *)(0))->f))))
 #endif
 /*}}}*/
 

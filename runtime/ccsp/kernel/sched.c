@@ -1933,7 +1933,7 @@ static void NO_RETURN REGPARM kernel_scheduler (sched_t *sched)
  *	@CALL: 		K_FASTSCHEDULER
  *	@PRIO:		50
  */
-K_CALL_DEFINE (Y_fastscheduler)
+K_CALL_DEFINE_0_0 (Y_fastscheduler)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_fastscheduler);
@@ -1951,7 +1951,7 @@ K_CALL_DEFINE (Y_fastscheduler)
  *	@CALL: 		K_OCCSCHEDULER
  *	@PRIO:		50
  */
-K_CALL_DEFINE (X_occscheduler)
+K_CALL_DEFINE_0_0 (X_occscheduler)
 {
 	K_CALL_PARAMS_0 ();
 	kernel_scheduler (sched);
@@ -1962,12 +1962,12 @@ K_CALL_DEFINE (X_occscheduler)
  *	call-in for a run-time thread as it starts up
  *
  *	@SYMBOL:	Y_rtthreadinit
- *	@INPUT:		0
+ *	@INPUT:		1
  *	@OUTPUT: 	0
  *	@CALL: 		K_RTTHREADINIT
  *	@PRIO:		10
  */
-K_CALL_DEFINE (Y_rtthreadinit)
+K_CALL_DEFINE_1_0 (Y_rtthreadinit)
 {
 	K_CALL_HEADER;
 
@@ -1976,7 +1976,6 @@ K_CALL_DEFINE (Y_rtthreadinit)
 	void *allocator;
 	word i, tried;
 	
-	/* K_THREADINIT (Y_rtthreadinit); */
 	ENTRY_TRACE (Y_rtthreadinit, "(%08x)", att_val (&enabled_threads));
 
 	allocator 		= dmem_new_allocator ();
@@ -2063,7 +2062,7 @@ K_CALL_DEFINE (Y_rtthreadinit)
  *	@CALL: 		K_SHUTDOWN
  *	@PRIO:		10
  */
-K_CALL_DEFINE (Y_shutdown)
+K_CALL_DEFINE_0_0 (Y_shutdown)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE (Y_shutdown, "");
@@ -2107,7 +2106,7 @@ static void kernel_X_common_error (word *Wptr, sched_t *sched, unsigned int retu
  *	@CALL: 		K_ZERODIV
  *	@PRIO:		0
  */
-K_CALL_DEFINE (X_zero_div)
+K_CALL_DEFINE_4_0 (X_zero_div)
 {
 	unsigned int zerodiv_info2, zerodiv_info, procedure_addr, filename_addr;
 
@@ -2127,7 +2126,7 @@ K_CALL_DEFINE (X_zero_div)
  *	@CALL: 		K_OVERFLOW
  *	@PRIO:		0
  */
-K_CALL_DEFINE (X_overflow)
+K_CALL_DEFINE_4_0 (X_overflow)
 {
 	unsigned int filename_addr, overflow_info, overflow_info2, procedure_addr;
 	
@@ -2147,7 +2146,7 @@ K_CALL_DEFINE (X_overflow)
  *	@CALL: 		K_FLOATERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE (X_floaterr)
+K_CALL_DEFINE_5_0 (X_floaterr)
 {
 	unsigned int filename_addr, floaterr_fpustatus, floaterr_info, floaterr_info2, procedure_addr;
 	
@@ -2167,7 +2166,7 @@ K_CALL_DEFINE (X_floaterr)
  *	@CALL: 		K_SETERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE (X_Seterr)
+K_CALL_DEFINE_4_0 (X_Seterr)
 {
 	unsigned int filename_addr, procedure_addr, seterr_info1, seterr_info2;
 	
@@ -2188,7 +2187,7 @@ K_CALL_DEFINE (X_Seterr)
  *	@CALL: 		K_BSETERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE (X_BSeterr)
+K_CALL_DEFINE_0_0 (X_BSeterr)
 {
 	K_CALL_PARAMS_0 ();
 
@@ -2207,7 +2206,7 @@ K_CALL_DEFINE (X_BSeterr)
  *	@CALL: 		K_BNSETERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE (X_BNSeterr)
+K_CALL_DEFINE_0_0 (X_BNSeterr)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_BNSeterr);
@@ -2226,7 +2225,7 @@ K_CALL_DEFINE (X_BNSeterr)
  *	@CALL: 		K_RANGERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE (X_RangeCheckError)
+K_CALL_DEFINE_4_0 (X_RangeCheckError)
 {
 	unsigned int filename_addr, procedure_addr, range_info1, range_info2;
 	
@@ -2247,7 +2246,7 @@ K_CALL_DEFINE (X_RangeCheckError)
  *	@CALL: 		K_BRANGERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE (X_BasicRangeError)
+K_CALL_DEFINE_0_0 (X_BasicRangeError)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_BasicRangeError);
@@ -2288,7 +2287,7 @@ void dump_trap_info (word *Wptr, word *Fptr, word *Bptr, unsigned int return_add
  *	@DEPEND:	ENABLE_DTRACES
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (X_dtrace)
+K_CALL_DEFINE_2_0 (X_dtrace)
 {
 	unsigned int trapval_A, trapval_B, trapval_C;
 	
@@ -2311,7 +2310,7 @@ K_CALL_DEFINE (X_dtrace)
  *	@CALL: 		K_TRAP
  *	@PRIO:		0
  */
-K_CALL_DEFINE (X_trap)
+K_CALL_DEFINE_3_3 (X_trap)
 {
 	unsigned int trapval_A, trapval_B, trapval_C;
 	
@@ -2353,7 +2352,7 @@ K_CALL_DEFINE (X_trap)
  *	@HANDLE:	K_MINN, K_MOUTN, K_XMINN
  *	@HANDLE:	K_FBAR_INIT, K_FBAR_SYNC, K_FBAR_ENROLL, K_FBAR_RESIGN
  */
-K_CALL_DEFINE (Y_unsupported)
+K_CALL_DEFINE_0_0 (Y_unsupported)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_unsupported);
@@ -2430,7 +2429,6 @@ static INLINE void sem_claim (sched_t *sched, word *Wptr, unsigned int return_ad
 
 	if ((val = atw_val (&(sem->bptr))) == (NotProcess_p | 1)) {
 		if (atw_cas (&(sem->bptr), val, NotProcess_p)) {
-			K_ZERO_OUT ();
 			return;
 		}
 		/* We could read barrier here, but because of the 
@@ -3577,7 +3575,7 @@ static void kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, wo
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (X_b_dispatch)
+K_CALL_DEFINE_2_0 (X_b_dispatch)
 {
 	void *b_func, *b_param;
 	
@@ -3599,7 +3597,7 @@ K_CALL_DEFINE (X_b_dispatch)
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (X_bx_dispatch)
+K_CALL_DEFINE_2_0 (X_bx_dispatch)
 {
 	void *b_func, *b_param;
 	
@@ -3621,7 +3619,7 @@ K_CALL_DEFINE (X_bx_dispatch)
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (Y_bx_kill)
+K_CALL_DEFINE_1_1 (Y_bx_kill)
 {
 	word *ptr;
 	int result;
@@ -3647,7 +3645,7 @@ K_CALL_DEFINE (Y_bx_kill)
  *	@CALL: 		K_MT_ALLOC
  *	@PRIO:		100
  */
-K_CALL_DEFINE (Y_mt_alloc)
+K_CALL_DEFINE_2_1 (Y_mt_alloc)
 {
 	word *ptr, type, size;
 	
@@ -3669,7 +3667,7 @@ K_CALL_DEFINE (Y_mt_alloc)
  *	@CALL: 		K_MT_RELEASE
  *	@PRIO:		100
  */
-K_CALL_DEFINE (Y_mt_release)
+K_CALL_DEFINE_1_0 (Y_mt_release)
 {
 	word *ptr;
 	
@@ -3691,7 +3689,7 @@ K_CALL_DEFINE (Y_mt_release)
  *	@CALL: 		K_MT_CLONE
  *	@PRIO:		100
  */
-K_CALL_DEFINE (Y_mt_clone)
+K_CALL_DEFINE_1_1 (Y_mt_clone)
 {
 	word *dst, *src;
 	
@@ -3713,7 +3711,7 @@ K_CALL_DEFINE (Y_mt_clone)
  *	@CALL: 		K_MT_DCLONE
  *	@PRIO:		60
  */
-K_CALL_DEFINE (Y_mt_dclone)
+K_CALL_DEFINE_3_1 (Y_mt_dclone)
 {
 	word bytes, *dst, type;
 	void *src;
@@ -3744,7 +3742,7 @@ K_CALL_DEFINE (Y_mt_dclone)
  *	@CALL: 		K_MALLOC
  *	@PRIO:		110
  */
-K_CALL_DEFINE (X_malloc)
+K_CALL_DEFINE_1_1 (X_malloc)
 {
 	word *ptr, size;
 	
@@ -3771,7 +3769,7 @@ K_CALL_DEFINE (X_malloc)
  *	@CALL: 		K_MRELEASE
  *	@PRIO:		110
  */
-K_CALL_DEFINE (X_mrelease)
+K_CALL_DEFINE_1_0 (X_mrelease)
 {
 	word *ptr;
 	
@@ -3793,7 +3791,7 @@ K_CALL_DEFINE (X_mrelease)
  *	@CALL: 		K_MT_BIND
  *	@PRIO:		50
  */
-K_CALL_DEFINE (Y_mt_bind)
+K_CALL_DEFINE_3_1 (Y_mt_bind)
 {
 	word bind_type, *data, *ptr, type;
 	
@@ -3843,7 +3841,6 @@ K_CALL_DEFINE (Y_mt_bind)
 				if (MT_FLAGS(inner) & MT_ARRAY_OPTS_DMA) {
 					/* already capable */
 					K_ONE_OUT (ptr);
-					return;
 				}
 				align = MT_ARRAY_OPTS_ALIGN(inner);
 				flags = MT_FLAGS(inner);
@@ -3898,7 +3895,7 @@ K_CALL_DEFINE (Y_mt_bind)
  *	@CALL: 		K_NORM
  *	@PRIO:		50
  */
-K_CALL_DEFINE (X_norm)
+K_CALL_DEFINE_2_3 (X_norm)
 {
 	unsigned int Areg, Breg, Creg;
 	
@@ -3932,7 +3929,7 @@ K_CALL_DEFINE (X_norm)
  *	@CALL: 		K_FMUL
  *	@PRIO:		50
  */
-K_CALL_DEFINE (X_fmul)
+K_CALL_DEFINE_2_1 (X_fmul)
 {
 	long long tmp_long;
 	int hi_word, lo_word;
@@ -3976,7 +3973,7 @@ K_CALL_DEFINE (X_fmul)
  *	@CALL: 		K_STARTP
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_startp)
+K_CALL_DEFINE_2_0 (Y_startp)
 {
 	unsigned int start_offset;
 	word *workspace;
@@ -4002,9 +3999,9 @@ K_CALL_DEFINE (Y_startp)
 		save_return (sched, Wptr, return_address);
 		enqueue_to_batch_front (&(sched->curb), Wptr);
 		kernel_scheduler (sched);
-	} else {
-		K_ZERO_OUT ();
 	}
+	
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_runp (void)*/
@@ -4017,7 +4014,7 @@ K_CALL_DEFINE (Y_startp)
  *	@CALL: 		K_RUNP
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_runp)
+K_CALL_DEFINE_1_0 (Y_runp)
 {
 	word *other_workspace;
 	
@@ -4040,7 +4037,7 @@ K_CALL_DEFINE (Y_runp)
  *	@CALL: 		K_PAUSE
  *	@PRIO:		80
  */
-K_CALL_DEFINE (X_pause)
+K_CALL_DEFINE_0_0 (X_pause)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_pause);
@@ -4062,7 +4059,7 @@ K_CALL_DEFINE (X_pause)
  *	@CALL: 		K_STOPP
  *	@PRIO:		80
  */
-K_CALL_DEFINE (X_stopp)
+K_CALL_DEFINE_0_0 (X_stopp)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_stopp);
@@ -4083,7 +4080,7 @@ K_CALL_DEFINE (X_stopp)
  *	@CALL: 		K_ENDP
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_endp)
+K_CALL_DEFINE_1_0 (Y_endp)
 {
 	word *ptr;
 	
@@ -4115,7 +4112,7 @@ K_CALL_DEFINE (Y_endp)
  *	@CALL: 		K_PAR_ENROLL
  *	@PRIO:		50
  */
-K_CALL_DEFINE (Y_par_enroll)
+K_CALL_DEFINE_2_0 (Y_par_enroll)
 {
 	word count, *ptr;
 	
@@ -4137,7 +4134,7 @@ K_CALL_DEFINE (Y_par_enroll)
  *	@CALL: 		K_MRELEASEP
  *	@PRIO:		90
  */
-K_CALL_DEFINE (X_mreleasep)
+K_CALL_DEFINE_1_0 (X_mreleasep)
 {
 	word *ptr, adjust;
 	
@@ -4166,7 +4163,7 @@ K_CALL_DEFINE (X_mreleasep)
  *	@CALL: 		K_PROC_ALLOC
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_proc_alloc)
+K_CALL_DEFINE_2_1 (Y_proc_alloc)
 {
 	word flags, words, *ws;
 
@@ -4188,7 +4185,7 @@ K_CALL_DEFINE (Y_proc_alloc)
  *	@CALL: 		K_PROC_PARAM
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_proc_param)
+K_CALL_DEFINE_3_0 (Y_proc_param)
 {
 	word offset, param, *ws;
 
@@ -4210,7 +4207,7 @@ K_CALL_DEFINE (Y_proc_param)
  *	@CALL: 		K_PROC_MT_COPY
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_proc_mt_copy)
+K_CALL_DEFINE_3_0 (Y_proc_mt_copy)
 {
 	word offset, *ptr, *ws;
 
@@ -4236,7 +4233,7 @@ K_CALL_DEFINE (Y_proc_mt_copy)
  *	@CALL: 		K_PROC_MT_MOVE
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_proc_mt_move)
+K_CALL_DEFINE_3_0 (Y_proc_mt_move)
 {
 	word offset, *ptr, **pptr, *ws;
 
@@ -4264,7 +4261,7 @@ K_CALL_DEFINE (Y_proc_mt_move)
  *	@CALL: 		K_PROC_START
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_proc_start)
+K_CALL_DEFINE_3_0 (Y_proc_start)
 {
 	word code, offset, *ws;
 
@@ -4300,7 +4297,7 @@ K_CALL_DEFINE (Y_proc_start)
  *	@CALL: 		K_PROC_END
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_proc_end)
+K_CALL_DEFINE_1_0 (Y_proc_end)
 {
 	word *ws;
 
@@ -4334,7 +4331,7 @@ word *ccsp_proc_alloc (word flags, word words)
  *	@CALL: 		K_GETAFF
  *	@PRIO:		30
  */
-K_CALL_DEFINE (Y_getaff)
+K_CALL_DEFINE_0_1 (Y_getaff)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_getaff);
@@ -4351,7 +4348,7 @@ K_CALL_DEFINE (Y_getaff)
  *	@CALL: 		K_SETAFF
  *	@PRIO:		30
  */
-K_CALL_DEFINE (Y_setaff)
+K_CALL_DEFINE_1_0 (Y_setaff)
 {
 	unsigned int affinity;
 	
@@ -4395,7 +4392,7 @@ K_CALL_DEFINE (Y_setaff)
  *	@CALL: 		K_GETPAS
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_getpas)
+K_CALL_DEFINE_0_1 (Y_getpas)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_getpas);
@@ -4412,7 +4409,7 @@ K_CALL_DEFINE (Y_getpas)
  *	@CALL: 		K_GETPRI
  *	@PRIO:		30
  */
-K_CALL_DEFINE (X_getpri)
+K_CALL_DEFINE_0_1 (X_getpri)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_getpri);
@@ -4429,7 +4426,7 @@ K_CALL_DEFINE (X_getpri)
  *	@CALL: 		K_SETPRI
  *	@PRIO:		30
  */
-K_CALL_DEFINE (Y_setpri)
+K_CALL_DEFINE_1_0 (Y_setpri)
 {
 	int priority;
 	
@@ -4559,7 +4556,7 @@ static INLINE void kernel_chan_io (word flags, word *Wptr, sched_t *sched, word 
 	K_ZERO_OUT_JRET ();
 }
 #define BUILD_CHANNEL_IO(symbol,count,flags) \
-K_CALL_DEFINE (symbol) 			\
+K_CALL_DEFINE_2_0 (symbol)		\
 {					\
 	word *channel_address;		\
 	byte *pointer;			\
@@ -4570,7 +4567,7 @@ K_CALL_DEFINE (symbol) 			\
 }
 
 #define BUILD_CHANNEL_COUNTED_IO(symbol,shift,flags) \
-K_CALL_DEFINE (symbol)			\
+K_CALL_DEFINE_3_0 (symbol)		\
 {					\
 	word count, *channel_address;	\
 	byte *pointer;			\
@@ -4653,7 +4650,7 @@ BUILD_CHANNEL_COUNTED_IO (Y_out, 0, CIO_OUTPUT)
  *	@CALL: 		K_OUTBYTE
  *	@PRIO:		100
  */
-K_CALL_DEFINE (Y_outbyte)
+K_CALL_DEFINE_2_0 (Y_outbyte)
 {
 	word *channel_address;
 	byte *pointer;
@@ -4679,7 +4676,7 @@ K_CALL_DEFINE (Y_outbyte)
  *	@CALL: 		K_OUTWORD
  *	@PRIO:		100
  */
-K_CALL_DEFINE (Y_outword)
+K_CALL_DEFINE_2_0 (Y_outword)
 {
 	word *channel_address;
 	byte *pointer;
@@ -4706,7 +4703,7 @@ K_CALL_DEFINE (Y_outword)
  *	@CALL: 		K_XABLE
  *	@PRIO:		70
  */
-K_CALL_DEFINE (X_xable)
+K_CALL_DEFINE_1_0 (X_xable)
 {
 	word *channel_address, temp;
 	
@@ -4748,7 +4745,7 @@ K_CALL_DEFINE (X_xable)
  *	@CALL: 		K_XEND
  *	@PRIO:		70
  */
-K_CALL_DEFINE (X_xend)
+K_CALL_DEFINE_1_0 (X_xend)
 {
 	word *channel_address, *ptr;
 
@@ -4847,7 +4844,7 @@ BUILD_CHANNEL_IO (Y_mt_xxchg, 0, CIO_EXTENDED | CIO_MOBILE | CIO_EXCHANGE)
  *	@CALL: 		K_LDTIMER
  *	@PRIO:		90
  */
-K_CALL_DEFINE (X_ldtimer)
+K_CALL_DEFINE_0_1 (X_ldtimer)
 {
 	Time now;
 	
@@ -4869,7 +4866,7 @@ K_CALL_DEFINE (X_ldtimer)
  *	@CALL: 		K_TIN
  *	@PRIO:		80
  */
-K_CALL_DEFINE (X_tin)
+K_CALL_DEFINE_1_0 (X_tin)
 {
 	Time now, wait_time;
 	
@@ -4901,7 +4898,7 @@ K_CALL_DEFINE (X_tin)
  *	@CALL: 		K_FASTTIN
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_fasttin)
+K_CALL_DEFINE_1_0 (Y_fasttin)
 {
 	Time wait_time;
 
@@ -4927,7 +4924,7 @@ K_CALL_DEFINE (Y_fasttin)
  *	@CALL: 		K_ALT
  *	@PRIO:		70
  */
-K_CALL_DEFINE (Y_alt)
+K_CALL_DEFINE_0_0 (Y_alt)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_alt);
@@ -4948,7 +4945,7 @@ K_CALL_DEFINE (Y_alt)
  *	@CALL: 		K_TALT
  *	@PRIO:		70
  */
-K_CALL_DEFINE (Y_talt)
+K_CALL_DEFINE_0_0 (Y_talt)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_talt);
@@ -4971,13 +4968,11 @@ static INLINE void kernel_altend (word *Wptr, sched_t *sched, unsigned int retur
 	save_return (sched, Wptr, return_address);
 	weak_write_barrier ();
 
-	if (atw_dec_z (&(Wptr[State]))) {
-		K_ZERO_OUT ();
-		return;
-	} else {
+	if (!atw_dec_z (&(Wptr[State]))) {
 		kernel_scheduler (sched);
-		return;
 	}
+
+	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_altend (void)*/
@@ -4990,7 +4985,7 @@ static INLINE void kernel_altend (word *Wptr, sched_t *sched, unsigned int retur
  *	@CALL: 		K_ALTEND
  *	@PRIO:		70
  */
-K_CALL_DEFINE (Y_altend)
+K_CALL_DEFINE_0_0 (Y_altend)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_altend);
@@ -5008,7 +5003,7 @@ K_CALL_DEFINE (Y_altend)
  *	@CALL: 		K_CALTEND
  *	@PRIO:		70
  */
-K_CALL_DEFINE (Y_caltend)
+K_CALL_DEFINE_0_0 (Y_caltend)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_caltend);
@@ -5026,7 +5021,7 @@ K_CALL_DEFINE (Y_caltend)
  *	@CALL: 		K_ALTWT
  *	@PRIO:		70
  */
-K_CALL_DEFINE (X_altwt)
+K_CALL_DEFINE_0_0 (X_altwt)
 {
 	word state;
 
@@ -5044,7 +5039,6 @@ K_CALL_DEFINE (X_altwt)
 		
 		if (atw_cas (&(Wptr[State]), state, nstate)) {
 			kernel_scheduler (sched);
-			return;
 		}
 	}
 	
@@ -5063,7 +5057,7 @@ K_CALL_DEFINE (X_altwt)
  *	@CALL: 		K_TALTWT
  *	@PRIO:		70
  */
-K_CALL_DEFINE (X_taltwt)
+K_CALL_DEFINE_0_0 (X_taltwt)
 {
 	Time now;
 	word state;
@@ -5096,7 +5090,6 @@ K_CALL_DEFINE (X_taltwt)
 			
 			if (atw_cas (&(Wptr[State]), state, nstate)) {
 				kernel_scheduler (sched);
-				return;
 			} else if (tn != NULL) {
 				Wptr[TLink] = TimeSet_p;
 				delete_tqnode (sched, tn);
@@ -5127,7 +5120,8 @@ static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, unsigned int return_
 			atw_set (channel_address, temp);
 			if (jump) {
 				atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
-				K_ZERO_OUT ();
+				save_return (sched, Wptr, return_address);
+				K_ZERO_OUT_JRET ();
 			} else if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
 				atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
 				if (set_address) {
@@ -5141,7 +5135,8 @@ static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, unsigned int return_
 	} else if (temp != ptr) {
 		if (jump) {
 			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
-			K_ZERO_OUT ();
+			save_return (sched, Wptr, return_address);
+			K_ZERO_OUT_JRET ();
 		} else if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
 			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
 			if (set_address) {
@@ -5164,7 +5159,7 @@ static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, unsigned int return_
  *	@CALL: 		K_ENBC
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_enbc)
+K_CALL_DEFINE_2_1 (Y_enbc)
 {
 	word **channel_address, guard;
 
@@ -5173,7 +5168,6 @@ K_CALL_DEFINE (Y_enbc)
 
 	if (!guard) {
 		K_ONE_OUT (false);
-		return;
 	}
 	
 	kernel_enbc (Wptr, sched, return_address, channel_address, false, false);
@@ -5191,7 +5185,7 @@ K_CALL_DEFINE (Y_enbc)
  *	@CALL: 		K_ENBC2
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_enbc2)
+K_CALL_DEFINE_2_0 (Y_enbc2)
 {
 	unsigned int process_address;
 	word **channel_address;
@@ -5214,7 +5208,7 @@ K_CALL_DEFINE (Y_enbc2)
  *	@CALL: 		K_ENBC3
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_enbc3)
+K_CALL_DEFINE_3_1 (Y_enbc3)
 {
 	unsigned int process_address;
 	word **channel_address, guard;
@@ -5224,7 +5218,6 @@ K_CALL_DEFINE (Y_enbc3)
 
 	if (!guard) {
 		K_ONE_OUT (false);
-		return;
 	}
 	
 	kernel_enbc (Wptr, sched, process_address, channel_address, true, false);
@@ -5242,7 +5235,7 @@ K_CALL_DEFINE (Y_enbc3)
  *	@CALL: 		K_CENBC
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_cenbc)
+K_CALL_DEFINE_2_1 (Y_cenbc)
 {
 	word **channel_address, id;
 
@@ -5278,7 +5271,7 @@ static INLINE void kernel_enbs (word *Wptr, unsigned int return_address, bool ju
  *	@CALL: 		K_ENBS
  *	@PRIO:		60
  */
-K_CALL_DEFINE (Y_enbs)
+K_CALL_DEFINE_1_1 (Y_enbs)
 {
 	word guard;
 
@@ -5287,7 +5280,6 @@ K_CALL_DEFINE (Y_enbs)
 
 	if (!guard) {
 		K_ONE_OUT (false);
-		return;
 	}
 	
 	kernel_enbs (Wptr, 0, false, false);
@@ -5305,7 +5297,7 @@ K_CALL_DEFINE (Y_enbs)
  *	@CALL: 		K_ENBS2
  *	@PRIO:		60
  */
-K_CALL_DEFINE (Y_enbs2)
+K_CALL_DEFINE_1_0 (Y_enbs2)
 {
 	unsigned int process_address;
 
@@ -5328,7 +5320,7 @@ K_CALL_DEFINE (Y_enbs2)
  *	@CALL: 		K_ENBS3
  *	@PRIO:		60
  */
-K_CALL_DEFINE (Y_enbs3)
+K_CALL_DEFINE_2_1 (Y_enbs3)
 {
 	unsigned int process_address;
 	word guard;
@@ -5338,7 +5330,6 @@ K_CALL_DEFINE (Y_enbs3)
 
 	if (!guard) {
 		K_ONE_OUT (false);
-		return;
 	}
 
 	kernel_enbs (Wptr, 0, true, false);
@@ -5357,7 +5348,7 @@ K_CALL_DEFINE (Y_enbs3)
  *	@CALL: 		K_CENBS
  *	@PRIO:		60
  */
-K_CALL_DEFINE (Y_cenbs)
+K_CALL_DEFINE_1_1 (Y_cenbs)
 {
 	word id;
 
@@ -5382,7 +5373,8 @@ static INLINE bool kernel_enbt (word *Wptr, sched_t *sched, unsigned int return_
 		SetTimeField (Wptr, now);
 		if (jump) {
 			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
-			K_ZERO_OUT ();
+			save_return (sched, Wptr, return_address);
+			K_ZERO_OUT_JRET ();
 		} else if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
 			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
 			if (set_address) {
@@ -5410,7 +5402,7 @@ static INLINE bool kernel_enbt (word *Wptr, sched_t *sched, unsigned int return_
  *	@CALL: 		K_ENBT
  *	@PRIO:		70
  */
-K_CALL_DEFINE (X_enbt)
+K_CALL_DEFINE_2_1 (X_enbt)
 {
 	Time timeout;
 	word guard;
@@ -5420,7 +5412,6 @@ K_CALL_DEFINE (X_enbt)
 
 	if (!guard) {
 		K_ONE_OUT (false);
-		return;
 	}
 	
 	kernel_enbt (Wptr, sched, 0, timeout, false, false, false);
@@ -5438,7 +5429,7 @@ K_CALL_DEFINE (X_enbt)
  *	@CALL: 		K_ENBT2
  *	@PRIO:		70
  */
-K_CALL_DEFINE (Y_enbt2)
+K_CALL_DEFINE_2_0 (Y_enbt2)
 {
 	unsigned int process_address;
 	Time timeout;
@@ -5461,7 +5452,7 @@ K_CALL_DEFINE (Y_enbt2)
  *	@CALL: 		K_ENBT3
  *	@PRIO:		70
  */
-K_CALL_DEFINE (Y_enbt3)
+K_CALL_DEFINE_3_1 (Y_enbt3)
 {
 	unsigned int process_address;
 	Time timeout;
@@ -5472,7 +5463,6 @@ K_CALL_DEFINE (Y_enbt3)
 
 	if (!guard) {
 		K_ONE_OUT (false);
-		return;
 	}
 	
 	kernel_enbt (Wptr, sched, process_address, timeout, true, false, false);
@@ -5490,7 +5480,7 @@ K_CALL_DEFINE (Y_enbt3)
  *	@CALL: 		K_CENBT
  *	@PRIO:		70
  */
-K_CALL_DEFINE (Y_cenbt)
+K_CALL_DEFINE_2_1 (Y_cenbt)
 {
 	Time id, timeout;
 
@@ -5534,7 +5524,7 @@ static INLINE word kernel_disc (word *Wptr, unsigned int process_address, word *
  *	@CALL: 		K_DISC
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_disc)
+K_CALL_DEFINE_3_1 (Y_disc)
 {
 	unsigned int process_address;
 	word **channel_address, guard;
@@ -5544,7 +5534,6 @@ K_CALL_DEFINE (Y_disc)
 
 	if (!guard) {
 		K_ONE_OUT (false);
-		return;
 	}
 
 	K_ONE_OUT (kernel_disc (Wptr, process_address, channel_address, (Wptr[Temp] == NoneSelected_o)));
@@ -5560,7 +5549,7 @@ K_CALL_DEFINE (Y_disc)
  *	@CALL: 		K_CDISC
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_cdisc)
+K_CALL_DEFINE_2_1 (Y_cdisc)
 {
 	word **channel_address, id;
 
@@ -5580,7 +5569,7 @@ K_CALL_DEFINE (Y_cdisc)
  *	@CALL: 		K_NDISC
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_ndisc)
+K_CALL_DEFINE_3_1 (Y_ndisc)
 {
 	unsigned int process_address;
 	word **channel_address, guard;
@@ -5590,7 +5579,6 @@ K_CALL_DEFINE (Y_ndisc)
 
 	if (!guard) {
 		K_ONE_OUT (false);
-		return;
 	}
 
 	K_ONE_OUT (kernel_disc (Wptr, process_address, channel_address, true));
@@ -5606,7 +5594,7 @@ K_CALL_DEFINE (Y_ndisc)
  *	@CALL: 		K_DISS
  *	@PRIO:		60
  */
-K_CALL_DEFINE (X_diss)
+K_CALL_DEFINE_2_1 (X_diss)
 {
 	unsigned int process_address;
 	word fired, guard;
@@ -5635,7 +5623,7 @@ K_CALL_DEFINE (X_diss)
  *	@CALL: 		K_CDISS
  *	@PRIO:		60
  */
-K_CALL_DEFINE (Y_cdiss)
+K_CALL_DEFINE_1_1 (Y_cdiss)
 {
 	word id;
 
@@ -5660,7 +5648,7 @@ K_CALL_DEFINE (Y_cdiss)
  *	@CALL: 		K_NDISS
  *	@PRIO:		60
  */
-K_CALL_DEFINE (X_ndiss)
+K_CALL_DEFINE_2_1 (X_ndiss)
 {
 	unsigned int fired, guard, process_address;
 
@@ -5727,7 +5715,7 @@ static INLINE word kernel_dist (word *Wptr, sched_t *sched, unsigned int process
  *	@CALL: 		K_DIST
  *	@PRIO:		70
  */
-K_CALL_DEFINE (X_dist)
+K_CALL_DEFINE_3_1 (X_dist)
 {
 	unsigned int process_address;
 	Time timeout;
@@ -5738,7 +5726,6 @@ K_CALL_DEFINE (X_dist)
 
 	if (!guard) {
 		K_ONE_OUT (false);
-		return;
 	}
 	
 	K_ONE_OUT (kernel_dist (Wptr, sched, process_address, timeout, (Wptr[Temp] == NoneSelected_o)));
@@ -5754,7 +5741,7 @@ K_CALL_DEFINE (X_dist)
  *	@CALL: 		K_CDIST
  *	@PRIO:		70
  */
-K_CALL_DEFINE (Y_cdist)
+K_CALL_DEFINE_2_1 (Y_cdist)
 {
 	Time id, timeout;
 	
@@ -5774,7 +5761,7 @@ K_CALL_DEFINE (Y_cdist)
  *	@CALL: 		K_NDIST
  *	@PRIO:		70
  */
-K_CALL_DEFINE (X_ndist)
+K_CALL_DEFINE_3_1 (X_ndist)
 {
 	unsigned int process_address;
 	Time timeout;
@@ -5785,7 +5772,6 @@ K_CALL_DEFINE (X_ndist)
 
 	if (!guard) {
 		K_ONE_OUT (false);
-		return;
 	}
 	
 	K_ONE_OUT (kernel_dist (Wptr, sched, process_address, timeout, true));
@@ -5801,7 +5787,7 @@ K_CALL_DEFINE (X_ndist)
  *	@CALL: 		K_SEM_CLAIM
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_sem_claim)
+K_CALL_DEFINE_1_0 (Y_sem_claim)
 {
 	ccsp_sem_t *sem;
 	
@@ -5809,6 +5795,8 @@ K_CALL_DEFINE (Y_sem_claim)
 	ENTRY_TRACE (Y_sem_claim, "%p", sem);
 
 	sem_claim (sched, Wptr, return_address, sem);
+
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_sem_release (void)*/
@@ -5819,7 +5807,7 @@ K_CALL_DEFINE (Y_sem_claim)
  *	@CALL: 		K_SEM_RELEASE
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_sem_release)
+K_CALL_DEFINE_1_0 (Y_sem_release)
 {
 	ccsp_sem_t *sem;
 	
@@ -5839,7 +5827,7 @@ K_CALL_DEFINE (Y_sem_release)
  *	@CALL: 		K_SEM_INIT
  *	@PRIO:		70
  */
-K_CALL_DEFINE (Y_sem_init)
+K_CALL_DEFINE_1_0 (Y_sem_init)
 {
 	ccsp_sem_t *sem;
 	
@@ -5861,7 +5849,7 @@ K_CALL_DEFINE (Y_sem_init)
  *	@CALL: 		K_MT_LOCK
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_mt_lock)
+K_CALL_DEFINE_2_0 (Y_mt_lock)
 {
 	mt_cb_shared_internal_t *cb;
 	word *ptr, type;
@@ -5876,6 +5864,8 @@ K_CALL_DEFINE (Y_mt_lock)
 	ASSERT ( type == MT_CB_CLIENT || type == MT_CB_SERVER );
 
 	sem_claim (sched, Wptr, return_address, &(cb->sem[type]));
+
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_mt_unlock (void)*/
@@ -5888,7 +5878,7 @@ K_CALL_DEFINE (Y_mt_lock)
  *	@CALL: 		K_MT_UNLOCK
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_mt_unlock)
+K_CALL_DEFINE_2_0 (Y_mt_unlock)
 {
 	mt_cb_shared_internal_t *cb;
 	word *ptr, type;
@@ -5917,7 +5907,7 @@ K_CALL_DEFINE (Y_mt_unlock)
  *	@CALL: 		K_MT_SYNC
  *	@PRIO:		90
  */
-K_CALL_DEFINE (Y_mt_sync)
+K_CALL_DEFINE_1_0 (Y_mt_sync)
 {
 	ccsp_barrier_t *bar;
 	
@@ -5937,7 +5927,7 @@ K_CALL_DEFINE (Y_mt_sync)
  *	@CALL: 		K_MT_RESIGN
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_mt_resign)
+K_CALL_DEFINE_2_0 (Y_mt_resign)
 {
 	ccsp_barrier_t *bar;
 	word count;
@@ -5958,7 +5948,7 @@ K_CALL_DEFINE (Y_mt_resign)
  *	@CALL: 		K_MT_ENROLL
  *	@PRIO:		80
  */
-K_CALL_DEFINE (Y_mt_enroll)
+K_CALL_DEFINE_2_0 (Y_mt_enroll)
 {
 	ccsp_barrier_t *bar;
 	word count;
@@ -6022,7 +6012,7 @@ void ccsp_interrupt_handler (int irq)
  *	@PRIO:		50
  *	@DEPEND:	RMOX_BUILD
  */
-K_CALL_DEFINE (Y_wait_int)
+K_CALL_DEFINE_2_0 (Y_wait_int)
 {
 	word number, mask;
 
@@ -6072,7 +6062,7 @@ K_CALL_DEFINE (Y_wait_int)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (X_kernel_run)
+K_CALL_DEFINE_1_0 (X_kernel_run)
 {
 	unsigned int kr_param;
 	d_process *kr_dptr;
@@ -6116,7 +6106,7 @@ K_CALL_DEFINE (X_kernel_run)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (X_dynproc_suspend)
+K_CALL_DEFINE_1_0 (X_dynproc_suspend)
 {
 	word *ds_param;
 	
@@ -6144,7 +6134,7 @@ K_CALL_DEFINE (X_dynproc_suspend)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (X_dynproc_exit)
+K_CALL_DEFINE_0_0 (X_dynproc_exit)
 {
 	d_process *kr_dptr;
 	word *kr_wptr;
@@ -6174,7 +6164,7 @@ K_CALL_DEFINE (X_dynproc_exit)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (Y_ldwsmap)
+K_CALL_DEFINE_2_0 (Y_ldwsmap)
 {
 	unsigned int code_offset, process_address;
 	
@@ -6197,7 +6187,7 @@ K_CALL_DEFINE (Y_ldwsmap)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (Y_ulwsmap)
+K_CALL_DEFINE_2_0 (Y_ulwsmap)
 {
 	unsigned int code_offset, process_address;
 	
@@ -6220,7 +6210,7 @@ K_CALL_DEFINE (Y_ulwsmap)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (Y_rmwsmap)
+K_CALL_DEFINE_1_0 (Y_rmwsmap)
 {
 	unsigned int process_address;
 	
@@ -6243,7 +6233,7 @@ K_CALL_DEFINE (Y_rmwsmap)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (Y_mppclone)
+K_CALL_DEFINE_1_1 (Y_mppclone)
 {
 	unsigned int process_address;
 
@@ -6274,7 +6264,7 @@ K_CALL_DEFINE (Y_mppclone)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (Y_mppserialise)
+K_CALL_DEFINE_3_0 (Y_mppserialise)
 {
 	unsigned int count, process_address;
 	word **channel_address;
@@ -6308,7 +6298,7 @@ K_CALL_DEFINE (Y_mppserialise)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE (Y_mppdeserialise)
+K_CALL_DEFINE_3_0 (Y_mppdeserialise)
 {
 	unsigned int count, process_address;
 	word **channel_address;
@@ -6331,1117 +6321,5 @@ K_CALL_DEFINE (Y_mppdeserialise)
 }
 /*}}}*/
 #endif	/* defined(RMOX_BUILD) || !defined(DYNAMIC_PROCS) */
-/*}}}*/
-/*{{{  MWS barriers */
-#if 0
-/*{{{  void kernel_Y_mwenb (void)*/
-/*
- *	enable multiway sync (with ready address)
- */
-K_CALL_DEFINE (Y_mwenb)
-{
-	unsigned int *mwsync_address, process_address;
-	word *temp_ptr;
-
-	K_CALL_PARAMS_2 (process_address, mwsync_address);
-	ENTRY_TRACE (Y_mwenb, "%p (count-down = %d), %p", mwsync_address, ((mwsync_t *)mwsync_address)->down_count, (void *)process_address);
-	DTRACE ("YEWA", Wptr, mwsync_address);
-
-#if 0
-fprintf (stderr, "kernel_Y_mwenb(): 0x%8.8x: bar = 0x%8.8x: rc = %d, ec = %d, dc = %d, qfptr = 0x%8.8x, qbptr = 0x%8.8x\n", (unsigned int)Wptr, (unsigned int)mwsync_address,
-		((mwsync_t *)mwsync_address)->ref_count, ((mwsync_t *)mwsync_address)->enroll_count, ((mwsync_t *)mwsync_address)->down_count,
-		(unsigned int)((mwsync_t *)mwsync_address)->qfptr, (unsigned int)((mwsync_t *)mwsync_address)->qbptr);
-#endif
-	if (((mwsync_t *)mwsync_address)->qfptr && (((mwsync_t *)mwsync_address)->qfptr->wptr == (unsigned int *)Wptr)) {
-		DTRACE ("YQWA", Wptr, mwsync_address);
-		/* already on the queue */
-	} else {
-		((mwsync_t *)mwsync_address)->down_count--;
-		if (((mwsync_t *)mwsync_address)->down_count > 0) {
-			temp_ptr = (word *)dmem_alloc (sizeof (mwsyncwait_t));
-
-			((mwsyncwait_t *)temp_ptr)->next = NULL;
-			((mwsyncwait_t *)temp_ptr)->wptr = (unsigned int *)Wptr;
-			((mwsyncwait_t *)temp_ptr)->priority = sched->priofinity;
-
-			if (!((mwsync_t *)mwsync_address)->qfptr) {
-				((mwsync_t *)mwsync_address)->qfptr = (mwsyncwait_t *)temp_ptr;
-			} else {
-				((mwsync_t *)mwsync_address)->qbptr->next = (mwsyncwait_t *)temp_ptr;
-			}
-			((mwsync_t *)mwsync_address)->qbptr = (mwsyncwait_t *)temp_ptr;
-
-		} else {
-			DTRACE ("YXWA", Wptr, mwsync_address);
-
-			/* process_address is really in the disabling sequence somewhere */
-			Wptr[MWSyncChosen] = (int)process_address;
-			((mwsync_t *)mwsync_address)->down_count = ((mwsync_t *)mwsync_address)->enroll_count;
-
-			/*{{{  reschedule other processes*/
-			while (((mwsync_t *)mwsync_address)->qfptr) {
-				word *currentp, temp1;
-				temp_ptr = (word *)((mwsync_t *)mwsync_address)->qfptr;
-
-				if (((mwsync_t *)mwsync_address)->qfptr == ((mwsync_t *)mwsync_address)->qbptr) {
-					((mwsync_t *)mwsync_address)->qfptr = NULL;		/* end */
-					((mwsync_t *)mwsync_address)->qbptr = NULL;
-				} else {
-					((mwsync_t *)mwsync_address)->qfptr = ((mwsyncwait_t *)temp_ptr)->next;
-				}
-				temp1 = ((mwsyncwait_t *)temp_ptr)->priority;
-				currentp = (word *)((mwsyncwait_t *)temp_ptr)->wptr;
-
-				currentp[Priofinity] = temp1; /* CGR FIXME: do something else */
-				enqueue_process (sched, currentp);
-
-				dmem_release (temp_ptr);
-			}
-			/*}}}*/
-
-			Wptr[State] = Ready_p;
-			mwaltlock.count = ((mwsync_t *)mwsync_address)->enroll_count;
-
-			return_address = process_address;
-			K_ZERO_OUT ();
-		}
-	}
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mwdis (void)*/
-/*
- *	disable multiway synch
- */
-K_CALL_DEFINE (Y_mwdis)
-{
-	unsigned int *mwsync_address, process_address;
-	word *temp_ptr;
-	
-	K_CALL_PARAMS_2 (process_address, mwsync_address);
-	ENTRY_TRACE (Y_mwdis, "%p, %p", (void *)process_address, mwsync_address);
-	DTRACE ("YDWA", Wptr, mwsync_address);
-
-#if 0
-fprintf (stderr, "kernel_Y_mwdis(): 0x%8.8x: bar = 0x%8.8x\n", (unsigned int)Wptr, (unsigned int)mwsync_address);
-fprintf (stderr, "kernel_Y_mwdis(): 0x%8.8x: bar = 0x%8.8x: rc = %d, ec = %d, dc = %d, qfptr = 0x%8.8x, qbptr = 0x%8.8x\n", (unsigned int)Wptr, (unsigned int)mwsync_address,
-		((mwsync_t *)mwsync_address)->ref_count, ((mwsync_t *)mwsync_address)->enroll_count, ((mwsync_t *)mwsync_address)->down_count,
-		(unsigned int)((mwsync_t *)mwsync_address)->qfptr, (unsigned int)((mwsync_t *)mwsync_address)->qbptr);
-#endif
-	if (((mwsync_t *)mwsync_address)->down_count == ((mwsync_t *)mwsync_address)->enroll_count) {
-		DTRACE ("YYWA", Wptr, mwsync_address);
-		Wptr[MWSyncChosen] = (int)process_address;
-		Wptr[Temp] = (int)process_address;
-	} else {
-		word *previousp;
-
-		DTRACE ("YZWA", Wptr, mwsync_address);
-
-		/* didn't fire, remove ourselves from the wait set */
-		temp_ptr = (word *)((mwsync_t *)mwsync_address)->qfptr;
-		previousp = NULL;
-
-		while (temp_ptr && (((mwsyncwait_t *)temp_ptr)->wptr != (unsigned int *)Wptr)) {
-			previousp = temp_ptr;
-			temp_ptr = (word *)((mwsyncwait_t *)temp_ptr)->next;
-		}
-		if (!temp_ptr) {
-			/* fell off */
-			impossible (5, return_address);
-		}
-		if (!previousp) {
-			/* at the front */
-			if (((mwsync_t *)mwsync_address)->qfptr == ((mwsync_t *)mwsync_address)->qbptr) {
-				((mwsync_t *)mwsync_address)->qfptr = NULL;
-				((mwsync_t *)mwsync_address)->qbptr = NULL;
-			} else {
-				((mwsync_t *)mwsync_address)->qfptr = ((mwsyncwait_t *)temp_ptr)->next;
-			}
-		} else {
-			((mwsyncwait_t *)previousp)->next = ((mwsyncwait_t *)temp_ptr)->next;
-			if (((mwsync_t *)mwsync_address)->qbptr == (mwsyncwait_t *)temp_ptr) {
-				/* at the back */
-				((mwsync_t *)mwsync_address)->qbptr = (mwsyncwait_t *)previousp;
-			}
-		}
-		((mwsync_t *)mwsync_address)->down_count++;
-	}
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mwalt (void)*/
-/*
- *	multiway alt start
- */
-K_CALL_DEFINE (Y_mwalt)
-{
-	word *temp_ptr;
-
-	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (Y_mwalt);
-	DTRACE ("YAW", Wptr);
-#if 0
-fprintf (stderr, "kernel_Y_mwalt(): \n");
-#endif
-
-	/* claim mutex */
-	if (!mwaltlock.value) {
-		DTRACE ("YMW", Wptr);
-
-		/* block */
-		if (mwaltlock.qfptr) {
-			mwaltlock.qbptr[Link] = (word)Wptr;
-		} else {
-			mwaltlock.qfptr = Wptr;
-		}
-		mwaltlock.qbptr = Wptr;
-
-		Wptr[Temp] = return_address;
-		K_LOADLABADDR (Y_mwalt2, temp_ptr);
-		Wptr[Iptr] = (word)temp_ptr;
-		Wptr[Link] = NotProcess_p;
-		save_priofinity (sched, Wptr);
-		kernel_scheduler (sched);
-	} else {
-		/* do claim */
-		mwaltlock.value = 0;
-		mwaltlock.count = 1;
-	}
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mwalt2 (void)*/
-/*
- *	2nd half of multiway alt start -- get left here
- *	if we blocked at the mutex claim
- */
-K_CALL_DEFINE (Y_mwalt2)
-{
-	unsigned int return_address;
-	
-	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (Y_mwalt);
-#if 0
-fprintf (stderr, "kernel_Y_mwalt2(): \n");
-#endif
-
-	return_address = Wptr[Temp];
-	mwaltlock.count = 1;
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mwaltwt (void)*/
-/*
- *	multiway alt wait
- */
-K_CALL_DEFINE (Y_mwaltwt)
-{
-	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (Y_mwaltwt);
-	DTRACE ("YWW", Wptr);
-#if 0
-fprintf (stderr, "kernel_Y_mwaltwt(): \n");
-#endif
-
-	mwaltlock.count = 0;
-	/* release mutex */
-	if (!mwaltlock.value) {
-		if (mwaltlock.qfptr) {
-			/* release one process */
-			word *currentp = mwaltlock.qfptr;
-
-			if (mwaltlock.qfptr == mwaltlock.qbptr) {
-				/* last */
-				mwaltlock.qfptr = NULL;
-				mwaltlock.qbptr = NULL;
-			} else {
-				mwaltlock.qfptr = (word *)(mwaltlock.qfptr[Link]);
-			}
-
-			enqueue_process (sched, currentp);
-		} else {
-			mwaltlock.value = 1;
-		}
-	} else {
-		impossible (6, return_address);
-	}
-
-	K_JUMP (I_altwt);
-}
-/*}}}*/
-/*{{{  void kernel_Y_mwaltend (void)*/
-/*
- *	multiway alt end
- */
-K_CALL_DEFINE (Y_mwaltend)
-{
-	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (Y_mwaltend);
-	DTRACE ("YNW", Wptr);
-#if 0
-fprintf (stderr, "kernel_Y_mwaltend(): \n");
-#endif
-
-	mwaltlock.count--;
-	if (mwaltlock.count == 0) {
-		if (mwaltlock.qfptr) {
-			/* release one process */
-			word *currentp = mwaltlock.qfptr;
-
-			if (mwaltlock.qfptr == mwaltlock.qbptr) {
-				/* last */
-				mwaltlock.qfptr = NULL;
-				mwaltlock.qbptr = NULL;
-			} else {
-				mwaltlock.qfptr = (word *)(mwaltlock.qfptr[Link]);
-			}
-
-			enqueue_process (sched, currentp);
-		} else {
-			mwaltlock.value = 1;
-		}
-	}
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  static inline void mwaltlock_releaseprocess (void)*/
-/*
- *	releases a single process from the mwaltlock (global) queue
- */
-static inline void mwaltlock_releaseprocess (word *Wptr, sched_t *sched)
-{
-	if (mwaltlock.qfptr) {
-		/* release one process */
-		word *currentp = mwaltlock.qfptr;
-
-		if (mwaltlock.qfptr == mwaltlock.qbptr) {
-			/* last */
-			mwaltlock.qfptr = NULL;
-			mwaltlock.qbptr = NULL;
-		} else {
-			mwaltlock.qfptr = (word *)(mwaltlock.qfptr[Link]);
-		}
-
-		enqueue_process (sched, currentp);
-	} else {
-		mwaltlock.value = 1;
-	}
-}
-/*}}}*/
-/*{{{  static inline void mws_barriercomplete (mws_parbarrier_t *me)*/
-/*
- *	called to reschedule all processes blocked on a barrier
- *	if 'me' is set, the matching set gets one less synch (presumably because it's us)
- */
-static inline void mws_barriercomplete (word *Wptr, sched_t *sched, mws_parbarrier_t *me, mws_barrier_t *mws_barrier)
-{
-	mws_parbarrier_t *mws_parbarrier;
-	int tmpint_a = 0;
-
-	/* reschedule other processes */
-	for (mws_parbarrier = mws_barrier->set_fptr; mws_parbarrier; mws_parbarrier = mws_parbarrier->next_set) {
-		/* for each blocked process, add to run-queue */
-
-		int mws_count = (mws_parbarrier == me) ? mws_parbarrier->sync_count - 1 : mws_parbarrier->sync_count;
-
-#if 0
-		BMESSAGE ("mws_barriercomplete: resheduling %d processes from par-barrier at 0x%8.8x (%d enrolled here)\n", mws_count, (unsigned int)mws_parbarrier, mws_parbarrier->enroll_count);
-#endif
-		for (; mws_count; mws_count--) {
-			mws_procbarrier_t *mws_thisprocbarrier;
-			word *currentp;
-			int do_queue = 1;
-
-			mws_thisprocbarrier = mws_parbarrier->q_fptr;
-			mws_parbarrier->q_fptr = mws_thisprocbarrier->q_next;
-			if (mws_parbarrier->q_fptr) {
-				mws_parbarrier->q_fptr->q_prev = NULL;
-			}
-			mws_thisprocbarrier->q_next = NULL;
-			currentp = mws_thisprocbarrier->wptr;
-			
-			if (mws_thisprocbarrier->flags == MWS_ALT_SELECTED) {
-				/* already selected -- do nothing */
-				do_queue = 0;
-			} else if (mws_thisprocbarrier->flags == MWS_ALT) {
-				/* unselected ALT, better force completion in disabling*/
-				mws_thisprocbarrier->flags = MWS_ALT_SELECTED;
-				if (currentp[State] == Ready_p) {
-					/* ALT is already on the run-queue */
-					do_queue = 0;
-				} else if (currentp[State] == Waiting_p) {
-					/* we're rescheduling a now ready ALT */
-					mwaltlock.count++;
-					currentp[State] = Ready_p;
-					currentp[MWSyncChosen] = (int)currentp;			/* tell waking ALTWT that it was a multiway sync which did it */
-				}
-			}
-
-			if (do_queue) {
-				enqueue_process (sched, currentp);
-			}
-
-		}
-		if (!mws_parbarrier->q_fptr) {
-			mws_parbarrier->q_bptr = NULL;
-		}
-		mws_parbarrier->down_count += mws_parbarrier->sync_count;
-#if (MWSDEBUG == 1)
-		BMESSAGE ("mws_barriercomplete: reset PAR barrier to %d from (%d,%d)\n", mws_parbarrier->down_count, mws_parbarrier->sync_count, mws_parbarrier->enroll_count);
-#endif
-		if ((mws_parbarrier->sync_count > 0) && (mws_parbarrier->down_count <= 0)) {
-			/* this set can still synchronise, so remember that.. */
-			tmpint_a++;
-		}
-	}
-
-	mws_barrier->sets_downcount = (mws_barrier->sets_enrolled - tmpint_a);
-#if (MWSDEBUG == 1)
-	BMESSAGE ("mws_barriercomplete: reset top-level barrier to %d\n", mws_barrier->sets_downcount);
-	BMESSAGE ("mws_barriercomplete: all blocked processes scheduled, there are %d ALTs which need to disable\n", mwaltlock.count);
-#endif
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_binit (void)*/
-/*
- *	new multiway sync barrier init
- */
-K_CALL_DEFINE (Y_mws_binit)
-{
-	mws_barrier_t *mws_barrier;
-	
-	K_CALL_PARAMS_1 (mws_barrier);
-
-#if (MWSDEBUG == 1)
-	MESSAGE ("Y_mws_binit: barrier at 0x%8.8x\n", (unsigned int)mws_barrier);
-#endif
-
-	mws_barrier->parent = NULL;
-	mws_barrier->sets_enrolled = 0;
-	mws_barrier->sets_downcount = 0;
-	mws_barrier->set_fptr = NULL;
-	mws_barrier->set_bptr = NULL;
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_pbrilnk (void)*/
-/*
- *	new multiway sync par-barrier init and link
- */
-K_CALL_DEFINE (Y_mws_pbrilnk)
-{
-	mws_parbarrier_t *mws_parbarrier;
-	mws_barrier_t *mws_barrier;
-	
-	K_CALL_PARAMS_2 (mws_parbarrier, mws_barrier);
-
-#if (MWSDEBUG == 1)
-	MESSAGE ("Y_mws_pbrilnk: parbarrier at 0x%8.8x, barrier at 0x%8.8x\n", (unsigned int)mws_parbarrier, (unsigned int)mws_barrier);
-#endif
-
-	mws_parbarrier->next_set = NULL;
-	mws_parbarrier->prev_set = NULL;
-	mws_parbarrier->parent_set = NULL;
-	mws_parbarrier->barrier_link = mws_barrier;
-	mws_parbarrier->enroll_count = 0;
-	mws_parbarrier->sync_count = 0;
-	mws_parbarrier->down_count = 0;
-	mws_parbarrier->q_fptr = NULL;
-	mws_parbarrier->q_bptr = NULL;
-
-	/* stitch in */
-	if (mws_barrier->set_fptr) {
-		mws_parbarrier->prev_set = mws_barrier->set_bptr;
-		mws_barrier->set_bptr->next_set = mws_parbarrier;
-	} else {
-		mws_barrier->set_fptr = mws_parbarrier;
-	}
-	mws_barrier->set_bptr = mws_parbarrier;
-
-	/* mws_barrier->sets_enrolled++; */
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_pbrulnk (void)*/
-/*
- *	new multiway sync par-barrier unlink
- */
-K_CALL_DEFINE (Y_mws_pbrulnk)
-{
-	mws_parbarrier_t *mws_parbarrier;
-	mws_barrier_t *mws_barrier;
-	
-	K_CALL_PARAMS_1 (mws_parbarrier);
-
-#if (MWSDEBUG == 1)
-	MESSAGE ("Y_mws_pbrulnk: parbarrier at 0x%8.8x\n", (unsigned int)mws_parbarrier);
-#endif
-	if (mws_parbarrier->enroll_count) {
-		BMESSAGE ("serious: mws_pbrulink: barrier has %d enrolled processes!\n", mws_parbarrier->enroll_count);
-	}
-
-	mws_barrier = mws_parbarrier->barrier_link;
-	if ((mws_barrier->set_fptr == mws_parbarrier) && (mws_barrier->set_bptr == mws_parbarrier)) {
-		/* singleton */
-		mws_barrier->set_fptr = NULL;
-		mws_barrier->set_bptr = NULL;
-	} else if (mws_barrier->set_fptr == mws_parbarrier) {
-		/* front of queue */
-		mws_barrier->set_fptr = mws_parbarrier->next_set;
-		mws_barrier->set_fptr->prev_set = NULL;
-		mws_parbarrier->next_set = NULL;
-	} else if (mws_barrier->set_bptr == mws_parbarrier) {
-		/* back of queue */
-		mws_barrier->set_bptr = mws_parbarrier->prev_set;
-		mws_barrier->set_bptr->next_set = NULL;
-		mws_parbarrier->prev_set = NULL;
-	} else {
-		/* in the middle somewhere */
-		mws_parbarrier->prev_set->next_set = mws_parbarrier->next_set;
-		mws_parbarrier->next_set->prev_set = mws_parbarrier->prev_set;
-		mws_parbarrier->prev_set = NULL;
-		mws_parbarrier->next_set = NULL;
-	}
-
-	/* mws_barrier->sets_enrolled--; */
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_ppilnk (void)*/
-/*
- *	new multiway sync proc-barrier init and link
- */
-K_CALL_DEFINE (Y_mws_ppilnk)
-{
-	mws_procbarrier_t *mws_procbarrier;
-	mws_parbarrier_t *mws_parbarrier;
-	
-	K_CALL_PARAMS_2 (mws_procbarrier, mws_parbarrier);
-
-#if (MWSDEBUG == 1)
-	MESSAGE ("Y_mws_ppilnk: procbarrier at 0x%8.8x, parbarrier at 0x%8.8x\n", (unsigned int)mws_procbarrier, (unsigned int)mws_parbarrier);
-#endif
-	mws_procbarrier->q_next = NULL;
-	mws_procbarrier->q_prev = NULL;
-	mws_procbarrier->parbarrier_link = mws_parbarrier;
-	mws_procbarrier->wptr = NULL;
-	mws_procbarrier->flags = MWS_NONE;
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_pbenroll (void)*/
-/*
- *	new multiway sync par-barrier enroll (and link-to-parent)
- */
-K_CALL_DEFINE (Y_mws_pbenroll)
-{
-	mws_parbarrier_t *mws_parbarrier, *mws_parent;
-	mws_barrier_t *mws_barrier;
-	int mws_count;
-	
-	K_CALL_PARAMS_3 (mws_parbarrier, mws_parent, mws_count);
-
-#if (MWSDEBUG == 1)
-	MESSAGE ("Y_mws_pbenroll: Wptr=0x%8.8x, count = %d, parbarrier at 0x%8.8x, parent barrier at 0x%8.8x\n", (unsigned int)Wptr, mws_count, (unsigned int)mws_parbarrier, (unsigned int)mws_parent);
-#endif
-	mws_barrier = mws_parbarrier->barrier_link;
-	if (mws_count) {
-		/* enrolling something */
-		mws_parbarrier->enroll_count += mws_count;
-		mws_parbarrier->sync_count += mws_count;
-		mws_parbarrier->down_count += mws_count;
-
-		if (mws_parbarrier->enroll_count == mws_count) {
-			/* first processes enrolling here */
-			mws_barrier->sets_enrolled++;
-			mws_barrier->sets_downcount++;
-
-			if (mws_parent) {
-				mws_parbarrier->parent_set = mws_parent;
-#if (MWSDEBUG == 1)
-				BMESSAGE ("mws_pbenroll: resigning in parent-set (%d,%d,%d)\n", mws_parent->down_count, mws_parent->enroll_count, mws_parent->sync_count);
-#endif
-				/* and resign it from the parent */
-				mws_parent->sync_count--;
-				mws_parent->down_count--;
-
-				if (!mws_parent->sync_count) {
-					/* this is now empty, remove from sync */
-					mws_barrier->sets_enrolled--;
-					mws_barrier->sets_downcount--;
-#if (MWSDEBUG == 1)
-					BMESSAGE ("mws_pbenroll: removed parent-set from sync (now %d of %d sets left)\n", mws_barrier->sets_downcount, mws_barrier->sets_enrolled);
-#endif
-				} else if (!mws_parent->down_count) {
-#if (MWSDEBUG == 1)
-					BMESSAGE ("mws_pbenroll: parent now ready-to-sync (%d enrolled processes)\n", mws_parent->enroll_count);
-#endif
-					/* we just completed the synchronisation here */
-					mws_barrier->sets_downcount--;
-				}
-			}
-		}
-	}
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_pbresign (void)*/
-/*
- *	new multiway sync par-barrier resign
- */
-K_CALL_DEFINE (Y_mws_pbresign)
-{
-	mws_parbarrier_t *mws_parbarrier, *mws_parent;
-	mws_barrier_t *mws_barrier;
-	int mws_count, tmpint_a, tmpint_b;
-	
-	K_CALL_PARAMS_2 (mws_parbarrier, mws_count);
-
-	mws_barrier = mws_parbarrier->barrier_link;
-	mws_parent = mws_parbarrier->parent_set;
-	tmpint_b = 0;
-
-	if (mws_count) {
-		tmpint_a = mws_parbarrier->down_count;
-
-		/* resigning something */
-		mws_parbarrier->enroll_count -= mws_count;
-		mws_parbarrier->sync_count -= mws_count;
-		mws_parbarrier->down_count -= mws_count;
-
-#if (MWSDEBUG == 1)
-		BMESSAGE ("mws_pbresign: Wptr=0x%8.8x parbarrier=0x%8.8x count=%d, down=%d, sync=%d, enroll=%d, orig-down=%d, parent-set=0x%8.8x\n", (unsigned int)Wptr, (unsigned int)mws_parbarrier,
-			mws_count, mws_parbarrier->down_count, mws_parbarrier->sync_count, mws_parbarrier->enroll_count, tmpint_a, (unsigned int)mws_parent);
-#endif
-
-		if (!mws_parbarrier->enroll_count) {
-			/*{{{  last processes resigning in this PARBARRIER*/
-			mws_barrier->sets_enrolled--;
-			mws_barrier->sets_downcount--;
-
-			if (mws_parent) {
-				/* re-enroll in the parent set */
-				if (!mws_parent->sync_count) {
-					/* this will no longer be empty, re-add to sync */
-					mws_barrier->sets_enrolled++;
-					mws_barrier->sets_downcount++;
-				} else if (!mws_parent->down_count) {
-					/* this will no longer be synching */
-					mws_barrier->sets_downcount++;
-				}
-				mws_parent->sync_count++;
-				mws_parent->down_count++;
-			}
-			/*}}}*/
-		} else if ((mws_parbarrier->down_count <= 0) && (tmpint_a > 0)) {
-			/*{{{  we completed a synchronisation locally*/
-			mws_barrier->sets_downcount--;
-			/*}}}*/
-		}
-
-		/* check to see if we just completed a top-level sync */
-		if (!mws_barrier->sets_downcount && mws_barrier->sets_enrolled) {
-			/*{{{  top-level synchronisation completed*/
-			mwaltlock.count = 0;
-			tmpint_b = 1;			/* flag the fact that we did the synchronisation */
-
-			mws_barriercomplete (Wptr, sched, NULL, mws_barrier);
-			/*}}}*/
-		}
-	}
-
-	/* we had the ALT lock on the way in, release it only if no ALTy processes were selected */
-	if (!tmpint_b || !mwaltlock.count) {
-		mwaltlock.count = 0;
-		mwaltlock_releaseprocess (Wptr, sched);
-	}
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_pbadjsync (void)*/
-/*
- *	new multiway sync par barrier adjust
- */
-K_CALL_DEFINE (Y_mws_pbadjsync)
-{
-	mws_parbarrier_t *mws_parbarrier;
-	mws_barrier_t *mws_barrier;
-	int mws_count, tmpint_a, tmpint_b;
-	
-	K_CALL_PARAMS_2 (mws_parbarrier, mws_count);
-
-	mws_barrier = mws_parbarrier->barrier_link;
-	tmpint_b = 0;
-
-#if (MWSDEBUG == 1)
-	BMESSAGE ("mws_pbadjsync: Wptr=0x%8.8x, parbarrier at 0x%8.8x, adjust = %d\n", (unsigned int)Wptr, (unsigned int)mws_parbarrier, (int)mws_count);
-#endif
-
-	if (mws_count) {
-		tmpint_a = mws_parbarrier->down_count;
-
-		/* adjust sync-count and down-count */
-		mws_parbarrier->sync_count += mws_count;
-		mws_parbarrier->down_count += mws_count;
-
-#if (MWSDEBUG == 1)
-		BMESSAGE ("mws_pbadjsync: Wptr=0x%8.8x parbarrier=0x%8.8x count=%d, down=%d, sync=%d, enroll=%d, orig-down=%d\n", (unsigned int)Wptr, (unsigned int)mws_parbarrier,
-			mws_count, mws_parbarrier->down_count, mws_parbarrier->sync_count, mws_parbarrier->enroll_count, tmpint_a);
-#endif
-
-		if (mws_parbarrier->sync_count <= 0) {
-			BMESSAGE ("mws_pbadjsync: PANIC! adjust %d moved sync-count to %d, restoring to %d", mws_count, mws_parbarrier->sync_count, tmpint_a);
-			mws_parbarrier->sync_count -= mws_count;
-			mws_parbarrier->down_count -= mws_count;		/* so things don't go (too) strange */
-			goto skip_to_out;
-		}
-
-		if ((mws_parbarrier->down_count <= 0) && (tmpint_a > 0)) {
-			/*{{{  we completed a synchronisation locally*/
-			mws_barrier->sets_downcount--;
-			/*}}}*/
-		} else if ((mws_parbarrier->down_count > 0) && (tmpint_a <= 0)) {
-			/*{{{  we stopped a synchronisation locally*/
-			mws_barrier->sets_downcount++;
-			/*}}}*/
-		}
-
-		/* check to see if we just completed a top-level sync */
-		if (!mws_barrier->sets_downcount && mws_barrier->sets_enrolled) {
-			/*{{{  top-level synchronisation completed*/
-			mwaltlock.count = 0;
-			tmpint_b = 1;			/* flag the fact that we did the synchronisation */
-
-			mws_barriercomplete (Wptr, sched, NULL, mws_barrier);
-			/*}}}*/
-		}
-	}
-skip_to_out:
-
-	/* we had the ALT lock on the way in, release it only if no ALTy processes were selected */
-	if (!tmpint_b || !mwaltlock.count) {
-		mwaltlock.count = 0;
-		mwaltlock_releaseprocess (Wptr, sched);
-	}
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_sync (void)*/
-/*
- *	new multiway sync instruction
- */
-K_CALL_DEFINE (Y_mws_sync)
-{
-	mws_procbarrier_t *mws_procbarrier;
-	mws_parbarrier_t *mws_parbarrier, *mws_parent;
-	mws_barrier_t *mws_barrier;
-	
-	K_CALL_PARAMS_1 (mws_procbarrier);
-
-	mws_parbarrier = mws_procbarrier->parbarrier_link;
-
-	/* NOTE: down_count could be <= 0, in which case we're blocking on an interleaving synchronisation which is effectively ready */
-
-	/* first step -- synchronise on this set */
-	mws_parbarrier->down_count--;
-
-	if (!mws_parbarrier->down_count) {
-		/* we just completed this synchronisation;  second step -- synchronise at the top-level */
-		mws_barrier = mws_parbarrier->barrier_link;
-		mws_barrier->sets_downcount--;
-	}
-
-#if (MWSDEBUG == 1)
-	BMESSAGE ("mws_sync: sync on procbarrier at 0x%8.8x, parbarrier at 0x%8.8x, %d left here, %d of %d sets\n", (unsigned int)mws_procbarrier, (unsigned int)mws_parbarrier,
-			mws_parbarrier->down_count, mws_barrier->sets_downcount, mws_barrier->sets_enrolled);
-#endif
-
-	if (!mws_barrier->sets_downcount) {
-		/* synchronisation complete! */
-#if (MWSDEBUG == 1)
-		BMESSAGE ("mws_sync: synchronisation complete! (%d sets enrolled, in this set, %d of (%d,%d))\n", mws_barrier->sets_enrolled, mws_parbarrier->down_count, mws_parbarrier->sync_count, mws_parbarrier->enroll_count);
-#endif
-
-		mwaltlock.count = 0;
-
-		/* this process is a slightly odd case -- because it's not on the queue */
-		mws_parent = mws_parbarrier;
-		mws_barriercomplete (Wptr, sched, mws_parent, mws_barrier);
-
-		/* we had the ALT lock on the way in, release it only if no ALTy processes were selected */
-		if (!mwaltlock.count) {
-			mwaltlock_releaseprocess (Wptr, sched);
-		}
-
-	} else {
-#if (MWSDEBUG == 1)
-		BMESSAGE ("mws_sync: synchronisation incomplete (%d sets left), sleeping\n", mws_barrier->sets_downcount);
-#endif
-
-		/* release the ALT lock */
-		mwaltlock_releaseprocess (Wptr, sched);
-
-		/* synchronisation not complete, sleep on the parbarrier */
-		if (!mws_parbarrier->q_fptr) {
-			/* first */
-			mws_parbarrier->q_fptr = mws_procbarrier;
-		} else {
-			/* not first */
-			mws_parbarrier->q_bptr->q_next = mws_procbarrier;
-			mws_procbarrier->q_prev = mws_parbarrier->q_bptr;
-		}
-		mws_parbarrier->q_bptr = mws_procbarrier;
-
-		/* suspend */
-		mws_procbarrier->wptr = Wptr;
-
-		Wptr[Iptr] = (word)return_address;
-		/* Wptr[Link] = NotProcess_p; */
-		save_priofinity (sched, Wptr);
-		kernel_scheduler (sched);
-	}
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_altlock (void)*/
-/*
- *	new multiway sync ALT lock
- */
-K_CALL_DEFINE (Y_mws_altlock)
-{
-	K_CALL_PARAMS_0 ();
-
-#if (MWSDEBUG == 1)
-	BMESSAGE ("mws_altlock: here (value = %d, count = %d)\n", mwaltlock.value, mwaltlock.count);
-#endif
-
-	/* claim mutex */
-	if (!mwaltlock.value) {
-		/* block */
-		if (mwaltlock.qfptr) {
-			mwaltlock.qbptr[Link] = (word)Wptr;
-		} else {
-			mwaltlock.qfptr = Wptr;
-		}
-		mwaltlock.qbptr = Wptr;
-
-		Wptr[Iptr] = (word)return_address;
-		Wptr[Link] = NotProcess_p;
-		save_priofinity (sched, Wptr);
-		kernel_scheduler (sched);
-	} else {
-		/* do claim */
-		mwaltlock.value = 0;
-		mwaltlock.count = 0;
-	}
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_altunlock (void)*/
-/*
- *	new multiway sync ALT unlock
- */
-K_CALL_DEFINE (Y_mws_altunlock)
-{
-	K_CALL_PARAMS_0 ();
-
-#if (MWSDEBUG == 1)
-	BMESSAGE ("mws_altunlock: here (value = %d, count = %d)\n", mwaltlock.value, mwaltlock.count);
-#endif
-
-	mwaltlock.count = 0;
-	mwaltlock_releaseprocess (Wptr, sched);
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_alt (void)*/
-/*
- *	new multiway sync ALT start
- */
-K_CALL_DEFINE (Y_mws_alt)
-{
-	K_CALL_PARAMS_0 ();
-
-	Wptr[MWSyncChosen] = NotProcess_p;
-	Wptr[State] = Enabling_p;
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_altend (void)*/
-/*
- *	new multiway sync ALT end
- */
-K_CALL_DEFINE (Y_mws_altend)
-{
-	K_CALL_PARAMS_0 ();
-
-	ENTRY_TRACE0 (Y_mws_altend);
-
-	if (Wptr[MWSyncChosen] == (int)Wptr) {
-		/* slightly special case: shouldn't happen probably.. */
-		BMESSAGE ("mws_altend: we were woken by mwsync, but didn't choose one!\n");
-		return_address = Wptr[Temp];
-	} else if (Wptr[MWSyncChosen] != NotProcess_p) {
-		return_address = Wptr[MWSyncChosen];
-		mwaltlock.count--;
-#if (MWSDEBUG == 1)
-		BMESSAGE ("mws_altend: multi-way sync selected in this ALT, mwaltlock.count = %d\n", mwaltlock.count);
-#endif
-
-		if (!mwaltlock.count) {
-			mwaltlock_releaseprocess (Wptr, sched);
-		}
-	} else {
-		return_address = Wptr[Temp];
-	}
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_enb (void)*/
-/*
- *	new multiway sync ALT enable
- */
-K_CALL_DEFINE (Y_mws_enb)
-{
-	mws_procbarrier_t *mws_procbarrier;
-	mws_parbarrier_t *mws_parbarrier, *mws_parent;
-	unsigned int process_address;
-	
-	K_CALL_PARAMS_2 (process_address, mws_procbarrier);
-
-#if (MWSDEBUG == 1)
-	BMESSAGE ("mws_enb: here!  mws_procbarrier = 0x%8.8x\n", (unsigned int)mws_procbarrier);
-#endif
-
-	mws_parbarrier = mws_procbarrier->parbarrier_link;
-	if (mws_procbarrier->flags == MWS_ALT) {
-		/* already ALTing on this one */
-	} else {
-		mws_barrier_t *mws_barrier;
-		/* NOTE: down_count could be <= 0, in which case we're blocking on an interleaving synchronisation which is effectively ready */
-
-		/* first step -- synchronise on this set */
-		mws_parbarrier->down_count--;
-
-		if (!mws_parbarrier->down_count) {
-			/* we just completed this synchronisation;  second step -- synchronise at the top-level */
-			mws_barrier = mws_parbarrier->barrier_link;
-			mws_barrier->sets_downcount--;
-		}
-
-		if (!mws_barrier->sets_downcount) {
-			/*{{{  synchronisation complete!*/
-
-			mwaltlock.count = 1;		/* because we'll need to disable too! */
-
-#if (MWSDEBUG == 1)
-			BMESSAGE ("mws_enb: synchronisation complete! (%d sets enrolled, in this set, %d of (%d,%d))\n", mws_barrier->sets_enrolled, mws_parbarrier->down_count, mws_parbarrier->sync_count, mws_parbarrier->enroll_count);
-			BMESSAGE ("mws_enb: selecting enabling proc-barrier at 0x%8.8x\n", (unsigned int)mws_procbarrier);
-#endif
-			mws_procbarrier->flags = MWS_ALT_SELECTED;
-			Wptr[MWSyncChosen] = (int)Wptr;
-
-			/* this process is a slightly odd case -- because it's not on the queue */
-			mws_parent = mws_parbarrier;
-			mws_barriercomplete (Wptr, sched, mws_parent, mws_barrier);
-
-			return_address = process_address;		/* go direct to disabling */
-			/*}}}*/
-		} else {
-#if (MWSDEBUG == 1)
-			BMESSAGE ("mws_enb: synchronisation incomplete (%d sets left), sleeping\n", mws_barrier->sets_downcount);
-#endif
-
-			/* synchronisation not complete, place process on the parbarrier */
-			if (!mws_parbarrier->q_fptr) {
-				/* first */
-				mws_parbarrier->q_fptr = mws_procbarrier;
-			} else {
-				/* not first */
-				mws_parbarrier->q_bptr->q_next = mws_procbarrier;
-				mws_procbarrier->q_prev = mws_parbarrier->q_bptr;
-			}
-			mws_parbarrier->q_bptr = mws_procbarrier;
-
-			/* finish up, but don't suspend */
-			mws_procbarrier->wptr = Wptr;
-			mws_procbarrier->flags = MWS_ALT;
-		}
-	}
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_dis (void)*/
-/*
- *	new multiway sync ALT disable
- */
-K_CALL_DEFINE (Y_mws_dis)
-{
-	mws_procbarrier_t *mws_procbarrier;
-	mws_parbarrier_t *mws_parbarrier;
-	mws_barrier_t *mws_barrier;
-	unsigned int process_address;
-	
-	K_CALL_PARAMS_2 (process_address, mws_procbarrier);
-
-#if 0
-	BMESSAGE ("mws_dis: here!\n");
-#endif
-
-	if (mws_procbarrier->flags == MWS_ALT_SELECTED) {
-#if (MWSDEBUG == 1)
-		BMESSAGE ("mws_dis: ALT selected on procbarrier at 0x%8.8x\n", (unsigned int)mws_procbarrier);
-#endif
-		/* this one triggered */
-		Wptr[MWSyncChosen] = (int)process_address;
-		Wptr[Temp] = (int)process_address;
-		/* hold the lock until past MWSALTEND -- last will see count == 0 */
-	} else if (mws_procbarrier->flags == MWS_ALT) {
-		/* unselected ALT, remove from wait set */
-#if (MWSDEBUG == 1)
-		BMESSAGE ("mws_dis: ALT _not_ selected on procbarrier at 0x%8.8x\n", (unsigned int)mws_procbarrier);
-#endif
-		mws_parbarrier = mws_procbarrier->parbarrier_link;
-
-		if (mws_parbarrier->q_fptr == mws_parbarrier->q_bptr) {
-			if (mws_procbarrier != mws_parbarrier->q_fptr) {
-				/* something waiting, but it's not us..! */
-				BMESSAGE ("mws_dis: serious: not me!\n");
-			} else {
-				/* lone process on queue */
-				mws_parbarrier->q_fptr = NULL;
-				mws_parbarrier->q_bptr = NULL;
-			}
-		} else if (mws_procbarrier == mws_parbarrier->q_fptr) {
-			/* first on queue */
-			mws_parbarrier->q_fptr = mws_procbarrier->q_next;
-			mws_parbarrier->q_fptr->q_prev = NULL;
-			mws_procbarrier->q_next = NULL;
-		} else if (mws_procbarrier == mws_parbarrier->q_bptr) {
-			/* last on queue */
-			mws_parbarrier->q_bptr = mws_procbarrier->q_prev;
-			mws_parbarrier->q_bptr->q_next = NULL;
-			mws_procbarrier->q_prev = NULL;
-		} else {
-			/* in the middle somewhere */
-			mws_procbarrier->q_prev->q_next = mws_procbarrier->q_next;
-			mws_procbarrier->q_next->q_prev = mws_procbarrier->q_prev;
-			mws_procbarrier->q_next = NULL;
-			mws_procbarrier->q_prev = NULL;
-		}
-
-		mws_barrier = mws_parbarrier->barrier_link;
-		mws_parbarrier->down_count++;
-
-		if (mws_parbarrier->down_count == 1) {
-			/* we just stopped this set from synchronising */
-			mws_barrier->sets_downcount++;
-		}
-
-	}
-	mws_procbarrier->wptr = NULL;
-	mws_procbarrier->flags = MWS_NONE;
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_altpostlock (void)*/
-/*
- *	new multiway sync lock-after-ALT
- */
-K_CALL_DEFINE (Y_mws_altpostlock)
-{
-	K_CALL_PARAMS_0 ();
-
-#if (MWSDEBUG == 1)
-	BMESSAGE ("mws_altpostlock: Wptr=0x%8.8x, Wptr[MWSyncChosen]=0x%8.8x, mwaltlock.value = %d, .count = %d\n", (unsigned int)Wptr, (unsigned int)Wptr[MWSyncChosen], mwaltlock.value, mwaltlock.count);
-#endif
-	if (Wptr[MWSyncChosen] == (int)Wptr) {
-		/* yes, this ALT was woken up by a multi-way sync, so already have the lock */
-	} else {
-		/* claim mutex */
-		if (!mwaltlock.value) {
-			/* block */
-			if (mwaltlock.qfptr) {
-				mwaltlock.qbptr[Link] = (word)Wptr;
-			} else {
-				mwaltlock.qfptr = Wptr;
-			}
-			mwaltlock.qbptr = Wptr;
-
-			Wptr[Iptr] = (word)return_address;
-			Wptr[Link] = NotProcess_p;
-			save_priofinity (sched, Wptr);
-			kernel_scheduler (sched);
-		} else {
-			/* do claim */
-			mwaltlock.value = 0;
-			mwaltlock.count = 0;
-		}
-	}
-	K_ZERO_OUT ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_ppbaseof (void)*/
-/*
- *	turns a proc-barrier reference into a base-of-barrier reference
- */
-K_CALL_DEFINE (Y_mws_ppbaseof)
-{
-	mws_procbarrier_t *mws_procbarrier;
-	mws_parbarrier_t *mws_parbarrier;
-	mws_barrier_t *mws_barrier;
-	
-	K_CALL_PARAMS_1 (mws_procbarrier);
-	ENTRY_TRACE (Y_mws_ppbaseof, "%p", mws_procbarrier);
-
-#if (MWSDEBUG == 1)
-	MESSAGE ("Y_mws_ppbaseof: procbarrier at 0x%8.8x\n", (unsigned int)mws_procbarrier);
-#endif
-	mws_parbarrier = mws_procbarrier->parbarrier_link;
-	mws_barrier = mws_parbarrier ? mws_parbarrier->barrier_link : NULL;
-
-	K_ONE_OUT (mws_barrier);
-}
-/*}}}*/
-/*{{{  void kernel_Y_mws_ppparof (void)*/
-/*
- *	turns a proc-barrier reference into a par-barrier reference
- */
-K_CALL_DEFINE (Y_mws_ppparof)
-{
-	mws_procbarrier_t *mws_procbarrier;
-	mws_parbarrier_t *mws_parbarrier;
-	
-	K_CALL_PARAMS_1 (mws_procbarrier);
-	ENTRY_TRACE (Y_mws_ppparof, "%p", mws_procbarrier);
-
-#if (MWSDEBUG == 1)
-	MESSAGE ("Y_mws_ppparof: procbarrier at 0x%8.8x\n", (unsigned int)mws_procbarrier);
-#endif
-	mws_parbarrier = mws_procbarrier->parbarrier_link;
-
-	K_ONE_OUT (mws_parbarrier);
-}
-/*}}}*/
-#endif
 /*}}}*/
 
