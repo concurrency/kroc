@@ -1796,7 +1796,7 @@ static void compose_debug_filenames_i386 (tstate *ts)
 static void compose_debug_zero_div_i386 (tstate *ts)
 {
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->zerodiv_label));
-	
+
 	/* argument 2 */
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EDX, ARG_REG, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
 	/* argument 3 */
@@ -3135,10 +3135,13 @@ static void compose_external_ccall_i386 (tstate *ts, int inlined, char *name, in
 		/* re-assess and push parameters (and fix Wptr) */
 		add_to_ins_chain (compose_ins (INS_LEA, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, 4, ARG_REG, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR));
-		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, tmp_reg));
 		kernel_call = K_DYNPROC_SUSPEND;
 		if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
-			*pst_last = compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup ((kif_entry (kernel_call))->entrypoint));
+			/* really we should use a constraint on tmp_reg for the param */
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, tmp_reg, ARG_REG, xregs[0]));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
+			*pst_last = compose_kjump_i386 (ts, INS_CALL, 0, (kif_entry (kernel_call)));
 		} else if (options.kernel_interface & KRNLIFACE_MESH) {
 			fprintf (stderr, "%s: error: do not have dynamic process support for MESH yet\n", progname);
 			exit (EXIT_FAILURE);
