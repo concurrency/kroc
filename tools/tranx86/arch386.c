@@ -1796,9 +1796,9 @@ static void compose_debug_filenames_i386 (tstate *ts)
 static void compose_debug_zero_div_i386 (tstate *ts)
 {
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->zerodiv_label));
-
+	
 	/* argument 2 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EDX, ARG_REG, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EDX, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
 	/* argument 3 */
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[1])));
 	/* argument 4 */
@@ -3563,8 +3563,8 @@ static int regcolour_get_regs_i386 (int *regs)
  */
 static char *get_register_name_i386 (int reg)
 {
-	static char *mainregs[] = {"%eax", "%ecx", "%edx", "%ebx", "%esp", "%ebp", "%esi", "%edi"};
-	static char *altregs[] = {"%eax", "%ecx", "%edx", "%ebx", "%edi"};
+	static char *mainregs[] = {"%eax", "%ebx", "%ecx", "%edx", "%esp", "%ebp", "%esi", "%edi"};
+	static char *altregs[] = {"%eax", "%ebx", "%ecx", "%edx", "%edi"};
 	static char *unkreg = "?";
 
 	if ((reg >= 0) && (reg <= 7)) {

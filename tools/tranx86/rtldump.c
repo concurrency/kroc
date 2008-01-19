@@ -110,6 +110,10 @@ static char *reg_string (int regnum, arch_t *arch)
 		strcpy (buf, "ca");
 		rv = buf;
 		break;
+	case REG_SCHED:
+		strcpy (buf, "%sched");
+		rv = buf;
+		break;
 	default:
 		if (regnum >= FIRST_VIRTUAL_REG) {
 			sprintf (buf, "%%%d", regnum);
