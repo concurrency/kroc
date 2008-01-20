@@ -583,8 +583,6 @@ static inline void ProcEnd (Workspace wptr)
 		case ((word) -1):
 			{
 				/* called from occam */
-				ccsp_sched_t *sched = ccsp_scheduler;
-				wptr[BarrierPtr] = (word) sched;
 				ccsp_cif_jump (wptr, wptr[EscapePtr]);
 			}
 			break;

@@ -40,10 +40,6 @@ extern void ccsp_occam_entry (void *, unsigned int, word, word *, word *);
 extern void ccsp_cif_bcall0_stub (word *);
 extern void ccsp_cif_bcall1_stub (word *);
 extern void ccsp_cif_bcalln_stub (word *);
-extern void ccsp_cif_endp_resume_stub (void);
-extern void ccsp_cif_light_proc_stub (void);
-extern void ccsp_cif_occam_resume_stub (word *);
-extern void ccsp_cif_proc_stub (void);
 
 extern void ccsp_show_last_debug_insert (void);
 

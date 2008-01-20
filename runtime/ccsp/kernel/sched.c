@@ -1982,7 +1982,7 @@ K_CALL_DEFINE_1_0 (Y_rtthreadinit)
 	allocator 		= dmem_new_allocator ();
 	sched 			= dmem_thread_alloc (allocator, sizeof(sched_t));
 	init_sched_t (sched);
-	build_calltable (sched->calltable);
+	memcpy (sched->calltable, ccsp_calltable, sizeof(void *) * K_MAX_SUPPORTED);
 	sched->allocator 	= allocator;
 	sched->stack		= stack;
 	
@@ -6342,7 +6342,7 @@ static void *kernel_CIF_endp_resume_stub (void)
 static void *kernel_CIF_light_proc_stub (void)
 {
 	void *address;
-	K_CIF_PROC (address, K_ENDP, BarrierPtr);
+	K_CIF_PROC_IND (address, K_ENDP, BarrierPtr);
 	return address;
 }
 /*}}}*/
