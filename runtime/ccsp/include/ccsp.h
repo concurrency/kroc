@@ -67,5 +67,7 @@ extern ccsp_sched_t		*_ccsp_scheduler;
 #define ccsp_scheduler		_ccsp_scheduler
 #endif
 
+extern void			**_ccsp_calltable;
+
 #endif	/* !__CCSP_H */
 

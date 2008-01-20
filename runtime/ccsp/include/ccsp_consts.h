@@ -57,7 +57,8 @@
 #define State		-4
 #define TLink		-5
 #define Time_f		-6
-#define	StackPtr	-7	/* for CIF */
+#define SchedPtr	-7	/* for CIF */
+#define StackPtr	-7	/* for CIF */
 #define BarrierPtr	-8	/* for CIF */
 #define EscapePtr	-9	/* for CIF */
 

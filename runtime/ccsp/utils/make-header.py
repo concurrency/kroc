@@ -125,7 +125,7 @@ def load_symbols(calls, symbols, fn):
 		if m is not None:
 			type, data = m.group(1, 2)
 			if type == "SYMBOL":
-				current = { "name" : data }
+				current = { "name" : data, "INPUT" : 0, "OUTPUT" : 0 }
 				symbols[data] = current
 			elif type == "CALL":
 				calls[data] = current
@@ -245,20 +245,24 @@ def output_calltable(symbol_list, symbols, fn):
 	for name in symbol_list:
 		inputs = int(symbols[name].get("INPUT"))
 		outputs = int(symbols[name].get("OUTPUT"))
-		if not symbols[name].get("unsupported"):
+		if name.startswith("CIF_"):
+			f.write("static void *kernel_%s (void);\n" % name)
+		elif not symbols[name].get("unsupported"):
 			f.write("K_CALL_DEFINE_%d_%d (%s);\n" % (inputs, outputs, name))
 	f.write("\n")
 	
 	f.write("static inline void build_calltable (void **table)\n")
 	f.write("{\n")
-	#f.write("void *ccsp_calltable[] = {\n")
 	for (i, name) in enumerate(symbol_list):
 		sname = name
 		if symbols[name].get("unsupported"):
 			sname = "Y_unsupported"
+
 		f.write("\t/* %s */\n" % (name))
-		f.write("\ttable[% 3d] = K_CALL_PTR (%s);\n" % (i, sname))
-	#f.write("\tNULL\n")
+		if name.startswith("CIF_"):
+			f.write("\ttable[% 3d] = kernel_%s ();\n" % (i, sname))
+		else:
+			f.write("\ttable[% 3d] = K_CALL_PTR (%s);\n" % (i, sname))
 	f.write("}\n\n")
 
 	output_footer(f, fn)
@@ -290,7 +294,7 @@ def gen_cif_stub(f, symbol, arch_generator):
 	f.line("do {")
 
 	f.indent()
-	f.line("ccsp_sched_t *sched = ccsp_scheduler;")
+	f.line("ccsp_sched_t *sched = (ccsp_sched_t *) ((wptr)[SchedPtr]);")
 
 	arch_generator(f, symbol, inputs, outputs)
 
@@ -408,24 +412,30 @@ def gen_i386_header(f):
 	f.outdent()
 
 def gen_i386_cif_stub(f, symbol, inputs, outputs):
+	resched = (symbol["name"][0] == 'Y')
 	regs	= [ "a", "d", "c" ]
 	cregs	= [ "eax", "edx", "ecx" ]
 	in_regs = 0
 	out_regs= 0
+	offset  = (6 * 4) + (4 * symbol["offset"])
 
 	in_regs = len(inputs)
 	out_regs = len(outputs)
 
 	if in_regs > 1:
 		in_regs = 1
+	if out_regs > 1:
+		out_regs = 1
 	
-	dummies	= []
-	if out_regs < 3:
-		f.line("{")
-		f.indent()
-		dummies = ["dummy" + str(i) for i in range(out_regs, 3)]
-		for dummy in dummies:
-			f.line("word %s;" % dummy)
+	f.line("{")
+	f.indent()
+
+	dummies = ["sched_dummy"]
+	if in_regs > out_regs:
+		dummies = ["dummy0"] + dummies
+	
+	for dummy in dummies:
+		f.line("word %s;" % dummy)
 
 	if len(inputs) > 1:
 		for (n, i) in enumerate(inputs):
@@ -436,41 +446,54 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 	f.indent()
 
 	f.begin_asm()
-	f.line("\tpushl %%ebx")
-	f.line("\tpushl %%ebp")
-	f.line("\tmovl %%esp, -28(%%ecx)")
-	f.line("\tmovl %%edi, %%esp")
-
-	f.line("\tcall *%d(%%%%edx)" % ((8 * 4) + (4 * symbol["offset"])))
-	
-	f.line("\tmovl -28(%%ebp), %%esp")
-	f.line("\tmovl %%ebp, %%edi")
-	f.line("\tpopl %%ebp")
-	f.line("\tpopl %%ebx")
+	if resched:
+		f.line("\tpushl %%ebx")
+		f.line("\tpushl %%ebp")
+		f.line("\tmovl %%esp, -28(%%ecx)")
+		f.line("\tmovl (%%edx), %%esp")
+		f.line("\tcall *%d(%%%%edx)" % offset)
+		f.line("\tmovl -28(%%ebp), %%esp")
+		f.line("\tmovl %%ebp, %%edi")
+		f.line("\tmovl %%esi, -28(%%edi)")
+		f.line("\tpopl %%ebp")
+		f.line("\tpopl %%ebx")
+	else:
+		f.line("\tmovl (%%edx), %%ecx")
+		f.line("\tmovl %%esp, (%%ecx)")
+		f.line("\tmovl %%ecx, %%esp")
+		f.line("\tmovl %%edi, %%ecx")
+		f.line("\tcall *%d(%%%%edx)" % offset)
+		f.line("\tmovl (%%esp), %%esp")
 	f.end_asm()
 
 	f.begin_line()
-	f.add(": \"=D\" (wptr), \"=S\" (sched)")
-	for (idx, name) in enumerate(outputs + dummies):
-		f.add(", \"=%s\" (%s)" % (regs[idx], name))
+	f.add(": \"=D\" (wptr), \"=d\" (sched_dummy)")
+	if (in_regs + out_regs) > 0:
+		f.add(", \"=a\" (%s)" % ((outputs + dummies)[0]))
 	f.end_line()
 
 	f.begin_line()
-	f.add(": \"0\" (sched->stack), \"3\" (sched), \"4\" (wptr)")
+	f.add(": \"0\" (wptr), \"1\" (sched)")
 	for (idx, name) in enumerate(inputs):
 		if idx < in_regs:
 			f.add(", \"%d\" (%s)" % (idx + 2, name))
 	f.end_line()
 
 	f.begin_line()
-	f.add(": \"cc\", \"memory\"")
-	#for (idx, reg) in enumerate(cregs):
-	#	if (idx >= in_regs) and (idx >= out_regs):
-	#		f.add(", \"%s\"" % cregs[idx])
+	f.add(": \"cc\", \"memory\", \"ecx\"")
+	if (in_regs + out_regs) == 0:
+		f.add(", \"eax\"")
+	if resched:
+		f.add(", \"esi\"")
 	f.end_line()
 
 	f.outdent()
 	f.line(");")
+
+	if len(outputs) > 1:
+		for (n, i) in enumerate(outputs):
+			if n >= 1:
+				f.line("*((word *)(&(%s))) = sched->cparam[%d];" % (i, (n - 1)))
 
 	if len(dummies) > 0:
 		f.outdent()
