@@ -193,24 +193,36 @@
 		: "=g" (address) \
 		: /* no inputs */ \
 		: "memory")
-#define K_CIF_PROC(address, call, offset) \
-	__asm__ __volatile__ ("				\n" \
-		"	call	0f			\n" \
-		"	movl	%%esi, -28(%%ebp)	\n" \
+#define _K_CIF_PROC \
 		"	movl	(%%ebp), %%esp		\n" \
+		"	movl	%%esi, -28(%%ebp)	\n" \
 		"	popl	%%eax			\n" \
 		"	call	*%%eax			\n" \
 		"	movl	-28(%%ebp), %%edx	\n" \
 		"	movl	%%ebp, %%ecx		\n" \
-		"	movl	(%%edx), %%esp		\n" \
 		"	movl	%%edx, %%esi		\n" \
 		"	movl	%%ecx, %%eax		\n" \
-		"	addl	%1, %%esi		\n" \
+		"	movl	(%%edx), %%esp		\n" \
 		"	addl	%2, %%eax		\n" \
-		"	call	*%%esi			\n" \
+		"	addl	%1, %%esi		\n"
+#define K_CIF_PROC(address, call, offset) \
+	__asm__ __volatile__ ("				\n" \
+		"	call	0f			\n" \
+		_K_CIF_PROC \
+		"	call	*(%%esi)		\n" \
 		"0:	popl	%0			\n" \
 		: "=g" (address) \
-		: "i" (offsetof(sched_t, calltable[call])), "i" (offset) \
+		: "i" (offsetof(sched_t, calltable[call])), "i" (offset * sizeof(word)) \
+		: "memory")
+#define K_CIF_PROC_IND(address, call, offset) \
+	__asm__ __volatile__ ("				\n" \
+		"	call	0f			\n" \
+		_K_CIF_PROC \
+		"	movl	(%%eax), %%eax		\n" \
+		"	call	*(%%esi)		\n" \
+		"0:	popl	%0			\n" \
+		: "=g" (address) \
+		: "i" (offsetof(sched_t, calltable[call])), "i" (offset * sizeof(word)) \
 		: "memory")
 /*}}}*/
 

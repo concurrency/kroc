@@ -3215,6 +3215,7 @@ static void compose_cif_call_i386 (tstate *ts, int inlined, char *name, ins_chai
 	add_to_ins_chain (*pst_first);
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_FLABEL | ARG_ISCONST, 0, ARG_REGIND | ARG_DISP, REG_WPTR, -36));
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST | ARG_ISCONST, -1, ARG_REGIND | ARG_DISP, REG_WPTR, -32));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REGIND | ARG_DISP, REG_WPTR, -28));
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, tmp_reg));
 	constmap_remove (tmp_reg);
 	add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_CONST | ARG_ISCONST, 40, ARG_REG, tmp_reg, ARG_REG, tmp_reg));
@@ -3224,12 +3225,9 @@ static void compose_cif_call_i386 (tstate *ts, int inlined, char *name, ins_chai
 
 	sprintf (sbuf, "@%s%s", options.extref_prefix ? options.extref_prefix : "" , name + 4);
 	add_to_ins_chain (compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup (sbuf)));
-	sprintf (sbuf, "@%sccsp_cif_occam_resume_stub", options.extref_prefix ? options.extref_prefix : "");
-	add_to_ins_chain (compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup (sbuf)));
 
-	add_to_ins_chain (compose_ins (INS_POP, 1, 0, ARG_REG, REG_WPTR));
 	add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, -32, ARG_REG, REG_SCHED));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, -28, ARG_REG, REG_SCHED));
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, stack), ARG_REG, REG_ESP));
 	add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_CONST | ARG_ISCONST, 4, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR));
 	*pst_last = compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR);

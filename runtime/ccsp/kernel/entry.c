@@ -88,10 +88,3 @@ void ccsp_cif_bcalln_stub (word *arg)
 }
 /*}}}*/
 
-/*{{{  void ccsp_cif_occam_resume_stub (word *wptr) */
-void ccsp_cif_occam_resume_stub (word *wptr)
-{
-	wptr[BarrierPtr] = (word) _local_scheduler;
-}
-/*}}*/
-

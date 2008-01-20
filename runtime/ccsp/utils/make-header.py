@@ -449,12 +449,14 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 	if resched:
 		f.line("\tpushl %%ebx")
 		f.line("\tpushl %%ebp")
-		f.line("\tmovl %%esp, -28(%%ecx)")
+		f.line("\tmovl %%esp, -28(%%edi)")
+		f.line("\tmovl %%edi, %%ecx")
+		f.line("\tmovl %%edi, %%ebp")
 		f.line("\tmovl (%%edx), %%esp")
 		f.line("\tcall *%d(%%%%edx)" % offset)
 		f.line("\tmovl -28(%%ebp), %%esp")
 		f.line("\tmovl %%ebp, %%edi")
-		f.line("\tmovl %%esi, -28(%%edi)")
+		f.line("\tmovl %%esi, -28(%%ebp)")
 		f.line("\tpopl %%ebp")
 		f.line("\tpopl %%ebx")
 	else:
