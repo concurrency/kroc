@@ -56,7 +56,7 @@ def run_command(cmd):
 		import subprocess
 		return subprocess.call(cmd)
 	except ImportError:
-		return os.spawnvp(P.WAIT, cmd[0], cmd)
+		return os.spawnvp(os.P_WAIT, cmd[0], cmd)
 
 def safe_sorted(l):
 	l = l[:]
