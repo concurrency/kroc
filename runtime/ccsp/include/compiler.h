@@ -32,7 +32,7 @@
 #else
 #define likely(X)	(X)
 #define unlikely(X)	(X)
-#define expect(X,Y)	((X) == (Y))
+#define expect(X,Y)	(X)
 #endif
 /*}}}*/
 
