@@ -165,10 +165,6 @@
 		: /* no outputs */ \
 		: "a" (stack), "c" (Wptr), "d" (Fptr), "r" (init) \
 		: "memory")
-#define K_SETGLABEL(X) \
-	__asm__ __volatile__ ("		\n"	\
-		_K_SETGLABEL (X)		\
-		: : : "memory", "cc")
 /*}}}*/
 
 /*{{{  CIF helpers */
@@ -188,33 +184,34 @@
 		: "=a" (ret) \
 		: "0" (func), "c" (argc << WSH), "S" (argv) \
 		: "cc", "memory", "edx", "edi")
-#define K_CIF_ENDP_STUB(X) \
+#define K_CIF_ENDP_RESUME(address) \
 	__asm__ __volatile__ ("				\n" \
-		_K_SETGGLABEL (X)			\
-		"	movl	-28(%%ebp), %%ebp	\n" \
-		"	movl	-4(%%ebp), %%eax	\n" \
-		"	jmp	*%%eax			\n" \
-		: /* no outputs */ \
+		"	call	0f			\n" \
+		"	movl	-16(%%ebp), %%ebp	\n" \
+		"	jmp	*-4(%%ebp)		\n" \
+		"0:	popl	%0			\n" \
+		: "=g" (address) \
 		: /* no inputs */ \
 		: "memory")
-#define K_CIF_PROC_STUB(X, wptr) \
+#define K_CIF_PROC(address, call, offset) \
 	__asm__ __volatile__ ("				\n" \
-		_K_SETGGLABEL (X)			\
+		"	call	0f			\n" \
+		"	movl	%%esi, -28(%%ebp)	\n" \
 		"	movl	(%%ebp), %%esp		\n" \
 		"	popl	%%eax			\n" \
 		"	call	*%%eax			\n" \
-		"	movl	(%%esp), %%eax		\n" \
-		"	subl	$32, %%esp		\n" \
-		: "=a" (wptr) \
-		: /* no inputs */ \
-		: "cc", "memory", "ecx", "edx", "esi", "edi")
-#define K_CIF_SCHED_CALL(sched, stack, call, wptr) \
-	__asm__ __volatile__ ("				\n" \
-		"	movl	%0, %%esp		\n" \
-		"	jmp	*%1			\n" \
-		: /* no outputs */ \
-		:  "r" (stack), "r" (call), "S" (sched), "a" (wptr) \
-		: "cc", "memory")
+		"	movl	-28(%%ebp), %%edx	\n" \
+		"	movl	%%ebp, %%ecx		\n" \
+		"	movl	(%%edx), %%esp		\n" \
+		"	movl	%%edx, %%esi		\n" \
+		"	movl	%%ecx, %%eax		\n" \
+		"	addl	%1, %%esi		\n" \
+		"	addl	%2, %%eax		\n" \
+		"	call	*%%esi			\n" \
+		"0:	popl	%0			\n" \
+		: "=g" (address) \
+		: "i" (offsetof(sched_t, calltable[call])), "i" (offset) \
+		: "memory")
 /*}}}*/
 
 #endif /* sched_asm_inserts.h */

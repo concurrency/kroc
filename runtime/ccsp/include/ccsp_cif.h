@@ -53,20 +53,20 @@ struct _light_proc_bar_t {
 /*{{{  void Alt (Workspace wptr) */
 static inline void Alt (Workspace wptr)
 {
-	ccsp_cif_Y_alt (wptr);
+	ccsp_cif_X_alt (wptr);
 }
 /*}}}*/
 /*{{{  void TimerAlt (Workspace wptr) */
 static inline void TimerAlt (Workspace wptr)
 {
-	ccsp_cif_Y_talt (wptr);
+	ccsp_cif_X_talt (wptr);
 }
 /*}}}*/
 /*{{{  bool AltEnableChannel (Workspace wptr, int id, Channel *c) */
 static inline bool AltEnableChannel (Workspace wptr, int id, Channel *c)
 {
 	bool fired;
-	ccsp_cif_Y_cenbc (wptr, id, c, fired);
+	ccsp_cif_X_cenbc (wptr, id, c, fired);
 	return fired;
 }
 /*}}}*/
@@ -74,7 +74,7 @@ static inline bool AltEnableChannel (Workspace wptr, int id, Channel *c)
 static inline bool AltEnableTimer (Workspace wptr, int id, Time timeout)
 {
 	bool fired;
-	ccsp_cif_Y_cenbt (wptr, id, timeout, fired);
+	ccsp_cif_X_cenbt (wptr, id, timeout, fired);
 	return fired;
 }
 /*}}}*/
@@ -82,7 +82,7 @@ static inline bool AltEnableTimer (Workspace wptr, int id, Time timeout)
 static inline bool AltEnableSkip (Workspace wptr, int id)
 {
 	bool fired;
-	ccsp_cif_Y_cenbs (wptr, id, fired);
+	ccsp_cif_X_cenbs (wptr, id, fired);
 	return fired;
 }
 /*}}}*/
@@ -90,7 +90,7 @@ static inline bool AltEnableSkip (Workspace wptr, int id)
 static inline bool AltDisableChannel (Workspace wptr, int id, Channel *c)
 {
 	bool fired;
-	ccsp_cif_Y_cdisc (wptr, id, c, fired);
+	ccsp_cif_X_cdisc (wptr, id, c, fired);
 	return fired;
 }
 /*}}}*/
@@ -98,7 +98,7 @@ static inline bool AltDisableChannel (Workspace wptr, int id, Channel *c)
 static inline bool AltDisableTimer (Workspace wptr, int id, Time timeout)
 {
 	bool fired;
-	ccsp_cif_Y_cdist (wptr, id, timeout, fired);
+	ccsp_cif_X_cdist (wptr, id, timeout, fired);
 	return fired;
 }
 /*}}}*/
@@ -106,20 +106,20 @@ static inline bool AltDisableTimer (Workspace wptr, int id, Time timeout)
 static inline bool AltDisableSkip (Workspace wptr, int id)
 {
 	bool fired;
-	ccsp_cif_Y_cdiss (wptr, id, fired);
+	ccsp_cif_X_cdiss (wptr, id, fired);
 	return fired;
 }
 /*}}}*/
 /*{{{  void AltWait (Workspace wptr) */
 static inline void AltWait (Workspace wptr)
 {
-	ccsp_cif_X_altwt (wptr);
+	ccsp_cif_Y_altwt (wptr);
 }
 /*}}}*/
 /*{{{  void TimerAltWait (Workspace wptr) */
 static inline void TimerAltWait (Workspace wptr)
 {
-	ccsp_cif_X_taltwt (wptr);
+	ccsp_cif_Y_taltwt (wptr);
 }
 /*}}}*/
 /*{{{  int AltEnd (Workspace wptr) */
@@ -177,7 +177,7 @@ static inline void ChanOutWord (Workspace wptr, Channel *c, word w)
 /*{{{  void ChanXAble (Workspace wptr, Channel *c) */
 static inline void ChanXAble (Workspace wptr, Channel *c)
 {
-	ccsp_cif_X_xable (wptr, c);
+	ccsp_cif_Y_xable (wptr, c);
 }
 /*}}}*/
 /*{{{  void ChanXEnd (Workspace wptr, Channel *c)*/
@@ -200,7 +200,7 @@ static inline void _SetErrW(Workspace wptr, char *file, word line)
 {
 	line |= 0xfe000000;
 
-	ccsp_cif_X_Seterr (wptr, "(external)", file, 0, line);
+	ccsp_cif_Y_Seterr (wptr, "(external)", file, 0, line);
 }
 /*}}}*/
 /*{{{  void SetErrW(Workspace wptr) */
@@ -219,7 +219,7 @@ static inline word BlockingCall0 (Workspace wptr, void *func)
 	word arg = (word) func;
 	word *tmp = &arg;
 
-	ccsp_cif_X_b_dispatch (wptr, ccsp_cif_bcall0_stub, tmp);
+	ccsp_cif_Y_b_dispatch (wptr, ccsp_cif_bcall0_stub, tmp);
 
 	return arg;
 }
@@ -233,7 +233,7 @@ static inline word BlockingCall1 (Workspace wptr, void *func, word arg)
 	args[0] = (word) func;
 	args[1] = arg;
 
-	ccsp_cif_X_b_dispatch (wptr, ccsp_cif_bcall1_stub, tmp);
+	ccsp_cif_Y_b_dispatch (wptr, ccsp_cif_bcall1_stub, tmp);
 
 	return args[0];
 }
@@ -254,7 +254,7 @@ static word BlockingCallN (Workspace wptr, void *func, word argc, ...)
 	args[1] = argc;
 	args[2] = ((word) (&argc)) + sizeof (word);
 
-	ccsp_cif_X_b_dispatch (wptr, ccsp_cif_bcalln_stub, tmp);
+	ccsp_cif_Y_b_dispatch (wptr, ccsp_cif_bcalln_stub, tmp);
 
 	va_end (ap);
 
@@ -331,7 +331,7 @@ static word KillableBlockingCallN (Workspace wptr, void *func, Channel *killchan
 	args[2] = argc;
 	args[3] = ((word) (&argc)) + sizeof (word);
 
-	ccsp_cif_X_bx_dispatch (wptr, ccsp_cif_bcalln_stub, tmp);
+	ccsp_cif_Y_bx_dispatch (wptr, ccsp_cif_bcalln_stub, tmp);
 
 	va_end (ap);
 
@@ -343,7 +343,7 @@ static int KillBlockingCall (Workspace wptr, Channel *killchan)
 {
 	int result;
 
-	ccsp_cif_Y_bx_kill (wptr, killchan, result);
+	ccsp_cif_X_bx_kill (wptr, killchan, result);
 
 	return result;
 }
@@ -399,7 +399,7 @@ static inline void MRelease (Workspace wptr, void *ptr)
 static inline void *MTAlloc (Workspace wptr, word type, word size)
 {
 	void *ptr;
-	ccsp_cif_Y_mt_alloc (wptr, type, size, ptr);
+	ccsp_cif_X_mt_alloc (wptr, type, size, ptr);
 	return ptr;
 }
 /*}}}*/
@@ -407,14 +407,14 @@ static inline void *MTAlloc (Workspace wptr, word type, word size)
 static inline void *MTClone (Workspace wptr, void *ptr)
 {
 	void *clone;
-	ccsp_cif_Y_mt_clone (wptr, ptr, clone);
+	ccsp_cif_X_mt_clone (wptr, ptr, clone);
 	return clone;
 }
 /*}}}*/
 /*{{{  void MTRelease (Workspace wptr, void *ptr) */
 static inline void MTRelease (Workspace wptr, void *ptr)
 {
-	ccsp_cif_Y_mt_release (wptr, ptr);
+	ccsp_cif_X_mt_release (wptr, ptr);
 }
 /*}}}*/
 /*{{{  void MTChanIn (Workspace wptr, Channel *c, void **pptr) */
@@ -456,7 +456,7 @@ static inline void MTLock (Workspace wptr, void *ptr, word lock)
 /*{{{  void MTUnlock (Workspace wptr, void *ptr, word lock) */
 static inline void MTUnlock (Workspace wptr, void *ptr, word lock)
 {
-	ccsp_cif_Y_mt_unlock (wptr, lock, ptr);
+	ccsp_cif_X_mt_unlock (wptr, lock, ptr);
 }
 /*}}}*/
 /*{{{  void MTSync (Workspace wptr, void *ptr) */
@@ -468,13 +468,13 @@ static inline void MTSync (Workspace wptr, void *ptr)
 /*{{{  void MTEnroll (Workspace wptr, void *ptr, word count) */
 static inline void MTEnroll (Workspace wptr, void *ptr, word count)
 {
-	ccsp_cif_Y_mt_enroll (wptr, ptr, count);
+	ccsp_cif_X_mt_enroll (wptr, ptr, count);
 }
 /*}}}*/
 /*{{{  void MTResign (Workspace wptr, void *ptr, word count) */
 static inline void MTResign (Workspace wptr, void *ptr, word count)
 {
-	ccsp_cif_Y_mt_resign (wptr, ptr, count);
+	ccsp_cif_X_mt_resign (wptr, ptr, count);
 }
 /*}}}*/
 /*}}}*/
@@ -498,7 +498,7 @@ static inline void SetPriority (Workspace wptr, word priority)
 static inline word GetAffinity (Workspace wptr)
 {
 	word affinity;
-	ccsp_cif_Y_getaff (wptr, affinity);
+	ccsp_cif_X_getaff (wptr, affinity);
 	return affinity;
 }
 /*}}}*/
@@ -517,7 +517,7 @@ static inline Workspace ProcAlloc (Workspace wptr, word args, word stack)
 	Workspace ws;
 	word words = WORKSPACE_SIZE (args, stack);
 
-	ccsp_cif_Y_proc_alloc (wptr, 0, words, ws);
+	ccsp_cif_X_proc_alloc (wptr, 0, words, ws);
 
 	ws += CIF_PROCESS_WORDS;
 	ws[BarrierPtr] = (word) NULL;
@@ -535,7 +535,7 @@ static inline void ProcMTCopy (Workspace wptr, Workspace ws, word n, void *ptr)
 {
 	ws -= CIF_PROCESS_WORDS;
 	n += CIF_PROCESS_WORDS + 1;
-	ccsp_cif_Y_proc_mt_copy (wptr, n, ws, ptr);
+	ccsp_cif_X_proc_mt_copy (wptr, n, ws, ptr);
 }
 /*}}}*/
 /*{{{  void ProcMTMove (Workspace wptr, Workspace ws, word n, void *pptr) */
@@ -543,7 +543,7 @@ static inline void ProcMTMove (Workspace wptr, Workspace ws, word n, void *pptr)
 {
 	ws -= CIF_PROCESS_WORDS;
 	n += CIF_PROCESS_WORDS + 1;
-	ccsp_cif_Y_proc_mt_move (wptr, n, ws, pptr);
+	ccsp_cif_X_proc_mt_move (wptr, n, ws, pptr);
 }
 /*}}}*/
 /*{{{  type ProcGetParam (Workspace wptr, word n, type) */
@@ -553,6 +553,7 @@ static inline void ProcMTMove (Workspace wptr, Workspace ws, word n, void *pptr)
 /*{{{  void ProcStart (Workspace wptr, Workspace ws, Process func) */
 static inline void ProcStart (Workspace wptr, Workspace ws, Process func)
 {
+	ccsp_sched_t *sched = (ccsp_sched_t *) wptr[SchedPtr];
 	Workspace top = ws + ws[StackPtr];
 	
 	top -= 1; 			/* one parameter (ws) */
@@ -565,7 +566,7 @@ static inline void ProcStart (Workspace wptr, Workspace ws, Process func)
 
 	ws -= CIF_PROCESS_WORDS;
 
-	ccsp_cif_Y_proc_start (wptr, CIF_PROCESS_WORDS, ws, ccsp_cif_proc_stub);
+	ccsp_cif_Y_proc_start (wptr, CIF_PROCESS_WORDS, ws, sched->calltable[K_CIF_PROC_STUB]);
 }
 /*}}}*/
 /*{{{  void ProcEnd (Workspace wptr) */
@@ -621,7 +622,7 @@ static inline void ProcStartInitial (Workspace ws, Process func)
 	top = (Workspace) (((word) top) & (~((sizeof(word) * CIF_STACK_ALIGN) - 1)));
 	top -= CIF_STACK_LINKAGE;	/* return pointer */
 
-	ws[Iptr]	= (word) ccsp_cif_proc_stub;
+	ws[Iptr]	= (word) _ccsp_calltable[K_CIF_PROC_STUB];
 	ws[0]		= (word) top;
 	top[0]		= (word) func;
 	top[1]		= (word) ws;
@@ -632,12 +633,13 @@ static inline void ProcStartInitial (Workspace ws, Process func)
 /*{{{  void LightProcBarrierInit (Workspace wptr, LightProcBarrier *bar, word count) */
 static inline void LightProcBarrierInit (Workspace wptr, LightProcBarrier *bar, word count)
 {
+	ccsp_sched_t *sched = (ccsp_sched_t *) wptr[SchedPtr];
 	word *wbar = bar->data + CIF_PROCESS_WORDS;
 	word pas;
 
-	ccsp_cif_Y_getpas (wptr, pas);
+	ccsp_cif_X_getpas (wptr, pas);
 
-	wbar[IptrSucc]		= (word) ccsp_cif_endp_resume_stub;
+	wbar[IptrSucc]		= (word) sched->calltable[K_CIF_ENDP_RESUME_STUB];
 	wbar[Count] 		= count + 1;
 	wbar[SavedPriority]	= pas;
 }
@@ -647,7 +649,7 @@ static inline void LightProcBarrierEnroll (Workspace wptr, LightProcBarrier *bar
 {
 	word *wbar = bar->data + CIF_PROCESS_WORDS;
 
-	ccsp_cif_Y_par_enroll (wptr, wbar, count);
+	ccsp_cif_X_par_enroll (wptr, wbar, count);
 }
 /*}}}*/
 /*{{{  void LightProcBarrierWait (Workspace wptr, LightProcBarrier *bar) */
@@ -655,7 +657,7 @@ static inline void LightProcBarrierWait (Workspace wptr, LightProcBarrier *bar)
 {
 	word *wbar = bar->data + CIF_PROCESS_WORDS;
 
-	wbar[StackPtr] = (word) wptr;
+	wbar[Pointer] = (word) wptr;
 
 	ccsp_cif_Y_endp (wptr, wbar);
 }
@@ -674,6 +676,7 @@ static inline Workspace LightProcInit (Workspace wptr, word *base, word args, wo
 /*{{{  void LightProcStart (Workspace wptr, LightProcBarrier *bar, Workspace ws, Process func) */
 static inline void LightProcStart (Workspace wptr, LightProcBarrier *bar, Workspace ws, Process func)
 {
+	ccsp_sched_t *sched = (ccsp_sched_t *) wptr[SchedPtr];
 	Workspace top = ws + ws[StackPtr];
 	
 	top -= 1; 			/* one parameter (ws) */
@@ -682,12 +685,12 @@ static inline void LightProcStart (Workspace wptr, LightProcBarrier *bar, Worksp
 
 	ws[BarrierPtr]	= (word) (bar->data + CIF_PROCESS_WORDS);
 	ws[Priofinity]	= (bar->data + CIF_PROCESS_WORDS)[SavedPriority];
-	ws[Iptr]	= (word) ccsp_cif_light_proc_stub;
+	ws[Iptr]	= (word) sched->calltable[K_CIF_LIGHT_PROC_STUB];
 	ws[0]		= (word) top;
 	top[0]		= (word) func;
 	top[1]		= (word) ws;
 
-	ccsp_cif_Y_runp (wptr, ws);
+	ccsp_cif_X_runp (wptr, ws);
 }
 /*}}}*/
 /*}}}*/
@@ -696,7 +699,7 @@ static inline void LightProcStart (Workspace wptr, LightProcBarrier *bar, Worksp
 /*{{{  void Reschedule (Workspace wptr) */
 static inline void Reschedule (Workspace wptr)
 {
-	ccsp_cif_X_pause (wptr);
+	ccsp_cif_Y_pause (wptr);
 }
 /*}}}*/
 /*{{{  void Shutdown (Workspace wptr)*/
@@ -719,7 +722,7 @@ static inline Time TimerRead (Workspace wptr)
 /*{{{  Time TimerWait (Workspace wptr, Time timeout) */
 static inline Time TimerWait (Workspace wptr, Time timeout)
 {
-	ccsp_cif_X_tin (wptr, timeout);
+	ccsp_cif_Y_tin (wptr, timeout);
 	return GetTimeField (wptr);
 }
 /*}}}*/

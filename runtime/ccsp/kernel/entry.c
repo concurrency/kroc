@@ -88,39 +88,10 @@ void ccsp_cif_bcalln_stub (word *arg)
 }
 /*}}}*/
 
-/*{{{  void kernel_cif_endp_resume_stub (void)*/
-void kernel_cif_endp_resume_stub (void)
-{
-	K_CIF_ENDP_STUB (ccsp_cif_endp_resume_stub);
-}
-/*}}}*/
-
-/*{{{  void kernel_cif_light_proc_stub (void)*/
-void kernel_cif_light_proc_stub (void)
-{
-	sched_t *sched;
-	word *wptr;
-	K_CIF_PROC_STUB (ccsp_cif_light_proc_stub, wptr);
-	sched = _local_scheduler;
-	K_CIF_SCHED_CALL (sched, sched->stack, sched->calltable[K_ENDP], wptr[BarrierPtr]);
-}
-/*}}}*/
-
 /*{{{  void ccsp_cif_occam_resume_stub (word *wptr) */
 void ccsp_cif_occam_resume_stub (word *wptr)
 {
 	wptr[BarrierPtr] = (word) _local_scheduler;
 }
 /*}}*/
-
-/*{{{  void kernel_cif_proc_stub (void)*/
-void kernel_cif_proc_stub (void)
-{
-	sched_t *sched;
-	word *wptr;
-	K_CIF_PROC_STUB (ccsp_cif_proc_stub, wptr);
-	sched = _local_scheduler;
-	K_CIF_SCHED_CALL (sched, sched->stack, sched->calltable[K_PROC_END], wptr - CIF_PROCESS_WORDS);
-}
-/*}}}*/
 

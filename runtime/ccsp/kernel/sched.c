@@ -113,9 +113,8 @@ sched_t			*_ccsp_scheduler 		CACHELINE_ALIGN = NULL;
 #endif 
 
 ccsp_global_t		_ccsp				CACHELINE_ALIGN = {};
-#if 0
-mwsyncglock_t 		mwaltlock 			CACHELINE_ALIGN;
-#endif
+
+void 			**_ccsp_calltable		CACHELINE_ALIGN = NULL;
 /*}}}*/
 
 /*{{{  ENTRY_TRACE macros*/
@@ -1761,18 +1760,12 @@ void do_queue_process (word *ws)
 /*{{{  void ccsp_kernel_init (void)*/
 void ccsp_kernel_init (void)
 {
-	#if 0
-	/* initialise global multiway-sync data */
-	mwaltlock.value = 1;
-	mwaltlock.qfptr = NULL;
-	mwaltlock.qbptr = NULL;
-	mwaltlock.count = 0;
-	#endif
-
 	/* initialise run-time */
 	init_ccsp_global_t (&_ccsp);
 	build_calltable (_ccsp.calltable);
+	_ccsp_calltable = _ccsp.calltable;
 	init_local_schedulers ();
+
 }
 /*}}}*/
 
@@ -6324,5 +6317,47 @@ K_CALL_DEFINE_3_0 (Y_mppdeserialise)
 }
 /*}}}*/
 #endif	/* defined(RMOX_BUILD) || !defined(DYNAMIC_PROCS) */
+/*}}}*/
+
+/*{{{  CIF stubs */
+/*{{{  void *kernel_CIF_endp_resume_stub (void)*/
+/*
+ *	@SYMBOL:	CIF_endp_resume_stub
+ *	@CALL: 		K_CIF_ENDP_RESUME_STUB
+ *	@PRIO:		0
+ */
+static void *kernel_CIF_endp_resume_stub (void)
+{
+	void *address;
+	K_CIF_ENDP_RESUME (address);
+	return address;
+}
+/*}}}*/
+/*{{{  void *kernel_CIF_light_proc_stub (void)*/
+/*
+ *	@SYMBOL:	CIF_light_proc_stub
+ *	@CALL: 		K_CIF_LIGHT_PROC_STUB
+ *	@PRIO:		0
+ */
+static void *kernel_CIF_light_proc_stub (void)
+{
+	void *address;
+	K_CIF_PROC (address, K_ENDP, BarrierPtr);
+	return address;
+}
+/*}}}*/
+/*{{{  void *kernel_CIF_proc_stub (void)*/
+/*
+ *	@SYMBOL:	CIF_proc_stub
+ *	@CALL: 		K_CIF_PROC_STUB
+ *	@PRIO:		0
+ */
+static void *kernel_CIF_proc_stub (void)
+{
+	void *address;
+	K_CIF_PROC (address, K_PROC_END, -CIF_PROCESS_WORDS);
+	return address;
+}
+/*}}}*/
 /*}}}*/
 
