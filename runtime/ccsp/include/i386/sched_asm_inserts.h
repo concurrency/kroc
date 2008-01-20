@@ -31,9 +31,9 @@
 
 /*{{{  architecture dependent kernel call declarations */
 #define _K_CALL_DEFINE(X) \
-	void __attribute__ ((regparm(3))) kernel_##X (word param0, sched_t *sched, word *Wptr)
+	static void __attribute__ ((regparm(3))) kernel_##X (word param0, sched_t *sched, word *Wptr)
 #define _K_CALL_DEFINE_O(X) \
-	word __attribute__ ((regparm(3))) kernel_##X (word param0, sched_t *sched, word *Wptr)
+	static word __attribute__ ((regparm(3))) kernel_##X (word param0, sched_t *sched, word *Wptr)
 #define K_CALL_DEFINE_0_0(X) _K_CALL_DEFINE(X)
 #define K_CALL_DEFINE_1_0(X) _K_CALL_DEFINE(X)
 #define K_CALL_DEFINE_2_0(X) _K_CALL_DEFINE(X)
@@ -110,24 +110,35 @@
 /*}}}*/
 
 /*{{{  outgoing entry-point macros*/
+#define _SET_RETURN_ADDRESS(R) \
+	((word *) sched->stack)[-1] = (word) (R)
+
 #define K_ZERO_OUT() \
 	return
-
+#define K_ZERO_OUT_JUMP(R) \
+	do { \
+		_SET_RETURN_ADDRESS (R);\
+		K_ZERO_OUT ();		\
+	} while (0)
 #define K_ZERO_OUT_JRET() \
 	do { \
 		TRACE_RETURN (Wptr[Iptr]); \
-		/* use of EAX for Wptr is intentional */ \
 		__asm__ __volatile__ ("			\n" \
 			"	movl	%0, %%ebp	\n" \
 			"	movl	(%%esi), %%esp	\n" \
 			"	jmp	*-4(%%ebp)	\n" \
 			: /* no outputs */ \
-			: "a" (Wptr), "S" (sched) \
+			: "g" (Wptr), "S" (sched) \
 			: "memory"); \
 	} while (0)
 
 #define K_ONE_OUT(A) \
 	return ((word) (A))
+#define K_ONE_OUT_JUMP(R,A) \
+	do { \
+		_SET_RETURN_ADDRESS (R);\
+		K_ONE_OUT (A);		\
+	} while (0)
 
 #define K_TWO_OUT(A,B) \
 	do { \

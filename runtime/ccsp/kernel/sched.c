@@ -1782,7 +1782,7 @@ static void NO_RETURN REGPARM kernel_scheduler (sched_t *sched)
 {
 	word *Wptr = NotProcess_p;
 	
-	ENTRY_TRACE (X_scheduler, "sync=%d", att_val (&(sched->sync)));
+	ENTRY_TRACE (scheduler, "sync=%d", att_val (&(sched->sync)));
 	
 	do {
 		if (unlikely (att_val (&(sched->sync)))) {
@@ -1926,9 +1926,6 @@ static void NO_RETURN REGPARM kernel_scheduler (sched_t *sched)
 		}
 	} while (Wptr == NotProcess_p);
 
-	ENTRY_TRACE (X_scheduler_dispatch, "sync=%d, raddr=0x%8.8x", att_val (&(sched->sync)), Wptr[Iptr]);
-	DTRACE ("SSW", Wptr);
-
 	K_ZERO_OUT_JRET ();
 	
 	no_return ();
@@ -1954,15 +1951,15 @@ K_CALL_DEFINE_0_0 (Y_fastscheduler)
 	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
-/*{{{  void kernel_X_occscheduler (void)*/
+/*{{{  void kernel_Y_occscheduler (void)*/
 /*
- *	@SYMBOL:	X_occscheduler
+ *	@SYMBOL:	Y_occscheduler
  *	@INPUT:		0
  *	@OUTPUT: 	0
  *	@CALL: 		K_OCCSCHEDULER
  *	@PRIO:		50
  */
-K_CALL_DEFINE_0_0 (X_occscheduler)
+K_CALL_DEFINE_0_0 (Y_occscheduler)
 {
 	K_CALL_PARAMS_0 ();
 	kernel_scheduler (sched);
@@ -2083,8 +2080,8 @@ K_CALL_DEFINE_0_0 (Y_shutdown)
 /*}}}*/
 /*}}}*/
 /*{{{  error entry-points */
-/*{{{  static void kernel_X_common_error (...) */
-static void kernel_X_common_error (word *Wptr, sched_t *sched, unsigned int return_address, char *name)
+/*{{{  static void kernel_common_error (...) */
+static void kernel_common_error (word *Wptr, sched_t *sched, unsigned int return_address, char *name)
 {
 #if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 	d_process *kr_dptr;
@@ -2094,7 +2091,7 @@ static void kernel_X_common_error (word *Wptr, sched_t *sched, unsigned int retu
 	if (faulting_dynproc ((word **)&(Wptr), &return_address, name, &kr_dptr)) {
 		BMESSAGE ("dynamic process generated a fault, killed it.\n");
 		switch_priofinity (sched, kr_dptr->holding_priofinity);
-		K_ZERO_OUT ();
+		K_ZERO_OUT_JUMP (return_address);
 	} else
 #endif
 	{
@@ -2107,163 +2104,162 @@ static void kernel_X_common_error (word *Wptr, sched_t *sched, unsigned int retu
 	}
 }
 /*}}}*/
-/*{{{  void kernel_X_zero_div (void)*/
+/*{{{  void kernel_Y_zero_div (void)*/
 /*
  *	entry point for integer division-by-zero
  *
- *	@SYMBOL:	X_zero_div
+ *	@SYMBOL:	Y_zero_div
  *	@INPUT:		4
  *	@OUTPUT: 	0
  *	@CALL: 		K_ZERODIV
  *	@PRIO:		0
  */
-K_CALL_DEFINE_4_0 (X_zero_div)
+K_CALL_DEFINE_4_0 (Y_zero_div)
 {
 	unsigned int zerodiv_info2, zerodiv_info, procedure_addr, filename_addr;
 
 	K_CALL_PARAMS_4 (zerodiv_info2, zerodiv_info, procedure_addr, filename_addr);
 	
 	zerodiv_happened (zerodiv_info, zerodiv_info2, filename_addr, procedure_addr);
-	kernel_X_common_error (Wptr, sched, return_address, "zero_div");
+	kernel_common_error (Wptr, sched, return_address, "zero_div");
 }
 /*}}}*/
-/*{{{  void kernel_X_overflow (void)*/
+/*{{{  void kernel_Y_overflow (void)*/
 /*
  *	arithmetic overflow entry point
  *
- *	@SYMBOL:	X_overflow
+ *	@SYMBOL:	Y_overflow
  *	@INPUT:		4
  *	@OUTPUT: 	0
  *	@CALL: 		K_OVERFLOW
  *	@PRIO:		0
  */
-K_CALL_DEFINE_4_0 (X_overflow)
+K_CALL_DEFINE_4_0 (Y_overflow)
 {
 	unsigned int filename_addr, overflow_info, overflow_info2, procedure_addr;
 	
 	K_CALL_PARAMS_4 (overflow_info2, overflow_info, procedure_addr, filename_addr);
 
 	overflow_happened (overflow_info, overflow_info2, filename_addr, procedure_addr);		/* Parameters dealt with (they're visible throughout) */
-	kernel_X_common_error (Wptr, sched, return_address, "overflow");
+	kernel_common_error (Wptr, sched, return_address, "overflow");
 }
 /*}}}*/
-/*{{{  void kernel_X_floaterr (void)*/
+/*{{{  void kernel_Y_floaterr (void)*/
 /*
  *	floating-point error entry point
  *
- *	@SYMBOL:	X_floaterr
+ *	@SYMBOL:	Y_floaterr
  *	@INPUT:		5
  *	@OUTPUT: 	0
  *	@CALL: 		K_FLOATERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_5_0 (X_floaterr)
+K_CALL_DEFINE_5_0 (Y_floaterr)
 {
 	unsigned int filename_addr, floaterr_fpustatus, floaterr_info, floaterr_info2, procedure_addr;
 	
 	K_CALL_PARAMS_5 (floaterr_info2, floaterr_info, procedure_addr, filename_addr, floaterr_fpustatus);
 	
 	floaterr_happened (floaterr_info, floaterr_info2, floaterr_fpustatus, filename_addr, procedure_addr);
-	kernel_X_common_error (Wptr, sched, return_address, "floaterr");
+	kernel_common_error (Wptr, sched, return_address, "floaterr");
 }
 /*}}}*/
-/*{{{  void kernel_X_Seterr (void)*/
+/*{{{  void kernel_Y_Seterr (void)*/
 /*
  *	SETERR entry-point
  *
- *	@SYMBOL:	X_Seterr
+ *	@SYMBOL:	Y_Seterr
  *	@INPUT:		4
  *	@OUTPUT: 	0
  *	@CALL: 		K_SETERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_4_0 (X_Seterr)
+K_CALL_DEFINE_4_0 (Y_Seterr)
 {
 	unsigned int filename_addr, procedure_addr, seterr_info1, seterr_info2;
 	
 	K_CALL_PARAMS_4 (procedure_addr, filename_addr, seterr_info2, seterr_info1);
-	ENTRY_TRACE (X_Seterr, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, seterr_info2, seterr_info1);
+	ENTRY_TRACE (Y_Seterr, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, seterr_info2, seterr_info1);
 	
 	handle_seterr (seterr_info1, seterr_info2, filename_addr, procedure_addr);
-	kernel_X_common_error (Wptr, sched, return_address, "Seterr");
+	kernel_common_error (Wptr, sched, return_address, "Seterr");
 }
 /*}}}*/
-/*{{{  void kernel_X_BSeterr (void)*/
+/*{{{  void kernel_Y_BSeterr (void)*/
 /*
  *	basic SETERR entry-point
  *
- *	@SYMBOL:	X_BSeterr
+ *	@SYMBOL:	Y_BSeterr
  *	@INPUT:		0
  *	@OUTPUT: 	0
  *	@CALL: 		K_BSETERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_0_0 (X_BSeterr)
+K_CALL_DEFINE_0_0 (Y_BSeterr)
 {
 	K_CALL_PARAMS_0 ();
 
-	ENTRY_TRACE0 (X_BSeterr);
+	ENTRY_TRACE0 (Y_BSeterr);
 	
-	kernel_X_common_error (Wptr, sched, return_address, "BSeterr");
+	kernel_common_error (Wptr, sched, return_address, "BSeterr");
 }
 /*}}}*/
-/*{{{  void kernel_X_BNSeterr (void)*/
+/*{{{  void kernel_Y_BNSeterr (void)*/
 /*
  *	basic SETERR entry-point, but no return address expected
  *
- *	@SYMBOL:	X_BNSeterr
+ *	@SYMBOL:	Y_BNSeterr
  *	@INPUT:		0
  *	@OUTPUT: 	0
  *	@CALL: 		K_BNSETERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_0_0 (X_BNSeterr)
+K_CALL_DEFINE_0_0 (Y_BNSeterr)
 {
 	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (X_BNSeterr);
+	ENTRY_TRACE0 (Y_BNSeterr);
 
-	/* return_address = 0 */
-	kernel_X_common_error (Wptr, sched, 0, "BNSeterr");
+	kernel_common_error (Wptr, sched, 0, "BNSeterr");
 }
 /*}}}*/
-/*{{{  void kernel_X_RangeCheckError (void)*/
+/*{{{  void kernel_Y_RangeCheckError (void)*/
 /*
  *	Range error entry-point
  *
- *	@SYMBOL:	X_RangeCheckError
+ *	@SYMBOL:	Y_RangeCheckError
  *	@INPUT:		4
  *	@OUTPUT: 	0
  *	@CALL: 		K_RANGERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_4_0 (X_RangeCheckError)
+K_CALL_DEFINE_4_0 (Y_RangeCheckError)
 {
 	unsigned int filename_addr, procedure_addr, range_info1, range_info2;
 	
 	K_CALL_PARAMS_4 (procedure_addr, filename_addr, range_info2, range_info1);
-	ENTRY_TRACE (X_RangeCheckError, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, range_info2, range_info1);
+	ENTRY_TRACE (Y_RangeCheckError, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, range_info2, range_info1);
 
 	handle_range_error (range_info1, range_info2, filename_addr, procedure_addr);
-	kernel_X_common_error (Wptr, sched, return_address, "RangeCheckError");
+	kernel_common_error (Wptr, sched, return_address, "RangeCheckError");
 }
 /*}}}*/
-/*{{{  void kernel_X_BasicRangeError (void)*/
+/*{{{  void kernel_Y_BasicRangeError (void)*/
 /*
  *	basic range error entry point
  *
- *	@SYMBOL:	X_BasicRangeError
+ *	@SYMBOL:	Y_BasicRangeError
  *	@INPUT:		0
  *	@OUTPUT: 	0
  *	@CALL: 		K_BRANGERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_0_0 (X_BasicRangeError)
+K_CALL_DEFINE_0_0 (Y_BasicRangeError)
 {
 	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (X_BasicRangeError);
+	ENTRY_TRACE0 (Y_BasicRangeError);
 
 	BMESSAGE ("range error.\n");
-	kernel_X_common_error (Wptr, sched, return_address, "BasicRangeError");
+	kernel_common_error (Wptr, sched, return_address, "BasicRangeError");
 }
 /*}}}*/
 /*{{{  void dump_trap_info (unsigned int return_address, word a_val, word b_val, word c_val)*/
@@ -2286,7 +2282,7 @@ void dump_trap_info (word *Wptr, word *Fptr, word *Bptr, unsigned int return_add
 }
 /*}}}*/
 #if defined(ENABLE_DTRACES) && !defined(RMOX_BUILD)
-/*{{{  void kernel_X_dtrace (void)*/
+/*{{{  void kernel_Y_dtrace (void)*/
 /*
  *	this handles debugging traces generated by tranx86
  *
@@ -2298,12 +2294,12 @@ void dump_trap_info (word *Wptr, word *Fptr, word *Bptr, unsigned int return_add
  *	@DEPEND:	ENABLE_DTRACES
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_2_0 (X_dtrace)
+K_CALL_DEFINE_2_0 (Y_dtrace)
 {
 	unsigned int trapval_A, trapval_B, trapval_C;
 	
 	K_CALL_PARAMS_2 (trapval_A, trapval_B);
-	ENTRY_TRACE (X_dtrace, "0x8.8x, 0x8.8x", trapval_A, trapval_B);
+	ENTRY_TRACE (Y_dtrace, "0x8.8x, 0x8.8x", trapval_A, trapval_B);
 
 	rt_dtrace ((void *)Wptr, trapval_A, trapval_B);
 
@@ -3574,11 +3570,11 @@ static void kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, wo
 	kernel_scheduler (sched);
 }
 /*}}}*/
-/*{{{  void kernel_X_b_dispatch (void)*/
+/*{{{  void kernel_Y_b_dispatch (void)*/
 /*
  *	dispatches a blocking call
  *
- *	@SYMBOL:	X_b_dispatch
+ *	@SYMBOL:	Y_b_dispatch
  *	@INPUT:		2
  *	@OUTPUT: 	0
  *	@CALL: 		K_B_DISPATCH
@@ -3586,21 +3582,21 @@ static void kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, wo
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_2_0 (X_b_dispatch)
+K_CALL_DEFINE_2_0 (Y_b_dispatch)
 {
 	void *b_func, *b_param;
 	
 	K_CALL_PARAMS_2 (b_func, b_param);
-	ENTRY_TRACE (X_b_dispatch, "%p, %p", (void *)b_func, (void *)b_param);
+	ENTRY_TRACE (Y_b_dispatch, "%p, %p", (void *)b_func, (void *)b_param);
 
 	kernel_bsc_dispatch (sched, return_address, Wptr, b_func, b_param, 0);
 }
 /*}}}*/
-/*{{{  void kernel_X_bx_dispatch (void)*/
+/*{{{  void kernel_Y_bx_dispatch (void)*/
 /*
  *	dispatches a terminateable blocking call
  *
- *	@SYMBOL:	X_bx_dispatch
+ *	@SYMBOL:	Y_bx_dispatch
  *	@INPUT:		2
  *	@OUTPUT: 	0
  *	@CALL: 		K_BX_DISPATCH
@@ -3608,21 +3604,21 @@ K_CALL_DEFINE_2_0 (X_b_dispatch)
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_2_0 (X_bx_dispatch)
+K_CALL_DEFINE_2_0 (Y_bx_dispatch)
 {
 	void *b_func, *b_param;
 	
 	K_CALL_PARAMS_2 (b_func, b_param);
-	ENTRY_TRACE (X_bx_dispatch, "%p, %p", (void *)b_func, (void *)b_param);
+	ENTRY_TRACE (Y_bx_dispatch, "%p, %p", (void *)b_func, (void *)b_param);
 
 	kernel_bsc_dispatch (sched, return_address, Wptr, b_func, b_param, 1);
 }
 /*}}}*/
-/*{{{  void kernel_Y_bx_kill (void)*/
+/*{{{  void kernel_X_bx_kill (void)*/
 /*
  *	dispatches a terminateable blocking call
  *
- *	@SYMBOL:	Y_bx_kill
+ *	@SYMBOL:	X_bx_kill
  *	@INPUT:		1
  *	@OUTPUT: 	1
  *	@CALL: 		K_BX_KILL
@@ -3630,13 +3626,13 @@ K_CALL_DEFINE_2_0 (X_bx_dispatch)
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_1_1 (Y_bx_kill)
+K_CALL_DEFINE_1_1 (X_bx_kill)
 {
 	word *ptr;
 	int result;
 	
 	K_CALL_PARAMS_1 (ptr);
-	ENTRY_TRACE (Y_bx_kill, "%p", ptr);
+	ENTRY_TRACE (X_bx_kill, "%p", ptr);
 
 	result = bsyscall_kill (ptr);
 
@@ -3646,89 +3642,89 @@ K_CALL_DEFINE_1_1 (Y_bx_kill)
 #endif	/* RMOX_BUILD || !BLOCKING_SYSCALLS */
 /*}}}*/
 /*{{{  memory allocation */
-/*{{{  void kernel_Y_mt_alloc (void)*/
+/*{{{  void kernel_X_mt_alloc (void)*/
 /*
  *	allocates a new mobile type and initialises it
  *
- *	@SYMBOL:	Y_mt_alloc
+ *	@SYMBOL:	X_mt_alloc
  *	@INPUT:		2
  *	@OUTPUT: 	1
  *	@CALL: 		K_MT_ALLOC
  *	@PRIO:		100
  */
-K_CALL_DEFINE_2_1 (Y_mt_alloc)
+K_CALL_DEFINE_2_1 (X_mt_alloc)
 {
 	word *ptr, type, size;
 	
 	K_CALL_PARAMS_2 (type, size);
-	ENTRY_TRACE (Y_mt_alloc, "%08x %d", type, size);
+	ENTRY_TRACE (X_mt_alloc, "%08x %d", type, size);
 
 	ptr = mt_alloc (sched->allocator, type, size);
 
 	K_ONE_OUT (ptr);
 }
 /*}}}*/
-/*{{{  void kernel_Y_mt_release (void)*/
+/*{{{  void kernel_X_mt_release (void)*/
 /*
  *	frees a mobile type
  *
- *	@SYMBOL:	Y_mt_release
+ *	@SYMBOL:	X_mt_release
  *	@INPUT:		1
  *	@OUTPUT: 	0
  *	@CALL: 		K_MT_RELEASE
  *	@PRIO:		100
  */
-K_CALL_DEFINE_1_0 (Y_mt_release)
+K_CALL_DEFINE_1_0 (X_mt_release)
 {
 	word *ptr;
 	
 	K_CALL_PARAMS_1 (ptr);
-	ENTRY_TRACE (Y_mt_release, "%p", ptr);
+	ENTRY_TRACE (X_mt_release, "%p", ptr);
 
 	mt_release (sched, ptr);
 
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_mt_clone (void)*/
+/*{{{  void kernel_X_mt_clone (void)*/
 /*
  *	clones a mobile type
  *
- *	@SYMBOL:	Y_mt_clone
+ *	@SYMBOL:	X_mt_clone
  *	@INPUT:		1
  *	@OUTPUT: 	1
  *	@CALL: 		K_MT_CLONE
  *	@PRIO:		100
  */
-K_CALL_DEFINE_1_1 (Y_mt_clone)
+K_CALL_DEFINE_1_1 (X_mt_clone)
 {
 	word *dst, *src;
 	
 	K_CALL_PARAMS_1 (src);
-	ENTRY_TRACE (Y_mt_clone, "%p", src);
+	ENTRY_TRACE (X_mt_clone, "%p", src);
 
 	dst = mt_clone (sched, src);
 
 	K_ONE_OUT (dst);
 }
 /*}}}*/
-/*{{{  void kernel_Y_mt_dclone (void)*/
+/*{{{  void kernel_X_mt_dclone (void)*/
 /*
  *	clones some data into a new mobile type
  *
- *	@SYMBOL:	Y_mt_dclone
+ *	@SYMBOL:	X_mt_dclone
  *	@INPUT:		3
  *	@OUTPUT: 	1
  *	@CALL: 		K_MT_DCLONE
  *	@PRIO:		60
  */
-K_CALL_DEFINE_3_1 (Y_mt_dclone)
+K_CALL_DEFINE_3_1 (X_mt_dclone)
 {
 	word bytes, *dst, type;
 	void *src;
 	
 	K_CALL_PARAMS_3 (type, bytes, src);
-	ENTRY_TRACE (Y_mt_dclone, "%08x, %d, %p", type, bytes, src);
+	ENTRY_TRACE (X_mt_dclone, "%08x, %d, %p", type, bytes, src);
 	
 	if (bytes && (type == (MT_SIMPLE | MT_MAKE_TYPE (MT_DATA)))) {
 		dst = mt_alloc_data (sched->allocator, type, bytes);
@@ -3792,22 +3788,22 @@ K_CALL_DEFINE_1_0 (X_mrelease)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_mt_bind (void)*/
+/*{{{  void kernel_X_mt_bind (void)*/
 /*
  *	bind a mobile type in some way to a bit of data
  *
- *	@SYMBOL:	Y_mt_bind
+ *	@SYMBOL:	X_mt_bind
  *	@INPUT:		3
  *	@OUTPUT: 	1
  *	@CALL: 		K_MT_BIND
  *	@PRIO:		50
  */
-K_CALL_DEFINE_3_1 (Y_mt_bind)
+K_CALL_DEFINE_3_1 (X_mt_bind)
 {
 	word bind_type, *data, *ptr, type;
 	
 	K_CALL_PARAMS_3 (bind_type, ptr, data);
-	ENTRY_TRACE (Y_mt_bind, "%08x %p %p", bind_type, ptr, data);
+	ENTRY_TRACE (X_mt_bind, "%08x %p %p", bind_type, ptr, data);
 
 	ASSERT (ptr != NULL);
 
@@ -4015,22 +4011,22 @@ K_CALL_DEFINE_2_0 (Y_startp)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_runp (void)*/
+/*{{{  void kernel_X_runp (void)*/
 /*
  *	run process (fast interface)
  *
- *	@SYMBOL:	Y_runp
+ *	@SYMBOL:	X_runp
  *	@INPUT:		1
  *	@OUTPUT: 	0
  *	@CALL: 		K_RUNP
  *	@PRIO:		80
  */
-K_CALL_DEFINE_1_0 (Y_runp)
+K_CALL_DEFINE_1_0 (X_runp)
 {
 	word *other_workspace;
 	
 	K_CALL_PARAMS_1 (other_workspace);
-	ENTRY_TRACE (Y_runp, "%p", other_workspace);
+	ENTRY_TRACE (X_runp, "%p", other_workspace);
 
 	other_workspace = (word *)(((word)other_workspace) & (~(sizeof(word) - 1)));
 	enqueue_process (sched, other_workspace);
@@ -4038,20 +4034,20 @@ K_CALL_DEFINE_1_0 (Y_runp)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_X_pause (void)*/
+/*{{{  void kernel_Y_pause (void)*/
 /*
  *	reschedule
  *
- *	@SYMBOL:	X_pause
+ *	@SYMBOL:	Y_pause
  *	@INPUT:		0
  *	@OUTPUT: 	0
  *	@CALL: 		K_PAUSE
  *	@PRIO:		80
  */
-K_CALL_DEFINE_0_0 (X_pause)
+K_CALL_DEFINE_0_0 (Y_pause)
 {
 	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (X_pause);
+	ENTRY_TRACE0 (Y_pause);
 
 	save_priofinity (sched, Wptr);
 	save_return (sched, Wptr, return_address);
@@ -4060,20 +4056,20 @@ K_CALL_DEFINE_0_0 (X_pause)
 	kernel_scheduler (sched);
 }
 /*}}}*/
-/*{{{  void kernel_X_stopp (void)*/
+/*{{{  void kernel_Y_stopp (void)*/
 /*
  *	stop process
  *
- *	@SYMBOL:	X_stopp
+ *	@SYMBOL:	Y_stopp
  *	@INPUT:		0
  *	@OUTPUT: 	0
  *	@CALL: 		K_STOPP
  *	@PRIO:		80
  */
-K_CALL_DEFINE_0_0 (X_stopp)
+K_CALL_DEFINE_0_0 (Y_stopp)
 {
 	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (X_stopp);
+	ENTRY_TRACE0 (Y_stopp);
 
 	save_priofinity (sched, Wptr);
 	save_return (sched, Wptr, return_address);
@@ -4113,44 +4109,44 @@ K_CALL_DEFINE_1_0 (Y_endp)
 	kernel_scheduler (sched);
 }
 /*}}}*/
-/*{{{  void kernel_Y_par_enroll (void)*/
+/*{{{  void kernel_X_par_enroll (void)*/
 /*
  *	end process
  *
- *	@SYMBOL:	Y_par_enroll
+ *	@SYMBOL:	X_par_enroll
  *	@INPUT:		2
  *	@OUTPUT: 	0
  *	@CALL: 		K_PAR_ENROLL
  *	@PRIO:		50
  */
-K_CALL_DEFINE_2_0 (Y_par_enroll)
+K_CALL_DEFINE_2_0 (X_par_enroll)
 {
 	word count, *ptr;
 	
 	K_CALL_PARAMS_2 (count, ptr);
-	ENTRY_TRACE (Y_par_enroll, "%d %p", count, ptr);
+	ENTRY_TRACE (X_par_enroll, "%d %p", count, ptr);
 
 	atw_add (&(ptr[Count]), count);
 
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_X_mreleasep (void)*/
+/*{{{  void kernel_Y_mreleasep (void)*/
 /*
  *	frees a process whos workspace was allocated by X_malloc, first adjusting by the parameter
  *
- *	@SYMBOL:	X_mreleasep
+ *	@SYMBOL:	Y_mreleasep
  *	@INPUT:		1
  *	@OUTPUT: 	0
  *	@CALL: 		K_MRELEASEP
  *	@PRIO:		90
  */
-K_CALL_DEFINE_1_0 (X_mreleasep)
+K_CALL_DEFINE_1_0 (Y_mreleasep)
 {
 	word *ptr, adjust;
 	
 	K_CALL_PARAMS_1 (adjust);
-	ENTRY_TRACE (X_mreleasep, "%d", adjust);
+	ENTRY_TRACE (Y_mreleasep, "%d", adjust);
 
 	ptr = (word *)(((char *) Wptr) + (((signed int) adjust) * sizeof(word)));
 
@@ -4164,66 +4160,66 @@ K_CALL_DEFINE_1_0 (X_mreleasep)
 	kernel_scheduler (sched);
 }
 /*}}}*/
-/*{{{  void kernel_Y_proc_alloc (void)*/
+/*{{{  void kernel_X_proc_alloc (void)*/
 /*
  *	allocate a process workspace
  *
- *	@SYMBOL:	Y_proc_alloc
+ *	@SYMBOL:	X_proc_alloc
  *	@INPUT:		2
  *	@OUTPUT: 	1
  *	@CALL: 		K_PROC_ALLOC
  *	@PRIO:		90
  */
-K_CALL_DEFINE_2_1 (Y_proc_alloc)
+K_CALL_DEFINE_2_1 (X_proc_alloc)
 {
 	word flags, words, *ws;
 
 	K_CALL_PARAMS_2 (flags, words);
-	ENTRY_TRACE (Y_proc_alloc, "%d, %d", flags, words);
+	ENTRY_TRACE (X_proc_alloc, "%d, %d", flags, words);
 
 	ws = mt_alloc_data (sched->allocator, MT_SIMPLE | MT_MAKE_TYPE (MT_DATA), words << WSH);
 	
 	K_ONE_OUT (ws);
 }
 /*}}}*/
-/*{{{  void kernel_Y_proc_param (void)*/
+/*{{{  void kernel_X_proc_param (void)*/
 /*
- *	pass a param to workspace allocated via Y_proc_alloc
+ *	pass a param to workspace allocated via X_proc_alloc
  *
- *	@SYMBOL:	Y_proc_param
+ *	@SYMBOL:	X_proc_param
  *	@INPUT:		3
  *	@OUTPUT: 	0
  *	@CALL: 		K_PROC_PARAM
  *	@PRIO:		90
  */
-K_CALL_DEFINE_3_0 (Y_proc_param)
+K_CALL_DEFINE_3_0 (X_proc_param)
 {
 	word offset, param, *ws;
 
 	K_CALL_PARAMS_3 (offset, ws, param);
-	ENTRY_TRACE (Y_proc_param, "%d, %p, %08x", offset, ws, param);
+	ENTRY_TRACE (X_proc_param, "%d, %p, %08x", offset, ws, param);
 
 	ws[offset] = param;
 
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_proc_mt_copy (void)*/
+/*{{{  void kernel_X_proc_mt_copy (void)*/
 /*
- *	copy a mobile type to workspace allocated via Y_proc_alloc
+ *	copy a mobile type to workspace allocated via X_proc_alloc
  *
- *	@SYMBOL:	Y_proc_mt_copy
+ *	@SYMBOL:	X_proc_mt_copy
  *	@INPUT:		3
  *	@OUTPUT: 	0
  *	@CALL: 		K_PROC_MT_COPY
  *	@PRIO:		90
  */
-K_CALL_DEFINE_3_0 (Y_proc_mt_copy)
+K_CALL_DEFINE_3_0 (X_proc_mt_copy)
 {
 	word offset, *ptr, *ws;
 
 	K_CALL_PARAMS_3 (offset, ws, ptr);
-	ENTRY_TRACE (Y_proc_mt_copy, "%d, %p, %p", offset, ws, ptr);
+	ENTRY_TRACE (X_proc_mt_copy, "%d, %p, %p", offset, ws, ptr);
 
 	if (ptr != NULL) {
 		ws[offset] = (word) mt_clone (sched, ptr);
@@ -4234,22 +4230,22 @@ K_CALL_DEFINE_3_0 (Y_proc_mt_copy)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_proc_mt_move (void)*/
+/*{{{  void kernel_X_proc_mt_move (void)*/
 /*
- *	move a mobile type to workspace allocated via Y_proc_alloc
+ *	move a mobile type to workspace allocated via X_proc_alloc
  *
- *	@SYMBOL:	Y_proc_mt_move
+ *	@SYMBOL:	X_proc_mt_move
  *	@INPUT:		3
  *	@OUTPUT: 	0
  *	@CALL: 		K_PROC_MT_MOVE
  *	@PRIO:		90
  */
-K_CALL_DEFINE_3_0 (Y_proc_mt_move)
+K_CALL_DEFINE_3_0 (X_proc_mt_move)
 {
 	word offset, *ptr, **pptr, *ws;
 
 	K_CALL_PARAMS_3 (offset, ws, pptr);
-	ENTRY_TRACE (Y_proc_mt_move, "%d, %p, %p (%p)", offset, ws, pptr, (word *) *pptr);
+	ENTRY_TRACE (X_proc_mt_move, "%d, %p, %p (%p)", offset, ws, pptr, (word *) *pptr);
 
 	ptr = *pptr;
 	if (ptr != NULL) {
@@ -4264,7 +4260,7 @@ K_CALL_DEFINE_3_0 (Y_proc_mt_move)
 /*}}}*/
 /*{{{  void kernel_Y_proc_start (void)*/
 /*
- *	start a process using a workspace allocated via Y_proc_alloc
+ *	start a process using a workspace allocated via X_proc_alloc
  *
  *	@SYMBOL:	Y_proc_start
  *	@INPUT:		3
@@ -4332,20 +4328,20 @@ word *ccsp_proc_alloc (word flags, word words)
 /*}}}*/
 /*}}}*/
 /*{{{  priority and affinity */
-/*{{{  void kernel_Y_getaff (void)*/
+/*{{{  void kernel_X_getaff (void)*/
 /*
  *	get processor affinity
  *
- *	@SYMBOL:	Y_getaff
+ *	@SYMBOL:	X_getaff
  *	@INPUT:		0
  *	@OUTPUT: 	1
  *	@CALL: 		K_GETAFF
  *	@PRIO:		30
  */
-K_CALL_DEFINE_0_1 (Y_getaff)
+K_CALL_DEFINE_0_1 (X_getaff)
 {
 	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (Y_getaff);
+	ENTRY_TRACE0 (X_getaff);
 	K_ONE_OUT (PAffinity (sched->priofinity));
 }
 /*}}}*/
@@ -4393,20 +4389,20 @@ K_CALL_DEFINE_1_0 (Y_setaff)
 	}
 }
 /*}}}*/
-/*{{{  void kernel_Y_getpas (void)*/
+/*{{{  void kernel_X_getpas (void)*/
 /*
  *	get current raw priofinity
  *
- *	@SYMBOL:	Y_getpas
+ *	@SYMBOL:	X_getpas
  *	@INPUT:		0
  *	@OUTPUT: 	1
  *	@CALL: 		K_GETPAS
  *	@PRIO:		80
  */
-K_CALL_DEFINE_0_1 (Y_getpas)
+K_CALL_DEFINE_0_1 (X_getpas)
 {
 	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (Y_getpas);
+	ENTRY_TRACE0 (X_getpas);
 	K_ONE_OUT (sched->priofinity);
 }
 /*}}}*/
@@ -4703,23 +4699,23 @@ K_CALL_DEFINE_2_0 (Y_outword)
 	kernel_chan_io (CIO_OUTPUT, Wptr, sched, channel_address, pointer, sizeof (word));
 }
 /*}}}*/
-/*{{{  void kernel_X_xable (void)*/
+/*{{{  void kernel_Y_xable (void)*/
 /*
  *	called to synchronise with outputting process
  *	also works with an inputting process in the case where output ALTs are enabled
  *
- *	@SYMBOL:	X_xable
+ *	@SYMBOL:	Y_xable
  *	@INPUT:		1
  *	@OUTPUT: 	0
  *	@CALL: 		K_XABLE
  *	@PRIO:		70
  */
-K_CALL_DEFINE_1_0 (X_xable)
+K_CALL_DEFINE_1_0 (Y_xable)
 {
 	word *channel_address, temp;
 	
 	K_CALL_PARAMS_1 (channel_address);
-	ENTRY_TRACE (X_xable, "%p", channel_address);
+	ENTRY_TRACE (Y_xable, "%p", channel_address);
 
 	temp = atw_val (channel_address);
 
@@ -4867,22 +4863,22 @@ K_CALL_DEFINE_0_1 (X_ldtimer)
 	K_ONE_OUT (now);
 }
 /*}}}*/
-/*{{{  void kernel_X_tin (void)*/
+/*{{{  void kernel_Y_tin (void)*/
 /*
  *	timer input (delay)
  *
- *	@SYMBOL:	X_tin
+ *	@SYMBOL:	Y_tin
  *	@INPUT:		1
  *	@OUTPUT: 	0
  *	@CALL: 		K_TIN
  *	@PRIO:		80
  */
-K_CALL_DEFINE_1_0 (X_tin)
+K_CALL_DEFINE_1_0 (Y_tin)
 {
 	Time now, wait_time;
 	
 	K_CALL_PARAMS_1 (wait_time);
-	ENTRY_TRACE (X_tin, "%d", wait_time);
+	ENTRY_TRACE (Y_tin, "%d", wait_time);
 
 	now = Time_GetTime(sched);
 
@@ -4893,7 +4889,6 @@ K_CALL_DEFINE_1_0 (X_tin)
 		SetTimeField(Wptr, wait_time);
 		add_to_timer_queue (sched, Wptr, wait_time, false);
 		kernel_scheduler (sched);
-		return;
 	}
 	
 	K_ZERO_OUT ();
@@ -4925,20 +4920,20 @@ K_CALL_DEFINE_1_0 (Y_fasttin)
 /*}}}*/
 /*}}}*/
 /*{{{  ALTing */
-/*{{{  void kernel_Y_alt (void)*/
+/*{{{  void kernel_X_alt (void)*/
 /*
  *	ALT start
  *
- *	@SYMBOL:	Y_alt
+ *	@SYMBOL:	X_alt
  *	@INPUT:		0
  *	@OUTPUT: 	0
  *	@CALL: 		K_ALT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_0_0 (Y_alt)
+K_CALL_DEFINE_0_0 (X_alt)
 {
 	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (Y_alt);
+	ENTRY_TRACE0 (X_alt);
 
 	atw_set (&(Wptr[State]), ALT_ENABLING | ALT_NOT_READY | 1);
 	weak_write_barrier ();
@@ -4946,20 +4941,20 @@ K_CALL_DEFINE_0_0 (Y_alt)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_talt (void)*/
+/*{{{  void kernel_X_talt (void)*/
 /*
  *	timer ALT start
  *
- *	@SYMBOL:	Y_talt
+ *	@SYMBOL:	X_talt
  *	@INPUT:		0
  *	@OUTPUT: 	0
  *	@CALL: 		K_TALT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_0_0 (Y_talt)
+K_CALL_DEFINE_0_0 (X_talt)
 {
 	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (Y_talt);
+	ENTRY_TRACE0 (X_talt);
 
 	atw_set (&(Wptr[State]), ALT_ENABLING | ALT_NOT_READY | 1);
 	atw_set (&(Wptr[TLink]), TimeNotSet_p);
@@ -5022,22 +5017,22 @@ K_CALL_DEFINE_0_0 (Y_caltend)
 	kernel_altend (Wptr, sched, return_address, false);
 }
 /*}}}*/
-/*{{{  void kernel_X_altwt (void)*/
+/*{{{  void kernel_Y_altwt (void)*/
 /*
  *	ALT wait
  *
- *	@SYMBOL:	X_altwt
+ *	@SYMBOL:	Y_altwt
  *	@INPUT:		0
  *	@OUTPUT: 	0
  *	@CALL: 		K_ALTWT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_0_0 (X_altwt)
+K_CALL_DEFINE_0_0 (Y_altwt)
 {
 	word state;
 
 	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (X_altwt);
+	ENTRY_TRACE0 (Y_altwt);
 
 	Wptr[Temp] = NoneSelected_o;
 
@@ -5058,23 +5053,23 @@ K_CALL_DEFINE_0_0 (X_altwt)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_X_taltwt (void)*/
+/*{{{  void kernel_Y_taltwt (void)*/
 /*
  *	timer ALT wait
  *
- *	@SYMBOL:	X_taltwt
+ *	@SYMBOL:	Y_taltwt
  *	@INPUT:		0
  *	@OUTPUT: 	0
  *	@CALL: 		K_TALTWT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_0_0 (X_taltwt)
+K_CALL_DEFINE_0_0 (Y_taltwt)
 {
 	Time now;
 	word state;
 
 	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (X_taltwt);
+	ENTRY_TRACE0 (Y_taltwt);
 
 	Wptr[Temp] = NoneSelected_o;
 	
@@ -5160,22 +5155,22 @@ static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, unsigned int return_
 	return false;
 }
 /*}}}*/
-/*{{{  void kernel_Y_enbc (void)*/
+/*{{{  void kernel_X_enbc (void)*/
 /*
  *	enable channel
  *
- *	@SYMBOL:	Y_enbc
+ *	@SYMBOL:	X_enbc
  *	@INPUT:		2
  *	@OUTPUT: 	1
  *	@CALL: 		K_ENBC
  *	@PRIO:		80
  */
-K_CALL_DEFINE_2_1 (Y_enbc)
+K_CALL_DEFINE_2_1 (X_enbc)
 {
 	word **channel_address, guard;
 
 	K_CALL_PARAMS_2 (guard, channel_address);
-	ENTRY_TRACE (Y_enbc, "%d, %p (ready = %d)", guard, channel_address, guard && (*channel_address != NotProcess_p) && (*channel_address != Wptr));
+	ENTRY_TRACE (X_enbc, "%d, %p (ready = %d)", guard, channel_address, guard && (*channel_address != NotProcess_p) && (*channel_address != Wptr));
 
 	if (!guard) {
 		K_ONE_OUT (false);
@@ -5236,22 +5231,22 @@ K_CALL_DEFINE_3_1 (Y_enbc3)
 	K_ONE_OUT (true);
 }
 /*}}}*/
-/*{{{  void kernel_Y_cenbc (void)*/
+/*{{{  void kernel_X_cenbc (void)*/
 /*
  *	CIF enable channel (2 param)
  *
- *	@SYMBOL:	Y_cenbc
+ *	@SYMBOL:	X_cenbc
  *	@INPUT:		2
  *	@OUTPUT: 	1
  *	@CALL: 		K_CENBC
  *	@PRIO:		80
  */
-K_CALL_DEFINE_2_1 (Y_cenbc)
+K_CALL_DEFINE_2_1 (X_cenbc)
 {
 	word **channel_address, id;
 
 	K_CALL_PARAMS_2 (id, channel_address);
-	ENTRY_TRACE (Y_cenbc, "%d %p (ready = %d), %p", id, channel_address, (*channel_address != NotProcess_p) && (*channel_address != Wptr));
+	ENTRY_TRACE (X_cenbc, "%d %p (ready = %d), %p", id, channel_address, (*channel_address != NotProcess_p) && (*channel_address != Wptr));
 
 	K_ONE_OUT (kernel_enbc (Wptr, sched, id, channel_address, false, true));
 }
@@ -5272,22 +5267,22 @@ static INLINE void kernel_enbs (word *Wptr, unsigned int return_address, bool ju
 	}
 }
 /*}}}*/
-/*{{{  void kernel_Y_enbs (void)*/
+/*{{{  void kernel_X_enbs (void)*/
 /*
  *	enable skip guard
  *
- *	@SYMBOL:	Y_enbs
+ *	@SYMBOL:	X_enbs
  *	@INPUT:		1
  *	@OUTPUT: 	1
  *	@CALL: 		K_ENBS
  *	@PRIO:		60
  */
-K_CALL_DEFINE_1_1 (Y_enbs)
+K_CALL_DEFINE_1_1 (X_enbs)
 {
 	word guard;
 
 	K_CALL_PARAMS_1 (guard);
-	ENTRY_TRACE (Y_enbs, "%d", guard);
+	ENTRY_TRACE (X_enbs, "%d", guard);
 
 	if (!guard) {
 		K_ONE_OUT (false);
@@ -5313,12 +5308,11 @@ K_CALL_DEFINE_1_0 (Y_enbs2)
 	unsigned int process_address;
 
 	K_CALL_PARAMS_1 (process_address);
-	ENTRY_TRACE (Y_enbs2, "%p", process_address);
+	ENTRY_TRACE (X_enbs2, "%p", process_address);
 
 	kernel_enbs (Wptr, 0, true, false);
-	return_address = process_address;
 
-	K_ZERO_OUT ();
+	K_ZERO_OUT_JUMP (process_address);
 }
 /*}}}*/
 /*{{{  void kernel_Y_enbs3 (void)*/
@@ -5344,27 +5338,26 @@ K_CALL_DEFINE_2_1 (Y_enbs3)
 	}
 
 	kernel_enbs (Wptr, 0, true, false);
-	return_address = process_address;
 
-	K_ONE_OUT (true);
+	K_ONE_OUT_JUMP (process_address, true);
 }
 /*}}}*/
-/*{{{  void kernel_Y_cenbs (void)*/
+/*{{{  void kernel_X_cenbs (void)*/
 /*
  *	CIF enable skip guard
  *
- *	@SYMBOL:	Y_cenbs
+ *	@SYMBOL:	X_cenbs
  *	@INPUT:		1
  *	@OUTPUT: 	1
  *	@CALL: 		K_CENBS
  *	@PRIO:		60
  */
-K_CALL_DEFINE_1_1 (Y_cenbs)
+K_CALL_DEFINE_1_1 (X_cenbs)
 {
 	word id;
 
 	K_CALL_PARAMS_1 (id);
-	ENTRY_TRACE (Y_cenbs, "%d", id);
+	ENTRY_TRACE (X_cenbs, "%d", id);
 
 	kernel_enbs (Wptr, id, false, true);
 
@@ -5481,22 +5474,22 @@ K_CALL_DEFINE_3_1 (Y_enbt3)
 	K_ONE_OUT (true);
 }
 /*}}}*/
-/*{{{  void kernel_Y_cenbt (void)*/
+/*{{{  void kernel_X_cenbt (void)*/
 /*
  *	CIF enable timer
  *
- *	@SYMBOL:	Y_cenbt
+ *	@SYMBOL:	X_cenbt
  *	@INPUT:		2
  *	@OUTPUT: 	1
  *	@CALL: 		K_CENBT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_2_1 (Y_cenbt)
+K_CALL_DEFINE_2_1 (X_cenbt)
 {
 	Time id, timeout;
 
 	K_CALL_PARAMS_2 (id, timeout);
-	ENTRY_TRACE (Y_cenbt, "%d %d", id, timeout);
+	ENTRY_TRACE (X_cenbt, "%d %d", id, timeout);
 
 	K_ONE_OUT (kernel_enbt (Wptr, sched, id, timeout, false, true, true));
 }
@@ -5525,23 +5518,23 @@ static INLINE word kernel_disc (word *Wptr, unsigned int process_address, word *
 	return true;
 }
 /*}}}*/
-/*{{{  void kernel_Y_disc (void)*/
+/*{{{  void kernel_X_disc (void)*/
 /*
  *	disable channel
  *
- *	@SYMBOL:	Y_disc
+ *	@SYMBOL:	X_disc
  *	@INPUT:		3
  *	@OUTPUT: 	1
  *	@CALL: 		K_DISC
  *	@PRIO:		80
  */
-K_CALL_DEFINE_3_1 (Y_disc)
+K_CALL_DEFINE_3_1 (X_disc)
 {
 	unsigned int process_address;
 	word **channel_address, guard;
 
 	K_CALL_PARAMS_3 (process_address, guard, channel_address);
-	ENTRY_TRACE (Y_disc, "%p, %d, %p", (void *)process_address, guard, channel_address);
+	ENTRY_TRACE (X_disc, "%p, %d, %p", (void *)process_address, guard, channel_address);
 
 	if (!guard) {
 		K_ONE_OUT (false);
@@ -5550,43 +5543,43 @@ K_CALL_DEFINE_3_1 (Y_disc)
 	K_ONE_OUT (kernel_disc (Wptr, process_address, channel_address, (Wptr[Temp] == NoneSelected_o)));
 }
 /*}}}*/
-/*{{{  void kernel_Y_cdisc (void)*/
+/*{{{  void kernel_X_cdisc (void)*/
 /*
  *	CIF disable channel
  *
- *	@SYMBOL:	Y_cdisc
+ *	@SYMBOL:	X_cdisc
  *	@INPUT:		2
  *	@OUTPUT: 	1
  *	@CALL: 		K_CDISC
  *	@PRIO:		80
  */
-K_CALL_DEFINE_2_1 (Y_cdisc)
+K_CALL_DEFINE_2_1 (X_cdisc)
 {
 	word **channel_address, id;
 
 	K_CALL_PARAMS_2 (id, channel_address);
-	ENTRY_TRACE (Y_cdisc, "%d %p", id, channel_address);
+	ENTRY_TRACE (X_cdisc, "%d %p", id, channel_address);
 
 	K_ONE_OUT (kernel_disc (Wptr, id, channel_address, (Wptr[Temp] == NoneSelected_o)));
 }
 /*}}}*/
-/*{{{  void kernel_Y_ndisc (void)*/
+/*{{{  void kernel_X_ndisc (void)*/
 /*
  *	disable channel
  *
- *	@SYMBOL:	Y_ndisc
+ *	@SYMBOL:	X_ndisc
  *	@INPUT:		3
  *	@OUTPUT: 	1
  *	@CALL: 		K_NDISC
  *	@PRIO:		80
  */
-K_CALL_DEFINE_3_1 (Y_ndisc)
+K_CALL_DEFINE_3_1 (X_ndisc)
 {
 	unsigned int process_address;
 	word **channel_address, guard;
 
 	K_CALL_PARAMS_3 (process_address, guard, channel_address);
-	ENTRY_TRACE (Y_ndisc, "%p, %d, %p", (void *)process_address, guard, channel_address);
+	ENTRY_TRACE (X_ndisc, "%p, %d, %p", (void *)process_address, guard, channel_address);
 
 	if (!guard) {
 		K_ONE_OUT (false);
@@ -5624,22 +5617,22 @@ K_CALL_DEFINE_2_1 (X_diss)
 	K_ONE_OUT (fired);
 }
 /*}}}*/
-/*{{{  void kernel_Y_cdiss (void)*/
+/*{{{  void kernel_X_cdiss (void)*/
 /*
  *	CIF disable SKIP guard
  *
- *	@SYMBOL:	Y_cdiss
+ *	@SYMBOL:	X_cdiss
  *	@INPUT:		1
  *	@OUTPUT: 	1
  *	@CALL: 		K_CDISS
  *	@PRIO:		60
  */
-K_CALL_DEFINE_1_1 (Y_cdiss)
+K_CALL_DEFINE_1_1 (X_cdiss)
 {
 	word id;
 
 	K_CALL_PARAMS_1 (id);
-	ENTRY_TRACE (Y_cdiss, "%d", id);
+	ENTRY_TRACE (X_cdiss, "%d", id);
 
 	if (Wptr[Temp] == NoneSelected_o) {
 		Wptr[Temp] = id;
@@ -5742,22 +5735,22 @@ K_CALL_DEFINE_3_1 (X_dist)
 	K_ONE_OUT (kernel_dist (Wptr, sched, process_address, timeout, (Wptr[Temp] == NoneSelected_o)));
 }
 /*}}}*/
-/*{{{  void kernel_Y_cdist (void)*/
+/*{{{  void kernel_X_cdist (void)*/
 /*
  *	CIF disable timer
  *
- *	@SYMBOL:	Y_cdist
+ *	@SYMBOL:	X_cdist
  *	@INPUT:		2
  *	@OUTPUT: 	1
  *	@CALL: 		K_CDIST
  *	@PRIO:		70
  */
-K_CALL_DEFINE_2_1 (Y_cdist)
+K_CALL_DEFINE_2_1 (X_cdist)
 {
 	Time id, timeout;
 	
 	K_CALL_PARAMS_2 (id, timeout);
-	ENTRY_TRACE (Y_cdist, "%d, %d", id, timeout);
+	ENTRY_TRACE (X_cdist, "%d, %d", id, timeout);
 
 	K_ONE_OUT (kernel_dist (Wptr, sched, id, timeout, (Wptr[Temp] == NoneSelected_o)));
 }
@@ -5810,40 +5803,40 @@ K_CALL_DEFINE_1_0 (Y_sem_claim)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_sem_release (void)*/
+/*{{{  void kernel_X_sem_release (void)*/
 /*
- *	@SYMBOL:	Y_sem_release
+ *	@SYMBOL:	X_sem_release
  *	@INPUT:		1
  *	@OUTPUT: 	0
  *	@CALL: 		K_SEM_RELEASE
  *	@PRIO:		90
  */
-K_CALL_DEFINE_1_0 (Y_sem_release)
+K_CALL_DEFINE_1_0 (X_sem_release)
 {
 	ccsp_sem_t *sem;
 	
 	K_CALL_PARAMS_1 (sem);
-	ENTRY_TRACE (Y_sem_release, "%p", sem);
+	ENTRY_TRACE (X_sem_release, "%p", sem);
 
 	sem_release (sched, sem);
 
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_sem_init (void)*/
+/*{{{  void kernel_X_sem_init (void)*/
 /*
- *	@SYMBOL:	Y_sem_init
+ *	@SYMBOL:	X_sem_init
  *	@INPUT:		1
  *	@OUTPUT: 	0
  *	@CALL: 		K_SEM_INIT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_1_0 (Y_sem_init)
+K_CALL_DEFINE_1_0 (X_sem_init)
 {
 	ccsp_sem_t *sem;
 	
 	K_CALL_PARAMS_1 (sem);
-	ENTRY_TRACE (Y_sem_init, "%p", sem);
+	ENTRY_TRACE (X_sem_init, "%p", sem);
 
 	sem_init (sem);
 
@@ -5879,23 +5872,23 @@ K_CALL_DEFINE_2_0 (Y_mt_lock)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_mt_unlock (void)*/
+/*{{{  void kernel_X_mt_unlock (void)*/
 /*
  *	unlock a mobile type
  *
- *	@SYMBOL:	Y_mt_unlock
+ *	@SYMBOL:	X_mt_unlock
  *	@INPUT:		2
  *	@OUTPUT: 	0
  *	@CALL: 		K_MT_UNLOCK
  *	@PRIO:		90
  */
-K_CALL_DEFINE_2_0 (Y_mt_unlock)
+K_CALL_DEFINE_2_0 (X_mt_unlock)
 {
 	mt_cb_shared_internal_t *cb;
 	word *ptr, type;
 	
 	K_CALL_PARAMS_2 (type, ptr);
-	ENTRY_TRACE (Y_mt_unlock, "%p", type, ptr);
+	ENTRY_TRACE (X_mt_unlock, "%p", type, ptr);
 
 	cb = (mt_cb_shared_internal_t *) (ptr - MT_CB_SHARED_PTR_OFFSET);
 	
@@ -5930,42 +5923,42 @@ K_CALL_DEFINE_1_0 (Y_mt_sync)
 	bar->sync (sched, &(bar->data), Wptr);
 }
 /*}}}*/
-/*{{{  void kernel_Y_mt_resign (void)*/
+/*{{{  void kernel_X_mt_resign (void)*/
 /*
- *	@SYMBOL:	Y_mt_resign
+ *	@SYMBOL:	X_mt_resign
  *	@INPUT:		2
  *	@OUTPUT: 	0
  *	@CALL: 		K_MT_RESIGN
  *	@PRIO:		80
  */
-K_CALL_DEFINE_2_0 (Y_mt_resign)
+K_CALL_DEFINE_2_0 (X_mt_resign)
 {
 	ccsp_barrier_t *bar;
 	word count;
 	
 	K_CALL_PARAMS_2 (count, bar);
-	ENTRY_TRACE (Y_mt_resign, "%d %p", count, bar);
+	ENTRY_TRACE (X_mt_resign, "%d %p", count, bar);
 
 	bar->resign (sched, &(bar->data), count);
 
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_mt_enroll (void)*/
+/*{{{  void kernel_X_mt_enroll (void)*/
 /*
- *	@SYMBOL:	Y_mt_enroll
+ *	@SYMBOL:	X_mt_enroll
  *	@INPUT:		2
  *	@OUTPUT: 	0
  *	@CALL: 		K_MT_ENROLL
  *	@PRIO:		80
  */
-K_CALL_DEFINE_2_0 (Y_mt_enroll)
+K_CALL_DEFINE_2_0 (X_mt_enroll)
 {
 	ccsp_barrier_t *bar;
 	word count;
 	
 	K_CALL_PARAMS_2 (count, bar);
-	ENTRY_TRACE (Y_mt_enroll, "%d %p", count, bar);
+	ENTRY_TRACE (X_mt_enroll, "%d %p", count, bar);
 
 	bar->enroll (sched, &(bar->data), count);
 
@@ -6081,7 +6074,7 @@ K_CALL_DEFINE_1_0 (X_kernel_run)
 	K_CALL_PARAMS_1 (kr_param);
 	ENTRY_TRACE (X_kernel_run, "%p", (void *)kr_param);
 
-	kr_dptr = dynproc_startprocess ((int *)kr_param, K_CALL_PTR (X_dynproc_exit));
+	kr_dptr = dynproc_startprocess ((int *)kr_param, K_CALL_PTR (Y_dynproc_exit));
 	kr_dptr->holding_wptr 		= Wptr;
 	kr_dptr->holding_raddr 		= return_address;
 	kr_dptr->holding_priofinity 	= sched->priofinity;
@@ -6098,18 +6091,18 @@ K_CALL_DEFINE_1_0 (X_kernel_run)
 		#endif
 		
 		Wptr 			= kr_dptr->ws_ptr;
-		Wptr[IptrSucc]		= (word) K_CALL_PTR (X_dynproc_exit);
+		Wptr[IptrSucc]		= (word) K_CALL_PTR (Y_dynproc_exit);
 		return_address 		= (word) kr_dptr->entrypoint;
 	}
 
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_X_dynproc_suspend (void)*/
+/*{{{  void kernel_Y_dynproc_suspend (void)*/
 /*
  *	entered when a dynamic process is suspending
  *
- *	@SYMBOL:	X_dynproc_suspend
+ *	@SYMBOL:	Y_dynproc_suspend
  *	@INPUT:		1
  *	@OUTPUT: 	0
  *	@CALL: 		K_DYNPROC_SUSPEND
@@ -6117,12 +6110,12 @@ K_CALL_DEFINE_1_0 (X_kernel_run)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_1_0 (X_dynproc_suspend)
+K_CALL_DEFINE_1_0 (Y_dynproc_suspend)
 {
 	word *ds_param;
 	
 	K_CALL_PARAMS_1 (ds_param);
-	ENTRY_TRACE (X_dynproc_suspend, "%p", ds_param);
+	ENTRY_TRACE (Y_dynproc_suspend, "%p", ds_param);
 
 	/* ds_param should point at the argument-set (VAL DPROCESS p, INT result) */
 	if (dynproc_suspendprocess ((d_process *)(ds_param[0]), (int *)(ds_param[1]), Wptr, return_address, sched->priofinity)) {
@@ -6133,11 +6126,11 @@ K_CALL_DEFINE_1_0 (X_dynproc_suspend)
 	}
 }
 /*}}}*/
-/*{{{  void kernel_X_dynproc_exit (void)*/
+/*{{{  void kernel_Y_dynproc_exit (void)*/
 /*
  *	entered when dynamic process finishes
  *
- *	@SYMBOL:	X_dynproc_exit
+ *	@SYMBOL:	Y_dynproc_exit
  *	@INPUT:		0
  *	@OUTPUT: 	0
  *	@CALL: 		K_DYNPROC_EXIT
@@ -6145,29 +6138,28 @@ K_CALL_DEFINE_1_0 (X_dynproc_suspend)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_0_0 (X_dynproc_exit)
+K_CALL_DEFINE_0_0 (Y_dynproc_exit)
 {
 	d_process *kr_dptr;
 	word *kr_wptr;
 	
 	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (X_dynproc_exit);
+	ENTRY_TRACE0 (Y_dynproc_exit);
 
 	kr_wptr 		= (word *) (((word) Wptr) - (4 * sizeof(word)));
 	kr_dptr 		= dynproc_endprocess (kr_wptr);
 	*(kr_dptr->result) 	= DPROCESS_FINISHED;
 	Wptr 			= kr_dptr->holding_wptr;
-	return_address 		= kr_dptr->holding_raddr;
 	switch_priofinity (sched, kr_dptr->holding_priofinity);
 
-	K_ZERO_OUT ();
+	K_ZERO_OUT_JUMP (kr_dptr->holding_raddr);
 }
 /*}}}*/
-/*{{{  void kernel_Y_ldwsmap (void)*/
+/*{{{  void kernel_X_ldwsmap (void)*/
 /*
  *	load workspace-map
  *
- *	@SYMBOL:	Y_ldwsmap
+ *	@SYMBOL:	X_ldwsmap
  *	@INPUT:		2
  *	@OUTPUT: 	0
  *	@CALL: 		K_LDWSMAP
@@ -6175,7 +6167,7 @@ K_CALL_DEFINE_0_0 (X_dynproc_exit)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_2_0 (Y_ldwsmap)
+K_CALL_DEFINE_2_0 (X_ldwsmap)
 {
 	unsigned int code_offset, process_address;
 	
@@ -6186,11 +6178,11 @@ K_CALL_DEFINE_2_0 (Y_ldwsmap)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_ulwsmap (void)*/
+/*{{{  void kernel_X_ulwsmap (void)*/
 /*
  *	unload workspace-map
  *
- *	@SYMBOL:	Y_ulwsmap
+ *	@SYMBOL:	X_ulwsmap
  *	@INPUT:		2
  *	@OUTPUT: 	0
  *	@CALL: 		K_ULWSMAP
@@ -6198,7 +6190,7 @@ K_CALL_DEFINE_2_0 (Y_ldwsmap)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_2_0 (Y_ulwsmap)
+K_CALL_DEFINE_2_0 (X_ulwsmap)
 {
 	unsigned int code_offset, process_address;
 	
@@ -6209,11 +6201,11 @@ K_CALL_DEFINE_2_0 (Y_ulwsmap)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_rmwsmap (void)*/
+/*{{{  void kernel_X_rmwsmap (void)*/
 /*
  *	delete workspace-map
  *
- *	@SYMBOL:	Y_rmwsmap
+ *	@SYMBOL:	X_rmwsmap
  *	@INPUT:		1
  *	@OUTPUT: 	0
  *	@CALL: 		K_RMWSMAP
@@ -6221,7 +6213,7 @@ K_CALL_DEFINE_2_0 (Y_ulwsmap)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_1_0 (Y_rmwsmap)
+K_CALL_DEFINE_1_0 (X_rmwsmap)
 {
 	unsigned int process_address;
 	
@@ -6232,11 +6224,11 @@ K_CALL_DEFINE_1_0 (Y_rmwsmap)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_mppclone (void)*/
+/*{{{  void kernel_X_mppclone (void)*/
 /*
  *	clone mobile process
  *
- *	@SYMBOL:	Y_mppclone
+ *	@SYMBOL:	X_mppclone
  *	@INPUT:		1
  *	@OUTPUT: 	1
  *	@CALL: 		K_MPPCLONE
@@ -6244,7 +6236,7 @@ K_CALL_DEFINE_1_0 (Y_rmwsmap)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_1_1 (Y_mppclone)
+K_CALL_DEFINE_1_1 (X_mppclone)
 {
 	unsigned int process_address;
 
