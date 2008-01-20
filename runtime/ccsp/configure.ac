@@ -643,11 +643,6 @@ if test "$bigendian" = yes; then
  AC_DEFINE([TARGET_BIGENDIAN],1,[define if big-endian target])
 fi
 
-AM_CONDITIONAL(ARCH_DIR_I386, [test "$ARCH_DIR" = "i386"])
-#AM_CONDITIONAL(ARCH_DIR_SPARC, [test "$ARCH_DIR" = "sparc"])
-#AM_CONDITIONAL(ARCH_DIR_MIPS, [test "$ARCH_DIR" = "mips"])
-#AM_CONDITIONAL(ARCH_DIR_PPC64, [test "$ARCH_DIR" = "ppc64"])
-
 #}}}
 #{{{  OS specific configuration
 

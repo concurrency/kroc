@@ -742,10 +742,10 @@ static TEPID void mail_batch (word affinity, batch_t *batch)
 		}
 	}
 	
-	n = pick_random_bit (affinity & (att_val (&enabled_threads)));
+	n = pick_random_bit (targets);
 	s = schedulers[n];
 	atomic_enqueue_to_runqueue (&(s->bmail), false, batch);
-
+	weak_write_barrier ();
 	att_safe_set_bit (&(s->sync), SYNC_BMAIL_BIT);
 #if !defined (RMOX_BUILD)
 	strong_read_barrier ();
@@ -771,7 +771,6 @@ static TEPID void mail_process (word affinity, word *Wptr)
 	
 	if (!affinity) {
 		targets = att_val (&enabled_threads);
-		affinity = -1; /* i.e. 0xffffffff */
 	} else {
 		targets = affinity & (att_val (&enabled_threads));
 	
