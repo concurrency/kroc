@@ -427,15 +427,17 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 	if out_regs > 1:
 		out_regs = 1
 	
-	f.line("{")
-	f.indent()
-
-	dummies = ["sched_dummy"]
+	dummies = []
+	if not resched:
+		dummies.append("sched_dummy")
 	if in_regs > out_regs:
 		dummies = ["dummy0"] + dummies
-	
-	for dummy in dummies:
-		f.line("word %s;" % dummy)
+
+	if len(dummies) > 0:
+		f.line("{")
+		f.indent()
+		for dummy in dummies:
+			f.line("word %s;" % dummy)
 
 	if len(inputs) > 1:
 		for (n, i) in enumerate(inputs):
@@ -450,13 +452,13 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 		f.line("\tpushl %%ebx")
 		f.line("\tpushl %%ebp")
 		f.line("\tmovl %%esp, -28(%%edi)")
+		f.line("\tmovl (%%esi), %%esp")
+		f.line("\tmovl %%esi, %%edx")
 		f.line("\tmovl %%edi, %%ecx")
 		f.line("\tmovl %%edi, %%ebp")
-		f.line("\tmovl (%%edx), %%esp")
-		f.line("\tcall *%d(%%%%edx)" % offset)
+		f.line("\tcall *%d(%%%%esi)" % offset)
 		f.line("\tmovl -28(%%ebp), %%esp")
 		f.line("\tmovl %%ebp, %%edi")
-		f.line("\tmovl %%esi, -28(%%ebp)")
 		f.line("\tpopl %%ebp")
 		f.line("\tpopl %%ebx")
 	else:
@@ -469,7 +471,11 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 	f.end_asm()
 
 	f.begin_line()
-	f.add(": \"=D\" (wptr), \"=d\" (sched_dummy)")
+	f.add(": \"=D\" (wptr), ")
+	if resched:
+		f.add("\"=S\" (sched)")
+	else:
+		f.add("\"=d\" (sched_dummy)")
 	if (in_regs + out_regs) > 0:
 		f.add(", \"=a\" (%s)" % ((outputs + dummies)[0]))
 	f.end_line()
@@ -486,11 +492,14 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 	if (in_regs + out_regs) == 0:
 		f.add(", \"eax\"")
 	if resched:
-		f.add(", \"esi\"")
+		f.add(", \"edx\"")
 	f.end_line()
 
 	f.outdent()
 	f.line(");")
+
+	if resched:
+		f.line("(wptr)[SchedPtr] = (word) sched;")
 
 	if len(outputs) > 1:
 		for (n, i) in enumerate(outputs):
