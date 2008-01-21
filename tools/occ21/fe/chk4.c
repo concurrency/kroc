@@ -2973,7 +2973,7 @@ printtreenl (stderr, 4, t);
 								scopeandcheck (INameAddr (t));
 								SetNMode (INameOf (t), PD_DECODE_CHANNEL3);
 							}
-						} else if (NNameOf (INameOf (t)) == lookupword ("DECODE.DATA", 14)) {
+						} else if (NNameOf (INameOf (t)) == lookupword ("DECODE.DATA", 11)) {
 							SetNMode (INameOf (t), PD_DECODE_DATA);
 						}
 					}
