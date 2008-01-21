@@ -318,6 +318,19 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
             check.BYTE (a.green[15+p][payload][4], 'o', "test3.4")
   :
   --}}}
+  --{{{  BYTESIN on mobiles
+  PROC test4 ()
+    MOBILE []BYTE s:
+    MOBILE []INT ns:
+    SEQ
+      s := MOBILE [14]BYTE
+      s := "hello, world"
+      check.INT (BYTESIN (s), 14, "test4.0")
+      ns := MOBILE [12]INT
+      ns := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+      check.INT (BYTESIN (s), 12 * BYTESIN (INT), "test4.1")
+  :
+  --}}}
   --}}}  
   SEQ
     init ("CG test 85", "dynamic MOBILE arrays")
