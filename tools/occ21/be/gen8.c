@@ -2342,6 +2342,7 @@ gencomment0 ("gen non-register param 2..0");
 	}
 	/*}}} */
 	checkerror ();
+		/*}}}*/
 	
 	/*{{{  call routine */
 	if (ptype & PROC_FORKED) {
@@ -4474,7 +4475,7 @@ printtreenl (stderr, 4, param[0]);
 	case PD_READ_MEMORY_BARRIER:
 		gensecondary (I_RMB);
 		break;
-		/*}}*/
+		/*}}}*/
 		/*{{{ WRITE.MEMORY.BARRIER */
 	case PD_WRITE_MEMORY_BARRIER:
 		gensecondary (I_WMB);
