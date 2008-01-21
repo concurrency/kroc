@@ -3019,22 +3019,10 @@ printtreenl (stderr, 4, OpOf (t));
 fprintf (stderr, "*** isdynmobilearray(OpOf(t)) = %d, isdynmobilearrapiece(OpOf(t)) = %d, type =", isdynmobilearray (OpOf (t)), isdynmobilearraypiece (OpOf (t)));
 printtreenl (stderr, 4, type);
 #endif
-					if (base_bytes == -1) {
-						if (isdynmobilearraypiece (OpOf (t))) {
-							treenode *temptype;
-
-							if (TagOf (type) == S_MOBILE) {
-								type = MTypeOf (type);
-							}
-							for (temptype = type; TagOf (temptype) == S_ARRAY; temptype = ARTypeOf (temptype));
-#if 0
-fprintf (stderr, "tran1: sub_transexp() BYTESIN.  temptype = ");
-printtreenl (stderr, 4, temptype);
-#endif
-							/* FIXME: for nested MOBILE types */
-							result = newconstant (known_bytesin (temptype));
-						}
-					} else
+					if (TagOf (type) == S_MOBILE) {
+						type = MTypeOf (type);
+					}
+					/* FIXME: nested mobiles */
 #endif
 					if (base_bytes != 1) {
 						result = newconstant (base_bytes);
