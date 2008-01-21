@@ -101,17 +101,6 @@ PUBLIC treenode *follow_user_type (treenode * tptr)
 #endif
 
 /*}}}*/
-/*{{{  PRIVATE const treenode *follow_const_user_type*/
-PRIVATE const treenode *follow_const_user_type (const treenode * tptr)
-{
-#ifdef OCCAM2_5
-	while (TagOf (tptr) == N_TYPEDECL)
-		tptr = NTypeOf (tptr);
-#endif
-	return tptr;
-}
-
-/*}}}*/
 
 /*{{{  PUBLIC BOOL isint (t)*/
 PUBLIC BOOL isint (const int t)
@@ -533,19 +522,21 @@ PUBLIC INT32 elementsin (treenode * const t)
 /*{{{  PUBLIC INT32 known_bytesin*/
 PUBLIC INT32 known_bytesin (const treenode * type)
 {
-	BIT32 bytes = 1;
-
-	if (TagOf (type) == S_MOBILE) {
-		type = MTypeOf (type);
-	}
-
-	for (type = follow_const_user_type (type); TagOf (type) == S_ARRAY; type = follow_const_user_type (ARTypeOf (type))) {
-		if (ARDimOf (type) != -1) {
-			bytes *= ARDimOf (type);
+	switch (TagOf (type)) {
+	case N_TYPEDECL:
+		return known_bytesin (NTypeOf (type));
+	case S_ARRAY: {
+		BIT32 dim = ARDimOf (type);
+		if (dim == -1) {
+			dim = 1;
 		}
+		return dim * known_bytesin (ARTypeOf (type));
 	}
-	bytes *= bytesin (type);
-	return bytes;
+	case S_MOBILE:
+		return known_bytesin (MTypeOf (type));
+	default:
+		return bytesin (type);
+	}
 }
 
 /*}}}*/
