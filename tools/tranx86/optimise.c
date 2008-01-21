@@ -1021,7 +1021,6 @@ static int codeblock_pack_sequences (ins_chain *head)
 int optimise_run (rtl_chain *rtl_code, arch_t *arch)
 {
 	rtl_chain *tmp;
-	rtl_chain dummy;
 	int tot_squeezed, i, j, k;
 
 	tot_squeezed = 0;
@@ -1042,22 +1041,22 @@ int optimise_run (rtl_chain *rtl_code, arch_t *arch)
 				/* got unhappy somewhere.. */
 				return -1;
 			} else if (i || j || k) {
+				rtl_chain *next, *prev;
 				/* mark all setart/end registers to INS_CLEANUP */
 				codeblock_clean_regmarkers (tmp->u.code.head);
 				tmp->u.code.head = cleanup_code (tmp->u.code.head);
 				/* retrace registers */
-				dummy.next = NULL;
-				dummy.prev = NULL;
-				dummy.type = RTL_CODE;
-				dummy.u.code.head = tmp->u.code.head;
-				dummy.u.code.tail = tmp->u.code.tail;
-				if (rtl_trace_regs (&dummy) < 0) {
+				next = tmp->next;
+				prev = tmp->prev;
+				tmp->next = NULL;
+				tmp->prev = NULL;
+				if (rtl_trace_regs (tmp) < 0) {
 					fprintf (stderr, "%s: error: rtl_trace_regs failed during squeeze\n", progname);
 					return -1;
 				}
 				/* re-attach */
-				tmp->u.code.head = dummy.u.code.head;
-				tmp->u.code.tail = dummy.u.code.tail;
+				tmp->next = next;
+				tmp->prev = prev;
 				tot_squeezed += (i + j + k);
 			}
 		}
