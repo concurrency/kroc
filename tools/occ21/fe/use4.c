@@ -3844,6 +3844,9 @@ fprintf (stderr, "*** SetNUndef (%p, NULL)\n", ThisItem (formallist));
 			}
 			if (i == 3) {
 				/* missing 4th parameter */
+				/* XXX This code is modifying the tree inside
+				   the undefinedness checker; this is a bad
+				   idea. */
 				const int old = switch_to_real_workspace ();
 				treenode *fparamcopy;
 				
