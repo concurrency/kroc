@@ -3099,6 +3099,7 @@ static INLINE word *mt_alloc_cb (void *allocator, word type, word channels)
 	if (type & MT_CB_STATE_SPACE) {
 		words += 5;
 	}
+	type |= channels << MT_CB_CHANNELS_SHIFT;
 
 	if (type & MT_CB_SHARED) {
 		mt_cb_shared_internal_t	*i_cb;
