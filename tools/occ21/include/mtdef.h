@@ -184,11 +184,14 @@ typedef struct _mt_array_internal_t {
 /*{{{ TYPE 2: mobile channel bundle
  *   - flag bit 0 indicates sharing (0 = unshared),
  *   - flag bit 1 indicate whether to allocate additional space
- *     for p0ny/etc support (0 = don't allocate).
+ *     for pony/etc support (0 = don't allocate).
+ *   - flag bits 3-11 code number of channels.
  */
 #define MT_CB			2
 #define MT_CB_SHARED		(0x1 << MT_FLAGS_SHIFT)
 #define MT_CB_STATE_SPACE	(0x2 << MT_FLAGS_SHIFT)
+#define MT_CB_CHANNELS_SHIFT	(MT_FLAGS_SHIFT + 3)
+#define MT_CB_CHANNELS(X)	(((X) >> MT_CB_CHANNELS_SHIFT) & 0xFF)
 /* lock constants */
 #define MT_CB_CLIENT		0x0
 #define MT_CB_SERVER		0x1
