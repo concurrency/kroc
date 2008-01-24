@@ -4,10 +4,19 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 MZSCHEME=@MZSCHEME@
 MZC=@MZC@
 
-
-COMMON_SRC = cmdline.ss code-expansion.ss code-improvement.ss code-inspection.ss \
-						 code-merging.ss code-output.ss code-simplification.ss constants.ss \
-						 helpers.ss types.ss version.ss code-translation-intermediate.ss
+COMMON_SRC = 
+	cmdline.ss \
+	code-expansion.ss \
+	code-improvement.ss \
+	code-inspection.ss \
+	code-merging.ss \
+	code-output.ss \
+	code-simplification.ss \
+	code-translation-intermediate.ss
+	constants.ss \
+	helpers.ss \
+	types.ss \
+	version.ss
 
 bin_PROGRAMS = slinker library2
 
