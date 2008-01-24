@@ -1,18 +1,12 @@
-
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
-AM_CFLAGS = -Wall @AM_CFLAGS@
+AUTOMAKE_OPTIONS = foreign
 
-#To enable fpu support on solaris you need to include stuff from that directory
-if SOLARIS
-AM_CFLAGS+=-I/opt/SUNWspro/prod/include/cc/
-endif
+AM_CFLAGS = @AM_CFLAGS@ @TVM_CFLAGS@
 
-libdir = $(prefix)/lib/transterpreter
+lib_LIBRARIES = libtvm.a
 
-lib_LIBRARIES = libinterpreter.a
-
-libinterpreter_a_SOURCES = transputer.c transputer.h \
+libtvm_a_SOURCES = transputer.c transputer.h \
 			   mem.h \
 			   mem_bigendian.h mem_native.h \
 			   scheduler.c scheduler.h \
@@ -36,7 +30,7 @@ libinterpreter_a_SOURCES = transputer.c transputer.h \
 
 if TVM_DISPATCH_SWITCH
 else
-libinterpreter_a_SOURCES += \
+libtvm_a_SOURCES += \
 	dmem.c \
 	ins_alt.c \
 	ins_barrier.c \
@@ -54,18 +48,8 @@ libinterpreter_a_SOURCES += \
 	jumptbl_pri.c jumptbl_pri.h \
 	jumptbl_sec.c jumptbl_sec.h \
 	jumptbl_ex_sec.c jumptbl_ex_sec.h \
-	mem.c
-endif
-
-# Check which implementation of the memory substystem to use
-if COMPILE_MEMORY_INTF_NATIVE
-libinterpreter_a_SOURCES += mem_native.c
-endif
-if COMPILE_MEMORY_INTF_BIGENDIAN
-libinterpreter_a_SOURCES += mem_bigendian.c
-endif
-if COMPILE_MEMORY_INTF_ARRAY
-libinterpreter_a_SOURCES += mem_array.c
+	mem.c \
+	mem_native.c
 endif
 
 # Rebuild the instruction dispatching code if necessary (and if we can).
@@ -86,14 +70,17 @@ DISPATCH_SOURCE_FILES = \
 	ins_timer.c
 DISPATCH_OUTPUT_FILES = \
 	dispatch_ins.c jumptbl_pri.c jumptbl_sec.c jumptbl_ex_sec.c
-make_dispatch = ../scripts/make-dispatch.py
+
+make_dispatch = make-dispatch.py
+
 if HAVE_PYTHON
 $(DISPATCH_OUTPUT_FILES): $(make_dispatch) $(DISPATCH_SOURCE_FILES)
-	python $(make_dispatch) $(DISPATCH_SOURCE_FILES)
+	$(PYTHON) $(make_dispatch) $(DISPATCH_SOURCE_FILES)
 endif
 
 EXTRA_DIST = \
-	dispatch_ins.c
+	dispatch_ins.c \
+	make-dispatch.py
 
 splint:
 	splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(SOURCES)
