@@ -6,27 +6,36 @@ AM_CFLAGS = @AM_CFLAGS@ @TVM_CFLAGS@
 
 lib_LIBRARIES = libtvm.a
 
-libtvm_a_SOURCES = transputer.c transputer.h \
-			   mem.h \
-			   mem_bigendian.h mem_native.h \
-			   scheduler.c scheduler.h \
-			   interpreter.c interpreter.h \
-			   hook_timer.h \
-			   ext_chan.c ext_chan.h \
-			   pool_alloc.c pool_alloc.h \
-			   dmem.h \
-			   instructions.h \
-			   ins_alt.h \
-			   ins_barrier.h \
-			   ins_chan.h \
-			   ins_fred.h \
-			   ins_mt.h \
-			   ins_pri.h \
-			   ins_proc.h \
-			   ins_rmox.h \
-			   ins_sec.h \
-			   ins_t800.h \
-			   ins_timer.h
+noinst_HEADERS = \
+	dmem.h \
+	ext_chan.h \
+	hook_timer.h \
+	pool_alloc.h \
+	instructions.h \
+	ins_alt.h \
+	ins_barrier.h \
+	ins_chan.h \
+	ins_fred.h \
+	ins_mt.h \
+	ins_pri.h \
+	ins_proc.h \
+	ins_rmox.h \
+	ins_sec.h \
+	ins_t800.h \
+	ins_timer.h \
+	interpreter.h \
+	jumptbl_ex_sec.h \
+	jumptbl_pri.h \
+	jumptbl_sec.h \
+	mem_bigendian.h \
+	mem_native.h \
+	scheduler.h \
+	transputer.h
+
+include_HEADERS = \
+	tvm-config.h
+
+libtvm_a_SOURCES = transputer.c
 
 if TVM_DISPATCH_SWITCH
 else
@@ -45,9 +54,9 @@ libtvm_a_SOURCES += \
 	ins_timer.c \
 	ins_t800.c \
 	instructions.c \
-	jumptbl_pri.c jumptbl_pri.h \
-	jumptbl_sec.c jumptbl_sec.h \
-	jumptbl_ex_sec.c jumptbl_ex_sec.h \
+	jumptbl_pri.c \
+	jumptbl_sec.c \
+	jumptbl_ex_sec.c \
 	mem.c \
 	mem_native.c
 endif
