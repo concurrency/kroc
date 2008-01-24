@@ -339,6 +339,9 @@ static word KillableBlockingCallN (Workspace wptr, void *func, Channel *killchan
 }
 /*}}}*/
 /*{{{ static int KillBlockingCall (Workspace wptr, Channel *killchan) */
+#if defined(__GNUC__)
+__attribute__ ((unused)) /* make GCC ignore when unused */
+#endif
 static int KillBlockingCall (Workspace wptr, Channel *killchan)
 {
 	int result;
