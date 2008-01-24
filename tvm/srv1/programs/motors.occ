@@ -1,0 +1,75 @@
+VAL INT MASTER.CLOCK      IS 22118000:
+VAL INT VCO.MULTIPLIER    IS 22:
+VAL INT CCLK.DIVIDER      IS 1:
+VAL INT SCLK.DIVIDER      IS 4:
+VAL INT CORE.CLOCK        IS (MASTER.CLOCK * VCO.MULTIPLIER) / CCLK.DIVIDER:
+VAL INT PERIPHERAL.CLOCK  IS (CORE.CLOCK / SCLK.DIVIDER):
+
+
+VAL INT PORTHIO           IS #FFC01700: -- Port H I/O Pin State Specifiy Register 
+VAL INT TIMER2.WIDTH      IS #FFC0062C: -- Timer 2 Width Register
+VAL INT TIMER3.WIDTH      IS #FFC0063C: -- Timer 3 Width Register
+
+PROC set.pwm (VAL INT left, right)
+  INITIAL INT left IS left:
+  INITIAL INT right IS right:
+  PLACED [1]INT port.h.io PORTHIO:
+  PLACED [1]INT timer2.width TIMER2.WIDTH:
+  PLACED [1]INT timer3.width TIMER3.WIDTH:
+  INT h.val:
+  SEQ
+    h.val := port.h.io[0]
+    IF
+      left < 0
+        -- clear left direction bit
+        h.val, left := h.val /\ #FFDF, -left
+      TRUE
+        -- turn on left direction bit
+        h.val := (h.val /\ #FFDF) \/ #0020
+    IF
+      right < 0
+        -- clear right direction bit
+        h.val, right := h.val /\ #FFEF, -right
+      TRUE
+        -- turn on right direction bit
+        h.val := (h.val /\ #FFEF) \/ #0010
+
+    IF
+      left > 100
+        left := 100
+      left < 1
+        left := 1
+      TRUE
+        SKIP
+    IF
+      right > 100
+        right := 100
+      right < 1
+        right := 1
+      TRUE
+        SKIP
+
+    timer2.width[0] := ((PERIPHERAL.CLOCK / 1000) * left) / 100
+    timer3.width[0] := ((PERIPHERAL.CLOCK / 1000) * right) / 100
+:
+
+PROC sleep.ms (VAL INT ms)
+  TIMER time:
+  INT now:
+  SEQ
+    time ? now
+    time ? AFTER (now PLUS ms)
+:
+
+PROC test ()
+  SEQ
+    set.pwm (0, 0)
+    sleep.ms (1000)
+    set.pwm (50, 50)
+    sleep.ms (1000)
+    set.pwm (0, 50)
+    sleep.ms (1000)
+    set.pwm (50, 0)
+    sleep.ms (1000)
+    set.pwm (0, 0)
+:
