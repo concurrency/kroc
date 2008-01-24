@@ -74,6 +74,6 @@ else
 	rm -f "$(DESTDIR)$(libdir)/@LIBCCSP@"
 endif
 
-EXTRA_DIST = README INSTALL COPYRIGHT preconfigure
+EXTRA_DIST = README INSTALL COPYRIGHT
 DISTCLEANFILES = libccsp.a $(shared_libs)
 
