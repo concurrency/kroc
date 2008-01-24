@@ -1,0 +1,66 @@
+#OPTION "W V"  -- full ASMs, no vector space
+#COMMENT "Transterpreter screen process"
+#COMMENT "(c) Copyright Christian L. Jacobsen 2006"
+
+#PRAGMA EXTERNAL "PROC C.tvmspecial.1.printscr(VAL BYTE ch) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.2.flushscr() = 0"
+
+-- May want to put a buffer in this proc?
+PROC screenhandler(CHAN BYTE in?)
+  WHILE TRUE
+    BYTE ch:
+    SEQ
+      -- Extended rendezvous here. If there is no extended rendezvous we might
+      -- loose one character of output. This might happen if:
+      --  * A process send a character on screen, blocks
+      --  * It gets picked up by screenhandler, which runs the process again
+      --    (no further code in screnhandler than in ? ch is executed)
+      --  * The process had sent its last character, does no more
+      --    communication and does the final return. Ie the program quits
+      --    but the part of the screen handler which does output has never
+      --    been executed and the last character is lost
+#IF DEFINED (OCCAMPI)
+      in ?? ch
+        IF
+          -- The Java terminal emulator we are using in occPlug does
+          -- not automagically flush after a newline. We used to have
+          -- the behaviour where flushes happen after newline and 
+          -- 255 (explicit flush) before we had the scrhandler. It seems
+          -- like this was for some reason not carried over to the new
+          -- top-level channel handlers.
+          -- FIXME: We could also fix this in
+          --  1) terminal emulator
+          --  2) C.tvmspecial.1.printscr
+          ch = '*n'
+            SEQ
+              C.tvmspecial.1.printscr('*n')
+              C.tvmspecial.2.flushscr()
+          ch = 255
+            C.tvmspecial.2.flushscr()
+          TRUE
+            C.tvmspecial.1.printscr(ch)
+        SKIP
+#ELSE
+      -- This might loose a char at the end, but won't crash without occampi support
+      in ? ch
+      IF
+        -- The Java terminal emulator we are using in occPlug does
+        -- not automagically flush after a newline. We used to have
+        -- the behaviour where flushes happen after newline and 
+        -- 255 (explicit flush) before we had the scrhandler. It seems
+        -- like this was for some reason not carried over to the new
+        -- top-level channel handlers.
+        -- FIXME: We could also fix this in
+        --  1) terminal emulator
+        --  2) C.tvmspecial.1.printscr
+        ch = '*n'
+          SEQ
+            C.tvmspecial.1.printscr('*n')
+            C.tvmspecial.2.flushscr()
+        ch = 255
+          C.tvmspecial.2.flushscr()
+        TRUE
+          C.tvmspecial.1.printscr(ch)
+      SKIP
+#ENDIF
+:
