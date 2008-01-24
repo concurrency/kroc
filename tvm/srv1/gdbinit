@@ -1,3 +1,6 @@
+# Target the Blackfin GDB Proxy, runs on 2000 by default.
+target remote :2000
+
 define tvm_dump
 printf  "Transterpreter state\n--------------------\n"
 printf "areg %08X\n", areg
@@ -23,32 +26,8 @@ printf "wptr+3 %08X [%08X]\n", (wptr+3), *(wptr+3)
 printf "wptr+4 %08X [%08X]\n", (wptr+4), *(wptr+4)
 end
 
-define old_breakpoints
-#b ins_sec.c:425
-#b ins_pri.c:189
-#b ins_pri.c:487
-#b ins_pri.c:346
-#b ins_fred.c:71
-#b ins_sec.c:979
-end
-
-define load_byte_breakpoints
-#b ins_sec.c:40
-end
-
-define userspace_breakpoints
-b userspace.c:103
-end
-
-userspace_breakpoints
-target remote :2000
-
 document tvm_dump
-Dump the state of the TVM VM
-end
-
-document udump
-Dump information about the userspace
+Dump Transterpreter state
 end
 
 define print_us
