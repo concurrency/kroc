@@ -1,0 +1,59 @@
+<process>
+  <begin>
+    <par>
+      load-eight-code
+      remove-unknown-things
+      get-and-remove-filename
+      remove-useless-text
+      find-globalnames
+      shiftimm->shifts
+      jentry2jump
+      expand-loopend
+      unify-jumps
+      unify-labels
+      guarantee-unique-label-names
+      get-and-remove-spaces
+      expand-notprocess
+    </par>
+    <seq>
+      renumber
+      inst2binary
+      data-bytes2binary
+      boolinvert2binary
+      widenshort2binary
+      insert-alignment
+      load-labels2binary
+      load-precompiled-libraries
+      make-binaries-in-precompiled-libraries
+      set-precompiled-library-offsets
+      insert-precompiled-libraries
+      merge-library-globalnames
+      expand-ffi-stubnames
+      inst2binary
+      resolve-stubnames-picky
+      jumps2binary
+      instruction-list
+      debug-ip
+      dump-external-ffi-table
+    </seq>
+
+    <branch switch="*OUTPUT-FORMAT*">
+      <output-c>
+	<seq>binary2c</seq>
+      </output-c>
+
+      <output-bytecode>
+	<seq>binary2bytecode</seq>
+      </output-bytecode>
+
+      <output-lx>
+	<seq>binary2lx</seq>
+      </output-lx>
+      
+      <output-library>
+	<seq>binary2scheme</seq>
+      </output-library>
+
+    </branch>
+</begin>
+</process>
