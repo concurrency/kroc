@@ -1,0 +1,11 @@
+(module defaults mzscheme (provide (all-defined))
+
+(define target-cpu-type  "@skroc_cpu_target@")
+
+(define default-runtime-libraries "@skroc_default_lib@")
+
+(define BYTEORDER "@skroc_byte_order@")
+
+(define system-library-dir "@prefix@/lib/transterpreter")
+)
+

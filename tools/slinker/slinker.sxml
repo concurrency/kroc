@@ -1,0 +1,100 @@
+#|
+slinker - slinker.sxml
+A Scheme linker for Transputer bytecodes targeting the Transterpreter
+Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+|#
+(process
+ (begin
+   (par
+    tcoff2bin
+    ;; Identical to here.
+    decode
+    specialize-trivially
+    specialize-nontrivially
+    remove-unknown-things
+    ;; I think the get-and-remove-filename pass only does the remove part these
+    ;; days, so it is probably no longer needed, as there are better places to
+    ;; remove the filename. If somebody can confirm this, please remove the
+    ;; comments - clj3
+    ;;get-and-remove-filename 
+    propagate-debugging-info
+    remove-debugging-instructions
+    remove-useless-text
+
+    check-tlp
+
+    find-procentries
+    find-globalnames
+    shiftimm->shifts
+    jentry2jump
+    expand-loopend
+    expand-starttable
+    expand-mobileinit
+    expand-semaphore
+    expand-reschedule
+    expand-barrier
+    expand-floatingpoint-specials
+    unify-jumps
+    unify-labels
+    guarantee-unique-label-names
+    get-and-remove-spaces
+    expand-notprocess
+    )
+   (seq
+    renumber
+    ;; just-dump-stuff
+    inst2binary
+    data-bytes2binary
+    boolinvert2binary
+    widenshort2binary
+    ;; If the driver didn't suck, we could do this *first*. However
+    ;; it will cause problems if we try to do that.
+    load-static-ffi-table
+    )
+   (if (not *OPT-OPTIMAL-PFX*)
+       (seq				
+        insert-alignment
+        load-labels2binary))
+   (seq
+    load-precompiled-libraries
+    dead-library-elimination
+    make-binaries-in-precompiled-libraries
+    set-precompiled-library-offsets
+    insert-precompiled-libraries ;; SLOWDOWN (see comments in method)
+    merge-library-globalnames
+    merge-library-dynlibs
+    expand-ffi-stubnames
+    inst2binary
+    resolve-stubnames-picky)
+   (if *OPT-OPTIMAL-PFX*
+       (seq jumps-and-loads2binary)
+       (seq jumps2binary))
+   (seq
+    ;;prefix-patching ;; make this a conditional
+    instruction-list
+    debug-ip)
+   (case *OUTPUT-FORMAT*
+     [(output-c) binary2c]
+     [(output-bytecode) (seq dump-debugging-info dump-external-ffi-table binary2bytecode)]
+     [(output-unified-bytecode) dump-unified-output]
+     [(output-lx) binary2lx]
+     [(output-library) binary2scheme]
+     [(output-efficientc) output-efficient-c ]
+     [(output-srec) binary2srec]
+	 [(output-occam) binary2occam]
+	 [(output-blackfin) binary2blackfin])
+   ))
