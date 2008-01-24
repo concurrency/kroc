@@ -2,7 +2,7 @@
 #  Autoconf script for libtvm  #
 ################################
 
-AC_INIT([interpreter.c], [1.0.0])
+AC_INIT([libtvm], [1.0.0])
 AM_CONFIG_HEADER(tvm-config.h)
 AC_PREREQ(2.59)
 
@@ -222,7 +222,7 @@ case "$transputer" in
 esac
 
 # Word length
-AC_DEFINE([TVM_WORD_LENGTH], $word_length, [define emulated word length])
+AC_DEFINE_UNQUOTED([TVM_WORD_LENGTH], [$word_length], [define emulated word length])
 
 #########################
 #  Output
