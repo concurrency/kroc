@@ -66,7 +66,7 @@ Copyright (C) 2006-2008 Matthew C. Jadud
      (once-each
       [("-v" "--version")
        "Get the current version of TinySwig"
-       (printf "tinyswig version ~a (~a)~n" (get-parameter 'version) (pregexp-match "([0-9]+)" "$Revision$"))
+       (printf "tinyswig version ~a (r~a)~n" (get-parameter 'version) (list-ref (pregexp-match "[0-9]+" "$Revision$") 0))
        (exit) ]
 
       [("-p" "--prefix")
