@@ -1,0 +1,26 @@
+#IF NOT DEFINED (BIT.TWIDDLE.OCC)
+#DEFINE BIT.TWIDDLE.OCC
+
+INT FUNCTION bit (VAL INT x)
+  INT tmp:
+  VALOF
+    tmp := (1 << x)
+    RESULT tmp
+:
+
+PROC setbit (INT word, VAL INT bit)
+  word := word \/ bit
+:
+
+PROC clearbit (INT word, VAL INT bit)
+  word := word /\ (~ bit)
+:
+
+PROC checkbit (INT word, VAL INT bit, INT result)
+  result := word /\ bit
+:
+
+PROC togglebit (INT word, VAL INT bit)
+  word := word >< (1 << bit)
+:
+#ENDIF --BIT.TWIDDLE.OCC

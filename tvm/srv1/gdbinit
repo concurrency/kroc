@@ -1,0 +1,70 @@
+define tvm_dump
+printf  "Transterpreter state\n--------------------\n"
+printf "areg %08X\n", areg
+printf "breg %08X\n", breg
+printf "creg %08X\n", creg
+printf "-------------\n"
+printf "iptr %08X\n", iptr
+printf "wptr %08X\n", wptr
+printf "-------------\n"
+printf "[0] %08X\n", transputermem[0]
+printf "[1] %08X\n", transputermem[1]
+printf "[2] %08X\n", transputermem[2]
+printf "[3] %08X\n", transputermem[3]
+printf "-------------\n"
+printf "wptr-4 %08X [%08X]\n", (wptr-4), *(wptr-4)
+printf "wptr-3 %08X [%08X]\n", (wptr-3), *(wptr-3)
+printf "wptr-2 %08X [%08X]\n", (wptr-2), *(wptr-2)
+printf "wptr-1 %08X [%08X]\n", (wptr-1), *(wptr-1)
+printf "wptr   %08X [%08X]\n", wptr, *wptr
+printf "wptr+1 %08X [%08X]\n", (wptr+1), *(wptr+1)
+printf "wptr+2 %08X [%08X]\n", (wptr+2), *(wptr+2)
+printf "wptr+3 %08X [%08X]\n", (wptr+3), *(wptr+3)
+printf "wptr+4 %08X [%08X]\n", (wptr+4), *(wptr+4)
+end
+
+define old_breakpoints
+#b ins_sec.c:425
+#b ins_pri.c:189
+#b ins_pri.c:487
+#b ins_pri.c:346
+#b ins_fred.c:71
+#b ins_sec.c:979
+end
+
+define load_byte_breakpoints
+#b ins_sec.c:40
+end
+
+define userspace_breakpoints
+b userspace.c:103
+end
+
+userspace_breakpoints
+target remote :2000
+
+document tvm_dump
+Dump the state of the TVM VM
+end
+
+document udump
+Dump information about the userspace
+end
+
+define print_us
+	set $start=$arg0
+	set $end=$start+$arg1
+	set $i=$start
+	while $i < $end	
+		printf "%02X ", *(userspace_start+$i)
+	  	set $i=$i+1	
+	end
+	printf "\n"
+end
+
+document print_us
+print_us <START> <NUM BYTES>
+Prints userspace bytes.
+end
+
+
