@@ -28,14 +28,12 @@
 #include <unistd.h>
 #endif /* WIN32 */
 
-#include "interpreter/transputer.h"
-#include "interpreter/mem.h"
-
+#include "stiw.h"
 #include "occam_debug.h"
 #include "tbzutil.h"
 
 /* FIXME: */
-extern BPOOTER code_start;
+extern BYTEPTR code_start;
 extern int filetype;
 
 void read_and_check(unsigned int *var, FILE *fp)
@@ -64,7 +62,7 @@ void find_dbg_info(char *tdb_filename)
 	/* iptr points to the next instruction,
 	 * iptr_prime points to the current instruction 
 	 */
-	BPOOTER iptr_prime = bpooter_minus(iptr, 1);
+	BYTEPTR iptr_prime = byteptr_minus(iptr, 1);
 	unsigned int code_offset = iptr_prime - code_start;
 
 	//printf("code_offset %d, iptr: %d, code_start: %d\n", code_offset, iptr, code_start);

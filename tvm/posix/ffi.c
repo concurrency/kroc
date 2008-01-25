@@ -17,9 +17,6 @@
 #endif /* WIN32 */
 
 #include "stiw.h"
-#include "interpreter/mem.h"
-#include "interpreter/ffi_tables.h"
-
 #include "tbzutil.h"
 
 #ifdef WIN32
