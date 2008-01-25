@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define INS_MT_H
 
 #include "instructions.h"
-#include "types.h"
+#include "tvm_types.h"
 
 #ifdef __MOBILE_PI_SUPPORT__
 

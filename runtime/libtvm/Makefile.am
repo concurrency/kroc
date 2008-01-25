@@ -2,6 +2,8 @@
 
 AUTOMAKE_OPTIONS = foreign
 
+CFLAGS=-I$(top_srcdir) @CFLAGS@
+
 lib_LIBRARIES = libtvm.a
 
 noinst_HEADERS = \
@@ -27,11 +29,12 @@ noinst_HEADERS = \
 	jumptbl_sec.h \
 	mem_bigendian.h \
 	mem_native.h \
-	scheduler.h \
-	transputer.h
+	scheduler.h
 
 include_HEADERS = \
-	tvm-config.h
+	transputer.h \
+	tvm-config.h \
+	tvm_types.h 
 
 libtvm_a_SOURCES = transputer.c
 

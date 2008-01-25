@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define INS_FRED_H
 
 #include "instructions.h"
-#include "types.h"
+#include "tvm_types.h"
 
 /* 0x23 - 0x22 0xF2 - boolinvert */
 TVM_INSTRUCTION_PROTO void ins_boolinvert(void);

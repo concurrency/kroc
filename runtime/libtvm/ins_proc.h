@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define INS_PROC_H
 
 #include "instructions.h"
-#include "types.h"
+#include "tvm_types.h"
 
 #ifdef __MOBILE_PI_SUPPORT__
 /* 0x22F - 0x22 0x22 0xFF - proc_alloc - allocate process workspace */
