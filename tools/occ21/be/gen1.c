@@ -3640,25 +3640,25 @@ PUBLIC void tprocess (treenode * tptr)
 							const int ijoinlab = newlab ();
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_CLAIM);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, pony_offset + 1);		/* uiohook */
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							genboolinvert ();
 							genbranch (I_CJ, iskiplab);			/* operations-hook is non-null, so skip */
 
 							/* change value in state field */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, pony_offset + 2);		/* load current state */
+							genprimary (I_LDNL, pony_offset + PONY_STATE);	/* load current state */
 							loadconstant (is_client ? 0x0001 : 0x00010000);
 							gensecondary (I_SUM);				/* advance state from 2 to 3 */
 							loadmobile (ct_nptr);
-							genprimary (I_STNL, pony_offset + 2);		/* save modified state */
+							genprimary (I_STNL, pony_offset + PONY_STATE);	/* save modified state */
 
 							/* release semaphore */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_RELEASE);
 							genbranch (I_J, ijoinlab);
 
@@ -3666,7 +3666,7 @@ PUBLIC void tprocess (treenode * tptr)
 							setlab (iskiplab);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_RELEASE);
 
 							/* do uio communication (to KRoC.net kernel in this case) */
@@ -3722,25 +3722,25 @@ PUBLIC void tprocess (treenode * tptr)
 							const int ijoinlab = newlab ();
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_CLAIM);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, pony_offset + 1);		/* uiohook */
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							genboolinvert ();
 							genbranch (I_CJ, iskiplab);			/* operations-hook is non-null, so skip */
 
 							/* change value in state field */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, pony_offset + 2);		/* load current state */
+							genprimary (I_LDNL, pony_offset + PONY_STATE);	/* load current state */
 							loadconstant (is_client ? 0x0001 : 0x00010000);
 							gensecondary (I_DIFF);				/* reduce state from 3 to 2 */
 							loadmobile (ct_nptr);
-							genprimary (I_STNL, pony_offset + 2);		/* save modified state */
+							genprimary (I_STNL, pony_offset + PONY_STATE);	/* save modified state */
 
 							/* release semaphore */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_RELEASE);
 
 							genbranch (I_J, ijoinlab);
@@ -3749,7 +3749,7 @@ PUBLIC void tprocess (treenode * tptr)
 							setlab (iskiplab);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_RELEASE);
 
 							/* do uio communication (to KRoC.net kernel in this case) */
