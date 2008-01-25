@@ -1,0 +1,57 @@
+#ifndef TVM_CONFIG_H
+#define TVM_CONFIG_H
+
+#if !defined (HAVE_INTTYPES_H)
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+#endif /* !HAVE_INTTYPES_H */
+
+/* define for big-endian TVM */
+#undef TVM_BIG_ENDIAN
+
+/* define to dispatch instructions using switch rather than a jump table */
+#undef TVM_DISPATCH_SWITCH
+
+/* define to emulate a T2 processor */
+#undef TVM_EMULATE_T2
+
+/* define to emulate a T4 processor */
+#undef TVM_EMULATE_T4
+
+/* define to emulate a T8 processor */
+#undef TVM_EMULATE_T8
+
+/* define for little-endian TVM */
+#undef TVM_LITTLE_ENDIAN
+
+/* define to enable occam-pi support */
+#undef TVM_OCCAM_PI
+
+/* define for Darwin TVM */
+#undef TVM_OS_DARWIN
+
+/* define for FreeBSD TVM */
+#undef TVM_OS_FREEBSD
+
+/* define for Linux TVM */
+#undef TVM_OS_LINUX
+
+/* define for OS independent TVM */
+#undef TVM_OS_NONE
+
+/* define for Solaris TVM */
+#undef TVM_OS_SOLARIS
+
+/* define for Windows TVM */
+#undef TVM_OS_WINDOWS
+
+/* define to allow FPU usage */
+#undef TVM_USE_FPU
+
+/* define to allow malloc usage */
+#undef TVM_USE_MALLOC
+
+/* define emulated word length */
+#undef TVM_WORD_LENGTH
+
+#endif /* !TVM_CONFIG_H */

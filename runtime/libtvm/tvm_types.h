@@ -20,13 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef TVM_TYPES_H
 #define TVM_TYPES_H
 
-#if defined(HAVE_TVM_TVM_CONFIG_H)
-#include <tvm/tvm_config.h>
-#elif defined(HAVE_KROC_TVM_CONFIG_H)
-#include <kroc/tvm_config.h>
-#else
-#include <tvm_config.h>
-#endif
+#include "tvm_config.h"
 
 /* Use stddef to get NULL. */
 #include <stddef.h>

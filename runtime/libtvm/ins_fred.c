@@ -18,7 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
+#include "tvm.h"
 #include "instructions.h"
 #include "ext_chan.h"
 
@@ -28,8 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ins_sec.h"
 #include "ins_fred.h"
 #include "ins_pri.h"
-
-#include "ffi_tables.h"
 
 /* The FFI tables, which we initialise to NULL to indicate that they have not
  * yet been provided. */

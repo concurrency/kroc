@@ -1,5 +1,5 @@
 /*
-tvm - ffi_tables.h
+tvm - tvm.h
 The Transterpreter - a portable virtual machine for Transputer bytecode
 Copyright (C) 2004-2008 Christian L. Jacobsen, Matthew C. Jadud
 
@@ -18,14 +18,15 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef FFI_TABLES_H
-#define FFI_TABLES_H
+#ifndef TVM_H
+#define TVM_H
 
-#include "transputer.h"
+#include "tvm_config.h"
 #include "tvm_types.h"
+#include "transputer.h"
 
 /* The foregin function interface jump tables */
 extern FFI_TABLE_ENTRY *ffi_table;
 extern FFI_FUNCTION *special_ffi_table;
 
-#endif /* FFI_TABLES_H */
+#endif /* TVM_H */

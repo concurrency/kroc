@@ -33,8 +33,9 @@ noinst_HEADERS = \
 
 include_HEADERS = \
 	transputer.h \
+	tvm.h \
 	tvm_config.h \
-	tvm_types.h 
+	tvm_types.h
 
 libtvm_a_SOURCES = transputer.c
 
