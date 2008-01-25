@@ -1,8 +1,9 @@
-// Copyright: Fred Barnes, Mario Schweigler (C) 2000-2006
-// Institution: Computing Laboratory, University of Kent, Canterbury, UK
-// Description: pony internal TCP/IP socket utilities C code file
-
 /*
+ *	ponyinttcpipsockc.c - pony TCP/IP socket utilities
+ *	Copyright (C) 2005, 2006 Mario Schweigler
+ *	Copyright (C) 2005, 2006 Fred Barnes
+ *	Copyright (C) 2008 Adam Sampson <ats@offog.org>
+ *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
  *	the Free Software Foundation; either version 2 of the License, or
@@ -40,6 +41,8 @@
 #include <w32api/wtypes.h>
 #include <w32api/winbase.h>
 #endif
+
+#include <cif.h>
 //}}}
 
 //{{{  Structures
@@ -193,19 +196,19 @@ static __inline__ void pony_real_fullread_sizes (int *data_dim, int *sizes_dim)
 // Parameters: *sock         | socket
 //             *header       | RETURN VALUE: header
 //             header_len    | length of header
-//             **data_maddr  | RETURN VALUE: data-array
-//             *data_mdim    | RETURN VALUE: dimensions of data-array
-//             *data_size    | RETURN VALUE: target dimensions of data-array
-//             **sizes_maddr | RETURN VALUE: size-array
-//             *sizes_mdim   | RETURN VALUE: dimensions of size-array
-//             *sizes_size   | RETURN VALUE: target dimensions of size-array
+//             *data_array   | data array
+//             *data_size    | size of data array
+//             *sizes_array  | sizes array
+//             *sizes_size   | size of sizes array
 //             *result       | RETURN VALUE: result
-static __inline__ void pony_real_fullread_multi (occ_socket *sock, char *header, int header_len, char **data_maddr, int *data_mdim, int *data_size, int **sizes_maddr, int *sizes_mdim, int *sizes_size, int *result)
+static __inline__ void pony_real_fullread_multi (occ_socket *sock, char *header, int header_len, mt_array_t *data_array, int *data_size, mt_array_t *sizes_array, int *sizes_size, int *result)
 {
-#ifdef HAVE_UIO_RWVEC
 	int in = 0;
 	int ccount;
 	int dsize = 0;
+
+	char *data = (char *) data_array->data;
+	int *sizes = (int *) sizes_array->data;
 
 	if (sock->fd < 0) {
 		*result = -1;
@@ -239,37 +242,25 @@ static __inline__ void pony_real_fullread_multi (occ_socket *sock, char *header,
 			int size = *(int *)(header + (header_len - (2 * sizeof(int))));
 
 			// sizes array must be at least 1 big..
-			(*sizes_maddr)[0] = size;
+			sizes[0] = size;
 			dsize = size;
 		} else if (ccount > 1) {
 			int toread = (ccount * sizeof(int));
 
-			if (*sizes_mdim < ccount) {
+			if (sizes_array->dimensions[0] < ccount) {
+				/* XXX global should be atomic */
 				frm_sizes_mdim = ccount * 2;				// slightly generous
-				// sizes array not big enough -- will fit in data array ?
-				if (*data_mdim >= (ccount * sizeof(int))) {
-					// yes, so swap the buffers around
-					int *tmpa = *sizes_maddr;
-					int tmpd = *sizes_mdim;
 
-					*sizes_maddr = (int *)(*data_maddr);
-					*sizes_mdim = (*data_mdim / sizeof(int));	// gcc will optimise div away..
-					*sizes_size = *sizes_mdim;
-					*data_maddr = (char *)tmpa;
-					*data_mdim = (tmpd * sizeof(int));
-					*data_size = *data_mdim;
-				} else {
-					// nope, will need to re-read sizes
-					*result = -3;
-					return;
-				}
+				// nope, will need to re-read sizes
+				*result = -3;
+				return;
 			}
 			// if we get this far, can read the sizes in
 			in = 0;
 			while (in < toread) {
 				int x;
 
-				x = read (sock->fd, (char *)(*sizes_maddr) + in, toread - in);
+				x = read (sock->fd, ((char *) sizes) + in, toread - in);
 				if (x < 0) {
 					sock->error = errno;
 					*result = -1;
@@ -284,13 +275,14 @@ static __inline__ void pony_real_fullread_multi (occ_socket *sock, char *header,
 			// sum sizes into "dsize"
 			dsize = 0;
 			for (in=0; in<ccount; in++) {
-				dsize += (*sizes_maddr)[in];
+				dsize += sizes[in];
 			}
 		}
 		if (ccount == 0) {
 			*sizes_size = 0;
 		} else {
-			*sizes_mdim = ccount;
+			/* XXX yuck! */
+			sizes_array->dimensions[0] = ccount;
 			*sizes_size = ccount;
 		}
 		//}}}
@@ -304,15 +296,17 @@ static __inline__ void pony_real_fullread_multi (occ_socket *sock, char *header,
 				dsize = *(int *)(header + (header_len - (2 * sizeof(int))));
 			} else {
 				for (in=0; in<ccount; in++) {
-					dsize += (*sizes_maddr)[in];
+					dsize += sizes[in];
 				}
 			}
 		}
 		// target array large enough ?
-		if (*data_mdim < dsize) {
+		if (data_array->dimensions[0] < dsize) {
+			/* XXX should be atomic */
+			frm_data_mdim = dsize * 2;		// slightly generous
+
 			// nope
 			*result = -4;
-			frm_data_mdim = dsize * 2;		// slightly generous
 			return;
 		}
 		in = 0;
@@ -320,7 +314,7 @@ static __inline__ void pony_real_fullread_multi (occ_socket *sock, char *header,
 		while (in < dsize) {
 			int x;
 
-			x = read (sock->fd, (*data_maddr) + in, dsize - in);
+			x = read (sock->fd, data + in, dsize - in);
 			if (x < 0) {
 				sock->error = errno;
 				*result = -1;
@@ -335,7 +329,8 @@ static __inline__ void pony_real_fullread_multi (occ_socket *sock, char *header,
 		if (dsize == 0) {
 			*data_size = 0;
 		} else {
-			*data_mdim = dsize;
+			/* XXX yuck! */
+			data_array->dimensions[0] = dsize;
 			*data_size = dsize;
 		}
 		// right, should be all done..
@@ -345,12 +340,6 @@ static __inline__ void pony_real_fullread_multi (occ_socket *sock, char *header,
                 }
 		break;
 	}
-#else
-	// ... do it the hard way ...
-	sock->error = ENOSYS;
-	*result = -1;
-#endif
-	return;
 }
 //}}}
 
@@ -394,9 +383,15 @@ void _pony_int_tcpip_socket_fullread_sizes (int *ws) {
 void _pony_int_tcpip_socket_fullread_multi (int *ws) {
   pony_real_fullread_multi ((occ_socket *)(ws[0]),
                             (char *)(ws[1]), (int)(ws[2]),
-                            (char **)(&(ws[3])), (int *)(&(ws[4])), (int *)(ws[5]),
-                            (int **)(&(ws[6])), (int *)(&(ws[7])), (int *)(ws[8]),
-                            (int *)(ws[9]));
+                            /* ws[3] is data */
+                            (mt_array_t *)(ws[4]),
+                            /* ws[5] is dimension 0 */
+                            (int *)(ws[6]),
+                            /* ws[7] is data */
+                            (mt_array_t *)(ws[8]),
+                            /* ws[9] is dimension 0 */
+                            (int *)(ws[10]),
+                            (int *)(ws[11]));
 }
 //}}}
 
