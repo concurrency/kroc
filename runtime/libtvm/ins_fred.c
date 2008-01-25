@@ -103,7 +103,7 @@ TVM_INSTRUCTION void ins_fficall(void)
 	/* Now we got the address, jump! Hold on to your hats :p */
 	/* Though we need to make sure that we pass the correct parameter, which is
 	 * the wptr + 1 (+1 to avoid the iptr on the top of the stack). */
-	ffi_func_addr(pooter_real_address(pooter_plus(wptr, 1)));
+	ffi_func_addr(wordptr_real_address(wordptr_plus(wptr, 1)));
 	
 	/* FFI call is done, now we need to return, use ins_ret */
 	ins_ret();
@@ -114,13 +114,13 @@ TVM_INSTRUCTION void ins_lend3(void)
 {
 	/* Loop start offset comes in from areg */
 	/* Loop control block ptr in breg */
-	POOTER loopcount_ptr = pooter_plus((POOTER) breg, 1);
-	POOTER loopindex_ptr = (POOTER) breg;
-	WORD loopcount = read_mem(loopcount_ptr) - 1;
+	WORDPTR loopcount_ptr = wordptr_plus((WORDPTR) breg, 1);
+	WORDPTR loopindex_ptr = (WORDPTR) breg;
+	WORD loopcount = read_word(loopcount_ptr) - 1;
 
 	//printf(">lend3\n");
 	/* Decrement count */
-	write_mem(loopcount_ptr, loopcount);
+	write_word(loopcount_ptr, loopcount);
 	if(loopcount == 0)
 	{
 		/* Stop looping */
@@ -128,15 +128,15 @@ TVM_INSTRUCTION void ins_lend3(void)
 	}
 	else
 	{
-		POOTER loopstep_ptr = pooter_plus((POOTER) breg, 2);
-		WORD loopindex = read_mem(loopindex_ptr);
+		WORDPTR loopstep_ptr = wordptr_plus((WORDPTR) breg, 2);
+		WORD loopindex = read_word(loopindex_ptr);
 
 		//printf("  continue looping\n");
 		/* Increment index, by step */
-		WORD step = read_mem(loopstep_ptr);
-		write_mem(loopindex_ptr, loopindex + step);
+		WORD step = read_word(loopstep_ptr);
+		write_word(loopindex_ptr, loopindex + step);
 		/* Loop */
-		iptr = bpooter_minus(iptr, areg);
+		iptr = byteptr_minus(iptr, areg);
 	}
 	//printf("<lend3\n");
 }
@@ -146,14 +146,14 @@ TVM_INSTRUCTION void ins_lendbw(void)
 {
 	/* Loop start offset comes in from areg */
 	/* Loop control block ptr in breg */
-	POOTER loopcount_ptr = pooter_plus((POOTER) breg, 1);
-	POOTER loopindex_ptr = (POOTER) breg;
-	WORD loopcount = read_mem(loopcount_ptr) - 1;
+	WORDPTR loopcount_ptr = wordptr_plus((WORDPTR) breg, 1);
+	WORDPTR loopindex_ptr = (WORDPTR) breg;
+	WORD loopcount = read_word(loopcount_ptr) - 1;
 
 	//printf(">lendbw\n");
 
 	/* Decrement count */
-	write_mem(loopcount_ptr, loopcount);
+	write_word(loopcount_ptr, loopcount);
 	if(loopcount == 0)
 	{
 		/* Stop looping */
@@ -162,11 +162,11 @@ TVM_INSTRUCTION void ins_lendbw(void)
 	else
 	{
 		/* Decrement index */
-		WORD loopindex = read_mem(loopindex_ptr) - 1;
+		WORD loopindex = read_word(loopindex_ptr) - 1;
 		//printf("  continue looping\n");
-		write_mem(loopindex_ptr, loopindex);
+		write_word(loopindex_ptr, loopindex);
 		/* Loop */
-		iptr = bpooter_minus(iptr, areg);
+		iptr = byteptr_minus(iptr, areg);
 	}
 	//printf("<lendbw\n");
 }
@@ -193,7 +193,7 @@ TVM_INSTRUCTION void ins_extin(void)
 	 */
 	/* ANNO: Cast to UNSIGNED WORD as the behaviour of a shift on negative values
 	 * is implementation defined */
-	ext_chan_table[(UWORD)breg >> 1](areg, (BPOOTER)creg);
+	ext_chan_table[(UWORD)breg >> 1](areg, (BYTEPTR)creg);
 }
 
 /* 0x61 - 0x26 0xF1 - extout - external channel output */
@@ -207,7 +207,7 @@ TVM_INSTRUCTION void ins_extout(void)
 	 */
 	/* ANNO: Cast to UNSIGNED WORD as the behaviour of a shift on negative values
 	 * is implementation defined */
-	ext_chan_table[(UWORD)breg >> 1](areg, (BPOOTER)creg);
+	ext_chan_table[(UWORD)breg >> 1](areg, (BYTEPTR)creg);
 }
 
 #endif
@@ -251,21 +251,21 @@ TVM_INSTRUCTION void ins_restorecreg(void)
 #define SEM_FPTR 0
 #define SEM_BPTR 1
 
-TVM_HELPER void tvm_sem_init(POOTER sem)
+TVM_HELPER void tvm_sem_init(WORDPTR sem)
 {
-	write_mem(sem, (WORD) (NOT_PROCESS_P | 1));
-	write_mem(pooter_plus(sem, 1), (WORD) NOT_PROCESS_P);
+	write_word(sem, (WORD) (NOT_PROCESS_P | 1));
+	write_word(wordptr_plus(sem, 1), (WORD) NOT_PROCESS_P);
 }
 
-TVM_HELPER void tvm_sem_claim(POOTER sem)
+TVM_HELPER void tvm_sem_claim(WORDPTR sem)
 {
-	WORD sem_fptr = read_mem(pooter_plus(sem, SEM_FPTR));
+	WORD sem_fptr = read_word(wordptr_plus(sem, SEM_FPTR));
 
 	/* Check to see if the semaphore is busy */
 	if(sem_fptr == (WORD) (NOT_PROCESS_P | 1))
 	{ 
 		/* Nobody has this semaphore already, claim it as ours */
-		write_mem(pooter_plus(sem, SEM_FPTR), (WORD) NOT_PROCESS_P);
+		write_word(wordptr_plus(sem, SEM_FPTR), (WORD) NOT_PROCESS_P);
 	}
 	else
 	{
@@ -277,36 +277,36 @@ TVM_HELPER void tvm_sem_claim(POOTER sem)
 		if(sem_fptr == NOT_PROCESS_P)
 		{
 			/* Add us as the only element */
-			write_mem(pooter_plus(sem, SEM_FPTR), (WORD) wptr);
-			write_mem(pooter_plus(sem, SEM_BPTR), (WORD) wptr);
+			write_word(wordptr_plus(sem, SEM_FPTR), (WORD) wptr);
+			write_word(wordptr_plus(sem, SEM_BPTR), (WORD) wptr);
 		}
 		else
 		{
 			/* Add us as the last element */
-			POOTER sem_bptr_ptr = pooter_plus(sem, SEM_BPTR);
-			POOTER sem_bptr = (POOTER) read_mem(sem_bptr_ptr);
+			WORDPTR sem_bptr_ptr = wordptr_plus(sem, SEM_BPTR);
+			WORDPTR sem_bptr = (WORDPTR) read_word(sem_bptr_ptr);
 			WORKSPACE_SET(sem_bptr, WS_NEXT, (WORD) wptr);
-			write_mem(sem_bptr_ptr, (WORD) wptr);
+			write_word(sem_bptr_ptr, (WORD) wptr);
 		}
 		iptr = run_next_on_queue();
 	}
 }
 
-TVM_HELPER void tvm_sem_release(POOTER sem)
+TVM_HELPER void tvm_sem_release(WORDPTR sem)
 {
-	POOTER sem_fptr_ptr = pooter_plus(sem, SEM_FPTR);
-	WORD sem_fptr = read_mem(sem_fptr_ptr);
+	WORDPTR sem_fptr_ptr = wordptr_plus(sem, SEM_FPTR);
+	WORD sem_fptr = read_word(sem_fptr_ptr);
 
 	/* Is anybody waiting on the semaphore? */
 	if(sem_fptr == (WORD) NOT_PROCESS_P)
 	{
 		/* No, so we dont need to wake anybody */
-		write_mem(sem_fptr_ptr, (WORD) (NOT_PROCESS_P | 1));
+		write_word(sem_fptr_ptr, (WORD) (NOT_PROCESS_P | 1));
 	}
 	else
 	{
 		/* Yes, so we need to update ptrs and schedule waiting process */
-		write_mem(sem_fptr_ptr, WORKSPACE_GET((POOTER) sem_fptr, WS_NEXT));
+		write_word(sem_fptr_ptr, WORKSPACE_GET((WORDPTR) sem_fptr, WS_NEXT));
 
 		/* Put the process we picked up semaphore queue onto run queue */
 		just_add_to_queue(sem_fptr);
@@ -317,7 +317,7 @@ TVM_HELPER void tvm_sem_release(POOTER sem)
 TVM_INSTRUCTION void ins_seminit(void)
 {
 
-	tvm_sem_init((POOTER) areg);
+	tvm_sem_init((WORDPTR) areg);
 
 	UNDEFINE_STACK();
 }
@@ -325,7 +325,7 @@ TVM_INSTRUCTION void ins_seminit(void)
 /* 0x7B - 0x27 0xFB - semclaim - claim semaphore */
 TVM_INSTRUCTION void ins_semclaim(void)
 {
-	tvm_sem_claim((POOTER) areg);
+	tvm_sem_claim((WORDPTR) areg);
 
 	UNDEFINE_STACK();
 }
@@ -333,7 +333,7 @@ TVM_INSTRUCTION void ins_semclaim(void)
 /* 0x7C - 0x27 0xFC - semrelease - release semaphore */
 TVM_INSTRUCTION void ins_semrelease(void)
 {
-	tvm_sem_release((POOTER) areg);
+	tvm_sem_release((WORDPTR) areg);
 
 	UNDEFINE_STACK();
 }
@@ -348,8 +348,8 @@ TVM_INSTRUCTION void ins_semrelease(void)
 /* 0xE8 - 0x2E 0xF8 - xable - Extended Input Enable */
 TVM_INSTRUCTION void ins_xable(void)
 {
-	POOTER chan_addr = (POOTER) areg;
-	POOTER other_wptr = (POOTER) read_mem(chan_addr);
+	WORDPTR chan_addr = (WORDPTR) areg;
+	WORDPTR other_wptr = (WORDPTR) read_word(chan_addr);
 
 	/* This is like a single guard ALT */
 	/* If channel is empty, then alt on it */
@@ -360,7 +360,7 @@ TVM_INSTRUCTION void ins_xable(void)
 		WORKSPACE_SET(wptr, WS_IPTR, (WORD) iptr);
 
 		/* Put ourselves into the channel word */
-		write_mem(chan_addr, (WORD) wptr);
+		write_word(chan_addr, (WORD) wptr);
 
 		/* Find something else to run */
 		iptr = run_next_on_queue();
@@ -372,14 +372,14 @@ TVM_INSTRUCTION void ins_xable(void)
 /* 0xE9 - 0x2E 0xF9 - xin - Extended Input */
 TVM_INSTRUCTION void ins_xin(void)
 {
-	BPOOTER write_start = (BPOOTER) creg;
-	BPOOTER read_start;
-	POOTER chan_addr = (POOTER) breg;
-	POOTER other_wptr;
+	BYTEPTR write_start = (BYTEPTR) creg;
+	BYTEPTR read_start;
+	WORDPTR chan_addr = (WORDPTR) breg;
+	WORDPTR other_wptr;
 	WORD num_bytes = areg;
 
-	other_wptr = (POOTER) read_mem(chan_addr);
-	read_start = (BPOOTER) WORKSPACE_GET(other_wptr, WS_CHAN);
+	other_wptr = (WORDPTR) read_word(chan_addr);
+	read_start = (BYTEPTR) WORKSPACE_GET(other_wptr, WS_CHAN);
 
 	copy_data(write_start, read_start, num_bytes);
 
@@ -389,11 +389,11 @@ TVM_INSTRUCTION void ins_xin(void)
 /* 0xEC - 0x2E 0xFC - xend - Extended Input End */
 TVM_INSTRUCTION void ins_xend(void)
 {
-	POOTER chan_addr = (POOTER) areg;
-	POOTER other_wptr = (POOTER) read_mem(chan_addr);
+	WORDPTR chan_addr = (WORDPTR) areg;
+	WORDPTR other_wptr = (WORDPTR) read_word(chan_addr);
 
 	/* Set chan word to NOT_PROCESS_P */
-	write_mem(chan_addr, NOT_PROCESS_P);
+	write_word(chan_addr, NOT_PROCESS_P);
 
 	/* Put the outputting process on the run queue */
 	just_add_to_queue((WORD)other_wptr);

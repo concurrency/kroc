@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 
-void write_mem(POOTER ptr, WORD val)
+void write_word(WORDPTR ptr, WORD val)
 {	
 	//ASSERT_WORD_ALIGNED(ptr, TVM_WORD_LENGTH, "writing");
 
@@ -40,7 +40,7 @@ void write_mem(POOTER ptr, WORD val)
 #endif
 }
 
-WORD read_mem(POOTER ptr)
+WORD read_word(WORDPTR ptr)
 {
 	//ASSERT_WORD_ALIGNED(ptr, TVM_WORD_LENGTH, "reading");
 	/* ANNO: Cast to UNSIGNED WORD as the behaviour of a shift on negative values
@@ -54,32 +54,32 @@ WORD read_mem(POOTER ptr)
 #endif
 }
 
-void write_byte(BPOOTER ptr, BYTE val) 
+void write_byte(BYTEPTR ptr, BYTE val) 
 {
 	*ptr = val;
 }
 
-BYTE read_byte (BPOOTER ptr)
+BYTE read_byte (BYTEPTR ptr)
 {
 	return *ptr;
 }
 
-POOTER pooter_plus(POOTER ptr, WORD inc)
+WORDPTR wordptr_plus(WORDPTR ptr, WORD inc)
 {
 	return ptr + inc;
 }
 
-POOTER pooter_minus(POOTER ptr, WORD inc)
+WORDPTR wordptr_minus(WORDPTR ptr, WORD inc)
 {
 	return ptr - inc;
 }
 
-BPOOTER bpooter_plus(BPOOTER ptr, WORD inc)
+BYTEPTR byteptr_plus(BYTEPTR ptr, WORD inc)
 {
 	return ptr + inc;
 }
 
-BPOOTER bpooter_minus(BPOOTER ptr, WORD inc)
+BYTEPTR byteptr_minus(BYTEPTR ptr, WORD inc)
 {
 	return ptr - inc;
 }
@@ -96,22 +96,22 @@ BPOOTER bpooter_minus(BPOOTER ptr, WORD inc)
    __r.__l[1] = SwapFourBytes (__v.__l[0]); \
    __r.__ll; })) 
 
-void write_memf(POOTER ptr, float val)
+void write_wordf(WORDPTR ptr, float val)
 {	
 	*ptr = (float)SwapFourBytes((UWORD)val);
 }
 
-float read_memf(POOTER ptr)
+float read_wordf(WORDPTR ptr)
 {
 	return (float)SwapFourBytes((UWORD)*ptr);
 }
 
-void write_memd(POOTER ptr, double val)
+void write_wordd(WORDPTR ptr, double val)
 {	
 	*ptr = (double)SwapEightBytes((UWORD)val);
 }
 
-double read_memd(POOTER ptr)
+double read_wordd(WORDPTR ptr)
 {
 	return (double)SwapEightBytes((UWORD)*ptr);
 }

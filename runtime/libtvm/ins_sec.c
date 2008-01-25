@@ -39,13 +39,13 @@ TVM_INSTRUCTION void ins_rev(void)
 /* 0x01 - 0xF1 - lb - load byte */
 TVM_INSTRUCTION void ins_lb(void)
 {
-  STACK((WORD)read_byte((BPOOTER)areg),breg,creg);
+  STACK((WORD)read_byte((BYTEPTR)areg),breg,creg);
 }
 
 /* 0x02 - 0xF2 - bsub - byte subscript */
 TVM_INSTRUCTION void ins_bsub(void)
 {
-	STACK((WORD)bpooter_plus((BPOOTER) areg, breg), creg, UNDEFINE(creg));
+	STACK((WORD)byteptr_plus((BYTEPTR) areg, breg), creg, UNDEFINE(creg));
 }
 
 /* 0x03 - 0xF3 - endp - end process */
@@ -53,18 +53,18 @@ TVM_INSTRUCTION void ins_endp(void)
 {
 	/* Check the process count */
 	/* if(((WORD *)areg)[1] == 1) */
-	if(read_mem(pooter_plus((POOTER)areg, 1)) == 1) 
+	if(read_word(wordptr_plus((WORDPTR)areg, 1)) == 1) 
 	{
 		/* No more child processes, continue as the parent process */
 
 		/* Set the process count to zero */
 		/* ((WORD *)areg)[1] = 0; */
-		write_mem(pooter_plus((POOTER)areg, 1), 0);
+		write_word(wordptr_plus((WORDPTR)areg, 1), 0);
 		/* Get the resume address from the workspace */
 		/* iptr = (BYTE *)((WORD *)areg)[0]; */
-		iptr = (BPOOTER)read_mem((POOTER)areg);
+		iptr = (BYTEPTR)read_word((WORDPTR)areg);
 		/* The areg becomes the new wptr */
-		wptr = (POOTER)areg;
+		wptr = (WORDPTR)areg;
 		/* The entire stack becomes undefined */
 		//STACK(UNDEFINE(areg), UNDEFINE(breg), UNDEFINE(creg));
 	}
@@ -74,8 +74,8 @@ TVM_INSTRUCTION void ins_endp(void)
 
 		/* Subtract one from the process count */
 		/*((WORD *)areg)[1] = ((WORD *)areg)[1] - 1;*/
-		write_mem(pooter_plus((POOTER)areg, 1), 
-				read_mem(pooter_plus((POOTER)areg, 1)) - 1);
+		write_word(wordptr_plus((WORDPTR)areg, 1), 
+				read_word(wordptr_plus((WORDPTR)areg, 1)) - 1);
 		/* The entire stack becomes undefined */
 		//STACK(UNDEFINE(areg), UNDEFINE(breg), UNDEFINE(creg));
 		/* Run the next process */
@@ -114,7 +114,7 @@ TVM_INSTRUCTION void ins_gcall(void)
 	 */
 	temp = areg;
 	areg = (WORD)iptr;
-	iptr = (BPOOTER)temp;
+	iptr = (BYTEPTR)temp;
 
 	/* FIXME: This is not the INMOS GCALL, it has been modified by fred (I
 	 * presume) to store the IPTR in WS_TOP. The original instruction does NOT
@@ -146,7 +146,7 @@ TVM_INSTRUCTION void ins_wsub(void)
 {
 	/* FIXME: Same check as for bsub */
 	/*STACK((WORD)((WORD *) areg) + breg, creg, UNDEFINE(creg));*/
-	STACK((WORD)pooter_plus((POOTER)areg, breg), creg, UNDEFINE(creg));
+	STACK((WORD)wordptr_plus((WORDPTR)areg, breg), creg, UNDEFINE(creg));
 }
 
 /* 0x0C - 0xFC - sub - subtract */
@@ -203,7 +203,7 @@ TVM_INSTRUCTION void ins_csub0(void)
 /* 0x15 - 0x21 0xF5 - stopp - stop process */
 TVM_INSTRUCTION void ins_stopp(void)
 {
-	WORKSPACE_SET((POOTER) wptr, WS_IPTR, (WORD) iptr);
+	WORKSPACE_SET((WORDPTR) wptr, WS_IPTR, (WORD) iptr);
 
 	iptr = run_next_on_queue();
 }
@@ -376,7 +376,7 @@ again2:
 TVM_INSTRUCTION void ins_ldpi(void)
 {
 	/*STACK((WORD)(iptr + areg), breg, creg);*/
-	STACK((WORD)bpooter_plus(iptr, areg), breg, creg);
+	STACK((WORD)byteptr_plus(iptr, areg), breg, creg);
 }
 
 /* 0x1D - 0x21 0xFD - xdble - extend to double */
@@ -418,10 +418,10 @@ TVM_INSTRUCTION void ins_rem(void)
 /* 0x20 - 0x22 0xF0 - ret - return */
 TVM_INSTRUCTION void ins_ret(void)
 {
-	BPOOTER ret_addr = (BPOOTER)read_mem(wptr);
+	BYTEPTR ret_addr = (BYTEPTR)read_word(wptr);
 
 	iptr = ret_addr;
-	wptr = pooter_plus(wptr, 4);
+	wptr = wordptr_plus(wptr, 4);
 }
 
 /* 0x21 - 0x22 0xF1 - lend - loop end */
@@ -435,21 +435,21 @@ TVM_INSTRUCTION void ins_lend(void)
 	 * assume that memory is all zeros before the program runs. eg: The scheme
 	 * interpreter inits memory to <void>.
 	 */
-	if(read_mem(pooter_plus((POOTER)breg, 1)) > 1)
+	if(read_word(wordptr_plus((WORDPTR)breg, 1)) > 1)
 	{
 		/* FIXME: This is done the other way around in soccam, I think I followed
 		 * the order it was done in the book... check though */
-		write_mem((POOTER)breg, read_mem((POOTER)breg) + 1);
-		write_mem(pooter_plus((POOTER)breg, 1), 
-				read_mem(pooter_plus((POOTER)breg, 1)) - 1);
+		write_word((WORDPTR)breg, read_word((WORDPTR)breg) + 1);
+		write_word(wordptr_plus((WORDPTR)breg, 1), 
+				read_word(wordptr_plus((WORDPTR)breg, 1)) - 1);
 
-		iptr = bpooter_minus(iptr, areg);
+		iptr = byteptr_minus(iptr, areg);
 	} 
 	else 
 	{
 		/* Decrement the counter */
-		write_mem(pooter_plus((POOTER)breg, 1), 
-				read_mem(pooter_plus((POOTER)breg, 1)) - 1);
+		write_word(wordptr_plus((WORDPTR)breg, 1), 
+				read_word(wordptr_plus((WORDPTR)breg, 1)) - 1);
 	 }			
 		
 	/* FIXME: I dont think the soccam instruction set the stack properly, it
@@ -735,7 +735,7 @@ TVM_INSTRUCTION void ins_runp(void)
 /* 0x3B - 0x23 0xFB - sb - store byte */
 TVM_INSTRUCTION void ins_sb(void)
 {
-	write_byte((BPOOTER)areg, (BYTE)breg);
+	write_byte((BYTEPTR)areg, (BYTE)breg);
 
 	STACK(creg, UNDEFINE(breg), UNDEFINE(creg));
 }
@@ -749,7 +749,7 @@ TVM_INSTRUCTION void ins_gajw(void)
 	 * compiler are not included, which would probalby include this one??? */
 	WORD tmp = (WORD)wptr;
 
-	wptr = (POOTER)areg;
+	wptr = (WORDPTR)areg;
 	areg = tmp;
 }
 
@@ -778,9 +778,9 @@ TVM_INSTRUCTION void ins_gajw(void)
 /* 0x3E - 0x23 0xFE - saveh - Save queue registers */
 TVM_INSTRUCTION void ins_saveh(void)
 {
-	write_mem(pooter_plus((POOTER) areg, 0), (WORD) fptr[pri]);
-	write_mem(pooter_plus((POOTER) areg, 1), (WORD) bptr[pri]);
-	write_mem(pooter_plus((POOTER) areg, 2), (WORD) tptr[pri]);
+	write_word(wordptr_plus((WORDPTR) areg, 0), (WORD) fptr[pri]);
+	write_word(wordptr_plus((WORDPTR) areg, 1), (WORD) bptr[pri]);
+	write_word(wordptr_plus((WORDPTR) areg, 2), (WORD) tptr[pri]);
 
 	/* printf("fptr: 0x%x; bptr: 0x%x; tptr: 0x%x (wptr: 0x%x; iptr: 0x%x)\n", fptr[pri], bptr[pri], tptr[pri], wptr, iptr); */
 
@@ -843,7 +843,7 @@ TVM_INSTRUCTION void ins_and(void)
 TVM_INSTRUCTION void ins_move(void)
 {
 	
-	copy_data((BPOOTER) breg, (BPOOTER) creg, areg);
+	copy_data((BYTEPTR) breg, (BYTEPTR) creg, areg);
 	UNDEFINE_STACK();
 }
 
@@ -924,7 +924,7 @@ TVM_INSTRUCTION void ins_stoperr(void)
 		//STACK(UNDEFINE(areg), UNDEFINE(areg), UNDEFINE(breg));
 
 		/* Store the instruction pointer at wptr-1 */
-		write_mem(pooter_minus(wptr, 1), (WORD)iptr);
+		write_word(wordptr_minus(wptr, 1), (WORD)iptr);
 
 		/* Run a new process */
 		iptr = run_next_on_queue();

@@ -26,42 +26,42 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "mem.h"
 
 /*
-void write_mem(POOTER ptr, WORD val)
+void write_word(WORDPTR ptr, WORD val)
 {
 	*ptr = val;
 }
 
-WORD read_mem(POOTER ptr)
+WORD read_word(WORDPTR ptr)
 {
 	return *ptr;
 }
 
-void write_byte(BPOOTER ptr, BYTE val) 
+void write_byte(BYTEPTR ptr, BYTE val) 
 {
 	*ptr = val; 
 }
 
-BYTE read_byte (BPOOTER ptr)
+BYTE read_byte (BYTEPTR ptr)
 {
 	return *ptr;
 }
 
-POOTER pooter_plus(POOTER ptr, WORD inc)
+WORDPTR wordptr_plus(WORDPTR ptr, WORD inc)
 {
 	return ptr + inc;
 }
 
-POOTER pooter_minus(POOTER ptr, WORD inc)
+WORDPTR wordptr_minus(WORDPTR ptr, WORD inc)
 {
 	return ptr - inc;
 }
 
-BPOOTER bpooter_plus(BPOOTER ptr, WORD inc)
+BYTEPTR byteptr_plus(BYTEPTR ptr, WORD inc)
 {
 	return ptr + inc;
 }
 
-BPOOTER bpooter_minus(BPOOTER ptr, WORD inc)
+BYTEPTR byteptr_minus(BYTEPTR ptr, WORD inc)
 {
 	return ptr - inc;
 }

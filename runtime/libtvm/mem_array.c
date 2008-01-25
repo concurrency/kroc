@@ -41,55 +41,55 @@ static inline void check_addr(WORD ptr) {
 	}
 }
 
-WORD read_mem(POOTER ptr)
+WORD read_word(WORDPTR ptr)
 {
 	check_addr(ptr);
 	return *(WORD *)(&memory_array[ptr]);
 }
 
-void write_mem(POOTER ptr, WORD val)
+void write_word(WORDPTR ptr, WORD val)
 {
 	check_addr(ptr);
 	*(WORD *)(&memory_array[ptr]) = val;
 }
 
-BYTE read_byte(BPOOTER ptr)
+BYTE read_byte(BYTEPTR ptr)
 {
 	check_addr(ptr);
 	return memory_array[ptr];
 }
 
-void write_byte(BPOOTER ptr, BYTE val) 
+void write_byte(BYTEPTR ptr, BYTE val) 
 {
 	check_addr(ptr);
 	memory_array[ptr] = val;
 }
 
-float read_memf(POOTER ptr)
+float read_wordf(WORDPTR ptr)
 {
 	check_addr(ptr);
 	return *(float *)(&memory_array[ptr]);
 }
 
-void write_memf(POOTER ptr, float val)
+void write_wordf(WORDPTR ptr, float val)
 {
 	check_addr(ptr);
 	*(float *)(&memory_array[ptr]) = val;
 }
 
-double read_memd(POOTER ptr)
+double read_wordd(WORDPTR ptr)
 {
 	check_addr(ptr);
 	return *(double *)(&memory_array[ptr]);
 }
 
-void write_memd(POOTER ptr, double val)
+void write_wordd(WORDPTR ptr, double val)
 {
 	check_addr(ptr);
 	*(double *)(&memory_array[ptr]) = val;
 }
 
-int *pooter_real_address(POOTER ptr)
+int *wordptr_real_address(WORDPTR ptr)
 {
 	check_addr(ptr);
 	return (int *)(&memory_array[ptr]);

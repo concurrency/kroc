@@ -34,7 +34,7 @@ extern void tvm_sleep(void);
 extern void just_add_to_queue(WORD src_reg);
 extern void add_to_queue(WORD src_reg, WORD iptr_prime);
 extern void add_queue_to_queue(WORD front, WORD back);
-extern BPOOTER run_next_on_queue(void);
+extern BYTEPTR run_next_on_queue(void);
 
 #ifdef ENABLE_SCHED_SYNC
 extern volatile int sched_sync;

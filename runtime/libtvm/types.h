@@ -57,12 +57,12 @@ typedef uint8_t		UWORD;
 #endif /* HAVE_INTTYPES_H */
 
 /* Define kinds of pointers which we want to be able to use */
-#if defined(POOTERS_FAKE)
-typedef WORD 		POOTER;
-typedef WORD 		BPOOTER;
+#if defined(WORDPTRS_FAKE)
+typedef WORD 		WORDPTR;
+typedef WORD 		BYTEPTR;
 #else
-typedef WORD * 		POOTER;
-typedef BYTE * 		BPOOTER;
+typedef WORD * 		WORDPTR;
+typedef BYTE * 		BYTEPTR;
 #endif
 
 /* This is the prototype for occam FFI calls, it is defined, by D.C.Wood as

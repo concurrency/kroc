@@ -21,25 +21,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef MEM_NATIVE_H
 #define MEM_NATIVE_H
 
-#define read_mem(LOC)            ( *((POOTER)(LOC)) )
-#define write_mem(LOC, VAL)      ( *((POOTER)(LOC)) ) = (VAL)
-#define pooter_minus(WPTR, LOC)  ( ((POOTER)WPTR) - (LOC) )
-#define pooter_plus(WPTR, LOC)   ( ((POOTER)WPTR) + (LOC) )
+#define read_word(LOC)            ( *((WORDPTR)(LOC)) )
+#define write_word(LOC, VAL)      ( *((WORDPTR)(LOC)) ) = (VAL)
+#define wordptr_minus(WPTR, LOC)  ( ((WORDPTR)WPTR) - (LOC) )
+#define wordptr_plus(WPTR, LOC)   ( ((WORDPTR)WPTR) + (LOC) )
 
-#define read_byte(LOC)           ( *((BPOOTER)(LOC)) )
-#define write_byte(LOC, VAL)     ( *((BPOOTER)(LOC)) ) = (VAL)
-#define bpooter_minus(WPTR, LOC) ( ((BPOOTER)WPTR) - (LOC) )
-#define bpooter_plus(WPTR, LOC)  ( ((BPOOTER)WPTR) + (LOC) )
+#define read_byte(LOC)           ( *((BYTEPTR)(LOC)) )
+#define write_byte(LOC, VAL)     ( *((BYTEPTR)(LOC)) ) = (VAL)
+#define byteptr_minus(WPTR, LOC) ( ((BYTEPTR)WPTR) - (LOC) )
+#define byteptr_plus(WPTR, LOC)  ( ((BYTEPTR)WPTR) + (LOC) )
 
 #ifdef __FPU_SUPPORT__
 
-#define read_memf(LOC)           ( *((float *)(LOC)) )
-#define write_memf(LOC, VAL)     ( *((float *)(LOC)) ) = (VAL)
+#define read_wordf(LOC)           ( *((float *)(LOC)) )
+#define write_wordf(LOC, VAL)     ( *((float *)(LOC)) ) = (VAL)
 
-#define read_memd(LOC)           ( *((double *)(LOC)) )
-#define write_memd(LOC, VAL)     ( *((double *)(LOC)) ) = (VAL)
+#define read_wordd(LOC)           ( *((double *)(LOC)) )
+#define write_wordd(LOC, VAL)     ( *((double *)(LOC)) ) = (VAL)
 #endif
 
-#define pooter_real_address(LOC) ( LOC )
+#define wordptr_real_address(LOC) ( LOC )
 
 #endif

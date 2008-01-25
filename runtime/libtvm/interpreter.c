@@ -103,9 +103,9 @@ void exit_runloop(int exit_val)
  *    ...
  *    init_stackframe(&wptr, ...)
  */
-void init_stackframe(POOTER *where, int argc, WORD argv[],
-		POOTER vectorspace, POOTER mobilespace, POOTER forkingbarrier,
-		int ret_type, BPOOTER ret_addr)
+void init_stackframe(WORDPTR *where, int argc, WORD argv[],
+		WORDPTR vectorspace, WORDPTR mobilespace, WORDPTR forkingbarrier,
+		int ret_type, BYTEPTR ret_addr)
 {
 	int index = 0;
 	int i, frame_size, ret_index;
@@ -119,45 +119,45 @@ void init_stackframe(POOTER *where, int argc, WORD argv[],
 	/* Set up a stack frame which will return to the method final_ret, which
 	 * will in turn exit the run loop
 	 */
-	*where = pooter_minus(*where, frame_size);
+	*where = wordptr_minus(*where, frame_size);
 
 	/* Store an index to the return pointer */
 	ret_index = index++;
 
 	/* Set up arguments */
 	for(i = 0; i < argc; i++)
-		write_mem(pooter_plus(*where, index++), (WORD)argv[i]);
+		write_word(wordptr_plus(*where, index++), (WORD)argv[i]);
 
 	/* Set up vectorspace pointer if neccesary */
 	if(vectorspace)
 	{
-		write_mem(pooter_plus(*where, index++), (WORD)vectorspace);
+		write_word(wordptr_plus(*where, index++), (WORD)vectorspace);
 	}
 
 	/* Set up mobilespace pointer if neccesary */
 	if(mobilespace)
 	{
-		write_mem(pooter_plus(*where, index++), (WORD)mobilespace);
+		write_word(wordptr_plus(*where, index++), (WORD)mobilespace);
 	}
 
 	/* Set up forking barrier pointer if neccesary */
 	#ifdef __MOBILE_PI_SUPPORT__
 	if(forkingbarrier)
 	{
-		write_mem(pooter_plus(*where, index++), (WORD)forkingbarrier);
+		write_word(wordptr_plus(*where, index++), (WORD)forkingbarrier);
 	}
 	#endif
 
 	switch(ret_type) {
 		case RET_SHUTDOWN:
 			/* Put a shutdown instruction in top workspace */
-			write_byte(bpooter_plus((BPOOTER)pooter_plus(*where, index), 0), 0x2F);
-			write_byte(bpooter_plus((BPOOTER)pooter_plus(*where, index), 1), 0xFE);
+			write_byte(byteptr_plus((BYTEPTR)wordptr_plus(*where, index), 0), 0x2F);
+			write_byte(byteptr_plus((BYTEPTR)wordptr_plus(*where, index), 1), 0xFE);
 			break;
 		case RET_ERROR:
 			/* Put a seterr instruction in top workspace */
-			write_byte(bpooter_plus((BPOOTER)pooter_plus(*where, index), 0), 0x21);
-			write_byte(bpooter_plus((BPOOTER)pooter_plus(*where, index), 1), 0xF0);
+			write_byte(byteptr_plus((BYTEPTR)wordptr_plus(*where, index), 0), 0x21);
+			write_byte(byteptr_plus((BYTEPTR)wordptr_plus(*where, index), 1), 0xF0);
 			break;
 		default:
 			break;
@@ -166,19 +166,19 @@ void init_stackframe(POOTER *where, int argc, WORD argv[],
 	if(ret_type == RET_REAL)
 	{
 		/* Store the return pointer, to completion byte code */
-		write_mem(pooter_plus(*where, ret_index), (WORD)ret_addr);
+		write_word(wordptr_plus(*where, ret_index), (WORD)ret_addr);
 	}
 	else
 	{
 		/* Store the return pointer, to completion byte code */
-		write_mem(pooter_plus(*where, ret_index), (WORD)pooter_plus(*where, index));
+		write_word(wordptr_plus(*where, ret_index), (WORD)wordptr_plus(*where, index));
 	}
 }
 
-void initial_stackframe(POOTER *where, int argc, WORD argv[],
-		POOTER vectorspace, POOTER mobilespace, int add_forkingbarrier)
+void initial_stackframe(WORDPTR *where, int argc, WORD argv[],
+		WORDPTR vectorspace, WORDPTR mobilespace, int add_forkingbarrier)
 {
-	POOTER fb = (POOTER) NULL_P;
+	WORDPTR fb = (WORDPTR) NULL_P;
 
 	#ifdef __MOBILE_PI_SUPPORT__
 	if(add_forkingbarrier)
@@ -238,7 +238,7 @@ int run(void)
 			instr = read_byte(iptr);
 #endif
 			//printf("  instr = %02x\n", instr);
-			iptr = bpooter_plus(iptr, 1);
+			iptr = byteptr_plus(iptr, 1);
 
 			/* Put the least significant bits in oreg */
 			oreg |= (instr & 0x0f);

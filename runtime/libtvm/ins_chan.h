@@ -23,11 +23,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "instructions.h"
 
-TVM_HELPER_PROTO POOTER chan_io_begin(WORD altable, POOTER chan_ptr, BPOOTER data_ptr);
-TVM_HELPER_PROTO void chan_io_end(POOTER chan_ptr, POOTER other_wptr);
-TVM_HELPER_PROTO void chan_in(WORD num_bytes, POOTER chan_ptr, BPOOTER write_start);
-TVM_HELPER_PROTO void chan_out(WORD num_bytes, POOTER chan_ptr, BPOOTER read_start);
-TVM_HELPER_PROTO void chan_swap(POOTER chan_ptr, POOTER data_ptr);
+TVM_HELPER_PROTO WORDPTR chan_io_begin(WORD altable, WORDPTR chan_ptr, BYTEPTR data_ptr);
+TVM_HELPER_PROTO void chan_io_end(WORDPTR chan_ptr, WORDPTR other_wptr);
+TVM_HELPER_PROTO void chan_in(WORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start);
+TVM_HELPER_PROTO void chan_out(WORD num_bytes, WORDPTR chan_ptr, BYTEPTR read_start);
+TVM_HELPER_PROTO void chan_swap(WORDPTR chan_ptr, WORDPTR data_ptr);
 
 /****************************************************************************
  *                   0xF_              0xF_              0xF_               *

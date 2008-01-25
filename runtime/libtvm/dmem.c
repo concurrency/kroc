@@ -41,10 +41,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 TVM_INSTRUCTION void ins_mreleasep(void)
 {
 	/* Find the pointer to the allocated block, size comes in from areg */
-	BPOOTER ptr = ((BPOOTER)wptr) + (areg * TVM_WORD_LENGTH);
+	BYTEPTR ptr = ((BYTEPTR)wptr) + (areg * TVM_WORD_LENGTH);
 	//printf(">mreleasep\n");
 	//printf("  ptr = 0x%08x\n", (WORD) ptr);
-	mt_release_simple((POOTER) ptr, MT_MAKE_TYPE(MT_DATA));
+	mt_release_simple((WORDPTR) ptr, MT_MAKE_TYPE(MT_DATA));
 
 	iptr = run_next_on_queue();
 	//printf("<mreleasep\n");
@@ -98,7 +98,7 @@ TVM_INSTRUCTION void ins_mfree(void)
 /* 0xE2 - 0x2E 0xF2 - malloc - dynamic memory allocation */
 TVM_INSTRUCTION void ins_malloc(void)
 {
-	POOTER ptr = (POOTER)NULL_P;
+	WORDPTR ptr = (WORDPTR)NULL_P;
 	UWORD size = areg;
 	
 	if(size != 0)
@@ -117,7 +117,7 @@ TVM_INSTRUCTION void ins_mrelease(void)
 		set_error_flag(EFLAG_DMEM);
 	}
 
-	mt_release_simple((POOTER)areg, MT_MAKE_TYPE(MT_DATA));
+	mt_release_simple((WORDPTR)areg, MT_MAKE_TYPE(MT_DATA));
 	
 	UNDEFINE_STACK();
 }
@@ -125,8 +125,8 @@ TVM_INSTRUCTION void ins_mrelease(void)
 /* 0xE4 - 0x2E 0xF4 - min - mobile input */
 TVM_INSTRUCTION void ins_min(void)
 {
-	POOTER chan_ptr	= (POOTER)areg;
-	POOTER data_ptr	= (POOTER)breg;
+	WORDPTR chan_ptr	= (WORDPTR)areg;
+	WORDPTR data_ptr	= (WORDPTR)breg;
 
 	chan_swap(chan_ptr, data_ptr);
 }
@@ -134,8 +134,8 @@ TVM_INSTRUCTION void ins_min(void)
 /* 0xE5 - 0x2E 0xF5 - mout - mobile output */
 TVM_INSTRUCTION void ins_mout(void)
 {
-	POOTER chan_ptr = (POOTER)areg;
-	POOTER data_ptr = (POOTER)breg;
+	WORDPTR chan_ptr = (WORDPTR)areg;
+	WORDPTR data_ptr = (WORDPTR)breg;
 
 	chan_swap(chan_ptr, data_ptr);
 }
@@ -143,8 +143,8 @@ TVM_INSTRUCTION void ins_mout(void)
 /* 0xE6 - 0x2E 0xF6 - min64 - dynamic mobile array input */
 TVM_INSTRUCTION void ins_min64(void)
 {
-	BPOOTER data_ptr = (BPOOTER)breg;
-	POOTER chan_ptr = (POOTER)areg;
+	BYTEPTR data_ptr = (BYTEPTR)breg;
+	WORDPTR chan_ptr = (WORDPTR)areg;
 
 	chan_in(8, chan_ptr, data_ptr);
 }
@@ -152,8 +152,8 @@ TVM_INSTRUCTION void ins_min64(void)
 /* 0xE7 - 0x2E 0xF7 - mout64 - dynamic mobile array output */
 TVM_INSTRUCTION void ins_mout64(void)
 {
-	BPOOTER data_ptr = (BPOOTER)breg;
-	POOTER chan_ptr = (POOTER)areg;
+	BYTEPTR data_ptr = (BYTEPTR)breg;
+	WORDPTR chan_ptr = (WORDPTR)areg;
 
 	chan_out(8, chan_ptr, data_ptr);
 }
@@ -161,13 +161,13 @@ TVM_INSTRUCTION void ins_mout64(void)
 /* 0xEA - 0x2E 0xFA - xmin - Extended Mobile Input */
 TVM_INSTRUCTION void ins_xmin(void)
 {
-	POOTER chan_addr = (POOTER) areg;
-	POOTER data_ptr = (POOTER) breg;
-	POOTER other_ptr;
-	POOTER other_wptr;
+	WORDPTR chan_addr = (WORDPTR) areg;
+	WORDPTR data_ptr = (WORDPTR) breg;
+	WORDPTR other_ptr;
+	WORDPTR other_wptr;
 
-	other_wptr = (POOTER) read_mem(chan_addr);
-	other_ptr = (POOTER) WORKSPACE_GET(other_wptr, WS_CHAN);
+	other_wptr = (WORDPTR) read_word(chan_addr);
+	other_ptr = (WORDPTR) WORKSPACE_GET(other_wptr, WS_CHAN);
 
 	swap_data_word(data_ptr, other_ptr);
 

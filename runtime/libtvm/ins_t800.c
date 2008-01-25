@@ -45,6 +45,6 @@ TVM_INSTRUCTION void ins_wsubdb(void)
 	 * a shift followed by a WSUB or BSUB when accessing double word
 	 * array items.
 	 */
-	STACK((WORD)pooter_plus((POOTER)areg, breg * 2), creg, UNDEFINE(creg));
+	STACK((WORD)wordptr_plus((WORDPTR)areg, breg * 2), creg, UNDEFINE(creg));
 }
 

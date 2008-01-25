@@ -73,11 +73,11 @@ one:
 		/* Are we the head of the timerqueue */
 		if(tptr[pri] == wptr)
 		{
-			tptr[pri] = (POOTER) WORKSPACE_GET((POOTER)tptr[pri], WS_NEXT_T);
+			tptr[pri] = (WORDPTR) WORKSPACE_GET((WORDPTR)tptr[pri], WS_NEXT_T);
 			/* If we were the last thing on the queue, this should not happen */
-			if(tptr[pri] != (POOTER)NOT_PROCESS_P)
+			if(tptr[pri] != (WORDPTR)NOT_PROCESS_P)
 			{
-				tnext[pri] = WORKSPACE_GET((POOTER)tptr[pri], WS_TIMEOUT);
+				tnext[pri] = WORKSPACE_GET((WORDPTR)tptr[pri], WS_TIMEOUT);
 #ifdef ENABLE_SCHED_SYNC
 				set_alarm(tnext[pri] - get_time());
 #endif
@@ -85,17 +85,17 @@ one:
 		}
 		/* We could check that tptr[pri] == NOT_PROCESS_P but this case SHOULD be
 		 * impossible! So we dont bother */
-		else if(tptr[pri] == (POOTER)NOT_PROCESS_P)
+		else if(tptr[pri] == (WORDPTR)NOT_PROCESS_P)
 		{
 		}
 		else
 		{
-			POOTER previous = tptr[pri];
-			POOTER current = (POOTER)WORKSPACE_GET((POOTER)tptr[pri], WS_NEXT_T);
-			while((current != (POOTER)NOT_PROCESS_P) && (current != wptr))
+			WORDPTR previous = tptr[pri];
+			WORDPTR current = (WORDPTR)WORKSPACE_GET((WORDPTR)tptr[pri], WS_NEXT_T);
+			while((current != (WORDPTR)NOT_PROCESS_P) && (current != wptr))
 			{
 				previous = current;
-				current =(POOTER) WORKSPACE_GET(current, WS_NEXT_T);
+				current =(WORDPTR) WORKSPACE_GET(current, WS_NEXT_T);
 			}
 			/* There is a sanity test we could do here to check if current is
 			 * NOT_PROCESS_P, this is impossible though so we are not going to */
@@ -122,12 +122,12 @@ one:
 	{
 
 	/* Aditionally */
-	//if((breg != 0) && (BEFORE(current_time, creg)) && (tptr[pri] != (POOTER)NOT_PROCESS_P))
-	if(tptr[pri] != (POOTER)NOT_PROCESS_P)
+	//if((breg != 0) && (BEFORE(current_time, creg)) && (tptr[pri] != (WORDPTR)NOT_PROCESS_P))
+	if(tptr[pri] != (WORDPTR)NOT_PROCESS_P)
 	{
-		POOTER loop_wptr = tptr[pri];
-		POOTER loop_next = (POOTER)WORKSPACE_GET(tptr[pri], WS_NEXT_T);
-		POOTER loop_prev = 0;
+		WORDPTR loop_wptr = tptr[pri];
+		WORDPTR loop_next = (WORDPTR)WORKSPACE_GET(tptr[pri], WS_NEXT_T);
+		WORDPTR loop_prev = 0;
 		fprintf(stdout, "Phantom removal:\n");
 		
 		//print_timer_queue();
@@ -140,17 +140,17 @@ ins_dist_loop:
 		{
 			/* HEAD CHECK */
 			/* We are at the head of the list */
-			if(loop_next == (POOTER)NOT_PROCESS_P)
+			if(loop_next == (WORDPTR)NOT_PROCESS_P)
 			{
 				/* If there is nobody after this process, we can nuke the tptr */
-				tptr[pri] = (POOTER)NOT_PROCESS_P;
+				tptr[pri] = (WORDPTR)NOT_PROCESS_P;
 			}
 			else
 			{
 				/* If there are others after this process, we need to put them at the
 				 * head of the queue, and also set the timeout to their timeout value.
 				 */
-				tptr[pri] = (POOTER)WORKSPACE_GET(loop_wptr, WS_NEXT_T);
+				tptr[pri] = (WORDPTR)WORKSPACE_GET(loop_wptr, WS_NEXT_T);
 				tnext[pri] = WORKSPACE_GET(tptr[pri], WS_TIMEOUT);
 			}
 		}
@@ -162,7 +162,7 @@ ins_dist_loop:
 			/* ... take us out of the queue */
 			WORKSPACE_SET(loop_prev, WS_NEXT_T, WORKSPACE_GET(loop_wptr, WS_NEXT_T));
 		}
-		else if(loop_next == (POOTER)NOT_PROCESS_P)
+		else if(loop_next == (WORDPTR)NOT_PROCESS_P)
 		{
 			/* AT THE END OF THE LIST */
 			/* Do nothing */
@@ -171,8 +171,8 @@ ins_dist_loop:
 		{
 			/* KEEP LOOKING */
 			loop_prev = loop_wptr; /* FIXME: different order from soccam */
-			loop_wptr = (POOTER)WORKSPACE_GET(loop_wptr, WS_NEXT_T);
-			loop_next = (POOTER)WORKSPACE_GET(loop_wptr, WS_NEXT_T); /* FIXME: different from soccam */
+			loop_wptr = (WORDPTR)WORKSPACE_GET(loop_wptr, WS_NEXT_T);
+			loop_next = (WORDPTR)WORKSPACE_GET(loop_wptr, WS_NEXT_T); /* FIXME: different from soccam */
 			goto ins_dist_loop;
 		}
 		//print_timer_queue();
@@ -187,7 +187,7 @@ ins_dist_loop:
 TVM_INSTRUCTION void ins_disc(void)
 {
 	WORD wptr_deref = WORKSPACE_GET(wptr, WS_TOP);
-	WORD creg_deref = read_mem((POOTER)creg);
+	WORD creg_deref = read_word((WORDPTR)creg);
 	/* FIXME: There dont seem that much point in doing this the same way
 	 * as with soccam, ie by hacing the fired variable, as we dont seem to 
 	 * gain anything, as we still need to do the test in a big ig. Ie we
@@ -200,7 +200,7 @@ TVM_INSTRUCTION void ins_disc(void)
 	if((breg != 0) && 
 			(wptr_deref == NONE_SELECTED_O) && 
 			(creg_deref != NOT_PROCESS_P) && 
-			((POOTER)creg_deref != wptr))
+			((WORDPTR)creg_deref != wptr))
 	{
 		WORKSPACE_SET(wptr, WS_TOP, areg);
 		fired = 1;
@@ -211,11 +211,11 @@ TVM_INSTRUCTION void ins_disc(void)
 	 * at ourselves. So, we should destroy evidence of 
 	 * a waiting process (US!) before doing everything else.
 	 */
-	if((breg != 0) && ((POOTER)creg_deref == wptr))
+	if((breg != 0) && ((WORDPTR)creg_deref == wptr))
 	{
 		/* FIXME: Here and in soccam would it be more clear to use 
 		 * wptr rather than creg??? */
-		write_mem((POOTER)creg, NOT_PROCESS_P);
+		write_word((WORDPTR)creg, NOT_PROCESS_P);
 	}
 
 	STACK((WORD)fired, UNDEFINE(breg), UNDEFINE(creg));
@@ -291,7 +291,7 @@ TVM_INSTRUCTION void ins_altend(void)
 {
 	/* Add the jump offset which has been stored at the top of the workspace by
 	 * one of the disabeling instructions to the current iptr */
-	iptr = bpooter_plus(iptr, WORKSPACE_GET(wptr, WS_TOP));
+	iptr = byteptr_plus(iptr, WORKSPACE_GET(wptr, WS_TOP));
 }
 
 /* 0x47 - 0x24 0xF7 - enbt - enable timer */
@@ -334,13 +334,13 @@ TVM_INSTRUCTION void ins_enbc(void)
 	/* FIXME: This is the other way around from how the test is done in soccam */
 	if(areg != 0)
 	{
-		if(read_mem((POOTER)breg) == NOT_PROCESS_P)
+		if(read_word((WORDPTR)breg) == NOT_PROCESS_P)
 		{
-			write_mem((POOTER)breg, (WORD)wptr);
+			write_word((WORDPTR)breg, (WORD)wptr);
 		}
 		else
 		{
-			if((POOTER)read_mem((POOTER)breg) == wptr)
+			if((WORDPTR)read_word((WORDPTR)breg) == wptr)
 			{
 				/* Another guard of the current process is waiting
 				 * on the channnel; do nothing.

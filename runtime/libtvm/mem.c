@@ -24,10 +24,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #if (defined USE_CUSTOM_COPY_DATA)
 /* define nothing */
-#elif (defined USE_MEMCPY) && (defined POOTERS_REAL)
+#elif (defined USE_MEMCPY) && (defined WORDPTRS_REAL)
 /* define nothing */
 #else
-TVM_HELPER void copy_data(BPOOTER write_start, BPOOTER read_start, UWORD num_bytes)
+TVM_HELPER void copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes)
 {
 	/* -- Bit twiddling lesson --
 	 * 
@@ -65,9 +65,9 @@ TVM_HELPER void copy_data(BPOOTER write_start, BPOOTER read_start, UWORD num_byt
 		/* This count is now on words */
 		while(num_bytes--)
 		{
-			write_mem((POOTER) write_start, read_mem((POOTER) read_start));
-			read_start = (BPOOTER) pooter_plus((POOTER) read_start, 1);
-			write_start = (BPOOTER) pooter_plus((POOTER) write_start, 1);
+			write_word((WORDPTR) write_start, read_word((WORDPTR) read_start));
+			read_start = (BYTEPTR) wordptr_plus((WORDPTR) read_start, 1);
+			write_start = (BYTEPTR) wordptr_plus((WORDPTR) write_start, 1);
 		}
 	}
 	else
@@ -76,8 +76,8 @@ TVM_HELPER void copy_data(BPOOTER write_start, BPOOTER read_start, UWORD num_byt
 		while(num_bytes--)
 		{
 			write_byte(write_start, read_byte(read_start));
-			read_start = bpooter_plus(read_start, 1);
-			write_start = bpooter_plus(write_start, 1);
+			read_start = byteptr_plus(read_start, 1);
+			write_start = byteptr_plus(write_start, 1);
 		}
 	}
 }

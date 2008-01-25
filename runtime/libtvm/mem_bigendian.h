@@ -21,11 +21,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef MEM_BIGENDIAN_H
 #define MEM_BIGENDIAN_H
 
-void write_mem(POOTER ptr, WORD val);
-WORD read_mem(POOTER ptr);
+void write_word(WORDPTR ptr, WORD val);
+WORD read_word(WORDPTR ptr);
 
-void write_byte(BPOOTER ptr, BYTE val);
-BYTE read_byte (BPOOTER ptr);
+void write_byte(BYTEPTR ptr, BYTE val);
+BYTE read_byte (BYTEPTR ptr);
 
 /* FIXME: Check that this is the right place to put the shared annotations, Ii
  * would have liked (I think) to annotate wptr and iptr as shared, though that
@@ -38,19 +38,19 @@ BYTE read_byte (BPOOTER ptr);
  */
 /* ANNO: Marking these functions as using and returning @shared@ pointers, ie
  * pointers into memory which is never deallocated */
-POOTER pooter_plus(/*@returned@*/POOTER ptr, WORD inc);
-POOTER pooter_minus(/*@returned@*/ POOTER ptr, WORD inc);
-BPOOTER bpooter_plus(/*@returned@*/ BPOOTER ptr, WORD inc);
-BPOOTER bpooter_minus(/*@returned@*/ BPOOTER ptr, WORD inc);
+WORDPTR wordptr_plus(/*@returned@*/WORDPTR ptr, WORD inc);
+WORDPTR wordptr_minus(/*@returned@*/ WORDPTR ptr, WORD inc);
+BYTEPTR byteptr_plus(/*@returned@*/ BYTEPTR ptr, WORD inc);
+BYTEPTR byteptr_minus(/*@returned@*/ BYTEPTR ptr, WORD inc);
 
 #ifdef __FPU_SUPPORT__
-void write_memf(POOTER ptr, float val);
-float read_memf(POOTER ptr);
-void write_memd(POOTER ptr, double val);
-double read_memd(POOTER ptr);
+void write_wordf(WORDPTR ptr, float val);
+float read_wordf(WORDPTR ptr);
+void write_wordd(WORDPTR ptr, double val);
+double read_wordd(WORDPTR ptr);
 #endif  /*__FPU_SUPPORT__ */
 
-#define pooter_real_address(LOC) ( LOC )
+#define wordptr_real_address(LOC) ( LOC )
 
 #endif 
 

@@ -258,10 +258,10 @@ TVM_INSTRUCTION void ins_fpldnldbi(void)
   * I think this has to do with the index being 64 bit (as in indexing into 64 bit words)
   * so the index needs to be multiplied by 2 to get the correct value.  This makes the cgtest
   * pass.  There is probably some better way to designate this though... DJD 24012007*/
-  PUSH_FPREG(read_memd(pooter_plus(areg, (breg * 2))), DOUBLE);
+  PUSH_FPREG(read_wordd(wordptr_plus(areg, (breg * 2))), DOUBLE);
   //fcreg = fbreg;
   //fbreg = fareg;
-  //fareg = read_memd(pooter_plus(areg, (breg * 2)));
+  //fareg = read_wordd(wordptr_plus(areg, (breg * 2)));
   //printf("areg %x, breg %x\n ", areg, breg);
   STACK(breg, creg, UNDEFINE(creg));
 	SET_ROUNDMODE(FE_TONEAREST);
@@ -282,7 +282,7 @@ TVM_INSTRUCTION void ins_fpchkerr(void)
 /* 0x84 - 0x28 0xF4 - fpstnldb - floating point store non-local double */
 TVM_INSTRUCTION void ins_fpstnldb(void)
 {
-  write_memd(areg, fareg);
+  write_wordd(areg, fareg);
   POP_FPREG(fbreg);
   //fareg = fbreg;
   //fbreg = fcreg;
@@ -293,10 +293,10 @@ TVM_INSTRUCTION void ins_fpstnldb(void)
 /* 0x86 - 0x28 0xF6 - fpldnlsni - floating load non local indexed single */
 TVM_INSTRUCTION void ins_fpldnlsni(void)
 {
-  PUSH_FPREG(read_memf(pooter_plus(areg, breg)), SINGLE);
+  PUSH_FPREG(read_wordf(wordptr_plus(areg, breg)), SINGLE);
   //fcreg = fbreg;
   //fbreg = fareg;
-  //fareg = read_memf(pooter_plus(areg, breg));
+  //fareg = read_wordf(wordptr_plus(areg, breg));
   //printf("areg %x, breg %x\n ", areg, breg);
   STACK(creg, UNDEFINE(breg), UNDEFINE(creg));
 	SET_ROUNDMODE(FE_TONEAREST);
@@ -327,8 +327,8 @@ TVM_INSTRUCTION void ins_fpstnlsn(void)
 	
 	// areg /\ byteselectmask = 0
 	// fareg.len = sn - means fareg is a single, not a double.
-	write_memf(areg, (float)fareg);
-	//printf("fareg is %f, read_mem is %f, areg* is %i\n", fareg, read_memf(areg), areg);
+	write_wordf(areg, (float)fareg);
+	//printf("fareg is %f, read_word is %f, areg* is %i\n", fareg, read_wordf(areg), areg);
 
 	STACK(breg, creg, UNDEFINE(creg));
 	POP_FPREG(fbreg);
@@ -366,8 +366,8 @@ TVM_INSTRUCTION void ins_fpldnldb(void)
   //fcreg = fbreg;
   //fbreg = fareg;
   //read memory double in gotta see if this actually works.
-  //fareg = read_memd(areg);  
-  PUSH_FPREG(read_memd(areg), DOUBLE);
+  //fareg = read_wordd(areg);  
+  PUSH_FPREG(read_wordd(areg), DOUBLE);
 	STACK(breg, creg, UNDEFINE(creg));
 }
 
@@ -431,9 +431,9 @@ TVM_INSTRUCTION void ins_fpldnlsn(void)
 		//fbreg = fareg;
 		
   /* Since fareg is a double, the unpack.sn (above) may happen automagically.. maybe... */
-		//fareg = read_memf( areg ); 
-  PUSH_FPREG(read_memf( areg), SINGLE);
-	//	printf("fareg is %f, read_mem is %f, areg* is %i\n", fareg, read_memf(areg), areg);
+		//fareg = read_wordf( areg ); 
+  PUSH_FPREG(read_wordf( areg), SINGLE);
+	//	printf("fareg is %f, read_word is %f, areg* is %i\n", fareg, read_wordf(areg), areg);
 
 	/* These come last since areg gets modified, and the above needs it.*/
   /* From graytransputer book areg' = breg */
@@ -554,9 +554,9 @@ TVM_INSTRUCTION void ins_fpi32tor32(void)
 	/*push stack up and cast*/
 	//fcreg = fbreg;
 	//fbreg = fareg;
-	/*Use read_mem not read_memf since the book says not to RETYPE*/
-	//fareg = read_mem(areg);
-  PUSH_FPREG((float)read_mem(areg), SINGLE);
+	/*Use read_word not read_wordf since the book says not to RETYPE*/
+	//fareg = read_word(areg);
+  PUSH_FPREG((float)read_word(areg), SINGLE);
 	//printf("fpi32tor32 fareg %f areg %i\n", fareg, areg);
 
 	STACK(breg, creg, UNDEFINE(creg));
@@ -571,10 +571,10 @@ TVM_INSTRUCTION void ins_fpi32tor64 (void)
    /*push stack up and cast*/
   //fcreg = fbreg;
   //fbreg = fareg;
-  /*Use read_mem not read_memf since the book says not to RETYPE*/
+  /*Use read_word not read_wordf since the book says not to RETYPE*/
   //Not sure if this is correct... may need a (double) cast there
-  //fareg = read_mem(areg);
-  PUSH_FPREG((double)read_mem(areg), DOUBLE);
+  //fareg = read_word(areg);
+  PUSH_FPREG((double)read_word(areg), DOUBLE);
   //printf("fpi32tor64 fareg %f areg %i\n", fareg, areg);
 
 	STACK(breg, creg, UNDEFINE(creg));
@@ -618,13 +618,13 @@ TVM_INSTRUCTION void ins_fpstnli32(void)
 {
 	// Should test to see if fareg contains an value which fits 
 	// into an int...
-	/* IMPORTANT: This uses write_mem instead of write_memf
+	/* IMPORTANT: This uses write_word instead of write_wordf
 	 * since we are storing the float as an int (casting)i.
 	 * The below line is supposed to correspond to:
 	 * Mem' = Mem { Areg -> INT32 TRUNC pack (fareg)} 
 	 * where pack is either pack.sn or pack.db depending
 	 * on fareg.len */
-	write_mem(areg, (int)fareg);
+	write_word(areg, (int)fareg);
 	
 	STACK(breg, creg, UNDEFINE(creg));
 	POP_FPREG(fbreg);
@@ -704,7 +704,7 @@ TVM_INSTRUCTION void ins_fpldnladddb(void)
 	// areg /\ byteselectmask = 0
 	// fareg.len = db - means fareg is a double.
   //fareg' = fareg +IEEE unpack.db (RETYPE REAL64 [Mem Areg, Mem (Index Areg 1)])
-  fareg = (double) ((double)fareg) + read_memd(areg);
+  fareg = (double) ((double)fareg) + read_wordd(areg);
   fareg_length = DOUBLE;
   //fbreg' = fbreg
   //fcreg = undefined
@@ -715,7 +715,7 @@ TVM_INSTRUCTION void ins_fpldnladddb(void)
 /* 0xA8 - 0x2A 0xF8 - fpldnlmuldb - floating load non local and multiply double */
 TVM_INSTRUCTION void ins_fpldnlmuldb(void)
 {
-	fareg = (double)((double)fareg) * read_memd(areg);
+	fareg = (double)((double)fareg) * read_wordd(areg);
   fareg_length = DOUBLE;
 	//fbreg = fbreg (doesn't change)
 	//fcreg = undefined
@@ -732,9 +732,9 @@ TVM_INSTRUCTION void ins_fpldnladdsn(void)
 	// fareg.len = sn - means fareg is a single, not a double.
 	
 	//fareg' = fareg +ieee unpack.sn (RETYPE REAL32 Mem Areg)
-	fareg = (float) ((float)fareg) + read_memf(areg);
+	fareg = (float) ((float)fareg) + read_wordf(areg);
   fareg_length = SINGLE;
-	//printf("fareg is %f, read_mem is %f, areg* is %i\n", fareg, read_memf(areg), areg);
+	//printf("fareg is %f, read_word is %f, areg* is %i\n", fareg, read_wordf(areg), areg);
 
 	//fbreg' = fbreg (no changes, so do nothing)
 	//fcreg' = undefined..
@@ -748,7 +748,7 @@ TVM_INSTRUCTION void ins_fpldnladdsn(void)
 /* 0xAC - 0x2A 0xFC - fpldnlmulsn - floating load non local and multiply single */
 TVM_INSTRUCTION void ins_fpldnlmulsn(void)
 {
-	fareg = (float)((float)fareg) * read_memf(areg);
+	fareg = (float)((float)fareg) * read_wordf(areg);
   fareg_length = SINGLE;
 	//fbreg = fbreg (doesn't change)
 	//fcreg = undefined
@@ -812,7 +812,7 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 */
   /* Push stack */
   //STACK(areg, areg, breg);
-  fareg = (double) read_mem(areg);
+  fareg = (double) read_word(areg);
   fareg_length = DOUBLE;
   //STACK(areg, areg, breg);
 	SET_ROUNDMODE(FE_TONEAREST);
