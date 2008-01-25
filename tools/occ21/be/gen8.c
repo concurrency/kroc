@@ -4255,7 +4255,7 @@ fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (N
 
 				genloadlabptr (MTDLabOf (mtype), NOLAB, "MTD PTR");
 				genprimary (I_LDL, 0);
-				genprimary (I_STNL, pony_offset); /* typedesc */
+				genprimary (I_STNL, pony_offset + PONY_TYPEDESC);
 			}
 
 			if (kroc_chantype_knsf) {
@@ -4269,7 +4269,7 @@ fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (N
 										: 0x00010000);	/* not shared */
 				loadconstant (istate);
 				genprimary (I_LDL, 0);
-				genprimary (I_STNL, pony_offset + 2); /* state */
+				genprimary (I_STNL, pony_offset + PONY_STATE);
 			}
 
 			/* that ought to do it.. */

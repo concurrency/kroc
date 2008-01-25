@@ -22,4 +22,10 @@
 
 #define WSH (wordshift)		/* workspace shift */
 
+/* Offsets in mt_cb_pony_state_t, in words. */
+#define PONY_TYPEDESC 0
+#define PONY_UIOHOOK 1
+#define PONY_STATE 2
+#define PONY_STATESEM 3
+
 #endif	/* !__GENKROC_H */
