@@ -3670,12 +3670,12 @@ PUBLIC void tprocess (treenode * tptr)
 							gensemop (SEMOP_RELEASE);
 
 							/* do uio communication (to KRoC.net kernel in this case) */
-							/* note: the pointer in the chantype (MCT_DESCOFFSET + 1) is to the first (client)
+							/* note: the pointer in the chantype is to the first (client)
 							 *       channel word, server stacked above that
 							 */
 							loadmobile (ct_nptr);
 							gensecondary (I_DUP);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							if (is_client) {
 								/* genprimary (I_LDNLP, 0);	*/		/* load address of "client" channel */
 							} else {
@@ -3691,11 +3691,11 @@ PUBLIC void tprocess (treenode * tptr)
 							const int iskiplab = newlab ();
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							genbranch (I_CJ, iskiplab);		/* operations-hook is NULL, so skip */
 							loadmobile (ct_nptr);
 							gensecondary (I_DUP);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							if (is_client) {
 								genprimary (I_LDNL, 0);			/* load address of "client" channel */
 							} else {
@@ -3753,15 +3753,15 @@ PUBLIC void tprocess (treenode * tptr)
 							gensemop (SEMOP_RELEASE);
 
 							/* do uio communication (to KRoC.net kernel in this case) */
-							/* note: the pointer in the chantype (MCT_DESCOFFSET + 1) is to the first (client)
+							/* note: the pointer in the chantype is to the first (client)
 							 *       channel word, server stacked above that
 							 */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							genbranch (I_CJ, iskiplab);		/* operations-hook is NULL, so skip */
 							loadmobile (ct_nptr);
 							gensecondary (I_DUP);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							if (is_client) {
 								/* genprimary (I_LDNL, 0); */			/* load address of "client" channel */
 							} else {
@@ -3779,11 +3779,11 @@ PUBLIC void tprocess (treenode * tptr)
 							const int iskiplab = newlab ();
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							genbranch (I_CJ, iskiplab);		/* operations-hook is NULL, so skip */
 							loadmobile (ct_nptr);
 							gensecondary (I_DUP);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							if (is_client) {
 								genprimary (I_LDNL, 0);			/* load address of "client" channel */
 							} else {
@@ -3834,8 +3834,6 @@ printtreenl (stderr, 4, ct_subtype);
 					lastchan_offset = (bytesin (ct_subtype) / bytesperword);		/* client at this + 1, server at this + 4, maybe more if chantype_desc */
 					is_client = (NTypeAttrOf (ct_subtype) & TypeAttr_marked_out);
 					lock = (is_client ? MT_CB_CLIENT : MT_CB_SERVER);
-					//soffset = lastchan_offset + MCT_REFCSIZE + (is_client ? MCT_CLI_SEMOFFS : MCT_SVR_SEMOFFS) + (kroc_chantype_desc ? MCT_DESCSIZE : 0);
-					//knsf_offset = lastchan_offset + MCT_REFCSIZE + (kroc_chantype_desc ? MCT_DESCSIZE : 0) + MCT_KROCNETOFFS;
 					cl_head = newlab ();
 					cl_tail = newlab ();
 					rl_head = newlab ();

@@ -33,8 +33,6 @@
 
 #include "trandef.h"
 #include "tran1def.h"
-
-#include "genhdr.h"	/* for MCT_ offsets/sizes */
 /*}}}*/
 
 /*{{{  PUBLIC  treenode *add_to */
