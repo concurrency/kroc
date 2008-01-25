@@ -3622,7 +3622,7 @@ PUBLIC void tprocess (treenode * tptr)
 					const int chans = (bytesin (ct_type) / bytesperword);		/* client at this + 1, server at this + 4, maybe more if chantype_desc */
 					const int is_client = (NTypeAttrOf (ct_type) & TypeAttr_marked_out);
 					const int lock = (is_client ? MT_CB_CLIENT : MT_CB_SERVER);
-					const int knsf_offset = chans + (kroc_chantype_desc ? MCT_DESCSIZE : 0);
+					const int pony_offset = chans;					/* offset of pony state in words */
 					/*}}}*/
 					gencomment0 ("begin claim semaphore");
 					loadmobile (ct_nptr);
@@ -3640,25 +3640,25 @@ PUBLIC void tprocess (treenode * tptr)
 							const int ijoinlab = newlab ();
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
 							gensemop (SEMOP_CLAIM);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + 1);		/* uiohook */
 							genboolinvert ();
 							genbranch (I_CJ, iskiplab);			/* operations-hook is non-null, so skip */
 
 							/* change value in state field */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, knsf_offset);		/* load current state */
+							genprimary (I_LDNL, pony_offset + 2);		/* load current state */
 							loadconstant (is_client ? 0x0001 : 0x00010000);
 							gensecondary (I_SUM);				/* advance state from 2 to 3 */
 							loadmobile (ct_nptr);
-							genprimary (I_STNL, knsf_offset);		/* save modified state */
+							genprimary (I_STNL, pony_offset + 2);		/* save modified state */
 
 							/* release semaphore */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
 							gensemop (SEMOP_RELEASE);
 							genbranch (I_J, ijoinlab);
 
@@ -3666,7 +3666,7 @@ PUBLIC void tprocess (treenode * tptr)
 							setlab (iskiplab);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + 2);		/* address of "state" semaphore */
 							gensemop (SEMOP_RELEASE);
 
 							/* do uio communication (to KRoC.net kernel in this case) */
@@ -3722,25 +3722,25 @@ PUBLIC void tprocess (treenode * tptr)
 							const int ijoinlab = newlab ();
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + 2);		/* address of "state" semaphore */
 							gensemop (SEMOP_CLAIM);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + 1);		/* uiohook */
 							genboolinvert ();
 							genbranch (I_CJ, iskiplab);			/* operations-hook is non-null, so skip */
 
 							/* change value in state field */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, knsf_offset);		/* load current state */
+							genprimary (I_LDNL, pony_offset + 2);		/* load current state */
 							loadconstant (is_client ? 0x0001 : 0x00010000);
 							gensecondary (I_DIFF);				/* reduce state from 3 to 2 */
 							loadmobile (ct_nptr);
-							genprimary (I_STNL, knsf_offset);		/* save modified state */
+							genprimary (I_STNL, pony_offset + 2);		/* save modified state */
 
 							/* release semaphore */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
 							gensemop (SEMOP_RELEASE);
 
 							genbranch (I_J, ijoinlab);
@@ -3749,7 +3749,7 @@ PUBLIC void tprocess (treenode * tptr)
 							setlab (iskiplab);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
 							gensemop (SEMOP_RELEASE);
 
 							/* do uio communication (to KRoC.net kernel in this case) */
