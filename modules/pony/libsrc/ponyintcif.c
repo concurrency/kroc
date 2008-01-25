@@ -1767,12 +1767,12 @@ static void make_ctb_networked (Workspace wptr, mt_cb_t *ctb, unsigned int *type
 				pd = ProcAlloc (wptr, 3, pony_protocol_decoder_stacksize);
 				ProcParam (wptr, pd, 0, &(ctb->channels[i]));
 				ProcParam (wptr, pd, 1, &(chandesc[1]));
-				ProcParam (wptr, pd, 2, dha[fi]);
+				ProcMTMove (wptr, pd, 2, &(dha[fi]));
 
-				pd = ProcAlloc (wptr, 3, pony_protocol_encoder_stacksize);
-				ProcParam (wptr, pd, 0, &(ctb->channels[i]));
-				ProcParam (wptr, pd, 1, &(chandesc[1]));
-				ProcParam (wptr, pd, 2, eha[fi]);
+				pe = ProcAlloc (wptr, 3, pony_protocol_encoder_stacksize);
+				ProcParam (wptr, pe, 0, &(ctb->channels[i]));
+				ProcParam (wptr, pe, 1, &(chandesc[1]));
+				ProcMTMove (wptr, pe, 2, &(eha[fi]));
 
 				fi++;
 				break;
@@ -1782,12 +1782,12 @@ static void make_ctb_networked (Workspace wptr, mt_cb_t *ctb, unsigned int *type
 				pd = ProcAlloc (wptr, 3, pony_protocol_decoder_stacksize);
 				ProcParam (wptr, pd, 0, &(ctb->channels[i]));
 				ProcParam (wptr, pd, 1, &(chandesc[1]));
-				ProcParam (wptr, pd, 2, dha[ti]);
+				ProcMTMove (wptr, pd, 2, &(dha[ti]));
 
-				pd = ProcAlloc (wptr, 3, pony_protocol_encoder_stacksize);
-				ProcParam (wptr, pd, 0, &(ctb->channels[i]));
-				ProcParam (wptr, pd, 1, &(chandesc[1]));
-				ProcParam (wptr, pd, 2, eha[ti]);
+				pe = ProcAlloc (wptr, 3, pony_protocol_encoder_stacksize);
+				ProcParam (wptr, pe, 0, &(ctb->channels[i]));
+				ProcParam (wptr, pe, 1, &(chandesc[1]));
+				ProcMTMove (wptr, pe, 2, &(eha[ti]));
 
 				ti--;
 				break;
@@ -1798,10 +1798,8 @@ static void make_ctb_networked (Workspace wptr, mt_cb_t *ctb, unsigned int *type
 			coffset += typedesc_len (chandesc[0]);
 
 			/* start processes */
-			if (pd != 0 && pe != 0) {
-				ProcStart (wptr, pd, pony_protocol_decoder);
-				ProcStart (wptr, pe, pony_protocol_encoder);
-			}
+			ProcStart (wptr, pd, pony_protocol_decoder);
+			ProcStart (wptr, pe, pony_protocol_encoder);
 		}
 		/*}}}*/
 	}
