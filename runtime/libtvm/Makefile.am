@@ -60,7 +60,8 @@ libtvm_a_SOURCES += \
 	jumptbl_sec.c \
 	jumptbl_ex_sec.c \
 	mem.c \
-	mem_native.c
+	mem_native.c \
+	scheduler.c
 endif
 
 # Rebuild the instruction dispatching code if necessary (and if we can).
