@@ -41,7 +41,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 TVM_INSTRUCTION void ins_mreleasep(void)
 {
 	/* Find the pointer to the allocated block, size comes in from areg */
-	BPOOTER ptr = ((BPOOTER)wptr) + (areg * WORDLENGTH);
+	BPOOTER ptr = ((BPOOTER)wptr) + (areg * TVM_WORD_LENGTH);
 	//printf(">mreleasep\n");
 	//printf("  ptr = 0x%08x\n", (WORD) ptr);
 	mt_release_simple((POOTER) ptr, MT_MAKE_TYPE(MT_DATA));

@@ -13,7 +13,7 @@ AC_PROG_CC
 AC_PROG_RANLIB
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS(stdlib.h stdio.h string.h sys/types.h math.h)
+AC_CHECK_HEADERS(stdlib.h stdio.h string.h sys/types.h math.h inttypes.h)
 
 #########################
 #  Configuration Options
@@ -79,7 +79,6 @@ esac
 case "$host_os" in
   cygwin*)
     x_os=windows
-    TVM_CFLAGS=
     ;;
   *Darwin* | *darwin*)
     x_os=darwin
@@ -238,6 +237,8 @@ AC_MSG_NOTICE([OS support      : $x_os])
 AC_MSG_NOTICE([transputer      : $transputer])
 AC_MSG_NOTICE([word length     : $word_length])
 AC_MSG_NOTICE([----------------------------------------------------])
+
+CFLAGS="$TVM_CFLAGS $CFLAGS"
 
 AC_SUBST(TVM_CFLAGS)
 

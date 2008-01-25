@@ -45,10 +45,6 @@ TVM_INSTRUCTION void ins_lb(void)
 /* 0x02 - 0xF2 - bsub - byte subscript */
 TVM_INSTRUCTION void ins_bsub(void)
 {
-	/* FIXME: Does it make sense to implement this like so: 
-	 * ie using the (BYTE *) to ensure that things are incremented by
-	 * the correct amount? I think so.*/
-	/* STACK((WORD)((BYTE *) areg) + breg, creg, UNDEFINE(creg)); */
 	STACK((WORD)bpooter_plus((BPOOTER) areg, breg), creg, UNDEFINE(creg));
 }
 
@@ -100,7 +96,7 @@ TVM_INSTRUCTION void ins_add(void)
 	WORD result = breg + areg;
 
 	/* Check for overflow, from Hackers Delight p. 27 */
-	if( ((UWORD) (((result) ^ breg) & ((result) ^ areg)) >> (WORDSIZE_BITS - 1)) )
+	if( ((UWORD) (((result) ^ breg) & ((result) ^ areg)) >> (WORD_BITS - 1)) )
 	{
 		set_error_flag(EFLAG_ADD);
 	}
@@ -159,7 +155,7 @@ TVM_INSTRUCTION void ins_sub(void)
 	WORD result = breg - areg;
 
 	/* Overflow detection from Hackers Delight p. 27 */
-	if( ((UWORD) ((breg ^ areg) & (result ^ breg))) >> (WORDSIZE_BITS - 1))
+	if( ((UWORD) ((breg ^ areg) & (result ^ breg))) >> (WORD_BITS - 1))
 	{
 		set_error_flag(EFLAG_SUB);
 	}
@@ -219,7 +215,7 @@ TVM_INSTRUCTION void ins_ladd(void)
 	WORD result = ((WORD) breg) + ((WORD) areg) + ((WORD) creg & 1);
 
 	/* Check for overflow, from Hackers Delight p. 27 */
-	if( ((UWORD) (((result) ^ breg) & ((result) ^ areg)) >> (WORDSIZE_BITS - 1)) )
+	if( ((UWORD) (((result) ^ breg) & ((result) ^ areg)) >> (WORD_BITS - 1)) )
 	{
 		set_error_flag(EFLAG_LADD);
 	}
@@ -234,12 +230,12 @@ TVM_INSTRUCTION void ins_norm(void)
 	creg = 0;
 	if(areg == 0 && breg == 0)
 	{
-		/*STACK(areg, breg, 2 * WORDLENGTH);*/
+		/*STACK(areg, breg, 2 * TVM_WORD_LENGTH);*/
 		STACK(areg, breg, 64);
 	}
 	else
 	{
-		/* FIXME: WORDLENGTH */
+		/* FIXME: TVM_WORD_LENGTH */
 		while(!(breg & 0x80000000))
 		{
 			breg = breg << 1;
@@ -254,7 +250,7 @@ TVM_INSTRUCTION void ins_norm(void)
 	}
 }
 
-#if WORDLENGTH == 4
+#if TVM_WORD_LENGTH == 4
 /* FIXME: We should have an INLINE define, that can be turned on and off */
 #ifdef WIN32
 static int nlz(unsigned x) {
@@ -278,7 +274,7 @@ static inline int nlz(unsigned x) {
  * reg pair CB by a single length value in A */
 TVM_INSTRUCTION void ins_ldiv(void)
 {
-#if WORDLENGTH != 4
+#if TVM_WORD_LENGTH != 4
 	/* FIXME: Does not work with BCC32 */
 	ins_not_implemented();
 #else
@@ -370,7 +366,7 @@ again2:
 		set_error_flag();
 	} 
 	tmp = (unsigned int)creg;
-	result = (tmp << WORDSIZE_BITS) + ((unsigned int)breg);
+	result = (tmp << WORD_BITS) + ((unsigned int)breg);
 	STACK( result / areg, result % areg, UNDEFINE(creg));
 #endif
 }
@@ -487,7 +483,7 @@ TVM_INSTRUCTION void ins_div(void)
 /* 0x31 - 0x23 F1 - lmul - long multiply */
 TVM_INSTRUCTION void ins_lmul(void)
 {
-#if WORDLENGTH != 4
+#if TVM_WORD_LENGTH != 4
 	/* FIXME: Does not work with BCC32 */
 	ins_not_implemented();
 #else
@@ -542,7 +538,7 @@ TVM_INSTRUCTION void ins_lmul(void)
 	result = breg;
 	tmp = (unsigned int)areg;
 	result = (result * tmp) + creg;
-	tmp = (result >> WORDSIZE_BITS);
+	tmp = (result >> WORD_BITS);
 	hi = (int) tmp;
 	lo = (result & LONG_LO_MASK );
 	STACK( lo, hi, UNDEFINE(creg));
@@ -567,7 +563,7 @@ TVM_INSTRUCTION void ins_xor(void)
 /* 0x35 - 0x23 F5 - lshr - long shift right */
 TVM_INSTRUCTION void ins_lshr(void)
 {
-#if WORDLENGTH != 4
+#if TVM_WORD_LENGTH != 4
 	/* FIXME: Does not work with BCC32 */
 	ins_not_implemented();
 #else
@@ -602,17 +598,17 @@ TVM_INSTRUCTION void ins_lshr(void)
 	* fall out into the void anyway */
 	unsigned int lo;  
 	unsigned long long hi;
-	if(areg <= 2* WORDSIZE_BITS  && areg >= 0 )
+	if(areg <= 2* WORD_BITS  && areg >= 0 )
         {
                 hi = (unsigned int) creg;
-                hi = hi << (WORDSIZE_BITS - areg); /*make hi really be the 'hi' and then shift it.*/
+                hi = hi << (WORD_BITS - areg); /*make hi really be the 'hi' and then shift it.*/
                 /* shift lo - done on seperage line coz shifting breg directly buggered up
 		 * coz it's unsigned, I think.  Maybe not though.  This seems to work, and
 		 * shifting breg directly didn't.  */
                 lo = breg;
                 lo = lo >> ((UWORD) areg);  
                 lo += hi;  /*add what 'overflowed' from lo to hi.*/
-                hi = hi >> WORDSIZE_BITS; /*set hi back to what it would have been in a real reg.*/
+                hi = hi >> WORD_BITS; /*set hi back to what it would have been in a real reg.*/
                 STACK((WORD)lo,(WORD) hi, 0);
         }
 #endif
@@ -622,7 +618,7 @@ TVM_INSTRUCTION void ins_lshr(void)
 /* 0x36 - 0x23 F6 - lshl - long shift left */
 TVM_INSTRUCTION void ins_lshl(void)
 {
-#if WORDLENGTH != 4
+#if TVM_WORD_LENGTH != 4
 	/* FIXME: Does not work with BCC32 */
 	ins_not_implemented();
 #else
@@ -666,7 +662,7 @@ TVM_INSTRUCTION void ins_lshl(void)
 	 * breakdown in the compiler writers guide an assertion that areg is always
 	 * going to be that value?
 	 */
-	if(((UWORD) areg >= 2 * WORDLENGTH))
+	if(((UWORD) areg >= 2 * TVM_WORD_LENGTH))
 	{
 		STACK(0, 0, UNDEFINE(creg));
 	}
@@ -685,7 +681,7 @@ TVM_INSTRUCTION void ins_lshl(void)
 	* fall out into the void anyway */
 	unsigned int hi;  
 	unsigned long long lo;
-	if(areg <= 2* WORDSIZE_BITS  && areg >= 0 )
+	if(areg <= 2* WORD_BITS  && areg >= 0 )
 	{
 		hi = ((unsigned int)creg) << areg; /*shift hi*/
 		/* shift lo - if breg is shifted directly then you get the result of
@@ -694,7 +690,7 @@ TVM_INSTRUCTION void ins_lshl(void)
 		 * very efficient.*/
 		lo = breg; 
 		lo = lo << areg;  
-		hi += lo >> WORDSIZE_BITS;  /*add what 'overflowed' from lo to hi.*/
+		hi += lo >> WORD_BITS;  /*add what 'overflowed' from lo to hi.*/
 		STACK((WORD)lo, (WORD)hi, UNDEFINE(creg));
 	} 
 #endif
@@ -708,7 +704,7 @@ TVM_INSTRUCTION void ins_lsum(void)
 	/* carry algorithm from Hackers Delight p. 34 */
 	WORD resnocarry = breg + areg;
 	WORD result = resnocarry + (creg & 1);
-	WORD carry = ((UWORD) ((breg & areg) | ((breg | areg) & ~resnocarry)) >> (WORDSIZE_BITS - 1));
+	WORD carry = ((UWORD) ((breg & areg) | ((breg | areg) & ~resnocarry)) >> (WORD_BITS - 1));
 
 	STACK(result, carry, UNDEFINE(creg));
 }
@@ -720,7 +716,7 @@ TVM_INSTRUCTION void ins_lsub(void)
 	WORD result = breg - areg - (creg & 1);
 
 	/* Overflow detection from Hackers Delight p. 27 */
-	if( ((UWORD) ((breg ^ areg) & (result ^ breg))) >> (WORDSIZE_BITS - 1))
+	if( ((UWORD) ((breg ^ areg) & (result ^ breg))) >> (WORD_BITS - 1))
 	{
 		set_error_flag(EFLAG_LSUB);
 	}
@@ -812,7 +808,7 @@ TVM_INSTRUCTION void ins_shr(void)
 	 */
 	/* STACK(((UWORD) ((UWORD) breg) >> ((UWORD) areg)), creg, UNDEFINE(creg)); */
 	STACK(
-			((unsigned) areg >= WORDSIZE_BITS) ? 0 :
+			((unsigned) areg >= WORD_BITS) ? 0 :
 			((UWORD) ((UWORD) breg) >> ((UWORD) areg)), 
 			creg, UNDEFINE(creg));
 }
@@ -827,7 +823,7 @@ TVM_INSTRUCTION void ins_shl(void)
 	 */
 	/* STACK(((UWORD) breg) << ((UWORD) areg), creg, UNDEFINE(creg)); */
 	STACK(
-			((unsigned) areg >= WORDSIZE_BITS) ? 0 : ((UWORD) breg) << ((UWORD) areg),
+			((unsigned) areg >= WORD_BITS) ? 0 : ((UWORD) breg) << ((UWORD) areg),
 			creg, UNDEFINE(creg));
 }
 
@@ -847,16 +843,8 @@ TVM_INSTRUCTION void ins_and(void)
 TVM_INSTRUCTION void ins_move(void)
 {
 	
-	/* Areg has the count, we use that as our counter variable and count down to 0
-	 * We also modify breg (dest) and creg (src) by adding one to them each
-	 * time through the loop in order to perform the move */
-	/* FIXME: Optimise this for WORDALIGNED WORDLENGTH moves? */
-	for(; areg > 0 ; areg--)
-	{
-		write_byte((BPOOTER) breg++, read_byte((BPOOTER) creg++));
-	}
-		
-	//STACK(UNDEFINE(areg), UNDEFINE(breg), UNDEFINE(creg));
+	copy_data((BPOOTER) breg, (BPOOTER) creg, areg);
+	UNDEFINE_STACK();
 }
 
 /* 0x4B - 0x24 0xFB - or - or */
@@ -894,7 +882,7 @@ TVM_INSTRUCTION void ins_ldiff(void)
 	WORD resnocarry = breg - areg;
 	WORD result = resnocarry - (creg & 1);
 	WORD equiv = (breg & areg) - (breg | areg) - 1;
-	WORD carry = ((UWORD) ((~breg & areg) | (equiv & result)) >> (WORDSIZE_BITS - 1));
+	WORD carry = ((UWORD) ((~breg & areg) | (equiv & result)) >> (WORD_BITS - 1));
 
 	STACK(result, carry, UNDEFINE(creg));
 }

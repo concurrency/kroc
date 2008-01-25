@@ -39,19 +39,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 		exit_runloop(666); /* EXIT_ALIGN_ERROR */  \
 	}
 
-#if (defined MEMORY_INTF_NATIVE)
-#	include "mem_native.h"
-#elif (defined MEMORY_INTF_BIGENDIAN)
+#if defined(MEMORY_INTF_BIGENDIAN)
 #	include "mem_bigendian.h"
-#elif (defined MEMORY_INTF_ARRAY)
+#elif defined(MEMORY_INTF_ARRAY)
 #	include "mem_array.h"
 #else
-#	error "Unknown memory interface specified"
+#	include "mem_native.h"
 #endif
 
-#if (defined USE_CUSTOM_COPY_DATA)
+#if defined(USE_CUSTOM_COPY_DATA)
 #define copy_data USE_CUSTOM_COPY_DATA
-#elif (defined USE_MEMCPY) && (defined POOTERS_REAL)
+#elif defined(USE_MEMCPY) && defined(POOTERS_REAL)
 #include <string.h>
 #define copy_data memcpy
 #else

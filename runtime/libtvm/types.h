@@ -26,58 +26,43 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef HAVE_INTTYPES_H
 
 /* No inttypes.h; assume the sizes of the standard types are correct. */
-typedef unsigned char BYTE;
-typedef short HWORD;
-typedef int WORD;
-typedef unsigned int UWORD;
+typedef unsigned char	BYTE;
+typedef short		HWORD;
+typedef int		WORD;
+typedef unsigned int	UWORD;
 
 #else /* HAVE_INTTYPES_H */
 
 #include <inttypes.h>
 
-#if WORDLENGTH == 4
-typedef uint8_t BYTE;
-typedef int16_t HWORD;
-typedef int32_t WORD;
-typedef uint32_t UWORD;
-#elif WORDLENGTH == 2
-typedef uint8_t BYTE;
-typedef int8_t HWORD;
-typedef int16_t WORD;
-typedef uint16_t UWORD;
-#elif WORDLENGTH == 1
-typedef uint8_t BYTE;
-typedef uint8_t HWORD;
-typedef int8_t WORD;
-typedef uint8_t UWORD;
+#if TVM_WORD_LENGTH == 4
+typedef uint8_t		BYTE;
+typedef int16_t		HWORD;
+typedef int32_t		WORD;
+typedef uint32_t	UWORD;
+#elif TVM_WORD_LENGTH == 2
+typedef uint8_t		BYTE;
+typedef int8_t		HWORD;
+typedef int16_t		WORD;
+typedef uint16_t	UWORD;
+#elif TVM_WORD_LENGTH == 1
+typedef uint8_t		BYTE;
+typedef uint8_t		HWORD;
+typedef int8_t		WORD;
+typedef uint8_t		UWORD;
 #else
 #error "Word length not supported (1)"
 #endif
 
 #endif /* HAVE_INTTYPES_H */
 
-/* Define a shift to convert between words and bytes. */
-#if WORDLENGTH == 8
-#define WSH 3
-#elif WORDLENGTH == 4
-#define WSH 2
-#elif WORDLENGTH == 2
-#define WSH 1
-#elif WORDLENGTH == 1
-#define WSH 0
-#else
-#error "Word length not supported (2)"
-#endif
-
 /* Define kinds of pointers which we want to be able to use */
-#ifdef POOTERS_REAL
-typedef WORD * POOTER;
-typedef BYTE * BPOOTER;
-#elif defined POOTERS_FAKE
-typedef WORD POOTER;
-typedef WORD BPOOTER;
+#if defined(POOTERS_FAKE)
+typedef WORD 		POOTER;
+typedef WORD 		BPOOTER;
 #else
-#error "Invalid pointer typedef selector used"
+typedef WORD * 		POOTER;
+typedef BYTE * 		BPOOTER;
 #endif
 
 /* This is the prototype for occam FFI calls, it is defined, by D.C.Wood as
