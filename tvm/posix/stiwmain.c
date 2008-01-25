@@ -53,22 +53,8 @@
 #include "occam_debug.h"
 #include "unix_io.h" // temporary
 
-#include "interpreter/transputer.h"
-#include "interpreter/interpreter.h"
-#include "interpreter/instructions.h"
-#include "interpreter/ext_chan.h"
-#include "interpreter/hook_timer.h"
-#include "interpreter/hook_debug.h"
-#include "interpreter/mem.h"
-#include "interpreter/scheduler.h"
-#include "interpreter/ffi_tables.h"
-
-/* The keyboard handler bytecode */
-#include "kbhandler.h"
-/* The screen handler bytecode */
-#include "scrhandler.h"
-/* The error  handler bytecode */
-#include "errhandler.h"
+/* The keyboard/screen/error handler bytecode */
+#include "handlers.h"
 
 /* The ffi stuff :)*/
 #include "ffi.h"
@@ -105,7 +91,7 @@ void  *memories_root = NULL;
 
 typedef struct memories_t
 {
-	POOTER ptr;
+	WORDPTR ptr;
 	WORD size;
 } memories;
 
@@ -135,7 +121,7 @@ memories* new_memories()
 	return item;
 }
 
-void memories_insert(POOTER ptr, WORD size)
+void memories_insert(WORDPTR ptr, WORD size)
 {
 	memories* node = new_memories();
 	node->ptr = ptr;
@@ -144,7 +130,7 @@ void memories_insert(POOTER ptr, WORD size)
 	(void) tsearch((void *)node, (void **)&memories_root, memories_compare); 
 }
 
-void memories_remove(POOTER ptr)
+void memories_remove(WORDPTR ptr)
 {
 	memories search_node;
 	memories *node;
@@ -166,9 +152,9 @@ int memories_valid_mem_compare(const void *aa, const void *bb)
 {
 	memories* a = (memories*) aa;
 	memories* b = (memories*) bb;
-	POOTER top = b->ptr;
-	POOTER bot = b->ptr + (b->size / WORDLENGTH);
-	POOTER target = a->ptr;
+	WORDPTR top = b->ptr;
+	WORDPTR bot = b->ptr + (b->size / WORDLENGTH);
+	WORDPTR target = a->ptr;
 
 	/* Check that the node we are searching for is in a */
 	if(!a->size == 0)
@@ -192,7 +178,7 @@ int memories_valid_mem_compare(const void *aa, const void *bb)
 	return 0;
 }
 
-int memories_valid_mem(POOTER ptr)
+int memories_valid_mem(WORDPTR ptr)
 {
 	void * res;
 	memories search_node;
@@ -209,7 +195,7 @@ int memories_valid_mem(POOTER ptr)
 
 void ins_malloc_debug()
 {
-	POOTER ptr;
+	WORDPTR ptr;
 	WORD size;
 
 	/* Pick up the size of the allocated block */
@@ -218,7 +204,7 @@ void ins_malloc_debug()
 	/* Do the actual call */
 	ins_malloc();
 	/* Pick up pointer to allocated block */
-	ptr = (POOTER) areg;
+	ptr = (WORDPTR) areg;
 
 	/* Store the information away somewhere */
 	memories_insert(ptr, size);
@@ -226,10 +212,10 @@ void ins_malloc_debug()
 
 void ins_mrelease_debug()
 {
-	POOTER ptr;
+	WORDPTR ptr;
 
 	/* Pick up the pointer */
-	ptr = (POOTER) areg;
+	ptr = (WORDPTR) areg;
 
 	/* Do the actual call */
 	ins_mrelease();
@@ -240,7 +226,7 @@ void ins_mrelease_debug()
 
 void ins_mreleasep_debug()
 {
-	POOTER ptr = (POOTER) (((BPOOTER)wptr) + (areg * WORDLENGTH));
+	WORDPTR ptr = (WORDPTR) (((BYTEPTR)wptr) + (areg * WORDLENGTH));
 
 	printf("mrelease_debug: ptr=0x%08x\n", (WORD) ptr);
 	ins_mreleasep();
@@ -279,7 +265,7 @@ void stiw_busywait_hook()
 
 /* FIXME: FIXME: FIXME: Need to sort out the memory interface */
 void setup_mem(WORD *, WORD);
-void print_mem(POOTER start, POOTER end, POOTER point_at, WORD what_is_zero);
+void print_mem(WORDPTR start, WORDPTR end, WORDPTR point_at, WORD what_is_zero);
 void print_stack();
 void print_vectorspace();
 void print_mobilespace();
@@ -290,24 +276,24 @@ void print_dmem();
 /* Pointers to the memory available to this transputer */
 WORD *transputermem; /* This has to be a real pointer, so we can pass real 
 												memory to the memory subsystem. */
-POOTER topmem, botmem;        /* 'Pointers' to top and bottom of memory */
-BPOOTER code_start, code_end; /* 'Pointers' to start and end of code */
+WORDPTR topmem, botmem;        /* 'Pointers' to top and bottom of memory */
+BYTEPTR code_start, code_end; /* 'Pointers' to start and end of code */
 
 /* The various sizes of the various bits of memory */
 int workspace_size   = 0;
 int vectorspace_size = 0;
 int mobilespace_size = 0;
 /* Pointers to the start of the various bits of memory */
-POOTER workspace_ptr   = 0;
-POOTER vectorspace_ptr = 0;
-POOTER mobilespace_ptr = 0;
+WORDPTR workspace_ptr   = 0;
+WORDPTR vectorspace_ptr = 0;
+WORDPTR mobilespace_ptr = 0;
 /* Pointers to the code for the error handlers */
-BPOOTER kbh_code_ptr = 0;
-BPOOTER scrh_code_ptr = 0;
-BPOOTER errh_code_ptr = 0;
+BYTEPTR kbh_code_ptr = 0;
+BYTEPTR scrh_code_ptr = 0;
+BYTEPTR errh_code_ptr = 0;
 
-static inline POOTER pooter_plusb(POOTER p, int bytes) {
-	return (POOTER) bpooter_plus(p, bytes);
+static inline WORDPTR wordptr_plusb(WORDPTR p, int bytes) {
+	return (WORDPTR) byteptr_plus(p, bytes);
 }
 
 /* We need these to be actual variables if compiling for STIWTVM */
@@ -339,7 +325,7 @@ void print_crash(int i)
 	printf("The Transterpreter crashed! (Code: %3d)\n", i);
 }
 
-int valid_mem(POOTER ptr)
+int valid_mem(WORDPTR ptr)
 {
 	if(ptr >= topmem && ptr <= botmem)
 		return 1;
@@ -357,24 +343,24 @@ int valid_mem(POOTER ptr)
 #define IN_ERROR_HANDLER 4;
 const char status_codes[] = "*ukse";
 
-int valid_code(BPOOTER ptr)
+int valid_code(BYTEPTR ptr)
 {
 	if(ptr >= code_start && ptr < code_end)
 	{
 		return IN_USER_PROGRAM;
 	}
 
-	if(ptr >= kbh_code_ptr && ptr < kbh_code_ptr + kbh_instsize)
+	if(ptr >= kbh_code_ptr && ptr < kbh_code_ptr + kbh_inst_size)
 	{
 		return IN_KEYBOARD_HANDLER;
 	}
 
-	if(ptr >= scrh_code_ptr && ptr < scrh_code_ptr + scrh_instsize)
+	if(ptr >= scrh_code_ptr && ptr < scrh_code_ptr + scrh_inst_size)
 	{
 		return IN_SCREEN_HANDLER;
 	}
 
-	if(ptr >= errh_code_ptr && ptr < errh_code_ptr + errh_instsize)
+	if(ptr >= errh_code_ptr && ptr < errh_code_ptr + errh_inst_size)
 	{
 		return IN_ERROR_HANDLER;
 	}
@@ -382,14 +368,14 @@ int valid_code(BPOOTER ptr)
 	return 0;
 }
 
-POOTER adj2memstart(POOTER ptr)
+WORDPTR adj2memstart(WORDPTR ptr)
 {
-	return (POOTER)(ptr - topmem);
+	return (WORDPTR)(ptr - topmem);
 }
 
-BPOOTER adj2codestart(BPOOTER ptr)
+BYTEPTR adj2codestart(BYTEPTR ptr)
 {
-	return (BPOOTER)(ptr - code_start);
+	return (BYTEPTR)(ptr - code_start);
 }
 
 #define QUEUE_MAX_PRINT 20
@@ -403,10 +389,10 @@ void print_scheduling_queue(void)
 	for(i = 0; i < NUM_PRI; i++)
 	{
 		int count = 0;
-		POOTER ptr = fptr[i];
+		WORDPTR ptr = fptr[i];
 
 		printf("  Scheduling Queue %d: (fptr: 0x%08x (0x%08x))\n", i, (WORD)ptr, (WORD)adj2memstart(ptr));
-		if(ptr == (POOTER)NOT_PROCESS_P)
+		if(ptr == (WORDPTR)NOT_PROCESS_P)
 		{
 			printf("    empty\n");
 		}
@@ -414,7 +400,7 @@ void print_scheduling_queue(void)
 		{
 			int print_count = 0;
 
-			while(ptr != (POOTER)NOT_PROCESS_P)
+			while(ptr != (WORDPTR)NOT_PROCESS_P)
 			{
 				/* Indent if it is the first thing on a line */
 				if(count == 0)
@@ -425,14 +411,14 @@ void print_scheduling_queue(void)
 		
 				/* Print the queue entry */
 				{
-					BPOOTER iptr = (BPOOTER)WORKSPACE_GET(ptr, WS_IPTR);
+					BYTEPTR iptr = (BYTEPTR)WORKSPACE_GET(ptr, WS_IPTR);
 					const char iptr_status = status_codes[valid_code(iptr)];
 					printf("wptr: 0x%08x, iptr: 0x%08x %c, next: 0x%08x -> ", 
 							(WORD)ptr, (WORD)iptr, iptr_status, WORKSPACE_GET(ptr, WS_NEXT));
 				}
 
 				/* Was this the last entry??? */
-				if(ptr == (POOTER)NOT_PROCESS_P || ptr == bptr[i])
+				if(ptr == (WORDPTR)NOT_PROCESS_P || ptr == bptr[i])
 				{
 					printf("end\n");
 					break;
@@ -440,7 +426,7 @@ void print_scheduling_queue(void)
 
 				/* Printed one, so add one to count, and point to the next ptr */
 				count = (count + 1) % SQUEUE_COLS;
-				ptr = (POOTER)WORKSPACE_GET(ptr, WS_NEXT);
+				ptr = (WORDPTR)WORKSPACE_GET(ptr, WS_NEXT);
 
 			
 				/* If the new pointer is not in valid memory, things are broken */
@@ -483,10 +469,10 @@ void print_timer_queue(void)
 	for(i = 0; i < NUM_PRI; i++)
 	{
 		int count = 0;
-		POOTER ptr = tptr[i];
+		WORDPTR ptr = tptr[i];
 
 		printf("  Timer Queue %d: (top: 0x%08x (0x%08x))\n", i, (WORD)ptr, (WORD)adj2memstart(ptr));
-		if(ptr == (POOTER)NOT_PROCESS_P)
+		if(ptr == (WORDPTR)NOT_PROCESS_P)
 		{
 			printf("    empty\n");
 		}
@@ -494,13 +480,13 @@ void print_timer_queue(void)
 		{
 			int print_count = 0;
 
-			while(1) /* ptr != (POOTER)NOT_PROCESS_P)*/
+			while(1) /* ptr != (WORDPTR)NOT_PROCESS_P)*/
 			{
 				if(count == 0)
 				{
 					printf("    ");
 				}
-				if(ptr == (POOTER)NOT_PROCESS_P)
+				if(ptr == (WORDPTR)NOT_PROCESS_P)
 				{
 					printf("end\n");
 					break;
@@ -518,8 +504,8 @@ void print_timer_queue(void)
 				printf("0x%08x [%11d] {0x%08x (0x%08x)} -> ", 
 						WORKSPACE_GET(ptr, WS_TIMEOUT),
 						WORKSPACE_GET(ptr, WS_TIMEOUT),
-						WORKSPACE_GET(ptr, WS_NEXT_T), (unsigned int)adj2memstart((POOTER)WORKSPACE_GET(ptr, WS_NEXT_T)));
-				ptr = (POOTER)WORKSPACE_GET(ptr, WS_NEXT_T);
+						WORKSPACE_GET(ptr, WS_NEXT_T), (unsigned int)adj2memstart((WORDPTR)WORKSPACE_GET(ptr, WS_NEXT_T)));
+				ptr = (WORDPTR)WORKSPACE_GET(ptr, WS_NEXT_T);
 
 				count = (count + 1) % TQUEUE_COLS;
 				if(count == 0)
@@ -539,7 +525,7 @@ void print_registers(void)
 {
 	int i; /* General counter */
 	int time = get_time();
-	BPOOTER iptr_prime = bpooter_minus(iptr, 1);
+	BYTEPTR iptr_prime = byteptr_minus(iptr, 1);
 
 	printf("Registers:\n");
 	printf("  iptr: 0x%08x (0x%08x) (iptr_prime: 0x%08x (0x%08x))\n", 
@@ -568,12 +554,12 @@ void print_registers(void)
 void print_state(void)
 {
 	/*int time = get_time();*/
-	BPOOTER ptr;
-	//POOTER sptr;
+	BYTEPTR ptr;
+	//WORDPTR sptr;
 	/*int i; *//* General counter */
 	//int czeros; /* consequtive zeros */
 	/* Since the iptr always points to the next instruciton */
-	BPOOTER iptr_prime = bpooter_minus(iptr, 1);
+	BYTEPTR iptr_prime = byteptr_minus(iptr, 1);
 
 	print_registers();
 
@@ -615,14 +601,14 @@ void print_state(void)
 #if 0
 	czeros = 0;
 	printf("Stack: (wptr = 0x%08x (0x%08x)\n", (WORD)wptr, (WORD)adj2memstart(wptr));
-	for(sptr = topmem; sptr < botmem; sptr=pooter_plus(sptr, 1))
+	for(sptr = topmem; sptr < botmem; sptr=wordptr_plus(sptr, 1))
 	{
-		if(read_mem(sptr) != 0 || sptr == wptr)
+		if(read_word(sptr) != 0 || sptr == wptr)
 		{
 			if(czeros > 4)
 			{
 				/* Back up */
-				sptr = pooter_minus(sptr, 2);
+				sptr = wordptr_minus(sptr, 2);
 			}
 			czeros = 0;
 		}
@@ -634,7 +620,7 @@ void print_state(void)
 		if(czeros <= 2)
 		{
 			char indicator_l, indicator_r;
-			if(valid_code((BPOOTER)sptr))
+			if(valid_code((BYTEPTR)sptr))
 			{
 				indicator_l = '{';
 				indicator_r = '}';
@@ -650,7 +636,7 @@ void print_state(void)
 				indicator_r = ' ';
 			}
 			printf(" %c0x%08x (0x%08x): 0x%08x [%11d]%c\n", 
-					indicator_l, (WORD)sptr, (WORD)adj2memstart(sptr), read_mem(sptr), read_mem(sptr), indicator_r);
+					indicator_l, (WORD)sptr, (WORD)adj2memstart(sptr), read_word(sptr), read_word(sptr), indicator_r);
 		}
 		else if(czeros == 3)
 		{
@@ -662,8 +648,8 @@ void print_state(void)
 
 void print_stack()
 {
-	POOTER top = (POOTER)((BPOOTER)workspace_ptr - workspace_size);
-	POOTER bottom = workspace_ptr;
+	WORDPTR top = (WORDPTR)((BYTEPTR)workspace_ptr - workspace_size);
+	WORDPTR bottom = workspace_ptr;
 	
 	printf("Stack: (wptr = 0x%08x (0x%08x) (top = 0x%08x, bot = 0x%08x)\n",
 			(WORD)wptr, (WORD)adj2memstart(wptr), (WORD)top, (WORD)bottom);
@@ -675,8 +661,8 @@ void print_vectorspace()
 {
 	if(vectorspace_ptr)
 	{
-		POOTER top = vectorspace_ptr;
-		POOTER bottom = (POOTER)((BPOOTER)vectorspace_ptr + vectorspace_size);
+		WORDPTR top = vectorspace_ptr;
+		WORDPTR bottom = (WORDPTR)((BYTEPTR)vectorspace_ptr + vectorspace_size);
 
 		printf("Vector space: (wptr = 0x%08x) (top = 0x%08x, bot = 0x%08x)\n", (WORD)wptr, (WORD)top, (WORD)bottom);
 		print_mem(top, bottom, wptr, MEM_FILL_WORD);
@@ -687,8 +673,8 @@ void print_mobilespace()
 {
 	if(mobilespace_ptr)
 	{
-		POOTER top = mobilespace_ptr;
-		POOTER bottom = (POOTER)((BPOOTER)mobilespace_ptr + mobilespace_size);
+		WORDPTR top = mobilespace_ptr;
+		WORDPTR bottom = (WORDPTR)((BYTEPTR)mobilespace_ptr + mobilespace_size);
 
 		printf("Mobile space: (wptr = 0x%08x) (top = 0x%08x, bot = 0x%08x)\n", (WORD)wptr, (WORD)top, (WORD)bottom);
 		print_mem(top, bottom, wptr, 0x80000000);
@@ -704,9 +690,9 @@ void print_dmem_node(const void *ptr, VISIT order, int level)
 	}
 
 	memories* node = *(memories **)ptr;
-	POOTER start = node->ptr;
+	WORDPTR start = node->ptr;
 	WORD size  = node->size / WORDLENGTH;
-	POOTER end   = start + size;
+	WORDPTR end   = start + size;
 
 	printf("Dmem: (top = 0x%08x, bot = 0x%08x, size = %d)\n", 
 			(WORD) start, (WORD) end, size);
@@ -719,19 +705,19 @@ void print_dmem()
 }
 #endif
 
-void print_mem(POOTER start, POOTER end, POOTER point_at, WORD what_is_zero)
+void print_mem(WORDPTR start, WORDPTR end, WORDPTR point_at, WORD what_is_zero)
 {
 	int czeros = 0;
-	POOTER sptr;
+	WORDPTR sptr;
 
-	for(sptr = start; sptr < end; sptr=pooter_plus(sptr, 1))
+	for(sptr = start; sptr < end; sptr=wordptr_plus(sptr, 1))
 	{
-		if(read_mem(sptr) != what_is_zero || sptr == point_at)
+		if(read_word(sptr) != what_is_zero || sptr == point_at)
 		{
 			if(czeros > 4)
 			{
 				/* Back up */
-				sptr = pooter_minus(sptr, 2);
+				sptr = wordptr_minus(sptr, 2);
 			}
 			czeros = 0;
 		}
@@ -743,7 +729,7 @@ void print_mem(POOTER start, POOTER end, POOTER point_at, WORD what_is_zero)
 		if(czeros <= 2)
 		{
 			char indicator_l, indicator_r;
-			if(valid_code((BPOOTER)sptr))
+			if(valid_code((BYTEPTR)sptr))
 			{
 				indicator_l = '{';
 				indicator_r = '}';
@@ -759,7 +745,7 @@ void print_mem(POOTER start, POOTER end, POOTER point_at, WORD what_is_zero)
 				indicator_r = ' ';
 			}
 			printf(" %c0x%08x (0x%08x): 0x%08x [%11d]%c\n", 
-					indicator_l, (WORD)sptr, (WORD)adj2memstart(sptr), read_mem(sptr), read_mem(sptr), indicator_r);
+					indicator_l, (WORD)sptr, (WORD)adj2memstart(sptr), read_word(sptr), read_word(sptr), indicator_r);
 		}
 		else if(czeros == 3)
 		{
@@ -783,7 +769,7 @@ void dbg_print_state(void)
 static void stiw_ins_not_implemented(void)
 {
 	/* Since the iptr always points to the next instruciton */
-	BPOOTER iptr_prime = iptr - 1;
+	BYTEPTR iptr_prime = iptr - 1;
 
 	print_crash(EXIT_INS_NOT_IMP);
 	printf("Instruction (0x%1x) (arg: 0x%1x) @0x%04x (0x%08x) not implemented\n", read_byte(iptr_prime) >> 4, read_byte(iptr_prime) & 0xf, iptr_prime - code_start, (WORD)iptr_prime);
@@ -803,7 +789,7 @@ static void stiw_ins_not_implemented(void)
 static void stiw_ins_invalid(void)
 {
 	/* Since the iptr always points to the next instruciton */
-	BPOOTER iptr_prime = iptr - 1;
+	BYTEPTR iptr_prime = iptr - 1;
 
 	print_crash(EXIT_INS_INVALID);
 	printf("Instruction (0x%02x) (arg: 0x%02x) @%x (0x%08x) not implemented\n", read_byte(iptr_prime) >> 4, read_byte(iptr_prime) & 0xf, iptr_prime - code_start, (WORD)iptr_prime);
@@ -1028,23 +1014,23 @@ int parse_bytecode_v2(char *filename)
 #endif 
 
 //Genericifying the setting up of channels.
-void init_special_process(WORD *arg, BPOOTER code, int code_ws_size)
+void init_special_process(WORD *arg, BYTEPTR code, int code_ws_size)
 {
-	POOTER *channel_pointer = (POOTER *) arg;
+	WORDPTR *channel_pointer = (WORDPTR *) arg;
 	WORD argv[1];
 
 	/* Allocate one word of memory for the 'CHAN BYTE' channel */
-	wptr = pooter_minus(wptr, 1);
+	wptr = wordptr_minus(wptr, 1);
 	*channel_pointer = wptr;
 	/* Set the channel to NOT.PROCESS.P */
-	write_mem(*channel_pointer, NOT_PROCESS_P);
+	write_word(*channel_pointer, NOT_PROCESS_P);
 	/* Initialise a stack frame */
 	argv[0] = *arg;
 	init_stackframe(&wptr, 
 		1, argv, 		/* one argument */
-		(POOTER) NULL_P, 	/* no vectorspace */
-		(POOTER) NULL_P,	/* no mobilespace */
-		(POOTER) NULL_P,	/* no forking barrier */
+		(WORDPTR) NULL_P, 	/* no vectorspace */
+		(WORDPTR) NULL_P,	/* no mobilespace */
+		(WORDPTR) NULL_P,	/* no forking barrier */
 		RET_ERROR, 0		/* seterr on return */
 	);
 #ifdef MEM_LAYOUT_DEBUG
@@ -1054,17 +1040,17 @@ void init_special_process(WORD *arg, BPOOTER code, int code_ws_size)
 	add_to_queue((WORD)wptr, (WORD)code);
 	/* Allocate enough workspace to be able to run the handler process */
 	/* (using *_memsize is probably a bit conservative) */
-	wptr = pooter_minus(wptr, code_ws_size);
+	wptr = wordptr_minus(wptr, code_ws_size);
 }
 
-BPOOTER copy_bytecode(BPOOTER dest, unsigned char *src, int size)
+BYTEPTR copy_bytecode(BYTEPTR dest, unsigned char *src, int size)
 {
 	int i;
 
 	for(i = 0; i < size; i++)
 	{
 		write_byte(dest, *src++);
-		dest = bpooter_plus(dest, 1);
+		dest = byteptr_plus(dest, 1);
 	}
 
 	return dest;
@@ -1244,16 +1230,16 @@ int main(int argc, char *argv[])
 			  + 32 * WORDLENGTH;
 	}
 
-#ifndef POOTERS_REAL
+#ifndef WORDPTRS_REAL
 	/* Reserve instruction space for the handler processes. */
 #ifndef DISABLE_KEYBOARD_PROC
-	memsize += kbh_instsize;
+	memsize += kbh_inst_size;
 #endif
 #ifndef DISABLE_SCREEN_PROC
-	memsize += scrh_instsize;
+	memsize += scrh_inst_size;
 #endif
 #ifndef DISABLE_ERROR_PROC
-	memsize += errh_instsize;
+	memsize += errh_inst_size;
 #endif
 
 	/* Reserve instruction space for the user program. */
@@ -1273,31 +1259,31 @@ int main(int argc, char *argv[])
 
 	/* The layout inside transputermem (which is memsize bytes long) is:
 
-	(POOTER topmem and char *transputermem point here)
+	(WORDPTR topmem and char *transputermem point here)
 	- workspace_size bytes of workspace, which consists of:
 		- workspace for the user program
-	(POOTER wptr points here)
+	(WORDPTR wptr points here)
 		- workspace for the error handler
 		- workspace for the screen handler
 		- workspace for the keyboard handler
-	(POOTER workspace_ptr points here)
-	(POOTER vectorspace_ptr points here)
+	(WORDPTR workspace_ptr points here)
+	(WORDPTR vectorspace_ptr points here)
 	- vectorspace_size bytes of vectorspace
-	(POOTER mobilespace_ptr points here)
+	(WORDPTR mobilespace_ptr points here)
 	- mobilespace_size bytes of mobilespace
-	[if !POOTERS_REAL]
-	(BPOOTER code_start points here)
-	(BPOOTER iptr points here)
+	[if !WORDPTRS_REAL]
+	(BYTEPTR code_start points here)
+	(BYTEPTR iptr points here)
 	- instsize bytes of Transputer bytecode for the user program
-	(BPOOTER code_end points here)
-	(BPOOTER kbh_code_ptr points here)
-	- kbh_instsize bytes of Transputer bytecode for the keyboard handler
-	(BPOOTER scrh_code_ptr points here)
-	- scrh_instsize bytes of Transputer bytecode for the screen handler
-	(BPOOTER errh_code_ptr points here)
-	- errh_instsize bytes of Transputer bytecode for the error handler
+	(BYTEPTR code_end points here)
+	(BYTEPTR kbh_code_ptr points here)
+	- kbh_inst_size bytes of Transputer bytecode for the keyboard handler
+	(BYTEPTR scrh_code_ptr points here)
+	- scrh_inst_size bytes of Transputer bytecode for the screen handler
+	(BYTEPTR errh_code_ptr points here)
+	- errh_inst_size bytes of Transputer bytecode for the error handler
 	[endif]
-	(POOTER botmem points here)
+	(WORDPTR botmem points here)
 
 	*/
 
@@ -1312,7 +1298,7 @@ int main(int argc, char *argv[])
 	/* Clear all the transputer memory */
 	memset(transputermem, MEM_FILL_BYTE, memsize); // memsize is in bytes
 
-#ifdef POOTERS_REAL
+#ifdef WORDPTRS_REAL
 	topmem = transputermem;
 #else
 	/* FIXME: This needs to be more generic, the whole ifdef will go when I get a
@@ -1320,63 +1306,63 @@ int main(int argc, char *argv[])
 	setup_mem(transputermem, memsize);
 	topmem = 0;
 #endif
-	botmem = pooter_plusb(topmem, memsize);
+	botmem = wordptr_plusb(topmem, memsize);
 
 	/* Set up the memory map */
-	workspace_ptr = pooter_plusb(topmem, workspace_size);
+	workspace_ptr = wordptr_plusb(topmem, workspace_size);
 	vectorspace_ptr = workspace_ptr;
-	mobilespace_ptr = pooter_plusb(vectorspace_ptr, vectorspace_size);
-	code_start = bpooter_plus((BPOOTER)mobilespace_ptr, mobilespace_size);
+	mobilespace_ptr = wordptr_plusb(vectorspace_ptr, vectorspace_size);
+	code_start = byteptr_plus((BYTEPTR)mobilespace_ptr, mobilespace_size);
 
 	if(!vectorspace_size)
 	{
-		vectorspace_ptr = (POOTER) NULL_P;
+		vectorspace_ptr = (WORDPTR) NULL_P;
 	}
 
 	if(mobilespace_size)
 	{
 		/* Clear the mobilespace to MINT */
-		POOTER ptr = mobilespace_ptr;
+		WORDPTR ptr = mobilespace_ptr;
 		int i;
 
 		for (i = 0; i < (mobilespace_size / WORDLENGTH); i++)
 		{
-			write_mem(ptr, 0x80000000);
-			ptr = pooter_plus(ptr, 1);
+			write_word(ptr, 0x80000000);
+			ptr = wordptr_plus(ptr, 1);
 		}
 	}
 	else
 	{
-		mobilespace_ptr = (POOTER) NULL_P;
+		mobilespace_ptr = (WORDPTR) NULL_P;
 	}
 
-#ifdef POOTERS_REAL
+#ifdef WORDPTRS_REAL
 	/* We can just use the code we loaded directly. */
 	code_start = transputercode;
 	#ifndef DISABLE_KEYBOARD_PROC
-	kbh_code_ptr = (BPOOTER) kbh_transputercode;
+	kbh_code_ptr = (BYTEPTR) kbh_transputercode;
 	#endif
 	#ifndef DISABLE_SCREEN_PROC
-	scrh_code_ptr = (BPOOTER) scrh_transputercode;
+	scrh_code_ptr = (BYTEPTR) scrh_transputercode;
 	#endif
 	#ifndef DISABLE_ERROR_PROC
-	errh_code_ptr = (BPOOTER) errh_transputercode;
+	errh_code_ptr = (BYTEPTR) errh_transputercode;
 	#endif
 #else
 	{
-		BPOOTER ptr = code_start;
+		BYTEPTR ptr = code_start;
 		ptr = copy_bytecode(ptr, transputercode, instsize);
 		#ifndef DISABLE_KEYBOARD_PROC
 		kbh_code_ptr = ptr;
-		ptr = copy_bytecode(ptr, kbh_transputercode, kbh_instsize);
+		ptr = copy_bytecode(ptr, kbh_transputercode, kbh_inst_size);
 		#endif
 		#ifndef DISABLE_SCREEN_PROC
 		scrh_code_ptr = ptr;
-		ptr = copy_bytecode(ptr, scrh_transputercode, scrh_instsize);
+		ptr = copy_bytecode(ptr, scrh_transputercode, scrh_inst_size);
 		#endif
 		#ifndef DISABLE_ERROR_PROC
 		errh_code_ptr = ptr;
-		ptr = copy_bytecode(ptr, errh_transputercode, errh_instsize);
+		ptr = copy_bytecode(ptr, errh_transputercode, errh_inst_size);
 		#endif
 	}
 #endif
@@ -1399,19 +1385,19 @@ int main(int argc, char *argv[])
 	printf("  instsize = 0x%08x (%d)\n", instsize, instsize);
 	printf(" @code_end = 0x%08x\n", code_end);
 	printf(" @kbh_code_ptr = 0x%08x\n", kbh_code_ptr);
-	printf("  kbh_instsize = 0x%08x (%d)\n", kbh_instsize, kbh_instsize);
+	printf("  kbh_inst_size = 0x%08x (%d)\n", kbh_inst_size, kbh_inst_size);
 	printf(" @scrh_code_ptr = 0x%08x\n", scrh_code_ptr);
-	printf("  scrh_instsize = 0x%08x (%d)\n", scrh_instsize, scrh_instsize);
+	printf("  scrh_inst_size = 0x%08x (%d)\n", scrh_inst_size, scrh_inst_size);
 	printf(" @errh_code_ptr = 0x%08x\n", errh_code_ptr);
-	printf("  kbh_instsize = 0x%08x (%d)\n", kbh_instsize, kbh_instsize);
+	printf("  kbh_inst_size = 0x%08x (%d)\n", kbh_inst_size, kbh_inst_size);
 	printf(" @botmem = 0x%08x\n", botmem);
 #endif
 
 	for(i = 0; i < NUM_PRI; i++)
 	{
-		fptr[i] = (POOTER)NOT_PROCESS_P;
-		bptr[i] = (POOTER)NOT_PROCESS_P;
-		tptr[i] = (POOTER)NOT_PROCESS_P;
+		fptr[i] = (WORDPTR)NOT_PROCESS_P;
+		bptr[i] = (WORDPTR)NOT_PROCESS_P;
+		tptr[i] = (WORDPTR)NOT_PROCESS_P;
 	}
 	areg = 0;
 	breg = 0;

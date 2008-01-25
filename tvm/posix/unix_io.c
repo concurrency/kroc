@@ -76,12 +76,12 @@ char read_char()
 #if 0
 /* This is an INT channel, it sends either a character, if one was obtained,
    or -1 if no characters are awailable at the current time. */
-static void ext_chan_kyb_nonblocking(WORD count, BPOOTER address)
+static void ext_chan_kyb_nonblocking(WORD count, BYTEPTR address)
 {
 }
 
 #ifndef WIN32
-static void ext_chan_kyb_blocking(WORD count, BPOOTER address)
+static void ext_chan_kyb_blocking(WORD count, BYTEPTR address)
 {
 #ifndef WIN32
 	struct termios oldT, newT;
@@ -111,7 +111,7 @@ static void ext_chan_kyb_blocking(WORD count, BPOOTER address)
 
 #endif
 
-#ifdef POOTERS_REAL
+#ifdef WORDPTRS_REAL
 
 void ext_chan_scr(int count, char* address)
 {

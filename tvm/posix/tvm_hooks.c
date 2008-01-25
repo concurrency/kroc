@@ -88,13 +88,13 @@ void HOOK_READCHAR(int w[])
 	if(char_available())
 	{
 		//*((int *)w[0]) = read_char();
-		write_mem(Swap4OnBigendian(w[0]), read_char());
+		write_word(Swap4OnBigendian(w[0]), read_char());
 		//printf("available %p %d\n", w[0], *((int *)w[0]));
 	}
 	else
 	{
 		//*((int *)w[0]) = -1;
-		write_mem(Swap4OnBigendian(w[0]), -1);
+		write_word(Swap4OnBigendian(w[0]), -1);
 		//printf("unavailable\n");
 	}
 }

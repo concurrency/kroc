@@ -1,6 +1,4 @@
-#include "interpreter/transputer.h"
-#include "interpreter/scheduler.h"
-#include "interpreter/timer.h"
+#include "stiw.h"
 
 #define MSECS 1000000
 #define NSEC  1000
