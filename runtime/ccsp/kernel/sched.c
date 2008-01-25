@@ -60,6 +60,7 @@
 #define MT_CCSP 1
 #define MT_DEFINES 1
 #include <mobile_types.h>
+#include <ccsp_pony.h>
 
 #include <typedesc.h>
 
@@ -3097,7 +3098,7 @@ static INLINE word *mt_alloc_cb (void *allocator, word type, word channels)
 	word i;
 
 	if (type & MT_CB_STATE_SPACE) {
-		words += 5;
+		words += sizeof(mt_cb_pony_state_t) / sizeof(word);
 	}
 	type |= channels << MT_CB_CHANNELS_SHIFT;
 
@@ -3121,6 +3122,15 @@ static INLINE word *mt_alloc_cb (void *allocator, word type, word channels)
 		i_cb->ref_count = 2;
 		i_cb->type	= type;
 		cb		= (mt_cb_t *) (((word *) i_cb) + MT_CB_PTR_OFFSET);
+	}
+
+	if (type & MT_CB_STATE_SPACE) {
+		mt_cb_pony_state_t *pony = (mt_cb_pony_state_t *) &(cb->channels[channels]);
+
+		pony->typedesc	= NULL;
+		pony->uiohook	= NULL;
+		pony->state	= 0;
+		sem_init (&(pony->statesem));
 	}
 
 	for (i = 0; i < channels; ++i) {
