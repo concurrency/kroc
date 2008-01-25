@@ -1,8 +1,10 @@
-// Copyright: Adam Sampson, Fred Barnes, Mario Schweigler (C) 2005-2006
-// Institution: Computing Laboratory, University of Kent, Canterbury, UK
-// Description: pony internal CIF C code file
-
 /*
+ *	ponyintcif.c -- pony protocol converters
+ *	Copyright (C) 2005, 2006 Mario Schweigler
+ *	Copyright (C) 2005, 2006 Fred Barnes
+ *	Copyright (C) 2005, 2006 University of Kent
+ *	Copyright (C) 2008 Adam Sampson <ats@offog.org>
+ *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
  *	the Free Software Foundation; either version 2 of the License, or
@@ -29,7 +31,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-#include "cifccsp.h"
+#include <cif.h>
 #define CIFTRACE_NAME "pony"
 #include "ciftrace.h"
 #include "dmem_if.h"
@@ -46,25 +48,7 @@
 #endif
 
 /*}}}*/
-/*{{{  structures*/
-typedef struct chantype_BASIC {
-        int refcount;
-        unsigned int *typedesc;
-        void *uiohook;
-	Channel channels[0];
-} ct_BASIC;
-
-typedef struct chantype_BASIC_end {
-	CTSem clisem;
-	CTSem svrsem;
-	int state;
-	CTSem statesem;
-} ct_BASIC_end;
-
-#define ct_size(typedesc) (sizeof (ct_BASIC) + (sizeof (Channel) * typedesc_chantype_nchans (typedesc)) + sizeof (ct_BASIC_end))
-#define ct_end(ctb) ((ct_BASIC_end *)(((char *)ctb) + sizeof (ct_BASIC) + (sizeof (Channel) * typedesc_chantype_nchans (ctb->typedesc))))
-/*}}}*/
-/*{{{  protocol tag values*/
+/*{{{  protocol tag values */
 enum PDI_tags {
 	PDI_activate = 0,
 	PDI_make_ctb_networked_confirm,
@@ -90,7 +74,7 @@ enum PEI_tags {
 	PEI_first_clc = 0,
 	PEI_rest_clcs,
 	PEI_data_item_nlc,
-	PEI_increase_ref_count,
+	PEI_clone_ctb,
 	PEI_alloc_new_ctb,
 	PEI_alloc_new_ctb_confirm,
 	PEI_cancel,
@@ -103,12 +87,12 @@ enum PEO_tags {
 };
 /*}}}*/
 /*{{{ forward declarations */
-static void init_ctb (ct_BASIC *ctb, unsigned int *typedesc);
-static void make_ctb_networked (ct_BASIC *ctb, unsigned int *typedesc, int nct_id, ct_BASIC *nhh, ct_BASIC **dha, int dhs, ct_BASIC **eha, int ehs);
+static mt_cb_t *new_ctb (Workspace wptr, unsigned int *typedesc);
+static void make_ctb_networked (Workspace wptr, mt_cb_t *cb, unsigned int *typedesc, int nct_id, mt_cb_t *nhh, mt_array_t *dec_handle_array, mt_array_t *enc_handle_array);
 /*}}}*/
 
 /*{{{ typedesc helper functions */
-/*{{{ static inline unsigned int typedesc_id (unsigned int typedesc) */
+/*{{{ typedesc_id */
 /*
  *	returns the type ID from the start of a typedesc
  */
@@ -116,7 +100,7 @@ static inline unsigned int typedesc_id (unsigned int typedesc) {
 	return typedesc >> 24;
 }
 /*}}}*/
-/*{{{ static inline unsigned int typedesc_len (unsigned int typedesc) */
+/*{{{ typedesc_len */
 /*
  *	returns the typedesc length from the start of a typedesc
  */
@@ -124,30 +108,31 @@ static inline unsigned int typedesc_len (unsigned int typedesc) {
 	return (typedesc & 0x00FFFFFF) / sizeof (unsigned int);
 }
 /*}}}*/
-/*{{{  static int typedesc_chantype_nchans (unsigned int *tdesc)*/
+/*{{{ typedesc_chantype_nchans */
 /*
  *	returns the number of channels in a channel-type given its type-descriptor
  */
-static int typedesc_chantype_nchans (unsigned int *tdesc)
+static int typedesc_chantype_nchans (Workspace wptr, unsigned int *tdesc)
 {
 	if (typedesc_id (tdesc[0]) != MTID_CHANTYPE) {
-		CFATAL ("typedesc_chantype_nchans: not a channel type\n");
+		CFATAL ("typedesc_chantype_nchans: not a channel type\n", 0);
 	}
 	return (int) tdesc[1];
 }
 /*}}}*/
+/*{{{ typedesc_chantype_server_read */
 /*
  *	returns the number of server-read channels in a channel-type given its type-descriptor
  */
-static int typedesc_chantype_server_read (unsigned int *tdesc)
+static int typedesc_chantype_server_read (Workspace wptr, unsigned int *tdesc)
 {
 	int i, nchans, count = 0;
 
 	if (typedesc_id (tdesc[0]) != MTID_CHANTYPE) {
-		CFATAL ("typedesc_chantype_server_read: not a channel type\n");
+		CFATAL ("typedesc_chantype_server_read: not a channel type\n", 0);
 	}
 
-	nchans = typedesc_chantype_nchans (tdesc);
+	nchans = typedesc_chantype_nchans (wptr, tdesc);
 	tdesc += 3;
 	for (i = 0; i < nchans; i++) {
 		const unsigned int id = typedesc_id (tdesc[0]);
@@ -159,7 +144,7 @@ static int typedesc_chantype_server_read (unsigned int *tdesc)
 		case MTID_CHAN_O:
 			break;
 		default:
-			CFATAL ("typedesc_chantype_server_read: expected input or output channel, found %d %08x\n", id, tdesc[0]);
+			CFATAL ("typedesc_chantype_server_read: expected input or output channel, found %d %08x\n", 2, id, tdesc[0]);
 		}
 
 		tdesc += typedesc_len (tdesc[0]);
@@ -168,85 +153,6 @@ static int typedesc_chantype_server_read (unsigned int *tdesc)
 	return count;
 }
 /*}}}*/
-
-/*{{{ static mobile pool */
-/*
- *	Static mobiles, as far as KRoC's concerned, are usually allocated by
- *	the compiler from mobilespace, and are never freed. You can request a
- *	fixed-size chunk of mobilespace from the compiler when doing a #PRAGMA
- *	EXTERN for a C process, but there isn't currently a (nice) way of doing
- *	dynamic allocation.
- *
- *	Since ponyintcif processes may be created and deleted many times during
- *	the lifetime of a program, we've got a few options for mobilespace
- *	allocation:
- *	- request a big chunk of mobilespace in the #PRAGMA EXTERN for
- *	  alloc.ctb.*, which'd result in us getting four chunks of mobilespace
- *	  (since you get one per call in the program), and do allocation from
- *	  it -- this could result in us running out of it at some later point,
- *	  which would be unpleasant;
- *	- have a fake mobilespace pool per-walker, which would mean that we'd
- *	  be allocating a chunk of memory each time we started a walker that
- *	  never got freed -- although we could guarantee we allocate precisely
- *	  the right amount of memory by walking the type definition at
- *	  allocation time;
- *	- have a single shared pool of mobilespace objects that all walkers can
- *	  draw upon -- this means that, while we're unavoidably going to leak
- *	  memory at the end of the program (since some of our pointers might be
- *	  in other processes), we should at least keep our memory use fairly
- *	  constant throughout the life of the program.
- *
- *	Carl Ritson came up with a clever hack that provides a fourth
- *	alternative: we (the tree-walkers) know that we're a leaf in the
- *	process graph. As such, whenever a process does a static mobile
- *	communication with us, we know that the object it gives us is only
- *	needed for the duration of the communication.  We can thus cheat by
- *	doing two swaps rather than one: take the object (swapping with a dummy
- *	value), read/write our data, and give it back immediately.  This means
- *	we don't have to allocate in mobilespace at all, because the compiler's
- *	done it for us! You'd need a CIF binding for extended output in order
- *	to do this.
- *
- *	For now, this implements the third option, in a rather inefficient way
- *	for simplicity's sake.
- */
-
-typedef struct spare_mobile {
-	void *ptr;
-	size_t size;
-	struct spare_mobile *next;
-} spare_mobile;
-
-static spare_mobile spare_mobile_head = { NULL, -1, NULL };
-
-static void *get_static_mobile (size_t size) {
-	spare_mobile *prev = &spare_mobile_head;
-	spare_mobile *sm;
-
-	for (sm = prev->next; sm != NULL; sm = sm->next) {
-		if (sm->size == size) {
-			void *ptr = sm->ptr;
-			CTRACE ("size %d; use existing 0x%08x\n", size, (unsigned int) ptr);
-			prev->next = sm->next;
-			DMemFree (sm);
-			return ptr;
-		}
-	}
-
-	/* No existing static mobiles available; allocate a new chunk of memory. */
-	CTRACE ("size %d; allocate new\n");
-	return DMemAlloc (size);
-}
-
-static void return_static_mobile (void *ptr, size_t size) {
-	spare_mobile *sm = DMemAlloc (sizeof *sm);
-
-	CTRACE ("size %d; at 0x%08x\n", size, ptr);
-	sm->ptr = ptr;
-	sm->size = size;
-	sm->next = spare_mobile_head.next;
-	spare_mobile_head.next = sm;
-}
 /*}}}*/
 
 /*{{{ type-walker */
@@ -294,19 +200,6 @@ typedef struct {
 	int ct_rest;
 } pony_walk_counts;
 
-/* Types of items on comm_list */
-typedef enum {
-	CL_static_mobile,
-	CL_dynamic_mobile,
-	CL_ctb
-} comm_list_type;
-
-typedef struct {
-	void *ptr;
-	size_t size;
-	comm_list_type type;
-} comm_list_item;
-
 typedef struct {
 	pony_walk_mode mode;
 
@@ -321,20 +214,20 @@ typedef struct {
 	int temp_list_used;
 	int temp_list_size;
 
-	comm_list_item *comm_list;
+	void **comm_list;
 	int comm_list_used;
 	int comm_list_size;
 } pony_walk_state;
 
-#define SCTRACE(s, format, args...) \
-	CTRACE("[Chan#%08x Mode%d CLC%d] " format, (unsigned int) (s)->user, (s)->mode, (s)->clc, ##args)
+#define SCTRACE(s, format, n, args...) \
+	CTRACE("[Chan#%08x Mode%d CLC%d] " format, n + 3, (unsigned int) (s)->user, (s)->mode, (s)->clc, ##args)
 
 /*}}}*/
-/*{{{ static void *vector_add (void **list, size_t item_size, int *used, int *size, int default_size) */
+/*{{{ vector_add */
 /*
  *	add an item to a dynamically-sized array
  */
-static void *vector_add (void **list, size_t item_size, int *used, int *size, int default_size)
+static void *vector_add (Workspace wptr, void **list, size_t item_size, int *used, int *size, int default_size)
 {
 	void *new_list, *ptr;
 
@@ -344,11 +237,11 @@ static void *vector_add (void **list, size_t item_size, int *used, int *size, in
 		} else {
 			*size *= 2;
 		}
-		CTRACE ("%d used; stretched list to %d items\n", *used, *size);
-		new_list = DMemAlloc (*size * item_size);
+		CTRACE ("%d used; stretched list to %d items\n", 2, *used, *size);
+		new_list = malloc (*size * item_size);
 		if (*list != NULL) {
 			memcpy (new_list, *list, *used * item_size);
-			DMemFree (*list);
+			free (*list);
 		}
 		*list = new_list;
 	}
@@ -358,122 +251,103 @@ static void *vector_add (void **list, size_t item_size, int *used, int *size, in
 	return ptr;
 }
 /*}}}*/
-/*{{{ static void temp_list_add (pony_walk_state *s, void *ptr) */
+/*{{{ temp_list_add */
 /*
- *	add a block of DMemAlloc-allocated memory to those to free at the end of this walk
+ *	add a block of malloc-allocated memory to those to free at the end of this walk
  */
-static void temp_list_add (pony_walk_state *s, void *ptr) {
-	void **p = vector_add ((void **) &s->temp_list, sizeof *s->temp_list, &s->temp_list_used, &s->temp_list_size, 16);
-	CTRACE ("adding to temp list: 0x%08x\n", (unsigned int) ptr);
+static void temp_list_add (Workspace wptr, pony_walk_state *s, void *ptr) {
+	void **p;
+
+	CTRACE ("adding to temp list: 0x%08x\n", 1, (unsigned int) ptr);
+
+	p = vector_add (wptr, (void **) &s->temp_list, sizeof *s->temp_list, &s->temp_list_used, &s->temp_list_size, 16);
 	*p = ptr;
 }
 /*}}}*/
-/*{{{ static void comm_list_add (pony_walk_state *s, void *ptr, size_t size, comm_list_type type) */
+/*{{{ comm_list_add */
 /*
- *	add a communicated item to those to free at the end of the walk, if not cancelled
+ *	add a communicated mobile to those to free at the end of the walk, if not cancelled
  */
-static void comm_list_add (pony_walk_state *s, void *ptr, size_t size, comm_list_type type)
+static void comm_list_add (Workspace wptr, pony_walk_state *s, void *item)
 {
-	comm_list_item *item;
+	void **p;
 
-	if (ptr == NULL) {
-		CFATAL ("comm_list_add: adding NULL pointer to comm_list\n");
+	if (item == NULL) {
+		CFATAL ("comm_list_add: adding NULL pointer to comm_list\n", 0);
 	}
 
-	item = vector_add ((void **) &s->comm_list, sizeof *s->comm_list, &s->comm_list_used, &s->comm_list_size, 16);
-	item->ptr = ptr;
-	item->size = size;
-	item->type = type;
+	p = vector_add (wptr, (void **) &s->comm_list, sizeof *s->comm_list, &s->comm_list_used, &s->comm_list_size, 16);
+	*p = item;
 }
 /*}}}*/
-/*{{{ static void *alloc_temp_mem (pony_walk_state *s, size_t size) */
+/*{{{ alloc_temp_mem */
 /*
  *	allocate temporary memory for the duration of this walk
  */
-static void *alloc_temp_mem (pony_walk_state *s, size_t size)
+static void *alloc_temp_mem (Workspace wptr, pony_walk_state *s, size_t size)
 {
-	void *mem = DMemAlloc (size);
-	CTRACE ("allocated %d bytes at %08x\n", size, (unsigned int) mem);
-	temp_list_add (s, mem);
+	void *mem = malloc (size);
+	CTRACE ("allocated %d bytes at %08x\n", 2, size, (unsigned int) mem);
+	temp_list_add (wptr, s, mem);
 	return mem;
 }
 /*}}}*/
-/*{{{ static void process_temp_list (pony_walk_state *s) */
+/*{{{ process_temp_list */
 /*
  *	free temporary memory
  */
-static void process_temp_list (pony_walk_state *s)
+static void process_temp_list (Workspace wptr, pony_walk_state *s)
 {
 	int i;
 
-	CTRACE ("freeing %d temporary items\n", s->temp_list_used);
+	CTRACE ("freeing %d temporary items\n", 1, s->temp_list_used);
 	for (i = 0; i < s->temp_list_used; i++) {
-		CTRACE ("freeing item %d: 0x%08x\n", i, (unsigned int) s->temp_list[i]);
-		DMemFree (s->temp_list[i]);
+		CTRACE ("freeing item %d: 0x%08x\n", 2, i, (unsigned int) s->temp_list[i]);
+		free (s->temp_list[i]);
 	}
 	s->temp_list_used = 0;
 }
 /*}}}*/
-/*{{{ static void process_comm_list (pony_walk_state *s) */
+/*{{{ process_comm_list */
 /*
  *	free communicated items
  */
-static void process_comm_list (pony_walk_state *s)
+static void process_comm_list (Workspace wptr, pony_walk_state *s)
 {
 	int i;
 
-	CTRACE ("freeing %d items\n", s->comm_list_used);
+	CTRACE ("freeing %d items\n", 1, s->comm_list_used);
 	for (i = 0; i < s->comm_list_used; i++) {
-		comm_list_item *item = &s->comm_list[i];
-		CTRACE ("freeing item %d: type %d ptr 0x%08x\n", i, item->type, (unsigned int) item->ptr);
+		void *item = s->comm_list[i];
+		CTRACE ("freeing item %d: ptr 0x%08x\n", 2, i, (unsigned int) item);
 
-		switch (item->type) {
-		case CL_dynamic_mobile:
-			DMemFree ((void *) item->ptr);
-			break;
-		case CL_static_mobile:
-			return_static_mobile (item->ptr, item->size);
-			break;
-		case CL_ctb:
-			{
-				ct_BASIC *ctb = item->ptr;
-				CTRACE ("deref CTB 0x%08x\n", (unsigned int) ctb);
-				ctb->refcount--;
-				if (ctb->refcount == 0 && ctb->uiohook == NULL) {
-					CTRACE ("freeing non-networked CTB\n");
-					DMemFree (ctb);
-				}
-			}
-			break;
-		default:
-			CFATAL ("process_comm_list: unknown item type %d on comm_list\n", item->type);
-		}
+		MTRelease (wptr, item);
 	}
 	s->comm_list_used = 0;
 }
 /*}}}*/
-/*{{{ static void free_walk_state (pony_walk_state *s) */
+/*{{{ free_walk_state */
 /*
  *	release any memory used by the walk state
  */
-static void free_walk_state (pony_walk_state *s)
+static void free_walk_state (Workspace wptr, pony_walk_state *s)
 {
-	process_temp_list (s);
+	process_temp_list (wptr, s);
 	if (s->temp_list != NULL) {
-		DMemFree (s->temp_list);
+		free (s->temp_list);
 	}
 
-	process_comm_list (s);
+	process_comm_list (wptr, s);
 	if (s->comm_list != NULL) {
-		DMemFree (s->comm_list);
+		free (s->comm_list);
 	}
 }
 /*}}}*/
-/*{{{ static void *copy_di (pony_walk_state *s, void *data, size_t size) */
+/*{{{ copy_di */
 /*
  *	copy a data item into temporary memory if necessary
  */
-static void *copy_di (pony_walk_state *s, void *data, size_t size)
+static void *copy_di (Workspace wptr, pony_walk_state *s, void *data, size_t size)
 {
 	/* Since the pony kernel expects to be able to hang on to
 	 * pointers it's given for the duration of the ULC (since it wants to be able
@@ -483,59 +357,59 @@ static void *copy_di (pony_walk_state *s, void *data, size_t size)
 	if (s->clc == 0 || s->clc == (s->clc_total - 1)) {
 		data_copy = data;
 	} else {
-		data_copy = alloc_temp_mem (s, size);
+		data_copy = alloc_temp_mem (wptr, s, size);
 		memcpy (data_copy, data, size);
-		CTRACE ("copied data item, size %d, from 0x%08x to 0x%08x\n", size, (unsigned int) data, (unsigned int) data_copy);
+		CTRACE ("copied data item, size %d, from 0x%08x to 0x%08x\n", 3, size, (unsigned int) data, (unsigned int) data_copy);
 	}
 
 	return data_copy;
 }
 /*}}}*/
-/*{{{ static void output_di (pony_walk_state *s, void *data, size_t size) */
+/*{{{ output_di */
 /*
  *	output a data item to the pony kernel
  */
-static void output_di (pony_walk_state *s, void *data, size_t size)
+static void output_di (Workspace wptr, pony_walk_state *s, void *data, size_t size)
 {
 	if (s->mode == PW_cancel) {
-		SCTRACE (s, "cancel CLC %d\n");
+		SCTRACE (s, "cancel CLC %d\n", 1, s->clc);
 	} else {
-		data = copy_di (s, data, size);
+		data = copy_di (wptr, s, data, size);
 
-		SCTRACE (s, "output CLC %d data.item.nlc; data 0x%08x; size %d\n", s->clc, (unsigned int) data, size);
-		ChanOutChar (s->to_kern, PDO_data_item_nlc);
-		ChanOutInt (s->to_kern, (int) data);
-		ChanOutInt (s->to_kern, (int) size);
+		SCTRACE (s, "output CLC %d data.item.nlc; data 0x%08x; size %d\n", 3, s->clc, (unsigned int) data, size);
+		ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
+		ChanOutInt (wptr, s->to_kern, (int) data);
+		ChanOutInt (wptr, s->to_kern, (int) size);
 	}
 }
 /*}}}*/
-/*{{{ static void input_di (pony_walk_state *s, void **addr, size_t size) */
+/*{{{ input_di */
 /*
  *	input a data item from the pony kernel
  */
-static void input_di (pony_walk_state *s, void **addr, size_t size)
+static void input_di (Workspace wptr, pony_walk_state *s, void **addr, size_t size)
 {
 	size_t recv_size;
 	char tag;
 
-	SCTRACE (s, "reading data.item.nlc\n");
-	ChanInChar (s->from_kern, &tag);
+	SCTRACE (s, "reading data.item.nlc\n", 0);
+	ChanInChar (wptr, s->from_kern, &tag);
 	if (tag != PEI_data_item_nlc) {
-		CFATAL ("input_di: expected data.item.nlc, got %d\n", tag);
+		CFATAL ("input_di: expected data.item.nlc, got %d\n", 1, tag);
 	}
-	ChanInInt (s->from_kern, (int *) addr);
-	ChanInInt (s->from_kern, (int *) &recv_size);
-	SCTRACE (s, "... read data.item.nlc; data %08x; size %d\n", *(unsigned int *) addr, recv_size);
+	ChanInInt (wptr, s->from_kern, (int *) addr);
+	ChanInInt (wptr, s->from_kern, (int *) &recv_size);
+	SCTRACE (s, "... read data.item.nlc; data %08x; size %d\n", 2, *(unsigned int *) addr, recv_size);
 	if (recv_size != size) {
-		CFATAL ("input_di: expected size %d in data.item.nlc, got size %d\n", size, recv_size);
+		CFATAL ("input_di: expected size %d in data.item.nlc, got size %d\n", 2, size, recv_size);
 	}
 }
 /*}}}*/
-/*{{{ static void count_di (pony_walk_state *s, int num) */
+/*{{{ count_di */
 /*
  *	add data items to the count
  */
-static void count_di (pony_walk_state *s, int num)
+static void count_di (Workspace wptr, pony_walk_state *s, int num)
 {
 	if (s->clc == 0) {
 		s->counts.di_first += num;
@@ -544,11 +418,11 @@ static void count_di (pony_walk_state *s, int num)
 	}
 }
 /*}}}*/
-/*{{{ static void *get_data (pony_walk_state *s) */
+/*{{{ get_data */
 /*
  *	get the address of the sending process's data
  */
-static void *get_data (pony_walk_state *s)
+static void *get_data (Workspace wptr, pony_walk_state *s)
 {
 	if (s->mode == PW_input) {
 		/* There isn't a sending process. */
@@ -556,77 +430,77 @@ static void *get_data (pony_walk_state *s)
 	} else {
 		Process *other = (Process *)(*s->user);
 		if (other == NULL) {
-			CFATAL ("get_data: no sending process for channel at 0x%08x (channel word is NULL)\n", (unsigned int) s->user);
+			CFATAL ("get_data: no sending process for channel at 0x%08x (channel word is NULL)\n", 1, (unsigned int) s->user);
 		}
-		return (void *) other[-4];
+		return (void *) other[Pointer];
 	}
 }
 /*}}}*/
-/*{{{ static void process_di (pony_walk_state *s, size_t size, void *save_at) */
+/*{{{ process_di */
 /*
  *	process a data item
  */
-static void process_di (pony_walk_state *s, void **addr, size_t size)
+static void process_di (Workspace wptr, pony_walk_state *s, void **addr, size_t size)
 {
 	switch (s->mode) {
 	case PW_count:
-		count_di (s, 1);
+		count_di (wptr, s, 1);
 		break;
 	case PW_output:
 	case PW_cancel:
-		output_di (s, *addr, size);
+		output_di (wptr, s, *addr, size);
 		break;
 	case PW_input:
-		input_di (s, addr, size);
+		input_di (wptr, s, addr, size);
 		break;
 	}
 }
 /*}}}*/
-/*{{{ static void release_user (pony_walk_state *s) */
+/*{{{ release_user */
 /*
  *	release the user process from a communication
  */
-static void release_user (pony_walk_state *s)
+static void release_user (Workspace wptr, pony_walk_state *s)
 {
 	if (s->mode == PW_output || s->mode == PW_cancel) {
-		SCTRACE (s, "releasing user process\n");
-		ChanXEnd (s->user);
-		ChanXAble (s->user);
+		SCTRACE (s, "releasing user process\n", 0);
+		ChanXEnd (wptr, s->user);
+		ChanXAble (wptr, s->user);
 	}
 }
 /*}}}*/
-/*{{{ static int new_clc (pony_walk_state *s, int inhibit_release) */
+/*{{{ new_clc */
 /*
  *	start a new CLC
  */
-static int new_clc (pony_walk_state *s, int inhibit_release)
+static int new_clc (Workspace wptr, pony_walk_state *s, int inhibit_release)
 {
 	s->clc++;
-	SCTRACE (s, "new CLC\n");
+	SCTRACE (s, "new CLC\n", 0);
 
 	if (s->mode != PW_count) {
 		char c;
 
-		SCTRACE (s, "asking whether to continue\n");
-		ChanOutChar (s->pwo, PWO_more);
-		ChanInChar (s->pwi, &c);
+		SCTRACE (s, "asking whether to continue\n", 0);
+		ChanOutChar (wptr, s->pwo, PWO_more);
+		ChanInChar (wptr, s->pwi, &c);
 		if (c == PWI_stop) {
-			SCTRACE (s, "got PWI_stop, stopping here\n");
+			SCTRACE (s, "got PWI_stop, stopping here\n", 0);
 			return 1;
 		} else if (c != PWI_next) {
-			CFATAL ("new_clc: expected PWI_stop or PWI_next, got %d\n", c);
+			CFATAL ("new_clc: expected PWI_stop or PWI_next, got %d\n", 1, c);
 		}
-		CTRACE ("got PWI_next, continuing\n");
+		CTRACE ("got PWI_next, continuing\n", 0);
 	}
 
 	if (!inhibit_release) {
-		release_user (s);
+		release_user (wptr, s);
 	}
 
 	return 0;
 }
 /*}}}*/
-/*{{{ static inline int is_primitive (unsigned int id) */
+/*{{{ is_primitive */
 /*
  *	say whether a typedesc id is a primitive type
  */
@@ -635,29 +509,29 @@ static inline int is_primitive (unsigned int id)
 	return id == MTID_PRIM || id == MTID_RECORD;
 }
 /*}}}*/
-/*{{{ static int walk_inner_primitive (pony_walk_state *s, int item_count, void **data, size_t *size) */
+/*{{{ walk_inner_primitive */
 /*
  *	walk part of a type descriptor for a single primitive communication
  */
-static int walk_inner_primitive (pony_walk_state *s, int item_count, void **data, size_t *size)
+static int walk_inner_primitive (Workspace wptr, pony_walk_state *s, int item_count, void **data, size_t *size)
 {
 	const unsigned int type = typedesc_id (s->pdesc[0]);
 	const unsigned int type_len = typedesc_len (s->pdesc[0]);
 	unsigned int *orig_pdesc = s->pdesc;
 	s->pdesc++;
 
-	SCTRACE (s, "type is %d length %d\n", type, type_len);
+	SCTRACE (s, "type is %d length %d\n", 2, type, type_len);
 	switch (type) {
 	case MTID_PRIM:
 	case MTID_RECORD:
 		{
 			long long total_size = s->pdesc[0] * item_count;
 			if (s->mode == PW_output && total_size >= 0x80000000) {
-				CFATAL ("walk_inner_primitive: attempting to send %lld-byte data item; this won't fit in the count\n");
+				CFATAL ("walk_inner_primitive: attempting to send %lld-byte data item; this won't fit in the count\n", 1, total_size);
 			}
 			*size = (size_t) total_size;
 
-			process_di (s, data, *size);
+			process_di (wptr, s, data, *size);
 			s->pdesc += 2;
 		}
 		break;
@@ -666,53 +540,53 @@ static int walk_inner_primitive (pony_walk_state *s, int item_count, void **data
 			const unsigned int nitems = s->pdesc[0];
 			s->pdesc++;
 
-			CTRACE ("array with %d items; this dimension is %d\n", nitems * item_count, nitems);
-			if (walk_inner_primitive (s, nitems * item_count, data, size)) {
+			CTRACE ("array with %d items; this dimension is %d\n", 2, nitems * item_count, nitems);
+			if (walk_inner_primitive (wptr, s, nitems * item_count, data, size)) {
 				return 1;
 			}
 		}
 		break;
 	default:
-		CFATAL ("walk_inner_primitive: expected primitive type; this is type %d length %d\n", type, type_len);
+		CFATAL ("walk_inner_primitive: expected primitive type; this is type %d length %d\n", 2, type, type_len);
 	}
 
 	if (s->pdesc != orig_pdesc + type_len) {
-		CFATAL ("walk_inner: typedesc size mismatch: type %d length %d, measured %d\n", type, type_len, s->pdesc - orig_pdesc);
+		CFATAL ("walk_inner: typedesc size mismatch: type %d length %d, measured %d\n", 3, type, type_len, s->pdesc - orig_pdesc);
 	}
 
-	SCTRACE (s, "done\n");
+	SCTRACE (s, "done\n", 0);
 	return 0;
 }
 /*}}}*/
-/*{{{ static int walk_inner (pony_walk_state *s) */
+/*{{{ walk_inner */
 /*
  *	walk part of a type descriptor
  */
-static int walk_inner (pony_walk_state *s)
+static int walk_inner (Workspace wptr, pony_walk_state *s)
 {
 	const unsigned int type = typedesc_id (s->pdesc[0]);
 	const unsigned int type_len = typedesc_len (s->pdesc[0]);
 	unsigned int *orig_pdesc = s->pdesc;
 	s->pdesc++;
 
-	SCTRACE (s, "type is %d length %d\n", type, type_len);
+	SCTRACE (s, "type is %d length %d\n", 2, type, type_len);
 	switch (type) {
 	case MTID_PRIM:
 	case MTID_RECORD:
 	case MTID_ARRAY:
 		{
-			void *data = get_data (s);
+			void *data = get_data (wptr, s);
 			size_t size;
 
 			s->pdesc--;
-			if (walk_inner_primitive (s, 1, &data, &size)) {
+			if (walk_inner_primitive (wptr, s, 1, &data, &size)) {
 				return 1;
 			}
 			if (s->mode == PW_input) {
-				SCTRACE (s, "doing ChanOut; data 0x%08x; size %d\n", (unsigned int) data, size);
-				ChanOut (s->user, data, size);
-				SCTRACE (s, "ChanOut done\n");
-				temp_list_add (s, data);
+				SCTRACE (s, "doing ChanOut; data 0x%08x; size %d\n", 2, (unsigned int) data, size);
+				ChanOut (wptr, s->user, data, size);
+				SCTRACE (s, "ChanOut done\n", 0);
+				temp_list_add (wptr, s, data);
 			}
 		}
 		break;
@@ -723,46 +597,46 @@ static int walk_inner (pony_walk_state *s)
 			s->pdesc++;
 
 			for (i = 0; i < nitems; i++) {
-				SCTRACE (s, "item %d of %d in protocol\n", i, nitems);
+				SCTRACE (s, "item %d of %d in protocol\n", 2, i, nitems);
 				if (i > 0) {
-					if (new_clc (s, 0)) {
+					if (new_clc (wptr, s, 0)) {
 						return 1;
 					}
 				}
-				if (walk_inner (s)) {
+				if (walk_inner (wptr, s)) {
 					return 1;
 				}
-				SCTRACE (s, "done item %d of %d\n", i, nitems);
+				SCTRACE (s, "done item %d of %d\n", 2, i, nitems);
 			}
 		}
 		break;
 	case MTID_TAGPROTO:
 		{
 			char tag;
-			void *tag_addr = get_data (s);
+			void *tag_addr = get_data (wptr, s);
 			unsigned int i;
 			const unsigned int ntags = s->pdesc[0];
 			s->pdesc++;
 
-			SCTRACE (s, "tagged protocol with %d possible tags\n", ntags);
-			process_di (s, &tag_addr, 1);
+			SCTRACE (s, "tagged protocol with %d possible tags\n", 1, ntags);
+			process_di (wptr, s, &tag_addr, 1);
 			if (s->mode == PW_input) {
-				SCTRACE (s, "doing ChanOut; data 0x%08x; size 1\n", (unsigned int) tag_addr);
-				ChanOut (s->user, tag_addr, 1);
-				SCTRACE (s, "ChanOut done\n");
+				SCTRACE (s, "doing ChanOut; data 0x%08x; size 1\n", 1, (unsigned int) tag_addr);
+				ChanOut (wptr, s->user, tag_addr, 1);
+				SCTRACE (s, "ChanOut done\n", 0);
 			}
 			tag = *(char *) tag_addr;
 			if (s->mode == PW_input) {
-				temp_list_add (s, tag_addr);
+				temp_list_add (wptr, s, tag_addr);
 			}
-			SCTRACE (s, "... and this tag is %d\n", tag);
+			SCTRACE (s, "... and this tag is %d\n", 1, tag);
 
 			for (i = 0; i < ntags; i++) {
 				const unsigned int tag_id = typedesc_id (s->pdesc[0]);
 				const unsigned int tag_len = typedesc_len (s->pdesc[0]);
 
 				if (tag_id != MTID_TAG) {
-					CFATAL ("walk_inner: expected MTID_TAG, found type %d length %d\n", tag_id, tag_len);
+					CFATAL ("walk_inner: expected MTID_TAG, found type %d length %d\n", 2, tag_id, tag_len);
 				}
 
 				if (s->pdesc[1] == tag) {
@@ -770,13 +644,13 @@ static int walk_inner (pony_walk_state *s)
 					const unsigned int nitems = s->pdesc[2];
 					s->pdesc += 3;
 
-					CTRACE ("found tag; it's number %d\n", i);
+					CTRACE ("found tag; it's number %d\n", 1, i);
 					for (j = 0; j < nitems; j++) {
-						CTRACE ("item %d of %d in tagged protocol\n", i, nitems);
-						if (new_clc (s, 0)) {
+						CTRACE ("item %d of %d in tagged protocol\n", 2, i, nitems);
+						if (new_clc (wptr, s, 0)) {
 							return 1;
 						}
-						if (walk_inner (s)) {
+						if (walk_inner (wptr, s)) {
 							return 1;
 						}
 					}
@@ -785,7 +659,7 @@ static int walk_inner (pony_walk_state *s)
 					s->pdesc = orig_pdesc + type_len;
 					break;
 				} else {
-					CTRACE ("it's not tag %d\n", i);
+					CTRACE ("it's not tag %d\n", 1, i);
 					s->pdesc += tag_len;
 				}
 			}
@@ -811,10 +685,10 @@ static int walk_inner (pony_walk_state *s)
 			unsigned int subtype_id, subtype_len;
 			int count_size, subtype_size;
 
-			CTRACE ("handling counted array as (probably) %d CLCs\n", first_clc ? 2 : 1);
+			CTRACE ("handling counted array as (probably) %d CLCs\n", 1, first_clc ? 2 : 1);
 
 			if (!is_primitive (count_id)) {
-				CFATAL ("walk_inner: expected primitive counted array count type, found type %d length %d\n", count_id, count_len);
+				CFATAL ("walk_inner: expected primitive counted array count type, found type %d length %d\n", 2, count_id, count_len);
 			}
 			count_size = s->pdesc[1];
 			s->pdesc += 3;
@@ -822,31 +696,31 @@ static int walk_inner (pony_walk_state *s)
 			subtype_id = typedesc_id (s->pdesc[0]);
 			subtype_len = typedesc_len (s->pdesc[0]);
 			if (!is_primitive (subtype_id)) {
-				CFATAL ("walk_inner: expected primitive counted array data type, found type %d length %d\n", subtype_id, subtype_len);
+				CFATAL ("walk_inner: expected primitive counted array data type, found type %d length %d\n", 2, subtype_id, subtype_len);
 			}
 			subtype_size = s->pdesc[1];
 			s->pdesc += 3;
 
 			switch (s->mode) {
 			case PW_count:
-				count_di (s, 1);
+				count_di (wptr, s, 1);
 				if (first_clc) {
 					/* Special case: if this is the first CLC, and the count is zero,
 					 * then we must only send *one* NLC, so that the pony kernel knows
 					 * the communication is completed before the user process is released
 					 * -- else we get deadlock inside the pony kernel. Argh! */
 					/* FIXME: get rid of count mode entirely in favour of buffering */
-					CTRACE ("reading count %d bytes from 0x%08x\n", count_size, (unsigned int) get_data (s));
-					memcpy (&count, get_data (s), count_size);
-					CTRACE ("counted array count is %lld\n", count);
+					CTRACE ("reading count %d bytes from 0x%08x\n", 2, count_size, (unsigned int) get_data (wptr, s));
+					memcpy (&count, get_data (wptr, s), count_size);
+					CTRACE ("counted array count is %lld\n", 1, count);
 
 					if (count != 0) {
-						if (new_clc (s, 1)) {
+						if (new_clc (wptr, s, 1)) {
 							return 1;
 						}
-						count_di (s, 1);
+						count_di (wptr, s, 1);
 					} else {
-						CTRACE ("... so we're actually handling it as *one* CLC\n");
+						CTRACE ("... so we're actually handling it as *one* CLC\n", 0);
 					}
 				}
 				break;
@@ -854,63 +728,63 @@ static int walk_inner (pony_walk_state *s)
 			case PW_cancel:
 				{
 					/* XXX: Endianness-dependent code. */
-					memcpy (&count, get_data (s), count_size);
-					CTRACE ("counted array count is %lld\n", count);
+					memcpy (&count, get_data (wptr, s), count_size);
+					CTRACE ("counted array count is %lld\n", 1, count);
 
 					if (count == 0) {
 						if (first_clc) {
 							/* As above: this is the first CLC, and the count is zero, so
 							 * the count is the only NLC we send. */
-							CTRACE ("... so we're actually handling it as *one* CLC\n");
-							CTRACE ("output counted array size CLC %d\n", s->clc);
+							CTRACE ("... so we're actually handling it as *one* CLC\n", 0);
+							CTRACE ("output counted array size CLC %d\n", 1, s->clc);
 							if (s->mode == PW_output) {
-								void *count_data = alloc_temp_mem (s, count_size);
+								void *count_data = alloc_temp_mem (wptr, s, count_size);
 								memcpy (count_data, &count, count_size);
 
-								ChanOutChar (s->to_kern, PDO_data_item_nlc);
-								ChanOutInt (s->to_kern, (int) count_data);
-								ChanOutInt (s->to_kern, count_size);
+								ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
+								ChanOutInt (wptr, s->to_kern, (int) count_data);
+								ChanOutInt (wptr, s->to_kern, count_size);
 							}
 						} else {
 							if (s->mode == PW_output) {
-								CTRACE ("output fake data CLC %d (0, NULL)\n", s->clc);
-								ChanOutChar (s->to_kern, PDO_data_item_nlc);
-								ChanOutInt (s->to_kern, (int) NULL);
-								ChanOutInt (s->to_kern, 0);
+								CTRACE ("output fake data CLC %d (0, NULL)\n", 1, s->clc);
+								ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
+								ChanOutInt (wptr, s->to_kern, (int) NULL);
+								ChanOutInt (wptr, s->to_kern, 0);
 							}
 						}
 					} else {
 						void *data;
 						const long long data_size = (size_t) count * subtype_size;
 
-						CTRACE ("array data size is %lld\n", data_size);
+						CTRACE ("array data size is %lld\n", 1, data_size);
 						if (data_size >= 0x80000000) {
-							CFATAL ("walk_inner: counted array data size %lld (%d items of size %d) is too large to send\n", data_size, count, subtype_size);
+							CFATAL ("walk_inner: counted array data size %lld (%d items of size %d) is too large to send\n", 3, data_size, count, subtype_size);
 						}
 
 						if (first_clc) {
-							CTRACE ("output counted array size CLC %d\n", s->clc);
+							CTRACE ("output counted array size CLC %d\n", 1, s->clc);
 							if (s->mode == PW_output) {
-								void *count_data = alloc_temp_mem (s, count_size);
+								void *count_data = alloc_temp_mem (wptr, s, count_size);
 								memcpy (count_data, &count, count_size);
 
-								ChanOutChar (s->to_kern, PDO_data_item_nlc);
-								ChanOutInt (s->to_kern, (int) count_data);
-								ChanOutInt (s->to_kern, count_size);
+								ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
+								ChanOutInt (wptr, s->to_kern, (int) count_data);
+								ChanOutInt (wptr, s->to_kern, count_size);
 							}
 
-							if (new_clc (s, 0)) {
+							if (new_clc (wptr, s, 0)) {
 								return 1;
 							}
 						} else {
-							release_user (s);
+							release_user (wptr, s);
 						}
 						if (s->mode == PW_output) {
-							data = copy_di (s, get_data(s), (size_t) data_size);
-							CTRACE ("output counted array data CLC %d\n", s->clc);
-							ChanOutChar (s->to_kern, PDO_data_item_nlc);
-							ChanOutInt (s->to_kern, (int) data);
-							ChanOutInt (s->to_kern, (int) data_size);
+							data = copy_di (wptr, s, get_data (wptr, s), (size_t) data_size);
+							CTRACE ("output counted array data CLC %d\n", 1, s->clc);
+							ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
+							ChanOutInt (wptr, s->to_kern, (int) data);
+							ChanOutInt (wptr, s->to_kern, (int) data_size);
 						}
 					}
 				}
@@ -922,80 +796,81 @@ static int walk_inner (pony_walk_state *s)
 					char tag;
 
 					if (first_clc) {
-						CTRACE ("input counted array size CLC %d\n", s->clc);
-						ChanInChar (s->from_kern, &tag);
+						CTRACE ("input counted array size CLC %d\n", 1, s->clc);
+						ChanInChar (wptr, s->from_kern, &tag);
 						if (tag != PEI_data_item_nlc) {
-							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", tag);
+							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
 						}
-						ChanInInt (s->from_kern, (int *) &recv_data);
-						ChanInInt (s->from_kern, (int *) &recv_size);
+						ChanInInt (wptr, s->from_kern, (int *) &recv_data);
+						ChanInInt (wptr, s->from_kern, (int *) &recv_size);
 						if (recv_size > sizeof count || recv_size != count_size) {
-							CFATAL ("walk_inner: counted array size type is invalid; was %d, expected %d\n", recv_size, count_size);
+							CFATAL ("walk_inner: counted array size type is invalid; was %d, expected %d\n", 2, recv_size, count_size);
 						}
 						if (count_size == sizeof (int)) {
-							CTRACE ("received data %08x size %d contains %08x\n", (unsigned int) recv_data, recv_size, *(int *) recv_data);
+							CTRACE ("received data %08x size %d contains %08x\n", 3, (unsigned int) recv_data, recv_size, *(int *) recv_data);
 						}
 						memcpy (&count, recv_data, recv_size);
-						temp_list_add (s, recv_data);
+						temp_list_add (wptr, s, recv_data);
 
-						CTRACE ("output counted array size %lld (count size %d; value %016llx)\n", count, count_size, count);
-						ChanOut (s->user, &count, count_size);
+						CTRACE ("output counted array size %lld (count size %d; value %016llx)\n", 3, count, count_size, count);
+						ChanOut (wptr, s->user, &count, count_size);
 
 						if (count != 0) {
-							if (new_clc (s, 0)) {
+							if (new_clc (wptr, s, 0)) {
 								return 1;
 							}
 						} else {
-							CTRACE ("... so we're actually handling it as *one* CLC\n");
+							CTRACE ("... so we're actually handling it as *one* CLC\n", 0);
 						}
 					}
 
 					if (!(first_clc && count == 0)) {
-						CTRACE ("input counted array data CLC %d\n", s->clc);
-						ChanInChar (s->from_kern, &tag);
+						CTRACE ("input counted array data CLC %d\n", 1, s->clc);
+						ChanInChar (wptr, s->from_kern, &tag);
 						if (tag != PEI_data_item_nlc) {
-							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", tag);
+							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
 						}
-						ChanInInt (s->from_kern, (int *) &recv_data);
-						ChanInInt (s->from_kern, (int *) &recv_size);
+						ChanInInt (wptr, s->from_kern, (int *) &recv_data);
+						ChanInInt (wptr, s->from_kern, (int *) &recv_size);
 
 						if (!first_clc) {
-							CTRACE ("output counted array size; size is %d, count is %d\n", recv_size, recv_size / subtype_size);
-							ChanOutInt (s->user, recv_size / subtype_size);
+							CTRACE ("output counted array size; size is %d, count is %d\n", 2, recv_size, recv_size / subtype_size);
+							ChanOutInt (wptr, s->user, recv_size / subtype_size);
 						}
 
 						if (recv_size != 0) {
-							CTRACE ("output counted array data at %08x\n", (unsigned int) recv_data);
-							ChanOut (s->user, recv_data, recv_size);
-							temp_list_add (s, recv_data);
+							CTRACE ("output counted array data at %08x\n", 1, (unsigned int) recv_data);
+							ChanOut (wptr, s->user, recv_data, recv_size);
+							temp_list_add (wptr, s, recv_data);
 						}
 					}
 
-					CTRACE ("output counted array done\n");
+					CTRACE ("output counted array done\n", 0);
 				}
 				break;
 			}
 		}
 		break;
+#if 0
 	case MTID_MARRAY:
 		{
 			const unsigned int dimcount = s->pdesc[0];
 			const unsigned int subtype_id = typedesc_id (s->pdesc[1]);
 			const unsigned int subtype_len = typedesc_len (s->pdesc[1]);
 			unsigned int subtype_size;
-			CTRACE ("mobile array, dimcount %d, subtype %d length %d\n", dimcount, subtype_id, subtype_len);
+			CTRACE ("mobile array, dimcount %d, subtype %d length %d\n", 3, dimcount, subtype_id, subtype_len);
 
 			if (!is_primitive (subtype_id)) {
-				CFATAL ("walk_inner: mobile array subtype must be primitive; found type %d length %d\n", subtype_id, subtype_len);
+				CFATAL ("walk_inner: mobile array subtype must be primitive; found type %d length %d\n", 2, subtype_id, subtype_len);
 			}
 			subtype_size = s->pdesc[2];
-			CTRACE ("marray subtype item size is %d\n", subtype_size);
+			CTRACE ("marray subtype item size is %d\n", 1, subtype_size);
 			s->pdesc += 4;
 
 			switch (s->mode) {
 			case PW_count:
 				{
-					count_di (s, (dimcount == 1) ? 1 : 2);
+					count_di (wptr, s, (dimcount == 1) ? 1 : 2);
 				}
 				break;
 			case PW_output:
@@ -1003,50 +878,50 @@ static int walk_inner (pony_walk_state *s)
 				{
 					int i;
 					long long data_size;
-					unsigned int *block = get_data (s);
+					unsigned int *block = get_data (wptr, s);
 					/* This contains the mobile pointer, followed by dimcount dimensions. */
 
 					if (block == NULL) {
-						CFATAL ("walk_inner: trying to send undefined mobile array\n");
+						CFATAL ("walk_inner: trying to send undefined mobile array\n", 0);
 					}
 
-					CTRACE ("output marray, %d dimensions, block at 0x%08x\n", dimcount, block[0]);
+					CTRACE ("output marray, %d dimensions, block at 0x%08x\n", 2, dimcount, block[0]);
 					data_size = subtype_size;
 					for (i = 0; i < dimcount; i++) {
-						CTRACE ("dimension %d is %d\n", i, block[i + 1]);
+						CTRACE ("dimension %d is %d\n", 2, i, block[i + 1]);
 						data_size *= block[i + 1];
 					}
-					CTRACE ("marray data size is %lld\n", data_size);
+					CTRACE ("marray data size is %lld\n", 1, data_size);
 
 					if (data_size >= 0x80000000) {
-						CFATAL ("walk_inner: mobile array data size too large to transmit\n");
+						CFATAL ("walk_inner: mobile array data size too large to transmit\n", 0);
 					}
 
 					if (s->mode == PW_output) {
 						if (dimcount > 1) {
-							CTRACE ("output CLC %d (marray dimension block at 0x%08x)\n", s->clc, (unsigned int) &block[1]);
-							ChanOutChar (s->to_kern, PDO_data_item_nlc);
-							ChanOutInt (s->to_kern, (int) &block[1]);
-							ChanOutInt (s->to_kern, (int) dimcount * sizeof *block);
+							CTRACE ("output CLC %d (marray dimension block at 0x%08x)\n", 2, s->clc, (unsigned int) &block[1]);
+							ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
+							ChanOutInt (wptr, s->to_kern, (int) &block[1]);
+							ChanOutInt (wptr, s->to_kern, (int) dimcount * sizeof *block);
 						}
 
-						CTRACE ("output CLC %d (marray data at 0x%08x)\n", s->clc, block[0]);
-						ChanOutChar (s->to_kern, PDO_data_item_nlc);
-						ChanOutInt (s->to_kern, (int) block[0]);
-						ChanOutInt (s->to_kern, (int) data_size);
+						CTRACE ("output CLC %d (marray data at 0x%08x)\n", 2, s->clc, block[0]);
+						ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
+						ChanOutInt (wptr, s->to_kern, (int) block[0]);
+						ChanOutInt (wptr, s->to_kern, (int) data_size);
 					} else {
-						CTRACE ("cancelling CLC %d marray\n", s->clc);
+						CTRACE ("cancelling CLC %d marray\n", 1, s->clc);
 					}
 
-					CTRACE ("will free marray data at 0x%08x\n", block[0]);
-					comm_list_add (s, (void *) block[0], -1, CL_dynamic_mobile);
+					CTRACE ("will free marray data at 0x%08x\n", 1, block[0]);
+					comm_list_add (wptr, s, (void *) block[0], -1, CL_dynamic_mobile);
 				}
 				break;
 			case PW_input:
 				{
 					int i;
 					long long data_size;
-					unsigned int *block = alloc_temp_mem (s, (dimcount + 1) * sizeof *block);
+					unsigned int *block = alloc_temp_mem (wptr, s, (dimcount + 1) * sizeof *block);
 					unsigned int *recv_dims;
 					void *recv_data;
 					char tag;
@@ -1054,46 +929,46 @@ static int walk_inner (pony_walk_state *s)
 					if (dimcount == 1) {
 						size_t recv_size;
 
-						CTRACE ("input CLC %d (marray data for single dimension)\n", s->clc);
-						ChanInChar (s->from_kern, &tag);
+						CTRACE ("input CLC %d (marray data for single dimension)\n", 1, s->clc);
+						ChanInChar (wptr, s->from_kern, &tag);
 						if (tag != PEI_data_item_nlc) {
-							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", tag);
+							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
 						}
-						ChanInInt (s->from_kern, (int *) &recv_data);
-						ChanInInt (s->from_kern, (int *) &recv_size);
+						ChanInInt (wptr, s->from_kern, (int *) &recv_data);
+						ChanInInt (wptr, s->from_kern, (int *) &recv_size);
 
-						block[0] = (unsigned int) DMemAlloc (recv_size);
+						block[0] = (unsigned int) malloc (recv_size);
 						memcpy ((void *) block[0], recv_data, recv_size);
-						temp_list_add (s, recv_data);
+						temp_list_add (wptr, s, recv_data);
 						block[1] = recv_size / subtype_size;
-						CTRACE ("received %d items, total size %d\n", block[1], recv_size);
+						CTRACE ("received %d items, total size %d\n", 2, block[1], recv_size);
 					} else {
-						CTRACE ("input CLC %d (marray dimension block)\n", s->clc);
-						input_di (s, (void *) &recv_dims, dimcount * sizeof *recv_dims);
+						CTRACE ("input CLC %d (marray dimension block)\n", 1, s->clc);
+						input_di (wptr, s, (void *) &recv_dims, dimcount * sizeof *recv_dims);
 						memcpy (&block[1], recv_dims, dimcount * sizeof *recv_dims);
-						temp_list_add (s, (void *) recv_dims);
+						temp_list_add (wptr, s, (void *) recv_dims);
 
 						data_size = subtype_size;
 						for (i = 0; i < dimcount; i++) {
-							CTRACE ("dimension %d is %d\n", i, block[i + 1]);
+							CTRACE ("dimension %d is %d\n", 2, i, block[i + 1]);
 							data_size *= block[i + 1];
 						}
-						CTRACE ("marray data size is %lld\n", data_size);
+						CTRACE ("marray data size is %lld\n", 1, data_size);
 
 						if (data_size >= 0x80000000) {
-							CFATAL ("walk_inner: received mobile array data size too large to allocate\n");
+							CFATAL ("walk_inner: received mobile array data size too large to allocate\n", 0);
 						}
 
-						CTRACE ("input CLC %d (marray data, size %lld)\n", s->clc, data_size);
-						block[0] = (unsigned int) DMemAlloc ((size_t) data_size);
-						input_di (s, &recv_data, data_size);
+						CTRACE ("input CLC %d (marray data, size %lld)\n", 2, s->clc, data_size);
+						block[0] = (unsigned int) malloc ((size_t) data_size);
+						input_di (wptr, s, &recv_data, data_size);
 						memcpy ((void *) block[0], recv_data, data_size);
-						temp_list_add (s, recv_data);
+						temp_list_add (wptr, s, recv_data);
 					}
 
-					CTRACE ("doing ChanMOutN for marray; data 0x%08x; length %d\n", (unsigned int) block, dimcount + 1);
-					ChanMOutN (s->user, block, dimcount + 1);
-					CTRACE ("ChanMOutN done\n");
+					CTRACE ("doing ChanMOutN for marray; data 0x%08x; length %d\n", 2, (unsigned int) block, dimcount + 1);
+					MTChanOut (wptr, s->user, block, dimcount + 1); //XXX
+					CTRACE ("ChanMOutN done\n", 0);
 				}
 				break;
 			}
@@ -1105,24 +980,24 @@ static int walk_inner (pony_walk_state *s)
 			size_t size;
 
 			if (s->mode == PW_output || s->mode == PW_cancel) {
-				data = *(void **) get_data (s);
+				data = *(void **) get_data (wptr, s);
 			}
-			CTRACE ("starting static mobile, data 0x%08x\n", (unsigned int) data);
-			if (walk_inner_primitive (s, 1, &data, &size)) {
+			CTRACE ("starting static mobile, data 0x%08x\n", 1, (unsigned int) data);
+			if (walk_inner_primitive (wptr, s, 1, &data, &size)) {
 				return 1;
 			}
-			CTRACE ("done static mobile, data 0x%08x, size %d\n", (unsigned int) data, size);
+			CTRACE ("done static mobile, data 0x%08x, size %d\n", 2, (unsigned int) data, size);
 			if (s->mode == PW_input) {
-				void *ptr = get_static_mobile (size);
+				void *ptr = get_static_mobile (wptr, size);
 
 				memcpy (ptr, data, size);
 
-				CTRACE ("doing ChanMOut for static mobile with ptr %08x\n", (unsigned int) ptr);
+				CTRACE ("doing ChanMOut for static mobile with ptr %08x\n", 1, (unsigned int) ptr);
 				ChanMOut (s->user, &ptr);
-				CTRACE ("ChanMOut done, got ptr %08x\n", (unsigned int) ptr);
+				CTRACE ("ChanMOut done, got ptr %08x\n", 1, (unsigned int) ptr);
 
-				comm_list_add (s, ptr, size, CL_static_mobile);
-				temp_list_add (s, data);
+				comm_list_add (wptr, s, ptr, size, CL_static_mobile);
+				temp_list_add (wptr, s, data);
 			}
 		}
 		break;
@@ -1134,7 +1009,7 @@ static int walk_inner (pony_walk_state *s)
 			const int is_client = (type == MTID_MCHANEND_OU || type == MTID_MCHANEND_OS);
 			const int is_shared = (type == MTID_MCHANEND_IS || type == MTID_MCHANEND_OS);
 
-			CTRACE ("got mobile channel end, client %d shared %d\n", is_client, is_shared);
+			CTRACE ("got mobile channel end, client %d shared %d\n", 2, 2, is_client, is_shared);
 
 			switch (s->mode) {
 			case PW_count:
@@ -1147,132 +1022,132 @@ static int walk_inner (pony_walk_state *s)
 			case PW_output:
 			case PW_cancel:
 				{
-					ct_BASIC **data = get_data (s);
-					ct_BASIC *ctb;
-					ct_BASIC_end *ctb_end;
+					mt_cb_t **data = get_data (wptr, s);
+					mt_cb_t *ctb;
+					mt_cb_pony_state_t *pony;
 
 					if (data == NULL) {
-						CFATAL ("walk_inner: trying to send undefined channel end\n");
+						CFATAL ("walk_inner: trying to send undefined channel end\n", 0);
 					}
 
 					ctb = *data;
-					ctb_end = ct_end (ctb);
+					pony = ct_state (ctb);
 
-					CTRACE ("CTB at 0x%08x refcount %d typedesc 0x%08x uiohook 0x%08x\n", (unsigned int) ctb, ctb->refcount, (unsigned int) ctb->typedesc, (unsigned int) ctb->uiohook);
+					CTRACE ("CTB at 0x%08x typedesc 0x%08x uiohook 0x%08x\n", 3, (unsigned int) ctb, (unsigned int) pony->typedesc, (unsigned int) pony->uiohook);
 
 					if (s->mode == PW_output) {
 						CTSemClaim (&ctb_end->statesem);
 						if (ctb->uiohook == NULL) {
 							int nct_id, dhs, ehs;
-							ct_BASIC *nhh, **dha, **eha;
+							mt_cb_t *nhh, **dha, **eha;
 							char tag;
 							int tmp[2];
 
-							CTRACE ("CTB not networked; sending make.ctb.networked; state 0x%08x\n", ctb_end->state);
-							ChanOutChar (s->to_kern, PDO_make_ctb_networked);
-							ChanOutInt (s->to_kern, (int) ctb);
-							ChanOutInt (s->to_kern, ctb_end->state & 0xFFFF);
-							ChanOutInt (s->to_kern, ctb_end->state >> 16);
-							ChanOutInt (s->to_kern, typedesc_chantype_nchans (ctb->typedesc));
-							ChanOutInt (s->to_kern, typedesc_chantype_server_read (ctb->typedesc));
+							CTRACE ("CTB not networked; sending make.ctb.networked; state 0x%08x\n", 1, ctb_end->state);
+							ChanOutChar (wptr, s->to_kern, PDO_make_ctb_networked);
+							ChanOutInt (wptr, s->to_kern, (int) ctb);
+							ChanOutInt (wptr, s->to_kern, ctb_end->state & 0xFFFF);
+							ChanOutInt (wptr, s->to_kern, ctb_end->state >> 16);
+							ChanOutInt (wptr, s->to_kern, typedesc_chantype_nchans (wptr, ctb->typedesc));
+							ChanOutInt (wptr, s->to_kern, typedesc_chantype_server_read (wptr, ctb->typedesc));
 
-							CTRACE ("reading make.ctb.networked.confirm\n");
-							ChanInInt (s->from_kern, &tag);
+							CTRACE ("reading make.ctb.networked.confirm\n", 0);
+							ChanInInt (wptr, s->from_kern, &tag);
 							if (tag != PDI_make_ctb_networked_confirm) {
-								CFATAL ("walk_inner: expected make.ctb.networked.confirm; got %d\n", tag);
+								CFATAL ("walk_inner: expected make.ctb.networked.confirm; got %d\n", 1, tag);
 							}
-							ChanInInt (s->from_kern, (int *) &nct_id);
-							ChanInInt (s->from_kern, (int *) &nhh);
+							ChanInInt (wptr, s->from_kern, (int *) &nct_id);
+							ChanInInt (wptr, s->from_kern, (int *) &nhh);
 							ChanMIn64 (s->from_kern, (long long *) tmp);
-							dha = (ct_BASIC **) tmp[0];
+							dha = (mt_cb_t **) tmp[0];
 							dhs = tmp[1];
 							ChanMIn64 (s->from_kern, (long long *) tmp);
-							eha = (ct_BASIC **) tmp[0];
+							eha = (mt_cb_t **) tmp[0];
 							ehs = tmp[1];
 
-							CTRACE ("actually making the CTB networked -- nct.id now 0x%08x\n", nct_id);
-							make_ctb_networked (ctb, ctb->typedesc, nct_id, nhh, dha, dhs, eha, ehs);
+							CTRACE ("actually making the CTB networked -- nct.id now 0x%08x\n", 1, nct_id);
+							make_ctb_networked (wptr, ctb, ctb->typedesc, nct_id, nhh, dha, dhs, eha, ehs);
 						}
 						CTSemRelease (&ctb_end->statesem);
 
-						CTRACE ("output CT CLC %d; nct.id 0x%08x\n", s->clc, (unsigned int) ct_end (ctb)->state);
-						ChanOutChar (s->to_kern, PDO_ct_end_nlc);
-						ChanOutInt (s->to_kern, ct_end (ctb)->state); /* the nct.id, now it's networked */
-						ChanOutInt (s->to_kern, is_client ? 0 : 1);
-						ChanOutInt (s->to_kern, is_shared ? 2 : 1);
-						CTRACE ("output CT done\n");
+						CTRACE ("output CT CLC %d; nct.id 0x%08x\n", 2, s->clc, (unsigned int) ct_end (ctb)->state);
+						ChanOutChar (wptr, s->to_kern, PDO_ct_end_nlc);
+						ChanOutInt (wptr, s->to_kern, ct_end (ctb)->state); /* the nct.id, now it's networked */
+						ChanOutInt (wptr, s->to_kern, is_client ? 0 : 1);
+						ChanOutInt (wptr, s->to_kern, is_shared ? 2 : 1);
+						CTRACE ("output CT done\n", 0);
 					} else {
-						CTRACE ("cancelling CTB\n");
+						CTRACE ("cancelling CTB\n", 0);
 					}
 
-					comm_list_add (s, ctb, -1, CL_ctb);
+					comm_list_add (wptr, s, ctb, -1, CL_ctb);
 				}
 				break;
 			case PW_input:
 				{
 					/* For channel types, the typehash is actually the typedesc pointer. */
 					unsigned int *typedesc = (unsigned int *) s->pdesc[0];
-					ct_BASIC *ctb;
+					mt_cb_t *ctb;
 					char tag;
 
-					CTRACE ("reading either increase.ref.count or alloc.new.ctb\n");
-					ChanInChar (s->from_kern, &tag);
+					CTRACE ("reading either clone.ctb or alloc.new.ctb\n", 0);
+					ChanInChar (wptr, s->from_kern, &tag);
 					switch (tag) {
-					case PEI_increase_ref_count:
+					case PEI_clone_ctb:
 						{
-							ChanInInt (s->from_kern, (int *) &ctb);
-							CTRACE ("increasing ref count on CTB 0x%08x\n", (unsigned int) ctb);
+							ChanInInt (wptr, s->from_kern, (int *) &ctb);
+							CTRACE ("increasing ref count on CTB 0x%08x\n", 1, (unsigned int) ctb);
 							ctb->refcount++;
 						}
 						break;
 					case PEI_alloc_new_ctb:
 						{
 							int nct_id, dhs, ehs;
-							ct_BASIC *nhh, **dha, **eha;
+							mt_cb_t *nhh, **dha, **eha;
 							int tmp[2];
 
-							ChanInInt (s->from_kern, &nct_id);
-							CTRACE ("alloc new CTB, NCT-ID 0x%08x\n", nct_id);
+							ChanInInt (wptr, s->from_kern, &nct_id);
+							CTRACE ("alloc new CTB, NCT-ID 0x%08x\n", 1, nct_id);
 
-							ctb = DMemAlloc (ct_size (typedesc));
-							init_ctb (ctb, typedesc);
+							ctb = new_ctb (wptr, typedesc);
 
-							CTRACE ("sending alloc.new.ctb.confirm\n");
-							ChanOutChar (s->to_kern, PEO_alloc_new_ctb_confirm);
-							ChanOutInt (s->to_kern, (int) ctb);
-							ChanOutInt (s->to_kern, typedesc_chantype_nchans (ctb->typedesc));
-							ChanOutInt (s->to_kern, typedesc_chantype_server_read (ctb->typedesc));
+							CTRACE ("sending alloc.new.ctb.confirm\n", 0);
+							ChanOutChar (wptr, s->to_kern, PEO_alloc_new_ctb_confirm);
+							ChanOutInt (wptr, s->to_kern, (int) ctb);
+							ChanOutInt (wptr, s->to_kern, typedesc_chantype_nchans (wptr, ctb->typedesc));
+							ChanOutInt (wptr, s->to_kern, typedesc_chantype_server_read (wptr, ctb->typedesc));
 
-							CTRACE ("reading alloc.new.ctb.confirm\n");
-							ChanInInt (s->from_kern, &tag);
+							CTRACE ("reading alloc.new.ctb.confirm\n", 0);
+							ChanInInt (wptr, s->from_kern, &tag);
 							if (tag != PEI_alloc_new_ctb_confirm) {
-								CFATAL ("walk_inner: expected alloc.new.ctb.confirm; got %d\n", tag);
+								CFATAL ("walk_inner: expected alloc.new.ctb.confirm; got %d\n", 1, tag);
 							}
-							ChanInInt (s->from_kern, (int *) &nhh);
+							ChanInInt (wptr, s->from_kern, (int *) &nhh);
 							ChanMIn64 (s->from_kern, (long long *) tmp);
-							dha = (ct_BASIC **) tmp[0];
+							dha = (mt_cb_t **) tmp[0];
 							dhs = tmp[1];
 							ChanMIn64 (s->from_kern, (long long *) tmp);
-							eha = (ct_BASIC **) tmp[0];
+							eha = (mt_cb_t **) tmp[0];
 							ehs = tmp[1];
 
-							CTRACE ("actually making the CTB networked; CTB is 0x%08x\n", ctb);
-							make_ctb_networked (ctb, ctb->typedesc, nct_id, nhh, dha, dhs, eha, ehs);
+							CTRACE ("actually making the CTB networked; CTB is 0x%08x\n", 1, ctb);
+							make_ctb_networked (wptr, ctb, ctb->typedesc, nct_id, nhh, dha, dhs, eha, ehs);
 						}
 						break;
 					default:
-						CFATAL ("walk_inner: expecting increase.ref.count or alloc.new.ctb; got %d\n", tag);
+						CFATAL ("walk_inner: expecting clone.ctb or alloc.new.ctb; got %d\n", 1, tag);
 					}
 
-					CTRACE ("sending received end to user\n");
+					CTRACE ("sending received end to user\n", 0);
 					ChanMOutN (s->user, &ctb, 1);
-					CTRACE ("CTB receive done\n");
+					CTRACE ("CTB receive done\n", 0);
 				}
 				break;
 			}
 			s->pdesc++;
 		}
 		break;
+#endif
 	/* FIXME: These types are not yet implemented: */
 	case MTID_MBARRIER:
 	case MTID_MPROC:
@@ -1285,24 +1160,31 @@ static int walk_inner (pony_walk_state *s)
 	case MTID_FIELD:
 	case MTID_UNKNOWN:
 	default:
-		CFATAL ("walk_inner: unhandled type in typedesc: type %d length %d\n", type, type_len);
+		CFATAL ("walk_inner: unhandled type in typedesc: type %d length %d\n", 2, type, type_len);
 	}
 
 	if (s->pdesc != orig_pdesc + type_len) {
-		CFATAL ("walk_inner: typedesc size mismatch: type %d length %d, measured %d\n", type, type_len, s->pdesc - orig_pdesc);
+		CFATAL ("walk_inner: typedesc size mismatch: type %d length %d, measured %d\n", 3, type, type_len, s->pdesc - orig_pdesc);
 	}
 
-	SCTRACE (s, "done\n");
+	SCTRACE (s, "done\n", 0);
 	return 0;
 }
 /*}}}*/
-/*{{{ static void type_walker (Process *me, Channel *pwi, Channel *pwo, Channel *user, Channel *to_kern, Channel *from_kern, unsigned int *pdesc) */
+/*{{{ type_walker */
 /*
  *	process for walking over type descriptors, doing counting, encoding or decoding as appropriate
  */
 static const int type_walker_stacksize = 16384;
-static void type_walker (Process *me, Channel *pwi, Channel *pwo, Channel *user, Channel *to_kern, Channel *from_kern, unsigned int *pdesc)
+static void type_walker (Workspace wptr)
 {
+	Channel *pwi		= ProcGetParam (wptr, 0, Channel *);
+	Channel *pwo		= ProcGetParam (wptr, 1, Channel *);
+	Channel *user		= ProcGetParam (wptr, 2, Channel *);
+	Channel *to_kern	= ProcGetParam (wptr, 3, Channel *);
+	Channel *from_kern	= ProcGetParam (wptr, 4, Channel *);
+	unsigned int *pdesc	= ProcGetParam (wptr, 5, unsigned int *);
+
 	pony_walk_state state;
 
 	state.mode = PW_count;
@@ -1318,20 +1200,20 @@ static void type_walker (Process *me, Channel *pwi, Channel *pwo, Channel *user,
 	state.comm_list_used = 0;
 	state.comm_list_size = 0;
 
-	CTRACE ("starting; user channel at 0x%08x; to_kern 0x%08x; from_kern 0x%08x\n", (unsigned int) user, (unsigned int) to_kern, (unsigned int) from_kern);
+	CTRACE ("starting; user channel at 0x%08x; to_kern 0x%08x; from_kern 0x%08x\n", 3, (unsigned int) user, (unsigned int) to_kern, (unsigned int) from_kern);
 	while (1) {
 		int stopped;
 		char c;
 
-		ChanInChar (pwi, &c);
-		process_temp_list (&state);
-		process_comm_list (&state);
+		ChanInChar (wptr, pwi, &c);
+		process_temp_list (wptr, &state);
+		process_comm_list (wptr, &state);
 		if (c == PWI_term) {
 			break;
 		} else if (c != PWI_reset) {
-			CFATAL ("pony_walk_type: expected PWI_reset or PWI_term; got %d\n", c);
+			CFATAL ("pony_walk_type: expected PWI_reset or PWI_term; got %d\n", 1, c);
 		}
-		ChanInInt (pwi, &state.mode);
+		ChanInInt (wptr, pwi, (int *) &state.mode);
 
 		state.pdesc = pdesc;
 		state.clc = 0;
@@ -1343,63 +1225,71 @@ static void type_walker (Process *me, Channel *pwi, Channel *pwo, Channel *user,
 		state.counts.di_rest = 0;
 		state.counts.ct_rest = 0;
 
-		SCTRACE (&state, "walk starting in mode %d\n", state.mode);
-		stopped = walk_inner (&state);
-		SCTRACE (&state, "walk finished: stopped = %d\n", stopped);
+		SCTRACE (&state, "walk starting in mode %d\n", 1, state.mode);
+		stopped = walk_inner (wptr, &state);
+		SCTRACE (&state, "walk finished: stopped = %d\n", 1, stopped);
 
 		if (state.mode == PW_count) {
 			pony_walk_counts *counts = &state.counts;
-			ChanOutChar (pwo, PWO_counts);
-			ChanOut (pwo, &counts, sizeof counts);
+			ChanOutChar (wptr, pwo, PWO_counts);
+			ChanOut (wptr, pwo, &counts, sizeof counts);
 
 			state.clc_total = state.clc + 1;
 		} else if (!stopped) {
-			ChanOutChar (pwo, PWO_done);
+			ChanOutChar (wptr, pwo, PWO_done);
 		}
 
 		if (state.mode == PW_output) {
-			ChanInChar (pwi, &c);
+			ChanInChar (wptr, pwi, &c);
 			if (c == PWI_output_ok) {
-				SCTRACE (&state, "output walk completed successfully; processing comm_list\n");
-				process_comm_list (&state);
+				SCTRACE (&state, "output walk completed successfully; processing comm_list\n", 0);
+				process_comm_list (wptr, &state);
 			} else if (c == PWI_output_cancelled) {
-				SCTRACE (&state, "output walk was cancelled; discarding comm_list\n");
+				SCTRACE (&state, "output walk was cancelled; discarding comm_list\n", 0);
 				state.comm_list_used = 0;
 			} else {
-				CFATAL ("type_walker: expected PWI_output_ok or PWI_output_cancelled\n");
+				CFATAL ("type_walker: expected PWI_output_ok or PWI_output_cancelled\n", 0);
 			}
 		}
 	}
 
-	free_walk_state (&state);
-	CTRACE ("terminating\n");
+	free_walk_state (wptr, &state);
+	CTRACE ("terminating\n", 0);
 }
 /*}}} */
 /*}}} */
 
 /*{{{ protocol decoder */
-/*{{{ static void try_first_clc (Process *me, Channel *csync, const pony_walk_counts *counts, Channel *dh_out) */
+/*{{{ try_first_clc */
 /*
  *	try to send the first.clc message to the pony kernel to say we've got data to send
  */
-static const int try_first_clc_stacksize = 4096;
-static void try_first_clc (Process *me, Channel *csync, const pony_walk_counts *counts, Channel *dh_out)
+static const int try_first_clc_stacksize = 512;
+static void try_first_clc (Workspace wptr)
 {
-	ChanOutChar (dh_out, PDO_first_clc);
-	ChanOutInt (dh_out, counts->di_first);
-	ChanOutInt (dh_out, counts->ct_first);
-	ChanOutInt (dh_out, (counts->di_rest + counts->ct_rest) > 0);
+	Channel *csync			= ProcGetParam (wptr, 0, Channel *);
+	const pony_walk_counts *counts	= ProcGetParam (wptr, 1, const pony_walk_counts *);
+	Channel *dh_out			= ProcGetParam (wptr, 2, Channel *);
 
-	ChanOutChar (csync, 0);
+	ChanOutChar (wptr, dh_out, PDO_first_clc);
+	ChanOutInt (wptr, dh_out, counts->di_first);
+	ChanOutInt (wptr, dh_out, counts->ct_first);
+	ChanOutInt (wptr, dh_out, (counts->di_rest + counts->ct_rest) > 0);
+
+	ChanOutChar (wptr, csync, 0);
 }
 /*}}}*/
-/*{{{  static void cancel_decode_inner (Process *me, Channel *csync, Channel *dh_in, int *cflag)*/
+/*{{{ cancel_decode_inner */
 /*
  *	cancelling helper process (inside decode)
  */
-static const int cancel_decode_inner_stacksize = 4096;
-static void cancel_decode_inner (Process *me, Channel *csync, Channel *dh_in, int *cflag)
+static const int cancel_decode_inner_stacksize = 512;
+static void cancel_decode_inner (Workspace wptr)
 {
+	Channel *csync	= ProcGetParam (wptr, 0, Channel *);
+	Channel *dh_in	= ProcGetParam (wptr, 1, Channel *);
+	int *cflag	= ProcGetParam (wptr, 2, int *);
+
 	int idx;
 	char tag;
 
@@ -1407,191 +1297,210 @@ static void cancel_decode_inner (Process *me, Channel *csync, Channel *dh_in, in
 	switch (idx) {
 		/*{{{  0 -- communication from pony kernel*/
 	case 0:
-		ChanInChar (dh_in, &tag);
-		CTRACE ("got cdi cancel\n");
+		ChanInChar (wptr, dh_in, &tag);
+		CTRACE ("got cdi cancel\n", 0);
 		if (tag == PDI_cancel) {
-			ChanInChar (csync, &tag);
+			ChanInChar (wptr, csync, &tag);
 			*cflag = 1;
 		} else {
-			CFATAL ("cancel_decode_inner: expected cancel, got %d\n", tag);
+			CFATAL ("cancel_decode_inner: expected cancel, got %d\n", 1, tag);
 		}
 		break;
 		/*}}}*/
 		/*{{{  1 -- cancel sync*/
 	case 1:
-		ChanInChar (csync, &tag);
-		CTRACE ("cdi not cancelled\n");
+		ChanInChar (wptr, csync, &tag);
+		CTRACE ("cdi not cancelled\n", 0);
 		*cflag = 0;
 		break;
 		/*}}}*/
 		/*{{{  default -- error*/
 	default:
-		CFATAL ("cancel_decode_inner: bad ProcAlt index %d\n", idx);
+		CFATAL ("cancel_decode_inner: bad ProcAlt index %d\n", 1, idx);
 		/*}}}*/
 	}
 }
 /*}}}*/
-/*{{{  static void pony_protocol_decoder (Process *me, Channel *in, unsigned int *pdesc, ct_BASIC *dhan)*/
+/*{{{ pony_protocol_decoder */
 /*
  *	pony specific decoder implementation.  "in" is the application-level channel;
  *	"pdesc" points at the constant type description for this channel; "dhan" is a client-end
  *	for communication back to the pony kernel.
  */
 static const int pony_protocol_decoder_stacksize = 8192;
-static void pony_protocol_decoder (Process *me, Channel *in, unsigned int *pdesc, ct_BASIC *dhan)
+static void pony_protocol_decoder (Workspace wptr)
 {
+	Channel *in		= ProcGetParam (wptr, 0, Channel *);
+	unsigned int *pdesc	= ProcGetParam (wptr, 1, unsigned int *);
+	mt_cb_t *dhan		= ProcGetParam (wptr, 2, mt_cb_t *);
+
 	Channel pw_in, pw_out;
 	Channel *dh_in = &(dhan->channels[0]);
 	Channel *dh_out = &(dhan->channels[1]);
-	Process *walker;
+	Workspace walker;
 	int running = 1;
 
-	ChanInit (&pw_in);
-	ChanInit (&pw_out);
-	walker = ProcAlloc (type_walker, type_walker_stacksize, 6, &pw_in, &pw_out, in, dh_out, dh_in, pdesc);
-	ProcFork (walker);
+	ChanInit (wptr, &pw_in);
+	ChanInit (wptr, &pw_out);
+	walker = ProcAlloc (wptr, 6, type_walker_stacksize);
+	ProcParam (wptr, walker, 0, &pw_in);
+	ProcParam (wptr, walker, 1, &pw_out);
+	ProcParam (wptr, walker, 2, in);
+	ProcParam (wptr, walker, 3, dh_out);
+	ProcParam (wptr, walker, 4, dh_in);
+	ProcParam (wptr, walker, 5, pdesc);
+	ProcStart (wptr, walker, type_walker);
 
 	while (running) {
 		char tag;
 		int irun;
 
-		CTRACE ("doing input -- managed channel at 0x%08x, control channel at 0x%08x\n", (unsigned int)in, (unsigned int)dh_in);
-		ChanIn (dh_in, &tag, 1);
+		CTRACE ("doing input -- managed channel at 0x%08x, control channel at 0x%08x\n", 2, (unsigned int)in, (unsigned int)dh_in);
+		ChanIn (wptr, dh_in, &tag, 1);
 		switch (tag) {
 			/*{{{  PDI_activate -- start decoding*/
 		case PDI_activate:
-			CTRACE ("activate\n");
+			CTRACE ("activate\n", 0);
 			irun = 1;
 			while (irun) {
 				int idx;
 
-				CTRACE ("alting; dh_in=0x%8.8x, in=0x%8.8x, *in=0x%8.8x\n", (unsigned int)dh_in, (unsigned int)in, (unsigned int)*in);
+				CTRACE ("alting; dh_in=0x%8.8x, in=0x%8.8x, *in=0x%8.8x\n", 3, (unsigned int)dh_in, (unsigned int)in, (unsigned int)*in);
 				idx = ProcAlt (dh_in, in, NULL);
 				switch (idx) {
 					/*{{{  0 -- cancel from pony kernel*/
 				case 0:
-					CTRACE ("cancel 1\n");
-					ChanIn (dh_in, &tag, 1);
+					CTRACE ("cancel 1\n", 0);
+					ChanIn (wptr, dh_in, &tag, 1);
 					if (tag == PDI_cancel) {
 						irun = 0;
 						tag = PDO_cancel_confirm;
-						ChanOut (dh_out, &tag, 1);
+						ChanOut (wptr, dh_out, &tag, 1);
 					} else {
-						CFATAL ("pony_protocol_decoder: expected cancel, got %d\n", tag);
+						CFATAL ("pony_protocol_decoder: expected cancel, got %d\n", 1, tag);
 					}
-					CTRACE ("cancel 1 done\n");
+					CTRACE ("cancel 1 done\n", 0);
 					break;
 					/*}}}*/
 					/*{{{  1 -- from application (extended input)*/
 				case 1:
-					CTRACE ("input from app, channel=0x%8.8x cword=0x%8.8x (@-2=0x%8.8x, @-4=0x%8.8x, @-6=0x%8.8x)\n", (unsigned int)in, *in, ((unsigned int*)(*in))[-2], ((unsigned int *)(*in))[-4], ((unsigned int*)(*in))[-6]);
+					CTRACE ("input from app, channel=0x%8.8x cword=0x%8.8x (@-2=0x%8.8x, @-4=0x%8.8x, @-6=0x%8.8x)\n", 5, (unsigned int)in, *in, ((unsigned int*)(*in))[-2], ((unsigned int *)(*in))[-4], ((unsigned int*)(*in))[-6]);
 					{
-						Process *i1, *i2;
+						Workspace i1, i2;
+						word stack_i1[WORKSPACE_SIZE (3, try_first_clc_stacksize)];
+						word stack_i2[WORKSPACE_SIZE (3, cancel_decode_inner_stacksize)];
 						Channel csync;
 						int was_cancelled = 0;
 						char walk_tag;
 						const pony_walk_counts *counts;
 						int di_rest, ct_rest;
 
-						CTRACE ("telling walker to count\n");
-						ChanOutChar (&pw_in, PWI_reset);
-						ChanOutInt (&pw_in, PW_count);
-						ChanInChar (&pw_out, &walk_tag);
+						CTRACE ("telling walker to count\n", 0);
+						ChanOutChar (wptr, &pw_in, PWI_reset);
+						ChanOutInt (wptr, &pw_in, PW_count);
+						ChanInChar (wptr, &pw_out, &walk_tag);
 						if (walk_tag != PWO_counts) {
-							CFATAL ("pony_protocol_decoder: expected PWO_counts, got %d\n", walk_tag);
+							CFATAL ("pony_protocol_decoder: expected PWO_counts, got %d\n", 1, walk_tag);
 						}
-						ChanIn (&pw_out, &counts, sizeof counts);
-						CTRACE ("walker count done -- received 0x%08x\n", counts);
-						CTRACE ("counts are %d %d %d %d\n", counts->di_first, counts->ct_first, counts->di_rest, counts->ct_rest);
+						ChanIn (wptr, &pw_out, &counts, sizeof counts);
+						CTRACE ("walker count done -- received 0x%08x\n", 1, counts);
+						CTRACE ("counts are %d %d %d %d\n", 4, counts->di_first, counts->ct_first, counts->di_rest, counts->ct_rest);
 						di_rest = counts->di_rest;
 						ct_rest = counts->ct_rest;
 
-						ChanInit (&csync);
-						i1 = ProcAlloc (try_first_clc, try_first_clc_stacksize, 3, &csync, counts, dh_out);
-						i2 = ProcAlloc (cancel_decode_inner, cancel_decode_inner_stacksize, 3, &csync, dh_in, &was_cancelled);
-						ProcPar (i1, i2, NULL);
-						ProcAllocClean (i1);
-						ProcAllocClean (i2);
+						ChanInit (wptr, &csync);
+
+						i1 = LightProcInit (wptr, stack_i1, 3, try_first_clc_stacksize);
+						ProcParam (wptr, i1, 0, &csync);
+						ProcParam (wptr, i1, 1, counts);
+						ProcParam (wptr, i1, 2, dh_out);
+
+						i2 = LightProcInit (wptr, stack_i2, 3, cancel_decode_inner_stacksize);
+						ProcParam (wptr, i1, 0, &csync);
+						ProcParam (wptr, i1, 1, dh_in);
+						ProcParam (wptr, i1, 2, &was_cancelled);
+
+						ProcPar (wptr, 2, i1, try_first_clc, i2, cancel_decode_inner);
 
 						if (was_cancelled) {
-							CTRACE ("ifa cancelled\n");
+							CTRACE ("ifa cancelled\n", 0);
 							irun = 0;
-							ChanOutChar (dh_out, PDO_cancel_confirm);
-							CTRACE ("ifa cancelled done\n");
+							ChanOutChar (wptr, dh_out, PDO_cancel_confirm);
+							CTRACE ("ifa cancelled done\n", 0);
 						} else {
-							CTRACE ("ifa not cancelled -- outputting first CLC\n");
+							CTRACE ("ifa not cancelled -- outputting first CLC\n", 0);
 
-							CTRACE ("in=0x%08x telling walker to output\n", (unsigned int) in);
-							ChanOutChar (&pw_in, PWI_reset);
-							ChanOutInt (&pw_in, PW_output);
-							ChanInChar (&pw_out, &walk_tag);
-							CTRACE ("in=0x%08x got tag %d\n", (unsigned int) in, walk_tag);
+							CTRACE ("in=0x%08x telling walker to output\n", 1, (unsigned int) in);
+							ChanOutChar (wptr, &pw_in, PWI_reset);
+							ChanOutInt (wptr, &pw_in, PW_output);
+							ChanInChar (wptr, &pw_out, &walk_tag);
+							CTRACE ("in=0x%08x got tag %d\n", 2, (unsigned int) in, walk_tag);
 
-							ChanInChar (dh_in, &tag);
+							ChanInChar (wptr, dh_in, &tag);
 							switch (tag) {
 							case PDI_cancel:
-								CTRACE ("got cancel from kernel\n");
+								CTRACE ("got cancel from kernel\n", 0);
 								irun = 0;
-								ChanOutChar (dh_out, PDO_cancel_confirm);
+								ChanOutChar (wptr, dh_out, PDO_cancel_confirm);
 								if (walk_tag != PWO_done) {
-									ChanOutChar (&pw_in, PWI_stop);
+									ChanOutChar (wptr, &pw_in, PWI_stop);
 								}
 
-								ChanOutChar (&pw_in, PWI_output_cancelled);
+								ChanOutChar (wptr, &pw_in, PWI_output_cancelled);
 
-								CTRACE ("cancel confirmed -- deactivating\n");
+								CTRACE ("cancel confirmed -- deactivating\n", 0);
 								break;
 							case PDI_ack:
 								/* "Reduce refcount of CTBs for first CLC" --
 								 * will happen when walker comm_list is processed.
 								 */
-								CTRACE ("got ack from kernel\n");
+								CTRACE ("got ack from kernel\n", 0);
 								if (walk_tag != PWO_done) {
-									CTRACE ("sending rest.clcs\n");
-									ChanOutChar (dh_out, PDO_rest_clcs);
-									ChanOutInt (dh_out, di_rest);
-									ChanOutInt (dh_out, ct_rest);
+									CTRACE ("sending rest.clcs\n", 0);
+									ChanOutChar (wptr, dh_out, PDO_rest_clcs);
+									ChanOutInt (wptr, dh_out, di_rest);
+									ChanOutInt (wptr, dh_out, ct_rest);
 
 									while (walk_tag != PWO_done) {
-										ChanOutChar (&pw_in, PWI_next);
-										ChanInChar (&pw_out, &walk_tag);
+										ChanOutChar (wptr, &pw_in, PWI_next);
+										ChanInChar (wptr, &pw_out, &walk_tag);
 									}
-									CTRACE ("in=0x%08x sending done; awaiting ack\n", (unsigned int) in);
+									CTRACE ("in=0x%08x sending done; awaiting ack\n", 1, (unsigned int) in);
 
-									ChanInChar (dh_in, &tag);
+									ChanInChar (wptr, dh_in, &tag);
 									if (tag != PDI_ack) {
-										CFATAL ("pony_protocol_decoder: expecting ack\n");
+										CFATAL ("pony_protocol_decoder: expecting ack\n", 0);
 									}
-									CTRACE ("in=0x%08x got ack\n", (unsigned int) in);
+									CTRACE ("in=0x%08x got ack\n", 1, (unsigned int) in);
 									/* "Reduce refcount of remaining CTBs" --
 									 * will happen when walker comm_list is
 									 * processed.
 									 */
 								}
 
-								ChanOutChar (&pw_in, PWI_output_ok);
+								ChanOutChar (wptr, &pw_in, PWI_output_ok);
 
-								CTRACE ("releasing user process\n");
-								ChanXEnd (in);
+								CTRACE ("releasing user process\n", 0);
+								ChanXEnd (wptr, in);
 								break;
 							}
 						}
 					}
-					CTRACE ("input from app done\n");
+					CTRACE ("input from app done\n", 0);
 					break;
 					/*}}}*/
 					/*{{{  default -- error*/
 				default:
-					CFATAL ("pony_protocol_decoder: bad ProcAlt index %d\n", idx);
+					CFATAL ("pony_protocol_decoder: bad ProcAlt index %d\n", 1, idx);
 					/*}}}*/
 				}
 			}
-			CTRACE ("deactivate\n");
+			CTRACE ("deactivate\n", 0);
 			break;
 			/*}}}*/
 			/*{{{  PDI_cancel_encode -- cancel encode*/
 		case PDI_cancel_encode:
-			CTRACE ("cancel.encode\n");
+			CTRACE ("cancel.encode\n", 0);
 			{
 				int idx;
 				char tag, walk_tag;
@@ -1600,137 +1509,144 @@ static void pony_protocol_decoder (Process *me, Channel *in, unsigned int *pdesc
 				switch (idx) {
 				/*{{{  dh_in */
 				case 0:
-					ChanInChar (dh_in, &tag);
+					ChanInChar (wptr, dh_in, &tag);
 					if (tag != PDI_cancel_encode_ack) {
-						CFATAL ("pony_protocol_decoder: expected cancel.encode.ack, got %d\n", tag);
+						CFATAL ("pony_protocol_decoder: expected cancel.encode.ack, got %d\n", 1, tag);
 					}
-					CTRACE ("encode.not.cancelled\n");
-					ChanOutChar (dh_out, PDO_encode_not_cancelled);
+					CTRACE ("encode.not.cancelled\n", 0);
+					ChanOutChar (wptr, dh_out, PDO_encode_not_cancelled);
 					break;
 				/*}}}*/
 				/*{{{  in */
 				case 1:
-					CTRACE ("cancelling input from user\n");
-					ChanOutChar (&pw_in, PWI_reset);
-					ChanOutInt (&pw_in, PW_cancel);
-					ChanInChar (&pw_out, &walk_tag);
-					CTRACE ("cancelling, received tag %d\n", walk_tag);
+					CTRACE ("cancelling input from user\n", 0);
+					ChanOutChar (wptr, &pw_in, PWI_reset);
+					ChanOutInt (wptr, &pw_in, PW_cancel);
+					ChanInChar (wptr, &pw_out, &walk_tag);
+					CTRACE ("cancelling, received tag %d\n", 1, walk_tag);
 
 					if (walk_tag != PWO_done) {
-						ChanOutChar (&pw_in, PWI_stop);
+						ChanOutChar (wptr, &pw_in, PWI_stop);
 					}
 
-					CTRACE ("releasing protocol encoder after cancel\n");
-					ChanXEnd (in);
+					CTRACE ("releasing protocol encoder after cancel\n", 0);
+					ChanXEnd (wptr, in);
 
-					CTRACE ("awaiting ack\n");
-					ChanInChar (dh_in, &tag);
+					CTRACE ("awaiting ack\n", 0);
+					ChanInChar (wptr, dh_in, &tag);
 					if (tag != PDI_cancel_encode_ack) {
-						CFATAL ("pony_protocol_decoder: expected cancel.encode.ack, got %d\n", tag);
+						CFATAL ("pony_protocol_decoder: expected cancel.encode.ack, got %d\n", 1, tag);
 					}
-					CTRACE ("encode.cancelled\n");
-					ChanOutChar (dh_out, PDO_encode_cancelled);
+					CTRACE ("encode.cancelled\n", 0);
+					ChanOutChar (wptr, dh_out, PDO_encode_cancelled);
 					break;
 				/*}}}*/
 				}
-				CTRACE ("done cancelling\n");
+				CTRACE ("done cancelling\n", 0);
 			}
 			break;
 			/*}}}*/
 			/*{{{  PDI_term -- terminate*/
 		case PDI_term:
-			CTRACE ("terminate\n");
+			CTRACE ("terminate\n", 0);
 			running = 0;
-			dhan->refcount--;
-			if (!dhan->refcount) {
-				DMemFree (dhan);
-			}
+			MTRelease (wptr, dhan);
 			break;
 			/*}}}*/
 			/*{{{  default -- error*/
 		default:
-			CFATAL ("pony_protocol_decoder: expected PDI_active, PDI_cancel_encode or PDI_term, got %d\n", tag);
+			CFATAL ("pony_protocol_decoder: expected PDI_active, PDI_cancel_encode or PDI_term, got %d\n", 1, tag);
 			/*}}}*/
 		}
 	}
 
-	ChanOutChar (&pw_in, PWI_term);
+	ChanOutChar (wptr, &pw_in, PWI_term);
 }
 /*}}}*/
 /*}}}*/
 
 /*{{{ protocol encoder */
-/*{{{  static void pony_protocol_encoder (Process *me, Channel *out, unsigned int *pdesc, ct_BASIC *ehan)*/
+/*{{{ pony_protocol_encoder */
 /*
  *	pony specific encoder implementation.  "out" is the application-level output channel;
  *	"prot_desc" points at the constant type description for this channel; "enc_handle" is a client-end
  *	for communication back to the pony kernel.
  */
 static const int pony_protocol_encoder_stacksize = 8192;
-static void pony_protocol_encoder (Process *me, Channel *out, unsigned int *pdesc, ct_BASIC *ehan)
+static void pony_protocol_encoder (Workspace wptr)
 {
+	Channel *out		= ProcGetParam (wptr, 0, Channel *);
+	unsigned int *pdesc	= ProcGetParam (wptr, 1, unsigned int *);
+	mt_cb_t *ehan		= ProcGetParam (wptr, 2, mt_cb_t *);
+
 	Channel pw_in, pw_out;
 	Channel *eh_in = &(ehan->channels[0]);
 	Channel *eh_out = &(ehan->channels[1]);
-	Process *walker;
+	Workspace walker;
 	int running = 1;
 
-	ChanInit (&pw_in);
-	ChanInit (&pw_out);
-	walker = ProcAlloc (type_walker, type_walker_stacksize, 6, &pw_in, &pw_out, out, eh_out, eh_in, pdesc);
-	ProcFork (walker);
+	ChanInit (wptr, &pw_in);
+	ChanInit (wptr, &pw_out);
+	walker = ProcAlloc (wptr, 6, type_walker_stacksize);
+	ProcParam (wptr, walker, 0, &pw_in);
+	ProcParam (wptr, walker, 1, &pw_out);
+	ProcParam (wptr, walker, 2, out);
+	ProcParam (wptr, walker, 3, eh_out);
+	ProcParam (wptr, walker, 4, eh_in);
+	ProcParam (wptr, walker, 5, pdesc);
+	ProcStart (wptr, walker, type_walker);
 
 	while (running) {
 		char tag;
 
-		CTRACE ("doing input -- managed channel at 0x%08x, control channel at 0x%08x\n", (unsigned int)out, (unsigned int)eh_in);
-		ChanIn (eh_in, &tag, 1);
-		CTRACE ("done input\n");
+		CTRACE ("doing input -- managed channel at 0x%08x, control channel at 0x%08x\n", 2, (unsigned int)out, (unsigned int)eh_in);
+		ChanIn (wptr, eh_in, &tag, 1);
+		CTRACE ("done input\n", 0);
 		switch (tag) {
 			/*{{{  PEI_first_clc -- first CLC from pony kernel*/
 		case PEI_first_clc:
 			{
 				char walk_tag;
 				int has_rest;
-				const pony_walk_counts counts;
+				pony_walk_counts counts;
 
-				ChanInInt (eh_in, &counts.di_first);
-				ChanInInt (eh_in, &counts.ct_first);
-				ChanInInt (eh_in, &has_rest);
-				CTRACE ("first.clc %d %d %d\n", counts.di_first, counts.ct_first, has_rest);
+				ChanInInt (wptr, eh_in, &counts.di_first);
+				ChanInInt (wptr, eh_in, &counts.ct_first);
+				ChanInInt (wptr, eh_in, &has_rest);
+				CTRACE ("first.clc %d %d %d\n", 3, counts.di_first, counts.ct_first, has_rest);
 
 				/* We can't count the tree ourself, since we can't tell the size if it's got a tagged protocol in it. */
 
-				ChanOutChar (&pw_in, PWI_reset);
-				ChanOutInt (&pw_in, PW_input);
-				ChanInChar (&pw_out, &walk_tag);
+				ChanOutChar (wptr, &pw_in, PWI_reset);
+				ChanOutInt (wptr, &pw_in, PW_input);
+				ChanInChar (wptr, &pw_out, &walk_tag);
 
-				CTRACE ("sending ack, having got %d from walker\n", walk_tag);
-				ChanOutChar (eh_out, PEO_ack);
-				CTRACE ("ack taken\n");
+				CTRACE ("sending ack, having got %d from walker\n", 1, walk_tag);
+				ChanOutChar (wptr, eh_out, PEO_ack);
+				CTRACE ("ack taken\n", 0);
 
 				if (walk_tag != PWO_done) {
-					CTRACE ("waiting for cancel/rest.clcs from kernel\n");
-					ChanInChar (eh_in, &tag);
+					CTRACE ("waiting for cancel/rest.clcs from kernel\n", 0);
+					ChanInChar (wptr, eh_in, &tag);
 					if (tag == PEI_cancel) {
-						CTRACE ("cancelled\n");
-						ChanOutChar (&pw_in, PWI_stop);
+						CTRACE ("cancelled\n", 0);
+						ChanOutChar (wptr, &pw_in, PWI_stop);
 					} else if (tag == PEI_rest_clcs) {
-						ChanInInt (eh_in, &counts.di_rest);
-						ChanInInt (eh_in, &counts.ct_rest);
-						CTRACE ("rest.clcs %d %d\n", counts.di_rest, counts.ct_rest);
+						ChanInInt (wptr, eh_in, &counts.di_rest);
+						ChanInInt (wptr, eh_in, &counts.ct_rest);
+						CTRACE ("rest.clcs %d %d\n", 2, counts.di_rest, counts.ct_rest);
 
-						CTRACE ("reading remaining NLCs\n");
+						CTRACE ("reading remaining NLCs\n", 0);
 						while (walk_tag != PWO_done) {
-							ChanOutChar (&pw_in, PWI_next);
-							ChanInChar (&pw_out, &walk_tag);
-							CTRACE ("read tag %d\n", walk_tag);
+							ChanOutChar (wptr, &pw_in, PWI_next);
+							ChanInChar (wptr, &pw_out, &walk_tag);
+							CTRACE ("read tag %d\n", 1, walk_tag);
 						}
-						CTRACE ("sending ack\n");
-						ChanOutChar (eh_out, PEO_ack);
-						CTRACE ("ack sent\n");
+						CTRACE ("sending ack\n", 0);
+						ChanOutChar (wptr, eh_out, PEO_ack);
+						CTRACE ("ack sent\n", 0);
 					} else {
-						CFATAL ("pony_protocol_encoder: expected cancel or rest.clcs; got %d\n", tag);
+						CFATAL ("pony_protocol_encoder: expected cancel or rest.clcs; got %d\n", 1, tag);
 					}
 				}
 			}
@@ -1738,98 +1654,49 @@ static void pony_protocol_encoder (Process *me, Channel *out, unsigned int *pdes
 			/*}}}*/
 			/*{{{  PEI_term -- terminate*/
 		case PEI_term:
-			CTRACE ("term\n");
+			CTRACE ("term\n", 0);
 			running = 0;
-			ehan->refcount--;
-			if (!ehan->refcount) {
-				DMemFree (ehan);
-			}
+			MTRelease (wptr, ehan);
 			break;
 			/*}}}*/
 			/*{{{  default -- error*/
 		default:
-			CFATAL ("pony_protocol_encoder: expecting PEI_first_clc or PEI_term, got %d\n", tag);
+			CFATAL ("pony_protocol_encoder: expecting PEI_first_clc or PEI_term, got %d\n", 1, tag);
 			/*}}}*/
 		}
 	}
 
-	ChanOutChar (&pw_in, PWI_term);
+	ChanOutChar (wptr, &pw_in, PWI_term);
 }
 /*}}}*/
 /*}}} */
 
-/*{{{  static void pony_real_get_tdesc_data (unsigned int *tdesc, int *nchans, int *nsvrread, unsigned int *typehash)*/
+/*{{{ new_ctb */
 /*
- *	extracts data from a type-descriptor (cooked into the application binary)
+ *	Allocate a new channel bundle, given a type descriptor.
  */
-static void pony_real_get_tdesc_data (unsigned int *tdesc, int *nchans, int *nsvrread, unsigned int *typehash)
+static mt_cb_t *new_ctb (Workspace wptr, unsigned int *typedesc)
 {
-	if (typedesc_id (tdesc[0]) != MTID_CHANTYPE) {
-		*nchans = 0;
-		*nsvrread = 0;
-		*typehash = 0;
-	} else {
-		*nchans = typedesc_chantype_nchans (tdesc);
-		*typehash = tdesc[2];
-		*nsvrread = typedesc_chantype_server_read (tdesc);
-	}
+	/* XXX should this always be SHARED? */
+	word type = MT_SIMPLE | MT_MAKE_TYPE (MT_CB) | MT_CB_SHARED | MT_CB_STATE_SPACE;
+	mt_cb_t *cb;
+	mt_cb_pony_state_t *pony;
+
+	cb = MTAlloc (wptr, type, typedesc_chantype_nchans (wptr, typedesc));
+
+	pony = mt_cb_get_pony_state (cb);
+	pony->typedesc = typedesc;
+	pony->uiohook = NULL;
+
+	return cb;
 }
 /*}}}*/
-/*{{{  static void pony_real_increase_ref_count (ct_BASIC **ctb, int ctb_ptr)*/
+/*{{{ make_ctb_networked */
 /*
- *	increases the ref-count of a channel-type and returns it (in "ctb" param)
+ *	Given a channel bundle, set up the appropriate fields in it to make it
+ *	networked, and fire off the protocol-encoder/decoder processes.
  */
-static void pony_real_increase_ref_count (ct_BASIC **ctb, int ctb_ptr)
-{
-	ct_BASIC *tmp = (ct_BASIC *)ctb_ptr;
-
-	tmp->refcount++;
-	*ctb = tmp;
-}
-/*}}}*/
-/*{{{  static void init_ctb (ct_BASIC *ctb, unsigned int *typedesc) */
-/* Warning: this function may be called in *either* context. */
-static void init_ctb (ct_BASIC *ctb, unsigned int *typedesc)
-{
-	ct_BASIC_end *ctb_end;
-	int i, nchans;
-
-	/* setup channel-type (fully populated) */
-	ctb->refcount = 1;
-	ctb->typedesc = typedesc;
-	ctb->uiohook = NULL;
-
-	nchans = typedesc_chantype_nchans (typedesc);
-	for (i = 0; i < nchans; i++) {
-		ChanInit (&(ctb->channels[i]));
-	}
-
-	ctb_end = ct_end (ctb);
-	CTSemInit (&(ctb_end->clisem));
-	CTSemInit (&(ctb_end->svrsem));
-	CTSemInit (&(ctb_end->statesem));
-}
-/*}}}*/
-/*{{{  static ct_BASIC *pony_real_alloc_ctb (unsigned int *typedesc)*/
-/*
- *	this actually allocates the channel-type block, used by pony_alloc_ctb() below.
- *	This is called in a C context;  pony_alloc_ctb() is called in a CIF context.
- */
-static ct_BASIC *pony_real_alloc_ctb (unsigned int *typedesc)
-{
-	ct_BASIC *ctb;
-
-	ctb = dmem_alloc (ct_size (typedesc));
-	init_ctb (ctb, typedesc);
-	return ctb;
-}
-/*}}}*/
-/*{{{ static void make_ctb_networked (ct_BASIC *ctb, unsigned int *typedesc, int nct_id, ct_BASIC *nhh, ct_BASIC **dha, int dhs, ct_BASIC **eha, int ehs) */
-/*
- * given a CTB, set up the appropriate fields in it to make it networked, and
- * fire off the protocol-encoder/decoder processes
- */
-static void make_ctb_networked (ct_BASIC *ctb, unsigned int *typedesc, int nct_id, ct_BASIC *nhh, ct_BASIC **dha, int dhs, ct_BASIC **eha, int ehs)
+static void make_ctb_networked (Workspace wptr, mt_cb_t *ctb, unsigned int *typedesc, int nct_id, mt_cb_t *nhh, mt_array_t *dec_handle_array, mt_array_t *enc_handle_array)
 {
 	/*{{{  note from pony specification*/
 /*
@@ -1861,19 +1728,27 @@ static void make_ctb_networked (ct_BASIC *ctb, unsigned int *typedesc, int nct_i
 //--      * the integer value of that CTB-pointer        (ws[8])
 */
 	/*}}}*/
-	int nchans = typedesc_chantype_nchans (typedesc);
+	int nchans = typedesc_chantype_nchans (wptr, typedesc);
+
+	mt_cb_t **dha = (mt_cb_t **) dec_handle_array->data;
+	mt_cb_t **eha = (mt_cb_t **) enc_handle_array->data;
+
+	mt_cb_pony_state_t *pony = mt_cb_get_pony_state (ctb);
 
 	/* store nct_id in the state-field */
-	ct_end (ctb)->state = nct_id;
+	pony->state = nct_id;
 
 	/* setup uio-hook */
-	ctb->uiohook = &nhh->channels[0];
-	(nhh->refcount)--;
+	pony->uiohook = MTClone (wptr, nhh);
 
-	CTRACE ("starting, ctb @ 0x%8.8x\n", (unsigned int)ctb);
+	/* XXX Hack: bump the reference count of the channel bundle, since pony
+	 * now holds a reference to it (and it'll release it eventually). */
+	MTClone (wptr, ctb);
+
+	CTRACE ("starting, ctb @ 0x%8.8x\n", 1, (unsigned int)ctb);
 
 	if (typedesc_id (typedesc[0]) != MTID_CHANTYPE) {
-		CFATAL ("make_ctb_networked: not a channel-type!\n");
+		CFATAL ("make_ctb_networked: not a channel-type!\n", 0);
 	} else {
 		/*{{{  create encode/decode processes*/
 		int i, coffset;
@@ -1881,224 +1756,222 @@ static void make_ctb_networked (ct_BASIC *ctb, unsigned int *typedesc, int nct_i
 
 		for (i=0, fi=0, ti=(nchans-1), coffset=3; i<nchans; i++) {
 			unsigned int *chandesc = typedesc + coffset;
-			Process *p = NULL;
-			Process *p2 = NULL;
-			CTRACE ("ctb %08x channel %d is %08x\n", ctb, i, &(ctb->channels[i]));
+			Workspace pd = 0, pe = 0;
+			CTRACE ("ctb %08x channel %d is %08x\n", 3, ctb, i, &(ctb->channels[i]));
 
 			switch (typedesc_id (chandesc[0])) {
 				/*{{{  MTID_CHAN_I -- input channel*/
 			case MTID_CHAN_I:
-				p = ProcAlloc (pony_protocol_decoder, pony_protocol_decoder_stacksize, 3,
-						&(ctb->channels[i]), chandesc + 1, dha[fi]);
-				p2 = ProcAlloc (pony_protocol_encoder, pony_protocol_encoder_stacksize, 3,
-						&(ctb->channels[i]), chandesc + 1, eha[fi]);
+				pd = ProcAlloc (wptr, 3, pony_protocol_decoder_stacksize);
+				ProcParam (wptr, pd, 0, &(ctb->channels[i]));
+				ProcParam (wptr, pd, 1, &(chandesc[1]));
+				ProcParam (wptr, pd, 2, dha[fi]);
+
+				pd = ProcAlloc (wptr, 3, pony_protocol_encoder_stacksize);
+				ProcParam (wptr, pd, 0, &(ctb->channels[i]));
+				ProcParam (wptr, pd, 1, &(chandesc[1]));
+				ProcParam (wptr, pd, 2, eha[fi]);
+
 				fi++;
 				break;
 				/*}}}*/
 				/*{{{  MTID_CHAN_O -- output channel*/
 			case MTID_CHAN_O:
-				p = ProcAlloc (pony_protocol_decoder, pony_protocol_decoder_stacksize, 3,
-						&(ctb->channels[i]), chandesc + 1, dha[ti]);
-				p2 = ProcAlloc (pony_protocol_encoder, pony_protocol_encoder_stacksize, 3,
-						&(ctb->channels[i]), chandesc + 1, eha[ti]);
+				pd = ProcAlloc (wptr, 3, pony_protocol_decoder_stacksize);
+				ProcParam (wptr, pd, 0, &(ctb->channels[i]));
+				ProcParam (wptr, pd, 1, &(chandesc[1]));
+				ProcParam (wptr, pd, 2, dha[ti]);
+
+				pd = ProcAlloc (wptr, 3, pony_protocol_encoder_stacksize);
+				ProcParam (wptr, pd, 0, &(ctb->channels[i]));
+				ProcParam (wptr, pd, 1, &(chandesc[1]));
+				ProcParam (wptr, pd, 2, eha[ti]);
+
 				ti--;
 				break;
 				/*}}}*/
 			default:
-				CFATAL ("make_ctb_networked: channel %d (at offset %d) not a channel ? (type = %d)\n", i, coffset, typedesc_id (chandesc[0]));
+				CFATAL ("make_ctb_networked: channel %d (at offset %d) not a channel ? (type = %d)\n", 3, i, coffset, typedesc_id (chandesc[0]));
 			}
 			coffset += typedesc_len (chandesc[0]);
 
 			/* start processes */
-			if (p && p2) {
-				ProcFork (p);
-				ProcFork (p2);
+			if (pd != 0 && pe != 0) {
+				ProcStart (wptr, pd, pony_protocol_decoder);
+				ProcStart (wptr, pe, pony_protocol_encoder);
 			}
 		}
 		/*}}}*/
 	}
 
-	/* cleanup */
-	DMemFree (dha);
-	DMemFree (eha);
-
-	CTRACE ("leaving, encoders and decoders started\n");
+	CTRACE ("leaving, encoders and decoders started\n", 0);
 }
 /*}}}*/
-/*{{{  static void pony_alloc_ctb (Process *me, ct_BASIC *ctb, unsigned int *typedesc, ...)*/
+
+/*{{{  CIF processes */
+/*{{{ PROC CIF.pony.int.get.tdesc.data.uc (MOBILE.CHAN! cli, RESULT INT nchans, nsvrread, typehash) */
 /*
- *	allocates a channel-type for pony.  "ctb" holds the created channel-type;
- *	"typedesc" points at the type description; "nct_id" provides the pony
- *	'network channel-type ID'; "nhh" is the network channel-type hook
- *	for the client-end; "dha" is an array of decode-handles;
- *	"dhs" is the size of this array; "eha" is an
- *	array of encode-handles; "ehs" is the size of this array.
+ *	Extract data from a channel bundle's type descriptor.
+ */
+void pony_int_get_tdesc_data_uc (Workspace wptr)
+{
+	unsigned int *tdesc	= ProcGetParam (wptr, 1, unsigned int *);
+	int *nchans		= ProcGetParam (wptr, 2, int *);
+	int *nsvrread		= ProcGetParam (wptr, 3, int *);
+	int *typehash		= ProcGetParam (wptr, 4, int *);
+
+	CTRACE ("get_tdesc_data (%08x)\n", 1, (int) tdesc);
+	if (typedesc_id (tdesc[0]) != MTID_CHANTYPE) {
+		*nchans = 0;
+		*nsvrread = 0;
+		*typehash = 0;
+	} else {
+		*nchans = typedesc_chantype_nchans (wptr, tdesc);
+		*typehash = tdesc[2];
+		*nsvrread = typedesc_chantype_server_read (wptr, tdesc);
+	}
+}
+/*}}}*/
+/*{{{ PROC CIF.pony.int.get.tdesc.data.sc (SHARED MOBILE.CHAN! cli, RESULT INT nchans, nsvrread, typehash) */
+void pony_int_get_tdesc_data_sc (Workspace wptr)
+{
+	pony_int_get_tdesc_data_uc (wptr);
+}
+/*}}}*/
+/*{{{ PROC CIF.pony.int.get.tdesc.data.us (MOBILE.CHAN? svr, RESULT INT nchans, nsvrread, typehash) */
+void pony_int_get_tdesc_data_us (Workspace wptr)
+{
+	pony_int_get_tdesc_data_uc (wptr);
+}
+/*}}}*/
+/*{{{ PROC CIF.pony.int.get.tdesc.data.ss (SHARED MOBILE.CHAN? svr, RESULT INT nchans, nsvrread, typehash) */
+void pony_int_get_tdesc_data_ss (Workspace wptr)
+{
+	pony_int_get_tdesc_data_uc (wptr);
+}
+/*}}}*/
+/*{{{ PROC CIF.pony.int.clone.ctb.uc (RESULT MOBILE.CHAN! cli, VAL INT ctb.ptr) */
+/*
+ *	Clone a channel bundle end, given its address.
+ */
+void pony_int_clone_ctb_uc (Workspace wptr)
+{
+	int ctb_ptr = ProcGetParam (wptr, 2, int);
+
+	CTRACE ("clone_ctb_uc (%08x)\n", 1, ctb_ptr);
+	ProcParam (wptr, wptr, 0, MTClone (wptr, (mt_cb_t *) ctb_ptr));
+}
+/*}}}*/
+/*{{{ PROC CIF.pony.int.clone.ctb.sc (RESULT SHARED MOBILE.CHAN! cli, VAL INT ctb.ptr) */
+void pony_int_clone_ctb_sc (Workspace wptr)
+{
+	pony_int_clone_ctb_uc (wptr);
+}
+/*}}}*/
+/*{{{ PROC CIF.pony.int.clone.ctb.us (RESULT MOBILE.CHAN? svr, VAL INT ctb.ptr) */
+void pony_int_clone_ctb_us (Workspace wptr)
+{
+	pony_int_clone_ctb_uc (wptr);
+}
+/*}}}*/
+/*{{{ PROC CIF.pony.int.clone.ctb.ss (RESULT SHARED MOBILE.CHAN? svr, VAL INT ctb.ptr) */
+void pony_int_clone_ctb_ss (Workspace wptr)
+{
+	pony_int_clone_ctb_uc (wptr);
+}
+/*}}}*/
+/*{{{ PROC CIF.pony.int.alloc.ctb.uc (RESULT MOBILE.CHAN! cli, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) */
+/*
+ *	Allocate a new channel bundle.
  *
- *	NOTE: this must be called in a CIF process context, since it forks off new processes.
- *	as such, some of the work in parameter cleaning has already been done.
+ *	This must leave the CB with a reference count of 2, since the pony
+ *	kernel expects to be able to hang on to the address even if no
+ *	userspace stuff is using it.
  */
-static const int pony_alloc_ctb_stacksize = 16384;
-static void pony_alloc_ctb (Process *me, ct_BASIC *ctb, unsigned int *typedesc,
-		int nct_id, ct_BASIC *nhh,
-		ct_BASIC **dha, int dhs,
-		ct_BASIC **eha, int ehs)
+void pony_int_alloc_ctb_uc (Workspace wptr)
 {
-	make_ctb_networked (ctb, typedesc, nct_id, nhh, dha, dhs, eha, ehs);
+	unsigned int *cb_tdesc		= ProcGetParam (wptr, 1, unsigned int *);
+	int nct_id			= ProcGetParam (wptr, 2, int);
+	mt_cb_t *net_hook_handle	= ProcGetParam (wptr, 3, mt_cb_t *);
+	mt_array_t *dec_handle_array	= ProcGetParam (wptr, 4, mt_array_t *);
+	mt_array_t *enc_handle_array	= ProcGetParam (wptr, 5, mt_array_t *);
+	int *ctb_ptr			= ProcGetParam (wptr, 6, int *);
+
+	mt_cb_t *cb;
+
+	CTRACE ("alloc_ctb_uc (%08x, %08x)\n", 2, (int) cb_tdesc, nct_id);
+	cb = new_ctb (wptr, cb_tdesc);
+	make_ctb_networked (wptr, cb, cb_tdesc, nct_id, net_hook_handle, dec_handle_array, enc_handle_array);
+
+	ProcParam (wptr, wptr, 0, cb);
+	ProcParam (wptr, wptr, 3, NULL);
+	MTRelease (wptr, dec_handle_array);
+	ProcParam (wptr, wptr, 4, NULL);
+	MTRelease (wptr, enc_handle_array);
+	ProcParam (wptr, wptr, 5, NULL);
+	*ctb_ptr = (int) cb;
 }
 /*}}}*/
-/*{{{  static void pony_real_shutdown_ctbs (int *aptr, int alen)*/
-/*
- *	shuts-down CTBs.  Pointers are given as integers.
- */
-static void pony_real_shutdown_ctbs (int *aptr, int alen)
+/*{{{ PROC CIF.pony.int.alloc.ctb.sc (RESULT SHARED MOBILE.CHAN! cli, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) */
+void pony_int_alloc_ctb_sc (Workspace wptr)
 {
+	pony_int_alloc_ctb_uc (wptr);
+}
+/*}}}*/
+/*{{{ PROC CIF.pony.int.alloc.ctb.us (RESULT MOBILE.CHAN? svr, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) */
+void pony_int_alloc_ctb_us (Workspace wptr)
+{
+	pony_int_alloc_ctb_uc (wptr);
+}
+/*}}}*/
+/*{{{ PROC CIF.pony.int.alloc.ctb.ss (RESULT SHARED MOBILE.CHAN? svr, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) */
+void pony_int_alloc_ctb_ss (Workspace wptr)
+{
+	pony_int_alloc_ctb_uc (wptr);
+}
+/*}}}*/
+/*{{{ PROC CIF.pony.int.shutdown.ctbs (MOBILE []INT ctbs) */
+/*
+ *	Free a list of channel bundles, given their addresses.
+ */
+void pony_int_shutdown_ctbs (Workspace wptr)
+{
+	mt_array_t *ctbs = ProcGetParam (wptr, 0, mt_array_t *);
+
 	int i;
+	mt_cb_t **p;
 
-	for (i=0; i<alen; i++) {
-		ct_BASIC *ctb = (ct_BASIC *)(aptr[i]);
-
-		if (ctb && !ctb->refcount) {
-			dmem_release (ctb);
-			aptr[i] = 0;
-		} else if (ctb && ctb->uiohook) {
-			ctb->uiohook = NULL;
+	CTRACE ("shutdown_ctbs (%08x)\n", 1, (int) ctbs);
+	p = (mt_cb_t **) ctbs->data;
+	for (i = 0; i < ctbs->dimensions[0]; i++, p++) {
+		if (*p != NULL) {
+			mt_cb_get_pony_state (*p)->uiohook = NULL;
+			MTRelease (wptr, *p);
 		}
 	}
 }
 /*}}}*/
-/*{{{  static void pony_real_get_nct_id (int ctb_ptr, int *nct_id, int *result)*/
+/*{{{ PROC CIF.pony.int.get.nct.id (VAL INT ctb.ptr, RESULT INT nct.id, result) */
 /*
- *	retrieves the "nct-id" of a channel-type, buried in the ops structure
+ *	Retrieve the "nct-id", stored in the state field
  */
-static void pony_real_get_nct_id (int ctb_ptr, int *nct_id, int *result)
+void pony_int_get_nct_id (Workspace wptr)
 {
-	ct_BASIC *ctb = (ct_BASIC *)ctb_ptr;
+	int ctb_ptr	= ProcGetParam (wptr, 0, int);
+	int *nct_id	= ProcGetParam (wptr, 1, int *);
+	int *result	= ProcGetParam (wptr, 2, int *);
 
-	if (!ctb->uiohook) {
+	mt_cb_pony_state_t *pony;
+
+	CTRACE ("get_nct_id (%08x)\n", 1, ctb_ptr);
+	pony = mt_cb_get_pony_state ((mt_cb_t *) ctb_ptr);
+	if (pony->uiohook == NULL) {
 		*nct_id = -1;
 		*result = -2;
 	} else {
-		*nct_id = ct_end(ctb)->state;
+		*nct_id = pony->state;
 		*result = 0;
 	}
 }
 /*}}}*/
-
-/*{{{  glue for occam-pi*/
-/*{{{  PROC C.pony.int.get.tdesc.data.uc (MOBILE.CHAN! cli, RESULT INT nchans, nsvrreaders, typehash)*/
-void _pony_int_get_tdesc_data_uc (int *ws)
-{
-	pony_real_get_tdesc_data ((unsigned int*)(ws[1]), (int *)(ws[2]), (int *)(ws[3]), (unsigned int *)(ws[4]));
-}
 /*}}}*/
-/*{{{  PROC C.pony.int.get.tdesc.data.sc (SHARED MOBILE.CHAN! cli, RESULT INT nchans, nsvrreaders, typehash)*/
-void _pony_int_get_tdesc_data_sc (int *ws)
-{
-	pony_real_get_tdesc_data ((unsigned int *)(ws[1]), (int *)(ws[2]), (int *)(ws[3]), (unsigned int *)(ws[4]));
-}
-/*}}}*/
-/*{{{  PROC C.pony.int.get.tdesc.data.us (MOBILE.CHAN? svr, RESULT INT nchans, nsvrreaders, typehash)*/
-void _pony_int_get_tdesc_data_us (int *ws)
-{
-	pony_real_get_tdesc_data ((unsigned int *)(ws[1]), (int *)(ws[2]), (int *)(ws[3]), (unsigned int *)(ws[4]));
-}
-/*}}}*/
-/*{{{  PROC C.pony.int.get.tdesc.data.ss (SHARED MOBILE.CHAN? svr, RESULT INT nchans, nsvrreaders, typehash)*/
-void _pony_int_get_tdesc_data_ss (int *ws)
-{
-	pony_real_get_tdesc_data ((unsigned int *)(ws[1]), (int *)(ws[2]), (int *)(ws[3]), (unsigned int *)(ws[4]));
-}
-/*}}}*/
-
-/*{{{  PROC C.pony.int.increase.ref.count.uc (RESULT MOBILE.CHAN! cli, VAL INT ctb.ptr)*/
-void _pony_int_increase_ref_count_uc (int *ws)
-{
-	pony_real_increase_ref_count ((ct_BASIC **)&(ws[0]), (int)(ws[2]));
-}
-/*}}}*/
-/*{{{  PROC C.pony.int.increase.ref.count.sc (RESULT SHARED MOBILE.CHAN! cli, VAL INT ctb.ptr)*/
-void _pony_int_increase_ref_count_sc (int *ws)
-{
-	pony_real_increase_ref_count ((ct_BASIC **)&(ws[0]), (int)(ws[2]));
-}
-/*}}}*/
-/*{{{  PROC C.pony.int.increase.ref.count.us (RESULT MOBILE.CHAN? svr, VAL INT ctb.ptr)*/
-void _pony_int_increase_ref_count_us (int *ws)
-{
-	pony_real_increase_ref_count ((ct_BASIC **)&(ws[0]), (int)(ws[2]));
-}
-/*}}}*/
-/*{{{  PROC C.pony.int.increase.ref.count.ss (RESULT SHARED MOBILE.CHAN? svr, VAL INT ctb.ptr)*/
-void _pony_int_increase_ref_count_ss (int *ws)
-{
-	pony_real_increase_ref_count ((ct_BASIC **)&(ws[0]), (int)(ws[2]));
-}
-/*}}}*/
-
-/*{{{  PROC C.pony.cleancifprocess (INT addr)*/
-void _pony_cleancifprocess (int *ws)
-{
-	Process **p = (Process **)(ws[0]);
-
-	ProcAllocClean (*p);
-	*p = NULL;
-}
-/*}}}*/
-/*{{{  PROC C.pony.int.alloc.ctb.uc (RESULT INT paddr, RESULT MOBILE.CHAN! cli, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr)*/
-void _pony_int_alloc_ctb_uc (int *ws)
-{
-	ct_BASIC *ct = pony_real_alloc_ctb ((unsigned int *)(ws[2]));
-	ct_BASIC **dhans = (ct_BASIC **)(ws[5]);
-	int ndhans = ws[6];
-	ct_BASIC **ehans = (ct_BASIC **)(ws[7]);
-	int nehans = ws[8];
-	ct_BASIC *nhh = (ct_BASIC *)(ws[4]);
-
-	Process *p = ProcAlloc (pony_alloc_ctb, pony_alloc_ctb_stacksize, 8, ct, (unsigned int *)(ws[2]), ws[3], nhh,
-			dhans, ndhans, ehans, nehans);
-
-	/* deal with parameters */
-	ws[1] = (int)ct;
-	ws[4] = (int)NULL;
-	ws[5] = (int)NULL;
-	ws[6] = 0;
-	ws[7] = (int)NULL;
-	ws[8] = 0;
-
-	*(int *)(ws[9]) = (int)ct;
-	*(int *)(ws[0]) = (int)p;
-}
-/*}}}*/
-/*{{{  PROC C.pony.int.alloc.ctb.sc (RESULT INT raddr, RESULT SHARED MOBILE.CHAN! cli, VAL INT nctid, ...)*/
-void _pony_int_alloc_ctb_sc (int *ws)
-{
-	_pony_int_alloc_ctb_uc (ws);
-}
-/*}}}*/
-/*{{{  PROC C.pony.int.alloc.ctb.us (RESUNT INT raddr, RESULT MOBILE.CHAN? svr, VAL INT nctid, PONY.NETHOOKHANDLE! nhh, ...)*/
-void _pony_int_alloc_ctb_us (int *ws)
-{
-	_pony_int_alloc_ctb_uc (ws);
-}
-/*}}}*/
-/*{{{  PROC C.pony.int.alloc.ctb.ss (RESULT INT raddr, RESULT SHARED MOBILE.CHAN? svr, VAL INT nctid, PONY.NETHOOKHANDLE! nhh, ...)*/
-void _pony_int_alloc_ctb_ss (int *ws)
-{
-	_pony_int_alloc_ctb_uc (ws);
-}
-/*}}}*/
-
-/*{{{  PROC C.pony.int.shutdown.ctbs (MOBILE []INT ctbptra)*/
-void _pony_int_shutdown_ctbs (int *ws)
-{
-	pony_real_shutdown_ctbs ((int *)(ws[0]), (int)(ws[1]));
-}
-/*}}}*/
-/*{{{  PROC C.pony.int.get.nct.id (VAL INT ctb.ptr, RESULT INT nct.id, result)*/
-void _pony_int_get_nct_id (int *ws)
-{
-	pony_real_get_nct_id ((int)(ws[0]), (int *)(ws[1]), (int *)(ws[2]));
-}
-/*}}}*/
-/*}}}*/
-

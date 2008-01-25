@@ -437,7 +437,7 @@ PROTOCOL PONY.INT.CTBMGRHANDLE.FROM.MGR
     ----------------------------------------------------------------------
     -- Increase reference-count of CTB
     -- Carrying: CTB-pointer
-    increase.ref.count; INT
+    clone.ctb; INT
     ----------------------------------------------------------------------
     -- Allocate new CTB
     alloc.new.ctb

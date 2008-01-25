@@ -2944,7 +2944,7 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                               --{{{  Increase reference-count of CTB
                               INT ctb.ptr:
                               -- Carrying: CTB-pointer
-                              increase.ref.count; ctb.ptr
+                              clone.ctb; ctb.ptr
                                 SEQ
                                   --{{{  IN message
                                   IF
@@ -2955,7 +2955,7 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                                           int.msg.handle[to.handler] ! msg.int; own.nct.id
                                           int.msg.handle[to.handler] ! msg.str; "/"
                                           int.msg.handle[to.handler] ! msg.int; own.chan.id
-                                          int.msg.handle[to.handler] ! msg.str; ": IN ctbmgrh: increase.ref.count; "
+                                          int.msg.handle[to.handler] ! msg.str; ": IN ctbmgrh: clone.ctb; "
                                           int.msg.handle[to.handler] ! msg.hex; ctb.ptr
                                           int.msg.handle[to.handler] ! msg.end; FALSE
                                     TRUE
@@ -2971,14 +2971,14 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                                           int.msg.handle[to.handler] ! msg.int; own.nct.id
                                           int.msg.handle[to.handler] ! msg.str; "/"
                                           int.msg.handle[to.handler] ! msg.int; own.chan.id
-                                          int.msg.handle[to.handler] ! msg.str; ": OUT ext.ench: increase.ref.count; "
+                                          int.msg.handle[to.handler] ! msg.str; ": OUT ext.ench: clone.ctb; "
                                           int.msg.handle[to.handler] ! msg.hex; ctb.ptr
                                           int.msg.handle[to.handler] ! msg.end; FALSE
                                     TRUE
                                       SKIP
                                   --}}}
                                   -- Carrying: CTB-pointer
-                                  enc.handle.svr[to.encoder] ! increase.ref.count; ctb.ptr
+                                  enc.handle.svr[to.encoder] ! clone.ctb; ctb.ptr
                               --}}}
                               --{{{  Allocate new CTB
                               alloc.new.ctb
@@ -3438,7 +3438,7 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                                     --{{{  Increase reference-count of CTB
                                     INT ctb.ptr:
                                     -- Carrying: CTB-pointer
-                                    increase.ref.count; ctb.ptr
+                                    clone.ctb; ctb.ptr
                                       SEQ
                                         --{{{  IN message
                                         IF
@@ -3449,7 +3449,7 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                                                 int.msg.handle[to.handler] ! msg.int; own.nct.id
                                                 int.msg.handle[to.handler] ! msg.str; "/"
                                                 int.msg.handle[to.handler] ! msg.int; own.chan.id
-                                                int.msg.handle[to.handler] ! msg.str; ": IN ctbmgrh: increase.ref.count; "
+                                                int.msg.handle[to.handler] ! msg.str; ": IN ctbmgrh: clone.ctb; "
                                                 int.msg.handle[to.handler] ! msg.hex; ctb.ptr
                                                 int.msg.handle[to.handler] ! msg.end; FALSE
                                           TRUE
@@ -3465,14 +3465,14 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                                                 int.msg.handle[to.handler] ! msg.int; own.nct.id
                                                 int.msg.handle[to.handler] ! msg.str; "/"
                                                 int.msg.handle[to.handler] ! msg.int; own.chan.id
-                                                int.msg.handle[to.handler] ! msg.str; ": OUT ext.ench: increase.ref.count; "
+                                                int.msg.handle[to.handler] ! msg.str; ": OUT ext.ench: clone.ctb; "
                                                 int.msg.handle[to.handler] ! msg.hex; ctb.ptr
                                                 int.msg.handle[to.handler] ! msg.end; FALSE
                                           TRUE
                                             SKIP
                                         --}}}
                                         -- Carrying: CTB-pointer
-                                        enc.handle.svr[to.encoder] ! increase.ref.count; ctb.ptr
+                                        enc.handle.svr[to.encoder] ! clone.ctb; ctb.ptr
                                     --}}}
                                     --{{{  Allocate new CTB
                                     alloc.new.ctb

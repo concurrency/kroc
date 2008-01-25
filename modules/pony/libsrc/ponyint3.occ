@@ -2058,14 +2058,14 @@ PROC pony.int.main.kernel (VAL INT own.node.id,
                         --{{{  Increase reference-count of CTB
                         INT ctb.ptr:
                         -- Carrying: CTB-pointer
-                        increase.ref.count; ctb.ptr
+                        clone.ctb; ctb.ptr
                           SEQ
                             --{{{  IN message
                             IF
                               output.msgs
                                 CLAIM int.msg.handle
                                   SEQ
-                                    int.msg.handle[to.handler] ! msg.str; "main.kernel: IN ctbmgrh: increase.ref.count; "
+                                    int.msg.handle[to.handler] ! msg.str; "main.kernel: IN ctbmgrh: clone.ctb; "
                                     int.msg.handle[to.handler] ! msg.hex; ctb.ptr
                                     int.msg.handle[to.handler] ! msg.end; FALSE
                               TRUE
@@ -2077,14 +2077,14 @@ PROC pony.int.main.kernel (VAL INT own.node.id,
                               output.msgs
                                 CLAIM int.msg.handle
                                   SEQ
-                                    int.msg.handle[to.handler] ! msg.str; "main.kernel: OUT neth: increase.ref.count; "
+                                    int.msg.handle[to.handler] ! msg.str; "main.kernel: OUT neth: clone.ctb; "
                                     int.msg.handle[to.handler] ! msg.hex; ctb.ptr
                                     int.msg.handle[to.handler] ! msg.end; FALSE
                               TRUE
                                 SKIP
                             --}}}
                             -- Carrying: CTB-pointer
-                            net.handle.svr[from.kernel] ! increase.ref.count; ctb.ptr
+                            net.handle.svr[from.kernel] ! clone.ctb; ctb.ptr
                         --}}}
                         --{{{  Allocate new CTB
                         alloc.new.ctb

@@ -1799,7 +1799,7 @@ PROC pony.alloc.uc (PONY.NETHANDLE! net.handle,
       INT num.chans, num.readers.in.svr, type.hash:
       SEQ
         -- Get type-descriptor data
-        C.pony.int.get.tdesc.data.uc (cli, num.chans, num.readers.in.svr, type.hash)
+        CIF.pony.int.get.tdesc.data.uc (cli, num.chans, num.readers.in.svr, type.hash)
         --{{{  Request explicit allocation
         -- Carrying: client-end to be allocated;
         --           client-end unshared;
@@ -1824,9 +1824,9 @@ PROC pony.alloc.uc (PONY.NETHANDLE! net.handle,
           --{{{  pony kernel wants reference-count of existing CTB increased
           INT ctb.ptr:
           -- Carrying: CTB-pointer
-          increase.ref.count; ctb.ptr
+          clone.ctb; ctb.ptr
             -- Increase reference-count and assign `cli'
-            C.pony.int.increase.ref.count.uc (cli, ctb.ptr)
+            CIF.pony.int.clone.ctb.uc (cli, ctb.ptr)
           --}}}
           --{{{  pony kernel wants new CTB allocated
           INT nct.id:
@@ -1838,14 +1838,12 @@ PROC pony.alloc.uc (PONY.NETHANDLE! net.handle,
           --           array of decode-handles;
           --           array of encode-handles
           alloc.new.ctb; nct.id; net.hook.handle; dec.handle.array; enc.handle.array
-            INT paddr, ctb.ptr:
+            INT ctb.ptr:
             SEQ
               -- Allocate new CTB for `cli'
-              C.pony.int.alloc.ctb.uc (paddr, cli, nct.id, net.hook.handle,
+              CIF.pony.int.alloc.ctb.uc (cli, nct.id, net.hook.handle,
                                        dec.handle.array, enc.handle.array,
                                        ctb.ptr)
-              cifccsp.startprocess (paddr)
-              C.pony.cleancifprocess (paddr)
               -- Return new CTB-pointer to pony kernel
               -- Carrying: CTB-pointer
               net.handle[to.kernel] ! alloc.new.ctb.confirm; ctb.ptr
@@ -1873,7 +1871,7 @@ PROC pony.alloc.sc (PONY.NETHANDLE! net.handle,
       INT num.chans, num.readers.in.svr, type.hash:
       SEQ
         -- Get type-descriptor data
-        C.pony.int.get.tdesc.data.sc (cli, num.chans, num.readers.in.svr, type.hash)
+        CIF.pony.int.get.tdesc.data.sc (cli, num.chans, num.readers.in.svr, type.hash)
         --{{{  Request explicit allocation
         -- Carrying: client-end to be allocated;
         --           client-end shared;
@@ -1898,9 +1896,9 @@ PROC pony.alloc.sc (PONY.NETHANDLE! net.handle,
           --{{{  pony kernel wants reference-count of existing CTB increased
           INT ctb.ptr:
           -- Carrying: CTB-pointer
-          increase.ref.count; ctb.ptr
+          clone.ctb; ctb.ptr
             -- Increase reference-count and assign `cli'
-            C.pony.int.increase.ref.count.sc (cli, ctb.ptr)
+            CIF.pony.int.clone.ctb.sc (cli, ctb.ptr)
           --}}}
           --{{{  pony kernel wants new CTB allocated
           INT nct.id:
@@ -1912,14 +1910,12 @@ PROC pony.alloc.sc (PONY.NETHANDLE! net.handle,
           --           array of decode-handles;
           --           array of encode-handles
           alloc.new.ctb; nct.id; net.hook.handle; dec.handle.array; enc.handle.array
-            INT paddr, ctb.ptr:
+            INT ctb.ptr:
             SEQ
               -- Allocate new CTB for `cli'
-              C.pony.int.alloc.ctb.sc (paddr, cli, nct.id, net.hook.handle,
+              CIF.pony.int.alloc.ctb.sc (cli, nct.id, net.hook.handle,
                                        dec.handle.array, enc.handle.array,
                                        ctb.ptr)
-              cifccsp.startprocess (paddr)
-              C.pony.cleancifprocess (paddr)
               -- Return new CTB-pointer to pony kernel
               -- Carrying: CTB-pointer
               net.handle[to.kernel] ! alloc.new.ctb.confirm; ctb.ptr
@@ -1947,7 +1943,7 @@ PROC pony.alloc.us (PONY.NETHANDLE! net.handle,
       INT num.chans, num.readers.in.svr, type.hash:
       SEQ
         -- Get type-descriptor data
-        C.pony.int.get.tdesc.data.us (svr, num.chans, num.readers.in.svr, type.hash)
+        CIF.pony.int.get.tdesc.data.us (svr, num.chans, num.readers.in.svr, type.hash)
         --{{{  Request explicit allocation
         -- Carrying: server-end to be allocated;
         --           server-end unshared;
@@ -1972,9 +1968,9 @@ PROC pony.alloc.us (PONY.NETHANDLE! net.handle,
           --{{{  pony kernel wants reference-count of existing CTB increased
           INT ctb.ptr:
           -- Carrying: CTB-pointer
-          increase.ref.count; ctb.ptr
+          clone.ctb; ctb.ptr
             -- Increase reference-count and assign `svr' if successful
-            C.pony.int.increase.ref.count.us (svr, ctb.ptr)
+            CIF.pony.int.clone.ctb.us (svr, ctb.ptr)
           --}}}
           --{{{  pony kernel wants new CTB allocated
           INT nct.id:
@@ -1986,14 +1982,12 @@ PROC pony.alloc.us (PONY.NETHANDLE! net.handle,
           --           array of decode-handles;
           --           array of encode-handles
           alloc.new.ctb; nct.id; net.hook.handle; dec.handle.array; enc.handle.array
-            INT paddr, ctb.ptr:
+            INT ctb.ptr:
             SEQ
               -- Allocate new CTB for `svr'
-              C.pony.int.alloc.ctb.us (paddr, svr, nct.id, net.hook.handle,
+              CIF.pony.int.alloc.ctb.us (svr, nct.id, net.hook.handle,
                                        dec.handle.array, enc.handle.array,
                                        ctb.ptr)
-              cifccsp.startprocess (paddr)
-              C.pony.cleancifprocess (paddr)
               -- Return new CTB-pointer to pony kernel
               -- Carrying: CTB-pointer
               net.handle[to.kernel] ! alloc.new.ctb.confirm; ctb.ptr
@@ -2021,7 +2015,7 @@ PROC pony.alloc.ss (PONY.NETHANDLE! net.handle,
       INT num.chans, num.readers.in.svr, type.hash:
       SEQ
         -- Get type-descriptor data
-        C.pony.int.get.tdesc.data.ss (svr, num.chans, num.readers.in.svr, type.hash)
+        CIF.pony.int.get.tdesc.data.ss (svr, num.chans, num.readers.in.svr, type.hash)
         --{{{  Request explicit allocation
         -- Carrying: server-end to be allocated;
         --           server-end shared;
@@ -2046,9 +2040,9 @@ PROC pony.alloc.ss (PONY.NETHANDLE! net.handle,
           --{{{  pony kernel wants reference-count of existing CTB increased
           INT ctb.ptr:
           -- Carrying: CTB-pointer
-          increase.ref.count; ctb.ptr
+          clone.ctb; ctb.ptr
             -- Increase reference-count and assign `svr' if successful
-            C.pony.int.increase.ref.count.ss (svr, ctb.ptr)
+            CIF.pony.int.clone.ctb.ss (svr, ctb.ptr)
           --}}}
           --{{{  pony kernel wants new CTB allocated
           INT nct.id:
@@ -2060,14 +2054,12 @@ PROC pony.alloc.ss (PONY.NETHANDLE! net.handle,
           --           array of decode-handles;
           --           array of encode-handles
           alloc.new.ctb; nct.id; net.hook.handle; dec.handle.array; enc.handle.array
-            INT paddr, ctb.ptr:
+            INT ctb.ptr:
             SEQ
               -- Allocate new CTB for `svr'
-              C.pony.int.alloc.ctb.ss (paddr, svr, nct.id, net.hook.handle,
+              CIF.pony.int.alloc.ctb.ss (svr, nct.id, net.hook.handle,
                                        dec.handle.array, enc.handle.array,
                                        ctb.ptr)
-              cifccsp.startprocess (paddr)
-              C.pony.cleancifprocess (paddr)
               -- Return new CTB-pointer to pony kernel
               -- Carrying: CTB-pointer
               net.handle[to.kernel] ! alloc.new.ctb.confirm; ctb.ptr
@@ -2089,7 +2081,7 @@ PROC pony.shutdown (PONY.NETHANDLE! net.handle)
     -- Carrying: array of formerly networked CTB-pointers
     net.handle[from.kernel] ? CASE shutdown.confirm; ctb.ptr.array
     -- Shut down all formerly networked CTBs
-    C.pony.int.shutdown.ctbs (ctb.ptr.array)
+    CIF.pony.int.shutdown.ctbs (ctb.ptr.array)
 :
 --}}}
 --{{{  PROCs pony.err.*
@@ -2114,7 +2106,7 @@ PROC pony.err.get.nct.id.uc (MOBILE.CHAN! cli,
           LDL cli
           ST ctb.ptr
         -- Call CIF process
-        C.pony.int.get.nct.id (ctb.ptr, nct.id, result)
+        CIF.pony.int.get.nct.id (ctb.ptr, nct.id, result)
     --}}}
     --{{{  `cli' is undefined
     TRUE
@@ -2143,7 +2135,7 @@ PROC pony.err.get.nct.id.sc (SHARED MOBILE.CHAN! cli,
           LDL cli
           ST ctb.ptr
         -- Call CIF process
-        C.pony.int.get.nct.id (ctb.ptr, nct.id, result)
+        CIF.pony.int.get.nct.id (ctb.ptr, nct.id, result)
     --}}}
     --{{{  `cli' is undefined
     TRUE
@@ -2172,7 +2164,7 @@ PROC pony.err.get.nct.id.us (MOBILE.CHAN? svr,
           LDL svr
           ST ctb.ptr
         -- Call CIF process
-        C.pony.int.get.nct.id (ctb.ptr, nct.id, result)
+        CIF.pony.int.get.nct.id (ctb.ptr, nct.id, result)
     --}}}
     --{{{  `svr' is undefined
     TRUE
@@ -2201,7 +2193,7 @@ PROC pony.err.get.nct.id.ss (SHARED MOBILE.CHAN? svr,
           LDL svr
           ST ctb.ptr
         -- Call CIF process
-        C.pony.int.get.nct.id (ctb.ptr, nct.id, result)
+        CIF.pony.int.get.nct.id (ctb.ptr, nct.id, result)
     --}}}
     --{{{  `svr' is undefined
     TRUE

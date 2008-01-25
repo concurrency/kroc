@@ -237,7 +237,7 @@ PROTOCOL PONY.ENCODEHANDLE.TO.ENCODER
     ----------------------------------------------------------------------
     -- Increase reference-count of CTB
     -- Carrying: CTB-pointer
-    increase.ref.count = 3; INT
+    clone.ctb = 3; INT
     ----------------------------------------------------------------------
     -- Allocate new CTB
     -- Carrying: NCT-ID
@@ -332,7 +332,7 @@ PROTOCOL PONY.NETHANDLE.FROM.KERNEL
     ----------------------------------------------------------------------
     -- Increase reference-count of CTB
     -- Carrying: CTB-pointer
-    increase.ref.count; INT
+    clone.ctb; INT
     ----------------------------------------------------------------------
     -- Allocate new CTB
     -- Carrying: NCT-ID;
