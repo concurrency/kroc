@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #ifndef __FPU_SUPPORT__
-#if WORDLENGTH < 4
+#if TVM_WORD_LENGTH < 4
 /* INT is too small to hold a REAL32 on this platform, so we can't provide the
    REAL32 helper instructions. */
 #define TOO_SMALL_FOR_FP

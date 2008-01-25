@@ -26,10 +26,10 @@ void setup_mem(WORD *ptr, int size);
 WORD read_mem(POOTER ptr);
 void write_mem(POOTER ptr, WORD val);
 static inline POOTER pooter_minus(POOTER ptr, WORD inc) {
-	return ptr - inc * WORDLENGTH;
+	return ptr - inc * TVM_WORD_LENGTH;
 }
 static inline POOTER pooter_plus(POOTER ptr, WORD inc) {
-	return ptr + inc * WORDLENGTH;
+	return ptr + inc * TVM_WORD_LENGTH;
 }
 
 BYTE read_byte(BPOOTER ptr);

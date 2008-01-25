@@ -58,7 +58,7 @@ TVM_HELPER void copy_data(BPOOTER write_start, BPOOTER read_start, UWORD num_byt
 	 * Please see above bit twiddling lesson if confused.
 	 */
 	#if (defined USE_BETTER_COPY_DATA)
-	if(!((num_bytes | (UWORD) write_start | (UWORD) read_start) & (WORDLENGTH - 1)))
+	if(!((num_bytes | (UWORD) write_start | (UWORD) read_start) & (TVM_WORD_LENGTH - 1)))
 	{
 		/* Reduce bytes to words */
 		num_bytes >>= WSH;

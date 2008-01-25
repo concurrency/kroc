@@ -74,7 +74,7 @@ TVM_INSTRUCTION void ins_adc(void)
 
 
 	/* Check for overflow, from Hackers Delight p. 27 */
-	if( ((UWORD) (((result) ^ areg) & ((result) ^ oreg)) >> (WORDSIZE_BITS - 1)) )
+	if( ((UWORD) (((result) ^ areg) & ((result) ^ oreg)) >> (WORD_BITS - 1)) )
 	{
 		set_error_flag(EFLAG_ADC);
 	}

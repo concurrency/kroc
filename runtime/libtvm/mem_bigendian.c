@@ -29,11 +29,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 void write_mem(POOTER ptr, WORD val)
 {	
-	//ASSERT_WORD_ALIGNED(ptr, WORDLENGTH, "writing");
+	//ASSERT_WORD_ALIGNED(ptr, TVM_WORD_LENGTH, "writing");
 
-#if WORDLENGTH == 2
+#if TVM_WORD_LENGTH == 2
 	*ptr = (WORD)SwapTwoBytes((UWORD)val);
-#elif WORDLENGTH == 4
+#elif TVM_WORD_LENGTH == 4
 	*ptr = (WORD)SwapFourBytes((UWORD)val);
 #elif
 #	error "Unsupported wordlength"
@@ -42,12 +42,12 @@ void write_mem(POOTER ptr, WORD val)
 
 WORD read_mem(POOTER ptr)
 {
-	//ASSERT_WORD_ALIGNED(ptr, WORDLENGTH, "reading");
+	//ASSERT_WORD_ALIGNED(ptr, TVM_WORD_LENGTH, "reading");
 	/* ANNO: Cast to UNSIGNED WORD as the behaviour of a shift on negative values
 	 * is implementation defined */
-#if WORDLENGTH == 2
+#if TVM_WORD_LENGTH == 2
 	return (WORD)SwapTwoBytes((UWORD)*ptr);
-#elif WORDLENGTH == 4
+#elif TVM_WORD_LENGTH == 4
 	return (WORD)SwapFourBytes((UWORD)*ptr);
 #elif
 #	error "Unsupported wordlength"

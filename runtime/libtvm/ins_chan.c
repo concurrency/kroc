@@ -190,6 +190,6 @@ TVM_INSTRUCTION void ins_outword(void)
 	/* Put the word to be transfered at the top of the workspace */
 	write_mem((POOTER)data_ptr, data);
 
-	chan_out(WORDLENGTH, chan_ptr, data_ptr);
+	chan_out(TVM_WORD_LENGTH, chan_ptr, data_ptr);
 }
 

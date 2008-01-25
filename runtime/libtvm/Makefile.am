@@ -2,8 +2,6 @@
 
 AUTOMAKE_OPTIONS = foreign
 
-AM_CFLAGS = @AM_CFLAGS@ @TVM_CFLAGS@
-
 lib_LIBRARIES = libtvm.a
 
 noinst_HEADERS = \
