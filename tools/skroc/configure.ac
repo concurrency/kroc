@@ -8,8 +8,7 @@ AM_INIT_AUTOMAKE(skroc.ss,1.0.0)
 #  Options
 #######################
 
-
-AC_ARG_WITH([default-libs], AS_HELP_STRING([--with-mzscheme=PATH], [specify default libraries (default: forall)]), [default_libs=$withval], [default_libs=forall])
+AC_ARG_WITH([default-libs], AS_HELP_STRING([--with-default-libs=PATH], [specify default libraries (default: forall)]), [default_libs=$withval], [default_libs=forall])
 AC_ARG_WITH([mzscheme], AS_HELP_STRING([--with-mzscheme=PATH], [specifying the path to the mzscheme executables]), [mzscheme=$withval], [mzscheme=])
 
 #######################
