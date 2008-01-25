@@ -32,13 +32,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define MT_TRUE 1
 #include "mobile_types.h"
 
-TVM_HELPER_PROTO POOTER mt_alloc_data(UWORD type, UWORD size);
-TVM_HELPER_PROTO POOTER mt_alloc(UWORD type, UWORD size);
-TVM_HELPER_PROTO void mt_release_simple(POOTER ptr, UWORD type);
-TVM_HELPER_PROTO void mt_release(POOTER ptr);
-TVM_HELPER_PROTO POOTER mt_clone(POOTER ptr);
-TVM_HELPER_PROTO UWORD mt_io_update(POOTER *ptr);
-TVM_HELPER_PROTO void mt_chan_io(POOTER dst, POOTER src);
+TVM_HELPER_PROTO WORDPTR mt_alloc_data(UWORD type, UWORD size);
+TVM_HELPER_PROTO WORDPTR mt_alloc(UWORD type, UWORD size);
+TVM_HELPER_PROTO void mt_release_simple(WORDPTR ptr, UWORD type);
+TVM_HELPER_PROTO void mt_release(WORDPTR ptr);
+TVM_HELPER_PROTO WORDPTR mt_clone(WORDPTR ptr);
+TVM_HELPER_PROTO UWORD mt_io_update(WORDPTR *ptr);
+TVM_HELPER_PROTO void mt_chan_io(WORDPTR dst, WORDPTR src);
 
 /* 0x238 - 0x22 0x23 0xF8 - mt_alloc - allocate a mobile type */
 TVM_INSTRUCTION_PROTO void ins_mt_alloc(void);

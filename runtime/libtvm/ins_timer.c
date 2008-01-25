@@ -90,7 +90,7 @@ void set_alarm(int time)
 void timer_queue_insert(WORD current_time, WORD reschedule_time)
 {
 	/* Check if the queue is empty */
-	if(tptr[pri] == (POOTER)NOT_PROCESS_P)
+	if(tptr[pri] == (WORDPTR)NOT_PROCESS_P)
 	{
 		/* It was, insert ourselves as the only thing */
 		tptr[pri] = wptr;
@@ -129,15 +129,15 @@ void timer_queue_insert(WORD current_time, WORD reschedule_time)
 		/* Signal we are not done yet :) */
 		int done = 0;
 		/* Get the first workspace on the timer queue */
-		POOTER this_wptr = tptr[pri];
+		WORDPTR this_wptr = tptr[pri];
 		/* Get the (first) next workspace pointer on the queue */
-		POOTER next_wptr = (POOTER)WORKSPACE_GET(this_wptr, WS_NEXT_T);
+		WORDPTR next_wptr = (WORDPTR)WORKSPACE_GET(this_wptr, WS_NEXT_T);
 	
 		/* Now loop through the list */
 		while(!done)
 		{
 			/* Are we at the end of the queue */
-			if(next_wptr == (POOTER)NOT_PROCESS_P)
+			if(next_wptr == (WORDPTR)NOT_PROCESS_P)
 			{
 				/* Yes, insert us at the end, no update of TNEXT */
 
@@ -173,7 +173,7 @@ void timer_queue_insert(WORD current_time, WORD reschedule_time)
 				/* Get the next workspace on the timer queue */
 				this_wptr = next_wptr;
 				/* Get the (next) next workspace pointer on the queue */
-				next_wptr = (POOTER)WORKSPACE_GET(this_wptr, WS_NEXT_T);
+				next_wptr = (WORDPTR)WORKSPACE_GET(this_wptr, WS_NEXT_T);
 
 				/* We are NOT done!!! */
 			}

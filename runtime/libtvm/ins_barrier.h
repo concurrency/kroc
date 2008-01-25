@@ -23,10 +23,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef __PI_SUPPORT__
 
-TVM_HELPER_PROTO void tvm_bar_init(POOTER bar, UWORD initial_count);
-TVM_HELPER_PROTO void tvm_bar_sync(POOTER bar);
-TVM_HELPER_PROTO void tvm_bar_enroll(POOTER bar, UWORD enroll_count);
-TVM_HELPER_PROTO void tvm_bar_resign(POOTER bar, UWORD resign_count);
+TVM_HELPER_PROTO void tvm_bar_init(WORDPTR bar, UWORD initial_count);
+TVM_HELPER_PROTO void tvm_bar_sync(WORDPTR bar);
+TVM_HELPER_PROTO void tvm_bar_enroll(WORDPTR bar, UWORD enroll_count);
+TVM_HELPER_PROTO void tvm_bar_resign(WORDPTR bar, UWORD resign_count);
 
 /* 0xB0 - 0x2B 0xF0 - barrier intialisation */
 TVM_INSTRUCTION_PROTO void ins_barinit();

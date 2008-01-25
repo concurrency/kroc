@@ -112,9 +112,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /* Now the actual macros */
 #define WORKSPACE_GET(WPTR, LOC) \
-	read_mem(pooter_minus((WPTR), (LOC)))
+	read_word(wordptr_minus((WPTR), (LOC)))
 #define WORKSPACE_SET(WPTR, LOC, VAL) \
-	write_mem(pooter_minus((WPTR), (LOC)), (VAL))
+	write_word(wordptr_minus((WPTR), (LOC)), (VAL))
 
 /* Error values */
 enum {

@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* 0x22F - 0x22 0x22 0xFF - proc_alloc - allocate process workspace */
 TVM_INSTRUCTION void ins_proc_alloc(void)
 {
-	POOTER ws = 0;
+	WORDPTR ws = 0;
 	UWORD flags = (UWORD) areg;
 	UWORD words = (UWORD) breg;
 
@@ -50,11 +50,11 @@ TVM_INSTRUCTION void ins_proc_alloc(void)
 /* 0x230 - 0x22 0x23 0xF0 - proc_param - pass parameter into workspace */
 TVM_INSTRUCTION void ins_proc_param(void)
 {
-	POOTER ws	= (POOTER) breg;
+	WORDPTR ws	= (WORDPTR) breg;
 	UWORD offset	= (UWORD) areg;
 	WORD param	= creg;
 
-	write_mem (pooter_plus (ws, offset), param);
+	write_word (wordptr_plus (ws, offset), param);
 
 	UNDEFINE_STACK ();
 }
@@ -62,15 +62,15 @@ TVM_INSTRUCTION void ins_proc_param(void)
 /* 0x231 - 0x22 0x23 0xF1 - proc_mt_copy - clone mobile type into workspace */
 TVM_INSTRUCTION void ins_proc_mt_copy(void)
 {
-	POOTER ptr	= (POOTER) creg;
-	POOTER ws	= (POOTER) breg;
+	WORDPTR ptr	= (WORDPTR) creg;
+	WORDPTR ws	= (WORDPTR) breg;
 	UWORD offset	= (UWORD) areg;
 
-	if (ptr != (POOTER) NULL_P) {
+	if (ptr != (WORDPTR) NULL_P) {
 		ptr = mt_clone (ptr);
 	}
 	
-	write_mem (pooter_plus (ws, offset), (WORD) ptr);
+	write_word (wordptr_plus (ws, offset), (WORD) ptr);
 
 	UNDEFINE_STACK ();
 }
@@ -78,21 +78,21 @@ TVM_INSTRUCTION void ins_proc_mt_copy(void)
 /* 0x232 - 0x22 0x23 0xF2 - proc_mt_move - move mobile type into workspace */
 TVM_INSTRUCTION void ins_proc_mt_move(void)
 {
-	POOTER pptr	= (POOTER) creg;
-	POOTER ws	= (POOTER) breg;
+	WORDPTR pptr	= (WORDPTR) creg;
+	WORDPTR ws	= (WORDPTR) breg;
 	UWORD offset	= (UWORD) areg;
 
-	if (pptr != (POOTER) NULL_P) {
-		POOTER ptr = (POOTER) read_mem (pptr);
+	if (pptr != (WORDPTR) NULL_P) {
+		WORDPTR ptr = (WORDPTR) read_word (pptr);
 
-		if (ptr != (POOTER) NULL_P) {
+		if (ptr != (WORDPTR) NULL_P) {
 			if (mt_io_update (&ptr)) {
 				/* Data moved, delete source reference. */
-				write_mem (pptr, (WORD) NULL_P);
+				write_word (pptr, (WORD) NULL_P);
 			}
 		}
 	
-		write_mem (pooter_plus (ws, offset), (WORD) ptr);
+		write_word (wordptr_plus (ws, offset), (WORD) ptr);
 	} else {
 		/* Source reference pointer should never be null. */
 		set_error_flag (EFLAG_PROC);
@@ -104,11 +104,11 @@ TVM_INSTRUCTION void ins_proc_mt_move(void)
 /* 0x233 - 0x22 0x23 0xF3 - proc_start - start process */
 TVM_INSTRUCTION void ins_proc_start(void)
 {
-	BPOOTER code	= (BPOOTER) creg;
-	POOTER ws	= (POOTER) breg;
+	BYTEPTR code	= (BYTEPTR) creg;
+	WORDPTR ws	= (WORDPTR) breg;
 	UWORD offset	= (UWORD) areg;
 
-	ws = pooter_plus (ws, offset);
+	ws = wordptr_plus (ws, offset);
 
 	add_to_queue ((WORD) ws, (WORD) code);
 
@@ -118,7 +118,7 @@ TVM_INSTRUCTION void ins_proc_start(void)
 /* 0x234 - 0x22 0x23 0xF4 - proc_end - end process and release workspace */
 TVM_INSTRUCTION void ins_proc_end(void)
 {
-	POOTER ws = (POOTER) areg;
+	WORDPTR ws = (WORDPTR) areg;
 
 	mt_release_simple (ws, MT_MAKE_TYPE (MT_DATA));
 

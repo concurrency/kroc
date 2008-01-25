@@ -60,9 +60,9 @@ TVM_INSTRUCTION_PROTO void ins_restorecreg(void);
  *              0x27 0xF_         0x27 0xF_         0x27 0xF_               *
  ****************************************************************************/
 
-TVM_HELPER_PROTO void tvm_sem_init(POOTER sem);
-TVM_HELPER_PROTO void tvm_sem_claim(POOTER sem);
-TVM_HELPER_PROTO void tvm_sem_release(POOTER sem);
+TVM_HELPER_PROTO void tvm_sem_init(WORDPTR sem);
+TVM_HELPER_PROTO void tvm_sem_claim(WORDPTR sem);
+TVM_HELPER_PROTO void tvm_sem_release(WORDPTR sem);
 
 /* 0x7A - 0x27 0xFA - seminit - initialise semaphore */
 TVM_INSTRUCTION_PROTO void ins_seminit(void);

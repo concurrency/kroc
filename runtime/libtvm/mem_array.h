@@ -23,35 +23,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 void setup_mem(WORD *ptr, int size);
 
-WORD read_mem(POOTER ptr);
-void write_mem(POOTER ptr, WORD val);
-static inline POOTER pooter_minus(POOTER ptr, WORD inc) {
+WORD read_word(WORDPTR ptr);
+void write_word(WORDPTR ptr, WORD val);
+static inline WORDPTR wordptr_minus(WORDPTR ptr, WORD inc) {
 	return ptr - inc * TVM_WORD_LENGTH;
 }
-static inline POOTER pooter_plus(POOTER ptr, WORD inc) {
+static inline WORDPTR wordptr_plus(WORDPTR ptr, WORD inc) {
 	return ptr + inc * TVM_WORD_LENGTH;
 }
 
-BYTE read_byte(BPOOTER ptr);
-void write_byte(BPOOTER ptr, BYTE val);
-static inline BPOOTER bpooter_minus(BPOOTER ptr, WORD inc) {
+BYTE read_byte(BYTEPTR ptr);
+void write_byte(BYTEPTR ptr, BYTE val);
+static inline BYTEPTR byteptr_minus(BYTEPTR ptr, WORD inc) {
 	return ptr - inc;
 }
-static inline BPOOTER bpooter_plus(BPOOTER ptr, WORD inc) {
+static inline BYTEPTR byteptr_plus(BYTEPTR ptr, WORD inc) {
 	return ptr + inc;
 }
 
 #ifdef __FPU_SUPPORT__
 
-float read_memf(POOTER ptr);
-void write_memf(POOTER ptr, float val);
+float read_wordf(WORDPTR ptr);
+void write_wordf(WORDPTR ptr, float val);
 
-double read_memd(POOTER ptr);
-void write_memd(POOTER ptr, double val);
+double read_wordd(WORDPTR ptr);
+void write_wordd(WORDPTR ptr, double val);
 
 #endif
 
-int *pooter_real_address(POOTER ptr);
+int *wordptr_real_address(WORDPTR ptr);
 
 #endif
 

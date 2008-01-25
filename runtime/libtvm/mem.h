@@ -32,10 +32,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	(((data) <<  8) & 0x00FF0000) | (((data) << 24) & 0xFF000000) )
 
 
-#define ASSERT_WORD_ALIGNED(pooter, WL, where) \
-	if(((int)pooter % WL) != 0) \
+#define ASSERT_WORD_ALIGNED(wordptr, WL, where) \
+	if(((int)wordptr % WL) != 0) \
 	{ \
-		/*printf("Unaligned access while %s at %p\n", where, pooter); */\
+		/*printf("Unaligned access while %s at %p\n", where, wordptr); */\
 		exit_runloop(666); /* EXIT_ALIGN_ERROR */  \
 	}
 
@@ -49,19 +49,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #if defined(USE_CUSTOM_COPY_DATA)
 #define copy_data USE_CUSTOM_COPY_DATA
-#elif defined(USE_MEMCPY) && defined(POOTERS_REAL)
+#elif defined(USE_MEMCPY) && defined(WORDPTRS_REAL)
 #include <string.h>
 #define copy_data memcpy
 #else
-TVM_HELPER_PROTO void copy_data(BPOOTER write_start, BPOOTER read_start, UWORD num_bytes);
+TVM_HELPER_PROTO void copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
 #endif /* !(defined USE_CUSTOM_COPY_DATA) */
 
-static inline void swap_data_word(POOTER a_ptr, POOTER b_ptr)
+static inline void swap_data_word(WORDPTR a_ptr, WORDPTR b_ptr)
 {
-	WORD a_data = read_mem(a_ptr);
-	WORD b_data = read_mem(b_ptr);
-	write_mem(b_ptr, a_data);
-	write_mem(a_ptr, b_data);
+	WORD a_data = read_word(a_ptr);
+	WORD b_data = read_word(b_ptr);
+	write_word(b_ptr, a_data);
+	write_word(a_ptr, b_data);
 }
 
 #endif

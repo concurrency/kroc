@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef __PI_SUPPORT__
 
-void ext_chan_undefined(/*@unused@*/ WORD count, /*@unused@*/ BPOOTER address)
+void ext_chan_undefined(/*@unused@*/ WORD count, /*@unused@*/ BYTEPTR address)
 {
 	/* FIXME: A hook like in ins_not_impl */
 }

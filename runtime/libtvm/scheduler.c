@@ -41,8 +41,8 @@ volatile int sched_sync;
  * it probably ought to live with the rest of the scheduler stuff in
  * scheduler.scm
  */
-/* FIXME: I think this should probably take a POOTER as the first argument, and
- * possibly a BPOOTER as the second */
+/* FIXME: I think this should probably take a WORDPTR as the first argument, and
+ * possibly a BYTEPTR as the second */
 void just_add_to_queue(WORD src_reg)
 {
 
@@ -50,16 +50,16 @@ void just_add_to_queue(WORD src_reg)
 	/* Carl points out that we were practicing bad hygene in our workspace when
 	 * doing this operation. The TVM should always set the link pointer to null
 	 * before adding to the queue. This line *probably* fixes that problem. */
-	WORKSPACE_SET((POOTER)src_reg, WS_NEXT, (WORD)NOT_PROCESS_P);
+	WORKSPACE_SET((WORDPTR)src_reg, WS_NEXT, (WORD)NOT_PROCESS_P);
 	
 	/* src_reg is effectively the new workspace pointer */
 
-	if(fptr[pri] == (POOTER)NOT_PROCESS_P)
+	if(fptr[pri] == (WORDPTR)NOT_PROCESS_P)
 	{
 		/* If there is nothing on the queue, we will make this process
 		 * the only thing on the queue */
-		fptr[pri] = (POOTER)src_reg;
-		bptr[pri] = (POOTER)src_reg;
+		fptr[pri] = (WORDPTR)src_reg;
+		bptr[pri] = (WORDPTR)src_reg;
 	}
 	else
 	{
@@ -68,7 +68,7 @@ void just_add_to_queue(WORD src_reg)
 		 * processes workspace */
 		/* FIXME: soccam does not use the workspace! macro here, it should! */
 		WORKSPACE_SET(bptr[pri], WS_NEXT, src_reg);
-		bptr[pri] = (POOTER)src_reg;
+		bptr[pri] = (WORDPTR)src_reg;
 	}
 }
 
@@ -81,24 +81,24 @@ void add_to_queue(WORD src_reg, WORD iptr_prime)
 
 void add_queue_to_queue(WORD front, WORD back)
 {
-	WORKSPACE_SET((POOTER)back, WS_NEXT, (WORD)NOT_PROCESS_P);
+	WORKSPACE_SET((WORDPTR)back, WS_NEXT, (WORD)NOT_PROCESS_P);
 	
-	if(fptr[pri] == (POOTER)NOT_PROCESS_P)
+	if(fptr[pri] == (WORDPTR)NOT_PROCESS_P)
 	{
-		fptr[pri] = (POOTER)front;
-		bptr[pri] = (POOTER)back;
+		fptr[pri] = (WORDPTR)front;
+		bptr[pri] = (WORDPTR)back;
 	}
 	else
 	{
 		WORKSPACE_SET(bptr[pri], WS_NEXT, front);
-		bptr[pri] = (POOTER)back;
+		bptr[pri] = (WORDPTR)back;
 	}
 }
 
 /* FIXME: These should go elsewhere!!! */
 #define TRUE 1
 #define FALSE 0
-BPOOTER run_next_on_queue(void)
+BYTEPTR run_next_on_queue(void)
 {
 	//int loops = 0;
 	int now;
@@ -135,7 +135,7 @@ sched_start:
 		removed = FALSE;
 #if 0
 		/* Sanity check */
-		if(tptr[pri] == (POOTER)NOT_PROCESS_P)
+		if(tptr[pri] == (WORDPTR)NOT_PROCESS_P)
 		{
 			printf("Got scheduler sync when tptr = NOT_PROCESS_P\n");
 			abort();
@@ -149,9 +149,9 @@ sched_start:
 			now = get_time();
 			removed = FALSE;
 
-			if((tptr[pri] != (POOTER)NOT_PROCESS_P))
+			if((tptr[pri] != (WORDPTR)NOT_PROCESS_P))
 			{
-				while((tptr[pri] != (POOTER)NOT_PROCESS_P) && (!(AFTER(WORKSPACE_GET(tptr[pri], WS_TIMEOUT), now))))
+				while((tptr[pri] != (WORDPTR)NOT_PROCESS_P) && (!(AFTER(WORKSPACE_GET(tptr[pri], WS_TIMEOUT), now))))
 				{
 #endif
 					/* Move first process from timer queue to the run queue */
@@ -174,8 +174,8 @@ sched_start:
 					   !         temp^[State] := Ready.p
 					   !         ...  add on to run queue
 					   */
-					POOTER temp = tptr[pri];
-					tptr[pri] = (POOTER)WORKSPACE_GET(tptr[pri], WS_NEXT_T);
+					WORDPTR temp = tptr[pri];
+					tptr[pri] = (WORDPTR)WORKSPACE_GET(tptr[pri], WS_NEXT_T);
 					WORKSPACE_SET(temp, WS_NEXT_T, TIME_SET_P);
 					WORKSPACE_SET(temp, WS_TIMEOUT, now);
 					if(WORKSPACE_GET(temp, WS_ALT_STATE) == READY_P)
@@ -198,7 +198,7 @@ sched_start:
 				}
 				/* We update tnext here (which is equivalent to calling ualarm in the occam
 				 * code, they seem to use OS services rather than tnext though) */
-				if(tptr[pri] != (POOTER)NOT_PROCESS_P && removed)
+				if(tptr[pri] != (WORDPTR)NOT_PROCESS_P && removed)
 				{ 
 					tnext[pri] = WORKSPACE_GET(tptr[pri], WS_TIMEOUT);
 #ifdef ENABLE_SCHED_SYNC
@@ -208,13 +208,13 @@ sched_start:
 			}
 
 			/* Any processes in the run queue? */
-			if(fptr[pri] != (POOTER)NOT_PROCESS_P)
+			if(fptr[pri] != (WORDPTR)NOT_PROCESS_P)
 			{
 				/* yes */
 				/*printf("SCHEDULED NEW PROCESS!\n");*/
 				wptr = fptr[pri];
 			}
-			else if(tptr[pri] != (POOTER)NOT_PROCESS_P)
+			else if(tptr[pri] != (WORDPTR)NOT_PROCESS_P)
 			{
 #ifndef BUSY_WAIT
 				/* It would be nice to get rid of the timer tests at the start of the kernel
@@ -248,15 +248,15 @@ sched_start:
 			/* Update thet run queue by taking new current process off it */
 			if(fptr[pri] == bptr[pri])
 			{
-				fptr[pri] = (POOTER)NOT_PROCESS_P;
-				bptr[pri] = (POOTER)NOT_PROCESS_P;
+				fptr[pri] = (WORDPTR)NOT_PROCESS_P;
+				bptr[pri] = (WORDPTR)NOT_PROCESS_P;
 			}
 			else
 			{
-				fptr[pri] = (POOTER)WORKSPACE_GET(fptr[pri], WS_NEXT);
+				fptr[pri] = (WORDPTR)WORKSPACE_GET(fptr[pri], WS_NEXT);
 			}
-			//iptr = (BPOOTER)WORKSPACE_GET(wptr, WS_IPTR);
-			return (BPOOTER)WORKSPACE_GET(wptr, WS_IPTR);
+			//iptr = (BYTEPTR)WORKSPACE_GET(wptr, WS_IPTR);
+			return (BYTEPTR)WORKSPACE_GET(wptr, WS_IPTR);
 			/*printf("/\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\        /\\\n");*/
 }
 

@@ -71,18 +71,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define NONE_SELECTED_O		(-1)
 
 /* Transputer registers and flags */
-extern BPOOTER iptr;		/* Instruction pointer */
-extern POOTER wptr;		/* Workspace pointer */
+extern BYTEPTR iptr;		/* Instruction pointer */
+extern WORDPTR wptr;		/* Workspace pointer */
 
 extern WORD areg;		/* Evaluation stack */
 extern WORD breg;		/* Evaluation stack */
 extern WORD creg;		/* Evaluation stack */
 extern WORD oreg;		/* Operand register */
 
-extern POOTER tptr[NUM_PRI];	/* Timer queue pointers */
+extern WORDPTR tptr[NUM_PRI];	/* Timer queue pointers */
 extern WORD tnext[NUM_PRI];	/* Timeout register */
-extern POOTER fptr[NUM_PRI];	/* Front pointer (scheduler queue) */
-extern POOTER bptr[NUM_PRI];	/* Back pointer (scheduler queue) */
+extern WORDPTR fptr[NUM_PRI];	/* Front pointer (scheduler queue) */
+extern WORDPTR bptr[NUM_PRI];	/* Back pointer (scheduler queue) */
 
 extern WORD error_flag;
 extern WORD halt_on_error_flag;

@@ -61,11 +61,11 @@ enum {
 };
 
 void exit_runloop(int ret_val);
-void init_stackframe(POOTER *where, int argc, WORD argv[],
-		POOTER vectorspace, POOTER mobilespace, POOTER forkbarrier,
-		int ret_type, BPOOTER ret_addr);
-void initial_stackframe(POOTER *where, int argc, WORD argv[],
-		POOTER vectorspace, POOTER mobilespace, int add_forkingbarrier);
+void init_stackframe(WORDPTR *where, int argc, WORD argv[],
+		WORDPTR vectorspace, WORDPTR mobilespace, WORDPTR forkbarrier,
+		int ret_type, BYTEPTR ret_addr);
+void initial_stackframe(WORDPTR *where, int argc, WORD argv[],
+		WORDPTR vectorspace, WORDPTR mobilespace, int add_forkingbarrier);
 void final_ret(void);
 int run(void);
 

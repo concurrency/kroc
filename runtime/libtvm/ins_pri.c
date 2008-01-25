@@ -114,7 +114,7 @@ TVM_INSTRUCTION void ins_adc(void)
 TVM_INSTRUCTION void ins_ajw(void)
 {
 	/* Add the value in the operand register to the workspace pointer. */
-	wptr = pooter_plus(wptr, oreg);
+	wptr = wordptr_plus(wptr, oreg);
 
 	CLEAR(oreg);
 }
@@ -187,18 +187,18 @@ TVM_INSTRUCTION void ins_ajw(void)
 TVM_INSTRUCTION void ins_call(void)
 {
 	/* Store registers in a new stack frame */
-	write_mem(pooter_minus(wptr, 4 - 0), (WORD)iptr);
-	write_mem(pooter_minus(wptr, 4 - 1), areg);
-	write_mem(pooter_minus(wptr, 4 - 2), breg);
-	write_mem(pooter_minus(wptr, 4 - 3), creg);
+	write_word(wordptr_minus(wptr, 4 - 0), (WORD)iptr);
+	write_word(wordptr_minus(wptr, 4 - 1), areg);
+	write_word(wordptr_minus(wptr, 4 - 2), breg);
+	write_word(wordptr_minus(wptr, 4 - 3), creg);
 	/* Actually allocate the stack frame */
-	wptr = pooter_minus(wptr, 4);
+	wptr = wordptr_minus(wptr, 4);
 
 	/* Set the areg to the old iptr */
 	areg = (WORD)iptr;
 
 	/* Set the new iptr from the oreg */
-	iptr = bpooter_plus(iptr, oreg);
+	iptr = byteptr_plus(iptr, oreg);
 
 	CLEAR(oreg);
 }
@@ -236,7 +236,7 @@ TVM_INSTRUCTION void ins_cj(void)
 	if(areg == 0)
 	{
 		/* Set the iptr to the new address: iptr offset by oreg */
-		iptr = bpooter_plus(iptr, oreg);
+		iptr = byteptr_plus(iptr, oreg);
 
 		/* Stack is left untouched */
 		STACK(areg, breg, creg);
@@ -305,7 +305,7 @@ TVM_INSTRUCTION void ins_eqc(void)
 
 TVM_INSTRUCTION void ins_j(void)
 {
-	iptr = bpooter_plus(iptr, oreg);
+	iptr = byteptr_plus(iptr, oreg);
 
 	/* FIXME: The T9000 provides a breakpoint hook if the oreg is 0 (ie a jump of
 	 * size zero, which would just execute the next instruction). The
@@ -373,7 +373,7 @@ TVM_INSTRUCTION void ins_ldc(void)
 TVM_INSTRUCTION void ins_ldl(void)
 {
 	/* Push the stack down and read a value from from memory(oreg+wptr) */
-	STACK(read_mem(pooter_plus(wptr, oreg)), areg, breg);
+	STACK(read_word(wordptr_plus(wptr, oreg)), areg, breg);
 
 	CLEAR(oreg);
 }
@@ -409,7 +409,7 @@ TVM_INSTRUCTION void ins_ldl(void)
 TVM_INSTRUCTION void ins_ldlp(void)
 {
 	/* Push wptr+oreg onto the stack */
-	STACK((WORD)pooter_plus(wptr, oreg), areg, breg);
+	STACK((WORD)wordptr_plus(wptr, oreg), areg, breg);
 
 	CLEAR(oreg);
 }
@@ -433,7 +433,7 @@ TVM_INSTRUCTION void ins_ldlp(void)
 TVM_INSTRUCTION void ins_ldnl(void)
 {
 	/* Read from memory(areg+oreg) */
-	areg = read_mem(pooter_plus((POOTER)areg, oreg));
+	areg = read_word(wordptr_plus((WORDPTR)areg, oreg));
 
 	CLEAR(oreg);
 }
@@ -457,7 +457,7 @@ TVM_INSTRUCTION void ins_ldnl(void)
 TVM_INSTRUCTION void ins_ldnlp(void)
 {
 	/* Add the oreg to the areg and store it in the areg */
-	areg = (WORD)pooter_plus((POOTER)areg, oreg);
+	areg = (WORD)wordptr_plus((WORDPTR)areg, oreg);
 
 	CLEAR(oreg);
 }
@@ -484,7 +484,7 @@ TVM_INSTRUCTION void ins_ldnlp(void)
 TVM_INSTRUCTION void ins_stl(void)
 {
 	/* Put the top of the stack into mem(wptr + oreg) */
-	write_mem(pooter_plus(wptr, oreg), areg);
+	write_word(wordptr_plus(wptr, oreg), areg);
 
 	/* Pop the stack */
 	STACK(breg, creg, UNDEFINE(creg));
@@ -514,7 +514,7 @@ TVM_INSTRUCTION void ins_stl(void)
 TVM_INSTRUCTION void ins_stnl(void)
 {
 	/* Put value in breg into mem(areg + oreg) */
-	write_mem(pooter_plus((POOTER)areg, oreg), breg);
+	write_word(wordptr_plus((WORDPTR)areg, oreg), breg);
 
 	/* Pop the stack */
 	STACK(creg, UNDEFINE(breg), UNDEFINE(creg));

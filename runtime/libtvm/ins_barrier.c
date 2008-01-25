@@ -30,17 +30,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define BAR_FPTR 	2
 #define BAR_BPTR 	3
 
-static void tvm_bar_complete(POOTER bar)
+static void tvm_bar_complete(WORDPTR bar)
 {
 	/* Load barrier state. */
-	WORD enrolled	= read_mem(pooter_plus(bar, BAR_ENROLLED));
-	WORD bar_fptr	= read_mem(pooter_plus(bar, BAR_FPTR));
-	WORD bar_bptr	= read_mem(pooter_plus(bar, BAR_BPTR));
+	WORD enrolled	= read_word(wordptr_plus(bar, BAR_ENROLLED));
+	WORD bar_fptr	= read_word(wordptr_plus(bar, BAR_FPTR));
+	WORD bar_bptr	= read_word(wordptr_plus(bar, BAR_BPTR));
 
 	/* Reset barrier state. */
-	write_mem(pooter_plus(bar, BAR_COUNT), enrolled);
-	write_mem(pooter_plus(bar, BAR_FPTR), (WORD) NOT_PROCESS_P);
-	write_mem(pooter_plus(bar, BAR_BPTR), (WORD) NOT_PROCESS_P);
+	write_word(wordptr_plus(bar, BAR_COUNT), enrolled);
+	write_word(wordptr_plus(bar, BAR_FPTR), (WORD) NOT_PROCESS_P);
+	write_word(wordptr_plus(bar, BAR_BPTR), (WORD) NOT_PROCESS_P);
 
 	if(bar_fptr != (WORD) NOT_PROCESS_P)
 	{
@@ -49,43 +49,43 @@ static void tvm_bar_complete(POOTER bar)
 	}
 }
 
-TVM_HELPER void tvm_bar_init(POOTER bar, UWORD initial_count)
+TVM_HELPER void tvm_bar_init(WORDPTR bar, UWORD initial_count)
 {
-	write_mem(pooter_plus(bar, BAR_ENROLLED), (WORD) initial_count);
-	write_mem(pooter_plus(bar, BAR_COUNT), (WORD) initial_count);
-	write_mem(pooter_plus(bar, BAR_FPTR), (WORD) NOT_PROCESS_P);
-	write_mem(pooter_plus(bar, BAR_BPTR), (WORD) NOT_PROCESS_P);
+	write_word(wordptr_plus(bar, BAR_ENROLLED), (WORD) initial_count);
+	write_word(wordptr_plus(bar, BAR_COUNT), (WORD) initial_count);
+	write_word(wordptr_plus(bar, BAR_FPTR), (WORD) NOT_PROCESS_P);
+	write_word(wordptr_plus(bar, BAR_BPTR), (WORD) NOT_PROCESS_P);
 }
 
-TVM_HELPER void tvm_bar_sync(POOTER bar)
+TVM_HELPER void tvm_bar_sync(WORDPTR bar)
 {
-	UWORD count = (UWORD) read_mem(pooter_plus(bar, BAR_COUNT));
+	UWORD count = (UWORD) read_word(wordptr_plus(bar, BAR_COUNT));
 
 	/* Is this the last process to synchronise? */
 	if(count > 1)
 	{
 		/* No, other processes have yet to synchronise, so deschedule. */
-		POOTER bar_bptr	= (POOTER)read_mem(pooter_plus(bar, BAR_BPTR));
+		WORDPTR bar_bptr	= (WORDPTR)read_word(wordptr_plus(bar, BAR_BPTR));
 
 		/* Drop synchronisation count. */
-		write_mem(pooter_plus(bar, BAR_COUNT), count - 1);
+		write_word(wordptr_plus(bar, BAR_COUNT), count - 1);
 
 		/* Stop process. */
 		WORKSPACE_SET(wptr, WS_NEXT, (WORD) bar_bptr);
 		WORKSPACE_SET(wptr, WS_IPTR, (WORD) iptr);
 
 		/* Enqueue process to barrier. */
-		if(bar_bptr == (POOTER) NOT_PROCESS_P)
+		if(bar_bptr == (WORDPTR) NOT_PROCESS_P)
 		{
 			/* Only process in queue. */
-			write_mem(pooter_plus(bar, BAR_FPTR), (WORD) wptr);
+			write_word(wordptr_plus(bar, BAR_FPTR), (WORD) wptr);
 		}
 		else
 		{
 			/* Last process in queue. */
 			WORKSPACE_SET(bar_bptr, WS_NEXT, (WORD) wptr);
 		}
-		write_mem(pooter_plus(bar, BAR_BPTR), (WORD) wptr);
+		write_word(wordptr_plus(bar, BAR_BPTR), (WORD) wptr);
 
 		/* Schedule new process. */
 		iptr = run_next_on_queue();
@@ -97,10 +97,10 @@ TVM_HELPER void tvm_bar_sync(POOTER bar)
 	}
 }
 
-TVM_HELPER void tvm_bar_enroll(POOTER bar, UWORD enroll_count)
+TVM_HELPER void tvm_bar_enroll(WORDPTR bar, UWORD enroll_count)
 {
-	UWORD enrolled	= read_mem(pooter_plus(bar, BAR_ENROLLED));
-	UWORD count	= read_mem(pooter_plus(bar, BAR_COUNT));
+	UWORD enrolled	= read_word(wordptr_plus(bar, BAR_ENROLLED));
+	UWORD count	= read_word(wordptr_plus(bar, BAR_COUNT));
 
 	if((enrolled + enroll_count) < enrolled)
 	{
@@ -108,14 +108,14 @@ TVM_HELPER void tvm_bar_enroll(POOTER bar, UWORD enroll_count)
 		set_error_flag(EFLAG_BAR);
 	}
 
-	write_mem(pooter_plus(bar, BAR_ENROLLED), (WORD) (enrolled + enroll_count));
-	write_mem(pooter_plus(bar, BAR_COUNT), (WORD) (count + enroll_count));
+	write_word(wordptr_plus(bar, BAR_ENROLLED), (WORD) (enrolled + enroll_count));
+	write_word(wordptr_plus(bar, BAR_COUNT), (WORD) (count + enroll_count));
 }
 
-TVM_HELPER void tvm_bar_resign(POOTER bar, UWORD resign_count)
+TVM_HELPER void tvm_bar_resign(WORDPTR bar, UWORD resign_count)
 {
-	UWORD enrolled	= (UWORD) read_mem(pooter_plus(bar, BAR_ENROLLED));
-	UWORD count	= (UWORD) read_mem(pooter_plus(bar, BAR_COUNT));
+	UWORD enrolled	= (UWORD) read_word(wordptr_plus(bar, BAR_ENROLLED));
+	UWORD count	= (UWORD) read_word(wordptr_plus(bar, BAR_COUNT));
 
 	if((resign_count > enrolled) || (resign_count > count))
 	{
@@ -126,14 +126,14 @@ TVM_HELPER void tvm_bar_resign(POOTER bar, UWORD resign_count)
 	}
 
 	/* Update enroll count. */
-	write_mem(pooter_plus(bar, BAR_ENROLLED), (WORD) (enrolled - resign_count));
+	write_word(wordptr_plus(bar, BAR_ENROLLED), (WORD) (enrolled - resign_count));
 	/* Calculate new synchronisation count. */
 	count -= resign_count;
 	
 	if(count >= 1)
 	{
 		/* Update synchronisation count. */
-		write_mem(pooter_plus(bar, BAR_COUNT), (WORD) count);
+		write_word(wordptr_plus(bar, BAR_COUNT), (WORD) count);
 	}
 	else
 	{
@@ -145,7 +145,7 @@ TVM_HELPER void tvm_bar_resign(POOTER bar, UWORD resign_count)
 /* 0xB0 - 0x2B 0xF0 - barrier intialisation */
 TVM_INSTRUCTION void ins_barinit()
 {
-	tvm_bar_init((POOTER) areg, 0);
+	tvm_bar_init((WORDPTR) areg, 0);
 
 	UNDEFINE_STACK();
 }
@@ -153,7 +153,7 @@ TVM_INSTRUCTION void ins_barinit()
 /* 0xB1 - 0x2B 0xF1 - barrier synchronisation */
 TVM_INSTRUCTION void ins_barsync()
 {
-	tvm_bar_sync((POOTER) areg);
+	tvm_bar_sync((WORDPTR) areg);
 
 	UNDEFINE_STACK();
 }
@@ -161,7 +161,7 @@ TVM_INSTRUCTION void ins_barsync()
 /* 0xB2 - 0x2B 0xF2 - barrier resignation */
 TVM_INSTRUCTION void ins_barresign()
 {
-	tvm_bar_resign((POOTER) breg, (UWORD) areg);
+	tvm_bar_resign((WORDPTR) breg, (UWORD) areg);
 
 	UNDEFINE_STACK();
 }
@@ -169,7 +169,7 @@ TVM_INSTRUCTION void ins_barresign()
 /* 0xB3 - 0x2B 0xF3 - barrier enroll */
 TVM_INSTRUCTION void ins_barenroll()
 {
-	tvm_bar_enroll((POOTER) breg, (UWORD) areg);
+	tvm_bar_enroll((WORDPTR) breg, (UWORD) areg);
 
 	UNDEFINE_STACK();
 }
