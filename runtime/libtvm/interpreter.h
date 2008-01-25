@@ -28,6 +28,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*@-exportlocal@*/
 
+#ifdef HAVE_CONFIG_H
+#	include <config.h>
+#endif
 #ifdef HAVE_SETJMP_H
 #	include <setjmp.h>
 #endif

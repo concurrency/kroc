@@ -21,13 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef TRANSPUTER_H
 #define TRANSPUTER_H
 
-#if defined(HAVE_TVM_TVM_TYPES_H)
-#include <tvm/tvm_types.h>
-#elif defined(HAVE_KROC_TVM_TYPES_H)
-#include <kroc/tvm_types.h>
-#else
-#include <tvm_types.h>
-#endif
+#include "tvm_types.h"
 
 #define NUM_PRI 1
 

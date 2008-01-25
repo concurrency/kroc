@@ -3,7 +3,7 @@
 ################################
 
 AC_INIT([libtvm], [1.0.0])
-AM_CONFIG_HEADER(tvm_config.h)
+AM_CONFIG_HEADER(config.h)
 AC_PREREQ(2.59)
 
 AM_INIT_AUTOMAKE([libtvm], [1.0.0])
@@ -13,7 +13,8 @@ AC_PROG_CC
 AC_PROG_RANLIB
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS(stdlib.h stdio.h string.h sys/types.h math.h inttypes.h)
+AC_CHECK_HEADERS([stdlib.h stdio.h string.h])
+AC_CHECK_HEADERS([sys/types.h math.h inttypes.h setjmp.h])
 
 #########################
 #  Configuration Options
@@ -242,4 +243,5 @@ CFLAGS="$TVM_CFLAGS $CFLAGS"
 
 AC_SUBST(TVM_CFLAGS)
 
+AC_CONFIG_HEADERS([tvm_config.h])
 AC_OUTPUT([Makefile])
