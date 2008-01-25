@@ -173,20 +173,18 @@ PROTOCOL GETOPT
     done
 :
 --}}}
---{{{  C.STAT and STAT
---* Internal stat structure.
--- Equivalent to [@text struct stat] in C.
--- @private
-DATA TYPE C.STAT IS [18]INT32:
-
+--{{{  STAT
 --* Information about a filesystem object.
 -- This is the result from [@ref file.stat], [@ref file.lstat] and
 -- [@ref file.fstat]. See the [@text stat(2)] manual page for more information
 -- on the meaning of the fields.
+
+-- The C code depends on the layout of this structure; if you change it, you
+-- must also update unpack_stat.
 DATA TYPE STAT
-  RECORD
+  PACKED RECORD
     INT64 dev:            --* Device number
-    INT32 ino:            --* Inode number
+    INT64 ino:            --* Inode number
     INT32 mode:           --* Object type and permissions
     INT32 nlink:          --* Number of links
     INT32 uid:            --* Owner's uid
@@ -200,20 +198,13 @@ DATA TYPE STAT
     INT32 ctime:          --* Change time
 :
 --}}}
---{{{  C.DIRENT and DIRENT
---* Internal directory entry structure.
--- Equivalent to [@text struct dirent] in C.
--- @private
-DATA TYPE C.DIRENT IS [3 + 64]INT32:
-
+--{{{  DIRENT
 --* Information about a directory entry.
 -- This is the result from [@ref file.readdir].
+
+-- This is all the contents that POSIX guarantees (although most OSs have more).
 DATA TYPE DIRENT
   RECORD
-    INT32 ino:            --* Inode number
-    INT32 off:
-    INT16 reclen:
-    BYTE type:
     [256]BYTE filename:   --* Filename, terminated with [@code '*0']
 :
 --}}}
