@@ -3,7 +3,7 @@
 ################################
 
 AC_INIT([libtvm], [1.0.0])
-AM_CONFIG_HEADER(tvm-config.h)
+AM_CONFIG_HEADER(tvm_config.h)
 AC_PREREQ(2.59)
 
 AM_INIT_AUTOMAKE([libtvm], [1.0.0])
