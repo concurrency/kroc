@@ -3666,7 +3666,7 @@ PUBLIC void tprocess (treenode * tptr)
 							setlab (iskiplab);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, pony_offset + 2);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
 							gensemop (SEMOP_RELEASE);
 
 							/* do uio communication (to KRoC.net kernel in this case) */
@@ -3722,7 +3722,7 @@ PUBLIC void tprocess (treenode * tptr)
 							const int ijoinlab = newlab ();
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, pony_offset + 2);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + 3);		/* address of "state" semaphore */
 							gensemop (SEMOP_CLAIM);
 
 							loadmobile (ct_nptr);
