@@ -35,7 +35,12 @@ int has_shutdown = 0;
 /* FIXME: Should this be somewehere else? */
 void (*scheduler_busywait_hook)(void);
 #endif
+#ifndef BUSY_WAIT
+void (*tvm_sleep)(void);
+#endif
+#ifdef ENABLE_SCHED_SYNC
 volatile int sched_sync;
+#endif
 
 /* FIXME: The add_to_queue macro in soccam is in the helpers.scm, though
  * it probably ought to live with the rest of the scheduler stuff in
