@@ -1340,6 +1340,7 @@ static void pony_protocol_decoder (Workspace wptr)
 	Workspace walker;
 	int running = 1;
 
+	CTRACE ("protocol decoder starting (%08x)\n", 1, (int) in);
 	ChanInit (wptr, &pw_in);
 	ChanInit (wptr, &pw_out);
 	walker = ProcAlloc (wptr, 6, type_walker_stacksize);
@@ -1585,6 +1586,7 @@ static void pony_protocol_encoder (Workspace wptr)
 	Workspace walker;
 	int running = 1;
 
+	CTRACE ("protocol encoder starting (%08x)\n", 1, (int) out);
 	ChanInit (wptr, &pw_in);
 	ChanInit (wptr, &pw_out);
 	walker = ProcAlloc (wptr, 6, type_walker_stacksize);
@@ -1815,6 +1817,7 @@ static void make_ctb_networked (Workspace wptr, mt_cb_t *ctb, unsigned int *type
  */
 void pony_int_get_tdesc_data_uc (Workspace wptr)
 {
+	/* 0 is cli (we only care about the type descriptor) */
 	unsigned int *tdesc	= ProcGetParam (wptr, 1, unsigned int *);
 	int *nchans		= ProcGetParam (wptr, 2, int *);
 	int *nsvrread		= ProcGetParam (wptr, 3, int *);
@@ -1856,6 +1859,8 @@ void pony_int_get_tdesc_data_ss (Workspace wptr)
  */
 void pony_int_clone_ctb_uc (Workspace wptr)
 {
+	/* 0 is cli return slot */
+	/* 1 is typedesc for cli */
 	int ctb_ptr = ProcGetParam (wptr, 2, int);
 
 	CTRACE ("clone_ctb_uc (%08x)\n", 1, ctb_ptr);
@@ -1890,12 +1895,17 @@ void pony_int_clone_ctb_ss (Workspace wptr)
  */
 void pony_int_alloc_ctb_uc (Workspace wptr)
 {
+	/* 0 is cli return slot */
 	unsigned int *cb_tdesc		= ProcGetParam (wptr, 1, unsigned int *);
 	int nct_id			= ProcGetParam (wptr, 2, int);
 	mt_cb_t *net_hook_handle	= ProcGetParam (wptr, 3, mt_cb_t *);
-	mt_array_t *dec_handle_array	= ProcGetParam (wptr, 4, mt_array_t *);
-	mt_array_t *enc_handle_array	= ProcGetParam (wptr, 5, mt_array_t *);
-	int *ctb_ptr			= ProcGetParam (wptr, 6, int *);
+	/* 4 is data */
+	mt_array_t *dec_handle_array	= ProcGetParam (wptr, 5, mt_array_t *);
+	/* 6 is dimension 0 */
+	/* 7 is data */
+	mt_array_t *enc_handle_array	= ProcGetParam (wptr, 8, mt_array_t *);
+	/* 9 is dimension 0 */
+	int *ctb_ptr			= ProcGetParam (wptr, 10, int *);
 
 	mt_cb_t *cb;
 
@@ -1906,10 +1916,11 @@ void pony_int_alloc_ctb_uc (Workspace wptr)
 	ProcParam (wptr, wptr, 0, cb);
 	ProcParam (wptr, wptr, 3, NULL);
 	MTRelease (wptr, dec_handle_array);
-	ProcParam (wptr, wptr, 4, NULL);
-	MTRelease (wptr, enc_handle_array);
 	ProcParam (wptr, wptr, 5, NULL);
+	MTRelease (wptr, enc_handle_array);
+	ProcParam (wptr, wptr, 8, NULL);
 	*ctb_ptr = (int) cb;
+	CTRACE ("alloc_ctb_uc done\n", 0);
 }
 /*}}}*/
 /*{{{ PROC CIF.pony.int.alloc.ctb.sc (RESULT SHARED MOBILE.CHAN! cli, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) */
@@ -1936,7 +1947,9 @@ void pony_int_alloc_ctb_ss (Workspace wptr)
  */
 void pony_int_shutdown_ctbs (Workspace wptr)
 {
-	mt_array_t *ctbs = ProcGetParam (wptr, 0, mt_array_t *);
+	/* 0 is data */
+	mt_array_t *ctbs = ProcGetParam (wptr, 1, mt_array_t *);
+	/* 2 is dimension 0 */
 
 	int i;
 	mt_cb_t **p;
