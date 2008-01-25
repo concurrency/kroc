@@ -1,7 +1,7 @@
 #|
 skroc - skroc.ss
 An occam compiler convenience wrapper for occ21 and the slinker
-Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
+Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -147,9 +147,9 @@ Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
         [(windows) (format "~a.exe" name)]
         [else name])))
   
-  (define skroc-version "0.6.1")
-  (define skroc-revision (pregexp-replace* " ?\\$" "$Revision: 3136 $" ""))
-  (define skroc-c-year "2005")
+  (define skroc-version "0.6.2")
+  (define skroc-revision (pregexp-replace* " ?\\$" "$Revision$" ""))
+  (define skroc-c-year "2006")
   
   (define occ21 (lambda () (find-executable (add-exe "occ21"))))
   (define slinker (lambda () (find-executable (add-exe "slinker"))))
@@ -251,7 +251,7 @@ Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
 	 (set-parameter! 'brief #t)]
 	["--lego"
 	 "Output a .lx for the LEGO Mindstorms (very deprecated)"
-	 (set-parameter! 'targetprocessor 't2)
+	 (set-parameter! 'target-processor 't2)
 	 (set-parameter! 'output 'lx)
          ;; WARNING MCJ 20060331
          ;; We have no idea where this will pick this
@@ -264,7 +264,7 @@ Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
         
         ["--blackfin"
 	 "Output a TBC for the Surveyor SRV-1 running the Analog Devices BF537 processor."
-	 (set-parameter! 'targetprocessor 't4)
+	 (set-parameter! 'target-processor 't4)
 	 (set-parameter! 'output 'blackfin)
          ]
         
@@ -273,12 +273,12 @@ Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
         ;; For now, I'm calling it "srec".
         ["--srec"
          "Output a .srec for the LEGO Mindstorms"
-         (set-parameter! 'targetprocessor 't2)
+         (set-parameter! 'target-processor 't2)
          (set-parameter! 'output 'srec)]
         
         ["--occam"
          "Output a .occ for including in... occam-pi programs..."
-         (set-parameter! 'targetprocessor 't4)
+         (set-parameter! 'target-processor 't4)
          (set-parameter! 'output 'occam)]
         
         ["--keep-temp-files"
@@ -293,7 +293,7 @@ Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
 	 target
          "Set parameter to one of t2, t4, t8 (t4 or t8 are default)" 
          (if (list? (member (string->symbol target) '(t2 t4 t8)))
-             (set-parameter! 'targetprocessor (string->symbol target))
+             (set-parameter! 'target-processor (string->symbol target))
              (raise-user-error 'skroc "-t or --target only take values of t2, t4 or t8"))]
 	["--c"
 	 "Outputs a C file containing an array of bytecodes."
@@ -432,9 +432,9 @@ Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
                 ;;                                        implemented]
                 ;; removed -revalt (reverse alt enabeling sequence)
                 (cond
-                  [(equal? (get-parameter 'targetprocessor) 't2) "-t2 -V"]
-                  [(equal? (get-parameter 'targetprocessor) 't4) "-t4"]
-                  [(equal? (get-parameter 'targetprocessor) 't8) "-t8 -zqa"]
+                  [(equal? (get-parameter 'target-processor) 't2) "-t2 -V"]
+                  [(equal? (get-parameter 'target-processor) 't4) "-t4"]
+                  [(equal? (get-parameter 'target-processor) 't8) "-t8 -zqa"]
                   )
                 (apply string-append 
                        (map (lambda (x) 
@@ -442,7 +442,7 @@ Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
                             (get-parameter 
                              'defines
                              (lambda () '()))))
-                (if (equal? BYTEORDER "BIG") "-tbe" "-tle")
+                (if (equal? (get-parameter 'target-endian) 'BIG) "-tbe" "-tle")
                 (if (get-parameter 'brief (lambda () #f)) "-b" "")))
        (argify (intelli-split (get-parameter 'occ21-opts (lambda () '()))))
        )))
@@ -507,9 +507,9 @@ Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
       (list
        "-f" (get-parameter 'output-filename)
        "-w" (cond 
-              [(equal? (get-parameter 'targetprocessor) 't2) 2 ] 
-              [(equal? (get-parameter 'targetprocessor) 't4) 4 ] 
-              [(equal? (get-parameter 'targetprocessor) 't8) 4 ] 
+              [(equal? (get-parameter 'target-processor) 't2) 2 ] 
+              [(equal? (get-parameter 'target-processor) 't4) 4 ] 
+              [(equal? (get-parameter 'target-processor) 't8) 4 ] 
               )
        "-o" (get-parameter 'output)
        (map (lambda (dir) (list "-L" dir)) (get-parameter 'library-paths))
@@ -691,15 +691,30 @@ Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
   
   (define init
     (lambda ()
-      (set-parameter! 'output 'bytecode)
-      (set-parameter! 'library-output 'all)
-      (set-parameter! 'use-std-libs #t)
-      (set-parameter! 'targetprocessor (string->symbol target-cpu-type))
-      (set-parameter! 'temp-files '())
-      (set-parameter! 'keep-temp-files #f)
-      (set-parameter! 'done #f)
-      ))
-  
+      (let ([config-file (format "~a/include/tvm-config.h" install-dir)]
+	    [target-endian 'LITTLE]
+	    [target-processor 't4])
+	(if (file-exists? config-file)
+	  (let ([ip (open-input-file config-file)])
+	    (let loop ([line (read-line ip)])
+	      (unless (eof-object? line)
+	        (let ([emu (pregexp-match "^#define.*TVM_EMULATE_T([0-9]+)[[:space:]]" line)]
+		      [endian (pregexp-match "^#define.*TVM_(.*)_ENDIAN[[:space:]]" line)])
+		  (if emu
+		    (set! target-processor (string->symbol (format "t~a" (list-ref emu 1)))))
+		  (if endian
+		    (set! target-endian (string->symbol (list-ref endian 1))))
+		  (loop (read-line ip)))))))
+	(set-parameter! 'output 'bytecode)
+	(set-parameter! 'library-output 'all)
+	(set-parameter! 'use-std-libs #t)
+	(set-parameter! 'target-endian target-endian)
+	(set-parameter! 'target-processor target-processor)
+	(set-parameter! 'temp-files '())
+	(set-parameter! 'keep-temp-files #f)
+	(set-parameter! 'done #f)
+        )))
+
   (define (check-output-name-not-input-name)
     (let ([in* (get-parameter 'input-files)]
           [out (get-parameter 'output-filename)])
@@ -713,9 +728,9 @@ Copyright (C) 2004-2006 Matthew C. Jadud, Christian L. Jacobsen
   (init)
   ;; Parse the command-line arguments
   (parse-cmd)
-  ;; Tack the system library directory onto the end of the search path, so that
+  ;; Tack the library directory onto the end of the search path, so that
   ;; -L options will override it.
-  (append-parameter 'library-paths system-library-dir)
+  (append-parameter 'library-paths (format "~a/lib" install-dir))
   ;; If not output filename was supplied, try to autodetect
   (fix-output-name)
   ;; Make sure we aren't about to overwrite ourselves
