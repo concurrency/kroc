@@ -18,21 +18,16 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* ANNO: Various things are exported from this file which are not neccesarily
- * used in the interpreter, but they might be in other parts of a
- * Transterpreter, such as the wrapper. Ignore warnings about exported things
- * from here which are not used.
- */
-/*@-exportlocal@*/
-
 #ifndef TRANSPUTER_H
 #define TRANSPUTER_H
 
-#ifdef HAVE_CONFIG_H
-#include "tvm-config.h"
+#if defined(HAVE_TVM_TVM_TYPES_H)
+#include <tvm/tvm_types.h>
+#elif defined(HAVE_KROC_TVM_TYPES_H)
+#include <kroc/tvm_types.h>
+#else
+#include <tvm_types.h>
 #endif
-
-#include "types.h"
 
 #define NUM_PRI 1
 
@@ -88,7 +83,7 @@ extern WORD error_flag;
 extern WORD halt_on_error_flag;
 
 /* State not in the original Transputer */
-//extern WORD pri;		/* Current priority level */
+// extern WORD pri;		/* Current priority level */
 #define pri 0
 
 #endif /* TRANSPUTER_H */

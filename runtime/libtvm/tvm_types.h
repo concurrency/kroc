@@ -1,5 +1,5 @@
 /*
-tvm - types.h
+tvm - tvm_types.h
 The Transterpreter - a portable virtual machine for Transputer bytecode
 Copyright (C) 2004-2008 Christian L. Jacobsen, Matthew C. Jadud
 
@@ -17,8 +17,16 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef TVM_TYPES_H
+#define TVM_TYPES_H
+
+#if defined(HAVE_TVM_TVM_CONFIG_H)
+#include <tvm/tvm-config.h>
+#elif defined(HAVE_KROC_TVM_CONFIG_H)
+#include <kroc/tvm-config.h>
+#else
+#include <tvm-config.h>
+#endif
 
 /* Use stddef to get NULL. */
 #include <stddef.h>
@@ -74,4 +82,4 @@ typedef struct {
 	char *name;
 } FFI_TABLE_ENTRY;
 
-#endif /* !TYPES_H */
+#endif /* !TVM_TYPES_H */

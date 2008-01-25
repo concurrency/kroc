@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define FFI_TABLES_H
 
 #include "transputer.h"
-#include "types.h"
+#include "tvm_types.h"
 
 /* The foregin function interface jump tables */
 extern FFI_TABLE_ENTRY *ffi_table;
