@@ -33,6 +33,7 @@
 #include "ukcthreads_types.h"
 #include "ccsp_consts.h"
 #include "mobile_types.h"
+#include "ccsp_pony.h"
 #include "dmem_if.h"
 #include "kiface.h"
 #include "ccsp_if.h"
