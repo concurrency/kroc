@@ -197,7 +197,7 @@ case "$x_os" in
     ;;
   solaris)
     AC_DEFINE([TVM_OS_SOLARIS], 1, [define for Solaris TVM])
-    TVM_CFLAGS = "$TVM_CFLAGS -I/opt/SUNWspro/prod/include/cc/"
+    TVM_CFLAGS="$TVM_CFLAGS -I/opt/SUNWspro/prod/include/cc/"
     ;;
   windows)
     AC_DEFINE([TVM_OS_WINDOWS], 1, [define for Windows TVM])
