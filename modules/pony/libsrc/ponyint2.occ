@@ -4702,14 +4702,14 @@ PROC pony.int.ctb.mgr (VAL INT own.node.id,
                         output.msgs
                           CLAIM int.msg.handle
                             SEQ
-                              int.msg.handle[to.handler] ! msg.str; "ctb.mgr: OUT ctbmgrh: increase.ref.count; "
+                              int.msg.handle[to.handler] ! msg.str; "ctb.mgr: OUT ctbmgrh: clone.ctb; "
                               int.msg.handle[to.handler] ! msg.hex; ctb.ptr.array[nct.id]
                               int.msg.handle[to.handler] ! msg.end; FALSE
                         TRUE
                           SKIP
                       --}}}
                       -- Carrying: CTB-pointer
-                      ctb.mgr.handle.svr[from.mgr] ! increase.ref.count; ctb.ptr.array[nct.id]
+                      ctb.mgr.handle.svr[from.mgr] ! clone.ctb; ctb.ptr.array[nct.id]
                   --}}}
                   --{{{  New CTB
                   TRUE
