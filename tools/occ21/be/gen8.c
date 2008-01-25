@@ -4181,8 +4181,7 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 	case PD_ALLOC_CHAN_TYPE:
 		{
 			int chans, type_bytes, shared_server, shared_client;
-			int knsf_offset;
-			int tdesc_offset;
+			int pony_offset;
 			int flags = 0;
 
 			treenode *p0base = param[0];
@@ -4205,17 +4204,11 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 
 			chans = (type_bytes / bytesperword);
 
-			if (kroc_chantype_desc) {
+			if (kroc_chantype_desc || kroc_chantype_knsf) {
 				flags |= MT_CB_STATE_SPACE;
-				tdesc_offset = chans;
+				pony_offset = chans;
 			} else {
-				tdesc_offset = 0x80000000;
-			}
-
-			if (kroc_chantype_knsf) {
-				knsf_offset = chans + MCT_DESCSIZE;
-			} else {
-				knsf_offset = 0x80000000;
+				pony_offset = 0x80000000;
 			}
 
 #if 0
@@ -4224,7 +4217,7 @@ printtreenl (stderr, 4, p0base);
 fprintf (stderr, "tpredef (PD_ALLOC_CHAN_TYPE): p1base is: ");
 printtreenl (stderr, 4, p1base);
 fprintf (stderr, "tpredef: bytesin (NTypeOf (param[0])) = %d.  shared_server = %d, shared_client = %d.  extra_bytes = %d\n", type_bytes, shared_server, shared_client, extra_bytes);
-fprintf (stderr, "tpredef: tdesc_offset = %d, knsf_offset = %d.  (param[0]) is ", tdesc_offset, knsf_offset);
+fprintf (stderr, "tpredef: pony_offset = %d.  (param[0]) is ", pony_offset);
 printtreenl (stderr, 4, (param[0]));
 fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (NTypeOf (param[1])) = %d\n", NTypeAttrOf (NTypeOf (param[0])), NTypeAttrOf (NTypeOf (param[1])));
 #endif
@@ -4262,12 +4255,7 @@ fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (N
 
 				genloadlabptr (MTDLabOf (mtype), NOLAB, "MTD PTR");
 				genprimary (I_LDL, 0);
-				genprimary (I_STNL, tdesc_offset);
-
-				/* set magic operations field to NULL */
-				gensecondary (I_NULL);
-				genprimary (I_LDL, 0);
-				genprimary (I_STNL, tdesc_offset + 1);
+				genprimary (I_STNL, pony_offset); /* typedesc */
 			}
 
 			if (kroc_chantype_knsf) {
@@ -4281,11 +4269,7 @@ fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (N
 										: 0x00010000);	/* not shared */
 				loadconstant (istate);
 				genprimary (I_LDL, 0);
-				genprimary (I_STNL, knsf_offset);
-
-				genprimary (I_LDL, 0);
-				genprimary (I_LDNLP, knsf_offset + 1);
-				gensemop (SEMOP_INIT);
+				genprimary (I_STNL, pony_offset + 2); /* state */
 			}
 
 			/* that ought to do it.. */
