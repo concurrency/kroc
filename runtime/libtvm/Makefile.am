@@ -55,6 +55,7 @@ libtvm_a_SOURCES += \
 	ins_timer.c \
 	ins_t800.c \
 	instructions.c \
+	interpreter.c \
 	jumptbl_pri.c \
 	jumptbl_sec.c \
 	jumptbl_ex_sec.c \
