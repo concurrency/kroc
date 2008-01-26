@@ -37,7 +37,7 @@ TVM_INSTRUCTION_PROTO void ins_lendbw(void);
 /* 0x23 - 0x22 0xF3 - reschedule */
 TVM_INSTRUCTION_PROTO void ins_reschedule(void);
 
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 /* 0x14 - 0x21 0xF4 - extvrfy - external channel verify */
 TVM_INSTRUCTION_PROTO void ins_extvrfy(void);
 /* 0x60 - 0x26 0xF0 - extin - external channel input */
@@ -55,7 +55,8 @@ TVM_INSTRUCTION_PROTO void ins_savecreg(void);
 /* 0xAE - 0x2A 0xFE - ins_restorecreg - restore the creg *magic :) */
 TVM_INSTRUCTION_PROTO void ins_restorecreg(void);
 
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
+
 /****************************************************************************
  *              0x27 0xF_         0x27 0xF_         0x27 0xF_               *
  ****************************************************************************/
@@ -81,6 +82,7 @@ TVM_INSTRUCTION_PROTO void ins_xable(void);
 TVM_INSTRUCTION_PROTO void ins_xin(void);
 /* 0xEC - 0x2E 0xFC - xend - Extended Input End */
 TVM_INSTRUCTION_PROTO void ins_xend(void);
-#endif /* __PI_SUPPORT */
+
+#endif /* TVM_OCCAM_PI */
 
 #endif /* INS_FRED_H */

@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ins_mt.h"
 #include "dmem.h"
 
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 
 /****************************************************************************
  *              0x26 0xF_         0x26 0xF_         0x26 0xF_               *
@@ -191,19 +191,15 @@ TVM_INSTRUCTION void ins_xminn(void)
 	ins_xin();
 }
 
-#endif /*__MOBILE_PI_SUPPORT__ */
+#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
 
 /****************************************************************************
  *              0x2F 0xF_         0x2F 0xF_         0x2F 0xF_               *
  ****************************************************************************/
 
-/* 0xFD - 0x2F 0xFD - null - put null onto the stack I think */
+/* 0xFD - 0x2F 0xFD - null - put null onto the stack */
 TVM_INSTRUCTION void ins_null(void)
 {
-	/* FIXME: Is this not just LDC 0 */
-	/* FIXME: And if so, should the slinker turn it into that? */
-	/* FIXME: Or is there something going on here I havent spotted */
 	STACK((WORD) NULL_P, areg, breg);
 }
-
 

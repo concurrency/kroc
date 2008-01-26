@@ -168,7 +168,7 @@ TVM_INSTRUCTION void ins_lendbw(void)
 	//printf("<lendbw\n");
 }
 
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 
 /* 0x14 - 0x21 0xF4 - extvrfy - external channel verify */
 TVM_INSTRUCTION void ins_extvrfy(void)
@@ -207,7 +207,7 @@ TVM_INSTRUCTION void ins_extout(void)
 	ext_chan_table[(UWORD)breg >> 1](areg, (BYTEPTR)creg);
 }
 
-#endif
+#endif /* TVM_OCCAM_PI */
 
 /* FIXME: We don't currently support priority in the scheduler, so these two
  * instructions do nothing. */
@@ -239,7 +239,7 @@ TVM_INSTRUCTION void ins_restorecreg(void)
 	creg = saved_creg;
 }
 
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 
 /****************************************************************************
  *              0x27 0xF_         0x27 0xF_         0x27 0xF_               *
@@ -378,7 +378,7 @@ TVM_INSTRUCTION void ins_xin(void)
 	other_wptr = (WORDPTR) read_word(chan_addr);
 	read_start = (BYTEPTR) WORKSPACE_GET(other_wptr, WS_CHAN);
 
-	copy_data(write_start, read_start, num_bytes);
+	tvm_copy_data(write_start, read_start, num_bytes);
 
 	UNDEFINE_STACK();
 }
@@ -393,10 +393,10 @@ TVM_INSTRUCTION void ins_xend(void)
 	write_word(chan_addr, NOT_PROCESS_P);
 
 	/* Put the outputting process on the run queue */
-	add_just_add_to_queue(other_wptr);
+	tvm_just_add_to_queue(other_wptr);
 
 	UNDEFINE_STACK();
 }
 
-#endif /* __PI_SUPPORT__ */
+#endif /* TVM_OCCAM_PI */
 

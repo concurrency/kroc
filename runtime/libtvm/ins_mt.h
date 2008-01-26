@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "instructions.h"
 #include "tvm_types.h"
 
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 
 #define MT_DEFINES 1
 #define MT_TVM 1
@@ -72,6 +72,7 @@ TVM_INSTRUCTION_PROTO void ins_mt_xxchg(void);
 TVM_INSTRUCTION_PROTO void ins_mt_dclone(void);
 /* 0x247 - 0x22 0x24 0xF7 - mt_bind - bind a mobile type in some way to a bit of data */
 TVM_INSTRUCTION_PROTO void ins_mt_bind(void);
-#endif
+
+#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
 
 #endif /* INS_MT_H */

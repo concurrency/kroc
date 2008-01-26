@@ -15,6 +15,9 @@
 /* define to dispatch instructions using switch rather than a jump table */
 #undef TVM_DISPATCH_SWITCH
 
+/* define to alloc dynamic memory allocation */
+#undef TVM_DYNAMIC_MEMORY
+
 /* define to emulate a T2 processor */
 #undef TVM_EMULATE_T2
 

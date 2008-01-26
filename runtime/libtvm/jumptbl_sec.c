@@ -34,14 +34,14 @@ void (*const secondaries[255])(void) =
 	ins_outbyte,             /* 0E */
 	ins_outword,             /* 0F */
 	ins_seterr,              /* 10 */
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_mreleasep,           /* 11 */
 #else
 	ins_not_implemented,     /* 11 */
 #endif
 	ins_not_implemented,     /* 12 */
 	ins_csub0,               /* 13 */
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_extvrfy,             /* 14 */
 #else
 	ins_not_implemented,     /* 14 */
@@ -121,17 +121,17 @@ void (*const secondaries[255])(void) =
 	ins_not_implemented,     /* 5D */
 	ins_not_implemented,     /* 5E */
 	ins_not_implemented,     /* 5F */
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_extin,               /* 60 */
 #else
 	ins_not_implemented,     /* 60 */
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_extout,              /* 61 */
 #else
 	ins_not_implemented,     /* 61 */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_minn,                /* 62 */
 #else
 	ins_not_implemented,     /* 62 */
@@ -141,12 +141,12 @@ void (*const secondaries[255])(void) =
 #else
 	ins_not_implemented,     /* 63 */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_moutn,               /* 64 */
 #else
 	ins_not_implemented,     /* 64 */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_xminn,               /* 65 */
 #else
 	ins_not_implemented,     /* 65 */
@@ -187,17 +187,17 @@ void (*const secondaries[255])(void) =
 	ins_not_implemented,     /* 77 */
 	ins_not_implemented,     /* 78 */
 	ins_pop,                 /* 79 */
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_seminit,             /* 7A */
 #else
 	ins_not_implemented,     /* 7A */
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_semclaim,            /* 7B */
 #else
 	ins_not_implemented,     /* 7B */
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_semrelease,          /* 7C */
 #else
 	ins_not_implemented,     /* 7C */
@@ -373,22 +373,22 @@ void (*const secondaries[255])(void) =
 	ins_savecreg,            /* AD */
 	ins_restorecreg,         /* AE */
 	ins_not_implemented,     /* AF */
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_barinit,             /* B0 */
 #else
 	ins_not_implemented,     /* B0 */
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_barsync,             /* B1 */
 #else
 	ins_not_implemented,     /* B1 */
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_barresign,           /* B2 */
 #else
 	ins_not_implemented,     /* B2 */
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_barenroll,           /* B3 */
 #else
 	ins_not_implemented,     /* B3 */
@@ -481,67 +481,67 @@ void (*const secondaries[255])(void) =
 #else
 	ins_not_implemented,     /* DF */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_mnew,                /* E0 */
 #else
 	ins_not_implemented,     /* E0 */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_mfree,               /* E1 */
 #else
 	ins_not_implemented,     /* E1 */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_malloc,              /* E2 */
 #else
 	ins_not_implemented,     /* E2 */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_mrelease,            /* E3 */
 #else
 	ins_not_implemented,     /* E3 */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_min,                 /* E4 */
 #else
 	ins_not_implemented,     /* E4 */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_mout,                /* E5 */
 #else
 	ins_not_implemented,     /* E5 */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_min64,               /* E6 */
 #else
 	ins_not_implemented,     /* E6 */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_mout64,              /* E7 */
 #else
 	ins_not_implemented,     /* E7 */
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_xable,               /* E8 */
 #else
 	ins_not_implemented,     /* E8 */
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_xin,                 /* E9 */
 #else
 	ins_not_implemented,     /* E9 */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_xmin,                /* EA */
 #else
 	ins_not_implemented,     /* EA */
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	ins_xmin64,              /* EB */
 #else
 	ins_not_implemented,     /* EB */
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 	ins_xend,                /* EC */
 #else
 	ins_not_implemented,     /* EC */

@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "instructions.h"
 #include "tvm_types.h"
 
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 /* 0x22F - 0x22 0x22 0xFF - proc_alloc - allocate process workspace */
 TVM_INSTRUCTION_PROTO void ins_proc_alloc(void);
 /* 0x230 - 0x22 0x23 0xF0 - proc_param - pass parameter into workspace */
@@ -38,13 +38,12 @@ TVM_INSTRUCTION_PROTO void ins_proc_start(void);
 /* 0x234 - 0x22 0x23 0xF4 - proc_end - end process and release workspace */
 TVM_INSTRUCTION_PROTO void ins_proc_end(void);
 #endif
-
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 /* 0x235 - 0x22 0x23 0xF5 - getaff - get processor affinity */
 TVM_INSTRUCTION_PROTO void ins_getaff(void);
 /* 0x236 - 0x22 0x23 0xF6 - setaff - set processor affinity */
 TVM_INSTRUCTION_PROTO void ins_setaff(void);
-#endif
+#endif 
 /* 0x237 - 0x22 0x23 0xF7 - getpas - get priority and affinity state */
 TVM_INSTRUCTION_PROTO void ins_getpas(void);
 

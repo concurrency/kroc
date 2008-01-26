@@ -18,7 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
+#include "tvm.h"
 #include "instructions.h"
 #include "ext_chan.h"
 
@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ins_pri.h"
 #include "ins_sec.h"
 
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 
 /* stddef.h is freestanding, so should be safe in any build */
 #include <stddef.h>
@@ -257,7 +257,7 @@ TVM_HELPER void mt_release_simple (WORDPTR ptr, UWORD type)
 					if (MT_BARRIER_TYPE(type) == MT_BARRIER_FORKING) {
 						WORD process = read_word (ptr);
 						if (process != NOT_PROCESS_P) {
-							just_add_to_queue (process);
+							tvm_just_add_to_queue ((WORDPTR) process);
 						}
 					}
 					pfree (mb);
@@ -317,7 +317,7 @@ static WORDPTR mt_clone_array (WORDPTR ptr, UWORD type)
 	}
 
 	if (MT_TYPE(inner_type) == MT_NUM) {
-		copy_data ((BYTEPTR) dst_data, (BYTEPTR) src_data, size << size_shift);
+		tvm_copy_data ((BYTEPTR) dst_data, (BYTEPTR) src_data, size << size_shift);
 	} else {
 		while (size--) {
 			WORDPTR inner_ptr = (WORDPTR) read_word (src_data);
@@ -367,7 +367,7 @@ static WORDPTR mt_clone_simple (WORDPTR ptr, UWORD type)
 				UWORD size = (UWORD) read_offset (src, mt_data_internal_t, size);
 
 				dst = mt_alloc_data (type, size);
-				copy_data ((BYTEPTR) dst, (BYTEPTR) ptr, size);
+				tvm_copy_data ((BYTEPTR) dst, (BYTEPTR) ptr, size);
 
 				return dst;
 			}
@@ -765,7 +765,7 @@ TVM_INSTRUCTION void ins_mt_dclone(void)
 	if (type == (MT_SIMPLE | MT_MAKE_TYPE (MT_DATA))) {
 		if (bytes) {
 			dst = mt_alloc_data (type, bytes);
-			copy_data ((BYTEPTR) dst, (BYTEPTR) src, bytes);
+			tvm_copy_data ((BYTEPTR) dst, (BYTEPTR) src, bytes);
 		}
 	} else {
 		set_error_flag (EFLAG_MT);
@@ -875,5 +875,5 @@ void tvm_mt_release (void *ptr)
 }
 /*}}}*/
 
-#endif /* __MOBILE_PI_SUPPORT__ */
+#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
 

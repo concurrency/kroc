@@ -25,11 +25,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifndef TVM_DISPATCH_SWITCH
 #include "jumptbl_sec.h"
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 #include "jumptbl_ex_sec.h"
-#else /* !__PI_SUPPORT__ */
-#include "ins_fred.h"
-#endif /* !__PI_SUPPORT__ */
+#else /* !TVM_OCCAM_PI */
+#include "ins_pi.h"
+#endif /* !TVM_OCCAM_PI */
 #endif /* !TVM_DISPATCH_SWITCH */
 
 /* 0x8_ - adc - add constant */
@@ -621,17 +621,17 @@ TVM_INSTRUCTION void ins_opr(void)
 	}
 	else
 	{
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 		if(oreg >= extended_secondaries_min && oreg <= extended_secondaries_max)
 		{
 			extended_secondaries[oreg - extended_secondaries_min]();
 		} 
-#else /* !__PI_SUPPORT__*/
+#else /* !TVM_OCCAM_PI */
 		if (oreg == 0x237) /* getpas */
 		{
 			ins_getpri();
 		}
-#endif /* !__PI_SUPPORT__*/
+#endif /* !TVM_OCCAM_PI */
 		else
 		{
 			ins_not_implemented();

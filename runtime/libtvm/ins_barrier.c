@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #include "ins_barrier.h"
 
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 
 #define BAR_ENROLLED	0
 #define BAR_COUNT	1
@@ -45,7 +45,7 @@ static void tvm_bar_complete(WORDPTR bar)
 	if(bar_fptr != (WORD) NOT_PROCESS_P)
 	{
 		/* Reschedule processes queued on barrier. */
-		add_queue_to_queue(bar_fptr, bar_bptr);
+		tvm_add_queue_to_queue((WORDPTR) bar_fptr, (WORDPTR) bar_bptr);
 	}
 }
 
@@ -174,4 +174,4 @@ TVM_INSTRUCTION void ins_barenroll()
 	UNDEFINE_STACK();
 }
 
-#endif /* __PI_SUPPORT */
+#endif /* TVM_OCCAM_PI */
