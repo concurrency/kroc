@@ -20,20 +20,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "transputer.h"
 
-BYTEPTR iptr;             /* Instruction pointer */
-WORDPTR wptr;              /* Workspace pointer */
+BYTEPTR iptr;		/* Instruction pointer */
+WORDPTR wptr;		/* Workspace pointer */
 
-WORD areg;                /* Evaluation stack */
-WORD breg;                /* Evaluation stack */
-WORD creg;                /* Evaluation stack */
-WORD oreg;                /* Operand register */
+WORD areg;		/* Evaluation stack */
+WORD breg;		/* Evaluation stack */
+WORD creg;		/* Evaluation stack */
+WORD oreg;		/* Operand register */
 
-WORDPTR tptr[NUM_PRI];     /* Timer queue pointers */
-WORD tnext[NUM_PRI];      /* Timeout register */
-WORDPTR fptr[NUM_PRI];     /* Front pointer (scheduler queue) */
-WORDPTR bptr[NUM_PRI];     /* Back pointer (scheduler queue) */
+WORDPTR fptr[NUM_PRI];	/* Front pointer (scheduler queue) */
+WORDPTR bptr[NUM_PRI];	/* Back pointer (scheduler queue) */
+WORDPTR tptr;		/* Timer queue pointer */
+WORD tnext;		/* Timeout register */
 
-WORD error_flag;         
+WORD error_flag;
 WORD halt_on_error_flag;
 
 /* State not in the original Transputer */

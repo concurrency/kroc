@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tvm_types.h"
 #include "transputer.h"
 #include "tvm_mem.h"
+#include "tvm_time.h"
 
 /*{{{  The foregin function interface jump tables */
 extern FFI_TABLE_ENTRY *ffi_table;
@@ -98,7 +99,6 @@ enum {
 /*}}}*/
 
 /*{{{  Externally provided functions */
-extern WORD (*tvm_get_time)(void);
 extern void (*tvm_invalid)(void);
 extern void (*tvm_not_implemented)(void);
 extern void (*tvm_runloop_pre)(void);

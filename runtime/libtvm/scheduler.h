@@ -32,6 +32,8 @@ extern void add_to_queue(WORD src_reg, WORD iptr_prime);
 extern void add_queue_to_queue(WORD front, WORD back);
 extern BYTEPTR run_next_on_queue(void);
 
+void timer_queue_insert(WORD current_time, WORD reschedule_time);
+
 #ifndef BUSY_WAIT
 extern void (*tvm_sleep)(void);
 #endif

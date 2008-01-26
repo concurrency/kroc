@@ -33,6 +33,8 @@ include_HEADERS = \
 	tvm.h \
 	tvm_config.h \
 	tvm_mem.h \
+	tvm_mem_intf.h \
+	tvm_time.h \
 	tvm_types.h
 
 libtvm_a_SOURCES = transputer.c

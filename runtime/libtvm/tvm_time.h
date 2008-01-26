@@ -1,5 +1,5 @@
 /*
-tvm - timer.h
+tvm - tvm_time.h
 The Transterpreter - a portable virtual machine for Transputer bytecode
 Copyright (C) 2004-2008 Christian L. Jacobsen, Matthew C. Jadud
 
@@ -18,16 +18,16 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef TVM_TIME_H
+#define TVM_TIME_H
 
-#define BEFORE(t1, t2) (!(AFTER(t1, t2)))
-int AFTER(WORD t1, WORD t2);
+#include "tvm.h"
 
-void timer_queue_insert(WORD current_time, WORD reschedule_time);
+#define TIME_AFTER(t1,t2)	((((WORD) (t1)) - ((WORD) (t2))) > 0)
+#define TIME_BEFORE(t1,t2)	TIME_AFTER(t2,t1)
 
-#ifdef ENABLE_SCHED_SYNC
-void set_alarm(int time);
-#endif
+extern WORD (*tvm_get_time)(void);
+extern void (*tvm_set_alarm)(WORD);
+extern void (*tvm_sleep)(void);
 
-#endif /* TIMER_H */
+#endif /* TVM_TIME_H */
