@@ -25,10 +25,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*@-predboolint@*/
 
-#include "transputer.h"
+#include "tvm.h"
 #include "instructions.h"
 #include "interpreter.h"
-#include "mem.h"
 #include "ext_chan.h"
 
 #ifdef TVM_DISPATCH_SWITCH
@@ -103,7 +102,7 @@ void exit_runloop(int exit_val)
  *    ...
  *    init_stackframe(&wptr, ...)
  */
-void init_stackframe(WORDPTR *where, int argc, WORD argv[],
+void tvm_init_stackframe(WORDPTR *where, int argc, WORD argv[],
 		WORDPTR vectorspace, WORDPTR mobilespace, WORDPTR forkingbarrier,
 		int ret_type, BYTEPTR ret_addr)
 {
@@ -116,9 +115,6 @@ void init_stackframe(WORDPTR *where, int argc, WORD argv[],
 		+ (ret_type != RET_REAL ? 1 : 0);
 	frame_size = (frame_size < 4 ? 4 : frame_size);
 
-	/* Set up a stack frame which will return to the method final_ret, which
-	 * will in turn exit the run loop
-	 */
 	*where = wordptr_minus(*where, frame_size);
 
 	/* Store an index to the return pointer */
@@ -175,7 +171,7 @@ void init_stackframe(WORDPTR *where, int argc, WORD argv[],
 	}
 }
 
-void initial_stackframe(WORDPTR *where, int argc, WORD argv[],
+void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 		WORDPTR vectorspace, WORDPTR mobilespace, int add_forkingbarrier)
 {
 	WORDPTR fb = (WORDPTR) NULL_P;
@@ -187,7 +183,7 @@ void initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 	}
 	#endif
 
-	init_stackframe(where, argc, argv, vectorspace, mobilespace, fb, RET_SHUTDOWN, 0);
+	tvm_init_stackframe(where, argc, argv, vectorspace, mobilespace, fb, RET_SHUTDOWN, 0);
 }
 
 /** 
@@ -200,7 +196,7 @@ void initial_stackframe(WORDPTR *where, int argc, WORD argv[],
  *
  * @return Nothing, when the interpreted program has finished.
  */
-int run(void)
+int tvm_run(void)
 {
 	/* FIXME: Set up a stack frame we can return from to a special location
 	 * which will break us out of this loop.
@@ -224,9 +220,9 @@ int run(void)
 			BYTE instr;
 
 #ifdef ENABLE_RUNLOOP_DBG_HOOKS
-			if(runloop_dbg_hook_pre)
+			if(tvm_runloop_pre)
 			{
-				runloop_dbg_hook_pre();
+				tvm_runloop_pre();
 			}
 #endif
 			/* Increment the instruction pointer */
@@ -255,9 +251,9 @@ int run(void)
 #endif
 
 #ifdef ENABLE_RUNLOOP_DBG_HOOKS
-			if(runloop_dbg_hook_post)
+			if(tvm_runloop_post)
 			{
-				runloop_dbg_hook_post();
+				tvm_runloop_post();
 			}
 #endif
 		}

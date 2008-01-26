@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "transputer.h"
 #include "instructions.h"
 
-#include "mem.h"
 #include "scheduler.h"
 
 #include "ins_mt.h"

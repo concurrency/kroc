@@ -18,14 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
-#include "instructions.h"
-#include "ext_chan.h"
-
-#include "mem.h"
-#include "pool_alloc.h"
-#include "scheduler.h"
-
+#include "tvm.h"
 #include "ins_rmox.h"
 
 #ifdef __RMOX_PI_SUPPORT__

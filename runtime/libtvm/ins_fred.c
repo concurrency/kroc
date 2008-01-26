@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ext_chan.h"
 
 #include "scheduler.h"
-#include "mem.h"
 
 #include "ins_sec.h"
 #include "ins_fred.h"

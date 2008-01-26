@@ -9,6 +9,9 @@
 /* define for big-endian TVM */
 #undef TVM_BIG_ENDIAN
 
+/* define to enable tvm_copy_data as an externally provided function */
+#undef TVM_CUSTOM_COPY_DATA
+
 /* define to dispatch instructions using switch rather than a jump table */
 #undef TVM_DISPATCH_SWITCH
 
@@ -47,6 +50,9 @@
 
 /* define to allow FPU usage */
 #undef TVM_USE_FPU
+
+/* define to use memcpy as tvm_copy_data */
+#undef TVM_USE_MEMCPY
 
 /* define to allow malloc usage */
 #undef TVM_USE_MALLOC

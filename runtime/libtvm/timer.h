@@ -24,8 +24,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define BEFORE(t1, t2) (!(AFTER(t1, t2)))
 int AFTER(WORD t1, WORD t2);
 
-extern WORD (*get_time)(void);
-
 void timer_queue_insert(WORD current_time, WORD reschedule_time);
 
 #ifdef ENABLE_SCHED_SYNC

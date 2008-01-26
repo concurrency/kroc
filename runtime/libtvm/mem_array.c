@@ -18,13 +18,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* ANNO: This file redefines the memory interface (functions), this is ok,
- * as only one memory interface file gets compiled in ever. */
-/*@-redef@*/
+#include "tvm_mem.h"
 
-#include "transputer.h"
-#include "interpreter.h"
-#include "mem.h"
+#ifdef TVM_MEM_INTF_ARRAY
 
 static BYTE *memory_array;
 int mem_size;
@@ -71,6 +67,8 @@ float read_wordf(WORDPTR ptr)
 	return *(float *)(&memory_array[ptr]);
 }
 
+#ifdef TVM_USE_FPU
+
 void write_wordf(WORDPTR ptr, float val)
 {
 	check_addr(ptr);
@@ -95,3 +93,6 @@ int *wordptr_real_address(WORDPTR ptr)
 	return (int *)(&memory_array[ptr]);
 }
 
+#endif /* TVM_USE_FPU */
+
+#endif /* TVM_MEM_INTF_ARRAY */

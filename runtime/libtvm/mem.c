@@ -18,16 +18,14 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
-#include "instructions.h"
-#include "mem.h"
+#include "tvm_mem.h"
 
-#if (defined USE_CUSTOM_COPY_DATA)
-/* define nothing */
-#elif (defined USE_MEMCPY) && (defined WORDPTRS_REAL)
+#if defined(TVM_CUSTOM_COPY_DATA)
+void (*tvm_copy_data)(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
+#elif defined(TVM_USE_MEMCPY) && defined(WORDPTRS_REAL)
 /* define nothing */
 #else
-TVM_HELPER void copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes)
+void tvm_copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes)
 {
 	/* -- Bit twiddling lesson --
 	 * 
@@ -57,7 +55,6 @@ TVM_HELPER void copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_byt
 	 * 
 	 * Please see above bit twiddling lesson if confused.
 	 */
-	#if (defined USE_BETTER_COPY_DATA)
 	if(!((num_bytes | (UWORD) write_start | (UWORD) read_start) & (TVM_WORD_LENGTH - 1)))
 	{
 		/* Reduce bytes to words */
@@ -71,7 +68,6 @@ TVM_HELPER void copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_byt
 		}
 	}
 	else
-	#endif /* (defined BETTER_COPY_DATA) */
 	{
 		while(num_bytes--)
 		{
@@ -81,5 +77,5 @@ TVM_HELPER void copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_byt
 		}
 	}
 }
-#endif /* (defined USE_CUSTOM_COPY_DATA) */
+#endif /* !defined(TVM_USE_MEMCPY) */
 

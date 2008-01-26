@@ -35,17 +35,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define TVM_INSTRUCTION_PROTO extern
 #endif
 
-/* This instruction MAY timeslice */
-#define TIMESLICE()
-/* This instruction MAY reschedule */
-#define RESCHEDULE()
 /* This instruction clears a register */
 #define CLEAR(reg) \
 	do { (reg) = 0; } while (0)
 /* This instruction makes a register undefined */
 #define UNDEFINE(reg) (reg)
-/* Increment the instruction pointer */
-#define NEXTINS() ++iptr
 
 /* This macro assumes a decent C compiler (i.e. gcc) 
  * which removes things like "y = x; x = y".
@@ -96,54 +90,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define UNDEFINE_STACK() \
 	/* STACK(UNDEFINE(areg), UNDEFINE(breg), UNDEFINE(creg)) */
-
-/* The WORKSPACE macros (_SET and _GET). These are (roughly) equivalent to
- * the "workspace" and "workspace!" macros in soccam. */
-
-/* First, the symbols for the various workspace locations */
-#define WS_TOP       0
-#define WS_IPTR      1 /* Valid when: the process has been descheduled */
-#define WS_NEXT      2 /* Valid when: the process is on a scheduling list */
-#define WS_CHAN      3 /* Valid when: the process is waiting for */
-#define WS_ALT_STATE 3 /*             communication, or is executing an ALT */
-#define WS_NEXT_T    4 /* Valid when: the process is on */
-#define WS_ALT_T     4 /*             a timer list */
-#define WS_TIMEOUT   5 /* Valid when: the process is on a timer list */
-
-/* Now the actual macros */
-#define WORKSPACE_GET(WPTR, LOC) \
-	read_word(wordptr_minus((WPTR), (LOC)))
-#define WORKSPACE_SET(WPTR, LOC, VAL) \
-	write_word(wordptr_minus((WPTR), (LOC)), (VAL))
-
-/* Error values */
-enum {
-	EFLAG_SETERR = 1,
-	EFLAG_CSUB0,
-	EFLAG_LADD,
-	EFLAG_LDIV,
-	EFLAG_REM,
-	EFLAG_DIV,
-	EFLAG_LSUB,
-	EFLAG_CSNGL,
-	EFLAG_CCNT1,
-	EFLAG_CWORD,
-	EFLAG_ADC,
-	EFLAG_ADD,
-	EFLAG_SUB,
-	EFLAG_MUL,
-	EFLAG_BAR,	/* Barrier underflow */
-	EFLAG_FP,	/* Floating point error */
-	EFLAG_ALT,
-	EFLAG_CHAN,	/* Channel communication error */
-	EFLAG_DMEM,	/* Memory allocator error */
-	EFLAG_MT,	/* Mobile type error */
-	EFLAG_PROC,	/* Process API error */
-	EFLAG_SHUTDOWN	/* Erroneous shutdown */
-};
-
-extern void (*not_implemented)(void);
-extern void (*invalid)(void);
 
 extern void ins_not_implemented(void);
 extern void ins_invalid(void);

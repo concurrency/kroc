@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "instructions.h"
 #include "ext_chan.h"
 
-#include "mem.h"
 #include "pool_alloc.h"
 #include "scheduler.h"
 
