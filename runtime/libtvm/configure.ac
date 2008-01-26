@@ -194,6 +194,7 @@ fi
 
 # Memory allocator
 if test "$memory_allocator" = "malloc"; then
+  AC_DEFINE([TVM_DYNAMIC_MEMORY], 1, [define to alloc dynamic memory allocation])
   AC_DEFINE([TVM_USE_MALLOC], 1, [define to allow malloc usage])
 fi
 

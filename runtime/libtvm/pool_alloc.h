@@ -21,13 +21,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef POOL_ALLOC_H
 #define POOL_ALLOC_H
 
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 void dmem_init(void);
 void* palloc(int size);
 void* palloc_pool(int index);
 void* palloc_pool_size(int index, int size);
 void pfree(void* address);
 void pfree_pool(int index, void* address);
-#endif
+#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
 
 #endif

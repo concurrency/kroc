@@ -23,7 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "instructions.h"
 
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
+
 /****************************************************************************
  *              0x26 0xF_         0x26 0xF_         0x26 0xF_               *
  ****************************************************************************/
@@ -66,7 +67,8 @@ TVM_INSTRUCTION_PROTO void ins_xmin(void);
 TVM_INSTRUCTION_PROTO void ins_xmin64(void);
 /* 0x65 - 0x26 0xF5 - xminn - Extended multi-dim Dynamic Mobile Array Input */
 TVM_INSTRUCTION_PROTO void ins_xminn(void);
-#endif /* __MOBILE_PI_SUPPORT__ */
+
+#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
 
 /****************************************************************************
  *              0x2F 0xF_         0x2F 0xF_         0x2F 0xF_               *

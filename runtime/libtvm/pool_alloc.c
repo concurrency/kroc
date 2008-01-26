@@ -18,11 +18,11 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
+#include "tvm.h"
 #include "pool_alloc.h"
 #include "interpreter.h"
 
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 
 #include <stdlib.h>
 #include <string.h>
@@ -72,5 +72,5 @@ void pfree_pool(int index, void *addr)
 	pfree(addr);
 }
 
-#endif
+#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
 

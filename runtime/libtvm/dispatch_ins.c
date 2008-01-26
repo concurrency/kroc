@@ -38,11 +38,11 @@ static inline void dispatch_instruction(BYTE instr)
 		case 0x0E: ins_outbyte(); break;
 		case 0x0F: ins_outword(); break;
 		case 0x10: ins_seterr(); break;
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 		case 0x11: ins_mreleasep(); break;
 #endif
 		case 0x13: ins_csub0(); break;
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 		case 0x14: ins_extvrfy(); break;
 #endif
 		case 0x15: ins_stopp(); break;
@@ -99,17 +99,17 @@ static inline void dispatch_instruction(BYTE instr)
 		case 0x55: ins_stoperr(); break;
 		case 0x56: ins_cword(); break;
 		case 0x5A: ins_dup(); break;
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 		case 0x60: ins_extin(); break;
 		case 0x61: ins_extout(); break;
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 		case 0x62: ins_minn(); break;
 #endif
 #if defined(TVM_EMULATE_T4) || defined(TVM_EMULATE_T8)
 		case 0x63: ins_unpacksn(); break;
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 		case 0x64: ins_moutn(); break;
 		case 0x65: ins_xminn(); break;
 #endif
@@ -120,7 +120,7 @@ static inline void dispatch_instruction(BYTE instr)
 		case 0x72: ins_fmul(); break;
 #endif
 		case 0x79: ins_pop(); break;
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 		case 0x7A: ins_seminit(); break;
 		case 0x7B: ins_semclaim(); break;
 		case 0x7C: ins_semrelease(); break;
@@ -166,7 +166,7 @@ static inline void dispatch_instruction(BYTE instr)
 #endif
 		case 0xAD: ins_savecreg(); break;
 		case 0xAE: ins_restorecreg(); break;
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 		case 0xB0: ins_barinit(); break;
 		case 0xB1: ins_barsync(); break;
 		case 0xB2: ins_barresign(); break;
@@ -185,7 +185,7 @@ static inline void dispatch_instruction(BYTE instr)
 		case 0xDB: ins_fpabs(); break;
 		case 0xDF: ins_fpchki64(); break;
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 		case 0xE0: ins_mnew(); break;
 		case 0xE1: ins_mfree(); break;
 		case 0xE2: ins_malloc(); break;
@@ -195,20 +195,20 @@ static inline void dispatch_instruction(BYTE instr)
 		case 0xE6: ins_min64(); break;
 		case 0xE7: ins_mout64(); break;
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 		case 0xE8: ins_xable(); break;
 		case 0xE9: ins_xin(); break;
 #endif
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 		case 0xEA: ins_xmin(); break;
 		case 0xEB: ins_xmin64(); break;
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 		case 0xEC: ins_xend(); break;
 #endif
 		case 0xFD: ins_null(); break;
 		case 0xFE: ins_shutdown(); break;
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 		case 0x22F: ins_proc_alloc(); break;
 		case 0x230: ins_proc_param(); break;
 		case 0x231: ins_proc_mt_copy(); break;
@@ -216,12 +216,12 @@ static inline void dispatch_instruction(BYTE instr)
 		case 0x233: ins_proc_start(); break;
 		case 0x234: ins_proc_end(); break;
 #endif
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 		case 0x235: ins_getaff(); break;
 		case 0x236: ins_setaff(); break;
 #endif
 		case 0x237: ins_getpas(); break;
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 		case 0x238: ins_mt_alloc(); break;
 		case 0x239: ins_mt_release(); break;
 		case 0x23A: ins_mt_clone(); break;

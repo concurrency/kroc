@@ -18,12 +18,12 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
+#include "tvm.h"
 #include "ext_chan.h"
 
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 
-void ext_chan_undefined(/*@unused@*/ WORD count, /*@unused@*/ BYTEPTR address)
+void ext_chan_undefined(WORD count, BYTEPTR address)
 {
 	/* FIXME: A hook like in ins_not_impl */
 }
@@ -48,5 +48,5 @@ EXT_CHAN_FUNCTION ext_chan_table[EXT_CHAN_ENTRIES] =
 	ext_chan_undefined
 };
 
-#endif
+#endif /* TVM_OCCAM_PI */
 

@@ -37,7 +37,14 @@ include_HEADERS = \
 	tvm_time.h \
 	tvm_types.h
 
-libtvm_a_SOURCES = transputer.c
+libtvm_a_SOURCES = \
+	ext_chan.c \
+	interpreter.c \
+	mem_array.c \
+	mem_bigendian.c \
+	pool_alloc.c \
+	scheduler.c \
+	transputer.c
 
 if TVM_DISPATCH_SWITCH
 else
@@ -56,13 +63,10 @@ libtvm_a_SOURCES += \
 	ins_timer.c \
 	ins_t800.c \
 	instructions.c \
-	interpreter.c \
 	jumptbl_pri.c \
 	jumptbl_sec.c \
 	jumptbl_ex_sec.c \
 	mem.c \
-	mem_array.c \
-	mem_bigendian.c \
 	scheduler.c
 endif
 

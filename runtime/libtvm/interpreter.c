@@ -137,12 +137,10 @@ void tvm_init_stackframe(WORDPTR *where, int argc, WORD argv[],
 	}
 
 	/* Set up forking barrier pointer if neccesary */
-	#ifdef __MOBILE_PI_SUPPORT__
 	if(forkingbarrier)
 	{
 		write_word(wordptr_plus(*where, index++), (WORD)forkingbarrier);
 	}
-	#endif
 
 	switch(ret_type) {
 		case RET_SHUTDOWN:
@@ -176,7 +174,7 @@ void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 {
 	WORDPTR fb = (WORDPTR) NULL_P;
 
-	#ifdef __MOBILE_PI_SUPPORT__
+	#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	if(add_forkingbarrier)
 	{
 		fb = mt_alloc(MT_MAKE_BARRIER(MT_BARRIER_FORKING), 0);

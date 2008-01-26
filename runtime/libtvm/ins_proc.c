@@ -18,7 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
+#include "tvm.h"
 #include "instructions.h"
 
 #include "scheduler.h"
@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ins_pri.h"
 #include "ins_sec.h"
 
-#ifdef __MOBILE_PI_SUPPORT__
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 
 /* 0x22F - 0x22 0x22 0xFF - proc_alloc - allocate process workspace */
 TVM_INSTRUCTION void ins_proc_alloc(void)
@@ -109,7 +109,7 @@ TVM_INSTRUCTION void ins_proc_start(void)
 
 	ws = wordptr_plus (ws, offset);
 
-	add_to_queue ((WORD) ws, (WORD) code);
+	tvm_add_to_queue (ws, code);
 
 	UNDEFINE_STACK ();
 }
@@ -124,10 +124,10 @@ TVM_INSTRUCTION void ins_proc_end(void)
 	iptr = run_next_on_queue ();
 }
 
-#endif /* __MOBILE_PI_SUPPORT */
+#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
 
 
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 
 /* 0x235 - 0x22 0x23 0xF5 - getaff - get processor affinity */
 TVM_INSTRUCTION void ins_getaff(void)
@@ -143,7 +143,7 @@ TVM_INSTRUCTION void ins_setaff(void)
 	STACK (breg, creg, UNDEFINE(creg));
 }
 
-#endif /* __PI_SUPPORT__ */
+#endif /* TVM_OCCAM_PI */
 
 /* 0x237 - 0x22 0x23 0xF7 - getpas - get priority and affinity state */
 TVM_INSTRUCTION void ins_getpas(void)

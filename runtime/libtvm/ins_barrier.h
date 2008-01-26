@@ -18,10 +18,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef BARRIER_H
-#define BARRIER_H
+#ifndef INS_BARRIER_H
+#define INS_BARRIER_H
 
-#ifdef __PI_SUPPORT__
+#ifdef TVM_OCCAM_PI
 
 TVM_HELPER_PROTO void tvm_bar_init(WORDPTR bar, UWORD initial_count);
 TVM_HELPER_PROTO void tvm_bar_sync(WORDPTR bar);
@@ -37,6 +37,6 @@ TVM_INSTRUCTION_PROTO void ins_barresign();
 /* 0xB3 - 0x2B 0xF3 - barrier enroll */
 TVM_INSTRUCTION_PROTO void ins_barenroll();
 
-#endif /*__PI_SUPPORT__ */
+#endif /* TVM_OCCAM_PI */
 
-#endif /*BARRIER_H*/
+#endif /* INS_BARRIER_H */
