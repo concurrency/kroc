@@ -1293,7 +1293,7 @@ static void cancel_decode_inner (Workspace wptr)
 	int idx;
 	char tag;
 
-	idx = ProcAlt (dh_in, csync, NULL);
+	idx = ProcAlt (wptr, dh_in, csync, NULL);
 	switch (idx) {
 		/*{{{  0 -- communication from pony kernel*/
 	case 0:
@@ -1367,7 +1367,7 @@ static void pony_protocol_decoder (Workspace wptr)
 				int idx;
 
 				CTRACE ("alting; dh_in=0x%8.8x, in=0x%8.8x, *in=0x%8.8x\n", 3, (unsigned int)dh_in, (unsigned int)in, (unsigned int)*in);
-				idx = ProcAlt (dh_in, in, NULL);
+				idx = ProcAlt (wptr, dh_in, in, NULL);
 				switch (idx) {
 					/*{{{  0 -- cancel from pony kernel*/
 				case 0:
@@ -1506,7 +1506,7 @@ static void pony_protocol_decoder (Workspace wptr)
 				int idx;
 				char tag, walk_tag;
 
-				idx = ProcAlt (dh_in, in, NULL);
+				idx = ProcAlt (wptr, dh_in, in, NULL);
 				switch (idx) {
 				/*{{{  dh_in */
 				case 0:
