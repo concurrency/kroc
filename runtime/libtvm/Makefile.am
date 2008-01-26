@@ -70,7 +70,6 @@ libtvm_a_SOURCES += \
 	scheduler.c
 endif
 
-# Rebuild the instruction dispatching code if necessary (and if we can).
 DISPATCH_SOURCE_FILES = \
 	dmem.c \
 	ext_chan.c \
@@ -86,18 +85,16 @@ DISPATCH_SOURCE_FILES = \
 	ins_sec.c \
 	ins_t800.c \
 	ins_timer.c
+
 DISPATCH_OUTPUT_FILES = \
 	dispatch_ins.c jumptbl_pri.c jumptbl_sec.c jumptbl_ex_sec.c
 
 make_dispatch = make-dispatch.py
 
-if HAVE_PYTHON
 $(DISPATCH_OUTPUT_FILES): $(make_dispatch) $(DISPATCH_SOURCE_FILES)
 	$(PYTHON) $(make_dispatch) $(DISPATCH_SOURCE_FILES)
-endif
 
 EXTRA_DIST = \
-	dispatch_ins.c \
 	make-dispatch.py
 
 splint:
