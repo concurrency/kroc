@@ -21,13 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef INTERPRETER_H
 #define INTERPRETER_H
 
-/* ANNO: Various things are exported from this file which are not neccesarily
- * used in the interpreter, but they might be in other parts of a
- * Transterpreter, such as the wrapper. Ignore warnings about exported things
- * from here which are not used.
- */
-/*@-exportlocal@*/
-
 #ifdef HAVE_CONFIG_H
 #	include <config.h>
 #endif
@@ -42,34 +35,6 @@ extern int running;
 #endif
 extern int exit_value;
 
-/* Interpreter exit codes */
-enum {
-	EXIT_STACK_BOTTOM	= 0,	/* For what currently amounts to a good exit */
-	EXIT_DEADLOCK		= 100,	/* When the running program has deadlocked */
-	EXIT_HALTED		= 200,	/* When the program halted due to an error */
-	EXIT_DEBUG_TRAP		= 300,	/* When the program halted due to an J 0 */
-	EXIT_ERROR		= 400,	/* When a runtime error occurs */
-	EXIT_ALIGN_ERROR	= 666,	/* A memory alignment error */
-	EXIT_BAD_ADDR		= 667,	/* A bad memory address */
-	EXIT_INS_INVALID	= 998,	/* If we hit an invalid instruction */
-	EXIT_INS_NOT_IMP	= 999,	/* If we hit an unimplemented instruction */
-	EXIT_SCHEDULER_BAD_1	= 5000	/* If the scheduler  has gone bad */
-};
-
-/* Stack frame return types */
-enum {
-	RET_ERROR		= 0,	/* Set error flag on process return */
-	RET_REAL,			/* Go to address on process return */
-	RET_SHUTDOWN			/* Shutdown interpreter on return */
-};
-
 void exit_runloop(int ret_val);
-void init_stackframe(WORDPTR *where, int argc, WORD argv[],
-		WORDPTR vectorspace, WORDPTR mobilespace, WORDPTR forkbarrier,
-		int ret_type, BYTEPTR ret_addr);
-void initial_stackframe(WORDPTR *where, int argc, WORD argv[],
-		WORDPTR vectorspace, WORDPTR mobilespace, int add_forkingbarrier);
-void final_ret(void);
-int run(void);
 
 #endif

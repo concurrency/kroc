@@ -9,7 +9,6 @@ lib_LIBRARIES = libtvm.a
 noinst_HEADERS = \
 	dmem.h \
 	ext_chan.h \
-	hook_timer.h \
 	pool_alloc.h \
 	instructions.h \
 	ins_alt.h \
@@ -27,14 +26,13 @@ noinst_HEADERS = \
 	jumptbl_ex_sec.h \
 	jumptbl_pri.h \
 	jumptbl_sec.h \
-	mem_bigendian.h \
-	mem_native.h \
 	scheduler.h
 
 include_HEADERS = \
 	transputer.h \
 	tvm.h \
 	tvm_config.h \
+	tvm_mem.h \
 	tvm_types.h
 
 libtvm_a_SOURCES = transputer.c
@@ -61,7 +59,8 @@ libtvm_a_SOURCES += \
 	jumptbl_sec.c \
 	jumptbl_ex_sec.c \
 	mem.c \
-	mem_native.c \
+	mem_array.c \
+	mem_bigendian.c \
 	scheduler.c
 endif
 

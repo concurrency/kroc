@@ -18,11 +18,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
+#include "tvm.h"
 #include "instructions.h"
 #include "scheduler.h"
-#include "hook_timer.h"
-#include "mem.h"
 #include "timer.h"
 #include "ins_timer.h"
 #include "interpreter.h"
@@ -41,8 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <sys/time.h>
 #endif
 
-/* FIXME: This possibly ought to be somewhere else */
-WORD (*get_time)(void);
+WORD (*tvm_get_time)(void);
 
 int AFTER(WORD t1, WORD t2)
 {
@@ -208,10 +205,10 @@ void timer_queue_insert(WORD current_time, WORD reschedule_time)
 
 TVM_INSTRUCTION void ins_ldtimer(void)
 {
-	if(get_time != 0)
+	if(tvm_get_time != 0)
 	{
 		/* Load current time onto stack */
-		STACK(get_time(), areg, breg);
+		STACK(tvm_get_time(), areg, breg);
 	}
 	else
 	{
@@ -252,9 +249,9 @@ TVM_INSTRUCTION void ins_ldtimer(void)
 
 TVM_INSTRUCTION void ins_tin(void)
 {
-	if(get_time != 0)
+	if(tvm_get_time != 0)
 	{
-		WORD current_time = get_time();
+		WORD current_time = tvm_get_time();
 		WORD reschedule_time = areg;
 
 		if(AFTER(current_time, reschedule_time))

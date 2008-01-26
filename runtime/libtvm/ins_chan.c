@@ -18,9 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
+#include "tvm.h"
 #include "instructions.h"
-#include "mem.h"
 #include "ext_chan.h"
 #include "scheduler.h"
 #include "ins_chan.h"
@@ -99,7 +98,7 @@ TVM_HELPER void chan_in(WORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start)
 		/* Where we start reading from */
 		BYTEPTR read_start = (BYTEPTR)WORKSPACE_GET(other_wptr, WS_CHAN);
 		/* Copy the data */
-		copy_data(write_start, read_start, num_bytes);
+		tvm_copy_data(write_start, read_start, num_bytes);
 		/* Complete channel operation */
 		chan_io_end(chan_ptr, other_wptr);
 	}
@@ -116,7 +115,7 @@ TVM_HELPER void chan_out(WORD num_bytes, WORDPTR chan_ptr, BYTEPTR read_start)
 		/* Normal communication */
 		BYTEPTR write_start = (BYTEPTR)WORKSPACE_GET(other_wptr, WS_CHAN);
 		/* Copy the data */
-		copy_data(write_start, read_start, num_bytes);
+		tvm_copy_data(write_start, read_start, num_bytes);
 		/* Complete channel operation */
 		chan_io_end(chan_ptr, other_wptr);
 	}

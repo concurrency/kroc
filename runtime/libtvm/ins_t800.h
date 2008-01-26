@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef INS_T800_H
 #define INS_T800_H
 
-//#ifdef __FPU_SUPPORT__
 /****************************************************************************
  *              0x25 0xF_         0x25 0xF_         0x25 0xF_               *
  ****************************************************************************/
@@ -34,8 +33,4 @@ TVM_INSTRUCTION_PROTO void ins_dup(void);
 /* 0x81 - 0x28 0xF1 - wsubdb - word subscript (INT64?) */
 TVM_INSTRUCTION_PROTO void ins_wsubdb();
 
-//#endif /* __FPU_SUPPORT__ */
 #endif /* INS_T800_H */
-
-
-

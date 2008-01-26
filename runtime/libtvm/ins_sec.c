@@ -18,11 +18,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
+#include "tvm.h"
 #include "instructions.h"
 #include "interpreter.h"
 #include "scheduler.h"
-#include "mem.h"
 #include "ins_sec.h"
 
 
@@ -39,7 +38,7 @@ TVM_INSTRUCTION void ins_rev(void)
 /* 0x01 - 0xF1 - lb - load byte */
 TVM_INSTRUCTION void ins_lb(void)
 {
-  STACK((WORD)read_byte((BYTEPTR)areg),breg,creg);
+	STACK((WORD)read_byte((BYTEPTR)areg),breg,creg);
 }
 
 /* 0x02 - 0xF2 - bsub - byte subscript */
@@ -257,16 +256,16 @@ static int nlz(unsigned x) {
 #else
 static inline int nlz(unsigned x) {
 #endif
-   int n;
+	int n;
 
-   if (x == 0) return(32);
-   n = 0;
-   if (x <= 0x0000FFFF) {n = n +16; x = x <<16;}
-   if (x <= 0x00FFFFFF) {n = n + 8; x = x << 8;}
-   if (x <= 0x0FFFFFFF) {n = n + 4; x = x << 4;}
-   if (x <= 0x3FFFFFFF) {n = n + 2; x = x << 2;}
-   if (x <= 0x7FFFFFFF) {n = n + 1;}
-   return n;
+	if (x == 0) return(32);
+	n = 0;
+	if (x <= 0x0000FFFF) {n = n +16; x = x <<16;}
+	if (x <= 0x00FFFFFF) {n = n + 8; x = x << 8;}
+	if (x <= 0x0FFFFFFF) {n = n + 4; x = x << 4;}
+	if (x <= 0x3FFFFFFF) {n = n + 2; x = x << 2;}
+	if (x <= 0x7FFFFFFF) {n = n + 1;}
+	return n;
 }
 #endif
 
@@ -843,7 +842,7 @@ TVM_INSTRUCTION void ins_and(void)
 TVM_INSTRUCTION void ins_move(void)
 {
 	
-	copy_data((BYTEPTR) breg, (BYTEPTR) creg, areg);
+	tvm_copy_data((BYTEPTR) breg, (BYTEPTR) creg, areg);
 	UNDEFINE_STACK();
 }
 

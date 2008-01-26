@@ -20,6 +20,7 @@ AC_CHECK_HEADERS([sys/types.h math.h inttypes.h setjmp.h])
 #  Configuration Options
 #########################
 
+AC_ARG_ENABLE([custom-copy-data], AC_HELP_STRING([--enable-custom-copy-data], [make tvm_copy_data is an externally provided function]), [custom_copy_data=$enableval], [custom_copy_data=no])
 AC_ARG_ENABLE([dispatch-switch], AS_HELP_STRING([--enable-dispatch-switch], [dispatch to instructions using switch rather than a jump table]), [dispatch_switch=$enableval], [dispatch_switch=no])
 AC_ARG_WITH([endian], AC_HELP_STRING([--with-endian=...], [endian mode: big/little/host, default: host]), [endian=$withval], [endian=host])
 AC_ARG_WITH([memory-allocator], AC_HELP_STRING([--with-memory-allocator=...], [select memory allocator: none/malloc, default host dependent]), [memory_allocator=$withval], [memory_allocator=auto])
@@ -31,6 +32,7 @@ AC_ARG_WITH([transputer], AC_HELP_STRING([--with-transputer=...],[transputer to 
 #  Host Configuration
 #########################
 
+copy_data=memcpy
 word_length=4
 x_fpu=no
 x_os=none
@@ -97,9 +99,15 @@ case "$host_os" in
     x_os=solaris
     ;;
   *)
+    copy_data=internal
     x_os=none
     ;;
 esac
+
+# Custom copy data
+if "x$custom_copy_data" != "xno"; then
+  copy_data=custom
+fi
 
 # Endian override
 case "X$endian" in
@@ -153,6 +161,18 @@ esac
 #########################
 
 TVM_CFLAGS="-Wall"
+
+# Copy data
+case "$copy_data" in
+  custom)
+    AC_DEFINE([TVM_CUSTOM_COPY_DATA], 1, [define to enable tvm_copy_data as an externally provided function])
+    ;;
+  internal)
+    ;;
+  memcpy)
+    AC_DEFINE([TVM_USE_MEMCPY], 1, [define to use memcpy as tvm_copy_data])
+    ;;
+esac
 
 # Dispatch switch
 if test "x$dispatch_switch" = "xyes"; then
@@ -229,6 +249,7 @@ AC_DEFINE_UNQUOTED([TVM_WORD_LENGTH], [$word_length], [define emulated word leng
 #########################
 
 AC_MSG_NOTICE([----------------------------------------------------])
+AC_MSG_NOTICE([tvm_copy_data   : $copy_data])
 AC_MSG_NOTICE([dispatch-switch : $dispatch_switch])
 AC_MSG_NOTICE([endian          : $endian])
 AC_MSG_NOTICE([FPU             : $x_fpu])

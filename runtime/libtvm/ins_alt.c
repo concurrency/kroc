@@ -18,11 +18,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
+#include "tvm.h"
 #include "instructions.h"
 #include "interpreter.h"
 #include "scheduler.h"
-#include "mem.h"
 #include "timer.h"
 #include "ins_alt.h"
 
@@ -79,7 +78,7 @@ one:
 			{
 				tnext[pri] = WORKSPACE_GET((WORDPTR)tptr[pri], WS_TIMEOUT);
 #ifdef ENABLE_SCHED_SYNC
-				set_alarm(tnext[pri] - get_time());
+				set_alarm(tnext[pri] - tvm_get_time());
 #endif
 			}
 		}
@@ -392,7 +391,7 @@ TVM_INSTRUCTION void ins_talt(void)
 /* 0x51 - 0x25 0xF1 - taltwt - timer alt wait */
 TVM_INSTRUCTION void ins_taltwt(void)
 {
-	int current_time = get_time();
+	int current_time = tvm_get_time();
 
 	/* Set the top of the workspace to -1 */
 	WORKSPACE_SET(wptr, WS_TOP, NONE_SELECTED_O);

@@ -1,5 +1,5 @@
 /*
-tvm - mem.h
+tvm - tvm_mem.h
 The Transterpreter - a portable virtual machine for Transputer bytecode
 Copyright (C) 2004-2008 Christian L. Jacobsen, Matthew C. Jadud
 
@@ -18,44 +18,43 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef MEM_H
-#define MEM_H
+#ifndef TVM_MEM_H
+#define TVM_MEM_H
 
-#include "transputer.h"
-#include "instructions.h"
+#include "tvm.h"
 
+/*{{{  Byte swapping */
+#ifndef SwapTwoBytes
 #define SwapTwoBytes(data) \
-(  (((data) >> 8) & 0x00FF) | (((data) << 8) & 0xFF00))
+	((((data) >> 8) & 0x00FF) | (((data) << 8) & 0xFF00))
+#endif /* SwapTwoBytes */
 
+#ifndef SwapFourBytes
 #define SwapFourBytes(data) \
-( (((data) >> 24) & 0x000000FF) | (((data) >>  8) & 0x0000FF00) | \
-	(((data) <<  8) & 0x00FF0000) | (((data) << 24) & 0xFF000000) )
+	((((data) >> 24) & 0x000000FF) | (((data) >>  8) & 0x0000FF00) | \
+	 (((data) <<  8) & 0x00FF0000) | (((data) << 24) & 0xFF000000) )
+#endif /* !SwapFourBytes */
+/*}}}*/
 
+/*{{{  Memory interface */
+#include "tvm_mem_intf.h"
+/*}}}*/
 
-#define ASSERT_WORD_ALIGNED(wordptr, WL, where) \
-	if(((int)wordptr % WL) != 0) \
-	{ \
-		/*printf("Unaligned access while %s at %p\n", where, wordptr); */\
-		exit_runloop(666); /* EXIT_ALIGN_ERROR */  \
-	}
-
-#if defined(MEMORY_INTF_BIGENDIAN)
-#	include "mem_bigendian.h"
-#elif defined(MEMORY_INTF_ARRAY)
-#	include "mem_array.h"
-#else
-#	include "mem_native.h"
-#endif
-
-#if defined(USE_CUSTOM_COPY_DATA)
-#define copy_data USE_CUSTOM_COPY_DATA
-#elif defined(USE_MEMCPY) && defined(WORDPTRS_REAL)
+/*{{{  void tvm_copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes) */
+#if defined(TVM_CUSTOM_COPY_DATA)
+void (*tvm_copy_data)(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
+#elif defined(TVM_USE_MEMCPY) && defined(WORDPTRS_REAL)
 #include <string.h>
-#define copy_data memcpy
+#define tvm_copy_data memcpy
 #else
-TVM_HELPER_PROTO void copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
+void tvm_copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
 #endif /* !(defined USE_CUSTOM_COPY_DATA) */
+/*}}}*/
 
+/*{{{  void swap_data_word(WORDPTR a_ptr, WORDPTR b_ptr) */
+#ifdef __GNUC__
+__attribute__ ((unused))
+#endif
 static inline void swap_data_word(WORDPTR a_ptr, WORDPTR b_ptr)
 {
 	WORD a_data = read_word(a_ptr);
@@ -63,5 +62,6 @@ static inline void swap_data_word(WORDPTR a_ptr, WORDPTR b_ptr)
 	write_word(b_ptr, a_data);
 	write_word(a_ptr, b_data);
 }
+/*}}}*/
 
-#endif
+#endif /* !TVM_MEM_H */

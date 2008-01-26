@@ -18,10 +18,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "transputer.h"
+#include "tvm.h"
 #include "instructions.h"
 #include "interpreter.h"
-#include "mem.h"
 #include "timer.h"
 #include "scheduler.h"
 
@@ -136,7 +135,7 @@ sched_start:
 	if(sched_sync == 1)
 	{
 		sched_sync = 0;
-		now = get_time();
+		now = tvm_get_time();
 		removed = FALSE;
 #if 0
 		/* Sanity check */
@@ -151,7 +150,7 @@ sched_start:
 #else
 			/* FIXME: 20070607 CGR notes that this is expensive to ALWAYS read the clock.
 			 * could it just go inside the IF statement? That's just a quick glance.*/
-			now = get_time();
+			now = tvm_get_time();
 			removed = FALSE;
 
 			if((tptr[pri] != (WORDPTR)NOT_PROCESS_P))

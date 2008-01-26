@@ -18,19 +18,12 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* ANNO: This file redefines the memory interface (functions), this is ok,
- * as only one memory interface file gets compiled in ever. */
-/*@-redef@*/
+#include "tvm_mem.h"
 
-#include "transputer.h"
-#include "mem.h"
-
-
+#ifdef TVM_MEM_INTF_BIGENDIAN
 
 void write_word(WORDPTR ptr, WORD val)
 {	
-	//ASSERT_WORD_ALIGNED(ptr, TVM_WORD_LENGTH, "writing");
-
 #if TVM_WORD_LENGTH == 2
 	*ptr = (WORD)SwapTwoBytes((UWORD)val);
 #elif TVM_WORD_LENGTH == 4
@@ -42,9 +35,6 @@ void write_word(WORDPTR ptr, WORD val)
 
 WORD read_word(WORDPTR ptr)
 {
-	//ASSERT_WORD_ALIGNED(ptr, TVM_WORD_LENGTH, "reading");
-	/* ANNO: Cast to UNSIGNED WORD as the behaviour of a shift on negative values
-	 * is implementation defined */
 #if TVM_WORD_LENGTH == 2
 	return (WORD)SwapTwoBytes((UWORD)*ptr);
 #elif TVM_WORD_LENGTH == 4
@@ -84,8 +74,7 @@ BYTEPTR byteptr_minus(BYTEPTR ptr, WORD inc)
 	return ptr - inc;
 }
 
-
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_USE_FPU
 
 # define SwapEightBytes(x) \
      (__extension__ \
@@ -116,6 +105,6 @@ double read_wordd(WORDPTR ptr)
 	return (double)SwapEightBytes((UWORD)*ptr);
 }
 
-#endif  /*__FPU_SUPPORT__ */
+#endif /* TVM_USE_FPU */
 
-
+#endif /* TVM_MEM_INTF_BIGENDIAN */
