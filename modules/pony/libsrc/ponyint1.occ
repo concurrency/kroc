@@ -812,12 +812,16 @@ PROC pony.int.msg.handler (VAL INT own.node.id, msg.type,
         get.msg
           IF
             end.ptr <> start.ptr
+              MOBILE []BYTE tmp:
               SEQ
                 -- Send message
                 -- Carrying: message;
                 --           error-flag
+                -- XXX This uses a temporary as a workaround for an occ21 bug
+                -- -- communicating straight out of the array doesn't work.
+                tmp := msg.array[start.ptr]
                 msg.handle.svr[from.handler] ! get.msg.confirm;
-                                               msg.array[start.ptr];
+                                               tmp;
                                                err.flag.array[start.ptr]
                 -- Move start-pointer
                 start.ptr := (start.ptr + 1) \ (SIZE msg.array)
