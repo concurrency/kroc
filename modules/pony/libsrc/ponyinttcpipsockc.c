@@ -81,11 +81,9 @@ static int frm_sizes_mdim = 64;
 static __inline__ void pony_real_fullwrite_iovecdim (int *sizes, int sizes_len, int *iovec_dim)
 {
 #ifdef HAVE_UIO_RWVEC
-	int nvecs;
+	int nvecs = sizes_len + 1;
 	if (sizes_len > 1) {
-		nvecs = 2 + sizes_len;		// header, sizes, and all data
-	} else {
-		nvecs = 2;			// header and single data
+		nvecs++;
 	}
 	*iovec_dim = nvecs * sizeof (struct iovec);
 	return;
@@ -110,7 +108,7 @@ static __inline__ void pony_real_fullwrite_iovecdim (int *sizes, int sizes_len, 
 static __inline__ void pony_real_fullwrite_multi (occ_socket *sock, char *header, int header_len, int *addrs, int addrs_len, int *sizes, int sizes_len, char *iovecs_param, int iovecs_len, int *result)
 {
 #ifdef HAVE_UIO_RWVEC
-	struct iovec *iovecs;
+	struct iovec *iovecs = (struct iovec *) iovecs_param;
 	int nvecs, nbytes, i, j;
 
 	if (sock->fd < 0) {
@@ -118,12 +116,11 @@ static __inline__ void pony_real_fullwrite_multi (occ_socket *sock, char *header
 		sock->error = ENOTCONN;
 		return;
 	}
+
+	nvecs = sizes_len + 1;
 	if (sizes_len > 1) {
-		nvecs = 2 + sizes_len;		// header, sizes, and all data
-	} else {
-		nvecs = 2;			// header and single data
+		nvecs++;
 	}
-	iovecs = (struct iovec *)iovecs_param;
 
 	nbytes = header_len;
 	iovecs[0].iov_base = (void *)header;
