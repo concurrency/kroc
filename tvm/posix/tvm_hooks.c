@@ -6,9 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "interpreter/transputer.h"
-#include "interpreter/mem.h"
-
+#include "stiw.h"
 #include "tvm_hooks.h"
 
 /* Include IO code */

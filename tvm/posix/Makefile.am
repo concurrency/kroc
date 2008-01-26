@@ -40,6 +40,6 @@ EXTRA_DIST = \
 	tvmspecials.inc
 
 CLEANFILES = \
-	kbhandler.h kbhandler.tce kbhandler_tmp.tvmdbg kbhandler_tmp.h kbhandler.tvmdbg \
-	scrhandler.h scrhandler.tce scrhandler_tmp.tvmdbg scrhandler_tmp.h scrhandler.tvmdbg \
-	errhandler.h errhandler.tce errhandler_tmp.tvmdbg errhandler_tmp.h errhandler.tvmdg
+	kbhandler.h kbhandler.tce kbhandler.tvmdbg \
+	scrhandler.h scrhandler.tce scrhandler.tvmdbg \
+	errhandler.h errhandler.tce errhandler.tvmdbg

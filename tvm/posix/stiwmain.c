@@ -30,9 +30,8 @@
 #include <signal.h>
 #include <sys/timeb.h>
 #include <time.h>
-#ifdef STIWTVM
 #include <limits.h>
-#endif /* STIWTVM */
+
 #ifndef WIN32
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -41,17 +40,10 @@
 #endif /* !WIN32 */
 
 
-#ifndef STIWTVM
 #include "stiw.h"
-#else /* STIWTVM */
-/* FIXME: Line below probably ought to be up here, but it gives me an annoying
- * warning when stiw is compiled into a library. I am guessing that I will fix
- * things so that we dont compile this into a library at some point, cos we
- * dont use that anymore on platforms that use this wrapper. */
 #include "tbzutil.h"
-#endif /* STIWTVM */
 #include "occam_debug.h"
-#include "unix_io.h" // temporary
+#include "unix_io.h"
 
 /* The keyboard/screen/error handler bytecode */
 #include "handlers.h"
@@ -76,7 +68,7 @@
 char *filename;
 
 /* Holds the type of file that we are dealing with */
-int filetype;
+int file_type;
 
 /*Global vars for holding command line arguments*/
 char **tvm_argv;
@@ -153,7 +145,7 @@ int memories_valid_mem_compare(const void *aa, const void *bb)
 	memories* a = (memories*) aa;
 	memories* b = (memories*) bb;
 	WORDPTR top = b->ptr;
-	WORDPTR bot = b->ptr + (b->size / WORDLENGTH);
+	WORDPTR bot = b->ptr + (b->size / TVM_WORD_LENGTH);
 	WORDPTR target = a->ptr;
 
 	/* Check that the node we are searching for is in a */
@@ -226,7 +218,7 @@ void ins_mrelease_debug()
 
 void ins_mreleasep_debug()
 {
-	WORDPTR ptr = (WORDPTR) (((BYTEPTR)wptr) + (areg * WORDLENGTH));
+	WORDPTR ptr = (WORDPTR) (((BYTEPTR)wptr) + (areg * TVM_WORD_LENGTH));
 
 	printf("mrelease_debug: ptr=0x%08x\n", (WORD) ptr);
 	ins_mreleasep();
@@ -297,11 +289,10 @@ static inline WORDPTR wordptr_plusb(WORDPTR p, int bytes) {
 }
 
 /* We need these to be actual variables if compiling for STIWTVM */
-#ifdef STIWTVM
 unsigned char *transputercode;
 unsigned char *transputercode_ptr;
-int memsize = 0;
-int instsize;
+int memory_size = 0;
+int inst_size;
 
 
 #define BYTECODE_VERSION 1
@@ -318,7 +309,6 @@ void usage(char *progname)
 	printf("    If MEMSIZE is specified, it is the workspace size of the program;\n");
 	printf("    if not specified it will be computed automatically.\n");
 }
-#endif
 
 void print_crash(int i)
 {
@@ -462,59 +452,55 @@ void print_scheduling_queue(void)
 
 void print_timer_queue(void)
 {
+	WORDPTR ptr = tptr;
+	int count = 0;
 	int i;
 #	define TQUEUE_COLS 1
 	
 	printf("Timer Queues: [fmt: timeout {next} -> ]\n");
-	for(i = 0; i < NUM_PRI; i++)
+	printf("  Timer Queue %d: (top: 0x%08x (0x%08x))\n", i, (WORD)ptr, (WORD)adj2memstart(ptr));
+	if(ptr == (WORDPTR)NOT_PROCESS_P)
 	{
-		int count = 0;
-		WORDPTR ptr = tptr[i];
+		printf("    empty\n");
+	}
+	else
+	{
+		int print_count = 0;
 
-		printf("  Timer Queue %d: (top: 0x%08x (0x%08x))\n", i, (WORD)ptr, (WORD)adj2memstart(ptr));
-		if(ptr == (WORDPTR)NOT_PROCESS_P)
+		while(1) /* ptr != (WORDPTR)NOT_PROCESS_P)*/
 		{
-			printf("    empty\n");
-		}
-		else
-		{
-			int print_count = 0;
-
-			while(1) /* ptr != (WORDPTR)NOT_PROCESS_P)*/
+			if(count == 0)
 			{
-				if(count == 0)
-				{
-					printf("    ");
-				}
-				if(ptr == (WORDPTR)NOT_PROCESS_P)
-				{
-					printf("end\n");
-					break;
-				}
-				else if(ptr < topmem || ptr > botmem)
-				{
-					printf("timer queue broken\n");
-					break;
-				}
-				else if(print_count > QUEUE_MAX_PRINT)
-				{
-					printf("timer queue too long, not printing any more");
-					break;
-				}
-				printf("0x%08x [%11d] {0x%08x (0x%08x)} -> ", 
-						WORKSPACE_GET(ptr, WS_TIMEOUT),
-						WORKSPACE_GET(ptr, WS_TIMEOUT),
-						WORKSPACE_GET(ptr, WS_NEXT_T), (unsigned int)adj2memstart((WORDPTR)WORKSPACE_GET(ptr, WS_NEXT_T)));
-				ptr = (WORDPTR)WORKSPACE_GET(ptr, WS_NEXT_T);
-
-				count = (count + 1) % TQUEUE_COLS;
-				if(count == 0)
-				{
-					printf("\n");
-				}
-
-				++print_count;
+				printf("    ");
 			}
+			if(ptr == (WORDPTR)NOT_PROCESS_P)
+			{
+				printf("end\n");
+				break;
+			}
+			else if(ptr < topmem || ptr > botmem)
+			{
+				printf("timer queue broken\n");
+				break;
+			}
+			else if(print_count > QUEUE_MAX_PRINT)
+			{
+				printf("timer queue too long, not printing any more");
+				break;
+			}
+			printf("0x%08x [%11d] {0x%08x (0x%08x)} -> ", 
+					WORKSPACE_GET(ptr, WS_TIMEOUT),
+					WORKSPACE_GET(ptr, WS_TIMEOUT),
+					WORKSPACE_GET(ptr, WS_NEXT_T), (unsigned int)adj2memstart((WORDPTR)WORKSPACE_GET(ptr, WS_NEXT_T)));
+			ptr = (WORDPTR)WORKSPACE_GET(ptr, WS_NEXT_T);
+
+			count = (count + 1) % TQUEUE_COLS;
+			if(count == 0)
+			{
+				printf("\n");
+			}
+
+			++print_count;
 		}
 	}
 
@@ -524,7 +510,7 @@ void print_timer_queue(void)
 void print_registers(void)
 {
 	int i; /* General counter */
-	int time = get_time();
+	int time = tvm_get_time();
 	BYTEPTR iptr_prime = byteptr_minus(iptr, 1);
 
 	printf("Registers:\n");
@@ -537,9 +523,9 @@ void print_registers(void)
 	{
 		printf("  fptr[%02d]:  0x%08x  (0x%08x)\n", i, (WORD)fptr[i], (WORD)adj2memstart(fptr[i]));
 		printf("  bptr[%02d]:  0x%08x  (0x%08x)\n", i, (WORD)bptr[i], (WORD)adj2memstart(bptr[i]));
-		printf("  tptr[%02d]:  0x%08x  (0x%08x)\n", i, (WORD)tptr[i], (WORD)adj2memstart(tptr[i]));
-		printf("  tnext[%02d]: 0x%08x [%11d]\n", i, (WORD)tnext[i], (WORD)tnext[i]);
 	}
+	printf("  tptr:  0x%08x  (0x%08x)\n", (WORD)tptr, (WORD)adj2memstart(tptr));
+	printf("  tnext: 0x%08x [%11d]\n", (WORD)tnext, (WORD)tnext);
 	printf("\n");
 	printf("  clock:     0x%08x [%11d]\n", time, time);
 	printf("\n");
@@ -691,7 +677,7 @@ void print_dmem_node(const void *ptr, VISIT order, int level)
 
 	memories* node = *(memories **)ptr;
 	WORDPTR start = node->ptr;
-	WORD size  = node->size / WORDLENGTH;
+	WORD size  = node->size / TVM_WORD_LENGTH;
 	WORDPTR end   = start + size;
 
 	printf("Dmem: (top = 0x%08x, bot = 0x%08x, size = %d)\n", 
@@ -905,16 +891,16 @@ static void sigbus_handler(int num)
 }
 #endif
 
-#ifdef ENABLE_SCHED_SYNC
+#ifndef WIN32
 static void sigalrm_handler(int num)
 {
-	sched_sync = 1;
+	tvm_sched_sync();
 }
 #endif /* ENABLE_SCHED_SYNC */
 
 int get_file_size(FILE *fp, char* file_name, char* app_name)
 {
-	int instsize;
+	int inst_size;
 
 	/* Obtain the size of the file and deal with errors */
 	if(fseek(fp, 0, SEEK_END) != 0)
@@ -922,8 +908,8 @@ int get_file_size(FILE *fp, char* file_name, char* app_name)
 		printf("%s: an error (#1) occured while optaining the size of %s!\n", app_name, file_name);
 		exit(1);
 	}
-	instsize = ftell(fp);
-	if(instsize == -1)
+	inst_size = ftell(fp);
+	if(inst_size == -1)
 	{
 		printf("%s: an error (#2) occured while optaining the size of %s!\n", app_name, file_name);
 		exit(1);
@@ -934,10 +920,9 @@ int get_file_size(FILE *fp, char* file_name, char* app_name)
 		exit(1);
 	}
 
-	return instsize;
+	return inst_size;
 }
 
-#ifdef STIWTVM
 int parse_bytecode_v1(char *filename)
 {
 	int result;
@@ -951,7 +936,7 @@ int parse_bytecode_v1(char *filename)
 
 	/* There's no information about memory size in this format, so pick an
 	 * arbitrary size unless we've been told otherwise. */
-	if(memsize == 0)
+	if(memory_size == 0)
 	{
 		workspace_size = 10 * 1024;
 	}
@@ -959,7 +944,7 @@ int parse_bytecode_v1(char *filename)
 	/* Adjust the transputercode pointer to avoid the first 4 characters, the
 	 * header */
 	transputercode += 4;
-	instsize -= 4;
+	inst_size -= 4;
 
 	return 0;
 }
@@ -975,7 +960,7 @@ int parse_bytecode_v2(char *filename)
 		return result;
 	}
 
-#ifdef HOST_BIGENDIAN
+#ifdef TVM_BIG_ENDIAN
 	workspace_size   = ((int *) transputercode)[1];
 	vectorspace_size = ((int *) transputercode)[2];
 	mobilespace_size = ((int *) transputercode)[3];
@@ -986,32 +971,31 @@ int parse_bytecode_v2(char *filename)
 #endif
 
 	/* Round up to multiples of 2 and adjust to bytes */
-	workspace_size = (workspace_size + (workspace_size & 1)) * WORDLENGTH;
-	vectorspace_size = (vectorspace_size + (vectorspace_size & 1)) * WORDLENGTH;
-	mobilespace_size = (mobilespace_size + (mobilespace_size & 1)) * WORDLENGTH;
+	workspace_size = (workspace_size + (workspace_size & 1)) * TVM_WORD_LENGTH;
+	vectorspace_size = (vectorspace_size + (vectorspace_size & 1)) * TVM_WORD_LENGTH;
+	mobilespace_size = (mobilespace_size + (mobilespace_size & 1)) * TVM_WORD_LENGTH;
 
 	/* The sizes added to workspace and vectorspace come from CCSP */
-	workspace_size = workspace_size + 32 * WORDLENGTH; 
+	workspace_size = workspace_size + 32 * TVM_WORD_LENGTH; 
 	if(vectorspace_size != 0)
 	{
-		vectorspace_size = vectorspace_size + 256 * WORDLENGTH;
+		vectorspace_size = vectorspace_size + 256 * TVM_WORD_LENGTH;
 	}
 	/* My adjustments to the sizes */
 	/* Initial stack frame, -1 iptr, chans, ms + vs ptrs */
-	workspace_size = workspace_size + 6 * WORDLENGTH; 
+	workspace_size = workspace_size + 6 * TVM_WORD_LENGTH; 
 	/* Add memory for handlers */
 	/* (1 channel word + 4 stack frame) * 3 + ws + ws + ws + alignment */
-	workspace_size = workspace_size + ((1 * WORDLENGTH + 4 * WORDLENGTH) * 3) + (1 * WORDLENGTH);
+	workspace_size = workspace_size + ((1 * TVM_WORD_LENGTH + 4 * TVM_WORD_LENGTH) * 3) + (1 * TVM_WORD_LENGTH);
 
 
 	/* Adjust the transputercode pointer to avoid the first 16 characters, the
 	 * header */
 	transputercode += 16;
-	instsize -= 16;
+	inst_size -= 16;
 
 	return 0;
 }
-#endif 
 
 //Genericifying the setting up of channels.
 void init_special_process(WORD *arg, BYTEPTR code, int code_ws_size)
@@ -1026,7 +1010,7 @@ void init_special_process(WORD *arg, BYTEPTR code, int code_ws_size)
 	write_word(*channel_pointer, NOT_PROCESS_P);
 	/* Initialise a stack frame */
 	argv[0] = *arg;
-	init_stackframe(&wptr, 
+	tvm_init_stackframe(&wptr, 
 		1, argv, 		/* one argument */
 		(WORDPTR) NULL_P, 	/* no vectorspace */
 		(WORDPTR) NULL_P,	/* no mobilespace */
@@ -1037,13 +1021,13 @@ void init_special_process(WORD *arg, BYTEPTR code, int code_ws_size)
 	printf("special process code=0x%08x has wptr=0x%08x\n", code, wptr);
 #endif
 	/* Put the process on the runqueue */
-	add_to_queue((WORD)wptr, (WORD)code);
+	tvm_add_to_queue(wptr, code);
 	/* Allocate enough workspace to be able to run the handler process */
-	/* (using *_memsize is probably a bit conservative) */
+	/* (using *_memory_size is probably a bit conservative) */
 	wptr = wordptr_minus(wptr, code_ws_size);
 }
 
-BYTEPTR copy_bytecode(BYTEPTR dest, unsigned char *src, int size)
+BYTEPTR copy_bytecode(BYTEPTR dest, const unsigned char *src, int size)
 {
 	int i;
 
@@ -1059,9 +1043,7 @@ BYTEPTR copy_bytecode(BYTEPTR dest, unsigned char *src, int size)
 int main(int argc, char *argv[])
 {
 	int i;
-#ifdef STIWTVM
 	int result = 1;
-#endif
 
 	/* Ultimately we might have a variable number of top level channels,
 	 * currently we ALWAYS have keyboard, screen and error, or we die! */
@@ -1075,7 +1057,6 @@ int main(int argc, char *argv[])
 	filename = argv[1];
 
 	/* Deal with loading in files if we are STIWTVM */
-#ifdef STIWTVM
 	FILE *bytecode_fp;
 
 	if(argc == 1)
@@ -1098,7 +1079,7 @@ int main(int argc, char *argv[])
 	{
 		char *endptr;
 		
-		memsize = strtol(argv[2], &endptr, 0);
+		memory_size = strtol(argv[2], &endptr, 0);
 
 		if(!(*argv[2] != 0 && *endptr == 0))
 		{
@@ -1107,7 +1088,7 @@ int main(int argc, char *argv[])
 
 			return 1;
 		}
-		if(memsize <= 0)
+		if(memory_size <= 0)
 		{
 
 			printf("%s: memory size less than or equal to zero specified!\n", argv[0]);
@@ -1117,11 +1098,10 @@ int main(int argc, char *argv[])
 		}
 	}
 
-#ifdef __MOBILE_PI_SUPPORT__
-	dmem_init();
+	tvm_init();
+
 #ifdef DMEM_DEBUG
 	dmem_debug_init();
-#endif
 #endif
 
 	/* Open the file and deal with errors */
@@ -1134,10 +1114,10 @@ int main(int argc, char *argv[])
 	}
 
 	/* Get the size of the file */
-	instsize = get_file_size(bytecode_fp, argv[1], argv[0]);
+	inst_size = get_file_size(bytecode_fp, argv[1], argv[0]);
 
 	/* Allocate memory to read in the file, and deal with errors... */
-	infile_start = transputercode = (unsigned char *)malloc(instsize);
+	infile_start = transputercode = (unsigned char *)malloc(inst_size);
 	if(transputercode == 0)
 	{
 		printf("%s: an error occured while allocating memory to read in file: %s!\n", argv[0], argv[1]);
@@ -1153,13 +1133,13 @@ int main(int argc, char *argv[])
 	if(strncmp("tvm", (char *)transputercode, 3) == 0)
 	{
 		/* Its a .tbc file, there will (may) be a separate .ffi and .tvmdbg file */
-		filetype = TBC;
+		file_type = TBC;
 	} 
 	else if(strncmp("tbz", (char *)transputercode, 3) == 0)
 	{
 		/* Its a .tbz file, it has everything in it (ffi, if required, and debug, if
 		 * not stripped) */
-		filetype = TBZ;
+		file_type = TBZ;
 	}
 	else
 	{
@@ -1185,7 +1165,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(filetype == TBC)
+	if(file_type == TBC)
 	{
 		switch(transputercode[3])
 		{
@@ -1200,7 +1180,7 @@ int main(int argc, char *argv[])
 				return 1;
 		}
 	}
-	else if(filetype == TBZ)
+	else if(file_type == TBZ)
 	{
 		result = parse_tbz_v0(argv[1]);
 	}
@@ -1209,55 +1189,54 @@ int main(int argc, char *argv[])
 	{
 		return result;
 	}
-#endif /* STIWTVM */
 
 	/* Reserve workspace for the handler processes. */
 #ifndef DISABLE_KEYBOARD_PROC
-	workspace_size += (kbh_ws_size + (kbh_ws_size & 1)) * WORDLENGTH;
+	workspace_size += (kbh_ws_size + (kbh_ws_size & 1)) * TVM_WORD_LENGTH;
 #endif
 #ifndef DISABLE_SCREEN_PROC
-	workspace_size += (scrh_ws_size + (scrh_ws_size & 1)) * WORDLENGTH;
+	workspace_size += (scrh_ws_size + (scrh_ws_size & 1)) * TVM_WORD_LENGTH;
 #endif
 #ifndef DISABLE_ERROR_PROC
-	workspace_size += (errh_ws_size + (errh_ws_size & 1)) * WORDLENGTH;
+	workspace_size += (errh_ws_size + (errh_ws_size & 1)) * TVM_WORD_LENGTH;
 #endif
 
-	if (memsize == 0) {
+	if (memory_size == 0) {
 		/* Compute a base memory size, including a small buffer. */
-		memsize = workspace_size
+		memory_size = workspace_size
 			  + vectorspace_size
 			  + mobilespace_size
-			  + 32 * WORDLENGTH;
+			  + 32 * TVM_WORD_LENGTH;
 	}
 
 #ifndef WORDPTRS_REAL
 	/* Reserve instruction space for the handler processes. */
 #ifndef DISABLE_KEYBOARD_PROC
-	memsize += kbh_inst_size;
+	memory_size += kbh_inst_size;
 #endif
 #ifndef DISABLE_SCREEN_PROC
-	memsize += scrh_inst_size;
+	memory_size += scrh_inst_size;
 #endif
 #ifndef DISABLE_ERROR_PROC
-	memsize += errh_inst_size;
+	memory_size += errh_inst_size;
 #endif
 
 	/* Reserve instruction space for the user program. */
-	memsize += instsize;
+	memory_size += inst_size;
 #endif
 
 	/* Pad to make sure we can refer to all the memory as words. */
-	memsize += WORDLENGTH;
+	memory_size += TVM_WORD_LENGTH;
 
 	/* This doesn't guarantee that there will be enough memory, but it'll
 	 * at least complain if there definitely isn't. */
-	if(memsize < workspace_size + vectorspace_size + mobilespace_size)
+	if(memory_size < workspace_size + vectorspace_size + mobilespace_size)
 	{
 		fprintf(stderr, "%s: Not enough memory allocated for program (allocated: %d, needed %d)!\n", 
-				filename, memsize, workspace_size + vectorspace_size + mobilespace_size);
+				filename, memory_size, workspace_size + vectorspace_size + mobilespace_size);
 	}
 
-	/* The layout inside transputermem (which is memsize bytes long) is:
+	/* The layout inside transputermem (which is memory_size bytes long) is:
 
 	(WORDPTR topmem and char *transputermem point here)
 	- workspace_size bytes of workspace, which consists of:
@@ -1274,7 +1253,7 @@ int main(int argc, char *argv[])
 	[if !WORDPTRS_REAL]
 	(BYTEPTR code_start points here)
 	(BYTEPTR iptr points here)
-	- instsize bytes of Transputer bytecode for the user program
+	- inst_size bytes of Transputer bytecode for the user program
 	(BYTEPTR code_end points here)
 	(BYTEPTR kbh_code_ptr points here)
 	- kbh_inst_size bytes of Transputer bytecode for the keyboard handler
@@ -1287,26 +1266,26 @@ int main(int argc, char *argv[])
 
 	*/
 
-	transputermem = (WORD *)malloc(memsize);
+	transputermem = (WORD *)malloc(memory_size);
 	if(!transputermem)
 	{
 		printf("%s: could not allocate enough memory (%d bytes)\n", 
-				argv[0], memsize);
+				argv[0], memory_size);
 		exit(1);
 	}
 
 	/* Clear all the transputer memory */
-	memset(transputermem, MEM_FILL_BYTE, memsize); // memsize is in bytes
+	memset(transputermem, MEM_FILL_BYTE, memory_size); // memory_size is in bytes
 
-#ifdef WORDPTRS_REAL
-	topmem = transputermem;
-#else
+#ifdef WORDPTRS_VIRTUAL
 	/* FIXME: This needs to be more generic, the whole ifdef will go when I get a
 	 * chance to kill it... */
-	setup_mem(transputermem, memsize);
+	setup_mem(transputermem, memory_size);
 	topmem = 0;
+#else
+	topmem = transputermem;
 #endif
-	botmem = wordptr_plusb(topmem, memsize);
+	botmem = wordptr_plusb(topmem, memory_size);
 
 	/* Set up the memory map */
 	workspace_ptr = wordptr_plusb(topmem, workspace_size);
@@ -1325,7 +1304,7 @@ int main(int argc, char *argv[])
 		WORDPTR ptr = mobilespace_ptr;
 		int i;
 
-		for (i = 0; i < (mobilespace_size / WORDLENGTH); i++)
+		for (i = 0; i < (mobilespace_size / TVM_WORD_LENGTH); i++)
 		{
 			write_word(ptr, 0x80000000);
 			ptr = wordptr_plus(ptr, 1);
@@ -1351,7 +1330,7 @@ int main(int argc, char *argv[])
 #else
 	{
 		BYTEPTR ptr = code_start;
-		ptr = copy_bytecode(ptr, transputercode, instsize);
+		ptr = copy_bytecode(ptr, transputercode, inst_size);
 		#ifndef DISABLE_KEYBOARD_PROC
 		kbh_code_ptr = ptr;
 		ptr = copy_bytecode(ptr, kbh_transputercode, kbh_inst_size);
@@ -1366,13 +1345,13 @@ int main(int argc, char *argv[])
 		#endif
 	}
 #endif
-	code_end = code_start + instsize;
+	code_end = code_start + inst_size;
 	iptr = code_start;
 	wptr = workspace_ptr;
 
 #ifdef MEM_LAYOUT_DEBUG
 	printf("Memory layout:\n");
-	printf(" @topmem = 0x%08x (real address 0x%08x; size 0x%08x (%d))\n", topmem, (unsigned int) transputermem, memsize, memsize);
+	printf(" @topmem = 0x%08x (real address 0x%08x; size 0x%08x (%d))\n", topmem, (unsigned int) transputermem, memory_size, memory_size);
 	printf("  workspace_size = 0x%08x (%d)\n", workspace_size, workspace_size);
 	printf(" @wptr = 0x%08x\n", wptr);
 	printf(" @workspace_ptr = 0x%08x\n", workspace_ptr);
@@ -1382,7 +1361,7 @@ int main(int argc, char *argv[])
 	printf("  mobilespace_size = 0x%08x (%d)\n", mobilespace_size, mobilespace_size);
 	printf(" @code_start = 0x%08x\n", code_start);
 	printf(" @iptr = 0x%08x\n", iptr);
-	printf("  instsize = 0x%08x (%d)\n", instsize, instsize);
+	printf("  inst_size = 0x%08x (%d)\n", inst_size, inst_size);
 	printf(" @code_end = 0x%08x\n", code_end);
 	printf(" @kbh_code_ptr = 0x%08x\n", kbh_code_ptr);
 	printf("  kbh_inst_size = 0x%08x (%d)\n", kbh_inst_size, kbh_inst_size);
@@ -1393,19 +1372,8 @@ int main(int argc, char *argv[])
 	printf(" @botmem = 0x%08x\n", botmem);
 #endif
 
-	for(i = 0; i < NUM_PRI; i++)
-	{
-		fptr[i] = (WORDPTR)NOT_PROCESS_P;
-		bptr[i] = (WORDPTR)NOT_PROCESS_P;
-		tptr[i] = (WORDPTR)NOT_PROCESS_P;
-	}
-	areg = 0;
-	breg = 0;
-	creg = 0;
-	oreg = 0;
-
-	not_implemented = stiw_ins_not_implemented;
-	invalid = stiw_ins_invalid;
+	tvm_not_implemented = stiw_ins_not_implemented;
+	tvm_invalid = stiw_ins_invalid;
 
 	/* Set up the special FFI Hooks */
 	special_ffi_table = get_special_hooks();
@@ -1416,7 +1384,8 @@ int main(int argc, char *argv[])
 	//ext_chan_table[EXT_CHAN_ERR] = ext_chan_err;
 
 	/* Set up timer hooks */
-	get_time = stiwc_get_time;
+	tvm_get_time = stiwc_get_time;
+	tvm_sleep = stiw_sleep;
 
 	/* Set up debug hooks */
 #ifdef ENABLE_RUNLOOP_DBG_HOOKS
@@ -1441,7 +1410,7 @@ int main(int argc, char *argv[])
 #endif
 
 	/* Initialise the stackframe for the "main" PROC */
-	initial_stackframe(&wptr, 3, stackframe_args, vectorspace_ptr, mobilespace_ptr, 1);
+	tvm_initial_stackframe(&wptr, 3, stackframe_args, vectorspace_ptr, mobilespace_ptr, 1);
 
 #ifdef MEM_LAYOUT_DEBUG
 	printf("Memory layout after handler/stackframe setup:\n");
@@ -1456,14 +1425,12 @@ int main(int argc, char *argv[])
 #if ((!defined WIN32) && (!defined CYGWIN))
 	signal(SIGBUS, sigbus_handler);
 #endif
-#ifdef ENABLE_SCHED_SYNC
-	sched_sync = 0;
+#ifndef WIN32
 	signal(SIGALRM, sigalrm_handler);
 #endif
 
-
 	/* Start the interpreter off */
-	i = run();
+	i = tvm_run();
 
 	/* Good exit? */
 	if(i == EXIT_STACK_BOTTOM)
@@ -1578,9 +1545,8 @@ int main(int argc, char *argv[])
 				printf("UNKNOWN error\n");
 				break;
 		}
-#ifdef STIWTVM
+		
 		print_debug_info(argv[1]);
-#endif
 		return ERROR_RET_VAL;
 	}
 

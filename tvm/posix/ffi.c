@@ -31,6 +31,8 @@
 #endif
 #define DIRECTORY_PFIX "transterpreter/"
 
+extern int get_file_size(FILE *fp, char* file_name, char* app_name);
+
 const char *error_name = "stiw FFI loader";
 
 #ifdef WIN32
@@ -128,7 +130,7 @@ int setup_ffi_table(char *tbc_file)
 	 * allways going to be three chars, ie .tbc, so we can just overwrite
 	 * the last three chars in the string with "ffi", */
   /* But only if its not a tbz file */
-  if(filetype == TBZ)
+  if(file_type == TBZ)
   {
     /* Is there any FFI at all??? If no, just return. */
     if(ffi_start == 0)
@@ -147,7 +149,7 @@ int setup_ffi_table(char *tbc_file)
 		return 0;
 	}
   /* If we are reading from a TBZ, then seek to the right place */
-  if(filetype == TBZ)
+  if(file_type == TBZ)
   {
     fseek(ffi_file_fp, ffi_start, SEEK_SET);
     file_size = ffi_length;

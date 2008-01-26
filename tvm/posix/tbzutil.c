@@ -6,10 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "stiw.h"
 #include "tbzutil.h"
-
-/* The byteswapping macro is in here */
-#include "interpreter/mem.h"
 
 /*
  * The various header offsets
@@ -67,7 +65,7 @@ int parse_tbz_v0(char* filename)
   /* This was set by main when reading in the file (and is the size of the
    * entire unified bytecode file, we can just reset it to the size of the
    * bytecode */
-  instsize = bytecode_length;
+  inst_size = bytecode_length;
   /* Now we call parse_bytecode_v2 to figure out whats in the bytecode,
    * parse_bytecode_v2 will make a call to load ffi stuff too... First lets
    * check we have something sensible though */

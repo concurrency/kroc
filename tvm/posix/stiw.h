@@ -13,8 +13,13 @@
 #include <tvm.h>
 #endif
 
-extern int memsize;
-extern int instsize;
-extern int filetype;
+extern int memory_size;
+extern int inst_size;
+extern int file_type;
+
+#ifndef WIN32
+void stiw_set_alarm(WORD);
+#endif
+void stiw_sleep(void);
 
 #endif
