@@ -513,7 +513,7 @@ static void walk_inner_primitive (Workspace wptr, pony_walk_state *s, int item_c
 			size_t size;
 			long long total_size = s->pdesc[0] * item_count;
 			if (s->mode == PW_output && total_size >= 0x80000000) {
-				CFATAL ("walk_inner_primitive: attempting to send %lld-byte data item; this won't fit in the count\n", 1, total_size);
+				CFATAL ("walk_inner_primitive: attempting to send enormous data item; this won't fit in the count\n", 0);
 			}
 			size = (size_t) total_size;
 
@@ -686,7 +686,6 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			/*}}}*/
 		}
 		break;
-#if 0
 	case MTID_COUNTED:
 		{
 			/* This actually requires either one or two CLCs from
@@ -734,7 +733,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 					/* FIXME: get rid of count mode entirely in favour of buffering */
 					CTRACE ("reading count %d bytes from 0x%08x\n", 2, count_size, (unsigned int) get_data (wptr, s));
 					memcpy (&count, get_data (wptr, s), count_size);
-					CTRACE ("counted array count is %lld\n", 1, count);
+					CTRACE ("counted array count is %d\n", 1, (int) count);
 
 					if (count != 0) {
 						if (new_clc (wptr, s, 1)) {
@@ -751,7 +750,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 				{
 					/* XXX: Endianness-dependent code. */
 					memcpy (&count, get_data (wptr, s), count_size);
-					CTRACE ("counted array count is %lld\n", 1, count);
+					CTRACE ("counted array count is %d\n", 1, (int) count);
 
 					if (count == 0) {
 						if (first_clc) {
@@ -779,9 +778,9 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 						void *data;
 						const long long data_size = (size_t) count * subtype_size;
 
-						CTRACE ("array data size is %lld\n", 1, data_size);
+						CTRACE ("array data size is %d\n", 1, (int) data_size);
 						if (data_size >= 0x80000000) {
-							CFATAL ("walk_inner: counted array data size %lld (%d items of size %d) is too large to send\n", 3, data_size, count, subtype_size);
+							CFATAL ("walk_inner: counted array data size %d (%d items of size %d) is too large to send\n", 3, (int) data_size, count, subtype_size);
 						}
 
 						if (first_clc) {
@@ -813,29 +812,23 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 				break;
 			case PW_input:
 				{
-					void *recv_data;
-					size_t recv_size = 0;
+					mt_array_t *array;
 					char tag;
 
 					if (first_clc) {
 						CTRACE ("input counted array size CLC %d\n", 1, s->clc);
 						ChanInChar (wptr, s->from_kern, &tag);
 						if (tag != PEI_data_item_nlc) {
-#warning FIX
 							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
 						}
-						ChanInInt (wptr, s->from_kern, (int *) &recv_data);
-						ChanInInt (wptr, s->from_kern, (int *) &recv_size);
-						if (recv_size > sizeof count || recv_size != count_size) {
-							CFATAL ("walk_inner: counted array size type is invalid; was %d, expected %d\n", 2, recv_size, count_size);
+						MTChanIn (wptr, s->from_kern, (void **) &array);
+						if (array->dimensions[0] > sizeof count || array->dimensions[0] != count_size) {
+							CFATAL ("walk_inner: counted array size type is invalid; was %d, expected %d\n", 2, array->dimensions[0], count_size);
 						}
-						if (count_size == sizeof (int)) {
-							CTRACE ("received data %08x size %d contains %08x\n", 3, (unsigned int) recv_data, recv_size, *(int *) recv_data);
-						}
-						memcpy (&count, recv_data, recv_size);
-						temp_list_add (wptr, s, recv_data);
+						memcpy (&count, array->data, array->dimensions[0]);
+						MTRelease (wptr, array);
 
-						CTRACE ("output counted array size %lld (count size %d; value %016llx)\n", 3, count, count_size, count);
+						CTRACE ("output counted array size %d (count size %d; value %08x)\n", 3, (int) count, count_size, (int) count);
 						ChanOut (wptr, s->user, &count, count_size);
 
 						if (count != 0) {
@@ -853,20 +846,24 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 						if (tag != PEI_data_item_nlc) {
 							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
 						}
-#warning FIX
-						ChanInInt (wptr, s->from_kern, (int *) &recv_data);
-						ChanInInt (wptr, s->from_kern, (int *) &recv_size);
+						MTChanIn (wptr, s->from_kern, (void **) &array);
+
+						if (array == NULL) {
+							/* XXX Workaround: if the array is empty, NULL gets communicated. */
+							array = MTAllocArray (wptr, MT_MAKE_NUM (MT_NUM_BYTE), 1, 0);
+						}
 
 						if (!first_clc) {
-							CTRACE ("output counted array size; size is %d, count is %d\n", 2, recv_size, recv_size / subtype_size);
-							ChanOutInt (wptr, s->user, recv_size / subtype_size);
+							CTRACE ("output counted array size; size is %d, count is %d\n", 2, array->dimensions[0], array->dimensions[0] / subtype_size);
+							ChanOutInt (wptr, s->user, array->dimensions[0] / subtype_size);
 						}
 
-						if (recv_size != 0) {
-							CTRACE ("output counted array data at %08x\n", 1, (unsigned int) recv_data);
-							ChanOut (wptr, s->user, recv_data, recv_size);
-							temp_list_add (wptr, s, recv_data);
+						if (array->dimensions[0] != 0) {
+							CTRACE ("output counted array data at %08x\n", 1, (unsigned int) array->data);
+							ChanOut (wptr, s->user, array->data, array->dimensions[0]);
 						}
+
+						MTRelease (wptr, array);
 					}
 
 					CTRACE ("output counted array done\n", 0);
@@ -875,7 +872,6 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			}
 		}
 		break;
-#endif
 #if 0
 	case MTID_MARRAY:
 		{
@@ -916,7 +912,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 						CTRACE ("dimension %d is %d\n", 2, i, block[i + 1]);
 						data_size *= block[i + 1];
 					}
-					CTRACE ("marray data size is %lld\n", 1, data_size);
+					CTRACE ("marray data size is %d\n", 1, (int) data_size);
 
 					if (data_size >= 0x80000000) {
 						CFATAL ("walk_inner: mobile array data size too large to transmit\n", 0);
@@ -979,13 +975,13 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 							CTRACE ("dimension %d is %d\n", 2, i, block[i + 1]);
 							data_size *= block[i + 1];
 						}
-						CTRACE ("marray data size is %lld\n", 1, data_size);
+						CTRACE ("marray data size is %d\n", 1, (int) data_size);
 
 						if (data_size >= 0x80000000) {
 							CFATAL ("walk_inner: received mobile array data size too large to allocate\n", 0);
 						}
 
-						CTRACE ("input CLC %d (marray data, size %lld)\n", 2, s->clc, data_size);
+						CTRACE ("input CLC %d (marray data, size %d)\n", 2, s->clc, (int) data_size);
 						block[0] = (unsigned int) malloc ((size_t) data_size);
 						input_di (wptr, s, &recv_data, data_size);
 						memcpy ((void *) block[0], recv_data, data_size);
