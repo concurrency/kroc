@@ -136,7 +136,7 @@ void (*const secondaries[255])(void) =
 #else
 	ins_not_implemented,     /* 62 */
 #endif
-#ifndef __FPU_SUPPORT__
+#if defined(TVM_EMULATE_T4) || defined(TVM_EMULATE_T8)
 	ins_unpacksn,            /* 63 */
 #else
 	ins_not_implemented,     /* 63 */
@@ -157,12 +157,12 @@ void (*const secondaries[255])(void) =
 	ins_not_implemented,     /* 69 */
 	ins_not_implemented,     /* 6A */
 	ins_not_implemented,     /* 6B */
-#ifndef __FPU_SUPPORT__
+#if defined(TVM_EMULATE_T4) || defined(TVM_EMULATE_T8)
 	ins_postnormsn,          /* 6C */
 #else
 	ins_not_implemented,     /* 6C */
 #endif
-#ifndef __FPU_SUPPORT__
+#if defined(TVM_EMULATE_T4) || defined(TVM_EMULATE_T8)
 	ins_roundsn,             /* 6D */
 #else
 	ins_not_implemented,     /* 6D */
@@ -170,12 +170,16 @@ void (*const secondaries[255])(void) =
 	ins_not_implemented,     /* 6E */
 	ins_not_implemented,     /* 6F */
 	ins_not_implemented,     /* 70 */
-#ifndef __FPU_SUPPORT__
+#if defined(TVM_EMULATE_T4) || defined(TVM_EMULATE_T8)
 	ins_ldinf,               /* 71 */
 #else
 	ins_not_implemented,     /* 71 */
 #endif
+#if defined(TVM_EMULATE_T4) || defined(TVM_EMULATE_T8)
 	ins_fmul,                /* 72 */
+#else
+	ins_not_implemented,     /* 72 */
+#endif
 	ins_not_implemented,     /* 73 */
 	ins_not_implemented,     /* 74 */
 	ins_not_implemented,     /* 75 */
@@ -203,165 +207,165 @@ void (*const secondaries[255])(void) =
 	ins_not_implemented,     /* 7F */
 	ins_not_implemented,     /* 80 */
 	ins_wsubdb,              /* 81 */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpldnldbi,           /* 82 */
 #else
 	ins_not_implemented,     /* 82 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpchkerr,            /* 83 */
 #else
 	ins_not_implemented,     /* 83 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpstnldb,            /* 84 */
 #else
 	ins_not_implemented,     /* 84 */
 #endif
 	ins_not_implemented,     /* 85 */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpldnlsni,           /* 86 */
 #else
 	ins_not_implemented,     /* 86 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpadd,               /* 87 */
 #else
 	ins_not_implemented,     /* 87 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpstnlsn,            /* 88 */
 #else
 	ins_not_implemented,     /* 88 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpsub,               /* 89 */
 #else
 	ins_not_implemented,     /* 89 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpldnldb,            /* 8A */
 #else
 	ins_not_implemented,     /* 8A */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpmul,               /* 8B */
 #else
 	ins_not_implemented,     /* 8B */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpdiv,               /* 8C */
 #else
 	ins_not_implemented,     /* 8C */
 #endif
 	ins_not_implemented,     /* 8D */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpldnlsn,            /* 8E */
 #else
 	ins_not_implemented,     /* 8E */
 #endif
 	ins_not_implemented,     /* 8F */
 	ins_not_implemented,     /* 90 */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpnan ,              /* 91 */
 #else
 	ins_not_implemented,     /* 91 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpordered ,          /* 92 */
 #else
 	ins_not_implemented,     /* 92 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpnotfinite ,        /* 93 */
 #else
 	ins_not_implemented,     /* 93 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpgt ,               /* 94 */
 #else
 	ins_not_implemented,     /* 94 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpeq ,               /* 95 */
 #else
 	ins_not_implemented,     /* 95 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpi32tor32,          /* 96 */
 #else
 	ins_not_implemented,     /* 96 */
 #endif
 	ins_not_implemented,     /* 97 */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpi32tor64 ,         /* 98 */
 #else
 	ins_not_implemented,     /* 98 */
 #endif
 	ins_not_implemented,     /* 99 */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpb32tor64,          /* 9A */
 #else
 	ins_not_implemented,     /* 9A */
 #endif
 	ins_not_implemented,     /* 9B */
 	ins_not_implemented,     /* 9C */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fprtoi32,            /* 9D */
 #else
 	ins_not_implemented,     /* 9D */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpstnli32,           /* 9E */
 #else
 	ins_not_implemented,     /* 9E */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpldzerosn,          /* 9F */
 #else
 	ins_not_implemented,     /* 9F */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpldzerodb,          /* A0 */
 #else
 	ins_not_implemented,     /* A0 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpint,               /* A1 */
 #else
 	ins_not_implemented,     /* A1 */
 #endif
 	ins_getpri,              /* A2 */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpdup,               /* A3 */
 #else
 	ins_not_implemented,     /* A3 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fprev,               /* A4 */
 #else
 	ins_not_implemented,     /* A4 */
 #endif
 	ins_setpri,              /* A5 */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpldnladddb,         /* A6 */
 #else
 	ins_not_implemented,     /* A6 */
 #endif
 	ins_not_implemented,     /* A7 */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpldnlmuldb,         /* A8 */
 #else
 	ins_not_implemented,     /* A8 */
 #endif
 	ins_not_implemented,     /* A9 */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpldnladdsn,         /* AA */
 #else
 	ins_not_implemented,     /* AA */
 #endif
 	ins_not_implemented,     /* AB */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpldnlmulsn,         /* AC */
 #else
 	ins_not_implemented,     /* AC */
@@ -416,55 +420,55 @@ void (*const secondaries[255])(void) =
 	ins_not_implemented,     /* CC */
 	ins_not_implemented,     /* CD */
 	ins_not_implemented,     /* CE */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fprem,               /* CF */
 #else
 	ins_not_implemented,     /* CF */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_i64toreal,           /* D0 */
 #else
 	ins_not_implemented,     /* D0 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpdivby2,            /* D1 */
 #else
 	ins_not_implemented,     /* D1 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpmulby2,            /* D2 */
 #else
 	ins_not_implemented,     /* D2 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpsqrt,              /* D3 */
 #else
 	ins_not_implemented,     /* D3 */
 #endif
 	ins_not_implemented,     /* D4 */
 	ins_not_implemented,     /* D5 */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fprz,                /* D6 */
 #else
 	ins_not_implemented,     /* D6 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpr32to64,           /* D7 */
 #else
 	ins_not_implemented,     /* D7 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpr64to32,           /* D8 */
 #else
 	ins_not_implemented,     /* D8 */
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpexpdec32,          /* D9 */
 #else
 	ins_not_implemented,     /* D9 */
 #endif
 	ins_not_implemented,     /* DA */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpabs,               /* DB */
 #else
 	ins_not_implemented,     /* DB */
@@ -472,7 +476,7 @@ void (*const secondaries[255])(void) =
 	ins_not_implemented,     /* DC */
 	ins_not_implemented,     /* DD */
 	ins_not_implemented,     /* DE */
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 	ins_fpchki64,            /* DF */
 #else
 	ins_not_implemented,     /* DF */

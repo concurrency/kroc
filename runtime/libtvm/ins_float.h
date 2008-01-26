@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "instructions.h"
 
-#ifndef __FPU_SUPPORT__
+#if defined(TVM_EMULATE_T4) || defined(TVM_EMULATE_T8)
 /* T4 only floating point instructions */
 /* 0x63 - 0x26 0xF3 - unpacksn - unpack single len floating point number */
 TVM_INSTRUCTION_PROTO void ins_unpacksn(void);
@@ -33,21 +33,13 @@ TVM_INSTRUCTION_PROTO void ins_postnormsn(void);
 TVM_INSTRUCTION_PROTO void ins_roundsn(void);
 /* 0x71 - 0x27 0xF1 - ldinf - load single length floating point infinity */
 TVM_INSTRUCTION_PROTO void ins_ldinf(void);
-#endif
 /* 0x72 - 0x27 0xF2 - fmul - fractional multiply */
 TVM_INSTRUCTION_PROTO void ins_fmul(void);
-#ifndef __FPU_SUPPORT__
+#endif /* defined(TVM_EMULATE_T4) || defined(TVM_EMULATE_T8) */
+
+#ifdef TVM_EMULATE_T8
 /* 0x73 - 0x27 0xF3 - cflerr - check single length floating point infinity or NaN 
    this isn't implemented as it doesn't seem to be used anywhere*/
-
-#else //__FPU_SUPPORT__
-/* T800 and up floating point instructions */
-/*Set rounding mode macro.
- * - This macro checks what the rounding mode is, and if a different
- *   one was requested, sets it.  This is done because setting rounding
- *   modes is slow.  - Benchmarking required.*/
-#define SET_ROUNDMODE(X) if(X != fegetround()) { \
-                   fesetround(X); } 
 
 /* 0x28 and up */
 /* 0x82 - 0x28 0xF2 - fpldnldbi - floating load non-local indexed double */
@@ -177,6 +169,6 @@ TVM_INSTRUCTION_PROTO void ins_fpabs(void);
 /* 0xDF  - 0x2D 0xFF - fpchki64 -  check that value at top of FP stack (fareg) fits in an INT32/INT64 */
 TVM_INSTRUCTION_PROTO void ins_fpchki64(void);
 
-#endif /*FPU_SUPPORT*/
+#endif /* TVM_EMULATE_T8 */
 
-#endif /*INS_FLOAT_H*/
+#endif /* !INS_FLOAT_H */

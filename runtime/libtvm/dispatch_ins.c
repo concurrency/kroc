@@ -106,19 +106,19 @@ static inline void dispatch_instruction(BYTE instr)
 #ifdef __MOBILE_PI_SUPPORT__
 		case 0x62: ins_minn(); break;
 #endif
-#ifndef __FPU_SUPPORT__
+#if defined(TVM_EMULATE_T4) || defined(TVM_EMULATE_T8)
 		case 0x63: ins_unpacksn(); break;
 #endif
 #ifdef __MOBILE_PI_SUPPORT__
 		case 0x64: ins_moutn(); break;
 		case 0x65: ins_xminn(); break;
 #endif
-#ifndef __FPU_SUPPORT__
+#if defined(TVM_EMULATE_T4) || defined(TVM_EMULATE_T8)
 		case 0x6C: ins_postnormsn(); break;
 		case 0x6D: ins_roundsn(); break;
 		case 0x71: ins_ldinf(); break;
-#endif
 		case 0x72: ins_fmul(); break;
+#endif
 		case 0x79: ins_pop(); break;
 #ifdef __PI_SUPPORT__
 		case 0x7A: ins_seminit(); break;
@@ -126,7 +126,7 @@ static inline void dispatch_instruction(BYTE instr)
 		case 0x7C: ins_semrelease(); break;
 #endif
 		case 0x81: ins_wsubdb(); break;
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 		case 0x82: ins_fpldnldbi(); break;
 		case 0x83: ins_fpchkerr(); break;
 		case 0x84: ins_fpstnldb(); break;
@@ -153,12 +153,12 @@ static inline void dispatch_instruction(BYTE instr)
 		case 0xA1: ins_fpint(); break;
 #endif
 		case 0xA2: ins_getpri(); break;
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 		case 0xA3: ins_fpdup(); break;
 		case 0xA4: ins_fprev(); break;
 #endif
 		case 0xA5: ins_setpri(); break;
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 		case 0xA6: ins_fpldnladddb(); break;
 		case 0xA8: ins_fpldnlmuldb(); break;
 		case 0xAA: ins_fpldnladdsn(); break;
@@ -172,7 +172,7 @@ static inline void dispatch_instruction(BYTE instr)
 		case 0xB2: ins_barresign(); break;
 		case 0xB3: ins_barenroll(); break;
 #endif
-#ifdef __FPU_SUPPORT__
+#ifdef TVM_EMULATE_T8
 		case 0xCF: ins_fprem(); break;
 		case 0xD0: ins_i64toreal(); break;
 		case 0xD1: ins_fpdivby2(); break;
