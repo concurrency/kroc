@@ -49,9 +49,10 @@
 
 /*}}}*/
 /*{{{  protocol tag values */
+/* PROTOCOL PONY.DECODEHANDLE.TO.DECODER */
 enum PDI_tags {
 	PDI_activate = 0,
-	PDI_make_ctb_networked_confirm,
+	PDI_make_ctb_networked_confirm,	/* INT; PONY.NETHOOKHANDLE!; MOBILE []PONY.DECODEHANDLE!; MOBILE []PONY.ENCODEHANDLE! */
 	PDI_ack,
 	PDI_cancel,
 	PDI_cancel_encode,
@@ -59,30 +60,33 @@ enum PDI_tags {
 	PDI_term
 };
 
+/* PROTOCOL PONY.DECODEHANDLE.FROM.DECODER */
 enum PDO_tags {
-	PDO_first_clc = 0,
-	PDO_rest_clcs,
-	PDO_data_item_nlc,
-	PDO_make_ctb_networked,
-	PDO_ct_end_nlc,
+	PDO_first_clc = 0,		/* INT; INT; BOOL */
+	PDO_rest_clcs,			/* INT; INT */
+	PDO_data_item_nlc,		/* INT; INT */
+	PDO_make_ctb_networked,		/* INT; INT; INT; INT; INT */
+	PDO_ct_end_nlc,			/* INT; INT; INT */
 	PDO_cancel_confirm,
 	PDO_encode_cancelled,
 	PDO_encode_not_cancelled
 };
 
+/* PROTOCOL PONY.ENCODEHANDLE.TO.ENCODER */
 enum PEI_tags {
-	PEI_first_clc = 0,
-	PEI_rest_clcs,
-	PEI_data_item_nlc,
-	PEI_clone_ctb,
-	PEI_alloc_new_ctb,
-	PEI_alloc_new_ctb_confirm,
+	PEI_first_clc = 0,		/* INT; INT; BOOL */
+	PEI_rest_clcs,			/* INT; INT */
+	PEI_data_item_nlc,		/* INT; INT */
+	PEI_clone_ctb,			/* INT */
+	PEI_alloc_new_ctb,		/* INT */
+	PEI_alloc_new_ctb_confirm,	/* PONY.NETHOOKHANDLE!; MOBILE []PONY.DECODEHANDLE!; MOBILE []PONY.ENCODEHANDLE! */
 	PEI_cancel,
 	PEI_term
 };
 
+/* PROTOCOL PONY.ENCODEHANDLE.FROM.ENCODER */
 enum PEO_tags {
-	PEO_alloc_new_ctb_confirm = 0,
+	PEO_alloc_new_ctb_confirm = 0,	/* INT; INT; INT */
 	PEO_ack
 };
 /*}}}*/
