@@ -24,7 +24,7 @@ AC_ARG_ENABLE([custom-copy-data], AC_HELP_STRING([--enable-custom-copy-data], [m
 AC_ARG_ENABLE([dispatch-switch], AS_HELP_STRING([--enable-dispatch-switch], [dispatch to instructions using switch rather than a jump table]), [dispatch_switch=$enableval], [dispatch_switch=no])
 AC_ARG_WITH([endian], AC_HELP_STRING([--with-endian=...], [endian mode: big/little/host, default: host]), [endian=$withval], [endian=host])
 AC_ARG_WITH([memory-allocator], AC_HELP_STRING([--with-memory-allocator=...], [select memory allocator: none/malloc, default host dependent]), [memory_allocator=$withval], [memory_allocator=auto])
-AC_ARG_WITH([python], AS_HELP_STRING([--with-python=PATH], [use python, optionally specifying the path to the python executable]), [python=$withval], [python=auto])
+AC_ARG_WITH([python], AS_HELP_STRING([--with-python=PATH], [use python, optionally specifying the path to the python executable directory]), [python=$withval], [python=])
 AC_ARG_ENABLE([occam-pi], AC_HELP_STRING([--disable-occam-pi], [disable support for occam-pi, actual support level depends on memory allocator]), [enable_pi=$enableval], [enable_pi=yes])
 AC_ARG_WITH([transputer], AC_HELP_STRING([--with-transputer=...],[transputer to emulate: t2/t4/t8, default is host-dependent]), [transputer=$withval], [transputer=auto])
 
@@ -132,12 +132,15 @@ case "X$memory_allocator" in
 esac
 
 # Python
-if test "x$python" = "xauto"; then
-  AC_CHECK_PROGS([PYTHON], [python python2.5 python2.4 python2.3 python2.2 python2.1 python2], [no])
-else
-  AC_SUBST([PYTHON], $python)
+PYTHON_PATH="$PATH"
+if test "x$python" != "x"; then
+  PYTHON_PATH="$python:$PYTHON_PATH"
 fi
-AM_CONDITIONAL(HAVE_PYTHON, test "x$PYTHON" != "xno")
+
+AC_PATH_PROGS([PYTHON], [python python2.5 python2.4 python2.3 python2.2 python2.1 python2], [python=no], $PYTHON_PATH)
+if test "$PYTHON" = "no"; then
+  AC_MSG_ERROR([python is required])
+fi
 
 # Transputer type
 case "X$transputer" in
