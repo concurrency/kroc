@@ -34,7 +34,7 @@
 
 /* FIXME: */
 extern BYTEPTR code_start;
-extern int filetype;
+extern int file_type;
 
 void read_and_check(unsigned int *var, FILE *fp)
 {
@@ -76,7 +76,7 @@ void find_dbg_info(char *tdb_filename)
 
   /* Now (if TBZ) we need to seek to the right place in the file to get teh
    * debugging info... this comes from tbzutil.h */
-  if(filetype == TBZ)
+  if(file_type == TBZ)
   {
     fseek(fp, debug_start, SEEK_SET);
     /* At this point the file should look the same as if we were reading stuff
@@ -167,7 +167,7 @@ void print_debug_info(char *tbc_filename)
 
   /* If we are dealing with a TBZ type file, we'll actually just be opening the
    * normal file as opposed to a special debuginfo file */
-  if(filetype == TBZ)
+  if(file_type == TBZ)
   {
     /* If debug_start is 0, there is no debugging information */
     if(debug_start == 0)
@@ -201,6 +201,6 @@ void print_debug_info(char *tbc_filename)
 		printf("No debugging information found\n");
 	}
 
-  if(filetype != TBZ)
+  if(file_type != TBZ)
     free(tdb_filename);
 }

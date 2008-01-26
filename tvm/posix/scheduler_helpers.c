@@ -4,14 +4,20 @@
 #define NSEC  1000
 
 #ifndef WIN32
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_TIME_H
 #include <time.h>
-void tvm_sleep(void)
+#endif
+
+void stiw_sleep(void)
 {
-	unsigned int now = get_time();
-	if(AFTER(tnext[pri], now))
+	unsigned int now = (unsigned int) tvm_get_time();
+	if(TIME_AFTER(tnext, now))
 	{
 		struct timespec to;
-		unsigned int timeout = tnext[pri] - now;
+		unsigned int timeout = tnext - now;
 
 		/* The - 1000 is a bit arbitrary really... just felt it'd be a good thing to
 		 * do, it probably isnt :)
@@ -29,6 +35,32 @@ void tvm_sleep(void)
 	}
 }
 
+/* FIXME: Should we sanity check for time > 0 here? */
+void stiw_set_alarm(WORD time)
+{
+	struct itimerval timeoutval;
+
+	if(time <= 0)
+	{
+		/* If we got something which is less than zero then the timeout already
+		 * happened.
+		 * FIXME: Do something more intelligent than just setting the alarm even
+		 * though we have already timed out. */
+		time = 1;
+	}
+
+	timerclear(&timeoutval.it_interval);	
+	timerclear(&timeoutval.it_value);	
+	timeoutval.it_value.tv_sec = time / 1000000;
+	timeoutval.it_value.tv_usec = time % 1000000;
+
+	if(setitimer(ITIMER_REAL, &timeoutval, NULL) != 0)
+	{
+		/* If setitimer fails then we're going to deadlock, so it's
+		 * better to explicitly blow up here. */
+		/* FIXME: exit_runloop(EXIT_SCHEDULER_BAD_1); */
+	}
+}
 #else
 
 #ifdef WIN32
@@ -41,12 +73,12 @@ void tvm_sleep(void)
 #undef UWORD 
 #endif
 
-void tvm_sleep(void)
+void stiw_sleep(void)
 {
-	unsigned int now = get_time();
-	if(AFTER(tnext[pri], now))
+	unsigned int now = (unsigned int) tvm_get_time();
+	if(TIME_AFTER(tnext, now))
 	{
-		unsigned int timeout = (tnext[pri] - now) / 1000;
+		unsigned int timeout = (tnext - now) / 1000;
 		Sleep(timeout);
 	}
 }

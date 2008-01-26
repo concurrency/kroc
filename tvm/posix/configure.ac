@@ -13,31 +13,15 @@ AC_PROG_CC
 AC_PROG_RANLIB
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS(stdlib.h stdio.h string.h sys/types.h math.h inttypes.h)
+AC_CHECK_HEADERS([stdlib.h stdio.h string.h])
+AC_CHECK_HEADERS([dlfcn.h inttypes.h limits.h math.h search.h time.h unistd.h])
+AC_CHECK_HEADERS([sys/ioctl.h sys/time.h sys/timeb.h sys/types.h])
 
 #########################
 #  Configuration Options
 #########################
 
 AC_ARG_WITH([skroc], AS_HELP_STRING([--with-skroc=PATH], [specifying the path to the directory containing skroc]), [skroc=$withval], [skroc=])
-
-#########################
-#  Find libtvm bits
-#########################
-
-tvm_h=no
-
-AC_CHECK_LIB([tvm], [initial_stackframe], [], AC_MSG_ERROR([libtvm missing]))
-
-AC_CHECK_HEADER([tvm.h], [tvm_h=yes])
-AC_CHECK_HEADER([tvm/tvm.h], [tvm_h=yes])
-AC_CHECK_HEADER([kroc/tvm.h], [tvm_h=yes])
-if test "$tvm_h" = "no"; then
-  AC_MSG_ERROR([tvm.h missing])
-else
-  # Check headers again to define them
-  AC_CHECK_HEADERS([tvm.h tvm/tvm.h kroc/tvm.h])
-fi
 
 #########################
 #  Find skroc
@@ -112,6 +96,24 @@ AM_CONDITIONAL([OS_FREEBSD],	test "$x_os" = "freebsd")
 AM_CONDITIONAL([OS_LINUX],	test "$x_os" = "linux")
 AM_CONDITIONAL([OS_SOLARIS],	test "$x_os" = "solaris")
 AM_CONDITIONAL([OS_WINDOWS],	test "$x_os" = "windows")
+
+#########################
+#  Find libtvm bits
+#########################
+
+tvm_h=no
+
+AC_CHECK_LIB([tvm], [tvm_init], [], AC_MSG_ERROR([libtvm missing]))
+
+AC_CHECK_HEADER([tvm.h], [tvm_h=yes])
+AC_CHECK_HEADER([tvm/tvm.h], [tvm_h=yes])
+AC_CHECK_HEADER([kroc/tvm.h], [tvm_h=yes])
+if test "$tvm_h" = "no"; then
+  AC_MSG_ERROR([tvm.h missing])
+else
+  # Check headers again to define them
+  AC_CHECK_HEADERS([tvm.h tvm/tvm.h kroc/tvm.h])
+fi
 
 #########################
 #  Output
