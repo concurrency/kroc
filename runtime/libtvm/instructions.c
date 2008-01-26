@@ -22,11 +22,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "instructions.h"
 #include "interpreter.h"
 
-/* Instruction jump tables */
-
 /* Jump hooks for unimplemented and invalid instructions */
-void (*not_implemented)(void); /* Jump hook for unimplemented instructions */
-void (*invalid)(void); /* Jump hook for invalid instructions */
+void (*tvm_not_implemented)(void)	= NULL; /* Jump hook for unimplemented instructions */
+void (*tvm_invalid)(void)		= NULL; /* Jump hook for invalid instructions */
 
 /**
  * This function is placed in the instruction jump table for instructions
@@ -34,9 +32,9 @@ void (*invalid)(void); /* Jump hook for invalid instructions */
  */
 void ins_not_implemented(void)
 {
-	if(not_implemented)
+	if(tvm_not_implemented)
 	{
-		not_implemented();
+		tvm_not_implemented();
 	}
 	exit_runloop(EXIT_INS_NOT_IMP);
 }
@@ -48,9 +46,9 @@ void ins_not_implemented(void)
  */
 void ins_invalid(void)
 {
-	if(invalid)
+	if(tvm_invalid)
 	{
-		invalid();
+		tvm_invalid();
 	}
 	exit_runloop(EXIT_INS_INVALID);
 }

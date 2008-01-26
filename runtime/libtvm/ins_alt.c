@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "instructions.h"
 #include "interpreter.h"
 #include "scheduler.h"
-#include "timer.h"
 #include "ins_alt.h"
 
 /****************************************************************************
@@ -48,7 +47,7 @@ one:
 	}
 	else if(WORKSPACE_GET(wptr, WS_NEXT_T) == TIME_SET_P)
 	{
-		if((!AFTER(WORKSPACE_GET(wptr, WS_TIMEOUT), creg)) || 
+		if((!TIME_AFTER(WORKSPACE_GET(wptr, WS_TIMEOUT), creg)) || 
 				(WORKSPACE_GET(wptr, WS_TOP) != NONE_SELECTED_O))
 		{
 			STACK(0, UNDEFINE(breg), UNDEFINE(creg));
@@ -70,27 +69,27 @@ one:
 		*/
 	
 		/* Are we the head of the timerqueue */
-		if(tptr[pri] == wptr)
+		if(tptr == wptr)
 		{
-			tptr[pri] = (WORDPTR) WORKSPACE_GET((WORDPTR)tptr[pri], WS_NEXT_T);
+			tptr = (WORDPTR) WORKSPACE_GET((WORDPTR)tptr, WS_NEXT_T);
 			/* If we were the last thing on the queue, this should not happen */
-			if(tptr[pri] != (WORDPTR)NOT_PROCESS_P)
+			if(tptr != (WORDPTR)NOT_PROCESS_P)
 			{
-				tnext[pri] = WORKSPACE_GET((WORDPTR)tptr[pri], WS_TIMEOUT);
+				tnext = WORKSPACE_GET((WORDPTR)tptr, WS_TIMEOUT);
 #ifdef ENABLE_SCHED_SYNC
-				set_alarm(tnext[pri] - tvm_get_time());
+				set_alarm(tnext - tvm_get_time());
 #endif
 			}
 		}
-		/* We could check that tptr[pri] == NOT_PROCESS_P but this case SHOULD be
+		/* We could check that tptr == NOT_PROCESS_P but this case SHOULD be
 		 * impossible! So we dont bother */
-		else if(tptr[pri] == (WORDPTR)NOT_PROCESS_P)
+		else if(tptr == (WORDPTR)NOT_PROCESS_P)
 		{
 		}
 		else
 		{
-			WORDPTR previous = tptr[pri];
-			WORDPTR current = (WORDPTR)WORKSPACE_GET((WORDPTR)tptr[pri], WS_NEXT_T);
+			WORDPTR previous = tptr;
+			WORDPTR current = (WORDPTR)WORKSPACE_GET((WORDPTR)tptr, WS_NEXT_T);
 			while((current != (WORDPTR)NOT_PROCESS_P) && (current != wptr))
 			{
 				previous = current;
@@ -121,11 +120,11 @@ one:
 	{
 
 	/* Aditionally */
-	//if((breg != 0) && (BEFORE(current_time, creg)) && (tptr[pri] != (WORDPTR)NOT_PROCESS_P))
-	if(tptr[pri] != (WORDPTR)NOT_PROCESS_P)
+	//if((breg != 0) && (BEFORE(current_time, creg)) && (tptr != (WORDPTR)NOT_PROCESS_P))
+	if(tptr != (WORDPTR)NOT_PROCESS_P)
 	{
-		WORDPTR loop_wptr = tptr[pri];
-		WORDPTR loop_next = (WORDPTR)WORKSPACE_GET(tptr[pri], WS_NEXT_T);
+		WORDPTR loop_wptr = tptr;
+		WORDPTR loop_next = (WORDPTR)WORKSPACE_GET(tptr, WS_NEXT_T);
 		WORDPTR loop_prev = 0;
 		fprintf(stdout, "Phantom removal:\n");
 		
@@ -135,22 +134,22 @@ ins_dist_loop:
 		//fprintf(stdout, "  wptr:      0x%08x\n", wptr);
 		//fprintf(stdout, "  loop_next: 0x%08x\n", loop_next);
 		//fprintf(stdout, "  loop_prev: 0x%08x\n", loop_prev);
-		if((loop_wptr == tptr[pri]) && (loop_wptr == wptr))
+		if((loop_wptr == tptr) && (loop_wptr == wptr))
 		{
 			/* HEAD CHECK */
 			/* We are at the head of the list */
 			if(loop_next == (WORDPTR)NOT_PROCESS_P)
 			{
 				/* If there is nobody after this process, we can nuke the tptr */
-				tptr[pri] = (WORDPTR)NOT_PROCESS_P;
+				tptr = (WORDPTR)NOT_PROCESS_P;
 			}
 			else
 			{
 				/* If there are others after this process, we need to put them at the
 				 * head of the queue, and also set the timeout to their timeout value.
 				 */
-				tptr[pri] = (WORDPTR)WORKSPACE_GET(loop_wptr, WS_NEXT_T);
-				tnext[pri] = WORKSPACE_GET(tptr[pri], WS_TIMEOUT);
+				tptr = (WORDPTR)WORKSPACE_GET(loop_wptr, WS_NEXT_T);
+				tnext = WORKSPACE_GET(tptr, WS_TIMEOUT);
 			}
 		}
 		else if(loop_wptr == wptr)
@@ -311,7 +310,7 @@ TVM_INSTRUCTION void ins_enbt(void)
 			WORKSPACE_SET(wptr, WS_ALT_T, TIME_SET_P);
 			WORKSPACE_SET(wptr, WS_TIMEOUT, breg);
 		}
-		else if(AFTER(WORKSPACE_GET(wptr, WS_TIMEOUT), breg))
+		else if(TIME_AFTER(WORKSPACE_GET(wptr, WS_TIMEOUT), breg))
 		{
 			/* Otherwise if the timeout of this enbt is earlier then the stored one */
 			WORKSPACE_SET(wptr, WS_TIMEOUT, breg);
@@ -410,7 +409,7 @@ TVM_INSTRUCTION void ins_taltwt(void)
 		iptr = run_next_on_queue();
 	}
 	/* Redundant if? */
-	else if(AFTER(current_time, WORKSPACE_GET(wptr, WS_TIMEOUT)))
+	else if(TIME_AFTER(current_time, WORKSPACE_GET(wptr, WS_TIMEOUT)))
 	{
 		/*fprintf(stderr, "3");*/
 		WORKSPACE_SET(wptr, WS_ALT_STATE, DISABLING_P); /* READY_P */
@@ -422,7 +421,7 @@ TVM_INSTRUCTION void ins_taltwt(void)
 		/*printf("TALT added stuff to timer queue\n");*/
 		WORKSPACE_SET(wptr, WS_TIMEOUT, WORKSPACE_GET(wptr, WS_TIMEOUT) + 1);
 
-		/*traverse_and_insert(tptr[pri], tptr[pri]);*/
+		/*traverse_and_insert(tptr, tptr);*/
 		timer_queue_insert(current_time, WORKSPACE_GET(wptr, WS_TIMEOUT));
 		/*print_timer_queue();*/
 		/* Redundant if? */
@@ -438,9 +437,5 @@ TVM_INSTRUCTION void ins_taltwt(void)
 			set_error_flag(EFLAG_ALT);
 		}
 	}
-
-	/*printf("STATE AFTER TALT:\n");*/
-	/*print_state();*/
 }
-
 

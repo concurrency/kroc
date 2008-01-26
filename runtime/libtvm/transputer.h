@@ -68,10 +68,10 @@ extern WORD breg;		/* Evaluation stack */
 extern WORD creg;		/* Evaluation stack */
 extern WORD oreg;		/* Operand register */
 
-extern WORDPTR tptr[NUM_PRI];	/* Timer queue pointers */
-extern WORD tnext[NUM_PRI];	/* Timeout register */
 extern WORDPTR fptr[NUM_PRI];	/* Front pointer (scheduler queue) */
 extern WORDPTR bptr[NUM_PRI];	/* Back pointer (scheduler queue) */
+extern WORDPTR tptr;		/* Timer queue pointer */
+extern WORD tnext;		/* Timeout register */
 
 extern WORD error_flag;
 extern WORD halt_on_error_flag;

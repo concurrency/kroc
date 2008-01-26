@@ -21,12 +21,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tvm.h"
 #include "instructions.h"
 #include "interpreter.h"
-#include "timer.h"
 #include "scheduler.h"
 
 #ifdef ENABLE_SCHED_SYNC
 #include <unistd.h>
 #endif
+
+WORD (*tvm_get_time)(void)	= NULL;
+void (*tvm_set_alarm)(WORD)	= NULL;
+void (*tvm_sleep)(void)		= NULL;
 
 int has_shutdown = 0;
 
@@ -34,12 +37,12 @@ int has_shutdown = 0;
 /* FIXME: Should this be somewehere else? */
 void (*scheduler_busywait_hook)(void);
 #endif
-#ifndef BUSY_WAIT
-void (*tvm_sleep)(void);
-#endif
-#ifdef ENABLE_SCHED_SYNC
-volatile int sched_sync;
-#endif
+static volatile int sched_sync = 0;
+
+void tvm_sched_sync(void)
+{
+	sched_sync = 1;
+}
 
 /* FIXME: The add_to_queue macro in soccam is in the helpers.scm, though
  * it probably ought to live with the rest of the scheduler stuff in
@@ -99,19 +102,13 @@ void add_queue_to_queue(WORD front, WORD back)
 	}
 }
 
-/* FIXME: These should go elsewhere!!! */
-#define TRUE 1
-#define FALSE 0
 BYTEPTR run_next_on_queue(void)
 {
-	//int loops = 0;
-	int now;
-	int removed;
 	/*
 	   ! SEQ
 	   !   tim ? now
 	   !   removed := FALSE
-	   !   WHILE (Tptr <> NotProcess.p) AND (NOT (Tptr^[Time] AFTER now))
+	   !   WHILE (Tptr <> NotProcess.p) AND (NOT (Tptr^[Time] TIME_AFTER now))
 	   !     SEQ
 	   !       ...  move first process on timer queue to the run queue
 	   !       removed := TRUE
@@ -121,146 +118,210 @@ BYTEPTR run_next_on_queue(void)
 	   !     TRUE
 	   !       SKIP
 	   */
-	/*
-	   printf("\\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/\n");
-	   printf("ENTERED SCHEDULER!\n");
-	   print_timer_queue();
-	   print_scheduling_queue();
-	   */
 sched_start:
-	/* This is a bit ugly at the moment... */
-#ifdef ENABLE_SCHED_SYNC
-	/* FIXME: This should expand to be able to deal with more than just timer
-	 * syncs, which is what it does now */
-	if(sched_sync == 1)
+	if((tvm_set_alarm && sched_sync) || ((!tvm_set_alarm) && (tptr != (WORDPTR)NOT_PROCESS_P)))
 	{
+		WORD removed = 0;
+		WORD now;
+		
 		sched_sync = 0;
 		now = tvm_get_time();
-		removed = FALSE;
 #if 0
 		/* Sanity check */
-		if(tptr[pri] == (WORDPTR)NOT_PROCESS_P)
+		if(tptr == (WORDPTR)NOT_PROCESS_P)
 		{
 			printf("Got scheduler sync when tptr = NOT_PROCESS_P\n");
 			abort();
 		}
 #endif
 
+		if((tptr != (WORDPTR)NOT_PROCESS_P))
 		{
-#else
-			/* FIXME: 20070607 CGR notes that this is expensive to ALWAYS read the clock.
-			 * could it just go inside the IF statement? That's just a quick glance.*/
-			now = tvm_get_time();
-			removed = FALSE;
-
-			if((tptr[pri] != (WORDPTR)NOT_PROCESS_P))
+			while((tptr != (WORDPTR)NOT_PROCESS_P) && (!(TIME_AFTER(WORKSPACE_GET(tptr, WS_TIMEOUT), now))))
 			{
-				while((tptr[pri] != (WORDPTR)NOT_PROCESS_P) && (!(AFTER(WORKSPACE_GET(tptr[pri], WS_TIMEOUT), now))))
-				{
-#endif
-					/* Move first process from timer queue to the run queue */
-					/*
-					   ! -- Move first process on timer queue to the run queue
-					   !
-					   ! POINTER temp := Tptr:
-					   ! SEQ
-					   !   Tptr := Tptr^[TLink]
-					   !   temp^[TLink] := TimeSet.p           -- i.e. time expired
-					   !   temp^[Time] := now                  -- ??
-					   !   IF
-					   !     temp^[State] = Ready.p
-					   !       SKIP                            -- used to trap to impossible(1)
-					   !                                       -- the ALTing process has
-					   !                                       -- already been put on the
-					   !                                       -- run queue by something else
-					   !     TRUE
-					   !       SEQ
-					   !         temp^[State] := Ready.p
-					   !         ...  add on to run queue
-					   */
-					WORDPTR temp = tptr[pri];
-					tptr[pri] = (WORDPTR)WORKSPACE_GET(tptr[pri], WS_NEXT_T);
-					WORKSPACE_SET(temp, WS_NEXT_T, TIME_SET_P);
-					WORKSPACE_SET(temp, WS_TIMEOUT, now);
-					if(WORKSPACE_GET(temp, WS_ALT_STATE) == READY_P)
-					{ 
-						/* SKIP -- do nothing */
-						/*printf("TIMER - SKIP\n");*/
-					}
-					else
-					{ 
-						/*printf("TIMER - ADDED TO QUEUE\n");*/
-						WORKSPACE_SET(temp, WS_ALT_STATE, READY_P);
-						/* Add on to run queue */
-						just_add_to_queue((WORD)temp);
-					}
-					/*
-					   print_timer_queue();
-					   print_scheduling_queue();
-					   */
-					removed = TRUE;
-				}
-				/* We update tnext here (which is equivalent to calling ualarm in the occam
-				 * code, they seem to use OS services rather than tnext though) */
-				if(tptr[pri] != (WORDPTR)NOT_PROCESS_P && removed)
+				/* Move first process from timer queue to the run queue */
+				/*
+				   ! -- Move first process on timer queue to the run queue
+				   !
+				   ! POINTER temp := Tptr:
+				   ! SEQ
+				   !   Tptr := Tptr^[TLink]
+				   !   temp^[TLink] := TimeSet.p           -- i.e. time expired
+				   !   temp^[Time] := now                  -- ??
+				   !   IF
+				   !     temp^[State] = Ready.p
+				   !       SKIP                            -- used to trap to impossible(1)
+				   !                                       -- the ALTing process has
+				   !                                       -- already been put on the
+				   !                                       -- run queue by something else
+				   !     TRUE
+				   !       SEQ
+				   !         temp^[State] := Ready.p
+				   !         ...  add on to run queue
+				   */
+				WORDPTR temp = tptr;
+				tptr = (WORDPTR)WORKSPACE_GET(tptr, WS_NEXT_T);
+				WORKSPACE_SET(temp, WS_NEXT_T, TIME_SET_P);
+				WORKSPACE_SET(temp, WS_TIMEOUT, now);
+				if(WORKSPACE_GET(temp, WS_ALT_STATE) == READY_P)
 				{ 
-					tnext[pri] = WORKSPACE_GET(tptr[pri], WS_TIMEOUT);
-#ifdef ENABLE_SCHED_SYNC
-					set_alarm(tnext[pri] - now);
-#endif
+					/* SKIP -- do nothing */
+					/*printf("TIMER - SKIP\n");*/
 				}
+				else
+				{ 
+					/*printf("TIMER - ADDED TO QUEUE\n");*/
+					WORKSPACE_SET(temp, WS_ALT_STATE, READY_P);
+					/* Add on to run queue */
+					just_add_to_queue((WORD)temp);
+				}
+				/*
+				   print_timer_queue();
+				   print_scheduling_queue();
+				   */
+				removed++;
 			}
+			/* We update tnext here (which is equivalent to calling ualarm in the occam
+			 * code, they seem to use OS services rather than tnext though) */
+			if((tptr != (WORDPTR)NOT_PROCESS_P) && removed)
+			{ 
+				tnext = WORKSPACE_GET(tptr, WS_TIMEOUT);
+				if (tvm_set_alarm)
+					tvm_set_alarm(tnext - now);
+			}
+		}
+	}
 
-			/* Any processes in the run queue? */
-			if(fptr[pri] != (WORDPTR)NOT_PROCESS_P)
-			{
-				/* yes */
-				/*printf("SCHEDULED NEW PROCESS!\n");*/
-				wptr = fptr[pri];
-			}
-			else if(tptr[pri] != (WORDPTR)NOT_PROCESS_P)
-			{
-#ifndef BUSY_WAIT
-				/* It would be nice to get rid of the timer tests at the start of the kernel
-				 * and put them here, which I think is ok... so they dont happen everytime
-				 * we go into the kernel? Will have to think a bit more about this
-				 * perhaps, and check its ok, but it would seem sensible???
-				 */
-				/* This function sleeps until a time close to when the next process is ready
-				*/
-#	ifdef ENABLE_SCHED_SYNC
-				/* FIXME: The pause business should probably just be rolled into
-				 * tvm_sleep() */
-				pause();
-#else
-				tvm_sleep();
-#	endif
-#endif
-				goto sched_start;
-			}
-			else if (has_shutdown)
-			{
-				exit_runloop(EXIT_STACK_BOTTOM);
-			}
-			else
-			{
-				/* DEADLOCK */
-				exit_runloop(EXIT_DEADLOCK);
-			}
-			/*printf("LOOPED %d TIMES\n", loops);*/
+	/* Any processes in the run queue? */
+	if(fptr[pri] != (WORDPTR)NOT_PROCESS_P)
+	{
+		/* yes */
+		wptr = fptr[pri];
+	}
+	else if(tptr != (WORDPTR)NOT_PROCESS_P)
+	{
+		if (tvm_sleep)
+			tvm_sleep();
+		goto sched_start;
+	}
+	else if (has_shutdown)
+	{
+		exit_runloop(EXIT_STACK_BOTTOM);
+	}
+	else
+	{
+		/* DEADLOCK */
+		exit_runloop(EXIT_DEADLOCK);
+	}
 
-			/* Update thet run queue by taking new current process off it */
-			if(fptr[pri] == bptr[pri])
-			{
-				fptr[pri] = (WORDPTR)NOT_PROCESS_P;
-				bptr[pri] = (WORDPTR)NOT_PROCESS_P;
-			}
-			else
-			{
-				fptr[pri] = (WORDPTR)WORKSPACE_GET(fptr[pri], WS_NEXT);
-			}
-			//iptr = (BYTEPTR)WORKSPACE_GET(wptr, WS_IPTR);
-			return (BYTEPTR)WORKSPACE_GET(wptr, WS_IPTR);
-			/*printf("/\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\ /\\        /\\\n");*/
+	/* Update thet run queue by taking new current process off it */
+	if(fptr[pri] == bptr[pri])
+	{
+		fptr[pri] = (WORDPTR)NOT_PROCESS_P;
+		bptr[pri] = (WORDPTR)NOT_PROCESS_P;
+	}
+	else
+	{
+		fptr[pri] = (WORDPTR)WORKSPACE_GET(fptr[pri], WS_NEXT);
+	}
+	
+	return (BYTEPTR)WORKSPACE_GET(wptr, WS_IPTR);
 }
 
+/* PREREQUISITES:
+ *   The workspace must be already have WS_TIMEOUT set correctly
+ */
+void timer_queue_insert(WORD current_time, WORD reschedule_time)
+{
+	/* Check if the queue is empty */
+	if(tptr == (WORDPTR)NOT_PROCESS_P)
+	{
+		/* It was, insert ourselves as the only thing */
+		tptr = wptr;
+		/* Update the tnext value */
+		/* tnext = WORKSPACE_GET(wptr, WS_TIMEOUT); */
+		/* This should work instead of the above line */
+		tnext = reschedule_time;
+
+		if (tvm_set_alarm)
+			tvm_set_alarm(reschedule_time - current_time);
+
+		WORKSPACE_SET(wptr, WS_IPTR, (WORD)iptr);
+		WORKSPACE_SET(wptr, WS_NEXT_T, NOT_PROCESS_P);
+	}
+	/* Check if we should be at the top of the queue */
+	else if(TIME_AFTER(tnext, reschedule_time))
+	{
+		/* If the time in tnext is after our reschedule_time, then we should be at
+		 * the front of the queue, so lets insert ourselves there. We know there
+		 * is at least one other thing on the queue than us we need to insert
+		 * ourselves before */
+
+		/* Update our NEXT pointer to point to the previous head of the queue */
+		WORKSPACE_SET(wptr, WS_NEXT_T, (WORD)tptr);
+		/* Add us to the front pointer */
+		tptr  = wptr;
+		/* Set the new reschedule time in tnext */
+		tnext = reschedule_time;
+		
+		if (tvm_set_alarm)
+			tvm_set_alarm(reschedule_time - current_time);
+	}
+	else
+	{
+		/* No, things get a bit more complicated :( */
+
+		/* Signal we are not done yet :) */
+		int done = 0;
+		/* Get the first workspace on the timer queue */
+		WORDPTR this_wptr = tptr;
+		/* Get the (first) next workspace pointer on the queue */
+		WORDPTR next_wptr = (WORDPTR)WORKSPACE_GET(this_wptr, WS_NEXT_T);
+	
+		/* Now loop through the list */
+		while(!done)
+		{
+			/* Are we at the end of the queue */
+			if(next_wptr == (WORDPTR)NOT_PROCESS_P)
+			{
+				/* Yes, insert us at the end, no update of TNEXT */
+
+				/* Adjust the process at the end of the queue to point to us */
+				WORKSPACE_SET(this_wptr, WS_NEXT_T, (WORD)wptr);
+				/* Adjust ourselves to point to the end of the queue NOT_PROCESS_P */
+				WORKSPACE_SET(wptr, WS_NEXT_T, NOT_PROCESS_P);
+
+				/* We are done */
+				done = 1;
+			}
+			/* Do we need to insert ourselves after this process? */
+			else if(TIME_AFTER(WORKSPACE_GET(next_wptr, WS_TIMEOUT), reschedule_time))
+			{
+				/* If the reschedule time of the process after the one we are looing at,
+				 * is TIME_AFTER the reschedule time we have, then we need to insert
+				 * ourselves before that process (ie after the current process) */
+
+				/* Insert ourselves after the process we are looking at */
+				/* We are going to point to the next process in the queue */
+		    WORKSPACE_SET(wptr, WS_NEXT_T, (WORD)next_wptr);
+				/* The current process in the queue is going to point to us */
+		    WORKSPACE_SET(this_wptr, WS_NEXT_T, (WORD)wptr);
+
+				/* We are done */
+				done = 1;
+			}
+			/* We need to dig deeper in the list */
+			else
+			{
+				/* FIXME: Do we really need to get all these values every time round? */
+
+				/* Get the next workspace on the timer queue */
+				this_wptr = next_wptr;
+				/* Get the (next) next workspace pointer on the queue */
+				next_wptr = (WORDPTR)WORKSPACE_GET(this_wptr, WS_NEXT_T);
+
+				/* We are NOT done!!! */
+			}
+		}
+	}
+}
