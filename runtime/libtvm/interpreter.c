@@ -186,6 +186,25 @@ void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 	tvm_init_stackframe(where, argc, argv, vectorspace, mobilespace, fb, RET_SHUTDOWN, 0);
 }
 
+void tvm_init(void)
+{
+	int i;
+
+	/* setup scheduler queues */
+	for (i = 0; i < NUM_PRI; i++) {
+		fptr[i] = (WORD *)NOT_PROCESS_P;
+		bptr[i] = (WORD *)NOT_PROCESS_P;
+	}
+
+	tptr = (WORD *)NOT_PROCESS_P;
+
+	/* evaluation stack */
+	areg = 0;
+	breg = 0;
+	creg = 0;
+	oreg = 0;
+}
+
 /** 
  * Starts the main run loop of the interpreter, fetching code starting from
  * code_ptr. This function will exit when the interpreted program has finished

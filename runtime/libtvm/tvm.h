@@ -110,13 +110,21 @@ extern FFI_TABLE_ENTRY *ffi_table;
 extern FFI_FUNCTION *special_ffi_table;
 /*}}}*/
 
+/*{{{  Scheduler API */
+extern void tvm_just_add_to_queue(WORDPTR wptr);
+extern void tvm_add_to_queue(WORDPTR wptr, BYTEPTR iptr_prime);
+extern void tvm_add_queue_to_queue(WORDPTR front, WORDPTR back);
+extern void tvm_sched_sync(void);
+/*}}}*/
+
 /*{{{  Interpreter API */
-void tvm_init_stackframe(WORDPTR *where, int argc, WORD argv[],
+extern void tvm_init_stackframe(WORDPTR *where, int argc, WORD argv[],
 		WORDPTR vectorspace, WORDPTR mobilespace, WORDPTR forkbarrier,
 		int ret_type, BYTEPTR ret_addr);
-void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
+extern void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 	WORDPTR vectorspace, WORDPTR mobilespace, int add_forkingbarrier);
-int tvm_run(void);
+extern void tvm_init(void);
+extern int tvm_run(void);
 /*}}}*/
 
 #endif /* TVM_H */

@@ -49,7 +49,7 @@ TVM_INSTRUCTION void ins_boolinvert(void)
 /* 0x28 - 0x22 0xF8 - reschedule */
 TVM_INSTRUCTION void ins_reschedule(void)
 {
-	add_to_queue((WORD) wptr, (WORD) iptr);
+	tvm_add_to_queue(wptr, iptr);
 
 	iptr = run_next_on_queue();
 }
@@ -306,7 +306,7 @@ TVM_HELPER void tvm_sem_release(WORDPTR sem)
 		write_word(sem_fptr_ptr, WORKSPACE_GET((WORDPTR) sem_fptr, WS_NEXT));
 
 		/* Put the process we picked up semaphore queue onto run queue */
-		just_add_to_queue(sem_fptr);
+		tvm_just_add_to_queue((WORDPTR)sem_fptr);
 	}
 }
 
@@ -393,7 +393,7 @@ TVM_INSTRUCTION void ins_xend(void)
 	write_word(chan_addr, NOT_PROCESS_P);
 
 	/* Put the outputting process on the run queue */
-	just_add_to_queue((WORD)other_wptr);
+	add_just_add_to_queue(other_wptr);
 
 	UNDEFINE_STACK();
 }

@@ -165,7 +165,7 @@ TVM_INSTRUCTION void ins_sub(void)
 /* 0x0D - 0xFD - startp - star process */
 TVM_INSTRUCTION void ins_startp(void)
 {
-	add_to_queue(areg, ((WORD) iptr) + breg);
+	tvm_add_to_queue((WORDPTR)areg, byteptr_plus(iptr, breg));
 	/* FIXME: Due to the different semantics of the C add_to_queue, and the
 	 * soccam add to queue, (which we need to bring in sync) I have this line
 	 * which is not currently present in soccam */
@@ -726,9 +726,7 @@ TVM_INSTRUCTION void ins_lsub(void)
 /* 0x39 - 0x23 0xF9 - runp - run process */
 TVM_INSTRUCTION void ins_runp(void)
 {
-	/* FIXME: Details on this instruction are scetchy in the compiler writers
-	 * guide... */
-	just_add_to_queue(areg);
+	tvm_just_add_to_queue((WORDPTR)areg);
 }
 
 /* 0x3B - 0x23 0xFB - sb - store byte */

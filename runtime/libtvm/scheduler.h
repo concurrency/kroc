@@ -27,18 +27,7 @@ extern int has_shutdown;
 extern void (*scheduler_busywait_hook)(void);
 #endif
 
-extern void just_add_to_queue(WORD src_reg);
-extern void add_to_queue(WORD src_reg, WORD iptr_prime);
-extern void add_queue_to_queue(WORD front, WORD back);
+extern void timer_queue_insert(WORD current_time, WORD reschedule_time);
 extern BYTEPTR run_next_on_queue(void);
-
-void timer_queue_insert(WORD current_time, WORD reschedule_time);
-
-#ifndef BUSY_WAIT
-extern void (*tvm_sleep)(void);
-#endif
-#ifdef ENABLE_SCHED_SYNC
-extern volatile int sched_sync;
-#endif
 
 #endif

@@ -105,7 +105,7 @@ case "$host_os" in
 esac
 
 # Custom copy data
-if "x$custom_copy_data" != "xno"; then
+if test "x$custom_copy_data" != "xno"; then
   copy_data=custom
 fi
 

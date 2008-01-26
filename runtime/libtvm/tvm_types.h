@@ -59,7 +59,7 @@ typedef uint8_t		UWORD;
 #endif /* HAVE_INTTYPES_H */
 
 /* Define kinds of pointers which we want to be able to use */
-#if defined(WORDPTRS_FAKE)
+#if defined(WORDPTRS_VIRTUAL)
 typedef WORD 		WORDPTR;
 typedef WORD 		BYTEPTR;
 #else

@@ -47,10 +47,6 @@ static inline int SlotToSize (int p)
   return s;
 }
 
-void dmem_init(void)
-{
-}
-
 void *palloc(int size)
 {
 	void *addr = malloc(size);
