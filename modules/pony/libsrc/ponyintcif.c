@@ -584,7 +584,6 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			walk_inner_primitive (wptr, s, 1);
 		}
 		break;
-#if 0
 	case MTID_SEQPROTO:
 		{
 			unsigned int i;
@@ -608,24 +607,47 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 	case MTID_TAGPROTO:
 		{
 			char tag;
-			void *tag_addr = get_data (wptr, s);
 			unsigned int i;
 			const unsigned int ntags = s->pdesc[0];
 			s->pdesc++;
 
 			SCTRACE (s, "tagged protocol with %d possible tags\n", 1, ntags);
-			process_di (wptr, s, &tag_addr, 1);
-			if (s->mode == PW_input) {
-				SCTRACE (s, "doing ChanOut; data 0x%08x; size 1\n", 1, (unsigned int) tag_addr);
-				ChanOut (wptr, s->user, tag_addr, 1);
-				SCTRACE (s, "ChanOut done\n", 0);
-			}
-			tag = *(char *) tag_addr;
-			if (s->mode == PW_input) {
-				temp_list_add (wptr, s, tag_addr);
+
+			/*{{{  process the tag */
+			switch (s->mode) {
+			case PW_count:
+				{
+					/* Read the user's data anyway -- we need to know which tag it is! */
+					void *data = get_data (wptr, s);
+					tag = *((char *) data);
+
+					count_di (wptr, s, 1);
+					break;
+				}
+			case PW_output:
+			case PW_cancel:
+				{
+					void *data = get_data (wptr, s);
+					tag = *((char *) data);
+
+					output_di (wptr, s, data, 1);
+					break;
+				}
+			case PW_input:
+				{
+					mt_array_t *data = input_di (wptr, s, 1);
+					tag = *((char *) data->data);
+					MTRelease (wptr, data);
+
+					SCTRACE (s, "doing ChanOut for tag\n", 0);
+					ChanOutChar (wptr, s->user, tag);
+					SCTRACE (s, "ChanOut done\n", 0);
+					break;
+				}
 			}
 			SCTRACE (s, "... and this tag is %d\n", 1, tag);
-
+			/*}}}*/
+			/*{{{  process the remaining items */
 			for (i = 0; i < ntags; i++) {
 				const unsigned int tag_id = typedesc_id (s->pdesc[0]);
 				const unsigned int tag_len = typedesc_len (s->pdesc[0]);
@@ -658,8 +680,13 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 					s->pdesc += tag_len;
 				}
 			}
+			if (i == ntags) {
+				CFATAL ("walk_inner: failed to find a matching tag for %d\n", 1, tag);
+			}
+			/*}}}*/
 		}
 		break;
+#if 0
 	case MTID_COUNTED:
 		{
 			/* This actually requires either one or two CLCs from
