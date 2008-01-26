@@ -1417,9 +1417,9 @@ static void pony_protocol_decoder (Workspace wptr)
 						ProcParam (wptr, i1, 2, dh_out);
 
 						i2 = LightProcInit (wptr, stack_i2, 3, cancel_decode_inner_stacksize);
-						ProcParam (wptr, i1, 0, &csync);
-						ProcParam (wptr, i1, 1, dh_in);
-						ProcParam (wptr, i1, 2, &was_cancelled);
+						ProcParam (wptr, i2, 0, &csync);
+						ProcParam (wptr, i2, 1, dh_in);
+						ProcParam (wptr, i2, 2, &was_cancelled);
 
 						ProcPar (wptr, 2, i1, try_first_clc, i2, cancel_decode_inner);
 
