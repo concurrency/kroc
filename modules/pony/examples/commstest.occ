@@ -469,6 +469,15 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   ASSERT (DEFINED svr)
                   ASSERT (result = PONYC.RESULT.ALLOC.OK)
                   --}}}
+
+                  --{{{  brief delay, to reduce error message confusion
+                  TIMER tim:
+                  INT t:
+                  SEQ
+                    tim ? t
+                    tim ? AFTER t PLUS 500000
+                  --}}}
+
                   SEQ i = 0 FOR Iterations
                     INT x, y, z:
                     SEQ
@@ -2353,6 +2362,15 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   ASSERT (DEFINED cli)
                   ASSERT (result = PONYC.RESULT.ALLOC.OK)
                   --}}}
+
+                  --{{{  brief delay, to reduce error message confusion
+                  TIMER tim:
+                  INT t:
+                  SEQ
+                    tim ? t
+                    tim ? AFTER t PLUS 500000
+                  --}}}
+
                   SEQ i = 0 FOR Iterations
                     SEQ
                       C.trace.i ("commstest: starting output cycle ", i)
