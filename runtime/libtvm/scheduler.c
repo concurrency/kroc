@@ -44,61 +44,48 @@ void tvm_sched_sync(void)
 	sched_sync = 1;
 }
 
-/* FIXME: The add_to_queue macro in soccam is in the helpers.scm, though
- * it probably ought to live with the rest of the scheduler stuff in
- * scheduler.scm
- */
-/* FIXME: I think this should probably take a WORDPTR as the first argument, and
- * possibly a BYTEPTR as the second */
-void just_add_to_queue(WORD src_reg)
+void tvm_just_add_to_queue(WORDPTR ws)
 {
 
-	/* 20070607 CGR */
-	/* Carl points out that we were practicing bad hygene in our workspace when
-	 * doing this operation. The TVM should always set the link pointer to null
-	 * before adding to the queue. This line *probably* fixes that problem. */
-	WORKSPACE_SET((WORDPTR)src_reg, WS_NEXT, (WORD)NOT_PROCESS_P);
+	WORKSPACE_SET(ws, WS_NEXT, (WORD)NOT_PROCESS_P);
 	
-	/* src_reg is effectively the new workspace pointer */
-
 	if(fptr[pri] == (WORDPTR)NOT_PROCESS_P)
 	{
 		/* If there is nothing on the queue, we will make this process
 		 * the only thing on the queue */
-		fptr[pri] = (WORDPTR)src_reg;
-		bptr[pri] = (WORDPTR)src_reg;
+		fptr[pri] = ws;
+		bptr[pri] = ws;
 	}
 	else
 	{
 		/* There are other things on the queue, we add this process to the 
 		 * back pointer, and add a link to this process at into the previous
 		 * processes workspace */
-		/* FIXME: soccam does not use the workspace! macro here, it should! */
-		WORKSPACE_SET(bptr[pri], WS_NEXT, src_reg);
-		bptr[pri] = (WORDPTR)src_reg;
+		WORKSPACE_SET(bptr[pri], WS_NEXT, (WORD)ws);
+		bptr[pri] = ws;
 	}
 }
 
-void add_to_queue(WORD src_reg, WORD iptr_prime)
+void tvm_add_to_queue(WORDPTR ws, BYTEPTR iptr_prime)
 {
-	just_add_to_queue(src_reg);
+	tvm_just_add_to_queue(ws);
 	
-	WORKSPACE_SET(bptr[pri], WS_IPTR, iptr_prime);
+	WORKSPACE_SET(bptr[pri], WS_IPTR, (WORD)iptr_prime);
 }
 
-void add_queue_to_queue(WORD front, WORD back)
+void tvm_add_queue_to_queue(WORDPTR front, WORDPTR back)
 {
-	WORKSPACE_SET((WORDPTR)back, WS_NEXT, (WORD)NOT_PROCESS_P);
+	WORKSPACE_SET(back, WS_NEXT, (WORD)NOT_PROCESS_P);
 	
 	if(fptr[pri] == (WORDPTR)NOT_PROCESS_P)
 	{
-		fptr[pri] = (WORDPTR)front;
-		bptr[pri] = (WORDPTR)back;
+		fptr[pri] = front;
+		bptr[pri] = back;
 	}
 	else
 	{
-		WORKSPACE_SET(bptr[pri], WS_NEXT, front);
-		bptr[pri] = (WORDPTR)back;
+		WORKSPACE_SET(bptr[pri], WS_NEXT, (WORD)front);
+		bptr[pri] = back;
 	}
 }
 
@@ -173,7 +160,7 @@ sched_start:
 					/*printf("TIMER - ADDED TO QUEUE\n");*/
 					WORKSPACE_SET(temp, WS_ALT_STATE, READY_P);
 					/* Add on to run queue */
-					just_add_to_queue((WORD)temp);
+					tvm_just_add_to_queue(temp);
 				}
 				/*
 				   print_timer_queue();

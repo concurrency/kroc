@@ -81,10 +81,10 @@ TVM_HELPER void chan_io_end(WORDPTR chan_ptr, WORDPTR other_wptr)
 	write_word(chan_ptr, NOT_PROCESS_P);
 
 	/* Add ourselves to the back of the runqueue */
-	add_to_queue((WORD)wptr, (WORD)iptr);
+	tvm_add_to_queue(wptr, iptr);
 	
 	/* Reschedule the process at the other end of the channel */
-	wptr = (WORDPTR)other_wptr;
+	wptr = other_wptr;
 	/* Load the newly scheduled processes instruction pointer */
 	iptr = (BYTEPTR)WORKSPACE_GET(wptr, WS_IPTR);
 }
