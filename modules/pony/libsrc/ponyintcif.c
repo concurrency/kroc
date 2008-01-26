@@ -76,7 +76,7 @@ enum PDO_tags {
 enum PEI_tags {
 	PEI_first_clc = 0,		/* INT; INT; BOOL */
 	PEI_rest_clcs,			/* INT; INT */
-	PEI_data_item_nlc,		/* INT; INT */
+	PEI_data_item_nlc,		/* MOBILE []BYTE */
 	PEI_clone_ctb,			/* INT */
 	PEI_alloc_new_ctb,		/* INT */
 	PEI_alloc_new_ctb_confirm,	/* PONY.NETHOOKHANDLE!; MOBILE []PONY.DECODEHANDLE!; MOBILE []PONY.ENCODEHANDLE! */
@@ -391,22 +391,23 @@ static void output_di (Workspace wptr, pony_walk_state *s, void *data, size_t si
 /*
  *	input a data item from the pony kernel
  */
-static void input_di (Workspace wptr, pony_walk_state *s, void **addr, size_t size)
+static mt_array_t *input_di (Workspace wptr, pony_walk_state *s, size_t size)
 {
-	size_t recv_size;
 	char tag;
+	mt_array_t *array;
 
 	SCTRACE (s, "reading data.item.nlc\n", 0);
 	ChanInChar (wptr, s->from_kern, &tag);
 	if (tag != PEI_data_item_nlc) {
 		CFATAL ("input_di: expected data.item.nlc, got %d\n", 1, tag);
 	}
-	ChanInInt (wptr, s->from_kern, (int *) addr);
-	ChanInInt (wptr, s->from_kern, (int *) &recv_size);
-	SCTRACE (s, "... read data.item.nlc; data %08x; size %d\n", 2, *(unsigned int *) addr, recv_size);
-	if (recv_size != size) {
-		CFATAL ("input_di: expected size %d in data.item.nlc, got size %d\n", 2, size, recv_size);
+	MTChanIn (wptr, s->from_kern, (void **) &array);
+	SCTRACE (s, "... read data.item.nlc; mobile %08x; size %d\n", 2, (int) array, array->dimensions[0]);
+	if (array->dimensions[0] != size) {
+		CFATAL ("input_di: expected size %d in data.item.nlc, got size %d\n", 2, size, array->dimensions[0]);
 	}
+
+	return array;
 }
 /*}}}*/
 /*{{{ count_di */
@@ -437,26 +438,6 @@ static void *get_data (Workspace wptr, pony_walk_state *s)
 			CFATAL ("get_data: no sending process for channel at 0x%08x (channel word is NULL)\n", 1, (unsigned int) s->user);
 		}
 		return (void *) other[Pointer];
-	}
-}
-/*}}}*/
-/*{{{ process_di */
-/*
- *	process a data item
- */
-static void process_di (Workspace wptr, pony_walk_state *s, void **addr, size_t size)
-{
-	switch (s->mode) {
-	case PW_count:
-		count_di (wptr, s, 1);
-		break;
-	case PW_output:
-	case PW_cancel:
-		output_di (wptr, s, *addr, size);
-		break;
-	case PW_input:
-		input_di (wptr, s, addr, size);
-		break;
 	}
 }
 /*}}}*/
@@ -517,7 +498,7 @@ static inline int is_primitive (unsigned int id)
 /*
  *	walk part of a type descriptor for a single primitive communication
  */
-static int walk_inner_primitive (Workspace wptr, pony_walk_state *s, int item_count, void **data, size_t *size)
+static void walk_inner_primitive (Workspace wptr, pony_walk_state *s, int item_count)
 {
 	const unsigned int type = typedesc_id (s->pdesc[0]);
 	const unsigned int type_len = typedesc_len (s->pdesc[0]);
@@ -529,13 +510,36 @@ static int walk_inner_primitive (Workspace wptr, pony_walk_state *s, int item_co
 	case MTID_PRIM:
 	case MTID_RECORD:
 		{
+			size_t size;
 			long long total_size = s->pdesc[0] * item_count;
 			if (s->mode == PW_output && total_size >= 0x80000000) {
 				CFATAL ("walk_inner_primitive: attempting to send %lld-byte data item; this won't fit in the count\n", 1, total_size);
 			}
-			*size = (size_t) total_size;
+			size = (size_t) total_size;
 
-			process_di (wptr, s, data, *size);
+			switch (s->mode) {
+			case PW_count:
+				{
+					count_di (wptr, s, 1);
+					break;
+				}
+			case PW_output:
+			case PW_cancel:
+				{
+					void *data = get_data (wptr, s);
+					output_di (wptr, s, data, size);
+					break;
+				}
+			case PW_input:
+				{
+					mt_array_t *data = input_di (wptr, s, size);
+					SCTRACE (s, "doing ChanOut; data 0x%08x; size %d\n", 2, (unsigned int) data, size);
+					ChanOut (wptr, s->user, data->data, size);
+					SCTRACE (s, "ChanOut done\n", 0);
+					MTRelease (wptr, data);
+					break;
+				}
+			}
 			s->pdesc += 2;
 		}
 		break;
@@ -545,9 +549,7 @@ static int walk_inner_primitive (Workspace wptr, pony_walk_state *s, int item_co
 			s->pdesc++;
 
 			CTRACE ("array with %d items; this dimension is %d\n", 2, nitems * item_count, nitems);
-			if (walk_inner_primitive (wptr, s, nitems * item_count, data, size)) {
-				return 1;
-			}
+			walk_inner_primitive (wptr, s, nitems * item_count);
 		}
 		break;
 	default:
@@ -559,7 +561,6 @@ static int walk_inner_primitive (Workspace wptr, pony_walk_state *s, int item_co
 	}
 
 	SCTRACE (s, "done\n", 0);
-	return 0;
 }
 /*}}}*/
 /*{{{ walk_inner */
@@ -579,21 +580,11 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 	case MTID_RECORD:
 	case MTID_ARRAY:
 		{
-			void *data = get_data (wptr, s);
-			size_t size;
-
 			s->pdesc--;
-			if (walk_inner_primitive (wptr, s, 1, &data, &size)) {
-				return 1;
-			}
-			if (s->mode == PW_input) {
-				SCTRACE (s, "doing ChanOut; data 0x%08x; size %d\n", 2, (unsigned int) data, size);
-				ChanOut (wptr, s->user, data, size);
-				SCTRACE (s, "ChanOut done\n", 0);
-				temp_list_add (wptr, s, data);
-			}
+			walk_inner_primitive (wptr, s, 1);
 		}
 		break;
+#if 0
 	case MTID_SEQPROTO:
 		{
 			unsigned int i;
@@ -803,6 +794,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 						CTRACE ("input counted array size CLC %d\n", 1, s->clc);
 						ChanInChar (wptr, s->from_kern, &tag);
 						if (tag != PEI_data_item_nlc) {
+#warning FIX
 							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
 						}
 						ChanInInt (wptr, s->from_kern, (int *) &recv_data);
@@ -834,6 +826,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 						if (tag != PEI_data_item_nlc) {
 							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
 						}
+#warning FIX
 						ChanInInt (wptr, s->from_kern, (int *) &recv_data);
 						ChanInInt (wptr, s->from_kern, (int *) &recv_size);
 
@@ -855,6 +848,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			}
 		}
 		break;
+#endif
 #if 0
 	case MTID_MARRAY:
 		{
@@ -935,6 +929,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 
 						CTRACE ("input CLC %d (marray data for single dimension)\n", 1, s->clc);
 						ChanInChar (wptr, s->from_kern, &tag);
+#warning FIX
 						if (tag != PEI_data_item_nlc) {
 							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
 						}

@@ -2820,7 +2820,6 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
               -- Send all NLCs of first CLC to encoder
               INITIAL INT nlc.start.index IS 0:
               MOBILE []BYTE nlc.data.array:
-              INT addr, size:
               SEQ i = 0 FOR di.nlcs.first
                 SEQ
                   -- Get NLC-data-array
@@ -2832,8 +2831,6 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                         nlc.data.array := MOBILE [size.array[i]]BYTE
                         [nlc.data.array FOR size.array[i]] := [data.array FROM nlc.start.index FOR size.array[i]]
                         nlc.start.index := nlc.start.index + size.array[i]
-                  -- Detach NLC-data-array
-                  DETACH.DYNMOB (nlc.data.array, addr, size)
                   -- Data-item NLC
                   --{{{  OUT message
                   IF
@@ -2845,16 +2842,13 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                           int.msg.handle[to.handler] ! msg.str; "/"
                           int.msg.handle[to.handler] ! msg.int; own.chan.id
                           int.msg.handle[to.handler] ! msg.str; ": OUT ext.ench: data.item.nlc; "
-                          int.msg.handle[to.handler] ! msg.hex; addr
-                          int.msg.handle[to.handler] ! msg.str; "; "
-                          int.msg.handle[to.handler] ! msg.int; size
+                          int.msg.handle[to.handler] ! msg.int; SIZE nlc.data.array
                           int.msg.handle[to.handler] ! msg.end; FALSE
                     TRUE
                       SKIP
                   --}}}
-                  -- Carrying: address;
-                  --           size
-                  enc.handle.svr[to.encoder] ! data.item.nlc; addr; size
+                  -- Carrying: data
+                  enc.handle.svr[to.encoder] ! data.item.nlc; nlc.data.array
             --}}}
             --{{{  There are channel-type-end NLCs in first CLC
             TRUE
@@ -2864,10 +2858,6 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                   di.nlcs.first = 0
                     SEQ
                       clc.desc.first := data.array
-                      -- Without next line compiler complains when doing `DETACH.DYNMOB'
-                      --   (compiler does not know that with `di.nlcs.first' being zero,
-                      --   no data-item NLCs can happen, and with `DETACH.DYNMOB' the
-                      --   undefinedness-checker produces an error rather than a warning)
                       data.array := ""
                   TRUE
                     SEQ
@@ -2884,7 +2874,6 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                     --{{{  Data-item NLC
                     clc.desc.first[current.clc.desc.index] = 0
                       MOBILE []BYTE nlc.data.array:
-                      INT addr, size:
                       SEQ
                         -- Get NLC-data-array
                         nlc.data.array := MOBILE [size.array[current.size.index]]BYTE
@@ -2892,8 +2881,6 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                           [data.array FROM nlc.start.index FOR size.array[current.size.index]]
                         nlc.start.index := nlc.start.index + size.array[current.size.index]
                         current.size.index := current.size.index + 1
-                        -- Detach NLC-data-array
-                        DETACH.DYNMOB (nlc.data.array, addr, size)
                         -- Data-item NLC
                         --{{{  OUT message
                         IF
@@ -2905,16 +2892,13 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                                 int.msg.handle[to.handler] ! msg.str; "/"
                                 int.msg.handle[to.handler] ! msg.int; own.chan.id
                                 int.msg.handle[to.handler] ! msg.str; ": OUT ext.ench: data.item.nlc; "
-                                int.msg.handle[to.handler] ! msg.hex; addr
-                                int.msg.handle[to.handler] ! msg.str; "; "
-                                int.msg.handle[to.handler] ! msg.int; size
+                                int.msg.handle[to.handler] ! msg.int; SIZE nlc.data.array
                                 int.msg.handle[to.handler] ! msg.end; FALSE
                           TRUE
                             SKIP
                         --}}}
-                        -- Carrying: address;
-                        --           size
-                        enc.handle.svr[to.encoder] ! data.item.nlc; addr; size
+                        -- Carrying: data
+                        enc.handle.svr[to.encoder] ! data.item.nlc; nlc.data.array
                         -- Update CLC-descriptor index
                         current.clc.desc.index := current.clc.desc.index + 1
                     --}}}
@@ -3313,7 +3297,6 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                     -- Send all NLCs of remaining CLCs to encoder
                     INITIAL INT nlc.start.index IS 0:
                     MOBILE []BYTE nlc.data.array:
-                    INT addr, size:
                     SEQ i = 0 FOR di.nlcs.rest
                       SEQ
                         -- Get NLC-data-array
@@ -3326,8 +3309,6 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                               [nlc.data.array FOR size.array[i]] :=
                                 [data.array FROM nlc.start.index FOR size.array[i]]
                               nlc.start.index := nlc.start.index + size.array[i]
-                        -- Detach NLC-data-array
-                        DETACH.DYNMOB (nlc.data.array, addr, size)
                         -- Data-item NLC
                         --{{{  OUT message
                         IF
@@ -3339,16 +3320,13 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                                 int.msg.handle[to.handler] ! msg.str; "/"
                                 int.msg.handle[to.handler] ! msg.int; own.chan.id
                                 int.msg.handle[to.handler] ! msg.str; ": OUT ext.ench: data.item.nlc; "
-                                int.msg.handle[to.handler] ! msg.hex; addr
-                                int.msg.handle[to.handler] ! msg.str; "; "
-                                int.msg.handle[to.handler] ! msg.int; size
+                                int.msg.handle[to.handler] ! msg.int; SIZE nlc.data.array
                                 int.msg.handle[to.handler] ! msg.end; FALSE
                           TRUE
                             SKIP
                         --}}}
-                        -- Carrying: address;
-                        --           size
-                        enc.handle.svr[to.encoder] ! data.item.nlc; addr; size
+                        -- Carrying: data
+                        enc.handle.svr[to.encoder] ! data.item.nlc; nlc.data.array
                   --}}}
                   --{{{  There are channel-type-end NLCs in remaining CLCs
                   TRUE
@@ -3358,10 +3336,6 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                         di.nlcs.rest = 0
                           SEQ
                             clc.desc.rest := data.array
-                            -- Without next line compiler complains when doing `DETACH.DYNMOB'
-                            --   (compiler does not know that with `di.nlcs.rest' being zero,
-                            --   no data-item NLCs can happen, and with `DETACH.DYNMOB' the
-                            --   undefinedness-checker produces an error rather than a warning)
                             data.array := ""
                         TRUE
                           SEQ
@@ -3378,7 +3352,6 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                           --{{{  Data-item NLC
                           clc.desc.rest[current.clc.desc.index] = 0
                             MOBILE []BYTE nlc.data.array:
-                            INT addr, size:
                             SEQ
                               -- Get NLC-data-array
                               nlc.data.array := MOBILE [size.array[current.size.index]]BYTE
@@ -3386,8 +3359,6 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                                 [data.array FROM nlc.start.index FOR size.array[current.size.index]]
                               nlc.start.index := nlc.start.index + size.array[current.size.index]
                               current.size.index := current.size.index + 1
-                              -- Detach NLC-data-array
-                              DETACH.DYNMOB (nlc.data.array, addr, size)
                               -- Data-item NLC
                               --{{{  OUT message
                               IF
@@ -3399,16 +3370,13 @@ PROC pony.int.enc.handler (VAL INT own.nct.id, own.chan.id,
                                       int.msg.handle[to.handler] ! msg.str; "/"
                                       int.msg.handle[to.handler] ! msg.int; own.chan.id
                                       int.msg.handle[to.handler] ! msg.str; ": OUT ext.ench: data.item.nlc; "
-                                      int.msg.handle[to.handler] ! msg.hex; addr
-                                      int.msg.handle[to.handler] ! msg.str; "; "
-                                      int.msg.handle[to.handler] ! msg.int; size
+                                      int.msg.handle[to.handler] ! msg.int; SIZE nlc.data.array
                                       int.msg.handle[to.handler] ! msg.end; FALSE
                                 TRUE
                                   SKIP
                               --}}}
-                              -- Carrying: address;
-                              --           size
-                              enc.handle.svr[to.encoder] ! data.item.nlc; addr; size
+                              -- Carrying: data
+                              enc.handle.svr[to.encoder] ! data.item.nlc; nlc.data.array
                               -- Update CLC-descriptor index
                               current.clc.desc.index := current.clc.desc.index + 1
                           --}}}
