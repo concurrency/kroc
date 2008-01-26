@@ -872,7 +872,6 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			}
 		}
 		break;
-#if 0
 	case MTID_MARRAY:
 		{
 			const unsigned int dimcount = s->pdesc[0];
@@ -899,18 +898,19 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 				{
 					int i;
 					long long data_size;
-					unsigned int *block = get_data (wptr, s);
-					/* This contains the mobile pointer, followed by dimcount dimensions. */
+					mt_array_t *array;
 
-					if (block == NULL) {
+					MTChanXIn (wptr, s->user, (void **) &array);
+					if (array == NULL) {
 						CFATAL ("walk_inner: trying to send undefined mobile array\n", 0);
+						/* FIXME ... or a zero-length one. */
 					}
 
-					CTRACE ("output marray, %d dimensions, block at 0x%08x\n", 2, dimcount, block[0]);
+					CTRACE ("output marray, %d dimensions, mobile at 0x%08x\n", 2, dimcount, (int) array);
 					data_size = subtype_size;
 					for (i = 0; i < dimcount; i++) {
-						CTRACE ("dimension %d is %d\n", 2, i, block[i + 1]);
-						data_size *= block[i + 1];
+						CTRACE ("dimension %d is %d\n", 2, i, array->dimensions[i]);
+						data_size *= array->dimensions[i];
 					}
 					CTRACE ("marray data size is %d\n", 1, (int) data_size);
 
@@ -920,82 +920,83 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 
 					if (s->mode == PW_output) {
 						if (dimcount > 1) {
-							CTRACE ("output CLC %d (marray dimension block at 0x%08x)\n", 2, s->clc, (unsigned int) &block[1]);
+							CTRACE ("output CLC %d (marray dimension block at 0x%08x)\n", 2, s->clc, (unsigned int) &(array->dimensions[0]));
 							ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
-							ChanOutInt (wptr, s->to_kern, (int) &block[1]);
-							ChanOutInt (wptr, s->to_kern, (int) dimcount * sizeof *block);
+							ChanOutInt (wptr, s->to_kern, (int) &(array->dimensions[0]));
+							ChanOutInt (wptr, s->to_kern, (int) dimcount * sizeof (word));
 						}
 
-						CTRACE ("output CLC %d (marray data at 0x%08x)\n", 2, s->clc, block[0]);
+						CTRACE ("output CLC %d (marray data at 0x%08x)\n", 2, s->clc, (int) array->data);
 						ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
-						ChanOutInt (wptr, s->to_kern, (int) block[0]);
+						ChanOutInt (wptr, s->to_kern, (int) array->data);
 						ChanOutInt (wptr, s->to_kern, (int) data_size);
+						CTRACE ("data:\n", 0);
+						for (i = 0; i < data_size; i++) {
+							CTRACE ("  %5d: %02x\n", 2, i, ((char *) array->data)[i]);
+						}
 					} else {
 						CTRACE ("cancelling CLC %d marray\n", 1, s->clc);
 					}
 
-					CTRACE ("will free marray data at 0x%08x\n", 1, block[0]);
-					comm_list_add (wptr, s, (void *) block[0], -1, CL_dynamic_mobile);
+					comm_list_add (wptr, s, array);
 				}
 				break;
 			case PW_input:
 				{
 					int i;
-					long long data_size;
-					unsigned int *block = alloc_temp_mem (wptr, s, (dimcount + 1) * sizeof *block);
-					unsigned int *recv_dims;
-					void *recv_data;
+					mt_array_t *array, *output;
 					char tag;
+					int num_elements;
+
+					/* We allocate mobile arrays as arrays of BYTEs, from the mobile type system's
+					 * perspective. It doesn't seem entirely unreasonable that this might break
+					 * something in the future. */
+					const word subtype_mt = MT_MAKE_NUM (MT_NUM_BYTE);
 
 					if (dimcount == 1) {
-						size_t recv_size;
-
 						CTRACE ("input CLC %d (marray data for single dimension)\n", 1, s->clc);
 						ChanInChar (wptr, s->from_kern, &tag);
-#warning FIX
 						if (tag != PEI_data_item_nlc) {
 							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
 						}
-						ChanInInt (wptr, s->from_kern, (int *) &recv_data);
-						ChanInInt (wptr, s->from_kern, (int *) &recv_size);
+						MTChanIn (wptr, s->from_kern, (void **) &array);
+						num_elements = array->dimensions[0] / subtype_size;
 
-						block[0] = (unsigned int) malloc (recv_size);
-						memcpy ((void *) block[0], recv_data, recv_size);
-						temp_list_add (wptr, s, recv_data);
-						block[1] = recv_size / subtype_size;
-						CTRACE ("received %d items, total size %d\n", 2, block[1], recv_size);
+						/* We can just reuse the array we received, since it has one dimension already. */
+						output = array;
+						output->dimensions[0] = num_elements;
 					} else {
+						mt_array_t *dimensions;
+
 						CTRACE ("input CLC %d (marray dimension block)\n", 1, s->clc);
-						input_di (wptr, s, (void *) &recv_dims, dimcount * sizeof *recv_dims);
-						memcpy (&block[1], recv_dims, dimcount * sizeof *recv_dims);
-						temp_list_add (wptr, s, (void *) recv_dims);
-
-						data_size = subtype_size;
+						dimensions = input_di (wptr, s, dimcount * sizeof (word));
+						num_elements = 1;
 						for (i = 0; i < dimcount; i++) {
-							CTRACE ("dimension %d is %d\n", 2, i, block[i + 1]);
-							data_size *= block[i + 1];
-						}
-						CTRACE ("marray data size is %d\n", 1, (int) data_size);
-
-						if (data_size >= 0x80000000) {
-							CFATAL ("walk_inner: received mobile array data size too large to allocate\n", 0);
+							num_elements *= ((word *) dimensions->data)[i];
 						}
 
-						CTRACE ("input CLC %d (marray data, size %d)\n", 2, s->clc, (int) data_size);
-						block[0] = (unsigned int) malloc ((size_t) data_size);
-						input_di (wptr, s, &recv_data, data_size);
-						memcpy ((void *) block[0], recv_data, data_size);
-						temp_list_add (wptr, s, recv_data);
+						CTRACE ("input CLC %d (marray data for %d dimensions)\n", 2, s->clc, dimcount);
+						array = input_di (wptr, s, num_elements * subtype_size);
+
+						output = MTAlloc (wptr, MT_MAKE_ARRAY_TYPE (dimcount, subtype_mt), num_elements * subtype_size);
+						for (i = 0; i < dimcount; i++) {
+							output->dimensions[i] = ((word *) dimensions->data)[i];
+						}
+
+						CTRACE ("received %d items, total size %d\n", 2, num_elements, array->dimensions[0]);
+						memcpy (output->data, array->data, array->dimensions[0]);
+						MTRelease (wptr, array);
 					}
 
-					CTRACE ("doing ChanMOutN for marray; data 0x%08x; length %d\n", 2, (unsigned int) block, dimcount + 1);
-					MTChanOut (wptr, s->user, block, dimcount + 1); //XXX
-					CTRACE ("ChanMOutN done\n", 0);
+					CTRACE ("doing output for marray; mobile 0x%08x\n", 1, (unsigned int) output);
+					MTChanOut (wptr, s->user, (void **) &output);
+					CTRACE ("output done\n", 0);
 				}
 				break;
 			}
 		}
 		break;
+#if 0
 	case MTID_MOBILE:
 		{
 			void *data = NULL;
