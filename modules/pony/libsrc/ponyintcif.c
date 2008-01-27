@@ -112,6 +112,35 @@ static inline unsigned int typedesc_len (unsigned int typedesc) {
 	return (typedesc & 0x00FFFFFF) / sizeof (unsigned int);
 }
 /*}}}*/
+/*{{{ typedesc_data_size */
+/*
+ *	get the size of the data in a primitive type
+ */
+static long long typedesc_data_size (Workspace wptr, unsigned int **pdesc) {
+	const unsigned int type = typedesc_id ((*pdesc)[0]);
+	(*pdesc)++;
+	CTRACE ("typedesc_data_size: type = %d\n", 1, type);
+
+	switch (type) {
+	case MTID_PRIM:
+	case MTID_RECORD:
+		{
+			const unsigned int item_size = (*pdesc)[0];
+			(*pdesc) += 2;
+			return item_size;
+		}
+	case MTID_ARRAY:
+		{
+			const unsigned int num_elements = (*pdesc)[0];
+			(*pdesc)++;
+			return num_elements * typedesc_data_size (wptr, pdesc);
+		}
+	default:
+		CFATAL ("typedesc_data_size: expected primitive type; this is type %d\n", 1, type);
+		return -1;
+	}
+}
+/*}}}*/
 /*{{{ typedesc_chantype_nchans */
 /*
  *	returns the number of channels in a channel-type given its type-descriptor
@@ -494,11 +523,11 @@ static inline int is_primitive (unsigned int id)
 	return id == MTID_PRIM || id == MTID_RECORD;
 }
 /*}}}*/
-/*{{{ walk_inner_primitive */
+/*{{{ walk_inner */
 /*
- *	walk part of a type descriptor for a single primitive communication
+ *	walk part of a type descriptor
  */
-static void walk_inner_primitive (Workspace wptr, pony_walk_state *s, int item_count)
+static int walk_inner (Workspace wptr, pony_walk_state *s)
 {
 	const unsigned int type = typedesc_id (s->pdesc[0]);
 	const unsigned int type_len = typedesc_len (s->pdesc[0]);
@@ -509,13 +538,19 @@ static void walk_inner_primitive (Workspace wptr, pony_walk_state *s, int item_c
 	switch (type) {
 	case MTID_PRIM:
 	case MTID_RECORD:
+	case MTID_ARRAY:
 		{
+			long long data_size;
 			size_t size;
-			long long total_size = s->pdesc[0] * item_count;
-			if (s->mode == PW_output && total_size >= 0x80000000) {
+
+			s->pdesc--;
+			data_size = typedesc_data_size (wptr, &(s->pdesc));
+			size = data_size;
+
+			if (s->mode == PW_output && data_size >= 0x80000000) {
 				CFATAL ("walk_inner_primitive: attempting to send enormous data item; this won't fit in the count\n", 0);
 			}
-			size = (size_t) total_size;
+			CTRACE ("primitive type of size %d\n", 1, (int) size);
 
 			switch (s->mode) {
 			case PW_count:
@@ -540,48 +575,6 @@ static void walk_inner_primitive (Workspace wptr, pony_walk_state *s, int item_c
 					break;
 				}
 			}
-			s->pdesc += 2;
-		}
-		break;
-	case MTID_ARRAY:
-		{
-			const unsigned int nitems = s->pdesc[0];
-			s->pdesc++;
-
-			CTRACE ("array with %d items; this dimension is %d\n", 2, nitems * item_count, nitems);
-			walk_inner_primitive (wptr, s, nitems * item_count);
-		}
-		break;
-	default:
-		CFATAL ("walk_inner_primitive: expected primitive type; this is type %d length %d\n", 2, type, type_len);
-	}
-
-	if (s->pdesc != orig_pdesc + type_len) {
-		CFATAL ("walk_inner: typedesc size mismatch: type %d length %d, measured %d\n", 3, type, type_len, s->pdesc - orig_pdesc);
-	}
-
-	SCTRACE (s, "done\n", 0);
-}
-/*}}}*/
-/*{{{ walk_inner */
-/*
- *	walk part of a type descriptor
- */
-static int walk_inner (Workspace wptr, pony_walk_state *s)
-{
-	const unsigned int type = typedesc_id (s->pdesc[0]);
-	const unsigned int type_len = typedesc_len (s->pdesc[0]);
-	unsigned int *orig_pdesc = s->pdesc;
-	s->pdesc++;
-
-	SCTRACE (s, "type is %d length %d\n", 2, type, type_len);
-	switch (type) {
-	case MTID_PRIM:
-	case MTID_RECORD:
-	case MTID_ARRAY:
-		{
-			s->pdesc--;
-			walk_inner_primitive (wptr, s, 1);
 		}
 		break;
 	case MTID_SEQPROTO:
