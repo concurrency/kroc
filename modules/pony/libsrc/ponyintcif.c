@@ -989,34 +989,60 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			}
 		}
 		break;
-#if 0
 	case MTID_MOBILE:
 		{
-			void *data = NULL;
-			size_t size;
+			long long data_size = typedesc_data_size (wptr, &(s->pdesc));
+			size_t size = data_size;
+			mt_array_t *array;
 
-			if (s->mode == PW_output || s->mode == PW_cancel) {
-				data = *(void **) get_data (wptr, s);
+			if (s->mode == PW_output && data_size >= 0x80000000) {
+				CFATAL ("walk_inner_primitive: attempting to send enormous data item; this won't fit in the count\n", 0);
 			}
-			CTRACE ("starting static mobile, data 0x%08x\n", 1, (unsigned int) data);
-			if (walk_inner_primitive (wptr, s, 1, &data, &size)) {
-				return 1;
-			}
-			CTRACE ("done static mobile, data 0x%08x, size %d\n", 2, (unsigned int) data, size);
-			if (s->mode == PW_input) {
-				void *ptr = get_static_mobile (wptr, size);
+			CTRACE ("fixed-size mobile of size %d\n", 1, (int) size);
 
-				memcpy (ptr, data, size);
+			switch (s->mode) {
+			case PW_count:
+				{
+					count_di (wptr, s, 1);
+					break;
+				}
+			case PW_output:
+			case PW_cancel:
+				{
+					void *mobile = NULL;
 
-				CTRACE ("doing ChanMOut for static mobile with ptr %08x\n", 1, (unsigned int) ptr);
-				ChanMOut (s->user, &ptr);
-				CTRACE ("ChanMOut done, got ptr %08x\n", 1, (unsigned int) ptr);
+					CTRACE ("doing swap-and-copy input for fixed-size mobile\n", 0);
+					MTChanXXChg (wptr, s->user, &mobile);
+					output_di (wptr, s, mobile, size);
+					MTChanXXChg (wptr, s->user, &mobile);
+					CTRACE ("input done\n", 0);
 
-				comm_list_add (wptr, s, ptr, size, CL_static_mobile);
-				temp_list_add (wptr, s, data);
+					break;
+				}
+			case PW_input:
+				{
+					/* FIXME: It would be nice if we could do this using the same
+					 * double-swap trick as above, since we know the other process
+					 * already has a mobile of the right size. */
+
+					void *mobile = MAlloc (wptr, size);
+
+					array = input_di (wptr, s, size);
+					memcpy (mobile, array->data, size);
+
+					CTRACE ("doing exchange output for fixed-size mobile\n", 0);
+					MTChanXChg (wptr, s->user, &mobile);
+					CTRACE ("output done\n", 0);
+
+					MTRelease (wptr, array);
+					MTRelease (wptr, mobile);
+
+					break;
+				}
 			}
 		}
 		break;
+#if 0
 	case MTID_MCHANEND_IU:
 	case MTID_MCHANEND_OU:
 	case MTID_MCHANEND_IS:
