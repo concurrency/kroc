@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define BAR_FPTR 	2
 #define BAR_BPTR 	3
 
-static void tvm_bar_complete(WORDPTR bar)
+static void tvm_bar_complete(tvm_ectx_t *ectx, WORDPTR bar)
 {
 	/* Load barrier state. */
 	WORD enrolled	= read_word(wordptr_plus(bar, BAR_ENROLLED));
@@ -57,7 +57,7 @@ TVM_HELPER void tvm_bar_init(WORDPTR bar, UWORD initial_count)
 	write_word(wordptr_plus(bar, BAR_BPTR), (WORD) NOT_PROCESS_P);
 }
 
-TVM_HELPER void tvm_bar_sync(WORDPTR bar)
+TVM_HELPER int tvm_bar_sync(tvm_ectx_t *ectx, WORDPTR bar)
 {
 	UWORD count = (UWORD) read_word(wordptr_plus(bar, BAR_COUNT));
 
@@ -71,33 +71,34 @@ TVM_HELPER void tvm_bar_sync(WORDPTR bar)
 		write_word(wordptr_plus(bar, BAR_COUNT), count - 1);
 
 		/* Stop process. */
-		WORKSPACE_SET(wptr, WS_NEXT, (WORD) bar_bptr);
-		WORKSPACE_SET(wptr, WS_IPTR, (WORD) iptr);
+		WORKSPACE_SET(WPTR, WS_NEXT, (WORD) bar_bptr);
+		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
 
 		/* Enqueue process to barrier. */
 		if(bar_bptr == (WORDPTR) NOT_PROCESS_P)
 		{
 			/* Only process in queue. */
-			write_word(wordptr_plus(bar, BAR_FPTR), (WORD) wptr);
+			write_word(wordptr_plus(bar, BAR_FPTR), (WORD) WPTR);
 		}
 		else
 		{
 			/* Last process in queue. */
-			WORKSPACE_SET(bar_bptr, WS_NEXT, (WORD) wptr);
+			WORKSPACE_SET(bar_bptr, WS_NEXT, (WORD) WPTR);
 		}
-		write_word(wordptr_plus(bar, BAR_BPTR), (WORD) wptr);
+		write_word(wordptr_plus(bar, BAR_BPTR), (WORD) WPTR);
 
 		/* Schedule new process. */
-		iptr = run_next_on_queue();
+		return run_next_on_queue();
 	}
 	else
 	{
 		/* Yes, complete barrier. */
-		tvm_bar_complete(bar);
+		tvm_bar_complete(ectx, bar);
+		return ECTX_INS_OK;
 	}
 }
 
-TVM_HELPER void tvm_bar_enroll(WORDPTR bar, UWORD enroll_count)
+TVM_HELPER int tvm_bar_enroll(tvm_ectx_t *ectx, WORDPTR bar, UWORD enroll_count)
 {
 	UWORD enrolled	= read_word(wordptr_plus(bar, BAR_ENROLLED));
 	UWORD count	= read_word(wordptr_plus(bar, BAR_COUNT));
@@ -105,14 +106,16 @@ TVM_HELPER void tvm_bar_enroll(WORDPTR bar, UWORD enroll_count)
 	if((enrolled + enroll_count) < enrolled)
 	{
 		/* Enroll count overflow, virtually impossible under sane conditions. */
-		set_error_flag(EFLAG_BAR);
+		return ectx->set_error_flag(ectx, EFLAG_BAR);
 	}
 
 	write_word(wordptr_plus(bar, BAR_ENROLLED), (WORD) (enrolled + enroll_count));
 	write_word(wordptr_plus(bar, BAR_COUNT), (WORD) (count + enroll_count));
+
+	return ECTX_INS_OK;
 }
 
-TVM_HELPER void tvm_bar_resign(WORDPTR bar, UWORD resign_count)
+TVM_HELPER int tvm_bar_resign(tvm_ectx_t *ectx, WORDPTR bar, UWORD resign_count)
 {
 	UWORD enrolled	= (UWORD) read_word(wordptr_plus(bar, BAR_ENROLLED));
 	UWORD count	= (UWORD) read_word(wordptr_plus(bar, BAR_COUNT));
@@ -122,7 +125,7 @@ TVM_HELPER void tvm_bar_resign(WORDPTR bar, UWORD resign_count)
 		/* Attempt to resign more processes than enrolled,
 		 * or resign processes that are synchronising.
 		 */
-		set_error_flag(EFLAG_BAR);
+		return ectx->set_error_flag(ectx, EFLAG_BAR);
 	}
 
 	/* Update enroll count. */
@@ -138,40 +141,36 @@ TVM_HELPER void tvm_bar_resign(WORDPTR bar, UWORD resign_count)
 	else
 	{
 		/* Count would drop to 0, so complete barrier instead. */
-		tvm_bar_complete(bar);
+		tvm_bar_complete(ectx, bar);
 	}
+
+	return ECTX_INS_OK;
 }
 
 /* 0xB0 - 0x2B 0xF0 - barrier intialisation */
-TVM_INSTRUCTION void ins_barinit()
+TVM_INSTRUCTION (ins_bar_init)
 {
-	tvm_bar_init((WORDPTR) areg, 0);
+	tvm_bar_init((WORDPTR) AREG, 0);
 
-	UNDEFINE_STACK();
+	UNDEFINE_STACK_RET();
 }
 
 /* 0xB1 - 0x2B 0xF1 - barrier synchronisation */
-TVM_INSTRUCTION void ins_barsync()
+TVM_INSTRUCTION (ins_bar_sync)
 {
-	tvm_bar_sync((WORDPTR) areg);
-
-	UNDEFINE_STACK();
+	return tvm_bar_sync(ectx, (WORDPTR) AREG);
 }
 
 /* 0xB2 - 0x2B 0xF2 - barrier resignation */
-TVM_INSTRUCTION void ins_barresign()
+TVM_INSTRUCTION (ins_bar_resign)
 {
-	tvm_bar_resign((WORDPTR) breg, (UWORD) areg);
-
-	UNDEFINE_STACK();
+	return tvm_bar_resign(ectx, (WORDPTR) BREG, (UWORD) AREG);
 }
 
 /* 0xB3 - 0x2B 0xF3 - barrier enroll */
-TVM_INSTRUCTION void ins_barenroll()
+TVM_INSTRUCTION (ins_bar_enroll)
 {
-	tvm_bar_enroll((WORDPTR) breg, (UWORD) areg);
-
-	UNDEFINE_STACK();
+	return tvm_bar_enroll(ectx, (WORDPTR) BREG, (UWORD) AREG);
 }
 
 #endif /* TVM_OCCAM_PI */

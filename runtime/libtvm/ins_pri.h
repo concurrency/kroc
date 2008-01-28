@@ -20,26 +20,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef INS_PRI_H
 #define INS_PRI_H
 
-TVM_INSTRUCTION_PROTO void ins_adc(void);
-TVM_INSTRUCTION_PROTO void ins_ajw(void);
-TVM_INSTRUCTION_PROTO void ins_call(void);
-TVM_INSTRUCTION_PROTO void ins_cj(void);
-TVM_INSTRUCTION_PROTO void ins_eqc(void);
-TVM_INSTRUCTION_PROTO void ins_j(void);
-TVM_INSTRUCTION_PROTO void ins_ldc(void);
-TVM_INSTRUCTION_PROTO void ins_ldl(void);
-TVM_INSTRUCTION_PROTO void ins_ldlp(void);
-TVM_INSTRUCTION_PROTO void ins_ldnl(void);
-TVM_INSTRUCTION_PROTO void ins_ldnlp(void);
-TVM_INSTRUCTION_PROTO void ins_stl(void);
-TVM_INSTRUCTION_PROTO void ins_stnl(void);
+TVM_INSTRUCTION_PROTO (ins_adc);
+TVM_INSTRUCTION_PROTO (ins_ajw);
+TVM_INSTRUCTION_PROTO (ins_call);
+TVM_INSTRUCTION_PROTO (ins_cj);
+TVM_INSTRUCTION_PROTO (ins_eqc);
+TVM_INSTRUCTION_PROTO (ins_j);
+TVM_INSTRUCTION_PROTO (ins_ldc);
+TVM_INSTRUCTION_PROTO (ins_ldl);
+TVM_INSTRUCTION_PROTO (ins_ldlp);
+TVM_INSTRUCTION_PROTO (ins_ldnl);
+TVM_INSTRUCTION_PROTO (ins_ldnlp);
+TVM_INSTRUCTION_PROTO (ins_stl);
+TVM_INSTRUCTION_PROTO (ins_stnl);
 
 /* FIXME: The following instructions are not present in soccam */
-TVM_INSTRUCTION_PROTO void ins_pfix(void);
-TVM_INSTRUCTION_PROTO void ins_nfix(void);
+TVM_INSTRUCTION_PROTO (ins_pfix);
+TVM_INSTRUCTION_PROTO (ins_nfix);
 
 #ifndef TVM_DISPATCH_SWITCH
-TVM_INSTRUCTION_PROTO void ins_opr(void);
+TVM_INSTRUCTION_PROTO (ins_opr);
 #endif
 
 #endif /* INS_PRI_H */

@@ -14,7 +14,7 @@ AC_PROG_RANLIB
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h stdio.h string.h])
-AC_CHECK_HEADERS([sys/types.h math.h inttypes.h setjmp.h])
+AC_CHECK_HEADERS([sys/types.h math.h inttypes.h])
 
 #########################
 #  Configuration Options
@@ -163,7 +163,7 @@ esac
 #  Defines
 #########################
 
-TVM_CFLAGS="-Wall"
+TVM_CFLAGS="-Wall -DTVM_INTERNALS"
 
 # Copy data
 case "$copy_data" in

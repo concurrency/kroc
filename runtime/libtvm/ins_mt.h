@@ -32,46 +32,46 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define MT_TRUE 1
 #include "mobile_types.h"
 
-TVM_HELPER_PROTO WORDPTR mt_alloc_data(UWORD type, UWORD size);
-TVM_HELPER_PROTO WORDPTR mt_alloc(UWORD type, UWORD size);
-TVM_HELPER_PROTO void mt_release_simple(WORDPTR ptr, UWORD type);
-TVM_HELPER_PROTO void mt_release(WORDPTR ptr);
-TVM_HELPER_PROTO WORDPTR mt_clone(WORDPTR ptr);
-TVM_HELPER_PROTO UWORD mt_io_update(WORDPTR *ptr);
-TVM_HELPER_PROTO void mt_chan_io(WORDPTR dst, WORDPTR src);
+TVM_HELPER_PROTO WORDPTR mt_alloc_data(tvm_ectx_t *ectx, UWORD type, UWORD size);
+TVM_HELPER_PROTO int mt_alloc(tvm_ectx_t *ectx, UWORD type, UWORD size, WORDPTR *ret);
+TVM_HELPER_PROTO int mt_release_simple(tvm_ectx_t *ectx, WORDPTR ptr, UWORD type);
+TVM_HELPER_PROTO int mt_release(tvm_ectx_t *ectx, WORDPTR ptr);
+TVM_HELPER_PROTO int mt_clone(tvm_ectx_t *ectx, WORDPTR ptr, WORDPTR *ret);
+TVM_HELPER_PROTO int mt_io_update(tvm_ectx_t *ectx, WORDPTR *ptr, UWORD *move);
+TVM_HELPER_PROTO int mt_chan_io(tvm_ectx_t *ectx, WORDPTR dst, WORDPTR src);
 
 /* 0x238 - 0x22 0x23 0xF8 - mt_alloc - allocate a mobile type */
-TVM_INSTRUCTION_PROTO void ins_mt_alloc(void);
+TVM_INSTRUCTION_PROTO (ins_mt_alloc);
 /* 0x239 - 0x22 0x23 0xF9 - mt_release - release a mobile type */
-TVM_INSTRUCTION_PROTO void ins_mt_release(void);
+TVM_INSTRUCTION_PROTO (ins_mt_release);
 /* 0x23A - 0x22 0x23 0xFA - mt_clone - clone a mobile type */
-TVM_INSTRUCTION_PROTO void ins_mt_clone(void);
+TVM_INSTRUCTION_PROTO (ins_mt_clone);
 /* 0x23B - 0x22 0x23 0xFB - mt_in - mobile type channel input */
-TVM_INSTRUCTION_PROTO void ins_mt_in(void);
+TVM_INSTRUCTION_PROTO (ins_mt_in);
 /* 0x23C - 0x22 0x23 0xFC - mt_out - mobile type channel output */
-TVM_INSTRUCTION_PROTO void ins_mt_out(void);
+TVM_INSTRUCTION_PROTO (ins_mt_out);
 /* 0x23D - 0x22 0x23 0xFD - mt_xchg - mobile type channel exchange */
-TVM_INSTRUCTION_PROTO void ins_mt_xchg(void);
+TVM_INSTRUCTION_PROTO (ins_mt_xchg);
 /* 0x23E - 0x22 0x23 0xFE - mt_lock - lock a mobile type */
-TVM_INSTRUCTION_PROTO void ins_mt_lock(void);
+TVM_INSTRUCTION_PROTO (ins_mt_lock);
 /* 0x23F - 0x22 0x23 0xFF - mt_unlock - unlock a mobile type */
-TVM_INSTRUCTION_PROTO void ins_mt_unlock(void);
+TVM_INSTRUCTION_PROTO (ins_mt_unlock);
 /* 0x240 - 0x22 0x24 0xF0 - mt_enroll - enroll processes on a mobile type */
-TVM_INSTRUCTION_PROTO void ins_mt_enroll(void);
+TVM_INSTRUCTION_PROTO (ins_mt_enroll);
 /* 0x241 - 0x22 0x24 0xF1 - mt_resign - resign process from a mobile type */
-TVM_INSTRUCTION_PROTO void ins_mt_resign(void);
+TVM_INSTRUCTION_PROTO (ins_mt_resign);
 /* 0x242 - 0x22 0x24 0xF2 - mt_sync - synchronise on a mobile type */
-TVM_INSTRUCTION_PROTO void ins_mt_sync(void);
+TVM_INSTRUCTION_PROTO (ins_mt_sync);
 /* 0x243 - 0x22 0x24 0xF3 - mt_xin - mobile type channel extended input */
-TVM_INSTRUCTION_PROTO void ins_mt_xin(void);
+TVM_INSTRUCTION_PROTO (ins_mt_xin);
 /* 0x244 - 0x22 0x24 0xF4 - mt_xout - mobile type channel extended output */
-TVM_INSTRUCTION_PROTO void ins_mt_xout(void);
+TVM_INSTRUCTION_PROTO (ins_mt_xout);
 /* 0x245 - 0x22 0x24 0xF5 - mt_xxchg - mobile type channel extended exchange */
-TVM_INSTRUCTION_PROTO void ins_mt_xxchg(void);
+TVM_INSTRUCTION_PROTO (ins_mt_xxchg);
 /* 0x246 - 0x22 0x24 0xF6 - mt_dclone - clone data into a mobile type */
-TVM_INSTRUCTION_PROTO void ins_mt_dclone(void);
+TVM_INSTRUCTION_PROTO (ins_mt_dclone);
 /* 0x247 - 0x22 0x24 0xF7 - mt_bind - bind a mobile type in some way to a bit of data */
-TVM_INSTRUCTION_PROTO void ins_mt_bind(void);
+TVM_INSTRUCTION_PROTO (ins_mt_bind);
 
 #endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
 

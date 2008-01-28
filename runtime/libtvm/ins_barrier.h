@@ -24,18 +24,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef TVM_OCCAM_PI
 
 TVM_HELPER_PROTO void tvm_bar_init(WORDPTR bar, UWORD initial_count);
-TVM_HELPER_PROTO void tvm_bar_sync(WORDPTR bar);
-TVM_HELPER_PROTO void tvm_bar_enroll(WORDPTR bar, UWORD enroll_count);
-TVM_HELPER_PROTO void tvm_bar_resign(WORDPTR bar, UWORD resign_count);
+TVM_HELPER_PROTO int tvm_bar_sync(tvm_ectx_t *ectx, WORDPTR bar);
+TVM_HELPER_PROTO int tvm_bar_enroll(tvm_ectx_t *ectx, WORDPTR bar, UWORD enroll_count);
+TVM_HELPER_PROTO int tvm_bar_resign(tvm_ectx_t *ectx, WORDPTR bar, UWORD resign_count);
 
 /* 0xB0 - 0x2B 0xF0 - barrier intialisation */
-TVM_INSTRUCTION_PROTO void ins_barinit();
+TVM_INSTRUCTION_PROTO (ins_bar_init);
 /* 0xB1 - 0x2B 0xF1 - barrier synchronisation */
-TVM_INSTRUCTION_PROTO void ins_barsync();
+TVM_INSTRUCTION_PROTO (ins_bar_sync);
 /* 0xB2 - 0x2B 0xF2 - barrier resignation */
-TVM_INSTRUCTION_PROTO void ins_barresign();
+TVM_INSTRUCTION_PROTO (ins_bar_resign);
 /* 0xB3 - 0x2B 0xF3 - barrier enroll */
-TVM_INSTRUCTION_PROTO void ins_barenroll();
+TVM_INSTRUCTION_PROTO (ins_bar_enroll);
 
 #endif /* TVM_OCCAM_PI */
 

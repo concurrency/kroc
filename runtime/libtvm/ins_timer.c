@@ -42,16 +42,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /** DEVIATES */
 
 /** STATE
- * (areg (out (str current time)))
- * (breg (out areg))
- * (creg (out breg))
- * (iptr (out nextinst))
+ * (AREG (out (str current time)))
+ * (BREG (out AREG))
+ * (CREG (out BREG))
+ * (IPTR (out nextinst))
  */
 
-TVM_INSTRUCTION void ins_ldtimer(void)
+TVM_INSTRUCTION (ins_ldtimer)
 {
 	/* Load current time onto stack */
-	STACK(tvm_get_time(), areg, breg);
+	STACK_RET(tvm_get_time(), AREG, BREG);
 }
 
 /* 0x2B - 0x22 0xFB - tin - timer input */
@@ -72,48 +72,49 @@ TVM_INSTRUCTION void ins_ldtimer(void)
 /* FIXME: Add timer + run queue info */
 /** STATE
  * (where
- *  ((TIME_AFTER now areg)
- *   (areg (out undefined))
- *   (breg (out undefined))
- *   (creg (out undefined))
- *   (iptr (out nextinst)))
- *  ((BEFORE now areg)
- *   (areg (out undefined))
- *   (breg (out undefined))
- *   (creg (out undefined))
- *   (iptr (out (str iptr of next scheduled process)))))
+ *  ((TIME_AFTER now AREG)
+ *   (AREG (out undefined))
+ *   (BREG (out undefined))
+ *   (CREG (out undefined))
+ *   (IPTR (out nextinst)))
+ *  ((BEFORE now AREG)
+ *   (AREG (out undefined))
+ *   (BREG (out undefined))
+ *   (CREG (out undefined))
+ *   (IPTR (out (str IPTR of next scheduled process)))))
  */
 
-TVM_INSTRUCTION void ins_tin(void)
+TVM_INSTRUCTION (ins_tin)
 {
 	WORD current_time = tvm_get_time();
-	WORD reschedule_time = areg;
+	WORD reschedule_time = AREG;
 
 	if(TIME_AFTER(current_time, reschedule_time))
 	{
 		/* Do nothing, as we have already timed out */
+		UNDEFINE_STACK_RET();
 	}
 	else
 	{
 		/* Store our reschedule time in our workspace */
-		WORKSPACE_SET(wptr, WS_TIMEOUT, reschedule_time);
-		/* Store the iptr in our workspace */
-		WORKSPACE_SET(wptr, WS_IPTR, (WORD)iptr);
+		WORKSPACE_SET(WPTR, WS_TIMEOUT, reschedule_time);
+		/* Store the IPTR in our workspace */
+		WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
 		
 		/* We need to insert ourselves into the timer queue, this is an ordered
 		 * queue, after that we need to reschedule another process */
 		/* Put ourselves into the timer queue */
 		timer_queue_insert(current_time, reschedule_time);
+		
 		/* FIXME: Is this the correct thing to do next? */
 		/* Since we use the (ALT) STATE to check for READY_P for things on the
 		 * timer queue, we should probably set the (ALT) STATE to a known value
 		 * here (ie something else than READY_P
 		 */
-		WORKSPACE_SET(wptr, WS_ALT_STATE, NOT_PROCESS_P);
+		WORKSPACE_SET(WPTR, WS_ALT_STATE, NOT_PROCESS_P);
+		
 		/* Run the next process */
-		iptr = run_next_on_queue();
-		/* Undefine the entire stack */
-		/* STACK(UNDEFINE(areg), UNDEFINE(breg), UNDEFINE(creg)); */
+		return run_next_on_queue();
 	}
 }
 

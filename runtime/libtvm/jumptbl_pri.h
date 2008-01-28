@@ -29,6 +29,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 extern const unsigned int primaries_min;
 extern const unsigned int primaries_max;
-extern void (*const primaries[])(void);
+extern int (*const primaries[])(tvm_ectx_t *);
 
 #endif /* JUMPTBL_PRI_H */

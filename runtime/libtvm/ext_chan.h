@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define EXT_CHAN_SCR 1
 #define EXT_CHAN_ERR 2
 
-typedef void (*EXT_CHAN_FUNCTION)(WORD count, BYTEPTR address);
+typedef int (*EXT_CHAN_FUNCTION)(tvm_ectx_t *ectx, WORD count, BYTEPTR address);
 
 extern EXT_CHAN_FUNCTION ext_chan_table[];
 

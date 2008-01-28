@@ -23,8 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tvm_types.h"
 
-#define NUM_PRI 1
-
 #if TVM_WORD_LENGTH == 4
 #	define MIN_INT		0x80000000
 #	define MAX_INT		(MIN_INT - 1)
@@ -59,25 +57,55 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define TIME_NOT_SET_P		(MIN_INT + 2)
 #define NONE_SELECTED_O		(-1)
 
-/* Transputer registers and flags */
-extern BYTEPTR iptr;		/* Instruction pointer */
-extern WORDPTR wptr;		/* Workspace pointer */
+typedef struct _tvm_ectx_t tvm_ectx_t;
+/* Transputer registers and flags, make up execution context */
+struct _tvm_ectx_t {
+	BYTEPTR iptr;		/* Instruction pointer */
+	WORDPTR wptr;		/* Workspace pointer */
+	
+	WORD areg;		/* Evaluation stack */
+	WORD breg;		/* Evaluation stack */
+	WORD creg;		/* Evaluation stack */
+	WORD oreg;		/* Operand register */
 
-extern WORD areg;		/* Evaluation stack */
-extern WORD breg;		/* Evaluation stack */
-extern WORD creg;		/* Evaluation stack */
-extern WORD oreg;		/* Operand register */
+	WORDPTR fptr;		/* Front pointer (scheduler queue) */
+	WORDPTR bptr;		/* Back pointer (scheduler queue) */
+	WORDPTR tptr;		/* Timer queue pointer */
+	WORD tnext;		/* Timeout register */
 
-extern WORDPTR fptr[NUM_PRI];	/* Front pointer (scheduler queue) */
-extern WORDPTR bptr[NUM_PRI];	/* Back pointer (scheduler queue) */
-extern WORDPTR tptr;		/* Timer queue pointer */
-extern WORD tnext;		/* Timeout register */
+	WORD saved_creg;	/* Special case CREG storage */
+	WORD error_flag;
+	WORD halt_on_error_flag;
 
-extern WORD error_flag;
-extern WORD halt_on_error_flag;
+	WORD pri;
 
-/* State not in the original Transputer */
-// extern WORD pri;		/* Current priority level */
-#define pri 0
+	int (*set_error_flag)(tvm_ectx_t *ctx, WORD flag);
+	void (*add_to_queue)(tvm_ectx_t *ctx, WORDPTR ws);
+	void (*add_queue_to_queue)(tvm_ectx_t *ctx, WORDPTR front, WORDPTR back);
+	void (*timer_queue_insert)(tvm_ectx_t *ctx, WORD current_time, WORD reschedule_time);
+	int (*run_next_on_queue)(tvm_ectx_t *ctx);
+
+	WORD (*get_time)(tvm_ectx_t *ctx);
+	void (*set_alarm)(tvm_ectx_t *ctx, WORD alarm);
+};
+
+#ifdef TVM_INTERNALS
+
+#define IPTR	(ectx->iptr)
+#define WPTR	(ectx->wptr)
+
+#define AREG	(ectx->areg)
+#define BREG	(ectx->breg)
+#define CREG	(ectx->creg)
+#define OREG	(ectx->oreg)
+
+#define FPTR	(ectx->fptr)
+#define BPTR	(ectx->bptr)
+#define TPTR	(ectx->tptr)
+#define TNEXT	(ectx->tnext)
+
+#define PPRI	(ectx->pri)
+
+#endif /* TVM_INTERNAL_MACROS */
 
 #endif /* TRANSPUTER_H */

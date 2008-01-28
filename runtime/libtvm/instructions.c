@@ -30,29 +30,12 @@ void (*tvm_invalid)(void)		= NULL; /* Jump hook for invalid instructions */
  * This function is placed in the instruction jump table for instructions
  * which have not been implemented, but are otherwise valid.
  */
-void ins_not_implemented(void)
+TVM_INSTRUCTION (ins_not_implemented)
 {
-	if(tvm_not_implemented)
-	{
-		tvm_not_implemented();
-	}
-	exit_runloop(EXIT_INS_NOT_IMP);
+	return ECTX_INS_UNSUPPORTED;
 }
 
-/**
- * This function is placed in the instruction jump table for instructions
- * which are not valid for the current transputer architecture, or due to
- * features not being compiled in.
- */
-void ins_invalid(void)
-{
-	if(tvm_invalid)
-	{
-		tvm_invalid();
-	}
-	exit_runloop(EXIT_INS_INVALID);
-}
-
+#if 0
 #ifdef DEBUG_ERRORS
 #include <stdio.h>
 void debug_error_flag(char *file, int line, int error_num)
@@ -83,3 +66,4 @@ void clear_error_flag(void)
 {
 	error_flag = 0;
 }
+#endif

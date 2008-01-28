@@ -28,6 +28,6 @@ extern void (*scheduler_busywait_hook)(void);
 #endif
 
 extern void timer_queue_insert(WORD current_time, WORD reschedule_time);
-extern BYTEPTR run_next_on_queue(void);
+extern int run_next_on_queue(void);
 
 #endif

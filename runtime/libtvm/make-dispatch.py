@@ -43,7 +43,7 @@ def find_instructions(defs, fn):
 				if defl == "" or defl.startswith("#"):
 					die("EOF or preprocessor instruction while looking for TVM_INSTRUCTION matching '%s' in %s" % (l, fn))
 				defl = defl.strip()
-				m = re.match(r'^TVM_INSTRUCTION void (ins_[^\(]*)\(', defl)
+				m = re.match(r'^TVM_INSTRUCTION\s*\(\s*(ins_[^\s\)]+)\s*\)', defl)
 				if m is not None:
 					break
 
@@ -70,7 +70,7 @@ def ins_key_to_int(key):
 def write_switch(defs, fn):
 	bits = ["""/* Generated automatically by make-dispatch.py; do not modify! */
 
-static inline void dispatch_instruction(BYTE instr)
+static inline int dispatch_instruction(tvm_ectx_t *ectx, BYTE instr)
 {
 	switch (instr >> 4) {
 """]
@@ -87,7 +87,7 @@ static inline void dispatch_instruction(BYTE instr)
 			for c in conds:
 				bits.append(c + "\n")
 
-		bits.append("%scase 0x%s: %s(); break;\n" % (indent, opcode, func))
+		bits.append("%scase 0x%s: return %s(ectx);\n" % (indent, opcode, func))
 
 		for c in conds:
 			bits.append("#endif\n")
@@ -104,21 +104,23 @@ static inline void dispatch_instruction(BYTE instr)
 
 	bits.append("""
 	case 0x0F:
-		switch (oreg) {
+		{
+			WORD ins = OREG;
+			CLEAR(OREG);
+			switch (ins) {
 """)
 
 	last_conds[:] = []
 	for k in keys:
 		if k[1] != "_":
-			gen_instr("\t\t", k, k)
+			gen_instr("\t\t\t", k, k)
 
 	bits.append("""
-		/* FIXME: This handles unimplemented and invalid instructions the same way. */
-		default: ins_not_implemented(); break;
+			}
 		}
-		CLEAR(oreg);
-		break;
 	}
+	/* FIXME: This handles unimplemented and invalid instructions the same way. */
+	return ECTX_INS_INVALID;
 }
 """)
 

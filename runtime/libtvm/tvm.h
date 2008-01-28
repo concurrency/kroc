@@ -47,6 +47,16 @@ enum {
 };
 /*}}}*/
 
+/*{{{  Execution context returns */
+enum {
+	ECTX_INS_OK		= 0,
+	ECTX_INS_INVALID	= EXIT_INS_INVALID,
+	ECTX_INS_UNSUPPORTED	= EXIT_INS_NOT_IMP,
+	ECTX_ERROR		= EXIT_ERROR,
+	ECTX_SHUTDOWN
+};
+/*}}}*/
+
 /*{{{  Stack frame return types */
 enum {
 	RET_ERROR		= 0,	/* Set error flag on process return */
@@ -78,7 +88,8 @@ enum {
 	EFLAG_DMEM,	/* Memory allocator error */
 	EFLAG_MT,	/* Mobile type error */
 	EFLAG_PROC,	/* Process API error */
-	EFLAG_SHUTDOWN	/* Erroneous shutdown */
+	EFLAG_SHUTDOWN,	/* Erroneous shutdown */
+	EFLAG_FFI	/* FFI error (missing function) */
 };
 /*}}}*/
 
@@ -99,8 +110,6 @@ enum {
 /*}}}*/
 
 /*{{{  Externally provided functions */
-extern void (*tvm_invalid)(void);
-extern void (*tvm_not_implemented)(void);
 extern void (*tvm_runloop_pre)(void);
 extern void (*tvm_runloop_post)(void);
 /*}}}*/
@@ -124,7 +133,7 @@ extern void tvm_init_stackframe(WORDPTR *where, int argc, WORD argv[],
 extern void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 	WORDPTR vectorspace, WORDPTR mobilespace, int add_forkingbarrier);
 extern void tvm_init(void);
-extern int tvm_run(void);
+extern int tvm_run(tvm_ectx_t *ectx);
 /*}}}*/
 
 #endif /* TVM_H */

@@ -25,35 +25,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tvm_types.h"
 
 /* 0x23 - 0x22 0xF2 - boolinvert */
-TVM_INSTRUCTION_PROTO void ins_boolinvert(void);
+TVM_INSTRUCTION_PROTO (ins_boolinvert);
 /* 0x24 - 0x22 0xF4 - boolinvert */
-TVM_INSTRUCTION_PROTO void ins_widenshort(void);
+TVM_INSTRUCTION_PROTO (ins_widenshort);
 /* 0x25 - 0x22 0xF5 - fficall */
-TVM_INSTRUCTION_PROTO void ins_fficall(void);
+TVM_INSTRUCTION_PROTO (ins_fficall);
 /* 0x26 - 0x22 0xF6 - lend3 - loopend3 (for step in replicators) */
-TVM_INSTRUCTION_PROTO void ins_lend3(void);
+TVM_INSTRUCTION_PROTO (ins_lend3);
 /* 0x27 - 0x22 0xF7 - lendbw - backwards loopend */
-TVM_INSTRUCTION_PROTO void ins_lendbw(void);
+TVM_INSTRUCTION_PROTO (ins_lendbw);
 /* 0x23 - 0x22 0xF3 - reschedule */
-TVM_INSTRUCTION_PROTO void ins_reschedule(void);
+TVM_INSTRUCTION_PROTO (ins_reschedule);
 
 #ifdef TVM_OCCAM_PI
 /* 0x14 - 0x21 0xF4 - extvrfy - external channel verify */
-TVM_INSTRUCTION_PROTO void ins_extvrfy(void);
+TVM_INSTRUCTION_PROTO (ins_extvrfy);
 /* 0x60 - 0x26 0xF0 - extin - external channel input */
-TVM_INSTRUCTION_PROTO void ins_extin(void);
+TVM_INSTRUCTION_PROTO (ins_extin);
 /* 0x61 - 0x26 0xF1 - extout - external channel output */
-TVM_INSTRUCTION_PROTO void ins_extout(void);
+TVM_INSTRUCTION_PROTO (ins_extout);
 #endif
 
 /* 0xA2 - 0x2A 0xF2 - getpri - get priority */
-TVM_INSTRUCTION_PROTO void ins_getpri(void);
+TVM_INSTRUCTION_PROTO (ins_getpri);
 /* 0xA5 - 0x2A 0xF5 - setpri - set priority */
-TVM_INSTRUCTION_PROTO void ins_setpri(void);
+TVM_INSTRUCTION_PROTO (ins_setpri);
 /* 0xAD - 0x2A 0xFD - ins_savecreg - save the creg *magic* :) */
-TVM_INSTRUCTION_PROTO void ins_savecreg(void);
+TVM_INSTRUCTION_PROTO (ins_savecreg);
 /* 0xAE - 0x2A 0xFE - ins_restorecreg - restore the creg *magic :) */
-TVM_INSTRUCTION_PROTO void ins_restorecreg(void);
+TVM_INSTRUCTION_PROTO (ins_restorecreg);
 
 #ifdef TVM_OCCAM_PI
 
@@ -62,26 +62,26 @@ TVM_INSTRUCTION_PROTO void ins_restorecreg(void);
  ****************************************************************************/
 
 TVM_HELPER_PROTO void tvm_sem_init(WORDPTR sem);
-TVM_HELPER_PROTO void tvm_sem_claim(WORDPTR sem);
-TVM_HELPER_PROTO void tvm_sem_release(WORDPTR sem);
+TVM_HELPER_PROTO int tvm_sem_claim(tvm_ectx_t *ectx, WORDPTR sem);
+TVM_HELPER_PROTO int tvm_sem_release(tvm_ectx_t *ectx, WORDPTR sem);
 
 /* 0x7A - 0x27 0xFA - seminit - initialise semaphore */
-TVM_INSTRUCTION_PROTO void ins_seminit(void);
+TVM_INSTRUCTION_PROTO (ins_sem_init);
 /* 0x7B - 0x27 0xFB - semclaim - claim semaphore */
-TVM_INSTRUCTION_PROTO void ins_semclaim(void);
+TVM_INSTRUCTION_PROTO (ins_sem_claim);
 /* 0x7C - 0x27 0xFC - semrelease - release semaphore */
-TVM_INSTRUCTION_PROTO void ins_semrelease(void);
+TVM_INSTRUCTION_PROTO (ins_sem_release);
 
 /****************************************************************************
  *              0x28 0xF_         0x28 0xF_         0x28 0xF_               *
  ****************************************************************************/
 
 /* 0xE8 - 0x2E 0xF8 - xable - Extended Input Enable */
-TVM_INSTRUCTION_PROTO void ins_xable(void);
+TVM_INSTRUCTION_PROTO (ins_xable);
 /* 0xE9 - 0x2E 0xF9 - xin - Extended Input */
-TVM_INSTRUCTION_PROTO void ins_xin(void);
+TVM_INSTRUCTION_PROTO (ins_xin);
 /* 0xEC - 0x2E 0xFC - xend - Extended Input End */
-TVM_INSTRUCTION_PROTO void ins_xend(void);
+TVM_INSTRUCTION_PROTO (ins_xend);
 
 #endif /* TVM_OCCAM_PI */
 

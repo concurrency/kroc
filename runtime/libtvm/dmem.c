@@ -37,15 +37,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  ****************************************************************************/
 
 /* 0x11 - 0x21 0xF1 - mreleasep - dynamic process release */
-TVM_INSTRUCTION void ins_mreleasep(void)
+TVM_INSTRUCTION (ins_mreleasep)
 {
-	/* Find the pointer to the allocated block, size comes in from areg */
-	BYTEPTR ptr = ((BYTEPTR)wptr) + (areg * TVM_WORD_LENGTH);
+	/* Find the pointer to the allocated block, size comes in from AREG */
+	BYTEPTR ptr = ((BYTEPTR)WPTR) + (AREG * TVM_WORD_LENGTH);
 	//printf(">mreleasep\n");
 	//printf("  ptr = 0x%08x\n", (WORD) ptr);
-	mt_release_simple((WORDPTR) ptr, MT_MAKE_TYPE(MT_DATA));
+	mt_release_simple(ectx, (WORDPTR) ptr, MT_MAKE_TYPE(MT_DATA));
 
-	iptr = run_next_on_queue();
+	return run_next_on_queue();
 	//printf("<mreleasep\n");
 }
 
@@ -54,141 +54,145 @@ TVM_INSTRUCTION void ins_mreleasep(void)
  ****************************************************************************/
 
 /* 0x62 - 0x26 0xF2 - minn - multi dimension mobile array input */
-TVM_INSTRUCTION void ins_minn(void)
+TVM_INSTRUCTION (ins_minn)
 {
-	/* Set up the areg to be in bytes (what in expects) rather than 
+	/* Set up the AREG to be in bytes (what in expects) rather than 
 	 * words (what minn gets)
 	 */
-	areg = areg << WSH;
+	AREG = AREG << WSH;
 
-	ins_in();
+	return ins_in(ectx);
 }
 
 /* 0x64 - 0x26 0xF4 - moutn - multi dimension mobile array output */
-TVM_INSTRUCTION void ins_moutn(void)
+TVM_INSTRUCTION (ins_moutn)
 {
-	/* Set up the areg to be in bytes (what out expects) rather than 
+	/* Set up the AREG to be in bytes (what out expects) rather than 
 	 * words (what moutn gets)
 	 */
-	areg = areg << WSH;
+	AREG = AREG << WSH;
 
-	ins_out();
+	return ins_out(ectx);
 }
 
+#if 0 /* no recent compiler ever generates this instruction */
 /* 0xE0 - 0x2E 0xF0 - mnew - dynamic allocation from pool */
-TVM_INSTRUCTION void ins_mnew(void)
+TVM_INSTRUCTION (ins_mnew)
 {
-	if(areg == 0)
+	if(AREG == 0)
 	{
-		set_error_flag(EFLAG_DMEM);
+		return ectx->set_error_flag(ectx, EFLAG_DMEM);
 	}
 
-	areg = (WORD)palloc_pool(areg);
-}
+	AREG = (WORD)palloc_pool(AREG);
 
+	return ECTX_INS_OK;
+}
+#endif
+
+#if 0 /* no recent compiler ever generates this instruction */
 /* 0xE1 - 0x2E 0xF1 - mfree - dynamic release to pool */
-TVM_INSTRUCTION void ins_mfree(void)
+TVM_INSTRUCTION (ins_mfree)
 {
-	pfree_pool(areg, (void*)breg);
+	pfree_pool(AREG, (void*)BREG);
 
-	STACK(creg, UNDEFINE(breg), UNDEFINE(creg));
+	STACK_RET(CREG, UNDEFINE(BREG), UNDEFINE(CREG));
 }
+#endif
 
 /* 0xE2 - 0x2E 0xF2 - malloc - dynamic memory allocation */
-TVM_INSTRUCTION void ins_malloc(void)
+TVM_INSTRUCTION (ins_malloc)
 {
 	WORDPTR ptr = (WORDPTR)NULL_P;
-	UWORD size = areg;
+	UWORD size = AREG;
 	
 	if(size != 0)
 	{
-		ptr = mt_alloc_data(MT_SIMPLE | MT_MAKE_TYPE(MT_DATA), size);
+		ptr = mt_alloc_data(ectx, MT_SIMPLE | MT_MAKE_TYPE(MT_DATA), size);
 	}
 
-	STACK((WORD)ptr, UNDEFINE(breg), UNDEFINE(creg));
+	STACK_RET((WORD)ptr, UNDEFINE(BREG), UNDEFINE(CREG));
 }
 
 /* 0xE3 - 0x2E 0xF3 - mrelease - dynamic memory release */
-TVM_INSTRUCTION void ins_mrelease(void)
+TVM_INSTRUCTION (ins_mrelease)
 {
-	if(areg == (WORD)NULL_P)
+	if(AREG == (WORD)NULL_P)
 	{
-		set_error_flag(EFLAG_DMEM);
+		return ectx->set_error_flag(ectx, EFLAG_DMEM);
 	}
 
-	mt_release_simple((WORDPTR)areg, MT_MAKE_TYPE(MT_DATA));
-	
-	UNDEFINE_STACK();
+	return mt_release_simple(ectx, (WORDPTR)AREG, MT_MAKE_TYPE(MT_DATA));
 }
 
 /* 0xE4 - 0x2E 0xF4 - min - mobile input */
-TVM_INSTRUCTION void ins_min(void)
+TVM_INSTRUCTION (ins_min)
 {
-	WORDPTR chan_ptr	= (WORDPTR)areg;
-	WORDPTR data_ptr	= (WORDPTR)breg;
+	WORDPTR chan_ptr	= (WORDPTR)AREG;
+	WORDPTR data_ptr	= (WORDPTR)BREG;
 
-	chan_swap(chan_ptr, data_ptr);
+	return chan_swap(ectx, chan_ptr, data_ptr);
 }
 
 /* 0xE5 - 0x2E 0xF5 - mout - mobile output */
-TVM_INSTRUCTION void ins_mout(void)
+TVM_INSTRUCTION (ins_mout)
 {
-	WORDPTR chan_ptr = (WORDPTR)areg;
-	WORDPTR data_ptr = (WORDPTR)breg;
+	WORDPTR chan_ptr = (WORDPTR)AREG;
+	WORDPTR data_ptr = (WORDPTR)BREG;
 
-	chan_swap(chan_ptr, data_ptr);
+	return chan_swap(ectx, chan_ptr, data_ptr);
 }
 
 /* 0xE6 - 0x2E 0xF6 - min64 - dynamic mobile array input */
-TVM_INSTRUCTION void ins_min64(void)
+TVM_INSTRUCTION (ins_min64)
 {
-	BYTEPTR data_ptr = (BYTEPTR)breg;
-	WORDPTR chan_ptr = (WORDPTR)areg;
+	BYTEPTR data_ptr = (BYTEPTR)BREG;
+	WORDPTR chan_ptr = (WORDPTR)AREG;
 
-	chan_in(8, chan_ptr, data_ptr);
+	return chan_in(ectx, 8, chan_ptr, data_ptr);
 }
 
 /* 0xE7 - 0x2E 0xF7 - mout64 - dynamic mobile array output */
-TVM_INSTRUCTION void ins_mout64(void)
+TVM_INSTRUCTION (ins_mout64)
 {
-	BYTEPTR data_ptr = (BYTEPTR)breg;
-	WORDPTR chan_ptr = (WORDPTR)areg;
+	BYTEPTR data_ptr = (BYTEPTR)BREG;
+	WORDPTR chan_ptr = (WORDPTR)AREG;
 
-	chan_out(8, chan_ptr, data_ptr);
+	return chan_out(ectx, 8, chan_ptr, data_ptr);
 }
 
 /* 0xEA - 0x2E 0xFA - xmin - Extended Mobile Input */
-TVM_INSTRUCTION void ins_xmin(void)
+TVM_INSTRUCTION (ins_xmin)
 {
-	WORDPTR chan_addr = (WORDPTR) areg;
-	WORDPTR data_ptr = (WORDPTR) breg;
+	WORDPTR chan_addr = (WORDPTR) AREG;
+	WORDPTR data_ptr = (WORDPTR) BREG;
 	WORDPTR other_ptr;
-	WORDPTR other_wptr;
+	WORDPTR other_WPTR;
 
-	other_wptr = (WORDPTR) read_word(chan_addr);
-	other_ptr = (WORDPTR) WORKSPACE_GET(other_wptr, WS_CHAN);
+	other_WPTR = (WORDPTR) read_word(chan_addr);
+	other_ptr = (WORDPTR) WORKSPACE_GET(other_WPTR, WS_CHAN);
 
 	swap_data_word(data_ptr, other_ptr);
 
-	UNDEFINE_STACK();
+	UNDEFINE_STACK_RET();
 }
 
 /* 0xEB - 0x2E 0xFB - xmin64 - Extended Dynamic Mobile Array Input */
-TVM_INSTRUCTION void ins_xmin64(void)
+TVM_INSTRUCTION (ins_xmin64)
 {
 	/* Push 8 (byte count) onto stack. */
-	STACK(8, areg, breg);
+	STACK(8, AREG, BREG);
 	/* Do an XIN */
-	ins_xin();
+	return ins_xin(ectx);
 }
 
 /* 0x65 - 0x26 0xF5 - xminn - Extended multi-dim Dynamic Mobile Array Input */
-TVM_INSTRUCTION void ins_xminn(void)
+TVM_INSTRUCTION (ins_xminn)
 {
 	/* Convert word count to byte count */
-	areg = areg << WSH;
+	AREG = AREG << WSH;
 	/* Do an XIN */
-	ins_xin();
+	return ins_xin(ectx);
 }
 
 #endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
@@ -198,8 +202,8 @@ TVM_INSTRUCTION void ins_xminn(void)
  ****************************************************************************/
 
 /* 0xFD - 0x2F 0xFD - null - put null onto the stack */
-TVM_INSTRUCTION void ins_null(void)
+TVM_INSTRUCTION (ins_null)
 {
-	STACK((WORD) NULL_P, areg, breg);
+	STACK_RET((WORD) NULL_P, AREG, BREG);
 }
 
