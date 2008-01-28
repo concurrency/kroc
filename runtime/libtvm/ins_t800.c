@@ -30,21 +30,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *              0x25 0xF_         0x25 0xF_         0x25 0xF_               *
  ****************************************************************************/
 /* 0x5A - 0x25 0xFA - dup - duplicate top of stack */
-TVM_INSTRUCTION void ins_dup(void)
+TVM_INSTRUCTION (ins_dup)
 {
-	STACK(areg, areg, breg);
+	STACK_RET(AREG, AREG, BREG);
 }
 
 /****************************************************************************
  *              0x28 0xF_         0x28 0xF_         0x28 0xF_               *
  ****************************************************************************/
 /* 0x81 - 0x28 0xF1 - wsubdb - double word subscript */
-TVM_INSTRUCTION void ins_wsubdb(void)
+TVM_INSTRUCTION (ins_wsubdb)
 {
 	/* T800 provides a double word subscript instruct to save on doing
 	 * a shift followed by a WSUB or BSUB when accessing double word
 	 * array items.
 	 */
-	STACK((WORD)wordptr_plus((WORDPTR)areg, breg * 2), creg, UNDEFINE(creg));
+	STACK_RET((WORD)wordptr_plus((WORDPTR)AREG, BREG * 2), CREG, UNDEFINE(CREG));
 }
 

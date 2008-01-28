@@ -38,6 +38,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 		if((X) != fegetround()) 	\
 			fesetround((X));	\
 	} while(0)
+#define SET_ROUNDMODE_RET(X) \
+	do {					\
+		SET_ROUNDMODE(X);		\
+		return ECTX_INS_OK;		\
+	} while(0)
 
 #endif /* TVM_USE_FPU */
 
@@ -55,7 +60,7 @@ static const WORD FP_INFINITY = 0x7F800000;
        (type: 0 = zero; 1 = any number; 2 = infinity; 3 = NaN)
   This is based on UNPACKSN from the occama library.
  */
-TVM_INSTRUCTION void ins_unpacksn(void)
+TVM_INSTRUCTION (ins_unpacksn)
 {
 	WORD mantissa, exponent, type;
 
@@ -63,9 +68,9 @@ TVM_INSTRUCTION void ins_unpacksn(void)
 	   - one sign bit (which we ignore)
 	   - 8 bits of exponent
 	   - 23 bits of mantissa, with an implicit leading 1 */
-	exponent = (areg >> 23) & 0xFF;
+	exponent = (AREG >> 23) & 0xFF;
 	/* Leave space for us to add the leading 1 later. */
-	mantissa = (areg & 0x7FFFFF) << 8;
+	mantissa = (AREG & 0x7FFFFF) << 8;
 
 	if (exponent == 0) {
 		if (mantissa == 0) {
@@ -96,7 +101,7 @@ TVM_INSTRUCTION void ins_unpacksn(void)
 		mantissa |= 0x80000000;
 	}
 
-	STACK(mantissa, exponent, (4 * breg) + type);
+	STACK_RET(mantissa, exponent, (4 * BREG) + type);
 }
 
 /* 0x6C - 0x26 0xFC - postnormsn - post normalise correction of single length fp nr */
@@ -112,12 +117,12 @@ TVM_INSTRUCTION void ins_unpacksn(void)
   This is based on ROUNDSN from the occama library (which does the equivalent
   of NORM, POSTNORMSN, ROUNDSN).
  */
-TVM_INSTRUCTION void ins_postnormsn(void)
+TVM_INSTRUCTION (ins_postnormsn)
 {
-	WORD guard = areg;
+	WORD guard = AREG;
 	/* Adjust the exponent for the number of places shifted. */
-	WORD exponent = WORKSPACE_GET(wptr, WS_TOP) - creg;
-	WORD mantissa = breg;
+	WORD exponent = WORKSPACE_GET(WPTR, WS_TOP) - CREG;
+	WORD mantissa = BREG;
 	if (exponent <= -32) {
 		/* too small to represent -- make it zero */
 		exponent = 0;
@@ -133,7 +138,7 @@ TVM_INSTRUCTION void ins_postnormsn(void)
 	} else {
 		/* normalised -- nothing more to be done */
 	}
-	STACK(guard, mantissa, exponent);
+	STACK_RET(guard, mantissa, exponent);
 }
 
 /* 0x6D - 0x26 0xFD - roundsn - round single length fp number */
@@ -145,19 +150,19 @@ TVM_INSTRUCTION void ins_postnormsn(void)
      Areg = 32-bit float built from the given values
    This is likewise based on ROUNDSN from occama.
  */
-TVM_INSTRUCTION void ins_roundsn(void)
+TVM_INSTRUCTION (ins_roundsn)
 {
 	WORD f;
-	if (creg >= 0xFF) {
+	if (CREG >= 0xFF) {
 		/* too large to represent -- make it infinity */
 		f = FP_INFINITY;
 	} else {
 		/* Create the REAL32. */
-		f = (creg & 0xFF) << 23 | ((breg >> 8) & 0x7FFFFF);
+		f = (CREG & 0xFF) << 23 | ((BREG >> 8) & 0x7FFFFF);
 
-		if ((breg & 0x80) == 0) {
+		if ((BREG & 0x80) == 0) {
 			/* round bit not set -- round down */
-		} else if ((areg | (breg & 0x7F) | (f & 1)) == 0) {
+		} else if ((AREG | (BREG & 0x7F) | (f & 1)) == 0) {
 			/* round bit is set, but the LSB of f and everything to
 			   its right are 0 -- round down */
 		} else {
@@ -165,25 +170,25 @@ TVM_INSTRUCTION void ins_roundsn(void)
 			f += 1;
 		}
 	}
-	STACK(f, UNDEFINE(breg), UNDEFINE(creg));
+	STACK_RET(f, UNDEFINE(BREG), UNDEFINE(CREG));
 }
 
 /* 0x71 - 0x27 0xF1 - ldinf - load single length floating point infinity */
-TVM_INSTRUCTION void ins_ldinf(void)
+TVM_INSTRUCTION (ins_ldinf)
 {
-	STACK(FP_INFINITY, areg, breg);
+	STACK_RET(FP_INFINITY, AREG, BREG);
 }
 
 /* This is a T4  only specific instruction */
 /* 0x72 - 0x27 0xF2 - fmul - fractional multiply */
-TVM_INSTRUCTION void ins_fmul(void)
+TVM_INSTRUCTION (ins_fmul)
 {
 	/* The code below is borrowed from the CCSP kernel */
 	long long tmp_long;
 	int hi_word, lo_word;
 	int tmpint_c;
 
-	tmp_long = (long long)areg * (long long)breg;
+	tmp_long = (long long)AREG * (long long)BREG;
 	hi_word = (int)((tmp_long >> 32) & 0xffffffff);
 	lo_word = (int)(tmp_long & 0xffffffff);
 	hi_word  = (int)((unsigned int)hi_word << 1);
@@ -200,7 +205,8 @@ TVM_INSTRUCTION void ins_fmul(void)
 	} else {
 		tmpint_c = hi_word;
 	}
-	STACK(tmpint_c, creg, UNDEFINE(creg));
+
+	STACK_RET(tmpint_c, CREG, UNDEFINE(CREG));
 }
 
 #endif /* TVM_EMULATE_T4 || TVM_EMUALTE_T8 */
@@ -208,528 +214,527 @@ TVM_INSTRUCTION void ins_fmul(void)
 #ifdef TVM_EMULATE_T8
 
 /* The floating point registers. */
-double fareg, fbreg, fcreg;
+double fAREG, fBREG, fCREG;
 #define DOUBLE 1
 #define SINGLE 0
-int fareg_length, fbreg_length, fcreg_length;
+int fAREG_length, fBREG_length, fCREG_length;
 
-/*Pushes the new areg onto the stack */
-#define PUSH_FPREG(X, Y)  fcreg = fbreg; fcreg_length = fbreg_length; \
-                               fbreg = fareg; fbreg_length = fareg_length; \
-                               fareg = X; fareg_length = Y
-/*NOTE: This may be risky, always assigning fbreg_length to fareg_length here 
+/*Pushes the new AREG onto the stack */
+#define PUSH_FPREG(X, Y)  fCREG = fBREG; fCREG_length = fBREG_length; \
+                               fBREG = fAREG; fBREG_length = fAREG_length; \
+                               fAREG = X; fAREG_length = Y
+/*NOTE: This may be risky, always assigning fBREG_length to fAREG_length here 
   It might also be ok.*/
-#define POP_FPREG(X) fareg = X; fareg_length = fbreg_length; \
-                            fbreg = fcreg; fbreg_length = fcreg_length
+#define POP_FPREG(X) fAREG = X; fAREG_length = fBREG_length; \
+                            fBREG = fCREG; fBREG_length = fCREG_length
 /**************************
 *  0x28 0xFx Starts here  *
 ***************************/
 
 /* 0x82 - 0x28 0xF2 - fpldnldbi - floating load non-local indexed double */
-TVM_INSTRUCTION void ins_fpldnldbi(void)
+TVM_INSTRUCTION (ins_fpldnldbi)
 {
-	/*FIXME!  the * 2 of breg here is very magical:
+	/*FIXME!  the * 2 of BREG here is very magical:
 	 * I think this has to do with the index being 64 bit (as in indexing into 64 bit words)
 	 * so the index needs to be multiplied by 2 to get the correct value.  This makes the cgtest
 	 * pass.  There is probably some better way to designate this though... DJD 24012007*/
-	PUSH_FPREG(read_wordd(wordptr_plus(areg, (breg * 2))), DOUBLE);
-	//fcreg = fbreg;
-	//fbreg = fareg;
-	//fareg = read_wordd(wordptr_plus(areg, (breg * 2)));
-	//printf("areg %x, breg %x\n ", areg, breg);
-	STACK(breg, creg, UNDEFINE(creg));
-	SET_ROUNDMODE(FE_TONEAREST);
+	PUSH_FPREG(read_wordd(wordptr_plus(AREG, (BREG * 2))), DOUBLE);
+	//fCREG = fBREG;
+	//fBREG = fAREG;
+	//fAREG = read_wordd(wordptr_plus(AREG, (BREG * 2)));
+	//printf("AREG %x, BREG %x\n ", AREG, BREG);
+	STACK(BREG, CREG, UNDEFINE(CREG));
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x83 - 0x28 0xF3 - fpcheckerr - check floating error */
 /*FIXME: Erm, I guess we should do something here...
  * Oh, and speaking of which, C should really bomb if we get one
  * of these.  We could check for overflow and the like 'inline'*/
-TVM_INSTRUCTION void ins_fpchkerr(void)
+TVM_INSTRUCTION (ins_fpchkerr)
 {
 	//From gray tputer book.
 	//error_flag' = error_flag \/ fp_error_flag
 	//round_mode' = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x84 - 0x28 0xF4 - fpstnldb - floating point store non-local double */
-TVM_INSTRUCTION void ins_fpstnldb(void)
+TVM_INSTRUCTION (ins_fpstnldb)
 {
-	write_wordd(areg, fareg);
-	POP_FPREG(fbreg);
-	//fareg = fbreg;
-	//fbreg = fcreg;
-	//fcreg = UNDEFINE
-	STACK(breg, creg, UNDEFINE(creg));
+	write_wordd(AREG, fAREG);
+	POP_FPREG(fBREG);
+	//fAREG = fBREG;
+	//fBREG = fCREG;
+	//fCREG = UNDEFINE
+	STACK_RET(BREG, CREG, UNDEFINE(CREG));
 }
 
 /* 0x86 - 0x28 0xF6 - fpldnlsni - floating load non local indexed single */
-TVM_INSTRUCTION void ins_fpldnlsni(void)
+TVM_INSTRUCTION (ins_fpldnlsni)
 {
-	PUSH_FPREG(read_wordf(wordptr_plus(areg, breg)), SINGLE);
-	//fcreg = fbreg;
-	//fbreg = fareg;
-	//fareg = read_wordf(wordptr_plus(areg, breg));
-	//printf("areg %x, breg %x\n ", areg, breg);
-	STACK(creg, UNDEFINE(breg), UNDEFINE(creg));
-	SET_ROUNDMODE(FE_TONEAREST);
+	PUSH_FPREG(read_wordf(wordptr_plus(AREG, BREG)), SINGLE);
+	//fCREG = fBREG;
+	//fBREG = fAREG;
+	//fAREG = read_wordf(wordptr_plus(AREG, BREG));
+	//printf("AREG %x, BREG %x\n ", AREG, BREG);
+	STACK(CREG, UNDEFINE(BREG), UNDEFINE(CREG));
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x87 - 0x28 0xF7 - fpadd - floating point add */
-TVM_INSTRUCTION void ins_fpadd(void)
+TVM_INSTRUCTION (ins_fpadd)
 {
-	//fareg.len = fbreg.len
-	if((fareg_length == fbreg_length) && (fareg_length == SINGLE))
+	//fAREG.len = fBREG.len
+	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
 	{
-		POP_FPREG((float) ((float)fbreg) + ((float)fareg));
-	} else if ((fareg_length == fbreg_length) && (fareg_length == DOUBLE)) {
-		POP_FPREG((double) ((double)fbreg) + ((double)fareg));
+		POP_FPREG((float) ((float)fBREG) + ((float)fAREG));
+	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
+		POP_FPREG((double) ((double)fBREG) + ((double)fAREG));
 	} else {
-		set_error_flag(EFLAG_FP);
+		return ectx->set_error_flag(ectx, EFLAG_FP);
 	}
-	//fbreg = fcreg;
-	//fcreg = undefined
+	//fBREG = fCREG;
+	//fCREG = undefined
 	//fp_error flag can be set by the division
 	//round_mode = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x88 - 0x28 0xF8 - fpstnlsn - floating store non local single */
-TVM_INSTRUCTION void ins_fpstnlsn(void)
+TVM_INSTRUCTION (ins_fpstnlsn)
 {
 
-	// areg /\ byteselectmask = 0
-	// fareg.len = sn - means fareg is a single, not a double.
-	write_wordf(areg, (float)fareg);
-	//printf("fareg is %f, read_word is %f, areg* is %i\n", fareg, read_wordf(areg), areg);
+	// AREG /\ byteselectmask = 0
+	// fAREG.len = sn - means fAREG is a single, not a double.
+	write_wordf(AREG, (float)fAREG);
+	//printf("fAREG is %f, read_word is %f, AREG* is %i\n", fAREG, read_wordf(AREG), AREG);
 
-	STACK(breg, creg, UNDEFINE(creg));
-	POP_FPREG(fbreg);
-	//fareg = fbreg;
-	//fbreg = fcreg;
-	//fcreg = undefined
+	STACK(BREG, CREG, UNDEFINE(CREG));
+	POP_FPREG(fBREG);
+	//fAREG = fBREG;
+	//fBREG = fCREG;
+	//fCREG = undefined
 	//
 	//round_mode = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 
 }
 
 /* 0x89 - 0x28 0xF9 - fpsub - floating point subtract */
-TVM_INSTRUCTION void ins_fpsub(void)
+TVM_INSTRUCTION (ins_fpsub)
 {
-	//fareg.len = fbreg.len
-	if((fareg_length == fbreg_length) && (fareg_length == SINGLE))
+	//fAREG.len = fBREG.len
+	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
 	{
-		POP_FPREG((float) ((float)fbreg) - ((float)fareg));
-	} else if ((fareg_length == fbreg_length) && (fareg_length == DOUBLE)) {
-		POP_FPREG((double) ((double)fbreg) - ((double)fareg));
+		POP_FPREG((float) ((float)fBREG) - ((float)fAREG));
+	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
+		POP_FPREG((double) ((double)fBREG) - ((double)fAREG));
 	} else {
-		set_error_flag(EFLAG_FP);
+		return ectx->set_error_flag(ectx, EFLAG_FP);
 	}
-	//fbreg = fcreg;
-	//fcreg = undefined
+	//fBREG = fCREG;
+	//fCREG = undefined
 	//fp_error flag can be set by the division
 	//round_mode = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x8A - 0x28 0xFA - fpldnldb - floating point load non-local double */
-TVM_INSTRUCTION void ins_fpldnldb(void)
+TVM_INSTRUCTION (ins_fpldnldb)
 {
-	//fcreg = fbreg;
-	//fbreg = fareg;
+	//fCREG = fBREG;
+	//fBREG = fAREG;
 	//read memory double in gotta see if this actually works.
-	//fareg = read_wordd(areg);  
-	PUSH_FPREG(read_wordd(areg), DOUBLE);
-	STACK(breg, creg, UNDEFINE(creg));
+	//fAREG = read_wordd(AREG);  
+	PUSH_FPREG(read_wordd(AREG), DOUBLE);
+	STACK_RET(BREG, CREG, UNDEFINE(CREG));
 }
 
 /* 0x8B - 0x28 0xFB - fpmul - floating point multiply */
-TVM_INSTRUCTION void ins_fpmul(void)
+TVM_INSTRUCTION (ins_fpmul)
 {
-	//fareg.len = fbreg.len
-	if((fareg_length == fbreg_length) && (fareg_length == SINGLE))
+	//fAREG.len = fBREG.len
+	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
 	{
-		POP_FPREG((float) ((float)fbreg) * ((float)fareg));
-	} else if ((fareg_length == fbreg_length) && (fareg_length == DOUBLE)) {
-		POP_FPREG((double) ((double)fbreg) * ((double)fareg));
+		POP_FPREG((float) ((float)fBREG) * ((float)fAREG));
+	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
+		POP_FPREG((double) ((double)fBREG) * ((double)fAREG));
 	} else {
-		set_error_flag(EFLAG_FP);
+		return ectx->set_error_flag(ectx, EFLAG_FP);
 	}
-	//fbreg = fcreg;
-	//fcreg = undefined
+	//fBREG = fCREG;
+	//fCREG = undefined
 	//fp_error flag can be set by the division
 	//round_mode = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x8C - 0x28 0xFC - fpdiv - floating point divide */
-TVM_INSTRUCTION void ins_fpdiv(void)
+TVM_INSTRUCTION (ins_fpdiv)
 {
-	if((fareg_length == fbreg_length) && (fareg_length == SINGLE))
+	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
 	{
-		POP_FPREG((float) ((float)fbreg) / ((float)fareg));
-	} else if ((fareg_length == fbreg_length) && (fareg_length == DOUBLE)) {
-		POP_FPREG((double) ((double)fbreg) / ((double)fareg));
+		POP_FPREG((float) ((float)fBREG) / ((float)fAREG));
+	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
+		POP_FPREG((double) ((double)fBREG) / ((double)fAREG));
 	} else {
-		set_error_flag(EFLAG_FP);
+		return ectx->set_error_flag(ectx, EFLAG_FP);
 	}
-	//fareg.len = fbreg.len
-	//fareg  = (float) ((float)fbreg) / ((float)fareg);
-	//fbreg = fcreg;
-	//fcreg = undefined
+	//fAREG.len = fBREG.len
+	//fAREG  = (float) ((float)fBREG) / ((float)fAREG);
+	//fBREG = fCREG;
+	//fCREG = undefined
 	//fp_error flag can be set by the division
 	//round_mode = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x8E - 0x28 0xFE - fpldnlsn - floating point load non local single */
-TVM_INSTRUCTION void ins_fpldnlsn(void) 
+TVM_INSTRUCTION (ins_fpldnlsn) 
 {
 	// From graytransputer book Areg /\ byteselectmask = 0
 	// This is supposed to be word-aligned.
-	//if((areg | byteselectmask) == 0)
+	//if((AREG | byteselectmask) == 0)
 	//{
 
-	/* From graytransputer book creg' = undefined */
-	// creg = UNDEFINED;
+	/* From graytransputer book CREG' = undefined */
+	// CREG = UNDEFINED;
 	// FIXME: whats the line above become?
 
 	/*Gray tvm book:
-	 * fareg' = unpack.sn (RETYPE REAL32 Mem Areg)
-	 * fberg' = fareg
-	 * fcreg' = fbreg */
+	 * fAREG' = unpack.sn (RETYPE REAL32 Mem Areg)
+	 * fberg' = fAREG
+	 * fCREG' = fBREG */
 	/* Writing these 'in reverse' so we don't need temp variables. */
-	//fcreg = fbreg;
-	//fbreg = fareg;
+	//fCREG = fBREG;
+	//fBREG = fAREG;
 
-	/* Since fareg is a double, the unpack.sn (above) may happen automagically.. maybe... */
-	//fareg = read_wordf( areg ); 
-	PUSH_FPREG(read_wordf( areg), SINGLE);
-	//	printf("fareg is %f, read_word is %f, areg* is %i\n", fareg, read_wordf(areg), areg);
+	/* Since fAREG is a double, the unpack.sn (above) may happen automagically.. maybe... */
+	//fAREG = read_wordf( AREG ); 
+	PUSH_FPREG(read_wordf( AREG), SINGLE);
+	//	printf("fAREG is %f, read_word is %f, AREG* is %i\n", fAREG, read_wordf(AREG), AREG);
 
-	/* These come last since areg gets modified, and the above needs it.*/
-	/* From graytransputer book areg' = breg */
-	/* From graytransputer book breg' = creg */
+	/* These come last since AREG gets modified, and the above needs it.*/
+	/* From graytransputer book AREG' = BREG */
+	/* From graytransputer book BREG' = CREG */
 
-	STACK(breg, creg, UNDEFINE(creg));
+	STACK(BREG, CREG, UNDEFINE(CREG));
 	/*There's also the rounding mode...*/
 	//round_mode = ToNearest.. hmm.
-	SET_ROUNDMODE(FE_TONEAREST);
-
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /**************************
  *  0x29 0xFx Starts here  *
  ***************************/
 /* 0x91 - 0x29 0xF1 - fpnan - floating point test for NaN */
-TVM_INSTRUCTION void ins_fpnan (void)
+TVM_INSTRUCTION (ins_fpnan)
 {
 	//printf("fpnan \n");
-	STACK(areg, areg, breg);
-	areg = isnan(fareg);
-	SET_ROUNDMODE(FE_TONEAREST);
+	STACK(AREG, AREG, BREG);
+	AREG = isnan(fAREG);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x92 - 0x29 0xF2 - fpordered - floating point ordereability */
-TVM_INSTRUCTION void ins_fpordered (void)
+TVM_INSTRUCTION (ins_fpordered)
 { 
 	//printf("fpordered \n");
-	STACK(areg, areg, breg);
+	STACK(AREG, AREG, BREG);
 	/*This is possibly wrong.*/
-	if((isnan(fareg)) ||  (isnan(fbreg))) {
-		areg = 0;
+	if((isnan(fAREG)) ||  (isnan(fBREG))) {
+		AREG = 0;
 	} else {
-		areg = 1;
+		AREG = 1;
 	}
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x93 - 0x29 0xF3 - fpnotfinite - floating point test for not finite */
-TVM_INSTRUCTION void ins_fpnotfinite (void)
+TVM_INSTRUCTION (ins_fpnotfinite)
 {
-	//printf("fpnotfinite fareg %f  %i  %i  %i\n", fareg, areg, breg, creg);
-	STACK(areg, areg, breg);
-	if(isinf(fareg)) {
-		areg = 1; 
+	//printf("fpnotfinite fAREG %f  %i  %i  %i\n", fAREG, AREG, BREG, CREG);
+	STACK(AREG, AREG, BREG);
+	if(isinf(fAREG)) {
+		AREG = 1; 
 	} else {
-		areg = 0;
+		AREG = 0;
 	}
-	//printf("fpnotfinite fareg %f  %i  %i  %i\n", fareg, areg, breg, creg);
+	//printf("fpnotfinite fAREG %f  %i  %i  %i\n", fAREG, AREG, BREG, CREG);
 
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x94 - 0x29 0xF4 - fpgt - floating point equals */
-TVM_INSTRUCTION void ins_fpgt (void)
+TVM_INSTRUCTION (ins_fpgt)
 {
 	//FIXME: fpgt and fpeq may want to take into account if something is a double or a float?  
-	//fareg_length = fbreg_length 
-	STACK(areg, areg, breg);
+	//fAREG_length = fBREG_length 
+	STACK(AREG, AREG, BREG);
 	/* This one pops 2 floating regs off the stack so it does not use the pop macro*/
-	if((fareg_length == fbreg_length) && (fareg_length == SINGLE))
+	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
 	{
-		if((float)fbreg > (float)fareg) {
-			areg = 1;
+		if((float)fBREG > (float)fAREG) {
+			AREG = 1;
 		} else {
-			areg = 0;
+			AREG = 0;
 		}
-	} else if ((fareg_length == fbreg_length) && (fareg_length == DOUBLE)) {
-		if((double)fbreg > (double)fareg) {
-			areg = 1;
+	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
+		if((double)fBREG > (double)fAREG) {
+			AREG = 1;
 		} else {
-			areg = 0;
+			AREG = 0;
 		}
 	} else { 
-		set_error_flag(EFLAG_FP); 
+		return ectx->set_error_flag(ectx, EFLAG_FP); 
 	}
 
-	fareg = fcreg;
-	fareg_length = fcreg_length;
-	//fbreg = undefined
-	//fcreg = undefined 
-	// Could set fp error flag here?  Fp.Error.flg = fp.error.flag |? (fareeg E Inf U NAN) \/ (fbreg E Inf U Nan)
-	SET_ROUNDMODE(FE_TONEAREST);
+	fAREG = fCREG;
+	fAREG_length = fCREG_length;
+	//fBREG = undefined
+	//fCREG = undefined 
+	// Could set fp error flag here?  Fp.Error.flg = fp.error.flag |? (fareeg E Inf U NAN) \/ (fBREG E Inf U Nan)
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x95 - 0x29 0xF5 - fpeq - floating point equals */
-TVM_INSTRUCTION void ins_fpeq (void)
+TVM_INSTRUCTION (ins_fpeq)
 {
-	//fareg_length = fbreg_length 
-	STACK(areg, areg, breg);
-	if((fareg_length == fbreg_length) && (fareg_length == SINGLE))
+	//fAREG_length = fBREG_length 
+	STACK(AREG, AREG, BREG);
+	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
 	{
-		if((float)fareg == (float)fbreg) {
-			areg = 1;
+		if((float)fAREG == (float)fBREG) {
+			AREG = 1;
 		} else {
-			areg = 0;
+			AREG = 0;
 		}
-	} else if ((fareg_length == fbreg_length) && (fareg_length == DOUBLE)) {
-		if((double)fareg == (double)fbreg) {
-			areg = 1;
+	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
+		if((double)fAREG == (double)fBREG) {
+			AREG = 1;
 		} else {
-			areg = 0;
+			AREG = 0;
 		}
 	} else { 
-		set_error_flag(EFLAG_FP);
+		return ectx->set_error_flag(ectx, EFLAG_FP);
 	}
-	fareg = fcreg;
-	fareg_length = fcreg_length;
-	//fbreg = undefined
-	//fcreg = undefined 
-	// Could set fp error flag here?  Fp.Error.flg = fp.error.flag |? (fareeg E Inf U NAN) \/ (fbreg E Inf U Nan)
-	SET_ROUNDMODE(FE_TONEAREST);
+	fAREG = fCREG;
+	fAREG_length = fCREG_length;
+	//fBREG = undefined
+	//fCREG = undefined 
+	// Could set fp error flag here?  Fp.Error.flg = fp.error.flag |? (fareeg E Inf U NAN) \/ (fBREG E Inf U Nan)
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x96 - 0x29 0xF6 - fpi32tor32 - load int32 as real32 */
-TVM_INSTRUCTION void ins_fpi32tor32(void)
+TVM_INSTRUCTION (ins_fpi32tor32)
 {
 	/*push stack up and cast*/
-	//fcreg = fbreg;
-	//fbreg = fareg;
+	//fCREG = fBREG;
+	//fBREG = fAREG;
 	/*Use read_word not read_wordf since the book says not to RETYPE*/
-	//fareg = read_word(areg);
-	PUSH_FPREG((float)read_word(areg), SINGLE);
-	//printf("fpi32tor32 fareg %f areg %i\n", fareg, areg);
+	//fAREG = read_word(AREG);
+	PUSH_FPREG((float)read_word(AREG), SINGLE);
+	//printf("fpi32tor32 fAREG %f AREG %i\n", fAREG, AREG);
 
-	STACK(breg, creg, UNDEFINE(creg));
-	//creg = undefined;
+	STACK(BREG, CREG, UNDEFINE(CREG));
+	//CREG = undefined;
 	//round_mode = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x98 - 0x29 0xF8 - fpi32tor64 - load int32 as real64 */
-TVM_INSTRUCTION void ins_fpi32tor64 (void)
+TVM_INSTRUCTION (ins_fpi32tor64)
 {
 	/*push stack up and cast*/
-	//fcreg = fbreg;
-	//fbreg = fareg;
+	//fCREG = fBREG;
+	//fBREG = fAREG;
 	/*Use read_word not read_wordf since the book says not to RETYPE*/
 	//Not sure if this is correct... may need a (double) cast there
-	//fareg = read_word(areg);
-	PUSH_FPREG((double)read_word(areg), DOUBLE);
-	//printf("fpi32tor64 fareg %f areg %i\n", fareg, areg);
+	//fAREG = read_word(AREG);
+	PUSH_FPREG((double)read_word(AREG), DOUBLE);
+	//printf("fpi32tor64 fAREG %f AREG %i\n", fAREG, AREG);
 
-	STACK(breg, creg, UNDEFINE(creg));
+	STACK(BREG, CREG, UNDEFINE(CREG));
 	//round_mode = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 
 /* 0x9A - 0x29 0xFA - fpb32tor64 - load unsigned word as real64 */
-TVM_INSTRUCTION void ins_fpb32tor64(void)
+TVM_INSTRUCTION (ins_fpb32tor64)
 {
-	// printf("fpb32tor64 %i \n", *(unsigned int*)areg);
-	PUSH_FPREG(*(unsigned int *)areg, DOUBLE);
-	STACK(breg, creg, UNDEFINE(creg));
-	SET_ROUNDMODE(FE_TONEAREST);
+	// printf("fpb32tor64 %i \n", *(unsigned int*)AREG);
+	PUSH_FPREG(*(unsigned int *)AREG, DOUBLE);
+	STACK(BREG, CREG, UNDEFINE(CREG));
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x9D - 0x29 0xFD - fprtoi32 - real to int32 */
-TVM_INSTRUCTION void ins_fprtoi32(void)
+TVM_INSTRUCTION (ins_fprtoi32)
 {
-	//fareg,len = single
-	if(fareg_length == SINGLE) { 
-		//printf("pre fprtoi32 fareg %f\n", fareg);
+	//fAREG,len = single
+	if(fAREG_length == SINGLE) { 
+		//printf("pre fprtoi32 fAREG %f\n", fAREG);
 
 		/* This truncates any decimals... 
 		 * I think it should actually round since that seems
 		 * to be the default (need to check) */
-		fareg = rintf(fareg);
+		fAREG = rintf(fAREG);
 	} else {
-		fareg = rint(fareg);
+		fAREG = rint(fAREG);
 	}
 
-	//printf("post fprtoi32 fareg %f\n", fareg);
+	//printf("post fprtoi32 fAREG %f\n", fAREG);
 	// Should check if value outside of minint > x < maxint range...
 	// round_mode = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x9E - 0x29 0xFE - fpstnli32 - store non local int32 */
-TVM_INSTRUCTION void ins_fpstnli32(void)
+TVM_INSTRUCTION (ins_fpstnli32)
 {
-	// Should test to see if fareg contains an value which fits 
+	// Should test to see if fAREG contains an value which fits 
 	// into an int...
 	/* IMPORTANT: This uses write_word instead of write_wordf
 	 * since we are storing the float as an int (casting)i.
 	 * The below line is supposed to correspond to:
-	 * Mem' = Mem { Areg -> INT32 TRUNC pack (fareg)} 
+	 * Mem' = Mem { Areg -> INT32 TRUNC pack (fAREG)} 
 	 * where pack is either pack.sn or pack.db depending
-	 * on fareg.len */
-	write_word(areg, (int)fareg);
+	 * on fAREG.len */
+	write_word(AREG, (int)fAREG);
 
-	STACK(breg, creg, UNDEFINE(creg));
-	POP_FPREG(fbreg);
-	//fareg = fbreg;
-	//fbreg = fcreg;
-	//fcreg = undefined
+	STACK(BREG, CREG, UNDEFINE(CREG));
+	POP_FPREG(fBREG);
+	//fAREG = fBREG;
+	//fBREG = fCREG;
+	//fCREG = undefined
 	//round_mode = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x9F - 0x29 0xFF - fpldzerosn - floating load zero single */
-TVM_INSTRUCTION void ins_fpldzerosn(void)
+TVM_INSTRUCTION (ins_fpldzerosn)
 {
-	//Set that fbreg is single - (not done yet)
-	//fareg_length = single
+	//Set that fBREG is single - (not done yet)
+	//fAREG_length = single
 	PUSH_FPREG((float) 0.0, SINGLE);
-	/*fcreg = fbreg;
-	  fbreg = fareg;
-	  fareg = (float) 0.0; */
-	SET_ROUNDMODE(FE_TONEAREST);
+	/*fCREG = fBREG;
+	  fBREG = fAREG;
+	  fAREG = (float) 0.0; */
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /**************************
  *  0x2A 0xFx Starts here  *
  ***************************/
 /* 0xA0 - 0x2A 0xF0 - fpldzerodb - floating load zero double */
-TVM_INSTRUCTION void ins_fpldzerodb(void)
+TVM_INSTRUCTION (ins_fpldzerodb)
 {
-	//Set that fbreg is double - (not done yet)
-	//fareg_length = double
+	//Set that fBREG is double - (not done yet)
+	//fAREG_length = double
 	PUSH_FPREG((double) 0.0, DOUBLE);
-	/*fcreg = fbreg;
-	  fbreg = fareg;
-	  fareg = (double) 0.0;*/
-	SET_ROUNDMODE(FE_TONEAREST);
+	/*fCREG = fBREG;
+	  fBREG = fAREG;
+	  fAREG = (double) 0.0;*/
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0xA1 - 0x2A 0xF1 - fpint - round to floating integer */
 /* This rounds FAreg, wrt Round_Mode, to a floating point number of the same format iwth an integer value. - from Gray Book.*/
-TVM_INSTRUCTION void ins_fpint(void)
+TVM_INSTRUCTION (ins_fpint)
 {
-	/*So we round fareg to the nearest int by casting it an int and then back to a float... hmm.*/
-	if(fareg_length == SINGLE) {
-		fareg = rintf(fareg);
+	/*So we round fAREG to the nearest int by casting it an int and then back to a float... hmm.*/
+	if(fAREG_length == SINGLE) {
+		fAREG = rintf(fAREG);
 	} else {
-		fareg = rint(fareg);
+		fAREG = rint(fAREG);
 	}
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0xA3 - 0x2A 0xF3 - fpdup - floating point duplicate */
-TVM_INSTRUCTION void ins_fpdup(void)
+TVM_INSTRUCTION (ins_fpdup)
 {
-	//fareg = fareg;
-	PUSH_FPREG(fareg, fareg_length);
-	//fbreg = fareg;
-	//fcreg = fbreg;
-	SET_ROUNDMODE(FE_TONEAREST);
+	//fAREG = fAREG;
+	PUSH_FPREG(fAREG, fAREG_length);
+	//fBREG = fAREG;
+	//fCREG = fBREG;
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0xA4 - 0x2A 0xF4 - fprev - floating reverse */
-TVM_INSTRUCTION void ins_fprev(void)
+TVM_INSTRUCTION (ins_fprev)
 {
-	double tmp = fareg;
-	int tmp_length = fareg_length;
-	fareg = fbreg; 
-	fareg_length = fbreg_length;
-	fbreg = tmp;
-	fbreg_length = tmp_length;
-	//fcreg' = fcreg;
-	SET_ROUNDMODE(FE_TONEAREST);
+	double tmp = fAREG;
+	int tmp_length = fAREG_length;
+	fAREG = fBREG; 
+	fAREG_length = fBREG_length;
+	fBREG = tmp;
+	fBREG_length = tmp_length;
+	//fCREG' = fCREG;
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0xA6 - 0x2A 0xF6 - fpldnladddb - floating load non local and add double */
-TVM_INSTRUCTION void ins_fpldnladddb(void)
+TVM_INSTRUCTION (ins_fpldnladddb)
 {
-	// areg /\ byteselectmask = 0
-	// fareg.len = db - means fareg is a double.
-	//fareg' = fareg +IEEE unpack.db (RETYPE REAL64 [Mem Areg, Mem (Index Areg 1)])
-	fareg = (double) ((double)fareg) + read_wordd(areg);
-	fareg_length = DOUBLE;
-	//fbreg' = fbreg
-	//fcreg = undefined
-	STACK(breg, creg, UNDEFINE(creg));
-	SET_ROUNDMODE(FE_TONEAREST);
+	// AREG /\ byteselectmask = 0
+	// fAREG.len = db - means fAREG is a double.
+	//fAREG' = fAREG +IEEE unpack.db (RETYPE REAL64 [Mem Areg, Mem (Index Areg 1)])
+	fAREG = (double) ((double)fAREG) + read_wordd(AREG);
+	fAREG_length = DOUBLE;
+	//fBREG' = fBREG
+	//fCREG = undefined
+	STACK(BREG, CREG, UNDEFINE(CREG));
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0xA8 - 0x2A 0xF8 - fpldnlmuldb - floating load non local and multiply double */
-TVM_INSTRUCTION void ins_fpldnlmuldb(void)
+TVM_INSTRUCTION (ins_fpldnlmuldb)
 {
-	fareg = (double)((double)fareg) * read_wordd(areg);
-	fareg_length = DOUBLE;
-	//fbreg = fbreg (doesn't change)
-	//fcreg = undefined
-	STACK(breg, creg, UNDEFINE(creg));
+	fAREG = (double)((double)fAREG) * read_wordd(AREG);
+	fAREG_length = DOUBLE;
+	//fBREG = fBREG (doesn't change)
+	//fCREG = undefined
+	STACK(BREG, CREG, UNDEFINE(CREG));
 	//fp_error_flag can be set from float multiply
 	//round_mode = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0xAA - 0x2A 0xFA - fpldnladdsn - floating load non local and add single */
-TVM_INSTRUCTION void ins_fpldnladdsn(void)
+TVM_INSTRUCTION (ins_fpldnladdsn)
 {
-	// areg /\ byteselectmask = 0
-	// fareg.len = sn - means fareg is a single, not a double.
+	// AREG /\ byteselectmask = 0
+	// fAREG.len = sn - means fAREG is a single, not a double.
 
-	//fareg' = fareg +ieee unpack.sn (RETYPE REAL32 Mem Areg)
-	fareg = (float) ((float)fareg) + read_wordf(areg);
-	fareg_length = SINGLE;
-	//printf("fareg is %f, read_word is %f, areg* is %i\n", fareg, read_wordf(areg), areg);
+	//fAREG' = fAREG +ieee unpack.sn (RETYPE REAL32 Mem Areg)
+	fAREG = (float) ((float)fAREG) + read_wordf(AREG);
+	fAREG_length = SINGLE;
+	//printf("fAREG is %f, read_word is %f, AREG* is %i\n", fAREG, read_wordf(AREG), AREG);
 
-	//fbreg' = fbreg (no changes, so do nothing)
-	//fcreg' = undefined..
+	//fBREG' = fBREG (no changes, so do nothing)
+	//fCREG' = undefined..
 
-	STACK(breg, creg, UNDEFINE(creg));
+	STACK(BREG, CREG, UNDEFINE(CREG));
 	//FP_Error_FLag' = can be set by error from +ieee..
 	//round_mode' = ToNearest - see FIXME above.
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0xAC - 0x2A 0xFC - fpldnlmulsn - floating load non local and multiply single */
-TVM_INSTRUCTION void ins_fpldnlmulsn(void)
+TVM_INSTRUCTION (ins_fpldnlmulsn)
 {
-	fareg = (float)((float)fareg) * read_wordf(areg);
-	fareg_length = SINGLE;
-	//fbreg = fbreg (doesn't change)
-	//fcreg = undefined
-	STACK(breg, creg, UNDEFINE(creg));
+	fAREG = (float)((float)fAREG) * read_wordf(AREG);
+	fAREG_length = SINGLE;
+	//fBREG = fBREG (doesn't change)
+	//fCREG = undefined
+	STACK(BREG, CREG, UNDEFINE(CREG));
 	//fp_error_flag can be set from float multiply
 	//round_mode = ToNearest
-	SET_ROUNDMODE(FE_TONEAREST);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /**************************
@@ -738,25 +743,25 @@ TVM_INSTRUCTION void ins_fpldnlmulsn(void)
 /* 0xCF - 0x2C 0xFF - fprem - floating point remainder */
 /* This 'instruction' is composed of what used to be 2 instruction on the transputer #8F and #90 
  * which are fpremfirst and fpremstep respectivley */
-TVM_INSTRUCTION void ins_fprem(void)
+TVM_INSTRUCTION (ins_fprem)
 {
-	//fareg_length = fbreg_length
+	//fAREG_length = fBREG_length
 
-	if((fareg_length == fbreg_length) && (fareg_length == SINGLE))
+	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
 	{
-		fareg = remainderf(fbreg, fareg);
-	} else if ((fareg_length == fbreg_length) && (fareg_length == DOUBLE)) {
-		fareg = remainder(fbreg, fareg);
+		fAREG = remainderf(fBREG, fAREG);
+	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
+		fAREG = remainder(fBREG, fAREG);
 	} else { 
-		set_error_flag(EFLAG_FP);
+		return ectx->set_error_flag(ectx, EFLAG_FP);
 	}
 	//FIXME:  Really, what we want here is a check for the size of the register, and do fmod or fmodf depending.
-	// fbreg unchanged?
-	// fcreg = undefined.
-	STACK(breg, creg, UNDEFINE(creg));
-	SET_ROUNDMODE(FE_TONEAREST);
+	// fBREG unchanged?
+	// fCREG = undefined.
+	STACK(BREG, CREG, UNDEFINE(CREG));
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 
-	/* From gray book: The value of fbreg' will be the quotient used to produce the remainder when (fbreg.exp - fareg.exp)
+	/* From gray book: The value of fBREG' will be the quotient used to produce the remainder when (fBREG.exp - fAREG.exp)
 	   is <= 20 for single length and <= 30 for double length operands.  This is inteded to correct the rounding error
 	   in argument reduction and is explained in greater detail in teh arithmetic operations section earlier. */
 }
@@ -765,7 +770,7 @@ TVM_INSTRUCTION void ins_fprem(void)
  *  0x2D 0xFx Starts here  *
  ***************************/
 /* 0xD0 - 0x2D 0xF0 - i64toreal - 64bit into to real (converted from special .I64TOREAL) */
-TVM_INSTRUCTION void ins_i64toreal(void)
+TVM_INSTRUCTION (ins_i64toreal)
 {
 	//FIXME: Fill me in...
 	/*  From tranx86:
@@ -785,152 +790,153 @@ tstate_ctofp (ts);
 break;
 */
 	/* Push stack */
-	//STACK(areg, areg, breg);
-	fareg = (double) read_word(areg);
-	fareg_length = DOUBLE;
-	//STACK(areg, areg, breg);
-	SET_ROUNDMODE(FE_TONEAREST);
+	//STACK(AREG, AREG, BREG);
+	fAREG = (double) read_word(AREG);
+	fAREG_length = DOUBLE;
+	//STACK(AREG, AREG, BREG);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0xD1 - 0x2D 0xF1 - fpdivby2 - floating point divide by 2 */
-TVM_INSTRUCTION void ins_fpdivby2(void)
+TVM_INSTRUCTION (ins_fpdivby2)
 {
 	// Again, checking for single or double should take place...
-	if(fareg_length == SINGLE)
+	if(fAREG_length == SINGLE)
 	{ 
-		fareg = (float)fareg /(float) 2.0;
-	} else { //if ( fareg_length && DOUBLE) {
-		fareg = fareg / 2.0;
+		fAREG = (float)fAREG /(float) 2.0;
+	} else { //if ( fAREG_length && DOUBLE) {
+		fAREG = fAREG / 2.0;
 	}
-	//fp error can be set from fareg * 2
-	SET_ROUNDMODE(FE_TONEAREST);
-	}
+	//fp error can be set from fAREG * 2
+	SET_ROUNDMODE_RET(FE_TONEAREST);
+}
 
-	/* 0xD2 - 0x2D 0xF2 - fpmulby2 - floating point multiply by 2 */
-	TVM_INSTRUCTION void ins_fpmulby2(void)
+/* 0xD2 - 0x2D 0xF2 - fpmulby2 - floating point multiply by 2 */
+TVM_INSTRUCTION (ins_fpmulby2)
+{
+	// Again, checking for single or double should take place...
+	if(fAREG_length == SINGLE)
 	{
-		// Again, checking for single or double should take place...
-		if(fareg_length == SINGLE)
-		{
-			fareg = (float)fareg * (float)2.0;
-		} else { //if ( fareg_length && DOUBLE) {
-			fareg = fareg * 2.0;
-		}
-		//fp error can be set from fareg * 2
-		SET_ROUNDMODE(FE_TONEAREST);
-		}
+		fAREG = (float)fAREG * (float)2.0;
+	} else { //if ( fAREG_length && DOUBLE) {
+		fAREG = fAREG * 2.0;
+	}
+	//fp error can be set from fAREG * 2
+	SET_ROUNDMODE_RET(FE_TONEAREST);
+}
 
-		/* 0xD3 - 0x2D 0xF3 - fpsqrt - floating point square root */
-		TVM_INSTRUCTION void ins_fpsqrt(void)
-		{
-			/* While this instruction was actually composed of 3 instructions, 
-			 * it is only called by fpsqrt and hence can be implemented as a
-			 * single instruction.  The question is, is it safe to assume
-			 * that we have a math.h libary on every system, and does it 
-			 * compromise portability? (if fp is used, then yes, probably)*/
-			if(fareg_length == SINGLE) 
-			{ 
-				fareg = (float)sqrtf(fareg);
-			} else { //if (fareg_length == DOUBLE) {
-				fareg = sqrt(fareg);
-			} 
-			//fbreg = undefined
-			//fcreg = undefined
-			//
-			//fp_error_flag = can be set by error from SQRT-ieee FAREG
-			//Round_Mode = ToNearest
-			SET_ROUNDMODE(FE_TONEAREST);
-			}
+/* 0xD3 - 0x2D 0xF3 - fpsqrt - floating point square root */
+TVM_INSTRUCTION (ins_fpsqrt)
+{
+	/* While this instruction was actually composed of 3 instructions, 
+	 * it is only called by fpsqrt and hence can be implemented as a
+	 * single instruction.  The question is, is it safe to assume
+	 * that we have a math.h libary on every system, and does it 
+	 * compromise portability? (if fp is used, then yes, probably)*/
+	if(fAREG_length == SINGLE) 
+	{ 
+		fAREG = (float)sqrtf(fAREG);
+	} else { //if (fAREG_length == DOUBLE) {
+		fAREG = sqrt(fAREG);
+	} 
+	//fBREG = undefined
+	//fCREG = undefined
+	//
+	//fp_error_flag = can be set by error from SQRT-ieee FAREG
+	//Round_Mode = ToNearest
+	SET_ROUNDMODE_RET(FE_TONEAREST);
+}
 
-			/* 0xD6 - 0x2D 0xF6 - fprz - floating point rounding mode to zero
-			 * - This is a 'new' instruction, which did exist on the transputer
-			 *   but was strange (0x44; 0x2A; 0xFB), and was renumbered in kroc.*/
-			TVM_INSTRUCTION void ins_fprz(void)
-			{
-				//printf("setting rounding to fprz\n");
-				fesetround(FE_TOWARDZERO);
-			}
+/* 0xD6 - 0x2D 0xF6 - fprz - floating point rounding mode to zero
+ * - This is a 'new' instruction, which did exist on the transputer
+ *   but was strange (0x44; 0x2A; 0xFB), and was renumbered in kroc.*/
+TVM_INSTRUCTION (ins_fprz)
+{
+	//printf("setting rounding to fprz\n");
+	SET_ROUNDMODE_RET(FE_TOWARDZERO);
+}
 
-			/* 0xD7 - 0x2D 0xF7 - fpr32tor64 - real32 to real64 */
-			TVM_INSTRUCTION void ins_fpr32to64(void) 
-			{
-				//FIXME: Should check for over/underflow.
-				fareg = (double) fareg;
-				fareg_length = DOUBLE;
-				SET_ROUNDMODE(FE_TONEAREST);
-			}
+/* 0xD7 - 0x2D 0xF7 - fpr32tor64 - real32 to real64 */
+TVM_INSTRUCTION (ins_fpr32to64) 
+{
+	//FIXME: Should check for over/underflow.
+	fAREG = (double) fAREG;
+	fAREG_length = DOUBLE;
+	SET_ROUNDMODE_RET(FE_TONEAREST);
+}
 
-			/* 0xD8 - 0x2D 0xF8 - fpr64tor32 - real64 to real32 */
-			TVM_INSTRUCTION void ins_fpr64to32(void) 
-			{
-				//FIXME: Should check for over/underflow.
-				fareg = (float) fareg;
-				fareg_length = SINGLE;
-				SET_ROUNDMODE(FE_TONEAREST);
-			}
+/* 0xD8 - 0x2D 0xF8 - fpr64tor32 - real64 to real32 */
+TVM_INSTRUCTION (ins_fpr64to32) 
+{
+	//FIXME: Should check for over/underflow.
+	fAREG = (float) fAREG;
+	fAREG_length = SINGLE;
+	SET_ROUNDMODE_RET(FE_TONEAREST);
+}
 
-			/* 0xD9 - 0x2D 0xF9 - fpexpdec32 - floating divide by 2^32 */
-			TVM_INSTRUCTION void ins_fpexpdec32(void)
-			{
-				//FIXME: Check if this is for both single and double
-				//Gray transputer book says: fareg' = fareg / IEEE 2^32
-				//fareg = fareg / 4294967296;
-				fareg = fareg / pow(2, 32);
-				SET_ROUNDMODE(FE_TONEAREST);
-			}
+/* 0xD9 - 0x2D 0xF9 - fpexpdec32 - floating divide by 2^32 */
+TVM_INSTRUCTION (ins_fpexpdec32)
+{
+	//FIXME: Check if this is for both single and double
+	//Gray transputer book says: fAREG' = fAREG / IEEE 2^32
+	//fAREG = fAREG / 4294967296;
+	fAREG = fAREG / pow(2, 32);
+	SET_ROUNDMODE_RET(FE_TONEAREST);
+}
 
-			/* 0xDB - 0x2D 0xFB - fpabs - floating point absolute value */
-			TVM_INSTRUCTION void ins_fpabs(void)
-			{
-				if(fareg_length == SINGLE) {
-					fareg = fabsf(fareg);
-				} else {
-					fareg = fabs(fareg);
-				}
-				SET_ROUNDMODE(FE_TONEAREST);
-			}
+/* 0xDB - 0x2D 0xFB - fpabs - floating point absolute value */
+TVM_INSTRUCTION (ins_fpabs)
+{
+	if(fAREG_length == SINGLE) {
+		fAREG = fabsf(fAREG);
+	} else {
+		fAREG = fabs(fAREG);
+	}
+	SET_ROUNDMODE_RET(FE_TONEAREST);
+}
 
-			/* 0xDF - 0x2D 0xFF - fpchki64 -  check that value at top of FP stack (fareg) fits in an INT32/INT64 
-			 * this should not be genereated for t8 but it seems to be. Wierd.  Tranx86 says so. */
-			TVM_INSTRUCTION void ins_fpchki64(void)
-			{
-				//FIXME:  Implement something here atm it does nothing... Should be ok till it does actually overflow.
-				/* From tranx86: */
+/* 0xDF - 0x2D 0xFF - fpchki64 -  check that value at top of FP stack (fAREG) fits in an INT32/INT64 
+ * this should not be genereated for t8 but it seems to be. Wierd.  Tranx86 says so. */
+TVM_INSTRUCTION (ins_fpchki64)
+{
+	return ECTX_INS_UNSUPPORTED;
+	//FIXME:  Implement something here atm it does nothing... Should be ok till it does actually overflow.
+	/* From tranx86: */
 #if 0
-				case I_FPCHKI32:
-				case I_FPCHKI64:
-					/* this should work, but are never actually generated for a T800 */
-					/* check that (-2^xx <= value) */
-					tmp_reg = tstack_newreg (ts->stack);
-					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->floatrange_label[(sec == I_FPCHKI32) ? 0 : 2], ARG_REG, tmp_reg));
-					add_to_ins_chain (compose_ins (INS_FLD64, 1, 0, ARG_REGIND, tmp_reg));
-					add_to_ins_chain (compose_ins (INS_FCOMP, 0, 0));
-					tmp_reg = tstack_newreg (ts->stack);
-					add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EAX));
-					add_to_ins_chain (compose_ins (INS_FSTSW, 0, 1, ARG_REG, tmp_reg));
-					add_to_ins_chain (compose_ins (INS_SAHF, 1, 1, ARG_REG | ARG_IMP, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
-					add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
-					this_lab = ++(ts->last_lab);
-					add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_BE, ARG_LABEL, this_lab));
-					compose_overflow_jumpcode_i386 (ts, (sec == I_FPCHKI32) ? PMOP_FPCHKI32 : PMOP_FPCHKI64);
-					add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, this_lab));
-					/* check that (2^xx > value) */
-					tmp_reg = tstack_newreg (ts->stack);
-					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->floatrange_label[(sec == I_FPCHKI32) ? 1 : 3], ARG_REG, tmp_reg));
-					add_to_ins_chain (compose_ins (INS_FLD64, 1, 0, ARG_REGIND, tmp_reg));
-					add_to_ins_chain (compose_ins (INS_FCOMP, 0, 0));
-					tmp_reg = tstack_newreg (ts->stack);
-					add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EAX));
-					add_to_ins_chain (compose_ins (INS_FSTSW, 0, 1, ARG_REG, tmp_reg));
-					add_to_ins_chain (compose_ins (INS_SAHF, 1, 1, ARG_REG | ARG_IMP, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
-					add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
-					this_lab = ++(ts->last_lab);
-					add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_A, ARG_LABEL, this_lab));
-					compose_overflow_jumpcode_i386 (ts, (sec == I_FPCHKI32) ? PMOP_FPCHKI32 : PMOP_FPCHKI64);
-					add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, this_lab));
-					break;
+	case I_FPCHKI32:
+	case I_FPCHKI64:
+		/* this should work, but are never actually generated for a T800 */
+		/* check that (-2^xx <= value) */
+		tmp_reg = tstack_newreg (ts->stack);
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->floatrange_label[(sec == I_FPCHKI32) ? 0 : 2], ARG_REG, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_FLD64, 1, 0, ARG_REGIND, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_FCOMP, 0, 0));
+		tmp_reg = tstack_newreg (ts->stack);
+		add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EAX));
+		add_to_ins_chain (compose_ins (INS_FSTSW, 0, 1, ARG_REG, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_SAHF, 1, 1, ARG_REG | ARG_IMP, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
+		this_lab = ++(ts->last_lab);
+		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_BE, ARG_LABEL, this_lab));
+		compose_overflow_jumpcode_i386 (ts, (sec == I_FPCHKI32) ? PMOP_FPCHKI32 : PMOP_FPCHKI64);
+		add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, this_lab));
+		/* check that (2^xx > value) */
+		tmp_reg = tstack_newreg (ts->stack);
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->floatrange_label[(sec == I_FPCHKI32) ? 1 : 3], ARG_REG, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_FLD64, 1, 0, ARG_REGIND, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_FCOMP, 0, 0));
+		tmp_reg = tstack_newreg (ts->stack);
+		add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EAX));
+		add_to_ins_chain (compose_ins (INS_FSTSW, 0, 1, ARG_REG, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_SAHF, 1, 1, ARG_REG | ARG_IMP, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
+		this_lab = ++(ts->last_lab);
+		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_A, ARG_LABEL, this_lab));
+		compose_overflow_jumpcode_i386 (ts, (sec == I_FPCHKI32) ? PMOP_FPCHKI32 : PMOP_FPCHKI64);
+		add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, this_lab));
+		break;
 #endif
-			}
+}
 
 #endif /* TVM_EMULATE_T8 */
 

@@ -27,11 +27,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef __RMOX_PI_SUPPORT__
 
 /* 0x248 - 0x22 0x24 0xF8 - mb - memory barrier */
-TVM_INSTRUCTION_PROTO void ins_mb(void);
+TVM_INSTRUCTION_PROTO (ins_mb);
 /* 0x249 - 0x22 0x24 0xF9 - rmb - read memory barrier */
-TVM_INSTRUCTION_PROTO void ins_rmb(void);
+TVM_INSTRUCTION_PROTO (ins_rmb);
 /* 0x24A - 0x22 0x24 0xFA - wmb - write memory barrier */
-TVM_INSTRUCTION_PROTO void ins_wmb(void);
+TVM_INSTRUCTION_PROTO (ins_wmb);
 
 #endif
 

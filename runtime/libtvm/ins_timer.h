@@ -26,8 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  ****************************************************************************/
 
 /* 0x22 - 0x22 0xF2 - ldtimer - load timer */
-TVM_INSTRUCTION_PROTO void ins_ldtimer(void);
+TVM_INSTRUCTION_PROTO (ins_ldtimer);
 /* 0x2B - 0x22 0xFB - tin - timer input */
-TVM_INSTRUCTION_PROTO void ins_tin(void);
+TVM_INSTRUCTION_PROTO (ins_tin);
 
 #endif /* INS_TIMER_H */

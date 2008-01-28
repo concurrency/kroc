@@ -41,146 +41,141 @@ FFI_FUNCTION *special_ffi_table = NULL;
  * AND
  * (I think that is correct)
  */
-TVM_INSTRUCTION void ins_boolinvert(void)
+TVM_INSTRUCTION (ins_boolinvert)
 {
-	STACK((areg == 0?1:0), breg, creg);
+	STACK_RET((AREG == 0?1:0), BREG, CREG);
 }
 
 /* 0x28 - 0x22 0xF8 - reschedule */
-TVM_INSTRUCTION void ins_reschedule(void)
+TVM_INSTRUCTION (ins_reschedule)
 {
-	tvm_add_to_queue(wptr, iptr);
+	tvm_add_to_queue(WPTR, IPTR);
 
-	iptr = run_next_on_queue();
+	return run_next_on_queue();
 }
 
 /* 0x24 - 0x22 0xF4 - widenshort */
-TVM_INSTRUCTION void ins_widenshort(void)
+TVM_INSTRUCTION (ins_widenshort)
 {
 	/* Kudos to Damian for suggesting casting rather than doing something stupid,
 	 * like I would have done! clj3 */
-	STACK(((WORD) ((HWORD)areg)), breg, creg);
+	STACK_RET(((WORD) ((HWORD)AREG)), BREG, CREG);
 }
 
 /* 0x25 - 0x22 0xF5 - fficall */
-TVM_INSTRUCTION void ins_fficall(void)
+TVM_INSTRUCTION (ins_fficall)
 {
 	FFI_FUNCTION ffi_func_addr;
 	
 	/* If the FFI table has not been created, then we dont want to
 	 * run this instruction as we are probably going to jump into
 	 * oblivion if that is the case */
-	if(areg >= 0 && !ffi_table)
+	if(AREG >= 0 && !ffi_table)
 	{
-	  /* FIXME: We need a seperate error trap for this */
-		ins_not_implemented();
+		/* FIXME: We need a seperate error trap for this */
+		return ectx->set_error_flag(ectx, EFLAG_FFI);
 	}
-	if(areg < 0 && !special_ffi_table)
+	if(AREG < 0 && !special_ffi_table)
 	{
-	  /* FIXME: We need a seperate error trap for this */
-		ins_not_implemented();
+		/* FIXME: We need a seperate error trap for this */
+		return ectx->set_error_flag(ectx, EFLAG_FFI);
 	}
 
 	/* Assume that if the FFI table has been set up that all is ok, and that we
-	 * can start jumping from it, areg contains the index we are jumping from,
+	 * can start jumping from it, AREG contains the index we are jumping from,
 	 * each index in the table has two words, one (the first) is the one we are
 	 * jumping to, the second is */
-	if(areg >= 0)
+	if(AREG >= 0)
 	{
-		ffi_func_addr = ffi_table[areg].func;
+		ffi_func_addr = ffi_table[AREG].func;
 	}
 	else
 	{
 		/* We do not multiply by 2, as there are no pointers to strings 
-		 * in this table, we also need to make areg positive and zero indexed */
-		ffi_func_addr = special_ffi_table[-(areg + 1)];
+		 * in this table, we also need to make AREG positive and zero indexed */
+		ffi_func_addr = special_ffi_table[-(AREG + 1)];
 	}
 
 
 	/* Now we got the address, jump! Hold on to your hats :p */
 	/* Though we need to make sure that we pass the correct parameter, which is
-	 * the wptr + 1 (+1 to avoid the iptr on the top of the stack). */
-	ffi_func_addr(wordptr_real_address(wordptr_plus(wptr, 1)));
+	 * the WPTR + 1 (+1 to avoid the IPTR on the top of the stack). */
+	ffi_func_addr(wordptr_real_address(wordptr_plus(WPTR, 1)));
 	
 	/* FFI call is done, now we need to return, use ins_ret */
-	ins_ret();
+	return ins_ret(ectx);
 }
 
 /* 0x26 - 0x22 0xF6 - lend3 - loopend3 (for step in replicators) */
-TVM_INSTRUCTION void ins_lend3(void)
+TVM_INSTRUCTION (ins_lend3)
 {
-	/* Loop start offset comes in from areg */
-	/* Loop control block ptr in breg */
-	WORDPTR loopcount_ptr = wordptr_plus((WORDPTR) breg, 1);
-	WORDPTR loopindex_ptr = (WORDPTR) breg;
+	/* Loop start offset comes in from AREG */
+	/* Loop control block ptr in BREG */
+	WORDPTR loopcount_ptr = wordptr_plus((WORDPTR) BREG, 1);
+	WORDPTR loopindex_ptr = (WORDPTR) BREG;
 	WORD loopcount = read_word(loopcount_ptr) - 1;
 
-	//printf(">lend3\n");
 	/* Decrement count */
 	write_word(loopcount_ptr, loopcount);
 	if(loopcount == 0)
 	{
 		/* Stop looping */
-		//printf("  stop looping\n");
 	}
 	else
 	{
-		WORDPTR loopstep_ptr = wordptr_plus((WORDPTR) breg, 2);
+		WORDPTR loopstep_ptr = wordptr_plus((WORDPTR) BREG, 2);
 		WORD loopindex = read_word(loopindex_ptr);
 
-		//printf("  continue looping\n");
 		/* Increment index, by step */
 		WORD step = read_word(loopstep_ptr);
 		write_word(loopindex_ptr, loopindex + step);
 		/* Loop */
-		iptr = byteptr_minus(iptr, areg);
+		IPTR = byteptr_minus(IPTR, AREG);
 	}
-	//printf("<lend3\n");
+	
+	return ECTX_INS_OK;
 }
 
 /* 0x27 - 0x22 0xF7 - lendbw - backwards loopend */
-TVM_INSTRUCTION void ins_lendbw(void)
+TVM_INSTRUCTION (ins_lendbw)
 {
-	/* Loop start offset comes in from areg */
-	/* Loop control block ptr in breg */
-	WORDPTR loopcount_ptr = wordptr_plus((WORDPTR) breg, 1);
-	WORDPTR loopindex_ptr = (WORDPTR) breg;
+	/* Loop start offset comes in from AREG */
+	/* Loop control block ptr in BREG */
+	WORDPTR loopcount_ptr = wordptr_plus((WORDPTR) BREG, 1);
+	WORDPTR loopindex_ptr = (WORDPTR) BREG;
 	WORD loopcount = read_word(loopcount_ptr) - 1;
-
-	//printf(">lendbw\n");
 
 	/* Decrement count */
 	write_word(loopcount_ptr, loopcount);
 	if(loopcount == 0)
 	{
 		/* Stop looping */
-		//printf("  stop looping\n");
 	}
 	else
 	{
 		/* Decrement index */
 		WORD loopindex = read_word(loopindex_ptr) - 1;
-		//printf("  continue looping\n");
 		write_word(loopindex_ptr, loopindex);
 		/* Loop */
-		iptr = byteptr_minus(iptr, areg);
+		IPTR = byteptr_minus(IPTR, AREG);
 	}
-	//printf("<lendbw\n");
+	
+	return ECTX_INS_OK;
 }
 
 #ifdef TVM_OCCAM_PI
 
 /* 0x14 - 0x21 0xF4 - extvrfy - external channel verify */
-TVM_INSTRUCTION void ins_extvrfy(void)
+TVM_INSTRUCTION (ins_extvrfy)
 {
 	/* FIXME: Actually do the verify? */
 
 	/* We should be popping two values off the stack as far as we can tell */
-	STACK(creg, UNDEFINE(creg), UNDEFINE(creg));
+	STACK_RET(CREG, UNDEFINE(CREG), UNDEFINE(CREG));
 }
 
 /* 0x60 - 0x26 0xF0 - extin - external channel input */
-TVM_INSTRUCTION void ins_extin(void)
+TVM_INSTRUCTION (ins_extin)
 {
 	/* Due to the fact that the KRoC uses the least significant
 	 * bit set to one to indicate a EXTERNAL channel, which is fine
@@ -190,11 +185,11 @@ TVM_INSTRUCTION void ins_extin(void)
 	 */
 	/* ANNO: Cast to UNSIGNED WORD as the behaviour of a shift on negative values
 	 * is implementation defined */
-	ext_chan_table[(UWORD)breg >> 1](areg, (BYTEPTR)creg);
+	return ext_chan_table[(UWORD)BREG >> 1](ectx, AREG, (BYTEPTR)CREG);
 }
 
 /* 0x61 - 0x26 0xF1 - extout - external channel output */
-TVM_INSTRUCTION void ins_extout(void)
+TVM_INSTRUCTION (ins_extout)
 {
 	/* Due to the fact that the KRoC uses the least significant
 	 * bit set to one to indicate a EXTERNAL channel, which is fine
@@ -204,7 +199,7 @@ TVM_INSTRUCTION void ins_extout(void)
 	 */
 	/* ANNO: Cast to UNSIGNED WORD as the behaviour of a shift on negative values
 	 * is implementation defined */
-	ext_chan_table[(UWORD)breg >> 1](areg, (BYTEPTR)creg);
+	return ext_chan_table[(UWORD)BREG >> 1](ectx, AREG, (BYTEPTR)CREG);
 }
 
 #endif /* TVM_OCCAM_PI */
@@ -213,30 +208,31 @@ TVM_INSTRUCTION void ins_extout(void)
  * instructions do nothing. */
 
 /* 0xA2 - 0x2A 0xF2 - getpri - get priority */
-TVM_INSTRUCTION void ins_getpri(void)
+TVM_INSTRUCTION (ins_getpri)
 {
 	/* Always return priority 0. */
-	STACK(0, areg, breg);
+	STACK_RET(0, AREG, BREG);
 }
 
 /* 0xA5 - 0x2A 0xF5 - setpri - set priority */
-TVM_INSTRUCTION void ins_setpri(void)
+TVM_INSTRUCTION (ins_setpri)
 {
 	/* Ignore the new priority. */
-	STACK(breg, creg, UNDEFINE(creg));
+	STACK_RET(BREG, CREG, UNDEFINE(CREG));
 }
 
-int saved_creg;
-/* 0xAD - 0x2A 0xFD - ins_savecreg - save the creg *magic* :) */
-TVM_INSTRUCTION void ins_savecreg(void)
+/* 0xAD - 0x2A 0xFD - ins_savecreg - save the creg */
+TVM_INSTRUCTION (ins_savecreg)
 {
-	saved_creg = creg;
+	ectx->saved_creg = CREG;
+	return ECTX_INS_OK;
 }
 
-/* 0xAE - 0x2A 0xFE - ins_restorecreg - restore the creg *magic :) */
-TVM_INSTRUCTION void ins_restorecreg(void)
+/* 0xAE - 0x2A 0xFE - ins_restorecreg - restore the creg */
+TVM_INSTRUCTION (ins_restorecreg)
 {
-	creg = saved_creg;
+	CREG = ectx->saved_creg;
+	return ECTX_INS_OK;
 }
 
 #ifdef TVM_OCCAM_PI
@@ -254,7 +250,7 @@ TVM_HELPER void tvm_sem_init(WORDPTR sem)
 	write_word(wordptr_plus(sem, 1), (WORD) NOT_PROCESS_P);
 }
 
-TVM_HELPER void tvm_sem_claim(WORDPTR sem)
+TVM_HELPER int tvm_sem_claim(tvm_ectx_t *ectx, WORDPTR sem)
 {
 	WORD sem_fptr = read_word(wordptr_plus(sem, SEM_FPTR));
 
@@ -263,33 +259,34 @@ TVM_HELPER void tvm_sem_claim(WORDPTR sem)
 	{ 
 		/* Nobody has this semaphore already, claim it as ours */
 		write_word(wordptr_plus(sem, SEM_FPTR), (WORD) NOT_PROCESS_P);
+		UNDEFINE_STACK_RET();
 	}
 	else
 	{
 		/* It is, join the queue */
-		WORKSPACE_SET(wptr, WS_NEXT, (WORD) NOT_PROCESS_P);
-		/* Save our iptr */
-		WORKSPACE_SET(wptr, WS_IPTR, (WORD) iptr);
+		WORKSPACE_SET(WPTR, WS_NEXT, (WORD) NOT_PROCESS_P);
+		/* Save our IPTR */
+		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
 		/* Check if the semaphores front pointer is null */
 		if(sem_fptr == NOT_PROCESS_P)
 		{
 			/* Add us as the only element */
-			write_word(wordptr_plus(sem, SEM_FPTR), (WORD) wptr);
-			write_word(wordptr_plus(sem, SEM_BPTR), (WORD) wptr);
+			write_word(wordptr_plus(sem, SEM_FPTR), (WORD) WPTR);
+			write_word(wordptr_plus(sem, SEM_BPTR), (WORD) WPTR);
 		}
 		else
 		{
 			/* Add us as the last element */
 			WORDPTR sem_bptr_ptr = wordptr_plus(sem, SEM_BPTR);
 			WORDPTR sem_bptr = (WORDPTR) read_word(sem_bptr_ptr);
-			WORKSPACE_SET(sem_bptr, WS_NEXT, (WORD) wptr);
-			write_word(sem_bptr_ptr, (WORD) wptr);
+			WORKSPACE_SET(sem_bptr, WS_NEXT, (WORD) WPTR);
+			write_word(sem_bptr_ptr, (WORD) WPTR);
 		}
-		iptr = run_next_on_queue();
+		return run_next_on_queue();
 	}
 }
 
-TVM_HELPER void tvm_sem_release(WORDPTR sem)
+TVM_HELPER int tvm_sem_release(tvm_ectx_t *ectx, WORDPTR sem)
 {
 	WORDPTR sem_fptr_ptr = wordptr_plus(sem, SEM_FPTR);
 	WORD sem_fptr = read_word(sem_fptr_ptr);
@@ -308,31 +305,29 @@ TVM_HELPER void tvm_sem_release(WORDPTR sem)
 		/* Put the process we picked up semaphore queue onto run queue */
 		tvm_just_add_to_queue((WORDPTR)sem_fptr);
 	}
+
+	UNDEFINE_STACK_RET();
 }
 
 /* 0x7A - 0x27 0xFA - seminit - initialise semaphore */
-TVM_INSTRUCTION void ins_seminit(void)
+TVM_INSTRUCTION (ins_sem_init)
 {
 
-	tvm_sem_init((WORDPTR) areg);
+	tvm_sem_init((WORDPTR) AREG);
 
-	UNDEFINE_STACK();
+	UNDEFINE_STACK_RET();
 }
 
 /* 0x7B - 0x27 0xFB - semclaim - claim semaphore */
-TVM_INSTRUCTION void ins_semclaim(void)
+TVM_INSTRUCTION (ins_sem_claim)
 {
-	tvm_sem_claim((WORDPTR) areg);
-
-	UNDEFINE_STACK();
+	return tvm_sem_claim(ectx, (WORDPTR) AREG);
 }
 
 /* 0x7C - 0x27 0xFC - semrelease - release semaphore */
-TVM_INSTRUCTION void ins_semrelease(void)
+TVM_INSTRUCTION (ins_sem_release)
 {
-	tvm_sem_release((WORDPTR) areg);
-
-	UNDEFINE_STACK();
+	return tvm_sem_release(ectx, (WORDPTR) AREG);
 }
 
 /****************************************************************************
@@ -343,59 +338,59 @@ TVM_INSTRUCTION void ins_semrelease(void)
 /* FIXME: All extended input instrucitons, priority is currently not handled */
 
 /* 0xE8 - 0x2E 0xF8 - xable - Extended Input Enable */
-TVM_INSTRUCTION void ins_xable(void)
+TVM_INSTRUCTION (ins_xable)
 {
-	WORDPTR chan_addr = (WORDPTR) areg;
-	WORDPTR other_wptr = (WORDPTR) read_word(chan_addr);
+	WORDPTR chan_addr = (WORDPTR) AREG;
+	WORDPTR other_WPTR = (WORDPTR) read_word(chan_addr);
 
 	/* This is like a single guard ALT */
 	/* If channel is empty, then alt on it */
-	if(other_wptr == NOT_PROCESS_P)
+	if(other_WPTR == NOT_PROCESS_P)
 	{
 		/* Save state, set ALT to waiting */
-		WORKSPACE_SET(wptr, WS_ALT_STATE, WAITING_P);
-		WORKSPACE_SET(wptr, WS_IPTR, (WORD) iptr);
+		WORKSPACE_SET(WPTR, WS_ALT_STATE, WAITING_P);
+		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
 
 		/* Put ourselves into the channel word */
-		write_word(chan_addr, (WORD) wptr);
+		write_word(chan_addr, (WORD) WPTR);
 
 		/* Find something else to run */
-		iptr = run_next_on_queue();
+		return run_next_on_queue();
 	}
 
-	UNDEFINE_STACK();
+	UNDEFINE_STACK_RET();
 }
 
 /* 0xE9 - 0x2E 0xF9 - xin - Extended Input */
-TVM_INSTRUCTION void ins_xin(void)
+TVM_INSTRUCTION (ins_xin)
 {
-	BYTEPTR write_start = (BYTEPTR) creg;
+	BYTEPTR write_start = (BYTEPTR) CREG;
 	BYTEPTR read_start;
-	WORDPTR chan_addr = (WORDPTR) breg;
-	WORDPTR other_wptr;
-	WORD num_bytes = areg;
+	WORDPTR chan_addr = (WORDPTR) BREG;
+	WORDPTR other_WPTR;
+	WORD num_bytes = AREG;
 
-	other_wptr = (WORDPTR) read_word(chan_addr);
-	read_start = (BYTEPTR) WORKSPACE_GET(other_wptr, WS_CHAN);
+	other_WPTR = (WORDPTR) read_word(chan_addr);
+	read_start = (BYTEPTR) WORKSPACE_GET(other_WPTR, WS_CHAN);
 
 	tvm_copy_data(write_start, read_start, num_bytes);
 
-	UNDEFINE_STACK();
+	UNDEFINE_STACK_RET();
 }
 
 /* 0xEC - 0x2E 0xFC - xend - Extended Input End */
-TVM_INSTRUCTION void ins_xend(void)
+TVM_INSTRUCTION (ins_xend)
 {
-	WORDPTR chan_addr = (WORDPTR) areg;
-	WORDPTR other_wptr = (WORDPTR) read_word(chan_addr);
+	WORDPTR chan_addr = (WORDPTR) AREG;
+	WORDPTR other_WPTR = (WORDPTR) read_word(chan_addr);
 
 	/* Set chan word to NOT_PROCESS_P */
 	write_word(chan_addr, NOT_PROCESS_P);
 
 	/* Put the outputting process on the run queue */
-	tvm_just_add_to_queue(other_wptr);
+	tvm_just_add_to_queue(other_WPTR);
 
-	UNDEFINE_STACK();
+	UNDEFINE_STACK_RET();
 }
 
 #endif /* TVM_OCCAM_PI */

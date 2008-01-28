@@ -29,11 +29,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  ****************************************************************************/
 
 /* 0x2E - 0x22 0xFE - dist - disable timer */
-TVM_INSTRUCTION void ins_dist(void)
+TVM_INSTRUCTION (ins_dist)
 {
 	/*
-	int fired = (((breg != 0) && (WORKSPACE_GET(wptr, WS_TOP) == NONE_SELECTED_O)) &&
-		AFTER(current_time, creg));// && (WORKSPACE_GET(wptr, WS_NEXT_T) == TIME_SET_P));
+	int fired = (((BREG != 0) && (WORKSPACE_GET(WPTR, WS_TOP) == NONE_SELECTED_O)) &&
+		AFTER(current_time, CREG));// && (WORKSPACE_GET(WPTR, WS_NEXT_T) == TIME_SET_P));
 	*/
 
 	/*
@@ -41,71 +41,61 @@ TVM_INSTRUCTION void ins_dist(void)
 
 one:
 	*/
-	if((!breg) || (WORKSPACE_GET(wptr, WS_NEXT_T) == TIME_NOT_SET_P))
+	if((!BREG) || (WORKSPACE_GET(WPTR, WS_NEXT_T) == TIME_NOT_SET_P))
 	{
-		STACK(0, UNDEFINE(breg), UNDEFINE(creg));
+		STACK_RET(0, UNDEFINE(BREG), UNDEFINE(CREG));
 	}
-	else if(WORKSPACE_GET(wptr, WS_NEXT_T) == TIME_SET_P)
+	else if(WORKSPACE_GET(WPTR, WS_NEXT_T) == TIME_SET_P)
 	{
-		if((!TIME_AFTER(WORKSPACE_GET(wptr, WS_TIMEOUT), creg)) || 
-				(WORKSPACE_GET(wptr, WS_TOP) != NONE_SELECTED_O))
+		if((!TIME_AFTER(WORKSPACE_GET(WPTR, WS_TIMEOUT), CREG)) || 
+				(WORKSPACE_GET(WPTR, WS_TOP) != NONE_SELECTED_O))
 		{
-			STACK(0, UNDEFINE(breg), UNDEFINE(creg));
+			STACK_RET(0, UNDEFINE(BREG), UNDEFINE(CREG));
 		}
 		else
 		{
-			WORKSPACE_SET(wptr, WS_TOP, areg);
-			STACK(1, UNDEFINE(breg), UNDEFINE(creg));
+			WORKSPACE_SET(WPTR, WS_TOP, AREG);
+			STACK_RET(1, UNDEFINE(BREG), UNDEFINE(CREG));
 		}
 	}
 	else
 	{
-		STACK(0, UNDEFINE(breg), UNDEFINE(creg));
-
-		/*
-		printf("PHANTOM REMOVAL:\n");
-		print_registers();
-		print_timer_queue();
-		*/
-	
 		/* Are we the head of the timerqueue */
-		if(tptr == wptr)
+		if(TPTR == WPTR)
 		{
-			tptr = (WORDPTR) WORKSPACE_GET((WORDPTR)tptr, WS_NEXT_T);
+			TPTR = (WORDPTR) WORKSPACE_GET((WORDPTR)TPTR, WS_NEXT_T);
 			/* If we were the last thing on the queue, this should not happen */
-			if(tptr != (WORDPTR)NOT_PROCESS_P)
+			if(TPTR != (WORDPTR)NOT_PROCESS_P)
 			{
-				tnext = WORKSPACE_GET((WORDPTR)tptr, WS_TIMEOUT);
+				TNEXT = WORKSPACE_GET((WORDPTR)TPTR, WS_TIMEOUT);
 #ifdef ENABLE_SCHED_SYNC
-				set_alarm(tnext - tvm_get_time());
+				set_alarm(TNEXT - tvm_get_time());
 #endif
 			}
 		}
-		/* We could check that tptr == NOT_PROCESS_P but this case SHOULD be
+		/* We could check that TPTR == NOT_PROCESS_P but this case SHOULD be
 		 * impossible! So we dont bother */
-		else if(tptr == (WORDPTR)NOT_PROCESS_P)
+		else if(TPTR == (WORDPTR)NOT_PROCESS_P)
 		{
 		}
 		else
 		{
-			WORDPTR previous = tptr;
-			WORDPTR current = (WORDPTR)WORKSPACE_GET((WORDPTR)tptr, WS_NEXT_T);
-			while((current != (WORDPTR)NOT_PROCESS_P) && (current != wptr))
+			WORDPTR previous = TPTR;
+			WORDPTR current = (WORDPTR)WORKSPACE_GET((WORDPTR)TPTR, WS_NEXT_T);
+			while((current != (WORDPTR)NOT_PROCESS_P) && (current != WPTR))
 			{
 				previous = current;
 				current =(WORDPTR) WORKSPACE_GET(current, WS_NEXT_T);
 			}
 			/* There is a sanity test we could do here to check if current is
 			 * NOT_PROCESS_P, this is impossible though so we are not going to */
-			WORKSPACE_SET(previous, WS_NEXT_T, WORKSPACE_GET(wptr, WS_NEXT_T));
+			WORKSPACE_SET(previous, WS_NEXT_T, WORKSPACE_GET(WPTR, WS_NEXT_T));
 		}
 
-		WORKSPACE_SET(wptr, WS_NEXT_T, TIME_NOT_SET_P); /* Timeout canceled */
-		/*print_timer_queue();*/
+		WORKSPACE_SET(WPTR, WS_NEXT_T, TIME_NOT_SET_P); /* Timeout canceled */
+
+		STACK_RET(0, UNDEFINE(BREG), UNDEFINE(CREG));
 	}
-
-	return;
-
 #if 0
 
 
@@ -114,51 +104,51 @@ one:
 	if(fired)
 	{
 		/* We fired, set the top of the workspace to the address of code to run */
-		WORKSPACE_SET(wptr, WS_TOP, areg);
+		WORKSPACE_SET(WPTR, WS_TOP, AREG);
 	}
 	else
 	{
 
 	/* Aditionally */
-	//if((breg != 0) && (BEFORE(current_time, creg)) && (tptr != (WORDPTR)NOT_PROCESS_P))
-	if(tptr != (WORDPTR)NOT_PROCESS_P)
+	//if((BREG != 0) && (BEFORE(current_time, CREG)) && (TPTR != (WORDPTR)NOT_PROCESS_P))
+	if(TPTR != (WORDPTR)NOT_PROCESS_P)
 	{
-		WORDPTR loop_wptr = tptr;
-		WORDPTR loop_next = (WORDPTR)WORKSPACE_GET(tptr, WS_NEXT_T);
+		WORDPTR loop_WPTR = TPTR;
+		WORDPTR loop_next = (WORDPTR)WORKSPACE_GET(TPTR, WS_NEXT_T);
 		WORDPTR loop_prev = 0;
 		fprintf(stdout, "Phantom removal:\n");
 		
 		//print_timer_queue();
 ins_dist_loop:
 		fprintf(stdout, "---\n");
-		//fprintf(stdout, "  wptr:      0x%08x\n", wptr);
+		//fprintf(stdout, "  WPTR:      0x%08x\n", WPTR);
 		//fprintf(stdout, "  loop_next: 0x%08x\n", loop_next);
 		//fprintf(stdout, "  loop_prev: 0x%08x\n", loop_prev);
-		if((loop_wptr == tptr) && (loop_wptr == wptr))
+		if((loop_WPTR == TPTR) && (loop_WPTR == WPTR))
 		{
 			/* HEAD CHECK */
 			/* We are at the head of the list */
 			if(loop_next == (WORDPTR)NOT_PROCESS_P)
 			{
-				/* If there is nobody after this process, we can nuke the tptr */
-				tptr = (WORDPTR)NOT_PROCESS_P;
+				/* If there is nobody after this process, we can nuke the TPTR */
+				TPTR = (WORDPTR)NOT_PROCESS_P;
 			}
 			else
 			{
 				/* If there are others after this process, we need to put them at the
 				 * head of the queue, and also set the timeout to their timeout value.
 				 */
-				tptr = (WORDPTR)WORKSPACE_GET(loop_wptr, WS_NEXT_T);
-				tnext = WORKSPACE_GET(tptr, WS_TIMEOUT);
+				TPTR = (WORDPTR)WORKSPACE_GET(loop_WPTR, WS_NEXT_T);
+				TNEXT = WORKSPACE_GET(TPTR, WS_TIMEOUT);
 			}
 		}
-		else if(loop_wptr == wptr)
+		else if(loop_WPTR == WPTR)
 		{
 			/* TERMINATION */
 			/* If we find ourselves on the queue... */
 			/* FIXME: check this is correct */
 			/* ... take us out of the queue */
-			WORKSPACE_SET(loop_prev, WS_NEXT_T, WORKSPACE_GET(loop_wptr, WS_NEXT_T));
+			WORKSPACE_SET(loop_prev, WS_NEXT_T, WORKSPACE_GET(loop_WPTR, WS_NEXT_T));
 		}
 		else if(loop_next == (WORDPTR)NOT_PROCESS_P)
 		{
@@ -168,24 +158,24 @@ ins_dist_loop:
 		else
 		{
 			/* KEEP LOOKING */
-			loop_prev = loop_wptr; /* FIXME: different order from soccam */
-			loop_wptr = (WORDPTR)WORKSPACE_GET(loop_wptr, WS_NEXT_T);
-			loop_next = (WORDPTR)WORKSPACE_GET(loop_wptr, WS_NEXT_T); /* FIXME: different from soccam */
+			loop_prev = loop_WPTR; /* FIXME: different order from soccam */
+			loop_WPTR = (WORDPTR)WORKSPACE_GET(loop_WPTR, WS_NEXT_T);
+			loop_next = (WORDPTR)WORKSPACE_GET(loop_WPTR, WS_NEXT_T); /* FIXME: different from soccam */
 			goto ins_dist_loop;
 		}
 		//print_timer_queue();
 	}
 	}
 
-	STACK(fired, UNDEFINE(breg), UNDEFINE(creg));
+	STACK(fired, UNDEFINE(BREG), UNDEFINE(CREG));
 #endif
 }
 
 /* 0x2F - 0x22 0xFF - disc - disable channel */
-TVM_INSTRUCTION void ins_disc(void)
+TVM_INSTRUCTION (ins_disc)
 {
-	WORD wptr_deref = WORKSPACE_GET(wptr, WS_TOP);
-	WORD creg_deref = read_word((WORDPTR)creg);
+	WORD WPTR_deref = WORKSPACE_GET(WPTR, WS_TOP);
+	WORD CREG_deref = read_word((WORDPTR)CREG);
 	/* FIXME: There dont seem that much point in doing this the same way
 	 * as with soccam, ie by hacing the fired variable, as we dont seem to 
 	 * gain anything, as we still need to do the test in a big ig. Ie we
@@ -195,12 +185,12 @@ TVM_INSTRUCTION void ins_disc(void)
 	int fired = 0;
 
 	/* If fired? */
-	if((breg != 0) && 
-			(wptr_deref == NONE_SELECTED_O) && 
-			(creg_deref != NOT_PROCESS_P) && 
-			((WORDPTR)creg_deref != wptr))
+	if((BREG != 0) && 
+			(WPTR_deref == NONE_SELECTED_O) && 
+			(CREG_deref != NOT_PROCESS_P) && 
+			((WORDPTR)CREG_deref != WPTR))
 	{
-		WORKSPACE_SET(wptr, WS_TOP, areg);
+		WORKSPACE_SET(WPTR, WS_TOP, AREG);
 		fired = 1;
 	}
 
@@ -209,14 +199,14 @@ TVM_INSTRUCTION void ins_disc(void)
 	 * at ourselves. So, we should destroy evidence of 
 	 * a waiting process (US!) before doing everything else.
 	 */
-	if((breg != 0) && ((WORDPTR)creg_deref == wptr))
+	if((BREG != 0) && ((WORDPTR)CREG_deref == WPTR))
 	{
 		/* FIXME: Here and in soccam would it be more clear to use 
-		 * wptr rather than creg??? */
-		write_word((WORDPTR)creg, NOT_PROCESS_P);
+		 * WPTR rather than CREG??? */
+		write_word((WORDPTR)CREG, NOT_PROCESS_P);
 	}
 
-	STACK((WORD)fired, UNDEFINE(breg), UNDEFINE(creg));
+	STACK_RET((WORD)fired, UNDEFINE(BREG), UNDEFINE(CREG));
 }
 
 
@@ -228,19 +218,19 @@ TVM_INSTRUCTION void ins_disc(void)
  ****************************************************************************/
 
 /* 0x30 - 0x23 0xF0 - diss - disable skip */
-TVM_INSTRUCTION void ins_diss(void)
+TVM_INSTRUCTION (ins_diss)
 {
 	/* FIXME: ditto as for disc */
 	int fired = 0;
 
 	/* Fired? */
-	if((breg != 0) && (WORKSPACE_GET(wptr, WS_TOP) == NONE_SELECTED_O))
+	if((BREG != 0) && (WORKSPACE_GET(WPTR, WS_TOP) == NONE_SELECTED_O))
 	{
-		WORKSPACE_SET(wptr, WS_TOP, areg);
+		WORKSPACE_SET(WPTR, WS_TOP, AREG);
 		fired = 1;
 	}
 
-	STACK((WORD)fired, creg, UNDEFINE(creg));
+	STACK_RET((WORD)fired, CREG, UNDEFINE(CREG));
 }
 
 
@@ -252,14 +242,15 @@ TVM_INSTRUCTION void ins_diss(void)
  ****************************************************************************/
 
 /* 0x43 - 0x24 0xF3 - alt - alt start */
-TVM_INSTRUCTION void ins_alt(void)
+TVM_INSTRUCTION (ins_alt)
 {
 	/* Set the alt state as enabeling */
-	WORKSPACE_SET(wptr, WS_ALT_STATE, ENABLING_P);
+	WORKSPACE_SET(WPTR, WS_ALT_STATE, ENABLING_P);
+	return ECTX_INS_OK;
 }
 
 /* 0x44 - 0x24 0xF4 - altwt - alt wait */
-TVM_INSTRUCTION void ins_altwt(void)
+TVM_INSTRUCTION (ins_altwt)
 {
 	/* FIXME: in both soccam and here, the set of WS_TOP happens in both branches,
 	 * so it should be taken out of the if.
@@ -267,53 +258,51 @@ TVM_INSTRUCTION void ins_altwt(void)
 	/* DISABLING_P is also (in the T9000 book) READY_P, so should we use that
 	 * instead? 
 	 */ 
-	if(WORKSPACE_GET(wptr, WS_ALT_STATE) == DISABLING_P)
+	if(WORKSPACE_GET(WPTR, WS_ALT_STATE) == DISABLING_P)
 	{
-		WORKSPACE_SET(wptr, WS_TOP, NONE_SELECTED_O);
+		WORKSPACE_SET(WPTR, WS_TOP, NONE_SELECTED_O);
+		UNDEFINE_STACK_RET();
 	}
 	else
 	{
-		WORKSPACE_SET(wptr, WS_ALT_STATE, WAITING_P);
-		WORKSPACE_SET(wptr, WS_IPTR, (WORD)iptr);
-		WORKSPACE_SET(wptr, WS_TOP, NONE_SELECTED_O);
-		/* FIXME: Soccam contains a warning here questioning the need to 
-		 * reschedule here, considering that things seem to work, I would have
-		 * thought that the reschedule is good! */
-		iptr = run_next_on_queue();
+		WORKSPACE_SET(WPTR, WS_ALT_STATE, WAITING_P);
+		WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
+		WORKSPACE_SET(WPTR, WS_TOP, NONE_SELECTED_O);
+		return run_next_on_queue();
 	}
-	//STACK(UNDEFINE(areg), UNDEFINE(breg), UNDEFINE(breg));
 }
 
 /* 0x45 - 0x24 0xF5 - altend - alt end */
-TVM_INSTRUCTION void ins_altend(void)
+TVM_INSTRUCTION (ins_altend)
 {
 	/* Add the jump offset which has been stored at the top of the workspace by
-	 * one of the disabeling instructions to the current iptr */
-	iptr = byteptr_plus(iptr, WORKSPACE_GET(wptr, WS_TOP));
+	 * one of the disabeling instructions to the current IPTR */
+	IPTR = byteptr_plus(IPTR, WORKSPACE_GET(WPTR, WS_TOP));
+	return ECTX_INS_OK;
 }
 
 /* 0x47 - 0x24 0xF7 - enbt - enable timer */
-TVM_INSTRUCTION void ins_enbt(void)
+TVM_INSTRUCTION (ins_enbt)
 {
 	/* FIXME: This is badly coded in soccam and here */
 	/* FIXME: There is a redundant STACK macro call */
-	if(areg == 0)
+	if(AREG == 0)
 	{
 		/* The quard is disabled, do nothing apart from changeing the stack */
-		//STACK(UNDEFINE(areg), UNDEFINE(breg), UNDEFINE(creg));
+		//STACK(UNDEFINE(AREG), UNDEFINE(BREG), UNDEFINE(CREG));
 	}
 	else
 	{
-		if(WORKSPACE_GET(wptr, WS_ALT_T) == TIME_NOT_SET_P)
+		if(WORKSPACE_GET(WPTR, WS_ALT_T) == TIME_NOT_SET_P)
 		{
 			/* If nobody else has set a timeout in this alt yet, set one */
-			WORKSPACE_SET(wptr, WS_ALT_T, TIME_SET_P);
-			WORKSPACE_SET(wptr, WS_TIMEOUT, breg);
+			WORKSPACE_SET(WPTR, WS_ALT_T, TIME_SET_P);
+			WORKSPACE_SET(WPTR, WS_TIMEOUT, BREG);
 		}
-		else if(TIME_AFTER(WORKSPACE_GET(wptr, WS_TIMEOUT), breg))
+		else if(TIME_AFTER(WORKSPACE_GET(WPTR, WS_TIMEOUT), BREG))
 		{
 			/* Otherwise if the timeout of this enbt is earlier then the stored one */
-			WORKSPACE_SET(wptr, WS_TIMEOUT, breg);
+			WORKSPACE_SET(WPTR, WS_TIMEOUT, BREG);
 		}
 		else
 		{
@@ -321,24 +310,24 @@ TVM_INSTRUCTION void ins_enbt(void)
 		}
 	}
 	
-	/* Remove the time in breg from the stack */
-	STACK(areg, creg, UNDEFINE(creg));
+	/* Remove the time in BREG from the stack */
+	STACK_RET(AREG, CREG, UNDEFINE(CREG));
 }
 
 /* 0x48 - 0x24 0xF8 - enbc - enable channel */
-TVM_INSTRUCTION void ins_enbc(void)
+TVM_INSTRUCTION (ins_enbc)
 {
 	/* Is guard enabled? if not, do nothing */
 	/* FIXME: This is the other way around from how the test is done in soccam */
-	if(areg != 0)
+	if(AREG != 0)
 	{
-		if(read_word((WORDPTR)breg) == NOT_PROCESS_P)
+		if(read_word((WORDPTR)BREG) == NOT_PROCESS_P)
 		{
-			write_word((WORDPTR)breg, (WORD)wptr);
+			write_word((WORDPTR)BREG, (WORD)WPTR);
 		}
 		else
 		{
-			if((WORDPTR)read_word((WORDPTR)breg) == wptr)
+			if((WORDPTR)read_word((WORDPTR)BREG) == WPTR)
 			{
 				/* Another guard of the current process is waiting
 				 * on the channnel; do nothing.
@@ -349,34 +338,36 @@ TVM_INSTRUCTION void ins_enbc(void)
 				/* another process is waiting on the channel, so set a 
 				 * flag to show that the guard is ready
 				 */
-				WORKSPACE_SET(wptr, WS_ALT_STATE, DISABLING_P);
+				WORKSPACE_SET(WPTR, WS_ALT_STATE, DISABLING_P);
 			}
 		}
 	}
 
-	STACK(areg, creg, UNDEFINE(creg));
+	STACK_RET(AREG, CREG, UNDEFINE(CREG));
 }
 
 /* 0x49 - 0x24 0xF9 - enbs - enable skip */
-TVM_INSTRUCTION void ins_enbs(void)
+TVM_INSTRUCTION (ins_enbs)
 {
 	/* The stack is unaffected by this instruction */
 
 	/* FIXME: in soccam and here, this does the test differently
 	 * than in enbc */
-	if(areg == 1)
+	if(AREG == 1)
 	{
-		WORKSPACE_SET(wptr, WS_ALT_STATE, DISABLING_P);
+		WORKSPACE_SET(WPTR, WS_ALT_STATE, DISABLING_P);
 	}
+	return ECTX_INS_OK;
 }
 
 /* 0x4E - 0x24 0xFE - talt - timer alt start */
-TVM_INSTRUCTION void ins_talt(void)
+TVM_INSTRUCTION (ins_talt)
 {
 	/* Set the alt state as enabeling */
-	WORKSPACE_SET(wptr, WS_ALT_STATE, ENABLING_P);
+	WORKSPACE_SET(WPTR, WS_ALT_STATE, ENABLING_P);
 	/* Set up the timer */
-	WORKSPACE_SET(wptr, WS_ALT_T, TIME_NOT_SET_P);
+	WORKSPACE_SET(WPTR, WS_ALT_T, TIME_NOT_SET_P);
+	return ECTX_INS_OK;
 }
 
 
@@ -388,54 +379,56 @@ TVM_INSTRUCTION void ins_talt(void)
  ****************************************************************************/
 
 /* 0x51 - 0x25 0xF1 - taltwt - timer alt wait */
-TVM_INSTRUCTION void ins_taltwt(void)
+TVM_INSTRUCTION (ins_taltwt)
 {
 	int current_time = tvm_get_time();
 
 	/* Set the top of the workspace to -1 */
-	WORKSPACE_SET(wptr, WS_TOP, NONE_SELECTED_O);
+	WORKSPACE_SET(WPTR, WS_TOP, NONE_SELECTED_O);
 
-	if(WORKSPACE_GET(wptr, WS_ALT_STATE) == DISABLING_P) /* READY_P */
+	if(WORKSPACE_GET(WPTR, WS_ALT_STATE) == DISABLING_P) /* READY_P */
 	{
 		/*fprintf(stderr, "1");*/
-		WORKSPACE_SET(wptr, WS_TIMEOUT, current_time);
+		WORKSPACE_SET(WPTR, WS_TIMEOUT, current_time);
 	}
-	else if(WORKSPACE_GET(wptr, WS_ALT_T) == TIME_NOT_SET_P)
+	else if(WORKSPACE_GET(WPTR, WS_ALT_T) == TIME_NOT_SET_P)
 	{
 		/*fprintf(stderr, "2");*/
-		WORKSPACE_SET(wptr, WS_ALT_STATE, WAITING_P);
+		WORKSPACE_SET(WPTR, WS_ALT_STATE, WAITING_P);
 
-		WORKSPACE_SET(wptr, WS_IPTR, (WORD)iptr);
-		iptr = run_next_on_queue();
+		WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
+		return run_next_on_queue();
 	}
 	/* Redundant if? */
-	else if(TIME_AFTER(current_time, WORKSPACE_GET(wptr, WS_TIMEOUT)))
+	else if(TIME_AFTER(current_time, WORKSPACE_GET(WPTR, WS_TIMEOUT)))
 	{
 		/*fprintf(stderr, "3");*/
-		WORKSPACE_SET(wptr, WS_ALT_STATE, DISABLING_P); /* READY_P */
-		WORKSPACE_SET(wptr, WS_TIMEOUT, current_time);
+		WORKSPACE_SET(WPTR, WS_ALT_STATE, DISABLING_P); /* READY_P */
+		WORKSPACE_SET(WPTR, WS_TIMEOUT, current_time);
 	}
 	else
 	{
 		/*fprintf(stderr, "4");*/
 		/*printf("TALT added stuff to timer queue\n");*/
-		WORKSPACE_SET(wptr, WS_TIMEOUT, WORKSPACE_GET(wptr, WS_TIMEOUT) + 1);
+		WORKSPACE_SET(WPTR, WS_TIMEOUT, WORKSPACE_GET(WPTR, WS_TIMEOUT) + 1);
 
-		/*traverse_and_insert(tptr, tptr);*/
-		timer_queue_insert(current_time, WORKSPACE_GET(wptr, WS_TIMEOUT));
+		/*traverse_and_insert(TPTR, TPTR);*/
+		timer_queue_insert(current_time, WORKSPACE_GET(WPTR, WS_TIMEOUT));
 		/*print_timer_queue();*/
 		/* Redundant if? */
-		if(WORKSPACE_GET(wptr, WS_ALT_STATE) != DISABLING_P)
+		if(WORKSPACE_GET(WPTR, WS_ALT_STATE) != DISABLING_P)
 		{
-			WORKSPACE_SET(wptr, WS_ALT_STATE, WAITING_P);
+			WORKSPACE_SET(WPTR, WS_ALT_STATE, WAITING_P);
 
-			WORKSPACE_SET(wptr, WS_IPTR, (WORD)iptr);
-			iptr = run_next_on_queue();
+			WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
+			return run_next_on_queue();
 		}
 		else
 		{
-			set_error_flag(EFLAG_ALT);
+			return ectx->set_error_flag(ectx, EFLAG_ALT);
 		}
 	}
+
+	return ECTX_INS_OK;
 }
 

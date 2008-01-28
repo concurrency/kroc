@@ -26,25 +26,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 /* 0x22F - 0x22 0x22 0xFF - proc_alloc - allocate process workspace */
-TVM_INSTRUCTION_PROTO void ins_proc_alloc(void);
+TVM_INSTRUCTION_PROTO (ins_proc_alloc);
 /* 0x230 - 0x22 0x23 0xF0 - proc_param - pass parameter into workspace */
-TVM_INSTRUCTION_PROTO void ins_proc_param(void);
+TVM_INSTRUCTION_PROTO (ins_proc_param);
 /* 0x231 - 0x22 0x23 0xF1 - proc_mt_copy - clone mobile type into workspace */
-TVM_INSTRUCTION_PROTO void ins_proc_mt_copy(void);
+TVM_INSTRUCTION_PROTO (ins_proc_mt_copy);
 /* 0x232 - 0x22 0x23 0xF2 - proc_mt_move - move mobile type into workspace */
-TVM_INSTRUCTION_PROTO void ins_proc_mt_move(void);
+TVM_INSTRUCTION_PROTO (ins_proc_mt_move);
 /* 0x233 - 0x22 0x23 0xF3 - proc_start - start process */
-TVM_INSTRUCTION_PROTO void ins_proc_start(void);
+TVM_INSTRUCTION_PROTO (ins_proc_start);
 /* 0x234 - 0x22 0x23 0xF4 - proc_end - end process and release workspace */
-TVM_INSTRUCTION_PROTO void ins_proc_end(void);
+TVM_INSTRUCTION_PROTO (ins_proc_end);
 #endif
 #ifdef TVM_OCCAM_PI
 /* 0x235 - 0x22 0x23 0xF5 - getaff - get processor affinity */
-TVM_INSTRUCTION_PROTO void ins_getaff(void);
+TVM_INSTRUCTION_PROTO (ins_getaff);
 /* 0x236 - 0x22 0x23 0xF6 - setaff - set processor affinity */
-TVM_INSTRUCTION_PROTO void ins_setaff(void);
+TVM_INSTRUCTION_PROTO (ins_setaff);
 #endif 
 /* 0x237 - 0x22 0x23 0xF7 - getpas - get priority and affinity state */
-TVM_INSTRUCTION_PROTO void ins_getpas(void);
+TVM_INSTRUCTION_PROTO (ins_getpas);
 
 #endif /* INS_PROC_H */

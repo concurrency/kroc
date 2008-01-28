@@ -26,13 +26,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef TVM_DISPATCH_SWITCH
 #define TVM_HELPER static inline
 #define TVM_HELPER_PROTO static inline
-#define TVM_INSTRUCTION static inline
-#define TVM_INSTRUCTION_PROTO static inline
+#define TVM_INSTRUCTION(X) \
+	static inline int X (tvm_ectx_t *ectx)
+#define TVM_INSTRUCTION_PROTO(X) \
+	static inline int X (tvm_ectx_t *ectx)
 #else
 #define TVM_HELPER
 #define TVM_HELPER_PROTO extern
-#define TVM_INSTRUCTION
-#define TVM_INSTRUCTION_PROTO extern
+#define TVM_INSTRUCTION(X) \
+	int X (tvm_ectx_t *ectx)
+#define TVM_INSTRUCTION_PROTO(X) \
+	extern int X (tvm_ectx_t *ectx)
 #endif
 
 /* This instruction clears a register */
@@ -66,33 +70,36 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * which is all we want.
  * */
-#define STACK(AREG, BREG, CREG) 		\
+#define STACK(A,B,C) 				\
 	do {					\
-		WORD atmp = (WORD) (AREG); 	\
-		WORD btmp = (WORD) (BREG); 	\
-		WORD ctmp = (WORD) (CREG); 	\
-		areg = atmp;			\
-		breg = btmp;			\
-		creg = ctmp;			\
+		WORD a_tmp = (WORD) (A); 	\
+		WORD b_tmp = (WORD) (B); 	\
+		WORD c_tmp = (WORD) (C); 	\
+		AREG = a_tmp;			\
+		BREG = b_tmp;			\
+		CREG = c_tmp;			\
+	} while (0)
+#define STACK_RET(A,B,C) 			\
+	do {					\
+		STACK(A,B,C);			\
+		return ECTX_INS_OK;		\
 	} while (0)
 
 /* Push all registers down by one, essentially leaves 'areg' undefined */ 
 #define PUSH_STACK() \
-	STACK(UNDEFINE(areg), areg, breg)
+	STACK(UNDEFINE(AREG), AREG, BREG)
 /* Pop all registers up by one, essentially leaves 'creg' undefined */
 #define POP_STACK() \
-	STACK(breg, creg, UNDEFINE(creg))
+	STACK(BREG, CREG, UNDEFINE(CREG))
 /* Pop all registers up by two, leaves 'breg' and 'creg' undefined */
 #define POP_STACK2() \
 	STACK(creg, UNDEFINE(breg), UNDEFINE(creg))
-#define STACK_CLAIM(reg, amount) reg = reg - amount;
-#define STACK_RELEASE(reg, amount) reg = reg + amount;
 
-#define UNDEFINE_STACK() \
-	/* STACK(UNDEFINE(areg), UNDEFINE(breg), UNDEFINE(creg)) */
+#define UNDEFINE_STACK()
+#define UNDEFINE_STACK_RET() \
+	return ECTX_INS_OK;
 
-extern void ins_not_implemented(void);
-extern void ins_invalid(void);
+TVM_INSTRUCTION_PROTO (ins_not_implemented);
 
 #ifdef DEBUG_ERRORS
 void debug_error_flag(char *file, int line, int error_num);

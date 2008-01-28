@@ -52,45 +52,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "jumptbl_pri.h"
 #endif
 
-/* Using setjmp/longjmp lets us use a thighter interpreter loop, as we do
- * not need to test if we are finished running after every instruction.
- * On the intel this saves us about 3 instructions. Probably quite significant
- * considering how much the interpreter loop is going to run.
- * FIXME: Profile this
- */
-#ifdef HAVE_SETJMP_H
-#	include <setjmp.h>
-#endif
-
 #ifdef ENABLE_RUNLOOP_DBG_HOOKS
 void (*runloop_dbg_hook_pre)(void) = 0;
 void (*runloop_dbg_hook_post)(void) = 0;
 #endif
-
-#ifdef HAVE_SETJMP_H
-/* If we are using setjmp we need somewhere to store the environment in order
- * to be able to jump out of the interpreter loop 
- */
-jmp_buf runloop_env; 
-#else
-/* If we are not using setjmp we use a variable which is set to zero when we
- * need to exit from the interpreter loop.
- */
-int running;
-#endif
-int exit_value; /* Blame Ed for the name of this variable */
-
-void exit_runloop(int exit_val)
-{
-	exit_value = exit_val;
-
-#ifdef HAVE_SETJMP_H
-	longjmp(runloop_env, 1);
-#else
-	running = 0;
-#endif
-
-}
 
 /*
  * Allocate a new stackframe using the workspace pointer pointed to by 'where',
@@ -98,9 +63,9 @@ void exit_runloop(int exit_val)
  * addresses) with the addresses (or null) for vectorspace and mobilespace.
  *
  * 'where' use like 
- *    int *wptr;
+ *    int *WPTR;
  *    ...
- *    init_stackframe(&wptr, ...)
+ *    init_stackframe(&WPTR, ...)
  */
 void tvm_init_stackframe(WORDPTR *where, int argc, WORD argv[],
 		WORDPTR vectorspace, WORDPTR mobilespace, WORDPTR forkingbarrier,
@@ -177,7 +142,7 @@ void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 	#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 	if(add_forkingbarrier)
 	{
-		fb = mt_alloc(MT_MAKE_BARRIER(MT_BARRIER_FORKING), 0);
+		/* CGR FIXME: fb = mt_alloc(MT_MAKE_BARRIER(MT_BARRIER_FORKING), 0); */
 	}
 	#endif
 
@@ -186,96 +151,72 @@ void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 
 void tvm_init(void)
 {
-	int i;
+}
 
+void tvm_init_ectx(tvm_ectx_t *ectx)
+{
 	/* setup scheduler queues */
-	for (i = 0; i < NUM_PRI; i++) {
-		fptr[i] = (WORD *)NOT_PROCESS_P;
-		bptr[i] = (WORD *)NOT_PROCESS_P;
-	}
-
-	tptr = (WORD *)NOT_PROCESS_P;
+	FPTR = (WORD *)NOT_PROCESS_P;
+	BPTR = (WORD *)NOT_PROCESS_P;
+	TPTR = (WORD *)NOT_PROCESS_P;
 
 	/* evaluation stack */
-	areg = 0;
-	breg = 0;
-	creg = 0;
-	oreg = 0;
+	AREG = 0;
+	BREG = 0;
+	CREG = 0;
+	OREG = 0;
 }
 
 /** 
- * Starts the main run loop of the interpreter, fetching code starting from
- * code_ptr. This function will exit when the interpreted program has finished
- * executing. Registers and memory will be left in the state of the finished
- * interpreted program.
- *
- * The interpreter must have been setup prior to calling this function.
- *
- * @return Nothing, when the interpreted program has finished.
+ * Runs an execution context until it exits for some reason.
+ * Returning the exit reason.
  */
-int tvm_run(void)
+int tvm_run(tvm_ectx_t *ectx)
 {
-	/* FIXME: Set up a stack frame we can return from to a special location
-	 * which will break us out of this loop.
-	 */
-#ifdef HAVE_SETJMP_H
-	if(setjmp(runloop_env) == 0)
-	{
-		for(;;)
-		{
-#else
-	running = 1;
-	while(running)
-	{
-		{ /* This to get the right number of brackets */
-#endif
-			/* FIXME: This here is to ensure that the iptr gets
-			 * updated correctly while still decoding and running
-			 * the correct instruction.  Check that the soccam
-			 * interpreter does this correctly, which it may or may
-			 * not do... */
-			BYTE instr;
+	BYTE instr;
+	int ret;
 
+	for(;;)
+	{
 #ifdef ENABLE_RUNLOOP_DBG_HOOKS
-			if(tvm_runloop_pre)
-			{
-				tvm_runloop_pre();
-			}
+		if(tvm_runloop_pre)
+		{
+			tvm_runloop_pre();
+		}
 #endif
-			/* Increment the instruction pointer */
-			//printf("iptr = %08x\n", (int) iptr);
+		/* Increment the instruction pointer */
+		//printf("IPTR = %08x\n", (int) IPTR);
 #if (defined MEMORY_INTF_BIGENDIAN)
-			/* FIXME: This is bad! but gets the lego working */
-			instr = *iptr;
+		/* FIXME: This is bad! but gets the lego working */
+		instr = *IPTR;
 #else
-			instr = read_byte(iptr);
+		instr = read_byte(IPTR);
 #endif
-			//printf("  instr = %02x\n", instr);
-			iptr = byteptr_plus(iptr, 1);
+		//printf("  instr = %02x\n", instr);
+		IPTR = byteptr_plus(IPTR, 1);
 
-			/* Put the least significant bits in oreg */
-			oreg |= (instr & 0x0f);
+		/* Put the least significant bits in OREG */
+		OREG |= (instr & 0x0f);
 
 #ifndef TVM_DISPATCH_SWITCH
-			/* Use the other bits to index into the jump table */
-			/* ANNO: It is OK to use a BYTE to index into this array, and not an int
-			 * type, so we allow chars as array indexes */
-			/*@+charindex@*/
-			primaries[instr >> 4]();
-			/*@=charindex@*/
+		/* Use the other bits to index into the jump table */
+		if ((ret = primaries[instr >> 4](ectx))) {
+			break;
+		}
 #else
-			dispatch_instruction(instr);
+		if ((ret = dispatch_instruction(ectx, instr))) {
+			break;
+		}
 #endif
 
 #ifdef ENABLE_RUNLOOP_DBG_HOOKS
-			if(tvm_runloop_post)
-			{
-				tvm_runloop_post();
-			}
-#endif
+		if(tvm_runloop_post)
+		{
+			tvm_runloop_post();
 		}
+#endif
 	}
 
-	return exit_value;
+	return ret;
 }
 

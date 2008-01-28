@@ -60,28 +60,30 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /** STATE
- * (areg (in (str addend)) (out (+checked areg oreg)))
- * (oreg (in (str constant)) (out 0))
- * (iptr (out nextinst))
+ * (AREG (in (str addend)) (out (+checked AREG OREG)))
+ * (OREG (in (str constant)) (out 0))
+ * (IPTR (out nextinst))
  * (errorflag (out (str set on overflow from addition)))
  */
 
-TVM_INSTRUCTION void ins_adc(void)
+TVM_INSTRUCTION (ins_adc)
 {
-	/* Add the operand register to areg */
-	WORD result = areg + oreg;
+	/* Add the operand register to AREG */
+	WORD result = AREG + OREG;
 
 
 	/* Check for overflow, from Hackers Delight p. 27 */
-	if( ((UWORD) (((result) ^ areg) & ((result) ^ oreg)) >> (WORD_BITS - 1)) )
+	if( ((UWORD) (((result) ^ AREG) & ((result) ^ OREG)) >> (WORD_BITS - 1)) )
 	{
 		set_error_flag(EFLAG_ADC);
 	}
 
 	/* Areg gets result, Breg and Creg stay the same */
-	areg = result;
+	AREG = result;
 
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 /* 0xB_ - ajw - adjust workspace */
@@ -105,17 +107,19 @@ TVM_INSTRUCTION void ins_adc(void)
  */
 
 /** STATE
- * (oreg (in (str offset)) (out 0))
- * (wptr (out  (+wordsize wptr oreg)))
- * (iptr (out nextinst))
+ * (OREG (in (str offset)) (out 0))
+ * (WPTR (out  (+wordsize WPTR OREG)))
+ * (IPTR (out nextinst))
  */
 
-TVM_INSTRUCTION void ins_ajw(void)
+TVM_INSTRUCTION (ins_ajw)
 {
 	/* Add the value in the operand register to the workspace pointer. */
-	wptr = wordptr_plus(wptr, oreg);
+	WPTR = wordptr_plus(WPTR, OREG);
 
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 /* 0x9_ - call - call */
@@ -169,37 +173,39 @@ TVM_INSTRUCTION void ins_ajw(void)
  */
 
 /** STATE
- * (areg (in (str actual param 1)) (out nextinst))
- * (breg (in (str actual param 2)) (out breg))
- * (creg (in (str actual param 3)) (out creg))
- * (oreg (in (str jump offset)) (out 0))
- * (wptr (out (+wordsize wptr -4)))
- * (iptr (out (+bytesize nextinst oreg)))
+ * (AREG (in (str actual param 1)) (out nextinst))
+ * (BREG (in (str actual param 2)) (out BREG))
+ * (CREG (in (str actual param 3)) (out CREG))
+ * (OREG (in (str jump offset)) (out 0))
+ * (WPTR (out (+wordsize WPTR -4)))
+ * (IPTR (out (+bytesize nextinst OREG)))
  * (mem (out (begin 
- *   (writemem (+wordsize (prime wptr) 0) iptr)
- *   (writemem (+wordsize (prime wptr) 1) areg)
- *   (writemem (+wordsize (prime wptr) 2) breg)
- *   (writemem (+wordsize (prime wptr) 3) creg)
+ *   (writemem (+wordsize (prime WPTR) 0) IPTR)
+ *   (writemem (+wordsize (prime WPTR) 1) AREG)
+ *   (writemem (+wordsize (prime WPTR) 2) BREG)
+ *   (writemem (+wordsize (prime WPTR) 3) CREG)
  *   )))
  */
 
-TVM_INSTRUCTION void ins_call(void)
+TVM_INSTRUCTION (ins_call)
 {
 	/* Store registers in a new stack frame */
-	write_word(wordptr_minus(wptr, 4 - 0), (WORD)iptr);
-	write_word(wordptr_minus(wptr, 4 - 1), areg);
-	write_word(wordptr_minus(wptr, 4 - 2), breg);
-	write_word(wordptr_minus(wptr, 4 - 3), creg);
+	write_word(wordptr_minus(WPTR, 4 - 0), (WORD)IPTR);
+	write_word(wordptr_minus(WPTR, 4 - 1), AREG);
+	write_word(wordptr_minus(WPTR, 4 - 2), BREG);
+	write_word(wordptr_minus(WPTR, 4 - 3), CREG);
 	/* Actually allocate the stack frame */
-	wptr = wordptr_minus(wptr, 4);
+	WPTR = wordptr_minus(WPTR, 4);
 
-	/* Set the areg to the old iptr */
-	areg = (WORD)iptr;
+	/* Set the AREG to the old IPTR */
+	AREG = (WORD)IPTR;
 
-	/* Set the new iptr from the oreg */
-	iptr = byteptr_plus(iptr, oreg);
+	/* Set the new IPTR from the OREG */
+	IPTR = byteptr_plus(IPTR, OREG);
 
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 /* 0xA_ - cj - conditional jump */
@@ -215,41 +221,43 @@ TVM_INSTRUCTION void ins_call(void)
 
 /** STATE
  * (where
- *   ((= areg 0)
- *    (areg (in (str condition)) (out areg))
- *    (breg (out breg))
- *    (creg (out creg))
- *    (iptr (out (+bytesize nextinst oreg)))
- *    (oreg (in (str jump offset)) (out 0)))
- *   ((!= areg 0)
- *    (areg (in (str condition)) (out breg))
- *    (breg (out creg))
- *    (creg (out undefined))
- *    (iptr (out nextinst))
- *    (oreg (in (str jump offset)) (out 0))))
+ *   ((= AREG 0)
+ *    (AREG (in (str condition)) (out AREG))
+ *    (BREG (out BREG))
+ *    (CREG (out CREG))
+ *    (IPTR (out (+bytesize nextinst OREG)))
+ *    (OREG (in (str jump offset)) (out 0)))
+ *   ((!= AREG 0)
+ *    (AREG (in (str condition)) (out BREG))
+ *    (BREG (out CREG))
+ *    (CREG (out undefined))
+ *    (IPTR (out nextinst))
+ *    (OREG (in (str jump offset)) (out 0))))
  */
 
-TVM_INSTRUCTION void ins_cj(void)
+TVM_INSTRUCTION (ins_cj)
 {
-	/* If areg is = 0 then we jump, otherwise pop the stack */
-	if(areg == 0)
+	/* If AREG is = 0 then we jump, otherwise pop the stack */
+	if(AREG == 0)
 	{
-		/* Set the iptr to the new address: iptr offset by oreg */
-		iptr = byteptr_plus(iptr, oreg);
+		/* Set the IPTR to the new address: IPTR offset by OREG */
+		IPTR = byteptr_plus(IPTR, OREG);
 
 		/* Stack is left untouched */
-		STACK(areg, breg, creg);
+		STACK(AREG, BREG, CREG);
 	}
 	else
 	{
 		/* Pop the stack */
-		STACK(breg, creg, UNDEFINE(creg));
+		STACK(BREG, CREG, UNDEFINE(CREG));
 	}
 
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
-/* 0xC_ - eqc - test if constant is equal to areg */
+/* 0xC_ - eqc - test if constant is equal to AREG */
 
 /** DESCRIPTION
  * This instruction tests if the constant supplied as an argument to the
@@ -259,29 +267,31 @@ TVM_INSTRUCTION void ins_cj(void)
 
 /** STATE
  * (where 
- *  ((= areg oreg)
- *   (areg (in (str value)) (out 1))
- *   (oreg (in (str constant)) (out 0))
- *   (iptr (out nextinst)))
- *  ((!= areg oreg)
- *   (areg (in (str value)) (out 0))
- *   (oreg (in (str constant)) (out 0))
- *   (iptr (out nextinst))))
+ *  ((= AREG OREG)
+ *   (AREG (in (str value)) (out 1))
+ *   (OREG (in (str constant)) (out 0))
+ *   (IPTR (out nextinst)))
+ *  ((!= AREG OREG)
+ *   (AREG (in (str value)) (out 0))
+ *   (OREG (in (str constant)) (out 0))
+ *   (IPTR (out nextinst))))
  */
 
-TVM_INSTRUCTION void ins_eqc(void)
+TVM_INSTRUCTION (ins_eqc)
 {
-	/* Check if areg is equal to the oreg, set areg accordingly */
-	if(areg == oreg)
+	/* Check if AREG is equal to the OREG, set AREG accordingly */
+	if(AREG == OREG)
 	{
-		areg = 1; /* Set areg to true */
+		AREG = 1; /* Set AREG to true */
 	}
 	else
 	{
-		areg = 0; /* Set areg to false */
+		AREG = 0; /* Set AREG to false */
 	}
 
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 /* 0x0_ - j - jump */
@@ -298,30 +308,32 @@ TVM_INSTRUCTION void ins_eqc(void)
 /** TIMESLICE */
 
 /** STATE
- * (oreg (in (str offset)) (out 0))
- * (iptr (out (+bytesize nextinst oreg)))
+ * (OREG (in (str offset)) (out 0))
+ * (IPTR (out (+bytesize nextinst OREG)))
  */
 
-TVM_INSTRUCTION void ins_j(void)
+TVM_INSTRUCTION (ins_j)
 {
-	iptr = byteptr_plus(iptr, oreg);
+	IPTR = byteptr_plus(IPTR, OREG);
 
-	/* FIXME: The T9000 provides a breakpoint hook if the oreg is 0 (ie a jump of
+	/* FIXME: The T9000 provides a breakpoint hook if the OREG is 0 (ie a jump of
 	 * size zero, which would just execute the next instruction). The
 	 * Transterpreter does not currently have this implemented. Could be
 	 * implemented in the future if needed.
 	 */
 	/*
-	if(oreg == 0)
+	if(OREG == 0)
 	{
 		exit_runloop(EXIT_DEBUG_TRAP);
 	}
 	*/
 
 	/* This instruction undefines all of the stack */
- 	/* STACK(UNDEFINE(areg), UNDEFINE(breg), UNDEFINE(creg)); */
+ 	/* STACK(UNDEFINE(AREG), UNDEFINE(BREG), UNDEFINE(CREG)); */
 	
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 /* 0x4_ - ldc - load constant */
@@ -332,56 +344,60 @@ TVM_INSTRUCTION void ins_j(void)
  */
 
 /** STATE
- * (areg (out oreg))
- * (breg (out areg))
- * (creg (out breg))
- * (oreg (in (str constant)) (out 0))
- * (iptr (out nextinst))
+ * (AREG (out OREG))
+ * (BREG (out AREG))
+ * (CREG (out BREG))
+ * (OREG (in (str constant)) (out 0))
+ * (IPTR (out nextinst))
  */
 
-TVM_INSTRUCTION void ins_ldc(void)
+TVM_INSTRUCTION (ins_ldc)
 {
-	/* Push the stack down and put the constant on the top of the stack (areg) */
-	STACK(oreg, areg, breg);
+	/* Push the stack down and put the constant on the top of the stack (AREG) */
+	STACK(OREG, AREG, BREG);
 
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 /* 0x7_ - ldl - load local */
 
 /** DESCRIPTION
  * 
- * Loads a value from the workspace, relative to the wptr, and puts it in the A
+ * Loads a value from the workspace, relative to the WPTR, and puts it in the A
  * register of the evaluation stack. The workspace slot to load from is
- * determined by addressing using wptr as a base and oreg as an offset.
+ * determined by addressing using WPTR as a base and OREG as an offset.
  *
- * The first 16 workspace slots (in relation to wptr) can be accessed using
+ * The first 16 workspace slots (in relation to WPTR) can be accessed using
  * just one instruction (ie ldl) slots which are further away will need one or
  * more prefixing instructions. To load from slot number n, log16(n)
  * instructions are required (log16(n) - 1) prefixing instructions and the ldl.
  */
 
 /** STATE
- * (areg (out (readmem (+wordsize wptr oreg))))
- * (breg (out areg))
- * (creg (out breg))
- * (oreg (in (str offset into workspace)) (out 0))
- * (iptr (out nextinst))
+ * (AREG (out (readmem (+wordsize WPTR OREG))))
+ * (BREG (out AREG))
+ * (CREG (out BREG))
+ * (OREG (in (str offset into workspace)) (out 0))
+ * (IPTR (out nextinst))
  */
 
-TVM_INSTRUCTION void ins_ldl(void)
+TVM_INSTRUCTION (ins_ldl)
 {
-	/* Push the stack down and read a value from from memory(oreg+wptr) */
-	STACK(read_word(wordptr_plus(wptr, oreg)), areg, breg);
+	/* Push the stack down and read a value from from memory(OREG+WPTR) */
+	STACK(read_word(wordptr_plus(WPTR, OREG)), AREG, BREG);
 
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 /* 0x1_ - ldlp - load local pointer */
 
 /** DESCRIPTION
  *
- * Loads a pointer to a value in the workspace in relation to the wptr and the
+ * Loads a pointer to a value in the workspace in relation to the WPTR and the
  * operand of ldlp. Much like ldl, but instead of loading the value out of a
  * workspace slot it loads the pointer to that slot. This pointer can then be
  * passed to other pieces piecies of code so they can access that particular 
@@ -398,19 +414,21 @@ TVM_INSTRUCTION void ins_ldl(void)
  */
 
 /** STATE
- * (areg (out (+wordsize wptr oreg)))
- * (breg (out areg))
- * (creg (out breg))
- * (oreg (in (str offset into workspace)) (out 0))
- * (iptr (out nextinst))
+ * (AREG (out (+wordsize WPTR OREG)))
+ * (BREG (out AREG))
+ * (CREG (out BREG))
+ * (OREG (in (str offset into workspace)) (out 0))
+ * (IPTR (out nextinst))
  */
 
-TVM_INSTRUCTION void ins_ldlp(void)
+TVM_INSTRUCTION (ins_ldlp)
 {
-	/* Push wptr+oreg onto the stack */
-	STACK((WORD)wordptr_plus(wptr, oreg), areg, breg);
+	/* Push WPTR+OREG onto the stack */
+	STACK((WORD)wordptr_plus(WPTR, OREG), AREG, BREG);
 
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 /* 0x3_ - ldnl - load non-local */
@@ -423,18 +441,20 @@ TVM_INSTRUCTION void ins_ldlp(void)
  */
 
 /** STATE
- * (assumes (= (|| areg byteselectmask) 0))
- * (areg (in (str base)) (out (readmem (+wordsize areg oreg))))
- * (oreg (in (str offset)) (out 0))
- * (iptr (out nextinst))
+ * (assumes (= (|| AREG byteselectmask) 0))
+ * (AREG (in (str base)) (out (readmem (+wordsize AREG OREG))))
+ * (OREG (in (str offset)) (out 0))
+ * (IPTR (out nextinst))
  */
 
-TVM_INSTRUCTION void ins_ldnl(void)
+TVM_INSTRUCTION (ins_ldnl)
 {
-	/* Read from memory(areg+oreg) */
-	areg = read_word(wordptr_plus((WORDPTR)areg, oreg));
+	/* Read from memory(AREG+OREG) */
+	AREG = read_word(wordptr_plus((WORDPTR)AREG, OREG));
 
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 /* 0x5_ - ldnlp - load non-local pointer */
@@ -443,22 +463,24 @@ TVM_INSTRUCTION void ins_ldnl(void)
  * Load a pointer to a workspace slot by using the A register as a base and the
  * operand register as an offset. Much like ldnl, but instead of loading the
  * value from a slot, it loads a pointer to that slot. For an example see ldlp
- * which performs the same operation, but using the wptr instead of the A
+ * which performs the same operation, but using the WPTR instead of the A
  * register.
  */
 
 /** STATE
- * (assumes (= (|| areg byteselectmask) 0))
- * (areg (in (str base)) (out (readmem (+wordsize areg oreg))))
- * (oreg (in (str offset)) (out 0))
- * (iptr (out nextinst))
+ * (assumes (= (|| AREG byteselectmask) 0))
+ * (AREG (in (str base)) (out (readmem (+wordsize AREG OREG))))
+ * (OREG (in (str offset)) (out 0))
+ * (IPTR (out nextinst))
  */
-TVM_INSTRUCTION void ins_ldnlp(void)
+TVM_INSTRUCTION (ins_ldnlp)
 {
-	/* Add the oreg to the areg and store it in the areg */
-	areg = (WORD)wordptr_plus((WORDPTR)areg, oreg);
+	/* Add the OREG to the AREG and store it in the AREG */
+	AREG = (WORD)wordptr_plus((WORDPTR)AREG, OREG);
 
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 /* 0xD_ - stl - store local */
@@ -467,28 +489,30 @@ TVM_INSTRUCTION void ins_ldnlp(void)
  *
  * This instruction stores a value into a workspace slot indexed by the 
  * workspace pointer. The value which is to be stored is found in the A
- * register and the slot (offset from wptr) at which it is to be stored is the
+ * register and the slot (offset from WPTR) at which it is to be stored is the
  * operand to this instruction.
  */
 
 /** STATE
- * (areg (in (str value to be stored)) (out breg))
- * (breg (out creg))
- * (creg (out undefined))
- * (oreg (in (str offset into workspace)) (out 0))
- * (iptr (out nextinst))
- * (mem (out (writemem (+wordsize wptr oreg) areg)))
+ * (AREG (in (str value to be stored)) (out BREG))
+ * (BREG (out CREG))
+ * (CREG (out undefined))
+ * (OREG (in (str offset into workspace)) (out 0))
+ * (IPTR (out nextinst))
+ * (mem (out (writemem (+wordsize WPTR OREG) AREG)))
  */
 
-TVM_INSTRUCTION void ins_stl(void)
+TVM_INSTRUCTION (ins_stl)
 {
-	/* Put the top of the stack into mem(wptr + oreg) */
-	write_word(wordptr_plus(wptr, oreg), areg);
+	/* Put the top of the stack into mem(WPTR + OREG) */
+	write_word(wordptr_plus(WPTR, OREG), AREG);
 
 	/* Pop the stack */
-	STACK(breg, creg, UNDEFINE(creg));
+	STACK(BREG, CREG, UNDEFINE(CREG));
 
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 /* 0xE_ - stnl - store non-local */
@@ -501,24 +525,26 @@ TVM_INSTRUCTION void ins_stl(void)
  */
 
 /** STATE
- * (assumes (= (|| areg byteselectmask) 0))
- * (areg (in (str base)) (out creg))
- * (breg (in (str value)) (out undefined))
- * (creg (out undefined))
- * (oreg (in (str offset)) (out 0))
- * (iptr (out nextinst))
- * (mem (out (writemem (+wordsize areg oreg) breg)))
+ * (assumes (= (|| AREG byteselectmask) 0))
+ * (AREG (in (str base)) (out CREG))
+ * (BREG (in (str value)) (out undefined))
+ * (CREG (out undefined))
+ * (OREG (in (str offset)) (out 0))
+ * (IPTR (out nextinst))
+ * (mem (out (writemem (+wordsize AREG OREG) BREG)))
  */
 
-TVM_INSTRUCTION void ins_stnl(void)
+TVM_INSTRUCTION (ins_stnl)
 {
-	/* Put value in breg into mem(areg + oreg) */
-	write_word(wordptr_plus((WORDPTR)areg, oreg), breg);
+	/* Put value in BREG into mem(AREG + OREG) */
+	write_word(wordptr_plus((WORDPTR)AREG, OREG), BREG);
 
 	/* Pop the stack */
-	STACK(creg, UNDEFINE(breg), UNDEFINE(creg));
+	STACK(CREG, UNDEFINE(BREG), UNDEFINE(CREG));
 	
-	CLEAR(oreg);
+	CLEAR(OREG);
+
+	return ECTX_INS_OK;
 }
 
 
@@ -537,16 +563,18 @@ TVM_INSTRUCTION void ins_stnl(void)
  */
 
 /** STATE
- * (oreg (out (<< oreg 4)))
- * (iptr (out nextinst))
+ * (OREG (out (<< OREG 4)))
+ * (IPTR (out nextinst))
  */
 
-TVM_INSTRUCTION void ins_pfix(void)
+TVM_INSTRUCTION (ins_pfix)
 {
 	/* Shift the operand register up */
 	/* ANNO: Cast to UNSIGNED WORD as the behaviour of a shift on negative values
 	 * is implementation defined in C */
-	oreg = (WORD)((UWORD)oreg << 4);
+	OREG = (WORD)((UWORD)OREG << 4);
+
+	return ECTX_INS_OK;
 }
 
 /* 0x6_ - nfix - negative prefix */
@@ -563,14 +591,16 @@ TVM_INSTRUCTION void ins_pfix(void)
  */
 
 /** STATE
- * (oreg (out (<< (bitnot oreg) 4)))
- * (iptr (out nextinst))
+ * (OREG (out (<< (bitnot OREG) 4)))
+ * (IPTR (out nextinst))
  */
 
-TVM_INSTRUCTION void ins_nfix(void)
+TVM_INSTRUCTION (ins_nfix)
 {
 	/* Negate the value in the operand register, and shift it up */
-	oreg = (WORD)((~(UWORD)oreg) << 4);
+	OREG = (WORD)((~(UWORD)OREG) << 4);
+
+	return ECTX_INS_OK;
 }
 
 #ifndef TVM_DISPATCH_SWITCH
@@ -610,34 +640,35 @@ TVM_INSTRUCTION void ins_nfix(void)
  */
 
 /** STATE
- * (oreg (in (str operator selector)) (out 0))
+ * (OREG (in (str operator selector)) (out 0))
  */
 
-TVM_INSTRUCTION void ins_opr(void)
+TVM_INSTRUCTION (ins_opr)
 {
-	if(oreg <= secondaries_max)
+	WORD ins = OREG;
+
+	if(ins <= secondaries_max)
 	{
-		secondaries[oreg]();
+		CLEAR(OREG);
+		return secondaries[ins]();
 	}
 	else
 	{
 #ifdef TVM_OCCAM_PI
-		if(oreg >= extended_secondaries_min && oreg <= extended_secondaries_max)
+		if(ins >= extended_secondaries_min && ins <= extended_secondaries_max)
 		{
-			extended_secondaries[oreg - extended_secondaries_min]();
+			CLEAR(OREG);
+			return extended_secondaries[ins - extended_secondaries_min]();
 		} 
 #else /* !TVM_OCCAM_PI */
-		if (oreg == 0x237) /* getpas */
+		if (ins == 0x237) /* getpas */
 		{
-			ins_getpri();
+			CLEAR(OREG);
+			return ins_getpas();
 		}
 #endif /* !TVM_OCCAM_PI */
-		else
-		{
-			ins_not_implemented();
-		}
 	}
 
-	CLEAR(oreg);
+	return ECTX_INS_INVALID;
 }
 #endif

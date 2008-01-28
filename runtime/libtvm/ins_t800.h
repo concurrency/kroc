@@ -25,12 +25,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *              0x25 0xF_         0x25 0xF_         0x25 0xF_               *
  ****************************************************************************/
 /* 0x5A - 0x25 0xFA - dup - duplicate top of stack */
-TVM_INSTRUCTION_PROTO void ins_dup(void);
+TVM_INSTRUCTION_PROTO (ins_dup);
 
 /****************************************************************************
  *              0x28 0xF_         0x28 0xF_         0x28 0xF_               *
  ****************************************************************************/
 /* 0x81 - 0x28 0xF1 - wsubdb - word subscript (INT64?) */
-TVM_INSTRUCTION_PROTO void ins_wsubdb();
+TVM_INSTRUCTION_PROTO (ins_wsubdb);
 
 #endif /* INS_T800_H */

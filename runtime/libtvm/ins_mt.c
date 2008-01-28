@@ -180,8 +180,8 @@ static WORDPTR mt_alloc_barrier (UWORD type)
 	return wordptr_plus (mb, MT_BARRIER_PTR_OFFSET);
 }
 /*}}}*/
-/*{{{  TVM_HELPER WORDPTR mt_alloc_data (UWORD type, UWORD size)*/
-TVM_HELPER WORDPTR mt_alloc_data (UWORD type, UWORD size)
+/*{{{  TVM_HELPER WORDPTR mt_alloc_data (tvm_ectx_t *ectx, UWORD type, UWORD size)*/
+TVM_HELPER WORDPTR mt_alloc_data (tvm_ectx_t *ectx, UWORD type, UWORD size)
 {	
 	WORDPTR md;
 	UWORD bytes = (size + (sizeof(UWORD) - 1)) & (~(sizeof(UWORD) - 1));
@@ -195,8 +195,8 @@ TVM_HELPER WORDPTR mt_alloc_data (UWORD type, UWORD size)
 	return wordptr_plus (md, MT_DATA_PTR_OFFSET);
 }
 /*}}}*/
-/*{{{   TVM_HELPER void mt_release_simple (WORDPTR ptr, UWORD type)*/
-TVM_HELPER void mt_release_simple (WORDPTR ptr, UWORD type)
+/*{{{   TVM_HELPER int mt_release_simple (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type)*/
+TVM_HELPER int mt_release_simple (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type)
 {
 	switch (MT_TYPE(type)) {
 		case MT_ARRAY:
@@ -218,7 +218,7 @@ TVM_HELPER void mt_release_simple (WORDPTR ptr, UWORD type)
 					while (size--) {
 						WORDPTR inner_ptr = (WORDPTR) read_word (data);
 						if (inner_ptr != (WORDPTR) NULL_P) {
-							mt_release (inner_ptr);
+							mt_release (ectx, inner_ptr);
 						}
 						data = wordptr_plus (data, 1);
 					}
@@ -251,7 +251,7 @@ TVM_HELPER void mt_release_simple (WORDPTR ptr, UWORD type)
 				if (refs > 1) {
 					write_offset (mb, mt_barrier_internal_t, ref_count, refs - 1);
 					if (MT_BARRIER_TYPE(type) == MT_BARRIER_FULL) {
-						tvm_bar_resign (ptr, 1);
+						return tvm_bar_resign (ectx, ptr, 1);
 					}
 				} else {
 					if (MT_BARRIER_TYPE(type) == MT_BARRIER_FORKING) {
@@ -271,25 +271,25 @@ TVM_HELPER void mt_release_simple (WORDPTR ptr, UWORD type)
 			}
 			break;
 		default:
-			set_error_flag (EFLAG_MT);
-			break;
+			return ectx->set_error_flag (ectx, EFLAG_MT);
 	}
+	return ECTX_INS_OK;
 }
 /*}}}*/
-/*{{{  TVM_HELPER void mt_release (WORDPTR ptr)*/
-TVM_HELPER void mt_release (WORDPTR ptr)
+/*{{{  TVM_HELPER int mt_release (tvm_ectx_t *ectx, WORDPTR ptr)*/
+TVM_HELPER int mt_release (tvm_ectx_t *ectx, WORDPTR ptr)
 {
 	UWORD type = read_type (ptr);
 
 	if (type & MT_SIMPLE) {
-		mt_release_simple (ptr, type);
+		return mt_release_simple (ectx, ptr, type);
 	} else {
-		set_error_flag (EFLAG_MT);
+		return ectx->set_error_flag (ectx, EFLAG_MT);
 	}
 }
 /*}}}*/
-/*{{{  static WORDPTR mt_clone_array (WORDPTR ptr, UWORD type)*/
-static WORDPTR mt_clone_array (WORDPTR ptr, UWORD type)
+/*{{{  static int mt_clone_array (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)*/
+static int mt_clone_array (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)
 {
 	WORDPTR src = wordptr_minus (ptr, MT_ARRAY_PTR_OFFSET);
 	WORDPTR dst, dst_data, dst_dim, src_data, src_dim;
@@ -323,7 +323,11 @@ static WORDPTR mt_clone_array (WORDPTR ptr, UWORD type)
 			WORDPTR inner_ptr = (WORDPTR) read_word (src_data);
 			
 			if (inner_ptr != (WORDPTR) NULL_P) {
-				inner_ptr = mt_clone (inner_ptr);
+				WORDPTR src_ptr = inner_ptr;
+				int eret;
+				if ((eret = mt_clone (ectx, src_ptr, &inner_ptr))) {
+					return eret;
+				}
 			}
 			write_word (dst_data, (WORD) inner_ptr);
 
@@ -332,15 +336,16 @@ static WORDPTR mt_clone_array (WORDPTR ptr, UWORD type)
 		}
 	}
 
-	return wordptr_plus (dst, MT_ARRAY_PTR_OFFSET);
+	*ret = wordptr_plus (dst, MT_ARRAY_PTR_OFFSET);
+	return ECTX_INS_OK;
 }	
 /*}}}*/
-/*{{{  static WORDPTR mt_clone_simple (WORDPTR ptr, UWORD type)*/
-static WORDPTR mt_clone_simple (WORDPTR ptr, UWORD type)
+/*{{{  static int mt_clone_simple (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)*/
+static int mt_clone_simple (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)
 {
 	switch (MT_TYPE(type)) {
 		case MT_ARRAY:
-			return mt_clone_array (ptr, type);
+			return mt_clone_array (ectx, ptr, type, ret);
 		case MT_CB:
 			{
 				WORDPTR cb = wordptr_minus (ptr, MT_CB_PTR_OFFSET);
@@ -348,7 +353,8 @@ static WORDPTR mt_clone_simple (WORDPTR ptr, UWORD type)
 				
 				write_offset (cb, mt_cb_internal_t, ref_count, refs + 1);
 			}
-			return ptr;
+			*ret = ptr;
+			break;
 		case MT_BARRIER:
 			{
 				WORDPTR mb = wordptr_minus (ptr, MT_BARRIER_PTR_OFFSET);
@@ -356,37 +362,40 @@ static WORDPTR mt_clone_simple (WORDPTR ptr, UWORD type)
 				
 				write_offset (mb, mt_barrier_internal_t, ref_count, refs + 1);
 				if (MT_BARRIER_TYPE(type) == MT_BARRIER_FULL) {
-					tvm_bar_enroll (ptr, 1);
+					return tvm_bar_enroll (ectx, ptr, 1);
 				}
 			}
-			return ptr;
+			*ret = ptr;
+			break;
 		case MT_DATA:
 			{
 				WORDPTR src = wordptr_minus (ptr, MT_DATA_PTR_OFFSET);
 				WORDPTR dst;
 				UWORD size = (UWORD) read_offset (src, mt_data_internal_t, size);
 
-				dst = mt_alloc_data (type, size);
+				dst = mt_alloc_data (ectx, type, size);
 				tvm_copy_data ((BYTEPTR) dst, (BYTEPTR) ptr, size);
 
-				return dst;
+				*ret = dst;
 			}
+			break;
 		default:
-			set_error_flag (EFLAG_MT);
-			return (WORDPTR) NULL_P;
+			*ret = (WORDPTR) NULL_P;
+			return ectx->set_error_flag (ectx, EFLAG_MT);
 	}
+	return ECTX_INS_OK;
 }
 /*}}}*/
-/*{{{  TVM_HELPER WORDPTR mt_clone (WORDPTR ptr)*/
-TVM_HELPER WORDPTR mt_clone (WORDPTR ptr)
+/*{{{  TVM_HELPER int mt_clone (tvm_ectx_t *ectx, WORDPTR ptr, WORDPTR *ret)*/
+TVM_HELPER int mt_clone (tvm_ectx_t *ectx, WORDPTR ptr, WORDPTR *ret)
 {
 	UWORD type = read_type (ptr);
 
 	if (type & MT_SIMPLE) {
-		return mt_clone_simple (ptr, type);
+		return mt_clone_simple (ectx, ptr, type, ret);
 	} else {
-		set_error_flag (EFLAG_MT);
-		return (WORDPTR) NULL_P;
+		*ret = (WORDPTR) NULL_P;
+		return ectx->set_error_flag (ectx, EFLAG_MT);
 	}
 }
 /*}}}*/
@@ -399,8 +408,8 @@ static void mt_io_update_shared_cb (WORDPTR *ptr)
 	write_offset (cb, mt_cb_internal_t, ref_count, refs + 1);
 }
 /*}}}*/
-/*{{{  static void mt_io_update_barrier (WORDPTR *ptr)*/
-static void mt_io_update_barrier (WORDPTR *ptr)
+/*{{{  static int mt_io_update_barrier (WORDPTR *ptr)*/
+static int mt_io_update_barrier (tvm_ectx_t *ectx, WORDPTR *ptr)
 {
 	WORDPTR mb = wordptr_minus (*ptr, MT_BARRIER_PTR_OFFSET);
 	UWORD refs = (UWORD) read_offset (mb, mt_barrier_internal_t, ref_count);
@@ -408,16 +417,19 @@ static void mt_io_update_barrier (WORDPTR *ptr)
 	
 	write_offset (mb, mt_barrier_internal_t, ref_count, refs + 1);
 	if (MT_BARRIER_TYPE(type) == MT_BARRIER_FULL) {
-		tvm_bar_enroll (*ptr, 1);
+		return tvm_bar_enroll (ectx, *ptr, 1);
+	} else {
+		return ECTX_INS_OK;
 	}
 }
 /*}}}*/
-/*{{{  static void mt_io_update_array (WORDPTR *ptr, UWORD inner)*/
-static void mt_io_update_array (WORDPTR *ptr, UWORD inner)
+/*{{{  static int mt_io_update_array (tvm_ectx_t *ectx, WORDPTR *ptr, UWORD inner)*/
+static int mt_io_update_array (tvm_ectx_t *ectx, WORDPTR *ptr, UWORD inner)
 {
 	WORDPTR ma	= wordptr_minus (ptr, MT_ARRAY_PTR_OFFSET);
 	WORDPTR data	= (WORDPTR) read_offset (ma, mt_array_internal_t, array.data);
 	UWORD size	= (UWORD) read_offset (ma, mt_array_internal_t, size);
+	int ret 	= ECTX_INS_OK;
 
 	switch (MT_TYPE(inner)) {
 		case MT_ARRAY:
@@ -425,7 +437,9 @@ static void mt_io_update_array (WORDPTR *ptr, UWORD inner)
 			while (size--) {
 				WORDPTR inner_ptr = (WORDPTR) read_word (data);
 				if (inner_ptr != (WORDPTR) NULL_P) {
-					mt_io_update_array ((WORDPTR *) data, inner);
+					if ((ret = mt_io_update_array (ectx, (WORDPTR *) data, inner))) {
+						break;
+					}
 				}
 				data = wordptr_plus (data, 1);
 			}
@@ -446,7 +460,9 @@ static void mt_io_update_array (WORDPTR *ptr, UWORD inner)
 			while (size--) {
 				WORDPTR inner_ptr = (WORDPTR) read_word (data);
 				if (inner_ptr != (WORDPTR) NULL_P) {
-					mt_io_update_barrier ((WORDPTR *) data);
+					if ((ret = mt_io_update_barrier (ectx, (WORDPTR *) data))) {
+						break;
+					}
 				}
 				data = wordptr_plus (data, 1);
 			}
@@ -455,7 +471,10 @@ static void mt_io_update_array (WORDPTR *ptr, UWORD inner)
 			while (size--) {
 				WORDPTR inner_ptr = (WORDPTR) read_word ((WORDPTR *) data);
 				if (inner_ptr != (WORDPTR) NULL_P) {
-					mt_io_update ((WORDPTR *) data);
+					UWORD move;
+					if ((ret = mt_io_update (ectx, (WORDPTR *) data, &move))) {
+						break;
+					}	
 				}
 				data = wordptr_plus (data, 1);
 			}
@@ -463,13 +482,14 @@ static void mt_io_update_array (WORDPTR *ptr, UWORD inner)
 		case MT_DATA:
 			break;
 		default:
-			set_error_flag (EFLAG_MT);
+			ret = ectx->set_error_flag (ectx, EFLAG_MT);
 			break;
 	}
+	return ret;
 }
 /*}}}*/
-/*{{{  TVM_HELPER UWORD mt_io_update (WORDPTR *ptr)*/
-TVM_HELPER UWORD mt_io_update (WORDPTR *ptr)
+/*{{{  TVM_HELPER int mt_io_update (tvm_ectx_t *ectx, WORDPTR *ptr, UWORD *move)*/
+TVM_HELPER int mt_io_update (tvm_ectx_t *ectx, WORDPTR *ptr, UWORD *move)
 {
 	UWORD type = read_type (*ptr);
 
@@ -487,213 +507,236 @@ TVM_HELPER UWORD mt_io_update (WORDPTR *ptr)
 				}	
 			} while (MT_TYPE(temp) == MT_ARRAY);
 
-			mt_io_update_array (ptr, MT_ARRAY_INNER_TYPE(type));
-
-			return MT_TRUE;
+			*move = MT_TRUE;
+			return mt_io_update_array (ectx, ptr, MT_ARRAY_INNER_TYPE(type));
 		} else if (MT_TYPE(type) == MT_CB) {
 			if (type & MT_CB_SHARED) {
+				*move = MT_FALSE;
 				mt_io_update_shared_cb (ptr);
-				return MT_FALSE;
 			} else {
-				return MT_TRUE;
+				*move = MT_TRUE;
 			}
 		} else if (MT_TYPE(type) == MT_BARRIER) {
-			mt_io_update_barrier (ptr);
-			return MT_FALSE;
+			*move = MT_FALSE;
+			return mt_io_update_barrier (ectx, ptr);
 		} else if (MT_TYPE(type) == MT_DATA) {
-			return MT_TRUE;
+			*move = MT_TRUE;
+		} else {
+			*move = MT_FALSE;
 		}
 	} else {
-		set_error_flag (EFLAG_MT);
+		*move = MT_TRUE;
+		return ectx->set_error_flag (ectx, EFLAG_MT);
 	}
 	
-	return MT_FALSE;
+	return ECTX_INS_OK;
 }
 /*}}}*/
-/*{{{  TVM_HELPER void mt_chan_io (WORDPTR dst, WORDPTR src)*/
-TVM_HELPER void mt_chan_io (WORDPTR dst, WORDPTR src)
+/*{{{  TVM_HELPER int mt_chan_io (tvm_ectx_t *ectx, WORDPTR dst, WORDPTR src)*/
+TVM_HELPER int mt_chan_io (tvm_ectx_t *ectx, WORDPTR dst, WORDPTR src)
 {
 	/* Read pointer to mobile type */
 	WORDPTR ptr = (WORDPTR) read_word (src);
 	/* Is there anything there? */
 	if (ptr != (WORDPTR) NULL_P) {
+		UWORD move;
+		int ret;
 		/* Is defined, so update it */
-		if (mt_io_update (&ptr)) {
+		if ((ret = mt_io_update (ectx, &ptr, &move))) {
+			return ret;
+		}
+		if (move == MT_TRUE) {
 			/* Pointer moved, delete old reference */
 			write_word (src, (WORD) NULL_P);
 		}
 	}
 	/* Write out possibly new pointer to mobile type */
 	write_word (dst, (WORD) ptr);
+	return ECTX_INS_OK;
 }
 /*}}}*/
-/*{{{  TVM_HELPER WORDPTR mt_alloc (UWORD type, UWORD size)*/
-TVM_HELPER WORDPTR mt_alloc (UWORD type, UWORD size)
+/*{{{  TVM_HELPER int mt_alloc (tvm_ectx_t *ectx, UWORD type, UWORD size, WORDPTR *ret)*/
+TVM_HELPER int mt_alloc (tvm_ectx_t *ectx, UWORD type, UWORD size, WORDPTR *ret)
 {
 	if (type & MT_SIMPLE) {
 		switch (MT_TYPE(type)) {
 			case MT_ARRAY:
-				return mt_alloc_array (type, size);
+				*ret = mt_alloc_array (type, size);
+				return ECTX_INS_OK;
 			case MT_CB:
-				return mt_alloc_cb (type, size);
+				*ret = mt_alloc_cb (type, size);
+				return ECTX_INS_OK;
 			case MT_BARRIER:
-				return mt_alloc_barrier (type);
+				*ret = mt_alloc_barrier (type);
+				return ECTX_INS_OK;
 			case MT_DATA:
-				return mt_alloc_data (type, size);
+				*ret = mt_alloc_data (ectx, type, size);
+				return ECTX_INS_OK;
 			default:
 				break;
 		}
 	}
 	
 	/* Should not end up here. */
-	set_error_flag (EFLAG_MT);
-	
-	return (WORDPTR) NULL_P;
+	*ret = (WORDPTR) NULL_P;
+	return ectx->set_error_flag (ectx, EFLAG_MT);
 }
 /*}}}*/
 
 /* 0x238 - 0x22 0x23 0xF8 - mt_alloc - allocate a mobile type */
-TVM_INSTRUCTION void ins_mt_alloc(void)
+TVM_INSTRUCTION (ins_mt_alloc)
 {
-	areg = (WORD) mt_alloc ((UWORD) areg, (UWORD) breg);
-	STACK (areg, UNDEFINE(breg), UNDEFINE(creg));
+	WORDPTR ptr;
+	int ret;
+
+	if ((ret = mt_alloc (ectx, (UWORD) AREG, (UWORD) BREG, &ptr))) {
+		return ret;
+	}
+	
+	STACK_RET (ptr, UNDEFINE(BREG), UNDEFINE(CREG));
 }
 
 /* 0x239 - 0x22 0x23 0xF9 - mt_release - release a mobile type */
-TVM_INSTRUCTION void ins_mt_release(void)
+TVM_INSTRUCTION (ins_mt_release)
 {
-	mt_release ((WORDPTR) areg);
-	UNDEFINE_STACK ();
+	return mt_release (ectx, (WORDPTR) AREG);
 }
 
 /* 0x23A - 0x22 0x23 0xFA - mt_clone - clone a mobile type */
-TVM_INSTRUCTION void ins_mt_clone(void)
+TVM_INSTRUCTION (ins_mt_clone)
 {
-	areg = (WORD) mt_clone ((WORDPTR) areg);
-	STACK (areg, UNDEFINE(breg), UNDEFINE(creg));
+	WORDPTR ptr;
+	int ret;
+
+	if ((ret = mt_clone (ectx, (WORDPTR) AREG, &ptr))) {
+		return ret;
+	}
+
+	STACK_RET (AREG, UNDEFINE(BREG), UNDEFINE(CREG));
 }
 
 /* 0x23B - 0x22 0x23 0xFB - mt_in - mobile type channel input */
-TVM_INSTRUCTION void ins_mt_in(void)
+TVM_INSTRUCTION (ins_mt_in)
 {
-	WORDPTR chan_ptr		= (WORDPTR) areg;
-	WORDPTR dst		= (WORDPTR) breg;
-	WORDPTR other_wptr	= chan_io_begin (0, chan_ptr, (BYTEPTR) dst);
-
-	if (other_wptr != NOT_PROCESS_P)
+	WORDPTR chan_ptr	= (WORDPTR) AREG;
+	WORDPTR dst		= (WORDPTR) BREG;
+	WORDPTR other_WPTR;
+	int ret;
+	
+	if ((ret = chan_io_begin (ectx, 0, chan_ptr, (BYTEPTR) dst, &other_WPTR)))
+	{
+		return ret;
+	}
+	if (other_WPTR != NOT_PROCESS_P)
 	{
 		/* Get pointer to source pointer */
-		WORDPTR src = (WORDPTR) WORKSPACE_GET (other_wptr, WS_CHAN);
+		WORDPTR src = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_CHAN);
 		/* Do input */
-		mt_chan_io (dst, src);
+		if ((ret = mt_chan_io (ectx, dst, src))) {
+			return ret;
+		}
 		/* Complete channel operation */
-		chan_io_end(chan_ptr, other_wptr);
+		chan_io_end (ectx, chan_ptr, other_WPTR);
 	}
 
-	UNDEFINE_STACK ();
+	UNDEFINE_STACK_RET ();
 }
 
 /* 0x23C - 0x22 0x23 0xFC - mt_out - mobile type channel output */
-TVM_INSTRUCTION void ins_mt_out(void)
+TVM_INSTRUCTION (ins_mt_out)
 {
-	WORDPTR chan_ptr		= (WORDPTR) areg;
-	WORDPTR src		= (WORDPTR) breg;
-	WORDPTR other_wptr	= chan_io_begin(1, chan_ptr, (BYTEPTR) src);
-
-	if (other_wptr != NOT_PROCESS_P)
+	WORDPTR chan_ptr	= (WORDPTR) AREG;
+	WORDPTR src		= (WORDPTR) BREG;
+	WORDPTR other_WPTR;
+	int ret;
+	
+	if ((ret = chan_io_begin (ectx, 1, chan_ptr, (BYTEPTR) src, &other_WPTR)))
+	{
+		return ret;
+	}
+	if (other_WPTR != NOT_PROCESS_P)
 	{
 		/* Get pointer to destination */
-		WORDPTR dst = (WORDPTR) WORKSPACE_GET (other_wptr, WS_CHAN);
+		WORDPTR dst = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_CHAN);
 		/* Do output */
-		mt_chan_io (dst, src);
+		if ((ret = mt_chan_io (ectx, dst, src))) {
+			return ret;
+		}
 		/* Complete channel operation */
-		chan_io_end(chan_ptr, other_wptr);
+		chan_io_end (ectx, chan_ptr, other_WPTR);
 	}
 
-	UNDEFINE_STACK ();
+	UNDEFINE_STACK_RET ();
 }
 
 /* 0x23D - 0x22 0x23 0xFD - mt_xchg - mobile type channel exchange */
-TVM_INSTRUCTION void ins_mt_xchg(void)
+TVM_INSTRUCTION (ins_mt_xchg)
 {
-	WORDPTR chan_ptr = (WORDPTR) areg;
-	WORDPTR data_ptr = (WORDPTR) breg;
+	WORDPTR chan_ptr = (WORDPTR) AREG;
+	WORDPTR data_ptr = (WORDPTR) BREG;
 
-	chan_swap (chan_ptr, data_ptr);
+	return chan_swap (ectx, chan_ptr, data_ptr);
 }
 
 /* 0x23E - 0x22 0x23 0xFE - mt_lock - lock a mobile type */
-TVM_INSTRUCTION void ins_mt_lock(void)
+TVM_INSTRUCTION (ins_mt_lock)
 {
-	WORDPTR mt = (WORDPTR) breg;
+	WORDPTR mt = (WORDPTR) BREG;
 	WORDPTR cb = wordptr_minus (mt, MT_CB_SHARED_PTR_OFFSET);
-	WORD lock = areg << 1;
+	WORD lock = AREG << 1;
 
-	tvm_sem_claim (wordptr_plus (wordptr_offset (cb, mt_cb_shared_internal_t, sem), lock));
-
-	UNDEFINE_STACK ();
+	return tvm_sem_claim (ectx, wordptr_plus (wordptr_offset (cb, mt_cb_shared_internal_t, sem), lock));
 }
 
 /* 0x23F - 0x22 0x23 0xFF - mt_unlock - unlock a mobile type */
-TVM_INSTRUCTION void ins_mt_unlock(void)
+TVM_INSTRUCTION (ins_mt_unlock)
 {
-	WORDPTR mt = (WORDPTR) breg;
+	WORDPTR mt = (WORDPTR) BREG;
 	WORDPTR cb = wordptr_minus (mt, MT_CB_SHARED_PTR_OFFSET);
-	WORD lock = areg << 1;
+	WORD lock = AREG << 1;
 
-	tvm_sem_release (wordptr_plus (wordptr_offset (cb, mt_cb_shared_internal_t, sem), lock));
-
-	UNDEFINE_STACK ();
+	return tvm_sem_release (ectx, wordptr_plus (wordptr_offset (cb, mt_cb_shared_internal_t, sem), lock));
 }
 
 /* 0x240 - 0x22 0x24 0xF0 - mt_enroll - enroll processes on a mobile type */
-TVM_INSTRUCTION void ins_mt_enroll(void)
+TVM_INSTRUCTION (ins_mt_enroll)
 {
-	WORDPTR mt = (WORDPTR) breg;
-	UWORD count = (UWORD) areg;
+	WORDPTR mt = (WORDPTR) BREG;
+	UWORD count = (UWORD) AREG;
 	UWORD type = read_type (mt);
 	
 	switch (MT_BARRIER_TYPE (type)) {
 		case MT_BARRIER_FULL:
-			tvm_bar_enroll (mt, count);
-			break;
-		default:
-			set_error_flag (EFLAG_MT);
-			break;
+			return tvm_bar_enroll (ectx, mt, count);
 	}
 	
-	UNDEFINE_STACK ();
+	return ectx->set_error_flag (ectx, EFLAG_MT);
 }
 
 /* 0x241 - 0x22 0x24 0xF1 - mt_resign - resign process from a mobile type */
-TVM_INSTRUCTION void ins_mt_resign(void)
+TVM_INSTRUCTION (ins_mt_resign)
 {
-	WORDPTR mt = (WORDPTR) breg;
-	UWORD count = (UWORD) areg;
+	WORDPTR mt = (WORDPTR) BREG;
+	UWORD count = (UWORD) AREG;
 	UWORD type = read_type (mt);
 	
 	switch (MT_BARRIER_TYPE (type)) {
 		case MT_BARRIER_FULL:
-			tvm_bar_resign (mt, count);
-			break;
-		default:
-			set_error_flag (EFLAG_MT);
-			break;
+			return tvm_bar_resign (ectx, mt, count);
 	}
-
-	UNDEFINE_STACK ();
+	
+	return ectx->set_error_flag (ectx, EFLAG_MT);
 }
 
 /* 0x242 - 0x22 0x24 0xF2 - mt_sync - synchronise on a mobile type */
-TVM_INSTRUCTION void ins_mt_sync(void)
+TVM_INSTRUCTION (ins_mt_sync)
 {
-	WORDPTR mt = (WORDPTR) areg;
+	WORDPTR mt = (WORDPTR) AREG;
 	UWORD type = read_type (mt);
 	
 	switch (MT_BARRIER_TYPE (type)) {
 		case MT_BARRIER_FULL:
-			tvm_bar_sync (mt);
-			break;
+			return tvm_bar_sync (ectx, mt);
 		case MT_BARRIER_FORKING:
 			{
 				WORDPTR mb = wordptr_minus (mt, MT_BARRIER_PTR_OFFSET);
@@ -702,85 +745,84 @@ TVM_INSTRUCTION void ins_mt_sync(void)
 				if (refs <= 1) {
 					pfree (mb);
 				} else {
-					WORKSPACE_SET (wptr, WS_IPTR, (WORD) iptr);
+					WORKSPACE_SET (WPTR, WS_IPTR, (WORD) IPTR);
 					write_offset (mb, mt_barrier_internal_t, ref_count, refs - 1);
-					write_word (mt, (WORD) wptr);
-					iptr = run_next_on_queue ();
+					write_word (mt, (WORD) WPTR);
+					return run_next_on_queue ();
 				}
 			}
 			break;
 		default:
-			set_error_flag (EFLAG_MT);
-			break;
+			return ectx->set_error_flag (ectx, EFLAG_MT);
 	}
 
-	UNDEFINE_STACK ();
+	UNDEFINE_STACK_RET ();
 }
 
 /* 0x243 - 0x22 0x24 0xF3 - mt_xin - mobile type channel extended input */
-TVM_INSTRUCTION void ins_mt_xin(void)
+TVM_INSTRUCTION (ins_mt_xin)
 {
-	WORDPTR chan_ptr		= (WORDPTR) areg;
-	WORDPTR dst		= (WORDPTR) breg;
-	WORDPTR other_wptr	= (WORDPTR) read_word (chan_ptr);
-	WORDPTR src		= (WORDPTR) WORKSPACE_GET (other_wptr, WS_CHAN);
+	WORDPTR chan_ptr	= (WORDPTR) AREG;
+	WORDPTR dst		= (WORDPTR) BREG;
+	WORDPTR other_WPTR	= (WORDPTR) read_word (chan_ptr);
+	WORDPTR src		= (WORDPTR) WORKSPACE_GET (other_WPTR, WS_CHAN);
 
 	/* Do input */
-	mt_chan_io (dst, src);
-
-	UNDEFINE_STACK ();
+	return mt_chan_io (ectx, dst, src);
 }
 
 /* 0x244 - 0x22 0x24 0xF4 - mt_xout - mobile type channel extended output */
-TVM_INSTRUCTION void ins_mt_xout(void)
+TVM_INSTRUCTION (ins_mt_xout)
 {
 	/* XXX: extended output not yet supported */
-	ins_not_implemented ();
+	return ECTX_INS_UNSUPPORTED;
 }
 
 /* 0x245 - 0x22 0x24 0xF5 - mt_xxchg - mobile type channel extended exchange */
-TVM_INSTRUCTION void ins_mt_xxchg(void)
+TVM_INSTRUCTION (ins_mt_xxchg)
 {
-	WORDPTR chan_ptr = (WORDPTR) areg;
-	WORDPTR data_ptr = (WORDPTR) breg;
+	WORDPTR chan_ptr = (WORDPTR) AREG;
+	WORDPTR data_ptr = (WORDPTR) BREG;
 	WORDPTR other_ptr;
-	WORDPTR other_wptr;
+	WORDPTR other_WPTR;
 
-	other_wptr = (WORDPTR) read_word (chan_ptr);
-	other_ptr = (WORDPTR) WORKSPACE_GET (other_wptr, WS_CHAN);
+	other_WPTR = (WORDPTR) read_word (chan_ptr);
+	other_ptr = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_CHAN);
 
 	swap_data_word (data_ptr, other_ptr);
 
-	UNDEFINE_STACK ();
+	UNDEFINE_STACK_RET ();
 }
 
 /* 0x246 - 0x22 0x24 0xF6 - mt_dclone - clone data into a mobile type */
-TVM_INSTRUCTION void ins_mt_dclone(void)
+TVM_INSTRUCTION (ins_mt_dclone)
 {
-	WORDPTR dst = (WORDPTR) NULL_P;
-	WORDPTR src = (WORDPTR) creg;
-	UWORD bytes = (UWORD) breg;
-	UWORD type = (UWORD) areg;
+	WORDPTR dst	= (WORDPTR) NULL_P;
+	WORDPTR src	= (WORDPTR) CREG;
+	UWORD bytes	= (UWORD) BREG;
+	UWORD type	= (UWORD) AREG;
 
 	if (type == (MT_SIMPLE | MT_MAKE_TYPE (MT_DATA))) {
 		if (bytes) {
-			dst = mt_alloc_data (type, bytes);
+			dst = mt_alloc_data (ectx, type, bytes);
 			tvm_copy_data ((BYTEPTR) dst, (BYTEPTR) src, bytes);
 		}
 	} else {
-		set_error_flag (EFLAG_MT);
+		STACK ((WORD) dst, UNDEFINE(BREG), UNDEFINE(CREG));
+		return ectx->set_error_flag (ectx, EFLAG_MT);
 	}
 
-	STACK ((WORD) dst, UNDEFINE(breg), UNDEFINE(creg));
+	STACK_RET ((WORD) dst, UNDEFINE(BREG), UNDEFINE(CREG));
 }
 
 /* 0x247 - 0x22 0x24 0xF7 - mt_bind - bind a mobile type in some way to a bit of data */
-TVM_INSTRUCTION void ins_mt_bind(void)
+TVM_INSTRUCTION (ins_mt_bind)
 {
-	BYTEPTR data	= (BYTEPTR) creg;
-	WORDPTR ptr	= (WORDPTR) breg;
-	UWORD bind_type	= (UWORD) areg;
+	BYTEPTR data	= (BYTEPTR) CREG;
+	WORDPTR ptr	= (WORDPTR) BREG;
+	UWORD bind_type	= (UWORD) AREG;
 	UWORD type;
+	int ret;
 
 	type = read_type (ptr);
 
@@ -804,7 +846,9 @@ TVM_INSTRUCTION void ins_mt_bind(void)
 				if (flags & MT_ARRAY_OPTS_SEPARATED) {
 					BYTEPTR data = (BYTEPTR) read_offset (ptr, mt_array_t, data);
 					if (data != NULL_P) {
-						mt_release ((WORDPTR) data);
+						if ((ret = mt_release (ectx, (WORDPTR) data))) {
+							return ret;
+						}
 					}
 				}
 
@@ -843,35 +887,46 @@ TVM_INSTRUCTION void ins_mt_bind(void)
 				WORDPTR new_ptr;
 
 				write_offset (ma, mt_array_internal_t, type, MT_MAKE_ARRAY_TYPE (dimensions, MT_MAKE_ARRAY_OPTS (flags | MT_ARRAY_OPTS_DMA, align, inner)));
-				new_ptr = mt_clone (ptr);
+				if ((ret = mt_clone (ectx, ptr, &new_ptr))) {
+					return ret;
+				}
 				write_offset (ma, mt_array_internal_t, type, old_type);
 				
-				mt_release (ptr);
+				if ((ret = mt_release (ectx, ptr))) {
+					return ret;
+				}
 
 				ptr = new_ptr;
 			}
 		} else {
-			set_error_flag (EFLAG_MT);
+			STACK (NULL_P, UNDEFINE(BREG), UNDEFINE(CREG));
+			return ectx->set_error_flag (ectx, EFLAG_MT);
 		}
 	} else {
-		set_error_flag (EFLAG_MT);
+		STACK (NULL_P, UNDEFINE(BREG), UNDEFINE(CREG));
+		return ectx->set_error_flag (ectx, EFLAG_MT);
 	}
 
-	STACK ((WORD) ptr, UNDEFINE(breg), UNDEFINE(creg));
+	STACK_RET ((WORD) ptr, UNDEFINE(BREG), UNDEFINE(CREG));
 }
 
 
-/*{{{  void *tvm_mt_alloc (UWORD type, UWORD size)*/
-void *tvm_mt_alloc (UWORD type, UWORD size)
+/*{{{  void *tvm_mt_alloc (tvm_ectx_t *ectx, UWORD type, UWORD size)*/
+void *tvm_mt_alloc (tvm_ectx_t *ectx, UWORD type, UWORD size)
 {
-	return (void *) mt_alloc (type, size);
+	WORDPTR ptr;
+	if (!mt_alloc (ectx, type, size, &ptr)) {
+		return (void *) ptr;
+	} else {
+		return NULL;
+	}
 }
 /*}}}*/
 
-/*{{{  void *tvm_mt_release (void *ptr)*/
-void tvm_mt_release (void *ptr)
+/*{{{  void *tvm_mt_release (tvm_ectx_t *ectx, void *ptr)*/
+void tvm_mt_release (tvm_ectx_t *ectx, void *ptr)
 {
-	mt_release ((WORDPTR) ptr);
+	mt_release (ectx, (WORDPTR) ptr);
 }
 /*}}}*/
 

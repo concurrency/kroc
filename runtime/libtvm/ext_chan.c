@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef TVM_OCCAM_PI
 
-void ext_chan_undefined(WORD count, BYTEPTR address)
+static void ext_chan_undefined(tvm_ectx_t *ectx, WORD count, BYTEPTR address)
 {
 	/* FIXME: A hook like in ins_not_impl */
 }
