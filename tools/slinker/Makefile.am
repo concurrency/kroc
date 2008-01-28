@@ -4,7 +4,7 @@ AUTOMAKE_OPTIONS=foreign no-dependencies
 MZSCHEME=@MZSCHEME@
 MZC=@MZC@
 
-COMMON_SRC = 
+COMMON_SRC = \
 	cmdline.ss \
 	code-expansion.ss \
 	code-improvement.ss \
@@ -22,7 +22,7 @@ bin_PROGRAMS = slinker library2
 
 CLEANFILES = slinker.ss library2.ss
 
-slinker_SOURCES = slinker.ss 
+slinker_SOURCES = slinker.ss
 EXTRA_slinker_SOURCES = $(COMMON_SRC)
 library2_SOURCES = library2.ss
 EXTRA_library2_SOURCES = $(COMMON_SRC)
