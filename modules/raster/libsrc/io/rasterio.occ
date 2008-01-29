@@ -17,6 +17,9 @@
 --	<http://www.gnu.org/licenses/>.
 --
 
+--** Support for saving and loading rasters as graphics files.
+-- @module rasterio
+
 #INCLUDE "course.module"
 #INCLUDE "raster.module"
 
