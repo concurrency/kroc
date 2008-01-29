@@ -64,8 +64,9 @@ foreach my $file (@ARGV) {
 					($val, $comment) = ($rest, "");
 				}
 				
-				if ($def =~ /^(\S+)\(([a-z0-9]+)\)$/i) {
+				if ($def =~ /^(\S+)\(([a-z0-9,]+)\)$/i) {
 					my ($name, $var) = ($1, $2);
+					my @var = split (/,/, $var);
 					$val =~ s/_/./g;
 					$val =~ s/\&/\/\\/g;
 					$val =~ s/\|/\\\//g;
@@ -74,7 +75,9 @@ foreach my $file (@ARGV) {
 					$name = verify_symbol ($state, 'function', $name);
 					$line  = "#IF NOT DEFINED ($name.DEF)\n";
 					$line .= "#DEFINE $name.DEF\n";
-					$line .= "INT FUNCTION $name (VAL INT $var) IS ($val):";
+					$line .= "INT FUNCTION $name (VAL INT ";
+					$line .= join(', ', @var);
+					$line .= ") IS ($val):";
 					$line .= " -- $comment" if $comment;
 					$line .= "\n";
 					$line .= "#ENDIF";
