@@ -45,7 +45,7 @@ static void tvm_bar_complete(ECTX ectx, WORDPTR bar)
 	if(bar_fptr != (WORD) NOT_PROCESS_P)
 	{
 		/* Reschedule processes queued on barrier. */
-		tvm_add_queue_to_queue((WORDPTR) bar_fptr, (WORDPTR) bar_bptr);
+		ADD_QUEUE_TO_QUEUE((WORDPTR) bar_fptr, (WORDPTR) bar_bptr);
 	}
 }
 

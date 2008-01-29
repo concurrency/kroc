@@ -130,7 +130,7 @@ static int run_next_on_queue(ECTX ectx)
 					/*printf("TIMER - ADDED TO QUEUE\n");*/
 					WORKSPACE_SET(temp, WS_ALT_STATE, READY_P);
 					/* Add on to run queue */
-					tvm_just_add_to_queue(temp);
+					ADD_TO_QUEUE(temp);
 				}
 				/*
 				   print_timer_queue();

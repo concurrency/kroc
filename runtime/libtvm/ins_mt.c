@@ -198,6 +198,8 @@ TVM_HELPER WORDPTR mt_alloc_data (ECTX ectx, UWORD type, UWORD size)
 /*{{{   TVM_HELPER int mt_release_simple (ECTX ectx, WORDPTR ptr, UWORD type)*/
 TVM_HELPER int mt_release_simple (ECTX ectx, WORDPTR ptr, UWORD type)
 {
+	int ret = ECTX_CONTINUE;
+
 	switch (MT_TYPE(type)) {
 		case MT_ARRAY:
 			{
@@ -251,13 +253,13 @@ TVM_HELPER int mt_release_simple (ECTX ectx, WORDPTR ptr, UWORD type)
 				if (refs > 1) {
 					write_offset (mb, mt_barrier_internal_t, ref_count, refs - 1);
 					if (MT_BARRIER_TYPE(type) == MT_BARRIER_FULL) {
-						return tvm_bar_resign (ectx, ptr, 1);
+						ret = tvm_bar_resign (ectx, ptr, 1);
 					}
 				} else {
 					if (MT_BARRIER_TYPE(type) == MT_BARRIER_FORKING) {
 						WORD process = read_word (ptr);
 						if (process != NOT_PROCESS_P) {
-							tvm_just_add_to_queue ((WORDPTR) process);
+							ADD_TO_QUEUE_ECTX ((WORDPTR) process, ret);
 						}
 					}
 					pfree (mb);
@@ -271,9 +273,11 @@ TVM_HELPER int mt_release_simple (ECTX ectx, WORDPTR ptr, UWORD type)
 			}
 			break;
 		default:
-			return ectx->set_error_flag (ectx, EFLAG_MT);
+			ret = ectx->set_error_flag (ectx, EFLAG_MT);
+			break;
 	}
-	return ECTX_CONTINUE;
+
+	return ret;
 }
 /*}}}*/
 /*{{{  TVM_HELPER int mt_release (ECTX ectx, WORDPTR ptr)*/
