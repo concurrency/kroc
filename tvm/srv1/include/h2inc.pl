@@ -27,7 +27,7 @@ foreach my $file (@ARGV) {
 	# Initial transformation pass
 	my $comment = 0;
 	for(my $ln = 0; $ln < @lines; ++$ln) {
-		my $orig_line	= @lines[$ln];
+		my $orig_line	= $lines[$ln];
 		my $line	= $orig_line;
 
 		$state->{'ln'}	= $ln;
@@ -42,6 +42,18 @@ foreach my $file (@ARGV) {
 				$line = '--' . $line;
 			}
 		} else {
+			# Detect lines split with '\'
+			if ($line =~ /^(.*)\\$/) {
+				my $prepend = $1;
+				$lines[$ln+1] = "$prepend " . $lines[$ln+1];
+				next;
+			}
+
+			my $xline = $line;
+			
+			$xline =~ s/\(\s+/\(/g;
+			$xline =~ s/\s+\)/\)/g;
+
 			if ($line =~ m/^\/\*/) {
 				if ($line =~ m/\*\//) {
 					$line =~ s/\/\*/--/;
@@ -50,7 +62,7 @@ foreach my $file (@ARGV) {
 					$line = "";
 					$comment = 1;
 				}
-			} elsif ($line =~ m/^#define\s+(.+?)\s+(.*)/) {
+			} elsif ($xline =~ m/^#define\s+(.+?)\s+(.*)/) {
 				my ($def, $rest) = ($1, $2);
 				my ($val, $comment);
 				
@@ -64,15 +76,21 @@ foreach my $file (@ARGV) {
 					($val, $comment) = ($rest, "");
 				}
 				
-				if ($def =~ /^(\S+)\(([a-z0-9,]+)\)$/i) {
+				print "\"$def\" \"$val\"\n";
+
+				if ($def =~ /^(\S+)\s*\(([a-z0-9,\s]+)\)$/i) {
 					my ($name, $var) = ($1, $2);
+					
+					$var =~ s/\s+//g;
 					my @var = split (/,/, $var);
 					$val =~ s/_/./g;
 					$val =~ s/\&/\/\\/g;
 					$val =~ s/\|/\\\//g;
 					$val =~ s/\^/\>\</g;
 					$val =~ s/0x([0-9A-F]+)/(#\1)/g;
+					
 					$name = verify_symbol ($state, 'function', $name);
+					
 					$line  = "#IF NOT DEFINED ($name.DEF)\n";
 					$line .= "#DEFINE $name.DEF\n";
 					$line .= "INT FUNCTION $name (VAL INT ";
@@ -83,24 +101,40 @@ foreach my $file (@ARGV) {
 					$line .= "#ENDIF";
 				} elsif ($val =~ /^(0x[0-9a-f]+|\d+)$/i) {
 					my $name = $def;
+					
 					if ($val =~ /^0x/) {
+						my $n = hex($val);
 						$val =~ s/^0x//;
 						$val =~ tr/a-f/A-F/;
-						if (hex($val) > 0xff000000) {
+						if (($n > 0xff000000) && (($n & 3) == 0)) {
 							$name .= '.ADDR';
 						}
 						$val = "#$val";
 					}
+					
 					$name =~ s/_/./g;
 					$name = verify_symbol ($state, 'constant', $name);
+					
 					$line = "VAL INT $name IS $val:";
 					$line .= " -- $comment" if $comment;
-				} elsif ($val =~ /^(\(.*\)|[a-z0-9_]+)$/i) {
+				} elsif ($val =~ /^(\(.*\)|[a-z0-9_]+(\([^\)]+\))?|)$/i) {
 					my $name = $def;
+
 					$val =~ s/_/./g;
 					$name =~ s/_/./g;
 					$name = verify_symbol ($state, 'expression', $name);
-					$line = "VAL INT $name IS $val:";
+					
+					my $symbols = $state->{'symbols'};
+					my @syms = ($val =~ m/([a-z0-9\.]+)/gi);
+					my $ok = 1;
+					print join(',', @syms), "\n";
+					foreach my $sym (@syms) {
+						$ok = $ok && exists($symbols->{$sym});
+					}
+					
+					$line = "";
+					$line .= "-- " if !$ok;
+					$line .= "VAL INT $name IS $val:";
 					$line .= " -- $comment" if $comment;
 				}
 			} elsif ($line =~ m/^#include\s+["<](.+?)[">]/) {
