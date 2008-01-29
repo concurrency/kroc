@@ -75,8 +75,6 @@ foreach my $file (@ARGV) {
 				} else {
 					($val, $comment) = ($rest, "");
 				}
-				
-				print "\"$def\" \"$val\"\n";
 
 				if ($def =~ /^(\S+)\s*\(([a-z0-9,\s]+)\)$/i) {
 					my ($name, $var) = ($1, $2);
@@ -127,7 +125,6 @@ foreach my $file (@ARGV) {
 					my $symbols = $state->{'symbols'};
 					my @syms = ($val =~ m/([a-z0-9\.]+)/gi);
 					my $ok = 1;
-					print join(',', @syms), "\n";
 					foreach my $sym (@syms) {
 						$ok = $ok && exists($symbols->{$sym});
 					}
