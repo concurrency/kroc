@@ -50,6 +50,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 /*}}}*/
 
+/*{{{  Workspace constants and manipulation */
+#define WS_TOP       0
+#define WS_IPTR      1 /* Valid when: the process has been descheduled */
+#define WS_NEXT      2 /* Valid when: the process is on a scheduling list */
+#define WS_ECTX		3 /* Execution context pointer */
+#define WS_CHAN      3 /* Valid when: the process is waiting for */
+#define WS_ALT_STATE 3 /*             communication, or is executing an ALT */
+#define WS_NEXT_T    4 /* Valid when: the process is on */
+#define WS_ALT_T     4 /*             a timer list */
+#define WS_TIMEOUT   5 /* Valid when: the process is on a timer list */
+
+#define WORKSPACE_GET(WPTR, LOC) \
+	read_word(wordptr_minus((WPTR), (LOC)))
+#define WORKSPACE_SET(WPTR, LOC, VAL) \
+	write_word(wordptr_minus((WPTR), (LOC)), (VAL))
+/*}}}*/
+
 /*{{{  Other transputer constants */
 #define NOT_PROCESS_P		0
 #define NULL_P			NOT_PROCESS_P

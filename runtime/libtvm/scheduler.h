@@ -30,6 +30,27 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 		ADD_TO_QUEUE ((WS));				\
 	} while (0)
 
+#define ADD_TO_QUEUE_ECTX(WS,ret) \
+	do { 							\
+		ECTX dst = (ECTX) WORKSPACE_GET ((WS), WS_ECTX);\
+		if (dst != ectx) {				\
+			(ret) = dst->add_to_queue_external (dst, ectx, (WS)); \
+		} else {					\
+			ADD_TO_QUEUE ((WS));			\
+			(ret) = ECTX_CONTINUE;			\
+		}						\
+	} while (0)
+
+#define ADD_TO_QUEUE_ECTX_RET(WS) \
+	do {							\
+		int ret;					\
+		ADD_TO_QUEUE_ECTX ((WS), ret);			\
+		return ret;					\
+	} while (0)
+
+#define ADD_QUEUE_TO_QUEUE(F,B) \
+	do { ectx->add_queue_to_queue (ectx, (F), (B)); } while (0)
+
 #define RUN_NEXT_ON_QUEUE() \
 	do {							\
 		int ret = ectx->run_next_on_queue (ectx);	\

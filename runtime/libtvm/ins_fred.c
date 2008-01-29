@@ -49,8 +49,7 @@ TVM_INSTRUCTION (ins_boolinvert)
 /* 0x28 - 0x22 0xF8 - reschedule */
 TVM_INSTRUCTION (ins_reschedule)
 {
-	tvm_add_to_queue(WPTR, IPTR);
-
+	ADD_TO_QUEUE_IPTR(WPTR, IPTR);
 	RUN_NEXT_ON_QUEUE_RET();
 }
 
@@ -296,6 +295,7 @@ TVM_HELPER int tvm_sem_release(ECTX ectx, WORDPTR sem)
 	{
 		/* No, so we dont need to wake anybody */
 		write_word(sem_fptr_ptr, (WORD) (NOT_PROCESS_P | 1));
+		UNDEFINE_STACK_RET();
 	}
 	else
 	{
@@ -303,10 +303,8 @@ TVM_HELPER int tvm_sem_release(ECTX ectx, WORDPTR sem)
 		write_word(sem_fptr_ptr, WORKSPACE_GET((WORDPTR) sem_fptr, WS_NEXT));
 
 		/* Put the process we picked up semaphore queue onto run queue */
-		tvm_just_add_to_queue((WORDPTR)sem_fptr);
+		ADD_TO_QUEUE_ECTX_RET((WORDPTR)sem_fptr);
 	}
-
-	UNDEFINE_STACK_RET();
 }
 
 /* 0x7A - 0x27 0xFA - seminit - initialise semaphore */
@@ -385,9 +383,7 @@ TVM_INSTRUCTION (ins_xend)
 	write_word(chan_addr, NOT_PROCESS_P);
 
 	/* Put the outputting process on the run queue */
-	tvm_just_add_to_queue(other_WPTR);
-
-	UNDEFINE_STACK_RET();
+	ADD_TO_QUEUE_ECTX_RET(other_WPTR);
 }
 
 #endif /* TVM_OCCAM_PI */

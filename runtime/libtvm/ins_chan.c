@@ -72,16 +72,25 @@ TVM_HELPER int chan_io_begin(ECTX ectx, WORD altable, WORDPTR chan_ptr, BYTEPTR 
 	return ECTX_CONTINUE;
 }
 
-TVM_HELPER void chan_io_end(ECTX ectx, WORDPTR chan_ptr, WORDPTR other_WPTR)
+TVM_HELPER int chan_io_end(ECTX ectx, WORDPTR chan_ptr, WORDPTR other_WPTR)
 {
+	ECTX other_ectx = (ECTX) WORKSPACE_GET(other_WPTR, WS_ECTX);
+
 	/* Set the channel word to NotProcess.p */
 	write_word(chan_ptr, NOT_PROCESS_P);
-	/* Add ourselves to the back of the runqueue */
-	ADD_TO_QUEUE_ECTX_IPTR(WPTR, IPTR);
-	/* Reschedule the process at the other end of the channel */
-	WPTR = other_WPTR;
-	/* Load the newly scheduled processes instruction pointer */
-	IPTR = (BYTEPTR)WORKSPACE_GET(WPTR, WS_IPTR);
+
+	if (other_ectx == ectx) {
+		/* Add ourselves to the back of the runqueue */
+		ADD_TO_QUEUE_IPTR(WPTR, IPTR);
+		/* Reschedule the process at the other end of the channel */
+		WPTR = other_WPTR;
+		/* Load the newly scheduled processes instruction pointer */
+		IPTR = (BYTEPTR)WORKSPACE_GET(WPTR, WS_IPTR);
+		/* Continue */
+		return ECTX_CONTINUE;
+	} else {
+		return other_ectx->add_to_queue_external(other_ectx, ectx, other_WPTR);
+	}
 }
 
 TVM_HELPER int chan_in(ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start)
@@ -89,21 +98,23 @@ TVM_HELPER int chan_in(ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR writ
 	WORDPTR other_WPTR;
 	int ret;
 	
+	UNDEFINE_STACK();
+
 	if((ret = chan_io_begin(ectx, 0, chan_ptr, write_start, &other_WPTR)))
 	{
 		return ret;
 	}
-	if (other_WPTR != NOT_PROCESS_P)
+	else if (other_WPTR != NOT_PROCESS_P)
 	{
 		/* Where we start reading from */
 		BYTEPTR read_start = (BYTEPTR)WORKSPACE_GET(other_WPTR, WS_CHAN);
 		/* Copy the data */
 		tvm_copy_data(write_start, read_start, num_bytes);
 		/* Complete channel operation */
-		chan_io_end(ectx, chan_ptr, other_WPTR);
+		return chan_io_end(ectx, chan_ptr, other_WPTR);
 	}
 
-	UNDEFINE_STACK_RET();
+	return ECTX_CONTINUE;
 }
 
 TVM_HELPER int chan_out(ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR read_start)
@@ -111,21 +122,23 @@ TVM_HELPER int chan_out(ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR rea
 	WORDPTR other_WPTR;
 	int ret;
 	
+	UNDEFINE_STACK();
+
 	if((ret = chan_io_begin(ectx, 1, chan_ptr, read_start, &other_WPTR)))
 	{
 		return ret;
 	}
-	if(other_WPTR != NOT_PROCESS_P)
+	else if(other_WPTR != NOT_PROCESS_P)
 	{
 		/* Normal communication */
 		BYTEPTR write_start = (BYTEPTR)WORKSPACE_GET(other_WPTR, WS_CHAN);
 		/* Copy the data */
 		tvm_copy_data(write_start, read_start, num_bytes);
 		/* Complete channel operation */
-		chan_io_end(ectx, chan_ptr, other_WPTR);
+		return chan_io_end(ectx, chan_ptr, other_WPTR);
 	}
-
-	UNDEFINE_STACK_RET();
+		
+	return ECTX_CONTINUE;
 }
 
 TVM_HELPER int chan_swap(ECTX ectx, WORDPTR chan_ptr, WORDPTR data_ptr)
@@ -133,21 +146,23 @@ TVM_HELPER int chan_swap(ECTX ectx, WORDPTR chan_ptr, WORDPTR data_ptr)
 	WORDPTR other_WPTR;
 	int ret;
 	
+	UNDEFINE_STACK();
+
 	if((ret = chan_io_begin(ectx, 1, chan_ptr, (BYTEPTR)data_ptr, &other_WPTR)))
 	{
 		return ret;
 	}
-	if(other_WPTR != NOT_PROCESS_P)
+	else if(other_WPTR != NOT_PROCESS_P)
 	{
 		/* Normal communication */
 		WORDPTR other_ptr = (WORDPTR)WORKSPACE_GET(other_WPTR, WS_CHAN);
 		/* Swap data */
 		swap_data_word(data_ptr, other_ptr);
 		/* Complete channel operation */
-		chan_io_end(ectx, chan_ptr, other_WPTR);
+		return chan_io_end(ectx, chan_ptr, other_WPTR);
 	}
 
-	UNDEFINE_STACK_RET();
+	return ECTX_CONTINUE;
 }
 
 /****************************************************************************

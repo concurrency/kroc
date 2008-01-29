@@ -118,7 +118,7 @@ TVM_INSTRUCTION (ins_proc_start)
 
 	ws = wordptr_plus (ws, offset);
 
-	tvm_add_to_queue (ws, code);
+	ADD_TO_QUEUE_IPTR (ws, code);
 
 	UNDEFINE_STACK_RET ();
 }

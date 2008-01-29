@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "instructions.h"
 
 TVM_HELPER_PROTO int chan_io_begin(tvm_ectx_t *ectx, WORD altable, WORDPTR chan_ptr, BYTEPTR data_ptr, WORDPTR *chan_val);
-TVM_HELPER_PROTO void chan_io_end(tvm_ectx_t *ectx, WORDPTR chan_ptr, WORDPTR other_wptr);
+TVM_HELPER_PROTO int chan_io_end(tvm_ectx_t *ectx, WORDPTR chan_ptr, WORDPTR other_wptr);
 TVM_HELPER_PROTO int chan_in(tvm_ectx_t *ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start);
 TVM_HELPER_PROTO int chan_out(tvm_ectx_t *ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR read_start);
 TVM_HELPER_PROTO int chan_swap(tvm_ectx_t *ectx, WORDPTR chan_ptr, WORDPTR data_ptr);

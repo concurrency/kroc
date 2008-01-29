@@ -98,22 +98,6 @@ enum {
 };
 /*}}}*/
 
-/*{{{  Workspace constants and manipulation */
-#define WS_TOP       0
-#define WS_IPTR      1 /* Valid when: the process has been descheduled */
-#define WS_NEXT      2 /* Valid when: the process is on a scheduling list */
-#define WS_CHAN      3 /* Valid when: the process is waiting for */
-#define WS_ALT_STATE 3 /*             communication, or is executing an ALT */
-#define WS_NEXT_T    4 /* Valid when: the process is on */
-#define WS_ALT_T     4 /*             a timer list */
-#define WS_TIMEOUT   5 /* Valid when: the process is on a timer list */
-
-#define WORKSPACE_GET(WPTR, LOC) \
-	read_word(wordptr_minus((WPTR), (LOC)))
-#define WORKSPACE_SET(WPTR, LOC, VAL) \
-	write_word(wordptr_minus((WPTR), (LOC)), (VAL))
-/*}}}*/
-
 /*{{{  Externally provided functions */
 extern void (*tvm_runloop_pre)(void);
 extern void (*tvm_runloop_post)(void);
