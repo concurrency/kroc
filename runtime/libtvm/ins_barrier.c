@@ -72,6 +72,7 @@ TVM_HELPER int tvm_bar_sync(ECTX ectx, WORDPTR bar)
 
 		/* Stop process. */
 		WORKSPACE_SET(WPTR, WS_LINK, (WORD) bar_bptr);
+		WORKSPACE_SET(WPTR, WS_ECTX, (WORD) ectx);
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
 
 		/* Enqueue process to barrier. */

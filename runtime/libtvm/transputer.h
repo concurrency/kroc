@@ -111,7 +111,7 @@ struct _tvm_ectx_t {
 
 	volatile WORD 	sflags;	/* Synchronisation flags */
 
-	/* Implementation function tables */
+	/* Implementation functions */
 	void		(*add_to_queue)
 				(ECTX ectx, WORDPTR ws);
 	int		(*add_to_queue_external)
@@ -125,10 +125,13 @@ struct _tvm_ectx_t {
 	void		(*timer_queue_insert)
 				(ECTX ectx, WORDPTR ws, WORD current_time, WORD reschedule_time);
 
+	/* Wrapper defined functions */
 	WORD		(*get_time)
 				(ECTX ectx);
 	void		(*set_alarm)
 				(ECTX ectx, WORD alarm);
+	int		(*run_hook)
+				(ECTX ectx);
 
 	/* Private data */
 	tvm_ectx_priv_t	priv;

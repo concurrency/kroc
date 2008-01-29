@@ -176,8 +176,12 @@ void tvm_reset_ectx(ECTX ectx)
 void tvm_init_ectx(ECTX ectx)
 {
 	tvm_reset_ectx(ectx);
-	ectx->pri = 0;
+	ectx->pri 	= 0;
+
 	_tvm_install_scheduler(ectx);
+	ectx->get_time	= NULL;
+	ectx->set_alarm	= NULL;
+	ectx->run_hook	= NULL;
 }
 
 int tvm_dispatch(ECTX ectx)
@@ -205,6 +209,30 @@ int tvm_dispatch(ECTX ectx)
 #endif
 }
 
+static int run_pre_init(ECTX ectx)
+{
+	int ret;
+
+	ectx->state = ECTX_RUNNING;
+
+	if (ectx->run_hook)
+	{
+		if ((ret = ectx->run_hook(ectx)))
+		{
+			return ret;
+		}
+	}
+
+	if (WPTR == (WORDPTR)NOT_PROCESS_P) {
+		if ((ret = ectx->run_next_on_queue(ectx)))
+		{
+			return ret;
+		}
+	}
+
+	return ECTX_CONTINUE;
+}
+
 /** 
  * Runs an execution context until it exits for some reason.
  * Returning the exit reason.
@@ -213,7 +241,10 @@ int tvm_run(ECTX ectx)
 {
 	int ret;
 
-	ectx->state = ECTX_RUNNING;
+	if ((ret = run_pre_init(ectx)))
+	{
+		return ret;
+	}
 
 	for(;;)
 	{
@@ -232,7 +263,10 @@ int tvm_run_count(ECTX ectx, UWORD count)
 {
 	int ret;
 
-	ectx->state = ECTX_RUNNING;
+	if ((ret = run_pre_init(ectx)))
+	{
+		return ret;
+	}
 
 	while(count--)
 	{

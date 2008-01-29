@@ -23,8 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "interpreter.h"
 #include "scheduler.h"
 
-#include "pool_alloc.h"
-
 #include "ins_chan.h"
 #include "ins_fred.h"
 #include "ins_mt.h"
@@ -74,31 +72,6 @@ TVM_INSTRUCTION (ins_moutn)
 
 	return ins_out(ectx);
 }
-
-#if 0 /* no recent compiler ever generates this instruction */
-/* 0xE0 - 0x2E 0xF0 - mnew - dynamic allocation from pool */
-TVM_INSTRUCTION (ins_mnew)
-{
-	if(AREG == 0)
-	{
-		return ectx->set_error_flag(ectx, EFLAG_DMEM);
-	}
-
-	AREG = (WORD)palloc_pool(AREG);
-
-	return ECTX_CONTINUE;
-}
-#endif
-
-#if 0 /* no recent compiler ever generates this instruction */
-/* 0xE1 - 0x2E 0xF1 - mfree - dynamic release to pool */
-TVM_INSTRUCTION (ins_mfree)
-{
-	pfree_pool(AREG, (void*)BREG);
-
-	STACK_RET(CREG, UNDEFINE(BREG), UNDEFINE(CREG));
-}
-#endif
 
 /* 0xE2 - 0x2E 0xF2 - malloc - dynamic memory allocation */
 TVM_INSTRUCTION (ins_malloc)

@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "instructions.h"
 #include "ext_chan.h"
 
-#include "pool_alloc.h"
 #include "scheduler.h"
 
 #include "ins_barrier.h"
@@ -33,6 +32,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ins_sec.h"
 
 #if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
+
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_USE_MALLOC)
+#include <stdlib.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+#endif /* TVM_DYNAMIC_MEMORY && TVM_USE_MALLOC */
 
 /* stddef.h is freestanding, so should be safe in any build */
 #include <stddef.h>
@@ -83,7 +89,7 @@ static WORDPTR mt_alloc_array_int (UWORD type, UWORD size, UWORD init, UWORD *sh
 	}
 
 	bytes		= (size << size_shift) + alignment + (meta_words << WSH);
-	ma		= (WORDPTR) palloc (bytes);
+	ma		= (WORDPTR) TVM_MALLOC (bytes);
 	if (size) {
 		data	= byteptr_plus ((BYTEPTR) wordptr_plus (ma, meta_words), alignment);
 		data	= (BYTEPTR) (((UWORD) data) & (~alignment));
@@ -136,7 +142,7 @@ static WORDPTR mt_alloc_cb (UWORD type, UWORD channels)
 	if (type & MT_CB_SHARED) {
 		words += MT_CB_SHARED_PTR_OFFSET;
 
-		i_cb 	= (WORDPTR) palloc (words << WSH);
+		i_cb 	= (WORDPTR) TVM_MALLOC (words << WSH);
 		tvm_sem_init (wordptr_offset(i_cb, mt_cb_shared_internal_t, sem[0]));
 		tvm_sem_init (wordptr_offset(i_cb, mt_cb_shared_internal_t, sem[1]));
 		write_offset (i_cb, mt_cb_shared_internal_t, ref_count, 2);
@@ -145,7 +151,7 @@ static WORDPTR mt_alloc_cb (UWORD type, UWORD channels)
 	} else {
 		words += MT_CB_PTR_OFFSET;
 	
-		i_cb 	= (WORDPTR) palloc (words << WSH);
+		i_cb 	= (WORDPTR) TVM_MALLOC (words << WSH);
 		write_offset (i_cb, mt_cb_internal_t, ref_count, 2);
 		write_offset (i_cb, mt_cb_internal_t, type, type);
 		cb	= wordptr_plus (i_cb, MT_CB_PTR_OFFSET);
@@ -161,7 +167,7 @@ static WORDPTR mt_alloc_cb (UWORD type, UWORD channels)
 /*{{{  static WORDPTR mt_alloc_barrier (UWORD type)*/
 static WORDPTR mt_alloc_barrier (UWORD type)
 {	
-	WORDPTR mb	= palloc (sizeof (mt_barrier_internal_t));
+	WORDPTR mb	= TVM_MALLOC (sizeof (mt_barrier_internal_t));
 	WORDPTR bar	= wordptr_offset(mb, mt_barrier_internal_t, barrier);
 
 	write_offset (mb, mt_barrier_internal_t, ref_count, 1);
@@ -188,7 +194,7 @@ TVM_HELPER WORDPTR mt_alloc_data (ECTX ectx, UWORD type, UWORD size)
 	
 	bytes += MT_DATA_PTR_OFFSET << WSH;
 
-	md = (WORDPTR) palloc (bytes);
+	md = (WORDPTR) TVM_MALLOC (bytes);
 	write_offset (md, mt_data_internal_t, size, size);
 	write_offset (md, mt_data_internal_t, type, type);
 
@@ -226,7 +232,7 @@ TVM_HELPER int mt_release_simple (ECTX ectx, WORDPTR ptr, UWORD type)
 					}
 				}
 
-				pfree (ma);
+				TVM_FREE (ma);
 			}
 			break;
 		case MT_CB:
@@ -236,9 +242,9 @@ TVM_HELPER int mt_release_simple (ECTX ectx, WORDPTR ptr, UWORD type)
 
 				if (refs <= 1) {
 					if (type & MT_CB_SHARED) {
-						pfree (wordptr_minus (ptr, MT_CB_SHARED_PTR_OFFSET));
+						TVM_FREE (wordptr_minus (ptr, MT_CB_SHARED_PTR_OFFSET));
 					} else {
-						pfree (cb);
+						TVM_FREE (cb);
 					}
 				} else {
 					write_offset (cb, mt_cb_internal_t, ref_count, refs - 1);
@@ -262,14 +268,14 @@ TVM_HELPER int mt_release_simple (ECTX ectx, WORDPTR ptr, UWORD type)
 							ADD_TO_QUEUE_ECTX ((WORDPTR) process, ret);
 						}
 					}
-					pfree (mb);
+					TVM_FREE (mb);
 				}
 			}
 			break;
 		case MT_DATA:
 			{
 				WORDPTR md = wordptr_minus (ptr, MT_DATA_PTR_OFFSET);
-				pfree (md);
+				TVM_FREE (md);
 			}
 			break;
 		default:
@@ -627,11 +633,13 @@ TVM_INSTRUCTION (ins_mt_in)
 	WORDPTR other_WPTR;
 	int ret;
 	
+	UNDEFINE_STACK ();
+
 	if ((ret = chan_io_begin (ectx, 0, chan_ptr, (BYTEPTR) dst, &other_WPTR)))
 	{
 		return ret;
 	}
-	if (other_WPTR != NOT_PROCESS_P)
+	else if (other_WPTR != NOT_PROCESS_P)
 	{
 		/* Get pointer to source pointer */
 		WORDPTR src = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_POINTER);
@@ -640,10 +648,10 @@ TVM_INSTRUCTION (ins_mt_in)
 			return ret;
 		}
 		/* Complete channel operation */
-		chan_io_end (ectx, chan_ptr, other_WPTR);
+		return chan_io_end (ectx, chan_ptr, other_WPTR);
 	}
 
-	UNDEFINE_STACK_RET ();
+	return ECTX_CONTINUE;
 }
 
 /* 0x23C - 0x22 0x23 0xFC - mt_out - mobile type channel output */
@@ -654,11 +662,13 @@ TVM_INSTRUCTION (ins_mt_out)
 	WORDPTR other_WPTR;
 	int ret;
 	
+	UNDEFINE_STACK ();
+
 	if ((ret = chan_io_begin (ectx, 1, chan_ptr, (BYTEPTR) src, &other_WPTR)))
 	{
 		return ret;
 	}
-	if (other_WPTR != NOT_PROCESS_P)
+	else if (other_WPTR != NOT_PROCESS_P)
 	{
 		/* Get pointer to destination */
 		WORDPTR dst = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_POINTER);
@@ -667,10 +677,10 @@ TVM_INSTRUCTION (ins_mt_out)
 			return ret;
 		}
 		/* Complete channel operation */
-		chan_io_end (ectx, chan_ptr, other_WPTR);
+		return chan_io_end (ectx, chan_ptr, other_WPTR);
 	}
 
-	UNDEFINE_STACK_RET ();
+	return ECTX_CONTINUE;
 }
 
 /* 0x23D - 0x22 0x23 0xFD - mt_xchg - mobile type channel exchange */
@@ -747,7 +757,7 @@ TVM_INSTRUCTION (ins_mt_sync)
 				UWORD refs = (UWORD) read_offset (mb, mt_barrier_internal_t, ref_count);
 				
 				if (refs <= 1) {
-					pfree (mb);
+					TVM_FREE (mb);
 				} else {
 					WORKSPACE_SET (WPTR, WS_IPTR, (WORD) IPTR);
 					write_offset (mb, mt_barrier_internal_t, ref_count, refs - 1);
