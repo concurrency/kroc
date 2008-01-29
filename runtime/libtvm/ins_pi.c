@@ -28,11 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ins_pi.h"
 #include "ins_pri.h"
 
-/* The FFI tables, which we initialise to NULL to indicate that they have not
- * yet been provided. */
-FFI_TABLE_ENTRY *ffi_table = NULL;
-FFI_FUNCTION *special_ffi_table = NULL;
-
 /* 0x23 - 0x22 0xF3 - boolinvert */
 /* FIXME: DELETEME! This ETC special should not be turned into a special 
  * instruction, but rather the sequence of existing instructions:
@@ -65,16 +60,17 @@ TVM_INSTRUCTION (ins_widenshort)
 TVM_INSTRUCTION (ins_fficall)
 {
 	FFI_FUNCTION ffi_func_addr;
+	tvm_t *tvm = ectx->tvm;
 	
 	/* If the FFI table has not been created, then we dont want to
 	 * run this instruction as we are probably going to jump into
 	 * oblivion if that is the case */
-	if(AREG >= 0 && !ffi_table)
+	if(AREG >= 0 && !tvm->ffi_table)
 	{
 		/* FIXME: We need a seperate error trap for this */
 		return ectx->set_error_flag(ectx, EFLAG_FFI);
 	}
-	if(AREG < 0 && !special_ffi_table)
+	if(AREG < 0 && !tvm->special_ffi_table)
 	{
 		/* FIXME: We need a seperate error trap for this */
 		return ectx->set_error_flag(ectx, EFLAG_FFI);
@@ -86,13 +82,13 @@ TVM_INSTRUCTION (ins_fficall)
 	 * jumping to, the second is */
 	if(AREG >= 0)
 	{
-		ffi_func_addr = ffi_table[AREG].func;
+		ffi_func_addr = tvm->ffi_table[AREG].func;
 	}
 	else
 	{
 		/* We do not multiply by 2, as there are no pointers to strings 
 		 * in this table, we also need to make AREG positive and zero indexed */
-		ffi_func_addr = special_ffi_table[-(AREG + 1)];
+		ffi_func_addr = tvm->special_ffi_table[-(AREG + 1)];
 	}
 
 

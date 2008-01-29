@@ -149,10 +149,6 @@ void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 	tvm_init_stackframe(where, argc, argv, vectorspace, mobilespace, fb, RET_SHUTDOWN, 0);
 }
 
-void tvm_init(void)
-{
-}
-
 void tvm_reset_ectx(ECTX ectx)
 {
 	ectx->state 	= ECTX_INIT;
@@ -172,15 +168,38 @@ void tvm_reset_ectx(ECTX ectx)
 	TPTR = (WORDPTR)NOT_PROCESS_P;
 }
 
-void tvm_init_ectx(ECTX ectx)
+void tvm_init_ectx(tvm_t *tvm, ECTX ectx)
 {
 	tvm_reset_ectx(ectx);
+	
 	ectx->pri 	= 0;
 
 	_tvm_install_scheduler(ectx);
+
 	ectx->get_time	= NULL;
 	ectx->set_alarm	= NULL;
 	ectx->run_hook	= NULL;
+
+	ectx->tvm	= tvm;
+
+	if (tvm->head == NULL) {
+		tvm->head = ectx;
+	} else {
+		tvm->tail->next = ectx;
+	}
+	
+	tvm->tail	= ectx;
+	ectx->next	= NULL;
+}
+
+int tvm_init(tvm_t *tvm)
+{
+	tvm->head 		= NULL;
+	tvm->tail		= NULL;
+	tvm->ffi_table		= NULL;
+	tvm->special_ffi_table	= NULL;
+
+	return 0;
 }
 
 int tvm_dispatch(ECTX ectx)

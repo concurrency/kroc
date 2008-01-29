@@ -21,16 +21,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef TVM_H
 #define TVM_H
 
+/*{{{  Pre-declare tvm data structure type */
+typedef struct _tvm_t tvm_t;
+/*}}}*/
+
 #include "tvm_config.h"
 #include "tvm_types.h"
 #include "transputer.h"
 #include "tvm_mem.h"
 #include "tvm_time.h"
-
-/*{{{  The foregin function interface jump tables */
-extern FFI_TABLE_ENTRY *ffi_table;
-extern FFI_FUNCTION *special_ffi_table;
-/*}}}*/
 
 /*{{{  Interpreter exit codes */
 enum {
@@ -70,34 +69,6 @@ enum {
 };
 /*}}}*/
 
-/*{{{  Error values */
-enum {
-	EFLAG_SETERR = 1,
-	EFLAG_CSUB0,
-	EFLAG_LADD,
-	EFLAG_LDIV,
-	EFLAG_REM,
-	EFLAG_DIV,
-	EFLAG_LSUB,
-	EFLAG_CSNGL,
-	EFLAG_CCNT1,
-	EFLAG_CWORD,
-	EFLAG_ADC,
-	EFLAG_ADD,
-	EFLAG_SUB,
-	EFLAG_MUL,
-	EFLAG_BAR,	/* Barrier underflow */
-	EFLAG_FP,	/* Floating point error */
-	EFLAG_ALT,
-	EFLAG_CHAN,	/* Channel communication error */
-	EFLAG_DMEM,	/* Memory allocator error */
-	EFLAG_MT,	/* Mobile type error */
-	EFLAG_PROC,	/* Process API error */
-	EFLAG_SHUTDOWN,	/* Erroneous shutdown */
-	EFLAG_FFI	/* FFI error (missing function) */
-};
-/*}}}*/
-
 /*{{{  Memory allocator selection */
 #if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_USE_MALLOC)
 #define TVM_MALLOC	malloc
@@ -108,9 +79,22 @@ enum {
 #endif /* !(TVM_DYNAMIC_MEMORY && TVM_USE_MALLOC) */
 /*}}}*/
 
-/*{{{  The foregin function interface jump tables */
-extern FFI_TABLE_ENTRY *ffi_table;
-extern FFI_FUNCTION *special_ffi_table;
+/*{{{  TVM instance data structure */
+#ifndef TVM_PRIVATE_DATA
+#define TVM_PRIVATE_DATA	WORD
+typedef TVM_PRIVATE_DATA	tvm_priv_t;
+#endif /* !TVM_ECTX_PRIVATE_DATA */
+
+struct _tvm_t {
+	/* Execution context list */
+	tvm_ectx_t	*head;
+	tvm_ectx_t	*tail;
+	/* FFI */
+	FFI_TABLE_ENTRY	*ffi_table;
+	FFI_FUNCTION	*special_ffi_table;
+	/* Private data */
+	tvm_priv_t	priv;
+};
 /*}}}*/
 
 /*{{{  Interpreter API */
@@ -119,7 +103,7 @@ extern void tvm_init_stackframe(WORDPTR *where, int argc, WORD argv[],
 		int ret_type, BYTEPTR ret_addr);
 extern void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 	WORDPTR vectorspace, WORDPTR mobilespace, int add_forkingbarrier);
-extern void tvm_init(void);
+extern int tvm_init(tvm_t *tvm);
 extern int tvm_dispatch(ECTX ectx);
 extern int tvm_run(ECTX ectx);
 extern int tvm_run_count(ECTX ectx, UWORD count);
