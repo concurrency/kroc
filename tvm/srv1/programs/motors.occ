@@ -1,14 +1,11 @@
-VAL INT MASTER.CLOCK      IS 22118000:
-VAL INT VCO.MULTIPLIER    IS 22:
-VAL INT CCLK.DIVIDER      IS 1:
-VAL INT SCLK.DIVIDER      IS 4:
-VAL INT CORE.CLOCK        IS (MASTER.CLOCK * VCO.MULTIPLIER) / CCLK.DIVIDER:
-VAL INT PERIPHERAL.CLOCK  IS (CORE.CLOCK / SCLK.DIVIDER):
-
 
 VAL INT PORTHIO           IS #FFC01700: -- Port H I/O Pin State Specifiy Register 
 VAL INT TIMER2.WIDTH      IS #FFC0062C: -- Timer 2 Width Register
 VAL INT TIMER3.WIDTH      IS #FFC0063C: -- Timer 3 Width Register
+
+
+#INCLUDE "../platform/config.inc"
+#INCLUDE "../includes/defBF534.inc"
 
 PROC set.pwm (VAL INT left, right)
   INITIAL INT left IS left:
@@ -16,6 +13,7 @@ PROC set.pwm (VAL INT left, right)
   PLACED [1]INT port.h.io PORTHIO:
   PLACED [1]INT timer2.width TIMER2.WIDTH:
   PLACED [1]INT timer3.width TIMER3.WIDTH:
+  PLACED [TIMER2.LEN]INT timer2 TIMER2.ADDR:
   INT h.val:
   SEQ
     h.val := port.h.io[0]
