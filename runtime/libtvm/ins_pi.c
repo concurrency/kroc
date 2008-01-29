@@ -1,5 +1,5 @@
 /*
-tvm - ins_fred.c
+tvm - ins_pi.c
 The Transterpreter - a portable virtual machine for Transputer bytecode
 Copyright (C) 2004-2008 Christian L. Jacobsen, Matthew C. Jadud
 
@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 
 #include "ins_sec.h"
-#include "ins_fred.h"
+#include "ins_pi.h"
 #include "ins_pri.h"
 
 /* The FFI tables, which we initialise to NULL to indicate that they have not
@@ -389,4 +389,10 @@ TVM_INSTRUCTION (ins_xend)
 }
 
 #endif /* TVM_OCCAM_PI */
+
+/* 0xFD - 0x2F 0xFD - null - put null onto the stack */
+TVM_INSTRUCTION (ins_null)
+{
+	STACK_RET((WORD) NULL_P, AREG, BREG);
+}
 

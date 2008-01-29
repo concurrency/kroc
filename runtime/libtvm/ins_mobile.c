@@ -1,5 +1,5 @@
 /*
-tvm - ins_mt.c
+tvm - ins_mobile.c
 The Transterpreter - a portable virtual machine for Transputer bytecode
 Copyright (C) 2004-2008 Christian L. Jacobsen, Matthew C. Jadud, Carl G. Ritson
 
@@ -26,8 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ins_barrier.h"
 #include "ins_chan.h"
-#include "ins_fred.h"
-#include "ins_mt.h"
+#include "ins_mobile.h"
 #include "ins_pri.h"
 #include "ins_sec.h"
 
@@ -592,6 +591,140 @@ TVM_HELPER int mt_alloc (ECTX ectx, UWORD type, UWORD size, WORDPTR *ret)
 	return ectx->set_error_flag (ectx, EFLAG_MT);
 }
 /*}}}*/
+
+/* 0x11 - 0x21 0xF1 - mreleasep - dynamic process release */
+TVM_INSTRUCTION (ins_mreleasep)
+{
+	/* Find the pointer to the allocated block, size comes in from AREG */
+	BYTEPTR ptr = ((BYTEPTR)WPTR) + (AREG * TVM_WORD_LENGTH);
+	//printf(">mreleasep\n");
+	//printf("  ptr = 0x%08x\n", (WORD) ptr);
+	mt_release_simple(ectx, (WORDPTR) ptr, MT_MAKE_TYPE(MT_DATA));
+
+	RUN_NEXT_ON_QUEUE_RET();
+	//printf("<mreleasep\n");
+}
+
+#if 0
+/* 0x62 - 0x26 0xF2 - minn - multi dimension mobile array input */
+TVM_INSTRUCTION (ins_minn)
+{
+	/* Set up the AREG to be in bytes (what in expects) rather than 
+	 * words (what minn gets)
+	 */
+	AREG = AREG << WSH;
+
+	return ins_in(ectx);
+}
+
+/* 0x64 - 0x26 0xF4 - moutn - multi dimension mobile array output */
+TVM_INSTRUCTION (ins_moutn)
+{
+	/* Set up the AREG to be in bytes (what out expects) rather than 
+	 * words (what moutn gets)
+	 */
+	AREG = AREG << WSH;
+
+	return ins_out(ectx);
+}
+#endif
+
+/* 0xE2 - 0x2E 0xF2 - malloc - dynamic memory allocation */
+TVM_INSTRUCTION (ins_malloc)
+{
+	WORDPTR ptr = (WORDPTR)NULL_P;
+	UWORD size = AREG;
+	
+	if(size != 0)
+	{
+		ptr = mt_alloc_data(ectx, MT_SIMPLE | MT_MAKE_TYPE(MT_DATA), size);
+	}
+
+	STACK_RET((WORD)ptr, UNDEFINE(BREG), UNDEFINE(CREG));
+}
+
+/* 0xE3 - 0x2E 0xF3 - mrelease - dynamic memory release */
+TVM_INSTRUCTION (ins_mrelease)
+{
+	if(AREG == (WORD)NULL_P)
+	{
+		return ectx->set_error_flag(ectx, EFLAG_DMEM);
+	}
+
+	return mt_release_simple(ectx, (WORDPTR)AREG, MT_MAKE_TYPE(MT_DATA));
+}
+
+#if 0
+/* 0xE4 - 0x2E 0xF4 - min - mobile input */
+TVM_INSTRUCTION (ins_min)
+{
+	WORDPTR chan_ptr	= (WORDPTR)AREG;
+	WORDPTR data_ptr	= (WORDPTR)BREG;
+
+	return chan_swap(ectx, chan_ptr, data_ptr);
+}
+
+/* 0xE5 - 0x2E 0xF5 - mout - mobile output */
+TVM_INSTRUCTION (ins_mout)
+{
+	WORDPTR chan_ptr = (WORDPTR)AREG;
+	WORDPTR data_ptr = (WORDPTR)BREG;
+
+	return chan_swap(ectx, chan_ptr, data_ptr);
+}
+
+/* 0xE6 - 0x2E 0xF6 - min64 - dynamic mobile array input */
+TVM_INSTRUCTION (ins_min64)
+{
+	BYTEPTR data_ptr = (BYTEPTR)BREG;
+	WORDPTR chan_ptr = (WORDPTR)AREG;
+
+	return chan_in(ectx, 8, chan_ptr, data_ptr);
+}
+
+/* 0xE7 - 0x2E 0xF7 - mout64 - dynamic mobile array output */
+TVM_INSTRUCTION (ins_mout64)
+{
+	BYTEPTR data_ptr = (BYTEPTR)BREG;
+	WORDPTR chan_ptr = (WORDPTR)AREG;
+
+	return chan_out(ectx, 8, chan_ptr, data_ptr);
+}
+
+/* 0xEA - 0x2E 0xFA - xmin - Extended Mobile Input */
+TVM_INSTRUCTION (ins_xmin)
+{
+	WORDPTR chan_addr = (WORDPTR) AREG;
+	WORDPTR data_ptr = (WORDPTR) BREG;
+	WORDPTR other_ptr;
+	WORDPTR other_WPTR;
+
+	other_WPTR = (WORDPTR) read_word(chan_addr);
+	other_ptr = (WORDPTR) WORKSPACE_GET(other_WPTR, WS_POINTER);
+
+	swap_data_word(data_ptr, other_ptr);
+
+	UNDEFINE_STACK_RET();
+}
+
+/* 0xEB - 0x2E 0xFB - xmin64 - Extended Dynamic Mobile Array Input */
+TVM_INSTRUCTION (ins_xmin64)
+{
+	/* Push 8 (byte count) onto stack. */
+	STACK(8, AREG, BREG);
+	/* Do an XIN */
+	return ins_xin(ectx);
+}
+
+/* 0x65 - 0x26 0xF5 - xminn - Extended multi-dim Dynamic Mobile Array Input */
+TVM_INSTRUCTION (ins_xminn)
+{
+	/* Convert word count to byte count */
+	AREG = AREG << WSH;
+	/* Do an XIN */
+	return ins_xin(ectx);
+}
+#endif
 
 /* 0x238 - 0x22 0x23 0xF8 - mt_alloc - allocate a mobile type */
 TVM_INSTRUCTION (ins_mt_alloc)

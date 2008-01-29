@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "scheduler.h"
 
-#include "ins_mt.h"
+#include "ins_mobile.h"
 #include "ins_pri.h"
 #include "ins_sec.h"
 

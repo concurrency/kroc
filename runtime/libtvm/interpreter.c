@@ -32,13 +32,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef TVM_DISPATCH_SWITCH
 #include "mem.c"
-#include "dmem.c"
 #include "ins_alt.c"
 #include "ins_barrier.c"
 #include "ins_chan.c"
 #include "ins_float.c"
-#include "ins_fred.c"
-#include "ins_mt.c"
+#include "ins_pi.c"
+#include "ins_mobile.c"
 #include "ins_pri.c"
 #include "ins_proc.c"
 #include "ins_rmox.c"

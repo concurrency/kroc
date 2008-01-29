@@ -1,5 +1,5 @@
 /*
-tvm - ins_fred.h
+tvm - ins_pi.h
 The Transterpreter - a portable virtual machine for Transputer bytecode
 Copyright (C) 2004-2008 Christian L. Jacobsen, Matthew C. Jadud
 
@@ -18,8 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef INS_FRED_H
-#define INS_FRED_H
+#ifndef INS_PI_H
+#define INS_PI_H
 
 #include "instructions.h"
 #include "tvm_types.h"
@@ -73,7 +73,7 @@ TVM_INSTRUCTION_PROTO (ins_sem_claim);
 TVM_INSTRUCTION_PROTO (ins_sem_release);
 
 /****************************************************************************
- *              0x28 0xF_         0x28 0xF_         0x28 0xF_               *
+ *              0x2E 0xF_         0x2E 0xF_         0x2E 0xF_               *
  ****************************************************************************/
 
 /* 0xE8 - 0x2E 0xF8 - xable - Extended Input Enable */
@@ -85,4 +85,11 @@ TVM_INSTRUCTION_PROTO (ins_xend);
 
 #endif /* TVM_OCCAM_PI */
 
-#endif /* INS_FRED_H */
+/****************************************************************************
+ *              0x2F 0xF_         0x2F 0xF_         0x2F 0xF_               *
+ ****************************************************************************/
+
+/* 0xFD - 0x2F 0xFD - null - put null onto the stack I think */
+TVM_INSTRUCTION_PROTO (ins_null);
+
+#endif /* INS_PI_H */
