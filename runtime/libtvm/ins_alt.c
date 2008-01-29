@@ -246,7 +246,7 @@ TVM_INSTRUCTION (ins_alt)
 {
 	/* Set the alt state as enabeling */
 	WORKSPACE_SET(WPTR, WS_ALT_STATE, ENABLING_P);
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x44 - 0x24 0xF4 - altwt - alt wait */
@@ -268,7 +268,7 @@ TVM_INSTRUCTION (ins_altwt)
 		WORKSPACE_SET(WPTR, WS_ALT_STATE, WAITING_P);
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
 		WORKSPACE_SET(WPTR, WS_TOP, NONE_SELECTED_O);
-		return run_next_on_queue();
+		RUN_NEXT_ON_QUEUE_RET();
 	}
 }
 
@@ -278,7 +278,7 @@ TVM_INSTRUCTION (ins_altend)
 	/* Add the jump offset which has been stored at the top of the workspace by
 	 * one of the disabeling instructions to the current IPTR */
 	IPTR = byteptr_plus(IPTR, WORKSPACE_GET(WPTR, WS_TOP));
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x47 - 0x24 0xF7 - enbt - enable timer */
@@ -357,7 +357,7 @@ TVM_INSTRUCTION (ins_enbs)
 	{
 		WORKSPACE_SET(WPTR, WS_ALT_STATE, DISABLING_P);
 	}
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x4E - 0x24 0xFE - talt - timer alt start */
@@ -367,7 +367,7 @@ TVM_INSTRUCTION (ins_talt)
 	WORKSPACE_SET(WPTR, WS_ALT_STATE, ENABLING_P);
 	/* Set up the timer */
 	WORKSPACE_SET(WPTR, WS_ALT_T, TIME_NOT_SET_P);
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 
@@ -397,7 +397,7 @@ TVM_INSTRUCTION (ins_taltwt)
 		WORKSPACE_SET(WPTR, WS_ALT_STATE, WAITING_P);
 
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
-		return run_next_on_queue();
+		RUN_NEXT_ON_QUEUE_RET();
 	}
 	/* Redundant if? */
 	else if(TIME_AFTER(current_time, WORKSPACE_GET(WPTR, WS_TIMEOUT)))
@@ -413,7 +413,7 @@ TVM_INSTRUCTION (ins_taltwt)
 		WORKSPACE_SET(WPTR, WS_TIMEOUT, WORKSPACE_GET(WPTR, WS_TIMEOUT) + 1);
 
 		/*traverse_and_insert(TPTR, TPTR);*/
-		timer_queue_insert(current_time, WORKSPACE_GET(WPTR, WS_TIMEOUT));
+		TIMER_QUEUE_INSERT(WPTR, current_time, WORKSPACE_GET(WPTR, WS_TIMEOUT));
 		/*print_timer_queue();*/
 		/* Redundant if? */
 		if(WORKSPACE_GET(WPTR, WS_ALT_STATE) != DISABLING_P)
@@ -421,7 +421,7 @@ TVM_INSTRUCTION (ins_taltwt)
 			WORKSPACE_SET(WPTR, WS_ALT_STATE, WAITING_P);
 
 			WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
-			return run_next_on_queue();
+			RUN_NEXT_ON_QUEUE_RET();
 		}
 		else
 		{
@@ -429,6 +429,6 @@ TVM_INSTRUCTION (ins_taltwt)
 		}
 	}
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 

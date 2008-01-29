@@ -51,7 +51,7 @@ TVM_INSTRUCTION (ins_reschedule)
 {
 	tvm_add_to_queue(WPTR, IPTR);
 
-	return run_next_on_queue();
+	RUN_NEXT_ON_QUEUE_RET();
 }
 
 /* 0x24 - 0x22 0xF4 - widenshort */
@@ -133,7 +133,7 @@ TVM_INSTRUCTION (ins_lend3)
 		IPTR = byteptr_minus(IPTR, AREG);
 	}
 	
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x27 - 0x22 0xF7 - lendbw - backwards loopend */
@@ -160,7 +160,7 @@ TVM_INSTRUCTION (ins_lendbw)
 		IPTR = byteptr_minus(IPTR, AREG);
 	}
 	
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 #ifdef TVM_OCCAM_PI
@@ -224,15 +224,15 @@ TVM_INSTRUCTION (ins_setpri)
 /* 0xAD - 0x2A 0xFD - ins_savecreg - save the creg */
 TVM_INSTRUCTION (ins_savecreg)
 {
-	ectx->saved_creg = CREG;
-	return ECTX_INS_OK;
+	ectx->_creg = CREG;
+	return ECTX_CONTINUE;
 }
 
 /* 0xAE - 0x2A 0xFE - ins_restorecreg - restore the creg */
 TVM_INSTRUCTION (ins_restorecreg)
 {
-	CREG = ectx->saved_creg;
-	return ECTX_INS_OK;
+	CREG = ectx->_creg;
+	return ECTX_CONTINUE;
 }
 
 #ifdef TVM_OCCAM_PI
@@ -250,7 +250,7 @@ TVM_HELPER void tvm_sem_init(WORDPTR sem)
 	write_word(wordptr_plus(sem, 1), (WORD) NOT_PROCESS_P);
 }
 
-TVM_HELPER int tvm_sem_claim(tvm_ectx_t *ectx, WORDPTR sem)
+TVM_HELPER int tvm_sem_claim(ECTX ectx, WORDPTR sem)
 {
 	WORD sem_fptr = read_word(wordptr_plus(sem, SEM_FPTR));
 
@@ -282,11 +282,11 @@ TVM_HELPER int tvm_sem_claim(tvm_ectx_t *ectx, WORDPTR sem)
 			WORKSPACE_SET(sem_bptr, WS_NEXT, (WORD) WPTR);
 			write_word(sem_bptr_ptr, (WORD) WPTR);
 		}
-		return run_next_on_queue();
+		RUN_NEXT_ON_QUEUE_RET();
 	}
 }
 
-TVM_HELPER int tvm_sem_release(tvm_ectx_t *ectx, WORDPTR sem)
+TVM_HELPER int tvm_sem_release(ECTX ectx, WORDPTR sem)
 {
 	WORDPTR sem_fptr_ptr = wordptr_plus(sem, SEM_FPTR);
 	WORD sem_fptr = read_word(sem_fptr_ptr);
@@ -334,9 +334,6 @@ TVM_INSTRUCTION (ins_sem_release)
  *              0x2E 0xF_         0x2E 0xF_         0x2E 0xF_               *
  ****************************************************************************/
 
-
-/* FIXME: All extended input instrucitons, priority is currently not handled */
-
 /* 0xE8 - 0x2E 0xF8 - xable - Extended Input Enable */
 TVM_INSTRUCTION (ins_xable)
 {
@@ -355,7 +352,7 @@ TVM_INSTRUCTION (ins_xable)
 		write_word(chan_addr, (WORD) WPTR);
 
 		/* Find something else to run */
-		return run_next_on_queue();
+		RUN_NEXT_ON_QUEUE_RET();
 	}
 
 	UNDEFINE_STACK_RET();

@@ -78,7 +78,7 @@ TVM_INSTRUCTION (ins_endp)
 		/* The entire stack becomes undefined */
 		//STACK(UNDEFINE(AREG), UNDEFINE(BREG), UNDEFINE(CREG));
 		/* Run the next process */
-		return run_next_on_queue();
+		RUN_NEXT_ON_QUEUE_RET();
 	}
 }
 
@@ -120,7 +120,7 @@ TVM_INSTRUCTION (ins_gcall)
 	 * do this!!!! */
 	WORKSPACE_SET(WPTR, WS_TOP, AREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x08 - 0xF8 - prod - Unchecked Multiplication (product) */
@@ -206,7 +206,7 @@ TVM_INSTRUCTION (ins_stopp)
 {
 	WORKSPACE_SET((WORDPTR) WPTR, WS_IPTR, (WORD) IPTR);
 
-	return run_next_on_queue();
+	RUN_NEXT_ON_QUEUE_RET();
 }
 	
 /* 0x16 - 0x21 0xF6 LADD - long addition  - used in conjunction with lsum*/
@@ -250,7 +250,7 @@ TVM_INSTRUCTION (ins_norm)
 		/* STACK(AREG, BREG, CREG) */
 	}
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 #if TVM_WORD_LENGTH == 4
@@ -420,7 +420,7 @@ TVM_INSTRUCTION (ins_ret)
 	IPTR = ret_addr;
 	WPTR = wordptr_plus(WPTR, 4);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x21 - 0x22 0xF1 - lend - loop end */
@@ -712,7 +712,7 @@ TVM_INSTRUCTION (ins_lsub)
 TVM_INSTRUCTION (ins_runp)
 {
 	tvm_just_add_to_queue((WORDPTR)AREG);
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x3B - 0x23 0xFB - sb - store byte */
@@ -732,7 +732,7 @@ TVM_INSTRUCTION (ins_gajw)
 	WPTR = (WORDPTR)AREG;
 	AREG = tmp;
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* WARNING: saveh as implemented here does not work as described in the
@@ -900,7 +900,7 @@ TVM_INSTRUCTION (ins_mul)
 /* 0x55 - 0x25 0xF5 - stoperr - stop on error */
 TVM_INSTRUCTION (ins_stoperr)
 {
-	if(ectx->error_flag)
+	if(ectx->eflags)
 	{
 		/* Undefine the whole stack */
 		UNDEFINE_STACK();
@@ -909,11 +909,11 @@ TVM_INSTRUCTION (ins_stoperr)
 		write_word(wordptr_minus(WPTR, 1), (WORD)IPTR);
 
 		/* Run a new process */
-		return run_next_on_queue();
+		RUN_NEXT_ON_QUEUE_RET();
 	}
 	else
 	{
-		return ECTX_INS_OK;
+		return ECTX_CONTINUE;
 	}
 }
 

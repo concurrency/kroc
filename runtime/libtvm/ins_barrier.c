@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define BAR_FPTR 	2
 #define BAR_BPTR 	3
 
-static void tvm_bar_complete(tvm_ectx_t *ectx, WORDPTR bar)
+static void tvm_bar_complete(ECTX ectx, WORDPTR bar)
 {
 	/* Load barrier state. */
 	WORD enrolled	= read_word(wordptr_plus(bar, BAR_ENROLLED));
@@ -57,7 +57,7 @@ TVM_HELPER void tvm_bar_init(WORDPTR bar, UWORD initial_count)
 	write_word(wordptr_plus(bar, BAR_BPTR), (WORD) NOT_PROCESS_P);
 }
 
-TVM_HELPER int tvm_bar_sync(tvm_ectx_t *ectx, WORDPTR bar)
+TVM_HELPER int tvm_bar_sync(ECTX ectx, WORDPTR bar)
 {
 	UWORD count = (UWORD) read_word(wordptr_plus(bar, BAR_COUNT));
 
@@ -88,17 +88,17 @@ TVM_HELPER int tvm_bar_sync(tvm_ectx_t *ectx, WORDPTR bar)
 		write_word(wordptr_plus(bar, BAR_BPTR), (WORD) WPTR);
 
 		/* Schedule new process. */
-		return run_next_on_queue();
+		RUN_NEXT_ON_QUEUE_RET();
 	}
 	else
 	{
 		/* Yes, complete barrier. */
 		tvm_bar_complete(ectx, bar);
-		return ECTX_INS_OK;
+		return ECTX_CONTINUE;
 	}
 }
 
-TVM_HELPER int tvm_bar_enroll(tvm_ectx_t *ectx, WORDPTR bar, UWORD enroll_count)
+TVM_HELPER int tvm_bar_enroll(ECTX ectx, WORDPTR bar, UWORD enroll_count)
 {
 	UWORD enrolled	= read_word(wordptr_plus(bar, BAR_ENROLLED));
 	UWORD count	= read_word(wordptr_plus(bar, BAR_COUNT));
@@ -112,10 +112,10 @@ TVM_HELPER int tvm_bar_enroll(tvm_ectx_t *ectx, WORDPTR bar, UWORD enroll_count)
 	write_word(wordptr_plus(bar, BAR_ENROLLED), (WORD) (enrolled + enroll_count));
 	write_word(wordptr_plus(bar, BAR_COUNT), (WORD) (count + enroll_count));
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
-TVM_HELPER int tvm_bar_resign(tvm_ectx_t *ectx, WORDPTR bar, UWORD resign_count)
+TVM_HELPER int tvm_bar_resign(ECTX ectx, WORDPTR bar, UWORD resign_count)
 {
 	UWORD enrolled	= (UWORD) read_word(wordptr_plus(bar, BAR_ENROLLED));
 	UWORD count	= (UWORD) read_word(wordptr_plus(bar, BAR_COUNT));
@@ -144,7 +144,7 @@ TVM_HELPER int tvm_bar_resign(tvm_ectx_t *ectx, WORDPTR bar, UWORD resign_count)
 		tvm_bar_complete(ectx, bar);
 	}
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0xB0 - 0x2B 0xF0 - barrier intialisation */

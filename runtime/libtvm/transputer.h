@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tvm_types.h"
 
+/*{{{  Word length related constants */
 #if TVM_WORD_LENGTH == 4
 #	define MIN_INT		0x80000000
 #	define MAX_INT		(MIN_INT - 1)
@@ -47,6 +48,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #else
 #	error Wordlength not supported
 #endif
+/*}}}*/
+
+/*{{{  Other transputer constants */
 #define NOT_PROCESS_P		0
 #define NULL_P			NOT_PROCESS_P
 #define ENABLING_P		(MIN_INT + 1)
@@ -56,39 +60,66 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define TIME_SET_P		(MIN_INT + 1)
 #define TIME_NOT_SET_P		(MIN_INT + 2)
 #define NONE_SELECTED_O		(-1)
+/*}}}*/
 
-typedef struct _tvm_ectx_t tvm_ectx_t;
-/* Transputer registers and flags, make up execution context */
+/*{{{  Transputer registers and flags, make up execution context */
+
+typedef struct _tvm_ectx_t	tvm_ectx_t;
+typedef tvm_ectx_t		*ECTX;
+#ifndef TVM_ECTX_PRIVATE_DATA
+#define TVM_ECTX_PRIVATE_DATA	WORD
+typedef TVM_ECTX_PRIVATE_DATA	tvm_ectx_priv_t;
+#endif /* !TVM_ECTX_PRIVATE_DATA */
+
 struct _tvm_ectx_t {
-	BYTEPTR iptr;		/* Instruction pointer */
-	WORDPTR wptr;		/* Workspace pointer */
+	BYTEPTR		iptr;	/* Instruction pointer */
 	
-	WORD areg;		/* Evaluation stack */
-	WORD breg;		/* Evaluation stack */
-	WORD creg;		/* Evaluation stack */
-	WORD oreg;		/* Operand register */
+	WORD		oreg;	/* Operand register */
+	WORD		areg;	/* Evaluation stack */
+	WORD		breg;	/* Evaluation stack */
+	WORD		creg;	/* Evaluation stack */
 
-	WORDPTR fptr;		/* Front pointer (scheduler queue) */
-	WORDPTR bptr;		/* Back pointer (scheduler queue) */
-	WORDPTR tptr;		/* Timer queue pointer */
-	WORD tnext;		/* Timeout register */
+	WORD		pri;	/* Priority */
 
-	WORD saved_creg;	/* Special case CREG storage */
-	WORD error_flag;
-	WORD halt_on_error_flag;
+	WORDPTR		wptr;	/* Workspace pointer */
+	WORDPTR		fptr;	/* Front pointer (scheduler queue) */
+	WORDPTR		bptr;	/* Back pointer (scheduler queue) */
+	WORDPTR		tptr;	/* Timer queue pointer */
+	WORD		tnext;	/* Timeout register */
 
-	WORD pri;
+	WORD 		_creg;	/* Special case CREG storage */
+	
+	WORD 		eflags;	/* Error flags */
+	WORD 		state;	/* Context state */
 
-	int (*set_error_flag)(tvm_ectx_t *ctx, WORD flag);
-	void (*add_to_queue)(tvm_ectx_t *ctx, WORDPTR ws);
-	void (*add_queue_to_queue)(tvm_ectx_t *ctx, WORDPTR front, WORDPTR back);
-	void (*timer_queue_insert)(tvm_ectx_t *ctx, WORD current_time, WORD reschedule_time);
-	int (*run_next_on_queue)(tvm_ectx_t *ctx);
+	volatile WORD 	sflags;	/* Synchronisation flags */
 
-	WORD (*get_time)(tvm_ectx_t *ctx);
-	void (*set_alarm)(tvm_ectx_t *ctx, WORD alarm);
+	/* Implementation function tables */
+	void		(*add_to_queue)
+				(ECTX ectx, WORDPTR ws);
+	int		(*add_to_queue_external)
+				(ECTX dst_ctx, ECTX src_ctx, WORDPTR ws);
+	void		(*add_queue_to_queue)
+				(ECTX ectx, WORDPTR front, WORDPTR back);
+	int		(*run_next_on_queue)
+				(ECTX ectx);
+	int		(*set_error_flag)
+				(ECTX ectx, WORD flag);
+	void		(*timer_queue_insert)
+				(ECTX ectx, WORDPTR ws, WORD current_time, WORD reschedule_time);
+
+	WORD		(*get_time)
+				(ECTX ectx);
+	void		(*set_alarm)
+				(ECTX ectx, WORD alarm);
+
+	/* Private data */
+	tvm_ectx_priv_t	priv;
 };
 
+/*}}}*/
+
+/*{{{  Internal macros */
 #ifdef TVM_INTERNALS
 
 #define IPTR	(ectx->iptr)
@@ -107,5 +138,6 @@ struct _tvm_ectx_t {
 #define PPRI	(ectx->pri)
 
 #endif /* TVM_INTERNAL_MACROS */
+/*}}}*/
 
 #endif /* TRANSPUTER_H */

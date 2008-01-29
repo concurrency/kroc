@@ -38,7 +38,6 @@ include_HEADERS = \
 	tvm_types.h
 
 libtvm_a_SOURCES = \
-	ext_chan.c \
 	interpreter.c \
 	mem_array.c \
 	mem_bigendian.c \

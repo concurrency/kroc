@@ -22,10 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "instructions.h"
 #include "interpreter.h"
 
-/* Jump hooks for unimplemented and invalid instructions */
-void (*tvm_not_implemented)(void)	= NULL; /* Jump hook for unimplemented instructions */
-void (*tvm_invalid)(void)		= NULL; /* Jump hook for invalid instructions */
-
 /**
  * This function is placed in the instruction jump table for instructions
  * which have not been implemented, but are otherwise valid.

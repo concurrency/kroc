@@ -41,7 +41,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define SET_ROUNDMODE_RET(X) \
 	do {					\
 		SET_ROUNDMODE(X);		\
-		return ECTX_INS_OK;		\
+		return ECTX_CONTINUE;		\
 	} while(0)
 
 #endif /* TVM_USE_FPU */

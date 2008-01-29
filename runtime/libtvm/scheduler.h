@@ -21,13 +21,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-extern int has_shutdown;
+#define ADD_TO_QUEUE(WS) \
+	do { ectx->add_to_queue (ectx, (WS)); } while (0)
 
-#ifdef SCHEDULER_ENABLE_BUSYWAIT_HOOK
-extern void (*scheduler_busywait_hook)(void);
-#endif
+#define ADD_TO_QUEUE_IPTR(WS,IP) \
+	do { 							\
+		WORKSPACE_SET ((WS), WS_IPTR, (WORD)(IP)); 	\
+		ADD_TO_QUEUE ((WS));				\
+	} while (0)
 
-extern void timer_queue_insert(WORD current_time, WORD reschedule_time);
-extern int run_next_on_queue(void);
+#define RUN_NEXT_ON_QUEUE() \
+	do {							\
+		int ret = ectx->run_next_on_queue (ectx);	\
+		if (ret)					\
+			return ret;				\
+	} while (0)
+
+#define RUN_NEXT_ON_QUEUE_RET() \
+	do { return ectx->run_next_on_queue (ectx); } while (0)
+
+#define TIMER_QUEUE_INSERT(WS,NOW,RESCHED) \
+	do { ectx->timer_queue_insert (ectx, (WS), (NOW), (RESCHED)); } while (0)
+
+extern void _tvm_install_scheduler (ECTX ectx);
 
 #endif
