@@ -1,22 +1,16 @@
-
-VAL INT PORTHIO           IS #FFC01700: -- Port H I/O Pin State Specifiy Register 
-VAL INT TIMER2.WIDTH      IS #FFC0062C: -- Timer 2 Width Register
-VAL INT TIMER3.WIDTH      IS #FFC0063C: -- Timer 3 Width Register
-
-
-#INCLUDE "../platform/config.inc"
-#INCLUDE "../includes/defBF534.inc"
+#INCLUDE "config.inc"
+#INCLUDE "defBF534.inc"
 
 PROC set.pwm (VAL INT left, right)
   INITIAL INT left IS left:
   INITIAL INT right IS right:
-  PLACED [1]INT port.h.io PORTHIO:
-  PLACED [1]INT timer2.width TIMER2.WIDTH:
-  PLACED [1]INT timer3.width TIMER3.WIDTH:
+  PLACED [PORTHIO.LEN]INT port.h.io PORTHIO.ADDR:
+  #PRAGMA DEFINED port.h.io
   PLACED [TIMER2.LEN]INT timer2 TIMER2.ADDR:
+  PLACED [TIMER3.LEN]INT timer3 TIMER3.ADDR:
   INT h.val:
   SEQ
-    h.val := port.h.io[0]
+    h.val := port.h.io[PORTHIO]
     IF
       left < 0
         -- clear left direction bit
@@ -47,8 +41,8 @@ PROC set.pwm (VAL INT left, right)
       TRUE
         SKIP
 
-    timer2.width[0] := ((PERIPHERAL.CLOCK / 1000) * left) / 100
-    timer3.width[0] := ((PERIPHERAL.CLOCK / 1000) * right) / 100
+    timer2[TIMER2.WIDTH] := ((PERIPHERAL.CLOCK / 1000) * left) / 100
+    timer3[TIMER3.WIDTH] := ((PERIPHERAL.CLOCK / 1000) * right) / 100
 :
 
 PROC sleep.ms (VAL INT ms)
