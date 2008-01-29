@@ -180,8 +180,8 @@ static WORDPTR mt_alloc_barrier (UWORD type)
 	return wordptr_plus (mb, MT_BARRIER_PTR_OFFSET);
 }
 /*}}}*/
-/*{{{  TVM_HELPER WORDPTR mt_alloc_data (tvm_ectx_t *ectx, UWORD type, UWORD size)*/
-TVM_HELPER WORDPTR mt_alloc_data (tvm_ectx_t *ectx, UWORD type, UWORD size)
+/*{{{  TVM_HELPER WORDPTR mt_alloc_data (ECTX ectx, UWORD type, UWORD size)*/
+TVM_HELPER WORDPTR mt_alloc_data (ECTX ectx, UWORD type, UWORD size)
 {	
 	WORDPTR md;
 	UWORD bytes = (size + (sizeof(UWORD) - 1)) & (~(sizeof(UWORD) - 1));
@@ -195,8 +195,8 @@ TVM_HELPER WORDPTR mt_alloc_data (tvm_ectx_t *ectx, UWORD type, UWORD size)
 	return wordptr_plus (md, MT_DATA_PTR_OFFSET);
 }
 /*}}}*/
-/*{{{   TVM_HELPER int mt_release_simple (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type)*/
-TVM_HELPER int mt_release_simple (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type)
+/*{{{   TVM_HELPER int mt_release_simple (ECTX ectx, WORDPTR ptr, UWORD type)*/
+TVM_HELPER int mt_release_simple (ECTX ectx, WORDPTR ptr, UWORD type)
 {
 	switch (MT_TYPE(type)) {
 		case MT_ARRAY:
@@ -273,11 +273,11 @@ TVM_HELPER int mt_release_simple (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type)
 		default:
 			return ectx->set_error_flag (ectx, EFLAG_MT);
 	}
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 /*}}}*/
-/*{{{  TVM_HELPER int mt_release (tvm_ectx_t *ectx, WORDPTR ptr)*/
-TVM_HELPER int mt_release (tvm_ectx_t *ectx, WORDPTR ptr)
+/*{{{  TVM_HELPER int mt_release (ECTX ectx, WORDPTR ptr)*/
+TVM_HELPER int mt_release (ECTX ectx, WORDPTR ptr)
 {
 	UWORD type = read_type (ptr);
 
@@ -288,8 +288,8 @@ TVM_HELPER int mt_release (tvm_ectx_t *ectx, WORDPTR ptr)
 	}
 }
 /*}}}*/
-/*{{{  static int mt_clone_array (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)*/
-static int mt_clone_array (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)
+/*{{{  static int mt_clone_array (ECTX ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)*/
+static int mt_clone_array (ECTX ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)
 {
 	WORDPTR src = wordptr_minus (ptr, MT_ARRAY_PTR_OFFSET);
 	WORDPTR dst, dst_data, dst_dim, src_data, src_dim;
@@ -337,11 +337,11 @@ static int mt_clone_array (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type, WORDPTR *r
 	}
 
 	*ret = wordptr_plus (dst, MT_ARRAY_PTR_OFFSET);
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }	
 /*}}}*/
-/*{{{  static int mt_clone_simple (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)*/
-static int mt_clone_simple (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)
+/*{{{  static int mt_clone_simple (ECTX ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)*/
+static int mt_clone_simple (ECTX ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)
 {
 	switch (MT_TYPE(type)) {
 		case MT_ARRAY:
@@ -383,11 +383,11 @@ static int mt_clone_simple (tvm_ectx_t *ectx, WORDPTR ptr, UWORD type, WORDPTR *
 			*ret = (WORDPTR) NULL_P;
 			return ectx->set_error_flag (ectx, EFLAG_MT);
 	}
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 /*}}}*/
-/*{{{  TVM_HELPER int mt_clone (tvm_ectx_t *ectx, WORDPTR ptr, WORDPTR *ret)*/
-TVM_HELPER int mt_clone (tvm_ectx_t *ectx, WORDPTR ptr, WORDPTR *ret)
+/*{{{  TVM_HELPER int mt_clone (ECTX ectx, WORDPTR ptr, WORDPTR *ret)*/
+TVM_HELPER int mt_clone (ECTX ectx, WORDPTR ptr, WORDPTR *ret)
 {
 	UWORD type = read_type (ptr);
 
@@ -409,7 +409,7 @@ static void mt_io_update_shared_cb (WORDPTR *ptr)
 }
 /*}}}*/
 /*{{{  static int mt_io_update_barrier (WORDPTR *ptr)*/
-static int mt_io_update_barrier (tvm_ectx_t *ectx, WORDPTR *ptr)
+static int mt_io_update_barrier (ECTX ectx, WORDPTR *ptr)
 {
 	WORDPTR mb = wordptr_minus (*ptr, MT_BARRIER_PTR_OFFSET);
 	UWORD refs = (UWORD) read_offset (mb, mt_barrier_internal_t, ref_count);
@@ -419,17 +419,17 @@ static int mt_io_update_barrier (tvm_ectx_t *ectx, WORDPTR *ptr)
 	if (MT_BARRIER_TYPE(type) == MT_BARRIER_FULL) {
 		return tvm_bar_enroll (ectx, *ptr, 1);
 	} else {
-		return ECTX_INS_OK;
+		return ECTX_CONTINUE;
 	}
 }
 /*}}}*/
-/*{{{  static int mt_io_update_array (tvm_ectx_t *ectx, WORDPTR *ptr, UWORD inner)*/
-static int mt_io_update_array (tvm_ectx_t *ectx, WORDPTR *ptr, UWORD inner)
+/*{{{  static int mt_io_update_array (ECTX ectx, WORDPTR *ptr, UWORD inner)*/
+static int mt_io_update_array (ECTX ectx, WORDPTR *ptr, UWORD inner)
 {
 	WORDPTR ma	= wordptr_minus (ptr, MT_ARRAY_PTR_OFFSET);
 	WORDPTR data	= (WORDPTR) read_offset (ma, mt_array_internal_t, array.data);
 	UWORD size	= (UWORD) read_offset (ma, mt_array_internal_t, size);
-	int ret 	= ECTX_INS_OK;
+	int ret 	= ECTX_CONTINUE;
 
 	switch (MT_TYPE(inner)) {
 		case MT_ARRAY:
@@ -488,8 +488,8 @@ static int mt_io_update_array (tvm_ectx_t *ectx, WORDPTR *ptr, UWORD inner)
 	return ret;
 }
 /*}}}*/
-/*{{{  TVM_HELPER int mt_io_update (tvm_ectx_t *ectx, WORDPTR *ptr, UWORD *move)*/
-TVM_HELPER int mt_io_update (tvm_ectx_t *ectx, WORDPTR *ptr, UWORD *move)
+/*{{{  TVM_HELPER int mt_io_update (ECTX ectx, WORDPTR *ptr, UWORD *move)*/
+TVM_HELPER int mt_io_update (ECTX ectx, WORDPTR *ptr, UWORD *move)
 {
 	UWORD type = read_type (*ptr);
 
@@ -529,11 +529,11 @@ TVM_HELPER int mt_io_update (tvm_ectx_t *ectx, WORDPTR *ptr, UWORD *move)
 		return ectx->set_error_flag (ectx, EFLAG_MT);
 	}
 	
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 /*}}}*/
-/*{{{  TVM_HELPER int mt_chan_io (tvm_ectx_t *ectx, WORDPTR dst, WORDPTR src)*/
-TVM_HELPER int mt_chan_io (tvm_ectx_t *ectx, WORDPTR dst, WORDPTR src)
+/*{{{  TVM_HELPER int mt_chan_io (ECTX ectx, WORDPTR dst, WORDPTR src)*/
+TVM_HELPER int mt_chan_io (ECTX ectx, WORDPTR dst, WORDPTR src)
 {
 	/* Read pointer to mobile type */
 	WORDPTR ptr = (WORDPTR) read_word (src);
@@ -552,26 +552,26 @@ TVM_HELPER int mt_chan_io (tvm_ectx_t *ectx, WORDPTR dst, WORDPTR src)
 	}
 	/* Write out possibly new pointer to mobile type */
 	write_word (dst, (WORD) ptr);
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 /*}}}*/
-/*{{{  TVM_HELPER int mt_alloc (tvm_ectx_t *ectx, UWORD type, UWORD size, WORDPTR *ret)*/
-TVM_HELPER int mt_alloc (tvm_ectx_t *ectx, UWORD type, UWORD size, WORDPTR *ret)
+/*{{{  TVM_HELPER int mt_alloc (ECTX ectx, UWORD type, UWORD size, WORDPTR *ret)*/
+TVM_HELPER int mt_alloc (ECTX ectx, UWORD type, UWORD size, WORDPTR *ret)
 {
 	if (type & MT_SIMPLE) {
 		switch (MT_TYPE(type)) {
 			case MT_ARRAY:
 				*ret = mt_alloc_array (type, size);
-				return ECTX_INS_OK;
+				return ECTX_CONTINUE;
 			case MT_CB:
 				*ret = mt_alloc_cb (type, size);
-				return ECTX_INS_OK;
+				return ECTX_CONTINUE;
 			case MT_BARRIER:
 				*ret = mt_alloc_barrier (type);
-				return ECTX_INS_OK;
+				return ECTX_CONTINUE;
 			case MT_DATA:
 				*ret = mt_alloc_data (ectx, type, size);
-				return ECTX_INS_OK;
+				return ECTX_CONTINUE;
 			default:
 				break;
 		}
@@ -748,7 +748,7 @@ TVM_INSTRUCTION (ins_mt_sync)
 					WORKSPACE_SET (WPTR, WS_IPTR, (WORD) IPTR);
 					write_offset (mb, mt_barrier_internal_t, ref_count, refs - 1);
 					write_word (mt, (WORD) WPTR);
-					return run_next_on_queue ();
+					RUN_NEXT_ON_QUEUE_RET();
 				}
 			}
 			break;
@@ -911,8 +911,8 @@ TVM_INSTRUCTION (ins_mt_bind)
 }
 
 
-/*{{{  void *tvm_mt_alloc (tvm_ectx_t *ectx, UWORD type, UWORD size)*/
-void *tvm_mt_alloc (tvm_ectx_t *ectx, UWORD type, UWORD size)
+/*{{{  void *tvm_mt_alloc (ECTX ectx, UWORD type, UWORD size)*/
+void *tvm_mt_alloc (ECTX ectx, UWORD type, UWORD size)
 {
 	WORDPTR ptr;
 	if (!mt_alloc (ectx, type, size, &ptr)) {
@@ -923,8 +923,8 @@ void *tvm_mt_alloc (tvm_ectx_t *ectx, UWORD type, UWORD size)
 }
 /*}}}*/
 
-/*{{{  void *tvm_mt_release (tvm_ectx_t *ectx, void *ptr)*/
-void tvm_mt_release (tvm_ectx_t *ectx, void *ptr)
+/*{{{  void *tvm_mt_release (ECTX ectx, void *ptr)*/
+void tvm_mt_release (ECTX ectx, void *ptr)
 {
 	mt_release (ectx, (WORDPTR) ptr);
 }

@@ -50,6 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #else
 #include "ins_mt.h"
 #include "jumptbl_pri.h"
+#include "scheduler.h"
 #endif
 
 #ifdef ENABLE_RUNLOOP_DBG_HOOKS
@@ -153,70 +154,94 @@ void tvm_init(void)
 {
 }
 
-void tvm_init_ectx(tvm_ectx_t *ectx)
+void tvm_reset_ectx(ECTX ectx)
 {
-	/* setup scheduler queues */
-	FPTR = (WORD *)NOT_PROCESS_P;
-	BPTR = (WORD *)NOT_PROCESS_P;
-	TPTR = (WORD *)NOT_PROCESS_P;
+	ectx->state 	= ECTX_INIT;
+	ectx->eflags	= 0;
+	ectx->sflags	= 0;
 
 	/* evaluation stack */
+	OREG = 0;
 	AREG = 0;
 	BREG = 0;
 	CREG = 0;
-	OREG = 0;
+
+	/* setup scheduler queues */
+	WPTR = (WORDPTR)NOT_PROCESS_P;
+	FPTR = (WORDPTR)NOT_PROCESS_P;
+	BPTR = (WORDPTR)NOT_PROCESS_P;
+	TPTR = (WORDPTR)NOT_PROCESS_P;
+}
+
+void tvm_init_ectx(ECTX ectx)
+{
+	tvm_reset_ectx(ectx);
+	ectx->pri = 0;
+	_tvm_install_scheduler(ectx);
+}
+
+int tvm_dispatch(ECTX ectx)
+{
+	BYTE instr;
+	
+	/* Read the instruction */
+#if (defined MEMORY_INTF_BIGENDIAN)
+	instr = *IPTR; /* FIXME */
+#else
+	instr = read_byte(IPTR);
+#endif
+	
+	/* Increment instruction pointer */
+	IPTR = byteptr_plus(IPTR, 1);
+
+	/* Put the least significant bits in OREG */
+	OREG |= (instr & 0x0f);
+
+#ifdef TVM_DISPATCH_SWITCH
+	return dispatch_instruction(ectx, instr);
+#else
+	/* Use the other bits to index into the jump table */
+	return primaries[instr >> 4](ectx);
+#endif
 }
 
 /** 
  * Runs an execution context until it exits for some reason.
  * Returning the exit reason.
  */
-int tvm_run(tvm_ectx_t *ectx)
+int tvm_run(ECTX ectx)
 {
-	BYTE instr;
 	int ret;
+
+	ectx->state = ECTX_RUNNING;
 
 	for(;;)
 	{
-#ifdef ENABLE_RUNLOOP_DBG_HOOKS
-		if(tvm_runloop_pre)
+		if ((ret = tvm_dispatch(ectx)))
 		{
-			tvm_runloop_pre();
+			return (ectx->state = ret);
 		}
-#endif
-		/* Increment the instruction pointer */
-		//printf("IPTR = %08x\n", (int) IPTR);
-#if (defined MEMORY_INTF_BIGENDIAN)
-		/* FIXME: This is bad! but gets the lego working */
-		instr = *IPTR;
-#else
-		instr = read_byte(IPTR);
-#endif
-		//printf("  instr = %02x\n", instr);
-		IPTR = byteptr_plus(IPTR, 1);
+	}
+}
 
-		/* Put the least significant bits in OREG */
-		OREG |= (instr & 0x0f);
+/** 
+ * Runs an execution context until it exits for some reason,
+ * or reaches the instruction count.  Returning the exit reason.
+ */
+int tvm_run_count(ECTX ectx, UWORD count)
+{
+	int ret;
 
-#ifndef TVM_DISPATCH_SWITCH
-		/* Use the other bits to index into the jump table */
-		if ((ret = primaries[instr >> 4](ectx))) {
-			break;
-		}
-#else
-		if ((ret = dispatch_instruction(ectx, instr))) {
-			break;
-		}
-#endif
+	ectx->state = ECTX_RUNNING;
 
-#ifdef ENABLE_RUNLOOP_DBG_HOOKS
-		if(tvm_runloop_post)
+	while(count--)
+	{
+		if ((ret = tvm_dispatch(ectx)))
 		{
-			tvm_runloop_post();
+			return (ectx->state = ret);
 		}
-#endif
 	}
 
-	return ret;
+	return ECTX_TIME_SLICE;
 }
 

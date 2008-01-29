@@ -49,11 +49,16 @@ enum {
 
 /*{{{  Execution context returns */
 enum {
-	ECTX_INS_OK		= 0,
+	ECTX_CONTINUE		= 0,
+	ECTX_INIT,
 	ECTX_INS_INVALID	= EXIT_INS_INVALID,
 	ECTX_INS_UNSUPPORTED	= EXIT_INS_NOT_IMP,
+	ECTX_EMPTY		= EXIT_DEADLOCK,
 	ECTX_ERROR		= EXIT_ERROR,
-	ECTX_SHUTDOWN
+	ECTX_RUNNING,
+	ECTX_SHUTDOWN,
+	ECTX_SLEEP,
+	ECTX_TIME_SLICE
 };
 /*}}}*/
 
@@ -120,10 +125,6 @@ extern FFI_FUNCTION *special_ffi_table;
 /*}}}*/
 
 /*{{{  Scheduler API */
-extern void tvm_just_add_to_queue(WORDPTR wptr);
-extern void tvm_add_to_queue(WORDPTR wptr, BYTEPTR iptr_prime);
-extern void tvm_add_queue_to_queue(WORDPTR front, WORDPTR back);
-extern void tvm_sched_sync(void);
 /*}}}*/
 
 /*{{{  Interpreter API */
@@ -133,7 +134,9 @@ extern void tvm_init_stackframe(WORDPTR *where, int argc, WORD argv[],
 extern void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 	WORDPTR vectorspace, WORDPTR mobilespace, int add_forkingbarrier);
 extern void tvm_init(void);
-extern int tvm_run(tvm_ectx_t *ectx);
+extern int tvm_dispatch(ECTX ectx);
+extern int tvm_run(ECTX ectx);
+extern int tvm_run_count(ECTX ectx, UWORD count);
 /*}}}*/
 
 #endif /* TVM_H */

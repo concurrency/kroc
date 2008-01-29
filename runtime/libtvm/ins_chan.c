@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #include "ins_chan.h"
 
-TVM_HELPER int chan_io_begin(tvm_ectx_t *ectx, WORD altable, WORDPTR chan_ptr, BYTEPTR data_ptr, WORDPTR *chan_val)
+TVM_HELPER int chan_io_begin(ECTX ectx, WORD altable, WORDPTR chan_ptr, BYTEPTR data_ptr, WORDPTR *chan_val)
 {
 	WORDPTR other_WPTR = *chan_val = (WORDPTR) read_word(chan_ptr);
 
@@ -36,7 +36,7 @@ TVM_HELPER int chan_io_begin(tvm_ectx_t *ectx, WORD altable, WORDPTR chan_ptr, B
 		WORKSPACE_SET(WPTR, WS_CHAN, (WORD)data_ptr);
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
 
-		return run_next_on_queue();
+		RUN_NEXT_ON_QUEUE_RET();
 	}
 	else if(altable)
 	{
@@ -49,6 +49,8 @@ TVM_HELPER int chan_io_begin(tvm_ectx_t *ectx, WORD altable, WORDPTR chan_ptr, B
 			WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
 
 			write_word(chan_ptr, (WORD)WPTR);
+
+			*chan_val = NOT_PROCESS_P;
 			
 			switch(alt_state) {
 				case WAITING_P:
@@ -60,33 +62,29 @@ TVM_HELPER int chan_io_begin(tvm_ectx_t *ectx, WORD altable, WORDPTR chan_ptr, B
 					WORKSPACE_SET(other_WPTR, WS_ALT_STATE, DISABLING_P);
 					/* Fall through */
 				case DISABLING_P:
-					return run_next_on_queue();
+					RUN_NEXT_ON_QUEUE_RET();
 				default:
 					return ectx->set_error_flag(ectx, EFLAG_CHAN);
 			}
-
-			return NOT_PROCESS_P;
 		}
 	}
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
-TVM_HELPER void chan_io_end(tvm_ectx_t *ectx, WORDPTR chan_ptr, WORDPTR other_WPTR)
+TVM_HELPER void chan_io_end(ECTX ectx, WORDPTR chan_ptr, WORDPTR other_WPTR)
 {
 	/* Set the channel word to NotProcess.p */
 	write_word(chan_ptr, NOT_PROCESS_P);
-
 	/* Add ourselves to the back of the runqueue */
-	tvm_add_to_queue(WPTR, IPTR);
-	
+	ADD_TO_QUEUE_ECTX_IPTR(WPTR, IPTR);
 	/* Reschedule the process at the other end of the channel */
 	WPTR = other_WPTR;
 	/* Load the newly scheduled processes instruction pointer */
 	IPTR = (BYTEPTR)WORKSPACE_GET(WPTR, WS_IPTR);
 }
 
-TVM_HELPER int chan_in(tvm_ectx_t *ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start)
+TVM_HELPER int chan_in(ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start)
 {
 	WORDPTR other_WPTR;
 	int ret;
@@ -108,7 +106,7 @@ TVM_HELPER int chan_in(tvm_ectx_t *ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEP
 	UNDEFINE_STACK_RET();
 }
 
-TVM_HELPER int chan_out(tvm_ectx_t *ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR read_start)
+TVM_HELPER int chan_out(ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR read_start)
 {
 	WORDPTR other_WPTR;
 	int ret;
@@ -130,7 +128,7 @@ TVM_HELPER int chan_out(tvm_ectx_t *ectx, WORD num_bytes, WORDPTR chan_ptr, BYTE
 	UNDEFINE_STACK_RET();
 }
 
-TVM_HELPER int chan_swap(tvm_ectx_t *ectx, WORDPTR chan_ptr, WORDPTR data_ptr)
+TVM_HELPER int chan_swap(ECTX ectx, WORDPTR chan_ptr, WORDPTR data_ptr)
 {
 	WORDPTR other_WPTR;
 	int ret;

@@ -83,7 +83,7 @@ TVM_INSTRUCTION (ins_adc)
 
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0xB_ - ajw - adjust workspace */
@@ -119,7 +119,7 @@ TVM_INSTRUCTION (ins_ajw)
 
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x9_ - call - call */
@@ -205,7 +205,7 @@ TVM_INSTRUCTION (ins_call)
 
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0xA_ - cj - conditional jump */
@@ -254,7 +254,7 @@ TVM_INSTRUCTION (ins_cj)
 
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0xC_ - eqc - test if constant is equal to AREG */
@@ -291,7 +291,7 @@ TVM_INSTRUCTION (ins_eqc)
 
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x0_ - j - jump */
@@ -333,7 +333,7 @@ TVM_INSTRUCTION (ins_j)
 	
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x4_ - ldc - load constant */
@@ -358,7 +358,7 @@ TVM_INSTRUCTION (ins_ldc)
 
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x7_ - ldl - load local */
@@ -390,7 +390,7 @@ TVM_INSTRUCTION (ins_ldl)
 
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x1_ - ldlp - load local pointer */
@@ -428,7 +428,7 @@ TVM_INSTRUCTION (ins_ldlp)
 
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x3_ - ldnl - load non-local */
@@ -454,7 +454,7 @@ TVM_INSTRUCTION (ins_ldnl)
 
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x5_ - ldnlp - load non-local pointer */
@@ -480,7 +480,7 @@ TVM_INSTRUCTION (ins_ldnlp)
 
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0xD_ - stl - store local */
@@ -512,7 +512,7 @@ TVM_INSTRUCTION (ins_stl)
 
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0xE_ - stnl - store non-local */
@@ -544,7 +544,7 @@ TVM_INSTRUCTION (ins_stnl)
 	
 	CLEAR(OREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 
@@ -574,7 +574,7 @@ TVM_INSTRUCTION (ins_pfix)
 	 * is implementation defined in C */
 	OREG = (WORD)((UWORD)OREG << 4);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* 0x6_ - nfix - negative prefix */
@@ -600,7 +600,7 @@ TVM_INSTRUCTION (ins_nfix)
 	/* Negate the value in the operand register, and shift it up */
 	OREG = (WORD)((~(UWORD)OREG) << 4);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 #ifndef TVM_DISPATCH_SWITCH

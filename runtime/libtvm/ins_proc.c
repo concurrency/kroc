@@ -130,7 +130,7 @@ TVM_INSTRUCTION (ins_proc_end)
 
 	mt_release_simple (ectx, ws, MT_MAKE_TYPE (MT_DATA));
 
-	return run_next_on_queue ();
+	RUN_NEXT_ON_QUEUE_RET();
 }
 
 #endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */

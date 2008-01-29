@@ -104,7 +104,7 @@ TVM_INSTRUCTION (ins_tin)
 		/* We need to insert ourselves into the timer queue, this is an ordered
 		 * queue, after that we need to reschedule another process */
 		/* Put ourselves into the timer queue */
-		timer_queue_insert(current_time, reschedule_time);
+		TIMER_QUEUE_INSERT(WPTR, current_time, reschedule_time);
 		
 		/* FIXME: Is this the correct thing to do next? */
 		/* Since we use the (ALT) STATE to check for READY_P for things on the
@@ -114,7 +114,7 @@ TVM_INSTRUCTION (ins_tin)
 		WORKSPACE_SET(WPTR, WS_ALT_STATE, NOT_PROCESS_P);
 		
 		/* Run the next process */
-		return run_next_on_queue();
+		RUN_NEXT_ON_QUEUE_RET();
 	}
 }
 

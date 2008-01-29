@@ -45,7 +45,7 @@ TVM_INSTRUCTION (ins_mreleasep)
 	//printf("  ptr = 0x%08x\n", (WORD) ptr);
 	mt_release_simple(ectx, (WORDPTR) ptr, MT_MAKE_TYPE(MT_DATA));
 
-	return run_next_on_queue();
+	RUN_NEXT_ON_QUEUE_RET();
 	//printf("<mreleasep\n");
 }
 
@@ -86,7 +86,7 @@ TVM_INSTRUCTION (ins_mnew)
 
 	AREG = (WORD)palloc_pool(AREG);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 #endif
 

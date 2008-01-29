@@ -27,16 +27,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define TVM_HELPER static inline
 #define TVM_HELPER_PROTO static inline
 #define TVM_INSTRUCTION(X) \
-	static inline int X (tvm_ectx_t *ectx)
+	static inline int X (ECTX ectx)
 #define TVM_INSTRUCTION_PROTO(X) \
-	static inline int X (tvm_ectx_t *ectx)
+	static inline int X (ECTX ectx)
 #else
 #define TVM_HELPER
 #define TVM_HELPER_PROTO extern
 #define TVM_INSTRUCTION(X) \
-	int X (tvm_ectx_t *ectx)
+	int X (ECTX ectx)
 #define TVM_INSTRUCTION_PROTO(X) \
-	extern int X (tvm_ectx_t *ectx)
+	extern int X (ECTX ectx)
 #endif
 
 /* This instruction clears a register */
@@ -82,7 +82,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define STACK_RET(A,B,C) 			\
 	do {					\
 		STACK(A,B,C);			\
-		return ECTX_INS_OK;		\
+		return ECTX_CONTINUE;		\
 	} while (0)
 
 /* Push all registers down by one, essentially leaves 'areg' undefined */ 
@@ -97,7 +97,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define UNDEFINE_STACK()
 #define UNDEFINE_STACK_RET() \
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 
 TVM_INSTRUCTION_PROTO (ins_not_implemented);
 

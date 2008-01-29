@@ -19,11 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "tvm.h"
-#include "instructions.h"
 #include "interpreter.h"
 #include "scheduler.h"
 
-static void add_to_queue(tvm_ectx_t *ectx, WORDPTR ws)
+static void add_to_queue(ECTX ectx, WORDPTR ws)
 {
 
 	WORKSPACE_SET(ws, WS_NEXT, (WORD)NOT_PROCESS_P);
@@ -45,14 +44,7 @@ static void add_to_queue(tvm_ectx_t *ectx, WORDPTR ws)
 	}
 }
 
-static void add_to_queue_iptr(tvm_ectx_t *ectx, WORDPTR ws, BYTEPTR IPTR_prime)
-{
-	WORKSPACE_SET(BPTR, WS_IPTR, (WORD)IPTR_prime);
-	
-	ectx->add_to_queue(ws);
-}
-
-static void add_queue_to_queue(tvm_ectx_t *ectx, WORDPTR front, WORDPTR back)
+static void add_queue_to_queue(ECTX ectx, WORDPTR front, WORDPTR back)
 {
 	WORKSPACE_SET(back, WS_NEXT, (WORD)NOT_PROCESS_P);
 	
@@ -68,7 +60,7 @@ static void add_queue_to_queue(tvm_ectx_t *ectx, WORDPTR front, WORDPTR back)
 	}
 }
 
-static int run_next_on_queue(tvm_ectx_t *ectx)
+static int run_next_on_queue(ECTX ectx)
 {
 	/*
 	   ! SEQ
@@ -84,13 +76,13 @@ static int run_next_on_queue(tvm_ectx_t *ectx)
 	   !     TRUE
 	   !       SKIP
 	   */
-	if((ectx->set_alarm && ectx->alarm) || ((!ectx->set_alarm) && (TPTR != (WORDPTR)NOT_PROCESS_P)))
+	if((ectx->set_alarm && ectx->sflags) || ((!ectx->set_alarm) && (TPTR != (WORDPTR)NOT_PROCESS_P)))
 	{
 		WORD removed = 0;
 		WORD now;
 		
-		ectx->alarm = 0;
-		now = ectx->get_time();
+		ectx->sflags = 0;
+		now = ectx->get_time(ectx);
 #if 0
 		/* Sanity check */
 		if(TPTR == (WORDPTR)NOT_PROCESS_P)
@@ -151,8 +143,8 @@ static int run_next_on_queue(tvm_ectx_t *ectx)
 			if((TPTR != (WORDPTR)NOT_PROCESS_P) && removed)
 			{ 
 				TNEXT = WORKSPACE_GET(TPTR, WS_TIMEOUT);
-				if (tvm_set_alarm)
-					tvm_set_alarm(TNEXT - now);
+				if (ectx->set_alarm)
+					ectx->set_alarm(ectx, TNEXT - now);
 			}
 		}
 	}
@@ -185,29 +177,29 @@ static int run_next_on_queue(tvm_ectx_t *ectx)
 	
 	IPTR = (BYTEPTR)WORKSPACE_GET(WPTR, WS_IPTR);
 
-	return ECTX_INS_OK;
+	return ECTX_CONTINUE;
 }
 
 /* PREREQUISITES:
  *   The workspace must be already have WS_TIMEOUT set correctly
  */
-static void timer_queue_insert(tvm_ectx_t *ectx, WORD current_time, WORD reschedule_time)
+static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD reschedule_time)
 {
 	/* Check if the queue is empty */
 	if(TPTR == (WORDPTR)NOT_PROCESS_P)
 	{
 		/* It was, insert ourselves as the only thing */
-		TPTR = WPTR;
+		TPTR = ws;
 		/* Update the TNEXT value */
 		/* TNEXT = WORKSPACE_GET(WPTR, WS_TIMEOUT); */
 		/* This should work instead of the above line */
 		TNEXT = reschedule_time;
 
 		if (ectx->set_alarm)
-			ectx->set_alarm(reschedule_time - current_time);
+			ectx->set_alarm(ectx, reschedule_time - current_time);
 
-		WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
-		WORKSPACE_SET(WPTR, WS_NEXT_T, NOT_PROCESS_P);
+		WORKSPACE_SET(ws, WS_IPTR, (WORD)IPTR);
+		WORKSPACE_SET(ws, WS_NEXT_T, NOT_PROCESS_P);
 	}
 	/* Check if we should be at the top of the queue */
 	else if(TIME_AFTER(TNEXT, reschedule_time))
@@ -218,44 +210,40 @@ static void timer_queue_insert(tvm_ectx_t *ectx, WORD current_time, WORD resched
 		 * ourselves before */
 
 		/* Update our NEXT pointer to point to the previous head of the queue */
-		WORKSPACE_SET(WPTR, WS_NEXT_T, (WORD)TPTR);
+		WORKSPACE_SET(ws, WS_NEXT_T, (WORD)TPTR);
 		/* Add us to the front pointer */
-		TPTR  = WPTR;
+		TPTR  = ws;
 		/* Set the new reschedule time in TNEXT */
 		TNEXT = reschedule_time;
 		
 		if (ectx->set_alarm)
-			ectx->set_alarm(reschedule_time - current_time);
+			ectx->set_alarm(ectx, reschedule_time - current_time);
 	}
 	else
 	{
-		/* No, things get a bit more complicated :( */
-
-		/* Signal we are not done yet :) */
-		int done = 0;
 		/* Get the first workspace on the timer queue */
-		WORDPTR this_WPTR = TPTR;
+		WORDPTR this_ws = TPTR;
 		/* Get the (first) next workspace pointer on the queue */
-		WORDPTR next_WPTR = (WORDPTR)WORKSPACE_GET(this_WPTR, WS_NEXT_T);
+		WORDPTR next_ws = (WORDPTR)WORKSPACE_GET(this_ws, WS_NEXT_T);
 	
 		/* Now loop through the list */
-		while(!done)
+		for(;;)
 		{
 			/* Are we at the end of the queue */
-			if(next_WPTR == (WORDPTR)NOT_PROCESS_P)
+			if(next_ws == (WORDPTR)NOT_PROCESS_P)
 			{
 				/* Yes, insert us at the end, no update of TNEXT */
 
 				/* Adjust the process at the end of the queue to point to us */
-				WORKSPACE_SET(this_WPTR, WS_NEXT_T, (WORD)WPTR);
+				WORKSPACE_SET(this_ws, WS_NEXT_T, (WORD)ws);
 				/* Adjust ourselves to point to the end of the queue NOT_PROCESS_P */
-				WORKSPACE_SET(WPTR, WS_NEXT_T, NOT_PROCESS_P);
+				WORKSPACE_SET(ws, WS_NEXT_T, NOT_PROCESS_P);
 
 				/* We are done */
-				done = 1;
+				break;
 			}
 			/* Do we need to insert ourselves after this process? */
-			else if(TIME_AFTER(WORKSPACE_GET(next_WPTR, WS_TIMEOUT), reschedule_time))
+			else if(TIME_AFTER(WORKSPACE_GET(next_ws, WS_TIMEOUT), reschedule_time))
 			{
 				/* If the reschedule time of the process after the one we are looing at,
 				 * is TIME_AFTER the reschedule time we have, then we need to insert
@@ -263,33 +251,32 @@ static void timer_queue_insert(tvm_ectx_t *ectx, WORD current_time, WORD resched
 
 				/* Insert ourselves after the process we are looking at */
 				/* We are going to point to the next process in the queue */
-				WORKSPACE_SET(WPTR, WS_NEXT_T, (WORD)next_WPTR);
+				WORKSPACE_SET(ws, WS_NEXT_T, (WORD)next_ws);
 				/* The current process in the queue is going to point to us */
-				WORKSPACE_SET(this_WPTR, WS_NEXT_T, (WORD)WPTR);
+				WORKSPACE_SET(this_ws, WS_NEXT_T, (WORD)ws);
 
 				/* We are done */
-				done = 1;
+				break;
 			}
 			/* We need to dig deeper in the list */
 			else
 			{
-				/* FIXME: Do we really need to get all these values every time round? */
-
 				/* Get the next workspace on the timer queue */
-				this_WPTR = next_WPTR;
+				this_ws = next_ws;
 				/* Get the (next) next workspace pointer on the queue */
-				next_WPTR = (WORDPTR)WORKSPACE_GET(this_WPTR, WS_NEXT_T);
+				next_ws = (WORDPTR)WORKSPACE_GET(this_ws, WS_NEXT_T);
 				/* We are NOT done!!! */
 			}
 		}
 	}
 }
 
-void tvm_default_scheduler(tvm_ectx_t *ectx)
+void _tvm_install_scheduler(ECTX ectx)
 {
 	ectx->add_to_queue 		= add_to_queue;
-	/* ectx->add_to_queue_iptr	= add_to_queue_iptr; */
 	ectx->add_queue_to_queue	= add_queue_to_queue;
 	ectx->run_next_on_queue		= run_next_on_queue;
 	ectx->timer_queue_insert	= timer_queue_insert;
+	ectx->get_time			= NULL;
+	ectx->set_alarm			= NULL;
 }
