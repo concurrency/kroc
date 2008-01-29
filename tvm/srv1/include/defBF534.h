@@ -1168,7 +1168,7 @@
 #define	RTC_DAY				0xFFFE0000	/* Real-Time Clock Days		*/
 
 /* RTC_ALARM Macro			z=day		y=hr	x=min	w=sec		*/
-#define SET_ALARM(z,y,x,w)	((((z)&0x7FFF)<<0x11)|(((y)&0x1F)<<0xC)|(((x)&0x3F)<<0x6)|((w)&0x3F))
+#define SET_ALARM(z,y,x,w)	(((((z)&0x7FFF)<<0x11)|(((y)&0x1F)<<0xC))|((((x)&0x3F)<<0x6)|((w)&0x3F)))
 
 /* RTC_ICTL and RTC_ISTAT Masks																		*/
 #define	STOPWATCH			0x0001		/* Stopwatch Interrupt Enable								*/

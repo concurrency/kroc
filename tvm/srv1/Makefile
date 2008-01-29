@@ -34,20 +34,20 @@ LDFLAGS = -T bftiny.x \
 	-L$(LIBPATH)
 
 ASMSRCS	+= startup.asm
-ASMSRCS += r8x8dct.asm
+ASMSRCS += platform/r8x8dct.asm
 ASMINCS += asmmacros.h config.h
-CSRCS   += main.c
-CSRCS	+= srv.c
+CSRCS	+= main.c
+CSRCS	+= platform/srv.c
 CSRCS	+= srv_ffi.c
 CSRCS	+= userspace.c
 CSRCS	+= external_srv_ffi_hooks.c
-CSRCS	+= uart.c
-CSRCS	+= camera.c
-CSRCS	+= jpeg.c
-CSRCS	+= i2cwrite.c
-CSRCS	+= stm_m25p32.c
-CSRCS	+= xmodem.c
-CSRCS	+= c.c
+CSRCS	+= platform/uart.c
+CSRCS	+= platform/camera.c
+CSRCS	+= platform/jpeg.c
+CSRCS	+= platform/i2cwrite.c
+CSRCS	+= platform/stm_m25p32.c
+CSRCS	+= platform/xmodem.c
+CSRCS	+= platform/c.c
 CINCS	+= camera.h c.h config.h font8x8.h \
 	i2cwrite.h jpeg.h memory_map.h \
 	ov9655.h srv.h stm_m25p32.h uart.h \
