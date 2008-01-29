@@ -98,17 +98,19 @@ enum {
 };
 /*}}}*/
 
-/*{{{  Externally provided functions */
-extern void (*tvm_runloop_pre)(void);
-extern void (*tvm_runloop_post)(void);
+/*{{{  Memory allocator selection */
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_USE_MALLOC)
+#define TVM_MALLOC	malloc
+#define TVM_FREE	free
+#else
+#define TVM_MALLOC	...ERROR...
+#define TVM_FREE	...ERROR...
+#endif /* !(TVM_DYNAMIC_MEMORY && TVM_USE_MALLOC) */
 /*}}}*/
 
 /*{{{  The foregin function interface jump tables */
 extern FFI_TABLE_ENTRY *ffi_table;
 extern FFI_FUNCTION *special_ffi_table;
-/*}}}*/
-
-/*{{{  Scheduler API */
 /*}}}*/
 
 /*{{{  Interpreter API */

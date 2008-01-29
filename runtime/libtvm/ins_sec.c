@@ -372,11 +372,9 @@ again2:
 }
 #endif /* TVM_WORD_LENGTH >= 4 */
 
-/* FIXME: This instruction has not been implemented in soccam!!! */
 /* 0x1B - 0x21 0xFB - ldpi - load pointer to instruction */
 TVM_INSTRUCTION (ins_ldpi)
 {
-	/*STACK((WORD)(IPTR + AREG), BREG, CREG);*/
 	STACK_RET((WORD)byteptr_plus(IPTR, AREG), BREG, CREG);
 }
 

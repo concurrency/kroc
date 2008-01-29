@@ -9,7 +9,6 @@ lib_LIBRARIES = libtvm.a
 noinst_HEADERS = \
 	dmem.h \
 	ext_chan.h \
-	pool_alloc.h \
 	instructions.h \
 	ins_alt.h \
 	ins_barrier.h \
@@ -41,9 +40,7 @@ libtvm_a_SOURCES = \
 	interpreter.c \
 	mem_array.c \
 	mem_bigendian.c \
-	pool_alloc.c \
-	scheduler.c \
-	transputer.c
+	scheduler.c
 
 if TVM_DISPATCH_SWITCH
 else

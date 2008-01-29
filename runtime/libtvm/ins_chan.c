@@ -34,6 +34,7 @@ TVM_HELPER int chan_io_begin(ECTX ectx, WORD altable, WORDPTR chan_ptr, BYTEPTR 
 		write_word(chan_ptr, (WORD)WPTR);
 		/* store our state */
 		WORKSPACE_SET(WPTR, WS_POINTER, (WORD)data_ptr);
+		WORKSPACE_SET(WPTR, WS_ECTX, (WORD)ectx);
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
 
 		RUN_NEXT_ON_QUEUE_RET();
@@ -46,6 +47,7 @@ TVM_HELPER int chan_io_begin(ECTX ectx, WORD altable, WORDPTR chan_ptr, BYTEPTR 
 		if((alt_state & (~3)) == MIN_INT)
 		{
 			WORKSPACE_SET(WPTR, WS_POINTER, (WORD)data_ptr);
+			WORKSPACE_SET(WPTR, WS_ECTX, (WORD)ectx);
 			WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
 
 			write_word(chan_ptr, (WORD)WPTR);

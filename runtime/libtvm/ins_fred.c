@@ -264,6 +264,8 @@ TVM_HELPER int tvm_sem_claim(ECTX ectx, WORDPTR sem)
 	{
 		/* It is, join the queue */
 		WORKSPACE_SET(WPTR, WS_LINK, (WORD) NOT_PROCESS_P);
+		/* Save execution context */
+		WORKSPACE_SET(WPTR, WS_ECTX, (WORD) ectx);
 		/* Save our IPTR */
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
 		/* Check if the semaphores front pointer is null */
