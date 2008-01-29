@@ -79,8 +79,36 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define NONE_SELECTED_O		(-1)
 /*}}}*/
 
-/*{{{  Transputer registers and flags, make up execution context */
+/*{{{  Error flags */
+enum {
+	EFLAG_SETERR 	= (1 << 0),
+	EFLAG_CSUB0	= (1 << 1),
+	EFLAG_REM	= (1 << 2),
+	EFLAG_DIV	= (1 << 3),
+	EFLAG_CSNGL	= (1 << 4),
+	EFLAG_CCNT1	= (1 << 5),
+	EFLAG_CWORD	= (1 << 6),
+	EFLAG_ADC	= (1 << 7),
+	EFLAG_ADD	= (1 << 8),
+	EFLAG_SUB	= (1 << 9),
+	EFLAG_MUL	= (1 << 10),
+	EFLAG_ALT	= (1 << 11),
+	EFLAG_FFI	= (1 << 12), /* FFI error (missing function) */
+	EFLAG_CHAN	= (1 << 13), /* Channel communication error */
+#if TVM_WORD_LENGTH >= 4
+	EFLAG_LADD	= (1 << 16),
+	EFLAG_LDIV	= (1 << 17),
+	EFLAG_LSUB	= (1 << 18),
+	EFLAG_BAR	= (1 << 19), /* Barrier underflow */
+	EFLAG_FP	= (1 << 20), /* Floating point error */
+	EFLAG_DMEM	= (1 << 21), /* Memory allocator error */
+	EFLAG_MT	= (1 << 22), /* Mobile type error */
+	EFLAG_PROC	= (1 << 23), /* Process API error */
+#endif
+};
+/*}}}*/
 
+/*{{{  Transputer registers, etc that make up the execution context */
 typedef struct _tvm_ectx_t	tvm_ectx_t;
 typedef tvm_ectx_t		*ECTX;
 #ifndef TVM_ECTX_PRIVATE_DATA
@@ -89,6 +117,7 @@ typedef TVM_ECTX_PRIVATE_DATA	tvm_ectx_priv_t;
 #endif /* !TVM_ECTX_PRIVATE_DATA */
 
 struct _tvm_ectx_t {
+	/* Machine state */
 	BYTEPTR		iptr;	/* Instruction pointer */
 	
 	WORD		oreg;	/* Operand register */
@@ -133,10 +162,13 @@ struct _tvm_ectx_t {
 	int		(*run_hook)
 				(ECTX ectx);
 
+	/* Links to other execution contexts */
+	tvm_t		*tvm;
+	tvm_ectx_t	*next;
+
 	/* Private data */
 	tvm_ectx_priv_t	priv;
 };
-
 /*}}}*/
 
 /*{{{  Internal macros */
