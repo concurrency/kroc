@@ -7,14 +7,13 @@ CFLAGS=-I$(top_srcdir) @CFLAGS@
 lib_LIBRARIES = libtvm.a
 
 noinst_HEADERS = \
-	dmem.h \
 	ext_chan.h \
 	instructions.h \
 	ins_alt.h \
 	ins_barrier.h \
 	ins_chan.h \
-	ins_fred.h \
-	ins_mt.h \
+	ins_pi.h \
+	ins_mobile.h \
 	ins_pri.h \
 	ins_proc.h \
 	ins_rmox.h \
@@ -45,13 +44,12 @@ libtvm_a_SOURCES = \
 if TVM_DISPATCH_SWITCH
 else
 libtvm_a_SOURCES += \
-	dmem.c \
 	ins_alt.c \
 	ins_barrier.c \
 	ins_chan.c \
 	ins_float.c \
-	ins_fred.c \
-	ins_mt.c \
+	ins_pi.c \
+	ins_mobile.c \
 	ins_pri.c \
 	ins_proc.c \
 	ins_rmox.c \
@@ -67,14 +65,13 @@ libtvm_a_SOURCES += \
 endif
 
 DISPATCH_SOURCE_FILES = \
-	dmem.c \
 	ext_chan.c \
 	ins_alt.c \
 	ins_barrier.c \
 	ins_chan.c \
 	ins_float.c \
-	ins_fred.c \
-	ins_mt.c \
+	ins_pi.c \
+	ins_mobile.c \
 	ins_pri.c \
 	ins_proc.c \
 	ins_rmox.c \
