@@ -1,0 +1,20 @@
+#INCLUDE "defBF534.inc"
+
+PROC init ()
+  -- IO
+  PLACED [PORTGIO.LEN]INT port.g.io PORTGIO.ADDR:
+  PLACED [PORTHIO.LEN]INT port.h.io PORTHIO.ADDR:
+  #PRAGMA DEFINED port.h.io
+  PLACED [PORTH.LEN]INT port.h PORTH.ADDR:
+  SEQ
+    -- LED's (PG8 and PG9)
+    port.g.io[PORTGIO.DIR]  := #0300
+    -- Set Port H for GPIO
+    port.h[PORTH.FER]   := #0000
+    -- Port H,6 to output for serial flow control
+    port.h.io[PORTHIO.DIR]  := port.h.io[PORTHIO.DIR] /\ #0040
+    -- Set output low
+    port.h.io[PORTHIO]      := #0000
+    -- Set up lasers
+    port.h.io[PORTHIO.DIR]  := port.h.io[PORTHIO.DIR] /\ #0380
+:
