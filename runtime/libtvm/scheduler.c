@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 static void add_to_queue(ECTX ectx, WORDPTR ws)
 {
 
-	WORKSPACE_SET(ws, WS_NEXT, (WORD)NOT_PROCESS_P);
+	WORKSPACE_SET(ws, WS_LINK, (WORD)NOT_PROCESS_P);
 	
 	if(FPTR == (WORDPTR)NOT_PROCESS_P)
 	{
@@ -39,14 +39,14 @@ static void add_to_queue(ECTX ectx, WORDPTR ws)
 		/* There are other things on the queue, we add this process to the 
 		 * back pointer, and add a link to this process at into the previous
 		 * processes workspace */
-		WORKSPACE_SET(BPTR, WS_NEXT, (WORD)ws);
+		WORKSPACE_SET(BPTR, WS_LINK, (WORD)ws);
 		BPTR = ws;
 	}
 }
 
 static void add_queue_to_queue(ECTX ectx, WORDPTR front, WORDPTR back)
 {
-	WORKSPACE_SET(back, WS_NEXT, (WORD)NOT_PROCESS_P);
+	WORKSPACE_SET(back, WS_LINK, (WORD)NOT_PROCESS_P);
 	
 	if(FPTR == (WORDPTR)NOT_PROCESS_P)
 	{
@@ -55,7 +55,7 @@ static void add_queue_to_queue(ECTX ectx, WORDPTR front, WORDPTR back)
 	}
 	else
 	{
-		WORKSPACE_SET(BPTR, WS_NEXT, (WORD)front);
+		WORKSPACE_SET(BPTR, WS_LINK, (WORD)front);
 		BPTR = back;
 	}
 }
@@ -94,7 +94,7 @@ static int run_next_on_queue(ECTX ectx)
 
 		if((TPTR != (WORDPTR)NOT_PROCESS_P))
 		{
-			while((TPTR != (WORDPTR)NOT_PROCESS_P) && (!(TIME_AFTER(WORKSPACE_GET(TPTR, WS_TIMEOUT), now))))
+			while((TPTR != (WORDPTR)NOT_PROCESS_P) && (!(TIME_AFTER(WORKSPACE_GET(TPTR, WS_TIME), now))))
 			{
 				/* Move first process from timer queue to the run queue */
 				/*
@@ -117,10 +117,10 @@ static int run_next_on_queue(ECTX ectx)
 				   !         ...  add on to run queue
 				   */
 				WORDPTR temp = TPTR;
-				TPTR = (WORDPTR)WORKSPACE_GET(TPTR, WS_NEXT_T);
-				WORKSPACE_SET(temp, WS_NEXT_T, TIME_SET_P);
-				WORKSPACE_SET(temp, WS_TIMEOUT, now);
-				if(WORKSPACE_GET(temp, WS_ALT_STATE) == READY_P)
+				TPTR = (WORDPTR)WORKSPACE_GET(TPTR, WS_TLINK);
+				WORKSPACE_SET(temp, WS_TLINK, TIME_SET_P);
+				WORKSPACE_SET(temp, WS_TIME, now);
+				if(WORKSPACE_GET(temp, WS_STATE) == READY_P)
 				{ 
 					/* SKIP -- do nothing */
 					/*printf("TIMER - SKIP\n");*/
@@ -128,7 +128,7 @@ static int run_next_on_queue(ECTX ectx)
 				else
 				{ 
 					/*printf("TIMER - ADDED TO QUEUE\n");*/
-					WORKSPACE_SET(temp, WS_ALT_STATE, READY_P);
+					WORKSPACE_SET(temp, WS_STATE, READY_P);
 					/* Add on to run queue */
 					ADD_TO_QUEUE(temp);
 				}
@@ -142,7 +142,7 @@ static int run_next_on_queue(ECTX ectx)
 			 * code, they seem to use OS services rather than TNEXT though) */
 			if((TPTR != (WORDPTR)NOT_PROCESS_P) && removed)
 			{ 
-				TNEXT = WORKSPACE_GET(TPTR, WS_TIMEOUT);
+				TNEXT = WORKSPACE_GET(TPTR, WS_TIME);
 				if (ectx->set_alarm)
 					ectx->set_alarm(ectx, TNEXT - now);
 			}
@@ -172,7 +172,7 @@ static int run_next_on_queue(ECTX ectx)
 	}
 	else
 	{
-		FPTR = (WORDPTR)WORKSPACE_GET(FPTR, WS_NEXT);
+		FPTR = (WORDPTR)WORKSPACE_GET(FPTR, WS_LINK);
 	}
 	
 	IPTR = (BYTEPTR)WORKSPACE_GET(WPTR, WS_IPTR);
@@ -181,7 +181,7 @@ static int run_next_on_queue(ECTX ectx)
 }
 
 /* PREREQUISITES:
- *   The workspace must be already have WS_TIMEOUT set correctly
+ *   The workspace must be already have WS_TIME set correctly
  */
 static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD reschedule_time)
 {
@@ -191,7 +191,7 @@ static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD re
 		/* It was, insert ourselves as the only thing */
 		TPTR = ws;
 		/* Update the TNEXT value */
-		/* TNEXT = WORKSPACE_GET(WPTR, WS_TIMEOUT); */
+		/* TNEXT = WORKSPACE_GET(WPTR, WS_TIME); */
 		/* This should work instead of the above line */
 		TNEXT = reschedule_time;
 
@@ -199,7 +199,7 @@ static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD re
 			ectx->set_alarm(ectx, reschedule_time - current_time);
 
 		WORKSPACE_SET(ws, WS_IPTR, (WORD)IPTR);
-		WORKSPACE_SET(ws, WS_NEXT_T, NOT_PROCESS_P);
+		WORKSPACE_SET(ws, WS_TLINK, NOT_PROCESS_P);
 	}
 	/* Check if we should be at the top of the queue */
 	else if(TIME_AFTER(TNEXT, reschedule_time))
@@ -210,7 +210,7 @@ static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD re
 		 * ourselves before */
 
 		/* Update our NEXT pointer to point to the previous head of the queue */
-		WORKSPACE_SET(ws, WS_NEXT_T, (WORD)TPTR);
+		WORKSPACE_SET(ws, WS_TLINK, (WORD)TPTR);
 		/* Add us to the front pointer */
 		TPTR  = ws;
 		/* Set the new reschedule time in TNEXT */
@@ -224,7 +224,7 @@ static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD re
 		/* Get the first workspace on the timer queue */
 		WORDPTR this_ws = TPTR;
 		/* Get the (first) next workspace pointer on the queue */
-		WORDPTR next_ws = (WORDPTR)WORKSPACE_GET(this_ws, WS_NEXT_T);
+		WORDPTR next_ws = (WORDPTR)WORKSPACE_GET(this_ws, WS_TLINK);
 	
 		/* Now loop through the list */
 		for(;;)
@@ -235,15 +235,15 @@ static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD re
 				/* Yes, insert us at the end, no update of TNEXT */
 
 				/* Adjust the process at the end of the queue to point to us */
-				WORKSPACE_SET(this_ws, WS_NEXT_T, (WORD)ws);
+				WORKSPACE_SET(this_ws, WS_TLINK, (WORD)ws);
 				/* Adjust ourselves to point to the end of the queue NOT_PROCESS_P */
-				WORKSPACE_SET(ws, WS_NEXT_T, NOT_PROCESS_P);
+				WORKSPACE_SET(ws, WS_TLINK, NOT_PROCESS_P);
 
 				/* We are done */
 				break;
 			}
 			/* Do we need to insert ourselves after this process? */
-			else if(TIME_AFTER(WORKSPACE_GET(next_ws, WS_TIMEOUT), reschedule_time))
+			else if(TIME_AFTER(WORKSPACE_GET(next_ws, WS_TIME), reschedule_time))
 			{
 				/* If the reschedule time of the process after the one we are looing at,
 				 * is TIME_AFTER the reschedule time we have, then we need to insert
@@ -251,9 +251,9 @@ static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD re
 
 				/* Insert ourselves after the process we are looking at */
 				/* We are going to point to the next process in the queue */
-				WORKSPACE_SET(ws, WS_NEXT_T, (WORD)next_ws);
+				WORKSPACE_SET(ws, WS_TLINK, (WORD)next_ws);
 				/* The current process in the queue is going to point to us */
-				WORKSPACE_SET(this_ws, WS_NEXT_T, (WORD)ws);
+				WORKSPACE_SET(this_ws, WS_TLINK, (WORD)ws);
 
 				/* We are done */
 				break;
@@ -264,7 +264,7 @@ static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD re
 				/* Get the next workspace on the timer queue */
 				this_ws = next_ws;
 				/* Get the (next) next workspace pointer on the queue */
-				next_ws = (WORDPTR)WORKSPACE_GET(this_ws, WS_NEXT_T);
+				next_ws = (WORDPTR)WORKSPACE_GET(this_ws, WS_TLINK);
 				/* We are NOT done!!! */
 			}
 		}

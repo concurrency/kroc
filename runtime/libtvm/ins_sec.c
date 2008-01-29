@@ -118,7 +118,7 @@ TVM_INSTRUCTION (ins_gcall)
 	/* FIXME: This is not the INMOS GCALL, it has been modified by fred (I
 	 * presume) to store the IPTR in WS_TOP. The original instruction does NOT
 	 * do this!!!! */
-	WORKSPACE_SET(WPTR, WS_TOP, AREG);
+	WORKSPACE_SET(WPTR, WS_TEMP, AREG);
 
 	return ECTX_CONTINUE;
 }

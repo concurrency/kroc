@@ -33,19 +33,19 @@ TVM_HELPER int chan_io_begin(ECTX ectx, WORD altable, WORDPTR chan_ptr, BYTEPTR 
 		/* ...Put this process('s WPTR) into the channel word, */
 		write_word(chan_ptr, (WORD)WPTR);
 		/* store our state */
-		WORKSPACE_SET(WPTR, WS_CHAN, (WORD)data_ptr);
+		WORKSPACE_SET(WPTR, WS_POINTER, (WORD)data_ptr);
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
 
 		RUN_NEXT_ON_QUEUE_RET();
 	}
 	else if(altable)
 	{
-		WORD alt_state = WORKSPACE_GET(other_WPTR, WS_ALT_STATE);
+		WORD alt_state = WORKSPACE_GET(other_WPTR, WS_STATE);
 
 		/* Check if alt_state == MIN_INT, MIN_INT +1, MI_INT +2, MIN_INT +3 */
 		if((alt_state & (~3)) == MIN_INT)
 		{
-			WORKSPACE_SET(WPTR, WS_CHAN, (WORD)data_ptr);
+			WORKSPACE_SET(WPTR, WS_POINTER, (WORD)data_ptr);
 			WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
 
 			write_word(chan_ptr, (WORD)WPTR);
@@ -54,12 +54,12 @@ TVM_HELPER int chan_io_begin(ECTX ectx, WORD altable, WORDPTR chan_ptr, BYTEPTR 
 			
 			switch(alt_state) {
 				case WAITING_P:
-					WORKSPACE_SET(other_WPTR, WS_ALT_STATE, DISABLING_P);
+					WORKSPACE_SET(other_WPTR, WS_STATE, DISABLING_P);
 					WPTR = other_WPTR;
 					IPTR = (BYTEPTR)WORKSPACE_GET(WPTR, WS_IPTR);
 					break;
 				case ENABLING_P:
-					WORKSPACE_SET(other_WPTR, WS_ALT_STATE, DISABLING_P);
+					WORKSPACE_SET(other_WPTR, WS_STATE, DISABLING_P);
 					/* Fall through */
 				case DISABLING_P:
 					RUN_NEXT_ON_QUEUE_RET();
@@ -107,7 +107,7 @@ TVM_HELPER int chan_in(ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR writ
 	else if (other_WPTR != NOT_PROCESS_P)
 	{
 		/* Where we start reading from */
-		BYTEPTR read_start = (BYTEPTR)WORKSPACE_GET(other_WPTR, WS_CHAN);
+		BYTEPTR read_start = (BYTEPTR)WORKSPACE_GET(other_WPTR, WS_POINTER);
 		/* Copy the data */
 		tvm_copy_data(write_start, read_start, num_bytes);
 		/* Complete channel operation */
@@ -131,7 +131,7 @@ TVM_HELPER int chan_out(ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR rea
 	else if(other_WPTR != NOT_PROCESS_P)
 	{
 		/* Normal communication */
-		BYTEPTR write_start = (BYTEPTR)WORKSPACE_GET(other_WPTR, WS_CHAN);
+		BYTEPTR write_start = (BYTEPTR)WORKSPACE_GET(other_WPTR, WS_POINTER);
 		/* Copy the data */
 		tvm_copy_data(write_start, read_start, num_bytes);
 		/* Complete channel operation */
@@ -155,7 +155,7 @@ TVM_HELPER int chan_swap(ECTX ectx, WORDPTR chan_ptr, WORDPTR data_ptr)
 	else if(other_WPTR != NOT_PROCESS_P)
 	{
 		/* Normal communication */
-		WORDPTR other_ptr = (WORDPTR)WORKSPACE_GET(other_WPTR, WS_CHAN);
+		WORDPTR other_ptr = (WORDPTR)WORKSPACE_GET(other_WPTR, WS_POINTER);
 		/* Swap data */
 		swap_data_word(data_ptr, other_ptr);
 		/* Complete channel operation */

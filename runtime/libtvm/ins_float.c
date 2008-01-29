@@ -121,7 +121,7 @@ TVM_INSTRUCTION (ins_postnormsn)
 {
 	WORD guard = AREG;
 	/* Adjust the exponent for the number of places shifted. */
-	WORD exponent = WORKSPACE_GET(WPTR, WS_TOP) - CREG;
+	WORD exponent = WORKSPACE_GET(WPTR, WS_TEMP) - CREG;
 	WORD mantissa = BREG;
 	if (exponent <= -32) {
 		/* too small to represent -- make it zero */

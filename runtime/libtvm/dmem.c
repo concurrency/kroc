@@ -170,7 +170,7 @@ TVM_INSTRUCTION (ins_xmin)
 	WORDPTR other_WPTR;
 
 	other_WPTR = (WORDPTR) read_word(chan_addr);
-	other_ptr = (WORDPTR) WORKSPACE_GET(other_WPTR, WS_CHAN);
+	other_ptr = (WORDPTR) WORKSPACE_GET(other_WPTR, WS_POINTER);
 
 	swap_data_word(data_ptr, other_ptr);
 
