@@ -92,6 +92,13 @@ foreach my $file (@ARGV) {
 					$name = verify_symbol ($state, 'constant', $name);
 					$line = "VAL INT $name IS $val:";
 					$line .= " -- $comment" if $comment;
+				} elsif ($val =~ /^(\(.*\)|[a-z0-9_]+)$/i) {
+					my $name = $def;
+					$val =~ s/_/./g;
+					$name =~ s/_/./g;
+					$name = verify_symbol ($state, 'expression', $name);
+					$line = "VAL INT $name IS $val:";
+					$line .= " -- $comment" if $comment;
 				}
 			} elsif ($line =~ m/^#include\s+["<](.+?)[">]/) {
 				my $header = $1;
@@ -113,8 +120,9 @@ foreach my $file (@ARGV) {
 	my %addrs;
 
 	foreach my $line (@lines) {
-		next if $line !~ m/^VAL INT (.+)\.(.+)\.ADDR IS #(.+):/;
+		next if $line !~ m/^VAL INT (.+?)\.(.+\.)?ADDR IS #(.+):/;
 		my ($base, $sub, $address) = ($1, $2, $3);
+		$sub =~ s/\.$//;
 		$address = hex($address);
 		if (exists($addrs{$base})) {
 			my $addr = $addrs{$base};
@@ -145,26 +153,34 @@ foreach my $file (@ARGV) {
 			$addr->{'offsets'}->{$sub} -= $address;
 			$addr->{'offsets'}->{$sub} /= 4;
 		}
-		$addr->{'length'} = ($addr->{'top'} - $address) / 4;
+		$addr->{'length'} = (($addr->{'top'} - $address) / 4) + 1;
 	}
 
 	# Inject addressing information
 	foreach my $line (@lines) {
-		next if $line !~ m/^VAL INT (.+)\.(.+)\.ADDR IS #(.+):/;
+		next if $line !~ m/^VAL INT (.+?)\.(.+\.)?ADDR IS #(.+):/;
 		my ($base, $sub, undef) = ($1, $2, $3);
 		my $addr = $addrs{$base};
+
+		$sub =~ s/\.$//;
+
 		if (!$addr->{'written'}) {
 			my $address = $addr->{'address'};
 			my $length = $addr->{'length'};
+			my $old_line = $line;
 			$line = "VAL INT $base.ADDR IS #" . 
 				sprintf('%08X', $address) .
 				":\n" .
-				"VAL INT $base.LEN IS $length:\n" .
-				$line;
+				"VAL INT $base.LEN IS $length:";
+			$line .= "\n$old_line" if $sub;
 			$addr->{'written'} = 1;
 		}
 		my $offset = $addr->{'offsets'}->{$sub};
-		$line .= "\nVAL INT $base.$sub IS $offset:";
+		if ($sub) {
+			$line .= "\nVAL INT $base.$sub IS $offset:";
+		} else {
+			$line .= "\nVAL INT $base IS $offset:";
+		}
 	}
 
 	# Inject space before comment lines
