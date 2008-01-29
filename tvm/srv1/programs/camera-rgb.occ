@@ -1,5 +1,5 @@
-#INCLUDE "../external_srv_ffi_pragmas.occ"
-#INCLUDE "course-output.inc"
+--#INCLUDE "../external_srv_ffi_pragmas.occ"
+--#INCLUDE "course-output.inc"
 
 PROC sleep.ms (VAL INT ms)
   TIMER time:
@@ -22,20 +22,20 @@ PROC camera.test1 ()
       CHAN BYTE chars:
       PAR
         SEQ
-          out.hex (pixel /\ #FFFF, 0, chars!)
+          --out.hex (pixel /\ #FFFF, 0, chars!)
           chars ! ' '
-          out.int (r, 0, chars!)
+          --out.int (r, 0, chars!)
           chars ! ','
-          out.int (g, 0, chars!)
+          --out.int (g, 0, chars!)
           chars ! ','
-          out.int (b, 0, chars!)
+          --out.int (b, 0, chars!)
           chars ! '*n'
         INITIAL BOOL done IS FALSE:
         WHILE NOT done
           BYTE ch:
           SEQ
             chars ? ch
-            ffi.print.char (ch)
+            --ffi.print.char (ch)
             done := (ch = '*n')
 
       sleep.ms (1000)
