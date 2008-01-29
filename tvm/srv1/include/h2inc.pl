@@ -86,10 +86,11 @@ foreach my $file (@ARGV) {
 						if (hex($val) > 0xff000000) {
 							$name .= '.ADDR';
 						}
+						$val = "#$val";
 					}
 					$name =~ s/_/./g;
 					$name = verify_symbol ($state, 'constant', $name);
-					$line = "VAL INT $name IS #$val:";
+					$line = "VAL INT $name IS $val:";
 					$line .= " -- $comment" if $comment;
 				}
 			} elsif ($line =~ m/^#include\s+["<](.+?)[">]/) {
