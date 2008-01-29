@@ -634,7 +634,7 @@ TVM_INSTRUCTION (ins_mt_in)
 	if (other_WPTR != NOT_PROCESS_P)
 	{
 		/* Get pointer to source pointer */
-		WORDPTR src = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_CHAN);
+		WORDPTR src = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_POINTER);
 		/* Do input */
 		if ((ret = mt_chan_io (ectx, dst, src))) {
 			return ret;
@@ -661,7 +661,7 @@ TVM_INSTRUCTION (ins_mt_out)
 	if (other_WPTR != NOT_PROCESS_P)
 	{
 		/* Get pointer to destination */
-		WORDPTR dst = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_CHAN);
+		WORDPTR dst = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_POINTER);
 		/* Do output */
 		if ((ret = mt_chan_io (ectx, dst, src))) {
 			return ret;
@@ -769,7 +769,7 @@ TVM_INSTRUCTION (ins_mt_xin)
 	WORDPTR chan_ptr	= (WORDPTR) AREG;
 	WORDPTR dst		= (WORDPTR) BREG;
 	WORDPTR other_WPTR	= (WORDPTR) read_word (chan_ptr);
-	WORDPTR src		= (WORDPTR) WORKSPACE_GET (other_WPTR, WS_CHAN);
+	WORDPTR src		= (WORDPTR) WORKSPACE_GET (other_WPTR, WS_POINTER);
 
 	/* Do input */
 	return mt_chan_io (ectx, dst, src);
@@ -791,7 +791,7 @@ TVM_INSTRUCTION (ins_mt_xxchg)
 	WORDPTR other_WPTR;
 
 	other_WPTR = (WORDPTR) read_word (chan_ptr);
-	other_ptr = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_CHAN);
+	other_ptr = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_POINTER);
 
 	swap_data_word (data_ptr, other_ptr);
 

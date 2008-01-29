@@ -51,15 +51,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /*}}}*/
 
 /*{{{  Workspace constants and manipulation */
-#define WS_TOP       0
-#define WS_IPTR      1 /* Valid when: the process has been descheduled */
-#define WS_NEXT      2 /* Valid when: the process is on a scheduling list */
-#define WS_ECTX		3 /* Execution context pointer */
-#define WS_CHAN      3 /* Valid when: the process is waiting for */
-#define WS_ALT_STATE 3 /*             communication, or is executing an ALT */
-#define WS_NEXT_T    4 /* Valid when: the process is on */
-#define WS_ALT_T     4 /*             a timer list */
-#define WS_TIMEOUT   5 /* Valid when: the process is on a timer list */
+#define WS_TEMP		0 /* Temporary slot used by some instructions */
+#define WS_IPTR		1 /* Instruction pointer when descheduled */
+#define WS_LINK		2 /* Next process when on a scheduling list */
+#define WS_ECTX		3 /* Execution context pointer when blocked on event */
+#define WS_POINTER	4 /* Data pointer when blocked on channel */
+#define WS_STATE	4 /* Saved alternative state when ALTing */
+#define WS_LENGTH	4 /* Length of received message for variable communication */
+#define WS_TLINK	5 /* Next process when on timer queue */
+#define WS_TIME		6 /* Time waited for when blocked on timer or TALTing */
 
 #define WORKSPACE_GET(WPTR, LOC) \
 	read_word(wordptr_minus((WPTR), (LOC)))

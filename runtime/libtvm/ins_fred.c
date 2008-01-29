@@ -263,7 +263,7 @@ TVM_HELPER int tvm_sem_claim(ECTX ectx, WORDPTR sem)
 	else
 	{
 		/* It is, join the queue */
-		WORKSPACE_SET(WPTR, WS_NEXT, (WORD) NOT_PROCESS_P);
+		WORKSPACE_SET(WPTR, WS_LINK, (WORD) NOT_PROCESS_P);
 		/* Save our IPTR */
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
 		/* Check if the semaphores front pointer is null */
@@ -278,7 +278,7 @@ TVM_HELPER int tvm_sem_claim(ECTX ectx, WORDPTR sem)
 			/* Add us as the last element */
 			WORDPTR sem_bptr_ptr = wordptr_plus(sem, SEM_BPTR);
 			WORDPTR sem_bptr = (WORDPTR) read_word(sem_bptr_ptr);
-			WORKSPACE_SET(sem_bptr, WS_NEXT, (WORD) WPTR);
+			WORKSPACE_SET(sem_bptr, WS_LINK, (WORD) WPTR);
 			write_word(sem_bptr_ptr, (WORD) WPTR);
 		}
 		RUN_NEXT_ON_QUEUE_RET();
@@ -300,7 +300,7 @@ TVM_HELPER int tvm_sem_release(ECTX ectx, WORDPTR sem)
 	else
 	{
 		/* Yes, so we need to update ptrs and schedule waiting process */
-		write_word(sem_fptr_ptr, WORKSPACE_GET((WORDPTR) sem_fptr, WS_NEXT));
+		write_word(sem_fptr_ptr, WORKSPACE_GET((WORDPTR) sem_fptr, WS_LINK));
 
 		/* Put the process we picked up semaphore queue onto run queue */
 		ADD_TO_QUEUE_ECTX_RET((WORDPTR)sem_fptr);
@@ -343,7 +343,7 @@ TVM_INSTRUCTION (ins_xable)
 	if(other_WPTR == NOT_PROCESS_P)
 	{
 		/* Save state, set ALT to waiting */
-		WORKSPACE_SET(WPTR, WS_ALT_STATE, WAITING_P);
+		WORKSPACE_SET(WPTR, WS_STATE, WAITING_P);
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
 
 		/* Put ourselves into the channel word */
@@ -366,7 +366,7 @@ TVM_INSTRUCTION (ins_xin)
 	WORD num_bytes = AREG;
 
 	other_WPTR = (WORDPTR) read_word(chan_addr);
-	read_start = (BYTEPTR) WORKSPACE_GET(other_WPTR, WS_CHAN);
+	read_start = (BYTEPTR) WORKSPACE_GET(other_WPTR, WS_POINTER);
 
 	tvm_copy_data(write_start, read_start, num_bytes);
 

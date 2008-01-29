@@ -71,7 +71,7 @@ TVM_HELPER int tvm_bar_sync(ECTX ectx, WORDPTR bar)
 		write_word(wordptr_plus(bar, BAR_COUNT), count - 1);
 
 		/* Stop process. */
-		WORKSPACE_SET(WPTR, WS_NEXT, (WORD) bar_bptr);
+		WORKSPACE_SET(WPTR, WS_LINK, (WORD) bar_bptr);
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
 
 		/* Enqueue process to barrier. */
@@ -83,7 +83,7 @@ TVM_HELPER int tvm_bar_sync(ECTX ectx, WORDPTR bar)
 		else
 		{
 			/* Last process in queue. */
-			WORKSPACE_SET(bar_bptr, WS_NEXT, (WORD) WPTR);
+			WORKSPACE_SET(bar_bptr, WS_LINK, (WORD) WPTR);
 		}
 		write_word(wordptr_plus(bar, BAR_BPTR), (WORD) WPTR);
 

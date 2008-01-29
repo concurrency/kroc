@@ -97,7 +97,7 @@ TVM_INSTRUCTION (ins_tin)
 	else
 	{
 		/* Store our reschedule time in our workspace */
-		WORKSPACE_SET(WPTR, WS_TIMEOUT, reschedule_time);
+		WORKSPACE_SET(WPTR, WS_TIME, reschedule_time);
 		/* Store the IPTR in our workspace */
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
 		
@@ -111,7 +111,7 @@ TVM_INSTRUCTION (ins_tin)
 		 * timer queue, we should probably set the (ALT) STATE to a known value
 		 * here (ie something else than READY_P
 		 */
-		WORKSPACE_SET(WPTR, WS_ALT_STATE, NOT_PROCESS_P);
+		WORKSPACE_SET(WPTR, WS_STATE, NOT_PROCESS_P);
 		
 		/* Run the next process */
 		RUN_NEXT_ON_QUEUE_RET();
