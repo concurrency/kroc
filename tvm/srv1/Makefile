@@ -55,7 +55,7 @@ CINCS	+= camera.h c.h config.h font8x8.h \
 
 OBJS = $(ASMSRCS:%.asm=%.o) $(CSRCS:%.c=%.o)
 
-TVMOBJS = ../../interpreter/libinterpreter.a
+TVMOBJS = libtvm/libtvm.a
 
 %.o: %.asm $(ASMINCS)
 	$(CC) $(ASMFLAGS) -c -o $@ $<
