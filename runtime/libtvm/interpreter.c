@@ -18,13 +18,6 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* ANNO: FIXME: We use an integer for a for a test expression, ie
- * while(variable). Splint complains about this, and this may be due to to the
- * fact that it really would perhaps be more clear to write while(variable ==
- * 1). Anyways, I am going to disable that warning for now.
- */
-/*@-predboolint@*/
-
 #include "tvm.h"
 #include "instructions.h"
 #include "interpreter.h"
@@ -52,101 +45,129 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #endif
 
-#ifdef ENABLE_RUNLOOP_DBG_HOOKS
-void (*runloop_dbg_hook_pre)(void) = 0;
-void (*runloop_dbg_hook_post)(void) = 0;
-#endif
-
 /*
- * Allocate a new stackframe using the workspace pointer pointed to by 'where',
- * with argc number of arguments placed in the argv array (literal values or
- * addresses) with the addresses (or null) for vectorspace and mobilespace.
- *
- * 'where' use like 
- *    int *WPTR;
- *    ...
- *    init_stackframe(&WPTR, ...)
+ * Setup the initial workspace and instruction pointers,
+ * and stack frame for an execution context.
  */
-void tvm_init_stackframe(WORDPTR *where, int argc, WORD argv[],
-		WORDPTR vectorspace, WORDPTR mobilespace, WORDPTR forkingbarrier,
-		int ret_type, BYTEPTR ret_addr)
+int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
+		WORDPTR ws, WORDPTR vs, WORDPTR ms,
+		char *fmt, int argc, WORD argv[])
 {
-	int index = 0;
-	int i, frame_size, ret_index;
+	WORDPTR fb = 0;
+	int i, frame_size;
 
-	/* Calculate the framesize, if below four, allocate four */
-	frame_size = 1 + argc 
-		+ (vectorspace ? 1 : 0) + (mobilespace? 1 : 0) + (forkingbarrier ? 1 : 0)
-		+ (ret_type != RET_REAL ? 1 : 0);
-	frame_size = (frame_size < 4 ? 4 : frame_size);
-
-	*where = wordptr_minus(*where, frame_size);
-
-	/* Store an index to the return pointer */
-	ret_index = index++;
-
-	/* Set up arguments */
-	for(i = 0; i < argc; i++)
-		write_word(wordptr_plus(*where, index++), (WORD)argv[i]);
-
-	/* Set up vectorspace pointer if neccesary */
-	if(vectorspace)
+	/* Make sure we don't have too many arguments */
+	if (argc > TVM_ECTX_TLP_ARGS)
 	{
-		write_word(wordptr_plus(*where, index++), (WORD)vectorspace);
+		return -1;
+	}
+
+	/* Copy arguments to execution context */
+	ectx->tlp_argc = argc;
+	for (i = 0; i < argc; ++i)
+	{
+		char arg = ectx->tlp_fmt[i] = fmt[i];
+
+		if (arg == 'F')
+		{
+			#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
+			int ret;
+			/* Allocate forking barrier */
+			if ((ret = mt_alloc(ectx, MT_MAKE_BARRIER(MT_BARRIER_FORKING), 0, &fb)))
+			{
+				return ret;
+			}
+			ectx->tlp_argv[i] = (WORD) fb;
+			#else
+			return -2;
+			#endif
+		} 
+		else 
+		{
+			ectx->tlp_argv[i] = argv[i];
+		}
+	}
+
+	/* Setup initial workspace pointer */
+	WPTR = ws;
+	/* Setup initial instruction pointer */
+	IPTR = code;
+
+	/* Calculate the framesize, and layout data
+	 * in initial stack frame.
+	 *
+	 * Memory ends up layed out as follows:
+	 * 
+	 * WS =>        [ ... padding ...         ]
+	 *              [ shutdown bytecode       ]
+	 *              [ forking barrier pointer ]
+	 *              [ mobile space pointer    ]
+	 *              [ vector space pointer    ]
+	 *      +argc:  [ argv[argc - 1]          ]
+	 *              [ argv[...]               ]
+	 *         +1:  [ argv[0]                 ]
+	 * WPTR =>  0:  [ return address          ]
+	 *
+	 * Where the forking barrier, mobile space
+	 * and vector space pointers are optional.
+	 *
+	 * The total size of the frame must be at
+	 * least 4 words, e.g. if argc == 0 and
+	 * there are no pointers then, 2 words of
+	 * padding will be added to the top of the
+	 * frame.
+	 *
+	 * The return address points at the shutdown
+	 * bytecode, allowing the interpreter to
+	 * detect normal completion of an execution
+	 * context using a instruction sequence.
+	 */
+	frame_size = 1 + argc 
+		+ (vs ? 1 : 0) 
+		+ (ms ? 1 : 0) 
+		+ (fb ? 1 : 0)
+		+ 1;
+	
+	WPTR = wordptr_minus(WPTR, frame_size < 4 ? 4 - frame_size: 0);
+
+	/* Put a shutdown instruction in top of the stack frame */
+	WPTR = wordptr_minus(WPTR, 1);
+	write_byte(byteptr_plus((BYTEPTR)WPTR, 0), 0x2F);
+	write_byte(byteptr_plus((BYTEPTR)WPTR, 1), 0xFE);
+
+	/* Set up forking barrier pointer if neccesary */
+	if(fb)
+	{
+		WPTR = wordptr_minus(WPTR, 1);
+		write_word(WPTR, (WORD)fb);
 	}
 
 	/* Set up mobilespace pointer if neccesary */
-	if(mobilespace)
+	if(ms)
 	{
-		write_word(wordptr_plus(*where, index++), (WORD)mobilespace);
+		WPTR = wordptr_minus(WPTR, 1);
+		write_word(WPTR, (WORD)ms);
 	}
-
-	/* Set up forking barrier pointer if neccesary */
-	if(forkingbarrier)
+	
+	/* Set up vectorspace pointer if neccesary */
+	if(vs)
 	{
-		write_word(wordptr_plus(*where, index++), (WORD)forkingbarrier);
+		WPTR = wordptr_minus(WPTR, 1);
+		write_word(WPTR, (WORD)vs);
 	}
-
-	switch(ret_type) {
-		case RET_SHUTDOWN:
-			/* Put a shutdown instruction in top workspace */
-			write_byte(byteptr_plus((BYTEPTR)wordptr_plus(*where, index), 0), 0x2F);
-			write_byte(byteptr_plus((BYTEPTR)wordptr_plus(*where, index), 1), 0xFE);
-			break;
-		case RET_ERROR:
-			/* Put a seterr instruction in top workspace */
-			write_byte(byteptr_plus((BYTEPTR)wordptr_plus(*where, index), 0), 0x21);
-			write_byte(byteptr_plus((BYTEPTR)wordptr_plus(*where, index), 1), 0xF0);
-			break;
-		default:
-			break;
-	}
-
-	if(ret_type == RET_REAL)
+	
+	/* Set up arguments */
+	for(i = argc - 1; i < argc; i++)
 	{
-		/* Store the return pointer, to completion byte code */
-		write_word(wordptr_plus(*where, ret_index), (WORD)ret_addr);
+		WPTR = wordptr_minus(WPTR, 1);
+		write_word(WPTR, ectx->tlp_argv[i]);
 	}
-	else
-	{
-		/* Store the return pointer, to completion byte code */
-		write_word(wordptr_plus(*where, ret_index), (WORD)wordptr_plus(*where, index));
-	}
-}
 
-void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
-		WORDPTR vectorspace, WORDPTR mobilespace, int add_forkingbarrier)
-{
-	WORDPTR fb = (WORDPTR) NULL_P;
+	/* Store the return pointer, to completion byte code */
+	/* FIXME: this won't work for virtual memory right? */
+	write_word(WPTR, (WORD)wordptr_plus(WPTR, frame_size - 1));
 
-	#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
-	if(add_forkingbarrier)
-	{
-		/* CGR FIXME: fb = mt_alloc(MT_MAKE_BARRIER(MT_BARRIER_FORKING), 0); */
-	}
-	#endif
-
-	tvm_init_stackframe(where, argc, argv, vectorspace, mobilespace, fb, RET_SHUTDOWN, 0);
+	return 0;
 }
 
 void tvm_ectx_reset(ECTX ectx)

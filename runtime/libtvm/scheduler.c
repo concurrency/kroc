@@ -180,6 +180,12 @@ static int run_next_on_queue(ECTX ectx)
 	return ECTX_CONTINUE;
 }
 
+static int set_error_flag(ECTX ectx, WORD flag)
+{
+	ectx->eflags |= flag;
+	return ECTX_ERROR;
+}
+
 /* PREREQUISITES:
  *   The workspace must be already have WS_TIME set correctly
  */
@@ -276,6 +282,7 @@ void _tvm_install_scheduler(ECTX ectx)
 	ectx->add_to_queue 		= add_to_queue;
 	ectx->add_queue_to_queue	= add_queue_to_queue;
 	ectx->run_next_on_queue		= run_next_on_queue;
+	ectx->set_error_flag		= set_error_flag;
 	ectx->timer_queue_insert	= timer_queue_insert;
 	ectx->get_time			= NULL;
 	ectx->set_alarm			= NULL;
