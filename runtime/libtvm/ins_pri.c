@@ -650,7 +650,7 @@ TVM_INSTRUCTION (ins_opr)
 	if(ins <= secondaries_max)
 	{
 		CLEAR(OREG);
-		return secondaries[ins]();
+		return secondaries[ins](ectx);
 	}
 	else
 	{
@@ -658,13 +658,13 @@ TVM_INSTRUCTION (ins_opr)
 		if(ins >= extended_secondaries_min && ins <= extended_secondaries_max)
 		{
 			CLEAR(OREG);
-			return extended_secondaries[ins - extended_secondaries_min]();
+			return extended_secondaries[ins - extended_secondaries_min](ectx);
 		} 
 #else /* !TVM_OCCAM_PI */
 		if (ins == 0x237) /* getpas */
 		{
 			CLEAR(OREG);
-			return ins_getpas();
+			return ins_getpas(ectx);
 		}
 #endif /* !TVM_OCCAM_PI */
 	}

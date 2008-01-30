@@ -65,24 +65,24 @@ libtvm_a_SOURCES += \
 endif
 
 DISPATCH_SOURCE_FILES = \
-	ext_chan.c \
-	ins_alt.c \
-	ins_barrier.c \
-	ins_chan.c \
-	ins_float.c \
-	ins_pi.c \
-	ins_mobile.c \
-	ins_pri.c \
-	ins_proc.c \
-	ins_rmox.c \
-	ins_sec.c \
-	ins_t800.c \
-	ins_timer.c
+	$(top_srcdir)/ext_chan.c \
+	$(top_srcdir)/ins_alt.c \
+	$(top_srcdir)/ins_barrier.c \
+	$(top_srcdir)/ins_chan.c \
+	$(top_srcdir)/ins_float.c \
+	$(top_srcdir)/ins_pi.c \
+	$(top_srcdir)/ins_mobile.c \
+	$(top_srcdir)/ins_pri.c \
+	$(top_srcdir)/ins_proc.c \
+	$(top_srcdir)/ins_rmox.c \
+	$(top_srcdir)/ins_sec.c \
+	$(top_srcdir)/ins_t800.c \
+	$(top_srcdir)/ins_timer.c
 
 DISPATCH_OUTPUT_FILES = \
 	dispatch_ins.c jumptbl_pri.c jumptbl_sec.c jumptbl_ex_sec.c
 
-make_dispatch = make-dispatch.py
+make_dispatch = $(top_srcdir)/make-dispatch.py
 
 $(DISPATCH_OUTPUT_FILES): $(make_dispatch) $(DISPATCH_SOURCE_FILES)
 	$(PYTHON) $(make_dispatch) $(DISPATCH_SOURCE_FILES)
