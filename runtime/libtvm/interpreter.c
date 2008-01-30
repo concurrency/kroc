@@ -45,13 +45,83 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #endif
 
+int tvm_init(tvm_t *tvm)
+{
+	tvm->head 		= NULL;
+	tvm->tail		= NULL;
+	tvm->ffi_table		= NULL;
+	tvm->special_ffi_table	= NULL;
+
+	return 0;
+}
+
+void tvm_ectx_init(tvm_t *tvm, ECTX ectx)
+{
+	tvm_ectx_reset(ectx);
+	
+	ectx->pri 	= 0;
+
+	_tvm_install_scheduler(ectx);
+
+	ectx->get_time	= NULL;
+	ectx->set_alarm	= NULL;
+	ectx->run_hook	= NULL;
+
+	ectx->tvm	= tvm;
+
+	if (tvm->head == NULL) {
+		tvm->head = ectx;
+	} else {
+		tvm->tail->next = ectx;
+	}
+	
+	tvm->tail	= ectx;
+	ectx->next	= NULL;
+}
+
+void tvm_ectx_reset(ECTX ectx)
+{
+	ectx->state 	= ECTX_INIT;
+	ectx->eflags	= 0;
+	ectx->sflags	= 0;
+
+	/* evaluation stack */
+	OREG = 0;
+	AREG = 0;
+	BREG = 0;
+	CREG = 0;
+
+	/* setup scheduler queues */
+	WPTR = (WORDPTR)NOT_PROCESS_P;
+	FPTR = (WORDPTR)NOT_PROCESS_P;
+	BPTR = (WORDPTR)NOT_PROCESS_P;
+	TPTR = (WORDPTR)NOT_PROCESS_P;
+}
+
+void tvm_ectx_layout(ECTX ectx, WORDPTR base,
+		const char *tlp_fmt, const int tlp_argc,
+		WORD ws_size, WORD vs_size, WORD ms_size,
+		WORD *size, WORDPTR *ws, WORDPTR *vs, WORDPTR *ms)
+{
+	int frame_size =
+		1 + tlp_argc 
+		+ (vs_size ? 1 : 0) 
+		+ (ms_size ? 1 : 0) 
+		+ 1;
+	
+	*size 	= frame_size + ws_size + vs_size + ms_size;
+	*ws 	= wordptr_plus(base, frame_size + ws_size);
+	*vs	= vs_size ? *ws : 0;
+	*ms	= ms_size ? wordptr_plus(*ws, vs_size) : 0;
+}
+
 /*
  * Setup the initial workspace and instruction pointers,
  * and stack frame for an execution context.
  */
 int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 		WORDPTR ws, WORDPTR vs, WORDPTR ms,
-		char *fmt, int argc, WORD argv[])
+		const char *fmt, int argc, const WORD argv[])
 {
 	WORDPTR fb = 0;
 	int i, frame_size;
@@ -125,7 +195,6 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 	frame_size = 1 + argc 
 		+ (vs ? 1 : 0) 
 		+ (ms ? 1 : 0) 
-		+ (fb ? 1 : 0)
 		+ 1;
 	
 	WPTR = wordptr_minus(WPTR, frame_size < 4 ? 4 - frame_size: 0);
@@ -157,68 +226,18 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 	}
 	
 	/* Set up arguments */
-	for(i = argc - 1; i < argc; i++)
+	for(i = ectx->tlp_argc - 1; i >= 0; i--)
 	{
-		WPTR = wordptr_minus(WPTR, 1);
-		write_word(WPTR, ectx->tlp_argv[i]);
+		if (ectx->tlp_argv[i] != 'F')
+		{
+			WPTR = wordptr_minus(WPTR, 1);
+			write_word(WPTR, ectx->tlp_argv[i]);
+		}
 	}
 
 	/* Store the return pointer, to completion byte code */
 	/* FIXME: this won't work for virtual memory right? */
 	write_word(WPTR, (WORD)wordptr_plus(WPTR, frame_size - 1));
-
-	return 0;
-}
-
-void tvm_ectx_reset(ECTX ectx)
-{
-	ectx->state 	= ECTX_INIT;
-	ectx->eflags	= 0;
-	ectx->sflags	= 0;
-
-	/* evaluation stack */
-	OREG = 0;
-	AREG = 0;
-	BREG = 0;
-	CREG = 0;
-
-	/* setup scheduler queues */
-	WPTR = (WORDPTR)NOT_PROCESS_P;
-	FPTR = (WORDPTR)NOT_PROCESS_P;
-	BPTR = (WORDPTR)NOT_PROCESS_P;
-	TPTR = (WORDPTR)NOT_PROCESS_P;
-}
-
-void tvm_ectx_init(tvm_t *tvm, ECTX ectx)
-{
-	tvm_ectx_reset(ectx);
-	
-	ectx->pri 	= 0;
-
-	_tvm_install_scheduler(ectx);
-
-	ectx->get_time	= NULL;
-	ectx->set_alarm	= NULL;
-	ectx->run_hook	= NULL;
-
-	ectx->tvm	= tvm;
-
-	if (tvm->head == NULL) {
-		tvm->head = ectx;
-	} else {
-		tvm->tail->next = ectx;
-	}
-	
-	tvm->tail	= ectx;
-	ectx->next	= NULL;
-}
-
-int tvm_init(tvm_t *tvm)
-{
-	tvm->head 		= NULL;
-	tvm->tail		= NULL;
-	tvm->ffi_table		= NULL;
-	tvm->special_ffi_table	= NULL;
 
 	return 0;
 }
