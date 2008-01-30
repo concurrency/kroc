@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <cdefBF537.h>
+#include <tvm.h>
 #include "config.h"
 #include "uart.h"
-
-#include "../../interpreter/transputer.h"
 
 /*********************************************/
 /* CONSOLE LOOP                              */
