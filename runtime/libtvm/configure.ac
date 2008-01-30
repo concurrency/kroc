@@ -12,6 +12,8 @@ AC_CANONICAL_HOST
 AC_PROG_CC
 AC_PROG_RANLIB
 
+AC_C_INLINE
+
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h stdio.h string.h])
 AC_CHECK_HEADERS([sys/types.h math.h inttypes.h])
@@ -195,6 +197,11 @@ fi
 # FPU
 if test "$x_fpu" = "yes"; then
   AC_DEFINE([TVM_USE_FPU], 1, [define to allow FPU usage])
+fi
+
+# Inlining
+if test "$ac_cv_c_inline" != no ; then
+  AC_DEFINE([TVM_USE_INLINE], 1, [define to allow inline keyword usage])
 fi
 
 # Memory allocator

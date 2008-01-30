@@ -299,7 +299,7 @@ TVM_INSTRUCTION (ins_talt)
 /* 0x51 - 0x25 0xF1 - taltwt - timer alt wait */
 TVM_INSTRUCTION (ins_taltwt)
 {
-	int current_time = tvm_get_time();
+	int current_time = ectx->get_time(ectx);
 
 	/* Set the top of the workspace to -1 */
 	WORKSPACE_SET(WPTR, WS_TEMP, NONE_SELECTED_O);
@@ -343,7 +343,7 @@ TVM_INSTRUCTION (ins_taltwt)
 		}
 		else
 		{
-			return ectx->set_error_flag(ectx, EFLAG_ALT);
+			SET_ERROR_FLAG_RET (EFLAG_ALT);
 		}
 	}
 

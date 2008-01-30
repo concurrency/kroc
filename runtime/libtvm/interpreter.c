@@ -149,7 +149,7 @@ void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
 	tvm_init_stackframe(where, argc, argv, vectorspace, mobilespace, fb, RET_SHUTDOWN, 0);
 }
 
-void tvm_reset_ectx(ECTX ectx)
+void tvm_ectx_reset(ECTX ectx)
 {
 	ectx->state 	= ECTX_INIT;
 	ectx->eflags	= 0;
@@ -168,9 +168,9 @@ void tvm_reset_ectx(ECTX ectx)
 	TPTR = (WORDPTR)NOT_PROCESS_P;
 }
 
-void tvm_init_ectx(tvm_t *tvm, ECTX ectx)
+void tvm_ectx_init(tvm_t *tvm, ECTX ectx)
 {
-	tvm_reset_ectx(ectx);
+	tvm_ectx_reset(ectx);
 	
 	ectx->pri 	= 0;
 

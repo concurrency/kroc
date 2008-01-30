@@ -31,35 +31,3 @@ TVM_INSTRUCTION (ins_not_implemented)
 	return ECTX_INS_UNSUPPORTED;
 }
 
-#if 0
-#ifdef DEBUG_ERRORS
-#include <stdio.h>
-void debug_error_flag(char *file, int line, int error_num)
-{
-	fprintf(stderr, "error_flag set to %d at %s:%d\n", error_num, file, line);
-	error_flag = error_num;
-	exit_runloop(EXIT_ERROR);
-}
-#else /* !DEBUG_ERRORS */
-void set_error_flag(int error_num)
-{
-	/* FIXME: This needs to check HaltOnErrorFlag and halt if that is set, ie
-	 *
-	 * if errorflag = 0
-	 *   if haltonerr = 1
-	 *     stop the machine
-	 *   else
-	 *     errorflag = 1
-	 * */
-	error_flag = error_num;
-
-	/* FIXME: Should we always exit???? */
-	exit_runloop(EXIT_ERROR);
-}
-#endif
-
-void clear_error_flag(void)
-{
-	error_flag = 0;
-}
-#endif

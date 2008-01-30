@@ -22,9 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tvm_config.h"
 
-/* Use stddef to get NULL. */
-#include <stddef.h>
-
 #ifndef HAVE_INTTYPES_H
 
 /* No inttypes.h; assume the sizes of the standard types are correct. */

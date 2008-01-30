@@ -26,40 +26,11 @@ typedef struct _tvm_t tvm_t;
 /*}}}*/
 
 #include "tvm_config.h"
+#include "tvm_compiler.h"
 #include "tvm_types.h"
 #include "transputer.h"
 #include "tvm_mem.h"
 #include "tvm_time.h"
-
-/*{{{  Interpreter exit codes */
-enum {
-	EXIT_STACK_BOTTOM	= 0,	/* For what currently amounts to a good exit */
-	EXIT_DEADLOCK		= 100,	/* When the running program has deadlocked */
-	EXIT_HALTED		= 200,	/* When the program halted due to an error */
-	EXIT_DEBUG_TRAP		= 300,	/* When the program halted due to an J 0 */
-	EXIT_ERROR		= 400,	/* When a runtime error occurs */
-	EXIT_ALIGN_ERROR	= 666,	/* A memory alignment error */
-	EXIT_BAD_ADDR		= 667,	/* A bad memory address */
-	EXIT_INS_INVALID	= 998,	/* If we hit an invalid instruction */
-	EXIT_INS_NOT_IMP	= 999,	/* If we hit an unimplemented instruction */
-	EXIT_SCHEDULER_BAD_1	= 5000	/* If the scheduler has gone bad */
-};
-/*}}}*/
-
-/*{{{  Execution context returns */
-enum {
-	ECTX_CONTINUE		= 0,
-	ECTX_INIT,
-	ECTX_INS_INVALID	= EXIT_INS_INVALID,
-	ECTX_INS_UNSUPPORTED	= EXIT_INS_NOT_IMP,
-	ECTX_EMPTY		= EXIT_DEADLOCK,
-	ECTX_ERROR		= EXIT_ERROR,
-	ECTX_RUNNING,
-	ECTX_SHUTDOWN,
-	ECTX_SLEEP,
-	ECTX_TIME_SLICE
-};
-/*}}}*/
 
 /*{{{  Stack frame return types */
 enum {
@@ -98,12 +69,9 @@ struct _tvm_t {
 /*}}}*/
 
 /*{{{  Interpreter API */
-extern void tvm_init_stackframe(WORDPTR *where, int argc, WORD argv[],
-		WORDPTR vectorspace, WORDPTR mobilespace, WORDPTR forkbarrier,
-		int ret_type, BYTEPTR ret_addr);
-extern void tvm_initial_stackframe(WORDPTR *where, int argc, WORD argv[],
-	WORDPTR vectorspace, WORDPTR mobilespace, int add_forkingbarrier);
 extern int tvm_init(tvm_t *tvm);
+extern void tvm_ectx_reset(ECTX ectx);
+extern void tvm_ectx_init(tvm_t *tvm, ECTX ectx);
 extern int tvm_dispatch(ECTX ectx);
 extern int tvm_run(ECTX ectx);
 extern int tvm_run_count(ECTX ectx, UWORD count);

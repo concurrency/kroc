@@ -32,16 +32,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* 0x22F - 0x22 0x22 0xFF - proc_alloc - allocate process workspace */
 TVM_INSTRUCTION (ins_proc_alloc)
 {
-	WORDPTR ws = 0;
+	WORDPTR ws;
 	UWORD flags = (UWORD) AREG;
 	UWORD words = (UWORD) BREG;
 
-	if (flags == 0) {
-		ws = mt_alloc_data (ectx, MT_SIMPLE | MT_MAKE_TYPE (MT_DATA), words << WSH);
-	} else {
-		/* Don't support any flags at present. */
-		return ectx->set_error_flag (ectx, EFLAG_PROC);
+	if (flags) {
+		/* No flags presently supported */
+		SET_ERROR_FLAG (EFLAG_PROC);
 	}
+	
+	ws = mt_alloc_data (ectx, MT_SIMPLE | MT_MAKE_TYPE (MT_DATA), words << WSH);
 
 	STACK_RET ((WORD) ws, UNDEFINE(BREG), UNDEFINE(CREG));
 }
@@ -103,7 +103,7 @@ TVM_INSTRUCTION (ins_proc_mt_move)
 		write_word (wordptr_plus (ws, offset), (WORD) ptr);
 	} else {
 		/* Source reference pointer should never be null. */
-		return ectx->set_error_flag (ectx, EFLAG_PROC);
+		SET_ERROR_FLAG (EFLAG_PROC);
 	}	
 
 	UNDEFINE_STACK_RET ();

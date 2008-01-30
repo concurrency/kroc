@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef TRANSPUTER_H
 #define TRANSPUTER_H
 
+#include "tvm_compiler.h"
 #include "tvm_types.h"
 
 /*{{{  Word length related constants */
@@ -116,6 +117,11 @@ typedef tvm_ectx_t		*ECTX;
 typedef TVM_ECTX_PRIVATE_DATA	tvm_ectx_priv_t;
 #endif /* !TVM_ECTX_PRIVATE_DATA */
 
+#ifndef TVM_H
+typedef void tvm_t;
+#endif
+
+TVM_PACK
 struct _tvm_ectx_t {
 	/* Machine state */
 	BYTEPTR		iptr;	/* Instruction pointer */
@@ -168,6 +174,21 @@ struct _tvm_ectx_t {
 
 	/* Private data */
 	tvm_ectx_priv_t	priv;
+};
+/*}}}*/
+
+/*{{{  Execution context returns */
+enum {
+	ECTX_CONTINUE		= 0,
+	ECTX_INIT		= 1000,
+	ECTX_INS_INVALID	= 2000,
+	ECTX_INS_UNSUPPORTED	= 2001,
+	ECTX_EMPTY		= 3000,
+	ECTX_ERROR		= 4000,
+	ECTX_RUNNING		= 1001,
+	ECTX_SHUTDOWN		= 6000,
+	ECTX_SLEEP		= 7000,
+	ECTX_TIME_SLICE		= 8000
 };
 /*}}}*/
 

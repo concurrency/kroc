@@ -67,13 +67,11 @@ TVM_INSTRUCTION (ins_fficall)
 	 * oblivion if that is the case */
 	if(AREG >= 0 && !tvm->ffi_table)
 	{
-		/* FIXME: We need a seperate error trap for this */
-		return ectx->set_error_flag(ectx, EFLAG_FFI);
+		SET_ERROR_FLAG_RET(EFLAG_FFI);
 	}
 	if(AREG < 0 && !tvm->special_ffi_table)
 	{
-		/* FIXME: We need a seperate error trap for this */
-		return ectx->set_error_flag(ectx, EFLAG_FFI);
+		SET_ERROR_FLAG_RET(EFLAG_FFI);
 	}
 
 	/* Assume that if the FFI table has been set up that all is ok, and that we
