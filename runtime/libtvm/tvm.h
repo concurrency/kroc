@@ -32,14 +32,6 @@ typedef struct _tvm_t tvm_t;
 #include "tvm_mem.h"
 #include "tvm_time.h"
 
-/*{{{  Stack frame return types */
-enum {
-	RET_ERROR		= 0,	/* Set error flag on process return */
-	RET_REAL,			/* Go to address on process return */
-	RET_SHUTDOWN			/* Shutdown interpreter on return */
-};
-/*}}}*/
-
 /*{{{  Memory allocator selection */
 #if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_USE_MALLOC)
 #define TVM_MALLOC	malloc
@@ -72,6 +64,9 @@ struct _tvm_t {
 extern int tvm_init(tvm_t *tvm);
 extern void tvm_ectx_reset(ECTX ectx);
 extern void tvm_ectx_init(tvm_t *tvm, ECTX ectx);
+extern int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
+				WORDPTR ws, WORDPTR vs, WORDPTR ms,
+				char *fmt, int argc, WORD argv[]);
 extern int tvm_dispatch(ECTX ectx);
 extern int tvm_run(ECTX ectx);
 extern int tvm_run_count(ECTX ectx, UWORD count);

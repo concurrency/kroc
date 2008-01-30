@@ -121,6 +121,8 @@ typedef TVM_ECTX_PRIVATE_DATA	tvm_ectx_priv_t;
 typedef void tvm_t;
 #endif
 
+#define TVM_ECTX_TLP_ARGS	8
+
 TVM_PACK
 struct _tvm_ectx_t {
 	/* Machine state */
@@ -167,6 +169,11 @@ struct _tvm_ectx_t {
 				(ECTX ectx, WORD alarm);
 	int		(*run_hook)
 				(ECTX ectx);
+
+	/* Top-level process */
+	char		tlp_fmt[TVM_ECTX_TLP_ARGS];
+	int		tlp_argc;
+	WORD		tlp_argv[TVM_ECTX_TLP_ARGS];
 
 	/* Links to other execution contexts */
 	tvm_t		*tvm;
