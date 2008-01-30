@@ -25,19 +25,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /*{{{  Array memory interface */
 extern WORD read_word(WORDPTR ptr);
 extern void write_word(WORDPTR ptr, WORD val);
-static inline WORDPTR wordptr_minus(WORDPTR ptr, WORD inc) {
+static TVM_INLINE WORDPTR wordptr_minus(WORDPTR ptr, WORD inc) {
 	return ptr - inc * TVM_WORD_LENGTH;
 }
-static inline WORDPTR wordptr_plus(WORDPTR ptr, WORD inc) {
+static TVM_INLINE WORDPTR wordptr_plus(WORDPTR ptr, WORD inc) {
 	return ptr + inc * TVM_WORD_LENGTH;
 }
 
 extern BYTE read_byte(BYTEPTR ptr);
 extern void write_byte(BYTEPTR ptr, BYTE val);
-static inline BYTEPTR byteptr_minus(BYTEPTR ptr, WORD inc) {
+static TVM_INLINE BYTEPTR byteptr_minus(BYTEPTR ptr, WORD inc) {
 	return ptr - inc;
 }
-static inline BYTEPTR byteptr_plus(BYTEPTR ptr, WORD inc) {
+static TVM_INLINE BYTEPTR byteptr_plus(BYTEPTR ptr, WORD inc) {
 	return ptr + inc;
 }
 

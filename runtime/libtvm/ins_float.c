@@ -292,7 +292,7 @@ TVM_INSTRUCTION (ins_fpadd)
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
 		POP_FPREG((double) ((double)fBREG) + ((double)fAREG));
 	} else {
-		return ectx->set_error_flag(ectx, EFLAG_FP);
+		SET_ERROR_FLAG(EFLAG_FP);
 	}
 	//fBREG = fCREG;
 	//fCREG = undefined
@@ -331,7 +331,7 @@ TVM_INSTRUCTION (ins_fpsub)
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
 		POP_FPREG((double) ((double)fBREG) - ((double)fAREG));
 	} else {
-		return ectx->set_error_flag(ectx, EFLAG_FP);
+		SET_ERROR_FLAG(EFLAG_FP);
 	}
 	//fBREG = fCREG;
 	//fCREG = undefined
@@ -361,7 +361,7 @@ TVM_INSTRUCTION (ins_fpmul)
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
 		POP_FPREG((double) ((double)fBREG) * ((double)fAREG));
 	} else {
-		return ectx->set_error_flag(ectx, EFLAG_FP);
+		SET_ERROR_FLAG(EFLAG_FP);
 	}
 	//fBREG = fCREG;
 	//fCREG = undefined
@@ -379,7 +379,7 @@ TVM_INSTRUCTION (ins_fpdiv)
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
 		POP_FPREG((double) ((double)fBREG) / ((double)fAREG));
 	} else {
-		return ectx->set_error_flag(ectx, EFLAG_FP);
+		SET_ERROR_FLAG(EFLAG_FP);
 	}
 	//fAREG.len = fBREG.len
 	//fAREG  = (float) ((float)fBREG) / ((float)fAREG);
@@ -487,7 +487,7 @@ TVM_INSTRUCTION (ins_fpgt)
 			AREG = 0;
 		}
 	} else { 
-		return ectx->set_error_flag(ectx, EFLAG_FP); 
+		SET_ERROR_FLAG(EFLAG_FP); 
 	}
 
 	fAREG = fCREG;
@@ -517,7 +517,7 @@ TVM_INSTRUCTION (ins_fpeq)
 			AREG = 0;
 		}
 	} else { 
-		return ectx->set_error_flag(ectx, EFLAG_FP);
+		SET_ERROR_FLAG(EFLAG_FP);
 	}
 	fAREG = fCREG;
 	fAREG_length = fCREG_length;
@@ -753,7 +753,7 @@ TVM_INSTRUCTION (ins_fprem)
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
 		fAREG = remainder(fBREG, fAREG);
 	} else { 
-		return ectx->set_error_flag(ectx, EFLAG_FP);
+		SET_ERROR_FLAG(EFLAG_FP);
 	}
 	//FIXME:  Really, what we want here is a check for the size of the register, and do fmod or fmodf depending.
 	// fBREG unchanged?

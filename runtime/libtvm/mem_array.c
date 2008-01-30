@@ -31,7 +31,7 @@ void setup_mem(WORD *ptr, int size)
 	mem_size = size;
 }
 
-static inline void check_addr(WORD ptr) {
+static TVM_INLINE void check_addr(WORD ptr) {
 	if (ptr < 0 || ptr >= mem_size) {
 		exit_runloop(EXIT_BAD_ADDR);
 	}

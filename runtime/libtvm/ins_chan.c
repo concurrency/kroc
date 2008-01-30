@@ -66,7 +66,7 @@ TVM_HELPER int chan_io_begin(ECTX ectx, WORD altable, WORDPTR chan_ptr, BYTEPTR 
 				case DISABLING_P:
 					RUN_NEXT_ON_QUEUE_RET();
 				default:
-					return ectx->set_error_flag(ectx, EFLAG_CHAN);
+					SET_ERROR_FLAG_RET(EFLAG_CHAN);
 			}
 		}
 	}

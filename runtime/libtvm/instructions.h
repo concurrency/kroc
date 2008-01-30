@@ -24,15 +24,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "transputer.h"
 
 #ifdef TVM_DISPATCH_SWITCH
-#define TVM_HELPER static inline
-#define TVM_HELPER_PROTO static inline
+#define TVM_HELPER \
+	static TVM_INLINE
+#define TVM_HELPER_PROTO \
+	static TVM_INLINE
 #define TVM_INSTRUCTION(X) \
-	static inline int X (ECTX ectx)
+	static TVM_INLINE int X (ECTX ectx)
 #define TVM_INSTRUCTION_PROTO(X) \
-	static inline int X (ECTX ectx)
+	static TVM_INLINE int X (ECTX ectx)
 #else
 #define TVM_HELPER
-#define TVM_HELPER_PROTO extern
+#define TVM_HELPER_PROTO \
+	extern
 #define TVM_INSTRUCTION(X) \
 	int X (ECTX ectx)
 #define TVM_INSTRUCTION_PROTO(X) \
@@ -81,34 +84,34 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 	} while (0)
 #define STACK_RET(A,B,C) 			\
 	do {					\
-		STACK(A,B,C);			\
+		STACK (A,B,C);			\
 		return ECTX_CONTINUE;		\
 	} while (0)
 
 /* Push all registers down by one, essentially leaves 'areg' undefined */ 
 #define PUSH_STACK() \
-	STACK(UNDEFINE(AREG), AREG, BREG)
+	STACK (UNDEFINE(AREG), AREG, BREG)
 /* Pop all registers up by one, essentially leaves 'creg' undefined */
 #define POP_STACK() \
-	STACK(BREG, CREG, UNDEFINE(CREG))
+	STACK (BREG, CREG, UNDEFINE(CREG))
 /* Pop all registers up by two, leaves 'breg' and 'creg' undefined */
 #define POP_STACK2() \
-	STACK(creg, UNDEFINE(breg), UNDEFINE(creg))
+	STACK (creg, UNDEFINE(breg), UNDEFINE(creg))
 
 #define UNDEFINE_STACK()
 #define UNDEFINE_STACK_RET() \
 	return ECTX_CONTINUE;
 
+#define SET_ERROR_FLAG(F) \
+	do {							\
+		int ret = ectx->set_error_flag (ectx, (F)); 	\
+		if (ret) {					\
+			return ret;				\
+		}						\
+	} while (0)
+#define SET_ERROR_FLAG_RET(F) \
+	do { return ectx->set_error_flag (ectx, (F)); } while (0)
+
 TVM_INSTRUCTION_PROTO (ins_not_implemented);
-
-#ifdef DEBUG_ERRORS
-void debug_error_flag(char *file, int line, int error_num);
-#define set_error_flag(n) \
-	debug_error_flag(__FILE__, __LINE__, (n))
-#else /* !DEBUG_ERRORS */
-void set_error_flag(int error_num);
-#endif /* !DEBUG_ERRORS */
-
-void clear_error_flag(void);
 
 #endif /* INSTRUCTIONS_H */

@@ -1,5 +1,5 @@
 /*
-tvm - tvm_time.h
+tvm - tvm_compiler.h
 The Transterpreter - a portable virtual machine for Transputer bytecode
 Copyright (C) 2004-2008 Christian L. Jacobsen, Matthew C. Jadud
 
@@ -17,13 +17,28 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
+#ifndef TVM_COMPILER_H
+#define TVM_COMPILER_H
 
-#ifndef TVM_TIME_H
-#define TVM_TIME_H
+#include "tvm_config.h"
 
-#include "tvm.h"
+/* stddef to get NULL */
+#include <stddef.h>
 
-#define TIME_AFTER(t1,t2)	((((WORD) (t1)) - ((WORD) (t2))) > 0)
-#define TIME_BEFORE(t1,t2)	TIME_AFTER(t2,t1)
+/* inlining */
+#ifdef TVM_USE_INLINE
+#define TVM_INLINE inline
+#else
+#define TVM_INLINE
+#endif
 
-#endif /* TVM_TIME_H */
+/* structure packing */
+#ifdef __GNUC__
+#define TVM_PACK	__attribute__ ((packed))
+#define TVM_UNUSED_OK	__attribute__ ((unused))
+#else
+#define TVM_PACK
+#define TMV_UNUSED_OK
+#endif
+
+#endif /* !TVM_COMPILER_H */

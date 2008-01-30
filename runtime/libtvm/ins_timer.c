@@ -51,7 +51,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 TVM_INSTRUCTION (ins_ldtimer)
 {
 	/* Load current time onto stack */
-	STACK_RET(tvm_get_time(), AREG, BREG);
+	STACK_RET(ectx->get_time(ectx), AREG, BREG);
 }
 
 /* 0x2B - 0x22 0xFB - tin - timer input */
@@ -86,7 +86,7 @@ TVM_INSTRUCTION (ins_ldtimer)
 
 TVM_INSTRUCTION (ins_tin)
 {
-	WORD current_time = tvm_get_time();
+	WORD current_time = ectx->get_time(ectx);
 	WORD reschedule_time = AREG;
 
 	if(TIME_AFTER(current_time, reschedule_time))

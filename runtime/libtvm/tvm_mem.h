@@ -52,10 +52,8 @@ void tvm_copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
 /*}}}*/
 
 /*{{{  void swap_data_word(WORDPTR a_ptr, WORDPTR b_ptr) */
-#ifdef __GNUC__
-__attribute__ ((unused))
-#endif
-static inline void swap_data_word(WORDPTR a_ptr, WORDPTR b_ptr)
+TVM_UNUSED_OK
+static TVM_INLINE void swap_data_word(WORDPTR a_ptr, WORDPTR b_ptr)
 {
 	WORD a_data = read_word(a_ptr);
 	WORD b_data = read_word(b_ptr);

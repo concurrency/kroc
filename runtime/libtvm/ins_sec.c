@@ -97,7 +97,7 @@ TVM_INSTRUCTION (ins_add)
 	/* Check for overflow, from Hackers Delight p. 27 */
 	if( ((UWORD) (((result) ^ BREG) & ((result) ^ AREG)) >> (WORD_BITS - 1)) )
 	{
-		return ectx->set_error_flag(ectx, EFLAG_ADD);
+		SET_ERROR_FLAG(EFLAG_ADD);
 	}
 
 	STACK_RET(result, CREG, UNDEFINE(CREG));
@@ -158,7 +158,7 @@ TVM_INSTRUCTION (ins_sub)
 	/* Overflow detection from Hackers Delight p. 27 */
 	if( ((UWORD) ((BREG ^ AREG) & (result ^ BREG))) >> (WORD_BITS - 1))
 	{
-		ectx->set_error_flag(ectx, EFLAG_SUB);
+		SET_ERROR_FLAG(EFLAG_SUB);
 	}
 
 	STACK_RET(BREG - AREG, CREG, UNDEFINE(CREG));
@@ -185,7 +185,7 @@ TVM_INSTRUCTION (ins_startp)
 /* 0x10 - 0x21 0xF0 - seterr - set error */
 TVM_INSTRUCTION (ins_seterr)
 {
-	return ectx->set_error_flag(ectx, EFLAG_SETERR);
+	SET_ERROR_FLAG_RET(EFLAG_SETERR);
 }
 
 /* 0x13 - 0x21 0xF3 - csub0 - check subscript from 0 */
@@ -196,7 +196,7 @@ TVM_INSTRUCTION (ins_csub0)
 	 */
 	if(((UWORD) BREG) >= ((UWORD) AREG))
 	{
-		return ectx->set_error_flag(ectx, EFLAG_CSUB0);
+		SET_ERROR_FLAG(EFLAG_CSUB0);
 	}
 	STACK_RET(BREG, CREG, UNDEFINE(CREG));
 }
@@ -212,13 +212,12 @@ TVM_INSTRUCTION (ins_stopp)
 /* 0x16 - 0x21 0xF6 LADD - long addition  - used in conjunction with lsum*/
 TVM_INSTRUCTION (ins_ladd)
 {
-#define SIGN(x) ((x>0)-(x<0))
 	WORD result = ((WORD) BREG) + ((WORD) AREG) + ((WORD) CREG & 1);
 
 	/* Check for overflow, from Hackers Delight p. 27 */
 	if( ((UWORD) (((result) ^ BREG) & ((result) ^ AREG)) >> (WORD_BITS - 1)) )
 	{
-		return ectx->set_error_flag(ectx, EFLAG_LADD);
+		SET_ERROR_FLAG(EFLAG_LADD);
 	}
 
 	STACK_RET(result, UNDEFINE(BREG), UNDEFINE(CREG));
@@ -227,20 +226,17 @@ TVM_INSTRUCTION (ins_ladd)
 /* 0x19 - 0x21 0xF9 - norm - normalise */
 TVM_INSTRUCTION (ins_norm)
 {
-	/*printf("norm\n");*/
 	CREG = 0;
 	if(AREG == 0 && BREG == 0)
 	{
-		/*STACK(AREG, BREG, 2 * TVM_WORD_LENGTH);*/
-		STACK(AREG, BREG, 64);
+		STACK(AREG, BREG, 2 * TVM_WORD_LENGTH);
 	}
 	else
 	{
-		/* FIXME: TVM_WORD_LENGTH */
-		while(!(BREG & 0x80000000))
+		while(!(BREG & MIN_INT))
 		{
 			BREG = BREG << 1;
-			if(AREG & 0x80000000)
+			if(AREG & MIN_INT)
 			{
 				BREG = BREG | 1;
 			}
@@ -254,12 +250,7 @@ TVM_INSTRUCTION (ins_norm)
 }
 
 #if TVM_WORD_LENGTH == 4
-/* FIXME: We should have an INLINE define, that can be turned on and off */
-#ifdef WIN32
-static int nlz(unsigned x) {
-#else
-static inline int nlz(unsigned x) {
-#endif
+static TVM_INLINE int nlz(unsigned int x) {
 	int n;
 
 	if (x == 0) return(32);
@@ -278,11 +269,6 @@ static inline int nlz(unsigned x) {
  * reg pair CB by a single length value in A */
 TVM_INSTRUCTION (ins_ldiv)
 {
-	/*
-	   unsigned divlu2(unsigned u1, unsigned u0, unsigned v,
-	   unsigned *r) {
-
-*/
 	/* 
 	 * The dividend is u1 and u0, with u1 being the most significant word.
 	 * The divisor is parameter v.
@@ -307,7 +293,7 @@ TVM_INSTRUCTION (ins_ldiv)
 	 */
 	if(u1 >= v) /* CREG >= AREG */
 	{
-		return ectx->set_error_flag(ectx, EFLAG_LDIV);
+		SET_ERROR_FLAG(EFLAG_LDIV);
 	}
 
 	s = nlz(v);               /* 0 <= s <= 31. */
@@ -357,18 +343,6 @@ again2:
 	AREG = q1*b + q0;
 
 	STACK_RET(AREG, BREG, UNDEFINE(CREG));
-#if 0
-	unsigned long long result, tmp;
-	/* FIXME: UNTESTED */	
-	/* Maybe the below should not be cast to unsigned word.... */
-	if(((UWORD) CREG) >= ((UWORD) AREG ))
-	{
-		set_error_flag(ectx, );
-	} 
-	tmp = (unsigned int)CREG;
-	result = (tmp << WORD_BITS) + ((unsigned int)BREG);
-	STACK( result / AREG, result % AREG, UNDEFINE(CREG));
-#endif
 }
 #endif /* TVM_WORD_LENGTH >= 4 */
 
@@ -397,12 +371,10 @@ TVM_INSTRUCTION (ins_rem)
 {
 	if((AREG == 0) || ((AREG == -1) && (BREG == MIN_INT)))
 	{
-		return ectx->set_error_flag(ectx, EFLAG_REM);
+		SET_ERROR_FLAG(EFLAG_REM);
 	}
-	else
-	{
-		STACK_RET ((BREG % AREG), CREG, UNDEFINE(CREG));	
-	}
+	
+	STACK_RET((BREG % AREG), CREG, UNDEFINE(CREG));	
 }
 
 
@@ -460,12 +432,10 @@ TVM_INSTRUCTION (ins_div)
 {
 	if((AREG == 0) || ((AREG == -1) && (BREG == MIN_INT)))
 	{
-		return ectx->set_error_flag(ectx, EFLAG_DIV);
+		SET_ERROR_FLAG(EFLAG_DIV);
 	}
-	else
-	{
-		STACK_RET(BREG / AREG, CREG, UNDEFINE(CREG));
-	}
+	
+	STACK_RET(BREG / AREG, CREG, UNDEFINE(CREG));
 }
  
 
@@ -700,7 +670,7 @@ TVM_INSTRUCTION (ins_lsub)
 	/* Overflow detection from Hackers Delight p. 27 */
 	if( ((UWORD) ((BREG ^ AREG) & (result ^ BREG))) >> (WORD_BITS - 1))
 	{
-		return ectx->set_error_flag(ectx, EFLAG_LSUB);
+		SET_ERROR_FLAG(EFLAG_LSUB);
 	}
 
 	STACK_RET(result, UNDEFINE(CREG), UNDEFINE(BREG));
@@ -837,7 +807,7 @@ TVM_INSTRUCTION (ins_csngl)
 {
 	if((AREG < 0 && BREG != -1) || (AREG >= 0 && BREG != 0))
 	{
-		return ectx->set_error_flag(ectx, EFLAG_CSNGL);
+		SET_ERROR_FLAG(EFLAG_CSNGL);
 	}
 
 	STACK_RET(AREG, CREG, UNDEFINE(CREG));
@@ -848,7 +818,7 @@ TVM_INSTRUCTION (ins_ccnt1)
 {
 	if((BREG == 0) || (((UWORD) BREG) > ((UWORD) AREG)))
 	{
-		return ectx->set_error_flag(ectx, EFLAG_CCNT1);
+		SET_ERROR_FLAG(EFLAG_CCNT1);
 	}
 	
 	STACK_RET(BREG, CREG, UNDEFINE(CREG));
@@ -919,7 +889,7 @@ TVM_INSTRUCTION (ins_cword)
 {
 	if((BREG >= AREG) || (BREG < -AREG))
 	{
-		return ectx->set_error_flag(ectx, EFLAG_CWORD);
+		SET_ERROR_FLAG(EFLAG_CWORD);
 	}
 
 	STACK_RET(BREG, CREG, UNDEFINE(CREG));

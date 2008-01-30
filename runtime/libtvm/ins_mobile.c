@@ -293,7 +293,7 @@ TVM_HELPER int mt_release (ECTX ectx, WORDPTR ptr)
 	if (type & MT_SIMPLE) {
 		return mt_release_simple (ectx, ptr, type);
 	} else {
-		return ectx->set_error_flag (ectx, EFLAG_MT);
+		SET_ERROR_FLAG_RET (EFLAG_MT);
 	}
 }
 /*}}}*/
@@ -390,7 +390,7 @@ static int mt_clone_simple (ECTX ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)
 			break;
 		default:
 			*ret = (WORDPTR) NULL_P;
-			return ectx->set_error_flag (ectx, EFLAG_MT);
+			SET_ERROR_FLAG_RET (EFLAG_MT);
 	}
 	return ECTX_CONTINUE;
 }
@@ -404,7 +404,7 @@ TVM_HELPER int mt_clone (ECTX ectx, WORDPTR ptr, WORDPTR *ret)
 		return mt_clone_simple (ectx, ptr, type, ret);
 	} else {
 		*ret = (WORDPTR) NULL_P;
-		return ectx->set_error_flag (ectx, EFLAG_MT);
+		SET_ERROR_FLAG_RET (EFLAG_MT);
 	}
 }
 /*}}}*/
@@ -535,7 +535,7 @@ TVM_HELPER int mt_io_update (ECTX ectx, WORDPTR *ptr, UWORD *move)
 		}
 	} else {
 		*move = MT_TRUE;
-		return ectx->set_error_flag (ectx, EFLAG_MT);
+		SET_ERROR_FLAG_RET (EFLAG_MT);
 	}
 	
 	return ECTX_CONTINUE;
@@ -588,7 +588,7 @@ TVM_HELPER int mt_alloc (ECTX ectx, UWORD type, UWORD size, WORDPTR *ret)
 	
 	/* Should not end up here. */
 	*ret = (WORDPTR) NULL_P;
-	return ectx->set_error_flag (ectx, EFLAG_MT);
+	SET_ERROR_FLAG_RET (EFLAG_MT);
 }
 /*}}}*/
 
@@ -648,10 +648,12 @@ TVM_INSTRUCTION (ins_mrelease)
 {
 	if(AREG == (WORD)NULL_P)
 	{
-		return ectx->set_error_flag(ectx, EFLAG_DMEM);
+		SET_ERROR_FLAG_RET (EFLAG_DMEM);
+	} 
+	else
+	{
+		return mt_release_simple(ectx, (WORDPTR)AREG, MT_MAKE_TYPE(MT_DATA));
 	}
-
-	return mt_release_simple(ectx, (WORDPTR)AREG, MT_MAKE_TYPE(MT_DATA));
 }
 
 #if 0
@@ -857,7 +859,7 @@ TVM_INSTRUCTION (ins_mt_enroll)
 			return tvm_bar_enroll (ectx, mt, count);
 	}
 	
-	return ectx->set_error_flag (ectx, EFLAG_MT);
+	SET_ERROR_FLAG_RET (EFLAG_MT);
 }
 
 /* 0x241 - 0x22 0x24 0xF1 - mt_resign - resign process from a mobile type */
@@ -872,7 +874,7 @@ TVM_INSTRUCTION (ins_mt_resign)
 			return tvm_bar_resign (ectx, mt, count);
 	}
 	
-	return ectx->set_error_flag (ectx, EFLAG_MT);
+	SET_ERROR_FLAG_RET (EFLAG_MT);
 }
 
 /* 0x242 - 0x22 0x24 0xF2 - mt_sync - synchronise on a mobile type */
@@ -900,7 +902,7 @@ TVM_INSTRUCTION (ins_mt_sync)
 			}
 			break;
 		default:
-			return ectx->set_error_flag (ectx, EFLAG_MT);
+			SET_ERROR_FLAG_RET (EFLAG_MT);
 	}
 
 	UNDEFINE_STACK_RET ();
@@ -956,7 +958,7 @@ TVM_INSTRUCTION (ins_mt_dclone)
 		}
 	} else {
 		STACK ((WORD) dst, UNDEFINE(BREG), UNDEFINE(CREG));
-		return ectx->set_error_flag (ectx, EFLAG_MT);
+		SET_ERROR_FLAG_RET (EFLAG_MT);
 	}
 
 	STACK_RET ((WORD) dst, UNDEFINE(BREG), UNDEFINE(CREG));
@@ -1047,11 +1049,11 @@ TVM_INSTRUCTION (ins_mt_bind)
 			}
 		} else {
 			STACK (NULL_P, UNDEFINE(BREG), UNDEFINE(CREG));
-			return ectx->set_error_flag (ectx, EFLAG_MT);
+			SET_ERROR_FLAG_RET (EFLAG_MT);
 		}
 	} else {
 		STACK (NULL_P, UNDEFINE(BREG), UNDEFINE(CREG));
-		return ectx->set_error_flag (ectx, EFLAG_MT);
+		SET_ERROR_FLAG_RET (EFLAG_MT);
 	}
 
 	STACK_RET ((WORD) ptr, UNDEFINE(BREG), UNDEFINE(CREG));

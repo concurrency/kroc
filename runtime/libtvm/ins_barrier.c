@@ -107,7 +107,7 @@ TVM_HELPER int tvm_bar_enroll(ECTX ectx, WORDPTR bar, UWORD enroll_count)
 	if((enrolled + enroll_count) < enrolled)
 	{
 		/* Enroll count overflow, virtually impossible under sane conditions. */
-		return ectx->set_error_flag(ectx, EFLAG_BAR);
+		SET_ERROR_FLAG(EFLAG_BAR);
 	}
 
 	write_word(wordptr_plus(bar, BAR_ENROLLED), (WORD) (enrolled + enroll_count));
@@ -126,7 +126,7 @@ TVM_HELPER int tvm_bar_resign(ECTX ectx, WORDPTR bar, UWORD resign_count)
 		/* Attempt to resign more processes than enrolled,
 		 * or resign processes that are synchronising.
 		 */
-		return ectx->set_error_flag(ectx, EFLAG_BAR);
+		SET_ERROR_FLAG(EFLAG_BAR);
 	}
 
 	/* Update enroll count. */

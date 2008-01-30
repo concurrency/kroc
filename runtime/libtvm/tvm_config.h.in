@@ -54,6 +54,9 @@
 /* define to allow FPU usage */
 #undef TVM_USE_FPU
 
+/* define to allow inline keyword usage */
+#undef TVM_USE_INLINE
+
 /* define to use memcpy as tvm_copy_data */
 #undef TVM_USE_MEMCPY
 

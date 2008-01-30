@@ -29,6 +29,7 @@ noinst_HEADERS = \
 include_HEADERS = \
 	transputer.h \
 	tvm.h \
+	tvm_compiler.h \
 	tvm_config.h \
 	tvm_mem.h \
 	tvm_mem_intf.h \
