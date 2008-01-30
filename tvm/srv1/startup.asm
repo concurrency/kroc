@@ -31,6 +31,7 @@
 
 #include "config.h"
 #include "asmmacros.h"
+#include "context.asm"
 
 ////////////////////////////////////////////////////////////////////////////
 // core clock dividers -- DO NOT CHANGE!
@@ -266,6 +267,13 @@ skip:
     // therefore we need a few tricks:
 
 
+    //  Enable Interrupt 10
+    p0.l = LO(EVT10);
+    p0.h = HI(EVT10);
+    r0.l = int10;
+    r0.h = int10;
+    [p0] = r0;
+
     //  Enable Interrupt 15 
     p0.l = LO(EVT15);
     p0.h = HI(EVT15);
@@ -273,7 +281,7 @@ skip:
     r0.h = call_main;
     [p0] = r0;
 
-    r0 = 0x8000(z);    // enable irq 15 only
+    r0 = 0xffff(z);    // enable irq 15 only
     sti r0;            // set mask
     raise 15;          // raise sw interrupt
     
@@ -304,6 +312,16 @@ end:
     idle;
     jump end;
 
+int10:
+    save_context
+
+    p0.l = _handle_int10;
+    p0.h = _handle_int10;
+
+    call (p0);
+
+    restore_context
+    rti
 
 .global idle_loop
 idle_loop:
