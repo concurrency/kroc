@@ -18,17 +18,11 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/**
- * jumptbl_pri.h - header for jumptbl_pri.c
- *
- * Copyright (C) 2004    Matt C. Jadud and Christian L. Jacobsen
- */
-
 #ifndef JUMPTBL_PRI_H
 #define JUMPTBL_PRI_H
 
 extern const unsigned int primaries_min;
 extern const unsigned int primaries_max;
-extern int (*const primaries[])(tvm_ectx_t *);
+extern int (*const primaries[])(ECTX);
 
 #endif /* JUMPTBL_PRI_H */

@@ -42,6 +42,8 @@ x_endian=little
 case "$host_cpu" in
   arm*)
     ;;
+  bfin*)
+    ;;
   h8300)
     x_endian=big
     wordlength=2

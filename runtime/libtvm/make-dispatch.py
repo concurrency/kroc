@@ -70,7 +70,7 @@ def ins_key_to_int(key):
 def write_switch(defs, fn):
 	bits = ["""/* Generated automatically by make-dispatch.py; do not modify! */
 
-static inline int dispatch_instruction(tvm_ectx_t *ectx, BYTE instr)
+static inline int dispatch_instruction(ECTX ectx, BYTE instr)
 {
 	switch (instr >> 4) {
 """]
@@ -136,7 +136,7 @@ static inline int dispatch_instruction(tvm_ectx_t *ectx, BYTE instr)
 def write_jumptable(defs, fn, name, keys):
 	bits = ["""/* Generated automatically by make-dispatch.py; do not modify! */
 
-#include "transputer.h"
+#include "tvm.h"
 #include "instructions.h"
 """]
 
@@ -163,7 +163,7 @@ const unsigned int %s_max = %d;
 """ % (name, min, name, max))
 
 	bits.append("""
-void (*const %s[%d])(void) =
+int (*const %s[%d])(ECTX) =
 {
 """ % (name, (max - min) + 1))
 
