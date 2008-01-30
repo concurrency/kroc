@@ -21,7 +21,7 @@ AC_CHECK_HEADERS([sys/types.h math.h inttypes.h])
 #########################
 
 AC_ARG_ENABLE([custom-copy-data], AC_HELP_STRING([--enable-custom-copy-data], [make tvm_copy_data is an externally provided function]), [custom_copy_data=$enableval], [custom_copy_data=no])
-AC_ARG_ENABLE([dispatch-switch], AS_HELP_STRING([--enable-dispatch-switch], [dispatch to instructions using switch rather than a jump table]), [dispatch_switch=$enableval], [dispatch_switch=no])
+AC_ARG_ENABLE([dispatch-switch], AS_HELP_STRING([--disable-dispatch-switch], [dispatch using jump tables rather than a switch statement]), [dispatch_switch=$enableval], [dispatch_switch=yes])
 AC_ARG_WITH([endian], AC_HELP_STRING([--with-endian=...], [endian mode: big/little/host, default: host]), [endian=$withval], [endian=host])
 AC_ARG_WITH([memory-allocator], AC_HELP_STRING([--with-memory-allocator=...], [select memory allocator: none/malloc, default host dependent]), [memory_allocator=$withval], [memory_allocator=auto])
 AC_ARG_WITH([python], AS_HELP_STRING([--with-python=PATH], [use python, optionally specifying the path to the python executable directory]), [python=$withval], [python=])
