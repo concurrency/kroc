@@ -1326,6 +1326,45 @@ static int dump_secondary (int esfunc, char *buffer)
 	case I_WMB:
 		sprintf (buffer, "\tWMB");
 		break;
+	case I_CB:
+		sprintf (buffer, "\tCB");
+		break;
+	case I_CBU:
+		sprintf (buffer, "\tCBU");
+		break;
+	case I_CIR:
+		sprintf (buffer, "\tCIR");
+		break;
+	case I_CIRU:
+		sprintf (buffer, "\tCIRU");
+		break;
+	case I_CS:
+		sprintf (buffer, "\tCS");
+		break;
+	case I_CSU:
+		sprintf (buffer, "\tCSU");
+		break;
+	case I_LBX:
+		sprintf (buffer, "\tLBX");
+		break;
+	case I_LS:
+		sprintf (buffer, "\tLS");
+		break;
+	case I_LSX:
+		sprintf (buffer, "\tLSX");
+		break;
+	case I_SS:
+		sprintf (buffer, "\tSS");
+		break;
+	case I_SSUB:
+		sprintf (buffer, "\tSSUB");
+		break;
+	case I_XBWORD:
+		sprintf (buffer, "\tXBWORD");
+		break;
+	case I_XSWORD:
+		sprintf (buffer, "\tXSWORD");
+		break;
 	default:
 		sprintf (buffer, "\tUnsupported %d", esfunc);
 		break;
