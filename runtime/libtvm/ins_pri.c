@@ -75,7 +75,7 @@ TVM_INSTRUCTION (ins_adc)
 	/* Check for overflow, from Hackers Delight p. 27 */
 	if( ((UWORD) (((result) ^ AREG) & ((result) ^ OREG)) >> (WORD_BITS - 1)) )
 	{
-		SET_ERROR_FLAG(EFLAG_ADC);
+		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 
 	/* Areg gets result, Breg and Creg stay the same */

@@ -75,32 +75,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*{{{  Error flags */
 enum {
-	EFLAG_SETERR 	= (1 << 0),
-	EFLAG_CSUB0	= (1 << 1),
-	EFLAG_REM	= (1 << 2),
-	EFLAG_DIV	= (1 << 3),
-	EFLAG_CSNGL	= (1 << 4),
-	EFLAG_CCNT1	= (1 << 5),
-	EFLAG_CWORD	= (1 << 6),
-	EFLAG_ADC	= (1 << 7),
-	EFLAG_ADD	= (1 << 8),
-	EFLAG_SUB	= (1 << 9),
-	EFLAG_MUL	= (1 << 10),
-	EFLAG_ALT	= (1 << 11),
-	EFLAG_FFI	= (1 << 12), /* FFI error (missing function) */
-	EFLAG_CHAN	= (1 << 13), /* Channel communication error */
-	EFLAG_EXTCHAN	= (1 << 14), /* External channel error */
-#if TVM_WORD_LENGTH >= 4
-	EFLAG_LADD	= (1 << 16),
-	EFLAG_LDIV	= (1 << 17),
-	EFLAG_LSUB	= (1 << 18),
-	EFLAG_BAR	= (1 << 19), /* Barrier underflow */
-	EFLAG_FP	= (1 << 20), /* Floating point error */
-	EFLAG_DMEM	= (1 << 21), /* Memory allocator error */
-	EFLAG_MT	= (1 << 22), /* Mobile type error */
-	EFLAG_PROC	= (1 << 23), /* Process API error */
-#endif
-	EFLAG_INTERR
+	EFLAG_SETERR 	= (1 << 0),	/* Error flag set by SETERR */
+	EFLAG_INTERR	= (1 << 1),	/* Integer (range) error */
+	EFLAG_INTOV	= (1 << 2),	/* Integer overflow */
+	EFLAG_FP	= (1 << 3),	/* Floating point error */
+	EFLAG_ALT	= (1 << 4),	/* ALT algorithm error */
+	EFLAG_FFI	= (1 << 5),	/* FFI error (missing function) */
+	EFLAG_CHAN	= (1 << 6),	/* Channel communication error */
+	EFLAG_EXTCHAN	= (1 << 7), 	/* External channel error */
+	EFLAG_BAR	= (1 << 8),	/* Barrier underflow */
+	EFLAG_DMEM	= (1 << 9),	/* Memory allocator error */
+	EFLAG_MT	= (1 << 10),	/* Mobile type error */
+	EFLAG_PROC	= (1 << 11),	/* Process API error */
 };
 /*}}}*/
 
