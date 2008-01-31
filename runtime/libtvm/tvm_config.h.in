@@ -51,6 +51,9 @@
 /* define for Windows TVM */
 #undef TVM_OS_WINDOWS
 
+/* define to T9000 short ops */
+#undef TVM_SHORT_OPS
+
 /* define to allow FPU usage */
 #undef TVM_USE_FPU
 

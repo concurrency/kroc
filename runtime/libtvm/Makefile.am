@@ -18,6 +18,7 @@ noinst_HEADERS = \
 	ins_rmox.h \
 	ins_sec.h \
 	ins_t800.h \
+	ins_t9000.h \
 	ins_timer.h \
 	interpreter.h \
 	jumptbl_ex_sec.h \
@@ -42,6 +43,7 @@ libtvm_a_SOURCES = \
 	scheduler.c
 
 if TVM_DISPATCH_SWITCH
+interpreter.c: $(top_builddir)/dispatch_ins.c
 else
 libtvm_a_SOURCES += \
 	ins_alt.c \
@@ -56,10 +58,11 @@ libtvm_a_SOURCES += \
 	ins_sec.c \
 	ins_timer.c \
 	ins_t800.c \
+	ins_t9000.c \
 	instructions.c \
-	jumptbl_pri.c \
-	jumptbl_sec.c \
-	jumptbl_ex_sec.c \
+	$(top_builddir)/jumptbl_pri.c \
+	$(top_builddir)/jumptbl_sec.c \
+	$(top_builddir)/jumptbl_ex_sec.c \
 	mem.c \
 	scheduler.c
 endif
@@ -76,10 +79,14 @@ DISPATCH_SOURCE_FILES = \
 	$(top_srcdir)/ins_rmox.c \
 	$(top_srcdir)/ins_sec.c \
 	$(top_srcdir)/ins_t800.c \
+	$(top_srcdir)/ins_t9000.c \
 	$(top_srcdir)/ins_timer.c
 
 DISPATCH_OUTPUT_FILES = \
-	dispatch_ins.c jumptbl_pri.c jumptbl_sec.c jumptbl_ex_sec.c
+	$(top_builddir)/dispatch_ins.c \
+	$(top_builddir)/jumptbl_pri.c \
+	$(top_builddir)/jumptbl_sec.c \
+	$(top_builddir)/jumptbl_ex_sec.c
 
 make_dispatch = $(top_srcdir)/make-dispatch.py
 
@@ -89,5 +96,3 @@ $(DISPATCH_OUTPUT_FILES): $(make_dispatch) $(DISPATCH_SOURCE_FILES)
 EXTRA_DIST = \
 	make-dispatch.py
 
-splint:
-	splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(SOURCES)

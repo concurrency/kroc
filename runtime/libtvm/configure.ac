@@ -28,6 +28,7 @@ AC_ARG_WITH([endian], AC_HELP_STRING([--with-endian=...], [endian mode: big/litt
 AC_ARG_WITH([memory-allocator], AC_HELP_STRING([--with-memory-allocator=...], [select memory allocator: none/malloc, default host dependent]), [memory_allocator=$withval], [memory_allocator=auto])
 AC_ARG_WITH([python], AS_HELP_STRING([--with-python=PATH], [use python, optionally specifying the path to the python executable directory]), [python=$withval], [python=])
 AC_ARG_ENABLE([occam-pi], AC_HELP_STRING([--disable-occam-pi], [disable support for occam-pi, actual support level depends on memory allocator]), [enable_pi=$enableval], [enable_pi=yes])
+AC_ARG_ENABLE([t9000-short-ops], AC_HELP_STRING([--enable-t9000-short-ops],[enable T9000 instructions for dealing with 16bit/8bit data]), [t9000_short_ops=$enableval], [t9000_short_ops=no])
 AC_ARG_WITH([transputer], AC_HELP_STRING([--with-transputer=...],[transputer to emulate: t2/t4/t8, default is host-dependent]), [transputer=$withval], [transputer=auto])
 
 #########################
@@ -238,6 +239,11 @@ case "$x_os" in
     ;;
 esac
 
+# T9000 short ops
+if test "x$t9000_short_ops" = "xyes"; then
+  AC_DEFINE([TVM_SHORT_OPS], 1, [define to T9000 short ops])
+fi
+
 # Transputer
 case "$transputer" in
   t2)
@@ -269,6 +275,7 @@ AC_MSG_NOTICE([FPU             : $x_fpu])
 AC_MSG_NOTICE([memory allocator: $memory_allocator])
 AC_MSG_NOTICE([occam-pi support: $enable_pi])
 AC_MSG_NOTICE([OS support      : $x_os])
+AC_MSG_NOTICE([T9000 short ops : $t9000_short_ops])
 AC_MSG_NOTICE([transputer      : $transputer])
 AC_MSG_NOTICE([word length     : $word_length])
 AC_MSG_NOTICE([----------------------------------------------------])
