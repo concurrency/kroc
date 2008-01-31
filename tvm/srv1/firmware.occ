@@ -1,0 +1,9 @@
+#INCLUDE "defBF534.inc"
+
+PROC leds.on ()
+  PLACED [PORTGIO.LEN]INT port.g.io PORTGIO.ADDR:
+  #PRAGMA DEFINED port.g.io
+  SEQ
+    port.g.io[PORTGIO] := port.g.io[PORTGIO] /\ (~#0300)
+:
+

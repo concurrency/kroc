@@ -69,16 +69,17 @@ default: tvm.ldr
 external_srv_ffi_hooks.c external_srv_ffi_pragmas.occ: srv_ffi.c
 	tinyswig -n srv_ffi.c
 
-#bytecode.h: ffi.occ external_srv_ffi_pragmas.occ
-#	skroc --keep-temp-files \
-#	--no-std-libs \
-#	--occ21-opts "-V" \
-#	--slinker-opts "--tlp-types \"()\"" \
-#	-t t4 --c -f bytecode.h ffi.occ
+firmware.h: firmware.occ
+	skroc --keep-temp-files \
+	-L include \
+	--no-std-libs \
+	--blackfin \
+	--slinker-opts "--tlp-types \"()\"" \
+	-t t4 --c -f $@ $<
 
-#main.o: bytecode.h *.h
+main.o: firmware.h
 
-tvm.bin: $(OBJS)
+tvm.bin: $(OBJS) $(TVMOBJS)
 	$(LD) $(LDFLAGS) $(LDADD) $(OBJS) $(TVMOBJS) -lgcc
 
 tvm.ldr: tvm.bin
