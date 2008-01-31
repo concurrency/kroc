@@ -64,13 +64,4 @@ typedef WORD * 		WORDPTR;
 typedef BYTE * 		BYTEPTR;
 #endif
 
-/* This is the prototype for occam FFI calls, it is defined, by D.C.Wood as
- * void name (word w[]). */
-typedef void (*FFI_FUNCTION)(WORD w[]);
-
-typedef struct {
-	FFI_FUNCTION func;
-	char *name;
-} FFI_TABLE_ENTRY;
-
 #endif /* !TVM_TYPES_H */

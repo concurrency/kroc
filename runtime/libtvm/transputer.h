@@ -96,6 +96,7 @@ enum {
 	EFLAG_ALT	= (1 << 11),
 	EFLAG_FFI	= (1 << 12), /* FFI error (missing function) */
 	EFLAG_CHAN	= (1 << 13), /* Channel communication error */
+	EFLAG_EXTCHAN	= (1 << 14), /* External channel error */
 #if TVM_WORD_LENGTH >= 4
 	EFLAG_LADD	= (1 << 16),
 	EFLAG_LDIV	= (1 << 17),
@@ -109,7 +110,7 @@ enum {
 };
 /*}}}*/
 
-/*{{{  Transputer registers, etc that make up the execution context */
+/*{{{  Execution context pre-definitions */
 typedef struct _tvm_ectx_t	tvm_ectx_t;
 typedef tvm_ectx_t		*ECTX;
 #ifndef TVM_ECTX_PRIVATE_DATA
@@ -120,8 +121,29 @@ typedef TVM_ECTX_PRIVATE_DATA	tvm_ectx_priv_t;
 #ifndef TVM_H
 typedef void tvm_t;
 #endif
+/*}}}*/
 
-#define TVM_ECTX_TLP_ARGS	8
+/*{{{  External channel function prototypes. */
+typedef int (*EXT_CHAN_FUNCTION)(ECTX ectx, WORD count, BYTEPTR address);
+
+typedef struct {
+	UWORD			typehash;
+	EXT_CHAN_FUNCTION	in;
+	EXT_CHAN_FUNCTION	out;
+} EXT_CHAN_ENTRY;
+/*}}}*/
+
+/*{{{   Foreign function interface prototypes. */
+typedef void (*FFI_FUNCTION)(WORD w[]);
+
+typedef struct {
+	FFI_FUNCTION func;
+	char *name;
+} FFI_TABLE_ENTRY;
+/*}}}*/
+
+/*{{{  Transputer registers, etc that make up the execution context */
+#define TVM_ECTX_TLP_ARGS 8
 
 TVM_PACK
 struct _tvm_ectx_t {
@@ -163,6 +185,10 @@ struct _tvm_ectx_t {
 				(ECTX ectx, WORDPTR ws, WORD current_time, WORD reschedule_time);
 
 	/* Wrapper defined functions */
+	#ifdef TVM_CUSTOM_COPY_DATA
+	void		(*copy_data)
+				(ECTX ectx, BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
+	#endif
 	WORD		(*get_time)
 				(ECTX ectx);
 	void		(*set_alarm)
@@ -174,6 +200,18 @@ struct _tvm_ectx_t {
 	char		tlp_fmt[TVM_ECTX_TLP_ARGS];
 	int		tlp_argc;
 	WORD		tlp_argv[TVM_ECTX_TLP_ARGS];
+
+	/* FFI */
+	FFI_TABLE_ENTRY	*ffi_table;
+	UWORD		ffi_table_length;
+	FFI_FUNCTION	*special_ffi_table;
+	UWORD		special_ffi_table_length;
+
+	/* External channels */
+	#ifdef TVM_OCCAM_PI
+	EXT_CHAN_ENTRY	*ext_chan_table;
+	UWORD		ext_chan_table_length;
+	#endif
 
 	/* Links to other execution contexts */
 	tvm_t		*tvm;

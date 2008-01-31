@@ -7,7 +7,6 @@ CFLAGS=-I$(top_srcdir) @CFLAGS@
 lib_LIBRARIES = libtvm.a
 
 noinst_HEADERS = \
-	ext_chan.h \
 	instructions.h \
 	ins_alt.h \
 	ins_barrier.h \
@@ -66,7 +65,6 @@ libtvm_a_SOURCES += \
 endif
 
 DISPATCH_SOURCE_FILES = \
-	$(top_srcdir)/ext_chan.c \
 	$(top_srcdir)/ins_alt.c \
 	$(top_srcdir)/ins_barrier.c \
 	$(top_srcdir)/ins_chan.c \

@@ -42,13 +42,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*{{{  void tvm_copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes) */
 #if defined(TVM_CUSTOM_COPY_DATA)
-void (*tvm_copy_data)(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
+#define tvm_copy_data(DST,SRC,LEN) \
+	do { ectx->copy_data((DST), (SRC), (LEN)); } while (0)
 #elif defined(TVM_USE_MEMCPY) && defined(WORDPTRS_REAL)
 #include <string.h>
 #define tvm_copy_data memcpy
 #else
 void tvm_copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
-#endif /* !(defined USE_CUSTOM_COPY_DATA) */
+#endif /* !TVM_CUSTOM_COPY_DATA */
 /*}}}*/
 
 /*{{{  void swap_data_word(WORDPTR a_ptr, WORDPTR b_ptr) */

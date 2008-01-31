@@ -20,7 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tvm.h"
 #include "instructions.h"
-#include "ext_chan.h"
 
 #include "scheduler.h"
 
@@ -60,16 +59,15 @@ TVM_INSTRUCTION (ins_widenshort)
 TVM_INSTRUCTION (ins_fficall)
 {
 	FFI_FUNCTION ffi_func_addr;
-	tvm_t *tvm = ectx->tvm;
 	
 	/* If the FFI table has not been created, then we dont want to
 	 * run this instruction as we are probably going to jump into
 	 * oblivion if that is the case */
-	if(AREG >= 0 && !tvm->ffi_table)
+	if(AREG >= 0 && (!ectx->ffi_table || AREG >= ectx->ffi_table_length))
 	{
 		SET_ERROR_FLAG_RET(EFLAG_FFI);
 	}
-	if(AREG < 0 && !tvm->special_ffi_table)
+	if(AREG < 0 && (!ectx->special_ffi_table || (-(AREG + 1)) >= ectx->special_ffi_table_length))
 	{
 		SET_ERROR_FLAG_RET(EFLAG_FFI);
 	}
@@ -80,15 +78,14 @@ TVM_INSTRUCTION (ins_fficall)
 	 * jumping to, the second is */
 	if(AREG >= 0)
 	{
-		ffi_func_addr = tvm->ffi_table[AREG].func;
+		ffi_func_addr = ectx->ffi_table[AREG].func;
 	}
 	else
 	{
 		/* We do not multiply by 2, as there are no pointers to strings 
 		 * in this table, we also need to make AREG positive and zero indexed */
-		ffi_func_addr = tvm->special_ffi_table[-(AREG + 1)];
+		ffi_func_addr = ectx->special_ffi_table[-(AREG + 1)];
 	}
-
 
 	/* Now we got the address, jump! Hold on to your hats :p */
 	/* Though we need to make sure that we pass the correct parameter, which is
@@ -161,10 +158,18 @@ TVM_INSTRUCTION (ins_lendbw)
 /* 0x14 - 0x21 0xF4 - extvrfy - external channel verify */
 TVM_INSTRUCTION (ins_extvrfy)
 {
-	/* FIXME: Actually do the verify? */
+	UWORD typehash 	= (UWORD) AREG;
+	UWORD index	= ((UWORD)BREG) >> 1;
 
-	/* We should be popping two values off the stack as far as we can tell */
-	STACK_RET(CREG, UNDEFINE(CREG), UNDEFINE(CREG));
+	if (!ectx->ext_chan_table || index >= ectx->ext_chan_table_length) {
+		SET_ERROR_FLAG_RET(EFLAG_EXTCHAN);
+	} else if (ectx->ext_chan_table[index].typehash == 0) {
+		/* typehash = 0 means any type OK */
+	} else if (ectx->ext_chan_table[index].typehash != typehash) {
+		SET_ERROR_FLAG(EFLAG_EXTCHAN);
+	}
+
+	UNDEFINE_STACK_RET();
 }
 
 /* 0x60 - 0x26 0xF0 - extin - external channel input */
@@ -176,9 +181,19 @@ TVM_INSTRUCTION (ins_extin)
 	 * address, but an INDEX, so we need to do some shifting to get
 	 * around that...
 	 */
-	/* ANNO: Cast to UNSIGNED WORD as the behaviour of a shift on negative values
-	 * is implementation defined */
-	return ext_chan_table[(UWORD)BREG >> 1](ectx, AREG, (BYTEPTR)CREG);
+	UWORD index = ((UWORD)BREG) >> 1;
+	if (!ectx->ext_chan_table || index >= ectx->ext_chan_table_length)
+	{
+		SET_ERROR_FLAG_RET(EFLAG_EXTCHAN);
+	} 
+	else if (!ectx->ext_chan_table[index].in)
+	{
+		SET_ERROR_FLAG_RET(EFLAG_EXTCHAN);
+	}
+	else 
+	{
+		return ectx->ext_chan_table[index].in(ectx, AREG, (BYTEPTR)CREG);
+	}
 }
 
 /* 0x61 - 0x26 0xF1 - extout - external channel output */
@@ -190,9 +205,19 @@ TVM_INSTRUCTION (ins_extout)
 	 * address, but an INDEX, so we need to do some shifting to get
 	 * around that...
 	 */
-	/* ANNO: Cast to UNSIGNED WORD as the behaviour of a shift on negative values
-	 * is implementation defined */
-	return ext_chan_table[(UWORD)BREG >> 1](ectx, AREG, (BYTEPTR)CREG);
+	UWORD index = ((UWORD)BREG) >> 1;
+	if (!ectx->ext_chan_table || index >= ectx->ext_chan_table_length)
+	{
+		SET_ERROR_FLAG_RET(EFLAG_EXTCHAN);
+	} 
+	else if (!ectx->ext_chan_table[index].out)
+	{
+		SET_ERROR_FLAG_RET(EFLAG_EXTCHAN);
+	}
+	else 
+	{
+		return ectx->ext_chan_table[index].out(ectx, AREG, (BYTEPTR)CREG);
+	}
 }
 
 #endif /* TVM_OCCAM_PI */
