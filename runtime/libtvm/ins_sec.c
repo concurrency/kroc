@@ -97,7 +97,7 @@ TVM_INSTRUCTION (ins_add)
 	/* Check for overflow, from Hackers Delight p. 27 */
 	if( ((UWORD) (((result) ^ BREG) & ((result) ^ AREG)) >> (WORD_BITS - 1)) )
 	{
-		SET_ERROR_FLAG(EFLAG_ADD);
+		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 
 	STACK_RET(result, CREG, UNDEFINE(CREG));
@@ -158,7 +158,7 @@ TVM_INSTRUCTION (ins_sub)
 	/* Overflow detection from Hackers Delight p. 27 */
 	if( ((UWORD) ((BREG ^ AREG) & (result ^ BREG))) >> (WORD_BITS - 1))
 	{
-		SET_ERROR_FLAG(EFLAG_SUB);
+		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 
 	STACK_RET(BREG - AREG, CREG, UNDEFINE(CREG));
@@ -196,7 +196,7 @@ TVM_INSTRUCTION (ins_csub0)
 	 */
 	if(((UWORD) BREG) >= ((UWORD) AREG))
 	{
-		SET_ERROR_FLAG(EFLAG_CSUB0);
+		SET_ERROR_FLAG(EFLAG_INTERR);
 	}
 	STACK_RET(BREG, CREG, UNDEFINE(CREG));
 }
@@ -217,7 +217,7 @@ TVM_INSTRUCTION (ins_ladd)
 	/* Check for overflow, from Hackers Delight p. 27 */
 	if( ((UWORD) (((result) ^ BREG) & ((result) ^ AREG)) >> (WORD_BITS - 1)) )
 	{
-		SET_ERROR_FLAG(EFLAG_LADD);
+		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 
 	STACK_RET(result, UNDEFINE(BREG), UNDEFINE(CREG));
@@ -293,7 +293,7 @@ TVM_INSTRUCTION (ins_ldiv)
 	 */
 	if(u1 >= v) /* CREG >= AREG */
 	{
-		SET_ERROR_FLAG(EFLAG_LDIV);
+		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 
 	s = nlz(v);               /* 0 <= s <= 31. */
@@ -371,7 +371,7 @@ TVM_INSTRUCTION (ins_rem)
 {
 	if((AREG == 0) || ((AREG == -1) && (BREG == MIN_INT)))
 	{
-		SET_ERROR_FLAG(EFLAG_REM);
+		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 	
 	STACK_RET((BREG % AREG), CREG, UNDEFINE(CREG));	
@@ -432,7 +432,7 @@ TVM_INSTRUCTION (ins_div)
 {
 	if((AREG == 0) || ((AREG == -1) && (BREG == MIN_INT)))
 	{
-		SET_ERROR_FLAG(EFLAG_DIV);
+		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 	
 	STACK_RET(BREG / AREG, CREG, UNDEFINE(CREG));
@@ -670,7 +670,7 @@ TVM_INSTRUCTION (ins_lsub)
 	/* Overflow detection from Hackers Delight p. 27 */
 	if( ((UWORD) ((BREG ^ AREG) & (result ^ BREG))) >> (WORD_BITS - 1))
 	{
-		SET_ERROR_FLAG(EFLAG_LSUB);
+		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 
 	STACK_RET(result, UNDEFINE(CREG), UNDEFINE(BREG));
@@ -807,7 +807,7 @@ TVM_INSTRUCTION (ins_csngl)
 {
 	if((AREG < 0 && BREG != -1) || (AREG >= 0 && BREG != 0))
 	{
-		SET_ERROR_FLAG(EFLAG_CSNGL);
+		SET_ERROR_FLAG(EFLAG_INTERR);
 	}
 
 	STACK_RET(AREG, CREG, UNDEFINE(CREG));
@@ -818,7 +818,7 @@ TVM_INSTRUCTION (ins_ccnt1)
 {
 	if((BREG == 0) || (((UWORD) BREG) > ((UWORD) AREG)))
 	{
-		SET_ERROR_FLAG(EFLAG_CCNT1);
+		SET_ERROR_FLAG(EFLAG_INTERR);
 	}
 	
 	STACK_RET(BREG, CREG, UNDEFINE(CREG));
@@ -889,7 +889,7 @@ TVM_INSTRUCTION (ins_cword)
 {
 	if((BREG >= AREG) || (BREG < -AREG))
 	{
-		SET_ERROR_FLAG(EFLAG_CWORD);
+		SET_ERROR_FLAG(EFLAG_INTERR);
 	}
 
 	STACK_RET(BREG, CREG, UNDEFINE(CREG));
