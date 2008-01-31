@@ -26,29 +26,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /* No inttypes.h; assume the sizes of the standard types are correct. */
 typedef unsigned char	BYTE;
-typedef short		HWORD;
-typedef int		WORD;
+typedef signed char	SBYTE;
+typedef signed short	INT16;
+typedef signed short	HWORD;
+typedef signed int	WORD;
 typedef unsigned int	UWORD;
 
 #else /* HAVE_INTTYPES_H */
 
 #include <inttypes.h>
 
-#if TVM_WORD_LENGTH == 4
 typedef uint8_t		BYTE;
+typedef int8_t		SBYTE;
+typedef int16_t		INT16;
+
+#if TVM_WORD_LENGTH == 4
 typedef int16_t		HWORD;
 typedef int32_t		WORD;
 typedef uint32_t	UWORD;
 #elif TVM_WORD_LENGTH == 2
-typedef uint8_t		BYTE;
 typedef int8_t		HWORD;
 typedef int16_t		WORD;
 typedef uint16_t	UWORD;
-#elif TVM_WORD_LENGTH == 1
-typedef uint8_t		BYTE;
-typedef uint8_t		HWORD;
-typedef int8_t		WORD;
-typedef uint8_t		UWORD;
 #else
 #error "Word length not supported (1)"
 #endif
@@ -57,11 +56,13 @@ typedef uint8_t		UWORD;
 
 /* Define kinds of pointers which we want to be able to use */
 #if defined(WORDPTRS_VIRTUAL)
-typedef WORD 		WORDPTR;
 typedef WORD 		BYTEPTR;
+typedef WORD		INT16PTR;
+typedef WORD 		WORDPTR;
 #else
-typedef WORD * 		WORDPTR;
 typedef BYTE * 		BYTEPTR;
+typedef INT16 *		INT16PTR;
+typedef WORD * 		WORDPTR;
 #endif
 
 #endif /* !TVM_TYPES_H */
