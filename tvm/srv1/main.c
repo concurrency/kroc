@@ -104,7 +104,6 @@ int main (void) {
 	
 	/* Initialise interpreter */
 	tvm_init (&tvm);
-	tvm.special_ffi_table 	= NULL; /* get_special_hooks(); */
 	
 	/* Initialise firmware execution context */
 	tvm_ectx_init (&tvm, firmware);

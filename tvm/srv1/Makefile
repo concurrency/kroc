@@ -72,6 +72,7 @@ external_srv_ffi_hooks.c external_srv_ffi_pragmas.occ: srv_ffi.c
 firmware.h: firmware.occ
 	skroc --keep-temp-files \
 	-L include \
+	--occ21-opts "-ZUS" \
 	--no-std-libs \
 	--blackfin \
 	--slinker-opts "--tlp-types \"()\"" \

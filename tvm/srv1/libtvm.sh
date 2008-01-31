@@ -3,7 +3,7 @@
 [ -n "$CC" ] && X_CC=$CC || X_CC=bfin-elf-gcc
 X_CFLAGS="-O2 -g -D__ADSPBF537__ -D__ADSPLPBLACKFIN__ $CFLAGS"
 
-CONF_OPTS="--host=bfin-elf --disable-occam-pi"
+CONF_OPTS="--host=bfin-elf --enable-occam-pi --enable-t9000-short-ops"
 BUILD="libtvm"
 EPATH=$PWD
 
