@@ -36,6 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ins_sec.c"
 #include "ins_timer.c"
 #include "ins_t800.c"
+#include "ins_t9000.c"
 #include "instructions.c"
 #include "dispatch_ins.c"
 #else
