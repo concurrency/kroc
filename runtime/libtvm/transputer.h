@@ -39,13 +39,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #	define LONG_LO_MASK	0x0000FFFF
 #	define WORD_BITS	16
 #	define WSH		1
-#elif TVM_WORD_LENGTH == 1
-#	define MIN_INT		0x80
-#	define MAX_INT		(MIN_INT - 1)
-#	define LONG_HI_MASK	0xFF00
-#	define LONG_LO_MASK	0x00FF
-#	define WORD_BITS	8
-#	define WSH		0
 #else
 #	error Wordlength not supported
 #endif
@@ -107,6 +100,7 @@ enum {
 	EFLAG_MT	= (1 << 22), /* Mobile type error */
 	EFLAG_PROC	= (1 << 23), /* Process API error */
 #endif
+	EFLAG_INTERR
 };
 /*}}}*/
 
