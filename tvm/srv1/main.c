@@ -18,6 +18,7 @@ void handle_int10 (void)
 {
 }
 
+/*{{{  Surveyor support code */
 static void init_io (void) {
 	*pPORTGIO_DIR	= 0x0300;	// LEDs (PG8 and PG9)
 	*pPORTGIO	= 0x0200;	// LED1 on
@@ -75,28 +76,56 @@ static void serial_out_version (void) {
 	uart0SendString ((unsigned char *)version_string);
 	uart0SendChar ('\n');
 }
+/*}}}*/
+
+/*{{{  TVM state */
+static tvm_t 		tvm;
+static tvm_ectx_t 	firmware_ctx, user_ctx;
+/*}}}*/
+
+#include "firmware.h"
+
+static WORD memory[256];
 
 int main (void) {
+	ECTX firmware 	= &firmware_ctx;
+	ECTX user	= &user_ctx;
+	WORDPTR	base	= (WORDPTR) memory;
+	WORDPTR ws, vs, ms;
+	WORD size;
+	int ret;
+
 	clear_sdram ();
 	init_uarts ();
 	init_io ();
 	init_rtc ();
 
 	serial_out_version ();
-
-	//get_time = srv_get_time;
-	//special_ffi_table = get_special_hooks();
 	
-	uart0SendString ((unsigned char *)"##TVM Initialiation Complete");
+	/* Initialise interpreter */
+	tvm_init (&tvm);
+	tvm.special_ffi_table 	= NULL; /* get_special_hooks(); */
+	
+	/* Initialise firmware execution context */
+	tvm_ectx_init (&tvm, firmware);
+	firmware->get_time 	= srv_get_time;
+
+	/* Initialise user execution context */
+	tvm_ectx_init (&tvm, user);
+	user->get_time 		= srv_get_time;
+
+	/* Setup memory and initial workspace */
+	tvm_ectx_layout (firmware, base, "", 0, ws_size, vs_size, ms_size, &size, &ws, &vs, &ms);
+	tvm_ectx_install_tlp (firmware, (BYTEPTR) transputercode, ws, vs, ms, "", 0, NULL);
+
+	uart0SendString ((unsigned char *) "##TVM Initialiation Complete");
 	uart0SendChar ('\n');
 	delay_ms (1000);
 	
-	for (;;) {
-		*pPORTGIO = *pPORTGIO ^ 0x0200;
-		delay_ms (1000);
-	}
+	ret = tvm_run (firmware);
 	
-	uart0SendString ((unsigned char *)"##Out of runloop.");
+	uart0SendString ((unsigned char *) "##Out of runloop, state: ");
+	uart0SendChar ((unsigned char) ret);
 	uart0SendChar ('\n');
 	delay_ms (1000);
 }
