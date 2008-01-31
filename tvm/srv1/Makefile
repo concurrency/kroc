@@ -27,10 +27,7 @@ INCLUDES = \
 
 ASMFLAGS = -x assembler-with-cpp $(CPUDEFINES) $(INCLUDES) -g
 
-TVMFLAGS = -DWORDLENGTH=4 -DPOOTERS_REAL -DMEMORY_INTF_NATIVE
-CFLAGS = $(INCLUDES) -g -O2 $(TVMFLAGS)
-CFLAGS += $(CPUDEFINES)
-
+CFLAGS	= $(INCLUDES) -g -O2 $(CPUDEFINES)
 LDFLAGS = -T bftiny.x \
 	-Map tvm.map -O binary -o tvm.bin \
 	-L$(LIBPATH)
@@ -92,7 +89,7 @@ flash: tvm.ldr
 clean:
 	rm -f 	*.o *.bin *.ldr \
 		support/*.o \
-		bytecode.h \
+		firmware.h \
 		external_srv_ffi_hooks.c \
 		external_srv_ffi_pragmas.occ
 

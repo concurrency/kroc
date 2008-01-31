@@ -109,8 +109,6 @@ foreach my $file (@ARGV) {
 							$name .= '.ADDR';
 						} elsif (length($val) == 4) {
 							$type = "INT16";
-						} elsif (length($val) == 8) {
-							$type = "INT32";
 						}
 						$val = "#$val";
 					}
@@ -136,7 +134,7 @@ foreach my $file (@ARGV) {
 					
 					$line = "";
 					$line .= "-- " if !$ok;
-					$line .= "VAL INT $name IS $val:";
+					$line .= "VAL _ $name IS $val:";
 					$line .= " -- $comment" if $comment;
 				}
 			} elsif ($line =~ m/^#include\s+["<](.+?)[">]/) {
@@ -191,7 +189,7 @@ foreach my $file (@ARGV) {
 		foreach my $sub (keys(%{$addr->{'offsets'}})) {
 			$addr->{'offsets'}->{$sub} -= $address;
 		}
-		$addr->{'length'} = ($addr->{'top'} - $address) / 2 + 4;
+		$addr->{'length'} = ($addr->{'top'} - $address) + 4;
 	}
 
 	# Inject addressing information
@@ -240,18 +238,19 @@ foreach my $file (@ARGV) {
 	# Width finding pass
 	my $max_width = 0;
 	foreach my $line (@lines) {
-		next if $line !~ m/^VAL INT\d{0,2} (.+) IS/;
+		next if $line !~ m/^VAL \S{0,5} (.+) IS/;
 		my $value = $1;
 		my $width = length($value);
 		$max_width = $width if $width > $max_width;
 	}
 	
-	# Formatting pass
+	# Formatting and VAL type cleaning pass
 	my $fmt = sprintf('%%-%ds', $max_width);
 	foreach my $line (@lines) {
-		next if $line !~ m/^VAL INT(\d{0,2})? (.+) IS(.*)/;
+		next if $line !~ m/^VAL (\S{0,5})? (.+) IS(.*)/;
 		my ($type, $value, $rest) = ($1, $2, $3);
-		$line = sprintf("VAL INT% 2s $fmt IS %s", $type, $value, $rest);
+		$type = "" if $type eq '_';
+		$line = sprintf("VAL %-5s $fmt IS %s", $type, $value, $rest);
 	}
 
 	# Output pass
