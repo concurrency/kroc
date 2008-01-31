@@ -106,11 +106,17 @@ void tvm_ectx_layout(ECTX ectx, WORDPTR base,
 	int frame_size =
 		1 + tlp_argc 
 		+ (vs_size ? 1 : 0) 
-		+ (ms_size ? 1 : 0) 
-		+ 1;
+		+ (ms_size ? 1 : 0);
 	
-	*size 	= frame_size + ws_size + vs_size + ms_size;
-	*ws 	= wordptr_plus(base, frame_size + ws_size);
+	/* Stack frame has a minimum size of 4 */
+	if (frame_size < 4)
+	{
+		frame_size = 4;
+	}
+
+	/* The plus 1 in here is for the shutdown bytecode */
+	*size 	= frame_size + 1 + ws_size + vs_size + ms_size;
+	*ws 	= wordptr_plus(base, frame_size + ws_size + 1);
 	*vs	= vs_size ? *ws : 0;
 	*ms	= ms_size ? wordptr_plus(*ws, vs_size) : 0;
 }
@@ -168,8 +174,8 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 	 *
 	 * Memory ends up layed out as follows:
 	 * 
-	 * WS =>        [ ... padding ...         ]
-	 *              [ shutdown bytecode       ]
+	 * WS =>        [ shutdown bytecode       ]
+	 *              [ ... padding ...         ]
 	 *              [ forking barrier pointer ]
 	 *              [ mobile space pointer    ]
 	 *              [ vector space pointer    ]
@@ -183,7 +189,7 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 	 *
 	 * The total size of the frame must be at
 	 * least 4 words, e.g. if argc == 0 and
-	 * there are no pointers then, 2 words of
+	 * there are no pointers then, 3 words of
 	 * padding will be added to the top of the
 	 * frame.
 	 *
@@ -191,11 +197,15 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 	 * bytecode, allowing the interpreter to
 	 * detect normal completion of an execution
 	 * context using a instruction sequence.
+	 *
+	 * The shutdown bytecode lives above the
+	 * stack frame, as the compiler is allowed
+	 * to use the slots in the frame for volatile
+	 * storage.
 	 */
 	frame_size = 1 + argc 
 		+ (vs ? 1 : 0) 
-		+ (ms ? 1 : 0) 
-		+ 1;
+		+ (ms ? 1 : 0);
 	
 	WPTR = wordptr_minus(WPTR, frame_size < 4 ? 4 - frame_size: 0);
 
@@ -204,21 +214,28 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 	write_byte(byteptr_plus((BYTEPTR)WPTR, 0), 0x2F);
 	write_byte(byteptr_plus((BYTEPTR)WPTR, 1), 0xFE);
 
-	/* Set up forking barrier pointer if neccesary */
+	/* Pad stack frame */
+	if (frame_size < 4) 
+	{
+		WPTR = wordptr_minus(WPTR, 4 - frame_size);
+		frame_size = 4;
+	}
+	
+	/* Set up forking barrier pointer */
 	if(fb)
 	{
 		WPTR = wordptr_minus(WPTR, 1);
 		write_word(WPTR, (WORD)fb);
 	}
 
-	/* Set up mobilespace pointer if neccesary */
+	/* Set up mobilespace pointer */
 	if(ms)
 	{
 		WPTR = wordptr_minus(WPTR, 1);
 		write_word(WPTR, (WORD)ms);
 	}
 	
-	/* Set up vectorspace pointer if neccesary */
+	/* Set up vectorspace pointer */
 	if(vs)
 	{
 		WPTR = wordptr_minus(WPTR, 1);
@@ -237,7 +254,8 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 
 	/* Store the return pointer, to completion byte code */
 	/* FIXME: this won't work for virtual memory right? */
-	write_word(WPTR, (WORD)wordptr_plus(WPTR, frame_size - 1));
+	WPTR = wordptr_minus(WPTR, 1);
+	write_word(WPTR, (WORD)wordptr_plus(WPTR, frame_size));
 
 	return 0;
 }

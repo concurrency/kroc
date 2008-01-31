@@ -187,15 +187,15 @@ struct _tvm_ectx_t {
 /*{{{  Execution context returns */
 enum {
 	ECTX_CONTINUE		= 0,
-	ECTX_INIT		= 1000,
-	ECTX_INS_INVALID	= 2000,
-	ECTX_INS_UNSUPPORTED	= 2001,
-	ECTX_EMPTY		= 3000,
-	ECTX_ERROR		= 4000,
-	ECTX_RUNNING		= 1001,
-	ECTX_SHUTDOWN		= 6000,
-	ECTX_SLEEP		= 7000,
-	ECTX_TIME_SLICE		= 8000
+	ECTX_INIT		= 'i',
+	ECTX_INS_INVALID	= 'I',
+	ECTX_INS_UNSUPPORTED	= 'U',
+	ECTX_EMPTY		= 'e',
+	ECTX_ERROR		= 'E',
+	ECTX_RUNNING		= 'r',
+	ECTX_SHUTDOWN		= 'S',
+	ECTX_SLEEP		= 's',
+	ECTX_TIME_SLICE		= 't'
 };
 /*}}}*/
 
