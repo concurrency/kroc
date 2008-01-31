@@ -52,9 +52,6 @@ struct _tvm_t {
 	/* Execution context list */
 	tvm_ectx_t	*head;
 	tvm_ectx_t	*tail;
-	/* FFI */
-	FFI_TABLE_ENTRY	*ffi_table;
-	FFI_FUNCTION	*special_ffi_table;
 	/* Private data */
 	tvm_priv_t	priv;
 };

@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tvm.h"
 #include "instructions.h"
 #include "interpreter.h"
-#include "ext_chan.h"
 
 #ifdef TVM_DISPATCH_SWITCH
 #include "mem.c"
@@ -49,9 +48,6 @@ int tvm_init(tvm_t *tvm)
 {
 	tvm->head 		= NULL;
 	tvm->tail		= NULL;
-	tvm->ffi_table		= NULL;
-	tvm->special_ffi_table	= NULL;
-
 	return 0;
 }
 
@@ -63,9 +59,22 @@ void tvm_ectx_init(tvm_t *tvm, ECTX ectx)
 
 	_tvm_install_scheduler(ectx);
 
-	ectx->get_time	= NULL;
-	ectx->set_alarm	= NULL;
-	ectx->run_hook	= NULL;
+	#ifdef TVM_CUSTOM_COPY_DATA
+	ectx->copy_data		= NULL;
+	#endif
+	ectx->get_time		= NULL;
+	ectx->set_alarm		= NULL;
+	ectx->run_hook		= NULL;
+
+	ectx->ffi_table		= NULL;
+	ectx->ffi_table_length	= 0;
+	ectx->special_ffi_table	= NULL;
+	ectx->special_ffi_table_length = 0;
+
+	#ifdef TVM_OCCAM_PI
+	ectx->ext_chan_table	= NULL;
+	ectx->ext_chan_table_length = 0;
+	#endif
 
 	ectx->tvm	= tvm;
 
