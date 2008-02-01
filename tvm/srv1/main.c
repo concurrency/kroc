@@ -15,7 +15,8 @@
 static char version_string[] = "TVM SRV-1 Blackfin w/C interpreter - " __TIME__ " - " __DATE__;
 
 /*{{{  Surveyor support code */
-static void init_io (void) {
+static void init_io (void)
+{
 	*pPORTGIO_DIR	= 0x0300;	// LEDs (PG8 and PG9)
 	*pPORTGIO	= 0x0200;	// LED1 on
 	*pPORTH_FER	= 0x0000;	// set for GPIO
@@ -25,7 +26,8 @@ static void init_io (void) {
 	*pPORTHIO_DIR	|= 0x0380; 	// set up lasers
 }
 
-static void clear_sdram (void) {
+static void clear_sdram (void)
+{
 	const BYTE *end = (BYTE *) 0x02000000;
 	BYTE *cp	= (BYTE *) 0;
 
@@ -34,7 +36,8 @@ static void clear_sdram (void) {
 	}
 }
 
-static void init_time (void) {
+static void init_time (void)
+{
 	*pTSCALE = ((CORE_CLOCK / 2000000) - 1);
 	*pTPERIOD = 0xffffffff;
 	*pTCOUNT = 0xffffffff;
@@ -43,11 +46,13 @@ static void init_time (void) {
 }
 
 /* Read the time counter, returns number of microseconds since reset */
-static int read_time (void) { 
+static int read_time (void)
+{ 
 	return (((unsigned int) 0xffffffff) - ((unsigned int) *pTCOUNT)) >> 1;
 }
 
-static void delay_ms (int delay) {
+static void delay_ms (int delay)
+{
 	int timeout = read_time () + (delay * 1000);
 
 	if ((delay < 0) || (delay > 100000))
@@ -61,7 +66,8 @@ static WORD srv_get_time (ECTX ectx)
 	return (WORD) read_time ();
 }
 
-static void serial_out_version (void) {
+static void serial_out_version (void)
+{
 	uart0SendString ((unsigned char *)"Version - ");
 	uart0SendString ((unsigned char *)version_string);
 	uart0SendChar ('\n');
@@ -178,6 +184,26 @@ static int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 		return ECTX_CONTINUE;
 	}
 }
+
+static int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
+{
+	unsigned char data = (unsigned char) read_byte (pointer);
+
+	/* Wait for RTS to go low (remote ready) */
+	while (*pPORTHIO & 0x0001) {
+		continue;
+	}
+
+	/* Wait for UART0 send buffer to be ready */
+	while (!(*pUART0_LSR & THRE)) {
+		continue;
+	}
+	
+	/* Send data */
+	*pUART0_THR = data;
+
+	return ECTX_CONTINUE;
+}
 /*}}}*/
 
 /*{{{  scheduling code */
@@ -200,7 +226,7 @@ static EXT_CHAN_ENTRY	ext_chans[] = {
 	{ 
 		.typehash 	= 0,
 		.in 		= uart0_in, 
-		.out 		= NULL
+		.out 		= uart0_out
 	}
 };
 static const int	ext_chans_length = sizeof(ext_chans) / sizeof(EXT_CHAN_ENTRY);
