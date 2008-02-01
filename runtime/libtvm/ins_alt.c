@@ -159,7 +159,6 @@ TVM_INSTRUCTION (ins_diss)
 /* 0x43 - 0x24 0xF3 - alt - alt start */
 TVM_INSTRUCTION (ins_alt)
 {
-	/* Set the alt state as enabeling */
 	WORKSPACE_SET(WPTR, WS_STATE, ENABLING_P);
 	return ECTX_CONTINUE;
 }
@@ -201,12 +200,7 @@ TVM_INSTRUCTION (ins_enbt)
 {
 	/* FIXME: This is badly coded in soccam and here */
 	/* FIXME: There is a redundant STACK macro call */
-	if(AREG == 0)
-	{
-		/* The quard is disabled, do nothing apart from changeing the stack */
-		//STACK(UNDEFINE(AREG), UNDEFINE(BREG), UNDEFINE(CREG));
-	}
-	else
+	if(AREG)
 	{
 		if(WORKSPACE_GET(WPTR, WS_TLINK) == TIME_NOT_SET_P)
 		{
@@ -233,8 +227,7 @@ TVM_INSTRUCTION (ins_enbt)
 TVM_INSTRUCTION (ins_enbc)
 {
 	/* Is guard enabled? if not, do nothing */
-	/* FIXME: This is the other way around from how the test is done in soccam */
-	if(AREG != 0)
+	if(AREG)
 	{
 		if(read_word((WORDPTR)BREG) == NOT_PROCESS_P)
 		{
@@ -265,10 +258,7 @@ TVM_INSTRUCTION (ins_enbc)
 TVM_INSTRUCTION (ins_enbs)
 {
 	/* The stack is unaffected by this instruction */
-
-	/* FIXME: in soccam and here, this does the test differently
-	 * than in enbc */
-	if(AREG == 1)
+	if(AREG)
 	{
 		WORKSPACE_SET(WPTR, WS_STATE, DISABLING_P);
 	}
@@ -303,12 +293,10 @@ TVM_INSTRUCTION (ins_taltwt)
 
 	if(WORKSPACE_GET(WPTR, WS_STATE) == DISABLING_P) /* READY_P */
 	{
-		/*fprintf(stderr, "1");*/
 		WORKSPACE_SET(WPTR, WS_TIME, current_time);
 	}
 	else if(WORKSPACE_GET(WPTR, WS_TLINK) == TIME_NOT_SET_P)
 	{
-		/*fprintf(stderr, "2");*/
 		WORKSPACE_SET(WPTR, WS_STATE, WAITING_P);
 
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD)IPTR);
@@ -317,19 +305,15 @@ TVM_INSTRUCTION (ins_taltwt)
 	/* Redundant if? */
 	else if(TIME_AFTER(current_time, WORKSPACE_GET(WPTR, WS_TIME)))
 	{
-		/*fprintf(stderr, "3");*/
 		WORKSPACE_SET(WPTR, WS_STATE, DISABLING_P); /* READY_P */
 		WORKSPACE_SET(WPTR, WS_TIME, current_time);
 	}
 	else
 	{
-		/*fprintf(stderr, "4");*/
-		/*printf("TALT added stuff to timer queue\n");*/
 		WORKSPACE_SET(WPTR, WS_TIME, WORKSPACE_GET(WPTR, WS_TIME) + 1);
 
-		/*traverse_and_insert(TPTR, TPTR);*/
 		TIMER_QUEUE_INSERT(WPTR, current_time, WORKSPACE_GET(WPTR, WS_TIME));
-		/*print_timer_queue();*/
+		
 		/* Redundant if? */
 		if(WORKSPACE_GET(WPTR, WS_STATE) != DISABLING_P)
 		{

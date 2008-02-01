@@ -77,7 +77,7 @@ static int busy_wait_synchronise(ECTX ectx)
 		
 		ectx->walk_timer_queue(ectx, now);
 
-		if(TPTR == NOT_PROCESS_P)
+		if(TPTR == (WORDPTR)NOT_PROCESS_P)
 		{
 			ectx->sflags &= (~SFLAG_TQ);
 		}
@@ -243,7 +243,7 @@ static void walk_timer_queue(ECTX ectx, WORD now)
 	WORDPTR tptr 	= TPTR;
 	WORD	tnext	= TNEXT;
 
-	if(tptr == (WORDPTR)NOT_PROCESS_P || !TIME_AFTER(tnext, now))
+	if(tptr == (WORDPTR)NOT_PROCESS_P || TIME_AFTER(tnext, now))
 	{
 		/* Timer queue empty or nothing expired. */
 		return;
