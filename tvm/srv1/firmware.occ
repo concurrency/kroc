@@ -1,9 +1,19 @@
 #INCLUDE "defBF534.inc"
 
+PROC delay.us (VAL INT us)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER (t PLUS us)
+:
+
 PROC leds.on ()
   PLACED [PORTGIO.LEN]INT16 port.g.io PORTGIO.ADDR:
   #PRAGMA DEFINED port.g.io
-  SEQ
-    port.g.io[PORTGIO] := port.g.io[PORTGIO] /\ (~#0300)
+  WHILE TRUE
+    SEQ
+      port.g.io[PORTGIO] := port.g.io[PORTGIO] >< #0300
+      delay.us (1000000)
 :
 
