@@ -164,7 +164,11 @@ struct _tvm_ectx_t {
 				(ECTX dst_ctx, ECTX src_ctx, WORDPTR ws);
 	void		(*add_queue_to_queue)
 				(ECTX ectx, WORDPTR front, WORDPTR back);
+	void		(*modify_sync_flags)
+				(ECTX ectx, WORD set, WORD clear);
 	int		(*run_next_on_queue)
+				(ECTX ectx);
+	void		(*set_alarm)
 				(ECTX ectx);
 	int		(*set_error_flag)
 				(ECTX ectx, WORD flag);
@@ -181,8 +185,6 @@ struct _tvm_ectx_t {
 				(ECTX ectx, BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
 	#endif
 	WORD		(*get_time)
-				(ECTX ectx);
-	void		(*set_alarm)
 				(ECTX ectx);
 	int		(*run_hook)
 				(ECTX ectx);
