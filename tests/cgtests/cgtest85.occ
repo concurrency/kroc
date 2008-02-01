@@ -324,11 +324,11 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
     MOBILE []INT ns:
     SEQ
       s := MOBILE [14]BYTE
-      s := "hello, world"
+      [s FOR 14] := "abcdefghijklmn"
       check.INT (BYTESIN (s), 14, "test4.0")
       ns := MOBILE [12]INT
       ns := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-      check.INT (BYTESIN (s), 12 * BYTESIN (INT), "test4.1")
+      check.INT (BYTESIN (ns), 12 * BYTESIN (INT), "test4.1")
   :
   --}}}
   --{{{  DEFINED on mobiles
@@ -374,6 +374,8 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
     test2 ()
     title ("user-defined types")
     test3 ()
+    title ("BYTESIN")
+    test4 ()
     title ("DEFINED")
     test5 ()
     finish ()
