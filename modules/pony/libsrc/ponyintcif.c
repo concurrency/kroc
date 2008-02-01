@@ -243,6 +243,8 @@ typedef struct {
 	int clc_total;
 	pony_walk_counts counts;
 
+	int deferred_min;
+
 	void **temp_list;
 	int temp_list_used;
 	int temp_list_size;
@@ -462,7 +464,7 @@ static void *get_data (Workspace wptr, pony_walk_state *s)
 		/* There isn't a sending process. */
 		return NULL;
 	} else {
-		Process *other = (Process *)(*s->user);
+		Workspace *other = (Workspace *)(*s->user);
 		if (other == NULL) {
 			CFATAL ("get_data: no sending process for channel at 0x%08x (channel word is NULL)\n", 1, (unsigned int) s->user);
 		}
@@ -470,16 +472,44 @@ static void *get_data (Workspace wptr, pony_walk_state *s)
 	}
 }
 /*}}}*/
+/*{{{ get_mobile */
+/*
+ *	Get the mobile that's being communicated across s->user, deferring the
+ *	completion of the input until later (in case the communication is
+ *	cancelled).
+ */
+static word *get_mobile (Workspace wptr, pony_walk_state *s)
+{
+	word **data = get_data (wptr, s);
+
+	SCTRACE (s, "deferring MTChanXIn\n", 0);
+	s->deferred_min = 1;
+	return *data;
+}
+/*}}}*/
 /*{{{ release_user */
 /*
  *	release the user process from a communication
  */
-static void release_user (Workspace wptr, pony_walk_state *s)
+static void release_user (Workspace wptr, pony_walk_state *s, int enable)
 {
 	if (s->mode == PW_output || s->mode == PW_cancel) {
 		SCTRACE (s, "releasing user process\n", 0);
+
+		if (s->deferred_min) {
+			void *mobile;
+
+			SCTRACE (s, "doing deferred MTChanXIn\n", 0);
+			MTChanXIn (wptr, s->user, &mobile);
+			comm_list_add (wptr, s, mobile);
+
+			s->deferred_min = 0;
+		}
+
 		ChanXEnd (wptr, s->user);
-		ChanXAble (wptr, s->user);
+		if (enable) {
+			ChanXAble (wptr, s->user);
+		}
 	}
 }
 /*}}}*/
@@ -508,7 +538,7 @@ static int new_clc (Workspace wptr, pony_walk_state *s, int inhibit_release)
 	}
 
 	if (!inhibit_release) {
-		release_user (wptr, s);
+		release_user (wptr, s, 1);
 	}
 
 	return 0;
@@ -791,7 +821,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 								return 1;
 							}
 						} else {
-							release_user (wptr, s);
+							release_user (wptr, s, 1);
 						}
 						if (s->mode == PW_output) {
 							data = copy_di (wptr, s, get_data (wptr, s), (size_t) data_size);
@@ -891,21 +921,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 				{
 					int i;
 					long long data_size;
-					mt_array_t *array;
-
-					/* XXX: Read the mobile that the other process is trying to
-					 * communicate directly out of its workspace.
-					 * (We know there's another process there, since we've got here
-					 * either because the ALT guard on the user channel fired, or
-					 * because we just did ChanXAble at the start of a new CLC.)
-					 *
-					 * This is not quite equivalent to:
-					 *   MTChanXIn (wptr, s->user, (void **) &array);
-					 * because that NULLs out the pointer in the other process,
-					 * which causes problems if we decide we need to cancel this
-					 * communication later. */
-					Workspace *other_process = *((Workspace **) s->user);
-					array = *((mt_array_t **) other_process[Pointer]);
+					mt_array_t *array = (mt_array_t *) get_mobile (wptr, s);
 
 					if (array == NULL) {
 						CFATAL ("walk_inner: trying to send undefined mobile array\n", 0);
@@ -940,7 +956,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 						CTRACE ("cancelling CLC %d marray\n", 1, s->clc);
 					}
 
-					comm_list_add (wptr, s, array);
+					/* The array will be freed when comm_list is processed. */
 				}
 				break;
 			case PW_input:
@@ -1073,16 +1089,8 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			case PW_output:
 			case PW_cancel:
 				{
-					mt_cb_t **data = get_data (wptr, s);
-					mt_cb_t *ctb;
-					mt_cb_pony_state_t *pony;
-
-					if (data == NULL) {
-						CFATAL ("walk_inner: trying to send undefined channel end\n", 0);
-					}
-
-					ctb = *data;
-					pony = ct_state (ctb);
+					mt_cb_t *ctb = get_mobile (wptr, s);
+					mt_cb_pony_state_t *pony = mt_cb_get_pony_state (ctb);
 
 					CTRACE ("CTB at 0x%08x typedesc 0x%08x uiohook 0x%08x\n", 3, (unsigned int) ctb, (unsigned int) pony->typedesc, (unsigned int) pony->uiohook);
 
@@ -1131,7 +1139,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 						CTRACE ("cancelling CTB\n", 0);
 					}
 
-					comm_list_add (wptr, s, ctb, -1, CL_ctb);
+					/* The CTB will be freed when comm_list is processed. */
 				}
 				break;
 			case PW_input:
@@ -1244,6 +1252,7 @@ static void type_walker (Workspace wptr)
 	state.user = user;
 	state.to_kern = to_kern;
 	state.from_kern = from_kern;
+	state.deferred_min = 0;
 	state.temp_list = NULL;
 	state.temp_list_used = 0;
 	state.temp_list_size = 0;
@@ -1291,9 +1300,12 @@ static void type_walker (Workspace wptr)
 		}
 
 		if (state.mode == PW_output) {
-			ChanInChar (wptr, pwi, &c);
+			ChanXAble (wptr, pwi);
+			ChanXIn (wptr, pwi, &c, 1);
 			if (c == PWI_output_ok) {
-				SCTRACE (&state, "output walk completed successfully; processing comm_list\n", 0);
+				SCTRACE (&state, "output walk completed successfully; releasing user\n", 0);
+				release_user (wptr, &state, 0);
+				SCTRACE (&state, "processing comm_list\n", 0);
 				process_comm_list (wptr, &state);
 			} else if (c == PWI_output_cancelled) {
 				SCTRACE (&state, "output walk was cancelled; discarding comm_list\n", 0);
@@ -1301,6 +1313,7 @@ static void type_walker (Workspace wptr)
 			} else {
 				CFATAL ("type_walker: expected PWI_output_ok or PWI_output_cancelled\n", 0);
 			}
+			ChanXEnd (wptr, pwi);
 		}
 	}
 
@@ -1531,9 +1544,6 @@ static void pony_protocol_decoder (Workspace wptr)
 								}
 
 								ChanOutChar (wptr, &pw_in, PWI_output_ok);
-
-								CTRACE ("releasing user process\n", 0);
-								ChanXEnd (wptr, in);
 								break;
 							}
 						}
