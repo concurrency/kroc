@@ -38,37 +38,31 @@ static void clear_sdram (void) {
 	}
 }
 
-static void init_rtc (void) {
-	*pRTC_ICTL = 0;  // disable interrupts
+static void init_time (void) {
+	*pTSCALE = ((CORE_CLOCK / 2000000) - 1);
+	*pTPERIOD = 0xffffffff;
+	*pTCOUNT = 0xffffffff;
 	SSYNC;
-	*pRTC_PREN = 0;  // disable prescaler - clock counts at 32768 Hz
-	SSYNC;
-	*pRTC_STAT = 0;  // clear counter
-	SSYNC;
+	*pTCNTL = 0x7;
 }
 
-/* Read the RTC counter, returns number of milliseconds since reset */
-static int read_rtc (void) {     
-	int i1, i2;
-	i1 = *pRTC_STAT;
-	i2 = (i1 & 0x0000003F) + (((i1 >> 6) & 0x0000003F) * 60) +  
-		(((i1 >> 12) & 0x0000001F) * 3600) + (((i1 >> 17) & 0x00007FFF) * 86400);
-	return (i2 / 33);  // converts tick count to milliseconds
-	//    32,768 / 32.77 = 1,000
+/* Read the time counter, returns number of microseconds since reset */
+static int read_time (void) { 
+	return (((unsigned int) 0xffffffff) - ((unsigned int) *pTCOUNT)) >> 1;
 }
 
 static void delay_ms (int delay) {
-	int timeout = read_rtc () + delay;
+	int timeout = read_time () + (delay * 1000);
 
 	if ((delay < 0) || (delay > 100000))
 		return;
-	while (read_rtc () < timeout)
+	while (read_time () < timeout)
 		continue;
 }
 
 static WORD srv_get_time (ECTX ectx)
 {
-	return (WORD) read_rtc ();
+	return (WORD) read_time ();
 }
 
 static void serial_out_version (void) {
@@ -98,7 +92,7 @@ int main (void) {
 	clear_sdram ();
 	init_uarts ();
 	init_io ();
-	init_rtc ();
+	init_time ();
 
 	serial_out_version ();
 	
@@ -121,7 +115,9 @@ int main (void) {
 	uart0SendChar ('\n');
 	delay_ms (1000);
 	
-	ret = tvm_run (firmware);
+	do {
+		ret = tvm_run (firmware);
+	} while (ret == ECTX_SLEEP);
 	
 	uart0SendString ((unsigned char *) "##Out of runloop, state: ");
 	uart0SendChar ((unsigned char) ret);
