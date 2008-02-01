@@ -39,6 +39,7 @@ static void ciftrace_startup ()
 		} \
 	} while (0)
 #define CFATAL(format, n, args...) do { \
+		CTRACE (">>> fatal error here <<<\n", 0); \
 		TimerDelay (wptr, 250000); \
 		ExternalCallN (fprintf, n + 2, stderr, "\n" CIFTRACE_NAME ": fatal error: " format, ##args); \
 		SetErrW (wptr); \
