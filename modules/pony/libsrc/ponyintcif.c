@@ -893,7 +893,20 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 					long long data_size;
 					mt_array_t *array;
 
-					MTChanXIn (wptr, s->user, (void **) &array);
+					/* XXX: Read the mobile that the other process is trying to
+					 * communicate directly out of its workspace.
+					 * (We know there's another process there, since we've got here
+					 * either because the ALT guard on the user channel fired, or
+					 * because we just did ChanXAble at the start of a new CLC.)
+					 *
+					 * This is not quite equivalent to:
+					 *   MTChanXIn (wptr, s->user, (void **) &array);
+					 * because that NULLs out the pointer in the other process,
+					 * which causes problems if we decide we need to cancel this
+					 * communication later. */
+					Workspace *other_process = *((Workspace **) s->user);
+					array = *((mt_array_t **) other_process[Pointer]);
+
 					if (array == NULL) {
 						CFATAL ("walk_inner: trying to send undefined mobile array\n", 0);
 						/* FIXME ... or a zero-length one. */
@@ -923,10 +936,6 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 						ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
 						ChanOutInt (wptr, s->to_kern, (int) array->data);
 						ChanOutInt (wptr, s->to_kern, (int) data_size);
-						CTRACE ("data:\n", 0);
-						for (i = 0; i < data_size; i++) {
-							CTRACE ("  %5d: %02x\n", 2, i, ((char *) array->data)[i]);
-						}
 					} else {
 						CTRACE ("cancelling CLC %d marray\n", 1, s->clc);
 					}
