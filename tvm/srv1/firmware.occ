@@ -15,16 +15,16 @@ PROC leds ()
   CHAN BYTE uart0:
   PLACE uart0 AT #0:
 
-  WHILE TRUE
-    BYTE b:
-    SEQ
-      uart0 ? b
-      IF
-        b = '1'
-          port.g.io[PORTGIO] := port.g.io[PORTGIO] >< #0100
-        b = '2'
-          port.g.io[PORTGIO] := port.g.io[PORTGIO] >< #0200
-        TRUE
-          SKIP
+  PAR
+    WHILE TRUE
+      SEQ
+        port.g.io[PORTGIO] := port.g.io[PORTGIO] >< #0300
+        delay.us (200000)
+
+    WHILE TRUE
+      BYTE b:
+      SEQ
+        uart0 ? b
+        uart0 ! b
 :
 
