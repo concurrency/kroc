@@ -90,6 +90,13 @@ enum {
 };
 /*}}}*/
 
+/*{{{  Synchronisation flags */
+enum {
+	SFLAG_TQ	= (1 << 0),	/* Timer queue ready */
+	SFLAG_INTR	= (1 << 1),	/* Interrupt execution */
+};
+/*}}}*/
+
 /*{{{  Execution context pre-definitions */
 typedef struct _tvm_ectx_t	tvm_ectx_t;
 typedef tvm_ectx_t		*ECTX;
@@ -161,8 +168,12 @@ struct _tvm_ectx_t {
 				(ECTX ectx);
 	int		(*set_error_flag)
 				(ECTX ectx, WORD flag);
+	int		(*synchronise)
+				(ECTX ectx);
 	void		(*timer_queue_insert)
 				(ECTX ectx, WORDPTR ws, WORD current_time, WORD reschedule_time);
+	void		(*walk_timer_queue)
+				(ECTX ectx, WORD now);
 
 	/* Wrapper defined functions */
 	#ifdef TVM_CUSTOM_COPY_DATA
@@ -172,7 +183,7 @@ struct _tvm_ectx_t {
 	WORD		(*get_time)
 				(ECTX ectx);
 	void		(*set_alarm)
-				(ECTX ectx, WORD alarm);
+				(ECTX ectx);
 	int		(*run_hook)
 				(ECTX ectx);
 
@@ -208,6 +219,7 @@ enum {
 	ECTX_INIT		= 'i',
 	ECTX_INS_INVALID	= 'I',
 	ECTX_INS_UNSUPPORTED	= 'U',
+	ECTX_INTERRUPT		= 'x',
 	ECTX_EMPTY		= 'e',
 	ECTX_ERROR		= 'E',
 	ECTX_RUNNING		= 'r',

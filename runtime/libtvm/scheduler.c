@@ -60,111 +60,73 @@ static void add_queue_to_queue(ECTX ectx, WORDPTR front, WORDPTR back)
 	}
 }
 
-static int run_next_on_queue(ECTX ectx)
+static void busy_wait_set_alarm(ECTX ectx)
 {
-	/*
-	   ! SEQ
-	   !   tim ? now
-	   !   removed := FALSE
-	   !   WHILE (Tptr <> NotProcess.p) AND (NOT (Tptr^[Time] TIME_AFTER now))
-	   !     SEQ
-	   !       ...  move first process on timer queue to the run queue
-	   !       removed := TRUE
-	   !   IF
-	   !     (Tptr <> NotProcess.p) AND removed
-	   !       ualarm (Tptr^[Time] MINUS now, 0)
-	   !     TRUE
-	   !       SKIP
-	   */
-	if((ectx->set_alarm && ectx->sflags) || ((!ectx->set_alarm) && (TPTR != (WORDPTR)NOT_PROCESS_P)))
+	ectx->sflags |= SFLAG_TQ;
+}
+
+static int busy_wait_synchronise(ECTX ectx)
+{
+	if(ectx->sflags & SFLAG_INTR)
 	{
-		WORD removed = 0;
-		WORD now;
+		return ECTX_INTERRUPT;
+	}
+	else if(ectx->sflags & SFLAG_TQ)
+	{
+		WORD now = ectx->get_time(ectx);
 		
-		ectx->sflags = 0;
-		now = ectx->get_time(ectx);
-#if 0
-		/* Sanity check */
-		if(TPTR == (WORDPTR)NOT_PROCESS_P)
-		{
-			printf("Got scheduler sync when TPTR = NOT_PROCESS_P\n");
-			abort();
-		}
-#endif
+		ectx->walk_timer_queue(ectx, now);
 
-		if((TPTR != (WORDPTR)NOT_PROCESS_P))
+		if(TPTR == NOT_PROCESS_P)
 		{
-			while((TPTR != (WORDPTR)NOT_PROCESS_P) && (!(TIME_AFTER(WORKSPACE_GET(TPTR, WS_TIME), now))))
-			{
-				/* Move first process from timer queue to the run queue */
-				/*
-				   ! -- Move first process on timer queue to the run queue
-				   !
-				   ! POINTER temp := Tptr:
-				   ! SEQ
-				   !   Tptr := Tptr^[TLink]
-				   !   temp^[TLink] := TimeSet.p           -- i.e. time expired
-				   !   temp^[Time] := now                  -- ??
-				   !   IF
-				   !     temp^[State] = Ready.p
-				   !       SKIP                            -- used to trap to impossible(1)
-				   !                                       -- the ALTing process has
-				   !                                       -- already been put on the
-				   !                                       -- run queue by something else
-				   !     TRUE
-				   !       SEQ
-				   !         temp^[State] := Ready.p
-				   !         ...  add on to run queue
-				   */
-				WORDPTR temp = TPTR;
-				TPTR = (WORDPTR)WORKSPACE_GET(TPTR, WS_TLINK);
-				WORKSPACE_SET(temp, WS_TLINK, TIME_SET_P);
-				WORKSPACE_SET(temp, WS_TIME, now);
-				if(WORKSPACE_GET(temp, WS_STATE) == READY_P)
-				{ 
-					/* SKIP -- do nothing */
-					/*printf("TIMER - SKIP\n");*/
-				}
-				else
-				{ 
-					/*printf("TIMER - ADDED TO QUEUE\n");*/
-					WORKSPACE_SET(temp, WS_STATE, READY_P);
-					/* Add on to run queue */
-					ADD_TO_QUEUE(temp);
-				}
-				/*
-				   print_timer_queue();
-				   print_scheduling_queue();
-				   */
-				removed++;
-			}
-			/* We update TNEXT here (which is equivalent to calling ualarm in the occam
-			 * code, they seem to use OS services rather than TNEXT though) */
-			if((TPTR != (WORDPTR)NOT_PROCESS_P) && removed)
-			{ 
-				TNEXT = WORKSPACE_GET(TPTR, WS_TIME);
-				if (ectx->set_alarm)
-					ectx->set_alarm(ectx, TNEXT - now);
-			}
+			ectx->sflags &= (~SFLAG_TQ);
 		}
-	}
 
-	/* Any processes in the run queue? */
-	if(FPTR != (WORDPTR)NOT_PROCESS_P)
-	{
-		/* yes */
-		WPTR = FPTR;
-	}
-	else if(TPTR != (WORDPTR)NOT_PROCESS_P)
-	{
-		return ECTX_SLEEP;
+		return ECTX_CONTINUE;
 	}
 	else
 	{
-		return ECTX_EMPTY;
+		return ECTX_ERROR;
+	}
+}
+
+static int run_next_on_queue(ECTX ectx)
+{
+	/* Synchronise with environment, timers, etc */
+	if(ectx->sflags)
+	{
+		int ret = ectx->synchronise(ectx);
+		if(ret)
+		{
+			WPTR = (WORDPTR)NOT_PROCESS_P;
+			return ret;
+		}
 	}
 
-	/* Update thet run queue by taking new current process off it */
+	/* Is there something to run? */
+	if(FPTR != (WORDPTR)NOT_PROCESS_P)
+	{
+		/* Yes. */
+		WPTR = FPTR;
+	} 
+	else
+	{
+		/* No, clear WPTR and exit tvm_run. */
+		WPTR = (WORDPTR)NOT_PROCESS_P;
+
+		if(TPTR != (WORDPTR)NOT_PROCESS_P)
+		{
+			/* We are just sleeping, not dead. */
+			return ECTX_SLEEP;
+		}
+		else
+		{
+			/* This looks like deadlock... */
+			return ECTX_EMPTY;
+		}
+	}
+
+	/* Update thet run queue by taking new current process off it. */
 	if(FPTR == BPTR)
 	{
 		FPTR = (WORDPTR)NOT_PROCESS_P;
@@ -174,7 +136,8 @@ static int run_next_on_queue(ECTX ectx)
 	{
 		FPTR = (WORDPTR)WORKSPACE_GET(FPTR, WS_LINK);
 	}
-	
+
+	/* Load instruction pointer from workspace. */
 	IPTR = (BYTEPTR)WORKSPACE_GET(WPTR, WS_IPTR);
 
 	return ECTX_CONTINUE;
@@ -201,11 +164,10 @@ static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD re
 		/* This should work instead of the above line */
 		TNEXT = reschedule_time;
 
-		if (ectx->set_alarm)
-			ectx->set_alarm(ectx, reschedule_time - current_time);
-
 		WORKSPACE_SET(ws, WS_IPTR, (WORD)IPTR);
 		WORKSPACE_SET(ws, WS_TLINK, NOT_PROCESS_P);
+
+		ectx->set_alarm(ectx);
 	}
 	/* Check if we should be at the top of the queue */
 	else if(TIME_AFTER(TNEXT, reschedule_time))
@@ -222,8 +184,7 @@ static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD re
 		/* Set the new reschedule time in TNEXT */
 		TNEXT = reschedule_time;
 		
-		if (ectx->set_alarm)
-			ectx->set_alarm(ectx, reschedule_time - current_time);
+		ectx->set_alarm(ectx);
 	}
 	else
 	{
@@ -277,13 +238,63 @@ static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD re
 	}
 }
 
+static void walk_timer_queue(ECTX ectx, WORD now)
+{
+	WORDPTR tptr 	= TPTR;
+	WORD	tnext	= TNEXT;
+
+	if(tptr == (WORDPTR)NOT_PROCESS_P || !TIME_AFTER(tnext, now))
+	{
+		/* Timer queue empty or nothing expired. */
+		return;
+	}
+
+	/* Since we are past tnext we can blindly remove the front
+	 * of the timer queue before doing anymore testing.
+	 */
+
+	do {
+		WORDPTR next = (WORDPTR)WORKSPACE_GET(tptr, WS_TLINK);
+		
+		WORKSPACE_SET(tptr, WS_TLINK, TIME_SET_P);
+		WORKSPACE_SET(tptr, WS_TIME, now);
+
+		if(WORKSPACE_GET(tptr, WS_STATE) != READY_P)
+		{
+			WORKSPACE_SET(tptr, WS_STATE, READY_P);
+			ADD_TO_QUEUE(tptr);
+		}
+
+		if((tptr = next) == (WORDPTR)NOT_PROCESS_P)
+		{
+			/* Queue became empty, clean-up and leave. */
+			TPTR = (WORDPTR)NOT_PROCESS_P;
+			return;
+		}
+
+		tnext = WORKSPACE_GET(tptr, WS_TIME);
+
+	} while(!TIME_AFTER(tnext, now));
+
+	/* If we got here the queue is not empty.
+	 * Write back the new head and timeout,
+	 * maybe set a new alarm.
+	 */
+
+	TPTR	= tptr;
+	TNEXT	= tnext;
+
+	ectx->set_alarm(ectx);
+}
+
 void _tvm_install_scheduler(ECTX ectx)
 {
 	ectx->add_to_queue 		= add_to_queue;
 	ectx->add_queue_to_queue	= add_queue_to_queue;
 	ectx->run_next_on_queue		= run_next_on_queue;
 	ectx->set_error_flag		= set_error_flag;
+	ectx->synchronise		= busy_wait_synchronise;
 	ectx->timer_queue_insert	= timer_queue_insert;
-	ectx->get_time			= NULL;
-	ectx->set_alarm			= NULL;
+	ectx->walk_timer_queue		= walk_timer_queue;
+	ectx->set_alarm			= busy_wait_set_alarm;
 }
