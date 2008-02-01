@@ -1067,7 +1067,6 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			}
 		}
 		break;
-#if 0
 	case MTID_MCHANEND_IU:
 	case MTID_MCHANEND_OU:
 	case MTID_MCHANEND_IS:
@@ -1089,49 +1088,47 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			case PW_output:
 			case PW_cancel:
 				{
-					mt_cb_t *ctb = get_mobile (wptr, s);
+					mt_cb_t *ctb = (mt_cb_t *) get_mobile (wptr, s);
 					mt_cb_pony_state_t *pony = mt_cb_get_pony_state (ctb);
 
 					CTRACE ("CTB at 0x%08x typedesc 0x%08x uiohook 0x%08x\n", 3, (unsigned int) ctb, (unsigned int) pony->typedesc, (unsigned int) pony->uiohook);
 
 					if (s->mode == PW_output) {
-						CTSemClaim (&ctb_end->statesem);
-						if (ctb->uiohook == NULL) {
+						/* FIXME: MTLock should be extended so we don't have to
+						 * use the semaphore ops directly. */
+						ccsp_cif_Y_sem_claim (wptr, &(pony->statesem));
+						if (pony->uiohook == NULL) {
 							int nct_id, dhs, ehs;
-							mt_cb_t *nhh, **dha, **eha;
+							mt_cb_t *nhh;
+							mt_array_t *dha, *eha;
 							char tag;
-							int tmp[2];
 
-							CTRACE ("CTB not networked; sending make.ctb.networked; state 0x%08x\n", 1, ctb_end->state);
+							CTRACE ("CTB not networked; sending make.ctb.networked; state 0x%08x\n", 1, pony->state);
 							ChanOutChar (wptr, s->to_kern, PDO_make_ctb_networked);
 							ChanOutInt (wptr, s->to_kern, (int) ctb);
-							ChanOutInt (wptr, s->to_kern, ctb_end->state & 0xFFFF);
-							ChanOutInt (wptr, s->to_kern, ctb_end->state >> 16);
-							ChanOutInt (wptr, s->to_kern, typedesc_chantype_nchans (wptr, ctb->typedesc));
-							ChanOutInt (wptr, s->to_kern, typedesc_chantype_server_read (wptr, ctb->typedesc));
+							ChanOutInt (wptr, s->to_kern, pony->state & 0xFFFF);
+							ChanOutInt (wptr, s->to_kern, pony->state >> 16);
+							ChanOutInt (wptr, s->to_kern, typedesc_chantype_nchans (wptr, pony->typedesc));
+							ChanOutInt (wptr, s->to_kern, typedesc_chantype_server_read (wptr, pony->typedesc));
 
 							CTRACE ("reading make.ctb.networked.confirm\n", 0);
-							ChanInInt (wptr, s->from_kern, &tag);
+							ChanInChar (wptr, s->from_kern, &tag);
 							if (tag != PDI_make_ctb_networked_confirm) {
 								CFATAL ("walk_inner: expected make.ctb.networked.confirm; got %d\n", 1, tag);
 							}
 							ChanInInt (wptr, s->from_kern, (int *) &nct_id);
-							ChanInInt (wptr, s->from_kern, (int *) &nhh);
-							ChanMIn64 (s->from_kern, (long long *) tmp);
-							dha = (mt_cb_t **) tmp[0];
-							dhs = tmp[1];
-							ChanMIn64 (s->from_kern, (long long *) tmp);
-							eha = (mt_cb_t **) tmp[0];
-							ehs = tmp[1];
+							MTChanIn (wptr, s->from_kern, (void **) &nhh);
+							MTChanIn (wptr, s->from_kern, (void **) &dha);
+							MTChanIn (wptr, s->from_kern, (void **) &eha);
 
 							CTRACE ("actually making the CTB networked -- nct.id now 0x%08x\n", 1, nct_id);
-							make_ctb_networked (wptr, ctb, ctb->typedesc, nct_id, nhh, dha, dhs, eha, ehs);
+							make_ctb_networked (wptr, ctb, pony->typedesc, nct_id, nhh, dha, eha);
 						}
-						CTSemRelease (&ctb_end->statesem);
+						ccsp_cif_X_sem_release (wptr, &(pony->statesem));
 
-						CTRACE ("output CT CLC %d; nct.id 0x%08x\n", 2, s->clc, (unsigned int) ct_end (ctb)->state);
+						CTRACE ("output CT CLC %d; nct.id 0x%08x\n", 2, s->clc, (unsigned int) pony->state);
 						ChanOutChar (wptr, s->to_kern, PDO_ct_end_nlc);
-						ChanOutInt (wptr, s->to_kern, ct_end (ctb)->state); /* the nct.id, now it's networked */
+						ChanOutInt (wptr, s->to_kern, pony->state); /* the nct.id, now it's networked */
 						ChanOutInt (wptr, s->to_kern, is_client ? 0 : 1);
 						ChanOutInt (wptr, s->to_kern, is_shared ? 2 : 1);
 						CTRACE ("output CT done\n", 0);
@@ -1156,41 +1153,39 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 						{
 							ChanInInt (wptr, s->from_kern, (int *) &ctb);
 							CTRACE ("increasing ref count on CTB 0x%08x\n", 1, (unsigned int) ctb);
-							ctb->refcount++;
+							MTClone (wptr, ctb);
 						}
 						break;
 					case PEI_alloc_new_ctb:
 						{
+							mt_cb_pony_state_t *pony;
 							int nct_id, dhs, ehs;
-							mt_cb_t *nhh, **dha, **eha;
-							int tmp[2];
+							mt_cb_t *nhh;
+							mt_array_t *dha, *eha;
 
 							ChanInInt (wptr, s->from_kern, &nct_id);
 							CTRACE ("alloc new CTB, NCT-ID 0x%08x\n", 1, nct_id);
 
 							ctb = new_ctb (wptr, typedesc);
+							pony = mt_cb_get_pony_state (ctb);
 
 							CTRACE ("sending alloc.new.ctb.confirm\n", 0);
 							ChanOutChar (wptr, s->to_kern, PEO_alloc_new_ctb_confirm);
 							ChanOutInt (wptr, s->to_kern, (int) ctb);
-							ChanOutInt (wptr, s->to_kern, typedesc_chantype_nchans (wptr, ctb->typedesc));
-							ChanOutInt (wptr, s->to_kern, typedesc_chantype_server_read (wptr, ctb->typedesc));
+							ChanOutInt (wptr, s->to_kern, typedesc_chantype_nchans (wptr, pony->typedesc));
+							ChanOutInt (wptr, s->to_kern, typedesc_chantype_server_read (wptr, pony->typedesc));
 
 							CTRACE ("reading alloc.new.ctb.confirm\n", 0);
-							ChanInInt (wptr, s->from_kern, &tag);
+							ChanInChar (wptr, s->from_kern, &tag);
 							if (tag != PEI_alloc_new_ctb_confirm) {
 								CFATAL ("walk_inner: expected alloc.new.ctb.confirm; got %d\n", 1, tag);
 							}
-							ChanInInt (wptr, s->from_kern, (int *) &nhh);
-							ChanMIn64 (s->from_kern, (long long *) tmp);
-							dha = (mt_cb_t **) tmp[0];
-							dhs = tmp[1];
-							ChanMIn64 (s->from_kern, (long long *) tmp);
-							eha = (mt_cb_t **) tmp[0];
-							ehs = tmp[1];
+							MTChanIn (wptr, s->from_kern, (void **) &nhh);
+							MTChanIn (wptr, s->from_kern, (void **) &dha);
+							MTChanIn (wptr, s->from_kern, (void **) &eha);
 
 							CTRACE ("actually making the CTB networked; CTB is 0x%08x\n", 1, ctb);
-							make_ctb_networked (wptr, ctb, ctb->typedesc, nct_id, nhh, dha, dhs, eha, ehs);
+							make_ctb_networked (wptr, ctb, pony->typedesc, nct_id, nhh, dha, eha);
 						}
 						break;
 					default:
@@ -1198,7 +1193,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 					}
 
 					CTRACE ("sending received end to user\n", 0);
-					ChanMOutN (s->user, &ctb, 1);
+					MTChanOut (wptr, s->user, (void **) &ctb);
 					CTRACE ("CTB receive done\n", 0);
 				}
 				break;
@@ -1206,7 +1201,6 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			s->pdesc++;
 		}
 		break;
-#endif
 	/* FIXME: These types are not yet implemented: */
 	case MTID_MBARRIER:
 	case MTID_MPROC:
