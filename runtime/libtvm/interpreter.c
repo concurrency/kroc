@@ -58,8 +58,6 @@ void tvm_ectx_init(tvm_t *tvm, ECTX ectx)
 	
 	ectx->pri 	= 0;
 
-	_tvm_install_scheduler(ectx);
-
 	#ifdef TVM_CUSTOM_COPY_DATA
 	ectx->copy_data		= NULL;
 	#endif
@@ -87,6 +85,8 @@ void tvm_ectx_init(tvm_t *tvm, ECTX ectx)
 	
 	tvm->tail	= ectx;
 	ectx->next	= NULL;
+
+	_tvm_install_scheduler(ectx);
 }
 
 void tvm_ectx_reset(ECTX ectx)

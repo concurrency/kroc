@@ -58,10 +58,7 @@ TVM_INSTRUCTION (ins_dist)
 			if(TPTR != (WORDPTR)NOT_PROCESS_P)
 			{
 				TNEXT = WORKSPACE_GET((WORDPTR)TPTR, WS_TIME);
-				if (ectx->set_alarm)
-				{
-					ectx->set_alarm(ectx, TNEXT - ectx->get_time(ectx));
-				}
+				ectx->set_alarm(ectx);
 			}
 		}
 		/* We could check that TPTR == NOT_PROCESS_P but this case SHOULD be
