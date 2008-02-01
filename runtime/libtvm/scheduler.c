@@ -62,7 +62,7 @@ static void add_queue_to_queue(ECTX ectx, WORDPTR front, WORDPTR back)
 
 static void busy_wait_set_alarm(ECTX ectx)
 {
-	ectx->sflags |= SFLAG_TQ;
+	ectx->modify_sync_flags(ectx, SFLAG_TQ, 0);
 }
 
 static int busy_wait_synchronise(ECTX ectx)
@@ -79,7 +79,7 @@ static int busy_wait_synchronise(ECTX ectx)
 
 		if(TPTR == (WORDPTR)NOT_PROCESS_P)
 		{
-			ectx->sflags &= (~SFLAG_TQ);
+			ectx->modify_sync_flags(ectx, 0, SFLAG_TQ);
 		}
 
 		return ECTX_CONTINUE;
@@ -88,6 +88,11 @@ static int busy_wait_synchronise(ECTX ectx)
 	{
 		return ECTX_ERROR;
 	}
+}
+
+static void modify_sync_flags(ECTX ectx, WORD set, WORD clear)
+{
+	ectx->sflags = (ectx->sflags & (~clear)) | set;
 }
 
 static int run_next_on_queue(ECTX ectx)
@@ -291,6 +296,7 @@ void _tvm_install_scheduler(ECTX ectx)
 {
 	ectx->add_to_queue 		= add_to_queue;
 	ectx->add_queue_to_queue	= add_queue_to_queue;
+	ectx->modify_sync_flags		= modify_sync_flags;
 	ectx->run_next_on_queue		= run_next_on_queue;
 	ectx->set_error_flag		= set_error_flag;
 	ectx->synchronise		= busy_wait_synchronise;
