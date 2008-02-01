@@ -2095,11 +2095,17 @@ PUBLIC void genmobileundefine (treenode *const var)
 			gensecondary (I_DUP);
 			gensecondary (I_NULL);
 			gensecondary (I_REV);
+			genprimary (I_STNL, wsposn);
+			gensecondary (I_DUP);
+			gensecondary (I_NULL);
+			gensecondary (I_REV);
 			genprimary (I_STNL, wsposn + 1);
 			loadconstant (0);
 			gensecondary (I_REV);
 			genprimary (I_STNL, wsposn + 2);
 		} else {
+			gensecondary (I_NULL);
+			genprimary (I_STL, wsposn);
 			gensecondary (I_NULL);
 			genprimary (I_STL, wsposn + 1);
 			loadconstant (0);
@@ -2375,22 +2381,7 @@ PUBLIC void gencleardynproctype (treenode *const nptr)
 /*{{{  PUBLIC void gencleardynarray (treenode *const nptr, const BOOL postout)*/
 PUBLIC void gencleardynarray (treenode *const nptr, const BOOL postout)
 {
-	if (postout && (TagOf (nptr) != S_ARRAYITEM) && (TagOf (nptr) != S_RECORDITEM)) {
-		/* only need to clear dimension */
-		const int level = NLexLevelOf (nptr);
-		const BOOL nonlocal = loadlex (level);
-		const INT32 wsposn = NVOffsetOf (nptr) + nameoffsetof (level);
-		
-		gencomment0 ("{{{ post output dynamic mobile undefine");
-		loadconstant (0);
-		if (nonlocal) {
-			gensecondary (I_REV);
-		}
-		genprimary (nonlocal ? I_STNL : I_STL, wsposn + 2);
-		gencomment0 ("}}}");
-	} else if (!postout) {
-		genmobileundefine (nptr);
-	}
+	genmobileundefine (nptr);
 }
 /*}}}*/
 /*{{{  PUBLIC void storehiddentypeof (treenode *tptr, int regs)*/

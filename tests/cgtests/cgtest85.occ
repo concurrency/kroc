@@ -331,6 +331,38 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
       check.INT (BYTESIN (s), 12 * BYTESIN (INT), "test4.1")
   :
   --}}}
+  --{{{  DEFINED on mobiles
+  PROC test5 ()
+    PROC check.defined (MOBILE []INT m, VAL BOOL want, VAL []BYTE name)
+      IF
+        DEFINED m
+          check.BOOL (TRUE, want, name)
+        TRUE
+          check.BOOL (FALSE, want, name)
+    :
+    MOBILE []INT a1:
+    SEQ
+      check.defined (a1, FALSE, "test5.0")
+      CHAN MOBILE []INT c:
+      PAR
+        MOBILE []INT a, b:
+        BOOL x:
+        SEQ
+          check.defined (a, FALSE, "test5.10a")
+          check.defined (b, FALSE, "test5.10b")
+          a := MOBILE [10]INT
+          check.defined (a, TRUE,  "test5.11a")
+          check.defined (b, FALSE, "test5.11b")
+          b := a
+          check.defined (a, FALSE, "test5.12a")
+          check.defined (b, TRUE,  "test5.12b")
+          c ! b
+          check.defined (a, FALSE, "test5.13a")
+          check.defined (b, FALSE, "test5.13b")
+        c ? a1
+      check.defined (a1, TRUE, "test5.20")
+  :
+  --}}}
   --}}}  
   SEQ
     init ("CG test 85", "dynamic MOBILE arrays")
@@ -342,6 +374,8 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
     test2 ()
     title ("user-defined types")
     test3 ()
+    title ("DEFINED")
+    test5 ()
     finish ()
 :
 
