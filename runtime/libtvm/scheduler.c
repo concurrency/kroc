@@ -44,6 +44,20 @@ static void add_to_queue(ECTX ectx, WORDPTR ws)
 	}
 }
 
+static int add_to_queue_external(ECTX ectx, ECTX src_ctx, WORDPTR ws)
+{
+	ectx->add_to_queue(ectx, ws);
+
+	if(ectx->pri > src_ctx->pri)
+	{
+		return ECTX_PREEMPT;
+	}
+	else
+	{
+		return ECTX_CONTINUE;
+	}
+}
+
 static void add_queue_to_queue(ECTX ectx, WORDPTR front, WORDPTR back)
 {
 	WORKSPACE_SET(back, WS_LINK, (WORD)NOT_PROCESS_P);
@@ -295,6 +309,7 @@ static void walk_timer_queue(ECTX ectx, WORD now)
 void _tvm_install_scheduler(ECTX ectx)
 {
 	ectx->add_to_queue 		= add_to_queue;
+	ectx->add_to_queue_external	= add_to_queue_external;
 	ectx->add_queue_to_queue	= add_queue_to_queue;
 	ectx->modify_sync_flags		= modify_sync_flags;
 	ectx->run_next_on_queue		= run_next_on_queue;
