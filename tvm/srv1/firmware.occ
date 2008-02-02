@@ -1,18 +1,12 @@
 #INCLUDE "defBF534.inc"
 #INCLUDE "out.occ"
 
-#PRAGMA EXTERNAL "PROC C.tvmspecial.0.firmware.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, VAL []BYTE tlp, VAL INT argc, CHAN BYTE in?, out!) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.0.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, VAL []BYTE tlp, VAL INT argc, CHAN BYTE in?, out!) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.1.kill.user () = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.2.query.user (BOOL running, INT state, []BYTE context) = 0"
 
 VAL INT USER.BYTECODE     IS #0070000:
 VAL INT USER.BYTECODE.LEN IS #0010000:
-
-PROC delay.us (VAL INT us)
-  TIMER tim:
-  INT t:
-  SEQ
-    tim ? t
-    tim ? AFTER (t PLUS us)
-:
 
 DATA TYPE SRV.HEADER
   PACKED RECORD
@@ -21,6 +15,37 @@ DATA TYPE SRV.HEADER
     INT vs.size:
     INT ms.size:
     INT inst.size:
+:
+
+DATA TYPE TVM.CONTEXT
+  PACKED RECORD
+    INT   iptr:
+    
+    INT   oreg:
+    INT   areg:
+    INT   breg:
+    INT   creg:
+
+    INT   pri:
+
+    INT   wptr:
+    INT   fptr:
+    INT   bptr:
+    INT   tptr:
+    INT   tnext:
+
+    INT   saved.creg:
+
+    INT   eflags:
+    INT   state:
+:
+
+PROC delay.us (VAL INT us)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER (t PLUS us)
 :
 
 PROC leds ()
@@ -84,7 +109,7 @@ PROC leds ()
           VAL INT vs IS header[vs.size]:
           VAL INT ms IS header[ms.size]:
           VAL INT inst.size IS header[inst.size]:
-          C.tvmspecial.0.firmware.run.user ([bytecode FOR inst.size], ws, vs, ms, "?!", 2, in?, out!)
+          C.tvmspecial.0.run.user ([bytecode FOR inst.size], ws, vs, ms, "?!", 2, in?, out!)
         WHILE TRUE
           BYTE b:
           SEQ

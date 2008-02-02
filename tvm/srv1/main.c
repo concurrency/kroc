@@ -308,6 +308,8 @@ static int run_user (void)
 	firmware_ctx.add_to_queue (&firmware_ctx, user_parent);
 	user_parent = (WORDPTR) NOT_PROCESS_P;
 
+	/* FIXME: mark the top-level channels as broken */
+
 	return ECTX_ERROR;
 }
 /*}}}*/
@@ -363,8 +365,47 @@ static int firmware_run_user (ECTX ectx, WORD args[])
 	return SFFI_RESCHEDULE;
 }
 
+static int firmware_kill_user (ECTX ectx, WORD args[])
+{
+	if (user_parent != (WORDPTR) NOT_PROCESS_P)
+	{
+		/* Restore parent in firmware */
+		firmware_ctx.add_to_queue (&firmware_ctx, user_parent);
+		user_parent = (WORDPTR) NOT_PROCESS_P;
+
+		/* FIXME: mark the top-level channels as broken */
+	}
+
+	return SFFI_OK;
+}
+
+static int firmware_query_user (ECTX ectx, WORD args[])
+{
+	WORDPTR running = (WORDPTR) args[0];
+	WORDPTR state	= (WORDPTR) args[1];
+	BYTEPTR	ctx	= (BYTEPTR) args[2];
+	WORD	ctx_len	= args[3];
+	BYTE 	*uctx	= (BYTE *) &user_ctx;
+	int i;
+
+	/* BOOL/WORD running */
+	write_word (running, user_parent != (WORDPTR) NOT_PROCESS_P ? 1 : 0);
+	/* WORD state */
+	write_word (state, (WORD) ectx->state);
+	/* []BYTE context */
+	for (i = 0; i < ctx_len && i < sizeof(user_ctx); ++i)
+	{
+		write_byte (ctx, *(uctx++));
+		ctx = byteptr_plus (ctx, 1);
+	}
+
+	return SFFI_OK;
+}
+
 static SFFI_FUNCTION	firmware_sffi_table[] = {
-	firmware_run_user
+	firmware_run_user,
+	firmware_kill_user,
+	firmware_query_user
 };
 static const int	firmware_sffi_table_length =
 				sizeof(firmware_sffi_table) / sizeof(SFFI_FUNCTION);
