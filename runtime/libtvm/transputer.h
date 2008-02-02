@@ -199,8 +199,8 @@ struct _tvm_ectx_t {
 	/* FFI */
 	FFI_TABLE_ENTRY	*ffi_table;
 	UWORD		ffi_table_length;
-	SFFI_FUNCTION	*special_ffi_table;
-	UWORD		special_ffi_table_length;
+	SFFI_FUNCTION	*sffi_table;
+	UWORD		sffi_table_length;
 
 	/* External channels */
 	#ifdef TVM_OCCAM_PI

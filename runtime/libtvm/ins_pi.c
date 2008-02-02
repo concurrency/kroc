@@ -78,12 +78,12 @@ TVM_INSTRUCTION (ins_fficall)
 		int ret;
 
 		/* Valid FFI call ? */
-		if(!ectx->special_ffi_table || index >= ectx->special_ffi_table_length)
+		if(!ectx->sffi_table || index >= ectx->sffi_table_length)
 		{
 			SET_ERROR_FLAG_RET(EFLAG_FFI);
 		}
 
-		ret = ectx->special_ffi_table[index](ectx, args);
+		ret = ectx->sffi_table[index](ectx, args);
 
 		switch (ret)
 		{
