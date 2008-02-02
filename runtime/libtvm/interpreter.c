@@ -67,8 +67,8 @@ void tvm_ectx_init(tvm_t *tvm, ECTX ectx)
 
 	ectx->ffi_table		= NULL;
 	ectx->ffi_table_length	= 0;
-	ectx->special_ffi_table	= NULL;
-	ectx->special_ffi_table_length = 0;
+	ectx->sffi_table	= NULL;
+	ectx->sffi_table_length = 0;
 
 	#ifdef TVM_OCCAM_PI
 	ectx->ext_chan_table	= NULL;
