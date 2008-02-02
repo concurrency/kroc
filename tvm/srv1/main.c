@@ -10,7 +10,8 @@
 #include "config.h"
 #include <uart.h>
 
-#define SSYNC asm("ssync;")
+#define CSYNC __asm__ __volatile__ ("csync;" : : : "memory")
+#define SSYNC __asm__ __volatile__ ("ssync;" : : : "memory")
 
 static char version_string[] = "TVM SRV-1 Blackfin w/C interpreter - " __TIME__ " - " __DATE__;
 
@@ -36,8 +37,12 @@ static void clear_sdram (void)
 	}
 }
 
-static void init_time (void)
+/*{{{  Timer code */
+volatile unsigned long core_timer_wrap_count;
+
+static void init_timers (void)
 {
+	core_timer_wrap_count = 0;
 	*pTSCALE = ((CORE_CLOCK / 2000000) - 1);
 	*pTPERIOD = 0xffffffff;
 	*pTCOUNT = 0xffffffff;
@@ -46,12 +51,22 @@ static void init_time (void)
 }
 
 /* Read the time counter, returns number of microseconds since reset */
-static int read_time (void)
-{ 
-	return (((unsigned int) 0xffffffff) - ((unsigned int) *pTCOUNT)) >> 1;
+static WORD read_time (void)
+{
+	unsigned long pre_w, post_w;
+	unsigned long tcount;
+
+	do {
+		pre_w 	= core_timer_wrap_count;
+		tcount 	= *pTCOUNT;
+		CSYNC;
+		post_w	= core_timer_wrap_count;
+	} while (pre_w != post_w);
+
+	return (~tcount) >> 1 | (post_w << 31);
 }
 
-static void delay_ms (int delay)
+static void delay_ms (WORD delay)
 {
 	int timeout = read_time () + (delay * 1000);
 
@@ -63,8 +78,9 @@ static void delay_ms (int delay)
 
 static WORD srv_get_time (ECTX ectx)
 {
-	return (WORD) read_time ();
+	return read_time ();
 }
+/*}}}*/
 
 static void serial_out_version (void)
 {
@@ -158,7 +174,7 @@ static int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 	int reschedule;
 	
 	/* Disable interrupts */
-	__asm__ __volatile__ ("cli %0" : "=r" (imask));
+	__asm__ __volatile__ ("cli %0;" : "=r" (imask));
 
 	if (uart0_pending) {
 		write_byte (pointer, (BYTE) uart0_buffer);
@@ -171,7 +187,7 @@ static int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 	}
 
 	/* Enable (restore) interrupts */
-	__asm__ __volatile__ ("sti %0" : : "r" (imask));
+	__asm__ __volatile__ ("sti %0;" : : "r" (imask));
 
 	if (reschedule) {
 		/* Lower (set) CTS */
@@ -212,12 +228,12 @@ static void srv_modify_sync_flags(ECTX ectx, WORD set, WORD clear)
 	unsigned short imask;
 	
 	/* Disable interrupts */
-	__asm__ __volatile__ ("cli %0" : "=r" (imask));
+	__asm__ __volatile__ ("cli %0;" : "=r" (imask));
 
 	ectx->sflags = (ectx->sflags & (~clear)) | set;
 
 	/* Enable (restore) interrupts */
-	__asm__ __volatile__ ("sti %0" : : "r" (imask));
+	__asm__ __volatile__ ("sti %0;" : : "r" (imask));
 }
 /*}}}*/ 
 
@@ -247,7 +263,7 @@ int main (void) {
 	clear_sdram ();
 	init_uart ();
 	init_io ();
-	init_time ();
+	init_timers ();
 
 	serial_out_version ();
 	

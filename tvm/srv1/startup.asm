@@ -211,42 +211,42 @@ skip:
     [p0++] = r0;
 
     r0.l = EXC_HANDLER;
-      r0.h = EXC_HANDLER;      // Exception Handler (Int3)
+    r0.h = EXC_HANDLER;    // Exception Handler (Int3)
     [p0++] = r0;
     
-    [p0++] = r0;         // IVT4 isn't used
+    [p0++] = r0;           // IVT4 isn't used
 
     r0.l = _HWHANDLER;
     r0.h = _HWHANDLER;     // HW Error Handler (Int5)
     [p0++] = r0;
     
     r0.l = _THANDLER;
-    r0.h = _THANDLER;      // Timer Handler (Int6)
+    r0.h = _THANDLER;      // Core Timer Handler (Int6)
     [p0++] = r0;
     
     r0.l = _RTCHANDLER;
-    r0.h = _RTCHANDLER; // IVG7 Handler
+    r0.h = _RTCHANDLER;    // IVG7 Handler
     [p0++] = r0;
     
     r0.l = _I8HANDLER;
     r0.h = _I8HANDLER;     // IVG8 Handler
-      [p0++] = r0;
+    [p0++] = r0;
       
-      r0.l = _I9HANDLER;
+    r0.l = _I9HANDLER;
     r0.h = _I9HANDLER;     // IVG9 Handler
-     [p0++] = r0;
-     
+    [p0++] = r0;
+    
     r0.l = _I10HANDLER;
     r0.h = _I10HANDLER;    // IVG10 Handler
-     [p0++] = r0;
+    [p0++] = r0;
      
     r0.l = _I11HANDLER;
     r0.h = _I11HANDLER;    // IVG11 Handler
-      [p0++] = r0;
+    [p0++] = r0;
       
     r0.l = _I12HANDLER;
     r0.h = _I12HANDLER;    // IVG12 Handler
-      [p0++] = r0;
+    [p0++] = r0;
       
     r0.l = _I13HANDLER;
     r0.h = _I13HANDLER;    // IVG13 Handler
@@ -254,34 +254,17 @@ skip:
 
     r0.l = _I14HANDLER;
     r0.h = _I14HANDLER;    // IVG14 Handler
-      [p0++] = r0;
+    [p0++] = r0;
 
     r0.l = _I15HANDLER;
     r0.h = _I15HANDLER;    // IVG15 Handler
     [p0++] = r0;
 
+    // We want to run our program in supervisor mode,
+    // therefore we need to leave the reset vector
+    // and re-enter by raising an interrupt again.
 
-    
-
-    // we want to run our program in supervisor mode,
-    // therefore we need a few tricks:
-
-
-    //  Enable Interrupt 10
-    p0.l = LO(EVT10);
-    p0.h = HI(EVT10);
-    r0.l = int10;
-    r0.h = int10;
-    [p0] = r0;
-
-    //  Enable Interrupt 15 
-    p0.l = LO(EVT15);
-    p0.h = HI(EVT15);
-    r0.l = call_main;  // install isr 15 as caller to main
-    r0.h = call_main;
-    [p0] = r0;
-
-    r0 = 0xffff(z);    // enable irq 15 only
+    r0 = 0xffff(z);    // interrupt mask to enable all interrupts
     sti r0;            // set mask
     raise 15;          // raise sw interrupt
     
@@ -289,7 +272,7 @@ skip:
     p0.h = wait;
 
     reti = p0;
-    rti;               // return from reset
+    rti;               // return from reset (to wait)
 
 wait:
     jump wait;         // wait until irq 15 is being serviced.
@@ -311,17 +294,6 @@ call_main:
 end:
     idle;
     jump end;
-
-int10:
-    save_context
-
-    p0.l = _handle_int10;
-    p0.h = _handle_int10;
-
-    call (p0);
-
-    restore_context
-    rti
 
 .global idle_loop
 idle_loop:
@@ -361,6 +333,7 @@ rti;
 
 _NHANDLER:
 stall:
+    idle
     jump stall;
 
 EXC_HANDLER:          // exception handler
@@ -375,9 +348,16 @@ EXC_HANDLER:          // exception handler
 cont_program:
     rtx;
 
-_THANDLER:            // Timer Handler 6    
-    r0.l = 6;
-    jump display_fail;
+_THANDLER:            // Timer Handler 6
+    /* Update core timer wrap count */
+    [--sp] = (r7:7, p5:5);
+    p5.l = _core_timer_wrap_count;
+    p5.h = _core_timer_wrap_count;
+    r7 = [p5];
+    r7 += 1;
+    [p5] = r7;
+    (r7:7, p5:5) = [sp++];
+    rti;
 
 _RTCHANDLER:          // IVG 7 Handler  
     r0.l = 7;
@@ -392,8 +372,16 @@ _I9HANDLER:           // IVG 9 Handler
     jump display_fail;
 
 _I10HANDLER:          // IVG 10 Handler
-    r0.l = 10;
-    jump display_fail;
+    // Save context on stack and call C handler
+    save_context
+
+    p0.l = _handle_int10;
+    p0.h = _handle_int10;
+
+    call (p0);
+
+    restore_context
+    rti;
 
 _I11HANDLER:          // IVG 11 Handler
     r0.l = 11;
@@ -412,8 +400,7 @@ _I14HANDLER:          // IVG 14 Handler
     jump display_fail;
 
 _I15HANDLER:          // IVG 15 Handler
-    r0.l = 15;
-    jump display_fail;
+    jump call_main
     
     
 ////////////////////////////////////////////////////////////////////////////
