@@ -1291,15 +1291,14 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
         (fprintf op "tvm")
         (write-byte bytecode-version op)
         
-        ;; Output the size of the bytecode array as a 32bit integer
-        ;;(for-each output-int-list (number->bytes (length bytes) 4))
-        
         ;; Output the workspace requirements as a 32bit integer
         (for-each output-int-list (number->bytes *WS* 4))
         ;; Output the vectorspace requirements as a 32bit integer
         (for-each output-int-list (number->bytes *VS* 4))
         ;; Output the mobilespace requirements as a 32bit integer
         (for-each output-int-list (number->bytes *MS* 4))
+        ;; Output the size of the bytecode array as a 32bit integer
+        (for-each output-int-list (number->bytes (length bytes) 4))
         ;; Output the bytecode
         (byte-write bytes op)
         (close-output-port op)
