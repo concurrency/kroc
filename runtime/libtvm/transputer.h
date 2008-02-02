@@ -226,6 +226,7 @@ enum {
 	ECTX_INTERRUPT		= 'x',
 	ECTX_EMPTY		= 'e',
 	ECTX_ERROR		= 'E',
+	ECTX_PREEMPT		= 'p',
 	ECTX_RUNNING		= 'r',
 	ECTX_SHUTDOWN		= 'S',
 	ECTX_SLEEP		= 's',
