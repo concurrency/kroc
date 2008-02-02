@@ -8,6 +8,7 @@
 #include <tvm.h>
 #include <cdefBF537.h>
 #include "config.h"
+#include "memory_map.h"
 #include <uart.h>
 
 #define CSYNC __asm__ __volatile__ ("csync;" : : : "memory")
@@ -22,7 +23,7 @@ static void init_io (void)
 	*pPORTGIO	= 0x0200;	// LED1 on
 	*pPORTH_FER	= 0x0000;	// set for GPIO
 	*pPORTHIO_DIR	|= 0x0040;	// set PORTH6 to output for serial flow control
-	*pPORTHIO	= 0x0000;	// set output low 
+	*pPORTHIO	= 0x0040;	// set PORTH6 output high
 	*pPORTHIO_INEN	= 0x0001;
 	*pPORTHIO_DIR	|= 0x0380; 	// set up lasers
 }
@@ -36,6 +37,14 @@ static void clear_sdram (void)
 		*(cp++) = 0;
 	}
 }
+
+static void serial_out_version (void)
+{
+	uart0SendString ((unsigned char *)"Version - ");
+	uart0SendString ((unsigned char *)version_string);
+	uart0SendChar ('\n');
+}
+/*}}}*/
 
 /*{{{  Timer code */
 volatile unsigned long core_timer_wrap_count;
@@ -79,14 +88,6 @@ static void delay_ms (WORD delay)
 static WORD srv_get_time (ECTX ectx)
 {
 	return read_time ();
-}
-/*}}}*/
-
-static void serial_out_version (void)
-{
-	uart0SendString ((unsigned char *)"Version - ");
-	uart0SendString ((unsigned char *)version_string);
-	uart0SendChar ('\n');
 }
 /*}}}*/
 
@@ -149,7 +150,7 @@ void handle_int10 (void)
 	unsigned char buffer;
 
 	/* Raise (clear) CTS */
-	*pPORTHIO	= *pPORTHIO | 0x0400;
+	*pPORTHIO	= *pPORTHIO | 0x0040;
 
 	/* Read character (clears interrupt condition) */
 	buffer		= *pUART0_RBR;
@@ -191,7 +192,7 @@ static int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 
 	if (reschedule) {
 		/* Lower (set) CTS */
-		*pPORTHIO = *pPORTHIO & (~0x0400);
+		*pPORTHIO = *pPORTHIO & (~0x0040);
 		/* Save instruction pointer */
 		WORKSPACE_SET (ectx->wptr, WS_IPTR, (WORD) ectx->iptr);
 		/* Reschedule */
@@ -222,8 +223,8 @@ static int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
 }
 /*}}}*/
 
-/*{{{  scheduling code */
-static void srv_modify_sync_flags(ECTX ectx, WORD set, WORD clear)
+/*{{{  Scheduling support */
+static void srv_modify_sync_flags (ECTX ectx, WORD set, WORD clear)
 {
 	unsigned short imask;
 	
@@ -245,17 +246,89 @@ static EXT_CHAN_ENTRY	ext_chans[] = {
 		.out 		= uart0_out
 	}
 };
-static const int	ext_chans_length = sizeof(ext_chans) / sizeof(EXT_CHAN_ENTRY);
+static const int	ext_chans_length =
+				sizeof(ext_chans) / sizeof(EXT_CHAN_ENTRY);
 /*}}}*/
 
+/*{{{  User context */
+static const WORDPTR 	user_memory	= (WORDPTR) USER_MEMORY;
+static WORDPTR 		user_parent	= (WORDPTR) NOT_PROCESS_P;
+/*}}}*/
+
+/*{{{  Firmware Special FFI */
+static int firmware_run_user (ECTX ectx, WORD args[])
+{
+	BYTEPTR bytecode	= (BYTEPTR) args[0];
+	WORD	bytecode_len	= args[1];
+	WORD	ws_size		= args[2];
+	WORD	vs_size		= args[3];
+	WORD	ms_size		= args[4];
+	BYTEPTR	tlp_fmt		= (BYTEPTR) args[5];
+	WORD	tlp_fmt_len	= args[6];
+	WORD	argc		= args[7];
+	WORDPTR	argv		= (WORD *) &(args[8]);
+	WORD	mem_size;
+	WORDPTR	ws, vs, ms;
+	int ret;
+
+	if (user_parent != (WORDPTR) NOT_PROCESS_P)
+	{
+		/* User context is already running */
+		return ectx->set_error_flag (ectx, EFLAG_FFI);
+	}
+
+	tvm_ectx_layout (
+		&user_ctx, user_memory, 
+		tlp_fmt, argc, ws_size, vs_size, ms_size,
+		&mem_size, &ws, &vs, &ms
+	);
+	ret = tvm_ectx_install_tlp (
+		&user_ctx, bytecode, ws, vs, ms,
+		tlp_fmt, argc, argv
+	);
+	if (ret != 0) {
+		/* Install TLP failed */
+		return ectx->set_error_flag (ectx, EFLAG_FFI);
+	}
+
+	/* Simulate return, and deschedule */
+	/* Push WPTR up 4 words */
+	user_parent = wordptr_plus (ectx->wptr, 4);
+	/* Store return address as descheduled IPTR */
+	WORKSPACE_SET (user_parent, WS_IPTR, read_word (ectx->wptr));
+	/* Save execution context for good measure */
+	WORKSPACE_SET (user_parent, WS_ECTX, (WORD) ectx);
+
+	return SFFI_RESCHEDULE;
+}
+
+static SFFI_FUNCTION	firmware_sffi_table[] = {
+	firmware_run_user
+};
+static const int	firmware_sffi_table_length =
+				sizeof(firmware_sffi_table) / sizeof(SFFI_FUNCTION);
+/*}}}*/
+
+/*{{{  Firmware */
 #include "firmware.h"
 
-static WORD memory[256];
+static WORD firmware_memory[128];
+
+static void init_firmware_memory(void)
+{
+	WORD *ptr = firmware_memory;
+	int words = (sizeof(firmware_memory) / sizeof(WORD));
+	
+	while ((words--) > 0) {
+		*(ptr++) = MIN_INT;
+	}
+}
+/*}}}*/
 
 int main (void) {
 	ECTX firmware 	= &firmware_ctx;
 	ECTX user	= &user_ctx;
-	WORDPTR	base	= (WORDPTR) memory;
+	WORDPTR	base	= (WORDPTR) firmware_memory;
 	WORDPTR ws, vs, ms;
 	WORD size;
 	int ret;
@@ -264,6 +337,7 @@ int main (void) {
 	init_uart ();
 	init_io ();
 	init_timers ();
+	init_firmware_memory ();
 
 	serial_out_version ();
 	
@@ -276,6 +350,8 @@ int main (void) {
 	firmware->modify_sync_flags	= srv_modify_sync_flags;
 	firmware->ext_chan_table	= ext_chans;
 	firmware->ext_chan_table_length	= ext_chans_length;
+	firmware->sffi_table		= firmware_sffi_table;
+	firmware->sffi_table_length	= firmware_sffi_table_length;
 
 	/* Initialise user execution context */
 	tvm_ectx_init (&tvm, user);
@@ -294,9 +370,9 @@ int main (void) {
 		ret = tvm_run (firmware);
 
 		if (ret == ECTX_SLEEP) {
-			continue;
+			/* OK */
 		} else if (ret == ECTX_EMPTY && uart0_channel != (WORDPTR) NOT_PROCESS_P) {
-			continue;
+			/* OK */
 		} else if (ret == ECTX_INTERRUPT) {
 			firmware->sflags	&= ~(SFLAG_INTR);
 			user->sflags		&= ~(SFLAG_INTR);
@@ -304,6 +380,25 @@ int main (void) {
 			uart0_channel		= (WORDPTR) NOT_PROCESS_P;
 		} else {
 			break;
+		}
+
+		if (user_parent != (WORDPTR) NOT_PROCESS_P) {
+			ret = tvm_run_count (user, 1000);
+
+			if (ret == ECTX_SLEEP || ret == ECTX_EMPTY) {
+				/* OK */
+			} else if (ret == ECTX_TIME_SLICE) {
+				/* OK */
+			} else if (ret == ECTX_INTERRUPT) {
+				/* OK */
+			} else {
+				uart0SendString ((unsigned char *) "##User out of runloop, state: ");
+				uart0SendChar ((unsigned char) ret);
+				uart0SendChar ('\n');
+
+				firmware->add_to_queue (firmware, user_parent);
+				user_parent = (WORDPTR) NOT_PROCESS_P;
+			}
 		}
 	}
 	

@@ -1,5 +1,10 @@
 #INCLUDE "defBF534.inc"
 
+#PRAGMA EXTERNAL "PROC C.tvmspecial.0.firmware.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, VAL []BYTE tlp, VAL INT argc, CHAN BYTE in?, out!) = 0"
+
+VAL INT USER.BYTECODE     IS #0070000:
+VAL INT USER.BYTECODE.LEN IS #0010000:
+
 PROC delay.us (VAL INT us)
   TIMER tim:
   INT t:
@@ -8,23 +13,57 @@ PROC delay.us (VAL INT us)
     tim ? AFTER (t PLUS us)
 :
 
+DATA TYPE TBC.HEADER
+  PACKED RECORD
+    INT tbc.version:
+    INT ws.size:
+    INT vs.size:
+    INT ms.size:
+    INT inst.size:
+:
+
 PROC leds ()
   PLACED [PORTGIO.LEN]INT16 port.g.io PORTGIO.ADDR:
   #PRAGMA DEFINED port.g.io
 
+  PLACED [USER.BYTECODE.LEN]BYTE bytecode USER.BYTECODE:
+  #PRAGMA DEFINED bytecode
+
   CHAN BYTE uart0:
   PLACE uart0 AT #0:
 
-  PAR
-    WHILE TRUE
-      SEQ
-        port.g.io[PORTGIO] := port.g.io[PORTGIO] >< #0300
-        delay.us (200000)
+  TBC.HEADER header:
 
-    WHILE TRUE
-      BYTE b:
+  SEQ
+    port.g.io[PORTGIO] := port.g.io[PORTGIO] /\ (~#0300)
+
+    []BYTE header RETYPES header:
+    SEQ i = 0 FOR SIZE header
+      uart0 ? header[i >< 3] -- byteswap from 32bit big-endian
+
+    SEQ i = 0 FOR header[inst.size]
+      uart0 ? bytecode[i]
+
+    CHAN BYTE in, out:
+    PAR
       SEQ
-        uart0 ? b
-        uart0 ! b
+        VAL INT ws IS header[ws.size]:
+        VAL INT vs IS header[vs.size]:
+        VAL INT ms IS header[ms.size]:
+        C.tvmspecial.0.firmware.run.user (bytecode, ws, vs, ms, "?!", 2, in?, out!)
+      WHILE TRUE
+        BYTE b:
+        SEQ
+          uart0 ? b
+          in ! b
+      WHILE TRUE
+        BYTE b:
+        SEQ
+          out ? b
+          uart0 ! b
+      WHILE TRUE
+        SEQ
+          port.g.io[PORTGIO] := port.g.io[PORTGIO] >< #0100
+          delay.us (500000)
 :
 
