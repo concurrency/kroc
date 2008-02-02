@@ -127,6 +127,8 @@ typedef struct {
 	FFI_FUNCTION func;
 	char *name;
 } FFI_TABLE_ENTRY;
+
+typedef int (*SFFI_FUNCTION)(ECTX ectx, WORD w[]);
 /*}}}*/
 
 /*{{{  Transputer registers, etc that make up the execution context */
@@ -197,7 +199,7 @@ struct _tvm_ectx_t {
 	/* FFI */
 	FFI_TABLE_ENTRY	*ffi_table;
 	UWORD		ffi_table_length;
-	FFI_FUNCTION	*special_ffi_table;
+	SFFI_FUNCTION	*special_ffi_table;
 	UWORD		special_ffi_table_length;
 
 	/* External channels */
@@ -228,6 +230,15 @@ enum {
 	ECTX_SHUTDOWN		= 'S',
 	ECTX_SLEEP		= 's',
 	ECTX_TIME_SLICE		= 't'
+};
+/*}}}*/
+
+/*{{{  Special FFI returns */
+enum {
+	/* only SFFI_OK should overlap with ECTX */
+	SFFI_OK			= ECTX_CONTINUE,
+	SFFI_BYPASS		= 'b',
+	SFFI_RESCHEDULE		= 'r'
 };
 /*}}}*/
 

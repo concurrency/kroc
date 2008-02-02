@@ -58,41 +58,47 @@ TVM_INSTRUCTION (ins_widenshort)
 /* 0x25 - 0x22 0xF5 - fficall */
 TVM_INSTRUCTION (ins_fficall)
 {
-	FFI_FUNCTION ffi_func_addr;
+	/* Arguments are at WPTR + 1 (+1 to avoid the IPTR on the top of the stack). */
+	WORDPTR args = wordptr_real_address(wordptr_plus(WPTR, 1));
 	
-	/* If the FFI table has not been created, then we dont want to
-	 * run this instruction as we are probably going to jump into
-	 * oblivion if that is the case */
-	if(AREG >= 0 && (!ectx->ffi_table || AREG >= ectx->ffi_table_length))
-	{
-		SET_ERROR_FLAG_RET(EFLAG_FFI);
-	}
-	if(AREG < 0 && (!ectx->special_ffi_table || (-(AREG + 1)) >= ectx->special_ffi_table_length))
-	{
-		SET_ERROR_FLAG_RET(EFLAG_FFI);
-	}
-
-	/* Assume that if the FFI table has been set up that all is ok, and that we
-	 * can start jumping from it, AREG contains the index we are jumping from,
-	 * each index in the table has two words, one (the first) is the one we are
-	 * jumping to, the second is */
+	/* Normal FFI (AREG >= 0), or Special FFI (AREG < 0) */
 	if(AREG >= 0)
 	{
-		ffi_func_addr = ectx->ffi_table[AREG].func;
+		/* Valid FFI call ? */
+		if((!ectx->ffi_table || AREG >= ectx->ffi_table_length))
+		{
+			SET_ERROR_FLAG_RET(EFLAG_FFI);
+		}
+		
+		ectx->ffi_table[AREG].func(args);
 	}
 	else
 	{
-		/* We do not multiply by 2, as there are no pointers to strings 
-		 * in this table, we also need to make AREG positive and zero indexed */
-		ffi_func_addr = ectx->special_ffi_table[-(AREG + 1)];
+		WORD index = -(AREG + 1);
+		int ret;
+
+		/* Valid FFI call ? */
+		if(!ectx->special_ffi_table || index >= ectx->special_ffi_table_length)
+		{
+			SET_ERROR_FLAG_RET(EFLAG_FFI);
+		}
+
+		ret = ectx->special_ffi_table[index](ectx, args);
+
+		switch (ret)
+		{
+			case ECTX_CONTINUE:
+				break;
+			case SFFI_BYPASS:
+				return ECTX_CONTINUE;
+			case SFFI_RESCHEDULE:
+				RUN_NEXT_ON_QUEUE_RET();
+			default:
+				return ret;
+		}
 	}
 
-	/* Now we got the address, jump! Hold on to your hats :p */
-	/* Though we need to make sure that we pass the correct parameter, which is
-	 * the WPTR + 1 (+1 to avoid the IPTR on the top of the stack). */
-	ffi_func_addr(wordptr_real_address(wordptr_plus(WPTR, 1)));
-	
-	/* FFI call is done, now we need to return, use ins_ret */
+	/* FFI call is done, return using ins_ret */
 	return ins_ret(ectx);
 }
 
