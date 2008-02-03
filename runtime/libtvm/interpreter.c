@@ -302,12 +302,12 @@ static void disconnect_channel(ECTX ectx, char dir, WORDPTR ptr)
 				}
 			}
 			#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
-			else if(data_len == (-1))
+			else if(data_len == MIN_INT)
 			{
 				/* mobile input */
 				write_word((WORDPTR)data_ptr, (WORD) NULL_P);
 			}
-			else if(data_len == (-2))
+			else if(data_len == (MIN_INT + 1))
 			{
 				/* mobile output */
 				WORDPTR src = (WORDPTR)data_ptr;

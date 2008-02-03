@@ -828,7 +828,7 @@ TVM_INSTRUCTION (ins_mt_in)
 	WORDPTR dst		= (WORDPTR) BREG;
 
 	return chan_std_io (
-		ectx, chan_ptr, (BYTEPTR) dst, -1, 
+		ectx, chan_ptr, (BYTEPTR) dst, MIN_INT, 
 		mt_chan_in, mt_chan_dc_in
 	);
 }
@@ -840,7 +840,7 @@ TVM_INSTRUCTION (ins_mt_out)
 	WORDPTR src		= (WORDPTR) BREG;
 	
 	return chan_std_io (
-		ectx, chan_ptr, (BYTEPTR) src, -2, 
+		ectx, chan_ptr, (BYTEPTR) src, MIN_INT + 1, 
 		mt_chan_out, mt_chan_dc_out
 	);
 }
@@ -947,7 +947,7 @@ TVM_INSTRUCTION (ins_mt_xin)
 
 	ret = chan_io(
 		ectx,
-		chan_ptr, (BYTEPTR) data_ptr, -1,
+		chan_ptr, (BYTEPTR) data_ptr, MIN_INT,
 		&requeue,
 		mt_chan_in, mt_chan_dc_in
 	);
