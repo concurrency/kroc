@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "instructions.h"
 
 typedef int (*CHAN_IO_OK)(ECTX, BYTEPTR, WORD, WORDPTR);
-typedef int (*CHAN_IO_BROKEN)(ECTX, BYTEPTR, WORD);
+typedef int (*CHAN_IO_DC)(ECTX, BYTEPTR, WORD);
 
 TVM_HELPER_PROTO int channel_input (ECTX ectx, BYTEPTR dst_ptr, WORD len, WORDPTR src_wptr);
 TVM_HELPER_PROTO int channel_output (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr);
@@ -33,10 +33,10 @@ TVM_HELPER_PROTO int channel_dc_nop (ECTX ectx, BYTEPTR ptr, WORD len);
 TVM_HELPER_PROTO int channel_swap (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr);
 TVM_HELPER_PROTO int chan_io (ECTX ectx, 
 			WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len, 
-			WORDPTR *requeue, CHAN_IO_OK data, CHAN_IO_BROKEN dc);
+			WORDPTR *requeue, CHAN_IO_OK data, CHAN_IO_DC dc);
 TVM_HELPER_PROTO int chan_std_io (ECTX ectx,
 			WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len,
-			CHAN_IO_OK data, CHAN_IO_BROKEN dc);
+			CHAN_IO_OK data, CHAN_IO_DC dc);
 TVM_HELPER_PROTO int chan_in (ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start);
 TVM_HELPER_PROTO int chan_out (ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR read_start);
 TVM_HELPER_PROTO int chan_swap (ECTX ectx, WORDPTR chan_ptr, WORDPTR data_ptr);

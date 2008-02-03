@@ -35,14 +35,22 @@ TVM_HELPER int channel_output (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst
 {
 	BYTEPTR	dst_ptr = (BYTEPTR) WORKSPACE_GET (dst_wptr, WS_POINTER);
 	ADD_TO_QUEUE (WPTR);
-	tvm_copy_data(dst_ptr, src_ptr, -len);
+	tvm_copy_data (dst_ptr, src_ptr, -len);
+	return ECTX_CONTINUE;
+}
+
+TVM_HELPER int channel_swap (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr)
+{
+	BYTEPTR	dst_ptr = (BYTEPTR) WORKSPACE_GET (dst_wptr, WS_POINTER);
+	ADD_TO_QUEUE (WPTR);
+	swap_data_word ((WORDPTR) dst_ptr, (WORDPTR) src_ptr);
 	return ECTX_CONTINUE;
 }
 
 TVM_HELPER int channel_dc_input (ECTX ectx, BYTEPTR dst_ptr, WORD len)
 {
 	ADD_TO_QUEUE (WPTR);
-	while(len--) {
+	while (len--) {
 		write_byte (dst_ptr, (BYTE) 0);
 		dst_ptr = byteptr_plus (dst_ptr, 1);
 	}
@@ -55,17 +63,9 @@ TVM_HELPER int channel_dc_nop (ECTX ectx, BYTEPTR ptr, WORD len)
 	return ECTX_CONTINUE;
 }
 
-TVM_HELPER int channel_swap (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr)
-{
-	BYTEPTR	dst_ptr = (BYTEPTR) WORKSPACE_GET (dst_wptr, WS_POINTER);
-	ADD_TO_QUEUE (WPTR);
-	swap_data_word ((WORDPTR) dst_ptr, (WORDPTR) src_ptr);
-	return ECTX_CONTINUE;
-}
-
 TVM_HELPER int chan_io (ECTX ectx, 
 			WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len, 
-			WORDPTR *requeue, CHAN_IO_OK data, CHAN_IO_BROKEN dc)
+			WORDPTR *requeue, CHAN_IO_OK data, CHAN_IO_DC dc)
 {
 	WORD	chan_value = read_word (chan_ptr);
 	WORDPTR other_WPTR = (WORDPTR) (chan_value & (~1));
@@ -78,30 +78,30 @@ TVM_HELPER int chan_io (ECTX ectx,
 			write_word (chan_ptr, NOT_PROCESS_P);
 			*requeue = other_WPTR;
 			return data (ectx, data_ptr, data_len, other_WPTR);
-		} else if ((chan_value & ~1) != NOT_PROCESS_P) {
-			WORD alt_state = WORKSPACE_GET(other_WPTR, WS_STATE);
+		} else if ((chan_value & (~1)) != NOT_PROCESS_P) {
+			WORD alt_state = WORKSPACE_GET (other_WPTR, WS_STATE);
 
 			/* Store state */
-			WORKSPACE_SET(WPTR, WS_POINTER, (WORD) data_ptr);
-			WORKSPACE_SET(WPTR, WS_ECTX, (WORD) ectx);
-			WORKSPACE_SET(WPTR, WS_PENDING, (WORD) data_len);
-			WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
+			WORKSPACE_SET (WPTR, WS_POINTER, (WORD) data_ptr);
+			WORKSPACE_SET (WPTR, WS_ECTX, (WORD) ectx);
+			WORKSPACE_SET (WPTR, WS_PENDING, data_len);
+			WORKSPACE_SET (WPTR, WS_IPTR, (WORD) IPTR);
 
 			/* Put this process into the channel word */
-			write_word(chan_ptr, (WORD)WPTR);
+			write_word (chan_ptr, (WORD) WPTR);
 
-			switch(alt_state) {
+			switch (alt_state) {
 				case WAITING_P:
 					*requeue = other_WPTR;
 					/* Fall through */
 				case ENABLING_P:
-					WORKSPACE_SET(other_WPTR, WS_STATE, DISABLING_P);
+					WORKSPACE_SET (other_WPTR, WS_STATE, DISABLING_P);
 					/* Fall through */
 				case DISABLING_P:
 				case EXTENDED_P:
 					break;
 				default:
-					SET_ERROR_FLAG_RET(EFLAG_CHAN);
+					SET_ERROR_FLAG_RET (EFLAG_CHAN);
 			}
 		} else {
 			/* Disconnected channel */
@@ -109,13 +109,13 @@ TVM_HELPER int chan_io (ECTX ectx,
 		}
 	} else {
 		/* Store state */
-		WORKSPACE_SET(WPTR, WS_POINTER, (WORD) data_ptr);
-		WORKSPACE_SET(WPTR, WS_ECTX, (WORD) ectx);
-		WORKSPACE_SET(WPTR, WS_PENDING, data_len);
-		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
+		WORKSPACE_SET (WPTR, WS_POINTER, (WORD) data_ptr);
+		WORKSPACE_SET (WPTR, WS_ECTX, (WORD) ectx);
+		WORKSPACE_SET (WPTR, WS_PENDING, data_len);
+		WORKSPACE_SET (WPTR, WS_IPTR, (WORD) IPTR);
 		
 		/* Put this process into the channel word */
-		write_word(chan_ptr, (WORD)WPTR);
+		write_word (chan_ptr, (WORD) WPTR);
 	}
 
 	return ECTX_CONTINUE;
@@ -123,7 +123,7 @@ TVM_HELPER int chan_io (ECTX ectx,
 
 TVM_HELPER int chan_std_io (ECTX ectx, 
 		WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len,
-		CHAN_IO_OK data, CHAN_IO_BROKEN dc)
+		CHAN_IO_OK data, CHAN_IO_DC dc)
 {
 	WORDPTR requeue;
 	int ret;
