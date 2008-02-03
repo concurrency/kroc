@@ -22,10 +22,6 @@ static void init_io (void)
 {
 	*pPORTGIO_DIR	= 0x0300;	// LEDs (PG8 and PG9)
 	*pPORTGIO	= 0x0200;	// LED1 on
-	*pPORTH_FER	= 0x0000;	// set for GPIO
-	*pPORTHIO_DIR	|= 0x0040;	// set PORTH6 to output for serial flow control
-	*pPORTHIO	= 0x0040;	// set PORTH6 output high
-	*pPORTHIO_INEN	= 0x0001;
 	*pPORTHIO_DIR	|= 0x0380; 	// set up lasers
 }
 
@@ -107,18 +103,25 @@ static void init_uart (void)
 {
 	unsigned char temp;
 
+	/* Configure port H pin 6 (PH6) for flow control CTS */
+	*pPORTHIO_DIR	|= 0x0040;
+	/* Raise PH6 to block input */
+	*pPORTHIO	= 0x0040;
+	/* Configure PH0 for flow control RTS */
+	*pPORTHIO_INEN	= 0x0001;
+	
 	/* Enable UART pins on port F */
 	*pPORTF_FER |= 0x000f;
 
 	/* Enable UART0 clocks */
-	*pUART0_GCTL = UCEN;
+	*pUART0_GCTL	= UCEN;
 	/* Switch on divisor programming */
-	*pUART0_LCR = DLAB;
+	*pUART0_LCR	= DLAB;
 	/* Program divisor */
-	*pUART0_DLL = UART0_DIVIDER;
-	*pUART0_DLH = UART0_DIVIDER >> 8;
+	*pUART0_DLL	= UART0_DIVIDER;
+	*pUART0_DLH	= UART0_DIVIDER >> 8;
 	/* Set operational mode (disables divisor programming) */
-	*pUART0_LCR = WLS(8); /* 8 bit, no parity, one stop bit */
+	*pUART0_LCR	= WLS(8); /* 8 bit, no parity, one stop bit */
 
 	/* Reads to clear possible pending errors / irqs */
 	temp = *pUART0_RBR;
@@ -154,6 +157,14 @@ void handle_int10 (void)
 		uart0_buffer = buffer;
 		uart0_pending++;
 	}
+}
+
+static void acknowledge_int10 (void)
+{
+	firmware_ctx.sflags	&= ~(SFLAG_INTR);
+	user_ctx.sflags		&= ~(SFLAG_INTR);
+	firmware_ctx.add_to_queue (&firmware_ctx, uart0_channel);
+	uart0_channel		= (WORDPTR) NOT_PROCESS_P;
 }
 
 static int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
@@ -290,6 +301,8 @@ static int run_user (void)
 
 	switch (ret) {
 		case ECTX_INTERRUPT:
+			acknowledge_int10 ();
+			/* fall through */
 		case ECTX_PREEMPT:
 		case ECTX_SLEEP:
 		case ECTX_TIME_SLICE:
@@ -464,21 +477,30 @@ static int run_firmware (void)
 		if (uart0_channel != (WORDPTR) NOT_PROCESS_P) {
 			return ret; /* OK - waiting for input */
 		} else if (user_parent != (WORDPTR) NOT_PROCESS_P) {
-			if (waiting_on (&user_ctx, firmware_memory, firmware_memory_len)) {
-				if (user_ctx.state != ECTX_EMPTY) {
-					return ret; /* OK - waiting on user process */
-				} else if (waiting_on (&user_ctx, user_memory, user_memory_len)) {
-					/* Circular dependency - probably bad firmware */
+			if (user_ctx.state == ECTX_EMPTY && user_ctx.fptr == (WORDPTR) NOT_PROCESS_P) {
+				if (waiting_on (&user_ctx, user_memory, user_memory_len)) {
+					/* User code is waiting on us so we are probably
+					 * in the wrong; bail...
+					 */
 				} else {
+					/* User code is not waiting on us, so spin and
+					 * let it get deadlock detected, if killing it
+					 * doesn't release us then we we'll be back
+					 * here...
+					 */
 					return ret;
 				}
+			} else {
+				/* Optimise for the common case by ignoring 
+				 * the possibility of deadlock when the
+				 * user code can still keep running.
+				 */
+				return ret;
 			}
 		}
+		/* Fall through indicates deadlock */
 	} else if (ret == ECTX_INTERRUPT) {
-		firmware_ctx.sflags	&= ~(SFLAG_INTR);
-		user_ctx.sflags		&= ~(SFLAG_INTR);
-		firmware_ctx.add_to_queue (&firmware_ctx, uart0_channel);
-		uart0_channel		= (WORDPTR) NOT_PROCESS_P;
+		acknowledge_int10 ();
 		return ret; /* OK - interrupt */
 	}
 
