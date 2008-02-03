@@ -563,8 +563,8 @@ TVM_HELPER int mt_chan_io (ECTX ectx, WORDPTR dst, WORDPTR src)
 	return ECTX_CONTINUE;
 }
 /*}}}*/
-/*{{{  TVM_HELPER int mt_chan_in (ECTX ectx, BYTEPTR dst_ptr, UWORD len, WORDPTR src_wptr)*/
-TVM_HELPER int mt_chan_in (ECTX ectx, BYTEPTR dst_ptr, UWORD len, WORDPTR src_wptr)
+/*{{{  TVM_HELPER int mt_chan_in (ECTX ectx, BYTEPTR dst_ptr, WORD len, WORDPTR src_wptr)*/
+TVM_HELPER int mt_chan_in (ECTX ectx, BYTEPTR dst_ptr, WORD len, WORDPTR src_wptr)
 {
 	WORDPTR dst = (WORDPTR) dst_ptr;
 	WORDPTR src = (WORDPTR) WORKSPACE_GET(src_wptr, WS_POINTER);
@@ -574,8 +574,8 @@ TVM_HELPER int mt_chan_in (ECTX ectx, BYTEPTR dst_ptr, UWORD len, WORDPTR src_wp
 	return mt_chan_io(ectx, dst, src);
 }
 /*}}}*/
-/*{{{  TVM_HELPER int mt_chan_out (ECTX ectx, BYTEPTR src_ptr, UWORD len, WORDPTR dst_wptr)*/
-TVM_HELPER int mt_chan_out (ECTX ectx, BYTEPTR src_ptr, UWORD len, WORDPTR dst_wptr)
+/*{{{  TVM_HELPER int mt_chan_out (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr)*/
+TVM_HELPER int mt_chan_out (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr)
 {
 	WORDPTR dst = (WORDPTR) WORKSPACE_GET(dst_wptr, WS_POINTER);
 	WORDPTR src = (WORDPTR) src_ptr;
@@ -585,8 +585,8 @@ TVM_HELPER int mt_chan_out (ECTX ectx, BYTEPTR src_ptr, UWORD len, WORDPTR dst_w
 	return mt_chan_io(ectx, dst, src);
 }
 /*}}}*/
-/*{{{  TVM_HELPER int mt_chan_broken_in (ECTX ectx, BYTEPTR dst_ptr, UWORD len)*/
-TVM_HELPER int mt_chan_broken_in (ECTX ectx, BYTEPTR dst_ptr, UWORD len)
+/*{{{  TVM_HELPER int mt_chan_dc_in (ECTX ectx, BYTEPTR dst_ptr, WORD len)*/
+TVM_HELPER int mt_chan_dc_in (ECTX ectx, BYTEPTR dst_ptr, WORD len)
 {
 	WORDPTR dst = (WORDPTR) dst_ptr;
 	
@@ -597,15 +597,16 @@ TVM_HELPER int mt_chan_broken_in (ECTX ectx, BYTEPTR dst_ptr, UWORD len)
 	return ECTX_CONTINUE;
 }
 /*}}}*/
-/*{{{  TVM_HELPER int mt_chan_broken_out (ECTX ectx, BYTEPTR src_ptr, UWORD len)*/
-TVM_HELPER int mt_chan_broken_out (ECTX ectx, BYTEPTR src_ptr, UWORD len)
+/*{{{  TVM_HELPER int mt_chan_dc_out (ECTX ectx, BYTEPTR src_ptr, WORD len)*/
+TVM_HELPER int mt_chan_dc_out (ECTX ectx, BYTEPTR src_ptr, WORD len)
 {
 	WORDPTR src	= (WORDPTR) src_ptr;
 	WORDPTR ptr	= (WORDPTR) read_word (src);
-	UWORD	move	= 0;
-	int ret;
 
 	if (ptr != (WORDPTR) NULL_P) {
+		UWORD move = MT_FALSE;
+		int ret;
+
 		if ((ret = mt_io_update (ectx, &ptr, &move))) {
 			return ret;
 		}
@@ -828,7 +829,7 @@ TVM_INSTRUCTION (ins_mt_in)
 
 	return chan_std_io (
 		ectx, chan_ptr, (BYTEPTR) dst, -1, 
-		mt_chan_in, mt_chan_broken_in
+		mt_chan_in, mt_chan_dc_in
 	);
 }
 
@@ -839,8 +840,8 @@ TVM_INSTRUCTION (ins_mt_out)
 	WORDPTR src		= (WORDPTR) BREG;
 	
 	return chan_std_io (
-		ectx, chan_ptr, (BYTEPTR) src, -1, 
-		mt_chan_out, mt_chan_broken_out
+		ectx, chan_ptr, (BYTEPTR) src, -2, 
+		mt_chan_out, mt_chan_dc_out
 	);
 }
 
@@ -948,7 +949,7 @@ TVM_INSTRUCTION (ins_mt_xin)
 		ectx,
 		chan_ptr, (BYTEPTR) data_ptr, -1,
 		&requeue,
-		mt_chan_in, mt_chan_broken_in
+		mt_chan_in, mt_chan_dc_in
 	);
 
 	if (ret) {

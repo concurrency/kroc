@@ -185,7 +185,7 @@ TVM_INSTRUCTION (ins_enbc)
 		WORD chan_value	= read_word (chan_ptr);
 
 		if (chan_value & 1) {
-			/* Broken or already enabled channel; ignore */
+			/* Disconnected or already enabled channel; ignore */
 		} 
 		else if (chan_value == NOT_PROCESS_P) {
 			/* Empty channel; enable */
