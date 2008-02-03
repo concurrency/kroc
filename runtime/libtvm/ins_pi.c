@@ -391,7 +391,7 @@ TVM_INSTRUCTION (ins_xin)
 	BYTEPTR data_ptr = (BYTEPTR) CREG;
 	WORDPTR chan_ptr = (WORDPTR) BREG;
 	WORDPTR requeue;
-	UWORD data_len = (UWORD) AREG;
+	WORD data_len = AREG;
 	int ret;
 	
 	UNDEFINE_STACK();
@@ -400,7 +400,7 @@ TVM_INSTRUCTION (ins_xin)
 		ectx,
 		chan_ptr, data_ptr, data_len,
 		&requeue,
-		channel_input, channel_broken_input
+		channel_input, channel_dc_input
 	);
 
 	if (ret) {
@@ -425,7 +425,7 @@ TVM_INSTRUCTION (ins_xend)
 
 	UNDEFINE_STACK();
 
-	/* Broken ? */
+	/* Disconnected channel ? */
 	if (chan_value != (NOT_PROCESS_P | 1)) {
 		/* No; reset channel */
 		write_word(chan_ptr, NOT_PROCESS_P);

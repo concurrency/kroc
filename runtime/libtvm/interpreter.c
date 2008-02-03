@@ -255,7 +255,7 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 	/* Set up arguments */
 	for(i = ectx->tlp_argc - 1; i >= 0; i--)
 	{
-		if (ectx->tlp_argv[i] != 'F')
+		if (ectx->tlp_fmt[i] != 'F')
 		{
 			WPTR = wordptr_minus(WPTR, 1);
 			write_word(WPTR, ectx->tlp_argv[i]);
@@ -268,6 +268,98 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 	write_word(WPTR, (WORD)wordptr_plus(WPTR, frame_size));
 
 	return 0;
+}
+
+static void disconnect_channel(ECTX ectx, char dir, WORDPTR ptr)
+{
+	WORD chan_value = read_word(ptr);
+
+	if((chan_value & (~1)) != NOT_PROCESS_P)
+	{
+		WORDPTR ws	= (WORDPTR) (chan_value & (~1));
+		ECTX	ws_ectx	= (ECTX)WORKSPACE_GET(ws, WS_ECTX);
+		if(chan_value & 1)
+		{
+			WORD alt_state = WORKSPACE_GET(ws, WS_STATE);
+			if(alt_state == EXTENDED_P)
+			{
+				ws_ectx->add_to_queue_external(ws_ectx, ectx, ws);
+				/* disregard return value */
+			}
+		}
+		else
+		{
+			BYTEPTR data_ptr = (BYTEPTR)WORKSPACE_GET(ws, WS_POINTER);
+			UWORD   data_len = (UWORD)WORKSPACE_GET(ws, WS_PENDING);
+
+			if(data_len > 0)
+			{
+				/* input */
+				while(data_len--)
+				{
+					write_byte(data_ptr, (BYTE) 0);
+					data_ptr = byteptr_plus(data_ptr, 1);
+				}
+			}
+			#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
+			else if(data_len == (-1))
+			{
+				/* mobile input */
+				write_word((WORDPTR)data_ptr, (WORD) NULL_P);
+			}
+			else if(data_len == (-2))
+			{
+				/* mobile output */
+				WORDPTR src = (WORDPTR)data_ptr;
+				WORDPTR ptr = (WORDPTR)read_word(data_ptr);
+
+				if(ptr != (WORDPTR) NULL_P)
+				{
+					UWORD move = MT_FALSE;
+
+					mt_io_update(ws_ectx, &ptr, &move);
+					/* ignore return; potentially bad */
+
+					if(move == MT_TRUE)
+					{
+						/* Pointer moved, delete old reference */
+						write_word(src, (WORD) NULL_P);
+					}
+
+					mt_release(ws_ectx, ptr);
+					/* ignore return; potentially bad */
+				}
+			}
+			#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
+
+			ws_ectx->add_to_queue_external(ws_ectx, ectx, ws);
+			/* disregard return value */
+		}
+	}
+	
+	write_word(ptr, (NOT_PROCESS_P | 1));
+}
+
+void tvm_ectx_disconnect(ECTX ectx)
+{
+	int i;
+
+	for(i = 0; i < ectx->tlp_argc; i++)
+	{
+		switch (ectx->tlp_fmt[i])
+		{
+			case '?':
+			case '!':
+				disconnect_channel(
+					ectx, 
+					ectx->tlp_fmt[i], 
+					(WORDPTR) ectx->tlp_argv[i]
+				);
+				break;
+			default:
+				break;
+		}
+	}
 }
 
 int tvm_dispatch(ECTX ectx)

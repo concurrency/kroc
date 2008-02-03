@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #include "ins_chan.h"
 
-TVM_HELPER int channel_input (ECTX ectx, BYTEPTR dst_ptr, UWORD len, WORDPTR src_wptr)
+TVM_HELPER int channel_input (ECTX ectx, BYTEPTR dst_ptr, WORD len, WORDPTR src_wptr)
 {
 	BYTEPTR	src_ptr = (BYTEPTR) WORKSPACE_GET (src_wptr, WS_POINTER);
 	ADD_TO_QUEUE (WPTR);
@@ -31,15 +31,15 @@ TVM_HELPER int channel_input (ECTX ectx, BYTEPTR dst_ptr, UWORD len, WORDPTR src
 	return ECTX_CONTINUE;
 }
 
-TVM_HELPER int channel_output (ECTX ectx, BYTEPTR src_ptr, UWORD len, WORDPTR dst_wptr)
+TVM_HELPER int channel_output (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr)
 {
 	BYTEPTR	dst_ptr = (BYTEPTR) WORKSPACE_GET (dst_wptr, WS_POINTER);
 	ADD_TO_QUEUE (WPTR);
-	tvm_copy_data(dst_ptr, src_ptr, len);
+	tvm_copy_data(dst_ptr, src_ptr, -len);
 	return ECTX_CONTINUE;
 }
 
-TVM_HELPER int channel_broken_input (ECTX ectx, BYTEPTR dst_ptr, UWORD len)
+TVM_HELPER int channel_dc_input (ECTX ectx, BYTEPTR dst_ptr, WORD len)
 {
 	ADD_TO_QUEUE (WPTR);
 	while(len--) {
@@ -49,13 +49,13 @@ TVM_HELPER int channel_broken_input (ECTX ectx, BYTEPTR dst_ptr, UWORD len)
 	return ECTX_CONTINUE;
 }
 
-TVM_HELPER int channel_broken_nop (ECTX ectx, BYTEPTR ptr, UWORD len)
+TVM_HELPER int channel_dc_nop (ECTX ectx, BYTEPTR ptr, WORD len)
 {
 	ADD_TO_QUEUE (WPTR);
 	return ECTX_CONTINUE;
 }
 
-TVM_HELPER int channel_swap (ECTX ectx, BYTEPTR src_ptr, UWORD len, WORDPTR dst_wptr)
+TVM_HELPER int channel_swap (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr)
 {
 	BYTEPTR	dst_ptr = (BYTEPTR) WORKSPACE_GET (dst_wptr, WS_POINTER);
 	ADD_TO_QUEUE (WPTR);
@@ -64,8 +64,8 @@ TVM_HELPER int channel_swap (ECTX ectx, BYTEPTR src_ptr, UWORD len, WORDPTR dst_
 }
 
 TVM_HELPER int chan_io (ECTX ectx, 
-			WORDPTR chan_ptr, BYTEPTR data_ptr, UWORD data_len, 
-			WORDPTR *requeue, CHAN_IO_OK data, CHAN_IO_BROKEN broken)
+			WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len, 
+			WORDPTR *requeue, CHAN_IO_OK data, CHAN_IO_BROKEN dc)
 {
 	WORD	chan_value = read_word (chan_ptr);
 	WORDPTR other_WPTR = (WORDPTR) (chan_value & (~1));
@@ -104,8 +104,8 @@ TVM_HELPER int chan_io (ECTX ectx,
 					SET_ERROR_FLAG_RET(EFLAG_CHAN);
 			}
 		} else {
-			/* Broken channel */
-			return broken (ectx, data_ptr, data_len);
+			/* Disconnected channel */
+			return dc (ectx, data_ptr, data_len);
 		}
 	} else {
 		/* Store state */
@@ -122,8 +122,8 @@ TVM_HELPER int chan_io (ECTX ectx,
 }
 
 TVM_HELPER int chan_std_io (ECTX ectx, 
-		WORDPTR chan_ptr, BYTEPTR data_ptr, UWORD data_len,
-		CHAN_IO_OK data, CHAN_IO_BROKEN broken)
+		WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len,
+		CHAN_IO_OK data, CHAN_IO_BROKEN dc)
 {
 	WORDPTR requeue;
 	int ret;
@@ -134,7 +134,7 @@ TVM_HELPER int chan_std_io (ECTX ectx,
 		ectx,
 		chan_ptr, data_ptr, data_len,
 		&requeue,
-		data, broken
+		data, dc
 	);
 
 	if (ret) {
@@ -146,19 +146,19 @@ TVM_HELPER int chan_std_io (ECTX ectx,
 	}
 }		
 
-TVM_HELPER int chan_in (ECTX ectx, UWORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start)
+TVM_HELPER int chan_in (ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start)
 {
 	return chan_std_io (
 		ectx, chan_ptr, write_start, num_bytes, 
-		channel_input, channel_broken_input
+		channel_input, channel_dc_input
 	);
 }
 
-TVM_HELPER int chan_out (ECTX ectx, UWORD num_bytes, WORDPTR chan_ptr, BYTEPTR read_start)
+TVM_HELPER int chan_out (ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR read_start)
 {
 	return chan_std_io (
-		ectx, chan_ptr, read_start, num_bytes, 
-		channel_output, channel_broken_nop
+		ectx, chan_ptr, read_start, -num_bytes, 
+		channel_output, channel_dc_nop
 	);
 }
 
@@ -166,7 +166,7 @@ TVM_HELPER int chan_swap (ECTX ectx, WORDPTR chan_ptr, WORDPTR data_ptr)
 {
 	return chan_std_io (
 		ectx, chan_ptr, (BYTEPTR) data_ptr, 0, 
-		channel_swap, channel_broken_nop
+		channel_swap, channel_dc_nop
 	);
 }
 

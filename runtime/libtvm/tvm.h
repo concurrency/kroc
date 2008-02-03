@@ -68,6 +68,7 @@ extern void tvm_ectx_layout(ECTX ectx, WORDPTR base,
 extern int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 				WORDPTR ws, WORDPTR vs, WORDPTR ms,
 				const char *fmt, int argc, const WORD argv[]);
+extern void tvm_ectx_disconnect(ECTX ectx);
 extern int tvm_dispatch(ECTX ectx);
 extern int tvm_run(ECTX ectx);
 extern int tvm_run_count(ECTX ectx, UWORD count);
