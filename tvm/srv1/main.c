@@ -321,7 +321,8 @@ static int run_user (void)
 	firmware_ctx.add_to_queue (&firmware_ctx, user_parent);
 	user_parent = (WORDPTR) NOT_PROCESS_P;
 
-	/* FIXME: mark the top-level channels as broken */
+	/* Disconnect any top-level channels. */
+	tvm_ectx_disconnect (&user_ctx);
 
 	return ECTX_ERROR;
 }
@@ -385,8 +386,8 @@ static int firmware_kill_user (ECTX ectx, WORD args[])
 		/* Restore parent in firmware */
 		firmware_ctx.add_to_queue (&firmware_ctx, user_parent);
 		user_parent = (WORDPTR) NOT_PROCESS_P;
-
-		/* FIXME: mark the top-level channels as broken */
+		/* Disconnect any top-level channels. */
+		tvm_ectx_disconnect (&user_ctx);
 	}
 
 	return SFFI_OK;
