@@ -48,6 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define WS_TEMP		0 /* Temporary slot used by some instructions */
 #define WS_IPTR		1 /* Instruction pointer when descheduled */
 #define WS_LINK		2 /* Next process when on a scheduling list */
+#define WS_PENDING	2 /* Pending bytes to send on a channel (not on Transputer) */
 #define WS_ECTX		3 /* Execution context pointer when blocked on event */
 #define WS_POINTER	4 /* Data pointer when blocked on channel */
 #define WS_STATE	4 /* Saved alternative state when ALTing */
@@ -64,6 +65,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /*{{{  Other transputer constants */
 #define NOT_PROCESS_P		0
 #define NULL_P			NOT_PROCESS_P
+#define EXTENDED_P		(0)
 #define ENABLING_P		(MIN_INT + 1)
 #define WAITING_P		(MIN_INT + 2)
 #define DISABLING_P		(MIN_INT + 3)
@@ -178,6 +180,8 @@ struct _tvm_ectx_t {
 				(ECTX ectx);
 	void		(*timer_queue_insert)
 				(ECTX ectx, WORDPTR ws, WORD current_time, WORD reschedule_time);
+	void		(*timer_queue_remove)
+				(ECTX ectx, WORDPTR ws);
 	void		(*walk_timer_queue)
 				(ECTX ectx, WORD now);
 

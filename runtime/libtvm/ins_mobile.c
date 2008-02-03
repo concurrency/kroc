@@ -563,6 +563,67 @@ TVM_HELPER int mt_chan_io (ECTX ectx, WORDPTR dst, WORDPTR src)
 	return ECTX_CONTINUE;
 }
 /*}}}*/
+/*{{{  TVM_HELPER int mt_chan_in (ECTX ectx, BYTEPTR dst_ptr, UWORD len, WORDPTR src_wptr)*/
+TVM_HELPER int mt_chan_in (ECTX ectx, BYTEPTR dst_ptr, UWORD len, WORDPTR src_wptr)
+{
+	WORDPTR dst = (WORDPTR) dst_ptr;
+	WORDPTR src = (WORDPTR) WORKSPACE_GET(src_wptr, WS_POINTER);
+	
+	ADD_TO_QUEUE (WPTR);
+
+	return mt_chan_io(ectx, dst, src);
+}
+/*}}}*/
+/*{{{  TVM_HELPER int mt_chan_out (ECTX ectx, BYTEPTR src_ptr, UWORD len, WORDPTR dst_wptr)*/
+TVM_HELPER int mt_chan_out (ECTX ectx, BYTEPTR src_ptr, UWORD len, WORDPTR dst_wptr)
+{
+	WORDPTR dst = (WORDPTR) WORKSPACE_GET(dst_wptr, WS_POINTER);
+	WORDPTR src = (WORDPTR) src_ptr;
+	
+	ADD_TO_QUEUE (WPTR);
+
+	return mt_chan_io(ectx, dst, src);
+}
+/*}}}*/
+/*{{{  TVM_HELPER int mt_chan_broken_in (ECTX ectx, BYTEPTR dst_ptr, UWORD len)*/
+TVM_HELPER int mt_chan_broken_in (ECTX ectx, BYTEPTR dst_ptr, UWORD len)
+{
+	WORDPTR dst = (WORDPTR) dst_ptr;
+	
+	write_word (dst, NULL_P);
+
+	ADD_TO_QUEUE (WPTR);
+	
+	return ECTX_CONTINUE;
+}
+/*}}}*/
+/*{{{  TVM_HELPER int mt_chan_broken_out (ECTX ectx, BYTEPTR src_ptr, UWORD len)*/
+TVM_HELPER int mt_chan_broken_out (ECTX ectx, BYTEPTR src_ptr, UWORD len)
+{
+	WORDPTR src	= (WORDPTR) src_ptr;
+	WORDPTR ptr	= (WORDPTR) read_word (src);
+	UWORD	move	= 0;
+	int ret;
+
+	if (ptr != (WORDPTR) NULL_P) {
+		if ((ret = mt_io_update (ectx, &ptr, &move))) {
+			return ret;
+		}
+
+		ADD_TO_QUEUE (WPTR);
+
+		if (move == MT_TRUE) {
+			/* Pointer moved, delete old reference */
+			write_word (src, (WORD) NULL_P);
+		}
+
+		return mt_release (ectx, ptr);
+	} else {
+		ADD_TO_QUEUE (WPTR);
+		return ECTX_CONTINUE;
+	}
+}
+/*}}}*/
 /*{{{  TVM_HELPER int mt_alloc (ECTX ectx, UWORD type, UWORD size, WORDPTR *ret)*/
 TVM_HELPER int mt_alloc (ECTX ectx, UWORD type, UWORD size, WORDPTR *ret)
 {
@@ -764,28 +825,11 @@ TVM_INSTRUCTION (ins_mt_in)
 {
 	WORDPTR chan_ptr	= (WORDPTR) AREG;
 	WORDPTR dst		= (WORDPTR) BREG;
-	WORDPTR other_WPTR;
-	int ret;
-	
-	UNDEFINE_STACK ();
 
-	if ((ret = chan_io_begin (ectx, 0, chan_ptr, (BYTEPTR) dst, &other_WPTR)))
-	{
-		return ret;
-	}
-	else if (other_WPTR != NOT_PROCESS_P)
-	{
-		/* Get pointer to source pointer */
-		WORDPTR src = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_POINTER);
-		/* Do input */
-		if ((ret = mt_chan_io (ectx, dst, src))) {
-			return ret;
-		}
-		/* Complete channel operation */
-		return chan_io_end (ectx, chan_ptr, other_WPTR);
-	}
-
-	return ECTX_CONTINUE;
+	return chan_std_io (
+		ectx, chan_ptr, (BYTEPTR) dst, -1, 
+		mt_chan_in, mt_chan_broken_in
+	);
 }
 
 /* 0x23C - 0x22 0x23 0xFC - mt_out - mobile type channel output */
@@ -793,28 +837,11 @@ TVM_INSTRUCTION (ins_mt_out)
 {
 	WORDPTR chan_ptr	= (WORDPTR) AREG;
 	WORDPTR src		= (WORDPTR) BREG;
-	WORDPTR other_WPTR;
-	int ret;
 	
-	UNDEFINE_STACK ();
-
-	if ((ret = chan_io_begin (ectx, 1, chan_ptr, (BYTEPTR) src, &other_WPTR)))
-	{
-		return ret;
-	}
-	else if (other_WPTR != NOT_PROCESS_P)
-	{
-		/* Get pointer to destination */
-		WORDPTR dst = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_POINTER);
-		/* Do output */
-		if ((ret = mt_chan_io (ectx, dst, src))) {
-			return ret;
-		}
-		/* Complete channel operation */
-		return chan_io_end (ectx, chan_ptr, other_WPTR);
-	}
-
-	return ECTX_CONTINUE;
+	return chan_std_io (
+		ectx, chan_ptr, (BYTEPTR) src, -1, 
+		mt_chan_out, mt_chan_broken_out
+	);
 }
 
 /* 0x23D - 0x22 0x23 0xFD - mt_xchg - mobile type channel exchange */
@@ -911,12 +938,31 @@ TVM_INSTRUCTION (ins_mt_sync)
 TVM_INSTRUCTION (ins_mt_xin)
 {
 	WORDPTR chan_ptr	= (WORDPTR) AREG;
-	WORDPTR dst		= (WORDPTR) BREG;
-	WORDPTR other_WPTR	= (WORDPTR) read_word (chan_ptr);
-	WORDPTR src		= (WORDPTR) WORKSPACE_GET (other_WPTR, WS_POINTER);
+	WORDPTR data_ptr	= (WORDPTR) BREG;
+	WORDPTR requeue;
+	int ret;
+	
+	UNDEFINE_STACK();
 
-	/* Do input */
-	return mt_chan_io (ectx, dst, src);
+	ret = chan_io(
+		ectx,
+		chan_ptr, (BYTEPTR) data_ptr, -1,
+		&requeue,
+		mt_chan_in, mt_chan_broken_in
+	);
+
+	if (ret) {
+		/* Restore output process to channel word */
+		write_word (chan_ptr, (WORD) requeue);
+		return ret;
+	}
+	else if (requeue != NOT_PROCESS_P)
+	{
+		/* Restore output process to channel word */
+		write_word (chan_ptr, (WORD) requeue);
+	}
+
+	return ECTX_CONTINUE;
 }
 
 /* 0x244 - 0x22 0x24 0xF4 - mt_xout - mobile type channel extended output */
