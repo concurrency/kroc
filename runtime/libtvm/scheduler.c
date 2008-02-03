@@ -257,6 +257,40 @@ static void timer_queue_insert(ECTX ectx, WORDPTR ws, WORD current_time, WORD re
 	}
 }
 
+static void timer_queue_remove(ECTX ectx, WORDPTR ws)
+{
+	/* Head of the timer queue? */
+	if(TPTR == ws)
+	{
+		TPTR = (WORDPTR) WORKSPACE_GET((WORDPTR)TPTR, WS_TLINK);
+		if(TPTR != (WORDPTR)NOT_PROCESS_P)
+		{
+			TNEXT = WORKSPACE_GET((WORDPTR)TPTR, WS_TIME);
+			ectx->set_alarm(ectx);
+		}
+	}
+	else if(TPTR != NOT_PROCESS_P)
+	{
+		WORDPTR previous = TPTR;
+		WORDPTR current = (WORDPTR)WORKSPACE_GET(previous, WS_TLINK);
+		while(current != (WORDPTR)NOT_PROCESS_P)
+		{
+			if(current == ws)
+			{
+				WORKSPACE_SET(previous, WS_TLINK, WORKSPACE_GET(ws, WS_TLINK));
+				break;
+			}
+			else
+			{
+				previous = current;
+				current = (WORDPTR)WORKSPACE_GET(current, WS_TLINK);
+			}
+		}
+	}
+
+	WORKSPACE_SET(ws, WS_TLINK, TIME_NOT_SET_P); /* Timeout canceled */
+}
+
 static void walk_timer_queue(ECTX ectx, WORD now)
 {
 	WORDPTR tptr 	= TPTR;
@@ -316,6 +350,7 @@ void _tvm_install_scheduler(ECTX ectx)
 	ectx->set_error_flag		= set_error_flag;
 	ectx->synchronise		= busy_wait_synchronise;
 	ectx->timer_queue_insert	= timer_queue_insert;
+	ectx->timer_queue_remove	= timer_queue_remove;
 	ectx->walk_timer_queue		= walk_timer_queue;
 	ectx->set_alarm			= busy_wait_set_alarm;
 }

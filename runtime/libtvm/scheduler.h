@@ -64,6 +64,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define TIMER_QUEUE_INSERT(WS,NOW,RESCHED) \
 	do { ectx->timer_queue_insert (ectx, (WS), (NOW), (RESCHED)); } while (0)
 
+#define TIMER_QUEUE_REMOVE(WS) \
+	do { ectx->timer_queue_remove (ectx, (WS)); } while (0)
+
+#define LOAD_PROCESS_RET(WS) \
+	do { 							\
+		ECTX dst = (ECTX) WORKSPACE_GET ((WS), WS_ECTX);\
+		if (dst != ectx) {				\
+			int ret;				\
+			ADD_TO_QUEUE_ECTX((WS), ret);		\
+			if (ret) {				\
+				return ret;			\
+			} else {				\
+				RUN_NEXT_ON_QUEUE_RET();	\
+			}					\
+		} else {					\
+			WPTR = (WS);				\
+			IPTR = (BYTEPTR)			\
+				WORKSPACE_GET(WPTR, WS_IPTR);	\
+			return ECTX_CONTINUE;			\
+		}						\
+	} while (0)
+
 extern void _tvm_install_scheduler (ECTX ectx);
 
 #endif

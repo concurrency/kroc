@@ -359,22 +359,24 @@ TVM_INSTRUCTION (ins_sem_release)
  *              0x2E 0xF_         0x2E 0xF_         0x2E 0xF_               *
  ****************************************************************************/
 
-/* 0xE8 - 0x2E 0xF8 - xable - Extended Input Enable */
+/* 0xE8 - 0x2E 0xF8 - xable - Extended Channel I/O Enable */
 TVM_INSTRUCTION (ins_xable)
 {
-	WORDPTR chan_addr = (WORDPTR) AREG;
-	WORDPTR other_WPTR = (WORDPTR) read_word(chan_addr);
+	WORDPTR chan_ptr	= (WORDPTR) AREG;
+	WORD chan_value		= read_word(chan_ptr);
 
 	/* This is like a single guard ALT */
 	/* If channel is empty, then alt on it */
-	if(other_WPTR == NOT_PROCESS_P)
+	if(chan_value == NOT_PROCESS_P)
 	{
 		/* Save state, set ALT to waiting */
-		WORKSPACE_SET(WPTR, WS_STATE, WAITING_P);
+		WORKSPACE_SET(WPTR, WS_STATE, EXTENDED_P);
+		WORKSPACE_SET(WPTR, WS_ECTX, (WORD) ectx);
+		WORKSPACE_SET(WPTR, WS_PENDING, (WORD) chan_ptr);
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
 
 		/* Put ourselves into the channel word */
-		write_word(chan_addr, (WORD) WPTR);
+		write_word(chan_ptr, ((WORD) WPTR) | 1);
 
 		/* Find something else to run */
 		RUN_NEXT_ON_QUEUE_RET();
@@ -386,31 +388,52 @@ TVM_INSTRUCTION (ins_xable)
 /* 0xE9 - 0x2E 0xF9 - xin - Extended Input */
 TVM_INSTRUCTION (ins_xin)
 {
-	BYTEPTR write_start = (BYTEPTR) CREG;
-	BYTEPTR read_start;
-	WORDPTR chan_addr = (WORDPTR) BREG;
-	WORDPTR other_WPTR;
-	WORD num_bytes = AREG;
+	BYTEPTR data_ptr = (BYTEPTR) CREG;
+	WORDPTR chan_ptr = (WORDPTR) BREG;
+	WORDPTR requeue;
+	UWORD data_len = (UWORD) AREG;
+	int ret;
+	
+	UNDEFINE_STACK();
 
-	other_WPTR = (WORDPTR) read_word(chan_addr);
-	read_start = (BYTEPTR) WORKSPACE_GET(other_WPTR, WS_POINTER);
+	ret = chan_io(
+		ectx,
+		chan_ptr, data_ptr, data_len,
+		&requeue,
+		channel_input, channel_broken_input
+	);
 
-	tvm_copy_data(write_start, read_start, num_bytes);
+	if (ret) {
+		/* Restore output process to channel word */
+		write_word (chan_ptr, (WORD) requeue);
+		return ret;
+	}
+	else if (requeue != NOT_PROCESS_P)
+	{
+		/* Restore output process to channel word */
+		write_word (chan_ptr, (WORD) requeue);
+	}
 
-	UNDEFINE_STACK_RET();
+	return ECTX_CONTINUE;
 }
 
-/* 0xEC - 0x2E 0xFC - xend - Extended Input End */
+/* 0xEC - 0x2E 0xFC - xend - Extended Channel I/O End */
 TVM_INSTRUCTION (ins_xend)
 {
-	WORDPTR chan_addr = (WORDPTR) AREG;
-	WORDPTR other_WPTR = (WORDPTR) read_word(chan_addr);
+	WORDPTR chan_ptr = (WORDPTR) AREG;
+	WORD chan_value = read_word(chan_ptr);
 
-	/* Set chan word to NOT_PROCESS_P */
-	write_word(chan_addr, NOT_PROCESS_P);
+	UNDEFINE_STACK();
 
-	/* Put the outputting process on the run queue */
-	ADD_TO_QUEUE_ECTX_RET(other_WPTR);
+	/* Broken ? */
+	if (chan_value != (NOT_PROCESS_P | 1)) {
+		/* No; reset channel */
+		write_word(chan_ptr, NOT_PROCESS_P);
+		/* Put the outputting process on the run queue */
+		ADD_TO_QUEUE_ECTX_RET((WORDPTR) (chan_value & (~1)));
+	}
+
+	return ECTX_CONTINUE;
 }
 
 #endif /* TVM_OCCAM_PI */
