@@ -569,9 +569,7 @@ TVM_HELPER int mt_chan_in (ECTX ectx, BYTEPTR dst_ptr, WORD len, WORDPTR src_wpt
 	WORDPTR dst = (WORDPTR) dst_ptr;
 	WORDPTR src = (WORDPTR) WORKSPACE_GET(src_wptr, WS_POINTER);
 	
-	ADD_TO_QUEUE (WPTR);
-
-	return mt_chan_io(ectx, dst, src);
+	return mt_chan_io (ectx, dst, src);
 }
 /*}}}*/
 /*{{{  TVM_HELPER int mt_chan_out (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr)*/
@@ -580,9 +578,7 @@ TVM_HELPER int mt_chan_out (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wp
 	WORDPTR dst = (WORDPTR) WORKSPACE_GET(dst_wptr, WS_POINTER);
 	WORDPTR src = (WORDPTR) src_ptr;
 	
-	ADD_TO_QUEUE (WPTR);
-
-	return mt_chan_io(ectx, dst, src);
+	return mt_chan_io (ectx, dst, src);
 }
 /*}}}*/
 /*{{{  TVM_HELPER int mt_chan_dc_in (ECTX ectx, BYTEPTR dst_ptr, WORD len)*/
@@ -943,9 +939,9 @@ TVM_INSTRUCTION (ins_mt_xin)
 	WORDPTR requeue;
 	int ret;
 	
-	UNDEFINE_STACK();
+	UNDEFINE_STACK ();
 
-	ret = chan_io(
+	ret = chan_io (
 		ectx,
 		chan_ptr, (BYTEPTR) data_ptr, MIN_INT,
 		&requeue,
