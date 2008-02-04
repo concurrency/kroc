@@ -1591,12 +1591,12 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             #IF DEFINED (TEST.CANCEL)
                             C.trace ("commstest: ... } ...")
                             #ENDIF
-                        ASSERT (DEFINED a)
-                        ASSERT ((SIZE a) = 10)
-                        C.trace.i ("commstest: ... done, read 0: ", a[0])
-                        C.trace.i ("commstest:       ... read 9: ", a[9])
-                        SEQ j = 0 FOR 10
-                          ASSERT (a[j] = (i + j))
+                        ASSERT ((i = 0) OR (DEFINED a))
+                        ASSERT ((SIZE a) = i)
+                        SEQ j = 0 FOR i
+                          SEQ
+                            C.trace.i ("commstest: ... done, read: ", a[j])
+                            ASSERT (a[j] = (i + j))
                       #ENDIF
                       --}}}
 
@@ -1632,10 +1632,10 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             #IF DEFINED (TEST.CANCEL)
                             C.trace ("commstest: ... } ...")
                             #ENDIF
-                        ASSERT (DEFINED a)
-                        ASSERT ((SIZE a) = 10)
+                        ASSERT ((i = 0) OR (DEFINED a))
+                        ASSERT ((SIZE a) = i)
                         C.trace ("commstest: ... done")
-                        SEQ j = 0 FOR 10
+                        SEQ j = 0 FOR i
                           SEQ
                             ASSERT (a[j][a] = (i + j))
                             ASSERT (a[j][b] = ((i + j) + 1))
@@ -1680,13 +1680,12 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             #IF DEFINED (TEST.CANCEL)
                             C.trace ("commstest: ... } ...")
                             #ENDIF
-                        ASSERT (DEFINED a)
-                        ASSERT ((SIZE a) = 3)
-                        ASSERT ((SIZE a[0]) = 3)
-                        C.trace.i ("commstest: ... done, read 0, 0: ", a[0][0])
-                        C.trace.i ("commstest:       ... read 2, 2: ", a[2][2])
-                        SEQ j = 0 FOR 3
-                          SEQ k = 0 FOR 3
+                        ASSERT ((i = 0) OR (DEFINED a))
+                        ASSERT ((SIZE a) = i)
+                        ASSERT ((i = 0) OR ((SIZE a[0]) = i))
+                        C.trace ("commstest: ... done")
+                        SEQ j = 0 FOR i
+                          SEQ k = 0 FOR i
                             ASSERT (a[j][k] = ((i + j) + k))
                       #ENDIF
                       --}}}
@@ -1723,12 +1722,12 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             #IF DEFINED (TEST.CANCEL)
                             C.trace ("commstest: ... } ...")
                             #ENDIF
-                        ASSERT (DEFINED a)
-                        ASSERT ((SIZE a) = 3)
-                        ASSERT ((SIZE a[0]) = 3)
+                        ASSERT ((i = 0) OR (DEFINED a))
+                        ASSERT ((SIZE a) = i)
+                        ASSERT ((i = 0) OR ((SIZE a[0]) = i))
                         C.trace ("commstest: ... done")
-                        SEQ j = 0 FOR 3
-                          SEQ k = 0 FOR 3
+                        SEQ j = 0 FOR i
+                          SEQ k = 0 FOR i
                             SEQ
                               ASSERT (a[j][k][a] = (i + (j + k)))
                               ASSERT (a[j][k][b] = ((i + (j + k)) + 1))
@@ -2906,8 +2905,8 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         MOBILE []INT a:
                         SEQ
                           C.trace ("commstest: ... claimed { ...")
-                          a := MOBILE [10]INT
-                          SEQ j = 0 FOR 10
+                          a := MOBILE [i]INT
+                          SEQ j = 0 FOR i
                             a[j] := (i + j)
                           #IF DEFINED (TEST.CANCEL)
                           C.trace ("commstest: ... output dummy INT...")
@@ -2925,8 +2924,8 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       C.trace ("commstest: output mobile.array.dyn.1d.of.record...")
                       MOBILE []SIMPLE.RECORD a:
                       SEQ
-                        a := MOBILE [10]SIMPLE.RECORD
-                        SEQ j = 0 FOR 10
+                        a := MOBILE [i]SIMPLE.RECORD
+                        SEQ j = 0 FOR i
                           SEQ
                             a[j][a] := (i + j)
                             a[j][b] := ((i + j) + 1)
@@ -2957,9 +2956,9 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         MOBILE [][]INT a:
                         SEQ
                           C.trace ("commstest: ... claimed { ...")
-                          a := MOBILE [3][3]INT
-                          SEQ j = 0 FOR 3
-                            SEQ k = 0 FOR 3
+                          a := MOBILE [i][i]INT
+                          SEQ j = 0 FOR i
+                            SEQ k = 0 FOR i
                               a[j][k] := (i + j) + k
                           #IF DEFINED (TEST.CANCEL)
                           C.trace ("commstest: ... output dummy INT...")
@@ -2977,9 +2976,9 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       C.trace ("commstest: output mobile.array.dyn.2d.of.record...")
                       MOBILE [][]SIMPLE.RECORD a:
                       SEQ
-                        a := MOBILE [3][3]SIMPLE.RECORD
-                        SEQ j = 0 FOR 3
-                          SEQ k = 0 FOR 3
+                        a := MOBILE [i][i]SIMPLE.RECORD
+                        SEQ j = 0 FOR i
+                          SEQ k = 0 FOR i
                             SEQ
                               a[j][k][a] := (i + (j + k))
                               a[j][k][b] := ((i + (j + k)) + 1)
