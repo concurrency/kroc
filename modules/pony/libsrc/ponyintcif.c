@@ -1108,7 +1108,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 						 * use the semaphore ops directly. */
 						ccsp_cif_Y_sem_claim (wptr, &(pony->statesem));
 						if (pony->uiohook == NULL) {
-							int nct_id, dhs, ehs;
+							int nct_id;
 							mt_cb_t *nhh;
 							mt_array_t *dha, *eha;
 							char tag;
@@ -1169,7 +1169,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 					case PEI_alloc_new_ctb:
 						{
 							mt_cb_pony_state_t *pony;
-							int nct_id, dhs, ehs;
+							int nct_id;
 							mt_cb_t *nhh;
 							mt_array_t *dha, *eha;
 
