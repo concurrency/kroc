@@ -41,14 +41,14 @@ PROC set.pwm (VAL INT left, right)
         h.mask, left := h.mask /\ (~#0020), -left
       TRUE
         -- turn on left direction bit
-        h.value := h.value /\ #0020
+        h.value := h.value \/ #0020
     IF
       right < 0
         -- clear right direction bit
         h.mask, right := h.mask /\ (~#0010), -right
       TRUE
         -- turn on right direction bit
-        h.value := h.value /\ #0010
+        h.value := h.value \/ #0010
 
     IF
       left > 100
@@ -73,9 +73,9 @@ PROC set.pwm (VAL INT left, right)
 PROC test ()
   SEQ
     init.pwm ()
-    set.pwm (0, 0)
+    set.pwm (100, 100)
     delay(1 * SECONDS)
-    set.pwm (50, 50)
+    set.pwm (-50, -50)
     delay (2 * SECONDS)
     set.pwm (100, 100)
     delay (2 * SECONDS)

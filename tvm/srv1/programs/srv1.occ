@@ -2,72 +2,135 @@
 #INCLUDE "motors.occ"
 #INCLUDE "misc.occ"
 
--- Camera Resolution Constants
-VAL [2]INT CAMERA.QQVGA IS [160, 128]:
-VAL [2]INT CAMERA.QVGA  IS [320, 256]:
-VAL [2]INT CAMERA.VGA   IS [640, 512]:
-VAL [2]INT CAMERA.SXVGA IS [1280, 1024]:
-
 PROTOCOL P.MOTOR
   CASE
-    speed; INT
-    speed.delta; INT
-    turn; INT
-    back.turn; INT
-    stop
-:
-
-PROTOCOL P.STATUS
-  CASE
-    version
+    disconnected = 0
+    speed = 1; INT
+    speed.delta = 2; INT
+    turn = 3; INT
+    back.turn = 4; INT
+    stop = 5
 :
 
 PROC motors (CHAN P.MOTOR in?, CHAN BOOL ctl?)
   INITIAL INT l.speed IS 0:
   INITIAL INT r.speed IS 0:
-  INT n:
-  INITIAL BOOL done IS FALSE:
-  WHILE NOT done
-    SEQ
-      ALT
-        in ? CASE
-          speed; n
-            l.speed, r.speed := n, n
-          speed.delta; n
-            l.speed, r.speed := (l.speed + n), (r.speed + n)
-          turn; n
-            l.speed, r.speed := (l.speed - n), (r.speed + n)
-          back.turn; n
-            l.speed, r.speed := -(l.speed - n), -(r.speed + n)
-          stop
-            l.speed, r.speed := 0, 0
-        ctl ? done
-          SKIP
-      IF
-        (NOT done)
-          set.pwm((INT16 l.speed), (INT16 r.speed))
-        TRUE
-          SKIP
+  SEQ
+    init.pwm()
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      SEQ
+        PRI ALT
+          ctl ? done
+            SKIP
+          INT n:
+          in ? CASE
+            disconnected
+              l.speed, r.speed := 0, 0
+            speed; n
+              l.speed, r.speed := n, n
+            speed.delta; n
+              l.speed, r.speed := (l.speed + n), (r.speed + n)
+            turn; n
+              l.speed, r.speed := (l.speed - n), (r.speed + n)
+            back.turn; n
+              l.speed, r.speed := -(l.speed - n), -(r.speed + n)
+            stop
+              l.speed, r.speed := 0, 0
+        IF
+          (NOT done)
+            set.pwm(l.speed, r.speed)
+          TRUE
+            SKIP
+    set.pwm(0, 0)
 :
 
-PROC test.motors (CHAN BYTE uart0.in?, uart0.out!)
-  CHAN P.MOTOR m:
-  CHAN BOOL ctl:
-  PAR
-    motors(m?, ctl?)
-    INITIAL BOOL ctl.loop IS TRUE:
-    WHILE ctl.loop
-      SEQ
-        delay(10 * SECONDS)
-        ctl ! TRUE
-        ctl.loop := FALSE
-    INITIAL BOOL test.loop IS TRUE:
-    WHILE test.loop
-      SEQ
-        out.string("Forward*n", 0, uart0.out!)
-        m ! speed; 50
-        delay(2500 * MILLIS)
-        out.string("Reverse*n", 0, uart0.out!)
-        m ! speed; -50
-        delay(2500 * MILLIS)
+PROTOCOL P.LASER
+  CASE
+    disconnected = 0
+    left = 1; BOOL
+    right = 2; BOOL
+    all = 3; BOOL
 :
+
+PROC lasers (CHAN P.LASER in?, CHAN BOOL ctl?)
+  INITIAL BOOL left IS FALSE:
+  INITIAL BOOL right IS FALSE:
+  SEQ
+    C.tvmspecial.3.set.register.16(PORTHIO.ADDR, 0, (~#0380))
+    
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      INITIAL INT bits IS 0:
+      SEQ
+        PRI ALT
+          ctl ? done
+            SKIP
+          BOOL b:
+          in ? CASE
+            disconnected
+              SKIP
+            left; left
+              SKIP
+            right; right
+              SKIP
+            all; b
+              left, right := b, b
+        IF
+          left
+            bits := bits \/ #0080
+          TRUE
+            SKIP
+        IF
+          right
+            bits := bits \/ #0200
+          TRUE
+            SKIP
+        C.tvmspecial.3.set.register.16(PORTHIO.ADDR, bits, (~#0380))
+
+    C.tvmspecial.3.set.register.16(PORTHIO.ADDR, 0, (~#0380))
+:
+
+PROTOCOL P.LED
+  CASE
+    disconnected = 0
+    led = 1; INT; BOOL
+:
+
+PROC leds (CHAN P.LED in?, CHAN BOOL ctl?)
+  INITIAL [2]BOOL status IS [FALSE, FALSE]:
+  SEQ
+    C.tvmspecial.3.set.register.16(PORTGIO.ADDR, 0, (~#0300))
+    
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      INITIAL INT bits IS 0:
+      SEQ
+        PRI ALT
+          ctl ? done
+            SKIP
+          in ? CASE
+            disconnected
+              SKIP
+            INT i:
+            BOOL b:
+            led; i; b
+              IF
+                (i > 0) AND (i <= (SIZE status))
+                  status[i - 1] := b
+                TRUE
+                  SKIP
+
+        SEQ i = 0 FOR SIZE status
+          IF
+            status[i]
+              bits := bits \/ (1 << (i + 8))
+            TRUE
+              SKIP
+        
+        C.tvmspecial.3.set.register.16(PORTGIO.ADDR, bits, (~#0300))
+
+    C.tvmspecial.3.set.register.16(PORTGIO.ADDR, 0, (~#0300))
+:
+
+
