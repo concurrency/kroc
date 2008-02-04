@@ -1,0 +1,69 @@
+#INCLUDE "srv1.occ"
+
+PROC test.lasers()
+  CHAN BOOL ctl:
+  CHAN P.LASER l:
+  PAR
+    lasers(l?, ctl?)
+    SEQ
+      l ! left; TRUE
+      delay(2 * SECONDS)
+      l ! right; TRUE
+      delay(2 * SECONDS)
+      l ! left; FALSE
+      delay (2 * SECONDS)
+      l ! right; FALSE
+      delay (2 * SECONDS)
+      l ! all; TRUE
+      delay (2 * SECONDS)
+      l ! all; FALSE
+      ctl ! TRUE
+:
+
+PROC test.leds()
+  CHAN BOOL ctl:
+  CHAN P.LED l:
+  PAR
+    leds(l?, ctl?)
+    SEQ
+      l ! led; 1; TRUE
+      delay(2 * SECONDS)
+      l ! led; 1; FALSE
+      delay(2 * SECONDS)
+      l ! led; 2; TRUE
+      delay (2 * SECONDS)
+      l ! led; 2; FALSE
+      delay (2 * SECONDS)
+      l ! led; 1; TRUE
+      l ! led; 2; TRUE
+      delay (2 * SECONDS)
+      l ! led; 1; FALSE
+      l ! led; 2; FALSE
+      ctl ! TRUE
+:
+
+PROC test.motors ()
+  CHAN P.MOTOR m:
+  CHAN BOOL ctl:
+  PAR
+    motors(m?, ctl?)
+    SEQ
+      SEQ i = 1 FOR 5
+        SEQ
+          m ! speed; i * 20
+          delay(2 * SECONDS)
+          m ! speed; -(i * 20)
+          delay(2 * SECONDS)
+      ctl ! TRUE
+:
+
+PROC tests (CHAN BYTE uart0.in?, uart0.out!)
+  SEQ
+    out.string("SRV-1 Test Program (of Doom)*n", 0, uart0.out!)
+    out.string("Testing death lasers*n", 0, uart0.out!)
+    test.lasers()
+    out.string("Testing less deadly LED*'s*n", 0, uart0.out!) 
+    test.leds()
+    out.string("Testing harmless motors*n", 0, uart0.out!)
+    test.motors()
+:

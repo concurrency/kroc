@@ -10,12 +10,15 @@ PROGRAMS = \
 	init.srv \
 	lasers.srv \
 	motors.srv \
-	srv1.srv
+	srv1.srv \
+	tests.srv
 
 %.srv: %.occ
 	$(SKROC) $<
 
 all: $(PROGRAMS)
+
+tests: *.occ
 
 clean:
 	rm -f *.srv *.tce
