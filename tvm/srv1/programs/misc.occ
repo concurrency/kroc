@@ -1,0 +1,10 @@
+VAL INT MILLIS      IS 1000:
+VAL INT SECONDS     IS (MILLIS * 1000):
+
+PROC delay (VAL INT delay)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS delay
+:

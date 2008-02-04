@@ -1,30 +1,54 @@
 #INCLUDE "config.inc"
 #INCLUDE "defBF534.inc"
+#INCLUDE "misc.occ"
+
+#PRAGMA EXTERNAL "PROC C.tvmspecial.3.set.register.16 (VAL INT addr, set, mask) = 0"
+
+PROC init.pwm ()
+  PLACED [PORT.LEN]INT16 port PORT.ADDR:
+  PLACED [PORTF.LEN]INT16 port.f PORTF.ADDR:
+  PLACED [PORTHIO.LEN]INT16 port.h.io PORTHIO.ADDR:
+  PLACED [1]INT16 timer2.config TIMER2.CONFIG.ADDR:
+  PLACED [1]INT16 timer3.config TIMER3.CONFIG.ADDR:
+  PLACED [TIMER2.LEN.32]INT timer2 TIMER2.ADDR:
+  PLACED [TIMER3.LEN.32]INT timer3 TIMER3.ADDR:
+  PLACED [TIMER.LEN]INT16 timer TIMER.ADDR:
+  SEQ
+    port[PORT.MUX] := 0
+    port.f[PORTF.FER] := port.f[PORTF.FER] \/ #00C0
+    timer2.config[0] := (PULSE.HI \/ PWM.OUT) \/ PERIOD.CNT
+    timer3.config[0] := (PULSE.HI \/ PWM.OUT) \/ PERIOD.CNT
+    timer2[TIMER2.PERIOD.32] := PERIPHERAL.CLOCK / 1000
+    timer3[TIMER3.PERIOD.32] := PERIPHERAL.CLOCK / 1000
+    timer2[TIMER2.WIDTH.32] := PERIPHERAL.CLOCK / 100000
+    timer3[TIMER3.WIDTH.32] := PERIPHERAL.CLOCK / 100000
+    timer[TIMER.ENABLE] := TIMEN2 \/ TIMEN3
+    port.h.io[PORTHIO.DIR] := port.h.io[PORTHIO.DIR] \/ #0030
+    C.tvmspecial.3.set.register.16 (PORTHIO.ADDR, #0030, #FFCF)
+:
 
 PROC set.pwm (VAL INT left, right)
   INITIAL INT left IS left:
   INITIAL INT right IS right:
-  PLACED [PORTHIO.LEN]INT port.h.io PORTHIO.ADDR:
-  #PRAGMA DEFINED port.h.io
-  PLACED [TIMER2.LEN]INT timer2 TIMER2.ADDR:
-  PLACED [TIMER3.LEN]INT timer3 TIMER3.ADDR:
-  INT h.val:
+  INITIAL INT h.mask IS #FFFF:
+  INITIAL INT h.value IS 0:
+  PLACED [TIMER2.LEN.32]INT timer2 TIMER2.ADDR:
+  PLACED [TIMER3.LEN.32]INT timer3 TIMER3.ADDR:
   SEQ
-    h.val := port.h.io[PORTHIO]
     IF
       left < 0
         -- clear left direction bit
-        h.val, left := h.val /\ #FFDF, -left
+        h.mask, left := h.mask /\ (~#0020), -left
       TRUE
         -- turn on left direction bit
-        h.val := (h.val /\ #FFDF) \/ #0020
+        h.value := h.value /\ #0020
     IF
       right < 0
         -- clear right direction bit
-        h.val, right := h.val /\ #FFEF, -right
+        h.mask, right := h.mask /\ (~#0010), -right
       TRUE
         -- turn on right direction bit
-        h.val := (h.val /\ #FFEF) \/ #0010
+        h.value := h.value /\ #0010
 
     IF
       left > 100
@@ -41,27 +65,21 @@ PROC set.pwm (VAL INT left, right)
       TRUE
         SKIP
 
-    timer2[TIMER2.WIDTH] := ((PERIPHERAL.CLOCK / 1000) * left) / 100
-    timer3[TIMER3.WIDTH] := ((PERIPHERAL.CLOCK / 1000) * right) / 100
-:
-
-PROC sleep.ms (VAL INT ms)
-  TIMER time:
-  INT now:
-  SEQ
-    time ? now
-    time ? AFTER (now PLUS ms)
+    C.tvmspecial.3.set.register.16 (PORTHIO.ADDR, h.value, h.mask)
+    timer2[TIMER2.WIDTH.32] := ((PERIPHERAL.CLOCK / 1000) * left) / 100
+    timer3[TIMER3.WIDTH.32] := ((PERIPHERAL.CLOCK / 1000) * right) / 100
 :
 
 PROC test ()
   SEQ
+    init.pwm ()
     set.pwm (0, 0)
-    sleep.ms (1000)
+    delay(1 * SECONDS)
     set.pwm (50, 50)
-    sleep.ms (1000)
-    set.pwm (0, 50)
-    sleep.ms (1000)
-    set.pwm (50, 0)
-    sleep.ms (1000)
+    delay (2 * SECONDS)
+    set.pwm (100, 100)
+    delay (2 * SECONDS)
+    set.pwm (-50, -50)
+    delay (2 * SECONDS)
     set.pwm (0, 0)
 :
