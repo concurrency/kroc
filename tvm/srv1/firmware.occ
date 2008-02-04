@@ -5,8 +5,8 @@
 #PRAGMA EXTERNAL "PROC C.tvmspecial.1.kill.user () = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.2.query.user (BOOL running, INT state, []BYTE context) = 0"
 
-VAL INT USER.BYTECODE     IS #0070000:
-VAL INT USER.BYTECODE.LEN IS #0010000:
+VAL INT USER.BYTECODE     IS #00700000:
+VAL INT USER.BYTECODE.LEN IS #00100000:
 
 DATA TYPE SRV.HEADER
   PACKED RECORD
@@ -17,7 +17,7 @@ DATA TYPE SRV.HEADER
     INT inst.size:
 :
 
-DATA TYPE TVM.CONTEXT
+DATA TYPE ECTX
   PACKED RECORD
     INT   iptr:
     
@@ -40,12 +40,47 @@ DATA TYPE TVM.CONTEXT
     INT   state:
 :
 
+VAL INT EFLAG.SETERR          IS (1 << 0):
+VAL INT EFLAG.INTERR          IS (1 << 1):
+VAL INT EFLAG.INTOV           IS (1 << 2):
+VAL INT EFLAG.FP              IS (1 << 3):
+VAL INT EFLAG.ALT             IS (1 << 4):
+VAL INT EFLAG.FFI             IS (1 << 5):
+VAL INT EFLAG.CHAN            IS (1 << 6):
+VAL INT EFLAG.EXTCHAN         IS (1 << 7):
+VAL INT EFLAG.BAR             IS (1 << 8):
+VAL INT EFLAG.DMEM            IS (1 << 9):
+VAL INT EFLAG.MT              IS (1 << 10):
+VAL INT EFLAG.PROC            IS (1 << 11):
+
+VAL INT ECTX.CONTINUE         IS 0:
+VAL INT ECTX.INIT             IS 'i':
+VAL INT ECTX.INS.INVALID      IS 'I':
+VAL INT ECTX.INS.UNSUPPORTED  IS 'U':
+VAL INT ECTX.INTERRUPT        IS 'x':
+VAL INT ECTX.EMPTY            IS 'e':
+VAL INT ECTX.ERROR            IS 'E':
+VAL INT ECTX.PREEMPT          IS 'p':
+VAL INT ECTX.RUNNING          IS 'r':
+VAL INT ECTX.SHUTDOWN         IS 'S':
+VAL INT ECTX.SLEEP            IS 's':
+VAL INT ECTX.TIME.SLICE       IS 't':
+
 PROC delay.us (VAL INT us)
   TIMER tim:
   INT t:
   SEQ
     tim ? t
     tim ? AFTER (t PLUS us)
+:
+
+PROC out.hex.byte (VAL BYTE b, CHAN BYTE out!)
+  VAL []BYTE cmap IS "0123456789ABCDEF":
+  VAL INT b IS (INT b):
+  SEQ
+    out ! '#'
+    out ! cmap[(b >> 4) /\ #F]
+    out ! cmap[b /\ #F]
 :
 
 PROC drain.uart (CHAN BYTE in?, out!)
@@ -63,6 +98,192 @@ PROC drain.uart (CHAN BYTE in?, out!)
           SEQ
             delay.us (100000)
             clear := clear + 1
+:
+
+PROC download.header (SRV.HEADER header, CHAN BYTE in?, out!)
+  SEQ
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      SEQ
+        out.string ("Waiting for header (", 0, out!)
+        out.int (BYTESIN(SRV.HEADER), 0, out!)
+        out.string (" bytes)*n", 0, out!)
+
+        []BYTE header RETYPES header:
+        SEQ i = 0 FOR SIZE header
+          in ? header[i >< 3] -- byteswap from 32bit big-endian
+
+        IF
+          header[tbc.version] = #74766D03 -- TVM\003
+            done := TRUE
+          TRUE
+            SEQ
+              out.string ("Bad TBC Header ID = ", 0, out!)
+              out.hex (header[tbc.version], 0, out!)
+              out ! '*n'
+              drain.uart (in?, out!)
+    
+    out.string ("Got header, ws.size = ", 0, out!)
+    out.int (header[ws.size], 0, out!)
+    out.string (", vs.size = ", 0, out!)
+    out.int (header[vs.size], 0, out!)
+    out.string (", ms.size = ", 0, out!)
+    out.int (header[ms.size], 0, out!)
+    out.string (".*n", 0, out!)
+:
+
+PROC download.bytecode ([]BYTE bytecode, CHAN BYTE in?, out!)
+  SEQ
+    out.string ("Waiting for bytecode (", 0, out!)
+    out.int (SIZE bytecode, 0, out!)
+    out.string (" bytes).*n", 0, out!)
+
+    SEQ i = 0 FOR SIZE bytecode
+      SEQ
+        in ? bytecode[i]
+        out ! '#'
+
+    out ! '*n'
+:
+
+PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN BYTE in?, out!)
+  SEQ
+    out.string ("Running bytecode...*n", 0, out!)
+
+    CHAN BOOL end.in, end.out, end.leds:
+    CHAN BYTE data.in, data.out:
+    PAR
+      SEQ
+        VAL INT ws IS header[ws.size]:
+        VAL INT vs IS header[vs.size]:
+        VAL INT ms IS header[ms.size]:
+        C.tvmspecial.0.run.user (bytecode, ws, vs, ms, "?!", 2, data.in?, data.out!)
+        PAR
+          end.in ! TRUE
+          end.out ! TRUE
+          end.leds ! TRUE
+
+      INITIAL BOOL done IS FALSE:
+      WHILE NOT done
+        PRI ALT
+          end.in ? done
+            SKIP
+          BYTE b:
+          in ? b
+            IF
+              b = '!'
+                BYTE c:
+                SEQ
+                  in ? c
+                  IF
+                    c = '*n'
+                      SEQ
+                        killed := TRUE
+                        C.tvmspecial.1.kill.user ()
+                    TRUE
+                      SEQ
+                        data.in ! b
+                        data.in ! c
+              TRUE
+                data.in ! b
+
+      INITIAL BOOL done IS FALSE:
+      WHILE NOT done
+        PRI ALT
+          end.out ? done
+            SKIP
+          BYTE b:
+          data.out ? b
+            IF
+              b = #00
+                SKIP
+              TRUE
+                out ! b
+
+      PLACED [PORTGIO.LEN]INT16 port.g.io PORTGIO.ADDR:
+      #PRAGMA DEFINED port.g.io
+      TIMER time:
+      INT next.flash:
+      SEQ
+        time ? next.flash
+        INITIAL BOOL done IS FALSE:
+        WHILE NOT done
+          PRI ALT
+            end.leds ? done
+              SKIP
+            time ? AFTER next.flash
+              SEQ
+                port.g.io[PORTGIO] := port.g.io[PORTGIO] >< #0100
+                next.flash := next.flash PLUS 500000
+:
+
+PROC report.termination (VAL []BYTE bytecode, VAL BOOL killed, CHAN BYTE out!)
+  ECTX context:
+  BOOL running:
+  INT state:
+  SEQ
+    []BYTE context RETYPES context:
+    C.tvmspecial.2.query.user (running, state, context)
+
+    IF
+      killed
+        out.string ("Program killed.*n", 0, out!)
+      state = ECTX.SHUTDOWN
+        out.string ("Program terminated normally.*n", 0, out!)
+      state = ECTX.EMPTY
+        out.string ("Program deadlocked.*n", 0, out!)
+      TRUE
+        SEQ
+          out.string ("Program terminated with a ", 0, out!)
+
+          IF
+            context[eflags] = EFLAG.SETERR
+              out.string ("assertion", 0, out!)
+            context[eflags] = EFLAG.INTERR
+              out.string ("range", 0, out!)
+            context[eflags] = EFLAG.INTOV
+              out.string ("arithmetic overflow", 0, out!)
+            context[eflags] = EFLAG.ALT
+              out.string ("ALT", 0, out!)
+            context[eflags] = EFLAG.FFI
+              out.string ("FFI", 0, out!)
+            context[eflags] = EFLAG.CHAN
+              out.string ("channel", 0, out!)
+            context[eflags] = EFLAG.EXTCHAN
+              out.string ("external channel", 0, out!)
+            context[eflags] = EFLAG.BAR
+              out.string ("barrier", 0, out!)
+            context[eflags] = EFLAG.DMEM
+              out.string ("dynamic memory", 0, out!)
+            context[eflags] = EFLAG.MT
+              out.string ("mobile type", 0, out!)
+            context[eflags] = EFLAG.PROC
+              out.string ("process", 0, out!)
+            TRUE
+              out.string ("unknown", 0, out!)
+
+          out.string (" error. (state = ", 0, out!)
+          out.byte (BYTE state, 0, out!)
+          out.string (")*n", 0, out!)
+
+          VAL INT iptr IS (context[iptr] - USER.BYTECODE):
+          SEQ
+            out.string ("WPTR = ", 0, out!)
+            out.hex (context[wptr], 0, out!)
+            out ! '*n'
+            out.string ("IPTR = ", 0, out!)
+            out.hex (iptr, 0, out!)
+            out ! '*n'
+            out.string ("Bytecodes before IPTR =", 0, out!)
+            SEQ i = (iptr - 8) FOR 8
+              IF 
+                (i > 0) AND (i < (SIZE bytecode))
+                  SEQ
+                    out ! ' '
+                    out.hex.byte (bytecode[i], out!)
+                TRUE
+                  SKIP
+            out ! '*n'
 :
 
 PROC firmware ()
@@ -100,114 +321,15 @@ PROC firmware ()
         drain.uart (uart0.in?, uart0.out!)
 
         -- Download header
-        INITIAL BOOL done IS FALSE:
-        WHILE NOT done
-          SEQ
-            out.string ("Waiting for header (", 0, uart0.out!)
-            out.int (BYTESIN(SRV.HEADER), 0, uart0.out!)
-            out.string (" bytes)*n", 0, uart0.out!)
+        download.header (header, uart0.in?, uart0.out!)
 
-            []BYTE header RETYPES header:
-            SEQ i = 0 FOR SIZE header
-              uart0.in ? header[i >< 3] -- byteswap from 32bit big-endian
-
-            IF
-              header[tbc.version] = #74766D03 -- TVM\003
-                done := TRUE
-              TRUE
-                SEQ
-                  out.string ("Bad TBC Header ID = ", 0, uart0.out!)
-                  out.hex (header[tbc.version], 0, uart0.out!)
-                  uart0.out ! '*n'
-                  drain.uart (uart0.in?, uart0.out!)
-
-        #PRAGMA DEFINED header
         -- Download bytecode
-        out.string ("Got header, ws.size = ", 0, uart0.out!)
-        out.int (header[ws.size], 0, uart0.out!)
-        out.string (", vs.size = ", 0, uart0.out!)
-        out.int (header[vs.size], 0, uart0.out!)
-        out.string (", ms.size = ", 0, uart0.out!)
-        out.int (header[ms.size], 0, uart0.out!)
-        out.string (".*n", 0, uart0.out!)
-
-        out.string ("Waiting for bytecode (", 0, uart0.out!)
-        out.int (header[inst.size], 0, uart0.out!)
-        out.string (" bytes).*n", 0, uart0.out!)
-
-        SEQ i = 0 FOR header[inst.size]
-          SEQ
-            uart0.in ? bytecode[i]
-            uart0.out ! '#'
-
-        uart0.out ! '*n'
+        download.bytecode ([ bytecode FOR header[inst.size] ], uart0.in?, uart0.out!)
 
         -- Run bytecode
-        out.string ("Running bytecode...*n", 0, uart0.out!)
-
-        CHAN BOOL end.in, end.out, end.leds:
-        CHAN BYTE data.in, data.out:
-        PAR
-          SEQ
-            VAL INT ws IS header[ws.size]:
-            VAL INT vs IS header[vs.size]:
-            VAL INT ms IS header[ms.size]:
-            VAL INT inst.size IS header[inst.size]:
-            C.tvmspecial.0.run.user ([bytecode FOR inst.size], ws, vs, ms, "?!", 2, data.in?, data.out!)
-            PAR
-              end.in ! TRUE
-              end.out ! TRUE
-              end.leds ! TRUE
-
-          INITIAL BOOL done IS FALSE:
-          WHILE NOT done
-            PRI ALT
-              end.in ? done
-                SKIP
-              BYTE b:
-              uart0.in ? b
-                IF
-                  b = '!'
-                    BYTE c:
-                    SEQ
-                      uart0.in ? c
-                      IF
-                        c = '*n'
-                          SEQ
-                            killed := TRUE
-                            C.tvmspecial.1.kill.user ()
-                        TRUE
-                          SEQ
-                            data.in ! b
-                            data.in ! c
-                  TRUE
-                    data.in ! b
-
-          INITIAL BOOL done IS FALSE:
-          WHILE NOT done
-            PRI ALT
-              end.out ? done
-                SKIP
-              BYTE b:
-              data.out ? b
-                IF
-                  b = #00
-                    SKIP
-                  TRUE
-                    uart0.out ! b
-
-          TIMER time:
-          INT next.flash:
-          SEQ
-            time ? next.flash
-            INITIAL BOOL done IS FALSE:
-            WHILE NOT done
-              PRI ALT
-                end.leds ? done
-                  SKIP
-                time ? AFTER next.flash
-                  SEQ
-                    port.g.io[PORTGIO] := port.g.io[PORTGIO] >< #0100
-                    next.flash := next.flash PLUS 500000
+        run.bytecode (header, [ bytecode FOR header[inst.size] ], killed, uart0.in?, uart0.out!)
+        
+        -- Tell the user what happened to their program
+        report.termination ([ bytecode FOR header[inst.size] ], killed, uart0.out!)
 :
 

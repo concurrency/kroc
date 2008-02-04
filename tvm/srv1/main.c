@@ -404,7 +404,7 @@ static int firmware_query_user (ECTX ectx, WORD args[])
 	/* BOOL/WORD running */
 	write_word (running, user_parent != (WORDPTR) NOT_PROCESS_P ? 1 : 0);
 	/* WORD state */
-	write_word (state, (WORD) ectx->state);
+	write_word (state, (WORD) user_ctx.state);
 	/* []BYTE context */
 	for (i = 0; i < ctx_len && i < sizeof(user_ctx); ++i)
 	{
@@ -427,7 +427,7 @@ static const int	firmware_sffi_table_length =
 /*{{{  Firmware context */
 #include "firmware.h"
 
-static WORD firmware_memory[128];
+static WORD firmware_memory[192];
 static WORD firmware_memory_len;
 
 static void init_firmware_memory (void)
