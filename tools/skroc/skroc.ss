@@ -266,6 +266,7 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
 	 "Output a TBC for the Surveyor SRV-1 running the Analog Devices BF537 processor."
 	 (set-parameter! 'target-processor 't4)
 	 (set-parameter! 'output 'blackfin)
+	 (append-parameter 'occ21-opts "-ZUS")
          ]
         
         ;; 20070601 MCJ
