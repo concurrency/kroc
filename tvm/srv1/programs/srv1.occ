@@ -1,3 +1,7 @@
+#INCLUDE "out.occ"
+#INCLUDE "motors.occ"
+#INCLUDE "misc.occ"
+
 -- Camera Resolution Constants
 VAL [2]INT CAMERA.QQVGA IS [160, 128]:
 VAL [2]INT CAMERA.QVGA  IS [320, 256]:
@@ -13,159 +17,57 @@ PROTOCOL P.MOTOR
     stop
 :
 
-PROTOCOL P.CAMERA
-  CASE
-    resolution; [2]INT
-    overlay; BOOL
-    quality; BYTE
-    frame
-:
-
-PROTOCOL P.VISION
-  CASE
-    range
-:
-
 PROTOCOL P.STATUS
   CASE
     version
 :
 
-PROC delay.ms (VAL INT ms)
-  TIMER tim:
-  INT t:
-  SEQ
-    tim ? t
-    tim ? AFTER t PLUS ms
-:
-
-PROC motors (CHAN P.MOTOR in?)
+PROC motors (CHAN P.MOTOR in?, CHAN BOOL ctl?)
   INITIAL INT l.speed IS 0:
   INITIAL INT r.speed IS 0:
   INT n:
-  WHILE TRUE
-    in ? CASE
-      speed; n
-        l.speed, r.speed := n, n
-      speed.delta; n
-        l.speed, r.speed := (l.speed + n), (r.speed + n)
-      turn; n
-        l.speed, r.speed := (l.speed - n), (r.speed + n)
-      back.turn; n
-        l.speed, r.speed := -(l.speed - n), -(r.speed + n)
-      stop
-        l.speed, r.speed := 0, 0
-:
-
-PROC camera (CHAN P.CAMERA in?, CHAN BYTE out!)
-  SKIP
-:
-
-PROC srv1.protocol (CHAN BYTE in?, CHAN P.MOTOR motors!, CHAN P.CAMERA camera!)
-  BYTE ch: 
-  INITIAL [2]BYTE response IS ['#', 0]:
-  WHILE TRUE
+  INITIAL BOOL done IS FALSE:
+  WHILE NOT done
     SEQ
-      in ? ch
-      response[1] := ch
-      CASE ch
-        -- Direct motor control
-        'M'
+      ALT
+        in ? CASE
+          speed; n
+            l.speed, r.speed := n, n
+          speed.delta; n
+            l.speed, r.speed := (l.speed + n), (r.speed + n)
+          turn; n
+            l.speed, r.speed := (l.speed - n), (r.speed + n)
+          back.turn; n
+            l.speed, r.speed := -(l.speed - n), -(r.speed + n)
+          stop
+            l.speed, r.speed := 0, 0
+        ctl ? done
           SKIP
-        -- Drift left
-        '7'
-          motors ! turn; 15
-        -- Drive forward
-        '8'
-          motors ! speed; 50
-        -- Drift right
-        '9'
-          motors ! turn; -15
-        -- Drive left
-        '4'
-          motors ! turn; 30
-        -- Stop
-        '5'
-          motors ! speed; 0
-        -- Drive right
-        '6'
-          motors ! turn; -30
-        -- Back left
-        '1'
-          motors ! back.turn; 30
-        -- Reverse
-        '2'
-          motors ! speed.delta; -1
-        -- Back right
-        '3'
-          motors ! back.turn; -30
-        -- Clockwise turn
-        '.'
-          SEQ
-            motors ! turn; 75
-            delay.ms(200)
-            motors ! stop
-        -- Caption overlay
-        'o'
-          camera ! overlay; TRUE
-        'O'
-          camera ! overlay; FALSE
-        -- Lasers
-        'l'
-          SKIP -- On
-        'L'
-          SKIP -- Off
-        -- Time in MS since reset.
-        't'
-          SEQ
-            response[1] := '#'
-            SKIP 
-        -- JPEG Quality
-        'q'
-          BYTE q: -- Quality 1-8 
-          SEQ
-            response[1] := '#'
-            in ? q
-            IF
-              (q < 1)
-                q := 0
-              (q > 8)
-                q := 8 
-              TRUE
-                SKIP
-            camera ! quality; q
-        -- Find range to object using Lasers
-        'R'
+      IF
+        (NOT done)
+          set.pwm((INT16 l.speed), (INT16 r.speed))
+        TRUE
           SKIP
-        -- IO pins
-        'd'
-          SEQ
-            in ? ch
-            CASE ch
-              -- Read level
-              'r'
-                SKIP
-              -- Direction/Write level
-              'd','w'
-                SKIP
-        -- Xmodem
-        'X'
-          SKIP
-        -- Flash memory
-        'z'
-          SEQ
-            in ? ch
-            CASE ch
-              -- Write
-              'w'
-                SKIP
-              -- Read
-              'r'
-                SKIP
-              -- Dump
-              'd'
-                SKIP
-              -- Update boot sector
-              'Z'
-                SKIP
+:
+
+PROC test.motors (CHAN BYTE uart0.in?, uart0.out!)
+  CHAN P.MOTOR m:
+  CHAN BOOL ctl:
+  PAR
+    motors(m?, ctl?)
+    INITIAL BOOL ctl.loop IS TRUE:
+    WHILE ctl.loop
+      SEQ
+        delay(10 * SECONDS)
+        ctl ! TRUE
+        ctl.loop := FALSE
+    INITIAL BOOL test.loop IS TRUE:
+    WHILE test.loop
+      SEQ
+        out.string("Forward*n", 0, uart0.out!)
+        m ! speed; 50
+        delay(2500 * MILLIS)
+        out.string("Reverse*n", 0, uart0.out!)
+        m ! speed; -50
+        delay(2500 * MILLIS)
 :

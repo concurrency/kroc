@@ -415,10 +415,28 @@ static int firmware_query_user (ECTX ectx, WORD args[])
 	return SFFI_OK;
 }
 
+static int set_register_16 (ECTX ectx, WORD args[])
+{
+	volatile unsigned short *addr = (unsigned short *) args[0];
+	unsigned short set	= (unsigned short) args[1];
+	unsigned short mask = (unsigned short) args[2];
+	unsigned short imask;
+
+	/* Disable interrupts */
+	__asm__ __volatile__ ("cli %0;" : "=r" (imask) : : "memory");
+
+	*addr = ((*addr) & mask) | set;
+
+	/* Enable (restore) interrupts */
+	__asm__ __volatile__ ("sti %0;" : : "r" (imask) : "memory");
+
+	return SFFI_OK;
+}
 static SFFI_FUNCTION	firmware_sffi_table[] = {
 	firmware_run_user,
 	firmware_kill_user,
-	firmware_query_user
+	firmware_query_user,
+	set_register_16
 };
 static const int	firmware_sffi_table_length =
 				sizeof(firmware_sffi_table) / sizeof(SFFI_FUNCTION);
@@ -538,6 +556,10 @@ int main (void) {
 	tvm_init (&tvm);
 	install_firmware_ctx ();
 	install_user_ctx ();
+
+	/* For testing... */
+	user_ctx.sffi_table		= firmware_sffi_table;
+	user_ctx.sffi_table_length	= firmware_sffi_table_length;
 
 	uart0SendString ((unsigned char *) "## TVM initialisation complete...\n");
 	
