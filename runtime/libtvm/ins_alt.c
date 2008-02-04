@@ -192,8 +192,8 @@ TVM_INSTRUCTION (ins_enbc)
 			write_word (chan_ptr, ((WORD) WPTR) | 1);
 		}
 		else {
-			/* Something waiting on channel; begin disabling */
-			WORKSPACE_SET (WPTR, WS_STATE, DISABLING_P);
+			/* Something waiting on channel; become ready */
+			WORKSPACE_SET (WPTR, WS_STATE, READY_P);
 		}
 	}
 
