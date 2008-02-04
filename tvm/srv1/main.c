@@ -254,7 +254,6 @@ static int waiting_on (ECTX ectx, WORDPTR ws_base, WORD ws_len)
 			case '!':
 				ptr = (WORDPTR) ectx->tlp_argv[i];
 				ptr = (WORDPTR) read_word (ptr);
-				ptr = (WORDPTR) read_word (ptr);
 				if (ptr >= ws_base && ptr <= ws_end)
 					return 1; /* dependency */
 				break;

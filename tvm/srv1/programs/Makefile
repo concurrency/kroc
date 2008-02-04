@@ -1,9 +1,12 @@
-all: camera-rgb.srv id.srv init.srv lasers.srv motors.srv srv1.srv
+all: camera-rgb.srv hello.srv id.srv init.srv lasers.srv motors.srv srv1.srv
 
 SKROC=skroc -L .. -L ../include --blackfin --no-std-libs --keep-temp-files
 
 camera-rgb.srv: camera-rgb.occ
 	$(SKROC) camera-rgb.occ
+
+hello.srv: hello.occ
+	$(SKROC) hello.occ
 
 id.srv: id.occ
 	$(SKROC) id.occ
