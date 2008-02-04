@@ -4,11 +4,17 @@
  * Copyright (C) 2007-2008 Jon Simpson, Matthew C. Jadud, Carl G. Ritson
  */
 
-/* Generic TVM Includes */
+/* TVM */
 #include <tvm.h>
+/* Blackfin */
 #include <cdefBF537.h>
+/* Configuration */
 #include "config.h"
 #include "memory_map.h"
+/* Support code */
+#include <camera.h>
+#include <i2cwrite.h>
+#include <ov9655.h>
 #include <uart.h>
 
 #define CSYNC	__asm__ __volatile__ ("csync;" : : : "memory")
@@ -91,6 +97,117 @@ static WORD srv_get_time (ECTX ectx)
 /*{{{  TVM state */
 static tvm_t 		tvm;
 static tvm_ectx_t 	firmware_ctx, user_ctx;
+/*}}}*/
+
+/*{{{  Camera support */
+static int camera_frame_words	= 0;
+static int camera_initialised	= 0;
+static int camera_running	= 0;
+
+/* Move these constants to a shared header */
+enum {
+	CAMERA_160_128		= 1,
+	CAMERA_320_256		= 2,
+	CAMERA_640_512		= 3,
+	CAMERA_1280_1024	= 4
+};
+
+static int set_camera_mode (ECTX ectx, WORD args[])
+{
+	unsigned int width, height, cfg_length;
+	unsigned char *cfg	= NULL;
+	WORD mode		= args[0];
+
+	if (camera_running) {
+		camera_stop ();
+		camera_running = 0;
+	}
+
+	switch (mode) {
+		case CAMERA_160_128: 
+			width		= 160;
+			height 		= 128; 
+			cfg		= ov9655_qqvga; 
+			cfg_length	= sizeof(ov9655_qqvga);
+			break;
+		case CAMERA_320_256:
+			width		= 320;
+			height 		= 256; 
+			cfg		= ov9655_qvga; 
+			cfg_length	= sizeof(ov9655_qvga);
+			break;
+		case CAMERA_640_512:
+			width		= 640;
+			height 		= 512; 
+			cfg		= ov9655_vga; 
+			cfg_length	= sizeof(ov9655_vga);
+			break;
+		case CAMERA_1280_1024:
+			width		= 1280;
+			height 		= 1024;
+			cfg		= ov9655_sxga; 
+			cfg_length	= sizeof(ov9655_sxga);
+			break;
+	}
+
+	if (cfg != NULL) {
+		if (!camera_initialised) {
+			i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >>1);
+			camera_initialised = 1;
+		}
+
+		i2cwrite (0x30, cfg, cfg_length >> 1);
+		
+		camera_init (
+			(unsigned char *) DMA_BUF1,
+			(unsigned char *) DMA_BUF2,
+			width, height
+		);
+		camera_start();
+
+		camera_frame_words = (width * height) >> 1;
+		camera_running = 1;
+	}
+				
+	return SFFI_OK;
+}
+
+static int get_camera_frame (ECTX ectx, WORD args[])
+{
+	WORDPTR	dst		= (WORDPTR) args[0];
+	WORD	dst_len		= args[1] >> 2;
+	WORD	*src		= NULL;
+	WORD	len		= dst_len;
+	WORD	i;
+
+	/* Make sure we don't copy more data than there is */
+	if (len > camera_frame_words) {
+		len = camera_frame_words;
+	}
+
+	/* Select buffer the hardware isn't writing to */
+	if (((unsigned long) *pDMA0_CURR_ADDR) < ((unsigned long) DMA_BUF2)) {
+		src = (WORD *) DMA_BUF2;
+	} else {
+		src = (WORD *) DMA_BUF1;
+	}
+
+	/* Copy data (as WORDs to improve throughput) */
+	for (i = 0; i < len; i++) {
+		write_word (dst, *(src++));
+		dst = wordptr_plus (dst, 1);
+	}
+
+	if (dst_len > len) {
+		/* Blank any excess buffer */
+		for (i = len; i < dst_len; i++) {
+			write_word (dst, (WORD) 0);
+			dst = wordptr_plus (dst, 1);
+		}
+	}
+
+	return SFFI_OK;
+}
 /*}}}*/
 
 /*{{{  UART functionality */
@@ -417,9 +534,9 @@ static int firmware_query_user (ECTX ectx, WORD args[])
 
 static int set_register_16 (ECTX ectx, WORD args[])
 {
-	volatile unsigned short *addr = (unsigned short *) args[0];
-	unsigned short set	= (unsigned short) args[1];
-	unsigned short mask = (unsigned short) args[2];
+	volatile unsigned short *addr	= (unsigned short *) args[0];
+	unsigned short set		= (unsigned short) args[1];
+	unsigned short mask		= (unsigned short) args[2];
 	unsigned short imask;
 
 	/* Disable interrupts */
@@ -432,11 +549,14 @@ static int set_register_16 (ECTX ectx, WORD args[])
 
 	return SFFI_OK;
 }
+
 static SFFI_FUNCTION	firmware_sffi_table[] = {
 	firmware_run_user,
 	firmware_kill_user,
 	firmware_query_user,
-	set_register_16
+	set_register_16,
+	set_camera_mode,
+	get_camera_frame
 };
 static const int	firmware_sffi_table_length =
 				sizeof(firmware_sffi_table) / sizeof(SFFI_FUNCTION);
