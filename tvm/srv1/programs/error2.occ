@@ -6,6 +6,6 @@ PROC main (CHAN BYTE in?, out!)
     out ! 'e'
     out ! '2'
     out ! '*n'
-    x := #0FFFFFFF
+    x := #7FFFFFFF
     y := x + 1
 :
