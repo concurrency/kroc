@@ -48,7 +48,24 @@ PROC delay.us (VAL INT us)
     tim ? AFTER (t PLUS us)
 :
 
-PROC leds ()
+PROC drain.uart (CHAN BYTE in?, out!)
+  INITIAL INT clear IS 0:
+  SEQ
+    -- Clear out UART
+    out.string ("Draining UART...*n", 0, out!)
+
+    WHILE clear < 10
+      PRI ALT
+        BYTE b:
+        in ? b
+          SKIP
+        TRUE & SKIP
+          SEQ
+            delay.us (100000)
+            clear := clear + 1
+:
+
+PROC firmware ()
   PLACED [PORTGIO.LEN]INT16 port.g.io PORTGIO.ADDR:
   #PRAGMA DEFINED port.g.io
 
@@ -60,64 +77,137 @@ PROC leds ()
 
   SRV.HEADER header:
 
-  CHAN BYTE out:
+  CHAN BYTE uart0.in, uart0.out:
   PAR
     WHILE TRUE
       BYTE b:
       SEQ
-        out ? b
+        uart0.out ? b
         uart0 ! b
-    SEQ
-      port.g.io[PORTGIO] := port.g.io[PORTGIO] /\ (~#0300)
 
-      -- Download header
-      out.string ("Waiting for header (", 0, out!)
-      out.int (BYTESIN(SRV.HEADER), 0, out!)
-      out.string (" bytes)*n", 0, out!)
+    WHILE TRUE
+      BYTE b:
+      SEQ
+        uart0 ? b
+        uart0.in ! b
 
-      []BYTE header RETYPES header:
-      SEQ i = 0 FOR SIZE header
-        uart0 ? header[i >< 3] -- byteswap from 32bit big-endian
+    WHILE TRUE
+      INITIAL BOOL killed IS FALSE:
+      SEQ
+        port.g.io[PORTGIO] := port.g.io[PORTGIO] /\ (~#0300)
 
-      -- Download bytecode
-      out.string ("Got header, ws.size = ", 0, out!)
-      out.int (header[ws.size], 0, out!)
-      out.string (", vs.size = ", 0, out!)
-      out.int (header[vs.size], 0, out!)
-      out.string (", ms.size = ", 0, out!)
-      out.int (header[ms.size], 0, out!)
-      out.string (".*n", 0, out!)
+        -- Clear out UART
+        drain.uart (uart0.in?, uart0.out!)
 
-      out.string ("Waiting for bytecode (", 0, out!)
-      out.int (header[inst.size], 0, out!)
-      out.string (" bytes).*n", 0, out!)
-
-      SEQ i = 0 FOR header[inst.size]
-        SEQ
-          uart0 ? bytecode[i]
-          out ! '#'
-
-      out ! '*n'
-
-      -- Run bytecode
-      out.string ("Running bytecode...*n", 0, out!)
-
-      CHAN BYTE in:
-      PAR
-        SEQ
-          VAL INT ws IS header[ws.size]:
-          VAL INT vs IS header[vs.size]:
-          VAL INT ms IS header[ms.size]:
-          VAL INT inst.size IS header[inst.size]:
-          C.tvmspecial.0.run.user ([bytecode FOR inst.size], ws, vs, ms, "?!", 2, in?, out!)
-        WHILE TRUE
-          BYTE b:
+        -- Download header
+        INITIAL BOOL done IS FALSE:
+        WHILE NOT done
           SEQ
-            uart0 ? b
-            in ! b
-        WHILE TRUE
+            out.string ("Waiting for header (", 0, uart0.out!)
+            out.int (BYTESIN(SRV.HEADER), 0, uart0.out!)
+            out.string (" bytes)*n", 0, uart0.out!)
+
+            []BYTE header RETYPES header:
+            SEQ i = 0 FOR SIZE header
+              uart0.in ? header[i >< 3] -- byteswap from 32bit big-endian
+
+            IF
+              header[tbc.version] = #74766D03 -- TVM\003
+                done := TRUE
+              TRUE
+                SEQ
+                  out.string ("Bad TBC Header ID = ", 0, uart0.out!)
+                  out.hex (header[tbc.version], 0, uart0.out!)
+                  uart0.out ! '*n'
+                  drain.uart (uart0.in?, uart0.out!)
+
+        #PRAGMA DEFINED header
+        -- Download bytecode
+        out.string ("Got header, ws.size = ", 0, uart0.out!)
+        out.int (header[ws.size], 0, uart0.out!)
+        out.string (", vs.size = ", 0, uart0.out!)
+        out.int (header[vs.size], 0, uart0.out!)
+        out.string (", ms.size = ", 0, uart0.out!)
+        out.int (header[ms.size], 0, uart0.out!)
+        out.string (".*n", 0, uart0.out!)
+
+        out.string ("Waiting for bytecode (", 0, uart0.out!)
+        out.int (header[inst.size], 0, uart0.out!)
+        out.string (" bytes).*n", 0, uart0.out!)
+
+        SEQ i = 0 FOR header[inst.size]
           SEQ
-            port.g.io[PORTGIO] := port.g.io[PORTGIO] >< #0100
-            delay.us (500000)
+            uart0.in ? bytecode[i]
+            uart0.out ! '#'
+
+        uart0.out ! '*n'
+
+        -- Run bytecode
+        out.string ("Running bytecode...*n", 0, uart0.out!)
+
+        CHAN BOOL end.in, end.out, end.leds:
+        CHAN BYTE data.in, data.out:
+        PAR
+          SEQ
+            VAL INT ws IS header[ws.size]:
+            VAL INT vs IS header[vs.size]:
+            VAL INT ms IS header[ms.size]:
+            VAL INT inst.size IS header[inst.size]:
+            C.tvmspecial.0.run.user ([bytecode FOR inst.size], ws, vs, ms, "?!", 2, data.in?, data.out!)
+            PAR
+              end.in ! TRUE
+              end.out ! TRUE
+              end.leds ! TRUE
+
+          INITIAL BOOL done IS FALSE:
+          WHILE NOT done
+            PRI ALT
+              end.in ? done
+                SKIP
+              BYTE b:
+              uart0.in ? b
+                IF
+                  b = '!'
+                    BYTE c:
+                    SEQ
+                      uart0.in ? c
+                      IF
+                        c = '*n'
+                          SEQ
+                            killed := TRUE
+                            C.tvmspecial.1.kill.user ()
+                        TRUE
+                          SEQ
+                            data.in ! b
+                            data.in ! c
+                  TRUE
+                    data.in ! b
+
+          INITIAL BOOL done IS FALSE:
+          WHILE NOT done
+            PRI ALT
+              end.out ? done
+                SKIP
+              BYTE b:
+              data.out ? b
+                IF
+                  b = #00
+                    SKIP
+                  TRUE
+                    uart0.out ! b
+
+          TIMER time:
+          INT next.flash:
+          SEQ
+            time ? next.flash
+            INITIAL BOOL done IS FALSE:
+            WHILE NOT done
+              PRI ALT
+                end.leds ? done
+                  SKIP
+                time ? AFTER next.flash
+                  SEQ
+                    port.g.io[PORTGIO] := port.g.io[PORTGIO] >< #0100
+                    next.flash := next.flash PLUS 500000
 :
 
