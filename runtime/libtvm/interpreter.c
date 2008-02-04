@@ -290,7 +290,7 @@ static void disconnect_channel(ECTX ectx, char dir, WORDPTR ptr)
 		else
 		{
 			BYTEPTR data_ptr = (BYTEPTR)WORKSPACE_GET(ws, WS_POINTER);
-			UWORD   data_len = (UWORD)WORKSPACE_GET(ws, WS_PENDING);
+			WORD   data_len	= WORKSPACE_GET(ws, WS_PENDING);
 
 			if(data_len > 0)
 			{

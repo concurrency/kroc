@@ -72,16 +72,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 		ECTX dst = (ECTX) WORKSPACE_GET ((WS), WS_ECTX);\
 		if (dst != ectx) {				\
 			int ret;				\
-			ADD_TO_QUEUE_ECTX((WS), ret);		\
+			ret = dst->add_to_queue_external (dst, ectx, (WS)); \
 			if (ret) {				\
 				return ret;			\
 			} else {				\
-				RUN_NEXT_ON_QUEUE_RET();	\
+				RUN_NEXT_ON_QUEUE_RET ();	\
 			}					\
 		} else {					\
 			WPTR = (WS);				\
 			IPTR = (BYTEPTR)			\
-				WORKSPACE_GET(WPTR, WS_IPTR);	\
+				WORKSPACE_GET (WPTR, WS_IPTR);	\
 			return ECTX_CONTINUE;			\
 		}						\
 	} while (0)
