@@ -403,16 +403,17 @@ TVM_INSTRUCTION (ins_xin)
 		channel_input, channel_dc_input
 	);
 
-	if (ret) {
-		/* Restore output process to channel word */
-		write_word (chan_ptr, (WORD) requeue);
+	if (ret > 0)
+	{
 		return ret;
 	}
-	else if (requeue != NOT_PROCESS_P)
+	else if (ret != 0 || requeue == NOT_PROCESS_P)
 	{
-		/* Restore output process to channel word */
-		write_word (chan_ptr, (WORD) requeue);
+		SET_ERROR_FLAG_RET (EFLAG_CHAN);
 	}
+
+	/* Restore output process to channel word */
+	write_word (chan_ptr, (WORD) requeue);
 
 	return ECTX_CONTINUE;
 }
