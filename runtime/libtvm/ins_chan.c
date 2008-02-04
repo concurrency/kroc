@@ -23,6 +23,37 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #include "ins_chan.h"
 
+/*{{{  Documentation */
+/*
+ * The channel communication code is divided into three layers:
+ *   - scheduling,
+ *   - channel word manipulation,
+ *   - and data movement.
+ * 
+ * Each layer does not interfere in the actions of the others,
+ * although may control the flow of execution.
+ *
+ * The scheduling layer invokes the channel word manipulation layer
+ * with pointers to data movement handlers.  It then acts on the
+ * return values in a way appropriate for the type of communication
+ * (normal or extended).
+ *
+ * The channel word manipulation layer reads the channel word,
+ * invokes data movement handlers if appriopriate, and perhaps
+ * saves this process in the channel.  Returning the information
+ * required to make a scheduling decision.
+ *
+ * Data movement handlers simply move data (or not in the case of 
+ * disconnected channel).
+ *
+ * Why this piece of documentation?  To try and remind people that
+ * having a data movement handler which does scheduling operations
+ * potentially confusing, and that by observing the defined
+ * hierarchy the code should maintain a degree of clarity.
+ */
+/*}}}*/
+
+/*{{{  Data movement */
 TVM_HELPER int channel_input (ECTX ectx, BYTEPTR dst_ptr, WORD len, WORDPTR src_wptr)
 {
 	BYTEPTR	src_ptr = (BYTEPTR) WORKSPACE_GET (src_wptr, WS_POINTER);
@@ -58,6 +89,9 @@ TVM_HELPER int channel_dc_nop (ECTX ectx, BYTEPTR ptr, WORD len)
 	return ECTX_CONTINUE;
 }
 
+/*}}}*/
+
+/*{{{  Channel word manipulation */
 TVM_HELPER int chan_io (ECTX ectx, 
 			WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len, 
 			WORDPTR *requeue, CHAN_IO_OK data, CHAN_IO_DC dc)
@@ -74,16 +108,8 @@ TVM_HELPER int chan_io (ECTX ectx,
 			*requeue = other_WPTR;
 			return data (ectx, data_ptr, data_len, other_WPTR);
 		} else if ((chan_value & (~1)) != NOT_PROCESS_P) {
+			/* Other end is ALTing */
 			WORD alt_state = WORKSPACE_GET (other_WPTR, WS_STATE);
-
-			/* Store state */
-			WORKSPACE_SET (WPTR, WS_POINTER, (WORD) data_ptr);
-			WORKSPACE_SET (WPTR, WS_ECTX, (WORD) ectx);
-			WORKSPACE_SET (WPTR, WS_PENDING, data_len);
-			WORKSPACE_SET (WPTR, WS_IPTR, (WORD) IPTR);
-
-			/* Put this process into the channel word */
-			write_word (chan_ptr, (WORD) WPTR);
 
 			switch (alt_state) {
 				case WAITING_P:
@@ -98,24 +124,28 @@ TVM_HELPER int chan_io (ECTX ectx,
 				default:
 					SET_ERROR_FLAG_RET (EFLAG_CHAN);
 			}
+
+			/* Fall through */
 		} else {
 			/* Disconnected channel */
 			return dc (ectx, data_ptr, data_len);
 		}
-	} else {
-		/* Store state */
-		WORKSPACE_SET (WPTR, WS_POINTER, (WORD) data_ptr);
-		WORKSPACE_SET (WPTR, WS_ECTX, (WORD) ectx);
-		WORKSPACE_SET (WPTR, WS_PENDING, data_len);
-		WORKSPACE_SET (WPTR, WS_IPTR, (WORD) IPTR);
-		
-		/* Put this process into the channel word */
-		write_word (chan_ptr, (WORD) WPTR);
 	}
+	
+	/* Store state */
+	WORKSPACE_SET (WPTR, WS_POINTER, (WORD) data_ptr);
+	WORKSPACE_SET (WPTR, WS_ECTX, (WORD) ectx);
+	WORKSPACE_SET (WPTR, WS_PENDING, data_len);
+	WORKSPACE_SET (WPTR, WS_IPTR, (WORD) IPTR);
+	
+	/* Put this process into the channel word */
+	write_word (chan_ptr, (WORD) WPTR);
 
-	return ECTX_CONTINUE;
+	return _ECTX_DESCHEDULE;
 }
+/*}}}*/
 
+/*{{{  I/O scheduling */
 TVM_HELPER int chan_std_io (ECTX ectx, 
 		WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len,
 		CHAN_IO_OK data, CHAN_IO_DC dc)
@@ -132,14 +162,22 @@ TVM_HELPER int chan_std_io (ECTX ectx,
 		data, dc
 	);
 
-	if (ret) {
+	if (ret > 0) {
 		return ret;
-	} else if (requeue != NOT_PROCESS_P) {
+	} 
+	else if (ret == _ECTX_DESCHEDULE) {
+		if (requeue != NOT_PROCESS_P) {
+			LOAD_PROCESS_RET (requeue);
+		} else {
+			RUN_NEXT_ON_QUEUE_RET ();
+		}
+	}
+	else if (requeue != NOT_PROCESS_P) {
 		ADD_TO_QUEUE_IPTR (WPTR, IPTR);
 		LOAD_PROCESS_RET (requeue);
-	} else {
-		RUN_NEXT_ON_QUEUE_RET ();
 	}
+
+	return ECTX_CONTINUE;
 }		
 
 TVM_HELPER int chan_in (ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start)
@@ -165,6 +203,7 @@ TVM_HELPER int chan_swap (ECTX ectx, WORDPTR chan_ptr, WORDPTR data_ptr)
 		channel_swap, channel_dc_nop
 	);
 }
+/*}}}*/
 
 /****************************************************************************
  *                   0xF_              0xF_              0xF_               *

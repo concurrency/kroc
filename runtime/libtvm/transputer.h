@@ -222,6 +222,9 @@ struct _tvm_ectx_t {
 /*}}}*/
 
 /*{{{  Execution context returns */
+/* Negative return values are reserved for internal use,
+ * and should never be propagated outside the interpreter.
+ */
 enum {
 	ECTX_CONTINUE		= 0,
 	ECTX_INIT		= 'i',
@@ -235,6 +238,9 @@ enum {
 	ECTX_SHUTDOWN		= 'S',
 	ECTX_SLEEP		= 's',
 	ECTX_TIME_SLICE		= 't'
+};
+enum {
+	_ECTX_DESCHEDULE	= -1
 };
 /*}}}*/
 
