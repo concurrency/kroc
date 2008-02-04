@@ -307,10 +307,6 @@ static void comm_list_add (Workspace wptr, pony_walk_state *s, void *item)
 {
 	void **p;
 
-	if (item == NULL) {
-		CFATAL ("comm_list_add: adding NULL pointer to comm_list\n", 0);
-	}
-
 	p = vector_add (wptr, (void **) &s->comm_list, sizeof *s->comm_list, &s->comm_list_used, &s->comm_list_size, 16);
 	*p = item;
 }
@@ -356,7 +352,9 @@ static void process_comm_list (Workspace wptr, pony_walk_state *s)
 		void *item = s->comm_list[i];
 		CTRACE ("freeing item %d: ptr 0x%08x\n", 2, i, (unsigned int) item);
 
-		MTRelease (wptr, item);
+		if (item != NULL) {
+			MTRelease (wptr, item);
+		}
 	}
 	s->comm_list_used = 0;
 }
@@ -418,11 +416,11 @@ static void output_di (Workspace wptr, pony_walk_state *s, void *data, size_t si
 	}
 }
 /*}}}*/
-/*{{{ input_di */
+/*{{{ input_di_unchecked */
 /*
- *	input a data item from the pony kernel
+ *	input a data item from the pony kernel without checking the size
  */
-static mt_array_t *input_di (Workspace wptr, pony_walk_state *s, size_t size)
+static mt_array_t *input_di_unchecked (Workspace wptr, pony_walk_state *s)
 {
 	char tag;
 	mt_array_t *array;
@@ -433,7 +431,25 @@ static mt_array_t *input_di (Workspace wptr, pony_walk_state *s, size_t size)
 		CFATAL ("input_di: expected data.item.nlc, got %d\n", 1, tag);
 	}
 	MTChanIn (wptr, s->from_kern, (void **) &array);
+
+	if (array == NULL) {
+		/* Zero-length array communicated as NULL -- allocate a dummy array
+		 * so we don't ever return NULL from this function. */
+		array = MTAllocArray (wptr, MT_MAKE_NUM (MT_NUM_BYTE), 1, 0);
+	}
+
 	SCTRACE (s, "... read data.item.nlc; mobile %08x; size %d\n", 2, (int) array, array->dimensions[0]);
+	return array;
+}
+/*}}}*/
+/*{{{ input_di */
+/*
+ *	input a data item from the pony kernel
+ */
+static mt_array_t *input_di (Workspace wptr, pony_walk_state *s, size_t size)
+{
+	mt_array_t *array = input_di_unchecked (wptr, s);
+
 	if (array->dimensions[0] != size) {
 		CFATAL ("input_di: expected size %d in data.item.nlc, got size %d\n", 2, size, array->dimensions[0]);
 	}
@@ -836,16 +852,12 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			case PW_input:
 				{
 					mt_array_t *array;
-					char tag;
 
 					if (first_clc) {
 						CTRACE ("input counted array size CLC %d\n", 1, s->clc);
-						ChanInChar (wptr, s->from_kern, &tag);
-						if (tag != PEI_data_item_nlc) {
-							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
-						}
-						MTChanIn (wptr, s->from_kern, (void **) &array);
-						if (array->dimensions[0] > sizeof count || array->dimensions[0] != count_size) {
+						array = input_di (wptr, s, count_size);
+
+						if (array->dimensions[0] > sizeof count) {
 							CFATAL ("walk_inner: counted array size type is invalid; was %d, expected %d\n", 2, array->dimensions[0], count_size);
 						}
 						memcpy (&count, array->data, array->dimensions[0]);
@@ -865,16 +877,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 
 					if (!(first_clc && count == 0)) {
 						CTRACE ("input counted array data CLC %d\n", 1, s->clc);
-						ChanInChar (wptr, s->from_kern, &tag);
-						if (tag != PEI_data_item_nlc) {
-							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
-						}
-						MTChanIn (wptr, s->from_kern, (void **) &array);
-
-						if (array == NULL) {
-							/* XXX Workaround: if the array is empty, NULL gets communicated. */
-							array = MTAllocArray (wptr, MT_MAKE_NUM (MT_NUM_BYTE), 1, 0);
-						}
+						array = input_di_unchecked (wptr, s);
 
 						if (!first_clc) {
 							CTRACE ("output counted array size; size is %d, count is %d\n", 2, array->dimensions[0], array->dimensions[0] / subtype_size);
@@ -920,19 +923,31 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			case PW_cancel:
 				{
 					int i;
-					long long data_size;
+					unsigned long long data_size;
 					mt_array_t *array = (mt_array_t *) get_mobile (wptr, s);
-
-					if (array == NULL) {
-						CFATAL ("walk_inner: trying to send undefined mobile array\n", 0);
-						/* FIXME ... or a zero-length one. */
-					}
+					unsigned int *dimensions;
+					void *data;
 
 					CTRACE ("output marray, %d dimensions, mobile at 0x%08x\n", 2, dimcount, (int) array);
+
+					if (array == NULL) {
+						/* Empty array, communicated as NULL, so we need to
+						 * allocate a dummy dimensions array. */
+						CTRACE ("empty marray\n", 0);
+						dimensions = alloc_temp_mem (wptr, s, dimcount * sizeof (int));
+						for (i = 0; i < dimcount; i++) {
+							dimensions[i] = 0;
+						}
+						data = NULL;
+					} else {
+						dimensions = array->dimensions;
+						data = array->data;
+					}
+
 					data_size = subtype_size;
 					for (i = 0; i < dimcount; i++) {
-						CTRACE ("dimension %d is %d\n", 2, i, array->dimensions[i]);
-						data_size *= array->dimensions[i];
+						CTRACE ("dimension %d is %d\n", 2, i, dimensions[i]);
+						data_size *= dimensions[i];
 					}
 					CTRACE ("marray data size is %d\n", 1, (int) data_size);
 
@@ -942,15 +957,15 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 
 					if (s->mode == PW_output) {
 						if (dimcount > 1) {
-							CTRACE ("output CLC %d (marray dimension block at 0x%08x)\n", 2, s->clc, (unsigned int) &(array->dimensions[0]));
+							CTRACE ("output CLC %d (marray dimension block at 0x%08x)\n", 2, s->clc, (unsigned int) dimensions);
 							ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
-							ChanOutInt (wptr, s->to_kern, (int) &(array->dimensions[0]));
+							ChanOutInt (wptr, s->to_kern, (int) dimensions);
 							ChanOutInt (wptr, s->to_kern, (int) dimcount * sizeof (word));
 						}
 
-						CTRACE ("output CLC %d (marray data at 0x%08x)\n", 2, s->clc, (int) array->data);
+						CTRACE ("output CLC %d (marray data at 0x%08x)\n", 2, s->clc, (int) data);
 						ChanOutChar (wptr, s->to_kern, PDO_data_item_nlc);
-						ChanOutInt (wptr, s->to_kern, (int) array->data);
+						ChanOutInt (wptr, s->to_kern, (int) data);
 						ChanOutInt (wptr, s->to_kern, (int) data_size);
 					} else {
 						CTRACE ("cancelling CLC %d marray\n", 1, s->clc);
@@ -963,7 +978,6 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 				{
 					int i;
 					mt_array_t *array, *output;
-					char tag;
 					int num_elements;
 
 					/* We allocate mobile arrays as arrays of BYTEs, from the mobile type system's
@@ -973,11 +987,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 
 					if (dimcount == 1) {
 						CTRACE ("input CLC %d (marray data for single dimension)\n", 1, s->clc);
-						ChanInChar (wptr, s->from_kern, &tag);
-						if (tag != PEI_data_item_nlc) {
-							CFATAL ("walk_inner: expected data.item.nlc, got %d\n", 1, tag);
-						}
-						MTChanIn (wptr, s->from_kern, (void **) &array);
+						array = input_di_unchecked (wptr, s);
 						num_elements = array->dimensions[0] / subtype_size;
 
 						/* We can just reuse the array we received, since it has one dimension already. */
