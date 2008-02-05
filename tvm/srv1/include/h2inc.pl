@@ -254,10 +254,19 @@ foreach my $file (@ARGV) {
 	}
 
 	# Output pass
+	my $out_file_n = $out_file;
+	$out_file_n =~ s/(.*)\///;
+	$out_file_n =~ tr/a-z/A-Z/;
+	$out_file_n =~ s/[^A-Z0-9.]/./g;
+
 	open ($fh, ">", $out_file) || die $!;
+	print $fh "#IF NOT DEFINED ($out_file_n)\n";
+	print $fh "#DEFINE $out_file_n\n";
 	foreach my $line (@lines) {
 		print $fh $line, "\n";
 	}
+	print $fh "\n";
+	print $fh "#ENDIF -- !$out_file_n\n";
 	close ($fh);
 }
 
