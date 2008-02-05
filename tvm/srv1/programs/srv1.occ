@@ -1,0 +1,143 @@
+#INCLUDE "lasers.occ"
+#INCLUDE "leds.occ"
+#INCLUDE "motors.occ"
+#INCLUDE "out.occ"
+#INCLUDE "misc.occ"
+
+PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.MOTOR motors!)
+  BYTE ch:
+  INITIAL [2]BYTE response IS ['#', 0]:
+  WHILE TRUE
+    SEQ
+      in ? ch
+      response[1] := ch
+      CASE ch
+        -- Direct motor control
+        'M'
+          SKIP
+        -- Drift left
+        '7'
+          motors ! turn; 15
+        -- Drive forward
+        '8'
+          motors ! speed; 50
+        -- Drift right
+        '9'
+          motors ! turn; -15
+        -- Drive left
+        '4'
+          motors ! turn; 30
+        -- Stop
+        '5'
+          motors ! speed; 0
+        -- Drive right
+        '6'
+          motors ! turn; -30
+        -- Back left
+        '1'
+          motors ! back.turn; 30
+        -- Reverse
+        '2'
+          motors ! speed.delta; -1
+        -- Back right
+        '3'
+          motors ! back.turn; -30
+        -- Clockwise turn
+        '.'
+          SEQ
+            motors ! turn; 75
+            delay(200 * MILLIS)
+            motors ! stop
+        -- Camera overlay
+        'o'
+          SKIP -- On
+        'O'
+          SKIP -- Off
+        -- Lasers
+        'l'
+          lasers ! all; TRUE  -- On
+        'L'
+          lasers ! all; FALSE -- Off
+        -- Time in MS since reset
+        't'
+          SKIP
+        -- JPEG Quality
+        'q'
+          SKIP
+        -- Range in centimeters to nearest object
+        'R'
+          SKIP
+        -- Version
+        'V'
+          SKIP
+        -- IO pins
+        'd'
+          SEQ
+            in ? ch
+            CASE ch
+              'd'
+                SKIP -- Direction
+              'r'
+                SKIP -- Read
+              'w'
+                SKIP -- Write
+              ELSE
+                SEQ
+                  out.string("Invalid command d", 0, out!)
+                  out.byte(ch, 0, out!)
+                  out.string(" found in protocol*n", 0, out!)
+        -- Xmodem recieve file
+        'X'
+          SKIP
+        -- Flash Memory
+        'z'
+          SEQ
+            in ? ch
+            CASE ch
+              'w'
+                SKIP -- Write
+              'r'
+                SKIP -- Read
+              'd'
+                SKIP -- Dump
+              'Z'
+                SKIP -- Update boot sector
+              ELSE
+                SEQ
+                  out.string("Invalid command z", 0, out!)
+                  out.byte(ch, 0, out!)
+                  out.string(" found in protocol*n", 0, out!)
+        -- Vision commands
+        'v'
+          SEQ
+            in ? ch
+            CASE ch
+              'g'
+                SKIP -- Grab and sample region
+              'r'
+                SKIP -- Retrieve stored color info from color bin
+              'c'
+                SKIP -- Set the contents of a color bin
+              's'
+                SKIP -- View pixel column vector data from color bin
+              'f'
+                SKIP -- Distance to first pixel matching target color
+              'b'
+                SKIP -- Search for blobs
+              'n'
+                SKIP -- Blobs, returns the number of pixels matching target color
+              ELSE
+                SEQ
+                  out.string("Invalid command v", 0, out!)
+                  out.byte(ch, 0, out!)
+                  out.string(" found in protocol*n", 0, out!)
+        'Q'
+          SKIP -- Execute C program stored in flash memory.
+        ELSE
+          SEQ
+            out.string("Invalid command ", 0, out!)
+            out.byte(ch, 0, out!)
+            out.string(" found in protocol*n", 0, out!)
+      -- Respond to commands.
+      out.string(response, 0, out!)
+:
