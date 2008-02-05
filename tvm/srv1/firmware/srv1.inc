@@ -83,7 +83,7 @@ PROC firmware.query.user (BOOL running, INT state, []BYTE context)
 :
 
 INLINE PROC safe.set.register.16 (VAL INT addr, set, mask)
-  C.tvmspecial.3.set.register.16 (VAL INT addr, set, mask)
+  C.tvmspecial.3.set.register.16 (addr, set, mask)
 :
 
 PROC set.camera.mode (VAL INT mode)

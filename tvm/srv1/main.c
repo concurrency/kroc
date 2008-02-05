@@ -15,34 +15,31 @@
 #include <camera.h>
 #include <i2cwrite.h>
 #include <ov9655.h>
-#include <uart.h>
 
 #define CSYNC	__asm__ __volatile__ ("csync;" : : : "memory")
 #define SSYNC	__asm__ __volatile__ ("ssync;" : : : "memory")
 #define IDLE	__asm__ __volatile__ ("idle;")
 
-static char version_string[] = "TVM SRV-1 Blackfin w/C interpreter - " __TIME__ " - " __DATE__;
+static char version_string[] = "TVM SRV-1 Blackfin - " __TIME__ " - " __DATE__;
 
-/*{{{  Surveyor support code */
+/*{{{  TVM state */
+static tvm_t 		tvm;
+static tvm_ectx_t 	firmware_ctx, user_ctx;
+/*}}}*/
+
+/*{{{  SDRAM support */
 static void clear_sdram (void)
 {
-	const BYTE *end = (BYTE *) 0x02000000;
-	BYTE *cp	= (BYTE *) 0;
+	const short *end	= (short *) 0x02000000;
+	short *cp		= (short *) 0;
 
 	while (cp < end) {
 		*(cp++) = 0;
 	}
 }
-
-static void serial_out_version (void)
-{
-	uart0SendString ((unsigned char *)"Version - ");
-	uart0SendString ((unsigned char *)version_string);
-	uart0SendChar ('\n');
-}
 /*}}}*/
 
-/*{{{  Timer code */
+/*{{{  Timer functionality */
 volatile unsigned long core_timer_wrap_count;
 
 static void init_timers (void)
@@ -84,122 +81,6 @@ static void delay_ms (WORD delay)
 static WORD srv_get_time (ECTX ectx)
 {
 	return read_time ();
-}
-/*}}}*/
-
-/*{{{  TVM state */
-static tvm_t 		tvm;
-static tvm_ectx_t 	firmware_ctx, user_ctx;
-/*}}}*/
-
-/*{{{  Camera support */
-static int camera_frame_words	= 0;
-static int camera_initialised	= 0;
-static int camera_running	= 0;
-
-/* Move these constants to a shared header */
-enum {
-	CAMERA_160_128		= 1,
-	CAMERA_320_256		= 2,
-	CAMERA_640_512		= 3,
-	CAMERA_1280_1024	= 4
-};
-
-static int set_camera_mode (ECTX ectx, WORD args[])
-{
-	unsigned int width, height, cfg_length;
-	unsigned char *cfg	= NULL;
-	WORD mode		= args[0];
-
-	if (camera_running) {
-		camera_stop ();
-		camera_running = 0;
-	}
-
-	switch (mode) {
-		case CAMERA_160_128: 
-			width		= 160;
-			height 		= 128; 
-			cfg		= ov9655_qqvga; 
-			cfg_length	= sizeof(ov9655_qqvga);
-			break;
-		case CAMERA_320_256:
-			width		= 320;
-			height 		= 256; 
-			cfg		= ov9655_qvga; 
-			cfg_length	= sizeof(ov9655_qvga);
-			break;
-		case CAMERA_640_512:
-			width		= 640;
-			height 		= 512; 
-			cfg		= ov9655_vga; 
-			cfg_length	= sizeof(ov9655_vga);
-			break;
-		case CAMERA_1280_1024:
-			width		= 1280;
-			height 		= 1024;
-			cfg		= ov9655_sxga; 
-			cfg_length	= sizeof(ov9655_sxga);
-			break;
-	}
-
-	if (cfg != NULL) {
-		if (!camera_initialised) {
-			i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >>1);
-			camera_initialised = 1;
-		}
-
-		i2cwrite (0x30, cfg, cfg_length >> 1);
-		
-		camera_init (
-			(unsigned char *) DMA_BUF1,
-			(unsigned char *) DMA_BUF2,
-			width, height
-		);
-		camera_start();
-
-		camera_frame_words = (width * height) >> 1;
-		camera_running = 1;
-	}
-				
-	return SFFI_OK;
-}
-
-static int get_camera_frame (ECTX ectx, WORD args[])
-{
-	WORDPTR	dst		= (WORDPTR) args[0];
-	WORD	dst_len		= args[1] >> 2;
-	WORD	*src		= NULL;
-	WORD	len		= dst_len;
-	WORD	i;
-
-	/* Make sure we don't copy more data than there is */
-	if (len > camera_frame_words) {
-		len = camera_frame_words;
-	}
-
-	/* Select buffer the hardware isn't writing to */
-	if (((unsigned long) *pDMA0_CURR_ADDR) < ((unsigned long) DMA_BUF2)) {
-		src = (WORD *) DMA_BUF2;
-	} else {
-		src = (WORD *) DMA_BUF1;
-	}
-
-	/* Copy data (as WORDs to improve throughput) */
-	for (i = 0; i < len; i++) {
-		write_word (dst, *(src++));
-		dst = wordptr_plus (dst, 1);
-	}
-
-	if (dst_len > len) {
-		/* Blank any excess buffer */
-		for (i = len; i < dst_len; i++) {
-			write_word (dst, (WORD) 0);
-			dst = wordptr_plus (dst, 1);
-		}
-	}
-
-	return SFFI_OK;
 }
 /*}}}*/
 
@@ -310,10 +191,8 @@ static int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 	}
 }
 
-static int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
+static void uart0_send_char (unsigned char c)
 {
-	unsigned char data = (unsigned char) read_byte (pointer);
-
 	/* Wait for RTS to go low (remote ready) */
 	while (*pPORTHIO & 0x0001) {
 		continue;
@@ -323,11 +202,138 @@ static int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
 	while (!(*pUART0_LSR & THRE)) {
 		continue;
 	}
-	
+
 	/* Send data */
-	*pUART0_THR = data;
+	*pUART0_THR = c;
+}
+
+static void uart0_send_string (unsigned char *str)
+{
+	unsigned char c;
+	while ((c = *str++) != '\0') {
+		uart0_send_char (c);
+	}
+}
+
+
+static int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
+{
+	unsigned char data = (unsigned char) read_byte (pointer);
+
+	uart0_send_char (data);
 
 	return ECTX_CONTINUE;
+}
+/*}}}*/
+
+/*{{{  Camera support */
+static int camera_frame_words	= 0;
+static int camera_initialised	= 0;
+static int camera_running	= 0;
+
+/* Move these constants to a shared header */
+enum {
+	CAMERA_160_128		= 1,
+	CAMERA_320_256		= 2,
+	CAMERA_640_512		= 3,
+	CAMERA_1280_1024	= 4
+};
+
+static int set_camera_mode (ECTX ectx, WORD args[])
+{
+	unsigned int width, height, cfg_length;
+	unsigned char *cfg	= NULL;
+	WORD mode		= args[0];
+
+	if (camera_running) {
+		camera_stop ();
+		camera_running = 0;
+	}
+
+	switch (mode) {
+		case CAMERA_160_128: 
+			width		= 160;
+			height 		= 128; 
+			cfg		= ov9655_qqvga; 
+			cfg_length	= sizeof(ov9655_qqvga);
+			break;
+		case CAMERA_320_256:
+			width		= 320;
+			height 		= 256; 
+			cfg		= ov9655_qvga; 
+			cfg_length	= sizeof(ov9655_qvga);
+			break;
+		case CAMERA_640_512:
+			width		= 640;
+			height 		= 512; 
+			cfg		= ov9655_vga; 
+			cfg_length	= sizeof(ov9655_vga);
+			break;
+		case CAMERA_1280_1024:
+			width		= 1280;
+			height 		= 1024;
+			cfg		= ov9655_sxga; 
+			cfg_length	= sizeof(ov9655_sxga);
+			break;
+	}
+
+	if (cfg != NULL) {
+		if (!camera_initialised) {
+			i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >>1);
+			camera_initialised = 1;
+		}
+
+		i2cwrite (0x30, cfg, cfg_length >> 1);
+		
+		camera_init (
+			(unsigned char *) DMA_BUF1,
+			(unsigned char *) DMA_BUF2,
+			width, height
+		);
+		camera_start();
+
+		camera_frame_words = (width * height) >> 1;
+		camera_running = 1;
+	}
+				
+	return SFFI_OK;
+}
+
+static int get_camera_frame (ECTX ectx, WORD args[])
+{
+	WORDPTR	dst		= (WORDPTR) args[0];
+	WORD	dst_len		= args[1] >> 2;
+	WORD	*src		= NULL;
+	WORD	len		= dst_len;
+	WORD	i;
+
+	/* Make sure we don't copy more data than there is */
+	if (len > camera_frame_words) {
+		len = camera_frame_words;
+	}
+
+	/* Select buffer the hardware isn't writing to */
+	if (((unsigned long) *pDMA0_CURR_ADDR) < ((unsigned long) DMA_BUF2)) {
+		src = (WORD *) DMA_BUF2;
+	} else {
+		src = (WORD *) DMA_BUF1;
+	}
+
+	/* Copy data (as WORDs to improve throughput) */
+	for (i = 0; i < len; i++) {
+		write_word (dst, *(src++));
+		dst = wordptr_plus (dst, 1);
+	}
+
+	if (dst_len > len) {
+		/* Blank any excess buffer */
+		for (i = len; i < dst_len; i++) {
+			write_word (dst, (WORD) 0);
+			dst = wordptr_plus (dst, 1);
+		}
+	}
+
+	return SFFI_OK;
 }
 /*}}}*/
 
@@ -558,7 +564,7 @@ static const int	firmware_sffi_table_length =
 /*{{{  Firmware context */
 #include "firmware.h"
 
-static WORD firmware_memory[192];
+static WORD firmware_memory[256];
 static WORD firmware_memory_len;
 
 static void init_firmware_memory (void)
@@ -637,14 +643,14 @@ static int run_firmware (void)
 
 	/* Being here means some unexpected happened... */
 	
-	uart0SendString ((unsigned char *) "## Firmware failed; state = ");
-	uart0SendChar ((unsigned char) ret);
-	uart0SendChar ('\n');
+	uart0_send_string ((unsigned char *) "## Firmware failed; state = ");
+	uart0_send_char ((unsigned char) ret);
+	uart0_send_char ('\n');
 
 	if (user_parent != (WORDPTR) NOT_PROCESS_P) {
-		uart0SendString ((unsigned char *) "## User state = ");
-		uart0SendChar ((unsigned char) user_ctx.state);
-		uart0SendChar ('\n');
+		uart0_send_string ((unsigned char *) "## User state = ");
+		uart0_send_char ((unsigned char) user_ctx.state);
+		uart0_send_char ('\n');
 	}
 
 	/* Go into an idle loop */
@@ -662,7 +668,8 @@ int main (void) {
 	init_uart ();
 	init_timers ();
 
-	serial_out_version ();
+	uart0_send_string ((unsigned char *) version_string);
+	uart0_send_char ('\n');
 	
 	/* Initialise interpreter */
 	tvm_init (&tvm);
@@ -673,8 +680,6 @@ int main (void) {
 	user_ctx.sffi_table		= firmware_sffi_table;
 	user_ctx.sffi_table_length	= firmware_sffi_table_length;
 
-	uart0SendString ((unsigned char *) "## TVM initialisation complete...\n");
-	
 	for (;;) {
 		int f_ret = run_firmware ();
 		int u_ret = ECTX_EMPTY;

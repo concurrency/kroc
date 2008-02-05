@@ -1,3 +1,5 @@
+#IF NOT DEFINED (OUT.OCC)
+#DEFINE OUT.OCC
 
 --*{{{  ASCII Character values.
 VAL BYTE NULL IS 0:          --* ASCII NUL
@@ -19,7 +21,6 @@ VAL INT string.more IS 1:    --* Left more than right
 --*}}}
 
 
---{{{  out stuff
 --{{{  PROC out.repeat (VAL BYTE ch, VAL INT n, CHAN BYTE out!)
 --* Write a character repeatedly to a channel.
 -- This outputs [@code ch] down the channel [@code out] [@code n] times. If
@@ -208,4 +209,17 @@ PROC out.hex (VAL INT n, VAL INT field, CHAN BYTE out!)
             SKIP
       --}}}  
 :
+--}}}
 
+--{{{  PROC out.hex.byte (VAL BYTE b, CHAN BYTE out!)
+PROC out.hex.byte (VAL BYTE b, CHAN BYTE out!)
+  VAL []BYTE cmap IS "0123456789ABCDEF":
+  VAL INT b IS (INT b):
+  SEQ
+    out ! '#'
+    out ! cmap[(b >> 4) /\ #F]
+    out ! cmap[b /\ #F]
+:
+--}}}
+
+#ENDIF -- !OUT.OCC

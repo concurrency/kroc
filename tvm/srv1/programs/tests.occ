@@ -1,69 +1,57 @@
-#INCLUDE "srv1.occ"
+#INCLUDE "srv1.inc"
+#INCLUDE "delay.inc"
 
-PROC test.lasers()
-  CHAN BOOL ctl:
-  CHAN P.LASER l:
-  PAR
-    lasers(l?, ctl?)
-    SEQ
-      l ! left; TRUE
-      delay(2 * SECONDS)
-      l ! right; TRUE
-      delay(2 * SECONDS)
-      l ! left; FALSE
-      delay (2 * SECONDS)
-      l ! right; FALSE
-      delay (2 * SECONDS)
-      l ! all; TRUE
-      delay (2 * SECONDS)
-      l ! all; FALSE
-      ctl ! TRUE
-:
+#INCLUDE "out.occ"
 
-PROC test.leds()
-  CHAN BOOL ctl:
-  CHAN P.LED l:
-  PAR
-    leds(l?, ctl?)
-    SEQ
-      l ! led; 1; TRUE
-      delay(2 * SECONDS)
-      l ! led; 1; FALSE
-      delay(2 * SECONDS)
-      l ! led; 2; TRUE
-      delay (2 * SECONDS)
-      l ! led; 2; FALSE
-      delay (2 * SECONDS)
-      l ! led; 1; TRUE
-      l ! led; 2; TRUE
-      delay (2 * SECONDS)
-      l ! led; 1; FALSE
-      l ! led; 2; FALSE
-      ctl ! TRUE
-:
-
-PROC test.motors ()
-  CHAN P.MOTOR m:
-  CHAN BOOL ctl:
-  PAR
-    motors(m?, ctl?)
-    SEQ
-      SEQ i = 1 FOR 5
-        SEQ
-          m ! speed; i * 20
-          delay(2 * SECONDS)
-          m ! speed; -(i * 20)
-          delay(2 * SECONDS)
-      ctl ! TRUE
-:
-
-PROC tests (CHAN BYTE uart0.in?, uart0.out!)
+PROC test.lasers(CHAN P.LASER l!)
   SEQ
-    out.string("SRV-1 Test Program (of Doom)*n", 0, uart0.out!)
-    out.string("Testing death lasers*n", 0, uart0.out!)
-    test.lasers()
-    out.string("Testing less deadly LED*'s*n", 0, uart0.out!) 
-    test.leds()
-    out.string("Testing harmless motors*n", 0, uart0.out!)
-    test.motors()
+    l ! left; TRUE
+    delay.s(2)
+    l ! right; TRUE
+    delay.s(2)
+    l ! left; FALSE
+    delay.s(2)
+    l ! right; FALSE
+    delay.s(2)
+    l ! all; TRUE
+    delay.s(2)
+    l ! all; FALSE
+:
+
+PROC test.leds(CHAN P.LED l!)
+  SEQ
+    l ! led; 1; TRUE
+    delay.s(2)
+    l ! led; 1; FALSE
+    delay.s(2)
+    l ! led; 2; TRUE
+    delay.s(2)
+    l ! led; 2; FALSE
+    delay.s(2)
+    l ! led; 1; TRUE
+    l ! led; 2; TRUE
+    delay.s(2)
+    l ! led; 1; FALSE
+    l ! led; 2; FALSE
+:
+
+PROC test.motors (CHAN P.MOTOR m!)
+  SEQ
+    SEQ i = 1 FOR 5
+      SEQ
+        m ! speed; i * 20
+        delay.s(2)
+        m ! speed; -(i * 20)
+        delay.s(2)
+:
+
+PROC tests (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.MOTOR motors!)
+  SEQ
+    out.string("SRV-1 Test Program (of Doom)*n", 0, out!)
+    out.string("Testing death lasers*n", 0, out!)
+    test.lasers(lasers!)
+    out.string("Testing less deadly LED*'s*n", 0, out!)
+    test.leds(leds!)
+    out.string("Testing harmless motors*n", 0, out!)
+    test.motors(motors!)
 :
