@@ -1,143 +1,237 @@
-#INCLUDE "lasers.occ"
-#INCLUDE "leds.occ"
-#INCLUDE "motors.occ"
+#INCLUDE "srv1.inc"
+#INCLUDE "delay.inc"
 #INCLUDE "out.occ"
-#INCLUDE "misc.occ"
+
+PROC drain.uart (CHAN BYTE in?)
+  INITIAL INT clear IS 0:
+  WHILE clear < 10
+    PRI ALT
+      BYTE b:
+      in ? b
+        SKIP
+      TRUE & SKIP
+        clear := clear + 1
+:
+
+PROC protocol.error (VAL BYTE prefix, ch, RESULT BOOL custom.response, CHAN BYTE out!)
+  SEQ
+    custom.response := TRUE
+    out.string("Invalid command ", 0, out!)
+    IF
+      prefix = 0
+        SKIP
+      TRUE
+        out ! prefix
+    out ! ch
+    out.string(" found in protocol*n", 0, out!)
+:
 
 PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.MOTOR motors!)
-  BYTE ch:
-  INITIAL [2]BYTE response IS ['#', 0]:
-  WHILE TRUE
-    SEQ
-      in ? ch
-      response[1] := ch
-      CASE ch
-        -- Direct motor control
-        'M'
-          SKIP
-        -- Drift left
-        '7'
-          motors ! turn; 15
-        -- Drive forward
-        '8'
-          motors ! speed; 50
-        -- Drift right
-        '9'
-          motors ! turn; -15
-        -- Drive left
-        '4'
-          motors ! turn; 30
-        -- Stop
-        '5'
-          motors ! speed; 0
-        -- Drive right
-        '6'
-          motors ! turn; -30
-        -- Back left
-        '1'
-          motors ! back.turn; 30
-        -- Reverse
-        '2'
-          motors ! speed.delta; -1
-        -- Back right
-        '3'
-          motors ! back.turn; -30
-        -- Clockwise turn
-        '.'
-          SEQ
-            motors ! turn; 75
-            delay(200 * MILLIS)
-            motors ! stop
-        -- Camera overlay
-        'o'
-          SKIP -- On
-        'O'
-          SKIP -- Off
-        -- Lasers
-        'l'
-          lasers ! all; TRUE  -- On
-        'L'
-          lasers ! all; FALSE -- Off
-        -- Time in MS since reset
-        't'
-          SKIP
-        -- JPEG Quality
-        'q'
-          SKIP
-        -- Range in centimeters to nearest object
-        'R'
-          SKIP
-        -- Version
-        'V'
-          SKIP
-        -- IO pins
-        'd'
-          SEQ
-            in ? ch
-            CASE ch
-              'd'
-                SKIP -- Direction
-              'r'
-                SKIP -- Read
-              'w'
-                SKIP -- Write
-              ELSE
-                SEQ
-                  out.string("Invalid command d", 0, out!)
-                  out.byte(ch, 0, out!)
-                  out.string(" found in protocol*n", 0, out!)
-        -- Xmodem recieve file
-        'X'
-          SKIP
-        -- Flash Memory
-        'z'
-          SEQ
-            in ? ch
-            CASE ch
-              'w'
-                SKIP -- Write
-              'r'
-                SKIP -- Read
-              'd'
-                SKIP -- Dump
-              'Z'
-                SKIP -- Update boot sector
-              ELSE
-                SEQ
-                  out.string("Invalid command z", 0, out!)
-                  out.byte(ch, 0, out!)
-                  out.string(" found in protocol*n", 0, out!)
-        -- Vision commands
-        'v'
-          SEQ
-            in ? ch
-            CASE ch
-              'g'
-                SKIP -- Grab and sample region
-              'r'
-                SKIP -- Retrieve stored color info from color bin
-              'c'
-                SKIP -- Set the contents of a color bin
-              's'
-                SKIP -- View pixel column vector data from color bin
-              'f'
-                SKIP -- Distance to first pixel matching target color
-              'b'
-                SKIP -- Search for blobs
-              'n'
-                SKIP -- Blobs, returns the number of pixels matching target color
-              ELSE
-                SEQ
-                  out.string("Invalid command v", 0, out!)
-                  out.byte(ch, 0, out!)
-                  out.string(" found in protocol*n", 0, out!)
-        'Q'
-          SKIP -- Execute C program stored in flash memory.
-        ELSE
-          SEQ
-            out.string("Invalid command ", 0, out!)
-            out.byte(ch, 0, out!)
-            out.string(" found in protocol*n", 0, out!)
-      -- Respond to commands.
-      out.string(response, 0, out!)
+  INITIAL [3]BYTE response IS ['#', 0, '*n']:
+  INITIAL INT frame.count IS 0:
+  INITIAL INT width IS 320:
+  INITIAL INT height IS 256:
+  INITIAL BOOL overlay IS TRUE:
+  INITIAL INT quality IS 4:
+  SEQ
+    set.camera.mode(CAMERA.320.256)
+    WHILE TRUE
+      INITIAL BOOL custom.response IS FALSE:
+      BYTE ch:
+      SEQ
+        in ? ch
+        response[1] := ch
+        CASE ch
+          -- Direct motor control
+          'M'
+            SKIP
+          -- Drift left
+          '7'
+            motors ! turn; 15
+          -- Drive forward
+          '8'
+            motors ! speed; 50
+          -- Drift right
+          '9'
+            motors ! turn; -15
+          -- Drive left
+          '4'
+            motors ! turn; 30
+          -- Stop
+          '5'
+            motors ! speed; 0
+          -- Drive right
+          '6'
+            motors ! turn; -30
+          -- Back left
+          '1'
+            motors ! back.turn; 30
+          -- Reverse
+          '2'
+            motors ! speed.delta; -1
+          -- Back right
+          '3'
+            motors ! back.turn; -30
+          -- Clockwise turn
+          '.'
+            SEQ
+              motors ! turn; 75
+              delay.ms(200)
+              motors ! stop
+          -- High motor speed range
+          '+'
+            SKIP
+          -- Low motor speed range
+          '-'
+            SKIP
+          -- Set camera resolution to 160x128
+          'a'
+            SEQ
+              width, height := 160, 128
+              set.camera.mode (CAMERA.160.128)
+          -- Set camera resolution to 320x256
+          'b'
+            SEQ
+              width, height := 320, 256
+              set.camera.mode (CAMERA.320.256)
+          -- Set camera resolution to 640x512
+          'c'
+            SEQ
+              width, height := 640, 512
+              set.camera.mode (CAMERA.640.512)
+          -- Set camera resolution to 1280x1024
+          'A'
+            SEQ
+              width, height := 1280, 1024
+              set.camera.mode (CAMERA.1280.1024)
+          -- Grab JPEG compressed video frame
+          'I'
+            [(1280 * 1024) * 2]BYTE frame:
+            [(1280 * 1024) * 2]BYTE jpeg.data:
+            INITIAL [10]BYTE header IS "##IMJ00000":
+            INT jpeg.bytes:
+            SEQ
+              get.camera.frame (frame)
+              IF
+                overlay
+                  INITIAL [9]BYTE caption IS "frame 000":
+                  SEQ
+                    caption[6] := BYTE ('0' + (((frame.count / 100) \ 10)))
+                    caption[7] := BYTE ('0' + (((frame.count / 10) \ 10)))
+                    caption[8] := BYTE ('0' +  (frame.count \ 10))
+                    draw.caption.on.frame (width, caption, frame)
+                TRUE
+                  SKIP
+              jpeg.encode.frame (width, height, quality, frame, jpeg.data, jpeg.bytes)
+              CASE width
+                80
+                  header[5] := '1'
+                160
+                  header[5] := '3'
+                320
+                  header[5] := '5'
+                640
+                  header[5] := '7'
+                1280
+                  header[5] := '9'
+              
+              [4]BYTE size RETYPES jpeg.bytes:
+              SEQ i = 0 FOR 4
+                header[6 + i] := size[i]
+              blit.to.uart0 (header)
+              blit.to.uart0 ([ jpeg.data FOR jpeg.bytes ])
+              drain.uart (in?)
+
+              frame.count := frame.count + 1
+              custom.response := TRUE
+          -- Camera overlay
+          'o'
+            overlay := TRUE
+          'O'
+            overlay := FALSE
+          -- Lasers
+          'l'
+            lasers ! all; TRUE  -- On
+          'L'
+            lasers ! all; FALSE -- Off
+          -- Time in MS since reset
+          't'
+            SKIP
+          -- JPEG Quality
+          'q'
+            SEQ
+              in ? ch
+              ch := ch - '0'
+              quality := INT ch
+          -- Range in centimeters to nearest object
+          'R'
+            SKIP
+          -- Version
+          'V'
+            SKIP
+          -- IO pins
+          'd'
+            SEQ
+              in ? ch
+              CASE ch
+                'd'
+                  SKIP -- Direction
+                'r'
+                  SKIP -- Read
+                'w'
+                  SKIP -- Write
+                ELSE
+                  protocol.error('d', ch, custom.response, out!)
+          -- Xmodem recieve file
+          'X'
+            SKIP
+          -- Flash Memory
+          'z'
+            SEQ
+              in ? ch
+              CASE ch
+                'w'
+                  SKIP -- Write
+                'r'
+                  SKIP -- Read
+                'd'
+                  SKIP -- Dump
+                'Z'
+                  SKIP -- Update boot sector
+                ELSE
+                  protocol.error('z', ch, custom.response, out!)
+          -- Vision commands
+          'v'
+            SEQ
+              in ? ch
+              CASE ch
+                'g'
+                  SKIP -- Grab and sample region
+                'r'
+                  SKIP -- Retrieve stored color info from color bin
+                'c'
+                  SKIP -- Set the contents of a color bin
+                's'
+                  SKIP -- View pixel column vector data from color bin
+                'f'
+                  SKIP -- Distance to first pixel matching target color
+                'b'
+                  SKIP -- Search for blobs
+                'n'
+                  SKIP -- Blobs, returns the number of pixels matching target color
+                ELSE
+                  protocol.error('v', ch, custom.response, out!)
+          'Q'
+            SKIP -- Execute C program stored in flash memory.
+          -- Carriage Return
+          '*n'
+            custom.response := TRUE -- Ignore, makes netcat/telnet happy.
+          ELSE
+            protocol.error(0, ch, custom.response, out!)
+        -- Respond to commands, if appropriate.
+        IF
+          NOT custom.response
+            out.string(response, 0, out!)
+          TRUE
+            SKIP
 :
