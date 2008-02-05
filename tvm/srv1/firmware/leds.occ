@@ -1,0 +1,42 @@
+#INCLUDE "defBF537.inc"
+
+PROC leds (CHAN P.LED in?, CHAN BOOL ctl?)
+  INITIAL [2]BOOL status IS [FALSE, FALSE]:
+  SEQ
+    -- Setup LED ports
+    safe.set.register.16(PORTGIO.DIR.ADDR, #0300, #FFFF)
+    -- Turn off LEDs
+    safe.set.register.16(PORTGIO.ADDR, 0, (~#0300))
+    
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      INITIAL INT bits IS 0:
+      SEQ
+        PRI ALT
+          ctl ? done
+            SKIP
+          in ? CASE
+            disconnected
+              SKIP
+            INT i:
+            BOOL b:
+            led; i; b
+              IF
+                (i > 0) AND (i <= (SIZE status))
+                  status[i - 1] := b
+                TRUE
+                  SKIP
+
+        SEQ i = 0 FOR SIZE status
+          IF
+            status[i]
+              bits := bits \/ (1 << (i + 8))
+            TRUE
+              SKIP
+        
+        safe.set.register.16(PORTGIO.ADDR, bits, (~#0300))
+
+    -- Turn off LEDS
+    safe.set.register.16(PORTGIO.ADDR, 0, (~#0300))
+:
+

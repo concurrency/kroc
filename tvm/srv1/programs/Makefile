@@ -7,10 +7,6 @@ PROGRAMS = \
 	error3.srv \
 	hello.srv \
 	id.srv \
-	init.srv \
-	lasers.srv \
-	motors.srv \
-	srv1.srv \
 	tests.srv
 
 %.srv: %.occ
