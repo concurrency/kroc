@@ -39,7 +39,7 @@ CSRCS	+= main.c
 #CSRCS	+= support/srv.c
 #CSRCS	+= srv_ffi.c
 #CSRCS	+= external_srv_ffi_hooks.c
-CSRCS	+= support/uart.c
+#CSRCS	+= support/uart.c
 CSRCS	+= support/camera.c
 #CSRCS	+= support/jpeg.c
 CSRCS	+= support/i2cwrite.c
@@ -66,8 +66,9 @@ default: tvm.ldr
 external_srv_ffi_hooks.c external_srv_ffi_pragmas.occ: srv_ffi.c
 	tinyswig -n srv_ffi.c
 
-firmware.h: firmware.occ
+firmware.h: firmware.occ firmware/*.occ firmware/*.inc
 	skroc --keep-temp-files \
+	-L firmware \
 	-L include \
 	--no-std-libs \
 	--blackfin \

@@ -1,4 +1,4 @@
-SKROC = skroc -L .. -L ../include --blackfin --no-std-libs --keep-temp-files
+SKROC = skroc -L .. -L ../firmware -L ../include --blackfin --no-std-libs --keep-temp-files
 
 PROGRAMS = \
 	camera-rgb.srv \

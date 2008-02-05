@@ -1,4 +1,5 @@
 #INCLUDE "defBF537.inc"
+#INCLUDE "srv1.inc"
 
 PROC leds (CHAN P.LED in?, CHAN BOOL ctl?)
   INITIAL [2]BOOL status IS [FALSE, FALSE]:
@@ -6,7 +7,7 @@ PROC leds (CHAN P.LED in?, CHAN BOOL ctl?)
     -- Setup LED ports
     safe.set.register.16(PORTGIO.DIR.ADDR, #0300, #FFFF)
     -- Turn off LEDs
-    safe.set.register.16(PORTGIO.ADDR, 0, (~#0300))
+    safe.set.register.16(PORTGIO.ADDR, #0300, #FFFF)
     
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
@@ -34,9 +35,9 @@ PROC leds (CHAN P.LED in?, CHAN BOOL ctl?)
             TRUE
               SKIP
         
-        safe.set.register.16(PORTGIO.ADDR, bits, (~#0300))
+        safe.set.register.16(PORTGIO.ADDR, ~bits, (~#0300))
 
     -- Turn off LEDS
-    safe.set.register.16(PORTGIO.ADDR, 0, (~#0300))
+    safe.set.register.16(PORTGIO.ADDR, #0300, #FFFF)
 :
 

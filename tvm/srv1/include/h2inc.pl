@@ -129,6 +129,8 @@ foreach my $file (@ARGV) {
 					my @syms = ($val =~ m/([a-z0-9\.]+)/gi);
 					my $ok = 1;
 					foreach my $sym (@syms) {
+						next if $sym =~ m/^0x[a-f0-9]+$/i;
+						next if $sym =~ m/^[0-9]+$/i;
 						$ok = $ok && exists($symbols->{$sym});
 					}
 					

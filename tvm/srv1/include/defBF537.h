@@ -353,7 +353,7 @@
 #define	SET_WF2_OFF(x) (((x)&0xFF)<< 16 ) /* Set Wake-Up Filter 2 Byte Offset		*/
 #define	SET_WF3_OFF(x) (((x)&0xFF)<< 24 ) /* Set Wake-Up Filter 3 Byte Offset		*/
 /* Set ALL Offsets																	*/
-#define	SET_WF_OFFS(x0,x1,x2,x3) 	(SET_WF0_OFF((x0))|SET_WF1_OFF((x1))|SET_WF2_OFF((x2))|SET_WF3_OFF((x3)))
+#define	SET_WF_OFFS(x0,x1,x2,x3) 	((SET_WF0_OFF((x0))|SET_WF1_OFF((x1)))|(SET_WF2_OFF((x2))|SET_WF3_OFF((x3))))
 
 /* EMAC_WKUP_FFCRC0 Masks															*/
 #define	WF0_CRC		0x0000FFFF	/* Wake-Up Filter 0 Pattern CRC						*/

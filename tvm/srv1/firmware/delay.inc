@@ -1,6 +1,8 @@
 #IF NOT DEFINED (DELAY.INC)
 #DEFINE DELAY.INC
 
+#INCLUDE "srv1.inc"
+
 PROC delay.us (VAL INT us)
   TIMER tim:
   INT t:
