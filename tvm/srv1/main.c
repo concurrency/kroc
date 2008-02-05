@@ -13,6 +13,7 @@
 #include "memory_map.h"
 /* Support code */
 #include <camera.h>
+#include <font8x8.h>
 #include <i2cwrite.h>
 #include <jpeg.h>
 #include <ov9655.h>
@@ -225,6 +226,20 @@ static int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
 
 	return ECTX_CONTINUE;
 }
+
+/* PROC blit.to.uart0 (VAL []BYTE data) */
+static int blit_to_uart0 (ECTX ectx, WORD args[])
+{
+	BYTEPTR src	= (BYTEPTR) args[0];
+	WORD	src_len	= args[1];
+
+	while (src_len--) {
+		uart0_send_char (read_byte (src));
+		src = byteptr_plus (src, 1);
+	}
+
+	return SFFI_OK;
+}
 /*}}}*/
 
 /*{{{  Camera support */
@@ -240,6 +255,7 @@ enum {
 	CAMERA_1280_1024	= 4
 };
 
+/* PROC set.camera.mode (VAL INT mode) */
 static int set_camera_mode (ECTX ectx, WORD args[])
 {
 	unsigned int width, height, cfg_length;
@@ -300,6 +316,7 @@ static int set_camera_mode (ECTX ectx, WORD args[])
 	return SFFI_OK;
 }
 
+/* PROC get.camera.frame ([]BYTE frame) */
 static int get_camera_frame (ECTX ectx, WORD args[])
 {
 	WORDPTR	dst		= (WORDPTR) args[0];
@@ -337,6 +354,8 @@ static int get_camera_frame (ECTX ectx, WORD args[])
 	return SFFI_OK;
 }
 
+/* PROC jpeg.encode.frame (VAL INT width, height, quality, 
+ * 			VAL []BYTE input, []BYTE output, INT used) */
 static int jpeg_encode_frame (ECTX ectx, WORD args[])
 {
 	WORD	width		= args[0];
@@ -361,8 +380,11 @@ static int jpeg_encode_frame (ECTX ectx, WORD args[])
 		/* Bad buffer sizes, return -1 */
 		write_word (used, -1);
 	} else {
+		input	= (BYTEPTR) wordptr_real_address ((WORDPTR) input);
+		output 	= (BYTEPTR) wordptr_real_address ((WORDPTR) output);
+
 		end = (BYTEPTR) encode_image (
-			(unsigned char *) input, 
+			(unsigned char *) input,
 			(unsigned char *) output,
 			quality,
 			FOUR_TWO_TWO,
@@ -371,6 +393,50 @@ static int jpeg_encode_frame (ECTX ectx, WORD args[])
 		);
 		/* Return output size */
 		write_word (used, ((WORD) end) - ((WORD) output));
+	}
+
+	return SFFI_OK;
+}
+
+/* PROC draw.caption.on.frame (VAL INT frame.width, VAL []BYTE caption, []BYTE frame) */
+static int draw_caption_on_frame (ECTX ectx, WORD args[])
+{
+	WORD	width		= args[0];
+	BYTEPTR	caption		= (BYTEPTR) args[1];
+	WORD	caption_len	= args[2];
+	BYTE	*frame		= (BYTE *) wordptr_real_address ((WORDPTR) args[3]);
+	WORD	frame_len	= args[4];
+	int 	ix, iy, iz;
+	
+	/* Limit caption length */
+	if (caption_len > 40) {
+		caption_len = 40;
+	}
+
+	/* Move to first character position */
+	frame = frame + ((width * 16) - (caption_len * 8));
+
+	for (ix = 0; ix < caption_len; ix++) {
+		unsigned int c = (unsigned int) read_byte (byteptr_plus (caption, ix));
+		BYTE *fcur = frame;
+
+		for (iy = 0; iy < 8; iy++) {
+			BYTE cc = font8x8[(c * 8) + iy];
+
+			for (iz = 0; iz < 8; iz++) {
+				if (cc & fontmask[iz]) {
+					fcur[0] = 0x80;
+					fcur[1] = 0xff;
+				}
+				fcur += 2;
+			}
+			
+			/* Move to next line */
+			fcur += (width * 2) - 16;
+		}
+		
+		/* Move to next character */
+		frame += 16;
 	}
 
 	return SFFI_OK;
@@ -434,56 +500,17 @@ static const int	ext_chans_length =
 				sizeof(ext_chans) / sizeof(EXT_CHAN_ENTRY);
 /*}}}*/
 
-/*{{{  User context */
+/*{{{  User context state */
 static BYTEPTR		user_bytecode;
 static WORD		user_bytecode_len;
 static const WORDPTR 	user_memory	= (WORDPTR) USER_MEMORY;
 static WORD		user_memory_len	= 0;
 static WORDPTR 		user_parent	= (WORDPTR) NOT_PROCESS_P;
-
-static void install_user_ctx (void)
-{
-	ECTX user = &user_ctx;
-
-	tvm_ectx_init (&tvm, user);
-	user->get_time 			= srv_get_time;
-	user->modify_sync_flags		= srv_modify_sync_flags;
-}
-
-static int run_user (void)
-{
-	int ret = tvm_run_count (&user_ctx, 1000);
-
-	switch (ret) {
-		case ECTX_INTERRUPT:
-			acknowledge_int10 ();
-			/* fall through */
-		case ECTX_PREEMPT:
-		case ECTX_SLEEP:
-		case ECTX_TIME_SLICE:
-			return ret; /* OK */
-		case ECTX_EMPTY:
-			if (waiting_on (&user_ctx, user_memory, user_memory_len)) {
-				return ret; /* OK - waiting for firmware */
-			}
-			break;
-		default:
-			break;
-	}
-
-	/* User context broke down for some reason. */
-	/* Restore parent in firmware */
-	firmware_ctx.add_to_queue (&firmware_ctx, user_parent);
-	user_parent = (WORDPTR) NOT_PROCESS_P;
-
-	/* Disconnect any top-level channels. */
-	tvm_ectx_disconnect (&user_ctx);
-
-	return ECTX_ERROR;
-}
 /*}}}*/
 
-/*{{{  Firmware SFFI */
+/*{{{  Firmware functions for running user bytecode */
+/* PROC firmware.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, 
+ * 				VAL []BYTE tlp.fmt, VAL INT argc, ...) */
 static int firmware_run_user (ECTX ectx, WORD args[])
 {
 	BYTEPTR bytecode	= (BYTEPTR) args[0];
@@ -534,6 +561,7 @@ static int firmware_run_user (ECTX ectx, WORD args[])
 	return SFFI_RESCHEDULE;
 }
 
+/* PROC firmware.kill.user () */
 static int firmware_kill_user (ECTX ectx, WORD args[])
 {
 	if (user_parent != (WORDPTR) NOT_PROCESS_P)
@@ -548,6 +576,7 @@ static int firmware_kill_user (ECTX ectx, WORD args[])
 	return SFFI_OK;
 }
 
+/* PROC firmware.query.user (BOOL running, INT state, []BYTE context) */
 static int firmware_query_user (ECTX ectx, WORD args[])
 {
 	WORDPTR running = (WORDPTR) args[0];
@@ -571,6 +600,7 @@ static int firmware_query_user (ECTX ectx, WORD args[])
 	return SFFI_OK;
 }
 
+/* PROC safe.set.register.16 (VAL INT addr, set, mask) */
 static int set_register_16 (ECTX ectx, WORD args[])
 {
 	volatile unsigned short *addr	= (unsigned short *) args[0];
@@ -588,17 +618,36 @@ static int set_register_16 (ECTX ectx, WORD args[])
 
 	return SFFI_OK;
 }
+/*}}}*/
 
+/*{{{  SFFI tables */
 static SFFI_FUNCTION	firmware_sffi_table[] = {
 	firmware_run_user,
 	firmware_kill_user,
 	firmware_query_user,
 	set_register_16,
 	set_camera_mode,
-	get_camera_frame
+	get_camera_frame,
+	jpeg_encode_frame,
+	draw_caption_on_frame,
+	blit_to_uart0
 };
 static const int	firmware_sffi_table_length =
 				sizeof(firmware_sffi_table) / sizeof(SFFI_FUNCTION);
+
+static SFFI_FUNCTION	user_sffi_table[] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	set_camera_mode,
+	get_camera_frame,
+	jpeg_encode_frame,
+	draw_caption_on_frame,
+	blit_to_uart0
+};
+static const int	user_sffi_table_length =
+				sizeof(user_sffi_table) / sizeof(SFFI_FUNCTION);
 /*}}}*/
 
 /*{{{  Firmware context */
@@ -703,6 +752,51 @@ static int run_firmware (void)
 }
 /*}}}*/
 
+/*{{{  User context */
+static void install_user_ctx (void)
+{
+	ECTX user = &user_ctx;
+
+	tvm_ectx_init (&tvm, user);
+	user->get_time 			= srv_get_time;
+	user->modify_sync_flags		= srv_modify_sync_flags;
+	user->sffi_table		= user_sffi_table;
+	user->sffi_table_length		= user_sffi_table_length;
+}
+
+static int run_user (void)
+{
+	int ret = tvm_run_count (&user_ctx, 1000);
+
+	switch (ret) {
+		case ECTX_INTERRUPT:
+			acknowledge_int10 ();
+			/* fall through */
+		case ECTX_PREEMPT:
+		case ECTX_SLEEP:
+		case ECTX_TIME_SLICE:
+			return ret; /* OK */
+		case ECTX_EMPTY:
+			if (waiting_on (&user_ctx, user_memory, user_memory_len)) {
+				return ret; /* OK - waiting for firmware */
+			}
+			break;
+		default:
+			break;
+	}
+
+	/* User context broke down for some reason. */
+	/* Restore parent in firmware */
+	firmware_ctx.add_to_queue (&firmware_ctx, user_parent);
+	user_parent = (WORDPTR) NOT_PROCESS_P;
+
+	/* Disconnect any top-level channels. */
+	tvm_ectx_disconnect (&user_ctx);
+
+	return ECTX_ERROR;
+}
+/*}}}*/
+
 int main (void) {
 	clear_sdram ();
 	init_uart ();
@@ -715,10 +809,6 @@ int main (void) {
 	tvm_init (&tvm);
 	install_firmware_ctx ();
 	install_user_ctx ();
-
-	/* For testing... */
-	user_ctx.sffi_table		= firmware_sffi_table;
-	user_ctx.sffi_table_length	= firmware_sffi_table_length;
 
 	for (;;) {
 		int f_ret = run_firmware ();
