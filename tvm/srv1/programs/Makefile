@@ -7,7 +7,8 @@ PROGRAMS = \
 	error3.srv \
 	hello.srv \
 	id.srv \
-	tests.srv
+	tests.srv \
+	srv1.srv
 
 %.srv: %.occ
 	$(SKROC) $<
