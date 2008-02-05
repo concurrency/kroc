@@ -14,6 +14,7 @@
 /* Support code */
 #include <camera.h>
 #include <i2cwrite.h>
+#include <jpeg.h>
 #include <ov9655.h>
 
 #define CSYNC	__asm__ __volatile__ ("csync;" : : : "memory")
@@ -331,6 +332,45 @@ static int get_camera_frame (ECTX ectx, WORD args[])
 			write_word (dst, (WORD) 0);
 			dst = wordptr_plus (dst, 1);
 		}
+	}
+
+	return SFFI_OK;
+}
+
+static int jpeg_encode_frame (ECTX ectx, WORD args[])
+{
+	WORD	width		= args[0];
+	WORD	height		= args[1];
+	WORD	quality		= args[2];
+	BYTEPTR	input		= (BYTEPTR) args[3];
+	WORD	input_len	= args[4];
+	BYTEPTR	output		= (BYTEPTR) args[5];
+	WORD	output_len	= args[6];
+	WORDPTR	used		= (WORDPTR) args[7];
+	BYTEPTR end;
+
+	if (quality < 1) {
+		quality = 1;
+	} else if (quality > 8) {
+		quality = 8;
+	}
+
+	/* Input buffer must be big enough to be a frame */
+	/* Output buffer must be at least as big as input buffer */
+	if ((((width * height) << 1) > input_len) || (output_len < input_len)) {
+		/* Bad buffer sizes, return -1 */
+		write_word (used, -1);
+	} else {
+		end = (BYTEPTR) encode_image (
+			(unsigned char *) input, 
+			(unsigned char *) output,
+			quality,
+			FOUR_TWO_TWO,
+			width,
+			height
+		);
+		/* Return output size */
+		write_word (used, ((WORD) end) - ((WORD) output));
 	}
 
 	return SFFI_OK;
