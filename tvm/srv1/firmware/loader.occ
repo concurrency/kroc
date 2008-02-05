@@ -127,6 +127,7 @@ PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN
         VAL INT vs IS header[vs.size]:
         VAL INT ms IS header[ms.size]:
         firmware.run.user (bytecode, ws, vs, ms, data.in?, data.out!, laser!, led!, motor!)
+        set.camera.mode (CAMERA.OFF)
         PAR i = 0 FOR SIZE shutdown
           shutdown[i] ! TRUE
 :

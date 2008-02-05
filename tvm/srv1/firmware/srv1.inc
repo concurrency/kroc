@@ -68,6 +68,9 @@ PROTOCOL P.LED
 #PRAGMA EXTERNAL "PROC C.tvmspecial.3.set.register.16 (VAL INT addr, set, mask) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.4.set.camera.mode (VAL INT mode) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.5.get.camera.frame ([]BYTE frame) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.6.jpeg.encode.frame (VAL INT width, height, quality, VAL []BYTE input, []BYTE output, INT used) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.7.draw.caption.on.frame (VAL INT frame.width, VAL []BYTE caption, []BYTE frame) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.8.blit.to.uart0 (VAL []BYTE data) = 0"
 --}}}
 --{{{  Wrappers
 PROC firmware.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, CHAN BYTE console.in?, console.out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.MOTOR motors!)
@@ -86,12 +89,24 @@ INLINE PROC safe.set.register.16 (VAL INT addr, set, mask)
   C.tvmspecial.3.set.register.16 (addr, set, mask)
 :
 
-PROC set.camera.mode (VAL INT mode)
+INLINE PROC set.camera.mode (VAL INT mode)
   C.tvmspecial.4.set.camera.mode (mode)
 :
 
 PROC get.camera.frame ([]BYTE frame)
   C.tvmspecial.5.get.camera.frame (frame)
+:
+
+PROC jpeg.encode.frame (VAL INT width, height, quality, VAL []BYTE input, []BYTE output, INT used)
+  C.tvmspecial.6.jpeg.encode.frame (width, height, quality, input, output, used)
+:
+
+PROC draw.caption.on.frame (VAL INT frame.width, VAL []BYTE caption, []BYTE frame)
+  C.tvmspecial.7.draw.caption.on.frame (frame.width, caption, frame)
+:
+
+PROC blit.to.uart0 (VAL []BYTE data)
+  C.tvmspecial.8.blit.to.uart0 (data)
 :
 --}}}
 --}}}
