@@ -24,13 +24,6 @@
 static char version_string[] = "TVM SRV-1 Blackfin w/C interpreter - " __TIME__ " - " __DATE__;
 
 /*{{{  Surveyor support code */
-static void init_io (void)
-{
-	*pPORTGIO_DIR	= 0x0300;	// LEDs (PG8 and PG9)
-	*pPORTGIO	= 0x0200;	// LED1 on
-	*pPORTHIO_DIR	|= 0x0380; 	// set up lasers
-}
-
 static void clear_sdram (void)
 {
 	const BYTE *end = (BYTE *) 0x02000000;
@@ -667,7 +660,6 @@ static int run_firmware (void)
 int main (void) {
 	clear_sdram ();
 	init_uart ();
-	init_io ();
 	init_timers ();
 
 	serial_out_version ();

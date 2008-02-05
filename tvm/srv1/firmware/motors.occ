@@ -1,8 +1,5 @@
+#INCLUDE "defBF537.inc"
 #INCLUDE "config.inc"
-#INCLUDE "defBF534.inc"
-#INCLUDE "misc.occ"
-
-#PRAGMA EXTERNAL "PROC C.tvmspecial.3.set.register.16 (VAL INT addr, set, mask) = 0"
 
 PROC init.pwm ()
   PLACED [PORT.LEN]INT16 port PORT.ADDR:
@@ -24,7 +21,7 @@ PROC init.pwm ()
     timer3[TIMER3.WIDTH.32] := PERIPHERAL.CLOCK / 100000
     timer[TIMER.ENABLE] := TIMEN2 \/ TIMEN3
     port.h.io[PORTHIO.DIR] := port.h.io[PORTHIO.DIR] \/ #0030
-    C.tvmspecial.3.set.register.16 (PORTHIO.ADDR, #0030, #FFCF)
+    safe.set.register.16 (PORTHIO.ADDR, #0030, #FFCF)
 :
 
 PROC set.pwm (VAL INT left, right)
@@ -65,21 +62,41 @@ PROC set.pwm (VAL INT left, right)
       TRUE
         SKIP
 
-    C.tvmspecial.3.set.register.16 (PORTHIO.ADDR, h.value, h.mask)
+    safe.set.register.16 (PORTHIO.ADDR, h.value, h.mask)
     timer2[TIMER2.WIDTH.32] := ((PERIPHERAL.CLOCK / 1000) * left) / 100
     timer3[TIMER3.WIDTH.32] := ((PERIPHERAL.CLOCK / 1000) * right) / 100
 :
 
-PROC test ()
+PROC motors (CHAN P.MOTOR in?, CHAN BOOL ctl?)
+  INITIAL INT l.speed IS 0:
+  INITIAL INT r.speed IS 0:
   SEQ
-    init.pwm ()
-    set.pwm (100, 100)
-    delay(1 * SECONDS)
-    set.pwm (-50, -50)
-    delay (2 * SECONDS)
-    set.pwm (100, 100)
-    delay (2 * SECONDS)
-    set.pwm (-50, -50)
-    delay (2 * SECONDS)
-    set.pwm (0, 0)
+    init.pwm()
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      SEQ
+        PRI ALT
+          ctl ? done
+            SKIP
+          INT n:
+          in ? CASE
+            disconnected
+              l.speed, r.speed := 0, 0
+            speed; n
+              l.speed, r.speed := n, n
+            speed.delta; n
+              l.speed, r.speed := (l.speed + n), (r.speed + n)
+            turn; n
+              l.speed, r.speed := (l.speed - n), (r.speed + n)
+            back.turn; n
+              l.speed, r.speed := -(l.speed - n), -(r.speed + n)
+            stop
+              l.speed, r.speed := 0, 0
+        IF
+          (NOT done)
+            set.pwm(l.speed, r.speed)
+          TRUE
+            SKIP
+    set.pwm(0, 0)
 :
+
