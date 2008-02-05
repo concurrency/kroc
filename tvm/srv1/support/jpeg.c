@@ -48,14 +48,7 @@ typedef struct JPEG_ENCODER_STRUCTURE
 
 } JPEG_ENCODER_STRUCTURE;
 
-#define        FOUR_ZERO_ZERO            0
-#define        FOUR_TWO_ZERO            1
-#define        FOUR_TWO_TWO            2
-#define        FOUR_FOUR_FOUR            3
-#define        RGB                        4
-
 #define        BLOCK_SIZE                64
-
 
 extern UINT8    Lqt [BLOCK_SIZE];
 extern UINT8    Cqt [BLOCK_SIZE];
