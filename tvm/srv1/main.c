@@ -414,7 +414,7 @@ static int draw_caption_on_frame (ECTX ectx, WORD args[])
 	}
 
 	/* Move to first character position */
-	frame = frame + ((width * 16) - (caption_len * 8));
+	frame = frame + (((width * 16) + width) - (caption_len * 8));
 
 	for (ix = 0; ix < caption_len; ix++) {
 		unsigned int c = (unsigned int) read_byte (byteptr_plus (caption, ix));
