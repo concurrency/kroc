@@ -27,26 +27,40 @@ PROC download.header (SRV.HEADER header, CHAN BYTE in?, out!)
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
       SEQ
-        out.string ("Waiting for header (", 0, out!)
+        out.string ("##Send *'U*' to begin upload.*n", 0, out!)
+        INITIAL BOOL ready IS FALSE:
+        WHILE NOT ready
+          BYTE b:
+          SEQ
+            in ? b
+            ready := (b = 'U')
+        
+        out.string ("##Waiting for header (", 0, out!)
         out.int (BYTESIN(SRV.HEADER), 0, out!)
         out.string (" bytes)*n", 0, out!)
 
+        -- Get first 4 bytes (version)
         []BYTE header RETYPES header:
-        SEQ i = 0 FOR SIZE header
+        SEQ i = 0 FOR 4
           in ? header[i >< 3] -- byteswap from 32bit big-endian
 
         IF
           header[tbc.version] = #74766D03 -- TVM\003
-            done := TRUE
+            SEQ
+              -- Get remaining header
+              []BYTE header RETYPES header:
+              SEQ i = 4 FOR (SIZE header) - 4
+                in ? header[i >< 3] -- byteswap from 32bit big-endian
+              done := TRUE
           TRUE
             SEQ
-              out.string ("Bad TBC Header ID = ", 0, out!)
+              out.string ("##Bad TBC Header ID = ", 0, out!)
               out.hex (header[tbc.version], 0, out!)
               out ! '*n'
               drain.uart (in?)
     
     #PRAGMA DEFINED header
-    out.string ("Got header, ws.size = ", 0, out!)
+    out.string ("##Got header, ws.size = ", 0, out!)
     out.int (header[ws.size], 0, out!)
     out.string (", vs.size = ", 0, out!)
     out.int (header[vs.size], 0, out!)
@@ -57,14 +71,14 @@ PROC download.header (SRV.HEADER header, CHAN BYTE in?, out!)
 
 PROC download.bytecode ([]BYTE bytecode, CHAN BYTE in?, out!)
   SEQ
-    out.string ("Waiting for bytecode (", 0, out!)
+    out.string ("##Waiting for bytecode (", 0, out!)
     out.int (SIZE bytecode, 0, out!)
     out.string (" bytes).*n", 0, out!)
 
     SEQ i = 0 FOR SIZE bytecode
       SEQ
         in ? bytecode[i]
-        out ! '#'
+        out ! '.'
 
     out ! '*n'
 :
@@ -108,7 +122,7 @@ PROC output.tap (CHAN BYTE in?, out!, CHAN BOOL shutdown?)
 
 PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN BYTE in?, out!)
   SEQ
-    out.string ("Running bytecode...*n", 0, out!)
+    out.string ("##Running bytecode...*n", 0, out!)
 
     [5]CHAN BOOL  shutdown:
     CHAN P.LASER  laser:
@@ -142,14 +156,14 @@ PROC report.termination (VAL []BYTE bytecode, VAL BOOL killed, CHAN BYTE out!)
 
     IF
       killed
-        out.string ("Program killed.*n", 0, out!)
+        out.string ("##Program killed.*n", 0, out!)
       state = ECTX.SHUTDOWN
-        out.string ("Program terminated normally.*n", 0, out!)
+        out.string ("##Program terminated normally.*n", 0, out!)
       state = ECTX.EMPTY
-        out.string ("Program deadlocked.*n", 0, out!)
+        out.string ("##Program deadlocked.*n", 0, out!)
       TRUE
         SEQ
-          out.string ("Program terminated with a ", 0, out!)
+          out.string ("##Program terminated with a ", 0, out!)
 
           IF
             context[eflags] = EFLAG.SETERR
@@ -183,13 +197,13 @@ PROC report.termination (VAL []BYTE bytecode, VAL BOOL killed, CHAN BYTE out!)
 
           VAL INT iptr IS (context[iptr] - USER.BYTECODE):
           SEQ
-            out.string ("WPTR = ", 0, out!)
+            out.string ("##WPTR = ", 0, out!)
             out.hex (context[wptr], 0, out!)
             out ! '*n'
-            out.string ("IPTR = ", 0, out!)
+            out.string ("##IPTR = ", 0, out!)
             out.hex (iptr, 0, out!)
             out ! '*n'
-            out.string ("Bytecodes before IPTR =", 0, out!)
+            out.string ("##Bytecodes before IPTR =", 0, out!)
             SEQ i = (iptr - 8) FOR 8
               IF 
                 (i > 0) AND (i < (SIZE bytecode))

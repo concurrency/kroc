@@ -21,7 +21,7 @@ PROC firmware ()
         in ! b
 
     SEQ
-      out.string ("Firmware running...*n", 0, out!)
+      out.string ("##Firmware running...*n", 0, out!)
       WHILE TRUE
         loader (in?, out!)
 :
