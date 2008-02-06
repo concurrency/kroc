@@ -64,6 +64,13 @@ public class SRV {
 			return false;
 		try {
 			out.write((byte) cmd);
+			switch (cmd) {
+				case CMD_KILL:
+					out.write((byte) '\n');
+					break;
+				default:
+					break;
+			}
 			out.flush();
 			return true;
 		} catch (IOException e) {
@@ -212,6 +219,7 @@ public class SRV {
 			return false;
 		
 		try {
+			System.err.println("Sending kill command.");
 			sendCommand(CMD_KILL);
 			sendCommand(CMD_KILL);
 			sendCommand(CMD_KILL);
@@ -219,16 +227,22 @@ public class SRV {
 
 			waitForResponse("Send 'U' to begin", 2000);
 				
+			System.err.println("Sending upload command.");
 			sendCommand(CMD_UPLOAD);
 
+			System.err.println("Waiting...");
 			if (!waitForResponse("Waiting for header", 3000))
 				return false;
 
+			System.err.println("Sending header...");
 			for(int i = 0; i < 20; ++i)
 				out.write(bytecode[i]);
 
+			System.err.println("Waiting...");
 			if (!waitForResponse("Waiting for bytecode", 3000))
 				return false;
+
+			System.err.println("Uploading bytecode...");
 
 			int ack = 0;
 
@@ -239,20 +253,24 @@ public class SRV {
 					int c = in.read();
 					if (c != '.')
 						return false;
+					System.err.print(".");
 					ack++;
 				}
 			}
 			
-			while (ack < (bytecode.length - 20))
-			{
+			while (ack < (bytecode.length - 20)) {
 				int c = in.read();
 				if (c != '.')
 					return false;
+				System.err.print(".");
 				ack++;
 			}
 			
 			if (in.read() != '\n')
 				return false;
+
+			System.err.println("");
+			System.err.println("Complete!");
 
 			return true;
 		} catch (IOException e) {
