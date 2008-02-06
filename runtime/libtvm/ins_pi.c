@@ -65,26 +65,45 @@ TVM_INSTRUCTION (ins_fficall)
 	if(AREG >= 0)
 	{
 		/* Valid FFI call ? */
-		if((!ectx->ffi_table || AREG >= ectx->ffi_table_length))
+		FFI_FUNCTION func = NULL;
+
+		if(ectx->ffi_table && (AREG < ectx->ffi_table_length))
 		{
-			SET_ERROR_FLAG_RET(EFLAG_FFI);
+			func = ectx->ffi_table[AREG].func;
 		}
-		
-		ectx->ffi_table[AREG].func(args);
+
+		/* Function defined ? */
+		if(func != NULL)
+		{
+			func(args);
+		}
+		else
+		{	
+			SET_ERROR_FLAG(EFLAG_FFI);
+		} 
 	}
 	else
 	{
-		WORD index = -(AREG + 1);
+		SFFI_FUNCTION func = NULL;
+		unsigned int index = -(AREG + 1);
 		int ret;
 
 		/* Valid FFI call ? */
-		if(!ectx->sffi_table || index >= ectx->sffi_table_length)
+		if(ectx->sffi_table && (index < ectx->sffi_table_length))
 		{
-			SET_ERROR_FLAG_RET(EFLAG_FFI);
+			func = ectx->sffi_table[index];
 		}
-
-		ret = ectx->sffi_table[index](ectx, args);
-
+		/* Function defined ? */
+		if(func != NULL)
+		{
+			ret = func(ectx, args);
+		}
+		else
+		{
+			SET_ERROR_FLAG(EFLAG_FFI);
+			ret = ECTX_CONTINUE;
+		}
+		
 		switch (ret)
 		{
 			case ECTX_CONTINUE:
