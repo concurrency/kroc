@@ -32,7 +32,7 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
   INITIAL INT width IS 320:
   INITIAL INT height IS 256:
   INITIAL BOOL overlay IS TRUE:
-  INITIAL INT quality IS 4:
+  INITIAL INT quality IS 3:
   SEQ
     set.camera.mode(CAMERA.320.256)
     WHILE TRUE
@@ -161,8 +161,18 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
           'q'
             SEQ
               in ? ch
-              ch := ch - '0'
-              quality := INT ch
+              quality := INT (ch - '0')
+              IF
+                quality < 1
+                  quality := 1
+                quality > 8
+                  quality := 8
+                TRUE
+                  SKIP
+              out.string ("##quality ", 0, out!)
+              out.int (quality, 0, out!)
+              out ! '*n'
+              custom.response := TRUE
           -- Range in centimeters to nearest object
           'R'
             SKIP
