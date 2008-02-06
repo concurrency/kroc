@@ -57,7 +57,6 @@ PROC download.header (SRV.HEADER header, CHAN BYTE in?, out!)
               out.string ("##Bad TBC Header ID = ", 0, out!)
               out.hex (header[tbc.version], 0, out!)
               out ! '*n'
-              drain.uart (in?)
     
     #PRAGMA DEFINED header
     out.string ("##Got header, ws.size = ", 0, out!)
