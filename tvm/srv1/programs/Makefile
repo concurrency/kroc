@@ -1,3 +1,4 @@
+JAVAC = javac
 SKROC = skroc -L .. -L ../firmware -L ../include --blackfin --no-std-libs --keep-temp-files
 
 PROGRAMS = \
@@ -13,9 +14,10 @@ PROGRAMS = \
 %.srv: %.occ
 	$(SKROC) $<
 
-all: $(PROGRAMS)
+uploader: SRV.java
+	$(JAVAC) $<
 
-tests: *.occ
+all: $(PROGRAMS) uploader
 
 clean:
-	rm -f *.srv *.tce
+	rm -f *.srv *.tce *.class
