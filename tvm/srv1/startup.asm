@@ -31,7 +31,6 @@
 
 #include "bfin_config.h"
 #include "asmmacros.h"
-#include "context.asm"
 
 ////////////////////////////////////////////////////////////////////////////
 // core clock dividers -- DO NOT CHANGE!
