@@ -14,10 +14,10 @@ PROGRAMS = \
 %.srv: %.occ
 	$(SKROC) $<
 
+all: $(PROGRAMS) uploader
+
 uploader: SRV.java
 	$(JAVAC) $<
-
-all: $(PROGRAMS) uploader
 
 clean:
 	rm -f *.srv *.tce *.class
