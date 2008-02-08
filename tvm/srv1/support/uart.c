@@ -1,5 +1,5 @@
 #include <cdefBF537.h>
-#include "config.h"
+#include "bfin_config.h"
 #include "uart.h"
 
 #define SSYNC    asm("ssync;")

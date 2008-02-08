@@ -35,7 +35,7 @@ LDFLAGS = -T bftiny.x \
 
 ASMOBJS	+= startup.o
 ASMOBJS	+= support/r8x8dct.o
-ASMINCS += include/config.h
+ASMINCS += include/bfin_config.h
 ASMINCS += include/asmmacros.h
 
 COBJS	+= main.o
@@ -45,7 +45,7 @@ COBJS	+= support/i2cwrite.o
 CINCS	+= include/*.h
 CINCS	+= support/*.h
 
-GENHDRS += include/config.inc
+GENHDRS += include/bfin_config.inc
 GENHDRS += include/memory_map.inc
 GENHDRS += include/def_LPBlackfin.inc
 GENHDRS += include/defBF534.inc

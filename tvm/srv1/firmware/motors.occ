@@ -1,5 +1,5 @@
 #INCLUDE "defBF537.inc"
-#INCLUDE "config.inc"
+#INCLUDE "bfin_config.inc"
 #INCLUDE "srv1.inc"
 
 PROC init.pwm ()
