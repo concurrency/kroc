@@ -2,13 +2,15 @@ AS = bfin-elf-as
 CC = bfin-elf-gcc
 LD = bfin-elf-ld
 LDR := bfin-elf-ldr
+PERL = perl
 
 ELF_LDR := $(shell which $(LDR))
 ifneq ($(notdir $(ELF_LDR)), $(LDR))
   LDR := bfin-uclinux-ldr
 endif
 
-FLASHLOAD=flashload --backend=spi_flash.dxe
+FLASHLOAD = flashload --backend=spi_flash.dxe
+H2INC = h2inc.pl
 
 CC_FPATH := $(shell which $(CC))
 CC_BASE := $(dir $(CC_FPATH))
@@ -18,11 +20,10 @@ LIBPATH := $(CC_BASE)../lib/gcc/bfin-elf/$(CC_VERS)
 CPUDEFINES = -D__ADSPBF537__ -D__ADSPLPBLACKFIN__
 
 INCLUDES = \
+	-I./include \
 	-I$(CC_BASE)../include \
-	-I. \
 	-I./libtvm \
 	-I../../runtime/libtvm \
-	-I./include \
 	-I./support
 
 ASMFLAGS = -x assembler-with-cpp $(CPUDEFINES) $(INCLUDES) -g
@@ -32,26 +33,26 @@ LDFLAGS = -T bftiny.x \
 	-Map tvm.map -O binary -o tvm.bin \
 	-L$(LIBPATH)
 
-ASMSRCS	+= startup.asm
-ASMSRCS += support/r8x8dct.asm
-ASMINCS += asmmacros.h config.h
-CSRCS	+= main.c
-#CSRCS	+= support/srv.c
-#CSRCS	+= srv_ffi.c
-#CSRCS	+= external_srv_ffi_hooks.c
-#CSRCS	+= support/uart.c
-CSRCS	+= support/camera.c
-CSRCS	+= support/jpeg.c
-CSRCS	+= support/i2cwrite.c
-#CSRCS	+= support/stm_m25p32.c
-#CSRCS	+= support/xmodem.c
-#CSRCS	+= support/c.c
-CINCS	+= camera.h c.h config.h font8x8.h \
-	i2cwrite.h jpeg.h memory_map.h \
-	ov9655.h srv.h stm_m25p32.h uart.h \
-	userspace.h xmodem.h
+ASMOBJS	+= startup.o
+ASMOBJS	+= support/r8x8dct.o
+ASMINCS += include/config.h
+ASMINCS += include/asmmacros.h
 
-OBJS = $(ASMSRCS:%.asm=%.o) $(CSRCS:%.c=%.o)
+COBJS	+= main.o
+COBJS	+= support/camera.o
+COBJS	+= support/jpeg.o
+COBJS	+= support/i2cwrite.o
+CINCS	+= include/*.h
+CINCS	+= support/*.h
+
+GENHDRS += include/config.inc
+GENHDRS += include/memory_map.inc
+GENHDRS += include/def_LPBlackfin.inc
+GENHDRS += include/defBF534.inc
+GENHDRS += include/defBF537.inc
+
+OBJS = $(ASMOBJS) $(COBJS)
+#$(ASMSRCS:%.asm=%.o) $(CSRCS:%.c=%.o)
 
 TVMOBJS = libtvm/libtvm.a
 
@@ -61,12 +62,15 @@ TVMOBJS = libtvm/libtvm.a
 %.o: %.c $(CINCS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+%.inc: %.h $(H2INC)
+	$(PERL) $(H2INC) $<
+
 default: tvm.ldr
 
 external_srv_ffi_hooks.c external_srv_ffi_pragmas.occ: srv_ffi.c
 	tinyswig -n srv_ffi.c
 
-firmware.h: firmware.occ firmware/*.occ firmware/*.inc
+firmware.h: firmware.occ firmware/*.occ firmware/*.inc $(GENHDRS)
 	skroc --keep-temp-files \
 	-L firmware \
 	-L include \
@@ -87,9 +91,8 @@ flash: tvm.ldr
 	$(FLASHLOAD) --erasesectors=0,1 --program=$<
 
 clean:
-	rm -f 	*.o *.bin *.ldr \
-		support/*.o \
+	rm -f 	tvm.bin tvm.ldr \
 		firmware.h \
-		external_srv_ffi_hooks.c \
-		external_srv_ffi_pragmas.occ
+		$(OBJS) \
+		$(GENHDRS)
 
