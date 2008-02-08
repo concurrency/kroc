@@ -2,7 +2,6 @@ AS = bfin-elf-as
 CC = bfin-elf-gcc
 LD = bfin-elf-ld
 LDR := bfin-elf-ldr
-PERL = perl
 
 ELF_LDR := $(shell which $(LDR))
 ifneq ($(notdir $(ELF_LDR)), $(LDR))
@@ -11,6 +10,8 @@ endif
 
 FLASHLOAD = flashload --backend=spi_flash.dxe
 H2INC = h2inc.pl
+MAKEDEPEND = makedepend
+PERL = perl
 
 CC_FPATH := $(shell which $(CC))
 CC_BASE := $(dir $(CC_FPATH))
@@ -42,8 +43,6 @@ COBJS	+= main.o
 COBJS	+= support/camera.o
 COBJS	+= support/jpeg.o
 COBJS	+= support/i2cwrite.o
-CINCS	+= include/*.h
-CINCS	+= support/*.h
 
 GENHDRS += include/bfin_config.inc
 GENHDRS += include/memory_map.inc
@@ -52,6 +51,7 @@ GENHDRS += include/defBF534.inc
 GENHDRS += include/defBF537.inc
 
 OBJS = $(ASMOBJS) $(COBJS)
+CSRCS = $(patsubst %.o,%.c,$(COBJS))
 #$(ASMSRCS:%.asm=%.o) $(CSRCS:%.c=%.o)
 
 TVMOBJS = libtvm/libtvm.a
@@ -59,16 +59,13 @@ TVMOBJS = libtvm/libtvm.a
 %.o: %.asm $(ASMINCS)
 	$(CC) $(ASMFLAGS) -c -o $@ $<
 
-%.o: %.c $(CINCS)
+%.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 %.inc: %.h $(H2INC)
 	$(PERL) $(H2INC) $<
 
 default: tvm.ldr
-
-external_srv_ffi_hooks.c external_srv_ffi_pragmas.occ: srv_ffi.c
-	tinyswig -n srv_ffi.c
 
 firmware.h: firmware.occ firmware/*.occ firmware/*.inc $(GENHDRS)
 	skroc --keep-temp-files \
@@ -91,8 +88,22 @@ flash: tvm.ldr
 	$(FLASHLOAD) --erasesectors=0,1 --program=$<
 
 clean:
-	rm -f 	tvm.bin tvm.ldr \
-		firmware.h \
+	rm -f 	.c.deps \
+		tvm.bin tvm.ldr \
+		firmware.h firmware.tce \
 		$(OBJS) \
 		$(GENHDRS)
 
+#{{{  dependency tracking for C files
+update-deps:
+	@echo "# DO NOT DELETE THIS LINE -- make depend depends on it." > .c.deps
+	$(MAKEDEPEND) $(CFLAGS) -f.c.deps $(CSRCS) 2> /dev/null 1> /dev/null
+.PHONY: update-deps
+
+ifeq ($(UPDATING_DEPS),yes)
+else
+.c.deps: $(CSRCS)
+	$(MAKE) -s update-deps UPDATING_DEPS=yes
+include .c.deps
+endif
+#}}}
