@@ -1,3 +1,7 @@
+/*
+package org.transterpreter.occPlug;
+*/
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -34,7 +38,17 @@ public class SRV {
 		this.port = port;
 	}
 
-	public boolean connect()
+	public String getHost()
+	{
+		return host;
+	}
+
+	public int getPort()
+	{
+		return port;
+	}	
+
+	public void disconnect()
 	{
 		if (conn != null) {
 			try {
@@ -46,7 +60,11 @@ public class SRV {
 			in	= null;
 			out	= null;
 		}
-
+	}
+  
+	public boolean connect()
+	{
+		disconnect();
 		try {
 			conn 	= new Socket(host, port);
 			in	= conn.getInputStream();
@@ -84,7 +102,17 @@ public class SRV {
 		return sendCommand(cmd, "");
 	}
 
-	private byte[] readImage() throws IOException
+	public InputStream getInputStream()
+	{
+		return in;
+	}
+
+	public OutputStream getOutputStream()
+	{
+		return out;
+	}
+
+	public byte[] readImage() throws IOException
 	{
 		byte[] data;
 		int size = 0;
