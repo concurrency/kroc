@@ -9,7 +9,7 @@
 /* Blackfin */
 #include <cdefBF537.h>
 /* Configuration */
-#include "config.h"
+#include "bfin_config.h"
 #include "memory_map.h"
 /* Support code */
 #include <camera.h>

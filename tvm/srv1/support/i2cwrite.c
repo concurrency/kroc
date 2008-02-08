@@ -1,4 +1,4 @@
-#include "config.h"
+#include "bfin_config.h"
 #include <cdefBF537.h>
 #include "i2cwrite.h"
 

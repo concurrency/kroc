@@ -29,7 +29,7 @@
 
 #include <defBF537.h>
 
-#include "config.h"
+#include "bfin_config.h"
 #include "asmmacros.h"
 #include "context.asm"
 

@@ -25,7 +25,7 @@
 
  */
 
-#include "config.h"
+#include "bfin_config.h"
 
 #define SOH  0x01
 #define STX  0x02

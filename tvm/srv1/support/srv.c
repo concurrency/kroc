@@ -15,7 +15,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include <cdefBF537.h>
-#include "config.h"
+#include "bfin_config.h"
 #include "uart.h"
 #include "i2cwrite.h"
 #include "ov9655.h"
