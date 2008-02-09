@@ -108,41 +108,49 @@ PROC input.tap (CHAN BYTE in?, out!, BOOL killed, CHAN BOOL shutdown?)
             out ! b
 :
 
-PROC output.tap (CHAN BYTE in?, out!, CHAN BOOL shutdown?)
+PROC output.tap (CHAN BYTE in?, out!)
   INITIAL BOOL done IS FALSE:
   WHILE NOT done
-    PRI ALT
-      shutdown ? done
-        SKIP
-      BYTE b:
+    BYTE b:
+    SEQ
       in ? b
-        out ! b
+      IF
+        b <> 0
+          out ! b
+        TRUE
+          CHAN OF ANY c? RETYPES in:
+          SEQ
+            test.disconnected (c, done)
+            IF
+              done
+                SKIP
+              TRUE
+                out ! b
 :
 
 PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN BYTE in?, out!)
   SEQ
     out.string ("##Running bytecode...*n", 0, out!)
 
-    [5]CHAN BOOL  shutdown:
+    CHAN BOOL     shutdown.in:
     CHAN P.LASER  laser:
     CHAN P.LED    led:
     CHAN P.MOTOR  motor:
     CHAN BYTE     data.in, data.out:
     PAR
-      input.tap (in?, data.in!, killed, shutdown[0]?)
-      output.tap (data.out?, out!, shutdown[1]?)
-      lasers (laser?, shutdown[2]?)
-      leds (led?, shutdown[3]?)
-      motors (motor?, shutdown[4]?)
+      input.tap (in?, data.in!, killed, shutdown.in?)
+      output.tap (data.out?, out!)
+      lasers (laser?)
+      leds (led?)
+      motors (motor?)
       
       SEQ
         VAL INT ws IS header[ws.size]:
         VAL INT vs IS header[vs.size]:
         VAL INT ms IS header[ms.size]:
         firmware.run.user (bytecode, ws, vs, ms, data.in?, data.out!, laser!, led!, motor!)
+        shutdown.in ! TRUE
         set.camera.mode (CAMERA.OFF)
-        PAR i = 0 FOR SIZE shutdown
-          shutdown[i] ! TRUE
 :
 
 PROC report.termination (VAL []BYTE bytecode, VAL BOOL killed, CHAN BYTE out!)

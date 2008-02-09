@@ -523,6 +523,7 @@ static int firmware_run_user (ECTX ectx, WORD args[])
 	WORD	argc		= args[7];
 	WORDPTR	argv		= (WORD *) &(args[8]);
 	WORDPTR	ws, vs, ms;
+	WORD	ret_addr;
 	int ret;
 
 	if (user_parent != (WORDPTR) NOT_PROCESS_P)
@@ -551,10 +552,11 @@ static int firmware_run_user (ECTX ectx, WORD args[])
 	user_bytecode_len	= bytecode_len;
 
 	/* Simulate return, and deschedule */
+	ret_addr	= read_word (ectx->wptr);
 	/* Push WPTR up 4 words */
-	user_parent = wordptr_plus (ectx->wptr, 4);
+	user_parent 	= wordptr_plus (ectx->wptr, 4);
 	/* Store return address as descheduled IPTR */
-	WORKSPACE_SET (user_parent, WS_IPTR, read_word (ectx->wptr));
+	WORKSPACE_SET (user_parent, WS_IPTR, ret_addr);
 	/* Save execution context for good measure */
 	WORKSPACE_SET (user_parent, WS_ECTX, (WORD) ectx);
 
@@ -618,6 +620,17 @@ static int set_register_16 (ECTX ectx, WORD args[])
 
 	return SFFI_OK;
 }
+
+/* PROC test.disconnected (CHAN ANY c, BOOL b) */
+static int test_disconnected (ECTX ectx, WORD args[])
+{
+	WORDPTR	chan_ptr	= (WORDPTR) args[0];
+	WORDPTR	out		= (WORDPTR) args[1];
+
+	write_word (out, (read_word (chan_ptr) == (NOT_PROCESS_P | 1)) ? 1 : 0);
+
+	return SFFI_OK;
+}
 /*}}}*/
 
 /*{{{  SFFI tables */
@@ -630,7 +643,8 @@ static SFFI_FUNCTION	firmware_sffi_table[] = {
 	get_camera_frame,
 	jpeg_encode_frame,
 	draw_caption_on_frame,
-	blit_to_uart0
+	blit_to_uart0,
+	test_disconnected
 };
 static const int	firmware_sffi_table_length =
 				sizeof(firmware_sffi_table) / sizeof(SFFI_FUNCTION);

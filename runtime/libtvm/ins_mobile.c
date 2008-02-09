@@ -588,8 +588,6 @@ TVM_HELPER int mt_chan_dc_in (ECTX ectx, BYTEPTR dst_ptr, WORD len)
 	
 	write_word (dst, NULL_P);
 
-	ADD_TO_QUEUE (WPTR);
-	
 	return ECTX_CONTINUE;
 }
 /*}}}*/
@@ -607,8 +605,6 @@ TVM_HELPER int mt_chan_dc_out (ECTX ectx, BYTEPTR src_ptr, WORD len)
 			return ret;
 		}
 
-		ADD_TO_QUEUE (WPTR);
-
 		if (move == MT_TRUE) {
 			/* Pointer moved, delete old reference */
 			write_word (src, (WORD) NULL_P);
@@ -616,7 +612,6 @@ TVM_HELPER int mt_chan_dc_out (ECTX ectx, BYTEPTR src_ptr, WORD len)
 
 		return mt_release (ectx, ptr);
 	} else {
-		ADD_TO_QUEUE (WPTR);
 		return ECTX_CONTINUE;
 	}
 }
@@ -952,9 +947,14 @@ TVM_INSTRUCTION (ins_mt_xin)
 	{
 		return ret;
 	}
-	else if (ret != 0 || requeue == NOT_PROCESS_P)
+	else if (ret != 0)
 	{
 		SET_ERROR_FLAG_RET (EFLAG_CHAN);
+	}
+	else if (requeue == (WORDPTR) (NOT_PROCESS_P | 1))
+	{
+		ADD_TO_QUEUE_IPTR (WPTR, IPTR);
+		RUN_NEXT_ON_QUEUE_RET ();
 	}
 
 	/* Restore output process to channel word */

@@ -99,27 +99,27 @@ TVM_HELPER int chan_io (ECTX ectx,
 	WORD	chan_value = read_word (chan_ptr);
 	WORDPTR other_WPTR = (WORDPTR) (chan_value & (~1));
 
-	*requeue = (WORDPTR) NOT_PROCESS_P;
+	*requeue = (WORDPTR) chan_value;
 
 	if (chan_value != NOT_PROCESS_P) {
 		if (!(chan_value & 1)) {
 			/* Normal communication */
 			write_word (chan_ptr, NOT_PROCESS_P);
-			*requeue = other_WPTR;
 			return data (ectx, data_ptr, data_len, other_WPTR);
-		} else if ((chan_value & (~1)) != NOT_PROCESS_P) {
+		} else if (other_WPTR != NOT_PROCESS_P) {
 			/* Other end is ALTing */
 			WORD alt_state = WORKSPACE_GET (other_WPTR, WS_STATE);
+			
+			if (alt_state != WAITING_P) {
+				*requeue = NOT_PROCESS_P;
+			}
 
 			switch (alt_state) {
 				case WAITING_P:
-					*requeue = other_WPTR;
-					/* Fall through */
 				case ENABLING_P:
 					WORKSPACE_SET (other_WPTR, WS_STATE, DISABLING_P);
 					/* Fall through */
 				case DISABLING_P:
-				case EXTENDED_P:
 					break;
 				default:
 					SET_ERROR_FLAG_RET (EFLAG_CHAN);
@@ -162,22 +162,19 @@ TVM_HELPER int chan_std_io (ECTX ectx,
 		data, dc
 	);
 
-	if (ret > 0) {
-		return ret;
-	} 
-	else if (ret == _ECTX_DESCHEDULE) {
-		if (requeue != NOT_PROCESS_P) {
-			LOAD_PROCESS_RET (requeue);
-		} else {
-			RUN_NEXT_ON_QUEUE_RET ();
-		}
-	}
-	else if (requeue != NOT_PROCESS_P) {
+	if (ret == ECTX_CONTINUE && requeue != NOT_PROCESS_P) {
 		ADD_TO_QUEUE_IPTR (WPTR, IPTR);
-		LOAD_PROCESS_RET (requeue);
+	} else if (ret > 0) {
+		return ret;
 	}
 
-	return ECTX_CONTINUE;
+	requeue = (WORDPTR) (((WORD) requeue) & (~1));
+
+	if (requeue != NOT_PROCESS_P) {
+		LOAD_PROCESS_RET (requeue);
+	} else {
+		RUN_NEXT_ON_QUEUE_RET ();
+	}
 }		
 
 TVM_HELPER int chan_in (ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start)

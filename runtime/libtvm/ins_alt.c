@@ -69,9 +69,9 @@ TVM_INSTRUCTION (ins_disc)
 	WORD fired		= 0;
 	
 	if (guard) {
-		WORD chan_proc = read_word (chan_ptr) & (~1);
+		WORD chan_proc = read_word (chan_ptr);
 		
-		if (chan_proc == (WORD) WPTR) {
+		if (chan_proc == (((WORD) WPTR) | 1)) {
 			/* Channel word is our WPTR; not fired */
 			write_word (chan_ptr, NOT_PROCESS_P);
 		} 
@@ -184,14 +184,10 @@ TVM_INSTRUCTION (ins_enbc)
 	if (guard) {
 		WORD chan_value	= read_word (chan_ptr);
 
-		if (chan_value & 1) {
-			/* Disconnected or already enabled channel; ignore */
-		} 
-		else if (chan_value == NOT_PROCESS_P) {
+		if (chan_value == NOT_PROCESS_P) {
 			/* Empty channel; enable */
 			write_word (chan_ptr, ((WORD) WPTR) | 1);
-		}
-		else {
+		} else {
 			/* Something waiting on channel; become ready */
 			WORKSPACE_SET (WPTR, WS_STATE, READY_P);
 		}

@@ -48,14 +48,15 @@ static int add_to_queue_external(ECTX ectx, ECTX src_ctx, WORDPTR ws)
 {
 	ectx->add_to_queue(ectx, ws);
 
-	if(ectx->pri > src_ctx->pri)
-	{
-		return ECTX_PREEMPT;
+	if(src_ctx != NULL)
+	{	
+		if(ectx->pri > src_ctx->pri)
+		{
+			return ECTX_PREEMPT;
+		}
 	}
-	else
-	{
-		return ECTX_CONTINUE;
-	}
+	
+	return ECTX_CONTINUE;
 }
 
 static void add_queue_to_queue(ECTX ectx, WORDPTR front, WORDPTR back)
