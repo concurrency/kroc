@@ -71,17 +71,18 @@ PROTOCOL P.LED
 #PRAGMA EXTERNAL "PROC C.tvmspecial.6.jpeg.encode.frame (VAL INT width, height, quality, VAL []BYTE input, []BYTE output, INT used) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.7.draw.caption.on.frame (VAL INT frame.width, VAL []BYTE caption, []BYTE frame) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.8.blit.to.uart0 (VAL []BYTE data) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.9.test.disconnected (CHAN OF ANY c, BOOL b) = 0"
 --}}}
 --{{{  Wrappers
-PROC firmware.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, CHAN BYTE console.in?, console.out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.MOTOR motors!)
+INLINE PROC firmware.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, CHAN BYTE console.in?, console.out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.MOTOR motors!)
   C.tvmspecial.0.run.user (bytecode, ws, vs, ms, "?!!!!", 5, console.in?, console.out!, lasers!, leds!, motors!)
 :
 
-PROC firmware.kill.user ()
+INLINE PROC firmware.kill.user ()
   C.tvmspecial.1.kill.user ()
 :
 
-PROC firmware.query.user (BOOL running, INT state, []BYTE context)
+INLINE PROC firmware.query.user (BOOL running, INT state, []BYTE context)
   C.tvmspecial.2.query.user (running, state, context)
 :
 
@@ -93,20 +94,24 @@ INLINE PROC set.camera.mode (VAL INT mode)
   C.tvmspecial.4.set.camera.mode (mode)
 :
 
-PROC get.camera.frame ([]BYTE frame)
+INLINE PROC get.camera.frame ([]BYTE frame)
   C.tvmspecial.5.get.camera.frame (frame)
 :
 
-PROC jpeg.encode.frame (VAL INT width, height, quality, VAL []BYTE input, []BYTE output, INT used)
+INLINE PROC jpeg.encode.frame (VAL INT width, height, quality, VAL []BYTE input, []BYTE output, INT used)
   C.tvmspecial.6.jpeg.encode.frame (width, height, quality, input, output, used)
 :
 
-PROC draw.caption.on.frame (VAL INT frame.width, VAL []BYTE caption, []BYTE frame)
+INLINE PROC draw.caption.on.frame (VAL INT frame.width, VAL []BYTE caption, []BYTE frame)
   C.tvmspecial.7.draw.caption.on.frame (frame.width, caption, frame)
 :
 
-PROC blit.to.uart0 (VAL []BYTE data)
+INLINE PROC blit.to.uart0 (VAL []BYTE data)
   C.tvmspecial.8.blit.to.uart0 (data)
+:
+
+INLINE PROC test.disconnected (CHAN OF ANY c, BOOL b)
+  C.tvmspecial.9.test.disconnected (c, b)
 :
 --}}}
 --}}}

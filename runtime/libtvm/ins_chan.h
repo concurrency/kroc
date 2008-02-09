@@ -51,7 +51,7 @@ TVM_INSTRUCTION_PROTO (ins_in);
 TVM_INSTRUCTION_PROTO (ins_out);
 /* 0x0E - 0xFE - outbyte - output byte */
 TVM_INSTRUCTION_PROTO (ins_outbyte);
-/* 0x0F- 0xFF - outword - output word */
+/* 0x0F - 0xFF - outword - output word */
 TVM_INSTRUCTION_PROTO (ins_outword);
 
 #endif /* INS_CHAN_H */

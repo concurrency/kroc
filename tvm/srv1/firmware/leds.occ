@@ -1,7 +1,7 @@
 #INCLUDE "defBF537.inc"
 #INCLUDE "srv1.inc"
 
-PROC leds (CHAN P.LED in?, CHAN BOOL ctl?)
+PROC leds (CHAN P.LED in?)
   INITIAL [2]BOOL status IS [FALSE, FALSE]:
   SEQ
     -- Setup LED ports
@@ -13,20 +13,17 @@ PROC leds (CHAN P.LED in?, CHAN BOOL ctl?)
     WHILE NOT done
       INITIAL INT bits IS 0:
       SEQ
-        PRI ALT
-          ctl ? done
-            SKIP
-          in ? CASE
-            disconnected
-              SKIP
-            INT i:
-            BOOL b:
-            led; i; b
-              IF
-                (i > 0) AND (i <= (SIZE status))
-                  status[i - 1] := b
-                TRUE
-                  SKIP
+        in ? CASE
+          disconnected
+            done := TRUE
+          INT i:
+          BOOL b:
+          led; i; b
+            IF
+              (i > 0) AND (i <= (SIZE status))
+                status[i - 1] := b
+              TRUE
+                SKIP
 
         SEQ i = 0 FOR SIZE status
           IF

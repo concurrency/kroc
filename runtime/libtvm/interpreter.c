@@ -45,6 +45,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #endif
 
+#define WS_PAD	4
+
 int tvm_init(tvm_t *tvm)
 {
 	tvm->head 		= NULL;
@@ -125,8 +127,8 @@ void tvm_ectx_layout(ECTX ectx, WORDPTR base,
 	}
 
 	/* The plus 1 in here is for the shutdown bytecode */
-	*size 	= frame_size + 1 + ws_size + vs_size + ms_size;
-	*ws 	= wordptr_plus(base, frame_size + ws_size + 1);
+	*size 	= frame_size + 1 + ws_size + vs_size + ms_size + WS_PAD;
+	*ws 	= wordptr_plus(base, frame_size + ws_size + 1 + WS_PAD);
 	*vs	= vs_size ? *ws : 0;
 	*ms	= ms_size ? wordptr_plus(*ws, vs_size) : 0;
 }
@@ -217,7 +219,7 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 		+ (vs ? 1 : 0) 
 		+ (ms ? 1 : 0);
 	
-	WPTR = wordptr_minus(WPTR, frame_size < 4 ? 4 - frame_size: 0);
+	WPTR = wordptr_minus(WPTR, frame_size < 4 ? 4 - frame_size : 0);
 
 	/* Put a shutdown instruction in top of the stack frame */
 	WPTR = wordptr_minus(WPTR, 1);
@@ -270,21 +272,30 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 	return 0;
 }
 
-static void disconnect_channel(ECTX ectx, char dir, WORDPTR ptr)
+static void disconnect_channel(WORDPTR ptr)
 {
 	WORD chan_value = read_word(ptr);
 
 	if((chan_value & (~1)) != NOT_PROCESS_P)
 	{
-		WORDPTR ws	= (WORDPTR) (chan_value & (~1));
-		ECTX	ws_ectx	= (ECTX)WORKSPACE_GET(ws, WS_ECTX);
+		WORDPTR ws	= (WORDPTR)(chan_value & (~1));
+		ECTX	ectx	= (ECTX)WORKSPACE_GET(ws, WS_ECTX);
 		if(chan_value & 1)
 		{
 			WORD alt_state = WORKSPACE_GET(ws, WS_STATE);
-			if(alt_state == EXTENDED_P)
-			{
-				ws_ectx->add_to_queue_external(ws_ectx, ectx, ws);
-				/* disregard return value */
+
+			switch (alt_state) {
+				case WAITING_P:
+					ectx->add_to_queue_external(ectx, NULL, ws);
+					/* Disregard return value */
+					/* Fall through */
+				case ENABLING_P:
+					WORKSPACE_SET (ws, WS_STATE, DISABLING_P);
+					/* Fall through */
+				case DISABLING_P:
+					break;
+				default:
+					break; /* Error state... */
 			}
 		}
 		else
@@ -317,7 +328,7 @@ static void disconnect_channel(ECTX ectx, char dir, WORDPTR ptr)
 				{
 					UWORD move = MT_FALSE;
 
-					mt_io_update(ws_ectx, &ptr, &move);
+					mt_io_update(ectx, &ptr, &move);
 					/* ignore return; potentially bad */
 
 					if(move == MT_TRUE)
@@ -326,13 +337,13 @@ static void disconnect_channel(ECTX ectx, char dir, WORDPTR ptr)
 						write_word(src, (WORD) NULL_P);
 					}
 
-					mt_release(ws_ectx, ptr);
+					mt_release(ectx, ptr);
 					/* ignore return; potentially bad */
 				}
 			}
 			#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
 
-			ws_ectx->add_to_queue_external(ws_ectx, ectx, ws);
+			ectx->add_to_queue_external(ectx, NULL, ws);
 			/* disregard return value */
 		}
 	}
@@ -350,11 +361,7 @@ void tvm_ectx_disconnect(ECTX ectx)
 		{
 			case '?':
 			case '!':
-				disconnect_channel(
-					ectx, 
-					ectx->tlp_fmt[i], 
-					(WORDPTR) ectx->tlp_argv[i]
-				);
+				disconnect_channel((WORDPTR) ectx->tlp_argv[i]);
 				break;
 			default:
 				break;

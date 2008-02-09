@@ -70,36 +70,31 @@ PROC set.pwm (VAL INT left, right)
     timer3[TIMER3.WIDTH.32] := ((PERIPHERAL.CLOCK / 1000) * right) / 100
 :
 
-PROC motors (CHAN P.MOTOR in?, CHAN BOOL ctl?)
+PROC motors (CHAN P.MOTOR in?)
   INITIAL INT l.speed IS 0:
   INITIAL INT r.speed IS 0:
   SEQ
     init.pwm()
+    
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
       SEQ
-        PRI ALT
-          ctl ? done
-            SKIP
-          INT n:
-          in ? CASE
-            disconnected
-              l.speed, r.speed := 0, 0
-            speed; n
-              l.speed, r.speed := n, n
-            speed.delta; n
-              l.speed, r.speed := (l.speed + n), (r.speed + n)
-            turn; n
-              l.speed, r.speed := (l.speed - n), (r.speed + n)
-            back.turn; n
-              l.speed, r.speed := -(l.speed - n), -(r.speed + n)
-            stop
-              l.speed, r.speed := 0, 0
-        IF
-          (NOT done)
-            set.pwm(l.speed, r.speed)
-          TRUE
-            SKIP
-    set.pwm(0, 0)
+        INT n:
+        in ? CASE
+          disconnected
+            done, l.speed, r.speed := TRUE, 0, 0
+          speed; n
+            l.speed, r.speed := n, n
+          speed.delta; n
+            l.speed, r.speed := (l.speed + n), (r.speed + n)
+          turn; n
+            l.speed, r.speed := (l.speed - n), (r.speed + n)
+          back.turn; n
+            l.speed, r.speed := -(l.speed - n), -(r.speed + n)
+          stop
+            l.speed, r.speed := 0, 0
+        
+        -- Implement change
+        set.pwm(l.speed, r.speed)
 :
 

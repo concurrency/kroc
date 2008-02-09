@@ -59,7 +59,7 @@ TVM_INSTRUCTION (ins_widenshort)
 TVM_INSTRUCTION (ins_fficall)
 {
 	/* Arguments are at WPTR + 1 (+1 to avoid the IPTR on the top of the stack). */
-	WORDPTR args = wordptr_real_address(wordptr_plus(WPTR, 1));
+	WORD *args = wordptr_real_address(wordptr_plus(WPTR, 1));
 	
 	/* Normal FFI (AREG >= 0), or Special FFI (AREG < 0) */
 	if(AREG >= 0)
@@ -389,7 +389,7 @@ TVM_INSTRUCTION (ins_xable)
 	if(chan_value == NOT_PROCESS_P)
 	{
 		/* Save state, set ALT to waiting */
-		WORKSPACE_SET(WPTR, WS_STATE, EXTENDED_P);
+		WORKSPACE_SET(WPTR, WS_STATE, WAITING_P);
 		WORKSPACE_SET(WPTR, WS_ECTX, (WORD) ectx);
 		WORKSPACE_SET(WPTR, WS_PENDING, (WORD) chan_ptr);
 		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
@@ -426,9 +426,14 @@ TVM_INSTRUCTION (ins_xin)
 	{
 		return ret;
 	}
-	else if (ret != 0 || requeue == NOT_PROCESS_P)
+	else if (ret != 0)
 	{
-		SET_ERROR_FLAG_RET (EFLAG_CHAN);
+		SET_ERROR_FLAG_RET(EFLAG_CHAN);
+	}
+	else if (requeue == (WORDPTR)(NOT_PROCESS_P | 1))
+	{
+		ADD_TO_QUEUE_IPTR(WPTR, IPTR);
+		RUN_NEXT_ON_QUEUE_RET();
 	}
 
 	/* Restore output process to channel word */

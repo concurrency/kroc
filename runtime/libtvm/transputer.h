@@ -65,7 +65,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /*{{{  Other transputer constants */
 #define NOT_PROCESS_P		0
 #define NULL_P			NOT_PROCESS_P
-#define EXTENDED_P		(0)
 #define ENABLING_P		(MIN_INT + 1)
 #define WAITING_P		(MIN_INT + 2)
 #define DISABLING_P		(MIN_INT + 3)

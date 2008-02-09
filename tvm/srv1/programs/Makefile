@@ -9,15 +9,16 @@ PROGRAMS = \
 	hello.srv \
 	id.srv \
 	tests.srv \
-	srv1.srv
+	srv1.srv \
+	SRV.class
 
 %.srv: %.occ
 	$(SKROC) $<
 
-all: $(PROGRAMS) uploader
-
-uploader: SRV.java
+%.class: %.java
 	$(JAVAC) $<
+
+all: $(PROGRAMS)
 
 clean:
 	rm -f *.srv *.tce *.class
