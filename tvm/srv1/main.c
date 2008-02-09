@@ -70,11 +70,11 @@ static WORD read_time (void)
 	return (~tcount) >> 1 | (post_w << 31);
 }
 
-static void delay_ms (WORD delay)
+static void delay_us (WORD delay)
 {
-	int timeout = read_time () + (delay * 1000);
+	int timeout = read_time () + delay;
 
-	if ((delay < 0) || (delay > 100000))
+	if ((delay < 0) || (delay >= (1 << 30)))
 		return;
 	while (read_time () < timeout)
 		continue;
@@ -249,6 +249,8 @@ static int camera_running	= 0;
 
 /* Move these constants to a shared header */
 enum {
+	CAMERA_INIT		= -1,
+	CAMERA_STOP		= 0,
 	CAMERA_160_128		= 1,
 	CAMERA_320_256		= 2,
 	CAMERA_640_512		= 3,
@@ -268,6 +270,7 @@ static int set_camera_mode (ECTX ectx, WORD args[])
 	}
 
 	switch (mode) {
+		case CAMERA_INIT:
 		case CAMERA_160_128: 
 			width		= 160;
 			height 		= 128; 
@@ -294,12 +297,14 @@ static int set_camera_mode (ECTX ectx, WORD args[])
 			break;
 	}
 
-	if (cfg != NULL) {
-		if (!camera_initialised) {
-			i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >>1);
-			camera_initialised = 1;
-		}
+	if ((cfg != NULL && !camera_initialised) || mode == CAMERA_INIT) {
+		i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >> 1);
+		delay_us (500000);
+		i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >> 1);
+		camera_initialised++;
+	}
 
+	if (cfg != NULL) {
 		i2cwrite (0x30, cfg, cfg_length >> 1);
 		
 		camera_init (

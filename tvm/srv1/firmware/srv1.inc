@@ -3,6 +3,7 @@
 
 --{{{  Constants
 --{{{  Camera
+VAL INT CAMERA.INIT       IS -1:
 VAL INT CAMERA.OFF        IS 0:
 VAL INT CAMERA.160.128    IS 1:
 VAL INT CAMERA.320.256    IS 2:
