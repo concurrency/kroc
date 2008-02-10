@@ -167,6 +167,7 @@
 
 
 #INCLUDE "course.module"
+#INCLUDE "file.module"
 
 
 --*{ max The following maxima are needed for classical occam (data and
@@ -181,6 +182,7 @@ VAL INT max.name.length IS 16:    --* maximum name length
 
 --* Structured data stream: zero or more [@code string] messages,
 --  followed by a single [@code poison] as the final message.
+--{{{
 PROTOCOL NAME.NUMBER
   CASE
     --* Data pair
@@ -285,13 +287,127 @@ PROC display (CHAN NAME.NUMBER in?, CHAN BYTE out!)
     --}}}
 :
 
+--* Dump a file down a channel, one byte at a time.
+--
+--  Sends END.OF.FILE (from "consts.inc", 255) at end of file.
+--  If no readable file with the given file name exists,
+--  just send one END.OF.FILE.
+--
+-- @param file.name The path-name to a readable file
+-- @param out The output channel
+--
+PROC from.file (VAL []BYTE file.name, CHAN BYTE out!)
+  INT fd:
+  SEQ
+    file.open (file.name, O.RDONLY, fd)
+    IF
+      fd < 0
+        out ! END.OF.FILE
+      TRUE
+        INT r:
+        SEQ
+          INITIAL BOOL running IS TRUE:
+          WHILE running
+            [2048]BYTE f.buf:
+            INT f.len:
+            SEQ
+              file.read (fd, f.buf, f.len)
+              IF
+                f.len <= 0
+                  running := FALSE
+                TRUE
+                  SEQ i = 0 FOR f.len
+                    out ! f.buf[i]
+          file.close (fd, r)
+          out ! END.OF.FILE
+:
 
---* The main process.
+--* Write to a file, from a channel.
+--
+--  If no writeable file with the given file
+--  name exists,
+--  refuse any channel input (e.g. STOP).
+--
+-- @param file.name The path-name to a
+-- writeable file
+-- @param in The input channel
+--
+PROC to.file (VAL []BYTE file.name, CHAN BYTE in?)
+  INT fd:
+  SEQ
+    file.open3 (file.name, (O.WRONLY \/ O.TRUNC) \/ O.CREAT, S.I644, fd)
+    IF
+      fd < 0
+        STOP
+      TRUE
+        INT r:
+        [1024]BYTE f.buf:
+        INT f.len:
+        SEQ
+          f.len := 0
+          INITIAL BOOL running IS TRUE:
+          WHILE running
+            INITIAL BOOL flush IS FALSE:
+            BYTE ch:
+            SEQ
+              in ? ch
+              IF
+                ch = END.OF.FILE
+                  running, flush := FALSE, TRUE
+                TRUE
+                  SEQ
+                    f.buf[f.len] := ch
+                    f.len := f.len + 1
+                    IF
+                      f.len = (SIZE f.buf)
+                        flush := TRUE
+                      TRUE
+                        SKIP
+
+              IF
+                flush AND (f.len > 0)
+                  SEQ
+                    file.write (fd, [f.buf FOR f.len], r)
+                    IF
+                      r < f.len
+                        STOP
+                      TRUE
+                        f.len, flush := 0, FALSE
+                TRUE
+                  SKIP
+          file.close (fd, r)
+:
+
+
+--* The main process (Transterpreter version).
+--
+--  Run this program by specifying the relevant file-names in the PROC
+--  below, e.g. "nn_data.txt" and "my_results.txt".
+--
+--  Transterpreter users: delete the "q6" PROC below, so that this
+--  one becomes the top-level process.
+--
+-- @param keyboard The standard input channel (stdin, in Unix-speak)
+-- @param screen The standard output channel (stdout, in Unix-speak)
+-- @param error The standard error channel (stderr, in Unix-speak)
+--
+PROC q6.tvm (CHAN BYTE keyboard?, screen!, error!)
+  CHAN NAME.NUMBER a:
+  CHAN BYTE in, out:
+  PAR
+    from.file ("nn_data.txt", in!)
+    read.data (in?, a!)
+    SEQ
+      display (a?, out!)
+      out ! END.OF.FILE
+    to.file ("my_results.txt", out?)
+:
+
+
+--* The main process (KRoC version).
 --
 --  Run this program by redirecting standard input and output to/from
 --  text files - e.g. "[@text ./q6 < nn_data.txt > my_results.txt]".
---
---  [Transterpreter users may have a problem here!]
 --
 -- @param keyboard The standard input channel (stdin, in Unix-speak)
 -- @param screen The standard output channel (stdout, in Unix-speak)
