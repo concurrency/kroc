@@ -414,6 +414,8 @@ static int read_bytecode (const char *fn)
 		return error_out ("failed reading bytecode (%d of %d bytes)", ret, bytecode_len);
 	}
 
+	fclose (fh);
+
 	return 0;
 }
 
@@ -553,6 +555,10 @@ int main (int argc, char *argv[])
 			break;
 		}
 	}
+
+	free (firmware_memory);
+	free (user_memory);
+	free (bytecode);
 
 	return 0;
 }
