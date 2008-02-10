@@ -171,7 +171,7 @@ PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 BUILDRECONF=0
 ACTIONLIST=
 FORCECONFIGURE=
-FORCESINGLEBUILD=1
+FORCESINGLEBUILD=0
 USEPRIORITY=42
 USECPUTIMERS=42
 USEPTHREADS=42
@@ -1695,8 +1695,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 	fi
 	SHOWBANNER=1
 	ACTIONLIST="preconfigure-ccsp \
-		fconfigure-ccspt make-ccspt install-ccspt \
-		fconfigure-ccsp make-ccsp install-ccsp \
+		configure-ccsp make-ccsp install-ccsp \
 		bsyscalls-support cputimers-support dynproc-support \
 		configure-mkoccdeps make-mkoccdeps install-mkoccdeps \
 		configure-occ21 make-occ21 install-occ21 \
