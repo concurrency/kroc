@@ -13,9 +13,10 @@ AC_PROG_CC
 AC_PROG_RANLIB
 
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdlib.h stdio.h string.h])
+AC_CHECK_HEADERS([stdlib.h stdio.h stdarg.h string.h])
 AC_CHECK_HEADERS([dlfcn.h inttypes.h limits.h math.h search.h time.h unistd.h])
 AC_CHECK_HEADERS([sys/ioctl.h sys/time.h sys/timeb.h sys/types.h])
+AC_CHECK_FUNCS([gettimeofday ftime])
 
 #########################
 #  Configuration Options

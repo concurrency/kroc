@@ -1,0 +1,113 @@
+
+--{{{  Special FFI Linkage 
+INLINE PROC init.input ()
+  #PRAGMA EXTERNAL "PROC C.tvmspecial.0.init.input () = 0"
+  C.tvmspecial.0.init.input ()
+:
+
+PROC read.char (RESULT INT ch)
+  #PRAGMA EXTERNAL "PROC C.tvmspecial.1.read.char (RESULT INT ch) = 0"
+  C.tvmspecial.1.read.char (ch)
+:
+
+INLINE PROC write.screen (VAL BYTE ch)
+  #PRAGMA EXTERNAL "PROC C.tvmspecial.2.write.screen (VAL BYTE ch) = 0"
+  C.tvmspecial.2.write.screen (ch)
+:
+
+INLINE PROC flush.screen ()
+  #PRAGMA EXTERNAL "PROC C.tvmspecial.3.flush.screen () = 0"
+  C.tvmspecial.3.flush.screen ()
+:
+
+INLINE PROC write.error (VAL BYTE ch)
+  #PRAGMA EXTERNAL "PROC C.tvmspecial.4.write.error (VAL BYTE ch) = 0"
+  C.tvmspecial.4.write.error (ch)
+:
+
+INLINE PROC flush.error ()
+  #PRAGMA EXTERNAL "PROC C.tvmspecial.5.flush.error () = 0"
+  C.tvmspecial.5.flush.error ()
+:
+--}}}
+
+-- The actual keyboard handler, please note that it takes INTegers in, so that
+-- we can reliably detect when the external keyboard channel has no input for
+-- us, without using any of the possible values available in a byte.
+
+PROC keyboard (CHAN BYTE out!)
+  VAL INT poll.delay IS 10000:
+  SEQ
+    init.input ()
+    WHILE TRUE
+      SEQ
+        -- We want to to send as much data as there is available in the
+        -- input buffer, this should make I/O from pipes perform better, 
+        -- but should not affect keyboard interactive input.
+        INT ch:
+        SEQ
+          read.char (ch)                -- Poll the external keyboard channel
+          WHILE ch <> (-1)              -- Check if there was actual key data on it
+            SEQ
+              out ! (BYTE (ch /\ #FF))  -- The user program will get scheduled now
+              read.char (ch)            -- Check if there is more data
+
+        -- Wait for a while, if there were no (more) key events
+        TIMER tim:
+        INT t:
+        SEQ
+          tim ? t
+          tim ? AFTER t PLUS poll.delay
+:
+
+PROC screen (CHAN BYTE in?)
+  WHILE TRUE
+    BYTE ch:
+    SEQ
+      -- Extended rendezvous here. If there is no extended rendezvous we might
+      -- loose one character of output. This might happen if:
+      --  * A process send a character on screen, blocks
+      --  * It gets picked up by screen handler, which runs the process again
+      --    (no further code in screen handler than in ? ch is executed)
+      --  * The process had sent its last character, does no more
+      --    communication and does the final return. Ie the program quits
+      --    but the part of the screen handler which does output has never
+      --    been executed and the last character is lost
+#IF DEFINED (OCCAMPI)
+      in ?? ch
+#ELSE
+      in ? ch
+      SEQ
+#ENDIF
+        IF
+          ch = '*n'
+            SEQ
+              write.screen ('*n')
+              flush.screen ()
+          ch = #FF
+            flush.screen ()
+          TRUE
+            write.screen (ch)
+        SKIP
+:
+
+PROC error (CHAN BYTE in?)
+  WHILE TRUE
+    BYTE ch:
+    SEQ
+      in ? ch
+      IF
+        ch <> #FF
+          write.error (ch)
+        TRUE
+          SKIP
+      flush.error ()
+:
+
+PROC firmware (CHAN BYTE kyb!, scr?, err?)
+  PAR
+    keyboard (kyb!)
+    screen (scr?)
+    error (err?)
+:
+

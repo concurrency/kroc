@@ -8,8 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stiw.h"
-
 /* #if defined(HAVE_IOCTL_H) && defined(HAVE_TERMIOS_H) */
 //#if defined _MAC_UNIX || defined LINUX ||defined SOLARIS
 
