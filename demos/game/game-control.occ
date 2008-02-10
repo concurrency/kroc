@@ -18,14 +18,14 @@
 --
 
 #INCLUDE "types.inc"
-#USE "course.lib"
+#INCLUDE "course.module"
+
 #INCLUDE "config.inc"
 #USE "game-utils"
 #USE "game-client"
 #USE "game-tty"
 
-#INCLUDE "filelib.inc"
-#USE "file.lib"
+#INCLUDE "file.module"
 
 
 --{{{  PROC game.makelink (SHARED CT.ROOMLINK! room, target, VAL INT nesw)

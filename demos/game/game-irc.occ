@@ -22,8 +22,7 @@
 
 #IF DEFINED (USE.IRC.IF)
 
-#INCLUDE "socklib.inc"
-#USE "sock.lib"
+#INCLUDE "sock.module"
 
 #INCLUDE "ircproto.inc"
 #USE "ircplug"

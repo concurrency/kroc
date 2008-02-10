@@ -17,11 +17,10 @@
 --	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 --
 
-#USE "course.lib"
 #INCLUDE "types.inc"
+#INCLUDE "course.module"
 
-#INCLUDE "filelib.inc"
-#USE "file.lib"
+#INCLUDE "file.module"
 
 #INCLUDE "config.inc"
 

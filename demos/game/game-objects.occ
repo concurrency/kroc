@@ -20,7 +20,8 @@
 #INCLUDE "config.inc"
 #INCLUDE "types.inc"
 #USE "game-utils"
-#USE "course.lib"
+
+#INCLUDE "course.module"
 
 
 --{{{  PROC triv.object (VAL []BYTE name, VAL INT ilocn, SHARED CT.GAMECTRL! to.game)

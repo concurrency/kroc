@@ -19,7 +19,7 @@
 
 #INCLUDE "types.inc"
 #INCLUDE "config.inc"
-#USE "course.lib"
+#INCLUDE "course.module"
 #USE "game-utils"
 #USE "game-client"
 
