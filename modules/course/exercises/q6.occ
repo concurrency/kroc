@@ -95,7 +95,11 @@
 --
 --   ./q6 < nn_small.txt > small_results.txt
 --
--- Those using the Transterpreter will need to do a little more.
+-- Those using the Transterpreter will need to do a little more -- remove
+-- the "q6" PROC at the bottom of the file, so that "q6.tvm" becomes the
+-- top-level process.  There are two process instances in here that read
+-- and write BYTEs from and to files.  Change the strings passed as parameters
+-- to specify different input and output files.
 --
 --}}}
 
