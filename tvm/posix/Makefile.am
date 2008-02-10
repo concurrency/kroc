@@ -8,7 +8,7 @@ bin_PROGRAMS = tvm
 tvm_SOURCES = \
 	firmware.h \
 	main.c \
-	tvm_hooks.c
+	sffi.c
 
 if OS_WINDOWS
 tvm_SOURCES += win32_io.c

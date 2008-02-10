@@ -1,30 +1,16 @@
-#define BYTE WIN_BYTE
-#define WORD WIN_WORD
-#define UWORD WIN_UWORD
-#include <windows.h>
-#undef BYTE
-#undef WORD
-#undef UWORD
 
-#include <stdio.h>
-
-#include "interpreter/transputer.h"
+#include "tvm_posix.h"
 
 /* Types for the function hooks */
 typedef int (*CHAR_AVAILABLE)(void);
 typedef BYTE (*READ_CHAR)(void);
 
 /* Function hooks */
-CHAR_AVAILABLE char_available_win32;
-READ_CHAR read_char_win32;
+static CHAR_AVAILABLE char_available_win32;
+static READ_CHAR read_char_win32;
  
 /* EOF For pipes */
-int pipe_eof = 0;
-
-
-
-
-
+static int pipe_eof = 0;
 
 /****************************************************************************
  ******************************** CONSOLE ***********************************
@@ -122,11 +108,6 @@ static BYTE read_char_console_win32(void)
 }
 
 
-
-
-
-
-
 /****************************************************************************
  ********************************** PIPE ************************************
  ****************************************************************************/
@@ -194,10 +175,6 @@ static BYTE read_char_pipe_win32(void)
 }
 
 
-
-
-
-
 /****************************************************************************
  ******************************** EXPORTED **********************************
  ****************************************************************************/
@@ -255,3 +232,4 @@ BYTE read_char(void)
 {
 	return read_char_win32();
 }
+
