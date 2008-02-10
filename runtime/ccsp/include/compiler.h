@@ -39,7 +39,11 @@
 /*{{{  no_return behaviour */
 #ifdef __GNUC__
 #define NO_RETURN	__attribute__ ((noreturn))
+#if defined(RMOX_BUILD)
+#define no_return()	rmox_panic ("no_return")
+#else
 #define no_return()	exit(0)
+#endif
 #else
 #define NO_RETURN
 #define no_return()
