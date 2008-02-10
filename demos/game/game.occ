@@ -20,8 +20,7 @@
 #USE "course.lib"
 #INCLUDE "types.inc"
 
-#INCLUDE "filelib.inc"
-#USE "file.lib"
+#INCLUDE "file.module"
 
 #INCLUDE "config.inc"
 #USE "game-utils"
@@ -36,7 +35,7 @@
 #USE "game-irc"
 #ENDIF
 #IF DEFINED (USE.TELNET.IF)
-#INCLUDE "socklib.inc"
+#INCLUDE "sock.module"
 #USE "game-ttysocket"
 #ENDIF
 

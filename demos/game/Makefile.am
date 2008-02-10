@@ -3,29 +3,74 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS=foreign no-dependencies
+OCCBUILD=@OCCBUILD@
 
-KROC=@KROC@
-KROCOPTS = -I. -v -d
-KROCLIBS = -lfile -lsock -lcourse
+examples = \
+	game
 
-ALLOBJS = game-utils.o game-room.o game-objects.o student-bots.o game-bots.o game-client.o game-tty.o game-control.o game-irc.o game-ttysocket.o ircplug.o game-linc.o
+EXTRA_DIST = data \
+	game.occ game-utils.occ game-room.occ game-objects.occ students-bots.occ game-bots.occ game-client.occ \
+		game-tty.occ game-control.occ game-irc.occ game-ttysocket.occ ircplug.occ game-linc.occ
 
-%.o: %.occ
-		$(KROC) $(KROCOPTS) -c $<
+OCC_OBJECTS = game-utils.o game-room.o game-objects.o student-bots.o game-bots.o game-client.o \
+		game-tty.o game-control.o game-irc.o game-ttysocket.o ircplug.o game-linc.o
 
-SUFFIXES = .occ
-
-kroc_programs=game
-
-all-local:	$(kroc_programs)
-
-game:		game.occ $(ALLOBJS) config.inc types.inc ircproto.inc
-		$(KROC) $(KROCOPTS) game.occ $(ALLOBJS) $(KROCLIBS)
+OCC_TCES = game-utils.tce game-room.tce game-objects.tce student-bots.tce game-bots.tce game-client.tce \
+		game-tty.tce game-control.tce game-irc.tce game-ttysocket.tce ircplug.tce game-linc.tce
 
 
-CLEANFILES=$(kroc_programs) *~ *.t *.s *.tco *.kt* *.tce $(ALLOBJS)
+all-local:	$(examples)
 
-install-exec-local: $(kroc_programs)
+game:		game.occ $(OCC_OBJECTS) config.inc types.inc ircproto.inc
+		$(OCCBUILD) --program $< $(OCC_OBJECTS)
+
+clean-local:
+		$(OCCBUILD) --clean $(examples) $(OCC_TCES)
+
+game-bots.o: game-utils.o
+game-bots.o: game-objects.o
+game-bots.o: student-bots.o
+game-client.o: game-utils.o
+game-client.o: game-room.o
+game-client.o: game-objects.o
+game-client.o: game-bots.o
+game-control.o: game-utils.o
+game-control.o: game-client.o
+game-control.o: game-tty.o
+game-irc.o: ircplug.o
+game-irc.o: game-utils.o
+game-irc.o: game-tty.o
+game-irc.o: game-client.o
+game-linc.o: game-utils.o
+game-objects.o: game-utils.o
+game.o: course.lib.o
+game.o: game-utils.o
+game.o: game-room.o
+game.o: game-objects.o
+game.o: game-client.o
+game.o: game-tty.o
+game.o: game-bots.o
+game.o: game-linc.o
+game.o: game-control.o
+game.o: game-irc.o
+game.o: game-ttysocket.o
+game-room.o: game-utils.o
+game-tty.o: game-utils.o
+game-tty.o: game-client.o
+game-ttysocket.o: game-utils.o
+game-ttysocket.o: game-client.o
+game-ttysocket.o: game-tty.o
+student-bots.o: game-utils.o
+student-bots.o: game-objects.o
+
+
+SUFFIXES = .occ .tce .lib
+
+.occ.o:
+		$(OCCBUILD) --object $<
+
+
+install-exec-local: $(examples)
 	$(mkinstalldirs) "$(DESTDIR)$(datadir)/examples/demos"
 	$(INSTALL_PROGRAM) "game" "$(DESTDIR)$(datadir)/examples/demos/game"
 	$(mkinstalldirs) "$(DESTDIR)$(datadir)/examples/demos/game-data"
@@ -195,6 +240,4 @@ install-exec-local: $(kroc_programs)
 	$(INSTALL_DATA) "data/wine.odesc" "$(DESTDIR)$(datadir)/examples/demos/game-data/wine.odesc"
 
 	$(INSTALL_DATA) "data/SCRIPT" "$(DESTDIR)$(datadir)/examples/demos/game-data/SCRIPT"
-
-EXTRA_DIST = data
 

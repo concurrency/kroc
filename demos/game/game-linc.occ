@@ -21,7 +21,8 @@
 #INCLUDE "config.inc"
 #INCLUDE "types.inc"
 #USE "game-utils"
-#USE "course.lib"
+
+#INCLUDE "course.module"
 
 
 --{{{  PROC linc.client (VAL INT origin, SHARED CT.PLINC! to.linc, SHARED CT.GAMECTRL! to.game, MOBILE []BYTE cname, CT.CLIENT! client)
