@@ -55,4 +55,6 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
+demo_nets.tce: demo_cycles.tce
+
 string.tce: utils.tce
