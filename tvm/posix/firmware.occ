@@ -10,24 +10,14 @@ PROC read.char (RESULT INT ch)
   C.tvmspecial.1.read.char (ch)
 :
 
-INLINE PROC write.screen (VAL BYTE ch)
-  #PRAGMA EXTERNAL "PROC C.tvmspecial.2.write.screen (VAL BYTE ch) = 0"
-  C.tvmspecial.2.write.screen (ch)
-:
-
-INLINE PROC flush.screen ()
-  #PRAGMA EXTERNAL "PROC C.tvmspecial.3.flush.screen () = 0"
-  C.tvmspecial.3.flush.screen ()
+INLINE PROC write.screen (VAL []BYTE buffer)
+  #PRAGMA EXTERNAL "PROC C.tvmspecial.2.write.screen (VAL []BYTE buffer) = 0"
+  C.tvmspecial.2.write.screen (buffer)
 :
 
 INLINE PROC write.error (VAL BYTE ch)
-  #PRAGMA EXTERNAL "PROC C.tvmspecial.4.write.error (VAL BYTE ch) = 0"
-  C.tvmspecial.4.write.error (ch)
-:
-
-INLINE PROC flush.error ()
-  #PRAGMA EXTERNAL "PROC C.tvmspecial.5.flush.error () = 0"
-  C.tvmspecial.5.flush.error ()
+  #PRAGMA EXTERNAL "PROC C.tvmspecial.3.write.error (VAL BYTE ch) = 0"
+  C.tvmspecial.3.write.error (ch)
 :
 --}}}
 
@@ -61,8 +51,11 @@ PROC keyboard (CHAN BYTE out!)
 :
 
 PROC screen (CHAN BYTE in?)
+  VAL INT buffer.size IS 64:
+  INITIAL INT len IS 0:
+  [buffer.size]BYTE buffer:
   WHILE TRUE
-    BYTE ch:
+    BOOL flush:
     SEQ
       -- Extended rendezvous here. If there is no extended rendezvous we might
       -- loose one character of output. This might happen if:
@@ -74,21 +67,30 @@ PROC screen (CHAN BYTE in?)
       --    but the part of the screen handler which does output has never
       --    been executed and the last character is lost
 #IF DEFINED (OCCAMPI)
-      in ?? ch
+      in ?? buffer[len]
+        SEQ
 #ELSE
-      in ? ch
+      in ? buffer[len]
       SEQ
+        SEQ
 #ENDIF
-        IF
-          ch = '*n'
-            SEQ
-              write.screen ('*n')
-              flush.screen ()
-          ch = #FF
-            flush.screen ()
-          TRUE
-            write.screen (ch)
-        SKIP
+          CASE buffer[len]
+            #FF
+              flush := TRUE
+            '*n', '*c'
+              flush, len := TRUE, (len + 1)
+            ELSE
+              SEQ
+                len   := len + 1
+                flush := len >= buffer.size
+          IF
+            flush
+              SEQ
+                #PRAGMA DEFINED buffer
+                write.screen ([ buffer FOR len ])
+                len := 0
+            TRUE
+              SKIP
 :
 
 PROC error (CHAN BYTE in?)
@@ -101,7 +103,6 @@ PROC error (CHAN BYTE in?)
           write.error (ch)
         TRUE
           SKIP
-      flush.error ()
 :
 
 PROC firmware (CHAN BYTE kyb!, scr?, err?)

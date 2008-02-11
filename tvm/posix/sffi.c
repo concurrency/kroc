@@ -24,30 +24,25 @@ static int _read_char (ECTX ectx, WORD args[])
 	return SFFI_OK;
 }
 
-/* PROC write.screen (VAL BYTE ch) */
+/* PROC write.screen (VAL []BYTE buffer) */
 static int write_screen (ECTX ectx, WORD args[])
 {
-	fprintf (stdout, "%c", (char) args[0]);
-	return SFFI_OK;
-}
+	char *buffer	= (char *) wordptr_real_address ((WORDPTR) args[0]);
+	WORD length	= args[1];
 
-/* PROC flush.screen () */
-static int flush_screen (ECTX ectx, WORD args[])
-{
+	if (length > 0) {
+		fwrite (buffer, length, 1, stdout);
+	}
+
 	fflush (stdout);
+	
 	return SFFI_OK;
 }
 
 /* PROC write.error (VAL BYTE ch) */
 static int write_error (ECTX ectx, WORD args[])
 {
-	fprintf (stderr, "%c", (char) args[0]);
-	return SFFI_OK;
-}
-
-/* PROC flush.error () */
-static int flush_error (ECTX ectx, WORD args[])
-{
+	fputc (read_byte (args[0]), stderr);
 	fflush (stderr);
 	return SFFI_OK;
 }
@@ -79,9 +74,7 @@ static SFFI_FUNCTION sffi_table[] = {
 	init_input,
 	_read_char,
 	write_screen,
-	flush_screen,
 	write_error,
-	flush_error,
 	get_argv,
 	get_version
 };
