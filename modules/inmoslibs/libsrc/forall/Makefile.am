@@ -164,8 +164,7 @@ forall_early_objs = \
 	r64eq.tce \
 	r64gt.tce
 
-forall_lib_objs = \
-	$(forall_early_objs) \
+forall_late_objs = \
 	bitcount.tce \
 	brevnbit.tce \
 	brevword.tce \
@@ -284,6 +283,10 @@ forall_lib_objs = \
 	rscaleb.tce \
 	unpacksn.tce
 
+forall_lib_objs = \
+	$(forall_early_objs) \
+	$(forall_late_objs)
+
 all-local: forall-real $(libs)
 
 # As above: this builds a "early" version of the runtime library containing
@@ -292,7 +295,7 @@ forall-early: $(forall_early_objs)
 	$(OCCBUILD) --library forall.lib $(forall_early_objs)
 	touch forall-early
 
-forall-real: forall-early $(forall_lib_objs)
+forall-real: $(forall_lib_objs)
 	$(OCCBUILD) --library forall.lib $(forall_lib_objs)
 	touch forall-real
 
@@ -309,6 +312,8 @@ SUFFIXES = .occ .tce .lib
 
 .occ.tce:
 	$(OCCBUILD) --object $<
+
+$(forall_late_objs): forall-early
 
 ## begin pideps dependencies
 dargred.tce: ridiv.tce rimul.tce
