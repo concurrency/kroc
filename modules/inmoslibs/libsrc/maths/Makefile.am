@@ -69,7 +69,7 @@ snglmath.lib: $(snglmath_lib_objs)
 dblmath.lib: $(dblmath_lib_objs)
 	$(OCCBUILD) --library dblmath.lib $(dblmath_lib_objs)
 
-maths.lib:
+maths.lib: snglmath.lib dblmath.lib
 	$(OCCBUILD) --library maths.lib --include mathhdr.inc --include mathvals.inc --need snglmath --need dblmath
 
 install-exec-local: $(libs) $(includes)
