@@ -492,20 +492,15 @@ static int run_user (void)
 		case ECTX_TIME_SLICE:
 			return ret; /* OK */
 		case ECTX_EMPTY:
-			/* FIXME: deadlock checking */
-			return ret;
+			if (tvm_ectx_waiting_on (&user_ctx, user_memory, user_memory_len)) {
+				return ret; /* OK - waiting for firmware */
+			}
+			break;
 		default:
 			break;
 	}
 
-	if (ret == ECTX_ERROR) {
-		fprintf (stderr, 
-			"Program failed, state = %c, eflags = %08x\n",
-			user_ctx.state, user_ctx.eflags
-		);
-	}
-
-	return ret;
+	return ECTX_ERROR;
 }
 
 int main (int argc, char *argv[])
@@ -557,6 +552,14 @@ int main (int argc, char *argv[])
 			run_firmware ();
 			break;
 		}
+	}
+	
+	if (user_ctx.state == ECTX_ERROR || user_ctx.state == ECTX_EMPTY) {
+		/* FIXME: more debugging */
+		fprintf (stderr, 
+			"Program failed, state = %c, eflags = %08x\n",
+			user_ctx.state, user_ctx.eflags
+		);
 	}
 
 	free (firmware_memory);
