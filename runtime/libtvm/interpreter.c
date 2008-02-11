@@ -47,18 +47,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define WS_PAD	4
 
-int tvm_init(tvm_t *tvm)
+int tvm_init (tvm_t *tvm)
 {
 	tvm->head 		= NULL;
 	tvm->tail		= NULL;
 	return 0;
 }
 
-void tvm_ectx_init(tvm_t *tvm, ECTX ectx)
+void tvm_ectx_init (tvm_t *tvm, ECTX ectx)
 {
-	tvm_ectx_reset(ectx);
+	tvm_ectx_reset (ectx);
 	
-	ectx->pri 	= 0;
+	ectx->pri 		= 0;
 
 	#ifdef TVM_CUSTOM_COPY_DATA
 	ectx->copy_data		= NULL;
@@ -77,7 +77,7 @@ void tvm_ectx_init(tvm_t *tvm, ECTX ectx)
 	ectx->ext_chan_table_length = 0;
 	#endif
 
-	ectx->tvm	= tvm;
+	ectx->tvm		= tvm;
 
 	if (tvm->head == NULL) {
 		tvm->head = ectx;
@@ -85,32 +85,32 @@ void tvm_ectx_init(tvm_t *tvm, ECTX ectx)
 		tvm->tail->next = ectx;
 	}
 	
-	tvm->tail	= ectx;
-	ectx->next	= NULL;
+	tvm->tail		= ectx;
+	ectx->next		= NULL;
 
-	_tvm_install_scheduler(ectx);
+	_tvm_install_scheduler (ectx);
 }
 
-void tvm_ectx_reset(ECTX ectx)
+void tvm_ectx_reset (ECTX ectx)
 {
 	ectx->state 	= ECTX_INIT;
 	ectx->eflags	= 0;
 	ectx->sflags	= 0;
 
 	/* evaluation stack */
-	OREG = 0;
-	AREG = 0;
-	BREG = 0;
-	CREG = 0;
+	OREG 		= 0;
+	AREG 		= 0;
+	BREG 		= 0;
+	CREG 		= 0;
 
 	/* setup scheduler queues */
-	WPTR = (WORDPTR)NOT_PROCESS_P;
-	FPTR = (WORDPTR)NOT_PROCESS_P;
-	BPTR = (WORDPTR)NOT_PROCESS_P;
-	TPTR = (WORDPTR)NOT_PROCESS_P;
+	WPTR = (WORDPTR) NOT_PROCESS_P;
+	FPTR = (WORDPTR) NOT_PROCESS_P;
+	BPTR = (WORDPTR) NOT_PROCESS_P;
+	TPTR = (WORDPTR) NOT_PROCESS_P;
 }
 
-void tvm_ectx_layout(ECTX ectx, WORDPTR base,
+void tvm_ectx_layout (ECTX ectx, WORDPTR base,
 		const char *tlp_fmt, const int tlp_argc,
 		WORD ws_size, WORD vs_size, WORD ms_size,
 		WORD *size, WORDPTR *ws, WORDPTR *vs, WORDPTR *ms)
@@ -121,23 +121,22 @@ void tvm_ectx_layout(ECTX ectx, WORDPTR base,
 		+ (ms_size ? 1 : 0);
 	
 	/* Stack frame has a minimum size of 4 */
-	if (frame_size < 4)
-	{
+	if (frame_size < 4) {
 		frame_size = 4;
 	}
 
 	/* The plus 1 in here is for the shutdown bytecode */
 	*size 	= frame_size + 1 + ws_size + vs_size + ms_size + WS_PAD;
-	*ws 	= wordptr_plus(base, frame_size + ws_size + 1 + WS_PAD);
+	*ws 	= wordptr_plus (base, frame_size + ws_size + 1 + WS_PAD);
 	*vs	= vs_size ? *ws : 0;
-	*ms	= ms_size ? wordptr_plus(*ws, vs_size) : 0;
+	*ms	= ms_size ? wordptr_plus (*ws, vs_size) : 0;
 }
 
 /*
  * Setup the initial workspace and instruction pointers,
  * and stack frame for an execution context.
  */
-int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
+int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 		WORDPTR ws, WORDPTR vs, WORDPTR ms,
 		const char *fmt, int argc, const WORD argv[])
 {
@@ -145,33 +144,27 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 	int i, frame_size;
 
 	/* Make sure we don't have too many arguments */
-	if (argc > TVM_ECTX_TLP_ARGS)
-	{
+	if (argc > TVM_ECTX_TLP_ARGS) {
 		return -1;
 	}
 
 	/* Copy arguments to execution context */
 	ectx->tlp_argc = argc;
-	for (i = 0; i < argc; ++i)
-	{
+	for (i = 0; i < argc; ++i) {
 		char arg = ectx->tlp_fmt[i] = fmt[i];
 
-		if (arg == 'F')
-		{
+		if (arg == 'F') {
 			#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 			int ret;
 			/* Allocate forking barrier */
-			if ((ret = mt_alloc(ectx, MT_MAKE_BARRIER(MT_BARRIER_FORKING), 0, &fb)))
-			{
+			if ((ret = mt_alloc (ectx, MT_MAKE_BARRIER(MT_BARRIER_FORKING), 0, &fb))) {
 				return ret;
 			}
 			ectx->tlp_argv[i] = (WORD) fb;
 			#else
 			return -2;
 			#endif
-		} 
-		else 
-		{
+		} else {
 			ectx->tlp_argv[i] = argv[i];
 		}
 	}
@@ -219,74 +212,66 @@ int tvm_ectx_install_tlp(ECTX ectx, BYTEPTR code,
 		+ (vs ? 1 : 0) 
 		+ (ms ? 1 : 0);
 	
-	WPTR = wordptr_minus(WPTR, frame_size < 4 ? 4 - frame_size : 0);
+	WPTR = wordptr_minus (WPTR, frame_size < 4 ? 4 - frame_size : 0);
 
 	/* Put a shutdown instruction in top of the stack frame */
-	WPTR = wordptr_minus(WPTR, 1);
-	write_byte(byteptr_plus((BYTEPTR)WPTR, 0), 0x2F);
-	write_byte(byteptr_plus((BYTEPTR)WPTR, 1), 0xFE);
+	WPTR = wordptr_minus (WPTR, 1);
+	write_byte (byteptr_plus ((BYTEPTR) WPTR, 0), 0x2F);
+	write_byte (byteptr_plus ((BYTEPTR) WPTR, 1), 0xFE);
 
 	/* Pad stack frame */
-	if (frame_size < 4) 
-	{
-		WPTR = wordptr_minus(WPTR, 4 - frame_size);
+	if (frame_size < 4) {
+		WPTR = wordptr_minus (WPTR, 4 - frame_size);
 		frame_size = 4;
 	}
 	
 	/* Set up forking barrier pointer */
-	if(fb)
-	{
-		WPTR = wordptr_minus(WPTR, 1);
-		write_word(WPTR, (WORD)fb);
+	if (fb) {
+		WPTR = wordptr_minus (WPTR, 1);
+		write_word (WPTR, (WORD) fb);
 	}
 
 	/* Set up mobilespace pointer */
-	if(ms)
-	{
-		WPTR = wordptr_minus(WPTR, 1);
-		write_word(WPTR, (WORD)ms);
+	if (ms) {
+		WPTR = wordptr_minus (WPTR, 1);
+		write_word (WPTR, (WORD) ms);
 	}
 	
 	/* Set up vectorspace pointer */
-	if(vs)
-	{
-		WPTR = wordptr_minus(WPTR, 1);
-		write_word(WPTR, (WORD)vs);
+	if (vs) {
+		WPTR = wordptr_minus (WPTR, 1);
+		write_word (WPTR, (WORD) vs);
 	}
 	
 	/* Set up arguments */
-	for(i = ectx->tlp_argc - 1; i >= 0; i--)
-	{
-		if (ectx->tlp_fmt[i] != 'F')
-		{
-			WPTR = wordptr_minus(WPTR, 1);
-			write_word(WPTR, ectx->tlp_argv[i]);
+	for(i = ectx->tlp_argc - 1; i >= 0; i--) {
+		if (ectx->tlp_fmt[i] != 'F') {
+			WPTR = wordptr_minus (WPTR, 1);
+			write_word (WPTR, ectx->tlp_argv[i]);
 		}
 	}
 
 	/* Store the return pointer, to completion byte code */
 	/* FIXME: this won't work for virtual memory right? */
-	WPTR = wordptr_minus(WPTR, 1);
-	write_word(WPTR, (WORD)wordptr_plus(WPTR, frame_size));
+	WPTR = wordptr_minus (WPTR, 1);
+	write_word (WPTR, (WORD) wordptr_plus (WPTR, frame_size));
 
 	return 0;
 }
 
-static void disconnect_channel(WORDPTR ptr)
+static void disconnect_channel (WORDPTR ptr)
 {
-	WORD chan_value = read_word(ptr);
+	WORD chan_value = read_word (ptr);
 
-	if((chan_value & (~1)) != NOT_PROCESS_P)
-	{
-		WORDPTR ws	= (WORDPTR)(chan_value & (~1));
-		ECTX	ectx	= (ECTX)WORKSPACE_GET(ws, WS_ECTX);
-		if(chan_value & 1)
-		{
-			WORD alt_state = WORKSPACE_GET(ws, WS_STATE);
+	if ((chan_value & (~1)) != NOT_PROCESS_P) {
+		WORDPTR ws	= (WORDPTR) (chan_value & (~1));
+		ECTX	ectx	= (ECTX) WORKSPACE_GET (ws, WS_ECTX);
+		if(chan_value & 1) {
+			WORD alt_state = WORKSPACE_GET (ws, WS_STATE);
 
 			switch (alt_state) {
 				case WAITING_P:
-					ectx->add_to_queue_external(ectx, NULL, ws);
+					ectx->add_to_queue_external (ectx, NULL, ws);
 					/* Disregard return value */
 					/* Fall through */
 				case ENABLING_P:
@@ -297,53 +282,45 @@ static void disconnect_channel(WORDPTR ptr)
 				default:
 					break; /* Error state... */
 			}
-		}
-		else
-		{
-			BYTEPTR data_ptr = (BYTEPTR)WORKSPACE_GET(ws, WS_POINTER);
-			WORD   data_len	= WORKSPACE_GET(ws, WS_PENDING);
+		} else {
+			BYTEPTR	data_ptr = (BYTEPTR) WORKSPACE_GET (ws, WS_POINTER);
+			WORD	data_len = WORKSPACE_GET (ws, WS_PENDING);
 
-			if(data_len > 0)
-			{
+			if (data_len > 0) {
 				/* input */
-				while(data_len--)
-				{
-					write_byte(data_ptr, (BYTE) 0);
-					data_ptr = byteptr_plus(data_ptr, 1);
+				while (data_len--) {
+					write_byte (data_ptr, (BYTE) 0);
+					data_ptr = byteptr_plus (data_ptr, 1);
 				}
 			}
 			#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
-			else if(data_len == MIN_INT)
-			{
+			else if (data_len == MIN_INT) {
 				/* mobile input */
-				write_word((WORDPTR)data_ptr, (WORD) NULL_P);
+				write_word ((WORDPTR) data_ptr, (WORD) NULL_P);
 			}
-			else if(data_len == (MIN_INT + 1))
-			{
+			else if (data_len == (MIN_INT + 1)) {
 				/* mobile output */
-				WORDPTR src = (WORDPTR)data_ptr;
-				WORDPTR ptr = (WORDPTR)read_word(data_ptr);
+				WORDPTR src = (WORDPTR) data_ptr;
+				WORDPTR ptr = (WORDPTR) read_word (data_ptr);
 
-				if(ptr != (WORDPTR) NULL_P)
-				{
+				if (ptr != (WORDPTR) NULL_P) {
 					UWORD move = MT_FALSE;
 
-					mt_io_update(ectx, &ptr, &move);
+					mt_io_update (ectx, &ptr, &move);
 					/* ignore return; potentially bad */
 
-					if(move == MT_TRUE)
-					{
+					if(move == MT_TRUE) {
 						/* Pointer moved, delete old reference */
-						write_word(src, (WORD) NULL_P);
+						write_word (src, (WORD) NULL_P);
 					}
 
-					mt_release(ectx, ptr);
+					mt_release (ectx, ptr);
 					/* ignore return; potentially bad */
 				}
 			}
 			#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
 
-			ectx->add_to_queue_external(ectx, NULL, ws);
+			ectx->add_to_queue_external (ectx, NULL, ws);
 			/* disregard return value */
 		}
 	}
@@ -351,17 +328,15 @@ static void disconnect_channel(WORDPTR ptr)
 	write_word(ptr, (NOT_PROCESS_P | 1));
 }
 
-void tvm_ectx_disconnect(ECTX ectx)
+void tvm_ectx_disconnect (ECTX ectx)
 {
 	int i;
 
-	for(i = 0; i < ectx->tlp_argc; i++)
-	{
-		switch (ectx->tlp_fmt[i])
-		{
+	for(i = 0; i < ectx->tlp_argc; i++) {
+		switch (ectx->tlp_fmt[i]) {
 			case '?':
 			case '!':
-				disconnect_channel((WORDPTR) ectx->tlp_argv[i]);
+				disconnect_channel ((WORDPTR) ectx->tlp_argv[i]);
 				break;
 			default:
 				break;
@@ -369,7 +344,37 @@ void tvm_ectx_disconnect(ECTX ectx)
 	}
 }
 
-int tvm_dispatch(ECTX ectx)
+/* Look for dependency conditions in top-level channels. */
+int tvm_ectx_waiting_on (ECTX ectx, WORDPTR ws_base, WORD ws_len)
+{
+	WORDPTR ws_end = wordptr_plus (ws_base, ws_len);
+	WORDPTR ptr;
+	int i;
+
+	if (ws_base > ws_end) {
+		WORDPTR tmp	= ws_base;
+		ws_base		= ws_end;
+		ws_end		= tmp;
+	}
+
+	for (i = 0; i < ectx->tlp_argc; ++i) {
+		switch (ectx->tlp_fmt[i]) {
+			case '?': 
+			case '!':
+				ptr = (WORDPTR) ectx->tlp_argv[i];
+				ptr = (WORDPTR) read_word (ptr);
+				if (ptr >= ws_base && ptr <= ws_end)
+					return 1; /* dependency */
+				break;
+			default:
+				break;
+		}
+	}
+
+	return 0; /* no dependencies */
+}
+
+int tvm_dispatch (ECTX ectx)
 {
 	BYTE instr;
 	
@@ -377,40 +382,37 @@ int tvm_dispatch(ECTX ectx)
 #if (defined MEMORY_INTF_BIGENDIAN)
 	instr = *IPTR; /* FIXME */
 #else
-	instr = read_byte(IPTR);
+	instr = read_byte (IPTR);
 #endif
 	
 	/* Increment instruction pointer */
-	IPTR = byteptr_plus(IPTR, 1);
+	IPTR = byteptr_plus (IPTR, 1);
 
 	/* Put the least significant bits in OREG */
 	OREG |= (instr & 0x0f);
 
 #ifdef TVM_DISPATCH_SWITCH
-	return dispatch_instruction(ectx, instr);
+	return dispatch_instruction (ectx, instr);
 #else
 	/* Use the other bits to index into the jump table */
-	return primaries[instr >> 4](ectx);
+	return primaries[instr >> 4] (ectx);
 #endif
 }
 
-static int run_pre_init(ECTX ectx)
+static int run_pre_init (ECTX ectx)
 {
 	int ret;
 
 	ectx->state = ECTX_RUNNING;
 
-	if (ectx->run_hook)
-	{
-		if ((ret = ectx->run_hook(ectx)))
-		{
+	if (ectx->run_hook) {
+		if ((ret = ectx->run_hook (ectx))) {
 			return ret;
 		}
 	}
 
-	if (WPTR == (WORDPTR)NOT_PROCESS_P) {
-		if ((ret = ectx->run_next_on_queue(ectx)))
-		{
+	if (WPTR == (WORDPTR) NOT_PROCESS_P) {
+		if ((ret = ectx->run_next_on_queue (ectx))) {
 			return ret;
 		}
 	}
@@ -422,19 +424,16 @@ static int run_pre_init(ECTX ectx)
  * Runs an execution context until it exits for some reason.
  * Returning the exit reason.
  */
-int tvm_run(ECTX ectx)
+int tvm_run (ECTX ectx)
 {
 	int ret;
 
-	if ((ret = run_pre_init(ectx)))
-	{
+	if ((ret = run_pre_init (ectx))) {
 		return ret;
 	}
 
-	for(;;)
-	{
-		if ((ret = tvm_dispatch(ectx)))
-		{
+	for (;;) {
+		if ((ret = tvm_dispatch (ectx))) {
 			return (ectx->state = ret);
 		}
 	}
@@ -444,19 +443,16 @@ int tvm_run(ECTX ectx)
  * Runs an execution context until it exits for some reason,
  * or reaches the instruction count.  Returning the exit reason.
  */
-int tvm_run_count(ECTX ectx, UWORD count)
+int tvm_run_count (ECTX ectx, UWORD count)
 {
 	int ret;
 
-	if ((ret = run_pre_init(ectx)))
-	{
+	if ((ret = run_pre_init (ectx))) {
 		return ret;
 	}
 
-	while(count--)
-	{
-		if ((ret = tvm_dispatch(ectx)))
-		{
+	while (count--) {
+		if ((ret = tvm_dispatch (ectx))) {
 			return (ectx->state = ret);
 		}
 	}
