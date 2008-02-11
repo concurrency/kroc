@@ -56,7 +56,7 @@ static int flush_error (ECTX ectx, WORD args[])
 static int get_argv (ECTX ectx, WORD args[])
 {
 	WORDPTR	argc	= (WORDPTR) args[0];
-	WORDPTR	argv	= (WORDPTR) argv[1];
+	WORDPTR	argv	= (WORDPTR) args[1];
 	
 	write_word (argc, tvm_argc);
 	write_word (argv, (WORD) tvm_argv);

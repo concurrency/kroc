@@ -430,6 +430,7 @@ static int install_user_ctx (const char *fn)
 	}
 
 	tvm_ectx_init (&tvm, user);
+	user->pri = 1; /* lower priority */
 	add_system_functions (user);
 	install_sffi (user);
 
@@ -546,7 +547,9 @@ int main (int argc, char *argv[])
 
 		if ((f_ret == ECTX_EMPTY || f_ret == ECTX_SLEEP) &&
 			(u_ret == ECTX_EMPTY || u_ret == ECTX_SLEEP)) {
-			tvm_sleep ();
+			if (firmware_ctx.fptr == NOT_PROCESS_P && user_ctx.fptr == NOT_PROCESS_P) {
+				tvm_sleep ();
+			}
 		} else if (f_ret == ECTX_ERROR || u_ret == ECTX_ERROR) {
 			break;
 		} else if (u_ret == ECTX_SHUTDOWN) {
