@@ -899,7 +899,7 @@ TVM_INSTRUCTION (ins_fpabs)
  * this should not be genereated for t8 but it seems to be. Wierd.  Tranx86 says so. */
 TVM_INSTRUCTION (ins_fpchki64)
 {
-	return ECTX_INS_UNSUPPORTED;
+	return ECTX_CONTINUE; /* FIXME: really ECTX_INS_UNSUPPORTED */
 	//FIXME:  Implement something here atm it does nothing... Should be ok till it does actually overflow.
 	/* From tranx86: */
 #if 0
