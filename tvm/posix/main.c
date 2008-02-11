@@ -488,6 +488,7 @@ static int run_user (void)
 
 	switch (ret) {
 		case ECTX_PREEMPT:
+		case ECTX_SHUTDOWN:
 		case ECTX_SLEEP:
 		case ECTX_TIME_SLICE:
 			return ret; /* OK */
@@ -506,6 +507,8 @@ static int run_user (void)
 int main (int argc, char *argv[])
 {
 	char *fn;
+	int f_ret, u_ret;
+
 	prog_name	= argv[0]; 
 	tvm_argc	= argc;
 	tvm_argv	= argv;
@@ -537,8 +540,8 @@ int main (int argc, char *argv[])
 	#endif
 
 	for (;;) {
-		int f_ret = run_firmware ();
-		int u_ret = run_user ();
+		f_ret = run_firmware ();
+		u_ret = run_user ();
 
 		if ((f_ret == ECTX_EMPTY || f_ret == ECTX_SLEEP) &&
 			(u_ret == ECTX_EMPTY || u_ret == ECTX_SLEEP)) {
@@ -554,17 +557,20 @@ int main (int argc, char *argv[])
 		}
 	}
 	
-	if (user_ctx.state == ECTX_ERROR || user_ctx.state == ECTX_EMPTY) {
+	if (u_ret == ECTX_ERROR) {
 		/* FIXME: more debugging */
 		fprintf (stderr, 
 			"Program failed, state = %c, eflags = %08x\n",
 			user_ctx.state, user_ctx.eflags
 		);
-	}
 
+		return 1;
+	}
+	
 	free (firmware_memory);
 	free (user_memory);
 	free (bytecode);
 
 	return 0;
 }
+
