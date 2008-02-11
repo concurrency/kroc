@@ -51,6 +51,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define ADD_QUEUE_TO_QUEUE(F,B) \
 	do { ectx->add_queue_to_queue (ectx, (F), (B)); } while (0)
 
+#define DESCHEDULE_CURRENT() \
+	do {							\
+		ADD_TO_QUEUE_IPTR (WPTR, IPTR);			\
+		WPTR = (WORDPTR) NOT_PROCESS_P;			\
+	} while (0)
+
 #define RUN_NEXT_ON_QUEUE() \
 	do {							\
 		int ret = ectx->run_next_on_queue (ectx);	\

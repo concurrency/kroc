@@ -163,7 +163,7 @@ TVM_HELPER int chan_std_io (ECTX ectx,
 	);
 
 	if (ret == ECTX_CONTINUE && requeue != NOT_PROCESS_P) {
-		ADD_TO_QUEUE_IPTR (WPTR, IPTR);
+		DESCHEDULE_CURRENT ();
 	} else if (ret > 0) {
 		return ret;
 	}

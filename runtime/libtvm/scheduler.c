@@ -50,7 +50,7 @@ static int add_to_queue_external(ECTX ectx, ECTX src_ctx, WORDPTR ws)
 
 	if(src_ctx != NULL)
 	{	
-		if(ectx->pri > src_ctx->pri)
+		if(ectx->pri < src_ctx->pri)
 		{
 			return ECTX_PREEMPT;
 		}

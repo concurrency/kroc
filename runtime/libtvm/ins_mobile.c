@@ -953,7 +953,7 @@ TVM_INSTRUCTION (ins_mt_xin)
 	}
 	else if (requeue == (WORDPTR) (NOT_PROCESS_P | 1))
 	{
-		ADD_TO_QUEUE_IPTR (WPTR, IPTR);
+		DESCHEDULE_CURRENT ();
 		RUN_NEXT_ON_QUEUE_RET ();
 	}
 
