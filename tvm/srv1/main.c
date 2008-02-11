@@ -461,36 +461,6 @@ static void srv_modify_sync_flags (ECTX ectx, WORD set, WORD clear)
 	/* Enable (restore) interrupts */
 	__asm__ __volatile__ ("sti %0;" : : "r" (imask));
 }
-
-/* Look for dependency conditions in top-level channels. */
-static int waiting_on (ECTX ectx, WORDPTR ws_base, WORD ws_len)
-{
-	WORDPTR ws_end = wordptr_plus (ws_base, ws_len);
-	WORDPTR ptr;
-	int i;
-
-	if (ws_base > ws_end) {
-		WORDPTR tmp	= ws_base;
-		ws_base		= ws_end;
-		ws_end		= tmp;
-	}
-
-	for (i = 0; i < ectx->tlp_argc; ++i) {
-		switch (ectx->tlp_fmt[i]) {
-			case '?': 
-			case '!':
-				ptr = (WORDPTR) ectx->tlp_argv[i];
-				ptr = (WORDPTR) read_word (ptr);
-				if (ptr >= ws_base && ptr <= ws_end)
-					return 1; /* dependency */
-				break;
-			default:
-				break;
-		}
-	}
-
-	return 0; /* no dependencies; deadlock? */
-}
 /*}}}*/ 
 
 /*{{{  External channel definitions */
@@ -723,7 +693,7 @@ static int run_firmware (void)
 			return ret; /* OK - waiting for input */
 		} else if (user_parent != (WORDPTR) NOT_PROCESS_P) {
 			if (user_ctx.state == ECTX_EMPTY && user_ctx.fptr == (WORDPTR) NOT_PROCESS_P) {
-				if (waiting_on (&user_ctx, user_memory, user_memory_len)) {
+				if (tvm_ectx_waiting_on (&user_ctx, user_memory, user_memory_len)) {
 					/* User code is waiting on us so we are probably
 					 * in the wrong; bail...
 					 */
@@ -749,7 +719,7 @@ static int run_firmware (void)
 		return ret; /* OK - interrupt */
 	}
 
-	/* Being here means some unexpected happened... */
+	/* Being here means something unexpected happened... */
 	
 	uart0_send_string ((unsigned char *) "## Firmware failed; state = ");
 	uart0_send_char ((unsigned char) ret);
@@ -796,7 +766,7 @@ static int run_user (void)
 		case ECTX_TIME_SLICE:
 			return ret; /* OK */
 		case ECTX_EMPTY:
-			if (waiting_on (&user_ctx, user_memory, user_memory_len)) {
+			if (tvm_ectx_waiting_on (&user_ctx, user_memory, user_memory_len)) {
 				return ret; /* OK - waiting for firmware */
 			}
 			break;
