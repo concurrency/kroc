@@ -731,7 +731,7 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
   (parse-cmd)
   ;; Tack the library directory onto the end of the search path, so that
   ;; -L options will override it.
-  (append-parameter 'library-paths (format "~a/lib" install-dir))
+  (append-parameter 'library-paths (format "~a/lib/transterpreter" install-dir))
   ;; If not output filename was supplied, try to autodetect
   (fix-output-name)
   ;; Make sure we aren't about to overwrite ourselves
