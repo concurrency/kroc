@@ -43,7 +43,7 @@ TVM_INSTRUCTION (ins_boolinvert)
 /* 0x28 - 0x22 0xF8 - reschedule */
 TVM_INSTRUCTION (ins_reschedule)
 {
-	ADD_TO_QUEUE_IPTR(WPTR, IPTR);
+	DESCHEDULE_CURRENT();
 	RUN_NEXT_ON_QUEUE_RET();
 }
 
@@ -432,7 +432,7 @@ TVM_INSTRUCTION (ins_xin)
 	}
 	else if (requeue == (WORDPTR)(NOT_PROCESS_P | 1))
 	{
-		ADD_TO_QUEUE_IPTR(WPTR, IPTR);
+		DESCHEDULE_CURRENT();
 		RUN_NEXT_ON_QUEUE_RET();
 	}
 

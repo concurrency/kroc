@@ -168,14 +168,8 @@ TVM_INSTRUCTION (ins_sub)
 TVM_INSTRUCTION (ins_startp)
 {
 	ADD_TO_QUEUE_IPTR((WORDPTR)AREG, byteptr_plus(IPTR, BREG));
-	/* FIXME: Due to the different semantics of the C add_to_queue, and the
-	 * soccam add to queue, (which we need to bring in sync) I have this line
-	 * which is not currently present in soccam */
-	STACK_RET(CREG, UNDEFINE(BREG), UNDEFINE(CREG));
+	UNDEFINE_STACK_RET();
 }
-
-
-
 
 
 /****************************************************************************
