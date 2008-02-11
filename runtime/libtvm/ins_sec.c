@@ -223,7 +223,7 @@ TVM_INSTRUCTION (ins_norm)
 	CREG = 0;
 	if(AREG == 0 && BREG == 0)
 	{
-		STACK(AREG, BREG, 2 * TVM_WORD_LENGTH);
+		STACK(AREG, BREG, 2 * WORD_BITS);
 	}
 	else
 	{
