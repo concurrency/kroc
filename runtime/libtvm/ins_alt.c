@@ -183,11 +183,12 @@ TVM_INSTRUCTION (ins_enbc)
 	
 	if (guard) {
 		WORD chan_value	= read_word (chan_ptr);
+		WORD this_ws	= ((WORD) WPTR) | 1;
 
 		if (chan_value == NOT_PROCESS_P) {
 			/* Empty channel; enable */
-			write_word (chan_ptr, ((WORD) WPTR) | 1);
-		} else {
+			write_word (chan_ptr, this_ws);
+		} else if (chan_value != this_ws) {
 			/* Something waiting on channel; become ready */
 			WORKSPACE_SET (WPTR, WS_STATE, READY_P);
 		}
@@ -204,7 +205,7 @@ TVM_INSTRUCTION (ins_enbs)
 
 	if (guard) {
 		/* Begin disabling */
-		WORKSPACE_SET (WPTR, WS_STATE, DISABLING_P);
+		WORKSPACE_SET (WPTR, WS_STATE, READY_P);
 	}
 
 	/* Leave stack intacted */
