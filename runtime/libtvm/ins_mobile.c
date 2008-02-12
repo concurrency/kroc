@@ -505,17 +505,18 @@ TVM_HELPER int mt_io_update (ECTX ectx, WORDPTR *ptr, UWORD *move)
 		if (MT_TYPE(type) == MT_ARRAY) {
 			UWORD temp = type;
 
+			*move = MT_TRUE;
+
 			do {
 				temp = MT_ARRAY_INNER_TYPE (temp);
 				if (MT_TYPE(temp) == MT_ARRAY_OPTS) {
 					temp = MT_ARRAY_OPTS_INNER(temp);
 				}
 				if (MT_TYPE(temp) == MT_NUM) {
-					return MT_TRUE;
+					return ECTX_CONTINUE; /* no further work */
 				}	
 			} while (MT_TYPE(temp) == MT_ARRAY);
 
-			*move = MT_TRUE;
 			return mt_io_update_array (ectx, ptr, MT_ARRAY_INNER_TYPE(type));
 		} else if (MT_TYPE(type) == MT_CB) {
 			if (type & MT_CB_SHARED) {
@@ -567,15 +568,15 @@ TVM_HELPER int mt_chan_io (ECTX ectx, WORDPTR dst, WORDPTR src)
 TVM_HELPER int mt_chan_in (ECTX ectx, BYTEPTR dst_ptr, WORD len, WORDPTR src_wptr)
 {
 	WORDPTR dst = (WORDPTR) dst_ptr;
-	WORDPTR src = (WORDPTR) WORKSPACE_GET(src_wptr, WS_POINTER);
-	
+	WORDPTR src = (WORDPTR) WORKSPACE_GET (src_wptr, WS_POINTER);
+
 	return mt_chan_io (ectx, dst, src);
 }
 /*}}}*/
 /*{{{  TVM_HELPER int mt_chan_out (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr)*/
 TVM_HELPER int mt_chan_out (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr)
 {
-	WORDPTR dst = (WORDPTR) WORKSPACE_GET(dst_wptr, WS_POINTER);
+	WORDPTR dst = (WORDPTR) WORKSPACE_GET (dst_wptr, WS_POINTER);
 	WORDPTR src = (WORDPTR) src_ptr;
 	
 	return mt_chan_io (ectx, dst, src);
