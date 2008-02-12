@@ -37,8 +37,23 @@ REAL32 FUNCTION REAL32REM (VAL REAL32 X, Y)
   --{{{  history
   -- V1.1, 21-Feb-89
   -- Port to new compiler ( oc ); V1.2, 12-Feb-90 SRH
+  -- Use FPREM instead of FPREMFIRST/FPREMSTEP; 12-Feb-08 CGR
   --}}}
 
+  REAL32 result:
+  VALOF
+    ASM
+      LD ADDRESSOF  X
+      FPLDNLSN
+      LD ADDRESSOF  Y
+      FPLDNLSN
+      FPREM
+      FPCHKERR
+      LD ADDRESSOF result
+      FPSTNLSN
+    RESULT result
+
+  #IF FALSE -- Original T8 code without FPREM
   REAL32 result:
   VALOF
     ASM
@@ -56,6 +71,7 @@ REAL32 FUNCTION REAL32REM (VAL REAL32 X, Y)
       LD ADDRESSOF result
       FPSTNLSN
     RESULT result
+  #ENDIF
 :
 --}}}
 

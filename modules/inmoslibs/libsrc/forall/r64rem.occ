@@ -37,8 +37,23 @@ REAL64 FUNCTION REAL64REM (VAL REAL64 X, Y)
   --{{{  history
   -- V1.1, 21-Feb-89
   -- Port to new compiler ( oc ): ASM replaces GUY; 12-Feb-90 SRH
+  -- Use FPREM instead of FPREMFIRST/FPREMSTEP; 12-Feb-08 CGR
   --}}}
 
+  REAL64 result:
+  VALOF
+    ASM
+      LD ADDRESSOF  X
+      FPLDNLDB
+      LD ADDRESSOF  Y
+      FPLDNLDB
+      FPREM
+      FPCHKERR
+      LD ADDRESSOF result
+      FPSTNLDB
+    RESULT result
+
+  #IF FALSE -- Original T8 code without FPREM
   REAL64 result:
   VALOF
     ASM
@@ -56,6 +71,7 @@ REAL64 FUNCTION REAL64REM (VAL REAL64 X, Y)
       LD ADDRESSOF result
       FPSTNLDB
     RESULT result
+  #ENDIF
 :
 --}}}
 
