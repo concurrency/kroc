@@ -237,6 +237,7 @@ static void v_error_out (const char *fmt, va_list ap)
 	fprintf (stderr, "%s: ", prog_name);
 	vfprintf (stderr, fmt, ap);
 	if (errno != 0) {
+		fprintf (stderr, ": ");
 		perror ("");
 	} else {
 		fprintf (stderr, ".\n");
