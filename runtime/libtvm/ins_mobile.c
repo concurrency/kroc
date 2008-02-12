@@ -648,14 +648,15 @@ TVM_HELPER int mt_alloc (ECTX ectx, UWORD type, UWORD size, WORDPTR *ret)
 /* 0x11 - 0x21 0xF1 - mreleasep - dynamic process release */
 TVM_INSTRUCTION (ins_mreleasep)
 {
-	/* Find the pointer to the allocated block, size comes in from AREG */
-	BYTEPTR ptr = ((BYTEPTR)WPTR) + (AREG * TVM_WORD_LENGTH);
-	//printf(">mreleasep\n");
-	//printf("  ptr = 0x%08x\n", (WORD) ptr);
-	mt_release_simple(ectx, (WORDPTR) ptr, MT_MAKE_TYPE(MT_DATA));
+	WORD	adjust = AREG;
+	BYTEPTR ptr = byteptr_plus (((BYTEPTR) WPTR), adjust * TVM_WORD_LENGTH);
+	int ret;
+	
+	if ((ret = mt_release_simple (ectx, (WORDPTR) ptr, MT_MAKE_TYPE(MT_DATA)))) {
+		return ret;
+	}
 
 	RUN_NEXT_ON_QUEUE_RET();
-	//printf("<mreleasep\n");
 }
 
 #if 0
@@ -685,27 +686,25 @@ TVM_INSTRUCTION (ins_moutn)
 /* 0xE2 - 0x2E 0xF2 - malloc - dynamic memory allocation */
 TVM_INSTRUCTION (ins_malloc)
 {
-	WORDPTR ptr = (WORDPTR)NULL_P;
-	UWORD size = AREG;
+	WORDPTR ptr = (WORDPTR) NULL_P;
+	UWORD size = (UWORD) AREG;
 	
-	if(size != 0)
-	{
+	if (size != 0) {
 		ptr = mt_alloc_data(ectx, MT_SIMPLE | MT_MAKE_TYPE(MT_DATA), size);
 	}
 
-	STACK_RET((WORD)ptr, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK_RET ((WORD) ptr, UNDEFINE(BREG), UNDEFINE(CREG));
 }
 
 /* 0xE3 - 0x2E 0xF3 - mrelease - dynamic memory release */
 TVM_INSTRUCTION (ins_mrelease)
 {
-	if(AREG == (WORD)NULL_P)
-	{
+	WORDPTR ptr = (WORDPTR) AREG;
+
+	if(ptr != (WORDPTR) NULL_P) {
+		return mt_release_simple (ectx, ptr, MT_MAKE_TYPE(MT_DATA));
+	} else {
 		SET_ERROR_FLAG_RET (EFLAG_DMEM);
-	} 
-	else
-	{
-		return mt_release_simple(ectx, (WORDPTR)AREG, MT_MAKE_TYPE(MT_DATA));
 	}
 }
 
@@ -913,6 +912,7 @@ TVM_INSTRUCTION (ins_mt_sync)
 				if (refs <= 1) {
 					TVM_FREE (mb);
 				} else {
+					WORKSPACE_SET (WPTR, WS_ECTX, (WORD) ectx);
 					WORKSPACE_SET (WPTR, WS_IPTR, (WORD) IPTR);
 					write_offset (mb, mt_barrier_internal_t, ref_count, refs - 1);
 					write_word (mt, (WORD) WPTR);
