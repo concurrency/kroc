@@ -679,7 +679,7 @@ fprintf (stderr, "augmentparams: vsp\n");
 				/*}}} */
 				/*{{{  S_PARAM_FB*/
 			case S_PARAM_FB:
-				if (!thisactual || (TagOf (thisactual) != S_PARAM_FB) || (IForkOf (instance) && (DNameOf (CBodyOf (IForkOf (instance))) != thisactual))) {
+				if (!thisactual || ((TagOf (thisactual) != S_PARAM_FB) && (IForkOf (instance) && (DNameOf (CBodyOf (IForkOf (instance))) != thisactual)))) {
 					if (IForkOf (instance)) {
 						/* using a local FORKING block */
 						*a = addtofront (DNameOf (CBodyOf (IForkOf (instance))), *a);
