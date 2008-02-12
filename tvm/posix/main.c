@@ -421,6 +421,14 @@ static int read_bytecode (const char *fn)
 
 static int install_user_ctx (const char *fn)
 {
+	#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
+	const char *tlp_fmt = "?!!F";
+	const int tlp_argc = 4;
+	#else
+	const char *tlp_fmt = "?!!";
+	const int tlp_argc = 3;
+	#endif /* !TVM_DYNAMIC_MEMORY || !TVM_OCCAM_PI */
+
 	WORDPTR ws, vs, ms;
 	ECTX user = &user_ctx;
 
@@ -437,7 +445,7 @@ static int install_user_ctx (const char *fn)
 	/* Do initial layout with NULL to get memory size. */
 	tvm_ectx_layout (
 		user, NULL,
-		"?!!", 3, 
+		tlp_fmt, tlp_argc, 
 		ws_size, 
 		vs_size, 
 		ms_size,
@@ -452,7 +460,7 @@ static int install_user_ctx (const char *fn)
 	/* This is the real layout. */
 	tvm_ectx_layout (
 		user, user_memory,
-		"?!!", 3, 
+		tlp_fmt, tlp_argc, 
 		ws_size, 
 		vs_size, 
 		ms_size,
@@ -461,7 +469,7 @@ static int install_user_ctx (const char *fn)
 
 	return tvm_ectx_install_tlp (
 		user, bytecode, ws, vs, ms,
-		"?!!", 3, tlp_argv
+		tlp_fmt, tlp_argc, tlp_argv
 	);
 }
 
