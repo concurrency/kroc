@@ -1236,6 +1236,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
     :
     bug.297()
     --}}}  
+    #IF FALSE
     --{{{  Bug 581
     PROC bug.581()
       -- Transputer code
@@ -1337,6 +1338,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
                 check (x, 99, "B581b")
     :
     bug.581()
+    #ENDIF
     --}}}  
     --{{{  bug 1308
     PROC bug.1308()
