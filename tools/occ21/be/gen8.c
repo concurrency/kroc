@@ -614,6 +614,7 @@ PUBLIC treenode *augmentparams (treenode *aptr, treenode *fptr, treenode *destli
 		treenode *resultlist = aptr;
 		treenode **a = &resultlist;
 		treenode *lastactual = NULL;
+		int arg_no = 0;
 
 		/*{{{  debugging messages */
 #if 0
@@ -631,7 +632,6 @@ printtreenl (stderr, 4, instance);
 		for (; !EndOfList (fptr); fptr = NextItem (fptr)) {
 			treenode *thisformal = ThisItem (fptr);
 			treenode *thisactual = (!EmptyList (aptr)) ? ThisItem (aptr) : NULL;
-			int arg_no = 0;
 			DEBUG_MSG (("augmentparams: thisformal is %s\n", itagstring (TagOf (thisformal))));
 			switch (TagOf (thisformal)) {
 				/*{{{  augment actual param list for this formal parameter */
@@ -679,7 +679,7 @@ fprintf (stderr, "augmentparams: vsp\n");
 				/*}}} */
 				/*{{{  S_PARAM_FB*/
 			case S_PARAM_FB:
-				if (!thisactual || ((TagOf (thisactual) != S_PARAM_FB) && (IForkOf (instance) && (DNameOf (CBodyOf (IForkOf (instance))) != thisactual)))) {
+				if (!thisactual || ((TagOf (thisactual) != S_PARAM_FB) && !IForkOf (instance)) || ((TagOf (thisactual) != S_PARAM_FB) && (IForkOf (instance) && (DNameOf (CBodyOf (IForkOf (instance))) != thisactual)))) {
 					if (IForkOf (instance)) {
 						/* using a local FORKING block */
 						*a = addtofront (DNameOf (CBodyOf (IForkOf (instance))), *a);
