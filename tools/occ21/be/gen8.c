@@ -2565,7 +2565,8 @@ gencomment0 ("gen non-register param 2..0");
 		/* recover old workspace -- ret will have moved Wptr up 4 */
 		genprimary (I_LDL, ((((nparams > MAXREGS) ? nparams : MAXREGS) + MIN_RECURSIVE_SLOTS) - 4));
 		gensecondary (I_GAJW);
-		throw_the_result_away ();
+		gensecondary (I_POP);
+		/* throw_the_result_away (); */
 	} else if (ptype & PROC_MPA) {
 		/* SKIP -- workspace recovered on MOBILE PROC return or SUSPEND */
 	}
