@@ -786,7 +786,7 @@ TVM_INSTRUCTION (ins_and)
 TVM_INSTRUCTION (ins_move)
 {
 	
-	tvm_copy_data((BYTEPTR) BREG, (BYTEPTR) CREG, AREG);
+	tvm_memcpy((BYTEPTR) BREG, (BYTEPTR) CREG, AREG);
 	UNDEFINE_STACK_RET();
 }
 

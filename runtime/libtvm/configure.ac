@@ -22,10 +22,10 @@ AC_CHECK_HEADERS([sys/types.h math.h inttypes.h])
 #  Configuration Options
 #########################
 
-AC_ARG_ENABLE([custom-copy-data], AC_HELP_STRING([--enable-custom-copy-data], [make tvm_copy_data is an externally provided function]), [custom_copy_data=$enableval], [custom_copy_data=no])
+AC_ARG_ENABLE([custom-memory-ops], AC_HELP_STRING([--enable-custom-memory-ops], [provide for overriding memcpy/memset]), [custom_memory_ops=$enableval], [custom_memory_ops=no])
 AC_ARG_ENABLE([dispatch-switch], AS_HELP_STRING([--disable-dispatch-switch], [dispatch using jump tables rather than a switch statement]), [dispatch_switch=$enableval], [dispatch_switch=yes])
 AC_ARG_WITH([endian], AC_HELP_STRING([--with-endian=...], [endian mode: big/little/host, default: host]), [endian=$withval], [endian=host])
-AC_ARG_WITH([memory-allocator], AC_HELP_STRING([--with-memory-allocator=...], [select memory allocator: none/malloc, default host dependent]), [memory_allocator=$withval], [memory_allocator=auto])
+AC_ARG_WITH([memory-allocator], AC_HELP_STRING([--with-memory-allocator=...], [select memory allocator: none/malloc/tlsf, default host dependent]), [memory_allocator=$withval], [memory_allocator=auto])
 AC_ARG_WITH([python], AS_HELP_STRING([--with-python=PATH], [use python, optionally specifying the path to the python executable directory]), [python=$withval], [python=])
 AC_ARG_ENABLE([occam-pi], AC_HELP_STRING([--disable-occam-pi], [disable support for occam-pi, actual support level depends on memory allocator]), [enable_pi=$enableval], [enable_pi=yes])
 AC_ARG_ENABLE([t9000-short-ops], AC_HELP_STRING([--enable-t9000-short-ops],[enable T9000 instructions for dealing with 16bit/8bit data]), [t9000_short_ops=$enableval], [t9000_short_ops=no])
@@ -35,7 +35,7 @@ AC_ARG_WITH([transputer], AC_HELP_STRING([--with-transputer=...],[transputer to 
 #  Host Configuration
 #########################
 
-copy_data=memcpy
+memory_ops=native
 word_length=4
 x_fpu=no
 x_os=none
@@ -104,14 +104,14 @@ case "$host_os" in
     x_os=solaris
     ;;
   *)
-    copy_data=internal
+    memory_ops=internal
     x_os=none
     ;;
 esac
 
-# Custom copy data
-if test "x$custom_copy_data" != "xno"; then
-  copy_data=custom
+# Custom copy memory operations
+if test "x$custom_memory_ops" != "xno"; then
+  memory_ops=custom
 fi
 
 # Endian override
@@ -125,11 +125,15 @@ esac
 
 # Memory allocator
 case "X$memory_allocator" in
-  Xnone | Xmalloc)
+  Xnone | Xmalloc | Xtlsf)
     ;;
   *)
     if test "$x_os" = "none"; then
-      memory_allocator=none
+      if "$enable_pi" = "yes"; then
+        memory_allocator=tlsf
+      else
+        memory_allocator=none
+      fi
     else
       memory_allocator=malloc
     fi
@@ -170,18 +174,6 @@ esac
 
 TVM_CFLAGS="-Wall -DTVM_INTERNALS"
 
-# Copy data
-case "$copy_data" in
-  custom)
-    AC_DEFINE([TVM_CUSTOM_COPY_DATA], 1, [define to enable tvm_copy_data as an externally provided function])
-    ;;
-  internal)
-    ;;
-  memcpy)
-    AC_DEFINE([TVM_USE_MEMCPY], 1, [define to use memcpy as tvm_copy_data])
-    ;;
-esac
-
 # Dispatch switch
 if test "x$dispatch_switch" = "xyes"; then
   AC_DEFINE([TVM_DISPATCH_SWITCH], 1, [define to dispatch instructions using switch rather than a jump table])
@@ -201,15 +193,33 @@ if test "$x_fpu" = "yes"; then
 fi
 
 # Inlining
-if test "$ac_cv_c_inline" != no ; then
+if test "$ac_cv_c_inline" != "no" ; then
   AC_DEFINE([TVM_USE_INLINE], 1, [define to allow inline keyword usage])
 fi
 
 # Memory allocator
-if test "$memory_allocator" = "malloc"; then
+if test "$memory_allocator" != "none"; then
   AC_DEFINE([TVM_DYNAMIC_MEMORY], 1, [define to alloc dynamic memory allocation])
-  AC_DEFINE([TVM_USE_MALLOC], 1, [define to allow malloc usage])
+  if test "$memory_allocator" = "tlsf"; then
+    AC_DEFINE([TVM_USE_TLSF], 1, [define to use TLSF dynamic memory allocator])
+  else
+    AC_DEFINE([TVM_USE_MALLOC], 1, [define to allow malloc usage])
+  fi
 fi
+AM_CONDITIONAL(TVM_TLSF, test "$memory_allocator" = "tlsf")
+
+# Memory Operations
+case "$memory_ops" in
+  custom)
+    AC_DEFINE([TVM_CUSTOM_MEM_OPS], 1, [define to enable memcpy/memset overriding])
+    ;;
+  internal)
+    ;;
+  memcpy)
+    AC_DEFINE([TVM_USE_MEMCPY], 1, [define to use memcpy])
+    AC_DEFINE([TVM_USE_MEMSET], 1, [define to use memset])
+    ;;
+esac
 
 # occam-pi
 if test "x$enable_pi" = "xyes"; then
@@ -268,11 +278,11 @@ AC_DEFINE_UNQUOTED([TVM_WORD_LENGTH], [$word_length], [define emulated word leng
 #########################
 
 AC_MSG_NOTICE([----------------------------------------------------])
-AC_MSG_NOTICE([tvm_copy_data   : $copy_data])
 AC_MSG_NOTICE([dispatch-switch : $dispatch_switch])
 AC_MSG_NOTICE([endian          : $endian])
 AC_MSG_NOTICE([FPU             : $x_fpu])
 AC_MSG_NOTICE([memory allocator: $memory_allocator])
+AC_MSG_NOTICE([memory ops      : $memory_ops])
 AC_MSG_NOTICE([occam-pi support: $enable_pi])
 AC_MSG_NOTICE([OS support      : $x_os])
 AC_MSG_NOTICE([T9000 short ops : $t9000_short_ops])

@@ -354,4 +354,9 @@ void _tvm_install_scheduler(ECTX ectx)
 	ectx->timer_queue_remove	= timer_queue_remove;
 	ectx->walk_timer_queue		= walk_timer_queue;
 	ectx->set_alarm			= busy_wait_set_alarm;
+	#ifdef TVM_CUSTOM_MEM_OPS
+	ectx->memcpy			= _tvm_memcpy;
+	ectx->memset			= _tvm_memset;
+	#endif
 }
+

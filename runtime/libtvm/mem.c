@@ -20,62 +20,87 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tvm_mem.h"
 
-#if defined(TVM_CUSTOM_COPY_DATA)
-void (*tvm_copy_data)(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
-#elif defined(TVM_USE_MEMCPY) && defined(WORDPTRS_REAL)
-/* define nothing */
-#else
-void tvm_copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes)
-{
-	/* -- Bit twiddling lesson --
-	 * 
-	 * For values on a power of two, that value -1 gives you a mask of bits
-	 * which will be zero in things which are a multiple of that type.
-	 *
-	 * e.g. 
-	 *   4 = 0100b
-	 *   4 - 1 => 3
-	 *   3 = 0011b
-	 *
-	 * Taking the bitwise-AND of a number and this mask is the same as doing a
-	 * modulo operation.
-	 *
-	 * e.g.
-	 *   4 & 3 = 4 % 4 = 0
-	 *   3 & 3 = 3 % 4 = 3
-	 *   5 & 3 = 5 % 4 = 1
-	 *
-	 * The difference is that modulo is typically compiled to integer division
-	 * which is 10s of times slower than bitwise logic, and sadly not all
-	 * compilers optimise fixed modulos to bitwise ops.
-	 */
+/* -- Bit twiddling lesson --
+ * 
+ * For values on a power of two, that value -1 gives you a mask of bits
+ * which will be zero in things which are a multiple of that type.
+ *
+ * e.g. 
+ *   4 = 0100b
+ *   4 - 1 => 3
+ *   3 = 0011b
+ *
+ * Taking the bitwise-AND of a number and this mask is the same as doing a
+ * modulo operation.
+ *
+ * e.g.
+ *   4 & 3 = 4 % 4 = 0
+ *   3 & 3 = 3 % 4 = 3
+ *   5 & 3 = 5 % 4 = 1
+ *
+ * The difference is that modulo is typically compiled to integer division
+ * which is 10s of times slower than bitwise logic, and sadly not all
+ * compilers optimise fixed modulos to bitwise ops.
+ */
 
+#if !defined(TVM_USE_MEMCPY)
+BYTEPTR _tvm_memcpy (BYTEPTR dst, BYTEPTR src, UWORD n)
+{
 	/* If everything is word aligned then copy words, else copy
 	 * the bytes one by one.
-	 * 
-	 * Please see above bit twiddling lesson if confused.
 	 */
-	if(!((num_bytes | (UWORD) write_start | (UWORD) read_start) & (TVM_WORD_LENGTH - 1)))
-	{
+	if (!((n | (UWORD) dst | (UWORD) src) & (TVM_WORD_LENGTH - 1))) {
+		WORDPTR dst_w = (WORDPTR) dst;
+		WORDPTR src_w = (WORDPTR) dst;
 		/* Reduce bytes to words */
-		num_bytes >>= WSH;
+		n >>= WSH;
 		/* This count is now on words */
-		while(num_bytes--)
-		{
-			write_word((WORDPTR) write_start, read_word((WORDPTR) read_start));
-			read_start = (BYTEPTR) wordptr_plus((WORDPTR) read_start, 1);
-			write_start = (BYTEPTR) wordptr_plus((WORDPTR) write_start, 1);
+		while (n--) {
+			write_word (dst_w, read_word (src_w));
+			src_w = wordptr_plus (src_w, 1);
+			dst_w = wordptr_plus (dst_w, 1);
+		}
+	} else {
+		while (n--) {
+			write_byte (dst, read_byte (src));
+			src = byteptr_plus (src, 1);
+			dst = byteptr_plus (dst, 1);
 		}
 	}
-	else
-	{
-		while(num_bytes--)
-		{
-			write_byte(write_start, read_byte(read_start));
-			read_start = byteptr_plus(read_start, 1);
-			write_start = byteptr_plus(write_start, 1);
-		}
-	}
+
+	return dst;
 }
-#endif /* !defined(TVM_USE_MEMCPY) */
+#endif /* !TVM_USE_MEMCPY */
+
+#if !defined(TVM_USE_MEMSET)
+BYTEPTR _tvm_memset (BYTEPTR s, WORD c, UWORD n)
+{	
+	/* If everything is word aligned and there are > 4 words then set
+	 * words, else set the bytes one by one.
+	 */
+	if (!((n | (UWORD) s) & (TVM_WORD_LENGTH - 1)) && (n >> (WSH + 2))) {
+		WORDPTR s_w = (WORDPTR) s;
+		/* Expand byte data of c to a word */
+		c &= 0xff;
+		c |= (c << 8) & 0xff00;
+		#if TVM_WORD_LENGTH == 4
+		c |= (c << 16) & 0xffff0000;
+		#endif
+		/* Reduce bytes to words */
+		n >>= WSH;
+		/* This count is now on words */
+		while (n--) {
+			write_word (s_w, c);
+			s_w = wordptr_plus (s_w, 1);
+		}
+	} else {
+		while (n--) {
+			write_byte (s, (BYTE) c);
+			s = byteptr_plus (s, 1);
+		}
+	}
+	
+	return s;
+}
+#endif
 
