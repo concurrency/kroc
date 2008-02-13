@@ -582,6 +582,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 
 	SCTRACE (s, "type is %d length %d\n", 2, type, type_len);
 	switch (type) {
+	/*{{{  PRIM, RECORD, ARRAY */
 	case MTID_PRIM:
 	case MTID_RECORD:
 	case MTID_ARRAY:
@@ -623,6 +624,8 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			}
 		}
 		break;
+	/*}}}*/
+	/*{{{  SEQPROTO */
 	case MTID_SEQPROTO:
 		{
 			unsigned int i;
@@ -643,6 +646,8 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			}
 		}
 		break;
+	/*}}}*/
+	/*{{{  TAGPROTO */
 	case MTID_TAGPROTO:
 		{
 			char tag;
@@ -725,6 +730,8 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			/*}}}*/
 		}
 		break;
+	/*}}}*/
+	/*{{{  COUNTED */
 	case MTID_COUNTED:
 		{
 			/* This actually requires either one or two CLCs from
@@ -898,6 +905,8 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			}
 		}
 		break;
+	/*}}}*/
+	/*{{{  MARRAY */
 	case MTID_MARRAY:
 		{
 			const unsigned int dimcount = s->pdesc[0];
@@ -1024,6 +1033,8 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			}
 		}
 		break;
+	/*}}}*/
+	/*{{{  MOBILE */
 	case MTID_MOBILE:
 		{
 			long long data_size = typedesc_data_size (wptr, &(s->pdesc));
@@ -1077,6 +1088,8 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			}
 		}
 		break;
+	/*}}}*/
+	/*{{{  MCHANEND_* */
 	case MTID_MCHANEND_IU:
 	case MTID_MCHANEND_OU:
 	case MTID_MCHANEND_IS:
@@ -1211,6 +1224,8 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 			s->pdesc++;
 		}
 		break;
+	/*}}}*/
+	/*{{{  unimplemented types */
 	/* FIXME: These types are not yet implemented: */
 	case MTID_MBARRIER:
 	case MTID_MPROC:
@@ -1224,6 +1239,7 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 	case MTID_UNKNOWN:
 	default:
 		CFATAL ("walk_inner: unhandled type in typedesc: type %d length %d\n", 2, type, type_len);
+	/*}}}*/
 	}
 
 	if (s->pdesc != orig_pdesc + type_len) {
