@@ -183,11 +183,18 @@ struct _tvm_ectx_t {
 				(ECTX ectx, WORDPTR ws);
 	void		(*walk_timer_queue)
 				(ECTX ectx, WORD now);
+	
+	/* Memory allocation related */
+	#ifdef TVM_USE_TLSF
+	void		*mem_pool;
+	#endif
 
 	/* Wrapper defined functions */
-	#ifdef TVM_CUSTOM_COPY_DATA
-	void		(*copy_data)
-				(ECTX ectx, BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
+	#ifdef TVM_CUSTOM_MEM_OPS
+	BYTEPTR		*(*memcpy)
+				(BYTEPTR dst, BYTEPTR src, UWORD n);
+	BYTEPTR		*(*memset)
+				(BYTEPTR s, WORD c, UWORD n);
 	#endif
 	WORD		(*get_time)
 				(ECTX ectx);

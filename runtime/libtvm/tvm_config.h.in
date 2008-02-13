@@ -9,8 +9,8 @@
 /* define for big-endian TVM */
 #undef TVM_BIG_ENDIAN
 
-/* define to enable tvm_copy_data as an externally provided function */
-#undef TVM_CUSTOM_COPY_DATA
+/* define to enable memcpy/memset overriding */
+#undef TVM_CUSTOM_MEM_OPS
 
 /* define to dispatch instructions using switch rather than a jump table */
 #undef TVM_DISPATCH_SWITCH
@@ -60,11 +60,17 @@
 /* define to allow inline keyword usage */
 #undef TVM_USE_INLINE
 
-/* define to use memcpy as tvm_copy_data */
+/* define to use memcpy */
 #undef TVM_USE_MEMCPY
+
+/* define to use memset */
+#undef TVM_USE_MEMSET
 
 /* define to allow malloc usage */
 #undef TVM_USE_MALLOC
+
+/* define to use TLSF dynamic memory allocator */
+#undef TVM_USE_TLSF
 
 /* define emulated word length */
 #undef TVM_WORD_LENGTH

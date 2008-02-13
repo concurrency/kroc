@@ -32,16 +32,6 @@ typedef struct _tvm_t tvm_t;
 #include "tvm_mem.h"
 #include "tvm_time.h"
 
-/*{{{  Memory allocator selection */
-#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_USE_MALLOC)
-#define TVM_MALLOC	malloc
-#define TVM_FREE	free
-#else
-#define TVM_MALLOC	...ERROR...
-#define TVM_FREE	...ERROR...
-#endif /* !(TVM_DYNAMIC_MEMORY && TVM_USE_MALLOC) */
-/*}}}*/
-
 /*{{{  TVM instance data structure */
 #ifndef TVM_PRIVATE_DATA
 #define TVM_PRIVATE_DATA	WORD

@@ -67,6 +67,10 @@ libtvm_a_SOURCES += \
 	scheduler.c
 endif
 
+if TVM_TLSF
+libtvm_a_SOURCES += tlsf.c
+endif
+
 DISPATCH_SOURCE_FILES = \
 	$(top_srcdir)/ins_alt.c \
 	$(top_srcdir)/ins_barrier.c \

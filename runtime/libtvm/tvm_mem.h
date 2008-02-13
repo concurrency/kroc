@@ -40,27 +40,78 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tvm_mem_intf.h"
 /*}}}*/
 
-/*{{{  void tvm_copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes) */
-#if defined(TVM_CUSTOM_COPY_DATA)
-#define tvm_copy_data(DST,SRC,LEN) \
-	do { ectx->copy_data((DST), (SRC), (LEN)); } while (0)
-#elif defined(TVM_USE_MEMCPY) && defined(WORDPTRS_REAL)
+/*{{{  memcpy/memset */
+#if defined(TVM_USE_MEMCPY) || defined(TVM_USE_MEMSET)
 #include <string.h>
-#define tvm_copy_data memcpy
+#endif
+
+#if defined(TVM_USE_MEMCPY) && defined(TVM_USE_MEMSET)
+
+#define _tvm_memcpy memcpy
+#define _tvm_memset memset
+#define tvm_memcpy memcpy
+#define tvm_memset memset
+
 #else
-void tvm_copy_data(BYTEPTR write_start, BYTEPTR read_start, UWORD num_bytes);
-#endif /* !TVM_CUSTOM_COPY_DATA */
+
+extern BYTEPTR _tvm_memcpy (BYTEPTR dst, BYTEPTR src, UWORD n);
+extern BYTEPTR _tvm_memset (BYTEPTR s, WORD c, UWORD n);
+
+#if defined(TVM_CUSTOM_MEM_OPS)
+#define tvm_memcpy(DST,SRC,N)	ectx->memcpy((DST), (SRC), (N))
+#define tvm_memset(S,C,N)	ectx->memset((S), (C), (N))
+#else
+#define tvm_memcpy 		_tvm_memcpy
+#define tvm_memset		_tvm_memset
+#endif /* !TVM_CUSTOM_MEM_OPS */
+
+#endif /* !TVM_USE_MEMCPY */
 /*}}}*/
 
-/*{{{  void swap_data_word(WORDPTR a_ptr, WORDPTR b_ptr) */
+/*{{{  void swap_data_word (WORDPTR a_ptr, WORDPTR b_ptr) */
 TVM_UNUSED_OK
-static TVM_INLINE void swap_data_word(WORDPTR a_ptr, WORDPTR b_ptr)
+static TVM_INLINE void swap_data_word (WORDPTR a_ptr, WORDPTR b_ptr)
 {
-	WORD a_data = read_word(a_ptr);
-	WORD b_data = read_word(b_ptr);
-	write_word(b_ptr, a_data);
-	write_word(a_ptr, b_data);
+	WORD a_data = read_word (a_ptr);
+	WORD b_data = read_word (b_ptr);
+	write_word (b_ptr, a_data);
+	write_word (a_ptr, b_data);
 }
+/*}}}*/
+
+/*{{{  Memory allocator selection */
+#if defined(TVM_USE_MALLOC)
+TVM_UNUSED_OK
+static TVM_INLINE void *tvm_malloc (ECTX ectx, UWORD bytes)
+{
+	return (void *) malloc (bytes);
+}
+
+TVM_UNUSED_OK
+static TVM_INLINE void tvm_free (ECTX ectx, void *data)
+{
+	free (data);
+}
+#elif defined(TVM_USE_TLSF)
+extern size_t tlsf_init_memory_pool (size_t mem_pool_size, void *mem_pool);
+extern size_t tlsf_get_used_size (void *mem_pool);
+extern void tlsf_destroy_memory_pool (void *mem_pool);
+extern void *tlsf_malloc (size_t size, void *mem_pool);
+extern void tlsf_free (void *ptr, void *mem_pool);
+extern void *tlsf_realloc (void *ptr, size_t new_size, void *mem_pool);
+
+TVM_UNUSED_OK
+static TVM_INLINE void *tvm_malloc (ECTX ectx, UWORD bytes)
+{
+	return (void *) tlsf_malloc (bytes, ectx->mem_pool);
+}
+
+TVM_UNUSED_OK
+static TVM_INLINE void tvm_free (ECTX ectx, void *data)
+{
+	tlsf_free (data, ectx->mem_pool);
+}
+#endif /* TVM_USE_TLSF */
 /*}}}*/
 
 #endif /* !TVM_MEM_H */

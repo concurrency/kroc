@@ -49,27 +49,10 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-
-#ifndef TLSF_USE_LOCKS
-#define	TLSF_USE_LOCKS 	(0)
-#endif
-
-#if TLSF_USE_LOCKS
-#include "target.h"
-#endif
-
-#include "tlsf.h"
-
-#if !defined(__GNUC__)
-#ifndef __inline__
-#define __inline__
-#endif
-#endif
+#include "tvm.h"
 
 /* The  debug functions  only can  be used  when _DEBUG_TLSF_  is set. */
-#define _DEBUG_TLSF_	(0)
+/* #define _DEBUG_TLSF_	(0) */
 
 /*************************************************************************/
 /* Definition of the structures used by TLSF */
@@ -108,11 +91,11 @@
 #define PREV_FREE	(0x2)
 #define PREV_USED	(0x0)
 
-#define PRINT_MSG(fmt, args...) printf(fmt, ## args)
-#define ERROR_MSG(fmt, args...) printf(fmt, ## args)
+#define PRINT_MSG(fmt, args...) /* printf(fmt, ## args) */
+#define ERROR_MSG(fmt, args...) /* printf(fmt, ## args) */
 
-typedef unsigned int u32_t;
-typedef unsigned char u8_t;
+typedef size_t	u32_t;
+typedef BYTE	u8_t;
 
 typedef struct free_ptr_struct {
     struct bhdr_struct *prev;
@@ -155,13 +138,13 @@ typedef struct TLSF_struct {
 /******************************************************************/
 /**************     Helping functions    **************************/
 /******************************************************************/
-static __inline__ void set_bit(int nr, u32_t *addr);
-static __inline__ void clear_bit(int nr, u32_t *addr);
-static __inline__ int ls_bit (int x);
-static __inline__ int ms_bit (int x);
-static __inline__ void MAPPING_SEARCH(size_t * _r, int *_fl, int *_sl);
-static __inline__ void MAPPING_INSERT(size_t _r, int *_fl, int *_sl);
-static __inline__ bhdr_t *FIND_SUITABLE_BLOCK(tlsf_t * _tlsf, int *_fl, int *_sl);
+static TVM_INLINE void set_bit(int nr, u32_t *addr);
+static TVM_INLINE void clear_bit(int nr, u32_t *addr);
+static TVM_INLINE int ls_bit (int x);
+static TVM_INLINE int ms_bit (int x);
+static TVM_INLINE void MAPPING_SEARCH(size_t * _r, int *_fl, int *_sl);
+static TVM_INLINE void MAPPING_INSERT(size_t _r, int *_fl, int *_sl);
+static TVM_INLINE bhdr_t *FIND_SUITABLE_BLOCK(tlsf_t * _tlsf, int *_fl, int *_sl);
 
 static const int table[] = {
 	-1,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
@@ -174,7 +157,7 @@ static const int table[] = {
 	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
 };
 
-static __inline__ int ls_bit (int i) {
+static TVM_INLINE int ls_bit (int i) {
 	unsigned int a;
 	unsigned int x = i & -i;
 
@@ -182,7 +165,7 @@ static __inline__ int ls_bit (int i) {
 	return table[x >> a] + a;
 }
 
-static __inline__ int ms_bit (int i) {
+static TVM_INLINE int ms_bit (int i) {
 	unsigned int a;
 	unsigned int x = (unsigned int) i;
 
@@ -190,15 +173,15 @@ static __inline__ int ms_bit (int i) {
 	return table[x >> a] + a;
 }
 
-static __inline__ void set_bit(int nr, u32_t *addr) {
+static TVM_INLINE void set_bit(int nr, u32_t *addr) {
 	addr[nr >> 5] |= 1 << (nr & 0x1f);
 }
 
-static __inline__ void clear_bit(int nr, u32_t *addr) {
+static TVM_INLINE void clear_bit(int nr, u32_t *addr) {
 	addr[nr >> 5] &= ~(1 << (nr & 0x1f));
 }
 
-static __inline__ void MAPPING_SEARCH(size_t * _r, int *_fl, int *_sl) {
+static TVM_INLINE void MAPPING_SEARCH(size_t * _r, int *_fl, int *_sl) {
     int _t;
 
     if (*_r < SMALL_BLOCK) {
@@ -217,7 +200,7 @@ static __inline__ void MAPPING_SEARCH(size_t * _r, int *_fl, int *_sl) {
     }
 }
 
-static __inline__ void MAPPING_INSERT(size_t _r, int *_fl, int *_sl) {
+static TVM_INLINE void MAPPING_INSERT(size_t _r, int *_fl, int *_sl) {
     if (_r < SMALL_BLOCK) {
 		*_fl = 0;
 		*_sl = _r / (SMALL_BLOCK / MAX_SLI);
@@ -229,7 +212,7 @@ static __inline__ void MAPPING_INSERT(size_t _r, int *_fl, int *_sl) {
 }
 
 
-static __inline__ bhdr_t *FIND_SUITABLE_BLOCK(tlsf_t * _tlsf, int *_fl,
+static TVM_INLINE bhdr_t *FIND_SUITABLE_BLOCK(tlsf_t * _tlsf, int *_fl,
 											  int *_sl) {
     u32_t _tmp = _tlsf->sl_bitmap[*_fl] & (~0 << *_sl);
     bhdr_t *_b = NULL;
@@ -290,11 +273,12 @@ static __inline__ bhdr_t *FIND_SUITABLE_BLOCK(tlsf_t * _tlsf, int *_fl,
 /******************** Begin of the allocator code *****************/
 /******************************************************************/
 
-
+#if 0
 static char *mp = NULL; // Default memory pool.
+#endif
 
 /******************************************************************/
-size_t init_memory_pool(size_t mem_pool_size, void *mem_pool) {
+size_t tlsf_init_memory_pool(size_t mem_pool_size, void *mem_pool) {
 /******************************************************************/
     tlsf_t *tlsf;
     bhdr_t *b, *lb;
@@ -312,20 +296,13 @@ size_t init_memory_pool(size_t mem_pool_size, void *mem_pool) {
 		return -1;
     }
     tlsf = (tlsf_t *) mem_pool;
-    /* Check if allready initialised */
-    if (tlsf->tlsf_signature == TLSF_SIGNATURE) {
-		mp = mem_pool;
-		b = GET_NEXT_BLOCK(mp, sizeof(tlsf_t));
-		return b->size & BLOCK_SIZE;
-    }
     tlsf->tlsf_signature = TLSF_SIGNATURE;
 #if TLSF_USE_LOCKS
     TLSF_CREATE_LOCK(&tlsf->lock);
 #endif
-    mp = mem_pool;
     /* Zeroing the memory pool */
-    memset(&tlsf->used_size, 0x0,
-           mem_pool_size - ((char *) &tlsf->used_size - mp));
+    _tvm_memset((BYTEPTR) &tlsf->used_size, 0x0,
+           mem_pool_size - ((char *) &tlsf->used_size - (char *) mem_pool));
     b = GET_NEXT_BLOCK(mem_pool, ROUNDUP_SIZE (sizeof(tlsf_t)));
     b->size = ROUNDDOWN_SIZE(mem_pool_size - sizeof(tlsf_t) - 2 *
 							 BHDR_OVERHEAD) | FREE_BLOCK | PREV_USED;
@@ -349,7 +326,7 @@ size_t init_memory_pool(size_t mem_pool_size, void *mem_pool) {
 }
 
 /******************************************************************/
-size_t get_used_size(void *mem_pool) {
+size_t tlsf_get_used_size(void *mem_pool) {
 /******************************************************************/
     tlsf_t *tlsf = (tlsf_t *) mem_pool;
 
@@ -358,7 +335,7 @@ size_t get_used_size(void *mem_pool) {
 
 
 /******************************************************************/
-void destroy_memory_pool(void *mem_pool) {
+void tlsf_destroy_memory_pool(void *mem_pool) {
 /******************************************************************/
     tlsf_t *tlsf = (tlsf_t *) mem_pool;
 
@@ -368,7 +345,7 @@ void destroy_memory_pool(void *mem_pool) {
 #endif
 }
 
-
+#if 0
 /******************************************************************/
 void *rtl_malloc(size_t size) {
 /******************************************************************/
@@ -430,10 +407,10 @@ void *rtl_calloc(size_t nelem, size_t elem_size) {
 #endif
     return ret;
 }
-
+#endif
 
 /******************************************************************/
-void *malloc_ex(size_t size, void *mem_pool) {
+void *tlsf_malloc(size_t size, void *mem_pool) {
 /******************************************************************/
     tlsf_t *tlsf = (tlsf_t *) mem_pool;
     bhdr_t *b, *b2, *next_b;
@@ -475,7 +452,7 @@ void *malloc_ex(size_t size, void *mem_pool) {
 }
 
 /******************************************************************/
-void free_ex(void *ptr, void *mem_pool) {
+void tlsf_free(void *ptr, void *mem_pool) {
 /******************************************************************/
     tlsf_t *tlsf = (tlsf_t *) mem_pool;
     bhdr_t *b, *tmp_b;
@@ -510,7 +487,7 @@ void free_ex(void *ptr, void *mem_pool) {
 }
 
 /******************************************************************/
-void *realloc_ex(void *ptr, size_t new_size, void *mem_pool) {
+void *tlsf_realloc(void *ptr, size_t new_size, void *mem_pool) {
 /******************************************************************/
     tlsf_t *tlsf = (tlsf_t *) mem_pool;
     void *ptr_aux;
@@ -521,11 +498,11 @@ void *realloc_ex(void *ptr, size_t new_size, void *mem_pool) {
 
     if (!ptr) {
 		if (new_size)
-			return (void *) malloc_ex(new_size, mem_pool);
+			return (void *) tlsf_malloc(new_size, mem_pool);
 		if (!new_size)
 			return NULL;
     } else if (!new_size) {
-		free_ex(ptr, mem_pool);
+		tlsf_free(ptr, mem_pool);
 		return NULL;
     }
 
@@ -584,18 +561,18 @@ void *realloc_ex(void *ptr, size_t new_size, void *mem_pool) {
 		}
     }
 
-    ptr_aux = malloc_ex(new_size, mem_pool);
+    ptr_aux = tlsf_malloc(new_size, mem_pool);
 
     cpsize = ((b->size & BLOCK_SIZE) > new_size) ?
 		new_size : (b->size & BLOCK_SIZE);
 
-    memcpy(ptr_aux, ptr, cpsize);
+    _tvm_memcpy(ptr_aux, ptr, cpsize);
 
-    free_ex(ptr, mem_pool);
+    tlsf_free(ptr, mem_pool);
     return ptr_aux;
 }
 
-
+#if 0
 /******************************************************************/
 void *calloc_ex(size_t nelem, size_t elem_size, void *mem_pool) {
 /******************************************************************/
@@ -610,6 +587,7 @@ void *calloc_ex(size_t nelem, size_t elem_size, void *mem_pool) {
 
     return ptr;
 }
+#endif
 
 
 

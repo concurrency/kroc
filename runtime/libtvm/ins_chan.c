@@ -57,14 +57,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 TVM_HELPER int channel_input (ECTX ectx, BYTEPTR dst_ptr, WORD len, WORDPTR src_wptr)
 {
 	BYTEPTR	src_ptr = (BYTEPTR) WORKSPACE_GET (src_wptr, WS_POINTER);
-	tvm_copy_data (dst_ptr, src_ptr, len);
+	tvm_memcpy (dst_ptr, src_ptr, len);
 	return ECTX_CONTINUE;
 }
 
 TVM_HELPER int channel_output (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr)
 {
 	BYTEPTR	dst_ptr = (BYTEPTR) WORKSPACE_GET (dst_wptr, WS_POINTER);
-	tvm_copy_data (dst_ptr, src_ptr, -len);
+	tvm_memcpy (dst_ptr, src_ptr, -len);
 	return ECTX_CONTINUE;
 }
 
