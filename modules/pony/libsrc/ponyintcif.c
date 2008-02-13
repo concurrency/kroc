@@ -1146,6 +1146,10 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 
 							CTRACE ("actually making the CTB networked -- nct.id now 0x%08x\n", 1, nct_id);
 							make_ctb_networked (wptr, ctb, pony->typedesc, nct_id, nhh, dha, eha);
+
+							MTRelease (wptr, nhh);
+							MTRelease (wptr, dha);
+							MTRelease (wptr, eha);
 						}
 						ccsp_cif_X_sem_release (wptr, &(pony->statesem));
 
@@ -1209,6 +1213,10 @@ static int walk_inner (Workspace wptr, pony_walk_state *s)
 
 							CTRACE ("actually making the CTB networked; CTB is 0x%08x\n", 1, ctb);
 							make_ctb_networked (wptr, ctb, pony->typedesc, nct_id, nhh, dha, eha);
+
+							MTRelease (wptr, nhh);
+							MTRelease (wptr, dha);
+							MTRelease (wptr, eha);
 						}
 						break;
 					default:
