@@ -29,7 +29,7 @@ INCLUDES = \
 
 ASMFLAGS = -x assembler-with-cpp $(CPUDEFINES) $(INCLUDES) -g
 
-CFLAGS	= $(INCLUDES) -g -O2 $(CPUDEFINES)
+CFLAGS	= $(INCLUDES) -g -Os $(CPUDEFINES)
 LDFLAGS = -T bftiny.x \
 	-Map tvm.map -O binary -o tvm.bin \
 	-L$(LIBPATH)

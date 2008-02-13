@@ -32,8 +32,8 @@ static tvm_ectx_t 	firmware_ctx, user_ctx;
 /*{{{  SDRAM support */
 static void clear_sdram (void)
 {
-	const short *end	= (short *) 0x02000000;
-	short *cp		= (short *) 0;
+	const short *end	= (short *) SDRAM_TOP;
+	short *cp		= (short *) SDRAM_BOTTOM;
 
 	while (cp < end) {
 		*(cp++) = 0;
@@ -498,7 +498,7 @@ static int firmware_run_user (ECTX ectx, WORD args[])
 	WORD	argc		= args[7];
 	WORDPTR	argv		= (WORD *) &(args[8]);
 	WORDPTR	ws, vs, ms;
-	WORD	ret_addr;
+	WORD	dmem_length, ret_addr;
 	int ret;
 
 	if (user_parent != (WORDPTR) NOT_PROCESS_P)
@@ -525,6 +525,13 @@ static int firmware_run_user (ECTX ectx, WORD args[])
 	/* Save bytecode addresses */
 	user_bytecode		= bytecode;
 	user_bytecode_len	= bytecode_len;
+
+	#ifdef TVM_USE_TLSF
+	user_ctx.mem_pool	= ((BYTE *) user_memory) + (user_memory_len << WSH);
+	firmware_ctx.mem_pool	= user_ctx.mem_pool;
+	dmem_length		= SDRAM_TOP - (UWORD) user_ctx.mem_pool;
+	tlsf_init_memory_pool (dmem_length, user_ctx.mem_pool);
+	#endif
 
 	/* Simulate return, and deschedule */
 	ret_addr	= read_word (ectx->wptr);
