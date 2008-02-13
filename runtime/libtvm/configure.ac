@@ -129,7 +129,7 @@ case "X$memory_allocator" in
     ;;
   *)
     if test "$x_os" = "none"; then
-      if "$enable_pi" = "yes"; then
+      if test "x$enable_pi" = "xyes"; then
         memory_allocator=tlsf
       else
         memory_allocator=none
