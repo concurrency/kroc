@@ -1,10 +1,12 @@
 
 #include "tvm_posix.h"
 
-#if defined(_FREEBSD) || defined(_OPENBSD) || defined(_NETBSD) || defined(_MAC_UNIX)
+#if !defined(TCGETS) && defined(TIOCGETA)
 #define TCGETS TIOCGETA
+#endif
+#if !defined(TCSETS) && defined(TIOCSETA)
 #define TCSETS TIOCSETA
-#endif /* _FREEBSD || _OPENBSD || _NETBSD || _MAC_UNIX */
+#endif
 
 static struct termios oldT;
 
