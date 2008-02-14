@@ -42,7 +42,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*{{{  memcpy/memset */
 #if defined(TVM_USE_MEMCPY) || defined(TVM_USE_MEMSET)
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
 #endif
 
 #if defined(TVM_USE_MEMCPY) && defined(TVM_USE_MEMSET)
