@@ -31,13 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
 
-#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_USE_MALLOC)
-#include <stdlib.h>
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-#endif /* TVM_DYNAMIC_MEMORY && TVM_USE_MALLOC */
-
 /* stddef.h is freestanding, so should be safe in any build */
 #include <stddef.h>
 #ifndef offsetof
