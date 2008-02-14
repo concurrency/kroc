@@ -81,6 +81,8 @@ static TVM_INLINE void swap_data_word (WORDPTR a_ptr, WORDPTR b_ptr)
 
 /*{{{  Memory allocator selection */
 #if defined(TVM_USE_MALLOC)
+#include <stdlib.h>
+
 TVM_UNUSED_OK
 static TVM_INLINE void *tvm_malloc (ECTX ectx, UWORD bytes)
 {
