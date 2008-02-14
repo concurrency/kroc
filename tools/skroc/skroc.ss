@@ -692,7 +692,7 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
   
   (define init
     (lambda ()
-      (let ([config-file (format "~a/include/tvm-config.h" install-dir)]
+      (let ([config-file (format "~a/include/tvm_config.h" install-dir)]
 	    [target-endian 'LITTLE]
 	    [target-processor 't4])
 	(if (file-exists? config-file)
