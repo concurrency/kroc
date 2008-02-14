@@ -2377,10 +2377,6 @@ fprintf (stderr, "setting ts->ws_adjust = %d\n", ts->ws_adjust);
 	if ((options.debug_options & DEBUG_DEADLOCK) && arch->compose_debug_deadlock_set) {
 		arch->compose_debug_deadlock_set (ts);
 	}
-	/* debug inserts entry point */
-	if ((options.debug_options & DEBUG_INSERT) && arch->compose_debug_insert_set) {
-		arch->compose_debug_insert_set (ts);
-	}
 	/* range-error entry point */
 	if ((options.debug_options & DEBUG_RANGESTOP) && arch->compose_debug_rangestop) {
 		arch->compose_debug_rangestop (ts);

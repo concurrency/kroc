@@ -41,6 +41,7 @@ extern void ccsp_cif_bcall0_stub (word *);
 extern void ccsp_cif_bcall1_stub (word *);
 extern void ccsp_cif_bcalln_stub (word *);
 
+extern void ccsp_decode_debug_insert (int offset, const char **filename, int *line);
 extern void ccsp_show_last_debug_insert (void);
 
 extern void *ccsp_mt_alloc (word type, word size);

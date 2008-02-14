@@ -1701,10 +1701,10 @@ static void compose_debug_insert_i386 (tstate *ts, int mdpairid)
 
 		if (!(options.kernel_interface & KRNLIFACE_MP)) {
 			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1)])));
-			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->insert_setup_label, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1) + 1])));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1) + 1])));
 		} else {
 			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, mdparam[(mdpairid << 1)])));
-			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->insert_setup_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, mdparam[((mdpairid << 1) + 1)])));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, mdparam[((mdpairid << 1) + 1)])));
 		}
 	}
 	return;
@@ -1984,23 +1984,6 @@ static void compose_debug_deadlock_set_i386 (tstate *ts)
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->procfile_setup_label));
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REG, REG_ALT_EAX));
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REG, REG_ALT_ECX));
-	add_to_ins_chain (compose_ins (INS_RET, 0, 0));
-	return;
-}
-/*}}}*/
-/*{{{  static void compose_debug_insert_set_i386 (tstate *ts)*/
-/*
- *	void compose_debug_insert_set_i386 (tstate *ts)
- *	generates insert-debugging setup point for post-mortem debugging
- */
-static void compose_debug_insert_set_i386 (tstate *ts)
-{
-	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->insert_setup_label));
-	if (!(options.kernel_interface & KRNLIFACE_MP)) {
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_NAMEDLABEL, string_dup ("&mdparam1")));
-	} else {
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label,  ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, mdparam[0])));
-	}
 	add_to_ins_chain (compose_ins (INS_RET, 0, 0));
 	return;
 }
@@ -3885,7 +3868,6 @@ arch_t *init_arch_i386 (int mclass)
 	arch->compose_rangestop_jumpcode = compose_rangestop_jumpcode_i386;
 
 	arch->compose_debug_deadlock_set = compose_debug_deadlock_set_i386;
-	arch->compose_debug_insert_set = compose_debug_insert_set_i386;
 
 	/* code-gen */
 	arch->compose_divcheck_zero = compose_divcheck_zero_i386;
