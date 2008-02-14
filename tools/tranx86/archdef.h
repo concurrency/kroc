@@ -71,7 +71,6 @@ typedef struct TAG_arch_t {
 	void (*compose_rangestop_jumpcode)(tstate *, int);				/* state, rcode */
 
 	void (*compose_debug_deadlock_set)(tstate *);					/* state -- return point */
-	void (*compose_debug_insert_set)(tstate *);					/* state -- return point */
 
 	/* code-gen stuff */
 	void (*compose_divcheck_zero)(tstate *, int);					/* state, reg */

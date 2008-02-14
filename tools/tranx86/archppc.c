@@ -546,7 +546,7 @@ static void compose_debug_insert_ppc (tstate *ts, int mdpairid)
 	if ((options.debug_options & DEBUG_INSERT) && !(ts->supress_debug_insert)) {
 		x = ((ts->file_pending & 0xffff) << 16) + (ts->line_pending & 0xffff);
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1)])));
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->insert_setup_label, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1) + 1])));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1) + 1])));
 	}
 	return;
 }
@@ -761,18 +761,6 @@ static void compose_debug_deadlock_set_ppc (tstate *ts)
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->procfile_setup_label));
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REG, REG_ALT_R6));
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REG, REG_ALT_R7));
-	add_to_ins_chain (compose_ins (INS_RET, 0, 0));
-	return;
-}
-/*}}}*/
-/*{{{  static void compose_debug_insert_set_ppc (tstate *ts)*/
-/*
- *	generates insert-debugging setup point for post-mortem debugging
- */
-static void compose_debug_insert_set_ppc (tstate *ts)
-{
-	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->insert_setup_label));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_NAMEDLABEL, string_dup ("&mdparam1")));
 	add_to_ins_chain (compose_ins (INS_RET, 0, 0));
 	return;
 }
@@ -3038,7 +3026,6 @@ arch_t *init_arch_ppc (int mclass)
 	arch->compose_rangestop_jumpcode = compose_rangestop_jumpcode_ppc;
 
 	arch->compose_debug_deadlock_set = compose_debug_deadlock_set_ppc;
-	arch->compose_debug_insert_set = compose_debug_insert_set_ppc;
 
 	/* code-gen */
 	arch->compose_divcheck_zero = compose_divcheck_zero_ppc;

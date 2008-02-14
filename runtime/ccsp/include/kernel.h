@@ -55,7 +55,6 @@ void ccsp_kernel_init (void);
 int not_on_any_queue (unsigned int ws_base, unsigned int ws_limit);
 int remove_from_any_queue (unsigned int ws_base, unsigned int ws_limit);
 void do_queue_process (word *process);
-void show_last_debug_insert (void);
 
 #define SCHED_POLICY_US 1		/* suspend other and reschedule invoking process */
 #define SCHED_POLICY_OTHER 2		/* suspend invoking process and reschedule other */

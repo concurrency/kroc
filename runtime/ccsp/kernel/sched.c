@@ -1549,44 +1549,56 @@ static void handle_seterr (unsigned int seterr_info1, unsigned int seterr_info2,
 	}
 }
 /*}}}*/
+/*{{{  void ccsp_decode_debug_insert (sched_t *sched, int offset, const char **file, int *line)*/
+/*
+ *	Decode a set of debug insert information.
+ *	If no valid information is available, returns 0 as the line number.
+ */
+void ccsp_decode_debug_insert (int offset, const char **filename, int *line)
+{
+	const sched_t *sched = _local_scheduler;
+	const word *info = &(sched->mdparam[offset]);
+
+	if (sched == NULL) {
+		*line = 0;
+		*filename = "no scheduler";
+	} else if (info[0] == 0xffffffff || info[1] == 0xffffffff
+	           || info[0] == 0 || info[1] == 0) {
+		*line = 0;
+		*filename = "no debug info";
+	} else {
+		const char *file_tab = (const char *) info[1];
+		int file_num = (info[0] >> 16) & 0xffff;
+
+		if (file_num < 0 || file_num >= *(int *)file_tab) {
+			*line = 0;
+			*filename = "bad file number";
+		} else {
+			*line = info[0] & 0xffff;
+			*filename = file_tab + *(int *)(file_tab + (4 * (file_num + 1)));
+		}
+	}
+}
+/*}}}*/
 /*{{{  void ccsp_show_last_debug_insert (void)*/
 /* ccsp_show_last_debug_insert*/
+/*
+ *	Show any debug insert information that's currently available.
+ */
 void ccsp_show_last_debug_insert (void)
 {
-	sched_t *sched = _local_scheduler;
-	void (*setup_fcn)(void);
-	int file_num, line_num;
-	char *insert_file;
+	const char *filename;
+	int line_num;
 
-	if ((sched->mdparam[0] != 0xffffffff) && (sched->mdparam[1] != 0xffffffff) && sched->mdparam[0] && sched->mdparam[1]) {
-		file_num = (sched->mdparam[0] >> 16) & 0xffff;
-		line_num = sched->mdparam[0] & 0xffff;
-		/* mdparam[1] holds address of setup code */
-		setup_fcn = (void (*)(void))sched->mdparam[1];
-		setup_fcn ();
-		insert_file = (char *)sched->mdparam[0];
-		if ((file_num >= *(int *)(insert_file)) || (file_num < 0)) {
-			BMESSAGE ("debug insert: invalid file number (file_num=%d)\n", file_num);
-			return;
-		}
-		insert_file += *(int *)(insert_file + (4 * (file_num+1)));
-		BMESSAGE ("last debug position was in file \"%s\" near line %d\n", insert_file, line_num);
+	ccsp_decode_debug_insert (0, &filename, &line_num);
+	if (line_num != 0) {
+		BMESSAGE ("last debug position was in file \"%s\" near line %d\n", filename, line_num);
 	}
-	if ((sched->mdparam[2] != 0xffffffff) && (sched->mdparam[3] != 0xffffffff) && sched->mdparam[2] && sched->mdparam[3]) {
-		file_num = (sched->mdparam[2] >> 16) & 0xffff;
-		line_num = sched->mdparam[2] & 0xffff;
-		/* mdparam[3] holds address of setup code */
-		setup_fcn = (void (*)(void))sched->mdparam[3];
-		setup_fcn ();
-		insert_file = (char *)sched->mdparam[0];
-		if ((file_num >= *(int *)(insert_file)) || (file_num < 0)) {
-			BMESSAGE ("debug insert: invalid file number (file_num=%d)\n", file_num);
-			return;
-		}
-		insert_file += *(int *)(insert_file + (4 * (file_num+1)));
-		BMESSAGE ("last position before CALL was in file \"%s\" near line %d\n", insert_file, line_num);
+
+	ccsp_decode_debug_insert (2, &filename, &line_num);
+	if (line_num != 0) {
+		BMESSAGE ("last position before CALL was in file \"%s\" near line %d\n", filename, line_num);
 	}
-	return;
 }
 /*}}}*/
 /*{{{  void err_no_bsyscalls (word *wptr, int ra)*/

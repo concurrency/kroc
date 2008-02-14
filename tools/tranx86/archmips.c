@@ -387,7 +387,7 @@ static void compose_debug_insert_mips (tstate *ts, int mdpairid)
 	if ((options.debug_options & DEBUG_INSERT) && !(ts->supress_debug_insert)) {
 		x = ((ts->file_pending & 0xffff) << 16) + (ts->line_pending & 0xffff);
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1)])));
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->insert_setup_label, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1) + 1])));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1) + 1])));
 	}
 	return;
 }
@@ -467,19 +467,6 @@ static void compose_debug_filenames_mips (tstate *ts)
 	memcpy (trtl->u.data.bytes, filename_buffer, filename_fcount);
 	add_to_rtl_chain (trtl);
 	sfree (filename_buffer);
-	return;
-}
-/*}}}*/
-/*{{{  static void compose_debug_insert_set_mips (tstate *ts)*/
-/*
- *	void compose_debug_insert_set_mips (tstate *ts)
- *	generates insert-debugging setup point for post-mortem debugging
- */
-static void compose_debug_insert_set_mips (tstate *ts)
-{
-	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->insert_setup_label));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_NAMEDLABEL, string_dup ("&mdparam1")));
-	add_to_ins_chain (compose_ins (INS_RET, 0, 0));
 	return;
 }
 /*}}}*/
@@ -2194,7 +2181,6 @@ arch_t *init_arch_mips (int mclass)
 	arch->compose_rangestop_jumpcode = NULL;
 
 	arch->compose_debug_deadlock_set = NULL;
-	arch->compose_debug_insert_set = compose_debug_insert_set_mips;
 
 	/* code-gen */
 	arch->compose_divcheck_zero = NULL;
