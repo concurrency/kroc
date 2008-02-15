@@ -290,14 +290,12 @@ static int install_firmware_ctx (void)
 	add_system_functions (firmware);
 	install_sffi (firmware);
 
-	/* Do initial layout with NULL to get memory size. */
-	tvm_ectx_layout (
-		firmware, NULL,
+	firmware_memory_len = tvm_ectx_memory_size (
+		firmware,
 		"!??", 3,
 		firmware_ws_size, 
 		firmware_vs_size, 
-		firmware_ms_size,
-		&firmware_memory_len, &ws, &vs, &ms
+		firmware_ms_size
 	);
 
 	firmware_memory = malloc (sizeof(WORD) * firmware_memory_len);
@@ -305,14 +303,13 @@ static int install_firmware_ctx (void)
 		return error_out ("unable to allocate firmware memory (%d words)", firmware_memory_len);
 	}
 
-	/* This is the real layout. */
 	tvm_ectx_layout (
 		firmware, firmware_memory,
 		"!??", 3,
 		firmware_ws_size, 
 		firmware_vs_size, 
 		firmware_ms_size,
-		&firmware_memory_len, &ws, &vs, &ms
+		&ws, &vs, &ms
 	);
 	
 	return tvm_ectx_install_tlp (
@@ -443,14 +440,10 @@ static int install_user_ctx (const char *fn)
 	add_system_functions (user);
 	install_sffi (user);
 
-	/* Do initial layout with NULL to get memory size. */
-	tvm_ectx_layout (
-		user, NULL,
+	user_memory_len = tvm_ectx_memory_size (
+		user,
 		tlp_fmt, tlp_argc, 
-		ws_size, 
-		vs_size, 
-		ms_size,
-		&user_memory_len, &ws, &vs, &ms
+		ws_size, vs_size, ms_size
 	);
 
 	user_memory = (WORDPTR) malloc (sizeof (WORD) * user_memory_len);
@@ -458,14 +451,13 @@ static int install_user_ctx (const char *fn)
 		return error_out ("failed to allocate user memory (%d words)", user_memory_len);
 	}
 
-	/* This is the real layout. */
 	tvm_ectx_layout (
 		user, user_memory,
 		tlp_fmt, tlp_argc, 
 		ws_size, 
 		vs_size, 
 		ms_size,
-		&user_memory_len, &ws, &vs, &ms
+		&ws, &vs, &ms
 	);
 
 	return tvm_ectx_install_tlp (
@@ -512,6 +504,31 @@ static int run_user (void)
 
 	return ECTX_ERROR;
 }
+
+#ifdef TVM_PROFILING
+static void output_profile (ECTX ectx)
+{
+	int i;
+	for (i = 0; i < sizeof(ectx->profile.pri) / sizeof(int); ++i) {
+		if (ectx->profile.pri[i] > 0) {
+			fprintf (stderr, "pri 0x%03x = %d\n", i, ectx->profile.pri[i]);
+		}
+	}
+	for (i = 0; i < sizeof(ectx->profile.sec) / sizeof(int); ++i) {
+		if (ectx->profile.sec[i] > 0) {
+			fprintf (stderr, "sec 0x%03x = %d\n", i, ectx->profile.sec[i]);
+		}
+	}
+}
+
+static void output_profiling (void)
+{
+	fprintf (stderr, "-- Firmware Bytecode Profile\n");
+	output_profile (&firmware_ctx);
+	fprintf (stderr, "-- User Bytecode Profile\n");
+	output_profile (&user_ctx);
+}
+#endif /* TVM_PROFILING */
 
 int main (int argc, char *argv[])
 {
@@ -579,6 +596,10 @@ int main (int argc, char *argv[])
 	free (firmware_memory);
 	free (user_memory);
 	free (bytecode);
+
+	#ifdef TVM_PROFILING
+	output_profiling ();
+	#endif
 
 	return 0;
 }

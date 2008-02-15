@@ -222,6 +222,14 @@ struct _tvm_ectx_t {
 	tvm_t		*tvm;
 	tvm_ectx_t	*next;
 
+	/* Profiling data */
+	#ifdef TVM_PROFILING
+	struct {
+		UWORD	pri[16];
+		UWORD	sec[608];
+	} profile;
+	#endif
+
 	/* Private data */
 	tvm_ectx_priv_t	priv;
 };

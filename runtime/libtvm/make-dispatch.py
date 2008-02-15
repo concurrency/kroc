@@ -70,8 +70,12 @@ def ins_key_to_int(key):
 def write_switch(defs, fn):
 	bits = ["""/* Generated automatically by make-dispatch.py; do not modify! */
 
-static inline int dispatch_instruction(ECTX ectx, BYTE instr)
+static inline int dispatch_instruction (ECTX ectx, BYTE instr)
 {
+	#ifdef TVM_PROFILING
+	ectx->profile.pri[instr >> 4]++;
+	#endif
+
 	switch (instr >> 4) {
 """]
 
@@ -107,6 +111,11 @@ static inline int dispatch_instruction(ECTX ectx, BYTE instr)
 		{
 			WORD ins = OREG;
 			CLEAR(OREG);
+			
+			#ifdef TVM_PROFILING
+			ectx->profile.sec[ins]++;
+			#endif
+
 			switch (ins) {
 """)
 
