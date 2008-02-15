@@ -56,6 +56,9 @@
 /* define for Windows TVM */
 #undef TVM_OS_WINDOWS
 
+/* define to enable profiling */
+#undef TVM_PROFILING
+
 /* define to T9000 short ops */
 #undef TVM_SHORT_OPS
 
