@@ -51,7 +51,7 @@ BYTEPTR _tvm_memcpy (BYTEPTR dst, BYTEPTR src, UWORD n)
 	 */
 	if (!((n | (UWORD) dst | (UWORD) src) & (TVM_WORD_LENGTH - 1))) {
 		WORDPTR dst_w = (WORDPTR) dst;
-		WORDPTR src_w = (WORDPTR) dst;
+		WORDPTR src_w = (WORDPTR) src;
 		/* Reduce bytes to words */
 		n >>= WSH;
 		/* This count is now on words */
