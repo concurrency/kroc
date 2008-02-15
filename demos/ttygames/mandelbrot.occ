@@ -223,7 +223,7 @@ PROC harvester (CT.WORK.OUT? link.out, CHAN INT tick?, tock!, kill?, CHAN BYTE s
 :
 
 
-PROC mandelbrot (CHAN BYTE scr!)
+PROC mandelbrot (CHAN BYTE kyb?, scr!, err!)
   CT.WORK.IN? mwsvr.in:
   CT.WORK.OUT? mwsvr.out:
   SHARED CT.WORK.IN! mwcli.in:
