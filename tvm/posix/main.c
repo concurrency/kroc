@@ -508,15 +508,34 @@ static int run_user (void)
 #ifdef TVM_PROFILING
 static void output_profile (ECTX ectx)
 {
+	const int n_pri = sizeof(ectx->profile.pri) / sizeof(UWORD);
+	const int n_sec = sizeof(ectx->profile.sec) / sizeof(UWORD);
+	UWORD total = 0;
 	int i;
-	for (i = 0; i < sizeof(ectx->profile.pri) / sizeof(int); ++i) {
+
+	for (i = 0; i < n_pri; ++i) {
+		total += ectx->profile.pri[i];
+	}
+	for (i = 0; i < n_sec; ++i) {
+		total += ectx->profile.sec[i];
+	}
+
+	for (i = 0; i < n_pri; ++i) {
 		if (ectx->profile.pri[i] > 0) {
-			fprintf (stderr, "pri 0x%03x = %d\n", i, ectx->profile.pri[i]);
+			fprintf (stderr,
+				"pri  0x%03x  %-12s = %-7d (%.2f%%)\n", 
+				i, tvm_instr_pri_name (i), ectx->profile.pri[i],
+				((double) ectx->profile.pri[i] / (double) total) * 100.0
+			);
 		}
 	}
-	for (i = 0; i < sizeof(ectx->profile.sec) / sizeof(int); ++i) {
+	for (i = 0; i < n_sec; ++i) {
 		if (ectx->profile.sec[i] > 0) {
-			fprintf (stderr, "sec 0x%03x = %d\n", i, ectx->profile.sec[i]);
+			fprintf (stderr, 
+				"sec  0x%03x  %-12s = %-7d (%.2f%%)\n", 
+				i, tvm_instr_sec_name (i), ectx->profile.sec[i],
+				((double) ectx->profile.sec[i] / (double) total) * 100.0
+			);
 		}
 	}
 }

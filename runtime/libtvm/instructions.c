@@ -21,6 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tvm.h"
 #include "instructions.h"
 #include "interpreter.h"
+#ifdef TVM_PROFILING
+#include "ins_names.h"
+#endif
 
 /**
  * This function is placed in the instruction jump table for instructions
@@ -30,4 +33,24 @@ TVM_INSTRUCTION (ins_not_implemented)
 {
 	return ECTX_INS_UNSUPPORTED;
 }
+
+#ifdef TVM_PROFILING
+const char *tvm_instr_pri_name (WORD ins)
+{
+	if (ins >= 0 && ins <= (sizeof(pri_name) / sizeof(char *))) {
+		return pri_name[ins];
+	} else {
+		return NULL;
+	}
+}
+
+const char *tvm_instr_sec_name (WORD ins)
+{
+	if (ins >= 0 && ins <= (sizeof(sec_name) / sizeof(char *))) {
+		return sec_name[ins];
+	} else {
+		return NULL;
+	}
+}
+#endif
 
