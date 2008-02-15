@@ -215,7 +215,7 @@ case "$memory_ops" in
     ;;
   internal)
     ;;
-  memcpy)
+  native)
     AC_DEFINE([TVM_USE_MEMCPY], 1, [define to use memcpy])
     AC_DEFINE([TVM_USE_MEMSET], 1, [define to use memset])
     ;;
