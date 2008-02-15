@@ -67,6 +67,57 @@ def find_instructions(defs, fn):
 def ins_key_to_int(key):
 	return int(key.replace('_', ' ').strip(), 16)
 
+def output_file(bits, fn):
+	f = open(fn + ".new", "w")
+	f.write("".join(bits))
+	f.close()
+	if os.access(fn, os.F_OK):
+		if os.access(fn + ".old", os.F_OK):
+			os.remove(fn + ".old")
+		os.rename(fn, fn + ".old")	
+	os.rename(fn + ".new", fn)
+
+def write_names(defs, fn):
+	keys = defs.keys()
+	keys.sort(lambda a, b: cmp(ins_key_to_int(a), ins_key_to_int(b)))
+	
+	bits = ["""/* Generated automatically by make-dispatch.py; do not modify! */
+
+static const char *pri_name[] = {
+"""]
+	
+	for k in keys:
+		if k[1] == "_":
+			(c, h, name) = defs[k]
+			name = name.replace("ins_", "").upper()
+			bits.append("\t\"%s\",\n" % name)
+	
+	bits.append("""
+	NULL
+};
+
+static const char *sec_name[] = {
+""")
+	
+	last = -1
+	for k in keys:
+		if k[1] != "_":
+			(c, h, name) = defs[k]
+			this = ins_key_to_int(k)
+			if this != (last + 1):
+				for i in range((this - last) - 1):
+					bits.append("\tNULL,\n")
+			last = this
+			name = name.replace("ins_", "").upper()
+			bits.append("\t\"%s\",\n" % name)
+
+	bits.append("""
+	NULL
+};
+
+""")
+	output_file(bits, fn)
+
 def write_switch(defs, fn):
 	bits = ["""/* Generated automatically by make-dispatch.py; do not modify! */
 
@@ -132,15 +183,7 @@ static inline int dispatch_instruction (ECTX ectx, BYTE instr)
 	return ECTX_INS_INVALID;
 }
 """)
-
-	f = open(fn + ".new", "w")
-	f.write("".join(bits))
-	f.close()
-	if os.access(fn, os.F_OK):
-		if os.access(fn + ".old", os.F_OK):
-			os.remove(fn + ".old")
-		os.rename(fn, fn + ".old")	
-	os.rename(fn + ".new", fn)
+	output_file(bits, fn)
 
 def write_jumptable(defs, fn, name, keys):
 	bits = ["""/* Generated automatically by make-dispatch.py; do not modify! */
@@ -208,15 +251,7 @@ int (*const %s[%d])(ECTX) =
 	bits.append("""
 };
 """)
-
-	f = open(fn + ".new", "w")
-	f.write("".join(bits))
-	f.close()
-	if os.access(fn, os.F_OK):
-		if os.access(fn + ".old", os.F_OK):
-			os.remove(fn + ".old")
-		os.rename(fn, fn + ".old")	
-	os.rename(fn + ".new", fn)
+	output_file(bits, fn)
 
 def write_jumptables(defs, fn_pri, fn_sec, fn_ex_sec):
 	keys = ["%1X_" % i for i in range(16)]
@@ -236,12 +271,14 @@ def main():
 	output_pri = "jumptbl_pri.c"
 	output_sec = "jumptbl_sec.c"
 	output_ex_sec = "jumptbl_ex_sec.c"
+	output_names = "ins_names.h"
 
 	defs = {}
 	for fn in inputs:
 		find_instructions(defs, fn)
 	write_switch(defs, output_switch)
 	write_jumptables(defs, output_pri, output_sec, output_ex_sec)
+	write_names(defs, output_names)
 
 if __name__ == "__main__":
 	main()

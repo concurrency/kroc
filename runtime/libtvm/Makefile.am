@@ -88,6 +88,7 @@ DISPATCH_SOURCE_FILES = \
 
 DISPATCH_OUTPUT_FILES = \
 	$(top_builddir)/dispatch_ins.c \
+	$(top_builddir)/ins_names.h \
 	$(top_builddir)/jumptbl_pri.c \
 	$(top_builddir)/jumptbl_sec.c \
 	$(top_builddir)/jumptbl_ex_sec.c

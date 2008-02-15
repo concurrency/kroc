@@ -68,4 +68,11 @@ extern int tvm_run (ECTX ectx);
 extern int tvm_run_count (ECTX ectx, UWORD count);
 /*}}}*/
 
+/*{{{  Profiling Support */
+#ifdef TVM_PROFILING
+extern const char *tvm_instr_pri_name (WORD ins);
+extern const char *tvm_instr_sec_name (WORD ins);
+#endif
+/*}}}*/
+
 #endif /* TVM_H */
