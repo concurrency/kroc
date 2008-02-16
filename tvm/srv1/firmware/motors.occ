@@ -70,7 +70,7 @@ PROC set.pwm (VAL INT left, right)
     timer3[TIMER3.WIDTH.32] := ((PERIPHERAL.CLOCK / 1000) * right) / 100
 :
 
-PROC motors (CHAN P.MOTOR in?)
+PROC motors (MOTOR? svr)
   INITIAL INT l.speed IS 0:
   INITIAL INT r.speed IS 0:
   SEQ
@@ -80,7 +80,7 @@ PROC motors (CHAN P.MOTOR in?)
     WHILE NOT done
       SEQ
         INT n:
-        in ? CASE
+        svr[rq] ? CASE
           disconnected
             done, l.speed, r.speed := TRUE, 0, 0
           speed; n
