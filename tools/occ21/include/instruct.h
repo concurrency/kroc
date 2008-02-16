@@ -167,36 +167,32 @@
 #define I_EXTIN       0x60
 #define I_EXTOUT      0x61
 /*}}}  */
+/* #define I_MINN        0x62 */
 #define I_UNPACKSN    0x63
-/*{{{  SLMUL/SULMUL removed by frmb -- space needed */
-#define I_MINN        0x62
-/* #define I_SLMUL       0x64 */ /* T450 */
-/* #define I_SULMUL      0x65 */ /* T450 */
-#define I_MOUTN       0x64
-#define I_XMINN       0x65
-/*}}}  */
+#define I_SLMUL       0x64 /* T450 */
+#define I_SULMUL      0x65 /* T450 */
+/* #define I_MOUTN       0x64 */
+/* #define I_XMINN       0x65 */
 /*{{{  added by frmb -- for "special" channel handling */
 #define I_EXTENBC     0x66
 #define I_EXTNDISC    0x67
 /*}}}  */
-/* SATADD/SATSUB/SATMUL removed by frmb -- space needed */
-/* #define I_SATADD      0x68 */ /* T450 */
-/* #define I_SATSUB      0x69 */ /* T450 */
-/* #define I_SATMUL      0x6A */ /* T450 */
+#define I_SATADD      0x68 /* T450 */
+#define I_SATSUB      0x69 /* T450 */
+#define I_SATMUL      0x6A /* T450 */
 /*{{{  added by frmb -- more "special" channel handling */
-#define I_EXTMIN      0x68
-#define I_EXTMOUT     0x69
-#define I_EXTMIN64    0x6A
-#define I_EXTMOUT64   0x6B
+/* #define I_EXTMIN      0x68 */
+/* #define I_EXTMOUT     0x69 */
+/* #define I_EXTMIN64    0x6A */
+/* #define I_EXTMOUT64   0x6B */
 /*}}}  */
 #define I_POSTNORMSN  0x6C
 #define I_ROUNDSN     0x6D
-/* LDTRAPH/STTRAPH removed by frmb -- space needed */
-/* #define I_LDTRAPH     0x6E */ /* T450 */
-/* #define I_STTRAPH     0x6F */ /* T450 */
+#define I_LDTRAPH     0x6E /* T450 */
+#define I_STTRAPH     0x6F /* T450 */
 /*{{{  added by frmb -- more "special" channel handling */
-#define I_EXTMINN    0x6E
-#define I_EXTMOUTN   0x6F
+/* #define I_EXTMINN    0x6E */
+/* #define I_EXTMOUTN   0x6F */
 /*}}}  */
 
 /*}}}*/
@@ -333,22 +329,22 @@
 
 /*}}}*/
 /*{{{  Ex */
-#define I_MNEW		0xE0
-#define I_MFREE		0xE1
-#define I_MALLOC	0xE2
-#define I_MRELEASE	0xE3
-#define I_MIN		0xE4
-#define I_MOUT		0xE5
-#define I_MIN64		0xE6
-#define I_MOUT64	0xE7
-#define I_XABLE		0xE8
-#define I_XIN		0xE9
-#define I_XMIN		0xEA
-#define I_XMIN64	0xEB
-#define I_XEND		0xEC
-#define I_NDISC		0xED
-#define I_NDIST		0xEE
-#define I_NDISS		0xEF
+/* #define I_MNEW	0xE0 */
+/* #define I_MFREE	0xE1 */
+#define I_MALLOC        0xE2
+#define I_MRELEASE      0xE3
+/* #define I_MIN	0xE4 */
+/* #define I_MOUT	0xE5 */
+/* #define I_MIN64	0xE6 */
+/* #define I_MOUT64	0xE7 */
+#define I_XABLE	        0xE8
+#define I_XIN	        0xE9
+/* #define I_XMIN	0xEA */
+/* #define I_XMIN64	0xEB */
+#define I_XEND          0xEC
+#define I_NDISC         0xED
+#define I_NDIST         0xEE
+#define I_NDISS         0xEF
 
 /*}}}*/
 /*{{{  Fx */
@@ -408,7 +404,6 @@
 #define I_MT_XXCHG     0x245
 #define I_MT_DCLONE    0x246
 #define I_MT_BIND      0x247
-
 
 #define I_MB           0x248
 #define I_RMB          0x249

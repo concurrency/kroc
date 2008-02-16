@@ -236,13 +236,15 @@ PRIVATE const struct instruction_struct
     { I_WSUBDB,  "WSUBDB",   &has_wsubdb, 0 },
     /*}}}  */
     /*{{{  KRoC dynamic memory support: mnew, mfree, malloc, mrelease */
+#if 0
     { I_MNEW,		"MNEW",		&trueval, 0 },
     { I_MFREE,		"MFREE",	&trueval, 0 },
+#endif
     { I_MALLOC,		"MALLOC",	&trueval, 0 },
     { I_MRELEASE,	"MRELEASE",	&trueval, 0 },
     { I_MRELEASEP,	"MRELEASEP",	&trueval, 0 },
     /*}}}  */
-#ifdef MOBILES
+#if 0 /* def MOBILES */
     /*{{{  MOBILE input/output */
     { I_MIN,		"MIN",		&trueval, 0 },
     { I_MOUT,		"MOUT",		&trueval, 0 },
@@ -255,9 +257,11 @@ PRIVATE const struct instruction_struct
     /*{{{  extended rendezvous stuff */
     { I_XABLE,		"XABLE",	&trueval, 0 },
     { I_XIN,		"XIN",		&trueval, 0 },
+#if 0
     { I_XMIN,		"XMIN",		&trueval, 0 },
     { I_XMIN64,		"XMIN64",	&trueval, 0 },
     { I_XMINN,		"XMINN",	&trueval, 0 },
+#endif
     { I_XEND,		"XEND",		&trueval, 0 },
     /*}}}  */
     /*{{{  modified ALT stuff */
@@ -274,12 +278,14 @@ PRIVATE const struct instruction_struct
     { I_EXTVRFY,	"EXTVRFY",	&trueval, 0 },
     { I_EXTENBC,	"EXTENBC",	&trueval, 0 },
     { I_EXTNDISC,	"EXTNDISC",	&trueval, 0 },
+#if 0
     { I_EXTMIN,		"EXTMIN",	&trueval, 0 },
     { I_EXTMOUT,	"EXTMOUT",	&trueval, 0 },
     { I_EXTMIN64,	"EXTMIN64",	&trueval, 0 },
     { I_EXTMOUT64,	"EXTMOUT64",	&trueval, 0 },
     { I_EXTMINN,	"EXTMINN",	&trueval, 0 },
     { I_EXTMOUTN,	"EXTMOUTN",	&trueval, 0 },
+#endif
     /*}}}  */
     /*{{{  inline fp codes */
     { I_FPLDNLDBI,  "FPLDNLDBI",  &has_fpu_core, 0 },
