@@ -1,7 +1,12 @@
 #INCLUDE "defBF537.inc"
 #INCLUDE "srv1.inc"
 
-#IF FALSE
+PROTOCOL P.LED
+  CASE
+    disconnected  = 0
+    led           = 1; INT; BOOL
+:
+
 PROC leds (CHAN P.LED in?)
   INITIAL [2]BOOL status IS [FALSE, FALSE]:
   SEQ
@@ -38,5 +43,4 @@ PROC leds (CHAN P.LED in?)
     -- Turn off LEDS
     safe.set.register.16(PORTGIO.ADDR, #0300, #FFFF)
 :
-#ENDIF
 

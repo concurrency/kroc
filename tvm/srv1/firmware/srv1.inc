@@ -138,8 +138,8 @@ PROTOCOL P.SYSTEM.RE
 --}}}
 CHAN TYPE SYSTEM
   MOBILE RECORD
-    CHAN P.SYSTEM.RQ rq!:
-    CHAN P.SYSTEM.RE re?:
+    CHAN P.SYSTEM.RQ rq?:
+    CHAN P.SYSTEM.RE re!:
 :
 --}}}
 --}}}

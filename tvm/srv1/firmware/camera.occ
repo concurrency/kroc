@@ -1,5 +1,3 @@
-#INCLUDE "defBF537.inc"
-#INCLUDE "bfin_config.inc"
 #INCLUDE "srv1.inc"
 
 VAL INT CAMERA.INIT       IS -1:
