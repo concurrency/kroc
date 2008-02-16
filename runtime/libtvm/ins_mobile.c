@@ -129,6 +129,7 @@ static WORDPTR mt_alloc_cb (ECTX ectx, UWORD type, UWORD channels)
 	if (type & MT_CB_STATE_SPACE) {
 		words += 5;
 	}
+	type |= channels << MT_CB_CHANNELS_SHIFT;
 
 	if (type & MT_CB_SHARED) {
 		words += MT_CB_SHARED_PTR_OFFSET;

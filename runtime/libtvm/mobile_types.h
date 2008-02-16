@@ -1,21 +1,21 @@
 /*
-mobile_types.h -- mobile type constants and structures 
-Copyright (C) 2007-2008 Carl Ritson <cgr@kent.ac.uk>
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+ *	mobile_types.h -- mobile type constants and structures 
+ *	Copyright (C) 2007 Carl Ritson <cgr@kent.ac.uk>
+ *
+ *	This program is free software; you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation; either version 2 of the License, or
+ *	(at your option) any later version.
+ *
+ *	This program is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with this program; if not, write to the Free Software
+ *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 
 #ifndef __MOBILE_TYPES_H
 #define __MOBILE_TYPES_H
@@ -184,11 +184,14 @@ typedef struct _mt_array_internal_t {
 /*{{{ TYPE 2: mobile channel bundle
  *   - flag bit 0 indicates sharing (0 = unshared),
  *   - flag bit 1 indicate whether to allocate additional space
- *     for p0ny/etc support (0 = don't allocate).
+ *     for pony/etc support (0 = don't allocate).
+ *   - flag bits 3-11 code number of channels.
  */
 #define MT_CB			2
 #define MT_CB_SHARED		(0x1 << MT_FLAGS_SHIFT)
 #define MT_CB_STATE_SPACE	(0x2 << MT_FLAGS_SHIFT)
+#define MT_CB_CHANNELS_SHIFT	(MT_FLAGS_SHIFT + 3)
+#define MT_CB_CHANNELS(X)	(((X) >> MT_CB_CHANNELS_SHIFT) & 0xFF)
 /* lock constants */
 #define MT_CB_CLIENT		0x0
 #define MT_CB_SERVER		0x1
