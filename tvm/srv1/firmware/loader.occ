@@ -4,8 +4,9 @@
 #INCLUDE "delay.inc"
 #INCLUDE "tvm.inc"
 
+#INCLUDE "camera.occ"
 #INCLUDE "lasers.occ"
-#INCLUDE "leds.occ"
+--#INCLUDE "leds.occ"
 #INCLUDE "motors.occ"
 #INCLUDE "out.occ"
 
@@ -152,6 +153,8 @@ PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN
     PAR
       input.tap (in?, console.svr[in]!, killed, shutdown.in?)
       output.tap (console.svr[out]?, out!)
+
+      camera (camera.svr?)
       lasers (laser.svr?)
       motors (motor.svr?)
       

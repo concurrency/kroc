@@ -1,0 +1,125 @@
+#INCLUDE "defBF537.inc"
+#INCLUDE "bfin_config.inc"
+#INCLUDE "srv1.inc"
+
+VAL INT CAMERA.INIT       IS -1:
+VAL INT CAMERA.OFF        IS 0:
+VAL INT CAMERA.160.128    IS 1:
+VAL INT CAMERA.320.256    IS 2:
+VAL INT CAMERA.640.512    IS 3:
+VAL INT CAMERA.1280.1024  IS 4:
+
+DATA TYPE CAMERA.MODE
+  RECORD
+    INT x:
+    INT y:
+    INT mode:
+:
+
+PROC camera (CAMERA? svr)
+  VAL INT           buffers IS 2:
+  VAL []CAMERA.MODE modes   IS [[ 160,  128, CAMERA.160.128  ],
+                                [ 320,  256, CAMERA.320.256  ],
+                                [ 640,  512, CAMERA.640.512  ],
+                                [1280, 1024, CAMERA.1280.1024]]:
+
+  PROC drain ()
+    CHAN MOBILE []BYTE camera.data:
+    PLACE camera.data AT #1:
+    SEQ i = 0 FOR buffers
+      MOBILE []BYTE data:
+      camera.data ? data
+  :
+
+  CHAN INT camera.mode:
+  PLACE camera.mode AT #1:
+
+  CHAN MOBILE []BYTE camera.data:
+  PLACE camera.data AT #1:
+
+  INITIAL INT mode        IS CAMERA.OFF:
+  INITIAL INT frame.size  IS 0:
+  SEQ
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      svr[rq] ? CASE
+        disconnected
+          done := TRUE
+
+        get.frame
+          IF
+            mode <> CAMERA.OFF
+              MOBILE []BYTE data:
+              SEQ
+                camera.data ? data
+                svr[re] ! frame; data
+                camera.data ! MOBILE [frame.size]BYTE
+            TRUE
+              svr[re] ! error; ERROR.INV.STATE
+
+        get.mode
+          IF
+            IF i = 0 FOR SIZE modes
+              VAL CAMERA.MODE m IS modes[i]:
+              m[mode] = mode
+                svr[re] ! mode; m[x]; m[y]
+            TRUE
+              svr[re] ! error; ERROR.INV.STATE
+
+        init
+          SEQ
+            IF
+              mode <> CAMERA.OFF
+                drain ()
+              TRUE
+                SKIP
+            
+            mode := CAMERA.INIT
+            camera.mode ! mode
+            mode := CAMERA.OFF
+
+        INT x, y:
+        set.mode; x; y
+          IF
+            IF i = 0 FOR SIZE modes
+              VAL CAMERA.MODE m IS modes[i]:
+              (m[x] = x) AND (m[y] = y)
+                SEQ
+                  IF
+                    mode <> CAMERA.OFF
+                      drain ()
+                    TRUE
+                      SKIP
+
+                  mode := m[mode]
+                  frame.size := (x * y) * 2
+
+                  camera.mode ! mode
+                  SEQ i = 0 FOR buffers
+                    camera.data ! MOBILE [frame.size]BYTE
+
+                  svr[re] ! ok
+            TRUE
+              svr[re] ! error; ERROR.INV.PARAM
+
+        stop
+          SEQ
+            IF
+              mode <> CAMERA.OFF
+                drain ()
+              TRUE
+                SKIP
+
+            mode := CAMERA.OFF
+            camera.mode ! mode
+      
+    IF
+      mode <> CAMERA.OFF
+        SEQ
+          drain ()
+          mode := CAMERA.OFF
+          camera.mode ! mode
+      TRUE
+        SKIP
+:
+
