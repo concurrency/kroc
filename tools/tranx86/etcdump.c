@@ -1365,6 +1365,12 @@ static int dump_secondary (int esfunc, char *buffer)
 	case I_XSWORD:
 		sprintf (buffer, "\tXSWORD");
 		break;
+	case I_EXT_MT_IN:
+		sprintf (buffer, "\tEXT_MT_IN");
+		break;
+	case I_EXT_MT_OUT:
+		sprintf (buffer, "\tEXT_MT_OUT");
+		break;
 	default:
 		sprintf (buffer, "\tUnsupported %d", esfunc);
 		break;

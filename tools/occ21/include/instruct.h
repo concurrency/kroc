@@ -408,6 +408,9 @@
 #define I_MB           0x248
 #define I_RMB          0x249
 #define I_WMB          0x24A
+
+#define I_EXT_MT_IN    0x24B
+#define I_EXT_MT_OUT   0x24C
 /*}}}*/
 /*{{{  negatives */
 #define I_FPSTALL     ( 0x01 | I_NEGATIVE) /* T9000 */
