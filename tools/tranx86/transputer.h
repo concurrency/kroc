@@ -446,6 +446,12 @@
 #define I_WMB		0x24a
 
 /*}}}*/
+/*{{{  placed channel mobile type instructions*/
+
+#define I_EXT_MT_IN	0x24b
+#define I_EXT_MT_OUT	0x24c
+
+/*}}}*/
 /*{{{  negative instructions (mostly T9000)*/
 #define I_NEGATIVE	0x8000
 #define I_FPSTALL	(0x01 | I_NEGATIVE)
@@ -648,7 +654,8 @@ static int tsdiff_sec_twocodes[] = { \
 	16, 16, 16, 16,	/* 23c: mt_out, mt_xchg, mt_lock, mt_unlock */
 	-2, -2,	16, 16,	/* 240: mt_enroll, mt_resign, mt_sync, mt_xin */
 	16, 16, -2, -2,	/* 244: mt_xout, mt_xxchg, mt_dclone, mt_bind */
-	0, 0, 0		/* 248: mb, rmb, wmb */
+	0, 0, 0, 16,	/* 248: mb, rmb, wmb, ext_mt_in */
+	16		/* 24c: ext_mt_out */
 };
 
 /*}}}*/

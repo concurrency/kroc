@@ -1778,7 +1778,7 @@ printf ("\n");
 		mapload2regs (outputitemmode, outputitem, channelmode, channel);
 		mapioop (isplaced ? I_EXTOUT : I_OUT, usecall);
 		mapload2regs (outputitemmode, outputitem, channelmode, channel);
-		mapioop (I_MT_OUT, usecall);
+		mapioop (isplaced ? I_EXT_MT_OUT : I_MT_OUT, usecall);
 
 		/*}}}*/
 	} else if ((ntypeof (*outputitem) == S_ANYPROCTYPE) && (TagOf (follow_user_type (prottype)) == S_ANYPROCTYPE)) {
@@ -1786,7 +1786,7 @@ printf ("\n");
 		mapload2regs (outputitemmode, outputitem, channelmode, channel);
 		mapioop (isplaced ? I_EXTOUT : I_OUT, usecall);
 		mapload2regs (outputitemmode, outputitem, channelmode, channel);
-		mapioop (I_MT_OUT, usecall);
+		mapioop (isplaced ? I_EXT_MT_OUT : I_MT_OUT, usecall);
 
 		/*}}}*/
 	} else if ((ntypeof (*outputitem) == S_MOBILE) && (TagOf (follow_user_type (prottype)) == S_MOBILE)) {
@@ -1796,7 +1796,7 @@ printf ("\n");
 fprintf (stderr, "gen10: mapoutputitem: mapping MOBILE output.  NTypeAttrOf (NTypeOf (*outputitem)) = %d, NTypeAttr (prottype) = %d\n", NTypeAttrOf (NTypeOf (*outputitem)), NTypeAttrOf (prottype));
 #endif
 		mapload2regs (outputitemmode, outputitem, channelmode, channel);
-		mapioop (I_MT_OUT, usecall);
+		mapioop (isplaced ? I_EXT_MT_OUT : I_MT_OUT, usecall);
 #endif
 		/*}}}*/
 	} else {
@@ -2193,12 +2193,22 @@ PUBLIC void mapinputitem (const int channelmode, treenode **const channel, const
 			mapexpopd (channelmode, channel);
 			mapioop (I_XABLE, usecall);
 		}
+		
 		if (utagged) {
 			mapload2regs (inputitemmode, OpAddr (*inputitem), channelmode, channel);
 		} else {
 			mapload2regs (inputitemmode, inputitem, channelmode, channel);
 		}
-		mapioop (is_extended ? I_MT_XIN : I_MT_IN, usecall);
+		
+		if (isplaced) {
+			if (is_extended) {
+				genwarn (GEN_WARN_BADCODE);
+			}
+			mapioop (I_EXT_MT_IN, usecall);
+		} else {
+			mapioop (is_extended ? I_MT_XIN : I_MT_IN, usecall);
+		}
+		
 		if (is_extended) {
 			/* _NOT_ going to be first or second half */
 			mapprocess (x_process);
@@ -2226,12 +2236,22 @@ fprintf (stderr, "mapinputitem: ANYCHANTYPE input!\n");
 			mapexpopd (channelmode, channel);
 			mapioop (I_XABLE, usecall);
 		}
+		
 		if (utagged) {
 			mapload2regs (inputitemmode, OpAddr (*inputitem), channelmode, channel);
 		} else {
 			mapload2regs (inputitemmode, inputitem, channelmode, channel);
 		}
-		mapioop (is_extended ? I_MT_XIN : I_MT_IN, usecall);
+		
+		if (isplaced) {
+			if (is_extended) {
+				genwarn (GEN_WARN_BADCODE);
+			}
+			mapioop (I_EXT_MT_IN, usecall);
+		} else {
+			mapioop (is_extended ? I_MT_XIN : I_MT_IN, usecall);
+		}
+
 		if (is_extended) {
 			/* _NOT_ going to be first or second half */
 			mapprocess (x_process);
@@ -2254,7 +2274,14 @@ fprintf (stderr, "mapinputitem: ANYCHANTYPE input!\n");
 			mapload2regs (inputitemmode, inputitem, channelmode, channel);
 		}
 		
-		mapioop (is_extended ? I_MT_XIN : I_MT_IN, usecall);
+		if (isplaced) {
+			if (is_extended) {
+				genwarn (GEN_WARN_BADCODE);
+			}
+			mapioop (I_EXT_MT_IN, usecall);
+		} else {
+			mapioop (is_extended ? I_MT_XIN : I_MT_IN, usecall);
+		}
 
 		if (is_extended) {
 			/* _NOT_ going to be first or second half */
@@ -3050,7 +3077,7 @@ printtreenl (stderr, 4, comm);
 
 		loadmobilepointer (outputitem);
 		texpopd_main (channelmode, channel, MANY_REGS, FALSE);
-		tioop (I_MT_OUT, usecall);
+		tioop (isplaced ? I_EXT_MT_OUT : I_MT_OUT, usecall);
 
 		/* gencleardynchantype (outputitem); */
 		/*}}}*/
@@ -3064,7 +3091,7 @@ printtreenl (stderr, 4, comm);
 
 		loadmobilepointer (outputitem);
 		texpopd_main (channelmode, channel, MANY_REGS, FALSE);
-		tioop (I_MT_OUT, usecall);
+		tioop (isplaced ? I_EXT_MT_OUT : I_MT_OUT, usecall);
 
 		gencleardynchantype (outputitem);
 		/*}}}*/
@@ -3083,7 +3110,7 @@ fprintf (stderr, "toutputitem: MOBILE output on MOBILE channel.  isdynmobilebarr
 				/* load real channel address */
 				genindirect (INDIR_AREG);
 			}
-			tioop (I_MT_OUT, usecall);
+			tioop (isplaced ? I_EXT_MT_OUT : I_MT_OUT, usecall);
 			gencleardynarray (outputitem, TRUE);
 			/*}}}*/
 		} else if (isdynmobilebarrier (outputitem)) {
@@ -3098,7 +3125,7 @@ fprintf (stderr, "toutputitem: MOBILE output on MOBILE channel.  isdynmobilebarr
 				/* load real channel address */
 				genindirect (INDIR_AREG);
 			}
-			tioop (I_MT_OUT, usecall);
+			tioop (isplaced ? I_EXT_MT_OUT : I_MT_OUT, usecall);
 			/*}}}*/
 		} else if (isdynmobilechantype (outputitem) || ((TagOf (outputitem) == S_CLONE) && isdynmobilechantype (OpOf (outputitem)))) {
 			/*{{{  non-cloned mobile channel output*/
@@ -3115,7 +3142,7 @@ fprintf (stderr, "toutputitem: MOBILE output on MOBILE channel.  isdynmobilebarr
 				/* load real channel address */
 				genindirect (INDIR_AREG);
 			}
-			tioop (I_MT_OUT, usecall);
+			tioop (isplaced ? I_EXT_MT_OUT : I_MT_OUT, usecall);
 			/* if appropriate instruction undefines pointer */
 			/*}}}*/
 		} else if (isdynmobileproctype (outputitem)) {
@@ -3127,7 +3154,7 @@ fprintf (stderr, "toutputitem: MOBILE output on MOBILE channel.  isdynmobilebarr
 				/* load real channel address */
 				genindirect (INDIR_AREG);
 			}
-			tioop (I_MT_OUT, usecall);
+			tioop (isplaced ? I_EXT_MT_OUT : I_MT_OUT, usecall);
 			/* clear output item to NULL */
 			gencleardynproctype (outputitem);
 			/*}}}*/
@@ -3593,7 +3620,7 @@ printtreenl (stderr, 4, x_process);
 				/* load real channel address */
 				genindirect (INDIR_AREG);
 			}
-			tioop (I_MT_IN, usecall);
+			tioop (isplaced ? I_EXT_MT_IN : I_MT_IN, usecall);
 		}
 		if (is_extended) {
 			texpopd_main (channelmode, channel, MANY_REGS, FALSE);
@@ -3662,7 +3689,7 @@ printtreenl (stderr, 4, x_process);
 				/* load real channel address */
 				genindirect (INDIR_AREG);
 			}
-			tioop (I_MT_IN, usecall);
+			tioop (isplaced ? I_EXT_MT_IN : I_MT_IN, usecall);
 		}
 		if (is_extended) {
 			texpopd_main (channelmode, channel, MANY_REGS, FALSE);
@@ -3764,33 +3791,43 @@ fprintf (stderr, "gen10: tinputitem: MOBILE input!\n");
 				/* load real channel address */
 				genindirect (INDIR_AREG);
 			}
-			tioop (is_extended ? I_MT_XIN : I_MT_IN, usecall);
+
+			if (isplaced) {
+				if (is_extended) {
+					genwarn (GEN_WARN_BADCODE);
+				}
+				tioop (I_EXT_MT_IN, usecall);
+			} else {
+				tioop (is_extended ? I_MT_XIN : I_MT_IN, usecall);
+			}
+			
 			if (utagged) {
 				genmobileunpack (OpOf (inputitem), FALSE, TRUE);
 			} else {
 				genmobileunpack (inputitem, FALSE, TRUE);
 			}
 
-		} else if (isdynbarriertype || isdynchantype) {
+		} else if (isdynbarriertype || isdynchantype || isdynproctype) {
 			if (indirect) {
 				/* load real channel address */
 				genindirect (INDIR_AREG);
 			}
-			tioop (is_extended ? I_MT_XIN : I_MT_IN, usecall);
 			
-		} else if (isdynproctype) {
-#if 0
-fprintf (stderr, "tinputitem: inputting dynamic mobile channel/process type\n");
-#endif
-			if (indirect) {
-				/* load real channel address */
-				genindirect (INDIR_AREG);
+			if (isplaced) {
+				if (is_extended) {
+					genwarn (GEN_WARN_BADCODE);
+				}
+				tioop (I_EXT_MT_IN, usecall);
+			} else {
+				tioop (is_extended ? I_MT_XIN : I_MT_IN, usecall);
 			}
-			tioop (is_extended ? I_MT_XIN : I_MT_IN, usecall);
 		} else {
 			if (indirect) {
 				/* load real channel address */
 				genindirect (INDIR_AREG);
+			}
+			if (isplaced) {
+				genwarn (GEN_WARN_BADCODE);
 			}
 			tioop (is_extended ? I_MT_XXCHG : I_MT_XCHG, usecall);
 		}
