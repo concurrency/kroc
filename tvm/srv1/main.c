@@ -508,10 +508,13 @@ static int firmware_run_user (ECTX ectx, WORD args[])
 	}
 
 	tvm_ectx_reset (&user_ctx);
+	user_memory_len = tvm_ectx_memory_size (
+		&user_ctx, tlp_fmt, argc, ws_size, vs_size, ms_size
+	);
 	tvm_ectx_layout (
 		&user_ctx, user_memory, 
 		tlp_fmt, argc, ws_size, vs_size, ms_size,
-		&user_memory_len, &ws, &vs, &ms
+		&ws, &vs, &ms
 	);
 	ret = tvm_ectx_install_tlp (
 		&user_ctx, bytecode, ws, vs, ms,
@@ -650,7 +653,6 @@ static const int	user_sffi_table_length =
 #include "firmware.h"
 
 static WORD firmware_memory[256];
-static WORD firmware_memory_len;
 
 static void init_firmware_memory (void)
 {
@@ -681,7 +683,7 @@ static void install_firmware_ctx (void)
 	tvm_ectx_layout (
 		firmware, firmware_memory,
 		"", 0, ws_size, vs_size, ms_size, 
-		&firmware_memory_len, &ws, &vs, &ms
+		&ws, &vs, &ms
 	);
 	tvm_ectx_install_tlp (
 		firmware, (BYTEPTR) transputercode, ws, vs, ms, 
