@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ins_pri.h"
 #include "ins_sec.h"
 
-#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
+#ifdef TVM_DYNAMIC_OCCAM_PI
 
 /* stddef.h is freestanding, so should be safe in any build */
 #include <stddef.h>
@@ -1117,5 +1117,5 @@ void tvm_mt_release (ECTX ectx, void *ptr)
 }
 /*}}}*/
 
-#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
+#endif /* TVM_DYNAMIC_OCCAM_PI */
 

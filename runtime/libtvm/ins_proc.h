@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "instructions.h"
 #include "tvm_types.h"
 
-#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
+#ifdef TVM_DYNAMIC_OCCAM_PI
 /* 0x22F - 0x22 0x22 0xFF - proc_alloc - allocate process workspace */
 TVM_INSTRUCTION_PROTO (ins_proc_alloc);
 /* 0x230 - 0x22 0x23 0xF0 - proc_param - pass parameter into workspace */
