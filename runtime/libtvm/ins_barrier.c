@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #include "ins_barrier.h"
 
-#ifdef TVM_OCCAM_PI
+#ifdef TVM_DYNAMIC_OCCAM_PI
 
 #define BAR_ENROLLED	0
 #define BAR_COUNT	1
@@ -148,30 +148,4 @@ TVM_HELPER int tvm_bar_resign(ECTX ectx, WORDPTR bar, UWORD resign_count)
 	return ECTX_CONTINUE;
 }
 
-/* 0xB0 - 0x2B 0xF0 - barrier intialisation */
-TVM_INSTRUCTION (ins_bar_init)
-{
-	tvm_bar_init((WORDPTR) AREG, 0);
-
-	UNDEFINE_STACK_RET();
-}
-
-/* 0xB1 - 0x2B 0xF1 - barrier synchronisation */
-TVM_INSTRUCTION (ins_bar_sync)
-{
-	return tvm_bar_sync(ectx, (WORDPTR) AREG);
-}
-
-/* 0xB2 - 0x2B 0xF2 - barrier resignation */
-TVM_INSTRUCTION (ins_bar_resign)
-{
-	return tvm_bar_resign(ectx, (WORDPTR) BREG, (UWORD) AREG);
-}
-
-/* 0xB3 - 0x2B 0xF3 - barrier enroll */
-TVM_INSTRUCTION (ins_bar_enroll)
-{
-	return tvm_bar_enroll(ectx, (WORDPTR) BREG, (UWORD) AREG);
-}
-
-#endif /* TVM_OCCAM_PI */
+#endif /* TVM_DYNAMIC_OCCAM_PI */
