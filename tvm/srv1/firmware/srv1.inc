@@ -63,7 +63,7 @@ PROTOCOL P.LED
 
 --{{{  FFI Interface
 --{{{  PRAGMAs
-#PRAGMA EXTERNAL "PROC C.tvmspecial.0.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, VAL []BYTE tlp, VAL INT argc, CHAN BYTE console.in?, console.out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.MOTOR motors!) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.0.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, VAL []BYTE tlp, CHAN BYTE console.in?, console.out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.MOTOR motors!) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.1.kill.user () = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.2.query.user (BOOL running, INT state, []BYTE context) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.3.set.register.16 (VAL INT addr, set, mask) = 0"
@@ -73,10 +73,11 @@ PROTOCOL P.LED
 #PRAGMA EXTERNAL "PROC C.tvmspecial.7.draw.caption.on.frame (VAL INT frame.width, VAL []BYTE caption, []BYTE frame) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.8.blit.to.uart0 (VAL []BYTE data) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.9.test.disconnected (CHAN OF ANY c, BOOL b) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.10.reset.dynamic.memory () = 0"
 --}}}
 --{{{  Wrappers
 INLINE PROC firmware.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, CHAN BYTE console.in?, console.out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.MOTOR motors!)
-  C.tvmspecial.0.run.user (bytecode, ws, vs, ms, "?!!!!", 5, console.in?, console.out!, lasers!, leds!, motors!)
+  C.tvmspecial.0.run.user (bytecode, ws, vs, ms, "?!!!!", console.in?, console.out!, lasers!, leds!, motors!)
 :
 
 INLINE PROC firmware.kill.user ()
@@ -113,6 +114,10 @@ INLINE PROC blit.to.uart0 (VAL []BYTE data)
 
 INLINE PROC test.disconnected (CHAN OF ANY c, BOOL b)
   C.tvmspecial.9.test.disconnected (c, b)
+:
+
+INLINE PROC reset.dynamic.memory ()
+  C.tvmspecial.10.reset.dynamic.memory ()
 :
 --}}}
 --}}}

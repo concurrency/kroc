@@ -260,7 +260,7 @@ enum {
 /* PROC set.camera.mode (VAL INT mode) */
 static int set_camera_mode (ECTX ectx, WORD args[])
 {
-	unsigned int width, height, cfg_length;
+	unsigned int cfg_length, height, width;
 	unsigned char *cfg	= NULL;
 	WORD mode		= args[0];
 
@@ -294,6 +294,10 @@ static int set_camera_mode (ECTX ectx, WORD args[])
 			height 		= 1024;
 			cfg		= ov9655_sxga; 
 			cfg_length	= sizeof(ov9655_sxga);
+			break;
+		default:
+			width		= 0;
+			height		= 0;
 			break;
 	}
 
@@ -410,7 +414,7 @@ static int draw_caption_on_frame (ECTX ectx, WORD args[])
 	BYTEPTR	caption		= (BYTEPTR) args[1];
 	WORD	caption_len	= args[2];
 	BYTE	*frame		= (BYTE *) wordptr_real_address ((WORDPTR) args[3]);
-	WORD	frame_len	= args[4];
+	/* WORD	frame_len	= args[4]; */
 	int 	ix, iy, iz;
 	
 	/* Limit caption length */
@@ -485,7 +489,7 @@ static WORDPTR 		user_parent	= (WORDPTR) NOT_PROCESS_P;
 
 /*{{{  Firmware functions for running user bytecode */
 /* PROC firmware.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, 
- * 				VAL []BYTE tlp.fmt, VAL INT argc, ...) */
+ * 				VAL []BYTE tlp, ...) */
 static int firmware_run_user (ECTX ectx, WORD args[])
 {
 	BYTEPTR bytecode	= (BYTEPTR) args[0];
@@ -493,27 +497,27 @@ static int firmware_run_user (ECTX ectx, WORD args[])
 	WORD	ws_size		= args[2];
 	WORD	vs_size		= args[3];
 	WORD	ms_size		= args[4];
-	BYTEPTR	tlp_fmt		= (BYTEPTR) args[5];
-	WORD	tlp_fmt_len	= args[6];
-	WORD	argc		= args[7];
-	WORDPTR	argv		= (WORD *) &(args[8]);
+	char	*tlp_fmt	= (char *) wordptr_real_address ((WORDPTR) args[5]);
+	WORD	argc		= args[6];
+	WORDPTR	argv		= (WORD *) &(args[7]);
 	WORDPTR	ws, vs, ms;
-	WORD	dmem_length, ret_addr;
+	WORD	ret_addr;
 	int ret;
 
-	if (user_parent != (WORDPTR) NOT_PROCESS_P)
-	{
+	if (user_parent != (WORDPTR) NOT_PROCESS_P) {
 		/* User context is already running */
 		return ectx->set_error_flag (ectx, EFLAG_FFI);
 	}
 
 	tvm_ectx_reset (&user_ctx);
 	user_memory_len = tvm_ectx_memory_size (
-		&user_ctx, tlp_fmt, argc, ws_size, vs_size, ms_size
+		&user_ctx, tlp_fmt, argc, 
+		ws_size, vs_size, ms_size
 	);
 	tvm_ectx_layout (
 		&user_ctx, user_memory, 
-		tlp_fmt, argc, ws_size, vs_size, ms_size,
+		tlp_fmt, argc, 
+		ws_size, vs_size, ms_size,
 		&ws, &vs, &ms
 	);
 	ret = tvm_ectx_install_tlp (
@@ -528,13 +532,6 @@ static int firmware_run_user (ECTX ectx, WORD args[])
 	/* Save bytecode addresses */
 	user_bytecode		= bytecode;
 	user_bytecode_len	= bytecode_len;
-
-	#ifdef TVM_USE_TLSF
-	user_ctx.mem_pool	= ((BYTE *) user_memory) + (user_memory_len << WSH);
-	firmware_ctx.mem_pool	= user_ctx.mem_pool;
-	dmem_length		= SDRAM_TOP - (UWORD) user_ctx.mem_pool;
-	tlsf_init_memory_pool (dmem_length, user_ctx.mem_pool);
-	#endif
 
 	/* Simulate return, and deschedule */
 	ret_addr	= read_word (ectx->wptr);
@@ -587,6 +584,20 @@ static int firmware_query_user (ECTX ectx, WORD args[])
 	return SFFI_OK;
 }
 
+/* PROC reset.dynamic.memory () */
+static int reset_dynamic_memory (ECTX ectx, WORD args[])
+{
+	#ifdef TVM_USE_TLSF
+	const UWORD dmem_length = SDRAM_TOP - DMEM_START;
+
+	tlsf_init_memory_pool (dmem_length, ectx->mem_pool);
+
+	return SFFI_OK;
+	#else
+	return ectx->set_error_flag (ectx, EFLAG_FFI);
+	#endif
+}
+
 /* PROC safe.set.register.16 (VAL INT addr, set, mask) */
 static int set_register_16 (ECTX ectx, WORD args[])
 {
@@ -629,7 +640,8 @@ static SFFI_FUNCTION	firmware_sffi_table[] = {
 	jpeg_encode_frame,
 	draw_caption_on_frame,
 	blit_to_uart0,
-	test_disconnected
+	test_disconnected,
+	reset_dynamic_memory
 };
 static const int	firmware_sffi_table_length =
 				sizeof(firmware_sffi_table) / sizeof(SFFI_FUNCTION);
@@ -677,6 +689,10 @@ static void install_firmware_ctx (void)
 	firmware->ext_chan_table_length	= ext_chans_length;
 	firmware->sffi_table		= firmware_sffi_table;
 	firmware->sffi_table_length	= firmware_sffi_table_length;
+	/* Dynamic memory */
+	#ifdef TVM_USE_TLSF
+	firmware->mem_pool		= (void *) DMEM_START;
+	#endif
 	
 	/* Setup memory and initial workspace */
 	init_firmware_memory ();
@@ -760,6 +776,11 @@ static void install_user_ctx (void)
 	user->modify_sync_flags		= srv_modify_sync_flags;
 	user->sffi_table		= user_sffi_table;
 	user->sffi_table_length		= user_sffi_table_length;
+	
+	/* Dynamic memory */
+	#ifdef TVM_USE_TLSF
+	user->mem_pool			= (void *) DMEM_START;
+	#endif
 }
 
 static int run_user (void)

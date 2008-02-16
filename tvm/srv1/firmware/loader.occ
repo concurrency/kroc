@@ -234,6 +234,9 @@ PROC loader (CHAN BYTE in?, out!)
     -- Clear out UART
     drain.uart (in?)
 
+    -- Setup dynamic memory
+    reset.dynamic.memory ()
+
     -- Download header
     download.header (header, in?, out!)
     #PRAGMA DEFINED header
