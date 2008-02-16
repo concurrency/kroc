@@ -1814,6 +1814,7 @@ PUBLIC void gensecondary (int instruction)
 		case I_VIN:
 		case I_VOUT:	/* variableio 3/11/91 */
 #ifdef MOBILES
+		#if 0
 		case I_MIN:
 		case I_MOUT:
 		case I_MIN64:
@@ -1824,6 +1825,7 @@ PUBLIC void gensecondary (int instruction)
 		case I_EXTMIN:
 		case I_EXTMOUTN:
 		case I_EXTMINN:
+		#endif
 		case I_MT_IN:
 		case I_MT_OUT:
 		case I_MT_XCHG:

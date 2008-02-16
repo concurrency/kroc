@@ -119,7 +119,7 @@ PRIVATE treenode *iocallname (const int ioinst)
 	case I_XEND:
 		str = virtualxendstring;
 		break;
-#ifdef MOBILES
+#if 0 /* def MOBILES */
 	case I_MIN:
 		str = virtualminstring;
 		break;
@@ -4494,7 +4494,8 @@ printtreenl (stderr, 4, tptr);
 				/* map copy and mobile output */
 				loadseq = mapload2regs (P_PTR, ed_addr, P_PTR, mtemp);
 				loadseq = mapload2regs (P_PTR, mtemp, channelmode, rchannel);
-				mapioop (I_MOUT, rusecall);
+				mapioop (I_MT_OUT, rusecall);
+				genwarn (GEN_WARN_BADCODE);
 				/*}}}*/
 			} else if (!is_count && is_dynmob) {
 				/*{{{  dynamic MOBILE encode*/
@@ -4503,6 +4504,7 @@ printtreenl (stderr, 4, tptr);
 				/* map dynamic mobile output */
 				loadseq = mapload2regs (P_PTR, mtemp, channelmode, rchannel);
 				mapioop (I_MT_OUT, rusecall);
+				genwarn (GEN_WARN_BADCODE);
 				/*}}}*/
 			} else if (!is_count) {
 				/*{{{  map output (should save loadseq somewhere really..) */
@@ -4719,7 +4721,8 @@ printtreenl (stderr, 4, mtemp);
 				loadmobilepointer (mtemp);
 				texpopd_main (channelmode, outchan, 2, FALSE);
 				checkerror ();
-				tioop (I_MOUT, usecall);
+				tioop (I_MT_OUT, usecall);
+				genwarn (GEN_WARN_BADCODE);
 
 				/* we're guarenteed that ed_addr points at a dynamic mobile array -- free it. */
 				texpopd_main (P_EXP, ed_addr, MANY_REGS, FALSE);
