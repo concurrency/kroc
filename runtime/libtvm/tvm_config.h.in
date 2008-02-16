@@ -83,4 +83,9 @@
 /* define emulated word length */
 #undef TVM_WORD_LENGTH
 
+/* define an alias for occam-pi with dynamic memory */
+#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
+#define TVM_DYNAMIC_OCCAM_PI 1
+#endif
+
 #endif /* !TVM_CONFIG_H */

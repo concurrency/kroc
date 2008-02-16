@@ -154,9 +154,9 @@ void tvm_ectx_layout (ECTX ectx, WORDPTR base,
 	int frame_size = calc_frame_size (tlp_argc, vs_size, ms_size, 1);
 	
 	/* The plus 1 in here is for the shutdown bytecode */
-	*ws 	= wordptr_plus (base, frame_size + ws_size + 1 + WS_PAD);
-	*vs	= vs_size ? *ws : 0;
-	*ms	= ms_size ? wordptr_plus (*ws, vs_size + VS_PAD) : 0;
+	*ws = wordptr_plus (base, frame_size + ws_size + 1 + WS_PAD);
+	*vs = vs_size ? *ws : 0;
+	*ms = ms_size ? wordptr_plus (*ws, vs_size + VS_PAD) : 0;
 }
 
 /*
@@ -181,7 +181,7 @@ int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 		char arg = ectx->tlp_fmt[i] = fmt[i];
 
 		if (arg == 'F') {
-			#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
+			#ifdef TVM_DYNAMIC_OCCAM_PI
 			int ret;
 			/* Allocate forking barrier */
 			if ((ret = mt_alloc (ectx, MT_MAKE_BARRIER(MT_BARRIER_FORKING), 0, &fb))) {
@@ -316,7 +316,7 @@ static void disconnect_channel (WORDPTR ptr)
 					data_ptr = byteptr_plus (data_ptr, 1);
 				}
 			}
-			#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
+			#ifdef TVM_DYNAMIC_OCCAM_PI
 			else if (data_len == MIN_INT) {
 				/* mobile input */
 				write_word ((WORDPTR) data_ptr, (WORD) NULL_P);
@@ -341,7 +341,7 @@ static void disconnect_channel (WORDPTR ptr)
 					/* ignore return; potentially bad */
 				}
 			}
-			#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
+			#endif /* TVM_DYNAMIC_OCCAM_PI */
 
 			ectx->add_to_queue_external (ectx, NULL, ws);
 			/* disregard return value */
@@ -361,6 +361,24 @@ void tvm_ectx_disconnect (ECTX ectx)
 			case '!':
 				disconnect_channel ((WORDPTR) ectx->tlp_argv[i]);
 				break;
+			#ifdef TVM_DYNAMIC_OCCAM_PI
+			case 'C':
+				if (ectx->tlp_argv[i] != NULL_P) {
+					WORDPTR ptr;
+					UWORD channels;
+					int j;
+
+					ptr		= (WORDPTR) ectx->tlp_argv[i];
+					channels	= read_word (wordptr_minus (ptr, 1));
+					channels	= MT_CB_CHANNELS(channels);
+
+					for (j = 0; j < channels; ++j) {
+						disconnect_channel (ptr);
+						ptr = wordptr_plus (ptr, 1);
+					}
+				}
+				break;
+			#endif /* TVM_DYNAMIC_OCCAM_PI */
 			default:
 				break;
 		}
@@ -389,6 +407,25 @@ int tvm_ectx_waiting_on (ECTX ectx, WORDPTR ws_base, WORD ws_len)
 				if (ptr >= ws_base && ptr <= ws_end)
 					return 1; /* dependency */
 				break;
+			#ifdef TVM_DYNAMIC_OCCAM_PI
+			case 'C':
+				if (ectx->tlp_argv[i] != NULL_P) {
+					UWORD channels;
+					int j;
+
+					ptr		= (WORDPTR) ectx->tlp_argv[i];
+					channels	= read_word (wordptr_minus (ptr, 1));
+					channels	= MT_CB_CHANNELS(channels);
+
+					for (j = 0; j < channels; ++j) {
+						WORDPTR val = (WORDPTR) read_word (ptr);
+						if (val >= ws_base && val <= ws_end)
+							return 1; /* dependency */
+						ptr = wordptr_plus (ptr, 1);
+					}
+				}
+				break;
+			#endif /* TVM_DYNAMIC_OCCAM_PI */
 			default:
 				break;
 		}
@@ -402,7 +439,7 @@ int tvm_dispatch (ECTX ectx)
 	BYTE instr;
 	
 	/* Read the instruction */
-#if (defined MEMORY_INTF_BIGENDIAN)
+#if defined(MEMORY_INTF_BIGENDIAN)
 	instr = *IPTR; /* FIXME */
 #else
 	instr = read_byte (IPTR);

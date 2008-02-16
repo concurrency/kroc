@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ins_pri.h"
 #include "ins_sec.h"
 
-#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
+#ifdef TVM_DYNAMIC_OCCAM_PI
 
 /* 0x22F - 0x22 0x22 0xFF - proc_alloc - allocate process workspace */
 TVM_INSTRUCTION (ins_proc_alloc)
@@ -133,7 +133,7 @@ TVM_INSTRUCTION (ins_proc_end)
 	RUN_NEXT_ON_QUEUE_RET();
 }
 
-#endif /* TVM_DYNAMIC_MEMORY && TVM_OCCAM_PI */
+#endif /* TVM_DYNAMIC__OCCAM_PI */
 
 
 #ifdef TVM_OCCAM_PI
