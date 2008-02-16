@@ -653,29 +653,6 @@ TVM_INSTRUCTION (ins_mreleasep)
 	RUN_NEXT_ON_QUEUE_RET();
 }
 
-#if 0
-/* 0x62 - 0x26 0xF2 - minn - multi dimension mobile array input */
-TVM_INSTRUCTION (ins_minn)
-{
-	/* Set up the AREG to be in bytes (what in expects) rather than 
-	 * words (what minn gets)
-	 */
-	AREG = AREG << WSH;
-
-	return ins_in(ectx);
-}
-
-/* 0x64 - 0x26 0xF4 - moutn - multi dimension mobile array output */
-TVM_INSTRUCTION (ins_moutn)
-{
-	/* Set up the AREG to be in bytes (what out expects) rather than 
-	 * words (what moutn gets)
-	 */
-	AREG = AREG << WSH;
-
-	return ins_out(ectx);
-}
-#endif
 
 /* 0xE2 - 0x2E 0xF2 - malloc - dynamic memory allocation */
 TVM_INSTRUCTION (ins_malloc)
@@ -702,77 +679,6 @@ TVM_INSTRUCTION (ins_mrelease)
 	}
 }
 
-#if 0
-/* 0xE4 - 0x2E 0xF4 - min - mobile input */
-TVM_INSTRUCTION (ins_min)
-{
-	WORDPTR chan_ptr	= (WORDPTR)AREG;
-	WORDPTR data_ptr	= (WORDPTR)BREG;
-
-	return chan_swap(ectx, chan_ptr, data_ptr);
-}
-
-/* 0xE5 - 0x2E 0xF5 - mout - mobile output */
-TVM_INSTRUCTION (ins_mout)
-{
-	WORDPTR chan_ptr = (WORDPTR)AREG;
-	WORDPTR data_ptr = (WORDPTR)BREG;
-
-	return chan_swap(ectx, chan_ptr, data_ptr);
-}
-
-/* 0xE6 - 0x2E 0xF6 - min64 - dynamic mobile array input */
-TVM_INSTRUCTION (ins_min64)
-{
-	BYTEPTR data_ptr = (BYTEPTR)BREG;
-	WORDPTR chan_ptr = (WORDPTR)AREG;
-
-	return chan_in(ectx, 8, chan_ptr, data_ptr);
-}
-
-/* 0xE7 - 0x2E 0xF7 - mout64 - dynamic mobile array output */
-TVM_INSTRUCTION (ins_mout64)
-{
-	BYTEPTR data_ptr = (BYTEPTR)BREG;
-	WORDPTR chan_ptr = (WORDPTR)AREG;
-
-	return chan_out(ectx, 8, chan_ptr, data_ptr);
-}
-
-/* 0xEA - 0x2E 0xFA - xmin - Extended Mobile Input */
-TVM_INSTRUCTION (ins_xmin)
-{
-	WORDPTR chan_addr = (WORDPTR) AREG;
-	WORDPTR data_ptr = (WORDPTR) BREG;
-	WORDPTR other_ptr;
-	WORDPTR other_WPTR;
-
-	other_WPTR = (WORDPTR) read_word(chan_addr);
-	other_ptr = (WORDPTR) WORKSPACE_GET(other_WPTR, WS_POINTER);
-
-	swap_data_word(data_ptr, other_ptr);
-
-	UNDEFINE_STACK_RET();
-}
-
-/* 0xEB - 0x2E 0xFB - xmin64 - Extended Dynamic Mobile Array Input */
-TVM_INSTRUCTION (ins_xmin64)
-{
-	/* Push 8 (byte count) onto stack. */
-	STACK(8, AREG, BREG);
-	/* Do an XIN */
-	return ins_xin(ectx);
-}
-
-/* 0x65 - 0x26 0xF5 - xminn - Extended multi-dim Dynamic Mobile Array Input */
-TVM_INSTRUCTION (ins_xminn)
-{
-	/* Convert word count to byte count */
-	AREG = AREG << WSH;
-	/* Do an XIN */
-	return ins_xin(ectx);
-}
-#endif
 
 /* 0x238 - 0x22 0x23 0xF8 - mt_alloc - allocate a mobile type */
 TVM_INSTRUCTION (ins_mt_alloc)
