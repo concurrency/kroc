@@ -6,8 +6,9 @@
 
 #INCLUDE "camera.occ"
 #INCLUDE "lasers.occ"
---#INCLUDE "leds.occ"
 #INCLUDE "motors.occ"
+#INCLUDE "system.occ"
+
 #INCLUDE "out.occ"
 
 PROC drain.uart (CHAN BYTE in?)
@@ -157,6 +158,7 @@ PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN
       camera (camera.svr?)
       lasers (laser.svr?)
       motors (motor.svr?)
+      system (system.svr?)
       
       SEQ
         VAL INT ws IS header[ws.size]:

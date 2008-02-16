@@ -1,0 +1,25 @@
+#INCLUDE "srv1.inc"
+#INCLUDE "leds.occ"
+
+PROC system (SYSTEM? svr)
+  CHAN P.LED led:
+  PAR
+    leds (led)
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      svr[rq] ? CASE
+        disconnected
+          SEQ
+            led ! disconnected
+            done := TRUE
+
+        get.version
+          -- FIXME: handle this properly
+          svr[re] ! version; 0; "UNKNOWN VERSION"
+
+        BOOL b:
+        INT n:
+        set.led; n; b
+          led ! led; n; b
+:
+
