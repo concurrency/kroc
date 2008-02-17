@@ -40,7 +40,6 @@ ASMINCS += include/bfin_config.h
 ASMINCS += include/asmmacros.h
 
 COBJS	+= main.o
-COBJS	+= support/camera.o
 COBJS	+= support/jpeg.o
 COBJS	+= support/i2cwrite.o
 
