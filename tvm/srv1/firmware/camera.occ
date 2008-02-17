@@ -70,11 +70,7 @@ PROC camera (CAMERA? svr)
                 SEQ
                   mode := m[mode]
                   frame.size := (x * y) * 2
-
                   camera.mode ! mode
-                  SEQ i = 0 FOR buffers
-                    camera.data ! MOBILE [frame.size]BYTE
-
                   svr[re] ! ok
             TRUE
               svr[re] ! error; ERROR.INV.PARAM

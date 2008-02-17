@@ -26,7 +26,7 @@ PROC protocol.error (VAL BYTE prefix, ch, RESULT BOOL custom.response, CHAN BYTE
     out.string(" found in protocol*n", 0, out!)
 :
 
-PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.MOTOR motors!)
+PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTEM! system)
   INITIAL [3]BYTE response IS ['#', 0, '*n']:
   INITIAL INT frame.count IS 0:
   INITIAL INT width IS 320:
@@ -34,12 +34,14 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
   INITIAL BOOL overlay IS TRUE:
   INITIAL INT quality IS 3:
   SEQ
-    set.camera.mode(CAMERA.320.256)
+    camera[rq] ! set.mode; 320; 256
+    camera[re] ? CASE ok
+
     WHILE TRUE
       INITIAL BOOL custom.response IS FALSE:
       BYTE ch:
       SEQ
-        in ? ch
+        console[in] ? ch
         response[1] := ch
         CASE ch
           -- Direct motor control
@@ -47,37 +49,37 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
             SKIP
           -- Drift left
           '7'
-            motors ! turn; 15
+            motors[rq] ! turn; 15
           -- Drive forward
           '8'
-            motors ! speed; 50
+            motors[rq] ! speed; 50
           -- Drift right
           '9'
-            motors ! turn; -15
+            motors[rq] ! turn; -15
           -- Drive left
           '4'
-            motors ! turn; 30
+            motors[rq] ! turn; 30
           -- Stop
           '5'
-            motors ! speed; 0
+            motors[rq] ! speed; 0
           -- Drive right
           '6'
-            motors ! turn; -30
+            motors[rq] ! turn; -30
           -- Back left
           '1'
-            motors ! back.turn; 30
+            motors[rq] ! back.turn; 30
           -- Reverse
           '2'
-            motors ! speed.delta; -1
+            motors[rq] ! speed.delta; -1
           -- Back right
           '3'
-            motors ! back.turn; -30
+            motors[rq] ! back.turn; -30
           -- Clockwise turn
           '.'
             SEQ
-              motors ! turn; 75
+              motors[rq] ! turn; 75
               delay.ms(200)
-              motors ! stop
+              motors[rq] ! stop
           -- High motor speed range
           '+'
             SKIP
@@ -88,30 +90,35 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
           'a'
             SEQ
               width, height := 160, 128
-              set.camera.mode (CAMERA.160.128)
+              camera[rq] ! set.mode; width; height
+              camera[re] ? CASE ok
           -- Set camera resolution to 320x256
           'b'
             SEQ
               width, height := 320, 256
-              set.camera.mode (CAMERA.320.256)
+              camera[rq] ! set.mode; width; height
+              camera[re] ? CASE ok
           -- Set camera resolution to 640x512
           'c'
             SEQ
               width, height := 640, 512
-              set.camera.mode (CAMERA.640.512)
+              camera[rq] ! set.mode; width; height
+              camera[re] ? CASE ok
           -- Set camera resolution to 1280x1024
           'A'
             SEQ
               width, height := 1280, 1024
-              set.camera.mode (CAMERA.1280.1024)
+              camera[rq] ! set.mode; width; height
+              camera[re] ? CASE ok
           -- Grab JPEG compressed video frame
           'I'
-            [(1280 * 1024) * 2]BYTE frame:
+            MOBILE []BYTE frame:
             [(1280 * 1024) * 2]BYTE jpeg.data:
             INITIAL [10]BYTE header IS "##IMJ00000":
             INT jpeg.bytes:
             SEQ
-              get.camera.frame (frame)
+              camera[rq] ! get.frame
+              camera[re] ? CASE frame; frame
               IF
                 overlay
                   INITIAL [9]BYTE caption IS "frame 000":
@@ -140,7 +147,7 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
                 header[6 + i] := size[i]
               blit.to.uart0 (header)
               blit.to.uart0 ([ jpeg.data FOR jpeg.bytes ])
-              drain.uart (in?)
+              drain.uart (console[in]?)
 
               frame.count := frame.count + 1
               custom.response := TRUE
@@ -151,16 +158,16 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
             overlay := FALSE
           -- Lasers
           'l'
-            lasers ! all; TRUE  -- On
+            lasers[rq] ! all; TRUE  -- On
           'L'
-            lasers ! all; FALSE -- Off
+            lasers[rq] ! all; FALSE -- Off
           -- Time in MS since reset
           't'
             SKIP
           -- JPEG Quality
           'q'
             SEQ
-              in ? ch
+              console[in] ? ch
               quality := INT (ch - '0')
               IF
                 quality < 1
@@ -169,9 +176,9 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
                   quality := 8
                 TRUE
                   SKIP
-              out.string ("##quality ", 0, out!)
-              out.int (quality, 0, out!)
-              out ! '*n'
+              out.string ("##quality ", 0, console[out]!)
+              out.int (quality, 0, console[out]!)
+              console[out] ! '*n'
               custom.response := TRUE
           -- Range in centimeters to nearest object
           'R'
@@ -182,7 +189,7 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
           -- IO pins
           'd'
             SEQ
-              in ? ch
+              console[in] ? ch
               CASE ch
                 'd'
                   SKIP -- Direction
@@ -191,14 +198,14 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
                 'w'
                   SKIP -- Write
                 ELSE
-                  protocol.error('d', ch, custom.response, out!)
+                  protocol.error('d', ch, custom.response, console[out]!)
           -- Xmodem recieve file
           'X'
             SKIP
           -- Flash Memory
           'z'
             SEQ
-              in ? ch
+              console[in] ? ch
               CASE ch
                 'w'
                   SKIP -- Write
@@ -209,11 +216,11 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
                 'Z'
                   SKIP -- Update boot sector
                 ELSE
-                  protocol.error('z', ch, custom.response, out!)
+                  protocol.error('z', ch, custom.response, console[out]!)
           -- Vision commands
           'v'
             SEQ
-              in ? ch
+              console[in] ? ch
               CASE ch
                 'g'
                   SKIP -- Grab and sample region
@@ -230,18 +237,18 @@ PROC srv1 (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.M
                 'n'
                   SKIP -- Blobs, returns the number of pixels matching target color
                 ELSE
-                  protocol.error('v', ch, custom.response, out!)
+                  protocol.error('v', ch, custom.response, console[out]!)
           'Q'
             SKIP -- Execute C program stored in flash memory.
           -- Carriage Return
           '*n'
             custom.response := TRUE -- Ignore, makes netcat/telnet happy.
           ELSE
-            protocol.error(0, ch, custom.response, out!)
+            protocol.error(0, ch, custom.response, console[out]!)
         -- Respond to commands, if appropriate.
         IF
           NOT custom.response
-            out.string(response, 0, out!)
+            out.string(response, 0, console[out]!)
           TRUE
             SKIP
 :
