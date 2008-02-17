@@ -491,7 +491,7 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 					ts->stack->old_a_reg = ts->stack->a_reg;
 					tmp_reg = tstack_newreg (ts->stack);
 					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->casetable_label, ARG_REG, tmp_reg));
-					add_to_ins_chain (compose_ins (INS_MOVESEXT16TO32, 1, 1, ARG_REGINDSIB, 2, ts->stack->a_reg, tmp_reg, ARG_REG, ts->stack->a_reg));
+					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGINDSIB, 4, ts->stack->a_reg, tmp_reg, ARG_REG, ts->stack->a_reg));
 					add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_REG, ts->stack->a_reg, ARG_REG, tmp_reg, ARG_REG, tmp_reg));
 					add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_REG | ARG_IND, tmp_reg));
 					add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->casetable_label));
@@ -1661,7 +1661,7 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 					if (ts->incasetable) {
 						deferred_cond (ts);
 						tstack_setprim (ts->stack, I_J, arch);
-						add_to_ins_chain (compose_ins (INS_CONSTLABDIFFSHORT, 2, 0, ARG_LABEL, y_opd, ARG_LABEL, ts->casetable_label));
+						add_to_ins_chain (compose_ins (INS_CONSTLABDIFF, 2, 0, ARG_LABEL, y_opd, ARG_LABEL, ts->casetable_label));
 					} else {
 						deferred_cond (ts);
 						tstack_setprim (ts->stack, I_J, arch);
