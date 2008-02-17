@@ -6,13 +6,16 @@
 
 /* TVM */
 #include <tvm.h>
+#define MT_TVM
+#define MT_DEFINES
+#include <mobile_types.h>
 /* Blackfin */
 #include <cdefBF537.h>
 /* Configuration */
 #include "bfin_config.h"
 #include "memory_map.h"
 /* Support code */
-#include <camera.h>
+//#include <camera.h>
 #include <font8x8.h>
 #include <i2cwrite.h>
 #include <jpeg.h>
@@ -21,24 +24,17 @@
 #define CSYNC	__asm__ __volatile__ ("csync;" : : : "memory")
 #define SSYNC	__asm__ __volatile__ ("ssync;" : : : "memory")
 #define IDLE	__asm__ __volatile__ ("idle;")
+#define DISABLE_INTERRUPTS(mask) \
+	__asm__ __volatile__ ("cli %0;" : "=d" (mask))
+#define ENABLE_INTERRUPTS(mask) \
+	__asm__ __volatile__ ("sti %0;" : : "d" (mask))
+	
 
 static char version_string[] = "TVM SRV-1 Blackfin - " __TIME__ " - " __DATE__;
 
 /*{{{  TVM state */
 static tvm_t 		tvm;
 static tvm_ectx_t 	firmware_ctx, user_ctx;
-/*}}}*/
-
-/*{{{  SDRAM support */
-static void clear_sdram (void)
-{
-	const short *end	= (short *) SDRAM_TOP;
-	short *cp		= (short *) SDRAM_BOTTOM;
-
-	while (cp < end) {
-		*(cp++) = 0;
-	}
-}
 /*}}}*/
 
 /*{{{  Timer functionality */
@@ -154,10 +150,12 @@ void handle_int10 (void)
 
 static void acknowledge_int10 (void)
 {
-	firmware_ctx.sflags	&= ~(SFLAG_INTR);
-	user_ctx.sflags		&= ~(SFLAG_INTR);
-	firmware_ctx.add_to_queue (&firmware_ctx, uart0_channel);
-	uart0_channel		= (WORDPTR) NOT_PROCESS_P;
+	WORDPTR wptr;
+
+	if ((wptr = uart0_channel) != (WORDPTR) NOT_PROCESS_P) {
+		firmware_ctx.add_to_queue (&firmware_ctx, wptr);
+		uart0_channel		= (WORDPTR) NOT_PROCESS_P;
+	}
 }
 
 static int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
@@ -165,8 +163,7 @@ static int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 	unsigned short imask;
 	int reschedule;
 	
-	/* Disable interrupts */
-	__asm__ __volatile__ ("cli %0;" : "=r" (imask));
+	DISABLE_INTERRUPTS (imask);
 
 	if (uart0_pending) {
 		write_byte (pointer, (BYTE) uart0_buffer);
@@ -178,8 +175,7 @@ static int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 		reschedule	= 1;
 	}
 
-	/* Enable (restore) interrupts */
-	__asm__ __volatile__ ("sti %0;" : : "r" (imask));
+	ENABLE_INTERRUPTS (imask);
 
 	if (reschedule) {
 		/* Lower (set) CTS */
@@ -243,9 +239,29 @@ static int blit_to_uart0 (ECTX ectx, WORD args[])
 /*}}}*/
 
 /*{{{  Camera support */
-static int camera_frame_words	= 0;
-static int camera_initialised	= 0;
-static int camera_running	= 0;
+typedef struct _dma_desc_t dma_desc_t;
+struct _dma_desc_t {
+	dma_desc_t	*next;
+	BYTE		*buffer;
+	short 		config;
+	WORDPTR		mobile;
+};
+
+/* DMA related */
+#define			CAMERA_BUFFERS		2
+static dma_desc_t	camera_dma[CAMERA_BUFFERS];
+static volatile short	camera_current		= 0;
+static volatile	short	camera_ready		= 0;
+
+/* State related */
+static unsigned short	camera_initialised	= 0;
+static unsigned short	camera_running		= 0;
+static UWORD		camera_bytes		= 0;
+
+/* Channel related */
+static volatile WORDPTR	camera_channel		= (WORDPTR) NOT_PROCESS_P;
+static BYTE *volatile 	camera_buffer		= NULL;
+static WORDPTR		camera_mobile		= (WORDPTR) NULL_P;
 
 /* Move these constants to a shared header */
 enum {
@@ -257,47 +273,219 @@ enum {
 	CAMERA_1280_1024	= 4
 };
 
-/* PROC set.camera.mode (VAL INT mode) */
-static int set_camera_mode (ECTX ectx, WORD args[])
+static void init_camera (void)
 {
-	unsigned int cfg_length, height, width;
-	unsigned char *cfg	= NULL;
-	WORD mode		= args[0];
+	int i;
+
+	/* Port G: 0-7 = PPI */
+	*pPORTG_FER |= 0x00FF;
+	/* Port F: 15 = PPI_CLK, 9 = FS1, 8 = FS2 */
+	*pPORTF_FER |= 0x8300;
+
+	*pPPI_CONTROL = DLEN_8 | PACK_EN
+		| (XFR_TYPE & 0x0C)	/* non ITU-R 656 mode */
+		| (PORT_CFG & 0x20);	/* 2 or 3 internal frame syncs */
+	*pPPI_DELAY = 0;
+
+	for (i = 0; i < CAMERA_BUFFERS; ++i) {
+		camera_dma[i].next 	= &(camera_dma[(i + 1) & (CAMERA_BUFFERS - 1)]);
+		camera_dma[i].buffer	= (void *) INVALID_ADDRESS;
+		camera_dma[i].config	= 
+			FLOW_LARGE | NDSIZE_5 | WDSIZE_16 | DMA2D | WNR | DMAEN | DI_EN;
+		camera_dma[i].mobile	= (WORDPTR) NULL_P;
+	}
+
+	/* Flush */
+	SSYNC;
+
+	/* Clear any pending interrupt status */
+	*pDMA0_IRQ_STATUS = DMA_DONE | DMA_ERR;
+	
+	/* Enable DMA interrupts */
+	*pSIC_IMASK |= IRQ_DMA0;
+	SSYNC;
+}
+
+static void allocate_camera_buffer (ECTX ectx, UWORD bytes, BYTE **buffer, WORDPTR *mobile)
+{
+	WORDPTR ma = (WORDPTR) tvm_mt_alloc (
+		ectx, 
+		MT_MAKE_ARRAY_TYPE (1, MT_MAKE_NUM (MT_NUM_BYTE)),
+		bytes
+	);
+	
+	write_offset (ma, mt_array_t, dimensions[0], bytes);
+
+	*buffer = (BYTE *) wordptr_real_address ((WORDPTR) read_offset (ma, mt_array_t, data));
+	*mobile = ma;
+}
+
+static void camera_start (ECTX ectx, UWORD pixels, unsigned short width, unsigned short height)
+{
+	int i;
+
+	camera_bytes	= pixels * 2; /* YUYV = 2 bytes per pixel */
+	camera_current	= 0;
+	camera_ready	= 0;
+
+	/* Allocate buffers */
+	for (i = 0; i < CAMERA_BUFFERS; ++i) {
+		allocate_camera_buffer (
+			ectx, camera_bytes, 
+			&(camera_dma[i].buffer), 
+			&(camera_dma[i].mobile)
+		);
+	}
+
+	/* Setup PPI */
+	*pPPI_COUNT = (width * 2) - 1; /* YUYV = 2 bytes per pixel */
+	*pPPI_FRAME = height;
+
+	/* Setup DMA */
+	*pDMA0_CONFIG = FLOW_LARGE | NDSIZE_5 | WDSIZE_16 | DMA2D | WNR | DI_EN;
+
+	*pDMA0_X_COUNT	= width;
+	*pDMA0_X_MODIFY	= 2;
+
+	*pDMA0_Y_COUNT	= height;
+	*pDMA0_Y_MODIFY	= 2;
+
+	*pDMA0_CURR_DESC_PTR = &(camera_dma[0]);
+	*pDMA0_NEXT_DESC_PTR = &(camera_dma[1]);
+
+	/* Flush configuration */
+	SSYNC;
+
+	/* Enable DMA */
+	*pDMA0_CONFIG |= DMAEN;
+	SSYNC;
+
+	/* Enable PPI */
+	*pPPI_CONTROL |= PORT_EN;
+	SSYNC;
+
+	camera_running = 1;
+}
+
+static void camera_stop (ECTX ectx)
+{
+	int i;
+
+	/* Disable DMA */
+	*pDMA0_CONFIG &= ~DMAEN;
+	SSYNC;
+	
+	/* Disable PPI */
+	*pPPI_CONTROL &= ~PORT_EN;
+	SSYNC;
+
+	/* Wait for DMA to disable (to be sure) */
+	while (*pDMA0_CONFIG & DMAEN)
+		continue;
+	
+	/* Release buffers */
+	for (i = 0; i < CAMERA_BUFFERS; ++i) {
+		camera_dma[i].buffer = (void *) INVALID_ADDRESS;
+		tvm_mt_release (ectx, camera_dma[i].mobile);
+	}
+
+	camera_running = 0;
+}
+
+void handle_int8 (void)
+{
+	short current	= camera_current;
+	BYTE *buffer	= camera_buffer;
+
+	if (!(*pDMA0_IRQ_STATUS & DMA_DONE)) {
+		/* Not an interrupt for us; we only do DMA */
+		return;
+	}
+
+	camera_current = (current + 1) & (CAMERA_BUFFERS - 1);
+	
+	if (buffer != NULL) {
+		WORDPTR r_mobile		= camera_dma[current].mobile;
+		camera_dma[current].buffer	= buffer;
+		camera_dma[current].mobile	= camera_mobile;
+		camera_buffer			= NULL;
+		camera_mobile			= r_mobile;
+		firmware_ctx.sflags		|= SFLAG_INTR;
+		user_ctx.sflags			|= SFLAG_INTR;
+	} else {
+		camera_ready++;
+	}
+	
+	/* Acknowledge interrupt */
+	*pDMA0_IRQ_STATUS = DMA_DONE;
+}
+
+static void acknowledge_int8 (void)
+{
+	WORDPTR wptr;
+
+	if ((wptr = camera_channel) != (WORDPTR) NOT_PROCESS_P) {
+		WORDPTR pointer = (WORDPTR) WORKSPACE_GET (wptr, WS_POINTER);
+
+		write_word (pointer, (WORD) camera_mobile);
+		firmware_ctx.add_to_queue (&firmware_ctx, wptr);
+
+		camera_channel = (WORDPTR) NOT_PROCESS_P;
+	}
+}
+
+static int camera_out (ECTX ectx, WORD count, BYTEPTR pointer)
+{
+	unsigned short height, width;
+	UWORD cfg_len, pixels;
+	BYTE *cfg;
+	WORD mode;
+	
+	if (count != sizeof(WORD)) {
+		return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
+	}
+
+	mode = read_word ((WORDPTR) pointer);
 
 	if (camera_running) {
-		camera_stop ();
-		camera_running = 0;
+		camera_stop (ectx);
 	}
 
 	switch (mode) {
-		case CAMERA_INIT:
 		case CAMERA_160_128: 
-			width		= 160;
-			height 		= 128; 
-			cfg		= ov9655_qqvga; 
-			cfg_length	= sizeof(ov9655_qqvga);
+			width	= 160;
+			height 	= 128; 
+			pixels	= 160 * 128;
+			cfg	= ov9655_qqvga; 
+			cfg_len	= sizeof(ov9655_qqvga);
 			break;
 		case CAMERA_320_256:
-			width		= 320;
-			height 		= 256; 
-			cfg		= ov9655_qvga; 
-			cfg_length	= sizeof(ov9655_qvga);
+			width	= 320;
+			height 	= 256;
+			pixels	= 320 * 256;
+			cfg	= ov9655_qvga; 
+			cfg_len	= sizeof(ov9655_qvga);
 			break;
 		case CAMERA_640_512:
-			width		= 640;
-			height 		= 512; 
-			cfg		= ov9655_vga; 
-			cfg_length	= sizeof(ov9655_vga);
+			width	= 640;
+			height 	= 512;
+			pixels	= 640 * 512;
+			cfg	= ov9655_vga; 
+			cfg_len	= sizeof(ov9655_vga);
 			break;
 		case CAMERA_1280_1024:
-			width		= 1280;
-			height 		= 1024;
-			cfg		= ov9655_sxga; 
-			cfg_length	= sizeof(ov9655_sxga);
+			width	= 1280;
+			height 	= 1024;
+			pixels	= 1280 * 1024;
+			cfg	= ov9655_sxga; 
+			cfg_len	= sizeof(ov9655_sxga);
 			break;
 		default:
-			width		= 0;
-			height		= 0;
+			width	= 0;
+			height	= 0;
+			pixels	= 0;
+			cfg	= NULL;
+			cfg_len	= 0;
 			break;
 	}
 
@@ -309,58 +497,82 @@ static int set_camera_mode (ECTX ectx, WORD args[])
 	}
 
 	if (cfg != NULL) {
-		i2cwrite (0x30, cfg, cfg_length >> 1);
+		i2cwrite (0x30, cfg, cfg_len >> 1);
 		
-		camera_init (
-			(unsigned char *) DMA_BUF1,
-			(unsigned char *) DMA_BUF2,
-			width, height
-		);
-		camera_start();
-
-		camera_frame_words = (width * height) >> 1;
-		camera_running = 1;
+		camera_start (ectx, pixels, width, height);
 	}
 				
-	return SFFI_OK;
+	return ECTX_CONTINUE;
 }
 
-/* PROC get.camera.frame ([]BYTE frame) */
-static int get_camera_frame (ECTX ectx, WORD args[])
+static int camera_mt_in (ECTX ectx, WORDPTR pointer)
 {
-	WORDPTR	dst		= (WORDPTR) args[0];
-	WORD	dst_len		= args[1] >> 2;
-	WORD	*src		= NULL;
-	WORD	len		= dst_len;
-	WORD	i;
+	unsigned short imask;
+	WORDPTR mobile;
+	short ready;
+	BYTE *buffer;
 
-	/* Make sure we don't copy more data than there is */
-	if (len > camera_frame_words) {
-		len = camera_frame_words;
-	}
+	allocate_camera_buffer (ectx, camera_bytes, &buffer, &mobile);
 
-	/* Select buffer the hardware isn't writing to */
-	if (((unsigned long) *pDMA0_CURR_ADDR) < ((unsigned long) DMA_BUF2)) {
-		src = (WORD *) DMA_BUF2;
-	} else {
-		src = (WORD *) DMA_BUF1;
-	}
+	DISABLE_INTERRUPTS (imask);
 
-	/* Copy data (as WORDs to improve throughput) */
-	for (i = 0; i < len; i++) {
-		write_word (dst, *(src++));
-		dst = wordptr_plus (dst, 1);
-	}
+	if ((ready = camera_ready)) {
+		BYTE *curr_buf 	= (BYTE *) *pDMA0_START_ADDR;
+		BYTE *curr_pos	= (BYTE *) *pDMA0_CURR_ADDR;
 
-	if (dst_len > len) {
-		/* Blank any excess buffer */
-		for (i = len; i < dst_len; i++) {
-			write_word (dst, (WORD) 0);
-			dst = wordptr_plus (dst, 1);
+		/* If we are in the last 2.5KiB of the current
+		 * transfer then wait for new frame instead.
+		 * Last 2.5KiB is 12.5% of a 160x128 frame,
+		 * or the last line of a 1280x1024 frame.
+		 */
+		curr_buf += camera_bytes - 2560;
+		if (curr_pos >= curr_buf) {
+			camera_ready = ready = 0;
+		} else {
+			unsigned short n = (camera_current - ready) & (CAMERA_BUFFERS - 1);
+			dma_desc_t *db = &(camera_dma[n]);
+			WORDPTR r_mobile;
+
+			/* Be defensive; never touch the descriptors while
+			 * the DMA controller is fetching.  In practice
+			 * this is *very* unlikely to happen, but just to 
+			 * be sure.
+			 */
+			while (*pDMA0_IRQ_STATUS & DFETCH)
+				continue;
+
+			/* Swap buffers */
+			db->buffer = buffer;
+			r_mobile = db->mobile;
+			db->mobile = mobile;
+			mobile = r_mobile;
+
+			SSYNC;
+
+			camera_ready = ready - 1;
 		}
 	}
+	
+	if (!ready) {
+		camera_channel 	= ectx->wptr;
+		camera_buffer	= buffer;
+		camera_mobile	= mobile;
+	}
 
-	return SFFI_OK;
+	ENABLE_INTERRUPTS (imask);
+
+	if (ready < 0) {
+		/* Save pointer */
+		WORKSPACE_SET (ectx->wptr, WS_POINTER, (WORD) pointer);
+		/* Save instruction pointer */
+		WORKSPACE_SET (ectx->wptr, WS_IPTR, (WORD) ectx->iptr);
+		/* Reschedule */
+		return ectx->run_next_on_queue (ectx);
+	} else {
+		write_word (pointer, (WORD) mobile);
+	}
+
+	return ECTX_CONTINUE;
 }
 
 /* PROC jpeg.encode.frame (VAL INT width, height, quality, 
@@ -457,13 +669,26 @@ static void srv_modify_sync_flags (ECTX ectx, WORD set, WORD clear)
 {
 	unsigned short imask;
 	
-	/* Disable interrupts */
-	__asm__ __volatile__ ("cli %0;" : "=r" (imask));
+	DISABLE_INTERRUPTS (imask);
 
 	ectx->sflags = (ectx->sflags & (~clear)) | set;
 
-	/* Enable (restore) interrupts */
-	__asm__ __volatile__ ("sti %0;" : : "r" (imask));
+	ENABLE_INTERRUPTS (imask);
+}
+
+static void clear_pending_interrupts (void)
+{
+	unsigned short imask;
+	
+	DISABLE_INTERRUPTS (imask);
+	
+	firmware_ctx.sflags	&= ~(SFLAG_INTR);
+	user_ctx.sflags		&= ~(SFLAG_INTR);
+
+	ENABLE_INTERRUPTS (imask);
+
+	acknowledge_int8 ();
+	acknowledge_int10 ();
 }
 /*}}}*/ 
 
@@ -472,7 +697,16 @@ static EXT_CHAN_ENTRY	ext_chans[] = {
 	{ 
 		.typehash 	= 0,
 		.in 		= uart0_in, 
-		.out 		= uart0_out
+		.out 		= uart0_out,
+		.mt_in		= NULL,
+		.mt_out		= NULL
+	},
+	{
+		.typehash	= 0,
+		.in		= NULL,
+		.out		= camera_out,
+		.mt_in		= camera_mt_in,
+		.mt_out		= NULL
 	}
 };
 static const int	ext_chans_length =
@@ -482,8 +716,8 @@ static const int	ext_chans_length =
 /*{{{  User context state */
 static BYTEPTR		user_bytecode;
 static WORD		user_bytecode_len;
-static const WORDPTR 	user_memory	= (WORDPTR) USER_MEMORY;
-static WORD		user_memory_len	= 0;
+static WORDPTR		user_memory;
+static WORD		user_memory_len;
 static WORDPTR 		user_parent	= (WORDPTR) NOT_PROCESS_P;
 /*}}}*/
 
@@ -514,6 +748,7 @@ static int firmware_run_user (ECTX ectx, WORD args[])
 		&user_ctx, tlp_fmt, argc, 
 		ws_size, vs_size, ms_size
 	);
+	user_memory = (WORDPTR) tvm_malloc (ectx, user_memory_len);
 	tvm_ectx_layout (
 		&user_ctx, user_memory, 
 		tlp_fmt, argc, 
@@ -606,13 +841,11 @@ static int set_register_16 (ECTX ectx, WORD args[])
 	unsigned short mask		= (unsigned short) args[2];
 	unsigned short imask;
 
-	/* Disable interrupts */
-	__asm__ __volatile__ ("cli %0;" : "=r" (imask) : : "memory");
+	DISABLE_INTERRUPTS (imask);
 
 	*addr = ((*addr) & mask) | set;
 
-	/* Enable (restore) interrupts */
-	__asm__ __volatile__ ("sti %0;" : : "r" (imask) : "memory");
+	ENABLE_INTERRUPTS (imask);
 
 	return SFFI_OK;
 }
@@ -635,8 +868,6 @@ static SFFI_FUNCTION	firmware_sffi_table[] = {
 	firmware_kill_user,
 	firmware_query_user,
 	set_register_16,
-	set_camera_mode,
-	get_camera_frame,
 	jpeg_encode_frame,
 	draw_caption_on_frame,
 	blit_to_uart0,
@@ -651,8 +882,6 @@ static SFFI_FUNCTION	user_sffi_table[] = {
 	NULL,
 	NULL,
 	NULL,
-	set_camera_mode,
-	get_camera_frame,
 	jpeg_encode_frame,
 	draw_caption_on_frame,
 	blit_to_uart0
@@ -709,40 +938,44 @@ static void install_firmware_ctx (void)
 
 static int run_firmware (void)
 {
-	int ret = tvm_run (&firmware_ctx);
+	int ret;
 
-	if (ret == ECTX_SLEEP) {
-		return ret; /* OK - timer sleep */
-	} else if (ret == ECTX_EMPTY) {
-		if (uart0_channel != (WORDPTR) NOT_PROCESS_P) {
-			return ret; /* OK - waiting for input */
-		} else if (user_parent != (WORDPTR) NOT_PROCESS_P) {
-			if (user_ctx.state == ECTX_EMPTY && user_ctx.fptr == (WORDPTR) NOT_PROCESS_P) {
-				if (tvm_ectx_waiting_on (&user_ctx, user_memory, user_memory_len)) {
-					/* User code is waiting on us so we are probably
-					 * in the wrong; bail...
-					 */
+	do {
+		ret = tvm_run (&firmware_ctx);
+
+		if (ret == ECTX_SLEEP) {
+			return ret; /* OK - timer sleep */
+		} else if (ret == ECTX_EMPTY) {
+			if (uart0_channel != (WORDPTR) NOT_PROCESS_P) {
+				return ret; /* OK - waiting for input */
+			} else if (user_parent != (WORDPTR) NOT_PROCESS_P) {
+				if (user_ctx.state == ECTX_EMPTY && user_ctx.fptr == (WORDPTR) NOT_PROCESS_P) {
+					if (tvm_ectx_waiting_on (&user_ctx, user_memory, user_memory_len)) {
+						/* User code is waiting on us so we are probably
+						 * in the wrong; bail...
+						 */
+					} else {
+						/* User code is not waiting on us, so spin and
+						 * let it get deadlock detected, if killing it
+						 * doesn't release us then we we'll be back
+						 * here...
+						 */
+						return ret;
+					}
 				} else {
-					/* User code is not waiting on us, so spin and
-					 * let it get deadlock detected, if killing it
-					 * doesn't release us then we we'll be back
-					 * here...
+					/* Optimise for the common case by ignoring 
+					 * the possibility of deadlock when the
+					 * user code can still keep running.
 					 */
 					return ret;
 				}
-			} else {
-				/* Optimise for the common case by ignoring 
-				 * the possibility of deadlock when the
-				 * user code can still keep running.
-				 */
-				return ret;
 			}
+			/* Fall through indicates deadlock */
+		} else if (ret == ECTX_INTERRUPT) {
+			clear_pending_interrupts ();
+			/* OK; fall through and loop */
 		}
-		/* Fall through indicates deadlock */
-	} else if (ret == ECTX_INTERRUPT) {
-		acknowledge_int10 ();
-		return ret; /* OK - interrupt */
-	}
+	} while (ret == ECTX_INTERRUPT);
 
 	/* Being here means something unexpected happened... */
 	
@@ -789,7 +1022,7 @@ static int run_user (void)
 
 	switch (ret) {
 		case ECTX_INTERRUPT:
-			acknowledge_int10 ();
+			clear_pending_interrupts ();
 			/* fall through */
 		case ECTX_PREEMPT:
 		case ECTX_SLEEP:
@@ -817,9 +1050,9 @@ static int run_user (void)
 /*}}}*/
 
 int main (void) {
-	clear_sdram ();
 	init_uart ();
 	init_timers ();
+	init_camera ();
 
 	uart0_send_string ((unsigned char *) version_string);
 	uart0_send_char ('\n');

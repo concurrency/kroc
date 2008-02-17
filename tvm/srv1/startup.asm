@@ -363,8 +363,16 @@ _RTCHANDLER:          // IVG 7 Handler
     jump display_fail;
 
 _I8HANDLER:           // IVG 8 Handler
-    r0.l = 8;
-    jump display_fail;
+    // Save context on stack and call C handler
+    save_context
+
+    p0.l = _handle_int8;
+    p0.h = _handle_int8;
+
+    call (p0);
+
+    restore_context
+    rti;
 
 _I9HANDLER:           // IVG 9 Handler
     r0.l = 9;

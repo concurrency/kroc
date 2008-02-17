@@ -21,14 +21,6 @@ PROC camera (CAMERA? svr)
                                 [ 640,  512, CAMERA.640.512  ],
                                 [1280, 1024, CAMERA.1280.1024]]:
 
-  PROC drain ()
-    CHAN MOBILE []BYTE camera.data:
-    PLACE camera.data AT #1:
-    SEQ i = 0 FOR buffers
-      MOBILE []BYTE data:
-      camera.data ? data
-  :
-
   CHAN INT camera.mode:
   PLACE camera.mode AT #1:
 
@@ -51,7 +43,6 @@ PROC camera (CAMERA? svr)
               SEQ
                 camera.data ? data
                 svr[re] ! frame; data
-                camera.data ! MOBILE [frame.size]BYTE
             TRUE
               svr[re] ! error; ERROR.INV.STATE
 
@@ -66,12 +57,6 @@ PROC camera (CAMERA? svr)
 
         init
           SEQ
-            IF
-              mode <> CAMERA.OFF
-                drain ()
-              TRUE
-                SKIP
-            
             mode := CAMERA.INIT
             camera.mode ! mode
             mode := CAMERA.OFF
@@ -83,12 +68,6 @@ PROC camera (CAMERA? svr)
               VAL CAMERA.MODE m IS modes[i]:
               (m[x] = x) AND (m[y] = y)
                 SEQ
-                  IF
-                    mode <> CAMERA.OFF
-                      drain ()
-                    TRUE
-                      SKIP
-
                   mode := m[mode]
                   frame.size := (x * y) * 2
 
@@ -102,19 +81,12 @@ PROC camera (CAMERA? svr)
 
         stop
           SEQ
-            IF
-              mode <> CAMERA.OFF
-                drain ()
-              TRUE
-                SKIP
-
             mode := CAMERA.OFF
             camera.mode ! mode
       
     IF
       mode <> CAMERA.OFF
         SEQ
-          drain ()
           mode := CAMERA.OFF
           camera.mode ! mode
       TRUE

@@ -168,7 +168,7 @@ PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN
         shutdown.in ! TRUE
 :
 
-PROC report.termination (VAL []BYTE bytecode, VAL BOOL killed, CHAN BYTE out!)
+PROC report.termination (MOBILE []BYTE bytecode, VAL BOOL killed, CHAN BYTE out!)
   ECTX context:
   BOOL running:
   INT state:
@@ -217,7 +217,7 @@ PROC report.termination (VAL []BYTE bytecode, VAL BOOL killed, CHAN BYTE out!)
           out.byte (BYTE state, 0, out!)
           out.string (")*n", 0, out!)
 
-          VAL INT iptr IS (context[iptr] - USER.BYTECODE):
+          VAL INT iptr IS context[iptr] - ADDROF(bytecode):
           SEQ
             out.string ("##WPTR = ", 0, out!)
             out.hex (context[wptr], 0, out!)
