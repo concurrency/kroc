@@ -31,23 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef TVM_DYNAMIC_OCCAM_PI
 
-/* stddef.h is freestanding, so should be safe in any build */
-#include <stddef.h>
-#ifndef offsetof
-#define offsetof(t,f) ((WORD) (&((((t *)(0))->f))))
-#endif
-
-#define word_offset(type, field) \
-	(offsetof(type, field) >> WSH)
-#define wordptr_offset(ptr, type, field) \
-	wordptr_plus((ptr), word_offset(type, field))
-#define read_offset(ptr, type, field) \
-	read_word(wordptr_offset(ptr,type,field))
-#define write_offset(ptr, type, field, data) \
-	write_word(wordptr_offset(ptr,type,field), (WORD) (data))
-#define read_type(ptr) \
-	(read_word (wordptr_minus ((ptr), 1)))
-
 /*{{{  static WORDPTR mt_alloc_array_int (ECTX ectx, UWORD type, UWORD size, UWORD init, UWORD *shift)*/
 static WORDPTR mt_alloc_array_int (ECTX ectx, UWORD type, UWORD size, UWORD init, UWORD *shift)
 {
@@ -281,7 +264,7 @@ TVM_HELPER int mt_release_simple (ECTX ectx, WORDPTR ptr, UWORD type)
 /*{{{  TVM_HELPER int mt_release (ECTX ectx, WORDPTR ptr)*/
 TVM_HELPER int mt_release (ECTX ectx, WORDPTR ptr)
 {
-	UWORD type = read_type (ptr);
+	UWORD type = read_mt_type (ptr);
 
 	if (type & MT_SIMPLE) {
 		return mt_release_simple (ectx, ptr, type);
@@ -391,7 +374,7 @@ static int mt_clone_simple (ECTX ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)
 /*{{{  TVM_HELPER int mt_clone (ECTX ectx, WORDPTR ptr, WORDPTR *ret)*/
 TVM_HELPER int mt_clone (ECTX ectx, WORDPTR ptr, WORDPTR *ret)
 {
-	UWORD type = read_type (ptr);
+	UWORD type = read_mt_type (ptr);
 
 	if (type & MT_SIMPLE) {
 		return mt_clone_simple (ectx, ptr, type, ret);
@@ -415,7 +398,7 @@ static int mt_io_update_barrier (ECTX ectx, WORDPTR *ptr)
 {
 	WORDPTR mb = wordptr_minus (*ptr, MT_BARRIER_PTR_OFFSET);
 	UWORD refs = (UWORD) read_offset (mb, mt_barrier_internal_t, ref_count);
-	UWORD type = read_type (*ptr);
+	UWORD type = read_mt_type (*ptr);
 	
 	write_offset (mb, mt_barrier_internal_t, ref_count, refs + 1);
 	if (MT_BARRIER_TYPE(type) == MT_BARRIER_FULL) {
@@ -493,7 +476,7 @@ static int mt_io_update_array (ECTX ectx, WORDPTR *ptr, UWORD inner)
 /*{{{  TVM_HELPER int mt_io_update (ECTX ectx, WORDPTR *ptr, UWORD *move)*/
 TVM_HELPER int mt_io_update (ECTX ectx, WORDPTR *ptr, UWORD *move)
 {
-	UWORD type = read_type (*ptr);
+	UWORD type = read_mt_type (*ptr);
 
 	if (type & MT_SIMPLE) {
 		if (MT_TYPE(type) == MT_ARRAY) {
@@ -770,7 +753,7 @@ TVM_INSTRUCTION (ins_mt_enroll)
 {
 	WORDPTR mt = (WORDPTR) BREG;
 	UWORD count = (UWORD) AREG;
-	UWORD type = read_type (mt);
+	UWORD type = read_mt_type (mt);
 	
 	switch (MT_BARRIER_TYPE (type)) {
 		case MT_BARRIER_FULL:
@@ -785,7 +768,7 @@ TVM_INSTRUCTION (ins_mt_resign)
 {
 	WORDPTR mt = (WORDPTR) BREG;
 	UWORD count = (UWORD) AREG;
-	UWORD type = read_type (mt);
+	UWORD type = read_mt_type (mt);
 	
 	switch (MT_BARRIER_TYPE (type)) {
 		case MT_BARRIER_FULL:
@@ -799,7 +782,7 @@ TVM_INSTRUCTION (ins_mt_resign)
 TVM_INSTRUCTION (ins_mt_sync)
 {
 	WORDPTR mt = (WORDPTR) AREG;
-	UWORD type = read_type (mt);
+	UWORD type = read_mt_type (mt);
 	
 	switch (MT_BARRIER_TYPE (type)) {
 		case MT_BARRIER_FULL:
@@ -917,7 +900,7 @@ TVM_INSTRUCTION (ins_mt_bind)
 	UWORD type;
 	int ret;
 
-	type = read_type (ptr);
+	type = read_mt_type (ptr);
 
 	if ((type & MT_SIMPLE) && (MT_TYPE(type) == MT_ARRAY)) {
 		UWORD dimensions = MT_ARRAY_DIM(type);
@@ -976,7 +959,7 @@ TVM_INSTRUCTION (ins_mt_bind)
 				write_offset (ma, mt_array_internal_t, type, MT_MAKE_ARRAY_TYPE (dimensions, MT_MAKE_ARRAY_OPTS (flags | MT_ARRAY_OPTS_DMA, align, inner)));
 				write_offset (ma, mt_array_internal_t, array.dimensions[dimensions], (WORD) data);
 			} else {
-				UWORD old_type = read_type (ptr);
+				UWORD old_type = read_mt_type (ptr);
 				WORDPTR new_ptr;
 
 				write_offset (ma, mt_array_internal_t, type, MT_MAKE_ARRAY_TYPE (dimensions, MT_MAKE_ARRAY_OPTS (flags | MT_ARRAY_OPTS_DMA, align, inner)));

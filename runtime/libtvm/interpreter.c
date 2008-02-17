@@ -363,18 +363,18 @@ void tvm_ectx_disconnect (ECTX ectx)
 				break;
 			#ifdef TVM_DYNAMIC_OCCAM_PI
 			case 'C':
+			case 'S':
 				if (ectx->tlp_argv[i] != NULL_P) {
 					WORDPTR ptr;
-					UWORD channels;
+					UWORD channels, type;
 					int j;
 
 					ptr		= (WORDPTR) ectx->tlp_argv[i];
-					channels	= read_word (wordptr_minus (ptr, 1));
-					channels	= MT_CB_CHANNELS(channels);
+					type		= read_mt_type (ptr);
+					channels	= MT_CB_CHANNELS(type);
 
 					for (j = 0; j < channels; ++j) {
-						disconnect_channel (ptr);
-						ptr = wordptr_plus (ptr, 1);
+						disconnect_channel (wordptr_offset (ptr, mt_cb_t, channels[i]));
 					}
 				}
 				break;
@@ -409,19 +409,19 @@ int tvm_ectx_waiting_on (ECTX ectx, WORDPTR ws_base, WORD ws_len)
 				break;
 			#ifdef TVM_DYNAMIC_OCCAM_PI
 			case 'C':
+			case 'S':
 				if (ectx->tlp_argv[i] != NULL_P) {
-					UWORD channels;
+					UWORD channels, type;
 					int j;
 
 					ptr		= (WORDPTR) ectx->tlp_argv[i];
-					channels	= read_word (wordptr_minus (ptr, 1));
-					channels	= MT_CB_CHANNELS(channels);
+					type		= read_mt_type (ptr);
+					channels	= MT_CB_CHANNELS(type);
 
 					for (j = 0; j < channels; ++j) {
-						WORDPTR val = (WORDPTR) read_word (ptr);
+						WORDPTR val = (WORDPTR) read_offset (ptr, mt_cb_t, channels[i]);
 						if (val >= ws_base && val <= ws_end)
 							return 1; /* dependency */
-						ptr = wordptr_plus (ptr, 1);
 					}
 				}
 				break;

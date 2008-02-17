@@ -115,4 +115,23 @@ extern double read_wordd(WORDPTR ptr);
 /*}}}*/
 #endif
 
+/*{{{  Common operations */
+/* stddef.h is freestanding, so should be safe in any build */
+#include <stddef.h>
+#ifndef offsetof
+#define offsetof(t,f) ((WORD) (&((((t *)(0))->f))))
+#endif
+
+#define word_offset(type, field) \
+	(offsetof (type, field) >> WSH)
+#define wordptr_offset(ptr, type, field) \
+	wordptr_plus ((ptr), word_offset (type, field))
+#define read_offset(ptr, type, field) \
+	read_word (wordptr_offset (ptr, type, field))
+#define write_offset(ptr, type, field, data) \
+	write_word (wordptr_offset (ptr, type, field), (WORD) (data))
+#define read_mt_type(ptr) \
+	(read_word (wordptr_minus ((ptr), 1)))
+/*}}}*/
+
 #endif /* !TVM_MEM_INTF */
