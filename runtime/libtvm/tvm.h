@@ -75,4 +75,11 @@ extern const char *tvm_instr_sec_name (WORD ins);
 #endif
 /*}}}*/
 
+/*{{{  Mobile API */
+#ifdef TVM_DYNAMIC_OCCAM_PI
+extern void *tvm_mt_alloc (ECTX ectx, UWORD type, UWORD size);
+extern void tvm_mt_release (ECTX ectx, void *ptr);
+#endif
+/*}}}*/
+
 #endif /* TVM_H */
