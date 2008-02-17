@@ -561,7 +561,7 @@ static int camera_mt_in (ECTX ectx, WORDPTR pointer)
 
 	ENABLE_INTERRUPTS (imask);
 
-	if (ready < 0) {
+	if (!ready) {
 		/* Save pointer */
 		WORKSPACE_SET (ectx->wptr, WS_POINTER, (WORD) pointer);
 		/* Save instruction pointer */
@@ -748,7 +748,7 @@ static int firmware_run_user (ECTX ectx, WORD args[])
 		&user_ctx, tlp_fmt, argc, 
 		ws_size, vs_size, ms_size
 	);
-	user_memory = (WORDPTR) tvm_malloc (ectx, user_memory_len);
+	user_memory = (WORDPTR) tvm_malloc (ectx, user_memory_len << WSH);
 	tvm_ectx_layout (
 		&user_ctx, user_memory, 
 		tlp_fmt, argc, 

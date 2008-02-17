@@ -22,10 +22,10 @@ PROC camera (CAMERA? svr)
                                 [1280, 1024, CAMERA.1280.1024]]:
 
   CHAN INT camera.mode:
-  PLACE camera.mode AT #1:
+  PLACE camera.mode AT #2:
 
   CHAN MOBILE []BYTE camera.data:
-  PLACE camera.data AT #1:
+  PLACE camera.data AT #2:
 
   INITIAL INT mode        IS CAMERA.OFF:
   INITIAL INT frame.size  IS 0:
