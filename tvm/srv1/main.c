@@ -867,12 +867,12 @@ static SFFI_FUNCTION	firmware_sffi_table[] = {
 	firmware_run_user,
 	firmware_kill_user,
 	firmware_query_user,
+	reset_dynamic_memory,
 	set_register_16,
 	jpeg_encode_frame,
 	draw_caption_on_frame,
 	blit_to_uart0,
-	test_disconnected,
-	reset_dynamic_memory
+	test_disconnected
 };
 static const int	firmware_sffi_table_length =
 				sizeof(firmware_sffi_table) / sizeof(SFFI_FUNCTION);
@@ -882,9 +882,11 @@ static SFFI_FUNCTION	user_sffi_table[] = {
 	NULL,
 	NULL,
 	NULL,
+	set_register_16,
 	jpeg_encode_frame,
 	draw_caption_on_frame,
-	blit_to_uart0
+	blit_to_uart0,
+	test_disconnected
 };
 static const int	user_sffi_table_length =
 				sizeof(user_sffi_table) / sizeof(SFFI_FUNCTION);
