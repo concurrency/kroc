@@ -44,7 +44,13 @@ TVM_INSTRUCTION_PROTO (ins_extvrfy);
 TVM_INSTRUCTION_PROTO (ins_extin);
 /* 0x61 - 0x26 0xF1 - extout - external channel output */
 TVM_INSTRUCTION_PROTO (ins_extout);
-#endif
+#ifdef TVM_DYNAMIC_OCCAM_PI
+/* 0x24B - 0x22 0x24 0xFB - ext_mt_in - external channel mobile type input */
+TVM_INSTRUCTION_PROTO (ins_ext_mt_out);
+/* 0x24C - 0x22 0x24 0xFC - ext_mt_out - external channel mobile type output */
+TVM_INSTRUCTION_PROTO (ins_ext_mt_out);
+#endif /* TVM_DYNAMIC_OCCAM_PI */
+#endif /* TVM_OCCAM_PI */
 
 /* 0xA2 - 0x2A 0xF2 - getpri - get priority */
 TVM_INSTRUCTION_PROTO (ins_getpri);

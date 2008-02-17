@@ -113,11 +113,14 @@ typedef void tvm_t;
 
 /*{{{  External channel function prototypes. */
 typedef int (*EXT_CHAN_FUNCTION)(ECTX ectx, WORD count, BYTEPTR address);
+typedef int (*EXT_CHAN_MT_FUNCTION)(ECTX ectx, WORDPTR address);
 
 typedef struct {
 	UWORD			typehash;
 	EXT_CHAN_FUNCTION	in;
 	EXT_CHAN_FUNCTION	out;
+	EXT_CHAN_MT_FUNCTION	mt_in;
+	EXT_CHAN_MT_FUNCTION	mt_out;
 } EXT_CHAN_ENTRY;
 /*}}}*/
 

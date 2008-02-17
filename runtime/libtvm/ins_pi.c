@@ -28,97 +28,76 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ins_pri.h"
 
 /* 0x23 - 0x22 0xF3 - boolinvert */
-/* FIXME: DELETEME! This ETC special should not be turned into a special 
- * instruction, but rather the sequence of existing instructions:
- * NOT
- * LDC 1
- * AND
- * (I think that is correct)
- */
 TVM_INSTRUCTION (ins_boolinvert)
 {
-	STACK_RET((AREG == 0?1:0), BREG, CREG);
+	STACK_RET ((AREG == 0 ? 1 : 0), BREG, CREG);
 }
 
 /* 0x28 - 0x22 0xF8 - reschedule */
 TVM_INSTRUCTION (ins_reschedule)
 {
-	DESCHEDULE_CURRENT();
-	RUN_NEXT_ON_QUEUE_RET();
+	DESCHEDULE_CURRENT ();
+	RUN_NEXT_ON_QUEUE_RET ();
 }
 
 /* 0x24 - 0x22 0xF4 - widenshort */
 TVM_INSTRUCTION (ins_widenshort)
 {
-	/* Kudos to Damian for suggesting casting rather than doing something stupid,
-	 * like I would have done! clj3 */
-	STACK_RET(((WORD) ((HWORD)AREG)), BREG, CREG);
+	STACK_RET (((WORD) ((HWORD) AREG)), BREG, CREG);
 }
 
 /* 0x25 - 0x22 0xF5 - fficall */
 TVM_INSTRUCTION (ins_fficall)
 {
 	/* Arguments are at WPTR + 1 (+1 to avoid the IPTR on the top of the stack). */
-	WORD *args = wordptr_real_address(wordptr_plus(WPTR, 1));
+	WORD *args = wordptr_real_address (wordptr_plus (WPTR, 1));
 	
 	/* Normal FFI (AREG >= 0), or Special FFI (AREG < 0) */
-	if(AREG >= 0)
-	{
+	if (AREG >= 0) {
 		/* Valid FFI call ? */
 		FFI_FUNCTION func = NULL;
 
-		if(ectx->ffi_table && (AREG < ectx->ffi_table_length))
-		{
+		if (ectx->ffi_table && (AREG < ectx->ffi_table_length)) {
 			func = ectx->ffi_table[AREG].func;
 		}
 
 		/* Function defined ? */
-		if(func != NULL)
-		{
-			func(args);
-		}
-		else
-		{	
-			SET_ERROR_FLAG(EFLAG_FFI);
+		if (func != NULL) {
+			func (args);
+		} else {	
+			SET_ERROR_FLAG (EFLAG_FFI);
 		} 
-	}
-	else
-	{
+	} else {
 		SFFI_FUNCTION func = NULL;
 		unsigned int index = -(AREG + 1);
 		int ret;
 
 		/* Valid FFI call ? */
-		if(ectx->sffi_table && (index < ectx->sffi_table_length))
-		{
+		if (ectx->sffi_table && (index < ectx->sffi_table_length)) {
 			func = ectx->sffi_table[index];
 		}
 		/* Function defined ? */
-		if(func != NULL)
-		{
-			ret = func(ectx, args);
-		}
-		else
-		{
-			SET_ERROR_FLAG(EFLAG_FFI);
+		if (func != NULL) {
+			ret = func (ectx, args);
+		} else {
+			SET_ERROR_FLAG (EFLAG_FFI);
 			ret = ECTX_CONTINUE;
 		}
 		
-		switch (ret)
-		{
+		switch (ret) {
 			case ECTX_CONTINUE:
 				break;
 			case SFFI_BYPASS:
 				return ECTX_CONTINUE;
 			case SFFI_RESCHEDULE:
-				RUN_NEXT_ON_QUEUE_RET();
+				RUN_NEXT_ON_QUEUE_RET ();
 			default:
 				return ret;
 		}
 	}
 
 	/* FFI call is done, return using ins_ret */
-	return ins_ret(ectx);
+	return ins_ret (ectx);
 }
 
 /* 0x26 - 0x22 0xF6 - lend3 - loopend3 (for step in replicators) */
@@ -184,66 +163,90 @@ TVM_INSTRUCTION (ins_lendbw)
 TVM_INSTRUCTION (ins_extvrfy)
 {
 	UWORD typehash 	= (UWORD) AREG;
-	UWORD index	= ((UWORD)BREG) >> 1;
+	UWORD index	= ((UWORD) BREG) >> 1;
 
 	if (!ectx->ext_chan_table || index >= ectx->ext_chan_table_length) {
-		SET_ERROR_FLAG_RET(EFLAG_EXTCHAN);
+		SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
 	} else if (ectx->ext_chan_table[index].typehash == 0) {
 		/* typehash = 0 means any type OK */
 	} else if (ectx->ext_chan_table[index].typehash != typehash) {
-		SET_ERROR_FLAG(EFLAG_EXTCHAN);
+		SET_ERROR_FLAG (EFLAG_EXTCHAN);
 	}
 
-	UNDEFINE_STACK_RET();
+	UNDEFINE_STACK_RET ();
 }
 
 /* 0x60 - 0x26 0xF0 - extin - external channel input */
 TVM_INSTRUCTION (ins_extin)
 {
-	/* Due to the fact that the KRoC uses the least significant
-	 * bit set to one to indicate a EXTERNAL channel, which is fine
-	 * if this is an address, but for the interpreter it is NOT an
-	 * address, but an INDEX, so we need to do some shifting to get
-	 * around that...
-	 */
-	UWORD index = ((UWORD)BREG) >> 1;
-	if (!ectx->ext_chan_table || index >= ectx->ext_chan_table_length)
-	{
-		SET_ERROR_FLAG_RET(EFLAG_EXTCHAN);
-	} 
-	else if (!ectx->ext_chan_table[index].in)
-	{
-		SET_ERROR_FLAG_RET(EFLAG_EXTCHAN);
+	/* Convert address to table index */
+	UWORD index = ((UWORD) BREG) >> 1;
+	
+	if (ectx->ext_chan_table && index < ectx->ext_chan_table_length) {
+		EXT_CHAN_FUNCTION func = ectx->ext_chan_table[index].in;
+
+		if (func) {
+			return func (ectx, AREG, (BYTEPTR) CREG);
+		}
 	}
-	else 
-	{
-		return ectx->ext_chan_table[index].in(ectx, AREG, (BYTEPTR)CREG);
-	}
+	
+	SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
 }
 
 /* 0x61 - 0x26 0xF1 - extout - external channel output */
 TVM_INSTRUCTION (ins_extout)
 {
-	/* Due to the fact that the KRoC uses the least significant
-	 * bit set to one to indicate a EXTERNAL channel, which is fine
-	 * if this is an address, but for the interpreter it is NOT an
-	 * address, but an INDEX, so we need to do some shifting to get
-	 * around that...
-	 */
-	UWORD index = ((UWORD)BREG) >> 1;
-	if (!ectx->ext_chan_table || index >= ectx->ext_chan_table_length)
-	{
-		SET_ERROR_FLAG_RET(EFLAG_EXTCHAN);
-	} 
-	else if (!ectx->ext_chan_table[index].out)
-	{
-		SET_ERROR_FLAG_RET(EFLAG_EXTCHAN);
+	/* Convert address to table index */
+	UWORD index = ((UWORD) BREG) >> 1;
+	
+	if (ectx->ext_chan_table && index < ectx->ext_chan_table_length) {
+		EXT_CHAN_FUNCTION func = ectx->ext_chan_table[index].out;
+
+		if (func) {
+			return func (ectx, AREG, (BYTEPTR) CREG);
+		}
 	}
-	else 
-	{
-		return ectx->ext_chan_table[index].out(ectx, AREG, (BYTEPTR)CREG);
-	}
+	
+	SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
 }
+
+#ifdef TVM_DYNAMIC_OCCAM_PI
+
+/* 0x24B - 0x22 0x24 0xFB - ext_mt_in - external channel mobile type input */
+TVM_INSTRUCTION (ins_ext_mt_in)
+{
+	/* Convert address to table index */
+	UWORD index = ((UWORD) AREG) >> 1;
+	
+	if (ectx->ext_chan_table && index < ectx->ext_chan_table_length) {
+		EXT_CHAN_MT_FUNCTION func = ectx->ext_chan_table[index].mt_in;
+
+		if (func) {
+			return func (ectx, (WORDPTR) BREG);
+		}
+	}
+	
+	SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
+}
+
+/* 0x24C - 0x22 0x24 0xFC - ext_mt_out - external channel mobile type output */
+TVM_INSTRUCTION (ins_ext_mt_out)
+{
+	/* Convert address to table index */
+	UWORD index = ((UWORD) AREG) >> 1;
+	
+	if (ectx->ext_chan_table && index < ectx->ext_chan_table_length) {
+		EXT_CHAN_MT_FUNCTION func = ectx->ext_chan_table[index].mt_out;
+
+		if (func) {
+			return func (ectx, (WORDPTR) BREG);
+		}
+	}
+	
+	SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
+}
+
+#endif /* TVM_DYANMIC_OCCAM_PI */
 
 #endif /* TVM_OCCAM_PI */
 
@@ -254,14 +257,14 @@ TVM_INSTRUCTION (ins_extout)
 TVM_INSTRUCTION (ins_getpri)
 {
 	/* Always return priority 0. */
-	STACK_RET(0, AREG, BREG);
+	STACK_RET (0, AREG, BREG);
 }
 
 /* 0xA5 - 0x2A 0xF5 - setpri - set priority */
 TVM_INSTRUCTION (ins_setpri)
 {
 	/* Ignore the new priority. */
-	STACK_RET(BREG, CREG, UNDEFINE(CREG));
+	STACK_RET (BREG, CREG, UNDEFINE(CREG));
 }
 
 /* 0xAD - 0x2A 0xFD - ins_savecreg - save the creg */
@@ -331,7 +334,7 @@ TVM_HELPER int tvm_sem_claim(ECTX ectx, WORDPTR sem)
 	}
 }
 
-TVM_HELPER int tvm_sem_release(ECTX ectx, WORDPTR sem)
+TVM_HELPER int tvm_sem_release (ECTX ectx, WORDPTR sem)
 {
 	WORDPTR sem_fptr_ptr = wordptr_plus(sem, SEM_FPTR);
 	WORD sem_fptr = read_word(sem_fptr_ptr);
@@ -357,21 +360,21 @@ TVM_HELPER int tvm_sem_release(ECTX ectx, WORDPTR sem)
 TVM_INSTRUCTION (ins_sem_init)
 {
 
-	tvm_sem_init((WORDPTR) AREG);
+	tvm_sem_init ((WORDPTR) AREG);
 
-	UNDEFINE_STACK_RET();
+	UNDEFINE_STACK_RET ();
 }
 
 /* 0x7B - 0x27 0xFB - semclaim - claim semaphore */
 TVM_INSTRUCTION (ins_sem_claim)
 {
-	return tvm_sem_claim(ectx, (WORDPTR) AREG);
+	return tvm_sem_claim (ectx, (WORDPTR) AREG);
 }
 
 /* 0x7C - 0x27 0xFC - semrelease - release semaphore */
 TVM_INSTRUCTION (ins_sem_release)
 {
-	return tvm_sem_release(ectx, (WORDPTR) AREG);
+	return tvm_sem_release (ectx, (WORDPTR) AREG);
 }
 
 /****************************************************************************
@@ -382,26 +385,25 @@ TVM_INSTRUCTION (ins_sem_release)
 TVM_INSTRUCTION (ins_xable)
 {
 	WORDPTR chan_ptr	= (WORDPTR) AREG;
-	WORD chan_value		= read_word(chan_ptr);
+	WORD chan_value		= read_word (chan_ptr);
 
 	/* This is like a single guard ALT */
 	/* If channel is empty, then alt on it */
-	if(chan_value == NOT_PROCESS_P)
-	{
+	if (chan_value == NOT_PROCESS_P) {
 		/* Save state, set ALT to waiting */
-		WORKSPACE_SET(WPTR, WS_STATE, WAITING_P);
-		WORKSPACE_SET(WPTR, WS_ECTX, (WORD) ectx);
-		WORKSPACE_SET(WPTR, WS_PENDING, (WORD) chan_ptr);
-		WORKSPACE_SET(WPTR, WS_IPTR, (WORD) IPTR);
+		WORKSPACE_SET (WPTR, WS_STATE, WAITING_P);
+		WORKSPACE_SET (WPTR, WS_ECTX, (WORD) ectx);
+		WORKSPACE_SET (WPTR, WS_PENDING, (WORD) chan_ptr);
+		WORKSPACE_SET (WPTR, WS_IPTR, (WORD) IPTR);
 
 		/* Put ourselves into the channel word */
-		write_word(chan_ptr, ((WORD) WPTR) | 1);
+		write_word (chan_ptr, ((WORD) WPTR) | 1);
 
 		/* Find something else to run */
-		RUN_NEXT_ON_QUEUE_RET();
+		RUN_NEXT_ON_QUEUE_RET ();
 	}
 
-	UNDEFINE_STACK_RET();
+	UNDEFINE_STACK_RET ();
 }
 
 /* 0xE9 - 0x2E 0xF9 - xin - Extended Input */
@@ -413,27 +415,24 @@ TVM_INSTRUCTION (ins_xin)
 	WORD data_len = AREG;
 	int ret;
 	
-	UNDEFINE_STACK();
+	UNDEFINE_STACK ();
 
-	ret = chan_io(
+	ret = chan_io (
 		ectx,
 		chan_ptr, data_ptr, data_len,
 		&requeue,
 		channel_input, channel_dc_input
 	);
 
-	if (ret > 0)
-	{
+	if (ret > 0) {
 		return ret;
 	}
-	else if (ret != 0)
-	{
-		SET_ERROR_FLAG_RET(EFLAG_CHAN);
+	else if (ret != 0) {
+		SET_ERROR_FLAG_RET (EFLAG_CHAN);
 	}
-	else if (requeue == (WORDPTR)(NOT_PROCESS_P | 1))
-	{
-		DESCHEDULE_CURRENT();
-		RUN_NEXT_ON_QUEUE_RET();
+	else if (requeue == (WORDPTR) (NOT_PROCESS_P | 1)) {
+		DESCHEDULE_CURRENT ();
+		RUN_NEXT_ON_QUEUE_RET ();
 	}
 
 	/* Restore output process to channel word */
@@ -446,16 +445,16 @@ TVM_INSTRUCTION (ins_xin)
 TVM_INSTRUCTION (ins_xend)
 {
 	WORDPTR chan_ptr = (WORDPTR) AREG;
-	WORD chan_value = read_word(chan_ptr);
+	WORD chan_value = read_word (chan_ptr);
 
-	UNDEFINE_STACK();
+	UNDEFINE_STACK ();
 
 	/* Disconnected channel ? */
 	if (chan_value != (NOT_PROCESS_P | 1)) {
 		/* No; reset channel */
-		write_word(chan_ptr, NOT_PROCESS_P);
+		write_word (chan_ptr, NOT_PROCESS_P);
 		/* Put the outputting process on the run queue */
-		ADD_TO_QUEUE_ECTX_RET((WORDPTR) (chan_value & (~1)));
+		ADD_TO_QUEUE_ECTX_RET ((WORDPTR) (chan_value & (~1)));
 	}
 
 	return ECTX_CONTINUE;
@@ -466,6 +465,6 @@ TVM_INSTRUCTION (ins_xend)
 /* 0xFD - 0x2F 0xFD - null - put null onto the stack */
 TVM_INSTRUCTION (ins_null)
 {
-	STACK_RET((WORD) NULL_P, AREG, BREG);
+	STACK_RET ((WORD) NULL_P, AREG, BREG);
 }
 
