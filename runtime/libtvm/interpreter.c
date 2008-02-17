@@ -374,7 +374,7 @@ void tvm_ectx_disconnect (ECTX ectx)
 					channels	= MT_CB_CHANNELS(type);
 
 					for (j = 0; j < channels; ++j) {
-						disconnect_channel (wordptr_offset (ptr, mt_cb_t, channels[i]));
+						disconnect_channel (wordptr_offset (ptr, mt_cb_t, channels[j]));
 					}
 				}
 				break;
@@ -419,7 +419,7 @@ int tvm_ectx_waiting_on (ECTX ectx, WORDPTR ws_base, WORD ws_len)
 					channels	= MT_CB_CHANNELS(type);
 
 					for (j = 0; j < channels; ++j) {
-						WORDPTR val = (WORDPTR) read_offset (ptr, mt_cb_t, channels[i]);
+						WORDPTR val = (WORDPTR) read_offset (ptr, mt_cb_t, channels[j]);
 						if (val >= ws_base && val <= ws_end)
 							return 1; /* dependency */
 					}
