@@ -2200,7 +2200,7 @@ static int rtl_validate_instr_ppc (ins_chain *ins)
 	case INS_SHL:
 	case INS_MOVEB:
 	case INS_NOT:
-	case INS_CONSTLABDIFFSHORT:
+	case INS_CONSTLABDIFF:
 	case INS_REPMOVEB:
 	case INS_MOVEZEXT8TO32:
 	case INS_RCR:

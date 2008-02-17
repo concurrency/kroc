@@ -1098,8 +1098,8 @@ static int decode_ins_mnemonic (char *str)
 		}
 		break;
 	case P2CHR ('c','o'):
-		if (!strcmp (str + 2, "nstlabdiffshort")) {
-			ins = INS_CONSTLABDIFFSHORT;
+		if (!strcmp (str + 2, "nstlabdiff")) {
+			ins = INS_CONSTLABDIFF;
 		} else if (!strcmp (str + 2, "nstrain")) {
 			ins = INS_CONSTRAIN_REG;
 		}

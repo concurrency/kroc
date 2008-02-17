@@ -129,7 +129,7 @@ typedef struct TAG_rtl_chain {
 #define INS_SHR 30
 #define INS_MOVEB 31
 #define INS_NOT 32
-#define INS_CONSTLABDIFFSHORT 33	/* for case tables */
+#define INS_CONSTLABDIFF 33	/* for case tables */
 #define INS_REPMOVEB 34
 #define INS_MOVEZEXT8TO32 35		/* zero-extend 8 to 32 bit move */
 #define INS_RCR 36

@@ -351,7 +351,7 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 			fprintf (outstream, "%d:\n", tmp->in_args[0]->regconst);
 			break;
 		case INS_LOADLABDIFF:
-		case INS_CONSTLABDIFFSHORT:
+		case INS_CONSTLABDIFF:
 			if ((tmp->in_args[0]->flags & ARG_MODEMASK) == ARG_INSLABEL) {
 				tlab1 = ((ins_chain *)tmp->in_args[0]->regconst)->in_args[0]->regconst;
 			} else {
@@ -365,7 +365,7 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 			if (tmp->type == INS_LOADLABDIFF) {
 				fprintf (outstream, "\tmov\t(" LBLPFX "%d - " LBLPFX "%d), %s\n", tlab1, tlab2, sparc_regs[tmp->out_args[0]->regconst]);
 			} else {
-				fprintf (outstream, ".short (" LBLPFX "%d - " LBLPFX "%d)\n", tlab1, tlab2);
+				fprintf (outstream, ".long (" LBLPFX "%d - " LBLPFX "%d)\n", tlab1, tlab2);
 			}
 			break;
 		case INS_CJUMP:

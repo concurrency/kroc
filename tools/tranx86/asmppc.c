@@ -372,9 +372,9 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 			fprintf (outstream, "%d:\n", tmp->in_args[0]->regconst);
 			break;
 			/*}}}*/
-			/*{{{  INS_LOADLABDIFF, INS_CONSTLABDIFFSHORT -- load label difference*/
+			/*{{{  INS_LOADLABDIFF, INS_CONSTLABDIFF -- load label difference*/
 		case INS_LOADLABDIFF:
-		case INS_CONSTLABDIFFSHORT:
+		case INS_CONSTLABDIFF:
 			if ((tmp->in_args[0]->flags & ARG_MODEMASK) == ARG_INSLABEL) {
 				tlab1 = ((ins_chain *)tmp->in_args[0]->regconst)->in_args[0]->regconst;
 			} else {
@@ -389,7 +389,7 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 				fprintf (outstream, "\tlis\t%s, (" LBLPFX "%d - " LBLPFX "%d)@ha\n", ppc_regs[tmp->out_args[0]->regconst], tlab1, tlab2);
 				fprintf (outstream, "\tori\t%s, %s, (" LBLPFX "%d - " LBLPFX "%d)@l\n", ppc_regs[tmp->out_args[0]->regconst], ppc_regs[tmp->out_args[0]->regconst], tlab1, tlab2);
 			} else {
-				fprintf (outstream, ".short (" LBLPFX "%d - " LBLPFX "%d)\n", tlab1, tlab2);
+				fprintf (outstream, ".long (" LBLPFX "%d - " LBLPFX "%d)\n", tlab1, tlab2);
 			}
 			break;
 			/*}}}*/
