@@ -361,10 +361,12 @@ static int camera_start (ECTX ectx,
 			int j;
 
 			for (j = 0; stream && j < i; ++j) {
+				camera_dma[j].buffer = (void *) INVALID_ADDRESS;
 				tvm_mt_release (ectx, camera_dma[j].mobile);
 			}
 
 			ectx->eflags &= ~EFLAG_MT;
+
 			return -1;
 		}
 
@@ -376,8 +378,6 @@ static int camera_start (ECTX ectx,
 	*pPPI_FRAME = height;
 
 	/* Setup DMA */
-	*pDMA0_CONFIG = FLOW_LARGE | NDSIZE_5 | WDSIZE_16 | DMA2D | WNR | DI_EN;
-
 	*pDMA0_X_COUNT	= width;
 	*pDMA0_X_MODIFY	= 2;
 
@@ -389,6 +389,8 @@ static int camera_start (ECTX ectx,
 	} else {
 		*pDMA0_NEXT_DESC_PTR = &(camera_dma[CAMERA_BUFFERS]);
 	}
+
+	*pDMA0_CONFIG = FLOW_LARGE | NDSIZE_5 | WDSIZE_16 | DMA2D | WNR | DI_EN;
 
 	/* Flush configuration */
 	SSYNC;
@@ -453,7 +455,7 @@ void handle_int8 (void)
 			camera_mobile			= r_mobile;
 			firmware_ctx.sflags		|= SFLAG_INTR;
 			user_ctx.sflags			|= SFLAG_INTR;
-		} else {
+		} else if (camera_ready < (CAMERA_BUFFERS - 1)) {
 			camera_ready++;
 		}
 		
