@@ -1057,6 +1057,8 @@ static int run_firmware (void)
 		} else if (ret == ECTX_EMPTY) {
 			if (uart0_channel != (WORDPTR) NOT_PROCESS_P) {
 				return ret; /* OK - waiting for input */
+			} else if (camera_channel != (WORDPTR) NOT_PROCESS_P) {
+				return ret; /* OK - waiting for imagery */
 			} else if (user_parent != (WORDPTR) NOT_PROCESS_P) {
 				if (user_ctx.state == ECTX_EMPTY && user_ctx.fptr == (WORDPTR) NOT_PROCESS_P) {
 					if (tvm_ectx_waiting_on (&user_ctx, user_memory, user_memory_len)) {
