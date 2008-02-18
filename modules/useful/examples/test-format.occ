@@ -1,0 +1,15 @@
+#INCLUDE "useful.module"
+
+PROC main (SHARED CHAN BYTE out!)
+  MOBILE []BYTE s:
+  SEQ
+    prints.s (out!, "Hello, world!*n")
+    SEQ i = 1 FOR 5
+      prints.isin (out!, i, " squared is ", i * i)
+
+    CLAIM out!
+      print.ssin (out!, "hello, ", "world ", 42)
+
+    format.sin (s, "life = ", 42)
+    prints.s (out!, s)
+:
