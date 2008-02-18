@@ -115,6 +115,7 @@ CIF_SRC=modules/cif/libsrc
 CIF_EXAMPLES_SRC=modules/cif/examples
 CGTESTS_SRC=tests/cgtests
 HERETICC_SRC=tests/hereticc
+USEFUL_SRC=modules/useful/libsrc
 FMTOUTLIB_SRC=modules/fmtoutlib/libsrc
 MOA_SRC=modules/moa/libsrc
 MOA_EXAMPLES_SRC=modules/moa/examples
@@ -141,6 +142,7 @@ ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC 
 	$OCCGL_SRC $OCCGL_EXAMPLES_SRC \
 	$OCCADE_SRC $OCCADE_EXAMPLES_SRC \
 	$BUTTON_SRC $BUTTON_EXAMPLES_SRC \
+	$USEFUL_SRC \
 	$FMTOUTLIB_SRC \
 	$MOA_SRC $MOA_EXAMPLES_SRC"
 FAILABLE_PKGS="\
@@ -281,6 +283,7 @@ choices for <pkg> are:
   occade                       arcade game development module
   button                       OpenGL buttons module
   pony                         pony (kroc-net) networking infrastructure
+  useful                       general utility module
   fmtoutlib                    formatted output module
   moa                          MySQL bindings module
   doc                          documentation
@@ -1713,6 +1716,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-occgl make-occgl install-occgl \
 		configure-occade make-occade install-occade \
 		configure-button make-button install-button \
+		configure-useful make-useful install-useful \
 		configure-fmtoutlib make-fmtoutlib install-fmtoutlib \
 		configure-moa make-moa install-moa \
 		configure-syncs make-syncs install-syncs"
@@ -1820,7 +1824,7 @@ for action in $ACTIONLIST; do
 	X*)
 		FOUND=0
 
-		for x in inmoslibs bsclib course course_answers syncs dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony fmtoutlib moa occamdoc; do
+		for x in inmoslibs bsclib course course_answers syncs dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony useful fmtoutlib moa occamdoc; do
 			if [ "X$x" = "X$action" ]; then
 				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
@@ -2474,6 +2478,11 @@ for action in $ACTIONLIST; do
 			#{{{  pony: kroc-net/pony network infrastructure
 		Xpony)
 			PKG_SRC=$PONY_SRC
+			;;
+			#}}}
+			#{{{  useful: general utility library
+		Xuseful)
+			PKG_SRC=$USEFUL_SRC
 			;;
 			#}}}
 			#{{{  fmtoutlib: formatted output library

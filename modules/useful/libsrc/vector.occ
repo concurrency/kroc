@@ -1,0 +1,81 @@
+--
+--	Vector utilities
+--	Copyright (C) 2008 Adam Sampson <ats@offog.org>
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** @module useful
+
+#INCLUDE "course.module"
+#INCLUDE "maths.module"
+#INCLUDE "useful.inc"
+
+--{{{  PROC out.vector2
+--* Print a [@ref VECTOR2].
+PROC out.vector2 (VAL VECTOR2 v, CHAN BYTE out!)
+  SEQ
+    out ! '('
+    out.real32 (v[x], 0, 0, out!)
+    out ! ','
+    out ! ' '
+    out.real32 (v[y], 0, 0, out!)
+    out ! ')'
+:
+--}}}
+--{{{  FUNCTION normalise2
+--* Normalise a [@ref VECTOR2].
+-- @param v Input vector
+-- @return Unit vector parallel to [@code v]
+VECTOR2 FUNCTION normalise2 (VAL VECTOR2 v) IS v / SQRT (mag.squared2 (v)):
+--}}}
+
+--{{{  PROC out.vector3
+--* Print a [@ref VECTOR3].
+PROC out.vector3 (VAL VECTOR3 v, CHAN BYTE out!)
+  SEQ
+    out ! '('
+    out.real32 (v[x], 0, 0, out!)
+    out ! ','
+    out ! ' '
+    out.real32 (v[y], 0, 0, out!)
+    out ! ','
+    out ! ' '
+    out.real32 (v[z], 0, 0, out!)
+    out ! ')'
+:
+--}}}
+--{{{  FUNCTION normalise3
+--* Normalise a [@ref VECTOR3].
+-- @param v Input vector
+-- @return Unit vector parallel to [@code v]
+VECTOR3 FUNCTION normalise3 (VAL VECTOR3 v) IS v / SQRT (mag.squared3 (v)):
+--}}}
+--{{{  FUNCTION cross.product3
+--* Compute the cross product of two [@ref VECTOR3]s.
+VECTOR3 FUNCTION cross.product3 (VAL VECTOR3 a, b)
+  VECTOR3 result:
+  VALOF
+    SEQ
+      result[x] := (a[y] * b[z]) - (a[z] * b[y])
+      result[y] := (a[z] * b[x]) - (a[x] * b[z])
+      result[z] := (a[x] * b[y]) - (a[y] * b[x])
+    RESULT result
+:
+--}}}
+--{{{  FUNCTION normal3
+--* Compute the normal to the plane defined by the two given vectors.
+VECTOR3 FUNCTION normal3 (VAL VECTOR3 a, b) IS normalise3 (cross.product3 (a, b)):
+--}}}
