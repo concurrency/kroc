@@ -50,6 +50,7 @@ typedef struct JPEG_ENCODER_STRUCTURE
 
 #define        BLOCK_SIZE                64
 
+#if 0
 extern UINT8    Lqt [BLOCK_SIZE];
 extern UINT8    Cqt [BLOCK_SIZE];
 extern UINT16    ILqt [BLOCK_SIZE];
@@ -65,6 +66,7 @@ extern INT16    Temp [BLOCK_SIZE];
 
 extern UINT32 lcode;
 extern UINT16 bitindex;
+#endif
 
 void initialization (JPEG_ENCODER_STRUCTURE *, UINT32, UINT32, UINT32);
 
@@ -93,31 +95,31 @@ void _r8x8dct(INT16 *, INT16 *, INT16 *);
 INT16 fdct_coeff[8] = {0x5a82,0x5a82,0x30fb,0x7641,0x18f8,0x7d8a,0x471c,0x6a6d};
 INT16 fdct_temp[64];
 
-UINT16 luminance_dc_code_table [] =
+static const UINT16 luminance_dc_code_table [] =
 {
     0x0000, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006,
     0x000E, 0x001E, 0x003E, 0x007E, 0x00FE, 0x01FE
 };
 
-UINT16 luminance_dc_size_table [] =
+static const UINT16 luminance_dc_size_table [] =
 {
     0x0002, 0x0003, 0x0003, 0x0003, 0x0003, 0x0003,
     0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009
 };
 
-UINT16 chrominance_dc_code_table [] =
+static const UINT16 chrominance_dc_code_table [] =
 {
     0x0000, 0x0001, 0x0002, 0x0006, 0x000E, 0x001E,
     0x003E, 0x007E, 0x00FE, 0x01FE, 0x03FE, 0x07FE
 };
 
-UINT16 chrominance_dc_size_table [] =
+static const UINT16 chrominance_dc_size_table [] =
 {
     0x0002, 0x0002, 0x0002, 0x0003, 0x0004, 0x0005,
     0x0006, 0x0007, 0x0008, 0x0009, 0x000A, 0x000B
 };
 
-UINT16 luminance_ac_code_table [] =
+static const UINT16 luminance_ac_code_table [] =
 {
     0x000A,
     0x0000, 0x0001, 0x0004, 0x000B, 0x001A, 0x0078, 0x00F8, 0x03F6, 0xFF82, 0xFF83,
@@ -139,7 +141,7 @@ UINT16 luminance_ac_code_table [] =
     0x07F9
 };
 
-UINT16 luminance_ac_size_table [] =
+static const UINT16 luminance_ac_size_table [] =
 {
     0x0004,
     0x0002, 0x0002, 0x0003, 0x0004, 0x0005, 0x0007, 0x0008, 0x000A, 0x0010, 0x0010,
@@ -161,7 +163,7 @@ UINT16 luminance_ac_size_table [] =
     0x000B
 };
 
-UINT16 chrominance_ac_code_table [] =
+static const UINT16 chrominance_ac_code_table [] =
 {
     0x0000,
     0x0001, 0x0004, 0x000A, 0x0018, 0x0019, 0x0038, 0x0078, 0x01F4, 0x03F6, 0x0FF4,
@@ -183,7 +185,7 @@ UINT16 chrominance_ac_code_table [] =
     0x03FA
 };
 
-UINT16 chrominance_ac_size_table [] =
+static const UINT16 chrominance_ac_size_table [] =
 {
     0x0002,
     0x0002, 0x0003, 0x0004, 0x0005, 0x0005, 0x0006, 0x0007, 0x0009, 0x000A, 0x000C,
@@ -205,7 +207,7 @@ UINT16 chrominance_ac_size_table [] =
     0x000A
 };
 
-UINT8 bitsize [] =
+static const UINT8 bitsize [] =
 {
     0, 1, 2, 2, 3, 3, 3, 3,
     4, 4, 4, 4, 4, 4, 4, 4,
@@ -241,7 +243,7 @@ UINT8 bitsize [] =
     8, 8, 8, 8, 8, 8, 8, 8
 };
 
-UINT8 markerdata [] =
+static const UINT8 markerdata [] =
 {
 0xFF, 0xC4, 0x00, 0x1F, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 
 
@@ -253,7 +255,7 @@ UINT8 markerdata [] =
 };
 
 
-UINT8 zigzag_table [] =
+static const UINT8 zigzag_table [] =
 {
     0,  1,   5,  6, 14, 15, 27, 28,
     2,  4,   7, 13, 16, 26, 29, 42,
@@ -264,7 +266,7 @@ UINT8 zigzag_table [] =
     21, 34, 37, 47, 50, 56, 59, 61,
     35, 36, 48, 49, 57, 58, 62, 63
 };
-UINT8 luminance_quant_table [] =
+static const UINT8 luminance_quant_table [] =
 {
     16, 11, 10, 16,  24,  40,  51,  61,
     12, 12, 14, 19,  26,  58,  60,  55,
@@ -276,7 +278,7 @@ UINT8 luminance_quant_table [] =
     72, 92, 95, 98, 112, 100, 103,  99
 };
 
-UINT8 chrominance_quant_table [] =
+static const UINT8 chrominance_quant_table [] =
 {
     17, 18, 24, 47, 99, 99, 99, 99,
     18, 21, 26, 66, 99, 99, 99, 99,
@@ -288,20 +290,20 @@ UINT8 chrominance_quant_table [] =
     99, 99, 99, 99, 99, 99, 99, 99
 };
 
-UINT8    Lqt [BLOCK_SIZE];
-UINT8    Cqt [BLOCK_SIZE];
-UINT16   ILqt [BLOCK_SIZE];
-UINT16   ICqt [BLOCK_SIZE];
+static UINT8    Lqt [BLOCK_SIZE];
+static UINT8    Cqt [BLOCK_SIZE];
+static UINT16   ILqt [BLOCK_SIZE];
+static UINT16   ICqt [BLOCK_SIZE];
 
-INT16    Y1 [BLOCK_SIZE];
-INT16    Y2 [BLOCK_SIZE];
-INT16    Y3 [BLOCK_SIZE];
-INT16    Y4 [BLOCK_SIZE];
-INT16    CB [BLOCK_SIZE];
-INT16    CR [BLOCK_SIZE];
-INT16    Temp [BLOCK_SIZE];
-UINT32   lcode = 0;
-UINT16   bitindex = 0;
+static INT16    Y1 [BLOCK_SIZE];
+static INT16    Y2 [BLOCK_SIZE];
+static INT16    Y3 [BLOCK_SIZE];
+static INT16    Y4 [BLOCK_SIZE];
+static INT16    CB [BLOCK_SIZE];
+static INT16    CR [BLOCK_SIZE];
+static INT16    Temp [BLOCK_SIZE];
+static UINT32   lcode = 0;
+static UINT16   bitindex = 0;
 
 
 void (*read_format) (JPEG_ENCODER_STRUCTURE *jpeg_encoder_structure, UINT8 *input_ptr);
@@ -594,7 +596,7 @@ void DCT (INT16 *data)
 UINT8* huffman (JPEG_ENCODER_STRUCTURE *jpeg_encoder_structure, UINT16 component, UINT8 *output_ptr)
 {
     UINT16 i;
-    UINT16 *DcCodeTable, *DcSizeTable, *AcCodeTable, *AcSizeTable;
+    const UINT16 *DcCodeTable, *DcSizeTable, *AcCodeTable, *AcSizeTable;
 
     INT16 *Temp_Ptr, Coeff, LastDc;
     UINT16 AbsCoeff, HuffCode, HuffSize, RunLength=0, DataSize=0, index;
