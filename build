@@ -87,6 +87,8 @@ BSCLIB_EXAMPLES_SRC=modules/bsclib/examples
 COURSE_SRC=modules/course/libsrc
 COURSE_EXAMPLES_SRC=modules/course/examples
 COURSE_ANSWERS_SRC=modules/course/answers
+USEFUL_SRC=modules/useful/libsrc
+USEFUL_EXAMPLES_SRC=modules/useful/examples
 SYNCS_SRC=modules/syncs/libsrc
 SYNCS_EXAMPLES_SRC=modules/syncs/examples
 DYNPROC_SRC=modules/dynproc/libsrc
@@ -115,7 +117,6 @@ CIF_SRC=modules/cif/libsrc
 CIF_EXAMPLES_SRC=modules/cif/examples
 CGTESTS_SRC=tests/cgtests
 HERETICC_SRC=tests/hereticc
-USEFUL_SRC=modules/useful/libsrc
 FMTOUTLIB_SRC=modules/fmtoutlib/libsrc
 MOA_SRC=modules/moa/libsrc
 MOA_EXAMPLES_SRC=modules/moa/examples
@@ -129,6 +130,7 @@ ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC 
 	$INMOSLIBS_SRC \
 	$BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC \
+	$USEFUL_SRC $USEFUL_EXAMPLES_SRC \
 	$SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC \
 	$UDC_SRC $UDC_EXAMPLES_SRC \
@@ -142,7 +144,6 @@ ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC 
 	$OCCGL_SRC $OCCGL_EXAMPLES_SRC \
 	$OCCADE_SRC $OCCADE_EXAMPLES_SRC \
 	$BUTTON_SRC $BUTTON_EXAMPLES_SRC \
-	$USEFUL_SRC \
 	$FMTOUTLIB_SRC \
 	$MOA_SRC $MOA_EXAMPLES_SRC"
 FAILABLE_PKGS="\
@@ -269,6 +270,7 @@ choices for <pkg> are:
   inmoslibs                    inmos libraries
   bsclib                       blocking system call libraries
   course                       UKC course library
+  useful                       general utility module
   syncs                        additional synchronisation primatives
   dynproc                      dynamic occam processes
   udc                          user-defined channels
@@ -283,7 +285,6 @@ choices for <pkg> are:
   occade                       arcade game development module
   button                       OpenGL buttons module
   pony                         pony (kroc-net) networking infrastructure
-  useful                       general utility module
   fmtoutlib                    formatted output module
   moa                          MySQL bindings module
   doc                          documentation
@@ -292,6 +293,7 @@ choices for <pkg> are:
     bsclib_examples            blocking system calls example programs
     course_examples            UKC course example programs
     course_answers             UKC course sample answers
+    useful_examples            useful example programs
     syncs_examples             additional synchronistaion example programs
     dynproc_examples           dynamic occam process examples
     udc_examples               user-defined channels examples
@@ -1709,6 +1711,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-inmoslibs make-inmoslibs install-inmoslibs \
 		configure-bsclib make-bsclib install-bsclib \
 		configure-course make-course install-course \
+		configure-useful make-useful install-useful \
 		configure-cif make-cif install-cif \
 		configure-occsdl make-occsdl install-occsdl \
 		configure-raster make-raster install-raster \
@@ -1716,7 +1719,6 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-occgl make-occgl install-occgl \
 		configure-occade make-occade install-occade \
 		configure-button make-button install-button \
-		configure-useful make-useful install-useful \
 		configure-fmtoutlib make-fmtoutlib install-fmtoutlib \
 		configure-moa make-moa install-moa \
 		configure-syncs make-syncs install-syncs"
@@ -1746,6 +1748,7 @@ EXAMPLE_ACTIONS="building-examples bsyscalls-support cputimers-support dynproc-s
 		configure-bsclib_examples make-bsclib_examples install-bsclib_examples \
 		configure-course_examples make-course_examples install-course_examples \
 		configure-course_answers make-course_answers install-course_answers \
+		configure-useful_examples make-useful_examples install-useful_examples \
 		configure-syncs_examples make-syncs_examples install-syncs_examples \
 		configure-dynproc_examples make-dynproc_examples install-dynproc_examples \
 		configure-cif_examples make-cif_examples install-cif_examples \
@@ -1824,14 +1827,14 @@ for action in $ACTIONLIST; do
 	X*)
 		FOUND=0
 
-		for x in inmoslibs bsclib course course_answers syncs dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony useful fmtoutlib moa occamdoc; do
+		for x in inmoslibs bsclib course course_answers useful syncs dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony fmtoutlib moa occamdoc; do
 			if [ "X$x" = "X$action" ]; then
 				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
 			fi
 		done
 
-		for x in bsclib course course syncs dynproc udc bar game cif raster sdlraster occsdl occgl occade button pony moa; do
+		for x in bsclib course course useful syncs dynproc udc bar game cif raster sdlraster occsdl occgl occade button pony moa; do
 			if [ "X${x}_examples" = "X$action" ]; then
 				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
@@ -2319,6 +2322,11 @@ for action in $ACTIONLIST; do
 			PKG_SRC=$COURSE_ANSWERS_SRC
 			;;
 			#}}}
+			#{{{  useful_examples: useful example programs
+		Xuseful_examples)
+			PKG_SRC=$USEFUL_EXAMPLES_SRC
+			;;
+			#}}}
 			#{{{  syncs_examples: synchronisation examples
 		Xsyncs_examples)
 			PKG_SRC=$SYNCS_EXAMPLES_SRC
@@ -2421,6 +2429,11 @@ for action in $ACTIONLIST; do
 			PKG_SRC=$COURSE_SRC
 			;;
 			#}}}
+			#{{{  useful: general utility library
+		Xuseful)
+			PKG_SRC=$USEFUL_SRC
+			;;
+			#}}}
 			#{{{  syncs: additional synchronisations
 		Xsyncs)
 			PKG_SRC=$SYNCS_SRC
@@ -2478,11 +2491,6 @@ for action in $ACTIONLIST; do
 			#{{{  pony: kroc-net/pony network infrastructure
 		Xpony)
 			PKG_SRC=$PONY_SRC
-			;;
-			#}}}
-			#{{{  useful: general utility library
-		Xuseful)
-			PKG_SRC=$USEFUL_SRC
 			;;
 			#}}}
 			#{{{  fmtoutlib: formatted output library
