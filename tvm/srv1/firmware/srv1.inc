@@ -5,6 +5,8 @@
 --{{{  Errors
 VAL INT ERROR.INV.PARAM   IS -1: -- invalid parameter (e.g. camera mode)
 VAL INT ERROR.INV.STATE   IS -2: -- invalid state (e.g. camera stopped)
+VAL INT ERROR.HARDWARE    IS -3: -- hardware error (e.g. camera got upset)
+VAL INT ERROR.NO.MEMORY   IS -4: -- not enough space/memory
 VAL INT ERROR.UNKNOWN     IS 0:
 --}}}
 --{{{  Timing

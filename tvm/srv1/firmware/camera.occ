@@ -24,6 +24,9 @@ PROC camera (CAMERA? svr)
   CHAN INT camera.mode:
   PLACE camera.mode AT #2:
 
+  CHAN INT camera.error:
+  PLACE camera.error AT #2:
+
   CHAN MOBILE []BYTE camera.data:
   PLACE camera.data AT #2:
 
@@ -42,7 +45,24 @@ PROC camera (CAMERA? svr)
               MOBILE []BYTE data:
               SEQ
                 camera.data ? data
-                svr[re] ! frame; data
+                IF
+                  (SIZE data) = 0
+                    -- Frame empty; error
+                    INT error:
+                    SEQ
+                      camera.error ? error
+                      IF
+                        error = 0
+                          svr[re] ! error; ERROR.NO.MEMORY
+                        TRUE
+                          SEQ
+                            svr[re] ! error; ERROR.HARDWARE
+                      
+                      mode := CAMERA.OFF
+                      camera.mode ! mode
+                  TRUE
+                    -- No error; pass frame
+                    svr[re] ! frame; data
             TRUE
               svr[re] ! error; ERROR.INV.STATE
 
