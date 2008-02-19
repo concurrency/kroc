@@ -13,27 +13,28 @@ PROC get.image(CAMERA! camera, CHAN MOBILE []BYTE frames!)
       SEQ
         camera[req] ! get.frame
         camera[rsp] ? CASE frame; frame
+        frames ! frame
 :
 
-DATA TYPE YUYV
+DATA TYPE UYVY
   PACKED RECORD
-    BYTE y.0:
     BYTE u:
-    BYTE y.1:
+    BYTE y.0:
     BYTE v:
+    BYTE y.1:
 :
 
 PROC avg.luma (VAL []BYTE frame, RESULT INT avg.luma)
-  VAL []YUYV image RETYPES frame:
+  VAL []UYVY image RETYPES frame:
   -- Set the start position at 1/16 offset of both width and height.
-  VAL INT start.pos IS ((SIZE image) >> 3) + (width >> 3):
+  VAL INT start.pos IS ((SIZE image) >> 4) + (width >> 3):
   SEQ
     avg.luma := 0
     -- Step 1/8's across the height of the image.
-    SEQ y = start.pos FOR 8 STEP ((SIZE image) >> 2)
+    SEQ y = start.pos FOR 8 STEP ((SIZE image) >> 3)
       -- Step 1/8's across the width of the image.
       SEQ pos = y FOR 8 STEP (width >> 2)
-        VAL YUYV pixel IS image[pos]:
+        VAL pixel IS image[pos]:
         SEQ
           avg.luma := avg.luma + (INT pixel[y.0])
     -- Divide by 64, the number of sampled pixels.
@@ -50,9 +51,9 @@ PROC is.dark(CHAN BYTE c.out!, CHAN MOBILE[] BYTE frames?, CHAN BOOL dark!)
       frames ? frame
       -- Check for darkness, store result in this.
       avg.luma(frame, avg)
-      out.string("Average: ", 0, c.out!)
-      out.int(avg, 0, c.out!)
-      c.out ! '*n'
+      --out.string("Average: ", 0, c.out!)
+      --out.int(avg, 0, c.out!)
+      --c.out ! '*n'
       this := (avg < 64)
       IF
         this <> last
