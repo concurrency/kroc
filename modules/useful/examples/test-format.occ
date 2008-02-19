@@ -3,13 +3,13 @@
 PROC main (SHARED CHAN BYTE out!)
   MOBILE []BYTE s:
   SEQ
-    prints.s (out!, "Hello, world!*n")
+    prints.s ("Hello, world!*n", out!)
     SEQ i = 1 FOR 5
-      prints.isin (out!, i, " squared is ", i * i)
+      prints.isin (i, " squared is ", i * i, out!)
 
     CLAIM out!
-      print.ssin (out!, "hello, ", "world ", 42)
+      print.ssin ("hello, ", "world ", 42, out!)
 
-    format.sin (s, "life = ", 42)
-    prints.s (out!, s)
+    format.sin ("life = ", 42, s)
+    prints.s (s, out!)
 :
