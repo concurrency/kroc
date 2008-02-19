@@ -67,10 +67,19 @@ CHAN TYPE CAMERA
 --}}}
 
 --{{{  CONSOLE
+--{{{  P.CONSOLE.CMD:
+PROTOCOL P.CONSOLE.CMD
+  CASE
+    disconnected  = 0
+    bulk.out      = 1; INT; MOBILE []BYTE
+:
+--}}}
+--}}}
 CHAN TYPE CONSOLE
   MOBILE RECORD
-    CHAN BYTE in!:
-    CHAN BYTE out?:
+    CHAN BYTE           in!:
+    CHAN BYTE           out?:
+    CHAN P.CONSOLE.CMD  cmd?:
 :
 --}}}
 
@@ -157,8 +166,7 @@ CHAN TYPE SYSTEM
 #PRAGMA EXTERNAL "PROC C.tvmspecial.4.set.register.16 (VAL INT addr, set, mask) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.5.jpeg.encode.frame (VAL INT width, height, quality, VAL []BYTE input, []BYTE output, INT used) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.6.draw.caption.on.frame (VAL INT frame.width, VAL []BYTE caption, []BYTE frame) = 0"
-#PRAGMA EXTERNAL "PROC C.tvmspecial.7.blit.to.uart0 (VAL []BYTE data) = 0"
-#PRAGMA EXTERNAL "PROC C.tvmspecial.8.test.disconnected (CHAN OF ANY c, BOOL b) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.7.test.disconnected (CHAN OF ANY c, BOOL b) = 0"
 --}}}
 --{{{  Wrappers
 INLINE PROC firmware.run.user (VAL []BYTE bytecode, VAL INT ws, vs, ms, CAMERA! camera, CONSOLE! console, LASER! laser, MOTOR! motor, SYSTEM! system)
@@ -189,12 +197,8 @@ INLINE PROC draw.caption.on.frame (VAL INT frame.width, VAL []BYTE caption, []BY
   C.tvmspecial.6.draw.caption.on.frame (frame.width, caption, frame)
 :
 
-INLINE PROC blit.to.uart0 (VAL []BYTE data)
-  C.tvmspecial.7.blit.to.uart0 (data)
-:
-
 INLINE PROC test.disconnected (CHAN OF ANY c, BOOL b)
-  C.tvmspecial.8.test.disconnected (c, b)
+  C.tvmspecial.7.test.disconnected (c, b)
 :
 --}}}
 --}}}

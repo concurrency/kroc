@@ -84,7 +84,7 @@ PROC download.bytecode ([]BYTE bytecode, CHAN BYTE in?, out!)
     out ! '*n'
 :
 
-PROC input.tap (CHAN BYTE in?, out!, BOOL killed, CHAN BOOL shutdown?)
+PROC console.input (CHAN BYTE in?, out!, BOOL killed, CHAN BOOL shutdown?)
   INITIAL BOOL done IS FALSE:
   WHILE NOT done
     PRI ALT
@@ -110,24 +110,56 @@ PROC input.tap (CHAN BYTE in?, out!, BOOL killed, CHAN BOOL shutdown?)
             out ! b
 :
 
-PROC output.tap (CHAN BYTE in?, out!)
+PROC console.output (CHAN BYTE in?, CHAN P.CONSOLE.CMD cmd?)
+  CHAN INT::[]BYTE uart0.bulk:
+  PLACE uart0.bulk AT #0:
+
+  CHAN BYTE uart0.out:
+  PLACE uart0.out AT #0:
+
   INITIAL BOOL done IS FALSE:
   WHILE NOT done
-    BYTE b:
-    SEQ
+    PRI ALT
+      cmd ? CASE
+        disconnected
+          done := TRUE
+        MOBILE []BYTE data:
+        INT size:
+        bulk.out; size; data
+          IF
+            (DEFINED data) AND (size > 0)
+              IF
+                (size > 4) AND ((SIZE data) >= size)
+                  VAL []BYTE data IS [ data FOR size]:
+                  uart0.bulk ! size::data
+                ((SIZE data) >= size)
+                  SEQ i = 0 FOR size
+                    uart0.out ! data[i]
+                TRUE
+                  SEQ i = 0 FOR SIZE data
+                    uart0.out ! data[i]
+            TRUE
+              SKIP
+      BYTE b:
       in ? b
-      IF
-        b <> 0
-          out ! b
-        TRUE
-          CHAN OF ANY c? RETYPES in:
-          SEQ
-            test.disconnected (c, done)
-            IF
-              done
-                SKIP
-              TRUE
-                out ! b
+        IF
+          b <> 0
+            uart0.out ! b
+          TRUE
+            CHAN OF ANY c? RETYPES in:
+            SEQ
+              test.disconnected (c, done)
+              IF
+                done
+                  SKIP
+                TRUE
+                  uart0.out ! b
+:
+
+PROC console (CONSOLE? console, CHAN BYTE in?, CHAN BOOL shutdown?, BOOL killed)
+  PAR
+    console.input (in?, console[in]!, killed, shutdown?)
+    console.output (console[out]?, console[cmd]?)
 :
 
 PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN BYTE in?, out!)
@@ -150,12 +182,10 @@ PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN
     motor.cli, motor.svr      := MOBILE MOTOR
     system.cli, system.svr    := MOBILE SYSTEM
 
-    CHAN BOOL shutdown.in:
+    CHAN BOOL shutdown:
     PAR
-      input.tap (in?, console.svr[in]!, killed, shutdown.in?)
-      output.tap (console.svr[out]?, out!)
-
       camera (camera.svr?)
+      console (console.svr?, in?, shutdown?, killed)
       lasers (laser.svr?)
       motors (motor.svr?)
       system (system.svr?)
@@ -165,7 +195,7 @@ PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN
         VAL INT vs IS header[vs.size]:
         VAL INT ms IS header[ms.size]:
         firmware.run.user (bytecode, ws, vs, ms, camera.cli, console.cli, laser.cli, motor.cli, system.cli)
-        shutdown.in ! TRUE
+        shutdown ! TRUE
 :
 
 PROC report.termination (MOBILE []BYTE bytecode, VAL BOOL killed, CHAN BYTE out!)
