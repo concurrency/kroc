@@ -92,7 +92,7 @@ class ArgInt(Arg):
 	def string(self, num):
 		return "[buf%d FROM start%d]" % (num, num)
 
-maximum_args = 4
+maximum_args = 5
 arg_types = {
 	"n": ArgNewline(),
 	"s": ArgString(),
