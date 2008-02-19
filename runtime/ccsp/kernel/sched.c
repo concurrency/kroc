@@ -1998,6 +1998,7 @@ K_CALL_DEFINE_1_0 (Y_rtthreadinit)
 	memcpy (sched->calltable, ccsp_calltable, sizeof(void *) * K_MAX_SUPPORTED);
 	sched->allocator 	= allocator;
 	sched->stack		= stack;
+	sched->priofinity	= BuildPriofinity (0, (MAX_PRIORITY_LEVELS / 2));
 	
 	set_local_scheduler (sched);
 
