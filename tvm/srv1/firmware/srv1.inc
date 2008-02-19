@@ -30,8 +30,8 @@ DATA TYPE SRV.HEADER
 
 --{{{  Channel Types
 --{{{  CAMERA
---{{{  P.CAMERA.RQ
-PROTOCOL P.CAMERA.RQ
+--{{{  P.CAMERA.REQ
+PROTOCOL P.CAMERA.REQ
   CASE
     disconnected        = 0
     -- get.frame        => frame | error
@@ -48,8 +48,8 @@ PROTOCOL P.CAMERA.RQ
     stop                = 6
 :
 --}}}
---{{{  P.CAMERA.RE
-PROTOCOL P.CAMERA.RE
+--{{{  P.CAMERA.RSP
+PROTOCOL P.CAMERA.RSP
   CASE
     disconnected  = 0
     error         = 1; INT      -- error number
@@ -61,8 +61,8 @@ PROTOCOL P.CAMERA.RE
 --}}}
 CHAN TYPE CAMERA
   MOBILE RECORD
-    CHAN P.CAMERA.RQ req?:
-    CHAN P.CAMERA.RE rsp!:
+    CHAN P.CAMERA.REQ req?:
+    CHAN P.CAMERA.RSP rsp!:
 :
 --}}}
 
@@ -84,8 +84,8 @@ CHAN TYPE CONSOLE
 --}}}
 
 --{{{  LASER
---{{{  P.LASER.RQ
-PROTOCOL P.LASER.RQ
+--{{{  P.LASER.REQ
+PROTOCOL P.LASER.REQ
   CASE
     disconnected  = 0
     left          = 1; BOOL
@@ -93,22 +93,22 @@ PROTOCOL P.LASER.RQ
     all           = 3; BOOL
 :
 --}}}
---{{{  P.LASER.RE
-PROTOCOL P.LASER.RE
+--{{{  P.LASER.RSP
+PROTOCOL P.LASER.RSP
   CASE
     disconnected  = 0
 :
 --}}}
 CHAN TYPE LASER
   MOBILE RECORD
-    CHAN P.LASER.RQ req?:
-    CHAN P.LASER.RE rsp!:
+    CHAN P.LASER.REQ req?:
+    CHAN P.LASER.RSP rsp!:
 :
 --}}}
 
 --{{{  MOTOR
---{{{  P.MOTOR.RQ
-PROTOCOL P.MOTOR.RQ
+--{{{  P.MOTOR.REQ
+PROTOCOL P.MOTOR.REQ
   CASE
     disconnected  = 0
     speed         = 1; INT
@@ -118,22 +118,22 @@ PROTOCOL P.MOTOR.RQ
     stop          = 5
 :
 --}}}
---{{{  P.MOTOR.RE
-PROTOCOL P.MOTOR.RE
+--{{{  P.MOTOR.RSP
+PROTOCOL P.MOTOR.RSP
   CASE
     disconnected  = 0
 :
 --}}}
 CHAN TYPE MOTOR
   MOBILE RECORD
-    CHAN P.MOTOR.RQ req?:
-    CHAN P.MOTOR.RE rsp!:
+    CHAN P.MOTOR.REQ req?:
+    CHAN P.MOTOR.RSP rsp!:
 :
 --}}}
 
 --{{{  SYSTEM
---{{{  P.SYSTEM.RQ
-PROTOCOL P.SYSTEM.RQ
+--{{{  P.SYSTEM.REQ
+PROTOCOL P.SYSTEM.REQ
   CASE
     disconnected  = 0
     -- get.version  => version
@@ -142,8 +142,8 @@ PROTOCOL P.SYSTEM.RQ
     set.led       = 2; INT; BOOL
 :
 --}}}
---{{{  P.SYSTEM.RE
-PROTOCOL P.SYSTEM.RE
+--{{{  P.SYSTEM.RSP
+PROTOCOL P.SYSTEM.RSP
   CASE
     disconnected  = 0
     version       = 1; INT; MOBILE []BYTE -- numeric version, version string
@@ -151,8 +151,8 @@ PROTOCOL P.SYSTEM.RE
 --}}}
 CHAN TYPE SYSTEM
   MOBILE RECORD
-    CHAN P.SYSTEM.RQ req?:
-    CHAN P.SYSTEM.RE rsp!:
+    CHAN P.SYSTEM.REQ req?:
+    CHAN P.SYSTEM.RSP rsp!:
 :
 --}}}
 --}}}
