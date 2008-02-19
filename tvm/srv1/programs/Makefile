@@ -2,6 +2,7 @@ JAVAC = javac
 SKROC = skroc -L .. -L ../firmware -L ../include --blackfin --no-std-libs --keep-temp-files
 
 PROGRAMS = \
+	dark.srv \
 	camera-rgb.srv \
 	error1.srv \
 	error2.srv \

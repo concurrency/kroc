@@ -1,0 +1,81 @@
+#INCLUDE "srv1.inc"
+#INCLUDE "out.occ"
+
+VAL INT width IS 320:
+VAL INT height IS 256:
+
+PROC get.image(CAMERA! camera, CHAN MOBILE []BYTE frames!)
+  MOBILE []BYTE frame:
+  SEQ
+    camera[req] ! set.stream.mode; width; height
+    camera[rsp] ? CASE ok
+    WHILE TRUE
+      SEQ
+        camera[req] ! get.frame
+        camera[rsp] ? CASE frame; frame
+:
+
+DATA TYPE YUYV
+  PACKED RECORD
+    BYTE y.0:
+    BYTE u:
+    BYTE y.1:
+    BYTE v:
+:
+
+PROC avg.luma (VAL []BYTE frame, RESULT INT avg.luma)
+  VAL []YUYV image RETYPES frame:
+  -- Set the start position at 1/16 offset of both width and height.
+  VAL INT start.pos IS ((SIZE image) >> 3) + (width >> 3):
+  SEQ
+    avg.luma := 0
+    -- Step 1/8's across the height of the image.
+    SEQ y = start.pos FOR 8 STEP ((SIZE image) >> 2)
+      -- Step 1/8's across the width of the image.
+      SEQ pos = y FOR 8 STEP (width >> 2)
+        VAL YUYV pixel IS image[pos]:
+        SEQ
+          avg.luma := avg.luma + (INT pixel[y.0])
+    -- Divide by 64, the number of sampled pixels.
+    avg.luma := avg.luma >> 6
+:
+
+PROC is.dark(CHAN BYTE c.out!, CHAN MOBILE[] BYTE frames?, CHAN BOOL dark!)
+  MOBILE []BYTE frame:
+  INITIAL BOOL last IS FALSE:
+  WHILE TRUE
+    INT avg:
+    BOOL this:
+    SEQ
+      frames ? frame
+      -- Check for darkness, store result in this.
+      avg.luma(frame, avg)
+      out.string("Average: ", 0, c.out!)
+      out.int(avg, 0, c.out!)
+      c.out ! '*n'
+      this := (avg < 64)
+      IF
+        this <> last
+          SEQ
+            last := this
+            dark ! this
+        TRUE
+          SKIP
+:
+
+PROC control.lasers (CHAN BOOL is.dark?, LASER! lasers)
+  BOOL dark:
+  WHILE TRUE
+    SEQ
+      is.dark ? dark
+      lasers[req] ! all; dark
+:
+
+PROC dark (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTEM! system)
+  CHAN BOOL dark:
+  CHAN MOBILE []BYTE frames:
+  PAR
+    get.image (camera, frames!)
+    is.dark (console[out]!, frames?, dark!)
+    control.lasers (dark?, lasers)
+:
