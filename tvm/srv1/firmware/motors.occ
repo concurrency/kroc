@@ -80,7 +80,7 @@ PROC motors (MOTOR? svr)
     WHILE NOT done
       SEQ
         INT n:
-        svr[rq] ? CASE
+        svr[req] ? CASE
           disconnected
             done, l.speed, r.speed := TRUE, 0, 0
           speed; n
