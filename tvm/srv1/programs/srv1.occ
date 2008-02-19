@@ -34,7 +34,7 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
   INITIAL BOOL overlay IS TRUE:
   INITIAL INT quality IS 3:
   SEQ
-    camera[rq] ! set.mode; 320; 256
+    camera[rq] ! set.stream.mode; 320; 256
     camera[re] ? CASE ok
 
     WHILE TRUE
@@ -90,25 +90,25 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
           'a'
             SEQ
               width, height := 160, 128
-              camera[rq] ! set.mode; width; height
+              camera[rq] ! set.stream.mode; width; height
               camera[re] ? CASE ok
           -- Set camera resolution to 320x256
           'b'
             SEQ
               width, height := 320, 256
-              camera[rq] ! set.mode; width; height
+              camera[rq] ! set.stream.mode; width; height
               camera[re] ? CASE ok
           -- Set camera resolution to 640x512
           'c'
             SEQ
               width, height := 640, 512
-              camera[rq] ! set.mode; width; height
+              camera[rq] ! set.stream.mode; width; height
               camera[re] ? CASE ok
           -- Set camera resolution to 1280x1024
           'A'
             SEQ
               width, height := 1280, 1024
-              camera[rq] ! set.mode; width; height
+              camera[rq] ! set.capture.mode; width; height
               camera[re] ? CASE ok
           -- Grab JPEG compressed video frame
           'I'

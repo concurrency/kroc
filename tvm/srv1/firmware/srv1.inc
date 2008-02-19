@@ -33,27 +33,30 @@ DATA TYPE SRV.HEADER
 --{{{  P.CAMERA.RQ
 PROTOCOL P.CAMERA.RQ
   CASE
-    disconnected  = 0
-    -- get.frame  => frame | error
-    get.frame     = 1
-    -- get.mode   => mode | error
-    get.mode      = 2
-    -- init       => (no response)
-    init          = 3
-    -- set.mode   => ok | error
-    set.mode      = 4; INT; INT -- width, height
-    -- stop       => (no response)
-    stop          = 5
+    disconnected        = 0
+    -- get.frame        => frame | error
+    get.frame           = 1
+    -- get.mode         => capture.mode | stream.mode | error
+    get.mode            = 2
+    -- init             => (no response)
+    init                = 3
+    -- set.capture.mode => ok | error
+    set.capture.mode    = 4; INT; INT -- width, height
+    -- set.stream.mode  => ok | error
+    set.stream.mode     = 5; INT; INT -- width, height
+    -- stop             => (no response)
+    stop                = 6
 :
 --}}}
 --{{{  P.CAMERA.RE
 PROTOCOL P.CAMERA.RE
   CASE
     disconnected  = 0
-    error         = 1; INT -- error number
+    error         = 1; INT      -- error number
     frame         = 2; MOBILE []BYTE
-    mode          = 3; INT; INT -- width, height
-    ok            = 4
+    capture.mode  = 3; INT; INT -- width, height
+    stream.mode   = 4; INT; INT -- width, height
+    ok            = 5
 :
 --}}}
 CHAN TYPE CAMERA
@@ -70,7 +73,6 @@ CHAN TYPE CONSOLE
     CHAN BYTE out?:
 :
 --}}}
-
 
 --{{{  LASER
 --{{{  P.LASER.RQ

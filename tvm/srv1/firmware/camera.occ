@@ -6,11 +6,12 @@ VAL INT CAMERA.160.128    IS 1:
 VAL INT CAMERA.320.256    IS 2:
 VAL INT CAMERA.640.512    IS 3:
 VAL INT CAMERA.1280.1024  IS 4:
+VAL INT CAMERA.ONE.SHOT   IS #10:
 
 DATA TYPE CAMERA.MODE
   RECORD
-    INT x:
-    INT y:
+    INT w:
+    INT h:
     INT mode:
 :
 
@@ -20,6 +21,20 @@ PROC camera (CAMERA? svr)
                                 [ 320,  256, CAMERA.320.256  ],
                                 [ 640,  512, CAMERA.640.512  ],
                                 [1280, 1024, CAMERA.1280.1024]]:
+  
+  BOOL, INT FUNCTION find.mode (VAL INT w, h)
+    BOOL found:
+    INT mode:
+    VALOF
+      IF
+        IF i = 0 FOR SIZE modes
+          VAL CAMERA.MODE m IS modes[i]:
+          (m[w] = w) AND (m[h] = h)
+            found, mode := TRUE, m[mode]
+        TRUE
+          found, mode := FALSE, CAMERA.OFF
+      RESULT found, mode
+  :
 
   CHAN INT camera.mode:
   PLACE camera.mode AT #2:
@@ -31,7 +46,7 @@ PROC camera (CAMERA? svr)
   PLACE camera.data AT #2:
 
   INITIAL INT mode        IS CAMERA.OFF:
-  INITIAL INT frame.size  IS 0:
+  INITIAL BOOL stream     IS FALSE:
   SEQ
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
@@ -46,7 +61,10 @@ PROC camera (CAMERA? svr)
               SEQ
                 camera.data ? data
                 IF
-                  (SIZE data) = 0
+                  DEFINED data
+                    -- No error; pass frame
+                    svr[re] ! frame; data
+                  TRUE
                     -- Frame empty; error
                     INT error:
                     SEQ
@@ -60,9 +78,6 @@ PROC camera (CAMERA? svr)
                       
                       mode := CAMERA.OFF
                       camera.mode ! mode
-                  TRUE
-                    -- No error; pass frame
-                    svr[re] ! frame; data
             TRUE
               svr[re] ! error; ERROR.INV.STATE
 
@@ -71,7 +86,11 @@ PROC camera (CAMERA? svr)
             IF i = 0 FOR SIZE modes
               VAL CAMERA.MODE m IS modes[i]:
               m[mode] = mode
-                svr[re] ! mode; m[x]; m[y]
+                IF
+                  stream
+                    svr[re] ! stream.mode; m[w]; m[h]
+                  TRUE
+                    svr[re] ! capture.mode; m[w]; m[h]
             TRUE
               svr[re] ! error; ERROR.INV.STATE
 
@@ -81,19 +100,35 @@ PROC camera (CAMERA? svr)
             camera.mode ! mode
             mode := CAMERA.OFF
 
-        INT x, y:
-        set.mode; x; y
-          IF
-            IF i = 0 FOR SIZE modes
-              VAL CAMERA.MODE m IS modes[i]:
-              (m[x] = x) AND (m[y] = y)
+        INT w, h:
+        set.capture.mode; w; h
+          BOOL found:
+          INT new.mode:
+          SEQ
+            found, new.mode := find.mode (w, h)
+            IF
+              found
                 SEQ
-                  mode := m[mode]
-                  frame.size := (x * y) * 2
+                  mode, stream := new.mode, FALSE
+                  camera.mode ! mode \/ CAMERA.ONE.SHOT
+                  svr[re] ! ok
+              TRUE
+                svr[re] ! error; ERROR.INV.PARAM
+
+        INT w, h:
+        set.stream.mode; w; h
+          BOOL found:
+          INT new.mode:
+          SEQ
+            found, new.mode := find.mode (w, h)
+            IF
+              found
+                SEQ
+                  mode, stream := new.mode, TRUE
                   camera.mode ! mode
                   svr[re] ! ok
-            TRUE
-              svr[re] ! error; ERROR.INV.PARAM
+              TRUE
+                svr[re] ! error; ERROR.INV.PARAM
 
         stop
           SEQ
