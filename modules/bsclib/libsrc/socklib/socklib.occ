@@ -328,7 +328,8 @@ PROC socket.connect (SOCKET sock, INT result)
 --   by the kernel while the program is not accepting them; most
 --   operating systems impose arbitrary limits on this, so changing it
 --   will have little effect
--- @param result [@code -1] if an error occured, [@code 0] otherwise
+-- @param result [@code -1] if an error occured, otherwise the file descriptor
+--   of the accepted socket
 PROC socket.listen (SOCKET sock, VAL INT backlog, INT result)
   SEQ
     C.sl.listen (sock, backlog, result)
