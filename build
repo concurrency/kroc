@@ -89,8 +89,6 @@ COURSE_EXAMPLES_SRC=modules/course/examples
 COURSE_ANSWERS_SRC=modules/course/answers
 USEFUL_SRC=modules/useful/libsrc
 USEFUL_EXAMPLES_SRC=modules/useful/examples
-SYNCS_SRC=modules/syncs/libsrc
-SYNCS_EXAMPLES_SRC=modules/syncs/examples
 DYNPROC_SRC=modules/dynproc/libsrc
 DYNPROC_EXAMPLES_SRC=modules/dynproc/examples
 DEMO_BAR_SRC=demos/bar
@@ -131,7 +129,6 @@ ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC 
 	$BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC \
 	$USEFUL_SRC $USEFUL_EXAMPLES_SRC \
-	$SYNCS_SRC $SYNCS_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC \
 	$UDC_SRC $UDC_EXAMPLES_SRC \
 	$CIF_SRC $CIF_EXAMPLES_SRC \
@@ -271,7 +268,6 @@ choices for <pkg> are:
   bsclib                       blocking system call libraries
   course                       UKC course library
   useful                       general utility module
-  syncs                        additional synchronisation primatives
   dynproc                      dynamic occam processes
   udc                          user-defined channels
   manpages                     man-page based documentation
@@ -294,7 +290,6 @@ choices for <pkg> are:
     course_examples            UKC course example programs
     course_answers             UKC course sample answers
     useful_examples            useful example programs
-    syncs_examples             additional synchronistaion example programs
     dynproc_examples           dynamic occam process examples
     udc_examples               user-defined channels examples
     bar_demo                   animated ALT demonstrator
@@ -1720,8 +1715,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-occade make-occade install-occade \
 		configure-button make-button install-button \
 		configure-fmtoutlib make-fmtoutlib install-fmtoutlib \
-		configure-moa make-moa install-moa \
-		configure-syncs make-syncs install-syncs"
+		configure-moa make-moa install-moa"
 	if [ "$USEUDC" -eq 1 ]; then
 		# conditional on the "--with-udc" flag
 		ACTIONLIST="$ACTIONLIST \
@@ -1749,7 +1743,6 @@ EXAMPLE_ACTIONS="building-examples bsyscalls-support cputimers-support dynproc-s
 		configure-course_examples make-course_examples install-course_examples \
 		configure-course_answers make-course_answers install-course_answers \
 		configure-useful_examples make-useful_examples install-useful_examples \
-		configure-syncs_examples make-syncs_examples install-syncs_examples \
 		configure-dynproc_examples make-dynproc_examples install-dynproc_examples \
 		configure-cif_examples make-cif_examples install-cif_examples \
 		configure-bar_demo make-bar_demo install-bar_demo \
@@ -1827,14 +1820,14 @@ for action in $ACTIONLIST; do
 	X*)
 		FOUND=0
 
-		for x in inmoslibs bsclib course course_answers useful syncs dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony fmtoutlib moa occamdoc; do
+		for x in inmoslibs bsclib course course_answers useful dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony fmtoutlib moa occamdoc; do
 			if [ "X$x" = "X$action" ]; then
 				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
 			fi
 		done
 
-		for x in bsclib course course useful syncs dynproc udc bar game cif raster sdlraster occsdl occgl occade button pony moa; do
+		for x in bsclib course course useful dynproc udc bar game cif raster sdlraster occsdl occgl occade button pony moa; do
 			if [ "X${x}_examples" = "X$action" ]; then
 				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
@@ -2327,11 +2320,6 @@ for action in $ACTIONLIST; do
 			PKG_SRC=$USEFUL_EXAMPLES_SRC
 			;;
 			#}}}
-			#{{{  syncs_examples: synchronisation examples
-		Xsyncs_examples)
-			PKG_SRC=$SYNCS_EXAMPLES_SRC
-			;;
-			#}}}
 			#{{{  dynproc_examples: dynamic loadable process examples
 		Xdynproc_examples)
 			if [ "$HAVE_DYNPROC_SUPPORT" = "1" ]; then
@@ -2432,11 +2420,6 @@ for action in $ACTIONLIST; do
 			#{{{  useful: general utility library
 		Xuseful)
 			PKG_SRC=$USEFUL_SRC
-			;;
-			#}}}
-			#{{{  syncs: additional synchronisations
-		Xsyncs)
-			PKG_SRC=$SYNCS_SRC
 			;;
 			#}}}
 			#{{{  dynproc: dynamic loadable processes

@@ -1,9 +1,0 @@
-
-These are all occam `include' source files.  To use, for example, BUCKET,
-we just need:
-
-  #INCLUDE "bucket.inc"
-
-in your source code.  The compiler will find it automatically.
-
-Peter Welch.
