@@ -1,6 +1,7 @@
 --
 --	pingdemo.occ - execute program (ping localhost) for 5 seconds then kill it
---	Copyright (C) 2000 Fred Barnes <frmb2@ukc.ac.uk>
+--	Copyright (C) 2000-2008 Fred Barnes <frmb@kent.ac.uk>
+--      Modifications (C) 2008 Tom Carlson
 --
 --	This program is free software; you can redistribute it and/or modify
 --	it under the terms of the GNU General Public License as published by
@@ -19,7 +20,7 @@
 
 #INCLUDE "proc.module"
 
-PROC pingdemo (CHAN OF BYTE kyb, scr, err)
+PROC pingdemo (CHAN BYTE kyb?, scr!, err!)
   [2][9]BYTE command:
   INT result:
   [1]ENVIRONMENT env:
@@ -31,11 +32,11 @@ PROC pingdemo (CHAN OF BYTE kyb, scr, err)
     [command[0] FOR 4] := "ping"
     [command[1] FOR 9] := "localhost"
     --}}}  
-    CHAN OF BOOL kill.chan:
-    CHAN OF INT result.chan:
+    CHAN BOOL kill.chan:
+    CHAN INT result.chan:
     PAR
       --{{{  blocking call (run ping)
-      proc.altable.wrapper (kill.chan, result.chan, [env FOR 0], command, kyb, scr, err, result)
+      proc.altable.wrapper (kill.chan?, result.chan!, [env FOR 0], command, kyb?, scr!, err!, result!)
       --}}}  
       --{{{  catch completion or timeout
       TIMER tim:

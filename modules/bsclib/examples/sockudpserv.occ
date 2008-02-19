@@ -20,71 +20,69 @@
 #INCLUDE "sock.module"
 #INCLUDE "course.module"
 
+--{{{  config constants
+VAL listen.addr IS INADDR.ANY:
+VAL listen.port IS 6969:
+--}}}  
 
---{{{  PROC sock.udp.serv (CHAN OF BYTE kyb, scr, err)
-PROC sock.udp.serv (CHAN OF BYTE kyb, scr, err)
+--{{{  constants
+VAL max.message.size IS 64:
+VAL msg.x IS 2:
+VAL msg.y IS 2:
+VAL err.x IS 2:
+VAL err.y IS 3:
+VAL []BYTE recvfrom.err IS "socket.recvfrom () failed":
+--}}}  
 
-  --{{{  config constants
-  VAL listen.addr IS INADDR.ANY:
-  VAL listen.port IS 6969:
-  --}}}  
+--{{{  PROC udp.receiver (SOCKET sock, CHAN BYTE out!)
+PROC udp.receiver (SOCKET sock, CHAN BYTE out!)
+  [max.message.size]BYTE buffer:
+  INITIAL INT msg.len IS 1:
+  WHILE msg.len > 0
+    SEQ
+      socket.recvfrom (sock, buffer, 0, msg.len)
+      IF
+        msg.len > 0
+          [128]BYTE hostname:
+          [16]BYTE ip.addr:
+          INT host.len, ip.len, res:
+          SEQ
+            socket.host.of.addr (sock[remote.addr], hostname, host.len, res)
+            IF
+              res < 0
+                [hostname FOR 7], host.len := "unknown", 7
+              TRUE
+                SKIP
+            socket.ip.of.addr (sock[remote.addr], ip.addr, ip.len, res)
+            IF
+              res < 0
+                [ip.addr FOR 7], ip.len := "?.?.?.?", 7
+              TRUE
+                SKIP
+            cursor.x.y (BYTE msg.x, BYTE msg.y, out!)
+            erase.eol (out!)
+            cursor.x.y (BYTE msg.x, BYTE msg.y, out!)
+            out ! '['
+            out.string ([buffer FOR msg.len], 0, out!)
+            out.string ("] from ", 0, out!)
+            out.string ([hostname FOR host.len], 0, out!)
+            out.string (" (", 0, out!)
+            out.string ([ip.addr FOR ip.len], 0, out!)
+            out.string (")*n", 0, out!)
+            out ! FLUSH
+        TRUE
+          SEQ
+            cursor.x.y (BYTE err.x, BYTE err.y, out!)
+            erase.eol (out!)
+            cursor.x.y (BYTE err.x, BYTE err.y, out!)
+            out.string (recvfrom.err, 0, out!)
+            out ! '*n'
+            out ! FLUSH
+:
+--}}}
 
-  --{{{  constants
-  VAL max.message.size IS 64:
-  VAL msg.x IS 2:
-  VAL msg.y IS 2:
-  VAL err.x IS 2:
-  VAL err.y IS 3:
-  VAL []BYTE recvfrom.err IS "socket.recvfrom () failed":
-  --}}}  
-
-  --{{{  PROC udp.receiver (SOCKET sock, CHAN OF BYTE out)
-  PROC udp.receiver (SOCKET sock, CHAN OF BYTE out)
-    [max.message.size]BYTE buffer:
-    INITIAL INT msg.len IS 1:
-    WHILE msg.len > 0
-      SEQ
-        socket.recvfrom (sock, buffer, 0, msg.len)
-        IF
-          msg.len > 0
-            [128]BYTE hostname:
-            [16]BYTE ip.addr:
-            INT host.len, ip.len, res:
-            SEQ
-              socket.host.of.addr (sock[remote.addr], hostname, host.len, res)
-              IF
-                res < 0
-                  [hostname FOR 7], host.len := "unknown", 7
-                TRUE
-                  SKIP
-              socket.ip.of.addr (sock[remote.addr], ip.addr, ip.len, res)
-              IF
-                res < 0
-                  [ip.addr FOR 7], ip.len := "?.?.?.?", 7
-                TRUE
-                  SKIP
-              cursor.x.y (BYTE msg.x, BYTE msg.y, out)
-              erase.eol (out)
-              cursor.x.y (BYTE msg.x, BYTE msg.y, out)
-              out ! '['
-              out.string ([buffer FOR msg.len], 0, out)
-              out.string ("] from ", 0, out)
-              out.string ([hostname FOR host.len], 0, out)
-              out.string (" (", 0, out)
-              out.string ([ip.addr FOR ip.len], 0, out)
-              out.string (")*n", 0, out)
-              out ! FLUSH
-          TRUE
-            SEQ
-              cursor.x.y (BYTE err.x, BYTE err.y, out)
-              erase.eol (out)
-              cursor.x.y (BYTE err.x, BYTE err.y, out)
-              out.string (recvfrom.err, 0, out)
-              out ! '*n'
-              out ! FLUSH
-  :
-  --}}}  
-
+--{{{  PROC sock.udp.serv (CHAN BYTE kyb?, scr!, err!)
+PROC sock.udp.serv (CHAN BYTE kyb?, scr!, err!)
   --{{{  start here
   INT res:
   SOCKET sock:
@@ -93,15 +91,15 @@ PROC sock.udp.serv (CHAN OF BYTE kyb, scr, err)
     IF
       res < 0
         SEQ
-          out.string ("Unable to create or bind socket*n", 0, scr)
+          out.string ("Unable to create or bind socket*n", 0, scr!)
           STOP
       TRUE
         SKIP
-    erase.screen (scr)
+    erase.screen (scr!)
     scr ! FLUSH
-    udp.receiver (sock, scr)
+    udp.receiver (sock, scr!)
     socket.close (sock)
-  --}}}  
+  --}}}
 
 :
 --}}}  
