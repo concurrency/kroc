@@ -112,8 +112,7 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
               camera[re] ? CASE ok
           -- Grab JPEG compressed video frame
           'I'
-            MOBILE []BYTE frame:
-            [(1280 * 1024) * 2]BYTE jpeg.data:
+            MOBILE []BYTE frame, jpeg.data:
             INITIAL [10]BYTE header IS "##IMJ00000":
             INT jpeg.bytes:
             SEQ
@@ -129,6 +128,7 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
                     draw.caption.on.frame (width, caption, frame)
                 TRUE
                   SKIP
+              jpeg.data := MOBILE [(SIZE frame) >> 2]BYTE
               jpeg.encode.frame (width, height, quality, frame, jpeg.data, jpeg.bytes)
               CASE width
                 80
@@ -145,8 +145,9 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
               [4]BYTE size RETYPES jpeg.bytes:
               SEQ i = 0 FOR 4
                 header[6 + i] := size[i]
-              blit.to.uart0 (header)
-              blit.to.uart0 ([ jpeg.data FOR jpeg.bytes ])
+              SEQ i = 0 FOR SIZE header
+                console[out] ! header[i]
+              console[cmd] ! bulk.out; jpeg.bytes; jpeg.data
               drain.uart (console[in]?)
 
               frame.count := frame.count + 1

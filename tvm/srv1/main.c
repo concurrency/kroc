@@ -221,25 +221,14 @@ static void uart0_send_string (unsigned char *str)
 
 static int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
 {
-	unsigned char data = (unsigned char) read_byte (pointer);
-
-	uart0_send_char (data);
-
-	return ECTX_CONTINUE;
-}
-
-/* PROC blit.to.uart0 (VAL []BYTE data) */
-static int blit_to_uart0 (ECTX ectx, WORD args[])
-{
-	BYTEPTR src	= (BYTEPTR) args[0];
-	WORD	src_len	= args[1];
-
-	while (src_len--) {
-		uart0_send_char (read_byte (src));
-		src = byteptr_plus (src, 1);
+	if (count != 4) {
+		while (count--) {
+			uart0_send_char (read_byte (pointer));
+			pointer = byteptr_plus (pointer, 1);
+		}
 	}
 
-	return SFFI_OK;
+	return ECTX_CONTINUE;
 }
 /*}}}*/
 
@@ -1026,7 +1015,6 @@ static SFFI_FUNCTION	firmware_sffi_table[] = {
 	set_register_16,
 	jpeg_encode_frame,
 	draw_caption_on_frame,
-	blit_to_uart0,
 	test_disconnected
 };
 static const int	firmware_sffi_table_length =
@@ -1040,7 +1028,6 @@ static SFFI_FUNCTION	user_sffi_table[] = {
 	set_register_16,
 	jpeg_encode_frame,
 	draw_caption_on_frame,
-	blit_to_uart0,
 	test_disconnected
 };
 static const int	user_sffi_table_length =
@@ -1050,7 +1037,7 @@ static const int	user_sffi_table_length =
 /*{{{  Firmware context */
 #include "firmware.h"
 
-static WORD firmware_memory[256];
+static WORD firmware_memory[272];
 
 static void init_firmware_memory (void)
 {
