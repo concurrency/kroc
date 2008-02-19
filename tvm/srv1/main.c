@@ -221,7 +221,11 @@ static void uart0_send_string (unsigned char *str)
 
 static int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
 {
-	if (count != 4) {
+	/* If count is the size of a word then throw away data,
+	 * as it will be the count from a counted array
+	 * output.  This should change in future.
+	 */
+	if (count != sizeof(WORD)) {
 		while (count--) {
 			uart0_send_char (read_byte (pointer));
 			pointer = byteptr_plus (pointer, 1);
