@@ -12,7 +12,7 @@ AC_CHECK_TOOL(KROC,kroc)
 OCCAM_OCCBUILD
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([dynproc.module course.module file.module semaphore.module], ,
+OCCAM_INCLUDE([dynproc.module course.module file.module], ,
               [AC_MSG_ERROR(Required modules not found)])
 
 dnl Checks for operating system features.

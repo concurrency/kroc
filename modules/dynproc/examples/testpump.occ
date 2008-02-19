@@ -19,7 +19,6 @@
 
 
 #INCLUDE "dynproc.module"
-#INCLUDE "semaphore.module"
 #INCLUDE "course.module"
 
 
@@ -51,8 +50,8 @@ PROC term.plex (CHAN OF BOOL in, []CHAN OF BOOL out)
 :
 --}}}  
 
---{{{  PROC kbd.feed (CHAN OF BYTE in, CHAN OF BOOL terminate, CHAN OF INT to.pump, CHAN OF BOOL to.flush, done.flush, CHAN OF BYTE to.screen, SEMAPHORE screen.sem)
-PROC kbd.feed (CHAN OF BYTE in, CHAN OF BOOL terminate, CHAN OF INT to.pump, CHAN OF BOOL to.flush, done.flush, CHAN OF BYTE to.screen, SEMAPHORE screen.sem)
+--{{{  PROC kbd.feed (CHAN OF BYTE in, CHAN OF BOOL terminate, CHAN OF INT to.pump, CHAN OF BOOL to.flush, done.flush, SHARED CHAN BYTE to.screen!)
+PROC kbd.feed (CHAN OF BYTE in, CHAN OF BOOL terminate, CHAN OF INT to.pump, CHAN OF BOOL to.flush, done.flush, SHARED CHAN BYTE to.screen!)
   BYTE ch:
   INITIAL BOOL running IS TRUE:
   INITIAL INT e.count IS 0:
@@ -62,23 +61,23 @@ PROC kbd.feed (CHAN OF BYTE in, CHAN OF BOOL terminate, CHAN OF INT to.pump, CHA
       IF
         just.flushed
           SEQ
-            claim.semaphore (screen.sem)
-            out.string ("to pump:   [", 0, to.screen)
-            to.screen ! FLUSH
-            release.semaphore (screen.sem)
+            CLAIM to.screen!
+              SEQ
+                out.string ("to pump:   [", 0, to.screen!)
+                to.screen ! FLUSH
             just.flushed := FALSE
         TRUE
           SKIP
       in ? ch
-      claim.semaphore (screen.sem)
-      IF
-        ch = '*n'
-          to.screen ! ']'
-        TRUE
-          SKIP
-      to.screen ! ch
-      to.screen ! FLUSH
-      release.semaphore (screen.sem)
+      CLAIM to.screen!
+        SEQ
+          IF
+            ch = '*n'
+              to.screen ! ']'
+            TRUE
+              SKIP
+          to.screen ! ch
+          to.screen ! FLUSH
       IF
         ch = '*n'
           IF
@@ -102,8 +101,8 @@ PROC kbd.feed (CHAN OF BYTE in, CHAN OF BOOL terminate, CHAN OF INT to.pump, CHA
 :
 --}}}  
 
---{{{  PROC collect (CHAN OF INT from.pump, CHAN OF BOOL terminate, done.flush, CHAN OF BYTE to.screen, SEMAPHORE screen.sem)
-PROC collect (CHAN OF INT from.pump, CHAN OF BOOL terminate, done.flush, CHAN OF BYTE to.screen, SEMAPHORE screen.sem)
+--{{{  PROC collect (CHAN OF INT from.pump, CHAN OF BOOL terminate, done.flush, SHARED CHAN BYTE to.screen!)
+PROC collect (CHAN OF INT from.pump, CHAN OF BOOL terminate, done.flush, SHARED CHAN BYTE to.screen!)
   INITIAL BOOL running IS TRUE:
   WHILE running
     PRI ALT
@@ -111,16 +110,16 @@ PROC collect (CHAN OF INT from.pump, CHAN OF BOOL terminate, done.flush, CHAN OF
       INT count:
       from.pump ? count
         SEQ
-          claim.semaphore (screen.sem)
-          out.string ("from pump: [", 0, to.screen)
-          SEQ i = 0 FOR count
-            INT val:
+          CLAIM to.screen!
             SEQ
-              from.pump ? val
-              to.screen ! (BYTE (val /\ #FF))
-          to.screen ! ']'
-          to.screen ! '*n'
-          release.semaphore (screen.sem)
+              out.string ("from pump: [", 0, to.screen!)
+              SEQ i = 0 FOR count
+                INT val:
+                SEQ
+                  from.pump ? val
+                  to.screen ! (BYTE (val /\ #FF))
+              to.screen ! ']'
+              to.screen ! '*n'
           done.flush ! TRUE
       --}}}  
       --{{{  terminate
@@ -131,25 +130,23 @@ PROC collect (CHAN OF INT from.pump, CHAN OF BOOL terminate, done.flush, CHAN OF
 :
 --}}}  
 
---{{{  PROC testpump (CHAN OF BYTE kyb, scr, err)
-PROC testpump (CHAN OF BYTE kyb, scr, err)
-  #PRAGMA SHARED scr
-  SEMAPHORE scr.sem:
-  #PRAGMA SHARED scr.sem
+--{{{  PROC testpump (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
+PROC testpump (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
   SEQ
-    initialise.semaphore (scr.sem, 1)
-    out.string ("dynamic sort-pump demo:*n", 0, scr)
-    out.string ("    type characters to fill the pump*n", 0, scr)
-    out.string ("    return-key flushes the pump*n", 0, scr)
-    out.string ("    return three times to terminate*n*n", 0, scr)
+    CLAIM scr!
+      SEQ
+        out.string ("dynamic sort-pump demo:*n", 0, scr!)
+        out.string ("    type characters to fill the pump*n", 0, scr!)
+        out.string ("    return-key flushes the pump*n", 0, scr!)
+        out.string ("    return three times to terminate*n*n", 0, scr!)
 
     [3]CHAN OF BOOL term.chans:
     CHAN OF INT to.pump, from.pump:
     CHAN OF BOOL pump.flush, done.flush:
     PAR
-      kbd.feed (kyb, term.chans[0], to.pump, pump.flush, done.flush, scr, scr.sem)
+      kbd.feed (kyb, term.chans[0], to.pump, pump.flush, done.flush, scr!)
       sort.pump.process (to.pump, pump.flush, term.chans[1], from.pump)
-      collect (from.pump, term.chans[2], done.flush, scr, scr.sem)
+      collect (from.pump, term.chans[2], done.flush, scr!)
       term.plex (term.chans[0], [term.chans FROM 1])
 :
 --}}}  
