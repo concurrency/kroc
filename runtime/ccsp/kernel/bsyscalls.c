@@ -350,7 +350,7 @@ void bsyscall_dispatch (bsc_batch_t *job)
 	bsc_pool_t *pool;
 
 	/* pick pool */
-	if (job->priofinity == 0) {
+	if (PAffinity (job->priofinity) == 0) {
 		pool = &(pools[0]);
 	} else {
 		pool = &(pools[(bsr (PAffinity (job->priofinity))) + 1]);
