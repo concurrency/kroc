@@ -44,12 +44,13 @@ volatile unsigned long core_timer_wrap_count;
 
 static void init_timers (void)
 {
-	core_timer_wrap_count = 0;
-	*pTSCALE = ((CORE_CLOCK / 2000000) - 1);
-	*pTPERIOD = 0xffffffff;
-	*pTCOUNT = 0xffffffff;
+	core_timer_wrap_count	= 0;
+	*pTSCALE		= ((CORE_CLOCK / 2000000) - 1);
+	*pTPERIOD		= 0xffffffff;
+	*pTCOUNT		= 0xffffffff;
 	SSYNC;
-	*pTCNTL = 0x7;
+	*pTCNTL			= TMREN_P | TAUTORLD_P | TINT_P;
+	CSYNC;
 }
 
 /* Read the time counter, returns number of microseconds since reset */
@@ -103,7 +104,7 @@ static void init_uart (void)
 	*pPORTHIO_INEN	= 0x0001;
 	
 	/* Enable UART pins on port F */
-	*pPORTF_FER |= 0x000f;
+	*pPORTF_FER 	|= 0x000f;
 
 	/* Enable UART0 clocks */
 	*pUART0_GCTL	= UCEN;
