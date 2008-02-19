@@ -182,9 +182,9 @@ def generate_proc(w, args, mode):
 	arg_list = [(i, arg_types[args[i]]) for i in range(len(args))]
 
 	formals = []
-	formals += mode.formals()
 	for (num, arg) in arg_list:
 		formals += arg.formals(num)
+	formals += mode.formals()
 	w.write("PROC %s.%s (%s)" % (mode.name, "".join(args), ", ".join(formals)))
 	w.indent(1)
 
