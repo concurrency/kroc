@@ -110,7 +110,7 @@ PROC console.input (CHAN BYTE in?, out!, BOOL killed, CHAN BOOL shutdown?)
             out ! b
 :
 
-PROC console.output (CHAN BYTE in?, CHAN P.CONSOLE.CMD cmd?)
+PROC console.output (CHAN BYTE in?, CHAN P.CONSOLE.REQ cmd.req?, CHAN P.CONSOLE.RSP cmd.rsp!)
   CHAN INT::[]BYTE uart0.bulk:
   PLACE uart0.bulk AT #0:
 
@@ -120,26 +120,33 @@ PROC console.output (CHAN BYTE in?, CHAN P.CONSOLE.CMD cmd?)
   INITIAL BOOL done IS FALSE:
   WHILE NOT done
     PRI ALT
-      cmd ? CASE
+      cmd.req ? CASE
         disconnected
           done := TRUE
+
         MOBILE []BYTE data:
         INT size:
         bulk.out; size; data
           IF
             (DEFINED data) AND (size > 0)
-              IF
-                (size > 4) AND ((SIZE data) >= size)
-                  VAL []BYTE data IS [ data FOR size]:
-                  uart0.bulk ! size::data
-                ((SIZE data) >= size)
-                  SEQ i = 0 FOR size
-                    uart0.out ! data[i]
-                TRUE
-                  SEQ i = 0 FOR SIZE data
-                    uart0.out ! data[i]
+              SEQ
+                IF
+                  (size > 4) AND ((SIZE data) >= size)
+                    VAL []BYTE data IS [ data FOR size ]:
+                    uart0.bulk ! size::data
+                  TRUE
+                    SEQ
+                      IF
+                        ((SIZE data) < size)
+                          size := SIZE data
+                        TRUE
+                          SKIP
+                      SEQ i = 0 FOR size
+                        uart0.out ! data[i]
+                cmd.rsp ! bulk.complete; size; data
             TRUE
-              SKIP
+              cmd.rsp ! error; ERROR.INV.PARAM
+              
       BYTE b:
       in ? b
         IF
@@ -159,7 +166,7 @@ PROC console.output (CHAN BYTE in?, CHAN P.CONSOLE.CMD cmd?)
 PROC console (CONSOLE? console, CHAN BYTE in?, CHAN BOOL shutdown?, BOOL killed)
   PAR
     console.input (in?, console[in]!, killed, shutdown?)
-    console.output (console[out]?, console[cmd]?)
+    console.output (console[out]?, console[cmd.req]?, console[cmd.rsp]!)
 :
 
 PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN BYTE in?, out!)
