@@ -50,7 +50,7 @@ PROC camera (CAMERA? svr)
   SEQ
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
-      svr[rq] ? CASE
+      svr[req] ? CASE
         disconnected
           done := TRUE
 
@@ -63,7 +63,7 @@ PROC camera (CAMERA? svr)
                 IF
                   DEFINED data
                     -- No error; pass frame
-                    svr[re] ! frame; data
+                    svr[rsp] ! frame; data
                   TRUE
                     -- Frame empty; error
                     INT error:
@@ -71,15 +71,15 @@ PROC camera (CAMERA? svr)
                       camera.error ? error
                       IF
                         error = 0
-                          svr[re] ! error; ERROR.NO.MEMORY
+                          svr[rsp] ! error; ERROR.NO.MEMORY
                         TRUE
                           SEQ
-                            svr[re] ! error; ERROR.HARDWARE
+                            svr[rsp] ! error; ERROR.HARDWARE
                       
                       mode := CAMERA.OFF
                       camera.mode ! mode
             TRUE
-              svr[re] ! error; ERROR.INV.STATE
+              svr[rsp] ! error; ERROR.INV.STATE
 
         get.mode
           IF
@@ -88,11 +88,11 @@ PROC camera (CAMERA? svr)
               m[mode] = mode
                 IF
                   stream
-                    svr[re] ! stream.mode; m[w]; m[h]
+                    svr[rsp] ! stream.mode; m[w]; m[h]
                   TRUE
-                    svr[re] ! capture.mode; m[w]; m[h]
+                    svr[rsp] ! capture.mode; m[w]; m[h]
             TRUE
-              svr[re] ! error; ERROR.INV.STATE
+              svr[rsp] ! error; ERROR.INV.STATE
 
         init
           SEQ
@@ -111,9 +111,9 @@ PROC camera (CAMERA? svr)
                 SEQ
                   mode, stream := new.mode, FALSE
                   camera.mode ! mode \/ CAMERA.ONE.SHOT
-                  svr[re] ! ok
+                  svr[rsp] ! ok
               TRUE
-                svr[re] ! error; ERROR.INV.PARAM
+                svr[rsp] ! error; ERROR.INV.PARAM
 
         INT w, h:
         set.stream.mode; w; h
@@ -126,9 +126,9 @@ PROC camera (CAMERA? svr)
                 SEQ
                   mode, stream := new.mode, TRUE
                   camera.mode ! mode
-                  svr[re] ! ok
+                  svr[rsp] ! ok
               TRUE
-                svr[re] ! error; ERROR.INV.PARAM
+                svr[rsp] ! error; ERROR.INV.PARAM
 
         stop
           SEQ

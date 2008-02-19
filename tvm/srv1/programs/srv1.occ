@@ -34,8 +34,8 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
   INITIAL BOOL overlay IS TRUE:
   INITIAL INT quality IS 3:
   SEQ
-    camera[rq] ! set.stream.mode; 320; 256
-    camera[re] ? CASE ok
+    camera[req] ! set.stream.mode; 320; 256
+    camera[rsp] ? CASE ok
 
     WHILE TRUE
       INITIAL BOOL custom.response IS FALSE:
@@ -49,37 +49,37 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
             SKIP
           -- Drift left
           '7'
-            motors[rq] ! turn; 15
+            motors[req] ! turn; 15
           -- Drive forward
           '8'
-            motors[rq] ! speed; 50
+            motors[req] ! speed; 50
           -- Drift right
           '9'
-            motors[rq] ! turn; -15
+            motors[req] ! turn; -15
           -- Drive left
           '4'
-            motors[rq] ! turn; 30
+            motors[req] ! turn; 30
           -- Stop
           '5'
-            motors[rq] ! speed; 0
+            motors[req] ! speed; 0
           -- Drive right
           '6'
-            motors[rq] ! turn; -30
+            motors[req] ! turn; -30
           -- Back left
           '1'
-            motors[rq] ! back.turn; 30
+            motors[req] ! back.turn; 30
           -- Reverse
           '2'
-            motors[rq] ! speed.delta; -1
+            motors[req] ! speed.delta; -1
           -- Back right
           '3'
-            motors[rq] ! back.turn; -30
+            motors[req] ! back.turn; -30
           -- Clockwise turn
           '.'
             SEQ
-              motors[rq] ! turn; 75
+              motors[req] ! turn; 75
               delay.ms(200)
-              motors[rq] ! stop
+              motors[req] ! stop
           -- High motor speed range
           '+'
             SKIP
@@ -90,34 +90,34 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
           'a'
             SEQ
               width, height := 160, 128
-              camera[rq] ! set.stream.mode; width; height
-              camera[re] ? CASE ok
+              camera[req] ! set.stream.mode; width; height
+              camera[rsp] ? CASE ok
           -- Set camera resolution to 320x256
           'b'
             SEQ
               width, height := 320, 256
-              camera[rq] ! set.stream.mode; width; height
-              camera[re] ? CASE ok
+              camera[req] ! set.stream.mode; width; height
+              camera[rsp] ? CASE ok
           -- Set camera resolution to 640x512
           'c'
             SEQ
               width, height := 640, 512
-              camera[rq] ! set.stream.mode; width; height
-              camera[re] ? CASE ok
+              camera[req] ! set.stream.mode; width; height
+              camera[rsp] ? CASE ok
           -- Set camera resolution to 1280x1024
           'A'
             SEQ
               width, height := 1280, 1024
-              camera[rq] ! set.capture.mode; width; height
-              camera[re] ? CASE ok
+              camera[req] ! set.capture.mode; width; height
+              camera[rsp] ? CASE ok
           -- Grab JPEG compressed video frame
           'I'
             MOBILE []BYTE frame, jpeg.data:
             INITIAL [10]BYTE header IS "##IMJ00000":
             INT jpeg.bytes:
             SEQ
-              camera[rq] ! get.frame
-              camera[re] ? CASE frame; frame
+              camera[req] ! get.frame
+              camera[rsp] ? CASE frame; frame
               IF
                 overlay
                   INITIAL [9]BYTE caption IS "frame 000":
@@ -159,9 +159,9 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
             overlay := FALSE
           -- Lasers
           'l'
-            lasers[rq] ! all; TRUE  -- On
+            lasers[req] ! all; TRUE  -- On
           'L'
-            lasers[rq] ! all; FALSE -- Off
+            lasers[req] ! all; FALSE -- Off
           -- Time in MS since reset
           't'
             SKIP

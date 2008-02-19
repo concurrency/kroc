@@ -14,7 +14,7 @@ PROC lasers (LASER? srv)
     WHILE NOT done
       INITIAL INT bits IS 0:
       SEQ
-        srv[rq] ? CASE
+        srv[req] ? CASE
           disconnected
             done := TRUE
           left; left

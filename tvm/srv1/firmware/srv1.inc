@@ -61,8 +61,8 @@ PROTOCOL P.CAMERA.RE
 --}}}
 CHAN TYPE CAMERA
   MOBILE RECORD
-    CHAN P.CAMERA.RQ rq?:
-    CHAN P.CAMERA.RE re!:
+    CHAN P.CAMERA.RQ req?:
+    CHAN P.CAMERA.RE rsp!:
 :
 --}}}
 
@@ -101,8 +101,8 @@ PROTOCOL P.LASER.RE
 --}}}
 CHAN TYPE LASER
   MOBILE RECORD
-    CHAN P.LASER.RQ rq?:
-    CHAN P.LASER.RE re!:
+    CHAN P.LASER.RQ req?:
+    CHAN P.LASER.RE rsp!:
 :
 --}}}
 
@@ -126,8 +126,8 @@ PROTOCOL P.MOTOR.RE
 --}}}
 CHAN TYPE MOTOR
   MOBILE RECORD
-    CHAN P.MOTOR.RQ rq?:
-    CHAN P.MOTOR.RE re!:
+    CHAN P.MOTOR.RQ req?:
+    CHAN P.MOTOR.RE rsp!:
 :
 --}}}
 
@@ -151,8 +151,8 @@ PROTOCOL P.SYSTEM.RE
 --}}}
 CHAN TYPE SYSTEM
   MOBILE RECORD
-    CHAN P.SYSTEM.RQ rq?:
-    CHAN P.SYSTEM.RE re!:
+    CHAN P.SYSTEM.RQ req?:
+    CHAN P.SYSTEM.RE rsp!:
 :
 --}}}
 --}}}
