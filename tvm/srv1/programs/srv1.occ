@@ -147,7 +147,10 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
                 header[6 + i] := size[i]
               SEQ i = 0 FOR SIZE header
                 console[out] ! header[i]
-              console[cmd] ! bulk.out; jpeg.bytes; jpeg.data
+
+              console[cmd.req] ! bulk.out; jpeg.bytes; jpeg.data
+              console[cmd.rsp] ? CASE bulk.complete; jpeg.bytes; jpeg.data
+
               drain.uart (console[in]?)
 
               frame.count := frame.count + 1

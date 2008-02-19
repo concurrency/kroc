@@ -67,11 +67,19 @@ CHAN TYPE CAMERA
 --}}}
 
 --{{{  CONSOLE
---{{{  P.CONSOLE.CMD:
-PROTOCOL P.CONSOLE.CMD
+--{{{  P.CONSOLE.REQ
+PROTOCOL P.CONSOLE.REQ
   CASE
     disconnected  = 0
     bulk.out      = 1; INT; MOBILE []BYTE
+:
+--}}}
+--{{{  P.CONSOLE.RSP
+PROTOCOL P.CONSOLE.RSP
+  CASE
+    disconnected  = 0
+    bulk.complete = 1; INT; MOBILE []BYTE
+    error         = 2; INT
 :
 --}}}
 --}}}
@@ -79,7 +87,8 @@ CHAN TYPE CONSOLE
   MOBILE RECORD
     CHAN BYTE           in!:
     CHAN BYTE           out?:
-    CHAN P.CONSOLE.CMD  cmd?:
+    CHAN P.CONSOLE.REQ  cmd.req?:
+    CHAN P.CONSOLE.RSP  cmd.rsp!:
 :
 --}}}
 
