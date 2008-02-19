@@ -340,7 +340,7 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
         TRUE
           check.BOOL (FALSE, want, name)
     :
-    MOBILE []INT a1:
+    MOBILE []INT a1, a2:
     SEQ
       check.defined (a1, FALSE, "test5.0")
       CHAN MOBILE []INT c:
@@ -348,6 +348,7 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
         MOBILE []INT a, b:
         BOOL x:
         SEQ
+          c ! a
           check.defined (a, FALSE, "test5.10a")
           check.defined (b, FALSE, "test5.10b")
           a := MOBILE [10]INT
@@ -359,8 +360,11 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
           c ! b
           check.defined (a, FALSE, "test5.13a")
           check.defined (b, FALSE, "test5.13b")
-        c ? a1
-      check.defined (a1, TRUE, "test5.20")
+        SEQ
+          c ? a1
+          c ? a2
+      check.defined (a1, FALSE, "test5.20")
+      check.defined (a2, TRUE, "test5.21")
   :
   --}}}
   --}}}  
