@@ -41,7 +41,7 @@ PROC avg.luma (VAL []BYTE frame, RESULT INT avg.luma)
     avg.luma := avg.luma >> 6
 :
 
-PROC is.dark(CHAN BYTE c.out!, CHAN MOBILE[] BYTE frames?, CHAN BOOL dark!)
+PROC is.dark(CHAN MOBILE[] BYTE frames?, CHAN BOOL dark!)
   MOBILE []BYTE frame:
   INITIAL BOOL last IS FALSE:
   WHILE TRUE
@@ -51,9 +51,6 @@ PROC is.dark(CHAN BYTE c.out!, CHAN MOBILE[] BYTE frames?, CHAN BOOL dark!)
       frames ? frame
       -- Check for darkness, store result in this.
       avg.luma(frame, avg)
-      --out.string("Average: ", 0, c.out!)
-      --out.int(avg, 0, c.out!)
-      --c.out ! '*n'
       this := (avg < 64)
       IF
         this <> last
@@ -77,6 +74,6 @@ PROC dark (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
   CHAN MOBILE []BYTE frames:
   PAR
     get.image (camera, frames!)
-    is.dark (console[out]!, frames?, dark!)
+    is.dark (frames?, dark!)
     control.lasers (dark?, lasers)
 :

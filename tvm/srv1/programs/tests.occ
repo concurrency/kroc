@@ -1,57 +1,56 @@
 #INCLUDE "srv1.inc"
 #INCLUDE "delay.inc"
-
 #INCLUDE "out.occ"
 
-PROC test.lasers(CHAN P.LASER l!)
+PROC test.lasers(LASER! l)
   SEQ
-    l ! left; TRUE
+    l[req] ! left; TRUE
     delay.s(2)
-    l ! right; TRUE
+    l[req] ! right; TRUE
     delay.s(2)
-    l ! left; FALSE
+    l[req] ! left; FALSE
     delay.s(2)
-    l ! right; FALSE
+    l[req] ! right; FALSE
     delay.s(2)
-    l ! all; TRUE
+    l[req] ! all; TRUE
     delay.s(2)
-    l ! all; FALSE
+    l[req] ! all; FALSE
 :
 
-PROC test.leds(CHAN P.LED l!)
-  SEQ
-    l ! led; 1; TRUE
-    delay.s(2)
-    l ! led; 1; FALSE
-    delay.s(2)
-    l ! led; 2; TRUE
-    delay.s(2)
-    l ! led; 2; FALSE
-    delay.s(2)
-    l ! led; 1; TRUE
-    l ! led; 2; TRUE
-    delay.s(2)
-    l ! led; 1; FALSE
-    l ! led; 2; FALSE
-:
+--PROC test.leds(CHAN P.LED l!)
+--  SEQ
+--    l ! led; 1; TRUE
+--    delay.s(2)
+--    l ! led; 1; FALSE
+--    delay.s(2)
+--    l ! led; 2; TRUE
+--    delay.s(2)
+--    l ! led; 2; FALSE
+--    delay.s(2)
+--    l ! led; 1; TRUE
+--    l ! led; 2; TRUE
+--    delay.s(2)
+--    l ! led; 1; FALSE
+--    l ! led; 2; FALSE
+--:
 
-PROC test.motors (CHAN P.MOTOR m!)
+PROC test.motors (MOTOR! m)
   SEQ
     SEQ i = 1 FOR 5
       SEQ
-        m ! speed; i * 20
+        m[req] ! speed; i * 20
         delay.s(2)
-        m ! speed; -(i * 20)
+        m[req] ! speed; -(i * 20)
         delay.s(2)
 :
 
-PROC tests (CHAN BYTE in?, out!, CHAN P.LASER lasers!, CHAN P.LED leds!, CHAN P.MOTOR motors!)
+PROC tests (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTEM! system)
   SEQ
-    out.string("SRV-1 Test Program (of Doom)*n", 0, out!)
-    out.string("Testing death lasers*n", 0, out!)
-    test.lasers(lasers!)
-    out.string("Testing less deadly LED*'s*n", 0, out!)
-    test.leds(leds!)
-    out.string("Testing harmless motors*n", 0, out!)
-    test.motors(motors!)
+    out.string("SRV-1 Test Program (of Doom)*n", 0, console[out]!)
+    out.string("Testing death lasers*n", 0, console[out]!)
+    test.lasers(lasers)
+    --out.string("Testing less deadly LED*'s*n", 0, console[out]!)
+    --test.leds(leds)
+    out.string("Testing harmless motors*n", 0, console[out]!)
+    test.motors(motors)
 :
