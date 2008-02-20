@@ -125,6 +125,18 @@ setup_PLL:
 setup_SDRAM:
     /* Initialize the SDRAM. */
 
+    /* Manual suggests waiting 100us for power to stablise before
+     * enabling SDRAM; we don't *need* this, but it seems like a
+     * good idea.
+     * At 500MHz, 100us is 50000 instructions, we do 65536.
+     */
+    p0.l = 0xffff;
+    p0.h = 0;
+    loop sdram_wait LC0 = p0;
+    loop_begin sdram_wait;
+    nop;
+    loop_end sdram_wait;
+
     /* 
      * SDRAM Refresh Rate Control Register
      */
