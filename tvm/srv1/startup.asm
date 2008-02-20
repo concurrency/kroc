@@ -318,8 +318,8 @@ display_fail:
 
 
 _HWHANDLER:           // HW Error Handler 5
-    jump stall;
-    /* rti; */
+    /* jump stall; */
+    rti;
 
 _NHANDLER:
 stall:
