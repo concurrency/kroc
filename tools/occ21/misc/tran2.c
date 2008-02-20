@@ -1491,6 +1491,7 @@ printtreenl (stderr, 4, tptr);
 	case S_SEGMENT:	/* MDP */
 	case S_PARAM_VSP:	/* MDP */
 	case S_PARAM_FB:
+	case S_NULLARRAY:
 #ifdef MOBILES
 	case S_PARAM_MSP:
 	case S_PARAM_MPP:
