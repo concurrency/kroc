@@ -9,8 +9,8 @@ PROGRAMS = \
 	error3.srv \
 	hello.srv \
 	id.srv \
-	tests.srv \
 	srv1.srv \
+	tests.srv \
 	SRV.class
 
 %.srv: %.occ
