@@ -17,22 +17,22 @@ PROC test.lasers(LASER! l)
     l[req] ! all; FALSE
 :
 
---PROC test.leds(CHAN P.LED l!)
---  SEQ
---    l ! led; 1; TRUE
---    delay.s(2)
---    l ! led; 1; FALSE
---    delay.s(2)
---    l ! led; 2; TRUE
---    delay.s(2)
---    l ! led; 2; FALSE
---    delay.s(2)
---    l ! led; 1; TRUE
---    l ! led; 2; TRUE
---    delay.s(2)
---    l ! led; 1; FALSE
---    l ! led; 2; FALSE
---:
+PROC test.leds(SYSTEM! sys)
+  SEQ
+    sys[req] ! set.led; 1; TRUE
+    delay.s(2)
+    sys[req] ! set.led; 1; FALSE
+    delay.s(2)
+    sys[req] ! set.led; 2; TRUE
+    delay.s(2)
+    sys[req] ! set.led; 2; FALSE
+    delay.s(2)
+    sys[req] ! set.led; 1; TRUE
+    sys[req] ! set.led; 2; TRUE
+    delay.s(2)
+    sys[req] ! set.led; 1; FALSE
+    sys[req] ! set.led; 2; FALSE
+:
 
 PROC test.motors (MOTOR! m)
   SEQ
@@ -49,8 +49,8 @@ PROC tests (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYST
     out.string("SRV-1 Test Program (of Doom)*n", 0, console[out]!)
     out.string("Testing death lasers*n", 0, console[out]!)
     test.lasers(lasers)
-    --out.string("Testing less deadly LED*'s*n", 0, console[out]!)
-    --test.leds(leds)
+    out.string("Testing less deadly LED*'s*n", 0, console[out]!)
+    test.leds(system)
     out.string("Testing harmless motors*n", 0, console[out]!)
     test.motors(motors)
 :
