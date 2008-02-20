@@ -32,11 +32,20 @@
 	__asm__ __volatile__ ("sti %0;" : : "d" (mask))
 	
 
-static char version_string[] = "TVM SRV-1 Blackfin - " __TIME__ " - " __DATE__;
+static unsigned char version_string[] = "##TVM SRV-1 Blackfin - " __TIME__ " - " __DATE__;
 
 /*{{{  TVM state */
 static tvm_t 		tvm;
 static tvm_ectx_t 	firmware_ctx, user_ctx;
+/*}}}*/
+
+/*{{{  I/O functionality */
+static void init_io (void)
+{
+	/* Port H = GPIO */
+	*pPORTH_FER 	= 0;
+	*pPORTHIO	= 0;
+}
 /*}}}*/
 
 /*{{{  Timer functionality */
@@ -98,10 +107,10 @@ static void init_uart (void)
 
 	/* Configure port H pin 6 (PH6) for flow control CTS */
 	*pPORTHIO_DIR	|= 0x0040;
-	/* Raise PH6 to block input */
-	*pPORTHIO	= 0x0040;
 	/* Configure PH0 for flow control RTS */
 	*pPORTHIO_INEN	= 0x0001;
+	/* Raise PH6 to block input */
+	*pPORTHIO	|= 0x0040;
 	
 	/* Enable UART pins on port F */
 	*pPORTF_FER 	|= 0x000f;
@@ -1201,11 +1210,17 @@ static int run_user (void)
 /*}}}*/
 
 int main (void) {
-	init_uart ();
+	/* Initialise Hardware */
+	init_io ();
 	init_timers ();
+	init_uart ();
 	init_camera ();
 
-	uart0_send_string ((unsigned char *) version_string);
+	/* Wait for 7 seconds for MatchPort to boot */
+	delay_us (7000000);
+
+	/* Output boot message */
+	uart0_send_string (version_string);
 	uart0_send_char ('\n');
 	
 	/* Initialise interpreter */

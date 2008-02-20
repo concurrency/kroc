@@ -19,7 +19,7 @@ PROC drain.uart (CHAN BYTE in?)
       BYTE b:
       in ? b
         SKIP
-      TRUE & SKIP
+      SKIP
         SEQ
           delay.us (100000)
           clear := clear + 1
