@@ -2229,6 +2229,7 @@ PUBLIC BOOL usedin (treenode *const t, treenode *tptr, const int my_lexlevel)
 		case S_EXACT:
 		case S_ROUND:
 		case S_TRUNC:
+		case S_DEFINED:
 			/*return (usedin(n, OpOf(tptr))); */
 			tptr = OpOf (tptr);
 			break;
