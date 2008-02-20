@@ -89,22 +89,15 @@
 .global start
 start:
 
-    sp.h = 0xFFB0;        //Set up supervisor stack in scratch pad
+    sp.h = 0xFFB0;        // Set up supervisor stack in scratch pad
     sp.l = 0x0400;
     fp = sp;
 
 
-////////////////////////////////////////////////////////////////////////////
-// PLL and clock setups
-//
-//
-
-
-
-setupPLL:
-    // we have to enter the idle state after changes applied to the
+setup_PLL:
+    /* Setup PLL and system clocks. */
+    // We have to enter the idle state after changes applied to the
     // VCO clock, because the PLL needs to lock in on the new clocks.
-
 
     p0.l = LO(PLL_CTL);
     p0.h = HI(PLL_CTL);
@@ -117,44 +110,41 @@ setupPLL:
     r0.l = ((VCO_MULTIPLIER & 0x3f) << 9);
     r1 = r1 | r0;
 
-
-     p1.l = LO(SIC_IWR);  // enable PLL Wakeup Interrupt
+    p1.l = LO(SIC_IWR);  // enable PLL Wakeup Interrupt
     p1.h = HI(SIC_IWR);
 
     r0 = [p1];            
     bitset(r0,0);      
     [p1] = r0;
     
-     w[p0] = r1;          // Apply PLL_CTL changes.
+    w[p0] = r1;          // Apply PLL_CTL changes.
     ssync;
      
     cli r0;
-     idle;    // wait for Loop_count expired wake up
+    idle;    // wait for Loop_count expired wake up
     sti r0;
 
     // now, set clock dividers:
     p0.l = LO(PLL_DIV);
     p0.h = HI(PLL_DIV);
 
-
     // SCLK = VCOCLK / SCLK_DIVIDER
     r0.l = (GET_CCLK(CCLK_DIVIDER) | (SCLK_DIVIDER & 0x000f));
-
 
     w[p0] = r0; // set Core and system clock dividers
 
 
-    /*
-     * Now, Initialize the SDRAM,
-     * start with the SDRAM Refresh Rate Control Register
-         */
+setup_SDRAM:
+    /* Initialize the SDRAM. */
 
-
+    /* 
+     * SDRAM Refresh Rate Control Register
+     */
     p0.l = LO(EBIU_SDRRC);
-        p0.h = HI(EBIU_SDRRC);
-        r0 = mem_SDRRC;
-        w[p0] = r0.l;
-        ssync;
+    p0.h = HI(EBIU_SDRRC);
+    r0 = mem_SDRRC;
+    w[p0] = r0.l;
+    ssync;
 
     /*
      * SDRAM Memory Bank Control Register - bank specific parameters
@@ -170,37 +160,35 @@ setupPLL:
      * Disable self-refresh
      */
     p2.h = HI(EBIU_SDGCTL);
-        p2.l = LO(EBIU_SDGCTL);
-        R0 = [P2];
-        BITCLR (R0, 24);
+    p2.l = LO(EBIU_SDGCTL);
+    R0 = [P2];
+    BITCLR (R0, 24);
 
     /*
-         * Check if SDRAM is already powered up, if it is, enable self-refresh
-         */
+     * Check if SDRAM is already powered up, if it is, enable self-refresh
+     */
     p0.h = HI(EBIU_SDSTAT);
     p0.l = LO(EBIU_SDSTAT);
     r2.l = w[p0];
     cc = bittst(r2,3);
     if !cc jump skip;
-        NOP;
-    BITSET (R0, 23);
+    nop;
+    bitset (R0, 23);
+
 skip:
     [P2] = R0;
-        SSYNC;
+    ssync;
 
     /* Write in the new value in the register */
-        r0.l = LO(mem_SDGCTL);
-        r0.h = HI(mem_SDGCTL);
+    r0.l = LO(mem_SDGCTL);
+    r0.h = HI(mem_SDGCTL);
     [P2] = R0;
-        SSYNC;
+    ssync;
     nop;
 
 
-
-    // not needed in reset routine: sti r1;
-
-////////////////////////////////////////////////////////////////////////////
-// install default interrupt handlers
+setup_events:
+    /* Install default event handlers. */
 
     p0.l = LO(EVT2);
     p0.h = HI(EVT2);
@@ -259,6 +247,8 @@ skip:
     r0.h = _I15HANDLER;    // IVG15 Handler
     [p0++] = r0;
 
+
+setup_main:
     // We want to run our program in supervisor mode,
     // therefore we need to leave the reset vector
     // and re-enter by raising an interrupt again.
