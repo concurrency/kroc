@@ -46,6 +46,10 @@ PROTOCOL P.CAMERA.REQ
     set.stream.mode     = 5; INT; INT -- width, height
     -- stop             => (no response)
     stop                = 6
+    -- set.auto.adjust	=> ok | error
+    set.auto.adjust	= 7; BOOL
+    -- get.auto.adjust	=> auto.adjust
+    get.auto.adjust	= 8
 :
 --}}}
 --{{{  P.CAMERA.RSP
@@ -57,6 +61,7 @@ PROTOCOL P.CAMERA.RSP
     capture.mode  = 3; INT; INT -- width, height
     stream.mode   = 4; INT; INT -- width, height
     ok            = 5
+    auto.adjust   = 6; BOOL
 :
 --}}}
 CHAN TYPE CAMERA

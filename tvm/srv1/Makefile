@@ -45,6 +45,7 @@ COBJS	+= support/jpeg.o
 COBJS	+= support/i2cwrite.o
 
 GENHDRS += include/bfin_config.inc
+GENHDRS += include/camera_const.inc
 GENHDRS += include/memory_map.inc
 GENHDRS += include/def_LPBlackfin.inc
 GENHDRS += include/defBF534.inc

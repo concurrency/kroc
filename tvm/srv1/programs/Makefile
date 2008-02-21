@@ -13,7 +13,11 @@ PROGRAMS = \
 	tests.srv \
 	SRV.class
 
-%.srv: %.occ
+HEADERS = \
+	../firmware/srv1.inc \
+	../firmware/out.occ
+
+%.srv: %.occ $(HEADERS)
 	$(SKROC) $<
 
 %.class: %.java
