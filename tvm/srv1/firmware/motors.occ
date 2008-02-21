@@ -74,27 +74,28 @@ PROC motors (MOTOR? svr)
   INITIAL INT l.speed IS 0:
   INITIAL INT r.speed IS 0:
   SEQ
-    init.pwm()
-    
+    init.pwm() 
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
       SEQ
-        INT n:
+        INT x,y:
         svr[req] ? CASE
           disconnected
             done, l.speed, r.speed := TRUE, 0, 0
-          speed; n
-            l.speed, r.speed := n, n
-          speed.delta; n
-            l.speed, r.speed := (l.speed + n), (r.speed + n)
-          turn; n
-            l.speed, r.speed := (l.speed - n), (r.speed + n)
-          back.turn; n
-            l.speed, r.speed := -(l.speed - n), -(r.speed + n)
+          left; x
+            l.speed := x
+          right; x
+            r.speed := x
+          all; x; y
+            l.speed, r.speed := x, y
+          delta; x; y
+            l.speed, r.speed := (l.speed + x), (r.speed + y)
+          turn; x
+            l.speed, r.speed := (l.speed - x), (r.speed + x)
+          back.turn; x
+            l.speed, r.speed := -(l.speed - x), -(r.speed + x)
           stop
             l.speed, r.speed := 0, 0
-        
-        -- Implement change
         set.pwm(l.speed, r.speed)
 :
 

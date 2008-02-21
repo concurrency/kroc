@@ -37,10 +37,13 @@ PROC test.leds(SYSTEM! sys)
 PROC test.motors (MOTOR! m)
   SEQ
     SEQ i = 1 FOR 5
+      INT speed:
       SEQ
-        m[req] ! speed; i * 20
+        speed := (i * 20)
+        m[req] ! all; speed; speed
         delay.s(2)
-        m[req] ! speed; -(i * 20)
+        speed := -speed
+        m[req] ! all; speed; speed
         delay.s(2)
 :
 

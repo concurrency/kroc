@@ -52,7 +52,7 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
             motors[req] ! turn; 15
           -- Drive forward
           '8'
-            motors[req] ! speed; 50
+            motors[req] ! all; 50; 50
           -- Drift right
           '9'
             motors[req] ! turn; -15
@@ -61,7 +61,7 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
             motors[req] ! turn; 30
           -- Stop
           '5'
-            motors[req] ! speed; 0
+            motors[req] ! all; 50; 50
           -- Drive right
           '6'
             motors[req] ! turn; -30
@@ -70,7 +70,7 @@ PROC srv1 (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
             motors[req] ! back.turn; 30
           -- Reverse
           '2'
-            motors[req] ! speed.delta; -1
+            motors[req] ! delta; -1; -1
           -- Back right
           '3'
             motors[req] ! back.turn; -30

@@ -125,11 +125,13 @@ CHAN TYPE LASER
 PROTOCOL P.MOTOR.REQ
   CASE
     disconnected  = 0
-    speed         = 1; INT
-    speed.delta   = 2; INT
-    turn          = 3; INT
-    back.turn     = 4; INT
-    stop          = 5
+    left          = 1; INT
+    right         = 2; INT
+    all           = 3; INT; INT
+    delta         = 4; INT; INT
+    turn          = 5; INT
+    back.turn     = 6; INT
+    stop          = 7
 :
 --}}}
 --{{{  P.MOTOR.RSP
