@@ -9,6 +9,7 @@ PROGRAMS = \
 	error3.srv \
 	hello.srv \
 	id.srv \
+	multi-dark.srv \
 	srv1.srv \
 	tests.srv \
 	SRV.class
