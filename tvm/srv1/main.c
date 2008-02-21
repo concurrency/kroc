@@ -13,6 +13,7 @@
 #include <cdefBF537.h>
 /* Configuration */
 #include "bfin_config.h"
+#include "camera_const.h"
 #include "memory_map.h"
 /* Support code */
 //#include <camera.h>
@@ -317,18 +318,6 @@ static WORDPTR		camera_channel		= (WORDPTR) NOT_PROCESS_P;
 static BYTE *volatile 	camera_buffer		= NULL;
 static WORDPTR		camera_mobile		= (WORDPTR) NULL_P;
 
-/* Move these constants to a shared header */
-enum {
-	CAMERA_INIT		= -1,
-	CAMERA_STOP		= 0,
-	CAMERA_160_128		= 1,
-	CAMERA_320_256		= 2,
-	CAMERA_640_512		= 3,
-	CAMERA_1280_1024	= 4,
-	CAMERA_MODE_MASK	= 0x0f,
-	CAMERA_ONE_SHOT		= 0x10
-};
-
 static void init_camera (void)
 {
 	int i;
@@ -587,19 +576,20 @@ static int camera_in (ECTX ectx, WORD count, BYTEPTR pointer)
 
 static int camera_out (ECTX ectx, WORD count, BYTEPTR pointer)
 {
-	WORD mode;
+	WORD config, mode;
 	
 	if (count != sizeof(WORD)) {
 		return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 	}
 
-	mode = read_word ((WORDPTR) pointer);
+	config 	= read_word ((WORDPTR) pointer);
+	mode	= config & CAMERA_MODE_MASK;
 
 	if (camera_running) {
 		camera_stop (ectx);
 	}
 
-	switch (mode & CAMERA_MODE_MASK) {
+	switch (mode) {
 		case CAMERA_160_128:
 			frame_setup = &qqvga_frame;
 			break;
@@ -625,9 +615,24 @@ static int camera_out (ECTX ectx, WORD count, BYTEPTR pointer)
 	}
 
 	if (frame_setup != NULL) {
+		if (config & CAMERA_AUTO_ADJUST) {
+			const unsigned char auto_bits_on[] = { 0x13, 0xcf };
+			/* COM8 = 
+			 * 	FAST AGC/AEC, 
+			 * 	AEC unlimited step, 
+			 * 	AEC time <1 line, 
+			 * 	AGC, AWB, AEC
+			 */
+			i2cwrite (0x30, (unsigned char *) auto_bits_on, 1);
+		} else {
+			const unsigned char auto_bits_off[] = { 0x13, 0x02 };
+			/* COM8 = AWB */
+			i2cwrite (0x30, (unsigned char *) auto_bits_off, 1);
+		}
+
 		i2cwrite (0x30, frame_setup->cfg, frame_setup->cfg_len >> 1);
 		
-		if (!(mode & CAMERA_ONE_SHOT)) {
+		if (config & CAMERA_STREAMING) {
 			int ret = camera_start (ectx, 1);
 			if (ret) {
 				camera_error = ret;

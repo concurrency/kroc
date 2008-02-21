@@ -1,12 +1,5 @@
 #INCLUDE "srv1.inc"
-
-VAL INT CAMERA.INIT       IS -1:
-VAL INT CAMERA.OFF        IS 0:
-VAL INT CAMERA.160.128    IS 1:
-VAL INT CAMERA.320.256    IS 2:
-VAL INT CAMERA.640.512    IS 3:
-VAL INT CAMERA.1280.1024  IS 4:
-VAL INT CAMERA.ONE.SHOT   IS #10:
+#INCLUDE "camera_const.inc"
 
 DATA TYPE CAMERA.MODE
   RECORD
@@ -16,7 +9,6 @@ DATA TYPE CAMERA.MODE
 :
 
 PROC camera (CAMERA? svr)
-  VAL INT           buffers IS 2:
   VAL []CAMERA.MODE modes   IS [[ 160,  128, CAMERA.160.128  ],
                                 [ 320,  256, CAMERA.320.256  ],
                                 [ 640,  512, CAMERA.640.512  ],
@@ -32,12 +24,12 @@ PROC camera (CAMERA? svr)
           (m[w] = w) AND (m[h] = h)
             found, mode := TRUE, m[mode]
         TRUE
-          found, mode := FALSE, CAMERA.OFF
+          found, mode := FALSE, CAMERA.STOP
       RESULT found, mode
   :
 
-  CHAN INT camera.mode:
-  PLACE camera.mode AT #2:
+  CHAN INT camera.cfg:
+  PLACE camera.cfg AT #2:
 
   CHAN INT camera.error:
   PLACE camera.error AT #2:
@@ -45,8 +37,8 @@ PROC camera (CAMERA? svr)
   CHAN MOBILE []BYTE camera.data:
   PLACE camera.data AT #2:
 
-  INITIAL INT mode        IS CAMERA.OFF:
-  INITIAL BOOL stream     IS FALSE:
+  INITIAL INT mode  IS CAMERA.STOP:
+  INITIAL INT flags IS CAMERA.AUTO.ADJUST:
   SEQ
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
@@ -54,9 +46,12 @@ PROC camera (CAMERA? svr)
         disconnected
           done := TRUE
 
+        get.auto.adjust
+          svr[rsp] ! auto.adjust; ((flags /\ CAMERA.AUTO.ADJUST) <> 0)
+
         get.frame
           IF
-            mode <> CAMERA.OFF
+            mode <> CAMERA.STOP
               MOBILE []BYTE data:
               SEQ
                 camera.data ? data
@@ -76,8 +71,8 @@ PROC camera (CAMERA? svr)
                           SEQ
                             svr[rsp] ! error; ERROR.HARDWARE
                       
-                      mode := CAMERA.OFF
-                      camera.mode ! mode
+                      mode := CAMERA.STOP
+                      camera.cfg ! mode
             TRUE
               svr[rsp] ! error; ERROR.INV.STATE
 
@@ -87,18 +82,33 @@ PROC camera (CAMERA? svr)
               VAL CAMERA.MODE m IS modes[i]:
               m[mode] = mode
                 IF
-                  stream
-                    svr[rsp] ! stream.mode; m[w]; m[h]
-                  TRUE
+                  (flags /\ CAMERA.STREAMING) = 0
                     svr[rsp] ! capture.mode; m[w]; m[h]
+                  TRUE
+                    svr[rsp] ! stream.mode; m[w]; m[h]
             TRUE
               svr[rsp] ! error; ERROR.INV.STATE
 
         init
           SEQ
             mode := CAMERA.INIT
-            camera.mode ! mode
-            mode := CAMERA.OFF
+            camera.cfg ! mode
+            mode := CAMERA.STOP
+
+        BOOL on:
+        set.auto.adjust; on
+          SEQ
+            IF
+              on
+                flags := flags \/ CAMERA.AUTO.ADJUST
+              TRUE
+                flags := flags /\ (~CAMERA.AUTO.ADJUST)
+            IF
+              mode <> CAMERA.STOP
+                camera.cfg ! mode \/ flags
+              TRUE
+                SKIP
+            svr[rsp] ! ok
 
         INT w, h:
         set.capture.mode; w; h
@@ -109,8 +119,8 @@ PROC camera (CAMERA? svr)
             IF
               found
                 SEQ
-                  mode, stream := new.mode, FALSE
-                  camera.mode ! mode \/ CAMERA.ONE.SHOT
+                  mode, flags := new.mode, flags /\ (~CAMERA.STREAMING)
+                  camera.cfg ! mode \/ flags
                   svr[rsp] ! ok
               TRUE
                 svr[rsp] ! error; ERROR.INV.PARAM
@@ -124,22 +134,22 @@ PROC camera (CAMERA? svr)
             IF
               found
                 SEQ
-                  mode, stream := new.mode, TRUE
-                  camera.mode ! mode
+                  mode, flags := new.mode, flags \/ CAMERA.STREAMING
+                  camera.cfg ! mode \/ flags
                   svr[rsp] ! ok
               TRUE
                 svr[rsp] ! error; ERROR.INV.PARAM
 
         stop
           SEQ
-            mode := CAMERA.OFF
-            camera.mode ! mode
+            mode := CAMERA.STOP
+            camera.cfg ! mode
       
     IF
-      mode <> CAMERA.OFF
+      mode <> CAMERA.STOP
         SEQ
-          mode := CAMERA.OFF
-          camera.mode ! mode
+          mode := CAMERA.STOP
+          camera.cfg ! mode
       TRUE
         SKIP
 :
