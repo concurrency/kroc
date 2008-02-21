@@ -25,24 +25,22 @@ VAL PICK PICK.NONE  IS 0:
 VAL PICK PICK.LEFT  IS 1:
 VAL PICK PICK.RIGHT IS 2:
 
-INT FUNCTION calc.avg.luma (VAL INT x, y, width, height, VAL []BYTE frame)
-  INT avg.luma:
+INT FUNCTION sum.luma (VAL INT scan.x, scan.width, VAL []BYTE frame)
+  INT sum:
   VALOF
     VAL []UYVY image RETYPES frame:
     -- Set the start position at 1/16 offset of both width and height.
     VAL INT start.pos IS (((SIZE image) >> 4) + (scan.width >> 3)) + scan.x:
     SEQ
-      avg.luma := 0
+      sum := 0
       -- Step 1/8's across the height of the image.
       SEQ y = start.pos FOR 8 STEP ((SIZE image) >> 3)
         -- Step 1/8's across the scanned width of the image.
         SEQ pos = y FOR 8 STEP (scan.width >> 2)
           VAL pixel IS image[pos]:
           SEQ
-            avg.luma := avg.luma + (INT pixel[y.0])
-      -- Divide by 64, the number of sampled pixels.
-      avg.luma := avg.luma >> 6
-    RESULT avg.luma
+            sum := sum + (INT pixel[y.0])
+    RESULT sum
 :
 
 PROC get.image (CAMERA! camera, CHAN MOBILE []BYTE frames!)
@@ -67,26 +65,31 @@ PROC get.image (CAMERA! camera, CHAN MOBILE []BYTE frames!)
         frames ! frame
 :
 
-PROC avg.luma.halves (CHAN MOBILE []BYTE frames?, CHAN LEFT.RIGHT luma!)
+PROC sum.luma.halves (CHAN MOBILE []BYTE frames?, CHAN LEFT.RIGHT luma!)
   MOBILE []BYTE frame:
   WHILE TRUE
-    LEFT.RIGHT avg.luma:
+    LEFT.RIGHT summed.luma:
     SEQ
       frames ? frame
-      avg.luma[left]  := calc.avg.luma (0, width / 2, frame)
-      avg.luma[right] := calc.avg.luma (width / 2, width / 2, frame)
-      luma ! avg.luma
+      summed.luma[left]  := sum.luma (0, width / 2, frame)
+      summed.luma[right] := sum.luma (width / 2, width / 2, frame)
+      luma ! summed.luma
 :
 
 PROC pick.darker.half (CHAN LEFT.RIGHT luma?, CHAN PICK pick!)
   WHILE TRUE
-    LEFT.RIGHT avg.luma:
-    INT diff:
+    LEFT.RIGHT summed.luma:
+    INT diff, p.diff:
     SEQ
-      luma ? avg.luma
-      diff := avg.luma[left] - avg.luma[right]
+      luma ? summed.luma
+      diff := summed.luma[left] - summed.luma[right]
       IF
-        diff = 0
+        diff < 0
+          p.diff := -diff
+        TRUE
+          p.diff := diff
+      IF
+        p.diff < 16
           pick ! PICK.NONE
         diff < 0
           pick ! PICK.LEFT
@@ -137,7 +140,7 @@ PROC dark.half (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, 
   CHAN PICK pick, pick.0, pick.1:
   PAR
     get.image (camera, frames!)
-    avg.luma.halves (frames?, luma!)
+    sum.luma.halves (frames?, luma!)
     pick.darker.half (luma?, pick!)
     change.delta (pick?, pick.0!, pick.1!)
     control.lasers (pick.0?, lasers)
