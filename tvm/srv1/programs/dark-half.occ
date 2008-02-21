@@ -50,11 +50,11 @@ PROC get.image (CAMERA! camera, CHAN MOBILE []BYTE frames!)
     camera[rsp] ? CASE ok
     
     -- Let it adjust to light level then freeze settings
-    camera[req] ! set.auto.adjust; TRUE
-    camera[rsp] ? CASE ok
-    delay.s (3)
-    camera[req] ! set.auto.adjust; FALSE
-    camera[rsp] ? CASE ok
+    --camera[req] ! set.auto.adjust; TRUE
+    --camera[rsp] ? CASE ok
+    --delay.s (3)
+    --camera[req] ! set.auto.adjust; FALSE
+    --camera[rsp] ? CASE ok
 
     -- Sample frames
     WHILE TRUE
@@ -75,7 +75,7 @@ PROC sum.luma.halves (CHAN MOBILE []BYTE frames?, CHAN LEFT.RIGHT luma!)
       luma ! summed.luma
 :
 
-PROC pick.darker.half (CHAN LEFT.RIGHT luma?, CHAN PICK pick!)
+PROC drive (CHAN LEFT.RIGHT luma?, MOTOR! motors)
   WHILE TRUE
     LEFT.RIGHT summed.luma:
     INT diff, p.diff:
@@ -89,71 +89,35 @@ PROC pick.darker.half (CHAN LEFT.RIGHT luma?, CHAN PICK pick!)
           p.diff := diff
       IF
         p.diff < 512
-          pick ! PICK.NONE
-        diff < 0
-          pick ! PICK.LEFT
-        TRUE
-          pick ! PICK.RIGHT
-:
-
-PROC change.delta (CHAN PICK in?, out.0!, out.1!)
-  PICK this:
-  SEQ
-    in ? this
-
-    WHILE TRUE
-      PICK new:
-      SEQ
-        PAR
-          out.0 ! this
-          out.1 ! this
-
-        in ? new
-        WHILE new = this
-          in ? new
-
-        this := new
-:
-
-PROC control.leds (CHAN PICK pick?, SYSTEM! system)
-  WHILE TRUE
-    PICK picked:
-    SEQ
-      pick ? picked
-      system[req] ! set.led; 1; (picked = PICK.LEFT)
-      system[req] ! set.led; 2; (picked = PICK.RIGHT)
-:
-
-PROC control.motors (CHAN PICK pick?, MOTOR! motors)
-  WHILE TRUE
-    PICK picked:
-    SEQ
-      pick ? picked
-      IF
-        picked = PICK.LEFT
           SEQ
-            motors[req] ! speed; 0
-            motors[req] ! turn; 50
-        picked = PICK.RIGHT
-          SEQ
-            motors[req] ! speed; 0
-            motors[req] ! back.turn; 50
+            IF
+              ((summed.luma[left] + summed.luma[right]) >> 7) < 96
+                motors[req] ! all; -100; -100
+              TRUE
+                motors[req] ! all; 40; 40
+            delay.ms (200)
+            luma ? summed.luma
         TRUE
           SEQ
-            motors[req] ! speed; 40
-          --motors[req] ! speed; 50
+            IF
+              diff < 0
+                motors[req] ! turn; 40
+              TRUE
+                motors[req] ! back.turn; 40
+
+            delay.ms (p.diff)
+            motors[req] ! stop
+
+            SEQ i = 0 FOR 4
+              luma ? summed.luma
 :
 
 PROC dark.half (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTEM! system)
   CHAN MOBILE []BYTE frames:
   CHAN LEFT.RIGHT luma:
-  CHAN PICK pick, pick.0, pick.1:
   PAR
     get.image (camera, frames!)
     sum.luma.halves (frames?, luma!)
-    pick.darker.half (luma?, pick!)
-    change.delta (pick?, pick.0!, pick.1!)
-    control.leds (pick.0?, system)
-    control.motors (pick.1?, motors)
+    drive (luma?, motors)
 :
 
