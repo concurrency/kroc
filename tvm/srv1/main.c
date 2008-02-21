@@ -771,7 +771,6 @@ static int jpeg_encode_frame (ECTX ectx, WORD args[])
 			(unsigned char *) input,
 			(unsigned char *) output,
 			quality,
-			FOUR_TWO_TWO,
 			width,
 			height
 		);
