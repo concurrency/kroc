@@ -1,4 +1,5 @@
 #INCLUDE "srv1.inc"
+#INCLUDE "delay.inc"
 #INCLUDE "out.occ"
 
 VAL INT width IS 320:
@@ -12,18 +13,18 @@ DATA TYPE UYVY
     BYTE y.1:
 :
 
-INT FUNCTION calc.avg.luma (VAL []BYTE frame)
+INT FUNCTION calc.avg.luma (VAL INT scan.width, VAL []BYTE frame)
   INT avg.luma:
   VALOF
     VAL []UYVY image RETYPES frame:
     -- Set the start position at 1/16 offset of both width and height.
-    VAL INT start.pos IS ((SIZE image) >> 4) + (width >> 3):
+    VAL INT start.pos IS ((SIZE image) >> 4) + (scan.width >> 3):
     SEQ
       avg.luma := 0
       -- Step 1/8's across the height of the image.
       SEQ y = start.pos FOR 8 STEP ((SIZE image) >> 3)
-        -- Step 1/8's across the width of the image.
-        SEQ pos = y FOR 8 STEP (width >> 2)
+        -- Step 1/8's across the scanned width of the image.
+        SEQ pos = y FOR 8 STEP (scan.width >> 2)
           VAL pixel IS image[pos]:
           SEQ
             avg.luma := avg.luma + (INT pixel[y.0])
@@ -32,11 +33,21 @@ INT FUNCTION calc.avg.luma (VAL []BYTE frame)
     RESULT avg.luma
 :
 
-PROC get.image(CAMERA! camera, CHAN MOBILE []BYTE frames!)
+PROC get.image (CAMERA! camera, CHAN MOBILE []BYTE frames!)
   MOBILE []BYTE frame:
   SEQ
+    -- Start camera
     camera[req] ! set.stream.mode; width; height
     camera[rsp] ? CASE ok
+    
+    -- Let it adjust to light level then freeze settings
+    camera[req] ! set.auto.adjust; TRUE
+    camera[rsp] ? CASE ok
+    delay.s (3)
+    camera[req] ! set.auto.adjust; FALSE
+    camera[rsp] ? CASE ok
+
+    -- Sample frames
     WHILE TRUE
       SEQ
         camera[req] ! get.frame
@@ -44,15 +55,15 @@ PROC get.image(CAMERA! camera, CHAN MOBILE []BYTE frames!)
         frames ! frame
 :
 
-PROC avg.luma(CHAN MOBILE []BYTE frames?, CHAN INT luma!)
+PROC avg.luma (CHAN MOBILE []BYTE frames?, CHAN INT luma!)
   MOBILE []BYTE frame:
   WHILE TRUE
     SEQ
       frames ? frame
-      luma ! calc.avg.luma (frame)
+      luma ! calc.avg.luma (width, frame)
 :
 
-PROC is.dark(CHAN INT luma?, CHAN BOOL dark!)
+PROC is.dark (CHAN INT luma?, CHAN BOOL dark!)
   WHILE TRUE
     INT avg.luma:
     SEQ
@@ -84,3 +95,4 @@ PROC dark (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTE
     is.dark (luma?, dark!)
     control.lasers (dark?, lasers)
 :
+
