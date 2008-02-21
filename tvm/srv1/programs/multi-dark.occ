@@ -18,13 +18,13 @@ INT FUNCTION calc.avg.luma (VAL INT scan.width, VAL []BYTE frame)
   VALOF
     VAL []UYVY image RETYPES frame:
     -- Set the start position at 1/16 offset of both width and height.
-    VAL INT start.pos IS ((SIZE image) >> 4) + (scan.width >> 3):
+    VAL INT start.pos IS ((SIZE image) >> 4) + (scan.width >> 4):
     SEQ
       avg.luma := 0
       -- Step 1/8's across the height of the image.
       SEQ y = start.pos FOR 8 STEP ((SIZE image) >> 3)
         -- Step 1/8's across the scanned width of the image.
-        SEQ pos = y FOR 8 STEP (scan.width >> 2)
+        SEQ pos = y FOR 8 STEP (scan.width >> 4)
           VAL pixel IS image[pos]:
           SEQ
             avg.luma := avg.luma + (INT pixel[y.0])
