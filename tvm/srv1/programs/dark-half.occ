@@ -30,16 +30,15 @@ INT FUNCTION sum.luma (VAL INT scan.x, scan.width, VAL []BYTE frame)
   VALOF
     VAL []UYVY image RETYPES frame:
     -- Set the start position at 1/16 offset of both width and height.
-    VAL INT start.pos IS (((SIZE image) >> 4) + (scan.width >> 3)) + scan.x:
+    VAL INT start.pos IS (((SIZE image) >> 4) + (scan.width >> 4)) + (scan.x >> 2):
     SEQ
       sum := 0
       -- Step 1/8's across the height of the image.
       SEQ y = start.pos FOR 8 STEP ((SIZE image) >> 3)
         -- Step 1/8's across the scanned width of the image.
-        SEQ pos = y FOR 8 STEP (scan.width >> 2)
+        SEQ pos = y FOR 8 STEP (scan.width >> 4)
           VAL pixel IS image[pos]:
-          SEQ
-            sum := sum + (INT pixel[y.0])
+          sum := sum + (INT pixel[y.0])
     RESULT sum
 :
 
@@ -51,11 +50,11 @@ PROC get.image (CAMERA! camera, CHAN MOBILE []BYTE frames!)
     camera[rsp] ? CASE ok
     
     -- Let it adjust to light level then freeze settings
-    --camera[req] ! set.auto.adjust; TRUE
-    --camera[rsp] ? CASE ok
-    --delay.s (3)
-    --camera[req] ! set.auto.adjust; FALSE
-    --camera[rsp] ? CASE ok
+    camera[req] ! set.auto.adjust; TRUE
+    camera[rsp] ? CASE ok
+    delay.s (3)
+    camera[req] ! set.auto.adjust; FALSE
+    camera[rsp] ? CASE ok
 
     -- Sample frames
     WHILE TRUE
@@ -89,7 +88,7 @@ PROC pick.darker.half (CHAN LEFT.RIGHT luma?, CHAN PICK pick!)
         TRUE
           p.diff := diff
       IF
-        p.diff < 16
+        p.diff < 512
           pick ! PICK.NONE
         diff < 0
           pick ! PICK.LEFT
@@ -116,15 +115,6 @@ PROC change.delta (CHAN PICK in?, out.0!, out.1!)
         this := new
 :
 
-PROC control.lasers (CHAN PICK pick?, LASER! lasers)
-  WHILE TRUE
-    PICK picked:
-    SEQ
-      pick ? picked
-      lasers[req] ! left; (picked = PICK.LEFT)
-      lasers[req] ! right; (picked = PICK.RIGHT)
-:
-
 PROC control.leds (CHAN PICK pick?, SYSTEM! system)
   WHILE TRUE
     PICK picked:
@@ -132,6 +122,26 @@ PROC control.leds (CHAN PICK pick?, SYSTEM! system)
       pick ? picked
       system[req] ! set.led; 1; (picked = PICK.LEFT)
       system[req] ! set.led; 2; (picked = PICK.RIGHT)
+:
+
+PROC control.motors (CHAN PICK pick?, MOTOR! motors)
+  WHILE TRUE
+    PICK picked:
+    SEQ
+      pick ? picked
+      IF
+        picked = PICK.LEFT
+          SEQ
+            motors[req] ! speed; 0
+            motors[req] ! turn; 50
+        picked = PICK.RIGHT
+          SEQ
+            motors[req] ! speed; 0
+            motors[req] ! back.turn; 50
+        TRUE
+          SEQ
+            motors[req] ! speed; 40
+          --motors[req] ! speed; 50
 :
 
 PROC dark.half (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTEM! system)
@@ -143,7 +153,7 @@ PROC dark.half (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, 
     sum.luma.halves (frames?, luma!)
     pick.darker.half (luma?, pick!)
     change.delta (pick?, pick.0!, pick.1!)
-    control.lasers (pick.0?, lasers)
-    control.leds (pick.1?, system)
+    control.leds (pick.0?, system)
+    control.motors (pick.1?, motors)
 :
 
