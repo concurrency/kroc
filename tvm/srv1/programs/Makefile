@@ -3,6 +3,7 @@ SKROC = skroc -L .. -L ../firmware -L ../include --blackfin --no-std-libs --keep
 
 PROGRAMS = \
 	dark.srv \
+	dark-half.srv \
 	camera-rgb.srv \
 	error1.srv \
 	error2.srv \
