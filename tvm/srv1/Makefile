@@ -58,11 +58,11 @@ GENHDRS += include/def_LPBlackfin.inc
 GENHDRS += include/defBF534.inc
 GENHDRS += include/defBF537.inc
 
-OBJS = $(ASMOBJS) $(COBJS)
-CSRCS = $(patsubst %.o,%.c,$(COBJS))
-#$(ASMSRCS:%.asm=%.o) $(CSRCS:%.c=%.o)
-
+OBJS 	= $(ASMOBJS) $(COBJS)
 TVMOBJS = libtvm/libtvm.a
+
+ASMSRCS	= $(patsubst %.o,%.asm,$(ASMOBJS))
+CSRCS	= $(patsubst %.o,%.c,$(COBJS))
 
 %.o: %.asm $(ASMINCS)
 	$(CC) $(ASMFLAGS) -c -o $@ $<
@@ -86,7 +86,7 @@ firmware.h: firmware.occ firmware/*.occ firmware/*.inc $(GENHDRS)
 
 main.o: firmware.h
 
-version.o: $(CSRCS)
+version.o: $(ASMSRCS) $(CSRCS)
 
 tvm.bin: $(OBJS) $(TVMOBJS)
 	$(LD) $(LDFLAGS) $(LDADD) $(OBJS) $(TVMOBJS) -lgcc
@@ -107,7 +107,7 @@ clean:
 #{{{  dependency tracking for C files
 update-deps:
 	@echo "# DO NOT DELETE THIS LINE -- make depend depends on it." > .c.deps
-	$(MAKEDEPEND) $(CFLAGS) -f.c.deps $(CSRCS) 2> /dev/null 1> /dev/null
+	$(MAKEDEPEND) $(CFLAGS) -f.c.deps $(ASMSRCS) $(CSRCS) 2> /dev/null 1> /dev/null
 .PHONY: update-deps
 
 ifeq ($(UPDATING_DEPS),yes)
