@@ -1473,6 +1473,12 @@ printtreenl (stderr, 4, formaltype);
 			while (TagOf (basetype) == S_ARRAY) {
 				basetype = ARTypeOf (basetype);
 			}
+#if 0
+fprintf (stderr, "gen8: trecparamexpopd(): VAL needs copying: , hps_ptr = %d, basetype =\n", hps_ptr);
+printtreenl (stderr, 4, basetype);
+fprintf (stderr, "gen8: trecparamexpopd(): VAL needs copying: formaltype =\n");
+printtreenl (stderr, 4, formaltype);
+#endif
 
 			while (hps_ptr && (TagOf (formaltype) == S_ARRAY)) {
 				if (ARDimOf (formaltype) == -1) {
@@ -1502,6 +1508,9 @@ printtreenl (stderr, 4, formaltype);
 				stored = TRUE;
 			}
 
+#if 0
+fprintf (stderr, "gen8: done size fiddling, stored = %d, carried = %d\n", stored, carried);
+#endif
 			/* load source pointer */
 			texpopd_main (opdmode, opd, MANY_REGS, FALSE);
 
@@ -1513,7 +1522,7 @@ printtreenl (stderr, 4, formaltype);
 					gensecondary (I_PROD);
 				}
 			} else {
-				loadconstant (bytesin (basetype));
+				loadconstant (bytesin (formaltype));
 			}
 			/* load type */
 			loadconstant (MT_SIMPLE | MT_MAKE_TYPE (MT_DATA));
