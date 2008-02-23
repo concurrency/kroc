@@ -7,7 +7,7 @@
 #include "srv.h"
 
 #include "camera_const.h"
-#include <i2cwrite.h>
+#include <i2c.h>
 #include <ov9655.h>
 
 typedef struct _dma_desc_t dma_desc_t;
@@ -369,9 +369,9 @@ int camera_out (ECTX ectx, WORD count, BYTEPTR pointer)
 	}
 
 	if ((frame_setup != NULL && !camera_initialised) || mode == CAMERA_INIT) {
-		i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >> 1);
+		i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >> 1, 1);
 		delay_us (500000);
-		i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >> 1);
+		i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >> 1, 1);
 		camera_initialised++;
 	}
 
@@ -384,14 +384,14 @@ int camera_out (ECTX ectx, WORD count, BYTEPTR pointer)
 			 * 	AEC time <1 line, 
 			 * 	AGC, AWB, AEC
 			 */
-			i2cwrite (0x30, (unsigned char *) auto_bits_on, 1);
+			i2cwrite (0x30, (unsigned char *) auto_bits_on, 1, 1);
 		} else {
 			const unsigned char auto_bits_off[] = { 0x13, 0x02 };
 			/* COM8 = AWB */
-			i2cwrite (0x30, (unsigned char *) auto_bits_off, 1);
+			i2cwrite (0x30, (unsigned char *) auto_bits_off, 1, 1);
 		}
 
-		i2cwrite (0x30, frame_setup->cfg, frame_setup->cfg_len >> 1);
+		i2cwrite (0x30, frame_setup->cfg, frame_setup->cfg_len >> 1, 1);
 		
 		if (config & CAMERA_STREAMING) {
 			int ret = camera_start (ectx, 1);
