@@ -40,7 +40,14 @@ ASMOBJS	+= support/r8x8dct.o
 ASMINCS += include/bfin_config.h
 ASMINCS += include/asmmacros.h
 
+COBJS	+= gpio.o
+COBJS	+= imagery.o
 COBJS	+= main.o
+COBJS	+= ppi_dma.o
+COBJS	+= timer.o
+COBJS	+= tvm.o
+COBJS	+= uart.o
+COBJS	+= version.o
 COBJS	+= support/jpeg.o
 COBJS	+= support/i2cwrite.o
 
@@ -78,6 +85,8 @@ firmware.h: firmware.occ firmware/*.occ firmware/*.inc $(GENHDRS)
 	-t t4 --c -f $@ $<
 
 main.o: firmware.h
+
+version.o: $(CSRCS)
 
 tvm.bin: $(OBJS) $(TVMOBJS)
 	$(LD) $(LDFLAGS) $(LDADD) $(OBJS) $(TVMOBJS) -lgcc
