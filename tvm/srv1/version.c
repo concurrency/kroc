@@ -4,5 +4,7 @@
  * Copyright (C) 2008 Jon Simpson, Matthew C. Jadud, Carl G. Ritson
  */
 
+#include "srv.h"
+
 const unsigned char version_string[] = "##TVM SRV-1 Blackfin - " __TIME__ " - " __DATE__;
 

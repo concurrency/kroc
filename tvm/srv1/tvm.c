@@ -403,7 +403,7 @@ void raise_tvm_interrupt (void)
 	user_ctx.sflags		|= SFLAG_INTR;
 }
 
-void run_tvm (void)
+int run_tvm (void)
 {
 	/* Initialise interpreter */
 	tvm_init (&tvm);
@@ -424,6 +424,8 @@ void run_tvm (void)
 			/* FIXME: power management goes here */
 		}
 	}
+
+	return 1;
 }
 /*}}}*/
 
