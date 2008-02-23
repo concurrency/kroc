@@ -729,9 +729,13 @@ printtreenl (stderr, 4, atype);
 				return TRUE;
 				/*}}}*/
 			}
-			/* if the formal is a named type, and the actual is its content equivalent, allow this */
+			/* if the formal is a named type, and the actual is its content equivalent, allow this (or vice versa) */
 			if ((TagOf (atype) == N_TYPEDECL) && (TagOf (ftype) != N_TYPEDECL)) {
 				if (typesequivalent (follow_user_type (atype), ftype, match_any)) {
+					return TRUE;
+				}
+			} else if ((TagOf (atype) != N_TYPEDECL) && (TagOf (ftype) == N_TYPEDECL)) {
+				if (typesequivalent (atype, follow_user_type (ftype), match_any)) {
 					return TRUE;
 				}
 			}
@@ -761,7 +765,7 @@ must check that the specifier tree fully defines these.
 Return TRUE if the trees represent equivalent types.
 */
 /*}}}*/
-PUBLIC BOOL spec_into_type (treenode * specptr, treenode * typeptr)
+PUBLIC BOOL spec_into_type (treenode *specptr, treenode *typeptr)
 {
 	/*{{{  debugging */
 #if 0
@@ -777,6 +781,7 @@ printtreenl (stderr, 4, typeptr);
 		/*{{{  loop body */
 		const int spectag = TagOf (specptr);
 		const int typetag = TagOf (typeptr);
+
 		if (spectag == typetag) {
 			/*{{{  switch on the tag */
 			switch (spectag) {
@@ -907,6 +912,14 @@ printtreenl (stderr, 4, typeptr);
 			/*{{{  allow through UNDECLARED types */
 			return (TRUE);
 			/*}}} */
+		} else if ((spectag != N_TYPEDECL) && (typetag == N_TYPEDECL)) {
+			/*{{{  de-user-typing?*/
+			typeptr = follow_user_type (typeptr);
+			/*}}}*/
+		} else if ((spectag == N_TYPEDECL) && (typetag != N_TYPEDECL)) {
+			/*{{{  re-user-typing?*/
+			specptr = follow_user_type (specptr);
+			/*}}}*/
 		} else {
 			return (FALSE);
 		}
