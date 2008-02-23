@@ -2277,8 +2277,8 @@ gencomment1 ("gen non-register param %d..", i);
 					/* CGR FIXME: xxx */
 					generr (GEN_NO_FMPARAM);
 				}
-				#endif
 				/*}}}*/
+				#endif
 			}
 		}
 	}
@@ -2583,8 +2583,8 @@ gencomment0 ("gen non-register param 2..0");
 	/**********************   End comment out  ****************************/
 	/*}}} */
 #ifdef MOBILES
-	/*{{{  return non-val MOBILEs to their pointer slots*/
 	if (!(ptype & PROC_FORKED)) {
+		/*{{{  return non-val MOBILEs to their pointer slots*/
 		int dimcount = 0;
 		treenode *foo = NULL;
 
@@ -2692,8 +2692,8 @@ printtreenl (stderr, 4, foo);
 				/*}}}*/
 			}
 		}
+		/*}}}*/
 	}
-	/*}}}*/
 #endif
 	/*{{{  free memory associated with call (if recursive) */
 	if ((ptype & (PROC_FORKED | PROC_REC)) == PROC_REC) {
