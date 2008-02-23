@@ -25,6 +25,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* stddef to get NULL */
 #include <stddef.h>
 
+/* alignment */
+#ifdef __GNUC__
+#define TVM_WORD_ALIGN __attribute__ ((aligned (TVM_WORD_LENGTH)))
+#else
+#define TVM_WORD_ALIGN
+#endif
+
 /* inlining */
 #ifdef TVM_USE_INLINE
 #define TVM_INLINE inline

@@ -58,7 +58,7 @@ WORD srv_get_time (ECTX ectx);
 
 /*{{{  tvm.c */
 void raise_tvm_interrupt (void);
-void run_tvm (void);
+int run_tvm (void);
 /*}}}*/
 
 /*{{{  uart.c */
@@ -74,5 +74,5 @@ int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer);
 /*}}}*/
 
 /*{{{  version.c */
-extern const unsigned char *version_string;
+extern const unsigned char version_string[];
 /*}}}*/

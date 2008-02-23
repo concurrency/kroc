@@ -1174,7 +1174,7 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
             (fprintf op "static const int vs_size = ~a;~n" *VS*)
             (fprintf op "static const int ms_size = ~a;~n" *MS*)
             (fprintf op "static const int inst_size = ~a;~n" (apply + (map length bytes)))
-            (fprintf op "static const unsigned char transputercode[] = {~n")
+            (fprintf op "static const unsigned char transputercode[] TVM_WORD_ALIGN = {~n")
             (fprintf op "~a " (byte-print bytes))
             (fprintf op "~n};~n~n")
             (make-pass (make-hash-table) (make-hash-table))

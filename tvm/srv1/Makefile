@@ -84,7 +84,7 @@ firmware.h: firmware.occ firmware/*.occ firmware/*.inc $(GENHDRS)
 	--slinker-opts "--tlp-types \"()\"" \
 	-t t4 --c -f $@ $<
 
-main.o: firmware.h
+tvm.o: firmware.h
 
 version.o: $(ASMSRCS) $(CSRCS)
 

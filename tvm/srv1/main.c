@@ -21,9 +21,6 @@ int main (void) {
 	uart0_send_char ('\n');
 	
 	/* Run the TVM */
-	run_tvm ();
-
-	/* Never reached */
-	return 1;
+	return run_tvm ();;
 }
 
