@@ -729,6 +729,12 @@ printtreenl (stderr, 4, atype);
 				return TRUE;
 				/*}}}*/
 			}
+			/* if the formal is a named type, and the actual is its content equivalent, allow this */
+			if ((TagOf (atype) == N_TYPEDECL) && (TagOf (ftype) != N_TYPEDECL)) {
+				if (typesequivalent (follow_user_type (atype), ftype, match_any)) {
+					return TRUE;
+				}
+			}
 			/* mobile type can be passed to non-mobile equivalent */
 			return typesequivalent (MTypeOf (follow_user_type (atype)), ftype, match_any);
 #endif
