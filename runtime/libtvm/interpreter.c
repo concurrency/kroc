@@ -434,29 +434,37 @@ int tvm_ectx_waiting_on (ECTX ectx, WORDPTR ws_base, WORD ws_len)
 	return 0; /* no dependencies */
 }
 
-int tvm_dispatch (ECTX ectx)
+int tvm_dispatch (ECTX ectx, UWORD cycles)
 {
-	BYTE instr;
-	
-	/* Read the instruction */
-#if defined(MEMORY_INTF_BIGENDIAN)
-	instr = *IPTR; /* FIXME */
-#else
-	instr = read_byte (IPTR);
-#endif
-	
-	/* Increment instruction pointer */
-	IPTR = byteptr_plus (IPTR, 1);
+	int ret;
 
-	/* Put the least significant bits in OREG */
-	OREG |= (instr & 0x0f);
+	do {
+		BYTE instr;
+		
+		/* Read the instruction */
+		#if defined(MEMORY_INTF_BIGENDIAN)
+		instr = *IPTR; /* FIXME */
+		#else
+		instr = read_byte (IPTR);
+		#endif
+		
+		/* Increment instruction pointer */
+		IPTR = byteptr_plus (IPTR, 1);
 
-#ifdef TVM_DISPATCH_SWITCH
-	return dispatch_instruction (ectx, instr);
-#else
-	/* Use the other bits to index into the jump table */
-	return primaries[instr >> 4] (ectx);
-#endif
+		/* Put the least significant bits in OREG */
+		OREG |= (instr & 0x0f);
+
+		#ifdef TVM_DISPATCH_SWITCH
+		ret = dispatch_instruction (ectx, instr);
+		#else
+		/* Use the other bits to index into the jump table */
+		ret = primaries[instr >> 4] (ectx);
+		#endif
+		
+		cycles -= 2;
+	} while (cycles && !ret);
+
+	return ret;
 }
 
 static int run_pre_init (ECTX ectx)
@@ -492,11 +500,7 @@ int tvm_run (ECTX ectx)
 		return ret;
 	}
 
-	for (;;) {
-		if ((ret = tvm_dispatch (ectx))) {
-			return (ectx->state = ret);
-		}
-	}
+	return tvm_dispatch (ectx, 1);
 }
 
 /** 
@@ -511,12 +515,10 @@ int tvm_run_count (ECTX ectx, UWORD count)
 		return ret;
 	}
 
-	while (count--) {
-		if ((ret = tvm_dispatch (ectx))) {
-			return (ectx->state = ret);
-		}
+	if ((ret = tvm_dispatch (ectx, count << 1))) {
+		return ret;
 	}
-
+	
 	return ECTX_TIME_SLICE;
 }
 
