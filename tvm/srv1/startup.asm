@@ -304,6 +304,21 @@ start.end:
 // Default handlers:
 //
 
+call_handler_then_rti:
+    call (p0)
+    restore_context
+    rti;
+
+_UNHANDLED:           // Unhandled Interrupt Handler
+    save_context
+
+    r0 = sp
+
+    p0.l = _unhandled_interrupt
+    p0.h = _unhandled_interrupt
+
+    jump call_handler_then_rti
+
 _HWHANDLER:           // HW Error Handler 5
     // Save context on stack and call C handler
     save_context
@@ -313,10 +328,7 @@ _HWHANDLER:           // HW Error Handler 5
     p0.l = _handle_hwerror;
     p0.h = _handle_hwerror;
 
-    call (p0);
-
-    restore_context
-    rti;
+    jump call_handler_then_rti
 
 _NHANDLER:
 stall:
@@ -348,9 +360,9 @@ _THANDLER:            // Timer Handler 6
     (r7:7, p5:5) = [sp++];
     rti;
 
-_RTCHANDLER:          // IVG 7 Handler  
-    r0.l = 7;
-    jump stall;
+_RTCHANDLER:          // IVG 7 Handler
+    r0 = 7 (z);
+    jump _UNHANDLED;
 
 _I8HANDLER:           // IVG 8 Handler
     // Save context on stack and call C handler
@@ -359,14 +371,11 @@ _I8HANDLER:           // IVG 8 Handler
     p0.l = _handle_int8;
     p0.h = _handle_int8;
 
-    call (p0);
-
-    restore_context
-    rti;
+    jump call_handler_then_rti;
 
 _I9HANDLER:           // IVG 9 Handler
-    r0.l = 9;
-    jump stall;
+    r0 = 9 (z);
+    jump _UNHANDLED;
 
 _I10HANDLER:          // IVG 10 Handler
     // Save context on stack and call C handler
@@ -375,26 +384,23 @@ _I10HANDLER:          // IVG 10 Handler
     p0.l = _handle_int10;
     p0.h = _handle_int10;
 
-    call (p0);
-
-    restore_context
-    rti;
+    jump call_handler_then_rti;
 
 _I11HANDLER:          // IVG 11 Handler
-    r0.l = 11;
-    jump stall;
+    r0 = 11 (z);
+    jump _UNHANDLED;
 
 _I12HANDLER:          // IVG 12 Handler
-    r0.l = 12;
-    jump stall;
+    r0 = 12 (z);
+    jump _UNHANDLED;
 
 _I13HANDLER:          // IVG 13 Handler
-    r0.l = 13;
-    jump stall;
+    r0 = 13 (z);
+    jump _UNHANDLED;
  
 _I14HANDLER:          // IVG 14 Handler
-    r0.l = 14;
-    jump stall;
+    r0 = 14 (z);
+    jump _UNHANDLED;
 
 _I15HANDLER:          // IVG 15 Handler
     jump call_main
