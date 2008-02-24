@@ -130,10 +130,12 @@ void uart0_send_char (const unsigned char c)
 	*pUART0_THR = c;
 }
 
-void uart0_send_string (const unsigned char *str)
+void uart0_send_string (const char *str)
 {
+	const unsigned char *p = (unsigned char *) str;
 	unsigned char c;
-	while ((c = *str++) != '\0') {
+
+	while ((c = *p++) != '\0') {
 		uart0_send_char (c);
 	}
 }

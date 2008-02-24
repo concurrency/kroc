@@ -6,5 +6,5 @@
 
 #include "srv.h"
 
-const unsigned char version_string[] = "##TVM SRV-1 Blackfin - " __TIME__ " - " __DATE__;
+const char version_string[] = "## TVM SRV-1 Blackfin - " __TIME__ " - " __DATE__;
 

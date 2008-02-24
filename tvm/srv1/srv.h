@@ -69,10 +69,10 @@ void handle_int10 (void);
 void complete_uart0_interrupt (ECTX ectx);
 int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer);
 void uart0_send_char (const unsigned char c);
-void uart0_send_string (const unsigned char *str);
+void uart0_send_string (const char *str);
 int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer);
 /*}}}*/
 
 /*{{{  version.c */
-extern const unsigned char version_string[];
+extern const char version_string[];
 /*}}}*/
