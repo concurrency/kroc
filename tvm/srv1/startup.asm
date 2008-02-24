@@ -76,9 +76,9 @@
 
 .global start
 start:
-
-    sp.h = 0xFFB0;        // Set up supervisor stack in scratch pad
-    sp.l = 0x0400;
+    /* Setup supervisor stack in scratch pad SRAM */
+    sp.h = 0xFFB0;
+    sp.l = 0x1000;
     fp = sp;
 
 
