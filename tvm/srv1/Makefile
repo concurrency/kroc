@@ -40,6 +40,7 @@ ASMOBJS	+= support/r8x8dct.o
 ASMINCS += include/bfin_config.h
 ASMINCS += include/asmmacros.h
 
+COBJS	+= debug.o
 COBJS	+= gpio.o
 COBJS	+= imagery.o
 COBJS	+= main.o

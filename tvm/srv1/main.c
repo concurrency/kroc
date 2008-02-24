@@ -19,7 +19,7 @@ int main (void) {
 	/* Output boot message */
 	uart0_send_string (version_string);
 	uart0_send_char ('\n');
-	
+
 	/* Run the TVM */
 	return run_tvm ();;
 }

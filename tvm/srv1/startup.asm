@@ -304,21 +304,18 @@ start.end:
 // Default handlers:
 //
 
-
-// If we get caught in one of these handlers for some reason, 
-// display the IRQ vector on the EZKIT LEDs and enter
-// endless loop.
-
-display_fail:
-    bitset(r0, 5);    // mark error
-#ifdef EXCEPTION_REPORT
-    call EXCEPTION_REPORT;
-#endif
-    jump stall;
-
-
 _HWHANDLER:           // HW Error Handler 5
-    /* jump stall; */
+    // Save context on stack and call C handler
+    save_context
+
+    r0 = sp
+
+    p0.l = _handle_hwerror;
+    p0.h = _handle_hwerror;
+
+    call (p0);
+
+    restore_context
     rti;
 
 _NHANDLER:
@@ -326,16 +323,18 @@ stall:
     idle
     jump stall;
 
-EXC_HANDLER:          // exception handler
-#ifdef EXCEPTION_REPORT
-    r0 = seqstat;
-    r1 = retx;
-    call EXCEPTION_REPORT;
-    cc = r0 == 0;
-    if !cc jump cont_program;
-#endif
-    jump idle_loop;
-cont_program:
+EXC_HANDLER:          // Exception Handler 3
+    // Save context on stack and call C handler
+    save_context
+
+    r0 = sp
+
+    p0.l = _handle_exception;
+    p0.h = _handle_exception;
+
+    call (p0);
+
+    restore_context
     rtx;
 
 _THANDLER:            // Timer Handler 6
@@ -351,7 +350,7 @@ _THANDLER:            // Timer Handler 6
 
 _RTCHANDLER:          // IVG 7 Handler  
     r0.l = 7;
-    jump display_fail;
+    jump stall;
 
 _I8HANDLER:           // IVG 8 Handler
     // Save context on stack and call C handler
@@ -367,7 +366,7 @@ _I8HANDLER:           // IVG 8 Handler
 
 _I9HANDLER:           // IVG 9 Handler
     r0.l = 9;
-    jump display_fail;
+    jump stall;
 
 _I10HANDLER:          // IVG 10 Handler
     // Save context on stack and call C handler
@@ -383,19 +382,19 @@ _I10HANDLER:          // IVG 10 Handler
 
 _I11HANDLER:          // IVG 11 Handler
     r0.l = 11;
-    jump display_fail;
+    jump stall;
 
 _I12HANDLER:          // IVG 12 Handler
     r0.l = 12;
-    jump display_fail;
+    jump stall;
 
 _I13HANDLER:          // IVG 13 Handler
     r0.l = 13;
-    jump display_fail;
+    jump stall;
  
 _I14HANDLER:          // IVG 14 Handler
     r0.l = 14;
-    jump display_fail;
+    jump stall;
 
 _I15HANDLER:          // IVG 15 Handler
     jump call_main

@@ -326,13 +326,13 @@ static int run_firmware (void)
 
 	/* Being here means something unexpected happened... */
 	
-	uart0_send_string ((unsigned char *) "## Firmware failed; state = ");
-	uart0_send_char ((unsigned char) ret);
+	uart0_send_string ("## Firmware failed; state = ");
+	uart0_send_char (ret);
 	uart0_send_char ('\n');
 
 	if (user_parent != (WORDPTR) NOT_PROCESS_P) {
-		uart0_send_string ((unsigned char *) "## User state = ");
-		uart0_send_char ((unsigned char) user_ctx.state);
+		uart0_send_string ("## User state = ");
+		uart0_send_char (user_ctx.state);
 		uart0_send_char ('\n');
 	}
 
