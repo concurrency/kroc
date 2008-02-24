@@ -69,7 +69,7 @@ static void print_regset (const char *name, int count, unsigned int *p)
 			uart0_send_char ('[');
 			uart0_send_char (digits[i]);
 			uart0_send_string ("] = ");
-			print_hex (p[8 - i]);
+			print_hex (p[count - (i + 1)]);
 		}
 		uart0_send_char ('\n');
 	}
@@ -155,7 +155,7 @@ void handle_hwerror (sys_state_t *sys)
 	const char *text;
 	int cause = (sys->sysstat >> 14) & 0x1f;
 
-	uart0_send_string ("## Hardware error\n");
+	uart0_send_string ("## Hardware Error\n");
 
 	switch (cause) {
 		case 0x02: text = "system MMR error"; break;
@@ -171,6 +171,19 @@ void handle_hwerror (sys_state_t *sys)
 	uart0_send_string (text);
 	uart0_send_string ("\n\n");
 
+	print_state (sys);
+	hang ();
+}
+
+void unhandled_interrupt (sys_state_t *sys)
+{
+	uart0_send_string ("## Unhandled Interrupt\n");
+
+	uart0_send_string ("\nInterrupt: ");
+	uart0_send_char (digits[sys->r[7] / 10]);
+	uart0_send_char (digits[sys->r[7] % 10]);
+	uart0_send_string ("\n\n");
+	
 	print_state (sys);
 	hang ();
 }
