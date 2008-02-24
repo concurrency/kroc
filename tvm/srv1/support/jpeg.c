@@ -313,6 +313,8 @@ static const UINT8 chrominance_quant_table [] __32BIT_ALIGN =
     99, 99, 99, 99, 99, 99, 99, 99
 };
 
+static JPEG_ENCODER_STRUCTURE JpegStruct __32BIT_ALIGN;
+
 static UINT8    Lqt [BLOCK_SIZE] __32BIT_ALIGN;
 static UINT8    Cqt [BLOCK_SIZE] __32BIT_ALIGN;
 static UINT16   ILqt [BLOCK_SIZE] __32BIT_ALIGN;
@@ -399,10 +401,8 @@ static void initialization (JPEG_ENCODER_STRUCTURE *jpeg, UINT32 image_width, UI
 
 UINT8* encode_image (UINT8 *input_ptr,UINT8 *output_ptr, UINT32 quality_factor, UINT32 image_width, UINT32 image_height)
 {
-    UINT16 i, j;
-
-    JPEG_ENCODER_STRUCTURE JpegStruct;
     JPEG_ENCODER_STRUCTURE *jpeg_encoder_structure = &JpegStruct;
+    UINT16 i, j;
 
     /* Initialization of JPEG control structure */
     initialization (jpeg_encoder_structure, image_width, image_height);
@@ -1236,21 +1236,31 @@ static void read_422_format (JPEG_ENCODER_STRUCTURE *jpeg_encoder_structure, UIN
         if (cols <= 8)
         {
             for (j=8-Y1_cols; j>0; j--)
-                *Y1_Ptr++ = *(Y1_Ptr - 1);
+	    {
+	        INT16 y = *(Y1_Ptr - 1);
+                *Y1_Ptr++ = y;
+	    }
 
             for (j=8-Y2_cols; j>0; j--)
-                *Y2_Ptr++ = *(Y1_Ptr - 1);
+	    {
+	        INT16 y = *(Y1_Ptr - 1); /* CGR FIXME: Not Y2_Ptr? */
+                *Y2_Ptr++ = y;
+	    }
         }
         else
         {
             for (j=8-Y2_cols; j>0; j--)
-                *Y2_Ptr++ = *(Y2_Ptr - 1);
+	    {
+	        INT16 y = *(Y2_Ptr - 1);
+                *Y2_Ptr++ = y;
+	    }
         }
 
         for (j=(16-cols)>>1; j>0; j--)
         {
-            *CB_Ptr++ = *(CB_Ptr-1);
-            *CR_Ptr++ = *(CR_Ptr-1);
+            INT16 cb = *(CB_Ptr - 1), cr = *(CR_Ptr - 1);
+	    *CB_Ptr++ = cb;
+            *CR_Ptr++ = cr;
         }
 
         input_ptr += incr;
@@ -1260,10 +1270,12 @@ static void read_422_format (JPEG_ENCODER_STRUCTURE *jpeg_encoder_structure, UIN
     {
         for (j=8; j>0; j--)
         {
-            *Y1_Ptr++ = *(Y1_Ptr - 8);
-            *Y2_Ptr++ = *(Y2_Ptr - 8);
-            *CB_Ptr++ = *(CB_Ptr - 8);
-            *CR_Ptr++ = *(CR_Ptr - 8);
+	    INT16 y1 = *(Y1_Ptr - 8), y2 = *(Y2_Ptr - 8);
+	    INT16 cb = *(CB_Ptr - 8), cr = *(CR_Ptr - 8);
+            *Y1_Ptr++ = y1;
+            *Y2_Ptr++ = y2;
+            *CB_Ptr++ = cb;
+            *CR_Ptr++ = cr;
         }
     }
 }
