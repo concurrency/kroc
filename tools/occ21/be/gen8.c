@@ -4498,7 +4498,7 @@ printtreenl (stderr, 4, param[0]);
 			storemobile (param[0]);
 			genmobileunpack (param[0], TRUE, FALSE);
 			texp (param[1], MANY_REGS);
-			storedynmobilesize (param[0], 0);
+			storemobilesize (param[0], 1);
 		}
 		break;
 		/*}}}*/
