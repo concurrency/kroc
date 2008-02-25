@@ -1371,6 +1371,9 @@ static int dump_secondary (int esfunc, char *buffer)
 	case I_EXT_MT_OUT:
 		sprintf (buffer, "\tEXT_MT_OUT");
 		break;
+	case I_MT_RESIZE:
+		sprintf (buffer, "\tMT_RESIZE");
+		break;
 	default:
 		sprintf (buffer, "\tUnsupported %d", esfunc);
 		break;

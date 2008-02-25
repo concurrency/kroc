@@ -411,6 +411,8 @@
 
 #define I_EXT_MT_IN    0x24B
 #define I_EXT_MT_OUT   0x24C
+
+#define I_MT_RESIZE    0x24D
 /*}}}*/
 /*{{{  negatives */
 #define I_FPSTALL     ( 0x01 | I_NEGATIVE) /* T9000 */

@@ -67,7 +67,7 @@
 #include "predefhd.h"
 #include "genkroc.h"
 #include "mobiles.h"		/* for mobile_getanontypes() */
-#include "mtdef.h"
+#include "mobile_types.h"
 /*}}}*/
 
 /*{{{  global variables*/

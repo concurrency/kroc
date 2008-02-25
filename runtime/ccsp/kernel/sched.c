@@ -3907,6 +3907,95 @@ K_CALL_DEFINE_3_1 (X_mt_bind)
 	K_ONE_OUT (ptr);
 }
 /*}}}*/
+/*{{{  void kernel_X_mt_resize (void)*/
+/*
+ *	resize a mobile type 
+ *
+ *	@SYMBOL:	X_mt_resize
+ *	@INPUT:		3
+ *	@OUTPUT: 	1
+ *	@CALL: 		K_MT_RESIZE
+ *	@PRIO:		50
+ */
+K_CALL_DEFINE_3_1 (X_mt_resize)
+{
+	word arg, *ptr, resize_type;
+	
+	K_CALL_PARAMS_3 (resize_type, ptr, arg);
+	ENTRY_TRACE (X_mt_resize, "%08x %p %08x", resize, ptr, arg);
+
+	if ((resize_type == MT_RESIZE_DATA) && (ptr != NULL)) {
+		word type = ptr[MTType];
+
+		if ((type & MT_SIMPLE) && (MT_TYPE(type) == MT_ARRAY)) {
+			mt_array_internal_t *ma = (mt_array_internal_t *) (ptr - MT_ARRAY_PTR_OFFSET);
+			word inner_type		= MT_ARRAY_INNER_TYPE(type);
+
+			if (MT_TYPE(inner_type) == MT_ARRAY_OPTS) {
+				inner_type = MT_ARRAY_OPTS_INNER(inner_type);
+			}
+
+			/* Reallocate the array if it needs to grow, or if it
+			 * shrinks to less than 50% of the allocated memory.
+			 */
+			if ((ma->size < arg) || (arg < (ma->size / 2))) {
+				mt_array_internal_t *new;
+				word size_shift;
+				
+				new = mt_alloc_array_internal (
+					sched->allocator, type, arg, false, &size_shift
+				);
+				if (MT_TYPE(inner_type) != MT_NUM) {
+					word **dst = (word **) new->array.data;
+					word **src = (word **) ma->array.data;
+					word count;
+
+					count = ma->size;
+					while (count--) {
+						*(dst++) = *src;
+						*(src++) = NULL;
+					}
+					
+					if (new->size > ma->size) {
+						count = new->size - ma->size;
+						while (count--) {
+							*(dst++) = NULL;
+						}
+					}
+				} else {
+					memcpy (
+						new->array.data,
+						ma->array.data, 
+						ma->size << size_shift
+					);
+				}
+
+				mt_release_simple (sched->allocator, ptr, type);
+				ptr = ((word *) new) + MT_ARRAY_PTR_OFFSET;
+			} else if (ma->size > arg) {
+				if (MT_TYPE(inner_type) != MT_NUM) {
+					word **data 	= ((word **) ma->array.data) + arg;
+					word count 	= ma->size - arg;
+					while (count--) {
+						word *p = *data;
+						if (p != NULL) {
+							mt_release (sched->allocator, p);
+							*data = NULL;
+						}
+						data++;
+					}
+				}
+			}
+		} else {
+			mobile_type_error ();
+		}
+	} else {
+		mobile_type_error ();
+	}
+
+	K_ONE_OUT (ptr);
+}
+/*}}}*/
 /*}}}*/
 /*{{{  numerics */
 /*{{{  void kernel_X_norm (void)*/

@@ -185,6 +185,9 @@
 #define PD_READ_MEMORY_BARRIER	118
 #define PD_WRITE_MEMORY_BARRIER	119
 /*}}}*/
+/*{{{  further MOBILE manipulation */
+#define PD_RESIZE_MOBILE_ARRAY_1D	120
+/*}}}*/
 
 /*{{{  Predefines for the configuration stuff */
 /*{{{  Predefines for the configurer */

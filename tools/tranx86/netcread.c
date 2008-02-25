@@ -1242,6 +1242,10 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 				/*{{{  bind a mobile type*/
 				tmp->opd = I_MT_BIND;
 				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_resize")) {
+				/*{{{  resize a mobile type*/
+				tmp->opd = I_MT_RESIZE;
+				/*}}}*/
 			} else {
 				goto bad_input_line;
 			}

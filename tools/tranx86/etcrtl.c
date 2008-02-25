@@ -5491,6 +5491,11 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 		arch->compose_kcall (ts, K_MT_BIND, 3, 1);
 		break;
 		/*}}}*/
+		/*{{{  I_MT_RESIZE -- mobile type resizing*/
+	case I_MT_RESIZE:
+		arch->compose_kcall (ts, K_MT_RESIZE, 3, 1);
+		break;
+		/*}}}*/
 		/*{{{  I_MB, I_RMB, I_WMB -- memory barriers*/
 	case I_MB:
 	case I_RMB:

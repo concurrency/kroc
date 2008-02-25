@@ -452,6 +452,11 @@
 #define I_EXT_MT_OUT	0x24c
 
 /*}}}*/
+/*{{{  (more) mobile type instructions*/
+
+#define I_MT_RESIZE	0x24d
+
+/*}}}*/
 /*{{{  negative instructions (mostly T9000)*/
 #define I_NEGATIVE	0x8000
 #define I_FPSTALL	(0x01 | I_NEGATIVE)
@@ -655,7 +660,7 @@ static int tsdiff_sec_twocodes[] = { \
 	-2, -2,	16, 16,	/* 240: mt_enroll, mt_resign, mt_sync, mt_xin */
 	16, 16, -2, -2,	/* 244: mt_xout, mt_xxchg, mt_dclone, mt_bind */
 	0, 0, 0, 16,	/* 248: mb, rmb, wmb, ext_mt_in */
-	16		/* 24c: ext_mt_out */
+	16, -2		/* 24c: ext_mt_out, mt_resize */
 };
 
 /*}}}*/

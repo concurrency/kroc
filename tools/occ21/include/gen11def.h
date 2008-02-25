@@ -56,6 +56,7 @@ void loadmobile_real (treenode *var);
 void loadmobile (treenode *var);
 void loadmobile_nochk (treenode *var);
 void loaddynmobilesize (treenode *const var, const int dim);
+void storedynmobilesize (treenode *const var, const int dim);
 void storemobile (treenode *var);
 void storemobile_nochk (treenode *var);
 void storemobilesize (treenode *const var, const int dim);
@@ -73,6 +74,7 @@ void loadhiddentypeptr (treenode *tptr, int regs);
 
 void mapcondfreedynchantype (treenode **nptr);
 void genaddrof (treenode *tptr);
+void mobilearray_base (treenode *const nptr, treenode **const basetype, int *basebytes);
 #endif
 /*void loadopdpointer (int opdmode, treenode *opd);*/ /* unused */
 #if 0 /* no constructors are passed to the backend any more */
