@@ -391,6 +391,7 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
         SEQ i = 0 FOR 5
           check.INT (id.INT (a[i]), 42 \/ (i << 8), "test6.3b")
 
+        #IF FALSE
         RESIZE.MOBILE.ARRAY.1D (a, 0)
         check.INT (id.INT (SIZE a), 0, "test6.4a")
         IF
@@ -398,6 +399,7 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
             SKIP
           TRUE
             check.BOOL (FALSE, TRUE, "test6.4b")
+        #ENDIF
     :
     PROC record.type ()
       DATA TYPE R1
@@ -415,14 +417,14 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
         RESIZE.MOBILE.ARRAY.1D (a, 2)
         check.INT (id.INT (SIZE a), 2, "test6.11a")
         check.INT (id.INT (a[0][x]), 42, "test6.11b")
-        check.INT (id.INT (a[0][y]), 42, "test6.11c")
-        check.INT (id.INT (a[0][z]), 42, "test6.11d")
+        check.INT (id.INT (a[0][y]), 17, "test6.11c")
+        check.INT (id.INT (a[0][z]), 95, "test6.11d")
 
         RESIZE.MOBILE.ARRAY.1D (a, 1)
         check.INT (id.INT (SIZE a), 1, "test6.12a")
         check.INT (id.INT (a[0][x]), 42, "test6.12b")
-        check.INT (id.INT (a[0][y]), 42, "test6.12c")
-        check.INT (id.INT (a[0][z]), 42, "test6.12d")
+        check.INT (id.INT (a[0][y]), 17, "test6.12c")
+        check.INT (id.INT (a[0][z]), 95, "test6.12d")
     :
       
     SEQ

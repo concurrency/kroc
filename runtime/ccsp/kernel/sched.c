@@ -3962,11 +3962,11 @@ K_CALL_DEFINE_3_1 (X_mt_resize)
 							*(dst++) = NULL;
 						}
 					}
-				} else {
+				} else if (new->size > 0) {
 					memcpy (
 						new->array.data,
 						ma->array.data, 
-						ma->size << size_shift
+						new->size << size_shift
 					);
 				}
 
