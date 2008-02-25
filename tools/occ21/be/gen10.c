@@ -51,7 +51,7 @@
 #include "gen12def.h"
 #include "code1def.h"
 #include "genkroc.h"
-#include "mtdef.h"
+#include "mobile_types.h"
 /*}}}*/
 
 /*{{{  private variables*/

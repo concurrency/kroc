@@ -367,6 +367,70 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
       check.defined (a2, TRUE, "test5.21")
   :
   --}}}
+  --{{{  RESIZE.MOBILE.ARRAY
+  PROC test6 ()
+    PROC int.type ()
+      MOBILE []INT a:
+      SEQ
+        a := MOBILE [10]INT
+        SEQ i = 0 FOR 10
+          a[i] := 42 \/ (i << 8)
+        
+        RESIZE.MOBILE.ARRAY.1D (a, 20)
+        check.INT (id.INT (SIZE a), 20, "test6.1a")
+        SEQ i = 0 FOR 10
+          check.INT (id.INT (a[i]), 42 \/ (i << 8), "test6.1b")
+
+        RESIZE.MOBILE.ARRAY.1D (a, 10)
+        check.INT (id.INT (SIZE a), 10, "test6.2a")
+        SEQ i = 0 FOR 10
+          check.INT (id.INT (a[i]), 42 \/ (i << 8), "test6.2b")
+
+        RESIZE.MOBILE.ARRAY.1D (a, 5)
+        check.INT (id.INT (SIZE a), 5, "test6.3a")
+        SEQ i = 0 FOR 5
+          check.INT (id.INT (a[i]), 42 \/ (i << 8), "test6.3b")
+
+        RESIZE.MOBILE.ARRAY.1D (a, 0)
+        check.INT (id.INT (SIZE a), 0, "test6.4a")
+        IF
+          DEFINED a
+            SKIP
+          TRUE
+            check.BOOL (FALSE, TRUE, "test6.4b")
+    :
+    PROC record.type ()
+      DATA TYPE R1
+        RECORD
+          INT x, y, z:
+      :
+      MOBILE []R1 a:
+      SEQ
+        a := MOBILE [1]R1
+        check.INT (id.INT (SIZE a), 1, "test6.10")
+        a[0][x] := 42
+        a[0][y] := 17
+        a[0][z] := 95
+        
+        RESIZE.MOBILE.ARRAY.1D (a, 2)
+        check.INT (id.INT (SIZE a), 2, "test6.11a")
+        check.INT (id.INT (a[0][x]), 42, "test6.11b")
+        check.INT (id.INT (a[0][y]), 42, "test6.11c")
+        check.INT (id.INT (a[0][z]), 42, "test6.11d")
+
+        RESIZE.MOBILE.ARRAY.1D (a, 1)
+        check.INT (id.INT (SIZE a), 1, "test6.12a")
+        check.INT (id.INT (a[0][x]), 42, "test6.12b")
+        check.INT (id.INT (a[0][y]), 42, "test6.12c")
+        check.INT (id.INT (a[0][z]), 42, "test6.12d")
+    :
+      
+    SEQ
+      int.type ()
+      record.type ()
+  :
+
+  --}}}
   --}}}  
   SEQ
     init ("CG test 85", "dynamic MOBILE arrays")
@@ -382,6 +446,8 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
     test4 ()
     title ("DEFINED")
     test5 ()
+    title ("RESIZE.MOBILE.ARRAY")
+    test6 ()
     finish ()
 :
 

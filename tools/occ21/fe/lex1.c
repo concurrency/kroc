@@ -559,6 +559,7 @@ predeflines[] =
 	, { CC, PD_BIND_MOBILE_HW, "P(a,VI):BIND.MOBILE.HW"}
 	, { CC, PD_DMA_CAPABLE, "FB(a):DMA.CAPABLE"}
 	, { CC, PD_MAKE_DMA_CAPABLE, "P(a):MAKE.DMA.CAPABLE"}
+	, { CC, PD_RESIZE_MOBILE_ARRAY_1D, "P(a,VI):RESIZE.MOBILE.ARRAY.1D"}
 	, /*}}}*/
 	  /*{{{  memory barriers by CGR */
 	  { CC, PD_MEMORY_BARRIER, "P():MEMORY.BARRIER"}

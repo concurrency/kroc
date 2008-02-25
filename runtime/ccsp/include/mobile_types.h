@@ -370,6 +370,10 @@ typedef struct _mt_data_internal_t {
 #define MT_BIND_DMA		3	/* re-bind memory so it's DMA capable */
 /*}}}*/
 
+/*{{{  Constants for mobile type resizing */
+#define MT_RESIZE_DATA		1	/* resize data */
+/*}}}*/
+
 /* Examples of generation 2 encoding:
  *
  *  MOBILE []BYTE

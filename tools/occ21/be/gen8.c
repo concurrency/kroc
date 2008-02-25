@@ -51,7 +51,7 @@
 #include "code1def.h"
 #include "profile.h"
 #include "genkroc.h"
-#include "mtdef.h"
+#include "mobile_types.h"
 /*}}}*/
 
 /*{{{  constants and definitions*/
@@ -3463,6 +3463,13 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 		case PD_WRITE_MEMORY_BARRIER:
 			break;
 			/*}}}*/
+			/*{{{  RESIZE.MOBILE.ARRAY.1D */
+		case PD_RESIZE_MOBILE_ARRAY_1D:
+			mapexp (param[1]);
+			mapexp (param[0]);
+			mapstoreinopd (P_EXP, param[0]);
+			break;
+			/*}}}*/
 		default:
 			badtag (LocnOf (tptr), TagOf (tptr), "mappredef");
 			break;
@@ -4306,7 +4313,6 @@ fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (N
 fprintf (stderr, "gen8: tpredef: ATTACH.DYNMOB: target (param[2]) = ");
 printtreenl (stderr, 4, param[2]);
 #endif
-		/* CGR FIXME: figure out what this is and whether it needs fixing. */
 		gencondfreedynmobile (param[2]);
 		texp (param[0], MANY_REGS);
 		storemobile (param[2]);
@@ -4473,6 +4479,27 @@ printtreenl (stderr, 4, param[0]);
 		/*{{{ WRITE.MEMORY.BARRIER */
 	case PD_WRITE_MEMORY_BARRIER:
 		gensecondary (I_WMB);
+		break;
+		/*}}}*/
+		/*{{{  RESIZE.MOBILE.ARRAY.1D */
+	case PD_RESIZE_MOBILE_ARRAY_1D:
+		{
+			treenode *basetype;
+			int basebytes;
+			mobilearray_base (param[0], &basetype, &basebytes);
+			texp (param[1], MANY_REGS);
+			if (!isscalartype (TagOf (basetype))) {
+				loadconstant (basebytes);
+				gensecondary (I_PROD);
+			}
+			loadmobile_real (param[0]);
+			loadconstant (MT_RESIZE_DATA);
+			gensecondary (I_MT_RESIZE);
+			storemobile (param[0]);
+			genmobileunpack (param[0], TRUE, FALSE);
+			texp (param[1], MANY_REGS);
+			storedynmobilesize (param[0], 0);
+		}
 		break;
 		/*}}}*/
 	default:
