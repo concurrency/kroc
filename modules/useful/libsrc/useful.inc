@@ -28,6 +28,7 @@
 -- @module useful
 
 --{{{  DATA TYPE VECTOR2
+--* A two-dimensional vector.
 DATA TYPE VECTOR2
   RECORD
     REAL32 x, y:
@@ -48,6 +49,7 @@ REAL32 INLINE FUNCTION dot.product2 (VAL VECTOR2 a, b) IS (a[x] * b[x]) + (a[y] 
 --}}}
 
 --{{{  DATA TYPE VECTOR3
+--* A three-dimensional vector.
 DATA TYPE VECTOR3
   RECORD
     REAL32 x, y, z:
