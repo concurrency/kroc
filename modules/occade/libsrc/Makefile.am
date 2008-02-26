@@ -11,13 +11,16 @@ EXTRA_DIST = \
 occade_lib_objs = \
 	occade.tce
 
-all-local: occade.lib
+libs = occade.lib
+includes = occade.inc overwriting-buffer.inc
+
+all-local: $(libs)
 
 occade.lib: $(occade_lib_objs)
 	$(OCCBUILD) --library occade.lib --need occSDL --need file --need course --need raster --need rasterio --need sdlraster --include occade.inc $(occade_lib_objs)
 
-install-exec-local: occade.lib occade.inc
-	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" occade.lib occade.inc
+install-exec-local: $(libs) $(includes)
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
 
 clean-local:
 	$(OCCBUILD) --clean occade.lib $(occade_lib_objs)
