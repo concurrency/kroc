@@ -2961,6 +2961,7 @@ printtreenl (stderr, 4, t);
 #endif
 					/*{{{  strange, mode of pname doesn't get set right for encode/decode/etc., do it here */
 					if (TagOf (INameOf (t)) == N_PREDEFPROC) {
+						#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3) && defined(PD_ENCODE_CHANNEL)
 						if (NNameOf (INameOf (t)) == lookupword ("ENCODE.CHANNEL", 14)) {
 							SetNMode (INameOf (t), PD_ENCODE_CHANNEL);
 						} else if (NNameOf (INameOf (t)) == lookupword ("DECODE.CHANNEL", 14)) {
@@ -2973,7 +2974,9 @@ printtreenl (stderr, 4, t);
 								scopeandcheck (INameAddr (t));
 								SetNMode (INameOf (t), PD_DECODE_CHANNEL3);
 							}
-						} else if (NNameOf (INameOf (t)) == lookupword ("DECODE.DATA", 11)) {
+						} else
+						#endif /* PD_DECODE_CHANNEL && PD_DECODE_CHANNEL3 && PD_ENCODE_CHANNEL */
+						if (NNameOf (INameOf (t)) == lookupword ("DECODE.DATA", 11)) {
 							SetNMode (INameOf (t), PD_DECODE_DATA);
 						}
 					}
@@ -3046,6 +3049,7 @@ printtreenl (stderr, 4, NTypeOf (n2));
 								chkerr (CHK_INV_CHANTYPE_ALLOC, LocnOf (t));
 							}
 							/*}}}*/
+						#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3) && defined(PD_ENCODE_CHANNEL)
 						} else if ((TagOf (t) == S_PINSTANCE) && (TagOf (INameOf (t)) == N_PREDEFPROC) &&
 								((NModeOf (INameOf (t)) == PD_DECODE_CHANNEL) || (NModeOf (INameOf (t)) == PD_DECODE_CHANNEL3) || (NModeOf (INameOf (t)) == PD_ENCODE_CHANNEL))) {
 							/*{{{  ENCODE.CHANNEL/DECODE.CHANNEL chan-dir check (first and second must be INPUT, third must be OUTPUT) -- see also USE */
@@ -3130,6 +3134,7 @@ printtreenl (stderr, 4, NTypeOf (param));
 								paramno++;
 							}
 							/*}}}*/
+						#endif /* PD_DECODE_CHANNEL && PD_DECODE_CHANNEL3 && PD_ENCODE_CHANNEL */
 						} else if ((TagOf (t) == S_PINSTANCE) && ((TagOf (INameOf (t)) == N_PROCDEF) ||
 									ismobileprocvar (INameOf (t)) ||			/* frmb: more complex to find these */
 									(TagOf (INameOf (t)) == N_SCPROCDEF) || (TagOf (INameOf (t)) == N_LIBPROCDEF) || (TagOf (INameOf (t)) == N_LIBMPROCDECL))) {

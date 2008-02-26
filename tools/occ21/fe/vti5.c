@@ -45,6 +45,7 @@ PRIVATE void xml_setindent (FILE *const fptr, int indent)
 	return;
 }
 /*}}}*/
+#if 0
 /*{{{  PRIVATE void xml_ptag (FILE *const fptr, const int t)*/
 /*
  *	prints an occam tag-string for XML
@@ -58,6 +59,7 @@ PRIVATE void xml_ptag (FILE *const fptr, const int t)
 	return;
 }
 /*}}}*/
+#endif
 /*{{{  PRIVATE void xml_pitag (FILE *const fptr, const int t)*/
 /*
  *	prints an internal tag-string for XML

@@ -821,6 +821,7 @@ printtreenl (stderr, 4, n);
 			/*}}} */
 			if (TagOf (INameOf (n)) == N_PREDEFPROC) {	/* bug 1035 1/11/90 */
 				/*{{{  check params */
+				#if 0
 				const int pdno = NModeOf (INameOf (n));
 				switch (pdno) {
 				case PD_LOADINPUTCHANNEL:
@@ -848,6 +849,7 @@ printtreenl (stderr, 4, n);
 				default:
 					break;
 				}
+				#endif
 				/*}}} */
 			} else {
 				/*{{{  check parameters */
@@ -1679,7 +1681,9 @@ printtreenl (stderr, 4, LeafLinkOf (n));
 		{
 			treenode *flist, *formal;
 			varlist *freevars = NFreeVarsOf (INameOf (n));
+			#if 0
 			BOOL is_predefproc = TagOf (INameOf (n)) == N_PREDEFPROC;
+			#endif
 			SOURCEPOSN errlocn = LocnOf (n);
 
 			/* pre-defs, etc. don't have free variable lists so ... */
@@ -1705,6 +1709,7 @@ printtreenl (stderr, 4, LeafLinkOf (n));
 				freevarsin_use_mode = EXP_READ;
 				prewalktree (INameOf (n), do_freevarsinexp, voidptr);
 			}
+			#if 0
 			if (is_predefproc &&
 			    (NModeOf (INameOf (n)) == PD_LOADINPUTCHANNEL ||
 			     NModeOf (INameOf (n)) == PD_LOADINPUTCHANNELVECTOR ||
@@ -1728,7 +1733,9 @@ printtreenl (stderr, 4, LeafLinkOf (n));
 					n = NextItem (n);
 				}
 				/*}}} */
-			} else {
+			} else 
+			#endif
+			{
 				/*{{{  check parameters */
 				flist = NParamListOf (INameOf (n));
 				n = IParamListOf (n);

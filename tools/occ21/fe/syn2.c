@@ -826,6 +826,7 @@ PUBLIC treenode *rinstance (int tag, SOURCEPOSN locn, treenode *name)
 /*const int saved_indent = linebreakindent; *//* bug TS/1457 11/11/91 */
 /*linebreakindent = (-1); *//* bug TS/1251 25/9/91 *//* removed 26/11/91 */
 
+		#if defined(PD_PROTOCOL_HASH)
 		/* frmb: special case for PROTOCOL.HASH -- parse protocol instead (names sorted out in check) */
 		if (TagOf (name) == S_NAME) {
 			const char *tmpch = WNameOf ((wordnode *)name);
@@ -846,6 +847,9 @@ printtreenl (stderr, 4, name);
 		} else {
 			params = rlist (rexp, S_COMMA);
 		}
+		#else
+		params = rlist (rexp, S_COMMA);
+		#endif
 /*linebreakindent = saved_indent; *//* added 11/11/91 *//* removed 26/11/91 */
 		if (params == NULL) {
 			return NULL;

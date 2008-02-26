@@ -4451,6 +4451,7 @@ PUBLIC void talt (treenode * tptr)
 
 /*}}}*/
 
+#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3) && defined(PD_ENCODE_CHANNEL)
 /*{{{  PUBLIC void mapxinputoutput (treenode *tptr)*/
 /*
  *	maps out extended input/output
@@ -5078,5 +5079,6 @@ printtreenl (stderr, 4, oseq);
 	return;
 }
 /*}}}*/
+#endif /* PD_DECODE_CHANNEL && PD_DECODE_CHANNEL3 && PD_ENCODE_CHANNEL */
 
 

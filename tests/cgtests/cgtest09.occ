@@ -713,6 +713,7 @@ PROC cgtest9 (CHAN OF BYTE keyb, scr, err)
     :
     bug.1782()
     --}}}
+    #IF FALSE
     --{{{  bug TS/2035
     PROC bug.TS.2035()
       INT in.addr, out.addr :
@@ -745,6 +746,7 @@ PROC cgtest9 (CHAN OF BYTE keyb, scr, err)
     :
     bug.TS.2035()
     --}}}
+    #ENDIF
     --{{{  bug TS/2076
     PROC bug.TS.2076()
       PROTOCOL protocol

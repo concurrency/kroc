@@ -2822,13 +2822,16 @@ PUBLIC treenode *foldexp (treenode * tptr)
 			treenode *const fname = INameOf (tptr);
 
 			/* special case: if it's a call to PD_PROTOCOL_HASH, first param might be non-sensible, we fold into the hash value early */
+			#ifdef PD_PROTOCOL_HASH
 			if ((TagOf (fname) == N_PREDEFFUNCTION) && (NModeOf (fname) == PD_PROTOCOL_HASH)) {
 				treenode *params = IParamListOf (tptr);
 				
 				if (NextItem (params)) {
 					tptr = ThisItem (NextItem (params));
 				}
-			} else {
+			} else 
+			#endif
+			{
 				foldexplist (IParamListOf (tptr));
 
 				if (TagOf (fname) == N_PREDEFFUNCTION) {
