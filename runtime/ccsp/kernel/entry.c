@@ -41,7 +41,12 @@
 /*{{{  void ccsp_kernel_entry (word *wptr, word *fptr)*/
 void ccsp_kernel_entry (word *wptr, word *fptr)
 {
-	K_ENTRY (ccsp_calltable[K_RTTHREADINIT], ((byte *)&fptr) + sizeof(word), wptr, fptr);
+	word stack = (word) (((byte *)&fptr) + sizeof(word));
+
+	stack -= sizeof(sched_t);	/* allocate stack for sched_t structure */
+	stack &= 0xfffff000;		/* align the stack on a page boundary */
+
+	K_ENTRY (ccsp_calltable[K_RTTHREADINIT], stack, wptr, fptr);
 }
 /*}}}*/
 
