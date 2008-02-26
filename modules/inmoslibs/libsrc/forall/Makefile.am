@@ -93,6 +93,7 @@ EXTRA_DIST = \
 	ie64comp.occ \
 	ie64op.occ \
 	ie64rem.occ \
+	instrinsics.occ \
 	move2d.occ \
 	nan16.inc \
 	nan32.inc \

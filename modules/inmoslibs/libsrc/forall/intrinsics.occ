@@ -1,0 +1,117 @@
+--
+--	occ21 -- instrinsics documentation
+--	Copyright (C) 2008  University of Kent
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+VAL INT BAD IS 0:
+
+INT FUNCTION LONGADD (VAL INT a, b, c) IS BAD:
+INT, INT FUNCTION LONGSUM (VAL INT a, b, c) IS BAD, BAD:
+INT FUNCTION LONGSUB (VAL INT a, b, c) IS BAD:
+
+INT, INT FUNCTION LONGDIFF (VAL INT a, b, c) IS BAD, BAD:
+INT, INT FUNCTION LONGPROD (VAL INT a, b, c) IS BAD, BAD:
+INT, INT FUNCTION LONGDIV (VAL INT a, b, c) IS BAD, BAD:
+
+INT, INT FUNCTION SHIFTRIGHT (VAL INT a, b, c) IS BAD, BAD:
+INT, INT FUNCTION SHIFTLEFT (VAL INT a, b, c) IS BAD, BAD:
+
+INT, INT, INT FUNCTION NORMALISE (VAL INT a, b) IS BAD, BAD, BAD:
+INT FUNCTION FRACMUL (VAL INT a, b) IS BAD, BAD:
+
+INT FUNCTION ASHIFTRIGHT (VAL INT a, b) IS BAD, BAD:
+INT FUNCTION ASHIFTLEFT (VAL INT a, b) IS BAD, BAD:
+INT FUNCTION ROTATERIGHT (VAL INT a, b) IS BAD, BAD:
+INT FUNCTION ROTATELEFT (VAL INT a, b) IS BAD, BAD:
+
+PROC CAUSEERROR ()
+  SKIP
+:
+
+PROC RESCHEDULE ()
+  SKIP
+:
+
+PROC ASSERT (VAL BOOL b)
+  SKIP
+:
+
+INT FUNCTION WSSIZEOF (VAL INT x) IS BAD:
+INT FUNCTION VSSIZEOF (VAL INT x) IS BAD:
+
+PROC DECODE.DATA (VAL INT x, y, z)
+  SKIP
+:
+
+PROC GETPRI (RESULT INT pri)
+  SKIP
+:
+PROC SETPRI (VAL INT pri)
+  SKIP
+:
+PROC INCPRI ()
+  SKIP
+:
+PROC DECPRI ()
+  SKIP
+:
+PROC RAISE.PRIORITY ()
+  SKIP
+:
+PROC LOWER.PRIORITY ()
+  SKIP
+:
+
+PROC GETAFF (RESULT INT aff)
+  SKIP
+:
+PROC SETAFF (VAL INT aff)
+  SKIP
+:
+PROC KILLCALL (CHAN OF ANY c, INT x)
+  SKIP
+:
+
+PROC WAIT.FOR.INTERRUPT (VAL INT x, y, RESULT INT z)
+  SKIP
+:
+PROC BIND.MOBILE (MOBILE.ANY mobile, VAL INT addr)
+  SKIP
+:
+PROC BIND.MOBILE.HW (MOBILE.ANY mobile, VAL INT hw.addr)
+  SKIP
+:
+BOOL FUNCTION DMA.CAPABLE (MOBILE.ANY mobile) IS FALSE:
+PROC MAKE.DMA.CAPABLE (MOBILE.ANY mobile)
+  SKIP
+:
+
+PROC RESIZE.MOBILE.ARRAY.1D (MOBILE.ANY mobile, VAL INT new.element.count)
+  SKIP
+:
+PROC MEMORY.BARRIER ()
+  SKIP
+:
+PROC READ.MEMORY.BARRIER ()
+  SKIP
+:
+PROC WRITE.MEMORY.BARRIER ()
+  SKIP
+:
+
