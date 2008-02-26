@@ -157,9 +157,6 @@
 /*{{{  entry and label functions */
 #define K_ENTRY(init,stack,Wptr,Fptr) \
 	__asm__ __volatile__ ("				\n" \
-		"	subl $64, %0			\n" \
-		"	andl $0xffffffe0, %0		\n" \
-		"	subl $768, %0			\n" \
 		"	movl %0, %%esp			\n" \
 		"	call *%3			\n" \
 		: /* no outputs */ \

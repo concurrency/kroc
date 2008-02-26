@@ -1992,8 +1992,8 @@ K_CALL_DEFINE_1_0 (Y_rtthreadinit)
 	
 	ENTRY_TRACE (Y_rtthreadinit, "(%08x)", att_val (&enabled_threads));
 
+	sched			= (sched_t *) stack;
 	allocator 		= dmem_new_allocator ();
-	sched 			= dmem_thread_alloc (allocator, sizeof(sched_t));
 	init_sched_t (sched);
 	memcpy (sched->calltable, ccsp_calltable, sizeof(void *) * K_MAX_SUPPORTED);
 	sched->allocator 	= allocator;
