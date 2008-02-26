@@ -1,5 +1,5 @@
 --
---	occ21 -- instrinsics documentation
+--	intrinsics.occ -- occ21 instrinsics documentation
 --	Copyright (C) 2008  University of Kent
 --
 --	This library is free software; you can redistribute it and/or
@@ -40,77 +40,293 @@ INT FUNCTION ASHIFTLEFT (VAL INT a, b) IS BAD, BAD:
 INT FUNCTION ROTATERIGHT (VAL INT a, b) IS BAD, BAD:
 INT FUNCTION ROTATELEFT (VAL INT a, b) IS BAD, BAD:
 
+--*  Set the error flag.
+--
+--  Sets the runtime error flag, causing either the runtime to
+--  error out or the current process to stop, depending on
+--  compile-time flags and runtime settings.
+--
 PROC CAUSEERROR ()
   SKIP
 :
 
+--*  Force reschedule.
+--
+--  Place the current process on the run-queue, and schedule
+--
 PROC RESCHEDULE ()
   SKIP
 :
 
-PROC ASSERT (VAL BOOL b)
-  SKIP
+--*  Causes an error if a condition is false.
+--
+--  Asserts that a given condition is true.  If the condition
+--  is false then the error flag is set.  Static analysis may 
+--  allow the detection of false conditions at compile time,
+--  if not the compiler will insert a runtime check.  
+--
+--  @param condition The condition to test.
+--
+PROC ASSERT (VAL BOOL condition)
+  IF
+    b
+      SKIP
+    TRUE
+      CAUSEERROR ()
 :
 
-INT FUNCTION WSSIZEOF (VAL INT x) IS BAD:
-INT FUNCTION VSSIZEOF (VAL INT x) IS BAD:
+--*  Calculate the workspace size (in words) of a process.
+--
+--  @param process Process for which the workspace size is 
+--                 to be calculated.
+--  @return Number of workspace words required by process.
+--
+INT FUNCTION WSSIZEOF (process) IS BAD:
+
+--*  Calculate the vectorspace size (in words) of a process.
+--
+--  @param process Process for which the vectorspace size is 
+--                 to be calculated.
+--  @return Number of vectorspace words required by process.
+--
+INT FUNCTION VSSIZEOF (process) IS BAD:
+
 
 PROC DECODE.DATA (VAL INT x, y, z)
   SKIP
 :
 
+--*  Get current process priority.
+--
+--  Numerically lower priorities are run before higher ones.  
+--
+--  @param pri Is set to the priority of the calling process.
+--
 PROC GETPRI (RESULT INT pri)
   SKIP
 :
+
+--*  Set current process priority.
+--
+--  @ref GETPRI
+--  @param pri The requested priority for the calling process.
+--             Invalid values will be ignored.
+--
 PROC SETPRI (VAL INT pri)
   SKIP
 :
+
+--*  Increase priority of current process.
+--  
+--  @ref RAISE.PRIORITY
+--
 PROC INCPRI ()
-  SKIP
-:
-PROC DECPRI ()
-  SKIP
-:
-PROC RAISE.PRIORITY ()
-  SKIP
-:
-PROC LOWER.PRIORITY ()
-  SKIP
+  RAISE.PRIORITY ()
 :
 
+--*  Decrease priority of current process.
+--
+--  @ref LOWER.PRIORITY
+--
+PROC DECPRI ()
+  LOWER.PRIORITY ()
+:
+
+--*  Raise the priority of current process.
+--
+--  Attempts to raise the priority of the calling process,
+--  by reducing its numeric priority.
+--
+--  @ref GETPRI
+--  @ref SETPRI
+--
+PROC RAISE.PRIORITY ()
+  INT pri:
+  SEQ
+    GETPRI (pri)
+    IF
+      pri <> 0
+        SETPRI (pri - 1)
+      TRUE
+        SKIP
+:
+
+--*  Lower the priority of current process.
+--
+--  Attempts to lower the priority of the calling process,
+--  by increasing its numeric priority.
+--
+--  @ref GETPRI
+--  @ref SETPRI
+--
+PROC LOWER.PRIORITY ()
+  INT pri:
+  SEQ
+    GETPRI (pri)
+    SETPRI (pri + 1)
+:
+
+--*  Get current process affinity.
+--
+--  The affinity may be a bitmap of logical execution units
+--  on which this process may run, or a numeric representation,
+--  of a single execution unit this process is bound to.
+--
+--  In either case the value -1 can be assumed to mean unbound.
+--
+--  @param aff Is set to the calling processes affinity.
+--
 PROC GETAFF (RESULT INT aff)
   SKIP
 :
+
+--*  Set current process affinity.
+--
+--  @ref GETAFF
+--  @param aff The requested affinity for the calling process.
+--             Invalid values will be ignored.
+--
 PROC SETAFF (VAL INT aff)
   SKIP
 :
-PROC KILLCALL (CHAN OF ANY c, INT x)
+
+--*  Kill a blocking FFI call.
+--
+--  Kill a 'BX.' blocking foreign-function-interface call associated 
+--  with a channel.
+--  
+--  The result will be one of the following:
+--  [@item -1]  Call not yet start.
+--  [@item 0]  Termination started.
+--  [@item 1]  Call terminated.
+--
+--  @param chan The channel passed when making the blocking call.
+--  @param res Is set to the result of the kill call.
+--             
+PROC KILLCALL (CHAN OF ANY chan, INT res)
   SKIP
 :
 
-PROC WAIT.FOR.INTERRUPT (VAL INT x, y, RESULT INT z)
+--*  Wait for an interrupt (RMoX).
+--  
+--  @param n The number of the interrupt for wait for.
+--  @param mask CPU or interrupt mask, implementation dependent.
+--  @param count Is set to number of missed interrupts.
+--
+PROC WAIT.FOR.INTERRUPT (VAL INT n, mask, RESULT INT count)
   SKIP
 :
+
+--*  Bind a piece of (virtual) memory to a mobile.
+--
+--  Associates a piece of memory with a mobile, the memory
+--  at the given address becomes the backing store for the
+--  mobile.  This is generally intended to use with EMPTY
+--  mobiles.
+--
+--  For example associate mobile with memory address #1000:
+--  [@code
+--     MOBILE []BYTE x:
+--     SEQ
+--       x := MOBILE EMPTY [1024]BYTE
+--       BIND.MOBILE (x, #1000)
+--  ]
+--
+--  @param mobile The mobile to bind.
+--  @param addr The address of the memory.
+--
 PROC BIND.MOBILE (MOBILE.ANY mobile, VAL INT addr)
   SKIP
 :
+
+--*  Bind a piece of physical memory to a mobile.
+--
+--  Acts as BIND.MOBILE, except a physical address is used,
+--  this may be converted to a virtual address by the runtime
+--  system.
+--
+--  @ref BIND.MOBILE
+--
+--  @param mobile The mobile to bind.
+--  @param hw.addr Hardware address of the memory.
+--
 PROC BIND.MOBILE.HW (MOBILE.ANY mobile, VAL INT hw.addr)
   SKIP
 :
+
+--*  Test if a mobile is DMA capable.
+--
+--  Test to see if a mobile is DMA accessible by hardware,
+--  the HWADDROF operator is only valid on DMA capable mobiles.
+--
+--  @param mobile The mobile to test.
+--  @return Whether the mobile is DMA accessible by hardware.
+--
 BOOL FUNCTION DMA.CAPABLE (MOBILE.ANY mobile) IS FALSE:
+
+--*  Move a mobile to DMA capable memory.
+--
+--  Convert a mobile to being DMA accessible by machine hardware,
+--  where appropriate moving the memory associated with the mobiles
+--  data.  If the mobile is already DMA capable then this is has no
+--  effect.
+--
+--  @ref DMA.CAPABLE
+--
+--  @param mobile The mobile to upgrade.
+--
 PROC MAKE.DMA.CAPABLE (MOBILE.ANY mobile)
   SKIP
 :
 
-PROC RESIZE.MOBILE.ARRAY.1D (MOBILE.ANY mobile, VAL INT new.element.count)
+--*  Resize a 1D mobile array.
+--
+--  Change the size of a one-dimensional mobile array.
+--  The memory associated with the mobile may or may not be
+--  reallocated by the runtime system depending on its
+--  memory allocator.
+--
+--  All data within the bounds of the new size of the array,
+--  and present in the old bounds of the array will be preserved.
+--
+--  @param mobile Mobile array to resize.
+--  @param count The new element count.
+--
+PROC RESIZE.MOBILE.ARRAY.1D (MOBILE.ANY mobile, VAL INT count)
   SKIP
 :
+
+--*  Generate a read and write memory barrier.
+--
+--  Barrier memory reads and writes, ensuring the
+--  order of all memory operations is visible to hardware
+--  busses in the order they have with respect to the barrier.
+--
+--  @ref READ.MEMORY.BARRIER
+--  @ref WRITE.MEMORY.BARRIER
+--
 PROC MEMORY.BARRIER ()
-  SKIP
+  PAR
+    READ.MEMORY.BARRIER ()
+    WRITE.MEMORY.BARRIER ()
 :
+
+--*  Generate a read memory barrier.
+--
+--  Barrier/flush memory reads, ensuring the memory reads are
+--  visible to hardware busses in the same order they have
+--  with respect to the barrier.
+--
 PROC READ.MEMORY.BARRIER ()
   SKIP
 :
+
+--*  Generate a write memory barrier.
+--
+--  Barrier/flush memory writes, ensuring the memory writes are
+--  visible to hardware busses in the same order they have
+--  with respect to the barrier.
+--
 PROC WRITE.MEMORY.BARRIER ()
   SKIP
 :
