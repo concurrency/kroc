@@ -916,7 +916,7 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 							add_to_ins_chain (arch->compose_kjump (ts, INS_CALL, 0, kif_entry (K_SETERR)));
 							ts->stack_drift -= 4;
 						} else {
-							add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+							arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 						}
 
 						add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, cslab));
@@ -2371,7 +2371,7 @@ fprintf (stderr, "setting ts->ws_adjust = %d\n", ts->ws_adjust);
 		arch->compose_debug_overflow (ts);
 	} else if (!options.disable_checking) {
 		add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->overflow_label));
-		add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+		arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 	}
 	/* deadlock setup entry point */
 	if ((options.debug_options & DEBUG_DEADLOCK) && arch->compose_debug_deadlock_set) {
@@ -3025,7 +3025,7 @@ static void generate_overflowed_code (tstate *ts, int dcode, arch_t *arch)
 	if (options.debug_options & DEBUG_OVERFLOW) {
 		arch->compose_overflow_jumpcode (ts, dcode);
 	} else if (!options.disable_checking) {
-		add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+		arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 	}
 	return;
 }
@@ -3040,7 +3040,7 @@ static void generate_range_code (tstate *ts, int rcode, arch_t *arch)
 	if (arch->compose_rangestop_jumpcode && (options.debug_options & DEBUG_RANGESTOP)) {
 		arch->compose_rangestop_jumpcode (ts, rcode);
 	} else {
-		add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+		arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 	}
 	return;
 }
@@ -4003,7 +4003,7 @@ static void do_code_secondary (tstate *ts, int sec, arch_t *arch)
 		if (arch->compose_debug_seterr && (options.debug_options & DEBUG_RANGESTOP)) {
 			arch->compose_debug_seterr (ts);
 		} else {
-			add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+			arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 		}
 		break;
 		/*}}}*/
@@ -4235,7 +4235,7 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 				arch->compose_divcheck_zero (ts, ts->stack->old_a_reg);
 			} else if ((constmap_typeof (ts->stack->old_a_reg) == VALUE_CONST) && (constmap_regconst (ts->stack->old_a_reg) == 0)) {
 				fprintf (stderr, "%s: serious: division by zero seen around line %d in %s\n", progname, ts->line_pending, ts->file_list[ts->file_pending]);
-				add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+				arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 				skip_codegen = 1;
 			} else if (!options.disable_checking) {
 				arch->compose_divcheck_zero_simple (ts, ts->stack->old_a_reg);
@@ -4271,7 +4271,7 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 				arch->compose_divcheck_zero (ts, ts->stack->old_a_reg);
 			} else if ((constmap_typeof (ts->stack->old_a_reg) == VALUE_CONST) && (constmap_regconst (ts->stack->old_a_reg) == 0)) {
 				fprintf (stderr, "%s: serious: remainder by zero seen around line %d in %s\n", progname, ts->line_pending, ts->file_list[ts->file_pending]);
-				add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+				arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 				skip_codegen = 1;
 			} else if (!options.disable_checking) {
 				arch->compose_divcheck_zero_simple (ts, ts->stack->old_a_reg);
@@ -5057,7 +5057,7 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 			add_to_ins_chain (arch->compose_kjump (ts, INS_CALL, 0, kif_entry (K_SETERR)));
 			ts->stack_drift -= 4;
 		} else {
-			add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+			arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 		}
 		break;
 		/*}}}*/

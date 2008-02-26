@@ -1788,6 +1788,29 @@ static void compose_debug_filenames_i386 (tstate *ts)
 	return;
 }
 /*}}}*/
+/*{{{  static void compose_error_entry (tstate *ts, int type, int args)*/
+static void compose_error_entry (tstate *ts, int type, int args)
+{
+	/* argument 2 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EDX, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
+	/* argument 3 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[1])));
+	/* argument 4 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[2])));
+	if (args == 5) {
+		/* argument 5 */
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EAX, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[3])));
+	}
+	
+	/* argument 1 */
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_ECX, ARG_REG, xregs[0]));
+
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
+
+	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (type)));
+}
+/*}}}*/
 /*{{{  static void compose_debug_zero_div_i386 (tstate *ts)*/
 /*
  *	void compose_debug_zero_div_i386 (tstate *ts)
@@ -1796,22 +1819,7 @@ static void compose_debug_filenames_i386 (tstate *ts)
 static void compose_debug_zero_div_i386 (tstate *ts)
 {
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->zerodiv_label));
-	
-	/* argument 2 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EDX, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
-	/* argument 3 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[1])));
-	/* argument 4 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[2])));
-	
-	/* argument 1 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_ECX, ARG_REG, xregs[0]));
-
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
-
-	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_ZERODIV)));
-	return;
+	compose_error_entry (ts, K_ZERODIV, 4);
 }
 /*}}}*/
 /*{{{  static void compose_debug_floaterr_i386 (tstate *ts)*/
@@ -1822,24 +1830,7 @@ static void compose_debug_zero_div_i386 (tstate *ts)
 static void compose_debug_floaterr_i386 (tstate *ts)
 {
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->floaterr_label));
-
-	/* argument 2 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EDX, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
-	/* argument 3 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[1])));
-	/* argument 4 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[2])));
-	/* argument 5 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EAX, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[3])));
-
-	/* argument 1 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_ECX, ARG_REG, xregs[0]));
-
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
-
-	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_FLOATERR)));
-	return;
+	compose_error_entry (ts, K_FLOATERR, 5);
 }
 /*}}}*/
 /*{{{  static void compose_debug_overflow_i386 (tstate *ts)*/
@@ -1850,22 +1841,7 @@ static void compose_debug_floaterr_i386 (tstate *ts)
 static void compose_debug_overflow_i386 (tstate *ts)
 {
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->overflow_label));
-	
-	/* argument 2 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_EDX, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
-	/* argument 3 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[1])));
-	/* argument 4 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[2])));
-	
-	/* argument 1 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_ALT_ECX, ARG_REG, xregs[0]));
-	
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
-
-	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_OVERFLOW)));
-	return;
+	compose_error_entry (ts, K_OVERFLOW, 4);
 }
 /*}}}*/
 /*{{{  static void compose_debug_rangestop_i386 (tstate *ts)*/
@@ -1876,17 +1852,7 @@ static void compose_debug_overflow_i386 (tstate *ts)
 static void compose_debug_rangestop_i386 (tstate *ts)
 {
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->range_entry_label));
-
-	/* argument 2 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1,  ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
-	/* argument 1 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REG, xregs[0]));
-
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
-
-	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_RANGERR)));
-	return;
+	compose_error_entry (ts, K_RANGERR, 4);
 }
 /*}}}*/
 /*{{{  static void compose_debug_seterr_i386 (tstate *ts)*/
@@ -1897,23 +1863,12 @@ static void compose_debug_seterr_i386 (tstate *ts)
 {
 	unsigned int x;
 
-	/* argument 2 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[0])));
-	/* argument 3 */
-	x = ((ts->file_pending & 0xffff) << 16) + (ts->proc_pending & 0xffff);
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[1])));
-	/* argument 4 */
 	x = (0xfb00 << 16) + (ts->line_pending & 0xffff);
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_REGIND | ARG_DISP, REG_SCHED, offsetof(ccsp_sched_t, cparam[2])));
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_REG, REG_ALT_EDX));
+	x = ((ts->file_pending & 0xffff) << 16) + (ts->proc_pending & 0xffff);
+	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_REG, REG_ALT_ECX));
 
-	/* argument 1 */
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REG, xregs[0]));
-
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
-
-	add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_SETERR)));
-	return;
+	compose_error_entry (ts, K_SETERR, 4);
 }
 /*}}}*/
 /*{{{  static void compose_overflow_jumpcode_i386 (tstate *ts, int dcode)*/
@@ -1964,12 +1919,10 @@ static void compose_rangestop_jumpcode_i386 (tstate *ts, int rcode)
 
 	if (options.debug_options & DEBUG_RANGESTOP) {
 		x = ((rcode & 0xff) << 24) + (0xff << 16) + (ts->line_pending & 0xffff);
-		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_CONST, x));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_REG, REG_ALT_EDX));
 		x = ((ts->file_pending & 0xffff) << 16) + (ts->proc_pending & 0xffff);
-		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_CONST, x));
-		ts->stack_drift += 2;
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_REG, REG_ALT_ECX));
 		add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_LABEL, ts->range_entry_label));
-		ts->stack_drift -= 2;
 	}
 	return;
 }
@@ -2037,14 +1990,18 @@ static void compose_divcheck_zero_simple_i386 (tstate *ts, int reg)
 	default:
 		add_to_ins_chain (compose_ins (INS_CMP, 2, 1, ARG_CONST, 0, ARG_REG, reg, ARG_REG | ARG_IMP, REG_CC));
 		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_NZ, ARG_FLABEL, 2));
-		add_to_ins_chain (compose_kjump_i386 (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
+		add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_BNSETERR)));
 		add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 2));
 		break;
 	case VALUE_CONST:
 		if (constmap_regconst (reg) == 0) {
 			/* wehey! */
 			fprintf (stderr, "%s: serious: division by zero seen around line %d in %s\n", progname, ts->line_pending, ts->file_list[ts->file_pending]);
-			add_to_ins_chain (compose_kjump_i386 (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SCHED, ARG_REG, xregs[1]));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_WPTR, ARG_REG, xregs[2]));
+			add_to_ins_chain (compose_kjump_i386 (ts, INS_CALL, 0, kif_entry (K_BNSETERR)));
 		}
 		/* otherwise it's a constant non-zero */
 		break;

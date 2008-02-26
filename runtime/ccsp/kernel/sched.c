@@ -2123,11 +2123,11 @@ static void kernel_common_error (word *Wptr, sched_t *sched, unsigned int return
  */
 K_CALL_DEFINE_4_0 (Y_zero_div)
 {
-	unsigned int zerodiv_info2, zerodiv_info, procedure_addr, filename_addr;
+	unsigned int zerodiv_info2, zerodiv_info1, procedure_addr, filename_addr;
 
-	K_CALL_PARAMS_4 (zerodiv_info2, zerodiv_info, procedure_addr, filename_addr);
+	K_CALL_PARAMS_4 (zerodiv_info2, zerodiv_info1, procedure_addr, filename_addr);
 	
-	zerodiv_happened (zerodiv_info, zerodiv_info2, filename_addr, procedure_addr);
+	zerodiv_happened (zerodiv_info1, zerodiv_info2, filename_addr, procedure_addr);
 	kernel_common_error (Wptr, sched, return_address, "zero_div");
 }
 /*}}}*/
@@ -2143,11 +2143,11 @@ K_CALL_DEFINE_4_0 (Y_zero_div)
  */
 K_CALL_DEFINE_4_0 (Y_overflow)
 {
-	unsigned int filename_addr, overflow_info, overflow_info2, procedure_addr;
+	unsigned int filename_addr, overflow_info1, overflow_info2, procedure_addr;
 	
-	K_CALL_PARAMS_4 (overflow_info2, overflow_info, procedure_addr, filename_addr);
+	K_CALL_PARAMS_4 (overflow_info2, overflow_info1, procedure_addr, filename_addr);
 
-	overflow_happened (overflow_info, overflow_info2, filename_addr, procedure_addr);		/* Parameters dealt with (they're visible throughout) */
+	overflow_happened (overflow_info1, overflow_info2, filename_addr, procedure_addr);		/* Parameters dealt with (they're visible throughout) */
 	kernel_common_error (Wptr, sched, return_address, "overflow");
 }
 /*}}}*/
@@ -2163,11 +2163,11 @@ K_CALL_DEFINE_4_0 (Y_overflow)
  */
 K_CALL_DEFINE_5_0 (Y_floaterr)
 {
-	unsigned int filename_addr, floaterr_fpustatus, floaterr_info, floaterr_info2, procedure_addr;
+	unsigned int filename_addr, floaterr_fpustatus, floaterr_info1, floaterr_info2, procedure_addr;
 	
-	K_CALL_PARAMS_5 (floaterr_info2, floaterr_info, procedure_addr, filename_addr, floaterr_fpustatus);
+	K_CALL_PARAMS_5 (floaterr_info2, floaterr_info1, procedure_addr, filename_addr, floaterr_fpustatus);
 	
-	floaterr_happened (floaterr_info, floaterr_info2, floaterr_fpustatus, filename_addr, procedure_addr);
+	floaterr_happened (floaterr_info1, floaterr_info2, floaterr_fpustatus, filename_addr, procedure_addr);
 	kernel_common_error (Wptr, sched, return_address, "floaterr");
 }
 /*}}}*/
@@ -2185,7 +2185,7 @@ K_CALL_DEFINE_4_0 (Y_Seterr)
 {
 	unsigned int filename_addr, procedure_addr, seterr_info1, seterr_info2;
 	
-	K_CALL_PARAMS_4 (procedure_addr, filename_addr, seterr_info2, seterr_info1);
+	K_CALL_PARAMS_4 (seterr_info2, seterr_info1, procedure_addr, filename_addr);
 	ENTRY_TRACE (Y_Seterr, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, seterr_info2, seterr_info1);
 	
 	handle_seterr (seterr_info1, seterr_info2, filename_addr, procedure_addr);
@@ -2243,7 +2243,7 @@ K_CALL_DEFINE_4_0 (Y_RangeCheckError)
 {
 	unsigned int filename_addr, procedure_addr, range_info1, range_info2;
 	
-	K_CALL_PARAMS_4 (procedure_addr, filename_addr, range_info2, range_info1);
+	K_CALL_PARAMS_4 (range_info2, range_info1, procedure_addr, filename_addr);
 	ENTRY_TRACE (Y_RangeCheckError, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, range_info2, range_info1);
 
 	handle_range_error (range_info1, range_info2, filename_addr, procedure_addr);
