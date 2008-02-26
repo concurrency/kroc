@@ -21,8 +21,8 @@
 
 #include <inlining.h>
 
-#ifndef __ATOMICS_H
-#define __ATOMICS_H
+#ifndef I386_ATOMICS_H
+#define I386_ATOMICS_H
 
 #ifdef __GNUC__
 #define _PACK_STRUCT __attribute__ ((packed))
@@ -401,5 +401,5 @@ static INLINE unsigned int att_unsafe_test_clear_bit (atomic_t *atval, unsigned 
 #define atw_test_clear_bit(W,B)	(att_test_clear_bit ((atomic_t *)((W)), (B)))
 /*}}}*/
 
-#endif	/* !__ATOMICS_H */
+#endif	/* !I386_ATOMICS_H */
 

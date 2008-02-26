@@ -683,8 +683,6 @@ EXTRA_DEFS="$EXTRA_CFLAGS $FRAMEPTR_CFLAGS $ARCH_CFLAGS $RMOX_CFLAGS -DSIGNAL_TY
 AC_SUBST(EXTRA_DEFS)
 AC_SUBST(EXTRA_LDFLAGS)
 
-AC_CONFIG_LINKS([include/arch:include/$ARCH_DIR])
-
 AC_CONFIG_HEADERS([include/ccsp_config.h])
-AC_OUTPUT([Makefile common/Makefile include/Makefile include/i386/Makefile kernel/Makefile utils/Makefile])
+AC_OUTPUT([Makefile common/Makefile include/Makefile include/arch/Makefile include/i386/Makefile kernel/Makefile utils/Makefile])
 

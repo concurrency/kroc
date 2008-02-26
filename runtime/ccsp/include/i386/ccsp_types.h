@@ -17,8 +17,8 @@
  *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __I386_TYPES_H
-#define __I386_TYPES_H
+#ifndef I386_CCSP_TYPES_H
+#define I386_CCSP_TYPES_H
 
 #if defined(HAVE_CONFIG_H)
 #include <config.h>
@@ -39,5 +39,5 @@ typedef struct _cputime_t {
 
 #undef _PACK_STRUCT
 
-#endif /* !__I386_TYPES_H */
+#endif /* !I386_CCSP_TYPES_H */
 
