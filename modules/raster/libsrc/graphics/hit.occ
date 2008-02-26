@@ -17,6 +17,8 @@
 --	<http://www.gnu.org/licenses/>.
 --
 
+--** @module rastergraphics
+
 --* Does circle hit anything?
 --
 --  @param X, Y Centre of circle
