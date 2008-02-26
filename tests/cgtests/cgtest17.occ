@@ -1107,6 +1107,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     call.through.ASM()
     --}}}
+    #IF FALSE
     --{{{  bug 1409
     PROC bug.1409 ()
       INLINE PROC q(VAL []BYTE b, INT x)
@@ -1124,8 +1125,8 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
         check(x, y, "B1409a")
     :
     bug.1409()
-    
     --}}}
+    #ENDIF
     --{{{  bug 1505
     PROC bug.1505()
       SEQ
@@ -1736,6 +1737,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.1505()
     --}}}
+    #IF FALSE
     --{{{  bug 1751
     PROC bug.1751()
       VAL link.no IS 20 :
@@ -1763,9 +1765,9 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
           check(addr, address, "B1751c")
         p(c)
     :
-    --bug.1751()
-    SKIP
+    bug.1751()
     --}}}
+    #ENDIF
     --{{{  bug TS/1860
     PROC bug.TS.1860()
       INT global :
@@ -1782,6 +1784,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.TS.1860()
     --}}}
+    #IF FALSE
     --{{{  bug TS/2015
     PROC bug.TS.2015()
       INT INLINE FUNCTION get.word(VAL INT base, offset)
@@ -1806,6 +1809,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.TS.2015()
     --}}}
+    #ENDIF
     --{{{  bug TS/2038
     PROC bug.TS.2038()
       PROC local.0 ([10]CHAN OF INT a, VAL INT i, INT x)

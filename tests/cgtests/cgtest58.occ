@@ -476,6 +476,7 @@ PROC cgtest58 (CHAN OF BYTE keyb, scr, err)
     :
     place.in.vectorspace()
     --}}}
+    #IF FALSE
     --{{{  some RETYPES work
     PROC some.RETYPES.work()
       DATA TYPE record
@@ -686,6 +687,7 @@ PROC cgtest58 (CHAN OF BYTE keyb, scr, err)
     :
     some.RETYPES.work()
     --}}}
+    #ENDIF
     --{{{  access to fn result array
     PROC const.access.to.result()
       VAL n IS 3 :

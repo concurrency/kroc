@@ -4479,10 +4479,12 @@ printtreenl (stderr, 4, resinst);
 			return;
 			/*}}} */
 			/*{{{  S_X_INPUT_OUTPUT  return */
+		#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3) && defined(PD_ENCODE_CHANNEL)
 		case S_X_INPUT_OUTPUT:
 			txinputoutput (tptr);
 			tdespecs (specsptr);
 			return;
+		#endif
 			/*}}}*/
 			/*{{{  S_ASS                  return */
 		case S_ASS:
@@ -4496,6 +4498,7 @@ printtreenl (stderr, 4, resinst);
 		case S_PINSTANCE:
 			tpreexp (IParamListOf (tptr));
 			if (TagOf (INameOf (tptr)) == N_PREDEFPROC) {
+				#if 0
 				if (cgraph_profiling && NModeOf (INameOf (tptr)) != PD_UPDATE_PROFCOUNT) {
 					ProfTabEntry *entry = get_proftab_entry (profile_table, tptr);
 					if (entry != NULL) {
@@ -4503,6 +4506,7 @@ printtreenl (stderr, 4, resinst);
 						proftab_calling_nptr_ (entry) = current_routine_nptr;
 					}
 				}
+				#endif
 				tpredef (tptr, NULL);
 			} else {
 				tinstance (tptr);

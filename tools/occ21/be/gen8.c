@@ -3193,6 +3193,7 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			}
 			break;
 			/*}}} */
+		#if 0
 			/*{{{  LOADINPUTCHANNEL + friends   special */
 		case PD_LOADINPUTCHANNEL:
 		case PD_LOADOUTPUTCHANNEL:
@@ -3226,6 +3227,7 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			}
 			break;
 			/*}}} */
+		#endif
 			/*{{{  MOVE2D CLIP2D DRAW2D         special */
 		case PD_MOVE2D:
 		case PD_CLIP2D:
@@ -3356,10 +3358,12 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			}
 			break;
 			/*}}} */
+		#if 0
 			/*{{{  UPDATE_PROFCOUNT*/
 		case PD_UPDATE_PROFCOUNT:
 			break;
 			/*}}}*/
+		#endif
 #ifdef MOBILES
 			/*{{{  ALLOC_CHAN_TYPE*/
 		case PD_ALLOC_CHAN_TYPE:
@@ -3371,18 +3375,22 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			/*}}}*/
 #endif
 			/*{{{  DETACH_DYNMOB ATTACH_DYNMOB*/
+		#ifdef PD_ATTACH_DYNMOB
 		case PD_ATTACH_DYNMOB:
 			mapexp (param[0]);
 			mapstoreinopd (P_EXP, param[2]);
 			mapexp (param[1]);
 			mapstoreinopd (P_EXP, param[2]);
 			break;
+		#endif
+		#ifdef PD_DETACH_DYNMOB
 		case PD_DETACH_DYNMOB:
 			mapexp (param[0]);
 			mapstoreinopd (P_EXP, param[1]);
 			mapexp (param[0]);
 			mapstoreinopd (P_EXP, param[2]);
 			break;
+		#endif
 			/*}}}*/
 			/*{{{  DECODE_DATA*/
 		case PD_DECODE_DATA:
@@ -3394,16 +3402,20 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			break;
 			/*}}}*/
 			/*{{{  PROTOCOL_HASH*/
+		#ifdef PD_PROTOCOL_HASH
 		case PD_PROTOCOL_HASH:
 			/* if this gets here, it's because it's a run-time type */
 			mapaddr (param[0]);
 			break;
+		#endif
 			/*}}}*/
 			/*{{{  LOAD_TYPE_DESC*/
+		#ifdef PD_LOAD_TYPE_DESC
 		case PD_LOAD_TYPE_DESC:
 			/* doesn't need to touch the variable (yet) */
 			// mapaddr (param[0]);
 			break;
+		#endif
 			/*}}}*/
 			/*{{{  REAL32SIN, REAL64SIN, REAL32COS, REAL64COS, REAL32TAN, REAL64TAN */
 		case PD_REAL32SIN:
@@ -4038,6 +4050,7 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 		}
 		break;
 		/*}}} */
+	#if 0
 		/*{{{  LOADINPUTCHANNEL + friends */
 	case PD_LOADINPUTCHANNEL:
 	case PD_LOADOUTPUTCHANNEL:
@@ -4071,6 +4084,7 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 		}
 		break;
 		/*}}} */
+	#endif
 		/*{{{  MOVE2D CLIP2D DRAW2D */
 	case PD_MOVE2D:
 	case PD_CLIP2D:
@@ -4189,9 +4203,11 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 		break;
 		/*}}} */
 		/*{{{  UPDATE_PROFCOUNT */
+	#if 0
 	case PD_UPDATE_PROFCOUNT:
 		tprofcountupdate (LoValOf (param[0]));
 		break;
+	#endif
 		/*}}} */
 		/*{{{  ALLOC_CHAN_TYPE*/
 #ifdef MOBILES
@@ -4296,6 +4312,7 @@ fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (N
 #endif
 		/*}}}*/
 		/*{{{  DETACH_DYNMOB*/
+	#ifdef PD_DETACH_DYNMOB
 	case PD_DETACH_DYNMOB:
 		/* param[0] is the mobile, param[1] address and param[2] count */
 		loadmobile (param[0]);
@@ -4305,8 +4322,10 @@ fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (N
 		genprimary (I_LDC, 0);
 		storemobilesize (param[0], 1);	/* trash original MOBILE */
 		break;
+	#endif
 		/*}}}*/
 		/*{{{  ATTACH_DYNMOB*/
+	#ifdef PD_ATTACH_DYNMOB
 	case PD_ATTACH_DYNMOB:
 		/* param[0] is the address, param[1] is the count and param[2] is the mobile */
 #if 0
@@ -4319,6 +4338,7 @@ printtreenl (stderr, 4, param[2]);
 		texp (param[1], MANY_REGS);
 		storemobilesize (param[2], 1);
 		break;
+	#endif
 		/*}}}*/
 		/*{{{  DECODE_DATA*/
 	case PD_DECODE_DATA:
@@ -4330,6 +4350,7 @@ printtreenl (stderr, 4, param[2]);
 		break;
 		/*}}}*/
 		/*{{{  PROTOCOL_HASH*/
+	#ifdef PD_PROTOCOL_HASH
 	case PD_PROTOCOL_HASH:
 		/* load run-time hash for parameter -- left on the stack */
 #if 0
@@ -4342,8 +4363,10 @@ printtreenl (stderr, 4, param[0]);
 			genprimary (I_LDNL, 2);
 		}
 		break;
+	#endif
 		/*}}}*/
 		/*{{{  LOAD_TYPE_DESC*/
+	#ifdef PD_LOAD_TYPE_DESC
 	case PD_LOAD_TYPE_DESC:
 		/* loads run-time type description */
 		{
@@ -4367,6 +4390,7 @@ printtreenl (stderr, 4, param[0]);
 			}
 		}
 		break;
+	#endif
 		/*}}}*/
 		/*{{{  REAL32SIN, REAL64SIN, REAL32COS, REAL64COS, REAL32TAN, REAL64TAN */
 	case PD_REAL32SIN:

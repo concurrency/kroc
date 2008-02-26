@@ -418,6 +418,7 @@ predeflines[] =
 		/*{{{  causeerror */
 	  { CC, PD_CAUSEERROR, "P():CAUSEERROR"}
 	, /*}}} */
+	#if 0
 		/*{{{  kernelrun,loadchannel,loadchannelvector,loadbytevector */
 	  { CC, PD_KERNELRUN, "P(V[]Y,VI,[]I,VI):KERNEL.RUN"}
 	, { CC, PD_LOADINPUTCHANNEL, "P(I,C):LOAD.INPUT.CHANNEL"}
@@ -426,6 +427,7 @@ predeflines[] =
 	, { CC, PD_LOADOUTPUTCHANNELVECTOR, "P(I,[]C):LOAD.OUTPUT.CHANNEL.VECTOR"}
 	, { CC, PD_LOADBYTEVECTOR, "P(I,V[]Y):LOAD.BYTE.VECTOR"}
 	, /*}}} */
+	#endif
 		/*{{{  unpacksnroundsn */
 	  { CC, PD_UNPACKSN, "FI,I,I(VI):UNPACKSN"}
 	, { CC, PD_ROUNDSN, "FI(VI,VI,VI):ROUNDSN"}
@@ -498,12 +500,16 @@ predeflines[] =
 	, { CC, PD_WSSIZEOF, "FI(VI):WSSIZEOF"}
 	, { CC, PD_VSSIZEOF, "FI(VI):VSSIZEOF"}
 	, /*}}} */
+	#if 0
 		/*{{{  Used by the compiler to update profile counts */
 	  { CC, PD_UPDATE_PROFCOUNT, "P(VI):UPDATE.PROFCOUNT"}
 	, /*}}} */
+	#endif
+	#if 0
 		/*{{{  configurer s/w attributes */
 	  { C, PD_IMS_GET_PDATA, "FI():IMS.GET.PDATA"}
 	, /*}}} */
+	#endif
 	  /*{{{  priority stuff added by frmb */
 	  { CC, PD_GETPRI, "P(=I):GETPRI"}
 	, { CC, PD_SETPRI, "P(VI):SETPRI"}
@@ -511,30 +517,44 @@ predeflines[] =
 	, { CC, PD_DECPRI, "P():DECPRI"}
 	, { CC, PD_INCPRI, "P():RAISE.PRIORITY"}
 	, { CC, PD_DECPRI, "P():LOWER.PRIORITY"}
-	, /*}}}  */
+	  /*}}}  */
 	  /*{{{  mobile chantype allocation stuff added by frmb */
-	  { CC, PD_ALLOC_CHAN_TYPE, "P(C,C):ALLOC.CHAN.TYPE"}		/* this says CHAN, CHAN; but it's not.  real checks in chk1/chk4 */
-	, /*}}}*/
+	, { CC, PD_ALLOC_CHAN_TYPE, "P(C,C):ALLOC.CHAN.TYPE"}		/* this says CHAN, CHAN; but it's not.  real checks in chk1/chk4 */
+	  /*}}}*/
 	  /*{{{  encode/decode and friends added by frmb */
-	  { CC, PD_PROTOCOL_HASH, "FI(C):PROTOCOL.HASH"}		/* will actually accept any type/protocol here, real checks in chk1/chk4 */
+	#ifdef PD_PROTOCOL_HASH
+	, { CC, PD_PROTOCOL_HASH, "FI(C):PROTOCOL.HASH"}		/* will actually accept any type/protocol here, real checks in chk1/chk4 */
+	#endif
+	#ifdef PD_DECODE_CHANNEL
 	, { CC, PD_DECODE_CHANNEL, "P(C,C,C,C):DECODE.CHANNEL"}		/* chan *, CHAN INT, CHAN [some seq protocol carrying 2 INTs], CHAN BOOL */
+	#endif
+	#ifdef PD_DECODE_CHANNEL3
 	, { CC, PD_DECODE_CHANNEL3, "P(C,C,C):DECODE.CHANNEL3"}		/* chan *, CHAN INT, CHAN [ ditto                           ] */
+	#endif
+	#ifdef PD_ENCODE_CHANNEL
 	, { CC, PD_ENCODE_CHANNEL, "P(C,C,C):ENCODE.CHANNEL"}		/* CHAN [some seq protocol carrying 2 INTs], CHAN INT, CHAN * */
-#ifdef MOBILES		/* need mobile support for these two */
+	#endif
+	#ifdef MOBILES		/* need mobile support for these two */
+	#ifdef PD_DETACH_DYNMOB
 	, { CC, PD_DETACH_DYNMOB, "P(M[]Y,I,I):DETACH.DYNMOB"}		/* lets hope they don't get it wrong...! */
+	#endif
+	#ifdef PD_ATTACH_DYNMOB
 	, { CC, PD_ATTACH_DYNMOB, "P(VI,VI,M[]Y):ATTACH.DYNMOB"}	/* ditto. */
-#endif	/* MOBILES */
-	, { CC, PD_DECODE_DATA, "P(I,I,I):DECODE.DATA"}
-	, /*}}}*/
+	#endif
+	#endif	/* MOBILES */
+	,  { CC, PD_DECODE_DATA, "P(I,I,I):DECODE.DATA"}
+	  /*}}}*/
 	  /*{{{  occampi stuff*/
-	  { CC, PD_MPBARSYNC, "P()S:MPBARSYNC"}
+	, { CC, PD_MPBARSYNC, "P()S:MPBARSYNC"}
 	, { CC, PD_MPBARRESIGN, "P()S:MPBARRESIGN"}
 	, { CC, PD_MPPSERIALISE, "P(m,M[]Y):MPP.SERIALISE"}
 	, { CC, PD_MPPDESERIALISE, "P(M[]Y,m):MPP.DESERIALISE"}
 	, { CC, PD_MPPCHECKROUTINE, "P(V[]Y,B):MPP.CHECKROUTINE"}
 	, { CC, PD_MPPLOADLIBRARY, "P(V[]Y,B):MPP.LOADLIBRARY"}
 	, { CC, PD_MPPUNLOADLIBRARY, "P(V[]Y,B):MPP.UNLOADLIBRARY"}
+	#if 0
 	, { CC, PD_LOAD_TYPE_DESC, "FI(C):LOAD.TYPE.DESC"}		/* will accept any mobile name/type, channel just used for plugging */
+	#endif
 	, /*}}}*/
 	  /*{{{  more floating-point*/
 	  { CC, PD_REAL32SIN, "FR3(VR3):SIN"}
@@ -746,7 +766,7 @@ PRIVATE char *readpredefline (char *const line, int *const line_len)
 {
 	if (linecount < ((sizeof (predeflines) / sizeof (struct predeflinestruct)) - 1)) {
 		if ((predeflines[linecount].langs & current_fe_data->fe_lang) != 0) {
-#ifdef MOBILES
+#if 0 /* defined(MOBILES) */
 			if (mobile_data_types || ((predeflines[linecount].pnumber != PD_ATTACH_DYNMOB) && (predeflines[linecount].pnumber != PD_DETACH_DYNMOB))) {
 				predecode (line, predeflines[linecount].pline);
 			}

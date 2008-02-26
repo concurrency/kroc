@@ -42,12 +42,14 @@
 #define PD_ROTATERIGHT                12
 #define PD_ROTATELEFT                 13
 #define PD_CAUSEERROR                 14
+#if 0
 #define PD_KERNELRUN                  15
 #define PD_LOADINPUTCHANNEL           16
 #define PD_LOADOUTPUTCHANNEL          17
 #define PD_LOADINPUTCHANNELVECTOR     18
 #define PD_LOADOUTPUTCHANNELVECTOR    19
 #define PD_LOADBYTEVECTOR             20
+#endif
 #define PD_UNPACKSN                   21
 #define PD_ROUNDSN                    22
 #define PD_DRAW2D                     23
@@ -106,9 +108,11 @@
 #define PD_ASSERT                     76 /* added 25/9/90 */
 #define PD_WSSIZEOF                   77 /* bug TS/1797 18/08/92 */
 #define PD_VSSIZEOF                   78 /* bug TS/1797 18/08/92 */
+#if 0
 #define PD_UPDATE_PROFCOUNT           79 /* It is introduced and inlined by the
                                             compiler */
 #define PD_IMS_GET_PDATA              80 /* bug TS/1039 05/02/93 */
+#endif
 /*}}}*/
 /*{{{  Added by frmb for priority handling */
 #define PD_GETPRI		81	/* get process priority */
@@ -120,6 +124,7 @@
 #define PD_ALLOC_CHAN_TYPE	85	/* manufacture a dynamic mobile chan type */
 /*}}}  */
 /*{{{  added by frmb for encode/decode and friends */
+#if 0
 #define PD_PROTOCOL_HASH	86	/* INT FUNCTION PROTOCOL.HASH (<name>) */
 #define PD_DECODE_CHANNEL	87	/* PROC DECODE.CHANNEL (CHAN * in?, CHAN INT term?, CHAN * out!, CHAN BOOL go?)
 					 * note: the output channel must be (INT; INT) or (INT; INT; INT) underneath! -- checked for
@@ -132,6 +137,7 @@
 					 */
 #define PD_DETACH_DYNMOB	90	/* PROC DETACH.DYNMOB (MOBILE []* v, RESULT INT addr, size) */
 #define PD_ATTACH_DYNMOB	91	/* PROC ATTACH.DYNMOB (VAL INT addr, size, MOBILE []* v) */
+#endif
 #define PD_DECODE_DATA		92	/* PROC DECODE.DATA (* item, RESULT INT addr, size) */
 /*}}}*/
 /*{{{  mobile-process related builtins*/
@@ -145,12 +151,16 @@
 
 /*}}}*/
 /*{{{  process-group related builtins*/
+#if 0
 #define PD_PGRP_NEWGRP		100	/* create a new process group */
 #define PD_PGRP_INFO		101	/* process group info */
+#endif
 
 /*}}}*/
 /*{{{  other occam-pi builtins*/
+#if 0
 #define PD_LOAD_TYPE_DESC	102	/* load type descriptor: INT FUNCTION LOAD.TYPE.DESC (<name>) */
+#endif
 
 /*}}}*/
 /*{{{  architecture capability builtins*/
