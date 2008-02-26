@@ -1,7 +1,9 @@
+--** @module button
+
 --#INCLUDE "occOPENGL.inc"
 #INCLUDE "nine_by_fifteen.inc"
 
---** A small helper library for rendering text to an OpenGL context for occam.
+-- A small helper library for rendering text to an OpenGL context for occam.
 -- It requires that a font file is included for use at compile time, like nine_by_fifteen.inc in the 
 -- source of this library.
 -- @maintainer Damian Dimmich <djd20@kent.ac.uk>
