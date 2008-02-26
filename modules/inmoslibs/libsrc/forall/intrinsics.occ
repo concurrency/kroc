@@ -20,7 +20,13 @@
 -- This file is not intended to compile; it's here to provide OccamDoc with
 -- definitions of the compiler intrinsics.
 
---** @module forall
+--** Definitions available to all occam-pi programs.
+--
+-- The definitions in this module are provided by the compiler or the support
+-- library, and are automatically made available for all programs. It is not
+-- necessary to explicitly include [@text forall.module].
+--
+-- @module forall
 
 --{{{  dummy definitions
 VAL INT X IS MOSTNEG INT:
