@@ -19,26 +19,157 @@
 
 --** @module forall
 
-VAL INT BAD IS 0:
+VAL INT X IS (MOSTNEG INT):
 
-INT FUNCTION LONGADD (VAL INT a, b, c) IS BAD:
-INT, INT FUNCTION LONGSUM (VAL INT a, b, c) IS BAD, BAD:
-INT FUNCTION LONGSUB (VAL INT a, b, c) IS BAD:
+--*  Signed addition with a carry in.
+--
+--  (a + b) + carry
+--  
+--  Overflow is an error.
+--
+--  @param a Integer one.
+--  @param b Integer two.
+--  @param carry Carry flag.
+--  @result Addition of a and b.
+--
+INT FUNCTION LONGADD (VAL INT a, b, carry) IS X:
 
-INT, INT FUNCTION LONGDIFF (VAL INT a, b, c) IS BAD, BAD:
-INT, INT FUNCTION LONGPROD (VAL INT a, b, c) IS BAD, BAD:
-INT, INT FUNCTION LONGDIV (VAL INT a, b, c) IS BAD, BAD:
+--*  Unsigned addition with a carry in and carry out.
+--
+--  (a + b) + carry
+-- 
+--  @param a Integer one.
+--  @param b Integer two.
+--  @param carry Carry in flag.
+--  @results carry The resulting carry out flag.
+--  @results sum The sum of a and b.
+--
+INT, INT FUNCTION LONGSUM (VAL INT a, b, carry) IS X, X:
 
-INT, INT FUNCTION SHIFTRIGHT (VAL INT a, b, c) IS BAD, BAD:
-INT, INT FUNCTION SHIFTLEFT (VAL INT a, b, c) IS BAD, BAD:
+--*  Signed subtraction with a borrow in.
+--
+--  (b - a) - borrow
+--
+--  Overflow is an error.
+--
+--  @param a Integer one.
+--  @param b Integer two.
+--  @param borrow Borrow flag.
+--  @result Subtraction of a and borrow from b.
+--
+INT FUNCTION LONGSUB (VAL INT a, b, borrow) IS X:
 
-INT, INT, INT FUNCTION NORMALISE (VAL INT a, b) IS BAD, BAD, BAD:
-INT FUNCTION FRACMUL (VAL INT a, b) IS BAD, BAD:
+--*  Unsigned subtraction with a borrow in and a borrow out.
+--
+--  (b - a) - borrow
+--
+--  @param a Integer one.
+--  @param b Integer two.
+--  @param borrow Borrow in flag.
+--  @results borrow Borrow out flag.
+--  @results diff Subtraction of a and borrow from b.
+--
+INT, INT FUNCTION LONGDIFF (VAL INT a, b, borrow) IS X, X:
 
-INT FUNCTION ASHIFTRIGHT (VAL INT a, b) IS BAD, BAD:
-INT FUNCTION ASHIFTLEFT (VAL INT a, b) IS BAD, BAD:
-INT FUNCTION ROTATERIGHT (VAL INT a, b) IS BAD, BAD:
-INT FUNCTION ROTATELEFT (VAL INT a, b) IS BAD, BAD:
+--*  Unsigned multiplication with a carry in, producing a double length result.
+--
+--  (a * b) + carry
+--
+--  @param a Integer one.
+--  @param b Integer two.
+--  @results r1 High order word of result.
+--  @results r0 Low order word of result.
+--
+INT, INT FUNCTION LONGPROD (VAL INT a, b, carry) IS X, X:
+
+--*  Unsigned division of a double length number, producing a single length result.
+--
+--  [u1, u0] / v
+--
+--  Overflow is an error.
+-- 
+--  @param u1 High order word of quantity being divided.
+--  @param u0 Low order word of quantity being divided.
+--  @param v Divisor.
+--  @results r1 High order word of result.
+--  @results r0 Low order word of result.
+--
+INT, INT FUNCTION LONGDIV (VAL INT u1, u0, v) IS X, X:
+
+--*  Right shift on a double length quantity.
+--
+--  [a1, a0] >> shift
+--
+--  @param a1 High order word of quantity being shifted.
+--  @param a0 Low order word of quantity being shifted.
+--  @param shift Number of bit places to shift right.
+--  @results r1 High order word of result.
+--  @results r0 Low order word of result.
+--
+INT, INT FUNCTION SHIFTRIGHT (VAL INT a1, a0, shift) IS X, X:
+
+--*  Left shift on a double length quantity.
+--
+--  [a1, a0] << shift
+--
+--  @param a1 High order word of quantity being shifted.
+--  @param a0 Low order word of quantity being shifted.
+--  @param shift Number of bit places to shift left.
+--  @results r1 High order word of result.
+--  @results r0 Low order word of result.
+--
+INT, INT FUNCTION SHIFTLEFT (VAL INT a1, a0, shift) IS X, X:
+
+--*  Normalise a double length quantity.
+--
+--  Shift the double word quantity left until the most
+--  significant bit is one.
+--
+--  @param a1 High order word of quantity being normalised.
+--  @param a0 Low order word of quantity being normalised.
+--  @results places Number of places shifted.
+--  @results r1 High order word of result.
+--  @results r0 Low order word of result.
+--
+INT, INT, INT FUNCTION NORMALISE (VAL INT a1, a0) IS X, X, X:
+
+--*  Arithmetic right shift on a double length quantity.
+--
+--  The operand is expanded to a double length quantity,
+--  then arithmetically shifted right, and the low order
+--  word returned.
+--
+--  @param a The integer being shifted.
+--  @param shift Number of bit places to shift right.
+--
+INT FUNCTION ASHIFTRIGHT (VAL INT a, shift) IS X, X:
+
+--*  Arithmetic left shift on a double length quantity.
+--
+--  The operand is expanded to a double length quantity,
+--  then arithmetically shifted left, and the low order
+--  word returned.
+--
+--  @param a The integer being shifted.
+--  @param shift Number of bit places to shift left.
+--
+INT FUNCTION ASHIFTLEFT (VAL INT a, shift) IS X, X:
+
+--*  Rotate a word right.
+--
+--  @param val The integer being rotated.
+--  @param shift Number of bit places to rotate right.
+--  @result val rotated shift places to the right.
+--
+INT FUNCTION ROTATERIGHT (VAL INT val, shift) IS X:
+
+--*  Rotate a word left.
+--
+--  @param val The integer being rotated.
+--  @param shift Number of bit places to rotate left.
+--  @result val rotated shift places to the left.
+--
+INT FUNCTION ROTATELEFT (VAL INT val, shift) IS X:
 
 --*  Set the error flag.
 --
@@ -81,7 +212,7 @@ PROC ASSERT (VAL BOOL condition)
 --                 to be calculated.
 --  @return Number of workspace words required by process.
 --
-INT FUNCTION WSSIZEOF (process) IS BAD:
+INT FUNCTION WSSIZEOF (process) IS X:
 
 --*  Calculate the vectorspace size (in words) of a process.
 --
@@ -89,10 +220,19 @@ INT FUNCTION WSSIZEOF (process) IS BAD:
 --                 to be calculated.
 --  @return Number of vectorspace words required by process.
 --
-INT FUNCTION VSSIZEOF (process) IS BAD:
+INT FUNCTION VSSIZEOF (process) IS X:
 
-
-PROC DECODE.DATA (VAL INT x, y, z)
+--*  Decode mobile data (pony).
+--  @private
+--
+--  Move a mobile into an integer.
+--  Please never, ever, ever use this PROC.
+--
+--  @param mobile The mobile being moved, is undefined post this PROC
+--  @param addr Receives the address of the mobile.
+--  @param size Receives the size of the mobile.
+--
+PROC DECODE.DATA (MOBILE.ANY mobile, addr, size)
   SKIP
 :
 
