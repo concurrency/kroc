@@ -26,6 +26,10 @@
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
+--* Single-precision tangent.
+--
+-- @param X Angle in radians
+-- @return Tangent of X
 REAL32 FUNCTION TAN (VAL REAL32 X)
 
   --{{{  history

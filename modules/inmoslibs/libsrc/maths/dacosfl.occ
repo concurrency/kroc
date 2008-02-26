@@ -24,6 +24,10 @@
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
+--* Double-precision arccosine.
+--
+-- @param X Input value in the range [@text [-1.0, 1.0]]
+-- @return Arccosine of X in radians
 REAL64 FUNCTION DACOS (VAL REAL64 X)
 
   --{{{  history

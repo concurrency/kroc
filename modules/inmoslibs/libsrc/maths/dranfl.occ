@@ -23,6 +23,11 @@
 #COMMENT "Floating point maths library, V1.2 14/12/90"
 #COMMENT "(c) Copyright INMOS Limited 1988"
 
+--* Double-precision pseudo-random number generator.
+--
+-- @param DSeedIn Input seed value
+-- @return Pseudo-random value in the range [0.0, 1.0)
+-- @return Output seed value
 REAL64, INT64 FUNCTION DRAN (VAL INT64 DSeedIn)
 
   --{{{  history

@@ -24,6 +24,10 @@
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
+--* Double-precision arcsine.
+--
+-- @param X Input value in the range [@text [-1.0, 1.0]]
+-- @return Arcsine of X in radians
 REAL64 FUNCTION DASIN (VAL REAL64 X)
 
   --{{{  history

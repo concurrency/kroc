@@ -24,6 +24,11 @@
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
+--* Single-precision power.
+--
+-- @param Base.r Base
+-- @param Expn.r Exponent
+-- @return Base.r raised to the power Expn.r
 REAL32 FUNCTION POWER (VAL REAL32 Base.r, Expn.r)
 
   --{{{  history

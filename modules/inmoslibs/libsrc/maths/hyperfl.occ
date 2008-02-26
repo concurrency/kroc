@@ -41,9 +41,10 @@ VAL REAL32 VBy2M1 RETYPES #37680897(INT32) : -- 0.000013830277566739823669195175
 VAL REAL32 LnV    RETYPES #3F317300(INT32) : -- 0.69316101074218750
 --}}}
 --{{{  REDUCED EXPONENTIAL - exp
+--* Single-precision exponential without input guards, for hyperbolic
+-- functions.
+-- @private
 REAL32 FUNCTION exp (VAL REAL32 X)
-
-  -- exponential without input guards, for hyperbolic functions
 
   REAL32 RWork :
   VALOF
@@ -68,6 +69,10 @@ REAL32 FUNCTION exp (VAL REAL32 X)
 :
 --}}}
 --{{{  SINH   (floating point)
+--* Single-precision hyperbolic sine.
+--
+-- @param X Hyperbolic angle
+-- @return Hyperbolic sine of X
 REAL32 FUNCTION SINH (VAL REAL32 X)
 
   REAL32 Result :
@@ -115,6 +120,10 @@ REAL32 FUNCTION SINH (VAL REAL32 X)
 :
 --}}}
 --{{{  COSH   (floating point)
+--* Single-precision hyperbolic cosine.
+--
+-- @param X Hyperbolic angle
+-- @return Hyperbolic cosine of X
 REAL32 FUNCTION COSH (VAL REAL32 X)
 
   REAL32 Result :
@@ -142,6 +151,10 @@ REAL32 FUNCTION COSH (VAL REAL32 X)
 :
 --}}}
 --{{{  TANH   (floating point)
+--* Single-precision hyperbolic tangent.
+--
+-- @param X Hyperbolic angle
+-- @return Hyperbolic tangent of X
 REAL32 FUNCTION TANH (VAL REAL32 X)
 
   REAL32 RWork :
