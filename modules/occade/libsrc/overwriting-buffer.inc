@@ -18,9 +18,11 @@
 --
 
 --** Generic N-place overwriting buffer.
--- To use this in your code, you'll need to provide a definition of ITEM and
--- then #INCLUDE this file. You can use channel retyping to connect it to
--- existing channels.
+-- To use this in your code, you'll need to provide a definition of the data
+-- type [@code ITEM] and then [@code #INCLUDE "overwriting-buffer.inc"]. You
+-- can use channel retyping to connect it to existing channels.
+--
+-- @module overwriting-buffer
 
 --* The buffer process.
 INLINE PROC overwriting.buffer (CHAN ITEM in?, out!, CHAN BOOL kill?, VAL INT size)
