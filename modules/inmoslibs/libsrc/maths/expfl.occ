@@ -24,6 +24,10 @@
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
+--* Single-precision exponent.
+--
+-- @param X Input value
+-- @return e raised to the power X
 REAL32 FUNCTION EXP (VAL REAL32 X)
 
   --{{{  history

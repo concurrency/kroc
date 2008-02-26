@@ -24,6 +24,10 @@
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
+--* Single-precision arcsine.
+--
+-- @param X Input value in the range [@text [-1.0, 1.0]]
+-- @return Arcsine of X in radians
 REAL32 FUNCTION ASIN (VAL REAL32 X)
 
   --{{{  history

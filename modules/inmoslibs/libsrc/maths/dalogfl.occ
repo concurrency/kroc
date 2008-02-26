@@ -29,6 +29,10 @@
 -- Added OPTION "V"; V1.1 27-Mar-90 SRH
 --}}}
 --{{{  DALOG
+--* Double-precision natural logarithm.
+--
+-- @param X Input value
+-- @return Natural logarithm of X
 REAL64 FUNCTION DALOG (VAL REAL64 X)
 
   REAL64 RWork :
@@ -85,6 +89,10 @@ REAL64 FUNCTION DALOG (VAL REAL64 X)
 :
 --}}}
 --{{{  DALOG10
+--* Double-precision base-10 logarithm.
+--
+-- @param X Input value
+-- @return Base-10 logarithm of X
 REAL64 FUNCTION DALOG10 (VAL REAL64 X)
 
   REAL64 RWork :

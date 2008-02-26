@@ -17,7 +17,7 @@
 --	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 --
 
---** @module forall
+--** @module maths
 
 #IF NOT DEFINED(OCCBUILD.KROC)
 
@@ -26,6 +26,10 @@
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
+--* Double-precision sine.
+--
+-- @param X Angle in radians
+-- @return Sine of X
 REAL64 FUNCTION DSIN (VAL REAL64 X)
 
   --{{{  history

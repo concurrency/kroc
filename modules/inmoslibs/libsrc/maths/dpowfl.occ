@@ -24,6 +24,11 @@
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
 
+--* Double-precision power.
+--
+-- @param Base.r Base
+-- @param Expn.r Exponent
+-- @return Base.r raised to the power Expn.r
 REAL64 FUNCTION DPOWER (VAL REAL64 Base.r, Expn.r)
 
   --{{{  history
