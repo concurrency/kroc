@@ -5,6 +5,8 @@ AUTOMAKE_OPTIONS=foreign
 SCHED_SOURCE = $(top_srcdir)/kernel/sched.c
 MAKE_HEADER = $(top_srcdir)/utils/make-header.py
 
+SUBDIRS = arch i386
+
 noinst_HEADERS = \
 	bsyscalls_if.h \
 	debug_defs.h \

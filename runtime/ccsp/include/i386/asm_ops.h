@@ -20,8 +20,8 @@
 
 #include <inlining.h>
 
-#ifndef ASM_OPS_H
-#define ASM_OPS_H
+#ifndef I386_ASM_OPS_H
+#define I386_ASM_OPS_H
 
 /*{{{  barriers */
 #define compiler_barrier()	__asm__ __volatile__ ( ""       : : : "memory" )
@@ -180,5 +180,5 @@ static INLINE void xmemcpy (void *src, void *dst, unsigned int count) {
 }
 /*}}}*/
 
-#endif /* !ASM_OPS_H */
+#endif /* !I386_ASM_OPS_H */
 

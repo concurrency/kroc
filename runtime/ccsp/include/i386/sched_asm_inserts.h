@@ -26,8 +26,8 @@
  * longer used.
  */
 
-#ifndef SCHED_ASM_INSERTS_H
-#define SCHED_ASM_INSERTS_H
+#ifndef I386_SCHED_ASM_INSERTS_H
+#define I386_SCHED_ASM_INSERTS_H
 
 /*{{{  architecture dependent kernel call declarations */
 #define _K_CALL_DEFINE(X) \
@@ -223,5 +223,5 @@
 		: "memory")
 /*}}}*/
 
-#endif /* sched_asm_inserts.h */
+#endif /* I386_SCHED_ASM_INSERTS */
 
