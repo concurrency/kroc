@@ -464,7 +464,7 @@ int tvm_dispatch (ECTX ectx, UWORD cycles)
 		cycles -= 2;
 	} while (cycles && !ret);
 
-	return ret;
+	return (ectx->state = ret);
 }
 
 static int run_pre_init (ECTX ectx)
@@ -475,13 +475,13 @@ static int run_pre_init (ECTX ectx)
 
 	if (ectx->run_hook) {
 		if ((ret = ectx->run_hook (ectx))) {
-			return ret;
+			return (ectx->state = ret);
 		}
 	}
 
 	if (WPTR == (WORDPTR) NOT_PROCESS_P) {
 		if ((ret = ectx->run_next_on_queue (ectx))) {
-			return ret;
+			return (ectx->state = ret);
 		}
 	}
 
