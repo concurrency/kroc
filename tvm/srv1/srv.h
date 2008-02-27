@@ -54,6 +54,8 @@ int camera_mt_in (ECTX ectx, WORDPTR pointer);
 void init_timers (void);
 void delay_us (WORD delay);
 WORD srv_get_time (ECTX ectx);
+void sleep_until (WORD timeout);
+void sleep (void);
 /*}}}*/
 
 /*{{{  tvm.c */
