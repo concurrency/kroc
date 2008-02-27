@@ -394,6 +394,34 @@ static int run_user (void)
 
 	return ECTX_ERROR;
 }
+
+static void tvm_sleep (void)
+{
+	ECTX firmware	= &firmware_ctx;
+	ECTX user	= &user_ctx;
+	WORD is_timed	= 1;
+	WORD timeout;
+
+	if (firmware->state == ECTX_SLEEP && user->state == ECTX_SLEEP) {
+		if (TIME_AFTER (user->tnext, firmware->tnext)) {
+			timeout	= firmware->tnext;
+		} else {
+			timeout	= user->tnext;
+		}
+	} else if (firmware->state == ECTX_SLEEP) {
+		timeout	= firmware->tnext;
+	} else if (firmware->state == ECTX_SLEEP) {
+		timeout	= user->tnext;
+	} else {
+		is_timed = timeout = 0;
+	}
+
+	if (is_timed) {
+		sleep_until (timeout);
+	} else {
+		sleep ();
+	}
+}
 /*}}}*/
 
 /*{{{  Interfacing */
@@ -421,7 +449,9 @@ int run_tvm (void)
 
 		if ((f_ret == ECTX_EMPTY || f_ret == ECTX_SLEEP) && 
 			(u_ret == ECTX_EMPTY || u_ret == ECTX_SLEEP)) {
-			/* FIXME: power management goes here */
+			if (firmware_ctx.fptr == NOT_PROCESS_P && user_ctx.fptr == NOT_PROCESS_P) {
+				tvm_sleep ();
+			}
 		}
 	}
 

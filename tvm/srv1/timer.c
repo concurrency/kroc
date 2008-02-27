@@ -11,6 +11,7 @@ volatile unsigned long core_timer_wrap_count;
 
 void init_timers (void)
 {
+	/* Setup core timer to run at ~2000000 ticks a second */
 	core_timer_wrap_count	= 0;
 	*pTSCALE		= ((CORE_CLOCK / 2000000) - 1);
 	*pTPERIOD		= 0xffffffff;
@@ -18,9 +19,18 @@ void init_timers (void)
 	SSYNC;
 	*pTCNTL			= TMREN_P | TAUTORLD_P | TINT_P;
 	CSYNC;
+
+	/* Setup RTC to run via pre-scaler */
+	*pRTC_ICTL 		= 0;
+	*pRTC_STAT		= 0;
+	*pRTC_PREN		= 1;
+	*pRTC_ISTAT		= 
+		STOPWATCH | ALARM | SECOND | MINUTE | HOUR | DAY | DAY_ALARM | WRITE_COMPLETE;
+	*pRTC_SWCNT		= 0;
+	*pRTC_ALARM		= 0;
+	SSYNC;
 }
 
-/* Read the time counter, returns number of microseconds since reset */
 static WORD read_time (void)
 {
 	unsigned long pre_w, post_w;
@@ -49,5 +59,22 @@ void delay_us (WORD delay)
 WORD srv_get_time (ECTX ectx)
 {
 	return read_time ();
+}
+
+void sleep_until (WORD timeout)
+{
+	/* CGR FIXME: implement this */
+}
+
+void sleep (void)
+{
+	unsigned short imask;
+
+	DISABLE_INTERRUPTS (imask);
+
+	IDLE;
+	SSYNC;
+
+	ENABLE_INTERRUPTS (imask);
 }
 
