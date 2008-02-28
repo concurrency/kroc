@@ -1,5 +1,5 @@
 /*
- *  flush_cache.asm - code to flush cache lines Blackfin processor
+ *  flush_cache.asm - code to flush cache lines on Blackfin processors
  *    Copyright (C) 2008  Carl Ritson <cgr@kent.ac.uk>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@ Prototype       : void flush_cache (void *data, unsigned int length);
                  *data -> Pointer to data to flush.
                  *length -> Length in bytes of data.
 
-Registers Used  : R0-R2, P0-P1, LC0.
+Registers Used  : R0-R2, P0, LC0.
 */
 
 .text;
@@ -30,18 +30,19 @@ Registers Used  : R0-R2, P0-P1, LC0.
 .align 8;
 .global _flush_cache;
 _flush_cache:
-        r2 = 0xf (x);
+        /* r0 = data, r1 = length */
+	r2 = 0x1f (x);
 	r2 = ~r2;
 
 	r0 = r0 & r2;
+	p0 = r0
+
 	r1 += 32;
 	r1 = r1 & r2;
 	r1 >>= 5;
 
-	p0 = r0;
-	p1 = r1;
-
-	loop __flush_cache LC0 = p1;
+	LC0 = r1;
+	loop __flush_cache LC0;
 	loop_begin __flush_cache;
 	flushinv [p0++];
 	loop_end __flush_cache;
