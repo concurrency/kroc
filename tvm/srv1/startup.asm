@@ -80,6 +80,12 @@ start:
     sp.h = 0xFFB0;
     sp.l = 0x1000;
     fp = sp;
+    /* Clear the limit registers */
+    r0 = 0 (x)
+    l0 = r0
+    l1 = r0
+    l2 = r0
+    l3 = r0
 
 
 setup_PLL:
@@ -89,27 +95,27 @@ setup_PLL:
 
     p0.l = LO(PLL_CTL);
     p0.h = HI(PLL_CTL);
-    r1 = w[p0](z);
+    r1 = w[p0] (z);
     r2 = r1;  
-    r0 = 0(z);
+    r0 = 0 (x);
         
     r0.l = ~(0x3f << 9);
     r1 = r1 & r0;
     r0.l = ((VCO_MULTIPLIER & 0x3f) << 9);
     r1 = r1 | r0;
 
-    p1.l = LO(SIC_IWR);  // enable PLL Wakeup Interrupt
+    p1.l = LO(SIC_IWR);	// enable PLL Wakeup Interrupt
     p1.h = HI(SIC_IWR);
 
     r0 = [p1];            
     bitset(r0,0);      
     [p1] = r0;
     
-    w[p0] = r1;          // Apply PLL_CTL changes.
+    w[p0] = r1;		// Apply PLL_CTL changes.
     ssync;
      
     cli r0;
-    idle;    // wait for Loop_count expired wake up
+    idle;		// wait for Loop_count expired wake up
     sti r0;
 
     // now, set clock dividers:
@@ -119,7 +125,7 @@ setup_PLL:
     // SCLK = VCOCLK / SCLK_DIVIDER
     r0.l = (GET_CCLK(CCLK_DIVIDER) | (SCLK_DIVIDER & 0x000f));
 
-    w[p0] = r0; // set Core and system clock dividers
+    w[p0] = r0;		// set Core and system clock dividers
 
 
 setup_SDRAM:
@@ -190,61 +196,61 @@ skip:
 setup_events:
     /* Install default event handlers. */
 
-    p0.l = LO(EVT2);
     p0.h = HI(EVT2);
+    p0.l = LO(EVT2);
 
+    r0.h = _NHANDLER;		// NMI Handler (Int2)
     r0.l = _NHANDLER;
-    r0.h = _NHANDLER;      // NMI Handler (Int2)
     [p0++] = r0;
 
-    r0.l = EXC_HANDLER;
-    r0.h = EXC_HANDLER;    // Exception Handler (Int3)
+    r0.h = _EXC_HANDLER;	// Exception Handler (Int3)
+    r0.l = _EXC_HANDLER;
     [p0++] = r0;
     
-    [p0++] = r0;           // IVT4 isn't used
+    [p0++] = r0;		// IVT4 isn't used
 
+    r0.h = _HWHANDLER;		// HW Error Handler (Int5)
     r0.l = _HWHANDLER;
-    r0.h = _HWHANDLER;     // HW Error Handler (Int5)
     [p0++] = r0;
     
+    r0.h = _THANDLER;		// Core Timer Handler (Int6)
     r0.l = _THANDLER;
-    r0.h = _THANDLER;      // Core Timer Handler (Int6)
     [p0++] = r0;
     
+    r0.h = _RTCHANDLER;		// IVG7 Handler
     r0.l = _RTCHANDLER;
-    r0.h = _RTCHANDLER;    // IVG7 Handler
     [p0++] = r0;
     
+    r0.h = _I8HANDLER;		// IVG8 Handler
     r0.l = _I8HANDLER;
-    r0.h = _I8HANDLER;     // IVG8 Handler
     [p0++] = r0;
       
+    r0.h = _I9HANDLER;		// IVG9 Handler
     r0.l = _I9HANDLER;
-    r0.h = _I9HANDLER;     // IVG9 Handler
     [p0++] = r0;
     
+    r0.h = _I10HANDLER;		// IVG10 Handler
     r0.l = _I10HANDLER;
-    r0.h = _I10HANDLER;    // IVG10 Handler
     [p0++] = r0;
      
+    r0.h = _I11HANDLER;		// IVG11 Handler
     r0.l = _I11HANDLER;
-    r0.h = _I11HANDLER;    // IVG11 Handler
     [p0++] = r0;
       
+    r0.h = _I12HANDLER;		// IVG12 Handler
     r0.l = _I12HANDLER;
-    r0.h = _I12HANDLER;    // IVG12 Handler
     [p0++] = r0;
       
+    r0.h = _I13HANDLER;		// IVG13 Handler
     r0.l = _I13HANDLER;
-    r0.h = _I13HANDLER;    // IVG13 Handler
     [p0++] = r0;
 
+    r0.h = _I14HANDLER;		// IVG14 Handler
     r0.l = _I14HANDLER;
-    r0.h = _I14HANDLER;    // IVG14 Handler
     [p0++] = r0;
 
+    r0.h = _I15HANDLER;		// IVG15 Handler
     r0.l = _I15HANDLER;
-    r0.h = _I15HANDLER;    // IVG15 Handler
     [p0++] = r0;
 
 
@@ -253,30 +259,30 @@ setup_main:
     // therefore we need to leave the reset vector
     // and re-enter by raising an interrupt again.
 
-    r0 = 0xffff(z);    // interrupt mask to enable all interrupts
-    sti r0;            // set mask
-    raise 15;          // raise sw interrupt
+    r0 = 0xffff (z);	// interrupt mask to enable all interrupts
+    sti r0;		// set mask
+    raise 15;		// raise sw interrupt
     
-    p0.l = wait;
     p0.h = wait;
+    p0.l = wait;
 
     reti = p0;
-    rti;               // return from reset (to wait)
+    rti;		// return from reset (to wait)
 
 wait:
-    jump wait;         // wait until irq 15 is being serviced.
+    jump wait;		// wait until irq 15 is being serviced.
 
 
 call_main:
-    [--sp] = reti;  // pushing RETI allows interrupts to occur inside all main routines
+    [--sp] = reti;	// pushing RETI allows interrupts to occur inside all main routines
 
-    p0.l = _main;
     p0.h = _main;
+    p0.l = _main;
 
-    r0.l = end;
     r0.h = end;
+    r0.l = end;
 
-    rets = r0;      // return address for main()'s RTS
+    rets = r0;		// return address for main()'s RTS
 
     jump (p0);
 
@@ -305,71 +311,71 @@ start.end:
 //
 
 call_handler_then_rti:
-    call (p0)
-    restore_context
+    call (p0);
+    restore_context;
     rti;
 
-_UNHANDLED:           // Unhandled Interrupt Handler
-    save_context
+_UNHANDLED:		// Unhandled Interrupt Handler
+    save_context;
 
-    r0 = sp
+    r0 = sp;
 
-    p0.l = _unhandled_interrupt
-    p0.h = _unhandled_interrupt
+    p0.h = _unhandled_interrupt;
+    p0.l = _unhandled_interrupt;
 
-    jump call_handler_then_rti
+    jump call_handler_then_rti;
 
-_HWHANDLER:           // HW Error Handler 5
+_HWHANDLER:		// HW Error Handler 5
     // Save context on stack and call C handler
-    save_context
+    save_context;
 
-    r0 = sp
+    r0 = sp;
 
-    p0.l = _handle_hwerror;
     p0.h = _handle_hwerror;
+    p0.l = _handle_hwerror;
 
-    jump call_handler_then_rti
+    jump call_handler_then_rti;
 
 _NHANDLER:
 stall:
-    idle
+    idle;
     jump stall;
 
-EXC_HANDLER:          // Exception Handler 3
+_EXC_HANDLER:		// Exception Handler 3
     // Save context on stack and call C handler
-    save_context
+    save_context;
 
-    r0 = sp
+    r0 = sp;
 
-    p0.l = _handle_exception;
     p0.h = _handle_exception;
+    p0.l = _handle_exception;
 
     call (p0);
 
-    restore_context
+    restore_context;
     rtx;
 
-_THANDLER:            // Timer Handler 6
+_THANDLER:		// Timer Handler 6
     /* Update core timer wrap count */
     [--sp] = (r7:7, p5:5);
-    p5.l = _core_timer_wrap_count;
     p5.h = _core_timer_wrap_count;
+    p5.l = _core_timer_wrap_count;
     r7 = [p5];
     r7 += 1;
     [p5] = r7;
     (r7:7, p5:5) = [sp++];
     rti;
 
-_RTCHANDLER:          // IVG 7 Handler
+_RTCHANDLER:		// IVG 7 Handler
     r0 = 7 (z);
     jump _UNHANDLED;
 
-_I8HANDLER:           // IVG 8 Handler
+_I8HANDLER:		// IVG 8 Handler
     // Save context on stack and call C handler
     save_context
 
-    p0.l = _handle_int8;
     p0.h = _handle_int8;
+    p0.l = _handle_int8;
 
     jump call_handler_then_rti;
 
@@ -377,31 +383,31 @@ _I9HANDLER:           // IVG 9 Handler
     r0 = 9 (z);
     jump _UNHANDLED;
 
-_I10HANDLER:          // IVG 10 Handler
+_I10HANDLER:		// IVG 10 Handler
     // Save context on stack and call C handler
     save_context
 
-    p0.l = _handle_int10;
     p0.h = _handle_int10;
+    p0.l = _handle_int10;
 
     jump call_handler_then_rti;
 
-_I11HANDLER:          // IVG 11 Handler
+_I11HANDLER:		// IVG 11 Handler
     r0 = 11 (z);
     jump _UNHANDLED;
 
-_I12HANDLER:          // IVG 12 Handler
+_I12HANDLER:		// IVG 12 Handler
     r0 = 12 (z);
     jump _UNHANDLED;
 
-_I13HANDLER:          // IVG 13 Handler
+_I13HANDLER:		// IVG 13 Handler
     r0 = 13 (z);
     jump _UNHANDLED;
  
-_I14HANDLER:          // IVG 14 Handler
+_I14HANDLER:		// IVG 14 Handler
     r0 = 14 (z);
     jump _UNHANDLED;
 
-_I15HANDLER:          // IVG 15 Handler
-    jump call_main
+_I15HANDLER:		// IVG 15 Handler
+    jump call_main;
     

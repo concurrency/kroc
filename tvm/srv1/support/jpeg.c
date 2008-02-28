@@ -506,8 +506,21 @@ static void levelshift (INT16* const data)
 static void DCT (INT16 *data)
 {
     _r8x8dct(data, fdct_coeff, fdct_temp);
+    /* _r8x8dct uses limit registers, to not violate the ABI these 
+     * must be 0 at return.  While technically only l3 is made 
+     * non-zero, by clearing all registers we future proof 
+     * ourselves.
+     */
+    __asm__ __volatile__ (
+    	"r0 = 0(x);	\n"
+	"l0 = r0;	\n"
+	"l1 = r0;	\n"
+	"l2 = r0;	\n"
+	"l3 = r0;	\n"
+	: : : "R0"
+    );
 
-/*
+#if 0 /* original C implementation */
     UINT16 i;
     INT32 x0, x1, x2, x3, x4, x5, x6, x7, x8;
 
@@ -590,7 +603,8 @@ static void DCT (INT16 *data)
         data [8] = (INT16) ((x0*c1 + x1*c3 + x2*c5 + x3*c7) >> s3);
 
         data++;
-    }*/
+    }
+#endif
 }
 
 #define PUTBITS    \
