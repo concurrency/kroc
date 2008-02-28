@@ -296,6 +296,25 @@ enable_cache:
 
     SSYNC;
 
+#if 0 /* Code to use PFMON0/PFMON1 to get cache-line stats */
+#define PFMON0 0x9A /* Data Bank A cache fills */
+#define PFMON1 0x9C /* Data Bank A cache evictions */
+
+    r0 = 0 (x);
+    p0.h = HI(PFCNTR0);
+    p0.l = LO(PFCNTR0);
+    [p0++] = r0;
+    [p0++] = r0;
+
+    p0.h = HI(PFCTL);
+    p0.l = LO(PFCTL);
+    r0.h = 0x0300 | PFMON1;
+    r0.l = (0xC019 | (PFMON0 << 5));
+    [p0] = r0;
+
+    CSYNC;
+#endif
+
 
 setup_main:
     // We want to run our program in supervisor mode,
