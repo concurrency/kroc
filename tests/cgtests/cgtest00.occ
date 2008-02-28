@@ -1180,7 +1180,10 @@ PROC cgtest0 (CHAN OF BYTE keyb, scr, err)
       --}}}
   :
   --}}}
+  #IF NOT DEFINED (COMPILER.TOCK)
   --{{{  E6b limited evaluation of bools   (tests B21  to B22)
+  -- Disabled for Tock: it can tell statically that the array accesses are
+  -- unsafe.
   PROC E6b(VAL BOOL true, false)
     -- In these checks the array should never be accessed
     [1]BOOL array :
@@ -1207,6 +1210,7 @@ PROC cgtest0 (CHAN OF BYTE keyb, scr, err)
           check(INT TRUE, INT FALSE, "B24")
   :
   --}}}
+  #ENDIF
   --{{{  E7  complex expressions           (tests X1   to X9)
   PROC E7 ()
     INT a, b, c, d, x :
@@ -1460,7 +1464,9 @@ PROC cgtest0 (CHAN OF BYTE keyb, scr, err)
       --}}}
   :
   --}}}
+  #IF NOT DEFINED (COMPILER.TOCK)
   --{{{  E11 lists of things in relation expressions  (tests D120 to D121)
+  -- This is supported by occ21, but it's not in the language spec.
   PROC E11 ()
     INT a, b, c, d, e, f, g, h:
     BOOL r:
@@ -1481,6 +1487,7 @@ PROC cgtest0 (CHAN OF BYTE keyb, scr, err)
       check (INT r, 1, "D121")
   :
   --}}}  
+  #ENDIF
   --}}}
   INT key :
   SEQ
@@ -1522,7 +1529,9 @@ PROC cgtest0 (CHAN OF BYTE keyb, scr, err)
     E4 ()
     E5 ()
     E6 ()
+    #IF NOT DEFINED (COMPILER.TOCK)
     E6b(TRUE, FALSE)
+    #ENDIF
     E7 ()
     E8 ()
     E9 ()
