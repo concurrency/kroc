@@ -2,7 +2,7 @@
  *  startup.asm - startup code for SRV-1 robot
  *    Copyright (C) 2004-2005  Martin Strubel <hackfin@section5.ch>
  *    Modifications Copyright (C) 2005-2007  Surveyor Corporation
- *    Mofifications Copyright (C) 2008  Carl Ritson <cgr@kent.ac.uk>
+ *    Modifications Copyright (C) 2008  Carl Ritson <cgr@kent.ac.uk>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -252,6 +252,49 @@ setup_events:
     r0.h = _I15HANDLER;		// IVG15 Handler
     r0.l = _I15HANDLER;
     [p0++] = r0;
+
+
+enable_cache:
+    p0.h = HI(DCPLB_DATA0);
+    p0.l = LO(DCPLB_DATA0);
+
+    p1.h = HI(DCPLB_ADDR0);
+    p1.l = LO(DCPLB_ADDR0);
+
+    /* One non-cachable page allows access to SRAM */
+    r0.h = HI(CPLB_VALID | CPLB_LOCK | CPLB_USER_RD | CPLB_USER_WR | CPLB_SUPV_WR | PAGE_SIZE_4MB);
+    r0.l = LO(CPLB_VALID | CPLB_LOCK | CPLB_USER_RD | CPLB_USER_WR | CPLB_SUPV_WR | PAGE_SIZE_4MB);
+    r1.h = 0xff80;
+    r1.l = 0x0000;
+    [p0++] = r0;
+    [p1++] = r1;
+
+    /* Setup write-back cached 8x4MiB pages */
+    bitset (r0, 7);	/* CPLB_DIRTY */
+    bitset (r0, 12);	/* CPLB_L1_CHBL */
+    p2 = 8 (x);
+    loop configure_cache LC0 = p2;
+    loop_begin configure_cache;
+    r1 = LC0;
+    r1 += -1;
+    r1 <<= 22;
+    [p0++] = r0;
+    [p1++] = r1;
+    loop_end configure_cache;
+
+    CSYNC;
+
+    /* Enable cache */
+    p0.h = HI(DMEM_CONTROL);
+    p0.l = LO(DMEM_CONTROL);
+    r0 = [p0];
+    bitset (r0, 1); /* ENDCPLB */
+    bitset (r0, 2); /* Enable upper 16KiB of both banks as cache */
+    bitset (r0, 3); /* "" */
+    bitclr (r0, 4); /* DCBS = use address line 14 as bank select */
+    [p0] = r0;
+
+    SSYNC;
 
 
 setup_main:

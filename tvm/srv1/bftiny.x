@@ -25,8 +25,10 @@ MEMORY
 	l1code(x)           : ORIGIN = 0xffa00000, LENGTH = 0xc000
 	l1code_cache(x)     : ORIGIN = 0xffa10000, LENGTH = 0x4000
 	/* BF533, BF537, BF539 */
-	l1data_a(rw)        : ORIGIN = 0xff800000, LENGTH = 0x8000
-	l1data_b(rw)        : ORIGIN = 0xff900000, LENGTH = 0x8000
+	l1data_a(rw)        : ORIGIN = 0xff800000, LENGTH = 0x4000
+	l1data_cache_a(rw)  : ORIGIN = 0xff804000, LENGTH = 0x4000
+	l1data_b(rw)        : ORIGIN = 0xff900000, LENGTH = 0x4000
+	l1data_cache_b(rw)  : ORIGIN = 0xff904000, LENGTH = 0x4000
 	scratchpad(rw)      : ORIGIN = 0xffb00000, LENGTH = 0x1000
 }
 

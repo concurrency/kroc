@@ -34,6 +34,7 @@ LDFLAGS = -T bftiny.x \
 	-Map tvm.map -O binary -o tvm.bin \
 	-L$(LIBPATH)
 
+ASMOBJS += flush_cache.o
 ASMOBJS += notlibc.o
 ASMOBJS	+= startup.o
 ASMOBJS	+= support/r8x8dct.o

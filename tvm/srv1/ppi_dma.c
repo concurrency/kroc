@@ -121,6 +121,8 @@ void init_camera (void)
 	SSYNC;
 }
 
+void flush_cache (void *data, unsigned int bytes);
+
 static void allocate_camera_buffer (ECTX ectx, UWORD bytes, BYTE **buffer, WORDPTR *mobile)
 {
 	WORDPTR ma = (WORDPTR) tvm_mt_alloc (
@@ -133,6 +135,8 @@ static void allocate_camera_buffer (ECTX ectx, UWORD bytes, BYTE **buffer, WORDP
 		write_offset (ma, mt_array_t, dimensions[0], bytes);
 
 		*buffer = (BYTE *) wordptr_real_address ((WORDPTR) read_offset (ma, mt_array_t, data));
+
+		flush_cache (*buffer, bytes);
 	} else {
 		*buffer = NULL;
 	}
