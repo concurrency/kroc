@@ -20,9 +20,15 @@ PROC init.pwm ()
     timer3[TIMER3.PERIOD.32] := PERIPHERAL.CLOCK / 1000
     timer2[TIMER2.WIDTH.32] := PERIPHERAL.CLOCK / 100000
     timer3[TIMER3.WIDTH.32] := PERIPHERAL.CLOCK / 100000
-    safe.set.register.16 (timer[TIMER.ENABLE], INT (TIMEN2 \/ TIMEN3), 0)
+    timer[TIMER.ENABLE] := TIMEN2 \/ TIMEN3
     safe.set.register.16 (port.h.io[PORTHIO.DIR], #0030, 0)
     safe.set.register.16 (port.h.io[PORTHIO], #0030, 0)
+:
+
+PROC deinit.pwm ()
+  PLACED [TIMER.LEN]INT16 timer TIMER.ADDR:
+  SEQ
+    timer[TIMER.DISABLE] := TIMEN2 \/ TIMEN3
 :
 
 PROC set.pwm (VAL INT left, right)
@@ -73,7 +79,8 @@ PROC motors (MOTOR? svr)
   INITIAL INT l.speed IS 0:
   INITIAL INT r.speed IS 0:
   SEQ
-    init.pwm() 
+    init.pwm()
+
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
       SEQ
@@ -96,5 +103,7 @@ PROC motors (MOTOR? svr)
           stop
             l.speed, r.speed := 0, 0
         set.pwm(l.speed, r.speed)
+
+    deinit.pwm()
 :
 
