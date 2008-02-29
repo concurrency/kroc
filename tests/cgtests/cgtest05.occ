@@ -1782,11 +1782,15 @@ PROC cgtest5 (CHAN OF BYTE keyb, scr, err)
         c[0] ! 99
         INT data :
         ALT
+          #IF DEFINED (COMPILER.TOCK)
+          c[0] ? data
+          #ELSE
           c[(INT a :
              VALOF
                a := 0
                RESULT a
             )] ? data
+          #ENDIF
             check(data, 99, "B779a")
     :
     bug.779()

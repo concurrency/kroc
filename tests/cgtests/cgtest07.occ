@@ -1074,11 +1074,15 @@ PROC cgtest7 (CHAN OF BYTE keyb, scr, err)
         b[0] := FALSE
         b[1] := TRUE
         a[1] := BOOL 1
+        #IF DEFINED (COMPILER.TOCK)
+        a[0] := bool AND [b FROM INT a[i] FOR INT a[i]][j]
+        #ELSE
         a[0] := bool AND (INT ii :
                           VALOF
                             ii := i
                             RESULT [b FROM INT a[i] FOR INT a[ii]] [j]
                          )
+        #ENDIF
         check(INT a[0], INT TRUE, "B1439a")
     :
     bug.1439()

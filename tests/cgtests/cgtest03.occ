@@ -324,11 +324,15 @@ PROC cgtest3 (CHAN OF BYTE keyb, scr, err)
           -- is overwritten by 'result' bacause the compiler was mapping
           -- the complicated segment length before bringing x into mapping scope
           INT x IS a[0] :
+          #IF DEFINED (COMPILER.TOCK)
+          []INT b IS [a FROM 1 FOR x + 2]:
+          #ELSE
           []INT b IS [a FROM 1 FOR (INT result :
                                     VALOF
                                       result := x + 2 -- evaluates to 2
                                       RESULT result
                                    )] :
+          #ENDIF
           SEQ
             global.s := SIZE b
             global.x := x
