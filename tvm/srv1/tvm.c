@@ -425,6 +425,11 @@ static void tvm_sleep (void)
 /*}}}*/
 
 /*{{{  Interfacing */
+int tvm_interrupt_pending (void)
+{
+	return (firmware_ctx.sflags | user_ctx.sflags);
+}
+
 void raise_tvm_interrupt (void)
 {
 	firmware_ctx.sflags	|= SFLAG_INTR;

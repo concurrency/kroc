@@ -59,6 +59,7 @@ void sleep (void);
 /*}}}*/
 
 /*{{{  tvm.c */
+int tvm_interrupt_pending (void);
 void raise_tvm_interrupt (void);
 int run_tvm (void);
 /*}}}*/
