@@ -3925,7 +3925,8 @@ K_CALL_DEFINE_3_1 (X_mt_resize)
 	ENTRY_TRACE (X_mt_resize, "%08x %p %08x", resize, ptr, arg);
 
 	if ((resize_type == MT_RESIZE_DATA) && (ptr != NULL)) {
-		word type = ptr[MTType];
+		word new_size	= arg;
+		word type	= ptr[MTType];
 
 		if ((type & MT_SIMPLE) && (MT_TYPE(type) == MT_ARRAY)) {
 			mt_array_internal_t *ma = (mt_array_internal_t *) (ptr - MT_ARRAY_PTR_OFFSET);
@@ -3938,19 +3939,18 @@ K_CALL_DEFINE_3_1 (X_mt_resize)
 			/* Reallocate the array if it needs to grow, or if it
 			 * shrinks to less than 50% of the allocated memory.
 			 */
-			if ((ma->size < arg) || (arg < (ma->size / 2))) {
+			if ((ma->size < new_size) || (new_size < (ma->size / 2))) {
 				mt_array_internal_t *new;
 				word size_shift;
 				
 				new = mt_alloc_array_internal (
-					sched->allocator, type, arg, false, &size_shift
+					sched->allocator, type, new_size, false, &size_shift
 				);
 				if (MT_TYPE(inner_type) != MT_NUM) {
 					word **dst = (word **) new->array.data;
 					word **src = (word **) ma->array.data;
-					word count;
+					word count = ma->size < new->size ? ma->size : new->size;
 
-					count = ma->size;
 					while (count--) {
 						*(dst++) = *src;
 						*(src++) = NULL;
@@ -3972,10 +3972,10 @@ K_CALL_DEFINE_3_1 (X_mt_resize)
 
 				mt_release_simple (sched->allocator, ptr, type);
 				ptr = ((word *) new) + MT_ARRAY_PTR_OFFSET;
-			} else if (ma->size > arg) {
+			} else if (ma->size > new_size) {
 				if (MT_TYPE(inner_type) != MT_NUM) {
-					word **data 	= ((word **) ma->array.data) + arg;
-					word count 	= ma->size - arg;
+					word **data 	= ((word **) ma->array.data) + new_size;
+					word count 	= ma->size - new_size;
 					while (count--) {
 						word *p = *data;
 						if (p != NULL) {
