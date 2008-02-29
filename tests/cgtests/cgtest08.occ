@@ -753,11 +753,16 @@ PROC cgtest8 (CHAN OF BYTE keyb, scr, err)
         check(f([a FROM i FOR j] [k]), now PLUS 17, "B01967b")
     
         init()
+        #IF DEFINED (COMPILER.TOCK)
+        VAL xx IS [a FROM i FOR j] :
+        clock ? AFTER f(xx [k])
+        #ELSE
         clock ? AFTER (VAL xx IS [a FROM i FOR j] :
                        VALOF
                          SKIP
                          RESULT f(xx [k])
                       )
+        #ENDIF
         check(f([a FROM i FOR j] [k]), now PLUS 17, "B01967c")
     :
     bug.INSdi01967()
