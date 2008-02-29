@@ -86,7 +86,6 @@ PROC check.REAL64 (VAL REAL64 val1, val2, VAL []BYTE test.type)
 --}}}
 --{{{  PROC check.string (VAL []BYTE val1, val2, VAL []BYTE test.type)
 PROC check.string (VAL []BYTE val1, val2, VAL []BYTE test.type)
-  INITIAL BOOL ok IS TRUE:
   INT key:
   IF
     (SIZE val1) <> (SIZE val2)
