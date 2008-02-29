@@ -518,6 +518,8 @@ PROC cgtest9 (CHAN OF BYTE keyb, scr, err)
       check (INT message [x], INT 'u', "A810")
       check (INT message2 [x], INT 'u', "A811")
     --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
+    -- The *l escape is not in the language spec.
     --{{{  check "*l"                      (A820 - A839)
     VAL test.null IS "*l" :
     VAL test.one  IS "*l1" :
@@ -546,6 +548,7 @@ PROC cgtest9 (CHAN OF BYTE keyb, scr, err)
       check (INT  new.ten [0], 10, "A836")
       check (INT (new.ten  [INT new.ten  [0]]), INT '0', "A837")
     --}}}
+    #ENDIF
     --}}}
     --{{{  unused arrays
     PROC unused.arrays(VAL INT j)
