@@ -968,6 +968,7 @@ PRIVATE BOOL validval (treenode * tptr)
 PRIVATE BOOL iselement (treenode * const tptr, const BOOL modifiable)
 {
 	treenode *const nptr = nameof (tptr);
+
 	switch (TagOf (nptr)) {
 	default:
 		return FALSE;
@@ -1250,6 +1251,9 @@ PUBLIC void checkelement (treenode * const tptr, treenode * type, const int para
 		if (istableelement (tptr, TRUE)) {
 			return;
 		}
+	} else if (TagOf (tptr) == S_NULLARRAY) {
+		/* these are valid elements -- of zero size */
+		return;
 	} else if (iselement (tptr, TRUE)) {
 		if (TagOf (type) == S_PORT) {
 			check_port (tptr);	/* bug TS/1985 17/02/93 */
