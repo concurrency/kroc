@@ -3,7 +3,6 @@
 #INCLUDE "srv1.inc"
 
 PROC init.pwm ()
-  PLACED [PORT.LEN]INT16 port PORT.ADDR:
   PLACED [PORTF.LEN]INT16 port.f PORTF.ADDR:
   #PRAGMA DEFINED port.f
   PLACED [PORTHIO.LEN]INT16 port.h.io PORTHIO.ADDR:
@@ -14,38 +13,38 @@ PROC init.pwm ()
   PLACED [TIMER3.LEN.32]INT timer3 TIMER3.ADDR:
   PLACED [TIMER.LEN]INT16 timer TIMER.ADDR:
   SEQ
-    port[PORT.MUX] := 0
-    port.f[PORTF.FER] := port.f[PORTF.FER] \/ #00C0
+    safe.set.register.16 (port.f[PORTF.FER], #00C0, 0)
     timer2.config[0] := (PULSE.HI \/ PWM.OUT) \/ PERIOD.CNT
     timer3.config[0] := (PULSE.HI \/ PWM.OUT) \/ PERIOD.CNT
     timer2[TIMER2.PERIOD.32] := PERIPHERAL.CLOCK / 1000
     timer3[TIMER3.PERIOD.32] := PERIPHERAL.CLOCK / 1000
     timer2[TIMER2.WIDTH.32] := PERIPHERAL.CLOCK / 100000
     timer3[TIMER3.WIDTH.32] := PERIPHERAL.CLOCK / 100000
-    timer[TIMER.ENABLE] := TIMEN2 \/ TIMEN3
-    port.h.io[PORTHIO.DIR] := port.h.io[PORTHIO.DIR] \/ #0030
-    safe.set.register.16 (PORTHIO.ADDR, #0030, #FFCF)
+    safe.set.register.16 (timer[TIMER.ENABLE], INT (TIMEN2 \/ TIMEN3), 0)
+    safe.set.register.16 (port.h.io[PORTHIO.DIR], #0030, 0)
+    safe.set.register.16 (port.h.io[PORTHIO], #0030, 0)
 :
 
 PROC set.pwm (VAL INT left, right)
   INITIAL INT left IS left:
   INITIAL INT right IS right:
-  INITIAL INT h.mask IS #FFFF:
+  INITIAL INT h.clear IS 0:
   INITIAL INT h.value IS 0:
   PLACED [TIMER2.LEN.32]INT timer2 TIMER2.ADDR:
   PLACED [TIMER3.LEN.32]INT timer3 TIMER3.ADDR:
+  PLACED [PORTHIO.LEN]INT16 port.h.io PORTHIO.ADDR:
   SEQ
     IF
       left < 0
         -- clear left direction bit
-        h.mask, left := h.mask /\ (~#0020), -left
+        h.clear, left := h.clear \/ #0020, -left
       TRUE
         -- turn on left direction bit
         h.value := h.value \/ #0020
     IF
       right < 0
         -- clear right direction bit
-        h.mask, right := h.mask /\ (~#0010), -right
+        h.clear, right := h.clear \/ #0010, -right
       TRUE
         -- turn on right direction bit
         h.value := h.value \/ #0010
@@ -65,7 +64,7 @@ PROC set.pwm (VAL INT left, right)
       TRUE
         SKIP
 
-    safe.set.register.16 (PORTHIO.ADDR, h.value, h.mask)
+    safe.set.register.16 (port.h.io[PORTHIO], h.value, h.clear)
     timer2[TIMER2.WIDTH.32] := ((PERIPHERAL.CLOCK / 1000) * left) / 100
     timer3[TIMER3.WIDTH.32] := ((PERIPHERAL.CLOCK / 1000) * right) / 100
 :

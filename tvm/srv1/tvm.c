@@ -178,17 +178,17 @@ static int reset_dynamic_memory (ECTX ectx, WORD args[])
 	#endif
 }
 
-/* PROC safe.set.register.16 (VAL INT addr, set, mask) */
+/* PROC safe.set.register.16 (INT16 reg, VAL INT set, clear) */
 static int set_register_16 (ECTX ectx, WORD args[])
 {
 	volatile unsigned short *addr	= (unsigned short *) args[0];
 	unsigned short set		= (unsigned short) args[1];
-	unsigned short mask		= (unsigned short) args[2];
+	unsigned short clear		= (unsigned short) args[2];
 	unsigned short imask;
 
 	DISABLE_INTERRUPTS (imask);
 
-	*addr = ((*addr) & mask) | set;
+	*addr = ((*addr) & (~clear)) | set;
 
 	ENABLE_INTERRUPTS (imask);
 
