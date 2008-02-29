@@ -306,6 +306,7 @@ PROC cgtest2 (CHAN OF BYTE keyb, scr, err)
       --}}}
   :
   --}}}
+  #IF NOT DEFINED (COMPILER.TOCK)
   --{{{  P10   (tests P45 to P49)  chan ? len ; [b FROM 0 FOR len]
   PROC P10 ()
     INT x :
@@ -346,7 +347,7 @@ PROC cgtest2 (CHAN OF BYTE keyb, scr, err)
       --check (x, 9, "P45a")
   --:
   --}}}
-  
+  #ENDIF
   --}}}
   INT key :
   SEQ
@@ -370,8 +371,10 @@ PROC cgtest2 (CHAN OF BYTE keyb, scr, err)
     P7 ()
     P8 ()
     P9 ()
+    #IF NOT DEFINED (COMPILER.TOCK)
     P10 ()
     -- P10a ()
+    #ENDIF
     --}}}
     finish ()
 :
