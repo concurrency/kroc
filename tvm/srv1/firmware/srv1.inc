@@ -179,7 +179,7 @@ CHAN TYPE SYSTEM
 #PRAGMA EXTERNAL "PROC C.tvmspecial.1.kill.user () = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.2.query.user (BOOL running, INT state, []BYTE context) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.3.reset.dynamic.memory () = 0"
-#PRAGMA EXTERNAL "PROC C.tvmspecial.4.set.register.16 (VAL INT addr, set, mask) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.4.set.register.16 (INT16 addr, VAL INT set, clear) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.5.jpeg.encode.frame (VAL INT width, height, quality, VAL []BYTE input, []BYTE output, INT used) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.6.draw.caption.on.frame (VAL INT frame.width, VAL []BYTE caption, []BYTE frame) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.7.test.disconnected (CHAN OF ANY c, BOOL b) = 0"
@@ -201,8 +201,8 @@ INLINE PROC reset.dynamic.memory ()
   C.tvmspecial.3.reset.dynamic.memory ()
 :
 
-INLINE PROC safe.set.register.16 (VAL INT addr, set, mask)
-  C.tvmspecial.4.set.register.16 (addr, set, mask)
+INLINE PROC safe.set.register.16 (INT16 reg, VAL INT set, clear)
+  C.tvmspecial.4.set.register.16 (reg, set, clear)
 :
 
 INLINE PROC jpeg.encode.frame (VAL INT width, height, quality, VAL []BYTE input, []BYTE output, INT used)

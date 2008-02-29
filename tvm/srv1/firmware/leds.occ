@@ -8,12 +8,13 @@ PROTOCOL P.LED
 :
 
 PROC leds (CHAN P.LED in?)
+  PLACED [PORTGIO.LEN]INT16 port.g.io PORTGIO.ADDR:
   INITIAL [2]BOOL status IS [FALSE, FALSE]:
   SEQ
     -- Setup LED ports
-    safe.set.register.16(PORTGIO.DIR.ADDR, #0300, #FFFF)
+    safe.set.register.16(port.g.io[PORTGIO.DIR], #0300, 0)
     -- Turn off LEDs
-    safe.set.register.16(PORTGIO.ADDR, #0300, #FFFF)
+    safe.set.register.16(port.g.io[PORTGIO], #0300, 0)
     
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
@@ -38,9 +39,9 @@ PROC leds (CHAN P.LED in?)
             TRUE
               SKIP
         
-        safe.set.register.16(PORTGIO.ADDR, ~bits, (~#0300))
+        safe.set.register.16(port.g.io[PORTGIO], bits >< #0300, bits)
 
-    -- Turn off LEDS
-    safe.set.register.16(PORTGIO.ADDR, #0300, #FFFF)
+    -- Turn off LEDs
+    safe.set.register.16(port.g.io[PORTGIO], #0300, 0)
 :
 
