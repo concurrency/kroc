@@ -6,6 +6,11 @@
 
 #include "srv.h"
 
+/* Maximum sleep depends on how many peripheral clock ticks fit in 2^32 */
+const unsigned int max_sleep = (((unsigned int) -1) / PERIPHERAL_CLOCK) * 1000000U;
+/* Minimum sleep is 10000 peripheral clocks */
+const unsigned int min_sleep = (10000U * 1000000U) / PERIPHERAL_CLOCK;
+
 /* Accessed from assembly interrupt wrapper */
 volatile unsigned long core_timer_wrap_count;
 
@@ -61,20 +66,88 @@ WORD srv_get_time (ECTX ectx)
 	return read_time ();
 }
 
-void sleep_until (WORD timeout)
+static void start_timer7 (unsigned int us)
 {
-	/* CGR FIXME: implement this */
+	/* Program timer to fire in <= us microseconds */
+	*pTIMER7_PERIOD		= 0;
+	*pTIMER7_WIDTH		= us * (PERIPHERAL_CLOCK / 1000000);
+	*pTIMER7_CONFIG		= OUT_DIS | IRQ_ENA | PWM_OUT;
+	SSYNC;
+	/* Enable timer */
+	*pTIMER_ENABLE		= TIMEN7;
 }
 
-void sleep (void)
+static unsigned int stop_timer7 (void)
+{
+	/* Disable timer */
+	*pTIMER_DISABLE		= TIMEN7;
+	SSYNC;
+	/* Force disable timer and clear any pending interrupt */
+	*pTIMER_STATUS		= TIMIL7 | TRUN7;
+	SSYNC;
+	return *pTIMER7_COUNTER;
+}
+
+static void go_to_sleep (unsigned int sleep_for)
 {
 	unsigned short imask;
 
 	DISABLE_INTERRUPTS (imask);
 
-	IDLE;
-	SSYNC;
+	/* Only sleep if there are no pending interrupts */
+	if (!tvm_interrupt_pending ()) {
+		unsigned int core_start, core_end, slept;
+
+		/* Set an alarm using timer 7 */
+		start_timer7 (sleep_for);
+
+		/* Stop core timer */
+		*pTCNTL  &= ~TMREN_P;
+		SSYNC;
+
+		/* Enable core clock stopping */
+		*pPLL_CTL |= STOPCK;
+		SSYNC;
+
+		/* Go to sleep... */
+		IDLE;
+		SSYNC;
+		/* Got woken up... */
+
+		/* Disable core clock stopping */
+		*pPLL_CTL &= ~STOPCK;
+		SSYNC;
+
+		/* Stop the alarm */
+		slept 		= stop_timer7 ();
+		slept 		/= (PERIPHERAL_CLOCK / 1000000);
+
+		/* Restore core clock */
+		core_start 	= *pTCOUNT;
+		core_end 	= core_start - (slept << 1);
+		if (core_start < core_end) {
+			core_timer_wrap_count++;
+		}
+		*pTCOUNT	= core_end;
+		CSYNC;
+		*pTCNTL  	|= TMREN_P;
+		CSYNC;
+	}
 
 	ENABLE_INTERRUPTS (imask);
+}
+
+void sleep_until (WORD timeout)
+{
+	unsigned int sleep_for = (unsigned int) (timeout - read_time ());
+	
+	if (sleep_for >= min_sleep) {
+		go_to_sleep (sleep_for > max_sleep ? max_sleep : sleep_for);
+	}
+}
+
+void sleep (void)
+{
+	go_to_sleep (max_sleep);
 }
 
