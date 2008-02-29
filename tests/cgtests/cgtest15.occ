@@ -523,6 +523,7 @@ PROC cgtest15 (CHAN OF BYTE keyb, scr, err)
     :
     bugs()
     --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
     --{{{  bug 1002
     PROC bug.1002()
       SEQ
@@ -601,6 +602,7 @@ PROC cgtest15 (CHAN OF BYTE keyb, scr, err)
     :
     bug.1002()
     --}}}
+    #ENDIF
     --{{{  multi word size function tests            M200 - M250
     PROC multi.word.size.tests()
       SEQ
@@ -1093,12 +1095,16 @@ PROC cgtest15 (CHAN OF BYTE keyb, scr, err)
         array[3] := 20(INT16) -- ditto,             avoid x overflowing
         check.local(0, INT array[1], 2, 3)
         -- This code only here to ensure temp vars allocated to highlight problem
+        #IF DEFINED (COMPILER.TOCK)
+        array[1] := INT16 ((INT (array[2] * array[3])) + (INT (array[2] * array[3])))
+        #ELSE
         array[1] := (INT x:
                      VALOF
                        x := (INT (array[2] * array[3])) +
                             (INT (array[2] * array[3]))
                        RESULT INT16 x
                     )
+        #ENDIF
     :
     bug.1013()
     PROC bug.1013e()
