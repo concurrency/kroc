@@ -41,8 +41,9 @@ PROC console.output (CHAN BYTE in?, CHAN P.CONSOLE.REQ cmd.req?, CHAN P.CONSOLE.
           done := TRUE
 
         MOBILE []BYTE data:
+        BOOL synchronous:
         INT size:
-        bulk.out; size; data
+        bulk.out; synchronous; size; data
           IF
             (DEFINED data) AND (size > 0)
               SEQ
@@ -59,9 +60,15 @@ PROC console.output (CHAN BYTE in?, CHAN P.CONSOLE.REQ cmd.req?, CHAN P.CONSOLE.
                           SKIP
                       SEQ i = 0 FOR size
                         uart0.out ! data[i]
-                cmd.rsp ! bulk.complete; size; data
-            TRUE
+                IF
+                  synchronous
+                    cmd.rsp ! bulk.complete; size; data
+                  TRUE
+                    SKIP
+            synchronous
               cmd.rsp ! error; ERROR.INV.PARAM
+            TRUE
+              SKIP
               
       BYTE b:
       in ? b

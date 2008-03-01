@@ -76,14 +76,16 @@ CHAN TYPE CAMERA
 PROTOCOL P.CONSOLE.REQ
   CASE
     disconnected  = 0
-    bulk.out      = 1; INT; MOBILE []BYTE
+    -- bulk.out; TRUE; ...  => bulk.complete | error
+    -- bulk.out; FALSE; ... => (no response)
+    bulk.out      = 1; BOOL; INT; MOBILE []BYTE -- synchronous, bytes, data
 :
 --}}}
 --{{{  P.CONSOLE.RSP
 PROTOCOL P.CONSOLE.RSP
   CASE
     disconnected  = 0
-    bulk.complete = 1; INT; MOBILE []BYTE
+    bulk.complete = 1; INT; MOBILE []BYTE -- bytes sent, data
     error         = 2; INT
 :
 --}}}
