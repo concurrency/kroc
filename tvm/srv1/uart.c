@@ -11,17 +11,14 @@
 #define CTS_MASK	(1 << CTS_PIN)
 #define RTS_MASK	(1 << RTS_PIN)
 
-volatile WORDPTR 		uart0_rx_channel= (WORDPTR) NOT_PROCESS_P;
-volatile WORDPTR 		uart0_tx_channel= (WORDPTR) NOT_PROCESS_P;
-
-static volatile BYTEPTR		rx_ptr		= (BYTEPTR) NULL_P;
 static volatile unsigned char 	rx_buffer	= '\0';
+static WORDPTR			rx_channel	= (WORDPTR) NOT_PROCESS_P;
 static volatile short		rx_pending	= 0;
-static volatile short		rx_intr		= 0;
+static volatile BYTEPTR		rx_ptr		= (BYTEPTR) NULL_P;
 
-static volatile BYTEPTR		tx_ptr		= (BYTEPTR) NULL_P;
-static volatile short		tx_pending	= 0;
-static volatile short		tx_intr		= 0;
+static WORDPTR			tx_channel	= (WORDPTR) NOT_PROCESS_P;
+static volatile WORD		tx_pending	= 0;
+static BYTEPTR			tx_ptr		= (BYTEPTR) NULL_P;
 
 void init_uart (void)
 {
@@ -31,6 +28,7 @@ void init_uart (void)
 	*pPORTHIO_DIR	|= CTS_MASK;
 	/* Configure port H for flow control RTS */
 	*pPORTHIO_INEN	|= RTS_MASK;
+	*pPORTHIO_POLAR	|= RTS_MASK;
 	/* Raise CTS to block input */
 	*pPORTHIO_SET	= CTS_MASK;
 	
@@ -59,13 +57,34 @@ void init_uart (void)
 	*pUART0_IER	|= ERBFI;
 	SSYNC;
 
-	/* Enable RTS interrupts on IVG 14 */
+	/* Setup RTS interrupts on IVG 14, but don't enable */
 	*pSIC_IAR2	= (*pSIC_IAR2 & (~P17_IVG(0xf))) | P17_IVG(14);
 	*pSIC_IMASK	|= IRQ_PFA_PORTH;
-	*pPORTHIO_EDGE	|= RTS_MASK; /* interrupts on edges */
-	*pPORTHIO_POLAR	|= RTS_MASK; /* falling edges */
-	*pPORTHIO_MASKA	|= RTS_MASK; /* enable interrupt */
 	SSYNC;
+}
+
+static WORD run_output (WORD count, BYTEPTR *pptr)
+{
+	BYTEPTR ptr = *pptr;
+
+	while (count && (*pPORTHIO & RTS_MASK)) {
+		unsigned char c = read_byte (ptr);
+
+		ptr = byteptr_plus (ptr, 1);
+
+		while (!(*pUART0_LSR & THRE)) {
+			continue;
+		}
+
+		/* Send data */
+		*pUART0_THR = c;
+
+		count--;
+	}
+
+	*pptr = ptr;
+
+	return count;
 }
 
 void handle_int10 (void)
@@ -83,8 +102,7 @@ void handle_int10 (void)
 		/* Yes; give it the data and trigger requeue */
 		write_byte (rx_ptr, (BYTE) buffer);
 		rx_ptr		= (BYTEPTR) NULL_P;
-		rx_intr		= 1;
-		raise_tvm_interrupt ();
+		raise_tvm_interrupt (TVM_INTR_UART0_RX);
 	} else {
 		/* No; buffer the character */
 		rx_buffer	= buffer;
@@ -94,18 +112,28 @@ void handle_int10 (void)
 
 void handle_int14 (void)
 {
-	*pPORTHIO_CLEAR = RTS_MASK;
+	if (!(tx_pending = run_output (tx_pending, &tx_ptr))) {
+		/* Complete; notify TVM and disable interrupt */
+		raise_tvm_interrupt (TVM_INTR_UART0_TX);
+		*pPORTHIO_MASKA_CLEAR = RTS_MASK;
+		SSYNC;
+	}
 }
 
-void complete_uart0_interrupt (ECTX ectx)
+void complete_uart0_rx_interrupt (ECTX ectx)
 {
-	WORDPTR wptr;
+	ectx->add_to_queue (ectx, rx_channel);
+}
 
-	if (rx_intr && ((wptr = uart0_rx_channel) != (WORDPTR) NOT_PROCESS_P)) {
-		uart0_rx_channel	= (WORDPTR) NOT_PROCESS_P;
-		rx_intr			= 0;
-		ectx->add_to_queue (ectx, wptr);
-	}
+void complete_uart0_tx_interrupt (ECTX ectx)
+{
+	ectx->add_to_queue (ectx, tx_channel);
+}
+
+int uart0_is_blocking (void)
+{
+	/* Return non-zero if rx_channel or tx_channel is not NOT_PROCESS_P. */
+	return ((int) rx_channel | (int) tx_channel) ^ NOT_PROCESS_P;
 }
 
 int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
@@ -118,10 +146,12 @@ int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 	if (rx_pending) {
 		write_byte (pointer, (BYTE) rx_buffer);
 		rx_pending	= 0;
+		BARRIER;
 		reschedule	= 0;
 	} else {
-		uart0_rx_channel= ectx->wptr;
+		rx_channel	= ectx->wptr;
 		rx_ptr		= pointer;
+		BARRIER;
 		reschedule	= 1;
 	}
 
@@ -142,7 +172,7 @@ int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 void uart0_send_char (const unsigned char c)
 {
 	/* Wait for RTS to go low (remote ready) */
-	while (*pPORTHIO & RTS_MASK) {
+	while (!(*pPORTHIO & RTS_MASK)) {
 		continue;
 	}
 
@@ -165,20 +195,31 @@ void uart0_send_string (const char *str)
 	}
 }
 
-
 int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
 {
-	/* If count is the size of a word then throw away data,
-	 * as it will be the count from a counted array
-	 * output.  This should change in future.
-	 */
-	if (count != sizeof(WORD)) {
-		while (count--) {
-			uart0_send_char (read_byte (pointer));
-			pointer = byteptr_plus (pointer, 1);
-		}
-	}
+	if (count == sizeof(WORD)) {
+		/* If count is the size of a word then 
+		 * throw away data as it will be the count 
+		 * from a counted array output.
+		 */
+	} else if ((count = run_output (count, &pointer))) {
+		/* Couldn't ship all the output, hand the
+		 * rest to the interrupt handler.
+		 */
+		tx_channel	= ectx->wptr;
+		tx_ptr		= pointer;
+		tx_pending	= count;
+		
+		BARRIER;
 
+		/* Enable interrupt */
+		*pPORTHIO_MASKA_SET = RTS_MASK;
+
+		/* Reschedule */
+		WORKSPACE_SET (ectx->wptr, WS_IPTR, (WORD) ectx->iptr);
+		return ectx->run_next_on_queue (ectx);
+	}
+	
 	return ECTX_CONTINUE;
 }
 

@@ -301,7 +301,7 @@ void handle_int8 (void)
 	if (wake) {
 		camera_buffer 		= NULL;
 		camera_intr		= 1;
-		raise_tvm_interrupt ();
+		raise_tvm_interrupt (TVM_INTR_PPI_DMA);
 	}	
 }
 

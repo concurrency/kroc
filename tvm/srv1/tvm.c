@@ -24,16 +24,26 @@ static void srv_modify_sync_flags (ECTX ectx, WORD set, WORD clear)
 static void clear_pending_interrupts (void)
 {
 	unsigned short imask;
+	WORD flags;
 	
 	DISABLE_INTERRUPTS (imask);
 	
-	firmware_ctx.sflags	&= ~(SFLAG_INTR);
-	user_ctx.sflags		&= ~(SFLAG_INTR);
+	flags = firmware_ctx.sflags | user_ctx.sflags;
+
+	firmware_ctx.sflags	&= ~(TVM_INTR_SFLAGS);
+	user_ctx.sflags		&= ~(TVM_INTR_SFLAGS);
 
 	ENABLE_INTERRUPTS (imask);
 
-	complete_camera_interrupt (&firmware_ctx);
-	complete_uart0_interrupt (&firmware_ctx);
+	if (flags & TVM_INTR_PPI_DMA) {
+		complete_camera_interrupt (&firmware_ctx);
+	}
+	if (flags & TVM_INTR_UART0_RX) {
+		complete_uart0_rx_interrupt (&firmware_ctx);
+	}
+	if (flags & TVM_INTR_UART0_TX) {
+		complete_uart0_tx_interrupt (&firmware_ctx);
+	}
 }
 /*}}}*/ 
 
@@ -291,7 +301,7 @@ static int run_firmware (void)
 		if (ret == ECTX_SLEEP) {
 			return ret; /* OK - timer sleep */
 		} else if (ret == ECTX_EMPTY) {
-			if (uart0_rx_channel != (WORDPTR) NOT_PROCESS_P) {
+			if (uart0_is_blocking ()) {
 				return ret; /* OK - waiting for input */
 			} else if (camera_channel != (WORDPTR) NOT_PROCESS_P) {
 				return ret; /* OK - waiting for imagery */
@@ -430,10 +440,12 @@ int tvm_interrupt_pending (void)
 	return (firmware_ctx.sflags | user_ctx.sflags);
 }
 
-void raise_tvm_interrupt (void)
+void raise_tvm_interrupt (WORD flag)
 {
-	firmware_ctx.sflags	|= SFLAG_INTR;
-	user_ctx.sflags		|= SFLAG_INTR;
+	WORD flags = SFLAG_INTR | flag;
+
+	firmware_ctx.sflags	|= flags;
+	user_ctx.sflags		|= flags;
 }
 
 int run_tvm (void)
