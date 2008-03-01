@@ -22,7 +22,7 @@ PROC init.pwm ()
     timer3[TIMER3.WIDTH.32] := PERIPHERAL.CLOCK / 100000
     timer[TIMER.ENABLE] := TIMEN2 \/ TIMEN3
     safe.set.register.16 (port.h.io[PORTHIO.DIR], #0030, 0)
-    safe.set.register.16 (port.h.io[PORTHIO], #0030, 0)
+    port.h.io[PORTHIO.SET] := #0030
 :
 
 PROC deinit.pwm ()
@@ -32,13 +32,13 @@ PROC deinit.pwm ()
 :
 
 PROC set.pwm (VAL INT left, right)
-  INITIAL INT left IS left:
-  INITIAL INT right IS right:
-  INITIAL INT h.clear IS 0:
-  INITIAL INT h.value IS 0:
   PLACED [TIMER2.LEN.32]INT timer2 TIMER2.ADDR:
   PLACED [TIMER3.LEN.32]INT timer3 TIMER3.ADDR:
   PLACED [PORTHIO.LEN]INT16 port.h.io PORTHIO.ADDR:
+  INITIAL INT left    IS left:
+  INITIAL INT right   IS right:
+  INITIAL INT h.clear IS 0:
+  INITIAL INT h.set   IS 0:
   SEQ
     IF
       left < 0
@@ -46,14 +46,14 @@ PROC set.pwm (VAL INT left, right)
         h.clear, left := h.clear \/ #0020, -left
       TRUE
         -- turn on left direction bit
-        h.value := h.value \/ #0020
+        h.set := h.set \/ #0020
     IF
       right < 0
         -- clear right direction bit
         h.clear, right := h.clear \/ #0010, -right
       TRUE
         -- turn on right direction bit
-        h.value := h.value \/ #0010
+        h.set := h.set \/ #0010
 
     IF
       left > 100
@@ -70,9 +70,10 @@ PROC set.pwm (VAL INT left, right)
       TRUE
         SKIP
 
-    safe.set.register.16 (port.h.io[PORTHIO], h.value, h.clear)
-    timer2[TIMER2.WIDTH.32] := ((PERIPHERAL.CLOCK / 1000) * left) / 100
-    timer3[TIMER3.WIDTH.32] := ((PERIPHERAL.CLOCK / 1000) * right) / 100
+    port.h.io[PORTHIO.CLEAR]  := INT16 h.clear
+    port.h.io[PORTHIO.SET]    := INT16 h.set
+    timer2[TIMER2.WIDTH.32]   := ((PERIPHERAL.CLOCK / 1000) * left) / 100
+    timer3[TIMER3.WIDTH.32]   := ((PERIPHERAL.CLOCK / 1000) * right) / 100
 :
 
 PROC motors (MOTOR? svr)
