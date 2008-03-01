@@ -94,7 +94,10 @@ enum {
 /*{{{  Synchronisation flags */
 enum {
 	SFLAG_TQ	= (1 << 0),	/* Timer queue ready */
+	SFLAG_TQ_P	= 0,
 	SFLAG_INTR	= (1 << 1),	/* Interrupt execution */
+	SFLAG_INTR_P	= 1,
+	SFLAG_USER_P	= 2		/* User flags from this position */
 };
 /*}}}*/
 
