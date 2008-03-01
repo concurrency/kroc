@@ -9,7 +9,7 @@ PROC lasers (LASER? srv)
     -- Setup laser ports
     safe.set.register.16(port.h.io[PORTHIO.DIR], #0380, 0)
     -- Turn off lasers
-    safe.set.register.16(port.h.io[PORTHIO], 0, #0380)
+    port.h.io[PORTHIO.CLEAR] := #0380
     
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
@@ -35,9 +35,10 @@ PROC lasers (LASER? srv)
             bits := bits \/ #0200
           TRUE
             SKIP
-        safe.set.register.16(port.h.io[PORTHIO], bits, bits >< #0380)
+        port.h.io[PORTHIO.CLEAR]  := INT16 (bits >< #0380)
+        port.h.io[PORTHIO.SET]    := INT16 bits
 
     -- Turn off lasers
-    safe.set.register.16(port.h.io[PORTHIO], 0, #0380)
+    port.h.io[PORTHIO.CLEAR] := #0380
 :
 
