@@ -6,22 +6,33 @@
 
 #include "srv.h"
 
-volatile WORDPTR 		uart0_channel 	= (WORDPTR) NOT_PROCESS_P;
-static volatile BYTEPTR		uart0_ptr	= (BYTEPTR) NULL_P;
-static volatile unsigned char 	uart0_buffer	= '\0';
-static volatile short		uart0_pending	= 0;
-static volatile short		uart0_intr	= 0;
+#define CTS_PIN		6
+#define	RTS_PIN		0
+#define CTS_MASK	(1 << CTS_PIN)
+#define RTS_MASK	(1 << RTS_PIN)
+
+volatile WORDPTR 		uart0_rx_channel= (WORDPTR) NOT_PROCESS_P;
+volatile WORDPTR 		uart0_tx_channel= (WORDPTR) NOT_PROCESS_P;
+
+static volatile BYTEPTR		rx_ptr		= (BYTEPTR) NULL_P;
+static volatile unsigned char 	rx_buffer	= '\0';
+static volatile short		rx_pending	= 0;
+static volatile short		rx_intr		= 0;
+
+static volatile BYTEPTR		tx_ptr		= (BYTEPTR) NULL_P;
+static volatile short		tx_pending	= 0;
+static volatile short		tx_intr		= 0;
 
 void init_uart (void)
 {
 	unsigned char temp;
 
-	/* Configure port H pin 6 (PH6) for flow control CTS */
-	*pPORTHIO_DIR	|= 0x0040;
-	/* Configure PH0 for flow control RTS */
-	*pPORTHIO_INEN	= 0x0001;
-	/* Raise PH6 to block input */
-	*pPORTHIO	|= 0x0040;
+	/* Configure port H for flow control CTS */
+	*pPORTHIO_DIR	|= CTS_MASK;
+	/* Configure port H for flow control RTS */
+	*pPORTHIO_INEN	|= RTS_MASK;
+	/* Raise CTS to block input */
+	*pPORTHIO_SET	= CTS_MASK;
 	
 	/* Enable UART pins on port F */
 	*pPORTF_FER 	|= 0x000f;
@@ -42,9 +53,18 @@ void init_uart (void)
 	temp = *pUART0_IIR;
 	SSYNC;
 
-	/* Enable receive interrupts */
-	*pSIC_IMASK |= IRQ_DMA8;
-	*pUART0_IER |= ERBFI;
+	/* Enable receive interrupts on IVG 10 */
+	*pSIC_IAR1	= (*pSIC_IAR1 & (~P11_IVG(0xf))) | P11_IVG(10);
+	*pSIC_IMASK	|= IRQ_DMA8;
+	*pUART0_IER	|= ERBFI;
+	SSYNC;
+
+	/* Enable RTS interrupts on IVG 14 */
+	*pSIC_IAR2	= (*pSIC_IAR2 & (~P17_IVG(0xf))) | P17_IVG(14);
+	*pSIC_IMASK	|= IRQ_PFA_PORTH;
+	*pPORTHIO_EDGE	|= RTS_MASK; /* interrupts on edges */
+	*pPORTHIO_POLAR	|= RTS_MASK; /* falling edges */
+	*pPORTHIO_MASKA	|= RTS_MASK; /* enable interrupt */
 	SSYNC;
 }
 
@@ -53,32 +73,37 @@ void handle_int10 (void)
 	unsigned char buffer;
 
 	/* Raise (clear) CTS */
-	*pPORTHIO	= *pPORTHIO | 0x0040;
+	*pPORTHIO_SET	= CTS_MASK;
 
 	/* Read character (clears interrupt condition) */
 	buffer		= *pUART0_RBR;
 
 	/* Is anything waiting for the character? */
-	if (uart0_ptr != (BYTEPTR) NULL_P) {
+	if (rx_ptr != (BYTEPTR) NULL_P) {
 		/* Yes; give it the data and trigger requeue */
-		write_byte (uart0_ptr, (BYTE) buffer);
-		uart0_ptr		= (BYTEPTR) NULL_P;
-		uart0_intr		= 1;
+		write_byte (rx_ptr, (BYTE) buffer);
+		rx_ptr		= (BYTEPTR) NULL_P;
+		rx_intr		= 1;
 		raise_tvm_interrupt ();
 	} else {
 		/* No; buffer the character */
-		uart0_buffer = buffer;
-		uart0_pending++;
+		rx_buffer	= buffer;
+		rx_pending++;
 	}
+}
+
+void handle_int14 (void)
+{
+	*pPORTHIO_CLEAR = RTS_MASK;
 }
 
 void complete_uart0_interrupt (ECTX ectx)
 {
 	WORDPTR wptr;
 
-	if (uart0_intr && ((wptr = uart0_channel) != (WORDPTR) NOT_PROCESS_P)) {
-		uart0_channel		= (WORDPTR) NOT_PROCESS_P;
-		uart0_intr		= 0;
+	if (rx_intr && ((wptr = uart0_rx_channel) != (WORDPTR) NOT_PROCESS_P)) {
+		uart0_rx_channel	= (WORDPTR) NOT_PROCESS_P;
+		rx_intr			= 0;
 		ectx->add_to_queue (ectx, wptr);
 	}
 }
@@ -90,13 +115,13 @@ int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 	
 	DISABLE_INTERRUPTS (imask);
 
-	if (uart0_pending) {
-		write_byte (pointer, (BYTE) uart0_buffer);
-		uart0_pending	= 0;
+	if (rx_pending) {
+		write_byte (pointer, (BYTE) rx_buffer);
+		rx_pending	= 0;
 		reschedule	= 0;
 	} else {
-		uart0_channel	= ectx->wptr;
-		uart0_ptr	= pointer;
+		uart0_rx_channel= ectx->wptr;
+		rx_ptr		= pointer;
 		reschedule	= 1;
 	}
 
@@ -104,7 +129,7 @@ int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 
 	if (reschedule) {
 		/* Lower (set) CTS */
-		*pPORTHIO = *pPORTHIO & (~0x0040);
+		*pPORTHIO_CLEAR = CTS_MASK;
 		/* Save instruction pointer */
 		WORKSPACE_SET (ectx->wptr, WS_IPTR, (WORD) ectx->iptr);
 		/* Reschedule */
@@ -117,7 +142,7 @@ int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 void uart0_send_char (const unsigned char c)
 {
 	/* Wait for RTS to go low (remote ready) */
-	while (*pPORTHIO & 0x0001) {
+	while (*pPORTHIO & RTS_MASK) {
 		continue;
 	}
 

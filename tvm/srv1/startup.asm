@@ -388,7 +388,6 @@ _UNHANDLED:		// Unhandled Interrupt Handler
     jump call_handler_then_rti;
 
 _HWHANDLER:		// HW Error Handler 5
-    // Save context on stack and call C handler
     save_context;
 
     r0 = sp;
@@ -404,7 +403,6 @@ stall:
     jump stall;
 
 _EXC_HANDLER:		// Exception Handler 3
-    // Save context on stack and call C handler
     save_context;
 
     r0 = sp;
@@ -433,7 +431,6 @@ _RTCHANDLER:		// IVG 7 Handler
     jump _UNHANDLED;
 
 _I8HANDLER:		// IVG 8 Handler
-    // Save context on stack and call C handler
     save_context
 
     p0.h = _handle_int8;
@@ -446,7 +443,6 @@ _I9HANDLER:           // IVG 9 Handler
     jump _UNHANDLED;
 
 _I10HANDLER:		// IVG 10 Handler
-    // Save context on stack and call C handler
     save_context
 
     p0.h = _handle_int10;
@@ -467,8 +463,12 @@ _I13HANDLER:		// IVG 13 Handler
     jump _UNHANDLED;
  
 _I14HANDLER:		// IVG 14 Handler
-    r0 = 14 (z);
-    jump _UNHANDLED;
+    save_context
+
+    p0.h = _handle_int14;
+    p0.l = _handle_int14;
+
+    jump call_handler_then_rti;
 
 _I15HANDLER:		// IVG 15 Handler
     jump call_main;

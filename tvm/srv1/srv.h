@@ -65,7 +65,7 @@ int run_tvm (void);
 /*}}}*/
 
 /*{{{  uart.c */
-extern volatile WORDPTR uart0_channel;
+extern volatile WORDPTR uart0_rx_channel;
 
 void init_uart (void);
 void handle_int10 (void);
