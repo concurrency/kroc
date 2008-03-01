@@ -291,7 +291,7 @@ static int run_firmware (void)
 		if (ret == ECTX_SLEEP) {
 			return ret; /* OK - timer sleep */
 		} else if (ret == ECTX_EMPTY) {
-			if (uart0_channel != (WORDPTR) NOT_PROCESS_P) {
+			if (uart0_rx_channel != (WORDPTR) NOT_PROCESS_P) {
 				return ret; /* OK - waiting for input */
 			} else if (camera_channel != (WORDPTR) NOT_PROCESS_P) {
 				return ret; /* OK - waiting for imagery */
