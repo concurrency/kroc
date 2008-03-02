@@ -123,11 +123,13 @@ void handle_int14 (void)
 void complete_uart0_rx_interrupt (ECTX ectx)
 {
 	ectx->add_to_queue (ectx, rx_channel);
+	rx_channel = NOT_PROCESS_P;
 }
 
 void complete_uart0_tx_interrupt (ECTX ectx)
 {
 	ectx->add_to_queue (ectx, tx_channel);
+	tx_channel = NOT_PROCESS_P;
 }
 
 int uart0_is_blocking (void)
