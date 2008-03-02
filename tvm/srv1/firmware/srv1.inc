@@ -149,31 +149,6 @@ CHAN TYPE MOTOR
 :
 --}}}
 
---{{{  SYSTEM
---{{{  P.SYSTEM.REQ
-PROTOCOL P.SYSTEM.REQ
-  CASE
-    disconnected  = 0
-    -- get.version  => version
-    get.version   = 1
-    -- set.led      => (no response)
-    set.led       = 2; INT; BOOL
-:
---}}}
---{{{  P.SYSTEM.RSP
-PROTOCOL P.SYSTEM.RSP
-  CASE
-    disconnected  = 0
-    version       = 1; INT; MOBILE []BYTE -- numeric version, version string
-:
---}}}
-CHAN TYPE SYSTEM
-  MOBILE RECORD
-    CHAN P.SYSTEM.REQ req?:
-    CHAN P.SYSTEM.RSP rsp!:
-:
---}}}
-
 --{{{  TWI
 --{{{  P.TWI.REQ
 PROTOCOL P.TWI.REQ
@@ -213,6 +188,34 @@ CHAN TYPE TWI
   MOBILE RECORD
     CHAN P.TWI.REQ req?:
     CHAN P.TWI.RSP rsp!:
+:
+--}}}
+
+--{{{  SYSTEM
+--{{{  P.SYSTEM.REQ
+PROTOCOL P.SYSTEM.REQ
+  CASE
+    disconnected  = 0
+    -- get.version  => version
+    get.version   = 1
+    -- open.twi     => twi
+    open.twi      = 2
+    -- set.led      => (no response)
+    set.led       = 3; INT; BOOL
+:
+--}}}
+--{{{  P.SYSTEM.RSP
+PROTOCOL P.SYSTEM.RSP
+  CASE
+    disconnected  = 0
+    twi           = 1; SHARED TWI!
+    version       = 2; INT; MOBILE []BYTE -- numeric version, version string
+:
+--}}}
+CHAN TYPE SYSTEM
+  MOBILE RECORD
+    CHAN P.SYSTEM.REQ req?:
+    CHAN P.SYSTEM.RSP rsp!:
 :
 --}}}
 --}}}

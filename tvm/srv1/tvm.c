@@ -62,6 +62,13 @@ static EXT_CHAN_ENTRY	ext_chans[] = {
 		.out		= camera_out,
 		.mt_in		= camera_mt_in,
 		.mt_out		= NULL
+	},
+	{
+		.typehash	= 0,
+		.in		= twi_in,
+		.out		= twi_out,
+		.mt_in		= twi_mt_in,
+		.mt_out		= twi_mt_out
 	}
 };
 static const int	ext_chans_length =
@@ -246,9 +253,11 @@ static const int	user_sffi_table_length =
 /*}}}*/
 
 /*{{{  Firmware context */
+#define transputercode __attribute__ ((section (".l1data.b"))) transputercode
 #include "firmware.h"
+#undef transputercode
 
-static WORD firmware_memory[272];
+static WORD firmware_memory[304];
 
 static void init_firmware_memory (void)
 {

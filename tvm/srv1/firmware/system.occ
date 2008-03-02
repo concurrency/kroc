@@ -1,7 +1,7 @@
 #INCLUDE "srv1.inc"
 #INCLUDE "leds.occ"
 
-PROC system (SYSTEM? svr)
+PROC system (SYSTEM? svr, SHARED TWI! twi)
   CHAN P.LED led:
   PAR
     leds (led)
@@ -16,6 +16,9 @@ PROC system (SYSTEM? svr)
         get.version
           -- FIXME: handle this properly
           svr[rsp] ! version; 0; "UNKNOWN VERSION"
+
+        open.twi
+          svr[rsp] ! twi; twi
 
         BOOL b:
         INT n:

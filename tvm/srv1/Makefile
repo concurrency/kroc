@@ -91,10 +91,10 @@ tvm.o: firmware.h
 
 version.o: $(ASMSRCS) $(CSRCS)
 
-tvm.bin: $(OBJS) $(TVMOBJS)
+tvm.bin: $(OBJS) $(TVMOBJS) bftiny.x
 	$(LD) $(LDFLAGS) $(LDADD) $(OBJS) $(TVMOBJS) -lgcc
 
-tvm.ldr: tvm.bin
+tvm.ldr: tvm.bin bftiny.x
 	$(LDR) -f -T BF537 -c $@ $<
 
 flash: tvm.ldr
