@@ -5,11 +5,7 @@
  */
 
 #include "srv.h"
-
-#define TWI_ADDRESS	0x0ff
-#define TWI_SCCB	0x100
-#define TWI_RECV	0x200
-#define TWI_SEND	0x400
+#include "twi_const.h"
 
 enum {
 	STATE_INIT	= 0,
@@ -126,13 +122,10 @@ void handle_int13 (void)
 
 void complete_twi_interrupt (ECTX ectx)
 {
-	unsigned short istat	= *pTWI_INT_STAT;
-	unsigned short mstat	= *pTWI_MASTER_STAT;
-	WORD ret 		= 0;
+	WORD ret = 0;
 
-	if (istat & MERR) {
-		/* FIXME: interpret stat masks */
-		ret = -1;
+	if (*pTWI_INT_STAT & MERR) {
+		ret = (WORD) *pTWI_MASTER_STAT;
 	}
 		
 	write_word (ret_ptr, ret);
