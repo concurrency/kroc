@@ -9,6 +9,7 @@
 #INCLUDE "lasers.occ"
 #INCLUDE "motors.occ"
 #INCLUDE "system.occ"
+#INCLUDE "twi.occ"
 
 #INCLUDE "out.occ"
 
@@ -96,6 +97,9 @@ PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN
   MOTOR?        motor.svr:
   SYSTEM!       system.cli:
   SYSTEM?       system.svr:
+  SHARED TWI!   twi.cli:
+  TWI!          twi.int.cli:
+  TWI?          twi.svr, twi.int.svr:
   SEQ
     out.string ("##Running bytecode...*n", 0, out!)
 
@@ -104,14 +108,17 @@ PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN
     laser.cli, laser.svr      := MOBILE LASER
     motor.cli, motor.svr      := MOBILE MOTOR
     system.cli, system.svr    := MOBILE SYSTEM
+    twi.cli, twi.svr          := MOBILE TWI
+    twi.int.cli, twi.int.svr  := MOBILE TWI
 
-    CHAN BOOL shutdown:
+    CHAN BOOL shutdown, twi.req:
     PAR
       camera (camera.svr?)
       console (console.svr?, in?, shutdown?, killed)
       lasers (laser.svr?)
       motors (motor.svr?)
-      system (system.svr?)
+      system (system.svr?, twi.cli)
+      twi (twi.req?, twi.int.svr?, twi.svr?)
       
       SEQ
         VAL INT ws IS header[ws.size]:

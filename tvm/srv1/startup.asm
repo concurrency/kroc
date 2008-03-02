@@ -459,8 +459,12 @@ _I12HANDLER:		// IVG 12 Handler
     jump _UNHANDLED;
 
 _I13HANDLER:		// IVG 13 Handler
-    r0 = 13 (z);
-    jump _UNHANDLED;
+    save_context
+
+    p0.h = _handle_int13;
+    p0.l = _handle_int13;
+
+    jump call_handler_then_rti;
  
 _I14HANDLER:		// IVG 14 Handler
     save_context

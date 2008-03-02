@@ -81,7 +81,7 @@ SECTIONS
 		. = ALIGN(32 / 8);
 		__bss_end = .;
 		/* PROVIDE (__bss_end = .); */
-	} > l1data_b
+	} > l1data_a
 	. = 0xffb00ffc;
 	PROVIDE (_supervisor_stack = .);
 }

@@ -81,6 +81,17 @@ void raise_tvm_interrupt (WORD n);
 int run_tvm (void);
 /*}}}*/
 
+/*{{{  twi.c */
+void init_twi (void);
+void handle_int13 (void);
+void complete_twi_interrupt (ECTX ectx);
+int twi_is_blocking (void);
+int twi_in (ECTX ectx, WORD count, BYTEPTR pointer);
+int twi_out (ECTX ectx, WORD count, BYTEPTR pointer);
+int twi_mt_in (ECTX ectx, WORDPTR pointer);
+int twi_mt_out (ECTX ectx, WORDPTR pointer);
+/*}}}*/
+
 /*{{{  uart.c */
 void init_uart (void);
 void handle_int10 (void);
