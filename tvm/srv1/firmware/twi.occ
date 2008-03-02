@@ -1,0 +1,97 @@
+#INCLUDE "srv1.inc"
+
+PROC twi (TWI? svr)
+
+  INT FUNCTION twi.map.result (VAL INT result) IS result:
+  
+  PROTOCOL P.TWI IS BYTE; INT; MOBILE []BYTE; MOBILE []BYTE:
+
+  CHAN P.TWI setup:
+  PLACE setup AT #4:
+
+  CHAN P.TWI result:
+  PLACE result AT #4:
+
+  CHAN [2]BYTE set.clock:
+  PLACE set.clock AT #4:
+
+  INITIAL [2]BYTE clock.div IS [ 67, 33 ]: -- 100KHz with 33% duty cycle
+  INITIAL BOOL    sccb      IS FALSE:
+  INITIAL INT     flags     IS 0:
+  
+  SEQ
+    set.clock ! clock.div
+
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      svr[req] ? CASE
+        disconnected
+          done := TRUE
+
+        get.clock.div
+          svr[rsp] ! clock.div; clock.div[0]; clock.div[1]
+
+        get.sccb
+          svr[rsp] ! sccb; sccb
+
+        BYTE hi, lo:
+        set.clock.div; hi; lo
+          IF
+            (hi <= 254) AND (lo <= 254)
+              SEQ
+                clock.div[0], clock.div[1] := hi, lo
+                set.clock ! clock.div
+                svr[rsp] ! ok
+            TRUE
+              svr[rsp] ! error; ERROR.INV.PARAM
+
+        set.sccb; sccb
+          IF
+            sccb
+              flags := flags \/ TWI.SCCB
+            TRUE
+              flags := flags /\ (~TWI.SCCB)
+
+        MOBILE []BYTE recv.buf:
+        BYTE address:
+        recv; address; recv.buf:
+          VAL INT cfg IS (flags \/ TWI.RECV) \/ (INT address):
+          MOBILE []BYTE send.buf:
+          INT ret:
+          SEQ
+            setup ! cfg; send.buf; recv.buf
+            result ? ret; recv.buf; send.buf
+            svr[rsp] ! ret; map.result (ret); recv.buf
+
+        MOBILE []BYTE recv.buf, send.buf:
+        BYTE address:
+        recv.send; address; recv.buf; send.buf
+          VAL INT cfg IS (flags \/ TWI.RECV) \/ (INT address):
+          INT ret:
+          SEQ
+            setup ! cfg; send.buf; recv.buf
+            result ? ret; recv.buf; send.buf
+            svr[rsp] ! ret; map.result (ret); recv.buf; send.buf
+
+        MOBILE []BYTE send.buf:
+        BYTE address:
+        send; address; send.buf
+          VAL INT cfg IS (flags \/ TWI.SEND) \/ (INT address):
+          MOBILE []BYTE recv.buf:
+          INT ret:
+          SEQ
+            setup ! cfg; send.buf; recv.buf
+            result ? ret; recv.buf; send.buf
+            svr[rsp] ! ret; map.result (ret); send.buf; recv.buf
+            
+        MOBILE []BYTE recv.buf, send.buf:
+        BYTE address:
+        send.recv; address; send.buf; recv.buf
+          VAL INT cfg IS (flags \/ TWI.SEND) \/ (INT address):
+          INT ret:
+          SEQ
+            setup ! cfg; send.buf; recv.buf
+            result ? ret; recv.buf; send.buf
+            svr[rsp] ! ret; map.result (ret); send.buf; recv.buf
+:
+

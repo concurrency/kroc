@@ -48,6 +48,7 @@ COBJS	+= main.o
 COBJS	+= ppi_dma.o
 COBJS	+= timer.o
 COBJS	+= tvm.o
+COBJS	+= twi.o
 COBJS	+= uart.o
 COBJS	+= version.o
 COBJS	+= support/jpeg.o
