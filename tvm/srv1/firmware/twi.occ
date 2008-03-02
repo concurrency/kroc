@@ -1,13 +1,23 @@
+#INCLUDE "defBF537.inc"
 #INCLUDE "srv1.inc"
-
-VAL INT TWI.ADDRESS IS #0FF:
-VAL INT TWI.SCCB    IS #100:
-VAL INT TWI.RECV    IS #200:
-VAL INT TWI.SEND    IS #400:
+#INCLUDE "twi_const.inc"
 
 PROC twi (CHAN BOOL req?, TWI? int, TWI? ext)
 
-  INT FUNCTION map.result (VAL INT result) IS result:
+  INT FUNCTION map.result (VAL INT result)
+    INT value:
+    VALOF
+      IF
+        (result /\ (INT (ANAK \/ DNAK))) <> 0
+          value := ERROR.TIMEOUT
+        (result /\ (INT (BUFRDERR \/ BUFWRERR))) <> 0
+          value := ERROR.FIFO
+        (result /\ (INT LOSTARB)) <> 0
+          value := ERROR.INTERRUPT
+        TRUE
+          value := 0
+      RESULT value
+  :
   
   PROTOCOL P.TWI IS INT; MOBILE []BYTE; MOBILE []BYTE:
 
