@@ -173,6 +173,48 @@ CHAN TYPE SYSTEM
     CHAN P.SYSTEM.RSP rsp!:
 :
 --}}}
+
+--{{{  TWI
+--{{{  P.TWI.REQ
+PROTOCOL P.TWI.REQ
+  CASE
+    disconnected  = 0
+    -- get.clock.div  => clock.div
+    get.clock.div = 1
+    -- get.sccb       => sccb
+    get.sccb      = 2
+    -- set.clock.div  => ok | error 
+    set.clock.div = 3; BYTE; BYTE -- clock hi, clock lo
+    -- set.sccb       => (no response)
+    set.sccb      = 4; BOOL
+    -- recv           => ret 
+    recv          = 5; BYTE; MOBILE []BYTE -- address, buffer
+    -- recv.send      => ret.2
+    recv.send     = 6; BYTE; MOBILE []BYTE; MOBILE []BYTE -- address, recv buffer, send buffer
+    -- send           => ret
+    send          = 7; BYTE; MOBILE []BYTE -- address, buffer
+    -- send.recv      => ret.2
+    send.recv     = 8; BYTE; MOBILE []BYTE; MOBILE []BYTE -- address, send buffer, recv buffer
+:
+--}}}
+--{{{  P.TWI.RSP
+PROTOCOL P.TWI.RSP
+  CASE
+    disconnected  = 0
+    clock.div     = 1; BYTE; BYTE -- clock hi, clock lo
+    error         = 2; INT
+    ok            = 3
+    ret           = 4; INT; MOBILE []BYTE -- result, buffer
+    ret.2         = 5; INT; MOBILE []BYTE; MOBILE []BYTE -- result, buffer 1, buffer 2
+    sccb          = 6; BOOL
+:
+--}}}
+CHAN TYPE TWI
+  MOBILE RECORD
+    CHAN P.TWI.REQ req?:
+    CHAN P.TWI.RSP rsp!:
+:
+--}}}
 --}}}
 
 --{{{  FFI Interface

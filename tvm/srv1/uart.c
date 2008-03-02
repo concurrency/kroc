@@ -52,13 +52,13 @@ void init_uart (void)
 	SSYNC;
 
 	/* Enable receive interrupts on IVG 10 */
-	*pSIC_IAR1	= (*pSIC_IAR1 & (~P11_IVG(0xf))) | P11_IVG(10);
+	*pSIC_IAR1	= (*pSIC_IAR1 & ~(0xf << 0xc)) | P11_IVG(10);
 	*pSIC_IMASK	|= IRQ_DMA8;
 	*pUART0_IER	|= ERBFI;
 	SSYNC;
 
 	/* Setup RTS interrupts on IVG 14, but don't enable */
-	*pSIC_IAR2	= (*pSIC_IAR2 & (~P17_IVG(0xf))) | P17_IVG(14);
+	*pSIC_IAR2	= (*pSIC_IAR2 & ~(0xf << 0x4)) | P17_IVG(14);
 	*pSIC_IMASK	|= IRQ_PFA_PORTH;
 	SSYNC;
 }
