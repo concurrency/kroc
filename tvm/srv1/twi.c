@@ -60,11 +60,15 @@ void init_twi (void)
 
 void handle_int13 (void)
 {
-	unsigned short stat	= *pTWI_INT_STAT;
+	unsigned short stat = *pTWI_INT_STAT;
 
+	print_hex (stat);
+	uart0_send_char ('\n');
+	
 	if (stat & MERR) {
 		*pTWI_INT_MASK	= 0;
 		state		= STATE_ERROR;
+		raise_tvm_interrupt (TVM_INTR_TWI);
 	} else if (state == STATE_RX) {
 		if (stat & MCOMP) {
 			if (tx_pending) {
@@ -78,7 +82,6 @@ void handle_int13 (void)
 				state		= STATE_TX;
 			} else {
 				*pTWI_INT_MASK	= 0;
-				state		= STATE_READY;
 				raise_tvm_interrupt (TVM_INTR_TWI);
 			}
 			*pTWI_INT_STAT	= MCOMP;
@@ -104,7 +107,6 @@ void handle_int13 (void)
 				state		= STATE_RX;
 			} else {
 				*pTWI_INT_MASK	= 0;
-				state		= STATE_READY;
 				raise_tvm_interrupt (TVM_INTR_TWI);
 			}
 			*pTWI_INT_STAT	= MCOMP;
@@ -132,7 +134,7 @@ void complete_twi_interrupt (ECTX ectx)
 	ectx->add_to_queue (ectx, channel);
 
 	channel = NOT_PROCESS_P;
-	state	= STATE_TX_BUF;
+	state	= STATE_RX_BUF;
 }
 
 int twi_is_blocking (void)
@@ -213,7 +215,7 @@ int twi_out (ECTX ectx, WORD count, BYTEPTR pointer)
 			return ECTX_CONTINUE;
 		} else if (count == sizeof(WORD)) {
 			flags = read_word (pointer);
-			state = STATE_RX_BUF;
+			state = STATE_TX_BUF;
 			return ECTX_CONTINUE;
 		}
 	}
@@ -223,17 +225,17 @@ int twi_out (ECTX ectx, WORD count, BYTEPTR pointer)
 int twi_mt_in (ECTX ectx, WORDPTR pointer)
 {
 	switch (state) {
-		case STATE_RX:
+		case STATE_RX_BUF:
 			write_word (pointer, (WORD) rx_mobile);
 			tx_buffer	= (BYTEPTR) NULL_P;
 			tx_mobile	= (WORDPTR) NULL_P;
-			state		= STATE_RX_BUF;
+			state		= STATE_TX_BUF;
 			return ECTX_CONTINUE;
-		case STATE_TX:
+		case STATE_TX_BUF:
 			write_word (pointer, (WORD) tx_mobile);
 			tx_buffer	= (BYTEPTR) NULL_P;
 			tx_mobile	= (WORDPTR) NULL_P;
-			state		= STATE_TX_BUF;
+			state		= STATE_INIT;
 			return ECTX_CONTINUE;
 		default:
 			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
@@ -246,12 +248,12 @@ int twi_mt_out (ECTX ectx, WORDPTR pointer)
 		case STATE_RX_BUF:
 			rx_mobile	= (WORDPTR) read_word (pointer);
 			write_word (pointer, NULL_P);
-			state		= STATE_TX_BUF;
+			state		= STATE_READY;
 			return ECTX_CONTINUE;
 		case STATE_TX_BUF:
 			tx_mobile	= (WORDPTR) read_word (pointer);
 			write_word (pointer, NULL_P);
-			state		= STATE_READY;
+			state		= STATE_RX_BUF;
 			return ECTX_CONTINUE;
 		default:
 			break;

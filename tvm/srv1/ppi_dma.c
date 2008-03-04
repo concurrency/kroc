@@ -73,8 +73,9 @@ void init_ppi_dma (void)
 	*pDMA0_IRQ_STATUS = DMA_DONE | DMA_ERR;
 	SSYNC;
 	
-	/* Enable DMA interrupts */
-	*pSIC_IMASK |= IRQ_DMA0;
+	/* Enable DMA interrupts on IVG 8 */
+	*pSIC_IAR0	= (*pSIC_IAR0 & ~(0xf << 0x10)) | P4_IVG(8);
+	*pSIC_IMASK	|= IRQ_DMA0;
 	SSYNC;
 }
 
@@ -317,17 +318,17 @@ int ppi_dma_out (ECTX ectx, WORD count, BYTEPTR pointer)
 		frame_height 	= read_word (wordptr_plus (config, 2));
 		frame_bpp 	= read_word (wordptr_plus (config, 3));
 		frame_length	= frame_width * frame_height * frame_bpp;
+		
+		if (mode == PPI_DMA_STREAM) {
+			int ret = dma_start (ectx, 1);
+			if (ret) {
+				dma_error = ret;
+			}
+		}
 	} else {
 		frame_length	= 0;
 	}
 	
-	if (mode == PPI_DMA_STREAM) {
-		int ret = dma_start (ectx, 1);
-		if (ret) {
-			dma_error = ret;
-		}
-	}
-				
 	return ECTX_CONTINUE;
 }
 
