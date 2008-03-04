@@ -19,13 +19,14 @@ struct _dma_desc_t {
 
 /* DMA related */
 #define			DMA_BUFFERS	2
-static dma_desc_t	TVM_WORD_ALIGN	dma[DMA_BUFFERS + 1];
+static dma_desc_t TVM_WORD_ALIGN
+			dma[DMA_BUFFERS + 1];
 static volatile short	dma_current	= 0;
 static volatile	short	dma_ready	= 0;
-
-/* State related */
 static volatile short	dma_error	= 0;
 static unsigned short	dma_running	= 0;
+
+/* Mode related */
 static unsigned short	frame_width	= 0;
 static unsigned short	frame_height	= 0;
 static unsigned short	frame_bpp	= 0;
@@ -215,10 +216,10 @@ void handle_int8 (void)
 	if (*pDMA0_IRQ_STATUS & DMA_DONE) {
 		if (dma_running) {
 			/* Streaming mode */
-			short current	= current;
+			short current	= dma_current;
 			BYTE *buffer	= dma_buffer;
 
-			current = (current + 1) & (DMA_BUFFERS - 1);
+			dma_current = (current + 1) & (DMA_BUFFERS - 1);
 			
 			if (buffer != NULL) {
 				/* Swap buffers */
