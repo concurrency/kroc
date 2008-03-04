@@ -139,19 +139,15 @@ static void go_to_sleep (unsigned int sleep_for)
 
 void sleep_until (WORD timeout)
 {
-	/*
 	unsigned int sleep_for = (unsigned int) (timeout - read_time ());
 	
 	if (sleep_for >= min_sleep) {
 		go_to_sleep (sleep_for > max_sleep ? max_sleep : sleep_for);
 	}
-	*/
 }
 
 void sleep (void)
 {
-	/*
 	go_to_sleep (max_sleep);
-	*/
 }
 
