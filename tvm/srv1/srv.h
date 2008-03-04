@@ -15,7 +15,6 @@
 
 /* Configuration */
 #include "bfin_config.h"
-#include "camera_const.h"
 #include "memory_map.h"
 
 /*{{{  Assembly Macros */
@@ -57,14 +56,13 @@ int jpeg_encode_frame (ECTX ectx, WORD args[]);
 /*}}}*/
 
 /*{{{  ppi_dma.c */
-extern WORDPTR camera_channel;
-
-void init_camera (void);
+void init_ppi_dma (void);
 void handle_int8 (void);
-void complete_camera_interrupt (ECTX ectx);
-int camera_in (ECTX ectx, WORD count, BYTEPTR pointer);
-int camera_out (ECTX ectx, WORD count, BYTEPTR pointer);
-int camera_mt_in (ECTX ectx, WORDPTR pointer);
+void complete_ppi_dma_interrupt (ECTX ectx);
+int ppi_dma_is_blocking (void);
+int ppi_dma_in (ECTX ectx, WORD count, BYTEPTR pointer);
+int ppi_dma_out (ECTX ectx, WORD count, BYTEPTR pointer);
+int ppi_dma_mt_in (ECTX ectx, WORDPTR pointer);
 /*}}}*/
 
 /*{{{  timer.c */

@@ -11,7 +11,8 @@ int main (void) {
 	init_gpio ();
 	init_timers ();
 	init_uart ();
-	init_camera ();
+	init_ppi_dma ();
+	init_twi ();
 
 	/* Wait for 7 seconds for MatchPort to boot */
 	delay_us (7000000);

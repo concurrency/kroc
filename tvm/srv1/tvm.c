@@ -36,13 +36,16 @@ static void clear_pending_interrupts (void)
 	ENABLE_INTERRUPTS (imask);
 
 	if (flags & TVM_INTR_PPI_DMA) {
-		complete_camera_interrupt (&firmware_ctx);
+		complete_ppi_dma_interrupt (&firmware_ctx);
 	}
 	if (flags & TVM_INTR_UART0_RX) {
 		complete_uart0_rx_interrupt (&firmware_ctx);
 	}
 	if (flags & TVM_INTR_UART0_TX) {
 		complete_uart0_tx_interrupt (&firmware_ctx);
+	}
+	if (flags & TVM_INTR_TWI) {
+		complete_twi_interrupt (&firmware_ctx);
 	}
 }
 /*}}}*/ 
@@ -58,9 +61,9 @@ static EXT_CHAN_ENTRY	ext_chans[] = {
 	},
 	{
 		.typehash	= 0,
-		.in		= camera_in,
-		.out		= camera_out,
-		.mt_in		= camera_mt_in,
+		.in		= ppi_dma_in,
+		.out		= ppi_dma_out,
+		.mt_in		= ppi_dma_mt_in,
 		.mt_out		= NULL
 	},
 	{
@@ -312,8 +315,10 @@ static int run_firmware (void)
 		} else if (ret == ECTX_EMPTY) {
 			if (uart0_is_blocking ()) {
 				return ret; /* OK - waiting for input */
-			} else if (camera_channel != (WORDPTR) NOT_PROCESS_P) {
+			} else if (ppi_dma_is_blocking ()) {
 				return ret; /* OK - waiting for imagery */
+			} else if (twi_is_blocking ()) {
+				return ret; /* OK - waiting for TWI transaction */
 			} else if (user_parent != (WORDPTR) NOT_PROCESS_P) {
 				if (user_ctx.state == ECTX_EMPTY && user_ctx.fptr == (WORDPTR) NOT_PROCESS_P) {
 					if (tvm_ectx_waiting_on (&user_ctx, user_memory, user_memory_len)) {
