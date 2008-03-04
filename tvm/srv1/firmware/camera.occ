@@ -33,6 +33,7 @@ PROC program.camera (CHAN BOOL twi.req!, TWI! twi, VAL INT w, h, VAL BYTE com8)
     -- Claim TWI and configure for OV9655 access
     twi.req ! TRUE
     twi[req] ! set.clock.div; 67; 33
+    twi[rsp] ? CASE ok
     twi[req] ! set.sccb; TRUE
     IF
       (w = 0) AND (h = 0)
@@ -195,7 +196,8 @@ PROC camera (CHAN BOOL twi.req!, TWI! twi, CAMERA? svr)
           SEQ
             config[mode] := PPI.DMA.STOP
             ppi.cfg ! config
-      
+    
+    -- Stop any active DMA
     IF
       config[mode] <> PPI.DMA.STOP
         SEQ
@@ -203,5 +205,9 @@ PROC camera (CHAN BOOL twi.req!, TWI! twi, CAMERA? svr)
           ppi.cfg ! config
       TRUE
         SKIP
+
+    -- Shutdown internal TWI
+    twi.req ! TRUE
+    twi[req] ! disconnected
 :
 

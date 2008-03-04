@@ -46,6 +46,10 @@ enum {
 	 TVM_INTR_UART0_TX)
 /*}}}*/
 
+/*{{{  debug.c */
+void print_hex (unsigned int val);
+/*}}}*/
+
 /*{{{  gpio.c */
 void init_gpio (void);
 /*}}}*/

@@ -2,7 +2,7 @@
 #INCLUDE "srv1.inc"
 #INCLUDE "twi_const.inc"
 
-PROC twi (CHAN BOOL req?, TWI? int, TWI? ext)
+PROC twi (CHAN BOOL req?, TWI? int, ext)
 
   INT FUNCTION map.result (VAL INT result)
     INT value:
@@ -43,18 +43,18 @@ PROC twi (CHAN BOOL req?, TWI? int, TWI? ext)
 
     INITIAL BOOL internal IS FALSE:
     INITIAL BOOL done     IS FALSE:
-    WHILE NOT done
+    WHILE (NOT done) OR internal
       PRI ALT
         req ? internal
           IF
             internal
               i.clock.div, i.flags, i.sccb := clock.div, flags, sccb
             TRUE
-              SKIP
+              internal := done
 
         internal & int[req] ? CASE
           disconnected
-            done := TRUE
+            done, internal := TRUE, FALSE
           
           get.clock.div
             int[rsp] ! clock.div; i.clock.div[0]; i.clock.div[1]
@@ -124,7 +124,7 @@ PROC twi (CHAN BOOL req?, TWI? int, TWI? ext)
 
         (NOT internal) & ext[req] ? CASE
           disconnected
-            done := TRUE
+            done, internal := TRUE, TRUE
 
           get.clock.div
             ext[rsp] ! clock.div; clock.div[0]; clock.div[1]

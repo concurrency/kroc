@@ -46,7 +46,7 @@ typedef struct _sys_state_t {
 
 static const unsigned char digits[] = "0123456789abcdef";
 
-static void print_hex (unsigned int val)
+void print_hex (unsigned int val)
 {
 	int i;
 
