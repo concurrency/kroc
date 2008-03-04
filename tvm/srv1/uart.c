@@ -187,16 +187,6 @@ void uart0_send_char (const unsigned char c)
 	*pUART0_THR = c;
 }
 
-void uart0_send_string (const char *str)
-{
-	const unsigned char *p = (unsigned char *) str;
-	unsigned char c;
-
-	while ((c = *p++) != '\0') {
-		uart0_send_char (c);
-	}
-}
-
 int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
 {
 	if (count == sizeof(WORD)) {

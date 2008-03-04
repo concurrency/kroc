@@ -19,7 +19,7 @@ struct _dma_desc_t {
 
 /* DMA related */
 #define			DMA_BUFFERS	2
-static dma_desc_t	dma[DMA_BUFFERS + 1];
+static dma_desc_t	TVM_WORD_ALIGN	dma[DMA_BUFFERS + 1];
 static volatile short	dma_current	= 0;
 static volatile	short	dma_ready	= 0;
 

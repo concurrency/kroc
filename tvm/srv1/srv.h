@@ -47,7 +47,9 @@ enum {
 /*}}}*/
 
 /*{{{  debug.c */
-void print_hex (unsigned int val);
+void debug_print_chr (const unsigned char c);
+void debug_print_hex (unsigned int val);
+void debug_print_str (const char *str);
 /*}}}*/
 
 /*{{{  gpio.c */
@@ -103,7 +105,6 @@ void complete_uart0_tx_interrupt (ECTX ectx);
 int uart0_is_blocking (void);
 int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer);
 void uart0_send_char (const unsigned char c);
-void uart0_send_string (const char *str);
 int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer);
 /*}}}*/
 

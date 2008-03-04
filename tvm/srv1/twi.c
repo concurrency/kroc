@@ -58,12 +58,19 @@ void init_twi (void)
 	SSYNC;
 }
 
+static void fill_xmt_fifo (void)
+{
+	do {
+		if ((*pTWI_FIFO_STAT & XMTSTAT) == XMT_FULL)
+			return;
+		*pTWI_XMT_DATA8		= read_byte (tx_buffer);
+		tx_buffer		= byteptr_plus (tx_buffer, 1);
+	} while (--tx_pending);
+}
+
 void handle_int13 (void)
 {
 	unsigned short stat = *pTWI_INT_STAT;
-
-	print_hex (stat);
-	uart0_send_char ('\n');
 	
 	if (stat & MERR) {
 		*pTWI_INT_MASK	= 0;
@@ -78,7 +85,6 @@ void handle_int13 (void)
 				ctl |= tx_pending << 6;
 
 				*pTWI_MASTER_CTL= ctl;
-				*pTWI_INT_MASK	= XMTSERV | MERR | MCOMP;
 				state		= STATE_TX;
 			} else {
 				*pTWI_INT_MASK	= 0;
@@ -91,6 +97,7 @@ void handle_int13 (void)
 			rx_buffer	= byteptr_plus (rx_buffer, 1);
 			if (!(--rx_pending) && tx_pending) {
 				*pTWI_MASTER_CTL = (*pTWI_MASTER_CTL | RSTART) & (~MDIR);
+				fill_xmt_fifo ();
 			}
 			*pTWI_INT_STAT	= RCVSERV;
 		}
@@ -103,7 +110,6 @@ void handle_int13 (void)
 				ctl |= MDIR | (rx_pending << 6);
 
 				*pTWI_MASTER_CTL= ctl;
-				*pTWI_INT_MASK	= RCVSERV | MERR | MCOMP;
 				state		= STATE_RX;
 			} else {
 				*pTWI_INT_MASK	= 0;
@@ -111,10 +117,8 @@ void handle_int13 (void)
 			}
 			*pTWI_INT_STAT	= MCOMP;
 		} else if (stat & XMTSERV) {
-			BYTE b		= read_byte (tx_buffer);
-			*pTWI_XMT_DATA8	= b;
-			tx_buffer	= byteptr_plus (tx_buffer, 1);
-			if (!(--tx_pending) && rx_pending) {
+			fill_xmt_fifo ();
+			if (!tx_pending && rx_pending) {
 				*pTWI_MASTER_CTL |= (RSTART | MDIR);
 			}
 			*pTWI_INT_STAT	= XMTSERV;
@@ -165,25 +169,32 @@ static void initiate_transfer (void)
 		*pTWI_CONTROL   = ctl | SCCB;
 	}	
 
-	/* Clear flags */
+	/* Clear flags and FIFO */
 	*pTWI_MASTER_STAT	= BUFWRERR | BUFRDERR | DNAK | ANAK | LOSTARB;
 	*pTWI_INT_STAT		= RCVSERV | XMTSERV | MERR | MCOMP;
+	*pTWI_FIFO_CTL		= RCVFLUSH | XMTFLUSH;
+	SSYNC;
+
+	/* Enable interrupts and FIFO */
+	*pTWI_INT_MASK		= RCVSERV | XMTSERV | MERR | MCOMP;
+	*pTWI_FIFO_CTL		= 0;
 
 	/* Setup clock and address */
 	*pTWI_CLKDIV		= clock_div;
 	*pTWI_MASTER_ADDR	= (flags & TWI_ADDRESS);
+	SSYNC;
 
-	/* Build master setup and enable interrupts */
+	/* Build master setup */
 	ctl = MEN;
 
 	if (flags & TWI_RECV) {
 		ctl		|= MDIR | (rx_pending << 6);
-		*pTWI_INT_MASK	= RCVSERV | MERR | MCOMP;
 		state		= STATE_RX;
 	} else {
 		ctl 		|= (tx_pending << 6);
-		*pTWI_INT_MASK	= XMTSERV | MERR | MCOMP;
 		state		= STATE_TX;
+		/* Fill FIFO */
+		fill_xmt_fifo ();
 	}
 
 	/* Commit configuration; interrupts drive transfer */
@@ -227,8 +238,8 @@ int twi_mt_in (ECTX ectx, WORDPTR pointer)
 	switch (state) {
 		case STATE_RX_BUF:
 			write_word (pointer, (WORD) rx_mobile);
-			tx_buffer	= (BYTEPTR) NULL_P;
-			tx_mobile	= (WORDPTR) NULL_P;
+			rx_buffer	= (BYTEPTR) NULL_P;
+			rx_mobile	= (WORDPTR) NULL_P;
 			state		= STATE_TX_BUF;
 			return ECTX_CONTINUE;
 		case STATE_TX_BUF:

@@ -18,8 +18,8 @@ int main (void) {
 	delay_us (7000000);
 
 	/* Output boot message */
-	uart0_send_string (version_string);
-	uart0_send_char ('\n');
+	debug_print_str (version_string);
+	debug_print_chr ('\n');
 
 	/* Run the TVM */
 	return run_tvm ();;

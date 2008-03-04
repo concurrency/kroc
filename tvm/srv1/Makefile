@@ -52,7 +52,6 @@ COBJS	+= twi.o
 COBJS	+= uart.o
 COBJS	+= version.o
 COBJS	+= support/jpeg.o
-COBJS	+= support/i2c.o
 
 GENHDRS += include/bfin_config.inc
 GENHDRS += include/memory_map.inc

@@ -350,14 +350,18 @@ static int run_firmware (void)
 
 	/* Being here means something unexpected happened... */
 	
-	uart0_send_string ("## Firmware failed; state = ");
-	uart0_send_char (ret);
-	uart0_send_char ('\n');
+	debug_print_str ("## Firmware failed; state = ");
+	debug_print_chr (ret);
+	debug_print_str (", eflags = ");
+	debug_print_hex (firmware_ctx.eflags);
+	debug_print_chr ('\n');
 
 	if (user_parent != (WORDPTR) NOT_PROCESS_P) {
-		uart0_send_string ("## User state = ");
-		uart0_send_char (user_ctx.state);
-		uart0_send_char ('\n');
+		debug_print_str ("## User state = ");
+		debug_print_chr (user_ctx.state);
+		debug_print_str (", eflags = ");
+		debug_print_hex (user_ctx.eflags);
+		debug_print_chr ('\n');
 	}
 
 	/* Go into an idle loop */

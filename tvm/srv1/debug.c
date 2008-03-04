@@ -46,14 +46,29 @@ typedef struct _sys_state_t {
 
 static const unsigned char digits[] = "0123456789abcdef";
 
-void print_hex (unsigned int val)
+void debug_print_chr (const unsigned char c)
+{
+	uart0_send_char (c);
+}
+
+void debug_print_hex (const unsigned int val)
 {
 	int i;
 
-	uart0_send_string ("0x");
+	debug_print_str ("0x");
 	for (i = 7; i >= 0; --i) {
 		unsigned int n = (val >> (i << 2)) & 0xf;
-		uart0_send_char (digits[n]);
+		debug_print_chr (digits[n]);
+	}
+}
+
+void debug_print_str (const char *str)
+{
+	const unsigned char *p = (unsigned char *) str;
+	unsigned char c;
+
+	while ((c = *p++) != '\0') {
+		uart0_send_char (c);
 	}
 }
 
@@ -64,37 +79,37 @@ static void print_regset (const char *name, int count, unsigned int *p)
 	for (j = 0; j < count; j += 4) {
 		for (i = j; i < (j + 4) && i < count; ++i) {
 			if (i > j)
-				uart0_send_string (", ");
-			uart0_send_string (name);
-			uart0_send_char ('[');
-			uart0_send_char (digits[i]);
-			uart0_send_string ("] = ");
-			print_hex (p[count - (i + 1)]);
+				debug_print_str (", ");
+			debug_print_str (name);
+			debug_print_chr ('[');
+			debug_print_chr (digits[i]);
+			debug_print_str ("] = ");
+			debug_print_hex (p[count - (i + 1)]);
 		}
-		uart0_send_char ('\n');
+		debug_print_chr ('\n');
 	}
 }
 
 static void print_state (sys_state_t *sys)
 {
-	uart0_send_string ("syscfg  = ");
-	print_hex (sys->syscfg);
-	uart0_send_string ("\nsysstat = ");
-	print_hex (sys->sysstat);
-	uart0_send_string ("\n\n");
+	debug_print_str ("syscfg  = ");
+	debug_print_hex (sys->syscfg);
+	debug_print_str ("\nsysstat = ");
+	debug_print_hex (sys->sysstat);
+	debug_print_str ("\n\n");
 
-	uart0_send_string ("retx = ");
-	print_hex (sys->retx);
-	uart0_send_string (", reti = ");
-	print_hex (sys->reti);
-	uart0_send_string (", rets = ");
-	print_hex (sys->rets);
-	uart0_send_string ("\n\n");
+	debug_print_str ("retx = ");
+	debug_print_hex (sys->retx);
+	debug_print_str (", reti = ");
+	debug_print_hex (sys->reti);
+	debug_print_str (", rets = ");
+	debug_print_hex (sys->rets);
+	debug_print_str ("\n\n");
 
 	print_regset ("r", 8, sys->r);
-	uart0_send_char ('\n');
+	debug_print_chr ('\n');
 	print_regset ("p", 6, sys->p);
-	uart0_send_char ('\n');
+	debug_print_chr ('\n');
 
 	print_regset ("i", 4, sys->i);
 	print_regset ("m", 4, sys->m);
@@ -115,7 +130,7 @@ void handle_exception (sys_state_t *sys)
 	const char *text;
 	int cause = sys->sysstat & 0x3f;
 
-	uart0_send_string ("## CPU Exception\n");
+	debug_print_str ("## CPU Exception\n");
 
 	switch (cause) {
 		case 0x10: text = "single step"; break;
@@ -142,9 +157,9 @@ void handle_exception (sys_state_t *sys)
 			break;
 	}
 
-	uart0_send_string ("\nException: ");
-	uart0_send_string (text);
-	uart0_send_string ("\n\n");
+	debug_print_str ("\nException: ");
+	debug_print_str (text);
+	debug_print_str ("\n\n");
 
 	print_state (sys);
 	hang ();
@@ -155,7 +170,7 @@ void handle_hwerror (sys_state_t *sys)
 	const char *text;
 	int cause = (sys->sysstat >> 14) & 0x1f;
 
-	uart0_send_string ("## Hardware Error\n");
+	debug_print_str ("## Hardware Error\n");
 
 	switch (cause) {
 		case 0x02: text = "system MMR error"; break;
@@ -167,9 +182,9 @@ void handle_hwerror (sys_state_t *sys)
 			break;
 	}
 
-	uart0_send_string ("\nError: ");
-	uart0_send_string (text);
-	uart0_send_string ("\n\n");
+	debug_print_str ("\nError: ");
+	debug_print_str (text);
+	debug_print_str ("\n\n");
 
 	print_state (sys);
 	hang ();
@@ -177,12 +192,12 @@ void handle_hwerror (sys_state_t *sys)
 
 void unhandled_interrupt (sys_state_t *sys)
 {
-	uart0_send_string ("## Unhandled Interrupt\n");
+	debug_print_str ("## Unhandled Interrupt\n");
 
-	uart0_send_string ("\nInterrupt: ");
-	uart0_send_char (digits[sys->r[7] / 10]);
-	uart0_send_char (digits[sys->r[7] % 10]);
-	uart0_send_string ("\n\n");
+	debug_print_str ("\nInterrupt: ");
+	debug_print_chr (digits[sys->r[7] / 10]);
+	debug_print_chr (digits[sys->r[7] % 10]);
+	debug_print_str ("\n\n");
 	
 	print_state (sys);
 	hang ();
