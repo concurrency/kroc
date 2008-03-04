@@ -113,7 +113,7 @@ PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN
 
     CHAN BOOL shutdown, twi.req:
     PAR
-      camera (camera.svr?)
+      camera (twi.req!, twi.int.cli!, camera.svr?)
       console (console.svr?, in?, shutdown?, killed)
       lasers (laser.svr?)
       motors (motor.svr?)

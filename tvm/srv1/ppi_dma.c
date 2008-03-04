@@ -6,9 +6,7 @@
 
 #include "srv.h"
 
-#include "camera_const.h"
-#include <i2c.h>
-#include <ov9655.h>
+#include "ppi_dma_const.h"
 
 typedef struct _dma_desc_t dma_desc_t;
 struct _dma_desc_t {
@@ -19,68 +17,26 @@ struct _dma_desc_t {
 	WORDPTR		mobile;
 } TVM_PACK;
 
-typedef const struct _frame_desc_t frame_desc_t;
-struct _frame_desc_t {
-	UWORD		bytes;
-	UWORD		pixels;
-	unsigned short	width;
-	unsigned short	height;
-	BYTE		*cfg;
-	UWORD		cfg_len;
-} TVM_PACK;
-
-static frame_desc_t	qqvga_frame = {
-	.bytes		= 160 * 128 * 2,
-	.pixels		= 160 * 128,
-	.width		= 160,
-	.height		= 128,
-	.cfg		= ov9655_qqvga,
-	.cfg_len	= sizeof(ov9655_qqvga)
-};
-static frame_desc_t	qvga_frame = {
-	.bytes		= 320 * 256 * 2,
-	.pixels		= 320 * 256,
-	.width		= 320,
-	.height		= 256,
-	.cfg		= ov9655_qvga,
-	.cfg_len	= sizeof(ov9655_qvga)
-};
-static frame_desc_t	vga_frame = {
-	.bytes		= 640 * 512 * 2,
-	.pixels		= 640 * 512,
-	.width		= 640,
-	.height		= 512,
-	.cfg		= ov9655_vga,
-	.cfg_len	= sizeof(ov9655_vga)
-};
-static frame_desc_t	sxga_frame = {
-	.bytes		= 1280 * 1024 * 2,
-	.pixels		= 1280 * 1024,
-	.width		= 1280,
-	.height		= 1024,
-	.cfg		= ov9655_sxga,
-	.cfg_len	= sizeof(ov9655_sxga)
-};
-
 /* DMA related */
-#define			CAMERA_BUFFERS		2
-static dma_desc_t	camera_dma[CAMERA_BUFFERS + 1];
-static volatile short	camera_current		= 0;
-static volatile	short	camera_ready		= 0;
-static volatile short	camera_intr		= 0;
+#define			DMA_BUFFERS	2
+static dma_desc_t	dma[DMA_BUFFERS + 1];
+static volatile short	dma_current	= 0;
+static volatile	short	dma_ready	= 0;
 
 /* State related */
-static unsigned short	camera_initialised	= 0;
-static volatile short	camera_error		= 0;
-static unsigned short	camera_running		= 0;
-static frame_desc_t	*frame_setup		= NULL;
+static volatile short	dma_error	= 0;
+static unsigned short	dma_running	= 0;
+static unsigned short	frame_width	= 0;
+static unsigned short	frame_height	= 0;
+static unsigned short	frame_bpp	= 0;
+static unsigned int	frame_length	= 0;
 
 /* Channel related */
-WORDPTR			camera_channel		= (WORDPTR) NOT_PROCESS_P;
-static BYTE *volatile 	camera_buffer		= NULL;
-static WORDPTR		camera_mobile		= (WORDPTR) NULL_P;
+WORDPTR			channel		= (WORDPTR) NOT_PROCESS_P;
+static BYTE *volatile 	dma_buffer	= NULL;
+static WORDPTR		dma_mobile	= (WORDPTR) NULL_P;
 
-void init_camera (void)
+void init_ppi_dma (void)
 {
 	int i;
 
@@ -95,19 +51,20 @@ void init_camera (void)
 	*pPPI_DELAY = 0;
 
 	/* Initialise DMA descriptors */
-	for (i = 0; i < CAMERA_BUFFERS; ++i) {
-		camera_dma[i].next 	= &(camera_dma[(i + 1) & (CAMERA_BUFFERS - 1)]);
-		camera_dma[i].buffer	= (void *) INVALID_ADDRESS;
-		camera_dma[i].config	= 
+	for (i = 0; i < DMA_BUFFERS; ++i) {
+		dma[i].next 	= &(dma[(i + 1) & (DMA_BUFFERS - 1)]);
+		dma[i].buffer	= (void *) INVALID_ADDRESS;
+		dma[i].config	= 
 			FLOW_LARGE | NDSIZE_5 | WDSIZE_16 | DMA2D | WNR | DMAEN | DI_EN;
-		camera_dma[i].mobile	= (WORDPTR) NULL_P;
+		dma[i].mobile	= (WORDPTR) NULL_P;
 	}
 
-	i = CAMERA_BUFFERS;
-	camera_dma[i].next	= (dma_desc_t *) INVALID_ADDRESS;
-	camera_dma[i].buffer	= (void *) INVALID_ADDRESS;
-	camera_dma[i].config	= WDSIZE_16 | DMA2D | WNR | DMAEN | DI_EN;
-	camera_dma[i].mobile	= (WORDPTR) NULL_P;
+	/* One shot descriptor */
+	i = DMA_BUFFERS;
+	dma[i].next	= (dma_desc_t *) INVALID_ADDRESS;
+	dma[i].buffer	= (void *) INVALID_ADDRESS;
+	dma[i].config	= WDSIZE_16 | DMA2D | WNR | DMAEN | DI_EN;
+	dma[i].mobile	= (WORDPTR) NULL_P;
 
 	/* Flush */
 	SSYNC;
@@ -123,7 +80,7 @@ void init_camera (void)
 
 void flush_cache (void *data, unsigned int bytes);
 
-static void allocate_camera_buffer (ECTX ectx, UWORD bytes, BYTE **buffer, WORDPTR *mobile)
+static void allocate_buffer (ECTX ectx, UWORD bytes, BYTE **buffer, WORDPTR *mobile)
 {
 	WORDPTR ma = (WORDPTR) tvm_mt_alloc (
 		ectx, 
@@ -144,31 +101,31 @@ static void allocate_camera_buffer (ECTX ectx, UWORD bytes, BYTE **buffer, WORDP
 	*mobile = ma;
 }
 
-static int camera_start (ECTX ectx, WORD stream)
+static int dma_start (ECTX ectx, WORD stream)
 {
 	int i, bufs;
 
-	camera_current	= 0;
-	camera_ready	= 0;
-	camera_error	= 0;
+	dma_current	= 0;
+	dma_ready	= 0;
+	dma_error	= 0;
 
 	/* Allocate buffers */
-	bufs 	= stream ? CAMERA_BUFFERS : 1;
-	i 	= stream ? 0 : CAMERA_BUFFERS;
+	bufs 	= stream ? DMA_BUFFERS : 1;
+	i 	= stream ? 0 : DMA_BUFFERS;
 	while (bufs--) {
-		allocate_camera_buffer (
-			ectx, frame_setup->bytes, 
-			&(camera_dma[i].buffer), 
-			&(camera_dma[i].mobile)
+		allocate_buffer (
+			ectx, frame_length, 
+			&(dma[i].buffer), 
+			&(dma[i].mobile)
 		);
 
-		if (camera_dma[i].buffer == NULL) {
+		if (dma[i].buffer == NULL) {
 			/* Allocation failed; unwind and return */
 			int j;
 
 			for (j = 0; stream && j < i; ++j) {
-				camera_dma[j].buffer = (void *) INVALID_ADDRESS;
-				tvm_mt_release (ectx, camera_dma[j].mobile);
+				dma[j].buffer = (void *) INVALID_ADDRESS;
+				tvm_mt_release (ectx, dma[j].mobile);
 			}
 
 			ectx->eflags &= ~EFLAG_MT;
@@ -180,23 +137,23 @@ static int camera_start (ECTX ectx, WORD stream)
 	}
 
 	/* Toggle running state */
-	camera_running = stream;
+	dma_running = stream;
 
 	/* Setup PPI */
-	*pPPI_COUNT = (frame_setup->width * 2) - 1; /* YUYV = 2 bytes per pixel */
-	*pPPI_FRAME = frame_setup->height;
+	*pPPI_COUNT = (frame_width * frame_bpp) - 1;
+	*pPPI_FRAME = frame_height;
 
 	/* Setup DMA */
-	*pDMA0_X_COUNT	= frame_setup->width;
-	*pDMA0_X_MODIFY	= 2;
+	*pDMA0_X_COUNT	= frame_width;
+	*pDMA0_X_MODIFY	= frame_bpp;
 
-	*pDMA0_Y_COUNT	= frame_setup->height;
-	*pDMA0_Y_MODIFY	= 2;
+	*pDMA0_Y_COUNT	= frame_height;
+	*pDMA0_Y_MODIFY	= frame_bpp;
 
 	if (stream) {
-		*pDMA0_NEXT_DESC_PTR = &(camera_dma[0]);
+		*pDMA0_NEXT_DESC_PTR = &(dma[0]);
 	} else {
-		*pDMA0_NEXT_DESC_PTR = &(camera_dma[CAMERA_BUFFERS]);
+		*pDMA0_NEXT_DESC_PTR = &(dma[DMA_BUFFERS]);
 	}
 
 	*pDMA0_CONFIG = FLOW_LARGE | NDSIZE_5 | WDSIZE_16 | DMA2D | WNR;
@@ -215,7 +172,7 @@ static int camera_start (ECTX ectx, WORD stream)
 	return 0;
 }
 
-static void camera_low_level_stop (void)
+static void low_level_stop (void)
 {
 	/* Disable PPI; stop data-flow */
 	*pPPI_CONTROL &= ~PORT_EN;
@@ -226,11 +183,11 @@ static void camera_low_level_stop (void)
 	SSYNC;
 }
 
-static void camera_stop (ECTX ectx)
+static void dma_stop (ECTX ectx)
 {
 	int i;
 
-	camera_low_level_stop ();
+	low_level_stop ();
 
 	/* Wait for DMA to stop */
 	while (*pDMA0_IRQ_STATUS & DMA_RUN)
@@ -241,12 +198,12 @@ static void camera_stop (ECTX ectx)
 		NOP;
 	
 	/* Release buffers */
-	for (i = 0; i < CAMERA_BUFFERS; ++i) {
-		camera_dma[i].buffer = (void *) INVALID_ADDRESS;
-		tvm_mt_release (ectx, camera_dma[i].mobile);
+	for (i = 0; i < DMA_BUFFERS; ++i) {
+		dma[i].buffer = (void *) INVALID_ADDRESS;
+		tvm_mt_release (ectx, dma[i].mobile);
 	}
 
-	camera_running = 0;
+	dma_running = 0;
 }
 
 void handle_int8 (void)
@@ -255,29 +212,29 @@ void handle_int8 (void)
 	int wake = 0;
 
 	if (*pDMA0_IRQ_STATUS & DMA_DONE) {
-		if (camera_running) {
+		if (dma_running) {
 			/* Streaming mode */
-			short current	= camera_current;
-			BYTE *buffer	= camera_buffer;
+			short current	= current;
+			BYTE *buffer	= dma_buffer;
 
-			camera_current = (current + 1) & (CAMERA_BUFFERS - 1);
+			current = (current + 1) & (DMA_BUFFERS - 1);
 			
 			if (buffer != NULL) {
 				/* Swap buffers */
-				WORDPTR r_mobile		= camera_dma[current].mobile;
-				camera_dma[current].buffer	= buffer;
-				camera_dma[current].mobile	= camera_mobile;
-				camera_mobile			= r_mobile;
-				wake				= 1;
-			} else if (camera_ready < (CAMERA_BUFFERS - 1)) {
-				camera_ready++;
+				WORDPTR r_mobile	= dma[current].mobile;
+				dma[current].buffer	= buffer;
+				dma[current].mobile	= dma_mobile;
+				dma_mobile		= r_mobile;
+				wake			= 1;
+			} else if (dma_ready < (DMA_BUFFERS - 1)) {
+				dma_ready++;
 			}
 		} else {
 			/* One-shot mode */
-			camera_low_level_stop ();
+			low_level_stop ();
 			
-			if (camera_channel != (WORDPTR) NOT_PROCESS_P) {
-				camera_mobile = camera_dma[CAMERA_BUFFERS].mobile;
+			if (channel != (WORDPTR) NOT_PROCESS_P) {
+				dma_mobile = dma[DMA_BUFFERS].mobile;
 				wake = 1;
 			}
 		}
@@ -286,10 +243,10 @@ void handle_int8 (void)
 		*pDMA0_IRQ_STATUS = DMA_DONE;
 	} else if (*pPPI_STATUS & ppi_errors) {
 		/* Save error(s) */
-		camera_error |= *pPPI_STATUS;
+		dma_error |= *pPPI_STATUS;
 
 		/* Stop PPI and DMA engine */
-		camera_low_level_stop ();
+		low_level_stop ();
 
 		/* Clear error(s) */
 		*pPPI_STATUS = ppi_errors;
@@ -299,151 +256,117 @@ void handle_int8 (void)
 	}
 
 	if (wake) {
-		camera_buffer 		= NULL;
-		camera_intr		= 1;
+		dma_buffer = NULL;
 		raise_tvm_interrupt (TVM_INTR_PPI_DMA);
 	}	
 }
 
-void complete_camera_interrupt (ECTX ectx)
+void complete_ppi_dma_interrupt (ECTX ectx)
 {
-	WORDPTR wptr;
+	WORDPTR wptr	= channel;
+	WORDPTR ma	= dma_mobile;
 
-	if (camera_intr && ((wptr = camera_channel) != (WORDPTR) NOT_PROCESS_P)) {
-		WORDPTR ma = camera_mobile;
-
-		if (!camera_error) {
-			WORDPTR pointer = (WORDPTR) WORKSPACE_GET (wptr, WS_POINTER);
-			write_word (pointer, (WORD) ma);
-		} else if (ma != (WORDPTR) NULL_P) {
-			tvm_mt_release (ectx, (void *) ma);
-		}
-
-		camera_channel	= (WORDPTR) NOT_PROCESS_P;
-		camera_mobile	= (WORDPTR) NULL_P;
-		BARRIER;
-		camera_intr	= 0;
-
-		ectx->add_to_queue (ectx, wptr);
+	if (!dma_error) {
+		WORDPTR pointer = (WORDPTR) WORKSPACE_GET (wptr, WS_POINTER);
+		write_word (pointer, (WORD) ma);
+	} else if (ma != (WORDPTR) NULL_P) {
+		tvm_mt_release (ectx, (void *) ma);
 	}
+
+	channel		= (WORDPTR) NOT_PROCESS_P;
+	dma_mobile	= (WORDPTR) NULL_P;
+
+	ectx->add_to_queue (ectx, wptr);
 }
 
-int camera_in (ECTX ectx, WORD count, BYTEPTR pointer)
+int ppi_dma_is_blocking (void)
+{
+	/* Return non-zero if channel is not NOT_PROCESS_P. */
+	return ((int) channel) ^ NOT_PROCESS_P;
+}
+
+int ppi_dma_in (ECTX ectx, WORD count, BYTEPTR pointer)
 {
 	if (count != sizeof(WORD)) {
 		return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 	}
 
-	write_word ((WORDPTR) pointer, camera_error);
+	write_word ((WORDPTR) pointer, dma_error);
 
 	return ECTX_CONTINUE;
 }
 
-int camera_out (ECTX ectx, WORD count, BYTEPTR pointer)
+int ppi_dma_out (ECTX ectx, WORD count, BYTEPTR pointer)
 {
-	WORD config, mode;
+	WORDPTR config = (WORDPTR) pointer;
+	WORD	mode;
 	
-	if (count != sizeof(WORD)) {
+	/* mode, width, height, bpp */
+	if (count != (sizeof(WORD) * 4)) {
 		return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 	}
-
-	config 	= read_word ((WORDPTR) pointer);
-	mode	= config & CAMERA_MODE_MASK;
-
-	if (camera_running) {
-		camera_stop (ectx);
+	
+	if (dma_running) {
+		dma_stop (ectx);
 	}
 
-	switch (mode) {
-		case CAMERA_160_128:
-			frame_setup = &qqvga_frame;
-			break;
-		case CAMERA_320_256:
-			frame_setup = &qvga_frame;
-			break;
-		case CAMERA_640_512:
-			frame_setup = &vga_frame;
-			break;
-		case CAMERA_1280_1024:
-			frame_setup = &sxga_frame;
-			break;
-		default:
-			frame_setup = NULL;
-			break;
+	mode = read_word (wordptr_plus (config, 0));
+	
+	if (mode != PPI_DMA_STOP) {
+		frame_width 	= read_word (wordptr_plus (config, 1));
+		frame_height 	= read_word (wordptr_plus (config, 2));
+		frame_bpp 	= read_word (wordptr_plus (config, 3));
+		frame_length	= frame_width * frame_height * frame_bpp;
+	} else {
+		frame_length	= 0;
 	}
-
-	if ((frame_setup != NULL && !camera_initialised) || mode == CAMERA_INIT) {
-		i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >> 1, 1);
-		delay_us (500000);
-		i2cwrite (0x30, ov9655_setup, sizeof(ov9655_setup) >> 1, 1);
-		camera_initialised++;
-	}
-
-	if (frame_setup != NULL) {
-		if (config & CAMERA_AUTO_ADJUST) {
-			const unsigned char auto_bits_on[] = { 0x13, 0xcf };
-			/* COM8 = 
-			 * 	FAST AGC/AEC, 
-			 * 	AEC unlimited step, 
-			 * 	AEC time <1 line, 
-			 * 	AGC, AWB, AEC
-			 */
-			i2cwrite (0x30, (unsigned char *) auto_bits_on, 1, 1);
-		} else {
-			const unsigned char auto_bits_off[] = { 0x13, 0x02 };
-			/* COM8 = AWB */
-			i2cwrite (0x30, (unsigned char *) auto_bits_off, 1, 1);
-		}
-
-		i2cwrite (0x30, frame_setup->cfg, frame_setup->cfg_len >> 1, 1);
-		
-		if (config & CAMERA_STREAMING) {
-			int ret = camera_start (ectx, 1);
-			if (ret) {
-				camera_error = ret;
-			}
+	
+	if (mode == PPI_DMA_STREAM) {
+		int ret = dma_start (ectx, 1);
+		if (ret) {
+			dma_error = ret;
 		}
 	}
 				
 	return ECTX_CONTINUE;
 }
 
-int camera_mt_in (ECTX ectx, WORDPTR pointer)
+int ppi_dma_mt_in (ECTX ectx, WORDPTR pointer)
 {
 	WORDPTR mobile = (WORDPTR) NULL_P;
 	short ready = 0;
 	short error;
 	BYTE *buffer;
 
-	if ((error = camera_error)) {
+	if ((error = dma_error)) {
 		/* Bad... */
-	} else if (camera_running) {
-		allocate_camera_buffer (ectx, frame_setup->bytes, &buffer, &mobile);
+	} else if (dma_running) {
+		allocate_buffer (ectx, frame_length, &buffer, &mobile);
 		if (buffer == NULL) {
 			ectx->eflags &= ~EFLAG_MT;
 			error = 1;
 		}
-	} else if (frame_setup != NULL) {
-		camera_channel = ectx->wptr;
+	} else if (frame_length != 0) {
+		channel = ectx->wptr;
 		BARRIER;
 
-		if ((error = camera_start (ectx, 0))) {
-			camera_channel	= (WORDPTR) NOT_PROCESS_P;
-			camera_error	= error;
+		if ((error = dma_start (ectx, 0))) {
+			channel		= (WORDPTR) NOT_PROCESS_P;
+			dma_error	= error;
 		}
 	} else {
 		return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 	}
 
-	if (!error && camera_running) {
+	if (!error && dma_running) {
 		unsigned short imask;
 
 		DISABLE_INTERRUPTS (imask);
 		
 		/* Intentionally test error again with interrupts disabled */
-		if ((error = camera_error)) {
+		if ((error = dma_error)) {
 			/* Bad... */
-		} else if ((ready = camera_ready)) {
+		} else if ((ready = dma_ready)) {
 			BYTE *curr_buf 	= (BYTE *) *pDMA0_START_ADDR;
 			BYTE *curr_pos	= (BYTE *) *pDMA0_CURR_ADDR;
 
@@ -452,12 +375,12 @@ int camera_mt_in (ECTX ectx, WORDPTR pointer)
 			 * Last 2.5KiB is 12.5% of a 160x128 frame,
 			 * or the last line of a 1280x1024 frame.
 			 */
-			curr_buf += frame_setup->bytes - 2560;
+			curr_buf += frame_length - 2560;
 			if (curr_pos >= curr_buf) {
-				camera_ready = ready = 0;
+				dma_ready = ready = 0;
 			} else {
-				unsigned short n = (camera_current - ready) & (CAMERA_BUFFERS - 1);
-				dma_desc_t *db = &(camera_dma[n]);
+				unsigned short n = (dma_current - ready) & (DMA_BUFFERS - 1);
+				dma_desc_t *db = &(dma[n]);
 				WORDPTR r_mobile;
 
 				/* Be defensive; never touch the descriptors while
@@ -476,14 +399,14 @@ int camera_mt_in (ECTX ectx, WORDPTR pointer)
 
 				SSYNC;
 
-				camera_ready = ready - 1;
+				dma_ready = ready - 1;
 			}
 		}
 		
 		if (!error && !ready) {
-			camera_channel 	= ectx->wptr;
-			camera_buffer	= buffer;
-			camera_mobile	= mobile;
+			channel 	= ectx->wptr;
+			dma_buffer	= buffer;
+			dma_mobile	= mobile;
 		}
 
 		ENABLE_INTERRUPTS (imask);

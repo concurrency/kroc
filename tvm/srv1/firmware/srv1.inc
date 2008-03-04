@@ -28,6 +28,15 @@ DATA TYPE SRV.HEADER
     INT inst.size:
 :
 --}}}
+--{{{  UYVY
+DATA TYPE UYVY
+  PACKED RECORD
+    BYTE u:
+    BYTE y.0:
+    BYTE v:
+    BYTE y.1:
+:
+--}}}
 --}}}
 
 --{{{  Channel Types
@@ -90,7 +99,6 @@ PROTOCOL P.CONSOLE.RSP
     bulk.complete = 1; INT; MOBILE []BYTE -- bytes sent, data
     error         = 2; INT
 :
---}}}
 --}}}
 CHAN TYPE CONSOLE
   MOBILE RECORD
