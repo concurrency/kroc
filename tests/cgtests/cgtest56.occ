@@ -483,6 +483,7 @@ PROC cgtest56 (CHAN OF BYTE keyb, scr, err)
         formals()
         --}}}
         --{{{  valofs
+        #IF NOT DEFINED (COMPILER.TOCK)
         PROC user.valofs()
           MYINT x, y :
           SEQ
@@ -521,6 +522,7 @@ PROC cgtest56 (CHAN OF BYTE keyb, scr, err)
             check.MYINT(x, 155(MYINT), "VALOF03")
         :
         user.valofs()
+        #ENDIF
         --}}}
     :
     user.syntax()
