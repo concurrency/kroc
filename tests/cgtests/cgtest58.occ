@@ -463,8 +463,10 @@ PROC cgtest58 (CHAN OF BYTE keyb, scr, err)
           INT x, y :
       :
       record r1, r2 :
+      #IF NOT DEFINED (COMPILER.TOCK)
       PLACE r1 IN VECSPACE :
       PLACE r2 IN WORKSPACE :
+      #ENDIF
       SEQ
         title("Place in vectorspace")
         r1[x], r1[y] := id(77), id(44)
@@ -694,7 +696,9 @@ PROC cgtest58 (CHAN OF BYTE keyb, scr, err)
       --{{{  f1
       [n]INT FUNCTION f1(VAL [n]INT y, VAL INT x)
         [n]INT res :
+        #IF NOT DEFINED (COMPILER.TOCK)
         PLACE res IN WORKSPACE :
+        #ENDIF
         VALOF
           SEQ
             res := y
@@ -712,7 +716,9 @@ PROC cgtest58 (CHAN OF BYTE keyb, scr, err)
       --{{{  f2
       [n]INT FUNCTION f2(VAL [n]INT y, VAL INT x)
         [n]INT res :
+        #IF NOT DEFINED (COMPILER.TOCK)
         PLACE res IN VECSPACE :
+        #ENDIF
         VALOF
           SEQ
             res := y
@@ -730,7 +736,9 @@ PROC cgtest58 (CHAN OF BYTE keyb, scr, err)
       --{{{  f3
       [n]INT FUNCTION f3(VAL [n]INT y, VAL INT x)
         [n]INT res :
+        #IF NOT DEFINED (COMPILER.TOCK)
         PLACE res IN VECSPACE :
+        #ENDIF
         VALOF
           SEQ
             res := y
@@ -778,7 +786,9 @@ PROC cgtest58 (CHAN OF BYTE keyb, scr, err)
         VALOF
           INT Carry, Dv3 :
           [5] INT W :
+          #IF NOT DEFINED (COMPILER.TOCK)
           PLACE W IN WORKSPACE :
+          #ENDIF
           SEQ
             IF
               Yfrac[3] = Dv3.in
@@ -886,7 +896,9 @@ PROC cgtest58 (CHAN OF BYTE keyb, scr, err)
         VALOF
           INT Carry, Dv3 :
           [5] INT W :
+          #IF NOT DEFINED (COMPILER.TOCK)
           PLACE W IN WORKSPACE :
+          #ENDIF
           SEQ
             IF
               Yfrac[3] = Dv.in[3]
@@ -988,11 +1000,15 @@ PROC cgtest58 (CHAN OF BYTE keyb, scr, err)
       
         INT Q, Guard :
         [3]INT Dv :
+        #IF NOT DEFINED (COMPILER.TOCK)
         PLACE Dv IN WORKSPACE :
+        #ENDIF
         VALOF
           INT Carry, Dv3 :
           [5] INT W :
+          #IF NOT DEFINED (COMPILER.TOCK)
           PLACE W IN WORKSPACE :
+          #ENDIF
           SEQ
             IF
               Yfrac[3] = Dv.in[3]
@@ -1042,7 +1058,9 @@ PROC cgtest58 (CHAN OF BYTE keyb, scr, err)
       
         INT Q, Guard :
         [3]INT Dv :
+        #IF NOT DEFINED (COMPILER.TOCK)
         PLACE Dv IN WORKSPACE :
+        #ENDIF
         VALOF
           INT Carry, Dv3 :
           INT W.0, W.1, W.2, W.3, W.4 :
