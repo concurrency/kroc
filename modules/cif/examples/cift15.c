@@ -86,7 +86,6 @@ void proc_main (Workspace wptr)
 }
 
 int main (int argc, char *argv[]) {
-	int main_stack[WORKSPACE_SIZE (0, 4096)];
 	Workspace p;
 
 	printf ("Initialising CCSP\n");
