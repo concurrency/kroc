@@ -430,6 +430,7 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 	dummies = []
 	if not resched:
 		dummies.append("sched_dummy")
+		dummies.append("wptr_dummy")
 	if in_regs > out_regs:
 		dummies = ["dummy0"] + dummies
 
@@ -452,7 +453,7 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 		f.line("\tpushl %%ebx")
 		f.line("\tpushl %%ebp")
 		f.line("\tmovl %%esp, -28(%%edi)")
-		f.line("\tmovl (%%esi), %%esp")
+		f.line("\tmovl %%esi, %%esp")
 		f.line("\tmovl %%esi, %%edx")
 		f.line("\tmovl %%edi, %%ecx")
 		f.line("\tmovl %%edi, %%ebp")
@@ -462,20 +463,17 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 		f.line("\tpopl %%ebp")
 		f.line("\tpopl %%ebx")
 	else:
-		f.line("\tmovl (%%edx), %%ecx")
-		f.line("\tmovl %%esp, (%%ecx)")
-		f.line("\tmovl %%ecx, %%esp")
-		f.line("\tmovl %%edi, %%ecx")
+		f.line("\tmovl %%esi, %%edx")
+		f.line("\txchgl %%esp, %%esi")
 		f.line("\tcall *%d(%%%%edx)" % offset)
-		f.line("\tmovl (%%esp), %%esp")
+		f.line("\tmovl %%esi, %%esp")
 	f.end_asm()
 
 	f.begin_line()
-	f.add(": \"=D\" (wptr), ")
 	if resched:
-		f.add("\"=S\" (sched)")
+		f.add(": \"=D\" (wptr), \"=S\" (sched)")
 	else:
-		f.add("\"=d\" (sched_dummy)")
+		f.add(": \"=c\" (wptr_dummy), \"=S\" (sched_dummy)")
 	if (in_regs + out_regs) > 0:
 		f.add(", \"=a\" (%s)" % ((outputs + dummies)[0]))
 	f.end_line()
@@ -488,11 +486,11 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 	f.end_line()
 
 	f.begin_line()
-	f.add(": \"cc\", \"memory\", \"ecx\"")
+	f.add(": \"cc\", \"memory\", \"edx\"")
 	if (in_regs + out_regs) == 0:
 		f.add(", \"eax\"")
 	if resched:
-		f.add(", \"edx\"")
+		f.add(", \"ecx\"")
 	f.end_line()
 
 	f.outdent()
