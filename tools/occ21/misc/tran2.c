@@ -1718,7 +1718,7 @@ printtreenl (stderr, 4, p);
 		dimension++;
 		ftype = follow_user_type (ARTypeOf (ftype));
 #ifdef MOBILES
-		if (TagOf (ftype) == S_MOBILE) {
+		if (TagOf (ftype) == S_MOBILE && !isdynmobilearraytype (ftype)) {
 			ftype = MTypeOf (ftype);
 		}
 #endif
