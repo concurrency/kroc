@@ -3633,7 +3633,7 @@ K_CALL_DEFINE_2_0 (Y_bx_dispatch)
 /*}}}*/
 /*{{{  void kernel_X_bx_kill (void)*/
 /*
- *	dispatches a terminateable blocking call
+ *	kills a terminateable blocking call
  *
  *	@SYMBOL:	X_bx_kill
  *	@INPUT:		1
