@@ -311,10 +311,10 @@ clean-local:
 
 SUFFIXES = .occ .tce .lib
 
+$(forall_late_objs): forall-early
+
 .occ.tce:
 	$(OCCBUILD) --object $<
-
-$(forall_late_objs): forall-early
 
 ## begin pideps dependencies
 dargred.tce: ridiv.tce rimul.tce
