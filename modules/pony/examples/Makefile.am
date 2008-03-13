@@ -59,11 +59,11 @@ SUFFIXES = .occ .tce
 	$(OCCBUILD) --program $< trace.o
 
 ## begin pideps dependencies
-bmbackground.tce: $(srcdir)/trace.inc
-bmpingpongtime.tce: $(srcdir)/trace.inc
-bmthroughput.tce: $(srcdir)/trace.inc
-commstest.tce: $(srcdir)/trace.inc
-mandelbauer.tce: $(srcdir)/trace.inc
-simplecanceltest.tce: $(srcdir)/trace.inc
-simpletest.tce: $(srcdir)/trace.inc
+bmbackground.occ: $(srcdir)/trace.inc
+bmpingpongtime.occ: $(srcdir)/trace.inc
+bmthroughput.occ: $(srcdir)/trace.inc
+commstest.occ: $(srcdir)/trace.inc
+mandelbauer.occ: $(srcdir)/trace.inc
+simplecanceltest.occ: $(srcdir)/trace.inc
+simpletest.occ: $(srcdir)/trace.inc
 ## end pideps dependencies

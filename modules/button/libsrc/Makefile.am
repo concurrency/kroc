@@ -29,7 +29,7 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 ## begin pideps dependencies
-button.tce: $(srcdir)/button.inc
-button.tce: $(srcdir)/font2.occ
-button.tce: $(srcdir)/nine_by_fifteen.inc
+button.occ: $(srcdir)/button.inc
+button.occ: $(srcdir)/font2.occ
+button.occ: $(srcdir)/nine_by_fifteen.inc
 ## end pideps dependencies
