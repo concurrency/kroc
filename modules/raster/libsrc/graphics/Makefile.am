@@ -71,7 +71,7 @@ SUFFIXES = .occ .tce .lib
 
 
 ## begin pideps dependencies
-arc.tce: cordic.tce
-cordic.tce: $(srcdir)/angle.inc
-spectrum.tce: $(srcdir)/graphics.inc
+arc.occ: cordic.tce
+cordic.occ: $(srcdir)/angle.inc
+spectrum.occ: $(srcdir)/graphics.inc
 ## end pideps dependencies

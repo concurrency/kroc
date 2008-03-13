@@ -79,29 +79,29 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 ## begin pideps dependencies
-keyscr.tce: $(srcdir)/streamio.inc
-keysink.tce: $(srcdir)/streamio.inc
-kfile.tce: $(srcdir)/streamio.inc
-kkbd.tce: $(srcdir)/streamio.inc
-kstdin.tce: $(srcdir)/streamio.inc
-scrcont.tce: $(srcdir)/streamio.inc
-scrcopy.tce: $(srcdir)/streamio.inc
-scrfan.tce: $(srcdir)/streamio.inc
-scrmux.tce: $(srcdir)/streamio.inc
-scrsink.tce: $(srcdir)/streamio.inc
-scrtfarr.tce: $(srcdir)/streamio.inc
-sfile.tce: $(srcdir)/streamio.inc
-srchar.tce: $(srcdir)/streamio.inc
-srint.tce: $(srcdir)/streamio.inc
-srint64.tce: $(srcdir)/streamio.inc
-srreal32.tce: $(srcdir)/streamio.inc
-srreal64.tce: $(srcdir)/streamio.inc
-sstdout.tce: $(srcdir)/streamio.inc
-swint.tce: $(srcdir)/streamio.inc
-swint64.tce: $(srcdir)/streamio.inc
-swreal32.tce: $(srcdir)/streamio.inc
-swreal64.tce: $(srcdir)/streamio.inc
-swsimple.tce: $(srcdir)/streamio.inc
-toansi.tce: $(srcdir)/streamio.inc
-totvi.tce: $(srcdir)/streamio.inc
+keyscr.occ: $(srcdir)/streamio.inc
+keysink.occ: $(srcdir)/streamio.inc
+kfile.occ: $(srcdir)/streamio.inc
+kkbd.occ: $(srcdir)/streamio.inc
+kstdin.occ: $(srcdir)/streamio.inc
+scrcont.occ: $(srcdir)/streamio.inc
+scrcopy.occ: $(srcdir)/streamio.inc
+scrfan.occ: $(srcdir)/streamio.inc
+scrmux.occ: $(srcdir)/streamio.inc
+scrsink.occ: $(srcdir)/streamio.inc
+scrtfarr.occ: $(srcdir)/streamio.inc
+sfile.occ: $(srcdir)/streamio.inc
+srchar.occ: $(srcdir)/streamio.inc
+srint.occ: $(srcdir)/streamio.inc
+srint64.occ: $(srcdir)/streamio.inc
+srreal32.occ: $(srcdir)/streamio.inc
+srreal64.occ: $(srcdir)/streamio.inc
+sstdout.occ: $(srcdir)/streamio.inc
+swint.occ: $(srcdir)/streamio.inc
+swint64.occ: $(srcdir)/streamio.inc
+swreal32.occ: $(srcdir)/streamio.inc
+swreal64.occ: $(srcdir)/streamio.inc
+swsimple.occ: $(srcdir)/streamio.inc
+toansi.occ: $(srcdir)/streamio.inc
+totvi.occ: $(srcdir)/streamio.inc
 ## end pideps dependencies

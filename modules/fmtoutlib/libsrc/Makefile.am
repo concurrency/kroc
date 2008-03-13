@@ -32,5 +32,5 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-sprintf.tce: doprnt.tce
+sprintf.occ: doprnt.tce
 

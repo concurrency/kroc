@@ -56,5 +56,5 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 $(shared_screen_lib_objs): course.lib
-demo_nets.tce: demo_cycles.tce
-string.tce: utils.tce
+demo_nets.occ: demo_cycles.tce
+string.occ: utils.tce

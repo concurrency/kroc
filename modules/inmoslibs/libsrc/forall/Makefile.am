@@ -317,8 +317,8 @@ $(forall_late_objs): forall-early
 	$(OCCBUILD) --object $<
 
 ## begin pideps dependencies
-dargred.tce: ridiv.tce rimul.tce
-ie64op.tce: ridiv.tce rimul.tce
-r64op.tce: ridiv.tce rimul.tce
-rargred.tce: ridiv.tce
+dargred.occ: ridiv.tce rimul.tce
+ie64op.occ: ridiv.tce rimul.tce
+r64op.occ: ridiv.tce rimul.tce
+rargred.occ: ridiv.tce
 ## end pideps dependencies
