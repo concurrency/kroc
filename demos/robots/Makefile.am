@@ -14,11 +14,11 @@ examples = \
 
 all-local: $(examples)
 
-robot: robot.occ graphics.tce graphics.o
-	$(OCCBUILD) --program $< graphics.o
+robot: robot.occ graphics.tce
+	$(OCCBUILD) --program $< graphics.tce
 
-robot2: robot2.occ graphics.tce graphics.o
-	$(OCCBUILD) --program $< graphics.o
+robot2: robot2.occ graphics.tce
+	$(OCCBUILD) --program $< graphics.tce
 
 particles-ats: particles-ats.occ
 	$(OCCBUILD) --program $<
