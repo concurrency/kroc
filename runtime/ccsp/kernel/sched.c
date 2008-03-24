@@ -3872,12 +3872,14 @@ K_CALL_DEFINE_3_1 (X_mt_bind)
 			}
 			
 			#ifdef RMOX_BUILD
-			word low = (word) ma->array.data;
-			word high = low + ma->size;
-			if ((low | high) & 0x3fffffff) { /* FIXME: magic mask */
-				dma_ready = true;
-			} else {
-				dma_ready = false;
+			{
+				word low = (word) ma->array.data;
+				word high = low + ma->size;
+				if ((low | high) & 0x3fffffff) { /* FIXME: magic mask */
+					dma_ready = true;
+				} else {
+					dma_ready = false;
+				}
 			}
 			#else
 			dma_ready = false;
