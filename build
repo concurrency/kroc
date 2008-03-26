@@ -152,16 +152,17 @@ FAILABLE_PKGS="\
 	$OCCGL_SRC $OCCGL_EXAMPLES_SRC \
 	$OCCADE_SRC $OCCADE_EXAMPLES_SRC \
 	$BUTTON_SRC $BUTTON_EXAMPLES_SRC \
-	$RASTER_SRC $RASTER_EXAMPLES_SRC"
+	$RASTER_SRC $RASTER_EXAMPLES_SRC \
+	$CIF_EXAMPLES_SRC"
 
 
 #}}}
 #{{{  release/install settings
 DUMPOUT=
 DUMPMAIL="kroc-bugs@kent.ac.uk"
-VERSION="1.5.1-pre3"
+VERSION="1.5.1-pre4"
 PRERELEASE=1
-NEXTPATCH="1.5.1-pre4"
+NEXTPATCH="1.5.1-pre5"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 # things set in typescript_head are: SED, AWK, MAKE, WGET
