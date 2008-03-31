@@ -31,7 +31,7 @@ Identifiers are made up of 4 ASCII encoded characters, and are case-sensitive.  
 
 With the exception of signed and unsigned integer types, the Integer of all Elements defines the unpadded size of the Data which follows.  Decoders may use this relationship to skip unknown element types, therefore this relationship must be preserved when adding new types.
 
-A TEncode stream begins with the special 'tenc' or 'TENC' Element, the Integer of which indicates the number of bytes which follow in the rest of the stream.  A lower-case 'tenc' indicates that integers are small (16 bit), whereas an upper-case 'TENC' indicates integers are large (32 bits).  The TENC Element contains all other elements in the stream.
+A TEncode stream begins with the special 'tenc' or 'TEnc' Element, the Integer of which indicates the number of bytes which follow in the rest of the stream.  A lower-case 'tenc' indicates that integers are small (16 bit), whereas an upper-case 'TEnc' indicates integers are large (32 bits).  The TEnc Element contains all other elements in the stream.
 
   Stream        := { Element }
 
