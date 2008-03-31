@@ -1032,6 +1032,8 @@ PUBLIC const char *chkmessagestring (const int n)
 		return ("must specify direction when claiming SHARED channel `%s\'");
 	case CHK_CLAIM_VAR_ISCHAN:
 		return ("can only CLAIM shared channels or channel-type ends");
+	case CHK_CLAIM_VAR_BADDIRSPEC:
+		return ("bad channel-end specifier on CLAIM");
 		/*}}}*/
 		/*{{{  fork related errors*/
 	case CHK_NO_LOCAL_FORKING:

@@ -433,6 +433,8 @@
 
 #define CHK_ANYMOBILETYPE_MISMATCH	330
 
+#define CHK_CLAIM_VAR_BADDIRSPEC	331
+
 /*}}}*/
 /*{{{  error macros */
 #define chkerr(N,L)      msg_out  (SEV_ERR,CHK,(N),(L))
