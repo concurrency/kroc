@@ -42,7 +42,7 @@ A TEncode stream begins with the special 'tenc' or 'TENC' Element, the Integer o
   UnsignedInt   := 3 * BYTE, "U", Integer
 
   Element := ByteString / SignedInt / ElementList / UTF8String / UnsignedInt
-  Header  := ("tenc", INT16) / ("TENC", INT32)
+  Header  := ("tenc", INT16) / ("TEnc", INT32)
   Stream  := { Element }
   TEncode := Header, Stream
 
@@ -52,7 +52,7 @@ Decoders should ignore elements they do not understand or care about.  If multip
 
 Transterpreter byte code is a TEncode stream defined as follows:
 
-TENC <stream length>
+TEnc <stream length>
   tbcL <length>
     endU <endian (0=little, 1=big)>
     ws U <workspace size (words)>
@@ -62,7 +62,7 @@ TENC <stream length>
 
     // Top-Level-Process descriptor (optional)
     tlfB <length> <top-level-format> [<padding>]
-    tltS <length> <top-level-types (string from ETC)> [<padding>]
+    tlpS <length> <top-level-process (string from TCOFF)> [<padding>]
 
     // FFI table (optional)
     ffiL <length>
