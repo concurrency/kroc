@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tvm.h"
 
-typedef struct _element_t {
+typedef struct _tenc_element_t {
 	char		id[5];
 	UWORD		length;
 	union {
@@ -30,7 +30,7 @@ typedef struct _element_t {
 		BYTE	*bytes;
 	} data;
 	BYTE		*next;
-} element_t;
+} tenc_element_t;
 
 typedef struct _tenc_str_t tenc_str_t;
 struct _tenc_str_t {
@@ -60,10 +60,11 @@ struct _tbc_lni_entry_t {
 
 typedef struct _tbc_lni_t {
 	tenc_str_t	*files;
-	tbc_lni_entry	*data;
+	tbc_lni_entry_t	*data;
 } tbc_lni_t;
 
 typedef struct _tbc_t {
+	/* Must fit in 10 words: */
 	unsigned int	endian;		/* 1 */
 	unsigned int	ws;		/* 2 */
 	unsigned int	vs;		/* 3 */
@@ -75,7 +76,7 @@ typedef struct _tbc_t {
 	tbc_tlp_t	*tlp;		/* 7 */
 
 	tbc_ffi_t	*ffi;		/* 8 */
-	tbc_lni_t	*line_numbers;	/* 9 */
+	tbc_lni_t	*lni;		/* 9 */
 } tbc_t;
 
 static WORD decode_int (BYTE *src)
@@ -92,7 +93,7 @@ static WORD decode_int (BYTE *src)
 	#endif
 }
 
-static int decode_element (BYTE *src, int *length, element_t *element)
+static int decode_element (BYTE *src, int *length, tenc_element_t *element)
 {
 	if (*length < (sizeof (WORD) + 4)) {
 		return -1;
@@ -123,21 +124,24 @@ static int decode_element (BYTE *src, int *length, element_t *element)
 	}
 }
 
-static int walk_to_element (BYTE *data, int *length, const char *id, element_t *element) {
+static int ids_match (const char *a, const char *b)
+{
+	if (a[0] != b[0]) return 0;
+	if (a[1] != b[1]) return 0;
+	if (a[2] != b[2]) return 0;
+	if (a[3] != b[3]) return 0;
+	return 1;
+}
+
+static int walk_to_element (BYTE *data, int *length, const char *id, tenc_element_t *element) {
 	while (*length > 0) {
 		int ret = decode_element (data, length, element);
-		int i;
 
 		if (ret < 0) {
 			return ret;
 		}
 
-		for (i = 0; i < 4; ++i) {
-			if (element->id[i] != id[i])
-				break;
-		}
-
-		if (i == 4) {
+		if (ids_match (element->id, id)) {
 			return 0;
 		}
 		
@@ -149,23 +153,40 @@ static int walk_to_element (BYTE *data, int *length, const char *id, element_t *
 
 static int load_uint (BYTE **data, int *length, const char *id, UWORD *dst)
 {
-	element_t element;
+	tenc_element_t element;
 	int ret;
 
 	if ((ret = walk_to_element (*data, length, id, &element)) < 0)
 		return ret;
 	
 	*dst 	= element.data.u_int;
-	*data	= element->next;
+	*data	= element.next;
 
 	return 0;
 }
 
+static tbc_tlp_t *decode_tlp (tenc_element_t *tlp_element)
+{
+	return NULL; /* FIXME */
+}
+
+static tbc_ffi_t *decode_ffi (tenc_element_t *ffi_element)
+{
+	return NULL; /* FIXME */
+}
+
+static tbc_lni_t *decode_lni (tenc_element_t *lni_element)
+{
+	return NULL; /* FIXME */
+}
+
 int tencode_tbc_decode (BYTE *data, int length, tbc_t **ptr)
 {
-	element_t 	element;
+	tenc_element_t 	element;
 	tbc_t 		*tbc	= (tbc_t *) data;
 	int		ret;
+
+	/* Decode the required elements */
 
 	if ((ret = load_uint (&data, &length, "endU", &(tbc->endian))) < 0)
 		return ret;
@@ -179,9 +200,31 @@ int tencode_tbc_decode (BYTE *data, int length, tbc_t **ptr)
 	if ((ret = walk_to_element (data, &length, "bc B", &element)) < 0)
 		return ret;
 	
-	tbc->bytecode_len	= element->length;
-	tbc->bytecode		= element->data.bytes;
-	data			= element->next;
+	tbc->bytecode_len	= element.length;
+	tbc->bytecode		= element.data.bytes;
+	data			= element.next;
 
+	/* Decode optional elements */
+
+	tbc->tlp = NULL;
+	tbc->ffi = NULL;
+	tbc->lni = NULL;
+
+	while (length > 0) {
+		if (decode_element (data, &length, &element) < 0)
+			return 0; /* ignore errors */
+
+		if (ids_match (element.id, "tlpL")) {
+			tbc->tlp = decode_tlp (&element); 
+		} else if (ids_match (element.id, "ffiL")) {
+			tbc->ffi = decode_ffi (&element);
+		} else if (ids_match (element.id, "lniL")) {
+			tbc->lni = decode_lni (&element);
+		}
+
+		data = element.next;
+	}
+
+	return 0;
 }
 
