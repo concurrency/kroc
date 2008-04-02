@@ -222,9 +222,10 @@ static tenc_str_t *decode_strs (BYTE *data, int length, const char *id)
 	return head;
 }
 
-static tbc_tlp_t *decode_tlp (BYTE *data, const tenc_element_t *tlp_element)
+static tbc_tlp_t *decode_tlp (BYTE *head, const tenc_element_t *tlp_element)
 {
-	tbc_tlp_t *tlp 	= (tbc_tlp_t *) data;
+	tbc_tlp_t *tlp 	= (tbc_tlp_t *) head;
+	BYTE *data	= tlp_element->data.bytes;
 	int length 	= tlp_element->length;
 
 	if (load_str (&data, &length, "fmtS", &(tlp->fmt)) < 0)
@@ -236,11 +237,12 @@ static tbc_tlp_t *decode_tlp (BYTE *data, const tenc_element_t *tlp_element)
 	return tlp;
 }
 
-static tbc_ffi_t *decode_ffi (BYTE *data, const tenc_element_t *ffi_element)
+static tbc_ffi_t *decode_ffi (BYTE *head, const tenc_element_t *ffi_element)
 {
 	tenc_element_t 	element;
 	tenc_str_t	*sym;
-	tbc_ffi_t	*ffi	= (tbc_ffi_t *) data;
+	tbc_ffi_t	*ffi	= (tbc_ffi_t *) head;
+	BYTE 		*data	= ffi_element->data.bytes;
 	int 		length	= ffi_element->length;
 
 	if (walk_to_element (data, &length, "libL", &element) < 0)
@@ -297,10 +299,11 @@ static tbc_ffi_t *decode_ffi (BYTE *data, const tenc_element_t *ffi_element)
 	return ffi;
 }
 
-static tbc_lni_t *decode_lni (BYTE *data, const tenc_element_t *lni_element)
+static tbc_lni_t *decode_lni (BYTE *head, const tenc_element_t *lni_element)
 {
 	tenc_element_t 	element;
-	tbc_lni_t	*lni	= (tbc_lni_t *) data;
+	tbc_lni_t	*lni	= (tbc_lni_t *) head;
+	BYTE 		*data	= lni_element->data.bytes;
 	int 		length	= lni_element->length;
 	int		idx	= 0;
 
