@@ -75,9 +75,9 @@ TEnc <stream length>
       symL <length> 
         symS <length> <symbol> [<padding>]
 	... further symS elements ...
-      // Symbol to library mapping (optional)
+      // Symbol to library mapping
       mapL <length>
-        idxI <library index of symbol (<0 = unknown)>
+        idxI <library index of symbol (-1 = unknown)>
 	... further idxI elements (one element per symS) ...
    
     // Line Numbering Information (optional)
