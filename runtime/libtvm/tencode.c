@@ -43,24 +43,29 @@ typedef struct _tbc_tlp_t {
 	char		*desc;
 } tbc_tlp_t;
 
+typedef struct _tbc_ffi_entry_t {
+	char	 	*symbol;
+	char		*library;
+} tbc_ffi_entry_t;
+
 typedef struct _tbc_ffi_t {
 	tenc_str_t 	*libraries;
+	int		n_symbols;
 	tenc_str_t	*symbols;
-	unsigned int	map_len;
-	UWORD		*map;
+	tbc_ffi_entry_t	*map;
 } tbc_ffi_t;
 
 typedef struct _tbc_lni_entry_t tbc_lni_entry_t;
 struct _tbc_lni_entry_t {
-	tbc_lni_entry_t		*next;
 	unsigned int 		offset;
-	char			*file;
+	unsigned int		file;
 	unsigned int		line;
 };
 
 typedef struct _tbc_lni_t {
 	tenc_str_t	*files;
-	tbc_lni_entry_t	*data;
+	int		n_entries;
+	tbc_lni_entry_t	*entries;
 } tbc_lni_t;
 
 typedef struct _tbc_t {
@@ -165,19 +170,171 @@ static int load_uint (BYTE **data, int *length, const char *id, UWORD *dst)
 	return 0;
 }
 
-static tbc_tlp_t *decode_tlp (tenc_element_t *tlp_element)
+static int load_int (BYTE **data, int *length, const char *id, WORD *dst)
 {
-	return NULL; /* FIXME */
+	return load_uint (data, length, id, (UWORD *) dst);
 }
 
-static tbc_ffi_t *decode_ffi (tenc_element_t *ffi_element)
+static int load_str (BYTE **data, int *length, const char *id, char **dst)
 {
-	return NULL; /* FIXME */
+	tenc_element_t element;
+	int ret;
+
+	if ((ret = walk_to_element (*data, length, id, &element)) < 0)
+		return ret;
+	
+	/* Make sure the string has room for a terminator */
+	if (element.length < 1)
+		return -1;
+
+	*dst 	= element.data.str;
+	*data	= element.next;
+
+	/* Make sure the string is terminated */
+	(*dst)[element.length - 1] = '\0';
+
+	return 0;
 }
 
-static tbc_lni_t *decode_lni (tenc_element_t *lni_element)
+static tenc_str_t *decode_strs (BYTE *data, int length, const char *id)
 {
-	return NULL; /* FIXME */
+	tenc_str_t	*head	= NULL;
+	tenc_str_t	*tail	= NULL;
+
+	while (length > 0) {
+		tenc_str_t *curr = (tenc_str_t *) data;
+		char *str;
+
+		if (load_str (&data, &length, id, &str) < 0)
+			return head;
+		
+		curr->next	= NULL;
+		curr->str	= str;
+
+		if (tail == NULL) {
+			head = tail = curr;
+		} else {
+			tail->next	= curr;
+			tail		= curr;
+		}
+	}
+
+	return head;
+}
+
+static tbc_tlp_t *decode_tlp (BYTE *data, const tenc_element_t *tlp_element)
+{
+	tbc_tlp_t *tlp 	= (tbc_tlp_t *) data;
+	int length 	= tlp_element->length;
+
+	if (load_str (&data, &length, "fmtS", &(tlp->fmt)) < 0)
+		return NULL;
+	
+	if (load_str (&data, &length, "tlpS", &(tlp->desc)) < 0)
+		return NULL;
+	
+	return tlp;
+}
+
+static tbc_ffi_t *decode_ffi (BYTE *data, const tenc_element_t *ffi_element)
+{
+	tenc_element_t 	element;
+	tenc_str_t	*sym;
+	tbc_ffi_t	*ffi	= (tbc_ffi_t *) data;
+	int 		length	= ffi_element->length;
+
+	if (walk_to_element (data, &length, "libL", &element) < 0)
+		return NULL;
+	
+	ffi->libraries	= decode_strs (element.data.bytes, element.length, "libS");
+	data		= element.next;
+	
+	if (walk_to_element (data, &length, "symL", &element) < 0)
+		return NULL;
+
+	ffi->symbols	= decode_strs (element.data.bytes, element.length, "symS");
+	data		= element.next;
+
+	if (walk_to_element (data, &length, "mapL", &element) < 0)
+		return NULL;
+	
+	ffi->n_symbols	= 0;
+	ffi->map 	= (tbc_ffi_entry_t *) (element.data.bytes - (4 + sizeof (WORD)));
+	length		= element.length;
+	data		= element.data.bytes;
+	sym		= ffi->symbols;
+	while ((sym != NULL) && (length > 0)) {
+		WORD lib_idx;
+
+		if (load_int (&data, &length, "idxI", &lib_idx) < 0)
+			return NULL;
+
+		ffi->map[ffi->n_symbols].symbol = sym->str;
+
+		if (lib_idx < 0) {
+			ffi->map[ffi->n_symbols].library = NULL;
+		} else {
+			tenc_str_t *lib = ffi->libraries;
+			
+			while (lib != NULL && lib_idx > 0) {
+				lib_idx--;
+				lib = lib->next;
+			}
+
+			if (lib == NULL)
+				return NULL;
+
+			ffi->map[ffi->n_symbols].library = lib->str;
+		}
+
+		ffi->n_symbols++;
+		sym = sym->next;
+	}
+	
+	if (sym != NULL)
+		return NULL;
+
+	return ffi;
+}
+
+static tbc_lni_t *decode_lni (BYTE *data, const tenc_element_t *lni_element)
+{
+	tenc_element_t 	element;
+	tbc_lni_t	*lni	= (tbc_lni_t *) data;
+	int 		length	= lni_element->length;
+	int		idx	= 0;
+
+	if (walk_to_element (data, &length, "fn L", &element) < 0)
+		return NULL;
+	
+	lni->files 	= decode_strs (element.data.bytes, element.length, "fn S");
+	lni->entries 	= (tbc_lni_entry_t *) element.next;
+	data		= element.next;
+	
+	while (length > 0) {
+		tbc_lni_entry_t *ent 		= lni->entries + idx;
+		BYTE 		*lnd_data;
+		int 		lnd_length;
+
+		if (walk_to_element (data, &length, "lndL", &element) < 0)
+			break;
+
+		lnd_length 	= element.length;
+		lnd_data 	= element.data.bytes;
+		if (load_uint (&lnd_data, &lnd_length, "offU", &(ent->offset)) < 0)
+			break;
+		if (load_uint (&lnd_data, &lnd_length, "fniU", &(ent->file)) < 0)
+			break;
+		if (load_uint (&lnd_data, &lnd_length, "ln U", &(ent->line)) < 0)
+			break;
+
+		data = element.next;
+		idx++;
+	}
+
+	lni->n_entries = idx;
+
+	return lni;
 }
 
 int tencode_tbc_decode (BYTE *data, int length, tbc_t **ptr)
@@ -215,11 +372,11 @@ int tencode_tbc_decode (BYTE *data, int length, tbc_t **ptr)
 			return 0; /* ignore errors */
 
 		if (ids_match (element.id, "tlpL")) {
-			tbc->tlp = decode_tlp (&element); 
+			tbc->tlp = decode_tlp (data, &element); 
 		} else if (ids_match (element.id, "ffiL")) {
-			tbc->ffi = decode_ffi (&element);
+			tbc->ffi = decode_ffi (data, &element);
 		} else if (ids_match (element.id, "lniL")) {
-			tbc->lni = decode_lni (&element);
+			tbc->lni = decode_lni (data, &element);
 		}
 
 		data = element.next;
