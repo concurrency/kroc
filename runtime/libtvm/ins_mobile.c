@@ -692,7 +692,7 @@ TVM_INSTRUCTION (ins_mt_clone)
 		return ret;
 	}
 
-	STACK_RET (AREG, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK_RET (ptr, UNDEFINE(BREG), UNDEFINE(CREG));
 }
 
 /* 0x23B - 0x22 0x23 0xFB - mt_in - mobile type channel input */
