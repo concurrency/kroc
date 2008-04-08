@@ -25,7 +25,6 @@ TIMEOUT = 30.0
 
 # Tests that are known not to work.
 KNOWN_BROKEN = [
-	"cgtest90",
 	]
 
 def run_command(cmd):
