@@ -134,9 +134,6 @@ if __name__ == "__main__":
 	if interpreter is not None and interpreter.startswith("./"):
 		interpreter = os.path.join(os.getcwd(), interpreter)
 	os.chdir(sys.path[0])
-	if run_command(["make"]) != 0:
-		status("Make failed\n")
-		sys.exit(1)
 
 	if args == []:
 		tests = ["cgtest%02d" % n for n in range(100)]
