@@ -2643,7 +2643,7 @@ printtreenl (stderr, 4, CTempOf (t));
 					case N_ABBR:
 						{
 							treenode *ntype = NTypeOf (CTempOf (t));
-							int errored = 1;
+							int errored = 0;
 
 							/* right, is it an anonymous channel-type being claimed ? */
 							if (TagOf (ntype) == S_ANONCHANTYPE) {
