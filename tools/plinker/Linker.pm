@@ -1,0 +1,892 @@
+#
+#  Perl code for linking and assembling bytecode for the TVM
+#  Copyright (C) 2008 Carl Ritson <cgr@kent.ac.uk>
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+package Transterpreter::Linker;
+
+require 'Instructions.pm';
+
+use strict;
+use Data::Dumper;
+
+sub new ($$) {
+	my ($class, $instruct_h) = @_;
+
+	my $self = {
+		'instructions' => new Transterpreter::Instructions (
+			$instruct_h,
+			'/Users/cgr/src/kroc-svn/runtime/libtvm/'
+		),
+	};
+	
+	$self = bless $self, $class;
+
+	return $self;
+}
+
+sub link ($$@) {
+	my ($self, $entry_point, @etc)	= @_;
+	my $instructions		= $self->{'instructions'};
+
+	# State
+	my %ffi;
+	my %globals;
+
+	# Tranform ETC
+	for (my $i = 0; $i < @etc; ++$i) {
+		my ($current, %labels, @procs);
+		my $etc		= $etc[$i];
+		my $align	= 0;
+		my $filename	= undef;
+		my $line	= undef;
+
+		# Initial operation translation
+		expand_etc_ops ($etc, $instructions);
+
+		# Build ETC stream for each label
+		# Identify PROCs and global symbols
+		# Carry alignment
+		# Carry file names and line numbers
+		foreach my $op (@$etc) {
+			my $name	= $op->{'name'};
+			my $arg		= $op->{'arg'};
+
+			if ($name eq '.ALIGN') {
+				$align	= $arg;
+			} elsif ($name =~ /^\.(SET|SECTION)LAB$/) {
+				my $label = 'L' . $i . ':' . $arg;
+				my @inst;
+
+				die "Label collision $label" 
+					if exists ($labels{$label});
+				
+				if ($filename) {
+					push (@inst, { 
+						'name'	=> '.FILENAME',
+						'arg'	=> $filename
+					});
+				}
+				if (defined ($line)) {
+					push (@inst, {
+						'name'	=> '.LINE',
+						'arg'	=> $line
+					});
+				}
+				if ($align) {
+					push (@inst, {
+						'name'	=> '.ALIGN',
+						'arg'	=> $align
+					});
+				}
+
+				my $new = { 
+					'name'	=> $label, 
+					'prev'	=> $current, 
+					'inst'	=> \@inst,
+					'align'	=> $align
+				};
+
+				$current->{'next'} 	= $new;
+				$current 		= $new;
+				$labels{$label}		= $new;
+
+				$align			= 0;
+			} elsif ($name eq '.FILENAME') {
+				$filename		= $arg;
+			} elsif ($name eq '.LINE') {
+				$line			= $arg;
+			} elsif ($name eq '.PROC') {
+				$current->{'symbol'}	= $arg;
+				push (@procs, $current);
+			} elsif ($name eq '.STUBNAME') {
+				$current->{'stub'}	= $arg;
+				$current->{'symbol'}	= $arg;
+				if ($arg =~ /^(C|BX?)\./) {
+					$ffi{$arg} = $current
+						if !exists ($ffi{$arg});
+				}
+			} elsif ($name eq '.GLOBAL') {
+				$globals{$arg}		= $current;
+			} elsif ($name eq '.GLOBALEND') {
+				$globals{$arg}->{'end'}	= $current;
+			}
+			
+			push (@{$current->{'inst'}}, $op)
+				if $current; 
+		}
+
+		# Transform Passes
+		foreach_label (\%labels, \&resolve_labels, $i);
+		foreach_label (\%labels, \&resolve_globals, \%globals, \%ffi);
+		foreach_label (\%labels, \&pull_out_data_blocks);
+		foreach_label (\%labels, \&add_data_lengths);
+		foreach_label (\%labels, \&isolate_static_sections);
+		tag_and_index_code_blocks (\@procs);
+		separate_code_blocks (\@procs);
+		foreach_label (\%labels, \&build_proc_dependencies);
+	}
+
+	if (!exists ($globals{$entry_point})) {
+		print STDERR "Unable to find entry point symbol $entry_point\n";
+		return;
+	}
+	
+	# Code from entry point down through dependencies
+	my @coding_order;
+	build_coding_order ($globals{$entry_point}, \@coding_order);
+	generate_code (\@coding_order, $instructions);
+
+	return expand_coding_order (@coding_order);
+}
+
+sub count_nybbles ($) {
+	my $value = shift;
+	my $count = 1;
+	while ($value >>= 4) {
+		$count++;
+	}
+	return $count;
+}
+
+sub foreach_label ($$@) {
+	my ($labels, $func, @param) = @_;
+	my @labels = keys (%$labels);
+	foreach my $label (@labels) {
+		&$func ($labels, $labels->{$label}, @param);
+	}
+}
+
+sub foreach_inst ($$$@) {
+	my ($labels, $label, $func, @param) = @_;
+	my $inst = $label->{'inst'};
+	foreach my $inst (@$inst) {
+		&$func ($labels, $label, $inst, @param);
+	}
+}
+
+sub expand_etc_ops ($$) {
+	my ($etc, $instructions) = @_;
+	my %IGNORE_SPECIAL = (
+		'CONTRJOIN'	=> 1,
+		'CONTRSPLIT'	=> 1
+	);
+	
+	for (my $i = 0; $i < @$etc; ++$i) {
+		my $op		= $etc->[$i];
+		my $name	= $op->{'name'};
+		my $arg		= $op->{'arg'};
+		if ($name eq '.LABEL') {
+			if ($arg->{'name'} eq 'LDC') {
+				splice (@$etc, $i, 1, 
+					$arg,
+					{ 'name' => 'LDPI' }
+				);
+			} else {
+				$etc->[$i] = $arg;
+			}
+		} elsif ($name eq '.SPECIAL') {
+			my $name	= $arg->{'name'};
+
+			if ($name eq 'NOTPROCESS') {
+				$op = { 
+					'name'	=> 'LDC',
+					'arg'	=> 0
+				};
+			} elsif (!exists ($IGNORE_SPECIAL{$name})) {
+				$op = $arg;
+			}
+			
+			$etc->[$i] = $op;
+		} elsif ($name =~ /^\.(LEND.?)$/) {
+			my $name	= $1;
+			my @arg		= @$arg;
+			my $start	= ($arg[2] =~ /^L(\d+)$/)[0];
+			my $end		= ($arg[1] =~ /^L(\d+)$/)[0];
+			splice (@$etc, $i, 1, 
+				$arg[0],
+				{ 'name' => 'LDC', 'arg' => $start	},
+				{ 'name' => 'LDPI'			},
+				{ 'name' => $name			},
+				{ 'name' => '.SETLAB', 'arg' => $end	}
+			);
+		}
+	}
+}
+
+sub resolve_inst_label ($$$$) {
+	my ($labels, $label, $inst, $fn) = @_;
+	my $arg = $inst->{'arg'};
+	if ($arg =~ /^L(\d+)$/) {
+		my $num	= $1;
+		my $n	= 'L' . $fn . ':' . $num;
+		if (!exists ($labels->{$n})) {
+			die "Undefined label $n";
+		} else {
+			$inst->{'arg'} = $labels->{$n};
+			$labels->{$n}->{'refs'}++;
+		}
+		$inst->{'label_arg'} = 1;
+	}
+}
+
+sub resolve_labels ($$$) {
+	my ($labels, $label, $fn) = @_;
+	foreach_inst ($labels, $label, \&resolve_inst_label, $fn);
+}
+
+sub resolve_inst_globals ($$$$$) {
+	my ($labels, $label, $inst, $globals, $ffi) = @_;
+	if ($inst->{'label_arg'}) {
+		my $arg = $inst->{'arg'};
+		if ($arg->{'stub'}) {
+			my $n = $arg->{'stub'};
+			if (exists ($globals->{$n})) {
+				$inst->{'arg'} = $globals->{$n};
+				$globals->{$n}->{'refs'}++;
+			} elsif (exists ($ffi->{$n})) {
+				$inst->{'arg'} = $ffi->{$n};
+				$ffi->{$n}->{'refs'}++;
+			} else {
+				die "Undefined global reference $n";
+			}
+		}
+	}
+}
+
+sub resolve_globals ($$$$) {
+	my ($labels, $label, $globals, $ffi) = @_;
+	foreach_inst ($labels, $label, \&resolve_inst_globals, $globals, $ffi);
+}
+
+sub pull_out_data_blocks ($$) {
+	my ($labels, $label) = @_;
+	my ($data, $inst) = (undef, 0);
+	foreach my $op (@{$label->{'inst'}}) {
+		my $name = $op->{'name'};
+		if ($name =~ /^[^.]/) {
+			die "Data label with instructions" if $data;
+			$inst++;
+		} elsif ($name eq '.DATABYTES') {
+			die "Data label with instructions" if $inst;
+			$data = $op->{'arg'};
+		}
+	}
+	if ($data) {
+		$label->{'data'} = $data if $data;
+		if ($label->{'prev'}) {
+			$label->{'prev'}->{'next'} = $label->{'next'};
+		}
+		if ($label->{'next'}) {
+			$label->{'next'}->{'prev'} = $label->{'prev'};
+		}
+	}
+}
+
+sub add_data_lengths ($$) {
+	my ($labels, $label) = @_;
+	if ($label->{'data'}) {
+		$label->{'length'} = length ($label->{'data'});
+	}
+}
+
+sub new_sub_label ($$$$) {
+	my ($labels, $label, $current, $sub_idx) = @_;
+	my $name		= sprintf ('%s_%d', $label->{'name'}, ($$sub_idx)++);
+	my $new 		= {
+		'name' => $name, 
+		'prev' => $current,
+		'next' => $current->{'next'},
+		'inst' => undef
+	};
+	$current->{'next'}	= $new;
+	if ($new->{'next'}) {
+		$new->{'next'}->{'prev'} = $new;
+	}
+	$labels->{$name}	= $new;
+	return $new;
+}
+
+sub isolate_static_sections ($$) {
+	my ($labels, $label) = @_;
+	
+	return if $label->{'data'};
+
+	my @inst	= @{$label->{'inst'}};
+	my $sub_idx	= 0;
+	my $current	= $label;
+	my $cinst	= [];
+	for (my $i = 0; $i < @inst; ++$i) {
+		my $inst = $inst[$i];
+		if ($inst->{'label_arg'}) {
+			if (@$cinst > 0) {
+				$current->{'inst'}	= $cinst;
+				$current		= new_sub_label (
+					$labels, $label, $current, \$sub_idx
+				);
+				$cinst			= [];
+			}
+			$current->{'inst'}		= [ $inst ];
+			$current 			= new_sub_label (
+				$labels, $label, $current, \$sub_idx
+			) if $i < (@inst - 1);
+		} else {
+			push (@$cinst, $inst);
+		}
+	}
+	if (@$cinst > 0) {
+		$current->{'inst'} = $cinst;
+	}
+}
+
+sub tag_and_index_code_blocks ($) {
+	my ($procs) = @_;
+	foreach my $proc (@$procs) {
+		my @labels	= ($proc);
+		my $label	= $proc->{'next'};
+		my $idx		= 0;
+		$proc->{'proc'}	= $proc;
+		$proc->{'idx'}	= $idx++;
+		while ($label && !$label->{'symbol'}) {
+			$label->{'proc'}	= $proc;
+			$label->{'idx'}		= $idx++;
+			push (@labels, $label);
+			$label = $label->{'next'};
+		}
+		$proc->{'labels'} = \@labels;
+	}
+}
+
+sub separate_code_blocks ($) {
+	my ($procs) = @_;
+	foreach my $proc (@$procs) {
+		my $labels	= $proc->{'labels'};
+		my $first	= $proc;
+		my $last	= $labels->[-1];
+		
+		if ($first->{'prev'}) {
+			delete ($first->{'prev'}->{'next'});
+		}
+		delete ($first->{'prev'});
+
+		if ($last->{'next'}) {
+			delete ($last->{'next'}->{'prev'});
+		}
+		delete ($last->{'next'});
+	}
+}
+
+sub instruction_proc_dependencies ($$$$) {
+	my (undef, $label, $inst, $depends) = @_;
+	if ($inst->{'label_arg'}) {
+		my $arg = $inst->{'arg'};
+		if ($label->{'proc'} ne $arg->{'proc'}) {
+			$depends->{$arg} = $arg;
+		}
+	}
+}
+
+sub build_proc_dependencies ($$) {
+	my ($labels, $label) = @_;
+	my $proc = $label->{'proc'};
+	if ($proc) {
+		my $depends = $proc->{'proc_depends'} || {};
+		foreach_inst (undef, $label, \&instruction_proc_dependencies, $depends);
+		delete ($depends->{$proc}); # no self-dependencies
+		$proc->{'proc_depends'} = $depends;
+	}
+}
+
+sub build_coding_order ($$) {
+	my ($label, $order) = @_;
+	my $depends = $label->{'proc_depends'};
+	
+	if ($depends) {
+		$label->{'ordering'} = 1;
+		
+		my @suborder = sort {
+			my $da = $depends->{$a};
+			my $db = $depends->{$b};
+			my $rc = $da->{'refs'} <=> $db->{'refs'};
+			return $rc if $rc != 0;
+			return ($a cmp $b);
+		} (keys (%$depends));
+
+		foreach my $dep (@suborder) {
+			my $label = $depends->{$dep};
+			$label = $label->{'proc'}
+				if $label->{'proc'};
+			if ($label->{'ordering'}) {
+				my $name = $label->{'name'};
+				my $proc = $label->{'proc'} || "data";
+				die "Recursive label dependencies $name ($proc)";
+			}
+			build_coding_order ($label, $order)
+				if !$label->{'ordered'};
+		}
+		
+		delete ($label->{'ordering'});
+	}
+
+	$label->{'ordered'} = 1;
+	push (@{$order}, $label);
+}
+
+sub code_instruction ($$$) {
+	my ($num, $arg, $instructions) = @_;
+	my @bytes;
+	
+	my $negate = 0;
+	if ($arg < 0) {
+		$negate = 1;
+		$arg = ~$arg;
+	}
+
+	my $nybbles = count_nybbles ($arg);
+	if ($nybbles == 1 && $negate) {
+		$nybbles = 2;
+	}
+
+	for (my $i = ($nybbles - 1); $i >= 0; --$i) {
+		my $byte = ($arg >> ($i * 4)) & 0xf;
+		if ($i == 0) {
+			$byte 	|= $num;
+		} elsif ($i == 1 && $negate) {
+			$byte	|= $instructions->primary ('NFIX');
+			$arg 	= ~$arg;
+		} else {
+			$byte 	|= $instructions->primary ('PFIX');
+		}
+		push (@bytes, pack ('C', $byte));
+	}
+	
+	return @bytes;
+}
+
+sub code_static_instruction ($$$$) {
+	my (undef, $label, $inst, $instructions) = @_;
+	
+	return if $inst->{'label_arg'};
+	
+	my $name	= $inst->{'name'};
+	my $arg		= $inst->{'arg'};
+	my @bytes;
+
+	if ($name =~ /^\./) {
+		# Special
+	} else {
+		my $num;
+
+		if (defined ($arg) && $instructions->valid_primary ($name)) {
+			# Primary
+			$num = $instructions->primary ($name);
+		} elsif ($instructions->valid_instruction ($name)) {
+			# Other
+			$arg = $instructions->numeric ($name);
+			$num = $instructions->primary ('OPR');
+		} else {
+			die "Unknown instruction $name";
+		}
+
+		@bytes = code_instruction ($num, $arg, $instructions);
+	}
+
+	if (@bytes) {
+		$inst->{'bytes'} = \@bytes;
+	}
+	
+	$inst->{'length'} = scalar (@bytes);
+}
+
+sub code_static_instructions ($$) {
+	my ($labels, $instructions) = @_;
+	foreach my $label (@$labels) {
+		foreach_inst (undef, $label, \&code_static_instruction, $instructions);
+	}
+}
+
+sub tag_if_complete ($) {
+	my $label = shift;
+	my $inst = $label->{'inst'};
+	my $static = 1;
+	my $length = 0;
+	for (my $i = 0; $static && $i < @$inst; ++$i) {
+		my $inst = $inst->[$i];
+		if (exists ($inst->{'length'})) {
+			$length += $inst->{'length'};
+		} else {
+			$static = 0;
+		}
+	}
+	if ($static) {
+		$label->{'length'} = $length;
+	}
+}
+
+sub tag_complete_labels ($) {
+	my $labels = shift;
+	foreach my $label (@$labels) {
+		tag_if_complete ($label);
+	}
+}
+
+sub code_offset ($$$) {
+	my ($label, $inst, $instructions) = @_;
+	my $arg		= $inst->{'arg'};
+	my $this	= $label->{'idx'};
+	my $backward;
+	my $distance;
+	my $target;
+
+	if ($arg->{'proc'} eq $label->{'proc'}) {
+		$target = $arg->{'idx'};
+		$distance = 0;
+	} else {
+		$target = 0;
+		$distance += $label->{'proc'}->{'pos'} - $arg->{'pos'};
+	}
+
+	if ($target > $this) {
+		# Forward Jump
+		my $p = $label->{'next'};
+		while ($p->{'idx'} != $target) {
+			return 0 if !exists ($p->{'length'});
+			$distance 	+= $p->{'length'};
+			$p		= $p->{'next'};
+		}
+	} elsif ($target < $this) {
+		# Backward Jump
+		my $p = $label->{'prev'};
+		do {
+			return 0 if !exists ($p->{'length'});
+			$distance 	+= $p->{'length'};
+			$p		= $p->{'prev'};
+		} until ($p->{'idx'} != $target);
+		$backward = 1;
+	} else {
+		# Self Reference
+		$backward = 1;
+	}
+
+	my $name	= $inst->{'name'};
+	my $num		= $instructions->primary ($name);
+
+	die "Unknown instruction $name" 
+		if !defined ($num);
+
+	my @bytes;
+
+	if ($backward) {
+		my $stable;
+		@bytes		= code_instruction (
+			$num, -$distance, $instructions
+		);
+		do {
+			my @new_bytes = code_instruction (
+				$num,
+				- ($distance + scalar (@bytes)),
+				$instructions
+			);
+			$stable = scalar (@bytes) == scalar (@new_bytes);
+			@bytes	= @new_bytes;
+		} until ($stable);
+	} else {
+		@bytes		= code_instruction (
+			$num, $distance, $instructions
+		);
+	}
+
+	$inst->{'bytes'}	= \@bytes;
+	$inst->{'length'}	= scalar (@bytes);
+	$label->{'length'}	= $inst->{'length'};
+}
+
+sub code_offset_if_known ($$) {
+	my ($label, $instructions) = @_;
+	my $inst	= $label->{'inst'}->[0];
+	my $arg		= $inst->{'arg'};
+	
+	return 0 if $arg->{'proc'} ne $label->{'proc'};
+	return code_offset ($label, $inst, $instructions);
+}
+
+sub code_known_offsets ($$) {
+	my ($labels, $instructions) = @_;
+	my $coded = 0;
+	foreach my $label (@$labels) {
+		next if exists ($label->{'length'});
+		$coded += code_offset_if_known ($label, $instructions);
+	}
+	return $coded;
+}
+
+sub code_static_external_offsets ($$) {
+	my ($labels, $instructions) = @_;
+	my $pos = $labels->[0]->{'pos'};
+
+	foreach my $label (@$labels) {
+		if (exists ($label->{'length'})) {
+			# Computed label, move on to next
+			$pos += $label->{'length'};
+			next;
+		}
+
+		my $inst	= $label->{'inst'}->[0];
+		my $arg		= $inst->{'arg'};
+		
+		if ($arg->{'proc'} eq $label->{'proc'}) {
+			# Uncomputed internal reference can't continue
+			return;
+		}
+
+		my $name	= $inst->{'name'};
+		my $num		= $instructions->primary ($name);
+
+		die "Unknown instruction $name" 
+			if !defined ($num);
+
+		my $arg_pos 	= $arg->{'pos'};
+		my @bytes	= code_instruction (
+			$num, $arg_pos - $pos, $instructions
+		);
+		my $stable;
+		do {
+			my @new_bytes = code_instruction (
+				$num,
+				$arg_pos - ($pos + scalar (@bytes)),
+				$instructions
+			);
+			$stable = scalar (@bytes) == scalar (@new_bytes);
+			@bytes	= @new_bytes;
+		} until ($stable);
+
+		$inst->{'bytes'}	= \@bytes;
+		$inst->{'length'}	= scalar (@bytes);
+		$label->{'length'}	= $inst->{'length'};
+		$pos 			+= $label->{'length'};
+	}
+}
+
+sub build_dynamic_label_map ($$) {
+	my ($proc, $labels) = @_;
+	my @map = scalar (@$labels) * 2;
+	my $i	= 0;
+
+	foreach my $label (@$labels) {
+		if ($label->{'length'}) {
+			$map[$i++] = '';
+			$map[$i++] = undef;
+		} else {
+			$map[$i++] = $label;
+			$map[$i++] = $label;
+		}
+	}
+	
+	$proc->{'dynamic_label_map'} = \@map;
+}
+
+sub build_label_dependencies ($) {
+	my ($label)	= @_;
+	my $idx		= $label->{'idx'};
+	my $map		= $label->{'proc'}->{'dynamic_label_map'};
+	my $arg		= $label->{'inst'}->[0]->{'arg'};
+	my $arg_idx	= $arg->{'proc'} == $label->{'proc'} ?
+			$arg->{'idx'} : 0;
+
+	# Slice bounds (lower, upper)
+	my $lb = ($arg_idx <= $idx ? $arg_idx : $idx) * 2;
+	my $ub = (($arg_idx >= $idx ? $arg_idx : $idx) * 2) + 1;
+
+	# Slice map, hash and remove empty and self references
+	my %deps = @{$map}[$lb..$ub];
+	delete ($deps{''});
+	delete ($deps{$label});
+
+	# If we have no dynamic dependencies something is wrong
+	if (keys (%deps) == 0) {
+		my $name = $label->{'name'};
+		die "No dynamic dependencies $name ($idx, $arg_idx)";
+	}
+
+	# Record ourselves in dependent hashes of dependencies
+	foreach my $k (keys (%deps)) {
+		my $dependents = $deps{$k}->{'dependents'};
+		if (!$dependents) {
+			$dependents			= {};
+			$deps{$k}->{'dependents'}	= $dependents;
+		}
+		$dependents->{$label} = $label;
+	}
+}
+
+sub build_label_dependents ($) {
+	my ($labels) = @_;
+	foreach my $label (@$labels) {
+		next if exists ($label->{'length'});
+		build_label_dependencies ($label);
+	}
+}
+
+sub add_initial_estimate_lengths ($) {
+	my ($labels) = @_;
+	foreach my $label (@$labels) {
+		if (!exists ($label->{'length'})) {
+			$label->{'length'}	= 1;
+			$label->{'estimate'}	= 1;
+		}
+	}
+}
+
+sub merge_hashes ($$) {
+	my ($dst, $src) = @_;
+	foreach my $key (keys (%$src)) {
+		$dst->{$key} = $src->{$key}
+			if !exists ($dst->{$key});
+	}
+}
+
+sub first_inst ($) {
+	my $inst = shift;
+	foreach my $inst (@$inst) {
+		return $inst if $inst->{'name'} !~ /^\./;
+	}
+	die "Unable to find instruction in label";
+}
+
+sub code_dynamic_offsets ($$) {
+	my ($labels, $instructions) = @_;
+	my $to_code = {};
+	
+	# Initial pass list is all estimated labels
+	foreach my $label (@$labels) {
+		$to_code->{$label} = $label if $label->{'estimate'};
+	}
+
+	# Keep interating until all labels are stable
+	while (keys (%$to_code)) {
+		my $pending = {};
+		foreach my $k (keys (%$to_code)) {
+			my $label = $to_code->{$k};
+			my $length = $label->{'length'};
+			die if !code_offset ($label, first_inst ($label->{'inst'}), $instructions);
+			if ($label->{'length'} != $length) {
+				merge_hashes ($pending, $label->{'dependents'});
+			}
+		}
+		$to_code = $pending;
+	}
+
+	# Code all the labels again now they are stable
+	foreach my $label (@$labels) {
+		next if !$label->{'estimate'};
+		my $length = $label->{'length'};
+
+		die if !code_offset ($label, first_inst ($label->{'inst'}), $instructions);
+		die if $length != $label->{'length'};
+		
+		delete ($label->{'estimate'});
+	}
+}
+
+sub tag_positions ($$) {
+	my ($labels, $pos) = @_;
+	foreach my $label (@$labels) {
+		$label->{'pos'} = $pos;
+		$pos += $label->{'length'};
+	}
+	return $pos;
+}
+
+sub build_ffi_stub ($$) {
+	my ($label, $ffi_idx)	= @_;
+	my $inst		= $label->{'inst'};
+	my $stub		= $label->{'stub'};
+	my $idx			= $$ffi_idx;
+	
+	if ($stub =~ /^C\.tvmspecial\.(\d)/) {
+		$idx = -($1 + 1);
+	} else {
+		my ($name) = ($stub =~ /^.*?\.(.*)$/);
+		$name =~ s/\./_/g;
+
+		$label->{'ffi_index'} 	= $idx;
+		$label->{'ffi_symbol'}	= $name;
+
+		${$ffi_idx}++;
+	}
+
+	push (@$inst, 
+		{ 'name' => 'LDC', 'arg' => $idx	},
+		{ 'name' => 'FFICALL'			}
+	);
+}
+
+sub generate_code ($$) {
+	my ($labels, $instructions) = @_;
+	my $ffi_idx	= 0;
+	my $pos		= 0;
+	foreach my $label (@$labels) {
+		if ($label->{'align'}) {
+			my %alignment = ( 1 => 0x1, 2 => 0x3, 3 => 0x7, 4 => 0xf );
+			my $mask = $alignment{$label->{'align'}};
+			if ($pos & $mask) {
+				$pos &= ~$mask;
+				$pos += $mask + 1;
+			}
+		}
+
+		$label->{'pos'} = $pos;
+
+		if ($label->{'proc'}) {
+			my $proc	= $label->{'proc'};
+			my $labels	= $proc->{'labels'};
+			code_static_instructions ($labels, $instructions);
+			tag_complete_labels ($labels);
+			code_static_external_offsets ($labels, $instructions);
+			while (code_known_offsets ($labels, $instructions) > 0) {
+				code_static_external_offsets ($labels, $instructions);
+			}
+			build_dynamic_label_map ($proc, $labels);
+			build_label_dependents ($labels);
+			add_initial_estimate_lengths ($labels);
+			code_dynamic_offsets ($labels, $instructions);
+			$pos = tag_positions ($labels, $pos);
+		} elsif ($label->{'stub'}) {
+			my $labels = [ $label ];
+			build_ffi_call ($label, \$ffi_idx);
+			code_static_instructions ($labels, $instructions);
+			tag_complete_labels ($labels);
+			$pos = tag_positions ($labels, $pos);
+		} else {
+			$pos += $label->{'length'};
+		}
+	}
+}
+
+sub expand_coding_order (@) {
+	my @coding_order = @_;
+	my @ret;
+	foreach my $label (@coding_order) {
+		do {
+			push (@ret, $label);
+			$label = $label->{'next'};
+		} while ($label);
+	}
+	return @ret;
+}
+
+1;
