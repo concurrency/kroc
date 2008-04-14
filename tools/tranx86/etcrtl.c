@@ -1,6 +1,6 @@
 /*
  *	etcrtl.c - ETC to RTL converter
- *	Copyright (C) 2000-2006 Fred Barnes <frmb@ukc.ac.uk>
+ *	Copyright (C) 2000-2006 Fred Barnes <frmb@kent.ac.uk>
  *	Parts based on tranetcp.occ Copyright (C) 1997 M D Poole
  *	MIPS modifications by Christian Jacobsen / Fred Barnes
  *
@@ -2132,8 +2132,21 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 			case I_MWS_ALTPOSTLOCK:
 			case I_MWS_PPBASEOF:
 			case I_MWS_PPPAROF:
+			case I_NLABADDR:
 				glob_in_icount++;
 				do_code_nocc_special (ts, &etc_code, arch);
+				break;
+			case I_NJTABLE:
+				glob_in_icount++;
+				do_code_nocc_special (ts, &etc_code, arch);
+				/* will force alignment of the following stuff */
+				if (options.internal_options & INTERNAL_ALIGNEDCODE) {
+					flush_ins_chain ();
+					trtl = new_rtl ();
+					trtl->type = RTL_ALIGN;
+					trtl->u.alignment = 2;
+					add_to_rtl_chain (trtl);
+				}
 				break;
 			case I_NWSADJ:
 				if (options.annotate_output) {
@@ -3302,6 +3315,34 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 				add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST | ARG_ISCONST, adj << WSH, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR));
 				add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_REG | ARG_IND, tmpreg));
 			}
+		}
+		break;
+		/*}}}*/
+		/*{{{  I_NJTABLE -- NOCC JTABLE instruction*/
+	case I_NJTABLE:
+		{
+			int lab = etc_code->fn - I_OPR;
+
+			if (options.annotate_output) {
+				sprintf (sbuf, "JTABLE %d", lab);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
+
+			/* FIXME: code for jump-table */
+
+		}
+		break;
+		/*}}}*/
+		/*{{{  I_NLABADDR -- NOCC constant label address (used in jump-tables)*/
+	case I_NLABADDR:
+		{
+			int lab = etc_code->fn - I_OPR;
+
+			if (options.annotate_output) {
+				sprintf (sbuf, ".labaddr %d", lab);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
+			add_to_ins_chain (compose_ins (INS_CONSTLABADDR, 1, 0, ARG_LABEL, lab));
 		}
 		break;
 		/*}}}*/

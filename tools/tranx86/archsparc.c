@@ -1,6 +1,6 @@
 /*
  *	archsparc.c -- sparc architecture stuff
- *	Copyright (C) 2004 Fred Barnes <frmb@ukc.ac.uk>
+ *	Copyright (C) 2004 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -1720,6 +1720,7 @@ static int rtl_validate_instr_sparc (ins_chain *ins)
 	case INS_MOVEB:
 	case INS_NOT:
 	case INS_CONSTLABDIFF:
+	case INS_CONSTLABADDR:
 	case INS_REPMOVEB:
 	case INS_MOVEZEXT8TO32:
 	case INS_RCR:

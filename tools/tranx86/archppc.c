@@ -1,6 +1,6 @@
 /*
  *	archppc.c -- powerpc architecture stuff
- *	Copyright (C) 2005 Fred Barnes <frmb@ukc.ac.uk>
+ *	Copyright (C) 2005 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -90,7 +90,6 @@ static void compose_kcall_ppc (tstate *ts, int call, int regs_in, int regs_out)
 	kif_entrytype *entry = kif_entry (call);
 	int to_preserve, r_in, r_out;
 	int i, cregs[3], xregs[5], oregs[3];
-	int tmp_reg, tmp_reg2;
 	ins_chain *tmp_ins, *tmp_ins2;
 #ifdef USER_DEFINED_CHANNELS
 	int target_reg = -1;
@@ -2201,6 +2200,7 @@ static int rtl_validate_instr_ppc (ins_chain *ins)
 	case INS_MOVEB:
 	case INS_NOT:
 	case INS_CONSTLABDIFF:
+	case INS_CONSTLABADDR:
 	case INS_REPMOVEB:
 	case INS_MOVEZEXT8TO32:
 	case INS_RCR:

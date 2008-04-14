@@ -653,6 +653,19 @@ fprintf (stderr, "netcread_nextblocks(): bits[0] = [%s], bits[1] = [%s], bits[2]
 			add_to_chain (&hblk, &tblk, tmp);
 
 			/*}}}*/
+		} else if (!strcmp (bits[0], ".labaddr")) {
+			/*{{{  constant address of label*/
+			int lab;
+
+			if (!bits[1] || (sscanf (bits[1], "%d", &lab) != 1)) {
+				goto bad_input_line;
+			}
+
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR + lab;
+			tmp->opd = I_NLABADDR;
+			add_to_chain (&hblk, &tblk, tmp);
+			/*}}}*/
 		} else {
 			goto bad_input_line;
 		}
@@ -1047,6 +1060,20 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 			if (sscanf (bits[1], "%d", &tmp->opd) != 1) {
 				goto bad_input_line;
 			}
+			add_to_chain (&hblk, &tblk, tmp);
+
+			/*}}}*/
+		} else if (!strcmp (bits[0], "jtable")) {
+			/*{{{  constant address of label*/
+			int lab;
+
+			if (!bits[1] || (sscanf (bits[1], "%d", &lab) != 1)) {
+				goto bad_input_line;
+			}
+
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR + lab;
+			tmp->opd = I_NJTABLE;
 			add_to_chain (&hblk, &tblk, tmp);
 
 			/*}}}*/
