@@ -1,6 +1,6 @@
 /*
  *	ppc.h - PPC related constants
- *	Copyright (C) 2005 Fred Barnes <frmb@ukc.ac.uk>
+ *	Copyright (C) 2005 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by

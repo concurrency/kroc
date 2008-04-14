@@ -1,6 +1,6 @@
 /*
  *	transputer.h - transputer constants
- *	Copyright (C) 2000 Fred Barnes <frmb2@ukc.ac.uk>
+ *	Copyright (C) 2000 Fred Barnes <frmb@kent.ac.uk>
  *	Based on transput.inc Copyright (C) 1997 M D Poole
  *
  *	This program is free software; you can redistribute it and/or modify
@@ -455,6 +455,13 @@
 /*{{{  (more) mobile type instructions*/
 
 #define I_MT_RESIZE	0x24d
+
+/*}}}*/
+/*{{{  additional NOCC specials*/
+/* FIXME: we really ought to reorder these sometime.. */
+
+#define I_NJTABLE	0x24e
+#define I_NLABADDR	0x24f
 
 /*}}}*/
 /*{{{  negative instructions (mostly T9000)*/

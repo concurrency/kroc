@@ -393,6 +393,16 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 			}
 			break;
 			/*}}}*/
+			/*{{{  INS_CONSTLABADDR -- load label address*/
+		case INS_CONSTLABADDR:
+			if ((tmp->in_args[0]->flags & ARG_MODEMASK) == ARG_INSLABEL) {
+				tlab1 = ((ins_chain *)tmp->in_args[0]->regconst)->in_args[0]->regconst;
+			} else {
+				tlab1 = tmp->in_args[0]->regconst;
+			}
+			fprintf (outstream, ".long " LBLPFX "%d\n", tlab1);
+			break;
+			/*}}}*/
 			/*{{{  INS_CJUMP -- conditional jump*/
 		case INS_CJUMP:
 			fprintf (outstream, "\tb%s\t", setcc_tailcodes[tmp->in_args[0]->regconst]);

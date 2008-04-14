@@ -1,6 +1,6 @@
 /*
  *	archmips.c -- MIPS architecture stuff
- *	Copyright (C) 2002-2003 Fred Barnes and Christian Jacobsen  <{frmb2,clj3}@ukc.ac.uk>
+ *	Copyright (C) 2002-2003 Fred Barnes and Christian Jacobsen  <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -63,6 +63,7 @@
 #define RMAX_MIPS 8
 #define NODEMAX_MIPS 256
 
+#if 0
 /*{{{  static void set_implied_inputs (ins_chain *instr, int n_inputs, int *i_regs)*/
 /*
  *	void set_implied_inputs (ins_chain *instr, int n_inputs, int *i_regs)
@@ -100,6 +101,7 @@ static void set_implied_outputs (ins_chain *instr, int n_outputs, int *o_regs)
 	return;
 }
 /*}}}*/
+#endif
 
 /*{{{  static void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)*/
 /*
@@ -110,9 +112,7 @@ static void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
 {
 	kif_entrytype *entry = kif_entry (call);
 	int to_preserve, r_in, r_out;
-	int i, cregs[3], xregs[4], oregs[3];
-	int tmp_reg;
-	ins_chain *tmp_ins, *tmp_ins2;
+	int cregs[3], xregs[4];
 
 	if (regs_out > 0) {
 		to_preserve = ts->stack->old_ts_depth - regs_in;
@@ -548,6 +548,7 @@ static void swap_in_args(ins_chain *ins, int a, int b)
 	ins->in_args[b] = tmp_arg;
 }
 /*}}}*/
+#if 0
 /*{{{ static void swap_imm_reg_args(ins_chain *ins) 
  * Swap args if in[0] is ARG_CONST, cos only src2 can be imm on MIPS 
  * This is for certain arithmetic instructions 
@@ -565,6 +566,7 @@ static void swap_imm_reg_args(ins_chain *ins)
 	}
 }
 /*}}}*/
+#endif
 
 /*{{{*/static ins_chain *find_next_ins_backward(ins_chain *ins)
 {
@@ -584,6 +586,7 @@ static void swap_imm_reg_args(ins_chain *ins)
 	return tmp_ins;
 }
 /*}}}*/
+#if 0
 /*{{{ static int expand_args_to_regs(ins_chain *ins)
  *
  * Expands the arguments of an instruction into purely using direct
@@ -617,6 +620,7 @@ static int expand_args_to_regs(ins_chain *ins)
 	/* FIXME: Do the same for out_args */
 	return 1;
 }/*}}}*/
+#endif
 /*{{{*/static ins_chain *find_and_check_setcc_regs(ins_chain *ins)
 /*
  * Oh, this is so ugly, possibly... In this case we have a SETCC
