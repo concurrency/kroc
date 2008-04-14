@@ -29,7 +29,7 @@ fi
 #
 #	build -- KRoC/Linux configuration/installation script
 #	Copyright (C) 2001-2006 Fred Barnes <frmb@kent.ac.uk>
-#	Copyright (C) 2007 University of Kent
+#	Copyright (C) 2007-2008 University of Kent
 #
 #	This program is free software; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -1583,7 +1583,7 @@ if [ "$PRERELEASE" = "1" ]; then
 **  in the BUGS file included in the distribution  **
 **                                                 **
 **  please report new bugs / suspicious behaviour  **
-**  to: frmb@kent.ac.uk  or  kroc-bugs@kent.ac.uk  **
+**  to:  kroc-bugs@kent.ac.uk                      **
 **                                                 **
 *****************************************************
 EOF
@@ -1600,7 +1600,7 @@ elif [ "$PRERELEASE" = "2" ]; then
 **  known bugs are listed in the included BUGS file.   **
 **                                                     **
 **  please report new-bugs and suspicious behaviour    **
-**  to:  frmb@kent.ac.uk   or  kroc-bugs@kent.ac.uk    **
+**  to:  kroc-bugs@kent.ac.uk                          **
 **                                                     **
 *********************************************************
 EOF
@@ -2685,7 +2685,7 @@ To clean the source tree, run:
 
 Enjoy,
 
-Fred.  (frmb@kent.ac.uk)
+Fred.  (kroc-bugs@kent.ac.uk)
 
 EOF
 fi
