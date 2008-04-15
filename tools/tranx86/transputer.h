@@ -462,6 +462,7 @@
 
 #define I_NJTABLE	0x24e
 #define I_NLABADDR	0x24f
+#define I_NJCSUB0	0x250
 
 /*}}}*/
 /*{{{  negative instructions (mostly T9000)*/
@@ -667,7 +668,8 @@ static int tsdiff_sec_twocodes[] = { \
 	-2, -2,	16, 16,	/* 240: mt_enroll, mt_resign, mt_sync, mt_xin */
 	16, 16, -2, -2,	/* 244: mt_xout, mt_xxchg, mt_dclone, mt_bind */
 	0, 0, 0, 16,	/* 248: mb, rmb, wmb, ext_mt_in */
-	16, -2		/* 24c: ext_mt_out, mt_resize */
+	16, -2, -1, 0,	/* 24c: ext_mt_out, mt_resize, njtable, nlabaddr */
+	-2		/* 250: njcsub0 */
 };
 
 /*}}}*/

@@ -781,7 +781,7 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 
 			/*}}}*/
 		} else if (!strcmp (bits[0], "csub0")) {
-			/*{{{  range check (FIXME: exact spec?)*/
+			/*{{{  range check (Breg must be in [0..(Areg-1)])*/
 			tmp = new_etc_chain ();
 			tmp->fn = I_OPR;
 			tmp->opd = I_CSUB0;
@@ -1074,6 +1074,20 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 			tmp = new_etc_chain ();
 			tmp->fn = I_OPR + lab;
 			tmp->opd = I_NJTABLE;
+			add_to_chain (&hblk, &tblk, tmp);
+
+			/*}}}*/
+		} else if (!strcmp (bits[0], "jcsub0")) {
+			/*{{{  jump if Breg outside of [0..(Areg-1)]*/
+			int lab;
+
+			if (!bits[1] || (sscanf (bits[1], "%d", &lab) != 1)) {
+				goto bad_input_line;
+			}
+
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR + lab;
+			tmp->opd = I_NJCSUB0;
 			add_to_chain (&hblk, &tblk, tmp);
 
 			/*}}}*/

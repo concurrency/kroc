@@ -2133,6 +2133,7 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 			case I_MWS_PPBASEOF:
 			case I_MWS_PPPAROF:
 			case I_NLABADDR:
+			case I_NJCSUB0:
 				glob_in_icount++;
 				do_code_nocc_special (ts, &etc_code, arch);
 				break;
@@ -3322,14 +3323,25 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 	case I_NJTABLE:
 		{
 			int lab = etc_code->fn - I_OPR;
+			int tmp_reg;
+
+			ts->stack->old_a_reg = ts->stack->a_reg;
+			ts->stack->old_b_reg = ts->stack->b_reg;
+			ts->stack->old_c_reg = ts->stack->c_reg;
+			deferred_cond (ts);
+			tstack_setsec (ts->stack, I_NJTABLE, arch);
 
 			if (options.annotate_output) {
 				sprintf (sbuf, "JTABLE %d", lab);
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
 				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
 			}
 
-			/* FIXME: code for jump-table */
-
+			tmp_reg = tstack_newreg (ts->stack);
+			/* Areg has the index for the jump, in a table at label 'lab' */
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, lab, ARG_REG, tmp_reg));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGINDSIB, 4, ts->stack->old_a_reg, tmp_reg, ARG_REG, tmp_reg));
+			add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_REG | ARG_IND, tmp_reg));
 		}
 		break;
 		/*}}}*/
@@ -3338,11 +3350,39 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 		{
 			int lab = etc_code->fn - I_OPR;
 
+			ts->stack->old_a_reg = ts->stack->a_reg;
+			ts->stack->old_b_reg = ts->stack->b_reg;
+			ts->stack->old_c_reg = ts->stack->c_reg;
+			tstack_setsec (ts->stack, I_NLABADDR, arch);
+
 			if (options.annotate_output) {
 				sprintf (sbuf, ".labaddr %d", lab);
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
 				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
 			}
 			add_to_ins_chain (compose_ins (INS_CONSTLABADDR, 1, 0, ARG_LABEL, lab));
+		}
+		break;
+		/*}}}*/
+		/*{{{  I_NJCSUB0 -- NOCC jump if CSUB0 condition (jump if Breg is outside of [0..(Areg-1)])*/
+	case I_NJCSUB0:
+		{
+			int lab = etc_code->fn - I_OPR;
+
+			ts->stack->old_a_reg = ts->stack->a_reg;
+			ts->stack->old_b_reg = ts->stack->b_reg;
+			ts->stack->old_c_reg = ts->stack->c_reg;
+			deferred_cond (ts);
+			tstack_setsec (ts->stack, I_NJCSUB0, arch);
+
+			if (options.annotate_output) {
+				sprintf (sbuf, "JCSUB0 %d", lab);
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
+
+			add_to_ins_chain (compose_ins (INS_CMP, 2, 1, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_a_reg, ARG_REG | ARG_IMP, REG_CC));
+			add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_BE, ARG_LABEL, lab));
 		}
 		break;
 		/*}}}*/
@@ -3351,6 +3391,7 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 		{
 			if (options.annotate_output) {
 				sprintf (sbuf, "NSTARTP");
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
 				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
 			}
 
