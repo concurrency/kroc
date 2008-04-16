@@ -33,6 +33,7 @@ include_HEADERS = \
 	tvm_config.h \
 	tvm_mem.h \
 	tvm_mem_intf.h \
+	tvm_tbc.h \
 	tvm_time.h \
 	tvm_types.h
 
@@ -40,7 +41,8 @@ libtvm_a_SOURCES = \
 	interpreter.c \
 	mem_array.c \
 	mem_bigendian.c \
-	scheduler.c
+	scheduler.c \
+	tencode.c
 
 if TVM_DISPATCH_SWITCH
 interpreter.c: $(top_builddir)/dispatch_ins.c
@@ -63,8 +65,7 @@ libtvm_a_SOURCES += \
 	$(top_builddir)/jumptbl_pri.c \
 	$(top_builddir)/jumptbl_sec.c \
 	$(top_builddir)/jumptbl_ex_sec.c \
-	mem.c \
-	scheduler.c
+	mem.c
 endif
 
 if TVM_TLSF
