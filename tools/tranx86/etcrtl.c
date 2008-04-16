@@ -3401,9 +3401,11 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 			deferred_cond (ts);
 			tstack_setsec (ts->stack, I_NSTARTP, arch);
 
-			add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_FLABEL | ARG_ISCONST, 0, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_b_reg));
+			// add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_FLABEL | ARG_ISCONST, 0, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_b_reg));
 
-			if ((options.inline_options & INLINE_SCHEDULER) && arch->compose_inline_startp) {
+			if (options.kernel_interface & KRNLIFACE_MP) {
+				arch->compose_kcall (ts, K_STARTP, 2, 0);
+			} else if ((options.inline_options & INLINE_SCHEDULER) && arch->compose_inline_startp) {
 				arch->compose_inline_startp (ts);
 			} else {
 				arch->compose_kcall (ts, K_STARTP, 2, 0);
