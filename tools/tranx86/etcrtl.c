@@ -3275,6 +3275,7 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 				} else {
 					sprintf (sbuf, "NCALL L%d %d", etc_code->opd, adj);
 				}
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
 				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
 			}
 
@@ -3295,16 +3296,17 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 		{
 			int adj = etc_code->fn - I_OPR;
 
-			if (options.annotate_output) {
-				sprintf (sbuf, "NRET %d", adj);
-				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
-			}
-
 			ts->stack->old_a_reg = ts->stack->a_reg;
 			ts->stack->old_b_reg = ts->stack->b_reg;
 			ts->stack->old_c_reg = ts->stack->c_reg;
 			deferred_cond (ts);
 			tstack_setsec (ts->stack, I_NRET, arch);
+
+			if (options.annotate_output) {
+				sprintf (sbuf, "NRET %d", adj);
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
 
 			if (arch->compose_nreturn) {
 				/* need to do this a bit more carefully.. */
@@ -3389,19 +3391,19 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 		/*{{{  I_NSTARTP -- NOCC STARTP instruction, value in Areg is absolute*/
 	case I_NSTARTP:
 		{
-			if (options.annotate_output) {
-				sprintf (sbuf, "NSTARTP");
-				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
-				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
-			}
-
 			ts->stack->old_a_reg = ts->stack->a_reg;
 			ts->stack->old_b_reg = ts->stack->b_reg;
 			ts->stack->old_c_reg = ts->stack->c_reg;
 			deferred_cond (ts);
 			tstack_setsec (ts->stack, I_NSTARTP, arch);
 
-			// add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_FLABEL | ARG_ISCONST, 0, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_b_reg));
+			if (options.annotate_output) {
+				sprintf (sbuf, "NSTARTP");
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
+
+			add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_FLABEL | ARG_ISCONST, 0, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_b_reg));
 
 			if (options.kernel_interface & KRNLIFACE_MP) {
 				arch->compose_kcall (ts, K_STARTP, 2, 0);
@@ -3410,6 +3412,8 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 			} else {
 				arch->compose_kcall (ts, K_STARTP, 2, 0);
 			}
+			add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0));
+
 		}
 		break;
 		/*}}}*/
@@ -3418,16 +3422,17 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 		{
 			int tmpreg = tstack_newreg (ts->stack);
 
-			if (options.annotate_output) {
-				sprintf (sbuf, "NNEG");
-				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
-			}
-
 			ts->stack->old_a_reg = ts->stack->a_reg;
 			ts->stack->old_b_reg = ts->stack->b_reg;
 			ts->stack->old_c_reg = ts->stack->c_reg;
 			deferred_cond (ts);
 			tstack_setsec (ts->stack, I_NNEG, arch);
+
+			if (options.annotate_output) {
+				sprintf (sbuf, "NNEG");
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
 
 			add_to_ins_chain (compose_ins (INS_XOR, 2, 1, ARG_REG, tmpreg, ARG_REG, tmpreg, ARG_REG, tmpreg));
 			add_to_ins_chain (compose_ins (INS_SUB, 2, 2, ARG_REG, ts->stack->old_a_reg, ARG_REG, tmpreg, ARG_REG, tmpreg, ARG_REG | ARG_IMP, REG_CC));
@@ -3441,16 +3446,17 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 		/*{{{  I_NLW -- load word at address in Areg into Areg'*/
 	case I_NLW:
 		{
-			if (options.annotate_output) {
-				sprintf (sbuf, "NLW");
-				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
-			}
-
 			ts->stack->old_a_reg = ts->stack->a_reg;
 			ts->stack->old_b_reg = ts->stack->b_reg;
 			ts->stack->old_c_reg = ts->stack->c_reg;
 			deferred_cond (ts);
 			tstack_setsec (ts->stack, I_NLW, arch);
+
+			if (options.annotate_output) {
+				sprintf (sbuf, "NLW");
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
 
 			if (ts->magic_pending & TS_MAGIC_IOSPACE) {
 				int tmp_reg;
@@ -3474,16 +3480,17 @@ fprintf (stderr, "MAGIC IOSPACE! (load-word) [%d] --> %d\n", ts->stack->old_a_re
 		/*{{{  I_NSW -- store word in Breg at address in Areg*/
 	case I_NSW:
 		{
-			if (options.annotate_output) {
-				sprintf (sbuf, "NSW");
-				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
-			}
-
 			ts->stack->old_a_reg = ts->stack->a_reg;
 			ts->stack->old_b_reg = ts->stack->b_reg;
 			ts->stack->old_c_reg = ts->stack->c_reg;
 			deferred_cond (ts);
 			tstack_setsec (ts->stack, I_NSW, arch);
+
+			if (options.annotate_output) {
+				sprintf (sbuf, "NSW");
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
 
 			if (ts->magic_pending & TS_MAGIC_IOSPACE) {
 #if 0
