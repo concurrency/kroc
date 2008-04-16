@@ -971,6 +971,20 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 			tmp->opd = I_GETPRI;
 			add_to_chain (&hblk, &tblk, tmp);
 			/*}}}*/
+		} else if (!strcmp (bits[0], "getaff")) {
+			/*{{{  get affinity*/
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR;
+			tmp->opd = I_GETAFF;
+			add_to_chain (&hblk, &tblk, tmp);
+			/*}}}*/
+		} else if (!strcmp (bits[0], "getpas")) {
+			/*{{{  get priority and affinity state*/
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR;
+			tmp->opd = I_GETPAS;
+			add_to_chain (&hblk, &tblk, tmp);
+			/*}}}*/
 		} else {
 			goto bad_input_line;
 		}
@@ -1616,6 +1630,13 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 			tmp = new_etc_chain ();
 			tmp->fn = I_OPR;
 			tmp->opd = I_SETPRI;
+			add_to_chain (&hblk, &tblk, tmp);
+			/*}}}*/
+		} else if (!strcmp (bits[0], "setaff")) {
+			/*{{{  set affinity*/
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR;
+			tmp->opd = I_SETAFF;
 			add_to_chain (&hblk, &tblk, tmp);
 			/*}}}*/
 		} else if (!strcmp (bits[0], "shr")) {
