@@ -6,6 +6,7 @@
  */
 
 #include "tvm_posix.h"
+#include <tvm_tbc.h>
 
 /*{{{  Global State */
 char			*prog_name 	= NULL;
@@ -40,11 +41,12 @@ static WORD 		tlp_argv[] = { (WORD) &kyb_channel, (WORD) &scr_channel, (WORD) &e
 /*}}}*/
 
 /*{{{  User */
+static tbc_t		*tbc;
+static BYTEPTR		tbc_data;
+static WORD		tbc_length;
+
 static WORDPTR		user_memory;
 static WORD		user_memory_len;
-static WORD		ws_size, vs_size, ms_size;
-static BYTEPTR		bytecode;
-static WORD		bytecode_len;
 /*}}}*/
 
 /*{{{  tvm_get_time */
@@ -318,27 +320,10 @@ static int install_firmware_ctx (void)
 	);
 }
 
-static int read_big_endian_int (FILE *fh, int *value)
-{
-	int ret;
-
-	if ((ret = fread (value, sizeof(int), 1, fh)) != 1) {
-		return error_out ("read error (%d)", ret);
-	}
-	
-	#if !defined(TVM_BIG_ENDIAN)
-	*value = SwapFourBytes (*value);
-	#endif
-
-	return 0;
-}
-
-static int read_bytecode (const char *fn)
+static int read_tbc (const char *fn)
 {
 	FILE *fh = fopen (fn, "rb");
-	char header[4];
-	int len, ret;
-	int bc_start, bc_length;
+	int ret;
 
 	if (fh == NULL) {
 		return error_out ("unable to open \"%s\"", fn);
@@ -348,68 +333,19 @@ static int read_bytecode (const char *fn)
 		return error_out ("unable to seek to file end", fn);
 	}
 
-	len = (int) ftell (fh);
-
+	tbc_length	= (int) ftell (fh);
+	tbc_data 	= (BYTEPTR) malloc (tbc_length);
+	
+	if (tbc_data == NULL) {
+		return error_out ("unable to allocate TBC memory (%d bytes)", tbc_length);
+	}
+	
 	if (fseek (fh, 0, SEEK_SET) < 0) {
 		return error_out ("unable to seek to file start", fn);
 	}
 
-	/* 'TBZ\0' + 2x4 + (4, 4, 4) + (4, 4, 4) + (4, 4, 4) + (4, 4, 4, 4) = 64 */
-	if (len <= 64) {
-		return error_out_no_errno ("file size %d is too small", len);
-	}
-
-	if ((ret = fread (header, sizeof(header), 1, fh)) != 1) {
-		return error_out ("read incorrect (%d)", ret);
-	}
-
-	if (memcmp (header, "tbz\0", 4)) {
-		return error_out_no_errno ("file header does not match");
-	}
-
-	if (fseek (fh, 3 * 4, SEEK_SET) < 0) {
-		return error_out ("unable to seek to bytecode descriptor", fn);
-	}
-	
-	if (read_big_endian_int (fh, &bc_start)) {
-		return -1;
-	}
-	if (read_big_endian_int (fh, &bc_length)) {
-		return -1;
-	}
-
-	if (fseek (fh, bc_start, SEEK_SET) < 0) {
-		return error_out ("unable to seek to bytecode", fn);
-	}
-
-	if ((ret = fread (header, sizeof(header), 1, fh)) != 1) {
-		return error_out ("read incorrect (%d)", ret);
-	}
-
-	if (memcmp (header, "tvm\2", 4)) {
-		fprintf (stderr, "%02x%02x%02x%02x\n", header[0], header[1], header[2], header[3]);
-		return error_out_no_errno ("bytecode header does not match");
-	}
-
-	if (read_big_endian_int (fh, &ws_size)) {
-		return -1;
-	}
-	if (read_big_endian_int (fh, &vs_size)) {
-		return -1;
-	}
-	if (read_big_endian_int (fh, &ms_size)) {
-		return -1;
-	}
-
-	bytecode_len	= bc_length - (4 * sizeof(int));
-	bytecode 	= (BYTEPTR) malloc (bytecode_len);
-
-	if (bytecode == NULL) {
-		return error_out ("unable to allocate bytecode memory (%d bytes)", bytecode_len);
-	}
-
-	if ((ret = fread (bytecode, 1, bytecode_len, fh)) != bytecode_len) {
-		return error_out ("failed reading bytecode (%d of %d bytes)", ret, bytecode_len);
+	if ((ret = fread (tbc_data, 1, tbc_length, fh)) != tbc_length) {
+		return error_out ("failed reading TBC (%d of %d bytes)", ret, tbc_length);
 	}
 
 	fclose (fh);
@@ -417,22 +353,90 @@ static int read_bytecode (const char *fn)
 	return 0;
 }
 
+static int load_tbc (const char *fn)
+{
+	tenc_element_t	element;
+	int		length;
+	BYTE		*data;
+
+	if (read_tbc (fn)) {
+		error_out_no_errno ("unable to read TBC");
+		return -1;
+	}
+
+	/* CGR FIXME: this function from here onward should move to libtvm. */
+
+	data	= tbc_data;
+	length	= tbc_length;
+
+	if (tenc_decode_element (data, &length, &element)) {
+		error_out_no_errno ("unable to decode TBC header");
+		return -1;
+	}
+
+	#if TVM_WORD_LENGTH == 2
+	if (memcmp (element.id, "tenc", 4) != 0)
+	#else
+	if (memcmp (element.id, "TEnc", 4) != 0)
+	#endif
+	{
+		error_out_no_errno ("unable to decode TBC is not TEncode");
+		return -1;
+	}
+
+	if (element.length > length) {
+		error_out_no_errno ("header length greater than available data");
+		return -1;
+	}
+
+	data	= element.data.bytes;
+	length	= element.length;
+
+	if (tenc_walk_to_element (data, &length, "tbcL", &element) < 0) {
+		error_out_no_errno ("TBC does not contain bytecode headers");
+		return -1;
+	}
+
+	if (tbc_decode (element.data.bytes, element.length, &tbc)) {
+		error_out_no_errno ("unable to decode TBC");
+		return -1;
+	}
+
+	return 0;
+}
+
 static int install_user_ctx (const char *fn)
 {
 	#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
-	const char *tlp_fmt = "?!!F";
-	const int tlp_argc = 4;
+	const char *const tlp_fmt = "?!!F";
 	#else
-	const char *tlp_fmt = "?!!";
-	const int tlp_argc = 3;
+	const char *const tlp_fmt = "?!!";
 	#endif /* !TVM_DYNAMIC_MEMORY || !TVM_OCCAM_PI */
+	const char *tlp;
 
 	WORDPTR ws, vs, ms;
 	ECTX user = &user_ctx;
 
-	if (read_bytecode (fn)) {
-		error_out_no_errno ("unable to read bytecode");
+	if (load_tbc (fn)) {
 		return -1;
+	}
+
+	if (tbc->tlp != NULL) {
+		tlp = tbc->tlp->fmt;
+		if (tlp == NULL) {
+			tlp = tlp_fmt;
+		} else if (strcmp (tlp, "") == 0) {
+			/* OK */
+		} else if (strcmp (tlp, "?!!F") == 0) {
+			/* OK */
+		} else if (strcmp (tlp, "?!!") == 0) {
+			/* OK */
+		} else {
+			error_out_no_errno ("unsupported top-level-process format: \"%s\"", tlp);
+			return -1;
+		}
+	} else {
+		tlp = tlp_fmt;
 	}
 
 	tvm_ectx_init (&tvm, user);
@@ -442,8 +446,8 @@ static int install_user_ctx (const char *fn)
 
 	user_memory_len = tvm_ectx_memory_size (
 		user,
-		tlp_fmt, tlp_argc, 
-		ws_size, vs_size, ms_size
+		tlp, strlen (tlp), 
+		tbc->ws, tbc->vs, tbc->ms
 	);
 
 	user_memory = (WORDPTR) malloc (sizeof (WORD) * user_memory_len);
@@ -453,16 +457,14 @@ static int install_user_ctx (const char *fn)
 
 	tvm_ectx_layout (
 		user, user_memory,
-		tlp_fmt, tlp_argc, 
-		ws_size, 
-		vs_size, 
-		ms_size,
+		tlp, strlen (tlp), 
+		tbc->ws, tbc->vs, tbc->ms, 
 		&ws, &vs, &ms
 	);
 
 	return tvm_ectx_install_tlp (
-		user, bytecode, ws, vs, ms,
-		tlp_fmt, tlp_argc, tlp_argv
+		user, tbc->bytecode, ws, vs, ms,
+		tlp, strlen (tlp), tlp_argv
 	);
 }
 
@@ -614,7 +616,7 @@ int main (int argc, char *argv[])
 	
 	free (firmware_memory);
 	free (user_memory);
-	free (bytecode);
+	free (tbc_data);
 
 	#ifdef TVM_PROFILING
 	output_profiling ();
