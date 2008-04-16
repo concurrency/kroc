@@ -5475,7 +5475,7 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 		}
 		break;
 		/*}}}*/
-		/*{{{  I_SETPRI -- set processor affinity*/
+		/*{{{  I_SETAFF -- set processor affinity*/
 	case I_SETAFF:
 		/* set current affinity to old Areg */
 		if (options.kernel_interface & KRNLIFACE_MP) {
