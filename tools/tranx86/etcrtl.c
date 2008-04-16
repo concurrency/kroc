@@ -3404,6 +3404,7 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 			}
 
 			add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_FLABEL | ARG_ISCONST, 0, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_b_reg));
+			constmap_remove (ts->stack->old_b_reg);
 
 			if (options.kernel_interface & KRNLIFACE_MP) {
 				arch->compose_kcall (ts, K_STARTP, 2, 0);
