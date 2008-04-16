@@ -303,10 +303,12 @@ int tbc_decode (BYTE *data, int length, tbc_t **ptr)
 	data			= element.next;
 
 	/* Decode optional elements */
+	tbc->tlp	= NULL;
+	tbc->ffi	= NULL;
+	tbc->lni	= NULL;
 
-	tbc->tlp = NULL;
-	tbc->ffi = NULL;
-	tbc->lni = NULL;
+	/* Copy pointer */
+	*ptr 		= tbc;
 
 	while (length > 0) {
 		if (tenc_decode_element (data, &length, &element) < 0)
