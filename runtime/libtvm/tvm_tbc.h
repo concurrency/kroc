@@ -92,6 +92,9 @@ typedef struct _tbc_t {
 /*}}}*/
 
 /*{{{  TBC decoder interface */
+extern WORD tenc_decode_int (BYTE *src);
+extern int tenc_decode_element (BYTE *src, int *length, tenc_element_t *element);
+extern int tenc_walk_to_element (BYTE *data, int *length, const char *id, tenc_element_t *element);
 extern int tbc_decode (BYTE *data, int length, tbc_t **ptr);
 /*}}}*/
 

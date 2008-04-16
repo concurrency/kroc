@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tvm.h"
 #include "tvm_tbc.h"
 
-static WORD decode_int (BYTE *src)
+WORD tenc_decode_int (BYTE *src)
 {
 	WORD value = *((WORD *) src);
 	#if defined (TVM_BIG_ENDIAN)
@@ -35,7 +35,7 @@ static WORD decode_int (BYTE *src)
 	#endif
 }
 
-static int decode_element (BYTE *src, int *length, tenc_element_t *element)
+int tenc_decode_element (BYTE *src, int *length, tenc_element_t *element)
 {
 	if (*length < (sizeof (WORD) + 4)) {
 		return -1;
@@ -43,7 +43,7 @@ static int decode_element (BYTE *src, int *length, tenc_element_t *element)
 
 	memcpy (element->id, src, 4);
 	element->id[4] 	= '\0';
-	element->length = decode_int (src + 4);
+	element->length = tenc_decode_int (src + 4);
 	element->next	= src + (sizeof (WORD) + 4);
 	*length		-= (sizeof (WORD) + 4);
 
@@ -75,9 +75,10 @@ static int ids_match (const char *a, const char *b)
 	return 1;
 }
 
-static int walk_to_element (BYTE *data, int *length, const char *id, tenc_element_t *element) {
+int tenc_walk_to_element (BYTE *data, int *length, const char *id, tenc_element_t *element)
+{
 	while (*length > 0) {
-		int ret = decode_element (data, length, element);
+		int ret = tenc_decode_element (data, length, element);
 
 		if (ret < 0) {
 			return ret;
@@ -98,7 +99,7 @@ static int load_uint (BYTE **data, int *length, const char *id, UWORD *dst)
 	tenc_element_t element;
 	int ret;
 
-	if ((ret = walk_to_element (*data, length, id, &element)) < 0)
+	if ((ret = tenc_walk_to_element (*data, length, id, &element)) < 0)
 		return ret;
 	
 	*dst 	= element.data.u_int;
@@ -117,7 +118,7 @@ static int load_str (BYTE **data, int *length, const char *id, char **dst)
 	tenc_element_t element;
 	int ret;
 
-	if ((ret = walk_to_element (*data, length, id, &element)) < 0)
+	if ((ret = tenc_walk_to_element (*data, length, id, &element)) < 0)
 		return ret;
 	
 	/* Make sure the string has room for a terminator */
@@ -182,19 +183,19 @@ static tbc_ffi_t *decode_ffi (BYTE *head, const tenc_element_t *ffi_element)
 	BYTE 		*data	= ffi_element->data.bytes;
 	int 		length	= ffi_element->length;
 
-	if (walk_to_element (data, &length, "libL", &element) < 0)
+	if (tenc_walk_to_element (data, &length, "libL", &element) < 0)
 		return NULL;
 	
 	ffi->libraries	= decode_strs (element.data.bytes, element.length, "libS");
 	data		= element.next;
 	
-	if (walk_to_element (data, &length, "symL", &element) < 0)
+	if (tenc_walk_to_element (data, &length, "symL", &element) < 0)
 		return NULL;
 
 	ffi->symbols	= decode_strs (element.data.bytes, element.length, "symS");
 	data		= element.next;
 
-	if (walk_to_element (data, &length, "mapL", &element) < 0)
+	if (tenc_walk_to_element (data, &length, "mapL", &element) < 0)
 		return NULL;
 	
 	ffi->n_symbols	= 0;
@@ -244,7 +245,7 @@ static tbc_lni_t *decode_lni (BYTE *head, const tenc_element_t *lni_element)
 	int 		length	= lni_element->length;
 	int		idx	= 0;
 
-	if (walk_to_element (data, &length, "fn L", &element) < 0)
+	if (tenc_walk_to_element (data, &length, "fn L", &element) < 0)
 		return NULL;
 	
 	lni->files 	= decode_strs (element.data.bytes, element.length, "fn S");
@@ -256,7 +257,7 @@ static tbc_lni_t *decode_lni (BYTE *head, const tenc_element_t *lni_element)
 		BYTE 		*lnd_data;
 		int 		lnd_length;
 
-		if (walk_to_element (data, &length, "lndL", &element) < 0)
+		if (tenc_walk_to_element (data, &length, "lndL", &element) < 0)
 			break;
 
 		lnd_length 	= element.length;
@@ -294,7 +295,7 @@ int tbc_decode (BYTE *data, int length, tbc_t **ptr)
 	if ((ret = load_uint (&data, &length, "ms U", &(tbc->ms))) < 0)
 		return ret;
 
-	if ((ret = walk_to_element (data, &length, "bc B", &element)) < 0)
+	if ((ret = tenc_walk_to_element (data, &length, "bc B", &element)) < 0)
 		return ret;
 	
 	tbc->bytecode_len	= element.length;
@@ -308,7 +309,7 @@ int tbc_decode (BYTE *data, int length, tbc_t **ptr)
 	tbc->lni = NULL;
 
 	while (length > 0) {
-		if (decode_element (data, &length, &element) < 0)
+		if (tenc_decode_element (data, &length, &element) < 0)
 			return 0; /* ignore errors */
 
 		if (ids_match (element.id, "tlpL")) {
