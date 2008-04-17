@@ -150,8 +150,13 @@ sub link ($$@) {
 	my @coding_order;
 	build_coding_order ($globals{$entry_point}, \@coding_order);
 	generate_code (\@coding_order, $instructions);
+	
+	# Add jump entry and shift labels
+	my $jump = $self->jump_entry ($globals{$entry_point});
+	@coding_order = expand_coding_order (@coding_order);
+	shift_labels ($jump->{'length'}, @coding_order);
 
-	return expand_coding_order (@coding_order);
+	return ($jump, @coding_order);
 }
 
 sub count_nybbles ($) {
@@ -291,9 +296,11 @@ sub pull_out_data_blocks ($$) {
 		if ($label->{'prev'}) {
 			$label->{'prev'}->{'next'} = $label->{'next'};
 		}
+		delete ($label->{'prev'});
 		if ($label->{'next'}) {
 			$label->{'next'}->{'prev'} = $label->{'prev'};
 		}
+		delete ($label->{'next'});
 	}
 }
 
@@ -377,7 +384,7 @@ sub separate_code_blocks ($) {
 		my $labels	= $proc->{'labels'};
 		my $first	= $proc;
 		my $last	= $labels->[-1];
-		
+
 		if ($first->{'prev'}) {
 			delete ($first->{'prev'}->{'next'});
 		}
@@ -877,16 +884,59 @@ sub generate_code ($$) {
 	}
 }
 
+sub jump_entry ($$) {
+	my ($self, $entry) 	= @_;
+	my $instructions	= $self->{'instructions'};
+
+	my @bytes		= code_instruction (
+		$instructions->numeric ('J'),
+		$entry->{'pos'},
+		$instructions
+	);
+
+	while (@bytes < 4) {
+		@bytes = (
+			code_instruction (
+				$instructions->numeric ('PFIX'),
+				0,
+				$instructions
+			),
+			@bytes
+		);
+	}
+
+	return {
+		'name'	=> 'Jump',
+		'pos'	=> 0,
+		'inst'	=> [
+			{
+				'name'	=> 'J',
+				'arg'	=> $entry->{'pos'},
+				'bytes'	=> \@bytes
+			}
+		],
+		'length' => scalar (@bytes)
+	};
+}
+
 sub expand_coding_order (@) {
 	my @coding_order = @_;
 	my @ret;
-	foreach my $label (@coding_order) {
+	foreach my $ent (@coding_order) {
+		my $label = $ent;
 		do {
 			push (@ret, $label);
 			$label = $label->{'next'};
 		} while ($label);
 	}
 	return @ret;
+}
+
+sub shift_labels ($@) {
+	my ($shift, @labels) = @_;
+	foreach my $label (@labels) {
+		$label->{'pos'} += $shift;
+	}
 }
 
 1;

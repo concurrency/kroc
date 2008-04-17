@@ -130,7 +130,7 @@ my $tenc		= new Transterpreter::TEncode (
 
 # Top-Level-Process
 
-$tlp->add ('fmtS', ''); # FIXME
+$tlp->add ('fmtS', '?!!'); # FIXME
 $tlp->add ('tlpS', $entry_point->{'definition'});
 
 # Line numbering information
