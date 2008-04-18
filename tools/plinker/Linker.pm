@@ -196,11 +196,18 @@ sub expand_etc_ops ($$) {
 		my $name	= $op->{'name'};
 		my $arg		= $op->{'arg'};
 		if ($name eq '.LABEL') {
-			if ($arg->{'name'} eq 'LDC') {
-				splice (@$etc, $i, 1, 
-					$arg,
-					{ 'name' => 'LDPI' }
-				);
+			if (ref ($arg)) {
+				my $l1 = $arg->[0];
+				my $l2 = $arg->[1];
+				if ($l2->{'arg'} >= 0) {
+					die "No label difference support.";
+				} else {
+					$l1->{'name'} = 'LDC-LDPI';
+					splice (@$etc, $i, 1, 
+						$l1,
+						{ 'name' => 'LDPI' }
+					);
+				}
 			} else {
 				$etc->[$i] = $arg;
 			}
@@ -224,10 +231,9 @@ sub expand_etc_ops ($$) {
 			my $end		= ($arg[1] =~ /^L(\d+)$/)[0];
 			splice (@$etc, $i, 1, 
 				$arg[0],
-				{ 'name' => 'LDC', 'arg' => $start	},
-				{ 'name' => 'LDPI'			},
-				{ 'name' => $name			},
-				{ 'name' => '.SETLAB', 'arg' => $end	}
+				{ 'name' => "LDC+$name", 'arg' => "L$start"	},
+				{ 'name' => $name				},
+				{ 'name' => '.SETLAB', 'arg' => $end		}
 			);
 		}
 	}
@@ -551,6 +557,55 @@ sub tag_complete_labels ($) {
 	}
 }
 
+sub code_offset_instruction ($$$$) {
+	my ($name, $backward, $offset, $instructions) = @_;
+	my $num	= $instructions->primary ($name =~ /^([a-z0-9]+)([\-\+].*)/i);
+
+	die "Unknown instruction $name" 
+		if !defined ($num);
+
+	my @bytes;
+	my $inv = 1;
+
+	if ($name =~ /^LDC([\-\+])/) {
+		my $type = $1;
+		my $inst = ($name =~ /[\-\+](.*)$/)[0];
+		my @diff = code_instruction (
+			$instructions->primary ('OPR'),
+			$instructions->numeric ($inst),
+			$instructions
+		);
+		if ($type eq '-') {
+			$offset	+= scalar (@diff);
+		} else {
+			$offset	+= scalar (@diff);
+			$inv	= $backward ? -1 : 1;
+		}
+	}
+
+	if ($backward) {
+		my $stable;
+		@bytes		= code_instruction (
+			$num, (-$offset) * $inv, $instructions
+		);
+		do {
+			my @new_bytes = code_instruction (
+				$num,
+				(- ($offset + scalar (@bytes))) * $inv,
+				$instructions
+			);
+			$stable = scalar (@bytes) == scalar (@new_bytes);
+			@bytes	= @new_bytes;
+		} until ($stable);
+	} else {
+		@bytes		= code_instruction (
+			$num, $offset, $instructions
+		);
+	}
+
+	return @bytes;
+}
+
 sub code_offset ($$$) {
 	my ($label, $inst, $instructions) = @_;
 	my $arg		= $inst->{'arg'};
@@ -563,7 +618,7 @@ sub code_offset ($$$) {
 		$target = $arg->{'idx'};
 		$distance = 0;
 	} else {
-		$target = 0;
+		$target = $label->{'idx'};
 		$distance += $label->{'proc'}->{'pos'} - $arg->{'pos'};
 	}
 
@@ -582,7 +637,8 @@ sub code_offset ($$$) {
 			return 0 if !exists ($p->{'length'});
 			$distance 	+= $p->{'length'};
 			$p		= $p->{'prev'};
-		} until ($p->{'idx'} != $target);
+		} until ($p->{'idx'} == $target);
+		$distance += $p->{'length'};
 		$backward = 1;
 	} else {
 		# Self Reference
@@ -590,36 +646,15 @@ sub code_offset ($$$) {
 	}
 
 	my $name	= $inst->{'name'};
-	my $num		= $instructions->primary ($name);
-
-	die "Unknown instruction $name" 
-		if !defined ($num);
-
-	my @bytes;
-
-	if ($backward) {
-		my $stable;
-		@bytes		= code_instruction (
-			$num, -$distance, $instructions
-		);
-		do {
-			my @new_bytes = code_instruction (
-				$num,
-				- ($distance + scalar (@bytes)),
-				$instructions
-			);
-			$stable = scalar (@bytes) == scalar (@new_bytes);
-			@bytes	= @new_bytes;
-		} until ($stable);
-	} else {
-		@bytes		= code_instruction (
-			$num, $distance, $instructions
-		);
-	}
+	my @bytes	= code_offset_instruction (
+		$name, $backward, $distance, $instructions
+	);
 
 	$inst->{'bytes'}	= \@bytes;
 	$inst->{'length'}	= scalar (@bytes);
 	$label->{'length'}	= $inst->{'length'};
+
+	return 1;
 }
 
 sub code_offset_if_known ($$) {
@@ -661,25 +696,11 @@ sub code_static_external_offsets ($$) {
 		}
 
 		my $name	= $inst->{'name'};
-		my $num		= $instructions->primary ($name);
-
-		die "Unknown instruction $name" 
-			if !defined ($num);
-
 		my $arg_pos 	= $arg->{'pos'};
-		my @bytes	= code_instruction (
-			$num, $arg_pos - $pos, $instructions
+		my $offset	= $pos - $arg_pos;
+		my @bytes	= code_offset_instruction (
+				$name, 1, $offset, $instructions
 		);
-		my $stable;
-		do {
-			my @new_bytes = code_instruction (
-				$num,
-				$arg_pos - ($pos + scalar (@bytes)),
-				$instructions
-			);
-			$stable = scalar (@bytes) == scalar (@new_bytes);
-			@bytes	= @new_bytes;
-		} until ($stable);
 
 		$inst->{'bytes'}	= \@bytes;
 		$inst->{'length'}	= scalar (@bytes);
