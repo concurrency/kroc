@@ -92,13 +92,14 @@ sub decode ($$) {
 				my $tag		= $self->{$opd};
 				my @params	= split (//, $tag->{'p'});
 
-				foreach my $p (@params) {
+				for (my $i = 0; $i < @params; ++$i) {
+					my $p = $params[$i];
 					my ($fn, $opd);
 				
 					($fn, $opd, $pos) = $self->decode_fn_opd (\@data, $pos);
 					return if !defined ($pos);
 
-					if ($p =~ /^[bclsx]$/ && $fn != $LDC) {
+					if ($p =~ /^[bcdlsx]$/ && $fn != $LDC) {
 						die "Invalid operation while loading constant: $fn $opd";
 					}
 
@@ -115,16 +116,21 @@ sub decode ($$) {
 						$p = { 'name' => $tag->{'specials'}->{$opd} };
 					} else {
 						my $name = $instr->primary ($fn);
-						if ($p eq 'i') {
+						if ($tag->{'name'} eq 'LABEL' && (@params == 1)) {
+							if ($name eq 'LDC') {
+								push (@params, 'i');
+							}	
 							$opd = "L$opd";
 						} else {
 							$opd = fix_sign ($opd);
 						}
 						$p = { 
 							'name'	=> $name, 
-							'arg'	=> $opd,
+							'arg'	=> $opd
 						};
 					}
+
+					$params[$i] = $p;
 				}
 				
 				push (@text, {
