@@ -664,11 +664,11 @@ sub code_offset ($$$) {
 		} elsif ($target < $this) {
 			# Backward Jump
 			my $p = $label->{'prev'};
-			do {
+			while ($p->{'idx'} != $target) {
 				return 0 if !exists ($p->{'length'});
 				$distance 	+= $p->{'length'};
 				$p		= $p->{'prev'};
-			} until ($p->{'idx'} == $target);
+			}
 			$distance += $p->{'length'};
 			push (@offsets, { 'd' => '-', 'v' => $distance });
 		} else {
@@ -740,7 +740,7 @@ sub code_static_external_offsets ($$) {
 
 		my $name	= $inst->{'name'};
 		my @bytes	= code_offset_instruction (
-				$name, \@offsets, $instructions
+			$name, \@offsets, $instructions
 		);
 
 		$inst->{'bytes'}	= \@bytes;
@@ -773,8 +773,10 @@ sub build_label_dependencies ($) {
 	my $idx		= $label->{'idx'};
 	my $map		= $label->{'proc'}->{'dynamic_label_map'};
 	my $arg		= $label->{'inst'}->[0]->{'arg'};
+	my %deps;
 
 	foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
+		next if !ref ($arg);
 		my $arg_idx = $arg->{'proc'} == $label->{'proc'} ?
 				$arg->{'idx'} : 0;
 
@@ -782,26 +784,29 @@ sub build_label_dependencies ($) {
 		my $lb = ($arg_idx <= $idx ? $arg_idx : $idx) * 2;
 		my $ub = (($arg_idx >= $idx ? $arg_idx : $idx) * 2) + 1;
 
-		# Slice map, hash and remove empty and self references
-		my %deps = @{$map}[$lb..$ub];
-		delete ($deps{''});
-		delete ($deps{$label});
+		# Slice map, hash and merge
+		my %arg_deps = @{$map}[$lb..$ub];
+		merge_hashes (\%deps, \%arg_deps);
+	}
+	
+	# Remove empty and self references
+	delete ($deps{''});
+	delete ($deps{$label});
 
-		# If we have no dynamic dependencies something is wrong
-		if (keys (%deps) == 0) {
-			my $name = $label->{'name'};
-			die "No dynamic dependencies $name ($idx, $arg_idx)";
-		}
+	# If we have no dynamic dependencies something is wrong
+	if (keys (%deps) == 0) {
+		my $name = $label->{'name'};
+		die "No dynamic dependencies $name";
+	}
 
-		# Record ourselves in dependent hashes of dependencies
-		foreach my $k (keys (%deps)) {
-			my $dependents = $deps{$k}->{'dependents'};
-			if (!$dependents) {
-				$dependents			= {};
-				$deps{$k}->{'dependents'}	= $dependents;
-			}
-			$dependents->{$label} = $label;
+	# Record ourselves in dependent hashes of dependencies
+	foreach my $k (keys (%deps)) {
+		my $dependents = $deps{$k}->{'dependents'};
+		if (!$dependents) {
+			$dependents			= {};
+			$deps{$k}->{'dependents'}	= $dependents;
 		}
+		$dependents->{$label} = $label;
 	}
 }
 
