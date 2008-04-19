@@ -100,6 +100,14 @@ sub print_op ($$) {
 		foreach my $line (@lines) {
 			print "\t$line\n" if $line;
 		}
+	} elsif ($name eq '.LABEL' && ref ($arg) =~ /^ARRAY/) {
+		my $l1 = $arg->[0];
+		my $l2 = $arg->[1];
+		if ($l2->{'arg'} < 0) {
+			print_op ($indent, $l1);
+		} else {
+			print $indent, $l1->{'name'}, "\t", $l1->{'arg'}, "-L", $l2->{'arg'}, "\n";
+		}
 	} elsif (exists ($op->{'arg'})) {
 		if (ref ($arg)) {
 			my @params = ref ($arg) =~ /^ARRAY/ ? @$arg : ( $arg );
