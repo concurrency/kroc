@@ -196,13 +196,14 @@ sub expand_etc_ops ($$) {
 		my $name	= $op->{'name'};
 		my $arg		= $op->{'arg'};
 		if ($name eq '.LABEL') {
-			if (ref ($arg)) {
+			if (ref ($arg) =~ /^ARRAY/) {
 				my $l1 = $arg->[0];
 				my $l2 = $arg->[1];
 				if ($l2->{'arg'} >= 0) {
-					die "No label difference support.";
+					$l1->{'arg'}	= [ $l1->{'arg'}, 'L' . $l2->{'arg'} ];
+					$etc->[$i]	= $l1;
 				} else {
-					$l1->{'name'} = 'LDC-LDPI';
+					$l1->{'arg'} 	= [ $l1->{'arg'}, 'LDPI' ];
 					splice (@$etc, $i, 1, 
 						$l1,
 						{ 'name' => 'LDPI' }
@@ -231,9 +232,9 @@ sub expand_etc_ops ($$) {
 			my $end		= ($arg[1] =~ /^L(\d+)$/)[0];
 			splice (@$etc, $i, 1, 
 				$arg[0],
-				{ 'name' => "LDC+$name", 'arg' => "L$start"	},
-				{ 'name' => $name				},
-				{ 'name' => '.SETLAB', 'arg' => $end		}
+				{ 'name' => 'LDC', 'arg' => [ "L$end", "L$start" ]	},
+				{ 'name' => $name					},
+				{ 'name' => '.SETLAB', 'arg' => $end			}
 			);
 		}
 	}
@@ -242,16 +243,22 @@ sub expand_etc_ops ($$) {
 sub resolve_inst_label ($$$$) {
 	my ($labels, $label, $inst, $fn) = @_;
 	my $arg = $inst->{'arg'};
-	if ($arg =~ /^L(\d+)$/) {
-		my $num	= $1;
-		my $n	= 'L' . $fn . ':' . $num;
-		if (!exists ($labels->{$n})) {
-			die "Undefined label $n";
-		} else {
-			$inst->{'arg'} = $labels->{$n};
-			$labels->{$n}->{'refs'}++;
+	foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
+		if ($arg =~ /^L(\d+)$/) {
+			my $num	= $1;
+			my $n	= 'L' . $fn . ':' . $num;
+			if (!exists ($labels->{$n})) {
+				die "Undefined label $n";
+			} else {
+				if ($arg eq $inst->{'arg'}) {
+					$inst->{'arg'} = $labels->{$n};
+				} else {
+					$arg = $labels->{$n};
+				}
+				$labels->{$n}->{'refs'}++;
+			}
+			$inst->{'label_arg'} = 1;
 		}
-		$inst->{'label_arg'} = 1;
 	}
 }
 
@@ -264,7 +271,7 @@ sub resolve_inst_globals ($$$$$) {
 	my ($labels, $label, $inst, $globals, $ffi) = @_;
 	if ($inst->{'label_arg'}) {
 		my $arg = $inst->{'arg'};
-		if ($arg->{'stub'}) {
+		if ((ref ($arg) =~ /^HASH/) && $arg->{'stub'}) {
 			my $n = $arg->{'stub'};
 			if (exists ($globals->{$n})) {
 				$inst->{'arg'} = $globals->{$n};
@@ -407,8 +414,11 @@ sub instruction_proc_dependencies ($$$$) {
 	my (undef, $label, $inst, $depends) = @_;
 	if ($inst->{'label_arg'}) {
 		my $arg = $inst->{'arg'};
-		if ($label->{'proc'} ne $arg->{'proc'}) {
-			$depends->{$arg} = $arg;
+		foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
+			next if !ref ($arg);
+			if ($label->{'proc'} ne $arg->{'proc'}) {
+				$depends->{$arg} = $arg;
+			}
 		}
 	}
 }
@@ -557,97 +567,119 @@ sub tag_complete_labels ($) {
 	}
 }
 
-sub code_offset_instruction ($$$$) {
-	my ($name, $backward, $offset, $instructions) = @_;
-	my $num	= $instructions->primary ($name =~ /^([a-z0-9]+)([\-\+].*)/i);
+sub merge_offsets ($$$) {
+	my ($length, $offsets, $instructions) = @_;
+	my ($sum, $diff, $l, $split) = (0, 0, 0, 0);
+
+	foreach my $o (@$offsets) {
+		next if ref $o;
+			
+		my @diff = code_instruction (
+			$instructions->primary ('OPR'),
+			$instructions->numeric ($o),
+			$instructions
+		);
+		$length += scalar (@diff);
+	}
+
+	foreach my $o (@$offsets) {
+		next if !ref $o;
+		
+		my $inv = $l++ > 0 ? -1 : 1;
+
+		if ($o->{'d'} eq '+') {
+			$sum += $o->{'v'} * $inv;
+		} elsif ($o->{'d'} eq '-') {
+			$sum -= $o->{'v'} * $inv;
+			$diff += $length;
+		}
+
+		$split = ($split * $sum) >= 0 ? $sum : $split;
+	}
+
+	$sum += $l <= 1 ? -$diff : $diff;
+
+	return $sum;
+}
+
+sub code_offset_instruction ($$$) {
+	my ($name, $offsets, $instructions) = @_;
+	my $num	= $instructions->primary ($name);
 
 	die "Unknown instruction $name" 
 		if !defined ($num);
 
-	my @bytes;
-	my $inv = 1;
-
-	if ($name =~ /^LDC([\-\+])/) {
-		my $type = $1;
-		my $inst = ($name =~ /[\-\+](.*)$/)[0];
-		my @diff = code_instruction (
-			$instructions->primary ('OPR'),
-			$instructions->numeric ($inst),
+	my $stable;
+	my @bytes = code_instruction (
+		$num,
+		merge_offsets (1, $offsets, $instructions),
+		$instructions
+	);
+	do {
+		my @new_bytes = code_instruction (
+			$num,
+			merge_offsets (scalar (@bytes), $offsets, $instructions),
 			$instructions
 		);
-		if ($type eq '-') {
-			$offset	+= scalar (@diff);
-		} else {
-			$offset	+= scalar (@diff);
-			$inv	= $backward ? -1 : 1;
-		}
-	}
-
-	if ($backward) {
-		my $stable;
-		@bytes		= code_instruction (
-			$num, (-$offset) * $inv, $instructions
-		);
-		do {
-			my @new_bytes = code_instruction (
-				$num,
-				(- ($offset + scalar (@bytes))) * $inv,
-				$instructions
-			);
-			$stable = scalar (@bytes) == scalar (@new_bytes);
-			@bytes	= @new_bytes;
-		} until ($stable);
-	} else {
-		@bytes		= code_instruction (
-			$num, $offset, $instructions
-		);
-	}
+		$stable = scalar (@bytes) == scalar (@new_bytes);
+		@bytes	= @new_bytes;
+	} until ($stable);
 
 	return @bytes;
 }
 
 sub code_offset ($$$) {
 	my ($label, $inst, $instructions) = @_;
-	my $arg		= $inst->{'arg'};
-	my $this	= $label->{'idx'};
-	my $backward;
-	my $distance;
-	my $target;
-
-	if ($arg->{'proc'} eq $label->{'proc'}) {
-		$target = $arg->{'idx'};
-		$distance = 0;
-	} else {
-		$target = $label->{'idx'};
-		$distance += $label->{'proc'}->{'pos'} - $arg->{'pos'};
-	}
-
-	if ($target > $this) {
-		# Forward Jump
-		my $p = $label->{'next'};
-		while ($p->{'idx'} != $target) {
-			return 0 if !exists ($p->{'length'});
-			$distance 	+= $p->{'length'};
-			$p		= $p->{'next'};
+	my $arg	= $inst->{'arg'};
+	my @offsets;
+	
+	foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
+		if (!ref ($arg)) {
+			push (@offsets, $arg);
+			next;
 		}
-	} elsif ($target < $this) {
-		# Backward Jump
-		my $p = $label->{'prev'};
-		do {
-			return 0 if !exists ($p->{'length'});
-			$distance 	+= $p->{'length'};
-			$p		= $p->{'prev'};
-		} until ($p->{'idx'} == $target);
-		$distance += $p->{'length'};
-		$backward = 1;
-	} else {
-		# Self Reference
-		$backward = 1;
+
+		my $this	= $label->{'idx'};
+		my $backward;
+		my $distance;
+		my $target;
+
+		if ($arg->{'proc'} eq $label->{'proc'}) {
+			$target = $arg->{'idx'};
+			$distance = 0;
+		} else {
+			$target = $label->{'idx'};
+			$distance += $label->{'proc'}->{'pos'} - $arg->{'pos'};
+		}
+
+		if ($target > $this) {
+			# Forward Jump
+			my $p = $label->{'next'};
+			while ($p->{'idx'} != $target) {
+				return 0 if !exists ($p->{'length'});
+				$distance 	+= $p->{'length'};
+				$p		= $p->{'next'};
+			}
+			push (@offsets, { 'd' => '+', 'v' => $distance });
+		} elsif ($target < $this) {
+			# Backward Jump
+			my $p = $label->{'prev'};
+			do {
+				return 0 if !exists ($p->{'length'});
+				$distance 	+= $p->{'length'};
+				$p		= $p->{'prev'};
+			} until ($p->{'idx'} == $target);
+			$distance += $p->{'length'};
+			push (@offsets, { 'd' => '-', 'v' => $distance });
+		} else {
+			# Self Reference
+			push (@offsets, { 'd' => '-', 'v' => 0 });
+		}
 	}
 
 	my $name	= $inst->{'name'};
 	my @bytes	= code_offset_instruction (
-		$name, $backward, $distance, $instructions
+		$name, \@offsets, $instructions
 	);
 
 	$inst->{'bytes'}	= \@bytes;
@@ -662,7 +694,11 @@ sub code_offset_if_known ($$) {
 	my $inst	= $label->{'inst'}->[0];
 	my $arg		= $inst->{'arg'};
 	
-	return 0 if $arg->{'proc'} ne $label->{'proc'};
+	foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
+		next if !ref ($arg);
+		return 0 if $arg->{'proc'} ne $label->{'proc'};
+	}
+
 	return code_offset ($label, $inst, $instructions);
 }
 
@@ -689,17 +725,22 @@ sub code_static_external_offsets ($$) {
 
 		my $inst	= $label->{'inst'}->[0];
 		my $arg		= $inst->{'arg'};
+		my @offsets;
 		
-		if ($arg->{'proc'} eq $label->{'proc'}) {
-			# Uncomputed internal reference can't continue
-			return;
+		foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
+			if (!ref ($arg)) {
+				push (@offsets, $arg);
+			} elsif ($arg->{'proc'} eq $label->{'proc'}) {
+				# Uncomputed internal reference can't continue
+				return;
+			} else {
+				push (@offsets, { 'd' => '-', 'v' => $pos - $arg->{'pos'} });
+			}
 		}
 
 		my $name	= $inst->{'name'};
-		my $arg_pos 	= $arg->{'pos'};
-		my $offset	= $pos - $arg_pos;
 		my @bytes	= code_offset_instruction (
-				$name, 1, $offset, $instructions
+				$name, \@offsets, $instructions
 		);
 
 		$inst->{'bytes'}	= \@bytes;
@@ -732,32 +773,35 @@ sub build_label_dependencies ($) {
 	my $idx		= $label->{'idx'};
 	my $map		= $label->{'proc'}->{'dynamic_label_map'};
 	my $arg		= $label->{'inst'}->[0]->{'arg'};
-	my $arg_idx	= $arg->{'proc'} == $label->{'proc'} ?
-			$arg->{'idx'} : 0;
 
-	# Slice bounds (lower, upper)
-	my $lb = ($arg_idx <= $idx ? $arg_idx : $idx) * 2;
-	my $ub = (($arg_idx >= $idx ? $arg_idx : $idx) * 2) + 1;
+	foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
+		my $arg_idx = $arg->{'proc'} == $label->{'proc'} ?
+				$arg->{'idx'} : 0;
 
-	# Slice map, hash and remove empty and self references
-	my %deps = @{$map}[$lb..$ub];
-	delete ($deps{''});
-	delete ($deps{$label});
+		# Slice bounds (lower, upper)
+		my $lb = ($arg_idx <= $idx ? $arg_idx : $idx) * 2;
+		my $ub = (($arg_idx >= $idx ? $arg_idx : $idx) * 2) + 1;
 
-	# If we have no dynamic dependencies something is wrong
-	if (keys (%deps) == 0) {
-		my $name = $label->{'name'};
-		die "No dynamic dependencies $name ($idx, $arg_idx)";
-	}
+		# Slice map, hash and remove empty and self references
+		my %deps = @{$map}[$lb..$ub];
+		delete ($deps{''});
+		delete ($deps{$label});
 
-	# Record ourselves in dependent hashes of dependencies
-	foreach my $k (keys (%deps)) {
-		my $dependents = $deps{$k}->{'dependents'};
-		if (!$dependents) {
-			$dependents			= {};
-			$deps{$k}->{'dependents'}	= $dependents;
+		# If we have no dynamic dependencies something is wrong
+		if (keys (%deps) == 0) {
+			my $name = $label->{'name'};
+			die "No dynamic dependencies $name ($idx, $arg_idx)";
 		}
-		$dependents->{$label} = $label;
+
+		# Record ourselves in dependent hashes of dependencies
+		foreach my $k (keys (%deps)) {
+			my $dependents = $deps{$k}->{'dependents'};
+			if (!$dependents) {
+				$dependents			= {};
+				$deps{$k}->{'dependents'}	= $dependents;
+			}
+			$dependents->{$label} = $label;
+		}
 	}
 }
 
