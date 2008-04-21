@@ -34,16 +34,23 @@ sub assemble ($@) {
 	my $pos = 0;
 
 	foreach my $label (@labels) {
-		printf STDERR ("%-6s  % 3d  % 3d  % 3d\n",
+		printf ("0x%05x %-6s  % 3d  % 3d\n",
+			$label->{'pos'},
 			$label->{'name'}, 
 			$pos,
-			$label->{'pos'},
 			$label->{'length'}
 		);
 
 		while ($pos < $label->{'pos'}) {
 			push (@bytecode, "\0");
 			$pos++;
+		}
+
+		if ($pos != $label->{'pos'}) {
+			die sprintf (
+				"Label positioning error %s at %d (pos:%d)",
+				$label->{'name'}, $label->{'pos'}, $pos
+			);
 		}
 		
 		foreach my $op (@{$label->{'inst'}}) {
@@ -53,12 +60,12 @@ sub assemble ($@) {
 				push (@bytecode, @$bytes);
 				$pos += scalar (@$bytes);
 
-				for (my $i = 0; $i < 23; ++$i) { print STDERR " "; }
-				printf STDERR ('%-16s', $name);
+				for (my $i = 0; $i < 23; ++$i) { print " "; }
+				printf ('%-16s', $name);
 				for (my $i = 0; $i < @$bytes; ++$i) {
-					printf STDERR ('%02x ', unpack ('C', $bytes->[$i]));
+					printf ('%02x ', unpack ('C', $bytes->[$i]));
 				}
-				print STDERR "\n";
+				print "\n";
 			} elsif ($name =~ /^\.FILENAME$/) {
 				$debug{$pos} = {} if !$debug{$pos};
 				$debug{$pos}->{'file'} = $op->{'arg'};
@@ -70,11 +77,11 @@ sub assemble ($@) {
 				push (@bytecode, @bytes);
 				$pos += scalar (@bytes);
 				
-				for (my $i = 0; $i < 23; ++$i) { print STDERR " "; }
+				for (my $i = 0; $i < 23; ++$i) { print " "; }
 				for (my $i = 0; $i < @bytes; ++$i) {
-					printf STDERR ('%02x ', unpack ('C', $bytes[$i]));
+					printf ('%02x ', unpack ('C', $bytes[$i]));
 				}
-				print STDERR "\n";
+				print "\n";
 			}
 		}
 	}
