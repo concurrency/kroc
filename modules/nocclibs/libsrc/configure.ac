@@ -10,6 +10,7 @@ AM_INIT_AUTOMAKE(nocclibs, 0.1.4)
 dnl Checks for programs.
 AC_PROG_CC
 AC_CHECK_PROG(KROC, kroc, kroc)
+AC_CHECK_PROG(LD, ld, ld)
 
 dnl Checks for occam modules.
 
