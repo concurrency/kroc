@@ -296,7 +296,7 @@ sub pull_out_data_blocks ($$) {
 	my ($data, $inst) = (undef, 0);
 	foreach my $op (@{$label->{'inst'}}) {
 		my $name = $op->{'name'};
-		if ($name =~ /^[^.]/) {
+		if ($name =~ /^[^\.]/) {
 			die "Data label with instructions" if $data;
 			$inst++;
 		} elsif ($name eq '.DATABYTES') {
@@ -305,14 +305,14 @@ sub pull_out_data_blocks ($$) {
 		}
 	}
 	if ($data) {
-		$label->{'data'} = $data if $data;
+		$label->{'data'} = $data;
 		if ($label->{'prev'}) {
 			$label->{'prev'}->{'next'} = $label->{'next'};
 		}
-		delete ($label->{'prev'});
 		if ($label->{'next'}) {
 			$label->{'next'}->{'prev'} = $label->{'prev'};
 		}
+		delete ($label->{'prev'});
 		delete ($label->{'next'});
 	}
 }
@@ -563,6 +563,7 @@ sub tag_if_complete ($) {
 sub tag_complete_labels ($) {
 	my $labels = shift;
 	foreach my $label (@$labels) {
+		die if exists ($label->{'data'});
 		tag_if_complete ($label);
 	}
 }
