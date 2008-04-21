@@ -19,9 +19,14 @@
 
 #LIBRARY "compiler"
   NATIVELIB "libcompiler.so"
+  NAMESPACE "_nocc"
+
+#PRAGMA EXTERNAL "PROC C.get.processor.id.fromname (VAL []BYTE name, INT id) = 0,0"
 
 PUBLIC PROC GET.PROCESSOR.ID.FROMNAME (VAL []BYTE name, RESULT INT id)
-  SKIP
+  SEQ
+    id := 0
+    C.get.processor.id.fromname (name, id)
 :
 
 
