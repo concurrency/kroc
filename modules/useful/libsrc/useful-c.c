@@ -22,6 +22,7 @@
 void _format_print_stderr (int w[])
 {
 	const char *s = (const char *) w[0];
+	const int s_len = w[1];
 
-	fprintf (stderr, "%s", s);
+	fwrite (s, 1, s_len, stderr);
 }
