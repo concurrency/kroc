@@ -13,7 +13,7 @@ OCCAM_OCCBUILD
 AM_PATH_PYTHON([2.2], [], [exit 1])
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([file.module course.module maths.module], ,
+OCCAM_INCLUDE([course.module maths.module], ,
               [AC_MSG_ERROR(Required modules not found)])
 
 AC_OUTPUT([Makefile])
