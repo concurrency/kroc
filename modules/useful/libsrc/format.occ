@@ -18,12 +18,23 @@
 --
 --** @module useful
 
+--{{{  externals
+#PRAGMA EXTERNAL "PROC C.format.print.stderr (VAL []BYTE s) = 0"
+--}}}
+
 --{{{  PROC format.print
 --* Trivially print a string to a channel.
 -- @private
 PROC format.print (CHAN BYTE out!, VAL []BYTE s)
   SEQ i = 0 FOR SIZE s
     out ! s[i]
+:
+--}}}
+--{{{  PROC format.trace
+--* Print a string directly to standard error.
+-- @private
+PROC format.trace (VAL []BYTE s)
+  C.format.print.stderr (s)
 :
 --}}}
 --{{{  PROC format.int

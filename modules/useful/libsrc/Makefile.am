@@ -2,6 +2,7 @@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 OCCBUILD = @OCCBUILD@
+CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 
 EXTRA_DIST = \
 	make-format.py \
@@ -11,6 +12,7 @@ EXTRA_DIST = \
 	string.occ \
 	time.occ \
 	useful.inc \
+	useful-c.c \
 	vector.occ
 
 useful_lib_objs = \
@@ -20,6 +22,7 @@ useful_lib_objs = \
 	random.tce \
 	string.tce \
 	time.tce \
+	useful-c.o \
 	vector.tce
 
 useful_libs = useful.lib
@@ -39,6 +42,9 @@ clean-local:
 	$(OCCBUILD) --clean $(libs) $(useful_lib_objs)
 
 SUFFIXES = .occ .tce .lib
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
 
 .occ.tce:
 	$(OCCBUILD) --object $<
