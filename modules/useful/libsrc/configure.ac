@@ -8,6 +8,7 @@ AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE(useful, 1.0)
 
 dnl Checks for programs.
+AC_PROG_CC
 OCCAM_OCCBUILD
 AM_PATH_PYTHON([2.2], [], [exit 1])
 

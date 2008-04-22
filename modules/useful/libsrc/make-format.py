@@ -159,10 +159,20 @@ class ModeFormat(Mode):
 		w.write("[string FROM pos FOR %s] := %s" % (size, string))
 		w.write("pos := pos + %s" % size)
 
+class ModeTrace(Mode):
+	"""Print trace output directly to stderr."""
+
+	name = "trace"
+	def formals(self):
+		return []
+	def output(self, w, string, size):
+		w.write("format.trace (%s)" % string)
+
 modes = [
 	ModePrint(),
 	ModePrintShared(),
 	ModeFormat(),
+	ModeTrace(),
 	]
 
 class Writer:
