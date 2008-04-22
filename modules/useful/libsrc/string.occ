@@ -27,11 +27,7 @@
 -- @param s String to resize
 -- @param new.size New length
 PROC resize.string (MOBILE []BYTE s, VAL INT new.size)
-  MOBILE []BYTE new:
-  SEQ
-    new := MOBILE [new.size]BYTE
-    [new FOR new.size] := [s FOR min.int (SIZE s, new.size)]
-    s := new
+  RESIZE.MOBILE.ARRAY.1D (s, new.size)
 :
 --}}}
 --{{{  PROC append.string
