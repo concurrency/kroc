@@ -82,9 +82,9 @@ sub _encode ($$) {
 		} else {
 			$element->{'bytes'} 	= $data;
 			$element->{'bytes'}	.= "\0" if $id =~ /S$/;
-			$length			= length ($data);
+			$length			= length ($element->{'bytes'});
 			$element->{'pad'}	= $ib - ($length & ($ib - 1))
-				if ($length & ($ib - 1)) != 0;
+				if ($length & ($ib - 1));
 		}
 
 		$bytes .= $id;
