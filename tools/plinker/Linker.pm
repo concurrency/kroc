@@ -570,37 +570,46 @@ sub tag_complete_labels ($) {
 
 sub merge_offsets ($$$) {
 	my ($length, $offsets, $instructions) = @_;
-	my ($sum, $diff, $l, $split) = (0, 0, 0, 0);
+	my $diff;
+	my @d;
 
 	foreach my $o (@$offsets) {
-		next if ref $o;
-			
-		my @diff = code_instruction (
-			$instructions->primary ('OPR'),
-			$instructions->numeric ($o),
-			$instructions
-		);
-		$length += scalar (@diff);
-	}
+		if (ref ($o)) {
+			push (@d, $o);
+		} else {
+			my @diff = code_instruction (
+				$instructions->primary ('OPR'),
+				$instructions->numeric ($o),
+				$instructions
+			);
 
-	foreach my $o (@$offsets) {
-		next if !ref $o;
-		
-		my $inv = $l++ > 0 ? -1 : 1;
-
-		if ($o->{'d'} eq '+') {
-			$sum += $o->{'v'} * $inv;
-		} elsif ($o->{'d'} eq '-') {
-			$sum -= $o->{'v'} * $inv;
-			$diff += $length;
+			$diff += scalar (@diff);
 		}
-
-		$split = ($split * $sum) >= 0 ? $sum : $split;
 	}
 
-	$sum += $l <= 1 ? -$diff : $diff;
+	die if !@d;
+	my $ret = 0;
 
-	return $sum;
+	if ($d[0]->{'d'} eq '+') {
+		$ret = $d[0]->{'v'} - $diff;
+	} elsif ($d[0]->{'d'} eq '-') {
+		$ret = -($d[0]->{'v'} + $length + $diff);
+	} else {
+		die;
+	}
+
+	for (my $i = 1; $i < @d; ++$i) {
+		my $o = $d[$i];
+		if ($o->{'d'} eq '+') {
+			$ret -= $o->{'v'} - $diff;
+		} elsif ($o->{'d'} eq '-') {
+			$ret -= -($o->{'v'} + $length + $diff);
+		} else {
+			die;
+		}
+	}
+
+	return $ret;
 }
 
 sub code_offset_instruction ($$$) {
