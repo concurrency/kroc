@@ -44,9 +44,18 @@ my $tcoff	= new Transputer::TCOFF ($tcoff_h);
 my $tvm		= new Transterpreter::VM ();
 
 # Command Line Parsing
-my @files = @ARGV;
-if (!@files) {
-	print "plinker.pl <file> [<file>]\n";
+my ($first, @files) = @ARGV;
+my $output;
+if ($first eq '-o') {
+	$output = shift @files;
+} else {
+	unshift (@files, $first) if $first ne '--';
+	$output = $files[-1];
+	$output =~ s/\.tce$/.tbc/i;
+}
+
+if (!$output || !@files) {
+	print "plinker.pl [-o <name>] <file> [<file>]\n";
 	exit 1;
 }
 
@@ -163,7 +172,7 @@ foreach my $entry (@$debug) {
 
 # Output 
 my $fh;
-open ($fh, ">test.tenc") || die $!;
+open ($fh, ">$output") || die $!;
 binmode ($fh);
 print $fh $tenc->encode ('TEnc');
 close ($fh);
