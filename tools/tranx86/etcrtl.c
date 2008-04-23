@@ -2361,7 +2361,7 @@ fprintf (stderr, "setting ts->ws_adjust = %d\n", ts->ws_adjust);
 	}
 	/*}}}*/
 	/*{{{  drop debugging info as needed*/
-	/* drop debugging info if appropiate */
+	/* drop debugging info if appropriate */
 	flush_ins_chain ();
 	trtl = new_rtl ();
 	trtl->type = RTL_ALIGN;
@@ -2410,7 +2410,7 @@ fprintf (stderr, "ts->ws_size = %d\n", ts->ws_size);
 		trtl->u.wsvs.ms_bytes = (ts->ms_size << WSH);
 		add_to_rtl_chain (trtl);
 	}
-	/* drop library WS/VS counts if appropiate */
+	/* drop library WS/VS counts if appropriate */
 	if (def_lib_head) {
 		add_chain_to_rtl_chain (def_lib_head);
 	}

@@ -83,7 +83,7 @@ static arch_t *ppcarchdef = NULL;
 /*{{{  static void compose_kcall_ppc (tstate *ts, int call, int regs_in, int regs_out)*/
 /*
  *	void compose_kcall_ppc (tstate *ts, int call, int regs_in, int regs_out)
- *	creates a kernel-call (constraining registers appropiately)
+ *	creates a kernel-call (constraining registers appropriately)
  */
 static void compose_kcall_ppc (tstate *ts, int call, int regs_in, int regs_out)
 {
@@ -259,7 +259,7 @@ static void compose_kcall_ppc (tstate *ts, int call, int regs_in, int regs_out)
 /*{{{  static void compose_deadlock_kcall_ppc (tstate *ts, int call, int regs_in, int regs_out)*/
 /*
  *	void compose_deadlock_kcall_ppc (tstate *ts, int call, int regs_in, int regs_out)
- *	creates a kernel-call with deadlock info (constraining registers appropiately)
+ *	creates a kernel-call with deadlock info (constraining registers appropriately)
  */
 static void compose_deadlock_kcall_ppc (tstate *ts, int call, int regs_in, int regs_out)
 {

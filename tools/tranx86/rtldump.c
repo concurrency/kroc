@@ -82,7 +82,7 @@ int dump_textual_rtl (rtl_chain *rtl_code, char *outfile, arch_t *arch)
 /*}}}*/
 /*{{{  static char *reg_string (int regnum, arch_t *arch)*/
 /*
- *	turns regnum into an appropiate string
+ *	turns regnum into an appropriate string
  */
 static char *reg_string (int regnum, arch_t *arch)
 {

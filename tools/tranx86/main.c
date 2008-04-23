@@ -1108,8 +1108,8 @@ static void usage (FILE *stream)
 	fprintf (stream, "\t--int-nocmap  disable constant mapping\n");
 	fprintf (stream, "\t--int-noopt   disable optimiser\n");
 	fprintf (stream, "\t--int-dpt     show process table\n");
-	fprintf (stream, "\t--gstabs      pass --gstabs option to assembler (if appropiate)\n");
-	fprintf (stream, "\t--gstabs+     pass --gstabs+ option to assembler (if appropiate)\n");
+	fprintf (stream, "\t--gstabs      pass --gstabs option to assembler (if appropriate)\n");
+	fprintf (stream, "\t--gstabs+     pass --gstabs+ option to assembler (if appropriate)\n");
 	fprintf (stream, "\t-nd           disallow dynamic memory (MALLOC, MRELEASE, MNEW & MFREE)\n");
 #ifdef USER_DEFINED_CHANNELS
 	fprintf (stream, "\t-nec          don\'t generate external channel checks\n");

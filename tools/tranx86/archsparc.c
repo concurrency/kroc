@@ -70,7 +70,7 @@ static void compose_fp_set_fround_sparc (tstate *ts, int mode);
 /*{{{  static void compose_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)*/
 /*
  *	void compose_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)
- *	creates a kernel-call (constraining registers appropiately)
+ *	creates a kernel-call (constraining registers appropriately)
  */
 static void compose_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)
 {
@@ -225,7 +225,7 @@ static void compose_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out
 /*{{{  static void compose_deadlock_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)*/
 /*
  *	void compose_deadlock_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)
- *	creates a kernel-call with deadlock info (constraining registers appropiately)
+ *	creates a kernel-call with deadlock info (constraining registers appropriately)
  */
 static void compose_deadlock_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)
 {
