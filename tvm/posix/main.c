@@ -384,11 +384,6 @@ static int load_tbc (const char *fn)
 		return -1;
 	}
 
-	if (element.length > length) {
-		error_out_no_errno ("header length greater than available data");
-		return -1;
-	}
-
 	data	= element.data.bytes;
 	length	= element.length;
 
@@ -605,6 +600,32 @@ int main (int argc, char *argv[])
 	}
 	
 	if (u_ret == ECTX_ERROR) {
+		if (tbc->lni) {
+			tbc_lni_entry_t	*ln;
+			tbc_lni_t	*lni = tbc->lni;
+			tenc_str_t 	*file;
+			int offset = user_ctx.iptr - tbc->bytecode;
+			int i = 0;
+
+			while (i < lni->n_entries) {
+				if (lni->entries[i].offset > offset) {
+					break;
+				}
+				i++;
+			}
+			ln = &(lni->entries[i - 1]);
+
+			file = lni->files;
+			for (i = 0; i < ln->file; ++i) {
+				file = file->next;
+			}
+
+			fprintf (stderr,
+				"Error at %s:%d\n",
+				file->str, ln->line
+			);
+		}
+
 		/* FIXME: more debugging */
 		fprintf (stderr, 
 			"Program failed, state = %c, eflags = %08x\n",

@@ -54,9 +54,12 @@ int tenc_decode_element (BYTE *src, int *length, tenc_element_t *element)
 	} else if (*length < element->length) {
 		return -1;
 	} else {
+		const int align_mask = (sizeof (WORD) - 1);
 		int bytes = element->length;
 
-		bytes += ((sizeof (WORD)) - (bytes & (sizeof (WORD) - 1)));
+		if (bytes & align_mask) {
+			bytes += (sizeof (WORD)) - (bytes & align_mask);
+		}
 		
 		element->data.bytes 	= element->next;
 		element->next		+= bytes;

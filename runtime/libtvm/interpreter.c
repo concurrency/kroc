@@ -45,6 +45,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #endif
 
+#include <stdio.h>
+#include "ins_names.h"
+
 #define WS_PAD	4
 #define VS_PAD	1
 
@@ -448,6 +451,17 @@ int tvm_dispatch (ECTX ectx, UWORD cycles)
 		instr = read_byte (IPTR);
 		#endif
 		
+		#if 0
+		printf ("%p %02x ", IPTR, instr);
+		if ((instr & 0xF0) != 0xF0) {
+			printf ("%8s", pri_name[(instr >> 4) & 0xF]);
+		} else {
+			printf ("%8s", sec_name[OREG | (instr & 0xF)]);
+		}
+		printf (" %08x %08x %08x %08x\n", 
+			OREG | (instr & 0xF), AREG, BREG, CREG);
+		#endif
+
 		/* Increment instruction pointer */
 		IPTR = byteptr_plus (IPTR, 1);
 
