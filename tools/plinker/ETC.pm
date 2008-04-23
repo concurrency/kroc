@@ -178,8 +178,8 @@ sub define_constants ($) {
 		'DEBUGLINE'	=> { 'i' => 0x0a },
 		'SETWS'		=> { 'i' => 0x0b },
 		'SETVS'		=> { 'i' => 0x0c },
-		'SLLIMM'	=> { 'i' => 0x0d },
-		'SLRIMM'	=> { 'i' => 0x0e },
+		'SLLIMM'	=> { 'i' => 0x0d, 'p' => 'c' },
+		'SLRIMM'	=> { 'i' => 0x0e, 'p' => 'c' },
 		'LOOPHEADTOP'	=> { 'i' => 0x0f },
 		# Strings
 		'STUBNAME'	=> { 'i' => 0x11, 'p' => 's' },
