@@ -236,6 +236,15 @@ sub expand_etc_ops ($$) {
 				{ 'name' => $name					},
 				{ 'name' => '.SETLAB', 'arg' => $end			}
 			);
+		} elsif ($name =~ /^\.SL([RL])IMM$/) {
+			$op->{'name'} = "SH$1";
+			splice (@$etc, $i, 1,
+				{ 'name' => 'SAVECREG'				},
+				{ 'name' => 'LDC', 'arg' => $op->{'arg'}	},
+				$op,
+				{ 'name' => 'RESTORECREG'			}
+			);
+			delete ($op->{'arg'});
 		}
 	}
 }
