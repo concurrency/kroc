@@ -103,7 +103,7 @@ static ins_chain *compose_kjump_i386 (tstate *ts, const int type, const int cond
 /*{{{  static void compose_kcall_i386 (tstate *ts, int call, int regs_in, int regs_out)*/
 /*
  *	void compose_kcall_i386 (tstate *ts, int call, int regs_in, int regs_out)
- *	creates a kernel-call (constraining registers appropiately)
+ *	creates a kernel-call (constraining registers appropriately)
  */
 static void compose_kcall_i386 (tstate *ts, int call, int regs_in, int regs_out)
 {
@@ -271,7 +271,7 @@ fprintf (stderr, "compose_kcall_i386: regs_in = %d, regs_out = %d, r_in = %d, r_
 /*{{{  static void compose_deadlock_kcall_i386 (tstate *ts, int call, int regs_in, int regs_out)*/
 /*
  *	void compose_deadlock_kcall_i386 (tstate *ts, int call, int regs_in, int regs_out)
- *	creates a kernel-call with deadlock info (constraining registers appropiately)
+ *	creates a kernel-call with deadlock info (constraining registers appropriately)
  */
 static void compose_deadlock_kcall_i386 (tstate *ts, int call, int regs_in, int regs_out)
 {
