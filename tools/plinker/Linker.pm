@@ -649,8 +649,8 @@ sub code_offset ($$$) {
 			$target = $arg->{'idx'};
 			$distance = 0;
 		} else {
-			$target = $label->{'idx'};
-			$distance += $label->{'proc'}->{'pos'} - $arg->{'pos'};
+			$target = $label->{'proc'}->{'idx'};
+			$distance = $label->{'proc'}->{'pos'} - $arg->{'pos'};
 		}
 
 		if ($target > $this) {
@@ -670,6 +670,7 @@ sub code_offset ($$$) {
 				$distance 	+= $p->{'length'};
 				$p		= $p->{'prev'};
 			}
+			return 0 if !exists ($p->{'length'});
 			$distance += $p->{'length'};
 			push (@offsets, { 'd' => '-', 'v' => $distance });
 		} else {
