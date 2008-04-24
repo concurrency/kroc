@@ -251,6 +251,9 @@ sub expand_etc_ops ($$) {
 
 sub resolve_inst_label ($$$$) {
 	my ($labels, $label, $inst, $fn) = @_;
+	
+	return if $inst->{'name'} =~ /^\..*BYTES$/;
+	
 	my $arg = $inst->{'arg'};
 	foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
 		if ($arg =~ /^L(\d+)$/) {
