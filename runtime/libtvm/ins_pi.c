@@ -381,6 +381,17 @@ TVM_INSTRUCTION (ins_sem_release)
  *              0x2E 0xF_         0x2E 0xF_         0x2E 0xF_               *
  ****************************************************************************/
 
+/* 0xE0 - 0x2E 0xF0 - checknotnull - Check Pointer Not NULL */
+TVM_INSTRUCTION (ins_checknotnull)
+{
+	if (AREG != (WORD) NULL_P) {
+		/* stack untouched */
+		return ECTX_CONTINUE;
+	} else {
+		SET_ERROR_FLAG_RET (EFLAG_SETERR);
+	}
+}
+
 /* 0xE8 - 0x2E 0xF8 - xable - Extended Channel I/O Enable */
 TVM_INSTRUCTION (ins_xable)
 {
