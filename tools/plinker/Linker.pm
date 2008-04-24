@@ -30,7 +30,7 @@ sub new ($$) {
 	my $self = {
 		'instructions' => new Transterpreter::Instructions (
 			$instruct_h,
-			'/Users/cgr/src/kroc-svn/runtime/libtvm/'
+			'/Users/cgr/src/kroc/branches/tsp/runtime/libtvm/'
 		),
 	};
 	
@@ -310,7 +310,7 @@ sub pull_out_data_blocks ($$) {
 			$inst++;
 		} elsif ($name eq '.DATABYTES') {
 			die "Data label with instructions" if $inst;
-			$data = $op->{'arg'};
+			$data .= $op->{'arg'};
 		}
 	}
 	if ($data) {
