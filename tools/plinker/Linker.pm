@@ -133,7 +133,7 @@ sub link ($$@) {
 		# Transform Passes
 		foreach_label (\%labels, \&resolve_labels, $i);
 		foreach_label (\%labels, \&resolve_globals, \%globals, \%ffi);
-		foreach_label (\%labels, \&pull_out_data_blocks);
+		foreach_label (\%labels, \&build_data_blocks);
 		foreach_label (\%labels, \&add_data_lengths);
 		foreach_label (\%labels, \&isolate_static_sections);
 		tag_and_index_code_blocks (\@procs);
@@ -188,7 +188,8 @@ sub expand_etc_ops ($$) {
 	my ($etc, $instructions) = @_;
 	my %IGNORE_SPECIAL = (
 		'CONTRJOIN'	=> 1,
-		'CONTRSPLIT'	=> 1
+		'CONTRSPLIT'	=> 1,
+		'STARTTABLE'	=> 1
 	);
 	
 	for (my $i = 0; $i < @$etc; ++$i) {
@@ -303,20 +304,20 @@ sub resolve_globals ($$$$) {
 	foreach_inst ($labels, $label, \&resolve_inst_globals, $globals, $ffi);
 }
 
-sub pull_out_data_blocks ($$) {
+sub build_data_blocks ($$) {
 	my ($labels, $label) = @_;
 	my ($data, $inst) = (undef, 0);
 	foreach my $op (@{$label->{'inst'}}) {
 		my $name = $op->{'name'};
 		if ($name =~ /^[^\.]/) {
-			die "Data label with instructions" if $data;
 			$inst++;
 		} elsif ($name eq '.DATABYTES') {
-			die "Data label with instructions" if $inst;
 			$data .= $op->{'arg'};
+			$op->{'bytes'}	= [ split (//, $op->{'arg'}) ];
+			$op->{'length'}	= length ($op->{'arg'});
 		}
 	}
-	if ($data) {
+	if (!$inst && $data) {
 		$label->{'data'} = $data;
 		if ($label->{'prev'}) {
 			$label->{'prev'}->{'next'} = $label->{'next'};
@@ -516,6 +517,7 @@ sub code_static_instruction ($$$$) {
 	my (undef, $label, $inst, $instructions) = @_;
 	
 	return if $inst->{'label_arg'};
+	return if exists ($inst->{'length'});
 	
 	my $name	= $inst->{'name'};
 	my $arg		= $inst->{'arg'};
