@@ -32,8 +32,8 @@ TVM_INSTRUCTION_PROTO (ins_widenshort);
 TVM_INSTRUCTION_PROTO (ins_fficall);
 /* 0x26 - 0x22 0xF6 - lend3 - loopend3 (for step in replicators) */
 TVM_INSTRUCTION_PROTO (ins_lend3);
-/* 0x27 - 0x22 0xF7 - lendbw - backwards loopend */
-TVM_INSTRUCTION_PROTO (ins_lendbw);
+/* 0x27 - 0x22 0xF7 - lendb - backwards loopend */
+TVM_INSTRUCTION_PROTO (ins_lendb);
 /* 0x23 - 0x22 0xF3 - reschedule */
 TVM_INSTRUCTION_PROTO (ins_reschedule);
 

@@ -130,8 +130,8 @@ TVM_INSTRUCTION (ins_lend3)
 	return ECTX_CONTINUE;
 }
 
-/* 0x27 - 0x22 0xF7 - lendbw - backwards loopend */
-TVM_INSTRUCTION (ins_lendbw)
+/* 0x27 - 0x22 0xF7 - lendb - backwards loopend */
+TVM_INSTRUCTION (ins_lendb)
 {
 	/* Loop start offset comes in from AREG */
 	/* Loop control block ptr in BREG */
