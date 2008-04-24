@@ -189,7 +189,7 @@ sub expand_etc_ops ($$) {
 	my %IGNORE_SPECIAL = (
 		'CONTRJOIN'	=> 1,
 		'CONTRSPLIT'	=> 1,
-		'STARTTABLE'	=> 1
+		'FPPOP'		=> 1
 	);
 	
 	for (my $i = 0; $i < @$etc; ++$i) {
