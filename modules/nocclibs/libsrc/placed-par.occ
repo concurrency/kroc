@@ -19,9 +19,8 @@
 
 #LIBRARY "compiler"
   NATIVELIB "libcompiler.so"
-  NAMESPACE "_nocc"
 
-#PRAGMA EXTERNAL "PROC C.get.processor.id.fromname (VAL []BYTE name, INT id) = 0,0"
+#PRAGMA EXTERNAL "PROC C.get.processor.id.fromname (VAL []BYTE name, INT id) = 4,0"
 
 PUBLIC PROC GET.PROCESSOR.ID.FROMNAME (VAL []BYTE name, RESULT INT id)
   SEQ
