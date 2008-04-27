@@ -191,12 +191,16 @@ sub expand_etc_ops ($$) {
 		'CONTRSPLIT'	=> 1,
 		'FPPOP'		=> 1
 	);
+	my ($labn, $labo) = (0, 0);
 	
 	for (my $i = 0; $i < @$etc; ++$i) {
 		my $op		= $etc->[$i];
 		my $name	= $op->{'name'};
 		my $arg		= $op->{'arg'};
-		if ($name eq '.LABEL') {
+		if ($name =~ /^\.(SET|SECTION)LAB$/) {
+			$labn = $arg;
+			$labo = 0;
+		} elsif ($name eq '.LABEL') {
 			if (ref ($arg) =~ /^ARRAY/) {
 				my $l1 = $arg->[0];
 				my $l2 = $arg->[1];
@@ -221,6 +225,43 @@ sub expand_etc_ops ($$) {
 					'name'	=> 'LDC',
 					'arg'	=> 0
 				};
+			} elsif ($name eq 'STARTTABLE') {
+				my (@arg, $done, @table);
+				for (my $j = ($i+1); !$done && $j < @$etc; ++$j) {
+					my $op = $etc->[$j];
+					if ($op->{'name'} eq '.LABEL') {
+						my $op = $op->{'arg'};
+						if ($op->{'name'} eq 'J') {
+							push (@arg, $op->{'arg'});
+							push (@table, $op);
+							next;
+						}
+					}
+					$done = 1;
+				}
+				my $size_op		= {
+					'name'		=> 'LDC',
+					'arg'		=> 0
+				};
+				$op->{'name'}		= 'TABLE';
+				$op->{'arg'}		= \@arg;
+				$op->{'label_arg'}	= 1;
+				$op->{'table'}		= \@table;
+				$op->{'size_op'}	= $size_op;
+				my $mlab = $labn + (++$labo / 10.0);
+				my $jlab = $labn + (++$labo / 10.0);
+				splice (@$etc, $i, 1,
+					{},
+					$size_op,
+					{ 'name' => 'PROD'	},
+					{ 'name' => 'LDC', 'arg' => [ "L$jlab", "L$mlab" ] },
+					{ 'name' => 'LDPI'	},
+					{ 'name' => '.SETLAB', 'arg' => $mlab		},
+					{ 'name' => 'BSUB'	},
+					{ 'name' => 'GCALL'	},
+					{ 'name' => '.SETLAB', 'arg' => $jlab		},
+					$op
+				);
 			} elsif (!exists ($IGNORE_SPECIAL{$name})) {
 				$op = $arg;
 			}
@@ -257,7 +298,7 @@ sub resolve_inst_label ($$$$) {
 	
 	my $arg = $inst->{'arg'};
 	foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
-		if ($arg =~ /^L(\d+)$/) {
+		if ($arg =~ /^L([0-9_\.]+)$/) {
 			my $num	= $1;
 			my $n	= 'L' . $fn . ':' . $num;
 			if (!exists ($labels->{$n})) {
@@ -482,8 +523,8 @@ sub build_coding_order ($$) {
 	push (@{$order}, $label);
 }
 
-sub code_instruction ($$$) {
-	my ($num, $arg, $instructions) = @_;
+sub code_instruction ($$$$) {
+	my ($num, $arg, $length, $instructions) = @_;
 	my @bytes;
 	
 	my $negate = 0;
@@ -509,6 +550,28 @@ sub code_instruction ($$$) {
 		}
 		push (@bytes, pack ('C', $byte));
 	}
+
+	if (defined ($length)) {
+		if ($arg < 0) {
+			while (@bytes < $length) {
+				push (@bytes, code_instruction (
+					$instructions->primary ('J'),
+					0,
+					undef,
+					$instructions
+				));
+			}
+		} else {
+			while (@bytes < $length) {
+				unshift (@bytes, code_instruction (
+					$instructions->primary ('PFIX'),
+					0,
+					undef,
+					$instructions
+				));
+			}
+		}	
+	}
 	
 	return @bytes;
 }
@@ -521,6 +584,7 @@ sub code_static_instruction ($$$$) {
 	
 	my $name	= $inst->{'name'};
 	my $arg		= $inst->{'arg'};
+	my $length	= $inst->{'target_length'};
 	my @bytes;
 
 	if ($name =~ /^\./) {
@@ -539,7 +603,7 @@ sub code_static_instruction ($$$$) {
 			die "Unknown instruction $name";
 		}
 
-		@bytes = code_instruction ($num, $arg, $instructions);
+		@bytes = code_instruction ($num, $arg, $length, $instructions);
 	}
 
 	if (@bytes) {
@@ -594,6 +658,7 @@ sub merge_offsets ($$$) {
 			my @diff = code_instruction (
 				$instructions->primary ('OPR'),
 				$instructions->numeric ($o),
+				undef,
 				$instructions
 			);
 
@@ -626,37 +691,91 @@ sub merge_offsets ($$$) {
 	return $ret;
 }
 
-sub code_offset_instruction ($$$) {
-	my ($name, $offsets, $instructions) = @_;
+sub code_offset_instruction ($$$$) {
+	my ($name, $length, $offsets, $instructions) = @_;
 	my $num	= $instructions->primary ($name);
 
 	die "Unknown instruction $name" 
 		if !defined ($num);
 
-	my $stable;
+	# Estimate
 	my @bytes = code_instruction (
 		$num,
 		merge_offsets (1, $offsets, $instructions),
+		undef,
 		$instructions
 	);
+
+	# Code until stable
+	my $stable;
 	do {
 		my @new_bytes = code_instruction (
 			$num,
 			merge_offsets (scalar (@bytes), $offsets, $instructions),
+			undef,
 			$instructions
 		);
 		$stable = scalar (@bytes) == scalar (@new_bytes);
 		@bytes	= @new_bytes;
 	} until ($stable);
 
+	# Add padding (if required)
+	if (defined ($length)) {
+		@bytes = code_instruction (
+			$num,
+			merge_offsets (scalar (@bytes), $offsets, $instructions),
+			$length,
+			$instructions
+		);
+	}
+
 	return @bytes;
+}
+
+sub code_table ($$$) {
+	my ($label, $inst, $instructions) = @_;
+	my $max_length = 0;
+
+	die if scalar (@{$inst->{'table'}}) == 0;
+
+	foreach my $op (@{$inst->{'table'}}) {
+		return 0 if !exists ($op->{'length'});
+		my $length = $op->{'length'};
+		$max_length = $length if $length > $max_length;
+	}
+	
+	die if $max_length == 0;
+
+	foreach my $op (@{$inst->{'table'}}) {
+		$op->{'target_length'} = $max_length;
+	}
+
+	my $size_op	= $inst->{'size_op'};
+	my @bytes	= code_instruction (
+		$instructions->primary ($size_op->{'name'}),
+		$max_length,
+		undef,
+		$instructions
+	);
+	
+	$size_op->{'arg'}	= $max_length;
+	$size_op->{'bytes'}	= \@bytes;
+	$size_op->{'length'}	= scalar (@bytes);
+
+	$inst->{'length'}	= 0;
+	$label->{'length'}	= 0;
+
+	return 1;
 }
 
 sub code_offset ($$$) {
 	my ($label, $inst, $instructions) = @_;
 	my $arg	= $inst->{'arg'};
 	my @offsets;
-	
+
+	return code_table ($label, $inst, $instructions)
+		if $inst->{'name'} eq 'TABLE';
+
 	foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
 		if (!ref ($arg)) {
 			push (@offsets, $arg);
@@ -704,7 +823,7 @@ sub code_offset ($$$) {
 
 	my $name	= $inst->{'name'};
 	my @bytes	= code_offset_instruction (
-		$name, \@offsets, $instructions
+		$name, $inst->{'target_length'}, \@offsets, $instructions
 	);
 
 	$inst->{'bytes'}	= \@bytes;
@@ -751,7 +870,10 @@ sub code_static_external_offsets ($$) {
 		my $inst	= $label->{'inst'}->[0];
 		my $arg		= $inst->{'arg'};
 		my @offsets;
-		
+	
+		# Can't compute tables
+		return if $inst->{'name'} eq 'TABLE';
+
 		foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
 			if (!ref ($arg)) {
 				push (@offsets, $arg);
@@ -765,7 +887,8 @@ sub code_static_external_offsets ($$) {
 
 		my $name	= $inst->{'name'};
 		my @bytes	= code_offset_instruction (
-			$name, \@offsets, $instructions
+			$name, $inst->{'target_length'}, 
+			\@offsets, $instructions
 		);
 
 		$inst->{'bytes'}	= \@bytes;
@@ -847,8 +970,15 @@ sub add_initial_estimate_lengths ($) {
 	my ($labels) = @_;
 	foreach my $label (@$labels) {
 		if (!exists ($label->{'length'})) {
-			$label->{'length'}	= 1;
-			$label->{'estimate'}	= 1;
+			my $inst = $label->{'inst'}->[0];
+			if (!$inst || ($inst->{'name'} eq 'TABLE')) {
+				$label->{'length'}	= 0;
+			} else {
+				$inst->{'length'}	= 1
+					if !exists ($inst->{'length'});
+				$label->{'length'}	= 1;
+			}
+			$label->{'estimate'}		= 1;
 		}
 	}
 }
@@ -875,7 +1005,7 @@ sub code_dynamic_offsets ($$) {
 	
 	# Initial pass list is all estimated labels
 	foreach my $label (@$labels) {
-		$to_code->{$label} = $label if $label->{'estimate'};
+		$to_code->{$label} = $label if (exists ($label->{'estimate'}));
 	}
 
 	# Keep interating until all labels are stable
@@ -986,6 +1116,7 @@ sub jump_entry ($$) {
 	my @bytes		= code_instruction (
 		$instructions->numeric ('J'),
 		$entry->{'pos'},
+		undef,
 		$instructions
 	);
 
@@ -994,6 +1125,7 @@ sub jump_entry ($$) {
 			code_instruction (
 				$instructions->numeric ('PFIX'),
 				0,
+				undef,
 				$instructions
 			),
 			@bytes
