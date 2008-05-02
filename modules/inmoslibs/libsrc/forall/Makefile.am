@@ -93,6 +93,7 @@ EXTRA_DIST = \
 	ie64comp.occ \
 	ie64op.occ \
 	ie64rem.occ \
+	instrinsics.occ \
 	move2d.occ \
 	nan16.inc \
 	nan32.inc \
@@ -164,8 +165,7 @@ forall_early_objs = \
 	r64eq.tce \
 	r64gt.tce
 
-forall_lib_objs = \
-	$(forall_early_objs) \
+forall_late_objs = \
 	bitcount.tce \
 	brevnbit.tce \
 	brevword.tce \
@@ -284,6 +284,10 @@ forall_lib_objs = \
 	rscaleb.tce \
 	unpacksn.tce
 
+forall_lib_objs = \
+	$(forall_early_objs) \
+	$(forall_late_objs)
+
 all-local: forall-real $(libs)
 
 # As above: this builds a "early" version of the runtime library containing
@@ -292,7 +296,7 @@ forall-early: $(forall_early_objs)
 	$(OCCBUILD) --library forall.lib $(forall_early_objs)
 	touch forall-early
 
-forall-real: forall-early $(forall_lib_objs)
+forall-real: $(forall_lib_objs)
 	$(OCCBUILD) --library forall.lib $(forall_lib_objs)
 	touch forall-real
 
@@ -307,12 +311,14 @@ clean-local:
 
 SUFFIXES = .occ .tce .lib
 
+$(forall_late_objs): forall-early
+
 .occ.tce:
 	$(OCCBUILD) --object $<
 
 ## begin pideps dependencies
-dargred.tce: ridiv.tce rimul.tce
-ie64op.tce: ridiv.tce rimul.tce
-r64op.tce: ridiv.tce rimul.tce
-rargred.tce: ridiv.tce
+dargred.occ: ridiv.tce rimul.tce
+ie64op.occ: ridiv.tce rimul.tce
+r64op.occ: ridiv.tce rimul.tce
+rargred.occ: ridiv.tce
 ## end pideps dependencies

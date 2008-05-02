@@ -1372,6 +1372,7 @@ PROC cgtest14 (CHAN OF BYTE keyb, scr, err)
     :
     multiple.types()
     --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
     --{{{  value processes             (F1200 - F1299)
     PROC value.processes()
       SEQ
@@ -1851,6 +1852,7 @@ PROC cgtest14 (CHAN OF BYTE keyb, scr, err)
     :
     value.processes()
     --}}}
+    #ENDIF
     --{{{  INLINE procs and fns        (F1300 - F1399)
     PROC inlines()
       SEQ

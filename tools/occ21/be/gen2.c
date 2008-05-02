@@ -292,6 +292,9 @@ pdinlines[] =
 	, { &trueval, 0}		/* READ.MEMORY.BARRIER */
 	, { &trueval, 0}		/* WRITE.MEMORY.BARRIER */
 		/*}}}*/
+		/*{{{  (more) MOBILE manipulation*/
+	, { &trueval, 0}		/* RESIZE.MOBILE.ARRAY.1D */
+		/*}}}*/
 };
 
 /*}}}*/

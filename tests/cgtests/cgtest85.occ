@@ -324,12 +324,114 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
     MOBILE []INT ns:
     SEQ
       s := MOBILE [14]BYTE
-      s := "hello, world"
+      [s FOR 14] := "abcdefghijklmn"
       check.INT (BYTESIN (s), 14, "test4.0")
       ns := MOBILE [12]INT
       ns := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-      check.INT (BYTESIN (s), 12 * BYTESIN (INT), "test4.1")
+      check.INT (BYTESIN (ns), 12 * BYTESIN (INT), "test4.1")
   :
+  --}}}
+  --{{{  DEFINED on mobiles
+  PROC test5 ()
+    PROC check.defined (MOBILE []INT m, VAL BOOL want, VAL []BYTE name)
+      IF
+        DEFINED m
+          check.BOOL (TRUE, want, name)
+        TRUE
+          check.BOOL (FALSE, want, name)
+    :
+    MOBILE []INT a1, a2:
+    SEQ
+      check.defined (a1, FALSE, "test5.0")
+      CHAN MOBILE []INT c:
+      PAR
+        MOBILE []INT a, b:
+        BOOL x:
+        SEQ
+          c ! a
+          check.defined (a, FALSE, "test5.10a")
+          check.defined (b, FALSE, "test5.10b")
+          a := MOBILE [10]INT
+          check.defined (a, TRUE,  "test5.11a")
+          check.defined (b, FALSE, "test5.11b")
+          b := a
+          check.defined (a, FALSE, "test5.12a")
+          check.defined (b, TRUE,  "test5.12b")
+          c ! b
+          check.defined (a, FALSE, "test5.13a")
+          check.defined (b, FALSE, "test5.13b")
+        SEQ
+          c ? a1
+          c ? a2
+      check.defined (a1, FALSE, "test5.20")
+      check.defined (a2, TRUE, "test5.21")
+  :
+  --}}}
+  --{{{  RESIZE.MOBILE.ARRAY
+  PROC test6 ()
+    PROC int.type ()
+      MOBILE []INT a:
+      SEQ
+        a := MOBILE [10]INT
+        SEQ i = 0 FOR 10
+          a[i] := 42 \/ (i << 8)
+        
+        RESIZE.MOBILE.ARRAY.1D (a, 20)
+        check.INT (id.INT (SIZE a), 20, "test6.1a")
+        SEQ i = 0 FOR 10
+          check.INT (id.INT (a[i]), 42 \/ (i << 8), "test6.1b")
+
+        RESIZE.MOBILE.ARRAY.1D (a, 10)
+        check.INT (id.INT (SIZE a), 10, "test6.2a")
+        SEQ i = 0 FOR 10
+          check.INT (id.INT (a[i]), 42 \/ (i << 8), "test6.2b")
+
+        RESIZE.MOBILE.ARRAY.1D (a, 5)
+        check.INT (id.INT (SIZE a), 5, "test6.3a")
+        SEQ i = 0 FOR 5
+          check.INT (id.INT (a[i]), 42 \/ (i << 8), "test6.3b")
+
+        #IF FALSE
+        RESIZE.MOBILE.ARRAY.1D (a, 0)
+        check.INT (id.INT (SIZE a), 0, "test6.4a")
+        IF
+          DEFINED a
+            SKIP
+          TRUE
+            check.BOOL (FALSE, TRUE, "test6.4b")
+        #ENDIF
+    :
+    PROC record.type ()
+      DATA TYPE R1
+        RECORD
+          INT x, y, z:
+      :
+      MOBILE []R1 a:
+      SEQ
+        a := MOBILE [1]R1
+        check.INT (id.INT (SIZE a), 1, "test6.10")
+        a[0][x] := 42
+        a[0][y] := 17
+        a[0][z] := 95
+        
+        RESIZE.MOBILE.ARRAY.1D (a, 2)
+        check.INT (id.INT (SIZE a), 2, "test6.11a")
+        check.INT (id.INT (a[0][x]), 42, "test6.11b")
+        check.INT (id.INT (a[0][y]), 17, "test6.11c")
+        check.INT (id.INT (a[0][z]), 95, "test6.11d")
+
+        RESIZE.MOBILE.ARRAY.1D (a, 1)
+        check.INT (id.INT (SIZE a), 1, "test6.12a")
+        check.INT (id.INT (a[0][x]), 42, "test6.12b")
+        check.INT (id.INT (a[0][y]), 17, "test6.12c")
+        check.INT (id.INT (a[0][z]), 95, "test6.12d")
+    :
+      
+    SEQ
+      int.type ()
+      record.type ()
+  :
+
   --}}}
   --}}}  
   SEQ
@@ -342,6 +444,12 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
     test2 ()
     title ("user-defined types")
     test3 ()
+    title ("BYTESIN")
+    test4 ()
+    title ("DEFINED")
+    test5 ()
+    title ("RESIZE.MOBILE.ARRAY")
+    test6 ()
     finish ()
 :
 

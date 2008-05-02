@@ -1,6 +1,6 @@
 /*
  *	archsparc.c -- sparc architecture stuff
- *	Copyright (C) 2004 Fred Barnes <frmb@ukc.ac.uk>
+ *	Copyright (C) 2004 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ static void compose_fp_set_fround_sparc (tstate *ts, int mode);
 /*{{{  static void compose_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)*/
 /*
  *	void compose_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)
- *	creates a kernel-call (constraining registers appropiately)
+ *	creates a kernel-call (constraining registers appropriately)
  */
 static void compose_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)
 {
@@ -225,7 +225,7 @@ static void compose_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out
 /*{{{  static void compose_deadlock_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)*/
 /*
  *	void compose_deadlock_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)
- *	creates a kernel-call with deadlock info (constraining registers appropiately)
+ *	creates a kernel-call with deadlock info (constraining registers appropriately)
  */
 static void compose_deadlock_kcall_sparc (tstate *ts, int call, int regs_in, int regs_out)
 {
@@ -524,7 +524,7 @@ static void compose_debug_insert_sparc (tstate *ts, int mdpairid)
 	if ((options.debug_options & DEBUG_INSERT) && !(ts->supress_debug_insert)) {
 		x = ((ts->file_pending & 0xffff) << 16) + (ts->line_pending & 0xffff);
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1)])));
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->insert_setup_label, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1) + 1])));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1) + 1])));
 	}
 	return;
 }
@@ -762,19 +762,6 @@ static void compose_debug_deadlock_set_sparc (tstate *ts)
 	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->procfile_setup_label));
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_REG, REG_ALT_L0));
 	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->procedure_label, ARG_REG, REG_ALT_L1));
-	add_to_ins_chain (compose_ins (INS_RET, 0, 0));
-	return;
-}
-/*}}}*/
-/*{{{  static void compose_debug_insert_set_sparc (tstate *ts)*/
-/*
- *	void compose_debug_insert_set_sparc (tstate *ts)
- *	generates insert-debugging setup point for post-mortem debugging
- */
-static void compose_debug_insert_set_sparc (tstate *ts)
-{
-	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->insert_setup_label));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_NAMEDLABEL, string_dup ("&mdparam1")));
 	add_to_ins_chain (compose_ins (INS_RET, 0, 0));
 	return;
 }
@@ -1732,7 +1719,8 @@ static int rtl_validate_instr_sparc (ins_chain *ins)
 	case INS_SHL:
 	case INS_MOVEB:
 	case INS_NOT:
-	case INS_CONSTLABDIFFSHORT:
+	case INS_CONSTLABDIFF:
+	case INS_CONSTLABADDR:
 	case INS_REPMOVEB:
 	case INS_MOVEZEXT8TO32:
 	case INS_RCR:
@@ -2465,7 +2453,6 @@ arch_t *init_arch_sparc (int mclass)
 	arch->compose_rangestop_jumpcode = compose_rangestop_jumpcode_sparc;
 
 	arch->compose_debug_deadlock_set = compose_debug_deadlock_set_sparc;
-	arch->compose_debug_insert_set = compose_debug_insert_set_sparc;
 
 	/* code-gen */
 	arch->compose_divcheck_zero = compose_divcheck_zero_sparc;

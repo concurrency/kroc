@@ -729,6 +729,16 @@ printtreenl (stderr, 4, atype);
 				return TRUE;
 				/*}}}*/
 			}
+			/* if the formal is a named type, and the actual is its content equivalent, allow this (or vice versa) */
+			if ((TagOf (atype) == N_TYPEDECL) && (TagOf (ftype) != N_TYPEDECL)) {
+				if (typesequivalent (follow_user_type (atype), ftype, match_any)) {
+					return TRUE;
+				}
+			} else if ((TagOf (atype) != N_TYPEDECL) && (TagOf (ftype) == N_TYPEDECL)) {
+				if (typesequivalent (atype, follow_user_type (ftype), match_any)) {
+					return TRUE;
+				}
+			}
 			/* mobile type can be passed to non-mobile equivalent */
 			return typesequivalent (MTypeOf (follow_user_type (atype)), ftype, match_any);
 #endif
@@ -755,7 +765,7 @@ must check that the specifier tree fully defines these.
 Return TRUE if the trees represent equivalent types.
 */
 /*}}}*/
-PUBLIC BOOL spec_into_type (treenode * specptr, treenode * typeptr)
+PUBLIC BOOL spec_into_type (treenode *specptr, treenode *typeptr)
 {
 	/*{{{  debugging */
 #if 0
@@ -771,6 +781,7 @@ printtreenl (stderr, 4, typeptr);
 		/*{{{  loop body */
 		const int spectag = TagOf (specptr);
 		const int typetag = TagOf (typeptr);
+
 		if (spectag == typetag) {
 			/*{{{  switch on the tag */
 			switch (spectag) {
@@ -901,6 +912,14 @@ printtreenl (stderr, 4, typeptr);
 			/*{{{  allow through UNDECLARED types */
 			return (TRUE);
 			/*}}} */
+		} else if ((spectag != N_TYPEDECL) && (typetag == N_TYPEDECL)) {
+			/*{{{  de-user-typing?*/
+			typeptr = follow_user_type (typeptr);
+			/*}}}*/
+		} else if ((spectag == N_TYPEDECL) && (typetag != N_TYPEDECL)) {
+			/*{{{  re-user-typing?*/
+			specptr = follow_user_type (specptr);
+			/*}}}*/
 		} else {
 			return (FALSE);
 		}
@@ -5185,6 +5204,7 @@ PUBLIC int chk_typeof (treenode * tptr)
 
 /*}}}*/
 
+#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3) && defined(PD_ENCODE_CHANNEL)
 /*{{{  PRIVATE int check_encode_decode_linkprot (treenode *atype)*/
 PRIVATE int check_encode_decode_linkprot (treenode *atype)
 {
@@ -5214,6 +5234,7 @@ PRIVATE int check_encode_decode_linkprot (treenode *atype)
 	return -1;
 }
 /*}}}*/
+#endif /* PD_DECODE_CHANNEL && PD_DECODE_CHANNEL3 && PD_ENCODE_CHANNEL */
 /*{{{  PRIVATE INT check_decode_data_type (treenode *aparam, treenode *atype)*/
 PRIVATE INT check_decode_data_type (treenode *aparam, treenode *atype)
 {
@@ -5342,7 +5363,11 @@ printtreenl (stderr, 4, pname);
 			chkreport_s (CHK_TOO_FEW_ACTUALS, chklocn, WNameOf (NNameOf (pname)));
 		} else {
 			int paramno = 1;
+			#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3) && defined(PD_ENCODE_CHANNEL)
 			const BOOL is_xio = (TagOf (pname) == N_PREDEFPROC) && ((NModeOf (pname) == PD_DECODE_CHANNEL) || (NModeOf (pname) == PD_DECODE_CHANNEL3) || (NModeOf (pname) == PD_ENCODE_CHANNEL));
+			#else
+			const BOOL is_xio = FALSE;
+			#endif
 
 			/*{{{  quickly walk along the lists and check that ASINPUT/ASOUTPUT parameters are good */
 			while (!EndOfList (fparamptr) && !EndOfList (aparamptr)) {
@@ -5546,8 +5571,12 @@ printtreenl (stderr, 4, pname);
 									/* always the case! */
 				/*}}} */
 				/* similar, for PROTOCOL.HASH, but it takes protocols/actuals instead */
+				#if defined(PD_PROTOCOL_HASH) && defined(PD_LOAD_TYPE_DESC)
 				const BOOL proto_param = (TagOf (pname) == N_PREDEFFUNCTION) && (NModeOf (pname) == PD_PROTOCOL_HASH);
 				const BOOL anyname_param = (TagOf (pname) == N_PREDEFFUNCTION) && (NModeOf (pname) == PD_LOAD_TYPE_DESC);
+				#else
+				const BOOL proto_param = FALSE, anyname_param = FALSE;
+				#endif
 
 				treenode *atype = NULL;
 
@@ -5569,6 +5598,7 @@ printtreenl (stderr, 4, a);
 					/*{{{  accept any name here*/
 					ok = (nodetypeoftag (atag) == NAMENODE);
 
+					#ifdef PD_LOAD_TYPE_DESC
 					if (NModeOf (pname) == PD_LOAD_TYPE_DESC) {
 						treenode *mtype = a;
 						/* must be a deep mobile type to get code-generated */
@@ -5590,6 +5620,7 @@ printtreenl (stderr, 4, a);
 							ok = FALSE;
 						}
 					}
+					#endif
 					/*}}}*/
 				} else if (proc_param) {
 					/*{{{  special case for PROC name parameters! */
@@ -5820,6 +5851,7 @@ fprintf (stderr, "failed at 2\n");
 					   any protocol on the channel parameter */
 					
 					switch (NModeOf (pname)) {
+					#if 0
 					case PD_LOADINPUTCHANNEL:
 					case PD_LOADINPUTCHANNELVECTOR:
 					case PD_LOADOUTPUTCHANNEL:
@@ -5840,6 +5872,7 @@ fprintf (stderr, "failed at 2\n");
 							/*}}} */
 						}
 						break;
+					#endif
 					case PD_ALLOC_CHAN_TYPE:
 						/*{{{  special handling, main check in chk4 */
 						/* all this PROCs formals are channel-type vars */
@@ -5861,6 +5894,7 @@ printtreenl (stderr, 4, NTypeOf (atype));
 #endif	/* MOBILES */
 						break;
 						/*}}}*/
+					#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3)
 					case PD_DECODE_CHANNEL:
 					case PD_DECODE_CHANNEL3:
 						/*{{{  DECODE.CHANNEL[3] (CHAN * ?, CHAN INT ?, CHAN <int2/int3> ! [, CHAN BOOL ?]) */
@@ -5898,6 +5932,8 @@ printtreenl (stderr, 4, atype);
 						}
 						break;
 						/*}}}*/
+					#endif /* PD_DECODE_CHANNEL && PD_DECODE_CHANNEL3 */
+					#ifdef PD_ENCODE_CHANNEL
 					case PD_ENCODE_CHANNEL:
 						/*{{{  ENCODE.CHANNEL (CHAN <int2/int3> ?, CHAN INT ?, CHAN * !) */
 #if 0
@@ -5928,6 +5964,7 @@ printtreenl (stderr, 4, atype);
 						}
 						break;
 						/*}}}*/
+					#endif /* PD_ENCODE_CHANNEL */
 					case PD_DECODE_DATA:
 						/*{{{  DECODE.DATA (* data, RESULT INT addr, RESULT INT data) */
 						switch (paramno) {

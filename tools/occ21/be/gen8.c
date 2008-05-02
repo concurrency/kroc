@@ -51,7 +51,7 @@
 #include "code1def.h"
 #include "profile.h"
 #include "genkroc.h"
-#include "mtdef.h"
+#include "mobile_types.h"
 /*}}}*/
 
 /*{{{  constants and definitions*/
@@ -614,6 +614,7 @@ PUBLIC treenode *augmentparams (treenode *aptr, treenode *fptr, treenode *destli
 		treenode *resultlist = aptr;
 		treenode **a = &resultlist;
 		treenode *lastactual = NULL;
+		int arg_no = 0;
 
 		/*{{{  debugging messages */
 #if 0
@@ -631,7 +632,6 @@ printtreenl (stderr, 4, instance);
 		for (; !EndOfList (fptr); fptr = NextItem (fptr)) {
 			treenode *thisformal = ThisItem (fptr);
 			treenode *thisactual = (!EmptyList (aptr)) ? ThisItem (aptr) : NULL;
-			int arg_no = 0;
 			DEBUG_MSG (("augmentparams: thisformal is %s\n", itagstring (TagOf (thisformal))));
 			switch (TagOf (thisformal)) {
 				/*{{{  augment actual param list for this formal parameter */
@@ -679,7 +679,7 @@ fprintf (stderr, "augmentparams: vsp\n");
 				/*}}} */
 				/*{{{  S_PARAM_FB*/
 			case S_PARAM_FB:
-				if (!thisactual || (TagOf (thisactual) != S_PARAM_FB) || (IForkOf (instance) && (DNameOf (CBodyOf (IForkOf (instance))) != thisactual))) {
+				if (!thisactual || ((TagOf (thisactual) != S_PARAM_FB) && !IForkOf (instance)) || ((TagOf (thisactual) != S_PARAM_FB) && (IForkOf (instance) && (DNameOf (CBodyOf (IForkOf (instance))) != thisactual)))) {
 					if (IForkOf (instance)) {
 						/* using a local FORKING block */
 						*a = addtofront (DNameOf (CBodyOf (IForkOf (instance))), *a);
@@ -1473,6 +1473,12 @@ printtreenl (stderr, 4, formaltype);
 			while (TagOf (basetype) == S_ARRAY) {
 				basetype = ARTypeOf (basetype);
 			}
+#if 0
+fprintf (stderr, "gen8: trecparamexpopd(): VAL needs copying: , hps_ptr = %d, basetype =\n", hps_ptr);
+printtreenl (stderr, 4, basetype);
+fprintf (stderr, "gen8: trecparamexpopd(): VAL needs copying: formaltype =\n");
+printtreenl (stderr, 4, formaltype);
+#endif
 
 			while (hps_ptr && (TagOf (formaltype) == S_ARRAY)) {
 				if (ARDimOf (formaltype) == -1) {
@@ -1502,6 +1508,9 @@ printtreenl (stderr, 4, formaltype);
 				stored = TRUE;
 			}
 
+#if 0
+fprintf (stderr, "gen8: done size fiddling, stored = %d, carried = %d\n", stored, carried);
+#endif
 			/* load source pointer */
 			texpopd_main (opdmode, opd, MANY_REGS, FALSE);
 
@@ -1513,7 +1522,7 @@ printtreenl (stderr, 4, formaltype);
 					gensecondary (I_PROD);
 				}
 			} else {
-				loadconstant (bytesin (basetype));
+				loadconstant (bytesin (formaltype));
 			}
 			/* load type */
 			loadconstant (MT_SIMPLE | MT_MAKE_TYPE (MT_DATA));
@@ -2277,8 +2286,8 @@ gencomment1 ("gen non-register param %d..", i);
 					/* CGR FIXME: xxx */
 					generr (GEN_NO_FMPARAM);
 				}
-				#endif
 				/*}}}*/
+				#endif
 			}
 		}
 	}
@@ -2565,7 +2574,8 @@ gencomment0 ("gen non-register param 2..0");
 		/* recover old workspace -- ret will have moved Wptr up 4 */
 		genprimary (I_LDL, ((((nparams > MAXREGS) ? nparams : MAXREGS) + MIN_RECURSIVE_SLOTS) - 4));
 		gensecondary (I_GAJW);
-		throw_the_result_away ();
+		gensecondary (I_POP);
+		/* throw_the_result_away (); */
 	} else if (ptype & PROC_MPA) {
 		/* SKIP -- workspace recovered on MOBILE PROC return or SUSPEND */
 	}
@@ -2582,8 +2592,8 @@ gencomment0 ("gen non-register param 2..0");
 	/**********************   End comment out  ****************************/
 	/*}}} */
 #ifdef MOBILES
-	/*{{{  return non-val MOBILEs to their pointer slots*/
 	if (!(ptype & PROC_FORKED)) {
+		/*{{{  return non-val MOBILEs to their pointer slots*/
 		int dimcount = 0;
 		treenode *foo = NULL;
 
@@ -2691,8 +2701,8 @@ printtreenl (stderr, 4, foo);
 				/*}}}*/
 			}
 		}
+		/*}}}*/
 	}
-	/*}}}*/
 #endif
 	/*{{{  free memory associated with call (if recursive) */
 	if ((ptype & (PROC_FORKED | PROC_REC)) == PROC_REC) {
@@ -3183,6 +3193,7 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			}
 			break;
 			/*}}} */
+		#if 0
 			/*{{{  LOADINPUTCHANNEL + friends   special */
 		case PD_LOADINPUTCHANNEL:
 		case PD_LOADOUTPUTCHANNEL:
@@ -3216,6 +3227,7 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			}
 			break;
 			/*}}} */
+		#endif
 			/*{{{  MOVE2D CLIP2D DRAW2D         special */
 		case PD_MOVE2D:
 		case PD_CLIP2D:
@@ -3346,10 +3358,12 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			}
 			break;
 			/*}}} */
+		#if 0
 			/*{{{  UPDATE_PROFCOUNT*/
 		case PD_UPDATE_PROFCOUNT:
 			break;
 			/*}}}*/
+		#endif
 #ifdef MOBILES
 			/*{{{  ALLOC_CHAN_TYPE*/
 		case PD_ALLOC_CHAN_TYPE:
@@ -3361,18 +3375,22 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			/*}}}*/
 #endif
 			/*{{{  DETACH_DYNMOB ATTACH_DYNMOB*/
+		#ifdef PD_ATTACH_DYNMOB
 		case PD_ATTACH_DYNMOB:
 			mapexp (param[0]);
 			mapstoreinopd (P_EXP, param[2]);
 			mapexp (param[1]);
 			mapstoreinopd (P_EXP, param[2]);
 			break;
+		#endif
+		#ifdef PD_DETACH_DYNMOB
 		case PD_DETACH_DYNMOB:
 			mapexp (param[0]);
 			mapstoreinopd (P_EXP, param[1]);
 			mapexp (param[0]);
 			mapstoreinopd (P_EXP, param[2]);
 			break;
+		#endif
 			/*}}}*/
 			/*{{{  DECODE_DATA*/
 		case PD_DECODE_DATA:
@@ -3384,16 +3402,20 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 			break;
 			/*}}}*/
 			/*{{{  PROTOCOL_HASH*/
+		#ifdef PD_PROTOCOL_HASH
 		case PD_PROTOCOL_HASH:
 			/* if this gets here, it's because it's a run-time type */
 			mapaddr (param[0]);
 			break;
+		#endif
 			/*}}}*/
 			/*{{{  LOAD_TYPE_DESC*/
+		#ifdef PD_LOAD_TYPE_DESC
 		case PD_LOAD_TYPE_DESC:
 			/* doesn't need to touch the variable (yet) */
 			// mapaddr (param[0]);
 			break;
+		#endif
 			/*}}}*/
 			/*{{{  REAL32SIN, REAL64SIN, REAL32COS, REAL64COS, REAL32TAN, REAL64TAN */
 		case PD_REAL32SIN:
@@ -3451,6 +3473,13 @@ PUBLIC int mappredef (treenode * tptr, treenode * destlist)
 		case PD_MEMORY_BARRIER:
 		case PD_READ_MEMORY_BARRIER:
 		case PD_WRITE_MEMORY_BARRIER:
+			break;
+			/*}}}*/
+			/*{{{  RESIZE.MOBILE.ARRAY.1D */
+		case PD_RESIZE_MOBILE_ARRAY_1D:
+			mapexp (param[1]);
+			mapexp (param[0]);
+			mapstoreinopd (P_EXP, param[0]);
 			break;
 			/*}}}*/
 		default:
@@ -4021,6 +4050,7 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 		}
 		break;
 		/*}}} */
+	#if 0
 		/*{{{  LOADINPUTCHANNEL + friends */
 	case PD_LOADINPUTCHANNEL:
 	case PD_LOADOUTPUTCHANNEL:
@@ -4054,6 +4084,7 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 		}
 		break;
 		/*}}} */
+	#endif
 		/*{{{  MOVE2D CLIP2D DRAW2D */
 	case PD_MOVE2D:
 	case PD_CLIP2D:
@@ -4172,17 +4203,18 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 		break;
 		/*}}} */
 		/*{{{  UPDATE_PROFCOUNT */
+	#if 0
 	case PD_UPDATE_PROFCOUNT:
 		tprofcountupdate (LoValOf (param[0]));
 		break;
+	#endif
 		/*}}} */
 		/*{{{  ALLOC_CHAN_TYPE*/
 #ifdef MOBILES
 	case PD_ALLOC_CHAN_TYPE:
 		{
 			int chans, type_bytes, shared_server, shared_client;
-			int knsf_offset;
-			int tdesc_offset;
+			int pony_offset;
 			int flags = 0;
 
 			treenode *p0base = param[0];
@@ -4205,17 +4237,11 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 
 			chans = (type_bytes / bytesperword);
 
-			if (kroc_chantype_desc) {
+			if (kroc_chantype_desc || kroc_chantype_knsf) {
 				flags |= MT_CB_STATE_SPACE;
-				tdesc_offset = chans;
+				pony_offset = chans;
 			} else {
-				tdesc_offset = 0x80000000;
-			}
-
-			if (kroc_chantype_knsf) {
-				knsf_offset = chans + MCT_DESCSIZE;
-			} else {
-				knsf_offset = 0x80000000;
+				pony_offset = 0x80000000;
 			}
 
 #if 0
@@ -4224,7 +4250,7 @@ printtreenl (stderr, 4, p0base);
 fprintf (stderr, "tpredef (PD_ALLOC_CHAN_TYPE): p1base is: ");
 printtreenl (stderr, 4, p1base);
 fprintf (stderr, "tpredef: bytesin (NTypeOf (param[0])) = %d.  shared_server = %d, shared_client = %d.  extra_bytes = %d\n", type_bytes, shared_server, shared_client, extra_bytes);
-fprintf (stderr, "tpredef: tdesc_offset = %d, knsf_offset = %d.  (param[0]) is ", tdesc_offset, knsf_offset);
+fprintf (stderr, "tpredef: pony_offset = %d.  (param[0]) is ", pony_offset);
 printtreenl (stderr, 4, (param[0]));
 fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (NTypeOf (param[1])) = %d\n", NTypeAttrOf (NTypeOf (param[0])), NTypeAttrOf (NTypeOf (param[1])));
 #endif
@@ -4262,12 +4288,7 @@ fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (N
 
 				genloadlabptr (MTDLabOf (mtype), NOLAB, "MTD PTR");
 				genprimary (I_LDL, 0);
-				genprimary (I_STNL, tdesc_offset);
-
-				/* set magic operations field to NULL */
-				gensecondary (I_NULL);
-				genprimary (I_LDL, 0);
-				genprimary (I_STNL, tdesc_offset + 1);
+				genprimary (I_STNL, pony_offset + PONY_TYPEDESC);
 			}
 
 			if (kroc_chantype_knsf) {
@@ -4281,11 +4302,7 @@ fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (N
 										: 0x00010000);	/* not shared */
 				loadconstant (istate);
 				genprimary (I_LDL, 0);
-				genprimary (I_STNL, knsf_offset);
-
-				genprimary (I_LDL, 0);
-				genprimary (I_LDNLP, knsf_offset + 1);
-				gensemop (SEMOP_INIT);
+				genprimary (I_STNL, pony_offset + PONY_STATE);
 			}
 
 			/* that ought to do it.. */
@@ -4295,6 +4312,7 @@ fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (N
 #endif
 		/*}}}*/
 		/*{{{  DETACH_DYNMOB*/
+	#ifdef PD_DETACH_DYNMOB
 	case PD_DETACH_DYNMOB:
 		/* param[0] is the mobile, param[1] address and param[2] count */
 		loadmobile (param[0]);
@@ -4304,21 +4322,23 @@ fprintf (stderr, "tpredef: NTypeAttrOf (NTypeOf (param[0])) = %d, NTypeAttrOf (N
 		genprimary (I_LDC, 0);
 		storemobilesize (param[0], 1);	/* trash original MOBILE */
 		break;
+	#endif
 		/*}}}*/
 		/*{{{  ATTACH_DYNMOB*/
+	#ifdef PD_ATTACH_DYNMOB
 	case PD_ATTACH_DYNMOB:
 		/* param[0] is the address, param[1] is the count and param[2] is the mobile */
 #if 0
 fprintf (stderr, "gen8: tpredef: ATTACH.DYNMOB: target (param[2]) = ");
 printtreenl (stderr, 4, param[2]);
 #endif
-		/* CGR FIXME: figure out what this is and whether it needs fixing. */
 		gencondfreedynmobile (param[2]);
 		texp (param[0], MANY_REGS);
 		storemobile (param[2]);
 		texp (param[1], MANY_REGS);
 		storemobilesize (param[2], 1);
 		break;
+	#endif
 		/*}}}*/
 		/*{{{  DECODE_DATA*/
 	case PD_DECODE_DATA:
@@ -4330,6 +4350,7 @@ printtreenl (stderr, 4, param[2]);
 		break;
 		/*}}}*/
 		/*{{{  PROTOCOL_HASH*/
+	#ifdef PD_PROTOCOL_HASH
 	case PD_PROTOCOL_HASH:
 		/* load run-time hash for parameter -- left on the stack */
 #if 0
@@ -4342,8 +4363,10 @@ printtreenl (stderr, 4, param[0]);
 			genprimary (I_LDNL, 2);
 		}
 		break;
+	#endif
 		/*}}}*/
 		/*{{{  LOAD_TYPE_DESC*/
+	#ifdef PD_LOAD_TYPE_DESC
 	case PD_LOAD_TYPE_DESC:
 		/* loads run-time type description */
 		{
@@ -4367,6 +4390,7 @@ printtreenl (stderr, 4, param[0]);
 			}
 		}
 		break;
+	#endif
 		/*}}}*/
 		/*{{{  REAL32SIN, REAL64SIN, REAL32COS, REAL64COS, REAL32TAN, REAL64TAN */
 	case PD_REAL32SIN:
@@ -4479,6 +4503,27 @@ printtreenl (stderr, 4, param[0]);
 		/*{{{ WRITE.MEMORY.BARRIER */
 	case PD_WRITE_MEMORY_BARRIER:
 		gensecondary (I_WMB);
+		break;
+		/*}}}*/
+		/*{{{  RESIZE.MOBILE.ARRAY.1D */
+	case PD_RESIZE_MOBILE_ARRAY_1D:
+		{
+			treenode *basetype;
+			int basebytes;
+			mobilearray_base (param[0], &basetype, &basebytes);
+			texp (param[1], MANY_REGS);
+			if (!isscalartype (TagOf (basetype))) {
+				loadconstant (basebytes);
+				gensecondary (I_PROD);
+			}
+			loadmobile_real (param[0]);
+			loadconstant (MT_RESIZE_DATA);
+			gensecondary (I_MT_RESIZE);
+			storemobile (param[0]);
+			genmobileunpack (param[0], TRUE, FALSE);
+			texp (param[1], MANY_REGS);
+			storemobilesize (param[0], 1);
+		}
 		break;
 		/*}}}*/
 	default:

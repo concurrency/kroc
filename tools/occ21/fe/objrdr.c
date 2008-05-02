@@ -972,12 +972,16 @@ PUBLIC BOOL init_external (const char *string)
 		synwarn_s (SYN_BAD_PRAGMA_DIRECTIVE, flocn, "EXTERNAL");
 		return FALSE;
 	}
-	if ((WLengthOf (name) >= 3) && (!strncmp (WNameOf (name), "B.", 2) || !strncmp (WNameOf (name), "BX.", 3))) {
+	if ((WLengthOf (name) >= 2) && (!strncmp (WNameOf (name), "C.", 2))) {
+		if (ws < 3) {
+			ws = 3;
+		}
+	} else if ((WLengthOf (name) >= 3) && (!strncmp (WNameOf (name), "B.", 2) || !strncmp (WNameOf (name), "BX.", 3))) {
 		/* EXTERNAL blocking system-call definition -- check that "ws" meets the minimum requirements, and fix if it doesn't. */
 		#ifdef PROCESS_PRIORITY
-		const int min_ws = 3;
+		const int min_ws = 6;
 		#else
-		const int min_ws = 2;
+		const int min_ws = 5;
 		#endif	/* !PROCESS_PRIORITY */
 
 		if (ws < min_ws) {

@@ -923,7 +923,8 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
         RESCHEDULE()
     :
     reschedule()
-    --}}}  
+    --}}}
+    #IF FALSE
     --{{{  LOAD.xxx
     PROC load.xxx()
       [5]BYTE string:
@@ -998,8 +999,8 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
         check(address, check.address, "L24")
     :
     load.xxx()
-
     --}}}  
+    #ENDIF
     --{{{  CRC stuff
     PROC CRCtest()
       INT dataIn, dataOut :
@@ -1236,6 +1237,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
     :
     bug.297()
     --}}}  
+    #IF FALSE
     --{{{  Bug 581
     PROC bug.581()
       -- Transputer code
@@ -1337,6 +1339,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
                 check (x, 99, "B581b")
     :
     bug.581()
+    #ENDIF
     --}}}  
     --{{{  bug 1308
     PROC bug.1308()

@@ -69,6 +69,7 @@ PROC pony.int.startup.linkmgr.tcpip (VAL []BYTE ans.name, app.name, node.name,
       ans.ip, ans.port, node.ip, node.port,
       master.ip, master.port, app.index, app.code:
   SOCKET ans.socket, listen.socket, master.socket:
+  INITIAL BOOL fixed.node.ip IS FALSE:
   INITIAL BOOL fixed.node.port IS FALSE:
   SEQ
     result := PONYC.RESULT.STARTUP.OK
@@ -444,7 +445,6 @@ PROC pony.int.startup.linkmgr.tcpip (VAL []BYTE ans.name, app.name, node.name,
     --{{{  Get location of node
     IF
       result = PONYC.RESULT.STARTUP.OK
-        INITIAL BOOL ip.done IS FALSE:
         SEQ
           --{{{  Check node-file for IP and port number
           IF
@@ -515,7 +515,7 @@ PROC pony.int.startup.linkmgr.tcpip (VAL []BYTE ans.name, app.name, node.name,
                                     result := PONYC.RESULT.STARTUP.TCPIP.NODEFILEINVALIDSETTINGS
                                   -- IP address could be resolved
                                   TRUE
-                                    ip.done := TRUE
+                                    fixed.node.ip := TRUE
                             --}}}
                         TRUE
                           SKIP
@@ -547,75 +547,6 @@ PROC pony.int.startup.linkmgr.tcpip (VAL []BYTE ans.name, app.name, node.name,
                           SKIP
                   --}}}
             --}}}
-          --}}}
-          --{{{  Resolve own IP address if IP not found in node-file
-          IF
-            (result = PONYC.RESULT.STARTUP.OK) AND (NOT ip.done)
-              INT sock.result:
-              INITIAL MOBILE []BYTE string.space IS MOBILE [500]BYTE:
-              SEQ
-                -- Get hostname
-                socket.gethostname (string.space, sock.result)
-                IF
-                  sock.result = (-1)
-                    result := PONYC.RESULT.STARTUP.TCPIP.IPADDRNOTRESOLVED
-                  --{{{  Host name found
-                  TRUE
-                    MOBILE []BYTE own.hostname:
-                    SEQ
-                      own.hostname := [string.space FOR sock.result]
-                      -- Get number of addresses
-                      socket.naddrs.of.host (own.hostname, sock.result)
-                      IF
-                        sock.result = (-1)
-                          result := PONYC.RESULT.STARTUP.TCPIP.IPADDRNOTRESOLVED
-                        --{{{  Number of addresses found
-                        TRUE
-                          MOBILE []INT node.ips:
-                          SEQ
-                            node.ips := MOBILE [sock.result]INT
-                            -- Get array of addresses
-                            socket.addrs.of.host (own.hostname, node.ips, sock.result)
-                            IF
-                              sock.result = (-1)
-                                result := PONYC.RESULT.STARTUP.TCPIP.IPADDRNOTRESOLVED
-                              --{{{  Array of addresses found
-                              TRUE
-                                INITIAL BOOL valid.addr.found IS FALSE:
-                                SEQ
-                                  --{{{  Use first `non-special' address found in array
-                                  INITIAL INT i IS 0:
-                                  WHILE (NOT valid.addr.found) AND (i < sock.result)
-                                    SEQ
-                                      IF
-                                        -- Disallow 127.x.x.x
-                                        (node.ips[i] /\ #FF000000) = #7F000000
-                                          SKIP
-                                        -- Disallow 255.x.x.x
-                                        (node.ips[i] /\ #FF000000) = #FF000000
-                                          SKIP
-                                        -- Disallow x.x.x.0
-                                        (node.ips[i] /\ #FF) = #0
-                                          SKIP
-                                        -- Disallow x.x.x.255
-                                        (node.ips[i] /\ #FF) = #FF
-                                          SKIP
-                                        TRUE
-                                          SEQ
-                                            valid.addr.found := TRUE
-                                            node.ip := node.ips[i]
-                                      i := i + 1
-                                  --}}}
-                                  IF
-                                    NOT valid.addr.found
-                                      result := PONYC.RESULT.STARTUP.TCPIP.IPADDRNOTRESOLVED
-                                    TRUE
-                                      SKIP
-                              --}}}
-                        --}}}
-                  --}}}
-            TRUE
-              SKIP
           --}}}
           --{{{  Use default port number if port not found in node-file
           IF
@@ -673,7 +604,7 @@ PROC pony.int.startup.linkmgr.tcpip (VAL []BYTE ans.name, app.name, node.name,
     --{{{  Connect to ANS (and to master if slave)
     INITIAL BOOL done IS FALSE:
     WHILE (NOT done) AND (result = PONYC.RESULT.STARTUP.OK)
-      INT sock.result:
+      INT sock.result, name.result:
       SEQ
         -- Connect to ANS
         socket.create.connect.tcp (ans.socket, ans.ip, ans.port, sock.result)
@@ -684,16 +615,25 @@ PROC pony.int.startup.linkmgr.tcpip (VAL []BYTE ans.name, app.name, node.name,
           TRUE
             INITIAL BOOL close.ans.socket IS TRUE:
             SEQ
+              -- Get local address
+              socket.getsockname (ans.socket, name.result)
               -- Force immediate socket writes
               socket.setsockopt (ans.socket, SOL.TCP, TCP.NODELAY, OPTION.ON, sock.result)
               IF
-                sock.result = (-1)
+                (sock.result = (-1)) OR (name.result = (-1))
                   result := PONYC.RESULT.STARTUP.TCPIP.ANSNETFAILURE
                 --{{{  No-delay successfully set, can start operation
                 TRUE
                   INITIAL MOBILE []BYTE header IS MOBILE [1 + (4 * BYTESIN (INT))]BYTE:
                   INT app.name.addr, app.name.size:
                   SEQ
+                    --{{{  Set node IP address if not found in node-file
+                    IF
+                      fixed.node.ip
+                        SKIP
+                      TRUE
+                        node.ip := ans.socket[local.addr]
+                    --}}}
                     -- Assemble header
                     header[0] := BYTE node.type
                     []BYTE node.ip.array RETYPES node.ip:

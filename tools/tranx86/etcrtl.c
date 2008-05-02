@@ -1,6 +1,6 @@
 /*
  *	etcrtl.c - ETC to RTL converter
- *	Copyright (C) 2000-2006 Fred Barnes <frmb@ukc.ac.uk>
+ *	Copyright (C) 2000-2006 Fred Barnes <frmb@kent.ac.uk>
  *	Parts based on tranetcp.occ Copyright (C) 1997 M D Poole
  *	MIPS modifications by Christian Jacobsen / Fred Barnes
  *
@@ -491,7 +491,7 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 					ts->stack->old_a_reg = ts->stack->a_reg;
 					tmp_reg = tstack_newreg (ts->stack);
 					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->casetable_label, ARG_REG, tmp_reg));
-					add_to_ins_chain (compose_ins (INS_MOVESEXT16TO32, 1, 1, ARG_REGINDSIB, 2, ts->stack->a_reg, tmp_reg, ARG_REG, ts->stack->a_reg));
+					add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGINDSIB, 4, ts->stack->a_reg, tmp_reg, ARG_REG, ts->stack->a_reg));
 					add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_REG, ts->stack->a_reg, ARG_REG, tmp_reg, ARG_REG, tmp_reg));
 					add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_REG | ARG_IND, tmp_reg));
 					add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->casetable_label));
@@ -916,7 +916,7 @@ fprintf (stderr, "*** I64TOREAL: ts_depth=%d, fs_depth=%d\n", ts->stack->ts_dept
 							add_to_ins_chain (arch->compose_kjump (ts, INS_CALL, 0, kif_entry (K_SETERR)));
 							ts->stack_drift -= 4;
 						} else {
-							add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+							arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 						}
 
 						add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, cslab));
@@ -1661,7 +1661,7 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 					if (ts->incasetable) {
 						deferred_cond (ts);
 						tstack_setprim (ts->stack, I_J, arch);
-						add_to_ins_chain (compose_ins (INS_CONSTLABDIFFSHORT, 2, 0, ARG_LABEL, y_opd, ARG_LABEL, ts->casetable_label));
+						add_to_ins_chain (compose_ins (INS_CONSTLABDIFF, 2, 0, ARG_LABEL, y_opd, ARG_LABEL, ts->casetable_label));
 					} else {
 						deferred_cond (ts);
 						tstack_setprim (ts->stack, I_J, arch);
@@ -2132,8 +2132,22 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 			case I_MWS_ALTPOSTLOCK:
 			case I_MWS_PPBASEOF:
 			case I_MWS_PPPAROF:
+			case I_NLABADDR:
+			case I_NJCSUB0:
 				glob_in_icount++;
 				do_code_nocc_special (ts, &etc_code, arch);
+				break;
+			case I_NJTABLE:
+				glob_in_icount++;
+				do_code_nocc_special (ts, &etc_code, arch);
+				/* will force alignment of the following stuff */
+				if (options.internal_options & INTERNAL_ALIGNEDCODE) {
+					flush_ins_chain ();
+					trtl = new_rtl ();
+					trtl->type = RTL_ALIGN;
+					trtl->u.alignment = 2;
+					add_to_rtl_chain (trtl);
+				}
 				break;
 			case I_NWSADJ:
 				if (options.annotate_output) {
@@ -2347,7 +2361,7 @@ fprintf (stderr, "setting ts->ws_adjust = %d\n", ts->ws_adjust);
 	}
 	/*}}}*/
 	/*{{{  drop debugging info as needed*/
-	/* drop debugging info if appropiate */
+	/* drop debugging info if appropriate */
 	flush_ins_chain ();
 	trtl = new_rtl ();
 	trtl->type = RTL_ALIGN;
@@ -2371,15 +2385,11 @@ fprintf (stderr, "setting ts->ws_adjust = %d\n", ts->ws_adjust);
 		arch->compose_debug_overflow (ts);
 	} else if (!options.disable_checking) {
 		add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->overflow_label));
-		add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+		arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 	}
 	/* deadlock setup entry point */
 	if ((options.debug_options & DEBUG_DEADLOCK) && arch->compose_debug_deadlock_set) {
 		arch->compose_debug_deadlock_set (ts);
-	}
-	/* debug inserts entry point */
-	if ((options.debug_options & DEBUG_INSERT) && arch->compose_debug_insert_set) {
-		arch->compose_debug_insert_set (ts);
 	}
 	/* range-error entry point */
 	if ((options.debug_options & DEBUG_RANGESTOP) && arch->compose_debug_rangestop) {
@@ -2400,7 +2410,7 @@ fprintf (stderr, "ts->ws_size = %d\n", ts->ws_size);
 		trtl->u.wsvs.ms_bytes = (ts->ms_size << WSH);
 		add_to_rtl_chain (trtl);
 	}
-	/* drop library WS/VS counts if appropiate */
+	/* drop library WS/VS counts if appropriate */
 	if (def_lib_head) {
 		add_chain_to_rtl_chain (def_lib_head);
 	}
@@ -3029,7 +3039,7 @@ static void generate_overflowed_code (tstate *ts, int dcode, arch_t *arch)
 	if (options.debug_options & DEBUG_OVERFLOW) {
 		arch->compose_overflow_jumpcode (ts, dcode);
 	} else if (!options.disable_checking) {
-		add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+		arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 	}
 	return;
 }
@@ -3044,7 +3054,7 @@ static void generate_range_code (tstate *ts, int rcode, arch_t *arch)
 	if (arch->compose_rangestop_jumpcode && (options.debug_options & DEBUG_RANGESTOP)) {
 		arch->compose_rangestop_jumpcode (ts, rcode);
 	} else {
-		add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+		arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 	}
 	return;
 }
@@ -3265,6 +3275,7 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 				} else {
 					sprintf (sbuf, "NCALL L%d %d", etc_code->opd, adj);
 				}
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
 				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
 			}
 
@@ -3285,16 +3296,17 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 		{
 			int adj = etc_code->fn - I_OPR;
 
-			if (options.annotate_output) {
-				sprintf (sbuf, "NRET %d", adj);
-				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
-			}
-
 			ts->stack->old_a_reg = ts->stack->a_reg;
 			ts->stack->old_b_reg = ts->stack->b_reg;
 			ts->stack->old_c_reg = ts->stack->c_reg;
 			deferred_cond (ts);
 			tstack_setsec (ts->stack, I_NRET, arch);
+
+			if (options.annotate_output) {
+				sprintf (sbuf, "NRET %d", adj);
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
 
 			if (arch->compose_nreturn) {
 				/* need to do this a bit more carefully.. */
@@ -3309,27 +3321,100 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 		}
 		break;
 		/*}}}*/
-		/*{{{  I_NSTARTP -- NOCC STARTP instruction, value in Areg is absolute*/
-	case I_NSTARTP:
+		/*{{{  I_NJTABLE -- NOCC JTABLE instruction*/
+	case I_NJTABLE:
 		{
+			int lab = etc_code->fn - I_OPR;
+			int tmp_reg;
+
+			ts->stack->old_a_reg = ts->stack->a_reg;
+			ts->stack->old_b_reg = ts->stack->b_reg;
+			ts->stack->old_c_reg = ts->stack->c_reg;
+			deferred_cond (ts);
+			tstack_setsec (ts->stack, I_NJTABLE, arch);
+
 			if (options.annotate_output) {
-				sprintf (sbuf, "NSTARTP");
+				sprintf (sbuf, "JTABLE %d", lab);
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
 				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
 			}
 
+			tmp_reg = tstack_newreg (ts->stack);
+			/* Areg has the index for the jump, in a table at label 'lab' */
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, lab, ARG_REG, tmp_reg));
+			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REGINDSIB, 4, ts->stack->old_a_reg, tmp_reg, ARG_REG, tmp_reg));
+			add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_REG | ARG_IND, tmp_reg));
+		}
+		break;
+		/*}}}*/
+		/*{{{  I_NLABADDR -- NOCC constant label address (used in jump-tables)*/
+	case I_NLABADDR:
+		{
+			int lab = etc_code->fn - I_OPR;
+
+			ts->stack->old_a_reg = ts->stack->a_reg;
+			ts->stack->old_b_reg = ts->stack->b_reg;
+			ts->stack->old_c_reg = ts->stack->c_reg;
+			tstack_setsec (ts->stack, I_NLABADDR, arch);
+
+			if (options.annotate_output) {
+				sprintf (sbuf, ".labaddr %d", lab);
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
+			add_to_ins_chain (compose_ins (INS_CONSTLABADDR, 1, 0, ARG_LABEL, lab));
+		}
+		break;
+		/*}}}*/
+		/*{{{  I_NJCSUB0 -- NOCC jump if CSUB0 condition (jump if Breg is outside of [0..(Areg-1)])*/
+	case I_NJCSUB0:
+		{
+			int lab = etc_code->fn - I_OPR;
+
+			ts->stack->old_a_reg = ts->stack->a_reg;
+			ts->stack->old_b_reg = ts->stack->b_reg;
+			ts->stack->old_c_reg = ts->stack->c_reg;
+			deferred_cond (ts);
+			tstack_setsec (ts->stack, I_NJCSUB0, arch);
+
+			if (options.annotate_output) {
+				sprintf (sbuf, "JCSUB0 %d", lab);
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
+
+			add_to_ins_chain (compose_ins (INS_CMP, 2, 1, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_a_reg, ARG_REG | ARG_IMP, REG_CC));
+			add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_BE, ARG_LABEL, lab));
+		}
+		break;
+		/*}}}*/
+		/*{{{  I_NSTARTP -- NOCC STARTP instruction, value in Areg is absolute*/
+	case I_NSTARTP:
+		{
 			ts->stack->old_a_reg = ts->stack->a_reg;
 			ts->stack->old_b_reg = ts->stack->b_reg;
 			ts->stack->old_c_reg = ts->stack->c_reg;
 			deferred_cond (ts);
 			tstack_setsec (ts->stack, I_NSTARTP, arch);
 
-			add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_FLABEL | ARG_ISCONST, 0, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_b_reg));
+			if (options.annotate_output) {
+				sprintf (sbuf, "NSTARTP");
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
 
-			if ((options.inline_options & INLINE_SCHEDULER) && arch->compose_inline_startp) {
+			add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_FLABEL | ARG_ISCONST, 0, ARG_REG, ts->stack->old_b_reg, ARG_REG, ts->stack->old_b_reg));
+			constmap_remove (ts->stack->old_b_reg);
+
+			if (options.kernel_interface & KRNLIFACE_MP) {
+				arch->compose_kcall (ts, K_STARTP, 2, 0);
+			} else if ((options.inline_options & INLINE_SCHEDULER) && arch->compose_inline_startp) {
 				arch->compose_inline_startp (ts);
 			} else {
 				arch->compose_kcall (ts, K_STARTP, 2, 0);
 			}
+			add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0));
+
 		}
 		break;
 		/*}}}*/
@@ -3338,16 +3423,17 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 		{
 			int tmpreg = tstack_newreg (ts->stack);
 
-			if (options.annotate_output) {
-				sprintf (sbuf, "NNEG");
-				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
-			}
-
 			ts->stack->old_a_reg = ts->stack->a_reg;
 			ts->stack->old_b_reg = ts->stack->b_reg;
 			ts->stack->old_c_reg = ts->stack->c_reg;
 			deferred_cond (ts);
 			tstack_setsec (ts->stack, I_NNEG, arch);
+
+			if (options.annotate_output) {
+				sprintf (sbuf, "NNEG");
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
 
 			add_to_ins_chain (compose_ins (INS_XOR, 2, 1, ARG_REG, tmpreg, ARG_REG, tmpreg, ARG_REG, tmpreg));
 			add_to_ins_chain (compose_ins (INS_SUB, 2, 2, ARG_REG, ts->stack->old_a_reg, ARG_REG, tmpreg, ARG_REG, tmpreg, ARG_REG | ARG_IMP, REG_CC));
@@ -3361,16 +3447,17 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 		/*{{{  I_NLW -- load word at address in Areg into Areg'*/
 	case I_NLW:
 		{
-			if (options.annotate_output) {
-				sprintf (sbuf, "NLW");
-				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
-			}
-
 			ts->stack->old_a_reg = ts->stack->a_reg;
 			ts->stack->old_b_reg = ts->stack->b_reg;
 			ts->stack->old_c_reg = ts->stack->c_reg;
 			deferred_cond (ts);
 			tstack_setsec (ts->stack, I_NLW, arch);
+
+			if (options.annotate_output) {
+				sprintf (sbuf, "NLW");
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
 
 			if (ts->magic_pending & TS_MAGIC_IOSPACE) {
 				int tmp_reg;
@@ -3394,16 +3481,17 @@ fprintf (stderr, "MAGIC IOSPACE! (load-word) [%d] --> %d\n", ts->stack->old_a_re
 		/*{{{  I_NSW -- store word in Breg at address in Areg*/
 	case I_NSW:
 		{
-			if (options.annotate_output) {
-				sprintf (sbuf, "NSW");
-				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
-			}
-
 			ts->stack->old_a_reg = ts->stack->a_reg;
 			ts->stack->old_b_reg = ts->stack->b_reg;
 			ts->stack->old_c_reg = ts->stack->c_reg;
 			deferred_cond (ts);
 			tstack_setsec (ts->stack, I_NSW, arch);
+
+			if (options.annotate_output) {
+				sprintf (sbuf, "NSW");
+				sprintf (sbuf + strlen (sbuf), " [tsd=%d,%d]", ts->stack->old_ts_depth, ts->stack->old_fs_depth);
+				add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+			}
 
 			if (ts->magic_pending & TS_MAGIC_IOSPACE) {
 #if 0
@@ -4007,7 +4095,7 @@ static void do_code_secondary (tstate *ts, int sec, arch_t *arch)
 		if (arch->compose_debug_seterr && (options.debug_options & DEBUG_RANGESTOP)) {
 			arch->compose_debug_seterr (ts);
 		} else {
-			add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+			arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 		}
 		break;
 		/*}}}*/
@@ -4239,7 +4327,7 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 				arch->compose_divcheck_zero (ts, ts->stack->old_a_reg);
 			} else if ((constmap_typeof (ts->stack->old_a_reg) == VALUE_CONST) && (constmap_regconst (ts->stack->old_a_reg) == 0)) {
 				fprintf (stderr, "%s: serious: division by zero seen around line %d in %s\n", progname, ts->line_pending, ts->file_list[ts->file_pending]);
-				add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+				arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 				skip_codegen = 1;
 			} else if (!options.disable_checking) {
 				arch->compose_divcheck_zero_simple (ts, ts->stack->old_a_reg);
@@ -4275,7 +4363,7 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 				arch->compose_divcheck_zero (ts, ts->stack->old_a_reg);
 			} else if ((constmap_typeof (ts->stack->old_a_reg) == VALUE_CONST) && (constmap_regconst (ts->stack->old_a_reg) == 0)) {
 				fprintf (stderr, "%s: serious: remainder by zero seen around line %d in %s\n", progname, ts->line_pending, ts->file_list[ts->file_pending]);
-				add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+				arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 				skip_codegen = 1;
 			} else if (!options.disable_checking) {
 				arch->compose_divcheck_zero_simple (ts, ts->stack->old_a_reg);
@@ -5061,7 +5149,7 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 			add_to_ins_chain (arch->compose_kjump (ts, INS_CALL, 0, kif_entry (K_SETERR)));
 			ts->stack_drift -= 4;
 		} else {
-			add_to_ins_chain (arch->compose_kjump (ts, INS_JUMP, 0, kif_entry (K_BNSETERR)));
+			arch->compose_kcall (ts, K_BNSETERR, 0, 0);
 		}
 		break;
 		/*}}}*/
@@ -5395,7 +5483,7 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 		}
 		break;
 		/*}}}*/
-		/*{{{  I_SETPRI -- set processor affinity*/
+		/*{{{  I_SETAFF -- set processor affinity*/
 	case I_SETAFF:
 		/* set current affinity to old Areg */
 		if (options.kernel_interface & KRNLIFACE_MP) {
@@ -5493,6 +5581,11 @@ fprintf (stderr, "MAGIC IOSPACE! (store-byte) %d --> [%d]\n", ts->stack->old_b_r
 		/*{{{  I_MT_BIND -- mobile type binding*/
 	case I_MT_BIND:
 		arch->compose_kcall (ts, K_MT_BIND, 3, 1);
+		break;
+		/*}}}*/
+		/*{{{  I_MT_RESIZE -- mobile type resizing*/
+	case I_MT_RESIZE:
+		arch->compose_kcall (ts, K_MT_RESIZE, 3, 1);
 		break;
 		/*}}}*/
 		/*{{{  I_MB, I_RMB, I_WMB -- memory barriers*/

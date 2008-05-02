@@ -3763,6 +3763,7 @@ fprintf (stderr, "*** SetNUndef (%p, NULL)\n", ThisItem (formallist));
 			}
 			/*}}}*/
 			/*}}}*/
+		#if defined(PD_ATTACH_DYNMOB) && defined(PD_DETACH_DYNMOB)
 		} else if ((tag == S_PINSTANCE) && (TagOf (INameOf (n)) == N_PREDEFPROC) && ((NModeOf (INameOf (n)) == PD_ATTACH_DYNMOB) || (NModeOf (INameOf (n)) == PD_DETACH_DYNMOB))) {
 			/*{{{  check special MOBILE-affecting pre-defines (ATTACH/DETACH.DYMOB) */
 			treenode *actuallist = IParamListOf (n);
@@ -3820,6 +3821,7 @@ fprintf (stderr, "*** SetNUndef (%p, NULL)\n", ThisItem (formallist));
 				udv_resetexp (addrparam, UDV_DEFINED, UDV_UNDEFINED);
 			}
 			/*}}}*/
+		#endif /* PD_ATTACH_DYNMOB && PD_DETACH_DYNMOB */
 		} else if ((tag == S_PINSTANCE) && (TagOf (INameOf (n)) == N_PREDEFPROC) && ((NModeOf (INameOf (n)) == PD_DECODE_DATA))) {
 			/*{{{  this defines the second two parameters.  if the 4th parameter isn't present, we add it here*/
 			treenode *actuallist;

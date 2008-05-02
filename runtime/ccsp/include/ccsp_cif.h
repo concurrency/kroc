@@ -144,8 +144,8 @@ static inline void ChanIn (Workspace wptr, Channel *c, void *buffer, word length
 	ccsp_cif_Y_in (wptr, length, c, buffer);
 }
 /*}}}*/
-/*{{{  void ChanOut (Workspace wptr, Channel *c, void *buffer, word length) */
-static inline void ChanOut (Workspace wptr, Channel *c, void *buffer, word length)
+/*{{{  void ChanOut (Workspace wptr, Channel *c, const void *buffer, word length) */
+static inline void ChanOut (Workspace wptr, Channel *c, const void *buffer, word length)
 {
 	ccsp_cif_Y_out (wptr, length, c, buffer);
 }
@@ -339,6 +339,9 @@ static word KillableBlockingCallN (Workspace wptr, void *func, Channel *killchan
 }
 /*}}}*/
 /*{{{ static int KillBlockingCall (Workspace wptr, Channel *killchan) */
+#if defined(__GNUC__)
+__attribute__ ((unused)) /* make GCC ignore when unused */
+#endif
 static int KillBlockingCall (Workspace wptr, Channel *killchan)
 {
 	int result;

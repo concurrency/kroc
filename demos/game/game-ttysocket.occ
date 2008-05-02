@@ -17,14 +17,12 @@
 --	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 --
 
-#USE "course.lib"
 #INCLUDE "types.inc"
 #INCLUDE "config.inc"
+#INCLUDE "course.module"
 
-#INCLUDE "filelib.inc"
-#USE "file.lib"
-#INCLUDE "socklib.inc"
-#USE "sock.lib"
+#INCLUDE "file.module"
+#INCLUDE "sock.module"
 
 #USE "game-utils"
 #USE "game-client"

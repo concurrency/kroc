@@ -19,8 +19,8 @@
  *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __ARCH_TIMER_H
-#define __ARCH_TIMER_H
+#ifndef I386_TIMER_H
+#define I386_TIMER_H
 
 #if defined(HAVE_CONFIG_H)
 #include <config.h>
@@ -96,5 +96,5 @@ static inline void Time_SetPastTimeout (sched_t *sched, Time delay)
 }
 #endif /* ENABLE_CPU_TIMERS */
 
-#endif /* __ARCH_TIMER_H */
+#endif /* I386_TIMER_H */
 

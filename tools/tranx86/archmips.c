@@ -1,6 +1,6 @@
 /*
  *	archmips.c -- MIPS architecture stuff
- *	Copyright (C) 2002-2003 Fred Barnes and Christian Jacobsen  <{frmb2,clj3}@ukc.ac.uk>
+ *	Copyright (C) 2002-2003 Fred Barnes and Christian Jacobsen  <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -63,6 +63,7 @@
 #define RMAX_MIPS 8
 #define NODEMAX_MIPS 256
 
+#if 0
 /*{{{  static void set_implied_inputs (ins_chain *instr, int n_inputs, int *i_regs)*/
 /*
  *	void set_implied_inputs (ins_chain *instr, int n_inputs, int *i_regs)
@@ -100,19 +101,18 @@ static void set_implied_outputs (ins_chain *instr, int n_outputs, int *o_regs)
 	return;
 }
 /*}}}*/
+#endif
 
 /*{{{  static void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)*/
 /*
  *	void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
- *	creates a kernel-call (constraining registers appropiately)
+ *	creates a kernel-call (constraining registers appropriately)
  */
 static void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
 {
 	kif_entrytype *entry = kif_entry (call);
 	int to_preserve, r_in, r_out;
-	int i, cregs[3], xregs[4], oregs[3];
-	int tmp_reg;
-	ins_chain *tmp_ins, *tmp_ins2;
+	int cregs[3], xregs[4];
 
 	if (regs_out > 0) {
 		to_preserve = ts->stack->old_ts_depth - regs_in;
@@ -291,7 +291,7 @@ static void compose_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
 /*{{{  static void compose_deadlock_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)*/
 /*
  *	void compose_deadlock_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
- *	creates a kernel-call with deadlock info (constraining registers appropiately)
+ *	creates a kernel-call with deadlock info (constraining registers appropriately)
  */
 static void compose_deadlock_kcall_mips (tstate *ts, int call, int regs_in, int regs_out)
 {
@@ -387,7 +387,7 @@ static void compose_debug_insert_mips (tstate *ts, int mdpairid)
 	if ((options.debug_options & DEBUG_INSERT) && !(ts->supress_debug_insert)) {
 		x = ((ts->file_pending & 0xffff) << 16) + (ts->line_pending & 0xffff);
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, x, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1)])));
-		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->insert_setup_label, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1) + 1])));
+		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_NAMEDLABEL, string_dup (mdparam_vars[(mdpairid << 1) + 1])));
 	}
 	return;
 }
@@ -470,19 +470,6 @@ static void compose_debug_filenames_mips (tstate *ts)
 	return;
 }
 /*}}}*/
-/*{{{  static void compose_debug_insert_set_mips (tstate *ts)*/
-/*
- *	void compose_debug_insert_set_mips (tstate *ts)
- *	generates insert-debugging setup point for post-mortem debugging
- */
-static void compose_debug_insert_set_mips (tstate *ts)
-{
-	add_to_ins_chain (compose_ins (INS_SETLABEL, 1, 0, ARG_LABEL, ts->insert_setup_label));
-	add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_LABEL | ARG_ISCONST, ts->filename_label, ARG_NAMEDLABEL, string_dup ("&mdparam1")));
-	add_to_ins_chain (compose_ins (INS_RET, 0, 0));
-	return;
-}
-/*}}}*/
 
 
 /*{{{ int regcolour_special_to_real_mips (int sreg)*/
@@ -561,6 +548,7 @@ static void swap_in_args(ins_chain *ins, int a, int b)
 	ins->in_args[b] = tmp_arg;
 }
 /*}}}*/
+#if 0
 /*{{{ static void swap_imm_reg_args(ins_chain *ins) 
  * Swap args if in[0] is ARG_CONST, cos only src2 can be imm on MIPS 
  * This is for certain arithmetic instructions 
@@ -578,6 +566,7 @@ static void swap_imm_reg_args(ins_chain *ins)
 	}
 }
 /*}}}*/
+#endif
 
 /*{{{*/static ins_chain *find_next_ins_backward(ins_chain *ins)
 {
@@ -597,6 +586,7 @@ static void swap_imm_reg_args(ins_chain *ins)
 	return tmp_ins;
 }
 /*}}}*/
+#if 0
 /*{{{ static int expand_args_to_regs(ins_chain *ins)
  *
  * Expands the arguments of an instruction into purely using direct
@@ -630,6 +620,7 @@ static int expand_args_to_regs(ins_chain *ins)
 	/* FIXME: Do the same for out_args */
 	return 1;
 }/*}}}*/
+#endif
 /*{{{*/static ins_chain *find_and_check_setcc_regs(ins_chain *ins)
 /*
  * Oh, this is so ugly, possibly... In this case we have a SETCC
@@ -2194,7 +2185,6 @@ arch_t *init_arch_mips (int mclass)
 	arch->compose_rangestop_jumpcode = NULL;
 
 	arch->compose_debug_deadlock_set = NULL;
-	arch->compose_debug_insert_set = compose_debug_insert_set_mips;
 
 	/* code-gen */
 	arch->compose_divcheck_zero = NULL;

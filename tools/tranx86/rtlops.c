@@ -1,6 +1,6 @@
 /*
  *	rtlops.c - RTL operations (basic sortings out of the RTL/instruction chain)
- *	Copyright (C) 2000 Fred Barnes <frmb2@ukc.ac.uk>
+ *	Copyright (C) 2000 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -1098,10 +1098,12 @@ static int decode_ins_mnemonic (char *str)
 		}
 		break;
 	case P2CHR ('c','o'):
-		if (!strcmp (str + 2, "nstlabdiffshort")) {
-			ins = INS_CONSTLABDIFFSHORT;
+		if (!strcmp (str + 2, "nstlabdiff")) {
+			ins = INS_CONSTLABDIFF;
 		} else if (!strcmp (str + 2, "nstrain")) {
 			ins = INS_CONSTRAIN_REG;
+		} else if (!strcmp (str + 2, "nstlabaddr")) {
+			ins = INS_CONSTLABADDR;
 		}
 		break;
 	case P2CHR ('c','w'):

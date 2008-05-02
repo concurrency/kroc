@@ -43,6 +43,10 @@
 -- TS/1232, V1.2, 10-Apr-91 SRH
 --}}}
 --{{{  ATAN
+--* Single-precision arctangent.
+--
+-- @param X Input value
+-- @return Arctangent of X
 REAL32 FUNCTION ATAN (VAL REAL32 X)
 
   REAL32 Result :
@@ -132,6 +136,13 @@ REAL32 FUNCTION ATAN (VAL REAL32 X)
 :
 --}}}
 --{{{  ATAN2
+--* Single-precision divide and arctangent.
+--
+-- This can be used to convert a 2D coordinate to a polar angle. It is more
+-- accurate than doing the equivalent division and call to [@ref ATAN].
+--
+-- @param U, V Input values
+-- @return Arctangent of [@code U / V]
 REAL32 FUNCTION ATAN2 (VAL REAL32 U, V)
 
   REAL32 Result :

@@ -60,6 +60,7 @@
 #define MT_CCSP 1
 #define MT_DEFINES 1
 #include <mobile_types.h>
+#include <ccsp_pony.h>
 
 #include <typedesc.h>
 
@@ -1548,44 +1549,56 @@ static void handle_seterr (unsigned int seterr_info1, unsigned int seterr_info2,
 	}
 }
 /*}}}*/
+/*{{{  void ccsp_decode_debug_insert (sched_t *sched, int offset, const char **file, int *line)*/
+/*
+ *	Decode a set of debug insert information.
+ *	If no valid information is available, returns 0 as the line number.
+ */
+void ccsp_decode_debug_insert (int offset, const char **filename, int *line)
+{
+	const sched_t *sched = _local_scheduler;
+	const word *info = &(sched->mdparam[offset]);
+
+	if (sched == NULL) {
+		*line = 0;
+		*filename = "no scheduler";
+	} else if (info[0] == 0xffffffff || info[1] == 0xffffffff
+	           || info[0] == 0 || info[1] == 0) {
+		*line = 0;
+		*filename = "no debug info";
+	} else {
+		const char *file_tab = (const char *) info[1];
+		int file_num = (info[0] >> 16) & 0xffff;
+
+		if (file_num < 0 || file_num >= *(int *)file_tab) {
+			*line = 0;
+			*filename = "bad file number";
+		} else {
+			*line = info[0] & 0xffff;
+			*filename = file_tab + *(int *)(file_tab + (4 * (file_num + 1)));
+		}
+	}
+}
+/*}}}*/
 /*{{{  void ccsp_show_last_debug_insert (void)*/
 /* ccsp_show_last_debug_insert*/
+/*
+ *	Show any debug insert information that's currently available.
+ */
 void ccsp_show_last_debug_insert (void)
 {
-	sched_t *sched = _local_scheduler;
-	void (*setup_fcn)(void);
-	int file_num, line_num;
-	char *insert_file;
+	const char *filename;
+	int line_num;
 
-	if ((sched->mdparam[0] != 0xffffffff) && (sched->mdparam[1] != 0xffffffff) && sched->mdparam[0] && sched->mdparam[1]) {
-		file_num = (sched->mdparam[0] >> 16) & 0xffff;
-		line_num = sched->mdparam[0] & 0xffff;
-		/* mdparam[1] holds address of setup code */
-		setup_fcn = (void (*)(void))sched->mdparam[1];
-		setup_fcn ();
-		insert_file = (char *)sched->mdparam[0];
-		if ((file_num >= *(int *)(insert_file)) || (file_num < 0)) {
-			BMESSAGE ("debug insert: invalid file number (file_num=%d)\n", file_num);
-			return;
-		}
-		insert_file += *(int *)(insert_file + (4 * (file_num+1)));
-		BMESSAGE ("last debug position was in file \"%s\" near line %d\n", insert_file, line_num);
+	ccsp_decode_debug_insert (0, &filename, &line_num);
+	if (line_num != 0) {
+		BMESSAGE ("last debug position was in file \"%s\" near line %d\n", filename, line_num);
 	}
-	if ((sched->mdparam[2] != 0xffffffff) && (sched->mdparam[3] != 0xffffffff) && sched->mdparam[2] && sched->mdparam[3]) {
-		file_num = (sched->mdparam[2] >> 16) & 0xffff;
-		line_num = sched->mdparam[2] & 0xffff;
-		/* mdparam[3] holds address of setup code */
-		setup_fcn = (void (*)(void))sched->mdparam[3];
-		setup_fcn ();
-		insert_file = (char *)sched->mdparam[0];
-		if ((file_num >= *(int *)(insert_file)) || (file_num < 0)) {
-			BMESSAGE ("debug insert: invalid file number (file_num=%d)\n", file_num);
-			return;
-		}
-		insert_file += *(int *)(insert_file + (4 * (file_num+1)));
-		BMESSAGE ("last position before CALL was in file \"%s\" near line %d\n", insert_file, line_num);
+
+	ccsp_decode_debug_insert (2, &filename, &line_num);
+	if (line_num != 0) {
+		BMESSAGE ("last position before CALL was in file \"%s\" near line %d\n", filename, line_num);
 	}
-	return;
 }
 /*}}}*/
 /*{{{  void err_no_bsyscalls (word *wptr, int ra)*/
@@ -1979,12 +1992,13 @@ K_CALL_DEFINE_1_0 (Y_rtthreadinit)
 	
 	ENTRY_TRACE (Y_rtthreadinit, "(%08x)", att_val (&enabled_threads));
 
+	sched			= (sched_t *) stack;
 	allocator 		= dmem_new_allocator ();
-	sched 			= dmem_thread_alloc (allocator, sizeof(sched_t));
 	init_sched_t (sched);
 	memcpy (sched->calltable, ccsp_calltable, sizeof(void *) * K_MAX_SUPPORTED);
 	sched->allocator 	= allocator;
 	sched->stack		= stack;
+	sched->priofinity	= BuildPriofinity (0, (MAX_PRIORITY_LEVELS / 2));
 	
 	set_local_scheduler (sched);
 
@@ -2109,11 +2123,11 @@ static void kernel_common_error (word *Wptr, sched_t *sched, unsigned int return
  */
 K_CALL_DEFINE_4_0 (Y_zero_div)
 {
-	unsigned int zerodiv_info2, zerodiv_info, procedure_addr, filename_addr;
+	unsigned int zerodiv_info2, zerodiv_info1, procedure_addr, filename_addr;
 
-	K_CALL_PARAMS_4 (zerodiv_info2, zerodiv_info, procedure_addr, filename_addr);
+	K_CALL_PARAMS_4 (zerodiv_info2, zerodiv_info1, procedure_addr, filename_addr);
 	
-	zerodiv_happened (zerodiv_info, zerodiv_info2, filename_addr, procedure_addr);
+	zerodiv_happened (zerodiv_info1, zerodiv_info2, filename_addr, procedure_addr);
 	kernel_common_error (Wptr, sched, return_address, "zero_div");
 }
 /*}}}*/
@@ -2129,11 +2143,11 @@ K_CALL_DEFINE_4_0 (Y_zero_div)
  */
 K_CALL_DEFINE_4_0 (Y_overflow)
 {
-	unsigned int filename_addr, overflow_info, overflow_info2, procedure_addr;
+	unsigned int filename_addr, overflow_info1, overflow_info2, procedure_addr;
 	
-	K_CALL_PARAMS_4 (overflow_info2, overflow_info, procedure_addr, filename_addr);
+	K_CALL_PARAMS_4 (overflow_info2, overflow_info1, procedure_addr, filename_addr);
 
-	overflow_happened (overflow_info, overflow_info2, filename_addr, procedure_addr);		/* Parameters dealt with (they're visible throughout) */
+	overflow_happened (overflow_info1, overflow_info2, filename_addr, procedure_addr);		/* Parameters dealt with (they're visible throughout) */
 	kernel_common_error (Wptr, sched, return_address, "overflow");
 }
 /*}}}*/
@@ -2149,11 +2163,11 @@ K_CALL_DEFINE_4_0 (Y_overflow)
  */
 K_CALL_DEFINE_5_0 (Y_floaterr)
 {
-	unsigned int filename_addr, floaterr_fpustatus, floaterr_info, floaterr_info2, procedure_addr;
+	unsigned int filename_addr, floaterr_fpustatus, floaterr_info1, floaterr_info2, procedure_addr;
 	
-	K_CALL_PARAMS_5 (floaterr_info2, floaterr_info, procedure_addr, filename_addr, floaterr_fpustatus);
+	K_CALL_PARAMS_5 (floaterr_info2, floaterr_info1, procedure_addr, filename_addr, floaterr_fpustatus);
 	
-	floaterr_happened (floaterr_info, floaterr_info2, floaterr_fpustatus, filename_addr, procedure_addr);
+	floaterr_happened (floaterr_info1, floaterr_info2, floaterr_fpustatus, filename_addr, procedure_addr);
 	kernel_common_error (Wptr, sched, return_address, "floaterr");
 }
 /*}}}*/
@@ -2171,7 +2185,7 @@ K_CALL_DEFINE_4_0 (Y_Seterr)
 {
 	unsigned int filename_addr, procedure_addr, seterr_info1, seterr_info2;
 	
-	K_CALL_PARAMS_4 (procedure_addr, filename_addr, seterr_info2, seterr_info1);
+	K_CALL_PARAMS_4 (seterr_info2, seterr_info1, procedure_addr, filename_addr);
 	ENTRY_TRACE (Y_Seterr, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, seterr_info2, seterr_info1);
 	
 	handle_seterr (seterr_info1, seterr_info2, filename_addr, procedure_addr);
@@ -2229,7 +2243,7 @@ K_CALL_DEFINE_4_0 (Y_RangeCheckError)
 {
 	unsigned int filename_addr, procedure_addr, range_info1, range_info2;
 	
-	K_CALL_PARAMS_4 (procedure_addr, filename_addr, range_info2, range_info1);
+	K_CALL_PARAMS_4 (range_info2, range_info1, procedure_addr, filename_addr);
 	ENTRY_TRACE (Y_RangeCheckError, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, range_info2, range_info1);
 
 	handle_range_error (range_info1, range_info2, filename_addr, procedure_addr);
@@ -3097,8 +3111,9 @@ static INLINE word *mt_alloc_cb (void *allocator, word type, word channels)
 	word i;
 
 	if (type & MT_CB_STATE_SPACE) {
-		words += 5;
+		words += sizeof(mt_cb_pony_state_t) / sizeof(word);
 	}
+	type |= channels << MT_CB_CHANNELS_SHIFT;
 
 	if (type & MT_CB_SHARED) {
 		mt_cb_shared_internal_t	*i_cb;
@@ -3120,6 +3135,15 @@ static INLINE word *mt_alloc_cb (void *allocator, word type, word channels)
 		i_cb->ref_count = 2;
 		i_cb->type	= type;
 		cb		= (mt_cb_t *) (((word *) i_cb) + MT_CB_PTR_OFFSET);
+	}
+
+	if (type & MT_CB_STATE_SPACE) {
+		mt_cb_pony_state_t *pony = (mt_cb_pony_state_t *) &(cb->channels[channels]);
+
+		pony->typedesc	= NULL;
+		pony->uiohook	= NULL;
+		pony->state	= 0;
+		sem_init (&(pony->statesem));
 	}
 
 	for (i = 0; i < channels; ++i) {
@@ -3609,7 +3633,7 @@ K_CALL_DEFINE_2_0 (Y_bx_dispatch)
 /*}}}*/
 /*{{{  void kernel_X_bx_kill (void)*/
 /*
- *	dispatches a terminateable blocking call
+ *	kills a terminateable blocking call
  *
  *	@SYMBOL:	X_bx_kill
  *	@INPUT:		1
@@ -3848,12 +3872,14 @@ K_CALL_DEFINE_3_1 (X_mt_bind)
 			}
 			
 			#ifdef RMOX_BUILD
-			word low = (word) ma->array.data;
-			word high = low + ma->size;
-			if ((low | high) & 0x3fffffff) { /* FIXME: magic mask */
-				dma_ready = true;
-			} else {
-				dma_ready = false;
+			{
+				word low = (word) ma->array.data;
+				word high = low + ma->size;
+				if ((low | high) & 0x3fffffff) { /* FIXME: magic mask */
+					dma_ready = true;
+				} else {
+					dma_ready = false;
+				}
 			}
 			#else
 			dma_ready = false;
@@ -3872,6 +3898,95 @@ K_CALL_DEFINE_3_1 (X_mt_bind)
 				ma->type = old_type;
 				mt_release (sched, ptr);
 				ptr = new_ptr;
+			}
+		} else {
+			mobile_type_error ();
+		}
+	} else {
+		mobile_type_error ();
+	}
+
+	K_ONE_OUT (ptr);
+}
+/*}}}*/
+/*{{{  void kernel_X_mt_resize (void)*/
+/*
+ *	resize a mobile type 
+ *
+ *	@SYMBOL:	X_mt_resize
+ *	@INPUT:		3
+ *	@OUTPUT: 	1
+ *	@CALL: 		K_MT_RESIZE
+ *	@PRIO:		50
+ */
+K_CALL_DEFINE_3_1 (X_mt_resize)
+{
+	word arg, *ptr, resize_type;
+	
+	K_CALL_PARAMS_3 (resize_type, ptr, arg);
+	ENTRY_TRACE (X_mt_resize, "%08x %p %08x", resize, ptr, arg);
+
+	if ((resize_type == MT_RESIZE_DATA) && (ptr != NULL)) {
+		word new_size	= arg;
+		word type	= ptr[MTType];
+
+		if ((type & MT_SIMPLE) && (MT_TYPE(type) == MT_ARRAY)) {
+			mt_array_internal_t *ma = (mt_array_internal_t *) (ptr - MT_ARRAY_PTR_OFFSET);
+			word inner_type		= MT_ARRAY_INNER_TYPE(type);
+
+			if (MT_TYPE(inner_type) == MT_ARRAY_OPTS) {
+				inner_type = MT_ARRAY_OPTS_INNER(inner_type);
+			}
+
+			/* Reallocate the array if it needs to grow, or if it
+			 * shrinks to less than 50% of the allocated memory.
+			 */
+			if ((ma->size < new_size) || (new_size < (ma->size / 2))) {
+				mt_array_internal_t *new;
+				word size_shift;
+				
+				new = mt_alloc_array_internal (
+					sched->allocator, type, new_size, false, &size_shift
+				);
+				if (MT_TYPE(inner_type) != MT_NUM) {
+					word **dst = (word **) new->array.data;
+					word **src = (word **) ma->array.data;
+					word count = ma->size < new->size ? ma->size : new->size;
+
+					while (count--) {
+						*(dst++) = *src;
+						*(src++) = NULL;
+					}
+					
+					if (new->size > ma->size) {
+						count = new->size - ma->size;
+						while (count--) {
+							*(dst++) = NULL;
+						}
+					}
+				} else if (new->size > 0) {
+					memcpy (
+						new->array.data,
+						ma->array.data, 
+						new->size << size_shift
+					);
+				}
+
+				mt_release_simple (sched->allocator, ptr, type);
+				ptr = ((word *) new) + MT_ARRAY_PTR_OFFSET;
+			} else if (ma->size > new_size) {
+				if (MT_TYPE(inner_type) != MT_NUM) {
+					word **data 	= ((word **) ma->array.data) + new_size;
+					word count 	= ma->size - new_size;
+					while (count--) {
+						word *p = *data;
+						if (p != NULL) {
+							mt_release (sched->allocator, p);
+							*data = NULL;
+						}
+						data++;
+					}
+				}
 			}
 		} else {
 			mobile_type_error ();

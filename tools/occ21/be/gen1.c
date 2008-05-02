@@ -67,7 +67,7 @@
 #include "predefhd.h"
 #include "genkroc.h"
 #include "mobiles.h"		/* for mobile_getanontypes() */
-#include "mtdef.h"
+#include "mobile_types.h"
 /*}}}*/
 
 /*{{{  global variables*/
@@ -3622,7 +3622,7 @@ PUBLIC void tprocess (treenode * tptr)
 					const int chans = (bytesin (ct_type) / bytesperword);		/* client at this + 1, server at this + 4, maybe more if chantype_desc */
 					const int is_client = (NTypeAttrOf (ct_type) & TypeAttr_marked_out);
 					const int lock = (is_client ? MT_CB_CLIENT : MT_CB_SERVER);
-					const int knsf_offset = chans + (kroc_chantype_desc ? MCT_DESCSIZE : 0);
+					const int pony_offset = chans;					/* offset of pony state in words */
 					/*}}}*/
 					gencomment0 ("begin claim semaphore");
 					loadmobile (ct_nptr);
@@ -3640,25 +3640,25 @@ PUBLIC void tprocess (treenode * tptr)
 							const int ijoinlab = newlab ();
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_CLAIM);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							genboolinvert ();
 							genbranch (I_CJ, iskiplab);			/* operations-hook is non-null, so skip */
 
 							/* change value in state field */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, knsf_offset);		/* load current state */
+							genprimary (I_LDNL, pony_offset + PONY_STATE);	/* load current state */
 							loadconstant (is_client ? 0x0001 : 0x00010000);
 							gensecondary (I_SUM);				/* advance state from 2 to 3 */
 							loadmobile (ct_nptr);
-							genprimary (I_STNL, knsf_offset);		/* save modified state */
+							genprimary (I_STNL, pony_offset + PONY_STATE);	/* save modified state */
 
 							/* release semaphore */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_RELEASE);
 							genbranch (I_J, ijoinlab);
 
@@ -3666,16 +3666,16 @@ PUBLIC void tprocess (treenode * tptr)
 							setlab (iskiplab);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_RELEASE);
 
 							/* do uio communication (to KRoC.net kernel in this case) */
-							/* note: the pointer in the chantype (MCT_DESCOFFSET + 1) is to the first (client)
+							/* note: the pointer in the chantype is to the first (client)
 							 *       channel word, server stacked above that
 							 */
 							loadmobile (ct_nptr);
 							gensecondary (I_DUP);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							if (is_client) {
 								/* genprimary (I_LDNLP, 0);	*/		/* load address of "client" channel */
 							} else {
@@ -3691,11 +3691,11 @@ PUBLIC void tprocess (treenode * tptr)
 							const int iskiplab = newlab ();
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							genbranch (I_CJ, iskiplab);		/* operations-hook is NULL, so skip */
 							loadmobile (ct_nptr);
 							gensecondary (I_DUP);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							if (is_client) {
 								genprimary (I_LDNL, 0);			/* load address of "client" channel */
 							} else {
@@ -3722,25 +3722,25 @@ PUBLIC void tprocess (treenode * tptr)
 							const int ijoinlab = newlab ();
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_CLAIM);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							genboolinvert ();
 							genbranch (I_CJ, iskiplab);			/* operations-hook is non-null, so skip */
 
 							/* change value in state field */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, knsf_offset);		/* load current state */
+							genprimary (I_LDNL, pony_offset + PONY_STATE);	/* load current state */
 							loadconstant (is_client ? 0x0001 : 0x00010000);
 							gensecondary (I_DIFF);				/* reduce state from 3 to 2 */
 							loadmobile (ct_nptr);
-							genprimary (I_STNL, knsf_offset);		/* save modified state */
+							genprimary (I_STNL, pony_offset + PONY_STATE);	/* save modified state */
 
 							/* release semaphore */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_RELEASE);
 
 							genbranch (I_J, ijoinlab);
@@ -3749,19 +3749,19 @@ PUBLIC void tprocess (treenode * tptr)
 							setlab (iskiplab);
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNLP, knsf_offset + 1);		/* address of "state" semaphore */
+							genprimary (I_LDNLP, pony_offset + PONY_STATESEM);
 							gensemop (SEMOP_RELEASE);
 
 							/* do uio communication (to KRoC.net kernel in this case) */
-							/* note: the pointer in the chantype (MCT_DESCOFFSET + 1) is to the first (client)
+							/* note: the pointer in the chantype is to the first (client)
 							 *       channel word, server stacked above that
 							 */
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							genbranch (I_CJ, iskiplab);		/* operations-hook is NULL, so skip */
 							loadmobile (ct_nptr);
 							gensecondary (I_DUP);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							if (is_client) {
 								/* genprimary (I_LDNL, 0); */			/* load address of "client" channel */
 							} else {
@@ -3779,11 +3779,11 @@ PUBLIC void tprocess (treenode * tptr)
 							const int iskiplab = newlab ();
 
 							loadmobile (ct_nptr);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							genbranch (I_CJ, iskiplab);		/* operations-hook is NULL, so skip */
 							loadmobile (ct_nptr);
 							gensecondary (I_DUP);
-							genprimary (I_LDNL, MCT_DESCOFFSET + 1);
+							genprimary (I_LDNL, pony_offset + PONY_UIOHOOK);
 							if (is_client) {
 								genprimary (I_LDNL, 0);			/* load address of "client" channel */
 							} else {
@@ -3834,8 +3834,6 @@ printtreenl (stderr, 4, ct_subtype);
 					lastchan_offset = (bytesin (ct_subtype) / bytesperword);		/* client at this + 1, server at this + 4, maybe more if chantype_desc */
 					is_client = (NTypeAttrOf (ct_subtype) & TypeAttr_marked_out);
 					lock = (is_client ? MT_CB_CLIENT : MT_CB_SERVER);
-					//soffset = lastchan_offset + MCT_REFCSIZE + (is_client ? MCT_CLI_SEMOFFS : MCT_SVR_SEMOFFS) + (kroc_chantype_desc ? MCT_DESCSIZE : 0);
-					//knsf_offset = lastchan_offset + MCT_REFCSIZE + (kroc_chantype_desc ? MCT_DESCSIZE : 0) + MCT_KROCNETOFFS;
 					cl_head = newlab ();
 					cl_tail = newlab ();
 					rl_head = newlab ();
@@ -4481,10 +4479,12 @@ printtreenl (stderr, 4, resinst);
 			return;
 			/*}}} */
 			/*{{{  S_X_INPUT_OUTPUT  return */
+		#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3) && defined(PD_ENCODE_CHANNEL)
 		case S_X_INPUT_OUTPUT:
 			txinputoutput (tptr);
 			tdespecs (specsptr);
 			return;
+		#endif
 			/*}}}*/
 			/*{{{  S_ASS                  return */
 		case S_ASS:
@@ -4498,6 +4498,7 @@ printtreenl (stderr, 4, resinst);
 		case S_PINSTANCE:
 			tpreexp (IParamListOf (tptr));
 			if (TagOf (INameOf (tptr)) == N_PREDEFPROC) {
+				#if 0
 				if (cgraph_profiling && NModeOf (INameOf (tptr)) != PD_UPDATE_PROFCOUNT) {
 					ProfTabEntry *entry = get_proftab_entry (profile_table, tptr);
 					if (entry != NULL) {
@@ -4505,6 +4506,7 @@ printtreenl (stderr, 4, resinst);
 						proftab_calling_nptr_ (entry) = current_routine_nptr;
 					}
 				}
+				#endif
 				tpredef (tptr, NULL);
 			} else {
 				tinstance (tptr);

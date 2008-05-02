@@ -2643,6 +2643,7 @@ printtreenl (stderr, 4, CTempOf (t));
 					case N_ABBR:
 						{
 							treenode *ntype = NTypeOf (CTempOf (t));
+							int errored = 0;
 
 							/* right, is it an anonymous channel-type being claimed ? */
 							if (TagOf (ntype) == S_ANONCHANTYPE) {
@@ -2651,6 +2652,7 @@ printtreenl (stderr, 4, CTempOf (t));
 								/* yes..  oki, check for direction specifier on variable */
 								if (!anon_ct_iospec) {
 									chkerr_s (CHK_CLAIM_ANON_NODIRSPEC, chklocn, WNameOf (NNameOf (CTempOf (t))));
+									errored = 1;
 								} else {
 									/* subsitute in the right half for CLAIMing */
 									if (anon_ct_iospec & TypeAttr_marked_out) {
@@ -2661,17 +2663,23 @@ printtreenl (stderr, 4, CTempOf (t));
 										newtemp = mobile_getanon_fromvar (CTempOf (t), TRUE, FALSE, *tptr);
 									}
 								}
-								SetCTemp (t, newtemp);
+								if (!newtemp) {
+									/* NULL, means it doesn't exist really */
+									chkerr (CHK_CLAIM_VAR_BADDIRSPEC, chklocn);
+									errored = 1;
+								} else {
+									SetCTemp (t, newtemp);
 #if 0
 fprintf (stderr, "scopeandcheck: CLAIM node.  Adjusted CTemp to newtemp =");
 printtreenl (stderr, 4, newtemp);
 fprintf (stderr, "scopeandcheck: CLAIM node.  Adjusted CTemp NTypeOf (newtemp) =");
 printtreenl (stderr, 4, NTypeOf (newtemp));
 #endif
-								ntype = NTypeOf (newtemp);
+									ntype = NTypeOf (newtemp);
+								}
 							}
 
-							if (isdynmobilearraytype (ntype)) {
+							if (ntype && isdynmobilearraytype (ntype)) {
 								/* claiming an array of channel-ends */
 								ntype = ARTypeOf (MTypeOf (ntype));
 #if 0
@@ -2680,19 +2688,22 @@ printtreenl (stderr, 4, ntype);
 #endif
 							}
 
-							if (TagOf (ntype) == S_CHAN) {
-								/* this can happen if the SHARED attribute is missed for an anonymous channel-type,
-								 * generate a more meaningful error
-								 */
-								chkerr (CHK_CLAIM_VAR_ISCHAN, chklocn);
-							} else if (TagOf (ntype) != N_TYPEDECL) {
-								chkerr_s (CHK_CLAIM_VAR_NOTCHANTYPE, chklocn, WNameOf (NNameOf (CTempOf (t))));
-							} else if (!(NTypeAttrOf (ntype) & TypeAttr_shared)) {
-								if (TagOf (ntype) != S_UNDECLARED) {
-									chkerr_s (CHK_CLAIM_VAR_NOTSHARED, chklocn, WNameOf (NNameOf (CTempOf (t))));
+							/* if we screwed up, don't bother generating any more errors regarding this */
+							if (!errored) {
+								if (TagOf (ntype) == S_CHAN) {
+									/* this can happen if the SHARED attribute is missed for an anonymous channel-type,
+									 * generate a more meaningful error
+									 */
+									chkerr (CHK_CLAIM_VAR_ISCHAN, chklocn);
+								} else if (TagOf (ntype) != N_TYPEDECL) {
+									chkerr_s (CHK_CLAIM_VAR_NOTCHANTYPE, chklocn, WNameOf (NNameOf (CTempOf (t))));
+								} else if (!(NTypeAttrOf (ntype) & TypeAttr_shared)) {
+									if (TagOf (ntype) != S_UNDECLARED) {
+										chkerr_s (CHK_CLAIM_VAR_NOTSHARED, chklocn, WNameOf (NNameOf (CTempOf (t))));
+									}
+								} else if ((TagOf (ntype) == N_TYPEDECL) && (NTypeAttrOf (ntype) & TypeAttr_shared)) {
+									sharedattrptr = NTypeAttrAddr (ntype);
 								}
-							} else if ((TagOf (ntype) == N_TYPEDECL) && (NTypeAttrOf (ntype) & TypeAttr_shared)) {
-								sharedattrptr = NTypeAttrAddr (ntype);
 							}
 						}
 						break;
@@ -2961,6 +2972,7 @@ printtreenl (stderr, 4, t);
 #endif
 					/*{{{  strange, mode of pname doesn't get set right for encode/decode/etc., do it here */
 					if (TagOf (INameOf (t)) == N_PREDEFPROC) {
+						#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3) && defined(PD_ENCODE_CHANNEL)
 						if (NNameOf (INameOf (t)) == lookupword ("ENCODE.CHANNEL", 14)) {
 							SetNMode (INameOf (t), PD_ENCODE_CHANNEL);
 						} else if (NNameOf (INameOf (t)) == lookupword ("DECODE.CHANNEL", 14)) {
@@ -2973,7 +2985,9 @@ printtreenl (stderr, 4, t);
 								scopeandcheck (INameAddr (t));
 								SetNMode (INameOf (t), PD_DECODE_CHANNEL3);
 							}
-						} else if (NNameOf (INameOf (t)) == lookupword ("DECODE.DATA", 11)) {
+						} else
+						#endif /* PD_DECODE_CHANNEL && PD_DECODE_CHANNEL3 && PD_ENCODE_CHANNEL */
+						if (NNameOf (INameOf (t)) == lookupword ("DECODE.DATA", 11)) {
 							SetNMode (INameOf (t), PD_DECODE_DATA);
 						}
 					}
@@ -3046,6 +3060,7 @@ printtreenl (stderr, 4, NTypeOf (n2));
 								chkerr (CHK_INV_CHANTYPE_ALLOC, LocnOf (t));
 							}
 							/*}}}*/
+						#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3) && defined(PD_ENCODE_CHANNEL)
 						} else if ((TagOf (t) == S_PINSTANCE) && (TagOf (INameOf (t)) == N_PREDEFPROC) &&
 								((NModeOf (INameOf (t)) == PD_DECODE_CHANNEL) || (NModeOf (INameOf (t)) == PD_DECODE_CHANNEL3) || (NModeOf (INameOf (t)) == PD_ENCODE_CHANNEL))) {
 							/*{{{  ENCODE.CHANNEL/DECODE.CHANNEL chan-dir check (first and second must be INPUT, third must be OUTPUT) -- see also USE */
@@ -3130,6 +3145,7 @@ printtreenl (stderr, 4, NTypeOf (param));
 								paramno++;
 							}
 							/*}}}*/
+						#endif /* PD_DECODE_CHANNEL && PD_DECODE_CHANNEL3 && PD_ENCODE_CHANNEL */
 						} else if ((TagOf (t) == S_PINSTANCE) && ((TagOf (INameOf (t)) == N_PROCDEF) ||
 									ismobileprocvar (INameOf (t)) ||			/* frmb: more complex to find these */
 									(TagOf (INameOf (t)) == N_SCPROCDEF) || (TagOf (INameOf (t)) == N_LIBPROCDEF) || (TagOf (INameOf (t)) == N_LIBMPROCDECL))) {

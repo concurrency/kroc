@@ -742,7 +742,8 @@ static int tsdiff_sec_twocodes[] = { \
 	16, 16, 16, 16,	/* 23c: mt_out, mt_xchg, mt_lock, mt_unlock */
 	-2, -2, 16, 16,	/* 240: mt_enroll, mt_resign, mt_sync, mt_xin */
 	16, 16, -2, -2,	/* 244: mt_xout, mt_xxchg, mt_dclone, mt_bind */
-	0, 0, 0         /* 248: mb, rmb, wmb */
+	0, 0, 0, 16,    /* 248: mb, rmb, wmb, ext_mt_in */
+	16, -2          /* 24c: ext_mt_out, mt_resize */
 };
 /*}}}*/
 PRIVATE char tstack[4];
@@ -1814,6 +1815,7 @@ PUBLIC void gensecondary (int instruction)
 		case I_VIN:
 		case I_VOUT:	/* variableio 3/11/91 */
 #ifdef MOBILES
+		#if 0
 		case I_MIN:
 		case I_MOUT:
 		case I_MIN64:
@@ -1824,6 +1826,7 @@ PUBLIC void gensecondary (int instruction)
 		case I_EXTMIN:
 		case I_EXTMOUTN:
 		case I_EXTMINN:
+		#endif
 		case I_MT_IN:
 		case I_MT_OUT:
 		case I_MT_XCHG:
@@ -1833,6 +1836,8 @@ PUBLIC void gensecondary (int instruction)
 		case I_MT_XIN:
 		case I_MT_XOUT:
 		case I_MT_XXCHG:
+		case I_EXT_MT_IN:
+		case I_EXT_MT_OUT:
 #endif	/* MOBILES */
 		case I_XIN:
 		case I_EXTIN:

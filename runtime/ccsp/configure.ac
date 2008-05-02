@@ -49,7 +49,7 @@ AC_ARG_ENABLE([pthreads], AS_HELP_STRING([--enable-pthreads],[use pthreads libra
 AC_ARG_ENABLE([mmap], AS_HELP_STRING([--disable-mmap],[disable mmap() based allocation (default enabled)]), [enable_mmap=$enableval], [enable_mmap=yes])
 AC_ARG_ENABLE([mp], AS_HELP_STRING([--enable-mp],[enable multi-processor support (default disabled)]), [enable_mp=$enableval], [enable_mp=no])
 AC_ARG_ENABLE([tls], AS_HELP_STRING([--enable-tls],[use thread-local-storage for scheduler pointer]), [enable_tls=$enableval], [enable_tls=yes])
-AC_ARG_ENABLE([use_sse2], AS_HELP_STRING([--disable-sse2],[do not use SSE2 even if supported on build system]), [enable_sse2=$enableval], [enable_sse2=yes])
+AC_ARG_ENABLE([sse2], AS_HELP_STRING([--disable-sse2],[do not use SSE2 even if supported on build system]), [enable_sse2=$enableval], [enable_sse2=yes])
 AC_ARG_ENABLE([tuning], AS_HELP_STRING([--enable-tuning=...],[set tuning for speed or size (default speed)]), [tuning=$enableval], [tuning=default])
 AC_ARG_WITH([rmox], AS_HELP_STRING([--with-rmox=...],[location of RMoX source tree to build the RMoX version of CCSP for]), [rmox=$withval], [rmox=])
 
@@ -683,8 +683,6 @@ EXTRA_DEFS="$EXTRA_CFLAGS $FRAMEPTR_CFLAGS $ARCH_CFLAGS $RMOX_CFLAGS -DSIGNAL_TY
 AC_SUBST(EXTRA_DEFS)
 AC_SUBST(EXTRA_LDFLAGS)
 
-AC_CONFIG_LINKS([include/arch:include/$ARCH_DIR])
-
 AC_CONFIG_HEADERS([include/ccsp_config.h])
-AC_OUTPUT([Makefile common/Makefile include/Makefile include/i386/Makefile kernel/Makefile utils/Makefile])
+AC_OUTPUT([Makefile common/Makefile include/Makefile include/arch/Makefile include/i386/Makefile kernel/Makefile utils/Makefile])
 

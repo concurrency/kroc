@@ -148,6 +148,9 @@ void ccsp_kernel_exit (int exit_status, int iptr)
 		/* MESSAGE ("STOPped at %08x\n", iptr); */
 	}
 	#endif
+	#if defined(RMOX_BUILD)
+	MESSAGE ("CCSP: kernel exit at 0x%8.8x\n", (unsigned int)iptr);
+	#endif
 	userproc_exit (exit_status, false);
 }
 /*}}}*/
@@ -160,6 +163,9 @@ void ccsp_bad_exit (void)
 	if (RTS_TRACING) {
 		BMESSAGE ("userproc: I've been murdered!\n");
 	}
+	#if defined(RMOX_BUILD)
+	MESSAGE ("CCSP: bad exit in kernel\n");
+	#endif
 	userproc_exit (-8, 1);
 }
 /*}}}*/

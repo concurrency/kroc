@@ -73,6 +73,7 @@ void loadhiddentypeptr (treenode *tptr, int regs);
 
 void mapcondfreedynchantype (treenode **nptr);
 void genaddrof (treenode *tptr);
+void mobilearray_base (treenode *const nptr, treenode **const basetype, int *basebytes);
 #endif
 /*void loadopdpointer (int opdmode, treenode *opd);*/ /* unused */
 #if 0 /* no constructors are passed to the backend any more */

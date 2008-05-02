@@ -1,6 +1,7 @@
 --
 --	sockstreamcli.occ - stream client
---	Copyright (C) 2000 Fred Barnes <frmb2@ukc.ac.uk>
+--	Copyright (C) 2000-2008 Fred Barnes <frmb@kent.ac.uk>
+--      Modifications (C) 2008 Tom Carlson
 --
 --	This program is free software; you can redistribute it and/or modify
 --	it under the terms of the GNU General Public License as published by
@@ -21,8 +22,8 @@
 #INCLUDE "course.module"
 
 
---{{{  PROC sock.stream.cli (CHAN OF BYTE kyb, scr, err)
-PROC sock.stream.cli (CHAN OF BYTE kyb, scr, err)
+--{{{  PROC sock.stream.cli (CHAN BYTE kyb?, scr!, err!)
+PROC sock.stream.cli (CHAN BYTE kyb?, scr!, err!)
 
   --{{{  constants
   VAL max.message.size IS 1500:
@@ -37,23 +38,23 @@ PROC sock.stream.cli (CHAN OF BYTE kyb, scr, err)
   INT host.len:
   SEQ
     --{{{  get hostname/port from user
-    out.string ("Hostname ?: ", 0, scr)
+    out.string ("Hostname ?: ", 0, scr!)
     scr ! FLUSH
-    in.string (hostname, host.len, (SIZE hostname), kyb, scr)
+    in.string (hostname, host.len, (SIZE hostname), kyb?, scr!)
     scr ! '*n'
     socket.addr.of.host ([hostname FOR host.len], remote.addr, res)
     IF
       res < 0
         SEQ
-          out.string ("Unable to get address of ", 0, scr)
-          out.string ([hostname FOR host.len], 0, scr)
-          out.string ("*n", 0, scr)
+          out.string ("Unable to get address of ", 0, scr!)
+          out.string ([hostname FOR host.len], 0, scr!)
+          out.string ("*n", 0, scr!)
           STOP
       TRUE
         SKIP
-    out.string ("Port ?: ", 0, scr)
+    out.string ("Port ?: ", 0, scr!)
     scr ! FLUSH
-    in.int (remote.port, 5, kyb, scr)
+    in.int (remote.port, 5, kyb, scr!)
     scr ! '*n'
     --}}}  
     --{{{  create/connect socket
@@ -61,11 +62,11 @@ PROC sock.stream.cli (CHAN OF BYTE kyb, scr, err)
     IF
       res < 0
         SEQ
-          out.string ("Unable to connect to ", 0, scr)
-          out.string ([hostname FOR host.len], 0, scr)
-          out.string (" port ", 0, scr)
-          out.int (remote.port, 0, scr)
-          out.string ("*n", 0, scr)
+          out.string ("Unable to connect to ", 0, scr!)
+          out.string ([hostname FOR host.len], 0, scr!)
+          out.string (" port ", 0, scr!)
+          out.int (remote.port, 0, scr!)
+          out.string ("*n", 0, scr!)
           STOP
       TRUE
         SKIP
@@ -76,9 +77,9 @@ PROC sock.stream.cli (CHAN OF BYTE kyb, scr, err)
       INT i:
       SEQ
         i := 0
-        out.string ("sending ", 0, scr)
-        out.int (bytes, 0, scr)
-        out.string (" byte packets...*n", 0, scr)
+        out.string ("sending ", 0, scr!)
+        out.int (bytes, 0, scr!)
+        out.string (" byte packets...*n", 0, scr!)
         WHILE (i < 100000) AND (res > 0)
           SEQ
             socket.write (sock, [buffer FOR bytes], res)

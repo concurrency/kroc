@@ -653,6 +653,19 @@ fprintf (stderr, "netcread_nextblocks(): bits[0] = [%s], bits[1] = [%s], bits[2]
 			add_to_chain (&hblk, &tblk, tmp);
 
 			/*}}}*/
+		} else if (!strcmp (bits[0], ".labaddr")) {
+			/*{{{  constant address of label*/
+			int lab;
+
+			if (!bits[1] || (sscanf (bits[1], "%d", &lab) != 1)) {
+				goto bad_input_line;
+			}
+
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR + lab;
+			tmp->opd = I_NLABADDR;
+			add_to_chain (&hblk, &tblk, tmp);
+			/*}}}*/
 		} else {
 			goto bad_input_line;
 		}
@@ -768,7 +781,7 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 
 			/*}}}*/
 		} else if (!strcmp (bits[0], "csub0")) {
-			/*{{{  range check (FIXME: exact spec?)*/
+			/*{{{  range check (Breg must be in [0..(Areg-1)])*/
 			tmp = new_etc_chain ();
 			tmp->fn = I_OPR;
 			tmp->opd = I_CSUB0;
@@ -958,6 +971,20 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 			tmp->opd = I_GETPRI;
 			add_to_chain (&hblk, &tblk, tmp);
 			/*}}}*/
+		} else if (!strcmp (bits[0], "getaff")) {
+			/*{{{  get affinity*/
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR;
+			tmp->opd = I_GETAFF;
+			add_to_chain (&hblk, &tblk, tmp);
+			/*}}}*/
+		} else if (!strcmp (bits[0], "getpas")) {
+			/*{{{  get priority and affinity state*/
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR;
+			tmp->opd = I_GETPAS;
+			add_to_chain (&hblk, &tblk, tmp);
+			/*}}}*/
 		} else {
 			goto bad_input_line;
 		}
@@ -1047,6 +1074,34 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 			if (sscanf (bits[1], "%d", &tmp->opd) != 1) {
 				goto bad_input_line;
 			}
+			add_to_chain (&hblk, &tblk, tmp);
+
+			/*}}}*/
+		} else if (!strcmp (bits[0], "jtable")) {
+			/*{{{  constant address of label*/
+			int lab;
+
+			if (!bits[1] || (sscanf (bits[1], "%d", &lab) != 1)) {
+				goto bad_input_line;
+			}
+
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR + lab;
+			tmp->opd = I_NJTABLE;
+			add_to_chain (&hblk, &tblk, tmp);
+
+			/*}}}*/
+		} else if (!strcmp (bits[0], "jcsub0")) {
+			/*{{{  jump if Breg outside of [0..(Areg-1)]*/
+			int lab;
+
+			if (!bits[1] || (sscanf (bits[1], "%d", &lab) != 1)) {
+				goto bad_input_line;
+			}
+
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR + lab;
+			tmp->opd = I_NJCSUB0;
 			add_to_chain (&hblk, &tblk, tmp);
 
 			/*}}}*/
@@ -1241,6 +1296,10 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 			} else if (!strcmp (bits[0], "mt_bind")) {
 				/*{{{  bind a mobile type*/
 				tmp->opd = I_MT_BIND;
+				/*}}}*/
+			} else if (!strcmp (bits[0], "mt_resize")) {
+				/*{{{  resize a mobile type*/
+				tmp->opd = I_MT_RESIZE;
 				/*}}}*/
 			} else {
 				goto bad_input_line;
@@ -1571,6 +1630,13 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 			tmp = new_etc_chain ();
 			tmp->fn = I_OPR;
 			tmp->opd = I_SETPRI;
+			add_to_chain (&hblk, &tblk, tmp);
+			/*}}}*/
+		} else if (!strcmp (bits[0], "setaff")) {
+			/*{{{  set affinity*/
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR;
+			tmp->opd = I_SETAFF;
 			add_to_chain (&hblk, &tblk, tmp);
 			/*}}}*/
 		} else if (!strcmp (bits[0], "shr")) {

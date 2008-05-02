@@ -18,7 +18,8 @@
 --
 
 #INCLUDE "types.inc"
-#USE "course.lib"
+#INCLUDE "course.module"
+
 #USE "game-utils"
 #USE "game-objects"
 #USE "student-bots"

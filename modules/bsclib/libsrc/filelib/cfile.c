@@ -442,30 +442,63 @@ static __inline__ void r_nth_arg (int n, char *arg, int arglen, int *len)
 void _fl_nth_arg (int *ws) { r_nth_arg ((int)(ws[0]), (char *)(ws[1]), (int)(ws[2]), (int *)(ws[3])); }
 /*}}}*/
 
-/*{{{  clj additions */
-
-#define AS_INT(X,O) (*(((int *)&(X)) + (O)))
-static __inline__ void unpack_stat(int *dst, struct stat *buf)
-{
-	dst[0] = AS_INT(buf->st_dev, 0);
-	dst[1] = AS_INT(buf->st_dev, 1);
-	dst[2] = AS_INT(buf->st_ino, 0);
-	dst[3] = (int) buf->st_mode;
-	dst[4] = (int) buf->st_nlink;
-	dst[5] = (int) buf->st_uid;
-	dst[6] = (int) buf->st_gid;
-	dst[7] = AS_INT(buf->st_rdev, 0);
-	dst[8] = AS_INT(buf->st_rdev, 1);
-	dst[9] = (int) buf->st_size;
-	dst[10] = (int) buf->st_blksize;
-	dst[11] = (int) buf->st_blocks;
-	dst[12] = (int) buf->st_atime;
-	dst[13] = (int) buf->st_mtime;
-	dst[14] = (int) buf->st_ctime;
+/*{{{  struct occam_stat */
+/* This must match DATA TYPE STAT. */
+struct occam_stat {
+	int64_t dev;
+	int64_t ino;
+	int mode;
+	int nlink;
+	int uid;
+	int gid;
+	int64_t rdev;
+	int size;
+	int blksize;
+	int blocks;
+	int atime;
+	int mtime;
+	int ctime;
 }
-#undef AS_INT
+#ifdef __GNUC__
+	__attribute__ ((packed))
+#else
+	#warning Not GNU C -- might get structure problems
+#endif
+;
+/*}}}*/
+/*{{{  struct occam_dirent */
+/* This must match DATA TYPE DIRENT. */
+struct occam_dirent {
+	char filename[256];
+}
+#ifdef __GNUC__
+	__attribute__ ((packed))
+#else
+	#warning Not GNU C -- might get structure problems
+#endif
+;
+/*}}}*/
 
-static __inline__ void r_stat(char *fname, int flen, int *stat_struct, int *res)
+/*{{{  static __inline__ void unpack_stat (struct occam_stat *dest, const struct stat *st) */
+static __inline__ void unpack_stat (struct occam_stat *dest, const struct stat *st)
+{
+	dest->dev = st->st_dev;
+	dest->ino = st->st_ino;
+	dest->mode = st->st_mode;
+	dest->nlink = st->st_nlink;
+	dest->uid = st->st_uid;
+	dest->gid = st->st_gid;
+	dest->rdev = st->st_rdev;
+	dest->size = st->st_size;
+	dest->blksize = st->st_blksize;
+	dest->blocks = st->st_blocks;
+	dest->atime = st->st_atime;
+	dest->mtime = st->st_mtime;
+	dest->ctime = st->st_ctime;
+}
+/*}}}*/
+/*{{{  static __inline__ void r_stat (char *fname, int flen, struct occam_stat *stat_struct, int *res) */
+static __inline__ void r_stat (char *fname, int flen, struct occam_stat *stat_struct, int *res)
 {
 	struct stat sbuf;
 	char pbuffer[FILENAME_MAX];
@@ -483,10 +516,9 @@ static __inline__ void r_stat(char *fname, int flen, int *stat_struct, int *res)
 
 	unpack_stat(stat_struct, &sbuf);
 }
-
-void _fl_stat(int *w) { r_stat((char *)(w[0]), (int)(w[1]), (int *)(w[2]), (int *)(w[3])); }
-
-static __inline__ void r_lstat(char *fname, int flen, int *stat_struct, int *res)
+/*}}}*/
+/*{{{  static __inline__ void r_lstat (char *fname, int flen, struct occam_stat *stat_struct, int *res) */
+static __inline__ void r_lstat (char *fname, int flen, struct occam_stat *stat_struct, int *res)
 {
 	struct stat sbuf;
 	char pbuffer[FILENAME_MAX];
@@ -504,11 +536,9 @@ static __inline__ void r_lstat(char *fname, int flen, int *stat_struct, int *res
 	
 	unpack_stat(stat_struct, &sbuf);
 }
-
-void _fl_lstat(int *w) { r_lstat((char *)(w[0]), (int)(w[1]), (int *)(w[2]), (int *)(w[3])); }
-
-
-static __inline__ void r_fstat(int fd, int *stat_struct, int *res)
+/*}}}*/
+/*{{{  static __inline__ void r_fstat (int fd, struct occam_stat *stat_struct, int *res) */
+static __inline__ void r_fstat (int fd, struct occam_stat *stat_struct, int *res)
 {
 	struct stat sbuf;
 
@@ -516,10 +546,9 @@ static __inline__ void r_fstat(int fd, int *stat_struct, int *res)
 	
 	unpack_stat(stat_struct, &sbuf);
 }
-
-void _fl_fstat(int *w) { r_fstat((int)(w[0]), (int *)(w[1]), (int *)(w[2])); }
-
-static __inline__ void r_opendir(char *fname, int flen, int *dd)
+/*}}}*/
+/*{{{  static __inline__ void r_opendir (char *fname, int flen, int *dd) */
+static __inline__ void r_opendir (char *fname, int flen, int *dd)
 {
 	char pbuffer[FILENAME_MAX];
 	int x;
@@ -534,39 +563,33 @@ static __inline__ void r_opendir(char *fname, int flen, int *dd)
 
 	*dd = (int)opendir(pbuffer);
 }
-
-void _fl_opendir(int *w) { r_opendir((char *)(w[0]), (int)(w[1]), (int *)(w[2])); }
-
+/*}}}*/
+/*{{{  static __inline__ void r_readdir (int dd, struct occam_dirent *dirent_struct, int *result) */
 /*
  * This function returns non-zero (ie not null) on success... The real things
  * returns the pointer of course, but we wont do that as it is not needed.
  */
-static __inline__ void r_readdir(int dd, int *dirent_struct, int *result)
+static __inline__ void r_readdir (int dd, struct occam_dirent *dest, int *result)
 {
-	struct dirent *dirent_ptr;
+	struct dirent *de;
 
-	dirent_ptr = readdir((DIR *) dd);
-	if(dirent_ptr)
-	{
-		
-		memcpy(dirent_struct, dirent_ptr, sizeof(struct dirent));
+	de = readdir((DIR *) dd);
+	if (de != NULL && (strlen (de->d_name) + 1) <= sizeof (dest->filename)) {
+		strcpy (dest->filename, de->d_name);
 		*result = 1;
-	}
-	else
+	} else {
 		*result = 0;
-
+	}
 }
-
-void _fl_readdir(int *w) { r_readdir((int)(w[0]), (int *)(w[1]), (int *)(w[2])); }
-
-static __inline__ void r_closedir(int dd, int *result)
+/*}}}*/
+/*{{{  static __inline__ void r_closedir (int dd, int *result) */
+static __inline__ void r_closedir (int dd, int *result)
 {
 	*result = closedir((DIR *) dd);
 }
-
-void _fl_closedir(int *w) { r_closedir((int)(w[0]), (int *)(w[1])); }
-
-static __inline__ void r_chmod(char *fname, int flen, int mode, int *result)
+/*}}}*/
+/*{{{  static __inline__ void r_chmod (char *fname, int flen, int mode, int *result) */
+static __inline__ void r_chmod (char *fname, int flen, int mode, int *result)
 {
 	char pbuffer[FILENAME_MAX];
 	int x;
@@ -581,17 +604,12 @@ static __inline__ void r_chmod(char *fname, int flen, int mode, int *result)
 
 	*result = chmod(pbuffer, mode);
 }
-
-void _fl_chmod(int *w) { r_chmod((char *)(w[0]), (int)(w[1]), (int)(w[2]), (int *)(w[3])); }
-
-static __inline__ void r_fsync(int fd, int *result)
+/*}}}*/
+/*{{{  static __inline__ void r_fsync (int fd, int *result) */
+static __inline__ void r_fsync (int fd, int *result)
 {
 	*result = fsync(fd);
 }
-
-void _fl_fsync(int *w) { r_fsync((int)(w[0]), (int *)(w[1])); }
-
-/* End of my additions (clj) */
 /*}}}*/
 
 /*{{{  interface functions*/
@@ -610,5 +628,13 @@ void _fl_rmdir (int *w)					{ r_rmdir ((char *)(w[0]), (int)(w[1]), (int *)(w[2]
 void _fl_unlink (int *w)				{ r_unlink ((char *)(w[0]), (int)(w[1]), (int *)(w[2])); }
 void _fl_fd_fd_copy (int *w)				{ r_fd_fd_copy ((int)(w[0]), (int)(w[1]), (int)(w[2]), (int *)(w[3])); }
 void _fl_sendfile (int *w)				{ r_sendfile ((int)(w[0]), (int)(w[1]), (int)(w[2]), (int *)(w[3]), (int *)(w[4])); }
+void _fl_stat(int *w)					{ r_stat ((char *)(w[0]), (int)(w[1]), (struct occam_stat *)(w[2]), (int *)(w[3])); }
+void _fl_lstat(int *w)					{ r_lstat ((char *)(w[0]), (int)(w[1]), (struct occam_stat *)(w[2]), (int *)(w[3])); }
+void _fl_fstat(int *w)					{ r_fstat ((int)(w[0]), (struct occam_stat *)(w[1]), (int *)(w[2])); }
+void _fl_opendir(int *w)				{ r_opendir ((char *)(w[0]), (int)(w[1]), (int *)(w[2])); }
+void _fl_readdir(int *w)				{ r_readdir ((int)(w[0]), (struct occam_dirent *)(w[1]), (int *)(w[2])); }
+void _fl_closedir(int *w)				{ r_closedir ((int)(w[0]), (int *)(w[1])); }
+void _fl_chmod(int *w)					{ r_chmod ((char *)(w[0]), (int)(w[1]), (int)(w[2]), (int *)(w[3])); }
+void _fl_fsync(int *w)					{ r_fsync ((int)(w[0]), (int *)(w[1])); }
 /*}}}*/
 

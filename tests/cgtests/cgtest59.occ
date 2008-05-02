@@ -145,29 +145,40 @@ PROC cgtest59 (CHAN OF BYTE keyb, scr, err)
     BYTESIN.on.types()
     --}}}
     --{{{  OFFSETOF
+    -- The two arrays and all uses of them are commented out for Tock, because
+    -- in Tock OFFSETOF applied to a non-PACKED RECORD is not knowable at compile-time,
+    -- and dynamically sized arrays are not yet allowed
     PROC test.OFFSETOF()
       DATA TYPE record1
         RECORD
           INT field0, field1:
       :
+      #IF NOT DEFINED (COMPILER.TOCK)
       [(OFFSETOF(record1, field1))+1]INT silly :
       [OFFSETOF(record1, field1)+1]INT silly2 :
+      #ENDIF
       SEQ
         title("OFFSETOF")
         check.BOOL((OFFSETOF(record1, field1)) <> (OFFSETOF(record1, field0)),
                    TRUE, "OFFSET00")
+        #IF NOT DEFINED (COMPILER.TOCK)
         SEQ i = 0 FOR SIZE silly
           silly[i] := id(i)
+        #ENDIF
         check.BOOL((OFFSETOF(record1, field1)) < (BYTESIN(record1)), TRUE, "OFFSET01")
         check.BOOL((OFFSETOF(record1, field0)) < (BYTESIN(record1)), TRUE, "OFFSET02")
+        #IF NOT DEFINED (COMPILER.TOCK)
         check.BOOL((OFFSETOF(record1, field1)) < (SIZE silly), TRUE, "OFFSET03")
         SEQ i = 0 FOR SIZE silly
           check(silly[i], i, "OFFSET04")
+        #ENDIF
         check.BOOL(OFFSETOF(record1, field1) <> OFFSETOF(record1, field0),
                    TRUE, "OFFSET10")
         check.BOOL(OFFSETOF(record1, field1) < BYTESIN(record1), TRUE, "OFFSET21")
         check.BOOL(OFFSETOF(record1, field0) < BYTESIN(record1), TRUE, "OFFSET22")
+        #IF NOT DEFINED (COMPILER.TOCK)
         check.BOOL(OFFSETOF(record1, field1) < (SIZE silly), TRUE, "OFFSET23")
+        #ENDIF
     :
     test.OFFSETOF()
     --}}}

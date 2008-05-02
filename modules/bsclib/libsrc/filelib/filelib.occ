@@ -70,16 +70,14 @@
 #PRAGMA EXTERNAL "PROC C.killcall (CHAN OF INT c, RESULT INT result) = 0"
 #ENDIF
 
---{{{  clj additions
-#PRAGMA EXTERNAL "PROC C.fl.stat(VAL []BYTE filename, RESULT C.STAT result, RESULT INT res) = 0"
-#PRAGMA EXTERNAL "PROC C.fl.lstat(VAL []BYTE filename, RESULT C.STAT result, RESULT INT res) = 0"
-#PRAGMA EXTERNAL "PROC C.fl.fstat(VAL INT fd, RESULT C.STAT result, RESULT INT res) = 0"
-#PRAGMA EXTERNAL "PROC C.fl.opendir(VAL []BYTE filename, RESULT INT dd) = 0"
-#PRAGMA EXTERNAL "PROC C.fl.readdir(VAL INT dd, C.DIRENT info, RESULT INT res) = 0"
-#PRAGMA EXTERNAL "PROC C.fl.closedir(VAL INT dd, RESULT INT res) = 0"
-#PRAGMA EXTERNAL "PROC C.fl.chmod(VAL []BYTE filename, INT mode, RESULT INT res) = 0"
-#PRAGMA EXTERNAL "PROC C.fl.fsync(VAL INT fd, RESULT INT result) = 0"
---}}}
+#PRAGMA EXTERNAL "PROC C.fl.stat (VAL []BYTE filename, RESULT STAT result, RESULT INT res) = 0"
+#PRAGMA EXTERNAL "PROC C.fl.lstat (VAL []BYTE filename, RESULT STAT result, RESULT INT res) = 0"
+#PRAGMA EXTERNAL "PROC C.fl.fstat (VAL INT fd, RESULT STAT result, RESULT INT res) = 0"
+#PRAGMA EXTERNAL "PROC C.fl.opendir (VAL []BYTE filename, RESULT INT dd) = 0"
+#PRAGMA EXTERNAL "PROC C.fl.readdir (VAL INT dd, DIRENT info, RESULT INT res) = 0"
+#PRAGMA EXTERNAL "PROC C.fl.closedir (VAL INT dd, RESULT INT res) = 0"
+#PRAGMA EXTERNAL "PROC C.fl.chmod (VAL []BYTE filename, INT mode, RESULT INT res) = 0"
+#PRAGMA EXTERNAL "PROC C.fl.fsync (VAL INT fd, RESULT INT result) = 0"
 
 #PRAGMA EXTERNAL "PROC C.fl.fcntl0 (VAL INT fd, cmd, RESULT INT result) = 0"
 #PRAGMA EXTERNAL "PROC C.fl.fcntl1 (VAL INT fd, cmd, arg, RESULT INT result) = 0"
@@ -765,58 +763,6 @@ PROC file.get.options (VAL []BYTE options, CHAN GETOPT out!)
     --}}}
 :
 --}}}
---{{{  Convert between C and occam structures
---{{{  PROC c.stat.2.stat
---* @private
-PROC c.stat.2.stat(VAL C.STAT c.info, RESULT STAT info)
-  SEQ
-    #PRAGMA DEFINED info
-    PAR
-      [2]INT32 info.dev RETYPES info[dev]:
-      PAR
-        info.dev[0] := c.info[0] --INT64 dev:
-        info.dev[1] := c.info[1] --INT62 dev:
-      -- A short ints worth of paddings skips cell 2
-      info[ino] := c.info[3] -- INT32 ino:
-      info[mode] := c.info[4] --INT16 mode:
-      info[nlink] := c.info[5] --INT32 nlink:
-      info[uid] := c.info[6] --INT32 uid:
-      info[gid] := c.info[7] --INT32 gid:
-      [2]INT32 info.rdev RETYPES info[rdev]:
-      PAR
-        info.rdev[0] := c.info[8]
-        info.rdev[1] := c.info[9] --INT64 rdev:
-      -- A short ints worth of paddings skips cell 10
-      info[size] := c.info[11] --INT32 size: 
-      info[blksize] := c.info[12] --INT32 blksize:
-      info[blocks] := c.info[13] --INT32 blocks:
-      info[atime] := c.info[14] --INT32 atime:
-      info[mtime] := c.info[15] --INT32 mtime:
-      info[ctime] := c.info[16] --INT32 ctime:
-:
---}}}
---{{{  PROC c.dirent.2.dirent
---* @private
-PROC c.dirent.2.dirent(VAL C.DIRENT c.info, RESULT DIRENT info)
-  SEQ 
-    PAR
-      info[ino] := c.info[0]
-      info[off] := c.info[1]
-    SEQ
-      VAL [2]INT16 c.info.reclen.type RETYPES c.info[2]:
-      PAR
-        info[reclen] := c.info.reclen.type[0]
-        VAL [2]BYTE  c.info.type.char RETYPES c.info.reclen.type[1]:
-        PAR
-          info[type] := c.info.type.char[0]
-          info[filename][0] := c.info.type.char[1]
-      VAL [256]BYTE c.filename RETYPES [c.info FROM 3 FOR 64]:
-      INITIAL INT len IS ((INT info[reclen]) - (3 * 4)):
-      [info[filename] FROM 1 FOR len] := [c.filename FROM 0 FOR len]
-      info[filename][(INT info[reclen])] := 0 -- just making sure
-:
---}}}
---}}}
 --{{{  PROC file.stat (VAL []BYTE name, RESULT STAT info, RESULT INT res)
 --* Get information about a filesystem object.
 -- Symbolic links will be followed.
@@ -824,15 +770,7 @@ PROC c.dirent.2.dirent(VAL C.DIRENT c.info, RESULT DIRENT info)
 -- @param info The returned information (see [@ref STAT])
 -- @param res [@code 0] on success, [@code -1] on error
 PROC file.stat (VAL []BYTE name, RESULT STAT info, RESULT INT res)
-  C.STAT c.info:
-  SEQ
-    C.fl.stat (name, c.info, res)
-    IF
-      res = 0
-        c.stat.2.stat (c.info, info)
-      TRUE
-        #PRAGMA DEFINED info
-        SKIP
+  C.fl.stat (name, info, res)
 :
 --}}}
 --{{{  PROC file.lstat (VAL []BYTE name, RESULT STAT info, RESULT INT res)
@@ -842,15 +780,7 @@ PROC file.stat (VAL []BYTE name, RESULT STAT info, RESULT INT res)
 -- @param info The returned information (see [@ref STAT])
 -- @param res [@code 0] on success, [@code -1] on error
 PROC file.lstat (VAL []BYTE name, RESULT STAT info, RESULT INT res)
-  C.STAT c.info:
-  SEQ
-    C.fl.lstat (name, c.info, res)
-    IF
-      res = 0
-        c.stat.2.stat (c.info, info)
-      TRUE
-        #PRAGMA DEFINED info
-        SKIP
+  C.fl.lstat (name, info, res)
 :
 --}}}
 --{{{  PROC file.fstat (VAL INT fd, RESULT STAT info, RESULT INT res)
@@ -859,15 +789,7 @@ PROC file.lstat (VAL []BYTE name, RESULT STAT info, RESULT INT res)
 -- @param info The returned information (see [@ref STAT])
 -- @param res [@code 0] on success, [@code -1] on error
 PROC file.fstat (VAL INT fd, RESULT STAT info, RESULT INT res)
-  C.STAT c.info:
-  SEQ
-    C.fl.fstat (fd, c.info, res)
-    IF
-      res = 0
-        c.stat.2.stat (c.info, info)
-      TRUE
-        #PRAGMA DEFINED info
-        SKIP
+  C.fl.fstat (fd, info, res)
 :
 --}}}
 --{{{  PROC file.opendir (VAL []BYTE filename, RESULT INT dd)
@@ -885,15 +807,7 @@ PROC file.opendir (VAL []BYTE filename, RESULT INT dd)
 -- @param info The returned directory entry (see [@ref DIRENT])
 -- @param res [@code 0] on success, [@code -1] on error
 PROC file.readdir (VAL INT dd, RESULT DIRENT info, RESULT INT res)
-  C.DIRENT c.info:
-  SEQ
-    C.fl.readdir (dd, c.info, res)
-    IF
-      res > 0
-        c.dirent.2.dirent (c.info, info)
-      TRUE
-        #PRAGMA DEFINED info
-        SKIP
+  C.fl.readdir (dd, info, res)
 :
 --}}}
 --{{{  PROC file.closedir (VAL INT dd, RESULT INT res)

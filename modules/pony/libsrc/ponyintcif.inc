@@ -17,27 +17,26 @@
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 -- MA 02110-1301, USA.
 
---{{{  C.pony.int.get.tdesc.data.{uc,sc,us,ss} -- get type-descriptor data
-#PRAGMA EXTERNAL "PROC C.pony.int.get.tdesc.data.uc (MOBILE.CHAN! cli, RESULT INT nchans, nsvrread, typehash) = 0"
-#PRAGMA EXTERNAL "PROC C.pony.int.get.tdesc.data.sc (SHARED MOBILE.CHAN! cli, RESULT INT nchans, nsvrread, typehash) = 0"
-#PRAGMA EXTERNAL "PROC C.pony.int.get.tdesc.data.us (MOBILE.CHAN? svr, RESULT INT nchans, nsvrread, typehash) = 0"
-#PRAGMA EXTERNAL "PROC C.pony.int.get.tdesc.data.ss (SHARED MOBILE.CHAN? svr, RESULT INT nchans, nsvrread, typehash) = 0"
+--{{{  CIF.pony.int.get.tdesc.data.{uc,sc,us,ss} -- get type-descriptor data
+#PRAGMA EXTERNAL "PROC CIF.pony.int.get.tdesc.data.uc (MOBILE.CHAN! cli, RESULT INT nchans, nsvrread, typehash) = 4096"
+#PRAGMA EXTERNAL "PROC CIF.pony.int.get.tdesc.data.sc (SHARED MOBILE.CHAN! cli, RESULT INT nchans, nsvrread, typehash) = 4096"
+#PRAGMA EXTERNAL "PROC CIF.pony.int.get.tdesc.data.us (MOBILE.CHAN? svr, RESULT INT nchans, nsvrread, typehash) = 4096"
+#PRAGMA EXTERNAL "PROC CIF.pony.int.get.tdesc.data.ss (SHARED MOBILE.CHAN? svr, RESULT INT nchans, nsvrread, typehash) = 4096"
 --}}}
---{{{  C.pony.int.increase.ref.count.{uc,sc,us,ss} -- cast and inc ref-count
-#PRAGMA EXTERNAL "PROC C.pony.int.increase.ref.count.uc (RESULT MOBILE.CHAN! cli, VAL INT ctb.ptr) = 0"
-#PRAGMA EXTERNAL "PROC C.pony.int.increase.ref.count.sc (RESULT SHARED MOBILE.CHAN! cli, VAL INT ctb.ptr) = 0"
-#PRAGMA EXTERNAL "PROC C.pony.int.increase.ref.count.us (RESULT MOBILE.CHAN? svr, VAL INT ctb.ptr) = 0"
-#PRAGMA EXTERNAL "PROC C.pony.int.increase.ref.count.ss (RESULT SHARED MOBILE.CHAN? svr, VAL INT ctb.ptr) = 0"
+--{{{  CIF.pony.int.clone.ctb.{uc,sc,us,ss} -- cast and inc ref-count
+#PRAGMA EXTERNAL "PROC CIF.pony.int.clone.ctb.uc (RESULT MOBILE.CHAN! cli, VAL INT ctb.ptr) = 4096"
+#PRAGMA EXTERNAL "PROC CIF.pony.int.clone.ctb.sc (RESULT SHARED MOBILE.CHAN! cli, VAL INT ctb.ptr) = 4096"
+#PRAGMA EXTERNAL "PROC CIF.pony.int.clone.ctb.us (RESULT MOBILE.CHAN? svr, VAL INT ctb.ptr) = 4096"
+#PRAGMA EXTERNAL "PROC CIF.pony.int.clone.ctb.ss (RESULT SHARED MOBILE.CHAN? svr, VAL INT ctb.ptr) = 4096"
 --}}}
---{{{  C.pony.int.alloc.ctb.{uc,sc,us,ss} -- allocate networked channel-type
-#PRAGMA EXTERNAL "PROC C.pony.int.alloc.ctb.uc (RESULT INT paddr, RESULT MOBILE.CHAN! cli, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) = 0"
-#PRAGMA EXTERNAL "PROC C.pony.int.alloc.ctb.sc (RESULT INT paddr, RESULT SHARED MOBILE.CHAN! cli, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) = 0"
-#PRAGMA EXTERNAL "PROC C.pony.int.alloc.ctb.us (RESULT INT paddr, RESULT MOBILE.CHAN? svr, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) = 0"
-#PRAGMA EXTERNAL "PROC C.pony.int.alloc.ctb.ss (RESULT INT paddr, RESULT SHARED MOBILE.CHAN? svr, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) = 0"
+--{{{  CIF.pony.int.alloc.ctb.{uc,sc,us,ss} -- allocate networked channel-type
+#PRAGMA EXTERNAL "PROC CIF.pony.int.alloc.ctb.uc (RESULT MOBILE.CHAN! cli, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) = 4096"
+#PRAGMA EXTERNAL "PROC CIF.pony.int.alloc.ctb.sc (RESULT SHARED MOBILE.CHAN! cli, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) = 4096"
+#PRAGMA EXTERNAL "PROC CIF.pony.int.alloc.ctb.us (RESULT MOBILE.CHAN? svr, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) = 4096"
+#PRAGMA EXTERNAL "PROC CIF.pony.int.alloc.ctb.ss (RESULT SHARED MOBILE.CHAN? svr, VAL INT nct.id, PONY.NETHOOKHANDLE! net.hook.handle, MOBILE []PONY.DECODEHANDLE! dec.handle.array, MOBILE []PONY.ENCODEHANDLE! enc.handle.array, RESULT INT ctb.ptr) = 4096"
 --}}}
 --{{{  other external C routines
-#PRAGMA EXTERNAL "PROC C.pony.int.shutdown.ctbs (MOBILE []INT ctbs) = 0"
-#PRAGMA EXTERNAL "PROC C.pony.int.get.nct.id (VAL INT ctb.ptr, RESULT INT nct.id, result) = 0"
-#PRAGMA EXTERNAL "PROC C.pony.cleancifprocess (INT paddr) = 0"
+#PRAGMA EXTERNAL "PROC CIF.pony.int.shutdown.ctbs (MOBILE []INT ctbs) = 4096"
+#PRAGMA EXTERNAL "PROC CIF.pony.int.get.nct.id (VAL INT ctb.ptr, RESULT INT nct.id, result) = 4096"
 --}}}
 

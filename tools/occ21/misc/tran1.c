@@ -3437,6 +3437,7 @@ printtreenl (stderr, 4, n);
 	return n;
 }
 /*}}}*/
+#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3) && defined(PD_ENCODE_CHANNEL)
 /*{{{  PRIVATE int trans_encode_decode_comm_count (treenode *prot)*/
 PRIVATE int trans_encode_decode_comm_count (treenode *prot)
 {
@@ -4319,6 +4320,7 @@ printtreenl (stderr, 4, lctype);
 	return n_decl;
 }
 /*}}}*/
+#endif /* PD_DECODE_CHANNEL && PD_DECODE_CHANNEL3 && PD_ENCODE_CHANNEL */
 /*{{{  PRIVATE treenode *trans_suspended_instance (treenode *tptr)*/
 /*
  *	transforms an instance of a PROC that suspends so that local channels
@@ -4754,6 +4756,7 @@ printtreenl (stderr, 4, LeafLinkOf (t));
 						}
 						/*}}}  */
 					} else if (TagOf (name) == N_PREDEFPROC) {
+						#if defined(PD_DECODE_CHANNEL) && defined(PD_DECODE_CHANNEL3) && defined(PD_ENCODE_CHANNEL)
 						/*{{{  more special transformations for some predefines*/
 						switch (NModeOf (name)) {
 							/*{{{  DECODE.CHANNEL, ENCODE.CHANNEL*/
@@ -4776,6 +4779,7 @@ printtreenl (stderr, 4, *tptr);
 							break;
 						}
 						/*}}}*/
+						#endif /* PD_DECODE_CHANNEL && PD_DECODE_CHANNEL3 && PD_ENCODE_CHANNEL */
 					}
 				}
 

@@ -29,7 +29,7 @@ fi
 #
 #	build -- KRoC/Linux configuration/installation script
 #	Copyright (C) 2001-2006 Fred Barnes <frmb@kent.ac.uk>
-#	Copyright (C) 2007 University of Kent
+#	Copyright (C) 2007-2008 University of Kent
 #
 #	This program is free software; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -87,8 +87,8 @@ BSCLIB_EXAMPLES_SRC=modules/bsclib/examples
 COURSE_SRC=modules/course/libsrc
 COURSE_EXAMPLES_SRC=modules/course/examples
 COURSE_ANSWERS_SRC=modules/course/answers
-SYNCS_SRC=modules/syncs/libsrc
-SYNCS_EXAMPLES_SRC=modules/syncs/examples
+USEFUL_SRC=modules/useful/libsrc
+USEFUL_EXAMPLES_SRC=modules/useful/examples
 DYNPROC_SRC=modules/dynproc/libsrc
 DYNPROC_EXAMPLES_SRC=modules/dynproc/examples
 DEMO_BAR_SRC=demos/bar
@@ -128,7 +128,7 @@ ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC 
 	$INMOSLIBS_SRC \
 	$BSCLIB_SRC $BSCLIB_EXAMPLES_SRC \
 	$COURSE_SRC $COURSE_EXAMPLES_SRC $COURSE_ANSWERS_SRC \
-	$SYNCS_SRC $SYNCS_EXAMPLES_SRC \
+	$USEFUL_SRC $USEFUL_EXAMPLES_SRC \
 	$DYNPROC_SRC $DYNPROC_EXAMPLES_SRC \
 	$UDC_SRC $UDC_EXAMPLES_SRC \
 	$CIF_SRC $CIF_EXAMPLES_SRC \
@@ -151,16 +151,18 @@ FAILABLE_PKGS="\
 	$OCCSDL_SRC $OCCSDL_EXAMPLES_SRC \
 	$OCCGL_SRC $OCCGL_EXAMPLES_SRC \
 	$OCCADE_SRC $OCCADE_EXAMPLES_SRC \
-	$BUTTON_SRC $BUTTON_EXAMPLES_SRC"
+	$BUTTON_SRC $BUTTON_EXAMPLES_SRC \
+	$RASTER_SRC $RASTER_EXAMPLES_SRC \
+	$CIF_EXAMPLES_SRC"
 
 
 #}}}
 #{{{  release/install settings
 DUMPOUT=
 DUMPMAIL="kroc-bugs@kent.ac.uk"
-VERSION="1.5.1-pre3"
+VERSION="1.5.1-pre4"
 PRERELEASE=1
-NEXTPATCH="1.5.1-pre4"
+NEXTPATCH="1.5.1-pre5"
 PATCHINFOFILE="update-info-$NEXTPATCH"
 PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 # things set in typescript_head are: SED, AWK, MAKE, WGET
@@ -171,7 +173,7 @@ PATCHINFOURL="http://www.cs.kent.ac.uk/projects/ofa/kroc/updates/$PATCHINFOFILE"
 BUILDRECONF=0
 ACTIONLIST=
 FORCECONFIGURE=
-FORCESINGLEBUILD=1
+FORCESINGLEBUILD=0
 USEPRIORITY=42
 USECPUTIMERS=42
 USEPTHREADS=42
@@ -267,7 +269,7 @@ choices for <pkg> are:
   inmoslibs                    inmos libraries
   bsclib                       blocking system call libraries
   course                       UKC course library
-  syncs                        additional synchronisation primatives
+  useful                       general utility module
   dynproc                      dynamic occam processes
   udc                          user-defined channels
   manpages                     man-page based documentation
@@ -289,7 +291,7 @@ choices for <pkg> are:
     bsclib_examples            blocking system calls example programs
     course_examples            UKC course example programs
     course_answers             UKC course sample answers
-    syncs_examples             additional synchronistaion example programs
+    useful_examples            useful example programs
     dynproc_examples           dynamic occam process examples
     udc_examples               user-defined channels examples
     bar_demo                   animated ALT demonstrator
@@ -1581,7 +1583,7 @@ if [ "$PRERELEASE" = "1" ]; then
 **  in the BUGS file included in the distribution  **
 **                                                 **
 **  please report new bugs / suspicious behaviour  **
-**  to: frmb@kent.ac.uk  or  kroc-bugs@kent.ac.uk  **
+**  to:  kroc-bugs@kent.ac.uk                      **
 **                                                 **
 *****************************************************
 EOF
@@ -1598,7 +1600,7 @@ elif [ "$PRERELEASE" = "2" ]; then
 **  known bugs are listed in the included BUGS file.   **
 **                                                     **
 **  please report new-bugs and suspicious behaviour    **
-**  to:  frmb@kent.ac.uk   or  kroc-bugs@kent.ac.uk    **
+**  to:  kroc-bugs@kent.ac.uk                          **
 **                                                     **
 *********************************************************
 EOF
@@ -1695,8 +1697,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 	fi
 	SHOWBANNER=1
 	ACTIONLIST="preconfigure-ccsp \
-		fconfigure-ccspt make-ccspt install-ccspt \
-		fconfigure-ccsp make-ccsp install-ccsp \
+		configure-ccsp make-ccsp install-ccsp \
 		bsyscalls-support cputimers-support dynproc-support \
 		configure-mkoccdeps make-mkoccdeps install-mkoccdeps \
 		configure-occ21 make-occ21 install-occ21 \
@@ -1707,6 +1708,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-inmoslibs make-inmoslibs install-inmoslibs \
 		configure-bsclib make-bsclib install-bsclib \
 		configure-course make-course install-course \
+		configure-useful make-useful install-useful \
 		configure-cif make-cif install-cif \
 		configure-occsdl make-occsdl install-occsdl \
 		configure-raster make-raster install-raster \
@@ -1715,8 +1717,7 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-occade make-occade install-occade \
 		configure-button make-button install-button \
 		configure-fmtoutlib make-fmtoutlib install-fmtoutlib \
-		configure-moa make-moa install-moa \
-		configure-syncs make-syncs install-syncs"
+		configure-moa make-moa install-moa"
 	if [ "$USEUDC" -eq 1 ]; then
 		# conditional on the "--with-udc" flag
 		ACTIONLIST="$ACTIONLIST \
@@ -1743,7 +1744,7 @@ EXAMPLE_ACTIONS="building-examples bsyscalls-support cputimers-support dynproc-s
 		configure-bsclib_examples make-bsclib_examples install-bsclib_examples \
 		configure-course_examples make-course_examples install-course_examples \
 		configure-course_answers make-course_answers install-course_answers \
-		configure-syncs_examples make-syncs_examples install-syncs_examples \
+		configure-useful_examples make-useful_examples install-useful_examples \
 		configure-dynproc_examples make-dynproc_examples install-dynproc_examples \
 		configure-cif_examples make-cif_examples install-cif_examples \
 		configure-bar_demo make-bar_demo install-bar_demo \
@@ -1821,14 +1822,14 @@ for action in $ACTIONLIST; do
 	X*)
 		FOUND=0
 
-		for x in inmoslibs bsclib course course_answers syncs dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony fmtoutlib moa occamdoc; do
+		for x in inmoslibs bsclib course course_answers useful dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony fmtoutlib moa occamdoc; do
 			if [ "X$x" = "X$action" ]; then
 				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
 			fi
 		done
 
-		for x in bsclib course course syncs dynproc udc bar game cif raster sdlraster occsdl occgl occade button pony moa; do
+		for x in bsclib course course useful dynproc udc bar game cif raster sdlraster occsdl occgl occade button pony moa; do
 			if [ "X${x}_examples" = "X$action" ]; then
 				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
@@ -2316,9 +2317,9 @@ for action in $ACTIONLIST; do
 			PKG_SRC=$COURSE_ANSWERS_SRC
 			;;
 			#}}}
-			#{{{  syncs_examples: synchronisation examples
-		Xsyncs_examples)
-			PKG_SRC=$SYNCS_EXAMPLES_SRC
+			#{{{  useful_examples: useful example programs
+		Xuseful_examples)
+			PKG_SRC=$USEFUL_EXAMPLES_SRC
 			;;
 			#}}}
 			#{{{  dynproc_examples: dynamic loadable process examples
@@ -2418,9 +2419,9 @@ for action in $ACTIONLIST; do
 			PKG_SRC=$COURSE_SRC
 			;;
 			#}}}
-			#{{{  syncs: additional synchronisations
-		Xsyncs)
-			PKG_SRC=$SYNCS_SRC
+			#{{{  useful: general utility library
+		Xuseful)
+			PKG_SRC=$USEFUL_SRC
 			;;
 			#}}}
 			#{{{  dynproc: dynamic loadable processes
@@ -2684,7 +2685,7 @@ To clean the source tree, run:
 
 Enjoy,
 
-Fred.  (frmb@kent.ac.uk)
+Fred.  (kroc-bugs@kent.ac.uk)
 
 EOF
 fi

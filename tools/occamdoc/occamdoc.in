@@ -299,6 +299,8 @@ def parse_decl(f):
 			this_type = m.group(1)
 			if this_type is None:
 				this_type = last_type
+				if last_type is None:
+					raise OccamDocException("No type specified for argument '" + a + "'")
 
 			# Strip direction specifiers.
 			name = m.group(2)

@@ -23,6 +23,11 @@
 #COMMENT "Floating point maths library, V1.2 14/12/90"
 #COMMENT "(c) Copyright INMOS Limited 1988"
 
+--* Single-precision pseudo-random number generator.
+--
+-- @param SeedRan Input seed value
+-- @return Pseudo-random value in the range [0.0, 1.0)
+-- @return Output seed value
 REAL32, INT32 FUNCTION RAN (VAL INT32 SeedRan)
 
   --{{{  history

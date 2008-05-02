@@ -365,6 +365,7 @@ PUBLIC BOOL no_undefineness_check = FALSE;
 /*}}}*/
 /*{{{  T9000 Alpha bits*/
 PUBLIC BOOL use_shortintops;
+PUBLIC BOOL force_shortintops = FALSE;
 
 /**************************************************************************
 HISTORY of T9000 Alpha modifications; search for 'T9000_alpha' & 'T9000_gamma'.
@@ -764,6 +765,10 @@ PRIVATEPARAM void setprocessorattr(void)
 	use_shortintops = has_shortintops;
 	if (T9000_alpha_nolsx(&tx_global) || T9000_alpha_noxsword(&tx_global)) {
 		use_shortintops = FALSE;
+	}
+	if (force_shortintops) {
+		has_shortintops = TRUE;
+		use_shortintops = TRUE;
 	}
 	if (!extlibfilename_overruled) {
 		#if 0
@@ -1516,6 +1521,15 @@ PRIVATE arg_control optzed ( const char *opt, const char *arg, void *data )
 			#if defined(COMPILING_TO_JCODE)
 			debug_set(&opt[2]);
 			#endif
+		}
+		break;
+	/*}}}*/
+	/*{{{  ZU...*/
+	case 'U':
+		switch(opt[2]) {
+		case 'S':
+			force_shortintops = TRUE;
+			break;
 		}
 		break;
 	/*}}}*/
@@ -2311,6 +2325,7 @@ const arg2_descriptor cloptions[] = {
 	{"ZTST",      arg2_single,    NULL,           optzed,             HELP_ZED, "generic test flag"},
 	{"ZTX",	      arg2_single,    NULL,           optzed,             HELP_ZED, "print XML tree"},
 	{"ZT",        arg2_single,    NULL,           optzed,             HELP_ZED, "print tree"},
+	{"ZUS",       arg2_single,    NULL,           optzed,             HELP_ZED, "force enable T9 short ops"},
 	{"ZV",        arg2_single,    NULL,           optzed, /* used */  HELP_ZED, "disable library I/O"}, /* used to build virtual.lib */
 	{"ZWAU",      arg2_single,    NULL,           optzed,             HELP_ZED, "warn on alias and usage checks"},
 	{"ZWC",       arg2_single,    NULL,           optzed,             HELP_ZED, "warn on comment indentation"},

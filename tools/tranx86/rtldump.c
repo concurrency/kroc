@@ -1,6 +1,6 @@
 /*
  *	rtldump.c - RTL dumper	
- *	Copyright (C) 2000 Fred Barnes <frmb2@ukc.ac.uk>
+ *	Copyright (C) 2000 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -82,7 +82,7 @@ int dump_textual_rtl (rtl_chain *rtl_code, char *outfile, arch_t *arch)
 /*}}}*/
 /*{{{  static char *reg_string (int regnum, arch_t *arch)*/
 /*
- *	turns regnum into an appropiate string
+ *	turns regnum into an appropriate string
  */
 static char *reg_string (int regnum, arch_t *arch)
 {

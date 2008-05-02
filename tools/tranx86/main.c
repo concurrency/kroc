@@ -1,6 +1,6 @@
 /*
  *	main.c -- main glue-code
- *	Copyright (C) 2000-2004 Fred Barnes <frmb@kent.ac.uk>
+ *	Copyright (C) 2000-2008 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -766,7 +766,7 @@ int main (int argc, char **argv)
 static void tranx86_banner (FILE *stream)
 {
 	fprintf (stream, "tranx86 " VERSION " -- occam ETC to Intel/i386 and MIPS code converter\n");
-	fprintf (stream, "Copyright (C) 2000-2004 Fred Barnes <frmb@kent.ac.uk>\n");
+	fprintf (stream, "Copyright (C) 2000-2008 Fred Barnes <frmb@kent.ac.uk>\n");
 	fprintf (stream, "This software is released under the GNU General Public License\n");
 	return;
 }
@@ -1108,8 +1108,8 @@ static void usage (FILE *stream)
 	fprintf (stream, "\t--int-nocmap  disable constant mapping\n");
 	fprintf (stream, "\t--int-noopt   disable optimiser\n");
 	fprintf (stream, "\t--int-dpt     show process table\n");
-	fprintf (stream, "\t--gstabs      pass --gstabs option to assembler (if appropiate)\n");
-	fprintf (stream, "\t--gstabs+     pass --gstabs+ option to assembler (if appropiate)\n");
+	fprintf (stream, "\t--gstabs      pass --gstabs option to assembler (if appropriate)\n");
+	fprintf (stream, "\t--gstabs+     pass --gstabs+ option to assembler (if appropriate)\n");
 	fprintf (stream, "\t-nd           disallow dynamic memory (MALLOC, MRELEASE, MNEW & MFREE)\n");
 #ifdef USER_DEFINED_CHANNELS
 	fprintf (stream, "\t-nec          don\'t generate external channel checks\n");

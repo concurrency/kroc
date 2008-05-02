@@ -1,6 +1,6 @@
 /*
  *	structs.h - Various structures
- *	Copyright (C) 2000 Fred Barnes <frmb2@ukc.ac.uk>
+ *	Copyright (C) 2000 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -129,7 +129,7 @@ typedef struct TAG_rtl_chain {
 #define INS_SHR 30
 #define INS_MOVEB 31
 #define INS_NOT 32
-#define INS_CONSTLABDIFFSHORT 33	/* for case tables */
+#define INS_CONSTLABDIFF 33	/* for case tables */
 #define INS_REPMOVEB 34
 #define INS_MOVEZEXT8TO32 35		/* zero-extend 8 to 32 bit move */
 #define INS_RCR 36
@@ -216,9 +216,10 @@ typedef struct TAG_rtl_chain {
 #define INS_MB 117		/* memory barrier */
 #define INS_RMB 118		/* read memory barrier */
 #define INS_WMB 119		/* write memory barrier */
+#define INS_CONSTLABADDR 120	/* constant label address */
 
 #define INS_FIRST INS_MOVE
-#define INS_LAST INS_WMB
+#define INS_LAST INS_CONSTLABADDR
 
 #define INS_START_REG 65535	/* ARG_REG */
 #define INS_END_REG 65534	/* ARG_REG */

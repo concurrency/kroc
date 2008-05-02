@@ -1,5 +1,9 @@
 -- version control marker $Id: cgmain.occ,v 3.9 1997/03/06 16:36:15 dcw Exp $
+#IF NOT DEFINED (COMPILER.TOCK)
 #INCLUDE "cglib.module"
+#ELSE
+#USE "cglib"
+#ENDIF
 
 #IF DEFINED (SUCCESSFUL.TESTS)
 VAL display.names  IS TRUE :

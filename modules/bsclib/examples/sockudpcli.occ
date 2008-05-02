@@ -1,6 +1,7 @@
 --
 --	sockudpcli.occ - UDP client
---	Copyright (C) 2000 Fred Barnes <frmb2@ukc.ac.uk>
+--	Copyright (C) 2000-2008 Fred Barnes <frmb@kent.ac.uk>
+--      Modifications (C) 2008 Tom Carlson
 --
 --	This program is free software; you can redistribute it and/or modify
 --	it under the terms of the GNU General Public License as published by
@@ -20,20 +21,19 @@
 #INCLUDE "sock.module"
 #INCLUDE "course.module"
 
+--{{{  constants
+VAL max.message.len IS 64:
+--}}}  
 
---{{{  
-PROC sock.udp.cli (CHAN OF BYTE kyb, scr, err)
+--{{{  PROC send.message (SOCKET sock, VAL []BYTE message, INT res)
+PROC send.message (SOCKET sock, VAL []BYTE message, INT res)
+  SEQ
+    socket.sendto (sock, message, 0, res)
+:
+--}}}  
 
-  --{{{  constants
-  VAL max.message.len IS 64:
-  --}}}  
-
-  --{{{  PROC send.message (SOCKET sock, VAL []BYTE message, INT res)
-  PROC send.message (SOCKET sock, VAL []BYTE message, INT res)
-    SEQ
-      socket.sendto (sock, message, 0, res)
-  :
-  --}}}  
+--{{{ PROC sock.udp.cli (CHAN BYTE kyb?, scr!, err!)
+PROC sock.udp.cli (CHAN BYTE kyb?, scr!, err!)
 
   --{{{  start here
   [128]BYTE hostname:
@@ -44,23 +44,23 @@ PROC sock.udp.cli (CHAN OF BYTE kyb, scr, err)
   SOCKET sock:
   SEQ
     --{{{  get hostname/port
-    out.string ("Hostname ?: ", 0, scr)
+    out.string ("Hostname ?: ", 0, scr!)
     scr ! FLUSH
-    in.string (hostname, host.len, (SIZE hostname), kyb, scr)
+    in.string (hostname, host.len, (SIZE hostname), kyb?, scr!)
     scr ! '*n'
     socket.addr.of.host ([hostname FOR host.len], remote.addr, res)
     IF
       res < 0
         SEQ
-          out.string ("Unable to determine address of ", 0, scr)
-          out.string ([hostname FOR host.len], 0, scr)
-          out.string ("*n", 0, scr)
+          out.string ("Unable to determine address of ", 0, scr!)
+          out.string ([hostname FOR host.len], 0, scr!)
+          out.string ("*n", 0, scr!)
           STOP
       TRUE
         SKIP
-    out.string ("Port ?: ", 0, scr)
+    out.string ("Port ?: ", 0, scr!)
     scr ! FLUSH
-    in.int (remote.port, 5, kyb, scr)
+    in.int (remote.port, 5, kyb?, scr!)
     scr ! '*n'
     --}}}  
     --{{{  create socket
@@ -68,11 +68,11 @@ PROC sock.udp.cli (CHAN OF BYTE kyb, scr, err)
     IF
       sock[fd] < 0
         SEQ
-          out.string ("Unable to connect to ", 0, scr)
-          out.string ([hostname FOR host.len], 0, scr)
-          out.string (" port ", 0, scr)
-          out.int (remote.port, 0, scr)
-          out.string ("*n", 0, scr)
+          out.string ("Unable to connect to ", 0, scr!)
+          out.string ([hostname FOR host.len], 0, scr!)
+          out.string (" port ", 0, scr!)
+          out.int (remote.port, 0, scr!)
+          out.string ("*n", 0, scr!)
           STOP
       TRUE
         SKIP
@@ -96,11 +96,11 @@ PROC sock.udp.cli (CHAN OF BYTE kyb, scr, err)
             IF
               res < 0
                 SEQ
-                  out.string ("Unable to set broadcast option on socket*n", 0, scr)
+                  out.string ("Unable to set broadcast option on socket*n", 0, scr!)
                   socket.close (sock)
                   STOP
               TRUE
-                out.string ("Broadcast option set on socket*n", 0, scr)
+                out.string ("Broadcast option set on socket*n", 0, scr!)
         TRUE
           SKIP
     --}}}  
@@ -108,9 +108,9 @@ PROC sock.udp.cli (CHAN OF BYTE kyb, scr, err)
     res := 1
     WHILE res > 0
       SEQ
-        out.string ("Message (empty message exits) ?: ", 0, scr)
+        out.string ("Message (empty message exits) ?: ", 0, scr!)
         scr ! FLUSH
-        in.string (message, msg.len, (SIZE message), kyb, scr)
+        in.string (message, msg.len, (SIZE message), kyb?, scr!)
         scr ! '*n'
         IF
           msg.len > 0

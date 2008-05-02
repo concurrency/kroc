@@ -47,6 +47,7 @@ include_HEADERS = \
 	include/ccsp_if.h \
 	include/ccsp_cif.h \
 	include/ccsp_cif_stubs.h \
+	include/ccsp_pony.h \
 	include/ccsp_stats.h \
 	include/ccsp_timer.h \
 	include/dmem_if.h \
@@ -74,6 +75,6 @@ else
 	rm -f "$(DESTDIR)$(libdir)/@LIBCCSP@"
 endif
 
-EXTRA_DIST = README INSTALL COPYRIGHT preconfigure
+EXTRA_DIST = README INSTALL COPYRIGHT
 DISTCLEANFILES = libccsp.a $(shared_libs)
 

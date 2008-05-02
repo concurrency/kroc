@@ -26,8 +26,8 @@
  * longer used.
  */
 
-#ifndef SCHED_ASM_INSERTS_H
-#define SCHED_ASM_INSERTS_H
+#ifndef I386_SCHED_ASM_INSERTS_H
+#define I386_SCHED_ASM_INSERTS_H
 
 /*{{{  architecture dependent kernel call declarations */
 #define _K_CALL_DEFINE(X) \
@@ -157,9 +157,6 @@
 /*{{{  entry and label functions */
 #define K_ENTRY(init,stack,Wptr,Fptr) \
 	__asm__ __volatile__ ("				\n" \
-		"	subl $64, %0			\n" \
-		"	andl $0xffffffe0, %0		\n" \
-		"	subl $768, %0			\n" \
 		"	movl %0, %%esp			\n" \
 		"	call *%3			\n" \
 		: /* no outputs */ \
@@ -226,5 +223,5 @@
 		: "memory")
 /*}}}*/
 
-#endif /* sched_asm_inserts.h */
+#endif /* I386_SCHED_ASM_INSERTS */
 

@@ -17,6 +17,8 @@
 --	<http://www.gnu.org/licenses/>.
 --
 
+--** @module rasterio
+
 #INCLUDE "raster.module"
 
 --{{{  externals

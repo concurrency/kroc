@@ -1,6 +1,6 @@
 /*
  *	asm386.c - i386 assembly source outputter
- *	Copyright (C) 2000-2004 Fred Barnes <frmb@ukc.ac.uk>
+ *	Copyright (C) 2000-2004 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -336,7 +336,7 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 			fprintf (outstream, "%d:\n", tmp->in_args[0]->regconst);
 			break;
 		case INS_LOADLABDIFF:
-		case INS_CONSTLABDIFFSHORT:
+		case INS_CONSTLABDIFF:
 			if ((tmp->in_args[0]->flags & ARG_MODEMASK) == ARG_INSLABEL) {
 				tlab1 = ((ins_chain *)tmp->in_args[0]->regconst)->in_args[0]->regconst;
 			} else {
@@ -350,8 +350,16 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 			if (tmp->type == INS_LOADLABDIFF) {
 				fprintf (outstream, "\tmovl\t$(" LBLPFX "%d - " LBLPFX "%d), %s\n", tlab1, tlab2, intel_regs[tmp->out_args[0]->regconst]);
 			} else {
-				fprintf (outstream, ".short (" LBLPFX "%d - " LBLPFX "%d)\n", tlab1, tlab2);
+				fprintf (outstream, ".long (" LBLPFX "%d - " LBLPFX "%d)\n", tlab1, tlab2);
 			}
+			break;
+		case INS_CONSTLABADDR:
+			if ((tmp->in_args[0]->flags & ARG_MODEMASK) == ARG_INSLABEL) {
+				tlab1 = ((ins_chain *)tmp->in_args[0]->regconst)->in_args[0]->regconst;
+			} else {
+				tlab1 = tmp->in_args[0]->regconst;
+			}
+			fprintf (outstream, ".long " LBLPFX "%d\n", tlab1);
 			break;
 		case INS_CJUMP:
 			fprintf (outstream, "\tj%s\t", setcc_tailcodes[tmp->in_args[0]->regconst]);

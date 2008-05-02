@@ -1,6 +1,6 @@
 /*
  *	archdef.h -- architecture definition
- *	Copyright (C) 2002 Fred Barnes <frmb2@ukc.ac.uk>
+ *	Copyright (C) 2002 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -71,7 +71,6 @@ typedef struct TAG_arch_t {
 	void (*compose_rangestop_jumpcode)(tstate *, int);				/* state, rcode */
 
 	void (*compose_debug_deadlock_set)(tstate *);					/* state -- return point */
-	void (*compose_debug_insert_set)(tstate *);					/* state -- return point */
 
 	/* code-gen stuff */
 	void (*compose_divcheck_zero)(tstate *, int);					/* state, reg */

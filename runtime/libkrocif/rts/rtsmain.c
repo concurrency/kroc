@@ -83,6 +83,7 @@ static void exit_handler (int status, bool core)
 
 	ccsp_default_exit_handler (status, core);
 }
+/*}}}*/
 
 /*{{{  int main (int argc, char **argv)*/
 /*

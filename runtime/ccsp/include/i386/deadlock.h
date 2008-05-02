@@ -18,8 +18,8 @@
  */
 
 
-#ifndef __DEADLOCK_H
-#define __DEADLOCK_H
+#ifndef I386_DEADLOCK_H
+#define I386_DEADLOCK_H
 
 #ifdef __DEADLOCK_C
 /* architecture dependant stuff */
@@ -47,5 +47,5 @@
 
 #endif	/* __DEADLOCK_C */
 
-#endif	/* !__DEADLOCK_H */
+#endif	/* !I386_DEADLOCK_H */
 

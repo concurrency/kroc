@@ -199,6 +199,13 @@ PUBLIC void write_id (char *const libname, const BOOL write_lib_id)
 		written_comment = TRUE;
 	}
 	/*}}} */
+	/*{{{  Record the target endian */
+	{
+		char str[32];
+		sprintf (str, ".ENDIAN %s", target_bigendian ? "big" : "little");
+		tcoff_putrec (objfile, COMMENT_TAG, "%ld%ld%s", FALSE, TRUE, str); 
+	}
+	/*}}}*/
 	/*{{{  Define the standard symbols */
 	{
 		const int text_base = p_symbol_id (objfile, EXECUTE_SECTION | READ_SECTION, EXPORT_USAGE,

@@ -24,9 +24,7 @@ import sys, os, re, getopt, time, select, signal
 TIMEOUT = 30.0
 
 # Tests that are known not to work.
-KNOWN_BROKEN = [
-	"cgtest90",
-	]
+KNOWN_BROKEN = []
 
 def run_command(cmd):
 	"""Run a program with arguments and return the exit code.
@@ -51,9 +49,12 @@ def run_test(name, verbose, interpreter):
 	else:
 		path = name
 		cmd = ["./%s" % path]
-	if not os.access(path, os.F_OK):
-		status("%s has not been compiled\n" % path)
-		return False
+	if name in KNOWN_BROKEN:
+		status("%s skipped: known broken\n" % path)
+		return None
+	elif not os.access(path, os.F_OK):
+		status("%s skipped: no binary found\n" % path)
+		return None
 
 	null = os.open("/dev/null", os.O_RDWR)
 	(pr, pw) = os.pipe()
@@ -135,9 +136,6 @@ if __name__ == "__main__":
 	if interpreter is not None and interpreter.startswith("./"):
 		interpreter = os.path.join(os.getcwd(), interpreter)
 	os.chdir(sys.path[0])
-	if run_command(["make"]) != 0:
-		status("Make failed\n")
-		sys.exit(1)
 
 	if args == []:
 		tests = ["cgtest%02d" % n for n in range(100)]
@@ -155,10 +153,11 @@ if __name__ == "__main__":
 	failed = []
 	skipped = []
 	for test in tests:
-		if run_test(test, verbose, interpreter):
-			passed.append(test)
-		elif test in KNOWN_BROKEN:
+		r = run_test(test, verbose, interpreter)
+		if r is None:
 			skipped.append(test)
+		elif r:
+			passed.append(test)
 		else:
 			failed.append(test)
 

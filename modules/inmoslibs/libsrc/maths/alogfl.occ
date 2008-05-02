@@ -29,6 +29,10 @@
 -- Added OPTION "V"; V1.1 27-Mar-90 SRH
 --}}}
 --{{{  ALOG
+--* Single-precision natural logarithm.
+--
+-- @param X Input value
+-- @return Natural logarithm of X
 REAL32 FUNCTION ALOG (VAL REAL32 X)
 
   REAL32 RWork :
@@ -77,6 +81,10 @@ REAL32 FUNCTION ALOG (VAL REAL32 X)
 :
 --}}}
 --{{{  ALOG10
+--* Single-precision base-10 logarithm.
+--
+-- @param X Input value
+-- @return Base-10 logarithm of X
 REAL32 FUNCTION ALOG10 (VAL REAL32 X)
 
   REAL32 NLog :

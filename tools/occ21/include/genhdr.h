@@ -24,16 +24,11 @@
 #define NO_SLOT 0x80000000
 /*}}}*/
 
-/*{{{  semaphore offset constants*/
-#define MCT_CLI_SEMOFFS		(0)
-#define MCT_SVR_SEMOFFS		(2)
-#define MCT_SEMSIZE		(2)	/* 2 words per semaphore */
-#define MCT_REFCSIZE		(1)	/* 1 word for the ref-count (located above channel words) */
-#define MCT_REFCOFFSET		(0)	/* lives in the first word */
-#define MCT_DESCOFFSET		(1)	/* offset for channel-type description */
-#define MCT_DESCSIZE		(2)	/* 2 words for this -- const description-pointer, op-channel-words block */
-#define MCT_KROCNETSIZE		(3)	/* 3 words for KRoC.net specials, 1 for state (2-bytes each) and 2 for the semaphore */
-#define MCT_KROCNETOFFS		(4)	/* above the client and server semaphores */
+/*{{{  offsets in mt_cb_pony_state_t */
+#define PONY_TYPEDESC 0
+#define PONY_UIOHOOK 1
+#define PONY_STATE 2
+#define PONY_STATESEM 3
 /*}}}*/
 /*{{{  static link, vector space, constant pointer constants */
 #define MAX_LEX_LEVELS           254

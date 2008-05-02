@@ -53,9 +53,6 @@
 #define SCR_WORKSPACE_WORDS 36
 #define ERR_WORKSPACE_WORDS 12
 
-#define MT_CHAN_TYPE \
-	(MT_SIMPLE | MT_MAKE_TYPE (MT_CB) | MT_CB_SHARED | MT_CB_STATE_SPACE)
-
 static int stdin_is_tty;
 
 extern int using_keyboard;
@@ -84,22 +81,18 @@ extern void O_kroc_error_process (void);
 extern void O_kroc_keyboard_process (void);
 /*}}}*/
 
-/*{{{  static word **setup_chan (word type) */
-static word **setup_chan (word type)
+/*{{{  static word **setup_chan (word init_state) */
+static word **setup_chan (word init_state)
 {
-	word **chan = (word **) ccsp_mt_alloc (
+	mt_cb_t *cb = ccsp_mt_alloc (
 		MT_SIMPLE | MT_MAKE_TYPE (MT_CB) | MT_CB_SHARED | MT_CB_STATE_SPACE, 
 		1
 	);
 
-	/* chan[0] = NotProcess_p; */			/* channel word */
-	chan[1] = (word *) 0;				/* type-description pointer */
-	chan[2] = (word *) 0;				/* user-operations pointer */
-	chan[3] = (word *) type;			/* KRoC.net special state */
-	chan[4] = (word *) (((word) NotProcess_p) | 1);	/* state, mixed value/Fptr */
-	chan[5] = NotProcess_p;				/* state, Bptr */
+	/* cb->channels[0] = NotProcess_p; */
+	mt_cb_get_pony_state (cb)->state = init_state;
 
-	return chan;
+	return (word **) cb;
 }
 /*}}}*/
 

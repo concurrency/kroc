@@ -17,8 +17,8 @@
  *	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef ALIGNMENT_H
-#define ALIGNMENT_H
+#ifndef I386_ALIGNMENT_H
+#define I386_ALIGNMENT_H
 
 /*{{{  alignment helper macro */
 #if defined(__GNUC__) && !defined(__ALIGN)
@@ -49,5 +49,5 @@
 #endif /* MAX_RUNTIME_THREADS > 1 */ 
 /*}}}*/
 
-#endif /* ALIGNMENT_H */
+#endif /* I386_ALIGNMENT_H */
 

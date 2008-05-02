@@ -1,7 +1,0 @@
-
-Please see the kroc/docs/essentially-kroc.txt file for details of how to create
-a Unix makefile for these examples.  The `crew_test.occ' file is also used, in
-that documentation, as an example for separate compilation and library building.
-See the directories kroc/docs/sc/ and kroc/docs/lib/.
-
-Peter Welch.

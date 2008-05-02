@@ -231,13 +231,12 @@ PROTOCOL PONY.ENCODEHANDLE.TO.ENCODER
     rest.clcs = 1; INT; INT
     ----------------------------------------------------------------------
     -- Data-item NLC
-    -- Carrying: address;
-    --           size
-    data.item.nlc = 2; INT; INT
+    -- Carrying: data
+    data.item.nlc = 2; MOBILE []BYTE
     ----------------------------------------------------------------------
     -- Increase reference-count of CTB
     -- Carrying: CTB-pointer
-    increase.ref.count = 3; INT
+    clone.ctb = 3; INT
     ----------------------------------------------------------------------
     -- Allocate new CTB
     -- Carrying: NCT-ID
@@ -332,7 +331,7 @@ PROTOCOL PONY.NETHANDLE.FROM.KERNEL
     ----------------------------------------------------------------------
     -- Increase reference-count of CTB
     -- Carrying: CTB-pointer
-    increase.ref.count; INT
+    clone.ctb; INT
     ----------------------------------------------------------------------
     -- Allocate new CTB
     -- Carrying: NCT-ID;

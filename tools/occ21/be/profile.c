@@ -304,15 +304,17 @@ INT32 get_proftab_routine_address (ProfTab *table, treenode *nptr)
 /*{{{  treenode *add_profcountupd_nd(int count, treenode *tptr) */
 treenode *add_profcountupd_nd (ProfTabEntry *profcount, treenode *tptr)
 {
+	#if 0
 	const SOURCEPOSN locn = LocnOf (tptr);
 	treenode *argls = addtofront (newintconstant (profcount->entry_number, S_INT),
 				      NULL);
 	treenode *procnamend = get_predefname (PD_UPDATE_PROFCOUNT);
 	return newcnode (S_SEQ, locn, newlistnode (S_LIST, locn,
 						   newinstancenode (S_PINSTANCE, locn, procnamend, argls), newlistnode (S_LIST, locn, tptr, NULL)));
-
+	#else
+	return NULL;
+	#endif
 }
-
 /*}}}*/
 /*{{{  ProfTabEntry *get_proftab_entry(INT32 index) */
 ProfTabEntry *get_proftab_entry (ProfTab *prof_table, treenode *tptr)

@@ -410,6 +410,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.321()        
     --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
     --{{{  Bug 338
     PROC bug.338()
       SEQ
@@ -419,6 +420,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.338()
     --}}}
+    #ENDIF
     --{{{  Bug 476
     PROC bug.476()
       INLINE PROC q (INT z)
@@ -442,6 +444,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.476()
     --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
     --{{{  Bug 178
     PROC bug.178()
       VAL name IS "byte string" :
@@ -547,7 +550,9 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.494()
     --}}}
+    #ENDIF
     --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
     --{{{  protocol RETYPES test  PR1 - PR12
     PROC protocolRetype()
       PROTOCOL p1 IS BYTE; BOOL :
@@ -1107,6 +1112,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     call.through.ASM()
     --}}}
+    #IF FALSE
     --{{{  bug 1409
     PROC bug.1409 ()
       INLINE PROC q(VAL []BYTE b, INT x)
@@ -1124,8 +1130,9 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
         check(x, y, "B1409a")
     :
     bug.1409()
-    
     --}}}
+    #ENDIF
+    #ENDIF
     --{{{  bug 1505
     PROC bug.1505()
       SEQ
@@ -1736,6 +1743,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.1505()
     --}}}
+    #IF FALSE
     --{{{  bug 1751
     PROC bug.1751()
       VAL link.no IS 20 :
@@ -1763,9 +1771,9 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
           check(addr, address, "B1751c")
         p(c)
     :
-    --bug.1751()
-    SKIP
+    bug.1751()
     --}}}
+    #ENDIF
     --{{{  bug TS/1860
     PROC bug.TS.1860()
       INT global :
@@ -1782,6 +1790,8 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.TS.1860()
     --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
+    #IF FALSE
     --{{{  bug TS/2015
     PROC bug.TS.2015()
       INT INLINE FUNCTION get.word(VAL INT base, offset)
@@ -1806,6 +1816,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.TS.2015()
     --}}}
+    #ENDIF
     --{{{  bug TS/2038
     PROC bug.TS.2038()
       PROC local.0 ([10]CHAN OF INT a, VAL INT i, INT x)
@@ -1827,7 +1838,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
           a[5] ! 88
         INT x :
         SEQ
-          local.1(a, 3, x)
+          local.0(a, 3, x)
           check(x, 77, "B2038a")
           local.2(a, 5, x)
           check(x, 88, "B2038b")
@@ -1836,6 +1847,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.TS.2038()
     --}}}
+    #ENDIF
     --{{{  bug INSdi01929
     PROC bug.INSdi01929()
       SEQ
@@ -1882,6 +1894,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.INSdi01929()
     --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
     --{{{  bug INSdi02058
     PROC bug.INSdi02058()
       INT w, x, y, z :
@@ -1988,5 +2001,6 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     bug.INSdi02497()
     --}}}
+    #ENDIF
     finish ()
 :

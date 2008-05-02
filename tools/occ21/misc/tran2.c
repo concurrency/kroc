@@ -1491,6 +1491,7 @@ printtreenl (stderr, 4, tptr);
 	case S_SEGMENT:	/* MDP */
 	case S_PARAM_VSP:	/* MDP */
 	case S_PARAM_FB:
+	case S_NULLARRAY:
 #ifdef MOBILES
 	case S_PARAM_MSP:
 	case S_PARAM_MPP:
@@ -1717,7 +1718,7 @@ printtreenl (stderr, 4, p);
 		dimension++;
 		ftype = follow_user_type (ARTypeOf (ftype));
 #ifdef MOBILES
-		if (TagOf (ftype) == S_MOBILE) {
+		if (TagOf (ftype) == S_MOBILE && !isdynmobilearraytype (ftype)) {
 			ftype = MTypeOf (ftype);
 		}
 #endif
@@ -2228,6 +2229,7 @@ PUBLIC BOOL usedin (treenode *const t, treenode *tptr, const int my_lexlevel)
 		case S_EXACT:
 		case S_ROUND:
 		case S_TRUNC:
+		case S_DEFINED:
 			/*return (usedin(n, OpOf(tptr))); */
 			tptr = OpOf (tptr);
 			break;

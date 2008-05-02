@@ -1,7 +1,7 @@
 /*
  *	asmmips.c - mips assembly source outputter
- *	Copyright (C) 2000-2003 Fred Barnes <frmb2@ukc.ac.uk>,
- *	                        Christian L. Jacobsen <clj3@ukc.ac.uk>
+ *	Copyright (C) 2000-2003 Fred Barnes <frmb@kent.ac.uk>,
+ *	                        Christian L. Jacobsen
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -355,7 +355,7 @@ static int disassemble_code (ins_chain *ins, FILE *outstream)
 				fprintf (outstream, "\n");
 				break; /* INS_ADD */
 			case INS_LOADLABDIFF: /* 26 */
-			case INS_CONSTLABDIFFSHORT: /* 33 */
+			case INS_CONSTLABDIFF: /* 33 */
 				if ((tmp->in_args[0]->flags & ARG_MODEMASK) == ARG_INSLABEL) {
 					tlab1 = ((ins_chain *)tmp->in_args[0]->regconst)->in_args[0]->regconst;
 				} else {
@@ -371,12 +371,20 @@ static int disassemble_code (ins_chain *ins, FILE *outstream)
 					fprintf (stderr, "error: dont know about INS_LOADLABDIFF yet");
 					abort();
 				} else {
-					fprintf (outstream, ".short (" LBLPFX "%d - " LBLPFX "%d)\n", tlab1, tlab2);
+					fprintf (outstream, ".long (" LBLPFX "%d - " LBLPFX "%d)\n", tlab1, tlab2);
 					/* FIXME: Temporary fudge */
-					if (tmp->next->type != INS_CONSTLABDIFFSHORT) {
+					if (tmp->next->type != INS_CONSTLABDIFF) {
 						fprintf (outstream, ".align 8\n");
 					}
 				}
+				break;
+			case INS_CONSTLABADDR:
+				if ((tmp->in_args[0]->flags & ARG_MODEMASK) == ARG_INSLABEL) {
+					tlab1 = ((ins_chain *)tmp->in_args[0]->regconst)->in_args[0]->regconst;
+				} else {
+					tlab1 = tmp->in_args[0]->regconst;
+				}
+				fprintf (outstream, ".long " LBLPFX "%d\n", tlab1);
 				break;
 			case INS_CJUMP: /* 10 */
 				switch (ArgCC (tmp->in_args[0])) {

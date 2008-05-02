@@ -47,7 +47,7 @@
 #include "gen12def.h"
 #include "code1def.h"
 #include "genkroc.h"
-#include "mtdef.h"
+#include "mobile_types.h"
 /*}}}*/
 
 /* fred debugging stuff */
@@ -767,6 +767,58 @@ PRIVATE void mapdynmobilearraycreate (treenode **dest, treenode **src, int regs)
 	return;
 }
 /*}}}*/
+/*{{{  PUBLIC void mobilearray_base (treenode *const nptr, treenode **const basetype, int *basebytes)*/
+PUBLIC void mobilearray_base (treenode *const nptr, treenode **const basetype, int *basebytes)
+{
+	const BOOL utagged = (TagOf (nptr) == S_UNDEFINED);
+	treenode *const rptr = (utagged ? OpOf (nptr) : nptr);
+	const int dimcount = dynmobiledimensioncount (nptr);
+	int idim;
+	
+	*basetype = gettype (rptr);
+	if (TagOf (*basetype) == S_MOBILE) {
+		*basetype = MTypeOf (*basetype);
+	}
+
+	for (idim = 0; idim < dimcount; idim++) {
+		if (TagOf (*basetype) == S_ARRAY) {
+			*basetype = ARTypeOf (*basetype);
+		} else {
+			geninternal_is (GEN_ERROR_IN_ROUTINE, 0, "mobilearray_base (expected S_ARRAY in type tree)");
+		}
+	}
+
+	if (TagOf (*basetype) == N_TYPEDECL) {
+		/* skip into type */
+		*basetype = follow_user_type (*basetype);
+	}
+
+	switch (TagOf (*basetype)) {
+		case S_MOBILE:
+			/* some nested MOBILE structure */
+			*basebytes = bytesperword;
+			break;
+		case S_RECORD:
+			*basebytes = ARDimOf (*basetype);
+			break;
+		case S_ARRAY:
+			/* not scalar, but maybe countable */
+			*basebytes = bytesin (*basetype);
+			
+			if (*basebytes < 0) {
+				geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "mobilearray_base (basetype has unknown size)");
+			}
+			break;
+		default:
+			*basebytes = bytesinscalar (TagOf (*basetype));
+
+			if (*basebytes < 0) {
+				geninternal_is (GEN_ERROR_IN_ROUTINE, 2, "mobilearray_base (basetype not scalar)");
+			}
+			break;
+	}
+}
+/*}}}*/
 /*{{{  PRIVATE void gendynmobilearraycreate (treenode *const dest, treenode *const src, int regs)*/
 PRIVATE void gendynmobilearraycreate (treenode *const dest, treenode *const src, int regs)
 {
@@ -792,45 +844,9 @@ PRIVATE void gendynmobilearraycreate (treenode *const dest, treenode *const src,
 		gencondfreedynmobile (rdest);
 	}
 
-	/* scan the type-tree to find the actual base size and type */
-	basetype = gettype (rdest);
-	if (TagOf (basetype) == S_MOBILE) {
-		basetype = MTypeOf (basetype);
-	}
-	for (idim = 0; idim < dimcount; idim++) {
-		if (TagOf (basetype) == S_ARRAY) {
-			basetype = ARTypeOf (basetype);
-		} else {
-			geninternal_is (GEN_ERROR_IN_ROUTINE, 0, "gendynmobilearraycreate (expected S_ARRAY in type tree)");
-		}
-	}
-	if (TagOf (basetype) == N_TYPEDECL) {
-		/* skip into type */
-		basetype = follow_user_type (basetype);
-	}
-	if (TagOf (basetype) == S_MOBILE) {
-		/* some nested MOBILE structure */
-		basebytes = bytesperword;
-	} else if (TagOf (basetype) == S_RECORD) {
-		basebytes = ARDimOf (basetype);
-	} else if (TagOf (basetype) == S_ARRAY) {
-		/* not scalar, but maybe countable */
-		basebytes = bytesin (basetype);
+	/* find actual base size and type */
+	mobilearray_base (dest, &basetype, &basebytes);
 
-		if (basebytes < 0) {
-			geninternal_is (GEN_ERROR_IN_ROUTINE, 3, "gendynmobilearraycreate (basetype has unknown size)");
-		}
-	} else {
-		basebytes = bytesinscalar (TagOf (basetype));
-
-		if (basebytes < 0) {
-#if 0
-fprintf (stderr, "gendynmobilearraycreate: basebytes = %d, basetype = ", basebytes);
-printtreenl (stderr, 4, basetype);
-#endif
-			geninternal_is (GEN_ERROR_IN_ROUTINE, 4, "gendynmobilearraycreate (basetype not scalar)");
-		}
-	}
 #if 0
 fprintf (stderr, "gen11: gendynmobilearraycreate: regs = %d, src = ", regs);
 printtreenl (stderr, 4, src);
@@ -2095,11 +2111,17 @@ PUBLIC void genmobileundefine (treenode *const var)
 			gensecondary (I_DUP);
 			gensecondary (I_NULL);
 			gensecondary (I_REV);
+			genprimary (I_STNL, wsposn);
+			gensecondary (I_DUP);
+			gensecondary (I_NULL);
+			gensecondary (I_REV);
 			genprimary (I_STNL, wsposn + 1);
 			loadconstant (0);
 			gensecondary (I_REV);
 			genprimary (I_STNL, wsposn + 2);
 		} else {
+			gensecondary (I_NULL);
+			genprimary (I_STL, wsposn);
 			gensecondary (I_NULL);
 			genprimary (I_STL, wsposn + 1);
 			loadconstant (0);
@@ -2375,22 +2397,7 @@ PUBLIC void gencleardynproctype (treenode *const nptr)
 /*{{{  PUBLIC void gencleardynarray (treenode *const nptr, const BOOL postout)*/
 PUBLIC void gencleardynarray (treenode *const nptr, const BOOL postout)
 {
-	if (postout && (TagOf (nptr) != S_ARRAYITEM) && (TagOf (nptr) != S_RECORDITEM)) {
-		/* only need to clear dimension */
-		const int level = NLexLevelOf (nptr);
-		const BOOL nonlocal = loadlex (level);
-		const INT32 wsposn = NVOffsetOf (nptr) + nameoffsetof (level);
-		
-		gencomment0 ("{{{ post output dynamic mobile undefine");
-		loadconstant (0);
-		if (nonlocal) {
-			gensecondary (I_REV);
-		}
-		genprimary (nonlocal ? I_STNL : I_STL, wsposn + 2);
-		gencomment0 ("}}}");
-	} else if (!postout) {
-		genmobileundefine (nptr);
-	}
+	genmobileundefine (nptr);
 }
 /*}}}*/
 /*{{{  PUBLIC void storehiddentypeof (treenode *tptr, int regs)*/
