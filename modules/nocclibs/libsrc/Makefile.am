@@ -16,7 +16,7 @@ EXTRA_DIST = \
 	placed-par.occ
 
 .occ.o:
-	$(KROC) $(KROCOPTS) -e -c -v $<
+	$(KROC) $(KROCOPTS) -c -v $<
 
 libs = compiler.xlb compiler.so
 
