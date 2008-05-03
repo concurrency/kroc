@@ -153,6 +153,7 @@ int main (int argc, char **argv)
 	options.extref_prefix = NULL;
 	options.use_cttd = 0;
 	options.mpenable = 0;
+	options.nocc_codegen = 0;
 
 	glob_in_icount = 0;
 	glob_out_icount = 0;
@@ -730,6 +731,7 @@ int main (int argc, char **argv)
 		if (open_netc_file (input_filename)) {
 			exit (1);
 		}
+		options.nocc_codegen = 1;
 	} else if (open_tce_file (input_filename)) {
 		exit (1);
 	}

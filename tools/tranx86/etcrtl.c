@@ -3280,6 +3280,7 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 			}
 
 			add_to_ins_chain (compose_ins (INS_SUB, 2, 1, ARG_CONST | ARG_ISCONST, adj << WSH, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR));
+#if 0
 			add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_ISCONST | ARG_FLABEL, 0, ARG_REGIND, REG_WPTR));
 			if (fname) {
 				add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_NAMEDLABEL, string_dup (fname)));
@@ -3287,7 +3288,12 @@ static void do_code_nocc_special (tstate *ts, etc_chain **ecodeptr, arch_t *arch
 				add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_LABEL, etc_code->opd));
 			}
 			add_to_ins_chain (compose_ins (INS_SETFLABEL, 1, 0, ARG_FLABEL, 0));
-
+#endif
+			generate_call (ts, etc_code, arch, 0);
+			/* XXX: if this was an external C call, need to adjust the workspace back to where it was */
+			if (fname && !strncmp (fname, "C.", 2)) {
+				add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST | ARG_ISCONST, adj << WSH, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR));
+			}
 		}
 		break;
 		/*}}}*/

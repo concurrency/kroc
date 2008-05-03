@@ -3045,7 +3045,7 @@ static void compose_external_ccall_i386 (tstate *ts, int inlined, char *name, in
 {
 	int tmp_reg, kernel_call;
 
-	/* In the i386 ABI used by Linux, *BSD, Darwin and resumably Windows
+	/* In the i386 ABI used by Linux, *BSD, Darwin and presumably Windows
 	 * defines EBP, ESI, EDI as private to the caller, hence we don't
 	 * need to save them.
 	 *
@@ -3067,8 +3067,9 @@ static void compose_external_ccall_i386 (tstate *ts, int inlined, char *name, in
 	} else {
 		add_to_ins_chain (compose_ins (INS_CALL, 1, 0, ARG_NAMEDLABEL, string_dup (name + 1)));
 	}
-	add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
-	
+	*pst_last = compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_ESP, ARG_REG, REG_ESP);
+	add_to_ins_chain (*pst_last);
+
 	if (!strcmp (name, "C.ccsp.suspendproc")) {
 		/* hack for dynamic process suspension -- we've done ccsp.suspendproc, now call kernel */
 		*pst_last = NULL;
@@ -3090,7 +3091,10 @@ static void compose_external_ccall_i386 (tstate *ts, int inlined, char *name, in
 			exit (EXIT_FAILURE);
 		}
 	} else {
-		*pst_last = compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR);
+		/* if we're using NOCC, call return does not do this anymore */
+		if (!options.nocc_codegen) {
+			*pst_last = compose_ins (INS_ADD, 2, 1, ARG_CONST, 16, ARG_REG, REG_WPTR, ARG_REG, REG_WPTR);
+		}
 	}
 	add_to_ins_chain (*pst_last);
 }
