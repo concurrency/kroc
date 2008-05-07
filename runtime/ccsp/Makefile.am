@@ -59,11 +59,14 @@ include_HEADERS = \
 	include/typedesc.h \
 	include/ukcthreads_types.h
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = ccsp-1.6.pc
+
 all-local: libccsp.a $(shared_libs)
 
 if BUILD_SHARED
 @LIBCCSP@: libccsp.a
-	$(CC) @SLINKFLAGS@ $(CFLAGS) $(EXTRALDFLAGS) -o @LIBCCSP@ $(libccsp_a_LIBADD)
+	$(CC) @SLINKFLAGS@ $(CFLAGS) $(EXTRALDFLAGS) -o @LIBCCSP@ $(libccsp_a_LIBADD) @LIBS@
 endif
 
 install-exec-local: libccsp.a $(shared_libs)

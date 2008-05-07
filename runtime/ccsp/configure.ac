@@ -22,6 +22,7 @@ AC_CHECK_TOOL(AS,as)
 AC_CHECK_TOOL(LD,ld)
 
 AC_CHECK_HEADERS(stdlib.h stdarg.h malloc.h sys/param.h sys/time.h string.h strings.h sys/ioctl.h time.h)
+AC_CHECK_LIB(m, sin)
 
 #{{{  options parsing
 
@@ -57,7 +58,7 @@ AC_ARG_WITH([rmox], AS_HELP_STRING([--with-rmox=...],[location of RMoX source tr
 
 #{{{  check for pthreads
 
-dnl For BSD pthreads support
+dnl For platform-specific pthreads support
 case "$host_os" in
 *BSD* | *bsd*)
  SAVED_CFLAGS="$CFLAGS"
@@ -66,6 +67,9 @@ case "$host_os" in
  AC_MSG_CHECKING([whether this system has pthread support])
  AC_MSG_RESULT($have_pthread_libcr)
  CFLAGS="$SAVED_CFLAGS"
+ ;;
+solaris*)
+ LIBS="-lrt $LIBS"
  ;;
 *)
  ;;
@@ -76,6 +80,7 @@ AC_CHECK_LIB(pthread,pthread_create,[have_libpthread=yes],[have_libpthread=no])
 AC_MSG_CHECKING([whether to use POSIX threads])
 if test "$enable_pthreads" = yes; then
  if test "$have_libpthread" = yes || test "$have_pthread_libcr" = yes; then
+  LIBS="-lpthread $LIBS"
   AC_DEFINE([USE_PTHREADS],1,[define to use POSIX threads for blocking syscalls and multi-processor])
   AC_MSG_RESULT(yes)
  else
@@ -684,5 +689,5 @@ AC_SUBST(EXTRA_DEFS)
 AC_SUBST(EXTRA_LDFLAGS)
 
 AC_CONFIG_HEADERS([include/ccsp_config.h])
-AC_OUTPUT([Makefile common/Makefile include/Makefile include/arch/Makefile include/i386/Makefile kernel/Makefile utils/Makefile])
+AC_OUTPUT([Makefile ccsp-1.6.pc common/Makefile include/Makefile include/arch/Makefile include/i386/Makefile kernel/Makefile utils/Makefile])
 
