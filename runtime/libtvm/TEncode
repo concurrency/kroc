@@ -57,13 +57,12 @@ TEnc <stream length>
     endU <endian (0=little, 1=big)>
     ws U <workspace size (words)>
     vs U <vectorspace size (words)>
-    ms U <mobilespace size (words)>
     bc B <length> <bytecode>
 
     // Top-Level-Process descriptor (optional)
     tlpL <length>
       fmtS <length> <top-level-format> [<padding>]
-      tlpS <length> <top-level-process (from TCOFF)> [<padding>]
+      symS <length> <top-level-process symbol name> [<padding>]
 
     // FFI table (optional)
     ffiL <length>
@@ -80,16 +79,24 @@ TEnc <stream length>
         idxI <library index of symbol (-1 = unknown)>
 	... further idxI elements (one element per symS) ...
    
-    // Line Numbering Information (optional)
-    lniL <length>
+    // Symbol Table (optional)
+    stbL <length>
+      symL <length>
+        offU <bytecode offset>
+        symS <length> <symbol name> [<padding>]
+	// (optionally)
+	defS <length> <definition> [<padding>]
+	ws U <workspace words>
+	vs U <vectorspace words>
+
+    // Debug Information (optional)
+    dbgL <length>
       // File names
       fn L <length>
         fn S <length> <file name>
       // Line Numbering Data
-      lndL <length>
-        offU <bytecode offset>
-	fniU <file name index>
-	ln U <line number>
-      ... further lndL elements ...
+      lndB <length>
+        <bytecode offset> <file index> <line number>
+	... further elements ...
 
   ... futher tbcL elements (e.g. alternate endian) ...
