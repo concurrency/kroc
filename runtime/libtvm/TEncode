@@ -57,6 +57,7 @@ TEnc <stream length>
     endU <endian (0=little, 1=big)>
     ws U <workspace size (words)>
     vs U <vectorspace size (words)>
+    padB <length> <padding>
     bc B <length> <bytecode>
 
     // Top-Level-Process descriptor (optional)
