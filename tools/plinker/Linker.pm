@@ -95,10 +95,11 @@ sub link ($$@) {
 				}
 
 				my $new = { 
-					'name'	=> $label, 
-					'prev'	=> $current, 
-					'inst'	=> \@inst,
-					'align'	=> $align
+					'name'		=> $label, 
+					'prev'		=> $current, 
+					'inst'		=> \@inst,
+					'align'		=> $align,
+					'source'	=> $etc
 				};
 
 				$current->{'next'} 	= $new;
