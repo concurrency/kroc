@@ -125,6 +125,7 @@ my $tbc			= new Transterpreter::TEncode (
 	'endU'	=> $endian eq 'big' ? 1 : 0,
 	'ws U'	=> $entry_point->{'ws'},
 	'vs U'	=> $entry_point->{'vs'},
+	'padB'	=> "\0\0\0\0",
 	'ms U'	=> $entry_point->{'ms'},
 	'bc B'	=> join ('', @$bytecode),
 	'tlpL'	=> $tlp,
@@ -137,7 +138,6 @@ my $tenc		= new Transterpreter::TEncode (
 );
 
 # Top-Level-Process
-
 $tlp->add ('fmtS', build_format_string ($entry_point->{'definition'}));
 $tlp->add ('symS', $entry_point->{'string'});
 
@@ -181,7 +181,7 @@ $dbg->add ('fn L' => $fns);
 
 my $lnd;
 foreach my $entry (@$debug) {
-	$lnd .= pack ('VVV', 
+	$lnd .= pack ('NNN', 
 		$entry->{'pos'},
 		$files{$entry->{'file'}},
 		$entry->{'line'}
