@@ -62,6 +62,7 @@ if (!$output || !@files) {
 # Load ETC
 my $last_file;
 my $endian;
+my %etc_file;
 my @etc;
 foreach my $file (@files) {
 	my $data = $tcoff->read_file ($file);
@@ -82,7 +83,9 @@ foreach my $file (@files) {
 		if (!@text) {
 			print STDERR "Failed to decode a text section in $file...\n";
 		} else {
-			push (@etc, \@text);
+			my $ref = \@text;
+			push (@etc, $ref);
+			$etc_file{$ref} = $data;
 		}
 	}
 
@@ -101,16 +104,10 @@ foreach my $op (@{$etc[@etc - 1]}) {
 die "No jump entry in the final text section: don't know which process to link"
 	if !defined ($jentry);
 
-my $entry_point;
-foreach my $sym_id (keys (%$symbols)) {
-	my $sym = $symbols->{$sym_id};
-	if (exists ($sym->{'definition'}) && ($sym->{'string'} eq $jentry)) {
-		$entry_point = $sym;
-	}
-}
+my $entry_point = $symbols->{$jentry};
 
 die "Unable to find symbol definition for entry point $jentry"
-	if !defined ($entry_point);
+	if !defined ($entry_point) || !exists ($entry_point->{'definition'});
 
 print 	"Target:\n",
 	format_symbol_definition ($entry_point->{'definition'}, "  ");
@@ -122,7 +119,8 @@ my @labels = $linker->link ($entry_point->{'string'}, @etc);
 my ($bytecode, $debug)	= $tvm->assemble (@labels);
 my $tlp			= new Transterpreter::TEncode ();
 my $ffi			= new Transterpreter::TEncode ();
-my $lni			= new Transterpreter::TEncode ();
+my $stb			= new Transterpreter::TEncode ();
+my $dbg			= new Transterpreter::TEncode ();
 my $tbc			= new Transterpreter::TEncode (
 	'endU'	=> $endian eq 'big' ? 1 : 0,
 	'ws U'	=> $entry_point->{'ws'},
@@ -131,7 +129,8 @@ my $tbc			= new Transterpreter::TEncode (
 	'bc B'	=> join ('', @$bytecode),
 	'tlpL'	=> $tlp,
 	'ffiL'	=> $ffi,
-	'lniL'	=> $lni
+	'stbL'	=> $stb,
+	'dbgL'	=> $dbg
 );
 my $tenc		= new Transterpreter::TEncode (
 	'tbcL'	=> $tbc
@@ -139,11 +138,32 @@ my $tenc		= new Transterpreter::TEncode (
 
 # Top-Level-Process
 
-$tlp->add ('fmtS', '?!!'); # FIXME
-$tlp->add ('tlpS', $entry_point->{'definition'});
+$tlp->add ('fmtS', build_format_string ($entry_point->{'definition'}));
+$tlp->add ('symS', $entry_point->{'string'});
+
+# Symbol Table
+foreach my $label (@labels) {
+	next if !exists ($label->{'symbol'});
+	die if !$label->{'source'};
+	my $name	= $label->{'symbol'};
+	my $symbols 	= $etc_file{$label->{'source'}}->{'symbols'};
+	my $symbol	= $symbols->{$name};
+	my $sym		= new Transterpreter::TEncode (
+		'offU'	=> $label->{'pos'},
+		'symS'	=> $name
+	);
+
+	if (exists ($symbol->{'definition'})) {
+		$sym->add ('defS' => $symbol->{'definition'});
+		$sym->add ('ws U' => $symbol->{'ws'});
+		$sym->add ('vs U' => $symbol->{'vs'});
+	}
+
+	$stb->add ('symL' => $sym);
+}
 
 # Line numbering information
-my $lni_fn 	= new Transterpreter::TEncode ();
+my $fns 	= new Transterpreter::TEncode ();
 my %files;
 
 foreach my $entry (@$debug) {
@@ -155,20 +175,19 @@ my @files = sort { $files{$a} <=> $files{$b} } (keys (%files));
 for (my $i = 0; $i < @files; ++$i) {
 	my $file	= $files[$i];
 	$files{$file}	= $i;
-	$lni_fn->add ('fn S' => $file );
+	$fns->add ('fn S' => $file );
 }
+$dbg->add ('fn L' => $fns);
 
-$lni->add ('fn L' => $lni_fn);
-
+my $lnd;
 foreach my $entry (@$debug) {
-	$lni->add (
-		'lndL'	=> new Transterpreter::TEncode (
-			'offU'	=> $entry->{'pos'},
-			'fniU'	=> $files{$entry->{'file'}},
-			'ln U'	=> $entry->{'line'}
-		)
+	$lnd .= pack ('VVV', 
+		$entry->{'pos'},
+		$files{$entry->{'file'}},
+		$entry->{'line'}
 	);
 }
+$dbg->add ('lndB' => $lnd);
 
 # Output 
 my $fh;
@@ -193,6 +212,41 @@ if (0) {
 }
 
 exit 0;
+
+sub build_format_string {
+	my ($def)	= @_;
+	my ($params)	= ($def =~ m/PROC\s+\S+\(([^\)]+)\)/s);
+	my @params	= split (/,/, $params);
+	my @fmt;
+
+	foreach my $param (@params) {
+		if ($param =~ /^FIXED/) {
+			if ($param =~ /\?/) {
+				push (@fmt, 'S');
+			} elsif ($param =~ /!/) {
+				push (@fmt, 'C');
+			} else {
+				die;
+			}
+		} elsif ($param =~ m/^CHAN OF (\S+)\s+(\S+)/) {
+			my ($type, $name)	= ($1, $2);
+			my ($dir)		= ($name =~ m/([\?!])$/);
+			if (!$dir) {
+				($dir) = ($def =~ m/$name([\?!])/gs);
+				$dir = '.' if !$dir;
+			}
+			push (@fmt, $dir);
+		} elsif ($param =~ /^VAL/) {
+			push (@fmt, 'V');
+		} else {
+			push (@fmt, '_');
+		}
+	}
+
+	push (@fmt, 'F') if $def =~ /PROC.*\(.*\).*FORK/;
+
+	return join ('', @fmt);
+}
 
 sub format_symbol_definition {
 	my ($def, $prefix) 	= @_;

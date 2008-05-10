@@ -178,14 +178,19 @@ sub decode_symbols ($$) {
 			($origin_id, $data) = decode_int ($data)
 				if $tag eq 'SPECIFIC_SYMBOL';
 
-			$symbols{$symbol_id++}	= {
+			my $sym = {
 				'type'		=> $type,
 				'scope'		=> $scope, 
 				'string'	=> $str,
 				'origin_id'	=> $origin_id
 			};
+			$symbols{'@' . $symbol_id++}	= $sym;
+			$symbols{$str}			= $sym;
 		} elsif ($tag eq 'DESCRIPTOR') {
 			my ($id, $data) = decode_int ($data);
+
+			$id = '@' . $id;
+			
 			if (exists ($symbols{$id}) && $symbols{$id}->{'scope'} == ($tcoff->{'EXPORT_USAGE'} | $tcoff->{'ROUTINE_USAGE'})) {
 				my $symbol	= $symbols{$id};
 				my ($lang, $p_len, $ws, $vs, $ms);
