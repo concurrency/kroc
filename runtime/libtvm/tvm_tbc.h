@@ -46,7 +46,7 @@ struct _tenc_str_t {
 /*{{{  TBC Structures */
 typedef struct _tbc_tlp_t {
 	char		*fmt;
-	char		*desc;
+	char		*symbol;
 } tbc_tlp_t;
 
 typedef struct _tbc_ffi_entry_t {
@@ -61,33 +61,42 @@ typedef struct _tbc_ffi_t {
 	tbc_ffi_entry_t	*map;
 } tbc_ffi_t;
 
-typedef struct _tbc_lni_entry_t tbc_lni_entry_t;
-struct _tbc_lni_entry_t {
+typedef struct _tbc_sym_t tbc_sym_t;
+struct _tbc_sym_t {
+	unsigned int		offset;
+	unsigned int		ws;
+	unsigned int		vs;
+	char			*name;
+	char			*definition;
+	tbc_sym_t		*next;
+};
+
+typedef struct _tbc_lnd_t tbc_lnd_t;
+struct _tbc_lnd_t {
 	unsigned int 		offset;
 	unsigned int		file;
 	unsigned int		line;
 };
 
-typedef struct _tbc_lni_t {
+typedef struct _tbc_dbg_t {
 	tenc_str_t	*files;
-	int		n_entries;
-	tbc_lni_entry_t	*entries;
-} tbc_lni_t;
+	int		n_lnd;
+	tbc_lnd_t	*lnd;
+} tbc_dbg_t;
 
 typedef struct _tbc_t {
 	/* Must fit in 10 words: */
 	unsigned int	endian;		/* 1 */
 	unsigned int	ws;		/* 2 */
 	unsigned int	vs;		/* 3 */
-	unsigned int	ms;		/* 4 */
 	
-	unsigned int	bytecode_len;	/* 5 */
-	BYTE		*bytecode;	/* 6 */
+	unsigned int	bytecode_len;	/* 4 */
+	BYTE		*bytecode;	/* 5 */
 
-	tbc_tlp_t	*tlp;		/* 7 */
-
-	tbc_ffi_t	*ffi;		/* 8 */
-	tbc_lni_t	*lni;		/* 9 */
+	tbc_tlp_t	*tlp;		/* 6 */
+	tbc_ffi_t	*ffi;		/* 7 */
+	tbc_sym_t	*symbols;	/* 8 */
+	tbc_dbg_t	*debug;		/* 9 */
 } tbc_t;
 /*}}}*/
 

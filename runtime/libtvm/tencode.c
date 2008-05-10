@@ -172,7 +172,7 @@ static tbc_tlp_t *decode_tlp (BYTE *head, const tenc_element_t *tlp_element)
 	if (load_str (&data, &length, "fmtS", &(tlp->fmt)) < 0)
 		return NULL;
 	
-	if (load_str (&data, &length, "tlpS", &(tlp->desc)) < 0)
+	if (load_str (&data, &length, "symS", &(tlp->symbol)) < 0)
 		return NULL;
 	
 	return tlp;
@@ -240,46 +240,85 @@ static tbc_ffi_t *decode_ffi (BYTE *head, const tenc_element_t *ffi_element)
 	return ffi;
 }
 
-static tbc_lni_t *decode_lni (BYTE *head, const tenc_element_t *lni_element)
+static tbc_dbg_t *decode_debug (BYTE *head, const tenc_element_t *dbg_element)
 {
 	tenc_element_t 	element;
-	tbc_lni_t	*lni	= (tbc_lni_t *) head;
-	BYTE 		*data	= lni_element->data.bytes;
-	int 		length	= lni_element->length;
-	int		idx	= 0;
+	tbc_dbg_t	*dbg	= (tbc_dbg_t *) head;
+	BYTE 		*data	= dbg_element->data.bytes;
+	int 		length	= dbg_element->length;
 
 	if (tenc_walk_to_element (data, &length, "fn L", &element) < 0)
 		return NULL;
 	
-	lni->files 	= decode_strs (element.data.bytes, element.length, "fn S");
-	lni->entries 	= (tbc_lni_entry_t *) element.next;
-	data		= element.next;
+	dbg->files 	= decode_strs (element.data.bytes, element.length, "fn S");
 	
+	if (tenc_walk_to_element (data, &length, "lndB", &element) < 0)
+		return NULL;
+
+	dbg->lnd 	= (tbc_lnd_t *) element.next;
+	dbg->n_lnd	= element.length / ((sizeof (int)) * 3);
+	
+	data		= element.next;
+	length		= element.length / (sizeof (int));
 	while (length > 0) {
-		tbc_lni_entry_t *ent 		= lni->entries + idx;
-		BYTE 		*lnd_data;
-		int 		lnd_length;
-
-		if (tenc_walk_to_element (data, &length, "lndL", &element) < 0)
-			break;
-
-		lnd_length 	= element.length;
-		lnd_data 	= element.data.bytes;
-		if (load_uint (&lnd_data, &lnd_length, "offU", &(ent->offset)) < 0)
-			break;
-		if (load_uint (&lnd_data, &lnd_length, "fniU", &(ent->file)) < 0)
-			break;
-		if (load_uint (&lnd_data, &lnd_length, "ln U", &(ent->line)) < 0)
-			break;
-
-		data = element.next;
-		idx++;
+		*((int *) data) = tenc_decode_int (data);
+		data += sizeof (int);
+		length--;
 	}
 
-	lni->n_entries = idx;
-
-	return lni;
+	return dbg;
 }
+
+static tbc_sym_t *decode_symbols (const tenc_element_t *stb_element)
+{
+	tenc_element_t	element;
+	tbc_sym_t	*head	= NULL;
+	tbc_sym_t	*sym	= NULL;
+	BYTE 		*data	= stb_element->data.bytes;
+	int 		length	= stb_element->length;
+
+	while (length > 0) {
+		BYTE 		*s_data;
+		int		s_length;
+
+		if (tenc_walk_to_element (data, &length, "symL", &element) < 0)
+			return NULL;
+
+		if (head == NULL) {
+			head 		= (tbc_sym_t *) data;
+			sym		= head;
+		} else {
+			sym->next	= (tbc_sym_t *) data;
+			sym		= sym->next;
+		}
+
+		s_data		= element.data.bytes;
+		s_length	= element.length;
+		data		= element.next;
+
+		if (load_uint (&s_data, &s_length, "offU", &(sym->offset)) < 0)
+			return NULL;
+		if (load_str (&s_data, &s_length, "symS", &(sym->name)) < 0)
+			return NULL;
+
+		sym->definition	= NULL;
+		sym->ws		= 0;
+		sym->vs		= 0;
+
+		if (s_length > 0) {
+			if (load_str (&s_data, &s_length, "defS", &(sym->definition)) < 0)
+				continue;
+			if (load_uint (&s_data, &s_length, "ws U", &(sym->ws)) < 0)
+				continue;
+			if (load_uint (&s_data, &s_length, "vs U", &(sym->vs)) < 0)
+				continue;
+
+		}
+	}
+
+	return head;
+}
+
 
 int tbc_decode (BYTE *data, int length, tbc_t **ptr)
 {
@@ -295,8 +334,6 @@ int tbc_decode (BYTE *data, int length, tbc_t **ptr)
 		return ret;
 	if ((ret = load_uint (&data, &length, "vs U", &(tbc->vs))) < 0)
 		return ret;
-	if ((ret = load_uint (&data, &length, "ms U", &(tbc->ms))) < 0)
-		return ret;
 
 	if ((ret = tenc_walk_to_element (data, &length, "bc B", &element)) < 0)
 		return ret;
@@ -307,8 +344,9 @@ int tbc_decode (BYTE *data, int length, tbc_t **ptr)
 
 	/* Decode optional elements */
 	tbc->tlp	= NULL;
+	tbc->symbols	= NULL;
 	tbc->ffi	= NULL;
-	tbc->lni	= NULL;
+	tbc->debug	= NULL;
 
 	/* Copy pointer */
 	*ptr 		= tbc;
@@ -321,8 +359,10 @@ int tbc_decode (BYTE *data, int length, tbc_t **ptr)
 			tbc->tlp = decode_tlp (data, &element); 
 		} else if (ids_match (element.id, "ffiL")) {
 			tbc->ffi = decode_ffi (data, &element);
-		} else if (ids_match (element.id, "lniL")) {
-			tbc->lni = decode_lni (data, &element);
+		} else if (ids_match (element.id, "stbL")) {
+			tbc->symbols = decode_symbols (&element);
+		} else if (ids_match (element.id, "dbgL")) {
+			tbc->debug = decode_debug (data, &element);
 		}
 
 		data = element.next;
