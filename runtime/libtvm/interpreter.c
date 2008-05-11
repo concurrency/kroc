@@ -124,12 +124,11 @@ void tvm_ectx_reset (ECTX ectx)
 	TPTR = (WORDPTR) NOT_PROCESS_P;
 }
 
-static int calc_frame_size (const int tlp_argc, const int vs, const int ms, const int pad)
+static int calc_frame_size (const int tlp_argc, const int vs, const int pad)
 {
 	int frame_size = 1 + tlp_argc;
 	
 	frame_size += (vs ? 1 : 0);
-	frame_size += (ms ? 1 : 0);
 
 	/* Stack frame has a minimum size of 4 */
 	if (pad && (frame_size < 4)) {
@@ -141,25 +140,24 @@ static int calc_frame_size (const int tlp_argc, const int vs, const int ms, cons
 
 WORD tvm_ectx_memory_size (ECTX ectx,
 		const char *tlp_fmt, const int tlp_argc,
-		WORD ws_size, WORD vs_size, WORD ms_size)
+		WORD ws_size, WORD vs_size)
 {
-	int frame_size = calc_frame_size (tlp_argc, vs_size, ms_size, 1);
+	int frame_size = calc_frame_size (tlp_argc, vs_size, 1);
 
 	/* The plus 1 in here is for the shutdown bytecode */
-	return frame_size + 1 + ws_size + vs_size + ms_size + WS_PAD + VS_PAD;
+	return frame_size + 1 + ws_size + vs_size + WS_PAD + VS_PAD;
 }
 
 void tvm_ectx_layout (ECTX ectx, WORDPTR base,
 		const char *tlp_fmt, const int tlp_argc,
-		WORD ws_size, WORD vs_size, WORD ms_size,
-		WORDPTR *ws, WORDPTR *vs, WORDPTR *ms)
+		WORD ws_size, WORD vs_size,
+		WORDPTR *ws, WORDPTR *vs)
 {
-	int frame_size = calc_frame_size (tlp_argc, vs_size, ms_size, 1);
+	int frame_size = calc_frame_size (tlp_argc, vs_size, 1);
 	
 	/* The plus 1 in here is for the shutdown bytecode */
 	*ws = wordptr_plus (base, frame_size + ws_size + 1 + WS_PAD);
 	*vs = vs_size ? *ws : 0;
-	*ms = ms_size ? wordptr_plus (*ws, vs_size + VS_PAD) : 0;
 }
 
 /*
@@ -167,7 +165,7 @@ void tvm_ectx_layout (ECTX ectx, WORDPTR base,
  * and stack frame for an execution context.
  */
 int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
-		WORDPTR ws, WORDPTR vs, WORDPTR ms,
+		WORDPTR ws, WORDPTR vs,
 		const char *fmt, int argc, const WORD argv[])
 {
 	WORDPTR fb = 0;
@@ -245,7 +243,7 @@ int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 	write_byte (byteptr_plus ((BYTEPTR) WPTR, 1), 0xFE);
 
 	/* Pad stack frame */
-	frame_size = calc_frame_size (argc, (WORD) vs, (WORD) ms, 0);
+	frame_size = calc_frame_size (argc, (WORD) vs, 0);
 	if (frame_size < 4) {
 		WPTR = wordptr_minus (WPTR, 4 - frame_size);
 		frame_size = 4;
@@ -257,12 +255,6 @@ int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 		write_word (WPTR, (WORD) fb);
 	}
 
-	/* Set up mobilespace pointer */
-	if (ms) {
-		WPTR = wordptr_minus (WPTR, 1);
-		write_word (WPTR, (WORD) ms);
-	}
-	
 	/* Set up vectorspace pointer */
 	if (vs) {
 		WPTR = wordptr_minus (WPTR, 1);

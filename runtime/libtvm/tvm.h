@@ -53,13 +53,13 @@ extern void tvm_ectx_reset (ECTX ectx);
 extern void tvm_ectx_init (tvm_t *tvm, ECTX ectx);
 extern WORD tvm_ectx_memory_size (ECTX ectx,
 				const char *tlp_fmt, const int tlp_argc,
-				WORD ws_size, WORD vs_size, WORD ms_size);
+				WORD ws_size, WORD vs_size);
 extern void tvm_ectx_layout (ECTX ectx, WORDPTR base,
 				const char *tlp_fmt, const int tlp_argc,
-				WORD ws_size, WORD vs_size, WORD ms_size,
-				WORDPTR *ws, WORDPTR *vs, WORDPTR *ms);
+				WORD ws_size, WORD vs_size,
+				WORDPTR *ws, WORDPTR *vs);
 extern int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
-				WORDPTR ws, WORDPTR vs, WORDPTR ms,
+				WORDPTR ws, WORDPTR vs,
 				const char *fmt, int argc, const WORD argv[]);
 extern void tvm_ectx_disconnect (ECTX ectx);
 extern int tvm_ectx_waiting_on (ECTX ectx, WORDPTR ws_base, WORD ws_len);
