@@ -285,7 +285,7 @@ static void add_system_functions (ECTX ectx)
 
 static int install_firmware_ctx (void)
 {
-	WORDPTR ws, vs, ms;
+	WORDPTR ws, vs;
 	ECTX firmware = &firmware_ctx;
 
 	tvm_ectx_init (&tvm, firmware);
@@ -296,8 +296,7 @@ static int install_firmware_ctx (void)
 		firmware,
 		"!??", 3,
 		firmware_ws_size, 
-		firmware_vs_size, 
-		firmware_ms_size
+		firmware_vs_size 
 	);
 
 	firmware_memory = malloc (sizeof(WORD) * firmware_memory_len);
@@ -310,12 +309,11 @@ static int install_firmware_ctx (void)
 		"!??", 3,
 		firmware_ws_size, 
 		firmware_vs_size, 
-		firmware_ms_size,
-		&ws, &vs, &ms
+		&ws, &vs
 	);
 	
 	return tvm_ectx_install_tlp (
-		firmware, (BYTEPTR) firmware_bytecode, ws, vs, ms,
+		firmware, (BYTEPTR) firmware_bytecode, ws, vs,
 		"!??", 3, tlp_argv
 	);
 }
@@ -409,7 +407,7 @@ static int install_user_ctx (const char *fn)
 	#endif /* !TVM_DYNAMIC_MEMORY || !TVM_OCCAM_PI */
 	const char *tlp;
 
-	WORDPTR ws, vs, ms;
+	WORDPTR ws, vs;
 	ECTX user = &user_ctx;
 
 	if (load_tbc (fn)) {
@@ -442,7 +440,7 @@ static int install_user_ctx (const char *fn)
 	user_memory_len = tvm_ectx_memory_size (
 		user,
 		tlp, strlen (tlp), 
-		tbc->ws, tbc->vs, tbc->ms
+		tbc->ws, tbc->vs
 	);
 
 	user_memory = (WORDPTR) malloc (sizeof (WORD) * user_memory_len);
@@ -453,12 +451,12 @@ static int install_user_ctx (const char *fn)
 	tvm_ectx_layout (
 		user, user_memory,
 		tlp, strlen (tlp), 
-		tbc->ws, tbc->vs, tbc->ms, 
-		&ws, &vs, &ms
+		tbc->ws, tbc->vs, 
+		&ws, &vs
 	);
 
 	return tvm_ectx_install_tlp (
-		user, tbc->bytecode, ws, vs, ms,
+		user, tbc->bytecode, ws, vs,
 		tlp, strlen (tlp), tlp_argv
 	);
 }
@@ -600,22 +598,22 @@ int main (int argc, char *argv[])
 	}
 	
 	if (u_ret == ECTX_ERROR) {
-		if (tbc->lni) {
-			tbc_lni_entry_t	*ln;
-			tbc_lni_t	*lni = tbc->lni;
+		if (tbc->debug) {
+			tbc_dbg_t	*dbg = tbc->debug;
+			tbc_lnd_t	*ln;
 			tenc_str_t 	*file;
 			int offset = user_ctx.iptr - tbc->bytecode;
 			int i = 0;
 
-			while (i < lni->n_entries) {
-				if (lni->entries[i].offset > offset) {
+			while (i < dbg->n_lnd) {
+				if (dbg->lnd[i].offset > offset) {
 					break;
 				}
 				i++;
 			}
-			ln = &(lni->entries[i - 1]);
+			ln = &(dbg->lnd[i - 1]);
 
-			file = lni->files;
+			file = dbg->files;
 			for (i = 0; i < ln->file; ++i) {
 				file = file->next;
 			}
