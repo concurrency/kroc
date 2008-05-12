@@ -129,6 +129,7 @@ typedef struct {
 	char *extref_prefix;		/* prefix for external C references (typically "_") */
 	int use_cttd;			/* whether the source was compiled with chan-type type descriptions */
 	int mpenable;			/* whether multi-processor support is enabled in the run-time */
+	int nocc_codegen;		/* non-zero if generating code compiled by NOCC */
 } optstruct;
 
 #ifndef __MAIN_C
