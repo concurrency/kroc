@@ -406,7 +406,13 @@ TVM_INSTRUCTION (ins_xable)
 		WORDPTR cb		= (WORDPTR) (chan_value & (~3));
 		EXT_CB_INTERFACE *intf	= (EXT_CB_INTERFACE *) read_offset (cb, mt_cb_ext_t, interface);
 		void *ext_data 		= (void *) read_offset (cb, mt_cb_ext_t, data);
-		return intf->xable (ectx, ext_data, chan_ptr);
+		if (intf != NULL) {
+			if (intf->xable != NULL) {
+				return intf->xable (ectx, ext_data, chan_ptr);
+			}
+		}
+		
+		SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
 	}
 	else
 	#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
@@ -430,7 +436,10 @@ TVM_INSTRUCTION (ins_xable)
 #ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
 TVM_HELPER int channel_ext_xin (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
 {
-	return intf->xin (ectx, ext_data, chan_ptr, data_ptr, data_len);
+	if (intf->xin != NULL)
+		return intf->xin (ectx, ext_data, chan_ptr, data_ptr, data_len);
+	else
+		SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
 }
 #endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
 

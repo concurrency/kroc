@@ -140,7 +140,7 @@ static WORDPTR mt_alloc_cb (ECTX ectx, UWORD type, UWORD channels)
 	if (type & MT_CB_EXTERNAL) {
 		write_offset (cb_base, mt_cb_ext_t, interface, NULL_P);
 		write_offset (cb_base, mt_cb_ext_t, data, NULL_P);
-		cw = ((WORD) cb) | 2;
+		cw = ((WORD) cb_base) | 2;
 	}
 
 	write_offset (cb_int, mt_cb_internal_t, ref_count, 2);
@@ -615,17 +615,26 @@ TVM_HELPER int mt_chan_dc_out (ECTX ectx, BYTEPTR src_ptr, WORD len)
 #ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
 TVM_HELPER int mt_chan_ext_in (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
 {
-	return intf->mt_in (ectx, ext_data, chan_ptr, (WORDPTR) data_ptr);
+	if (intf->mt_in)
+		return intf->mt_in (ectx, ext_data, chan_ptr, (WORDPTR) data_ptr);
+	else
+		SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
 }
 
 TVM_HELPER int mt_chan_ext_out (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
 {
-	return intf->mt_out (ectx, ext_data, chan_ptr, (WORDPTR) data_ptr);
+	if (intf->mt_out)
+		return intf->mt_out (ectx, ext_data, chan_ptr, (WORDPTR) data_ptr);
+	else
+		SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
 }
 
 TVM_HELPER int mt_chan_ext_xin (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
 {
-	return intf->mt_xin (ectx, ext_data, chan_ptr, (WORDPTR) data_ptr);
+	if (intf->mt_xin)
+		return intf->mt_xin (ectx, ext_data, chan_ptr, (WORDPTR) data_ptr);
+	else
+		SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
 }
 #endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
 /*{{{  TVM_HELPER int mt_alloc (ECTX ectx, UWORD type, UWORD size, WORDPTR *ret)*/
