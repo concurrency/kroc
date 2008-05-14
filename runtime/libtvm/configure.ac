@@ -25,6 +25,7 @@ AC_CHECK_HEADERS([sys/types.h math.h inttypes.h])
 AC_ARG_ENABLE([custom-memory-ops], AC_HELP_STRING([--enable-custom-memory-ops], [provide for overriding memcpy/memset]), [custom_memory_ops=$enableval], [custom_memory_ops=no])
 AC_ARG_ENABLE([dispatch-switch], AS_HELP_STRING([--disable-dispatch-switch], [dispatch using jump tables rather than a switch statement]), [dispatch_switch=$enableval], [dispatch_switch=yes])
 AC_ARG_WITH([endian], AC_HELP_STRING([--with-endian=...], [endian mode: big/little/host, default: host]), [endian=$withval], [endian=host])
+AC_ARG_ENABLE([external-channel-bundles], AC_HELP_STRING([--enable-external-channel-bundles], [enable support for externally hooked channel bundles]), [external_channel_bundles=$enableval], [external_channel_bundles=no])
 AC_ARG_WITH([memory-allocator], AC_HELP_STRING([--with-memory-allocator=...], [select memory allocator: none/malloc/tlsf, default host dependent]), [memory_allocator=$withval], [memory_allocator=auto])
 AC_ARG_ENABLE([profiling], AC_HELP_STRING([--enable-profiling], [enable support for (bytecode) profiling]), [profiling=$enableval], [profiling=no])
 AC_ARG_WITH([python], AS_HELP_STRING([--with-python=PATH], [use python, optionally specifying the path to the python executable directory]), [python=$withval], [python=])
@@ -188,6 +189,13 @@ else
   AC_DEFINE([TVM_LITTLE_ENDIAN], 1, [define for little-endian TVM])
 fi
 
+# External Channel Bundles
+if test "$external_channel_bundles" = "yes"; then
+  if test "x$enable_pi" = "xyes"; then
+    AC_DEFINE([TVM_EXTERNAL_CHANNEL_BUNDLES], 1, [define for external channel bundles])
+  fi
+fi
+
 # FPU
 if test "$x_fpu" = "yes"; then
   AC_DEFINE([TVM_USE_FPU], 1, [define to allow FPU usage])
@@ -286,6 +294,7 @@ AC_DEFINE_UNQUOTED([TVM_WORD_LENGTH], [$word_length], [define emulated word leng
 AC_MSG_NOTICE([----------------------------------------------------])
 AC_MSG_NOTICE([dispatch-switch : $dispatch_switch])
 AC_MSG_NOTICE([endian          : $endian])
+AC_MSG_NOTICE([external bundles: $external_channel_bundles])
 AC_MSG_NOTICE([FPU             : $x_fpu])
 AC_MSG_NOTICE([memory allocator: $memory_allocator])
 AC_MSG_NOTICE([memory ops      : $memory_ops])

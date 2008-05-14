@@ -400,6 +400,16 @@ TVM_INSTRUCTION (ins_xable)
 
 	/* This is like a single guard ALT */
 	/* If channel is empty, then alt on it */
+
+	#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
+	if (chan_value & 2) {
+		WORDPTR cb		= (WORDPTR) (chan_value & (~3));
+		EXT_CB_INTERFACE *intf	= (EXT_CB_INTERFACE *) read_offset (cb, mt_cb_ext_t, interface);
+		void *ext_data 		= (void *) read_offset (cb, mt_cb_ext_t, data);
+		return intf->xable (ectx, ext_data, chan_ptr);
+	}
+	else
+	#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
 	if (chan_value == NOT_PROCESS_P) {
 		/* Save state, set ALT to waiting */
 		WORKSPACE_SET (WPTR, WS_STATE, WAITING_P);
@@ -417,6 +427,13 @@ TVM_INSTRUCTION (ins_xable)
 	UNDEFINE_STACK_RET ();
 }
 
+#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
+TVM_HELPER int channel_ext_xin (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
+{
+	return intf->xin (ectx, ext_data, chan_ptr, data_ptr, data_len);
+}
+#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
+
 /* 0xE9 - 0x2E 0xF9 - xin - Extended Input */
 TVM_INSTRUCTION (ins_xin)
 {
@@ -432,7 +449,8 @@ TVM_INSTRUCTION (ins_xin)
 		ectx,
 		chan_ptr, data_ptr, data_len,
 		&requeue,
-		channel_input, channel_dc_input
+		channel_input, channel_dc_input,
+		IF_EXTERNAL_CHANNEL_BUNDLES (channel_ext_xin)
 	);
 
 	if (ret > 0) {

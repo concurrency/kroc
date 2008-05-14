@@ -125,6 +125,27 @@ typedef struct {
 	EXT_CHAN_MT_FUNCTION	mt_in;
 	EXT_CHAN_MT_FUNCTION	mt_out;
 } EXT_CHAN_ENTRY;
+
+typedef void (*EXT_CB_FREE_FUNCTION)(ECTX ectx, void *data);
+typedef int (*EXT_CB_IO_FUNCTION)(ECTX ectx, void *data, WORDPTR channel, BYTEPTR address, WORD count);
+typedef int (*EXT_CB_MT_FUNCTION)(ECTX ectx, void *data, WORDPTR channel, WORDPTR address);
+typedef int (*EXT_CB_XABLE_FUNCTION)(ECTX ectx, void *data, WORDPTR channel);
+typedef struct {
+	EXT_CB_IO_FUNCTION	in;
+	EXT_CB_IO_FUNCTION	out;
+	EXT_CB_IO_FUNCTION	swap;
+	EXT_CB_MT_FUNCTION	mt_in;
+	EXT_CB_MT_FUNCTION	mt_out;
+	EXT_CB_XABLE_FUNCTION	xable;
+	EXT_CB_IO_FUNCTION	xin;
+	EXT_CB_MT_FUNCTION	mt_xin;
+	EXT_CB_FREE_FUNCTION	free;
+} EXT_CB_INTERFACE;
+
+typedef struct {
+	EXT_CB_INTERFACE	*interface;
+	void			*data;
+} mt_cb_ext_t;
 /*}}}*/
 
 /*{{{   Foreign function interface prototypes. */

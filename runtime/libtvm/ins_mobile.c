@@ -31,6 +31,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef TVM_DYNAMIC_OCCAM_PI
 
+static TVM_INLINE WORD mt_cb_words (UWORD type)
+{
+	UWORD 	flags	= MT_FLAGS (type);
+	WORD	words	= MT_CB_PTR_OFFSET;
+
+	words += ((flags >> MT_CB_SHARED_BIT) & 0x1) 
+			* (2 * (sizeof (mt_sem_t) / sizeof (WORD)));
+	words += ((flags >> MT_CB_EXTERNAL_BIT) & 0x1) 
+			* (sizeof (mt_cb_ext_t) / sizeof (WORD));
+	
+	return words;
+}
+
+#define MT_CB_BASE_PTR(mt,type) \
+	(wordptr_minus ((mt), mt_cb_words ((type))))
+
 /*{{{  static WORDPTR mt_alloc_array_int (ECTX ectx, UWORD type, UWORD size, UWORD init, UWORD *shift)*/
 static WORDPTR mt_alloc_array_int (ECTX ectx, UWORD type, UWORD size, UWORD init, UWORD *shift)
 {
@@ -105,35 +121,33 @@ static WORDPTR mt_alloc_array (ECTX ectx, UWORD type, UWORD size)
 /*{{{  static WORDPTR mt_alloc_cb (ECTX ectx, UWORD type, UWORD channels)*/
 static WORDPTR mt_alloc_cb (ECTX ectx, UWORD type, UWORD channels)
 {
-	WORDPTR cb, i_cb;
-	UWORD words = channels;
-	UWORD i;
+	WORDPTR	cb, cb_base, cb_int;
+	UWORD	type_words = mt_cb_words (type);
+	UWORD	i;
+	WORD	cw = (WORD) NOT_PROCESS_P;
 
-	if (type & MT_CB_STATE_SPACE) {
-		words += 5;
-	}
 	type |= channels << MT_CB_CHANNELS_SHIFT;
 
-	if (type & MT_CB_SHARED) {
-		words += MT_CB_SHARED_PTR_OFFSET;
+	cb_base = (WORDPTR) tvm_malloc (ectx, (type_words + channels) << WSH);
+	cb	= wordptr_plus (cb_base, type_words);
+	cb_int	= wordptr_minus (cb, MT_CB_PTR_OFFSET);
 
-		i_cb 	= (WORDPTR) tvm_malloc (ectx, words << WSH);
-		tvm_sem_init (wordptr_offset(i_cb, mt_cb_shared_internal_t, sem[0]));
-		tvm_sem_init (wordptr_offset(i_cb, mt_cb_shared_internal_t, sem[1]));
-		write_offset (i_cb, mt_cb_shared_internal_t, ref_count, 2);
-		write_offset (i_cb, mt_cb_shared_internal_t, type, type);
-		cb	= wordptr_plus (i_cb, MT_CB_SHARED_PTR_OFFSET);
-	} else {
-		words += MT_CB_PTR_OFFSET;
-	
-		i_cb 	= (WORDPTR) tvm_malloc (ectx, words << WSH);
-		write_offset (i_cb, mt_cb_internal_t, ref_count, 2);
-		write_offset (i_cb, mt_cb_internal_t, type, type);
-		cb	= wordptr_plus (i_cb, MT_CB_PTR_OFFSET);
+	if (type & MT_CB_SHARED) {
+		tvm_sem_init (MT_CB_LOCK_PTR (cb_int, MT_CB_SERVER));
+		tvm_sem_init (MT_CB_LOCK_PTR (cb_int, MT_CB_CLIENT));
 	}
 
+	if (type & MT_CB_EXTERNAL) {
+		write_offset (cb_base, mt_cb_ext_t, interface, NULL_P);
+		write_offset (cb_base, mt_cb_ext_t, data, NULL_P);
+		cw = ((WORD) cb) | 2;
+	}
+
+	write_offset (cb_int, mt_cb_internal_t, ref_count, 2);
+	write_offset (cb_int, mt_cb_internal_t, type, type);
+
 	for (i = 0; i < channels; ++i) {
-		write_word (wordptr_plus (cb, i), (WORD) NOT_PROCESS_P);
+		write_word (wordptr_plus (cb, i), cw);
 	}
 
 	return cb;
@@ -216,11 +230,15 @@ TVM_HELPER int mt_release_simple (ECTX ectx, WORDPTR ptr, UWORD type)
 				UWORD refs = (UWORD) read_offset (cb, mt_cb_internal_t, ref_count);
 
 				if (refs <= 1) {
-					if (type & MT_CB_SHARED) {
-						tvm_free (ectx, wordptr_minus (ptr, MT_CB_SHARED_PTR_OFFSET));
-					} else {
-						tvm_free (ectx, cb);
+					WORDPTR base = MT_CB_BASE_PTR (ptr, type);
+					if (type & MT_CB_EXTERNAL) {
+						EXT_CB_INTERFACE *intf = (EXT_CB_INTERFACE *) read_offset (base, mt_cb_ext_t, interface);
+						void *data = (void *) read_offset (base, mt_cb_ext_t, data);
+						if (intf->free != NULL && data != NULL) {
+							intf->free (ectx, data);
+						}
 					}
+					tvm_free (ectx, base);
 				} else {
 					write_offset (cb, mt_cb_internal_t, ref_count, refs - 1);
 				}
@@ -594,6 +612,22 @@ TVM_HELPER int mt_chan_dc_out (ECTX ectx, BYTEPTR src_ptr, WORD len)
 	}
 }
 /*}}}*/
+#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
+TVM_HELPER int mt_chan_ext_in (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
+{
+	return intf->mt_in (ectx, ext_data, chan_ptr, (WORDPTR) data_ptr);
+}
+
+TVM_HELPER int mt_chan_ext_out (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
+{
+	return intf->mt_out (ectx, ext_data, chan_ptr, (WORDPTR) data_ptr);
+}
+
+TVM_HELPER int mt_chan_ext_xin (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
+{
+	return intf->mt_xin (ectx, ext_data, chan_ptr, (WORDPTR) data_ptr);
+}
+#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
 /*{{{  TVM_HELPER int mt_alloc (ECTX ectx, UWORD type, UWORD size, WORDPTR *ret)*/
 TVM_HELPER int mt_alloc (ECTX ectx, UWORD type, UWORD size, WORDPTR *ret)
 {
@@ -703,7 +737,8 @@ TVM_INSTRUCTION (ins_mt_in)
 
 	return chan_std_io (
 		ectx, chan_ptr, (BYTEPTR) dst, MIN_INT, 
-		mt_chan_in, mt_chan_dc_in
+		mt_chan_in, mt_chan_dc_in, 
+		IF_EXTERNAL_CHANNEL_BUNDLES (mt_chan_ext_in)
 	);
 }
 
@@ -715,7 +750,8 @@ TVM_INSTRUCTION (ins_mt_out)
 	
 	return chan_std_io (
 		ectx, chan_ptr, (BYTEPTR) src, MIN_INT + 1, 
-		mt_chan_out, mt_chan_dc_out
+		mt_chan_out, mt_chan_dc_out,
+		IF_EXTERNAL_CHANNEL_BUNDLES (mt_chan_ext_out)
 	);
 }
 
@@ -731,21 +767,21 @@ TVM_INSTRUCTION (ins_mt_xchg)
 /* 0x23E - 0x22 0x23 0xFE - mt_lock - lock a mobile type */
 TVM_INSTRUCTION (ins_mt_lock)
 {
-	WORDPTR mt = (WORDPTR) BREG;
-	WORDPTR cb = wordptr_minus (mt, MT_CB_SHARED_PTR_OFFSET);
-	WORD lock = AREG << 1;
+	WORDPTR mt	= (WORDPTR) BREG;
+	WORD	lock	= AREG << 1;
+	WORDPTR ptr	= MT_CB_LOCK_PTR (mt, lock);
 
-	return tvm_sem_claim (ectx, wordptr_plus (wordptr_offset (cb, mt_cb_shared_internal_t, sem), lock));
+	return tvm_sem_claim (ectx, ptr);
 }
 
 /* 0x23F - 0x22 0x23 0xFF - mt_unlock - unlock a mobile type */
 TVM_INSTRUCTION (ins_mt_unlock)
 {
-	WORDPTR mt = (WORDPTR) BREG;
-	WORDPTR cb = wordptr_minus (mt, MT_CB_SHARED_PTR_OFFSET);
-	WORD lock = AREG << 1;
+	WORDPTR mt	= (WORDPTR) BREG;
+	WORD	lock	= AREG << 1;
+	WORDPTR ptr	= MT_CB_LOCK_PTR (mt, lock);
 
-	return tvm_sem_release (ectx, wordptr_plus (wordptr_offset (cb, mt_cb_shared_internal_t, sem), lock));
+	return tvm_sem_release (ectx, ptr);
 }
 
 /* 0x240 - 0x22 0x24 0xF0 - mt_enroll - enroll processes on a mobile type */
@@ -799,7 +835,7 @@ TVM_INSTRUCTION (ins_mt_sync)
 					WORKSPACE_SET (WPTR, WS_IPTR, (WORD) IPTR);
 					write_offset (mb, mt_barrier_internal_t, ref_count, refs - 1);
 					write_word (mt, (WORD) WPTR);
-					RUN_NEXT_ON_QUEUE_RET();
+					RUN_NEXT_ON_QUEUE_RET ();
 				}
 			}
 			break;
@@ -824,7 +860,8 @@ TVM_INSTRUCTION (ins_mt_xin)
 		ectx,
 		chan_ptr, (BYTEPTR) data_ptr, MIN_INT,
 		&requeue,
-		mt_chan_in, mt_chan_dc_in
+		mt_chan_in, mt_chan_dc_in,
+		IF_EXTERNAL_CHANNEL_BUNDLES (mt_chan_ext_xin)
 	);
 
 	if (ret > 0)

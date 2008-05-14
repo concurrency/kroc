@@ -89,12 +89,29 @@ TVM_HELPER int channel_dc_nop (ECTX ectx, BYTEPTR ptr, WORD len)
 	return ECTX_CONTINUE;
 }
 
+#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
+TVM_HELPER int channel_ext_input (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
+{
+	return intf->in (ectx, ext_data, chan_ptr, data_ptr, data_len);
+}
+
+TVM_HELPER int channel_ext_output (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
+{
+	return intf->out (ectx, ext_data, chan_ptr, data_ptr, -data_len);
+}
+
+TVM_HELPER int channel_ext_swap (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
+{
+	return intf->swap (ectx, ext_data, chan_ptr, data_ptr, data_len);
+}
+#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
 /*}}}*/
 
 /*{{{  Channel word manipulation */
 TVM_HELPER int chan_io (ECTX ectx, 
 			WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len, 
-			WORDPTR *requeue, CHAN_IO_OK data, CHAN_IO_DC dc)
+			WORDPTR *requeue, CHAN_IO_OK data, CHAN_IO_DC dc,
+			CHAN_IO_EXT ext)
 {
 	WORD	chan_value = read_word (chan_ptr);
 	WORDPTR other_WPTR = (WORDPTR) (chan_value & (~1));
@@ -106,6 +123,13 @@ TVM_HELPER int chan_io (ECTX ectx,
 			/* Normal communication */
 			write_word (chan_ptr, NOT_PROCESS_P);
 			return data (ectx, data_ptr, data_len, other_WPTR);
+		#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
+		} else if (chan_value & 2) {
+			WORDPTR cb		= (WORDPTR) (chan_value & (~3));
+			EXT_CB_INTERFACE *intf	= (EXT_CB_INTERFACE *) read_offset (cb, mt_cb_ext_t, interface);
+			void *ext_data 		= (void *) read_offset (cb, mt_cb_ext_t, data);
+			return ext (ectx, intf, ext_data, chan_ptr, data_ptr, data_len);
+		#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
 		} else if (other_WPTR != NOT_PROCESS_P) {
 			/* Other end is ALTing */
 			WORD alt_state = WORKSPACE_GET (other_WPTR, WS_STATE);
@@ -148,7 +172,7 @@ TVM_HELPER int chan_io (ECTX ectx,
 /*{{{  I/O scheduling */
 TVM_HELPER int chan_std_io (ECTX ectx, 
 		WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len,
-		CHAN_IO_OK data, CHAN_IO_DC dc)
+		CHAN_IO_OK data, CHAN_IO_DC dc, CHAN_IO_EXT ext)
 {
 	WORDPTR requeue;
 	int ret;
@@ -159,7 +183,7 @@ TVM_HELPER int chan_std_io (ECTX ectx,
 		ectx,
 		chan_ptr, data_ptr, data_len,
 		&requeue,
-		data, dc
+		data, dc, ext
 	);
 
 	if (ret == ECTX_CONTINUE && requeue != NOT_PROCESS_P) {
@@ -181,7 +205,8 @@ TVM_HELPER int chan_in (ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR wri
 {
 	return chan_std_io (
 		ectx, chan_ptr, write_start, num_bytes, 
-		channel_input, channel_dc_input
+		channel_input, channel_dc_input,
+		IF_EXTERNAL_CHANNEL_BUNDLES (channel_ext_input)
 	);
 }
 
@@ -189,7 +214,8 @@ TVM_HELPER int chan_out (ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR re
 {
 	return chan_std_io (
 		ectx, chan_ptr, read_start, -num_bytes, 
-		channel_output, channel_dc_nop
+		channel_output, channel_dc_nop,
+		IF_EXTERNAL_CHANNEL_BUNDLES (channel_ext_output)
 	);
 }
 
@@ -197,7 +223,8 @@ TVM_HELPER int chan_swap (ECTX ectx, WORDPTR chan_ptr, WORDPTR data_ptr)
 {
 	return chan_std_io (
 		ectx, chan_ptr, (BYTEPTR) data_ptr, 0, 
-		channel_swap, channel_dc_nop
+		channel_swap, channel_dc_nop,
+		IF_EXTERNAL_CHANNEL_BUNDLES (channel_ext_swap)
 	);
 }
 /*}}}*/
