@@ -7,6 +7,7 @@ SKROC_OPTS = #@SKROC_OPTS@
 bin_PROGRAMS = tvm
 tvm_SOURCES = \
 	firmware.h \
+	introspect.c \
 	main.c \
 	sffi.c
 
