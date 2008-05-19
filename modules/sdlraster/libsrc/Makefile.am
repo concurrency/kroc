@@ -27,11 +27,11 @@ includes = $(sdlraster_includes)
 
 all-local: $(libs) $(includes)
 
-sdlraster.lib: $(sdlraster_lib_objs)  
+sdlraster.lib: $(sdlraster_lib_objs)
 	$(OCCBUILD) --library sdlraster.lib --need occSDL --need raster --include sdlraster.inc --include sdlrcompat.inc $(sdlraster_lib_objs)
 
 # Using miniraster.lib just gets you sdlraster now, since all the compatibility stuff is in one library.
-miniraster.lib:
+miniraster.lib: sdlraster.lib
 	$(OCCBUILD) --library miniraster.lib --need sdlraster
 
 install-exec-local: $(libs) $(includes)
