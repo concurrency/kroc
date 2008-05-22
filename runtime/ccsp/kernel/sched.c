@@ -3943,15 +3943,15 @@ K_CALL_DEFINE_3_1 (X_mt_resize)
 			 */
 			if ((ma->size < new_size) || (new_size < (ma->size / 2))) {
 				mt_array_internal_t *new;
-				word size_shift;
+				word size_shift, count;
 				
 				new = mt_alloc_array_internal (
 					sched->allocator, type, new_size, false, &size_shift
 				);
+				count = ma->size < new->size ? ma->size : new->size;
 				if (MT_TYPE(inner_type) != MT_NUM) {
 					word **dst = (word **) new->array.data;
 					word **src = (word **) ma->array.data;
-					word count = ma->size < new->size ? ma->size : new->size;
 
 					while (count--) {
 						*(dst++) = *src;
@@ -3964,11 +3964,11 @@ K_CALL_DEFINE_3_1 (X_mt_resize)
 							*(dst++) = NULL;
 						}
 					}
-				} else if (new->size > 0) {
+				} else if (count > 0) {
 					memcpy (
 						new->array.data,
 						ma->array.data, 
-						new->size << size_shift
+						count << size_shift
 					);
 				}
 
