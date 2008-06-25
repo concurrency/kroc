@@ -18,6 +18,7 @@ EXTRA_DIST = \
 	disc.occ \
 	disc2.occ \
 	dither.occ \
+	ellipse.occ \
 	graphics.inc \
 	hit.occ \
 	line.occ \
@@ -36,6 +37,7 @@ rastergraphics_lib_objs = \
 	disc.tce \
 	disc2.tce \
 	dither.tce \
+	ellipse.tce \
 	hit.tce \
 	line.tce \
 	lines.tce \
