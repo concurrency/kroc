@@ -9,6 +9,7 @@ CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 
 EXTRA_DIST = \
 	convert-font \
+	convert-varfont \
 	font10x20.inc \
 	font6x13.inc \
 	text.occ
