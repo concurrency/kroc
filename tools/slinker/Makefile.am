@@ -31,7 +31,7 @@ SUFFIXES = .ss .sxml
 
 LINK=$(MZC) --exe $@ $(basename $@).ss
 
-%.ss: %.sxml
+.sxml.ss:
 	$(MZSCHEME) -gmt-- make-driver.ss -f $*
 
 # deps

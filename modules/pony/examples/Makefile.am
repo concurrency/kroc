@@ -55,7 +55,7 @@ SUFFIXES = .occ .tce
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-%: %.occ trace.o
+.occ: trace.o
 	$(OCCBUILD) --program $< trace.o
 
 ## begin pideps dependencies

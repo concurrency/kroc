@@ -69,7 +69,7 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-%: %.occ
+.occ:
 	$(OCCBUILD) --program $<
 
 update-deps:

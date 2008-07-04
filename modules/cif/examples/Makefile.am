@@ -55,11 +55,56 @@ clean-local:
 
 SUFFIXES = .occ
 
-%: %.occ %-c.o ciftutils.o
+cift1: cift1.occ cift1-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift2: cift2.occ cift2-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift3: cift3.occ cift3-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift4: cift4.occ cift4-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift5: cift5.occ cift5-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift6: cift6.occ cift6-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift7: cift7.occ cift7-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift8: cift8.occ cift8-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift9: cift9.occ cift9-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift10: cift10.occ cift10-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift11: cift11.occ cift11-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift12: cift12.occ cift12-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift13: cift13.occ cift13-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift14: cift14.occ cift14-c.o ciftutils.o
 	$(OCCBUILD) --program $^
 
 cift15: cift15.o ciftutils.o
 	$(CC) -o $@ $^ -L$(libdir) -lccsp -lpthread @LIBDL@
+
+cift16: cift16.occ cift16-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
+cift17: cift17.occ cift17-c.o ciftutils.o
+	$(OCCBUILD) --program $^
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<

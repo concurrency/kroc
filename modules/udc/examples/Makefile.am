@@ -29,5 +29,5 @@ clean-local:
 
 SUFFIXES = .occ .tce
 
-%: %.occ
+.occ:
 	$(OCCBUILD) --program $<
