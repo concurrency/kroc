@@ -55,6 +55,9 @@ clean-local:
 
 SUFFIXES = .occ
 
+cif-commstime: cif-commstime.occ cif-commstime-c.o ciftutils.o
+	$(OCCBUILD) --program $^
+
 cift1: cift1.occ cift1-c.o ciftutils.o
 	$(OCCBUILD) --program $^
 
