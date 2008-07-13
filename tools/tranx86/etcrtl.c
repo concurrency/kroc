@@ -1,6 +1,6 @@
 /*
  *	etcrtl.c - ETC to RTL converter
- *	Copyright (C) 2000-2006 Fred Barnes <frmb@kent.ac.uk>
+ *	Copyright (C) 2000-2008 Fred Barnes <frmb@kent.ac.uk>
  *	Parts based on tranetcp.occ Copyright (C) 1997 M D Poole
  *	MIPS modifications by Christian Jacobsen / Fred Barnes
  *
@@ -153,7 +153,9 @@ static void generate_call (tstate *ts, etc_chain *etc_code, arch_t *arch, int st
 	switch (i) {
 	case 0:
 		/* normal call */
-		if (stub) {
+
+		if (stub || options.nocc_codegen) {
+			/* if using NOCC, remember to handle return-address (goes at WS offset 0 always, adjustment done) */
 			st_first = compose_ins (INS_MOVE, 1, 1, ARG_FLABEL | ARG_ISCONST, 0, ARG_REGIND, REG_WPTR);
 			add_to_ins_chain (st_first);
 			add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_NAMEDLABEL, string_dup (d_str)));
