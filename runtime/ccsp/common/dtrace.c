@@ -1,6 +1,6 @@
 /*
  *	dtrace.c -- debugging traces (for use with debugging tools)
- *	Copyright (C) 2006 Fred Barnes <frmb@kent.ac.uk>
+ *	Copyright (C) 2006-2008 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by

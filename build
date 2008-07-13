@@ -1295,6 +1295,9 @@ if [ "$kroc_configdir" = "" ]; then
 	if [ "$USER" = "root" ] || [ "$UID" = "0" ]; then
 		# use /etc/ as the configuration directory
 		kroc_configdir="/etc"
+	elif [ "$HOME" != "" ] && [ ! -w "$HOME" ]; then
+		# home-directory that we can't write to, use installation directory
+		kroc_configdir="$INSTALL_DIR"
 	elif [ "$HOME" != "" ]; then
 		# use the user's home-directory
 		kroc_configdir="$HOME"
@@ -1304,7 +1307,7 @@ if [ "$kroc_configdir" = "" ]; then
 		kroc_configdir="$INSTALL_DIR"
 	fi
 fi
-if [ "$kroc_configdir" = "$HOME" ]; then
+if [ "$kroc_configdir" = "$HOME" ] && [ -w "$HOME" ]; then
 	USER_INSTALL=1
 fi
 if [ "$kroc_archbindir" = "" ]; then
