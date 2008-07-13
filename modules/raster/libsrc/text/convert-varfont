@@ -1,0 +1,129 @@
+#!/usr/bin/env python
+# convert-varfont: convert a proportional BDF font into an occam source fragment
+#
+# Copyright (C) 2008 Adam Sampson <ats@offog.org>
+# Hacked a bit 2008 by Fred Barnes  <frmb@kent.ac.uk>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
+
+import sys, os
+
+def convert(fn, name):
+	width = None
+	height = None
+	comment_lines = []
+	chars = {}
+	heights = {}
+	widths = {}
+
+	f = open(fn)
+
+	while 1:
+		l = f.readline()
+		if l == "":
+			break
+		l = l[:-1]
+
+		fs = l.split()
+		cmd = fs[0]
+		if cmd in ("FONT", "COMMENT", "COPYRIGHT"):
+			comment_lines.append(l)
+		elif cmd == "FONTBOUNDINGBOX":
+			width, height = int(fs[1]), int(fs[2])
+		elif cmd == "STARTCHAR":
+			code = None
+			char_h = None
+			char_w = None
+
+			while cmd != "ENDCHAR":
+				l = f.readline()
+				if l == "":
+					print "EOF in character"
+					sys.exit(1)
+				l = l[:-1]
+
+				fs = l.split()
+				cmd = fs[0]
+				if cmd == "ENCODING":
+					code = int(fs[1])
+				elif cmd == "BBX":
+					char_w = int (fs[1])
+					char_h = int (fs[2])
+				elif cmd == "BITMAP":
+					# Bitmap data is MSB-aligned in a
+					# variable number of hex digits; we
+					# want it MSB-aligned in 32 bits.
+					if char_h > 0:
+						lines = [f.readline().strip() for i in range(char_h)]
+						shift = 32 - (len(lines[0]) * 4)
+						chars[code] = [int(line, 16) << shift for line in lines]
+						for i in range(height - char_h):
+							chars[code].append (0)
+
+					heights[code] = char_h
+					widths[code] = char_w
+				elif cmd == "ENDCHAR":
+					break
+
+	f.close()
+
+	if width > 32:
+		print "Font is too wide (max 32 pixels)"
+		sys.exit(1)
+
+	def format_num(n):
+		if n == 0:
+			return "0"
+		else:
+			return "#%08X" % n
+	def convert_char(code):
+		char = chars.get(code, [0 for i in range(height)])
+		return ", ".join(map(format_num, char))
+
+	f = sys.stdout
+	f.write("-- Font converted from %s by convert-font; details:\n" % os.path.basename(fn))
+	for l in comment_lines:
+		f.write("--   %s\n" % l)
+
+	f.write("VAL []INT %s IS\n" % name)
+	f.write("  [%d, %d,\n" % (width, height))
+	f.write("   " + ",\n   ".join(map(convert_char, range(256))) + "]:\n")
+	f.write("VAL []INT %s.WTAB IS\n" % name)
+	f.write("  [")
+	for i in range(255):
+		if ((i % 16) == 0) and (i > 0):
+			f.write ("\n   ")
+		f.write ("%d," % widths.get(i, 1))
+	f.write ("%d" % widths.get(255, 1))
+	f.write("]:\n")
+	f.write("VAL []INT %s.HTAB IS\n" % name)
+	f.write("  [")
+	for i in range(255):
+		if ((i % 16) == 0) and (i > 0):
+			f.write ("\n   ")
+		f.write ("%d," % heights.get(i, 1))
+	f.write ("%d" % heights.get(255, 1))
+	f.write("]:\n")
+	f.write("\n")
+
+if __name__ == "__main__":
+	args = sys.argv[1:]
+
+	if len(args) != 2:
+		print "Usage: convert-font BDF-FILE NAME"
+		sys.exit(1)
+
+	convert(args[0], args[1])

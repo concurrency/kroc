@@ -47,8 +47,8 @@ clean-local:
 
 SUFFIXES = .occ .tce .so
 
-%: %.occ
+.occ:
 	$(OCCBUILD) --program $<
 
-%.so: %.occ
+.occ.so:
 	$(KROC) -l $<

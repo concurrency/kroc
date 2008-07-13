@@ -4,4 +4,4 @@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
-SUBDIRS = base graphics io
+SUBDIRS = base graphics io text

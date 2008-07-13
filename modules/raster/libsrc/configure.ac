@@ -23,4 +23,4 @@ dnl Checks for occam modules.
 OCCAM_INCLUDE([course.module file.module], ,
               [AC_MSG_ERROR(Required modules not found)])
 
-AC_OUTPUT([Makefile base/Makefile graphics/Makefile io/Makefile])
+AC_OUTPUT([Makefile base/Makefile graphics/Makefile io/Makefile text/Makefile])
