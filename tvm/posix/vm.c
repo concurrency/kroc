@@ -165,7 +165,8 @@ ECTX allocate_ectx (bytecode_t *bc, const char *tlp, WORD *argv)
 	);
 
 	if (tvm_ectx_install_tlp (
-		mem, bc->tbc->bytecode, ws, vs,
+		vm,
+		bc->tbc->bytecode, ws, vs,
 		tlp, strlen (tlp), argv
 	)) {
 		free (mem);
@@ -173,8 +174,11 @@ ECTX allocate_ectx (bytecode_t *bc, const char *tlp, WORD *argv)
 		return NULL;
 	}
 
+	vm->priv.bytecode	= bc;
 	vm->priv.memory		= mem;
 	vm->priv.memory_length	= mem_len;
 
 	return vm;
 }
+
+

@@ -77,7 +77,8 @@ tbc_t *decode_tbc (BYTE *data, int length)
 	return tbc;
 }
 
-void free_bytecode (bytecode_t *bc) {
+void free_bytecode (bytecode_t *bc)
+{
 	if (bc->source != NULL)
 		free (bc->source);
 	if (bc->data != NULL)
@@ -104,3 +105,4 @@ bytecode_t *load_bytecode (const char *file)
 
 	return bc;
 }
+

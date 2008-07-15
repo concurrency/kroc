@@ -114,12 +114,18 @@ static int install_firmware_ctx (void)
 		return -1;
 	}
 
-	/* FIXME: complete */
+	if ((firmware = allocate_ectx (fw_bc, "!??", tlp_argv)) == NULL) {
+		return -1;
+	}
+
+	return 0;
 }
 
 static int install_user_ctx (const char *fn)
 {
+	const char *const tlp_fmt = "?!!";
 	tbc_t *tbc;
+	char *tlp;
 
 	if ((us_bc = load_bytecode (fn)) == NULL) {
 		fprintf (stderr, 
@@ -131,13 +137,10 @@ static int install_user_ctx (const char *fn)
 
 	tbc = us_bc->tbc;
 
-	/* FIXME: complete */
-
-	#if 0
 	if (tbc->tlp != NULL) {
 		tlp = tbc->tlp->fmt;
 		if (tlp == NULL) {
-			tlp = tlp_fmt;
+			tlp = (char *) tlp_fmt;
 		} else if (strcmp (tlp, "") == 0) {
 			/* OK */
 		} else if (strcmp (tlp, "?!!F") == 0) {
@@ -149,10 +152,14 @@ static int install_user_ctx (const char *fn)
 			return -1;
 		}
 	} else {
-		tlp = tlp_fmt;
+		tlp = (char *) tlp_fmt;
 	}
-	#endif
 
+	if ((user = allocate_ectx (us_bc, tlp, tlp_argv)) == NULL) {
+		return -1;
+	}
+
+	return 0;
 }
 
 static int run_firmware (void)
@@ -325,8 +332,8 @@ int main (int argc, char *argv[])
 		return 1;
 	}
 	
-	free_vm (firmware);
-	free_vm (user);
+	//free_vm (firmware);
+	//free_vm (user);
 
 	#ifdef TVM_PROFILING
 	output_profiling ();

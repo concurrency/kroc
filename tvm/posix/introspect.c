@@ -105,6 +105,9 @@ PROTOCOL P.VM.CTL.RQ
     read.byte; ADDR        -- read byte at address
     read.int16; ADDR       -- read int16 at address
     read.type; ADDR        -- read type of memory at address
+    return.param; INT      -- release parameter N 
+                           -- set parameter N to channel
+    set.param.chan; INT; MOBILE.CHAN
 :
 PROTOCOL P.VM.CTL.RE
   CASE
@@ -119,6 +122,7 @@ PROTOCOL P.VM.CTL.RE
     byte; BYTE
     int16; INT16
     type; INT
+    channel; MOBILE.CHAN
 :
 */
 
