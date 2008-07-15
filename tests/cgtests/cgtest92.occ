@@ -286,6 +286,48 @@ PROC cgtest92 (CHAN OF BYTE keyb?, scr!, err!)
             check.INT (n, (i + 1) * factor, "t3 return value")
   :
   --}}}
+  --{{{  test4 -- MOBILE PROC as FORK parameter
+  PROC test4 ()
+    PROC run.factor (MOBILE PT.3 proc, SHARED CHAN INT in?, out!)
+      CLAIM in?
+        CLAIM out!
+          CHAN INT dummy:
+          proc (dummy?, in?, out!)
+    :
+
+    MOBILE PT.3 proc:
+    SEQ factor = 1 FOR 5
+      CHAN INT config, in, out:
+      INT state, n:
+      SEQ
+        proc := MOBILE config.multiply
+
+        state := 0
+        PAR
+          proc (config?, in?, out!)
+          config ! factor
+        check.INT (state, 0, "t4 state 0")
+
+        SEQ i = 1 FOR 10
+          SHARED? CHAN INT in:
+          SHARED! CHAN INT out:
+          SEQ
+            state := i
+            FORK run.factor (proc, in?, out!)
+            in ! i
+            out ? n
+            check.INT (state, i, "t4 state 1-10")
+            check.INT (n, i * factor, "t4 result")
+
+        state := 100
+        PAR
+          proc (config?, in?, out!)
+          in ! 42
+          out ? n
+        check.INT (state, 100, "t4 state 100")
+        check.INT (n, 42 * factor, "t4 last result")
+  :
+  --}}}
   --}}}
 
   SEQ
@@ -294,6 +336,7 @@ PROC cgtest92 (CHAN OF BYTE keyb?, scr!, err!)
     test1 ()
     test2 ()
     test3 ()
+    test4 ()
     finish ()
 :
 
