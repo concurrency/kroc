@@ -139,6 +139,23 @@ MOBILE PROC integrate (CHAN INT in?, out!) IMPLEMENTS PT.2
     prefix (0, b?, c!)
 :
 --}}}
+--{{{  definitions for test3
+PROC TYPE PT.3 IS (CHAN INT config?, in?, out!):
+
+MOBILE PROC config.multiply (CHAN INT config?, in?, out!) IMPLEMENTS PT.3
+  INT factor:
+  SEQ
+    config ? factor
+    SUSPEND
+
+    WHILE TRUE
+      INT n:
+      SEQ
+        in ? n
+        out ! n * factor
+        SUSPEND
+:
+--}}}
 --}}}
 
 PROC cgtest92 (CHAN OF BYTE keyb?, scr!, err!)
@@ -233,6 +250,42 @@ PROC cgtest92 (CHAN OF BYTE keyb?, scr!, err!)
       check.INT (cycles, 10, "t2 number of cycles")
   :
   --}}}
+  --{{{  test3 -- multiple invocation points
+  -- The idea here is to check that we return to the correct invocation point
+  -- after a MOBILE PROC call.
+  PROC test3 ()
+    MOBILE PT.3 proc:
+    SEQ factor = 1 FOR 5
+      CHAN INT config, in, out:
+      INT state, n:
+      SEQ
+        proc := MOBILE config.multiply
+
+        state := 0
+        PAR
+          proc (config?, in?, out!)
+          config ! factor
+        check.INT (state, 0, "t3 state 0")
+
+        SEQ i = 1 FOR 10 STEP 2
+          SEQ
+            state := i
+            PAR
+              proc (config?, in?, out!)
+              in ! i
+              out ? n
+            check.INT (state, i, "t3 state odd")
+            check.INT (n, i * factor, "t3 return value")
+
+            state := i + 1
+            PAR
+              proc (config?, in?, out!)
+              in ! i + 1
+              out ? n
+            check.INT (state, i + 1, "t3 state even")
+            check.INT (n, (i + 1) * factor, "t3 return value")
+  :
+  --}}}
   --}}}
 
   SEQ
@@ -240,6 +293,7 @@ PROC cgtest92 (CHAN OF BYTE keyb?, scr!, err!)
     test0 ()
     test1 ()
     test2 ()
+    test3 ()
     finish ()
 :
 
