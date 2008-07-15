@@ -332,8 +332,10 @@ int main (int argc, char *argv[])
 		return 1;
 	}
 	
-	//free_vm (firmware);
-	//free_vm (user);
+	free_ectx (firmware);
+	free_ectx (user);
+	free_bytecode (fw_bc);
+	free_bytecode (us_bc);
 
 	#ifdef TVM_PROFILING
 	output_profiling ();

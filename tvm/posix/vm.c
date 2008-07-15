@@ -174,6 +174,8 @@ ECTX allocate_ectx (bytecode_t *bc, const char *tlp, WORD *argv)
 		return NULL;
 	}
 
+	bc->refcount++;
+
 	vm->priv.bytecode	= bc;
 	vm->priv.memory		= mem;
 	vm->priv.memory_length	= mem_len;
@@ -181,4 +183,11 @@ ECTX allocate_ectx (bytecode_t *bc, const char *tlp, WORD *argv)
 	return vm;
 }
 
+void free_ectx (ECTX vm)
+{
+	/* FIXME: deal with stray mobiles */
+	free_bytecode (vm->priv.bytecode);
+	free (vm->priv.memory);
+	free (vm);
+}
 

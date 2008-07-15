@@ -79,6 +79,8 @@ tbc_t *decode_tbc (BYTE *data, int length)
 
 void free_bytecode (bytecode_t *bc)
 {
+	if (--bc->refcount)
+		return;
 	if (bc->source != NULL)
 		free (bc->source);
 	if (bc->data != NULL)
@@ -90,6 +92,7 @@ bytecode_t *load_bytecode (const char *file)
 {
 	bytecode_t *bc	= (bytecode_t *) malloc (sizeof (bytecode_t));
 
+	bc->refcount	= 1;
 	bc->source 	= strdup (file);
 	bc->data	= NULL;
 

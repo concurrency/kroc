@@ -76,6 +76,7 @@ typedef struct _tvm_ectx_priv_t {
 
 /*{{{  bc_t - bytecode data */
 struct _bytecode_t {
+	int	refcount;
 	char 	*source;
 	BYTE	*data;
 	int	length;
@@ -109,5 +110,6 @@ extern BYTE read_char (void);
 /*{{{  vm.c */
 extern void init_vm (void);
 extern ECTX allocate_ectx (bytecode_t *bc, const char *tlp, WORD *argv);
+extern void free_ectx (ECTX vm);
 /*}}}*/
 
