@@ -8,32 +8,10 @@
 #include "tvm_posix.h"
 #include <tvm_tbc.h>
 
-/*
-VAL INT CLOCK.STEP IS 1:
-DATA TYPE ADDR IS INT:
-DATA TYPE IPTR IS INT:
+/*{{{  Protocol Decoder */
 
-DATA TYPE VM.STATE
-  PACKED RECORD
-    INT        state:
-    [3]INT     stack:
-    [4]BYTE    type:
-    INT        oreg:
-    ADDR       wptr:
-    IPTR       iptr:
-    INT        icount:
-:
-*/
-
-typedef struct vm_state_t {
-	WORD	state;
-	WORD	stack[3];
-	BYTE	type[4];
-	WORD	oreg;
-	WORD	wptr;
-	WORD	iptr;
-	WORD	icount;
-} vm_state_t;
+/* Channel State Type Pre-declaration */
+typedef struct c_state_t c_state_t;
 
 /* Protocol Argument Types */
 enum {
@@ -61,14 +39,14 @@ typedef struct p_arg_t {
 typedef struct pc_desc_t {
 	int		entry;
 	int		argc;
-	p_arg_t		*argv;
+	p_arg_t		argv[8];
 } pc_desc_t;
 
 /* Protocol Symbol */
 typedef struct p_sym_t {
 	int	entry;
 	char	*symbols;
-	int	(*dispatch)(ECTX, pc_desc_t *);
+	int	(*dispatch)(ECTX, c_state_t *);
 } p_sym_t;
 
 /* Channel States */
@@ -79,16 +57,317 @@ enum {
 	C_S_DECODE
 };
 
+/* Channel Type */
+enum {
+	C_T_UNKNOWN,
+	C_T_BYTECODE,
+	C_T_VM,
+	C_T_VM_CTL
+};
+
+
 /* Channel State */
-typedef struct c_state_t {
+struct c_state_t {
 	int		state;
 	WORDPTR		waiting;
 	p_sym_t		*in;
 	p_sym_t		*decode;
 	pc_desc_t	p;
-} c_state_t;
+	int		type;
+	union {
+		bytecode_t	*bc;
+		ECTX		vm;
+	} 		data;
+};
 
-/* 
+static int handle_in (ECTX ectx,
+	void *data, WORDPTR channel, BYTEPTR address, WORD count)
+{
+	c_state_t *c = (c_state_t *) data;
+
+	if (c->state == C_S_ENCODE_ENTRY) {
+		if (count == 1) {
+			write_byte (address, (BYTE) c->p.entry);
+			
+			if (c->p.argc > 0) {
+				c->state = C_S_ENCODE;
+			} else {
+				c->state = C_S_IDLE;
+			}
+			
+			return ECTX_CONTINUE;
+		} else {
+			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
+		}
+	} else if (c->state == C_S_ENCODE) {
+		int	n	= --c->p.argc;
+		p_arg_t *arg	= &(c->p.argv[n]);
+		int	i;
+		
+		if (arg->type == P_A_WORD && count == sizeof (WORD)) {
+			write_word ((WORDPTR) address, arg->data.word);
+		} else if (arg->type == P_A_BYTE && count == 1) {
+			write_byte (address, arg->data.byte);
+		} else if (arg->type == P_A_BYTES && count == arg->length) {
+			for (i = 0; i < arg->length; ++i) {
+				write_byte (address, arg->data.bytes[i]);
+				address = byteptr_plus (address, 1);
+			}
+		} else if (arg->type == P_A_ARRAY && count == arg->length) {
+			for (i = 0; i < arg->length; ++i) {
+				write_byte (address, arg->data.array[i]);
+				address = byteptr_plus (address, 1);
+			}
+			free (arg->data.array);
+		} else {
+			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
+		}
+
+		return ECTX_CONTINUE;
+	} else {
+		WORKSPACE_SET (ectx->wptr, WS_POINTER, (WORD) address);
+		WORKSPACE_SET (ectx->wptr, WS_ECTX, (WORD) ectx);
+		WORKSPACE_SET (ectx->wptr, WS_PENDING, count);
+		WORKSPACE_SET (ectx->wptr, WS_IPTR, (WORD) ectx->iptr);
+
+		c->waiting = ectx->wptr;
+
+		return _ECTX_DESCHEDULE;
+	}
+}
+
+static int handle_out (ECTX ectx,
+	void *data, WORDPTR channel, BYTEPTR address, WORD count)
+{
+	c_state_t *c = (c_state_t *) data;
+	int i;
+
+	if (c->state == C_S_IDLE && count == 1) {
+		int entry = read_byte (address);
+		
+		for (i = 0; c->in[i].entry != entry; ++i) {
+			if (c->in[i].symbols == NULL) {
+				return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
+			}
+		}
+
+		c->p.entry	= entry;
+		c->p.argc	= 0;
+
+		if (c->in[i].symbols[0] == '\0') {
+			return c->in[i].dispatch (ectx, c);
+		} else {
+			c->state	= C_S_DECODE;
+			c->decode 	= &(c->in[i]);
+			return ECTX_CONTINUE;
+		}
+	} else if (c->state == C_S_DECODE) {
+		int n		= c->p.argc++;
+		p_arg_t	*arg	= &(c->p.argv[n]);
+		
+		arg->length	= 0;
+
+		switch (c->decode->symbols[n]) {
+			case '4': arg->length++;
+			case '3': arg->length++;
+			case '2': arg->length++;
+			case '1': arg->length++;
+			case '0': 
+				arg->type = 'B';
+				break;
+			default:
+				arg->type = c->decode->symbols[n];
+				break;
+		}
+
+		if (arg->type == P_A_WORD && count == sizeof (WORD)) {
+			arg->data.word = read_word ((WORDPTR) address);
+		} else if (arg->type == P_A_BYTE && count == 1) {
+			arg->data.byte = read_byte (address);
+		} else if (arg->type == P_A_BYTES && count == arg->length) {
+			for (i = 0; i < arg->length; ++i) {
+				arg->data.bytes[i] = read_byte (address);
+				address = byteptr_plus (address, 1);
+			}
+		} else if (arg->type == P_A_ARRAY) {
+			arg->length	= count;
+			arg->data.array = (BYTE *) malloc (count);
+			for (i = 0; i < arg->length; ++i) {
+				arg->data.array[i] = read_byte (address);
+				address = byteptr_plus (address, 1);
+			}
+		} else {
+			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
+		}
+		
+		if (c->decode->symbols[n+1] == '\0') {
+			c->state = C_S_IDLE;
+			return c->decode->dispatch (ectx, c);
+		} else {
+			return ECTX_CONTINUE;
+		}
+	}
+
+	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
+}
+
+static int handle_mt_in (ECTX ectx, 
+	void *data, WORDPTR channel, WORDPTR address)
+{
+	c_state_t *c = (c_state_t *) data;
+	
+	if (c->state == C_S_ENCODE) {
+		int	n	= --c->p.argc;
+		p_arg_t *arg	= &(c->p.argv[n]);
+		
+		if (arg->type == P_A_MT) {
+			write_word (address, (WORD) arg->data.mt);
+
+			if (c->decode->symbols[n+1] == '\0') {
+				c->state = C_S_IDLE;
+				return c->decode->dispatch (ectx, c);
+			} else {
+				return ECTX_CONTINUE;
+			}
+		}
+	}
+	
+	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
+}
+
+static int handle_mt_out (ECTX ectx, 
+	void *data, WORDPTR channel, WORDPTR address)
+{
+	c_state_t *c = (c_state_t *) data;
+
+	if (c->state == C_S_DECODE) {
+		int n		= c->p.argc++;
+		p_arg_t	*arg	= &(c->p.argv[n]);
+		
+		arg->length	= 0;
+
+		if (arg->type == P_A_MT) {
+			arg->data.word = read_word ((WORDPTR) address);
+			/* XXX:	really we should write NULL_P back to the
+			 * 	address when the mobile type is not shared.
+			 */
+			return ECTX_CONTINUE;
+		}
+	}
+
+	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
+}
+
+static void handle_free (ECTX ectx, void *data)
+{
+	c_state_t *c = (c_state_t *) data;
+	if (c->type == C_T_BYTECODE) {
+		free_bytecode (c->data.bc);
+	} else if (c->type == C_T_VM_CTL) {
+		free_ectx (c->data.vm);
+	}
+	free (c);
+}
+
+static int send_message (ECTX ectx, c_state_t *c, p_sym_t *sym, ...)
+{
+	va_list args;
+	char	*fmt	= sym->symbols;
+	int	i	= 0;
+
+	c->state	= C_S_ENCODE_ENTRY;
+	c->p.entry	= sym->entry;
+
+	va_start (args, sym);
+	
+	while (*fmt != '\0') {
+		int type = (int) *fmt;
+
+		c->p.argv[i].type = type;
+
+		if (type == P_A_ARRAY) {
+			c->p.argv[i].data.array = va_arg (args, BYTE *); 
+			c->p.argv[i].length	= va_arg (args, int);
+		} else if (type == P_A_BYTES) {
+			BYTE *bytes		= va_arg (args, BYTE *);
+			int length		= va_arg (args, int);
+			int j;
+			
+			c->p.argv[i].length	= length;
+			
+			for (j = 0; j < length; ++j) {
+				c->p.argv[i].data.bytes[j] = bytes[j];
+			}
+		} else {
+			c->p.argv[i].length	= 0;
+			c->p.argv[i].data.word	= va_arg (args, WORD);
+		}
+
+		i++;
+		fmt++;
+	}
+
+	va_end (args);
+
+	c->p.argc = i;
+
+	if (c->waiting != NOT_PROCESS_P) {
+		WORDPTR wptr	= c->waiting;
+		BYTEPTR address = (BYTEPTR) WORKSPACE_GET (wptr, WS_POINTER);
+		WORD count	= WORKSPACE_GET (wptr, WS_PENDING);
+
+		c->waiting = NOT_PROCESS_P;
+
+		ectx->add_to_queue_external (ectx, ectx, wptr);
+
+		return handle_in (ectx, c, NULL_P, address, count);
+	} else {
+		return ECTX_CONTINUE;
+	}
+}
+
+static EXT_CB_INTERFACE cb_interface = {
+	.in	= handle_in,
+	.out	= handle_out,
+	.swap	= NULL,
+	.mt_in	= handle_mt_in,
+	.mt_out	= handle_mt_out,
+	.xable	= NULL,
+	.xin	= NULL,
+	.mt_xin	= NULL,
+	.free	= handle_free
+};
+
+/*}}}*/
+
+/*
+VAL INT CLOCK.STEP IS 1:
+DATA TYPE ADDR IS INT:
+DATA TYPE IPTR IS INT:
+
+DATA TYPE VM.STATE
+  PACKED RECORD
+    INT        state:
+    [3]INT     stack:
+    [4]BYTE    type:
+    INT        oreg:
+    ADDR       wptr:
+    IPTR       iptr:
+    INT        icount:
+:
+*/
+
+typedef struct vm_state_t {
+	WORD	state;
+	WORD	stack[3];
+	BYTE	type[4];
+	WORD	oreg;
+	WORD	wptr;
+	WORD	iptr;
+	WORD	icount;
+} vm_state_t;
+
+/*
 PROTOCOL P.VM.CTL.RQ
   CASE
     run; INT               -- run until for N instructions or until breakpoint
@@ -184,186 +463,4 @@ static p_sym_t vm_re[] = {
 	{ .entry = 0, .symbols = "w", .dispatch = NULL },
 	{ .symbols = NULL }
 };
-
-static void handle_free (ECTX ectx, void *data)
-{
-}
-
-static int handle_in (ECTX ectx,
-	void *data, WORDPTR channel, BYTEPTR address, WORD count)
-{
-	c_state_t *c = (c_state_t *) data;
-
-	if (c->state == C_S_ENCODE_ENTRY) {
-		if (count == 1) {
-			write_byte (address, (BYTE) c->p.entry);
-			
-			if (c->p.argc > 0) {
-				c->state = C_S_ENCODE;
-			} else {
-				c->state = C_S_IDLE;
-			}
-			
-			return ECTX_CONTINUE;
-		} else {
-			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
-		}
-	} else if (c->state == C_S_ENCODE) {
-		int	n	= --c->p.argc;
-		p_arg_t *arg	= &(c->p.argv[n]);
-		int	i;
-		
-		if (arg->type == P_A_WORD && count == sizeof (WORD)) {
-			write_word ((WORDPTR) address, arg->data.word);
-		} else if (arg->type == P_A_BYTE && count == 1) {
-			write_byte (address, arg->data.byte);
-		} else if (arg->type == P_A_BYTES && count == arg->length) {
-			for (i = 0; i < arg->length; ++i) {
-				write_byte (address, arg->data.bytes[i]);
-				address = byteptr_plus (address, 1);
-			}
-		} else if (arg->type == P_A_ARRAY && count == arg->length) {
-			for (i = 0; i < arg->length; ++i) {
-				write_byte (address, arg->data.array[i]);
-				address = byteptr_plus (address, 1);
-			}
-			free (arg->data.array);
-		} else {
-			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
-		}
-
-		return ECTX_CONTINUE;
-	} else {
-		WORKSPACE_SET (ectx->wptr, WS_POINTER, (WORD) address);
-		WORKSPACE_SET (ectx->wptr, WS_ECTX, (WORD) ectx);
-		WORKSPACE_SET (ectx->wptr, WS_PENDING, count);
-		WORKSPACE_SET (ectx->wptr, WS_IPTR, (WORD) ectx->iptr);
-
-		c->waiting = ectx->wptr;
-
-		return _ECTX_DESCHEDULE;
-	}
-}
-
-static int handle_out (ECTX ectx,
-	void *data, WORDPTR channel, BYTEPTR address, WORD count)
-{
-	c_state_t *c = (c_state_t *) data;
-	int i;
-
-	if (c->state == C_S_IDLE && count == 1) {
-		int entry = read_byte (address);
-		
-		for (i = 0; c->in[i].entry != entry; ++i) {
-			if (c->in[i].symbols == NULL) {
-				return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
-			}
-		}
-
-		c->p.entry	= entry;
-		c->p.argc	= 0;
-
-		if (c->in[i].symbols[0] == '\0') {
-			return c->in[i].dispatch (ectx, &(c->p));
-		} else {
-			c->state	= C_S_DECODE;
-			c->decode 	= &(c->in[i]);
-			return ECTX_CONTINUE;
-		}
-	} else if (c->state == C_S_DECODE) {
-		int n		= c->p.argc++;
-		p_arg_t	*arg	= &(c->p.argv[n]);
-		
-		arg->length	= 0;
-
-		switch (c->decode->symbols[n]) {
-			case '4': arg->length++;
-			case '3': arg->length++;
-			case '2': arg->length++;
-			case '1': arg->length++;
-			case '0': 
-				arg->type = 'B';
-				break;
-			default:
-				arg->type = c->decode->symbols[n];
-				break;
-		}
-
-		if (arg->type == P_A_WORD && count == sizeof (WORD)) {
-			arg->data.word = read_word ((WORDPTR) address);
-		} else if (arg->type == P_A_BYTE && count == 1) {
-			arg->data.byte = read_byte (address);
-		} else if (arg->type == P_A_BYTES && count == arg->length) {
-			for (i = 0; i < arg->length; ++i) {
-				arg->data.bytes[i] = read_byte (address);
-				address = byteptr_plus (address, 1);
-			}
-		} else if (arg->type == P_A_ARRAY) {
-			arg->length	= count;
-			arg->data.array = (BYTE *) malloc (count);
-			for (i = 0; i < arg->length; ++i) {
-				arg->data.array[i] = read_byte (address);
-				address = byteptr_plus (address, 1);
-			}
-		} else {
-			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
-		}
-		
-		if (c->decode->symbols[n+1] == '\0') {
-			c->state = C_S_IDLE;
-			return c->decode->dispatch (ectx, &(c->p));
-		} else {
-			return ECTX_CONTINUE;
-		}
-	}
-
-	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
-}
-
-static int handle_mt_in (ECTX ectx, 
-	void *data, WORDPTR channel, WORDPTR address)
-{
-	c_state_t *c = (c_state_t *) data;
-	
-	if (c->state == C_S_ENCODE) {
-		int	n	= --c->p.argc;
-		p_arg_t *arg	= &(c->p.argv[n]);
-		
-		if (arg->type == P_A_MT) {
-			write_word (address, (WORD) arg->data.mt);
-
-			if (c->decode->symbols[n+1] == '\0') {
-				c->state = C_S_IDLE;
-				return c->decode->dispatch (ectx, &(c->p));
-			} else {
-				return ECTX_CONTINUE;
-			}
-		}
-	}
-	
-	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
-}
-
-static int handle_mt_out (ECTX ectx, 
-	void *data, WORDPTR channel, WORDPTR address)
-{
-	c_state_t *c = (c_state_t *) data;
-
-	if (c->state == C_S_DECODE) {
-		int n		= c->p.argc++;
-		p_arg_t	*arg	= &(c->p.argv[n]);
-		
-		arg->length	= 0;
-
-		if (arg->type == P_A_MT) {
-			arg->data.word = read_word ((WORDPTR) address);
-			/* XXX:	really we should write NULL_P back to the
-			 * 	address when the mobile type is not shared.
-			 */
-			return ECTX_CONTINUE;
-		}
-	}
-
-	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
-}
 
