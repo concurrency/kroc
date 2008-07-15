@@ -1044,7 +1044,7 @@ sub tag_positions ($$) {
 	return $pos;
 }
 
-sub build_ffi_stub ($$) {
+sub build_ffi_call ($$) {
 	my ($label, $ffi_idx)	= @_;
 	my $inst		= $label->{'inst'};
 	my $stub		= $label->{'stub'};
@@ -1066,6 +1066,9 @@ sub build_ffi_stub ($$) {
 		{ 'name' => 'LDC', 'arg' => $idx	},
 		{ 'name' => 'FFICALL'			}
 	);
+
+	delete ($label->{'prev'});
+	delete ($label->{'next'});
 }
 
 sub generate_code ($$) {
