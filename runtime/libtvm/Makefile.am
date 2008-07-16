@@ -27,6 +27,7 @@ noinst_HEADERS = \
 	scheduler.h
 
 include_HEADERS = \
+	mobile_types.h \
 	transputer.h \
 	tvm.h \
 	tvm_compiler.h \
