@@ -92,6 +92,9 @@ foreach my $file (@files) {
 	$last_file = $data;
 }
 
+# Check we have some ETC to work with
+die "No valid data loaded (invalid ETC files?)" if !@etc;
+
 # Pick Entry Point
 my $symbols 	= $last_file->{'symbols'};
 my $jentry;
