@@ -1554,7 +1554,7 @@ fprintf (stderr, "gen8: done size fiddling, stored = %d, carried = %d\n", stored
 					}
 				}
 			} else if (!(isdynmobilearray (opd) && isdynmobilearraytype (formaltype))) {
-				BOOL move = isdynmobilechantype (opd);
+				BOOL move = isdynmobilechantype (opd) || isdynmobileproctype (opd);
 				BOOL xcopy = copy || (!move && ismobile (opd));
 				if (move && !xcopy) {
 					loadmobilepointer (opd);
