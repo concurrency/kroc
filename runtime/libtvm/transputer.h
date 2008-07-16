@@ -281,7 +281,8 @@ enum {
 	ECTX_TIME_SLICE		= 't'
 };
 enum {
-	_ECTX_DESCHEDULE	= -1
+	_ECTX_DESCHEDULE	= -1,
+	_ECTX_BYPASS		= -2
 };
 /*}}}*/
 

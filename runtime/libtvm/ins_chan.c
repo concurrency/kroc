@@ -129,20 +129,28 @@ TVM_HELPER int chan_io (ECTX ectx,
 	*requeue = (WORDPTR) chan_value;
 
 	if (chan_value != NOT_PROCESS_P) {
+		#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
+		if (chan_value & 2) {
+			WORDPTR cb		= (WORDPTR) (chan_value & (~3));
+			EXT_CB_INTERFACE *intf	= (EXT_CB_INTERFACE *) read_offset (cb, mt_cb_ext_t, interface);
+			void *ext_data 		= (void *) read_offset (cb, mt_cb_ext_t, data);
+			
+			if (intf != NULL) {
+				int ret = ext (ectx, intf, ext_data, chan_ptr, data_ptr, data_len);
+				if (ret == ECTX_CONTINUE) {
+					return _ECTX_BYPASS; 
+				} else {
+					return ret;
+				}
+			} else {
+				SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
+			}
+		} else
+		#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
 		if (!(chan_value & 1)) {
 			/* Normal communication */
 			write_word (chan_ptr, NOT_PROCESS_P);
 			return data (ectx, data_ptr, data_len, other_WPTR);
-		#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
-		} else if (chan_value & 2) {
-			WORDPTR cb		= (WORDPTR) (chan_value & (~3));
-			EXT_CB_INTERFACE *intf	= (EXT_CB_INTERFACE *) read_offset (cb, mt_cb_ext_t, interface);
-			void *ext_data 		= (void *) read_offset (cb, mt_cb_ext_t, data);
-			if (intf != NULL)
-				return ext (ectx, intf, ext_data, chan_ptr, data_ptr, data_len);
-			else
-				SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
-		#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
 		} else if (other_WPTR != NOT_PROCESS_P) {
 			/* Other end is ALTing */
 			WORD alt_state = WORKSPACE_GET (other_WPTR, WS_STATE);
@@ -203,6 +211,8 @@ TVM_HELPER int chan_std_io (ECTX ectx,
 		DESCHEDULE_CURRENT ();
 	} else if (ret > 0) {
 		return ret;
+	} else if (ret == _ECTX_BYPASS) {
+		return ECTX_CONTINUE;
 	}
 
 	requeue = (WORDPTR) (((WORD) requeue) & (~1));
