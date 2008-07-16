@@ -496,19 +496,19 @@ static int vm_rq_test (ECTX, c_state_t *);
 
 static p_sym_t vm_rq[] = {
 	{ .entry = 0, .symbols = "M", .dispatch = NULL },
-	{ .entry = 1, .symbols = "", .dispatch = vm_rq_test },
+	{ .entry = 1, .symbols = "w", .dispatch = vm_rq_test },
 	{ .symbols = NULL }
 };
 
 static p_sym_t vm_re[] = {
 	{ .entry = 0, .symbols = "w", .dispatch = NULL },
-	{ .entry = 1, .symbols = "", .dispatch = NULL },
+	{ .entry = 1, .symbols = "w", .dispatch = NULL },
 	{ .symbols = NULL }
 };
 
 static int vm_rq_test (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_re[1]));
+	return send_message (ectx, c, &(vm_re[1]), c->p.argv[0].data.word * 2);
 }
 
 /*{{{  Virtual Channel 0 - outputs VM channel bundles */
