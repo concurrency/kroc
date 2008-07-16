@@ -8,6 +8,10 @@
 #include "tvm_posix.h"
 #include <tvm_tbc.h>
 
+#define MT_DEFINES	1
+#define MT_TVM		1
+#include <mobile_types.h>
+
 /*{{{  Protocol Decoder */
 
 /* Channel State Type Pre-declaration */
@@ -338,6 +342,37 @@ static EXT_CB_INTERFACE cb_interface = {
 	.free	= handle_free
 };
 
+#define MT_CB_CONFIG (MT_SIMPLE |\
+			MT_MAKE_TYPE (MT_CB) |\
+			MT_CB_EXTERNAL |\
+			(2 << MT_CB_CHANNELS_SHIFT))
+
+static WORDPTR allocate_cb (ECTX ectx, p_sym_t *in, c_state_t **c_ptr)
+{
+	c_state_t 	*c = (c_state_t *) malloc (sizeof (c_state_t));
+	WORDPTR		cb = tvm_mt_alloc (ectx, MT_CB_CONFIG, 2);
+	WORDPTR		cb_base;
+
+	if (cb == (WORDPTR) NULL_P) {
+		free (c);
+		return (WORDPTR) NULL_P;
+	}
+
+	c->state	= C_S_IDLE;
+	c->waiting	= (WORDPTR) NOT_PROCESS_P;
+	c->in		= in;
+	c->decode	= NULL;
+	c->p.argc	= 0;
+	*c_ptr		= c;
+
+	cb_base = wordptr_minus (cb, MT_CB_PTR_OFFSET + (sizeof (mt_cb_ext_t) / sizeof (WORD)));
+
+	write_offset (cb_base, mt_cb_ext_t, interface, (WORD) &cb_interface);
+	write_offset (cb_base, mt_cb_ext_t, data, (WORD) c);
+
+	return cb;
+}
+
 /*}}}*/
 
 /*
@@ -447,20 +482,56 @@ static p_sym_t bytecode_re[] = {
 PROTOCOL P.VM.RQ
   CASE
     decode.bytecode = 0; MOBILE []BYTE
+    test = 1
 :
 PROTOCOL P.VM.RE
   CASE
     error = 0; INT
+    ok = 1
 :
 */
 
+
+static int vm_rq_test (ECTX, c_state_t *);
+
 static p_sym_t vm_rq[] = {
 	{ .entry = 0, .symbols = "M", .dispatch = NULL },
+	{ .entry = 1, .symbols = "", .dispatch = vm_rq_test },
 	{ .symbols = NULL }
 };
 
 static p_sym_t vm_re[] = {
 	{ .entry = 0, .symbols = "w", .dispatch = NULL },
+	{ .entry = 1, .symbols = "", .dispatch = NULL },
 	{ .symbols = NULL }
 };
+
+static int vm_rq_test (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_re[1]));
+}
+
+/*{{{  Virtual Channel 0 - outputs VM channel bundles */
+int vc0_mt_in (ECTX ectx, WORDPTR address)
+{
+	c_state_t 	*c;
+	WORDPTR 	cb = allocate_cb (ectx, vm_rq, &c);
+
+	if (cb == (WORDPTR) NULL_P) {
+		return ectx->set_error_flag (ectx, EFLAG_MT);
+	}
+
+	/* Setup as VM type */
+	c->type 	= C_T_VM;
+	c->data.vm 	= ectx;
+
+	/* Reduce reference count to 1 */
+	tvm_mt_release (ectx, cb);
+	
+	/* Pass remaining reference to client */
+	write_word (address, (WORD) cb);
+
+	return ECTX_CONTINUE;
+}
+/*}}}*/
 

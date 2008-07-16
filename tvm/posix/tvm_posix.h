@@ -84,6 +84,10 @@ struct _bytecode_t {
 };
 /*}}}*/
 
+/*{{{  introspect.c */
+extern int vc0_mt_in (ECTX ectx, WORDPTR address);
+/*}}}*/
+
 /*{{{  main.c */
 extern char **tvm_argv;
 extern int tvm_argc;

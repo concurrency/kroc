@@ -121,6 +121,17 @@ static int install_firmware_ctx (void)
 	return 0;
 }
 
+static EXT_CHAN_ENTRY ext_chans[] = {
+	{
+		.typehash	= 0,
+		.in		= NULL,
+		.out		= NULL,
+		.mt_in		= vc0_mt_in,
+		.mt_out		= NULL
+	}
+};
+static const int ext_chans_length = sizeof (ext_chans) / sizeof (EXT_CHAN_ENTRY);
+
 static int install_user_ctx (const char *fn)
 {
 	const char *const tlp_fmt = "?!!";
@@ -158,6 +169,9 @@ static int install_user_ctx (const char *fn)
 	if ((user = allocate_ectx (us_bc, tlp, tlp_argv)) == NULL) {
 		return -1;
 	}
+
+	user->ext_chan_table		= ext_chans;
+	user->ext_chan_table_length	= ext_chans_length;
 
 	return 0;
 }
