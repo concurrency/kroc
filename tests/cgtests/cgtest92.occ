@@ -139,7 +139,7 @@ MOBILE PROC integrate (CHAN INT in?, out!) IMPLEMENTS PT.2
     prefix (0, b?, c!)
 :
 --}}}
---{{{  definitions for test3
+--{{{  definitions for test3/4
 PROC TYPE PT.3 IS (CHAN INT config?, in?, out!):
 
 MOBILE PROC config.multiply (CHAN INT config?, in?, out!) IMPLEMENTS PT.3
@@ -288,11 +288,13 @@ PROC cgtest92 (CHAN OF BYTE keyb?, scr!, err!)
   --}}}
   --{{{  test4 -- MOBILE PROC as FORK parameter
   PROC test4 ()
-    PROC run.factor (MOBILE PT.3 proc, SHARED CHAN INT in?, out!)
-      CLAIM in?
-        CLAIM out!
-          CHAN INT dummy:
-          proc (dummy?, in?, out!)
+    PROC run.factor (MOBILE PT.3 proc, SHARED CHAN INT out!)
+      SEQ i = 0 FOR 10
+        CHAN INT dummy, in:
+        PAR
+          CLAIM out!
+            proc (dummy?, in?, out!)
+          in ! i
     :
 
     MOBILE PT.3 proc:
@@ -304,28 +306,20 @@ PROC cgtest92 (CHAN OF BYTE keyb?, scr!, err!)
 
         state := 0
         PAR
-          proc (config?, in?, out!)
-          config ! factor
-        check.INT (state, 0, "t4 state 0")
-
-        SEQ i = 1 FOR 10
-          SHARED? CHAN INT in:
-          SHARED! CHAN INT out:
           SEQ
-            state := i
-            FORK run.factor (proc, in?, out!)
-            in ! i
-            out ? n
-            check.INT (state, i, "t4 state 1-10")
-            check.INT (n, i * factor, "t4 result")
+            proc (config?, in?, out!)
+            check.INT (state, 0, "t4 state 0")
+          config ! factor
 
-        state := 100
-        PAR
-          proc (config?, in?, out!)
-          in ! 42
-          out ? n
-        check.INT (state, 100, "t4 state 100")
-        check.INT (n, 42 * factor, "t4 last result")
+        state := 1
+        SHARED! CHAN INT sout:
+        SEQ
+          FORK run.factor (proc, sout!)
+          SEQ i = 0 FOR 10
+            SEQ
+              sout ? n
+              check.INT (state, 1, "t4 state 1")
+              check.INT (n, i * factor, "t4 result")
   :
   --}}}
   --}}}
