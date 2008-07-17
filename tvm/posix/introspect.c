@@ -12,7 +12,7 @@
 #define MT_TVM		1
 #include <mobile_types.h>
 
-/*{{{  Protocol Decoder */
+/*{{{  Very Limited Protocol Decoder */
 
 /* Channel State Type Pre-declaration */
 typedef struct c_state_t c_state_t;
@@ -373,6 +373,23 @@ static WORDPTR allocate_cb (ECTX ectx, p_sym_t *in, c_state_t **c_ptr)
 	return cb;
 }
 
+WORDPTR str_to_mt (ECTX ectx, const char *str)
+{
+	WORDPTR mt = (WORDPTR) NULL_P;
+	
+	if (str != NULL) {
+		int length = strlen (str);
+		
+		mt = tvm_mt_alloc (ectx, MT_MAKE_ARRAY_TYPE (1, MT_NUM_BYTE), length);
+		memcpy (
+			wordptr_real_address ((WORDPTR) read_word (mt)),
+			str,
+			length
+		);
+	}
+	
+	return mt;
+}
 /*}}}*/
 
 /*
@@ -438,6 +455,11 @@ PROTOCOL P.VM.CTL.RE
     type; INT
     channel; MOBILE.CHAN
 :
+CHAN TYPE CT.VM.CTL
+  MOBILE RECORD
+    CHAN P.VM.CTL.RQ request?:
+    CHAN P.VM.CTL.RE response!:
+:
 */
 
 /*
@@ -455,61 +477,206 @@ PROTOCOL P.BYTECODE.RE
     error          = 1; INT
     file           = 2; MOBILE []BYTE
     info           = 3; INT; INT       -- file, line
-                                       -- offset, name, description, ws, vs
+                                       -- offset, name, definition, ws, vs
     symbol         = 4; INT; MOBILE []BYTE; MOBILE []BYTE; INT; INT
+:
+CHAN TYPE CT.BYTECODE
+  MOBILE RECORD
+    CHAN P.BYTECODE.RQ request?:
+    CHAN P.BYTECODE.RE response!:
 :
 */
 
+static int bytecode_run (ECTX, c_state_t *);
+static int bytecode_get_symbol (ECTX, c_state_t *);
+static int bytecode_get_file (ECTX, c_state_t *);
+static int bytecode_get_line_info (ECTX, c_state_t *);
+
 static p_sym_t bytecode_rq[] = {
-	{ .entry	= 0, .symbols = "", .dispatch = NULL },
-	{ .entry	= 1, .symbols = "M", .dispatch = NULL },
-	{ .entry	= 2, .symbols = "w", .dispatch = NULL },
-	{ .entry	= 3, .symbols = "w", .dispatch = NULL },
-	{ .entry	= 4, .symbols = "w", .dispatch = NULL },
+	{ .entry	= 0, .symbols = "", .dispatch = bytecode_run },
+	{ .entry	= 1, .symbols = "M", .dispatch = bytecode_get_symbol },
+	{ .entry	= 2, .symbols = "w", .dispatch = bytecode_get_symbol },
+	{ .entry	= 3, .symbols = "w", .dispatch = bytecode_get_file },
+	{ .entry	= 4, .symbols = "w", .dispatch = bytecode_get_line_info },
 	{ .symbols = NULL }
 };
 
+enum {
+	BYTECODE_RE_VM		= 0,
+	BYTECODE_RE_ERROR	= 1,
+	BYTECODE_RE_FILE	= 2,
+	BYTECODE_RE_INFO	= 3,
+	BYTECODE_RE_SYMBOL	= 4
+};
 static p_sym_t bytecode_re[] = {
-	{ .entry	= 0, .symbols = "M", .dispatch = NULL },
-	{ .entry	= 1, .symbols = "w", .dispatch = NULL },
-	{ .entry	= 2, .symbols = "M", .dispatch = NULL },
-	{ .entry	= 3, .symbols = "ww", .dispatch = NULL },
-	{ .entry	= 4, .symbols = "wMMww", .dispatch = NULL },
+	{ .entry = BYTECODE_RE_VM,	.symbols = "M", .dispatch = NULL },
+	{ .entry = BYTECODE_RE_ERROR,	.symbols = "w", .dispatch = NULL },
+	{ .entry = BYTECODE_RE_FILE,	.symbols = "M", .dispatch = NULL },
+	{ .entry = BYTECODE_RE_INFO,	.symbols = "ww", .dispatch = NULL },
+	{ .entry = BYTECODE_RE_SYMBOL,	.symbols = "wMMww", .dispatch = NULL },
 	{ .symbols = NULL }
 };
 
+static int bytecode_run (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_ERROR]), 0);
+}
+
+static int bytecode_get_symbol (ECTX ectx, c_state_t *c)
+{
+	tbc_sym_t *sym = c->data.bc->tbc->symbols;
+
+	if (c->p.argv[0].type == P_A_MT) {
+		/* symbol name */
+		WORDPTR mt	= c->p.argv[0].data.mt;
+		char *str	= (char *) 
+			wordptr_real_address ((WORDPTR) read_word (wordptr_plus (mt, 0)));
+		int length	= read_word (wordptr_plus (mt, 1));
+
+		while (sym != NULL) {
+			if (memcmp (sym->name, str, length) == 0) {
+				if (sym->name[length] == '\0')
+					break;
+			}
+			sym = sym->next;
+		}
+
+		tvm_mt_release (ectx, mt);
+	} else {
+		/* bytecode offset */
+		unsigned int iptr = (unsigned int) c->p.argv[0].data.word;
+		
+		while (sym != NULL) {
+			if (sym->offset <= iptr)
+				break;
+			sym = sym->next;
+		}
+	}
+
+	if (sym != NULL) {
+		return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_SYMBOL]),
+			(WORD) sym->offset,
+			str_to_mt (ectx, sym->name),
+			str_to_mt (ectx, sym->definition),
+			(WORD) sym->ws,
+			(WORD) sym->vs
+		);
+	} else {
+		return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_ERROR]), 0);
+	}
+}
+
+static int bytecode_get_file (ECTX ectx, c_state_t *c)
+{
+	if (c->data.bc->tbc->debug != NULL) {
+		tenc_str_t *file	= c->data.bc->tbc->debug->files;
+		int n			= c->p.argv[0].data.word;
+		while (file != NULL) {
+			if (n == 0) {
+				return 	send_message (ectx, c, 
+						&(bytecode_re[BYTECODE_RE_FILE]),
+						str_to_mt (ectx, file->str)
+				);
+			}
+			file = file->next;
+			n--;
+		}
+	}
+	
+	return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_ERROR]), 0);
+}
+
+static int bytecode_get_line_info (ECTX ectx, c_state_t *c)
+{
+	if (c->data.bc->tbc->debug != NULL) {
+		tbc_dbg_t 	*dbg = c->data.bc->tbc->debug;
+		unsigned int	iptr = (unsigned int) c->p.argv[0].data.word;
+		int 		i;
+
+		/* FIXME: use a binary search instead of a linear scan */
+
+		for (i = 0; i < dbg->n_lnd; ++i) {
+			if (dbg->lnd[i].offset <= iptr) {
+				return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_INFO]),
+					dbg->lnd[i].file,
+					dbg->lnd[i].line
+				);
+			}
+		}
+	}
+	
+	return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_ERROR]), 0);
+}
+/*}}}*/
+
+/*{{{  CT.VM */
 /*
 PROTOCOL P.VM.RQ
   CASE
     decode.bytecode = 0; MOBILE []BYTE
-    test = 1
 :
 PROTOCOL P.VM.RE
   CASE
-    error = 0; INT
-    ok = 1
+    bytecode        = 0; CT.BYTECODE!
+    error           = 1; INT
+:
+CHAN TYPE CT.VM
+  MOBILE RECORD
+    CHAN P.VM.RQ request?:
+    CHAN P.VM.RE response!:
 :
 */
 
-
-static int vm_rq_test (ECTX, c_state_t *);
+static int vm_rq_decode_bytecode (ECTX, c_state_t *);
 
 static p_sym_t vm_rq[] = {
-	{ .entry = 0, .symbols = "M", .dispatch = NULL },
-	{ .entry = 1, .symbols = "w", .dispatch = vm_rq_test },
+	{ .entry = 0, .symbols = "M", .dispatch = vm_rq_decode_bytecode },
 	{ .symbols = NULL }
 };
 
+enum {
+	VM_RE_BYTECODE	= 0,
+	VM_RE_ERROR	= 1
+};
 static p_sym_t vm_re[] = {
-	{ .entry = 0, .symbols = "w", .dispatch = NULL },
-	{ .entry = 1, .symbols = "w", .dispatch = NULL },
+	{ .entry = VM_RE_BYTECODE,	.symbols = "M", .dispatch = NULL },
+	{ .entry = VM_RE_ERROR,		.symbols = "w", .dispatch = NULL },
 	{ .symbols = NULL }
 };
 
-static int vm_rq_test (ECTX ectx, c_state_t *c)
+static int vm_rq_decode_bytecode (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_re[1]), c->p.argv[0].data.word * 2);
+	WORDPTR 	mt	= c->p.argv[0].data.mt;
+	bytecode_t	*bc	= (bytecode_t *) malloc (sizeof (bytecode_t));
+	c_state_t	*cb_c;
+	WORDPTR 	cb;
+
+	/* FIXME: verify mobile type */
+	
+	bc->refcount	= 1;
+	bc->source 	= NULL;
+	bc->length	= (int)	read_word (wordptr_plus (mt, 1));
+	bc->data	= (BYTE *) malloc (bc->length);
+	memcpy (bc->data, 
+		(BYTE *) wordptr_real_address ((WORDPTR) read_word (wordptr_plus (mt, 0))),
+		bc->length
+	);
+
+	tvm_mt_release (ectx, mt);
+
+	if ((bc->tbc = decode_tbc (bc->data, bc->length)) == NULL) {
+		free_bytecode (bc);
+		return send_message (ectx, c, &(vm_re[VM_RE_ERROR]), 0);
+	}
+
+	cb		= allocate_cb (ectx, bytecode_rq, &cb_c);
+	cb_c->type 	= C_T_BYTECODE;
+	cb_c->data.bc	= bc;
+
+	return send_message (ectx, c, &(vm_re[VM_RE_BYTECODE]), cb);
 }
+/*}}}*/
+
 
 /*{{{  Virtual Channel 0 - outputs VM channel bundles */
 int vc0_mt_in (ECTX ectx, WORDPTR address)
