@@ -613,7 +613,8 @@ static int bytecode_get_line_info (ECTX ectx, c_state_t *c)
 /*
 PROTOCOL P.VM.RQ
   CASE
-    decode.bytecode = 0; MOBILE []BYTE
+    decode.bytecode = 0; MOBILE []BYTE -- TBC data
+    load.bytecode   = 1; MOBILE []BYTE -- resource path
 :
 PROTOCOL P.VM.RE
   CASE
@@ -628,9 +629,11 @@ CHAN TYPE CT.VM
 */
 
 static int vm_rq_decode_bytecode (ECTX, c_state_t *);
+static int vm_rq_load_bytecode (ECTX, c_state_t *);
 
 static p_sym_t vm_rq[] = {
 	{ .entry = 0, .symbols = "M", .dispatch = vm_rq_decode_bytecode },
+	{ .entry = 1, .symbols = "M", .dispatch = vm_rq_load_bytecode },
 	{ .symbols = NULL }
 };
 
@@ -666,6 +669,38 @@ static int vm_rq_decode_bytecode (ECTX ectx, c_state_t *c)
 
 	if ((bc->tbc = decode_tbc (bc->data, bc->length)) == NULL) {
 		free_bytecode (bc);
+		return send_message (ectx, c, &(vm_re[VM_RE_ERROR]), 0);
+	}
+
+	cb		= allocate_cb (ectx, bytecode_rq, &cb_c);
+	cb_c->type 	= C_T_BYTECODE;
+	cb_c->data.bc	= bc;
+
+	return send_message (ectx, c, &(vm_re[VM_RE_BYTECODE]), cb);
+}
+
+static int vm_rq_load_bytecode (ECTX ectx, c_state_t *c)
+{
+	WORDPTR 	mt	= c->p.argv[0].data.mt;
+	bytecode_t	*bc;
+	c_state_t	*cb_c;
+	WORDPTR 	cb;
+	char		*file;
+	int		length;
+
+	length	= (int) read_word (wordptr_plus (mt, 1));
+	file	= (char *) malloc (length + 1);
+	memcpy (file, 
+		(BYTE *) wordptr_real_address ((WORDPTR) read_word (wordptr_plus (mt, 0))),
+		length
+	);
+	file[length] = '\0';
+	tvm_mt_release (ectx, mt);
+
+	bc = load_bytecode (file);
+	free (file);
+
+	if (bc == NULL) {
 		return send_message (ectx, c, &(vm_re[VM_RE_ERROR]), 0);
 	}
 
