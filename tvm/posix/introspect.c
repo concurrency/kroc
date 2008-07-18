@@ -89,6 +89,9 @@ static int handle_in (ECTX ectx,
 {
 	c_state_t *c = (c_state_t *) data;
 
+	fprintf (stderr, "in; data = %p, channel = %p, address = %p, count = %d\n",
+		data, channel, address, count);
+	
 	if (c->state == C_S_ENCODE_ENTRY) {
 		if (count == 1) {
 			write_byte (address, (BYTE) c->p.entry);
@@ -128,6 +131,10 @@ static int handle_in (ECTX ectx,
 			fprintf (stderr, "X2\n");
 			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 		}
+		
+		if (c->p.argc == 0) {
+			c->state = C_S_IDLE;
+		}
 
 		return ECTX_CONTINUE;
 	} else {
@@ -148,7 +155,7 @@ static int handle_out (ECTX ectx,
 	c_state_t *c = (c_state_t *) data;
 	int i;
 
-	fprintf (stderr, "data = %p, channel = %p, address = %p, count = %d\n",
+	fprintf (stderr, "out; data = %p, channel = %p, address = %p, count = %d\n",
 		data, channel, address, count);
 
 	if (c->state == C_S_IDLE && count == 1) {
@@ -228,6 +235,9 @@ static int handle_mt_in (ECTX ectx,
 {
 	c_state_t *c = (c_state_t *) data;
 	
+	fprintf (stderr, "mt_in; data = %p, channel = %p, address = %p\n",
+		data, channel, address);
+	
 	if (c->state == C_S_ENCODE) {
 		int	n	= --c->p.argc;
 		p_arg_t *arg	= &(c->p.argv[n]);
@@ -235,12 +245,11 @@ static int handle_mt_in (ECTX ectx,
 		if (arg->type == P_A_MT) {
 			write_word (address, (WORD) arg->data.mt);
 
-			if (c->decode->symbols[n+1] == '\0') {
+			if (c->p.argc == 0) {
 				c->state = C_S_IDLE;
-				return c->decode->dispatch (ectx, c);
-			} else {
-				return ECTX_CONTINUE;
 			}
+			
+			return ECTX_CONTINUE;
 		}
 	}
 	
@@ -253,6 +262,9 @@ static int handle_mt_out (ECTX ectx,
 {
 	c_state_t *c = (c_state_t *) data;
 
+	fprintf (stderr, "mt_out; data = %p, channel = %p, address = %p\n",
+		data, channel, address);
+	
 	if (c->state == C_S_DECODE) {
 		int n		= c->p.argc++;
 		p_arg_t	*arg	= &(c->p.argv[n]);
@@ -712,6 +724,8 @@ static int vm_rq_load_bytecode (ECTX ectx, c_state_t *c)
 	);
 	file[length] = '\0';
 	tvm_mt_release (ectx, mt);
+
+	fprintf (stderr, "file = '%s'\n", file);
 
 	bc = load_bytecode (file);
 	free (file);
