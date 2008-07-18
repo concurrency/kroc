@@ -95,6 +95,8 @@
 
 #define MWSDEBUG 0
 
+#define CONST_ARRAY_LENGTH(array) (sizeof (array) / sizeof ((array)[0]))
+
 /*}}}*/
 
 /*{{{  PUBLIC variables that are used elsewhere in the run time system */
@@ -1338,214 +1340,183 @@ void kernel_panic (void)
 	ccsp_kernel_exit (1, 0);
 }
 /*}}}*/
-/*{{{  void zerodiv_happened (unsigned int zerodiv_info, unsigned int zerodiv_info2, unsigned int filename_addr, unsigned int procedure_addr)*/
+/*{{{  error_info */
 /*
- *	divide-by-zero handling function
+ *	Information supplied by the runtime system about an error.
  */
-static void zerodiv_happened (unsigned int zerodiv_info, unsigned int zerodiv_info2, unsigned int filename_addr, unsigned int procedure_addr)
+typedef struct {
+	word info1;
+	word info2;
+	word filename_info;
+	word proc_info;
+} error_info;
+/*}}}*/
+/*{{{  static void print_error_location (const error_info *info) */
+/*
+ *	Print the " in PROC ... \n" part of an error message.
+ */
+static void print_error_location (const error_info *info)
 {
-	int line_num, file_num, proc_num;
-	char *div_filename, *div_procname;
-	int *div_fc, *div_off;
-	int *pvr_fc, *pvr_off;
+	const char *filename_tab = (const char *) info->filename_info;
+	const char *procname_tab = (const char *) info->proc_info;
 
-	div_filename = div_procname = NULL;
-	line_num = zerodiv_info & 0xffff;
-	file_num = (zerodiv_info2 >> 16) & 0xffff;
-	proc_num = zerodiv_info2 & 0xffff;
-	div_fc = (int *)filename_addr;
-	if (file_num > *div_fc) {
-		BMESSAGE ("filename table inconsistent!\n");
-		file_num = -1;
+	const char *filename, *procname;
+	int line_num, file_num, proc_num;
+
+	line_num = info->info1 & 0xffff;
+
+	file_num = (info->info2 >> 16) & 0xffff;
+	if (file_num < 0 || file_num > ((const int *) filename_tab)[0]) {
+		filename = NULL;
 	} else {
-		div_off = div_fc + (file_num + 1);
-		div_filename = (char *)filename_addr + *div_off;
+		filename = filename_tab + ((const int *) filename_tab)[file_num + 1];
 	}
-	pvr_fc = (int *)procedure_addr;
-	if (proc_num > *pvr_fc) {
-		BMESSAGE ("procedure table inconsistent!\n");
-		proc_num = -1;
+
+	proc_num = info->info2 & 0xffff;
+	if (file_num < 0 || proc_num > ((const int *) procname_tab)[0]) {
+		procname = NULL;
 	} else {
-		pvr_off = pvr_fc + (proc_num + 1);
-		div_procname = (char *)procedure_addr + *pvr_off;
+		procname = procname_tab + ((const int *) procname_tab)[proc_num + 1];
 	}
-	BMESSAGE ("divide-by-zero in PROC \"%s\" in file \"%s\" line %d\n", (proc_num >= 0) ? div_procname : "<unknown>",
-		(file_num >= 0) ? div_filename : "<unknown>", line_num);
-	return;
+
+	MESSAGE (" in PROC \"%s\" in file \"%s\" line %d\n",
+	         (procname == NULL) ? "<unknown>" : procname,
+	         (filename == NULL) ? "<unknown>" : filename,
+	         line_num);
 }
 /*}}}*/
-/*{{{  void overflow_happened (unsigned int overflow_info, unsigned int overflow_info2, unsigned int filename_addr, unsigned int procedure_addr)*/
+/*{{{  void handle_zerodiv_error (const error_info *info) */
 /*
- *	overflow handling function
+ *	Handle integer divide-by-zero error.
  */
-static void overflow_happened (unsigned int overflow_info, unsigned int overflow_info2, unsigned int filename_addr, unsigned int procedure_addr)
+static void handle_zerodiv_error (const error_info *info)
 {
-	static char *overflow_ops[] = { "INVALID", "add", "subtract", "multiply", "divide", "modulo", "long-add", "long-subtract", "add-constant",
-					"STOP", "long-divide", "fractional-multiply", "fp-check-int32", "fp-check-int64" };
-	static int num_overflow_ops = 14;
-	int ovr_idx, line_num, file_num, proc_num;
-	char *ovr_filename, *ovr_procname;
-	int *ovr_fc, *ovr_off;
-	int *pvr_fc, *pvr_off;
-
-	ovr_filename = ovr_procname = NULL;
-	ovr_idx = (overflow_info >> 24) & 0xff;
-	line_num = overflow_info & 0xffff;
-	file_num = (overflow_info2 >> 16) & 0xffff;
-	proc_num = overflow_info2 & 0xffff;
-	if ((ovr_idx >= num_overflow_ops) || (ovr_idx < 0)) {
-		ovr_idx = 0;
-	}
-	ovr_fc = (int *)filename_addr;
-	if (file_num > *ovr_fc) {
-		BMESSAGE ("filename table inconsistent!\n");
-		file_num = -1;
-	} else {
-		ovr_off = ovr_fc + (file_num + 1);
-		ovr_filename = (char *)filename_addr + *ovr_off;
-	}
-	pvr_fc = (int *)procedure_addr;
-	if (proc_num > *pvr_fc) {
-		BMESSAGE ("procedure table inconsistent!\n");
-		proc_num = -1;
-	} else {
-		pvr_off = pvr_fc + (proc_num + 1);
-		ovr_procname = (char *)procedure_addr + *pvr_off;
-	}
-	BMESSAGE ("overflow on %s operation in PROC \"%s\" in file \"%s\" line %d\n",
-		overflow_ops[ovr_idx], (proc_num >= 0) ? ovr_procname : "<unknown>", (file_num >= 0) ? ovr_filename : "<unknown>", line_num);
-	return;
+	BMESSAGE ("divide-by-zero error");
+	print_error_location (info);
 }
 /*}}}*/
-/*{{{  void floaterr_happened (unsigned int floaterr_info, unsigned int floaterr_info2, unsigned int floaterr_fpustatus, unsigned int filename_addr, unsigned int procedure_addr)*/
+/*{{{  static void handle_overflow_error (const error_info *info) */
 /*
- *	floating-point error handling
- **/
-static void floaterr_happened (unsigned int floaterr_info, unsigned int floaterr_info2, unsigned int floaterr_fpustatus, unsigned int filename_addr, unsigned int procedure_addr)
+ *	Handle integer overflow error.
+ */
+static void handle_overflow_error (const error_info *info)
 {
-	int line_num, file_num, proc_num;
-	char *flt_filename, *flt_procname;
-	int *flt_fc, *flt_fo;
-	int *flt_pc, *flt_po;
-	static char *fpuerrs[] = {"invalid-op", "denormalised-operand", "divide-by-zero", "overflow", "underflow", "inexact-result"};
-	int num_fpuerrs = 6;
+	static const char *overflow_ops[] = {
+		"INVALID",
+		"add",
+		"subtract",
+		"multiply",
+		"divide",
+		"modulo",
+		"long-add",
+		"long-subtract",
+		"add-constant",
+		"STOP",
+		"long-divide",
+		"fractional-multiply",
+		"fp-check-int32",
+		"fp-check-int64"
+	};
+	int op_num;
+
+	op_num = (info->info1 >> 24) & 0xff;
+	if (op_num < 0 || op_num >= CONST_ARRAY_LENGTH (overflow_ops)) {
+		op_num = 0;
+	}
+
+	BMESSAGE ("overflow error during %s operation", overflow_ops[op_num]);
+	print_error_location (info);
+}
+/*}}}*/
+/*{{{  void handle_fp_error (const error_info *info, word fpu_status) */
+/*
+ *	Handle floating-point error.
+ */
+static void handle_fp_error (const error_info *info, word fpu_status)
+{
+	static const char *fpu_errors[] = {
+		"invalid operation",
+		"denormalised operand",
+		"divide by zero",
+		"overflow",
+		"underflow",
+		"inexact result"
+	};
 	int i;
 
-	flt_filename = flt_procname = NULL;
-	line_num = floaterr_info & 0xfff;
-	file_num = (floaterr_info2 >> 16) & 0xffff;
-	proc_num = floaterr_info2 & 0xffff;
-	flt_fc = (int *)filename_addr;
-	if (file_num > *flt_fc) {
-		BMESSAGE ("filename table inconsistent!\n");
-		file_num = -1;
-	} else {
-		flt_fo = flt_fc + (file_num + 1);
-		flt_filename = (char *)filename_addr + *flt_fo;
-	}
-	flt_pc = (int *)procedure_addr;
-	if (proc_num > *flt_pc) {
-		BMESSAGE ("procedure table inconsistent!\n");
-		proc_num = -1;
-	} else {
-		flt_po = flt_pc + (proc_num + 1);
-		flt_procname = (char *)procedure_addr + *flt_po;
-	}
 	BMESSAGE ("floating-point error (");
-	floaterr_fpustatus &= 0x3f;
-	for (i=0; i<num_fpuerrs; i++) {
-		if (floaterr_fpustatus & (1 << i)) {
-			MESSAGE ("%s", fpuerrs[i]);
-			floaterr_fpustatus &= ~(1 << i);
-			if (floaterr_fpustatus) {
-				MESSAGE (",");
+	fpu_status &= 0x3f;
+	for (i = 0; i < CONST_ARRAY_LENGTH (fpu_errors); i++) {
+		if (fpu_status & (1 << i)) {
+			MESSAGE ("%s", fpu_errors[i]);
+			fpu_status &= ~(1 << i);
+			if (fpu_status) {
+				MESSAGE (", ");
 			}
 		}
 	}
-	MESSAGE (") in PROC \"%s\" in file \"%s\" line %d\n", 
-		(proc_num >= 0) ? flt_procname : "<unknown>", (file_num >= 0) ? flt_filename : "<unknown>", line_num);
-	return;
+	MESSAGE (")");
+	print_error_location (info);
 }
 /*}}}*/
-/*{{{  void handle_range_error (unsigned int range_info1, unsigned int range_info2, unsigned int filename_addr, unsigned int procedure_addr)*/
-/* range error handling */
-static void handle_range_error (unsigned int range_info1, unsigned int range_info2, unsigned int filename_addr, unsigned int procedure_addr)
+/*{{{  void handle_range_error (const error_info *info) */
+/*
+ *	Handle range error.
+ */
+static void handle_range_error (const error_info *info)
 {
-	static char *rangerr_ops[] = { "INVALID", "shift", "CSNGL", "CSUB0", "CCNT1", "CWORD" };
-	static int num_rangerr_ops = 6;
-	int range_op, line_num, file_num, proc_num;
-	char *range_file, *range_proc;
+	static const char *range_ops[] = {
+		"INVALID",
+		"shift",
+		"CSNGL",
+		"CSUB0",
+		"CCNT1",
+		"CWORD"
+	};
+	int op_num, rt_bits;
+
+	rt_bits = (info->info1 >> 16) & 0xff;
+	if (rt_bits != 0xff) {
+		BMESSAGE ("range error (debug data incorrect - rt_bits=%04x)\n", rt_bits);
+		return;
+	}
+
+	op_num = (info->info1 >> 24) & 0xff;
+	if (op_num < 0 || op_num >= CONST_ARRAY_LENGTH (range_ops)) {
+		op_num = 0;
+	}
+
+	BMESSAGE ("range error during %s operation", range_ops[op_num]);
+	print_error_location (info);
+}
+/*}}}*/
+/*{{{  static void handle_seterr (const error_info *info) */
+/*
+ *	Handle general (SETERR) errors.
+ */
+static void handle_seterr (const error_info *info)
+{
+	bool occam_mode;
 	int rt_bits;
 
-	range_op = (range_info1 >> 24) & 0xff;
-	rt_bits = (range_info1 >> 16) & 0xff;
-	line_num = range_info1 & 0xffff;
-	if (rt_bits != 0xff) {
-		BMESSAGE ("Range error (debug data incorrect - rt_bits=%x)\n", rt_bits);
-		return;
-	}
-	if ((range_op >= num_rangerr_ops) || (range_op < 0)) {
-		BMESSAGE ("Range error (debug data incorrect - range_op=%d)\n", range_op);
-		return;
-	}
-	file_num = (range_info2 >> 16) & 0xffff;
-	proc_num = range_info2 & 0xffff;
-	range_file = (char *)filename_addr;
-	range_proc = (char *)procedure_addr;
-	if ((file_num >= *(int *)(range_file)) || (file_num < 0)) {
-		BMESSAGE ("Range error (debug data incorrect - file_num=%d)\n", file_num);
-		return;
-	}
-	if ((proc_num >= *(int *)(range_proc)) || (proc_num < 0)) {
-		BMESSAGE ("Range error (debug data incorrect - proc_num=%d)\n", proc_num);
-		return;
-	}
-	range_file += *(int *)(range_file + (4 * (file_num+1)));
-	range_proc += *(int *)(range_proc + (4 * (proc_num+1)));
-	BMESSAGE ("range error on %s operation in PROC \"%s\" in file \"%s\" line %d\n",
-		rangerr_ops[range_op], range_proc, range_file, line_num);
-	return;
-}
-/*}}}*/
-/*{{{  void handle_seterr (unsigned int seterr_info1, unsigned int seterr_info2, unsigned int filename_addr, unsigned int procedure_addr)*/
-/* seterr error handling */
-static void handle_seterr (unsigned int seterr_info1, unsigned int seterr_info2, unsigned int filename_addr, unsigned int procedure_addr)
-{
-	bool occam_mode = false;
-	int line_num, rt_bits;
-
-	rt_bits = (seterr_info1 >> 16) & 0xffff;
+	/* XXX: It would be nicer if errors always set these bits consistently. */
+	rt_bits = (info->info1 >> 16) & 0xffff;
 	if (rt_bits == 0xfb00) {
-		line_num = seterr_info1 & 0xffff;
 		occam_mode = true;
 	} else if ((rt_bits & 0xff00) == 0xfe00) {
-		line_num = seterr_info1 & 0xffffff;
+		occam_mode = false;
 	} else {
-		BMESSAGE ("SetErr: application level error (debug data incorrect - rt_bits=%4.4x)\n", rt_bits);
+		BMESSAGE ("error (debug data incorrect - rt_bits=%04x)\n", rt_bits);
 		return;
 	}
 	
+	BMESSAGE("error");
 	if (occam_mode) {
-		char *seterr_file, *seterr_proc;
-		int file_num = (seterr_info2 >> 16) & 0xffff;
-		int proc_num = seterr_info2 & 0xffff;
-		seterr_file = (char *)filename_addr;
-		seterr_proc = (char *)procedure_addr;
-		if ((file_num >= *(int *)(seterr_file)) || (file_num < 0)) {
-			BMESSAGE ("SetErr: application level error (debug data incorrect - file_num=%d)\n", file_num);
-			return;
-		}
-		if ((proc_num >= *(int *)(seterr_proc)) || (proc_num < 0)) {
-			BMESSAGE ("SetErr: application level error (debug data incorrect - proc_num=%d)\n", proc_num);
-			return;
-		}
-		seterr_file += *(int *)(seterr_file + (4 * (file_num+1)));
-		seterr_proc += *(int *)(seterr_proc + (4 * (proc_num+1)));
-		BMESSAGE ("error in PROC \"%s\", in file \"%s\" line %d.\n",
-			seterr_proc, seterr_file, line_num);
+		print_error_location (info);
 	} else {
-		BMESSAGE ("error in file \"%s\" at line %d.\n",
-			(char *)filename_addr, line_num);
+		BMESSAGE ("error in file \"%s\" line %d\n",
+		          (char *) info->filename_info,
+		          info->info1 & 0xffffff);
 	}
 }
 /*}}}*/
@@ -2129,11 +2100,11 @@ static void kernel_common_error (word *Wptr, sched_t *sched, unsigned int return
  */
 K_CALL_DEFINE_4_0 (Y_zero_div)
 {
-	unsigned int zerodiv_info2, zerodiv_info1, procedure_addr, filename_addr;
+	error_info info;
 
-	K_CALL_PARAMS_4 (zerodiv_info2, zerodiv_info1, procedure_addr, filename_addr);
+	K_CALL_PARAMS_4 (info.info2, info.info1, info.proc_info, info.filename_info);
 	
-	zerodiv_happened (zerodiv_info1, zerodiv_info2, filename_addr, procedure_addr);
+	handle_zerodiv_error (&info);
 	kernel_common_error (Wptr, sched, return_address, "zero_div");
 }
 /*}}}*/
@@ -2149,11 +2120,11 @@ K_CALL_DEFINE_4_0 (Y_zero_div)
  */
 K_CALL_DEFINE_4_0 (Y_overflow)
 {
-	unsigned int filename_addr, overflow_info1, overflow_info2, procedure_addr;
-	
-	K_CALL_PARAMS_4 (overflow_info2, overflow_info1, procedure_addr, filename_addr);
+	error_info info;
 
-	overflow_happened (overflow_info1, overflow_info2, filename_addr, procedure_addr);		/* Parameters dealt with (they're visible throughout) */
+	K_CALL_PARAMS_4 (info.info2, info.info1, info.proc_info, info.filename_info);
+
+	handle_overflow_error (&info);
 	kernel_common_error (Wptr, sched, return_address, "overflow");
 }
 /*}}}*/
@@ -2169,11 +2140,12 @@ K_CALL_DEFINE_4_0 (Y_overflow)
  */
 K_CALL_DEFINE_5_0 (Y_floaterr)
 {
-	unsigned int filename_addr, floaterr_fpustatus, floaterr_info1, floaterr_info2, procedure_addr;
+	error_info info;
+	word fpu_status;
+
+	K_CALL_PARAMS_5 (info.info2, info.info1, info.proc_info, info.filename_info, fpu_status);
 	
-	K_CALL_PARAMS_5 (floaterr_info2, floaterr_info1, procedure_addr, filename_addr, floaterr_fpustatus);
-	
-	floaterr_happened (floaterr_info1, floaterr_info2, floaterr_fpustatus, filename_addr, procedure_addr);
+	handle_fp_error (&info, fpu_status);
 	kernel_common_error (Wptr, sched, return_address, "floaterr");
 }
 /*}}}*/
@@ -2189,12 +2161,12 @@ K_CALL_DEFINE_5_0 (Y_floaterr)
  */
 K_CALL_DEFINE_4_0 (Y_Seterr)
 {
-	unsigned int filename_addr, procedure_addr, seterr_info1, seterr_info2;
+	error_info info;
+
+	K_CALL_PARAMS_4 (info.info2, info.info1, info.proc_info, info.filename_info);
+	ENTRY_TRACE (Y_Seterr, "%p, %p, %x, %x", (void *)info.proc_info, (void *)info.filename_info, info.info2, info.info1);
 	
-	K_CALL_PARAMS_4 (seterr_info2, seterr_info1, procedure_addr, filename_addr);
-	ENTRY_TRACE (Y_Seterr, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, seterr_info2, seterr_info1);
-	
-	handle_seterr (seterr_info1, seterr_info2, filename_addr, procedure_addr);
+	handle_seterr (&info);
 	kernel_common_error (Wptr, sched, return_address, "Seterr");
 }
 /*}}}*/
@@ -2247,12 +2219,12 @@ K_CALL_DEFINE_0_0 (Y_BNSeterr)
  */
 K_CALL_DEFINE_4_0 (Y_RangeCheckError)
 {
-	unsigned int filename_addr, procedure_addr, range_info1, range_info2;
-	
-	K_CALL_PARAMS_4 (range_info2, range_info1, procedure_addr, filename_addr);
-	ENTRY_TRACE (Y_RangeCheckError, "%p, %p, %x, %x", (void *)procedure_addr, (void *)filename_addr, range_info2, range_info1);
+	error_info info;
 
-	handle_range_error (range_info1, range_info2, filename_addr, procedure_addr);
+	K_CALL_PARAMS_4 (info.info2, info.info1, info.proc_info, info.filename_info);
+	ENTRY_TRACE (Y_RangeCheckError, "%p, %p, %x, %x", (void *)info.proc_info, (void *)info.filename_info, info.info2, info.info1);
+
+	handle_range_error (&info);
 	kernel_common_error (Wptr, sched, return_address, "RangeCheckError");
 }
 /*}}}*/
