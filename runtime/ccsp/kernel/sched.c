@@ -1551,31 +1551,37 @@ static void handle_seterr (unsigned int seterr_info1, unsigned int seterr_info2,
 /*}}}*/
 /*{{{  void ccsp_decode_debug_insert (sched_t *sched, int offset, const char **file, int *line)*/
 /*
- *	Decode a set of debug insert information.
+ *	Decode the current insert debugging information.
+ *	Pass 0 as the offset for the current position; pass 2 for the position
+ *	before the last PROC call.
  *	If no valid information is available, returns 0 as the line number.
  */
 void ccsp_decode_debug_insert (int offset, const char **filename, int *line)
 {
 	const sched_t *sched = _local_scheduler;
-	const word *info = &(sched->mdparam[offset]);
+	const word *info;
 
 	if (sched == NULL) {
 		*line = 0;
 		*filename = "no scheduler";
-	} else if (info[0] == 0xffffffff || info[1] == 0xffffffff
-	           || info[0] == 0 || info[1] == 0) {
+		return;
+	}
+
+	info = &(sched->mdparam[offset]);
+	if (info[0] == 0xffffffff || info[1] == 0xffffffff
+		   || info[0] == 0 || info[1] == 0) {
 		*line = 0;
-		*filename = "no debug info";
+		*filename = "(no debugging information recorded)";
 	} else {
 		const char *file_tab = (const char *) info[1];
 		int file_num = (info[0] >> 16) & 0xffff;
 
-		if (file_num < 0 || file_num >= *(int *)file_tab) {
+		if (file_num < 0 || file_num >= ((const int *) file_tab)[0]) {
 			*line = 0;
-			*filename = "bad file number";
+			*filename = "(bad file number in debugging information)";
 		} else {
 			*line = info[0] & 0xffff;
-			*filename = file_tab + *(int *)(file_tab + (4 * (file_num + 1)));
+			*filename = file_tab + ((const int *) file_tab)[file_num + 1];
 		}
 	}
 }
