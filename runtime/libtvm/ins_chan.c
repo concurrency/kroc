@@ -135,6 +135,8 @@ TVM_HELPER int chan_io (ECTX ectx,
 			EXT_CB_INTERFACE *intf	= (EXT_CB_INTERFACE *) read_offset (cb, mt_cb_ext_t, interface);
 			void *ext_data 		= (void *) read_offset (cb, mt_cb_ext_t, data);
 			
+			*requeue = (WORDPTR) NOT_PROCESS_P;
+
 			if (intf != NULL) {
 				int ret = ext (ectx, intf, ext_data, chan_ptr, data_ptr, data_len);
 				if (ret == ECTX_CONTINUE) {
