@@ -101,6 +101,7 @@ static int handle_in (ECTX ectx,
 			
 			return ECTX_CONTINUE;
 		} else {
+			fprintf (stderr, "X1\n");
 			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 		}
 	} else if (c->state == C_S_ENCODE) {
@@ -124,6 +125,7 @@ static int handle_in (ECTX ectx,
 			}
 			free (arg->data.array);
 		} else {
+			fprintf (stderr, "X2\n");
 			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 		}
 
@@ -146,11 +148,15 @@ static int handle_out (ECTX ectx,
 	c_state_t *c = (c_state_t *) data;
 	int i;
 
+	fprintf (stderr, "data = %p, channel = %p, address = %p, count = %d\n",
+		data, channel, address, count);
+
 	if (c->state == C_S_IDLE && count == 1) {
 		int entry = read_byte (address);
 		
 		for (i = 0; c->in[i].entry != entry; ++i) {
 			if (c->in[i].symbols == NULL) {
+				fprintf (stderr, "X3\n");
 				return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 			}
 		}
@@ -201,6 +207,7 @@ static int handle_out (ECTX ectx,
 				address = byteptr_plus (address, 1);
 			}
 		} else {
+			fprintf (stderr, "X4\n");
 			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 		}
 		
@@ -212,6 +219,7 @@ static int handle_out (ECTX ectx,
 		}
 	}
 
+	fprintf (stderr, "X5\n");
 	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 }
 
@@ -236,6 +244,7 @@ static int handle_mt_in (ECTX ectx,
 		}
 	}
 	
+	fprintf (stderr, "X6\n");
 	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 }
 
@@ -248,17 +257,24 @@ static int handle_mt_out (ECTX ectx,
 		int n		= c->p.argc++;
 		p_arg_t	*arg	= &(c->p.argv[n]);
 		
+		arg->type	= c->decode->symbols[n];
 		arg->length	= 0;
 
 		if (arg->type == P_A_MT) {
 			arg->data.word = read_word ((WORDPTR) address);
-			/* XXX:	really we should write NULL_P back to the
-			 * 	address when the mobile type is not shared.
+			/* FIXME: really we should write NULL_P back to the
+			 * 	  address when the mobile type is not shared.
 			 */
-			return ECTX_CONTINUE;
+			if (c->decode->symbols[n+1] == '\0') {
+				c->state = C_S_IDLE;
+				return c->decode->dispatch (ectx, c);
+			} else {
+				return ECTX_CONTINUE;
+			}
 		}
 	}
 
+	fprintf (stderr, "X7\n");
 	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 }
 
@@ -277,16 +293,19 @@ static int send_message (ECTX ectx, c_state_t *c, p_sym_t *sym, ...)
 {
 	va_list args;
 	char	*fmt	= sym->symbols;
-	int	i	= 0;
+	int	i;
 
 	c->state	= C_S_ENCODE_ENTRY;
 	c->p.entry	= sym->entry;
+	c->p.argc	= strlen (fmt);
+	i		= c->p.argc;
 
 	va_start (args, sym);
 	
-	while (*fmt != '\0') {
+	while (i) {
 		int type = (int) *fmt;
 
+		i--;
 		c->p.argv[i].type = type;
 
 		if (type == P_A_ARRAY) {
@@ -307,13 +326,10 @@ static int send_message (ECTX ectx, c_state_t *c, p_sym_t *sym, ...)
 			c->p.argv[i].data.word	= va_arg (args, WORD);
 		}
 
-		i++;
 		fmt++;
 	}
 
 	va_end (args);
-
-	c->p.argc = i;
 
 	if (c->waiting != NOT_PROCESS_P) {
 		WORDPTR wptr	= c->waiting;
