@@ -249,8 +249,9 @@ static tbc_dbg_t *decode_debug (BYTE *head, const tenc_element_t *dbg_element)
 
 	if (tenc_walk_to_element (data, &length, "fn L", &element) < 0)
 		return NULL;
-	
+
 	dbg->files 	= decode_strs (element.data.bytes, element.length, "fn S");
+	data		= element.next;
 	
 	if (tenc_walk_to_element (data, &length, "lndB", &element) < 0)
 		return NULL;
