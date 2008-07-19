@@ -1280,13 +1280,12 @@ PROC run.scaling.test (VAL INT test, VAL []BOOL enabled, VAL INT runs, cycles, V
 --}}}
 
 --{{{  PROC run.test.set
-PROC run.test.set (VAL []BOOL enabled, CHAN BYTE scr!, err!)
+PROC run.test.set (VAL []BOOL enabled, VAL INT runs, CHAN BYTE scr!, err!)
   SHARED! CHAN INT results.in:
   CHAN RESULTS results.out:
   CHAN P.SETUP setup:
   PAR
     results (results.in?, setup?, results.out!, err!)
-    VAL INT runs IS 10:
     VAL INT aff.cycles IS 1024 * 32:
     VAL INT comms.cycles IS 1024 * 1024:
     VAL INT mem.cycles IS 1024 * 32:
@@ -1373,6 +1372,7 @@ PROC run.test.set (VAL []BOOL enabled, CHAN BYTE scr!, err!)
 PROC hereticc (CHAN BYTE kyb?, scr!, err!)
   INITIAL [NUM.TESTS]BOOL enabled IS [i = 0 FOR NUM.TESTS | FALSE]:
   INITIAL INT num.sets IS 1:
+  INITIAL INT runs IS 10:
   SEQ
     --{{{  parse command-line options
     --{{{  PROC usage
@@ -1385,6 +1385,7 @@ PROC hereticc (CHAN BYTE kyb?, scr!, err!)
         out.string ("-e TEST                      Enable test TEST (default all tests)*n", 0, err!)
         out.string ("-c                           Run test suite continuously*n", 0, err!)
         out.string ("-n NUMBER                    Run test suite NUMBER times (default 1)*n", 0, err!)
+        out.string ("-r NUMBER                    Run each test NUMBER times (default 10)*n", 0, err!)
         err ! '*n'
         out.string ("Supported tests:*n", 0, err!)
         INITIAL INT i IS 0:
@@ -1408,7 +1409,7 @@ PROC hereticc (CHAN BYTE kyb?, scr!, err!)
     --}}}
     CHAN GETOPT opts:
     PAR
-      file.get.options ("cn:e:", opts!)
+      file.get.options ("cn:r:e:", opts!)
       INITIAL BOOL running IS TRUE:
       WHILE running
         BYTE o:
@@ -1425,6 +1426,17 @@ PROC hereticc (CHAN BYTE kyb?, scr!, err!)
                 BOOL ok:
                 SEQ
                   ok, num.sets := string.to.int (a)
+                  IF
+                    NOT ok
+                      usage ()
+                    TRUE
+                      SKIP
+                --}}}
+              'r'
+                --{{{  -r
+                BOOL ok:
+                SEQ
+                  ok, runs := string.to.int (a)
                   IF
                     NOT ok
                       usage ()
@@ -1483,7 +1495,7 @@ PROC hereticc (CHAN BYTE kyb?, scr!, err!)
     --{{{  run test sets
     WHILE num.sets <> 0
       SEQ
-        run.test.set (enabled, scr!, err!)
+        run.test.set (enabled, runs, scr!, err!)
         IF
           num.sets = (-1)
             SKIP
