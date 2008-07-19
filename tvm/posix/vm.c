@@ -10,7 +10,6 @@
 
 /*{{{  Static State  */
 static tvm_t		tvm;
-static tvm_ectx_t	firmware_ctx, user_ctx;
 static volatile WORD	alarm_set	= 0;
 static volatile WORD	alarm_time	= 0;
 /*}}}*/
