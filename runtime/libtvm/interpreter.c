@@ -429,44 +429,63 @@ int tvm_ectx_waiting_on (ECTX ectx, WORDPTR ws_base, WORD ws_len)
 	return 0; /* no dependencies */
 }
 
+static TVM_INLINE BYTE decode_next (ECTX ectx)
+{
+	BYTE instr;
+	
+	/* Read the instruction */
+	#if defined(MEMORY_INTF_BIGENDIAN)
+	instr = *IPTR; /* FIXME */
+	#else
+	instr = read_byte (IPTR);
+	#endif
+	
+	#if 0
+	printf ("%p %02x ", IPTR, instr);
+	if ((instr & 0xF0) != 0xF0) {
+		printf ("%8s", pri_name[(instr >> 4) & 0xF]);
+	} else {
+		printf ("%8s", sec_name[OREG | (instr & 0xF)]);
+	}
+	printf (" %08x %08x %08x %08x\n", 
+		OREG | (instr & 0xF), AREG, BREG, CREG);
+	#endif
+
+	/* Increment instruction pointer */
+	IPTR = byteptr_plus (IPTR, 1);
+
+	return instr;
+}
+
+static int do_dispatch (ECTX ectx, BYTE instr)
+{
+	/* Put the least significant bits in OREG */
+	OREG |= (instr & 0x0f);
+	
+	#ifdef TVM_DISPATCH_SWITCH
+	return dispatch_instruction (ectx, instr);
+	#else
+	/* Use the other bits to index into the jump table */
+	return primaries[instr >> 4] (ectx);
+	#endif
+}
+
+BYTE tvm_decode_instruction (ECTX ectx)
+{
+	return decode_next (ectx);
+}
+
+int tvm_dispatch_instruction (ECTX ectx, BYTE instr)
+{
+	return do_dispatch (ectx, instr);
+}
+
 int tvm_dispatch (ECTX ectx, UWORD cycles)
 {
 	int ret;
 
 	do {
-		BYTE instr;
-		
-		/* Read the instruction */
-		#if defined(MEMORY_INTF_BIGENDIAN)
-		instr = *IPTR; /* FIXME */
-		#else
-		instr = read_byte (IPTR);
-		#endif
-		
-		#if 0
-		printf ("%p %02x ", IPTR, instr);
-		if ((instr & 0xF0) != 0xF0) {
-			printf ("%8s", pri_name[(instr >> 4) & 0xF]);
-		} else {
-			printf ("%8s", sec_name[OREG | (instr & 0xF)]);
-		}
-		printf (" %08x %08x %08x %08x\n", 
-			OREG | (instr & 0xF), AREG, BREG, CREG);
-		#endif
-
-		/* Increment instruction pointer */
-		IPTR = byteptr_plus (IPTR, 1);
-
-		/* Put the least significant bits in OREG */
-		OREG |= (instr & 0x0f);
-
-		#ifdef TVM_DISPATCH_SWITCH
-		ret = dispatch_instruction (ectx, instr);
-		#else
-		/* Use the other bits to index into the jump table */
-		ret = primaries[instr >> 4] (ectx);
-		#endif
-		
+		ret = do_dispatch (ectx, decode_next (ectx));
 		cycles -= 2;
 	} while (cycles && !ret);
 

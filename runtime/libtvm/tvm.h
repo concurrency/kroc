@@ -63,6 +63,8 @@ extern int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 				const char *fmt, int argc, const WORD argv[]);
 extern void tvm_ectx_disconnect (ECTX ectx);
 extern int tvm_ectx_waiting_on (ECTX ectx, WORDPTR ws_base, WORD ws_len);
+extern BYTE tvm_decode_instruction (ECTX ectx);
+extern int tvm_dispatch_instruction (ECTX ectx, BYTE instr);
 extern int tvm_dispatch (ECTX ectx, UWORD cycles);
 extern int tvm_run (ECTX ectx);
 extern int tvm_run_count (ECTX ectx, UWORD count);
