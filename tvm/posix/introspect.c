@@ -432,41 +432,43 @@ typedef struct vm_state_t {
 	WORD	icount;
 } vm_state_t;
 
+/*{{{  CT.VM.CTL */
 /*
 PROTOCOL P.VM.CTL.RQ
   CASE
-    run; INT               -- run until for N instructions or until breakpoint
-    step                   -- step traced instruction
-    dispatch; INT          -- dispatch an arbitrary instruction
-    set.bp; IPTR           -- set break point
-    clear.bp; IPTR         -- clear break point
-    get.clock              -- get clock details
-    set.clock; INT; INT    -- set clock type and frequency
-    trace; INT; BOOL       -- enable/disable trace type (instruction)
-    get.state              -- get VM state
-    set.state; VM.STATE    -- set VM state
-    read.word; ADDR        -- read word at address
-    read.byte; ADDR        -- read byte at address
-    read.int16; ADDR       -- read int16 at address
-    read.type; ADDR        -- read type of memory at address
-    return.param; INT      -- release parameter N 
-                           -- set parameter N to channel
-    set.param.chan; INT; MOBILE.CHAN
+    run            = 0 ; INT       -- run until for N instructions or until breakpoint
+    step           = 1             -- step traced instruction
+    dispatch       = 2 ; INT       -- dispatch an arbitrary instruction
+    set.bp         = 3 ; IPTR      -- set break point
+    clear.bp       = 4 ; IPTR      -- clear break point
+    get.clock      = 5             -- get clock details
+    set.clock      = 6 ; INT; INT  -- set clock type and frequency
+    trace          = 7 ; INT; BOOL -- enable/disable trace type (instruction)
+    get.state      = 8             -- get VM state
+    set.state      = 9 ; VM.STATE  -- set VM state
+    read.word      = 10; ADDR      -- read word at address
+    read.byte      = 11; ADDR      -- read byte at address
+    read.int16     = 12; ADDR      -- read int16 at address
+    read.type      = 13; ADDR      -- read type of memory at address
+    return.param   = 14; INT       -- release parameter N 
+    set.param.chan = 15; INT; MOBILE.CHAN
+                                   -- set parameter N to channel
 :
 PROTOCOL P.VM.CTL.RE
   CASE
-    decoded; IPTR; INT     -- decode instruction, new IPTR
-    dispatched; IPTR; ADDR; INT  -- dispatched instruction, new IPTR and WPTR
-    bp; IPTR               -- break pointer IPTR reached
-    clock; INT; INT        -- clock type and frequency
-    ok
-    error; INT
-    state; VM.STATE
-    word; INT
-    byte; BYTE
-    int16; INT16
-    type; INT
-    channel; MOBILE.CHAN
+    decoded        = 0 ; IPTR; INT -- decode instruction, new IPTR
+    dispatched     = 1 ; IPTR; ADDR; INT  
+                                   -- dispatched instruction, new IPTR and WPTR
+    bp             = 2 ; IPTR      -- break pointer IPTR reached
+    clock          = 3 ; INT; INT  -- clock type and frequency
+    ok             = 4
+    error          = 5 ; INT
+    state          = 6 ; VM.STATE
+    word           = 7 ; INT
+    byte           = 8 ; BYTE
+    int16          = 9 ; INT16
+    type           = 10; INT
+    channel        = 11; MOBILE.CHAN
 :
 CHAN TYPE CT.VM.CTL
   MOBILE RECORD
@@ -475,6 +477,155 @@ CHAN TYPE CT.VM.CTL
 :
 */
 
+static int vm_ctl_run (ECTX, c_state_t *);
+static int vm_ctl_step (ECTX, c_state_t *);
+static int vm_ctl_dispatch (ECTX, c_state_t *);
+static int vm_ctl_set_bp (ECTX, c_state_t *);
+static int vm_ctl_clear_bp (ECTX, c_state_t *);
+static int vm_ctl_get_clock (ECTX, c_state_t *);
+static int vm_ctl_set_clock (ECTX, c_state_t *);
+static int vm_ctl_trace (ECTX, c_state_t *);
+static int vm_ctl_get_state (ECTX, c_state_t *);
+static int vm_ctl_set_state (ECTX, c_state_t *);
+static int vm_ctl_read_word (ECTX, c_state_t *);
+static int vm_ctl_read_byte (ECTX, c_state_t *);
+static int vm_ctl_read_int16 (ECTX, c_state_t *);
+static int vm_ctl_read_type (ECTX, c_state_t *);
+static int vm_ctl_return_param (ECTX, c_state_t *);
+static int vm_ctl_set_param_chan (ECTX, c_state_t *);
+
+static p_sym_t vm_ctl_rq[] = {
+	{ .entry = 0 , .symbols = "w",	.dispatch = vm_ctl_run		},
+	{ .entry = 1 , .symbols = "",	.dispatch = vm_ctl_step		},
+	{ .entry = 2 , .symbols = "w",	.dispatch = vm_ctl_dispatch	},
+	{ .entry = 3 , .symbols = "w",	.dispatch = vm_ctl_set_bp	},
+	{ .entry = 4 , .symbols = "w",	.dispatch = vm_ctl_clear_bp	},
+	{ .entry = 5 , .symbols = "",	.dispatch = vm_ctl_get_clock	},
+	{ .entry = 6 , .symbols = "ww",	.dispatch = vm_ctl_set_clock	},
+	{ .entry = 7 , .symbols = "wb",	.dispatch = vm_ctl_trace	},
+	{ .entry = 8 , .symbols = "",	.dispatch = vm_ctl_get_state	},
+	{ .entry = 9 , .symbols = "A",	.dispatch = vm_ctl_set_state	},
+	{ .entry = 10, .symbols = "w",	.dispatch = vm_ctl_read_word	},
+	{ .entry = 11, .symbols = "w",	.dispatch = vm_ctl_read_byte	},
+	{ .entry = 12, .symbols = "w",	.dispatch = vm_ctl_read_int16	},
+	{ .entry = 13, .symbols = "w",	.dispatch = vm_ctl_read_type	},
+	{ .entry = 14, .symbols = "w",	.dispatch = vm_ctl_return_param },
+	{ .entry = 15, .symbols = "wM",	.dispatch = vm_ctl_set_param_chan },
+	{ .symbols = NULL }
+};
+
+enum {
+	VM_CTL_RE_DECODED	= 0,
+	VM_CTL_RE_DISPATCHED	= 1,
+	VM_CTL_RE_BP		= 2,
+	VM_CTL_RE_CLOCK		= 3,
+	VM_CTL_RE_OK		= 4,
+	VM_CTL_RE_ERROR		= 5,
+	VM_CTL_RE_STATE		= 6,
+	VM_CTL_RE_WORD		= 7,
+	VM_CTL_RE_BYTE		= 8,
+	VM_CTL_RE_INT16		= 9,
+	VM_CTL_RE_TYPE		= 10,
+	VM_CTL_RE_CHANNEL	= 11
+};
+static p_sym_t vm_ctl_re[] = {
+	{ .entry = VM_CTL_RE_DECODED,	.symbols = "ww"	},
+	{ .entry = VM_CTL_RE_DISPATCHED,.symbols = "www"},
+	{ .entry = VM_CTL_RE_BP,	.symbols = "w"	},
+	{ .entry = VM_CTL_RE_CLOCK,	.symbols = "ww" },
+	{ .entry = VM_CTL_RE_OK,	.symbols = "" 	},
+	{ .entry = VM_CTL_RE_ERROR,	.symbols = "w"	},
+	{ .entry = VM_CTL_RE_STATE,	.symbols = "A"	},
+	{ .entry = VM_CTL_RE_WORD,	.symbols = "w"	},
+	{ .entry = VM_CTL_RE_BYTE,	.symbols = "b"	},
+	{ .entry = VM_CTL_RE_INT16,	.symbols = "2"	},
+	{ .entry = VM_CTL_RE_TYPE,	.symbols = "w"	},
+	{ .entry = VM_CTL_RE_CHANNEL,	.symbols = "M"	},
+	{ .symbols = NULL }
+};
+
+static int vm_ctl_run (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_step (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_dispatch (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_set_bp (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_clear_bp (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_get_clock (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_set_clock (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_trace (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_get_state (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_set_state (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_read_word (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_read_byte (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_read_int16 (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_read_type (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_return_param (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+
+static int vm_ctl_set_param_chan (ECTX ectx, c_state_t *c)
+{
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+}
+/*}}}*/
+
+/*{{{  CT.BYTECODE */
 /*
 PROTOCOL P.BYTECODE.RQ
   CASE
@@ -544,7 +695,31 @@ static p_sym_t bytecode_re[] = {
 
 static int bytecode_run (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_ERROR]), 0);
+	bytecode_t	*bc = c->data.bc;
+	c_state_t	*cb_c;
+	WORDPTR 	cb;
+	ECTX		vm = NULL;
+	WORD		argv[TVM_ECTX_TLP_ARGS];
+	int i;
+
+	for (i = 0; i < TVM_ECTX_TLP_ARGS; ++i)
+		argv[i] = (WORD) NULL_P;
+
+	if (bc->tbc->tlp != NULL) {
+		if (bc->tbc->tlp->fmt != NULL)
+			vm = allocate_ectx (bc, bc->tbc->tlp->fmt, argv);
+	} else if (vm == NULL) {
+		vm = allocate_ectx (bc, "?!!", argv);
+	}
+	
+	if (vm == NULL)
+		return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_ERROR]), 0);
+
+	cb		= allocate_cb (ectx, vm_ctl_rq, &cb_c);
+	cb_c->type 	= C_T_VM_CTL;
+	cb_c->data.vm	= vm;
+
+	return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_VM]), cb);
 }
 
 static int bytecode_get_symbol (ECTX ectx, c_state_t *c)
