@@ -89,9 +89,6 @@ static int handle_in (ECTX ectx,
 {
 	c_state_t *c = (c_state_t *) data;
 
-	fprintf (stderr, "in; data = %p, channel = %p, address = %p, count = %d\n",
-		data, channel, address, count);
-	
 	if (c->state == C_S_ENCODE_ENTRY) {
 		if (count == 1) {
 			write_byte (address, (BYTE) c->p.entry);
@@ -104,7 +101,6 @@ static int handle_in (ECTX ectx,
 			
 			return ECTX_CONTINUE;
 		} else {
-			fprintf (stderr, "X1\n");
 			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 		}
 	} else if (c->state == C_S_ENCODE) {
@@ -128,7 +124,6 @@ static int handle_in (ECTX ectx,
 			}
 			free (arg->data.array);
 		} else {
-			fprintf (stderr, "X2\n");
 			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 		}
 		
@@ -155,15 +150,11 @@ static int handle_out (ECTX ectx,
 	c_state_t *c = (c_state_t *) data;
 	int i;
 
-	fprintf (stderr, "out; data = %p, channel = %p, address = %p, count = %d\n",
-		data, channel, address, count);
-
 	if (c->state == C_S_IDLE && count == 1) {
 		int entry = read_byte (address);
 		
 		for (i = 0; c->in[i].entry != entry; ++i) {
 			if (c->in[i].symbols == NULL) {
-				fprintf (stderr, "X3\n");
 				return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 			}
 		}
@@ -214,7 +205,6 @@ static int handle_out (ECTX ectx,
 				address = byteptr_plus (address, 1);
 			}
 		} else {
-			fprintf (stderr, "X4\n");
 			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 		}
 		
@@ -226,7 +216,6 @@ static int handle_out (ECTX ectx,
 		}
 	}
 
-	fprintf (stderr, "X5\n");
 	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 }
 
@@ -234,9 +223,6 @@ static int handle_mt_in (ECTX ectx,
 	void *data, WORDPTR channel, WORDPTR address)
 {
 	c_state_t *c = (c_state_t *) data;
-	
-	fprintf (stderr, "mt_in; data = %p, channel = %p, address = %p\n",
-		data, channel, address);
 	
 	if (c->state == C_S_ENCODE) {
 		int	n	= --c->p.argc;
@@ -253,7 +239,6 @@ static int handle_mt_in (ECTX ectx,
 		}
 	}
 	
-	fprintf (stderr, "X6\n");
 	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 }
 
@@ -262,9 +247,6 @@ static int handle_mt_out (ECTX ectx,
 {
 	c_state_t *c = (c_state_t *) data;
 
-	fprintf (stderr, "mt_out; data = %p, channel = %p, address = %p\n",
-		data, channel, address);
-	
 	if (c->state == C_S_DECODE) {
 		int n		= c->p.argc++;
 		p_arg_t	*arg	= &(c->p.argv[n]);
@@ -286,7 +268,6 @@ static int handle_mt_out (ECTX ectx,
 		}
 	}
 
-	fprintf (stderr, "X7\n");
 	return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 }
 
@@ -408,12 +389,16 @@ WORDPTR str_to_mt (ECTX ectx, const char *str)
 	if (str != NULL) {
 		int length = strlen (str);
 		
+		/* Allocate mobile type */
 		mt = tvm_mt_alloc (ectx, MT_MAKE_ARRAY_TYPE (1, MT_NUM_BYTE), length);
+		/* Copy string into it */
 		memcpy (
 			wordptr_real_address ((WORDPTR) read_word (mt)),
 			str,
 			length
 		);
+		/* Set array dimension to string length */
+		write_word (wordptr_plus (mt, 1), length);
 	}
 	
 	return mt;
@@ -504,7 +489,7 @@ PROTOCOL P.BYTECODE.RE
     vm             = 0; CT.VM.CTL
     error          = 1; INT
     file           = 2; MOBILE []BYTE
-    info           = 3; INT; INT       -- file, line
+    line.info      = 3; INT; INT       -- file, line
                                        -- offset, name, definition, ws, vs
     symbol         = 4; INT; MOBILE []BYTE; MOBILE []BYTE; INT; INT
 :
@@ -552,7 +537,8 @@ static int bytecode_run (ECTX ectx, c_state_t *c)
 
 static int bytecode_get_symbol (ECTX ectx, c_state_t *c)
 {
-	tbc_sym_t *sym = c->data.bc->tbc->symbols;
+	tbc_t		*tbc = c->data.bc->tbc;
+	tbc_sym_t 	*sym = tbc->symbols;
 
 	if (c->p.argv[0].type == P_A_MT) {
 		/* symbol name */
@@ -574,10 +560,12 @@ static int bytecode_get_symbol (ECTX ectx, c_state_t *c)
 		/* bytecode offset */
 		unsigned int iptr = (unsigned int) c->p.argv[0].data.word;
 		
-		while (sym != NULL) {
-			if (sym->offset <= iptr)
-				break;
-			sym = sym->next;
+		if (iptr < tbc->bytecode_len) {
+			while (sym != NULL) {
+				if (sym->offset <= iptr)
+					break;
+				sym = sym->next;
+			}
 		}
 	}
 
@@ -599,6 +587,7 @@ static int bytecode_get_file (ECTX ectx, c_state_t *c)
 	if (c->data.bc->tbc->debug != NULL) {
 		tenc_str_t *file	= c->data.bc->tbc->debug->files;
 		int n			= c->p.argv[0].data.word;
+		
 		while (file != NULL) {
 			if (n == 0) {
 				return 	send_message (ectx, c, 
@@ -724,8 +713,6 @@ static int vm_rq_load_bytecode (ECTX ectx, c_state_t *c)
 	);
 	file[length] = '\0';
 	tvm_mt_release (ectx, mt);
-
-	fprintf (stderr, "file = '%s'\n", file);
 
 	bc = load_bytecode (file);
 	free (file);
