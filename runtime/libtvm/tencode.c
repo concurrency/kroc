@@ -256,11 +256,12 @@ static tbc_dbg_t *decode_debug (BYTE *head, const tenc_element_t *dbg_element)
 	if (tenc_walk_to_element (data, &length, "lndB", &element) < 0)
 		return NULL;
 
-	dbg->lnd 	= (tbc_lnd_t *) element.next;
+	dbg->lnd 	= (tbc_lnd_t *) element.data.bytes;
 	dbg->n_lnd	= element.length / ((sizeof (int)) * 3);
 	
-	data		= element.next;
+	data		= element.data.bytes;
 	length		= element.length / (sizeof (int));
+
 	while (length > 0) {
 		*((int *) data) = tenc_decode_int (data);
 		data += sizeof (int);
