@@ -39,19 +39,20 @@ typedef struct p_arg_t {
 	} data;
 } TVM_PACK p_arg_t;
 
-/* Protocol Case Description */
-typedef struct pc_desc_t {
-	int		entry;
-	int		argc;
-	p_arg_t		argv[8];
-} pc_desc_t;
-
 /* Protocol Symbol */
 typedef struct p_sym_t {
 	int	entry;
 	char	*symbols;
 	int	(*dispatch)(ECTX, c_state_t *);
 } p_sym_t;
+
+/* Protocol Case Description */
+typedef struct pc_desc_t {
+	p_sym_t		*symbol;
+	int		argc;
+	p_arg_t		argv[8];
+} pc_desc_t;
+
 
 /* Channel States */
 enum {
@@ -91,12 +92,14 @@ static int handle_in (ECTX ectx,
 
 	if (c->state == C_S_ENCODE_ENTRY) {
 		if (count == 1) {
-			write_byte (address, (BYTE) c->p.entry);
+			write_byte (address, (BYTE) c->p.symbol->entry);
 			
 			if (c->p.argc > 0) {
 				c->state = C_S_ENCODE;
 			} else {
 				c->state = C_S_IDLE;
+				if (c->p.symbol->dispatch != NULL)
+					return c->p.symbol->dispatch (ectx, c);
 			}
 			
 			return ECTX_CONTINUE;
@@ -129,6 +132,8 @@ static int handle_in (ECTX ectx,
 		
 		if (c->p.argc == 0) {
 			c->state = C_S_IDLE;
+			if (c->p.symbol->dispatch != NULL)
+				return c->p.symbol->dispatch (ectx, c);
 		}
 
 		return ECTX_CONTINUE;
@@ -159,14 +164,14 @@ static int handle_out (ECTX ectx,
 			}
 		}
 
-		c->p.entry	= entry;
+		c->p.symbol	= &(c->in[i]);
 		c->p.argc	= 0;
 
 		if (c->in[i].symbols[0] == '\0') {
 			return c->in[i].dispatch (ectx, c);
 		} else {
 			c->state	= C_S_DECODE;
-			c->decode 	= &(c->in[i]);
+			c->decode 	= c->p.symbol;
 			return ECTX_CONTINUE;
 		}
 	} else if (c->state == C_S_DECODE) {
@@ -233,6 +238,9 @@ static int handle_mt_in (ECTX ectx,
 
 			if (c->p.argc == 0) {
 				c->state = C_S_IDLE;
+
+				if (c->p.symbol->dispatch != NULL)
+					return c->p.symbol->dispatch (ectx, c);
 			}
 			
 			return ECTX_CONTINUE;
@@ -289,7 +297,7 @@ static int send_message (ECTX ectx, c_state_t *c, p_sym_t *sym, ...)
 	int	i;
 
 	c->state	= C_S_ENCODE_ENTRY;
-	c->p.entry	= sym->entry;
+	c->p.symbol	= sym;
 	c->p.argc	= strlen (fmt);
 	i		= c->p.argc;
 
@@ -529,18 +537,18 @@ enum {
 	VM_CTL_RE_CHANNEL	= 11
 };
 static p_sym_t vm_ctl_re[] = {
-	{ .entry = VM_CTL_RE_DECODED,	.symbols = "ww"	},
-	{ .entry = VM_CTL_RE_DISPATCHED,.symbols = "www"},
-	{ .entry = VM_CTL_RE_BP,	.symbols = "w"	},
-	{ .entry = VM_CTL_RE_CLOCK,	.symbols = "ww" },
-	{ .entry = VM_CTL_RE_OK,	.symbols = "" 	},
-	{ .entry = VM_CTL_RE_ERROR,	.symbols = "w"	},
-	{ .entry = VM_CTL_RE_STATE,	.symbols = "A"	},
-	{ .entry = VM_CTL_RE_WORD,	.symbols = "w"	},
-	{ .entry = VM_CTL_RE_BYTE,	.symbols = "b"	},
-	{ .entry = VM_CTL_RE_INT16,	.symbols = "2"	},
-	{ .entry = VM_CTL_RE_TYPE,	.symbols = "w"	},
-	{ .entry = VM_CTL_RE_CHANNEL,	.symbols = "M"	},
+	{ .entry = VM_CTL_RE_DECODED,	.symbols = "ww",	.dispatch = NULL },
+	{ .entry = VM_CTL_RE_DISPATCHED,.symbols = "www",	.dispatch = NULL },
+	{ .entry = VM_CTL_RE_BP,	.symbols = "w",		.dispatch = NULL },
+	{ .entry = VM_CTL_RE_CLOCK,	.symbols = "ww",	.dispatch = NULL },
+	{ .entry = VM_CTL_RE_OK,	.symbols = "",		.dispatch = NULL },
+	{ .entry = VM_CTL_RE_ERROR,	.symbols = "w",		.dispatch = NULL },
+	{ .entry = VM_CTL_RE_STATE,	.symbols = "A",		.dispatch = NULL },
+	{ .entry = VM_CTL_RE_WORD,	.symbols = "w",		.dispatch = NULL },
+	{ .entry = VM_CTL_RE_BYTE,	.symbols = "b",		.dispatch = NULL },
+	{ .entry = VM_CTL_RE_INT16,	.symbols = "2",		.dispatch = NULL },
+	{ .entry = VM_CTL_RE_TYPE,	.symbols = "w",		.dispatch = NULL },
+	{ .entry = VM_CTL_RE_CHANNEL,	.symbols = "M",		.dispatch = NULL },
 	{ .symbols = NULL }
 };
 
@@ -683,13 +691,13 @@ enum {
 	BYTECODE_RE_TOP_LEVEL	= 6
 };
 static p_sym_t bytecode_re[] = {
-	{ .entry = BYTECODE_RE_VM,		.symbols = "M"	},
-	{ .entry = BYTECODE_RE_ERROR,		.symbols = "w"	},
-	{ .entry = BYTECODE_RE_FILE,		.symbols = "M"	},
-	{ .entry = BYTECODE_RE_LINE_INFO,	.symbols = "ww"	},
-	{ .entry = BYTECODE_RE_SYMBOL,		.symbols = "wMMww" },
-	{ .entry = BYTECODE_RE_DETAILS,		.symbols = "www"},
-	{ .entry = BYTECODE_RE_TOP_LEVEL,	.symbols = "MM"	},
+	{ .entry = BYTECODE_RE_VM,		.symbols = "M",		.dispatch = NULL },
+	{ .entry = BYTECODE_RE_ERROR,		.symbols = "w",		.dispatch = NULL },
+	{ .entry = BYTECODE_RE_FILE,		.symbols = "M",		.dispatch = NULL },
+	{ .entry = BYTECODE_RE_LINE_INFO,	.symbols = "ww",	.dispatch = NULL },
+	{ .entry = BYTECODE_RE_SYMBOL,		.symbols = "wMMww",	.dispatch = NULL },
+	{ .entry = BYTECODE_RE_DETAILS,		.symbols = "www",	.dispatch = NULL },
+	{ .entry = BYTECODE_RE_TOP_LEVEL,	.symbols = "MM",	.dispatch = NULL },
 	{ .symbols = NULL }
 };
 
@@ -889,8 +897,8 @@ enum {
 	VM_RE_ERROR	= 1
 };
 static p_sym_t vm_re[] = {
-	{ .entry = VM_RE_BYTECODE,	.symbols = "M" },
-	{ .entry = VM_RE_ERROR,		.symbols = "w" },
+	{ .entry = VM_RE_BYTECODE,	.symbols = "M",	.dispatch = NULL },
+	{ .entry = VM_RE_ERROR,		.symbols = "w",	.dispatch = NULL },
 	{ .symbols = NULL }
 };
 
