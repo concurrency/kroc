@@ -483,6 +483,8 @@ PROTOCOL P.BYTECODE.RQ
     get.symbol.at  = 2; IPTR            -- look up symbol at bytecode offset
     get.file       = 3; INT             -- translate file number to name
     get.line.info  = 4; IPTR            -- get file/line number of address
+    get.details    = 5                  -- get bytecode details
+    get.top.level  = 6                  -- get top-level-process details
 :
 PROTOCOL P.BYTECODE.RE
   CASE
@@ -490,8 +492,10 @@ PROTOCOL P.BYTECODE.RE
     error          = 1; INT
     file           = 2; MOBILE []BYTE
     line.info      = 3; INT; INT       -- file, line
+    symbol         = 4; IPTR; MOBILE []BYTE; MOBILE []BYTE; INT; INT
                                        -- offset, name, definition, ws, vs
-    symbol         = 4; INT; MOBILE []BYTE; MOBILE []BYTE; INT; INT
+    details        = 5; INT; INT; INT  -- ws, vs, length
+    top.level      = 6; MOBILE []BYTE; MOBILE []BYTE
 :
 CHAN TYPE CT.BYTECODE
   MOBILE RECORD
@@ -504,13 +508,17 @@ static int bytecode_run (ECTX, c_state_t *);
 static int bytecode_get_symbol (ECTX, c_state_t *);
 static int bytecode_get_file (ECTX, c_state_t *);
 static int bytecode_get_line_info (ECTX, c_state_t *);
+static int bytecode_get_details (ECTX, c_state_t *);
+static int bytecode_get_top_level (ECTX, c_state_t *);
 
 static p_sym_t bytecode_rq[] = {
-	{ .entry	= 0, .symbols = "", .dispatch = bytecode_run },
-	{ .entry	= 1, .symbols = "M", .dispatch = bytecode_get_symbol },
-	{ .entry	= 2, .symbols = "w", .dispatch = bytecode_get_symbol },
-	{ .entry	= 3, .symbols = "w", .dispatch = bytecode_get_file },
-	{ .entry	= 4, .symbols = "w", .dispatch = bytecode_get_line_info },
+	{ .entry	= 0, .symbols = "",	.dispatch = bytecode_run },
+	{ .entry	= 1, .symbols = "M",	.dispatch = bytecode_get_symbol },
+	{ .entry	= 2, .symbols = "w",	.dispatch = bytecode_get_symbol },
+	{ .entry	= 3, .symbols = "w",	.dispatch = bytecode_get_file },
+	{ .entry	= 4, .symbols = "w",	.dispatch = bytecode_get_line_info },
+	{ .entry	= 5, .symbols = "",	.dispatch = bytecode_get_details },
+	{ .entry	= 6, .symbols = "",	.dispatch = bytecode_get_top_level },
 	{ .symbols = NULL }
 };
 
@@ -518,15 +526,19 @@ enum {
 	BYTECODE_RE_VM		= 0,
 	BYTECODE_RE_ERROR	= 1,
 	BYTECODE_RE_FILE	= 2,
-	BYTECODE_RE_INFO	= 3,
-	BYTECODE_RE_SYMBOL	= 4
+	BYTECODE_RE_LINE_INFO	= 3,
+	BYTECODE_RE_SYMBOL	= 4,
+	BYTECODE_RE_DETAILS	= 5,
+	BYTECODE_RE_TOP_LEVEL	= 6
 };
 static p_sym_t bytecode_re[] = {
-	{ .entry = BYTECODE_RE_VM,	.symbols = "M", .dispatch = NULL },
-	{ .entry = BYTECODE_RE_ERROR,	.symbols = "w", .dispatch = NULL },
-	{ .entry = BYTECODE_RE_FILE,	.symbols = "M", .dispatch = NULL },
-	{ .entry = BYTECODE_RE_INFO,	.symbols = "ww", .dispatch = NULL },
-	{ .entry = BYTECODE_RE_SYMBOL,	.symbols = "wMMww", .dispatch = NULL },
+	{ .entry = BYTECODE_RE_VM,		.symbols = "M"	},
+	{ .entry = BYTECODE_RE_ERROR,		.symbols = "w"	},
+	{ .entry = BYTECODE_RE_FILE,		.symbols = "M"	},
+	{ .entry = BYTECODE_RE_LINE_INFO,	.symbols = "ww"	},
+	{ .entry = BYTECODE_RE_SYMBOL,		.symbols = "wMMww" },
+	{ .entry = BYTECODE_RE_DETAILS,		.symbols = "www"},
+	{ .entry = BYTECODE_RE_TOP_LEVEL,	.symbols = "MM"	},
 	{ .symbols = NULL }
 };
 
@@ -561,11 +573,16 @@ static int bytecode_get_symbol (ECTX ectx, c_state_t *c)
 		unsigned int iptr = (unsigned int) c->p.argv[0].data.word;
 		
 		if (iptr < tbc->bytecode_len) {
+			tbc_sym_t *prev = NULL;
+			
 			while (sym != NULL) {
-				if (sym->offset <= iptr)
+				if (sym->offset > iptr)
 					break;
-				sym = sym->next;
+				prev	= sym;
+				sym	= sym->next;
 			}
+			
+			sym = prev;
 		}
 	}
 
@@ -605,24 +622,62 @@ static int bytecode_get_file (ECTX ectx, c_state_t *c)
 
 static int bytecode_get_line_info (ECTX ectx, c_state_t *c)
 {
-	if (c->data.bc->tbc->debug != NULL) {
-		tbc_dbg_t 	*dbg = c->data.bc->tbc->debug;
-		unsigned int	iptr = (unsigned int) c->p.argv[0].data.word;
-		int 		i;
+	tbc_t		*tbc = c->data.bc->tbc;
+	tbc_dbg_t 	*dbg = tbc->debug;
+	unsigned int	iptr = (unsigned int) c->p.argv[0].data.word;
+	
+	if (dbg != NULL && iptr < tbc->bytecode_len) {
+		int shift 	= (dbg->n_lnd >> 1);
+		int i		= shift;
 
-		/* FIXME: use a binary search instead of a linear scan */
-
-		for (i = 0; i < dbg->n_lnd; ++i) {
+		while (i >= 0 && i < dbg->n_lnd) {
+			if (shift > 1)
+				shift >>= 1;
+			
 			if (dbg->lnd[i].offset <= iptr) {
-				return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_INFO]),
-					dbg->lnd[i].file,
-					dbg->lnd[i].line
-				);
+				if (((i + 1) < dbg->n_lnd) && (dbg->lnd[i + 1].offset > iptr)) {
+					break;
+				} else {
+					i += shift;
+				}
+			} else {
+				i -= shift;
 			}
+		}
+		
+		if (i >= 0 && i < dbg->n_lnd) {
+			return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_LINE_INFO]),
+				dbg->lnd[i].file,
+				dbg->lnd[i].line
+			);
 		}
 	}
 	
 	return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_ERROR]), 0);
+}
+
+static int bytecode_get_details (ECTX ectx, c_state_t *c)
+{
+	tbc_t *tbc = c->data.bc->tbc;
+	return send_message (
+		ectx, c, &(bytecode_re[BYTECODE_RE_DETAILS]),
+		tbc->ws, tbc->vs, tbc->bytecode_len
+	);
+}
+
+static int bytecode_get_top_level (ECTX ectx, c_state_t *c)
+{
+	tbc_tlp_t *tlp = c->data.bc->tbc->tlp;
+	
+	if (tlp != NULL) {
+		return send_message (
+			ectx, c, &(bytecode_re[BYTECODE_RE_TOP_LEVEL]),
+			str_to_mt (ectx, tlp->fmt),
+			str_to_mt (ectx, tlp->symbol)
+		);
+	} else {
+		return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_ERROR]), 0);
+	}
 }
 /*}}}*/
 
@@ -659,8 +714,8 @@ enum {
 	VM_RE_ERROR	= 1
 };
 static p_sym_t vm_re[] = {
-	{ .entry = VM_RE_BYTECODE,	.symbols = "M", .dispatch = NULL },
-	{ .entry = VM_RE_ERROR,		.symbols = "w", .dispatch = NULL },
+	{ .entry = VM_RE_BYTECODE,	.symbols = "M" },
+	{ .entry = VM_RE_ERROR,		.symbols = "w" },
 	{ .symbols = NULL }
 };
 
