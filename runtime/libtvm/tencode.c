@@ -302,9 +302,10 @@ static tbc_sym_t *decode_symbols (const tenc_element_t *stb_element)
 		if (load_str (&s_data, &s_length, "symS", &(sym->name)) < 0)
 			return NULL;
 
-		sym->definition	= NULL;
 		sym->ws		= 0;
 		sym->vs		= 0;
+		sym->definition	= NULL;
+		sym->next	= NULL;
 
 		if (s_length > 0) {
 			if (load_str (&s_data, &s_length, "defS", &(sym->definition)) < 0)
