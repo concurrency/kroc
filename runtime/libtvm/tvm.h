@@ -49,6 +49,7 @@ struct _tvm_t {
 
 /*{{{  Interpreter API */
 extern int tvm_init (tvm_t *tvm);
+extern void tvm_ectx_release (ECTX ectx);
 extern void tvm_ectx_reset (ECTX ectx);
 extern void tvm_ectx_init (tvm_t *tvm, ECTX ectx);
 extern WORD tvm_ectx_memory_size (ECTX ectx,

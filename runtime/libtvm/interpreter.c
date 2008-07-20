@@ -105,6 +105,23 @@ void tvm_ectx_init (tvm_t *tvm, ECTX ectx)
 	#endif
 }
 
+void tvm_ectx_release (ECTX ectx)
+{
+	tvm_t *tvm = ectx->tvm;
+	
+	if (ectx == tvm->head) {
+		tvm->head = ectx->next;
+	} else {
+		ECTX p = tvm->head;
+		while (p->next != ectx)
+			p = p->next;
+		p->next = ectx->next;
+	}
+
+	ectx->tvm	= NULL;
+	ectx->next	= NULL;
+}
+
 void tvm_ectx_reset (ECTX ectx)
 {
 	ectx->state 	= ECTX_INIT;
