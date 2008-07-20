@@ -446,7 +446,7 @@ PROTOCOL P.VM.CTL.RQ
   CASE
     run            = 0 ; INT       -- run until for N instructions or until breakpoint
     step           = 1             -- step traced instruction
-    dispatch       = 2 ; INT       -- dispatch an arbitrary instruction
+    dispatch       = 2 ; INT; INT  -- dispatch an arbitrary instruction, with argument
     set.bp         = 3 ; IPTR      -- set break point
     clear.bp       = 4 ; IPTR      -- clear break point
     get.clock      = 5             -- get clock details
@@ -464,9 +464,10 @@ PROTOCOL P.VM.CTL.RQ
 :
 PROTOCOL P.VM.CTL.RE
   CASE
-    decoded        = 0 ; IPTR; INT -- decode instruction, new IPTR
-    dispatched     = 1 ; IPTR; ADDR; INT  
-                                   -- dispatched instruction, new IPTR and WPTR
+    decoded        = 0 ; IPTR; INT; INT
+                                   -- new IPTR, instruction, arg
+    dispatched     = 1 ; IPTR; ADDR
+                                   -- new IPTR and WPTR
     bp             = 2 ; IPTR      -- break pointer IPTR reached
     clock          = 3 ; INT; INT  -- clock type and frequency
     ok             = 4
@@ -505,7 +506,7 @@ static int vm_ctl_set_param_chan (ECTX, c_state_t *);
 static p_sym_t vm_ctl_rq[] = {
 	{ .entry = 0 , .symbols = "w",	.dispatch = vm_ctl_run		},
 	{ .entry = 1 , .symbols = "",	.dispatch = vm_ctl_step		},
-	{ .entry = 2 , .symbols = "w",	.dispatch = vm_ctl_dispatch	},
+	{ .entry = 2 , .symbols = "ww",	.dispatch = vm_ctl_dispatch	},
 	{ .entry = 3 , .symbols = "w",	.dispatch = vm_ctl_set_bp	},
 	{ .entry = 4 , .symbols = "w",	.dispatch = vm_ctl_clear_bp	},
 	{ .entry = 5 , .symbols = "",	.dispatch = vm_ctl_get_clock	},
@@ -537,8 +538,8 @@ enum {
 	VM_CTL_RE_CHANNEL	= 11
 };
 static p_sym_t vm_ctl_re[] = {
-	{ .entry = VM_CTL_RE_DECODED,	.symbols = "ww",	.dispatch = NULL },
-	{ .entry = VM_CTL_RE_DISPATCHED,.symbols = "www",	.dispatch = NULL },
+	{ .entry = VM_CTL_RE_DECODED,	.symbols = "www",	.dispatch = NULL },
+	{ .entry = VM_CTL_RE_DISPATCHED,.symbols = "ww",	.dispatch = NULL },
 	{ .entry = VM_CTL_RE_BP,	.symbols = "w",		.dispatch = NULL },
 	{ .entry = VM_CTL_RE_CLOCK,	.symbols = "ww",	.dispatch = NULL },
 	{ .entry = VM_CTL_RE_OK,	.symbols = "",		.dispatch = NULL },
@@ -637,7 +638,7 @@ static int vm_ctl_set_param_chan (ECTX ectx, c_state_t *c)
 /*
 PROTOCOL P.BYTECODE.RQ
   CASE
-    run            = 0
+    create.vm      = 0
     get.symbol     = 1; MOBILE []BYTE   -- look up symbol name
     get.symbol.at  = 2; IPTR            -- look up symbol at bytecode offset
     get.file       = 3; INT             -- translate file number to name
@@ -663,7 +664,7 @@ CHAN TYPE CT.BYTECODE
 :
 */
 
-static int bytecode_run (ECTX, c_state_t *);
+static int bytecode_create_vm (ECTX, c_state_t *);
 static int bytecode_get_symbol (ECTX, c_state_t *);
 static int bytecode_get_file (ECTX, c_state_t *);
 static int bytecode_get_line_info (ECTX, c_state_t *);
@@ -671,7 +672,7 @@ static int bytecode_get_details (ECTX, c_state_t *);
 static int bytecode_get_top_level (ECTX, c_state_t *);
 
 static p_sym_t bytecode_rq[] = {
-	{ .entry	= 0, .symbols = "",	.dispatch = bytecode_run },
+	{ .entry	= 0, .symbols = "",	.dispatch = bytecode_create_vm },
 	{ .entry	= 1, .symbols = "M",	.dispatch = bytecode_get_symbol },
 	{ .entry	= 2, .symbols = "w",	.dispatch = bytecode_get_symbol },
 	{ .entry	= 3, .symbols = "w",	.dispatch = bytecode_get_file },
@@ -701,7 +702,7 @@ static p_sym_t bytecode_re[] = {
 	{ .symbols = NULL }
 };
 
-static int bytecode_run (ECTX ectx, c_state_t *c)
+static int bytecode_create_vm (ECTX ectx, c_state_t *c)
 {
 	bytecode_t	*bc = c->data.bc;
 	c_state_t	*cb_c;
