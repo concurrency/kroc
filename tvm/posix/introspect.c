@@ -82,7 +82,8 @@ struct c_state_t {
 	union {
 		bytecode_t	*bc;
 		ECTX		vm;
-	} 		data;
+	}		data;
+	BYTE		*buffer;
 };
 
 static int handle_in (ECTX ectx,
@@ -287,6 +288,8 @@ static void handle_free (ECTX ectx, void *data)
 	} else if (c->type == C_T_VM_CTL) {
 		free_ectx (c->data.vm);
 	}
+	if (c->buffer != NULL)
+		free (c->buffer);
 	free (c);
 }
 
@@ -380,6 +383,7 @@ static WORDPTR allocate_cb (ECTX ectx, p_sym_t *in, c_state_t **c_ptr)
 	c->in		= in;
 	c->decode	= NULL;
 	c->p.argc	= 0;
+	c->buffer	= NULL;
 	*c_ptr		= c;
 
 	cb_base = wordptr_minus (cb, MT_CB_PTR_OFFSET + (sizeof (mt_cb_ext_t) / sizeof (WORD)));
@@ -438,6 +442,7 @@ typedef struct vm_state_t {
 	WORD	wptr;
 	WORD	iptr;
 	WORD	icount;
+	WORD	eflags;
 } vm_state_t;
 
 /*{{{  CT.VM.CTL */
@@ -538,7 +543,7 @@ enum {
 	VM_CTL_RE_CHANNEL	= 11
 };
 static p_sym_t vm_ctl_re[] = {
-	{ .entry = VM_CTL_RE_DECODED,	.symbols = "www",	.dispatch = NULL },
+	{ .entry = VM_CTL_RE_DECODED,	.symbols = "www",	.dispatch = vm_ctl_dispatch },
 	{ .entry = VM_CTL_RE_DISPATCHED,.symbols = "ww",	.dispatch = NULL },
 	{ .entry = VM_CTL_RE_BP,	.symbols = "w",		.dispatch = NULL },
 	{ .entry = VM_CTL_RE_CLOCK,	.symbols = "ww",	.dispatch = NULL },
@@ -555,17 +560,71 @@ static p_sym_t vm_ctl_re[] = {
 
 static int vm_ctl_run (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	ECTX 	vm 	= c->data.vm;
+	int 	ret 	= tvm_run_count (vm, c->p.argv[0].data.word);
+
+	switch (ret) {
+		case ECTX_TIME_SLICE:
+			return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_OK]));
+		default:
+			return send_message (
+				ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]),
+				vm->state
+			);
+	}
 }
 
 static int vm_ctl_step (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	ECTX vm 	= c->data.vm;
+	BYTE instr;
+	
+	vm->state	= ECTX_RUNNING;
+	instr		= tvm_decode_instruction (vm);
+
+	return send_message (
+		ectx, c, &(vm_ctl_re[VM_CTL_RE_DECODED]),
+		vm->iptr,
+		instr,
+		vm->oreg
+	);
 }
 
 static int vm_ctl_dispatch (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	ECTX vm 	= c->data.vm;
+	BYTE instr;
+
+	if (c->p.argc == 2) {
+		/* request ! dispatch */
+		vm->state	= ECTX_RUNNING;
+		vm->oreg	= c->p.argv[1].data.word;
+		instr		= (BYTE) c->p.argv[0].data.word;
+	} else {
+		/* continuation from response ! decoded */
+		instr		= (BYTE) c->p.argv[1].data.word;
+	}
+
+	vm->state = tvm_dispatch_instruction (vm, c->p.argv[0].data.word);
+
+	/* FIXME: this needs to be different; there's no way this will be sufficient */
+	switch (vm->state) {
+		case ECTX_INS_INVALID:
+		case ECTX_INS_UNSUPPORTED:
+		case ECTX_ERROR:
+		case ECTX_EMPTY:
+		case ECTX_SHUTDOWN:
+			return send_message (
+				ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]),
+				vm->state
+			);
+		default:
+			return send_message (
+				ectx, c, &(vm_ctl_re[VM_CTL_RE_DISPATCHED]),
+				vm->iptr,
+				vm->wptr
+			);
+	}
 }
 
 static int vm_ctl_set_bp (ECTX ectx, c_state_t *c)
@@ -593,29 +652,70 @@ static int vm_ctl_trace (ECTX ectx, c_state_t *c)
 	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
 }
 
+static void encode_state (ECTX vm, vm_state_t *state)
+{
+	state->state	= vm->state;
+	state->stack[0]	= vm->areg;
+	state->stack[1]	= vm->breg;
+	state->stack[2]	= vm->creg;
+	state->oreg	= vm->oreg;
+	state->wptr	= (WORD) vm->wptr;
+	state->iptr	= (WORD) vm->iptr; 
+	state->eflags	= vm->eflags;
+}
+
+static void decode_state (ECTX vm, vm_state_t *state)
+{
+	vm->state	= state->state;
+	vm->areg	= state->stack[0];
+	vm->breg	= state->stack[1];
+	vm->creg	= state->stack[2];
+	vm->oreg	= state->oreg;
+	vm->wptr	= (WORDPTR) state->wptr;
+	vm->iptr	= (BYTEPTR) state->iptr;
+	vm->eflags	= state->eflags;
+}
+
 static int vm_ctl_get_state (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	ECTX 		vm	= c->data.vm;
+	vm_state_t 	*state	= (vm_state_t *) c->buffer;	
+
+	encode_state (vm, state);
+
+	return send_message (
+		ectx, c, &(vm_ctl_re[VM_CTL_RE_STATE]),
+		state, sizeof (vm_state_t)
+	);
 }
 
 static int vm_ctl_set_state (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	ECTX 		vm	= c->data.vm;
+	vm_state_t 	*state	= (vm_state_t *) c->p.argv[0].data.array;
+
+	/* FIXME: verify state is valid */
+	decode_state (vm, state);
+
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_OK]));
 }
 
 static int vm_ctl_read_word (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	WORD w = read_word ((WORDPTR) c->p.argv[0].data.word);
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_WORD]), w);
 }
 
 static int vm_ctl_read_byte (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	BYTE b = read_byte ((BYTEPTR) c->p.argv[0].data.word);
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_BYTE]), b);
 }
 
 static int vm_ctl_read_int16 (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	INT16 s = read_int16 ((INT16PTR) c->p.argv[0].data.word);
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_INT16]), &s, 2);
 }
 
 static int vm_ctl_read_type (ECTX ectx, c_state_t *c)
@@ -625,12 +725,58 @@ static int vm_ctl_read_type (ECTX ectx, c_state_t *c)
 
 static int vm_ctl_return_param (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	ECTX 	vm	= c->data.vm;
+	WORD 	param	= c->p.argv[0].data.word;
+	WORDPTR	mt;
+	
+	/* FIXME: can we do a check on the VM state? */
+
+	if (!(param >= 0 && param < vm->tlp_argc)) {
+		return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	} else {
+		switch (vm->tlp_fmt[param]) {
+			case '?': case '!': case 'C': case 'S':
+				break; /* OK */
+			default:
+				return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+		}		
+	}
+
+	if ((mt = (WORDPTR) vm->tlp_argv[param]) == NULL_P) {
+		return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	} else {
+		vm->tlp_argv[param] = NULL_P;
+		return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_CHANNEL]), mt);
+	}
 }
 
 static int vm_ctl_set_param_chan (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	WORDPTR mt 	= c->p.argv[1].data.mt;
+	WORD 	param	= c->p.argv[0].data.word;
+	ECTX 	vm	= c->data.vm;
+	WORDPTR old_mt	= (WORDPTR) vm->tlp_argv[param];
+
+	if ((vm->state != ECTX_INIT) || !(param >= 0 && param < vm->tlp_argc)) {
+		/* VM is running or param invalid */
+		return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	} else {
+		switch (vm->tlp_fmt[param]) {
+			case '?': case '!': case 'C': case 'S':
+				break; /* OK */
+			default:
+				return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+		}		
+	}
+
+	write_word (wordptr_plus (vm->wptr, param + 1), (WORD) mt);
+	vm->tlp_argv[param] = (WORD) mt;
+	
+	if (old_mt == NULL_P) {
+		return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_OK]), 0);
+	} else {
+		return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_CHANNEL]), old_mt);
+	}
 }
 /*}}}*/
 
@@ -727,6 +873,7 @@ static int bytecode_create_vm (ECTX ectx, c_state_t *c)
 	cb		= allocate_cb (ectx, vm_ctl_rq, &cb_c);
 	cb_c->type 	= C_T_VM_CTL;
 	cb_c->data.vm	= vm;
+	cb_c->buffer	= (BYTE *) malloc (sizeof (vm_state_t));
 
 	return send_message (ectx, c, &(bytecode_re[BYTECODE_RE_VM]), cb);
 }
@@ -755,6 +902,9 @@ static int bytecode_get_symbol (ECTX ectx, c_state_t *c)
 	} else {
 		/* bytecode offset */
 		unsigned int iptr = (unsigned int) c->p.argv[0].data.word;
+
+		if (iptr >= ((unsigned int) tbc->bytecode))
+			iptr -= (unsigned int) tbc->bytecode;
 		
 		if (iptr < tbc->bytecode_len) {
 			tbc_sym_t *prev = NULL;
@@ -810,6 +960,9 @@ static int bytecode_get_line_info (ECTX ectx, c_state_t *c)
 	tbc_dbg_t 	*dbg = tbc->debug;
 	unsigned int	iptr = (unsigned int) c->p.argv[0].data.word;
 	
+	if (iptr >= ((unsigned int) tbc->bytecode))
+		iptr -= (unsigned int) tbc->bytecode;
+
 	if (dbg != NULL && iptr < tbc->bytecode_len) {
 		int shift 	= (dbg->n_lnd >> 1);
 		int i		= shift;
