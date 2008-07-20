@@ -67,7 +67,7 @@ PROTOCOL P.BYTECODE.RQ
     get.file       = 3; INT             -- translate file number to name
     get.line.info  = 4; IPTR            -- get file/line number of address
     get.details    = 5                  -- get bytecode details
-    get.top.level  = 6                  -- get top-level-process details
+    get.tlp        = 6                  -- get top-level-process details
 :
 PROTOCOL P.BYTECODE.RE
   CASE
@@ -78,7 +78,7 @@ PROTOCOL P.BYTECODE.RE
     symbol         = 4; IPTR; MOBILE []BYTE; MOBILE []BYTE; INT; INT
                         -- offset, name, definition, ws, vs
     details        = 5; INT; INT; INT  -- ws, vs, length
-    top.level      = 6; MOBILE []BYTE; MOBILE []BYTE
+    tlp            = 6; MOBILE []BYTE; MOBILE []BYTE
 :
 CHAN TYPE CT.BYTECODE
   MOBILE RECORD

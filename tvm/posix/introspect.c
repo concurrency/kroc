@@ -791,7 +791,7 @@ PROTOCOL P.BYTECODE.RQ
     get.file       = 3; INT             -- translate file number to name
     get.line.info  = 4; IPTR            -- get file/line number of address
     get.details    = 5                  -- get bytecode details
-    get.top.level  = 6                  -- get top-level-process details
+    get.tlp        = 6                  -- get top-level-process details
 :
 PROTOCOL P.BYTECODE.RE
   CASE
@@ -802,7 +802,7 @@ PROTOCOL P.BYTECODE.RE
     symbol         = 4; IPTR; MOBILE []BYTE; MOBILE []BYTE; INT; INT
                                        -- offset, name, definition, ws, vs
     details        = 5; INT; INT; INT  -- ws, vs, length
-    top.level      = 6; MOBILE []BYTE; MOBILE []BYTE
+    tlp            = 6; MOBILE []BYTE; MOBILE []BYTE
 :
 CHAN TYPE CT.BYTECODE
   MOBILE RECORD
@@ -816,7 +816,7 @@ static int bytecode_get_symbol (ECTX, c_state_t *);
 static int bytecode_get_file (ECTX, c_state_t *);
 static int bytecode_get_line_info (ECTX, c_state_t *);
 static int bytecode_get_details (ECTX, c_state_t *);
-static int bytecode_get_top_level (ECTX, c_state_t *);
+static int bytecode_get_tlp (ECTX, c_state_t *);
 
 static p_sym_t bytecode_rq[] = {
 	{ .entry	= 0, .symbols = "",	.dispatch = bytecode_create_vm },
@@ -825,7 +825,7 @@ static p_sym_t bytecode_rq[] = {
 	{ .entry	= 3, .symbols = "w",	.dispatch = bytecode_get_file },
 	{ .entry	= 4, .symbols = "w",	.dispatch = bytecode_get_line_info },
 	{ .entry	= 5, .symbols = "",	.dispatch = bytecode_get_details },
-	{ .entry	= 6, .symbols = "",	.dispatch = bytecode_get_top_level },
+	{ .entry	= 6, .symbols = "",	.dispatch = bytecode_get_tlp },
 	{ .symbols = NULL }
 };
 
@@ -836,7 +836,7 @@ enum {
 	BYTECODE_RE_LINE_INFO	= 3,
 	BYTECODE_RE_SYMBOL	= 4,
 	BYTECODE_RE_DETAILS	= 5,
-	BYTECODE_RE_TOP_LEVEL	= 6
+	BYTECODE_RE_TLP	= 6
 };
 static p_sym_t bytecode_re[] = {
 	{ .entry = BYTECODE_RE_VM,		.symbols = "M",		.dispatch = NULL },
@@ -845,7 +845,7 @@ static p_sym_t bytecode_re[] = {
 	{ .entry = BYTECODE_RE_LINE_INFO,	.symbols = "ww",	.dispatch = NULL },
 	{ .entry = BYTECODE_RE_SYMBOL,		.symbols = "wMMww",	.dispatch = NULL },
 	{ .entry = BYTECODE_RE_DETAILS,		.symbols = "www",	.dispatch = NULL },
-	{ .entry = BYTECODE_RE_TOP_LEVEL,	.symbols = "MM",	.dispatch = NULL },
+	{ .entry = BYTECODE_RE_TLP,		.symbols = "MM",	.dispatch = NULL },
 	{ .symbols = NULL }
 };
 
@@ -1003,13 +1003,13 @@ static int bytecode_get_details (ECTX ectx, c_state_t *c)
 	);
 }
 
-static int bytecode_get_top_level (ECTX ectx, c_state_t *c)
+static int bytecode_get_tlp (ECTX ectx, c_state_t *c)
 {
 	tbc_tlp_t *tlp = c->data.bc->tbc->tlp;
 	
 	if (tlp != NULL) {
 		return send_message (
-			ectx, c, &(bytecode_re[BYTECODE_RE_TOP_LEVEL]),
+			ectx, c, &(bytecode_re[BYTECODE_RE_TLP]),
 			str_to_mt (ectx, tlp->fmt),
 			str_to_mt (ectx, tlp->symbol)
 		);
