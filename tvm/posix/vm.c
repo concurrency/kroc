@@ -107,6 +107,7 @@ static void sigalrm_handler (int num)
 		ectx->sflags |= SFLAG_TQ;
 		if (ectx == tvm.tail)
 			break;
+		ectx = ectx->next;
 	}
 
 	alarm_set		= 0;
@@ -185,6 +186,7 @@ ECTX allocate_ectx (bytecode_t *bc, const char *tlp, WORD *argv)
 void free_ectx (ECTX vm)
 {
 	/* FIXME: deal with stray mobiles */
+	tvm_ectx_release (vm);
 	free_bytecode (vm->priv.bytecode);
 	free (vm->priv.memory);
 	free (vm);
