@@ -262,7 +262,7 @@ int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 	}
 	
 	/* Set up arguments */
-	for(i = ectx->tlp_argc - 1; i >= 0; i--) {
+	for (i = ectx->tlp_argc - 1; i >= 0; i--) {
 		if (ectx->tlp_fmt[i] != 'F') {
 			WPTR = wordptr_minus (WPTR, 1);
 			write_word (WPTR, ectx->tlp_argv[i]);
