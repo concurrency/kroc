@@ -606,7 +606,7 @@ static int vm_ctl_dispatch (ECTX ectx, c_state_t *c)
 		instr		= (BYTE) c->p.argv[1].data.word;
 	}
 
-	vm->state = tvm_dispatch_instruction (vm, c->p.argv[0].data.word);
+	vm->state = tvm_dispatch_instruction (vm, instr);
 
 	/* FIXME: this needs to be different; there's no way this will be sufficient */
 	switch (vm->state) {
