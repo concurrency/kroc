@@ -453,15 +453,15 @@ static TVM_INLINE BYTE decode_next (ECTX ectx)
 
 	/* Increment instruction pointer */
 	IPTR = byteptr_plus (IPTR, 1);
+	
+	/* Put the least significant bits in OREG */
+	OREG |= (instr & 0x0f);
 
 	return instr;
 }
 
 static int do_dispatch (ECTX ectx, BYTE instr)
 {
-	/* Put the least significant bits in OREG */
-	OREG |= (instr & 0x0f);
-	
 	#ifdef TVM_DISPATCH_SWITCH
 	return dispatch_instruction (ectx, instr);
 	#else
