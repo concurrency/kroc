@@ -431,6 +431,7 @@ DATA TYPE VM.STATE
     ADDR       wptr:
     IPTR       iptr:
     INT        icount:
+    INT        eflags:
 :
 */
 
@@ -443,7 +444,7 @@ typedef struct vm_state_t {
 	WORD	iptr;
 	WORD	icount;
 	WORD	eflags;
-} vm_state_t;
+} TVM_PACK vm_state_t;
 
 /*{{{  CT.VM.CTL */
 /*
@@ -794,7 +795,7 @@ PROTOCOL P.BYTECODE.RQ
 :
 PROTOCOL P.BYTECODE.RE
   CASE
-    vm             = 0; CT.VM.CTL
+    vm             = 0; CT.VM.CTL!
     error          = 1; INT
     file           = 2; MOBILE []BYTE
     line.info      = 3; INT; INT       -- file, line
