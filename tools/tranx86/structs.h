@@ -361,10 +361,10 @@ typedef struct TAG_ins_labrefs {
 
 /* FPU rounding modes */
 #define FPU_NONE 0
-#define FPU_N 0
-#define FPU_P 1
-#define FPU_M 2
-#define FPU_Z 3
+#define FPU_N 0 /* round to nearest */
+#define FPU_P 1 /* round up */
+#define FPU_M 2 /* round down */
+#define FPU_Z 3 /* round toward zero (truncate) */
 
 /* misc. constants */
 #define NOT_PROCESS 0
