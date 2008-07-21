@@ -17,12 +17,27 @@
 #  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
+require 'PLinker.pm';
+
 package Transputer::Instructions;
 
 use strict;
 
-sub new ($$) {
-	my ($class, $fn) = @_;
+sub new ($) {
+	my ($class) = @_;
+
+	my $self = {
+		'pri'	=> PLinker::get ('ins_pri'),
+		'sec'	=> PLinker::get ('ins_sec')
+	};
+
+	$self = bless $self, $class;
+
+	return $self;
+}
+
+sub compile ($$) {
+	my ($store, $fn) = @_;
 	my $pri = {};
 	my $sec = {};
 	my $ins;
@@ -58,14 +73,8 @@ sub new ($$) {
 	}
 	close ($fh);
 
-	my $self = {
-		'pri'	=> $pri,
-		'sec'	=> $sec
-	};
-
-	$self = bless $self, $class;
-
-	return $self;
+	$store->{'ins_pri'} = $pri;
+	$store->{'ins_sec'} = $sec;
 }
 
 sub valid_primary ($$) {
@@ -101,25 +110,37 @@ sub numeric ($$) {
 
 package Transterpreter::Instructions;
 
-require 'Instructions.pm';
-
 use strict;
 
 @Transterpreter::Instructions::ISA = qw(Transputer::Instructions);
 
-sub new ($$$) {
-	my ($class, $fn, $dir) = @_;
-	my $self = new Transputer::Instructions ($fn);
+sub new ($) {
+	my ($class) = @_;
+	my $self = new Transputer::Instructions ();
 	$self = bless $self, $class;
-	$self->load_tvm_instructions ($dir);
+	$self->load_tvm_instructions ();
 	return $self;
 }
 
-sub load_tvm_instructions ($$) {
-	my ($self, $dir) = @_;
-	my $dh;
+sub load_tvm_instructions ($) {
+	my ($self) = @_;
+	my $data = PLinker::get ('tvm_ins');
 
 	$self->{'tvm'} = {};
+
+	foreach my $tuple (@$data) {
+		my ($name, $number) = @$tuple;
+		if (!$self->valid_instruction ($name)) {
+			$self->{'tvm'}->{$number}	= $name;
+			$self->{'tvm'}->{$name}		= $number;
+		}
+	}
+}
+
+sub compile ($$) {
+	my ($store, $dir) = @_;
+	my @data;
+	my $dh;
 
 	if (!opendir ($dh, $dir)) {
 		print STDERR "Unable to open directory $dir: $!\n";
@@ -128,14 +149,16 @@ sub load_tvm_instructions ($$) {
 
 	while (my $fn = readdir ($dh)) {
 		next if $fn =~ /^\./;
-		$self->load_tvm_header ("$dir/$fn") if $fn =~ /\.h$/;
+		load_tvm_header (\@data, "$dir/$fn") if $fn =~ /\.h$/;
 	}
 
 	closedir ($dh);
+
+	$store->{'tvm_ins'} = \@data;
 }
 
 sub load_tvm_header ($$) {
-	my ($self, $fn) = @_;
+	my ($data, $fn) = @_;
 	my $fh;
 
 	open ($fh, $fn) || return;
@@ -145,10 +168,7 @@ sub load_tvm_header ($$) {
 		$number = hex ($number);
 		$name =~ tr/a-z/A-Z/;
 		$name =~ s/^INS_//;
-		if (!$self->valid_instruction ($name)) {
-			$self->{'tvm'}->{$number}	= $name;
-			$self->{'tvm'}->{$name}		= $number;
-		}
+		push (@$data, [ $name, $number ]);
 	}
 	close ($fh);
 }

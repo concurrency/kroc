@@ -17,10 +17,10 @@
 #  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-package Transputer::ETC;
-
 require 'Instructions.pm';
 require 'TCOFF.pm';
+
+package Transputer::ETC;
 
 use strict;
 

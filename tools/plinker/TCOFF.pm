@@ -17,6 +17,8 @@
 #  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
+require 'PLinker.pm';
+
 package Transputer::TCOFF;
 
 use strict;
@@ -25,7 +27,7 @@ sub new ($$) {
 	my ($class, $tcoff_h) = @_;
 
 	my $self	= {
-		'tcoff'	=> load_tcoff_constants ($tcoff_h)
+		'tcoff'	=> PLinker::get ('tcoff')
 	};
 	
 	$self = bless $self, $class;
@@ -232,8 +234,8 @@ sub decode_comments ($$) {
 	}
 }
 
-sub load_tcoff_constants ($) {
-	my ($fn) = @_;
+sub compile ($$) {
+	my ($store, $fn) = @_;
 	my $tcoff = {};
 	my $fh;
 
@@ -254,7 +256,7 @@ sub load_tcoff_constants ($) {
 	}
 	close ($fh);
 
-	return $tcoff;
+	$store->{'tcoff'} = $tcoff;
 }
 
 1;
