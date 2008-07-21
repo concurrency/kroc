@@ -8,8 +8,8 @@ package main;
 use Data::Dumper;
 use strict;
 
-my $in = 'plinker.pl';
-my $out = 'test.pl';
+my $in = 'main.pl';
+my $out = 'plinker.pl';
 my %included;
 
 write_file ('store.pl', compile_store ());
