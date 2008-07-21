@@ -29,18 +29,14 @@ package main;
 use strict;
 use Data::Dumper;
 
-# Constants
-my $instruct_h	= "/Users/cgr/src/kroc-svn/tools/occ21/include/instruct.h";
-my $tcoff_h	= "/Users/cgr/src/kroc-svn/tools/occ21/include/tcoff.h";
-
 # ETC Decoder
-my $etc		= new Transputer::ETC ($instruct_h);
+my $etc		= new Transputer::ETC ();
 
 # Linker
-my $linker	= new Transterpreter::Linker ($instruct_h);
+my $linker	= new Transterpreter::Linker ();
 
 # TCOFF Decoder
-my $tcoff	= new Transputer::TCOFF ($tcoff_h);
+my $tcoff	= new Transputer::TCOFF ();
 
 # TVM helper
 my $tvm		= new Transterpreter::VM ();
