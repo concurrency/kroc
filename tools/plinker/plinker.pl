@@ -18,14 +18,16 @@
 #  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-use strict;
-use Data::Dumper;
-
 require 'ETC.pm';
 require 'Linker.pm';
 require 'TCOFF.pm';
 require 'TEncode.pm';
 require 'TVM.pm';
+
+package main;
+
+use strict;
+use Data::Dumper;
 
 # Constants
 my $instruct_h	= "/Users/cgr/src/kroc-svn/tools/occ21/include/instruct.h";

@@ -17,21 +17,18 @@
 #  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-package Transterpreter::Linker;
-
 require 'Instructions.pm';
+
+package Transterpreter::Linker;
 
 use strict;
 use Data::Dumper;
 
-sub new ($$) {
+sub new ($) {
 	my ($class, $instruct_h) = @_;
 
 	my $self = {
-		'instructions' => new Transterpreter::Instructions (
-			$instruct_h,
-			'/Users/cgr/src/kroc/branches/tsp/runtime/libtvm/'
-		),
+		'instructions' => new Transterpreter::Instructions ()
 	};
 	
 	$self = bless $self, $class;
