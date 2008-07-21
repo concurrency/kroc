@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 require 'Instructions.pm';
 require 'TCOFF.pm';
@@ -7,6 +7,8 @@ package main;
 
 use Data::Dumper;
 use strict;
+
+require 'config.pl';
 
 my $in = 'main.pl';
 my $out = 'plinker.pl';
@@ -23,6 +25,7 @@ sub write_file ($$) {
 	open ($fh, '>', $fn) || die $!;
 	print $fh $data;
 	close ($fh);
+	print $fn, ": ", length ($data), " bytes\n";
 }
 
 sub compile_store {
