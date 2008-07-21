@@ -77,6 +77,23 @@ def output_file(bits, fn):
 		os.rename(fn, fn + ".old")	
 	os.rename(fn + ".new", fn)
 
+def write_ins_header(defs, fn):
+	keys = defs.keys()
+	keys.sort(lambda a, b: cmp(ins_key_to_int(a), ins_key_to_int(b)))
+	
+	bits = ["-- Generated automatically by make-dispatch.py; do not modify!\n\n"]
+	for k in keys:
+		if k == "F_":
+			pass
+		else:
+			(c, h, name) = defs[k]
+			name = name.replace("ins_", "").upper()
+			if k[1] == '_':
+				k = k.replace("_", "")
+			bits.append("VAL INT INS.%s IS #%s:\n" % (name, k))
+	
+	output_file(bits, fn)
+
 def write_names(defs, fn):
 	keys = defs.keys()
 	keys.sort(lambda a, b: cmp(ins_key_to_int(a), ins_key_to_int(b)))
@@ -272,6 +289,7 @@ def main():
 	output_sec = "jumptbl_sec.c"
 	output_ex_sec = "jumptbl_ex_sec.c"
 	output_names = "ins_names.h"
+	output_ins_header = "instructions.inc"
 
 	defs = {}
 	for fn in inputs:
@@ -279,6 +297,7 @@ def main():
 	write_switch(defs, output_switch)
 	write_jumptables(defs, output_pri, output_sec, output_ex_sec)
 	write_names(defs, output_names)
+	write_ins_header(defs, output_ins_header)
 
 if __name__ == "__main__":
 	main()
