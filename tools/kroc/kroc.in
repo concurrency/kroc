@@ -136,7 +136,7 @@ tsuffix='tce'
 
 # Default: medium warnings
 occwopts=
-occopts="-etc -w -y -znd -znec -udo -zncc -init -xin -mobiles -zrpe @OCCEXTRAOPTS@"
+occopts="-etc -w -y -znd -znec -udo -zncc -init -xin -mobiles -mpt -zrpe @OCCEXTRAOPTS@"
 
 case "$host_cpu" in
 	i386 | i486 | i586 | i686 | x86_64)
@@ -549,10 +549,9 @@ do
 		occopts="$occopts -xtag"
 		;;
 		#}}}
-		#{{{  -X7  enable mobile processes
+		#{{{  -X7  enable mobile processes (dummy)
 	-X7 )
-		printf '%s: enabling mobile process types\n' "$progname" 1>&2
-		occopts="$occopts -mpt"
+		printf '%s: mobile process types now enabled by default\n' "$progname" 1>&2
 		;;
 		#}}}
 		#{{{  -d  post-mortem debugging
@@ -932,7 +931,6 @@ EOF
        --nfw             Do not wait for globally FORKed processes
        --new             Do not wait for blocking syscalls
   -X6                    Extended input for unhandled CASE inputs (experimental)
-  -X7                    Enable mobile processes (experimental)
 EOF
 	if [ $showall -eq 1 ]; then
 	cat << EOF

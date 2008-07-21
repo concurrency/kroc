@@ -4,7 +4,7 @@
 # NOTE: cgtest19 needs the '-s' flag to put KERNEL.RUN workspace in program data
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
-OCCBUILD = @OCCBUILD@ --occ21-opts '-mpt'
+OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
 	README \
