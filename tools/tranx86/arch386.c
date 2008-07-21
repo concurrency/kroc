@@ -2546,7 +2546,7 @@ static void compose_longop_i386 (tstate *ts, int sec)
  */
 static void compose_fpop_i386 (tstate *ts, int sec)
 {
-	int tmp_reg, this_lab, this_lab2;
+	int tmp_reg, this_lab, this_lab2, error_flags;
 
 	switch (sec) {
 		/*{{{  I_FPPOP -- pop floating-point stack (no-op)*/
@@ -2816,20 +2816,30 @@ static void compose_fpop_i386 (tstate *ts, int sec)
 	case I_FPCHKERR:
 		this_lab = ++(ts->last_lab);
 
+		/* "precision", "overflow", "zero divide" */
+		error_flags = 0x2c;
+		if (options.underflow_error) {
+			/* "underflow" */
+			error_flags |= 0x10;
+		}
+
 		/* store current flags (in stack) */
 		tmp_reg = tstack_newreg (ts->stack);
 		add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EAX));
 		add_to_ins_chain (compose_ins (INS_LAHF, 0, 1, ARG_REG|ARG_IMP, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, tmp_reg));
 
-		/* do check */
+		/* extract exception flags */
 		add_to_ins_chain (compose_ins (INS_FSTSW, 0, 1, ARG_REG|ARG_IS16BIT, tmp_reg));
-		add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST, 0x3c, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG|ARG_IS16BIT, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST, error_flags, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG|ARG_IS16BIT, tmp_reg));
+		/* if it's only a "precision" exception, that's OK */
 		add_to_ins_chain (compose_ins (INS_CMP, 2, 1, ARG_CONST, 0x20, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
 		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_Z, ARG_LABEL, this_lab));
+		/* extract flags again */
 		add_to_ins_chain (compose_ins (INS_FSTSW, 0, 1, ARG_REG|ARG_IS16BIT, tmp_reg));
-		add_to_ins_chain (compose_ins (INS_AND, 2, 2, ARG_CONST, 0x3c, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
+		add_to_ins_chain (compose_ins (INS_AND, 2, 2, ARG_CONST, error_flags, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
 		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
+		/* if none are set, that's OK too */
 		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_Z, ARG_LABEL, this_lab));
 
 		/* error detected => fixup stack; call kernel */

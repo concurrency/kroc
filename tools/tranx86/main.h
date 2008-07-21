@@ -130,6 +130,7 @@ typedef struct {
 	int use_cttd;			/* whether the source was compiled with chan-type type descriptions */
 	int mpenable;			/* whether multi-processor support is enabled in the run-time */
 	int nocc_codegen;		/* non-zero if generating code compiled by NOCC */
+	int underflow_error;		/* whether FP underflow is an error */
 } optstruct;
 
 #ifndef __MAIN_C
