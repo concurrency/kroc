@@ -112,6 +112,7 @@ TVM_INSTRUCTION (ins_gcall)
 	 */
 	temp = AREG;
 	AREG = (WORD)IPTR;
+	SET_AREGt (STYPE_BC);
 	IPTR = (BYTEPTR)temp;
 
 	/* FIXME: This is not the INMOS GCALL, it has been modified by fred (I
@@ -691,6 +692,7 @@ TVM_INSTRUCTION (ins_gajw)
 
 	WPTR = (WORDPTR)AREG;
 	AREG = tmp;
+	SET_AREGt (STYPE_WS);
 
 	return ECTX_CONTINUE;
 }
@@ -752,6 +754,7 @@ TVM_INSTRUCTION (ins_move)
 {
 	
 	tvm_memcpy((BYTEPTR) BREG, (BYTEPTR) CREG, AREG);
+	/* CGR FIXME: copy typing information */
 	UNDEFINE_STACK_RET();
 }
 

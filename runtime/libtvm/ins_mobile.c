@@ -552,10 +552,12 @@ TVM_HELPER int mt_chan_io (ECTX ectx, WORDPTR dst, WORDPTR src)
 		if (move == MT_TRUE) {
 			/* Pointer moved, delete old reference */
 			write_word (src, (WORD) NULL_P);
+			/* CGR FIXME: fix type shadow */
 		}
 	}
 	/* Write out possibly new pointer to mobile type */
 	write_word (dst, (WORD) ptr);
+	/* CGR FIXME: fix type shadow */
 	return ECTX_CONTINUE;
 }
 /*}}}*/
@@ -583,6 +585,7 @@ TVM_HELPER int mt_chan_dc_in (ECTX ectx, BYTEPTR dst_ptr, WORD len)
 	WORDPTR dst = (WORDPTR) dst_ptr;
 	
 	write_word (dst, NULL_P);
+	/* CGR FIXME: fix type shadow */
 
 	return ECTX_CONTINUE;
 }
@@ -604,6 +607,7 @@ TVM_HELPER int mt_chan_dc_out (ECTX ectx, BYTEPTR src_ptr, WORD len)
 		if (move == MT_TRUE) {
 			/* Pointer moved, delete old reference */
 			write_word (src, (WORD) NULL_P);
+			/* CGR FIXME: fix type shadow */
 		}
 
 		return mt_release (ectx, ptr);

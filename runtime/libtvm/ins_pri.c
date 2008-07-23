@@ -80,6 +80,7 @@ TVM_INSTRUCTION (ins_adc)
 
 	/* Areg gets result, Breg and Creg stay the same */
 	AREG = result;
+	SET_AREGt (STYPE_DATA);
 
 	CLEAR(OREG);
 
@@ -199,6 +200,7 @@ TVM_INSTRUCTION (ins_call)
 
 	/* Set the AREG to the old IPTR */
 	AREG = (WORD)IPTR;
+	SET_AREGt (STYPE_BC);
 
 	/* Set the new IPTR from the OREG */
 	IPTR = byteptr_plus(IPTR, OREG);
