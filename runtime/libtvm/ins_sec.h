@@ -126,8 +126,6 @@ TVM_INSTRUCTION_PROTO (ins_runp);
 TVM_INSTRUCTION_PROTO (ins_sb);
 /* 0x3C - 0x23 0xFC - gajw - general adjust workspace */
 TVM_INSTRUCTION_PROTO (ins_gajw);
-/* 0x3E - 0x23 0xFE - gajw - general adjust workspace */
-TVM_INSTRUCTION_PROTO (ins_saveh);
 
 
 

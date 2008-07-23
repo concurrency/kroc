@@ -74,6 +74,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define NONE_SELECTED_O		(-1)
 /*}}}*/
 
+/*{{{  Shadow types */
+enum {
+	STYPE_DATA	= 0,	/* Unknown/untyped data */
+	STYPE_WS	= 1,	/* Workspace Pointer */
+	STYPE_BC	= 2,	/* Bytecode Pointer */
+	STYPE_MT	= 3,	/* Mobile Type Pointer */
+	STYPE_CHAN	= 4,	/* Channel */
+	STYPE_MOBILE	= 5,	/* Pointer into Mobile Memory */
+	STYPE_NULL	= 6	/* NULL Pointer */
+};
+/*}}}*/
+
 /*{{{  Error flags */
 enum {
 	EFLAG_SETERR 	= (1 << 0),	/* Error flag set by SETERR */
@@ -171,6 +183,13 @@ struct _tvm_ectx_t {
 	WORD		areg;	/* Evaluation stack */
 	WORD		breg;	/* Evaluation stack */
 	WORD		creg;	/* Evaluation stack */
+	WORD 		_creg;	/* Special case CREG storage */
+	#ifdef TVM_TYPE_SHADOW
+	WORD		aregT;
+	WORD		bregT;
+	WORD		cregT;
+	WORD		_cregT;
+	#endif /* TVM_TYPE_SHADOW */
 
 	WORD		pri;	/* Priority */
 
@@ -179,8 +198,6 @@ struct _tvm_ectx_t {
 	WORDPTR		bptr;	/* Back pointer (scheduler queue) */
 	WORDPTR		tptr;	/* Timer queue pointer */
 	WORD		tnext;	/* Timeout register */
-
-	WORD 		_creg;	/* Special case CREG storage */
 	
 	WORD 		eflags;	/* Error flags */
 	WORD 		state;	/* Context state */
@@ -305,6 +322,20 @@ enum {
 #define BREG	(ectx->breg)
 #define CREG	(ectx->creg)
 #define OREG	(ectx->oreg)
+
+#define AREGt	(ectx->aregT)
+#define BREGt	(ectx->bregT)
+#define CREGt	(ectx->cregT)
+#ifdef TVM_TYPE_SHADOW
+#define SET_AREGt(X)	do { AREGt = (X); } while (0)
+#define SET_BREGt(X)	do { BREGt = (X); } while (0)
+#define SET_CREGt(X)	do { CREGt = (X); } while (0)
+#else /* !TVM_TYPE_SHADOW */
+#define SET_AREGt(X)	do { } while (0)
+#define SET_BREGt(X)	do { } while (0)
+#define SET_CREGt(X)	do { } while (0)
+#endif /* !TVM_TYPE_SHADOW */
+
 
 #define FPTR	(ectx->fptr)
 #define BPTR	(ectx->bptr)

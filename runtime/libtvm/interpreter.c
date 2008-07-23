@@ -133,6 +133,9 @@ void tvm_ectx_reset (ECTX ectx)
 	AREG 		= 0;
 	BREG 		= 0;
 	CREG 		= 0;
+	SET_AREGt (STYPE_DATA);
+	SET_BREGt (STYPE_DATA);
+	SET_CREGt (STYPE_DATA);
 
 	/* setup scheduler queues */
 	WPTR = (WORDPTR) NOT_PROCESS_P;

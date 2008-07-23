@@ -244,12 +244,12 @@ TVM_INSTRUCTION (ins_cj)
 		IPTR = byteptr_plus(IPTR, OREG);
 
 		/* Stack is left untouched */
-		STACK(AREG, BREG, CREG);
+		/* STACK(AREG, BREG, CREG); */
 	}
 	else
 	{
 		/* Pop the stack */
-		STACK(BREG, CREG, UNDEFINE(CREG));
+		STACK(BREG, CREG, UNDEFINE(CREG), BREGt, CREGt, CREGt);
 	}
 
 	CLEAR(OREG);
@@ -289,6 +289,7 @@ TVM_INSTRUCTION (ins_eqc)
 		AREG = 0; /* Set AREG to false */
 	}
 
+	SET_AREGt(STYPE_DATA);
 	CLEAR(OREG);
 
 	return ECTX_CONTINUE;
@@ -354,7 +355,7 @@ TVM_INSTRUCTION (ins_j)
 TVM_INSTRUCTION (ins_ldc)
 {
 	/* Push the stack down and put the constant on the top of the stack (AREG) */
-	STACK(OREG, AREG, BREG);
+	STACK(OREG, AREG, BREG, STYPE_DATA, AREGt, BREGt);
 
 	CLEAR(OREG);
 
@@ -386,7 +387,9 @@ TVM_INSTRUCTION (ins_ldc)
 TVM_INSTRUCTION (ins_ldl)
 {
 	/* Push the stack down and read a value from from memory(OREG+WPTR) */
-	STACK(read_word(wordptr_plus(WPTR, OREG)), AREG, BREG);
+	/* CGR FIXME: load type from memory */
+	STACK(read_word(wordptr_plus(WPTR, OREG)), AREG, BREG,
+		STYPE_DATA, AREGt, BREGt);
 
 	CLEAR(OREG);
 
@@ -424,7 +427,8 @@ TVM_INSTRUCTION (ins_ldl)
 TVM_INSTRUCTION (ins_ldlp)
 {
 	/* Push WPTR+OREG onto the stack */
-	STACK((WORD)wordptr_plus(WPTR, OREG), AREG, BREG);
+	STACK((WORD)wordptr_plus(WPTR, OREG), AREG, BREG,
+		STYPE_WS, AREGt, BREGt);
 
 	CLEAR(OREG);
 
@@ -451,6 +455,8 @@ TVM_INSTRUCTION (ins_ldnl)
 {
 	/* Read from memory(AREG+OREG) */
 	AREG = read_word(wordptr_plus((WORDPTR)AREG, OREG));
+	/* CGR FIXME: load type from memory */
+	SET_AREGt(STYPE_DATA);
 
 	CLEAR(OREG);
 
@@ -477,6 +483,7 @@ TVM_INSTRUCTION (ins_ldnlp)
 {
 	/* Add the OREG to the AREG and store it in the AREG */
 	AREG = (WORD)wordptr_plus((WORDPTR)AREG, OREG);
+	/* Type signature unchanged */
 
 	CLEAR(OREG);
 
@@ -506,9 +513,10 @@ TVM_INSTRUCTION (ins_stl)
 {
 	/* Put the top of the stack into mem(WPTR + OREG) */
 	write_word(wordptr_plus(WPTR, OREG), AREG);
+	/* CGR FIXME: store type */
 
 	/* Pop the stack */
-	STACK(BREG, CREG, UNDEFINE(CREG));
+	STACK(BREG, CREG, UNDEFINE(CREG), BREGt, CREGt, CREGt);
 
 	CLEAR(OREG);
 
@@ -538,9 +546,10 @@ TVM_INSTRUCTION (ins_stnl)
 {
 	/* Put value in BREG into mem(AREG + OREG) */
 	write_word(wordptr_plus((WORDPTR)AREG, OREG), BREG);
+	/* CGR FIXME: store type */
 
 	/* Pop the stack */
-	STACK(CREG, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK(CREG, UNDEFINE(BREG), UNDEFINE(CREG), CREGt, BREGt, CREGt);
 	
 	CLEAR(OREG);
 

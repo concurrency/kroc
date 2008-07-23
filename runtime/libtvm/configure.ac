@@ -32,6 +32,7 @@ AC_ARG_WITH([python], AS_HELP_STRING([--with-python=PATH], [use python, optional
 AC_ARG_ENABLE([occam-pi], AC_HELP_STRING([--disable-occam-pi], [disable support for occam-pi, actual support level depends on memory allocator]), [enable_pi=$enableval], [enable_pi=yes])
 AC_ARG_ENABLE([t9000-short-ops], AC_HELP_STRING([--enable-t9000-short-ops],[enable T9000 instructions for dealing with 16bit/8bit data]), [t9000_short_ops=$enableval], [t9000_short_ops=no])
 AC_ARG_WITH([transputer], AC_HELP_STRING([--with-transputer=...],[transputer to emulate: t2/t4/t8, default is host-dependent]), [transputer=$withval], [transputer=auto])
+AC_ARG_ENABLE([type-shadow], AC_HELP_STRING([--enable-type-shadow], [enable shadowing of registers and memory with type information for debugging]), [type_shadow=$enableval], [type_shadow=no])
 
 #########################
 #  Host Configuration
@@ -284,6 +285,11 @@ case "$transputer" in
     ;;
 esac
 
+# Type Shadow
+if test "$type_shadow" = "yes"; then
+  AC_DEFINE([TVM_TYPE_SHADOW], 1, [define for type shadowing])
+fi
+
 # Word length
 AC_DEFINE_UNQUOTED([TVM_WORD_LENGTH], [$word_length], [define emulated word length])
 
@@ -303,6 +309,7 @@ AC_MSG_NOTICE([OS support      : $x_os])
 AC_MSG_NOTICE([profiling       : $profiling])
 AC_MSG_NOTICE([T9000 short ops : $t9000_short_ops])
 AC_MSG_NOTICE([transputer      : $transputer])
+AC_MSG_NOTICE([type shadow     : $type_shadow])
 AC_MSG_NOTICE([word length     : $word_length])
 AC_MSG_NOTICE([----------------------------------------------------])
 

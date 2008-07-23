@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* 0x23 - 0x22 0xF3 - boolinvert */
 TVM_INSTRUCTION (ins_boolinvert)
 {
-	STACK_RET ((AREG == 0 ? 1 : 0), BREG, CREG);
+	STACK_RET ((AREG == 0 ? 1 : 0), BREG, CREG, STYPE_DATA, BREGt, CREGt);
 }
 
 /* 0x28 - 0x22 0xF8 - reschedule */
@@ -43,7 +43,7 @@ TVM_INSTRUCTION (ins_reschedule)
 /* 0x24 - 0x22 0xF4 - widenshort */
 TVM_INSTRUCTION (ins_widenshort)
 {
-	STACK_RET (((WORD) ((HWORD) AREG)), BREG, CREG);
+	STACK_RET (((WORD) ((HWORD) AREG)), BREG, CREG, STYPE_DATA, BREGt, CREGt);
 }
 
 /* 0x25 - 0x22 0xF5 - fficall */
@@ -257,20 +257,23 @@ TVM_INSTRUCTION (ins_ext_mt_out)
 TVM_INSTRUCTION (ins_getpri)
 {
 	/* Always return priority 0. */
-	STACK_RET (0, AREG, BREG);
+	STACK_RET (0, AREG, BREG, STYPE_DATA, AREGt, BREGt);
 }
 
 /* 0xA5 - 0x2A 0xF5 - setpri - set priority */
 TVM_INSTRUCTION (ins_setpri)
 {
 	/* Ignore the new priority. */
-	STACK_RET (BREG, CREG, UNDEFINE(CREG));
+	STACK_RET (BREG, CREG, UNDEFINE(CREG), BREGt, CREGt, CREGt);
 }
 
 /* 0xAD - 0x2A 0xFD - ins_savecreg - save the creg */
 TVM_INSTRUCTION (ins_savecreg)
 {
 	ectx->_creg = CREG;
+	#ifdef TVM_TYPE_SHADOW
+	ectx->_cregT = CREGt;
+	#endif
 	return ECTX_CONTINUE;
 }
 
@@ -278,6 +281,7 @@ TVM_INSTRUCTION (ins_savecreg)
 TVM_INSTRUCTION (ins_restorecreg)
 {
 	CREG = ectx->_creg;
+	SET_CREGt (ectx->_cregT);
 	return ECTX_CONTINUE;
 }
 
@@ -503,6 +507,6 @@ TVM_INSTRUCTION (ins_xend)
 /* 0xFD - 0x2F 0xFD - null - put null onto the stack */
 TVM_INSTRUCTION (ins_null)
 {
-	STACK_RET ((WORD) NULL_P, AREG, BREG);
+	STACK_RET ((WORD) NULL_P, AREG, BREG, STYPE_NULL, AREGt, BREGt);
 }
 

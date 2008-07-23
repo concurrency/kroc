@@ -73,7 +73,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * which is all we want.
  * */
-#define STACK(A,B,C) 				\
+#ifdef TVM_TYPE_SHADOW
+#define INTERNAL_STACK_TYPES(A,B,C) 		\
+	do {					\
+		a_tmp = (WORD) (A); 		\
+		b_tmp = (WORD) (B); 		\
+		c_tmp = (WORD) (C); 		\
+		AREGt = a_tmp;			\
+		BREGt = b_tmp;			\
+		CREGt = c_tmp;			\
+	} while (0)
+#define PICK_POINTER_TYPE(A,B)			\
+	(((A) == STYPE_MT || (B) == STYPE_MT)	\
+	 ? STYPE_MOBILE				\
+	 : (((A) == STYPE_DATA) ? (B) : (A)))
+#else /* !TVM_TYPE_SHADOW */
+#define INTERNAL_STACK_TYPES(A,B,C)		\
+	do { } while (0)
+#define PICK_POINTER_TYPE(A,B)
+#endif /* !TVM_TYPE_SHADOW */
+#define STACK(A,B,C,At,Bt,Ct) 			\
 	do {					\
 		WORD a_tmp = (WORD) (A); 	\
 		WORD b_tmp = (WORD) (B); 	\
@@ -81,26 +100,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 		AREG = a_tmp;			\
 		BREG = b_tmp;			\
 		CREG = c_tmp;			\
+		INTERNAL_STACK_TYPES (At,Bt,Ct);\
 	} while (0)
-#define STACK_RET(A,B,C) 			\
+#define STACK_RET(A,B,C,At,Bt,Ct) 		\
 	do {					\
-		STACK (A,B,C);			\
+		STACK (A,B,C,At,Bt,Ct);		\
 		return ECTX_CONTINUE;		\
 	} while (0)
 
-/* Push all registers down by one, essentially leaves 'areg' undefined */ 
-#define PUSH_STACK() \
-	STACK (UNDEFINE(AREG), AREG, BREG)
-/* Pop all registers up by one, essentially leaves 'creg' undefined */
-#define POP_STACK() \
-	STACK (BREG, CREG, UNDEFINE(CREG))
-/* Pop all registers up by two, leaves 'breg' and 'creg' undefined */
-#define POP_STACK2() \
-	STACK (creg, UNDEFINE(breg), UNDEFINE(creg))
-
-#define UNDEFINE_STACK()
-#define UNDEFINE_STACK_RET() \
-	return ECTX_CONTINUE;
+#define UNDEFINE_STACK()		\
+	do {				\
+		SET_AREGt (STYPE_DATA); \
+		SET_BREGt (STYPE_DATA); \
+		SET_CREGt (STYPE_DATA); \
+	} while (0)
+#define UNDEFINE_STACK_RET()		\
+	do {				\
+		UNDEFINE_STACK();	\
+		return ECTX_CONTINUE;	\
+	} while (0)
 
 #define SET_ERROR_FLAG(F) \
 	do {							\

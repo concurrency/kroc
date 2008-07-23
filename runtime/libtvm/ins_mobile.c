@@ -690,7 +690,7 @@ TVM_INSTRUCTION (ins_malloc)
 		ptr = mt_alloc_data(ectx, MT_SIMPLE | MT_MAKE_TYPE(MT_DATA), size);
 	}
 
-	STACK_RET ((WORD) ptr, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK_RET ((WORD) ptr, UNDEFINE(BREG), UNDEFINE(CREG), STYPE_MOBILE, BREGt, CREGt);
 }
 
 /* 0xE3 - 0x2E 0xF3 - mrelease - dynamic memory release */
@@ -716,7 +716,7 @@ TVM_INSTRUCTION (ins_mt_alloc)
 		return ret;
 	}
 	
-	STACK_RET (ptr, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK_RET (ptr, UNDEFINE(BREG), UNDEFINE(CREG), STYPE_MT, BREGt, CREGt);
 }
 
 /* 0x239 - 0x22 0x23 0xF9 - mt_release - release a mobile type */
@@ -735,7 +735,7 @@ TVM_INSTRUCTION (ins_mt_clone)
 		return ret;
 	}
 
-	STACK_RET (ptr, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK_RET (ptr, UNDEFINE(BREG), UNDEFINE(CREG), STYPE_MT, BREGt, CREGt);
 }
 
 /* 0x23B - 0x22 0x23 0xFB - mt_in - mobile type channel input */
@@ -930,11 +930,11 @@ TVM_INSTRUCTION (ins_mt_dclone)
 			tvm_memcpy ((BYTEPTR) dst, (BYTEPTR) src, bytes);
 		}
 	} else {
-		STACK ((WORD) dst, UNDEFINE(BREG), UNDEFINE(CREG));
+		STACK ((WORD) dst, UNDEFINE(BREG), UNDEFINE(CREG), STYPE_MT, BREGt, CREGt);
 		SET_ERROR_FLAG_RET (EFLAG_MT);
 	}
 
-	STACK_RET ((WORD) dst, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK_RET ((WORD) dst, UNDEFINE(BREG), UNDEFINE(CREG), STYPE_MT, BREGt, CREGt);
 }
 
 /* 0x247 - 0x22 0x24 0xF7 - mt_bind - bind a mobile type in some way to a bit of data */
@@ -1021,15 +1021,15 @@ TVM_INSTRUCTION (ins_mt_bind)
 				ptr = new_ptr;
 			}
 		} else {
-			STACK (NULL_P, UNDEFINE(BREG), UNDEFINE(CREG));
+			STACK (NULL_P, UNDEFINE(BREG), UNDEFINE(CREG), STYPE_NULL, BREGt, BREGt);
 			SET_ERROR_FLAG_RET (EFLAG_MT);
 		}
 	} else {
-		STACK (NULL_P, UNDEFINE(BREG), UNDEFINE(CREG));
+		STACK (NULL_P, UNDEFINE(BREG), UNDEFINE(CREG), STYPE_NULL, BREGt, CREGt);
 		SET_ERROR_FLAG_RET (EFLAG_MT);
 	}
 
-	STACK_RET ((WORD) ptr, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK_RET ((WORD) ptr, UNDEFINE(BREG), UNDEFINE(CREG), STYPE_MT, BREGt, CREGt);
 }
 
 
