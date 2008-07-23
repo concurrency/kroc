@@ -142,6 +142,13 @@ void tvm_ectx_reset (ECTX ectx)
 	FPTR = (WORDPTR) NOT_PROCESS_P;
 	BPTR = (WORDPTR) NOT_PROCESS_P;
 	TPTR = (WORDPTR) NOT_PROCESS_P;
+
+	/* type shadow */
+	#ifdef TVM_TYPE_SHADOW
+	ectx->shadow_start	= 0;
+	ectx->shadow_end	= 0;
+	ectx->type_store	= NULL;
+	#endif
 }
 
 static int calc_frame_size (const int tlp_argc, const int vs, const int pad)

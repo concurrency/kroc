@@ -58,7 +58,7 @@ TVM_HELPER int channel_input (ECTX ectx, BYTEPTR dst_ptr, WORD len, WORDPTR src_
 {
 	BYTEPTR	src_ptr = (BYTEPTR) WORKSPACE_GET (src_wptr, WS_POINTER);
 	tvm_memcpy (dst_ptr, src_ptr, len);
-	/* CGR FIXME: copy type shadow */
+	copy_type_shadow (ectx, dst_ptr, src_ptr, len);
 	return ECTX_CONTINUE;
 }
 
@@ -66,15 +66,14 @@ TVM_HELPER int channel_output (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst
 {
 	BYTEPTR	dst_ptr = (BYTEPTR) WORKSPACE_GET (dst_wptr, WS_POINTER);
 	tvm_memcpy (dst_ptr, src_ptr, -len);
-	/* CGR FIXME: copy type shadow */
+	copy_type_shadow (ectx, dst_ptr, src_ptr, -len);
 	return ECTX_CONTINUE;
 }
 
 TVM_HELPER int channel_swap (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr)
 {
 	BYTEPTR	dst_ptr = (BYTEPTR) WORKSPACE_GET (dst_wptr, WS_POINTER);
-	swap_data_word ((WORDPTR) dst_ptr, (WORDPTR) src_ptr);
-	/* CGR FIXME: copy type shadow */
+	swap_data_word (ectx, (WORDPTR) dst_ptr, (WORDPTR) src_ptr);
 	return ECTX_CONTINUE;
 }
 
@@ -83,7 +82,7 @@ TVM_HELPER int channel_dc_input (ECTX ectx, BYTEPTR dst_ptr, WORD len)
 	while (len--) {
 		write_byte (dst_ptr, (BYTE) 0);
 		dst_ptr = byteptr_plus (dst_ptr, 1);
-		/* CGR FIXME: fix type shadow */
+		write_type (ectx, dst_ptr, STYPE_DATA);
 	}
 	return ECTX_CONTINUE;
 }
@@ -132,7 +131,8 @@ TVM_HELPER int chan_io (ECTX ectx,
 
 	*requeue = (WORDPTR) chan_value;
 
-	/* CGR FIXME: record chan_ptr as a STYPE_CHAN */
+	if (read_type (ectx, chan_ptr) != STYPE_CHAN)
+		write_type (ectx, chan_ptr, STYPE_CHAN);
 
 	if (chan_value != NOT_PROCESS_P) {
 		#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES

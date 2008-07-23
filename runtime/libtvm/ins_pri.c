@@ -389,9 +389,8 @@ TVM_INSTRUCTION (ins_ldc)
 TVM_INSTRUCTION (ins_ldl)
 {
 	/* Push the stack down and read a value from from memory(OREG+WPTR) */
-	/* CGR FIXME: load type from memory */
-	STACK(read_word(wordptr_plus(WPTR, OREG)), AREG, BREG,
-		STYPE_DATA, AREGt, BREGt);
+	WORDPTR offset = wordptr_plus(WPTR, OREG);
+	STACK(read_word(offset), AREG, BREG, read_type(ectx, offset), AREGt, BREGt);
 
 	CLEAR(OREG);
 
@@ -456,9 +455,9 @@ TVM_INSTRUCTION (ins_ldlp)
 TVM_INSTRUCTION (ins_ldnl)
 {
 	/* Read from memory(AREG+OREG) */
-	AREG = read_word(wordptr_plus((WORDPTR)AREG, OREG));
-	/* CGR FIXME: load type from memory */
-	SET_AREGt(STYPE_DATA);
+	WORDPTR offset = wordptr_plus((WORDPTR)AREG, OREG);
+	AREG = read_word(offset);
+	SET_AREGt(read_type(ectx, offset));
 
 	CLEAR(OREG);
 
@@ -514,8 +513,7 @@ TVM_INSTRUCTION (ins_ldnlp)
 TVM_INSTRUCTION (ins_stl)
 {
 	/* Put the top of the stack into mem(WPTR + OREG) */
-	write_word(wordptr_plus(WPTR, OREG), AREG);
-	/* CGR FIXME: store type */
+	write_word_and_type(ectx, wordptr_plus(WPTR, OREG), AREG, AREGt);
 
 	/* Pop the stack */
 	STACK(BREG, CREG, UNDEFINE(CREG), BREGt, CREGt, CREGt);
@@ -547,8 +545,7 @@ TVM_INSTRUCTION (ins_stl)
 TVM_INSTRUCTION (ins_stnl)
 {
 	/* Put value in BREG into mem(AREG + OREG) */
-	write_word(wordptr_plus((WORDPTR)AREG, OREG), BREG);
-	/* CGR FIXME: store type */
+	write_word_and_type(ectx, wordptr_plus((WORDPTR)AREG, OREG), BREG, BREGt);
 
 	/* Pop the stack */
 	STACK(CREG, UNDEFINE(BREG), UNDEFINE(CREG), CREGt, BREGt, CREGt);

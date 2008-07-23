@@ -754,7 +754,7 @@ TVM_INSTRUCTION (ins_move)
 {
 	
 	tvm_memcpy((BYTEPTR) BREG, (BYTEPTR) CREG, AREG);
-	/* CGR FIXME: copy typing information */
+	copy_type_shadow(ectx, (BYTEPTR) BREG, (BYTEPTR) CREG, AREG);
 	UNDEFINE_STACK_RET();
 }
 

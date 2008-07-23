@@ -204,6 +204,13 @@ struct _tvm_ectx_t {
 
 	volatile WORD 	sflags;	/* Synchronisation flags */
 
+	/* Type store */
+	#ifdef TVM_TYPE_SHADOW
+	unsigned int	shadow_start;
+	unsigned int	shadow_end;
+	BYTE		*type_store;
+	#endif /* TVM_TYPE_SHADOW */
+
 	/* Implementation functions */
 	void		(*add_to_queue)
 				(ECTX ectx, WORDPTR ws);

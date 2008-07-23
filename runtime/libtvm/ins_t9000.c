@@ -89,7 +89,7 @@ TVM_INSTRUCTION (ins_cir)
 TVM_INSTRUCTION (ins_ss)
 {
 	write_int16 ((INT16PTR) AREG, (INT16) (BREG & 0xffff));
-	/* CGR FIXME: write type to memory */
+	write_type (ectx, AREG, STYPE_DATA);
 	STACK_RET (CREG, UNDEFINE(BREG), UNDEFINE(CREG), CREGt, BREGt, CREGt);
 }
 

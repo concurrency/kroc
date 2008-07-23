@@ -541,6 +541,7 @@ TVM_HELPER int mt_chan_io (ECTX ectx, WORDPTR dst, WORDPTR src)
 {
 	/* Read pointer to mobile type */
 	WORDPTR ptr = (WORDPTR) read_word (src);
+	WORD type = STYPE_NULL;
 	/* Is there anything there? */
 	if (ptr != (WORDPTR) NULL_P) {
 		UWORD move;
@@ -551,13 +552,12 @@ TVM_HELPER int mt_chan_io (ECTX ectx, WORDPTR dst, WORDPTR src)
 		}
 		if (move == MT_TRUE) {
 			/* Pointer moved, delete old reference */
-			write_word (src, (WORD) NULL_P);
-			/* CGR FIXME: fix type shadow */
+			write_word_and_type (ectx, src, (WORD) NULL_P, STYPE_NULL);
 		}
+		type = STYPE_MT;
 	}
 	/* Write out possibly new pointer to mobile type */
-	write_word (dst, (WORD) ptr);
-	/* CGR FIXME: fix type shadow */
+	write_word_and_type (ectx, dst, (WORD) ptr, type);
 	return ECTX_CONTINUE;
 }
 /*}}}*/
@@ -584,8 +584,7 @@ TVM_HELPER int mt_chan_dc_in (ECTX ectx, BYTEPTR dst_ptr, WORD len)
 {
 	WORDPTR dst = (WORDPTR) dst_ptr;
 	
-	write_word (dst, NULL_P);
-	/* CGR FIXME: fix type shadow */
+	write_word_and_type (ectx, dst, NULL_P, STYPE_NULL);
 
 	return ECTX_CONTINUE;
 }
@@ -606,8 +605,7 @@ TVM_HELPER int mt_chan_dc_out (ECTX ectx, BYTEPTR src_ptr, WORD len)
 
 		if (move == MT_TRUE) {
 			/* Pointer moved, delete old reference */
-			write_word (src, (WORD) NULL_P);
-			/* CGR FIXME: fix type shadow */
+			write_word_and_type (ectx, src, (WORD) NULL_P, STYPE_NULL);
 		}
 
 		return mt_release (ectx, ptr);
@@ -915,7 +913,7 @@ TVM_INSTRUCTION (ins_mt_xxchg)
 	other_WPTR = (WORDPTR) read_word (chan_ptr);
 	other_ptr = (WORDPTR) WORKSPACE_GET (other_WPTR, WS_POINTER);
 
-	swap_data_word (data_ptr, other_ptr);
+	swap_data_word (ectx, data_ptr, other_ptr);
 
 	UNDEFINE_STACK_RET ();
 }
