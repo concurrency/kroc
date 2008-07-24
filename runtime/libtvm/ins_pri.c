@@ -198,7 +198,7 @@ TVM_INSTRUCTION (ins_ajw)
 TVM_INSTRUCTION (ins_call)
 {
 	/* Store registers in a new stack frame */
-	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 0), (WORD)IPTR, STYPE_BC);
+	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 0), (WORD)IPTR, STYPE_RET);
 	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 1), AREG, AREGt);
 	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 2), BREG, BREGt);
 	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 3), CREG, CREGt);

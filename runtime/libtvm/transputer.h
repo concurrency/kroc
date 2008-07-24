@@ -84,7 +84,8 @@ enum {
 	STYPE_CHAN	= 5,	/* Channel */
 	STYPE_MOBILE	= 6,	/* Pointer into Mobile Memory */
 	STYPE_NULL	= 7,	/* NULL Pointer */
-	STYPE_VS	= 8	/* Vectorspace Pointer */
+	STYPE_VS	= 8,	/* Vectorspace Pointer */
+	STYPE_RET	= 9	/* Return Address (in call-stack) */
 };
 /*}}}*/
 
