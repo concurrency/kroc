@@ -76,13 +76,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /*{{{  Shadow types */
 enum {
-	STYPE_DATA	= 0,	/* Unknown/untyped data */
-	STYPE_WS	= 1,	/* Workspace Pointer */
-	STYPE_BC	= 2,	/* Bytecode Pointer */
-	STYPE_MT	= 3,	/* Mobile Type Pointer */
-	STYPE_CHAN	= 4,	/* Channel */
-	STYPE_MOBILE	= 5,	/* Pointer into Mobile Memory */
-	STYPE_NULL	= 6	/* NULL Pointer */
+	STYPE_UNDEF	= 0,	/* Undefined/unknown type */
+	STYPE_DATA	= 1,	/* Generic data */
+	STYPE_WS	= 2,	/* Workspace Pointer */
+	STYPE_BC	= 3,	/* Bytecode Pointer */
+	STYPE_MT	= 4,	/* Mobile Type Pointer */
+	STYPE_CHAN	= 5,	/* Channel */
+	STYPE_MOBILE	= 6,	/* Pointer into Mobile Memory */
+	STYPE_NULL	= 7	/* NULL Pointer */
 };
 /*}}}*/
 

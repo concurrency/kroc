@@ -43,7 +43,7 @@ TVM_INSTRUCTION (ins_proc_alloc)
 	
 	ws = mt_alloc_data (ectx, MT_SIMPLE | MT_MAKE_TYPE (MT_DATA), words << WSH);
 
-	STACK_RET ((WORD) ws, UNDEFINE(BREG), UNDEFINE(CREG), STYPE_MT, BREGt, CREGt);
+	STACK1_RET ((WORD) ws, STYPE_MT);
 }
 
 /* 0x230 - 0x22 0x23 0xF0 - proc_param - pass parameter into workspace */
@@ -149,7 +149,7 @@ TVM_INSTRUCTION (ins_getaff)
 TVM_INSTRUCTION (ins_setaff)
 {
 	/* Ignore the new affinity mask. */
-	STACK_RET (BREG, CREG, UNDEFINE(CREG), BREGt, CREGt, CREGt);
+	STACK2_RET (BREG, CREG, BREGt, CREGt);
 }
 
 #endif /* TVM_OCCAM_PI */

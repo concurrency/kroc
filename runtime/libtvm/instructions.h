@@ -45,43 +45,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* This instruction clears a register */
 #define CLEAR(reg) \
 	do { (reg) = 0; } while (0)
-/* This instruction makes a register undefined */
-#define UNDEFINE(reg) (reg)
 
-/* This macro assumes a decent C compiler (i.e. gcc) 
- * which removes things like "y = x; x = y".
- * 
- * Furthermore, we expect to see code like
- * 
- * STACK(breg, creg, UNDEFINE(creg))
- * 
- * because this will evaluate to
- *
- * STACK(breg, creg, creg)
- * 
- * which will then expand to the parrallel
- * execution of
- *
- * areg = breg;
- * breg = creg;
- * creg = creg;
- *
- * which will then optimize out to
- *
- * areg = breg;
- * breg = creg;
- *
- * which is all we want.
- * */
 #ifdef TVM_TYPE_SHADOW
 #define INTERNAL_STACK_TYPES(A,B,C) 		\
 	do {					\
-		a_tmp = (WORD) (A); 		\
-		b_tmp = (WORD) (B); 		\
-		c_tmp = (WORD) (C); 		\
-		AREGt = a_tmp;			\
-		BREGt = b_tmp;			\
-		CREGt = c_tmp;			\
+		WORD at_tmp = (WORD) (A); 	\
+		WORD bt_tmp = (WORD) (B); 	\
+		WORD ct_tmp = (WORD) (C); 	\
+		AREGt = at_tmp;			\
+		BREGt = bt_tmp;			\
+		CREGt = ct_tmp;			\
 	} while (0)
 #define PICK_POINTER_TYPE(A,B)			\
 	(((A) == STYPE_MT || (B) == STYPE_MT)	\
@@ -102,17 +75,42 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 		CREG = c_tmp;			\
 		INTERNAL_STACK_TYPES (At,Bt,Ct);\
 	} while (0)
+#define STACK2(A,B,At,Bt) 			\
+	do {					\
+		WORD a_tmp = (WORD) (A); 	\
+		WORD b_tmp = (WORD) (B); 	\
+		AREG = a_tmp;			\
+		BREG = b_tmp;			\
+		INTERNAL_STACK_TYPES (At,Bt,STYPE_UNDEF);\
+	} while (0)
+#define STACK1(A,At) 				\
+	do {					\
+		WORD a_tmp = (WORD) (A); 	\
+		AREG = a_tmp;			\
+		INTERNAL_STACK_TYPES (At,STYPE_UNDEF,STYPE_UNDEF);\
+	} while (0)
 #define STACK_RET(A,B,C,At,Bt,Ct) 		\
 	do {					\
 		STACK (A,B,C,At,Bt,Ct);		\
 		return ECTX_CONTINUE;		\
 	} while (0)
+#define STACK2_RET(A,B,At,Bt)			\
+	do {					\
+		STACK2 (A,B,At,Bt);		\
+		return ECTX_CONTINUE;		\
+	} while (0)
+#define STACK1_RET(A,At)			\
+	do {					\
+		STACK1 (A,At);			\
+		return ECTX_CONTINUE;		\
+	} while (0)
+
 
 #define UNDEFINE_STACK()		\
 	do {				\
-		SET_AREGt (STYPE_DATA); \
-		SET_BREGt (STYPE_DATA); \
-		SET_CREGt (STYPE_DATA); \
+		SET_AREGt (STYPE_UNDEF);\
+		SET_BREGt (STYPE_UNDEF);\
+		SET_CREGt (STYPE_UNDEF);\
 	} while (0)
 #define UNDEFINE_STACK_RET()		\
 	do {				\

@@ -72,7 +72,7 @@ TVM_INSTRUCTION (ins_cbu)
 TVM_INSTRUCTION (ins_ssub)
 {
 	INT16PTR ptr = int16ptr_plus ((INT16PTR) AREG, BREG);
-	STACK_RET ((WORD) ptr, CREG, UNDEFINE(CREG), AREGt, CREGt, CREGt);
+	STACK2_RET ((WORD) ptr, CREG, AREGt, CREGt);
 }
 
 /* 0xC7 - 0x2C 0xF7 - cir - check in range */
@@ -82,7 +82,7 @@ TVM_INSTRUCTION (ins_cir)
 	{
 		SET_ERROR_FLAG (EFLAG_INTERR);
 	}
-	STACK_RET (CREG, UNDEFINE(BREG), UNDEFINE(CREG), CREGt, BREGt, CREGt);
+	STACK1_RET (CREG, CREGt);
 }
 
 /* 0xC8 - 0x2C 0xF8 - ss - store sixteen */
@@ -90,7 +90,7 @@ TVM_INSTRUCTION (ins_ss)
 {
 	write_int16 ((INT16PTR) AREG, (INT16) (BREG & 0xffff));
 	write_type (ectx, AREG, STYPE_DATA);
-	STACK_RET (CREG, UNDEFINE(BREG), UNDEFINE(CREG), CREGt, BREGt, CREGt);
+	STACK1_RET (CREG, CREGt);
 }
 
 /* 0xCA - 0x2C 0xFA - ls - load sixteen */
@@ -110,7 +110,7 @@ TVM_INSTRUCTION (ins_ciru)
 	{
 		SET_ERROR_FLAG (EFLAG_INTERR);
 	}
-	STACK_RET (CREG, UNDEFINE(BREG), UNDEFINE(CREG), CREGt, BREGt, CREGt);
+	STACK1_RET (CREG, CREGt);
 }
 
 

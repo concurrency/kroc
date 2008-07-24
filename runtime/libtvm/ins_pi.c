@@ -264,7 +264,7 @@ TVM_INSTRUCTION (ins_getpri)
 TVM_INSTRUCTION (ins_setpri)
 {
 	/* Ignore the new priority. */
-	STACK_RET (BREG, CREG, UNDEFINE(CREG), BREGt, CREGt, CREGt);
+	STACK2_RET (BREG, CREG, BREGt, CREGt);
 }
 
 /* 0xAD - 0x2A 0xFD - ins_savecreg - save the creg */

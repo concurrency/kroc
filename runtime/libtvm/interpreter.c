@@ -294,6 +294,19 @@ int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 			WPTR = wordptr_minus (WPTR, 1);
 			write_word (WPTR, ectx->tlp_argv[i]);
 		}
+		#ifdef TVM_TYPE_SHADOW
+		switch (ectx->tlp_fmt[i]) {
+			case '?': case '!':
+				write_type (ectx, WPTR, STYPE_MOBILE);
+				break;
+			case 'C': case 'S': case 'F': case 'M':
+				write_type (ectx, WPTR, STYPE_MT);
+				break;
+			default:
+				write_type (ectx, WPTR, STYPE_DATA);
+				break;
+		}
+		#endif
 	}
 
 	/* Store the return pointer, to completion byte code */

@@ -251,7 +251,7 @@ TVM_INSTRUCTION (ins_cj)
 	else
 	{
 		/* Pop the stack */
-		STACK(BREG, CREG, UNDEFINE(CREG), BREGt, CREGt, CREGt);
+		STACK2(BREG, CREG, BREGt, CREGt);
 	}
 
 	CLEAR(OREG);
@@ -514,13 +514,10 @@ TVM_INSTRUCTION (ins_stl)
 {
 	/* Put the top of the stack into mem(WPTR + OREG) */
 	write_word_and_type(ectx, wordptr_plus(WPTR, OREG), AREG, AREGt);
-
-	/* Pop the stack */
-	STACK(BREG, CREG, UNDEFINE(CREG), BREGt, CREGt, CREGt);
-
 	CLEAR(OREG);
-
-	return ECTX_CONTINUE;
+	
+	/* Pop the stack */
+	STACK2_RET(BREG, CREG, BREGt, CREGt);
 }
 
 /* 0xE_ - stnl - store non-local */
@@ -546,13 +543,10 @@ TVM_INSTRUCTION (ins_stnl)
 {
 	/* Put value in BREG into mem(AREG + OREG) */
 	write_word_and_type(ectx, wordptr_plus((WORDPTR)AREG, OREG), BREG, BREGt);
-
-	/* Pop the stack */
-	STACK(CREG, UNDEFINE(BREG), UNDEFINE(CREG), CREGt, BREGt, CREGt);
-	
 	CLEAR(OREG);
 
-	return ECTX_CONTINUE;
+	/* Pop the stack */
+	STACK2_RET(BREG, CREG, BREGt, CREGt);
 }
 
 
