@@ -83,7 +83,8 @@ enum {
 	STYPE_MT	= 4,	/* Mobile Type Pointer */
 	STYPE_CHAN	= 5,	/* Channel */
 	STYPE_MOBILE	= 6,	/* Pointer into Mobile Memory */
-	STYPE_NULL	= 7	/* NULL Pointer */
+	STYPE_NULL	= 7,	/* NULL Pointer */
+	STYPE_VS	= 8	/* Vectorspace Pointer */
 };
 /*}}}*/
 

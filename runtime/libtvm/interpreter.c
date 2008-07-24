@@ -133,9 +133,9 @@ void tvm_ectx_reset (ECTX ectx)
 	AREG 		= 0;
 	BREG 		= 0;
 	CREG 		= 0;
-	SET_AREGt (STYPE_DATA);
-	SET_BREGt (STYPE_DATA);
-	SET_CREGt (STYPE_DATA);
+	SET_AREGt (STYPE_UNDEF);
+	SET_BREGt (STYPE_UNDEF);
+	SET_CREGt (STYPE_UNDEF);
 
 	/* setup scheduler queues */
 	WPTR = (WORDPTR) NOT_PROCESS_P;
@@ -268,6 +268,7 @@ int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 	WPTR = wordptr_minus (WPTR, 1);
 	write_byte (byteptr_plus ((BYTEPTR) WPTR, 0), 0x2F);
 	write_byte (byteptr_plus ((BYTEPTR) WPTR, 1), 0xFE);
+	write_type (ectx, WPTR, STYPE_DATA);
 
 	/* Pad stack frame */
 	frame_size = calc_frame_size (argc, (WORD) vs, 0);
@@ -280,12 +281,14 @@ int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 	if (fb) {
 		WPTR = wordptr_minus (WPTR, 1);
 		write_word (WPTR, (WORD) fb);
+		write_type (ectx, WPTR, STYPE_MT);
 	}
 
 	/* Set up vectorspace pointer */
 	if (vs) {
 		WPTR = wordptr_minus (WPTR, 1);
 		write_word (WPTR, (WORD) vs);
+		write_type (ectx, WPTR, STYPE_VS);
 	}
 	
 	/* Set up arguments */
@@ -313,6 +316,7 @@ int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 	/* FIXME: this won't work for virtual memory right? */
 	WPTR = wordptr_minus (WPTR, 1);
 	write_word (WPTR, (WORD) wordptr_plus (WPTR, frame_size));
+	write_type (ectx, WPTR, STYPE_WS);
 
 	return 0;
 }

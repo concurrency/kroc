@@ -110,13 +110,15 @@ void copy_type_shadow (ECTX ectx, BYTEPTR dst, BYTEPTR src, WORD count)
 	unsigned int s = (unsigned int) src;
 
 	if (s >= ectx->shadow_start && (s + ((unsigned int) count)) <= ectx->shadow_end) {
-		unsigned int	d	= (unsigned int) dst;
-		unsigned int 	length	= (count + (WORD_BITS - 1)) >> WSH;
-		BYTE 		*tc_d	= ectx->type_store + (((d - ectx->shadow_start)) >> WSH);
-		BYTE 		*tc_s	= ectx->type_store + (((s - ectx->shadow_start)) >> WSH);
-		
-		while (length--) {
-			*(tc_d++) = *(tc_s++);
+		unsigned int d = (unsigned int) dst;
+		if (d >= ectx->shadow_start && (d + ((unsigned int) count)) <= ectx->shadow_end) {
+			unsigned int 	length	= (count + (WORD_BITS - 1)) >> WSH;
+			BYTE 		*tc_d	= ectx->type_store + (((d - ectx->shadow_start)) >> WSH);
+			BYTE 		*tc_s	= ectx->type_store + (((s - ectx->shadow_start)) >> WSH);
+			
+			while (length--) {
+				*(tc_d++) = *(tc_s++);
+			}
 		}
 	} else {
 		fill_type_shadow (ectx, dst, count, STYPE_DATA);

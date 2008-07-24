@@ -166,13 +166,13 @@ static TVM_INLINE void _write_type(ECTX ectx, BYTEPTR ptr, WORD val)
 	do {					\
 		WORDPTR loc = (LOC);		\
 		write_word (loc, (VAL));	\
-		write_type ((CTX), loc, (VAL));	\
+		write_type ((CTX), loc, (TYPE));\
 	} while (0);
 #define write_byte_and_type(CTX,LOC,VAL,TYPE)	\
 	do {					\
 		BYTEPTR loc = (LOC);		\
 		write_byte (loc, (VAL));	\
-		write_type ((CTX), loc, (VAL));	\
+		write_type ((CTX), loc, (TYPE));\
 	} while (0);
 /*}}}*/
 
