@@ -659,6 +659,11 @@ static void encode_state (ECTX vm, vm_state_t *state)
 	state->stack[0]	= vm->areg;
 	state->stack[1]	= vm->breg;
 	state->stack[2]	= vm->creg;
+	#ifdef TVM_TYPE_SHADOW
+	state->type[0]	= (BYTE) vm->aregT;
+	state->type[1]	= (BYTE) vm->bregT;
+	state->type[2]	= (BYTE) vm->cregT;
+	#endif
 	state->oreg	= vm->oreg;
 	state->wptr	= (WORD) vm->wptr;
 	state->iptr	= (WORD) vm->iptr; 
@@ -671,6 +676,11 @@ static void decode_state (ECTX vm, vm_state_t *state)
 	vm->areg	= state->stack[0];
 	vm->breg	= state->stack[1];
 	vm->creg	= state->stack[2];
+	#ifdef TVM_TYPE_SHADOW
+	vm->aregT	= state->type[0];
+	vm->bregT	= state->type[1];
+	vm->cregT	= state->type[2];
+	#endif
 	vm->oreg	= state->oreg;
 	vm->wptr	= (WORDPTR) state->wptr;
 	vm->iptr	= (BYTEPTR) state->iptr;
@@ -721,7 +731,8 @@ static int vm_ctl_read_int16 (ECTX ectx, c_state_t *c)
 
 static int vm_ctl_read_type (ECTX ectx, c_state_t *c)
 {
-	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_ERROR]), 0);
+	WORD type = read_type (ectx, (BYTEPTR) c->p.argv[0].data.word);
+	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_TYPE]), type);
 }
 
 static int vm_ctl_return_param (ECTX ectx, c_state_t *c)
