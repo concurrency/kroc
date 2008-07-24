@@ -93,7 +93,7 @@ static int handle_in (ECTX ectx,
 
 	if (c->state == C_S_ENCODE_ENTRY) {
 		if (count == 1) {
-			write_byte (address, (BYTE) c->p.symbol->entry);
+			write_byte_and_type (ectx, address, (BYTE) c->p.symbol->entry, STYPE_DATA);
 			
 			if (c->p.argc > 0) {
 				c->state = C_S_ENCODE;
@@ -113,15 +113,16 @@ static int handle_in (ECTX ectx,
 		int	i;
 		
 		if (arg->type == P_A_WORD && count == sizeof (WORD)) {
-			write_word ((WORDPTR) address, arg->data.word);
+			write_word_and_type (ectx, (WORDPTR) address, arg->data.word, STYPE_DATA);
 		} else if (arg->type == P_A_BYTE && count == 1) {
-			write_byte (address, arg->data.byte);
+			write_byte_and_type (ectx, address, arg->data.byte, STYPE_DATA);
 		} else if (arg->type == P_A_BYTES && count == arg->length) {
 			for (i = 0; i < arg->length; ++i) {
-				write_byte (address, arg->data.bytes[i]);
+				write_byte_and_type (ectx, address, arg->data.bytes[i], STYPE_DATA);
 				address = byteptr_plus (address, 1);
 			}
 		} else if (arg->type == P_A_ARRAY && count == arg->length) {
+			fill_type_shadow (ectx, address, arg->length, STYPE_DATA);
 			for (i = 0; i < arg->length; ++i) {
 				write_byte (address, arg->data.array[i]);
 				address = byteptr_plus (address, 1);
@@ -235,7 +236,8 @@ static int handle_mt_in (ECTX ectx,
 		p_arg_t *arg	= &(c->p.argv[n]);
 		
 		if (arg->type == P_A_MT) {
-			write_word (address, (WORD) arg->data.mt);
+			write_word_and_type (ectx, address, (WORD) arg->data.mt, 
+				arg->data.mt != NULL ? STYPE_MT : STYPE_NULL);
 
 			if (c->p.argc == 0) {
 				c->state = C_S_IDLE;

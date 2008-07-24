@@ -167,9 +167,9 @@ ECTX allocate_ectx (bytecode_t *bc, const char *tlp, WORD *argv)
 	/* Setup the type shadow before installing the TLP */
 	#ifdef TVM_TYPE_SHADOW
 	vm->shadow_start	= (unsigned int) mem;
-	vm->shadow_end		= vm->shadow_start + mem_len;
-	vm->type_store		= malloc (mem_len >> WSH);
-	fill_type_shadow (vm, (BYTEPTR) vm->shadow_start, mem_len, STYPE_UNDEF);
+	vm->shadow_end		= vm->shadow_start + (mem_len << WSH);
+	vm->type_store		= malloc (mem_len);
+	fill_type_shadow (vm, (BYTEPTR) vm->shadow_start, mem_len << WSH, STYPE_UNDEF);
 	#endif
 
 	if (tvm_ectx_install_tlp (
