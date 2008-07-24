@@ -80,7 +80,7 @@ TVM_INSTRUCTION (ins_adc)
 
 	/* Areg gets result, Breg and Creg stay the same */
 	AREG = result;
-	SET_AREGt (STYPE_DATA);
+	SET_AREGt(STYPE_DATA);
 
 	CLEAR(OREG);
 
@@ -115,6 +115,13 @@ TVM_INSTRUCTION (ins_adc)
 
 TVM_INSTRUCTION (ins_ajw)
 {
+	#ifdef TVM_TYPE_SHADOW
+	/* Release memory */
+	if(OREG < 0) {
+		fill_type_shadow(ectx, (BYTEPTR)WPTR, (-OREG) << WSH, STYPE_UNDEF);
+	}
+	#endif
+
 	/* Add the value in the operand register to the workspace pointer. */
 	WPTR = wordptr_plus(WPTR, OREG);
 
@@ -191,16 +198,15 @@ TVM_INSTRUCTION (ins_ajw)
 TVM_INSTRUCTION (ins_call)
 {
 	/* Store registers in a new stack frame */
-	write_word(wordptr_minus(WPTR, 4 - 0), (WORD)IPTR);
-	write_word(wordptr_minus(WPTR, 4 - 1), AREG);
-	write_word(wordptr_minus(WPTR, 4 - 2), BREG);
-	write_word(wordptr_minus(WPTR, 4 - 3), CREG);
+	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 0), (WORD)IPTR, STYPE_BC);
+	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 1), AREG, AREGt);
+	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 2), BREG, BREGt);
+	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 3), CREG, CREGt);
 	/* Actually allocate the stack frame */
 	WPTR = wordptr_minus(WPTR, 4);
 
 	/* Set the AREG to the old IPTR */
-	AREG = (WORD)IPTR;
-	SET_AREGt (STYPE_BC);
+	STACK1((WORD)IPTR, STYPE_BC);
 
 	/* Set the new IPTR from the OREG */
 	IPTR = byteptr_plus(IPTR, OREG);

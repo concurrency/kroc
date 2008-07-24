@@ -380,6 +380,8 @@ TVM_INSTRUCTION (ins_ret)
 {
 	BYTEPTR ret_addr = (BYTEPTR)read_word(WPTR);
 
+	fill_type_shadow(ectx, (BYTEPTR)WPTR, 4 << WSH, STYPE_UNDEF);
+
 	IPTR = ret_addr;
 	WPTR = wordptr_plus(WPTR, 4);
 
