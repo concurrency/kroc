@@ -64,10 +64,10 @@
 #define REG_SS 2
 #define REG_DS 3
 
-/* various FPU things */
+/* FPU rounding modes */
 #define I386_FPU_N 0
-#define I386_FPU_P 1
-#define I386_FPU_M 2
+#define I386_FPU_M 1
+#define I386_FPU_P 2
 #define I386_FPU_Z 3
 
 /* instruction encoding stuff */

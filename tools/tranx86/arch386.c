@@ -2546,7 +2546,7 @@ static void compose_longop_i386 (tstate *ts, int sec)
  */
 static void compose_fpop_i386 (tstate *ts, int sec)
 {
-	int tmp_reg, this_lab, this_lab2;
+	int tmp_reg, this_lab, this_lab2, error_flags;
 
 	switch (sec) {
 		/*{{{  I_FPPOP -- pop floating-point stack (no-op)*/
@@ -2816,20 +2816,30 @@ static void compose_fpop_i386 (tstate *ts, int sec)
 	case I_FPCHKERR:
 		this_lab = ++(ts->last_lab);
 
+		/* "precision", "overflow", "zero divide" */
+		error_flags = 0x2c;
+		if (options.underflow_error) {
+			/* "underflow" */
+			error_flags |= 0x10;
+		}
+
 		/* store current flags (in stack) */
 		tmp_reg = tstack_newreg (ts->stack);
 		add_to_ins_chain (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg, ARG_REG, REG_EAX));
 		add_to_ins_chain (compose_ins (INS_LAHF, 0, 1, ARG_REG|ARG_IMP, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_REG, tmp_reg));
 
-		/* do check */
+		/* extract exception flags */
 		add_to_ins_chain (compose_ins (INS_FSTSW, 0, 1, ARG_REG|ARG_IS16BIT, tmp_reg));
-		add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST, 0x3c, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG|ARG_IS16BIT, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST, error_flags, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG|ARG_IS16BIT, tmp_reg));
+		/* if it's only a "precision" exception, that's OK */
 		add_to_ins_chain (compose_ins (INS_CMP, 2, 1, ARG_CONST, 0x20, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
 		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_Z, ARG_LABEL, this_lab));
+		/* extract flags again */
 		add_to_ins_chain (compose_ins (INS_FSTSW, 0, 1, ARG_REG|ARG_IS16BIT, tmp_reg));
-		add_to_ins_chain (compose_ins (INS_AND, 2, 2, ARG_CONST, 0x3c, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
+		add_to_ins_chain (compose_ins (INS_AND, 2, 2, ARG_CONST, error_flags, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG|ARG_IS16BIT, tmp_reg, ARG_REG | ARG_IMP, REG_CC));
 		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
+		/* if none are set, that's OK too */
 		add_to_ins_chain (compose_ins (INS_CJUMP, 2, 0, ARG_COND, CC_Z, ARG_LABEL, this_lab));
 
 		/* error detected => fixup stack; call kernel */
@@ -3178,16 +3188,43 @@ static void compose_cif_call_i386 (tstate *ts, int inlined, char *name, ins_chai
 	add_to_ins_chain (*pst_last);
 }
 /*}}}*/
+/*{{{  static void compose_fp_load_control_i386 (tstate *ts, int rounding_mode)*/
+/*
+ *	load the FPU's control word (uses stack)
+ */
+static void compose_fp_load_control_i386 (tstate *ts, int rounding_mode)
+{
+	int rmodes[4] = {I386_FPU_N, I386_FPU_P, I386_FPU_M, I386_FPU_Z};
+
+	/* 0b << 12       infinity control -- unused on 387+
+	 * 00b << 10      rounding control -- from rmodes above
+	 * 11b << 8       precision control -- double extended precision (64 bits)
+	 * 000000b << 0   exception mask -- none masked
+	 */
+	int val = 0x0300 | (rmodes[rounding_mode] << 10);
+
+	if (options.debug_options & DEBUG_FLOAT) {
+		/* mask all FP exceptions except "invalid operation" */
+		val |= 0x003e;
+	} else {
+		/* mask all FP exceptions */
+		val |= 0x003f;
+	}
+
+	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_CONST | ARG_ISCONST, val));
+	add_to_ins_chain (compose_ins (INS_FLDCW, 1, 0, ARG_REGIND, REG_ESP));
+	add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST | ARG_ISCONST, 4, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
+
+	return;
+}
+/*}}}*/
 /*{{{  static void compose_fp_init_i386 (tstate *ts)*/
 /*
  *	initialises the FPU
  */
 static void compose_fp_init_i386 (tstate *ts)
 {
-	/* set rounding-control to round-to-nearest (00) */
-	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_CONST | ARG_ISCONST, 0x33e));		/* was 0xf3e */
-	add_to_ins_chain (compose_ins (INS_FLDCW, 1, 0, ARG_REGIND, REG_ESP));
-	add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST | ARG_ISCONST, 4, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
+	compose_fp_load_control_i386 (ts, FPU_N);
 
 	return;
 }
@@ -3324,30 +3361,11 @@ static void compose_entry_prolog_i386 (tstate *ts)
  */
 static void compose_fp_set_fround_i386 (tstate *ts, int mode)
 {
-	int fpu_orval;
-	int i386modes[4] = {I386_FPU_N, I386_FPU_P, I386_FPU_M, I386_FPU_Z};
-
 	if (mode == ts->stack->fpu_mode) {
 		return;
 	}
 
-	add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, -4, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
-	add_to_ins_chain (compose_ins (INS_FSTCW, 0, 1, ARG_REGIND, REG_ESP));
-	/* actually only a 16-bit op, but it doesn't make any speed difference */
-	add_to_ins_chain (compose_ins (INS_AND, 2, 1, ARG_CONST, 0xf3ff, ARG_REGIND | ARG_DISP, REG_EAX, 0, ARG_REGIND, REG_ESP));
-	if (options.debug_options & DEBUG_FLOAT) {
-		fpu_orval = 0x3f;		/* all exceptions masked */
-	} else {
-		fpu_orval = 0;			/* let exceptions get generated */
-	}
-	if (i386modes[mode] > 0) {
-		fpu_orval |= (i386modes[mode] << 10);
-	}
-	if (fpu_orval) {
-		add_to_ins_chain (compose_ins (INS_OR, 2, 1, ARG_CONST, fpu_orval, ARG_REGIND | ARG_DISP, REG_EAX, 0, ARG_REGIND, REG_ESP));
-	}
-	add_to_ins_chain (compose_ins (INS_FLDCW, 1, 0, ARG_REGIND, REG_ESP));
-	add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST, 4, ARG_REG, REG_ESP, ARG_REG, REG_ESP));
+	compose_fp_load_control_i386 (ts, mode);
 
 	ts->stack->fpu_mode = mode;
 	return;

@@ -154,6 +154,7 @@ int main (int argc, char **argv)
 	options.use_cttd = 0;
 	options.mpenable = 0;
 	options.nocc_codegen = 0;
+	options.underflow_error = 0;
 
 	glob_in_icount = 0;
 	glob_out_icount = 0;
@@ -603,6 +604,8 @@ int main (int argc, char **argv)
 				/* goes in as a top-level interface flag as well */
 				options.rtflags |= TLP_CTTD;
 				options.use_cttd = 1;
+			} else if (!strcmp (*walk + 2, "underflow-error")) {
+				options.underflow_error = 1;
 			} else {
 				goto unknown_option;
 			}
@@ -1130,6 +1133,8 @@ static void usage (FILE *stream)
 	fprintf (stream, "\t--new         do not wait for blocking sys-calls at exit\n");
 	fprintf (stream, "\t--cnpfx <str> use external C name prefix string <str>\n");
 	fprintf (stream, "\t--cttd        input compiled with chan-type type descriptions\n");
+	fprintf (stream, "\t--underflow-error\n");
+	fprintf (stream, "\t              treat floating-point underflow as an error\n");
 	fprintf (stream, "\n");
 	fprintf (stream, "\t-V | --version    dump version and exit\n");
 	fprintf (stream, "\t-h | --help       this help text\n");

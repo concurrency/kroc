@@ -2114,7 +2114,7 @@ for action in $ACTIONLIST; do
 		popd
 
 		pushd "$HERETICC_SRC"
-		./hereticc -n1 || all_ok=0
+		./hereticc -n1 -r1 || all_ok=0
 		popd
 
 		if [ "$all_ok" == 0 ]; then
