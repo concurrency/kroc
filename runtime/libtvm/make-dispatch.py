@@ -88,6 +88,7 @@ def write_ins_header(defs, fn):
 		else:
 			(c, h, name) = defs[k]
 			name = name.replace("ins_", "").upper()
+			name = name.replace("_", ".")
 			if k[1] == '_':
 				k = k.replace("_", "")
 			bits.append("VAL INT INS.%s IS #%s:\n" % (name, k))
