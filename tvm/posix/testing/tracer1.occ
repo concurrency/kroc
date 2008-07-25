@@ -155,6 +155,7 @@ PROC test3 (CHAN BYTE kyb?, scr!, err!)
                     scr ! ' '
                     out.hex (arg, 0, scr!)
                     scr ! '*n'
+                    vm.ctl[request] ! dispatch; op; arg
                     vm.ctl[response] ? CASE 
                       dispatched; iptr; wptr
                         INT file, line:

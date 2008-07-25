@@ -127,7 +127,8 @@ static int handle_in (ECTX ectx,
 				write_byte (address, arg->data.array[i]);
 				address = byteptr_plus (address, 1);
 			}
-			free (arg->data.array);
+			if (arg->data.array != c->buffer)
+				free (arg->data.array);
 		} else {
 			return ectx->set_error_flag (ectx, EFLAG_EXTCHAN);
 		}
@@ -546,7 +547,7 @@ enum {
 	VM_CTL_RE_CHANNEL	= 11
 };
 static p_sym_t vm_ctl_re[] = {
-	{ .entry = VM_CTL_RE_DECODED,	.symbols = "www",	.dispatch = vm_ctl_dispatch },
+	{ .entry = VM_CTL_RE_DECODED,	.symbols = "www",	.dispatch = NULL },
 	{ .entry = VM_CTL_RE_DISPATCHED,.symbols = "ww",	.dispatch = NULL },
 	{ .entry = VM_CTL_RE_BP,	.symbols = "w",		.dispatch = NULL },
 	{ .entry = VM_CTL_RE_CLOCK,	.symbols = "ww",	.dispatch = NULL },
@@ -588,7 +589,7 @@ static int vm_ctl_step (ECTX ectx, c_state_t *c)
 	return send_message (
 		ectx, c, &(vm_ctl_re[VM_CTL_RE_DECODED]),
 		vm->iptr,
-		instr,
+		instr >> 4,
 		vm->oreg
 	);
 }
@@ -602,10 +603,10 @@ static int vm_ctl_dispatch (ECTX ectx, c_state_t *c)
 		/* request ! dispatch */
 		vm->state	= ECTX_RUNNING;
 		vm->oreg	= c->p.argv[1].data.word;
-		instr		= (BYTE) c->p.argv[0].data.word;
+		instr		= ((BYTE) c->p.argv[0].data.word) << 4;
 	} else {
 		/* continuation from response ! decoded */
-		instr		= (BYTE) c->p.argv[1].data.word;
+		instr		= ((BYTE) c->p.argv[1].data.word) << 4;
 	}
 
 	vm->state = tvm_dispatch_instruction (vm, instr);
