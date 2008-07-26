@@ -185,12 +185,12 @@ PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
         IF 
           (op = INS.AJW) OR (op = INS.CALL)
             SEQ
-              out ! rename.process; id; new.id
               IF
                 op = INS.CALL
                   out ! call; iptr
                 TRUE
                   SKIP
+              out ! rename.process; id; new.id
           (op = INS.OPR)
             CASE arg
               INS.RET
