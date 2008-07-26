@@ -125,7 +125,7 @@ PROTOCOL P.TRACE
     executing; ADDR; IPTR
     start.process; ADDR
     fork.process; ADDR
-    end.process; ADDR
+    end.process
     rename.process; ADDR; ADDR
     call; IPTR
     return; IPTR
@@ -163,8 +163,18 @@ PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
                 INS.STARTP
                   -- process workspace is on the operand stack 
                   out ! start.process; ADDR state[stack][0] 
-                INS.ENDP, INS.PROC.END
-                  out ! end.process; id
+                INS.ENDP
+                  INT count:
+                  SEQ
+                    vm.ctl[request] ! read.word; (ADDR (state[stack][0] + BYTESIN(INT)))
+                    vm.ctl[response] ? CASE word; count
+                    IF
+                      ((ADDR state[stack][0]) = id)
+                        SKIP
+                      (count > 1)
+                        out ! end.process
+                      TRUE
+                        out ! rename.process; id; ADDR state[stack][0]
                 INS.IN
                   out ! input; ADDR state[stack][1]
                 INS.MT.IN
@@ -175,6 +185,8 @@ PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
                   out ! output; ADDR state[stack][0]
                 INS.PROC.START
                   out ! fork.process; ADDR state[stack][1]
+                INS.PROC.END
+                  out ! end.process
                 ELSE 
                   SKIP 
           TRUE 
@@ -243,8 +255,7 @@ PROC decode.trace (CT.BYTECODE! bc, CHAN P.TRACE in?, CHAN BYTE out!)
           out.string (" fork ", 0, out!)
           out.hex (INT process, 0, out!)
           out ! '*n'
-      ADDR process:
-      end.process; process
+      end.process
         SEQ
           out.hex (INT id, 0, out!)
           out.string (" end*n", 0, out!)
