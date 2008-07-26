@@ -131,6 +131,7 @@ PROTOCOL P.TRACE
     return; IPTR
     input; ADDR
     output; ADDR
+    release; ADDR; ADDR
 :
 
 PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
@@ -198,8 +199,10 @@ PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
           (op = INS.AJW) OR (op = INS.CALL)
             SEQ
               IF
-                op = INS.CALL
+                (op = INS.CALL)
                   out ! call; iptr
+                (op = INS.AJW) AND (new.id > id)
+                  out ! release; id; new.id
                 TRUE
                   SKIP
               out ! rename.process; id; new.id
@@ -299,6 +302,15 @@ PROC decode.trace (CT.BYTECODE! bc, CHAN P.TRACE in?, CHAN BYTE out!)
           out.hex (INT id, 0, out!)
           out.string (" output to ", 0, out!)
           out.hex (INT chan, 0, out!)
+          out ! '*n'
+      ADDR start, end:
+      release; start; end
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" release ", 0, out!)
+          out.hex (INT start, 0, out!)
+          out ! ' '
+          out.hex (INT end, 0, out!)
           out ! '*n'
 :
 
