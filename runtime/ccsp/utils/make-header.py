@@ -280,7 +280,7 @@ def gen_cif_stub(f, symbol, arch_generator):
 	f.begin_line()
 	f.add("#define ccsp_cif_%s(" % name)
 	
-	arguments.insert(0, "wptr")
+	arguments.insert(0, "__wptr")
 
 	if len(arguments) > 0:
 		f.add(arguments.pop(0))
@@ -294,7 +294,7 @@ def gen_cif_stub(f, symbol, arch_generator):
 	f.line("do {")
 
 	f.indent()
-	f.line("ccsp_sched_t *sched = (ccsp_sched_t *) ((wptr)[SchedPtr]);")
+	f.line("ccsp_sched_t *__sched = (ccsp_sched_t *) ((__wptr)[SchedPtr]);")
 
 	arch_generator(f, symbol, inputs, outputs)
 
@@ -443,7 +443,7 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 	if len(inputs) > 1:
 		for (n, i) in enumerate(inputs):
 			if n >= 1:
-				f.line("sched->cparam[%d] = (word) (%s);" % ((n - 1), i))
+				f.line("__sched->cparam[%d] = (word) (%s);" % ((n - 1), i))
 	
 	f.line("__asm__ __volatile__ (\"\\n\"")
 	f.indent()
@@ -471,7 +471,7 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 
 	f.begin_line()
 	if resched:
-		f.add(": \"=D\" (wptr), \"=S\" (sched)")
+		f.add(": \"=D\" (__wptr), \"=S\" (__sched)")
 	else:
 		f.add(": \"=c\" (wptr_dummy), \"=S\" (sched_dummy)")
 	if (in_regs + out_regs) > 0:
@@ -479,7 +479,7 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 	f.end_line()
 
 	f.begin_line()
-	f.add(": \"0\" (wptr), \"1\" (sched)")
+	f.add(": \"0\" (__wptr), \"1\" (__sched)")
 	for (idx, name) in enumerate(inputs):
 		if idx < in_regs:
 			f.add(", \"%d\" (%s)" % (idx + 2, name))
@@ -497,12 +497,12 @@ def gen_i386_cif_stub(f, symbol, inputs, outputs):
 	f.line(");")
 
 	if resched:
-		f.line("(wptr)[SchedPtr] = (word) sched;")
+		f.line("(__wptr)[SchedPtr] = (word) __sched;")
 
 	if len(outputs) > 1:
 		for (n, i) in enumerate(outputs):
 			if n >= 1:
-				f.line("*((word *)(&(%s))) = sched->cparam[%d];" % (i, (n - 1)))
+				f.line("*((word *)(&(%s))) = __sched->cparam[%d];" % (i, (n - 1)))
 
 	if len(dummies) > 0:
 		f.outdent()
