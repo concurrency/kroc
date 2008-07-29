@@ -35,13 +35,24 @@
 #PRAGMA EXTERNAL "PROC C.sdlraster.update.n (VAL INT n) = 0"
 
 --{{{  handy functions
+--* @deprecated
+-- @private
 INT FUNCTION SDLEVENT.XPOS (VAL SDLEVENT ev) IS (INT ev[x]):
+--* @deprecated
+-- @private
 INT FUNCTION SDLEVENT.YPOS (VAL SDLEVENT ev) IS (INT ev[y]):
+--* @deprecated
+-- @private
 INT FUNCTION SDLEVENT.BUTTON (VAL SDLEVENT ev) IS (ev[id]):
+--* @deprecated
+-- @private
 INT FUNCTION SDLEVENT.BSTATE (VAL SDLEVENT ev) IS (ev[mod]):
+--* @deprecated
+-- @private
 INT FUNCTION SDLEVENT.KSTATE (VAL SDLEVENT ev) IS (ev[mod]):
 --}}}
 
+--* @private
 VAL INT REFRESH.US IS 20000:
 
 --{{{  PROC SDLRaster (VAL []BYTE dispname, VAL INT width, height, nbuffers, CHAN RASTER in?, out!, CHAN SDLEVENT events!, CHAN INT control?)
