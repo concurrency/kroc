@@ -8,6 +8,7 @@ my @SRCPATH = ( '.' );
 # State
 my $next_id = 1;
 my %id_map;
+my @id_cache;
 my %procs;
 my %chans;
 my %cache;
@@ -22,6 +23,7 @@ while (my $line = <STDIN>) {
 	if (!exists ($id_map{$wp_id})) {
 		$id	 	= $next_id++;
 		$id_map{$wp_id}	= $id;
+		@id_cache	= ();
 		$procs{$id} 	= { 'id' => $id };
 		push (@ops, {
 			'op'		=> 'newp',
@@ -32,6 +34,22 @@ while (my $line = <STDIN>) {
 	}
 
 	my $proc		= $procs{$id};
+
+	if ($proc && $proc->{'blocked_on'}) {
+		my $chan = $proc->{'blocked_on'};
+		push (@ops, {
+			'op'		=> 'read',
+			'target'	=> $chan->{'input'}->{'id'},
+			'channel'	=> $chan->{'id'}
+		});
+		push (@ops, {
+			'op'		=> 'wrote',
+			'target'	=> $chan->{'output'}->{'id'},
+			'channel'	=> $chan->{'id'}
+		});
+		$chan->{'input'}->{'blocked_on'} = undef;
+		$chan->{'output'}->{'blocked_on'} = undef;
+	}
 
 	if ($cmd =~ m/^@ (.*):(\d+)/) {
 		my ($file, $line) = ($1, $2);
@@ -50,8 +68,9 @@ while (my $line = <STDIN>) {
 	} elsif ($cmd =~ m/^=> (#[A-F0-9]+)/) {
 		my $new_wp_id	= $1;
 		delete ($id_map{$wp_id});
+		@id_cache	= ();
 		if (!exists ($id_map{$new_wp_id})) {
-			$id_map{$new_wp_id} = $id;
+			$id_map{$new_wp_id}	= $id;
 		} elsif ($proc->{'parent'}) {
 			# this is a merge ?
 			delete ($procs{$id});
@@ -71,6 +90,7 @@ while (my $line = <STDIN>) {
 		$proc->{'children'}	= {} if !exists ($proc->{'children'});
 		$proc->{'children'}->{$new_proc} = $new_proc;
 		$id_map{$new_wp_id}	= $new_id;
+		@id_cache		= ();
 		$procs{$new_id}		= $new_proc;
 		push (@ops, {
 			'op'		=> 'startp',
@@ -83,12 +103,14 @@ while (my $line = <STDIN>) {
 		my $new_proc		= { 'id' => $new_id };
 		$id_map{$new_wp_id}	= $new_id;
 		$procs{$new_id}		= $new_proc;
+		@id_cache		= ();
 		push (@ops, {
 			'op'		=> 'newp',
 			'target'	=> $new_id
 		});
 	} elsif ($cmd =~ m/^end/) {
 		delete ($id_map{$wp_id});
+		@id_cache = ();
 		delete ($procs{$id});
 		if ($proc->{'parent'}) {
 			delete ($proc->{'parent'}->{'children'}->{$proc});
@@ -115,16 +137,53 @@ while (my $line = <STDIN>) {
 			'target'	=> $id,
 			'symbol'	=> $symbol
 		});
-	} elsif ($cmd =~ m/^(input|output) (to|from) (#[A-F0-9]+)/) {
+	} elsif ($cmd =~ m/^(input|output) (to|from) #([A-F0-9]+)/) {
 		my ($io, $tf, $cid)	= ($1, $2, $3);
-		my $chan		= $chans{$cid};
-		if (!$chan) {
+		my $chan;
+		$cid			= hex ($cid);
+		if (!exists ($chans{$cid})) {
 			$chan 		= { 'id' => $cid };
 			$chans{$cid} 	= $chan;
+			if (!@id_cache) {
+				@id_cache = sort {
+					my $ma = hex (($a =~ m/#(.*)/)[0]);
+					my $mb = hex (($b =~ m/#(.*)/)[0]);
+					return hex ($ma) <=> hex ($mb);
+				} (keys (%id_map));
+			
+				foreach my $id (@id_cache) {
+					$id =~ s/^#//;
+					$id = hex ($id);
+				}
+			}
+			
+			# FIXME: use binary search
+			my $proc;
+			for (my $i = 0; $id_cache[$i] < $cid && $i < @id_cache; ++$i) {
+				$proc = $i;
+			}
+			$proc = sprintf ('#%08X', $id_cache[$proc]);
+			$proc = $id_map{$proc};
+			$chan = { 
+				'id'		=> $cid,
+				'parent'	=> $proc
+			};
+			$chans{$cid} 	= $chan;
+			push (@ops, {
+				'op'		=> 'addc',
+				'target'	=> $proc,
+				'channel'	=> $cid
+			});
+		} else {
+			$chan		= $chans{$cid};
 		}
-		$chan->{$proc}	= $proc;
-		$proc->{$io}	= {} if !exists ($proc->{$io});
-		$proc->{$io}->{$cid} = scalar (@ops);
+		$chan->{$io}		= $proc;
+		$proc->{'blocked_on'}	= $chan;
+		push (@ops, {
+			'op'		=>	$io,
+			'target'	=>	$id,
+			'channel'	=>	$cid
+		});
 	} elsif ($cmd =~ m/^release (#[A-F0-9]+) (#[A-F0-9]+)/) {
 		my ($start, $end) = ($1, $2);
 		$start	=~ s/^#//;
@@ -139,14 +198,11 @@ while (my $line = <STDIN>) {
 			my $chan = $chans{$cid};
 			delete ($chans{$cid});
 			
-			foreach my $id (keys (%$chan)) {
-				next if $id !~ /^#/;
-				my $proc = $chan->{$id};
-				delete ($proc->{'input'}->{$cid})
-					if exists ($proc->{'input'});
-				delete ($proc->{'output'}->{$cid})
-					if exists ($proc->{'output'});
-			}
+			push (@ops, {
+				'op'		=>	'deletec',
+				'target'	=>	$chan->{'parent'},
+				'channel'	=>	$cid
+			});
 		}
 	}
 }
@@ -201,6 +257,8 @@ foreach my $op (@ops) {
 		print "\tparent = ", $op->{'parent'}, "\n";
 	} elsif ($op->{'op'} eq 'symbol') {
 		print "\t", $op->{'symbol'}, "\n";
+	} elsif ($op->{'op'} =~ /^(addc|deletec|input|output|read|wrote)$/) {
+		print "\tchannel = ", $op->{'channel'}, "\n";
 	}
 }
 
