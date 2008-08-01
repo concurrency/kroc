@@ -24,7 +24,7 @@ while (my $line = <STDIN>) {
 		$id_map{$wp_id}	= $id;
 		$procs{$id} 	= { 'id' => $id };
 		push (@ops, {
-			'op'		=> 'new',
+			'op'		=> 'newp',
 			'target'	=> $id
 		});
 	} else {
@@ -57,7 +57,7 @@ while (my $line = <STDIN>) {
 			delete ($procs{$id});
 			delete ($proc->{'parent'}->{'children'}->{$proc});
 			push (@ops, {
-				'op'		=> 'delete',
+				'op'		=> 'endp',
 				'target'	=> $id
 			});
 		}
@@ -73,7 +73,7 @@ while (my $line = <STDIN>) {
 		$id_map{$new_wp_id}	= $new_id;
 		$procs{$new_id}		= $new_proc;
 		push (@ops, {
-			'op'		=> 'start',
+			'op'		=> 'startp',
 			'target'	=> $new_id,
 			'parent'	=> $id
 		});
@@ -84,7 +84,7 @@ while (my $line = <STDIN>) {
 		$id_map{$new_wp_id}	= $new_id;
 		$procs{$new_id}		= $new_proc;
 		push (@ops, {
-			'op'		=> 'new',
+			'op'		=> 'newp',
 			'target'	=> $new_id
 		});
 	} elsif ($cmd =~ m/^end/) {
@@ -94,7 +94,7 @@ while (my $line = <STDIN>) {
 			delete ($proc->{'parent'}->{'children'}->{$proc});
 		}
 		push (@ops, {
-			'op'		=> 'end',
+			'op'		=> 'endp',
 			'target'	=> $id
 		});
 	} elsif ($cmd =~ m/^call (.*)/) {
@@ -102,18 +102,18 @@ while (my $line = <STDIN>) {
 		$proc->{'callstack'} = [] if !exists ($proc->{'callstack'});
 		push (@{$proc->{'callstack'}}, $symbol);
 		push (@ops, {
-			'op'		=> 'title',
+			'op'		=> 'symbol',
 			'target'	=> $id,
-			'title'		=> $symbol
+			'symbol'	=> $symbol
 		});
 	} elsif ($cmd =~ m/^return/) {
 		my $stack = $proc->{'callstack'};
 		pop (@$stack);
 		my $symbol = $stack->[@$stack - 1];
 		push (@ops, {
-			'op'		=> 'title',
+			'op'		=> 'symbol',
 			'target'	=> $id,
-			'title'		=> $symbol
+			'symbol'	=> $symbol
 		});
 	} elsif ($cmd =~ m/^(input|output) (to|from) (#[A-F0-9]+)/) {
 		my ($io, $tf, $cid)	= ($1, $2, $3);
@@ -151,8 +151,57 @@ while (my $line = <STDIN>) {
 	}
 }
 
+# Minimise number of process IDs
+my @free;
+$next_id = 1;
+%id_map = ();
+for (my $i = 0; $i < @ops; ++$i) {
+	my $op = $ops[$i];
+	$id_map{$op->{'target'}} = $i;
+	$id_map{$op->{'parent'}} = $i if exists ($op->{'parent'});
+}
+foreach my $id (keys (%id_map)) {
+	my $pos = $id_map{$id};
+	my $op = $ops[$pos];
+	$op->{'free_ids'} = [] if !exists ($op->{'free_ids'});
+	push (@{$op->{'free_ids'}}, $id);
+}
+for (my $i = 0; $i < @ops; ++$i) {
+	my $op		= $ops[$i];
+	if ($op->{'op'} =~ m/^startp|newp$/) {
+		my $id;
+		if (@free) {
+			$id = shift (@free);
+		} else {
+			$id = $next_id++;
+		}
+		$id_map{$op->{'target'}} = $id;
+	}
+	$op->{'target'} = $id_map{$op->{'target'}}
+		if exists ($op->{'target'});
+	$op->{'parent'} = $id_map{$op->{'parent'}}
+		if exists ($op->{'parent'});
+	if (exists ($op->{'free_ids'})) {
+		foreach my $id (@{$op->{'free_ids'}}) {
+			push (@free, $id_map{$id});
+		}
+	}
+}
+
+
+# Pretty print
 foreach my $op (@ops) {
 	print $op->{'op'}, " ", $op->{'target'}, "\n";
+	if ($op->{'op'} eq 'position') {
+		print "\t", $op->{'heading'}, "\n";
+		foreach my $line (@{$op->{'lines'}}) {
+			print "\t\t", $line, "\n";
+		}
+	} elsif ($op->{'op'} eq 'startp') {
+		print "\tparent = ", $op->{'parent'}, "\n";
+	} elsif ($op->{'op'} eq 'symbol') {
+		print "\t", $op->{'symbol'}, "\n";
+	}
 }
 
 exit 0;
@@ -197,6 +246,9 @@ sub load_file ($$) {
 sub pick_lines ($$) {
 	my ($lines, $n) = @_;
 	my (@l) = ('...', '...', '...');
+
+	# Line number data from 1
+	$n -= 1;
 
 	# Pick lines
 	if ($lines) {
