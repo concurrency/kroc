@@ -6,11 +6,16 @@ use strict;
 my @SRCPATH = ( '.' );
 
 # State
-my $next_id = 1;
+my $next_id	= 1;
 my %id_map;
 my @id_cache;
 my %procs;
+
+my $next_cid	= 1;
+my %cid_map;
+my @cid_free;
 my %chans;
+
 my %cache;
 
 # Output
@@ -20,11 +25,17 @@ while (my $line = <STDIN>) {
 	my ($wp_id, $cmd)	= ($line =~ m/^(#[A-F0-9]+)\s+(.*)/);
 	my $id;
 
+	$wp_id = ptr_to_val ($wp_id);
+
 	if (!exists ($id_map{$wp_id})) {
 		$id	 	= $next_id++;
 		$id_map{$wp_id}	= $id;
 		@id_cache	= ();
-		$procs{$id} 	= { 'id' => $id };
+		$procs{$id} 	= { 
+			'id' 		=> $id, 
+			'ws_top' 	=> $wp_id,
+			'ws_bottom'	=> $wp_id
+		};
 		push (@ops, {
 			'op'		=> 'newp',
 			'target'	=> $id
@@ -33,7 +44,7 @@ while (my $line = <STDIN>) {
 		$id		= $id_map{$wp_id};
 	}
 
-	my $proc		= $procs{$id};
+	my $proc = $procs{$id};
 
 	if ($proc && $proc->{'blocked_on'}) {
 		my $chan = $proc->{'blocked_on'};
@@ -71,24 +82,24 @@ while (my $line = <STDIN>) {
 		@id_cache	= ();
 		if (!exists ($id_map{$new_wp_id})) {
 			$id_map{$new_wp_id}	= $id;
+			$proc->{'ws_bottom'}	= $new_wp_id;
 		} elsif ($proc->{'parent'}) {
 			# this is a merge ?
 			delete ($procs{$id});
-			delete ($proc->{'parent'}->{'children'}->{$proc});
 			push (@ops, {
 				'op'		=> 'endp',
 				'target'	=> $id
 			});
 		}
 	} elsif ($cmd =~ m/^start (#[A-F0-9]+)/) {
-		my $new_wp_id	= $1;
+		my $new_wp_id	= ptr_to_val ($1);
 		my $new_id	= $next_id++;
 		my $new_proc	= {
 			'id'		=> $new_id,
-			'parent'	=> $proc
+			'parent'	=> $proc,
+			'ws_top'	=> $new_wp_id,
+			'ws_bottom'	=> $new_wp_id
 		};
-		$proc->{'children'}	= {} if !exists ($proc->{'children'});
-		$proc->{'children'}->{$new_proc} = $new_proc;
 		$id_map{$new_wp_id}	= $new_id;
 		@id_cache		= ();
 		$procs{$new_id}		= $new_proc;
@@ -112,9 +123,6 @@ while (my $line = <STDIN>) {
 		delete ($id_map{$wp_id});
 		@id_cache = ();
 		delete ($procs{$id});
-		if ($proc->{'parent'}) {
-			delete ($proc->{'parent'}->{'children'}->{$proc});
-		}
 		push (@ops, {
 			'op'		=> 'endp',
 			'target'	=> $id
@@ -137,44 +145,50 @@ while (my $line = <STDIN>) {
 			'target'	=> $id,
 			'symbol'	=> $symbol
 		});
-	} elsif ($cmd =~ m/^(input|output) (to|from) #([A-F0-9]+)/) {
-		my ($io, $tf, $cid)	= ($1, $2, $3);
-		my $chan;
-		$cid			= hex ($cid);
-		if (!exists ($chans{$cid})) {
+	} elsif ($cmd =~ m/^(input|output) (to|from) (#[A-F0-9]+)/) {
+		my ($io, $tf, $cp_id)	= ($1, $2, ptr_to_val ($3));
+		my ($cid, $chan);
+		if (!exists ($cid_map{$cp_id})) {
+			$cid		= (@cid_free ? shift (@cid_free) : $next_cid++);
 			$chan 		= { 'id' => $cid };
+			$cid_map{$cp_id}= $cid;
 			$chans{$cid} 	= $chan;
-			if (!@id_cache) {
-				@id_cache = sort {
-					my $ma = hex (($a =~ m/#(.*)/)[0]);
-					my $mb = hex (($b =~ m/#(.*)/)[0]);
-					return hex ($ma) <=> hex ($mb);
-				} (keys (%id_map));
-			
-				foreach my $id (@id_cache) {
-					$id =~ s/^#//;
-					$id = hex ($id);
-				}
-			}
+			@id_cache	= sort (keys (%id_map));
 			
 			# FIXME: use binary search
 			my $proc;
-			for (my $i = 0; $id_cache[$i] < $cid && $i < @id_cache; ++$i) {
+			for (my $i = 0; $id_cache[$i] < $cp_id && $i < @id_cache; ++$i) {
 				$proc = $i;
 			}
-			$proc = sprintf ('#%08X', $id_cache[$proc]);
-			$proc = $id_map{$proc};
-			$chan = { 
+			$proc = $procs{$id_map{$id_cache[$proc]}};
+			if ($proc->{'ws_bottom'} > $cp_id || $proc->{'ws_top'} < $cp_id) {
+				# Create a fake parent
+				my $id	 	= $next_id++;
+				$id_map{$cp_id}	= $id;
+				$proc		= { 
+					'id' 		=> $id, 
+					'ws_top' 	=> $cp_id + 4, # XXX: bad constant
+					'ws_bottom'	=> $cp_id
+				};
+				$procs{$id}	= $proc;
+				push (@ops, {
+					'op'		=> 'newp',
+					'target'	=> $id
+				});
+			}
+			$chan = {
 				'id'		=> $cid,
+				'cp_id'		=> $cp_id,
 				'parent'	=> $proc
 			};
 			$chans{$cid} 	= $chan;
 			push (@ops, {
 				'op'		=> 'addc',
-				'target'	=> $proc,
+				'target'	=> $proc->{'id'},
 				'channel'	=> $cid
 			});
 		} else {
+			$cid		= $cid_map{$cp_id};
 			$chan		= $chans{$cid};
 		}
 		$chan->{$io}		= $proc;
@@ -185,22 +199,19 @@ while (my $line = <STDIN>) {
 			'channel'	=>	$cid
 		});
 	} elsif ($cmd =~ m/^release (#[A-F0-9]+) (#[A-F0-9]+)/) {
-		my ($start, $end) = ($1, $2);
-		$start	=~ s/^#//;
-		$start	= hex ($start);
-		$end	=~ s/^#//;
-		$end 	= hex ($end);
-		foreach my $cid (keys (%chans)) {
-			my $pos = hex (($cid =~ /#(.*)/)[0]);
+		my ($start, $end) = (ptr_to_val ($1), ptr_to_val ($2));
+		foreach my $cp_id (keys (%cid_map)) {
+			next if $cp_id < $start || $cp_id >= $end;
 			
-			next if $pos < $start || $pos >= $end;
-			
+			my $cid	= $cid_map{$cp_id};
 			my $chan = $chans{$cid};
+			delete ($cid_map{$cp_id});
 			delete ($chans{$cid});
+			push (@cid_free, $cid);
 			
 			push (@ops, {
 				'op'		=>	'deletec',
-				'target'	=>	$chan->{'parent'},
+				'target'	=>	$chan->{'parent'}->{'id'},
 				'channel'	=>	$cid
 			});
 		}
@@ -264,24 +275,8 @@ foreach my $op (@ops) {
 
 exit 0;
 
-sub output_process {
-	my ($proc, $indent) = @_;
-	print 	$indent, $proc->{'id'}, " ", $proc->{'file'}, " ", $proc->{'line'}, "\n";
-	if (exists ($proc->{'callstack'})) {
-		print $indent, " (", join (', ', @{$proc->{'callstack'}}), ")\n";
-	}
-	if (exists ($proc->{'input'})) {
-		print $indent, " ? ", join (', ', keys (%{$proc->{'input'}})), "\n";
-	}
-	if (exists ($proc->{'output'})) {
-		print $indent, " ! ", join (', ', keys (%{$proc->{'output'}})), "\n";
-	}
-	if (exists ($proc->{'children'})) {
-		foreach my $key (sort (keys (%{$proc->{'children'}}))) {
-			my $proc = $proc->{'children'}->{$key};
-			output_process ($proc, "$indent\t");
-		}
-	}
+sub ptr_to_val($) {
+	return hex (($_[0] =~ m/#?([A-F0-9]+)/i)[0]);
 }
 
 sub load_file ($$) {
