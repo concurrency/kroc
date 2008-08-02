@@ -252,26 +252,20 @@ for (my $i = 0; $i < @ops; ++$i) {
 		foreach my $id (@{$op->{'free_ids'}}) {
 			push (@free, $id_map{$id});
 		}
+		delete ($op->{'free_ids'});
 	}
 }
 
-
-# Pretty print
-foreach my $op (@ops) {
-	print $op->{'op'}, " ", $op->{'target'}, "\n";
-	if ($op->{'op'} eq 'position') {
-		print "\t", $op->{'heading'}, "\n";
-		foreach my $line (@{$op->{'lines'}}) {
-			print "\t\t", $line, "\n";
-		}
-	} elsif ($op->{'op'} eq 'startp') {
-		print "\tparent = ", $op->{'parent'}, "\n";
-	} elsif ($op->{'op'} eq 'symbol') {
-		print "\t", $op->{'symbol'}, "\n";
-	} elsif ($op->{'op'} =~ /^(addc|deletec|input|output|read|wrote)$/) {
-		print "\tchannel = ", $op->{'channel'}, "\n";
-	}
-}
+# Encode output
+print <<END;
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist SYSTEM "file://localhost/System/Library/DTDs/PropertyList.dtd">
+<plist version="1.0">
+END
+plist_encode (\@ops);
+print <<END;
+</plist>
+END
 
 exit 0;
 
@@ -300,17 +294,14 @@ sub pick_lines ($$) {
 	my ($lines, $n) = @_;
 	my (@l) = ('...', '...', '...');
 
-	# Line number data from 1
-	$n -= 1;
-
 	# Pick lines
 	if ($lines) {
 		@l = (
+			$lines->[$n - 2],
 			$lines->[$n - 1],
-			$lines->[$n],
-			$lines->[$n + 1]
+			$lines->[$n]
 		);
-	} elsif ($n == 0) {
+	} elsif ($n <= 1) {
 		$l[0] = undef;
 	}
 
@@ -341,4 +332,27 @@ sub pick_lines ($$) {
 	}
 
 	return @l;
+}
+
+sub plist_encode ($) {
+	my ($val, $indent) = @_;
+	if (ref ($val) =~ /ARRAY/) {
+		print $indent, "<array>\n";
+		foreach my $element (@$val) {
+			plist_encode ($element, "$indent    ");
+		}
+		print $indent, "</array>\n";
+	} elsif (ref ($val) =~ /HASH/) {
+		print $indent, "<dict>\n";
+		foreach my $key (keys (%$val)) {
+			print $indent, "    ", "<key>$key</key>\n";
+			plist_encode ($val->{$key}, "$indent    ");
+		}
+		print $indent, "</dict>\n";
+	} elsif ($val =~ /^[0-9]+$/) {
+		print $indent, "<integer>$val</integer>\n";
+	} else {
+		# FIXME: encode string special characters
+		print $indent, "<string>$val</string>\n";
+	}
 }
