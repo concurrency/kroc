@@ -185,7 +185,7 @@ PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
                 INS.MT.OUT
                   out ! output; ADDR state[stack][0]
                 INS.PROC.START
-                  out ! fork.process; ADDR state[stack][1]
+                  out ! fork.process; ADDR (state[stack][1] + (state[stack][0] * BYTESIN(INT)))
                 INS.PROC.END
                   out ! end.process
                 ELSE 
