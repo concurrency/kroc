@@ -15,7 +15,8 @@ EXTRA_DIST = \
 	sdltest.occ \
 	starfield.occ \
 	mrshadebob.occ \
-	mrtestprog.occ
+	mrtestprog.occ \
+	glenz.occ
 
 examples = \
 	imageviewer \
@@ -29,7 +30,8 @@ examples = \
 	sdltest \
 	starfield \
 	mrshadebob \
-	mrtestprog
+	mrtestprog \
+	glenz
 
 all-local: $(examples)
 
