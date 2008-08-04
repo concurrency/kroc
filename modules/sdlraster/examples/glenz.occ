@@ -540,7 +540,7 @@ PROC main (CHAN BYTE kyb?, scr!)
     CHAN INT control:
     PAR
       raster.timed.buffer (rc3?, rc1!, 40)
-      raster.display.simple ("glenz vectors", SCR.WIDTH, SCR.HEIGHT, 4, rc1?, rc2!)
+      raster.display.simple ("glenz vectors", SCR.WIDTH, SCR.HEIGHT, 2, rc1?, rc2!)
       IF
         use.fader
           raster.fader (rc2?, rc4!)

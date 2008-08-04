@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS = foreign no-dependencies
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
+	glenz.occ \
 	imageviewer.occ \
 	mrevents.occ \
 	mrstar8.occ \
@@ -15,10 +16,10 @@ EXTRA_DIST = \
 	sdltest.occ \
 	starfield.occ \
 	mrshadebob.occ \
-	mrtestprog.occ \
-	glenz.occ
+	mrtestprog.occ
 
 examples = \
+	glenz \
 	imageviewer \
 	mrevents \
 	mrstar8 \
@@ -30,8 +31,7 @@ examples = \
 	sdltest \
 	starfield \
 	mrshadebob \
-	mrtestprog \
-	glenz
+	mrtestprog
 
 all-local: $(examples)
 
