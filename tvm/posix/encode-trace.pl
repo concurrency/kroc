@@ -77,7 +77,7 @@ while (my $line = <STDIN>) {
 			});
 		}
 	} elsif ($cmd =~ m/^=> (#[A-F0-9]+)/) {
-		my $new_wp_id	= $1;
+		my $new_wp_id	= ptr_to_val ($1);
 		delete ($id_map{$wp_id});
 		@id_cache	= ();
 		if (!exists ($id_map{$new_wp_id})) {
