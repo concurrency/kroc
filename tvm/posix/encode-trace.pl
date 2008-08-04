@@ -49,13 +49,8 @@ while (my $line = <STDIN>) {
 	if ($proc && $proc->{'blocked_on'}) {
 		my $chan = $proc->{'blocked_on'};
 		push (@ops, {
-			'op'		=> 'read',
-			'target'	=> $chan->{'input'}->{'id'},
-			'channel'	=> $chan->{'id'}
-		});
-		push (@ops, {
-			'op'		=> 'wrote',
-			'target'	=> $chan->{'output'}->{'id'},
+			'op'		=> 'unblocked',
+			'target'	=> $chan->{'parent'}->{'id'},
 			'channel'	=> $chan->{'id'}
 		});
 		$chan->{'input'}->{'blocked_on'} = undef;
