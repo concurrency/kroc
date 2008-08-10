@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS = foreign no-dependencies
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
+	glenz.occ \
 	imageviewer.occ \
 	mrevents.occ \
 	mrstar8.occ \
@@ -18,6 +19,7 @@ EXTRA_DIST = \
 	mrtestprog.occ
 
 examples = \
+	glenz \
 	imageviewer \
 	mrevents \
 	mrstar8 \
