@@ -1,0 +1,11 @@
+/**************************************
+ * Transterpreter Fluke
+ * 
+ * A port of the Transterpreter virtual machine to the IPRE Fluke.
+ *
+ **************************************/
+
+int main (void)
+{
+	return 42;
+}
