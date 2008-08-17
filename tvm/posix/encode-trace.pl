@@ -67,7 +67,7 @@ while (my $line = <STDIN>) {
 			push (@ops, { 
 				'op' 		=> 'position',
 				'target' 	=> $id, 
-				'heading'	=> "$file:$line",
+				'heading'	=> "$file",
 				'lines'		=> \@lines
 			});
 		}
@@ -125,22 +125,22 @@ while (my $line = <STDIN>) {
 	} elsif ($cmd =~ m/^call (.*)/) {
 		my $symbol	= $1;
 		$proc->{'callstack'} = [] if !exists ($proc->{'callstack'});
-		push (@{$proc->{'callstack'}}, $symbol);
+		my $stack	= $proc->{'callstack'};
+		push (@$stack, $symbol);
 		push (@ops, {
 			'op'		=> 'symbol',
 			'target'	=> $id,
-			'symbol'	=> $symbol
+			'symbol'	=> join (' / ', @$stack)
 		});
 	} elsif ($cmd =~ m/^return/) {
 		my $stack = $proc->{'callstack'};
 		pop (@$stack);
-		my $symbol = $stack->[@$stack - 1];
 		push (@ops, {
 			'op'		=> 'symbol',
 			'target'	=> $id,
-			'symbol'	=> $symbol
+			'symbol'	=> join (' / ', @$stack)
 		});
-	} elsif ($cmd =~ m/^(input|output) (to|from) (#[A-F0-9]+)/) {
+	} elsif ($cmd =~ m/^(input|output|en|dis)( to| from |able) (#[A-F0-9]+)/) {
 		my ($io, $tf, $cp_id)	= ($1, $2, ptr_to_val ($3));
 		my ($cid, $chan);
 		if (!exists ($cid_map{$cp_id})) {
@@ -183,11 +183,15 @@ while (my $line = <STDIN>) {
 				'channel'	=> $cid
 			});
 		} else {
-			$cid		= $cid_map{$cp_id};
-			$chan		= $chans{$cid};
+			$cid			= $cid_map{$cp_id};
+			$chan			= $chans{$cid};
 		}
-		$chan->{$io}		= $proc;
-		$proc->{'blocked_on'}	= $chan;
+		if ($io =~ /^(en|dis)$/) {
+			$io			.= 'able';
+		} else {
+			$chan->{$io}		= $proc;
+			$proc->{'blocked_on'}	= $chan;
+		}
 		push (@ops, {
 			'op'		=>	$io,
 			'target'	=>	$id,
@@ -210,6 +214,11 @@ while (my $line = <STDIN>) {
 				'channel'	=>	$cid
 			});
 		}
+	} elsif ($cmd =~ /^wait$/) {
+		push (@ops, {
+			'op'		=> 'wait',
+			'target'	=> $id,
+		});
 	}
 }
 

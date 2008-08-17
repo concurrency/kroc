@@ -132,6 +132,9 @@ PROTOCOL P.TRACE
     input; ADDR
     output; ADDR
     release; ADDR; ADDR
+    wait
+    enable.channel; ADDR
+    disable.channel; ADDR
 :
 
 PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
@@ -188,6 +191,12 @@ PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
                   out ! fork.process; ADDR (state[stack][1] + (state[stack][0] * BYTESIN(INT)))
                 INS.PROC.END
                   out ! end.process
+                INS.TIN, INT.ALTWT, INS.TALTWT
+                  out ! wait
+                INS.ENBC
+                  out ! enable.channel; ADDR state[stack][1]
+                INS.DISC
+                  out ! disable.channel; ADDR state[stack][2]
                 ELSE 
                   SKIP 
           TRUE 
@@ -311,6 +320,25 @@ PROC decode.trace (CT.BYTECODE! bc, CHAN P.TRACE in?, CHAN BYTE out!)
           out.hex (INT start, 0, out!)
           out ! ' '
           out.hex (INT end, 0, out!)
+          out ! '*n'
+      wait
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" wait", 0, out!)
+          out ! '*n'
+      ADDR chan:
+      enable.channel; chan
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" enable ", 0, out!)
+          out.hex (INT chan, 0, out!)
+          out ! '*n'
+      ADDR chan:
+      disable.channel; chan
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" disable ", 0, out!)
+          out.hex (INT chan, 0, out!)
           out ! '*n'
 :
 
