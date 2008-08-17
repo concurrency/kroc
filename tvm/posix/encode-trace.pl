@@ -140,7 +140,7 @@ while (my $line = <STDIN>) {
 			'target'	=> $id,
 			'symbol'	=> join (' / ', @$stack)
 		});
-	} elsif ($cmd =~ m/^(input|output|en|dis)( to| from |able) (#[A-F0-9]+)/) {
+	} elsif ($cmd =~ m/^(input|output|en|dis)( to| from|able) (#[A-F0-9]+)/) {
 		my ($io, $tf, $cp_id)	= ($1, $2, ptr_to_val ($3));
 		my ($cid, $chan);
 		if (!exists ($cid_map{$cp_id})) {
