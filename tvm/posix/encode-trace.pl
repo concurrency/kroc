@@ -3,7 +3,7 @@
 use strict;
 
 # Constants
-my @SRCPATH = ( '.' );
+my @SRCPATH = ( '.', split (/:/, $ENV{'SRCPATH'}) );
 
 # State
 my $next_id	= 1;
@@ -281,9 +281,25 @@ sub load_file ($$) {
 	my ($cache, $fn) = @_;
 	return $cache->{$fn} if exists ($cache->{$fn});
 	foreach my $path (@SRCPATH) {
-		next if !stat ("$path/$fn");
+		my $fpath;
+		if ($path =~ /\.lst$/) {
+			my ($fh, $found, $lpath);
+			open ($fh, $path) || next;
+			while (!$found && ($lpath = <$fh>)) {
+				$lpath =~ s/\r?\n$//s;
+				if (substr ($lpath, -length ($fn)) eq $fn) {
+					$fpath = $lpath;
+				}
+			}
+			close ($fh);
+			next if !$fpath;
+		} else {
+			$fpath = "$path/$fn";
+		}
+		next if !stat ($fpath);
+		
 		my ($fh, @lines);
-		open ($fh, "$path/$fn") || die "can't open $path/$fn: $!";
+		open ($fh, $fpath) || die "can't open $fpath: $!";
 		while (my $line = <$fh>) {
 			$line =~ s/\r?\n$//s;
 			push (@lines, $line);
