@@ -231,8 +231,8 @@ PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
             CASE arg
               INS.RET
                 SEQ
-                  out ! rename.process; id; new.id
                   out ! return; iptr
+                  out ! rename.process; id; new.id
               ELSE
                 SKIP
           TRUE 

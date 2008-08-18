@@ -357,6 +357,9 @@ sub plist_encode ($) {
 		print $indent, "<integer>$val</integer>\n";
 	} else {
 		# FIXME: encode string special characters
+		$val =~ s/&/&amp;/g;
+		$val =~ s/</&lt;/g;
+		$val =~ s/>/&gt;/g;
 		print $indent, "<string>$val</string>\n";
 	}
 }
