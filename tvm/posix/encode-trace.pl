@@ -152,7 +152,7 @@ while (my $line = <STDIN>) {
 			
 			# FIXME: use binary search
 			my $proc;
-			for (my $i = 0; $id_cache[$i] < $cp_id && $i < @id_cache; ++$i) {
+			for (my $i = 0; $id_cache[$i] <= $cp_id && $i < @id_cache; ++$i) {
 				$proc = $i;
 			}
 			$proc = $procs{$id_map{$id_cache[$proc]}};

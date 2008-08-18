@@ -135,6 +135,7 @@ PROTOCOL P.TRACE
     wait
     enable.channel; ADDR
     disable.channel; ADDR
+    error; INT
 :
 
 PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
@@ -191,7 +192,7 @@ PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
                   out ! fork.process; ADDR (state[stack][1] + (state[stack][0] * BYTESIN(INT)))
                 INS.PROC.END
                   out ! end.process
-                INS.TIN, INT.ALTWT, INS.TALTWT
+                INS.TIN, INS.ALTWT, INS.TALTWT
                   out ! wait
                 INS.ENBC
                   out ! enable.channel; ADDR state[stack][1]
@@ -203,7 +204,18 @@ PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
             SKIP 
         -- workspace pointer altering operations 
         vm.ctl[request] ! dispatch; op; arg
-        vm.ctl[response] ? CASE dispatched; iptr; new.id 
+        vm.ctl[response] ? CASE
+          dispatched; iptr; new.id
+            SKIP
+          INT n:
+          error; n
+            TIMER time:
+            INT t:
+            SEQ
+              out ! error; n
+              time ? t
+              time ? AFTER (t PLUS 100000)
+              STOP
         IF 
           (op = INS.AJW) OR (op = INS.CALL)
             SEQ
@@ -340,6 +352,13 @@ PROC decode.trace (CT.BYTECODE! bc, CHAN P.TRACE in?, CHAN BYTE out!)
           out.string (" disable ", 0, out!)
           out.hex (INT chan, 0, out!)
           out ! '*n'
+      INT error:
+      error; error
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" error ", 0, out!)
+          out ! BYTE error
+          out ! '*n'
 :
 
 PROC tracer (CHAN BYTE kyb?, scr!, err!)
@@ -349,7 +368,7 @@ PROC tracer (CHAN BYTE kyb?, scr!, err!)
   INT n:
   SEQ
     vc0 ? vm
-    vm[request] ! load.bytecode; "commstime.tbc"
+    vm[request] ! load.bytecode; "test.tbc"
     vm[response] ? CASE
       CT.BYTECODE! bc:
       bytecode; bc
