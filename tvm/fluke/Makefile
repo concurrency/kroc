@@ -1,5 +1,8 @@
 ARMGCC   ?= /Users/jadudm/svn/arm-elf
-VERSION  = 4.2.0
+VERSION  ?= 4.2.0
+PORT     ?= /dev/tty.usbserial
+
+
 CROSS    = $(ARMGCC)/bin/arm-elf-
 CC       = $(CROSS)gcc
 LD       = $(CROSS)ld
@@ -8,6 +11,7 @@ AS       = $(CROSS)as
 CP       = $(CROSS)objcopy
 OD       = $(CROSS)objdump
 RANLIB   = $(CROSS)ranlib
+NATIVEGCC= gcc
 
 LIBGCC   = -L$(ARMGCC)/lib/gcc/arm-elf/$(VERSION)/ -lgcc 
 
@@ -28,7 +32,10 @@ TVMOBJS = libtvm/libtvm.a
 
 all: main.out
 	$(CP) $(CPFLAGS) main.out main.hex
-	
+
+download: tools/lpc21isp main.hex
+	./tools/lpc21isp -control main.hex $(PORT) 19200 20000
+
 main.out: $(TVMOBJS) $(OBJECTS) ldscript.cmd
 	$(LD) $(LDFLAGS) -o main.out $(OBJECTS) $(TVMOBJS) $(LIBGCC) 
 
@@ -36,6 +43,8 @@ libtvm/libtvm.a: libtvm.sh
 	CC=$(CC) CFLAGS=-nostdlib ./libtvm.sh
 	$(RANLIB) libtvm/libtvm.a
 
+tools/lpc21isp: tools/lpc21isp-ipre.c
+	$(NATIVEGCC) -o tools/lpc21isp tools/lpc21isp-ipre.c
 
 clean:
 	@echo "Cleanliness is close to godliness."
