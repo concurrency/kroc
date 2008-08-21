@@ -7,5 +7,5 @@
 
 int main (void)
 {
-	return 42;
+	return run_tvm();
 }

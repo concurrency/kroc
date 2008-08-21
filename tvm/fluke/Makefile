@@ -1,5 +1,5 @@
-ARMGCC   = /Users/jadudm/svn/arm-elf
-VERSION  = 3.3.2
+ARMGCC   ?= /Users/jadudm/svn/arm-elf
+VERSION  = 4.2.0
 CROSS    = $(ARMGCC)/bin/arm-elf-
 CC       = $(CROSS)gcc
 LD       = $(CROSS)ld
@@ -7,26 +7,35 @@ AR       = $(CROSS)ar
 AS       = $(CROSS)as
 CP       = $(CROSS)objcopy
 OD       = $(CROSS)objdump
-CFLAGS   = -Wall -I./include -c -fno-common -O3
-AFLAGS   = -ahls -mapcs-32
-LDFLAGS  = -Map main.map -Tldscript.cmd
-CPFLAGS  = -O ihex
-ODFLAGS  = -x --syms
+RANLIB   = $(CROSS)ranlib
 
-LIGBCC   = -L$(ARMGCC)/lib/gcc/arm-elf/$(VERSION)/ -lgcc
+LIBGCC   = -L$(ARMGCC)/lib/gcc/arm-elf/$(VERSION)/ -lgcc 
 
 INCLUDES = \
 		-I./include \
 		-I./libtvm \
 		-I../../runtime/libtvm \
+		-I./firmware
 
-OBJECTS  = crt.o irqs.o main.o
+CFLAGS   = -Wall $(INCLUDES) -c -fno-common -O3
+AFLAGS   = -ahls -mapcs-32
+LDFLAGS  = -Map main.map -Tldscript.cmd
+CPFLAGS  = -O ihex
+ODFLAGS  = -x --syms
+
+OBJECTS  = crt.o irqs.o tvm.o timer.o debug.o main.o 
+TVMOBJS = libtvm/libtvm.a
 
 all: main.out
 	$(CP) $(CPFLAGS) main.out main.hex
 	
-main.out: $(OBJECTS) ldscript.cmd
-	$(LD) $(LDFLAGS) -o main.out $(OBJECTS) $(LIBGCC)
+main.out: $(TVMOBJS) $(OBJECTS) ldscript.cmd
+	$(LD) $(LDFLAGS) -o main.out $(OBJECTS) $(TVMOBJS) $(LIBGCC) 
+
+libtvm/libtvm.a: libtvm.sh
+	CC=$(CC) CFLAGS=-nostdlib ./libtvm.sh
+	$(RANLIB) libtvm/libtvm.a
+
 
 clean:
 	@echo "Cleanliness is close to godliness."
