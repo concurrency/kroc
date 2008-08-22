@@ -1,4 +1,4 @@
-#include "uart.h"
+#include "fluke_uart.h"
 #include "fluke.h"
 
 static const unsigned char digits[] = "0123456789abcdef";

@@ -20,8 +20,8 @@
  * 
  * reduced to learn what has to be done to enable and use UART0
  *****************************************************************************/
-#ifndef INC_UART_H
-#define INC_UART_H
+#ifndef FLUKE_UART_H
+#define FLUKE_UART_H
 
 #include "inttypes.h"
 

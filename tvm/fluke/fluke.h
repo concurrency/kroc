@@ -1,4 +1,6 @@
 #include "tvm.h"
+#include "fluke_uart.h"
+#include "tvm_uart.h"
 
 #define MT_TVM
 #define MT_DEFINES

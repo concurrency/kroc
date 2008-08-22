@@ -4,7 +4,7 @@
  * Copyright (C) 2008 Jon Simpson, Matthew C. Jadud, Carl G. Ritson
  */
 
-#include "srv.h"
+#include "fluke.h"
 
 #define CTS_PIN		6
 #define	RTS_PIN		0
@@ -20,6 +20,7 @@ static WORDPTR			tx_channel	= (WORDPTR) NOT_PROCESS_P;
 static volatile WORD		tx_pending	= 0;
 static BYTEPTR			tx_ptr		= (BYTEPTR) NULL_P;
 
+#if 0
 void init_uart (void)
 {
 	unsigned char temp;
@@ -61,30 +62,6 @@ void init_uart (void)
 	*pSIC_IAR2	= (*pSIC_IAR2 & ~(0xf << 0x4)) | P17_IVG(14);
 	*pSIC_IMASK	|= IRQ_PFA_PORTH;
 	SSYNC;
-}
-
-static WORD run_output (WORD count, BYTEPTR *pptr)
-{
-	BYTEPTR ptr = *pptr;
-
-	while (count && (*pPORTHIO & RTS_MASK)) {
-		unsigned char c = read_byte (ptr);
-
-		ptr = byteptr_plus (ptr, 1);
-
-		while (!(*pUART0_LSR & THRE)) {
-			continue;
-		}
-
-		/* Send data */
-		*pUART0_THR = c;
-
-		count--;
-	}
-
-	*pptr = ptr;
-
-	return count;
 }
 
 void handle_int10 (void)
@@ -137,9 +114,51 @@ int uart0_is_blocking (void)
 	/* Return non-zero if rx_channel or tx_channel is not NOT_PROCESS_P. */
 	return ((int) rx_channel | (int) tx_channel) ^ NOT_PROCESS_P;
 }
+#endif
+
+#if 0
+static WORD run_output (WORD count, BYTEPTR *pptr)
+{
+	BYTEPTR ptr = *pptr;
+
+	while (count && (*pPORTHIO & RTS_MASK)) {
+		unsigned char c = read_byte (ptr);
+
+		ptr = byteptr_plus (ptr, 1);
+
+		while (!(*pUART0_LSR & THRE)) {
+			continue;
+		}
+
+		/* Send data */
+		*pUART0_THR = c;
+
+		count--;
+	}
+
+	*pptr = ptr;
+
+	return count;
+}
+#endif
+
+/* Non-interrupt driven "run_output" */
+static WORD run_output (WORD count, BYTEPTR *pptr)
+{
+	BYTEPTR ptr = *pptr;
+	while (count > 0) {
+		unsigned char c = read_byte(ptr);
+		ptr = byteptr_plus(ptr, 1);
+		uart0Putch(c);
+		count--;
+	}
+
+	return count;
+}
 
 int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 {
+#if 0
 	unsigned short imask;
 	int reschedule;
 	
@@ -165,12 +184,17 @@ int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
 		/* Save instruction pointer */
 		WORKSPACE_SET (ectx->wptr, WS_IPTR, (WORD) ectx->iptr);
 		/* Reschedule */
+#endif 
 		return ectx->run_next_on_queue (ectx);
+#if 0
 	} else {
 		return ECTX_CONTINUE;
 	}
+#endif
 }
 
+/* Original UART putch routine. */
+#if 0
 void uart0_send_char (const unsigned char c)
 {
 	/* Wait for RTS to go low (remote ready) */
@@ -186,32 +210,52 @@ void uart0_send_char (const unsigned char c)
 	/* Send data */
 	*pUART0_THR = c;
 }
+#endif 
 
 int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
 {
-	if (count == sizeof(WORD)) {
+	if (count == sizeof(WORD)) 
+	{
 		/* If count is the size of a word then 
 		 * throw away data as it will be the count 
 		 * from a counted array output.
 		 */
-	} else if ((count = run_output (count, &pointer))) {
-		/* Couldn't ship all the output, hand the
-		 * rest to the interrupt handler.
-		 */
-		tx_channel	= ectx->wptr;
-		tx_ptr		= pointer;
-		tx_pending	= count;
+	} 
+	else 
+	{
+		count = run_output (count, &pointer);
 		
-		BARRIER;
+		/* This block is commented out because it is 
+		 * for an interrupt-driven UART. We're going
+		 * to (for the moment) have a blocking UART
+		 */
+#if 0
+		if (count > 0) 
+		{
+			/* Couldn't ship all the output, hand the
+			 * rest to the interrupt handler.
+			 */
+			tx_channel	= ectx->wptr;
+			tx_ptr		= pointer;
+			tx_pending	= count;
+			
+			BARRIER;
 
-		/* Enable interrupt */
-		*pPORTHIO_MASKA_SET = RTS_MASK;
+			/* Enable interrupt */
+			*pPORTHIO_MASKA_SET = RTS_MASK;
 
-		/* Reschedule */
-		WORKSPACE_SET (ectx->wptr, WS_IPTR, (WORD) ectx->iptr);
-		return ectx->run_next_on_queue (ectx);
+			/* Reschedule */
+			WORKSPACE_SET (ectx->wptr, WS_IPTR, (WORD) ectx->iptr);
+			return ectx->run_next_on_queue (ectx);
+		} else {
+			/* Finished. Note this does not handle the case
+			 * where "count" is negative. It shouldn't be, but
+			 * we have no guarantees.
+			 */
+		}
+#endif
 	}
-	
+
 	return ECTX_CONTINUE;
 }
 

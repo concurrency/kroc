@@ -24,7 +24,6 @@
  *****************************************************************************/
 
 #include "lpc210x.h"
-#include "uart.h"
 #include "fluke.h"
 
 /* on LPC210x: UART0 TX-Pin=P0.2, RX-Pin=P0.1 
