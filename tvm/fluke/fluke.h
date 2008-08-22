@@ -19,3 +19,7 @@ void debug_print_chr (const unsigned char c);
 void debug_print_hex (unsigned int val);
 void debug_print_str (const char *str);
 
+/* Values grabbed from the fluke firmwares fluke.h */
+#define B_RTS       (1 << 18)
+#define B_CTS       (1 << 11)
+
