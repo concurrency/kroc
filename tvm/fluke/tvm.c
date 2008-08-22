@@ -58,10 +58,8 @@ static void clear_pending_interrupts (void)
 }
 /*}}}*/ 
 #endif 
-
-static EXT_CHAN_ENTRY	ext_chans[] = {};
+	
 /*{{{  External channel definitions */
-#if 0
 static EXT_CHAN_ENTRY	ext_chans[] = {
 	{ 
 		.typehash 	= 0,
@@ -70,6 +68,7 @@ static EXT_CHAN_ENTRY	ext_chans[] = {
 		.mt_in		= NULL,
 		.mt_out		= NULL
 	},
+#if 0
 	{
 		.typehash	= 0,
 		.in		= ppi_dma_in,
@@ -84,8 +83,9 @@ static EXT_CHAN_ENTRY	ext_chans[] = {
 		.mt_in		= twi_mt_in,
 		.mt_out		= twi_mt_out
 	}
-};
 #endif
+};
+
 static const int	ext_chans_length =
 				sizeof(ext_chans) / sizeof(EXT_CHAN_ENTRY);
 /*}}}*/
