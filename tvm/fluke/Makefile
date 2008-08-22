@@ -27,14 +27,18 @@ LDFLAGS  = -Map main.map -Tldscript.cmd
 CPFLAGS  = -O ihex
 ODFLAGS  = -x --syms
 
-OBJECTS  = crt.o irqs.o tvm.o timer.o debug.o setup.o main.o 
+OBJECTS  = crt.o irqs.o tvm.o timer.o debug.o uart.o setup.o main.o 
 TVMOBJS = libtvm/libtvm.a
 
 all: main.hex
 run: download reset
+run-term: download reset-term
 
 reset: tools/serial_control.py
 	./tools/serial_control.py --reset $(PORT)
+
+reset-term: tools/serial_control.py
+	./tools/serial_control.py --reset --term $(PORT)
 
 download: tools/lpc21isp main.hex
 	./tools/lpc21isp -control main.hex $(PORT) 19200 20000

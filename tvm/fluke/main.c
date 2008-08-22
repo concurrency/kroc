@@ -5,6 +5,7 @@
  *
  **************************************/
 #include "setup.h"
+#include "uart.h"
 
 int main (void)
 {
@@ -13,9 +14,13 @@ int main (void)
 	setup_pins();
 	setup_pll();
 	setup_mam();
-	
+
+	uart0Init(B38400, UART_8N1, UART_FIFO_8); // setup UART 0
+
 	led_on();
-	// `run_tvm();
+	debug_print_str("In main.c\n");
+
+	run_tvm();
 
 	j = 0;	
 	for(;;) 
