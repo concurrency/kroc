@@ -21,23 +21,25 @@ INCLUDES = \
 		-I../../runtime/libtvm \
 		-I./firmware
 
-CFLAGS   = -Wall $(INCLUDES) -c -fno-common -O3
+CFLAGS   = -Wall $(INCLUDES) -c -fno-common # -O3 # For another day
 AFLAGS   = -ahls -mapcs-32
 LDFLAGS  = -Map main.map -Tldscript.cmd
 CPFLAGS  = -O ihex
 ODFLAGS  = -x --syms
 
-OBJECTS  = crt.o irqs.o tvm.o timer.o debug.o main.o 
+OBJECTS  = crt.o irqs.o tvm.o timer.o debug.o setup.o main.o 
 TVMOBJS = libtvm/libtvm.a
 
-all: main.out
-	$(CP) $(CPFLAGS) main.out main.hex
+all: main.hex
 
 download: tools/lpc21isp main.hex
 	./tools/lpc21isp -control main.hex $(PORT) 19200 20000
 
 main.out: $(TVMOBJS) $(OBJECTS) ldscript.cmd
 	$(LD) $(LDFLAGS) -o main.out $(OBJECTS) $(TVMOBJS) $(LIBGCC) 
+
+main.hex: main.out
+	$(CP) $(CPFLAGS) main.out main.hex
 
 libtvm/libtvm.a: libtvm.sh
 	CC=$(CC) CFLAGS=-nostdlib ./libtvm.sh

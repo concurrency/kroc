@@ -1,3 +1,5 @@
+#include "lpc210x.h"
+#include "setup.h"
 
 void led_on()
 {
