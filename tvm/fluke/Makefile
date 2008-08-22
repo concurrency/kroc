@@ -31,9 +31,14 @@ OBJECTS  = crt.o irqs.o tvm.o timer.o debug.o setup.o main.o
 TVMOBJS = libtvm/libtvm.a
 
 all: main.hex
+run: download reset
+
+reset: tools/serial_control.py
+	./tools/serial_control.py --reset $(PORT)
 
 download: tools/lpc21isp main.hex
 	./tools/lpc21isp -control main.hex $(PORT) 19200 20000
+
 
 main.out: $(TVMOBJS) $(OBJECTS) ldscript.cmd
 	$(LD) $(LDFLAGS) -o main.out $(OBJECTS) $(TVMOBJS) $(LIBGCC) 
