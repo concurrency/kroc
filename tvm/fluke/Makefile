@@ -54,5 +54,8 @@ tools/lpc21isp: tools/lpc21isp-ipre.c
 	$(NATIVEGCC) -o tools/lpc21isp tools/lpc21isp-ipre.c
 
 clean:
-	@echo "Cleanliness is close to godliness."
 	rm -f $(OBJECTS) main.out main.hex main.map
+
+distclean: clean
+	rm -rf libtvm
+	rm -f tools/lpc21isp
