@@ -7,7 +7,7 @@
 #include "setup.h"
 #include "fluke.h"
 
-#define BLINKS 20
+#define BLINKS 2
 
 void blinken(int max) {
 	int i,j,c;
