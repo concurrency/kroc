@@ -45,7 +45,17 @@
 // for uart0Init() and uart1Init()
 // CAUTION - 'baud' SHOULD ALWAYS BE A CONSTANT or
 // a lot of code will be generated.
+//
+// For some reason, the Fluke code uses some different values...
+// and using this definition will break things.
+//
+// This is the original definition
 // #define UART_BAUD(baud) (uint16_t)((PCLK / ((baud) * 16.0)) + 0.5)
+//
+// And this is the Fluke team's definition; it is the definition
+// that we must use, it seems, or the UART breaks. 
+ #define UART_BAUD(baud) (uint16_t)(((FOSC*PLL_M/VPBDIV_VAL) / ((baud) * 16.0)) + 0.5)
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Definitions for typical UART 'baud' settings

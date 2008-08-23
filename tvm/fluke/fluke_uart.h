@@ -28,7 +28,13 @@
 #include "lpc/lpc210x.h"
 #include "lpc/lpcUART.h"
 
-#define UART_BAUD(baud) (uint16_t)(((FOSC*PLL_M/VPBDIV_VAL) / ((baud) * 16.0)) + 0.5)
+/* 20080823 MCJ
+ * This was all in lpc/uart.h, so I commented it out here, and 
+ * let that header do the work. Ultimately, this code can be removed,
+ * and I would like to see all of the Fluke/TVM UART code 
+ * consolidated. 
+ */
+// #define UART_BAUD(baud) (uint16_t)(((FOSC*PLL_M/VPBDIV_VAL) / ((baud) * 16.0)) + 0.5)
 
 #if 0
 void uart0Init(uint16_t baud, uint8_t mode, uint8_t fmode);

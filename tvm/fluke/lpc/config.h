@@ -38,6 +38,7 @@ extern void abort(void);
 
 #define WDOG()
 
+// #define FOSC                (14745000)  // Master Oscillator Freq.
 #define PCLK                (CCLK / PBSD) // Pheripheal Bus Clock Freq.
 #define PLL_MUL             (4)         // PLL Multiplier
 #define CCLK                (FOSC * PLL_MUL) // CPU Clock Freq.
@@ -49,7 +50,6 @@ extern void abort(void);
 #if 0 /* Board specific parameters */
 // PLL setup values are computed within the LPC include file
 // It relies upon the following defines
-#define FOSC                (14745000)  // Master Oscillator Freq.
 
 // Do some value range testing
 #if ((FOSC < 10000000) || (FOSC > 25000000))
