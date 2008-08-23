@@ -23,8 +23,7 @@
  * reduced to see what has to be done for minimum UART-support by mthomas
  *****************************************************************************/
 
-#include "lpc/lpc210x.h"
-#include "fluke_uart.h"
+#include "lpc210x.h"
 #include "fluke.h"
 
 /* on LPC210x: UART0 TX-Pin=P0.2, RX-Pin=P0.1 
@@ -42,59 +41,59 @@ void uart0Init(uint16_t baud, uint8_t mode, uint8_t fmode)
   // setup Pin Function Select Register (Pin Connect Block) 
   // make sure old values of Bits 0-4 are masked out and
   // set them according to UART0-Pin-Selection
-  PINSEL0 = (PINSEL0 & ~U0_PINMASK) | U0_PINSEL;
+  PINSEL0 = (PINSEL0 & ~UART0_PINMASK) | UART0_PINSEL;
 
-  U0IER = 0x00;             // disable all interrupts
-  U0IIR = 0x00;             // clear interrupt ID register
-  U0LSR = 0x00;             // clear line status register
+  UART0_IER = 0x00;             // disable all interrupts
+  UART0_IIR = 0x00;             // clear interrupt ID register
+  UART0_LSR = 0x00;             // clear line status register
 
   // set the baudrate - DLAB must be set to access DLL/DLM
-  U0LCR = (1<<U0LCR_DLAB); // set divisor latches (DLAB)
+  UART0_LCR = (1<<UART0_LCR_DLAB); // set divisor latches (DLAB)
 
-  U0DLL = (uint8_t)baud;         // set for baud low byte
-  U0DLM = (uint8_t)(baud >> 8);  // set for baud high byte
+  UART0_DLL = (uint8_t)baud;         // set for baud low byte
+  UART0_DLM = (uint8_t)(baud >> 8);  // set for baud high byte
   
   // set the number of characters and other
   // user specified operating parameters
   // Databits, Parity, Stopbits - Settings in Line Control Register
-  U0LCR = (mode & ~(1<<U0LCR_DLAB)); // clear DLAB "on-the-fly"
+  UART0_LCR = (mode & ~(1<<UART0_LCR_DLAB)); // clear DLAB "on-the-fly"
   // setup FIFO Control Register (fifo-enabled + xx trig) 
-  U0FCR = fmode;
+  UART0_FCR = fmode;
 }
 
 int uart0Putch(int ch)
 {
-  while (!(U0LSR & ULSR_THRE))          // wait for TX buffer to empty
+  while (!(UART0_LSR & ULSR_THRE))          // wait for TX buffer to empty
     continue;                           // also either WDOG() or swap()
 
-  U0THR = (uint8_t)ch;  // put char to Transmit Holding Register
+  UART0_THR = (uint8_t)ch;  // put char to Transmit Holding Register
   return (uint8_t)ch;      // return char ("stdio-compatible"?)
 }
 
 int uart0TxEmpty(void)
 {
-  return (U0LSR & (ULSR_THRE | ULSR_TEMT)) == (ULSR_THRE | ULSR_TEMT);
+  return (UART0_LSR & (ULSR_THRE | ULSR_TEMT)) == (ULSR_THRE | ULSR_TEMT);
 }
 
 void uart0TxFlush(void)
 {
-  U0FCR |= UFCR_TX_FIFO_RESET;          // clear the TX fifo
+  UART0_FCR |= UFCR_TX_FIFO_RESET;          // clear the TX fifo
 }
 
 
 /* Returns: character on success, -1 if no character is available */
 int uart0Getch(void)
 {
-  if (U0LSR & ULSR_RDR)                 // check if character is available
-    return U0RBR;                       // return character
+  if (UART0_LSR & ULSR_RDR)                 // check if character is available
+    return UART0_RBR;                       // return character
 
   return -1;
 }
 
 int uart0GetchBlock(void)
 {
-  while (!(U0LSR & ULSR_RDR));
-  return U0RBR;
+  while (!(UART0_LSR & ULSR_RDR));
+  return UART0_RBR;
 }
 
 
@@ -108,66 +107,66 @@ void uart1Init(uint16_t baud, uint8_t mode, uint8_t fmode)
   // setup Pin Function Select Register (Pin Connect Block) 
   // make sure old values of Bits 0-4 are masked out and
   // set them according to UART1-Pin-Selection
-  PINSEL0 = (PINSEL0 & ~U1_PINMASK) | U1_PINSEL;
+  PINSEL0 = (PINSEL0 & ~UART1_PINMASK) | UART1_PINSEL;
   
   // turn on CTS
-  PINSEL0 = (PINSEL0 & ~U1CTS_PINMASK) | U1CTS_PINSEL;
+  PINSEL0 = (PINSEL0 & ~UART1_CTS_PINMASK) | UART1_CTS_PINSEL;
   
-  U1IER = 0x00;             // disable all interrupts
-  U1IIR = 0x00;             // clear interrupt ID register
-  U1LSR = 0x00;             // clear line status register
+  UART1_IER = 0x00;             // disable all interrupts
+  UART1_IIR = 0x00;             // clear interrupt ID register
+  UART1_LSR = 0x00;             // clear line status register
 
   // set the baudrate - DLAB must be set to access DLL/DLM
-  U1LCR = (1<<U1LCR_DLAB); // set divisor latches (DLAB)
-  U1DLL = (uint8_t)baud;         // set for baud low byte
-  U1DLM = (uint8_t)(baud >> 8);  // set for baud high byte
+  UART1_LCR = (1<<UART1_LCR_DLAB); // set divisor latches (DLAB)
+  UART1_DLL = (uint8_t)baud;         // set for baud low byte
+  UART1_DLM = (uint8_t)(baud >> 8);  // set for baud high byte
   
   // set the number of characters and other
   // user specified operating parameters
   // Databits, Parity, Stopbits - Settings in Line Control Register
-  U1LCR = (mode & ~(1<<U1LCR_DLAB)); // clear DLAB "on-the-fly"
+  UART1_LCR = (mode & ~(1<<UART1_LCR_DLAB)); // clear DLAB "on-the-fly"
   // setup FIFO Control Register (fifo-enabled + xx trig) 
-  U1FCR = fmode;
+  UART1_FCR = fmode;
 }
 
 int uart1Putch(int ch)
 {
-  while (!(U1LSR & ULSR_THRE))    // wait for TX buffer to empty
+  while (!(UART1_LSR & ULSR_THRE))    // wait for TX buffer to empty
     continue;                         // also either WDOG() or swap()
 
-  U1THR = (uint8_t)ch;  // put char to Transmit Holding Register
+  UART1_THR = (uint8_t)ch;  // put char to Transmit Holding Register
   return (uint8_t)ch;       // return char ("stdio-compatible"?)
 }
 
 int uart1PutchCTS(int ch)
 {  
 
-  while (!(U1MSR & UMSR_CTS) || !(U1LSR & ULSR_THRE))  // wait for CTS to change
+  while (!(UART1_MSR & UMSR_CTS) || !(UART1_LSR & ULSR_THRE))  // wait for CTS to change
     {
       ;
     }
   
   
-  U1THR = (uint8_t)ch;  // put char to Transmit Holding Register
+  UART1_THR = (uint8_t)ch;  // put char to Transmit Holding Register
   
   return (uint8_t)ch;       // return char ("stdio-compatible"?)
 }
 
 int uart1TxEmpty(void)
 {
-  return (U1LSR & (ULSR_THRE | ULSR_TEMT)) == (ULSR_THRE | ULSR_TEMT);
+  return (UART1_LSR & (ULSR_THRE | ULSR_TEMT)) == (ULSR_THRE | ULSR_TEMT);
 }
 
 void uart1TxFlush(void)
 {
-  U1FCR |= UFCR_TX_FIFO_RESET;          // clear the TX fifo
+  UART1_FCR |= UFCR_TX_FIFO_RESET;          // clear the TX fifo
 }
 
 /* Returns: character on success, -1 if no character is available */
 int uart1Getch(void)
 {
-  if (U1LSR & ULSR_RDR)                 // check if character is available
-    return U1RBR;                       // return character
+  if (UART1_LSR & ULSR_RDR)                 // check if character is available
+    return UART1_RBR;                       // return character
 
   return -1;
 }
@@ -177,11 +176,11 @@ int uart1GetchRTS(void)
   uart1_set_rts();
 
   // check if character is available
-  if (U1LSR & ULSR_RDR)
+  if (UART1_LSR & ULSR_RDR)
     {
       uart1_clear_rts();
       // return character
-      return U1RBR;   
+      return UART1_RBR;   
     }
   
   
@@ -191,33 +190,33 @@ int uart1GetchRTS(void)
 
 int uart1GetchBlock(void)
 {
-  while (!(U1LSR & ULSR_RDR));
-  return U1RBR;
+  while (!(UART1_LSR & ULSR_RDR));
+  return UART1_RBR;
 }
 
 int uart1GetchBlockRTS(void)
 {
   uart1_set_rts();
-  while (!(U1LSR & ULSR_RDR));
+  while (!(UART1_LSR & ULSR_RDR));
 
   uart1_clear_rts();
   
-  return U1RBR;
+  return UART1_RBR;
 }
 
 inline void uart1_set_rts()
 {
-  //U1MCR |= UMCR_RTS;
+  //UART1_MCR |= UMCR_RTS;
   IOCLR = B_RTS;
 }
 
 inline void uart1_clear_rts()
 {
-  //U1MCR &= ~UMCR_RTS;
+  //UART1_MCR &= ~UMCR_RTS;
   IOSET = B_RTS;
 }
 
 inline int uart1_cts()
 {
-  return (U1MSR & UMSR_CTS);
+  return (UART1_MSR & UMSR_CTS);
 }
