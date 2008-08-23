@@ -1,0 +1,270 @@
+   1              		.file	"armVIC.c"
+   9              	.Ltext0:
+  10              		.align	2
+  11              		.global	restoreIRQ
+  13              	restoreIRQ:
+  14              	.LFB5:
+  15              		.file 1 "armVIC.c"
+   1:armVIC.c      **** /******************************************************************************
+   2:armVIC.c      ****  *
+   3:armVIC.c      ****  * $RCSfile: $
+   4:armVIC.c      ****  * $Revision: $
+   5:armVIC.c      ****  *
+   6:armVIC.c      ****  * This module provides the interface routines for setting up and
+   7:armVIC.c      ****  * controlling the various interrupt modes present on the ARM processor.
+   8:armVIC.c      ****  * Copyright 2004, R O SoftWare
+   9:armVIC.c      ****  * No guarantees, warrantees, or promises, implied or otherwise.
+  10:armVIC.c      ****  * May be used for hobby or commercial purposes provided copyright
+  11:armVIC.c      ****  * notice remains intact.
+  12:armVIC.c      ****  *
+  13:armVIC.c      ****  *****************************************************************************/
+  14:armVIC.c      **** #include "types.h"
+  15:armVIC.c      **** #include "armVIC.h"
+  16:armVIC.c      **** 
+  17:armVIC.c      **** #define IRQ_MASK 0x00000080
+  18:armVIC.c      **** #define FIQ_MASK 0x00000040
+  19:armVIC.c      **** #define INT_MASK (IRQ_MASK | FIQ_MASK)
+  20:armVIC.c      **** 
+  21:armVIC.c      **** static inline unsigned __get_cpsr(void)
+  22:armVIC.c      **** {
+  23:armVIC.c      ****   unsigned long retval;
+  24:armVIC.c      ****   asm volatile (" mrs  %0, cpsr" : "=r" (retval) : /* no inputs */  );
+  25:armVIC.c      ****   return retval;
+  26:armVIC.c      **** }
+  27:armVIC.c      **** 
+  28:armVIC.c      **** static inline void __set_cpsr(unsigned val)
+  29:armVIC.c      **** {
+  30:armVIC.c      ****   asm volatile (" msr  cpsr, %0" : /* no outputs */ : "r" (val)  );
+  31:armVIC.c      **** }
+  32:armVIC.c      **** 
+  33:armVIC.c      **** unsigned disableIRQ(void)
+  34:armVIC.c      **** {
+  35:armVIC.c      ****   unsigned _cpsr;
+  36:armVIC.c      **** 
+  37:armVIC.c      ****   _cpsr = __get_cpsr();
+  38:armVIC.c      ****   __set_cpsr(_cpsr | IRQ_MASK);
+  39:armVIC.c      ****   return _cpsr;
+  40:armVIC.c      **** }
+  41:armVIC.c      **** 
+  42:armVIC.c      **** unsigned restoreIRQ(unsigned oldCPSR)
+  43:armVIC.c      **** {
+  16              		.loc 1 43 0
+  17              		@ args = 0, pretend = 0, frame = 0
+  18              		@ frame_needed = 0, uses_anonymous_args = 0
+  19              		@ link register save eliminated.
+  20              	.LVL0:
+  21              		@ lr needed for prologue
+  22              	.LBB6:
+  23              	.LBB7:
+  24              		.loc 1 24 0
+  25 0000 00200FE1 		 mrs  r2, cpsr
+  26              	.LVL1:
+  27              	.LBE7:
+  28              	.LBE6:
+  29              	.LBB8:
+  30              	.LBB9:
+  31              		.loc 1 30 0
+  32 0004 800000E2 		and	r0, r0, #128
+  33              	.LVL2:
+  34 0008 8030C2E3 		bic	r3, r2, #128
+  35 000c 003083E1 		orr	r3, r3, r0
+  36 0010 03F029E1 		 msr  cpsr, r3
+  37              	.LBE9:
+  38              	.LBE8:
+  44:armVIC.c      ****   unsigned _cpsr;
+  45:armVIC.c      **** 
+  46:armVIC.c      ****   _cpsr = __get_cpsr();
+  47:armVIC.c      ****   __set_cpsr((_cpsr & ~IRQ_MASK) | (oldCPSR & IRQ_MASK));
+  48:armVIC.c      ****   return _cpsr;
+  49:armVIC.c      **** }
+  39              		.loc 1 49 0
+  40 0014 0200A0E1 		mov	r0, r2
+  41 0018 1EFF2FE1 		bx	lr
+  42              	.LFE5:
+  44              		.align	2
+  45              		.global	restoreFIQ
+  47              	restoreFIQ:
+  48              	.LFB8:
+  50:armVIC.c      **** 
+  51:armVIC.c      **** unsigned enableIRQ(void)
+  52:armVIC.c      **** {
+  53:armVIC.c      ****   unsigned _cpsr;
+  54:armVIC.c      **** 
+  55:armVIC.c      ****   _cpsr = __get_cpsr();
+  56:armVIC.c      ****   __set_cpsr(_cpsr & ~IRQ_MASK);
+  57:armVIC.c      ****   return _cpsr;
+  58:armVIC.c      **** }
+  59:armVIC.c      **** 
+  60:armVIC.c      **** unsigned disableFIQ(void)
+  61:armVIC.c      **** {
+  62:armVIC.c      ****   unsigned _cpsr;
+  63:armVIC.c      **** 
+  64:armVIC.c      ****   _cpsr = __get_cpsr();
+  65:armVIC.c      ****   __set_cpsr(_cpsr | FIQ_MASK);
+  66:armVIC.c      ****   return _cpsr;
+  67:armVIC.c      **** }
+  68:armVIC.c      **** 
+  69:armVIC.c      **** unsigned restoreFIQ(unsigned oldCPSR)
+  70:armVIC.c      **** {
+  49              		.loc 1 70 0
+  50              		@ args = 0, pretend = 0, frame = 0
+  51              		@ frame_needed = 0, uses_anonymous_args = 0
+  52              		@ link register save eliminated.
+  53              	.LVL3:
+  54              		@ lr needed for prologue
+  55              	.LBB14:
+  56              	.LBB15:
+  57              		.loc 1 24 0
+  58 001c 00200FE1 		 mrs  r2, cpsr
+  59              	.LVL4:
+  60              	.LBE15:
+  61              	.LBE14:
+  62              	.LBB16:
+  63              	.LBB17:
+  64              		.loc 1 30 0
+  65 0020 400000E2 		and	r0, r0, #64
+  66              	.LVL5:
+  67 0024 4030C2E3 		bic	r3, r2, #64
+  68 0028 003083E1 		orr	r3, r3, r0
+  69 002c 03F029E1 		 msr  cpsr, r3
+  70              	.LBE17:
+  71              	.LBE16:
+  71:armVIC.c      ****   unsigned _cpsr;
+  72:armVIC.c      **** 
+  73:armVIC.c      ****   _cpsr = __get_cpsr();
+  74:armVIC.c      ****   __set_cpsr((_cpsr & ~FIQ_MASK) | (oldCPSR & FIQ_MASK));
+  75:armVIC.c      ****   return _cpsr;
+  76:armVIC.c      **** }
+  72              		.loc 1 76 0
+  73 0030 0200A0E1 		mov	r0, r2
+  74 0034 1EFF2FE1 		bx	lr
+  75              	.LFE8:
+  77              		.align	2
+  78              		.global	disableFIQ
+  80              	disableFIQ:
+  81              	.LFB7:
+  82              		.loc 1 61 0
+  83              		@ args = 0, pretend = 0, frame = 0
+  84              		@ frame_needed = 0, uses_anonymous_args = 0
+  85              		@ link register save eliminated.
+  86              		@ lr needed for prologue
+  87              	.LBB22:
+  88              	.LBB23:
+  89              		.loc 1 24 0
+  90 0038 00000FE1 		 mrs  r0, cpsr
+  91              	.LVL6:
+  92              	.LBE23:
+  93              	.LBE22:
+  94              	.LBB24:
+  95              	.LBB25:
+  96              		.loc 1 30 0
+  97 003c 403080E3 		orr	r3, r0, #64
+  98 0040 03F029E1 		 msr  cpsr, r3
+  99              	.LVL7:
+ 100              	.LBE25:
+ 101              	.LBE24:
+ 102              		.loc 1 67 0
+ 103 0044 1EFF2FE1 		bx	lr
+ 104              	.LFE7:
+ 106              		.align	2
+ 107              		.global	enableFIQ
+ 109              	enableFIQ:
+ 110              	.LFB9:
+  77:armVIC.c      **** 
+  78:armVIC.c      **** unsigned enableFIQ(void)
+  79:armVIC.c      **** {
+ 111              		.loc 1 79 0
+ 112              		@ args = 0, pretend = 0, frame = 0
+ 113              		@ frame_needed = 0, uses_anonymous_args = 0
+ 114              		@ link register save eliminated.
+ 115              		@ lr needed for prologue
+ 116              	.LBB30:
+ 117              	.LBB31:
+ 118              		.loc 1 24 0
+ 119 0048 00000FE1 		 mrs  r0, cpsr
+ 120              	.LVL8:
+ 121              	.LBE31:
+ 122              	.LBE30:
+ 123              	.LBB32:
+ 124              	.LBB33:
+ 125              		.loc 1 30 0
+ 126 004c 4030C0E3 		bic	r3, r0, #64
+ 127 0050 03F029E1 		 msr  cpsr, r3
+ 128              	.LVL9:
+ 129              	.LBE33:
+ 130              	.LBE32:
+  80:armVIC.c      ****   unsigned _cpsr;
+  81:armVIC.c      **** 
+  82:armVIC.c      ****   _cpsr = __get_cpsr();
+  83:armVIC.c      ****   __set_cpsr(_cpsr & ~FIQ_MASK);
+  84:armVIC.c      ****   return _cpsr;
+  85:armVIC.c      **** }
+ 131              		.loc 1 85 0
+ 132 0054 1EFF2FE1 		bx	lr
+ 133              	.LFE9:
+ 135              		.align	2
+ 136              		.global	disableIRQ
+ 138              	disableIRQ:
+ 139              	.LFB4:
+ 140              		.loc 1 34 0
+ 141              		@ args = 0, pretend = 0, frame = 0
+ 142              		@ frame_needed = 0, uses_anonymous_args = 0
+ 143              		@ link register save eliminated.
+ 144              		@ lr needed for prologue
+ 145              	.LBB38:
+ 146              	.LBB39:
+ 147              		.loc 1 24 0
+ 148 0058 00000FE1 		 mrs  r0, cpsr
+ 149              	.LVL10:
+ 150              	.LBE39:
+ 151              	.LBE38:
+ 152              	.LBB40:
+ 153              	.LBB41:
+ 154              		.loc 1 30 0
+ 155 005c 803080E3 		orr	r3, r0, #128
+ 156 0060 03F029E1 		 msr  cpsr, r3
+ 157              	.LVL11:
+ 158              	.LBE41:
+ 159              	.LBE40:
+ 160              		.loc 1 40 0
+ 161 0064 1EFF2FE1 		bx	lr
+ 162              	.LFE4:
+ 164              		.align	2
+ 165              		.global	enableIRQ
+ 167              	enableIRQ:
+ 168              	.LFB6:
+ 169              		.loc 1 52 0
+ 170              		@ args = 0, pretend = 0, frame = 0
+ 171              		@ frame_needed = 0, uses_anonymous_args = 0
+ 172              		@ link register save eliminated.
+ 173              		@ lr needed for prologue
+ 174              	.LBB46:
+ 175              	.LBB47:
+ 176              		.loc 1 24 0
+ 177 0068 00000FE1 		 mrs  r0, cpsr
+ 178              	.LVL12:
+ 179              	.LBE47:
+ 180              	.LBE46:
+ 181              	.LBB48:
+ 182              	.LBB49:
+ 183              		.loc 1 30 0
+ 184 006c 8030C0E3 		bic	r3, r0, #128
+ 185 0070 03F029E1 		 msr  cpsr, r3
+ 186              	.LVL13:
+ 187              	.LBE49:
+ 188              	.LBE48:
+ 189              		.loc 1 58 0
+ 190 0074 1EFF2FE1 		bx	lr
+ 191              	.LFE6:
+ 257              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 armVIC.c
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccr7LH9R.s:13     .text:00000000 restoreIRQ
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccr7LH9R.s:25     .text:00000000 $a
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccr7LH9R.s:47     .text:0000001c restoreFIQ
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccr7LH9R.s:80     .text:00000038 disableFIQ
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccr7LH9R.s:109    .text:00000048 enableFIQ
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccr7LH9R.s:138    .text:00000058 disableIRQ
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccr7LH9R.s:167    .text:00000068 enableIRQ
+
+NO UNDEFINED SYMBOLS

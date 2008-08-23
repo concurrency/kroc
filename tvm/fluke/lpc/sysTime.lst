@@ -1,0 +1,319 @@
+   1              		.file	"sysTime.c"
+   9              	.Ltext0:
+  10              		.align	2
+  11              		.global	initSysTime
+  13              	initSysTime:
+  14              	.LFB2:
+  15              		.file 1 "sysTime.c"
+   1:sysTime.c     **** /******************************************************************************
+   2:sysTime.c     ****  *
+   3:sysTime.c     ****  * $RCSfile: $
+   4:sysTime.c     ****  * $Revision: $
+   5:sysTime.c     ****  *
+   6:sysTime.c     ****  * This module provides the interface routines for initializing and
+   7:sysTime.c     ****  * accessing the system timing functions.
+   8:sysTime.c     ****  * Copyright 2004, R O SoftWare
+   9:sysTime.c     ****  * No guarantees, warrantees, or promises, implied or otherwise.
+  10:sysTime.c     ****  * May be used for hobby or commercial purposes provided copyright
+  11:sysTime.c     ****  * notice remains intact.
+  12:sysTime.c     ****  *
+  13:sysTime.c     ****  *****************************************************************************/
+  14:sysTime.c     **** #include "types.h"
+  15:sysTime.c     **** #include "LPC210x.h"
+  16:sysTime.c     **** #include "config.h"
+  17:sysTime.c     **** #include "sysTime.h"
+  18:sysTime.c     **** 
+  19:sysTime.c     **** static uint32_t sysTICs;
+  20:sysTime.c     **** static uint32_t lastT0TC;
+  21:sysTime.c     **** 
+  22:sysTime.c     **** /******************************************************************************
+  23:sysTime.c     ****  *
+  24:sysTime.c     ****  * Function Name: initSysTime()
+  25:sysTime.c     ****  *
+  26:sysTime.c     ****  * Description:
+  27:sysTime.c     ****  *    This function initializes the LPC's Timer 0 for use as the system timer.
+  28:sysTime.c     ****  *
+  29:sysTime.c     ****  * Calling Sequence: 
+  30:sysTime.c     ****  *    void
+  31:sysTime.c     ****  *
+  32:sysTime.c     ****  * Returns:
+  33:sysTime.c     ****  *    void
+  34:sysTime.c     ****  *
+  35:sysTime.c     ****  *****************************************************************************/
+  36:sysTime.c     **** void initSysTime(void)
+  37:sysTime.c     **** {
+  16              		.loc 1 37 0
+  17              		@ args = 0, pretend = 0, frame = 0
+  18              		@ frame_needed = 0, uses_anonymous_args = 0
+  19              		@ link register save eliminated.
+  38:sysTime.c     ****   // setup Timer 1 to count forever
+  39:sysTime.c     ****   T0TCR = TCR_RESET;                    // reset & disable timer 0
+  40:sysTime.c     ****   T0PR = T0_PCLK_DIV - 1;               // set the prescale divider
+  41:sysTime.c     ****   T0MCR = 0;                            // disable match registers
+  42:sysTime.c     ****   T0CCR = 0;                            // disable compare registers
+  43:sysTime.c     ****   T0EMR = 0;                            // disable external match register
+  44:sysTime.c     ****   T0TCR = TCR_ENABLE;                   // enable timer 0
+  45:sysTime.c     ****   sysTICs = 0;
+  20              		.loc 1 45 0
+  21 0000 2C309FE5 		ldr	r3, .L3
+  22              		.loc 1 39 0
+  23 0004 2C209FE5 		ldr	r2, .L3+4
+  24              		.loc 1 41 0
+  25 0008 0010A0E3 		mov	r1, #0
+  26              		.loc 1 45 0
+  27 000c 001083E5 		str	r1, [r3, #0]
+  28              		.loc 1 39 0
+  29 0010 0200A0E3 		mov	r0, #2
+  30              		.loc 1 44 0
+  31 0014 0130A0E3 		mov	r3, #1
+  32              		.loc 1 39 0
+  33 0018 040082E5 		str	r0, [r2, #4]
+  34              		.loc 1 37 0
+  35              		@ lr needed for prologue
+  36              		.loc 1 40 0
+  37 001c 0C0082E5 		str	r0, [r2, #12]
+  38              		.loc 1 41 0
+  39 0020 141082E5 		str	r1, [r2, #20]
+  40              		.loc 1 42 0
+  41 0024 281082E5 		str	r1, [r2, #40]
+  42              		.loc 1 43 0
+  43 0028 3C1082E5 		str	r1, [r2, #60]
+  44              		.loc 1 44 0
+  45 002c 043082E5 		str	r3, [r2, #4]
+  46:sysTime.c     **** }
+  46              		.loc 1 46 0
+  47 0030 1EFF2FE1 		bx	lr
+  48              	.L4:
+  49              		.align	2
+  50              	.L3:
+  51 0034 00000000 		.word	sysTICs
+  52 0038 004000E0 		.word	-536854528
+  53              	.LFE2:
+  55              		.align	2
+  56              		.global	getSysTICs
+  58              	getSysTICs:
+  59              	.LFB3:
+  47:sysTime.c     **** 
+  48:sysTime.c     **** /******************************************************************************
+  49:sysTime.c     ****  *
+  50:sysTime.c     ****  * Function Name: getSysTICs()
+  51:sysTime.c     ****  *
+  52:sysTime.c     ****  * Description:
+  53:sysTime.c     ****  *    This function returns the current syetem time in TICs.
+  54:sysTime.c     ****  *
+  55:sysTime.c     ****  * Calling Sequence: 
+  56:sysTime.c     ****  *    void
+  57:sysTime.c     ****  *
+  58:sysTime.c     ****  * Returns:
+  59:sysTime.c     ****  *    The current time in TICs as represented by sysTICs
+  60:sysTime.c     ****  *
+  61:sysTime.c     ****  *****************************************************************************/
+  62:sysTime.c     **** uint32_t getSysTICs(void)
+  63:sysTime.c     **** {
+  60              		.loc 1 63 0
+  61              		@ args = 0, pretend = 0, frame = 0
+  62              		@ frame_needed = 0, uses_anonymous_args = 0
+  63              		@ link register save eliminated.
+  64:sysTime.c     ****   uint32_t now = T0TC;
+  65:sysTime.c     **** 
+  66:sysTime.c     ****   sysTICs += (uint32_t)(now - lastT0TC);
+  64              		.loc 1 66 0
+  65 003c 24C09FE5 		ldr	ip, .L7
+  66              		.loc 1 64 0
+  67 0040 24309FE5 		ldr	r3, .L7+4
+  68              		.loc 1 66 0
+  69 0044 24109FE5 		ldr	r1, .L7+8
+  70              		.loc 1 64 0
+  71 0048 082093E5 		ldr	r2, [r3, #8]
+  72              	.LVL0:
+  73              		.loc 1 66 0
+  74 004c 00009CE5 		ldr	r0, [ip, #0]
+  75 0050 003091E5 		ldr	r3, [r1, #0]
+  76 0054 000082E0 		add	r0, r2, r0
+  77 0058 000063E0 		rsb	r0, r3, r0
+  78              		.loc 1 63 0
+  79              		@ lr needed for prologue
+  67:sysTime.c     ****   lastT0TC = now;
+  80              		.loc 1 67 0
+  81 005c 002081E5 		str	r2, [r1, #0]
+  82              		.loc 1 66 0
+  83 0060 00008CE5 		str	r0, [ip, #0]
+  68:sysTime.c     ****   return sysTICs;
+  69:sysTime.c     **** }
+  84              		.loc 1 69 0
+  85 0064 1EFF2FE1 		bx	lr
+  86              	.L8:
+  87              		.align	2
+  88              	.L7:
+  89 0068 00000000 		.word	sysTICs
+  90 006c 004000E0 		.word	-536854528
+  91 0070 04000000 		.word	lastT0TC
+  92              	.LFE3:
+  94              		.align	2
+  95              		.global	getElapsedSysTICs
+  97              	getElapsedSysTICs:
+  98              	.LFB4:
+  70:sysTime.c     **** 
+  71:sysTime.c     **** 
+  72:sysTime.c     **** /******************************************************************************
+  73:sysTime.c     ****  *
+  74:sysTime.c     ****  * Function Name: getElapsedSysTICs()
+  75:sysTime.c     ****  *
+  76:sysTime.c     ****  * Description:
+  77:sysTime.c     ****  *    This function then returns the difference in TICs between the
+  78:sysTime.c     ****  *    given starting time and the current system time.
+  79:sysTime.c     ****  *
+  80:sysTime.c     ****  * Calling Sequence: 
+  81:sysTime.c     ****  *    The starting time.
+  82:sysTime.c     ****  *
+  83:sysTime.c     ****  * Returns:
+  84:sysTime.c     ****  *    The time difference.
+  85:sysTime.c     ****  *
+  86:sysTime.c     ****  *****************************************************************************/
+  87:sysTime.c     **** uint32_t getElapsedSysTICs(uint32_t startTime)
+  88:sysTime.c     **** {
+  99              		.loc 1 88 0
+ 100              		@ args = 0, pretend = 0, frame = 0
+ 101              		@ frame_needed = 0, uses_anonymous_args = 0
+ 102              	.LVL1:
+ 103 0074 04E02DE5 		str	lr, [sp, #-4]!
+ 104              	.LCFI0:
+ 105              	.LBB4:
+ 106              	.LBB5:
+ 107              		.loc 1 64 0
+ 108 0078 28309FE5 		ldr	r3, .L11
+ 109              		.loc 1 66 0
+ 110 007c 28E09FE5 		ldr	lr, .L11+4
+ 111 0080 28C09FE5 		ldr	ip, .L11+8
+ 112              		.loc 1 64 0
+ 113 0084 081093E5 		ldr	r1, [r3, #8]
+ 114              	.LVL2:
+ 115              		.loc 1 66 0
+ 116 0088 00309EE5 		ldr	r3, [lr, #0]
+ 117 008c 00209CE5 		ldr	r2, [ip, #0]
+ 118 0090 033081E0 		add	r3, r1, r3
+ 119 0094 033062E0 		rsb	r3, r2, r3
+ 120              	.LBE5:
+ 121              	.LBE4:
+  89:sysTime.c     ****   return getSysTICs() - startTime;
+  90:sysTime.c     **** }
+ 122              		.loc 1 90 0
+ 123 0098 030060E0 		rsb	r0, r0, r3
+ 124              	.LVL3:
+ 125              	.LBB7:
+ 126              	.LBB6:
+ 127              		.loc 1 67 0
+ 128 009c 00108CE5 		str	r1, [ip, #0]
+ 129              		.loc 1 66 0
+ 130 00a0 00308EE5 		str	r3, [lr, #0]
+ 131              	.LBE6:
+ 132              	.LBE7:
+ 133              		.loc 1 90 0
+ 134 00a4 04F09DE4 		ldr	pc, [sp], #4
+ 135              	.L12:
+ 136              		.align	2
+ 137              	.L11:
+ 138 00a8 004000E0 		.word	-536854528
+ 139 00ac 00000000 		.word	sysTICs
+ 140 00b0 04000000 		.word	lastT0TC
+ 141              	.LFE4:
+ 143              		.align	2
+ 144              		.global	pause
+ 146              	pause:
+ 147              	.LFB5:
+  91:sysTime.c     **** 
+  92:sysTime.c     **** 
+  93:sysTime.c     **** /******************************************************************************
+  94:sysTime.c     ****  *
+  95:sysTime.c     ****  * Function Name: pause()
+  96:sysTime.c     ****  *
+  97:sysTime.c     ****  * Description:
+  98:sysTime.c     ****  *    This function does not return until the specified 'duration' in
+  99:sysTime.c     ****  *    TICs has elapsed.
+ 100:sysTime.c     ****  *
+ 101:sysTime.c     ****  * Calling Sequence: 
+ 102:sysTime.c     ****  *    duration - length of time in TICs to wait before returning
+ 103:sysTime.c     ****  *
+ 104:sysTime.c     ****  * Returns:
+ 105:sysTime.c     ****  *    void
+ 106:sysTime.c     ****  *
+ 107:sysTime.c     ****  *****************************************************************************/
+ 108:sysTime.c     **** void pause(uint32_t duration)
+ 109:sysTime.c     **** {
+ 148              		.loc 1 109 0
+ 149              		@ args = 0, pretend = 0, frame = 0
+ 150              		@ frame_needed = 0, uses_anonymous_args = 0
+ 151              	.LVL4:
+ 152 00b4 30402DE9 		stmfd	sp!, {r4, r5, lr}
+ 153              	.LCFI1:
+ 154              	.LBB10:
+ 155              	.LBB11:
+ 156              		.loc 1 64 0
+ 157 00b8 38309FE5 		ldr	r3, .L19
+ 158              		.loc 1 66 0
+ 159 00bc 38E09FE5 		ldr	lr, .L19+4
+ 160 00c0 38C09FE5 		ldr	ip, .L19+8
+ 161              		.loc 1 64 0
+ 162 00c4 081093E5 		ldr	r1, [r3, #8]
+ 163              	.LVL5:
+ 164              		.loc 1 66 0
+ 165 00c8 00309EE5 		ldr	r3, [lr, #0]
+ 166 00cc 00209CE5 		ldr	r2, [ip, #0]
+ 167 00d0 033081E0 		add	r3, r1, r3
+ 168 00d4 035062E0 		rsb	r5, r2, r3
+ 169              		.loc 1 67 0
+ 170 00d8 00108CE5 		str	r1, [ip, #0]
+ 171              		.loc 1 66 0
+ 172 00dc 00508EE5 		str	r5, [lr, #0]
+ 173              	.LBE11:
+ 174              	.LBE10:
+ 175              		.loc 1 109 0
+ 176 00e0 0040A0E1 		mov	r4, r0
+ 177              	.LVL6:
+ 178              	.L14:
+ 110:sysTime.c     ****   uint32_t startTime = getSysTICs();
+ 111:sysTime.c     **** 
+ 112:sysTime.c     ****   while (getElapsedSysTICs(startTime) < duration)
+ 179              		.loc 1 112 0
+ 180 00e4 0500A0E1 		mov	r0, r5
+ 181 00e8 FEFFFFEB 		bl	getElapsedSysTICs
+ 182              	.LVL7:
+ 183 00ec 040050E1 		cmp	r0, r4
+ 184 00f0 FBFFFF3A 		bcc	.L14
+ 113:sysTime.c     ****     WDOG();
+ 114:sysTime.c     **** }
+ 185              		.loc 1 114 0
+ 186 00f4 3080BDE8 		ldmfd	sp!, {r4, r5, pc}
+ 187              	.L20:
+ 188              		.align	2
+ 189              	.L19:
+ 190 00f8 004000E0 		.word	-536854528
+ 191 00fc 00000000 		.word	sysTICs
+ 192 0100 04000000 		.word	lastT0TC
+ 193              	.LFE5:
+ 195              		.bss
+ 196              		.align	2
+ 197              	sysTICs:
+ 198 0000 00000000 		.space	4
+ 199              		.align	2
+ 200              	lastT0TC:
+ 201 0004 00000000 		.space	4
+ 266              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 sysTime.c
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:13     .text:00000000 initSysTime
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:21     .text:00000000 $a
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:51     .text:00000034 $d
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:197    .bss:00000000 sysTICs
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:58     .text:0000003c getSysTICs
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:65     .text:0000003c $a
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:89     .text:00000068 $d
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:200    .bss:00000004 lastT0TC
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:97     .text:00000074 getElapsedSysTICs
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:103    .text:00000074 $a
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:138    .text:000000a8 $d
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:146    .text:000000b4 pause
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:152    .text:000000b4 $a
+/var/folders/ZU/ZUKd7gPtF6y+HqK+5PKE3E+++TI/-Tmp-//ccWNmk29.s:190    .text:000000f8 $d
+
+NO UNDEFINED SYMBOLS
