@@ -1,6 +1,4 @@
 /* Borrowed from the Fluke firmware while testing. */
-#ifndef SETUP_H
-#define SETUP_H
 
 void led_on();
 void led_off();
@@ -12,17 +10,16 @@ void setup_pll();
 void setup_mam();
 
 /* Constants for setup_pll */
-#define FOSC        (20000000)
-// #define FOSC        (14745000)
-#define PLL_M       3
-#define MSEL        (PLL_M-1)
-#define PSEL        0x01          
-#define PLLE        0
-#define PLLC        1
-#define PLOCK       10
-#define PLL_FEED1   0xAA
-#define PLL_FEED2   0x55
-#define VPBDIV_VAL  1
+#define FOSC            20000000
+#define PLL_M		3
+#define MSEL		(PLL_M-1)
+#define PSEL 		0x01          
+#define PLLE		0
+#define PLLC		1
+#define PLOCK		10
+#define PLL_FEED1	0xAA
+#define PLL_FEED2	0x55
+#define VPBDIV_VAL	1
 
 /* Constants for setup_mam */
 #define MEMMAP_BOOT_LOADER_MODE   0      
@@ -63,4 +60,3 @@ void setup_mam();
 #define CAM_D5      (1 << 29)
 #define CAM_D6      (1 << 30)
 #define CAM_D7      (1 << 31)
-#endif /* SETUP_H */

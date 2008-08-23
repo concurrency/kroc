@@ -39,10 +39,6 @@ all: main.hex
 run: download reset
 run-term: download reset-term
 
-date.h:
-	@echo "Updating the date."
-	@echo \#define DATE \"`date`\\n\" > date.h
-	
 reset: tools/serial_control.py
 	./tools/serial_control.py --reset $(PORT)
 
@@ -70,7 +66,7 @@ tools/lpc21isp: tools/lpc21isp-ipre.c
 
 clean:
 	@echo "Rub a dub dub!"
-	rm -f $(OBJECTS) main.out main.hex main.map date.h
+	rm -f $(OBJECTS) main.out main.hex main.map
 
 distclean: clean
 	rm -rf libtvm
@@ -78,5 +74,4 @@ distclean: clean
 
 # Dependencies: 
 tvm.o: firmware/firmware.h
-main.o: date.h
 

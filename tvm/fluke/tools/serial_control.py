@@ -62,7 +62,6 @@ def main():
         if cmd == 'reset':
             print '%s: resetting' % port
             s.setDTR(0)
-            time.sleep(1)
         else:
             print '%s: bootloader' % port
             pass

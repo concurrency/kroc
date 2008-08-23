@@ -1,8 +1,6 @@
 #include "tvm.h"
 #include "fluke_uart.h"
 #include "tvm_uart.h"
-#include "lpc/lpcUART.h"
-#include "lpc/uart.h"
 
 #define MT_TVM
 #define MT_DEFINES

@@ -6,7 +6,6 @@
  **************************************/
 #include "setup.h"
 #include "fluke.h"
-#include "date.h"
 
 #define BLINKS 20
 
@@ -40,7 +39,6 @@ int main (void)
 	/* Setup UART0 */
 	uart0Init(B38400, UART_8N1, UART_FIFO_8);
 
-	debug_print_str(DATE);
 	debug_print_str("In main.c\n");
 
 	blinken(BLINKS);

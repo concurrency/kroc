@@ -1,4 +1,4 @@
-#include "lpc/LPC210x.h"
+#include "lpc210x.h"
 #include "setup.h"
 
 void led_on()
