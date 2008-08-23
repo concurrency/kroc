@@ -70,7 +70,7 @@ tools/lpc21isp: tools/lpc21isp-ipre.c
 
 clean:
 	@echo "Rub a dub dub!"
-	rm -f $(OBJECTS) main.out main.hex main.map
+	rm -f $(OBJECTS) main.out main.hex main.map date.h
 
 distclean: clean
 	rm -rf libtvm
