@@ -5,6 +5,8 @@
 -- #INCLUDE "loader.occ"
 #INCLUDE "out.occ"
 
+VAL INT SECONDS IS 1000000:
+
 PROC firmware ()
   CHAN BYTE uart0:
   PLACE uart0 AT #0:
@@ -27,9 +29,22 @@ PROC firmware ()
         in ! b
 #ENDIF
 
+    INT last:
+    TIMER tim:
     SEQ
       out.string ("## Firmware running...*n", 0, out!)
+      tim ? last
       WHILE TRUE
-        SKIP
+        INT t:
+        SEQ
+          tim ? t
+          IF
+            (t - last) >= (1 * SECONDS)
+              SEQ
+                last := t
+                out.string("tick*c*n", 0, out!)
+            TRUE
+              SKIP
+
 :
 

@@ -2,7 +2,7 @@
 
 WORD arm7tdmi_get_time(ECTX ectx)
 {
-  return 0;
+  return getSysTICs();
 }
 
 void sleep_until(WORD timeout)
