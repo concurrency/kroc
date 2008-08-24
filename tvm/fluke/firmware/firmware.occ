@@ -28,7 +28,7 @@ PROC firmware ()
         uart0 ? b
         in ! b
 #ENDIF
-
+    
     INT last:
     TIMER tim:
     SEQ

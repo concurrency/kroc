@@ -20,7 +20,7 @@
 #include "armVIC.h"
 #include "sysTime.h"
 #include "uart.h"
-#include "fluke-tvm.h"
+#include "fluke.h"
 
 /******************************************************************************
  *
