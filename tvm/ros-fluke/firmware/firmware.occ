@@ -1,0 +1,35 @@
+-- Fluke TVM Firmware v100
+-- Insert GPLish stuff crediting Carl, Jon, us, etc.
+-- Borrowed from Surveyor firmware.
+
+-- #INCLUDE "loader.occ"
+#INCLUDE "out.occ"
+
+PROC firmware ()
+  CHAN BYTE uart0:
+  PLACE uart0 AT #0:
+
+  CHAN BYTE in, out:
+  PAR
+    -- OUT from TVM to WORLD
+    WHILE TRUE
+      BYTE b:
+      SEQ
+        out ? b
+        uart0 ! b
+
+#IF FALSE
+    -- IN from WORLD TO TVM
+    WHILE TRUE
+      BYTE b:
+      SEQ
+        uart0 ? b
+        in ! b
+#ENDIF
+
+    SEQ
+      out.string ("## Firmware running...*n", 0, out!)
+      WHILE TRUE
+        SKIP
+:
+
