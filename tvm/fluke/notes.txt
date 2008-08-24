@@ -1,7 +1,0 @@
-20080813
-
-ldscript.cmd: Pulled from Fluke project; probably usable in something closely resembling the current form.
-
-crt.s: Like the ldscript, we can probably use this (initially) verbatim. May need to touch once we start playing around with IRQs.
-
-libtvm.sh: Lifted the SRV-1 script, and changed the compiler. Worked.
