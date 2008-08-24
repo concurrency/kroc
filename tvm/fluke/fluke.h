@@ -1,3 +1,6 @@
+#ifndef FLUKE_H
+#define FLUKE_H
+
 #include "tvm.h"
 #include "fluke_uart.h"
 #include "tvm_uart.h"
@@ -24,4 +27,4 @@ void debug_print_str (const char *str);
 /* Values grabbed from the fluke firmwares fluke.h */
 #define B_RTS       (1 << 18)
 #define B_CTS       (1 << 11)
-
+#endif /* FLUKE_H */

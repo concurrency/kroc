@@ -34,6 +34,7 @@ OBJECTS  = crt.o irqs.o tvm.o timer.o debug.o \
 TVMOBJS  = libtvm/libtvm.a
 
 FIRMWARE = firmware/firmware.occ
+TVM_WORD_LENGTH = 4
 
 all: main.hex
 run: download reset
