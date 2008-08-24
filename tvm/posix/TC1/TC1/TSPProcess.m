@@ -23,7 +23,7 @@
 		blocked = FALSE;
 		complete = FALSE;
 		
-		self.layoutManager=[TSPProcessLayout layoutManager];
+		self.layoutManager = [TSPProcessLayout layoutManager];
 		
 		border = [CALayer layer];
 		border.bounds = CGRectMake (0.0, 0.0, 200.0, 60.0);

@@ -89,6 +89,9 @@
 
 - (void)nextEvent
 {	
+	if (idx >= [events count])
+		return;
+	
 	NSDictionary	*event		= [events objectAtIndex:idx];
 	NSString		*op			= [event objectForKey:@"op"];
 	NSNumber		*target		= [event objectForKey:@"target"];

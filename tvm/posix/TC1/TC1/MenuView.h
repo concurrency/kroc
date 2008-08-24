@@ -24,7 +24,7 @@
 
 -(void)awakeFromNib; 
 -(void)setupLayers;
--(void)loadEvents:(NSString *)path;
+-(void)loadEvents:(EventStream *)newStream;
 -(void)open:(id)sender;
 -(void)moveUp:(id)sender; 
 -(void)moveDown:(id)sender;
@@ -34,6 +34,8 @@
 -(void)mouseDragged:(NSEvent *)event;
 -(void)rightMouseDown:(NSEvent *)event;
 -(void)adjustView;
+-(NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender;
+-(BOOL)performDragOperation:(id <NSDraggingInfo>)sender;
 -(void)dealloc;
 
 @end

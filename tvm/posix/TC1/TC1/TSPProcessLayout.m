@@ -45,6 +45,7 @@ static NSInteger channelSort (id chan1, id chan2, void *source)
     return c2 + c1;
 }
 
+/*
 static CGRect doLayout (CALayer *proc, NSUInteger mask, NSUInteger elementCount, NSArray *freeElements)
 {
 	CGFloat innerWidth = proc.frame.size.width;
@@ -272,37 +273,307 @@ static void doPositioning (CALayer *proc, NSArray *freeElements)
 	}
 	
 }
+*/
+
+static void calculateForces (CALayer *root, NSArray *layers, bool channelCollisions)
+{
+	CGFloat k	= 2.0;
+	CGFloat k2	= k * k;
+	
+	for (CALayer *layer in layers) {
+		[layer setValue:[NSNumber numberWithFloat:0.0] forKey:@"fX"];
+		[layer setValue:[NSNumber numberWithFloat:0.0] forKey:@"fY"];
+	}
+	
+	NSUInteger count = [layers count];
+	NSUInteger idx;
+	for (idx = 0; idx < count; ++idx) {
+		CALayer *layer		= [layers objectAtIndex:idx];
+		CGFloat x			= [[layer valueForKey:@"pX"] floatValue];
+		CGFloat y			= [[layer valueForKey:@"pY"] floatValue];
+		CGFloat fx			= [[layer valueForKey:@"fX"] floatValue];
+		CGFloat fy			= [[layer valueForKey:@"fY"] floatValue];
+		CGRect thisBounds	= layer.frame;
+		
+		thisBounds.origin.x	= x - thisBounds.size.width / 2.0;
+		thisBounds.origin.y = y - thisBounds.size.height / 2.0;
+		
+		/* Process <=> Channel Forces */
+		if ([layer valueForKey:@"channels"]) {
+			NSArray *channels = [layer valueForKey:@"channels"];
+			for (TSPChannel *chan in channels) {
+				CGFloat cx		= [[chan valueForKey:@"pX"] floatValue];
+				CGFloat cy		= [[chan valueForKey:@"pY"] floatValue];
+				
+				CGPoint target = CGPointMake (CGRectGetMidX (thisBounds), CGRectGetMidY (thisBounds));
+				
+				if (cx < CGRectGetMinX (thisBounds)) {
+					target.x = CGRectGetMinX (thisBounds);
+				} else if (cx > CGRectGetMaxX (thisBounds)) {
+					target.x = CGRectGetMaxX (thisBounds);
+				}
+				
+				if (cy < CGRectGetMinY (thisBounds)) {
+					target.y = CGRectGetMinY (thisBounds);
+				} else if (cy > CGRectGetMaxY (thisBounds)) {
+					target.y = CGRectGetMaxY (thisBounds);
+				}
+				
+				CGFloat dX		= target.x - cx;
+				CGFloat dY		= target.y - cy;
+				CGFloat d		= sqrt (dX * dX + dY * dY);
+				
+				if (d > (chan.radius * 3.0)) {
+					CGFloat cfx		= [[chan valueForKey:@"fX"] floatValue];
+					CGFloat cfy		= [[chan valueForKey:@"fY"] floatValue];
+					CGFloat f		= (d - k2) / k;
+					
+					fx -= MIN (0.05 * f, 1.0) * (dX / d);
+					fy -= MIN (0.05 * f, 1.0) * (dY / d);
+					
+					if (channelCollisions)
+						f = MIN (0.05 * f, 1.0);
+					
+					[chan setValue:[NSNumber numberWithFloat:(cfx + f * (dX / d))] forKey:@"fX"];
+					[chan setValue:[NSNumber numberWithFloat:(cfy + f * (dY / d))] forKey:@"fY"];
+				}
+			}
+		}
+		
+		if (layer == root)
+			continue;
+		
+		/* Inter-node Forces */
+		if (([layer class] != [TSPChannel class]) || channelCollisions) {
+			CGRect collisionBounds = thisBounds;
+			
+			collisionBounds.origin.x -= 15.0;
+			collisionBounds.origin.y -= 10.0;
+			collisionBounds.size.width += 30.0;
+			collisionBounds.size.height + 20.0;
+			
+			NSUInteger oidx;
+			for (oidx = idx + 1; oidx < count; ++oidx) {
+				CALayer	*other		= [layers objectAtIndex:oidx];
+				
+				if (!channelCollisions && ([other class] == [TSPChannel class]))
+					continue;
+				
+				CGRect otherBounds	= other.frame;
+				CGFloat ox			= [[other valueForKey:@"pX"] floatValue];
+				CGFloat oy			= [[other valueForKey:@"pY"] floatValue];
+			
+				otherBounds.origin.x = ox - ((otherBounds.size.width / 2.0) + 15.0);
+				otherBounds.origin.y = oy - ((otherBounds.size.height / 2.0) + 10.0);
+				otherBounds.size.width += 30.0;
+				otherBounds.size.height += 20.0;
+				
+				if (CGRectIntersectsRect (collisionBounds, otherBounds)) {
+					CGFloat ofx		= [[other valueForKey:@"fX"] floatValue];
+					CGFloat ofy		= [[other valueForKey:@"fY"] floatValue];
+					
+					CGFloat dX	= x - ox;
+					CGFloat dY	= y - oy;
+					CGFloat rX	= (collisionBounds.size.width + otherBounds.size.width) / 2.0;
+					CGFloat rY	= (collisionBounds.size.height + otherBounds.size.height) / 2.0;
+					
+					CGFloat d2	= dX * dX + dY * dY;
+					CGFloat d	= sqrt (d2);
+					
+					if (d < 0.01) {
+						dX = 0.1;
+						dY = 0.1;
+						d2 = 0.1 * 0.1 + 0.1 * 0.1;
+						d  = sqrt (dX * dX + dY * dY);
+					}
+				
+					//CGFloat f = 5.0;
+				
+					CGFloat tX = (rX * 0.1) * (dX / d);
+					CGFloat tY = (rY * 0.1) * (dY / d);
+					
+					fx += tX;
+					fy += tY;
+					
+					if (other != root) {
+						ofx -= tX;
+						ofy -= tY;
+					
+						[other setValue:[NSNumber numberWithFloat:ofx] forKey:@"fX"];
+						[other setValue:[NSNumber numberWithFloat:ofy] forKey:@"fY"];
+					}
+				}
+			}
+		}
+		
+		/* Holding pull */
+		if ([layer valueForKey:@"oX"]) {
+			CGFloat ax = [[layer valueForKey:@"oX"] floatValue];
+			CGFloat ay = [[layer valueForKey:@"oY"] floatValue];
+			CGFloat adX = x - ax;
+			CGFloat adY = y - ay;
+			CGFloat d	= sqrt (adX * adX + adY * adY);
+			if (d > 0.0) {
+				fx -= adX * 0.1;
+				fy -= adY * 0.1;
+			}
+		}
+		//fx += (x < 0.0 ? -0.5 : +0.5);
+		//if (!channelCollisions)
+		//	fy += (y < 0.0 ? -0.8 : +0.8);
+		
+		//NSLog (@"--");
+		//NSLog ([[NSNumber numberWithFloat:fx] stringValue]);
+		//NSLog ([[NSNumber numberWithFloat:fy] stringValue]);
+		
+		[layer setValue:[NSNumber numberWithFloat:fx] forKey:@"fX"];
+		[layer setValue:[NSNumber numberWithFloat:fy] forKey:@"fY"];
+	}
+}
+	
+static CGFloat calculateAndApplyVelocity (NSArray *layers)
+{
+	CGFloat kE = 0.0;
+	
+	for (CALayer *layer in layers) {
+		CGFloat px = [[layer valueForKey:@"pX"] floatValue];
+		CGFloat py = [[layer valueForKey:@"pY"] floatValue];
+		CGFloat vx = [[layer valueForKey:@"vX"] floatValue];
+		CGFloat vy = [[layer valueForKey:@"vY"] floatValue];
+		CGFloat fx = [[layer valueForKey:@"fX"] floatValue];
+		CGFloat fy = [[layer valueForKey:@"fY"] floatValue];
+		
+		//if (isnan(vx) || isnan(fx) || isnan(vy) || isnan(fy))
+		//	NSLog (@"badness");
+		
+		vx = vx * 0.5 + fx;
+		vy = vy * 0.5 + fy;
+		px = round ((px + vx) / 2.0) * 2.0;
+		py = round ((py + vy) / 2.0) * 2.0;
+		
+		[layer setValue:[NSNumber numberWithFloat:vx] forKey:@"vX"];
+		[layer setValue:[NSNumber numberWithFloat:vy] forKey:@"vY"];
+		[layer setValue:[NSNumber numberWithFloat:px] forKey:@"pX"];
+		[layer setValue:[NSNumber numberWithFloat:py] forKey:@"pY"];
+		
+		kE += (vx * vx) + (vy * vy);
+	}
+	
+	//NSLog ([[NSNumber numberWithFloat:kE] stringValue]);
+	
+	return kE;
+}
+
+static CGRect calculateBounds (NSArray *layers)
+{
+	CGFloat minX = 0.0;
+	CGFloat minY = 0.0;
+	CGFloat maxX = 0.0;
+	CGFloat maxY = 0.0;
+	
+	for (CALayer *layer in layers) {
+		CGRect frame = layer.frame;
+		
+		CGFloat px = [[layer valueForKey:@"pX"] floatValue];
+		CGFloat py = [[layer valueForKey:@"pY"] floatValue];
+		
+		minX = MIN (minX, px - (frame.size.width / 2.0f));
+		maxX = MAX (maxX, px + (frame.size.width / 2.0f));
+		minY = MIN (minY, py - (frame.size.height / 2.0f));
+		maxY = MAX (maxY, py + (frame.size.height / 2.0f));
+	}
+	
+	/*
+	NSLog ([[NSNumber numberWithFloat:minX] stringValue]);
+	NSLog ([[NSNumber numberWithFloat:maxX] stringValue]);
+	NSLog ([[NSNumber numberWithFloat:minY] stringValue]);
+	NSLog ([[NSNumber numberWithFloat:maxY] stringValue]);
+	*/
+	 
+	return CGRectMake (minX, minY, maxX - minX, maxY - minY);
+}
+
+static CGRect doDirectedLayout (CALayer *root, NSArray *layers)
+{
+	CGFloat kE, dkE;
+	int i;
+	
+	for (i = 0; i < 3; ++i) {
+		calculateForces (root, layers, false);
+		kE = calculateAndApplyVelocity (layers);
+	}
+	
+	i = 0;
+	do {
+		calculateForces (root, layers, true);
+		CGFloat nkE = calculateAndApplyVelocity (layers);
+		dkE = nkE - kE;
+		dkE *= dkE;
+	} while (kE > 1.0 && dkE > 1.0 && ((++i) < 10));
+	
+	return calculateBounds (layers);
+}
+
+static void doPositioning (CGRect bounds, NSArray *layers)
+{
+	for (CALayer *layer in layers) {
+		CGFloat px = [[layer valueForKey:@"pX"] floatValue];
+		CGFloat py = [[layer valueForKey:@"pY"] floatValue];
+		
+		layer.anchorPoint	= CGPointMake (0.5, 0.5);
+		layer.position		= CGPointMake (px - bounds.origin.x, py - bounds.origin.y);
+	}
+}
 
 static void performLayout (CALayer *layer, CALayer *root, NSArray *processes, NSArray *channels, NSArray *all)
 {	
 	/* Setup */
+	NSUInteger i = 0;
 	for (CALayer *sublayer in all) {
 		[sublayer setValue:[NSNumber numberWithBool:FALSE] forKey:@"layedOut"];
 		[sublayer setValue:[NSNumber numberWithBool:FALSE] forKey:@"positioned"];
+		
+		if ([sublayer valueForKey:@"pX"]) {
+			[sublayer setValue:[sublayer valueForKey:@"pX"] forKey:@"oX"];
+		} else {
+			CGFloat x = 10.0 * sin (0.6 * (CGFloat)i);
+			//NSLog ([[NSNumber numberWithFloat:x] stringValue]);
+			[sublayer setValue:[NSNumber numberWithFloat:x] forKey:@"pX"];
+			[sublayer setValue:[NSNumber numberWithFloat:0.0] forKey:@"vX"];
+		}
+		
+		if ([sublayer valueForKey:@"pY"]) {
+			[sublayer setValue:[sublayer valueForKey:@"pY"] forKey:@"oY"];
+		} else {
+			CGFloat y = 10.0 * cos (0.6 * (CGFloat)i);
+			//NSLog ([[NSNumber numberWithFloat:y] stringValue]);
+			[sublayer setValue:[NSNumber numberWithFloat:y] forKey:@"pY"];
+			[sublayer setValue:[NSNumber numberWithFloat:0.0] forKey:@"vY"];
+		}
+		
+		i++;
 	}
 	
 	/* Border */
 	if ([layer class] == [TSPProcess class]) {
-		if ([all count] == 0) {
-			layer.borderWidth = 0.0f;
-		} else {
+		if ([all count] > 1.0) {
 			layer.borderWidth = 1.0f;
+		} else {
+			layer.borderWidth = 0.0f;
 		}
 	}
 	
-	/* Layout */
-	[root setValue:[NSNumber numberWithBool:TRUE] forKey:@"layedOut"];
-	[root setValue:[NSNumber numberWithBool:TRUE] forKey:@"positioned"];
-	
-	CGRect layoutBounds = doLayout (root, -1, [processes count] + [channels count], all);
+	CGRect layoutBounds = doDirectedLayout (root, all);
 	
 	NSNumber *scaled = [layer valueForKey:@"scaled"];
 	if (scaled && [scaled boolValue] && (layoutBounds.size.width > 200.0 || layoutBounds.size.height > 60.0)) {
 		CGFloat scale = 200.0 / layoutBounds.size.width;
 		scale = MIN (scale, 60.0 / layoutBounds.size.height);
-		layer.borderWidth = 1.0 / scale;
-		layer.bounds = CGRectMake (0.0, 0.0, layoutBounds.size.width, layoutBounds.size.height);
+		[CATransaction begin];
+		layer.borderWidth = 1.0f / scale;
 		layer.transform = CATransform3DMakeScale (scale, scale, scale);
+		layer.bounds = CGRectMake (0.0, 0.0, layoutBounds.size.width, layoutBounds.size.height);
+		[CATransaction commit];
 	} else {
 		layer.transform = CATransform3DIdentity;
 	}
@@ -312,8 +583,9 @@ static void performLayout (CALayer *layer, CALayer *root, NSArray *processes, NS
 									 layoutBounds.origin.y < 0.0 ? (-layoutBounds.origin.y) / layoutBounds.size.height : 0.0
 									 );
 	layer.bounds = CGRectMake (0.0, 0.0, layoutBounds.size.width, layoutBounds.size.height);
-	root.position = CGPointMake (0.0 - layoutBounds.origin.x, 0.0 - layoutBounds.origin.y);
-	doPositioning (root, all);
+	//root.position = CGPointMake (0.0 - layoutBounds.origin.x, 0.0 - layoutBounds.origin.y);
+	
+	doPositioning (layoutBounds, all);
 	
 	/* Clean-up */
 	[root setValue:nil forKey:@"channels"];
@@ -330,7 +602,7 @@ static void performLayout (CALayer *layer, CALayer *root, NSArray *processes, NS
 - (void)layoutSublayersOfLayer:(CALayer *)layer
 {	
 	/* Segregate out processes and channels */
-	NSUInteger arraySize		= [layer.sublayers count];
+	NSUInteger arraySize		= [layer.sublayers count] + 1;
 	NSMutableArray *all			= [NSMutableArray arrayWithCapacity:arraySize];
 	NSMutableArray *processes	= [NSMutableArray arrayWithCapacity:arraySize];
 	NSMutableArray *channels	= [NSMutableArray arrayWithCapacity:arraySize];
@@ -338,7 +610,7 @@ static void performLayout (CALayer *layer, CALayer *root, NSArray *processes, NS
 	CALayer	*root				= nil;
 	
 	for (CALayer *sublayer in layer.sublayers) {
-		if (sublayer.name == @"border") {
+		if ([sublayer.name isEqualToString:@"border"]) {
 			root = sublayer;
 		} else if ([sublayer class] == [TSPChannel class]) {
 			[channels addObject:sublayer];
@@ -352,12 +624,12 @@ static void performLayout (CALayer *layer, CALayer *root, NSArray *processes, NS
 	}
 	
 	/* Build channel arrays and linkages */
-	if (!root && ![processes count])
+	if (!root && ![processes count]) {
 		return;
-	else if (!root) {
+	} else if (!root) {
 		root = [processes objectAtIndex:0];
-		[processes removeObjectAtIndex:0];
-		[all removeObject:root];
+	} else {
+		[all addObject:root];
 	}
 	
 	[root setValue:[NSMutableArray arrayWithCapacity:[channels count]] forKey:@"channels"];
@@ -392,6 +664,7 @@ static void performLayout (CALayer *layer, CALayer *root, NSArray *processes, NS
 	
 	/* Do layout */
 	[CATransaction begin];
+	//[CATransaction setValue:[NSNumber numberWithFloat:0.8f] forKey:kCATransactionAnimationDuration];
 	performLayout (layer, root, processes, channels, all);
 	for (TSPLine *line in lines) {
 		[line updateLayout];

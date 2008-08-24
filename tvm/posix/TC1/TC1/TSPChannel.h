@@ -47,7 +47,6 @@ enum {
 - (CGPoint)inputPointInLayer:(CALayer *)layer;
 - (CGPoint)outputPointInLayer:(CALayer *)layer;
 - (void)unblocked;
-- (void)deflect;
 - (void)deleteChannel;
 
 @end

@@ -31,11 +31,11 @@
 	centre.backgroundColor = CGColorCreateGenericRGB(0.0,0.0,0.0,1.0);
 	centre.cornerRadius = radius;
 	centre.bounds = CGRectMake (0.0, 0.0, radius * 2.0, radius * 2.0);
-	centre.position = CGPointMake (100.0, 30.0);
+	centre.position = CGPointMake (radius * 2.0, radius * 2.0);
 	[self addSublayer:centre];
 	
 	self.name = @"channel";
-	self.bounds = CGRectMake (0.0, 0.0, 200.0, 60.0);
+	self.bounds = CGRectMake (0.0, 0.0, radius * 4.0, radius * 4.0);
 	
 	//self.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
 	//self.needsDisplayOnBoundsChange = YES;	
@@ -185,18 +185,6 @@
 	[inputLine removeFromSuperlayer];
 	[outputLine removeFromSuperlayer];
 	parent = nil;
-}
-
-- (void)deflect
-{
-	phase++;
-	switch (phase) {
-		case 1: centre.position = CGPointMake (50.0, 45.0); break;
-		case 2: centre.position = CGPointMake (150.0, 15.0); break;
-		case 3: centre.position = CGPointMake (150.0, 45.0); break;
-		case 4: centre.position = CGPointMake (50.0, 15.0); break;
-	}
-	[parent setNeedsDisplay];
 }
 
 @end

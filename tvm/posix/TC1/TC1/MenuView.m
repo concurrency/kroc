@@ -17,12 +17,12 @@
 	eventStream	= nil;
 	rootProcess	= nil;
 	selected	= nil;
-	pace		= 1.0;
 	
 	NSWindow *window = [self window];
 	[window setContentResizeIncrements:NSMakeSize(20.0, 10.0)];
 	[self setupLayers];
-	[self loadEvents:@"/Users/cgr/src/kroc/branches/tsp/tvm/posix/sort_pump.plist"];
+	[self registerForDraggedTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, nil]];
+	//[self loadEvents:@"/Users/cgr/src/kroc/branches/tsp/tvm/posix/sort_pump.plist"];
 }
 
 -(void)setupLayers
@@ -44,7 +44,7 @@
 	*/
 }
 
--(void)loadEvents:(NSString *)path
+-(void)loadEvents:(EventStream *)newStream
 {	
 	if (rootProcess) {
 		[rootProcess removeFromSuperlayer];
@@ -54,29 +54,19 @@
 	//if (eventStream)
 	//	[eventStream release];
 	
-	eventStream = [EventStream loadFromPath:path];
-	if (eventStream) {
-		rootProcess = [eventStream getRootLayer];
-		rootProcess.position = CGPointMake (self.bounds.size.width / 2.0, self.bounds.size.height / 2.0);
+	running	= false;
+	pace	= 1.0;
 	
-		[rootLayer addSublayer:rootProcess];
-		[rootLayer layoutIfNeeded];
+	eventStream = newStream;
 	
-		viewOrigin = CGPointMake (0.0, 0.0);
-		[self adjustView];
-		
-		[self.window setTitle:path];
-	} else {
-		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-		
-		[alert addButtonWithTitle:@"OK"];
-		[alert setMessageText:@"Unable to open file."];
-		[alert setInformativeText:path];
-		
-		[alert setAlertStyle:NSCriticalAlertStyle];
-		
-		[alert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:) contextInfo:nil];
-	}
+	rootProcess = [eventStream getRootLayer];
+	rootProcess.position = CGPointMake (self.bounds.size.width / 2.0, self.bounds.size.height / 2.0);
+	
+	[rootLayer addSublayer:rootProcess];
+	[rootLayer layoutIfNeeded];
+	
+	viewOrigin = CGPointMake (0.0, 0.0);
+	[self adjustView];
 }
 
 -(void)open:(id)sender
@@ -87,7 +77,22 @@
 	[openDlg setCanChooseFiles:YES];
 	
 	if ([openDlg runModalForDirectory:nil file:nil] == NSOKButton) {
-		[self loadEvents:[[openDlg filenames] objectAtIndex:0]];
+		NSString *path		= [[openDlg filenames] objectAtIndex:0];
+		EventStream *stream	= [EventStream loadFromPath:path];
+		if (stream) {
+			[self loadEvents:stream];
+			[self.window setTitle:path];
+		} else {
+			NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+			
+			[alert addButtonWithTitle:@"OK"];
+			[alert setMessageText:@"Unable to open file."];
+			[alert setInformativeText:path];
+			
+			[alert setAlertStyle:NSCriticalAlertStyle];
+			
+			[alert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:) contextInfo:nil];
+		}
 	}
 }
 
@@ -235,6 +240,42 @@
 {
 	rootProcess.position = CGPointMake (floorf (self.bounds.size.width / 2.0), floorf (self.bounds.size.height / 2.0));
 	[self performSelector:@selector(adjustView) withObject:nil afterDelay:1.0];
+}
+
+-(NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
+{
+    NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
+	NSPasteboard *pboard = [sender draggingPasteboard];
+	
+    if ([[pboard types] containsObject:NSFilenamesPboardType]) {
+        if (sourceDragMask & NSDragOperationLink) {
+            return NSDragOperationLink;
+        } else if (sourceDragMask & NSDragOperationCopy) {
+            return NSDragOperationCopy;
+        }
+    }
+	
+    return NSDragOperationNone;
+}
+
+-(BOOL)performDragOperation:(id <NSDraggingInfo>)sender
+{
+    NSPasteboard *pboard = [sender draggingPasteboard];
+	
+    if ([[pboard types] containsObject:NSFilenamesPboardType]) {
+        NSArray *files = [pboard propertyListForType:NSFilenamesPboardType];
+        if ([files count] == 1) {
+			NSString *path = [files objectAtIndex:0];
+			EventStream *stream = [EventStream loadFromPath:path];
+			if (stream) {
+				[self.window setTitle:path];
+				[self loadEvents:stream];
+				return YES;
+			}
+		}
+    }
+	
+    return NO;
 }
 
 -(void)dealloc
