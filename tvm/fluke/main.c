@@ -101,7 +101,7 @@ static void sysInit(void)
   VICDefVectAddr = (uint32_t)reset;     // point unvectored IRQs to reset()
 
   //  wdtInit();                        // initialize the watchdog timer
-  //initSysTime();                        // initialize the system timer
+  initSysTime();                        // initialize the system timer
   uart0Init(UART_BAUD(HOST_BAUD), UART_8N1, UART_FIFO_8); // setup the UART
 }
 

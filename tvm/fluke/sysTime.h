@@ -22,10 +22,16 @@
 // 32-bits, we must make a call to one of the sysTime functions at least
 // every ~430 sec.
 
-// setup parameters
-#define T0_PCLK_DIV     3
+// 20080823 TVM
+// We are currently running with CCLK = 60MHz and PCLK = 60MHz. 
+// We want to divide that by 60 to get down to 1 clock tick 
+// per million CPU ticks, or a resolution of 1 usec.
+#define T0_PCLK_DIV     60
 #define sysTICSperSEC   (PCLK / T0_PCLK_DIV)
 
+// 20080823 WARNING TVM
+// What is the deal with the .5 on these values?
+//
 // some helpful times for pause()
 #define ONE_MS          (uint32_t)((  1e-3 * sysTICSperSEC) + .5)
 #define TWO_MS          (uint32_t)((  2e-3 * sysTICSperSEC) + .5)
