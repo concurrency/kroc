@@ -23,7 +23,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // uncomment the following to use various interrupt modes
-#define UART0_INT_MODE
+//#define UART0_INT_MODE
 //#define UART1_INT_MODE
 // or
 //#define UART0_TX_INT_MODE
