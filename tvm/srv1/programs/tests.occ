@@ -1,9 +1,6 @@
-
--- #INCLUDE "srv1.inc"
--- #INCLUDE "delay.inc"
--- #INCLUDE "out.occ"
-
-#INCLUDE "mobile-lib.occ"
+#INCLUDE "srv1.inc"
+#INCLUDE "delay.inc"
+#INCLUDE "out.occ"
 
 PROC test.lasers(LASER! l)
   SEQ
@@ -50,33 +47,13 @@ PROC test.motors (MOTOR! m)
         delay.s(2)
 :
 
-
-PROC test.camera(CAMERA! camera, CHAN BYTE out!)
-  INT width, height:
-  SEQ
-    width, height := 320, 256
-    camera[req] ! set.stream.mode; width; height
-    camera[rsp] ? CASE ok
-    out.string("Here*n", 0, out!)
-:
-
-
 PROC tests (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTEM! system)
   SEQ
     out.string("SRV-1 Test Program (of Doom)*n", 0, console[out]!)
     out.string("Testing death lasers*n", 0, console[out]!)
-    -- test.lasers(lasers)
+    test.lasers(lasers)
     out.string("Testing less deadly LED*'s*n", 0, console[out]!)
-    -- test.leds(system)
+    test.leds(system)
     out.string("Testing harmless motors*n", 0, console[out]!)
-    -- test.motors(motors)
-    out.string("Testing privacy-invading camera*n", 0, console[out]!)
-    test.camera(camera, console[out]!)
-:
-
-PROC just.this (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTEM! system)
-  CHAN MOBILE []BYTE frames:
-  PAR
-    get.image(camera!, frames!)
-    transmit.image(frames?, console!)
+    test.motors(motors)
 :
