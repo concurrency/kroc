@@ -32,12 +32,11 @@ void blinken(int max) {
 	
 int main (void)
 {
+	setup_interrupts();
 	setup_pins();
 	setup_pll();
 	setup_mam();
-
-	/* Setup UART0 */
-	uart0Init(B38400, UART_8N1, UART_FIFO_8);
+	setup_uarts();
 
 	debug_print_str("In main.c\n");
 

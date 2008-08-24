@@ -1,7 +1,26 @@
 /* Borrowed from the Fluke firmware while testing. */
+#ifndef SETUP_H
+#define SETUP_H
+
+#include "fluke.h"
+
+/*  typedefs are here  */
+typedef unsigned char       uint8_t;
+typedef   signed char        int8_t;
+typedef unsigned short     uint16_t;
+typedef   signed short      int16_t;
+typedef unsigned long      uint32_t;
+typedef   signed long       int32_t;
+typedef unsigned long long uint64_t;
+typedef   signed long long  int64_t;
 
 void led_on();
 void led_off();
+
+// External, provided in crt.s
+extern void Reset_Handler(void);
+
+void setup_interrupts();
 
 void setup_pins();
 
@@ -60,3 +79,5 @@ void setup_mam();
 #define CAM_D5      (1 << 29)
 #define CAM_D6      (1 << 30)
 #define CAM_D7      (1 << 31)
+
+#endif /* SETUP_H */

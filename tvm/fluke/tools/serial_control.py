@@ -17,9 +17,9 @@ except ImportError:
 def usage():
     print "Usage: "
     if hasPySerial:
-        print "%s --<reset|bootldr> [--term] <serialport>" % sys.argv[0]
+        print "%s --<reset|bootldr> [--term] <baud rate> <serialport>" % sys.argv[0]
     else:
-        print "%s --<reset|bootldr> <serialport>" % sys.argv[0]
+        print "%s --<reset|bootldr> <baud rate> <serialport>" % sys.argv[0]
 
 def main():
     # Deal with the command line
@@ -46,19 +46,21 @@ def main():
         print 'You must specify a command'
         usage()
         sys.exit(2)
-    if len(args) > 1:
+    NUMARGS = 2
+    if len(args) > NUMARGS:
         print 'Unexpected number of arguments'
         usage()
         sys.exit(2)
-    if len(args) != 1:
-        print 'You must specify a serial port'
+    if len(args) != NUMARGS:
+        print 'You must specify a baud rate and serial port'
         usage()
         sys.exit(2)
-    port = args[0]
+    baud = args[0]
+    port = args[1]
     # This is where stuff happens
     if hasPySerial:
         # Using PySerial
-        s = serial.Serial(port, baudrate=38400, timeout=1)
+        s = serial.Serial(port, baudrate=baud, timeout=1)
         if cmd == 'reset':
             print '%s: resetting' % port
             s.setDTR(0)
