@@ -20,6 +20,7 @@
 #include "armVIC.h"
 #include "sysTime.h"
 #include "uart.h"
+#include "fluke-tvm.h"
 
 /******************************************************************************
  *
@@ -134,7 +135,7 @@ int main(void)
   
   uart0Puts("\r\nHello World!\r\n");
   uart0Puts("(a WinARM Demo-Application based on code from R O Software)\r\n\r\n");
-  for (;;) {}
+  run_tvm();
   return 0;
   
 }

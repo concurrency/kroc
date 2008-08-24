@@ -18,8 +18,7 @@
 
 NATIVEGCC = gcc
 SKROC     = skroc
-
-
+PORT      = /dev/tty.usbserial
 
 # MCU name and submodel
 MCU = arm7tdmi
@@ -43,7 +42,7 @@ TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c
-SRC += sysTime.c uart.c uartISR.c armVIC.c
+SRC += sysTime.c uart.c uartISR.c armVIC.c fluke-tvm.c debug.c timer.c
 
 # List Assembler source files here.
 # Make them always end in a capital .S.  Files ending in a lowercase .s
@@ -80,7 +79,10 @@ CSTANDARD = -std=gnu99
 CDEFS =  -D$(RUN_MODE)
 
 # Place -I options here
-CINCS =
+CINCS = \
+		-I./libtvm \
+		-I../../runtime/libtvm \
+		-I./firmware
 
 # Place -D or -U options for ASM here
 ADEFS =  -D$(RUN_MODE)
@@ -192,7 +194,8 @@ MSG_LPC21_RESETREMINDER = You may have to bring the target in bootloader-mode no
 
 
 # Define all object files.
-OBJ = $(SRC:.c=.o) $(ASRC:.S=.o) 
+OBJ  = $(SRC:.c=.o) $(ASRC:.S=.o) 
+LIBS = libtvm/libtvm.a
 
 
 # Define all listing files.
@@ -208,6 +211,9 @@ GENDEPFLAGS = -MD -MP -MF .dep/$(@F).d
 ALL_CFLAGS = -mcpu=$(MCU) $(THUMB_IW) -I. $(CFLAGS) $(GENDEPFLAGS)
 ALL_ASFLAGS = -mcpu=$(MCU) $(THUMB_IW) -I. -x assembler-with-cpp $(ASFLAGS)
 
+FIRMWARE = 	firmware/firmware.occ \
+						firmware/out.occ
+ 
 
 # Default target.
 all: begin gccversion sizebefore build sizeafter finished end
@@ -278,11 +284,11 @@ program: $(TARGET).hex
 
 # Link: create ELF output file from object files.
 .SECONDARY : $(TARGET).elf
-.PRECIOUS : $(OBJ)
-%.elf: $(OBJ)
+.PRECIOUS : $(OBJ) 
+%.elf: $(OBJ) $(LIBS)
 	@echo
 	@echo $(MSG_LINKING) $@
-	$(CC) $(THUMB) $(ALL_CFLAGS) $(OBJ) --output $@ $(LDFLAGS)
+	$(CC) $(THUMB) $(ALL_CFLAGS) $(OBJ) $(LIBS) --output $@ $(LDFLAGS)
 
 
 # Compile: create object files from C source files.
@@ -357,8 +363,10 @@ distclean: clean
 tools/lpc21isp: tools/lpc21isp-ipre.c
 	  $(NATIVEGCC) -o tools/lpc21isp tools/lpc21isp-ipre.c
 
+# Dependencies for the TVM
+main.elf: libtvm/libtvm.a
 
-
+main.o: firmware/firmware.h
 
 # Include the dependency files.
 -include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
