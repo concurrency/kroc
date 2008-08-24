@@ -1,10 +1,11 @@
 /*
- * tvm.c - FLUKE LPC2104 ARM7TDMI TVM Wrapper
- * (formerly: tvm.c - SRV-1 Blackfin TVM Wrapper)
+ * tvm.c - FLUKE LPC2104 ARM7TDMI Transterpreter Wrapper
+ * (formerly: tvm.c - SRV-1 Blackfin Transterpreter Wrapper)
  *
- * Copyright (C) 2008 Jon Simpson, Matthew C. Jadud, Carl G. Ritson
+ * Copyright (C) 2008 Jon Simpson, Matthew C. Jadud, Carl G. Ritson, Christian Jacobsen
+ * More license bits need to be added. To everything.
  */
-#include "fluke-tvm.h"
+#include "fluke.h"
 
 static tvm_t 		tvm;
 static tvm_ectx_t 	firmware_ctx, user_ctx;
@@ -66,14 +67,14 @@ static void clear_pending_interrupts (void)
 #define CTS_MASK	(1 << CTS_PIN)
 #define RTS_MASK	(1 << RTS_PIN)
 
-static volatile unsigned char 	rx_buffer	= '\0';
-static WORDPTR			rx_channel	= (WORDPTR) NOT_PROCESS_P;
-static volatile short		rx_pending	= 0;
-static volatile BYTEPTR		rx_ptr		= (BYTEPTR) NULL_P;
+static volatile unsigned char    rx_buffer    = '\0';
+static WORDPTR                   rx_channel   = (WORDPTR) NOT_PROCESS_P;
+static volatile short            rx_pending   = 0;
+static volatile BYTEPTR          rx_ptr       = (BYTEPTR) NULL_P;
 
-static WORDPTR			tx_channel	= (WORDPTR) NOT_PROCESS_P;
-static volatile WORD		tx_pending	= 0;
-static BYTEPTR			tx_ptr		= (BYTEPTR) NULL_P;
+static WORDPTR                   tx_channel   = (WORDPTR) NOT_PROCESS_P;
+static volatile WORD             tx_pending   = 0;
+static BYTEPTR                   tx_ptr       = (BYTEPTR) NULL_P;
 
 #if 0
 void init_uart (void)
