@@ -39,7 +39,7 @@ PROC firmware ()
         SEQ
           tim ? t
           IF
-            (t - last) >= (1 * SECONDS)
+            (t - last) >= (3 * SECONDS)
               SEQ
                 last := t
                 out.string("tick*c*n", 0, out!)

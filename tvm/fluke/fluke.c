@@ -76,6 +76,10 @@ static WORDPTR                   tx_channel   = (WORDPTR) NOT_PROCESS_P;
 static volatile WORD             tx_pending   = 0;
 static BYTEPTR                   tx_ptr       = (BYTEPTR) NULL_P;
 
+/*{{{ init_uart */
+/* 20080825 MCJ My assumption here is that we already
+ * have good code that sets up the UARTs in the ROS layer.
+ */
 #if 0
 void init_uart (void)
 {
@@ -119,7 +123,45 @@ void init_uart (void)
 	*pSIC_IMASK	|= IRQ_PFA_PORTH;
 	SSYNC;
 }
+#endif
+/*}}}*/
 
+/*{{{ handle_uart_interrupt: We only get one UART interrupt on the ARM.
+ *    So, we handle and jump to the appropriate routine
+ *    (ie. RX or TX)
+ */
+#if 0
+#define INTERRUPT_HANDLER_PREAMBLE()     ISR_ENTRY();
+#define INTERRUPT_ID_REG                 U0IIR
+#define NO_INTERRUPTS                    UIIR_NO_INT
+#define INTERRUPT_ID_MASK                UIIR_ID_MASK
+#define RECEIVE_LINE_STATUS_INT          UIIR_RLS_INT
+#define U0_LINE_STATUS_REG               U0LSR
+void handle_uart_interrupt (void) 
+{
+	uint8_t interrupt_id;
+	interrupt_id = U0_INT_ID_REG;
+
+	INTERRUPT_HANDLER_PREAMBLE();
+
+	// Loop until there are no interrupts left to handle.
+	while ((interrupt_id & NO_INTERRUPTS) == 0)
+	{
+		switch (interrupt_id & INTERRUPT_ID_MASK)
+		{
+			case RECEIVE_LINE_STATUS_INT:
+				// Read the U0 line status register to clear it.
+				U0_LINE_STATUS_REG;
+				break;
+			/* TODO: Receive interrupts */
+			
+
+}
+#endif
+/*}}}*/
+
+/*{{{ handle_int10 - This is the incoming (RX) interrupt. */
+#if 0
 void handle_int10 (void)
 {
 	unsigned char buffer;
@@ -142,36 +184,72 @@ void handle_int10 (void)
 		rx_pending++;
 	}
 }
+#endif 
+/*}}}*/
+// handle_int10: 
+//   Clear CTS (*pPORTHIO_SET = CTS_MASK)
+//   Read character (buffer = *pUART0_RBR)
 
-void handle_int14 (void)
+/*{{{ handle_int14 - This is the outbound (TX) interrupt.
+ *    RENAMED: handle_transmit_interrupt */
+#if 0
+
+// On the ARM, is this equivalent to clearing the FIFO?
+#define CLEAR_UART0_RTS     0;
+#define INVALIDATE_MEMORY   0;
+
+
+void handle_transmit_interrupt (void)
 {
+
 	if (!(tx_pending = run_output (tx_pending, &tx_ptr))) {
 		/* Complete; notify TVM and disable interrupt */
 		raise_tvm_interrupt (TVM_INTR_UART0_TX);
-		*pPORTHIO_MASKA_CLEAR = RTS_MASK;
-		SSYNC;
+
+		// *pPORTHIO_MASKA_CLEAR = RTS_MASK;
+		CLEAR_UART0_RTS;
+		
+		// Invalidate memory
+		// SSYNC;
+		INVALIDATE_MEMORY;
 	}
 }
+#endif
+/*}}}*/
+// handle_int14:
+//   Clear RTS (*pPORTHIO_MASKA_CLEAR = RTS_MASK)
 
+/*{{{ complete_uart0_rx_interrupt - This completes the RX interrupt. */
+#if 0
 void complete_uart0_rx_interrupt (ECTX ectx)
 {
 	ectx->add_to_queue (ectx, rx_channel);
 	rx_channel = NOT_PROCESS_P;
 }
+#endif
+/*}}}*/
 
+/*{{{ complete_uart0_tx_interrupt - This completes the TX interrupt. */
+#if 0
 void complete_uart0_tx_interrupt (ECTX ectx)
 {
 	ectx->add_to_queue (ectx, tx_channel);
 	tx_channel = NOT_PROCESS_P;
 }
+#endif
+/*}}}*/
 
+/*{{{ uart0_is_blocking - Non-zero if rx or tx is NOT_PROCESS_P */
+#if 0
 int uart0_is_blocking (void)
 {
 	/* Return non-zero if rx_channel or tx_channel is not NOT_PROCESS_P. */
 	return ((int) rx_channel | (int) tx_channel) ^ NOT_PROCESS_P;
 }
 #endif
+/*}}}*/
 
+/*{{{ run_output - Does the send. */
 #if 0
 static WORD run_output (WORD count, BYTEPTR *pptr)
 {
@@ -197,11 +275,17 @@ static WORD run_output (WORD count, BYTEPTR *pptr)
 	return count;
 }
 #endif
+/*}}}*/
+// run_output:
+//   Check ready: (*pPORTHIO & RTS_MASK)
+//   Buffer ready: (*pUART0_LSR & THRE)
+//   Send data: (*pUART0_THR = c)
 
 /* Non-interrupt driven "run_output" */
 static WORD run_output (WORD count, BYTEPTR *pptr)
 {
 	BYTEPTR ptr = *pptr;
+	
 	while (count > 0) {
 		unsigned char c = read_byte(ptr);
 		ptr = byteptr_plus(ptr, 1);
