@@ -35,10 +35,6 @@ PROC firmware ()
         tim ? t
         last := t
         magic.timer ? s
-        WHILE ((t - last) < (1 * SECONDS))
-          SEQ
-            tim ? t
-            RESCHEDULE()
         magic.timer ! s
   
     INT last:

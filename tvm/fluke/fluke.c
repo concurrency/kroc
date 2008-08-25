@@ -28,10 +28,11 @@ static void srv_modify_sync_flags (ECTX ectx, WORD set, WORD clear)
 
 	ENABLE_INTERRUPTS (imask);
 }
+#endif
 
 static void clear_pending_interrupts (void)
 {
-	unsigned short imask;
+	unsigned imask;
 	WORD flags;
 	
 	DISABLE_INTERRUPTS (imask);
@@ -43,21 +44,13 @@ static void clear_pending_interrupts (void)
 
 	ENABLE_INTERRUPTS (imask);
 
-	if (flags & TVM_INTR_PPI_DMA) {
-		complete_ppi_dma_interrupt (&firmware_ctx);
-	}
-	if (flags & TVM_INTR_UART0_RX) {
-		complete_uart0_rx_interrupt (&firmware_ctx);
-	}
-	if (flags & TVM_INTR_UART0_TX) {
-		complete_uart0_tx_interrupt (&firmware_ctx);
-	}
-	if (flags & TVM_INTR_TWI) {
-		complete_twi_interrupt (&firmware_ctx);
+	/* Terminate each TVM interrupt here... */
+	if (flags & TVM_INTR_MAGIC_TIMER)
+	{
+		complete_magic_timer_interrupt(&firmware_ctx);
 	}
 }
 /*}}}*/ 
-#endif 
 
 
 /*{{{  TVM UART definitions */
@@ -713,9 +706,7 @@ static int run_firmware (void)
 			}
 			/* Fall through indicates deadlock */
 		} else if (ret == ECTX_INTERRUPT) {
-#if 0
 			clear_pending_interrupts ();
-#endif
 			/* OK; fall through and loop */
 		}
 	} while (ret == ECTX_INTERRUPT);
@@ -771,9 +762,7 @@ static int run_user (void)
 
 	switch (ret) {
 		case ECTX_INTERRUPT:
-#if 0
 			clear_pending_interrupts ();
-#endif
 			/* fall through */
 		case ECTX_PREEMPT:
 		case ECTX_SLEEP:
