@@ -6,12 +6,17 @@ static WORDPTR                  tick_channel = (WORDPTR) NOT_PROCESS_P;
 static volatile short           tick_pending = 0;
 static volatile BYTEPTR         tick_ptr     = (BYTEPTR) NULL_P;
 
+/*{{{ timerISR
+ * The timer interrupt service routine.
+ */
 ISR timerISR (void)
 {
 
   // Enter and disable IRQs
   ISR_ENTRY();
-  
+    
+  // Raise an interrupt in the VM; otherwise, we won't 
+  // be able to complete the channel rendevous later.
   raise_tvm_interrupt(TVM_INTR_MAGIC_TIMER);
 
   // Reset the interrupt.
@@ -19,11 +24,14 @@ ISR timerISR (void)
   T0MR0 = T0MR0 + 500000;
   VICVectAddr = 0;
 
-  // Magic occam-pi channel interaction
-  debug_print_str("ISR TICK\r\n");
   ISR_EXIT();
 }
+/*}}}*/
 
+/*{{{ led_toggle_out
+ * This is a magic TVM channel. When written to 
+ * (or read from) it toggles the LED.
+ */
 int led_toggle_out (ECTX ectx, WORD count, BYTEPTR pointer)
 {
 
@@ -34,9 +42,15 @@ int led_toggle_out (ECTX ectx, WORD count, BYTEPTR pointer)
   }
 
   return ECTX_CONTINUE;
- 
 }
+/*}}}*/
 
+/*{{{ timer_in
+ * A magic TVM channel. When read from, it produces a '*'.
+ * This is, effectively, a "signal" channel from the timer 
+ * interrupt. The contents of the channel are less interesting
+ * than the scheduler interractions.
+ */
 int timer_in (ECTX ectx, WORD count, BYTEPTR pointer)
 {
   unsigned mask;
@@ -50,13 +64,11 @@ int timer_in (ECTX ectx, WORD count, BYTEPTR pointer)
     tick_pending = 0;
     // BARRIER
     reschedule = 0;
-    debug_print_str("tick_pending\r\n");
   } else {
     tick_channel = ectx->wptr;
     tick_ptr = pointer;
     // BARRIER
     reschedule = 1;
-    debug_print_str("!tick_pending\r\n");
   }
 
   ENABLE_INTERRUPTS(mask);
@@ -70,14 +82,28 @@ int timer_in (ECTX ectx, WORD count, BYTEPTR pointer)
   }
 
 }
+/*}}}*/
 
+/*{{{ complete_magic_timer_interrupt
+ * This completes the channel rendevous on the magic
+ * timer channel. It sticks us back on the queue to be
+ * read from again later. Because we are magic, we are always
+ * ready, so it is only the logic coded into the function
+ * "timer_in" (in this case) that handles whether a value
+ * is produced when read from (or not).
+ */
 void complete_magic_timer_interrupt (ECTX ectx) 
 {
   debug_print_str("Completing magic timer.\r\n");
   ectx->add_to_queue(ectx, tick_channel);
   tick_channel = NOT_PROCESS_P;
 }
+/*}}}*/
 
+/*{{{ init_timerISR
+ * Everything needed to initialize an IRQ on the LPC2106.
+ * This particular ISR is to handle a timer alarm.
+ */
 void init_timerISR (void)
 {
   VICIntSelect &= ~VIC_BIT(VIC_TIMER0);
@@ -92,8 +118,8 @@ void init_timerISR (void)
   T0CCR = 0;
   T0EMR = 0;
   T0TCR = TCR_ENABLE;
-
 }
+/*}}}*/
 
 WORD arm7tdmi_get_time(ECTX ectx)
 {
