@@ -10,8 +10,14 @@ VAL INT SECONDS IS 1000000:
 PROC firmware ()
   CHAN BYTE uart0:
   PLACE uart0 AT #0:
-
   CHAN BYTE in, out:
+
+  -- Oooh... turns out we need to use multiples of two
+  -- when placing channels... perhaps we're skipping over
+  -- the mobile component of the previous ext_chan definition?
+  CHAN BYTE magic.timer:
+  PLACE magic.timer AT #2:
+  
   PAR
     -- OUT from TVM to WORLD
     WHILE TRUE
@@ -20,15 +26,21 @@ PROC firmware ()
         out ? b
         uart0 ! b
 
-#IF FALSE
-    -- IN from WORLD TO TVM
+    -- Magic timer loop
+    TIMER tim:
+    INT last, t:
     WHILE TRUE
-      BYTE b:
+      BYTE s:
       SEQ
-        uart0 ? b
-        in ! b
-#ENDIF
-    
+        tim ? t
+        last := t
+        magic.timer ? s
+        WHILE ((t - last) < (1 * SECONDS))
+          SEQ
+            tim ? t
+            RESCHEDULE()
+        magic.timer ! s
+  
     INT last:
     TIMER tim:
     SEQ
@@ -44,7 +56,7 @@ PROC firmware ()
                 last := t
                 out.string("tick*c*n", 0, out!)
             TRUE
-              SKIP
+              RESCHEDULE()
 
 :
 

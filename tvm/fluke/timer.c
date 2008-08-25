@@ -1,30 +1,17 @@
 #include "fluke.h"
 #include "sysTime.h"
 
+/* occam-pi channel defined in C */
+static WORDPTR                  tick_channel = (WORDPTR) NOT_PROCESS_P;
+static volatile short           tick_pending = 0;
+static volatile BYTEPTR         tick_ptr     = (BYTEPTR) NULL_P;
+
 ISR timerISR (void)
 {
 
   // Enter and disable IRQs
    ISR_ENTRY();
 
-  // Check that this is clock 0 
-  // (match channel 0?)
-#if 0
-  if (T0IR & TIR_MR0I)
-  {
-    debug_print_str(".\n");
-
-  } else {
-    debug_print_str("_\n");
-  }
-#endif
-
-  if (IOPIN & LED) {
-    IOCLR = LED;
-  } else {
-    IOSET = LED;
-  }
-  
   // Reset the interrupt.
   T0IR  = 0xFF; // TIR_MR0I;
   T0MCR = TMCR_MR0_I;
@@ -33,7 +20,62 @@ ISR timerISR (void)
   T0EMR = 0;
   VICVectAddr = 0;
 
+  // Magic occam-pi channel interaction
+  tick_pending = 1;
+
   ISR_EXIT();
+}
+
+#define DISABLE_INTERRUPTS(mask) disableIRQ(mask);
+#define ENABLE_INTERRUPTS(mask)  restoreIRQ(mask); enableIRQ();
+
+int led_toggle_out (ECTX ectx, WORD count, BYTEPTR pointer)
+{
+
+  if (IOPIN & LED) {
+    IOCLR = LED;
+  } else {
+    IOSET = LED;
+  }
+
+  return ECTX_CONTINUE;
+ 
+}
+
+int timer_in (ECTX ectx, WORD count, BYTEPTR pointer)
+{
+  unsigned mask;
+  int reschedule;
+  
+  write_byte(pointer, (BYTE) '*');
+  return ECTX_CONTINUE;
+
+#if 0
+  // DISABLE_INTERRUPTS(mask);
+  if (tick_pending)
+  {
+    write_byte (pointer, (BYTE) '*');
+    tick_pending = 0;
+    // BARRIER
+    reschedule = 0;
+  } else {
+    tick_channel = ectx->wptr;
+    tick_ptr = pointer;
+    // BARRIER
+    reschedule = 1;
+  }
+
+  // ENABLE_INTERRUPTS(mask);
+
+  if (reschedule) 
+  {
+    WORKSPACE_SET (ectx->wptr, WS_IPTR, (WORD) ectx->iptr);
+    return ectx->run_next_on_queue (ectx);
+  } else {
+    return ECTX_CONTINUE;
+  }
+#endif 
+
 }
 
 void init_timerISR (void)

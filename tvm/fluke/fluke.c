@@ -405,12 +405,20 @@ int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
 /*{{{  External channel definitions */
 static EXT_CHAN_ENTRY	ext_chans[] = {
 	{ 
-		.typehash 	= 0,
-		.in 		= uart0_in, 
-		.out 		= uart0_out,
-		.mt_in		= NULL,
-		.mt_out		= NULL
+		.typehash   = 0,
+		.in         = uart0_in, 
+		.out        = uart0_out,
+		.mt_in      = NULL,
+		.mt_out     = NULL
 	},
+	{
+		.typehash   = 0,
+		.in         = timer_in,
+    .out        = led_toggle_out,
+		.mt_in      = NULL,
+		.mt_out     = NULL
+	},
+
 #if 0
 	{
 		.typehash	= 0,
