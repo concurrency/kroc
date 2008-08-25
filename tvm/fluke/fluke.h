@@ -21,36 +21,39 @@
 #define ISR void 
 
 ISR_PROTO(timerISR)
+#define DISABLE_INTERRUPTS(mask) mask = disableIRQ();
+#define ENABLE_INTERRUPTS(mask)  restoreIRQ(mask);
 
+/*{{{  TVM Interrupts */
+enum {
+  TVM_INTR_PPI_DMA     = 1 << (SFLAG_USER_P + 0),
+  TVM_INTR_TWI         = 1 << (SFLAG_USER_P + 1),
+  TVM_INTR_UART0_RX    = 1 << (SFLAG_USER_P + 2),
+  TVM_INTR_UART0_TX    = 1 << (SFLAG_USER_P + 3),
+	TVM_INTR_MAGIC_TIMER = 1 << (SFLAG_USER_P + 4)
+};
+#define TVM_INTR_SFLAGS  \
+  (SFLAG_INTR            | \
+   TVM_INTR_PPI_DMA      | \
+   TVM_INTR_TWI          | \
+   TVM_INTR_UART0_RX     | \
+   TVM_INTR_UART0_TX     | \
+   TVM_INTR_MAGIC_TIMER)
+/*}}}*/
+
+// This conditionally enables IRQs at the 
+// start of our code. For Magic Timer exploration.
+// Leaving it in is probably a good idea for now.
 #define TIMER_INT_MODE 1
 
 /*{{{  Assembly Macros */
 #define BARRIER	__asm__ __volatile__ ("" : : : "memory")
+#if 0
 #define CSYNC	__asm__ __volatile__ ("csync;" : : : "memory")
 #define SSYNC	__asm__ __volatile__ ("ssync;" : : : "memory")
 #define IDLE	__asm__ __volatile__ ("idle;")
 #define NOP	__asm__ __volatile__ ("nop;")
-#define DISABLE_INTERRUPTS(mask) \
-	__asm__ __volatile__ ("cli %0;" : "=d" (mask))
-#define ENABLE_INTERRUPTS(mask) \
-	__asm__ __volatile__ ("sti %0;" : : "d" (mask))
-#define RAISE_INTERRUPT(n) \
-	__asm__ __volatile__ ("raise %0;" : : "i" (n))
-/*}}}*/
-
-/*{{{  TVM Interrupts */
-enum {
-	TVM_INTR_PPI_DMA	= 1 << (SFLAG_USER_P + 0),
-	TVM_INTR_TWI		= 1 << (SFLAG_USER_P + 1),
-	TVM_INTR_UART0_RX	= 1 << (SFLAG_USER_P + 2),
-	TVM_INTR_UART0_TX	= 1 << (SFLAG_USER_P + 3)
-};
-#define TVM_INTR_SFLAGS \
-	(SFLAG_INTR 		| \
-	 TVM_INTR_PPI_DMA	| \
-	 TVM_INTR_TWI		| \
-	 TVM_INTR_UART0_RX	| \
-	 TVM_INTR_UART0_TX)
+#endif
 /*}}}*/
 
 /*{{{ UARTs */
