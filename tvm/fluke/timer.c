@@ -7,7 +7,7 @@ static volatile short           tick_pending = 0;
 static volatile BYTEPTR         tick_ptr     = (BYTEPTR) NULL_P;
 
 /* Timer interrupt frequency. */
-#define INTERRUPT_DELAY 5000000
+#define INTERRUPT_DELAY 100000
 
 /*{{{ timerISR
  * The timer interrupt service routine.
