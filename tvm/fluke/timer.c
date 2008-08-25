@@ -6,6 +6,9 @@ static WORDPTR                  tick_channel = (WORDPTR) NOT_PROCESS_P;
 static volatile short           tick_pending = 0;
 static volatile BYTEPTR         tick_ptr     = (BYTEPTR) NULL_P;
 
+/* Timer interrupt frequency. */
+#define INTERRUPT_DELAY 5000000
+
 /*{{{ timerISR
  * The timer interrupt service routine.
  */
@@ -17,11 +20,17 @@ ISR timerISR (void)
     
   // Raise an interrupt in the VM; otherwise, we won't 
   // be able to complete the channel rendevous later.
-  raise_tvm_interrupt(TVM_INTR_MAGIC_TIMER);
-
+  if (tick_ptr != (BYTEPTR) NULL_P) 
+  {
+    raise_tvm_interrupt(TVM_INTR_MAGIC_TIMER);
+    tick_ptr = (BYTEPTR) NULL_P;
+  } else {
+    tick_pending = 1;
+  }
+  
   // Reset the interrupt.
   T0IR  = TIR_MR0I;
-  T0MR0 = T0MR0 + 500000;
+  T0MR0 = T0MR0 + INTERRUPT_DELAY;
   VICVectAddr = 0;
 
   ISR_EXIT();
@@ -94,7 +103,6 @@ int timer_in (ECTX ectx, WORD count, BYTEPTR pointer)
  */
 void complete_magic_timer_interrupt (ECTX ectx) 
 {
-  debug_print_str("Completing magic timer.\r\n");
   ectx->add_to_queue(ectx, tick_channel);
   tick_channel = NOT_PROCESS_P;
 }
@@ -114,7 +122,7 @@ void init_timerISR (void)
   T0TCR = TCR_RESET;
   T0PR  = T0_PCLK_DIV - 1;
   T0MCR = TMCR_MR0_I;
-  T0MR0 = 500000;
+  T0MR0 = INTERRUPT_DELAY;
   T0CCR = 0;
   T0EMR = 0;
   T0TCR = TCR_ENABLE;

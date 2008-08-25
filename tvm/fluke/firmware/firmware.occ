@@ -6,6 +6,17 @@
 #INCLUDE "out.occ"
 
 VAL INT SECONDS IS 1000000:
+PROC delay (VAL INT time)
+  TIMER tim:
+  INT t, now:
+  SEQ
+    tim ? t
+    now := t
+    WHILE ((now - t) < time)
+      SEQ
+        tim ? now
+        RESCHEDULE()
+:
 
 PROC firmware ()
   CHAN BYTE uart0:
@@ -27,13 +38,9 @@ PROC firmware ()
         uart0 ! b
 
     -- Magic timer loop
-    TIMER tim:
-    INT last, t:
     WHILE TRUE
       BYTE s:
       SEQ
-        tim ? t
-        last := t
         magic.timer ? s
         magic.timer ! s
   
@@ -47,7 +54,7 @@ PROC firmware ()
         SEQ
           tim ? t
           IF
-            (t - last) >= (3 * SECONDS)
+            (t - last) >= (2 * SECONDS)
               SEQ
                 last := t
                 out.string("tick*c*n", 0, out!)
