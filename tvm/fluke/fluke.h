@@ -62,6 +62,10 @@ int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer);
 WORD arm7tdmi_get_time(ECTX ectx);
 void sleep_until(WORD timeout);
 void sleep(void);
+
+int  timer_in (ECTX ectx, WORD count, BYTEPTR pointer);
+int led_toggle_out (ECTX ectx, WORD count, BYTEPTR pointer);
+
 /*}}}*/
 
 /*{{{ Debug printing */
