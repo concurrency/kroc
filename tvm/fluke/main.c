@@ -101,7 +101,11 @@ static void sysInit(void)
   VICDefVectAddr = (uint32_t)reset;     // point unvectored IRQs to reset()
 
   //  wdtInit();                        // initialize the watchdog timer
-  initSysTime();                        // initialize the system timer
+  //  initSysTime();                        // initialize the system timer
+  
+  // Our uber timer interrupt code.
+  init_timerISR();
+
   uart0Init(UART_BAUD(HOST_BAUD), UART_8N1, UART_FIFO_8); // setup the UART
 }
 
@@ -124,12 +128,11 @@ static void sysInit(void)
  *****************************************************************************/
 int main(void)
 {
-#define LED         (1 << 17)
   IODIR = LED;
   IOSET = LED;
 
   sysInit();
-#if defined(UART0_TX_INT_MODE) || defined(UART0_RX_INT_MODE)
+#if defined(UART0_TX_INT_MODE) || defined(UART0_RX_INT_MODE) || defined(TIMER_INT_MODE)
   enableIRQ();
 #endif
   

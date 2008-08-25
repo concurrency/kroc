@@ -35,6 +35,7 @@ static uint32_t lastT0TC;
  *****************************************************************************/
 void initSysTime(void)
 {
+#if 0
   // setup Timer 1 to count forever
   T0TCR = TCR_RESET;                    // reset & disable timer 0
   T0PR = T0_PCLK_DIV - 1;               // set the prescale divider
@@ -43,6 +44,7 @@ void initSysTime(void)
   T0EMR = 0;                            // disable external match register
   T0TCR = TCR_ENABLE;                   // enable timer 0
   sysTICs = 0;
+#endif
 }
 
 /******************************************************************************
