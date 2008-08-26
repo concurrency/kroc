@@ -6,13 +6,13 @@
 #INCLUDE "out.occ"
 
 VAL INT SECONDS IS 1000000:
-PROC delay (VAL INT time)
+PROC delay (VAL INT delay)
   TIMER tim:
-  INT t, now:
+  INT now, then:
   SEQ
-    tim ? t
-    now := t
-    WHILE ((now MINUS t) < time)
+    tim ? now
+    then := now PLUS delay
+    WHILE (now AFTER then)
       SEQ
         tim ? now
         RESCHEDULE()
