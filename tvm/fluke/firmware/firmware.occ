@@ -12,7 +12,7 @@ PROC delay (VAL INT time)
   SEQ
     tim ? t
     now := t
-    WHILE ((now - t) < time)
+    WHILE ((now MINUS t) < time)
       SEQ
         tim ? now
         RESCHEDULE()
@@ -55,10 +55,10 @@ PROC firmware ()
         SEQ
           tim ? t
           IF
-            (t - last) >= (2 * SECONDS)
+            (t MINUS last) >= (2 * SECONDS)
               SEQ
                 last := t
-                counter := counter + 1
+                counter := counter PLUS 1
                 out.string("tick: ", 0, out!)
                 out.int(counter, 12, out!)
                 out.string("*c*n", 0, out!)
