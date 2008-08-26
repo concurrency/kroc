@@ -44,11 +44,12 @@ PROC firmware ()
         magic.timer ? s
         magic.timer ! s
   
-    INT last:
+    INT last, counter:
     TIMER tim:
     SEQ
       out.string ("## Firmware running...*n", 0, out!)
       tim ? last
+      counter := 0
       WHILE TRUE
         INT t:
         SEQ
@@ -57,7 +58,10 @@ PROC firmware ()
             (t - last) >= (2 * SECONDS)
               SEQ
                 last := t
-                out.string("tick*c*n", 0, out!)
+                counter := counter + 1
+                out.string("tick: ", 0, out!)
+                out.int(counter, 12, out!)
+                out.string("*c*n", 0, out!)
             TRUE
               RESCHEDULE()
 
