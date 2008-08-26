@@ -5,9 +5,10 @@
 static WORDPTR                  tick_channel = (WORDPTR) NOT_PROCESS_P;
 static volatile short           tick_pending = 0;
 static volatile BYTEPTR         tick_ptr     = (BYTEPTR) NULL_P;
+static int debug = 1;
 
 /* Timer interrupt frequency. */
-#define INTERRUPT_DELAY 100000
+#define INTERRUPT_DELAY 10000000
 
 /*{{{ timerISR
  * The timer interrupt service routine.
@@ -30,6 +31,14 @@ ISR timerISR (void)
   
   // Reset the interrupt.
   T0IR  = TIR_MR0I;
+ 
+  if (IOPIN & LED) {
+    debug_print_str("T0MR0: ");
+    debug_print_hex(T0MR0);
+    debug_print_str("\n");
+    debug = 0;
+  }
+
   T0MR0 = T0MR0 + INTERRUPT_DELAY;
   VICVectAddr = 0;
 
@@ -46,6 +55,7 @@ int led_toggle_out (ECTX ectx, WORD count, BYTEPTR pointer)
 
   if (IOPIN & LED) {
     IOCLR = LED;
+    debug = 1;
   } else {
     IOSET = LED;
   }
