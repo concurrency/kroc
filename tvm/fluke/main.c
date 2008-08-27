@@ -111,6 +111,28 @@ static void sysInit(void)
 
 /******************************************************************************
  *
+ * Function Name: powerInit()
+ *
+ * Description:
+ *    This function is responsible for turning off devices that are not used. 
+ *
+ * Calling Sequence: 
+ *    void
+ *
+ * Returns:
+ *    void
+ *
+ *****************************************************************************/
+static void powerInit()
+{
+  /* Turn off the listed devices (everything is on by default) */
+  PCONP &= ~(PCONP_PCTIM1 | PCONP_PCPWM0 | 
+             PCONP_PCI2C  | PCONP_PCSPI  | 
+             PCONP_PCRTC);
+}
+
+/******************************************************************************
+ *
  * Function Name: main()
  *
  * Description:
@@ -131,6 +153,7 @@ int main(void)
   IODIR = LED;
   IOSET = LED;
 
+  powerInit();
   sysInit();
 #if defined(UART0_TX_INT_MODE) || defined(UART0_RX_INT_MODE) || defined(TIMER_INT_MODE)
   enableIRQ();
