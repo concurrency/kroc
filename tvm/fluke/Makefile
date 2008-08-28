@@ -144,6 +144,18 @@ else
 LDFLAGS +=-T$(SUBMDL)-ROM.ld
 endif
 
+## -ffunction-sections in addition to the --gc-sections linker flag is useful 
+## when doing bits of testing that does not involve the actual TVM runtime. 
+## When using these two flags together (one CFLAG and one LDFLAG) unused
+## code is removed, possibly generating a much smaller binary. If 
+## ie, if -ffunction-sections is enabled, you comment out run_tvm and 
+## 'make clean ;  make', you get a very small binary. Very handy.
+DCE = NO
+ifeq ($(DCE), YES)
+CFLAGS += -ffunction-sections
+LDFLAGS += -Xlinker --gc-sections
+endif
+
 # ---------------------------------------------------------------------------
 # Flash-Programming support using lpc21isp by Martin Maurer 
 
