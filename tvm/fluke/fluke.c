@@ -51,8 +51,10 @@ static WORDPTR    user_parent         = (WORDPTR) NOT_PROCESS_P;
 
 static void arm7tdmi_modify_sync_flags (ECTX ectx, WORD set, WORD clear)
 {
-	/* Fine, until we enable interrupts... */
+	int mask;
+	DISABLE_INTERRUPTS(mask);
 	ectx->sflags = (ectx->sflags & (~clear)) | set;
+	ENABLE_INTERRUPTS(mask);
 }
 
 static void clear_pending_interrupts (void)
@@ -68,12 +70,13 @@ static void clear_pending_interrupts (void)
 	user_ctx.sflags		&= ~(TVM_INTR_SFLAGS);
 
 	ENABLE_INTERRUPTS (imask);
-
+#if 0
 	/* Terminate each TVM interrupt here... */
 	if (flags & TVM_INTR_MAGIC_TIMER)
 	{
 		complete_magic_timer_interrupt(&firmware_ctx);
 	}
+#endif
 }
 /*}}}*/ 
 
@@ -125,9 +128,9 @@ int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer)
 		 * to (for the moment) have a blocking UART
 		 */
 	}
-/*}}}*/
 	return ECTX_CONTINUE;
 }
+/*}}}*/
 
 
 /*{{{  External channel definitions */
@@ -139,6 +142,7 @@ static EXT_CHAN_ENTRY	ext_chans[] = {
 		.mt_in      = NULL,
 		.mt_out     = NULL
 	},
+#if 0
 	{
 		.typehash   = 0,
 		.in         = timer_in,
@@ -146,6 +150,7 @@ static EXT_CHAN_ENTRY	ext_chans[] = {
 		.mt_in      = NULL,
 		.mt_out     = NULL
 	},
+#endif
 };
 
 static const int	ext_chans_length =
@@ -343,6 +348,10 @@ static void init_firmware_memory (void)
 	}
 }
 
+static void do_nothing(void)
+{
+}
+
 static void install_firmware_ctx (void)
 {
 	WORDPTR ws, vs, ms;
@@ -350,12 +359,14 @@ static void install_firmware_ctx (void)
 
 	/* Initialise firmware execution context */
 	tvm_ectx_init (&tvm, firmware);
+	tvm_ectx_reset(firmware);
 	firmware->get_time 		= arm7tdmi_get_time;
 	firmware->modify_sync_flags	= arm7tdmi_modify_sync_flags;
 	firmware->ext_chan_table	= ext_chans;
 	firmware->ext_chan_table_length	= ext_chans_length;
 	firmware->sffi_table		= firmware_sffi_table;
 	firmware->sffi_table_length	= firmware_sffi_table_length;
+	//firmware->set_alarm             = do_nothing;
 	/* Dynamic memory */
 	#ifdef TVM_USE_TLSF
 	firmware->mem_pool		= (void *) DMEM_START;
@@ -384,6 +395,7 @@ static int run_firmware (void)
 		if (ret == ECTX_SLEEP) {
 			return ret; /* OK - timer sleep */
 		} else if (ret == ECTX_EMPTY) {
+		    return ret; /* FIXME TEMPORARY FOR TESTING!!!!! NO REALLY */
 #if 0		
 			if (uart0_is_blocking ()) {
 				return ret; /* OK - waiting for input */
@@ -456,6 +468,7 @@ static void install_user_ctx (void)
 	ECTX user = &user_ctx;
 
 	tvm_ectx_init (&tvm, user);
+	tvm_ectx_reset(user);
 	user->get_time 			= arm7tdmi_get_time;
 	user->modify_sync_flags		= arm7tdmi_modify_sync_flags;
 	user->sffi_table		= user_sffi_table;
@@ -531,7 +544,15 @@ static void tvm_sleep (void)
 /*{{{  Interfacing */
 int tvm_interrupt_pending (void)
 {
-	return (firmware_ctx.sflags | user_ctx.sflags);
+    debug_print_str("\r\n");
+    debug_print_str("F ");
+    debug_print_hex(firmware_ctx.sflags);
+    debug_print_str("\r\nU: ");
+    debug_print_hex(user_ctx.sflags);
+    debug_print_str("\r\n");
+
+    return ((firmware_ctx.sflags & ~SFLAG_TQ) | 
+	    (user_ctx.sflags & ~SFLAG_TQ));
 }
 
 void raise_tvm_interrupt (WORD flag)

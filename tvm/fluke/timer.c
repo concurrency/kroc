@@ -10,6 +10,7 @@ static int debug = 1;
 /* Timer interrupt frequency. */
 #define INTERRUPT_DELAY 10000000
 
+#if 0
 /*{{{ timerISR
  * The timer interrupt service routine.
  */
@@ -138,16 +139,101 @@ void init_timerISR (void)
   T0TCR = TCR_ENABLE;
 }
 /*}}}*/
+#endif
+
+/*{{{ timerISR
+ * The timer interrupt service routine.
+ */
+ISR timerISR (void)
+{
+  // Enter and disable IRQs
+  ISR_ENTRY();
+    
+  uart0Putch('I');
+
+  /* Ack the interrupt. */
+  T0IR  = TIR_MR0I;
+  VICVectAddr = 0;
+
+  ISR_EXIT();
+}
+/*}}}*/
+/*{{{ init_timer
+ * Everything needed to initialize an IRQ on the LPC2106.
+ * This particular ISR is to handle a timer alarm.
+ */
+void init_timer (void)
+{
+  VICIntSelect &= ~VIC_BIT(VIC_TIMER0);
+  VICIntEnable =  VIC_BIT(VIC_TIMER0);
+  VICVectCntl0 =  VIC_ENABLE | VIC_TIMER0;
+  VICVectAddr0 =  (uint32_t)timerISR;
+
+  T0TCR = TCR_RESET;
+  T0PR  = T0_PCLK_DIV - 1;
+  T0MR0 = 0;
+  T0MR1 = 0;
+  T0MR2 = 0;
+  T0CCR = 0;
+  T0EMR = 0;
+  T0TCR = TCR_ENABLE;
+}
+/*}}}*/
 
 WORD arm7tdmi_get_time(ECTX ectx)
 {
   return getSysTICs();
 }
 
+static void start_timer(unsigned int timeout)
+{
+  T0MCR = TMCR_MR0_I;
+  T0MR0 = timeout;
+}
+
+static void stop_timer(void)
+{
+  T0MCR = 0; /* Clear the match control register */
+}
+
+static void go_to_sleep(unsigned int timeout)
+{
+  unsigned short imask;
+
+  DISABLE_INTERRUPTS (imask);
+  
+  /* Only sleep if there are no pending interrupts */
+  if (!tvm_interrupt_pending ()) {
+    IOSET = LED;
+    start_timer(timeout);
+
+    /* Enter idle mode */
+    WB_CACHE_FLUSH;
+    PCON = PCON_IDL;
+    BARRIER;
+    /* Got woken up */
+
+    stop_timer();
+    IOCLR = LED;
+  }
+
+  ENABLE_INTERRUPTS (imask);
+}
+
+void sleep_for(WORD duration)
+{
+  unsigned int timeout = (unsigned int) getSysTICs() + duration;
+  go_to_sleep(timeout);
+}
+
 void sleep_until(WORD timeout)
 {
+  uart0Putch('X');
+  go_to_sleep(timeout);
 }
 
 void sleep(void)
 {
+  uart0Putch('*');
+  sleep_for(0xFFFFFFFF);
 }
