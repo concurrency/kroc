@@ -348,10 +348,6 @@ static void init_firmware_memory (void)
 	}
 }
 
-static void do_nothing(void)
-{
-}
-
 static void install_firmware_ctx (void)
 {
 	WORDPTR ws, vs, ms;
@@ -359,14 +355,12 @@ static void install_firmware_ctx (void)
 
 	/* Initialise firmware execution context */
 	tvm_ectx_init (&tvm, firmware);
-	tvm_ectx_reset(firmware);
 	firmware->get_time 		= arm7tdmi_get_time;
 	firmware->modify_sync_flags	= arm7tdmi_modify_sync_flags;
 	firmware->ext_chan_table	= ext_chans;
 	firmware->ext_chan_table_length	= ext_chans_length;
 	firmware->sffi_table		= firmware_sffi_table;
 	firmware->sffi_table_length	= firmware_sffi_table_length;
-	//firmware->set_alarm             = do_nothing;
 	/* Dynamic memory */
 	#ifdef TVM_USE_TLSF
 	firmware->mem_pool		= (void *) DMEM_START;
@@ -468,7 +462,6 @@ static void install_user_ctx (void)
 	ECTX user = &user_ctx;
 
 	tvm_ectx_init (&tvm, user);
-	tvm_ectx_reset(user);
 	user->get_time 			= arm7tdmi_get_time;
 	user->modify_sync_flags		= arm7tdmi_modify_sync_flags;
 	user->sffi_table		= user_sffi_table;
@@ -544,15 +537,8 @@ static void tvm_sleep (void)
 /*{{{  Interfacing */
 int tvm_interrupt_pending (void)
 {
-    debug_print_str("\r\n");
-    debug_print_str("F ");
-    debug_print_hex(firmware_ctx.sflags);
-    debug_print_str("\r\nU: ");
-    debug_print_hex(user_ctx.sflags);
-    debug_print_str("\r\n");
-
-    return ((firmware_ctx.sflags & ~SFLAG_TQ) | 
-	    (user_ctx.sflags & ~SFLAG_TQ));
+    return ((firmware_ctx.sflags & SFLAG_INTR) | 
+	    (user_ctx.sflags & SFLAG_INTR));
 }
 
 void raise_tvm_interrupt (WORD flag)
