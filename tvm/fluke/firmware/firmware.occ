@@ -26,8 +26,8 @@ PROC firmware ()
   -- Oooh... turns out we need to use multiples of two
   -- when placing channels... perhaps we're skipping over
   -- the mobile component of the previous ext_chan definition?
-  CHAN BYTE magic.timer:
-  PLACE magic.timer AT #2:
+  --CHAN BYTE magic.timer:
+  --PLACE magic.timer AT #2:
   
   PAR
     -- OUT from TVM to WORLD
@@ -37,19 +37,50 @@ PROC firmware ()
         out ? b
         uart0 ! b
 
+    WHILE TRUE
+      BYTE b:
+      SEQ
+        uart0 ? b
+        in ! b
+
+
     -- Magic timer loop
+    #IF FALSE
     WHILE TRUE
       BYTE s:
       SEQ
         magic.timer ? s
         magic.timer ! s
-  
+    #ENDIF    
+ 
+    #IF TRUE
+    INT timeout:
+    TIMER tim:
+    SEQ
+      tim ? timeout
+      WHILE FALSE
+        SEQ
+          timeout := timeout PLUS 1000000
+          tim ? AFTER timeout
+    #ENDIF
+
     INT last, counter:
+    INT timeout:
     TIMER tim:
     SEQ
       out.string ("## Firmware running...*n", 0, out!)
       tim ? last
+      tim ? timeout
       counter := 0
+      WHILE TRUE
+        SEQ
+          timeout := timeout PLUS 1000000
+          tim ? AFTER timeout
+          out.string("tick: ", 0, out!)
+          out.int(counter, 12, out!)
+          out.string("*c*n", 0, out!)
+          counter := counter + 1
+      #IF FALSE
       WHILE TRUE
         INT t:
         SEQ
@@ -64,6 +95,7 @@ PROC firmware ()
                 out.string("*c*n", 0, out!)
             TRUE
               RESCHEDULE()
+      #ENDIF        
 
 :
 

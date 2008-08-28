@@ -26,10 +26,7 @@
 // We are currently running with CCLK = 60MHz and PCLK = 60MHz. 
 // We want to divide that by 60 to get down to 1 clock tick 
 // per million CPU ticks, or a resolution of 1 usec.
-//
-// WARNING 
-// Dropped to '1' to try and accelerate a failure mode.
-#define T0_PCLK_DIV     1 
+#define T0_PCLK_DIV     60
 #define sysTICSperSEC   (PCLK / T0_PCLK_DIV)
 
 // 20080823 WARNING TVM

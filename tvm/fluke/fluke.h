@@ -46,6 +46,11 @@ enum {
 // Leaving it in is probably a good idea for now.
 #define TIMER_INT_MODE 1
 
+#define WB_CACHE_FLUSH { \
+  volatile int dummy_wb_cache_flush; \
+  dummy_wb_cache_flush = 0; \
+}
+
 /*{{{  Assembly Macros */
 #define BARRIER	__asm__ __volatile__ ("" : : : "memory")
 #if 0

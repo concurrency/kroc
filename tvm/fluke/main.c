@@ -103,8 +103,8 @@ static void sysInit(void)
   //  wdtInit();                        // initialize the watchdog timer
   //  initSysTime();                        // initialize the system timer
   
-  // Our uber timer interrupt code.
-  init_timerISR();
+  /* Set up timer, also wiring in an ISR to ack the match IRQ */
+  init_timer();
 
   uart0Init(UART_BAUD(HOST_BAUD), UART_8N1, UART_FIFO_8); // setup the UART
 }
@@ -151,7 +151,8 @@ static void powerInit()
 int main(void)
 {
   IODIR = LED;
-  IOSET = LED;
+  //IOSET = LED;
+  IOCLR = LED;
 
   powerInit();
   sysInit();
