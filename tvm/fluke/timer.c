@@ -149,8 +149,6 @@ ISR timerISR (void)
   // Enter and disable IRQs
   ISR_ENTRY();
     
-  uart0Putch('I');
-
   /* Ack the interrupt. */
   T0IR  = TIR_MR0I;
   VICVectAddr = 0;
@@ -204,7 +202,7 @@ static void go_to_sleep(unsigned int timeout)
   
   /* Only sleep if there are no pending interrupts */
   if (!tvm_interrupt_pending ()) {
-    IOSET = LED;
+    // IOSET = LED;
     start_timer(timeout);
 
     /* Enter idle mode */
@@ -214,7 +212,7 @@ static void go_to_sleep(unsigned int timeout)
     /* Got woken up */
 
     stop_timer();
-    IOCLR = LED;
+    // IOCLR = LED;
   }
 
   ENABLE_INTERRUPTS (imask);
@@ -228,12 +226,10 @@ void sleep_for(WORD duration)
 
 void sleep_until(WORD timeout)
 {
-  uart0Putch('X');
   go_to_sleep(timeout);
 }
 
 void sleep(void)
 {
-  uart0Putch('*');
   sleep_for(0xFFFFFFFF);
 }

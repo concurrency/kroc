@@ -5,19 +5,6 @@
 -- #INCLUDE "loader.occ"
 #INCLUDE "out.occ"
 
-VAL INT SECONDS IS 1000000:
-PROC delay (VAL INT delay)
-  TIMER tim:
-  INT now, then:
-  SEQ
-    tim ? now
-    then := now PLUS delay
-    WHILE (now AFTER then)
-      SEQ
-        tim ? now
-        RESCHEDULE()
-:
-
 PROC firmware ()
   CHAN BYTE uart0:
   PLACE uart0 AT #0:
@@ -43,59 +30,27 @@ PROC firmware ()
         uart0 ? b
         in ! b
 
-
-    -- Magic timer loop
-    #IF FALSE
-    WHILE TRUE
-      BYTE s:
-      SEQ
-        magic.timer ? s
-        magic.timer ! s
-    #ENDIF    
- 
-    #IF TRUE
-    INT timeout:
-    TIMER tim:
-    SEQ
-      tim ? timeout
-      WHILE FALSE
-        SEQ
-          timeout := timeout PLUS 1000000
-          tim ? AFTER timeout
-    #ENDIF
-
     INT last, counter:
     INT timeout:
     TIMER tim:
     SEQ
       out.string ("## Firmware running...*n", 0, out!)
       tim ? last
-      tim ? timeout
       counter := 0
       WHILE TRUE
         SEQ
-          timeout := timeout PLUS 1000000
+          tim ? timeout
+          timeout := timeout PLUS 8000000
           tim ? AFTER timeout
           out.string("tick: ", 0, out!)
           out.int(counter, 12, out!)
           out.string("*c*n", 0, out!)
           counter := counter + 1
-      #IF FALSE
-      WHILE TRUE
-        INT t:
-        SEQ
-          tim ? t
-          IF
-            (t MINUS last) >= (2 * SECONDS)
-              SEQ
-                last := t
-                counter := counter PLUS 1
-                out.string("tick: ", 0, out!)
-                out.int(counter, 12, out!)
-                out.string("*c*n", 0, out!)
-            TRUE
-              RESCHEDULE()
-      #ENDIF        
 
+          -- We currently use this to measure current consumption when
+          -- running and when idling
+          INITIAL INT c IS 250000:
+          WHILE (c > 0)
+            c := c - 1
 :
 

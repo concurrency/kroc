@@ -152,7 +152,6 @@ int main(void)
 {
   IODIR = LED;
   //IOSET = LED;
-  IOCLR = LED;
 
   powerInit();
   sysInit();
