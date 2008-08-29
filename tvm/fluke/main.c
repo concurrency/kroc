@@ -133,6 +133,25 @@ static void powerInit()
 
 /******************************************************************************
  *
+ * Function Name: pinInit()
+ *
+ * Description:
+ *    Sets up the direction of the io pins
+ *
+ * Calling Sequence: 
+ *    void
+ *
+ * Returns:
+ *    void
+ *
+ *****************************************************************************/
+static void pinInit()
+{
+  IODIR = LED;
+}
+
+/******************************************************************************
+ *
  * Function Name: main()
  *
  * Description:
@@ -150,18 +169,15 @@ static void powerInit()
  *****************************************************************************/
 int main(void)
 {
-  IODIR = LED;
-  //IOSET = LED;
-
   powerInit();
+  pinInit();
   sysInit();
 #if defined(UART0_TX_INT_MODE) || defined(UART0_RX_INT_MODE) || defined(TIMER_INT_MODE)
   enableIRQ();
 #endif
-  
-  uart0Puts("\r\nHello World!\r\n");
-  uart0Puts("(a WinARM Demo-Application based on code from R O Software)\r\n\r\n");
-  run_tvm();
-  return 0;
-  
+ 
+  debug_print_str(version_string);
+  debug_print_chr('\n');
+
+  return run_tvm();
 }
