@@ -64,7 +64,7 @@ enum {
 /*{{{ UARTs */
 int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer);
 int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer);
-/*{{{*/
+/*}}}*/
 
 /*{{{ Time and Sleep */
 WORD arm7tdmi_get_time(ECTX ectx);
@@ -85,3 +85,5 @@ void debug_print_str (const char *str);
 int run_tvm( void );
 
 #endif /* FLUKE_TVM_H */
+
+extern const char version_string[];
