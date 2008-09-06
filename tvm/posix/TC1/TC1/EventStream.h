@@ -24,7 +24,7 @@
 - (id)initFromStream:(NSArray *)stream;
 + (id)loadFromPath:(NSString *)path;
 - (CALayer *)getRootLayer;
-- (void)nextEvent;
+- (NSString *)nextEvent;
 - (void)dealloc;
 
 @end

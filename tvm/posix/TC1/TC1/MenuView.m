@@ -69,6 +69,30 @@
 	[self adjustView];
 }
 
+-(void)nextEvent
+{
+	if (eventStream) {
+		NSString *result = [eventStream nextEvent];
+		
+		if (result == nil)
+			return;
+		
+		@synchronized (self) {
+			running = false;
+		}
+		
+		NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+		
+		[alert addButtonWithTitle:@"OK"];
+		[alert setMessageText:@"Error"];
+		[alert setInformativeText:result];
+		
+		[alert setAlertStyle:NSCriticalAlertStyle];
+		
+		[alert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:) contextInfo:nil];		
+	}
+}
+
 -(void)open:(id)sender
 {
 	NSOpenPanel* openDlg = [NSOpenPanel openPanel];
@@ -104,15 +128,14 @@
 
 -(void)moveDown:(id)sender
 {
-	if (eventStream)
-		[eventStream nextEvent];
+	[self nextEvent];
 }
 
 -(void)advance
 {
 	@synchronized (self) {
-		if (running && eventStream) {
-			[eventStream nextEvent];
+		if (running) {
+			[self nextEvent];
 			[self performSelector:@selector(advance) withObject:nil afterDelay:pace];
 		}
 	}
@@ -121,7 +144,10 @@
 -(void)moveRight:(id)sender
 {
 	@synchronized (self) {
-		pace /= 2.0;
+		if (!running)
+			pace = 1.0;
+		else
+			pace /= 2.0;
 		if (pace <= 0.01)
 			pace = 0.01;
 		if (!running) {
@@ -134,7 +160,10 @@
 -(void)moveLeft:(id)sender
 {
 	@synchronized (self) {
-		pace *= 2.0;
+		if (!running)
+			pace = 1.0;
+		else
+			pace *= 2.0;
 		if (pace > 1.0)
 			pace = 1.0;
 		if (!running) {

@@ -1,0 +1,35 @@
+#OPTION "V"
+
+PROC id (CHAN INT in?, out!)
+  WHILE TRUE
+    INT n:
+    SEQ
+      in ? n
+      out ! n
+:
+
+PROC prefix (VAL INT n, CHAN INT in?, out!)
+  SEQ
+    out ! n
+    id (in?, out!)
+:
+
+PROC lossy.id (CHAN INT in?, out!)
+  WHILE TRUE
+    INT n:
+    SEQ
+      in ? n
+      SEQ i = 0 FOR 5
+        SEQ
+          out ! n
+          in ? n
+:
+
+PROC ring ()
+  CHAN INT c0, c1, c2, c3:
+  PAR
+    prefix (0, c3?, c0!)
+    id (c0?, c1!)
+    id (c1?, c2!)
+    lossy.id (c2?, c3!)
+:

@@ -9,6 +9,7 @@ my @SRCPATH = ( '.', split (/:/, $ENV{'SRCPATH'}) );
 my $next_id	= 1;
 my %id_map;
 my @id_cache;
+my $root;
 my %procs;
 
 my $next_cid	= 1;
@@ -40,13 +41,15 @@ while (my $line = <STDIN>) {
 			'op'		=> 'newp',
 			'target'	=> $id
 		});
+		$root		= $procs{$id}
+			if !$root;
 	} else {
 		$id		= $id_map{$wp_id};
 	}
 
 	my $proc = $procs{$id};
 
-	if ($proc && $proc->{'blocked_on'}) {
+	if ($proc && $proc->{'blocked_on'} && $cmd !~ /^error/) {
 		my $chan = $proc->{'blocked_on'};
 		push (@ops, {
 			'op'		=> 'unblocked',
@@ -158,18 +161,19 @@ while (my $line = <STDIN>) {
 			$proc = $procs{$id_map{$id_cache[$proc]}};
 			if ($proc->{'ws_bottom'} > $cp_id || $proc->{'ws_top'} < $cp_id) {
 				# Create a fake parent
-				my $id	 	= $next_id++;
-				$id_map{$cp_id}	= $id;
-				$proc		= { 
-					'id' 		=> $id, 
-					'ws_top' 	=> $cp_id + 4, # XXX: bad constant
-					'ws_bottom'	=> $cp_id
-				};
-				$procs{$id}	= $proc;
-				push (@ops, {
-					'op'		=> 'newp',
-					'target'	=> $id
-				});
+				#my $id	 	= $next_id++;
+				#$id_map{$cp_id}	= $id;
+				#$proc		= { 
+				#	'id' 		=> $id, 
+				#	'ws_top' 	=> $cp_id + 4, # XXX: bad constant
+				#	'ws_bottom'	=> $cp_id
+				#};
+				#$procs{$id}	= $proc;
+				#push (@ops, {
+				#	'op'		=> 'newp',
+				#	'target'	=> $id
+				#});
+				$proc = $root;
 			}
 			$chan = {
 				'id'		=> $cid,
@@ -217,7 +221,14 @@ while (my $line = <STDIN>) {
 	} elsif ($cmd =~ /^wait$/) {
 		push (@ops, {
 			'op'		=> 'wait',
-			'target'	=> $id,
+			'target'	=> $id
+		});
+	} elsif ($cmd =~ /^error (.*)$/) {
+		my $error = $1;
+		push (@ops, {
+			'op'		=> 'error',
+			'value'		=> $error,
+			'target'	=> $id
 		});
 	}
 }

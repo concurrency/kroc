@@ -87,7 +87,7 @@
 	return rootLayer;
 }
 
-- (void)nextEvent
+- (NSString *)nextEvent
 {	
 	if (idx >= [events count])
 		return;
@@ -168,9 +168,17 @@
 		[channel deleteChannel];
 	} else if ([op isEqualToString:@"wait"]) {
 		[process block];
+	} else if ([op isEqualToString:@"error"]) {
+		NSString *value = [event objectForKey:@"value"];
+		if ([value isEqualToString:@"e"]) {
+			return @"Deadlock detected.";
+		} else {
+			return value;
+		}
 	}
 	
 	idx++;
+	return nil;
 }
 
 - (void)dealloc
