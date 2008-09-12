@@ -70,8 +70,13 @@ static void clear_pending_interrupts (void)
 	user_ctx.sflags		&= ~(TVM_INTR_SFLAGS);
 
 	ENABLE_INTERRUPTS (imask);
-#if 0
+
 	/* Terminate each TVM interrupt here... */
+	if (flags & TVM_INTR_UART0_RX)
+	{
+	    complete_uart0_rx_interrupt (&firmware_ctx);
+	}
+#if 0
 	if (flags & TVM_INTR_MAGIC_TIMER)
 	{
 		complete_magic_timer_interrupt(&firmware_ctx);
@@ -85,25 +90,17 @@ static void clear_pending_interrupts (void)
  */
 static WORD run_output (WORD count, BYTEPTR *pptr)
 {
+    /* FIXME: This needs to go in favour of the code in fluke_uart.c */
 	BYTEPTR ptr = *pptr;
 	
 	while (count > 0) {
 		unsigned char c = read_byte(ptr);
 		ptr = byteptr_plus(ptr, 1);
-		uart0Putch(c);
+		uart0_send_char(c);
 		count--;
 	}
 
 	return count;
-}
-/*}}}*/
-
-/*{{{ uart0_in 
- * Does nothing.
- */
-int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer)
-{
-		return ectx->run_next_on_queue (ectx);
 }
 /*}}}*/
 
@@ -389,10 +386,10 @@ static int run_firmware (void)
 		if (ret == ECTX_SLEEP) {
 			return ret; /* OK - timer sleep */
 		} else if (ret == ECTX_EMPTY) {
-		    return ret; /* FIXME TEMPORARY FOR TESTING!!!!! NO REALLY */
-#if 0		
 			if (uart0_is_blocking ()) {
 				return ret; /* OK - waiting for input */
+			} else
+#if 0		
 			} else if (ppi_dma_is_blocking ()) {
 				return ret; /* OK - waiting for imagery */
 			} else if (twi_is_blocking ()) {
@@ -537,6 +534,10 @@ static void tvm_sleep (void)
 /*{{{  Interfacing */
 int tvm_interrupt_pending (void)
 {
+    debug_print_str("sflags:");
+    debug_print_hex(firmware_ctx.sflags);
+    debug_print_str("\r\n");
+
     return ((firmware_ctx.sflags & SFLAG_INTR) | 
 	    (user_ctx.sflags & SFLAG_INTR));
 }

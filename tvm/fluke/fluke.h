@@ -39,6 +39,7 @@ enum {
    TVM_INTR_UART0_RX     | \
    TVM_INTR_UART0_TX     | \
    TVM_INTR_MAGIC_TIMER)
+void raise_tvm_interrupt (WORD flag);
 /*}}}*/
 
 // This conditionally enables IRQs at the 
@@ -62,11 +63,16 @@ enum {
 /*}}}*/
 
 /*{{{ UARTs */
+void init_uart0 (uint16_t baud, uint8_t mode, uint8_t fmode);
 int uart0_in (ECTX ectx, WORD count, BYTEPTR pointer);
 int uart0_out (ECTX ectx, WORD count, BYTEPTR pointer);
+void complete_uart0_rx_interrupt (ECTX ectx);
+int uart0_is_blocking (void);
+void uart0_send_char (const unsigned char ch);
 /*}}}*/
 
 /*{{{ Time and Sleep */
+void init_timer (void);
 WORD arm7tdmi_get_time(ECTX ectx);
 void sleep_until(WORD timeout);
 void sleep(void);

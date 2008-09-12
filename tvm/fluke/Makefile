@@ -19,7 +19,43 @@
 NATIVEGCC = gcc
 SKROC     = skroc
 PORT      = /dev/tty.usbserial
-BAUDRATE  = 38400
+
+TARGET_LIST = FLUKE OLIMEX
+
+# Compiler settings
+FLUKE_HOST_BAUD         = 38400
+FLUKE_FOSC              = 20000000
+FLUKE_PLL_MUL           = 3
+FLUKE_PBSD              = 1
+# Build settings
+FLUKE_LPC21ISP          = tools/lpc21isp-ipre
+FLUKE_LPC21ISP_BAUD     = 19200
+FLUKE_LPC21ISP_XTAL     = 20000
+FLUKE_LPC21ISP_CONTROL  = -control
+FLUKE_MINITERM_ARGS     = --dtr=0
+
+# Compiler settings
+OLIMEX_HOST_BAUD        = 38400
+OLIMEX_FOSC             = 14745600
+OLIMEX_PLL_MUL          = 4
+OLIMEX_PBSD             = 1
+# Build settings
+OLIMEX_LPC21ISP         = tools/lpc21isp
+OLIMEX_LPC21ISP_BAUD    = 19200
+OLIMEX_LPC21ISP_XTAL    = 14746
+OLIMEX_LPC21ISP_CONTROL = -control
+OLIMEX_MINITERM_ARGS    = 
+
+BOARD_TARGET = \
+ $(strip $(shell sed -n -e \
+ "s/\/\* Configuration for target: *\([a-zA-Z0-9]*\) *\*/\1/p" \
+ config_target.h))
+LPC21ISP         = $($(BOARD_TARGET)_LPC21ISP)
+LPC21ISP_BAUD    = $($(BOARD_TARGET)_LPC21ISP_BAUD)
+LPC21ISP_XTAL    = $($(BOARD_TARGET)_LPC21ISP_XTAL)
+LPC21ISP_CONTROL = $($(BOARD_TARGET)_LPC21ISP_CONTROL)
+MINITERM_ARGS    = $($(BOARD_TARGET)_MINITERM_ARGS)
+HOST_BAUD        = $($(BOARD_TARGET)_HOST_BAUD)
 
 # MCU name and submodel
 MCU = arm7tdmi
@@ -43,7 +79,7 @@ TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c
-SRC += sysTime.c uart.c uartISR.c armVIC.c fluke.c debug.c timer.c version.c
+SRC += sysTime.c fluke_uart.c armVIC.c fluke.c debug.c timer.c version.c
 
 # List Assembler source files here.
 # Make them always end in a capital .S.  Files ending in a lowercase .s
@@ -160,16 +196,19 @@ endif
 # Flash-Programming support using lpc21isp by Martin Maurer 
 
 # Settings and variables:
-LPC21ISP = lpc21isp
-LPC21ISP_PORT = com1
-LPC21ISP_BAUD = 115200
-LPC21ISP_XTAL = 14746
+# LPC21ISP = lpc21isp
+# LPC21ISP_PORT = com1
+LPC21ISP_PORT = $(PORT)
+#LPC21ISP_BAUD = 115200
+LPC21ISP_BAUD = $(HOST_BAUD)
+# LPC21ISP_XTAL = 14746
 LPC21ISP_FLASHFILE = $(TARGET).hex
 # verbose output:
 ## LPC21ISP_DEBUG = -debug
 # enter bootloader via RS232 DTR/RTS (only if hardware supports this
 # feature - see Philips AppNote):
 ## LPC21ISP_CONTROL = -control
+#LPC21ISP_CONTROL = -control
 
 
 # ---------------------------------------------------------------------------
@@ -235,6 +274,41 @@ all: begin gccversion sizebefore build sizeafter finished end
 
 build: elf hex lss sym
 
+.PHONY: config
+config: create-config
+
+ifneq (config,$(findstring config,$(MAKEFLAGS)))
+ ifndef target
+	 $(error  Please define a target, ie 'make config target=<target>')
+ endif
+ ifneq ($(target),$(findstring $(target),$(TARGET_LIST)))
+	 $(error Target must be one of: $(TARGET_LIST))
+ endif
+endif
+
+.PHONY: create-config
+create-config: TARGET=$(target)
+create-config: HOST_BAUD=$($(TARGET)_HOST_BAUD)
+create-config: FOSC=$($(TARGET)_FOSC)
+create-config: PLL_MUL=$($(TARGET)_PLL_MUL)
+create-config: PBSD=$($(TARGET)_PBSD)
+create-config:
+	@echo "Creating config for the $(TARGET)"
+	@echo "/* Configuration for target: $(TARGET)    * " > config_target.h
+	@echo " * Created automagically by the makefile, * " >>config_target.h
+	@echo " * run 'make config-_____' to recreate */" >>config_target.h
+	@echo "/* Baud of UART0                 */         " >>config_target.h
+	@echo "#define HOST_BAUD  ($(HOST_BAUD))           " >>config_target.h
+	@echo "/* Master Oscillator Freq.       */         " >>config_target.h
+	@echo "#define FOSC       ($(FOSC))                " >>config_target.h
+	@echo "/* PLL Multiplier                */         " >>config_target.h
+	@echo "#define PLL_MUL    ($(PLL_MUL))             " >>config_target.h
+	@echo "/* Pheripheral Bus Speed Divider */         " >>config_target.h
+	@echo "#define PBSD       ($(PBSD))                " >>config_target.h
+
+config_target.h:
+	$(error run 'make config target=<T>', where T is in [$TARGET_LIST])
+
 elf: $(TARGET).elf
 hex: $(TARGET).hex
 lss: $(TARGET).lss 
@@ -269,10 +343,37 @@ gccversion :
 
 
 # Program the device.  
-program: $(TARGET).hex
+.PHONY: program
+program: $(TARGET).hex $(LPC21ISP)
 	@echo
 	@echo $(MSG_LPC21_RESETREMINDER)
 	$(LPC21ISP) $(LPC21ISP_CONTROL) $(LPC21ISP_DEBUG) $(LPC21ISP_FLASHFILE) $(LPC21ISP_PORT) $(LPC21ISP_BAUD) $(LPC21ISP_XTAL)
+
+last-program: $(TARGET).hex $(LPC21ISP)
+	@echo
+	@echo $(MSG_LPC21_RESETREMINDER)
+	$(LPC21ISP) $(LPC21ISP_CONTROL) $(LPC21ISP_DEBUG) $(LPC21ISP_FLASHFILE) $(LPC21ISP_PORT) $(LPC21ISP_BAUD) $(LPC21ISP_XTAL) && touch last-program
+
+# run, reset, and reset-term interact with the 
+# python tool for interacting with the Fluke.
+.PHONY: run
+run: last-program reset
+.PHONY: run-term
+run-term: last-program reset-term
+.PHONY: run-iterm
+run-iterm: last-program reset-iterm
+
+.PHONY: reset
+reset: tools/serial_control.py
+	  ./tools/serial_control.py --reset $(HOST_BAUD) $(PORT)
+
+.PHONY: reset-term
+reset-term: tools/serial_control.py
+	  ./tools/serial_control.py --reset --term $(HOST_BAUD) $(PORT)
+
+.PHONY: reset-iterm
+reset-iterm: tools/miniterm.py
+	  ./tools/miniterm.py $(MINITERM_ARGS) $(PORT) $(HOST_BAUD) 
 
 
 # Create final output files (.hex, .eep) from ELF output file.
@@ -355,29 +456,20 @@ libtvm/libtvm.a: libtvm.sh
 	CC=$(CC) CFLAGS=-nostdlib ./libtvm.sh
 	$(RANLIB) libtvm/libtvm.a
 
-# Download code to the Fluke board using lpc21isp
-download: tools/lpc21isp main.hex
-	./tools/lpc21isp -control main.hex $(PORT) 19200 20000
-
-# run, reset, and reset-term interact with the 
-# python tool for interacting with the Fluke.
-run: download reset
-	run-term: download reset-term
-
-reset: tools/serial_control.py
-	  ./tools/serial_control.py --reset $(BAUDRATE) $(PORT)
-
-reset-term: tools/serial_control.py
-	  ./tools/serial_control.py --reset --term $(BAUDRATE) $(PORT)
-
 # These are generated by other rules.
 distclean: clean
 	rm -rf libtvm
 	rm -f tools/lpc21isp
+	rm -f tools/lpc21isp
+	rm -f config_target.h
+	rm -f last_program
 
 # Build the isp tool if needed
-tools/lpc21isp: tools/lpc21isp-ipre.c
-	  $(NATIVEGCC) -o tools/lpc21isp tools/lpc21isp-ipre.c
+tools/lpc21isp-ipre: tools/lpc21isp-ipre.c
+	  $(NATIVEGCC) -o $@ $^
+
+tools/lpc21isp: tools/lpc21isp.c
+	  $(NATIVEGCC) -o $@ $^
 
 # Dependencies for the TVM
 main.elf: libtvm/libtvm.a

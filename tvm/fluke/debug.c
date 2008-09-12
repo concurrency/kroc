@@ -4,7 +4,7 @@ static const unsigned char digits[] = "0123456789abcdef";
 
 void debug_print_chr (const unsigned char c)
 { 
-  uart0Putch(c);
+  uart0_send_char(c);
 }
 
 void debug_print_hex (unsigned int val)
