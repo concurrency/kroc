@@ -5,10 +5,13 @@
 -- #INCLUDE "loader.occ"
 #INCLUDE "out.occ"
 
+VAL INT SECONDS IS 1000000:
+
 PROC firmware ()
   CHAN BYTE uart0:
   PLACE uart0 AT #0:
   CHAN BYTE in, out:
+  CHAN BYTE mout1, mout2:
 
   -- Oooh... turns out we need to use multiples of two
   -- when placing channels... perhaps we're skipping over
@@ -30,27 +33,44 @@ PROC firmware ()
         uart0 ? b
         in ! b
 
+    WHILE TRUE
+      BYTE ch:
+      ALT
+        mout1 ? ch
+          out ! ch
+        mout2 ? ch
+          out ! ch
+
+    SEQ
+      out.string("## From loopback proc...*n", 0, mout2!)
+      BYTE ch:
+      WHILE FALSE
+        SEQ
+          in ? ch
+          mout2 ! (ch + 1)
+
     INT last, counter:
     INT timeout:
     TIMER tim:
     SEQ
-      out.string ("## Firmware running...*n", 0, out!)
+      out.string ("## Firmware running...*n", 0, mout1!)
       tim ? last
       counter := 0
       WHILE TRUE
         SEQ
           tim ? timeout
-          timeout := timeout PLUS 8000000
+          --timeout := timeout PLUS 8000000
+          timeout := timeout PLUS (1 * SECONDS)
           tim ? AFTER timeout
-          out.string("tick: ", 0, out!)
-          out.int(counter, 12, out!)
-          out.string("*c*n", 0, out!)
+          out.string("tick: ", 0, mout1!)
+          out.int(counter, 12, mout1!)
+          out.string("*c*n", 0, mout1!)
           counter := counter + 1
 
           -- We currently use this to measure current consumption when
           -- running and when idling
-          INITIAL INT c IS 250000:
-          WHILE (c > 0)
-            c := c - 1
+          --INITIAL INT c IS 250000:
+          --WHILE (c > 0)
+          --  c := c - 1
 :
 

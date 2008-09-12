@@ -105,8 +105,6 @@ static void sysInit(void)
   
   /* Set up timer, also wiring in an ISR to ack the match IRQ */
   init_timer();
-
-  uart0Init(UART_BAUD(HOST_BAUD), UART_8N1, UART_FIFO_8); // setup the UART
 }
 
 /******************************************************************************
@@ -123,7 +121,7 @@ static void sysInit(void)
  *    void
  *
  *****************************************************************************/
-static void powerInit()
+static void powerInit(void)
 {
   /* Turn off the listed devices (everything is on by default) */
   PCONP &= ~(PCONP_PCTIM1 | PCONP_PCPWM0 | 
@@ -145,7 +143,7 @@ static void powerInit()
  *    void
  *
  *****************************************************************************/
-static void pinInit()
+static void pinInit(void)
 {
   IODIR = LED;
 }
@@ -172,9 +170,12 @@ int main(void)
   powerInit();
   pinInit();
   sysInit();
-#if defined(UART0_TX_INT_MODE) || defined(UART0_RX_INT_MODE) || defined(TIMER_INT_MODE)
+
+  init_uart0(UART_BAUD(HOST_BAUD), UART_8N1, UART_FIFO_1); /* setup the UART0 */
+
+/* #if defined(UART0_TX_INT_MODE) || defined(UART0_RX_INT_MODE) || defined(TIMER_INT_MODE)*/
   enableIRQ();
-#endif
+/* #endif */
  
   debug_print_str(version_string);
   debug_print_chr('\n');

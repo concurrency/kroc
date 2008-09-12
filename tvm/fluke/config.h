@@ -34,17 +34,19 @@ extern void reset(void);
 extern void abort(void);
 // maybe add interrupt vector addresses
 
-#define HOST_BAUD           (38400)
 
 #define WDOG()
 
+/* The commented out values below are now defined in the following file */
+#include "config_target.h"
+// #define HOST_BAUD           (38400)
 // PLL setup values are computed within the LPC include file
 // It relies upon the following defines
-#define FOSC                (20000000)      // Master Oscillator Freq.
-#define PLL_MUL             (3)             // PLL Multiplier
+// #define FOSC                (20000000)      // Master Oscillator Freq.
+// #define PLL_MUL             (3)             // PLL Multiplier
 
 // Pheripheral Bus Speed Divider
-#define PBSD                1               // MUST BE 1, 2, or 4
+// #define PBSD                1               // MUST BE 1, 2, or 4
 #define PCLK                (CCLK / PBSD)   // Pheripheal Bus Clock Freq.
 
 // Do some value range testing
