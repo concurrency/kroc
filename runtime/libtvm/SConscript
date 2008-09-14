@@ -1,0 +1,3 @@
+tvm_sources = Glob("*.c")
+
+Library("tvm", tvm_sources)
