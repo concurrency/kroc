@@ -1,0 +1,26 @@
+# Import the global environment
+Import('env')
+
+# Create a local configuration context; we will
+# close it before the end of this script.
+conf = env.Configure(config_h = 'config.h', help = False)
+
+# Check for the headers that we need. These automagically
+# get written to the file "config.h", as specified in the 
+# Configure() call.
+conf.CheckCHeader('stdlib.h')
+conf.CheckCHeader('string.h')
+conf.CheckCHeader('stdarg.h')
+
+# Finish the configuration section.
+env = conf.Finish()
+
+# Append the appropriate CCFLAGS for compiling 
+# mkoccdeps; in particular, make known that we have
+# a "config.h" file.
+env.Append(CCFLAGS = '-DHAVE_CONFIG_H')
+
+# There are only two sources. We will
+# glob them to be lazy.
+mkoccdeps = env.Program('mkoccdeps', Glob('*.c'))
+
