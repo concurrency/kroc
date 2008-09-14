@@ -1,1 +1,13 @@
 .sconsign.dblite
+*.o
+.*.sw?
+.sconf_temp
+
+# Dangerous, but we'll do it.
+config.h
+config.log
+
+# Built targets
+tools/mkoccdeps/mkoccdeps
+tools/ilibr/ilibr
+tools/ilibr/tcofflib/libtcoff.a
