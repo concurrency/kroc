@@ -7,9 +7,15 @@
 # Dangerous, but we'll do it.
 config.h
 config.log
+defaults.scm
 
 # Built targets
 tools/mkoccdeps/mkoccdeps
 tools/ilibr/ilibr
 tools/ilibr/tcofflib/libtcoff.a
 tools/schemescanner/schemescanner
+tools/skroc/skroc
+tools/slinker/make-driver
+tools/tinyswig/tinyswig
+tools/slinker/library2.ss
+tools/slinker/slinker.ss

@@ -1,0 +1,11 @@
+import scheme_utils, build_utils
+
+Import('env')
+
+build_utils.ATsubstituteAT("defaults.scm", 
+    dict(skroc_default_libs = '/dev/null', 
+    prefix = '/home/foo'))
+
+scheme_utils.BuildSchemeApp(env, 'skroc', 'ss') 
+
+env['skroc'] = 'tools/skroc/skroc' 

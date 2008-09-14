@@ -13,6 +13,8 @@ SConscript('tools/ilibr/SConscript')
 
 SConscript('tools/schemescanner/SConscript')
 SConscript('tools/tinyswig/SConscript')
+SConscript('tools/skroc/SConscript')
+SConscript('tools/slinker/SConscript')
 
 # A bit tedious, and not needed right now.
 # SConscript('tools/occamdoc/SConscript')

@@ -1,5 +1,6 @@
 import scheme_utils
 
 Import("env")
-env['schemescanner'] = scheme_utils.BuildSchemeApp(env, "schemescanner")
+scheme_utils.BuildSchemeApp(env, "schemescanner")
 
+env['schemescanner'] = 'tools/schemescanner/schemescanner'
