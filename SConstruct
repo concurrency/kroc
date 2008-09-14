@@ -1,4 +1,5 @@
 import os
+import scheme_utils
 
 # Create a global environment
 env  = Environment(ENV = {'PATH' : os.environ['PATH']})
