@@ -5,6 +5,11 @@ Import("env")
 
 local = env.Clone()
 
+# This variable will get used throughout 
+# the rest of the script. Sets the compiler
+# used for building Scheme executables.
+mzcompiler = "mzc"
+
 def CheckForExecutable(context, exe):
   # Using 0 and 1 for the result let SCons correctly
   # print "yes" and "no" in the output to the user.
@@ -23,11 +28,6 @@ def CheckForExecutable(context, exe):
 # Adding our custom checker for the mzc executable.
 conf  = local.Configure(custom_tests = {"CheckForExecutable" : CheckForExecutable })
 
-mzcompiler = "mzc"
-if not conf.CheckForExecutable(mzcompiler):
-  print "%s cannot be found!" % mzscompiler
-  Exit(1)
-
 # This builder just does a syscall to invoke the 
 # MzC compiler on a single Scheme file.
 def build (target, source, env):
@@ -37,6 +37,12 @@ def build (target, source, env):
     SRC = source[0].rstr())
   os.system(cmdstring)
 
-local.Command("schemescanner", "schemescanner.scm", build)
+# If the compiler is found, build the Scheme executable.
+# Otherwise, bail with an error for the user.
+if conf.CheckForExecutable(mzcompiler):
+  local.Command("schemescanner", "schemescanner.scm", build)
+else:
+  print "%s cannot be found!" % mzscompiler
+  Exit(1)
 
 local = conf.Finish()
