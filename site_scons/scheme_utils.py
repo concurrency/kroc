@@ -1,24 +1,16 @@
 import os, string
 from SCons.Builder import Builder
 
+# This ia custom builder we can hang off of 
+# an Environment(). Usage might look like:
 #
-# mzc_build
+# local = env.Clone(BUILDERS = {"MZC" : scheme_utils.mzc})
 # 
-# Usage is along the lines of:
-# local.Command("schemescanner", "schemescanner.scm", mzc_build)
+# and then
 #
-# This is probably only used in the context of a Command() 
-# build action.
+# local.MZC("schemescanner", "schemescanner.scm") 
 #
-# This builder just does a syscall to invoke the 
-# MzC compiler on a single Scheme file.a
-def mzc_build (target, source, env):
-  cmd = string.Template("mzc --exe $TGT $SRC")
-  cmdstring = cmd.substitute(
-        TGT = target[0].rstr(),
-        SRC = source[0].rstr())
-  os.system(cmdstring)
-
 mzc = Builder(action = ['mzc --exe \"$TARGET\" \"$SOURCE\"'],
-              src_suffix = ".scm")
+              src_suffix = ".scm",
+              single_source = True)
 
