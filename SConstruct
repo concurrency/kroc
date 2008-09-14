@@ -10,7 +10,9 @@ Export('env')
 # Build mkoccdeps
 SConscript('tools/mkoccdeps/SConscript')
 SConscript('tools/ilibr/SConscript')
+
 SConscript('tools/schemescanner/SConscript')
+SConscript('tools/tinyswig/SConscript')
 
 # A bit tedious, and not needed right now.
 # SConscript('tools/occamdoc/SConscript')

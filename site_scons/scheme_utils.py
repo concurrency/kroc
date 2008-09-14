@@ -1,6 +1,13 @@
-import re, os, string
+import re, os, string, popen2, select
+import build_utils
 from SCons.Builder import Builder
 from SCons.Scanner import Scanner
+
+def exe (command):
+  child = os.popen(command)
+  data = child.read()
+  err = child.close()
+  return data
 
 def schemefile_scan(node, env, path):
   results = []
@@ -15,9 +22,14 @@ def schemefile_scan(node, env, path):
   #  print "NOT SCANNING SCHEMESCANNER"
 
   if not reg.match(str(node)):
-    cmd = '%s %s' % (env['schemescanner'] + env['EXESUFFIX'], str(node))
-    # print "CMD ", cmd
-    stringresults = nbcmd.exe(cmd)
+    # WARNING
+    # 'EXESUFFIX', as it stands, needs to be set so that we get the 
+    # right, platform-specific extension for "schemescanner". eg. ".exe"
+    # on Windows.
+    # cmd = '%s %s' % (env['schemescanner'] + env.get('EXESUFFIX', ""), str(node))
+    cmd = '%s %s' % (env['schemescanner'], str(node))
+
+    stringresults = exe(cmd)
     # print "RESULTS ", results
   results_split = re.split(' ', stringresults)
   for i in results_split:
@@ -42,5 +54,20 @@ mzc = Builder(action = ['mzc --exe \"$TARGET\" \"$SOURCE\"'],
               src_suffix = ".scm",
               single_source = True,
               source_scanner = SchemeScanner)
-              
+
+def BuildSchemeApp(env, app, ext = "scm"):
+  local = env.Clone(BUILDERS = {"MZC" : mzc})
+
+  # Adding our custom checker for the an executable.
+  conf  = local.Configure(custom_tests = {"CheckForExecutable" : build_utils.CheckForExecutable })
+
+  # If the compiler is found, build the Scheme executable.
+  # Otherwise, bail with an error for the user.
+  if not conf.CheckForExecutable(local, "mzc"):
+    print "mzc cannot be found!" 
+    Exit(1)
+
+  local = conf.Finish()
+
+  return local.MZC(app, "%s.%s" % (app, ext))
 
