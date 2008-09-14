@@ -11,3 +11,4 @@ config.log
 tools/mkoccdeps/mkoccdeps
 tools/ilibr/ilibr
 tools/ilibr/tcofflib/libtcoff.a
+tools/schemescanner/schemescanner

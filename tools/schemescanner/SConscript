@@ -5,13 +5,13 @@ Import("env")
 
 local = env.Clone()
 
-def CheckForMzScheme(context):
+def CheckForExecutable(context, exe):
   # Using 0 and 1 for the result let SCons correctly
   # print "yes" and "no" in the output to the user.
   result = 0
-  context.Message("Checking for MzScheme... ")
+  context.Message("Checking for %s... " % exe)
   for dir in local["ENV"]["PATH"].split(":"):
-    if os.access(os.path.join(dir, "mzscheme"), os.X_OK):
+    if os.access(os.path.join(dir, exe), os.X_OK):
       result = 1
       break
 
@@ -20,18 +20,21 @@ def CheckForMzScheme(context):
   context.Result(result)
   return result
 
-# Adding our custom checker for the MzScheme executable.
-conf  = local.Configure(custom_tests = {"CheckForMzScheme" : CheckForMzScheme })
+# Adding our custom checker for the mzc executable.
+conf  = local.Configure(custom_tests = {"CheckForExecutable" : CheckForExecutable })
 
-if not conf.CheckForMzScheme():
-  print "MzScheme cannot be found!"
+mzcompiler = "mzc"
+if not conf.CheckForExecutable(mzcompiler):
+  print "%s cannot be found!" % mzscompiler
   Exit(1)
 
 # This builder just does a syscall to invoke the 
 # MzC compiler on a single Scheme file.
 def build (target, source, env):
-  cmd = Template("mzc --exe $TGT $SRC")
-  cmdstring = cmd.substitute(TGT = target[0].rstr(), SRC = source[0].rstr())
+  cmd = Template("$MZC --exe $TGT $SRC")
+  cmdstring = cmd.substitute(MZC = mzcompiler,
+    TGT = target[0].rstr(), 
+    SRC = source[0].rstr())
   os.system(cmdstring)
 
 local.Command("schemescanner", "schemescanner.scm", build)
