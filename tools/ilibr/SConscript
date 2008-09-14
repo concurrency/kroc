@@ -1,0 +1,36 @@
+# Import the global localironment
+Import("env")
+
+# Clone the environment so we don"t make it 
+# all dirty. ("Dirty, dirty.")
+local = env.Clone()
+
+# Create a local configuration context; we will
+# close it before the end of this script.
+conf = local.Configure(config_h = "config.h", help = False)
+
+conf.Define("TARGET_OS_IS_UNIX", 1, "Set if compiling ilibr & tcofflib under a UNIX.")
+conf.Define("COMPILER_IS_GCC", 1, "Set if compiling ilibr & tcofflib with GCC.")
+
+# tcofflib wants "stdlib.h"
+conf.CheckCHeader("stdlib.h")
+
+# Finish the configuration section.
+local = conf.Finish()
+
+# Append the appropriate CCFLAGS for compiling 
+# mkoccdeps; in particular, make known that we have
+# a "config.h" file.
+local.Append(CCFLAGS = "-DHAVE_CONFIG_H")
+
+tcofflib = local.Library("tcofflib/tcoff", 
+    Glob("tcofflib/*.c"),
+    CPPPATH = ".")
+
+# There are only two sources. We will
+# glob them to be lazy.
+ilibr = local.Program("ilibr", Glob("*.c"), 
+    LIBS     = [tcofflib],
+    LIBPATH  = "tcofflib",
+    CPPPATH  = "tcofflib")
+
