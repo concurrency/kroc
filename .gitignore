@@ -19,3 +19,11 @@ tools/slinker/make-driver
 tools/tinyswig/tinyswig
 tools/slinker/library2.ss
 tools/slinker/slinker.ss
+tools/occ21/arglib/libarglib.a
+tools/occ21/be/libbe.a
+tools/occ21/extlib/libextlib.a
+tools/occ21/fnilib/libfnilib.a
+tools/occ21/maplib/libmaplib.a
+tools/occ21/occ21
+tools/occ21/suplib/libsuplib.a
+tools/occ21/tcofflib/libtcofflib.a
