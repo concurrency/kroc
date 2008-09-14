@@ -1,0 +1,89 @@
+
+# Import the global localironment
+Import("env")
+
+# Clone the environment so we don"t make it 
+# all dirty. ("Dirty, dirty.")
+local = env.Clone()
+
+# Create a local configuration context; we will
+# close it before the end of this script.
+conf = local.Configure(config_h = "config.h", help = False)
+
+conf.Define("TARGET_OS_IS_UNIX", 1, "Set if compiling ilibr & tcofflib under a UNIX.")
+conf.Define("COMPILER_IS_GCC", 1, "Set if compiling ilibr & tcofflib with GCC.")
+conf.Define("TARGET_CPU_IS_I386", 1, "Set if compiling for an x86 platform.")
+conf.Define("OC", 1, "Unconditional")
+conf.Define("OCCAM2_5", 1, "Unconditional")
+conf.Define("TARGET_CANONICAL", '"i386"', "Target CPU")
+# TARGET_IS_BIGENDIAN
+# TARGET_ACCESSALIGNED
+conf.Define("CODE_GEN_KROC_ASM", 1, "Define to target KROC ETC.")
+conf.Define("USER_DEFINED_OPERATORS", 1, "To enable user-defined operators.")
+conf.Define("MOBILES", 1, "Default enabled.")
+#conf.Define("DEBUG", 0, "Default disabled.")
+#conf.Define("DEBUG_NEXTSYMB", 0, "Default disabled.")
+conf.Define("PROCESS_PRIORITY", 1, "Default enabled.")
+conf.Define("CAN_USE_INLINE", 1, "Depends on compiler... GCC OK?")
+#conf.Define("BACKENDTRACE", 0, "Default disabled.")
+conf.Define("INITIAL_DECL", 1, "Default enabled.")
+conf.Define("VERSION", '"1.4.0"', "This has not changed for 10 years... why start now?")
+
+conf.CheckTypeSize("signed int")
+
+# tcofflib wants "stdlib.h"
+conf.CheckCHeader("stdlib.h")
+conf.CheckCHeader("stdarg.h")
+conf.CheckCHeader("malloc.h")
+
+# Finish the configuration section.
+local = conf.Finish()
+
+# Append the appropriate CCFLAGS for compiling 
+# mkoccdeps; in particular, make known that we have
+# a "config.h" file.
+local.Append(CCFLAGS = "-DHAVE_CONFIG_H")
+
+# Adam discovered some time ago that there is a bad 
+# set of dependencies burried in here. So, we'll build
+# in that order, too. I wouldn't go changing these stages
+# unless you know what you're doing.
+stage01 = local.Object(['fe/vti1.c', 'fe/vti2.c', 'fe/vti3.c', 'fe/vti4.c', 'fe/vti5.c',
+    'fe/err1.c', 'fe/err2.c', 'fe/list.c', 'fe/const1.c', 'fe/strpool.c',
+    'fe/objlib.c', 'misc/txlib.c', 'fe/occamfe.c', 'fe/lex1.c', 'fe/syn1.c', 
+    'fe/syn2.c', 'fe/syn3.c', 'fe/chk1.c', 'fe/chk2.c', 'fe/chk4.c',
+    'fe/use1.c', 'fe/use2.c', 'fe/use3.c', 'fe/use4.c', 'fe/objrdr.c',
+    'fe/objtrans.c', 'misc/occompfe.c', 'misc/inst.c', 'misc/tran1.c',
+    'misc/tran2.c', 'misc/tran3.c', 'misc/mobiles.c'], CPPPATH = ['.',
+        'include'])
+
+stage02 = local.Library('be/be', Glob("be/*.c"), CPPPATH = ['.', 'include',
+    'be'])
+
+stage03 = local.Object('version.c', CPPPATH = ['.', 'include'])
+
+stage04 = ['misc/harness.c']
+
+stage05 = local.Library('arglib/arglib', Glob('arglib/*.c'), CPPPATH = ['.', 'include', 'arglib'])
+stage06 = local.Library('extlib/extlib', Glob('extlib/*.c'), CPPPATH = ['.',
+    'include', 'extlib'])
+stage07 = local.Library('fnilib/fnilib', Glob('fnilib/*.c'), CPPPATH = ['.',
+    'include', 'fnilib'])
+stage08 = local.Library('maplib/maplib', Glob('maplib/*.c'), CPPPATH = ['.',
+    'include', 'maplib'])
+stage09 = local.Library('suplib/suplib', Glob('suplib/*.c'), CPPPATH = ['.',
+    'include', 'suplib'])
+stage10 = local.Library('tcofflib/tcofflib', Glob('tcofflib/*.c'),
+    CPPPATH = ['.', 'include', 'tcofflib']) 
+
+# Feed the object files and libraries to the builder in the order
+# they are defined in. 
+occ21 = local.Program(target = "occ21",  
+        source = [stage01, stage02, stage03, stage04, stage05, stage06,
+            stage07, stage08, stage09, stage10],
+        CPPPATH = ['.', 'include'],
+        LIBPATH = ['arglib', 'extlib', 'fnilib', 'maplib', 'suplib', 'tcofflib']
+        )
+        
+        
+
