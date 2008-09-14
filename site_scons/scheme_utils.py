@@ -1,4 +1,5 @@
 import os, string
+from SCons.Builder import Builder
 
 #
 # mzc_build
@@ -10,10 +11,14 @@ import os, string
 # build action.
 #
 # This builder just does a syscall to invoke the 
-# MzC compiler on a single Scheme file.
+# MzC compiler on a single Scheme file.a
 def mzc_build (target, source, env):
   cmd = string.Template("mzc --exe $TGT $SRC")
   cmdstring = cmd.substitute(
         TGT = target[0].rstr(),
         SRC = source[0].rstr())
   os.system(cmdstring)
+
+mzc = Builder(action = ['mzc --exe \"$TARGET\" \"$SOURCE\"'],
+              src_suffix = ".scm")
+

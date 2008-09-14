@@ -2,15 +2,15 @@ import os, os.path, string, build_utils, scheme_utils
 
 Import("env")
 
-local = env.Clone()
+local = env.Clone(BUILDERS = {"MZC" : scheme_utils.mzc})
 
 # Adding our custom checker for the an executable.
 conf  = local.Configure(custom_tests = {"CheckForExecutable" : build_utils.CheckForExecutable })
 
 # If the compiler is found, build the Scheme executable.
 # Otherwise, bail with an error for the user.
-if conf.CheckForExecutable("mzc"):
-  local.Command("schemescanner", "schemescanner.scm", scheme_utils.mzc_build)
+if conf.CheckForExecutable(local, "mzc"):
+  local.MZC("schemescanner", "schemescanner.scm")
 else:
   print "mzc cannot be found!" 
   Exit(1)
