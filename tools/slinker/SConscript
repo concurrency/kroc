@@ -1,0 +1,16 @@
+import scheme_utils, build_utils
+
+Import('env')
+
+driver = scheme_utils.BuildSchemeApp(env, 'make-driver', 'ss') 
+slinker_builder = Builder(action = 'tools/slinker/make-driver --driver-script $TARGET')
+local = env.Clone(BUILDERS = {'slinker_builder' : slinker_builder })
+
+slinker  = local.slinker_builder('slinker', 'slinker.sxml')
+library2 = local.slinker_builder('library2', 'library2.sxml')
+
+Depends(slinker, driver)
+Depends(library2, driver)
+
+env['slinker'] = 'tools/slinker/slinker' 
+env['library2'] = 'tools/slinker/library2' 

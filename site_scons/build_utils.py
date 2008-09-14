@@ -1,4 +1,4 @@
-import os
+import os, re, string
 
 #
 # CheckForExecutable : context exe -> {0,1}
@@ -12,7 +12,7 @@ def CheckForExecutable(context, env, exe):
   # print "yes" and "no" in the output to the user.
   result = 0
   context.Message("Checking for %s... " % exe)
-  print context.env["ENV"] 
+  # print context.env["ENV"] 
   for dir in env["ENV"]["PATH"].split(":"):
     if os.access(os.path.join(dir, exe), os.X_OK):
       result = 1
@@ -22,3 +22,28 @@ def CheckForExecutable(context, env, exe):
   # So sayth the documentation.
   context.Result(result)
   return result
+
+
+
+# Tools for doing replacements in 
+
+class SchemeDefaultTemplate(string.Template):
+  pattern = r"""
+    @(?:
+      (?P<escaped>@)   |
+      (?P<named>.*?)@  |
+      (?P<invalid>))
+      """
+
+def ATsubstituteAT(outfile, substs):
+  infile   = open('%s.in' % outfile) 
+  contents = "".join(infile.readlines())
+  infile.close()
+
+  t        = SchemeDefaultTemplate(contents)
+
+  contents = open(outfile, 'w+')
+  contents.write(t.substitute(substs))
+  contents.close()
+
+
