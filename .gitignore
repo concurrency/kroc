@@ -2,6 +2,7 @@
 *.o
 .*.sw?
 .sconf_temp
+*.pyc
 
 # Dangerous, but we'll do it.
 config.h
