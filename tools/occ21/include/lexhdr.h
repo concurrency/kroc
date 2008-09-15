@@ -464,4 +464,9 @@
 #define S_HWADDROF			373
 #define S_ANYMOBILETYPE			374 /* special for pre-defined PROCs taking any MOBILE */
 
-
+/* Mapping for +/- chantype end syntax to the old client/server syntax */
+#define S_CLIENTEND			S_SUBTRACT
+#define S_SERVEREND			S_ADD
+#define is_output_symb(symb)		((symb) == S_CLIENTEND || (symb) == S_OUTPUT)
+#define is_input_symb(symb)		((symb) == S_SERVEREND || (symb) == S_INPUT)
+#define is_direction_symb(symb)		(is_output_symb(symb) || is_input_symb(symb))

@@ -1094,10 +1094,10 @@ PRIVATE treenode *rplacedchan (void)
 		return NULL;
 	}
 	/* maybe a channel direction specifier ? */
-	if (symb == S_INPUT) {
+	if (is_input_symb (symb)) {
 		nextsymb ();
 		SetTypeAttr (type, TypeAttrOf (type) | TypeAttr_marked_in);
-	} else if (symb == S_OUTPUT) {
+	} else if (is_output_symb (symb)) {
 		nextsymb ();
 		SetTypeAttr (type, TypeAttrOf (type) | TypeAttr_marked_out);
 	}
@@ -2529,7 +2529,7 @@ PUBLIC treenode *rprocess (void)
 						procptr = DBodyAddr (*procptr);
 						/*}}}*/
 #ifdef MOBILES
-					} else if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
+					} else if (is_direction_symb (symb)) {
 						/* check for channel-type variables (decl looks like "name[?!] {1,name} :") */
 						/* FIXME: need to be able to handle [const]FOO? x?" flavoured things as well..? */
 						int csymb = symb;
@@ -2573,7 +2573,7 @@ fprintf (stderr, "syn3: well, looks like a chan-type declaration!\n");
 								}
 							}
 							/* need to set channel direction specification in type */
-							if (csymb == S_INPUT) {
+							if (is_input_symb (csymb)) {
 								a = newmopnode (S_ASINPUT, locn, a, S_CHAN);
 							} else {
 								a = newmopnode (S_ASOUTPUT, locn, a, S_CHAN);
@@ -2758,10 +2758,10 @@ fprintf (stderr, "syn3: well, looks like a chan-type declaration!\n");
 						goto error;
 					}
 					/* we may have a direction specifier here, if we're dealing with an anonymous channel-type */
-					if (symb == S_OUTPUT) {
+					if (is_output_symb (symb)) {
 						name = newmopnode (S_ASOUTPUT, locn, name, S_CHAN);
 						nextsymb ();
-					} else if (symb == S_INPUT) {
+					} else if (is_input_symb (symb)) {
 						name = newmopnode (S_ASINPUT, locn, name, S_CHAN);
 						nextsymb ();
 					}

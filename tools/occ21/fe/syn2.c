@@ -1605,10 +1605,10 @@ PUBLIC treenode *rexp (void)
 							synerr_e (SYN_E_CHANTYPE, locn, symb);
 							return NULL;
 						}
-						if (symb == S_INPUT) {
+						if (is_input_symb (symb)) {
 							lname = newmopnode (S_ASINPUT, locn, lname, S_NAME);
 							nextsymb ();
-						} else if (symb == S_OUTPUT) {
+						} else if (is_output_symb (symb)) {
 							lname = newmopnode (S_ASOUTPUT, locn, lname, S_NAME);
 							nextsymb ();
 						}
@@ -1621,11 +1621,11 @@ PUBLIC treenode *rexp (void)
 				case S_NAME:
 					{
 						treenode *lname = (treenode *)rname ();
-						if (symb == S_INPUT) {
+						if (is_input_symb (symb)) {
 							/* might be allocation of a dynamic array of channel types */
 							lname = newmopnode (S_ASINPUT, locn, lname, S_NAME);
 							nextsymb ();
-						} else if (symb == S_OUTPUT) {
+						} else if (is_output_symb (symb)) {
 							/* ditto */
 							lname = newmopnode (S_ASOUTPUT, locn, lname, S_NAME);
 							nextsymb ();
@@ -1811,7 +1811,7 @@ PUBLIC treenode *rexp (void)
 fprintf (stderr, "rexp: just did rrestofoperand (op, locn).  op now ");
 printtreenl (stderr, 4, op);
 #endif
-				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
+				if (is_direction_symb (symb)) {
 					treenode *base;
 
 					/* walk through array subscripts */
@@ -1824,7 +1824,7 @@ fprintf (stderr, "rexp: found INPUT/OUTPUT after name");
 printtreenl (stderr, 4, op);
 #endif
 						/* could be a direction specifier following a name */
-						if (symb == S_INPUT) {
+						if (is_output_symb (symb)) {
 							op = newmopnode (S_ASINPUT, locn, op, S_NAME);
 						} else {
 							op = newmopnode (S_ASOUTPUT, locn, op, S_NAME);
@@ -1952,8 +1952,8 @@ printtreenl (stderr, 4, op);
 			op = roperand ();
 #endif
 			/* might have a channel-direction specifier here */
-			if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
-				op = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, locn, op, S_CHAN);
+			if (is_direction_symb (symb)) {
+				op = newmopnode (is_input_symb (symb) ? S_ASINPUT : S_ASOUTPUT, locn, op, S_CHAN);
 				nextsymb ();
 			}
 			return (op == NULL ? NULL : newmopnode (S_SIZE, locn, op, 0));
@@ -2183,7 +2183,7 @@ fprintf (stderr, "rtypeetc: returning something from rrestofoperand()\n");
 fprintf (stderr, "rtypeetc: else case, expression (possibly conversion) or chan-type decl\n");
 #endif
 		/*{{{  check for declaration of channel-types*/
-		if (line_starts_with_name && ((symb == S_INPUT) || (symb == S_OUTPUT))) {
+		if (line_starts_with_name && is_direction_symb (symb)) {
 			/* this is either an input/output node, or a channel-type declaration */
 			/*{{{  see if it must be a declaration or not*/
 			lex_save_state ();
@@ -2200,7 +2200,7 @@ fprintf (stderr, "rtypeetc: else case, expression (possibly conversion) or chan-
 				/* oki, symb is still input/output, type is basetype */
 				wordnode *name;
 
-				if (symb == S_INPUT) {
+				if (is_input_symb (symb)) {
 					type = newmopnode (S_ASINPUT, flocn, type, S_MOBILE);
 				} else {
 					type = newmopnode (S_ASOUTPUT, flocn, type, S_MOBILE);
@@ -2906,8 +2906,8 @@ printtreenl (stderr, 4, type);
 					goto error;
 				}
 				/* could have a channel-direction specifier here, is legal */
-				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
-					e = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, locn, e, S_NAME);
+				if (is_direction_symb (symb)) {
+					e = newmopnode (is_input_symb (symb) ? S_ASINPUT : S_ASOUTPUT, locn, e, S_NAME);
 					nextsymb ();
 #if 0
 fprintf (stderr, "rrestofspec: have input/output.  t =");
@@ -2991,7 +2991,7 @@ printtreenl (stderr, 4, t);
 				goto error;
 			}
 			nptr = newlistnode (S_LIST, locn, (treenode *) name, list);
-		} else if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
+		} else if (is_direction_symb (symb)) {
 			if (TagOf (t) == S_ANONCHANTYPE) {
 				/* this really doesn't make sense! */
 				synerr (SYN_UNEXPECTED_CHANDIR, flocn);
@@ -2999,11 +2999,11 @@ printtreenl (stderr, 4, t);
 			} else if (basetype (t) == S_CHAN) {
 				treenode *const rtype = basetype_tree (t);
 
-				SetTypeAttr (rtype, TypeAttrOf (rtype) | ((symb == S_INPUT) ? TypeAttr_marked_in : TypeAttr_marked_out));
+				SetTypeAttr (rtype, TypeAttrOf (rtype) | (is_input_symb (symb) ? TypeAttr_marked_in : TypeAttr_marked_out));
 				nextsymb ();
 				nptr = (treenode *)name;
 			} else {
-				const BOOL isinput = (symb == S_INPUT);
+				const BOOL isinput = is_input_symb (symb);
 
 #if 0
 fprintf (stderr, "rspecnameandbody: parsed name and found input/output specifier.  t =");
@@ -3124,10 +3124,10 @@ PRIVATE treenode *rpsub (void)
 			nextsymb ();
 			name = (treenode *)rname ();
 
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				nextsymb ();
 				name = newmopnode (S_ASINPUT, locn, name, S_NAME);
-			} else if (symb == S_OUTPUT) {
+			} else if (is_output_symb (symb)) {
 				nextsymb ();
 				name = newmopnode (S_ASOUTPUT, locn, name, S_NAME);
 			} else {
@@ -3173,10 +3173,10 @@ PRIVATE treenode *rpsub (void)
 		{
 			treenode *name = (treenode *)rname ();
 
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				nextsymb ();
 				name = newmopnode (S_ASINPUT, locn, name, S_NAME);
-			} else if (symb == S_OUTPUT) {
+			} else if (is_output_symb (symb)) {
 				nextsymb ();
 				name = newmopnode (S_ASOUTPUT, locn, name, S_NAME);
 			}
@@ -3225,10 +3225,10 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 			nextsymb ();
 			SetLeafLink (s, type);
 
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				nextsymb ();
 				typeattr |= TypeAttr_marked_in;
-			} else if (symb == S_OUTPUT) {
+			} else if (is_output_symb (symb)) {
 				nextsymb ();
 				typeattr |= TypeAttr_marked_out;
 			}
@@ -3421,11 +3421,11 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 				}
 
 				/* must have direction specifier now */
-				if (symb == S_INPUT) {
+				if (is_input_symb (symb)) {
 					nextsymb ();
 					name = newmopnode (S_ASINPUT, NOPOSN, name, S_CHAN);
 					SetOpTypeAttr (name, TypeAttr_shared);
-				} else if (symb == S_OUTPUT) {
+				} else if (is_output_symb (symb)) {
 					nextsymb ();
 					name = newmopnode (S_ASOUTPUT, NOPOSN, name, S_CHAN);
 					SetOpTypeAttr (name, TypeAttr_shared);
@@ -3445,10 +3445,10 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 
 					nextsymb ();
 					/* and might have a direction-specifier too */
-					if (symb == S_INPUT) {
+					if (is_input_symb (symb)) {
 						nextsymb ();
 						typeattr |= TypeAttr_marked_in;
-					} else if (symb == S_OUTPUT) {
+					} else if (is_output_symb (symb)) {
 						nextsymb ();
 						typeattr |= TypeAttr_marked_out;
 					}
@@ -3475,10 +3475,10 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 			}
 #ifdef MOBILES
 			/* might have a direction specifier here if the NAME is a channel-type */
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				nextsymb ();
 				name = newmopnode (S_ASINPUT, NOPOSN, name, S_CHAN);
-			} else if (symb == S_OUTPUT) {
+			} else if (is_output_symb (symb)) {
 				nextsymb ();
 				name = newmopnode (S_ASOUTPUT, NOPOSN, name, S_CHAN);
 			}
@@ -3907,15 +3907,11 @@ PRIVATE treenode *rtrace (const int indent)
 					goto error;
 				}
 				/* direction-specifier ? */
-				switch (symb) {
-				case S_INPUT:
-				case S_OUTPUT:
-					thisone = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, locn, (treenode *)name, S_CHAN);
+				if (is_direction_symb (symb)) {
+					thisone = newmopnode (is_input_symb (symb) ? S_ASINPUT : S_ASOUTPUT, locn, (treenode *)name, S_CHAN);
 					nextsymb ();
-					break;
-				default:
+				} else {
 					thisone = (treenode *)name;
-					break;
 				}
 			}
 			break;
@@ -4254,11 +4250,11 @@ PUBLIC treenode *rinitialspec (void)
 		{
 			treenode *name = (treenode *)rname ();
 
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				name = newmopnode (S_ASINPUT, flocn, name, S_CHAN);
 				nextsymb ();
 				return name;
-			} else if (symb == S_OUTPUT) {
+			} else if (is_output_symb (symb)) {
 				name = newmopnode (S_ASOUTPUT, flocn, name, S_CHAN);
 				nextsymb ();
 				return name;
@@ -4464,9 +4460,9 @@ PUBLIC treenode *rspecifier (void)
 fprintf (stderr, "rspecifier: (CHAN) got prot = ");
 printtreenl (stderr, 4, prot);
 #endif
-			if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
+			if (is_direction_symb (symb)) {
 				/* must be a channel of a chan-type, this is the client/server specifier */
-				prot = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, locn, prot, S_CHAN);
+				prot = newmopnode (is_input_symb (symb) ? S_ASINPUT : S_ASOUTPUT, locn, prot, S_CHAN);
 				nextsymb ();
 			}
 			t = newtypenode (S_CHAN, locn, NULL, prot);
@@ -4536,8 +4532,8 @@ fprintf (stderr, "rspecifier: putting SHARED in TypeAttr of CHAN\n");
 					return NULL;
 				}
 				/* ought to have a channel-direction specifier (for the type) here */
-				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
-					name = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, flocn, name, S_CHAN);
+				if (is_direction_symb (symb)) {
+					name = newmopnode (is_input_symb (symb) ? S_ASINPUT : S_ASOUTPUT, flocn, name, S_CHAN);
 					SetOpTypeAttr (name, OpTypeAttrOf (name) | TypeAttr_shared);		/* mark as shared */
 					nextsymb ();
 				} else {
@@ -4554,10 +4550,10 @@ fprintf (stderr, "rspecifier: putting SHARED in TypeAttr of CHAN\n");
 					SetLeafLink (name, type);
 					nextsymb ();
 
-					if (symb == S_INPUT) {
+					if (is_input_symb (symb)) {
 						nextsymb ();
 						typeattr |= TypeAttr_marked_in;
-					} else if (symb == S_OUTPUT) {
+					} else if (is_output_symb (symb)) {
 						nextsymb ();
 						typeattr |= TypeAttr_marked_out;
 					}
@@ -4583,10 +4579,10 @@ fprintf (stderr, "rspecifier: putting SHARED in TypeAttr of CHAN\n");
 			name = newleafnode (S_ANYCHANTYPE, locn);
 			SetLeafLink (name, type);
 			nextsymb ();
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				nextsymb ();
 				SetTypeAttr (type, TypeAttr_marked_in);
-			} else if (symb == S_OUTPUT) {
+			} else if (is_output_symb (symb)) {
 				nextsymb ();
 				SetTypeAttr (type, TypeAttr_marked_out);
 			}
@@ -4616,10 +4612,10 @@ fprintf (stderr, "rspecifier: putting SHARED in TypeAttr of CHAN\n");
 
 			name = (treenode *)rname ();
 #ifdef MOBILES
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				name = newmopnode (S_ASINPUT, locn, name, S_NAME);
 				nextsymb ();
-			} else if (symb == S_OUTPUT) {
+			} else if (is_output_symb (symb)) {
 				name = newmopnode (S_ASOUTPUT, locn, name, S_NAME);
 				nextsymb ();
 			}
@@ -4728,10 +4724,10 @@ if (symb == S_NAME) {
 			SetLeafLink (t, type);
 
 			nextsymb ();
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				nextsymb ();
 				typeattr |= TypeAttr_marked_in;
-			} else if (symb == S_OUTPUT) {
+			} else if (is_output_symb (symb)) {
 				nextsymb ();
 				typeattr |= TypeAttr_marked_out;
 			}
@@ -4744,8 +4740,8 @@ if (symb == S_NAME) {
 				return NULL;
 			}
 			/* ought to have a channel-direction specifier (for the type) here */
-			if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
-				t = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, flocn, t, S_CHAN);
+			if (is_direction_symb (symb)) {
+				t = newmopnode (is_input_symb (symb) ? S_ASINPUT : S_ASOUTPUT, flocn, t, S_CHAN);
 				SetOpTypeAttr (t, OpTypeAttrOf (t) | TypeAttr_shared);		/* mark as shared */
 				name = NULL;
 				nextsymb ();
@@ -4809,18 +4805,6 @@ if (symb == S_NAME) {
 fprintf (stderr, "syn2: rparam: CHAN, type (CHAN protocol): ");
 printtreenl (stderr, 4, t);
 #endif
-#if 0
-			/* frmb: rprotocol() now scoops this up */
-			/* might have "CHAN FOO? name?" type parameter */
-			if (marked_shared && (symb != S_INPUT) && (symb != S_OUTPUT)) {
-				synerr_e (SYN_E_CHANTYPEDIRSPEC, flocn, symb);
-				return NULL;
-			}
-			if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
-				SetProtocol (t, newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, locn, ProtocolOf (t), S_CHAN));
-				nextsymb ();
-			}
-#endif
 			if (TagOf (ProtocolOf (t)) == S_ANYCHANTYPE) {
 				treenode *mnode;
 
@@ -4830,8 +4814,8 @@ printtreenl (stderr, 4, t);
 				mnode = LeafLinkOf (ProtocolOf (t));
 
 				/* check for INPUT/OUTPUT for these ones here */
-				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
-					SetTypeAttr (mnode, TypeAttrOf (mnode) | ((symb == S_INPUT) ? TypeAttr_marked_in : TypeAttr_marked_out));
+				if (is_direction_symb (symb)) {
+					SetTypeAttr (mnode, TypeAttrOf (mnode) | (is_input_symb (symb) ? TypeAttr_marked_in : TypeAttr_marked_out));
 					nextsymb ();
 				}
 				if (marked_shared) {
@@ -4883,10 +4867,10 @@ printtreenl (stderr, 4, t);
 			t = newleafnode (S_ANYCHANTYPE, locn);
 			SetLeafLink (t, type);
 
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				nextsymb ();
 				typeattr |= TypeAttr_marked_in;
-			} else if (symb == S_OUTPUT) {
+			} else if (is_output_symb (symb)) {
 				nextsymb ();
 				typeattr |= TypeAttr_marked_out;
 			}
@@ -4927,13 +4911,13 @@ printtreenl (stderr, 4, t);
 			/*}}} */
 			if (t == NULL) {	/* We have had no specifier */
 #ifdef MOBILES
-				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
+				if (is_direction_symb (symb)) {
 					/* probably a channel-type direction specifier.  should have a name next */
 					const int csymb = symb;
 
 					nextsymb ();
 					if (symb == S_NAME) {
-						t = newmopnode ((csymb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, locn, (treenode *)name, S_CHAN);
+						t = newmopnode (is_input_symb (csymb) ? S_ASINPUT : S_ASOUTPUT, locn, (treenode *)name, S_CHAN);
 						name = NULL;	/* force the next read of name */
 						copy_type_tree = FALSE;
 						valparam = N_PARAM;
@@ -4946,13 +4930,13 @@ printtreenl (stderr, 4, t);
 					return NULL;
 				}
 #ifdef MOBILES
-			} else if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
+			} else if (is_direction_symb (symb)) {
 				/* another channel-type direction specifier?  should have a name next */
 				const int csymb = symb;
 
 				nextsymb ();
 				if (symb == S_NAME) {
-					t = newmopnode ((csymb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, locn, (treenode *)name, S_CHAN);
+					t = newmopnode (is_input_symb (csymb) ? S_ASINPUT : S_ASOUTPUT, locn, (treenode *)name, S_CHAN);
 					name = NULL;	/* force re-read of name */
 					copy_type_tree = FALSE;
 					valparam = N_PARAM;
@@ -4969,7 +4953,7 @@ printtreenl (stderr, 4, t);
 					}
 					if ((TagOf (ttype) == S_CHAN) || (TagOf (ttype) == S_ANONCHANTYPE) || (TagOf (ttype) == S_PORT)) {
 						SetTypeAttr (ttype, (TypeAttrOf (ttype) & ~(TypeAttr_marked_in | TypeAttr_marked_out)) |
-								((csymb == S_INPUT) ? TypeAttr_marked_in : TypeAttr_marked_out));
+								(is_input_symb (csymb) ? TypeAttr_marked_in : TypeAttr_marked_out));
 					}
 				}
 #endif
@@ -5004,10 +4988,10 @@ printtreenl (stderr, 4, t);
 		while (TagOf (itype) == S_ARRAY) {
 			itype = ARTypeOf (itype);
 		}
-		if (((TagOf (itype) == S_CHAN) || (TagOf (itype) == S_ANONCHANTYPE)) && ((symb == S_INPUT) || (symb == S_OUTPUT))) {
+		if (((TagOf (itype) == S_CHAN) || (TagOf (itype) == S_ANONCHANTYPE)) && is_direction_symb (symb)) {
 			SetTypeAttr (itype, TypeAttrOf (itype) & ~(TypeAttr_marked_in | TypeAttr_marked_out));
 			/* have a channel direction specifier */
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				SetTypeAttr (itype, TypeAttrOf (itype) | TypeAttr_marked_in);
 			} else {
 				SetTypeAttr (itype, TypeAttrOf (itype) | TypeAttr_marked_out);
@@ -5019,16 +5003,6 @@ printtreenl (stderr, 4, itype);
 			nextsymb ();
 		}
 	}
-#if 0
-	if (chantype_flag && ((symb == S_INPUT) || (symb == S_OUTPUT))) {
-		/* make sure direction specifiers match */
-		if (((TagOf (t) == S_ASINPUT) && (symb == S_OUTPUT)) || ((TagOf (t) == S_ASOUTPUT) && (symb == S_INPUT))) {
-			synerr_s (SYN_BAD_CHAN_CONFLICT, locn, WNameOf((wordnode *)name));
-			return NULL;
-		}
-		nextsymb ();
-	}
-#endif
 	/*}}}  */
 	nptr = declname (valparam, locn, name, t, NULL);
 	if (undefined_flag) {
@@ -5088,7 +5062,7 @@ PRIVATE treenode *rdescriptorline (void)
 	wordnode *name = rname ();
 
 	if (name != NULL) {
-		if (symb == S_INPUT || symb == S_OUTPUT) {
+		if (is_direction_symb (symb)) {
 			n = newactionnode (symb, flocn, (treenode *) name, NULL);
 			nextsymb ();
 			checknewline ();
@@ -6578,15 +6552,15 @@ printtreenl (stderr, 4, prot);
 				if (is_shared) {
 					SetTypeAttr (LeafLinkOf (prot), TypeAttrOf (LeafLinkOf (prot)) | TypeAttr_shared);
 				}
-				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
-					SetTypeAttr (LeafLinkOf (prot), TypeAttrOf (LeafLinkOf (prot)) | ((symb == S_INPUT) ? TypeAttr_marked_in : TypeAttr_marked_out));
+				if (is_direction_symb (symb)) {
+					SetTypeAttr (LeafLinkOf (prot), TypeAttrOf (LeafLinkOf (prot)) | (is_input_symb (symb) ? TypeAttr_marked_in : TypeAttr_marked_out));
 					nextsymb ();
 				}
 				t = newtypenode (S_CHAN, locn, NULL, prot);
 			} else {
-				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
+				if (is_direction_symb (symb)) {
 					/* must be channel of a chan-type, this is the client/server specifier */
-					prot = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, locn, prot, S_CHAN);
+					prot = newmopnode (is_input_symb (symb) ? S_ASINPUT : S_ASOUTPUT, locn, prot, S_CHAN);
 					nextsymb ();
 #if 0
 fprintf (stderr, "rspecification: found INPUT/OUTPUT before calling rspecnameandbody.  prot = \n");
@@ -6649,6 +6623,8 @@ fprintf (stderr, "rspecification: putting TypeAttr_shared in CHAN\n");
 #ifdef MOBILES
 			case S_INPUT:
 			case S_OUTPUT:
+			case S_CLIENTEND:
+			case S_SERVEREND:
 				/* this happens in "SHARED FOO[?!] name, name..:", also "FIXED NAME[?!] ..:" */
 				{
 					const int csymb = symb;
@@ -6676,7 +6652,7 @@ fprintf (stderr, "rspecification: putting TypeAttr_shared in CHAN\n");
 					}
 
 					/* set chan-dir spec */
-					type = newmopnode ((csymb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, locn, type, S_CHAN);
+					type = newmopnode (is_input_symb (csymb) ? S_ASINPUT : S_ASOUTPUT, locn, type, S_CHAN);
 
 					spec = rrestofspec (type, ((symb == S_IS) ? ThisItem (namelist) : namelist), locn, indent, FALSE);
 				}
@@ -6713,10 +6689,10 @@ fprintf (stderr, "rspecification: putting TypeAttr_shared in CHAN\n");
 			}
 			/*}}} */
 			/* might have a channel-direction specifier */
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				nextsymb ();
 				n = newmopnode (S_ASINPUT, locn, n, S_NAME);
-			} else if (symb == S_OUTPUT) {
+			} else if (is_output_symb (symb)) {
 				nextsymb ();
 				n = newmopnode (S_ASOUTPUT, locn, n, S_NAME);
 			}
@@ -6862,10 +6838,10 @@ fprintf (stderr, "rspecification: putting TypeAttr_shared in CHAN\n");
 
 			nextsymb ();
 			/* scoop up any ! or ? specifier on SHARED */
-			if (symb == S_INPUT) {
+			if (is_input_symb (symb)) {
 				extra_bits = TypeAttr_marked_in;
 				nextsymb ();
-			} else if (symb == S_OUTPUT) {
+			} else if (is_output_symb (symb)) {
 				extra_bits = TypeAttr_marked_out;
 				nextsymb ();
 			}
@@ -6895,12 +6871,12 @@ fprintf (stderr, "rspecification: putting TypeAttr_shared in CHAN\n");
 				if ((prot = rprotocol ()) == NULL) {
 					return NULL;
 				}
-				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
+				if (is_direction_symb (symb)) {
 #if 0
 fprintf (stderr, "syn2: INPUT/OUTPUT in SHARED CHAN ... declaration.  prot =");
 printtreenl (stderr, 4, prot);
 #endif
-					prot = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, NOPOSN, prot, S_CHAN);
+					prot = newmopnode (is_input_symb (symb) ? S_ASINPUT : S_ASOUTPUT, NOPOSN, prot, S_CHAN);
 					nextsymb ();
 				}
 				t = newtypenode (S_ANONCHANTYPE, locn, NULL, prot);
@@ -6933,10 +6909,10 @@ printtreenl (stderr, 4, realspec);
 				SetLeafLink (t, type);
 
 				nextsymb ();
-				if (symb == S_INPUT) {
+				if (is_input_symb (symb)) {
 					bits |= TypeAttr_marked_in;
 					nextsymb ();
-				} else if (symb == S_OUTPUT) {
+				} else if (is_output_symb (symb)) {
 					bits |= TypeAttr_marked_out;
 					nextsymb ();
 				}
