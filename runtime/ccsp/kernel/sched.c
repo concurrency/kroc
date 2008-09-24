@@ -5052,16 +5052,20 @@ K_CALL_DEFINE_0_0 (X_talt)
 /*{{{  static INLINE void kernel_altend (word *Wptr, sched_t *sched, unsigned int return_address, bool jump)*/
 static INLINE void kernel_altend (word *Wptr, sched_t *sched, unsigned int return_address, bool jump)
 {
+	word state = atw_val (&(Wptr[State]));
+
 	if (jump) {
 		return_address += Wptr[Temp];
 	}
 
-	save_priofinity (sched, Wptr);
-	save_return (sched, Wptr, return_address);
-	weak_write_barrier ();
+	if (unlikely (state != 1)) {
+		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
+		weak_write_barrier ();
 
-	if (unlikely (!atw_dec_z (&(Wptr[State])))) {
-		kernel_scheduler (sched);
+		if (!atw_dec_z (&(Wptr[State]))) {
+			kernel_scheduler (sched);
+		}
 	}
 
 	K_ZERO_OUT_JRET ();
