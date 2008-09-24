@@ -5058,16 +5058,17 @@ static INLINE void kernel_altend (word *Wptr, sched_t *sched, unsigned int retur
 		return_address += Wptr[Temp];
 	}
 
+	save_return (sched, Wptr, return_address);
+	
 	if (unlikely (state != 1)) {
 		save_priofinity (sched, Wptr);
-		save_return (sched, Wptr, return_address);
 		weak_write_barrier ();
 
 		if (!atw_dec_z (&(Wptr[State]))) {
 			kernel_scheduler (sched);
 		}
 	}
-
+	
 	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
