@@ -8,6 +8,7 @@ EXTRA_DIST = \
 	make-format.py \
 	format.occ \
 	math.occ \
+	matrix.occ \
 	random.occ \
 	string.occ \
 	time.occ \
@@ -19,6 +20,7 @@ useful_lib_objs = \
 	format.tce \
 	format-gen.tce \
 	math.tce \
+	matrix.tce \
 	random.tce \
 	string.tce \
 	time.tce \
