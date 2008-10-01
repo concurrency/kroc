@@ -31,6 +31,84 @@
 
 #include <dirent.h>
 
+/*{{{  occam constants */
+/* MUST MATCH filelib.inc */
+#define OCC_O_RDONLY	0x00000000
+#define OCC_O_WRONLY	0x00000001
+#define OCC_O_RDWR	0x00000002
+#define OCC_O_CREAT	0x00000040
+#define OCC_O_EXCL	0x00000080
+#define OCC_O_NOCTTY	0x00000100
+#define OCC_O_TRUNC	0x00000200
+#define OCC_O_APPEND	0x00000400
+#define OCC_O_NONBLOCK	0x00000800
+#define OCC_O_SYNC	0x00001000
+#define OCC_O_MASK	0x00001FC3
+
+#define OCC_SEEK_SET	0
+#define OCC_SEEK_CUR	1
+#define OCC_SEEK_END	2
+
+#define OCC_F_DUPFD 0
+#define OCC_F_GETFD 1
+#define OCC_F_SETFD 2
+#define OCC_F_GETFL 3
+#define OCC_F_SETFL 4
+#define OCC_F_GETLK 5
+#define OCC_F_SETLK 6
+#define OCC_F_SETLKW 7
+#define OCC_F_SETOWN 8
+#define OCC_F_GETOWN 9
+/*}}}*/
+
+/*{{{  flag/option converters */
+static int r_open_flags (int flags)
+{
+	int ret = (flags & (~OCC_O_MASK));
+
+	if (flags & OCC_O_RDWR)
+		ret |= O_RDWR;
+	else if (flags & OCC_O_WRONLY)
+		ret |= O_WRONLY;
+	else
+		ret |= O_RDONLY;
+	
+	if (flags & OCC_O_CREAT)
+		ret |= O_CREAT;
+	if (flags & OCC_O_EXCL)
+		ret |= O_EXCL;
+	if (flags & OCC_O_NOCTTY)
+		ret |= O_NOCTTY;
+	if (flags & OCC_O_TRUNC)
+		ret |= O_TRUNC;
+	if (flags & OCC_O_APPEND)
+		ret |= O_APPEND;
+	if (flags & OCC_O_NONBLOCK)
+		ret |= O_NONBLOCK;
+	if (flags & OCC_O_SYNC)
+		ret |= O_SYNC;
+	
+	return ret;
+}
+
+static int r_fcntl_cmd (int cmd)
+{
+	switch (cmd) {
+		case OCC_F_DUPFD: cmd = F_DUPFD; break;
+		case OCC_F_GETFD: cmd = F_GETFD; break;
+		case OCC_F_SETFD: cmd = F_SETFD; break;
+		case OCC_F_GETFL: cmd = F_GETFL; break;
+		case OCC_F_SETFL: cmd = F_SETFL; break;
+		case OCC_F_GETLK: cmd = F_GETLK; break;
+		case OCC_F_SETLK: cmd = F_SETLK; break;
+		case OCC_F_SETLKW: cmd = F_SETLKW; break;
+		case OCC_F_SETOWN: cmd = F_SETOWN; break;
+		case OCC_F_GETOWN: cmd = F_GETOWN; break;
+	}
+	return cmd;
+}
+/*}}}*/
+
 /*{{{  static __inline__ void r_check_access (char *fname, int flen, int what, int *result)*/
 /*
  *	void r_check_access (char *fname, int flen, int what, int *result)
@@ -94,7 +172,7 @@ static __inline__ void r_open (char *fname, int flen, int mode, int *fd)
 	}
 	memcpy (pbuffer, fname, x);
 	pbuffer[x] = '\0';
-	*fd = open (pbuffer, mode);
+	*fd = open (pbuffer, r_open_flags (mode));
 }
 /*}}}*/
 /*{{{  static __inline__ void r_open3 (char *fname, int flen, int mode, int perm, int *fd)*/
@@ -114,7 +192,7 @@ static __inline__ void r_open3 (char *fname, int flen, int mode, int perm, int *
 	}
 	memcpy (pbuffer, fname, x);
 	pbuffer[x] = '\0';
-	*fd = open (pbuffer, mode, perm);
+	*fd = open (pbuffer, r_open_flags (mode), perm);
 }
 /*}}}*/
 /*{{{  static __inline__ void r_pipe (int *fd_0, int *fd_1, int *result)*/
@@ -170,6 +248,12 @@ static __inline__ void r_write (int fd, char *buffer, int bufsize, int *result)
  */
 static __inline__ void r_seek (int fd, int offset, int whence, int *result)
 {
+	switch (offset) {
+		case OCC_SEEK_SET: offset = SEEK_SET; break;
+		case OCC_SEEK_CUR: offset = SEEK_CUR; break;
+		case OCC_SEEK_END: offset = SEEK_END; break;
+	}
+	
 	*result = (int)lseek (fd, offset, whence);
 }
 /*}}}*/
@@ -314,7 +398,7 @@ static __inline__ void r_fcntl0 (int fd, int cmd, int *result)
 	if (fd < 0) {
 		*result = -1;
 	} else {
-		*result = fcntl (fd, cmd);
+		*result = fcntl (fd, r_fcntl_cmd (cmd));
 	}
 	return;
 }
@@ -326,7 +410,7 @@ static __inline__ void r_fcntl1 (int fd, int cmd, int arg, int *result)
 	if (fd < 0) {
 		*result = -1;
 	} else {
-		*result = fcntl (fd, cmd, (long)arg);
+		*result = fcntl (fd, r_fcntl_cmd (cmd), (long)arg);
 	}
 	return;
 }
