@@ -62,7 +62,7 @@
 /*}}}*/
 
 /*{{{  flag/option converters */
-static int r_open_flags (int flags)
+static int r_encode_open_flags (int flags)
 {
 	int ret = (flags & (~OCC_O_MASK));
 
@@ -88,6 +88,38 @@ static int r_open_flags (int flags)
 	if (flags & OCC_O_SYNC)
 		ret |= O_SYNC;
 	
+	return ret;
+}
+
+static int r_decode_open_flags (int flags)
+{
+	const int mask = O_RDWR | O_WRONLY | O_RDONLY
+		| O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC
+		| O_APPEND | O_NONBLOCK | O_SYNC;
+	int ret = (flags & (~mask));
+
+	if ((flags & O_RDWR) == O_RDWR)
+		ret |= OCC_O_RDWR;
+	else if ((flags & O_WRONLY) == O_WRONLY)
+		ret |= OCC_O_WRONLY;
+	else
+		ret |= OCC_O_RDONLY;
+	
+	if ((flags & O_CREAT) == O_CREAT)
+		ret |= OCC_O_CREAT;
+	if ((flags & O_EXCL) == O_EXCL)
+		ret |= OCC_O_EXCL;
+	if ((flags & O_NOCTTY) == O_NOCTTY)
+		ret |= OCC_O_NOCTTY;
+	if ((flags & O_TRUNC) == O_TRUNC)
+		ret |= OCC_O_TRUNC;
+	if ((flags & O_APPEND) == O_APPEND)
+		ret |= OCC_O_APPEND;
+	if ((flags & O_NONBLOCK) == O_NONBLOCK)
+		ret |= OCC_O_NONBLOCK;
+	if ((flags & O_SYNC) == O_SYNC)
+		ret |= OCC_O_SYNC;
+
 	return ret;
 }
 
@@ -172,7 +204,7 @@ static __inline__ void r_open (char *fname, int flen, int mode, int *fd)
 	}
 	memcpy (pbuffer, fname, x);
 	pbuffer[x] = '\0';
-	*fd = open (pbuffer, r_open_flags (mode));
+	*fd = open (pbuffer, r_encode_open_flags (mode));
 }
 /*}}}*/
 /*{{{  static __inline__ void r_open3 (char *fname, int flen, int mode, int perm, int *fd)*/
@@ -192,7 +224,7 @@ static __inline__ void r_open3 (char *fname, int flen, int mode, int perm, int *
 	}
 	memcpy (pbuffer, fname, x);
 	pbuffer[x] = '\0';
-	*fd = open (pbuffer, r_open_flags (mode), perm);
+	*fd = open (pbuffer, r_encode_open_flags (mode), perm);
 }
 /*}}}*/
 /*{{{  static __inline__ void r_pipe (int *fd_0, int *fd_1, int *result)*/
@@ -410,7 +442,11 @@ static __inline__ void r_fcntl1 (int fd, int cmd, int arg, int *result)
 	if (fd < 0) {
 		*result = -1;
 	} else {
+		if (cmd == OCC_F_SETFL)
+			arg = r_encode_open_flags (arg);
 		*result = fcntl (fd, r_fcntl_cmd (cmd), (long)arg);
+		if (cmd == OCC_F_GETFL)
+			*result = r_decode_open_flags (*result);
 	}
 	return;
 }
