@@ -70,7 +70,7 @@ PROC write.raster (VAL []BYTE filename, VAL [][]INT raster)
 --
 -- As each raster passes through, it's written to a file named [@text
 -- prefix000000suffix], with the number incrementing by one for each frame.
--- The files can be in any format supported by [@ref writer.raster].
+-- The files can be in any format supported by [@ref write.raster].
 --
 -- You can convert the resulting files into a video using [@text mencoder]
 -- or a similar tool; see [@link
