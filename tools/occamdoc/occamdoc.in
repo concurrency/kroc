@@ -625,7 +625,7 @@ def parse_file(f, include_private = False, include_undocumented = False):
 def generic_tag_to_xml(doc, text, tags, text_handler):
 	"""Generic converter from tagged text to a DOM node."""
 
-	fields = re.split(r'\s', text, 1)
+	fields = re.split(r'\s+', text, 1)
 	if len(fields) == 0:
 		raise OccamDocException("Expected tag in '[@" + text + "]'")
 	tagname = fields[0]
