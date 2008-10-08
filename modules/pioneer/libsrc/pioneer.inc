@@ -75,6 +75,7 @@ PROTOCOL P.PIONEER.CMD
     cmd; BYTE
     cmd.int; BYTE; BOOL; INT
     cmd.str; BYTE; MOBILE []BYTE
+    shutdown
 :
 
 DATA TYPE POS
