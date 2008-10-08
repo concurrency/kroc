@@ -5,9 +5,9 @@
 #PRAGMA EXTERNAL "PROC C.configure.serial.port (VAL INT fd, baud, parity, data.bits, stop.bits, flow, RESULT INT result) = 3"
 #PRAGMA EXTERNAL "PROC B.wait.and.read (VAL INT timeout, fd, []BYTE buffer, RESULT INT result) = 3"
 
-PROC serial.port (VAL []BYTE device, VAL INT baud, parity, data.bits, stop.bits, flow.ctl, CHAN INT error!, CHAN BOOL shutdown?, CHAN BYTE in?, out!, err!)
+PROC serial.port (VAL []BYTE device, VAL INT baud, parity, data.bits, stop.bits, flow.ctl, CHAN INT error!, CHAN BOOL shutdown?, CHAN BYTE in?, out!)
 
-  PROC port.reader (VAL INT fd, CHAN BOOL shutdown?, CHAN BYTE out!)
+  PROC port.reader (VAL INT fd, CHAN BOOL shutdown?, CHAN INT error!, CHAN BYTE out!)
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
       [128]BYTE buffer:
@@ -18,27 +18,38 @@ PROC serial.port (VAL []BYTE device, VAL INT baud, parity, data.bits, stop.bits,
           ret >= 1
             SEQ i = 0 FOR ret
               out ! buffer[i]
+          ret < 0
+            PAR
+              error ! ret
+              shutdown ? done
           TRUE
             SKIP -- FIXME: ret < 0
         PRI ALT
           shutdown ? done
-            SKIP
+            error ! 0
           SKIP
             SKIP
   :
 
-  PROC port.writer (VAL INT fd, CHAN BOOL shutdown?, CHAN BYTE in?)
+  PROC port.writer (VAL INT fd, CHAN BOOL shutdown?, CHAN INT error!, CHAN BYTE in?)
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
       [1]BYTE buffer:
       PRI ALT
         in ? buffer[0]
-          INT ret:
+          INITIAL INT ret IS 0:
           SEQ
-            file.blocking.write (fd, buffer, ret)
-            -- FIXME: ret < 1
+            WHILE ret = 0
+              file.blocking.write (fd, buffer, ret)
+            IF
+              ret < 0
+                PAR
+                  error ! ret
+                  shutdown ? done
+              TRUE
+                SKIP
         shutdown ? done
-          SKIP
+          error ! 0
   :
 
   INT fd, ret:
@@ -54,21 +65,47 @@ PROC serial.port (VAL []BYTE device, VAL INT baud, parity, data.bits, stop.bits,
           IF
             ret >= 0
               CHAN BOOL rs, ws:
+              CHAN INT re, we:
               PAR
-                port.reader (fd, rs?, out!)
-                port.writer (fd, ws?, in?)
-                BOOL junk:
-                SEQ
-                  shutdown ? junk
-                  rs ! TRUE
-                  file.close (fd, ret)
-                  ws ! TRUE
-                  error ! 0
+                port.reader (fd, rs?, re!, out!)
+                port.writer (fd, ws?, we!, in?)
+
+                INITIAL BOOL done IS FALSE:
+                INITIAL BOOL e.read IS FALSE:
+                INITIAL BOOL e.write IS FALSE:
+                WHILE NOT (done AND e.read AND e.write)
+                  PRI ALT
+                    BOOL junk:
+                    shutdown ? junk
+                      PAR
+                        rs ! TRUE
+                        ws ! TRUE
+                        IF
+                          e.read OR e.write
+                            SKIP
+                          TRUE
+                            error ! 0
+                        file.close (fd, ret)
+                        done := TRUE
+                    INT e.number:
+                    re ? e.number
+                      IF
+                        done OR e.read
+                          SKIP
+                        TRUE
+                          error ! e.number
+                    INT e.number:
+                    we ? e.number
+                      IF
+                        done OR e.write
+                          SKIP
+                        TRUE
+                          error ! e.number
             TRUE
               SEQ
-                error ! -2 -- FIXME: better number
+                error ! ret
                 file.close (fd, ret)
       TRUE
-        error ! -1 -- FIXME: better number
+        error ! fd
 :
 
