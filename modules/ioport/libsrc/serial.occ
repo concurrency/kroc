@@ -51,24 +51,33 @@ PROC serial.port (VAL []BYTE device, VAL INT baud, parity, data.bits, stop.bits,
   :
 
   PROC port.writer (VAL INT fd, CHAN BOOL shutdown?, CHAN INT error!, CHAN BYTE in?)
+    INITIAL BOOL has.error IS FALSE:
     INITIAL BOOL done IS FALSE:
     WHILE NOT done
       [1]BYTE buffer:
       PRI ALT
         in ? buffer[0]
-          INITIAL INT ret IS 0:
-          SEQ
-            WHILE ret = 0
-              file.blocking.write (fd, buffer, ret)
-            IF
-              ret < 0
-                PAR
-                  error ! ret
-                  shutdown ? done
-              TRUE
-                SKIP
+          IF
+            has.error
+              SKIP
+            TRUE
+              INITIAL INT ret IS 0:
+              SEQ
+                WHILE ret = 0
+                  file.blocking.write (fd, buffer, ret)
+                IF
+                  ret < 0
+                    SEQ
+                      error ! ret
+                      has.error := TRUE
+                  TRUE
+                    SKIP
         shutdown ? done
-          error ! 0
+          IF
+            has.error
+              SKIP
+            TRUE
+              error ! 0
   :
 
   INT fd, ret:
