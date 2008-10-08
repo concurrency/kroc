@@ -1,0 +1,74 @@
+
+#INCLUDE "file.module"
+#INCLUDE "ioport.inc"
+
+#PRAGMA EXTERNAL "PROC C.configure.serial.port (VAL INT fd, baud, parity, data.bits, stop.bits, flow, RESULT INT result) = 3"
+#PRAGMA EXTERNAL "PROC B.wait.and.read (VAL INT timeout, fd, []BYTE buffer, RESULT INT result) = 3"
+
+PROC serial.port (VAL []BYTE device, VAL INT baud, parity, data.bits, stop.bits, flow.ctl, CHAN INT error!, CHAN BOOL shutdown?, CHAN BYTE in?, out!, err!)
+
+  PROC port.reader (VAL INT fd, CHAN BOOL shutdown?, CHAN BYTE out!)
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      [128]BYTE buffer:
+      INT ret:
+      SEQ
+        B.wait.and.read (500000, fd, buffer, ret)
+        IF
+          ret >= 1
+            SEQ i = 0 FOR ret
+              out ! buffer[i]
+          TRUE
+            SKIP -- FIXME: ret < 0
+        PRI ALT
+          shutdown ? done
+            SKIP
+          SKIP
+            SKIP
+  :
+
+  PROC port.writer (VAL INT fd, CHAN BOOL shutdown?, CHAN BYTE in?)
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      [1]BYTE buffer:
+      PRI ALT
+        in ? buffer[0]
+          INT ret:
+          SEQ
+            file.blocking.write (fd, buffer, ret)
+            -- FIXME: ret < 1
+        shutdown ? done
+          SKIP
+  :
+
+  INT fd, ret:
+  SEQ
+    file.open (device, (O.RDWR \/ O.NOCTTY) \/ O.NONBLOCK, fd)
+    IF
+      fd > 0
+        SEQ
+          file.fcntl0 (fd, F.GETFL, ret)
+          INITIAL INT flags IS ret /\ (~O.NONBLOCK):
+          file.fcntl1 (fd, F.SETFL, flags, ret)
+          C.configure.serial.port (fd, baud, parity, data.bits, stop.bits, flow.ctl, ret)
+          IF
+            ret >= 0
+              CHAN BOOL rs, ws:
+              PAR
+                port.reader (fd, rs?, out!)
+                port.writer (fd, ws?, in?)
+                BOOL junk:
+                SEQ
+                  shutdown ? junk
+                  rs ! TRUE
+                  file.close (fd, ret)
+                  ws ! TRUE
+                  error ! 0
+            TRUE
+              SEQ
+                error ! -2 -- FIXME: better number
+                file.close (fd, ret)
+      TRUE
+        error ! -1 -- FIXME: better number
+:
+
