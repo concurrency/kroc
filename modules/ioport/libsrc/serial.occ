@@ -121,14 +121,18 @@ PROC serial.port (VAL []BYTE device, VAL INT baud, parity, data.bits, stop.bits,
                         done OR e.read
                           SKIP
                         TRUE
-                          error ! e.number
+                          SEQ
+                            e.read := TRUE
+                            error ! e.number
                     INT e.number:
                     we ? e.number
                       IF
                         done OR e.write
                           SKIP
                         TRUE
-                          error ! e.number
+                          SEQ
+                            e.write := TRUE
+                            error ! e.number
             TRUE
               SEQ
                 error ! ret
