@@ -3117,6 +3117,7 @@ fprintf (stderr, "toutputitem: MOBILE output on MOBILE channel.  isdynmobilebarr
 			/*{{{  mobile barrier channel output*/
 			loadmobile (outputitem);
 			genchecknotnull ();
+			gensecondary (I_POP);
 
 			loadmobilepointer (outputitem);
 			texpopd_main (channelmode, channel, MANY_REGS, FALSE);
