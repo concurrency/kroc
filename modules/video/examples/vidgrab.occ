@@ -1,0 +1,276 @@
+--
+--	vidgrab.occ -- video grab test for occam-pi
+--	Copyright (C) 2008 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+-- NOTE: this should disappear eventually, replaced with decent programs in ../examples/
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "video.module"
+
+VAL []BYTE DEVICE.NAME IS "/dev/video0":
+
+
+PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
+  VIDEO.IDENTITY ident:
+  MOBILE []VIDEO.CAMINPUT caminfos:
+  VIDEO.PICTURE pict:
+  VIDEO.FRAMEINFO finf:
+  BOOL ok:
+  SEQ
+
+    --{{{  device identity
+    out.string ("vidgrab: getting device identity...*n", 0, scr!)
+
+    dev[in] ! get.identity
+    dev[out] ? CASE
+      identity; ident
+        SEQ
+          out.string ("vidgrab: device is [", 0, scr!)
+          out.string ([ident[name] FOR ident[namelen]], 0, scr!)
+          out.string ("]*n", 0, scr!)
+      MOBILE []BYTE msg:
+      error; msg
+        SEQ
+          out.string ("vidgrab: failed to get device identity: ", 0, scr!)
+          out.string (msg, 0, scr!)
+          out.string ("*n", 0, scr!)
+
+    --}}}
+    --{{{  info about available cameras
+    out.string ("vidgrab: getting information about available cameras...*n", 0, scr!)
+
+    dev[in] ! get.cameras
+    dev[out] ? CASE
+      caminfo; caminfos
+        SEQ
+          out.string ("vidgrab: got information about ", 0, scr!)
+          out.int (SIZE caminfos, 0, scr!)
+          out.string (" cameras:*n", 0, scr!)
+          SEQ i = 0 FOR SIZE caminfos
+            SEQ
+              out.int (i, 2, scr!)
+              out.string ("  ", 0, scr!)
+              out.int (caminfos[i][id], 4, scr!)
+              out.string ("  ", 0, scr!)
+              out.string ([caminfos[i][name] FOR caminfos[i][namelen]], 0, scr!)
+              out.string (" (", 0, scr!)
+              out.int (caminfos[i][minw], 0, scr!)
+              out.string ("x", 0, scr!)
+              out.int (caminfos[i][minh], 0, scr!)
+              out.string (") - (", 0, scr!)
+              out.int (caminfos[i][maxw], 0, scr!)
+              out.string ("x", 0, scr!)
+              out.int (caminfos[i][maxh], 0, scr!)
+              out.string (")*n", 0, scr!)
+      MOBILE []BYTE msg:
+      error; msg
+        SEQ
+          out.string ("vidgrab: failed to get details of cameras: ", 0, scr!)
+          out.string (msg, 0, scr!)
+          out.string ("*n", 0, scr!)
+    --}}}
+    --{{{  picture properties
+    out.string ("vidgrab: getting picture properties...*n", 0, scr!)
+
+    dev[in] ! get.picture
+    dev[out] ? CASE
+      picture; pict
+        SEQ
+          out.string ("bright:   ", 0, scr!)
+          out.int (INT pict[brightness], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("hue:      ", 0, scr!)
+          out.int (INT pict[hue], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("colour:   ", 0, scr!)
+          out.int (INT pict[colour], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("contrast: ", 0, scr!)
+          out.int (INT pict[contrast], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("white:    ", 0, scr!)
+          out.int (INT pict[whiteness], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("depth:    ", 0, scr!)
+          out.int (INT pict[hue], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("palette:  ", 0, scr!)
+          out.int (INT pict[palette], 0, scr!)
+          VAL INT pal IS INT pict[palette]:
+          IF
+            (pal >= 0) AND (pal < (SIZE VIDEO.PAL.NAMES))
+              SEQ
+                out.string (" ", 0, scr!)
+                out.string (VIDEO.PAL.NAMES[pal], 0, scr!)
+            TRUE
+              SKIP
+          out.string ("*n", 0, scr!)
+      MOBILE []BYTE msg:
+      error; msg
+        SEQ
+          out.string ("vidgrab: failed to get picture properties: ", 0, scr!)
+          out.string (msg, 0, scr!)
+          out.string ("*n", 0, scr!)
+
+    --}}}
+    --{{{  set picture format to RGB24
+    out.string ("vidgrab: setting picture format to RGB24...*n", 0, scr!)
+
+    pict[palette] := VIDEO.PAL.RGB24
+    dev[in] ! set.picture; pict
+    dev[out] ? CASE
+      picture; pict
+        SEQ
+          out.string ("vidgrab: picture format now ", 0, scr!)
+          out.int (INT pict[palette], 0, scr!)
+          VAL INT pal IS INT pict[palette]:
+          IF
+            (pal >= 0) AND (pal < (SIZE VIDEO.PAL.NAMES))
+              SEQ
+                out.string (" ", 0, scr!)
+                out.string (VIDEO.PAL.NAMES[pal], 0, scr!)
+            TRUE
+              SKIP
+          out.string ("*n", 0, scr!)
+      MOBILE []BYTE msg:
+      error; msg
+        SEQ
+          out.string ("vidgrab: failed to set picture format: ", 0, scr!)
+          out.string (msg, 0, scr!)
+          out.string ("*n", 0, scr!)
+    --}}}
+    --{{{  frame info
+    out.string ("vidgrab: getting frame info...*n", 0, scr!)
+
+    dev[in] ! get.frameinfo
+    dev[out] ? CASE
+      frameinfo; finf
+        SEQ
+          out.string ("vidgrab: frames are ", 0, scr!)
+          out.int (finf[width], 0, scr!)
+          out.string ("x", 0, scr!)
+          out.int (finf[height], 0, scr!)
+          out.string (", palette ", 0, scr!)
+          out.int (finf[format], 0, scr!)
+          VAL INT pal IS INT finf[format]:
+          IF
+            (pal >= 0) AND (pal < (SIZE VIDEO.PAL.NAMES))
+              SEQ
+                out.string (" ", 0, scr!)
+                out.string (VIDEO.PAL.NAMES[pal], 0, scr!)
+            TRUE
+              SKIP
+          out.string (", isize is ", 0, scr!)
+          out.int (finf[isize], 0, scr!)
+          out.string ("*n", 0, scr!)
+      MOBILE []BYTE msg:
+      error; msg
+        SEQ
+          out.string ("vidgrab: failed to get frame info: ", 0, scr!)
+          out.string (msg, 0, scr!)
+          out.string ("*n", 0, scr!)
+    --}}}
+    CHAN RASTER rc1, rc2:
+    PAR
+      --{{{  create raster
+      raster.display.simple ("video grab test", finf[width], finf[height], 2, rc1?, rc2!)
+
+      --}}}
+      --{{{  loop grabbing frames from the camera, put them on the screen!
+      INITIAL BOOL run IS TRUE:
+      WHILE run
+        RASTER r:
+        SEQ
+          rc2 ? r
+
+          --{{{  oki, try and get a frame of data!
+          out.string ("vidgrab: attempting to grab a video frame..*n", 0, scr!)
+
+          dev[in] ! grab.frame
+          dev[out] ? CASE
+            MOBILE [][]INT32 frame:
+            frame; frame
+              INT mx, my:
+              SEQ
+                out.string ("vidgrab: got frame! ", 0, scr!)
+                out.int (SIZE frame[0], 0, scr!)
+                out.string ("x", 0, scr!)
+                out.int (SIZE frame, 0, scr!)
+                out.string ("*n", 0, scr!)
+
+                -- slap it on the raster!
+                IF
+                  (SIZE frame) > (SIZE r)
+                    my := SIZE r
+                  TRUE
+                    my := SIZE frame
+                IF
+                  (SIZE frame[0]) > (SIZE r[0])
+                    mx := SIZE r[0]
+                  TRUE
+                    mx := SIZE frame[0]
+
+                SEQ y = 0 FOR my
+                  SEQ x = 0 FOR mx
+                    r[y][x] := INT frame[y][x]
+
+            MOBILE []BYTE msg:
+            error; msg
+              SEQ
+                out.string ("vidgrab: failed to grab frame: ", 0, scr!)
+                out.string (msg, 0, scr!)
+                out.string ("*n", 0, scr!)
+          --}}}
+
+          rc1 ! r
+
+          TIMER tim:
+          INT t:
+          SEQ
+            tim ? t
+            -- tim ? AFTER (t PLUS 1000000)
+      --}}}
+:
+
+PROC vidgrab (CHAN BYTE kyb?, scr!, err!)
+  CT.VIDEO! vcli:
+  CT.VIDEO? vsvr:
+  SEQ
+    out.string ("vidgrab: hello, opening [", 0, scr!)
+    out.string (DEVICE.NAME, 0, scr!)
+    out.string ("]*n", 0, scr!)
+
+    vcli, vsvr := MOBILE CT.VIDEO
+    PAR
+      video.server (vsvr, DEVICE.NAME)
+
+      SEQ
+        vcli[out] ? CASE
+          ok
+            vidgrab.main (vcli, kyb?, scr!)
+          MOBILE []BYTE str:
+          error; str
+            SEQ
+              out.string ("vidgrab: failed to start video server: ", 0, scr!)
+              out.string (str, 0, scr!)
+              out.string ("*n", 0, scr!)
+        vcli[return] ! vcli
+:
+
+
