@@ -1,0 +1,99 @@
+--
+--	vtest.occ -- video test for occam-pi
+--	Copyright (C) 2008 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+-- NOTE: this should disappear eventually, replaced with decent programs in ../examples/
+
+#INCLUDE "course.module"
+#INCLUDE "video.module"
+
+VAL []BYTE DEVICE.NAME IS "/dev/video0":
+
+
+PROC vtest.main (VIDEO.DEVICE dev, CHAN BYTE kyb?, scr!)
+  VIDEO.IDENTITY ident:
+  BOOL ok:
+  SEQ
+    out.string ("vtest: opened device [", 0, scr!)
+    out.string ([dev[fname] FOR dev[fnamelen]], 0, scr!)
+    out.string ("] version ", 0, scr!)
+    out.int (dev[api], 0, scr!)
+    out.string (" API*n", 0, scr!)
+
+    out.string ("vtest: getting device identity...*n", 0, scr!)
+    video.identity (dev, ident, ok)
+    IF
+      NOT ok
+        out.string ("vtest: failed to get device identity*n", 0, scr!)
+      TRUE
+        SEQ
+          out.string ("vtest: device is [", 0, scr!)
+          out.string ([ident[name] FOR ident[namelen]], 0, scr!)
+          out.string ("]*n", 0, scr!)
+
+    #IF FALSE
+    out.string ("vtest: getting device capabilities...*n", 0, scr!)
+    video.getcapability (dev, cap, ok)
+    IF
+      NOT ok
+        out.string ("vtest: failed to get device capabilities*n", 0, scr!)
+      TRUE
+        SEQ
+          out.string ("  driver: ", 0, scr!)
+          out.string ([cap[driver] FOR cap[driverlen]], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("  card: ", 0, scr!)
+          out.string ([cap[card] FOR cap[cardlen]], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("  bus-info: ", 0, scr!)
+          out.string ([cap[businfo] FOR cap[businfolen]], 0, scr!)
+          out.string ("*n", 0, scr!)
+
+          out.string ("  version: 0x", 0, scr!)
+          out.hex (INT cap[version], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("  capabilities: 0x", 0, scr!)
+          out.hex (INT cap[capabilities], 0, scr!)
+          out.string ("*n", 0, scr!)
+    #ENDIF
+:
+
+PROC vtest (CHAN BYTE kyb?, scr!, err!)
+  VIDEO.DEVICE vdev:
+  BOOL ok:
+  SEQ
+    out.string ("vtest: hello, opening [", 0, scr!)
+    out.string (DEVICE.NAME, 0, scr!)
+    out.string ("]*n", 0, scr!)
+
+    video.opendev (DEVICE.NAME, vdev, ok)
+    IF
+      NOT ok
+        out.string ("vtest: failed to open device..*n", 0, scr!)
+      TRUE
+        SEQ
+          vtest.main (vdev, kyb?, scr!)
+          video.closedev (vdev, ok)
+          IF
+            NOT ok
+              out.string ("vtest: failed to close device..*n", 0, scr!)
+            TRUE
+              SKIP
+:
+
+
