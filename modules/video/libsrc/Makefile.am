@@ -10,7 +10,12 @@ CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 EXTRA_DIST = \
 	video.inc \
 	video.occ \
-	video-v4l.c
+	video-v4l.c \
+	video-v4l.h \
+	vtest.occ
+
+tests = \
+	vtest
 
 video_lib_objs = \
 	video.tce \
@@ -22,7 +27,7 @@ video_includes = video.inc
 libs = $(video_libs)
 includes = $(video_includes)
 
-all-local: $(libs) $(includes)
+all-local: $(libs) $(includes) $(tests)
 
 video.lib: $(video_lib_objs)
 	$(OCCBUILD) --library video.lib --need raster --include video.inc $(video_lib_objs)
@@ -31,7 +36,7 @@ install-exec-local: $(libs) $(includes)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
 
 clean-local:
-	$(OCCBUILD) --clean $(libs) $(video_lib_objs)
+	$(OCCBUILD) --clean $(libs) $(video_lib_objs) $(tests)
 
 SUFFIXES = .occ .tce .lib
 
@@ -40,6 +45,9 @@ SUFFIXES = .occ .tce .lib
 
 .occ.tce:
 	$(OCCBUILD) --object $<
+
+.occ:
+	$(OCCBUILD) --program $<
 
 #{{{  dependencies
 #}}}

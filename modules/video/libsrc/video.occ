@@ -29,8 +29,79 @@
 #INCLUDE "video.inc"
 --}}}
 --{{{  external C functions
-#PRAGMA EXTERNAL "PROC B.video.v4l2.open (VAL []BYTE device, RESULT INT fd) = 3"
-#PRAGMA EXTERNAL "PROC B.video.v4l2.readrgbframe (VAL INT fd, [][]INT r) = 3"
+#PRAGMA EXTERNAL "PROC C.video.initstruct (RESULT VIDEO.DEVICE vdev) = 0"
+#PRAGMA EXTERNAL "PROC B.video.open (VIDEO.DEVICE vdev, RESULT BOOL ok) = 3"
+-- #PRAGMA EXTERNAL "PROC B.video.v4l2.readrgbframe (VAL INT fd, [][]INT r) = 3"
+-- #PRAGMA EXTERNAL "PROC C.video.v4l2.querycap (VIDEO.DEVICE vdev, RESULT V4L2.CAPABILITY cap, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.identity (VIDEO.DEVICE vdev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.close (VIDEO.DEVICE vdev, RESULT BOOL ok) = 0"
 
 --}}}
+
+
+--{{{  PROC video.opendev (...)
+--* Opens a video device.
+PROC video.opendev (VAL []BYTE fname, RESULT VIDEO.DEVICE dev, RESULT BOOL ok)
+  INT xlen:
+  SEQ
+    C.video.initstruct (dev)
+    IF
+      (SIZE fname) >= VIDEO.DEVICE.FNAMEMAX
+        xlen := VIDEO.DEVICE.FNAMEMAX
+      TRUE
+        xlen := SIZE fname
+    [dev[fname] FOR xlen] := [fname FOR xlen]
+    dev[fnamelen] := xlen
+
+    B.video.open (dev, ok)
+:
+--}}}
+--{{{  PROC video.identity (...)
+--* Identifies a video device.
+PROC video.identity (VIDEO.DEVICE dev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok)
+  SEQ
+    C.video.identity (dev, ident, ok)
+:
+--}}}
+#IF FALSE
+--{{{  PROC video.getcapability (...)
+--* Queries the capabilities of a video device.
+PROC video.getcapability (VIDEO.DEVICE dev, RESULT V4L2.CAPABILITY cap, RESULT BOOL ok)
+  SEQ
+    C.video.v4l2.querycap (dev, cap, ok)
+    IF
+      ok
+        SEQ
+          -- fill in field lengths
+          IF
+            IF i = 0 FOR SIZE cap[driver]
+              cap[driver][i] = #00
+                cap[driverlen] := i
+            TRUE
+              cap[driverlen] := SIZE cap[driver]
+          IF
+            IF i = 0 FOR SIZE cap[card]
+              cap[card][i] = #00
+                cap[cardlen] := i
+            TRUE
+              cap[cardlen] := SIZE cap[card]
+          IF
+            IF i = 0 FOR SIZE cap[businfo]
+              cap[businfo][i] = #00
+                cap[businfolen] := i
+            TRUE
+              cap[businfolen] := SIZE cap[businfo]
+      TRUE
+        SKIP
+:
+--}}}
+#ENDIF
+--{{{  PROC video.closedev (...)
+--* Closes a video device.
+PROC video.closedev (VIDEO.DEVICE dev, RESULT BOOL ok)
+  SEQ
+    C.video.close (dev, ok)
+:
+--}}}
+
 
