@@ -31,10 +31,16 @@
 --{{{  external C functions
 #PRAGMA EXTERNAL "PROC C.video.initstruct (RESULT VIDEO.DEVICE vdev) = 0"
 #PRAGMA EXTERNAL "PROC B.video.open (VIDEO.DEVICE vdev, RESULT BOOL ok) = 3"
--- #PRAGMA EXTERNAL "PROC B.video.v4l2.readrgbframe (VAL INT fd, [][]INT r) = 3"
--- #PRAGMA EXTERNAL "PROC C.video.v4l2.querycap (VIDEO.DEVICE vdev, RESULT V4L2.CAPABILITY cap, RESULT BOOL ok) = 0"
-#PRAGMA EXTERNAL "PROC C.video.identity (VIDEO.DEVICE vdev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok) = 0"
 #PRAGMA EXTERNAL "PROC C.video.close (VIDEO.DEVICE vdev, RESULT BOOL ok) = 0"
+
+-- #PRAGMA EXTERNAL "PROC B.video.v4l2.readrgbframe (VAL INT fd, [][]INT r) = 3"
+#PRAGMA EXTERNAL "PROC C.video.identity (VIDEO.DEVICE vdev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.numcams (VIDEO.DEVICE vdev, RESULT INT num) = 0"
+#PRAGMA EXTERNAL "PROC C.video.getcaminfos (VIDEO.DEVICE vdev, []VIDEO.CAMINPUT inputs) = 0"
+#PRAGMA EXTERNAL "PROC C.video.setcamera (VIDEO.DEVICE vdev, VIDEO.CAMINPUT input, RESULT BOOL ok) = 0"
+
+#PRAGMA EXTERNAL "PROC C.video.getpicture (VIDEO.DEVICE vdev, RESULT VIDEO.PICTURE picture) = 0"
+#PRAGMA EXTERNAL "PROC C.video.setpicture (VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok) = 0"
 
 --}}}
 
@@ -63,44 +69,47 @@ PROC video.identity (VIDEO.DEVICE dev, RESULT VIDEO.IDENTITY ident, RESULT BOOL 
     C.video.identity (dev, ident, ok)
 :
 --}}}
-#IF FALSE
---{{{  PROC video.getcapability (...)
---* Queries the capabilities of a video device.
-PROC video.getcapability (VIDEO.DEVICE dev, RESULT V4L2.CAPABILITY cap, RESULT BOOL ok)
+--{{{  PROC video.getcaminputs (...)
+--* Gets information about camera inputs.
+PROC video.getcaminputs (VIDEO.DEVICE dev, RESULT MOBILE []VIDEO.CAMINPUT inputs)
+  INT ninputs:
   SEQ
-    C.video.v4l2.querycap (dev, cap, ok)
+    C.video.numcams (dev, ninputs)
+    inputs := MOBILE [ninputs]VIDEO.CAMINPUT
+
     IF
-      ok
-        SEQ
-          -- fill in field lengths
-          IF
-            IF i = 0 FOR SIZE cap[driver]
-              cap[driver][i] = #00
-                cap[driverlen] := i
-            TRUE
-              cap[driverlen] := SIZE cap[driver]
-          IF
-            IF i = 0 FOR SIZE cap[card]
-              cap[card][i] = #00
-                cap[cardlen] := i
-            TRUE
-              cap[cardlen] := SIZE cap[card]
-          IF
-            IF i = 0 FOR SIZE cap[businfo]
-              cap[businfo][i] = #00
-                cap[businfolen] := i
-            TRUE
-              cap[businfolen] := SIZE cap[businfo]
+      ninputs > 0
+        C.video.getcaminfos (dev, inputs)
       TRUE
         SKIP
 :
 --}}}
-#ENDIF
 --{{{  PROC video.closedev (...)
 --* Closes a video device.
 PROC video.closedev (VIDEO.DEVICE dev, RESULT BOOL ok)
   SEQ
     C.video.close (dev, ok)
+:
+--}}}
+--{{{  PROC video.setcamera (...)
+--* Sets the particular video camera to use.
+PROC video.setcamera (VIDEO.DEVICE dev, VIDEO.CAMINPUT input, RESULT BOOL ok)
+  SEQ
+    C.video.setcamera (dev, input, ok)
+:
+--}}}
+--{{{  PROC video.getpicture (...)
+--* Gets the current picture properties (brightness, etc.)
+PROC video.getpicture (VIDEO.DEVICE dev, RESULT VIDEO.PICTURE picture)
+  SEQ
+    C.video.getpicture (dev, picture)
+:
+--}}}
+--{{{  PROC video.setpicture (...)
+--* Sets the current picture properties (brightness, etc.)
+PROC video.setpicture (VIDEO.DEVICE dev, VIDEO.PICTURE picture, RESULT BOOL ok)
+  SEQ
+    C.video.setpicture (dev, picture, ok)
 :
 --}}}
 

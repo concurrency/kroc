@@ -20,7 +20,6 @@
 #ifndef __VIDEO_V4L_H
 #define __VIDEO_V4L_H
 
-#define OPI_VIDEO_IDENTITY_NAMEMAX 64
 #define OPI_VIDEO_DEVICE_FNAMEMAX 128
 
 typedef struct opi_video_device {
@@ -30,11 +29,24 @@ typedef struct opi_video_device {
 	int api;
 } opi_video_device_t;
 
+#define OPI_VIDEO_IDENTITY_NAMEMAX 64
+
 typedef struct opi_video_identity {
 	char name[OPI_VIDEO_IDENTITY_NAMEMAX];
 	int namelen;
 } opi_video_identity_t;
 
+#define OPI_VIDEO_CAMINPUT_NAMEMAX 64
+
+typedef struct opi_video_caminput {
+	int id;
+	char name[OPI_VIDEO_CAMINPUT_NAMEMAX];
+	int namelen;
+	int minw;
+	int minh;
+	int maxw;
+	int maxh;
+} opi_video_caminput_t;
 
 #endif	/* !__VIDEO_V4L_H */
 
