@@ -48,5 +48,22 @@ typedef struct opi_video_caminput {
 	int maxh;
 } opi_video_caminput_t;
 
+typedef struct opi_video_iodata {
+	int use_mmap;
+	int mmap_addr;
+	int mmap_size;
+	int width;
+	int height;
+	int format;
+	int isize;
+} opi_video_iodata_t;
+
+typedef struct opi_video_frameinfo {
+	int width;
+	int height;
+	int format;
+	int isize;
+} opi_video_frameinfo_t;
+
 #endif	/* !__VIDEO_V4L_H */
 

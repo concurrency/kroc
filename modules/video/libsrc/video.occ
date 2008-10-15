@@ -28,6 +28,37 @@
 #INCLUDE "raster.module"
 #INCLUDE "video.inc"
 --}}}
+--{{{  private structures
+
+--{{{  VIDEO.DEVICE
+--* Maximum length of a video device name.
+VAL INT VIDEO.DEVICE.FNAMEMAX IS 128:
+
+--* Generic video device information.
+DATA TYPE VIDEO.DEVICE
+  PACKED RECORD
+    [VIDEO.DEVICE.FNAMEMAX]BYTE fname:
+    INT fnamelen:
+    INT fd:
+    INT api:
+:
+
+--}}}
+--{{{  VIDEO.IODATA
+--* Describes how video data is accessed (including width/height).
+DATA TYPE VIDEO.IODATA
+  PACKED RECORD
+    INT use.mmap:
+    INT mmap.addr:
+    INT mmap.size:
+    INT width:
+    INT height:
+    INT format:             -- one of the VIDEO.PAL.... constants
+    INT isize:
+:
+  
+--}}}
+--}}}
 --{{{  external C functions
 #PRAGMA EXTERNAL "PROC C.video.initstruct (RESULT VIDEO.DEVICE vdev) = 0"
 #PRAGMA EXTERNAL "PROC B.video.open (VIDEO.DEVICE vdev, RESULT BOOL ok) = 3"
@@ -42,74 +73,261 @@
 #PRAGMA EXTERNAL "PROC C.video.getpicture (VIDEO.DEVICE vdev, RESULT VIDEO.PICTURE picture) = 0"
 #PRAGMA EXTERNAL "PROC C.video.setpicture (VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok) = 0"
 
+#PRAGMA EXTERNAL "PROC C.video.initio (VIDEO.DEVICE vdev, RESULT VIDEO.IODATA iod) = 0"
+#PRAGMA EXTERNAL "PROC C.video.shutdownio (VIDEO.DEVICE vdev, VIDEO.IODATA iod) = 0"
+
+#PRAGMA EXTERNAL "PROC C.video.startcapture (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC B.video.waitframe (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, [][]INT32 buffer, RESULT BOOL ok) = 3"
+
 --}}}
 
 
---{{{  PROC video.opendev (...)
---* Opens a video device.
-PROC video.opendev (VAL []BYTE fname, RESULT VIDEO.DEVICE dev, RESULT BOOL ok)
-  INT xlen:
+
+--{{{  PROC video.server (...)
+--* This process implements a video server for a particular V4L device.
+-- Once initialised, this will output either 'ok' or 'error' to the client.
+PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
+  --{{{  PROC video.opendev (...)
+  --* Opens a video device.
+  -- @private
+  PROC video.opendev (VAL []BYTE fname, RESULT VIDEO.DEVICE dev, RESULT BOOL ok)
+    INT xlen:
+    SEQ
+      C.video.initstruct (dev)
+      IF
+        (SIZE fname) >= VIDEO.DEVICE.FNAMEMAX
+          xlen := VIDEO.DEVICE.FNAMEMAX
+        TRUE
+          xlen := SIZE fname
+      [dev[fname] FOR xlen] := [fname FOR xlen]
+      dev[fnamelen] := xlen
+
+      B.video.open (dev, ok)
+  :
+  --}}}
+  --{{{  PROC video.closedev (...)
+  --* Closes a video device.
+  -- @private
+  PROC video.closedev (VIDEO.DEVICE dev, RESULT BOOL ok)
+    SEQ
+      C.video.close (dev, ok)
+  :
+  --}}}
+  --{{{  PROC video.identity (...)
+  --* Identifies a video device.
+  -- @private
+  PROC video.identity (VIDEO.DEVICE dev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok)
+    SEQ
+      C.video.identity (dev, ident, ok)
+  :
+  --}}}
+  --{{{  PROC video.getcaminputs (...)
+  --* Gets information about camera inputs.
+  -- @private
+  PROC video.getcaminputs (VIDEO.DEVICE dev, RESULT MOBILE []VIDEO.CAMINPUT inputs)
+    INT ninputs:
+    SEQ
+      C.video.numcams (dev, ninputs)
+      inputs := MOBILE [ninputs]VIDEO.CAMINPUT
+
+      IF
+        ninputs > 0
+          C.video.getcaminfos (dev, inputs)
+        TRUE
+          SKIP
+  :
+  --}}}
+  --{{{  PROC video.setcamera (...)
+  --* Sets the particular video camera to use.
+  -- @private
+  PROC video.setcamera (VIDEO.DEVICE dev, VIDEO.CAMINPUT input, RESULT BOOL ok)
+    SEQ
+      C.video.setcamera (dev, input, ok)
+  :
+  --}}}
+  --{{{  PROC video.getpicture (...)
+  --* Gets the current picture properties (brightness, etc.)
+  -- @private
+  PROC video.getpicture (VIDEO.DEVICE dev, RESULT VIDEO.PICTURE picture)
+    SEQ
+      C.video.getpicture (dev, picture)
+  :
+  --}}}
+  --{{{  PROC video.setpicture (...)
+  --* Sets the current picture properties (brightness, etc.)
+  -- @private
+  PROC video.setpicture (VIDEO.DEVICE dev, VIDEO.PICTURE picture, RESULT BOOL ok)
+    SEQ
+      C.video.setpicture (dev, picture, ok)
+  :
+  --}}}
+  --{{{  PROC video.initio (...)
+  --* Initialises video I/O.
+  -- @private
+  PROC video.initio (VIDEO.DEVICE dev, RESULT VIDEO.IODATA iod)
+    SEQ
+      C.video.initio (dev, iod)
+  :
+  --}}}
+  --{{{  PROC video.shutdownio (...)
+  --* Shuts down video I/O.
+  -- @private
+  PROC video.shutdownio (VIDEO.DEVICE dev, VIDEO.IODATA iod)
+    SEQ
+      C.video.shutdownio (dev, iod)
+  :
+  --}}}
+  --{{{  PROC video.startcapture (...)
+  --* Starts video capture.
+  -- @private
+  PROC video.startcapture (VIDEO.DEVICE dev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, RESULT BOOL ok)
+    SEQ
+      C.video.startcapture (dev, iod, finf, ok)
+  :
+  --}}}
+  --{{{  PROC video.waitframe (...)
+  --* Waits for a complete video frame to be captured.
+  -- @private
+  PROC video.waitframe (VIDEO.DEVICE dev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, [][]INT32 buffer, RESULT BOOL ok)
+    SEQ
+      B.video.waitframe (dev, iod, finf, buffer, ok)
+  :
+  --}}}
+  --{{{  PROC calc.isize (...)
+  --* Calculates image size
+  -- @private
+  PROC calc.isize (VIDEO.FRAMEINFO finfo)
+    CASE INT16 finfo[format]
+      VIDEO.PAL.INVALID
+        finfo[isize] := 0
+      VIDEO.PAL.GRAY
+        finfo[isize] := finfo[width] * finfo[height]
+      VIDEO.PAL.YUV420P
+        finfo[isize] := ((finfo[width] * finfo[height]) * 3) / 2
+      VIDEO.PAL.YUYV
+        finfo[isize] := (finfo[width] * finfo[height]) * 2
+      VIDEO.PAL.YUV422
+        finfo[isize] := (finfo[width] * finfo[height]) * 2
+      VIDEO.PAL.RGB24
+        finfo[isize] := (finfo[width] * finfo[height]) * 3
+      VIDEO.PAL.RGB32
+        finfo[isize] := (finfo[width] * finfo[height]) * 4
+      ELSE
+        finfo[isize] := 0
+  :
+  --}}}
+
+  VIDEO.DEVICE vdev:
+  BOOL ok:
   SEQ
-    C.video.initstruct (dev)
+    video.opendev (device, vdev, ok)
     IF
-      (SIZE fname) >= VIDEO.DEVICE.FNAMEMAX
-        xlen := VIDEO.DEVICE.FNAMEMAX
+      NOT ok
+        vsvr[out] ! error; "failed to open video device"
       TRUE
-        xlen := SIZE fname
-    [dev[fname] FOR xlen] := [fname FOR xlen]
-    dev[fnamelen] := xlen
+        VIDEO.IDENTITY ident:
+        SEQ
+          video.identity (vdev, ident, ok)
+          IF
+            NOT ok
+              vsvr[out] ! error; "failed to identify video device"
+            TRUE
+              MOBILE []VIDEO.CAMINPUT inputs:
+              SEQ
+                video.getcaminputs (vdev, inputs)
 
-    B.video.open (dev, ok)
-:
---}}}
---{{{  PROC video.identity (...)
---* Identifies a video device.
-PROC video.identity (VIDEO.DEVICE dev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok)
-  SEQ
-    C.video.identity (dev, ident, ok)
-:
---}}}
---{{{  PROC video.getcaminputs (...)
---* Gets information about camera inputs.
-PROC video.getcaminputs (VIDEO.DEVICE dev, RESULT MOBILE []VIDEO.CAMINPUT inputs)
-  INT ninputs:
-  SEQ
-    C.video.numcams (dev, ninputs)
-    inputs := MOBILE [ninputs]VIDEO.CAMINPUT
+                IF
+                  (SIZE inputs) = 0
+                    vsvr[out] ! error; "no camera inputs on this device"
+                  TRUE
+                    VIDEO.CAMINPUT selinput:
+                    VIDEO.IODATA iodata:
+                    SEQ
+                      #PRAGMA DEFINED inputs
+                      vsvr[out] ! ok
 
-    IF
-      ninputs > 0
-        C.video.getcaminfos (dev, inputs)
-      TRUE
-        SKIP
-:
---}}}
---{{{  PROC video.closedev (...)
---* Closes a video device.
-PROC video.closedev (VIDEO.DEVICE dev, RESULT BOOL ok)
-  SEQ
-    C.video.close (dev, ok)
-:
---}}}
---{{{  PROC video.setcamera (...)
---* Sets the particular video camera to use.
-PROC video.setcamera (VIDEO.DEVICE dev, VIDEO.CAMINPUT input, RESULT BOOL ok)
-  SEQ
-    C.video.setcamera (dev, input, ok)
-:
---}}}
---{{{  PROC video.getpicture (...)
---* Gets the current picture properties (brightness, etc.)
-PROC video.getpicture (VIDEO.DEVICE dev, RESULT VIDEO.PICTURE picture)
-  SEQ
-    C.video.getpicture (dev, picture)
-:
---}}}
---{{{  PROC video.setpicture (...)
---* Sets the current picture properties (brightness, etc.)
-PROC video.setpicture (VIDEO.DEVICE dev, VIDEO.PICTURE picture, RESULT BOOL ok)
-  SEQ
-    C.video.setpicture (dev, picture, ok)
+                      selinput := inputs[0]
+                      video.setcamera (vdev, selinput, ok)
+
+                      video.initio (vdev, iodata)
+                      #PRAGMA DEFINED iodata
+
+                      INITIAL BOOL running IS TRUE:
+                      WHILE running
+                        PRI ALT
+                          vsvr[in] ? CASE
+                            get.identity
+                              vsvr[out] ! identity; ident
+                            get.cameras
+                              MOBILE []VIDEO.CAMINPUT copy:
+                              SEQ
+                                copy := MOBILE [SIZE inputs]VIDEO.CAMINPUT
+                                #PRAGMA DEFINED copy
+                                SEQ i = 0 FOR SIZE inputs
+                                  copy[i] := inputs[i]
+                                vsvr[out] ! caminfo; copy
+                            get.picture
+                              VIDEO.PICTURE pict:
+                              SEQ
+                                video.getpicture (vdev, pict)
+                                vsvr[out] ! picture; pict
+                            VIDEO.PICTURE pict:
+                            set.picture; pict
+                              SEQ
+                                video.setpicture (vdev, pict, ok)
+                                IF
+                                  NOT ok
+                                    vsvr[out] ! error; "failed to set picture properties"
+                                  TRUE
+                                    vsvr[out] ! picture; pict
+                            get.frameinfo
+                              VIDEO.FRAMEINFO finf:
+                              VIDEO.PICTURE pict:
+                              SEQ
+                                video.getpicture (vdev, pict)
+                                #PRAGMA DEFINED pict
+                                finf[width] := iodata[width]
+                                finf[height] := iodata[height]
+                                finf[format] := INT pict[palette]
+                                #PRAGMA DEFINED finf
+                                calc.isize (finf)
+                                vsvr[out] ! frameinfo; finf
+                            grab.frame
+                              VIDEO.FRAMEINFO finf:
+                              VIDEO.PICTURE pict:
+                              BOOL ok:
+                              SEQ
+                                video.getpicture (vdev, pict)
+                                #PRAGMA DEFINED pict
+                                finf[width] := iodata[width]
+                                finf[height] := iodata[height]
+                                finf[format] := INT pict[palette]
+                                #PRAGMA DEFINED finf
+                                calc.isize (finf)
+
+                                video.startcapture (vdev, iodata, finf, ok)
+                                IF
+                                  NOT ok
+                                    vsvr[out] ! error; "failed to start capture"
+                                  TRUE
+                                    MOBILE [][]INT32 frame:
+                                    SEQ
+                                      -- started capture, now wait for it
+                                      frame := MOBILE [finf[height]][finf[width]]INT32
+                                      video.waitframe (vdev, iodata, finf, frame, ok)
+
+                                      IF
+                                        ok
+                                          vsvr[out] ! frame; frame
+                                        TRUE
+                                          vsvr[out] ! error; "failed to capture frame"
+                          CT.VIDEO! cli:
+                          vsvr[return] ? cli
+                            running := FALSE
+
+                      video.shutdownio (vdev, iodata)
+
+          video.closedev (vdev, ok)
 :
 --}}}
 

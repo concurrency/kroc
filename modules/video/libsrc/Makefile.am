@@ -12,6 +12,9 @@ EXTRA_DIST = \
 	video.occ \
 	video-v4l.c \
 	video-v4l.h \
+	ccvt.h \
+	ccvt_types.h \
+	ccvt_misc.c \
 	vtest.occ
 
 tests = \
@@ -19,7 +22,8 @@ tests = \
 
 video_lib_objs = \
 	video.tce \
-	video-v4l.o
+	video-v4l.o \
+	ccvt_misc.o
 
 video_libs = video.lib
 video_includes = video.inc

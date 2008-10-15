@@ -25,117 +25,211 @@
 VAL []BYTE DEVICE.NAME IS "/dev/video0":
 
 
-PROC vtest.main (VIDEO.DEVICE dev, CHAN BYTE kyb?, scr!)
+PROC vtest.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
   VIDEO.IDENTITY ident:
+  MOBILE []VIDEO.CAMINPUT caminfos:
+  VIDEO.PICTURE pict:
+  VIDEO.FRAMEINFO finf:
   BOOL ok:
   SEQ
-    out.string ("vtest: opened device [", 0, scr!)
-    out.string ([dev[fname] FOR dev[fnamelen]], 0, scr!)
-    out.string ("] version ", 0, scr!)
-    out.int (dev[api], 0, scr!)
-    out.string (" API*n", 0, scr!)
 
+    --{{{  device identity
     out.string ("vtest: getting device identity...*n", 0, scr!)
-    video.identity (dev, ident, ok)
-    IF
-      NOT ok
-        out.string ("vtest: failed to get device identity*n", 0, scr!)
-      TRUE
+
+    dev[in] ! get.identity
+    dev[out] ? CASE
+      identity; ident
         SEQ
           out.string ("vtest: device is [", 0, scr!)
           out.string ([ident[name] FOR ident[namelen]], 0, scr!)
           out.string ("]*n", 0, scr!)
+      MOBILE []BYTE msg:
+      error; msg
+        SEQ
+          out.string ("vtest: failed to get device identity: ", 0, scr!)
+          out.string (msg, 0, scr!)
+          out.string ("*n", 0, scr!)
 
+    --}}}
+    --{{{  info about available cameras
     out.string ("vtest: getting information about available cameras...*n", 0, scr!)
 
-    MOBILE []VIDEO.CAMINPUT caminfos:
-    SEQ
-      video.getcaminputs (dev, caminfos)
-
-      out.string ("vtest: got information about ", 0, scr!)
-      out.int (SIZE caminfos, 0, scr!)
-      out.string (" cameras:*n", 0, scr!)
-      SEQ i = 0 FOR SIZE caminfos
+    dev[in] ! get.cameras
+    dev[out] ? CASE
+      caminfo; caminfos
         SEQ
-          out.int (i, 2, scr!)
-          out.string ("  ", 0, scr!)
-          out.int (caminfos[i][id], 4, scr!)
-          out.string ("  ", 0, scr!)
-          out.string ([caminfos[i][name] FOR caminfos[i][namelen]], 0, scr!)
-          out.string (" (", 0, scr!)
-          out.int (caminfos[i][minw], 0, scr!)
-          out.string ("x", 0, scr!)
-          out.int (caminfos[i][minh], 0, scr!)
-          out.string (") - (", 0, scr!)
-          out.int (caminfos[i][maxw], 0, scr!)
-          out.string ("x", 0, scr!)
-          out.int (caminfos[i][maxh], 0, scr!)
-          out.string (")*n", 0, scr!)
-
-      out.string ("vtest: selecting first camera...*n", 0, scr!)
-      video.setcamera (dev, caminfos[0], ok)
-      IF
-        NOT ok
-          out.string ("vtest: failed to select first camera...*n", 0, scr!)
-        TRUE
-          out.string ("vtest: first camera selected.*n", 0, scr!)
-
-      VIDEO.PICTURE pict:
-      SEQ
-        out.string ("vtest: getting picture properties...*n", 0, scr!)
-        video.getpicture (dev, pict)
-        out.string ("bright:   ", 0, scr!)
-        out.int (INT pict[brightness], 0, scr!)
-        out.string ("*n", 0, scr!)
-        out.string ("hue:      ", 0, scr!)
-        out.int (INT pict[hue], 0, scr!)
-        out.string ("*n", 0, scr!)
-        out.string ("colour:   ", 0, scr!)
-        out.int (INT pict[colour], 0, scr!)
-        out.string ("*n", 0, scr!)
-        out.string ("contrast: ", 0, scr!)
-        out.int (INT pict[contrast], 0, scr!)
-        out.string ("*n", 0, scr!)
-        out.string ("white:    ", 0, scr!)
-        out.int (INT pict[whiteness], 0, scr!)
-        out.string ("*n", 0, scr!)
-        out.string ("depth:    ", 0, scr!)
-        out.int (INT pict[hue], 0, scr!)
-        out.string ("*n", 0, scr!)
-        out.string ("palette:  ", 0, scr!)
-        out.int (INT pict[palette], 0, scr!)
-        VAL INT pal IS INT pict[palette]:
-        IF
-          (pal >= 0) AND (pal < (SIZE VIDEO.PAL.NAMES))
+          out.string ("vtest: got information about ", 0, scr!)
+          out.int (SIZE caminfos, 0, scr!)
+          out.string (" cameras:*n", 0, scr!)
+          SEQ i = 0 FOR SIZE caminfos
             SEQ
-              out.string (" ", 0, scr!)
-              out.string (VIDEO.PAL.NAMES[pal], 0, scr!)
-          TRUE
-            SKIP
-        out.string ("*n", 0, scr!)
+              out.int (i, 2, scr!)
+              out.string ("  ", 0, scr!)
+              out.int (caminfos[i][id], 4, scr!)
+              out.string ("  ", 0, scr!)
+              out.string ([caminfos[i][name] FOR caminfos[i][namelen]], 0, scr!)
+              out.string (" (", 0, scr!)
+              out.int (caminfos[i][minw], 0, scr!)
+              out.string ("x", 0, scr!)
+              out.int (caminfos[i][minh], 0, scr!)
+              out.string (") - (", 0, scr!)
+              out.int (caminfos[i][maxw], 0, scr!)
+              out.string ("x", 0, scr!)
+              out.int (caminfos[i][maxh], 0, scr!)
+              out.string (")*n", 0, scr!)
+      MOBILE []BYTE msg:
+      error; msg
+        SEQ
+          out.string ("vtest: failed to get details of cameras: ", 0, scr!)
+          out.string (msg, 0, scr!)
+          out.string ("*n", 0, scr!)
+    --}}}
+    --{{{  picture properties
+    out.string ("vtest: getting picture properties...*n", 0, scr!)
+
+    dev[in] ! get.picture
+    dev[out] ? CASE
+      picture; pict
+        SEQ
+          out.string ("bright:   ", 0, scr!)
+          out.int (INT pict[brightness], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("hue:      ", 0, scr!)
+          out.int (INT pict[hue], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("colour:   ", 0, scr!)
+          out.int (INT pict[colour], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("contrast: ", 0, scr!)
+          out.int (INT pict[contrast], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("white:    ", 0, scr!)
+          out.int (INT pict[whiteness], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("depth:    ", 0, scr!)
+          out.int (INT pict[hue], 0, scr!)
+          out.string ("*n", 0, scr!)
+          out.string ("palette:  ", 0, scr!)
+          out.int (INT pict[palette], 0, scr!)
+          VAL INT pal IS INT pict[palette]:
+          IF
+            (pal >= 0) AND (pal < (SIZE VIDEO.PAL.NAMES))
+              SEQ
+                out.string (" ", 0, scr!)
+                out.string (VIDEO.PAL.NAMES[pal], 0, scr!)
+            TRUE
+              SKIP
+          out.string ("*n", 0, scr!)
+      MOBILE []BYTE msg:
+      error; msg
+        SEQ
+          out.string ("vtest: failed to get picture properties: ", 0, scr!)
+          out.string (msg, 0, scr!)
+          out.string ("*n", 0, scr!)
+
+    --}}}
+    --{{{  set picture format to RGB24
+    out.string ("vtest: setting picture format to RGB24...*n", 0, scr!)
+
+    pict[palette] := VIDEO.PAL.RGB24
+    dev[in] ! set.picture; pict
+    dev[out] ? CASE
+      picture; pict
+        SEQ
+          out.string ("vtest: picture format now ", 0, scr!)
+          out.int (INT pict[palette], 0, scr!)
+          VAL INT pal IS INT pict[palette]:
+          IF
+            (pal >= 0) AND (pal < (SIZE VIDEO.PAL.NAMES))
+              SEQ
+                out.string (" ", 0, scr!)
+                out.string (VIDEO.PAL.NAMES[pal], 0, scr!)
+            TRUE
+              SKIP
+          out.string ("*n", 0, scr!)
+      MOBILE []BYTE msg:
+      error; msg
+        SEQ
+          out.string ("vtest: failed to set picture format: ", 0, scr!)
+          out.string (msg, 0, scr!)
+          out.string ("*n", 0, scr!)
+    --}}}
+    --{{{  frame info
+    out.string ("vtest: getting frame info...*n", 0, scr!)
+
+    dev[in] ! get.frameinfo
+    dev[out] ? CASE
+      frameinfo; finf
+        SEQ
+          out.string ("vtest: frames are ", 0, scr!)
+          out.int (finf[width], 0, scr!)
+          out.string ("x", 0, scr!)
+          out.int (finf[height], 0, scr!)
+          out.string (", palette ", 0, scr!)
+          out.int (finf[format], 0, scr!)
+          VAL INT pal IS INT finf[format]:
+          IF
+            (pal >= 0) AND (pal < (SIZE VIDEO.PAL.NAMES))
+              SEQ
+                out.string (" ", 0, scr!)
+                out.string (VIDEO.PAL.NAMES[pal], 0, scr!)
+            TRUE
+              SKIP
+          out.string (", isize is ", 0, scr!)
+          out.int (finf[isize], 0, scr!)
+          out.string ("*n", 0, scr!)
+      MOBILE []BYTE msg:
+      error; msg
+        SEQ
+          out.string ("vtest: failed to get frame info: ", 0, scr!)
+          out.string (msg, 0, scr!)
+          out.string ("*n", 0, scr!)
+    --}}}
+    --{{{  oki, try and get a frame of data!
+    out.string ("vtest: attempting to grab a video frame..*n", 0, scr!)
+
+    dev[in] ! grab.frame
+    dev[out] ? CASE
+      MOBILE [][]INT32 frame:
+      frame; frame
+        SEQ
+          out.string ("vtest: got frame! ", 0, scr!)
+          out.int (SIZE frame[0], 0, scr!)
+          out.string ("x", 0, scr!)
+          out.int (SIZE frame, 0, scr!)
+          out.string ("*n", 0, scr!)
+      MOBILE []BYTE msg:
+      error; msg
+        SEQ
+          out.string ("vtest: failed to grab frame: ", 0, scr!)
+          out.string (msg, 0, scr!)
+          out.string ("*n", 0, scr!)
+    --}}}
 :
 
 PROC vtest (CHAN BYTE kyb?, scr!, err!)
-  VIDEO.DEVICE vdev:
-  BOOL ok:
+  CT.VIDEO! vcli:
+  CT.VIDEO? vsvr:
   SEQ
     out.string ("vtest: hello, opening [", 0, scr!)
     out.string (DEVICE.NAME, 0, scr!)
     out.string ("]*n", 0, scr!)
 
-    video.opendev (DEVICE.NAME, vdev, ok)
-    IF
-      NOT ok
-        out.string ("vtest: failed to open device..*n", 0, scr!)
-      TRUE
-        SEQ
-          vtest.main (vdev, kyb?, scr!)
-          video.closedev (vdev, ok)
-          IF
-            NOT ok
-              out.string ("vtest: failed to close device..*n", 0, scr!)
-            TRUE
-              SKIP
+    vcli, vsvr := MOBILE CT.VIDEO
+    PAR
+      video.server (vsvr, DEVICE.NAME)
+
+      SEQ
+        vcli[out] ? CASE
+          ok
+            vtest.main (vcli, kyb?, scr!)
+          MOBILE []BYTE str:
+          error; str
+            SEQ
+              out.string ("vtest: failed to start video server: ", 0, scr!)
+              out.string (str, 0, scr!)
+              out.string ("*n", 0, scr!)
+        vcli[return] ! vcli
 :
 
 
