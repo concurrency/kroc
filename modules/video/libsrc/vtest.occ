@@ -46,31 +46,73 @@ PROC vtest.main (VIDEO.DEVICE dev, CHAN BYTE kyb?, scr!)
           out.string ([ident[name] FOR ident[namelen]], 0, scr!)
           out.string ("]*n", 0, scr!)
 
-    #IF FALSE
-    out.string ("vtest: getting device capabilities...*n", 0, scr!)
-    video.getcapability (dev, cap, ok)
-    IF
-      NOT ok
-        out.string ("vtest: failed to get device capabilities*n", 0, scr!)
-      TRUE
-        SEQ
-          out.string ("  driver: ", 0, scr!)
-          out.string ([cap[driver] FOR cap[driverlen]], 0, scr!)
-          out.string ("*n", 0, scr!)
-          out.string ("  card: ", 0, scr!)
-          out.string ([cap[card] FOR cap[cardlen]], 0, scr!)
-          out.string ("*n", 0, scr!)
-          out.string ("  bus-info: ", 0, scr!)
-          out.string ([cap[businfo] FOR cap[businfolen]], 0, scr!)
-          out.string ("*n", 0, scr!)
+    out.string ("vtest: getting information about available cameras...*n", 0, scr!)
 
-          out.string ("  version: 0x", 0, scr!)
-          out.hex (INT cap[version], 0, scr!)
-          out.string ("*n", 0, scr!)
-          out.string ("  capabilities: 0x", 0, scr!)
-          out.hex (INT cap[capabilities], 0, scr!)
-          out.string ("*n", 0, scr!)
-    #ENDIF
+    MOBILE []VIDEO.CAMINPUT caminfos:
+    SEQ
+      video.getcaminputs (dev, caminfos)
+
+      out.string ("vtest: got information about ", 0, scr!)
+      out.int (SIZE caminfos, 0, scr!)
+      out.string (" cameras:*n", 0, scr!)
+      SEQ i = 0 FOR SIZE caminfos
+        SEQ
+          out.int (i, 2, scr!)
+          out.string ("  ", 0, scr!)
+          out.int (caminfos[i][id], 4, scr!)
+          out.string ("  ", 0, scr!)
+          out.string ([caminfos[i][name] FOR caminfos[i][namelen]], 0, scr!)
+          out.string (" (", 0, scr!)
+          out.int (caminfos[i][minw], 0, scr!)
+          out.string ("x", 0, scr!)
+          out.int (caminfos[i][minh], 0, scr!)
+          out.string (") - (", 0, scr!)
+          out.int (caminfos[i][maxw], 0, scr!)
+          out.string ("x", 0, scr!)
+          out.int (caminfos[i][maxh], 0, scr!)
+          out.string (")*n", 0, scr!)
+
+      out.string ("vtest: selecting first camera...*n", 0, scr!)
+      video.setcamera (dev, caminfos[0], ok)
+      IF
+        NOT ok
+          out.string ("vtest: failed to select first camera...*n", 0, scr!)
+        TRUE
+          out.string ("vtest: first camera selected.*n", 0, scr!)
+
+      VIDEO.PICTURE pict:
+      SEQ
+        out.string ("vtest: getting picture properties...*n", 0, scr!)
+        video.getpicture (dev, pict)
+        out.string ("bright:   ", 0, scr!)
+        out.int (INT pict[brightness], 0, scr!)
+        out.string ("*n", 0, scr!)
+        out.string ("hue:      ", 0, scr!)
+        out.int (INT pict[hue], 0, scr!)
+        out.string ("*n", 0, scr!)
+        out.string ("colour:   ", 0, scr!)
+        out.int (INT pict[colour], 0, scr!)
+        out.string ("*n", 0, scr!)
+        out.string ("contrast: ", 0, scr!)
+        out.int (INT pict[contrast], 0, scr!)
+        out.string ("*n", 0, scr!)
+        out.string ("white:    ", 0, scr!)
+        out.int (INT pict[whiteness], 0, scr!)
+        out.string ("*n", 0, scr!)
+        out.string ("depth:    ", 0, scr!)
+        out.int (INT pict[hue], 0, scr!)
+        out.string ("*n", 0, scr!)
+        out.string ("palette:  ", 0, scr!)
+        out.int (INT pict[palette], 0, scr!)
+        VAL INT pal IS INT pict[palette]:
+        IF
+          (pal >= 0) AND (pal < (SIZE VIDEO.PAL.NAMES))
+            SEQ
+              out.string (" ", 0, scr!)
+              out.string (VIDEO.PAL.NAMES[pal], 0, scr!)
+          TRUE
+            SKIP
+        out.string ("*n", 0, scr!)
 :
 
 PROC vtest (CHAN BYTE kyb?, scr!, err!)

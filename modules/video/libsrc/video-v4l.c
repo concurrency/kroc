@@ -88,6 +88,18 @@ static inline void video_open (opi_video_device_t *dev, int *ok) /*{{{*/
 	}
 }
 /*}}}*/
+static inline void video_close (opi_video_device_t *dev, int *ok) /*{{{*/
+{
+	*ok = 0;
+	if (dev->fd >= 0) {
+		if (close (dev->fd) == 0) {
+			dev->fd = -1;
+			*ok = 1;
+		}
+	}
+}
+/*}}}*/
+
 static inline void video_identity (opi_video_device_t *dev, opi_video_identity_t *ident, int *ok) /*{{{*/
 {
 	if (dev->fd < 0) {
@@ -120,29 +132,143 @@ static inline void video_identity (opi_video_device_t *dev, opi_video_identity_t
 	}
 }
 /*}}}*/
-static inline void video_v4l2_querycap (opi_video_device_t *dev, struct v4l2_capability *cap, int *ok) /*{{{*/
+static inline void video_numcams (opi_video_device_t *dev, int *num) /*{{{*/
 {
-	memset (cap, 0, sizeof (struct v4l2_capability));
-
-	*ok = 0;
-	if (dev->fd >= 0) {
+	if (dev->fd < 0) {
+		*num = 0;
+	} else if (dev->api == 1) {
+		struct video_capability vcap;
 		int r;
 
-		while (((r = ioctl (dev->fd, VIDIOC_QUERYCAP, cap)) == -1) && (errno == EINTR));		/* retry */
+		*num = 0;
+		while (((r = ioctl (dev->fd, VIDIOCGCAP, &vcap)) == -1) && (errno == EINTR));				/* retry */
 		if (r >= 0) {
-			*ok = 1;
+			int i;
+
+			for (i=0; i<vcap.channels; i++) {
+				struct video_channel cinf;
+
+				cinf.channel = i;
+				while (((r = ioctl (dev->fd, VIDIOCGCHAN, &cinf)) == -1) && (errno == EINTR));		/* retry */
+				if ((r >= 0) && (cinf.type & VIDEO_TYPE_CAMERA)) {
+					*num = *num + 1;
+				}
+			}
 		}
+	} else if (dev->api == 2) {
+		/* FIXME! */
+		*num = 0;
+	} else {
+		*num = 0;
 	}
 }
 /*}}}*/
-static inline void video_close (opi_video_device_t *dev, int *ok) /*{{{*/
+static inline void video_getcaminfos (opi_video_device_t *dev, opi_video_caminput_t *inputs, int numinputs) /*{{{*/
 {
-	*ok = 0;
-	if (dev->fd >= 0) {
-		if (close (dev->fd) == 0) {
-			dev->fd = -1;
-			*ok = 1;
+	int channo = 0;
+
+	if (dev->fd < 0) {
+		/* nothing */
+	} else if (dev->api == 1) {
+		struct video_capability vcap;
+		int r;
+
+		while (((r = ioctl (dev->fd, VIDIOCGCAP, &vcap)) == -1) && (errno == EINTR));				/* retry */
+		if (r >= 0) {
+			int i;
+
+			for (i=0; (i < vcap.channels) && (channo < numinputs); i++) {
+				struct video_channel cinf;
+
+				cinf.channel = i;
+				while (((r = ioctl (dev->fd, VIDIOCGCHAN, &cinf)) == -1) && (errno == EINTR));		/* retry */
+				if ((r >= 0) && (cinf.type & VIDEO_TYPE_CAMERA)) {
+					/* this one */
+					inputs[channo].id = i;
+					inputs[channo].namelen = snprintf (inputs[channo].name, OPI_VIDEO_CAMINPUT_NAMEMAX, "%s", cinf.name);
+					inputs[channo].minw = vcap.minwidth;
+					inputs[channo].minh = vcap.minheight;
+					inputs[channo].maxw = vcap.maxwidth;
+					inputs[channo].maxh = vcap.maxheight;
+
+					channo++;
+				}
+			}
 		}
+	} else if (dev->api == 2) {
+		/* FIXME! */
+	}
+
+	for (; channo < numinputs; channo++) {
+		inputs[channo].id = -1;
+		inputs[channo].namelen = 0;
+		inputs[channo].name[0] = '\0';
+		inputs[channo].minw = 0;
+		inputs[channo].minh = 0;
+		inputs[channo].maxw = 0;
+		inputs[channo].maxh = 0;
+	}
+}
+/*}}}*/
+static inline void video_setcamera (opi_video_device_t *dev, opi_video_caminput_t *input, int *ok) /*{{{*/
+{
+	if (dev->fd < 0) {
+		*ok = 0;
+	} else if (dev->api == 1) {
+		struct video_channel cinf;
+		int r;
+
+		/* get current channel properties */
+		cinf.channel = input->id;
+		while (((r = ioctl (dev->fd, VIDIOCGCHAN, &cinf)) == -1) && (errno == EINTR));		/* retry */
+
+		if ((r >= 0) && (cinf.channel == input->id)) {
+			while (((r = ioctl (dev->fd, VIDIOCSCHAN, &cinf)) == -1) && (errno == EINTR));		/* retry */
+			*ok = (r >= 0) ? 1 : 0;
+		} else {
+			*ok = 0;
+		}
+	} else if (dev->api == 2) {
+		/* FIXME! */
+		*ok = 0;
+	} else {
+		*ok = 0;
+	}
+}
+/*}}}*/
+static inline void video_getpicture (opi_video_device_t *dev, struct video_picture *pict) /*{{{*/
+{
+	if (dev->fd < 0) {
+		/* nothing */
+	} else if (dev->api == 1) {
+		int r;
+
+		while (((r = ioctl (dev->fd, VIDIOCGPICT, pict)) == -1) && (errno == EINTR));		/* retry */
+	} else if (dev->api == 2) {
+		/* FIXME! */
+	}
+}
+/*}}}*/
+static inline void video_setpicture (opi_video_device_t *dev, struct video_picture *pict, int *ok) /*{{{*/
+{
+	if (dev->fd < 0) {
+		*ok = 0;
+	} else if (dev->api == 1) {
+		int r;
+
+		while (((r = ioctl (dev->fd, VIDIOCSPICT, pict)) == -1) && (errno == EINTR));		/* retry */
+		if (r < 0) {
+			*ok = 0;
+		} else {
+			*ok = 1;
+			/* get the picture details again to see if we changed it */
+			video_getpicture (dev, pict);
+		}
+	} else if (dev->api == 2) {
+		/* FIXME! */
+		*ok = 0;
+	} else {
+		*ok = 0;
 	}
 }
 /*}}}*/
@@ -154,13 +280,26 @@ void _video_initstruct (int *w)			{ video_initstruct ((opi_video_device_t *)(w[0
 /*{{{  PROC ..video.open (VIDEO.DEVICE vdev, RESULT BOOL ok)*/
 void _video_open (int *w)			{ video_open ((opi_video_device_t *)(w[0]), (int *)(w[1])); }
 /*}}}*/
+/*{{{  PROC ..video.close (VIDEO.DEVICE vdev, RESULT BOOL ok)*/
+void _video_close (int *w)			{ video_close ((opi_video_device_t *)(w[0]), (int *)(w[1])); }
+/*}}}*/
+
 /*{{{  PROC ..video.identity (VIDEO.DEVICE vdev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok)*/
 void _video_identity (int *w)			{ video_identity ((opi_video_device_t *)(w[0]), (opi_video_identity_t *)(w[1]), (int *)(w[2])); }
 /*}}}*/
-/*{{{  PROC ..video.v4l2.querycap (VIDEO.DEVICE vdev, RESULT V4L2.CAPABILITY cap, RESULT BOOL ok)*/
-void _video_v4l2_querycap (int *w)		{ video_v4l2_querycap ((opi_video_device_t *)(w[0]), (struct v4l2_capability *)(w[1]), (int *)(w[2])); }
+/*{{{  PROC ..video.numcams (VIDEO.DEVICE vdev, RESULT INT num)*/
+void _video_numcams (int *w)			{ video_numcams ((opi_video_device_t *)(w[0]), (int *)(w[1])); }
 /*}}}*/
-/*{{{  PROC ..video.close (VIDEO.DEVICE vdev, RESULT BOOL ok)*/
-void _video_close (int *w)			{ video_close ((opi_video_device_t *)(w[0]), (int *)(w[1])); }
+/*{{{  PROC ..video.getcaminfos (VIDEO.DEVICE vdev, []VIDEO.CAMINPUT inputs)*/
+void _video_getcaminfos (int *w)		{ video_getcaminfos ((opi_video_device_t *)(w[0]), (opi_video_caminput_t *)(w[1]), (int)(w[2])); }
+/*}}}*/
+/*{{{  PROC ..video.setcamera (VIDEO.DEVICE vdev, VIDEO.CAMINPUT input, RESULT BOOL ok)*/
+void _video_setcamera (int *w)			{ video_setcamera ((opi_video_device_t *)(w[0]), (opi_video_caminput_t *)(w[1]), (int *)(w[2])); }
+/*}}}*/
+/*{{{  PROC ..video.getpicture (VIDEO.DEVICE vdev, RESULT VIDEO.PICTURE picture)*/
+void _video_getpicture (int *w)			{ video_getpicture ((opi_video_device_t *)(w[0]), (struct video_picture *)(w[1])); }
+/*}}}*/
+/*{{{  PROC ..video.setpicture (VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok)*/
+void _video_setpicture (int *w)			{ video_setpicture ((opi_video_device_t *)(w[0]), (struct video_picture *)(w[1]), (int *)(w[2])); }
 /*}}}*/
 

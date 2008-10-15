@@ -33,22 +33,8 @@
 #IF NOT DEFINED (VIDEO.INC)
 #DEFINE VIDEO.INC
 
---{{{  V4L2.CAPABILITY
---* Must match struct v4l2_capability
-DATA TYPE V4L2.CAPABILITY
-  PACKED RECORD
-    [16]BYTE driver:
-    [32]BYTE card:
-    [32]BYTE businfo:
-    INT32 version:
-    INT32 capabilities:
-    [4]INT32 reserved:
+-- NOTE: the PACKED RECORD structures here have equivalents in C (video-v4l.h)
 
-    -- occampi fields
-    INT driverlen, cardlen, businfolen:       -- lengths of string fields
-:
-
---}}}
 --{{{  VIDEO.IDENTITY
 --* Maximum length of a video identity.
 VAL INT VIDEO.IDENTITY.NAMEMAX IS 64:
@@ -59,6 +45,24 @@ DATA TYPE VIDEO.IDENTITY
     [VIDEO.IDENTITY.NAMEMAX]BYTE name:
     INT namelen:
 :
+
+--}}}
+--{{{  VIDEO.CAMINPUT
+--* Maximum length of a camera input name.
+VAL INT VIDEO.CAMINPUT.NAMEMAX IS 64:
+
+--* Generic video camera input information.
+DATA TYPE VIDEO.CAMINPUT
+  PACKED RECORD
+    INT id:
+    [VIDEO.CAMINPUT.NAMEMAX]BYTE name:
+    INT namelen:
+    INT minw:
+    INT minh:
+    INT maxw:
+    INT maxh:
+:
+
 --}}}
 --{{{  VIDEO.DEVICE
 --* Maximum length of a video device name.
@@ -72,6 +76,47 @@ DATA TYPE VIDEO.DEVICE
     INT fd:
     INT api:
 :
+
+--}}}
+--{{{  VIDEO.PICTURE
+--* Generic video picture information/settings.
+DATA TYPE VIDEO.PICTURE
+  PACKED RECORD
+    INT16 brightness:
+    INT16 hue:
+    INT16 colour:
+    INT16 contrast:
+    INT16 whiteness:
+    INT16 depth:
+    INT16 palette:
+
+    INT16 dummy:
+:
+--}}}
+--{{{  VIDEO.IODATA
+--* Describes how video data is accessed (including width/height).
+DATA VIDEO.IODATA
+  PACKED RECORD
+    BOOL use.mmap:
+    INT mmap.addr:
+    INT mmap.size:
+    INT width:
+    INT height:
+:
+  
+--}}}
+--{{{  video palette constants (from linux/videodev.h)
+VAL INT16 VIDEO.PAL.INVALID IS 0:
+VAL INT16 VIDEO.PAL.GRAY IS 1:
+VAL INT16 VIDEO.PAL.HI240 IS 2:
+VAL INT16 VIDEO.PAL.RGB565 IS 3:
+VAL INT16 VIDEO.PAL.RGB24 IS 4:
+VAL INT16 VIDEO.PAL.RGB32 IS 5:
+VAL INT16 VIDEO.PAL.RGB555 IS 6:
+-- FIXME: the rest of these please! (and need to cater for changing constants..)
+
+VAL [][]BYTE VIDEO.PAL.NAMES IS ["invalid", "gray   ", "hi240  ", "rgb565 ",
+                                 "rgb24  ", "rgb32  ", "rgb555 "]:
 
 --}}}
 
