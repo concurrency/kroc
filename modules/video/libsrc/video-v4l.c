@@ -397,7 +397,7 @@ static inline void video_waitframe (opi_video_device_t *dev, opi_video_iodata_t 
 				/* got a buffer-load at the mmap'd address we hope! */
 				switch (finf->format) {
 				case VIDEO_PALETTE_RGB24:
-					ccvt_rgb24_bgr32 (finf->width, finf->height, (void *)iod->mmap_addr, (void *)buffer);
+					ccvt_rgb24_rgb32 (finf->width, finf->height, (void *)iod->mmap_addr, (void *)buffer);
 					*ok = 1;
 					break;
 				default:

@@ -8,22 +8,22 @@ OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 
 EXTRA_DIST = \
+	ccvt.h \
+	ccvt_misc.c \
+	ccvt_types.h \
 	video.inc \
 	video.occ \
 	video-v4l.c \
 	video-v4l.h \
-	ccvt.h \
-	ccvt_types.h \
-	ccvt_misc.c \
 	vtest.occ
 
 tests = \
 	vtest
 
 video_lib_objs = \
+	ccvt_misc.o \
 	video.tce \
-	video-v4l.o \
-	ccvt_misc.o
+	video-v4l.o
 
 video_libs = video.lib
 video_includes = video.inc
