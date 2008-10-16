@@ -186,6 +186,8 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
           out.string (msg, 0, scr!)
           out.string ("*n", 0, scr!)
     --}}}
+    #PRAGMA DEFINED finf
+    #PRAGMA DEFINED pict
     CHAN RASTER rc1, rc2:
     PAR
       --{{{  create raster
@@ -193,58 +195,167 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
 
       --}}}
       --{{{  loop grabbing frames from the camera, put them on the screen!
-      INITIAL BOOL run IS TRUE:
-      WHILE run
-        RASTER r:
-        SEQ
-          rc2 ? r
+      SEQ
 
-          --{{{  oki, try and get a frame of data!
-          out.string ("vidgrab: attempting to grab a video frame..*n", 0, scr!)
+        INITIAL BOOL redraw.menu IS TRUE:
+        INITIAL BOOL update.pict IS FALSE:
+        INITIAL BOOL update.frameno IS TRUE:
+        INITIAL BOOL run IS TRUE:
+        INITIAL INT frameno IS 0:
+        WHILE run
+          RASTER r:
 
-          dev[in] ! grab.frame
-          dev[out] ? CASE
-            MOBILE [][]INT32 frame:
-            frame; frame
-              INT mx, my:
-              SEQ
-                out.string ("vidgrab: got frame! ", 0, scr!)
-                out.int (SIZE frame[0], 0, scr!)
-                out.string ("x", 0, scr!)
-                out.int (SIZE frame, 0, scr!)
-                out.string ("*n", 0, scr!)
+          PROC do.dec (INT16 val)
+            SEQ
+              val := val MINUS #100
+              update.pict, redraw.menu := TRUE, TRUE
+          :
+          PROC do.inc (INT16 val)
+            SEQ
+              val := val PLUS #100
+              update.pict, redraw.menu := TRUE, TRUE
+          :
 
-                -- slap it on the raster!
-                IF
-                  (SIZE frame) > (SIZE r)
-                    my := SIZE r
-                  TRUE
-                    my := SIZE frame
-                IF
-                  (SIZE frame[0]) > (SIZE r[0])
-                    mx := SIZE r[0]
-                  TRUE
-                    mx := SIZE frame[0]
-
-                SEQ y = 0 FOR my
-                  SEQ x = 0 FOR mx
-                    r[y][x] := INT frame[y][x]
-
-            MOBILE []BYTE msg:
-            error; msg
-              SEQ
-                out.string ("vidgrab: failed to grab frame: ", 0, scr!)
-                out.string (msg, 0, scr!)
-                out.string ("*n", 0, scr!)
-          --}}}
-
-          rc1 ! r
-
-          TIMER tim:
-          INT t:
           SEQ
-            tim ? t
-            -- tim ? AFTER (t PLUS 1000000)
+            rc2 ? r
+
+            --{{{  oki, try and get a frame of data!
+            -- out.string ("vidgrab: attempting to grab a video frame..*n", 0, scr!)
+
+            IF
+              update.pict
+                SEQ
+                  dev[in] ! set.picture; pict
+                  dev[out] ? CASE
+                    VIDEO.PICTURE tpict:
+                    picture; tpict
+                      SKIP
+                    MOBILE []BYTE str:
+                    error; str
+                      SEQ
+                        out.string ("vidgrab: failed to update picture: ", 0, scr!)
+                        out.string (str, 0, scr!)
+                        out.string ("*n", 0, scr!)
+                  update.pict := FALSE
+              TRUE
+                SKIP
+
+            IF
+              redraw.menu
+                SEQ
+                  erase.screen (scr!)
+                  cursor.x.y (1, 1, scr!)
+
+                  out.string ("B/b   +/- brightness: ", 0, scr!)
+                  out.int (INT pict[brightness], 0, scr!)
+                  out.string ("*n", 0, scr!)
+                  out.string ("H/h   +/- hue: ", 0, scr!)
+                  out.int (INT pict[hue], 0, scr!)
+                  out.string ("*n", 0, scr!)
+                  out.string ("C/c   +/- colour: ", 0, scr!)
+                  out.int (INT pict[colour], 0, scr!)
+                  out.string ("*n", 0, scr!)
+                  out.string ("O/o   +/- contrast: ", 0, scr!)
+                  out.int (INT pict[contrast], 0, scr!)
+                  out.string ("*n", 0, scr!)
+                  out.string ("W/w   +/- whiteness: ", 0, scr!)
+                  out.int (INT pict[whiteness], 0, scr!)
+                  out.string ("*n", 0, scr!)
+                  out.string ("D/d   +/- depth: ", 0, scr!)
+                  out.int (INT pict[depth], 0, scr!)
+                  out.string ("*n", 0, scr!)
+
+                  redraw.menu := FALSE
+              TRUE
+                SKIP
+
+            IF
+              update.frameno
+                SEQ
+                  out.string ("frame: ", 0, scr!)
+                  out.int (frameno, 0, scr!)
+                  out.string ("*c", 0, scr!)
+                  scr ! FLUSH
+                  update.frameno := FALSE
+              TRUE
+                SKIP
+
+            dev[in] ! grab.frame
+            INITIAL BOOL got.frame IS FALSE:
+            WHILE NOT got.frame
+              PRI ALT
+                BYTE ch:
+                kyb ? ch
+                  SEQ
+                    CASE ch
+                      'b'
+                        do.dec (pict[brightness])
+                      'B'
+                        do.inc (pict[brightness])
+                      'h'
+                        do.dec (pict[hue])
+                      'H'
+                        do.inc (pict[hue])
+                      'c'
+                        do.dec (pict[colour])
+                      'C'
+                        do.inc (pict[colour])
+                      'o'
+                        do.dec (pict[contrast])
+                      'O'
+                        do.inc (pict[contrast])
+                      'w'
+                        do.dec (pict[whiteness])
+                      'W'
+                        do.inc (pict[whiteness])
+                      'd'
+                        do.dec (pict[depth])
+                      'D'
+                        do.inc (pict[depth])
+                      ELSE
+                        SKIP
+
+                dev[out] ? CASE
+                  MOBILE [][]INT32 frame:
+                  frame; frame
+                    INT mx, my:
+                    SEQ
+                      -- out.string ("vidgrab: got frame! ", 0, scr!)
+                      -- out.int (SIZE frame[0], 0, scr!)
+                      -- out.string ("x", 0, scr!)
+                      -- out.int (SIZE frame, 0, scr!)
+                      -- out.string ("*n", 0, scr!)
+
+                      -- slap it on the raster!
+                      IF
+                        (SIZE frame) > (SIZE r)
+                          my := SIZE r
+                        TRUE
+                          my := SIZE frame
+                      IF
+                        (SIZE frame[0]) > (SIZE r[0])
+                          mx := SIZE r[0]
+                        TRUE
+                          mx := SIZE frame[0]
+
+                      SEQ y = 0 FOR my
+                        SEQ x = 0 FOR mx
+                          r[y][x] := INT frame[y][x]
+
+                      got.frame := TRUE
+
+                  MOBILE []BYTE msg:
+                  error; msg
+                    SEQ
+                      out.string ("vidgrab: failed to grab frame: ", 0, scr!)
+                      out.string (msg, 0, scr!)
+                      out.string ("*n", 0, scr!)
+            --}}}
+            frameno := frameno + 1
+            update.frameno := TRUE
+
+            rc1 ! r
+
       --}}}
 :
 
