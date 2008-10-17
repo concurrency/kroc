@@ -1,0 +1,714 @@
+
+#INCLUDE "course.module"
+#INCLUDE "file.module"
+#INCLUDE "convert.module"
+#INCLUDE "miniraster.module"
+#INCLUDE "rastergraphics.module"
+#INCLUDE "rasterio.module"
+
+--#DEFINE REPORTING
+
+VAL INT N.CYCLES    IS (1024 * 1024):
+
+VAL INT WORLD.SIZE  IS 5:
+
+VAL INT PIXEL.SCALE IS 768 / WORLD.SIZE:
+VAL INT SCREEN.UPDATE.TIME IS 1000000 / 20:
+
+VAL INT LOC.SIZE    IS 4096:
+VAL INT LOC.AGENTS  IS 12:
+VAL INT LOC.MAX     IS ((LOC.SIZE / 2) - 1):
+VAL INT LOC.MIN     IS (-(LOC.SIZE / 2)):
+
+VAL INT DIRECTIONS IS 8:
+VAL [DIRECTIONS + 1][2]INT OFFSETS IS [[-1, -1], [0, -1], [1, -1],
+                                       [-1, 0],           [1, 0],
+                                       [-1, 1],  [0, 1],  [1, 1],  [0, 0]]:
+
+DATA TYPE VECTOR
+  PACKED RECORD
+    INT x, y:
+:
+
+VECTOR INLINE FUNCTION "+" (VAL VECTOR a, b) IS [a[x] + b[x], a[y] + b[y]]:
+VECTOR INLINE FUNCTION "-" (VAL VECTOR a, b) IS [a[x] - b[x], a[y] - b[y]]:
+VECTOR INLINE FUNCTION "**" (VAL VECTOR a, VAL INT b) IS [a[x] * b, a[y] * b]:
+VECTOR INLINE FUNCTION "/" (VAL VECTOR a, VAL INT b) IS [a[x] / b, a[y] / b]:
+
+INT INLINE FUNCTION magnitude2 (VAL VECTOR v) IS (v[x] * v[x]) + (v[y] * v[y]):
+
+DATA TYPE AGENT.INFO
+  RECORD
+    INT idx, loc:
+    INT prev, next:
+    INT id:
+    VECTOR position:
+:
+
+--{{{  CT.VIEWER
+PROTOCOL P.VIEWER.RQ
+  CASE
+    borrow.info; INT
+    return.info; MOBILE []AGENT.INFO
+    shutdown
+:
+PROTOCOL P.VIEWER.RE
+  CASE
+    lend.info; MOBILE []AGENT.INFO
+:
+CHAN TYPE CT.VIEWER
+  MOBILE RECORD
+    CHAN P.VIEWER.RQ rq?:
+    CHAN P.VIEWER.RE re!:
+:
+--}}}
+
+--{{{  CT.LOC
+CHAN TYPE CT.LOC:
+PROTOCOL P.LOC.RQ
+  CASE
+    enter; AGENT.INFO
+    move; INT; VECTOR
+    borrow.info
+    return.info; MOBILE []AGENT.INFO
+    shutdown
+:
+PROTOCOL P.LOC.RE
+  CASE
+    stay.here; INT; INT; VECTOR; SHARED CT.VIEWER!
+    go.there; SHARED CT.LOC!; VECTOR
+    lend.info; INT; INT; MOBILE []AGENT.INFO
+:
+CHAN TYPE CT.LOC
+  MOBILE RECORD
+    CHAN P.LOC.RQ rq?:
+    CHAN P.LOC.RE re!:
+:
+--}}}
+
+PROTOCOL REPORT
+  CASE
+    agent.start; INT; INT
+    agent.at; INT; INT; INT; VECTOR
+    agent.end; INT; INT; INT
+:
+
+CHAN TYPE CT.RASTER
+  MOBILE RECORD
+    CHAN RASTER c?:
+:
+
+INT FUNCTION sign (VAL INT i)
+  INT s:
+  VALOF
+    IF
+      i < 0
+        s := -1
+      TRUE
+        s := 1
+    RESULT s
+:
+
+INT FUNCTION dir.value (VAL INT r)
+  INT d:
+  VALOF
+    IF
+      r < LOC.MIN
+        d := -1
+      r > LOC.MAX
+        d := 1
+      TRUE
+        d := 0
+    RESULT d
+:
+
+INT FUNCTION wrap (VAL INT i, max)
+  INT n:
+  VALOF
+    SEQ
+      n := i
+      WHILE n < 0
+        n := n + max
+    RESULT n \ max
+:
+
+INT FUNCTION min (VAL INT a, b)
+  INT r:
+  VALOF
+    IF
+      a < b
+        r := a
+      TRUE
+        r := b
+    RESULT r
+:
+
+INT FUNCTION limit (VAL INT a, l, u)
+  INT r:
+  VALOF
+    IF
+      a < l
+        r := l
+      a > u
+        r := u
+      TRUE
+        r := a
+    RESULT r
+:
+
+PROC resize.array (MOBILE []AGENT.INFO array, VAL INT new.size)
+  IF
+    (SIZE array) = new.size
+      SKIP
+    TRUE
+      INITIAL MOBILE []AGENT.INFO new.array IS MOBILE [new.size]AGENT.INFO:
+      SEQ
+        SEQ i = 0 FOR min (SIZE array, new.size)
+          new.array[i] := array[i]
+        array := new.array
+:
+
+PROC a.sqrt (VAL INT x, INT r)
+  INITIAL INT last.r IS 0:
+  INITIAL INT steps IS 0:
+  WHILE (r <> last.r) AND (steps < 16)
+    last.r, r, steps := r, (r + (x / r)) >> 1, steps + 1
+:
+
+PROC agent (VAL INT init.cycle, VAL AGENT.INFO init.info, MOBILE BARRIER b, SHARED CT.LOC! loc, SHARED CHAN REPORT report!)
+  INITIAL AGENT.INFO  info    IS init.info:
+  INITIAL INT         cycle   IS init.cycle:
+  INITIAL INT         persona IS info[id] * 37:
+  SHARED CT.VIEWER!   viewer:
+  SEQ
+    CLAIM report!
+      report ! agent.start; cycle; info[id]
+    
+    -- viewing phase
+    SYNC b
+    
+    -- update phase
+    CLAIM loc!
+      SEQ
+        loc[rq] ! enter; info
+        loc[re] ? CASE stay.here; info[loc]; info[idx]; info[position]; viewer
+    SYNC b
+    SYNC b
+    
+    -- viewing phase
+    WHILE (cycle < N.CYCLES)
+      INITIAL VECTOR force IS [0, 0]:
+      SEQ
+        persona := (persona /\ 65535) TIMES info[position][x]
+        persona := (persona /\ 65535) TIMES info[position][y]
+        persona := (persona /\ 65535) TIMES info[loc]
+
+        #IF DEFINED (REPORTING)
+        CLAIM report!
+          report ! agent.at; cycle; info[id]; info[loc]; info[position]
+        #ENDIF
+
+        cycle := cycle + 1
+        
+        -- viewing phase
+        CLAIM viewer!
+          MOBILE []AGENT.INFO agents:
+          SEQ
+            viewer[rq] ! borrow.info; cycle
+            viewer[re] ? CASE lend.info; agents
+            --ASSERT ((SIZE agents) > 0)
+            persona := persona PLUS (SIZE agents)
+            
+            VAL INT px IS INT (persona /\ #FF):
+            VAL INT py IS INT ((persona >> 8) /\ #FF):
+            SEQ i = 0 FOR SIZE agents
+              IF
+                agents[i][id] <> info[id]
+                  VECTOR d:
+                  INT dx2, dy2, r2, r, f:
+                  SEQ
+                    d   := info[position] - agents[i][position]
+                    d[x]:= (d[x] * (px + 1)) / 128
+                    d[y]:= (d[y] * (py + 1)) / 128
+                    dx2 := d[x] * d[x]
+                    dy2 := d[y] * d[y]
+                    r2  := dx2 + dy2
+                    f   := min (LOC.SIZE, (3 * (LOC.SIZE * LOC.SIZE)) / (r2 + 1))
+                    IF
+                      dx2 > dy2
+                        SEQ
+                          r := d[x] * sign (d[x])
+                          a.sqrt (r2, r)
+                      dy2 > 0
+                        SEQ
+                          r := d[y] * sign (d[y])
+                          a.sqrt (r2, r)
+                      TRUE
+                        r := 1
+                    IF
+                      r2 <> 0
+                        SEQ
+                          force[x] := force[x] + ((f * d[x]) / r)
+                          force[y] := force[y] + ((f * d[y]) / r)
+                      TRUE
+                        VAL INT x.jitter IS ((cycle /\ 1) * (-1)):
+                        VAL INT y.jitter IS (((cycle >> 1) /\ 1) * (-1)):
+                        SEQ
+                          force[x] := force[x] + (f * x.jitter)
+                          force[y] := force[y] + (f * y.jitter)
+
+                    RESCHEDULE ()
+                TRUE
+                  SKIP
+
+            viewer[rq] ! return.info; agents
+        SYNC b
+
+        force[x] := limit (force[x], -32, 32)
+        force[y] := limit (force[y], -32, 32)
+        
+        -- update phase
+        SHARED CT.LOC! new.loc:
+        INITIAL BOOL moving IS FALSE:
+        SEQ
+          CLAIM loc!
+            SEQ
+              loc[rq] ! move; info[idx]; force
+              loc[re] ? CASE
+                stay.here; info[loc]; info[idx]; info[position]; viewer
+                  SKIP
+                go.there; new.loc; info[position]
+                  moving := TRUE
+          IF
+            moving
+              WHILE moving
+                SEQ
+                  loc := new.loc
+                  CLAIM loc!
+                    SEQ
+                      loc[rq] ! enter; info
+                      loc[re] ? CASE 
+                        stay.here; info[loc]; info[idx]; info[position]; viewer
+                          moving := FALSE
+                        go.there; new.loc; info[position]
+                          SKIP
+            TRUE
+              SKIP
+        SYNC b
+        SYNC b
+        
+    SYNC b
+    CLAIM report!
+      SEQ
+        report ! agent.at; cycle; info[id]; info[loc]; info[position]
+        report ! agent.end; cycle; info[id]; persona
+:
+
+PROC viewer (CT.VIEWER? svr, MOBILE []SHARED CT.LOC! fov)
+  INITIAL MOBILE []AGENT.INFO view IS MOBILE [0]AGENT.INFO:
+  INITIAL INT cycle IS -1:
+  INITIAL BOOL done IS FALSE:
+  WHILE NOT done
+    svr[rq] ? CASE
+      INT rq.cycle:
+      borrow.info; rq.cycle
+        SEQ
+          IF
+            rq.cycle <> cycle
+              INITIAL INT used IS 0:
+              SEQ
+                SEQ dir = 0 FOR SIZE fov
+                  CLAIM fov[dir]!
+                    MOBILE []AGENT.INFO info:
+                    INT n.agents, head:
+                    SEQ
+                      fov[dir][rq] ! borrow.info
+                      fov[dir][re] ? CASE lend.info; n.agents; head; info
+
+                      IF
+                        (SIZE view) < (used + n.agents)
+                          resize.array (view, used + n.agents)
+                        TRUE
+                          SKIP
+
+                      ASSERT ((head <> (-1)) OR (n.agents = 0))
+
+                      VAL VECTOR offset IS [OFFSETS[dir][0] * LOC.SIZE, OFFSETS[dir][1] * LOC.SIZE]:
+                      WHILE (head <> (-1))
+                        SEQ
+                          view[used] := info[head]
+                          view[used][position] := view[used][position] + offset
+                          used, head := used + 1, info[head][next]
+
+                      fov[dir][rq] ! return.info; info
+                
+                cycle := rq.cycle
+                resize.array (view, used)
+            TRUE
+              SKIP
+          svr[re] ! lend.info; view
+          svr[rq] ? CASE return.info; view
+      shutdown
+        done := TRUE
+:
+
+PROC location (VAL INT loc, CT.LOC? svr, SHARED CT.LOC! cli, CT.RASTER? g.in, CT.RASTER! g.out, MOBILE []SHARED CT.LOC! neighbours)
+
+  PROC handle.update (AGENT.INFO info, RESULT BOOL moved)
+    INT dx, dy:
+    SEQ
+      dx := dir.value (info[position][x])
+      dy := dir.value (info[position][y])
+      IF
+        (dx <> 0) OR (dy <> 0)
+          IF dir = 0 FOR DIRECTIONS
+            (OFFSETS[dir][0] = dx) AND (OFFSETS[dir][1] = dy)
+              SEQ
+                --{{{  compute position in destination cell
+                info[position][x] := info[position][x] - (OFFSETS[dir][0] * LOC.SIZE)
+                info[position][y] := info[position][y] - (OFFSETS[dir][1] * LOC.SIZE)
+                --}}}
+                svr[re] ! go.there; neighbours[dir]; info[position]
+                moved := TRUE
+        TRUE
+          moved := FALSE
+  :
+
+  INITIAL MOBILE []AGENT.INFO agents IS MOBILE [0]AGENT.INFO:
+  INITIAL INT n.agents IS 0:
+  INITIAL INT head IS -1:
+  INITIAL INT tail IS -1:
+  INITIAL INT free IS -1:
+
+  PROC add.agent (VAL AGENT.INFO info, RESULT INT idx)
+    SEQ
+      IF
+        free = (-1)
+          INITIAL MOBILE []AGENT.INFO new.agents IS MOBILE [2 + (n.agents + (n.agents / 2))]AGENT.INFO:
+          SEQ
+            SEQ i = 0 FOR n.agents
+              new.agents[i] := agents[i]
+            SEQ i = n.agents FOR ((SIZE new.agents) - n.agents) - 1
+              new.agents[i][next] := i + 1
+            new.agents[(SIZE new.agents) - 1][next] := -1
+            free    := n.agents
+            agents  := new.agents
+        TRUE
+          SKIP
+
+      idx               := free
+      free              := agents[idx][next]
+      agents[idx][loc]  := loc
+      agents[idx][idx]  := idx
+      agents[idx][prev] := tail
+      agents[idx][next] := -1
+      agents[idx][id]   := info[id]
+      agents[idx][position] := info[position]
+      
+      IF
+        head = (-1)
+          head := idx
+        TRUE
+          SKIP
+      IF
+        tail <> (-1)
+          agents[tail][next] := idx
+        TRUE
+          SKIP
+      
+      tail              := idx
+      n.agents          := n.agents + 1
+  :
+
+  PROC remove.agent (VAL INT idx)
+    INITIAL INT next IS agents[idx][next]:
+    INITIAL INT prev IS agents[idx][prev]:
+    SEQ
+      IF
+        head = idx
+          head := next
+        TRUE
+          SKIP
+      IF
+        tail = idx
+          tail := prev
+        TRUE
+          SKIP
+      IF
+        next <> (-1)
+          agents[next][prev] := prev
+        TRUE
+          SKIP
+      IF
+        prev <> (-1)
+          agents[prev][next] := next
+        TRUE
+          SKIP
+      
+      agents[idx][next] := free
+      free              := idx
+      n.agents          := n.agents - 1
+  :
+
+  SHARED CT.VIEWER! view:
+  FORKING
+    SEQ
+      INITIAL MOBILE []SHARED CT.LOC! fov IS MOBILE [DIRECTIONS + 1]SHARED CT.LOC!:
+      CT.VIEWER? view.svr:
+      SEQ
+        view, view.svr := MOBILE CT.VIEWER
+        SEQ i = 0 FOR DIRECTIONS
+          fov[i] := neighbours[i]
+        fov[DIRECTIONS] := cli
+        FORK viewer (view.svr, fov)
+
+      INITIAL BOOL done IS FALSE:
+      WHILE NOT done
+        PRI ALT
+          svr[rq] ? CASE
+            AGENT.INFO info:
+            enter; info
+              BOOL moved:
+              SEQ
+                handle.update (info, moved)
+                IF
+                  moved
+                    SKIP
+                  TRUE
+                    INT idx:
+                    SEQ
+                      add.agent (info, idx)
+                      svr[re] ! stay.here; loc; idx; agents[idx][position]; view
+            VECTOR v:
+            INT idx:
+            move; idx; v
+              BOOL moved:
+              SEQ
+                agents[idx][position] := agents[idx][position] + v
+                handle.update (agents[idx], moved)
+                IF
+                  moved
+                    remove.agent (idx)
+                  TRUE
+                    svr[re] ! stay.here; loc; idx; agents[idx][position]; view
+            borrow.info
+              SEQ
+                svr[re] ! lend.info; n.agents; head; agents
+                svr[rq] ? CASE return.info; agents
+            shutdown
+              done := TRUE
+          RASTER r:
+          g.in[c] ? r
+            VAL INT loc.x IS (loc \ WORLD.SIZE):
+            VAL INT loc.y IS (loc / WORLD.SIZE):
+            VAL INT bx IS loc.x * PIXEL.SCALE:
+            VAL INT by IS loc.y * PIXEL.SCALE:
+            VAL REAL32 PSR IS (REAL32 ROUND PIXEL.SCALE) * 2.0:
+            SEQ
+              INITIAL INT idx IS head:
+              WHILE idx <> (-1)
+                VAL REAL32 ax IS (REAL32 ROUND agents[idx][position][x]) / (REAL32 ROUND LOC.SIZE):
+                VAL REAL32 ay IS (REAL32 ROUND agents[idx][position][y]) / (REAL32 ROUND LOC.SIZE):
+                VAL INT x IS bx + (INT TRUNC (PSR * ax)):
+                VAL INT y IS by + (INT TRUNC (PSR * ay)):
+                SEQ
+                  fill.circle (x, y, PIXEL.SCALE / 50, COLOUR.WHITE, r)
+                  idx := agents[idx][next]
+              g.out[c] ! r
+
+      CLAIM view!
+        view[rq] ! shutdown
+:
+
+PROC report.server (CHAN REPORT in?, CHAN BYTE scr!)
+  INITIAL INT n.agents IS 0:
+  INITIAL BOOL done IS FALSE:
+  WHILE (NOT done) OR (n.agents > 0)
+    INT cycle, id:
+    in ? CASE
+      agent.start; cycle; id
+        SEQ
+          n.agents := n.agents + 1
+          out.int (cycle, 0, scr!)
+          scr ! ' '
+          out.int (id, 0, scr!)
+          out.string (" start*n", 0, scr!)
+
+      VECTOR p:
+      INT loc:
+      agent.at; cycle; id; loc; p
+        SEQ
+          out.int (cycle, 0, scr!)
+          scr ! ' '
+          out.int (id, 0, scr!)
+          out.string (" at ", 0, scr!)
+          out.int (loc, 0, scr!)
+          scr ! ':'
+          out.int (p[x], 0, scr!)
+          scr ! ','
+          out.int (p[y], 0, scr!)
+          scr ! '*n'
+
+      INT persona:
+      agent.end; cycle; id; persona
+        SEQ
+          done, n.agents := TRUE, n.agents - 1
+          out.int (cycle, 0, scr!)
+          scr ! ' '
+          out.int (id, 0, scr!)
+          out.string (" end ", 0, scr!)
+          out.int (persona, 0, scr!)
+          scr ! '*n'
+:
+
+PROC load.cmd.line (INT world.size, loc.agents)
+  CHAN GETOPT opts:
+  PAR
+    file.get.options ("", opts!)
+    INITIAL INT arg.n IS 0:
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      opts ? CASE
+        MOBILE []BYTE s:
+        arg; s
+          BOOL error:
+          INT n:
+          SEQ
+            STRINGTOINT (error, n, s)
+            ASSERT (NOT error)
+            IF
+              arg.n = 0
+                arg.n, world.size := arg.n + 1, n
+              arg.n = 1
+                arg.n, loc.agents := arg.n + 1, n
+              TRUE
+                SKIP
+        done
+          done := TRUE
+:
+  
+--{{{  PROC display
+--* Wrapper around a raster display; this clears the raster and limits the update rate.
+PROC display (CHAN RASTER in?, out!)
+  --{{{  PROC clear
+  PROC clear (CHAN RASTER in?, out!)
+    WHILE TRUE
+      RASTER r:
+      SEQ
+        in ? r
+        clear.raster (r, #002000)
+        SEQ x = 1 FOR WORLD.SIZE - 1
+          draw.vertical.line (x * PIXEL.SCALE, 0, SIZE r, #447744, r)
+        SEQ y = 1 FOR WORLD.SIZE - 1
+          draw.horizontal.line (0, y * PIXEL.SCALE, SIZE r[0], #447744, r)
+        out ! r
+  :
+  --}}}
+  --{{{  PROC speed.limit
+  PROC speed.limit (CHAN RASTER in?, out!)
+    TIMER tim:
+    INT t:
+    SEQ
+      tim ? t
+      WHILE TRUE
+        RASTER r:
+        SEQ
+          tim ? AFTER t
+          t := t PLUS SCREEN.UPDATE.TIME
+          in ? r
+          out ! r
+  :
+  --}}}
+
+  CHAN RASTER thru, cleared:
+  PAR
+    raster.display.simple ("agents benchmark",
+                           (WORLD.SIZE * PIXEL.SCALE),
+                           (WORLD.SIZE * PIXEL.SCALE),
+                           4, in?, thru!)
+    clear (thru?, cleared!)
+    speed.limit (cleared?, out!)
+:
+--}}}
+
+PROC main (CHAN BYTE kyb?, scr!, err!)
+  INITIAL INT world.size IS WORLD.SIZE:
+  INITIAL INT loc.agents IS LOC.AGENTS:
+  INT world.area:
+  SEQ
+    load.cmd.line (world.size, loc.agents)
+    world.area := world.size * world.size
+    SHARED! CHAN REPORT report:
+    PAR
+      report.server (report?, scr!)
+      FORKING
+        INITIAL MOBILE []SHARED CT.LOC! world IS MOBILE [world.area]SHARED CT.LOC!:
+        INITIAL MOBILE []CT.RASTER? g.in IS MOBILE [world.area + 1]CT.RASTER?:
+        INITIAL MOBILE []CT.RASTER! g.out IS MOBILE [world.area + 1]CT.RASTER!: 
+        SEQ
+          INITIAL MOBILE []CT.LOC? world.svr IS MOBILE [world.area]CT.LOC?:
+          SEQ
+            SEQ i = 0 FOR world.area
+              SEQ
+                world[i], world.svr[i] := MOBILE CT.LOC
+                g.in[i], g.out[i] := MOBILE CT.RASTER
+
+            g.in[world.area], g.out[world.area] := MOBILE CT.RASTER
+
+            SEQ loc = 0 FOR world.area
+              INITIAL MOBILE []SHARED CT.LOC! neighbours IS MOBILE [DIRECTIONS]SHARED CT.LOC!:
+              VAL INT x IS loc \ world.size:
+              VAL INT y IS loc / world.size:
+              CT.RASTER? r.in:
+              CT.RASTER! r.out:
+              SHARED CT.LOC! cli:
+              CT.LOC? svr:
+              SEQ
+                SEQ i = 0 FOR DIRECTIONS
+                  VAL INT n.x IS wrap (x + OFFSETS[i][0], world.size):
+                  VAL INT n.y IS wrap (y + OFFSETS[i][1], world.size):
+                  neighbours[i] := world[(n.y * world.size) + n.x]
+                
+                cli := world[loc]
+                svr := world.svr[loc]
+                r.in := g.in[loc]
+                r.out := g.out[loc + 1]
+                FORK location (loc, svr, cli, r.in, r.out, neighbours)
+         
+          CHAN RASTER disp.in, disp.out:
+          PAR
+            display (disp.in?, disp.out!)
+            SEQ
+              FORKING
+                INITIAL MOBILE BARRIER b IS MOBILE BARRIER:
+                SEQ
+                  INITIAL INT id IS 1:
+                  SEQ loc = 0 FOR world.area
+                    SEQ p = 0 FOR loc.agents
+                      VAL INT x IS LOC.MIN + ((LOC.SIZE / (loc.agents + 4)) * (p + 2)):
+                      VAL INT y IS LOC.MIN + ((LOC.SIZE / (loc.agents + 4)) * (p + 2)):
+                      INITIAL AGENT.INFO info IS [0, 0, 0, 0, id, [x, y]]:
+                      SHARED CT.LOC! loc.cli:
+                      SEQ
+                        loc.cli := world[loc]
+                        FORK agent (0, info, b, loc.cli, report!)
+                        id := id + 1
+
+                  INITIAL CT.RASTER! g.out IS g.out[0]:
+                  INITIAL CT.RASTER? g.in IS g.in[world.area]:
+                  WHILE TRUE
+                    RASTER r:
+                    SEQ
+                      SYNC b
+                      SYNC b
+                      disp.out ? r
+                      g.out[c] ! r
+                      g.in[c] ? r
+                      disp.in ! r
+                      SYNC b
+
+              SEQ loc = 0 FOR world.area
+                CLAIM world[loc]!
+                  world[loc][rq] ! shutdown
+:
+
