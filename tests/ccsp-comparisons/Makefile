@@ -7,6 +7,7 @@ CC_INC := $(shell $(KROC) --ccincpath)
 CC_LIB := $(shell $(KROC) --cclibpath)
 
 targets = \
+	ts \
 	ring.beam \
 	ring.ccsp \
 	ring.chp \
@@ -31,6 +32,9 @@ targets = \
 	blur.pthread
 
 all: $(targets)
+
+ts:	ts.c
+	$(CC) -O2 -Wall $< -o $@
 
 %.beam:		erlang/%.erl
 	$(ERLC) +native +"{hipe, [o3]}" $<
