@@ -26,6 +26,7 @@ run_cmd ()
   fi
 }
 
+run_cmd "C" "./agents.c $GRID $AGENTS"
 run_cmd "CCSP C" "./agents.ccsp $GRID $AGENTS"
 run_cmd "CCSP occam-pi" "./agents.occam $GRID $AGENTS"
 run_cmd "Erlang" "erl -noshell -run agents main $GRID $AGENTS"

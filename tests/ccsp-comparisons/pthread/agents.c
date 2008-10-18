@@ -480,6 +480,7 @@ static int a_sqrt (const int x, int r)
 	int step = 0;
 
 	do {
+		last_r = r;
 		r = (r + (x / r)) >> 1;
 		step++;
 	} while (r != last_r && step < 16);
