@@ -118,6 +118,8 @@ HERETICC_SRC=tests/hereticc
 FMTOUTLIB_SRC=modules/fmtoutlib/libsrc
 MOA_SRC=modules/moa/libsrc
 MOA_EXAMPLES_SRC=modules/moa/examples
+VIDEO_SRC=modules/video/libsrc
+VIDEO_EXAMPLES_SRC=modules/video/examples
 MANPAGE_LIST=""
 MANPAGE_SECTIONS=""
 DOC_SRC=doc
@@ -141,6 +143,7 @@ ALL_PKGS="$CCSP_SRC $MKOCCDEPS_SRC $OCC21_SRC $ILIBR_SRC $TRANX86_SRC $KROC_SRC 
 	$OCCGL_SRC $OCCGL_EXAMPLES_SRC \
 	$OCCADE_SRC $OCCADE_EXAMPLES_SRC \
 	$BUTTON_SRC $BUTTON_EXAMPLES_SRC \
+	$VIDEO_SRC $VIDEO_EXAMPLES_SRC \
 	$FMTOUTLIB_SRC \
 	$MOA_SRC $MOA_EXAMPLES_SRC"
 FAILABLE_PKGS="\
@@ -153,6 +156,7 @@ FAILABLE_PKGS="\
 	$OCCADE_SRC $OCCADE_EXAMPLES_SRC \
 	$BUTTON_SRC $BUTTON_EXAMPLES_SRC \
 	$RASTER_SRC $RASTER_EXAMPLES_SRC \
+	$VIDEO_SRC $VIDEO_EXAMPLES_SRC \
 	$CIF_EXAMPLES_SRC"
 
 
@@ -285,6 +289,7 @@ choices for <pkg> are:
   pony                         pony (kroc-net) networking infrastructure
   fmtoutlib                    formatted output module
   moa                          MySQL bindings module
+  video                        video-4-linux module
   doc                          documentation
   occamdoc                     occam documentation tool
   examples                     all example programs, which are:
@@ -307,6 +312,7 @@ choices for <pkg> are:
     button_examples            button example programs
     pony_examples              pony example programs
     moa_examples               moa example programs
+    video_examples             video example programs
 EOF
 }
 #}}}
@@ -1720,7 +1726,8 @@ if [ "$ACTIONLIST" = "" ] || [ "$ACTIONLIST" = "build" ] || [ "$ACTIONLIST" = "a
 		configure-occade make-occade install-occade \
 		configure-button make-button install-button \
 		configure-fmtoutlib make-fmtoutlib install-fmtoutlib \
-		configure-moa make-moa install-moa"
+		configure-moa make-moa install-moa \
+		configure-video make-video install-video"
 	if [ "$USEUDC" -eq 1 ]; then
 		# conditional on the "--with-udc" flag
 		ACTIONLIST="$ACTIONLIST \
@@ -1760,7 +1767,8 @@ EXAMPLE_ACTIONS="building-examples bsyscalls-support cputimers-support dynproc-s
 		configure-occgl_examples make-occgl_examples install-occgl_examples \
 		configure-occade_examples make-occade_examples install-occade_examples \
 		configure-button_examples make-button_examples install-button_examples \
-		configure-moa_examples make-moa_examples install-moa_examples"
+		configure-moa_examples make-moa_examples install-moa_examples \
+		configure-video_examples make-video_examples install-video_examples"
 if [ "$USEUDC" -eq 1 ]; then
 	EXAMPLE_ACTIONS="$EXAMPLE_ACTIONS \
 		configure-udc_examples make-udc_examples install-udc_examples"
@@ -1825,14 +1833,14 @@ for action in $ACTIONLIST; do
 	X*)
 		FOUND=0
 
-		for x in inmoslibs bsclib course course_answers useful dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony fmtoutlib moa occamdoc; do
+		for x in inmoslibs bsclib course course_answers useful dynproc udc manpages cgtests hereticc cif raster sdlraster occsdl occgl occade button pony fmtoutlib moa video occamdoc; do
 			if [ "X$x" = "X$action" ]; then
 				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
 			fi
 		done
 
-		for x in bsclib course course useful dynproc udc bar game cif raster sdlraster occsdl occgl occade button pony moa; do
+		for x in bsclib course course useful dynproc udc bar game cif raster sdlraster occsdl occgl occade button pony moa video; do
 			if [ "X${x}_examples" = "X$action" ]; then
 				NEWACTION="bsyscalls-support cputimers-support dynproc-support configure-$action make-$action install-$action"
 				FOUND=1
@@ -2388,6 +2396,11 @@ for action in $ACTIONLIST; do
 			PKG_SRC=$MOA_EXAMPLES_SRC
 			;;
 			#}}}
+			#{{{  video_examples: video example programs
+		Xvideo_examples)
+			PKG_SRC=$VIDEO_EXAMPLES_SRC
+			;;
+			#}}}
 			#{{{  bar_demo: the "better-bar" demonstrator
 		Xbar_demo)
 			PKG_SRC=$DEMO_BAR_SRC
@@ -2489,6 +2502,11 @@ for action in $ACTIONLIST; do
 			#{{{  moa: MySQL bindings
 		Xmoa)
 			PKG_SRC=$MOA_SRC
+			;;
+			#}}}
+			#{{{  video: V4L library
+		Xvideo)
+			PKG_SRC=$VIDEO_SRC
 			;;
 			#}}}
 			#{{{  doc: documentation

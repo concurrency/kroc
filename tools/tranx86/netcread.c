@@ -1216,6 +1216,13 @@ fprintf (stderr, "case 'a': [%s]\n", bits[0]);
 			tmp->opd = I_MALLOC;
 			add_to_chain (&hblk, &tblk, tmp);
 			/*}}}*/
+		} else if (!strcmp (bits[0], "move")) {
+			/*{{{  move memory*/
+			tmp = new_etc_chain ();
+			tmp->fn = I_OPR;
+			tmp->opd = I_MOVE;
+			add_to_chain (&hblk, &tblk, tmp);
+			/*}}}*/
 		} else if (!strcmp (bits[0], "mrelease")) {
 			/*{{{  free dynamic memory*/
 			tmp = new_etc_chain ();
