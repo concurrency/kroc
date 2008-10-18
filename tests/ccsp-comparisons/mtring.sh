@@ -21,7 +21,7 @@ run_cmd ()
   if [[ $RET == 0 ]]; then
     for ((i = 0; i < $LOOPS; i = i + 1)); do
       echo "-- $LABEL $CYCLES $TOKENS"
-      $CMD | ts | head -n 3
+      $CMD | ./ts | head -n 3
     done
   fi
 }

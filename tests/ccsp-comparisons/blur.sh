@@ -20,7 +20,7 @@ run_cmd ()
   if [[ $RET == 0 ]]; then
     for ((i = 0; i < $LOOPS; i = i + 1)); do
       echo "-- $LABEL $FRAMES $WORKERS"
-      $CMD | ts | head -n 2
+      $CMD | ./ts | head -n 2
     done
   fi
 }

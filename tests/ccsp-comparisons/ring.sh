@@ -14,10 +14,10 @@ run_cmd ()
 {
   LABEL=$1
   CMD=$2
-  $CMD | ts | head -n 3 &> /dev/null
+  $CMD | ./ts | head -n 3 &> /dev/null
   for ((i = 0; i < $LOOPS; i = i + 1)); do
     echo "-- $LABEL $CYCLES"
-    $CMD | ts | head -n 3
+    $CMD | ./ts | head -n 3
   done
 }
 
