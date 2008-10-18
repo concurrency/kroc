@@ -21,6 +21,7 @@ targets = \
 	mtring.pthread \
 	jcsp/MTRing.class \
 	agents.beam \
+	agents.c \
 	agents.ccsp \
 	agents.haskell \
 	agents.occam \
@@ -33,6 +34,9 @@ all: $(targets)
 
 %.beam:		erlang/%.erl
 	$(ERLC) +native +"{hipe, [o3]}" $<
+
+%.c:		c/%.c
+	$(CC) -O2 -Wall $< -o $@
 
 %.ccsp:		ccsp/%.c
 	$(CC) $(CC_INC) -O2 -Wall $< -o $@ $(CC_LIB) -lccsp -lpthread
