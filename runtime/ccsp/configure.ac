@@ -53,6 +53,7 @@ AC_ARG_ENABLE([tls], AS_HELP_STRING([--enable-tls],[use thread-local-storage for
 AC_ARG_ENABLE([sse2], AS_HELP_STRING([--disable-sse2],[do not use SSE2 even if supported on build system]), [enable_sse2=$enableval], [enable_sse2=yes])
 AC_ARG_ENABLE([tuning], AS_HELP_STRING([--enable-tuning=...],[set tuning for speed or size (default speed)]), [tuning=$enableval], [tuning=default])
 AC_ARG_WITH([rmox], AS_HELP_STRING([--with-rmox=...],[location of RMoX source tree to build the RMoX version of CCSP for]), [rmox=$withval], [rmox=])
+AC_ARG_WITH([alloc], AS_HELP_STRING([--with-alloc=...],[allocator to use (malloc,block,sblock)]), [alloc=$withval], [alloc=])
 
 #}}}
 
@@ -532,6 +533,30 @@ else
 fi
 AC_SUBST(RMOX_RTLIB)
 
+#}}}
+#{{{  check which memory allocator to use
+
+AC_MSG_CHECKING(which memory allocator to use)
+if test "$alloc" = ""; then
+ alloc=malloc
+fi
+if test "$alloc" = "malloc"; then
+ AC_MSG_RESULT([malloc])
+ AC_DEFINE([ALLOC_MALLOC],1,[define to use system malloc])
+else
+ if test "$alloc" = "block"; then
+  AC_MSG_RESULT([per CPU block])
+  AC_DEFINE([ALLOC_BLOCK],1,[define to use per-CPU block allocator])
+ else
+  if test "$alloc" = "sblock"; then
+   AC_MSG_RESULT([shared block])
+   AC_DEFINE([ALLOC_SBLOCK],1,[define to use shared block allocator])
+  else
+   AC_MSG_RESULT([unknown])
+   AC_MSG_ERROR([no allocator specified])
+  fi
+ fi
+fi
 #}}}
 #{{{  check for thread-local storage 
 
