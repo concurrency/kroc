@@ -1,5 +1,14 @@
 /* Externally visible CCSP configuration. */
 
+/* define to use per-CPU block allocator */
+#undef ALLOC_BLOCK
+
+/* define to use system malloc */
+#undef ALLOC_MALLOC
+
+/* define to use shared block allocator */
+#undef ALLOC_SBLOCK
+
 /* define to support blocking syscalls */
 #undef BLOCKING_SYSCALLS
 
