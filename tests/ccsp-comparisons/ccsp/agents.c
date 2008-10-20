@@ -28,6 +28,7 @@ typedef struct _vector_t {
 typedef struct _agent_t {
 	int		id;
 	int		loc;
+	int		idx;
 	vector_t	pos;
 } agent_t;
 
@@ -62,7 +63,7 @@ enum {
 };
 
 typedef struct _move_req_t {
-	int		id;
+	int		idx;
 	vector_t	v;
 } move_req_t;
 
@@ -184,6 +185,8 @@ static agent_t *add_agent (Workspace wptr, agent_list_t **list, agent_t *info)
 	
 	memcpy (&(l->elements[idx].data), info, sizeof (*info));
 
+	l->elements[idx].data.idx = idx;
+
 	return &(l->elements[idx].data);
 }
 
@@ -205,20 +208,6 @@ static void remove_agent (Workspace wptr, agent_list_t **list, int idx)
 	l->elements[idx].next = l->free;
 	l->used--;
 	l->free	= idx;
-}
-
-static int find_agent (agent_list_t *l, int id)
-{
-	int p = l->head;
-
-	assert (p != -1);
-
-	while (l->elements[p].data.id != id) {
-		p = l->elements[p].next;
-		assert (p != -1);
-	}
-
-	return p;
 }
 
 static void merge_agents (Workspace wptr, const vector_t *offset, agent_list_t **result, agent_list_t *loc)
@@ -320,7 +309,7 @@ static void redirect_agent (Workspace wptr, mt_cb_t **neighbours, Channel *resp,
 	vector_sub (&(info->pos), &o);
 
 	ChanOutInt (wptr, resp, LOC_GO_THERE);
-	ChanOut (wptr, resp, info, sizeof (*info));
+	ChanOut (wptr, resp, &(info->pos), sizeof (info->pos));
 	MTChanOut (wptr, resp, (void *) &(neighbours[d]));
 }
 
@@ -359,34 +348,32 @@ static void location (Workspace wptr)
 		ChanInInt (wptr, req, &type);
 		
 		if (type == LOC_ENTER) {
-			agent_t info;
+			agent_t buf;
 
-			ChanIn (wptr, req, &info, sizeof (info));
+			ChanIn (wptr, req, &buf, sizeof (buf));
 			
-			info.loc = loc;
-			if (in_bounds (&(info.pos))) {
+			if (in_bounds (&(buf.pos))) {
+				agent_t *info = add_agent (wptr, &state, &buf);
+				info->loc = loc;
 				ChanOutInt (wptr, resp, LOC_STAY_HERE);
-				ChanOut (wptr, resp, &info, sizeof (info));
-				add_agent (wptr, &state, &info);
+				ChanOut (wptr, resp, info, sizeof (*info));
 			} else {
-				redirect_agent (wptr, neighbours, resp, &info);
+				redirect_agent (wptr, neighbours, resp, &buf);
 			}
 		} else if (type == LOC_MOVE) {
 			move_req_t update;
 			agent_t *info;
-			int idx;
 			
 			ChanIn (wptr, req, &update, sizeof (update));
 			
-			idx	= find_agent (state, update.id);
-			info	= &(state->elements[idx].data);
+			info	= &(state->elements[update.idx].data);
 			vector_add (&(info->pos), &(update.v));
 			if (in_bounds (&(info->pos))) {
 				ChanOutInt (wptr, resp, LOC_STAY_HERE);
-				ChanOut (wptr, resp, info, sizeof (*info));
+				ChanOut (wptr, resp, &(info->pos), sizeof (info->pos));
 			} else {
 				redirect_agent (wptr, neighbours, resp, info);
-				remove_agent (wptr, &state, idx);
+				remove_agent (wptr, &state, update.idx);
 			}
 		} else if (type == LOC_GET_VIEW) {
 			MTChanOut (wptr, resp, (void *) &view_cb);
@@ -466,7 +453,7 @@ static void agent (Workspace wptr)
 		view_req_t vr;
 		int idx, px, py;
 		
-		mr.id	= info.id;
+		mr.idx	= info.idx;
 		mr.v.x	= 0;
 		mr.v.y	= 0;
 
@@ -545,8 +532,10 @@ static void agent (Workspace wptr)
 			}
 			ChanInInt (wptr, &(loc->channels[1]), &resp);
 			if (resp == LOC_STAY_HERE) {
-				ChanIn (wptr, &(loc->channels[1]), &info, sizeof (info));
-				if (idx > 1) {
+				if (idx == 1) {
+					ChanIn (wptr, &(loc->channels[1]), &(info.pos), sizeof (info.pos));
+				} else {
+					ChanIn (wptr, &(loc->channels[1]), &info, sizeof (info));
 					MTRelease (wptr, view);
 					view = NULL;
 					ChanOutInt (wptr, &(loc->channels[0]), LOC_GET_VIEW);
@@ -556,7 +545,7 @@ static void agent (Workspace wptr)
 				idx = 0;
 			} else if (resp == LOC_GO_THERE) {
 				mt_cb_t *new_loc = NULL;
-				ChanIn (wptr, &(loc->channels[1]), &info, sizeof (info));
+				ChanIn (wptr, &(loc->channels[1]), &(info.pos), sizeof (info.pos));
 				MTChanIn (wptr, &(loc->channels[1]), (void *) &new_loc);
 				MTUnlock (wptr, loc, MT_CB_CLIENT);
 				MTRelease (wptr, loc);
