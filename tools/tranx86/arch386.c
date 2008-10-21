@@ -3199,17 +3199,9 @@ static void compose_fp_load_control_i386 (tstate *ts, int rounding_mode)
 	/* 0b << 12       infinity control -- unused on 387+
 	 * 00b << 10      rounding control -- from rmodes above
 	 * 11b << 8       precision control -- double extended precision (64 bits)
-	 * 000000b << 0   exception mask -- none masked
+	 * 111111b << 0   exception mask -- all masked
 	 */
-	int val = 0x0300 | (rmodes[rounding_mode] << 10);
-
-	if (options.debug_options & DEBUG_FLOAT) {
-		/* mask all FP exceptions */
-		val |= 0x003f;
-	} else {
-		/* mask all FP exceptions except "invalid operation" */
-		val |= 0x003e;
-	}
+	int val = 0x033f | (rmodes[rounding_mode] << 10);
 
 	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_CONST | ARG_ISCONST, val));
 	add_to_ins_chain (compose_ins (INS_FLDCW, 1, 0, ARG_REGIND, REG_ESP));
