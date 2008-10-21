@@ -3204,11 +3204,11 @@ static void compose_fp_load_control_i386 (tstate *ts, int rounding_mode)
 	int val = 0x0300 | (rmodes[rounding_mode] << 10);
 
 	if (options.debug_options & DEBUG_FLOAT) {
-		/* mask all FP exceptions except "invalid operation" */
-		val |= 0x003e;
-	} else {
 		/* mask all FP exceptions */
 		val |= 0x003f;
+	} else {
+		/* mask all FP exceptions except "invalid operation" */
+		val |= 0x003e;
 	}
 
 	add_to_ins_chain (compose_ins (INS_PUSH, 1, 0, ARG_CONST | ARG_ISCONST, val));
