@@ -25,7 +25,7 @@ run_cmd ()
   fi
 }
 
-run_cmd "CCSP" "./blur.ccsp $FRAMES $WORKERS"
-run_cmd "pthread" "./blur.pthread $FRAMES $WORKERS"
+run_cmd "CCSP C" "./blur.ccsp $FRAMES $WORKERS"
+run_cmd "pthread C" "./blur.pthread $FRAMES $WORKERS"
 #run_cmd "pthread (queue)" "./blur.pthread $FRAMES $WORKERS 1"
 

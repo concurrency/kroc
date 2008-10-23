@@ -1,6 +1,5 @@
 #!/bin/bash
 
-SPYTHON=/opt/stackless/bin/python
 TIMEOUT=90
 
 CORES=2
@@ -31,10 +30,7 @@ run_cmd "CCSP occam-pi" "./mtring.occam $CYCLES $TOKENS"
 run_cmd "Erlang" "erl -noshell -run mtring main $CYCLES $TOKENS"
 run_cmd "Haskell" "./mtring.haskell $CYCLES $TOKENS +RTS -N$CORES -RTS"
 run_cmd "JCSP" "java -classpath jcsp/jcsp.jar:jcsp/. MTRing $CYCLES $TOKENS"
-run_cmd "pthread" "./mtring.pthread $CYCLES $TOKENS"
+run_cmd "pthread C" "./mtring.pthread $CYCLES $TOKENS"
 #run_cmd "PyCSP" "python pycsp/mtring.py $CYCLES $TOKENS"
-
-if [ -x "$SPYTHON" ]; then
-	run_cmd "Stackless Python" "$SPYTHON stackless/mtring.py $CYCLES $TOKENS"
-fi
+#run_cmd "Stackless Python" "$SPYTHON stackless/mtring.py $CYCLES $TOKENS"
 

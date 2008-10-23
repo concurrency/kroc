@@ -10,7 +10,6 @@ targets = \
 	ts \
 	ring.beam \
 	ring.ccsp \
-	ring.chp \
 	ring.haskell \
 	ring.occam \
 	ring.pthread \
@@ -22,11 +21,11 @@ targets = \
 	mtring.pthread \
 	jcsp/MTRing.class \
 	agents.beam \
-	agents.c \
 	agents.ccsp \
 	agents.haskell \
 	agents.occam \
 	agents.pthread \
+	agents.serial \
 	jcsp/Agents.class \
 	blur.ccsp \
 	blur.pthread
@@ -38,9 +37,6 @@ ts:	ts.c
 
 %.beam:		erlang/%.erl
 	$(ERLC) +native +"{hipe, [o3]}" $<
-
-%.c:		c/%.c
-	$(CC) -O2 -Wall $< -o $@
 
 %.ccsp:		ccsp/%.c
 	$(CC) $(CC_INC) -O2 -Wall $< -o $@ $(CC_LIB) -lccsp -lpthread
@@ -59,6 +55,9 @@ ts:	ts.c
 
 %.pthread:	pthread/%.c
 	$(CC) -O2 -Wall $< -o $@ -lpthread
+
+%.serial:	serial/%.c
+	$(CC) -O2 -Wall $< -o $@
 
 clean:
 	rm -f $(targets) 
