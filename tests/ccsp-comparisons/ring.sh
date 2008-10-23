@@ -1,7 +1,5 @@
 #!/bin/bash
 
-SPYTHON=/opt/stackless/bin/python
-
 CORES=2
 if [ -f /proc/cpuinfo ]; then
   CORES=`cat /proc/cpuinfo | grep processor | wc -l`
@@ -26,10 +24,7 @@ run_cmd "CCSP occam-pi" "./ring.occam $CYCLES"
 run_cmd "Erlang" "erl -noshell -run ring main $CYCLES"
 run_cmd "Haskell" "./ring.haskell $CYCLES +RTS -N$CORES -RTS"
 run_cmd "JCSP" "java -classpath jcsp/jcsp.jar:jcsp/. Ring $CYCLES"
-run_cmd "pthread" "./ring.pthread $CYCLES"
-run_cmd "PyCSP" "python pycsp/ring.py $CYCLES"
-
-if [ -x "$SPYTHON" ]; then
-	run_cmd "Stackless Python" "$SPYTHON stackless/ring.py $CYCLES"
-fi
+run_cmd "pthread C" "./ring.pthread $CYCLES"
+#run_cmd "PyCSP" "python pycsp/ring.py $CYCLES"
+#run_cmd "Stackless Python" "$SPYTHON stackless/ring.py $CYCLES"
 

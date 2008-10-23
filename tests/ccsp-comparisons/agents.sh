@@ -1,6 +1,5 @@
 #!/bin/bash
 
-SPYTHON=/opt/stackless/bin/python
 TIMEOUT=300
 
 CORES=2
@@ -26,16 +25,13 @@ run_cmd ()
   fi
 }
 
-run_cmd "C" "./agents.c $GRID $AGENTS"
 run_cmd "CCSP C" "./agents.ccsp $GRID $AGENTS"
 run_cmd "CCSP occam-pi" "./agents.occam $GRID $AGENTS"
 run_cmd "Erlang" "erl -noshell -run agents main $GRID $AGENTS"
 run_cmd "Haskell" "./agents.haskell $GRID $AGENTS +RTS -N$CORES -RTS"
 run_cmd "JCSP" "java -classpath jcsp/jcsp.jar:jcsp/. Agents $GRID $AGENTS"
-run_cmd "pthread" "./agents.pthread $GRID $AGENTS"
+run_cmd "pthread C" "./agents.pthread $GRID $AGENTS"
+run_cmd "serial C" "./agents.serial $GRID $AGENTS"
 #run_cmd "PyCSP" "python pycsp/agents.py $GRID $AGENTS"
-
-#if [ -x "$SPYTHON" ]; then
-#	run_cmd "Stackless Python" "$SPYTHON stackless/agents.py $GRID $AGENTS"
-#fi
+#run_cmd "Stackless Python" "$SPYTHON stackless/agents.py $GRID $AGENTS"
 
