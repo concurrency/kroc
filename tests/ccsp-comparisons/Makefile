@@ -25,6 +25,7 @@ targets = \
 	agents.haskell \
 	agents.occam \
 	agents.pthread \
+	agents-dp.pthread \
 	agents.serial \
 	jcsp/Agents.class \
 	blur.ccsp \
