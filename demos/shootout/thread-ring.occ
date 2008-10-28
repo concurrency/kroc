@@ -1,0 +1,45 @@
+#INCLUDE "course.module"
+
+VAL INT N IS 10000000:
+VAL INT COUNT IS 503:
+
+PROC thread.ring (SHARED CHAN BYTE screen!)
+  SHARED? CHAN INT first:
+  [COUNT]CHAN INT links:
+
+  PROC thread (VAL INT name, CHAN INT in?, out!)
+    INT n:
+    SEQ
+      IF
+        name = 0
+          CLAIM first?
+            first ? n
+        TRUE
+          in ? n
+      INITIAL BOOL running IS TRUE:
+      WHILE running
+        IF
+          n = 0
+            SEQ
+              CLAIM screen!
+                SEQ
+                  out.int (name, 0, screen!)
+                  screen ! '*n'
+              out ! -1
+              in ? n
+              running := FALSE
+          n = (-1)
+            SEQ
+              out ! n
+              running := FALSE
+          TRUE
+            SEQ
+              out ! n - 1
+              in ? n
+  :
+
+  PAR
+    first ! N + 1
+    PAR i = 0 FOR COUNT
+      thread (i, links[i]?, links[(i + 1) \ COUNT]!)
+:
