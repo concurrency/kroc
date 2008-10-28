@@ -96,7 +96,7 @@ PROC out.int.word (VAL INT n, CHAN BYTE out!)
     3
       out.string ("three", 0, out!)
     4
-      out.string ("fource", 0, out!)
+      out.string ("four", 0, out!)
     5
       out.string ("five", 0, out!)
     6
