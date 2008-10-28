@@ -5,6 +5,7 @@ OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
 	chameneos.occ \
+	chameneos-redux.occ \
 	cheap-concurrency.occ \
 	fannkuch.occ \
 	fasta.occ \
@@ -18,6 +19,7 @@ EXTRA_DIST = \
 
 examples = \
 	chameneos \
+	chameneos-redux \
 	cheap-concurrency \
 	fannkuch \
 	fasta \
@@ -32,6 +34,9 @@ examples = \
 all-local: $(examples)
 
 chameneos: chameneos.occ
+	$(OCCBUILD) --program $<
+
+chameneos-redux: chameneos-redux.occ
 	$(OCCBUILD) --program $<
 
 cheap-concurrency: cheap-concurrency.occ
