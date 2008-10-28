@@ -1,4 +1,4 @@
-#USE "course.lib"
+#INCLUDE "course.module"
 
 -- This does not work (past the first few digits) -- it needs a big integer
 -- library. It does turn out to be a reasonably nice way of implementing to

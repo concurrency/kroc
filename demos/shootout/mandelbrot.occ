@@ -1,6 +1,5 @@
-#USE "course.lib"
-#INCLUDE "filelib.inc"
-#USE "file.lib"
+#INCLUDE "course.module"
+#INCLUDE "file.module"
 
 VAL INT N IS 3000:
 VAL INT Width IS N:

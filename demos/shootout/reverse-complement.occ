@@ -1,5 +1,4 @@
-#INCLUDE "consts.inc"
-#USE "course.lib"
+#INCLUDE "course.module"
 
 PROC main (CHAN BYTE in?, out!)
   VAL []BYTE from IS "ACBDGHKMNSRUTWVYacbdghkmnsrutwvy":

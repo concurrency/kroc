@@ -1,4 +1,4 @@
-#USE "course.lib"
+#INCLUDE "course.module"
 
 VAL INT N IS 5000000:
 VAL INT Creatures IS 4:
