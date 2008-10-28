@@ -8,7 +8,6 @@ EXTRA_DIST = \
 	occman.occ \
 	mandelbrot.occ
 
-
 examples = \
 	bomberman \
 	occman \
@@ -26,7 +25,7 @@ mandelbrot: mandelbrot.occ
 	$(OCCBUILD) --program $<
 
 install-exec-local: $(examples)
-	$(OCCBUILD) --install-examples robots --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
+	$(OCCBUILD) --install-examples ttygames --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
 
 clean-local:
 	$(OCCBUILD) --clean $(examples)
