@@ -1,4 +1,4 @@
-#USE "course.lib"
+#INCLUDE "course.module"
 
 VAL INT N IS 15000:
 VAL INT Threads IS 500:
