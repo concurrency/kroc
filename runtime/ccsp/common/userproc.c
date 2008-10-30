@@ -733,7 +733,7 @@ unsigned int ccsp_spin_us (void)
 /*}}}*/
 #endif /* RMOX_BUILD */
 
-#if defined(ENABLE_MP)
+#if defined(ENABLE_MP) && defined(USE_PTHREADS)
 /*{{{  static void *user_thread (void *arg)*/
 static void *user_thread (void *arg)
 {
@@ -748,6 +748,12 @@ void ccsp_new_thread (void)
 	pthread_create (&thread, NULL, user_thread, NULL);
 }
 /*}}}*/
+#elif defined(ENABLE_MP) && defined(RMOX_BUILD)
+/* FIXME: needs relevant support for MP RMoX */
+void ccsp_new_thread (void)
+{
+	return;
+}
 #else /* !ENABLE_MP */
 /*{{{  void ccsp_new_thread (void)*/
 void ccsp_new_thread (void)
