@@ -68,13 +68,16 @@ static int configure_serial_port (int fd,
 	struct termios tio;
 	int ret;
 
+	/*
 	fprintf (stderr, "fd = %d, baud = %d, parity = %d, databits = %d, stopbits = %d, flow = %d\n", fd, baud, parity, databits, stopbits, flow);
+	*/
 
 	if ((ret = tcgetattr (fd, &tio))) {
 		fprintf (stderr, "tcgetattr failed %d\n", ret);
 		return -1;
 	}
 
+	/*
 	fprintf (stderr, "old: iflag %x, oflag %x, cflag %x, lflag %x, speed %d\n",
 		(unsigned int) tio.c_iflag, 
 		(unsigned int) tio.c_oflag,
@@ -82,6 +85,7 @@ static int configure_serial_port (int fd,
 		(unsigned int) tio.c_lflag,
 		(unsigned int) tio.c_ispeed
 	);
+	*/
 
 	cfmakeraw (&tio);
 	cfsetispeed (&tio, make_speed (baud));
@@ -135,7 +139,7 @@ static int configure_serial_port (int fd,
 			break;
 	}
 	*/
-
+	/*
 	fprintf (stderr, "new: iflag %x, oflag %x, cflag %x, lflag %x, speed %d\n",
 		(unsigned int) tio.c_iflag, 
 		(unsigned int) tio.c_oflag,
@@ -143,6 +147,7 @@ static int configure_serial_port (int fd,
 		(unsigned int) tio.c_lflag,
 		(unsigned int) tio.c_ispeed
 	);
+	*/
 	
 	tcflush (fd, TCIOFLUSH);
 	if ((ret = tcsetattr (fd, TCSANOW, &tio))) {
@@ -153,6 +158,7 @@ static int configure_serial_port (int fd,
 		return -1;
 	}
 
+	/*
 	fprintf (stderr, "result: iflag %x, oflag %x, cflag %x, lflag %x, speed %d\n",
 		(unsigned int) tio.c_iflag, 
 		(unsigned int) tio.c_oflag,
@@ -160,6 +166,7 @@ static int configure_serial_port (int fd,
 		(unsigned int) tio.c_lflag,
 		(unsigned int) tio.c_ispeed
 	);
+	*/
 
 #if 0
 	/* Assert RTS */
@@ -229,8 +236,6 @@ static int wait_and_read (int timeout, int fd, char *buffer, int buflen)
 	if ((ret = select (fd + 1, &fds, NULL, NULL, &tv)) > 0) {
 		return read (fd, buffer, buflen);
 	}
-	
-	fprintf (stderr, "fd = %d, ret = %d\n", fd, ret);
 	
 	return ret;
 }
