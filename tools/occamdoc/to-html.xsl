@@ -363,14 +363,14 @@
 
 <xsl:template match="ref">
 	<xsl:choose>
-		<xsl:when test="key('name',.)/@type='module'">
-			<a href="{key('name',.)/@name}.html">
-				<code><xsl:value-of select="." /></code>
+		<xsl:when test="key('name',@href)/@type='module'">
+			<a href="{key('name',@href)/@name}.html">
+				<code><xsl:value-of select="key('name',@href)/name" /></code>
 			</a>
 		</xsl:when>
 		<xsl:otherwise>
-			<a href="{key('name',.)/ancestor::declaration[@type='module']/@name}.html#name-{key('name',.)/@name}">
-				<code><xsl:value-of select="." /></code>
+			<a href="{key('name',@href)/ancestor::declaration[@type='module']/@name}.html#name-{key('name',@href)/@name}">
+				<code><xsl:value-of select="key('name',@href)/name" /></code>
 			</a>
 		</xsl:otherwise>
 	</xsl:choose>
