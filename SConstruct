@@ -17,6 +17,8 @@ SConscript('tools/skroc/SConscript')
 SConscript('tools/slinker/SConscript')
 SConscript('tools/occ21/SConscript')
 
+SConscript('runtime/libtvm/SConscript')
+
 # A bit tedious, and not needed right now.
 # SConscript('tools/occamdoc/SConscript')
 
