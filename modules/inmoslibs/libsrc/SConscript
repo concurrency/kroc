@@ -1,1 +1,6 @@
-SConscript('forall/SConscript')
+import os
+
+dirs = Split('forall maths convert')
+
+for d in dirs:
+    SConscript(os.path.join(d, 'SConscript'))
