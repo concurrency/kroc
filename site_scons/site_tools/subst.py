@@ -3,10 +3,12 @@ from SCons.Builder import Builder
 from SCons.Action import Action
 
 class AtSubstTemplate(string.Template):
+    delimiter = '@'
     pattern = r"""
       @(?:
         (?P<escaped>@)   |
         (?P<named>.*?)@  |
+        (?P<braced>.*?)@  |
         (?P<invalid>))
         """
 
