@@ -24,16 +24,24 @@
 #define OPI_VIDEO_TYPE_TUNER	0x2
 #define OPI_VIDEO_FLAG_AUDIO	0x1
 
-#define OPI_VIDEO_PAL_INVALID   0
-#define OPI_VIDEO_PAL_GRAY      1
-#define OPI_VIDEO_PAL_HI240     2
-#define OPI_VIDEO_PAL_RGB565    3
-#define OPI_VIDEO_PAL_RGB24     4
-#define OPI_VIDEO_PAL_RGB32     5
-#define OPI_VIDEO_PAL_RGB555    6
-#define OPI_VIDEO_PAL_YUV422    7
-#define OPI_VIDEO_PAL_YUYV      8
-#define OPI_VIDEO_PAL_YUV420P   15
+#define OPI_VIDEO_PAL_INVALID	0
+#define OPI_VIDEO_PAL_GRAY	1
+#define OPI_VIDEO_PAL_HI240	2
+#define OPI_VIDEO_PAL_RGB565	3
+#define OPI_VIDEO_PAL_RGB24	4
+#define OPI_VIDEO_PAL_RGB32	5
+#define OPI_VIDEO_PAL_RGB555	6
+#define OPI_VIDEO_PAL_YUV422	7
+#define OPI_VIDEO_PAL_YUYV	8
+#define OPI_VIDEO_PAL_UYVY	9
+#define OPI_VIDEO_PAL_YUV420	10
+#define OPI_VIDEO_PAL_YUV411	11
+#define OPI_VIDEO_PAL_YUV422P	13
+#define OPI_VIDEO_PAL_YUV411P	14
+#define OPI_VIDEO_PAL_YUV420P	15
+#define OPI_VIDEO_PAL_YUV410P	16
+#define OPI_VIDEO_PAL_BGR24	17
+#define OPI_VIDEO_PAL_BGR32	18
 
 #define OPI_VIDEO_DEVICE_FNAMEMAX 128
 
@@ -42,6 +50,7 @@ typedef struct opi_video_device {
 	int fnamelen;
 	int fd;
 	int api;
+	int caps;
 } opi_video_device_t;
 
 #define OPI_VIDEO_IDENTITY_NAMEMAX 64
@@ -79,7 +88,7 @@ typedef struct opi_video_frameinfo {
 	int width;
 	int height;
 	int format;
-	int isize;
+	int bytes;
 } opi_video_frameinfo_t;
 
 #endif	/* !__VIDEO_V4L_H */
