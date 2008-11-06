@@ -1,3 +1,4 @@
+import os.path
 
 # Import the global localironment
 Import("env")
@@ -84,6 +85,8 @@ occ21 = local.Program(target = "occ21",
         CPPPATH = ['.', 'include'],
         LIBPATH = ['arglib', 'extlib', 'fnilib', 'maplib', 'suplib', 'tcofflib']
         )
-        
+
+env['OCC21']        = occ21
+env.AppendENVPath('SKROCPATH', os.path.dirname(occ21[0].abspath))
         
 
