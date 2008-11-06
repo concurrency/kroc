@@ -60,6 +60,7 @@ env['OCCBUILD_TOOLCHAIN'] = 'tvm'
 
 
 SConscript('modules/inmoslibs/libsrc/SConscript')
+SConscript('modules/course/libsrc/SConscript')
 
 # A bit tedious, and not needed right now.
 # SConscript('tools/occamdoc/SConscript')
