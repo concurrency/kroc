@@ -17,8 +17,6 @@
 --	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 --
 
--- NOTE: this should disappear eventually, replaced with decent programs in ../examples/
-
 #INCLUDE "course.module"
 #INCLUDE "sdlraster.module"
 #INCLUDE "video.module"
@@ -28,7 +26,7 @@ VAL []BYTE DEVICE.NAME IS "/dev/video0":
 
 PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
   VIDEO.IDENTITY ident:
-  MOBILE []VIDEO.CAMINPUT caminfos:
+  MOBILE []VIDEO.INPUT inputs:
   VIDEO.PICTURE pict:
   VIDEO.FRAMEINFO finf:
   BOOL ok:
@@ -37,8 +35,8 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
     --{{{  device identity
     out.string ("vidgrab: getting device identity...*n", 0, scr!)
 
-    dev[in] ! get.identity
-    dev[out] ? CASE
+    dev[req] ! get.identity
+    dev[resp] ? CASE
       identity; ident
         SEQ
           out.string ("vidgrab: device is [", 0, scr!)
@@ -52,44 +50,44 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
           out.string ("*n", 0, scr!)
 
     --}}}
-    --{{{  info about available cameras
-    out.string ("vidgrab: getting information about available cameras...*n", 0, scr!)
+    --{{{  info about available inputs
+    out.string ("vidgrab: getting information about available inputs...*n", 0, scr!)
 
-    dev[in] ! get.cameras
-    dev[out] ? CASE
-      caminfo; caminfos
+    dev[req] ! get.inputs
+    dev[resp] ? CASE
+      inputs; inputs
         SEQ
           out.string ("vidgrab: got information about ", 0, scr!)
-          out.int (SIZE caminfos, 0, scr!)
-          out.string (" cameras:*n", 0, scr!)
-          SEQ i = 0 FOR SIZE caminfos
+          out.int (SIZE inputs, 0, scr!)
+          out.string (" inputs:*n", 0, scr!)
+          SEQ i = 0 FOR SIZE inputs
             SEQ
               out.int (i, 2, scr!)
               out.string ("  ", 0, scr!)
-              out.int (caminfos[i][id], 4, scr!)
+              out.int (inputs[i][id], 4, scr!)
               out.string ("  ", 0, scr!)
-              out.string ([caminfos[i][name] FOR caminfos[i][namelen]], 0, scr!)
+              out.string ([inputs[i][name] FOR inputs[i][namelen]], 0, scr!)
               out.string (" (", 0, scr!)
-              out.int (caminfos[i][minw], 0, scr!)
+              out.int (inputs[i][minw], 0, scr!)
               out.string ("x", 0, scr!)
-              out.int (caminfos[i][minh], 0, scr!)
+              out.int (inputs[i][minh], 0, scr!)
               out.string (") - (", 0, scr!)
-              out.int (caminfos[i][maxw], 0, scr!)
+              out.int (inputs[i][maxw], 0, scr!)
               out.string ("x", 0, scr!)
-              out.int (caminfos[i][maxh], 0, scr!)
+              out.int (inputs[i][maxh], 0, scr!)
               out.string (")*n", 0, scr!)
       MOBILE []BYTE msg:
       error; msg
         SEQ
-          out.string ("vidgrab: failed to get details of cameras: ", 0, scr!)
+          out.string ("vidgrab: failed to get details of inputs: ", 0, scr!)
           out.string (msg, 0, scr!)
           out.string ("*n", 0, scr!)
     --}}}
     --{{{  picture properties
     out.string ("vidgrab: getting picture properties...*n", 0, scr!)
 
-    dev[in] ! get.picture
-    dev[out] ? CASE
+    dev[req] ! get.picture
+    dev[resp] ? CASE
       picture; pict
         SEQ
           out.string ("bright:   ", 0, scr!)
@@ -133,8 +131,8 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
     out.string ("vidgrab: setting picture format to RGB24...*n", 0, scr!)
 
     pict[palette] := VIDEO.PAL.RGB24
-    dev[in] ! set.picture; pict
-    dev[out] ? CASE
+    dev[req] ! set.picture; pict
+    dev[resp] ? CASE
       picture; pict
         SEQ
           out.string ("vidgrab: picture format now ", 0, scr!)
@@ -158,8 +156,8 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
     --{{{  frame info
     out.string ("vidgrab: getting frame info...*n", 0, scr!)
 
-    dev[in] ! get.frameinfo
-    dev[out] ? CASE
+    dev[req] ! get.frameinfo
+    dev[resp] ? CASE
       frameinfo; finf
         SEQ
           out.string ("vidgrab: frames are ", 0, scr!)
@@ -194,7 +192,7 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
       raster.display.simple ("video grab test", finf[width], finf[height], 2, rc1?, rc2!)
 
       --}}}
-      --{{{  loop grabbing frames from the camera, put them on the screen!
+      --{{{  loop grabbing frames from the input, put them on the screen!
       SEQ
 
         INITIAL BOOL redraw.menu IS TRUE:
@@ -225,8 +223,8 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
             IF
               update.pict
                 SEQ
-                  dev[in] ! set.picture; pict
-                  dev[out] ? CASE
+                  dev[req] ! set.picture; pict
+                  dev[resp] ? CASE
                     VIDEO.PICTURE tpict:
                     picture; tpict
                       SKIP
@@ -280,7 +278,7 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
               TRUE
                 SKIP
 
-            dev[in] ! grab.frame
+            dev[req] ! grab.frame
             INITIAL BOOL got.frame IS FALSE:
             WHILE NOT got.frame
               PRI ALT
@@ -315,7 +313,7 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
                       ELSE
                         SKIP
 
-                dev[out] ? CASE
+                dev[resp] ? CASE
                   MOBILE [][]INT32 frame:
                   frame; frame
                     INT mx, my:
@@ -372,7 +370,7 @@ PROC vidgrab (CHAN BYTE kyb?, scr!, err!)
       video.server (vsvr, DEVICE.NAME)
 
       SEQ
-        vcli[out] ? CASE
+        vcli[resp] ? CASE
           ok
             vidgrab.main (vcli, kyb?, scr!)
           MOBILE []BYTE str:
