@@ -1,0 +1,23 @@
+Import('env')
+local = env.Clone()
+
+examples = Split('''
+    bar
+    casting
+    commstime
+    demo
+    double_echo
+    echoing
+    hello_raw_world
+    hello_seq_world
+    hello_world
+    sort_inside
+    sort_pump
+    test_utils
+    ''')
+
+local.Append(INCPATH = ['../libsrc', '../../inmoslibs/libsrc/forall'])
+local.Append(OCCBUILDFLAGS='--skroc-opts -v -v')
+
+for e in examples:
+    local.OccamProgram(e)

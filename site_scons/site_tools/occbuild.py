@@ -63,12 +63,18 @@ def generate(env, **kw):
                       suffix = '.lib',
                       src_suffix = '.tce',
                       src_builder = [tce_bld])
+    prog_bld = Builder(action = Action('$OCCBUILDPROGRAMCOM', '$OCCBUILDPROGRAMCOMSTR'),
+                      emitter = emitter,
+                      src_suffix = ['.occ', '.tce'],
+                      src_builder = [tce_bld])
     # Add the new Builder to the list of builders
     # Use of $( $)  causes bracketed flags not trigger rebuild when changed
     env['BUILDERS']['OccamObject']  = tce_bld
     env['OCCBUILDCOM']              = '$OCCBUILD $_OCCBUILD_TOOLCHAIN $_OCCBUILD_SEARCH_DIRS $OCCBUILDFLAGS --object $SOURCES'
     env['BUILDERS']['OccamLibrary'] = lib_bld
-    env['OCCBUILDLIBRARYCOM']       = '$OCCBUILD $_OCCBUILD_TOOLCHAIN $_OCBUILD_SEARCH_DIRS $OCCBUILDFLAGS --library $TARGET $SOURCES'
+    env['OCCBUILDLIBRARYCOM']       = '$OCCBUILD $_OCCBUILD_TOOLCHAIN $_OCCBUILD_SEARCH_DIRS $OCCBUILDFLAGS --library $TARGET $SOURCES'
+    env['BUILDERS']['OccamProgram'] = prog_bld
+    env['OCCBUILDPROGRAMCOM']       = '$OCCBUILD $_OCCBUILD_TOOLCHAIN $_OCCBUILD_SEARCH_DIRS $OCCBUILDFLAGS --program $SOURCES'
     env['OCCBUILD']                 = occbuild_path
     env['_OCCBUILD_SEARCH_DIRS']    = '$( ${_concat(OCCBUILD_SEARCH_PFX, INCPATH, "", __env__, RDirs, TARGET, SOURCE)} $)'
     env['OCCBUILD_SEARCH_PFX']      = '--search '

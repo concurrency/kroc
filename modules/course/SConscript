@@ -2,4 +2,5 @@ import os
 
 dirs = Split('answers examples libsrc')
 
-for d in dirs: SConscript(os.path.join(d, 'SConscript'))
+for d in dirs: 
+    SConscript(os.path.join(d, 'SConscript'))
