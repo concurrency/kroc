@@ -1,5 +1,9 @@
 import os
 
+# TODO:
+#   * The make driver scripts seem to always be called.
+
+
 # Create a global environment
 tools = ['default',
          'subst',
@@ -31,6 +35,8 @@ SConscript('tools/skroc/SConscript')
 SConscript('tools/slinker/SConscript')
 SConscript('tools/occ21/SConscript')
 SConscript('tools/kroc/SConscript')
+
+SConscript('modules/inmoslibs/libsrc/SConscript')
 
 SConscript('runtime/libtvm/SConscript')
 
