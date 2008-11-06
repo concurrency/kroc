@@ -1,5 +1,5 @@
 --
---	video.occ -- video-4-linux-2 frame-grabber
+--	video.occ -- video-4-linux(-2) frame-grabber
 --	Copyright (C) 2008 Fred Barnes <frmb@kent.ac.uk>
 --
 --	This program is free software; you can redistribute it and/or modify
@@ -17,10 +17,10 @@
 --	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 --
 
---** V4L2 frame-grabber interface.
+--** V4L(2) frame-grabber interface.
 --
 -- This module provides a raster-based interface to video-4-linux
--- frame-grabbers (version 2 of the Linux API).
+-- frame-grabbers (version 1/2 of the Linux API).
 --
 --** @module video
 
@@ -238,7 +238,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
 
                 IF
                   (SIZE inputs) = 0
-                    vsvr[resp] ! error; "no camera inputs on this device"
+                    vsvr[resp] ! error; "no inputs on this device"
                   TRUE
                     VIDEO.INPUT selinput:
                     VIDEO.IODATA iodata:

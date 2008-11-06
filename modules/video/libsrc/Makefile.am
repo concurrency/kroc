@@ -14,11 +14,7 @@ EXTRA_DIST = \
 	video.inc \
 	video.occ \
 	video-v4l.c \
-	video-v4l.h \
-	vtest.occ
-
-tests = \
-	vtest
+	video-v4l.h
 
 video_lib_objs = \
 	ccvt_misc.o \
@@ -31,7 +27,7 @@ video_includes = video.inc
 libs = $(video_libs)
 includes = $(video_includes)
 
-all-local: $(libs) $(includes) $(tests)
+all-local: $(libs) $(includes)
 
 video.lib: $(video_lib_objs)
 	$(OCCBUILD) --library video.lib --need raster --include video.inc $(video_lib_objs)
