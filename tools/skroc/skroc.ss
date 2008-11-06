@@ -42,6 +42,9 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
     (begin
       (apply fprintf (cons (current-error-port) (cons (string-append "skroc: " format) args)))
       (exit 1)))
+
+  (define (warn format . args)
+    (apply fprintf (cons (current-error-port) (cons (string-append "skroc: warning: " format) args))))
   
   ;; This is 1337 christian scheme!
   (define find-executable
@@ -705,7 +708,8 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
 		    (set! target-processor (string->symbol (format "t~a" (list-ref emu 1)))))
 		  (if endian
 		    (set! target-endian (string->symbol (list-ref endian 1))))
-		  (loop (read-line ip)))))))
+                 (loop (read-line ip))))))
+          (warn "could not read defaults from ~a\n" config-file))
 	(set-parameter! 'output 'bytecode)
 	(set-parameter! 'library-output 'all)
 	(set-parameter! 'use-std-libs #t)
