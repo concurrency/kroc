@@ -30,6 +30,7 @@ SConscript('tools/tinyswig/SConscript')
 SConscript('tools/skroc/SConscript')
 SConscript('tools/slinker/SConscript')
 SConscript('tools/occ21/SConscript')
+SConscript('tools/kroc/SConscript')
 
 SConscript('runtime/libtvm/SConscript')
 
