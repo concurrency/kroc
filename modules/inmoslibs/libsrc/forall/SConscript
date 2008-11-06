@@ -5,167 +5,205 @@ local = env.Clone()
 # We have to build some objects before the bulk of the library, because the
 # occam compiler expects to always be able to see the standard library.
 forall_early_srcs = Split('''
-	ridiv.occ
-	rimul.occ
-	qridiv.occ
-	qrimul.occ
-	qshiftl.occ
-	qshiftr.occ
-	qnorm.occ
-	dargred.occ
-	rargred.occ
-	ie32op.occ
-	ie64op.occ
-	r32eq.occ
-	r32gt.occ
-	r64eq.occ
-	r64gt.occ''')
+    ridiv.occ
+    rimul.occ
+    qridiv.occ
+    qrimul.occ
+    qshiftl.occ
+    qshiftr.occ
+    qnorm.occ
+    dargred.occ
+    rargred.occ
+    ie32op.occ
+    ie64op.occ
+    r32eq.occ
+    r32gt.occ
+    r64eq.occ
+    r64gt.occ''')
 
 forall_late_srcs = Split('''
-	bitcount.occ
-	brevnbit.occ
-	brevword.occ
-	clip2d.occ
-	crcbyte.occ
-	crcword.occ
-	dabsfint.occ
-	danalyse.occ
-	ddivby2.occ
-	dcpysign.occ
-	dfunpack.occ
-	dlogb.occ
-	dminusx.occ
-	dmulby2.occ
-	dnotfnte.occ
-	dnxtaftr.occ
-	draw2d.occ
-	dscaleb.occ
-	dsqrt.occ
-	fracmul.occ
-	i16add.occ
-	i16band.occ
-	i16bnot.occ
-	i16bor.occ
-	i16div.occ
-	i16eq.occ
-	i16gt.occ
-	i16lshft.occ
-	i16minus.occ
-	i16mul.occ
-	i16plus.occ
-	i16rem.occ
-	i16rshft.occ
-	i16sub.occ
-	i16times.occ
-	i16xor.occ
-	i16toi32.occ
-	i16toi64.occ
-	i16tor32.occ
-	i16tor64.occ
-	i32add.occ
-	i32band.occ
-	i32bnot.occ
-	i32bor.occ
-	i32divrm.occ
-	i32eq.occ
-	i32gt.occ
-	i32lshft.occ
-	i32minus.occ
-	i32mul.occ
-	i32plus.occ
-	i32rshft.occ
-	i32sub.occ
-	i32times.occ
-	i32toi16.occ
-	i32toi64.occ
-	i32tor32.occ
-	i32tor64.occ
-	i64add.occ
-	i64band.occ
-	i64bnot.occ
-	i64bor.occ
-	i64divrm.occ
-	i64eq.occ
-	i64gt.occ
-	i64lshft.occ
-	i64minus.occ
-	i64mul.occ
-	i64plus.occ
-	i64rshft.occ
-	i64sub.occ
-	i64times.occ
-	i64toi16.occ
-	i64toi32.occ
-	i64tor32.occ
-	i64tor64.occ
-	i64xor.occ
-	ie32comp.occ
-	ie32rem.occ
-	ie64comp.occ
-	ie64rem.occ
-	move2d.occ
-	occampi.occ
-	r32eqerr.occ
-	r32gterr.occ
-	r32op.occ
-	r32operr.occ
-	r32rem.occ
-	r32remer.occ
-	r32toi16.occ
-	r32toi32.occ
-	r32toi64.occ
-	r32tor64.occ
-	r64eqerr.occ
-	r64gterr.occ
-	r64op.occ
-	r64operr.occ
-	r64rem.occ
-	r64remer.occ
-	r64toi16.occ
-	r64toi32.occ
-	r64toi64.occ
-	r64tor32.occ
-	rabsfint.occ
-	ranalyse.occ
-	rcpysign.occ
-	rdivby2.occ
-	rfunpack.occ
-	rlogb.occ
-	rminusx.occ
-	rnotfnte.occ
-	rmulby2.occ
-	rnxtaftr.occ
-	roundsn.occ
-	rsqrt.occ
-	rscaleb.occ
-	unpacksn.occ
-	''')
+    bitcount.occ
+    brevnbit.occ
+    brevword.occ
+    clip2d.occ
+    crcbyte.occ
+    crcword.occ
+    dabsfint.occ
+    danalyse.occ
+    ddivby2.occ
+    dcpysign.occ
+    dfunpack.occ
+    dlogb.occ
+    dminusx.occ
+    dmulby2.occ
+    dnotfnte.occ
+    dnxtaftr.occ
+    draw2d.occ
+    dscaleb.occ
+    dsqrt.occ
+    fracmul.occ
+    i16add.occ
+    i16band.occ
+    i16bnot.occ
+    i16bor.occ
+    i16div.occ
+    i16eq.occ
+    i16gt.occ
+    i16lshft.occ
+    i16minus.occ
+    i16mul.occ
+    i16plus.occ
+    i16rem.occ
+    i16rshft.occ
+    i16sub.occ
+    i16times.occ
+    i16xor.occ
+    i16toi32.occ
+    i16toi64.occ
+    i16tor32.occ
+    i16tor64.occ
+    i32add.occ
+    i32band.occ
+    i32bnot.occ
+    i32bor.occ
+    i32divrm.occ
+    i32eq.occ
+    i32gt.occ
+    i32lshft.occ
+    i32minus.occ
+    i32mul.occ
+    i32plus.occ
+    i32rshft.occ
+    i32sub.occ
+    i32times.occ
+    i32toi16.occ
+    i32toi64.occ
+    i32tor32.occ
+    i32tor64.occ
+    i64add.occ
+    i64band.occ
+    i64bnot.occ
+    i64bor.occ
+    i64divrm.occ
+    i64eq.occ
+    i64gt.occ
+    i64lshft.occ
+    i64minus.occ
+    i64mul.occ
+    i64plus.occ
+    i64rshft.occ
+    i64sub.occ
+    i64times.occ
+    i64toi16.occ
+    i64toi32.occ
+    i64tor32.occ
+    i64tor64.occ
+    i64xor.occ
+    ie32comp.occ
+    ie32rem.occ
+    ie64comp.occ
+    ie64rem.occ
+    move2d.occ
+    occampi.occ
+    r32eqerr.occ
+    r32gterr.occ
+    r32op.occ
+    r32operr.occ
+    r32rem.occ
+    r32remer.occ
+    r32toi16.occ
+    r32toi32.occ
+    r32toi64.occ
+    r32tor64.occ
+    r64eqerr.occ
+    r64gterr.occ
+    r64op.occ
+    r64operr.occ
+    r64rem.occ
+    r64remer.occ
+    r64toi16.occ
+    r64toi32.occ
+    r64toi64.occ
+    r64tor32.occ
+    rabsfint.occ
+    ranalyse.occ
+    rcpysign.occ
+    rdivby2.occ
+    rfunpack.occ
+    rlogb.occ
+    rminusx.occ
+    rnotfnte.occ
+    rmulby2.occ
+    rnxtaftr.occ
+    roundsn.occ
+    rsqrt.occ
+    rscaleb.occ
+    unpacksn.occ
+    ''')
 
 
-local.Depends('dargred.occ', ['ridiv.tce', 'rimul.tce'])
-local.Depends('ie64op.occ',  ['ridiv.tce', 'rimul.tce'])
-local.Depends('r64op.occ',   ['ridiv.tce', 'rimul.tce'])
-local.Depends('rargred.occ', ['ridiv.tce'])
 
-forall_early = local.OccamLibrary('forall_early.lib', forall_early_srcs, 
-		               INCPATH=['.', '../maths'], 
-									 OCCBUILDFLAGS='--no-std-libs')
+# FIXME: These could be automatically generated
+local.Depends('dargred.tce', ['ridiv.tce', 'rimul.tce'])
+local.Depends('ie64op.tce',  ['ridiv.tce', 'rimul.tce'])
+local.Depends('r64op.tce',   ['ridiv.tce', 'rimul.tce'])
+local.Depends('rargred.tce', ['ridiv.tce'])
+
+
+
+# Compilation of forall_early objects, which are actually used in both stages
+# of the library build and can therefore not be specifed as sources to both
+# stages without making SCons throw up annoying warnings
+forall_early_objs = []
+for f in forall_early_srcs:
+    forall_early_objs.append(local.OccamObject(
+        f, 
+        INCPATH=['.', '../maths'], 
+        OCCBUILDFLAGS='--no-std-libs'))
+
+forall_early = local.OccamLibrary(
+    'forall_early.lib', 
+    forall_early_objs, 
+    INCPATH=['.', '../maths'], 
+    OCCBUILDFLAGS='--no-std-libs')
 p = os.path.split(forall_early[0].path)[0]
 local.AddPostAction(forall_early, 
                     Copy(os.path.join(p, 'forall.lib'), forall_early[0]))
-forall_late  = local.OccamLibrary('forall_late.lib', forall_late_srcs, 
-		               INCPATH=['.', '../maths'], 
-									 OCCBUILDFLAGS='--no-std-libs')
-# FIXME: Turn this into a command with forall.lib as target?
+local.SideEffect(
+     ['forall.lib', 'forall.module', 'forall.precomp',
+     'forall_early.module', 'forall_early.precomp'], forall_early)
+
+
+
+# Set up dependencies for all the forall_late sources
+for f in forall_late_srcs:
+    local.Depends(os.path.splitext(f)[0] + '.tce', forall_early)
+
+forall_late  = local.OccamLibrary(
+    'forall_late.lib',
+    forall_early_objs + forall_late_srcs, 
+    INCPATH=['.', '../maths'], 
+    OCCBUILDFLAGS='--no-std-libs')
+local.SideEffect(
+     ['forall.lib', 'forall.module', 'forall.precomp',
+      'forall_late.module',  'forall_late.precomp'], forall_late)
 p = os.path.split(forall_late[0].path)[0]
 local.AddPostAction(
-		forall_late, 
-		[Copy(os.path.join(p, 'forall.lib'), forall_late[0]),
-		 Copy(os.path.join(p, 'forall.module'),  
-			    os.path.splitext(forall_late[0].path)[0] + '.module'),
-		 Copy(os.path.join(p, 'forall.precomp'), 
-			    os.path.splitext(forall_late[0].path)[0] + '.precomp')])
-local.Requires(forall_late, forall_early)
-local.Clean(forall_late,  ['forall.lib', 'forall.module', 'forall.precomp',
-						               'forall_late.module',  'forall_late.precomp'])
-local.Clean(forall_early, ['forall_early.module', 'forall_early.precomp'])
+    forall_late, 
+    [Copy(os.path.join(p, 'forall.lib'), forall_late[0]),
+     Copy(os.path.join(p, 'forall.module'),  
+          os.path.splitext(forall_late[0].path)[0] + '.module'),
+     Copy(os.path.join(p, 'forall.precomp'), 
+          os.path.splitext(forall_late[0].path)[0] + '.precomp')])
+
+
+
+forall = local.Alias('forall.lib', forall_late)
+local.Clean(
+     [forall, forall_late],
+     ['forall.lib', 'forall.module', 'forall.precomp',
+      'forall_late.module',  'forall_late.precomp'])
+local.Clean(
+     [forall, forall_early],
+     ['forall.lib', 'forall.module', 'forall.precomp',
+      'forall_early.module', 'forall_early.precomp'])
