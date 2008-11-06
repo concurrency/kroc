@@ -1,6 +1,6 @@
-import scheme_utils
-
 Import("env")
-scheme_utils.BuildSchemeApp(env, "schemescanner")
+local = env.Clone()
+
+local.Mzc('schemescanner')
 
 env['schemescanner'] = 'tools/schemescanner/schemescanner'

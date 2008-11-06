@@ -1,8 +1,7 @@
-import scheme_utils, build_utils
-
 Import('env')
 
-driver = scheme_utils.BuildSchemeApp(env, 'make-driver', 'ss') 
+driver  = env.Mzc('make-driver', 'make-driver.ss')
+
 slinker_builder = Builder(action = 'tools/slinker/make-driver --driver-script $TARGET')
 local = env.Clone(BUILDERS = {'slinker_builder' : slinker_builder })
 
