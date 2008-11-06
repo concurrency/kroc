@@ -376,15 +376,31 @@ static int _v4l2_set_control (opi_video_device_t *dev, unsigned int id, signed i
 	return r;
 }
 
-static inline void video_getpicture (opi_video_device_t *dev, struct video_picture *pict) /*{{{*/
+static inline void video_getframeinfo (opi_video_device_t *dev, opi_video_frameinfo_t *finfo) /*{{{*/
 {
+	finfo->width	= 0;
+	finfo->height	= 0;
+	finfo->format	= 0;
+
 	if (dev->fd < 0) {
 		/* nothing */
 	} else if (dev->api == 1) {
+		struct video_picture pict;
+		struct video_window vwin;
 		int r;
 
-		while (((r = ioctl (dev->fd, VIDIOCGPICT, pict)) == -1) && (errno == EINTR));		/* retry */
-		pict->palette = convert_pal_v4l1_to_opi (pict->palette); 
+		while (((r = ioctl (dev->fd, VIDIOCGWIN, &vwin)) == -1) && (errno == EINTR));		/* retry */
+		if (r < 0)
+			return;
+
+		finfo->width = vwin.width;
+		finfo->height = vwin.height;
+		
+		while (((r = ioctl (dev->fd, VIDIOCGPICT, &pict)) == -1) && (errno == EINTR));		/* retry */
+		if (r < 0)
+			return;
+
+		finfo->format = convert_pal_v4l1_to_opi (pict.palette);
 	} else if (dev->api == 2) {
 		struct v4l2_format fmt;
 		int r;
@@ -395,26 +411,38 @@ static inline void video_getpicture (opi_video_device_t *dev, struct video_pictu
 		if (r < 0 || fmt.type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
 			return;
 
-		pict->brightness = _v4l2_get_control (dev, V4L2_CID_BRIGHTNESS);
-		pict->hue	= _v4l2_get_control (dev, V4L2_CID_HUE);
-		pict->contrast	= _v4l2_get_control (dev, V4L2_CID_CONTRAST);
-		pict->whiteness	= _v4l2_get_control (dev, V4L2_CID_WHITENESS);
-		pict->palette	= convert_pal_v4l2_to_opi (fmt.fmt.pix.pixelformat);
+		finfo->width	= fmt.fmt.pix.width;
+		finfo->height	= fmt.fmt.pix.height;
+		finfo->format	= convert_pal_v4l2_to_opi (fmt.fmt.pix.pixelformat);
 	}
 }
 /*}}}*/
-static inline int video_setpicture (opi_video_device_t *dev, struct video_picture *pict) /*{{{*/
+static inline int video_setframeinfo (opi_video_device_t *dev, opi_video_frameinfo_t *finfo) /*{{{*/
 {
 	if (dev->fd < 0) {
-		return 0; /* not open */
+		/* nothing */
 	} else if (dev->api == 1) {
+		struct video_picture pict;
+		struct video_window vwin;
 		int r;
 
-		pict->palette = convert_pal_opi_to_v4l1 (pict->palette);
-		while (((r = ioctl (dev->fd, VIDIOCSPICT, pict)) == -1) && (errno == EINTR));		/* retry */
+		while (((r = ioctl (dev->fd, VIDIOCGWIN, &vwin)) == -1) && (errno == EINTR));		/* retry */
+		if (r < 0)
+			return 0;
+		while (((r = ioctl (dev->fd, VIDIOCGPICT, &pict)) == -1) && (errno == EINTR));		/* retry */
 		if (r < 0)
 			return 0;
 
+		vwin.width = finfo->width;
+		vwin.height = finfo->height;
+		pict.palette = convert_pal_v4l1_to_opi (finfo->format);
+		
+		while (((r = ioctl (dev->fd, VIDIOCSWIN, &vwin)) == -1) && (errno == EINTR));		/* retry */
+		if (r < 0)
+			return 0;
+		while (((r = ioctl (dev->fd, VIDIOCSPICT, &pict)) == -1) && (errno == EINTR));		/* retry */
+		if (r >= 0)
+			return 1;
 	} else if (dev->api == 2) {
 		struct v4l2_format fmt;
 		int r;
@@ -425,24 +453,72 @@ static inline int video_setpicture (opi_video_device_t *dev, struct video_pictur
 		if (r < 0 || fmt.type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
 			return 0;
 
-		fmt.fmt.pix.pixelformat = convert_pal_opi_to_v4l2 (pict->palette);
+		fmt.fmt.pix.width	= finfo->width;
+		fmt.fmt.pix.height	= finfo->height;
+		fmt.fmt.pix.pixelformat = convert_pal_opi_to_v4l2 (finfo->format);
 
 		while (((r = ioctl (dev->fd, VIDIOC_S_FMT, &fmt)) == -1) && (errno == EINTR));		/* retry */
+		if (r >= 0)
+			return 1;
+	}
+	return 0;
+}
+/*}}}*/
+static inline void video_getpicture (opi_video_device_t *dev, opi_video_picture_t *pict) /*{{{*/
+{
+	if (dev->fd < 0) {
+		/* nothing */
+	} else if (dev->api == 1) {
+		struct video_picture buf;
+		int r;
+
+		while (((r = ioctl (dev->fd, VIDIOCGPICT, &buf)) == -1) && (errno == EINTR));		/* retry */
+		pict->brightness 	= buf.brightness;
+		pict->hue		= buf.hue;
+		pict->contrast		= buf.contrast;
+		pict->whiteness		= buf.whiteness;
+		pict->colour		= buf.colour;
+	} else if (dev->api == 2) {
+		pict->brightness	= _v4l2_get_control (dev, V4L2_CID_BRIGHTNESS);
+		pict->hue		= _v4l2_get_control (dev, V4L2_CID_HUE);
+		pict->contrast		= _v4l2_get_control (dev, V4L2_CID_CONTRAST);
+		pict->whiteness		= _v4l2_get_control (dev, V4L2_CID_WHITENESS);
+		pict->colour		= 0;
+	}
+}
+/*}}}*/
+static inline int video_setpicture (opi_video_device_t *dev, opi_video_picture_t *pict) /*{{{*/
+{
+	if (dev->fd < 0) {
+		return 0; /* not open */
+	} else if (dev->api == 1) {
+		struct video_picture buf;
+		int r;
+		
+		while (((r = ioctl (dev->fd, VIDIOCGPICT, &buf)) == -1) && (errno == EINTR));		/* retry */
 		if (r < 0)
 			return 0;
+		
+		buf.brightness	= pict->brightness;
+		buf.hue		= pict->hue;
+		buf.contrast	= pict->contrast;
+		buf.whiteness	= pict->whiteness;
+		buf.colour	= pict->colour;
 
+		while (((r = ioctl (dev->fd, VIDIOCSPICT, &buf)) == -1) && (errno == EINTR));		/* retry */
+		if (r < 0)
+			return 0;
+	} else if (dev->api == 2) {
 		_v4l2_set_control (dev, V4L2_CID_BRIGHTNESS, pict->brightness);
 		_v4l2_set_control (dev, V4L2_CID_HUE, pict->hue);
 		_v4l2_set_control (dev, V4L2_CID_CONTRAST, pict->contrast);
 		_v4l2_set_control (dev, V4L2_CID_WHITENESS, pict->whiteness);
 	}
 	
-	/* get the picture details again to see if we changed it */
-	video_getpicture (dev, pict);
 	return 1;
 }
 /*}}}*/
-static inline void video_initio (opi_video_device_t *dev, opi_video_iodata_t *iod) /*{{{*/
+static inline int video_initio (opi_video_device_t *dev, opi_video_iodata_t *iod, opi_video_frameinfo_t *finfo) /*{{{*/
 {
 	iod->use_mmap = -1;
 	iod->mmap_addr = 0;
@@ -456,7 +532,6 @@ static inline void video_initio (opi_video_device_t *dev, opi_video_iodata_t *io
 		/* nothing */
 	} else if (dev->api == 1) {
 		struct video_mbuf vmbuf;
-		struct video_window vwin;
 		int r;
 
 		vmbuf.size = 0;
@@ -467,31 +542,36 @@ static inline void video_initio (opi_video_device_t *dev, opi_video_iodata_t *io
 			/* got memory-map buffer info */
 			iod->use_mmap = 1;
 			iod->mmap_size = vmbuf.size;
-			iod->mmap_addr = (int)mmap (NULL, iod->mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, dev->fd, 0);
+			iod->mmap_addr = (int) mmap (NULL, iod->mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, dev->fd, 0);
+			
 			if (iod->mmap_addr == -1) {
 				/* failed to mmap, default to non-mmap */
 				iod->mmap_size = 0;
 				iod->mmap_addr = 0;
 				iod->use_mmap = 0;
+			} else {
+				struct video_mmap vmmap;
+				
+				vmmap.frame = 0;
+				vmmap.width = finfo->width;
+				vmmap.height = finfo->height;
+				vmmap.format = finfo->format;
+				
+				while (((r = ioctl (dev->fd, VIDIOCMCAPTURE, &vmmap)) == -1) && (errno == EINTR));	/* retry */
+				if (r >= 0) {
+					/* started capture */
+					return 1;
+				}
 			}
 		} else {
 			iod->use_mmap = 0;
 			iod->mmap_addr = 0;
 			iod->mmap_size = 0;
 		}
-
-		/* get the current window size */
-		while (((r = ioctl (dev->fd, VIDIOCGWIN, &vwin)) == -1) && (errno == EINTR));		/* retry */
-		if (r >= 0) {
-			iod->width = vwin.width;
-			iod->height = vwin.height;
-		} else {
-			iod->width = 0;
-			iod->height = 0;
-		}
 	} else if (dev->api == 2) {
 		/* FIXME! */
 	}
+	return 0;
 }
 /*}}}*/
 static inline void video_shutdownio (opi_video_device_t *dev, opi_video_iodata_t *iod) /*{{{*/
@@ -510,34 +590,6 @@ static inline void video_shutdownio (opi_video_device_t *dev, opi_video_iodata_t
 	} else if (dev->api == 2) {
 		/* FIXME! */
 	}
-}
-/*}}}*/
-static inline int video_startcapture (opi_video_device_t *dev, opi_video_iodata_t *iod, opi_video_frameinfo_t *finf) /*{{{*/
-{
-	if (dev->fd < 0) {
-		/* not open */
-	} else if (dev->api == 1) {
-		if (iod->use_mmap == 1) {
-			struct video_mmap vmmap;
-			int r;
-
-			vmmap.frame = 0;
-			vmmap.width = finf->width;
-			vmmap.height = finf->height;
-			vmmap.format = finf->format;
-			while (((r = ioctl (dev->fd, VIDIOCMCAPTURE, &vmmap)) == -1) && (errno == EINTR));	/* retry */
-			if (r >= 0) {
-				/* started capture */
-				return 1;
-			}
-		} else {
-			/* no need to do anything */
-			return 1;
-		}
-	} else if (dev->api == 2) {
-		/* FIXME! */
-	}
-	return 0;
 }
 /*}}}*/
 static inline int video_waitframe (opi_video_device_t *dev, opi_video_iodata_t *iod, opi_video_frameinfo_t *finf, int *buffer, int bufsize) /*{{{*/
@@ -588,23 +640,25 @@ void _video_getinputs (int *w)		{ video_getinputs ((opi_video_device_t *)(w[0]),
 /*{{{  PROC ..video.setinput (VIDEO.DEVICE vdev, VIDEO.INPUT input, RESULT BOOL ok)*/
 void _video_setinput (int *w)			{ *((int *)w[2]) = video_setinput ((opi_video_device_t *)(w[0]), (opi_video_input_t *)(w[1])); }
 /*}}}*/
+/*{{{  PROC ..video.getframeinfo (VIDEO.DEVICE vdev, RESULT VIDEO.FRAMEINFO frameinfo)*/
+void _video_getframeinfo (int *w)		{ video_getframeinfo ((opi_video_device_t *)(w[0]), (opi_video_frameinfo_t *)(w[1])); }
+/*}}}*/
+/*{{{  PROC ..video.setframeinfo (VIDEO.DEVICE vdev, VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok)*/
+void _video_setframeinfo (int *w)		{ *((int *)w[2]) = video_setframeinfo ((opi_video_device_t *)(w[0]), (opi_video_frameinfo_t *)(w[1])); }
+/*}}}*/
 /*{{{  PROC ..video.getpicture (VIDEO.DEVICE vdev, RESULT VIDEO.PICTURE picture)*/
-void _video_getpicture (int *w)			{ video_getpicture ((opi_video_device_t *)(w[0]), (struct video_picture *)(w[1])); }
+void _video_getpicture (int *w)			{ video_getpicture ((opi_video_device_t *)(w[0]), (opi_video_picture_t *)(w[1])); }
 /*}}}*/
 /*{{{  PROC ..video.setpicture (VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok)*/
-void _video_setpicture (int *w)			{ *((int *)w[2]) = video_setpicture ((opi_video_device_t *)(w[0]), (struct video_picture *)(w[1])); }
+void _video_setpicture (int *w)			{ *((int *)w[2]) = video_setpicture ((opi_video_device_t *)(w[0]), (opi_video_picture_t *)(w[1])); }
 /*}}}*/
-/*{{{  PROC ..video.initio (VIDEO.DEVICE vdev, RESULT VIDEO.IODATA iod)*/
-void _video_initio (int *w)			{ video_initio ((opi_video_device_t *)(w[0]), (opi_video_iodata_t *)(w[1])); }
+/*{{{  PROC ..video.initio (VIDEO.DEVICE vdev, RESULT VIDEO.IODATA iod, RESULT VIDEO.FRAMEINFO finfo, RESULT BOOL ok)*/
+void _video_initio (int *w)			{ *((int *)w[3]) = video_initio ((opi_video_device_t *)(w[0]), (opi_video_iodata_t *)(w[1]), (opi_video_frameinfo_t *)(w[2])); }
 /*}}}*/
 /*{{{  PROC ..video.shutdownio (VIDEO.DEVICE vdev, VIDEO.IODATA iod)*/
 void _video_shutdownio (int *w)			{ video_shutdownio ((opi_video_device_t *)(w[0]), (opi_video_iodata_t *)(w[1])); }
 /*}}}*/
-/*{{{  PROC ..video.startcapture (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, RESULT BOOL ok)*/
-void _video_startcapture (int *w)		{ *((int *)w[3]) = video_startcapture ((opi_video_device_t *)(w[0]), (opi_video_iodata_t *)(w[1]),
-								(opi_video_frameinfo_t *)(w[2])); }
-/*}}}*/
-/*{{{  PROC ..video.waitframe (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok)*/
+/*{{{  PROC ..video.waitframe (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finfo, []BYTE buffer, RESULT BOOL ok)*/
 void _video_waitframe (int *w)			{ *((int *)w[5]) = video_waitframe ((opi_video_device_t *)(w[0]), (opi_video_iodata_t *)(w[1]),
 								(opi_video_frameinfo_t *)(w[2]), (int *)(w[3]), (int)(w[4])); }
 /*}}}*/

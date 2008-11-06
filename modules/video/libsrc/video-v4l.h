@@ -84,6 +84,14 @@ typedef struct opi_video_iodata {
 	int isize;
 } opi_video_iodata_t;
 
+typedef struct opi_video_picture {
+	int brightness;
+	int hue;
+	int colour;
+	int contrast;
+	int whiteness;
+} opi_video_picture_t;
+
 typedef struct opi_video_frameinfo {
 	int width;
 	int height;

@@ -76,10 +76,9 @@ DATA TYPE VIDEO.IODATA
 #PRAGMA EXTERNAL "PROC C.video.getpicture (VIDEO.DEVICE vdev, RESULT VIDEO.PICTURE picture) = 0"
 #PRAGMA EXTERNAL "PROC C.video.setpicture (VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok) = 0"
 
-#PRAGMA EXTERNAL "PROC C.video.initio (VIDEO.DEVICE vdev, RESULT VIDEO.IODATA iod) = 0"
+#PRAGMA EXTERNAL "PROC C.video.initio (VIDEO.DEVICE vdev, RESULT VIDEO.IODATA iod, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok) = 0"
 #PRAGMA EXTERNAL "PROC C.video.shutdownio (VIDEO.DEVICE vdev, VIDEO.IODATA iod) = 0"
 
-#PRAGMA EXTERNAL "PROC C.video.startcapture (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, RESULT BOOL ok) = 0"
 #PRAGMA EXTERNAL "PROC B.video.waitframe (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok) = 3"
 
 --}}}
@@ -183,9 +182,9 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   --{{{  PROC video.initio (...)
   --* Initialises video I/O.
   -- @private
-  PROC video.initio (VIDEO.DEVICE dev, RESULT VIDEO.IODATA iod)
+  PROC video.initio (VIDEO.DEVICE dev, RESULT VIDEO.IODATA iod, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok)
     SEQ
-      C.video.initio (dev, iod)
+      C.video.initio (dev, iod, frameinfo, ok)
   :
   --}}}
   --{{{  PROC video.shutdownio (...)
@@ -194,14 +193,6 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   PROC video.shutdownio (VIDEO.DEVICE dev, VIDEO.IODATA iod)
     SEQ
       C.video.shutdownio (dev, iod)
-  :
-  --}}}
-  --{{{  PROC video.startcapture (...)
-  --* Starts video capture.
-  -- @private
-  PROC video.startcapture (VIDEO.DEVICE dev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, RESULT BOOL ok)
-    SEQ
-      C.video.startcapture (dev, iod, finf, ok)
   :
   --}}}
   --{{{  PROC video.waitframe (...)
@@ -340,7 +331,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                       streaming
                         SKIP
                       TRUE
-                        video.startcapture (vdev, iodata, finfo, streaming)
+                        video.initio (vdev, iodata, finfo, streaming)
                     IF
                       streaming
                         MOBILE []BYTE frame:
