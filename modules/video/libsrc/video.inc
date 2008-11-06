@@ -47,16 +47,18 @@ DATA TYPE VIDEO.IDENTITY
 :
 
 --}}}
---{{{  VIDEO.CAMINPUT
---* Maximum length of a camera input name.
-VAL INT VIDEO.CAMINPUT.NAMEMAX IS 64:
+--{{{  VIDEO.INPUT
+--* Maximum length of a input name.
+VAL INT VIDEO.INPUT.NAMEMAX IS 64:
 
---* Generic video camera input information.
-DATA TYPE VIDEO.CAMINPUT
+--* Generic video input information.
+DATA TYPE VIDEO.INPUT
   PACKED RECORD
     INT id:
-    [VIDEO.CAMINPUT.NAMEMAX]BYTE name:
+    [VIDEO.INPUT.NAMEMAX]BYTE name:
     INT namelen:
+    INT type:
+    INT flags:
     INT minw:
     INT minh:
     INT maxw:
@@ -89,17 +91,22 @@ DATA TYPE VIDEO.FRAMEINFO
     INT isize:
 :
 --}}}
+--{{{  video input/output types and flags
+VAL INT   VIDEO.TYPE.CAMERA   IS #1:
+VAL INT   VIDEO.TYPE.TUNER    IS #2:
+VAL INT   VIDEO.FLAG.AUDIO    IS #1:
+--}}}
 --{{{  video palette constants (from linux/videodev.h)
-VAL INT16 VIDEO.PAL.INVALID IS 0:
-VAL INT16 VIDEO.PAL.GRAY IS 1:
-VAL INT16 VIDEO.PAL.HI240 IS 2:
-VAL INT16 VIDEO.PAL.RGB565 IS 3:
-VAL INT16 VIDEO.PAL.RGB24 IS 4:
-VAL INT16 VIDEO.PAL.RGB32 IS 5:
-VAL INT16 VIDEO.PAL.RGB555 IS 6:
-VAL INT16 VIDEO.PAL.YUV422 IS 7:
-VAL INT16 VIDEO.PAL.YUYV IS 8:
-VAL INT16 VIDEO.PAL.YUV420P IS 15:
+VAL INT16 VIDEO.PAL.INVALID   IS 0:
+VAL INT16 VIDEO.PAL.GRAY      IS 1:
+VAL INT16 VIDEO.PAL.HI240     IS 2:
+VAL INT16 VIDEO.PAL.RGB565    IS 3:
+VAL INT16 VIDEO.PAL.RGB24     IS 4:
+VAL INT16 VIDEO.PAL.RGB32     IS 5:
+VAL INT16 VIDEO.PAL.RGB555    IS 6:
+VAL INT16 VIDEO.PAL.YUV422    IS 7:
+VAL INT16 VIDEO.PAL.YUYV      IS 8:
+VAL INT16 VIDEO.PAL.YUV420P   IS 15:
 -- FIXME: the rest of these please! (and need to cater for changing constants..)
 
 VAL [][]BYTE VIDEO.PAL.NAMES IS ["invalid", "gray   ", "hi240  ", "rgb565 ",
@@ -109,26 +116,26 @@ VAL [][]BYTE VIDEO.PAL.NAMES IS ["invalid", "gray   ", "hi240  ", "rgb565 ",
 
 --}}}
 
---{{{  P.VIDEO.IN
+--{{{  P.VIDEO.REQ
 --* Protocol used for communicating with a video-server process.
-PROTOCOL P.VIDEO.IN
+PROTOCOL P.VIDEO.REQ
   CASE
     get.identity                                  -- -> identity [] error
-    get.cameras                                   -- -> caminfo [] error
+    get.inputs                                    -- -> inputs [] error
     get.picture                                   -- -> picture [] error
     set.picture; VIDEO.PICTURE                    -- -> picture [] error
     get.frameinfo                                 -- -> frameinfo [] error
     grab.frame                                    -- -> frame [] error
 :
 --}}}
---{{{  P.VIDEO.OUT
+--{{{  P.VIDEO.RESP
 --* Protocol used for communicating with a video-server process.
-PROTOCOL P.VIDEO.OUT
+PROTOCOL P.VIDEO.RESP
   CASE
     ok                                            -- generic ok
     error; MOBILE []BYTE                          -- generic error
     identity; VIDEO.IDENTITY
-    caminfo; MOBILE []VIDEO.CAMINPUT
+    inputs; MOBILE []VIDEO.INPUT
     picture; VIDEO.PICTURE
     frameinfo; VIDEO.FRAMEINFO
     frame; MOBILE [][]INT32
@@ -138,8 +145,8 @@ PROTOCOL P.VIDEO.OUT
 --* Channel-type used for communicating with a video-server process.
 REC CHAN TYPE CT.VIDEO
   MOBILE RECORD
-    CHAN P.VIDEO.IN in?:
-    CHAN P.VIDEO.OUT out!:
+    CHAN P.VIDEO.REQ req?:
+    CHAN P.VIDEO.RESP resp!:
     CHAN CT.VIDEO! return?:
 :
 --}}}

@@ -66,9 +66,9 @@ DATA TYPE VIDEO.IODATA
 
 -- #PRAGMA EXTERNAL "PROC B.video.v4l2.readrgbframe (VAL INT fd, [][]INT r) = 3"
 #PRAGMA EXTERNAL "PROC C.video.identity (VIDEO.DEVICE vdev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok) = 0"
-#PRAGMA EXTERNAL "PROC C.video.numcams (VIDEO.DEVICE vdev, RESULT INT num) = 0"
-#PRAGMA EXTERNAL "PROC C.video.getcaminfos (VIDEO.DEVICE vdev, []VIDEO.CAMINPUT inputs) = 0"
-#PRAGMA EXTERNAL "PROC C.video.setcamera (VIDEO.DEVICE vdev, VIDEO.CAMINPUT input, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.numinputs (VIDEO.DEVICE vdev, RESULT INT num) = 0"
+#PRAGMA EXTERNAL "PROC C.video.getinputs (VIDEO.DEVICE vdev, []VIDEO.INPUT inputs) = 0"
+#PRAGMA EXTERNAL "PROC C.video.setinput (VIDEO.DEVICE vdev, VIDEO.INPUT input, RESULT BOOL ok) = 0"
 
 #PRAGMA EXTERNAL "PROC C.video.getpicture (VIDEO.DEVICE vdev, RESULT VIDEO.PICTURE picture) = 0"
 #PRAGMA EXTERNAL "PROC C.video.setpicture (VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok) = 0"
@@ -122,27 +122,27 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   :
   --}}}
   --{{{  PROC video.getcaminputs (...)
-  --* Gets information about camera inputs.
+  --* Gets information about video inputs.
   -- @private
-  PROC video.getcaminputs (VIDEO.DEVICE dev, RESULT MOBILE []VIDEO.CAMINPUT inputs)
+  PROC video.getinputs (VIDEO.DEVICE dev, RESULT MOBILE []VIDEO.INPUT inputs)
     INT ninputs:
     SEQ
-      C.video.numcams (dev, ninputs)
-      inputs := MOBILE [ninputs]VIDEO.CAMINPUT
+      C.video.numinputs (dev, ninputs)
+      inputs := MOBILE [ninputs]VIDEO.INPUT
 
       IF
         ninputs > 0
-          C.video.getcaminfos (dev, inputs)
+          C.video.getinputs (dev, inputs)
         TRUE
           SKIP
   :
   --}}}
-  --{{{  PROC video.setcamera (...)
-  --* Sets the particular video camera to use.
+  --{{{  PROC video.setinput (...)
+  --* Sets the particular video input to use.
   -- @private
-  PROC video.setcamera (VIDEO.DEVICE dev, VIDEO.CAMINPUT input, RESULT BOOL ok)
+  PROC video.setinput (VIDEO.DEVICE dev, VIDEO.INPUT input, RESULT BOOL ok)
     SEQ
-      C.video.setcamera (dev, input, ok)
+      C.video.setinput (dev, input, ok)
   :
   --}}}
   --{{{  PROC video.getpicture (...)
@@ -223,31 +223,31 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
     video.opendev (device, vdev, ok)
     IF
       NOT ok
-        vsvr[out] ! error; "failed to open video device"
+        vsvr[resp] ! error; "failed to open video device"
       TRUE
         VIDEO.IDENTITY ident:
         SEQ
           video.identity (vdev, ident, ok)
           IF
             NOT ok
-              vsvr[out] ! error; "failed to identify video device"
+              vsvr[resp] ! error; "failed to identify video device"
             TRUE
-              MOBILE []VIDEO.CAMINPUT inputs:
+              MOBILE []VIDEO.INPUT inputs:
               SEQ
-                video.getcaminputs (vdev, inputs)
+                video.getinputs (vdev, inputs)
 
                 IF
                   (SIZE inputs) = 0
-                    vsvr[out] ! error; "no camera inputs on this device"
+                    vsvr[resp] ! error; "no camera inputs on this device"
                   TRUE
-                    VIDEO.CAMINPUT selinput:
+                    VIDEO.INPUT selinput:
                     VIDEO.IODATA iodata:
                     SEQ
                       #PRAGMA DEFINED inputs
-                      vsvr[out] ! ok
+                      vsvr[resp] ! ok
 
                       selinput := inputs[0]
-                      video.setcamera (vdev, selinput, ok)
+                      video.setinput (vdev, selinput, ok)
 
                       video.initio (vdev, iodata)
                       #PRAGMA DEFINED iodata
@@ -255,31 +255,31 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                       INITIAL BOOL running IS TRUE:
                       WHILE running
                         PRI ALT
-                          vsvr[in] ? CASE
+                          vsvr[req] ? CASE
                             get.identity
-                              vsvr[out] ! identity; ident
-                            get.cameras
-                              MOBILE []VIDEO.CAMINPUT copy:
+                              vsvr[resp] ! identity; ident
+                            get.inputs
+                              MOBILE []VIDEO.INPUT copy:
                               SEQ
-                                copy := MOBILE [SIZE inputs]VIDEO.CAMINPUT
+                                copy := MOBILE [SIZE inputs]VIDEO.INPUT
                                 #PRAGMA DEFINED copy
                                 SEQ i = 0 FOR SIZE inputs
                                   copy[i] := inputs[i]
-                                vsvr[out] ! caminfo; copy
+                                vsvr[resp] ! inputs; copy
                             get.picture
                               VIDEO.PICTURE pict:
                               SEQ
                                 video.getpicture (vdev, pict)
-                                vsvr[out] ! picture; pict
+                                vsvr[resp] ! picture; pict
                             VIDEO.PICTURE pict:
                             set.picture; pict
                               SEQ
                                 video.setpicture (vdev, pict, ok)
                                 IF
                                   NOT ok
-                                    vsvr[out] ! error; "failed to set picture properties"
+                                    vsvr[resp] ! error; "failed to set picture properties"
                                   TRUE
-                                    vsvr[out] ! picture; pict
+                                    vsvr[resp] ! picture; pict
                             get.frameinfo
                               VIDEO.FRAMEINFO finf:
                               VIDEO.PICTURE pict:
@@ -291,7 +291,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                                 finf[format] := INT pict[palette]
                                 #PRAGMA DEFINED finf
                                 calc.isize (finf)
-                                vsvr[out] ! frameinfo; finf
+                                vsvr[resp] ! frameinfo; finf
                             grab.frame
                               VIDEO.FRAMEINFO finf:
                               VIDEO.PICTURE pict:
@@ -308,7 +308,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                                 video.startcapture (vdev, iodata, finf, ok)
                                 IF
                                   NOT ok
-                                    vsvr[out] ! error; "failed to start capture"
+                                    vsvr[resp] ! error; "failed to start capture"
                                   TRUE
                                     MOBILE [][]INT32 frame:
                                     SEQ
@@ -318,9 +318,9 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
 
                                       IF
                                         ok
-                                          vsvr[out] ! frame; frame
+                                          vsvr[resp] ! frame; frame
                                         TRUE
-                                          vsvr[out] ! error; "failed to capture frame"
+                                          vsvr[resp] ! error; "failed to capture frame"
                           CT.VIDEO! cli:
                           vsvr[return] ? cli
                             running := FALSE
