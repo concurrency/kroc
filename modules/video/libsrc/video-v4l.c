@@ -48,6 +48,7 @@ static inline void video_initstruct (opi_video_device_t *dev) /*{{{*/
 	dev->fnamelen = 0;
 	dev->fd = -1;
 	dev->api = 0;
+	dev->caps = 0;
 }
 /*}}}*/
 static inline int video_open (opi_video_device_t *dev) /*{{{*/
@@ -85,6 +86,7 @@ static inline int video_open (opi_video_device_t *dev) /*{{{*/
 				}
 			} else {
 				dev->api = 2;
+				dev->caps = v2_cap.capabilities;
 			}
 
 			return 1;
@@ -146,7 +148,13 @@ static inline int video_numinputs (opi_video_device_t *dev) /*{{{*/
 			num = vcap.channels;
 		}
 	} else if (dev->api == 2) {
-		/* FIXME! */
+		struct v4l2_input input;
+
+		input.index = 0;
+		while (ioctl (dev->fd, VIDIOC_ENUMINPUT, &input) >= 0)
+			input.index++;
+
+		num = input.index;
 	}
 	return num;
 }
@@ -203,7 +211,57 @@ static inline void video_getinputs (opi_video_device_t *dev, opi_video_input_t *
 			}
 		}
 	} else if (dev->api == 2) {
-		/* FIXME! */
+		struct v4l2_input input;
+		int idx, oidx, r;
+		
+		if (ioctl (dev->fd, VIDIOC_G_INPUT, &oidx) < 0)
+			oidx = -1;
+
+		for (idx = 0; idx < numinputs; idx++) {
+			struct v4l2_fmtdesc desc;
+			struct v4l2_format  fmt;
+
+			inputs[idx].id 	= idx;
+			input.index 	= idx;
+			
+			while (((r = ioctl (dev->fd, VIDIOC_S_INPUT, &idx)) == -1) && (errno == EINTR));
+			if (r < 0)
+				continue;
+			while (((r = ioctl (dev->fd, VIDIOC_ENUMINPUT, &input)) == -1) && (errno == EINTR));
+			if (r < 0)
+				continue;
+
+			inputs[idx].namelen = snprintf (inputs[idx].name, OPI_VIDEO_INPUT_NAMEMAX, "%s", input.name);
+			if (input.type == V4L2_INPUT_TYPE_TUNER)
+				inputs[idx].type = OPI_VIDEO_TYPE_TUNER;
+			else if (input.type == V4L2_INPUT_TYPE_CAMERA)
+				inputs[idx].type = OPI_VIDEO_TYPE_CAMERA;
+			if (input.audioset)
+				inputs[idx].flags |= OPI_VIDEO_FLAG_AUDIO;
+			
+			memset (&desc, 0, sizeof (desc));
+			memset (&fmt, 0, sizeof (fmt));
+
+			desc.index	= 0;
+			desc.type 	= V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			if (ioctl (dev->fd, VIDIOC_ENUM_FMT, &desc) < 0)
+				continue;
+
+			fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			fmt.fmt.pix.width       = 10000;
+			fmt.fmt.pix.height      = 10000;
+			fmt.fmt.pix.pixelformat = desc.pixelformat;
+			if (ioctl (dev->fd, VIDIOC_TRY_FMT, &fmt) < 0)
+				continue;
+
+			inputs[idx].minw = 48;
+			inputs[idx].minh = 32;
+			inputs[idx].maxw = fmt.fmt.pix.width;
+			inputs[idx].maxh = fmt.fmt.pix.height;
+		}
+		
+		if (oidx >= 0)
+			ioctl (dev->fd, VIDIOC_S_INPUT, &oidx);
 	}
 }
 /*}}}*/
@@ -224,7 +282,12 @@ static inline int video_setinput (opi_video_device_t *dev, opi_video_input_t *in
 			return ((r >= 0) ? 1 : 0);
 		}
 	} else if (dev->api == 2) {
-		/* FIXME! */
+		int idx = input->id;
+		int r;
+
+		while (((r = ioctl (dev->fd, VIDIOC_S_INPUT, &idx)) == -1) && (errno == EINTR));		/* retry */
+
+		return ((r >= 0) ? 1 : 0);
 	}
 	return 0;
 }
@@ -239,11 +302,35 @@ static int pal_convert_v4l1[] = {
 	OPI_VIDEO_PAL_RGB555, 	VIDEO_PALETTE_RGB555,
 	OPI_VIDEO_PAL_YUV422, 	VIDEO_PALETTE_YUV422, 
 	OPI_VIDEO_PAL_YUYV, 	VIDEO_PALETTE_YUYV,
+	OPI_VIDEO_PAL_UYVY, 	VIDEO_PALETTE_UYVY,
+	OPI_VIDEO_PAL_YUV420,	VIDEO_PALETTE_YUV420,
+	OPI_VIDEO_PAL_YUV411,	VIDEO_PALETTE_YUV411,
+	OPI_VIDEO_PAL_YUV422P,	VIDEO_PALETTE_YUV422P,
+	OPI_VIDEO_PAL_YUV411P,	VIDEO_PALETTE_YUV411P,
 	OPI_VIDEO_PAL_YUV420P, 	VIDEO_PALETTE_YUV420P,
+	OPI_VIDEO_PAL_YUV410P,	VIDEO_PALETTE_YUV410P,
 	OPI_VIDEO_PAL_INVALID, 	0
 };
 
-static inline int search_and_return (int *array, int stride, int search, int ret, int end, int fail, int value)
+static int pal_convert_v4l2[] = {
+	OPI_VIDEO_PAL_GRAY,	V4L2_PIX_FMT_GREY,
+	OPI_VIDEO_PAL_HI240,	V4L2_PIX_FMT_HI240,
+	OPI_VIDEO_PAL_RGB565,	V4L2_PIX_FMT_RGB565,
+	OPI_VIDEO_PAL_RGB24,	V4L2_PIX_FMT_RGB24,
+	OPI_VIDEO_PAL_RGB32,	V4L2_PIX_FMT_RGB32,
+	OPI_VIDEO_PAL_BGR24,	V4L2_PIX_FMT_BGR24,
+	OPI_VIDEO_PAL_BGR32,	V4L2_PIX_FMT_BGR32,
+	OPI_VIDEO_PAL_RGB555,	V4L2_PIX_FMT_RGB555,
+	OPI_VIDEO_PAL_YUV422,	V4L2_PIX_FMT_YUYV,
+	OPI_VIDEO_PAL_YUYV,	V4L2_PIX_FMT_YUYV,
+	OPI_VIDEO_PAL_UYVY, 	V4L2_PIX_FMT_UYVY,
+	OPI_VIDEO_PAL_YUV420,	V4L2_PIX_FMT_YUV420,
+	OPI_VIDEO_PAL_YUV422P,	V4L2_PIX_FMT_YUV422P,
+	OPI_VIDEO_PAL_YUV411P,	V4L2_PIX_FMT_YUV411P,
+	OPI_VIDEO_PAL_INVALID,	0
+};
+
+static int search_and_return (int *array, int stride, int search, int ret, int end, int fail, int value)
 {
 	int i;
 	for (i = 0; array[i + search] != end; i += stride) {
@@ -261,6 +348,33 @@ static inline int convert_pal_v4l1_to_opi (int v)
 {
 	return search_and_return (pal_convert_v4l1, 2, 1, 0, 0, OPI_VIDEO_PAL_INVALID, v);
 }
+static inline int convert_pal_opi_to_v4l2 (int v)
+{
+	return search_and_return (pal_convert_v4l2, 2, 0, 1, OPI_VIDEO_PAL_INVALID, 0, v);
+}
+static inline int convert_pal_v4l2_to_opi (int v)
+{
+	return search_and_return (pal_convert_v4l2, 2, 1, 0, 0, OPI_VIDEO_PAL_INVALID, v);
+}
+
+static int _v4l2_get_control (opi_video_device_t *dev, unsigned int id)
+{
+	struct v4l2_control ctrl;
+	ctrl.id		= id;
+	ctrl.value	= 0;
+	ioctl (dev->fd, VIDIOC_G_CTRL, &ctrl);
+	return ctrl.value;
+}
+
+static int _v4l2_set_control (opi_video_device_t *dev, unsigned int id, signed int value)
+{
+	struct v4l2_control ctrl;
+	int r;
+	ctrl.id		= id;
+	ctrl.value	= value;
+	while (((r = ioctl (dev->fd, VIDIOC_S_CTRL, &ctrl)) < 0) && (errno == EINTR));
+	return r;
+}
 
 static inline void video_getpicture (opi_video_device_t *dev, struct video_picture *pict) /*{{{*/
 {
@@ -272,28 +386,60 @@ static inline void video_getpicture (opi_video_device_t *dev, struct video_pictu
 		while (((r = ioctl (dev->fd, VIDIOCGPICT, pict)) == -1) && (errno == EINTR));		/* retry */
 		pict->palette = convert_pal_v4l1_to_opi (pict->palette); 
 	} else if (dev->api == 2) {
-		/* FIXME! */
+		struct v4l2_format fmt;
+		int r;
+		
+		memset (&fmt, 0, sizeof (fmt));
+
+		while (((r = ioctl (dev->fd, VIDIOC_G_FMT, &fmt)) == -1) && (errno == EINTR));		/* retry */
+		if (r < 0 || fmt.type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+			return;
+
+		pict->brightness = _v4l2_get_control (dev, V4L2_CID_BRIGHTNESS);
+		pict->hue	= _v4l2_get_control (dev, V4L2_CID_HUE);
+		pict->contrast	= _v4l2_get_control (dev, V4L2_CID_CONTRAST);
+		pict->whiteness	= _v4l2_get_control (dev, V4L2_CID_WHITENESS);
+		pict->palette	= convert_pal_v4l2_to_opi (fmt.fmt.pix.pixelformat);
 	}
 }
 /*}}}*/
 static inline int video_setpicture (opi_video_device_t *dev, struct video_picture *pict) /*{{{*/
 {
 	if (dev->fd < 0) {
-		/* not open */
+		return 0; /* not open */
 	} else if (dev->api == 1) {
 		int r;
 
 		pict->palette = convert_pal_opi_to_v4l1 (pict->palette);
 		while (((r = ioctl (dev->fd, VIDIOCSPICT, pict)) == -1) && (errno == EINTR));		/* retry */
-		if (r >= 0) {
-			/* get the picture details again to see if we changed it */
-			video_getpicture (dev, pict);
-			return 1;
-		}
+		if (r < 0)
+			return 0;
+
 	} else if (dev->api == 2) {
-		/* FIXME! */
+		struct v4l2_format fmt;
+		int r;
+		
+		memset (&fmt, 0, sizeof (fmt));
+
+		while (((r = ioctl (dev->fd, VIDIOC_G_FMT, &fmt)) == -1) && (errno == EINTR));		/* retry */
+		if (r < 0 || fmt.type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+			return 0;
+
+		fmt.fmt.pix.pixelformat = convert_pal_opi_to_v4l2 (pict->palette);
+
+		while (((r = ioctl (dev->fd, VIDIOC_S_FMT, &fmt)) == -1) && (errno == EINTR));		/* retry */
+		if (r < 0)
+			return 0;
+
+		_v4l2_set_control (dev, V4L2_CID_BRIGHTNESS, pict->brightness);
+		_v4l2_set_control (dev, V4L2_CID_HUE, pict->hue);
+		_v4l2_set_control (dev, V4L2_CID_CONTRAST, pict->contrast);
+		_v4l2_set_control (dev, V4L2_CID_WHITENESS, pict->whiteness);
 	}
-	return 0;
+	
+	/* get the picture details again to see if we changed it */
+	video_getpicture (dev, pict);
+	return 1;
 }
 /*}}}*/
 static inline void video_initio (opi_video_device_t *dev, opi_video_iodata_t *iod) /*{{{*/
@@ -394,26 +540,20 @@ static inline int video_startcapture (opi_video_device_t *dev, opi_video_iodata_
 	return 0;
 }
 /*}}}*/
-static inline int video_waitframe (opi_video_device_t *dev, opi_video_iodata_t *iod, opi_video_frameinfo_t *finf, int *buffer, int bufheight, int bufwidth) /*{{{*/
+static inline int video_waitframe (opi_video_device_t *dev, opi_video_iodata_t *iod, opi_video_frameinfo_t *finf, int *buffer, int bufsize) /*{{{*/
 {
 	if (dev->fd < 0) {
 		/* not open */
 	} else if (dev->api == 1) {
 		if (iod->use_mmap == 1) {
-			int x, y;
 			int bnum = 0;
 			int r;
 
 			while (((r = ioctl (dev->fd, VIDIOCSYNC, &bnum)) == -1) && (errno == EINTR));		/* retry */
 			if (r >= 0) {
 				/* got a buffer-load at the mmap'd address we hope! */
-				switch (finf->format) {
-				case VIDEO_PALETTE_RGB24:
-					ccvt_rgb24_rgb32 (finf->width, finf->height, (void *)iod->mmap_addr, (void *)buffer);
-					return 1;
-				default:
-					break;
-				}
+				memcpy (buffer, (void *)iod->mmap_addr, bufsize);
+				return 1;
 			}
 		} else {
 			/* FIXME! */
@@ -464,8 +604,8 @@ void _video_shutdownio (int *w)			{ video_shutdownio ((opi_video_device_t *)(w[0
 void _video_startcapture (int *w)		{ *((int *)w[3]) = video_startcapture ((opi_video_device_t *)(w[0]), (opi_video_iodata_t *)(w[1]),
 								(opi_video_frameinfo_t *)(w[2])); }
 /*}}}*/
-/*{{{  PROC ..video.waitframe (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, [][]INT32 buffer, RESULT BOOL ok)*/
-void _video_waitframe (int *w)			{ *((int *)w[6]) = video_waitframe ((opi_video_device_t *)(w[0]), (opi_video_iodata_t *)(w[1]),
-								(opi_video_frameinfo_t *)(w[2]), (int *)(w[3]), (int)(w[4]), (int)(w[5])); }
+/*{{{  PROC ..video.waitframe (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok)*/
+void _video_waitframe (int *w)			{ *((int *)w[5]) = video_waitframe ((opi_video_device_t *)(w[0]), (opi_video_iodata_t *)(w[1]),
+								(opi_video_frameinfo_t *)(w[2]), (int *)(w[3]), (int)(w[4])); }
 /*}}}*/
 

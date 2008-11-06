@@ -41,6 +41,7 @@ DATA TYPE VIDEO.DEVICE
     INT fnamelen:
     INT fd:
     INT api:
+    INT caps:
 :
 
 --}}}
@@ -70,6 +71,8 @@ DATA TYPE VIDEO.IODATA
 #PRAGMA EXTERNAL "PROC C.video.getinputs (VIDEO.DEVICE vdev, []VIDEO.INPUT inputs) = 0"
 #PRAGMA EXTERNAL "PROC C.video.setinput (VIDEO.DEVICE vdev, VIDEO.INPUT input, RESULT BOOL ok) = 0"
 
+#PRAGMA EXTERNAL "PROC C.video.getframeinfo (VIDEO.DEVICE vdev, RESULT VIDEO.FRAMEINFO frameinfo) = 0"
+#PRAGMA EXTERNAL "PROC C.video.setframeinfo (VIDEO.DEVICE vdev, VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok) = 0"
 #PRAGMA EXTERNAL "PROC C.video.getpicture (VIDEO.DEVICE vdev, RESULT VIDEO.PICTURE picture) = 0"
 #PRAGMA EXTERNAL "PROC C.video.setpicture (VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok) = 0"
 
@@ -77,7 +80,7 @@ DATA TYPE VIDEO.IODATA
 #PRAGMA EXTERNAL "PROC C.video.shutdownio (VIDEO.DEVICE vdev, VIDEO.IODATA iod) = 0"
 
 #PRAGMA EXTERNAL "PROC C.video.startcapture (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, RESULT BOOL ok) = 0"
-#PRAGMA EXTERNAL "PROC B.video.waitframe (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, [][]INT32 buffer, RESULT BOOL ok) = 3"
+#PRAGMA EXTERNAL "PROC B.video.waitframe (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok) = 3"
 
 --}}}
 
@@ -145,6 +148,22 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
       C.video.setinput (dev, input, ok)
   :
   --}}}
+  --{{{  PROC video.getframeinfo (...)
+  --* Gets the current frame (width, height, etc.)
+  -- @private
+  PROC video.getframeinfo (VIDEO.DEVICE dev, RESULT VIDEO.FRAMEINFO frameinfo)
+    SEQ
+      C.video.getframeinfo (dev, frameinfo)
+  :
+  --}}}
+  --{{{  PROC video.setframeinfo (...)
+  --* Sets the current frame (width, height, etc.)
+  -- @private
+  PROC video.setframeinfo (VIDEO.DEVICE dev, VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok)
+    SEQ
+      C.video.setframeinfo (dev, frameinfo, ok)
+  :
+  --}}}
   --{{{  PROC video.getpicture (...)
   --* Gets the current picture properties (brightness, etc.)
   -- @private
@@ -188,146 +207,193 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   --{{{  PROC video.waitframe (...)
   --* Waits for a complete video frame to be captured.
   -- @private
-  PROC video.waitframe (VIDEO.DEVICE dev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, [][]INT32 buffer, RESULT BOOL ok)
+  PROC video.waitframe (VIDEO.DEVICE dev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok)
     SEQ
       B.video.waitframe (dev, iod, finf, buffer, ok)
   :
   --}}}
-  --{{{  PROC calc.isize (...)
+  --{{{  PROC calc.frame.size (...)
   --* Calculates image size
   -- @private
-  PROC calc.isize (VIDEO.FRAMEINFO finfo)
+  PROC calc.frame.bytes (VIDEO.FRAMEINFO finfo)
     CASE INT16 finfo[format]
       VIDEO.PAL.INVALID
-        finfo[isize] := 0
+        finfo[bytes] := 0
       VIDEO.PAL.GRAY
-        finfo[isize] := finfo[width] * finfo[height]
+        finfo[bytes] := finfo[width] * finfo[height]
       VIDEO.PAL.YUV420P
-        finfo[isize] := ((finfo[width] * finfo[height]) * 3) / 2
+        finfo[bytes] := ((finfo[width] * finfo[height]) * 3) / 2
       VIDEO.PAL.YUYV
-        finfo[isize] := (finfo[width] * finfo[height]) * 2
+        finfo[bytes] := (finfo[width] * finfo[height]) * 2
       VIDEO.PAL.YUV422
-        finfo[isize] := (finfo[width] * finfo[height]) * 2
+        finfo[bytes] := (finfo[width] * finfo[height]) * 2
       VIDEO.PAL.RGB24
-        finfo[isize] := (finfo[width] * finfo[height]) * 3
+        finfo[bytes] := (finfo[width] * finfo[height]) * 3
       VIDEO.PAL.RGB32
-        finfo[isize] := (finfo[width] * finfo[height]) * 4
+        finfo[bytes] := (finfo[width] * finfo[height]) * 4
       ELSE
-        finfo[isize] := 0
+        finfo[bytes] := 0
   :
   --}}}
 
+  MOBILE []BYTE error:
+  MOBILE []VIDEO.INPUT inputs:
+  VIDEO.IDENTITY ident:
   VIDEO.DEVICE vdev:
   BOOL ok:
   SEQ
     video.opendev (device, vdev, ok)
+    #PRAGMA DEFINED vdev
     IF
-      NOT ok
-        vsvr[resp] ! error; "failed to open video device"
-      TRUE
-        VIDEO.IDENTITY ident:
+      ok
         SEQ
           video.identity (vdev, ident, ok)
           IF
-            NOT ok
-              vsvr[resp] ! error; "failed to identify video device"
-            TRUE
-              MOBILE []VIDEO.INPUT inputs:
+            ok
               SEQ
                 video.getinputs (vdev, inputs)
-
                 IF
-                  (SIZE inputs) = 0
-                    vsvr[resp] ! error; "no inputs on this device"
+                  (SIZE inputs) > 0
+                    ok := TRUE
                   TRUE
-                    VIDEO.INPUT selinput:
-                    VIDEO.IODATA iodata:
-                    SEQ
-                      #PRAGMA DEFINED inputs
-                      vsvr[resp] ! ok
+                    error := "no inputs on this device"
+            TRUE
+              error := "failed to identify video device"
+      TRUE
+        error := "failed to open video device"
 
-                      selinput := inputs[0]
-                      video.setinput (vdev, selinput, ok)
+    IF
+      ok
+        VIDEO.FRAMEINFO finfo:
+        VIDEO.INPUT selinput:
+        VIDEO.IODATA iodata:
+        SEQ
+          #PRAGMA DEFINED inputs
 
-                      video.initio (vdev, iodata)
-                      #PRAGMA DEFINED iodata
+          selinput := inputs[0]
+          video.setinput (vdev, selinput, ok)
+          video.getframeinfo (vdev, finfo)
 
-                      INITIAL BOOL running IS TRUE:
-                      WHILE running
-                        PRI ALT
-                          vsvr[req] ? CASE
-                            get.identity
-                              vsvr[resp] ! identity; ident
-                            get.inputs
-                              MOBILE []VIDEO.INPUT copy:
-                              SEQ
-                                copy := MOBILE [SIZE inputs]VIDEO.INPUT
-                                #PRAGMA DEFINED copy
-                                SEQ i = 0 FOR SIZE inputs
-                                  copy[i] := inputs[i]
-                                vsvr[resp] ! inputs; copy
-                            get.picture
-                              VIDEO.PICTURE pict:
-                              SEQ
-                                video.getpicture (vdev, pict)
-                                vsvr[resp] ! picture; pict
-                            VIDEO.PICTURE pict:
-                            set.picture; pict
-                              SEQ
-                                video.setpicture (vdev, pict, ok)
-                                IF
-                                  NOT ok
-                                    vsvr[resp] ! error; "failed to set picture properties"
-                                  TRUE
-                                    vsvr[resp] ! picture; pict
-                            get.frameinfo
-                              VIDEO.FRAMEINFO finf:
-                              VIDEO.PICTURE pict:
-                              SEQ
-                                video.getpicture (vdev, pict)
-                                #PRAGMA DEFINED pict
-                                finf[width] := iodata[width]
-                                finf[height] := iodata[height]
-                                finf[format] := INT pict[palette]
-                                #PRAGMA DEFINED finf
-                                calc.isize (finf)
-                                vsvr[resp] ! frameinfo; finf
-                            grab.frame
-                              VIDEO.FRAMEINFO finf:
-                              VIDEO.PICTURE pict:
-                              BOOL ok:
-                              SEQ
-                                video.getpicture (vdev, pict)
-                                #PRAGMA DEFINED pict
-                                finf[width] := iodata[width]
-                                finf[height] := iodata[height]
-                                finf[format] := INT pict[palette]
-                                #PRAGMA DEFINED finf
-                                calc.isize (finf)
-
-                                video.startcapture (vdev, iodata, finf, ok)
-                                IF
-                                  NOT ok
-                                    vsvr[resp] ! error; "failed to start capture"
-                                  TRUE
-                                    MOBILE [][]INT32 frame:
-                                    SEQ
-                                      -- started capture, now wait for it
-                                      frame := MOBILE [finf[height]][finf[width]]INT32
-                                      video.waitframe (vdev, iodata, finf, frame, ok)
-
-                                      IF
-                                        ok
-                                          vsvr[resp] ! frame; frame
-                                        TRUE
-                                          vsvr[resp] ! error; "failed to capture frame"
-                          CT.VIDEO! cli:
-                          vsvr[return] ? cli
-                            running := FALSE
-
+          INITIAL BOOL streaming IS FALSE:
+          INITIAL BOOL running IS TRUE:
+          WHILE running
+            PRI ALT
+              vsvr[req] ? CASE
+                get.identity
+                  vsvr[resp] ! identity; ident
+                get.inputs
+                  MOBILE []VIDEO.INPUT copy:
+                  SEQ
+                    copy := MOBILE [SIZE inputs]VIDEO.INPUT
+                    #PRAGMA DEFINED copy
+                    SEQ i = 0 FOR SIZE inputs
+                      copy[i] := inputs[i]
+                    vsvr[resp] ! inputs; copy
+                INT id:
+                set.input; id
+                  IF
+                    IF i = 0 FOR SIZE inputs
+                      inputs[i][id] = id
+                        SEQ
+                          selinput := inputs[i]
+                          video.setinput (vdev, selinput, ok)
+                          IF
+                            ok
+                              vsvr[resp] ! ok
+                            TRUE
+                              vsvr[resp] ! error; "failed to select specified input"
+                    TRUE
+                      vsvr[resp] ! error; "failed to find specified input" 
+                get.picture
+                  VIDEO.PICTURE pict:
+                  SEQ
+                    video.getpicture (vdev, pict)
+                    vsvr[resp] ! picture; pict
+                VIDEO.PICTURE pict:
+                set.picture; pict
+                  SEQ
+                    video.setpicture (vdev, pict, ok)
+                    IF
+                      ok
+                        vsvr[resp] ! picture; pict
+                      TRUE
+                        vsvr[resp] ! error; "failed to set picture properties"
+                get.frameinfo
+                  vsvr[resp] ! frameinfo; finfo
+                set.frameinfo; finfo
+                  SEQ
+                    IF
+                      streaming
+                        video.shutdownio (vdev, iodata)
+                      TRUE
+                        SKIP
+                    video.setframeinfo (vdev, finfo, ok)
+                    video.getframeinfo (vdev, finfo)
+                    IF
+                      ok
+                        vsvr[resp] ! frameinfo; finfo
+                      TRUE
+                        vsvr[resp] ! error; "failed to set frame properties"
+                grab.frame
+                  SEQ
+                    IF
+                      streaming
+                        SKIP
+                      TRUE
+                        video.startcapture (vdev, iodata, finfo, streaming)
+                    IF
+                      streaming
+                        MOBILE []BYTE frame:
+                        SEQ
+                          -- started capture, now wait for it
+                          frame := MOBILE [finfo[bytes]]BYTE
+                          video.waitframe (vdev, iodata, finfo, frame, ok)
+                          IF
+                            ok
+                              vsvr[resp] ! frame; frame
+                            TRUE
+                              vsvr[resp] ! error; "failed to capture frame"
+                      TRUE
+                        vsvr[resp] ! error; "failed to start capture"
+              CT.VIDEO! cli:
+              vsvr[return] ? cli
+                SEQ
+                  running := FALSE
+                  IF
+                    streaming
                       video.shutdownio (vdev, iodata)
+                    TRUE
+                      SKIP
+      TRUE
+        INITIAL BOOL running IS TRUE:
+        WHILE running
+          PRI ALT
+            vsvr[req] ? CASE
+              get.identity
+                vsvr[resp] ! error; CLONE error
+              get.inputs
+                vsvr[resp] ! error; CLONE error
+              INT id:
+              set.input; id
+                vsvr[resp] ! error; CLONE error
+              get.picture
+                vsvr[resp] ! error; CLONE error
+              VIDEO.PICTURE pict:
+              set.picture; pict
+                vsvr[resp] ! error; CLONE error
+              get.frameinfo
+                vsvr[resp] ! error; CLONE error
+              grab.frame
+                vsvr[resp] ! error; CLONE error
+            CT.VIDEO! cli:
+            vsvr[return] ? cli
+              running := FALSE
 
-          video.closedev (vdev, ok)
+    IF
+      vdev[fd] > 0
+        video.closedev (vdev, ok)
+      TRUE
+        SKIP
 :
 --}}}
 

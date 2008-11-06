@@ -70,15 +70,11 @@ DATA TYPE VIDEO.INPUT
 --* Generic video picture information/settings.
 DATA TYPE VIDEO.PICTURE
   PACKED RECORD
-    INT16 brightness:
-    INT16 hue:
-    INT16 colour:
-    INT16 contrast:
-    INT16 whiteness:
-    INT16 depth:
-    INT16 palette:
-
-    INT16 dummy:
+    INT brightness:
+    INT hue:
+    INT colour:
+    INT contrast:
+    INT whiteness:
 :
 --}}}
 --{{{  VIDEO.FRAMEINFO
@@ -88,7 +84,7 @@ DATA TYPE VIDEO.FRAMEINFO
     INT width:
     INT height:
     INT format:
-    INT isize:
+    INT bytes:
 :
 --}}}
 --{{{  video input/output types and flags
@@ -106,13 +102,21 @@ VAL INT16 VIDEO.PAL.RGB32     IS 5:
 VAL INT16 VIDEO.PAL.RGB555    IS 6:
 VAL INT16 VIDEO.PAL.YUV422    IS 7:
 VAL INT16 VIDEO.PAL.YUYV      IS 8:
+VAL INT16 VIDEO.PAL.UYVY      IS 9:
+VAL INT16 VIDEO.PAL.YUV420    IS 10:
+VAL INT16 VIDEO.PAL.YUV411    IS 11:
+VAL INT16 VIDEO.PAL.YUV422P   IS 13:
+VAL INT16 VIDEO.PAL.YUV411P   IS 14:
 VAL INT16 VIDEO.PAL.YUV420P   IS 15:
--- FIXME: the rest of these please! (and need to cater for changing constants..)
+VAL INT16 VIDEO.PAL.YUV410P   IS 16:
+VAL INT16 VIDEO.PAL.BGR24     IS 17:
+VAL INT16 VIDEO.PAL.BGR32     IS 18:
 
 VAL [][]BYTE VIDEO.PAL.NAMES IS ["invalid", "gray   ", "hi240  ", "rgb565 ",
                                  "rgb24  ", "rgb32  ", "rgb555 ", "yuv422 ",
-                                 "yuyv   ", "invalid", "invalid", "invalid",
-                                 "invalid", "invalid", "invalid", "yuv420p"]:
+                                 "yuyv   ", "uyvy   ", "yuv420 ", "yuv411 ",
+                                 "invalid", "yuv422p", "yuv411p", "yuv420p",
+                                 "yuv410p", "bgr24  ", "bgr32  "]:
 
 --}}}
 
@@ -122,9 +126,11 @@ PROTOCOL P.VIDEO.REQ
   CASE
     get.identity                                  -- -> identity [] error
     get.inputs                                    -- -> inputs [] error
+    set.input; INT                                -- -> ok [] error
     get.picture                                   -- -> picture [] error
     set.picture; VIDEO.PICTURE                    -- -> picture [] error
     get.frameinfo                                 -- -> frameinfo [] error
+    set.frameinfo; VIDEO.FRAMEINFO                -- -> frameinfo [] error
     grab.frame                                    -- -> frame [] error
 :
 --}}}
@@ -138,7 +144,7 @@ PROTOCOL P.VIDEO.RESP
     inputs; MOBILE []VIDEO.INPUT
     picture; VIDEO.PICTURE
     frameinfo; VIDEO.FRAMEINFO
-    frame; MOBILE [][]INT32
+    frame; MOBILE []BYTE
 :
 --}}}
 --{{{  CT.VIDEO
