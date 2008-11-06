@@ -40,3 +40,8 @@ mk_shared_screen('ss.lib')
 local.Depends('shared_screen.tce', course_lib)
 local.Depends('demo_nets.occ', 'demo_cycles.tce')
 local.Depends('string.occ', 'utils.tce')
+
+
+env['OCCLIBS']['course'] = dict(
+        dep=course_lib,
+        inc=Dir('.'))

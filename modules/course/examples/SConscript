@@ -16,8 +16,9 @@ examples = Split('''
     test_utils
     ''')
 
-local.Append(INCPATH = ['../libsrc', '../../inmoslibs/libsrc/forall'])
 local.Append(OCCBUILDFLAGS='--skroc-opts -v -v')
 
 for e in examples:
-    local.OccamProgram(e)
+    p = local.OccamProgram(e)
+    local.OccLibDepend(p, ['forall', 'course'])
+    

@@ -207,3 +207,8 @@ local.Clean(
      [forall, forall_early],
      ['forall.lib', 'forall.module', 'forall.precomp',
       'forall_early.module', 'forall_early.precomp'])
+
+#env.Append(INCPATH=Dir('.'))
+env['OCCLIBS']['forall'] = dict(
+        dep=forall,
+        inc=Dir('.'))
