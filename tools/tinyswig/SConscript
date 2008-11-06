@@ -1,4 +1,4 @@
-import scheme_utils
-
 Import("env")
-scheme_utils.BuildSchemeApp(env, "tinyswig")
+local = env.Clone()
+
+local.Mzc("tinyswig")

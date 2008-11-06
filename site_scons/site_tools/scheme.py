@@ -5,10 +5,10 @@ from SCons.Scanner import Scanner
 from SCons.Script import Exit
 
 def exe (command):
-  child = os.popen(command)
-  data = child.read()
-  err = child.close()
-  return data
+    child = os.popen(command)
+    data = child.read()
+    err = child.close()
+    return data
 
 def schemefile_scan(node, env, path):
   if not env.GetOption("clean"):
@@ -74,3 +74,8 @@ def BuildSchemeApp(env, app, ext = "scm"):
 
   return local.MZC(app, "%s.%s" % (app, ext))
 
+def generate(env, *kw):
+    env['BUILDERS']['Mzc'] = mzc
+
+def exists(env):
+    return 1

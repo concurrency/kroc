@@ -1,9 +1,9 @@
 import os
-import scheme_utils
 
 # Create a global environment
 tools = ['default',
-         'subst']
+         'subst',
+	 'scheme']
 env  = Environment(tools=tools,
 		   ENV = {'PATH' : os.environ['PATH']})
 
