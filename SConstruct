@@ -20,8 +20,9 @@ comstrings = dict(CCCOMSTR              = 'Compiling $TARGET',
 		  MZCCOMSTR             = 'Compiling $TARGET',
 		  OCCBUILDCOMSTR        = 'Compiling $TARGET',
 		  OCCBUILDLIBRARYCOMSTR = 'Linking $TARGET')
-for k in comstrings:
-    env[k] = comstrings[k]
+if ARGUMENTS.get('VERBOSE') != '1':
+    for k in comstrings:
+	env[k] = comstrings[k]
 
 
 # Export it for use in the SConscripts
