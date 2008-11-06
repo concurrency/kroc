@@ -5,6 +5,7 @@ local.Subst('defaults.scm.in',
             SUBST=dict(skroc_default_libs = '/dev/null',
                        prefix = '/home/foo'))
 
-local.Mzc('skroc', 'skroc.ss')
+skroc = local.Mzc('skroc', 'skroc.ss')
 
-env['skroc'] = 'tools/skroc/skroc' 
+env['SKROC'] = skroc
+env['ENV']['SKROC'] = skroc

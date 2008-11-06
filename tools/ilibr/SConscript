@@ -1,3 +1,4 @@
+import os
 # Import the global localironment
 Import("env")
 
@@ -34,3 +35,5 @@ ilibr = local.Program("ilibr", Glob("*.c"),
     LIBPATH  = "tcofflib",
     CPPPATH  = "tcofflib")
 
+env['ILIBR'] = ilibr
+env.AppendENVPath('SKROCPATH', os.path.dirname(ilibr[0].abspath))

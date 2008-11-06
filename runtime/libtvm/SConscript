@@ -39,8 +39,8 @@ dispatch_generated = Split('''
 def commonDefines(cnf):
   cnf.Define('TVM_WORD_LENGTH', 4, 'set to the wordlength of the target')
   #cnf.Define('TVM_EMULATE_T2', 0, 'define to emulate a T2 processor')
-  cnf.Define('TVM_EMULATE_T4', 1, 'define to emulate a T4 processor')
-  #cnf.Define('TVM_EMULATE_T8', 0, 'define to emulate a T8 processor')
+  #cnf.Define('TVM_EMULATE_T4', 1, 'define to emulate a T4 processor')
+  cnf.Define('TVM_EMULATE_T8', 1, 'define to emulate a T8 processor')
   #cnf.Define('TVM_SHORT_OPS',  0, 'define to T9000 short ops')
   #cnf.Define('TVM_PROFILING', 0, 'define to enable profiling')
   cnf.Define('TVM_OS_DARWIN', 1, 'define for Darwin TVM')
@@ -75,6 +75,7 @@ conf = local.Configure(config_h = "tvm_config.h", help = False)
 commonDefines(conf)
 local = conf.Finish()
 local.Append(CCFLAGS = '-DTVM_INTERNALS')
+tvm_config_h = local.File('tvm_config.h')
 
 
 
@@ -91,3 +92,6 @@ local.Command(dispatch_generated,
 # Definition of the libtvm library
 ##########################################################################
 local.Library("tvm", tvm_sources, CPPPATH='.')
+
+env['TVM_CONFIG_H'] = tvm_config_h
+env['ENV']['SKROC_TVM_CONFIG_H'] = tvm_config_h.path
