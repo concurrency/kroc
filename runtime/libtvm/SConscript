@@ -90,5 +90,4 @@ local.Command(dispatch_generated,
 ##########################################################################
 # Definition of the libtvm library
 ##########################################################################
-local.Append(CCFLAGS = '-I${SOURCE.dir}')
-local.Library("tvm", tvm_sources)
+local.Library("tvm", tvm_sources, CPPPATH='.')
