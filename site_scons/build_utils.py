@@ -25,25 +25,4 @@ def CheckForExecutable(context, env, exe):
 
 
 
-# Tools for doing replacements in 
-
-class SchemeDefaultTemplate(string.Template):
-  pattern = r"""
-    @(?:
-      (?P<escaped>@)   |
-      (?P<named>.*?)@  |
-      (?P<invalid>))
-      """
-
-def ATsubstituteAT(outfile, substs):
-  infile   = open('%s.in' % outfile) 
-  contents = "".join(infile.readlines())
-  infile.close()
-
-  t        = SchemeDefaultTemplate(contents)
-
-  contents = open(outfile, 'w+')
-  contents.write(t.substitute(substs))
-  contents.close()
-
 
