@@ -67,7 +67,8 @@ def BuildSchemeApp(env, app, ext = "scm"):
   # Otherwise, bail with an error for the user.
   if not conf.CheckForExecutable(local, "mzc"):
     print "mzc cannot be found!" 
-    Exit(1)
+    # Cannot exit here or we never get to display the help with --help
+    #Exit(1)
 
   local = conf.Finish()
 
