@@ -3,6 +3,10 @@
 .*.sw?
 .sconf_temp
 *.pyc
+*.tce
+*.lib
+*.precomp
+*.module
 
 # Dangerous, but we'll do it.
 config.h
