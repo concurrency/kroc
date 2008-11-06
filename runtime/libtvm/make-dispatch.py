@@ -263,23 +263,34 @@ def write_jumptables(defs, fn_pri, fn_sec, fn_ex_sec):
 	keys = ["2%02X" % i for i in range(256)]
 	write_jumptable(defs, fn_ex_sec, "extended_secondaries", keys)
 
-def main():
-	inputs = sys.argv[1:]
+def main(inputs, output_dir=None):
 	if inputs == []:
-		die("No input files specified -- use the Makefile target!")
-	output_switch = "dispatch_ins.c"
-	output_pri = "jumptbl_pri.c"
-	output_sec = "jumptbl_sec.c"
-	output_ex_sec = "jumptbl_ex_sec.c"
-	output_names = "ins_names.h"
+		die("No input files specified -- use the Makefile/SCons target!")
+	output = dict()
+	output['switch'] = "dispatch_ins.c"
+	output['pri']    = "jumptbl_pri.c"
+	output['sec']    = "jumptbl_sec.c"
+	output['ex_sec'] = "jumptbl_ex_sec.c"
+	output['names']  = "ins_names.h"
+
+	if output_dir:
+		for key in output:
+			output[key] = os.path.join(output_dir, output[key])
 
 	defs = {}
 	for fn in inputs:
 		find_instructions(defs, fn)
-	write_switch(defs, output_switch)
-	write_jumptables(defs, output_pri, output_sec, output_ex_sec)
-	write_names(defs, output_names)
+	write_switch(defs, output['switch'])
+	write_jumptables(defs, output['pri'], output['sec'], output['ex_sec'])
+	write_names(defs, output['names'])
 
 if __name__ == "__main__":
-	main()
+	from optparse import OptionParser
+	parser = OptionParser()
+	parser.add_option("-o", "--output", dest="output_directory",
+			                  help="Output directoru", 
+							  metavar="DIRECTORY",
+							  default=None)
+	(options, args) = parser.parse_args()
+	main(args,options.output_directory)
 
