@@ -2,7 +2,10 @@ import os
 import scheme_utils
 
 # Create a global environment
-env  = Environment(ENV = {'PATH' : os.environ['PATH']})
+tools = ['default',
+         'subst']
+env  = Environment(tools=tools,
+		   ENV = {'PATH' : os.environ['PATH']})
 
 # Pretty builds
 comstrings = dict(CCCOMSTR     = 'Compiling $TARGET',
