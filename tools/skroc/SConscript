@@ -1,8 +1,8 @@
 Import('env')
 local = env.Clone()
 
-local.Subst('defaults.scm.in', 
-            SUBST=dict(skroc_default_libs = '/dev/null',
+local.Substitute('defaults.scm.in', 
+            SUBST=dict(skroc_default_libs = 'forall',
                        prefix = '/home/foo'))
 
 skroc = local.Mzc('skroc', 'skroc.ss')

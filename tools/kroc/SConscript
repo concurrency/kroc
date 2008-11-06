@@ -6,7 +6,7 @@ local = env.Clone()
 
 # @TVM_BINDIR@, @TVM_LIBDIR@, @TVM_EXAMPLESDIR@
 
-occbuild = local.Subst(
+occbuild = local.Substitute(
     'occbuild', 'occbuild.in', SUBST=dict(TVM_LIBDIR='moo'))
 local.AddPostAction(occbuild, Chmod('$TARGET', 0755))
 
