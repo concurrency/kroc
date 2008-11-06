@@ -50,8 +50,13 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
   (define find-executable
     (lambda (name)
       (let* ([skrocpath (if (getenv "SKROCPATH") (getenv "SKROCPATH") "./")]
-             [inskrocpath (find-executable-path 
-                           (build-path skrocpath name) #f)])
+             [inskrocpath (ormap ;; map, but returns first non #f value, or #f
+                            (lambda (path)
+                              (find-executable-path 
+                                (build-path path name) #f))
+                            (path-list-string->path-list skrocpath 
+                                                         `(,(string->path ".")))
+                            )])
         (if inskrocpath inskrocpath
             (let ([inpath (find-executable-path name #f)])
               (if inpath inpath
@@ -84,7 +89,14 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
     (lambda (k v)
       (set-parameter! k (append (get-parameter k (lambda () '()))
                                 (list v)))))
-  
+  (define get-environment
+    (case-lambda
+      [(k) (getenv k)]
+      [(k otherwise)
+       (let ([v (getenv k)])
+         (if v v (otherwise)))]))
+        
+
   (define isverbose? 
     (lambda ()
       (get-parameter 'verbose (lambda () #f))))
@@ -239,6 +251,10 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
        ;;Command line flags we only want to see once
        (once-each
+        [("--with-tvm_config_h")
+         filename
+         "\n\tuse a particular tvm_config.h file (or set env var SKROC_TVM_CONFIG_H)"
+         (set-parameter! 'tvm_config.h filename)]
 	;;Going to phase this out, --target is more better/more flexible
 	;;djd20 31/5/06
 	[("-w" "--word-size")
@@ -422,8 +438,12 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
 	      ;; I am not sure if that is a good idea??? So I an not at the
 	      ;; moment, we can always change this
 	      (crunch (list-intersperse 
-                       isearch-separator 
-                       (get-parameter 'library-paths (lambda () '())))))
+                        isearch-separator 
+                        (append
+                          (get-parameter 'library-paths (lambda () '()))
+                          (if (getenv "ISEARCH")
+                            (list (getenv "ISEARCH"))
+                            '())))))
       (if (isverbose?) (printf "ISEARCH = ~a~n" (getenv "ISEARCH")))
       ;; Then, create and return the flags
       (append
@@ -516,7 +536,27 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
               [(equal? (get-parameter 'target-processor) 't8) 4 ] 
               )
        "-o" (get-parameter 'output)
-       (map (lambda (dir) (list "-L" dir)) (get-parameter 'library-paths))
+       (map (lambda (dir) (list "-L" dir)) 
+            ;; 20080424 clj3
+            ;; making skroc pick up paths from ISEARCH to make it easier to
+            ;; do builds of the tvm w/o doing pesky make install steps. This
+            ;; should be rolled into a better set of environment variables
+            ;; which affet how skroc behaves, so really, this is a FIXME
+            ;; We use a 'pristine' version of ISEARCH, as we pullute the
+            ;; environment in other places in the program.
+            ;; Also, I'm not sure why that second arg is needed in
+            ;; path-list-string->path-list, but it is. I wish i'd just return
+            ;; an empty list if there was nothing in the 'path-list-string',
+            ;; instead of insisting that we supply a valid path... bahh.
+            (append
+              (get-parameter 'library-paths)
+              (if (not (srfi13:string-null? 
+                         (get-parameter 'pristine-isearch)))
+                (map path->string 
+                     (path-list-string->path-list 
+                       (get-parameter 'pristine-isearch) 
+                       (list (string->path ".")))) 
+                '())))
        (intelli-split (get-parameter 'slinker-opts (lambda () '())))
        (if (get-parameter 'use-std-libs)
          ;; Include all the default runtime libraries -- dead library
@@ -673,13 +713,21 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
 	      (printcmd (ilibr) args)
               (unless (zero? (exec (ilibr) args))
                 (die "Couldn't slink one or more files.~n"))))
-        
         ;; Make .precomp file by calling the slinker
         (if (or (equal? libout 'all) (equal? libout 'precomp-only))
 	    (let ([args 
 		   (argify (list
                             (map (lambda (dir) (list "-L" dir))
-                             (get-parameter 'library-paths))
+                            ;; 20080424 clj3, see other comment with this date
+                            (append
+                              (get-parameter 'library-paths)
+                              (if (not (srfi13:string-null? 
+                                         (get-parameter 'pristine-isearch)))
+                                (map path->string 
+                                     (path-list-string->path-list
+                                       (get-parameter 'pristine-isearch)
+                                       (list (string->path "."))))
+                                '())))
                             (intelli-split 
                              (get-parameter 'slinker-opts (lambda () '())))
                             "-f" (format "~a.precomp" (get-parameter 'output-filename))
@@ -695,7 +743,18 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
   
   (define init
     (lambda ()
-      (let ([config-file (format "~a/include/tvm_config.h" install-dir)]
+      ;; for the config-file, we first check if the user supplied
+      ;; --with-tvm_config_h, if so, use that. If not, check for the env
+      ;; variable SKROC_TVM_CONFIG_H, if set, use that. Otherwise fall back to 
+      ;; $install_dir/include/tvm_config.h
+      (let ([config-file (get-parameter 
+                           'tvm_config.h 
+                           (lambda () 
+                             (get-environment 
+                               "SKROC_TVM_CONFIG_H"
+                               (lambda () 
+                                 (format "~a/include/tvm_config.h"
+                                         install-dir)))))]
 	    [target-endian 'LITTLE]
 	    [target-processor 't4])
 	(if (file-exists? config-file)
@@ -718,6 +777,8 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
 	(set-parameter! 'temp-files '())
 	(set-parameter! 'keep-temp-files #f)
 	(set-parameter! 'done #f)
+        (set-parameter! 'pristine-isearch (if (getenv "ISEARCH") 
+                                            (getenv "ISEARCH") ""))
         )))
 
   (define (check-output-name-not-input-name)
