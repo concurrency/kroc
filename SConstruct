@@ -11,12 +11,11 @@ env  = Environment(tools=tools,
 comstrings = dict(CCCOMSTR     = 'Compiling $TARGET',
                   LINKCOMSTR   = 'Linking $TARGET',
 		  ARCOMSTR     = 'Creating archive $TARGET',
-		  RANLIBCOMSTR = 'Indexing archive $TARGET')
-# FIXME: Not sure how to get nice comstr's for
-#        * env.Command commands
-#        * custom builders like the mzc builder
-#for k in comstrings:
-#    env[k] = comstrings[k]
+		  RANLIBCOMSTR = 'Indexing archive $TARGET',
+		  # FIXME: Why do PLT tools always have to be different?
+		  MZCCOMSTR    = 'Compiling $TARGET')
+for k in comstrings:
+    env[k] = comstrings[k]
 
 
 # Export it for use in the SConscripts

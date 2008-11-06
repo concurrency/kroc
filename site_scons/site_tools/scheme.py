@@ -1,8 +1,7 @@
-import re, os, string, popen2, select
-import build_utils
+import re, os
 from SCons.Builder import Builder
 from SCons.Scanner import Scanner
-from SCons.Script import Exit
+from SCons.Action import Action
 
 def exe (command):
     child = os.popen(command)
@@ -43,39 +42,16 @@ def schemefile_scan(node, env, path):
 SchemeScanner = Scanner(function = schemefile_scan, skeys = ['.scm', '.ss'])
 
 
-# This ia custom builder we can hang off of 
-# an Environment(). Usage might look like:
-#
-# local = env.Clone(BUILDERS = {"MZC" : scheme_utils.mzc})
-# 
-# and then
-#
-# local.MZC("schemescanner", "schemescanner.scm") 
-#
-mzc = Builder(action = ['mzc --exe \"$TARGET\" \"$SOURCE\"'],
+mzc = Builder(action = Action('$MZCCOM', '$MZCCOMSTR'),
               src_suffix = ".scm",
               single_source = True,
               source_scanner = SchemeScanner)
 
-def BuildSchemeApp(env, app, ext = "scm"):
-  local = env.Clone(BUILDERS = {"MZC" : mzc})
-
-  # Adding our custom checker for the an executable.
-  conf  = local.Configure(custom_tests = {"CheckForExecutable" : build_utils.CheckForExecutable })
-
-  # If the compiler is found, build the Scheme executable.
-  # Otherwise, bail with an error for the user.
-  if not conf.CheckForExecutable(local, "mzc"):
-    print "mzc cannot be found!" 
-    # Cannot exit here or we never get to display the help with --help
-    #Exit(1)
-
-  local = conf.Finish()
-
-  return local.MZC(app, "%s.%s" % (app, ext))
-
 def generate(env, *kw):
     env['BUILDERS']['Mzc'] = mzc
+    env['MZC']             = 'mzc'
+    env['MZCCOM']          = '$MZC --exe $TARGET $SOURCE'
+
 
 def exists(env):
     return 1
