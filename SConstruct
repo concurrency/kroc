@@ -4,6 +4,18 @@ import scheme_utils
 # Create a global environment
 env  = Environment(ENV = {'PATH' : os.environ['PATH']})
 
+# Pretty builds
+comstrings = dict(CCCOMSTR     = 'Compiling $TARGET',
+                  LINKCOMSTR   = 'Linking $TARGET',
+		  ARCOMSTR     = 'Creating archive $TARGET',
+		  RANLIBCOMSTR = 'Indexing archive $TARGET')
+# FIXME: Not sure how to get nice comstr's for
+#        * env.Command commands
+#        * custom builders like the mzc builder
+#for k in comstrings:
+#    env[k] = comstrings[k]
+
+
 # Export it for use in the SConscripts
 Export('env')
 
