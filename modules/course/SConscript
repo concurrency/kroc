@@ -1,6 +1,6 @@
 import os
 
-dirs = Split('answers examples libsrc')
+dirs = Split('libsrc answers examples')
 
 for d in dirs: 
     SConscript(os.path.join(d, 'SConscript'))

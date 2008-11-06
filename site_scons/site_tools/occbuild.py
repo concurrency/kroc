@@ -2,6 +2,8 @@
 from SCons.Builder import Builder
 from SCons.Action  import Action
 from SCons.Scanner import Scanner, FindPathDirs
+from SCons.Environment import Environment
+from SCons.Util import AddMethod, CLVar
 import os
 import pideps
 
@@ -80,6 +82,18 @@ def generate(env, **kw):
     env['OCCBUILD_SEARCH_PFX']      = '--search '
     env['OCCBUILD_TOOLCHAIN']       = None
     env['_OCCBUILD_TOOLCHAIN']      = '${(OCCBUILD_TOOLCHAIN and "--toolchain $OCCBUILD_TOOLCHAIN" or "")}'
+    def OccLibDepend(self, node, lib_name):
+        if not isinstance(lib_name, list): list(lib_name)
+        for lib in lib_name:
+            self.Depends(node, self['OCCLIBS'][lib]['dep'])
+            if 'inc' in self['OCCLIBS'][lib]:
+                for n in node:
+                    n.env.AppendUnique(INCPATH=self['OCCLIBS'][lib]['inc'])
+    env.AddMethod(OccLibDepend)
+    env['OCCLIBS'] = dict()
+    env['INCPATH'] = CLVar('')
+
+
 
 def exists(env):
     return 1
