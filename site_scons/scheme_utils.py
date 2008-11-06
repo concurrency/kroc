@@ -2,6 +2,7 @@ import re, os, string, popen2, select
 import build_utils
 from SCons.Builder import Builder
 from SCons.Scanner import Scanner
+from SCons.Script import Exit
 
 def exe (command):
   child = os.popen(command)
