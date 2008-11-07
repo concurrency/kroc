@@ -33,6 +33,8 @@
 #IF NOT DEFINED (VIDEO.INC)
 #DEFINE VIDEO.INC
 
+#INCLUDE "raster.module"
+
 -- NOTE: the PACKED RECORD structures here have equivalents in C (video-v4l.h)
 
 --{{{  VIDEO.IDENTITY
@@ -131,7 +133,7 @@ PROTOCOL P.VIDEO.REQ
     set.picture; VIDEO.PICTURE                    -- -> picture [] error
     get.frameinfo                                 -- -> frameinfo [] error
     set.frameinfo; VIDEO.FRAMEINFO                -- -> frameinfo [] error
-    grab.frame                                    -- -> frame [] error
+    grab.frame; BOOL                              -- -> raster [] frame [] error
 :
 --}}}
 --{{{  P.VIDEO.RESP
@@ -145,6 +147,7 @@ PROTOCOL P.VIDEO.RESP
     picture; VIDEO.PICTURE
     frameinfo; VIDEO.FRAMEINFO
     frame; MOBILE []BYTE
+    raster; RASTER
 :
 --}}}
 --{{{  CT.VIDEO

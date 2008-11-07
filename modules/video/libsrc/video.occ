@@ -52,10 +52,7 @@ DATA TYPE VIDEO.IODATA
     INT use.mmap:
     INT mmap.addr:
     INT mmap.size:
-    INT width:
-    INT height:
-    INT format:             -- one of the VIDEO.PAL.... constants
-    INT isize:
+    INT convert:
 :
   
 --}}}
@@ -79,7 +76,7 @@ DATA TYPE VIDEO.IODATA
 #PRAGMA EXTERNAL "PROC C.video.initio (VIDEO.DEVICE vdev, RESULT VIDEO.IODATA iod, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok) = 0"
 #PRAGMA EXTERNAL "PROC C.video.shutdownio (VIDEO.DEVICE vdev, VIDEO.IODATA iod) = 0"
 
-#PRAGMA EXTERNAL "PROC B.video.waitframe (VIDEO.DEVICE vdev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok) = 3"
+#PRAGMA EXTERNAL "PROC B.video.grabframe (VIDEO.DEVICE vdev, VAL BOOL raw, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok) = 3"
 
 --}}}
 
@@ -195,12 +192,12 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
       C.video.shutdownio (dev, iod)
   :
   --}}}
-  --{{{  PROC video.waitframe (...)
-  --* Waits for a complete video frame to be captured.
+  --{{{  PROC video.grabframe (...)
+  --* Grabs a new video frame from the input.
   -- @private
-  PROC video.waitframe (VIDEO.DEVICE dev, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok)
+  PROC video.grabframe (VIDEO.DEVICE dev, VAL BOOL raw, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok)
     SEQ
-      B.video.waitframe (dev, iod, finf, buffer, ok)
+      B.video.grabframe (dev, raw, iod, finf, buffer, ok)
   :
   --}}}
   --{{{  PROC calc.frame.size (...)
@@ -264,6 +261,8 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
           selinput := inputs[0]
           video.setinput (vdev, selinput, ok)
           video.getframeinfo (vdev, finfo)
+          #PRAGMA DEFINED finfo
+          calc.frame.bytes (finfo)
 
           INITIAL BOOL streaming IS FALSE:
           INITIAL BOOL running IS TRUE:
@@ -320,12 +319,14 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                         SKIP
                     video.setframeinfo (vdev, finfo, ok)
                     video.getframeinfo (vdev, finfo)
+                    calc.frame.bytes (finfo)
                     IF
                       ok
                         vsvr[resp] ! frameinfo; finfo
                       TRUE
                         vsvr[resp] ! error; "failed to set frame properties"
-                grab.frame
+                BOOL raw:
+                grab.frame; raw
                   SEQ
                     IF
                       streaming
@@ -334,14 +335,32 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                         video.initio (vdev, iodata, finfo, streaming)
                     IF
                       streaming
-                        MOBILE []BYTE frame:
                         SEQ
-                          -- started capture, now wait for it
-                          frame := MOBILE [finfo[bytes]]BYTE
-                          video.waitframe (vdev, iodata, finfo, frame, ok)
+                          IF
+                            raw
+                              MOBILE []BYTE frame:
+                              SEQ
+                                frame := MOBILE [finfo[bytes]]BYTE
+                                video.grabframe (vdev, raw, iodata, finfo, frame, ok)
+                                IF
+                                  ok
+                                    vsvr[resp] ! frame; frame
+                                  TRUE
+                                    SKIP
+                            TRUE
+                              RASTER r:
+                              SEQ
+                                r := MOBILE [finfo[height]][finfo[width]]INT
+                                []BYTE frame RETYPES r:
+                                video.grabframe (vdev, raw, iodata, finfo, frame, ok)
+                                IF
+                                  ok
+                                    vsvr[resp] ! raster; r
+                                  TRUE
+                                    SKIP
                           IF
                             ok
-                              vsvr[resp] ! frame; frame
+                              SKIP
                             TRUE
                               vsvr[resp] ! error; "failed to capture frame"
                       TRUE
@@ -374,7 +393,8 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                 vsvr[resp] ! error; CLONE error
               get.frameinfo
                 vsvr[resp] ! error; CLONE error
-              grab.frame
+              BOOL raw:
+              grab.frame; raw
                 vsvr[resp] ! error; CLONE error
             CT.VIDEO! cli:
             vsvr[return] ? cli
