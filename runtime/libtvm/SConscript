@@ -82,9 +82,12 @@ tvm_config_h = local.File('tvm_config.h')
 ##########################################################################
 # Call out to generate dispatch (table + switch) files (make-dispatch)
 ##########################################################################
-local.Command(dispatch_generated,
-              dispatch_src,
-              'python ${TARGET.dir}/make-dispatch.py -o ${TARGET.dir} $SOURCES')
+local.Command(
+      dispatch_generated,
+      dispatch_src,
+      Action(
+        'python ${TARGET.dir}/make-dispatch.py -o ${TARGET.dir} $SOURCES',
+        'Generating libtvm dispatch files'))
 
 
 
