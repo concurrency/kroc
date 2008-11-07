@@ -246,6 +246,11 @@ def trim_comment(s):
 
 	return split_comment(s)[1]
 
+def clean_ident(s):
+	"""Replace special characters in an XML identifier with dashes."""
+
+	return re.sub(r'[^A-Za-z0-9.-]', '-', s)
+
 class Declaration:
 	def __init__(self, ident, name, dtype, code = None, args = None, returns = None):
 		self.set_ident(ident)
@@ -267,7 +272,7 @@ class Declaration:
 		return self.__str__()
 
 	def set_ident(self, s):
-		self.ident = re.sub(r'[^A-Za-z0-9.-]', '-', s)
+		self.ident = clean_ident(s)
 
 def parse_decl(f):
 	"""Parse an occam-pi declaration."""
@@ -656,19 +661,24 @@ def free_text_to_xml(doc, descr, parent):
 	"""Convert OccamDoc free text to children of a DOM node."""
 
 	def do_tag(text):
-		tags = {
-			"code": [None],
-			"link": ["href", None],
-			"ref": [None],
-			"em": [None],
-			"text": [None],
-			"item": [],
-		}
-
 		def do_text(doc, descr, parent):
 			descr = re.sub(r'^\n*', '', descr)
 			descr = descr.rstrip()
 			parent.appendChild(doc.createTextNode(descr))
+
+		# @ref links to an identifier, so we have to mangle it in the
+		# appropriate way to get rid of special characters.
+		def do_ref(doc, s, el):
+			el.setAttribute("href", clean_ident(s))
+
+		tags = {
+			"code": [None],
+			"link": ["href", None],
+			"ref": [do_ref],
+			"em": [None],
+			"text": [None],
+			"item": [],
+		}
 
 		return generic_tag_to_xml(doc, text, tags, do_text)
 
