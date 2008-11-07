@@ -16,9 +16,6 @@ examples = Split('''
     test_utils
     ''')
 
-local.Append(OCCBUILDFLAGS='--skroc-opts -v -v')
-
 for e in examples:
     p = local.OccamProgram(e)
     local.OccLibDepend(p, ['forall', 'course'])
-    
