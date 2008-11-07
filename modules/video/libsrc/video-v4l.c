@@ -620,6 +620,37 @@ static inline void video_shutdownio (opi_video_device_t *dev, opi_video_iodata_t
 	}
 }
 /*}}}*/
+
+static void rgb24_rgb32 (int width, int height, unsigned char *buffer)
+{
+	unsigned int src_stride = width * 3;
+	unsigned char *src = buffer + (src_stride * (height - 1));
+	unsigned int *dst = ((unsigned int *) buffer) + (width * (height - 1));
+	int i;
+
+	while (src > buffer) {
+		for (i = 0; i < width; ++i) {
+			/* FIXME: endian? */
+			unsigned int pixel = (src[0] << 16) | (src[1] << 8) | (src[2] << 0);
+			(*dst) = pixel;
+			src += 3;
+			dst += 1;
+		}
+		src -= src_stride * 2;
+		dst -= width * 2;
+	}
+
+	src += src_stride - 3;
+	dst += width - 1;
+
+	for (i = 0; i < width; ++i) {
+		unsigned int pixel = src[0] | (src[1] << 8) | (src[2] << 16);
+		(*dst) = pixel;
+		src -= 3;
+		dst -= 1;
+	}
+}
+
 static inline int video_grabframe (opi_video_device_t *dev, int raw, opi_video_iodata_t *iod, opi_video_frameinfo_t *finfo, int *buffer, int bufsize) /*{{{*/
 {
 	if (dev->fd < 0) {
@@ -652,7 +683,7 @@ static inline int video_grabframe (opi_video_device_t *dev, int raw, opi_video_i
 						src.fmt.pix.sizeimage = iod->mmap_size;
 						src.fmt.pix.colorspace = V4L2_COLORSPACE_SMPTE170M;
 						memcpy (&dst, &src, sizeof (dst));
-						dst.fmt.pix.pixelformat = V4L2_PIX_FMT_BGR24;
+						dst.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
 						dst.fmt.pix.sizeimage = bufsize;
 						dst.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB;
 
@@ -661,6 +692,7 @@ static inline int video_grabframe (opi_video_device_t *dev, int raw, opi_video_i
 							&src, &dst,
 							(unsigned char *) iod->mmap_addr, iod->mmap_size, 
 							(unsigned char *) buffer, bufsize);
+						rgb24_rgb32 (finfo->width, finfo->height, (unsigned char *) buffer);
 					}
 				}
 				return (r >= 0) ? 1 : 0;
@@ -697,7 +729,7 @@ static inline int video_grabframe (opi_video_device_t *dev, int raw, opi_video_i
 					while (((r = ioctl (dev->fd, VIDIOC_G_FMT, &src)) == -1) && (errno == EINTR));		/* retry */
 					
 					memcpy (&dst, &src, sizeof (dst));
-					dst.fmt.pix.pixelformat = V4L2_PIX_FMT_BGR24;
+					dst.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
 					dst.fmt.pix.sizeimage = bufsize;
 					dst.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB;
 
@@ -706,6 +738,7 @@ static inline int video_grabframe (opi_video_device_t *dev, int raw, opi_video_i
 						&src, &dst,
 						(unsigned char *) iod->mmap_addr, iod->mmap_size, 
 						(unsigned char *) buffer, bufsize);
+					rgb24_rgb32 (finfo->width, finfo->height, (unsigned char *) buffer);
 				}
 				result = (r >= 0) ? 1 : 0;
 			}
