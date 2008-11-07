@@ -152,8 +152,7 @@ def make_module(name, custom):
 	f.write('-- Include file for "%s" module\n' % name)
 	f.write('-- %s\n' % autogen_message)
 	f.write("\n")
-	
-	ofn = os.path.basename(ofn) #FIXME
+
 	guard = ofn.replace("_", ".").upper()
 	f.write("#IF NOT (DEFINED (%s))\n" % guard)
 	f.write("#DEFINE %s\n" % guard)
@@ -622,10 +621,8 @@ def main(args):
 				native_objs.append(object)
 			else:
 				die("Object filename must end in .tce or .o: ", object)
-		(base, ext)  = os.path.splitext(target)		#FIXME
-		#(base, ext) = split_ext(target)
-		#if ext != "lib":
-		if ext != ".lib":
+		(base, ext) = split_ext(target)
+		if ext != "lib":
 			die("Library filename must end in .lib: ", target)
 		toolchain.library(occam_objs, native_objs, base)
 	elif mode == "program":
@@ -639,10 +636,8 @@ def main(args):
 				native_objs.append(object)
 			else:
 				die("Object filename must end in .tce or .o: ", object)
-		(base, ext)  = os.path.splitext(target)		#FIXME
-		#(base, ext) = split_ext(target)
-		#if ext != "occ":
-		if ext != ".occ":
+		(base, ext) = split_ext(target)
+		if ext != "occ":
 			die("Source filename must end in .occ: ", target)
 		toolchain.program(occam_objs, native_objs, base)
 	elif mode == "install":
