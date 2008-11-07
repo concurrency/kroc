@@ -108,17 +108,6 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
           out.string ("depth:    ", 0, scr!)
           out.int (INT pict[hue], 0, scr!)
           out.string ("*n", 0, scr!)
-          out.string ("palette:  ", 0, scr!)
-          out.int (INT pict[palette], 0, scr!)
-          VAL INT pal IS INT pict[palette]:
-          IF
-            (pal >= 0) AND (pal < (SIZE VIDEO.PAL.NAMES))
-              SEQ
-                out.string (" ", 0, scr!)
-                out.string (VIDEO.PAL.NAMES[pal], 0, scr!)
-            TRUE
-              SKIP
-          out.string ("*n", 0, scr!)
       MOBILE []BYTE msg:
       error; msg
         SEQ
@@ -127,6 +116,7 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
           out.string ("*n", 0, scr!)
 
     --}}}
+    #IF FALSE
     --{{{  set picture format to RGB24
     out.string ("vidgrab: setting picture format to RGB24...*n", 0, scr!)
 
@@ -153,6 +143,7 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
           out.string (msg, 0, scr!)
           out.string ("*n", 0, scr!)
     --}}}
+    #ENDIF
     --{{{  frame info
     out.string ("vidgrab: getting frame info...*n", 0, scr!)
 
@@ -174,8 +165,6 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
                 out.string (VIDEO.PAL.NAMES[pal], 0, scr!)
             TRUE
               SKIP
-          out.string (", isize is ", 0, scr!)
-          out.int (finf[isize], 0, scr!)
           out.string ("*n", 0, scr!)
       MOBILE []BYTE msg:
       error; msg
@@ -196,6 +185,7 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
       SEQ
 
         INITIAL BOOL redraw.menu IS TRUE:
+        INITIAL INT  change.input IS -1:
         INITIAL BOOL update.pict IS FALSE:
         INITIAL BOOL update.frameno IS TRUE:
         INITIAL BOOL run IS TRUE:
@@ -203,12 +193,12 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
         WHILE run
           RASTER r:
 
-          PROC do.dec (INT16 val)
+          PROC do.dec (INT val)
             SEQ
               val := val MINUS #100
               update.pict, redraw.menu := TRUE, TRUE
           :
-          PROC do.inc (INT16 val)
+          PROC do.inc (INT val)
             SEQ
               val := val PLUS #100
               update.pict, redraw.menu := TRUE, TRUE
@@ -219,6 +209,23 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
 
             --{{{  oki, try and get a frame of data!
             -- out.string ("vidgrab: attempting to grab a video frame..*n", 0, scr!)
+
+            IF
+              change.input >= 0
+                SEQ
+                  dev[req] ! set.input; change.input
+                  dev[resp] ? CASE
+                    ok
+                      SKIP
+                    MOBILE []BYTE str:
+                    error; str
+                      SEQ
+                        out.string ("vidgrab: failed to change input: ", 0, scr!)
+                        out.string (str, 0, scr!)
+                        out.string ("*n", 0, scr!)
+                  change.input := -1
+              TRUE
+                SKIP
 
             IF
               update.pict
@@ -259,9 +266,6 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
                   out.string ("W/w   +/- whiteness: ", 0, scr!)
                   out.int (INT pict[whiteness], 0, scr!)
                   out.string ("*n", 0, scr!)
-                  out.string ("D/d   +/- depth: ", 0, scr!)
-                  out.int (INT pict[depth], 0, scr!)
-                  out.string ("*n", 0, scr!)
 
                   redraw.menu := FALSE
               TRUE
@@ -278,7 +282,7 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
               TRUE
                 SKIP
 
-            dev[req] ! grab.frame
+            dev[req] ! grab.frame; FALSE
             INITIAL BOOL got.frame IS FALSE:
             WHILE NOT got.frame
               PRI ALT
@@ -306,16 +310,18 @@ PROC vidgrab.main (CT.VIDEO! dev, CHAN BYTE kyb?, scr!)
                         do.dec (pict[whiteness])
                       'W'
                         do.inc (pict[whiteness])
-                      'd'
-                        do.dec (pict[depth])
-                      'D'
-                        do.inc (pict[depth])
+                      '0'
+                        change.input := 0
+                      '1'
+                        change.input := 1
+                      '2'
+                        change.input := 2
                       ELSE
                         SKIP
 
                 dev[resp] ? CASE
-                  MOBILE [][]INT32 frame:
-                  frame; frame
+                  RASTER frame:
+                  raster; frame
                     INT mx, my:
                     SEQ
                       -- out.string ("vidgrab: got frame! ", 0, scr!)
@@ -370,6 +376,7 @@ PROC vidgrab (CHAN BYTE kyb?, scr!, err!)
       video.server (vsvr, DEVICE.NAME)
 
       SEQ
+        vcli[req] ! set.input; 0
         vcli[resp] ? CASE
           ok
             vidgrab.main (vcli, kyb?, scr!)

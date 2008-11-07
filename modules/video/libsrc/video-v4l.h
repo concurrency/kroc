@@ -78,10 +78,7 @@ typedef struct opi_video_iodata {
 	int use_mmap;
 	int mmap_addr;
 	int mmap_size;
-	int width;
-	int height;
-	int format;
-	int isize;
+	void *convert;
 } opi_video_iodata_t;
 
 typedef struct opi_video_picture {
