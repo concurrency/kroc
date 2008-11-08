@@ -43,16 +43,6 @@
 #define OPI_VIDEO_PAL_BGR24	17
 #define OPI_VIDEO_PAL_BGR32	18
 
-#define OPI_VIDEO_DEVICE_FNAMEMAX 128
-
-typedef struct opi_video_device {
-	char fname[OPI_VIDEO_DEVICE_FNAMEMAX];
-	int fnamelen;
-	int fd;
-	int api;
-	int caps;
-} opi_video_device_t;
-
 #define OPI_VIDEO_IDENTITY_NAMEMAX 64
 
 typedef struct opi_video_identity {
@@ -73,13 +63,6 @@ typedef struct opi_video_input {
 	int maxw;
 	int maxh;
 } opi_video_input_t;
-
-typedef struct opi_video_iodata {
-	int use_mmap;
-	int mmap_addr;
-	int mmap_size;
-	void *convert;
-} opi_video_iodata_t;
 
 typedef struct opi_video_picture {
 	int brightness;
