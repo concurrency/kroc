@@ -542,6 +542,7 @@ PRIVATE void endianadjustpointer (treenode *const nptr)
 		case S_BYTE:
 		case S_BOOL:
 		case S_INT16:
+		case S_UINT16:
 			if (target_bigendian) {
 				adjust = bytesperword - bytesinscalar (type);
 			}
@@ -920,14 +921,17 @@ printtreenl (stderr, 4, dest);
 					shift 		= 0;
 					break;
 				case S_INT16:
+				case S_UINT16:
 					i_type 		= MT_NUM_INT16;
 					shift 		= 1;
 					break;
 				case S_INT32:
+				case S_UINT32:
 					i_type	 	= MT_NUM_INT32;
 					shift 		= 2;
 					break;
 				case S_INT64:
+				case S_UINT64:
 					i_type 		= MT_NUM_INT64;
 					shift 		= 3;
 					break;
@@ -940,6 +944,7 @@ printtreenl (stderr, 4, dest);
 					shift		= 3;
 					break;
 				case S_INT:
+				case S_UINT:
 					switch (WSH) {
 						case 0: i_type = MT_NUM_BYTE; break;
 						case 1: i_type = MT_NUM_INT16; break;
@@ -3038,7 +3043,7 @@ fprintf (stderr, "gen11: movearrayitem (word = %d, regs = %d, dirn = %s), tptr =
 printtreenl (stderr, 4, tptr);
 #endif
 	if ((dirn != MOVEDIRN_LOADPTR) && !use_shortintops &&	/* T9000 shorts 17/7/91 */
-	    (type == S_INT16) && (targetintsize != S_INT16)) {
+	    ((type == S_INT16) || (type == S_UINT16)) && (targetintsize != S_INT16)) {
 		badtag (genlocn, type, "movearrayitem");
 	} else {
 		if (((dirn & (MOVEDIRN_LOADEXT | MOVEDIRN_LOAD)) != 0) && directload (P_EXP, tptr, be_lexlevel)) {
@@ -3885,8 +3890,9 @@ fprintf (stderr, "mapsimpleassign(): going recursive at 1\n");
 			mapmoveqopd (destmode, dest, sourcemode, source);
 			break;
 			/*}}} */
-			/*{{{  INT16 on 32-bit machine */
+			/*{{{  INT16/UINT16 on 32-bit machine */
 		case S_INT16:
+		case S_UINT16:
 			if (isaddressableopd (sourcemode, *source) || isconstopd (sourcemode, *source)) {
 				const BOOL needtempdest = needtemptoload (destmode, *dest);
 				const BOOL notconst = !isconstopd (sourcemode, *source);
@@ -4373,9 +4379,9 @@ printtreenl (stderr, 4, sourcetype);
 #endif
 
 		if (!source_devaccess && !dest_devaccess && ((b == 1) || ((b == bytesperword) &&
-			check_aligned (source, (int) b) && check_aligned (dest, (int) b))
-			|| ((b < bytesperword) && (b == 2) && use_shortintops &&	/* T9000 shorts 17/7/91 */
-			check_aligned (source, (int) b) && check_aligned (dest, (int) b)))) {
+				check_aligned (source, (int) b) && check_aligned (dest, (int) b))
+				|| ((b < bytesperword) && (b == 2) && use_shortintops &&	/* T9000 shorts 17/7/91 */
+				check_aligned (source, (int) b) && check_aligned (dest, (int) b)))) {
 			/*{{{  can be optimised to a load and a store */
 
 			const int size_tag = (b == 1) ? S_BYTE : (b == 2) ? S_INT16 : targetintsize;
@@ -4805,8 +4811,9 @@ fprintf (stderr, "  gen11: tsimpleassign: array source is in IOSPACE\n");
 			movepointer (MOVEDIRN_STORE, I_STNL, 0, type, NULL, dest_devaccess);
 			break;
 			/*}}} */
-			/*{{{  INT16 on 32-bit machine */
+			/*{{{  INT16/UINT16 on 32-bit machine */
 		case S_INT16:	/* we must be on a 32-bit machine */
+		case S_UINT16:
 			if (use_shortintops) {	/* T9000 shorts 17/7/91 *//* equivalent code to BYTE etc */
 				destmode = ptrmodeof (destmode);
 				tload2regs (sourcemode, source, destmode, dest, FALSE, FALSE);

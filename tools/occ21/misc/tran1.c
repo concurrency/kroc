@@ -3458,6 +3458,10 @@ printtreenl (stderr, 4, prot);
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 		case S_ARRAY:		/* fixed-size array here */
@@ -3664,13 +3668,17 @@ printtreenl (stderr, 4, c_temp);
 			}
 			break;
 			/*}}}*/
-			/*{{{  S_BOOL S_BYTE S_INT S_INT16 S_INT32 S_INT64 S_REAL32 S_REAL64  break*/
+			/*{{{  S_BOOL S_BYTE S_INT S_INT16 S_INT32 S_INT64 S_UINT S_INT16 S_UINT32 S_UINT64 S_REAL32 S_REAL64  break*/
 		case S_BOOL:
 		case S_BYTE:
 		case S_INT:
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 			{
@@ -3803,13 +3811,17 @@ printtreenl (stderr, 4, n_temp);
 #endif
 
 	switch (TagOf (protocol)) {
-		/*{{{  BOOL BYTE INT INT16 INT32 INT64 REAL32 REAL64 ARRAY  break*/
+		/*{{{  BOOL BYTE INT INT16 INT32 INT64 UINT UINT16 UINT32 UINT64 REAL32 REAL64 ARRAY  break*/
 	case S_BOOL:
 	case S_BYTE:
 	case S_INT:
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_ARRAY:		/* fixed-size array here */

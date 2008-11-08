@@ -91,6 +91,14 @@ PRIVATE wordnode *get_anon_type_name (treenode *protocol)
 		return lookupword ("$anon.INT32", 11);
 	case S_INT64:
 		return lookupword ("$anon.INT64", 11);
+	case S_UINT:
+		return lookupword ("$anon.UINT", 10);
+	case S_UINT16:
+		return lookupword ("$anon.UINT16", 12);
+	case S_UINT32:
+		return lookupword ("$anon.UINT32", 12);
+	case S_UINT64:
+		return lookupword ("$anon.UINT64", 12);
 	case S_BYTE:
 		return lookupword ("$anon.BYTE", 10);
 	case S_BOOL:
@@ -531,6 +539,10 @@ printtreenl (stderr, 4, tptr);
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_BYTE:

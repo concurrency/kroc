@@ -13,4 +13,4 @@ INCLUDES=-I.. -I@srcdir@/../include
 DEFS=@DEFS@ @ARCH_DEFS@
 
 libextlib_a_SOURCES = extconv.c exti8.c exti16.c exti32.c exti64.c \
-extlong.c extr32.c extr64.c extstr.c extui8.c extui16.c extui32.c
+extlong.c extr32.c extr64.c extstr.c extui8.c extui16.c extui32.c extui64.c
