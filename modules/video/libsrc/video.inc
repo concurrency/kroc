@@ -128,6 +128,7 @@ PROTOCOL P.VIDEO.REQ
   CASE
     get.identity                                  -- -> identity [] error
     get.inputs                                    -- -> inputs [] error
+    get.current.input                             -- -> input.number [] error
     set.input; INT                                -- -> ok [] error
     get.picture                                   -- -> picture [] error
     set.picture; VIDEO.PICTURE                    -- -> picture [] error
@@ -144,6 +145,7 @@ PROTOCOL P.VIDEO.RESP
     error; MOBILE []BYTE                          -- generic error
     identity; VIDEO.IDENTITY
     inputs; MOBILE []VIDEO.INPUT
+    input.number; INT
     picture; VIDEO.PICTURE
     frameinfo; VIDEO.FRAMEINFO
     frame; MOBILE []BYTE

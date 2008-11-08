@@ -30,53 +30,31 @@
 --}}}
 --{{{  private structures
 
---{{{  VIDEO.DEVICE
---* Maximum length of a video device name.
-VAL INT VIDEO.DEVICE.FNAMEMAX IS 128:
+DATA TYPE VIDEO.DEVICE IS INT:
 
---* Generic video device information.
-DATA TYPE VIDEO.DEVICE
-  PACKED RECORD
-    [VIDEO.DEVICE.FNAMEMAX]BYTE fname:
-    INT fnamelen:
-    INT fd:
-    INT api:
-    INT caps:
-:
-
---}}}
---{{{  VIDEO.IODATA
---* Describes how video data is accessed (including width/height).
-DATA TYPE VIDEO.IODATA
-  PACKED RECORD
-    INT use.mmap:
-    INT mmap.addr:
-    INT mmap.size:
-    INT convert:
-:
-  
---}}}
 --}}}
 --{{{  external C functions
 #PRAGMA EXTERNAL "PROC C.video.initstruct (RESULT VIDEO.DEVICE vdev) = 0"
-#PRAGMA EXTERNAL "PROC B.video.open (VIDEO.DEVICE vdev, RESULT BOOL ok) = 3"
-#PRAGMA EXTERNAL "PROC C.video.close (VIDEO.DEVICE vdev, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC B.video.open (VAL VIDEO.DEVICE vdev, VAL []BYTE fn, RESULT BOOL ok) = 3"
+#PRAGMA EXTERNAL "PROC C.video.close (VAL VIDEO.DEVICE vdev, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.freestruct (RESULT VIDEO.DEVICE vdev) = 0"
 
 -- #PRAGMA EXTERNAL "PROC B.video.v4l2.readrgbframe (VAL INT fd, [][]INT r) = 3"
-#PRAGMA EXTERNAL "PROC C.video.identity (VIDEO.DEVICE vdev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok) = 0"
-#PRAGMA EXTERNAL "PROC C.video.numinputs (VIDEO.DEVICE vdev, RESULT INT num) = 0"
-#PRAGMA EXTERNAL "PROC C.video.getinputs (VIDEO.DEVICE vdev, []VIDEO.INPUT inputs) = 0"
-#PRAGMA EXTERNAL "PROC C.video.setinput (VIDEO.DEVICE vdev, VIDEO.INPUT input, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.identity (VAL VIDEO.DEVICE vdev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.numinputs (VAL VIDEO.DEVICE vdev, RESULT INT num) = 0"
+#PRAGMA EXTERNAL "PROC C.video.getinputs (VAL VIDEO.DEVICE vdev, []VIDEO.INPUT inputs) = 0"
+#PRAGMA EXTERNAL "PROC C.video.currentinput (VAL VIDEO.DEVICE vdev, RESULT INT id) = 0"
+#PRAGMA EXTERNAL "PROC C.video.setinput (VAL VIDEO.DEVICE vdev, VIDEO.INPUT input, RESULT BOOL ok) = 0"
 
-#PRAGMA EXTERNAL "PROC C.video.getframeinfo (VIDEO.DEVICE vdev, RESULT VIDEO.FRAMEINFO frameinfo) = 0"
-#PRAGMA EXTERNAL "PROC C.video.setframeinfo (VIDEO.DEVICE vdev, VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok) = 0"
-#PRAGMA EXTERNAL "PROC C.video.getpicture (VIDEO.DEVICE vdev, RESULT VIDEO.PICTURE picture) = 0"
-#PRAGMA EXTERNAL "PROC C.video.setpicture (VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.getframeinfo (VAL VIDEO.DEVICE vdev, RESULT VIDEO.FRAMEINFO frameinfo) = 0"
+#PRAGMA EXTERNAL "PROC C.video.setframeinfo (VAL VIDEO.DEVICE vdev, VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.getpicture (VAL VIDEO.DEVICE vdev, RESULT VIDEO.PICTURE picture) = 0"
+#PRAGMA EXTERNAL "PROC C.video.setpicture (VAL VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok) = 0"
 
-#PRAGMA EXTERNAL "PROC C.video.initio (VIDEO.DEVICE vdev, RESULT VIDEO.IODATA iod, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok) = 0"
-#PRAGMA EXTERNAL "PROC C.video.shutdownio (VIDEO.DEVICE vdev, VIDEO.IODATA iod) = 0"
+#PRAGMA EXTERNAL "PROC C.video.initio (VAL VIDEO.DEVICE vdev, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.shutdownio (VAL VIDEO.DEVICE vdev) = 0"
 
-#PRAGMA EXTERNAL "PROC B.video.grabframe (VIDEO.DEVICE vdev, VAL BOOL raw, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok) = 3"
+#PRAGMA EXTERNAL "PROC B.video.grabframe (VAL VIDEO.DEVICE vdev, VAL BOOL raw, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok) = 3"
 
 --}}}
 
@@ -90,32 +68,29 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   --* Opens a video device.
   -- @private
   PROC video.opendev (VAL []BYTE fname, RESULT VIDEO.DEVICE dev, RESULT BOOL ok)
-    INT xlen:
     SEQ
       C.video.initstruct (dev)
+      B.video.open (dev, fname, ok)
       IF
-        (SIZE fname) >= VIDEO.DEVICE.FNAMEMAX
-          xlen := VIDEO.DEVICE.FNAMEMAX
+        ok
+          SKIP
         TRUE
-          xlen := SIZE fname
-      [dev[fname] FOR xlen] := [fname FOR xlen]
-      dev[fnamelen] := xlen
-
-      B.video.open (dev, ok)
+          C.video.freestruct (dev)
   :
   --}}}
   --{{{  PROC video.closedev (...)
   --* Closes a video device.
   -- @private
-  PROC video.closedev (VIDEO.DEVICE dev, RESULT BOOL ok)
+  PROC video.closedev (RESULT VIDEO.DEVICE dev, RESULT BOOL ok)
     SEQ
       C.video.close (dev, ok)
+      C.video.freestruct (dev)
   :
   --}}}
   --{{{  PROC video.identity (...)
   --* Identifies a video device.
   -- @private
-  PROC video.identity (VIDEO.DEVICE dev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok)
+  PROC video.identity (VAL VIDEO.DEVICE dev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok)
     SEQ
       C.video.identity (dev, ident, ok)
   :
@@ -123,7 +98,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   --{{{  PROC video.getcaminputs (...)
   --* Gets information about video inputs.
   -- @private
-  PROC video.getinputs (VIDEO.DEVICE dev, RESULT MOBILE []VIDEO.INPUT inputs)
+  PROC video.getinputs (VAL VIDEO.DEVICE dev, RESULT MOBILE []VIDEO.INPUT inputs)
     INT ninputs:
     SEQ
       C.video.numinputs (dev, ninputs)
@@ -136,10 +111,18 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
           SKIP
   :
   --}}}
+  --{{{  PROC video.getcaminputs (...)
+  --* Gets information about video inputs.
+  -- @private
+  PROC video.currentinput (VAL VIDEO.DEVICE dev, RESULT INT id)
+    SEQ
+      C.video.currentinput (dev, id)
+  :
+  --}}}
   --{{{  PROC video.setinput (...)
   --* Sets the particular video input to use.
   -- @private
-  PROC video.setinput (VIDEO.DEVICE dev, VIDEO.INPUT input, RESULT BOOL ok)
+  PROC video.setinput (VAL VIDEO.DEVICE dev, VIDEO.INPUT input, RESULT BOOL ok)
     SEQ
       C.video.setinput (dev, input, ok)
   :
@@ -147,7 +130,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   --{{{  PROC video.getframeinfo (...)
   --* Gets the current frame (width, height, etc.)
   -- @private
-  PROC video.getframeinfo (VIDEO.DEVICE dev, RESULT VIDEO.FRAMEINFO frameinfo)
+  PROC video.getframeinfo (VAL VIDEO.DEVICE dev, RESULT VIDEO.FRAMEINFO frameinfo)
     SEQ
       C.video.getframeinfo (dev, frameinfo)
   :
@@ -155,7 +138,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   --{{{  PROC video.setframeinfo (...)
   --* Sets the current frame (width, height, etc.)
   -- @private
-  PROC video.setframeinfo (VIDEO.DEVICE dev, VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok)
+  PROC video.setframeinfo (VAL VIDEO.DEVICE dev, VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok)
     SEQ
       C.video.setframeinfo (dev, frameinfo, ok)
   :
@@ -163,7 +146,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   --{{{  PROC video.getpicture (...)
   --* Gets the current picture properties (brightness, etc.)
   -- @private
-  PROC video.getpicture (VIDEO.DEVICE dev, RESULT VIDEO.PICTURE picture)
+  PROC video.getpicture (VAL VIDEO.DEVICE dev, RESULT VIDEO.PICTURE picture)
     SEQ
       C.video.getpicture (dev, picture)
   :
@@ -171,7 +154,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   --{{{  PROC video.setpicture (...)
   --* Sets the current picture properties (brightness, etc.)
   -- @private
-  PROC video.setpicture (VIDEO.DEVICE dev, VIDEO.PICTURE picture, RESULT BOOL ok)
+  PROC video.setpicture (VAL VIDEO.DEVICE dev, VIDEO.PICTURE picture, RESULT BOOL ok)
     SEQ
       C.video.setpicture (dev, picture, ok)
   :
@@ -179,25 +162,25 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   --{{{  PROC video.initio (...)
   --* Initialises video I/O.
   -- @private
-  PROC video.initio (VIDEO.DEVICE dev, RESULT VIDEO.IODATA iod, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok)
+  PROC video.initio (VAL VIDEO.DEVICE dev, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok)
     SEQ
-      C.video.initio (dev, iod, frameinfo, ok)
+      C.video.initio (dev, frameinfo, ok)
   :
   --}}}
   --{{{  PROC video.shutdownio (...)
   --* Shuts down video I/O.
   -- @private
-  PROC video.shutdownio (VIDEO.DEVICE dev, VIDEO.IODATA iod)
+  PROC video.shutdownio (VAL VIDEO.DEVICE dev)
     SEQ
-      C.video.shutdownio (dev, iod)
+      C.video.shutdownio (dev)
   :
   --}}}
   --{{{  PROC video.grabframe (...)
   --* Grabs a new video frame from the input.
   -- @private
-  PROC video.grabframe (VIDEO.DEVICE dev, VAL BOOL raw, VIDEO.IODATA iod, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok)
+  PROC video.grabframe (VAL VIDEO.DEVICE dev, VAL BOOL raw, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok)
     SEQ
-      B.video.grabframe (dev, raw, iod, finf, buffer, ok)
+      B.video.grabframe (dev, raw, finf, buffer, ok)
   :
   --}}}
   --{{{  PROC calc.frame.size (...)
@@ -253,13 +236,11 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
     IF
       ok
         VIDEO.FRAMEINFO finfo:
-        VIDEO.INPUT selinput:
-        VIDEO.IODATA iodata:
+        INT selected.input:
         SEQ
           #PRAGMA DEFINED inputs
-
-          selinput := inputs[0]
-          video.setinput (vdev, selinput, ok)
+          video.currentinput (vdev, selected.input)
+          #PRAGMA DEFINED selected.input
           video.getframeinfo (vdev, finfo)
           #PRAGMA DEFINED finfo
           calc.frame.bytes (finfo)
@@ -279,17 +260,22 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                     SEQ i = 0 FOR SIZE inputs
                       copy[i] := inputs[i]
                     vsvr[resp] ! inputs; copy
+                get.current.input
+                  vsvr[resp] ! input.number; selected.input
                 INT id:
                 set.input; id
                   IF
+                    selected.input = id
+                      vsvr[resp] ! ok
                     IF i = 0 FOR SIZE inputs
                       inputs[i][id] = id
                         SEQ
-                          selinput := inputs[i]
-                          video.setinput (vdev, selinput, ok)
+                          video.setinput (vdev, inputs[i], ok)
                           IF
                             ok
-                              vsvr[resp] ! ok
+                              SEQ
+                                selected.input := id
+                                vsvr[resp] ! ok
                             TRUE
                               vsvr[resp] ! error; "failed to select specified input"
                     TRUE
@@ -314,7 +300,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                   SEQ
                     IF
                       streaming
-                        video.shutdownio (vdev, iodata)
+                        video.shutdownio (vdev)
                       TRUE
                         SKIP
                     video.setframeinfo (vdev, finfo, ok)
@@ -332,7 +318,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                       streaming
                         SKIP
                       TRUE
-                        video.initio (vdev, iodata, finfo, streaming)
+                        video.initio (vdev, finfo, streaming)
                     IF
                       streaming
                         SEQ
@@ -341,7 +327,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                               MOBILE []BYTE frame:
                               SEQ
                                 frame := MOBILE [finfo[bytes]]BYTE
-                                video.grabframe (vdev, raw, iodata, finfo, frame, ok)
+                                video.grabframe (vdev, raw, finfo, frame, ok)
                                 IF
                                   ok
                                     vsvr[resp] ! frame; frame
@@ -352,7 +338,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                               SEQ
                                 r := MOBILE [finfo[height]][finfo[width]]INT
                                 []BYTE frame RETYPES r:
-                                video.grabframe (vdev, raw, iodata, finfo, frame, ok)
+                                video.grabframe (vdev, raw, finfo, frame, ok)
                                 IF
                                   ok
                                     vsvr[resp] ! raster; r
@@ -371,7 +357,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                   running := FALSE
                   IF
                     streaming
-                      video.shutdownio (vdev, iodata)
+                      video.shutdownio (vdev)
                     TRUE
                       SKIP
       TRUE
@@ -382,6 +368,8 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
               get.identity
                 vsvr[resp] ! error; CLONE error
               get.inputs
+                vsvr[resp] ! error; CLONE error
+              get.current.input
                 vsvr[resp] ! error; CLONE error
               INT id:
               set.input; id
@@ -401,7 +389,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
               running := FALSE
 
     IF
-      vdev[fd] > 0
+      vdev <> 0
         video.closedev (vdev, ok)
       TRUE
         SKIP
