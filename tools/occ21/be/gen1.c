@@ -766,12 +766,6 @@ printtreenl (stderr, 4, nptr);
 					tdecl_mark_debug_info (nptr, debug_marked);
 					zero_local_var (nptr);
 					break;
-#if 0				/* bug 328 11/9/90 */
-				case S_INT16:
-					if (targetintsize == S_INT32)
-						zero_local_var (nptr);
-					break;
-#endif
 					/*}}} */
 					/*{{{  ARRAY if CHAN initialise each element to MINT */
 				case S_ARRAY:

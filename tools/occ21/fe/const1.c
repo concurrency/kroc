@@ -870,11 +870,20 @@ PRIVATE void foldmonadic (treenode * tptr, BIT32 * reshi, BIT32 * reslo, const i
 		case S_INT16:
 			Int16Sub (&error, reslo, 0, oplo);
 			break;
+		case S_UINT16:
+			UInt16Sub (&error, reslo, 0, oplo);
+			break;
 		case S_INT32:
 			Int32Sub (&error, reslo, 0, oplo);
 			break;
+		case S_UINT32:
+			UInt32Sub (&error, reslo, 0, oplo);
+			break;
 		case S_INT64:
 			Int64Sub (&error, reshi, reslo, 0, 0, ophi, oplo);
+			break;
+		case S_UINT64:
+			UInt64Sub (&error, reshi, reslo, 0, 0, ophi, oplo);
 			break;
 		case S_REAL32:
 			Real32Op (&error, reslo, 0, Op_Sub + (RN << 2), oplo);
@@ -903,14 +912,29 @@ PRIVATE void foldmonadic (treenode * tptr, BIT32 * reshi, BIT32 * reslo, const i
 			Int16Minus (reslo, 0, oplo);
 			break;
 			/*}}}  */
+			/*{{{  S_UINT16 */
+		case S_UINT16:
+			UInt16Minus (reslo, 0, oplo);
+			break;
+			/*}}}  */
 			/*{{{  S_INT32 */
 		case S_INT32:
 			Int32Minus (reslo, 0, oplo);
 			break;
 			/*}}}  */
+			/*{{{  S_UINT32 */
+		case S_UINT32:
+			UInt32Minus (reslo, 0, oplo);
+			break;
+			/*}}}  */
 			/*{{{  S_INT64 */
 		case S_INT64:
 			Int64Minus (reshi, reslo, 0, 0, ophi, oplo);
+			break;
+			/*}}}  */
+			/*{{{  S_UINT64 */
+		case S_UINT64:
+			UInt64Minus (reshi, reslo, 0, 0, ophi, oplo);
 			break;
 			/*}}}  */
 		}

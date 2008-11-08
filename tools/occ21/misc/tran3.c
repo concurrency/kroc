@@ -546,12 +546,6 @@ fprintf (stderr, "tran3: get_offset_and_subscript_bytes: something MOBILE, b = %
 		subscripttype = S_BYTE;
 	}
 	
-#if 0
-	subscripttype = (trans_params->scale_by_bytes) ? S_BYTE : can_use_wsubdb (b, bytesperword, tptr) ?	/*S_INT64 *//* bug TS/1649 01/04/92 */
-		((bytesperword == 2) ? S_INT32 : S_INT64)
-		: (b >= bytesperword) ? S_INT : (use_shortintops && b == 2) ? S_INT16	/* T9000 shorts 17/7/91 */
-		: S_BYTE;
-#endif
 	/* Note that the offset scale is different from the subscript scale
 	   when we use wsubdb (eg. subscripttype == S_INT64) */
 	offsettype = (bytesinscalar (subscripttype) > bytesperword) ? S_INT : subscripttype;

@@ -1947,6 +1947,10 @@ PRIVATE void check_type_is_data_type (treenode * type, const SOURCEPOSN locn, co
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 		case N_DECL:	/* undeclared user type */
@@ -2344,6 +2348,10 @@ PRIVATE BOOL csameprot (treenode *p1, treenode *p2)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_BYTE:
@@ -4254,6 +4262,10 @@ PUBLIC treenode *ccase (treenode * volatile tptr)
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 			break;
 		case S_UNDECLARED:
 			memcpy ((char *) env, (char *) savedenv, sizeof (env));
@@ -4475,7 +4487,7 @@ PUBLIC treenode *callocation (treenode *volatile tptr, treenode *last_decl)
 
 				t = typecheck (DValOf (tptr), intnodeptr);
 
-				if ((TagOf (t) == S_INT) || (TagOf (t) == S_INT16)) {
+				if ((TagOf (t) == S_INT) || (TagOf (t) == S_INT16) || (TagOf (t) == S_UINT) || (TagOf (t) == S_UINT16)) {
 					if (isconst (DValOf (tptr))) {
 						/*{{{  constant PLACEment -- can only work for port-based I/O */
 						treenode *ptype = NTypeOf (pname);

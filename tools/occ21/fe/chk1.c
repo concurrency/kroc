@@ -62,6 +62,7 @@ PUBLIC BOOL chk_permit_lonely_fields = FALSE;
    It doesn't matter if we re-use them.
 */
 PUBLIC treenode *intnodeptr;
+PUBLIC treenode *uintnodeptr;
 PUBLIC treenode *boolnodeptr;
 PUBLIC treenode *channodeptr;
 PUBLIC treenode *chanboolnodeptr;
@@ -75,8 +76,9 @@ PRIVATE wordnode *udo_wordnodeptr;	/* added by Jim for user defined operators te
 	PRIVATE treenode *mobilenodeptr;	/* added by Fred for MOBILEs */
 #endif
 
-PRIVATE treenode *bytenodeptr, *int16nodeptr, *int32nodeptr, *int64nodeptr,	/* *realnodeptr, */
- *real32nodeptr, *real64nodeptr;	/* *stringnodeptr, */
+PRIVATE treenode *bytenodeptr, *int16nodeptr, *int32nodeptr, *int64nodeptr,
+	*uint16nodeptr, *uint32nodeptr, *uint64nodeptr,
+	*real32nodeptr, *real64nodeptr;
 PRIVATE treenode *controlportnodeptr;
 PRIVATE treenode *routenodeptr;
 
@@ -108,6 +110,10 @@ PUBLIC void chkinit (void)
 		int16nodeptr = newleafnode (S_INT16, NOPOSN);
 		int32nodeptr = newleafnode (S_INT32, NOPOSN);
 		int64nodeptr = newleafnode (S_INT64, NOPOSN);
+		uintnodeptr = newleafnode (S_UINT, NOPOSN);
+		uint16nodeptr = newleafnode (S_UINT16, NOPOSN);
+		uint32nodeptr = newleafnode (S_UINT32, NOPOSN);
+		uint64nodeptr = newleafnode (S_UINT64, NOPOSN);
 		real32nodeptr = newleafnode (S_REAL32, NOPOSN);
 		real64nodeptr = newleafnode (S_REAL64, NOPOSN);
 		/*stringnodeptr  = newleafnode (S_STRING, NOPOSN); */
@@ -136,37 +142,6 @@ PUBLIC void chkinit (void)
 }
 
 /*}}}*/
-/*{{{  PRIVATE treenode *litnodeptr (t)           NOT USED*/
-#if 0
-PRIVATE treenode *litnodeptr (int t)
-{
-	switch (t)
-		/*{{{  cases */
-	{
-	case S_TRUE:
-	case S_FALSE:
-		return boolnodeptr;
-	case S_BYTELIT:
-		return bytenodeptr;
-	case S_INTLIT:
-		return intnodeptr;
-	case S_INT16LIT:
-		return int16nodeptr;
-	case S_INT32LIT:
-		return int32nodeptr;
-	case S_INT64LIT:
-		return int64nodeptr;
-	case S_REAL32LIT:
-		return real32nodeptr;
-	case S_REAL64LIT:
-		return real64nodeptr;
-	default:
-		return NULL;
-	}
-	/*}}} */
-}
-#endif
-/*}}}*/
 /*{{{  PRIVATE treenode *typenodeptr (t)*/
 PRIVATE treenode *typenodeptr (int t)
 {
@@ -185,6 +160,14 @@ PRIVATE treenode *typenodeptr (int t)
 		return int32nodeptr;
 	case S_INT64:
 		return int64nodeptr;
+	case S_UINT:
+		return uintnodeptr;
+	case S_UINT16:
+		return uint16nodeptr;
+	case S_UINT32:
+		return uint32nodeptr;
+	case S_UINT64:
+		return uint64nodeptr;
 	case S_REAL32:
 		return real32nodeptr;
 	case S_REAL64:
@@ -370,6 +353,10 @@ fflush (stdout);
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 		case S_FULLBARRIER:
@@ -463,6 +450,10 @@ printtreenl (stderr, 4, ftype);
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_UINTLIT:
 			case S_REAL32:
 			case S_REAL64:
@@ -793,6 +784,10 @@ printtreenl (stderr, 4, typeptr);
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_REAL32:
 			case S_REAL64:
 			case S_TIMER:
@@ -1132,6 +1127,10 @@ PRIVATE void post_udo_error_check_on_literals (treenode * op_tree, treenode * de
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case N_DECL:	/* undeclared user type */
 			break;
 		default:
@@ -1183,6 +1182,10 @@ PRIVATE char *generate_typename_strings (treenode * typetree, int *length)
 	static const char *integer16 = "INT16";
 	static const char *integer32 = "INT32";
 	static const char *integer64 = "INT64";
+	static const char *uinteger = "UINT";
+	static const char *uinteger16 = "UINT16";
+	static const char *uinteger32 = "UINT32";
+	static const char *uinteger64 = "UINT64";
 	static const char *real32 = "REAL32";
 	static const char *real64 = "REAL64";
 	static const char *boolean = "BOOL";
@@ -1220,10 +1223,22 @@ PRIVATE char *generate_typename_strings (treenode * typetree, int *length)
 		length_of_addition = 3;
 		break;
 		/*}}} */
+		/*{{{  case S_UINT*/
+	case S_UINT:
+		string_to_add = (char *)uinteger;
+		length_of_addition = 4;
+		break;
+		/*}}}*/
 		/*{{{  case S_INT16 */
 	case S_INT16:
 		string_to_add = (char *) integer16;
 		length_of_addition = 5;
+		break;
+		/*}}} */
+		/*{{{  case S_UINT16 */
+	case S_UINT16:
+		string_to_add = (char *) uinteger16;
+		length_of_addition = 6;
 		break;
 		/*}}} */
 		/*{{{  case S_INT32 */
@@ -1232,10 +1247,22 @@ PRIVATE char *generate_typename_strings (treenode * typetree, int *length)
 		length_of_addition = 5;
 		break;
 		/*}}} */
+		/*{{{  case S_UINT32 */
+	case S_UINT32:
+		string_to_add = (char *) uinteger32;
+		length_of_addition = 6;
+		break;
+		/*}}} */
 		/*{{{  case S_INT64 */
 	case S_INT64:
 		string_to_add = (char *) integer64;
 		length_of_addition = 5;
+		break;
+		/*}}} */
+		/*{{{  case S_UINT64 */
+	case S_UINT64:
+		string_to_add = (char *) uinteger64;
+		length_of_addition = 6;
 		break;
 		/*}}} */
 		/*{{{  case S_BOOL */
@@ -1947,6 +1974,10 @@ fprintf (stderr, "typecheck_main(): S_NEG: checking for UDO tempname = [%s]\n", 
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_REAL32:
 			case S_REAL64:
 			case S_UNDECLARED:
@@ -2021,6 +2052,10 @@ fprintf (stderr, "typecheck_main(): S_NEG: checking for UDO tempname = [%s]\n", 
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_UNDECLARED:
 			#ifdef OCCAM2_5
 				case S_BYTE:
@@ -2417,6 +2452,10 @@ printtreenl (stderr, 4, t);
 				case S_INT16:
 				case S_INT32:
 				case S_INT64:
+				case S_UINT:
+				case S_UINT16:
+				case S_UINT32:
+				case S_UINT64:
 				case S_REAL32:
 				case S_REAL64:
 				case S_UREALLIT:
@@ -2508,6 +2547,10 @@ printtreenl (stderr, 4, t);
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_UINTLIT:
 			case S_UNDECLARED:
 			#ifdef OCCAM2_5
@@ -2600,6 +2643,10 @@ printtreenl (stderr, 4, t);
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_UINTLIT:
 			case S_UNDECLARED:
 			#ifdef OCCAM2_5
@@ -2773,6 +2820,10 @@ printtreenl (stderr, 4, t);
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_REAL32:
 			case S_REAL64:
 			case S_UNDECLARED:
@@ -2853,6 +2904,10 @@ printtreenl (stderr, 4, t);
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_UNDECLARED:
 			#ifdef OCCAM2_5
 				case S_BYTE:
@@ -2885,6 +2940,10 @@ printtreenl (stderr, 4, t);
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		#ifdef OCCAM2_5
 			case S_BYTE:
 		#endif
@@ -3214,6 +3273,10 @@ printf ("\n");
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case N_DECL:	/* undeclared user type */
 			break;
 			/*{{{  COMMENT extra cases for user defined operators */
@@ -4072,6 +4135,10 @@ printtreenl (stderr, 4, tptr);
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 		case S_UNDECLARED:
@@ -4540,16 +4607,6 @@ PUBLIC treenode *chk_gettype_main (treenode *tptr, BOOL orig_type)
 	case S_TRUE:
 	case S_FALSE:
 		return bytenodeptr;
-#if 0
-	case S_BYTELIT:
-	case S_INTLIT:
-	case S_INT16LIT:
-	case S_INT32LIT:
-	case S_INT64LIT:
-	case S_REAL32LIT:
-	case S_REAL64LIT:
-		return (litnodeptr (TagOf (tptr)));
-#endif
 	case S_UBYTELIT:
 	case S_UINTLIT:
 	case S_UREALLIT:
@@ -4780,12 +4837,6 @@ printtreenl (stderr, 4, SLengthExpOf (tptr));
 	case S_CONSTCONSTRUCTOR:
 		return (chk_gettype_main (CTExpOf (tptr), orig_type));
 		/*}}} */
-		/*{{{  structconstructor (COMMENTED) */
-#if 0
-	case S_STRUCTCONSTRUCTOR:
-		return (typenodeptr (MOpTypeOf (tptr)));
-#endif
-		/*}}} */
 		/*{{{  conditional expression */
 #ifdef CONDEXP
 	case S_CONDEXP:
@@ -4828,13 +4879,6 @@ printtreenl (stderr, 4, SLengthExpOf (tptr));
 #endif
 	case S_FNACTUALRESULT:
 		return intnodeptr;
-#if 0
-		/* This would seem to be correct, but counters the fact that
-		   actual results are only 1 word long, cos they are pointers!
-		 */
-	case S_FNACTUALRESULT:
-		return chk_gettype_main (HExpOf (tptr), orig_type);
-#endif
 #ifdef MOBILES
 	case S_PARAM_MPP:
 		/* type-tree associated with this is good */
@@ -4847,12 +4891,7 @@ printtreenl (stderr, 4, NTypeOf (tptr));
 		/*}}} */
 		/*}}} */
 	default:
-#if 0				/* bug INSdi02113 */
-		badtag (LocnOf (tptr), TagOf (tptr), "chk_gettype_main");
-		return (NULL);
-#else
 		return undeclaredp;
-#endif
 	}
 }
 
@@ -4974,26 +5013,8 @@ PUBLIC int chk_typeof (treenode * tptr)
 		case S_TRUE:
 		case S_FALSE:
 			return (S_BOOL);
-#if 0
-		case S_BYTELIT:
-			return (S_BYTE);
-#endif
 		case S_ASMNAME:
 			return (S_INT);
-#if 0
-		case S_INTLIT:
-			return (S_INT);
-		case S_INT16LIT:
-			return (S_INT16);
-		case S_INT32LIT:
-			return (S_INT32);
-		case S_INT64LIT:
-			return (S_INT64);
-		case S_REAL32LIT:
-			return (S_REAL32);	/* SK changed here */
-		case S_REAL64LIT:
-			return (S_REAL64);
-#endif
 		case S_UBYTELIT:
 		case S_UINTLIT:
 		case S_UREALLIT:
@@ -5173,12 +5194,6 @@ PUBLIC int chk_typeof (treenode * tptr)
 		case S_CONSTEXP:
 			tptr = CExpOf (tptr);
 			break;
-			/*}}} */
-			/*{{{  structconstructor */
-#if 0
-		case S_STRUCTCONSTRUCTOR:
-			return (MOpTypeOf (tptr));
-#endif
 			/*}}} */
 			/*{{{  backend parameters, bits and pieces */
 		case S_HIDDEN_PARAM:
@@ -6160,6 +6175,10 @@ printtreenl (stderr, 4, typeptr);
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 		case S_TIMER:
@@ -6443,6 +6462,10 @@ printtreenl (stderr, 4, pptr);
 				case S_INT16:
 				case S_INT32:
 				case S_INT64:
+				case S_UINT:
+				case S_UINT16:
+				case S_UINT32:
+				case S_UINT64:
 				case S_REAL32:
 				case S_REAL64:
 				case S_UNDECLARED:
@@ -6491,6 +6514,10 @@ printtreenl (stderr, 4, pptr);
 				case S_INT16:
 				case S_INT32:
 				case S_INT64:
+				case S_UINT:
+				case S_UINT16:
+				case S_UINT32:
+				case S_UINT64:
 				case S_REAL32:
 				case S_REAL64:
 					return (tptr);
