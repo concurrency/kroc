@@ -90,6 +90,14 @@ PUBLIC int checkbounds (int sourcetype, int desttype, BIT32 shi, BIT32 slo, cons
 		minlo = MOSTNEG_INT16;
 		break;
 		/*}}}  */
+		/*{{{  S_UINT16*/
+	case S_UINT16:
+		maxhi = 0;
+		maxlo = 0x0000ffffl;
+		minhi = 0;
+		minlo = 0;
+		break;
+		/*}}}*/
 		/*{{{  S_INT32 */
 	case S_INT32:
 		maxhi = 0;
@@ -97,12 +105,28 @@ PUBLIC int checkbounds (int sourcetype, int desttype, BIT32 shi, BIT32 slo, cons
 		minhi = 0xffffffffl;
 		minlo = MOSTNEG_INT32;
 		break;
-		/*}}}  */
+		/*}}}*/
+		/*{{{  S_UINT32*/
+	case S_UINT32:
+		maxhi = 0;
+		maxlo = 0xffffffffl;
+		minhi = 0;
+		minlo = 0;
+		break;
+		/*}}}*/
 		/*{{{  S_INT64 */
 	case S_INT64:
 		maxhi = MOSTPOS_INT32;
 		maxlo = 0xffffffffl;
 		minhi = MOSTNEG_INT32;
+		minlo = 0;
+		break;
+		/*}}}  */
+		/*{{{  S_UINT64 */
+	case S_UINT64:
+		maxhi = 0xffffffffl;
+		maxlo = 0xffffffffl;
+		minhi = 0;
 		minlo = 0;
 		break;
 		/*}}}  */
@@ -138,12 +162,15 @@ PRIVATE void IStrToInt (const int inttype, int *const error, BIT32 * const hi, B
 			StrToH8 (error, lo, string);
 			break;
 		case S_INT16:
+		case S_UINT16:
 			StrToH16 (error, lo, string);
 			break;
 		case S_INT32:
+		case S_UINT32:
 			StrToHex (error, lo, string);
 			break;
 		case S_INT64:
+		case S_UINT64:
 			StrToH64 (error, hi, lo, string);
 			break;
 		}
@@ -156,12 +183,15 @@ PRIVATE void IStrToInt (const int inttype, int *const error, BIT32 * const hi, B
 			StrToH8 (error, lo, string);
 			break;
 		case S_INT16:
+		case S_UINT16:
 			StrToH16 (error, lo, string);
 			break;
 		case S_INT32:
+		case S_UINT32:
 			StrToHex (error, lo, string);
 			break;
 		case S_INT64:
+		case S_UINT64:
 			StrToH64 (error, hi, lo, string);
 			break;
 		}
@@ -182,12 +212,15 @@ PRIVATE void IStrToInt (const int inttype, int *const error, BIT32 * const hi, B
 			StrToI8 (error, lo, string);
 			break;
 		case S_INT16:
+		case S_UINT16:
 			StrToI16 (error, lo, string);
 			break;
 		case S_INT32:
+		case S_UINT32:
 			StrToInt (error, lo, string);
 			break;
 		case S_INT64:
+		case S_UINT64:
 			StrToI64 (error, hi, lo, string);
 			break;
 		}
@@ -219,20 +252,32 @@ PRIVATE void exactconversion (int sourcetype, int desttype, BIT32 * const dhi, B
 	else
 		/*{{{  bool byte or int conversion */
 	{
-		const int targetintsize = current_fe_data->fe_txlib->bpw == 2 ? S_INT16 : S_INT32;
-		if (sourcetype == S_INT)
-			sourcetype = targetintsize;
-		if (desttype == S_INT)
-			desttype = targetintsize;
+		const int targetintsize = ((current_fe_data->fe_txlib->bpw == 2) ? S_INT16 : S_INT32);
+		const int targetuintsize = ((current_fe_data->fe_txlib->bpw == 2) ? S_UINT16 : S_UINT32);
 
-		if ((desttype == S_INT64) && (sourcetype != S_INT64))
+		if (sourcetype == S_INT) {
+			sourcetype = targetintsize;
+		} else if (sourcetype == S_UINT) {
+			sourcetype = targetuintsize;
+		}
+
+		if (desttype == S_INT) {
+			desttype = targetintsize;
+		} else if (desttype == S_UINT) {
+			desttype = targetuintsize;
+		}
+
+		if ((desttype == S_INT64) && (sourcetype != S_INT64)) {
 			I32ToI64 (dhi, dlo, slo);
-		else {
+		} else if ((desttype == S_UINT64) && (sourcetype != S_UINT64)) {
+			I32ToI64 (dhi, dlo, slo);
+		} else {
 			*dlo = slo;
 			*dhi = shi;
 		}
-		if (checkbounds (sourcetype, desttype, *dhi, *dlo, locn) != 0)
+		if (checkbounds (sourcetype, desttype, *dhi, *dlo, locn) != 0) {
 			chkreport (CHK_CFOLD_OFLOW, locn);
+		}
 	}
 	/*}}}  */
 }
@@ -811,8 +856,12 @@ PRIVATE void foldmonadic (treenode * tptr, BIT32 * reshi, BIT32 * reslo, const i
 
 	*reshi = 0;		/* reslo will be initialised anyway */
 	foldconstexp (OpOf (tptr), &ophi, &oplo, err_msg, err_locn);
-	if (type == S_INT)
+	if (type == S_INT) {
 		type = (current_fe_data->fe_txlib->bpw == 2) ? S_INT16 : S_INT32;
+	} else if (type == S_UINT) {
+		type = (current_fe_data->fe_txlib->bpw == 2) ? S_UINT16 : S_UINT32;
+	}
+
 	switch (TagOf (tptr)) {
 		/*{{{  S_NEG */
 	case S_NEG:

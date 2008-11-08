@@ -496,6 +496,10 @@ PRIVATE treenode *rtypespecorelement (BOOL *const specflag, const int indent)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 		/*}}} */

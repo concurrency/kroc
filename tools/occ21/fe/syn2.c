@@ -1554,6 +1554,10 @@ PUBLIC treenode *rexp (void)
 				case S_INT16:
 				case S_INT32:
 				case S_INT64:
+				case S_UINT:
+				case S_UINT16:
+				case S_UINT32:
+				case S_UINT64:
 				case S_REAL32:
 				case S_REAL64:
 					op = newtypenode (S_NEW_ARRAY, locn, dimlist, newleafnode (symb, locn));
@@ -1574,6 +1578,10 @@ PUBLIC treenode *rexp (void)
 					case S_INT16:
 					case S_INT32:
 					case S_INT64:
+					case S_UINT:
+					case S_UINT16:
+					case S_UINT32:
+					case S_UINT64:
 					case S_REAL32:
 					case S_REAL64:
 						op = newtypenode (S_NEW_ARRAY, locn, dimlist, newtypenode (S_CHAN, locn, NULL, newleafnode (symb, locn)));
@@ -1662,6 +1670,10 @@ PUBLIC treenode *rexp (void)
 						case S_INT16:
 						case S_INT32:
 						case S_INT64:
+						case S_UINT:
+						case S_UINT16:
+						case S_UINT32:
+						case S_UINT64:
 						case S_REAL32:
 						case S_REAL64:
 							*basehook = newleafnode (symb, locn);
@@ -1730,6 +1742,10 @@ PUBLIC treenode *rexp (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 		{
@@ -2384,6 +2400,10 @@ fprintf (stderr, "rspecorexpr: it was a VALOF\n");
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 		{
@@ -2549,6 +2569,10 @@ fprintf (stderr, "rspecorexpr: it was a VALOF\n");
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_NAME:
@@ -2595,6 +2619,10 @@ fprintf (stderr, "rspecorexpr: it was a primative type or name, and rtypeetc() w
 						case S_INT16:
 						case S_INT32:
 						case S_INT64:
+						case S_UINT:
+						case S_UINT16:
+						case S_UINT32:
+						case S_UINT64:
 						case S_REAL32:
 						case S_REAL64:
 							CASE_CONFIG_TYPE
@@ -3106,6 +3134,10 @@ PRIVATE treenode *rpsub (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 		{
@@ -3278,6 +3310,10 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 		s = newleafnode (symb, locn);
 		nextsymb ();
 		if (symb == S_COLON2) {
@@ -3295,6 +3331,10 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_REAL32:
 			case S_REAL64:
 				t = newleafnode (symb, alocn);
@@ -3345,6 +3385,10 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 			s = newtypenode (S_MOBILE, locn, NULL, newleafnode (symb, locn));
@@ -3810,6 +3854,10 @@ PRIVATE treenode *rspecifier_constr (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_TIMER:
@@ -4216,6 +4264,10 @@ PUBLIC treenode *rinitialspec (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 		CASE_CONFIG_TYPE {
@@ -4308,6 +4360,10 @@ PUBLIC treenode *rresultspec (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	CASE_CONFIG_TYPE
@@ -4370,6 +4426,10 @@ PUBLIC treenode *rspecifier (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_TIMER:
@@ -4854,6 +4914,10 @@ printtreenl (stderr, 4, t);
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_PORT:
@@ -5614,6 +5678,18 @@ PRIVATE int param_type_string (treenode *typetree, char *rbuf, int *rlen, int rs
 	case S_INT64:
 		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "INT64");
 		break;
+	case S_UINT:
+		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "UINT");
+		break;
+	case S_UINT16:
+		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "UINT16");
+		break;
+	case S_UINT32:
+		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "UINT32");
+		break;
+	case S_UINT64:
+		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "UINT64");
+		break;
 	case S_BOOL:
 		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "BOOL");
 		break;
@@ -6360,6 +6436,10 @@ fprintf (stderr, "rspecification...\n");
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_REAL32:
 			case S_REAL64:
 			case S_CHAN:
@@ -6465,6 +6545,10 @@ fprintf (stderr, "rspecification...\n");
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 #ifndef MOBILES			/* don't allow records of channels and catch CHAN here */
@@ -7071,6 +7155,10 @@ fprintf (stderr, "rleadingspecs...\n");
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 			{

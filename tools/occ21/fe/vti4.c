@@ -110,6 +110,10 @@ PUBLIC BOOL isint (const int t)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 		return TRUE;
 	default:
 		return FALSE;
@@ -125,6 +129,10 @@ PUBLIC BOOL isintorbyte (const int t)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_BYTE:
 		return TRUE;
 	default:
@@ -161,6 +169,10 @@ PUBLIC BOOL isscalartype (const int t)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_CHAN:
@@ -292,6 +304,10 @@ PUBLIC BOOL istypetag (const int tag)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_TIMER:
@@ -325,11 +341,14 @@ PUBLIC int bytesinscalar (const int tag)
 	case S_BYTE:
 		return 1;
 	case S_INT16:
+	case S_UINT16:
 		return 2;
 	case S_INT32:
+	case S_UINT32:
 	case S_REAL32:
 		return 4;
 	case S_INT64:
+	case S_UINT64:
 	case S_REAL64:
 		return 8;
 #ifdef MOBILES
@@ -347,6 +366,7 @@ PUBLIC int bytesinscalar (const int tag)
 		return (2 << WSH);
 #endif
 	case S_INT:
+	case S_UINT:
 	case S_CHAN:
 		return current_fe_data->fe_txlib->bpw;
 		/*case S_PORT:   chkreport_i(CHK_UNKNOWN_TYPE, chklocn, t); return(-1); */
