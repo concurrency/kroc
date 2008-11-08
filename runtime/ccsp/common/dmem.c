@@ -106,10 +106,24 @@
 static unsigned int slab_smallslabs[NUM_SMALL_SLABS];
 static unsigned int slab_largeslabs[NUM_LARGE_SLABS];
 
+typedef struct TAG_scraplist {
+	struct TAG_scraplist *next;				/* next block or NULL */
+	int left;						/* number of bytes left in this block */
+} scraplist_t;
+
 typedef struct TAG_allocator {
 	unsigned int *pools[NUM_POOLS];				/* dynamic memory pools */
-	unsigned int *scrap_list;				/* scrap memory list */
+	scraplist_t *scrap_list;				/* scrap memory list */
+	sched_t *sched;						/* scheduler this belongs to (NULL if shared) */
 } allocator_t;
+
+#if defined(ALLOC_SBLOCK)
+static allocator_t shalloc = {
+	pools: {NULL, },
+	scrap_list: NULL,
+	sched: NULL
+};
+#endif
 
 /*}}}*/
 /*{{{  block allocator routines*/
@@ -147,10 +161,10 @@ static void slab_map_init (void) /*{{{*/
 	int i;
 
 	for (i=0; i<NUM_SMALL_SLABS; i++) {
-		slab_smallslabs = SLABTYPE_INVALID;
+		slab_smallslabs[i] = SLABTYPE_INVALID;
 	}
 	for (i=0; i<NUM_LARGE_SLABS; i++) {
-		slab_largeslabs = SLABTYPE_INVALID;
+		slab_largeslabs[i] = SLABTYPE_INVALID;
 	}
 }
 /*}}}*/
@@ -162,6 +176,16 @@ static inline unsigned int addr_to_slabid (const void *ptr) /*{{{*/
 	}
 	/* large slab */
 	return slab_largeslabs[(unsigned int)ptr >> LARGE_SLAB_SHIFT];
+}
+/*}}}*/
+static inline unsigned int *addr_to_slabidptr (const void *ptr) /*{{{*/
+{
+	if ((unsigned int)ptr < SMALL_SLAB_LBYTES) {
+		/* small slab */
+		return &(slab_smallslabs[(unsigned int)ptr >> SMALL_SLAB_SHIFT]);
+	}
+	/* large slab */
+	return &(slab_largeslabs[(unsigned int)ptr >> LARGE_SLAB_SHIFT]);
 }
 /*}}}*/
 static inline int addr_to_slabsizeshift (const void *ptr) /*{{{*/
@@ -176,6 +200,40 @@ static inline int addr_to_slabsizeshift (const void *ptr) /*{{{*/
 /*}}}*/
 
 
+static inline int slab_markregion (const void *addr, const int bytes, unsigned int type) /*{{{*/
+{
+	unsigned int *sidp = addr_to_slabidptr (addr);
+	int shft = addr_to_slabsizeshift (addr);
+
+	while ((*sidp & SLABTYPE_MASK) == SLABTYPE_SPLIT) {
+		/* split slab: divided into fixed number of chunks */
+		unsigned int *sarry = (unsigned int *)(*sidp & ~SLABTYPE_MASK);
+		int sidx;
+
+		shft -= SLAB_SPLIT_SHIFT;
+		sidx = ((unsigned int)addr >> shft) & SLAB_SPLIT_MASK;
+
+		sidp = &(sarry[sidx]);
+	}
+
+	/* shft gives the slab-size of the interesting one, sidp is the starting slab */
+}
+/*}}}*/
+
+static allocator_t *poolmem_newallocator (sched_t *sched) /*{{{*/
+{
+	allocator_t *a = (allocator_t *)malloc (sizeof (allocator_t));
+	int i;
+
+	a->sched = sched;
+	a->scrap_list = NULL;
+	for (i=0; i<NUM_POOLS; i++) {
+		a->pools[i] = NULL;
+	}
+
+	return a;
+}
+/*}}}*/
 static inline void *poolmem_alloc (allocator_t *alc, const int bytes) /*{{{*/
 {
 	int pool = size_to_pool (bytes);
@@ -193,6 +251,7 @@ static inline void *poolmem_alloc (allocator_t *alc, const int bytes) /*{{{*/
 			pool++;
 			ptr = alc->pools[pool];
 		} else {
+			BMESSAGE ("poolmem_alloc(): OOM! (%d) bytes, pool %d\n", bytes, pool);
 			/* no memory here, go and find some! */
 			/* FIXME: */
 			return NULL;
@@ -218,7 +277,7 @@ static inline void poolmem_release (allocator_t *alc, const void *ptr) /*{{{*/
 		shft -= SLAB_SPLIT_SHIFT;
 		sidx = ((unsigned int)ptr >> shft) & SLAB_SPLIT_MASK;
 
-		sid = sarray[sidx];
+		sid = sarry[sidx];
 	}
 
 	switch (sid & SLABTYPE_MASK) {
@@ -227,7 +286,7 @@ static inline void poolmem_release (allocator_t *alc, const void *ptr) /*{{{*/
 		return;
 	case SLABTYPE_RESERVED:
 		/* revert to underlying free() */
-		free (ptr);
+		free ((void *)ptr);
 		return;
 	case SLABTYPE_POOLS:
 		{
@@ -271,7 +330,17 @@ static inline void poolmem_release (allocator_t *alc, const void *ptr) /*{{{*/
 /*{{{  void *dmem_new_allocator (void)*/
 void *dmem_new_allocator (void)
 {
+#if defined(ALLOC_MALLOC)
 	return NULL;
+#elif defined(ALLOC_BLOCK)
+	sched_t *sched = local_scheduler ();
+	allocator_t *a = poolmem_newallocator (sched);
+
+	BMESSAGE ("dmem_new_allocator(): allocated at %p for scheduler %p\n", a, sched);
+	return (void *)a;
+#elif defined(ALLOC_SBLOCK)
+	return (void *)&shalloc;
+#endif
 }
 /*}}}*/
 /*{{{  void *dmem_thread_alloc (void *allocator, word size)*/
@@ -279,10 +348,25 @@ void *dmem_thread_alloc (void *allocator, word size)
 {
 #if defined(ALLOC_MALLOC)
 	return malloc (size);
-#elif defined(ALLOC_BLOCK) || defined(ALLOC_SBLOCK)
+#elif defined(ALLOC_BLOCK)
 	allocator_t *a = (allocator_t *)allocator;
 
-	return NULL;
+BMESSAGE ("dmem_thread_alloc(): here (BLOCK)! (%d bytes, allocator at %p)\n", size, a);
+	if (!a) {
+		/* means we don't have an allocator setup yet */
+		return malloc (size);
+	} else {
+		return poolmem_alloc (a, size);
+	}
+#elif defined(ALLOC_SBLOCK)
+	allocator_t *a = (allocator_t *)allocator;
+
+BMESSAGE ("dmem_thread_alloc(): here (SBLOCK)! (%d bytes, allocator at %p)\n", size, a);
+	if (!a) {
+		return poolmem_alloc (&shalloc, size);
+	} else {
+		return poolmem_alloc (a, size);
+	}
 #endif
 }
 /*}}}*/
@@ -319,6 +403,7 @@ void *dmem_thread_realloc (void *allocator, void *ptr, word size)
 void *dmem_alloc (word size)
 {
 	sched_t *sched = local_scheduler ();
+
 	if (sched != NULL) {
 		return dmem_thread_alloc (sched->allocator, size);
 	} else {

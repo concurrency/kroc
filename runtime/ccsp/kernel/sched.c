@@ -1968,6 +1968,9 @@ K_CALL_DEFINE_1_0 (Y_rtthreadinit)
 	word i, tried;
 	
 	ENTRY_TRACE (Y_rtthreadinit, "(%08x)", att_val (&enabled_threads));
+#if 0
+BMESSAGE0 ("Y_rtthreadinit()\n");
+#endif
 
 	sched			= (sched_t *) stack;
 	allocator 		= dmem_new_allocator ();
