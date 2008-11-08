@@ -376,9 +376,10 @@ PROC vidgrab (CHAN BYTE kyb?, scr!, err!)
       video.server (vsvr, DEVICE.NAME)
 
       SEQ
-        vcli[req] ! set.input; 0
+        vcli[req] ! get.current.input
         vcli[resp] ? CASE
-          ok
+          INT n:
+          input.number; n
             vidgrab.main (vcli, kyb?, scr!)
           MOBILE []BYTE str:
           error; str

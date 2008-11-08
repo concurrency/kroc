@@ -37,29 +37,49 @@
 
 #include "video-v4l.h"
 
+#define MAX_NBUFS 16
+
 typedef struct opi_video_device {
 	int fd;
 	int api;
 	int caps;
 
 	int input;
-	
 	int use_mmap;
-	int mmap_addr;
-	int mmap_size;
+	int oneshot;
+	int n_buffers;
+	
+	struct v4l2_format src;
+	struct v4l2_format dst;
 
 	struct v4lconvert_data *convert;
+	
+	struct {
+		int	idx;
+		void 	*addr;
+		int 	size;
+	} buffers[MAX_NBUFS];
 } opi_video_device_t;
 
 static inline opi_video_device_t *video_initstruct (void) /*{{{*/
 {
 	opi_video_device_t *dev = malloc (sizeof (opi_video_device_t));
+	int i;
 
-	dev->fd = -1;
-	dev->api = 0;
-	dev->caps = 0;
+	dev->fd		= -1;
+	dev->api	= 0;
+	dev->caps 	= 0;
+	dev->input	= -1;
+	dev->use_mmap	= -1;
+	dev->oneshot	= 0;
+	dev->n_buffers	= 0;
+	dev->convert	= NULL;
 
-	dev->input = -1;
+	for (i = 0; i < MAX_NBUFS; ++i) {
+		dev->buffers[i].idx = -1;
+		dev->buffers[i].addr = NULL;
+		dev->buffers[i].size = 0;
+	}
 
 	return dev;
 }
@@ -573,11 +593,9 @@ static inline int video_setpicture (opi_video_device_t *dev, opi_video_picture_t
 	return 1;
 }
 /*}}}*/
-static inline int video_initio (opi_video_device_t *dev, opi_video_frameinfo_t *finfo) /*{{{*/
+static inline int video_initio (opi_video_device_t *dev, int oneshot, opi_video_frameinfo_t *finfo) /*{{{*/
 {
-	dev->use_mmap = -1;
-	dev->mmap_addr = 0;
-	dev->mmap_size = 0;
+	dev->oneshot = oneshot;
 	dev->convert = v4lconvert_create (dev->fd);
 
 	if (dev->fd < 0) {
@@ -585,6 +603,17 @@ static inline int video_initio (opi_video_device_t *dev, opi_video_frameinfo_t *
 	} else if (dev->api == 1) {
 		struct video_mbuf vmbuf;
 		int r;
+		
+		memset (&(dev->src), 0, sizeof (dev->src));
+		dev->src.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		dev->src.fmt.pix.width = finfo->width;
+		dev->src.fmt.pix.height = finfo->height;
+		dev->src.fmt.pix.pixelformat = convert_pal_opi_to_v4l2 (finfo->format);
+		dev->src.fmt.pix.colorspace = V4L2_COLORSPACE_SMPTE170M;
+		
+		memcpy (&(dev->dst), &(dev->src), sizeof (dev->dst));
+		dev->dst.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+		dev->dst.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB;
 
 		vmbuf.size = 0;
 		vmbuf.frames = 0;
@@ -592,33 +621,42 @@ static inline int video_initio (opi_video_device_t *dev, opi_video_frameinfo_t *
 		while (((r = ioctl (dev->fd, VIDIOCGMBUF, &vmbuf)) == -1) && (errno == EINTR));		/* retry */
 		if (r >= 0) {
 			/* got memory-map buffer info */
-			dev->use_mmap = 1;
-			dev->mmap_size = vmbuf.size;
-			dev->mmap_addr = (int) mmap (NULL, dev->mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, dev->fd, 0);
-			
-			if (dev->mmap_addr == -1) {
+			dev->buffers[0].size = vmbuf.size;
+			dev->buffers[0].addr = mmap (NULL, vmbuf.size, 
+								PROT_READ | PROT_WRITE, 
+								MAP_SHARED, 
+								dev->fd, 0);
+			if (dev->buffers[0].addr == MAP_FAILED) {
 				/* failed to mmap, default to non-mmap */
-				dev->mmap_size = 0;
-				dev->mmap_addr = 0;
 				dev->use_mmap = 0;
 			} else {
-				return 1;
+				dev->use_mmap = 1;
+				dev->n_buffers = 1;
 			}
 		} else {
 			dev->use_mmap = 0;
-			dev->mmap_addr = 0;
-			dev->mmap_size = 0;
-			return 1;
 		}
+		return 1;
 	} else if (dev->api == 2) {
+		int r;
+
+		memset (&(dev->src), 0, sizeof (dev->src));
+		dev->src.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		while (((r = ioctl (dev->fd, VIDIOC_G_FMT, &(dev->src))) == -1) && (errno == EINTR));		/* retry */
+		
+		memcpy (&(dev->dst), &(dev->src), sizeof (dev->dst));
+		dev->dst.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+		dev->dst.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB;
+		
 		if (dev->caps & V4L2_CAP_STREAMING) {
 			struct v4l2_requestbuffers req;
 			struct v4l2_buffer buffer;
+			int i;
 
 			memset (&req, 0, sizeof (req));
 			req.type	= V4L2_BUF_TYPE_VIDEO_CAPTURE;
 			req.memory	= V4L2_MEMORY_MMAP;
-			req.count 	= 1;
+			req.count 	= oneshot ? 1 : MAX_NBUFS;
 
 			if (ioctl (dev->fd, VIDIOC_REQBUFS, &req) < 0)
 				return 0;
@@ -626,35 +664,43 @@ static inline int video_initio (opi_video_device_t *dev, opi_video_frameinfo_t *
 			if (req.count < 1)
 				return 0;
 
-			memset (&buffer, 0, sizeof (buffer));
-			buffer.type	= req.type;
-			buffer.memory	= V4L2_MEMORY_MMAP;
-			buffer.index	= 0;
+			dev->n_buffers = 0;
+			for (i = 0; i < req.count; ++i) {
+				void *addr;
 
-			if (ioctl (dev->fd, VIDIOC_QUERYBUF, &buffer) < 0)
+				memset (&buffer, 0, sizeof (buffer));
+				buffer.type	= req.type;
+				buffer.memory	= V4L2_MEMORY_MMAP;
+				buffer.index	= i;
+
+				if (ioctl (dev->fd, VIDIOC_QUERYBUF, &buffer) < 0)
+					continue;
+
+				addr = mmap (NULL, buffer.length,
+							PROT_READ | PROT_WRITE,
+							MAP_SHARED,
+							dev->fd, buffer.m.offset);
+
+				if (addr == MAP_FAILED) {
+					continue;
+				} else {
+					int idx = dev->n_buffers++;
+					dev->buffers[idx].addr = addr;
+					dev->buffers[idx].size = buffer.length;
+					if (!oneshot) {
+						while (((r = ioctl (dev->fd, VIDIOC_QBUF, &buffer)) == -1) && (errno == EINTR));	/* retry */
+					}
+				}
+			}
+
+			if (dev->n_buffers <= 0)
 				return 0;
 
-			dev->mmap_size = buffer.length;
-			dev->mmap_addr = (int) mmap (NULL, buffer.length,
-						PROT_READ | PROT_WRITE,
-						MAP_SHARED,
-						dev->fd, buffer.m.offset);
-
-			if (dev->mmap_addr == -1) {
-				/* failed to mmap, default to non-mmap */
-				dev->mmap_size = 0;
-				dev->mmap_addr = 0;
-				dev->use_mmap = 0;
-			} else {
-				dev->use_mmap = 1;
-				return 1;
-			}
+			dev->use_mmap = 1;
 		} else {
 			dev->use_mmap = 0;
-			dev->mmap_addr = 0;
-			dev->mmap_size = 0;
-			return 1;
 		}
+		return 1;
 	}
 	return 0;
 }
@@ -662,17 +708,27 @@ static inline int video_initio (opi_video_device_t *dev, opi_video_frameinfo_t *
 static inline void video_shutdownio (opi_video_device_t *dev) /*{{{*/
 {
 	if (dev->convert != NULL)
-		v4lconvert_destroy ((struct v4lconvert_data *) dev->convert);
+		v4lconvert_destroy (dev->convert);
 
 	if (dev->fd < 0) {
 		/* nothing */
 	} else if (dev->use_mmap < 0) {
 		/* nothing */
 	} else if (dev->use_mmap) {
-		munmap ((void *)dev->mmap_addr, dev->mmap_size);
-		dev->mmap_addr = 0;
-		dev->mmap_size = 0;
+		int i;
+		if (dev->api == 2 && !dev->oneshot) {
+			int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			int r;
+			while (((r = ioctl (dev->fd, VIDIOC_STREAMOFF, &type)) == -1) && (errno == EINTR));	/* retry */
+		}
+		for (i = 0; i < dev->n_buffers; ++i) {
+			munmap (dev->buffers[i].addr, dev->buffers[i].size);
+			dev->buffers[i].idx = -1;
+			dev->buffers[i].addr = NULL;
+			dev->buffers[i].size = 0;
+		}
 		dev->use_mmap = -1;
+		dev->n_buffers = 0;
 	} else {
 		/* FIXME! */
 	}
@@ -681,31 +737,14 @@ static inline void video_shutdownio (opi_video_device_t *dev) /*{{{*/
 
 static void rgb24_rgb32 (int width, int height, unsigned char *buffer)
 {
-	unsigned int src_stride = width * 3;
-	unsigned char *src = buffer + (src_stride * (height - 1));
-	unsigned int *dst = ((unsigned int *) buffer) + (width * (height - 1));
+	unsigned char *src = buffer + (width * height * 3);
+	unsigned int *dst = ((unsigned int *) buffer) + (width * height);
 	int i;
 
 	while (src > buffer) {
-		for (i = 0; i < width; ++i) {
-			/* FIXME: endian? */
-			unsigned int pixel = (src[0] << 16) | (src[1] << 8) | (src[2] << 0);
-			(*dst) = pixel;
-			src += 3;
-			dst += 1;
-		}
-		src -= src_stride * 2;
-		dst -= width * 2;
-	}
-
-	src += src_stride - 3;
-	dst += width - 1;
-
-	for (i = 0; i < width; ++i) {
-		unsigned int pixel = src[0] | (src[1] << 8) | (src[2] << 16);
-		(*dst) = pixel;
 		src -= 3;
 		dst -= 1;
+		(*dst) = (src[0] << 16) | (src[1] << 8) | (src[2] << 0);
 	}
 }
 
@@ -729,31 +768,17 @@ static inline int video_grabframe (opi_video_device_t *dev, int raw, opi_video_f
 				while (((r = ioctl (dev->fd, VIDIOCSYNC, &bnum)) == -1) && (errno == EINTR));		/* retry */
 				if (r >= 0) {
 					if (raw) {
-						memcpy (buffer, (void *)dev->mmap_addr, bufsize);
+						memcpy (buffer, dev->buffers[0].addr, bufsize);
 					} else {
-						struct v4l2_format src, dst;
-
-						memset (&src, 0, sizeof (src));
-						src.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-						src.fmt.pix.width = finfo->width;
-						src.fmt.pix.height = finfo->height;
-						src.fmt.pix.pixelformat = convert_pal_opi_to_v4l2 (finfo->format);
-						src.fmt.pix.sizeimage = dev->mmap_size;
-						src.fmt.pix.colorspace = V4L2_COLORSPACE_SMPTE170M;
-						memcpy (&dst, &src, sizeof (dst));
-						dst.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
-						dst.fmt.pix.sizeimage = bufsize;
-						dst.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB;
-
-						r = v4lconvert_convert (
+						v4lconvert_convert (
 							(struct v4lconvert_data *) dev->convert,
-							&src, &dst,
-							(unsigned char *) dev->mmap_addr, dev->mmap_size, 
+							&(dev->src), &(dev->dst),
+							(unsigned char *) dev->buffers[0].addr, dev->buffers[0].size, 
 							(unsigned char *) buffer, bufsize);
 						rgb24_rgb32 (finfo->width, finfo->height, (unsigned char *) buffer);
 					}
+					return 1;
 				}
-				return (r >= 0) ? 1 : 0;
 			}
 		} else {
 			/* FIXME! */
@@ -767,41 +792,42 @@ static inline int video_grabframe (opi_video_device_t *dev, int raw, opi_video_f
 			memset (&buf, 0, sizeof (buf));
 			buf.type	= V4L2_BUF_TYPE_VIDEO_CAPTURE;
 			buf.memory	= V4L2_MEMORY_MMAP;
-			buf.index	= 0;
 			
-			while (((r = ioctl (dev->fd, VIDIOC_QBUF, &buf)) == -1) && (errno == EINTR));	/* retry */
-			if (r < 0)
-				return 0;
-			while (((r = ioctl (dev->fd, VIDIOC_STREAMON, &(buf.type))) == -1) && (errno == EINTR));	/* retry */
-			if (r < 0)
-				return 0;
+			if (dev->oneshot) {
+				buf.index = 0;
+
+				while (((r = ioctl (dev->fd, VIDIOC_QBUF, &buf)) == -1) && (errno == EINTR));	/* retry */
+				if (r < 0)
+					return 0;
+				while (((r = ioctl (dev->fd, VIDIOC_STREAMON, &(buf.type))) == -1) && (errno == EINTR));	/* retry */
+				if (r < 0)
+					return 0;
+			}
+
 			while (((r = ioctl (dev->fd, VIDIOC_DQBUF, &buf)) == -1) && (errno == EINTR));	/* retry */
 			if (r >= 0) {
+				int idx = buf.index;
+
 				if (raw) {
-					memcpy (buffer, (void *)dev->mmap_addr, bufsize);
+					memcpy (buffer, dev->buffers[idx].addr, bufsize);
 				} else {
-					struct v4l2_format src, dst;
-
-					memset (&src, 0, sizeof (src));
-					src.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-					while (((r = ioctl (dev->fd, VIDIOC_G_FMT, &src)) == -1) && (errno == EINTR));		/* retry */
-					
-					memcpy (&dst, &src, sizeof (dst));
-					dst.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
-					dst.fmt.pix.sizeimage = bufsize;
-					dst.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB;
-
-					r = v4lconvert_convert (
+					v4lconvert_convert (
 						(struct v4lconvert_data *) dev->convert,
-						&src, &dst,
-						(unsigned char *) dev->mmap_addr, dev->mmap_size, 
+						&(dev->src), &(dev->dst),
+						(unsigned char *) dev->buffers[idx].addr, dev->buffers[idx].size, 
 						(unsigned char *) buffer, bufsize);
 					rgb24_rgb32 (finfo->width, finfo->height, (unsigned char *) buffer);
 				}
-				result = (r >= 0) ? 1 : 0;
+
+				if (!dev->oneshot)
+					while (((r = ioctl (dev->fd, VIDIOC_QBUF, &buf)) == -1) && (errno == EINTR));  /* retry */
+				
+				result = 1;
 			}
 			
-			while (((r = ioctl (dev->fd, VIDIOC_STREAMOFF, &(buf.type))) == -1) && (errno == EINTR));	/* retry */
+			if (dev->oneshot) {
+				while (((r = ioctl (dev->fd, VIDIOC_STREAMOFF, &(buf.type))) == -1) && (errno == EINTR));	/* retry */
+			}
 
 			return result;
 		} else {
@@ -853,8 +879,8 @@ void _video_getpicture (int *w)			{ video_getpicture ((opi_video_device_t *)(w[0
 /*{{{  PROC ..video.setpicture (VAL VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok)*/
 void _video_setpicture (int *w)			{ *((int *)w[2]) = video_setpicture ((opi_video_device_t *)(w[0]), (opi_video_picture_t *)(w[1])); }
 /*}}}*/
-/*{{{  PROC ..video.initio (VAL VIDEO.DEVICE vdev, RESULT VIDEO.FRAMEINFO finfo, RESULT BOOL ok)*/
-void _video_initio (int *w)			{ *((int *)w[2]) = video_initio ((opi_video_device_t *)(w[0]), (opi_video_frameinfo_t *)(w[1])); }
+/*{{{  PROC ..video.initio (VAL VIDEO.DEVICE vdev, VAL BOOL oneshot, RESULT VIDEO.FRAMEINFO finfo, RESULT BOOL ok)*/
+void _video_initio (int *w)			{ *((int *)w[3]) = video_initio ((opi_video_device_t *)(w[0]), (int)(w[1]), (opi_video_frameinfo_t *)(w[2])); }
 /*}}}*/
 /*{{{  PROC ..video.shutdownio (VAL VIDEO.DEVICE vdev)*/
 void _video_shutdownio (int *w)			{ video_shutdownio ((opi_video_device_t *)(w[0])); }

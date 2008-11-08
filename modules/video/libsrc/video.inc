@@ -135,6 +135,8 @@ PROTOCOL P.VIDEO.REQ
     get.frameinfo                                 -- -> frameinfo [] error
     set.frameinfo; VIDEO.FRAMEINFO                -- -> frameinfo [] error
     grab.frame; BOOL                              -- -> raster [] frame [] error
+    capture; BOOL                                 -- -> (raster [] frame)* [] error
+    stop                                          -- -> ok [] error
 :
 --}}}
 --{{{  P.VIDEO.RESP

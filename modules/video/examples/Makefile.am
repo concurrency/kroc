@@ -4,9 +4,11 @@ AUTOMAKE_OPTIONS = foreign no-dependencies
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
+	fastvid.occ \
 	vidgrab.occ
 
 examples = \
+	fastvid \
 	vidgrab
 
 all-local: $(examples)

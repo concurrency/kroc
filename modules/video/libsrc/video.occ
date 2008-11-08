@@ -51,7 +51,7 @@ DATA TYPE VIDEO.DEVICE IS INT:
 #PRAGMA EXTERNAL "PROC C.video.getpicture (VAL VIDEO.DEVICE vdev, RESULT VIDEO.PICTURE picture) = 0"
 #PRAGMA EXTERNAL "PROC C.video.setpicture (VAL VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok) = 0"
 
-#PRAGMA EXTERNAL "PROC C.video.initio (VAL VIDEO.DEVICE vdev, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.initio (VAL VIDEO.DEVICE vdev, VAL BOOL oneshot, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok) = 0"
 #PRAGMA EXTERNAL "PROC C.video.shutdownio (VAL VIDEO.DEVICE vdev) = 0"
 
 #PRAGMA EXTERNAL "PROC B.video.grabframe (VAL VIDEO.DEVICE vdev, VAL BOOL raw, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok) = 3"
@@ -162,9 +162,9 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
   --{{{  PROC video.initio (...)
   --* Initialises video I/O.
   -- @private
-  PROC video.initio (VAL VIDEO.DEVICE dev, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok)
+  PROC video.initio (VAL VIDEO.DEVICE dev, VAL BOOL oneshot, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok)
     SEQ
-      C.video.initio (dev, frameinfo, ok)
+      C.video.initio (dev, oneshot, frameinfo, ok)
   :
   --}}}
   --{{{  PROC video.shutdownio (...)
@@ -206,6 +206,51 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
         finfo[bytes] := 0
   :
   --}}}
+  --{{{  PROC video.capture (...)
+  --* Streams video frames.
+  -- @private
+  PROC video.capture (VAL VIDEO.DEVICE vdev, VAL BOOL raw, RESULT VIDEO.FRAMEINFO finfo, CHAN BOOL stop?, CHAN P.VIDEO.RESP out!)
+    INITIAL BOOL running IS TRUE:
+    INITIAL BOOL error IS FALSE:
+    WHILE running
+      SEQ
+        IF
+          raw
+            MOBILE []BYTE frame:
+            SEQ
+              frame := MOBILE [finfo[bytes]]BYTE
+              video.grabframe (vdev, raw, finfo, frame, running)
+              IF
+                running
+                  out ! frame; frame
+                TRUE
+                  SEQ
+                    out ! error; "frame capture failed"
+                    error := TRUE
+          TRUE
+            RASTER r:
+            SEQ
+              r := MOBILE [finfo[height]][finfo[width]]INT
+              []BYTE frame RETYPES r:
+              video.grabframe (vdev, raw, finfo, frame, running)
+              IF
+                running
+                  out ! raster; r
+                TRUE
+                  SEQ
+                    out ! error; "frame capture failed"
+                    error := TRUE
+        IF
+          error
+            stop ? running
+          TRUE
+            PRI ALT
+              stop ? running
+                out ! ok
+              TRUE & SKIP
+                SKIP
+  :
+  --}}}
 
   MOBILE []BYTE error:
   MOBILE []VIDEO.INPUT inputs:
@@ -245,7 +290,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
           #PRAGMA DEFINED finfo
           calc.frame.bytes (finfo)
 
-          INITIAL BOOL streaming IS FALSE:
+          INITIAL BOOL io.ready IS FALSE:
           INITIAL BOOL running IS TRUE:
           WHILE running
             PRI ALT
@@ -299,7 +344,7 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                 set.frameinfo; finfo
                   SEQ
                     IF
-                      streaming
+                      io.ready
                         video.shutdownio (vdev)
                       TRUE
                         SKIP
@@ -315,12 +360,12 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                 grab.frame; raw
                   SEQ
                     IF
-                      streaming
+                      io.ready
                         SKIP
                       TRUE
-                        video.initio (vdev, finfo, streaming)
+                        video.initio (vdev, TRUE, finfo, io.ready)
                     IF
-                      streaming
+                      io.ready
                         SEQ
                           IF
                             raw
@@ -351,12 +396,37 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                               vsvr[resp] ! error; "failed to capture frame"
                       TRUE
                         vsvr[resp] ! error; "failed to start capture"
+                BOOL raw:
+                capture; raw
+                  SEQ
+                    IF
+                      io.ready
+                        video.shutdownio (vdev)
+                      TRUE
+                        SKIP
+                    
+                    video.initio (vdev, FALSE, finfo, io.ready)
+                    IF
+                      io.ready
+                        SEQ
+                          CHAN BOOL stop:
+                          PAR
+                            video.capture (vdev, raw, finfo, stop?, vsvr[resp]!)
+                            SEQ
+                              vsvr[req] ? CASE stop
+                              stop ! FALSE
+                          video.shutdownio (vdev)
+                          io.ready := FALSE
+                      TRUE
+                        vsvr[resp] ! error; "failed to start capture"
+                stop
+                  vsvr[resp] ! error; "not running"
               CT.VIDEO! cli:
               vsvr[return] ? cli
                 SEQ
                   running := FALSE
                   IF
-                    streaming
+                    io.ready
                       video.shutdownio (vdev)
                     TRUE
                       SKIP
@@ -383,6 +453,11 @@ PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
                 vsvr[resp] ! error; CLONE error
               BOOL raw:
               grab.frame; raw
+                vsvr[resp] ! error; CLONE error
+              BOOL raw:
+              capture; raw
+                vsvr[resp] ! error; CLONE error
+              stop
                 vsvr[resp] ! error; CLONE error
             CT.VIDEO! cli:
             vsvr[return] ? cli
