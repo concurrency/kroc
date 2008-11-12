@@ -16,10 +16,11 @@ comstrings = dict(CCCOMSTR              = 'Compiling $TARGET',
                   LINKCOMSTR            = 'Linking $TARGET',
 		  ARCOMSTR              = 'Creating archive $TARGET',
 		  RANLIBCOMSTR          = 'Indexing archive $TARGET',
-		  # FIXME: Why do PLT tools always have to be different?
 		  MZCCOMSTR             = 'Compiling $TARGET',
 		  OCCBUILDCOMSTR        = 'Compiling $TARGET',
-		  OCCBUILDLIBRARYCOMSTR = 'Linking $TARGET')
+		  OCCBUILDLIBRARYCOMSTR = 'Linking $TARGET',
+		  OCCBUILDPROGRAMCOMSTR = 'Compiling $TARGET',
+		  TBCHEADERCOMSTR       = 'Compiling bytecode header $TARGET')
 if ARGUMENTS.get('VERBOSE') != '1':
     for k in comstrings:
 	env[k] = comstrings[k]
@@ -61,6 +62,8 @@ env['OCCBUILD_TOOLCHAIN'] = 'tvm'
 
 SConscript('modules/inmoslibs/libsrc/SConscript')
 SConscript('modules/course/SConscript')
+
+SConscript('tvm/posix/SConscript')
 
 # A bit tedious, and not needed right now.
 # SConscript('tools/occamdoc/SConscript')

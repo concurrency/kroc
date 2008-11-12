@@ -94,7 +94,8 @@ local.Command(
 ##########################################################################
 # Definition of the libtvm library
 ##########################################################################
-local.Library("tvm", tvm_sources, CPPPATH='.')
+tvm_lib = local.Library("tvm", tvm_sources, CPPPATH='.')
 
 env['TVM_CONFIG_H'] = tvm_config_h
 env['ENV']['SKROC_TVM_CONFIG_H'] = tvm_config_h.path
+env['TVM_LIB'] = tvm_lib

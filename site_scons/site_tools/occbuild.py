@@ -94,6 +94,11 @@ def generate(env, **kw):
                       # want to turn my .occ extensions when I have a mixed
                       # .occ, .tce source list into .tce using the builder
                       )#src_builder = [tce_bld])
+    tbc_headr_bld = Builder(action = Action('$TBCHEADERCOM', '$TBCHEADERCOMSTR'),
+                      emitter = [depend_emitter],
+                      suffix='.h',
+                      src_suffix = ['.occ', '.tce'],
+                      src_bulider = [tce_bld])
     # Add the new Builder to the list of builders
     # Use of $( $)  causes bracketed flags not trigger rebuild when changed
     env['BUILDERS']['OccamObject']  = tce_bld
@@ -102,9 +107,13 @@ def generate(env, **kw):
     env['OCCBUILDLIBRARYCOM']       = '$OCCBUILD $_OCCBUILD_TOOLCHAIN $_OCCBUILD_SEARCH_DIRS $OCCBUILDFLAGS --library $TARGET $SOURCES'
     env['BUILDERS']['OccamProgram'] = prog_bld
     env['OCCBUILDPROGRAMCOM']       = '$OCCBUILD $_OCCBUILD_TOOLCHAIN $_OCCBUILD_SEARCH_DIRS $OCCBUILDFLAGS --program $SOURCES'
+    env['BUILDERS']['OccamBytecodeHeader'] = tbc_headr_bld
+    env['TBCHEADERCOM']             = '$SKROC $_SKROC_SEARCH_DIRS $SKROCFLAGS --c -f $TARGET $SOURCES'
     env['OCCBUILD']                 = occbuild_path
     env['_OCCBUILD_SEARCH_DIRS']    = '$( ${_concat(OCCBUILD_SEARCH_PFX, INCPATH, "", __env__, RDirs, TARGET, SOURCE)} $)'
+    env['_SKROC_SEARCH_DIRS']       = '$( ${_concat(SKROC_SEARCH_PFX, INCPATH, "", __env__, RDirs, TARGET, SOURCE)} $)'
     env['OCCBUILD_SEARCH_PFX']      = '--search '
+    env['SKROC_SEARCH_PFX']         = '-L '
     env['OCCBUILD_TOOLCHAIN']       = None
     env['_OCCBUILD_TOOLCHAIN']      = '${(OCCBUILD_TOOLCHAIN and "--toolchain $OCCBUILD_TOOLCHAIN" or "")}'
     def OccLibDepend(self, node, lib_name):
