@@ -32,7 +32,7 @@ def mk_shared_screen(lib_name):
             INCPATH='.',
             OCCBUILDFLAGS='--need course --include shared_screen.inc')
 
-mk_shared_screen('shared_screen.lib')
+sharedscreen_lib = mk_shared_screen('shared_screen.lib')
 # Build ss.lib too for backwards compatibility.
 mk_shared_screen('ss.lib')
 
@@ -44,4 +44,7 @@ local.Depends('string.occ', 'utils.tce')
 
 env['OCCLIBS']['course'] = dict(
         dep=course_lib,
+        inc=Dir('.'))
+env['OCCLIBS']['shared_screen'] = dict(
+        dep=sharedscreen_lib,
         inc=Dir('.'))
