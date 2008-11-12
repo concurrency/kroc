@@ -752,6 +752,7 @@ void ccsp_new_thread (void)
 /* FIXME: needs relevant support for MP RMoX */
 void ccsp_new_thread (void)
 {
+	ccsp_kernel_entry (NotProcess_p, NotProcess_p);
 	return;
 }
 #else /* !ENABLE_MP */
