@@ -41,32 +41,51 @@ def pideps_scan(node, env, path):
 
 # This emitter will be used later by a Builder, and set an explicit dependency
 # on the argument passed in as 'dependency', most probably occbuild
-def occbuild_emitter(target, source, env, dependency):
+def occbuild_depend_emitter(target, source, env, dependency):
     env.Depends(target, dependency)
+    return (target, source)
+
+def occbuild_program_emitter(target, source, env):
+    # FIXME: For kroc compile no .tbc file will be generated
+    target_name     = str(target[0])
+    if target[0].suffix:
+        tbc         = target_name.replace(target[0].suffix, '.tbc')
+    else:
+        tbc         = target_name + '.tbc'
+    target          = target + [tbc]
+    return (target, source)
+
+def occbuild_library_emitter(target, source, env):
+    # FIXME: for kroc compile, no precomp will be generated
+    target_name = str(target[0])
+    precomp     = target_name.replace(target[0].suffix, '.precomp')
+    module      = target_name.replace(target[0].suffix, '.module')
+    target      = target + [precomp, module]
     return (target, source)
 
 def generate(env, **kw):
     occbuild = kw.get('occbuild', None)
     if occbuild:
-        occbuild_path = occbuild[0].abspath
-        emitter       = lambda target, source, env: occbuild_emitter(target, source, env, occbuild)
+        occbuild_path  = occbuild[0].abspath
+        depend_emitter = lambda target, source, env: occbuild_depend_emitter(target, source, env, occbuild)
     else:
-        occbuild_path = 'occbuild'
-        emitter       = None
+        occbuild_path  = 'occbuild'
+        depend_emitter = None
     pideps_scanner = Scanner(function = pideps_scan, skeys = ['.occ'], path_function = FindPathDirs('INCPATH'))
     tce_bld = Builder(action = Action('$OCCBUILDCOM', '$OCCBUILDCOMSTR'),
-                      emitter = emitter,
+                      emitter = depend_emitter,
                       suffix = '.tce',
                       src_suffix = '.occ')
                       # FIXME: The source scanner does not work well enough yet :/
                       #source_scanner = pideps_scanner)
     lib_bld = Builder(action = Action('$OCCBUILDLIBRARYCOM', '$OCCBUILDLIBRARYCOMSTR'),
-                      emitter = emitter,
+                      emitter = [depend_emitter, occbuild_library_emitter],
                       suffix = '.lib',
                       src_suffix = '.tce',
                       src_builder = [tce_bld])
     prog_bld = Builder(action = Action('$OCCBUILDPROGRAMCOM', '$OCCBUILDPROGRAMCOMSTR'),
-                      emitter = emitter,
+                      emitter = [depend_emitter, occbuild_program_emitter],
+                      suffix='$PROGSUFFIX',
                       src_suffix = ['.occ', '.tce'],
                       src_builder = [tce_bld])
     # Add the new Builder to the list of builders
