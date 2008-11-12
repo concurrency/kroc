@@ -2,6 +2,16 @@ import os
 Import('env')
 local = env.Clone()
 
+# TODO:
+#  * A lot of the sources listed here are only relevant when compiling on 16
+#    bit targets, and produce the following warning when compiled on 32 bit
+#    tarets: Warning-occ21- no PROC or FUNCTION declared in SC module
+#    as there is actually no code defined (due to #IFDEF) when compiling for 32
+#    bit. This is slightly unsightly and takes up useless compile time. Do file
+#    lists conditional on bitcount of platform.
+
+
+
 # We have to build some objects before the bulk of the library, because the
 # occam compiler expects to always be able to see the standard library.
 forall_early_srcs = Split('''
@@ -166,49 +176,26 @@ forall_early = local.OccamLibrary(
     forall_early_objs, 
     INCPATH=['.', '../maths'], 
     OCCBUILDFLAGS='--no-std-libs')
-p = os.path.split(forall_early[0].path)[0]
-local.AddPostAction(forall_early, 
-                    Copy(os.path.join(p, 'forall.lib'), forall_early[0]))
-local.SideEffect(
-     ['forall.lib', 'forall.module', 'forall.precomp',
-     'forall_early.module', 'forall_early.precomp'], forall_early)
 
 
 
-# Set up dependencies for all the forall_late sources
+# Set up dependencies for all the forall_late sources on the forall_early
+# library. 
 for f in forall_late_srcs:
     local.Depends(os.path.splitext(f)[0] + '.tce', forall_early)
 
-forall_late  = local.OccamLibrary(
-    'forall_late.lib',
+
+
+forall = forall_late  = local.OccamLibrary(
+    'forall.lib',
     forall_early_objs + forall_late_srcs, 
     INCPATH=['.', '../maths'], 
-    OCCBUILDFLAGS='--no-std-libs')
-local.SideEffect(
-     ['forall.lib', 'forall.module', 'forall.precomp',
-      'forall_late.module',  'forall_late.precomp'], forall_late)
-p = os.path.split(forall_late[0].path)[0]
-local.AddPostAction(
-    forall_late, 
-    [Copy(os.path.join(p, 'forall.lib'), forall_late[0]),
-     Copy(os.path.join(p, 'forall.module'),  
-          os.path.splitext(forall_late[0].path)[0] + '.module'),
-     Copy(os.path.join(p, 'forall.precomp'), 
-          os.path.splitext(forall_late[0].path)[0] + '.precomp')])
+    OCCBUILDFLAGS='--no-std-libs --occ21-opts="-ZLC forall_early.lib"')
+    # Note: -ZLC = change compiler library to <lib>
+    # so we can do a more sane two stage build.
 
 
 
-forall = local.Alias('forall.lib', forall_late)
-local.Clean(
-     [forall, forall_late],
-     ['forall.lib', 'forall.module', 'forall.precomp',
-      'forall_late.module',  'forall_late.precomp'])
-local.Clean(
-     [forall, forall_early],
-     ['forall.lib', 'forall.module', 'forall.precomp',
-      'forall_early.module', 'forall_early.precomp'])
-
-#env.Append(INCPATH=Dir('.'))
 env['OCCLIBS']['forall'] = dict(
         dep=forall,
         inc=Dir('.'))
