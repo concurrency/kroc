@@ -60,7 +60,10 @@ def occbuild_library_emitter(target, source, env):
     target_name = str(target[0])
     precomp     = target_name.replace(target[0].suffix, '.precomp')
     module      = target_name.replace(target[0].suffix, '.module')
-    target      = target + [precomp, module]
+    if len(source) != 0:
+        # No precomp is generated if there are no sources, ie a 'meta' library.
+        target.append(precomp)
+    target.append(module)
     return (target, source)
 
 def generate(env, **kw):
@@ -87,7 +90,10 @@ def generate(env, **kw):
                       emitter = [depend_emitter, occbuild_program_emitter],
                       suffix='$PROGSUFFIX',
                       src_suffix = ['.occ', '.tce'],
-                      src_builder = [tce_bld])
+                      # FIXME: If I leave the sourcebuilder in, scons seems to
+                      # want to turn my .occ extensions when I have a mixed
+                      # .occ, .tce source list into .tce using the builder
+                      )#src_builder = [tce_bld])
     # Add the new Builder to the list of builders
     # Use of $( $)  causes bracketed flags not trigger rebuild when changed
     env['BUILDERS']['OccamObject']  = tce_bld
@@ -111,6 +117,7 @@ def generate(env, **kw):
     env.AddMethod(OccLibDepend)
     env['OCCLIBS'] = dict()
     env['INCPATH'] = CLVar('')
+    env['OCCBUILDFLAGS'] = CLVar('')
 
 
 
