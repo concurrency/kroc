@@ -833,7 +833,6 @@ PRIVATE void gendynmobilearraycreate (treenode *const dest, treenode *const src,
 	treenode *had_temp = NULL;
 	treenode *basetype = NULL;
 	int basebytes = 0;
-	int skiplab = newlab ();
 
 	gencomment0 ("{{{  gendynmobilearraycreate");
 	/* maybe free dest */
@@ -859,8 +858,7 @@ printtreenl (stderr, 4, dest);
 		genprimary (I_LDC, 0);
 	} else {
 		texp (ARDimLengthOf (src), regs);
-		gensecondary (I_DUP);
-		genbranch (I_CJ, skiplab);
+		/* do not skip anymore, allocate zero-length mobiles arrays as real */
 	}
 
 	if (dynchan) {
@@ -1277,7 +1275,6 @@ fprintf (stderr, "src (presumably something which we need to evaluate) =");
 printtreenl (stderr, 4, src);
 #endif
 	if (!empty) {
-		setlab (skiplab);
 		throw_the_result_away ();
 	}
 
