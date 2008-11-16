@@ -412,11 +412,11 @@ def parse_decl(f):
 				t = "constant"
 			return (t, m.group(3), m.group(1))
 
-		tag_re = re.compile(r'^([^: ]+)(\s*;(.*))?$')
+		tag_re = re.compile(r'^([^: ]+)(\s*=\s*[0-9]+)?(\s*;(.*))?$')
 		m = tag_re.match(s)
 		if m is not None:
-			if m.group(3) is not None:
-				items = parse_protocol(m.group(3))
+			if m.group(4) is not None:
+				items = parse_protocol(m.group(4))
 			else:
 				items = None
 			return ("tag", m.group(1), s, items)
