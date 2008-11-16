@@ -17,11 +17,6 @@
 --	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 --
 
---** V4L(2) frame-grabber interface.
---
--- This module provides a raster-based interface to video-4-linux
--- frame-grabbers (version 1/2 of the Linux API).
---
 --** @module video
 
 --{{{  includes

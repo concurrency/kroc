@@ -17,9 +17,9 @@
 --	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 --
 
---** A library for interfacing with video-4-linux devices from occam-pi
+--** V4L(2) frame-grabber interface.
 --
--- This library allows an application to open a video-4-linux device and
+-- This library allows an application to open a V4L(2) device and
 -- interact with it.  This currently only supports frame-grabbing from
 -- devices.
 --
