@@ -469,7 +469,7 @@ For each program prog of """ + ", ".join(safe_sorted(programs.keys())) + """:
   --prog PATH         Path to prog (or set PROG=PATH in the environment)
   --prog-opts OPTS    Additional options for prog
 
-Options for --object mode:
+Options for --object/--program mode:
   --occ21-opts OPTS   Additional options for occ21
   -D DEFINE           Passed through to occ21 as -DEF
 
