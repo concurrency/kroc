@@ -19,7 +19,7 @@
 #	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-import sys, os, getopt, re
+import sys, os, getopt, re, shlex
 
 VERSION = "$Revision$"[11:-2]
 CONTACT = "kroc-bugs@kent.ac.uk"
@@ -71,7 +71,7 @@ def tidy_spaces(string):
 def split_options(opts):
 	"""Split an argument we've been given into a list of arguments to pass
 	to another program."""
-	return opts.strip().split()
+	return shlex.split(opts)
 
 def split_ext(file):
 	"""Given a filename, return its basename and extension."""
