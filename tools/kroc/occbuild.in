@@ -287,8 +287,10 @@ class KRoCToolchain:
 		else:
 			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
 
-	def program(self, occam_objs, native_objs, base):
-		run(self.kroc_cmd() + [base + ".occ"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs)
+	def program(self, occam_objs, native_objs, base, output = None):
+		if output is None:
+			output = base
+		run(self.kroc_cmd() + ["-o", output, base + ".occ"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs)
 
 	def install(self, file):
 		bindir = get_install_dir("@KROC_ARCHBINDIR@", "/bin")
@@ -369,24 +371,27 @@ class TVMToolchain:
 		else:
 			run(programs["skroc"] + ["-f", base, "--library"] + occam_objs)
 
-	def program(self, occam_objs, native_objs, base):
+	def program(self, occam_objs, native_objs, base, output = None):
+		if output is None:
+			output = base
 		if native_objs != []:
 			die("Native objects in a Transterpreter program are not yet supported; build a library instead")
 			# You can *almost* get there by building an FFI library
 			# and a stub that invokes the right #PRAGMA here, but
 			# the slinker currently won't do the right thing if you
 			# use a .tce file that you haven't actually #USEd.
-		run(self.skroc_cmd() + [base + ".occ"] + occam_objs)
+
+		run(self.skroc_cmd() + ["-f", output + ".tbc", base + ".occ"] + occam_objs)
 
 		# Generate a wrapper script (because we have to produce
 		# something with the target name, and it might as well be
 		# useful).
-		f = open(base, "w")
+		f = open(output, "w")
 		f.write("#!/bin/sh\n")
 		f.write("# %s\n" % autogen_message)
 		f.write("exec %s $0.tbc \"$@\"\n" % (" ".join(programs["tvm"])))
 		f.close()
-		os.chmod(base, 0755)
+		os.chmod(output, 0755)
 
 	def install(self, file):
 		bindir = get_install_dir("@TVM_BINDIR@", "/bin")
@@ -488,6 +493,7 @@ Options for --library mode:
 
 Options for --program mode:
   --static            Force program to be statically linked
+  --output OUTPUT     Use OUTPUT as the output base filename
 
 Options for --install/--install-examples mode:
   --prefix PREFIX     Select installation prefix PREFIX (mandatory)
@@ -506,7 +512,7 @@ def main(args):
 		"help", "no-std-libs", "verbose",
 		"toolchain=", "search=",
 		"occ21-opts=", "need=", "include=", "include-after=",
-		"static",
+		"static", "output=",
 		"prefix=", "destdir=", "target-os="
 		]
 	for prog in programs.keys():
@@ -524,6 +530,7 @@ def main(args):
 
 	mode = None
 	target = None
+	output = None
 	toolchain = None
 	global std_libs, verbose, search_path, occ21_opts, linker_opts, needs
 	global includes_before, includes_after, static_link
@@ -562,6 +569,8 @@ def main(args):
 			includes_after.append(a)
 		elif o == "--static":
 			static_link = True
+		elif o == "--output":
+			output = a
 		elif o == "--prefix":
 			prefix = a
 		elif o == "--destdir":
@@ -639,7 +648,7 @@ def main(args):
 		(base, ext) = split_ext(target)
 		if ext != "occ":
 			die("Source filename must end in .occ: ", target)
-		toolchain.program(occam_objs, native_objs, base)
+		toolchain.program(occam_objs, native_objs, base, output)
 	elif mode == "install":
 		if prefix is None:
 			die("When using --install mode, you must give --prefix")
