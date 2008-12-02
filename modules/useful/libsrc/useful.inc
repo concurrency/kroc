@@ -37,6 +37,7 @@ DATA TYPE VECTOR2
 --{{{  VECTOR2 operators
 VECTOR2 INLINE FUNCTION "+" (VAL VECTOR2 a, b) IS [a[x] + b[x], a[y] + b[y]]:
 VECTOR2 INLINE FUNCTION "-" (VAL VECTOR2 a, b) IS [a[x] - b[x], a[y] - b[y]]:
+VECTOR2 INLINE FUNCTION "-" (VAL VECTOR2 a) IS [-a[x], -a[y]]:
 VECTOR2 INLINE FUNCTION "**" (VAL VECTOR2 a, VAL REAL32 b) IS [a[x] * b, a[y] * b]:
 VECTOR2 INLINE FUNCTION "/" (VAL VECTOR2 a, VAL REAL32 b) IS [a[x] / b, a[y] / b]:
 --}}}
@@ -58,6 +59,7 @@ DATA TYPE VECTOR3
 --{{{  VECTOR3 operators
 VECTOR3 INLINE FUNCTION "+" (VAL VECTOR3 a, b) IS [a[x] + b[x], a[y] + b[y], a[z] + b[z]]:
 VECTOR3 INLINE FUNCTION "-" (VAL VECTOR3 a, b) IS [a[x] - b[x], a[y] - b[y], a[z] - b[z]]:
+VECTOR3 INLINE FUNCTION "-" (VAL VECTOR3 a) IS [-a[x], -a[y], -a[z]]:
 VECTOR3 INLINE FUNCTION "**" (VAL VECTOR3 a, VAL REAL32 b) IS [a[x] * b, a[y] * b, a[z] * b]:
 VECTOR3 INLINE FUNCTION "/" (VAL VECTOR3 a, VAL REAL32 b) IS [a[x] / b, a[y] / b, a[z] / b]:
 --}}}
