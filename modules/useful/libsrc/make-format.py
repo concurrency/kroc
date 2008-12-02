@@ -268,7 +268,7 @@ def main():
 		(since some aren't very useful.)"""
 		if list == []:
 			return False
-		elif "n" in list[:-1] or list == ["n"]:
+		elif "n" in list[:-1]:
 			# Newline is only useful at the end.
 			return False
 		elif nonstring_re.search("".join(list)) is not None:
