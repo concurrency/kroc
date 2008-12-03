@@ -573,9 +573,250 @@ PROC file.nth.arg (VAL INT n, RESULT []BYTE arg, RESULT INT len)
     C.fl.nth.arg (n, arg, len)
 :
 --}}}
+--{{{  PROC file.get.long.options (MOBILE []MOBILE []BYTE options, CHAN GETOPT.LONG out!)
+--* Parse command-line options.
+-- This is intended to behave like GNU [@text getopt_long(3)], but without
+-- support for permuting options.
+--
+-- The [@code options] argument is an array of strings listing the possible
+-- options for the program. Options that can take an argument should be
+-- followed by an equals sign.
+--
+-- @param options List of options that this program can take
+-- @param out Channel down which options are reported (using [@ref GETOPT.LONG])
+PROC file.get.long.options (MOBILE []MOBILE []BYTE options, CHAN GETOPT.LONG out!)
+  --{{{  constants
+  VAL INT MAX.ARG.LENGTH IS 4096:
+  VAL INT TYPE.NONE IS 0:
+  VAL INT TYPE.OPT IS 1:
+  VAL INT TYPE.ARG IS 2:
+  --}}}
+  --{{{  FUNCTION starts.with.string
+  BOOL FUNCTION starts.with.string (VAL []BYTE needle, haystack)
+    BOOL result:
+    VALOF
+      VAL INT nsize IS SIZE needle:
+      IF
+        nsize > (SIZE haystack)
+          result := FALSE
+        IF i = 0 FOR nsize
+          needle[i] <> haystack[i]
+            result := FALSE
+        TRUE
+          result := TRUE
+      RESULT result
+  :
+  --}}}
+  --{{{  FUNCTION same.string
+  BOOL FUNCTION same.string (VAL []BYTE a, b)
+    BOOL result:
+    VALOF
+      IF
+        (SIZE a) <> (SIZE b)
+          result := FALSE
+        IF i = 0 FOR (SIZE a)
+          a[i] <> b[i]
+            result := FALSE
+        TRUE
+          result := TRUE
+      RESULT result
+  :
+  --}}}
+  --{{{  FUNCTION is.opt.arg
+  --* Is [@code haystack] is equal to [@code needle] followed by [@text =]?
+  BOOL FUNCTION is.opt.arg (VAL []BYTE needle, haystack)
+    BOOL result:
+    VALOF
+      IF
+        (SIZE haystack) = 1
+          result := FALSE
+        haystack[(SIZE haystack) - 1] <> '='
+          result := FALSE
+        same.string ([haystack FOR (SIZE haystack) - 1], needle)
+          result := TRUE
+        TRUE
+          result := FALSE
+      RESULT result
+  :
+  --}}}
+  --{{{  FUNCTION option.type
+  INT FUNCTION option.type (VAL []BYTE o)
+    INT type:
+    VALOF
+      IF
+        IF i = 0 FOR SIZE options
+          VAL []BYTE this IS [options[i] FROM 0]:
+          IF
+            same.string (o, this)
+              type := TYPE.OPT
+            is.opt.arg (o, this)
+              type := TYPE.ARG
+        TRUE
+          type := TYPE.NONE
+      RESULT type
+  :
+  --}}}
+  CHAN GETOPT.LONG inter:
+  PAR
+    --{{{  get command-line arguments
+    INT num.args:
+    SEQ
+      file.num.args (num.args)
+      SEQ i = 1 FOR num.args - 1
+        [MAX.ARG.LENGTH]BYTE arg:
+        INT len:
+        SEQ
+          file.nth.arg (i, arg, len)
+          inter ! arg; [arg FOR len]
+      inter ! done
+    --}}}
+    --{{{  parse options
+    SEQ
+      INITIAL BOOL running IS TRUE:
+      WHILE running
+        inter ? CASE
+          MOBILE []BYTE arg:
+          --{{{  PROC pass.rest.through
+          PROC pass.rest.through ()
+            WHILE running
+              inter ? CASE
+                arg; arg
+                  out ! arg; arg
+                done
+                  running := FALSE
+          :
+          --}}}
+          --{{{  PROC bad
+          PROC bad (VAL []BYTE o)
+            SEQ
+              WHILE running
+                inter ? CASE
+                  arg; arg
+                    SKIP
+                  done
+                    running := FALSE
+              out ! bad; o
+          :
+          --}}}
+          arg; arg
+            IF
+              same.string (arg, "--")
+                --{{{  treat the rest as non-option
+                pass.rest.through ()
+                --}}}
+              starts.with.string ("--", arg)
+                --{{{  long option argument
+                INT equals:
+                SEQ
+                  --{{{  find an equals sign
+                  IF
+                    IF i = 2 FOR (SIZE arg) - 2
+                      arg[i] = '='
+                        equals := i
+                    TRUE
+                      equals := SIZE arg
+                  --}}}
+                  -- FIXME: Workaround for occ21 bug: this should be a VAL []BYTE
+                  INITIAL MOBILE []BYTE o IS MOBILE [equals - 2]BYTE:
+                  SEQ
+                    o := [arg FROM 2 FOR equals - 2]
+                    CASE option.type (o)
+                      TYPE.NONE
+                        --{{{  unknown option
+                        bad (o)
+                        --}}}
+                      TYPE.OPT
+                        --{{{  plain option
+                        IF
+                          equals = (SIZE arg)
+                            out ! opt; o
+                          TRUE
+                            --{{{  argument provided, but none expected
+                            bad (o)
+                            --}}}
+                        --}}}
+                      TYPE.ARG
+                        --{{{  option with argument
+                        IF
+                          equals = (SIZE arg)
+                            --{{{  arg is next argument
+                            inter ? CASE
+                              arg; arg
+                                out ! opt.arg; o; arg
+                              done
+                                --{{{  ... but there isn't one
+                                SEQ
+                                  running := FALSE
+                                  bad (o)
+                                --}}}
+                            --}}}
+                          TRUE
+                            --{{{  arg is the rest of this argument
+                            out ! opt.arg; o; [arg FROM equals + 1]
+                            --}}}
+                        --}}}
+                --}}}
+              starts.with.string ("-", arg)
+                --{{{  short option argument
+                INITIAL BOOL scanning IS TRUE:
+                INITIAL INT pos IS 1:
+                WHILE scanning AND (pos < (SIZE arg))
+                  INITIAL [1]BYTE o IS [arg[pos]]:
+                  CASE option.type (o)
+                    TYPE.NONE
+                      --{{{  unknown option
+                      SEQ
+                        bad (o)
+                        scanning := FALSE
+                      --}}}
+                    TYPE.OPT
+                      --{{{  plain option
+                      SEQ
+                        out ! opt; o
+                        pos := pos + 1
+                      --}}}
+                    TYPE.ARG
+                      --{{{  option with argument
+                      SEQ
+                        pos := pos + 1
+                        IF
+                          pos < (SIZE arg)
+                            --{{{  arg is the rest of this argument
+                            VAL INT len IS (SIZE arg) - pos:
+                            out ! opt.arg; o; [arg FROM pos FOR len]
+                            --}}}
+                          TRUE
+                            --{{{  arg is next argument
+                            inter ? CASE
+                              arg; arg
+                                out ! opt.arg; o; arg
+                              done
+                                SEQ
+                                  --{{{  ... but there isn't one
+                                  running := FALSE
+                                  bad (o)
+                                  --}}}
+                            --}}}
+                        scanning := FALSE
+                      --}}}
+                --}}}
+              TRUE
+                --{{{  the first non-option argument
+                SEQ
+                  out ! arg; arg
+                  pass.rest.through ()
+                --}}}
+          done
+            running := FALSE
+      out ! done
+    --}}}
+:
+--}}}
 --{{{  PROC file.get.options (VAL []BYTE options, CHAN GETOPT out!)
 --* Parse command-line options.
 -- This is intended to behave like POSIX (not GNU) [@text getopt(3)].
+-- If you want to handle long options, use [@ref file.get.long.options]
+-- instead; this [@code PROC] will report all long options as [@code bad].
 --
 -- The [@code options] argument is a string listing the possible
 -- (single-character) options for the program. Options that can take an
@@ -612,164 +853,57 @@ PROC file.nth.arg (VAL INT n, RESULT []BYTE arg, RESULT INT len)
 -- @param options List of options that this program can take
 -- @param out Channel down which options are reported (using [@ref GETOPT])
 PROC file.get.options (VAL []BYTE options, CHAN GETOPT out!)
-  --{{{  constants
-  VAL INT MAX.ARG.LENGTH IS 4096:
-  VAL INT TYPE.NONE IS 0:
-  VAL INT TYPE.OPT IS 1:
-  VAL INT TYPE.ARG IS 2:
-  --}}}
-  --{{{  INT FUNCTION option.type (VAL BYTE o)
-  INT FUNCTION option.type (VAL BYTE o)
-    INT type:
-    VALOF
-      IF
-        IF i = 0 FOR SIZE options
-          options[i] = o
-            IF
-              i = ((SIZE options) - 1)
-                type := TYPE.OPT
-              options[i + 1] = ':'
-                type := TYPE.ARG
-              TRUE
-                type := TYPE.OPT
-        TRUE
-          type := TYPE.NONE
-      RESULT type
-  :
-  --}}}
-  --{{{  BOOL FUNCTION starts.with.string (VAL []BYTE needle, haystack)
-  BOOL FUNCTION starts.with.string (VAL []BYTE needle, haystack)
-    BOOL result:
-    VALOF
-      VAL INT nsize IS SIZE needle:
-      IF
-        nsize > (SIZE haystack)
-          result := FALSE
-        IF i = 0 FOR nsize
-          needle[i] <> haystack[i]
-            result := FALSE
-        TRUE
-          result := TRUE
-      RESULT result
-  :
-  --}}}
-  --{{{  BOOL FUNCTION same.string (VAL []BYTE a, b)
-  BOOL FUNCTION same.string (VAL []BYTE a, b)
-    BOOL result:
-    VALOF
-      IF
-        (SIZE a) <> (SIZE b)
-          result := FALSE
-        IF i = 0 FOR (SIZE a)
-          a[i] <> b[i]
-            result := FALSE
-        TRUE
-          result := TRUE
-      RESULT result
-  :
-  --}}}
-  CHAN GETOPT inter:
-  PAR
-    --{{{  get command-line arguments
-    INT num.args:
+  MOBILE []MOBILE []BYTE long.options:
+  SEQ
+    --{{{  convert options into file.get.long.options' format
+    INITIAL INT count IS 0:
     SEQ
-      file.num.args (num.args)
-      SEQ i = 1 FOR num.args - 1
-        [MAX.ARG.LENGTH]BYTE arg:
-        INT len:
+      --{{{  count the options
+      SEQ i = 0 FOR SIZE options
+        IF
+          options[i] <> ':'
+            count := count + 1
+          TRUE
+            SKIP
+      --}}}
+      long.options := MOBILE [count]MOBILE []BYTE
+      --{{{  convert the options
+      INITIAL INT i IS 0:
+      SEQ j = 0 FOR count
+        MOBILE []BYTE o:
         SEQ
-          file.nth.arg (i, arg, len)
-          inter ! arg; [arg FOR len]
-      inter ! done
+          IF
+            i = ((SIZE options) - 1)
+              o := [options[i]]
+            options[i + 1] = ':'
+              o := [options[i], '=']
+            TRUE
+              o := [options[i]]
+          i := i + (SIZE o)
+          long.options[j] := o
+      --}}}
     --}}}
-    --{{{  parse options
-    SEQ
+    CHAN GETOPT.LONG thru:
+    PAR
+      file.get.long.options (long.options, thru!)
+      --{{{  convert the results
       INITIAL BOOL running IS TRUE:
       WHILE running
-        inter ? CASE
-          MOBILE []BYTE arg:
-          --{{{  PROC pass.rest.through ()
-          PROC pass.rest.through ()
-            WHILE running
-              inter ? CASE
-                arg; arg
-                  out ! arg; arg
-                done
-                  running := FALSE
-          :
-          --}}}
-          --{{{  PROC bad (VAL BYTE o)
-          PROC bad (VAL BYTE o)
-            SEQ
-              WHILE running
-                inter ? CASE
-                  arg; arg
-                    SKIP
-                  done
-                    running := FALSE
-              out ! bad; o
-          :
-          --}}}
-          arg; arg
-            IF
-              same.string (arg, "--")
-                --{{{  treat the rest as non-option
-                pass.rest.through ()
-                --}}}
-              starts.with.string ("-", arg)
-                --{{{  old-style option argument
-                INITIAL BOOL scanning IS TRUE:
-                INITIAL INT pos IS 1:
-                WHILE scanning AND (pos < (SIZE arg))
-                  INITIAL BYTE o IS arg[pos]:
-                  CASE option.type (o)
-                    TYPE.NONE
-                      SEQ
-                        --{{{  unknown option
-                        bad (o)
-                        scanning := FALSE
-                        --}}}
-                    TYPE.OPT
-                      SEQ
-                        --{{{  plain option
-                        out ! opt; o
-                        pos := pos + 1
-                        --}}}
-                    TYPE.ARG
-                      SEQ
-                        --{{{  option with argument
-                        pos := pos + 1
-                        IF
-                          pos < (SIZE arg)
-                            --{{{  arg is the rest of this argument
-                            VAL INT len IS (SIZE arg) - pos:
-                            out ! opt.arg; o; [arg FROM pos FOR len]
-                            --}}}
-                          TRUE
-                            --{{{  arg is next argument
-                            inter ? CASE
-                              arg; arg
-                                out ! opt.arg; o; arg
-                              done
-                                SEQ
-                                  --{{{  ... but there isn't one
-                                  running := FALSE
-                                  bad (o)
-                                  --}}}
-                            --}}}
-                        scanning := FALSE
-                        --}}}
-                --}}}
-              TRUE
-                --{{{  the first non-option argument
-                SEQ
-                  out ! arg; arg
-                  pass.rest.through ()
-                --}}}
+        MOBILE []BYTE o, a:
+        thru ? CASE
+          opt; o
+            out ! opt; o[0]
+          opt.arg; o; a
+            out ! opt.arg; o[0]; a
+          arg; a
+            out ! arg; a
+          bad; o
+            out ! bad; o[0]
           done
-            running := FALSE
-      out ! done
-    --}}}
+            SEQ
+              out ! done
+              running := FALSE
+      --}}}
 :
 --}}}
 --{{{  PROC file.stat (VAL []BYTE name, RESULT STAT info, RESULT INT res)
