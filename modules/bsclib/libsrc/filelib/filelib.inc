@@ -167,6 +167,7 @@ PROTOCOL GETOPT
     -- @item arg The argument
     arg; MOBILE []BYTE
     --* An unrecognised option.
+    -- This will be followed immediately by [@code done].
     -- @item opt The option
     bad; BYTE
     --* No more options.
@@ -188,6 +189,7 @@ PROTOCOL GETOPT.LONG
     -- @item arg The argument
     arg; MOBILE []BYTE
     --* An unrecognised option.
+    -- This will be followed immediately by [@code done].
     -- @item opt The option
     bad; MOBILE []BYTE
     --* No more options.

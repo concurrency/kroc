@@ -582,6 +582,39 @@ PROC file.nth.arg (VAL INT n, RESULT []BYTE arg, RESULT INT len)
 -- options for the program. Options that can take an argument should be
 -- followed by an equals sign.
 --
+-- Example, for a program which can take [@text -v]/[@text --verbose] and
+-- [@text -h]/[@text --host HOST] arguments:
+--
+-- [@code
+-- CHAN GETOPT.LONG opts:
+-- PAR
+--   INITIAL MOBILE []MOBILE []BYTE spec IS MOBILE [4]MOBILE []BYTE:
+--   SEQ
+--     spec[0] := "v"
+--     spec[1] := "verbose"
+--     spec[2] := "h="
+--     spec[3] := "host="
+--     file.get.long.options (spec, opts!)
+--   INITIAL BOOL running IS TRUE:
+--   WHILE running
+--     MOBILE []BYTE o, a:
+--     opts ? CASE
+--       opt; o
+--         IF
+--           same.string (o, "v") OR same.string (o, "verbose")
+--             ...  handle -v option
+--       opt.arg; o; a
+--         IF
+--           same.string (o, "h") OR same.string (o, "host")
+--             ...  handle -h option; argument is in a
+--       arg; a
+--         ...  handle non-option argument a
+--       bad; o
+--         ...  print usage message and exit
+--       done
+--         running := FALSE
+-- ]
+--
 -- @param options List of options that this program can take
 -- @param out Channel down which options are reported (using [@ref GETOPT.LONG])
 PROC file.get.long.options (MOBILE []MOBILE []BYTE options, CHAN GETOPT.LONG out!)
@@ -624,6 +657,7 @@ PROC file.get.long.options (MOBILE []MOBILE []BYTE options, CHAN GETOPT.LONG out
   --}}}
   --{{{  FUNCTION is.opt.arg
   --* Is [@code haystack] is equal to [@code needle] followed by [@text =]?
+  -- @private
   BOOL FUNCTION is.opt.arg (VAL []BYTE needle, haystack)
     BOOL result:
     VALOF
