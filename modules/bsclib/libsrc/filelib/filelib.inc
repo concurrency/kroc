@@ -158,17 +158,38 @@ PROTOCOL GETOPT
   CASE
     --* An option (such as [@text -a]).
     -- @item opt The option
-    opt ; BYTE
+    opt; BYTE
     --* An option with an argument (such as [@text -a foo]).
     -- @item opt The option
     -- @item arg The argument
-    opt.arg ; BYTE ; MOBILE []BYTE
+    opt.arg; BYTE; MOBILE []BYTE
     --* A non-option argument (such as [@text foo]).
     -- @item arg The argument
-    arg ; MOBILE []BYTE
+    arg; MOBILE []BYTE
     --* An unrecognised option.
     -- @item opt The option
-    bad ; BYTE
+    bad; BYTE
+    --* No more options.
+    done
+:
+--}}}
+--{{{  GETOPT.LONG
+--* Responses from [@ref file.get.long.options].
+PROTOCOL GETOPT.LONG
+  CASE
+    --* An option (such as [@text -a] or [@text --arg]).
+    -- @item opt The option (e.g. [@text a] or [@text arg])
+    opt; MOBILE []BYTE
+    --* An option with an argument (such as [@text -a foo] or [@text --arg foo]).
+    -- @item opt The option (e.g. [@text a] or [@text arg])
+    -- @item arg The argument
+    opt.arg; MOBILE []BYTE; MOBILE []BYTE
+    --* A non-option argument (such as [@text foo]).
+    -- @item arg The argument
+    arg; MOBILE []BYTE
+    --* An unrecognised option.
+    -- @item opt The option
+    bad; MOBILE []BYTE
     --* No more options.
     done
 :
