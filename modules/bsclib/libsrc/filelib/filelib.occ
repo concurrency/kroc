@@ -679,7 +679,7 @@ PROC file.get.options (VAL []BYTE options, CHAN GETOPT out!)
         INT len:
         SEQ
           file.nth.arg (i, arg, len)
-          inter ! arg ; [arg FOR len]
+          inter ! arg; [arg FOR len]
       inter ! done
     --}}}
     --{{{  parse options
@@ -688,22 +688,36 @@ PROC file.get.options (VAL []BYTE options, CHAN GETOPT out!)
       WHILE running
         inter ? CASE
           MOBILE []BYTE arg:
+          --{{{  PROC pass.rest.through ()
+          PROC pass.rest.through ()
+            WHILE running
+              inter ? CASE
+                arg; arg
+                  out ! arg; arg
+                done
+                  running := FALSE
+          :
+          --}}}
           --{{{  PROC bad (VAL BYTE o)
           PROC bad (VAL BYTE o)
             SEQ
               WHILE running
                 inter ? CASE
-                  arg ; arg
+                  arg; arg
                     SKIP
                   done
                     running := FALSE
-              out ! bad ; o
+              out ! bad; o
           :
           --}}}
-          arg ; arg
+          arg; arg
             IF
-              starts.with.string ("-", arg) AND (NOT same.string (arg, "--"))
-                --{{{  option argument
+              same.string (arg, "--")
+                --{{{  treat the rest as non-option
+                pass.rest.through ()
+                --}}}
+              starts.with.string ("-", arg)
+                --{{{  old-style option argument
                 INITIAL BOOL scanning IS TRUE:
                 INITIAL INT pos IS 1:
                 WHILE scanning AND (pos < (SIZE arg))
@@ -718,7 +732,7 @@ PROC file.get.options (VAL []BYTE options, CHAN GETOPT out!)
                     TYPE.OPT
                       SEQ
                         --{{{  plain option
-                        out ! opt ; o
+                        out ! opt; o
                         pos := pos + 1
                         --}}}
                     TYPE.ARG
@@ -729,13 +743,13 @@ PROC file.get.options (VAL []BYTE options, CHAN GETOPT out!)
                           pos < (SIZE arg)
                             --{{{  arg is the rest of this argument
                             VAL INT len IS (SIZE arg) - pos:
-                            out ! opt.arg ; o ; [arg FROM pos FOR len]
+                            out ! opt.arg; o; [arg FROM pos FOR len]
                             --}}}
                           TRUE
                             --{{{  arg is next argument
                             inter ? CASE
-                              arg ; arg
-                                out ! opt.arg ; o ; arg
+                              arg; arg
+                                out ! opt.arg; o; arg
                               done
                                 SEQ
                                   --{{{  ... but there isn't one
@@ -747,15 +761,10 @@ PROC file.get.options (VAL []BYTE options, CHAN GETOPT out!)
                         --}}}
                 --}}}
               TRUE
-                --{{{  first non-option argument; pass the rest through
-                WHILE running
-                  SEQ
-                    out ! arg ; arg
-                    inter ? CASE
-                      arg ; arg
-                        SKIP
-                      done
-                        running := FALSE
+                --{{{  the first non-option argument
+                SEQ
+                  out ! arg; arg
+                  pass.rest.through ()
                 --}}}
           done
             running := FALSE

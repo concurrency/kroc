@@ -8,6 +8,7 @@ OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
 	args.occ \
+	getopt.occ \
 	lsdemo.occ \
 	pingdemo.occ \
 	sockdaytime.occ \
@@ -20,6 +21,7 @@ EXTRA_DIST = \
 
 examples = \
 	args \
+	getopt \
 	lsdemo \
 	sockdaytime \
 	sockstreamcli \
