@@ -603,7 +603,7 @@ PROC file.nth.arg (VAL INT n, RESULT []BYTE arg, RESULT INT len)
 --             ...  handle -h option; argument is in a
 --       arg; a
 --         ...  handle non-option argument a
---       bad; a
+--       bad; o
 --         ...  print usage message and exit
 --       done
 --         running := FALSE
