@@ -2,8 +2,9 @@
  *	Transputer style kernel in mixed C/asm
  *	Copyright (C) 1998 Jim Moores
  *	Based on the KRoC/sparc kernel Copyright (C) 1994-2000 D.C. Wood and P.H. Welch
- *	RMOX hacks copyright (C) 2002 Fred Barnes and Brian Vinter
+ *	RMoX hacks copyright (C) 2002 Fred Barnes and Brian Vinter
  *	Portions copyright (C) 1999-2005 Fred Barnes <frmb@kent.ac.uk>
+ *	Portions copyright (C) 2005-2008 Carl Ritson <cgr@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -104,6 +105,7 @@
 word *inttab[RMOX_NUM_INTERRUPTS];			/* interrupt process linkage (Wptr of waiting process) */
 volatile word intcount[RMOX_NUM_INTERRUPTS];		/* count of interrupts received */
 extern void no_dynamic_process_support (void);
+
 #endif
 /*}}}*/
 /*{{{  global variables*/
@@ -111,6 +113,9 @@ extern void no_dynamic_process_support (void);
 __thread sched_t	*_ccsp_scheduler		CACHELINE_ALIGN;
 #elif defined(ENABLE_MP) && defined(USE_PTHREADS)
 static pthread_key_t 	scheduler_key			CACHELINE_ALIGN;
+#elif defined(ENABLE_MP) && defined(RMOX_BUILD)
+static sched_t		*_ccsp_schedulers[RMOX_MAX_CPUS]	CACHELINE_ALIGN;
+static sched_t		*_ccsp_default_scheduler	CACHELINE_ALIGN = NULL;
 #else
 sched_t			*_ccsp_scheduler 		CACHELINE_ALIGN = NULL;
 #endif 
@@ -259,13 +264,16 @@ int ccsp_use_tls (void)
 static void NO_RETURN REGPARM kernel_scheduler (sched_t *sched);
 /*{{{  scheduler pointer storage */
 #if defined(USE_TLS)
+
 static int init_local_schedulers (void) { return 0; }
 #define set_local_scheduler(X)	do { _ccsp_scheduler = (X); } while (0)
 sched_t *local_scheduler(void)
 {
 	return _ccsp_scheduler;
 }
+
 #elif defined(ENABLE_MP) && defined(USE_PTHREADS)
+
 static pthread_key_t scheduler_key;
 
 static int init_local_schedulers (void)
@@ -283,14 +291,67 @@ inline sched_t *local_scheduler (void)
 {
 	return (sched_t *) pthread_getspecific (scheduler_key);
 }
-#else
-/* CGR FIXME: insert suitable RMOX code */
+
+#elif defined(ENABLE_MP) && defined(RMOX_BUILD)
+
+static int (*rmox_cpu_identifier)(void) = NULL;
+
+/* called from RMoX code to provide a function that can
+ * return a CPU identifier
+ */
+void set_cpu_identifier_fcn (int (*fcn)(void))
+{
+	rmox_cpu_identifier = fcn;
+}
+
+static int init_local_schedulers (void)
+{
+	int i;
+
+	for (i=0; i<RMOX_MAX_CPUS; i++) {
+		_ccsp_schedulers[i] = NULL;
+	}
+	rmox_cpu_identifier = NULL;
+
+	return 0;
+}
+
+static inline void set_local_scheduler (sched_t *scheduler)
+{
+	if (!rmox_cpu_identifier) {
+		_ccsp_default_scheduler = scheduler;
+	} else {
+		int cpuid = rmox_cpu_identifier ();
+
+		_ccsp_schedulers[cpuid] = scheduler;
+	}
+	return;
+}
+
+inline sched_t *local_scheduler (void)
+{
+	if (!rmox_cpu_identifier) {
+		return _ccsp_default_scheduler;
+	} else {
+		int cpuid = rmox_cpu_identifier ();
+		sched_t *sch = _ccsp_schedulers[cpuid];
+
+		if (!sch) {
+			sch = _ccsp_default_scheduler;
+		}
+		return sch;
+	}
+}
+
+#else	/* !USE_TLS, !(ENABLE_MP && USE_PTHREADS), !RMOX_BUILD */
+
 static int init_local_schedulers (void) { return 0; }
 #define set_local_scheduler(X)	do { _ccsp_scheduler = (X); } while (0)
 sched_t *local_scheduler(void)
 {
 	return _ccsp_scheduler;
 }
+
 #endif
 /*}}}*/
 /*{{{  batch state */

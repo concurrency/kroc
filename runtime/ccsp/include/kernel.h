@@ -30,13 +30,13 @@
 
 /* PUBLIC variables that are used elsewhere in the run time system. */
 #if defined(USE_TLS)
-extern __thread sched_t 	*_ccsp_scheduler;
-#define _local_scheduler	_ccsp_scheduler
+  extern __thread sched_t 	*_ccsp_scheduler;
+  #define _local_scheduler	_ccsp_scheduler
 #elif defined(ENABLE_MP)
-#define _local_scheduler	local_scheduler ();
+  #define _local_scheduler	local_scheduler ();
 #else
-extern sched_t			*_ccsp_scheduler;
-#define _local_scheduler	_ccsp_scheduler
+  extern sched_t			*_ccsp_scheduler;
+  #define _local_scheduler	_ccsp_scheduler
 #endif
 
 extern ccsp_global_t 		_ccsp;
@@ -64,8 +64,8 @@ void do_queue_process (word *process);
 #define DEFAULT_SCHED_POLICY SCHED_POLICY_US
 
 #if defined(RMOX_BUILD)
-extern word *inttab[RMOX_NUM_INTERRUPTS];
-extern volatile word intcount[RMOX_NUM_INTERRUPTS];
+  extern word *inttab[RMOX_NUM_INTERRUPTS];
+  extern volatile word intcount[RMOX_NUM_INTERRUPTS];
 #endif
 
 #endif	/* !__KERNEL_H */
