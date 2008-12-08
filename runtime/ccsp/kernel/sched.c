@@ -328,6 +328,17 @@ static inline void set_local_scheduler (sched_t *scheduler)
 	return;
 }
 
+void set_sched_fromdefault (void)
+{
+	if (!rmox_cpu_identifier) {
+		printk ("set_sched_fromdefault(): no CPU identifier code!\n");
+	} else {
+		int cpuid = rmox_cpu_identifier ();
+
+		_ccsp_schedulers[cpuid] = _ccsp_default_scheduler;
+	}
+}
+
 inline sched_t *local_scheduler (void)
 {
 	if (!rmox_cpu_identifier) {
