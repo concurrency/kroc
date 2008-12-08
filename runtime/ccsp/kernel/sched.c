@@ -323,6 +323,9 @@ static inline void set_local_scheduler (sched_t *scheduler)
 	} else {
 		int cpuid = rmox_cpu_identifier ();
 
+#if 0
+		printk ("set_local_scheduler(): cpuid = %d, scheduler = %p\n", cpuid, scheduler);
+#endif
 		_ccsp_schedulers[cpuid] = scheduler;
 	}
 	return;
@@ -335,6 +338,9 @@ void set_sched_fromdefault (void)
 	} else {
 		int cpuid = rmox_cpu_identifier ();
 
+#if 0
+		printk ("set_sched_fromdefault(): cpuid = %d, scheduler = %p\n", cpuid, _ccsp_default_scheduler);
+#endif
 		_ccsp_schedulers[cpuid] = _ccsp_default_scheduler;
 	}
 }
