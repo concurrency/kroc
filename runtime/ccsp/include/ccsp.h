@@ -63,10 +63,6 @@ typedef struct _ccsp_sched_t {
 #elif defined(ENABLE_MP)
   ccsp_sched_t 				*local_scheduler (void);
   #define ccsp_scheduler		(local_scheduler ())
-
-  #if defined(RMOX_BUILD)
-    extern void set_cpu_identifier_fcn (int (*fcn)(void));
-  #endif
 #else
   extern ccsp_sched_t			*_ccsp_scheduler;
   #define ccsp_scheduler		_ccsp_scheduler
