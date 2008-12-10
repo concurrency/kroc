@@ -1,6 +1,6 @@
 /*
  *	dmem.c -- dynamic memory allocator
- *	Copyright (C) 2000-2005 Fred Barnes  <frmb@kent.ac.uk>
+ *	Copyright (C) 2000-2008 Fred Barnes  <frmb@kent.ac.uk>
  *	Modifications (C) 2002 Brian Vinter
  *	Based on Per Brinch Hansen's parallel allocator as adapted by David Wood
  *
@@ -96,6 +96,8 @@
 
 #define NUM_POOLS (((LAST_POOL_SHIFT - FIRST_POOL_SHIFT) * 2) + 1)
 
+#define MALLOC_POOL_GRAB_BYTES (1 << 22)			/* 4 MiB default malloc grab for pools */
+#define MALLOC_MINALIGN_SHIFT 16				/* minimum 64k alignment from malloc()'d blocks */
 
 #define SLABTYPE_INVALID 0
 #define SLABTYPE_SPLIT 1
@@ -115,6 +117,7 @@ typedef struct TAG_allocator {
 	unsigned int *pools[NUM_POOLS];				/* dynamic memory pools */
 	scraplist_t *scrap_list;				/* scrap memory list */
 	sched_t *sched;						/* scheduler this belongs to (NULL if shared) */
+	void *next_uapool;					/* next unallocated pool address */
 } allocator_t;
 
 #if defined(ALLOC_SBLOCK)
@@ -160,6 +163,9 @@ static void slab_map_init (void) /*{{{*/
 {
 	int i;
 
+#if 1
+	BMESSAGE ("slab_map_init(): initialising slab-map for %d-bit space, %d small, %d large\n", ADDRSPACE_SHIFT, NUM_SMALL_SLABS, NUM_LARGE_SLABS);
+#endif
 	for (i=0; i<NUM_SMALL_SLABS; i++) {
 		slab_smallslabs[i] = SLABTYPE_INVALID;
 	}
@@ -198,35 +204,403 @@ static inline int addr_to_slabsizeshift (const void *ptr) /*{{{*/
 	return LARGE_SLAB_SHIFT;
 }
 /*}}}*/
-
-
-static inline int slab_markregion (const void *addr, const int bytes, unsigned int type) /*{{{*/
+static inline unsigned int addr_to_slabidbot (const void *ptr) /*{{{*/
 {
-	unsigned int *sidp = addr_to_slabidptr (addr);
-	int shft = addr_to_slabsizeshift (addr);
+	unsigned int sid = addr_to_slabid (ptr);
+	int shft = addr_to_slabsizeshift (ptr);
+
+	while ((sid & SLABTYPE_MASK) == SLABTYPE_SPLIT) {
+		unsigned int *sarry = (unsigned int *)(sid & ~SLABTYPE_MASK);
+		int sidx;
+
+		shft -= SLAB_SPLIT_SHIFT;
+		sidx = ((unsigned int)ptr >> shft) & SLAB_SPLIT_MASK;
+
+		sid = sarry[sidx];
+	}
+
+	return sid;
+}
+/*}}}*/
+static inline unsigned int addr_to_slabsizeshiftbot (const void *ptr) /*{{{*/
+{
+	unsigned int sid = addr_to_slabid (ptr);
+	int shft = addr_to_slabsizeshift (ptr);
+
+	while ((sid & SLABTYPE_MASK) == SLABTYPE_SPLIT) {
+		unsigned int *sarry = (unsigned int *)(sid & ~SLABTYPE_MASK);
+		int sidx;
+
+		shft -= SLAB_SPLIT_SHIFT;
+		sidx = ((unsigned int)ptr >> shft) & SLAB_SPLIT_MASK;
+
+		sid = sarry[sidx];
+	}
+
+	return shft;
+}
+/*}}}*/
+static inline unsigned int *addr_to_slabidptrbot (const void *ptr) /*{{{*/
+{
+	unsigned int *sidp = addr_to_slabidptr (ptr);
+	int shft = addr_to_slabsizeshift (ptr);
 
 	while ((*sidp & SLABTYPE_MASK) == SLABTYPE_SPLIT) {
-		/* split slab: divided into fixed number of chunks */
 		unsigned int *sarry = (unsigned int *)(*sidp & ~SLABTYPE_MASK);
 		int sidx;
 
 		shft -= SLAB_SPLIT_SHIFT;
-		sidx = ((unsigned int)addr >> shft) & SLAB_SPLIT_MASK;
+		sidx = ((unsigned int)ptr >> shft) & SLAB_SPLIT_MASK;
 
 		sidp = &(sarry[sidx]);
 	}
 
-	/* shft gives the slab-size of the interesting one, sidp is the starting slab */
+	return sidp;
+}
+/*}}}*/
+static void slab_dumpslabinfo (const unsigned int sid, const int shft, const void *addr, const int indent) /*{{{*/
+{
+	int i;
+
+	BMESSAGE ("  ");
+	for (i=1; i<indent; i++) {
+		MESSAGE ("  ");
+	}
+	MESSAGE ("%8.8x - %8.8x: %-2.2d %8.8x ", (unsigned int)addr, (unsigned int)addr + ((1 << shft) - 1),
+			shft, sid);
+	switch (sid & SLABTYPE_MASK) {
+	case SLABTYPE_RESERVED:
+		MESSAGE ("(reserved)\n");
+		break;
+	case SLABTYPE_INVALID:
+		MESSAGE ("(invalid)\n");
+		break;
+	case SLABTYPE_POOLS:
+		if (shft <= POOL_SMASH_SHIFT) {
+			MESSAGE ("(single pool %d)\n", (sid >> 8) & 0xff);
+		} else {
+			int npools = 1 << (shft - POOL_SMASH_SHIFT);
+			unsigned char *poolinf = (unsigned char *)(sid & ~SLABTYPE_MASK);
+
+			MESSAGE ("(multi pool size %d)\n", npools);
+			BMESSAGE ("  ");
+			for (i=1; i<=indent; i++) {
+				MESSAGE ("  ");
+			}
+			MESSAGE ("[");
+			for (i=0; i<npools; i++) {
+				MESSAGE ("%d ", (int)poolinf[i]);
+			}
+			MESSAGE ("]\n");
+		}
+		break;
+	case SLABTYPE_SPLIT:
+		{
+			unsigned int *sarry = (unsigned int *)(sid & ~SLABTYPE_MASK);
+
+			MESSAGE ("(split)\n");
+			for (i=0; i<(1 << SLAB_SPLIT_SHIFT); i++) {
+				slab_dumpslabinfo (sarry[i], shft - SLAB_SPLIT_SHIFT,
+						(void *)((unsigned char *)addr + (i << (shft - SLAB_SPLIT_SHIFT))), indent + 1);
+			}
+		}
+		break;
+	}
+}
+/*}}}*/
+static void slab_shutdown (void) /*{{{*/
+{
+	int i;
+
+#if 1
+	BMESSAGE ("slab_shutdown(): here!\n");
+#endif
+	BMESSAGE ("valid small-slabs:\n");
+	for (i=0; i<NUM_SMALL_SLABS; i++) {
+		if (slab_smallslabs[i] != SLABTYPE_INVALID) {
+			void *addr = (void *)(i << SMALL_SLAB_SHIFT);
+			unsigned int sid = addr_to_slabid (addr);
+			int shft = addr_to_slabsizeshift (addr);
+
+			slab_dumpslabinfo (sid, shft, addr, 1);
+		}
+	}
+	BMESSAGE ("valid large-slabs:\n");
+	for (i=0; i<NUM_LARGE_SLABS; i++) {
+		if (slab_largeslabs[i] != SLABTYPE_INVALID) {
+			void *addr = (void *)(i << LARGE_SLAB_SHIFT);
+			unsigned int sid = addr_to_slabid (addr);
+			int shft = addr_to_slabsizeshift (addr);
+
+			slab_dumpslabinfo (sid, shft, addr, 1);
+		}
+	}
 }
 /*}}}*/
 
+
+static inline void blockalloc_addscrap (allocator_t *alc, const void *addr, const int bytes) /*{{{*/
+{
+	if (bytes < sizeof (scraplist_t)) {
+		/* cannot do anything useful with this */
+		BMESSAGE ("blockalloc_addscrap(): losing %d bytes at %p\n", bytes, addr);
+	} else {
+		/* add to scrap-list, which we keep in-order */
+		scraplist_t **target = &(alc->scrap_list);
+		scraplist_t *tsl = (scraplist_t *)addr;
+
+		while (*target && ((unsigned int)(*target) < (unsigned int)addr)) {
+			scraplist_t *t = *target;
+
+			/* FIXME: coalesce blocks here? */
+			target = &(t->next);
+		}
+
+		tsl->left = bytes;
+		tsl->next = *target;
+		*target = tsl;
+	}
+}
+/*}}}*/
+static inline void *blockalloc_getscrap (allocator_t *alc, const int bytes) /*{{{*/
+{
+	scraplist_t *tmp = alc->scrap_list;
+	scraplist_t *prev = NULL;
+	void *vptr = NULL;
+
+	while (tmp) {
+		if (tmp->left >= bytes) {
+			break;
+		} else {
+			prev = tmp;
+			tmp = tmp->next;
+		}
+	}
+
+	if (tmp) {
+		/* got a scrap block that can accommodate this */
+		tmp->left -= bytes;
+		if (tmp->left < sizeof (scraplist_t)) {
+			/* not enough left, better remove from list */
+			if (tmp->left > 0) {
+				BMESSAGE ("blockalloc_getscrap(): losing %d bytes at %p\n", tmp->left, (unsigned char *)tmp + bytes);
+			}
+			if (prev) {
+				prev->next = tmp->next;
+			} else {
+				/* first */
+				alc->scrap_list = tmp->next;
+			}
+		} else {
+			/* remove from start of block */
+			if (prev) {
+				prev->next = (scraplist_t *)((unsigned char *)tmp + bytes);
+				prev->next->next = tmp->next;
+				prev->next->left = tmp->left;
+			} else {
+				alc->scrap_list = (scraplist_t *)((unsigned char *)tmp + bytes);
+				alc->scrap_list->next = tmp->next;
+				alc->scrap_list->left = tmp->left;
+			}
+		}
+		vptr = (void *)tmp;
+	} else {
+		/* no blocks for this, allocate a small bit and use that */
+		if (bytes < 2048) {
+			vptr = malloc (3096);
+			/* put what's going to be left on the scrap-list */
+			blockalloc_addscrap (alc, (unsigned char *)vptr + bytes, 3096 - bytes);
+		} else {
+			vptr = malloc (bytes);
+		}
+	}
+	return vptr;
+}
+/*}}}*/
+
+static inline int slab_markregion (const void *addr, const int bytes, unsigned int type) /*{{{*/
+{
+	int cbytes = bytes;
+	void *caddr = (void *)addr;
+
+	while (cbytes > 0) {
+		/* find the relevant slab where caddr lives */
+		unsigned int *sidp = addr_to_slabidptrbot (caddr);
+		int shft = addr_to_slabsizeshiftbot (caddr);
+		int s_slack, e_slack;
+
+		/* shft gives the slab-size of the interesting one, sidp is the starting slab info pointer */
+		s_slack = (unsigned int)caddr & ((1 << shft) - 1);
+		e_slack = ((s_slack + cbytes) > (1 << shft)) ? 0 : ((1 << shft) - (s_slack + cbytes));
+
+#if 1
+		BMESSAGE ("slab_markregion(): caddr = %p, cbytes = %d, sidp = %p, *sidp=0x%8.8x, type = %d, shft = %d, s_slack = %d, e_slack = %d\n",
+				caddr, cbytes, sidp, *sidp, type, shft, s_slack, e_slack);
+#endif
+
+		if ((*sidp & SLABTYPE_MASK) == SLABTYPE_INVALID) {
+			/* reassign slab to new type */
+			*sidp = type;
+		} else {
+#if 1
+			BMESSAGE ("slab_markregion(): slab already marked, value 0x%8.8x\n", *sidp);
+#endif
+		}
+
+		cbytes -= ((1 << shft) - s_slack);
+		caddr = (void *)((unsigned char *)caddr + ((1 << shft) - s_slack));
+	}
+
+	return 0;
+}
+/*}}}*/
+static inline void slab_splitslabaddr (allocator_t *alc, const void *addr) /*{{{*/
+{
+	unsigned int *sidp = addr_to_slabidptrbot (addr);
+	unsigned int *sarry = (unsigned int *)blockalloc_getscrap (alc, sizeof (unsigned int) << SLAB_SPLIT_SHIFT);
+	int i;
+
+#if 0
+	BMESSAGE ("slab_splitslabaddr(): splitting at %p, sidp = %p, *sidp = 0x%8.8x\n", addr, sidp, *sidp);
+#endif
+	for (i=0; i<(1 << SLAB_SPLIT_SHIFT); i++) {
+		sarry[i] = *sidp;				/* defaults to current setting (not SPLIT) */
+	}
+	*sidp = (unsigned int)sarry | SLABTYPE_SPLIT;
+}
+/*}}}*/
+
+static inline void poolmem_collect (allocator_t *alc, const int pool, const void *saddr, const int bytes) /*{{{*/
+{
+	int psize = pool_to_size (pool);
+	int left = bytes;
+	void *addr = (void *)saddr;
+
+	while (left > psize) {
+		/* put onto free-list */
+		unsigned int *me = (unsigned int *)addr;
+
+		me[0] = (unsigned int)(alc->pools[pool]);
+		alc->pools[pool] = me;
+
+		left -= psize;
+		addr = (void *)((char *)addr + psize);
+	}
+	if (left > 0) {
+		blockalloc_addscrap (alc, addr, left);
+	}
+}
+/*}}}*/
+static void poolmem_makeavail (allocator_t *alc, const int pool) /*{{{*/
+{
+	void *xptr;
+	int e_slack;
+	int mshft, bytes;
+
+#if 1
+	BMESSAGE ("poolmem_makeavail(): looking for memory for pool %d\n", pool);
+#endif
+	while (alc->next_uapool) {
+		/*{{{  got an unallocated pool available (probably)*/
+		unsigned int *psidp = addr_to_slabidptrbot (alc->next_uapool);
+		unsigned int pshft = addr_to_slabsizeshiftbot (alc->next_uapool);
+
+		switch (*psidp & SLABTYPE_MASK) {
+		case SLABTYPE_POOLS:
+			/* slab is pool memory at least, which pool was marked? */
+			if (pshft <= POOL_SMASH_SHIFT) {
+				int mpool = (*psidp >> 8) & 0xff;
+
+				if (mpool == 0xff) {
+					/* unallocated, use this */
+					*psidp = (pool << 8) | SLABTYPE_POOLS;
+					poolmem_collect (alc, pool, alc->next_uapool, 1 << pshft);
+
+					/* advance next unallocated pool address */
+					alc->next_uapool = (void *)((char *)alc->next_uapool + (1 << pshft));
+
+					return;
+				}
+				/* else this has already gone, look at next block along */
+				alc->next_uapool = (void *)((char *)alc->next_uapool + (1 << pshft));
+			} else {
+				unsigned char *parry = (unsigned char *)(*psidp & ~SLABTYPE_MASK);
+				int pidx = ((unsigned int)alc->next_uapool >> POOL_SMASH_SHIFT) & ((1 << (pshft - POOL_SMASH_SHIFT)) - 1);
+
+				if (parry[pidx] == 0xff) {
+					/* unallocated, use this */
+					parry[pidx] = pool;
+					poolmem_collect (alc, pool, alc->next_uapool, 1 << POOL_SMASH_SHIFT);
+
+					/* advance next unallocated pool address */
+					alc->next_uapool = (void *)((char *)alc->next_uapool + (1 << POOL_SMASH_SHIFT));
+
+					return;
+				}
+				/* else this has already gone, look at next block along */
+				alc->next_uapool = (void *)((char *)alc->next_uapool + (1 << pshft));
+			}
+			break;
+		case SLABTYPE_RESERVED:
+			/* try next pool along */
+			alc->next_uapool = (void *)((char *)alc->next_uapool + (1 << pshft));
+			break;
+		case SLABTYPE_INVALID:
+			/* ran out, give up */
+			alc->next_uapool = NULL;
+			break;
+		}
+		/*}}}*/
+	}
+
+	/* if we get here, need some more real memory */
+	bytes = MALLOC_POOL_GRAB_BYTES;
+	xptr = malloc (bytes);
+	mshft = MALLOC_MINALIGN_SHIFT;
+
+	if ((unsigned int)xptr & ((1 << mshft) - 1)) {
+		int s_slack = (1 << mshft) - ((unsigned int)xptr & ((1 << mshft) - 1));
+		int xshft;
+
+		/* add slack space as scrap */
+		blockalloc_addscrap (alc, xptr, s_slack);
+
+		/* mark slack region as reserved */
+		xshft = addr_to_slabsizeshiftbot (xptr);
+		while (xshft > (mshft + 1)) {
+			/* split this slab up */
+#if 1
+			BMESSAGE ("poolmem_makeavail(): split at %p, xshft = %d, mshft = %d\n", xptr, xshft, mshft);
+#endif
+			slab_splitslabaddr (alc, xptr);
+			xshft = addr_to_slabsizeshiftbot (xptr);
+		}
+
+		slab_markregion (xptr, s_slack, SLABTYPE_RESERVED);
+
+		bytes -= s_slack;
+		xptr = (void *)((unsigned char *)xptr + s_slack);
+
+	}
+
+
+#if 1
+	BMESSAGE ("poolmem_makeavail(): allocated (align) %d at %p\n", bytes, xptr);
+#endif
+	return;
+}
+/*}}}*/
 static allocator_t *poolmem_newallocator (sched_t *sched) /*{{{*/
 {
 	allocator_t *a = (allocator_t *)malloc (sizeof (allocator_t));
 	int i;
 
+#if 1
+	BMESSAGE ("poolmem_newallocator(): created allocator for scheduler %p at %p\n", sched, a);
+#endif
 	a->sched = sched;
 	a->scrap_list = NULL;
+	a->next_uapool = NULL;
 	for (i=0; i<NUM_POOLS; i++) {
 		a->pools[i] = NULL;
 	}
@@ -249,11 +623,14 @@ static inline void *poolmem_alloc (allocator_t *alc, const int bytes) /*{{{*/
 		if ((pool < (NUM_POOLS - 1)) && alc->pools[pool+1]) {
 			/* use the next one up */
 			pool++;
-			ptr = alc->pools[pool];
 		} else {
+			poolmem_makeavail (alc, pool);
+		}
+
+		ptr = alc->pools[pool];
+
+		if (!ptr) {
 			BMESSAGE ("poolmem_alloc(): OOM! (%d) bytes, pool %d\n", bytes, pool);
-			/* no memory here, go and find some! */
-			/* FIXME: */
 			return NULL;
 		}
 	}
@@ -353,7 +730,7 @@ void *dmem_thread_alloc (void *allocator, word size)
 
 BMESSAGE ("dmem_thread_alloc(): here (BLOCK)! (%d bytes, allocator at %p)\n", size, a);
 	if (!a) {
-		/* means we don't have an allocator setup yet */
+		/* means we don't have an allocator setup yet, revert to default malloc() */
 		return malloc (size);
 	} else {
 		return poolmem_alloc (a, size);
@@ -384,6 +761,14 @@ void dmem_thread_release (void *allocator, void *ptr)
 	free (ptr);
 #elif defined(ALLOC_BLOCK) || defined(ALLOC_SBLOCK)
 	allocator_t *a = (allocator_t *)allocator;
+
+BMESSAGE ("dmem_thread_release(): here (BLOCK/SBLOCK)! (ptr %p, allocator at %p)\n", ptr, a);
+	if (!a) {
+		/* no allocator, revert to default free() */
+		free (ptr);
+	} else {
+		poolmem_release (a, ptr);
+	}
 #endif
 }
 /*}}}*/
@@ -913,6 +1298,9 @@ void dmem_init (void)
  */
 void dmem_shutdown (void)
 {
+#if defined(ALLOC_BLOCK) || defined(ALLOC_SBLOCK)
+	slab_shutdown ();
+#endif
 }
 /*}}}*/
 
