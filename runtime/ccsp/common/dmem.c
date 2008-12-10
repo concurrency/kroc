@@ -91,7 +91,7 @@
 #define FIRST_POOL_SHIFT 4					/* 16 bytes */
 #define FIRST_POOL_BYTES (1 << FIRST_POOL_SHIFT)
 
-#define LAST_POOL_SHIFT 17					/* 128 KiB */
+#define LAST_POOL_SHIFT 16					/* 64 KiB */
 #define LAST_POOL_BYTES (1 << LAST_POOL_SHIFT)
 
 #define NUM_POOLS (((LAST_POOL_SHIFT - FIRST_POOL_SHIFT) * 2) + 1)
@@ -479,7 +479,7 @@ static inline int slab_markregion (const void *addr, const int bytes, unsigned i
 		/* find the relevant slab where caddr lives */
 		unsigned int *sidp = addr_to_slabidptrbot (caddr);
 		int shft = addr_to_slabsizeshiftbot (caddr);
-		int s_slack, e_slack;
+		int s_slack;
 
 		/* shft gives the slab-size of the interesting one, sidp is the starting slab info pointer */
 		s_slack = (unsigned int)caddr & ((1 << shft) - 1);
@@ -487,8 +487,6 @@ static inline int slab_markregion (const void *addr, const int bytes, unsigned i
 		if ((*sidp & SLABTYPE_MASK) == type) {
 			/* already the desired type, so allow (reserved -> reserved) */
 		} else {
-			e_slack = ((s_slack + cbytes) > (1 << shft)) ? 0 : ((1 << shft) - (s_slack + cbytes));
-
 #if 0
 			BMESSAGE ("slab_markregion(): caddr = %p, cbytes = %d, sidp = %p, *sidp=0x%8.8x, type = %d, shft = %d, s_slack = %d, e_slack = %d\n",
 					caddr, cbytes, sidp, *sidp, type, shft, s_slack, e_slack);
@@ -551,7 +549,6 @@ static inline void poolmem_collect (allocator_t *alc, const int pool, const void
 static void poolmem_makeavail (allocator_t *alc, const int pool) /*{{{*/
 {
 	void *xptr;
-	int e_slack;
 	int mshft, bytes, xshft;
 	void *pooladdr = NULL;
 	int rpsize = pool_to_size (pool);
@@ -767,7 +764,6 @@ static void poolmem_markreserved (allocator_t *alc, const void *addr, const int 
 	int xshft = addr_to_slabsizeshiftbot (xptr);
 	int mshft = MALLOC_MINALIGN_SHIFT;
 	unsigned int spare, start;
-	unsigned int sid = addr_to_slabidbot (xptr);
 
 #if 0
 	BMESSAGE ("poolmem_markreserved(): marking %d at %p, xshft = %d\n", left, xptr, xshft);
