@@ -302,7 +302,7 @@ static inline slabid_t *addr_to_slabidptrbot (const void *ptr) /*{{{*/
 	return sidp;
 }
 /*}}}*/
-static void slab_dumpslabinfo (const unsigned int sid, const int shft, const void *addr, const int indent) /*{{{*/
+static void slab_dumpslabinfo (const unsigned int sid, const int shft, const void *addr, const int indent, unsigned int *xover) /*{{{*/
 {
 	int i;
 
@@ -336,6 +336,10 @@ static void slab_dumpslabinfo (const unsigned int sid, const int shft, const voi
 				MESSAGE ("%d ", (int)poolinf[i]);
 			}
 			MESSAGE ("]\n");
+
+			if (xover) {
+				*xover += npools;
+			}
 		}
 		break;
 	case SLABTYPE_SPLIT:
@@ -345,7 +349,12 @@ static void slab_dumpslabinfo (const unsigned int sid, const int shft, const voi
 			MESSAGE ("(split)\n");
 			for (i=0; i<(1 << SLAB_SPLIT_SHIFT); i++) {
 				slab_dumpslabinfo (sarry[i], shft - SLAB_SPLIT_SHIFT,
-						(void *)((unsigned char *)addr + (i << (shft - SLAB_SPLIT_SHIFT))), indent + 1);
+						(void *)((unsigned char *)addr + (i << (shft - SLAB_SPLIT_SHIFT))), indent + 1,
+						xover);
+			}
+
+			if (xover) {
+				*xover += (sizeof (unsigned int) << SLAB_SPLIT_SHIFT);
 			}
 		}
 		break;
@@ -385,16 +394,16 @@ static void blockalloc_dumpallocator (allocator_t *alc) /*{{{*/
 
 }
 /*}}}*/
-static void slab_shutdown (void) /*{{{*/
+static void slab_dumpstats (void) /*{{{*/
 {
 	int i;
 	allocator_t *awalk;
 	long long alloc_diff, nalloc_diff;
+	unsigned int xover = 0;
 
-#if 1
-	BMESSAGE ("slab_shutdown(): here!\n");
-#endif
 #if defined(USE_SMALLSLABS)
+	xover += sizeof (slab_smallslabs);
+
 	BMESSAGE ("valid small-slabs:\n");
 	for (i=0; i<NUM_SMALL_SLABS; i++) {
 		if (SLABV (slab_smallslabs[i]) != SLABTYPE_INVALID) {
@@ -402,10 +411,12 @@ static void slab_shutdown (void) /*{{{*/
 			slabid_t sid = addr_to_slabid (addr);
 			int shft = addr_to_slabsizeshift (addr);
 
-			slab_dumpslabinfo (sid, shft, addr, 1);
+			slab_dumpslabinfo (sid, shft, addr, 1, &xover);
 		}
 	}
 #endif
+	xover += sizeof (slab_largeslabs);
+
 	BMESSAGE ("valid large-slabs:\n");
 	for (i=0; i<NUM_LARGE_SLABS; i++) {
 		if (SLABV (slab_largeslabs[i]) != SLABTYPE_INVALID) {
@@ -413,7 +424,7 @@ static void slab_shutdown (void) /*{{{*/
 			unsigned int sid = addr_to_slabid (addr);
 			int shft = addr_to_slabsizeshift (addr);
 
-			slab_dumpslabinfo (sid, shft, addr, 1);
+			slab_dumpslabinfo (sid, shft, addr, 1, &xover);
 		}
 	}
 	BMESSAGE ("allocators:\n");
@@ -427,6 +438,15 @@ static void slab_shutdown (void) /*{{{*/
 		nalloc_diff -= awalk->t_nrelease;
 	}
 	BMESSAGE ("allocator balance: %Ld bytes lost in %Ld allocations\n", alloc_diff, nalloc_diff);
+	BMESSAGE ("allocator structures overhead: %u bytes\n", xover);
+}
+/*}}}*/
+static void slab_shutdown (void) /*{{{*/
+{
+#if 0
+	BMESSAGE ("slab_shutdown(): here!\n");
+#endif
+	slab_dumpstats ();
 }
 /*}}}*/
 
