@@ -103,7 +103,7 @@
 #define SLABTYPE_SPLIT 1
 #define SLABTYPE_POOLS 2
 #define SLABTYPE_RESERVED 3
-#define SLABTYPE_MASK 0x03
+#define SLABTYPE_MASK 0x07
 
 static unsigned int slab_smallslabs[NUM_SMALL_SLABS];
 static unsigned int slab_largeslabs[NUM_LARGE_SLABS];
@@ -459,9 +459,9 @@ static inline void *blockalloc_getscrap (allocator_t *alc, const int bytes) /*{{
 	} else {
 		/* no blocks for this, allocate a small bit and use that */
 		if (bytes < 2048) {
-			vptr = malloc (3096);
+			vptr = malloc (4000);
 			/* put what's going to be left on the scrap-list */
-			blockalloc_addscrap (alc, (unsigned char *)vptr + bytes, 3096 - bytes);
+			blockalloc_addscrap (alc, (unsigned char *)vptr + bytes, 4000 - bytes);
 		} else {
 			vptr = malloc (bytes);
 		}
