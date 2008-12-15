@@ -132,6 +132,7 @@ typedef atomic_t slabid_t;
 #define SETSLABPV(X,V) do { (X)->value = (V); } while (0)
 #define SETSLABV(X,V) do { (X).value = (V); } while (0)
 
+#define SCRAP_MIN_ALIGN 3					/* scrap blocks must be 8-bytes aligned */
 
 #if defined(USE_SMALLSLABS)
 static slabid_t slab_smallslabs[NUM_SMALL_SLABS];
@@ -453,22 +454,29 @@ static void slab_shutdown (void) /*{{{*/
 
 static inline void blockalloc_addscrap (allocator_t *alc, const void *addr, const int bytes) /*{{{*/
 {
-	if (bytes < sizeof (scraplist_t)) {
+	void *blkaddr = (void *)addr;
+	int blksize = (int)bytes;
+
+	if ((unsigned int)blkaddr & ((1 << SCRAP_MIN_ALIGN) - 1)) {
+		blksize -= ((unsigned int)blkaddr & ((1 << SCRAP_MIN_ALIGN) - 1));
+		blkaddr = (void *)(((unsigned int)blkaddr & ~((1 << SCRAP_MIN_ALIGN) - 1)) + (1 << SCRAP_MIN_ALIGN));
+	}
+	if (blksize < sizeof (scraplist_t)) {
 		/* cannot do anything useful with this */
-		BMESSAGE ("blockalloc_addscrap(): losing %d bytes at %p\n", bytes, addr);
+		BMESSAGE ("blockalloc_addscrap(): losing %d bytes at %p\n", blksize, blkaddr);
 	} else {
 		/* add to scrap-list, which we keep in-order */
 		scraplist_t **target = &(alc->scrap_list);
-		scraplist_t *tsl = (scraplist_t *)addr;
+		scraplist_t *tsl = (scraplist_t *)blkaddr;
 
-		while (*target && ((unsigned int)(*target) < (unsigned int)addr)) {
+		while (*target && ((unsigned int)(*target) < (unsigned int)blkaddr)) {
 			scraplist_t *t = *target;
 
 			/* FIXME: coalesce blocks here? */
 			target = &(t->next);
 		}
 
-		tsl->left = bytes;
+		tsl->left = blksize;
 		tsl->next = *target;
 		*target = tsl;
 	}
@@ -479,9 +487,15 @@ static inline void *blockalloc_getscrap (allocator_t *alc, const int bytes) /*{{
 	scraplist_t *tmp = alc->scrap_list;
 	scraplist_t *prev = NULL;
 	void *vptr = NULL;
+	int abytes = (int)bytes;
+
+	if (abytes & ((1 << SCRAP_MIN_ALIGN) - 1)) {
+		/* round up to alignment size */
+		abytes = (abytes & ~((1 << SCRAP_MIN_ALIGN) - 1)) + (1 << SCRAP_MIN_ALIGN);
+	}
 
 	while (tmp) {
-		if (tmp->left >= bytes) {
+		if (tmp->left >= abytes) {
 			break;
 		} else {
 			prev = tmp;
@@ -491,11 +505,11 @@ static inline void *blockalloc_getscrap (allocator_t *alc, const int bytes) /*{{
 
 	if (tmp) {
 		/* got a scrap block that can accommodate this */
-		tmp->left -= bytes;
+		tmp->left -= abytes;
 		if (tmp->left < sizeof (scraplist_t)) {
 			/* not enough left, better remove from list */
 			if (tmp->left > 0) {
-				BMESSAGE ("blockalloc_getscrap(): losing %d bytes at %p\n", tmp->left, (unsigned char *)tmp + bytes);
+				BMESSAGE ("blockalloc_getscrap(): losing %d bytes at %p\n", tmp->left, (unsigned char *)tmp + abytes);
 			}
 			if (prev) {
 				prev->next = tmp->next;
@@ -506,11 +520,11 @@ static inline void *blockalloc_getscrap (allocator_t *alc, const int bytes) /*{{
 		} else {
 			/* remove from start of block */
 			if (prev) {
-				prev->next = (scraplist_t *)((unsigned char *)tmp + bytes);
+				prev->next = (scraplist_t *)((unsigned char *)tmp + abytes);
 				prev->next->next = tmp->next;
 				prev->next->left = tmp->left;
 			} else {
-				alc->scrap_list = (scraplist_t *)((unsigned char *)tmp + bytes);
+				alc->scrap_list = (scraplist_t *)((unsigned char *)tmp + abytes);
 				alc->scrap_list->next = tmp->next;
 				alc->scrap_list->left = tmp->left;
 			}
@@ -518,12 +532,12 @@ static inline void *blockalloc_getscrap (allocator_t *alc, const int bytes) /*{{
 		vptr = (void *)tmp;
 	} else {
 		/* no blocks for this, allocate a small bit and use that */
-		if (bytes < 2048) {
+		if (abytes < 2048) {
 			vptr = malloc (4000);
 			/* put what's going to be left on the scrap-list */
-			blockalloc_addscrap (alc, (unsigned char *)vptr + bytes, 4000 - bytes);
+			blockalloc_addscrap (alc, (unsigned char *)vptr + abytes, 4000 - abytes);
 		} else {
-			vptr = malloc (bytes);
+			vptr = malloc (abytes);
 		}
 	}
 	return vptr;
