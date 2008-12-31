@@ -1,0 +1,638 @@
+--
+--	occSDLjoy.occ -- joystick helper code for SDL wrapper
+--	Copyright (C) 2008 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+--** @module occSDL
+
+-- NOTE: this only does axis and buttons at the moment, not hats or balls.
+
+#INCLUDE "occSDL.inc"
+#INCLUDE "occSDLjoy.inc"
+
+#PRAGMA EXTERNAL "PROC C.out.stderr (VAL []BYTE str) = 0"
+#PRAGMA EXTERNAL "PROC C.out.stderr.int (VAL INT n) = 0"
+
+--{{{  PROC occ.SDL.joy.handler (...)
+--* Individual joystick handler.
+--
+-- @param svr Server channel-type link.
+-- @param num Joystick number.
+--
+-- @private
+PROC occ.SDL.joy.handler (CT.SDLJS? svr, VAL INT num)
+  INT min.iv, max.iv:         -- min/max polling intervals (us)
+  INT boff.iv:                -- interval backoff (us)
+  BOOL reporting:
+  TIMER tim:
+  INT t:
+  SDL.Joystick sptr:
+  INT nr.axes, nr.btns:
+  CT.SDLJSEVENT? e.svr:       -- only defined if reporting is TRUE.
+  SEQ
+    min.iv := 8000            -- 8ms
+    max.iv := 50000           -- 50ms
+    boff.iv := min.iv
+    reporting := FALSE
+
+    SDL.JoystickOpen (sptr, num)
+
+    IF
+      sptr <> 0
+        SEQ
+          SDL.JoystickNumAxes (nr.axes, sptr)
+          SDL.JoystickNumButtons (nr.btns, sptr)
+      TRUE
+        nr.axes, nr.btns := 0, 0
+
+    tim ? t                   -- duff
+
+    IF
+      sptr <> 0
+        MOBILE []INT16 ax.vals:
+        MOBILE []BYTE bt.vals:
+        SEQ
+          ax.vals := MOBILE [nr.axes]INT16
+          bt.vals := MOBILE [nr.btns]BYTE
+
+          SDL.JoystickUpdate ()
+
+          SEQ i = 0 FOR nr.axes
+            INT16 tmp:
+            SEQ
+              SDL.JoystickGetAxis (tmp, sptr, i)
+              ax.vals[i] := tmp
+          SEQ i = 0 FOR nr.btns
+            BYTE tmp:
+            SEQ
+              SDL.JoystickGetButton (tmp, sptr, i)
+              bt.vals[i] := tmp
+
+          CT.SDLJSEVENT! tmp:
+          SEQ
+            e.svr, tmp := MOBILE CT.SDLJSEVENT
+
+          INITIAL BOOL running IS TRUE:
+          WHILE running
+            INITIAL BOOL read.now IS FALSE:
+            SEQ
+              IF
+                reporting
+                  t := t PLUS boff.iv
+                TRUE
+                  SKIP
+
+              PRI ALT
+                svr[in] ? CASE
+                  enable
+                    CT.SDLJSEVENT! ev.cli:
+                    SEQ
+                      IF
+                        reporting
+                          e.svr[out] ! quit         -- kill this one first!
+                        TRUE
+                          SKIP
+
+                      e.svr, ev.cli := MOBILE CT.SDLJSEVENT
+                      reporting := TRUE
+                      boff.iv := min.iv
+                      read.now := TRUE
+                      svr[out] ! event.chan; ev.cli
+                      tim ? t
+
+                  disable
+                    SEQ
+                      IF
+                        reporting
+                          e.svr[out] ! quit
+                        TRUE
+                          SKIP
+                      reporting := FALSE
+
+                  query
+                    svr[out] ! query; [nr.axes, nr.btns]
+
+                reporting & e.svr[in] ? CASE
+                  force.event
+                    SEQ
+                      read.now := TRUE
+                      -- zero old events, force changes
+                      SEQ i = 0 FOR nr.axes
+                        ax.vals[i] := 0
+                      SEQ i = 0 FOR nr.btns
+                        bt.vals[i] := #00
+
+                reporting & tim ? AFTER t
+                  SEQ
+                    read.now := TRUE
+
+              IF
+                read.now
+                  MOBILE []INT16 old.ax:
+                  MOBILE []BYTE old.bt:
+                  INITIAL INT changed IS 0:
+                  INITIAL INT axmask IS 0:
+                  INITIAL INT btmask IS 0:
+                  SEQ
+                    SDL.JoystickUpdate ()
+
+                    -- save in old virst
+                    old.ax := MOBILE [nr.axes]INT16
+                    old.bt := MOBILE [nr.btns]BYTE
+                    SEQ i = 0 FOR nr.axes
+                      old.ax[i] := ax.vals[i]
+                    SEQ i = 0 FOR nr.btns
+                      old.bt[i] := bt.vals[i]
+
+                    -- read current values
+                    SEQ i = 0 FOR nr.axes
+                      INT16 tmp:
+                      SEQ
+                        SDL.JoystickGetAxis (tmp, sptr, i)
+                        ax.vals[i] := tmp
+                    SEQ i = 0 FOR nr.btns
+                      BYTE tmp:
+                      SEQ
+                        SDL.JoystickGetButton (tmp, sptr, i)
+                        bt.vals[i] := tmp
+
+                    #PRAGMA DEFINED ax.vals
+                    #PRAGMA DEFINED bt.vals
+
+                    SEQ i = 0 FOR nr.axes
+                      IF
+                        old.ax[i] <> ax.vals[i]
+                          SEQ
+                            changed := changed + 1
+                            axmask := (axmask \/ (1 << i))
+                        TRUE
+                          SKIP
+                    SEQ i = 0 FOR nr.btns
+                      IF
+                        old.bt[i] <> bt.vals[i]
+                          SEQ
+                            changed := changed + 1
+                            btmask := (btmask \/ (1 << i))
+                        TRUE
+                          SKIP
+
+                    IF
+                      (changed > 0) AND reporting
+                        MOBILE []INT16 tmp.ax:
+                        MOBILE []BYTE tmp.bt:
+                        SEQ
+                          tmp.ax := CLONE ax.vals
+                          tmp.bt := CLONE bt.vals
+                          e.svr[out] ! change; axmask; btmask; tmp.ax; tmp.bt
+                          boff.iv := min.iv
+                      (changed > 0)
+                        SEQ
+                          -- changed, but not reporting.
+                          boff.iv := min.iv
+                      TRUE
+                        -- no change, increase backoff interval.
+                        IF
+                          boff.iv < max.iv
+                            SEQ
+                              boff.iv := (boff.iv * 3) / 2
+                              IF
+                                boff.iv > max.iv
+                                  boff.iv := max.iv
+                                TRUE
+                                  SKIP
+                          TRUE
+                            SKIP
+                TRUE
+                  SKIP
+                              
+                        
+      TRUE
+        -- broken joystick handler
+        INITIAL BOOL running IS TRUE:
+        WHILE running
+          SEQ
+            svr[in] ? CASE
+              enable
+                SKIP
+              disable
+                SKIP
+              query
+                svr[out] ! query; [0, 0]
+:
+--}}}
+--{{{  PROC occ.SDL.wait.button (...)
+--* Waits for a button press event, discards other events.
+--
+-- @param ev Events from joystick.
+-- @param btn Returned button ID (-1 if quit).
+--
+PROC occ.SDL.wait.button (CT.SDLJSEVENT! ev, RESULT INT btn)
+  INITIAL BOOL loop IS TRUE:
+  WHILE loop
+    ev[out] ? CASE
+      INT ax.delta, bt.delta:
+      MOBILE []INT16 ax.vals:
+      MOBILE []BYTE bt.vals:
+      change; ax.delta; bt.delta; ax.vals; bt.vals
+        --{{{  change event, was it a button?
+        IF
+          bt.delta <> 0
+            SEQ
+              -- yes, which one?
+              IF
+                IF i = 0 FOR SIZE bt.vals
+                  ((bt.delta /\ (1 << i)) <> 0) AND (bt.vals[i] = 1)
+                    btn, loop := i, FALSE
+                TRUE
+                  SKIP        -- probably a button up event
+          TRUE
+            SKIP
+        --}}}
+      quit
+        --{{{  quit
+        btn, loop := -1, FALSE
+        --}}}
+:
+--}}}
+--{{{  PROC occ.SDL.wait.button.axes (...)
+--* Waits for a button press event and records axes positions, discards other events.
+--
+-- @param ev Events from joystick.
+-- @param btn Returned button ID (-1 if quit).
+-- @param ax.res Returned axis values.
+--
+PROC occ.SDL.wait.button.axes (CT.SDLJSEVENT! ev, RESULT INT btn, RESULT MOBILE []INT16 ax.res)
+  INITIAL BOOL loop IS TRUE:
+  WHILE loop
+    ev[out] ? CASE
+      INT ax.delta, bt.delta:
+      MOBILE []INT16 ax.vals:
+      MOBILE []BYTE bt.vals:
+      change; ax.delta; bt.delta; ax.vals; bt.vals
+        --{{{  change event, was it a button?
+        IF
+          bt.delta <> 0
+            SEQ
+              -- yes, which one?
+              IF
+                IF i = 0 FOR SIZE bt.vals
+                  ((bt.delta /\ (1 << i)) <> 0) AND (bt.vals[i] = 1)
+                    SEQ
+                      btn, loop := i, FALSE
+                      ax.res := ax.vals
+                TRUE
+                  SKIP        -- probably a button up event
+          TRUE
+            SKIP
+        --}}}
+      quit
+        --{{{  quit
+        SEQ
+          btn, loop := -1, FALSE
+          ax.res := MOBILE [0]INT16
+        --}}}
+:
+--}}}
+--{{{  PROC occ.SDL.waitfor.button (...)
+--* Waits for a particular button press, discards other events.
+--
+-- @param ev Events from joystick.
+-- @param btn Button to wait for.
+--
+PROC occ.SDL.waitfor.button (CT.SDLJSEVENT! ev, VAL INT btn)
+  INITIAL BOOL loop IS TRUE:
+  WHILE loop
+    ev[out] ? CASE
+      INT ax.delta, bt.delta:
+      MOBILE []INT16 ax.vals:
+      MOBILE []BYTE bt.vals:
+      change; ax.delta; bt.delta; ax.vals; bt.vals
+        --{{{  change event, was it the right button?
+        IF
+          ((bt.delta /\ (1 << btn)) <> 0) AND (bt.vals[btn] = 1)
+            loop := FALSE
+          TRUE
+            SKIP
+        --}}}
+      quit
+        --{{{  quit
+        loop := FALSE
+        --}}}
+:
+--}}}
+--{{{  PROC occ.SDL.waitfor.button.axes (...)
+--* Waits for a particular button press and records axis values, discards other events.
+--
+-- @param ev Events from joystick.
+-- @param btn Button to wait for.
+-- @param ax.res Returned axis positions.
+--
+PROC occ.SDL.waitfor.button.axes (CT.SDLJSEVENT! ev, VAL INT btn, RESULT MOBILE []INT16 ax.res)
+  INITIAL BOOL loop IS TRUE:
+  WHILE loop
+    ev[out] ? CASE
+      INT ax.delta, bt.delta:
+      MOBILE []INT16 ax.vals:
+      MOBILE []BYTE bt.vals:
+      change; ax.delta; bt.delta; ax.vals; bt.vals
+        --{{{  change event, was it the right button?
+        IF
+          ((bt.delta /\ (1 << btn)) <> 0) AND (bt.vals[btn] = 1)
+            SEQ
+              loop := FALSE
+              ax.res := ax.vals
+          TRUE
+            SKIP
+        --}}}
+      quit
+        --{{{  quit
+        SEQ
+          loop := FALSE
+          ax.res := MOBILE [0]INT16
+        --}}}
+:
+--}}}
+
+
+--{{{  PROC occ.SDL.joy.doread (...)
+--* Reads the current axes and buttons for a joystick.
+--
+-- @param ev Event channel-type link.
+-- @param ax.vals Returned axis values.
+-- @param bt.vals Returned button values.
+--
+PROC occ.SDL.joy.doread (CT.SDLJSEVENT! ev, RESULT MOBILE []INT16 ax.vals, RESULT MOBILE []BYTE bt.vals)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+
+    CHAN INT done:
+    PAR
+      --{{{  read change data
+      INT ax.delta, bt.delta:
+      SEQ
+        ev[out] ? CASE
+          change; ax.delta; bt.delta; ax.vals; bt.vals
+            done ! 0
+          quit
+            SEQ
+              ax.vals := MOBILE [0]INT16
+              bt.vals := MOBILE [0]BYTE
+              done ! 0
+      --}}}
+      --{{{  wait 10ms for event, then force it
+      SEQ
+        t := t PLUS 10000
+
+        INITIAL BOOL loop IS TRUE:
+        WHILE loop
+          PRI ALT
+            INT any:
+            done ? any
+              loop := FALSE
+            tim ? AFTER t
+              SEQ
+                ev[in] ! force.event
+                t := t PLUS 20000
+
+      --}}}
+:
+--}}}
+
+
+--{{{  PROC occ.SDL.joy.calibrate (...)
+--* Provides joystick calibration and subsequent adjustment of reported values.
+--
+-- @param svr Server channel-type link.
+-- @param ev.in Joystick events in.
+-- @param ev.out Joystick events out.
+--
+PROC occ.SDL.joy.calibrate (CT.SDLJSCALIBRATE? svr, CT.SDLJSEVENT! ev.in, CT.SDLJSEVENT? ev.out)
+
+  MOBILE []INT b.map:
+  MOBILE []INT a.scale:
+  MOBILE []INT16 a.minvals:
+  MOBILE []INT16 a.maxvals:
+  MOBILE []INT16 a.cenvals:
+  INT nbtns, naxes:
+  SEQ
+    --{{{  initialise
+    MOBILE []INT16 ax.vals:
+    MOBILE []BYTE bt.vals:
+    SEQ
+      occ.SDL.joy.doread (ev.in!, ax.vals, bt.vals)
+      nbtns := SIZE bt.vals
+      naxes := SIZE ax.vals
+
+      b.map := MOBILE [nbtns]INT
+      a.scale := MOBILE [naxes]INT
+
+      SEQ i = 0 FOR nbtns
+        b.map[i] := (nbtns - 1)         -- default to last button
+      SEQ i = 0 FOR naxes
+        a.scale[i] := 65536
+    --}}}
+  
+    INITIAL BOOL run IS TRUE:
+    WHILE run
+      PRI ALT
+        svr[in] ? CASE
+          calibrate
+            --{{{  do calibration
+            MOBILE []INT16 ax.vals:
+            MOBILE []BYTE bt.vals:
+            INT p.btn, s.btn:
+            SEQ
+              occ.SDL.joy.doread (ev.in!, ax.vals, bt.vals)
+
+              svr[out] ! message; "centre all axes and press primary fire button"
+              occ.SDL.wait.button.axes (ev.in!, p.btn, a.cenvals)
+              b.map[p.btn] := 0
+
+              svr[out] ! message; "press secondary fire button"
+              occ.SDL.wait.button (ev.in!, s.btn)
+              b.map[s.btn] := 1
+
+              svr[out] ! message; "move all axes to minimum/left/brake and press primary fire button"
+              occ.SDL.waitfor.button.axes (ev.in!, p.btn, a.minvals)
+
+              svr[out] ! message; "move all axes to maximum/right/accelerate and press primary fire button"
+              occ.SDL.waitfor.button.axes (ev.in!, p.btn, a.maxvals)
+
+              svr[out] ! done
+            --}}}
+        ev.in[out] ? CASE
+          INT ax.delta, bt.delta:
+          MOBILE []INT16 ax.vals:
+          MOBILE []BYTE bt.vals:
+          change; ax.delta; bt.delta; ax.vals; bt.vals
+            --{{{  joystick event
+            MOBILE []INT16 new.ax:
+            MOBILE []BYTE new.bt:
+            INT new.axd, new.btd:
+            SEQ
+              new.ax := MOBILE [naxes]INT16
+              new.bt := MOBILE [nbtns]BYTE
+              new.axd, new.btd := 0, 0
+
+              SEQ i = 0 FOR naxes
+                new.ax[i] := 0
+              SEQ i = 0 FOR nbtns
+                new.bt[i] := #00
+
+              SEQ i = 0 FOR nbtns
+                SEQ
+                  IF
+                    (bt.delta /\ (1 << i)) <> 0
+                      new.btd := new.btd \/ (1 << b.map[i])
+                    TRUE
+                      SKIP
+                  IF
+                    bt.vals[i] <> #00
+                      INITIAL INT tbtn IS b.map[i]:
+                      new.bt[tbtn] := bt.vals[i]
+                    TRUE
+                      SKIP
+
+              new.axd := ax.delta
+              SEQ i = 0 FOR naxes
+                SEQ
+                  new.ax[i] := ax.vals[i]
+
+              ev.out[out] ! change; new.axd; new.btd; new.ax; new.bt
+            --}}}
+          quit
+            --{{{  shutting down
+            SEQ
+              ev.out[out] ! quit
+              run := FALSE
+            --}}}
+        ev.out[in] ? CASE
+          force.event
+            --{{{  forcing event change, pass upstream
+            SEQ
+              ev.in[in] ! force.event
+            --}}}
+:
+--}}}
+--{{{  PROC occ.SDL.joy.calibrator (...)
+--* Launches a joystick calibration process.
+--
+-- @param ev.in Joystick events in.
+-- @param ev.out Returned joystick events out.
+-- @param cal.out Returned calibration channel-end.
+--
+PROC occ.SDL.joy.calibrator (CT.SDLJSEVENT! ev.in, RESULT CT.SDLJSEVENT! ev.out, RESULT CT.SDLJSCALIBRATE! cal.out)
+  CT.SDLJSCALIBRATE? csvr:
+  CT.SDLJSEVENT? esvr:
+  SEQ
+    csvr, cal.out := MOBILE CT.SDLJSCALIBRATE
+    esvr, ev.out := MOBILE CT.SDLJSEVENT
+    FORK occ.SDL.joy.calibrate (csvr, ev.in, esvr)
+:
+--}}}
+
+
+--{{{  PROC occ.SDL.joy.server (...)
+--* Provides a server process that monitors joysticks.
+--
+-- @param svr Server channel-type link.
+--
+PROC occ.SDL.joy.server (CT.SDLJOY? svr)
+  INT result:
+  SEQ
+    SDL.Init (result, SDL.INIT.JOYSTICK)
+    IF
+      result = 0
+        INT j.count:
+        MOBILE []SHARED CT.SDLJS! clis:
+        MOBILE [][SDLJS.ITEMS]INT js.info:
+        SEQ
+          SDL.NumJoysticks (j.count)
+
+          INT r2:
+          SEQ
+            SDL.JoystickEventState (r2, SDL.IGNORE)
+
+          clis := MOBILE [j.count]SHARED CT.SDLJS!
+          js.info := MOBILE [j.count][SDLJS.ITEMS]INT
+          
+          SEQ i = 0 FOR j.count
+            CT.SDLJS? svr:
+            SEQ
+              svr, clis[i] := MOBILE CT.SDLJS
+              FORK occ.SDL.joy.handler (svr, i)
+
+              -- get settings
+              CLAIM clis[i]
+                SEQ
+                  clis[i][in] ! query
+                  clis[i][out] ? CASE query; js.info[i]
+
+          INITIAL BOOL running IS TRUE:
+          WHILE running
+            svr[in] ? CASE
+              num.sticks
+                svr[out] ! num.sticks; j.count
+              INT stk:
+              query.stick; stk
+                IF
+                  (stk < 0) OR (stk >= j.count)
+                    svr[out] ! query; -1; [0, 0]
+                  TRUE
+                    svr[out] ! query; stk; js.info[stk]
+              quit
+                running := FALSE
+              INT stk:
+              connect; stk
+                IF
+                  (stk < 0) OR (stk >= j.count)
+                    svr[out] ! error
+                  TRUE
+                    SHARED CT.SDLJS! tmp:
+                    SEQ
+                      tmp := CLONE clis[stk]
+                      svr[out] ! joystick; tmp
+
+      TRUE
+        INITIAL BOOL running IS TRUE:
+        WHILE running
+          svr[in] ? CASE
+            num.sticks
+              svr[out] ! num.sticks; 0
+            INT stk:
+            query.stick; stk
+              svr[out] ! query; -1; [0, 0]
+            quit
+              running := FALSE
+:
+--}}}
+--{{{  PROC occ.SDL.joy.start (...)
+--* Starts a new instance of the SDL joystick server process.
+--
+-- @param cli Returned link to new server process.
+--
+PROC occ.SDL.joy.start (RESULT CT.SDLJOY! cli)
+  CT.SDLJOY? svr:
+  SEQ
+    svr, cli := MOBILE CT.SDLJOY
+    FORK occ.SDL.joy.server (svr)
+:
+--}}}
+
+
