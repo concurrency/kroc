@@ -97,6 +97,7 @@ PROTOCOL COMMANDS
     Slower
     Clockwise
     Anticlockwise
+    SetMotion; INT; INT
     Halt
     Freeze
 :
@@ -513,7 +514,7 @@ ANGLE INLINE FUNCTION ABS (VAL ANGLE w)
 --  @param info Receive info
 --  @param screen frame rate messages
 --
-PROC Manual (VAL STATE s, CHAN COMMANDS commands?, SHARED CHAN UPDATE update!, CHAN INFO info?,
+PROC Manual (VAL STATE s, CHAN COMMANDS commands?, CHAN UPDATE update!, CHAN INFO info?,
              SHARED CHAN BYTE screen!)
 
   TIMER tim:
@@ -525,11 +526,12 @@ PROC Manual (VAL STATE s, CHAN COMMANDS commands?, SHARED CHAN UPDATE update!, C
   VAL ANGLE D.W IS ANGLE.DEGREE / 2:
 
   SEQ
-    CLAIM update!
-      update ! State; s			-- initialize drone
+    update ! State; s			-- initialize drone
+
     tim ? t.0
     INITIAL INT   v IS s[V]:		-- only needs to know these
     INITIAL ANGLE w IS s[W]:
+    INITIAL BOOL seen.setm IS FALSE:
     WHILE TRUE
       RANGES ranges:
       INITIAL BOOL flag IS FALSE:
@@ -552,19 +554,43 @@ PROC Manual (VAL STATE s, CHAN COMMANDS commands?, SHARED CHAN UPDATE update!, C
               v, w := 0, 0
             Freeze
               commands ? CASE Freeze
+            INT ang, fwd:
+            SetMotion; ang; fwd
+              SEQ
+                v := fwd / 7
+                w := (ANGLE.DEGREE / 15) * (ANGLE ang)
+
+                -- make sure we don't run into scenary!
+                VAL INT speed IS Speed (Min (ranges)):
+                IF
+                  speed < v
+                    v := speed
+                  TRUE
+                    SKIP
+
+                seen.setm := TRUE
+
           SKIP
-            VAL INT speed IS Speed (Min (ranges)):
             IF
-              speed = 0
-                v := 0
+              NOT seen.setm
+                VAL INT speed IS Speed (Min (ranges)):
+                IF
+                  speed = 0
+                    v := 0
+                  TRUE
+                    v := speed
               TRUE
-                v := speed
-        CLAIM update!
-          IF
-            flag
-              update ! Position; x; y
-            TRUE
-              update ! Motion; v; w
+                VAL INT speed IS Speed (Min (ranges)):
+                IF
+                  speed < v
+                    v := speed
+                  TRUE
+                    SKIP
+        IF
+          flag
+            update ! Position; x; y
+          TRUE
+            update ! Motion; v; w
 
         count := count + 1
         IF
@@ -677,6 +703,36 @@ PROC Events (CHAN RASTER.EVENT events?, SHARED CHAN COMMANDS commands!)
           --}}}
           ELSE				-- anything else?
             SKIP
+:
+--}}}
+--{{{  PROC Joystick (CT.SDLJSEVENT! ev, SHARED CHAN COMMANDS commands!)
+--* Joystick handler.
+--
+PROC Joystick (CT.SDLJSEVENT! ev, SHARED CHAN COMMANDS commands!)
+  INITIAL BOOL loop IS TRUE:
+  WHILE loop
+    SEQ
+      ev[out] ? CASE
+        INT ax.delta, bt.delta:
+        MOBILE []INT16 ax.vals:
+        MOBILE []BYTE bt.vals:
+        change; ax.delta; bt.delta; ax.vals; bt.vals
+          IF
+            (SIZE ax.vals) >= 2
+              -- update with normalised axis values
+              SEQ
+                IF
+                  ax.vals[1] < 0
+                    ax.vals[1] := 0                 -- can't go backwards!
+                  TRUE
+                    SKIP
+                CLAIM commands!
+                  commands ! SetMotion; INT ax.vals[0]; INT ax.vals[1]
+            TRUE
+              SKIP
+        quit
+          loop := FALSE
+            
 :
 --}}}
 --{{{  PROC Head (CHAN RASTER in.1?, in.2?, out!)
@@ -898,14 +954,13 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
     [ROBOTS]CHAN RASTER d:
     [ROBOTS]CHAN UPDATE h:
     [ROBOTS]CHAN INFO j:
-    SHARED! CHAN UPDATE h.0:
     PAR
       raster.display ("Robots", WIDTH, DEPTH, RASTERS, return?, source!, events!)
       Scene (source?, b!)
       Head (b?, e?, c!)
-      Drone (h.0?, j[0]!, c?, d[0]!, screen!)
+      Drone (h[0]?, j[0]!, c?, d[0]!, screen!)
       -- Auto (s[0], h[0]!, j[0]?)
-      Manual (s[0], commands?, h.0!, j[0]?, screen!)
+      Manual (s[0], commands?, h[0]!, j[0]?, screen!)
       Events (events?, commands!)
       
       CT.SDLJOY! j.cli:
@@ -946,6 +1001,8 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
                               SKIP
                             quit
                               SKIP
+                    -- now pass events through to manual controller
+                    Joystick (ev2, commands!)
                 error
                   CLAIM screen!
                     out.string ("No joysticks found, keyboard control only!*n", 0, screen!)
