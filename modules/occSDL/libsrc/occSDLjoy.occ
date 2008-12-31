@@ -27,6 +27,19 @@
 #PRAGMA EXTERNAL "PROC C.out.stderr (VAL []BYTE str) = 0"
 #PRAGMA EXTERNAL "PROC C.out.stderr.int (VAL INT n) = 0"
 
+INT FUNCTION UINT16.TO.INT (VAL INT16 v)
+  INT r:
+  VALOF
+    SEQ
+      r := INT (v /\ #7FFF)
+      IF
+        ((INT v) /\ #8000) <> 0
+          r := r \/ #00008000
+        TRUE
+          SKIP
+    RESULT r
+:
+
 --{{{  PROC occ.SDL.joy.handler (...)
 --* Individual joystick handler.
 --
@@ -426,6 +439,7 @@ PROC occ.SDL.joy.calibrate (CT.SDLJSCALIBRATE? svr, CT.SDLJSEVENT! ev.in, CT.SDL
 
   MOBILE []INT b.map:
   MOBILE []INT a.scale:
+  MOBILE []INT a.delta:
   MOBILE []INT16 a.minvals:
   MOBILE []INT16 a.maxvals:
   MOBILE []INT16 a.cenvals:
@@ -441,11 +455,14 @@ PROC occ.SDL.joy.calibrate (CT.SDLJSCALIBRATE? svr, CT.SDLJSEVENT! ev.in, CT.SDL
 
       b.map := MOBILE [nbtns]INT
       a.scale := MOBILE [naxes]INT
+      a.delta := MOBILE [naxes]INT
 
       SEQ i = 0 FOR nbtns
         b.map[i] := (nbtns - 1)         -- default to last button
       SEQ i = 0 FOR naxes
-        a.scale[i] := 65536
+        SEQ
+          a.scale[i] := 16384
+          a.delta[i] := 0
     --}}}
   
     INITIAL BOOL run IS TRUE:
@@ -460,8 +477,8 @@ PROC occ.SDL.joy.calibrate (CT.SDLJSCALIBRATE? svr, CT.SDLJSEVENT! ev.in, CT.SDL
             SEQ
               occ.SDL.joy.doread (ev.in!, ax.vals, bt.vals)
 
-              svr[out] ! message; "centre all axes and press primary fire button"
-              occ.SDL.wait.button.axes (ev.in!, p.btn, a.cenvals)
+              svr[out] ! message; "press primary fire button"
+              occ.SDL.wait.button (ev.in!, p.btn)
               b.map[p.btn] := 0
 
               svr[out] ! message; "press secondary fire button"
@@ -474,7 +491,34 @@ PROC occ.SDL.joy.calibrate (CT.SDLJSCALIBRATE? svr, CT.SDLJSEVENT! ev.in, CT.SDL
               svr[out] ! message; "move all axes to maximum/right/accelerate and press primary fire button"
               occ.SDL.waitfor.button.axes (ev.in!, p.btn, a.maxvals)
 
+              svr[out] ! message; "move all axes to centre and press primary fire button"
+              occ.SDL.waitfor.button.axes (ev.in!, p.btn, a.cenvals)
+
               svr[out] ! done
+
+              -- figure out calibration
+              SEQ i = 0 FOR naxes
+                INT min.val, max.val, cen.val:
+                BOOL invert:
+                SEQ
+                  min.val := UINT16.TO.INT (a.minvals[i])
+                  max.val := UINT16.TO.INT (a.maxvals[i])
+                  cen.val := UINT16.TO.INT (a.cenvals[i])
+                  IF
+                    min.val > max.val
+                      SEQ
+                        invert := TRUE
+                        min.val, max.val := max.val, min.val
+                    TRUE
+                      invert := FALSE
+
+                  a.delta[i] := cen.val
+                  a.scale[i] := (1 << 22) / ((max.val - min.val) + (1 << 13))
+                  IF
+                    invert
+                      a.scale[i] := -a.scale[i]
+                    TRUE
+                      SKIP
             --}}}
         ev.in[out] ? CASE
           INT ax.delta, bt.delta:
@@ -511,8 +555,31 @@ PROC occ.SDL.joy.calibrate (CT.SDLJSCALIBRATE? svr, CT.SDLJSEVENT! ev.in, CT.SDL
 
               new.axd := ax.delta
               SEQ i = 0 FOR naxes
+                INT tmp, tmp2:
                 SEQ
-                  new.ax[i] := ax.vals[i]
+                  tmp := UINT16.TO.INT (ax.vals[i]) - a.delta[i]
+                  tmp2 := (tmp * a.scale[i])
+                  IF
+                    tmp2 < 0
+                      tmp2 := -((-tmp2) >> 14)
+                    TRUE
+                      tmp2 := tmp2 >> 14
+                  #IF FALSE
+                  SEQ
+                    C.out.stderr ("DEBUG: adj-val: ")
+                    C.out.stderr.int (tmp)
+                    C.out.stderr (", scaled-val: ")
+                    C.out.stderr.int (tmp2)
+                    C.out.stderr ("*n")
+                  #ENDIF
+                  -- suck near-zero values to zero (limit is 12)
+                  IF
+                    (tmp2 > (-12)) AND (tmp2 < 12)
+                      tmp2 := 0
+                    TRUE
+                      SKIP
+                  new.ax[i] := INT16 tmp2
+                  -- new.ax[i] := ax.vals[i]
 
               ev.out[out] ! change; new.axd; new.btd; new.ax; new.bt
             --}}}
