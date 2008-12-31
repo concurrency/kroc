@@ -16,20 +16,7 @@ PROC do.stick.handler (VAL INT num, CT.SDLJS! stick, SHARED CHAN BYTE scr!)
 
     PAR
       --{{{  calibrate joystick
-      SEQ
-        cal[in] ! calibrate
-        INITIAL BOOL c.loop IS TRUE:
-        WHILE c.loop
-          cal[out] ? CASE
-            MOBILE []BYTE msg:
-            message; msg
-              SEQ
-                CLAIM scr!
-                  SEQ
-                    out.string (msg, 0, scr!)
-                    scr ! '*n'
-            done
-              c.loop := FALSE
+      occ.SDL.joy.docalibrate (cal!, scr!)
       --}}}
       --{{{  loop processing events
       INITIAL BOOL run IS TRUE:
