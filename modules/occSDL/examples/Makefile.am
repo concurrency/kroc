@@ -7,6 +7,7 @@ EXTRA_DIST = \
 	array_surface.occ \
 	init.occ \
 	joystick.occ \
+	joy2.occ \
 	sdl_info.occ \
 	simple_surface.occ \
 	sound_test.occ
@@ -19,6 +20,7 @@ examples = \
 	array_surface \
 	init \
 	joystick \
+	joy2 \
 	sdl_info \
 	simple_surface \
 	$(sound_examples)
