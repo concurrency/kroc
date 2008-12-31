@@ -27,13 +27,16 @@ EXTRA_DIST = \
 	occSDLhelpers-c.c \
 	occSDLhelpers.inc \
 	occSDLhelpers.occ \
+	occSDLjoy.inc \
+	occSDLjoy.occ \
 	cocoa_helper.h \
 	cocoa_helper.m
 
 occSDL_lib_objs = \
 	SDL_wrap.o \
 	occSDLhelpers-c.o \
-	occSDLhelpers.tce
+	occSDLhelpers.tce \
+	occSDLjoy.tce
 if COCOA_HELPER
 occSDL_lib_objs += cocoa_helper.o
 endif
@@ -42,7 +45,7 @@ occSDLsound_lib_objs = \
 	SDL_sound_wrap.o
 
 occSDL_libs = occSDL.lib
-occSDL_includes = occSDL.inc occSDLhelpers.inc
+occSDL_includes = occSDL.inc occSDLhelpers.inc occSDLjoy.inc
 if HAVE_SDL_SOUND
 occSDLsound_libs = occSDLsound.lib
 occSDLsound_includes = occSDLsound.inc
@@ -58,7 +61,7 @@ SDL_wrap.c SDL_wrap.h occSDL.inc: $(SWIG_SOURCE_FILES)
 endif
 
 occSDL.lib: $(occSDL_lib_objs)
-	$(OCCBUILD) --library occSDL.lib --include occSDL.inc --include occSDLhelpers.inc @SDL_LIBS@ $(occSDL_lib_objs)
+	$(OCCBUILD) --library occSDL.lib --include occSDL.inc --include occSDLhelpers.inc --include occSDLjoy.inc @SDL_LIBS@ $(occSDL_lib_objs)
 
 if HAVE_SWIG_OCCAM
 SDL_sound_wrap.c SDL_sound_wrap.h occSDLsound.inc: $(SWIG_SOURCE_FILES)
