@@ -27,7 +27,7 @@
 #PRAGMA EXTERNAL "PROC C.out.stderr (VAL []BYTE str) = 0"
 #PRAGMA EXTERNAL "PROC C.out.stderr.int (VAL INT n) = 0"
 
-INT FUNCTION UINT16.TO.INT (VAL INT16 v)
+INT FUNCTION UINT16.TO.INT (VAL INT16 v) --{{{
   INT r:
   VALOF
     SEQ
@@ -39,6 +39,7 @@ INT FUNCTION UINT16.TO.INT (VAL INT16 v)
           SKIP
     RESULT r
 :
+--}}}
 
 --{{{  PROC occ.SDL.joy.handler (...)
 --* Individual joystick handler.
@@ -699,6 +700,30 @@ PROC occ.SDL.joy.start (RESULT CT.SDLJOY! cli)
   SEQ
     svr, cli := MOBILE CT.SDLJOY
     FORK occ.SDL.joy.server (svr)
+:
+--}}}
+--{{{  PROC occ.SDL.joy.docalibrate (...)
+--* Runs the joystick calibration routine.
+--
+-- @param cal Channel-type connection to calibrator process.
+-- @param out Shared byte channel for reporting.
+--
+PROC occ.SDL.joy.docalibrate (CT.SDLJSCALIBRATE! cal, SHARED CHAN BYTE out!)
+  SEQ
+    cal[in] ! calibrate
+    INITIAL BOOL c.loop IS TRUE:
+    WHILE c.loop
+      cal[out] ? CASE
+        MOBILE []BYTE msg:
+        message; msg
+          SEQ
+            CLAIM out!
+              SEQ
+                SEQ i = 0 FOR SIZE msg
+                  out ! msg[i]
+                out ! '*n'
+        done
+          c.loop := FALSE
 :
 --}}}
 
