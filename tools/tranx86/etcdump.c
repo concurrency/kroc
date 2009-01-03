@@ -94,6 +94,11 @@ int dump_textual_etc (etc_chain *chain, char *filename)
 	}
 	res = 0;
 	inproc = 0;
+#if 0
+	for (tmp=chain; tmp; tmp = tmp->next) {
+		fprintf (stderr, "  0x%8.8X, 0x%8.8X\n", (unsigned int)tmp->fn, (unsigned int)tmp->opd);
+	}
+#endif
 	for (tmp=chain; tmp && !res; tmp=tmp->next) {
 		if (tmp->fn < I_OPR) {
 			res = dump_primary (tmp->fn, tmp->opd, dumpstr);

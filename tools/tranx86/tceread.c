@@ -165,7 +165,9 @@ etc_chain *read_etc_chain (void)
 	head = tail = NULL;
 	running = 1;
 	while (running) {
+		xhead = xtail = NULL;
 		tceread_nextblocks (&xhead, &xtail);
+
 		if (!xhead && !xtail) {
 			continue;
 		} else if (!xhead && (xtail == (etc_chain *)-1)) {
@@ -246,6 +248,7 @@ static void tceread_nextblocks (etc_chain **head, etc_chain **tail)
 				tmp->fn = fn;
 				tmp->opd = opd;
 				if (fn == I_OPR) {
+					/*{{{  look for ETC specials that have some trailing bytes in them*/
 					switch (opd) {
 					case ETCS1:
 					case ETCS2:
@@ -263,17 +266,17 @@ static void tceread_nextblocks (etc_chain **head, etc_chain **tail)
 						building = 1;
 						while (building) {
 							lch = (unsigned char)code[i++];
-							lfn = (lch >> 4);
+							lfn = ((lch >> 4) & 0x0f);
 							nlen |= (lch & 0x0f);
 							if (lfn == I_PFIX) {
-								nlen <<= 4;
-							} else {
-								if (lfn != I_LDC) {
-									fprintf (stderr, "%s: tceread_nextblocks: bad TCE file %s (%lu/%lu)\n", progname, tcefile_filename,
-										(unsigned long int)tcefile_ptr, (unsigned long int)tcefile_length);
-									exit (1);
-								}
+								nlen = nlen << 4;
+							} else if (lfn == I_LDC) {
+								/* got it all */
 								building = 0;
+							} else {
+								fprintf (stderr, "%s: tceread_nextblocks: bad TCE file %s (%lu/%lu)\n", progname, tcefile_filename,
+										(unsigned long int)tcefile_ptr, (unsigned long int)tcefile_length);
+								exit (1);
 							}
 						}
 						tmp->o_bytes = smalloc (nlen + 4);
@@ -282,10 +285,15 @@ static void tceread_nextblocks (etc_chain **head, etc_chain **tail)
 						tmp->o_bytes[nlen+1] = '\0';
 						tmp->o_len = nlen;
 						i += nlen;
+#if 0
+fprintf (stderr, "%s: tceread_nextblocks(): scooped up embedded ETC string of %d bytes [%s].  Next code-byte is 0x%2.2X\n", progname,
+		nlen, tmp->o_bytes, code[i]);
+#endif
 						break;
 					default:
 						break;
 					} /* switch */
+					/*}}}*/
 				} /* if */
 				opd = 0;
 				if (!hblk) {
@@ -298,6 +306,7 @@ static void tceread_nextblocks (etc_chain **head, etc_chain **tail)
 			} /* switch */
 
 		} /* while */
+
 		tmp = new_etc_chain ();
 		tmp->fn = I_OPR;
 		tmp->opd = ETC0;
@@ -307,11 +316,13 @@ static void tceread_nextblocks (etc_chain **head, etc_chain **tail)
 			tblk->next = tmp;
 			tblk = tmp;
 		}
+
 		tmp = new_etc_chain ();
 		tmp->fn = I_LDC;
 		tmp->opd = FINISH_OP;
 		tblk->next = tmp;
 		tblk = tmp;
+
 		break;
 	case END_MODULE_TAG:
 		/* soak up tcoff */
