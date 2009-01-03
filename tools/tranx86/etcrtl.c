@@ -2098,10 +2098,11 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 			}
 			/*}}}*/
 		} else {
-			/*{{{  XSTL, NCALL, NRET, secondary instructions*/
+			/*{{{  XSTL, XSTLN, NCALL, NRET, secondary instructions*/
 			glob_in_icount++;
 			switch (x_opd) {
 			case I_XSTL:
+			case I_XSTLN:
 				glob_in_icount++;
 				do_code_special (ts, x_opd, x_fn - I_OPR, arch);
 				break;
@@ -3229,13 +3230,21 @@ static void do_code_special (tstate *ts, int ins, int opd, arch_t *arch)
 	static char sbuf[64];
 
 	switch (ins) {
-		/*{{{  I_XSTL -- STL/LDL combo instruction*/
+		/*{{{  I_XSTL, I_XSTLN -- STL/LDL combo instruction*/
 	case I_XSTL:
 		if (options.annotate_output) {
 			sprintf (sbuf, "XSTL %d", opd);
 			add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
 		}
 		tmp_ins = compose_ins_ex (EtcSpecial(I_XSTL), INS_MOVE, 1, 1, ARG_REG, ts->stack->a_reg, ARG_REGIND | ARG_DISP, REG_WPTR, opd << WSH);
+		add_to_ins_chain (tmp_ins);
+		break;
+	case I_XSTLN:
+		if (options.annotate_output) {
+			sprintf (sbuf, "XSTLN -%d", opd);
+			add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuf)));
+		}
+		tmp_ins = compose_ins_ex (EtcSpecial(I_XSTLN), INS_MOVE, 1, 1, ARG_REG, ts->stack->a_reg, ARG_REGIND | ARG_DISP, REG_WPTR, -(opd << WSH));
 		add_to_ins_chain (tmp_ins);
 		break;
 		/*}}}*/
@@ -3923,9 +3932,10 @@ static void do_code_secondary (tstate *ts, int sec, arch_t *arch)
 	deferred_cond (ts);
 	tstack_setsec (ts->stack, sec, arch);
 	switch (sec) {
-		/*{{{  I_XSTL -- store and load local (not expected here)*/
+		/*{{{  I_XSTL, I_XSTLN -- store and load local (not expected here)*/
 	case I_XSTL:
-		fprintf (stderr, "%s: error: unexpected XSTL in secondary.\n", progname);
+	case I_XSTLN:
+		fprintf (stderr, "%s: error: unexpected XSTL/XSTLN in secondary.\n", progname);
 		exit (EXIT_FAILURE);
 		break;
 		/*}}}*/
