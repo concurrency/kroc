@@ -110,6 +110,9 @@ int dump_textual_etc (etc_chain *chain, char *filename)
 			case I_XSTL:
 				fprintf (outstream, "%s %d\n", dumpstr, tmp->fn - I_OPR);
 				break;
+			case I_XSTLN:
+				fprintf (outstream, "%s -%d\n", dumpstr, tmp->fn - I_OPR);
+				break;
 			case I_NCALL:
 				{
 					int adj = tmp->fn - I_OPR;
@@ -1129,6 +1132,9 @@ static int dump_secondary (int esfunc, char *buffer)
 		break;
 	case I_XSTL:
 		sprintf (buffer, "\tXSTL");
+		break;
+	case I_XSTLN:
+		sprintf (buffer, "\tXSTLN");
 		break;
 	case I_NCALL:
 		sprintf (buffer, "\tNCALL");

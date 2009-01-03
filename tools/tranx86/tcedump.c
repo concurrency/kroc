@@ -191,11 +191,11 @@ int dump_binary_etc (etc_chain *chain, char *filename)
 	res = 0;
 	for (tmp=chain; tmp && !res; tmp=tmp->next) {
 		if (tmp->fn < I_OPR) {
-			add_byte((tmp->fn << 4) | prefix(tmp->opd, &section), &section);
+			add_byte ((tmp->fn << 4) | prefix(tmp->opd, &section), &section);
 		} else if (tmp->opd >= (signed int)ETC_MAX) {
-			if(tmp->opd == I_XSTL) {
-				printf("Got I_XSTL which is special I think, fixme!\n");
-				abort();
+			if ((tmp->opd == I_XSTL) || (tmp->opd == I_XSTLN)) {
+				fprintf (stderr, "%s: XSTL/XSTLN unexpected, giving up!\n", progname);
+				return -1;
 			}
 			add_byte((tmp->fn << 4) | prefix(tmp->opd, &section), &section);
 		} else {
@@ -553,6 +553,9 @@ int xxxdump_textual_etc (etc_chain *chain, char *filename)
 			switch (tmp->opd) {
 			case I_XSTL:
 				fprintf (outstream, "%s %d\n", dumpstr, tmp->fn - I_OPR);
+				break;
+			case I_XSTLN:
+				fprintf (outstream, "%s %d\n", dumpstr, -(tmp->fn - I_OPR));
 				break;
 			default:
 				fprintf (outstream, "%s\n", dumpstr);

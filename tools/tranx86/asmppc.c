@@ -277,7 +277,7 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 		"..", "..", "..", "..", "fadd", "fsub", "fmul", "fdiv", "..", "..", \
 		"..", "..", "..", "..", "..", "..", "..", "..", "frsp", "..", \
 		"fabs", "..", "..", "..", "..", "lha", "..", "..", "..", "..", \
-		"..", "..", "bl", "..", "..", "mtfsb"};
+		"..", "..", "bl", "..", "..", "mtfsb", "..", ".."};
 
 	static char *ccset_codes[] = { \
 		"..", "..", "..", "..", "..", "cmp.", "addo.", "and.", "or.", "..", \
@@ -352,6 +352,7 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 				coder_verify_addr (tmp->in_args[0], ADDR_SOURCE, live_rregs, outstream, dmcount);
 				break;
 			case EtcSpecial (I_XSTL):
+			case EtcSpecial (I_XSTLN):
 				/* verify target address */
 				dmcount++;
 				fprintf (outstream, ";# verify target address %d\n", dmcount);
