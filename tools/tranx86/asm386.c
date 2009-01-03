@@ -1028,10 +1028,11 @@ int dump_asm386_stream (rtl_chain *rtl_code, FILE *stream)
 				}
 
 				fprintf (stream, ".globl %s\n", label);
+				fprintf (stream, ".align 4\n");
 				fprintf (stream, "%s:\n", label);
 
 				flabel = modify_name (tmp->u.dyncode.fcn_name);
-				fprintf (stream, "\t.long $%s, %d, %d, 0x%x\n", flabel,
+				fprintf (stream, "\t.long %s, %d, %d, 0x%x\n", flabel,
 						tmp->u.dyncode.ws_slots, tmp->u.dyncode.vs_slots, tmp->u.dyncode.typehash);
 			}
 			break;
