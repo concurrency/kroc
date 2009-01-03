@@ -436,6 +436,10 @@ static int dump_rtl_hunk (FILE *stream, rtl_chain *rtl, arch_t *arch)
 		procinf_dumpentry (stream, rtl->u.codemap.pinf);
 		fprintf (stream, "<CODEMAP END>\n");
 		break;
+	case RTL_DYNCODEENTRY:
+		fprintf (stream, "<DYNCODE ENTRY \"%s\" \"%s\" %d %d 0x%8.8x>\n", rtl->u.dyncode.label_name, rtl->u.dyncode.fcn_name,
+				rtl->u.dyncode.ws_slots, rtl->u.dyncode.vs_slots, rtl->u.dyncode.typehash);
+		break;
 	default:
 	case RTL_UNDEFINED:
 		fprintf (stream, "<unknown RTL type %d>\n", rtl->type);

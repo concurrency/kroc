@@ -1543,6 +1543,43 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 						} else {
 							fprintf (stderr, "%s: error: broken fixup data: %*s\n", progname, etc_code->o_len - 7, etc_code->o_bytes + 7);
 						}
+					} else if (!strncmp (arg, "DYNCALL", (arglen < 7) ? arglen : 7)) {
+						/* expecting 3 numeric arguments, last hexadecimal */
+						if (arglen < 22) {
+							fprintf (stderr, "%s: error: broken DYNCALL data: %*s\n", progname,
+									etc_code->o_len - 7, etc_code->o_bytes + 7);
+						} else {
+							unsigned int ws, vs, thash;
+							char *ch, *pname;
+							int left, pnlen;
+
+							pname = arg + 8;
+							left = arglen - 8;
+							for (ch=pname; (left > 0) && (*ch != ' '); ch++, left--);
+							pnlen = (int)(ch - pname);
+							for (; (left > 0) && (*ch == ' '); ch++, left--);
+
+							if (sscanf (ch, "%d %d %x", &ws, &vs, &thash) != 3) {
+								fprintf (stderr, "%s: error: broken DYNCALL data: %*s\n",
+										progname, etc_code->o_len - 7, etc_code->o_bytes + 7);
+							} else {
+								flush_ins_chain ();
+								trtl = new_rtl ();
+								trtl->type = RTL_DYNCODEENTRY;
+								trtl->u.dyncode.fcn_name = string_ndup (pname, pnlen);
+
+								ch = (char *)smalloc (pnlen + 6);
+								snprintf (ch, pnlen + 6, "DCR_%s", trtl->u.dyncode.fcn_name);
+								trtl->u.dyncode.label_name = ch;
+#if 0
+fprintf (stderr, "DYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dyncode.label_name, trtl->u.dyncode.fcn_name);
+#endif
+								trtl->u.dyncode.ws_slots = ws;
+								trtl->u.dyncode.vs_slots = vs;
+								trtl->u.dyncode.typehash = thash;
+								add_to_rtl_chain (trtl);
+							}
+						}
 					} else {
 						/* unknown magic comment */
 						fprintf (stderr, "%s: warning: unknown magic: %*s\n", progname, etc_code->o_len - 7, etc_code->o_bytes + 7);

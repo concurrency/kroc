@@ -1221,6 +1221,7 @@ fprintf (stderr, "asmppc.c: dump_asmppc_stream(): first rtl is %d\n", rtl_code->
 		case RTL_COMMENT:
 		case RTL_CODELINE:
 		case RTL_MESSAGE:
+		case RTL_DYNCODEENTRY:
 			break;
 		case RTL_CODEMAP:
 			break;
