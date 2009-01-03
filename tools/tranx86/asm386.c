@@ -82,6 +82,7 @@ static int dmcount;
 /*{{{  static char *modify_name (char *name)*/
 /*
  *	modifies an outgoing name
+ *	NOTE: this returns a pointer into a static area.
  */
 static char *modify_name (char *name)
 {
@@ -1014,6 +1015,24 @@ int dump_asm386_stream (rtl_chain *rtl_code, FILE *stream)
 					fprintf (stream, ".type %s, @function\n", label);
 				}
 				fprintf (stream, "%s:\n", label);
+			}
+			break;
+		case RTL_DYNCODEENTRY:
+			{
+				const char *label = modify_name (tmp->u.dyncode.label_name);
+				const char *flabel;
+
+				if (!seen_data) {
+					fprintf (stream, ".data\n");
+					seen_data = 1;
+				}
+
+				fprintf (stream, ".globl %s\n", label);
+				fprintf (stream, "%s:\n", label);
+
+				flabel = modify_name (tmp->u.dyncode.fcn_name);
+				fprintf (stream, "\t.long $%s, %d, %d, 0x%x\n", flabel,
+						tmp->u.dyncode.ws_slots, tmp->u.dyncode.vs_slots, tmp->u.dyncode.typehash);
 			}
 			break;
 		case RTL_PUBLICENDNAMEDLABEL:

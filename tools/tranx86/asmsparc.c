@@ -848,6 +848,7 @@ int dump_asmsparc_stream (rtl_chain *rtl_code, FILE *stream)
 		case RTL_COMMENT:
 		case RTL_CODELINE:
 		case RTL_MESSAGE:
+		case RTL_DYNCODEENTRY:
 			break;
 		case RTL_CODEMAP:
 			break;

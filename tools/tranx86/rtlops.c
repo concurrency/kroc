@@ -220,7 +220,7 @@ rtl_chain *rtl_relocate_data (rtl_chain *rtl_code)
 		last_rtl = rtl_code;
 		rtl_code = rtl_code->next;
 	}
-	/* run through again, and move RDATA/labelled XDATA to the back */
+	/* run through again, and move RDATA/labelled XDATA/DYNCODEENTRY to the back */
 	rtl_code = head;
 	/* add an alignment to the back before moving data */
 	tmp = new_rtl ();
@@ -232,7 +232,8 @@ rtl_chain *rtl_relocate_data (rtl_chain *rtl_code)
 	last_rtl = tmp;
 	o_last_rtl = last_rtl;
 	while (rtl_code && (rtl_code != o_last_rtl)) {
-		if ((rtl_code->type == RTL_RDATA) || ((rtl_code->type == RTL_XDATA) && (rtl_code->u.xdata.label >= 0))) {
+		if ((rtl_code->type == RTL_RDATA) || ((rtl_code->type == RTL_XDATA) && (rtl_code->u.xdata.label >= 0)) ||
+				(rtl_code->type == RTL_DYNCODEENTRY)) {
 			tmp = rtl_code;
 			rtl_code = rtl_code->next;
 			/* cut tmp from the list */
@@ -743,6 +744,7 @@ int rtl_check_consistency (rtl_chain *rtl_code)
 		case RTL_COMMENT:
 		case RTL_MESSAGE:
 		case RTL_WSVS:
+		case RTL_DYNCODEENTRY:
 			break;
 		}
 		if (rtl_code->prev && (rtl_code->prev->next != rtl_code)) {
