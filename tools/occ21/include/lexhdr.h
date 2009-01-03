@@ -464,9 +464,11 @@
 #define S_HWADDROF			373
 #define S_ANYMOBILETYPE			374 /* special for pre-defined PROCs taking any MOBILE */
 
-#define S_UINT       375 /* unsigned integer types */
-#define S_UINT16     376
-#define S_UINT32     377
-#define S_UINT64     378
+#define S_UINT				375 /* unsigned integer types */
+#define S_UINT16			376
+#define S_UINT32			377
+#define S_UINT64			378
+
+#define S_DYNCALL			379 /* dynamic PROC call */
 
 

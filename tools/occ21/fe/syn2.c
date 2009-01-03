@@ -6181,9 +6181,10 @@ PRIVATEPARAM treenode *rpragma_translate (wordnode * const pragma_name, const pr
 								addtofront (newconsttablenode
 									    (S_STRING, flocn, lookupword (literalv, literalp), NULL), NULL)), NULL);
 
-				if (current_fe_data->fe_information)
+				if (current_fe_data->fe_information) {
 					fprintf (current_fe_data->fe_outfile, "%s %s %s \"%s\"\n",
 						 tagstring (S_PRAGMA), WNameOf (pragma_name), WNameOf (wptr), literalv);
+				}
 			}
 		} else if (symb == S_STRINGCONT)
 			synerr_i (SYN_STRING_TOO_LONG, flocn, MAXSTRING_SIZE);
@@ -6324,6 +6325,8 @@ pragma_list[] = {
 	"UNDEFINED", rpragma_namelist, O, pragma_name_undefined}
 	, {
 	"IOSPACE", rpragma_namelist, O, pragma_name_iospace}
+	, {
+	"DYNCALL", rpragma_name, CC, pragma_name_dyncall}
 };
 
 /*}}}*/
@@ -6355,6 +6358,17 @@ PRIVATE treenode *rpragma (void)
 		wptr = lookupword ("DEFINED", 7);
 		if (current_fe_data->fe_lang & O) {
 			return rpragma_namelist (wptr, pragma_name_defined, 0, -1);		/* don't care about the indentation following this */
+		}
+		synwarn_s (SYN_BAD_PRAGMA_NAME, flocn, WNameOf (wptr));
+		nextline ();
+		return NULL;
+	}
+	/* and with DYNCALL */
+	if (symb == S_DYNCALL) {
+		nextsymb ();
+		wptr = lookupword ("DYNCALL", 7);
+		if (current_fe_data->fe_lang & O) {
+			return rpragma_namelist (wptr, pragma_name_dyncall, 0, -1);
 		}
 		synwarn_s (SYN_BAD_PRAGMA_NAME, flocn, WNameOf (wptr));
 		nextline ();

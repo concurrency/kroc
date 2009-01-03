@@ -3617,14 +3617,13 @@ PUBLIC void tprocess (treenode * tptr)
 					const int is_client = (NTypeAttrOf (ct_type) & TypeAttr_marked_out);
 					const int lock = (is_client ? MT_CB_CLIENT : MT_CB_SERVER);
 					const int pony_offset = chans;					/* offset of pony state in words */
-					/*}}}*/
+
 					gencomment0 ("begin claim semaphore");
 					loadmobile (ct_nptr);
 					genchecknotnull ();
 					loadconstant (lock);
 					gensecondary (I_MT_LOCK);
 					gencomment0 ("end claim semaphore");
-					/*}}}*/
 					/*{{{  if chan-type operations or kroc-net specials are enabled, signal claim/set state*/
 					if (kroc_chantype_desc) {
 						gencomment0 ("{{{  kroc chantype special");
@@ -5177,13 +5176,26 @@ PRIVATE void tnestedroutines (treenode * tptr)
 				break;
 			}
 			/*}}} */
+			/*{{{  pragmas*/
+		case S_PRAGMA:	/* bug 829 19/9/91 */
+			switch ((pragma_name_tag_t) NModeOf (DNameOf (tptr))) {
+			case pragma_name_dyncall:
+				/*  */
+				gencomment0 ("#PRAGMA DYNCALL something");
+				break;
+			default:
+				tnestedroutines (DValOf (tptr));
+				break;
+			}
+			tptr = DBodyOf (tptr);
+			break;
+			/*}}}*/
 			/*{{{  other specification */
 		case S_ABBR:
 		case S_RETYPE:
 		case S_DECL:
 		case S_TPROTDEF:
 		case S_SPROTDEF:
-		case S_PRAGMA:	/* bug 829 19/9/91 */
 #ifdef MOBILES
 		case S_PROCTYPEDECL:
 #endif

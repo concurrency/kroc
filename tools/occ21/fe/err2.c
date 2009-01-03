@@ -416,6 +416,10 @@ PUBLIC const char *synmessagestring (const int n)
 		return "procedure call";
 	case SYN_E_FORK_PROCPARAMS:
 		return "procedure parameters";
+	case SYN_E_DYNCALL_PROCCALL:
+		return "procedure call";
+	case SYN_E_DYNCALL_PROCPARAMS:
+		return "procedure parameters";
 	case SYN_E_CHANTYPEDIRSPEC:
 		return "chan-type direction specifier";
 		/*}}}*/

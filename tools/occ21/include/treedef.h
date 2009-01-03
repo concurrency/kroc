@@ -190,8 +190,9 @@ struct instancenode_s
     struct tnode_s *i_nameptr;		/* Symbol table entry for called proc */
     struct tnode_s *i_paramlist;	/* List of actual parameters */
     struct tnode_s *i_fork;		/* Associated FORKING bit of tree */
-    unsigned int i_rinstance:1;		/* recursive instance of a PROC/FUNCTION ? */
-    unsigned int i_forked:1;		/* forked instance of a PROC ? */
+    unsigned int i_rinstance:1;		/* recursive instance of a PROC/FUNCTION? */
+    unsigned int i_forked:1;		/* forked instance of a PROC? */
+    unsigned int i_dynmem:1;		/* dynamically allocated instance of a PROC? */
     unsigned int i_rparamslots:15;	/* slots required for generating/passing parameters */
 #ifdef MOBILES
     unsigned int i_rmspoffset;		/* offset of recursive mobilespace (yes, really needed here..) */
