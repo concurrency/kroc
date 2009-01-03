@@ -878,7 +878,15 @@ fprintf (stderr, "maproutinename: name=%s, recursive=%d, forked=%d, set_wssize=%
 		}
 #endif
 
-		if (ptype & PROC_FORKED) {
+		if (ptype & PROC_DYNCALL) {
+			/* dynamically called PROCs need some special handling too */
+			ws = DYNCALL_SETUP_SLOTS + DS_MIN;
+			vs = 0;
+#ifdef MOBILES
+			/* these cannot use static mobilespace */
+			ms = 0;
+#endif
+		} else if (ptype & PROC_FORKED) {
 			/* forked (dynamic) calls to a PROC need to be handled specially */
 			ws = FORK_SETUP_SLOTS + DS_MIN;
 			vs = 0;
@@ -989,6 +997,7 @@ PUBLIC void mapinstance (treenode *const tptr)
 	int saved_datasize = -1;
 	const BOOL recursive = (nodetypeoftag (TagOf (tptr)) == INSTANCENODE) ? IRecursiveOf (tptr) : FALSE;
 	const BOOL forked = (nodetypeoftag (TagOf (tptr)) == INSTANCENODE) ? IForkedOf (tptr) : FALSE;
+	const BOOL dyncall = (nodetypeoftag (TagOf (tptr)) == INSTANCENODE) ? IDynmemOf (tptr) : FALSE;
 	const BOOL mprocact = (nodetypeoftag (TagOf (tptr)) == INSTANCENODE) ? (isdynmobileproctype (INameOf (tptr))) : FALSE;
 	int ptype = PROC_NONE;
 
@@ -997,6 +1006,9 @@ PUBLIC void mapinstance (treenode *const tptr)
 	}
 	if (recursive) {
 		ptype |= PROC_REC;
+	}
+	if (dyncall) {
+		ptype |= PROC_DYNCALL;
 	}
 	if (mprocact) {
 		ptype |= PROC_MPA;
@@ -1052,11 +1064,18 @@ printtreenl (stderr, 4, IParamListOf (tptr));
 		}
 	}
 	/*}}}  */
-	/*{{{  parameter WS requirements are special for forked and recursive stuff */
-	if (forked || recursive) {
+	/*{{{  parameter WS requirements are special for forked, dyn-call and recursive stuff */
+	if (forked) {
 		saved_datasize = datasize;
-		datasize = forked ? MIN_FORK_SLOTS : MIN_RECURSIVE_SLOTS;
+		datasize = MIN_FORK_SLOTS;
+	} else if (dyncall) {
+		saved_datasize = datasize;
+		datasize = MIN_DYNCALL_SLOTS;
+	} else if (recursive) {
+		saved_datasize = datasize;
+		datasize = MIN_RECURSIVE_SLOTS;
 	}
+
 	/*}}}  */
 	/*{{{  for forked instances, map $fork.barrier */
 	if (forked) {
@@ -1223,7 +1242,7 @@ fprintf (stderr, "mapinstance: found SIZE'd dynamic mobile array in parameters.\
 		 */
 
 		/*{{{  load register parameters */
-		if (recursive || forked) {
+		if (recursive || forked || dyncall) {
 			/* load them one-at-a-time, since we'll be storing in the other workspace */
 			if (nparams >= 3) {
 				mapexpopd (paramtable[2].pmode, paramtable[2].pparamexp);
@@ -1263,11 +1282,11 @@ fprintf (stderr, "mapinstance: found SIZE'd dynamic mobile array in parameters.\
 		memfree (paramtable);
 	}
 	/*}}} */
-	if (recursive || forked) {
+	if (recursive || forked || dyncall) {
 		SetIRPSlots (tptr, datasize);
 		datasize = saved_datasize;
 	}
-	if (mprocact || forked) {
+	if (mprocact || forked || dyncall) {
 		/* need low WS 0 to support GCALL return from MOBILE process */
 		reservelowworkspace (1);
 	}
@@ -1357,7 +1376,7 @@ PRIVATE void tparamexpopd (const int opdmode, treenode * const opd, const BOOL c
  *                  a pointer to store a workspace offset in "fork_freeslot".
  *                  "formaltype" has the type-tree for the formal.
  *  updated (frmb): tidied up "isrec" parameter into a more general "ptype"
- *                  bitfield of PROC_{NONE,REC,FORKED,MPA}
+ *                  bitfield of PROC_{NONE,REC,FORKED,MPA,DYNCALL}
  *
  *****************************************************************************/
 /*}}}*/
@@ -1387,6 +1406,8 @@ PRIVATE void trecstoreparam (const int type, const int slot, const BOOL copy, co
 			genprimary (I_LDL, RECURSIVE_WS);
 		} else if (type & PROC_MPA) {
 			genprimary (I_LDL, MPA_SETUP_TEMP);
+		} else if (type & PROC_DYNCALL) {
+			genprimary (I_LDL, DYNCALL_SETUP_TEMP_WS);
 		} else {
 			geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "trecstoreparam");
 		}
@@ -1415,6 +1436,8 @@ PRIVATE void trecparamexpopd (const int opdmode, treenode *const opd, const BOOL
 		} else {
 			if (ptype & PROC_REC) {
 				genprimary (I_LDL, RECURSIVE_WS);
+			} else if (ptype & PROC_DYNCALL) {
+				genprimary (I_LDL, DYNCALL_SETUP_TEMP_WS);
 			} else if (ptype & PROC_MPA) {
 				genprimary (I_LDL, MPA_SETUP_TEMP);
 			}
@@ -1438,6 +1461,8 @@ printtreenl (stderr, 4, formaltype);
 				genprimary (I_LDL, RECURSIVE_VS);
 			} else if (ptype & PROC_MPA) {
 				genprimary (I_LDL, MPA_SETUP_TEMP_VS);
+			} else if (ptype & PROC_DYNCALL) {
+				genprimary (I_LDL, DYNCALL_SETUP_TEMP_VS);
 			}
 			trecstoreparam (ptype, paramslot, FALSE, TRUE);
 			gencomment0 ("VSP");
@@ -1447,6 +1472,9 @@ printtreenl (stderr, 4, formaltype);
 			/*{{{  load mobilespace from RECURSIVE_MS/FORK_SETUP_TEMP_MS*/
 			if (ptype & PROC_FORKED) {
 				genprimary (I_LDLP, FORK_SETUP_TEMP_MS);
+			} else if (ptype & PROC_DYNCALL) {
+				/* should never happen! */
+				gensecondary (I_NULL);
 			} else if (ptype & PROC_REC) {
 				genprimary (I_LDL, RECURSIVE_MS);
 			} else if (ptype & PROC_MPA) {
@@ -1574,6 +1602,8 @@ fprintf (stderr, "gen8: done size fiddling, stored = %d, carried = %d\n", stored
 
 				if (ptype & PROC_REC) {
 					genprimary (I_LDL, RECURSIVE_WS);
+				} else if (ptype & PROC_DYNCALL) {
+					genprimary (I_LDL, DYNCALL_SETUP_TEMP_WS);
 				} else if (ptype & PROC_MPA) {
 					genprimary (I_LDL, MPA_SETUP_TEMP);
 				}
@@ -1712,6 +1742,7 @@ PUBLIC void tinstance (treenode *tptr)
 	const int nparams = npparamsof (iname);
 	const BOOL recursive = (nodetypeoftag (TagOf (tptr)) == INSTANCENODE) ? IRecursiveOf (tptr) : FALSE;
 	const BOOL forked = (nodetypeoftag (TagOf (tptr)) == INSTANCENODE) ? IForkedOf (tptr) : FALSE;
+	const BOOL dyncall = (nodetypeoftag (TagOf (tptr)) == INSTANCENODE) ? IDynmemOf (tptr) : FALSE;
 	const BOOL mprocact = (nodetypeoftag (TagOf (tptr)) == INSTANCENODE) ? isdynmobileproctype (INameOf (tptr)) : FALSE;
 	const int recparamslots = IRPSlotsOf (tptr);
 	/* Inside an ALT guard, we have to pull wptr down below the ALT below
@@ -1754,6 +1785,9 @@ PUBLIC void tinstance (treenode *tptr)
 	if (recursive) {
 		ptype |= PROC_REC;
 	}
+	if (dyncall) {
+		ptype |= PROC_DYNCALL;
+	}
 	if (mprocact) {
 		ptype |= PROC_MPA;
 	}
@@ -1789,7 +1823,7 @@ PUBLIC void tinstance (treenode *tptr)
 		}
 	}
 	/*}}} */
-	/*{{{  allocate memory and local setup for forked/recursive/mprocact stuffs*/
+	/*{{{  allocate memory and local setup for forked/recursive/dyncall/mprocact stuffs*/
 	if ((ptype != PROC_NONE) && disable_dynmem) {
 		generr (GEN_NO_DYNMEM);
 	} else if (ptype & PROC_FORKED) {
@@ -1834,8 +1868,8 @@ printtreenl (stderr, 4, tptr);
 		loadconstant (alloc_ws_slots);
 		loadconstant (0); /* flags */
 		gensecondary (I_PROC_ALLOC);
-		
 		genprimary (I_STL, FORK_SETUP_TEMP);
+
 		if (alloc_vs_slots) {
 			genprimary (I_LDC, (alloc_vs_slots << WSH));
 			gensecondary (I_MALLOC);
@@ -1906,6 +1940,65 @@ printtreenl (stderr, 4, tptr);
 		}
 		/*}}}*/
 #endif	/* MOBILES */
+		/*{{{  augment params here */
+#if 0
+fprintf (stderr, "tinstance: calling augmentparams()\n");
+#endif
+		SetIParamList (tptr, augmentparams (IParamListOf (tptr), NParamListOf (iname), NULL, tptr));
+		/*}}}*/
+		/*}}}*/
+	} else if (ptype & PROC_DYNCALL) {
+		/*{{{  allocate memory for dynamically called process (similar to RECURSIVE, except sizes loaded via name)*/
+		/*{{{  find base address and put in local temporary*/
+		char tmpname[128];
+		int vsskiplab = newlab ();
+
+		snprintf (tmpname, 127, "DCR_%s", WNameOf (NNameOf (iname)));
+
+		genloadnamedlabptr (tmpname);
+		genprimary (I_STL, DYNCALL_SETUP_TEMP_NAME);
+
+		alloc_ws_slots = 0;			/* meaningless here */
+		alloc_vs_slots = 0;
+		alloc_ms_slots = 0;
+
+		/*}}}*/
+		/*{{{  allocate workspace and vectorspace*/
+		genprimary (I_LDL, DYNCALL_SETUP_TEMP_NAME);
+		genprimary (I_LDNL, 1);					/* WS slots */
+		genprimary (I_ADC, ((nparams < MAXREGS) ? MAXREGS : nparams) + MAXREGS + 3);		/* extra slots for params + state */
+		loadconstant (4);
+		gensecondary (I_PROD);
+		gensecondary (I_MALLOC);
+		genprimary (I_STL, DYNCALL_SETUP_TEMP_WSBASE);
+
+		/* advance to base */
+		genprimary (I_LDL, DYNCALL_SETUP_TEMP_NAME);
+		genprimary (I_LDNL, 1);					/* WS slots */
+		loadconstant (4);
+		gensecondary (I_PROD);
+		genprimary (I_LDL, DYNCALL_SETUP_TEMP_WSBASE);
+		gensecondary (I_SUM);					/* add to base addr */
+		genprimary (I_STL, DYNCALL_SETUP_TEMP_WS);
+
+		loadconstant (0);					/* assume zero */
+		genprimary (I_STL, DYNCALL_SETUP_TEMP_VS);
+
+		genprimary (I_LDL, DYNCALL_SETUP_TEMP_NAME);
+		genprimary (I_LDNL, 2);					/* VS slots */
+		genbranch (I_CJ, vsskiplab);
+		throw_the_result_away ();
+		genprimary (I_LDL, DYNCALL_SETUP_TEMP_NAME);
+		genprimary (I_LDNL, 2);					/* VS slots */
+		loadconstant (4);
+		gensecondary (I_PROD);
+		gensecondary (I_MALLOC);
+		genprimary (I_STL, DYNCALL_SETUP_TEMP_VS);
+
+		setlab (vsskiplab);
+		
+		/*}}}*/
+
 		/*{{{  augment params here */
 #if 0
 fprintf (stderr, "tinstance: calling augmentparams()\n");
@@ -2056,7 +2149,7 @@ printtreenl (stderr, 4, msp_ptr);
 		/*}}}*/
 	}
 	/*}}}*/
-		/*{{{  load parameters */
+	/*{{{  load parameters */
 
 	if (nparams > 0) {
 		paramtable = (paraminfo_t *) memalloc (sizeof (paraminfo_t) * nparams);
@@ -2064,9 +2157,6 @@ printtreenl (stderr, 4, msp_ptr);
 	} else {
 		paramtable = NULL;
 	}
-	/*{{{*/
-
-	/*}}}*/
 #ifdef MOBILES
 	/*{{{  adjust any CLONEd parameters.  (only CLONEs left here are channel-types _AND_ dynamic MOBILEs).
 	 * the original reference is stored in pclone_list.
@@ -2168,6 +2258,8 @@ printtreenl (stderr, 4, *(paramtable[i].pparamexp));
 				if (ptype & PROC_FORKED) {
 					/* slot = ((1 - MIN_FORK_SLOTS) - nparams) + i; */
 					slot += alloc_ws_slots - MIN_FORK_SLOTS;
+				} else if (ptype & PROC_DYNCALL) {
+					slot += (1 - MIN_DYNCALL_SLOTS);
 				} else if (ptype & PROC_REC) {
 					slot += (1 - MIN_RECURSIVE_SLOTS);
 				} else if (ptype & PROC_MPA) {
@@ -2401,6 +2493,25 @@ gencomment0 ("gen non-register param 2..0");
 		throw_the_result_away ();
 		gencomment0 ("}}}");
 		/*}}}*/
+	} else if (ptype & PROC_DYNCALL) {
+		/*{{{  dynamically instantiated routine call*/
+		gencomment0 ("{{{  switch workspace (dyncall)");
+		genprimary (I_LDL, DYNCALL_SETUP_TEMP_WS);
+		gensecondary (I_GAJW);
+		genprimary (I_STL, DYNCALL_SAVED_WS);
+
+		genprimary (I_LDL, DYNCALL_SAVED_WS);
+		genprimary (I_LDNL, DYNCALL_SETUP_TEMP_NAME);
+		genprimary (I_LDNL, 0);				/* function entry-point address */
+
+		/* advance target workspace to the point just past the parameters */
+		genprimary (I_AJW, -(((nparams > MAXREGS) ? nparams : MAXREGS) + MIN_DYNCALL_SLOTS));
+		gensecondary (I_GCALL);
+		throw_the_result_away ();
+
+		/* when we get back, still in the allocated workspace */
+		gencomment0 ("}}}");
+		/*}}}*/
 	} else if (ptype & PROC_REC) {
 		/*{{{  setup new workspace (recursive call)*/
 		gencomment0 ("{{{  switch workspaces");
@@ -2408,6 +2519,7 @@ gencomment0 ("gen non-register param 2..0");
 		gensecondary (I_GAJW);
 		throw_the_result_away ();
 		/* genprimary (I_STL, RECURSIVE_SAVED_WS); */
+		/* advance target workspace to the point just past the parameters */
 		genprimary (I_AJW, -(((nparams > MAXREGS) ? nparams : MAXREGS) + MIN_RECURSIVE_SLOTS));
 		genloadlabptr (NPLabelOf (iname), NOLAB, "PTR");
 		gensecondary (I_GCALL);
@@ -2443,6 +2555,7 @@ gencomment0 ("gen non-register param 2..0");
 	}
 	gencomments ("Call %s", WNameOf (translate_from_internal (NNameOf (iname))));	/* MDP */
 	if (ptype & PROC_FORKED) {
+		/*{{{  clean-up after FORK call (MOBILE params, workspace, vectorspace, mobilespace)*/
 		/* const int ls_lab = newlab (); */
 		/* const int lf_lab = newlab (); */
 		int base_offset = (alloc_ws_slots - (((nparams > REG_PARAMS) ? nparams : REG_PARAMS) + MIN_FORK_SLOTS)) + 3;
@@ -2570,12 +2683,19 @@ gencomment0 ("gen non-register param 2..0");
 		/* continue normally */
 		gencomment0 ("forked SKIP resume point");
 		setlab (forked_s_lab);
+		/*}}}*/
 	} else if (ptype & PROC_REC) {
 		/* recover old workspace -- ret will have moved Wptr up 4 */
 		genprimary (I_LDL, ((((nparams > MAXREGS) ? nparams : MAXREGS) + MIN_RECURSIVE_SLOTS) - 4));
 		gensecondary (I_GAJW);
 		gensecondary (I_POP);
 		/* throw_the_result_away (); */
+	} else if (ptype & PROC_DYNCALL) {
+		/* recover old workspace -- ret will have moved Wptr up 4 */
+		genprimary (I_LDL, (((nparams > MAXREGS) ? nparams : MAXREGS) + MIN_DYNCALL_SLOTS) - 4);
+		gensecondary (I_GAJW);
+		gensecondary (I_POP);
+
 	} else if (ptype & PROC_MPA) {
 		/* SKIP -- workspace recovered on MOBILE PROC return or SUSPEND */
 	}
@@ -2603,6 +2723,9 @@ gencomment0 ("gen non-register param 2..0");
 				/* new_occam_line (*(paramtable[i].pparamexp), TRUE, FALSE, FALSE); */
 				if (ptype & PROC_REC) {
 					genprimary (I_LDL, RECURSIVE_WS);
+					genprimary (I_LDNL, paramtable[i].pslot + paramtable[i].mobile_outslot);
+				} else if (ptype & PROC_DYNCALL) {
+					genprimary (I_LDL, DYNCALL_SETUP_TEMP_WS);
 					genprimary (I_LDNL, paramtable[i].pslot + paramtable[i].mobile_outslot);
 				} else if (ptype & PROC_MPA) {
 					genprimary (I_LDL, MPA_SETUP_TEMP);
@@ -2704,8 +2827,8 @@ printtreenl (stderr, 4, foo);
 		/*}}}*/
 	}
 #endif
-	/*{{{  free memory associated with call (if recursive) */
-	if ((ptype & (PROC_FORKED | PROC_REC)) == PROC_REC) {
+	/*{{{  free memory associated with call (if recursive or dynamic) */
+	if (ptype & PROC_REC) {
 		if (alloc_vs_slots) {
 			genprimary (I_LDL, RECURSIVE_VS);
 			if (TagOf (tptr) != S_FINSTANCE) {
@@ -2725,6 +2848,19 @@ printtreenl (stderr, 4, foo);
 				genprimary (I_LDL, RECURSIVE_WS);
 			}
 		}
+	} else if (ptype & PROC_DYNCALL) {
+		int vsskiplab = newlab ();
+
+		genprimary (I_LDL, DYNCALL_SETUP_TEMP_WSBASE);
+		gensecondary (I_MRELEASE);
+
+		genprimary (I_LDL, DYNCALL_SETUP_TEMP_VS);
+		genbranch (I_CJ, vsskiplab);
+		throw_the_result_away ();
+		genprimary (I_LDL, DYNCALL_SETUP_TEMP_VS);
+		gensecondary (I_MRELEASE);
+
+		setlab (vsskiplab);
 	}
 	/*}}}  */
 	/*{{{  adjust wptr up if we are in an alt guard */

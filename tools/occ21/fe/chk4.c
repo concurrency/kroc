@@ -2326,6 +2326,7 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 							case pragma_name_defined:
 							case pragma_name_undefined:
 							case pragma_name_iospace:
+							case pragma_name_dyncall:
 								scopeandcheck (DValAddr (tt));
 								break;
 							case pragma_name_linkage:

@@ -2478,6 +2478,29 @@ PUBLIC treenode *rprocess (void)
 				goto error;
 			}
 			/*}}}*/
+		} else if (symb == S_DYNCALL) {
+			/*{{{  DYNCALL -- must be instance*/
+			treenode *pname, *dyncall;
+
+			/* special case, expect a PROC instance next */
+			nextsymb ();
+			if ((pname = (treenode *)rname ()) == NULL) {
+				synerr_e (SYN_E_DYNCALL_PROCCALL, flocn, symb);
+				goto error;
+			}
+			if (symb == S_LPAREN) {
+				dyncall = rinstance (S_PINSTANCE, locn, pname);
+				checknewline ();
+				if (dyncall && (TagOf (dyncall) == S_PINSTANCE)) {
+					SetIDynmem (dyncall, 1);
+				}
+				*procptr = dyncall;
+				return (procroot);
+			} else {
+				synerr_e (SYN_E_DYNCALL_PROCPARAMS, flocn, symb);
+				goto error;
+			}
+			/*}}}*/
 		} else if ((symb == S_NAME) || (symb == S_LBOX)) {
 			/*{{{  S_NAME, S_LBOX   --  specification or action */
 			BOOL specflag;

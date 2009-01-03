@@ -101,6 +101,7 @@ extern int genhdr_w_time_slot (void);
 #define RECURSIVE_SAVED_WS 0	/* in the allocated workspace */
 #define MIN_RECURSIVE_SLOTS 2	/* for the saved Wptr (+ result) */
 
+/* offsets for FORK call setup things */
 #define FORK_SETUP_TEMP -1
 #define FORK_SETUP_TEMPVAL -2
 #define FORK_SETUP_TEMP_VS -3
@@ -113,6 +114,18 @@ extern int genhdr_w_time_slot (void);
 
 #define MIN_FORK_SLOTS 1	/* in the allocated workspace */
 #define FORK_BARRIER 0		/* for the barrier pointer */
+
+/* offsets for dynmically called PROCs */
+#define DYNCALL_SETUP_TEMP_WS -1
+#define DYNCALL_SETUP_TEMP_VS -2
+#define DYNCALL_SETUP_TEMP_NAME -3
+#define DYNCALL_SETUP_TEMP_WSBASE -4
+
+#define DYNCALL_SETUP_SLOTS 4		/* in the parent workspace for temporaries */
+
+#define DYNCALL_SAVED_WS 0	/* in the allocated workspace */
+#define MIN_DYNCALL_SLOTS 1	/* for the saved Wptr */
+
 /*}}}*/
 /*{{{  constants for MOBILE process offsets*/
 #define MPP_WPTR 0		/* Wptr of mobile process when inactive, of invoking process when active */
@@ -156,6 +169,7 @@ extern int genhdr_w_time_slot (void);
 #define PROC_REC 0x01		/* recursive PROC call */
 #define PROC_FORKED 0x02	/* FORKed PROC call */
 #define PROC_MPA 0x04		/* mobile process activation */
+#define PROC_DYNCALL 0x08	/* dynamic PROC call */
 
 /*}}}*/
 /*{{{  special label constants */

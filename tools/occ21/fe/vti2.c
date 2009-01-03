@@ -597,6 +597,8 @@ PRIVATE const vti_keyword_t vti_keyword_table[] =
 	, {S_UINT16, "UINT16", NULL, NULL, NULL, LEAFNODE, A}
 	, {S_UINT32, "UINT32", NULL, NULL, NULL, LEAFNODE, A}
 	, {S_UINT64, "UINT64", NULL, NULL, NULL, LEAFNODE, A}
+
+	, {S_DYNCALL, "DYNCALL", NULL, NULL, NULL, NONODE, CC}
 };
 
 #define MAX_TAG ((int)(sizeof(vti_keyword_table)/sizeof(vti_keyword_table[0])))
@@ -1647,6 +1649,9 @@ PUBLIC void printtree (FILE * const fptr, int indent, treenode * n)
 			}
 			if (IForkedOf (n)) {
 				fprintf (fptr, " FORKED");
+			}
+			if (IDynmemOf (n)) {
+				fprintf (fptr, " DYNCALL");
 			}
 			indent += 2;
 			printtree (fptr, indent, INameOf (n));

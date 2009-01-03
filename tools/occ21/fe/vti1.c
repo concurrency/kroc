@@ -1004,6 +1004,7 @@ newinstancenode (const int t, const SOURCEPOSN ln, treenode * const n, treenode 
 	SetIRecursive (nptr, 0);
 	SetIFork (nptr, 0);
 	SetIForked (nptr, 0);
+	SetIDynmem (nptr, 0);
 	SetIRPSlots (nptr, 0);
 #ifdef MOBILES
 	SetIRMSPOffset (nptr, 0);
