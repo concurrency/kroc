@@ -114,7 +114,7 @@ static char *modify_name (char *name)
 	rbuf[j] = '\0';
 
 	const char *prepend = NULL;
-	if ((rbuf[0] == '_') || (!strncmp (rbuf, "O_", 2)) || (name[0] == '&') || (name[0] == '@')) {
+	if ((rbuf[0] == '_') || (!strncmp (rbuf, "O_", 2)) || (!strncmp (rbuf, "DCR_", 4)) || (name[0] == '&') || (name[0] == '@')) {
 		/* skip */
 	} else if (name[0] == '^') {
 		prepend = "E_";
