@@ -181,7 +181,6 @@ printtreenl (stderr, 4, nptr);
 /*}}}*/
 /*}}}*/
 
-#if 1				/*def CONFIG */
 /*{{{  PUBLIC treenode *rconfigdef ()*/
 /* Terminates with symb at start of next line */
 PUBLIC treenode *rconfigdef ()
@@ -331,7 +330,7 @@ PRIVATE treenode *rmap (void)
 }
 
 /*}}}*/
-#endif /*CONFIG*/
+
 /*{{{  PRIVATE int rrepl(nptr, start, length, step)*/
 /* parsing:      name '=' exp 'FOR' exp             */
 /*      or:      name '=' exp 'FOR' exp 'STEP' exp  */
@@ -2707,13 +2706,11 @@ fprintf (stderr, "syn3: well, looks like a chan-type declaration!\n");
 				*procptr = rconstruct (rprocess, S_PAR, S_REPLPAR);
 				return (procroot);
 				/*}}} */
-#if 1				/*def CONFIG */
 				/*{{{  S_DO */
 			case S_DO:
 				*procptr = rconstruct (rprocess, S_DO, S_REPLDO);
 				return (procroot);
 				/*}}} */
-#endif
 				/*{{{  S_PRI */
 			case S_PRI:
 				{
@@ -2905,26 +2902,12 @@ fprintf (stderr, "syn3: well, looks like a chan-type declaration!\n");
 					goto error2;
 				break;
 				/*}}} */
-				/*{{{  S_PRAGMA */
-#if 0				/* bug 829 19/9/91 */
-			case S_PRAGMA:
-				{
-					int saved_indent = indent;
-					if (!rpragma ()) {
-						goto error2;
-					}
-					ignorecomments (saved_indent);
-				}
-				break;
-#endif
-				/*}}} */
 				/*{{{  S_OPTION */
 			case S_OPTION:
 				synerr (SYN_OPTION_IN_BAD_POS, flocn);
 				nextline ();
 				break;
 				/*}}} */
-#if 1				/*def CONFIG */
 				/*{{{  S_SET */
 			case S_SET:
 				*procptr = rset ();
@@ -2940,7 +2923,6 @@ fprintf (stderr, "syn3: well, looks like a chan-type declaration!\n");
 				*procptr = rmap ();
 				return (procroot);
 				/*}}} */
-#endif
 				/*{{{  default / errors */
 			default:
 				if (syn_lexlevel == base_lexlevel && symb == S_END) {

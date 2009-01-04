@@ -5298,6 +5298,7 @@ PRIVATE treenode *rprocdef (void)
 	BOOL recursive = FALSE;
 	BOOL forks = FALSE;
 	BOOL suspends = FALSE;
+	BOOL dyncall = FALSE;
 
 	DEBUG_MSG (("rprocdef... "));
 	foundroutine = TRUE;
@@ -5408,11 +5409,20 @@ PRIVATE treenode *rprocdef (void)
 		break;
 	}
 	/*}}}*/
+	/*{{{  if DEXTERNAL, make sure we always call instances dynamically*/
+	if (lexmode == LEX_DEXTERNAL) {
+		dyncall = 1;
+	}
+	/*}}}*/
 
 	syn_lexlevel = oldlexlevel;
 	retptr = declare (S_PROCDEF, locn, params, name, pbody);
 	{
 		treenode *const nptr = DNameOf (retptr);
+#if 0
+fprintf (stderr, "rprocdef(): lexmode = %d, nptr =", (int)lexmode);
+printtreenl (stderr, 4, nptr);
+#endif
 
 		if (endlocn != NOPOSN) {
 			DEBUG_MSG (("locn = %8lX, endlocn = %8lX\n", locn, endlocn));
@@ -5432,6 +5442,9 @@ PRIVATE treenode *rprocdef (void)
 fprintf (stderr, "syn2: rprocdef: FORKs!\n");
 #endif
 			SetNPForks (nptr, 1);
+		}
+		if (dyncall) {
+			SetNPDyncall (nptr, 1);
 		}
 		if (suspends) {
 			SetNPSuspends (nptr, 1);
@@ -5923,14 +5936,14 @@ fprintf (stderr, "syn2: rfunctiondef(): UDO: modified code gave namelength = %d,
 				goto error;
 			/*}}} */
 
-			while (ignorecomments (indent + 2), symb != S_VALOF && symbindent == indent + 2)
+			while (ignorecomments (indent + 2), symb != S_VALOF && symbindent == indent + 2) {
 				/*{{{  parse leading specification */
-			{
 				*fbodyptr = rspecification ();
-				if (*fbodyptr != NULL)
+				if (*fbodyptr != NULL) {
 					fbodyptr = DBodyAddr (*fbodyptr);
+				}
+				/*}}} */
 			}
-			/*}}} */
 
 			/*{{{  parse VALOF */
 			if ((*fbodyptr = rvalof ()) == NULL)
@@ -6068,15 +6081,16 @@ PRIVATEPARAM treenode *rpragma_external (wordnode * const pragma_name, const pra
 	USE_VAR (tag);		/* prevent unused variable warning */
 	if ((symb == S_STRING) || (symb == S_STRINGCONT)) {
 		treenode *const str = rstring ();
-		const BOOL ok = open_file (WNameOf (CTValOf (str)), LEX_EXTERNAL, indent);
+		const BOOL ok = open_file (WNameOf (CTValOf (str)), (pragma_name_tag == pragma_name_dexternal) ? LEX_DEXTERNAL : LEX_EXTERNAL, indent);
 		if (ok) {
 			treenode *const pragma_nptr = declname (N_DECL, locn, pragma_name, NULL, NULL);
 			SetNMode (pragma_nptr, pragma_name_tag);
 			tptr = newdeclnode (S_PRAGMA, locn, pragma_nptr, str, NULL);
 
-			if (current_fe_data->fe_information)
+			if (current_fe_data->fe_information) {
 				fprintf (current_fe_data->fe_outfile, "%s %s \"%s\"\n",
 					 tagstring (S_PRAGMA), WNameOf (pragma_name), WNameOf (CTValOf (str)));
+			}
 			nextsymb ();
 		} else
 			nextline ();
@@ -6286,6 +6300,8 @@ pragma_list[] = {
 
 	{
 	"EXTERNAL", rpragma_external, O, pragma_name_external}
+	, {
+	"DEXTERNAL", rpragma_external, O, pragma_name_dexternal}
 	, {
 	"LINKAGE", rpragma_string, O, pragma_name_linkage}
 	,
@@ -6794,9 +6810,8 @@ fprintf (stderr, "rspecification: putting TypeAttr_shared in CHAN\n");
 		}
 		/*}}} */
 		/*{{{  S_NETWORK: */
-#if 1				/*def CONFIG */
-		CASE_CONFIG_SPEC return (rconfigdef ());
-#endif
+	CASE_CONFIG_SPEC
+		return (rconfigdef ());
 		/*}}} */
 		/*{{{  S_PLACE */
 	case S_PLACE:
@@ -6908,8 +6923,14 @@ fprintf (stderr, "rspecification: putting TypeAttr_shared in CHAN\n");
 	case S_PRAGMA:		/* bug 829 19/9/91 */
 		{
 			treenode *tptr = rpragma ();
-			if (tptr == NULL)
+
+			if (tptr == NULL) {
 				goto error2;
+			}
+#if 0
+fprintf (stderr, "rspecification(): parsed PRAGMA, got:\n");
+printtreenl (stderr, 4, tptr);
+#endif
 			return tptr;
 		}
 		/*}}} */

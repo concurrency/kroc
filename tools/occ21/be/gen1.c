@@ -5180,8 +5180,37 @@ PRIVATE void tnestedroutines (treenode * tptr)
 		case S_PRAGMA:	/* bug 829 19/9/91 */
 			switch ((pragma_name_tag_t) NModeOf (DNameOf (tptr))) {
 			case pragma_name_dyncall:
-				/*  */
-				gencomment0 ("#PRAGMA DYNCALL something");
+#if 0
+fprintf (stderr, "tnestedroutines(): PRAGMA DYNCALL:, DValOf =\n");
+printtreenl (stderr, 4, DValOf (tptr));
+#endif
+				if (TagOf (DValOf (tptr)) == S_LIST) {
+					treenode *v;
+					
+					for (v = DValOf (tptr); !EndOfList (v); v = NextItem (v)) {
+						treenode *vv = ThisItem (v);
+
+						if (TagOf (vv) == N_PROCDEF) {
+							treenode *plist = NParamListOf (vv);
+							INT32 ws, vs, thash;
+
+							getprocwsandvs (vv, &ws, &vs);
+							thash = typehash (plist);
+							gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
+						}
+					}
+				} else {
+					treenode *vv = DValOf (tptr);
+
+					if (TagOf (vv) == N_PROCDEF) {
+						treenode *plist = NParamListOf (vv);
+						INT32 ws, vs, thash;
+
+						getprocwsandvs (vv, &ws, &vs);
+						thash = typehash (plist);
+						gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
+					}
+				}
 				break;
 			default:
 				tnestedroutines (DValOf (tptr));

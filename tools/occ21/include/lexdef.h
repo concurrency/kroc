@@ -57,8 +57,9 @@ extern int lexmode;
 #define LEX_LIB 3
 #define LEX_PREDEFS 4
 #define LEX_STDLIB 5
-#define LEX_EXTERNAL 6	/* treated like a pseudo file */
-#define LEX_CSOURCE 7	/* C-like occam syntax */
+#define LEX_EXTERNAL 6		/* treated like a pseudo file */
+#define LEX_DEXTERNAL 7		/* treated like a pseudo file */
+#define LEX_CSOURCE 8		/* C-like occam syntax */
 
 extern int currentfilenum;
 /*extern int current_file;*/ /* unused */

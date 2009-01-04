@@ -413,6 +413,7 @@ struct namenode_s
         unsigned int      n_recursive:1;    /* Is something recursive */
 	unsigned int      n_forks:1;	    /* Does something have free FORKs ? */
 	unsigned int      n_suspends:1;	    /* whether something SUSPENDs */
+	unsigned int      n_dyncall:1;      /* whether we must always DYNCALL something */
       } n_proc;
       /*}}}*/
       /*{{{  n_var  - variables and most others*/

@@ -174,6 +174,7 @@ PRIVATE int namenodetag (int tag)
 		return tag;
 	case LEX_LIB:
 	case LEX_EXTERNAL:
+	case LEX_DEXTERNAL:
 		switch (tag) {
 		case N_PROCDEF:
 			return N_LIBPROCDEF;
@@ -234,6 +235,9 @@ PUBLIC treenode *declare (const int stype, const SOURCEPOSN locn, treenode * t, 
 		break;
 	case S_PROCDEF:
 		ntype = namenodetag (N_PROCDEF);
+#if 0
+fprintf (stderr, "syn1: declare(): PROCDEF/%d\n", ntype);
+#endif
 		break;
 	case S_SFUNCDEF:
 		ntype = namenodetag (N_SFUNCDEF);

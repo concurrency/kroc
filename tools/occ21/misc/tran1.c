@@ -4808,6 +4808,11 @@ fprintf (stderr, "did trans_suspended_instance, *tptr now: ");
 printtreenl (stderr, 4, *tptr);
 #endif
 				}
+
+				/* check for instance of something that must be called dynamically */
+				if (NPDyncallOf (name) && (tag == S_PINSTANCE)) {
+					SetIDynmem (t, 1);
+				}
 			}
 			going = FALSE;
 			break;
