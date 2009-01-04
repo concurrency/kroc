@@ -1535,6 +1535,7 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 						ts->magic_pending |= TS_MAGIC_TYPEDESC;
 						tstate_clear_fixups (ts);
 					} else if (!strncmp (arg, "FIXUP", (arglen < 5) ? arglen : 5)) {
+						/*{{{  state fixup*/
 						int xlab, xoffs, xolab;
 
 						if (sscanf (arg, "FIXUP %d %d %d", &xlab, &xoffs, &xolab) == 3) {
@@ -1543,7 +1544,9 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 						} else {
 							fprintf (stderr, "%s: error: broken fixup data: %*s\n", progname, etc_code->o_len - 7, etc_code->o_bytes + 7);
 						}
+						/*}}}*/
 					} else if (!strncmp (arg, "DYNCALL", (arglen < 7) ? arglen : 7)) {
+						/*{{{  indicator to generate dynamic call stub data*/
 						/* expecting 3 numeric arguments, last hexadecimal */
 						if (arglen < 22) {
 							fprintf (stderr, "%s: error: broken DYNCALL data: %*s\n", progname,
@@ -1580,6 +1583,22 @@ fprintf (stderr, "DYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dyncod
 								add_to_rtl_chain (trtl);
 							}
 						}
+						/*}}}*/
+					} else if (!strncmp (arg, "EXPORT", (arglen < 6) ? arglen : 6)) {
+						/*{{{  exported procedure information, contains signature*/
+						if (options.etab_filename && !options.etabfile) {
+							/* open file */
+							options.etabfile = fopen (options.etab_filename, "w");
+							if (!options.etabfile) {
+								fprintf (stderr, "%s: error: failed to open %s for writing: %s\n",
+										progname, options.etab_filename, strerror (errno));
+							}
+						}
+
+						if (options.etabfile) {
+							fprintf (options.etabfile, "%s\n", arg + 7);
+						}
+						/*}}}*/
 					} else {
 						/* unknown magic comment */
 						fprintf (stderr, "%s: warning: unknown magic: %*s\n", progname, etc_code->o_len - 7, etc_code->o_bytes + 7);
