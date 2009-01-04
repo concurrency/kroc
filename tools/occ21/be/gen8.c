@@ -1952,6 +1952,36 @@ fprintf (stderr, "tinstance: calling augmentparams()\n");
 		/*{{{  find base address and put in local temporary*/
 		char tmpname[128];
 		int vsskiplab = newlab ();
+		int tcskiplab = newlab ();
+		treenode *nplist = NParamListOf (iname);
+		treenode **savep_vsp = NULL;
+		treenode *save_vsp = NULL;
+		unsigned int thash;
+		
+		/* if the parameter list has a vectorspace pointer in it, remove for purposes of typehash generation */
+		for (savep_vsp = &nplist; savep_vsp && !EndOfList (*savep_vsp); savep_vsp = NextItemAddr (*savep_vsp)) {
+			save_vsp = ThisItem (*savep_vsp);
+
+			if (TagOf (save_vsp) == S_PARAM_VSP) {
+				break;		/* for() */
+			}
+		}
+		if (savep_vsp && EndOfList (*savep_vsp)) {
+			savep_vsp = NULL;
+		}
+		
+		if (savep_vsp) {
+			save_vsp = *savep_vsp;
+			*savep_vsp = NULL;
+		}
+		thash = typehash (nplist);
+		if (savep_vsp) {
+			*savep_vsp = save_vsp;
+		}
+#if 0
+fprintf (stderr, "tinstance: dynamic call to [%s], typehash 0x%8.8X, paramlist:", WNameOf (NNameOf (iname)), thash);
+printtreenl (stderr, 4, nplist);
+#endif
 
 		snprintf (tmpname, 127, "DCR_%s", WNameOf (NNameOf (iname)));
 
@@ -1961,6 +1991,18 @@ fprintf (stderr, "tinstance: calling augmentparams()\n");
 		alloc_ws_slots = 0;			/* meaningless here */
 		alloc_vs_slots = 0;
 		alloc_ms_slots = 0;
+
+		/*}}}*/
+		/*{{{  check that the type-hash matches (interface check)*/
+		genprimary (I_LDL, DYNCALL_SETUP_TEMP_NAME);
+		genprimary (I_LDNL, 3);					/* param typehash */
+		loadconstant (thash);
+		gensecondary (I_DIFF);
+		genbranch (I_CJ, tcskiplab);
+		throw_the_result_away ();
+		gensecondary (I_SETERR);
+
+		setlab (tcskiplab);
 
 		/*}}}*/
 		/*{{{  allocate workspace and vectorspace*/

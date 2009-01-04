@@ -5196,6 +5196,10 @@ printtreenl (stderr, 4, DValOf (tptr));
 
 							getprocwsandvs (vv, &ws, &vs);
 							thash = typehash (plist);
+#if 0
+fprintf (stderr, "tnestedroutines(): DYNCALL for [%s], thash = 0x%8.8X, plist =", WNameOf (NNameOf (vv)), (unsigned int)thash);
+printtreenl (stderr, 4, plist);
+#endif
 							gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
 						}
 					}
