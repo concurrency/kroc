@@ -501,6 +501,10 @@ PRIVATE void trans_constructor_assign (treenode ** tptr)
 #endif
 	int subscript;
 
+#if 0
+fprintf (stderr, "trans_constructor_assign(): *tptr =");
+printtreenl (stderr, 4, *tptr);
+#endif
 	/*if (!issimplelocal(lhs, trans_lexlevel)) */
 	if (!issimplelocal (lhs, trans_lexlevel) && !islocal (lhs, trans_lexlevel))
 		tptr = create_local_abbreviation (&lhs, tptr);
@@ -538,6 +542,9 @@ PRIVATE void trans_constructor_assign (treenode ** tptr)
 
 	freenode (&rhs);
 	freenode (&ass);
+#if 0
+fprintf (stderr, "trans_constructor_assign(): returning!\n");
+#endif
 }
 
 /*}}}  */
@@ -3057,46 +3064,50 @@ printtreenl (stderr, 4, result);
 			}
 			break;
 			/*}}}  */
-			/*{{{  CONSTRUCTOR */
-		case LITNODE:	/* S_CONSTRUCTOR */
-			if (is_sub_expression && trans_params->abbr_constructors && !no_anonymous_vars) {	/* bug TS/1455 5/11/91 */
-				treenode *name;
-				/* we must run trans on the sub-expressions _after_
-				   structuring the assignments. */
+			/*{{{  literal nodes */
+		case LITNODE:
+			if (TagOf (t) == S_CONSTRUCTOR) {
+				/*{{{  constructor simplification*/
+				if (is_sub_expression && trans_params->abbr_constructors && !no_anonymous_vars) {	/* bug TS/1455 5/11/91 */
+					treenode *name;
+					/* we must run trans on the sub-expressions _after_
+					   structuring the assignments. */
 /*sub_transexp(OpAddr(t), FALSE); *//* will be a major expression of the abbr */
 
-				name = create_abbreviation (t, TRUE);
-				create_initialised_constructor (name);	/* bug TS/1263 11/05/92 */
+					name = create_abbreviation (t, TRUE);
+					create_initialised_constructor (name);	/* bug TS/1263 11/05/92 */
 
 #ifdef OCCAM2_5
-				/* This can't happen - it is impossible for the abbreviation
-				   to overwrite the node, because the abbreviation must precede the
-				   whole process/expression.
-				   NOT TRUE: it can now happen when a constructor is listed
-				   as the result of a VALOF.
-				 */
-				if (*tptr == t)	/* the abbreviation has not overwritten this node */
-					*tptr = name;
-				else {
-					/* we have transformed the current node from 'expression' into
-					   VAL name IS expression :
-					   VALOF
-					   SKIP
-					   RESULT expression
-					   We now need to overwrite the 'expression' in result list
-					   with the name of the abbreviation.
+					/* This can't happen - it is impossible for the abbreviation
+					   to overwrite the node, because the abbreviation must precede the
+					   whole process/expression.
+					   NOT TRUE: it can now happen when a constructor is listed
+					   as the result of a VALOF.
 					 */
-					treenode *const resultlist = VLResultListOf (skipspecifications (*tptr));
-					/*fprintf(outfile, "sub_transexp: trans const -> VALOF at trans_locn:%d\n", trans_locn); */
-					NewItem (name, resultlist);
-				}
+					if (*tptr == t)	{ /* the abbreviation has not overwritten this node */
+						*tptr = name;
+					} else {
+						/* we have transformed the current node from 'expression' into
+						   VAL name IS expression :
+						   VALOF
+						   SKIP
+						   RESULT expression
+						   We now need to overwrite the 'expression' in result list
+						   with the name of the abbreviation.
+						 */
+						treenode *const resultlist = VLResultListOf (skipspecifications (*tptr));
+						/*fprintf(outfile, "sub_transexp: trans const -> VALOF at trans_locn:%d\n", trans_locn); */
+						NewItem (name, resultlist);
+					}
 #else
-				*tptr = name;
+					*tptr = name;
 #endif
 
-				trans (DValAddr (NDeclOf (name)));	/* run this _after_ restructuring */
+					trans (DValAddr (NDeclOf (name)));	/* run this _after_ restructuring */
 
-				return;
+					return;
+				}
+				/*}}}*/
 			}
 			tptr = LitExpAddr (t);
 			break;
@@ -3338,11 +3349,11 @@ printtreenl (stderr, 4, *tptr);
 
 /*}}}  */
 /*{{{  PRIVATE void transexp (treenode **const tptr, const BOOL is_sub_expression) */
-PRIVATE void transexp (treenode **const tptr, const BOOL is_sub_expression)
 /* This simply calls sub_transexp, and folds the resulting expression tree,
    incase any functions have been in-lined, which provide opportunities for
    constant propagation.
 */
+PRIVATE void transexp (treenode **const tptr, const BOOL is_sub_expression)
 {
 #if 0
 fprintf (stderr, "tran2: transexp (enter): *tptr = ");
