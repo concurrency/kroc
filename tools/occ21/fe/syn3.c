@@ -1177,7 +1177,56 @@ printtreenl (stderr, 4, rdecl);
 #endif
 	return rdecl;
 }
-/*}}}  */
+/*}}}*/
+/*{{{  PRIVATE treenode *rplaceddecl (void)*/
+/* parsing:
+ *	PLACED <type> <name> [AT] <element>:
+ * returns a tree of the form:
+ *	<type> <name>:
+ *	PLACE <name> <element>:
+ */
+ PRIVATE treenode *rplaceddecl (void)
+ {
+ 	treenode *rdecl = NULL;
+	treenode *type, *name, *placenode, *addr;
+	SOURCEPOSN locn = flocn;
+
+	type = rspecifier ();
+	if (!type) {
+		synerr_e (SYN_E_SPECIFIER, flocn, symb);
+		return NULL;
+	}
+
+	name = (treenode *)rname ();
+	if (!name) {
+		synerr_e (SYN_E_NAME, flocn, symb);
+		return NULL;
+	}
+
+#if 0
+fprintf (stderr, "rplaceddecl: type = ");
+printtreenl (stderr, 4, type);
+#endif
+
+	/* optional AT */
+	if (symb == S_AT) {
+		nextsymb ();
+	}
+	if (!(addr = rexp ())) {
+		synerr_e (SYN_E_EXPR, flocn, symb);
+		return NULL;
+	}
+	if (checkfor (S_COLON)) {
+		return NULL;
+	}
+	checknewline ();
+	rdecl = declare (S_DECL, locn, type, (wordnode *)name, NULL);
+	placenode = newdeclnode (S_PLACE, locn, (treenode *)name, addr, NULL);
+	SetDBody (rdecl, placenode);
+
+	return rdecl;
+ }
+/*}}}*/
 /*{{{  PRIVATE treenode *rprocessor ()*/
 /**********************  Start comment out ****************************
 processor = PROCESSOR element
@@ -2746,7 +2795,7 @@ fprintf (stderr, "syn3: well, looks like a chan-type declaration!\n");
 					procptr = DBodyAddr (*procptr);		/* step to where process attaches */
 					break;
 				case S_LBOX:
-					/* placed ARRAY construct -- included for OOS.. */
+					/* placed ARRAY construct -- included for RMoX */
 					*procptr = rplacedarray ();
 					if (!*procptr) {
 						goto error2;
@@ -2755,8 +2804,14 @@ fprintf (stderr, "syn3: well, looks like a chan-type declaration!\n");
 					procptr = DBodyAddr (*procptr);		/* step to where process attaches */
 					break;
 				default:
-					synetoken (S_PAR);
-					goto error;
+					/* placed data construct -- included for RMoX */
+					*procptr = rplaceddecl ();
+					if (!*procptr) {
+						goto error2;
+					}
+					procptr = DBodyAddr (*procptr);		/* step to PLACE node */
+					procptr = DBodyAddr (*procptr);		/* step to where process attaches */
+					break;
 				}
 				break;
 			case S_PROCESSOR:

@@ -4488,6 +4488,8 @@ PUBLIC treenode *callocation (treenode *volatile tptr, treenode *last_decl)
 				t = typecheck (DValOf (tptr), intnodeptr);
 
 				if ((TagOf (t) == S_INT) || (TagOf (t) == S_INT16) || (TagOf (t) == S_UINT) || (TagOf (t) == S_UINT16)) {
+					SetDVal (tptr, foldexp (DValOf (tptr)));
+
 					if (isconst (DValOf (tptr))) {
 						/*{{{  constant PLACEment -- can only work for port-based I/O */
 						treenode *ptype = NTypeOf (pname);
@@ -4499,20 +4501,7 @@ PUBLIC treenode *callocation (treenode *volatile tptr, treenode *last_decl)
 						SetDVal (tptr, newconstexp (DValOf (tptr)));
 						SetTypeAttr (NTypeOf (pname), TypeAttrOf (NTypeOf (pname)) | TypeAttr_placed);
 						/*}}}*/
-					} else
-#if 0
-					/* disabled by frmb: we don't want constant placement like this, really ;) */
-					if (isconst (DValOf (tptr))) {
-						/*{{{  fold the place expression, insert it into tree and symbol table */
-						INT32 placeaddr;
-						SetDVal (tptr, newconstexp (DValOf (tptr)));
-						placeaddr = LoValOf (DValOf (tptr));
-						SetNMode (pname, NM_PLACED);
-						SetNVOffset (pname, placeaddr);
-						/*}}} */
-					} else
-#endif
-					{
+					} else {
 						/*{{{  non-constant PLACEment */
 #if 0
 fprintf (stderr, "callocation: non-constant PLACE, node is");
@@ -4608,8 +4597,9 @@ printtreenl (stderr, 4, tptr);
 					source = NextItem (source);
 				}
 				t = typecheck (DValOf (tptr), arcnodeptr);
-				if (!sametype (TagOf (t), S_ARC))
+				if (!sametype (TagOf (t), S_ARC)) {
 					chkreport (CHK_INV_PLACEON_RHS, LocnOf (tptr));
+				}
 				SetDVal (tptr, foldexp (DValOf (tptr)));
 			}
 			break;
