@@ -131,6 +131,8 @@ typedef struct {
 	int mpenable;			/* whether multi-processor support is enabled in the run-time */
 	int nocc_codegen;		/* non-zero if generating code compiled by NOCC */
 	int underflow_error;		/* whether FP underflow is an error */
+	char *etab_filename;		/* if non-NULL, write exports to this file */
+	FILE *etabfile;			/* if non-NULL, writing EXPORTs to this file */
 } optstruct;
 
 #ifndef __MAIN_C
