@@ -1141,6 +1141,7 @@ PUBLIC treenode *newnamenode (const int tag, const SOURCEPOSN ln, wordnode * con
 		SetNPRecursive (nptr, 0);
 		SetNPForks (nptr, 0);
 		SetNPSuspends (nptr, 0);
+		SetNPDyncall (nptr, 0);
 		break;
 	default:
 		break;

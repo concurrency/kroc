@@ -1302,11 +1302,13 @@ PRIVATE treenode *cpragma (treenode * volatile tptr, treenode * last_decl, treen
 		case pragma_name_linkage:
 		case pragma_name_translate:
 		case pragma_name_external:
+		case pragma_name_dexternal:
 		case pragma_name_comment:
 		case pragma_name_hardware:
 		case pragma_name_defined:
 		case pragma_name_undefined:
 		case pragma_name_iospace:
+		case pragma_name_dyncall:
 			break;
 			/*}}}  */
 		}
@@ -2332,6 +2334,7 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 							case pragma_name_linkage:
 							case pragma_name_translate:
 							case pragma_name_external:
+							case pragma_name_dexternal:
 							case pragma_name_comment:
 							case pragma_name_hardware:
 								break;

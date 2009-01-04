@@ -977,6 +977,7 @@ PRIVATE void readline (void)
 				break;
 #if 1 /*ndef CONFIG*/		/* no #PRAGMA EXTERNAL when configuring */
 			case LEX_EXTERNAL:
+			case LEX_DEXTERNAL:
 				ptr = readexternalline (&linebuffer_len);
 				break;
 #endif
@@ -1106,11 +1107,11 @@ PRIVATE void suspend_file (const char *const name, const int mode, FILE * const 
 		filestackptr++;
 		DEBUG_MSG (("suspend_file: new filestackptr is %d, name is %s, saved baseindent is %d\n", filestackptr, name, baseindent));
 	}
-	if (mode != LEX_EXTERNAL) {
+	if ((mode != LEX_EXTERNAL) && (mode != LEX_DEXTERNAL)) {
 		infile = new_fptr;
 		strcpy (current_filename, name);
 	}
-	currentfilenum = fe_addfilename (current_fe_handle, (mode == LEX_EXTERNAL) ?
+	currentfilenum = fe_addfilename (current_fe_handle, ((mode == LEX_EXTERNAL) || (mode == LEX_DEXTERNAL)) ?
 					 NULL : lookupword (name, strlen (name)), ((mode == LEX_SOURCE) || (mode == LEX_CSOURCE)), currentfilenum, FileLineOf (flocn));
 	SetFileLine (flocn, 0);
 	SetFileNum (flocn, currentfilenum);
@@ -1124,6 +1125,7 @@ PRIVATE void patchup ()
 	case LEX_LIB:
 	case LEX_STDLIB:
 	case LEX_EXTERNAL:
+	case LEX_DEXTERNAL:
 		patchdescriptors (current_filename);
 		break;
 	default:
@@ -1147,7 +1149,7 @@ PRIVATE void resume_file (void)
 	{
 		filestruct_t *fptr = filestack;
 
-		if (lexmode != LEX_EXTERNAL) {
+		if ((lexmode != LEX_EXTERNAL) && (lexmode != LEX_DEXTERNAL)) {
 			fclose (infile);
 		}
 		strcpy (current_filename, fptr->fname);
@@ -1222,7 +1224,7 @@ PUBLIC BOOL open_file (const char *const name, const int mode, const int fileind
 #if 0
 fprintf (stderr, "lex1: open_file: [%s], fileindent = %d\n", name, fileindent);
 #endif
-	if ((strlen (name) >= MAX_FILENAME_LENGTH) && (mode != LEX_EXTERNAL)) {
+	if ((strlen (name) >= MAX_FILENAME_LENGTH) && (mode != LEX_EXTERNAL) && (mode != LEX_DEXTERNAL)) {
 		/* bug 331 29/8/90 */
 		lexerr_i (LEX_FILE_LENGTH_ERROR, flocn, MAX_FILENAME_LENGTH);
 	} else {
@@ -1236,11 +1238,12 @@ fprintf (stderr, "lex1: open_file: [%s], fileindent = %d\n", name, fileindent);
 		case LEX_STDLIB:
 			fptr = open_descfile (name, mode);
 			break;
-#if 1 /*ndef CONFIG*/		/* No #PRAGMA EXTERNAL when configuring */
 		case LEX_EXTERNAL:
-			external_ok = init_external (name);
+			external_ok = init_external (name, 0);
 			break;
-#endif
+		case LEX_DEXTERNAL:
+			external_ok = init_external (name, 1);
+			break;
 		}
 	}
 	if ((fptr != NULL) || external_ok) {

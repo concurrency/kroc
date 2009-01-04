@@ -1735,6 +1735,9 @@ PUBLIC void printtree (FILE * const fptr, int indent, treenode * n)
 					if (NPSuspendsOf (DNameOf (n))) {
 						fprintf (fptr, " (suspends)");
 					}
+					if (NPDyncallOf (DNameOf (n))) {
+						fprintf (fptr, " (dyncall)");
+					}
 					break;
 				default:
 #ifdef OCCAM2_5
@@ -2550,6 +2553,9 @@ PRIVATE void printsrcdecl (FILE * const fptr, const int indent, treenode * const
 		if (NPRecursiveOf (nptr)) {
 			fprintf (fptr, " (recursive)");
 		}
+		if (NPDyncallOf (nptr)) {
+			fprintf (fptr, " (dyncall)");
+		}
 		printsrc (fptr, indent + 2, DValOf (tptr));
 		setsrcindent (fptr, indent);
 		fputs (":\n", fptr);
@@ -2672,6 +2678,9 @@ PRIVATE void printsrcdecl (FILE * const fptr, const int indent, treenode * const
 		}
 		if (NPRecursiveOf (nptr)) {
 			fprintf (fptr, " (recursive)");
+		}
+		if (NPDyncallOf (nptr)) {
+			fprintf (fptr, " (dyncall)");
 		}
 		printsrc (fptr, indent + 2, DValOf (tptr));
 		setsrcindent (fptr, indent);

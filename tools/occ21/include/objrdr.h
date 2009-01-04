@@ -24,7 +24,7 @@
 FILE *open_descfile (const char *name, int mode);
 char *readdescriptorline(char *line, BOOL in_stdlib, int *line_len);
 
-BOOL init_external (const char *name);
+BOOL init_external (const char *name, const int dynext);
 const char *readexternalline (int *line_len);
 
 void addtoentrypointlist (treenode *nptr);

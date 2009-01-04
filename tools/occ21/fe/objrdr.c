@@ -247,10 +247,8 @@ PRIVATE BOOL process_externalname (wordnode *name,
 		module->m_instr = instr;
 		module->m_attr = attr;
 		module->m_size = 0;
-#if 1				/*def CONFIG */
 		module->m_config = NULL;
 		module->m_filestr = NULL;
-#endif
 		module->m_next = localmodules;
 		localmodules = module;
 	}
@@ -885,8 +883,6 @@ fprintf (stderr, "objrdr: here! -- len = %d, sub_desc = [%s]\n", len, sub_desc);
 /*}}}  */
 
 /*{{{  EXTERNAL handling  */
-#if 1				/*ndef CONFIG */
-/* #PRAGMA EXTERNAL is disabled when configuring */
 
 PRIVATE char *extern_buf;
 PRIVATE int extern_buf_len;
@@ -899,15 +895,17 @@ PRIVATE int extern_status;
 
 /*{{{  PRIVATE get_optional_num  */
 /*  return negative if error */
-PRIVATE const char *get_optional_num (const char *ptr, INT32 * res, char c)
+PRIVATE const char *get_optional_num (const char *ptr, INT32 *res, char c)
 {
 	INT32 n = 0;
-	while (*ptr == ' ')
+	while (*ptr == ' ') {
 		ptr++;
+	}
 	if (*ptr == c) {
 		ptr++;		/* skip past the matched character */
-		while (*ptr == ' ')
+		while (*ptr == ' ') {
 			ptr++;
+		}
 		while ((*ptr >= '0') && (*ptr <= '9')) {
 			if (((BIT32) n) > 0x7FFFFFFF) {
 				n = EXTERNAL_VALUE_ERR;
@@ -916,17 +914,19 @@ PRIVATE const char *get_optional_num (const char *ptr, INT32 * res, char c)
 			n = (n * 10) + ((INT32) (*ptr) - '0');
 			ptr++;
 		}
-	} else if (*ptr == '\0')
+	} else if (*ptr == '\0') {
 		n = (*res);
-	else
+	} else {
 		n = EXTERNAL_VALUE_ERR;
+	}
 	(*res) = n;
+
 	return (ptr);
 }
 
 /*}}}  */
 /*{{{  PUBLIC BOOL init_external  */
-PUBLIC BOOL init_external (const char *string)
+PUBLIC BOOL init_external (const char *string, const int dynext)
 {
 	wordnode *name = NULL;
 	const char *ptr;
@@ -940,10 +940,12 @@ PUBLIC BOOL init_external (const char *string)
 	/* PARSE: "PROC P () = 1", or "PROC P () = 1 , 10" */
 	/* for mobiles, parse an extra one */
 
-	while ((len > 0) && string[len] != ')')
+	while ((len > 0) && string[len] != ')') {
 		len--;
+	}
 	extern_buf = memalloc (len + 3);
 	memcpy (extern_buf, string, len + 1);
+
 	extern_buf[len + 1] = '\n';
 	extern_buf[len + 2] = '\0';
 	extern_buf_len = len + 2;
@@ -958,8 +960,23 @@ PUBLIC BOOL init_external (const char *string)
 #ifdef MOBILES
 	ptr = get_optional_num (ptr, &ms, ',');
 #endif
-	while (*ptr == ' ')
+	while (*ptr == ' ') {
 		ptr++;
+	}
+
+	if (dynext) {
+		/* dynamic external definition -- workspace and vectorspace are found separately, minimal amount to start with */
+		if ((ws != DEFAULT_EXTERNAL_WS) || (vs != DEFAULT_EXTERNAL_VS)) {
+			/* not expecting these to be specified */
+			synwarn_s (SYN_BAD_PRAGMA_DIRECTIVE, flocn, "DEXTERNAL");
+			return FALSE;
+		}
+		ws = 1;
+		vs = 1;
+#ifdef MOBILES
+		ms = 0;
+#endif
+	}
 #ifdef MOBILES
 	DEBUG_MSG (("ws : %ld, vs : %ld, ms : %d\n", ws, vs, ms));
 #else
@@ -1044,7 +1061,6 @@ PUBLIC const char *readexternalline (int *const line_len)
 /*}}}  */
 
 /* end of #PRAGMA external stuff */
-#endif
 /*}}}  */
 
 /*{{{  PUBLIC void addtoentrypointlist (nptr)  for the parser */
@@ -1253,10 +1269,8 @@ PUBLIC void init_obj_reader ()
 
 /*sctableptr = 0; *//* #SC is no longer supported */
 	entrypointlist = NULL;
-#if 1 /*ndef CONFIG*/		/* no #PRAGMA EXTERNAL when configuring */
 	extern_buf = NULL;
 	extern_status = 0;
-#endif
 	libentries = NULL;
 	localmodules = NULL;
 }
