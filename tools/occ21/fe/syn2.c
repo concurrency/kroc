@@ -6303,6 +6303,8 @@ pragma_list[] = {
 	, {
 	"DEXTERNAL", rpragma_external, O, pragma_name_dexternal}
 	, {
+	"EXPORT", rpragma_namelist, CC, pragma_name_export}
+	, {
 	"LINKAGE", rpragma_string, O, pragma_name_linkage}
 	,
 #if 0
@@ -6342,7 +6344,7 @@ pragma_list[] = {
 	, {
 	"IOSPACE", rpragma_namelist, O, pragma_name_iospace}
 	, {
-	"DYNCALL", rpragma_name, CC, pragma_name_dyncall}
+	"DYNCALL", rpragma_namelist, CC, pragma_name_dyncall}
 };
 
 /*}}}*/

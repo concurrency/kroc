@@ -1309,6 +1309,7 @@ PRIVATE treenode *cpragma (treenode * volatile tptr, treenode * last_decl, treen
 		case pragma_name_undefined:
 		case pragma_name_iospace:
 		case pragma_name_dyncall:
+		case pragma_name_export:
 			break;
 			/*}}}  */
 		}
@@ -2329,6 +2330,7 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 							case pragma_name_undefined:
 							case pragma_name_iospace:
 							case pragma_name_dyncall:
+							case pragma_name_export:
 								scopeandcheck (DValAddr (tt));
 								break;
 							case pragma_name_linkage:
