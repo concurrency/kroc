@@ -342,7 +342,7 @@ do
 		#}}}
 		#{{{  --rmox  building for RMoX
 	--rmox)
-		octranopts="$octranopts -kr"
+		octranopts="$octranopts -kr --exporttab ."
 		;;
 		#}}}
 		#{{{  --nfw  no wait for globally FORKed processes
