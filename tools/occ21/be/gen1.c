@@ -62,6 +62,7 @@
 #include "gen12def.h"
 #include "code1def.h"
 #include "debugdef.h"
+#include "objlib.h"
 #include "objwrt.h"
 #include "profile.h"
 #include "predefhd.h"
@@ -5204,16 +5205,37 @@ printtreenl (stderr, 4, plist);
 						}
 					}
 				} else {
-					treenode *vv = DValOf (tptr);
+					geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: PRAGMA DYNCALL is not a list");
+				}
+				break;
+			case pragma_name_export:
+				if (TagOf (DValOf (tptr)) == S_LIST) {
+					treenode *v;
+					
+					for (v = DValOf (tptr); !EndOfList (v); v = NextItem (v)) {
+						treenode *vv = ThisItem (v);
 
-					if (TagOf (vv) == N_PROCDEF) {
-						treenode *plist = NParamListOf (vv);
-						INT32 ws, vs, thash;
+						if (TagOf (vv) == N_PROCDEF) {
+							wordnode *nameptr = translate_from_internal (NNameOf (vv));
+							const char *desc_buffer;
+							char *lcbuf;
+							int lclen;
+							
+							desc_buffer = create_descriptor_string (be_get_fe_handle (), vv, nameptr, 1, 1, 1);
+							for (lclen=0; (desc_buffer[lclen] != '\0') && (desc_buffer[lclen] != '\n'); lclen++);
+							lcbuf = memalloc (lclen + 2);
+							memcpy (lcbuf, desc_buffer, lclen);
+							lcbuf[lclen] = '\0';
+#if 0
+fprintf (stderr, "tnestedroutines(): EXPORT for [%s], lcbuf=[%s]\n", WNameOf (NNameOf (vv)), lcbuf);
+#endif
 
-						getprocwsandvs (vv, &ws, &vs);
-						thash = typehash (plist);
-						gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
+							gencommentv (".MAGIC EXPORT %s", lcbuf);
+							memfree (lcbuf);
+						}
 					}
+				} else {
+					geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: PRAGMA EXPORT is not a list");
 				}
 				break;
 			default:
