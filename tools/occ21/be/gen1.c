@@ -5220,7 +5220,9 @@ printtreenl (stderr, 4, plist);
 							const char *desc_buffer;
 							char *lcbuf;
 							int lclen;
-							
+							treenode *plist = NParamListOf (vv);
+							INT32 ws, vs, thash;
+
 							desc_buffer = create_descriptor_string (be_get_fe_handle (), vv, nameptr, 1, 1, 1);
 							for (lclen=0; (desc_buffer[lclen] != '\0') && (desc_buffer[lclen] != '\n'); lclen++);
 							lcbuf = memalloc (lclen + 2);
@@ -5232,6 +5234,10 @@ fprintf (stderr, "tnestedroutines(): EXPORT for [%s], lcbuf=[%s]\n", WNameOf (NN
 
 							gencommentv (".MAGIC EXPORT %s", lcbuf);
 							memfree (lcbuf);
+
+							getprocwsandvs (vv, &ws, &vs);
+							thash = typehash (plist);
+							gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
 						}
 					}
 				} else {
