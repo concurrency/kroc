@@ -988,8 +988,7 @@ newhiddenparamnode (const int t, const SOURCEPOSN ln, treenode * const e, const 
 #endif
 /*}}}*/
 /*{{{  treenode *newinstancenode (t, ln, n, p)*/
-treenode *
-newinstancenode (const int t, const SOURCEPOSN ln, treenode * const n, treenode * const p)
+treenode *newinstancenode (const int t, const SOURCEPOSN ln, treenode * const n, treenode * const p)
 {
 	treenode *nptr = (treenode *) newvec (TREENODEBASE + sizeof (struct instancenode_s));
 	checknodetype (t, INSTANCENODE);
@@ -1005,6 +1004,7 @@ newinstancenode (const int t, const SOURCEPOSN ln, treenode * const n, treenode 
 	SetIFork (nptr, 0);
 	SetIForked (nptr, 0);
 	SetIDynmem (nptr, 0);
+	SetIDynaddr (nptr, NULL);
 	SetIRPSlots (nptr, 0);
 #ifdef MOBILES
 	SetIRMSPOffset (nptr, 0);

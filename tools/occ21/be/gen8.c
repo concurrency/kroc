@@ -1088,6 +1088,11 @@ printtreenl (stderr, 4, IParamListOf (tptr));
 		}
 	}
 	/*}}}*/
+	/*{{{  if a dynamic call at a specific address, map that*/
+	if (dyncall && IDynaddrOf (tptr)) {
+		mapexp (IDynaddrAddr (tptr));
+	}
+	/*}}}*/
 	/*{{{  map parameter loading */
 	if (nparams > 0) {
 		int i;
@@ -1983,9 +1988,12 @@ fprintf (stderr, "tinstance: dynamic call to [%s], typehash 0x%8.8X, paramlist:"
 printtreenl (stderr, 4, nplist);
 #endif
 
-		snprintf (tmpname, 127, "DCR_%s", WNameOf (NNameOf (iname)));
-
-		genloadnamedlabptr (tmpname);
+		if (IDynaddrOf (tptr)) {
+			texpopd (P_EXP, IDynaddrOf (tptr), MANY_REGS);
+		} else {
+			snprintf (tmpname, 127, "DCR_%s", WNameOf (NNameOf (iname)));
+			genloadnamedlabptr (tmpname);
+		}
 		genprimary (I_STL, DYNCALL_SETUP_TEMP_NAME);
 
 		alloc_ws_slots = 0;			/* meaningless here */

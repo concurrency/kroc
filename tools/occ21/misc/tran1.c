@@ -4708,6 +4708,9 @@ printtreenl (stderr, 4, LeafLinkOf (t));
 					}
 #endif
 					transexp (IParamListAddr (t), TRUE);	/* do params first */
+					if (IDynaddrOf (t)) {
+						transexp (IDynaddrAddr (t), TRUE);
+					}
 					/* added for bug TS/1530 11/12/91 */
 					while (isspecification (*tptr))	{
 						/* incase anon vars have been added */

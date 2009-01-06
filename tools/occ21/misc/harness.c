@@ -272,6 +272,7 @@ PUBLIC BOOL reverse_alt_disable = FALSE;
 PUBLIC BOOL disable_dynmem = FALSE;
 PUBLIC BOOL no_placed_chans = FALSE;
 PUBLIC BOOL mobile_size_field = FALSE;
+PUBLIC BOOL main_dynentry = FALSE;
 #if defined(INITIAL_DECL)
 PUBLIC BOOL initial_decl = FALSE;
 #endif
@@ -2180,6 +2181,7 @@ const arg2_descriptor cloptions[] = {
 
 	/*{{{  zd - ze*/
 	#if !defined(COMPILING_TO_JCODE)
+	{"ZDME",      arg2_single,    &main_dynentry, set_flag,           HELP_ZED, "dynamic top-level entry point"},
 	{"ZD",        arg2_single,    NULL,           optzed,             HELP_ZED, "disassemble after crunch"},
 	{"ZEN",       arg2_single,    &enhanced_alt_enable, set_flag,     HELP_FUL, "use enhanced ALT enabling"},
 	{"ZEP",       arg2_single,    &alt_preenable, set_flag,           HELP_FUL, "use ALT pre-enabling sequence"},

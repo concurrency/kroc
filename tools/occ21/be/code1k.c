@@ -2195,13 +2195,15 @@ PUBLIC void coder_jumptoentrypoint (const treenode * const nptr)
 {
 	const char *extname = WNameOf (translate_from_internal (NNameOf (nptr)));	/* MDP */
 	if (assembly_output) {
-		if (diagnostics)
+		if (diagnostics) {
 			gencomment0 ("coder jumptoentrypoint");
+		}
 		diag_write_nl ();
 		fprintf (etcfile, "%-8s$%s", "j", WNameOf (translate_from_internal (NNameOf (nptr))));	/* MDP */
 	}
-	if (etc_output)
+	if (etc_output) {
 		etc_oinst (JUMPENTRY, extname);
+	}
 }
 
 /*}}}*/

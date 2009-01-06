@@ -5736,7 +5736,7 @@ PUBLIC void tmain (treenode * tptr)
 		int num_procs_declared = 0;
 
 		/* set nptr to the last PROC/FUNCTION declared */
-		for (t = tptr; TagOf (t) != S_END; t = DBodyOf (t))
+		for (t = tptr; TagOf (t) != S_END; t = DBodyOf (t)) {
 			switch (TagOf (t)) {
 			case S_PROCDEF:
 #ifdef MOBILES
@@ -5750,8 +5750,19 @@ PUBLIC void tmain (treenode * tptr)
 			default:
 				break;
 			}
-		if (nptr != NULL)	/* should suppress if not a main module */
-			coder_jumptoentrypoint (nptr);
+		}
+		if (nptr != NULL) {	/* should suppress if not a main module */
+			if (main_dynentry) {
+				INT32 ws, vs;
+				unsigned int thash;
+
+				getprocwsandvs (nptr, &ws, &vs);
+				thash = typehash (NParamListOf (nptr));
+				gencommentv (".MAGIC MAINDYNCALL %s %d %d %8.8X", WNameOf (NNameOf (nptr)), ws, vs, thash);
+			} else {
+				coder_jumptoentrypoint (nptr);
+			}
+		}
 	}
 	/*}}} */
 	if ((sampling_profiling || line_profiling || cgraph_profiling) && profile_table->count_table_size > 0) {

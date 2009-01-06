@@ -1688,6 +1688,7 @@ printtreenl (stderr, 4, tptr);
 	SetIRecursive (tptr, 0);
 	SetIForked (tptr, 0);
 	SetIDynmem (tptr, 0);
+	SetIDynaddr (tptr, 0);
 	SetNUsed (INameOf (tptr), TRUE);
 #if 0
 fprintf (stderr, "trans_mop_to_finstance (out).  tptr =");
@@ -1748,6 +1749,7 @@ fprintf (stderr, "trans_dop_to_finstance.  back to previous workspace now :), ch
 	SetIRecursive (tptr, 0);
 	SetIForked (tptr, 0);
 	SetIDynmem (tptr, 0);
+	SetIDynaddr (tptr, 0);
 	SetNUsed (INameOf (tptr), TRUE);
 	memfree (memalloc (512));
 #if 0
