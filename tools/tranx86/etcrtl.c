@@ -262,7 +262,12 @@ rtl_chain *etc_to_rtl (etc_chain *etc_code, arch_t *arch)
 
 	/* module header */
 	if (!options.not_main_module) {
-		arch->compose_entry_prolog (ts);
+		if (options.rmoxmode != RM_NONE) {
+			/* generate alternative RMoX entry prolog */
+			arch->compose_rmox_entry_prolog (ts, options.rmoxmode);
+		} else {
+			arch->compose_entry_prolog (ts);
+		}
 	}
 	trtl = new_rtl ();
 	trtl->type = RTL_SETNAMEDLABEL;

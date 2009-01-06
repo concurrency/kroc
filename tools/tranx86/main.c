@@ -122,6 +122,7 @@ int main (int argc, char **argv)
 	options.annotate_output = 0;
 	options.drop_assembler = 0;
 	options.gstabs = 0;
+	options.rmoxmode = RM_NONE;
 	options.debug_options = 0;
 	options.diagnostics = 0;
 	options.use_cpuid = 0;
@@ -615,6 +616,28 @@ int main (int argc, char **argv)
 					exit (EXIT_FAILURE);
 				}
 				options.etab_filename = *walk;
+			} else if (!strcmp (*walk + 2, "rmoxmode")) {
+				i++, walk++;
+				if ((i == argc) || !*walk) {
+					fprintf (stderr, "%s: option %s requires an argument\n", progname, walk[-1]);
+					exit (EXIT_FAILURE);
+				}
+				if (options.rmoxmode != RM_NONE) {
+					fprintf (stderr, "%s: warning: RMoX mode is already set!\n", progname);
+				} else if (!strcmp (*walk, "app")) {
+					options.rmoxmode = RM_APP;
+				} else if (!strcmp (*walk, "drv")) {
+					options.rmoxmode = RM_DRV;
+				} else if (!strcmp (*walk, "srv")) {
+					options.rmoxmode = RM_SRV;
+				} else if (!strcmp (*walk, "fs")) {
+					options.rmoxmode = RM_FS;
+				} else if (!strcmp (*walk, "net")) {
+					options.rmoxmode = RM_NET;
+				} else {
+					fprintf (stderr, "%s: error: unknown RMoX mode [%s]\n", progname, *walk);
+					exit (EXIT_FAILURE);
+				}
 			} else {
 				goto unknown_option;
 			}
@@ -1174,6 +1197,9 @@ static void usage (FILE *stream)
 	fprintf (stream, "\t              treat floating-point underflow as an error\n");
 	fprintf (stream, "\t--exporttab <file>\n");
 	fprintf (stream, "\t              write EXPORT table to specified file (removes if none)\n");
+	fprintf (stream, "\t--rmoxmode <type>\n");
+	fprintf (stream, "\t              generate alternate RMoX main module prolog, <type> is one\n");
+	fprintf (stream, "\t              of: app, drv, srv, fs, net\n");
 	fprintf (stream, "\n");
 	fprintf (stream, "\t-V | --version    dump version and exit\n");
 	fprintf (stream, "\t-h | --help       this help text\n");

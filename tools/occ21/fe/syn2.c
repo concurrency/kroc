@@ -53,6 +53,8 @@ PRIVATE treenode *rspecifier_constr (void);
 PRIVATE treenode *rtypeoroperand (void);
 PRIVATE treenode *rspecorexprlist (BOOL * specflag);
 #endif
+PRIVATE int rtypehash (treenode **tptr);
+
 #ifdef USER_DEFINED_OPERATORS
 extern BOOL user_defined_operators;
 #endif
@@ -1150,11 +1152,13 @@ PRIVATE treenode *roperand (void)
 				nextsymb ();
 #else
 				ss = rspecifier ();
-				if (ss == NULL)
+				if (ss == NULL) {
 					return NULL;
+				}
 #endif
-				if (checkfor (S_RPAREN))
+				if (checkfor (S_RPAREN)) {
 					return NULL;
+				}
 				/*}}} */
 			}
 			node = newlitnode (s, locn, (treenode *) w, ss);
@@ -3517,6 +3521,7 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 			if (!name) {
 				return NULL;
 			}
+			rtypehash (&name);
 #ifdef MOBILES
 			/* might have a direction specifier here if the NAME is a channel-type */
 			if (symb == S_INPUT) {
@@ -4411,6 +4416,36 @@ PUBLIC treenode *rresultspec (void)
 	}
 }
 /*}}}  */
+/*{{{  PRIVATE void rtypehash (treenode **tptr)*/
+/*
+ *	parses a typehash attached to a name-node
+ *	(usually) for external declaration processing.
+ *	Returns non-zero if a declaration was found and parsed.
+ */
+PRIVATE int rtypehash (treenode **tptr)
+{
+	SOURCEPOSN locn = flocn;
+
+	if ((lexmode != LEX_DEXTERNAL) || (symb != S_AMPERSAT)) {
+		return 0;
+	}
+
+	nextsymb ();
+	if (symb != S_UINTLIT) {
+		synerr_e (SYN_E_TYPEHASH, flocn, symb);
+	} else {
+		treenode *val = roperand ();
+
+#if 0
+fprintf (stderr, "rtypehash(): got specifier, value =");
+printtreenl (stderr, 4, val);
+#endif
+		*tptr = newdopnode (S_TYPEHASHCHECK, locn, *tptr, val, 0);
+	}
+
+	return 1;
+}
+/*}}}*/
 /*{{{  PUBLIC treenode *rspecifier ()*/
 /* On error, leaves symb unchanged */
 /* Actually allows PORTs, although they are strictly illegal */
@@ -4595,6 +4630,7 @@ fprintf (stderr, "rspecifier: putting SHARED in TypeAttr of CHAN\n");
 					synerr_e (SYN_E_SPECIFIER, flocn, symb);
 					return NULL;
 				}
+				rtypehash (&name);
 				/* ought to have a channel-direction specifier (for the type) here */
 				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
 					name = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, flocn, name, S_CHAN);
@@ -4675,6 +4711,11 @@ fprintf (stderr, "rspecifier: putting SHARED in TypeAttr of CHAN\n");
 			treenode *name;
 
 			name = (treenode *)rname ();
+
+			if ((lexmode == LEX_DEXTERNAL) && (symb == S_AMPERSAT)) {
+				/* means there is a typehash attached to the name */
+				rtypehash (&name);
+			}
 #ifdef MOBILES
 			if (symb == S_INPUT) {
 				name = newmopnode (S_ASINPUT, locn, name, S_NAME);
@@ -4803,6 +4844,7 @@ if (symb == S_NAME) {
 				synerr_e (SYN_E_SPECIFIER, flocn, symb);
 				return NULL;
 			}
+			rtypehash (&t);
 			/* ought to have a channel-direction specifier (for the type) here */
 			if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
 				t = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, flocn, t, S_CHAN);
@@ -4971,7 +5013,7 @@ printtreenl (stderr, 4, t);
 		break;
 		/*}}}*/
 #endif
-		/*{{{  default */
+		/*{{{  default (probably a name)*/
 	default:
 		{
 			BOOL copy_type_tree = TRUE;
@@ -4981,6 +5023,7 @@ printtreenl (stderr, 4, t);
 			if ((name = rname ()) == NULL) {
 				return NULL;
 			}
+			rtypehash ((treenode **)&name);
 			if (symb == S_NAME) {
 				t = (treenode *) name;
 				name = NULL;	/* force the next read of name */
@@ -4989,7 +5032,8 @@ printtreenl (stderr, 4, t);
 			}
 #endif
 			/*}}} */
-			if (t == NULL) {	/* We have had no specifier */
+			if (t == NULL) {
+				/*{{{  We have had no specifier*/
 #ifdef MOBILES
 				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
 					/* probably a channel-type direction specifier.  should have a name next */
@@ -5009,9 +5053,10 @@ printtreenl (stderr, 4, t);
 					synerr_e (SYN_E_SPECIFIER, locn, symb);
 					return NULL;
 				}
+				/*}}}*/
 #ifdef MOBILES
 			} else if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
-				/* another channel-type direction specifier?  should have a name next */
+				/*{{{  another channel-type direction specifier?  should have a name next*/
 				const int csymb = symb;
 
 				nextsymb ();
@@ -5036,8 +5081,10 @@ printtreenl (stderr, 4, t);
 								((csymb == S_INPUT) ? TypeAttr_marked_in : TypeAttr_marked_out));
 					}
 				}
+				/*}}}*/
 #endif
 			} else if (copy_type_tree) {
+				/*{{{  make a new copy of the type tree*/
 				treenode *ttype;
 
 				/* make a new copy of t */
@@ -5050,6 +5097,7 @@ printtreenl (stderr, 4, t);
 				if ((TagOf (ttype) == S_CHAN) || (TagOf (ttype) == S_PORT)) {
 					SetTypeAttr (ttype, TypeAttrOf (ttype) & ~(TypeAttr_marked_in | TypeAttr_marked_out));
 				}
+				/*}}}*/
 			}
 		}
 		break;

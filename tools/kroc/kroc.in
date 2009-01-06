@@ -213,6 +213,7 @@ makelib=
 compile=yes
 translate=yes
 link=yes
+rmoxlink=
 outfile=
 dorun=yes
 showversion=
@@ -343,6 +344,37 @@ do
 		#{{{  --rmox  building for RMoX
 	--rmox)
 		octranopts="$octranopts -kr --exporttab ."
+		;;
+		#}}}
+		#{{{  --rmox*  building RMoX module of some type
+	--rmox*)
+		value=$(printf '%s' "$option" | $SED -e 's/^......[-]*//')
+		link=
+		case $value in
+		app | application)
+			octranopts="$octranopts -kr --rmoxmode app"
+			rmoxlink=app
+			;;
+		drv | driver)
+			octranopts="$octranopts -kr --rmoxmode drv"
+			rmoxlink=drv
+			;;
+		srv | service)
+			octranopts="$octranopts -kr --rmoxmode srv"
+			rmoxlink=srv
+			;;
+		fs | filesystem)
+			octranopts="$octranopts -kr --rmoxmode fs"
+			rmoxlink=fs
+			;;
+		net | network)
+			octranopts="$octranopts -kr --rmoxmode net"
+			rmoxlink=net
+			;;
+		*)
+			printf '%s: unknown RMoX build mode: %s\n' "$progname" "$value" 1>&2
+			exit 1
+		esac
 		;;
 		#}}}
 		#{{{  --nfw  no wait for globally FORKed processes
@@ -865,10 +897,8 @@ if [ $showasflags ]; then
 	exit 0
 fi
 
-if [ $makelib ]
-then
-	if [ "X$link" = "X" ]
-	then
+if [ $makelib ]; then
+	if [ "X$link" = "X" ]; then
 		printf '%s: -c and -l are mutually exclusive (dropping -c)\n' "$progname" 1>&2
 		link=yes
 	fi
@@ -1057,6 +1087,13 @@ for src in $srcs; do
 	if [ "X$link" != "X" -a "X$efile" = "X" ]; then
 		if [ "X$outfile" = "X" ]; then
 			efile=$base
+		else
+			efile=$outfile
+			outfile=
+		fi
+	elif [ "X$link" = "X" -a "X$rmoxlink" != "X" ]; then
+		if [ "X$outfile" = "X" ]; then
+			efile="$base.$rmoxlink"
 		else
 			efile=$outfile
 			outfile=
@@ -1272,7 +1309,7 @@ if [ $defaultlibraries -eq 1 ]; then
 	ocllibs="$ocllibs -loccam_forall"
 fi
 
-if [ "X$link" = "X" ]; then
+if [ "X$link" = "X" ] && [ "X$rmoxlink" = "X" ]; then
 	exit 0
 fi
 
@@ -1290,6 +1327,8 @@ if [ $makelib ]; then
 	cmd="$cc $ccopts $oclibpath $ocrtslibs $ocllibs $ocrts $extraccopts $ARCH_LDFLAGS $ldopts -o $efile $objs"
 elif [ $skip_link ]; then
 	test
+elif [ "X$rmoxlink" != "X" ]; then
+	cmd="$ld -o $efile -r $objs"
 else
 	cmd="$cc $ccopts $objs $oclibpath $cincludepath $ocllibs $ocrts $ocrtslibs $extraccopts -o $efile"
 fi

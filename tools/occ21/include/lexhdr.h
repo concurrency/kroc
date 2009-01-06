@@ -470,5 +470,6 @@
 #define S_UINT64			378
 
 #define S_DYNCALL			379 /* dynamic PROC call */
+#define S_TYPEHASHCHECK			380 /* on imported DEXTERNAL declarations */
 
 

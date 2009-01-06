@@ -416,14 +416,16 @@ PUBLIC const char *synmessagestring (const int n)
 		return "procedure call";
 	case SYN_E_FORK_PROCPARAMS:
 		return "procedure parameters";
-	case SYN_E_DYNCALL_PROCCALL:
-		return "procedure call";
-	case SYN_E_DYNCALL_PROCPARAMS:
-		return "procedure parameters";
 	case SYN_E_CHANTYPEDIRSPEC:
 		return "chan-type direction specifier";
 		/*}}}*/
 		/*{{{  frmb: other stuff*/
+	case SYN_E_DYNCALL_PROCCALL:
+		return "procedure call";
+	case SYN_E_DYNCALL_PROCPARAMS:
+		return "procedure parameters";
+	case SYN_E_TYPEHASH:
+		return "type-hash";
 	case SYN_REC_TYPE_NOT_MOBILE:
 		return "recursive channel-type must be MOBILE";
 	case SYN_UNEXPECTED_CHANDIR:
