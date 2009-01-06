@@ -3268,6 +3268,15 @@ fprintf (stderr, "scopeandcheck: INSTANCENODE: param checking; ctvar = NULL\n");
 					}
 					/*}}}  */
 
+					if (IDynaddrOf (t)) {
+						if (IDynmemOf (t) == FALSE) {
+							chkerr_s (CHK_CALLAT_NOT_DYNAMIC, chklocn, WNameOf (NNameOf (name)));
+						}
+
+						scopeandcheck (IDynaddrAddr (t));
+					}
+
+
 					if (insidepripar && (TagOf (name) != N_DECL) && NPNestedPriParOf (name)) {
 						/* N.B. tag is N_DECL if the lookupname failed */
 						chkerr_s (CHK_NESTED_PRI_PROC, chklocn, WNameOf (NNameOf (name)));

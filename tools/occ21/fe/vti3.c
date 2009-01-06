@@ -872,6 +872,7 @@ PUBLIC void applytoexp (treenode * tptr, void (*f1) (treenode *, void *), void *
 		case S_PINSTANCE:
 		case S_FINSTANCE:
 			walklist (f1, IParamListOf (tptr), voidptr);
+			walklist (f1, IDynaddrOf (tptr), voidptr);
 			return;
 			/*}}} */
 			/*{{{  ASS */
@@ -1182,6 +1183,7 @@ PUBLIC void prewalktree (treenode *tptr, int (*f1)(treenode *, void *), void *co
 		case S_PINSTANCE:
 		case S_FINSTANCE:
 			prewalktree (INameOf (tptr), f1, voidptr);
+			prewalktree (IDynaddrOf (tptr), f1, voidptr);
 			tptr = IParamListOf (tptr);
 			break;
 			/*}}} */
@@ -1682,6 +1684,7 @@ PUBLIC void modprewalktree (treenode ** tptr, int (*f1) (treenode **, void *), v
 			case S_PINSTANCE:
 			case S_FINSTANCE:
 				modprewalktree (INameAddr (t), f1, voidptr);
+				modprewalktree (IDynaddrAddr (t), f1, voidptr);
 				tptr = IParamListAddr (t);
 				break;
 				/*}}} */

@@ -190,6 +190,7 @@ struct instancenode_s
     struct tnode_s *i_nameptr;		/* Symbol table entry for called proc */
     struct tnode_s *i_paramlist;	/* List of actual parameters */
     struct tnode_s *i_fork;		/* Associated FORKING bit of tree */
+    struct tnode_s *i_dynaddr;		/* Address expression associated with a dynamic call (special) */
     unsigned int i_rinstance:1;		/* recursive instance of a PROC/FUNCTION? */
     unsigned int i_forked:1;		/* forked instance of a PROC? */
     unsigned int i_dynmem:1;		/* dynamically allocated instance of a PROC? */

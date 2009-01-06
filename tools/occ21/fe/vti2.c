@@ -1204,8 +1204,8 @@ PRIVATE void printdecllist (FILE * const fptr, const int indent, treenode * n)
 }
 
 /*}}}*/
-/*{{{  PUBLIC void printexp(tptr)*/
-PUBLIC void printexp (FILE * const fptr, treenode * tptr)
+/*{{{  PUBLIC void printexp (FILE *const fptr, treenode *tptr)*/
+PUBLIC void printexp (FILE *const fptr, treenode *tptr)
 {
 	while (tptr != NULL)
 		switch (TagOf (tptr))
@@ -1654,6 +1654,11 @@ PUBLIC void printtree (FILE * const fptr, int indent, treenode * n)
 			if (IDynmemOf (n)) {
 				fprintf (fptr, " DYNCALL");
 			}
+			if (IDynaddrOf (n)) {
+				fprintf (fptr, " AT");
+				printtree (fptr, indent + 2, IDynaddrOf (n));
+			}
+
 			indent += 2;
 			printtree (fptr, indent, INameOf (n));
 			n = IParamListOf (n);

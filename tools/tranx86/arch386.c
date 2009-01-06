@@ -3354,17 +3354,7 @@ static void compose_entry_prolog_i386 (tstate *ts)
  */
 static void compose_rmox_entry_prolog_i386 (tstate *ts, rmoxmode_e rmode)
 {
-	rtl_chain *trtl;
 	char sbuffer[128];
-	int tmp_reg;
-
-	trtl = new_rtl ();
-	trtl->type = RTL_PUBLICSETNAMEDLABEL;
-	sprintf (sbuffer, "%s_occam_start", (options.extref_prefix ? options.extref_prefix : ""));
-	trtl->u.label_name = string_dup (sbuffer);
-	add_to_rtl_chain (trtl);
-
-	/* FIXME! */
 
 	sprintf (sbuffer, "RMoX entry prolog for mode %d", (int)rmode);
 	add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuffer)));

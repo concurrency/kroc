@@ -1166,6 +1166,8 @@ PUBLIC const char *chkmessagestring (const int n)
 		return ("missing type for parameter");
 	case CHK_ANYMOBILETYPE_MISMATCH:
 		return ("can only communicate mobiles on a CHAN OF MOBILE.ANY");
+	case CHK_CALLAT_NOT_DYNAMIC:
+		return ("cannot call non-dynamic PROC %s at specified address");
 		/*}}}*/
 		/*{{{  buffered channel errors*/
 	case CHK_BUFCHAN_NOTCONST:

@@ -1552,7 +1552,7 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 						/*}}}*/
 					} else if (!strncmp (arg, "DYNCALL", (arglen < 7) ? arglen : 7)) {
 						/*{{{  indicator to generate dynamic call stub data*/
-						/* expecting 3 numeric arguments, last hexadecimal */
+						/* expecting name and 3 numeric arguments, last hexadecimal */
 						if (arglen < 22) {
 							fprintf (stderr, "%s: error: broken DYNCALL data: %*s\n", progname,
 									etc_code->o_len - 7, etc_code->o_bytes + 7);
@@ -1581,6 +1581,61 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 								trtl->u.dyncode.label_name = ch;
 #if 0
 fprintf (stderr, "DYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dyncode.label_name, trtl->u.dyncode.fcn_name);
+#endif
+								trtl->u.dyncode.ws_slots = ws;
+								trtl->u.dyncode.vs_slots = vs;
+								trtl->u.dyncode.typehash = thash;
+								add_to_rtl_chain (trtl);
+							}
+						}
+						/*}}}*/
+					} else if (!strncmp (arg, "MAINDYNCALL", (arglen < 11) ? arglen : 11)) {
+						/*{{{  indicator to generate dynamic call stub data for "main" routine*/
+						/* expecting name and 3 numeric arguments, last hexadecimal */
+						if (arglen < 26) {
+							fprintf (stderr, "%s: error: broken MAINDYNCALL data: %*s\n", progname,
+									etc_code->o_len - 7, etc_code->o_bytes + 7);
+						} else {
+							unsigned int ws, vs, thash;
+							char *ch, *pname;
+							int left, pnlen;
+
+							pname = arg + 12;
+							left = arglen - 12;
+							for (ch=pname; (left > 0) && (*ch != ' '); ch++, left--);
+							pnlen = (int)(ch - pname);
+							for (; (left > 0) && (*ch == ' '); ch++, left--);
+
+							if (sscanf (ch, "%d %d %x", &ws, &vs, &thash) != 3) {
+								fprintf (stderr, "%s: error: broken MAINDYNCALL data: %*s\n",
+										progname, etc_code->o_len - 7, etc_code->o_bytes + 7);
+							} else {
+								flush_ins_chain ();
+								trtl = new_rtl ();
+								trtl->type = RTL_DYNCODEENTRY;
+								trtl->u.dyncode.fcn_name = string_ndup (pname, pnlen);
+								switch (options.rmoxmode) {
+								case RM_NONE:
+									trtl->u.dyncode.label_name = string_dup ("DCR_occam_start");
+									break;
+								case RM_APP:
+									trtl->u.dyncode.label_name = string_dup ("DCR_rmox_app_main");
+									break;
+								case RM_DRV:
+									trtl->u.dyncode.label_name = string_dup ("DCR_rmox_drv_main");
+									break;
+								case RM_SRV:
+									trtl->u.dyncode.label_name = string_dup ("DCR_rmox_srv_main");
+									break;
+								case RM_FS:
+									trtl->u.dyncode.label_name = string_dup ("DCR_rmox_fs_main");
+									break;
+								case RM_NET:
+									trtl->u.dyncode.label_name = string_dup ("DCR_rmox_net_main");
+									break;
+								}
+#if 0
+fprintf (stderr, "MAINDYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dyncode.label_name, trtl->u.dyncode.fcn_name);
 #endif
 								trtl->u.dyncode.ws_slots = ws;
 								trtl->u.dyncode.vs_slots = vs;

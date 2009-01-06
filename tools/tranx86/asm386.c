@@ -1052,14 +1052,18 @@ int dump_asm386_stream (rtl_chain *rtl_code, FILE *stream)
 				seen_data = 1;
 			}
 			const char *pfx = options.extref_prefix ? options.extref_prefix : "";
-			fprintf (stream, ".globl %s_wsbytes\n", pfx);
-			fprintf (stream, "%s_wsbytes: .long %d\n", pfx, tmp->u.wsvs.ws_bytes);
-			fprintf (stream, ".globl %s_wsadjust\n", pfx);
-			fprintf (stream, "%s_wsadjust: .long %d\n", pfx, tmp->u.wsvs.ws_adjust);
-			fprintf (stream, ".globl %s_vsbytes\n", pfx);
-			fprintf (stream, "%s_vsbytes: .long %d\n", pfx, tmp->u.wsvs.vs_bytes);
-			fprintf (stream, ".globl %s_msbytes\n", pfx);
-			fprintf (stream, "%s_msbytes: .long %d\n", pfx, tmp->u.wsvs.ms_bytes);
+
+			if (options.rmoxmode == RM_NONE) {
+				/* only generate these if not compiling for RMoX */
+				fprintf (stream, ".globl %s_wsbytes\n", pfx);
+				fprintf (stream, "%s_wsbytes: .long %d\n", pfx, tmp->u.wsvs.ws_bytes);
+				fprintf (stream, ".globl %s_wsadjust\n", pfx);
+				fprintf (stream, "%s_wsadjust: .long %d\n", pfx, tmp->u.wsvs.ws_adjust);
+				fprintf (stream, ".globl %s_vsbytes\n", pfx);
+				fprintf (stream, "%s_vsbytes: .long %d\n", pfx, tmp->u.wsvs.vs_bytes);
+				fprintf (stream, ".globl %s_msbytes\n", pfx);
+				fprintf (stream, "%s_msbytes: .long %d\n", pfx, tmp->u.wsvs.ms_bytes);
+			}
 			break;
 		case RTL_UNDEFINED:
 		case RTL_CODELINE:

@@ -353,22 +353,27 @@ do
 		case $value in
 		app | application)
 			octranopts="$octranopts -kr --rmoxmode app"
+			occopts="$occopts -zdme"
 			rmoxlink=app
 			;;
 		drv | driver)
 			octranopts="$octranopts -kr --rmoxmode drv"
+			occopts="$occopts -zdme"
 			rmoxlink=drv
 			;;
 		srv | service)
 			octranopts="$octranopts -kr --rmoxmode srv"
+			occopts="$occopts -zdme"
 			rmoxlink=srv
 			;;
 		fs | filesystem)
 			octranopts="$octranopts -kr --rmoxmode fs"
+			occopts="$occopts -zdme"
 			rmoxlink=fs
 			;;
 		net | network)
 			octranopts="$octranopts -kr --rmoxmode net"
+			occopts="$occopts -zdme"
 			rmoxlink=net
 			;;
 		*)

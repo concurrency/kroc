@@ -2538,6 +2538,22 @@ PUBLIC treenode *rprocess (void)
 			}
 			if (symb == S_LPAREN) {
 				dyncall = rinstance (S_PINSTANCE, locn, pname);
+				if (symb == S_AT) {
+					treenode *calladdr;
+
+					/* special case, allow dynamic call at a specific address */
+					/* FIXME: drop some marker that says this is basically insecure */
+					nextsymb ();
+					calladdr = rexp ();
+
+#if 0
+fprintf (stderr, "rprocess(): DYNCALL, calladdr expr =\n");
+printtreenl (stderr, 4, calladdr);
+#endif
+					if (TagOf (dyncall) == S_PINSTANCE) {
+						SetIDynaddr (dyncall, calladdr);
+					}
+				}
 				checknewline ();
 				if (dyncall && (TagOf (dyncall) == S_PINSTANCE)) {
 					SetIDynmem (dyncall, 1);
