@@ -1096,7 +1096,7 @@ for src in $srcs; do
 			efile=$outfile
 			outfile=
 		fi
-	elif [ "X$link" = "X" -a "X$rmoxlink" != "X" ]; then
+	elif [ "X$link" = "X" -a "X$rmoxlink" != "X" -a "X$efile" = "X" ]; then
 		if [ "X$outfile" = "X" ]; then
 			efile="$base.$rmoxlink"
 		else
