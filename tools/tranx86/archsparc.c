@@ -2477,6 +2477,7 @@ arch_t *init_arch_sparc (int mclass)
 	arch->compose_bcall = compose_bcall_sparc;
 
 	arch->compose_entry_prolog = compose_entry_prolog_sparc;
+	arch->compose_rmox_entry_prolog = NULL;
 	arch->compose_fp_set_fround = compose_fp_set_fround_sparc;
 	arch->compose_fp_init = compose_fp_init_sparc;
 	arch->compose_reset_fregs = compose_reset_fregs_sparc;

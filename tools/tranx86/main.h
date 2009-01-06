@@ -95,6 +95,15 @@
 #define INTERNAL_FLOATCONV 0x20		/* need a floating-point conversion constant */
 #define INTERNAL_ALIGNEDCODE 0x40	/* if code needs to be sensibly aligned */
 
+typedef enum {
+	RM_NONE,			/* not building for RMoX */
+	RM_APP,				/* building RMoX application */
+	RM_DRV,				/* building RMoX device driver */
+	RM_SRV,				/* building RMoX service */
+	RM_FS,				/* building RMoX file-system handler */
+	RM_NET				/* building RMoX network driver */
+} rmoxmode_e;
+
 typedef struct {
 	/* general options */
 	int not_main_module;
@@ -109,6 +118,7 @@ typedef struct {
 	int gstabs;
 	int drop_assembler;
 	int tlp_interface;		/* overrides automatic checking */
+	rmoxmode_e rmoxmode;
 	/* debugging */
 	int debug_options;
 	int diagnostics;
