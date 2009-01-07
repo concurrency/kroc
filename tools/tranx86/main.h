@@ -96,12 +96,12 @@
 #define INTERNAL_ALIGNEDCODE 0x40	/* if code needs to be sensibly aligned */
 
 typedef enum {
-	RM_NONE,			/* not building for RMoX */
-	RM_APP,				/* building RMoX application */
-	RM_DRV,				/* building RMoX device driver */
-	RM_SRV,				/* building RMoX service */
-	RM_FS,				/* building RMoX file-system handler */
-	RM_NET				/* building RMoX network driver */
+	RM_NONE = 0,			/* not building for RMoX */
+	RM_APP = 1,			/* building RMoX application */
+	RM_DRV = 2,			/* building RMoX device driver */
+	RM_SRV = 3,			/* building RMoX service */
+	RM_FS = 4,			/* building RMoX file-system handler */
+	RM_NET = 5			/* building RMoX network driver */
 } rmoxmode_e;
 
 typedef struct {
