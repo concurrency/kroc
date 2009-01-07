@@ -1034,6 +1034,15 @@ int dump_asm386_stream (rtl_chain *rtl_code, FILE *stream)
 				flabel = modify_name (tmp->u.dyncode.fcn_name);
 				fprintf (stream, "\t.long %s, %d, %d, 0x%x\n", flabel,
 						tmp->u.dyncode.ws_slots, tmp->u.dyncode.vs_slots, tmp->u.dyncode.typehash);
+
+				if (tmp->u.dyncode.rmoxmode != RM_NONE) {
+					/* add some extra information with details about what we're compiling */
+					fprintf (stream, ".globl rmox_modname\n");
+					fprintf (stream, "rmox_modname: .asciz \"%s\"\n", tmp->u.dyncode.fcn_name ?: "");
+					fprintf (stream, ".align 4\n");
+					fprintf (stream, ".globl rmox_modtype\n");
+					fprintf (stream, "rmox_modtype: .long %d\n", (int)tmp->u.dyncode.rmoxmode);
+				}
 			}
 			break;
 		case RTL_PUBLICENDNAMEDLABEL:
