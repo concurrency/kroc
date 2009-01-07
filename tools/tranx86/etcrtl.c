@@ -1614,6 +1614,7 @@ fprintf (stderr, "DYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dyncod
 								trtl = new_rtl ();
 								trtl->type = RTL_DYNCODEENTRY;
 								trtl->u.dyncode.fcn_name = string_ndup (pname, pnlen);
+								trtl->u.dyncode.rmoxmode = options.rmoxmode;
 								switch (options.rmoxmode) {
 								case RM_NONE:
 									trtl->u.dyncode.label_name = string_dup ("DCR_occam_start");
@@ -1641,6 +1642,13 @@ fprintf (stderr, "MAINDYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dy
 								trtl->u.dyncode.vs_slots = vs;
 								trtl->u.dyncode.typehash = thash;
 								add_to_rtl_chain (trtl);
+
+								/* set jentry_name, as this effectively replaces that */
+								if (ts->jentry_name) {
+									sfree (ts->jentry_name);
+									ts->jentry_name = NULL;
+								}
+								ts->jentry_name = string_ndup (pname, pnlen);
 							}
 						}
 						/*}}}*/

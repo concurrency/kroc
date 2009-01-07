@@ -98,6 +98,7 @@ typedef struct TAG_rtl_chain {
 			int ws_slots;
 			int vs_slots;
 			unsigned int typehash;
+			rmoxmode_e rmoxmode;
 		} dyncode;
 		char *label_name;
 		char *stub_name;
