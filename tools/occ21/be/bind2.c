@@ -599,10 +599,10 @@ printtreenl (stderr, 4, t);
 		case S_NTH_DIMENSION:
 			/* don't need to do anything :) */
 			return;
-		case S_TYPEHASHOF:
-			tptr = OpAddr (t);
-			break;
 #endif
+		case S_TYPEHASHOF:
+			/* tptr = OpAddr (t); */
+			return;
 			/*{{{  SIZE ELSIZE SEGSTART */
 		case S_SIZE:
 #ifdef MOBILES

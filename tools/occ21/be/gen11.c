@@ -2488,6 +2488,12 @@ fprintf (stderr, "gen11: loadhiddentypeof(): dynmobileproctype: type =");
 printtreenl (stderr, 4, type);
 #endif
 		loadconstant (typehash (NTypeOf (MTypeOf (type))));
+	} else {
+#if 0
+fprintf (stderr, "gen11: loadhiddentypeof(): non-mobile type:");
+printtreenl (stderr, 4, type);
+#endif
+		loadconstant (typehash (type));
 	}
 	return;
 }

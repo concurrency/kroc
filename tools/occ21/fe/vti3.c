@@ -929,6 +929,7 @@ PUBLIC void applytoexp (treenode * tptr, void (*f1) (treenode *, void *), void *
 #ifdef OCCAM2_5
 		case S_BYTESIN:
 #endif
+		case S_TYPEHASHOF:
 #ifdef MOBILES
 		case S_ADDROF:
 		case S_HWADDROF:
@@ -1226,6 +1227,7 @@ PUBLIC void prewalktree (treenode *tptr, int (*f1)(treenode *, void *), void *co
 #ifdef OCCAM2_5
 		case S_BYTESIN:
 #endif
+		case S_TYPEHASHOF:
 			tptr = OpOf (tptr);
 			break;
 #ifdef MOBILES

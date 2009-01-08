@@ -2409,6 +2409,8 @@ PUBLIC BOOL isconst (treenode * tptr)
 		case S_ROUND:
 		case S_TRUNC:
 			return isconst (OpOf (tptr));
+		case S_TYPEHASHOF:
+			return FALSE;			/* no, but yes.. */
 		case S_SIZE:
 		case S_ELSIZE:	/* introduced by the backend */
 #ifdef OCCAM2_5
@@ -3086,6 +3088,9 @@ PUBLIC treenode *foldexp (treenode * tptr)
 		SetOp (tptr, foldexp (OpOf (tptr)));
 		break;
 #endif
+	case S_TYPEHASHOF:
+		SetOp (tptr, foldexp (OpOf (tptr)));
+		break;
 		/*{{{  specification */
 	case S_VALABBR:
 	case S_ABBR:

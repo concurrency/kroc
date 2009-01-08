@@ -1375,6 +1375,7 @@ PUBLIC BOOL issame (treenode * t1, treenode * t2)
 #ifdef OCCAM2_5
 		case S_BYTESIN:
 #endif
+		case S_TYPEHASHOF:
 #ifdef MOBILES
 		case S_ADDROF:
 		case S_HWADDROF:

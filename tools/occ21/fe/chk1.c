@@ -3087,6 +3087,17 @@ printtreenl (stderr, 4, *orig);
 	}
 	/*}}}  */
 #endif
+	/*{{{  TYPEHASHOF operator */
+	case S_TYPEHASHOF:
+	{
+		treenode *optype = intnodeptr;
+
+		/* FIXME: should check that the operand is sensible */
+		SetMOpType (tptr, S_INT);
+
+		return optype;
+	}
+	/*}}}*/
 	/*{{{  conversions */
 	case S_EXACT:
 	case S_ROUND:
@@ -4881,6 +4892,7 @@ printtreenl (stderr, 4, SLengthExpOf (tptr));
 	case S_ADDROF:
 	case S_HWADDROF:
 #endif
+	case S_TYPEHASHOF:
 	case S_FNACTUALRESULT:
 		return intnodeptr;
 #ifdef MOBILES
@@ -4947,7 +4959,6 @@ PUBLIC int chk_typeof (treenode * tptr)
 #ifdef MOBILES
 		case S_CLONE:
 		case S_DEFINED:
-		case S_TYPEHASHOF:
 #endif
 #ifdef USER_DEFINED_OPERATORS
 	#include "casemops.h"
@@ -4967,6 +4978,7 @@ PUBLIC int chk_typeof (treenode * tptr)
 		case S_NTH_DIMENSION:
 			return S_INT;
 #endif
+		case S_TYPEHASHOF:
 		case S_ADDRESSOF:
 		case S_SIZE:
 		case S_ELSIZE:

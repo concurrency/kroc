@@ -196,6 +196,7 @@ PRIVATE BOOL mustbeexp (const int s)
 	case S_ADDROF:
 	case S_HWADDROF:
 #endif
+	case S_TYPEHASHOF:
 	case S_SUBTRACT:
 	case S_MINUS:
 	case S_BITNOT:
@@ -1267,6 +1268,8 @@ printtreenl (stderr, 4, node);
 #ifdef MOBILES
 	case S_ADDROF:
 	case S_HWADDROF:
+#endif
+	case S_TYPEHASHOF:
 		{
 			const int s = symb;
 			treenode *op;
@@ -1278,7 +1281,6 @@ printtreenl (stderr, 4, node);
 			node = newmopnode (s, locn, op, 0);
 		}
 		break;
-#endif
 	default:
 		synerr_e (SYN_E_OPERAND, flocn, symb);
 		break;
@@ -1455,9 +1457,10 @@ PUBLIC treenode *rexp (void)
 		}
 		/*}}} */
 #ifdef MOBILES
-		/*{{{  case S_ADDROF S_HWADDROF */
+		/*{{{  case S_ADDROF S_HWADDROF S_TYPEHASHOF*/
 	case S_ADDROF:
 	case S_HWADDROF:
+	case S_TYPEHASHOF:
 		{
 			treenode *op = roperand ();
 			return (op == NULL ? NULL : rrestofexp (op, locn));
