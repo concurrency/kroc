@@ -1979,7 +1979,7 @@ else fprintf (stderr, "\n    [NULL]\n");
 		{
 			treenode *op = OpOf (tptr);
 
-#if 1
+#if 0
 fprintf (stderr, "texp_main(): S_TYPEHASHOF: OpOf (tptr) = ");
 printtreenl (stderr, 4, op);
 #endif
