@@ -703,7 +703,7 @@ PRIVATE int revsfor (treenode * tptr, int regs)
 		if (isdynmobilearray (OpOf (tptr))) {
 			return 0;
 		} else {
-			return revsfor (dimexpof (OpOf (tptr), 0), regs);
+			return revsfor (OpOf (tptr), regs);
 		}
 #endif	/* MOBILES */
 	case S_TYPEHASHOF:
