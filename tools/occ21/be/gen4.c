@@ -282,9 +282,19 @@ printtreenl (stderr, 4, tptr);
 	case S_ADDROF:
 	case S_HWADDROF:
 	case S_CLONE:
-	case S_TYPEHASHOF:
 		return regsfor (OpOf (tptr));
 #endif
+	case S_TYPEHASHOF:
+		switch (TagOf (OpOf (tptr))) {
+		case N_PROCDEF:
+		case N_LIBPROCDEF:
+		case N_STDLIBPROCDEF:
+		case N_SCPROCDEF:
+			return 1;			/* these end up constant */
+		default:
+			return regsfor (OpOf (tptr));
+		}
+		break;
 		/*}}} */
 		/*{{{  dyadic operators */
 	case S_ADD:
@@ -696,6 +706,18 @@ PRIVATE int revsfor (treenode * tptr, int regs)
 			return revsfor (dimexpof (OpOf (tptr), 0), regs);
 		}
 #endif	/* MOBILES */
+	case S_TYPEHASHOF:
+		switch (TagOf (OpOf (tptr))) {
+		case N_PROCDEF:
+		case N_LIBPROCDEF:
+		case N_STDLIBPROCDEF:
+		case N_SCPROCDEF:
+		case N_INLINEPROCDEF:
+			return 0;			/* these will be constant expressions */
+		default:
+			return revsfor (OpOf (tptr), regs);
+		}
+		break;
 	case S_SEGSTART:
 		return revsfor (SStartExpOf (OpOf (tptr)), regs);
 		/*}}} */
@@ -1952,14 +1974,62 @@ else fprintf (stderr, "\n    [NULL]\n");
 	case S_HIDDEN_TYPE:
 		loadhiddentypeof (HExpOf (tptr), regs);
 		break;
-	case S_TYPEHASHOF:
-#if 0
-fprintf (stderr, "texp_main(): S_TYPEHASHOF: OpOf (tptr) = ");
-printtreenl (stderr, 4, OpOf (tptr));
-#endif
-		loadhiddentypeof (OpOf (tptr), regs);
-		break;
 #endif /* MOBILES */
+	case S_TYPEHASHOF:
+		{
+			treenode *op = OpOf (tptr);
+
+#if 1
+fprintf (stderr, "texp_main(): S_TYPEHASHOF: OpOf (tptr) = ");
+printtreenl (stderr, 4, op);
+#endif
+			switch (TagOf (op)) {
+			case N_PROCDEF:
+			case N_LIBPROCDEF:
+			case N_STDLIBPROCDEF:
+			case N_SCPROCDEF:
+			case N_INLINEPROCDEF:
+				/* loading typehash of a PROC, this means the paramter list normally */
+				{
+					treenode *param_list = NParamListOf (op);
+					treenode **savep_vsp = NULL;
+					treenode *save_vsp = NULL;
+					unsigned int thash;
+					
+					/* if the parameter list has a vectorspace pointer in it, remove for purposes of typehash generation */
+					for (savep_vsp = &param_list; savep_vsp && !EndOfList (*savep_vsp); savep_vsp = NextItemAddr (*savep_vsp)) {
+						save_vsp = ThisItem (*savep_vsp);
+
+						if (TagOf (save_vsp) == S_PARAM_VSP) {
+							break;		/* for() */
+						}
+					}
+					if (savep_vsp && EndOfList (*savep_vsp)) {
+						savep_vsp = NULL;
+					}
+					
+					if (savep_vsp) {
+						save_vsp = *savep_vsp;
+						*savep_vsp = NULL;
+					}
+					thash = typehash (param_list);
+					if (savep_vsp) {
+						*savep_vsp = save_vsp;
+					}
+
+					loadconstant (thash);
+				}
+				break;
+			default:
+#ifdef MOBILES
+				loadhiddentypeof (op, regs);
+#else
+				loadconstant (typehash (op));
+#endif
+				break;
+			}
+		}
+		break;
 	case S_HIDDEN_PARAM:
 		texp_main (HExpOf (tptr), regs, signextend_result);
 		break;

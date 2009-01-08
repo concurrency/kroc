@@ -977,6 +977,7 @@ PRIVATE void aliascheckexp (treenode *n, use_mode_t use_mode)
 		case S_BYTESIN:
 		case S_OFFSETOF:
 #endif
+		case S_TYPEHASHOF:
 			return;
 			/*}}} */
 			/*{{{  dyadics */
