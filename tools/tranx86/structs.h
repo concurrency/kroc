@@ -286,6 +286,7 @@ typedef struct TAG_ins_arg {
 #define ArgConst(X)	((X)->regconst)
 #define ArgCC(X)	ArgConst(X)
 #define ArgLabel(X)	((X)->regconst)
+#define ArgFLabel(X)	((X)->regconst)
 #define ArgName(X)	(char *)((X)->regconst)
 #define ArgDisp(X)	((X)->disp)
 #define ArgHasDisp(X)	((X)->flags & ARG_DISP)

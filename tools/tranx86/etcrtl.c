@@ -122,7 +122,8 @@ static void generate_call (tstate *ts, etc_chain *etc_code, arch_t *arch, int st
 	int i = 0;
 
 	/* handle special calling sequences here (spares pain in optimisation) */
-	/* NOTE: these should never be called directly! -- stubtable.[ch] and translation of I_CALL inline these (can help reduce cache displacement) */
+	/* NOTE: these should never be called directly! -- stubtable.[ch] and translation of
+	 * I_CALL inline these (can help reduce cache displacement) */
 
 	switch (d_str[0]) {
 	case 'B':

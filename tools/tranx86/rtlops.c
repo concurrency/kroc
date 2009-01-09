@@ -2448,6 +2448,421 @@ static void rtl_procinf_setlabrefs (procinf *pinfo, void *arg)
 	return;
 }
 /*}}}*/
+/*{{{  static int rtl_count_code_instr (rtl_chain *rtl, int instr)*/
+/*
+ *	counts up the number of particular instructions in generated code
+ */
+static int rtl_count_code_instr (rtl_chain *rtl, int instr)
+{
+	int count = 0;
+
+	for (; rtl; rtl = rtl->next) {
+		if (rtl->type == RTL_CODE) {
+			ins_chain *ins;
+			
+			for (ins = rtl->u.code.head; ins; ins = ins->next) {
+				if (ins->type == instr) {
+					count++;
+				}
+			}
+
+		}
+	}
+
+	return count;
+}
+/*}}}*/
+/*{{{  static int rtl_find_code_instr (rtl_chain *rtl, int instr, ins_chain **rarry, int *rptr)*/
+/*
+ *	retrieves instances of an instruction in generated code (pointers to)
+ *	returns number found
+ */
+static int rtl_find_code_instr (rtl_chain *rtl, int instr, ins_chain **rarry, int *rptr)
+{
+	int count = 0;
+
+	for (; rtl; rtl = rtl->next) {
+		if (rtl->type == RTL_CODE) {
+			ins_chain *ins;
+			
+			for (ins = rtl->u.code.head; ins; ins = ins->next) {
+				if (ins->type == instr) {
+					rarry[*rptr] = ins;
+					*rptr = *rptr + 1;
+					count++;
+				}
+			}
+
+		}
+	}
+	return count;
+}
+/*}}}*/
+/*{{{  int rtl_cleanup_flabels (rtl_chain *rtl_code)*/
+/*
+ *	cleans up SETFLABELs that don't have any references.
+ *	returns number of SETFLABELs removed, -1 on error.
+ */
+int rtl_cleanup_flabels (rtl_chain *rtl_code)
+{
+	ins_chain **flabel_links;		/* links to where SETFLABEL instructions are */
+	int *flabel_refcounts;
+	int flabel_ptr = -1;
+	int i, num_flabs;
+	int rcode = -1;
+
+	num_flabs = rtl_count_code_instr (rtl_code, INS_SETFLABEL);
+#if 0
+fprintf (stderr, "rtl_cleanup_flabels(): %d SETFLABEL instances\n", num_flabs);
+#endif
+	if (num_flabs > 0) {
+		flabel_links = (ins_chain **)smalloc (num_flabs * sizeof (ins_chain *));
+		flabel_refcounts = (int *)smalloc (num_flabs * sizeof (int));
+		for (i=0; i<num_flabs; i++) {
+			flabel_links[i] = NULL;
+			flabel_refcounts[i] = 0;
+		}
+		/* put these in first */
+		i = 0;
+		rtl_find_code_instr (rtl_code, INS_SETFLABEL, flabel_links, &i);
+		if (i != num_flabs) {
+			fprintf (stderr, "%s: error: inconsistent number of SETFLABELs (%d vs. %d)\n", progname, i, num_flabs);
+			sfree (flabel_links);
+			sfree (flabel_refcounts);
+			return -1;
+		}
+	} else {
+		return 0;
+	}
+
+	flabel_ptr = -1;
+	for (; rtl_code; rtl_code = rtl_code->next) {
+		if (rtl_code->type == RTL_CODE) {
+			ins_chain *tmp_ins;
+
+			for (tmp_ins = rtl_code->u.code.head; tmp_ins; tmp_ins=tmp_ins->next) {
+				switch (tmp_ins->type) {
+					/*{{{  INS_SETFLABEL: check that this matches the expected one in flabel_links[]*/
+				case INS_SETFLABEL:
+					if (tmp_ins->in_args[0] && ((tmp_ins->in_args[0]->flags & ARG_MODEMASK) == ARG_FLABEL)) {
+						flabel_ptr++;
+						if (flabel_links[flabel_ptr] != tmp_ins) {
+							fprintf (stderr, "%s: error: confusion in SETFLABEL organisation!\n", progname);
+							rcode = -1;
+							goto get_out_of_here;
+						}
+						/* flabel_ptr points at the *last seen* label */
+					}
+					break;
+					/*}}}*/
+					/*{{{  INS_CJUMP: conditional jump, check for FLABELs and BLABELs*/
+				case INS_CJUMP:
+					if (tmp_ins->in_args[1] && (ArgMode (tmp_ins->in_args[1]) == ARG_FLABEL)) {
+						/* forward label reference */
+						int j;
+
+						for (j=flabel_ptr + 1; j<num_flabs; j++) {
+							if (flabel_links[j]->in_args[0] && (ArgFLabel (flabel_links[j]->in_args[0]) == ArgFLabel (tmp_ins->in_args[1]))) {
+								/* reference to this one */
+								flabel_refcounts[j]++;
+								break;		/* for() */
+							}
+						}
+						if (j == num_flabs) {
+							fprintf (stderr, "%s: error: undefined reference to FLABEL\n", progname);
+							rcode = -1;
+							goto get_out_of_here;
+						}
+					} else if (tmp_ins->in_args[1] && (ArgMode (tmp_ins->in_args[1]) == ARG_BLABEL)) {
+						/* backward label reference */
+						int j;
+
+						for (j=flabel_ptr; j>=0; j--) {
+							if (flabel_links[j]->in_args[0] && (ArgFLabel (flabel_links[j]->in_args[0]) == ArgFLabel (tmp_ins->in_args[1]))) {
+								/* reference to this one */
+								flabel_refcounts[j]++;
+								break;		/* for() */
+							}
+						}
+						if (j < 0) {
+							fprintf (stderr, "%s: error: undefined reference to BLABEL\n", progname);
+							rcode = -1;
+							goto get_out_of_here;
+						}
+					}
+					break;
+					/*}}}*/
+					/*{{{  INS_PJUMP, INS_JUMP: unconditional jump, same as above*/
+				case INS_PJUMP:
+				case INS_JUMP:
+					if (tmp_ins->in_args[0] && (ArgMode (tmp_ins->in_args[0]) == ARG_FLABEL)) {
+						/* forward label reference */
+						int j;
+
+						for (j=flabel_ptr + 1; j<num_flabs; j++) {
+							if (flabel_links[j]->in_args[0] && (ArgFLabel (flabel_links[j]->in_args[0]) == ArgFLabel (tmp_ins->in_args[0]))) {
+								/* reference to this one */
+								flabel_refcounts[j]++;
+								break;		/* for() */
+							}
+						}
+						if (j == num_flabs) {
+							fprintf (stderr, "%s: error: undefined reference to FLABEL\n", progname);
+							rcode = -1;
+							goto get_out_of_here;
+						}
+					} else if (tmp_ins->in_args[0] && (ArgMode (tmp_ins->in_args[0]) == ARG_BLABEL)) {
+						/* backward label reference */
+						int j;
+
+						for (j=flabel_ptr; j>=0; j--) {
+							if (flabel_links[j]->in_args[0] && (ArgFLabel (flabel_links[j]->in_args[0]) == ArgFLabel (tmp_ins->in_args[0]))) {
+								/* reference to this one */
+								flabel_refcounts[j]++;
+								break;		/* for() */
+							}
+						}
+						if (j < 0) {
+							fprintf (stderr, "%s: error: undefined reference to BLABEL\n", progname);
+							rcode = -1;
+							goto get_out_of_here;
+						}
+					}
+					break;
+					/*}}}*/
+					/*{{{  default: look for FLABEL references*/
+				default:
+					for (i=0; tmp_ins->in_args[i]; i++) {
+						int j;
+
+						switch (ArgMode (tmp_ins->in_args[i])) {
+						case ARG_FLABEL:
+							/* forward label reference */
+
+							for (j=flabel_ptr + 1; j<num_flabs; j++) {
+								if (flabel_links[j]->in_args[0] && (ArgFLabel (flabel_links[j]->in_args[0]) == ArgFLabel (tmp_ins->in_args[i]))) {
+									/* reference to this one */
+									flabel_refcounts[j]++;
+									break;		/* for() */
+								}
+							}
+							if (j == num_flabs) {
+								fprintf (stderr, "%s: error: undefined reference to FLABEL\n", progname);
+								rcode = -1;
+								goto get_out_of_here;
+							}
+							break;
+						case ARG_BLABEL:
+							/* backward label reference */
+
+							for (j=flabel_ptr; j>=0; j--) {
+								if (flabel_links[j]->in_args[0] && (ArgFLabel (flabel_links[j]->in_args[0]) == ArgFLabel (tmp_ins->in_args[i]))) {
+									/* reference to this one */
+									flabel_refcounts[j]++;
+									break;		/* for() */
+								}
+							}
+							if (j < 0) {
+								fprintf (stderr, "%s: error: undefined reference to BLABEL\n", progname);
+								rcode = -1;
+								goto get_out_of_here;
+							}
+							break;
+						}
+					}
+					for (i=0; tmp_ins->out_args[i]; i++) {
+						int j;
+
+						switch (ArgMode (tmp_ins->out_args[i])) {
+						case ARG_FLABEL:
+							/* forward label reference */
+
+							for (j=flabel_ptr + 1; j<num_flabs; j++) {
+								if (flabel_links[j]->out_args[0] && (ArgFLabel (flabel_links[j]->out_args[0]) == ArgFLabel (tmp_ins->out_args[i]))) {
+									/* reference to this one */
+									flabel_refcounts[j]++;
+									break;		/* for() */
+								}
+							}
+							if (j == num_flabs) {
+								fprintf (stderr, "%s: error: undefined reference to FLABEL\n", progname);
+								rcode = -1;
+								goto get_out_of_here;
+							}
+							break;
+						case ARG_BLABEL:
+							/* backward label reference */
+
+							for (j=flabel_ptr; j>=0; j--) {
+								if (flabel_links[j]->out_args[0] && (ArgFLabel (flabel_links[j]->out_args[0]) == ArgFLabel (tmp_ins->out_args[i]))) {
+									/* reference to this one */
+									flabel_refcounts[j]++;
+									break;		/* for() */
+								}
+							}
+							if (j < 0) {
+								fprintf (stderr, "%s: error: undefined reference to BLABEL\n", progname);
+								rcode = -1;
+								goto get_out_of_here;
+							}
+							break;
+						}
+					}
+					break;
+					/*}}}*/
+				}
+			}
+		}
+	}
+	rcode = 0;
+	for (i=0; i<num_flabs; i++) {
+		if (!flabel_refcounts[i]) {
+			ins_chain *tins = rtl_prev_instr (flabel_links[i]);
+			int do_trash = 0;
+
+			if (!tins) {
+				/* means this occurs effective at the start of an RTL
+				 * code-block, remove if first thing in the program */
+				if (!flabel_links[i]->rtl->prev) {
+					do_trash = 1;
+				}
+			} else if ((tins->type == INS_JUMP) || (tins->type == INS_PJUMP)) {
+				/* means we can't reach this from above, and no references, so dead */
+				do_trash = 1;
+			}
+
+			if (do_trash) {
+				ins_chain *walk;
+				int stop = 0;
+				int x;
+
+#if 0
+fprintf (stderr, "%s: no references to unreachable SETFLABEL %d!\n", progname, ArgFLabel (flabel_links[i]->in_args[0]));
+#endif
+				flabel_links[i]->type = INS_CLEANUP;
+				rcode++;
+				for (walk = flabel_links[i]->next; walk && !stop; walk = walk->next) {
+					switch (walk->type) {
+					case INS_SETLABEL:
+					case INS_SETFLABEL:
+						/* hit a label */
+						stop = 1;
+						break;
+					case INS_ANNO:
+						/* leave annotations here (for now..) */
+						break;
+					default:
+						/*{{{  unreachable code, mark for cleanup and find any other flabel references */
+						for (x=0; walk->in_args[x]; x++) {
+							int j;
+
+							switch (ArgMode (walk->in_args[x])) {
+							case ARG_FLABEL:
+								/* forward label reference */
+
+								for (j=i+1; j<num_flabs; j++) {
+									if (flabel_links[j]->in_args[0] && (ArgFLabel (flabel_links[j]->in_args[0]) == ArgFLabel (walk->in_args[x]))) {
+										/* reference to this one */
+										flabel_refcounts[j]--;
+										break;		/* for() */
+									}
+								}
+								if (j == num_flabs) {
+									fprintf (stderr, "%s: error: undefined reference to FLABEL\n", progname);
+									rcode = -1;
+									goto get_out_of_here;
+								}
+								break;
+							case ARG_BLABEL:
+								/* backward label reference */
+
+								for (j=i; j>=0; j--) {
+									if (flabel_links[j]->in_args[0] && (ArgFLabel (flabel_links[j]->in_args[0]) == ArgFLabel (walk->in_args[x]))) {
+										/* reference to this one */
+										flabel_refcounts[j]--;
+										break;		/* for() */
+									}
+								}
+								if (j < 0) {
+									fprintf (stderr, "%s: error: undefined reference to BLABEL\n", progname);
+									rcode = -1;
+									goto get_out_of_here;
+								}
+								break;
+							}
+						}
+						walk->type = INS_CLEANUP;
+						rcode++;
+						/*}}}*/
+						break;
+					}
+				}
+			}
+		}
+	}
+
+get_out_of_here:
+	if (num_flabs > 0) {
+		sfree (flabel_links);
+		sfree (flabel_refcounts);
+	}
+
+	return rcode;
+}
+/*}}}*/
+/*{{{  ins_chain *rtl_cleanup_code (ins_chain *ins)*/
+/*
+ *	removes code marked with INS_CLEANUP
+ */
+ins_chain *rtl_cleanup_code (ins_chain *ins)
+{
+	ins_chain *tmp, *head, *holding;
+
+	head = ins;
+	tmp = head;
+	while (tmp) {
+		if (tmp->type == INS_CLEANUP) {
+			if (tmp == head) {
+				head = tmp->next;
+				tmp->rtl->u.code.head = head;
+			} else {
+				tmp->prev->next = tmp->next;
+			}
+			if (tmp->next) {
+				tmp->next->prev = tmp->prev;
+			} else if (tmp->prev) {
+				tmp->prev->next = NULL;
+				tmp->rtl->u.code.tail = tmp->prev;
+			}
+			holding = tmp->next;
+			rtl_free_instr (tmp);
+			tmp = holding;
+		} else {
+			tmp = tmp->next;
+		}
+	}
+	return head;
+}
+/*}}}*/
+/*{{{  rtl_chain *rtl_cleanup_code_all (rtl_chain *rtl)*/
+/*
+ *	removes code marked with INS_CLEANUP
+ */
+rtl_chain *rtl_cleanup_code_all (rtl_chain *rtl)
+{
+	rtl_chain *head;
+
+	head = rtl;
+	while (rtl) {
+		if (rtl->type == RTL_CODE) {
+			rtl->u.code.head = rtl_cleanup_code (rtl->u.code.head);
+		}
+		rtl = rtl->next;
+	}
+
+	return head;
+}
+/*}}}*/
 /*{{{  int rtl_link_jumps (rtl_chain *rtl_code)*/
 /*
  *	links jump arguments to code and places label references in labels
@@ -2472,6 +2887,7 @@ int rtl_link_jumps (rtl_chain *rtl_code)
 
 	first_lab = 0;
 	last_lab = get_last_lab ();
+
 	label_links = (ins_chain **)smalloc ((last_lab + 1) * sizeof (ins_chain *));
 	label_references = (ins_arg ***)smalloc ((last_lab + 1) * sizeof (ins_arg **));
 	label_refins = (ins_chain ***)smalloc ((last_lab + 1) * sizeof (ins_chain **));
@@ -2498,11 +2914,14 @@ int rtl_link_jumps (rtl_chain *rtl_code)
 				the_lab[0] = -1;
 				n_jref_arg = 0;
 				switch (tmp_ins->type) {
+					/*{{{  INS_SETLABEL: mark in the_lab[0]*/
 				case INS_SETLABEL:
 					if (tmp_ins->in_args[0] && ((tmp_ins->in_args[0]->flags & ARG_MODEMASK) == ARG_LABEL)) {
 						the_lab[0] = tmp_ins->in_args[0]->regconst;
 					}
 					break;
+					/*}}}*/
+					/*{{{  INS_CJUMP: if regular label, mark in the_lab[0] and jref_arg[0]; if FLABEL, increment refcount*/
 				case INS_CJUMP:
 					if (tmp_ins->in_args[1] && ((tmp_ins->in_args[1]->flags & ARG_MODEMASK) == ARG_LABEL)) {
 						the_lab[0] = tmp_ins->in_args[1]->regconst;
@@ -2510,30 +2929,39 @@ int rtl_link_jumps (rtl_chain *rtl_code)
 						n_jref_arg = 1;
 					}
 					break;
+					/*}}}*/
+					/*{{{  INS_PJUMP, INS_JUMP: unconditional jump, same as above*/
 				case INS_PJUMP:
 				case INS_JUMP:
-					if (tmp_ins->in_args[0] && ((tmp_ins->in_args[0]->flags & ARG_MODEMASK) == ARG_LABEL)) {
+					if (tmp_ins->in_args[0] && (ArgMode (tmp_ins->in_args[0]) == ARG_LABEL)) {
 						the_lab[0] = tmp_ins->in_args[0]->regconst;
 						jref_arg[0] = tmp_ins->in_args[0];
 						n_jref_arg = 1;
 					}
 					break;
+					/*}}}*/
+					/*{{{  default: look for label references and fill up jref_arg[], the_lab[]*/
 				default:
 					for (i=0; tmp_ins->in_args[i]; i++) {
-						if ((tmp_ins->in_args[i]->flags & ARG_MODEMASK) == ARG_LABEL) {
+						switch (ArgMode (tmp_ins->in_args[i])) {
+						case ARG_LABEL:
 							jref_arg[n_jref_arg] = tmp_ins->in_args[i];
 							the_lab[n_jref_arg] = jref_arg[n_jref_arg]->regconst;
 							n_jref_arg++;
+							break;
 						}
 					}
 					for (i=0; tmp_ins->out_args[i]; i++) {
-						if ((tmp_ins->out_args[i]->flags & ARG_MODEMASK) == ARG_LABEL) {
+						switch (ArgMode (tmp_ins->out_args[i])) {
+						case ARG_LABEL:
 							jref_arg[n_jref_arg] = tmp_ins->out_args[i];
 							the_lab[n_jref_arg] = jref_arg[n_jref_arg]->regconst;
 							n_jref_arg++;
+							break;
 						}
 					}
 					break;
+					/*}}}*/
 				}
 				if (the_lab[0] == -1) {
 					continue;	/* to for() */
@@ -2546,6 +2974,7 @@ int rtl_link_jumps (rtl_chain *rtl_code)
 					}
 				}
 				if (tmp_ins->type == INS_SETLABEL) {
+					/*{{{  make labrefs for SETLABEL (put in out_args[0])*/
 					if (label_links[the_lab[0]]) {
 						fprintf (stderr, "%s: error: label %d has duplicate definition\n", progname, the_lab[0]);
 						rcode = -1;
@@ -2571,7 +3000,9 @@ int rtl_link_jumps (rtl_chain *rtl_code)
 						sfree (label_refins[the_lab[0]]);
 						label_refins[the_lab[0]] = NULL;
 					}
+					/*}}}*/
 				} else {
+					/*{{{  resolve any references to regular labels*/
 					while (n_jref_arg) {
 						n_jref_arg--;
 						if (!label_links[the_lab[n_jref_arg]]) {
@@ -2608,6 +3039,7 @@ int rtl_link_jumps (rtl_chain *rtl_code)
 							SetArgLabRefs(lab_refins->out_args[0], rtl_add_labref (ArgLabRefs(lab_refins->out_args[0]), tmp_ins));
 						}
 					}
+					/*}}}*/
 				}
 			}
 			break;
