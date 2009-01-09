@@ -24,7 +24,13 @@ VAL INT SDLJS.ITEMS IS 2:           -- axes and buttons
 --* Joystick event protocol.
 PROTOCOL P.SDLJS.EVENT
   CASE
+    --* Reporting change in joystick status.
+    -- @item ax.delta Bit-field indicating changes to axis values.
+    -- @item bt.delta Bit-field indicating changes to button values.
+    -- @item axis 16-bit joystick axis values.
+    -- @item btns Byte array of joystick button values.
     change; INT; INT; MOBILE []INT16; MOBILE []BYTE
+    --* Joystick server process terminating.
     quit
 :
 
@@ -37,34 +43,34 @@ PROTOCOL P.SDLJS.EVENT.IN
 --* Joystick event channel-type.
 CHAN TYPE CT.SDLJSEVENT
   MOBILE RECORD
-    CHAN P.SDLJS.EVENT.IN in?:
-    CHAN P.SDLJS.EVENT out!:
+    CHAN P.SDLJS.EVENT.IN in?:      --* Commands to control joystick events.
+    CHAN P.SDLJS.EVENT out!:        --* Joystick events.
 :
 
 --* Joystick calibration input protocol.
 PROTOCOL P.SDLJSCALIBRATE.IN
   CASE
-    calibrate
+    calibrate                       --* Start joystick calibration.
 :
 
 --* Joystick calibration output protocol.
 PROTOCOL P.SDLJSCALIBRATE.OUT
   CASE
-    message; MOBILE []BYTE
-    done
+    message; MOBILE []BYTE          --* Message to be reported to the user.
+    done                            --* Calibration complete.
 :
 
 --* Joystick calibration channel-type.
 CHAN TYPE CT.SDLJSCALIBRATE
   MOBILE RECORD
-    CHAN P.SDLJSCALIBRATE.IN in?:
-    CHAN P.SDLJSCALIBRATE.OUT out!:
+    CHAN P.SDLJSCALIBRATE.IN in?:   --* Commands to calibrator process.
+    CHAN P.SDLJSCALIBRATE.OUT out!: --* Responses from calibrator process.
 :
 
 --* Joystick input protocol.
 PROTOCOL P.SDLJS.IN
   CASE
-    enable                          --* Enable joystick data capture, returns channel-end.
+    enable                          --* Enable joystick data capture, returns [@ref CT.SDLJSEVENT] client channel-end.
     disable                         --* Disable joystick data capture.
     query                           --* Query joystick (number of axes and buttons).
 :
@@ -79,8 +85,8 @@ PROTOCOL P.SDLJS.OUT
 --* Joystick channel-type.
 CHAN TYPE CT.SDLJS
   MOBILE RECORD
-    CHAN P.SDLJS.IN in?:
-    CHAN P.SDLJS.OUT out!:
+    CHAN P.SDLJS.IN in?:            --* Commands to joystick.
+    CHAN P.SDLJS.OUT out!:          --* responses from joystick.
 :
 
 --* Joystick server input protocol.
@@ -104,8 +110,8 @@ PROTOCOL P.SDLJOY.OUT
 --* Joystick server channel-type.
 CHAN TYPE CT.SDLJOY
   MOBILE RECORD
-    CHAN P.SDLJOY.IN in?:
-    CHAN P.SDLJOY.OUT out!:
+    CHAN P.SDLJOY.IN in?:           --* Commands to joystick server.
+    CHAN P.SDLJOY.OUT out!:         --* Responses from joystick server.
 :
 
 
