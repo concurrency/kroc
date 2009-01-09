@@ -2427,6 +2427,24 @@ ins_chain *rtl_prev_instr (ins_chain *ins)
 	return ins;
 }
 /*}}}*/
+/*{{{  ins_chain *rtl_last_instr (rtl_chain *rtl)*/
+/*
+ *	returns the last instruction in an RTL chain, skipping annotations, etc.
+ */
+ins_chain *rtl_last_instr (rtl_chain *rtl)
+{
+	ins_chain *ins = NULL;
+
+	if (rtl->type != RTL_CODE) {
+		return NULL;
+	}
+	ins = rtl->u.code.tail;
+	while (ins && ((ins->type == INS_ANNO) || (ins->type == INS_CLEANUP) || (ins->type < INS_FIRST) || (ins->type > INS_LAST))) {
+		ins = ins->prev;
+	}
+	return ins;
+}
+/*}}}*/
 /*{{{  static void rtl_procinf_setlabrefs (procinf *pinfo, void *arg)*/
 /*
  *	called for each entry in the procinf table, sets label refcounts for internal labels
@@ -2716,16 +2734,56 @@ fprintf (stderr, "rtl_cleanup_flabels(): %d SETFLABEL instances\n", num_flabs);
 	}
 	rcode = 0;
 	for (i=0; i<num_flabs; i++) {
+#if 0
+fprintf (stderr, "flabel_cleanup: %d references..\n", flabel_refcounts[i]);
+#endif
 		if (!flabel_refcounts[i]) {
 			ins_chain *tins = rtl_prev_instr (flabel_links[i]);
 			int do_trash = 0;
 
+#if 0
+fprintf (stderr, "flabel_cleanup: unreferenced flabel, looking..\n");
+#endif
 			if (!tins) {
-				/* means this occurs effective at the start of an RTL
-				 * code-block, remove if first thing in the program */
-				if (!flabel_links[i]->rtl->prev) {
+				/* means this occurs effective at the start of an RTL code-block, see what's before it */
+				rtl_chain *rwalk;
+				int stopwalk = 0;
+
+#if 0
+fprintf (stderr, "flabel_cleanup: flabel at start of RTL, scanning backwards..\n");
+#endif
+				for (rwalk = flabel_links[i]->rtl->prev; !stopwalk && rwalk; rwalk = rwalk->prev) {
+					switch (rwalk->type) {
+					case RTL_CODE:
+						/* if last instruction is a jump, can't reach this from above */
+						tins = rtl_last_instr (rwalk);
+						if ((tins->type == INS_JUMP) || (tins->type == INS_PJUMP)) {
+							/* can't reach this from above, no references, so dead */
+							do_trash = 1;
+						}
+						stopwalk = 1;
+						break;
+					case RTL_SETNAMEDLABEL:
+					case RTL_PUBLICSETNAMEDLABEL:
+						/* entry points, reachable */
+						stopwalk = 1;
+						break;
+					case RTL_DATA:
+						/* possibly reachable */
+						stopwalk = 1;
+						break;
+					default:
+						/* assume benign, skip through */
+						break;
+					}
+				}
+				if (!rwalk && !stopwalk) {
+					/* walked off top of RTL, assume first thing in program, no references, so dead */
 					do_trash = 1;
 				}
+#if 0
+fprintf (stderr, "flabel_cleanup: scanned_backwards, rwalk = %p, stopwalk = %d, do_trash = %d\n", rwalk, stopwalk, do_trash);
+#endif
 			} else if ((tins->type == INS_JUMP) || (tins->type == INS_PJUMP)) {
 				/* means we can't reach this from above, and no references, so dead */
 				do_trash = 1;

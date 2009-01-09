@@ -1026,10 +1026,45 @@ int optimise_run (rtl_chain *rtl_code, arch_t *arch)
 		}
 	}
 	/* may well have un-reachable code at the start of the program! */
-	if (rtl_code && (rtl_code->type == RTL_CODE)) {
-		tot_squeezed += clean_up_deadcode (rtl_code->u.code.head);
+	{
+		rtl_chain *xstart;
+		int stoploop = 0;
+		int tmpsqz;
+
+		for (xstart = rtl_code; !stoploop && xstart; xstart = xstart->next) {
+			switch (xstart->type) {
+			case RTL_CODE:
+				stoploop = 1;
+				break;
+			case RTL_DATA:
+			case RTL_SETNAMEDLABEL:
+			case RTL_PUBLICSETNAMEDLABEL:
+			case RTL_XDATA:
+			case RTL_RDATA:
+				xstart = NULL;
+				stoploop = 1;
+				break;
+			default:
+				break;
+			}
+			if (stoploop) {
+				break;
+			}
+		}
+		if (xstart && (xstart->type == RTL_CODE)) {
+#if 0
+fprintf (stderr, "DEBUG: deadcode near program start\n");
+#endif
+			tot_squeezed += clean_up_deadcode (xstart->u.code.head);
+			xstart->u.code.head = rtl_cleanup_code (xstart->u.code.head);
+		}
+
+		tmpsqz = rtl_cleanup_flabels (rtl_code);
+		if (tmpsqz) {
+			rtl_cleanup_code_all (rtl_code);
+		}
+		tot_squeezed += tmpsqz;
 	}
-	rtl_cleanup_flabels (rtl_code);
 
 	return tot_squeezed;
 }

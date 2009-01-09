@@ -97,6 +97,7 @@ extern int rtl_compare_args (ins_arg *arg1, ins_arg *arg2);
 extern int rtl_arg_in_sequence (ins_arg *arg, ins_chain *first, ins_chain *last);
 extern ins_chain *rtl_next_instr (ins_chain *ins);
 extern ins_chain *rtl_prev_instr (ins_chain *ins);
+extern ins_chain *rtl_last_instr (rtl_chain *rtl);
 extern int rtl_result_of_const_compare (int c1, int c2, int cond);
 extern ins_labrefs *rtl_add_labref (ins_labrefs *labrefs, ins_chain *ins);
 extern int rtl_del_labref (ins_labrefs *labrefs, ins_chain *ins);
