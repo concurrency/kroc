@@ -78,7 +78,6 @@ static int regblock_squeeze (ins_chain *first_ins, ins_chain *last_ins, int reg)
 static int register_is_source_or_target (ins_chain *ins, int reg);
 static int register_is_source (ins_chain *ins, int reg);
 static int register_is_target (ins_chain *ins, int reg);
-static ins_chain *cleanup_code (ins_chain *ins);
 static int codeblock_pack_sequences (ins_chain *head);
 static int clean_up_deadcode (ins_chain *start);
 
@@ -101,41 +100,6 @@ typedef struct TAG_optnode {
 
 /*}}}*/
 
-/*{{{  static ins_chain *cleanup_code (ins_chain *ins)*/
-/*
- *	ins_chain *cleanup_code (ins_chain *ins)
- *	removes code marked with INS_CLEANUP
- */
-static ins_chain *cleanup_code (ins_chain *ins)
-{
-	ins_chain *tmp, *head, *holding;
-
-	head = ins;
-	tmp = head;
-	while (tmp) {
-		if (tmp->type == INS_CLEANUP) {
-			if (tmp == head) {
-				head = tmp->next;
-				tmp->rtl->u.code.head = head;
-			} else {
-				tmp->prev->next = tmp->next;
-			}
-			if (tmp->next) {
-				tmp->next->prev = tmp->prev;
-			} else if (tmp->prev) {
-				tmp->prev->next = NULL;
-				tmp->rtl->u.code.tail = tmp->prev;
-			}
-			holding = tmp->next;
-			rtl_free_instr (tmp);
-			tmp = holding;
-		} else {
-			tmp = tmp->next;
-		}
-	}
-	return head;
-}
-/*}}}*/
 /*{{{  static void codeblock_clean_regmarkers (ins_chain *instrs)*/
 /*
  *	void codeblock_clean_regmarkers (ins_chain *instrs)
@@ -1044,7 +1008,7 @@ int optimise_run (rtl_chain *rtl_code, arch_t *arch)
 				rtl_chain *next, *prev;
 				/* mark all setart/end registers to INS_CLEANUP */
 				codeblock_clean_regmarkers (tmp->u.code.head);
-				tmp->u.code.head = cleanup_code (tmp->u.code.head);
+				tmp->u.code.head = rtl_cleanup_code (tmp->u.code.head);
 				/* retrace registers */
 				next = tmp->next;
 				prev = tmp->prev;
@@ -1065,6 +1029,8 @@ int optimise_run (rtl_chain *rtl_code, arch_t *arch)
 	if (rtl_code && (rtl_code->type == RTL_CODE)) {
 		tot_squeezed += clean_up_deadcode (rtl_code->u.code.head);
 	}
+	rtl_cleanup_flabels (rtl_code);
+
 	return tot_squeezed;
 }
 /*}}}*/
