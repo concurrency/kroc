@@ -124,7 +124,7 @@ extern int genhdr_w_time_slot (void);
 #define DYNCALL_SETUP_SLOTS 4		/* in the parent workspace for temporaries */
 
 #define DYNCALL_SAVED_WS 0	/* in the allocated workspace */
-#define MIN_DYNCALL_SLOTS 1	/* for the saved Wptr */
+#define MIN_DYNCALL_SLOTS 2	/* for the saved Wptr */
 
 /*}}}*/
 /*{{{  constants for MOBILE process offsets*/

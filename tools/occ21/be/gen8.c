@@ -2016,7 +2016,7 @@ printtreenl (stderr, 4, nplist);
 		/*{{{  allocate workspace and vectorspace*/
 		genprimary (I_LDL, DYNCALL_SETUP_TEMP_NAME);
 		genprimary (I_LDNL, 1);					/* WS slots */
-		genprimary (I_ADC, ((nparams < MAXREGS) ? MAXREGS : nparams) + MAXREGS + 3);		/* extra slots for params + state */
+		genprimary (I_ADC, ((nparams < MAXREGS) ? MAXREGS : nparams) + MAXREGS + MIN_DYNCALL_SLOTS);	/* extra slots for params + state */
 		loadconstant (4);
 		gensecondary (I_PROD);
 		gensecondary (I_MALLOC);
@@ -2025,12 +2025,14 @@ printtreenl (stderr, 4, nplist);
 		/* advance to base */
 		genprimary (I_LDL, DYNCALL_SETUP_TEMP_NAME);
 		genprimary (I_LDNL, 1);					/* WS slots */
+		genprimary (I_ADC, ((nparams < MAXREGS) ? MAXREGS : nparams) + MAXREGS + MIN_DYNCALL_SLOTS - 1);	/* extra slots for params + state */
 		loadconstant (4);
 		gensecondary (I_PROD);
 		genprimary (I_LDL, DYNCALL_SETUP_TEMP_WSBASE);
 		gensecondary (I_SUM);					/* add to base addr */
 		genprimary (I_STL, DYNCALL_SETUP_TEMP_WS);
 
+		/* do vectorspace */
 		loadconstant (0);					/* assume zero */
 		genprimary (I_STL, DYNCALL_SETUP_TEMP_VS);
 
@@ -2850,6 +2852,9 @@ printtreenl (stderr, 4, foo);
 
 				if (ptype & PROC_REC) {
 					genprimary (I_LDL, RECURSIVE_WS);
+					genprimary (I_LDNL, slot);
+				} else if (ptype & PROC_DYNCALL) {
+					genprimary (I_LDL, DYNCALL_SETUP_TEMP_WS);
 					genprimary (I_LDNL, slot);
 				} else if (ptype & PROC_MPA) {
 					genprimary (I_LDL, MPA_SETUP_TEMP);
