@@ -41,7 +41,7 @@ INT FUNCTION UINT16.TO.INT (VAL INT16 v) --{{{
 :
 --}}}
 
---{{{  PROC occ.SDL.joy.handler (...)
+--{{{  PROC occ.SDL.joy.handler (CT.SDLJS? svr, VAL INT num)
 --* Individual joystick handler.
 --
 -- @param svr Server channel-type link.
@@ -248,7 +248,7 @@ PROC occ.SDL.joy.handler (CT.SDLJS? svr, VAL INT num)
                 svr[out] ! query; [0, 0]
 :
 --}}}
---{{{  PROC occ.SDL.wait.button (...)
+--{{{  PROC occ.SDL.wait.button (CT.SDLJSEVENT! ev, RESULT INT btn)
 --* Waits for a button press event, discards other events.
 --
 -- @param ev Events from joystick.
@@ -282,7 +282,7 @@ PROC occ.SDL.wait.button (CT.SDLJSEVENT! ev, RESULT INT btn)
         --}}}
 :
 --}}}
---{{{  PROC occ.SDL.wait.button.axes (...)
+--{{{  PROC occ.SDL.wait.button.axes (CT.SDLJSEVENT! ev, RESULT INT btn, RESULT MOBILE []INT16 ax.res)
 --* Waits for a button press event and records axes positions, discards other events.
 --
 -- @param ev Events from joystick.
@@ -321,7 +321,7 @@ PROC occ.SDL.wait.button.axes (CT.SDLJSEVENT! ev, RESULT INT btn, RESULT MOBILE 
         --}}}
 :
 --}}}
---{{{  PROC occ.SDL.waitfor.button (...)
+--{{{  PROC occ.SDL.waitfor.button (CT.SDLJSEVENT! ev, VAL INT btn)
 --* Waits for a particular button press, discards other events.
 --
 -- @param ev Events from joystick.
@@ -348,7 +348,7 @@ PROC occ.SDL.waitfor.button (CT.SDLJSEVENT! ev, VAL INT btn)
         --}}}
 :
 --}}}
---{{{  PROC occ.SDL.waitfor.button.axes (...)
+--{{{  PROC occ.SDL.waitfor.button.axes (CT.SDLJSEVENT! ev, VAL INT btn, RESULT MOBILE []INT16 ax.res)
 --* Waits for a particular button press and records axis values, discards other events.
 --
 -- @param ev Events from joystick.
@@ -382,7 +382,7 @@ PROC occ.SDL.waitfor.button.axes (CT.SDLJSEVENT! ev, VAL INT btn, RESULT MOBILE 
 --}}}
 
 
---{{{  PROC occ.SDL.joy.doread (...)
+--{{{  PROC occ.SDL.joy.doread (CT.SDLJSEVENT! ev, RESULT MOBILE []INT16 ax.vals, RESULT MOBILE []BYTE bt.vals)
 --* Reads the current axes and buttons for a joystick.
 --
 -- @param ev Event channel-type link.
@@ -429,7 +429,7 @@ PROC occ.SDL.joy.doread (CT.SDLJSEVENT! ev, RESULT MOBILE []INT16 ax.vals, RESUL
 --}}}
 
 
---{{{  PROC occ.SDL.joy.calibrate (...)
+--{{{  PROC occ.SDL.joy.calibrate (CT.SDLJSCALIBRATE? svr, CT.SDLJSEVENT! ev.in, CT.SDLJSEVENT? ev.out)
 --* Provides joystick calibration and subsequent adjustment of reported values.
 --
 -- @param svr Server channel-type link.
@@ -598,7 +598,7 @@ PROC occ.SDL.joy.calibrate (CT.SDLJSCALIBRATE? svr, CT.SDLJSEVENT! ev.in, CT.SDL
             --}}}
 :
 --}}}
---{{{  PROC occ.SDL.joy.calibrator (...)
+--{{{  PROC occ.SDL.joy.calibrator (CT.SDLJSEVENT! ev.in, RESULT CT.SDLJSEVENT! ev.out, RESULT CT.SDLJSCALIBRATE! cal.out)
 --* Launches a joystick calibration process.
 --
 -- @param ev.in Joystick events in.
@@ -616,7 +616,7 @@ PROC occ.SDL.joy.calibrator (CT.SDLJSEVENT! ev.in, RESULT CT.SDLJSEVENT! ev.out,
 --}}}
 
 
---{{{  PROC occ.SDL.joy.server (...)
+--{{{  PROC occ.SDL.joy.server (CT.SDLJOY? svr)
 --* Provides a server process that monitors joysticks.
 --
 -- @param svr Server channel-type link.
@@ -690,7 +690,7 @@ PROC occ.SDL.joy.server (CT.SDLJOY? svr)
               running := FALSE
 :
 --}}}
---{{{  PROC occ.SDL.joy.start (...)
+--{{{  PROC occ.SDL.joy.start (RESULT CT.SDLJOY! cli)
 --* Starts a new instance of the SDL joystick server process.
 --
 -- @param cli Returned link to new server process.
@@ -702,7 +702,7 @@ PROC occ.SDL.joy.start (RESULT CT.SDLJOY! cli)
     FORK occ.SDL.joy.server (svr)
 :
 --}}}
---{{{  PROC occ.SDL.joy.docalibrate (...)
+--{{{  PROC occ.SDL.joy.docalibrate (CT.SDLJSCALIBRATE! cal, SHARED CHAN BYTE out!)
 --* Runs the joystick calibration routine.
 --
 -- @param cal Channel-type connection to calibrator process.
