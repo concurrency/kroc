@@ -5754,10 +5754,38 @@ PUBLIC void tmain (treenode * tptr)
 		if (nptr != NULL) {	/* should suppress if not a main module */
 			if (main_dynentry) {
 				INT32 ws, vs;
+				treenode *nplist = NParamListOf (nptr);
+				treenode **savep_vsp = NULL;
+				treenode *save_vsp = NULL;
 				unsigned int thash;
-
+				
 				getprocwsandvs (nptr, &ws, &vs);
-				thash = typehash (NParamListOf (nptr));
+
+				/* if the parameter list has a vectorspace pointer in it, remove for purposes of typehash generation */
+				for (savep_vsp = &nplist; savep_vsp && !EndOfList (*savep_vsp); savep_vsp = NextItemAddr (*savep_vsp)) {
+					save_vsp = ThisItem (*savep_vsp);
+
+					if (TagOf (save_vsp) == S_PARAM_VSP) {
+						break;		/* for() */
+					}
+				}
+				if (savep_vsp && EndOfList (*savep_vsp)) {
+					savep_vsp = NULL;
+				}
+				
+				if (savep_vsp) {
+					save_vsp = *savep_vsp;
+					*savep_vsp = NULL;
+				}
+				thash = typehash (nplist);
+				if (savep_vsp) {
+					*savep_vsp = save_vsp;
+				}
+
+#if 0
+fprintf (stderr, "tmain(): generating dynamic entry-point for main routine, thash is 0x%8.8x, ws = %d, vs = %d\n", thash, ws, vs);
+#endif
+
 				gencommentv (".MAGIC MAINDYNCALL %s %d %d %8.8X", WNameOf (NNameOf (nptr)), ws, vs, thash);
 			} else {
 				coder_jumptoentrypoint (nptr);
