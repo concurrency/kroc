@@ -2550,7 +2550,7 @@ PUBLIC treenode *rprocess (void)
 fprintf (stderr, "rprocess(): DYNCALL, calladdr expr =\n");
 printtreenl (stderr, 4, calladdr);
 #endif
-					if (TagOf (dyncall) == S_PINSTANCE) {
+					if ((TagOf (dyncall) == S_PINSTANCE) || (TagOf (dyncall) == S_FINSTANCE)) {
 						SetIDynaddr (dyncall, calladdr);
 					}
 				}

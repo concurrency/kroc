@@ -437,6 +437,7 @@
 
 /* dynamic call related errors */
 #define CHK_CALLAT_NOT_DYNAMIC		332
+#define CHK_BAD_DYNCALL_TYPE		333
 
 
 /*}}}*/

@@ -193,7 +193,7 @@ struct instancenode_s
     struct tnode_s *i_dynaddr;		/* Address expression associated with a dynamic call (special) */
     unsigned int i_rinstance:1;		/* recursive instance of a PROC/FUNCTION? */
     unsigned int i_forked:1;		/* forked instance of a PROC? */
-    unsigned int i_dynmem:1;		/* dynamically allocated instance of a PROC? */
+    unsigned int i_dynmem:1;		/* dynamically allocated instance of a PROC/FUNCTION? */
     unsigned int i_rparamslots:15;	/* slots required for generating/passing parameters */
 #ifdef MOBILES
     unsigned int i_rmspoffset;		/* offset of recursive mobilespace (yes, really needed here..) */

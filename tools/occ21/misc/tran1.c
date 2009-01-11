@@ -4824,8 +4824,17 @@ printtreenl (stderr, 4, *tptr);
 				}
 
 				/* check for instance of something that must be called dynamically */
-				if (NPDyncallOf (name) && (tag == S_PINSTANCE)) {
-					SetIDynmem (t, 1);
+				if (NPDyncallOf (name)) {
+#if 0
+fprintf (stderr, "trans: instance of NPDyncall thing, t =");
+printtreenl (stderr, 4, t);
+#endif
+					switch (tag) {
+					case S_PINSTANCE:
+					case S_FINSTANCE:
+						SetIDynmem (t, 1);
+						break;
+					}
 				}
 			}
 			going = FALSE;
