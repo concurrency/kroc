@@ -1310,6 +1310,7 @@ PRIVATE treenode *cpragma (treenode * volatile tptr, treenode * last_decl, treen
 					switch (TagOf (pname)) {
 					case N_PROCDEF:
 					case N_LFUNCDEF:
+					case N_SFUNCDEF:
 						break;
 					default:
 						chkreport_s (CHK_BAD_DYNCALL_TYPE, chklocn, WNameOf (NNameOf (pname)));
