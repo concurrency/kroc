@@ -5191,17 +5191,26 @@ printtreenl (stderr, 4, DValOf (tptr));
 					for (v = DValOf (tptr); !EndOfList (v); v = NextItem (v)) {
 						treenode *vv = ThisItem (v);
 
-						if (TagOf (vv) == N_PROCDEF) {
-							treenode *plist = NParamListOf (vv);
-							INT32 ws, vs, thash;
+						switch (TagOf (vv)) {
+						case N_PROCDEF:
+						case N_LFUNCDEF:
+						case N_SFUNCDEF:
+							{
+								treenode *plist = NParamListOf (vv);
+								INT32 ws, vs, thash;
 
-							getprocwsandvs (vv, &ws, &vs);
-							thash = typehash (plist);
+								getprocwsandvs (vv, &ws, &vs);
+								thash = typehash (plist);
 #if 0
 fprintf (stderr, "tnestedroutines(): DYNCALL for [%s], thash = 0x%8.8X, plist =", WNameOf (NNameOf (vv)), (unsigned int)thash);
 printtreenl (stderr, 4, plist);
 #endif
-							gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
+								gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
+							}
+							break;
+						default:
+							geninternal_is (GEN_ERROR_IN_ROUTINE, 2, "tnestedroutines: unsupported type for DYNCALL");
+							break;
 						}
 					}
 				} else {
@@ -5218,6 +5227,7 @@ printtreenl (stderr, 4, plist);
 						switch (TagOf (vv)) {
 						case N_PROCDEF:
 						case N_LFUNCDEF:
+						case N_SFUNCDEF:
 							{
 								wordnode *nameptr = translate_from_internal (NNameOf (vv));
 								const char *desc_buffer;
