@@ -85,6 +85,7 @@
 #define GEN_BAD_ALIGNMENT		63	/* bad alignment expression */
 #define GEN_PRI_PAR_AS_PAR		64	/* PRI PAR is compiled as PAR */
 #define GEN_ADDROF_BAD_TYPE		65	/* ADDROF/HWADDROF unsupported type */
+
 /*}}}*/
 
 /*{{{  error macros */

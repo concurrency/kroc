@@ -5215,63 +5215,71 @@ printtreenl (stderr, 4, plist);
 					for (v = DValOf (tptr); !EndOfList (v); v = NextItem (v)) {
 						treenode *vv = ThisItem (v);
 
-						if (TagOf (vv) == N_PROCDEF) {
-							wordnode *nameptr = translate_from_internal (NNameOf (vv));
-							const char *desc_buffer;
-							char *lcbuf;
-							int lclen, i;
-							treenode *plist = NParamListOf (vv);
-							INT32 ws, vs, thash;
-							int pcount = 0;
+						switch (TagOf (vv)) {
+						case N_PROCDEF:
+						case N_LFUNCDEF:
+							{
+								wordnode *nameptr = translate_from_internal (NNameOf (vv));
+								const char *desc_buffer;
+								char *lcbuf;
+								int lclen, i;
+								treenode *plist = NParamListOf (vv);
+								INT32 ws, vs, thash;
+								int pcount = 0;
 
-							desc_buffer = create_descriptor_string (be_get_fe_handle (), vv, nameptr, 1, 1, 1);
-							/* the descriptor may be split over several lines; count until we reach a closing parenthesis */
+								desc_buffer = create_descriptor_string (be_get_fe_handle (), vv, nameptr, 1, 1, 1);
+								/* the descriptor may be split over several lines; count until we reach a closing parenthesis */
 #if 1
 #endif
-							for (lclen=0; (desc_buffer[lclen] != '\0') && (desc_buffer[lclen] != '('); lclen++);
-							if (desc_buffer[lclen] == '(') {
-								/* start of parameter list */
-								pcount = 1;
-								for (lclen++; (desc_buffer[lclen] != '\0') && pcount; lclen++) {
-									switch (desc_buffer[lclen]) {
-									case '(':
-										pcount++;
-										break;
-									case ')':
-										pcount--;
-										break;
+								for (lclen=0; (desc_buffer[lclen] != '\0') && (desc_buffer[lclen] != '('); lclen++);
+								if (desc_buffer[lclen] == '(') {
+									/* start of parameter list */
+									pcount = 1;
+									for (lclen++; (desc_buffer[lclen] != '\0') && pcount; lclen++) {
+										switch (desc_buffer[lclen]) {
+										case '(':
+											pcount++;
+											break;
+										case ')':
+											pcount--;
+											break;
+										}
 									}
-								}
 
-								if (desc_buffer[lclen-1] == ')') {
-									/* found it! */
+									if (desc_buffer[lclen-1] == ')') {
+										/* found it! */
+									} else {
+										geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: damaged descriptor string for EXPORT");
+									}
 								} else {
 									geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: damaged descriptor string for EXPORT");
+									return;
 								}
-							} else {
-								geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: damaged descriptor string for EXPORT");
-								return;
-							}
 
-							lcbuf = memalloc (lclen + 2);
-							memcpy (lcbuf, desc_buffer, lclen);
-							/* go through and turn newlines into spaces */
-							for (i=0; i < lclen; i++) {
-								if (lcbuf[i] == '\n') {
-									lcbuf[i] = ' ';
+								lcbuf = memalloc (lclen + 2);
+								memcpy (lcbuf, desc_buffer, lclen);
+								/* go through and turn newlines into spaces */
+								for (i=0; i < lclen; i++) {
+									if (lcbuf[i] == '\n') {
+										lcbuf[i] = ' ';
+									}
 								}
-							}
-							lcbuf[lclen] = '\0';
+								lcbuf[lclen] = '\0';
 #if 0
 fprintf (stderr, "tnestedroutines(): EXPORT for [%s], lcbuf=[%s]\n", WNameOf (NNameOf (vv)), lcbuf);
 #endif
 
-							gencommentv (".MAGIC EXPORT %s", lcbuf);
-							memfree (lcbuf);
+								gencommentv (".MAGIC EXPORT %s", lcbuf);
+								memfree (lcbuf);
 
-							getprocwsandvs (vv, &ws, &vs);
-							thash = typehash (plist);
-							gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
+								getprocwsandvs (vv, &ws, &vs);
+								thash = typehash (plist);
+								gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
+							}
+							break;
+						default:
+							geninternal_is (GEN_ERROR_IN_ROUTINE, 2, "tnestedroutines: unsupported type for EXPORT");
+							break;
 						}
 					}
 				} else {

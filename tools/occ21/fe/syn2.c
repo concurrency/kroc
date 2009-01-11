@@ -5799,6 +5799,7 @@ PUBLIC treenode *rfunctiondef (treenode *typelist, SOURCEPOSN locn, int indent)
 	treenode *fntype;	/* Funtion type node */
 	BOOL inline_decl = FALSE;
 	BOOL recursive = FALSE;
+	BOOL dyncall = FALSE;
 	SOURCEPOSN endlocn;
 	const int oldlexlevel = syn_lexlevel;
 #ifdef USER_DEFINED_OPERATORS
@@ -6030,6 +6031,13 @@ fprintf (stderr, "syn2: rfunctiondef(): UDO: modified code gave namelength = %d,
 		}
 		/*}}} */
 	}
+	/*{{{  if DEXTERNAL, make sure we always call instances dynamically*/
+	if (lexmode == LEX_DEXTERNAL) {
+		dyncall = 1;
+	}
+
+	/*}}}*/
+
 	syn_lexlevel = oldlexlevel;
 	retptr = declare (t, locn, fntype, name, fbody);
 	{
@@ -6045,6 +6053,9 @@ fprintf (stderr, "syn2: rfunctiondef(): UDO: modified code gave namelength = %d,
 		}
 		if (recursive) {
 			SetNPRecursive (nptr, 1);
+		}
+		if (dyncall) {
+			SetNPDyncall (nptr, 1);
 		}
 	}
 	if (checknlindent (indent)) {

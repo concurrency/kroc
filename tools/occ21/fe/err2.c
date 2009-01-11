@@ -1168,6 +1168,8 @@ PUBLIC const char *chkmessagestring (const int n)
 		return ("can only communicate mobiles on a CHAN OF MOBILE.ANY");
 	case CHK_CALLAT_NOT_DYNAMIC:
 		return ("cannot call non-dynamic PROC %s at specified address");
+	case CHK_BAD_DYNCALL_TYPE:
+		return ("%s cannot be exported as a dynamic call");
 		/*}}}*/
 		/*{{{  buffered channel errors*/
 	case CHK_BUFCHAN_NOTCONST:

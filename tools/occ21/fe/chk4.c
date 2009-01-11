@@ -1298,6 +1298,27 @@ PRIVATE treenode *cpragma (treenode * volatile tptr, treenode * last_decl, treen
 			}
 			break;
 			/*}}}  */
+			/*{{{  DYNCALL, EXPORT*/
+		case pragma_name_dyncall:
+		case pragma_name_export:
+			{
+				treenode *l;
+
+				for (l = DValOf (tptr); !EndOfList (l); l = NextItem (l)) {
+					treenode *pname = ThisItem (l);
+
+					switch (TagOf (pname)) {
+					case N_PROCDEF:
+					case N_LFUNCDEF:
+						break;
+					default:
+						chkreport_s (CHK_BAD_DYNCALL_TYPE, chklocn, WNameOf (NNameOf (pname)));
+						break;
+					}
+				}
+			}
+			break;
+			/*}}}*/
 			/*{{{  everything else */
 		case pragma_name_linkage:
 		case pragma_name_translate:
@@ -1308,8 +1329,6 @@ PRIVATE treenode *cpragma (treenode * volatile tptr, treenode * last_decl, treen
 		case pragma_name_defined:
 		case pragma_name_undefined:
 		case pragma_name_iospace:
-		case pragma_name_dyncall:
-		case pragma_name_export:
 			break;
 			/*}}}  */
 		}

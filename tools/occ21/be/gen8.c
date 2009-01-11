@@ -961,7 +961,8 @@ fprintf (stderr, "allocating recursive ms with newmobileinstance(..,1)\n");
 fprintf (stderr, "maproutinename: ws=%d, vs=%d, ms=%d, datasize=%d, staticlinkuserd=%d\n", (int)ws, (int)vs, (int)ms, (int)datasize, (int)staticlinkused);
 #endif
 	}
-	if (isinlibrary (nptr)) {
+	/* don't add dynamic calls to the libentry table */
+	if (isinlibrary (nptr) && !(ptype & PROC_DYNCALL)) {
 		add_to_libentries (nptr);
 	}
 }
