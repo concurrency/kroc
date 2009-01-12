@@ -1964,6 +1964,7 @@ fprintf (stderr, "tinstance: calling augmentparams()\n");
 		treenode *save_vsp = NULL;
 		unsigned int thash;
 		
+		new_occam_line (tptr, TRUE, TRUE, FALSE);
 		/* if the parameter list has a vectorspace pointer in it, remove for purposes of typehash generation */
 		for (savep_vsp = &nplist; savep_vsp && !EndOfList (*savep_vsp); savep_vsp = NextItemAddr (*savep_vsp)) {
 			save_vsp = ThisItem (*savep_vsp);
@@ -2770,6 +2771,7 @@ gencomment0 ("gen non-register param 2..0");
 		int dimcount = 0;
 		treenode *foo = NULL;
 
+		new_occam_line (tptr, TRUE, TRUE, FALSE);
 		/* need to store any non-val MOBILEs back to their pointers */
 		for (i = 0; i < nparams; i++) {
 			if (paramtable[i].mobile_outslot > -4) {
@@ -4064,6 +4066,7 @@ PUBLIC void tpredef (treenode * tptr, treenode * destlist)
 			genprimary (I_LDC, ERR_INTERR);
 			gensecondary (I_CAUSEERROR);
 		} else {
+			new_occam_line (tptr, TRUE, TRUE, FALSE);
 			gensecondary (I_SETERR);
 		}
 		checkerror ();

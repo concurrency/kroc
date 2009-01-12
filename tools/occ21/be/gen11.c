@@ -2580,7 +2580,7 @@ PRIVATE void mapanychantypeassign (treenode **const dest, treenode **const src, 
 /*
  *	generates code to assign from/to a MOBILE.CHAN
  */
-PRIVATE void genanychantypeassign (treenode *const dest, treenode *const src, int regs)
+PRIVATE void genanychantypeassign (treenode *const dest, treenode *const src, int regs, treenode *action)
 {
 	const BOOL dutagged = (TagOf (dest) == S_UNDEFINED);
 	const BOOL sutagged = (TagOf (src) == S_UNDEFINED);
@@ -2610,6 +2610,10 @@ printtreenl (stderr, 4, gettype_main_orig (rsrc));
 		storehiddentypeof (rdest, (regs == MANY_REGS) ? (MAXREGS - 1) : (regs - 1));
 	} else {
 		int skiplab = newlab ();
+
+		if (action) {
+			new_occam_line (action, TRUE, TRUE, FALSE);
+		}
 
 		/* need to check it's the correct type */
 		if (stype != S_ANYCHANTYPE) {
@@ -4638,7 +4642,7 @@ fprintf (stderr, "tsimpleassign: MOBILE := MOBILE assignment\n");
 			/*}}}*/
 		} else if (ntypeof (source) == S_ANYCHANTYPE) {
 			/*{{{  assignment from MOBILE.CHAN to regular mobile-chan (return)*/
-			genanychantypeassign (dest, source, regs);
+			genanychantypeassign (dest, source, regs, dest);
 			return;
 			/*}}}*/
 		} else if (ntypeof (source) == S_ANYPROCTYPE) {
@@ -4652,7 +4656,7 @@ fprintf (stderr, "tsimpleassign: MOBILE := MOBILE assignment\n");
 		}
 	} else if (ntypeof (dest) == S_ANYCHANTYPE) {
 		/*{{{  assignment to MOBILE.CHAN  (return)*/
-		genanychantypeassign (dest, source, regs);
+		genanychantypeassign (dest, source, regs, dest);
 		return;
 		/*}}}*/
 	} else if (ntypeof (dest) == S_ANYPROCTYPE) {
