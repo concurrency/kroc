@@ -3158,6 +3158,12 @@ static INLINE word *mt_alloc_array (void *allocator, word type, word size)
 	word size_shift;
 	
 	ma = mt_alloc_array_internal (allocator, type, size, true, &size_shift);
+#if 0
+fprintf (stderr, "mt_alloc_array(): here, size = %d, type=0x%8.8x, ptr = %p\n",
+		(int)size, (unsigned int)type, ma);
+fprintf (stderr, " ditto()        : ptr = 0x%8.8x, size = 0x%8.8x\n",
+		((unsigned int *)ma)[0], ((unsigned int *)ma)[1]);
+#endif
 
 	return ((word *) ma) + MT_ARRAY_PTR_OFFSET;
 }
