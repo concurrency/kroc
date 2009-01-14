@@ -1754,15 +1754,6 @@ PUBLIC void tinstance (treenode *tptr)
 	/* Inside an ALT guard, we have to pull wptr down below the ALT below
 	   workspace, to avoid overwriting alt instruction temporaries. */
 	const INT32 altadjust = get_altadjust (tptr);
-	/*{{{  COMMENT  wsp optimisation */
-	/**********************  Start comment out ****************************
-	@*{{{  *@
-	int params_below_ws = nparams > (MAX_LOCAL_PARAMS + REG_PARAMS)
-		? nparams - (MAX_LOCAL_PARAMS + REG_PARAMS)
-		: 0;
-	@*}}}*@
-	 **********************   End comment out  ****************************/
-	/*}}} */
 	const int savedinsidealtguard = insidealtguard;
 	const int oldinstancedlevel = instancedlevel;
 	int alloc_ws_slots = 0;
@@ -2096,11 +2087,6 @@ fprintf (stderr, "tinstance: alloc_ws_slots = %d, alloc_vs_slots = %d, alloc_ms_
 		/*}}}*/
 		/*{{{  augment params here if vs/ms needed*/
 		/* for VS/WS parameters will not be augmented yet. */
-#ifdef MOBILES
-		if (alloc_vs_slots || alloc_ms_slots)
-#else
-		if (alloc_vs_slots)
-#endif
 		{
 #if 0
 fprintf (stderr, "tinstance: calling augmentparams()\n");
