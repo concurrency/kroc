@@ -3060,6 +3060,7 @@ PUBLIC treenode *foldexp (treenode * tptr)
 		break;
 		/*}}}  */
 #ifdef MOBILES
+		/*{{{  new array, allocate proc, new barrier, assorted address/clone/defined*/
 	case S_NEW_ARRAY:
 		{
 			treenode *list = ARDimLengthOf (tptr);
@@ -3087,10 +3088,13 @@ PUBLIC treenode *foldexp (treenode * tptr)
 	case S_DEFINED:
 		SetOp (tptr, foldexp (OpOf (tptr)));
 		break;
+		/*}}}*/
 #endif
+		/*{{{  typehash*/
 	case S_TYPEHASHOF:
 		SetOp (tptr, foldexp (OpOf (tptr)));
 		break;
+		/*}}}*/
 		/*{{{  specification */
 	case S_VALABBR:
 	case S_ABBR:
@@ -3159,6 +3163,10 @@ PUBLIC treenode *foldexp (treenode * tptr)
 		/*{{{  asinput, asoutput*/
 	case S_ASINPUT:
 	case S_ASOUTPUT:
+		break;
+		/*}}}*/
+		/*{{{  LIST -- bug, but can happen in error cases*/
+	case S_LIST:
 		break;
 		/*}}}*/
 	default:

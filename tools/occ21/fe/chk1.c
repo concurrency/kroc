@@ -4211,6 +4211,10 @@ printtreenl (stderr, 4, tptr);
 		/*}}} */
 		break;
 	/*}}} */
+		/*{{{  LIST -- not expected here, but can happen in certain erroneous cases*/
+	case S_LIST:
+		return undeclaredp;
+		/*}}}*/
 	default:
 		badtag (chklocn, TagOf (tptr), "typecheck_main");
 		return (NULL);

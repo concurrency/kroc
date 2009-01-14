@@ -1658,7 +1658,7 @@ printtreenl (stderr, 4, tptr);
 		/*}}}  */
 		/*{{{  DEFINED*/
 	case S_DEFINED:
-		loadmobile_nochk (OpOf (tptr));		/* automatically the correct BOOL result */
+		loadmobile_real (OpOf (tptr));		/* automatically the correct BOOL result */
 		break;
 		/*}}}*/
 #endif
