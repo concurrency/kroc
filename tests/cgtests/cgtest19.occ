@@ -781,9 +781,11 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
       PROC check.fmul (VAL INT x, y, VAL []BYTE where)
         INT v1, v2 :
         SEQ
+          #IF NOT DEFINED (COMPILER.TOCK)
           fmul (v1, x, y)
           v2 := FRACMUL (x, y)
           check (v2, v1, where)
+          #ENDIF
       :
       --}}}  
       SEQ
@@ -813,6 +815,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
         VAL bpw IS ((INT ((MOSTNEG INT) =  #8000)) * 2) +
                    ((INT ((MOSTNEG INT) <> #8000)) * 4) :
         SEQ
+          #IF NOT DEFINED (COMPILER.TOCK)
           check (BITREVNBITS(#1234, 16), #2C48, "B186a")
           VAL x IS MOSTPOS INT :
           check (BITREVNBITS(BITREVNBITS(x, bpw * 8), bpw * 8), x, "B186b")
@@ -824,6 +827,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
           check (BITREVNBITS(BITREVNBITS(x, 8), 8), x /\ #FF, "B186e")
           VAL x IS -1 :
           check (BITREVNBITS(BITREVNBITS(x, 16), 16), x /\ #FFFF, "B186f")
+          #ENDIF
         --}}}  
         --{{{  bug 129
         -- test for bug 129 in buglist
@@ -874,6 +878,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
       IF
         bits.per.word = 32
           SEQ
+            #IF NOT DEFINED (COMPILER.TOCK)
             mask := 0(INT32)
             frac, exp, type := UNPACKSN(0)
             check(type, 0, "SN0")
@@ -911,6 +916,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
             check (a.int, #40490FDB, "SNI6")
             a.int := ROUNDSN (#00000001, #00000100, #00000000)
             check (a.int, #00000001, "SNI7")
+            #ENDIF
         TRUE
           SKIP
     :
@@ -1021,6 +1027,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
           RESULT CRCOut
       :
       SEQ
+        #IF NOT DEFINED (COMPILER.TOCK)
         check(CRCWORD(1234, 0, 654),    test(1234, 0, 654, bits.per.word), "CRC0")
         check(CRCWORD(1234, 0,  54),    test(1234, 0,  54, bits.per.word), "CRC1")
         check(CRCWORD(1234, 4321, 654), test(1234, 4321, 654, bits.per.word), "CRC2")
@@ -1029,12 +1036,14 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
         check(CRCBYTE(dataIn, 0, 654),  test(dataIn, 0, 654, 8), "CRC3")
         check(CRCBYTE(dataIn, 0,  54),  test(dataIn, 0,  54, 8), "CRC4")
         check(CRCBYTE(dataIn, 4321, 654),  test(dataIn, 4321, 654, 8), "CRC5")
+        #ENDIF
     :
     CRCtest()
     --}}}  
     --{{{  Bit manipulation
     PROC bitManipulation()
       SEQ
+        #IF NOT DEFINED (COMPILER.TOCK)
         check(BITCOUNT(0,0), 0, "BM0")
         check(BITCOUNT(1,0), 1, "BM1")
         check(BITCOUNT(#100, 0), 1, "BM2")
@@ -1052,6 +1061,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
         check(BITREVNBITS(1, 4), 8, "BM12")
         check(BITREVNBITS(1, bits.per.word), MOSTNEG INT, "BM13")
         check(BITREVNBITS(#555, 8), #AA, "BM14")
+        #ENDIF
     :
     bitManipulation()
     --}}}  
@@ -1372,6 +1382,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
     PROC bug.1378()
       INT A, B:
       SEQ
+        #IF NOT DEFINED (COMPILER.TOCK)
         --{{{  modified by frmb.  can't test like this, need flow-control info
         --ASM
         --  LDAB 1, 2
@@ -1392,6 +1403,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
         --}}}  
         check(A, 2, "B1378a")
         check(B, 0, "B1378b")
+        #ENDIF
     :
     bug.1378()
     --}}}  
@@ -1416,6 +1428,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
       INT FUNCTION f() IS 99 :
       INT x :
       SEQ
+        #IF NOT DEFINED (COMPILER.TOCK)
         x := WSSIZEOF(check)
         x := WSSIZEOF(finish) + x
         --x := WSSIZEOF(cg.exit) + x
@@ -1431,6 +1444,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
         check(x, 0, "B1797e")
         x := WSSIZEOF(testw)
         check(INT (x >= slots), INT TRUE, "B1797f")
+        #ENDIF
     :
     bug.1797()
     --}}}  
