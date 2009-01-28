@@ -271,7 +271,7 @@ struct _sched_t {
 static inline void init_sched_t (sched_t *sched) {
 	int i;
 
-	for (i = 0; i < 16; ++i) {
+	for (i = 0; i < 32; ++i) {
 		sched->mdparam[i] = 0xffffffff;
 	}
 
