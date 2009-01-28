@@ -145,6 +145,7 @@ PROC cgtest80 (CHAN OF BYTE keyb, scr, err)
   PROC test9 ()
     [3][3]REAL64 array:
     SEQ
+      #IF NOT DEFINED (COMPILER.TOCK)
       array := [i = 0 FOR SIZE array | ([3]REAL64 tmp:
                                         VALOF
                                           SEQ
@@ -156,6 +157,7 @@ PROC cgtest80 (CHAN OF BYTE keyb, scr, err)
       check.REAL64 (array[0][0], 0.0, "test9.0")
       check.REAL64 (array[2][2], 7.0, "test9.1")
       check.REAL64 (array[2][0], 2.0, "test9.2")
+      #ENDIF
   :
   --}}}  
   --{{{  as parameters / abbreviations
