@@ -5237,7 +5237,7 @@ printtreenl (stderr, 4, plist);
 								INT32 ws, vs, thash;
 								int pcount = 0;
 
-								desc_buffer = create_descriptor_string (be_get_fe_handle (), vv, nameptr, 1, 1, 1);
+								desc_buffer = create_descriptor_string (be_get_fe_handle (), vv, nameptr, 1, 0, 1);
 								/* the descriptor may be split over several lines; count until we reach a closing parenthesis */
 #if 1
 #endif
