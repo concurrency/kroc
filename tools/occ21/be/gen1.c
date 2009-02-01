@@ -5200,7 +5200,32 @@ printtreenl (stderr, 4, DValOf (tptr));
 								INT32 ws, vs, thash;
 
 								getprocwsandvs (vv, &ws, &vs);
-								thash = typehash (plist);
+								/* remember to carve off any VS parameter before hashing */
+								{
+									treenode **savep_vsp = NULL;
+									treenode *save_vsp = NULL;
+
+									/* if the parameter list has a vectorspace pointer in it, remove for purposes of typehash generation */
+									for (savep_vsp = &plist; savep_vsp && !EndOfList (*savep_vsp); savep_vsp = NextItemAddr (*savep_vsp)) {
+										save_vsp = ThisItem (*savep_vsp);
+
+										if (TagOf (save_vsp) == S_PARAM_VSP) {
+											break;		/* for() */
+										}
+									}
+									if (savep_vsp && EndOfList (*savep_vsp)) {
+										savep_vsp = NULL;
+									}
+									
+									if (savep_vsp) {
+										save_vsp = *savep_vsp;
+										*savep_vsp = NULL;
+									}
+									thash = typehash (plist);
+									if (savep_vsp) {
+										*savep_vsp = save_vsp;
+									}
+								}
 #if 0
 fprintf (stderr, "tnestedroutines(): DYNCALL for [%s], thash = 0x%8.8X, plist =", WNameOf (NNameOf (vv)), (unsigned int)thash);
 printtreenl (stderr, 4, plist);
@@ -5283,7 +5308,33 @@ fprintf (stderr, "tnestedroutines(): EXPORT for [%s], lcbuf=[%s]\n", WNameOf (NN
 								memfree (lcbuf);
 
 								getprocwsandvs (vv, &ws, &vs);
-								thash = typehash (plist);
+
+								/* remember to carve off any VS parameter before hashing */
+								{
+									treenode **savep_vsp = NULL;
+									treenode *save_vsp = NULL;
+
+									/* if the parameter list has a vectorspace pointer in it, remove for purposes of typehash generation */
+									for (savep_vsp = &plist; savep_vsp && !EndOfList (*savep_vsp); savep_vsp = NextItemAddr (*savep_vsp)) {
+										save_vsp = ThisItem (*savep_vsp);
+
+										if (TagOf (save_vsp) == S_PARAM_VSP) {
+											break;		/* for() */
+										}
+									}
+									if (savep_vsp && EndOfList (*savep_vsp)) {
+										savep_vsp = NULL;
+									}
+									
+									if (savep_vsp) {
+										save_vsp = *savep_vsp;
+										*savep_vsp = NULL;
+									}
+									thash = typehash (plist);
+									if (savep_vsp) {
+										*savep_vsp = save_vsp;
+									}
+								}
 								gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
 							}
 							break;
