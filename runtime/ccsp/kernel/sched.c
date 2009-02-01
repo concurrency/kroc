@@ -3083,10 +3083,15 @@ static REGPARM void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr
 #endif
 /*}}}*/
 /*{{{  mobile type operations */
-/*{{{ mobile_type_error() */
+/*{{{ mobile_type_error(), mobile_type_error_type() */
 #define mobile_type_error() \
 	do { \
 		BMESSAGE ("mobile typing error (%s:%d)\n", __FILE__, __LINE__); \
+		ccsp_kernel_exit (1, 0); \
+	} while (0)
+#define mobile_type_error_type(X) \
+	do { \
+		BMESSAGE ("mobile typing error (%s:%d), type 0x%8.8x\n", __FILE__, __LINE__, (unsigned int)(X)); \
 		ccsp_kernel_exit (1, 0); \
 	} while (0)
 /*}}}*/
@@ -3448,7 +3453,7 @@ static INLINE word *mt_clone_simple (sched_t *sched, word *ptr, word type)
 				return dst;
 			}
 		default:
-			mobile_type_error ();
+			mobile_type_error_type (MT_TYPE (type));
 			return NULL;
 	}
 }

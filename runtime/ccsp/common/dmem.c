@@ -489,14 +489,15 @@ static void slab_dumpstats (void) /*{{{*/
 	long long alloc_diff, nalloc_diff;
 	unsigned int xover = 0;
 
+#if 0
 #if defined(USE_SMALLSLABS)
 	xover += sizeof (slab_smallslabs);
 
 	BMESSAGE ("valid small-slabs:\n");
 	for (i=0; i<NUM_SMALL_SLABS; i++) {
 		if (SLABV (slab_smallslabs[i]) != SLABTYPE_INVALID) {
-			void *addr = (void *)(i << SMALL_SLAB_SHIFT);
-			slabid_t sid = addr_to_slabid (addr);
+			const void *addr = (const void *)(i << SMALL_SLAB_SHIFT);
+			unsigned int sid = addr_to_slabid (addr);
 			int shft = addr_to_slabsizeshift (addr);
 
 			slab_dumpslabinfo (sid, shft, addr, 1, &xover);
@@ -515,6 +516,7 @@ static void slab_dumpstats (void) /*{{{*/
 			slab_dumpslabinfo (sid, shft, addr, 1, &xover);
 		}
 	}
+#endif
 	BMESSAGE ("allocators:\n");
 	alloc_diff = 0;
 	nalloc_diff = 0;
