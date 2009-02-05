@@ -46,6 +46,7 @@ extern BOOL no_placed_chans;		/* disable PLACE'd channels (user-defined channels
 extern BOOL tagged_input_tag_xin;	/* whether to XIN on the tag byte (only if extended_input is enabled) */
 extern BOOL enable_dtraces;		/* whether to enable debugging traces (flag in misc/harness.c) */
 extern BOOL no_undefinedness_check;	/* if TRUE disables the undefinedness checker */
+extern BOOL formal_model;		/* if TRUE, generate formal model (.cspx style) */
 
 /*extern char current_filename[];*/ /* Now PRIVATE */
 extern SOURCEPOSN flocn;

@@ -294,6 +294,7 @@ PUBLIC BOOL target_accessaligned = FALSE;
 #endif
 PUBLIC BOOL enable_dtraces = FALSE;		/* debugging traces (requires run-time support) */
 PUBLIC BOOL no_undefinedness_check = FALSE;
+PUBLIC BOOL formal_model = FALSE;		/* whether or not to dump a .cspx file with a CSP model of the source */
 
 
 PUBLIC BOOL debugoutput     = TRUE; /* Whether to insert debug info into object file */
@@ -360,7 +361,6 @@ PUBLIC const BOOL configuring = FALSE;
 
 PUBLIC BOOL barrier_rbpe = FALSE;
 
-PUBLIC BOOL no_undefineness_check = FALSE;
 /*}}}*/
 
 /*}}}*/
@@ -2179,7 +2179,7 @@ const arg2_descriptor cloptions[] = {
 	#endif
 	/*}}}*/
 
-	/*{{{  zd - ze*/
+	/*{{{  zd - zf*/
 	#if !defined(COMPILING_TO_JCODE)
 	{"ZDME",      arg2_single,    &main_dynentry, set_flag,           HELP_ZED, "dynamic top-level entry point"},
 	{"ZD",        arg2_single,    NULL,           optzed,             HELP_ZED, "disassemble after crunch"},
@@ -2216,6 +2216,7 @@ const arg2_descriptor cloptions[] = {
 	{"ZEW",       arg2_single,    NULL,           optzed,             HELP_ZED, "allocate workspace by variable colouring"},
 	{"ZE",        arg2_single,    NULL,           optzed,             HELP_ZED, "visible compiler library names"},
 	#endif
+	{"ZFM",       arg2_single,    &formal_model,  set_flag,           HELP_ZED, "generate formal model"},
 	/*}}}*/
 
 	/*{{{  zg - zl*/
