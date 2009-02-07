@@ -2752,6 +2752,7 @@ PRIVATE treenode *call_occam_frontend(BOOL *const error_occurred)
 	parms.hash_version_string = hash_version_string;
 	parms.checkalias          = &checkalias; /* may be modified by #OPTION */
 	parms.checkusage          = &checkusage; /* may be modified by #OPTION */
+	parms.formalmodel         = &formal_model; /* may be modified by #OPTION */
 	parms.error_occurred      = error_occurred; /* is set if any error happens */
 	parms.process_option      = process_option;
 	parms.guyinserts          = &guyinserts;

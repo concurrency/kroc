@@ -35,6 +35,32 @@
 
 /*}}}*/
 
+/*{{{  private types*/
+
+typedef enum ENUM_fmtype {
+	FM_INVALID,
+	FM_SEQ,
+	FM_PAR,
+	FM_FIXPOINT,
+	FM_ATOM,
+	FM_INPUT,
+	FM_OUTPUT,
+	FM_DET,
+	FM_NDET,
+	FM_SKIP,
+	FM_STOP,
+	FM_DIV,
+	FM_CHAOS,
+	FM_FIELD
+} fmtype_e;
+
+typedef struct TAG_fmnode {
+	fmtype_e type;
+	treenode *org;		/* where it originated */
+} fmnode_t;
+
+/*}}}*/
+
 
 /*{{{  PRIVATEPARAM int do_formalmodelcheck_tree (treenode *n, void *const voidptr)*/
 /*
@@ -46,10 +72,14 @@ PRIVATEPARAM int do_formalmodelcheck_tree (treenode *n, void *const voidptr)
 
 	switch (TagOf (n)) {
 	case S_PROCDEF:
-	case S_LFUNCDEF:
 	case S_MPROCDECL:
-	CASE_CONFIG_SPEC
-		/* FIXME: incomplete! */
+		if (!separatelycompiled (DNameOf (n))) {
+			char *pname = (char *)WNameOf (NNameOf (DNameOf (n)));
+
+#if 1
+fprintf (stderr, "do_formalmodecheck_tree(): PROC [%s]\n", pname);
+#endif
+		}
 		break;
 	}
 
@@ -57,21 +87,23 @@ PRIVATEPARAM int do_formalmodelcheck_tree (treenode *n, void *const voidptr)
 	return CONTINUE_WALK;
 }
 /*}}}*/
-/*{{{  PUBLIC void formalmodelcheck (treenode *n)*/
+/*{{{  PUBLIC void formalmodelcheck (treenode *n, BOOL check_formalmodels)*/
 /* 
  *	does formal-model checking on a tree, calls do_formalmodelcheck_tree for each PROC/FUNCTION
  */
-PUBLIC void formalmodelcheck (treenode *n)
+PUBLIC void formalmodelcheck (treenode *n, BOOL check_formalmodels)
 {
-	jmp_buf saved_enf;
+	if (check_formalmodels) {
+		jmp_buf saved_env;
 
-	memcpy ((char *)saved_env, (char *)env, sizeof (env));
-	if (setjmp (env) == 0) {
-		prewalkproctree (n, do_formalmodelcheck_tree, NULL);
+		memcpy ((char *)saved_env, (char *)env, sizeof (env));
+		if (setjmp (env) == 0) {
+			prewalkproctree (n, do_formalmodelcheck_tree, NULL);
+		}
+
+		memcpy ((char *)env, (char *)saved_env, sizeof (env));
+		flocn = NOPOSN;
 	}
-
-	memcpy ((char *)env, (char *)saved_env, sizeof (env));
-	flocn = NOPOSN;
 	return;
 }
 /*}}}*/
