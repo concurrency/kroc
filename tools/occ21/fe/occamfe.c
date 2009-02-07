@@ -32,7 +32,7 @@
 #include "syndef.h"		/* syninit, parse_file */
 #include "chkdef.h"		/* scopeandcheck_main */
 #include "usehdr.h"		/* needed for usedef.h */
-#include "usedef.h"		/* alias_and_usage_check */
+#include "usedef.h"		/* alias_and_usage_check, formalmodelcheck */
 #include "mobiles.h"		/* any mobile stuff */
 /*}}}*/
 
@@ -41,8 +41,6 @@ extern BOOL preproc_dump;
 
 /*{{{  local state */
 /* These are used to control access to 'current_fe_handle' */
-
-
 /*{{{  PRIVATE void         fe_set_local_state */
 PRIVATE void fe_set_local_state (fe_handle_t * const new)
 {
@@ -52,8 +50,6 @@ PRIVATE void fe_set_local_state (fe_handle_t * const new)
 }
 
 /*}}}*/
-
-
 /*{{{  PRIVATE fe_handle_t *fe_save_local_state */
 PRIVATE fe_handle_t *fe_save_local_state (fe_handle_t * const new)
 {
@@ -64,8 +60,6 @@ PRIVATE fe_handle_t *fe_save_local_state (fe_handle_t * const new)
 }
 
 /*}}}*/
-
-
 /*{{{  PRIVATE void         fe_restore_local_state */
 #if 0
 PRIVATE void fe_restore_local_state (fe_handle_t * const old)
@@ -191,6 +185,19 @@ printtreenl (stderr, 4, handle->tree);
 }
 
 /*}}}*/
+/*{{{  PUBLIC void         fe_formalmodel_check (fe_handle_t *const handle)*/
+PUBLIC void fe_formalmodel_check (fe_handle_t *const handle)
+{
+	const fe_data_t *const data = handle->data_ptr;
+
+	DEBUG_MSG (("fe_formalmodel_check: current_fe_handle is #%X\n", (unsigned int)current_fe_handle));
+	fe_set_local_state (handle);
+
+	formalmodelcheck (handle->tree, data->fe_formalmodel);
+
+	freeup_temp_workspace ();
+}
+/*}}}*/
 /*{{{  PUBLIC treenode    *fe_loadstdlib */
 PUBLIC treenode *fe_loadstdlib (fe_handle_t * const handle, const char *filename)
 {
@@ -213,8 +220,6 @@ PUBLIC treenode *fe_get_treeroot (const fe_handle_t * const handle)
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC int          fe_get_totallines */
 PUBLIC int fe_get_totallines (const fe_handle_t * const handle)
 {
@@ -222,8 +227,6 @@ PUBLIC int fe_get_totallines (const fe_handle_t * const handle)
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC const fe_data_t *fe_get_data_ptr */
 PUBLIC const fe_data_t *fe_get_data_ptr (const fe_handle_t * const handle)
 {
@@ -231,8 +234,6 @@ PUBLIC const fe_data_t *fe_get_data_ptr (const fe_handle_t * const handle)
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC jmp_buf     *fe_get_env_addr */
 PUBLIC jmp_buf *fe_get_env_addr (const fe_handle_t * const handle)
 {
@@ -240,8 +241,6 @@ PUBLIC jmp_buf *fe_get_env_addr (const fe_handle_t * const handle)
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC void         fe_set_user_ptr */
 PUBLIC void fe_set_user_ptr (fe_handle_t * const handle, void *const user_ptr)
 {
@@ -249,8 +248,6 @@ PUBLIC void fe_set_user_ptr (fe_handle_t * const handle, void *const user_ptr)
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC void        *fe_get_user_ptr */
 PUBLIC void *fe_get_user_ptr (const fe_handle_t * const handle)
 {
@@ -325,8 +322,6 @@ PRIVATE const filetablestruct_t *lookupfilenameptr (const fe_handle_t * const ha
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC int   fe_addfilename(name, mode, parent, parentline) */
 PUBLIC int fe_addfilename (fe_handle_t * const handle, wordnode * const name, const int issource, const int parent, const int parentline)
 {
@@ -344,8 +339,6 @@ PUBLIC int fe_addfilename (fe_handle_t * const handle, wordnode * const name, co
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC const char *fe_lookupfilename(n) */
 PUBLIC const char *fe_lookupfilename (const fe_handle_t * const handle, const int n)
 {
@@ -357,8 +350,6 @@ PUBLIC const char *fe_lookupfilename (const fe_handle_t * const handle, const in
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC BOOL  fe_fileissource(n) */
 PUBLIC BOOL fe_fileissource (const fe_handle_t * const handle, const int n)
 {
@@ -369,8 +360,6 @@ PUBLIC BOOL fe_fileissource (const fe_handle_t * const handle, const int n)
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC int   fe_parentoffile(n) */
 PUBLIC int fe_parentoffile (const fe_handle_t * const handle, const int n)
 {
@@ -378,8 +367,6 @@ PUBLIC int fe_parentoffile (const fe_handle_t * const handle, const int n)
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC int   fe_parentposnoffile(n) */
 PUBLIC int fe_parentposnoffile (const fe_handle_t * const handle, const int n)
 {
@@ -387,8 +374,6 @@ PUBLIC int fe_parentposnoffile (const fe_handle_t * const handle, const int n)
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC int   fe_numberoffiles() */
 PUBLIC int fe_numberoffiles (const fe_handle_t * const handle)
 {
@@ -396,8 +381,6 @@ PUBLIC int fe_numberoffiles (const fe_handle_t * const handle)
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC SOURCEPOSN fe_sourcefileof */
 PUBLIC SOURCEPOSN fe_sourcefileof (fe_handle_t * const handle, const SOURCEPOSN old_locn)
 {
@@ -420,8 +403,6 @@ PUBLIC fe_translate_data_t *fe_translates (const fe_handle_t * const handle)
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC wordnode *fe_translate_from_internal */
 PUBLIC wordnode *fe_translate_from_internal (const fe_handle_t * const handle, wordnode * name)
 {
@@ -438,8 +419,6 @@ PUBLIC BIT32 fe_get_sourcehash (const fe_handle_t * const handle)
 }
 
 /*}}}*/
-
-
 /*{{{  PUBLIC void  fe_sourcehash */
 /* We have now arranged things so that we already know the length,
  * and we also know that string is maximally aligned, because it

@@ -24,6 +24,7 @@
  *  use3 - builds up lists of free variables for procs / functions
  *         alias checks if required
  *         calls usage checker in use2 if required
+ *         also calls undefinedness checker in use4
  *
  *****************************************************************************/
 

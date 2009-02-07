@@ -100,6 +100,7 @@ typedef struct
     BOOL               fe_chanaspointer; /* TRUE if channels are implemented as pointers */
     BOOL               fe_checkalias;    /* TRUE if we want to alias check the source */
     BOOL               fe_checkusage;    /* TRUE if we want to usage check the source */
+    BOOL               fe_formalmodel;   /* TRUE if we want to formal model check/generate the source */
     BOOL               fe_debuguse;      /* TRUE if we want to display usage check diagnostics */
     BOOL               fe_rangechecking; /* TRUE if range checking is required */
     BOOL               fe_disable_rangechecking_in_branches; /* TRUE when configurer/ndlrdr want to disable
@@ -151,7 +152,7 @@ typedef struct
 /*{{{  main processing functions*/
 /* set up the following for _all_ functions:
    fe_lang, fe_error_msg_fn,
-   fe_brieferrors, fe_backenderror, fe_checkalias, fe_checkusage,
+   fe_brieferrors, fe_backenderror, fe_checkalias, fe_checkusage, fe_formalmodel,
    fe_errormode, fe_toolversion, fe_toolname, fe_information,
    ALL fe_warning... flags, fe_warn_on_all_errors
    fe_pathname, fe_outfile, fe_errfile, fe_abort_fn, fe_error_occurred
@@ -180,6 +181,9 @@ void         fe_scope_and_check(fe_handle_t *const handle);
    fe_debuguse, fe_warn_on_usage_error
 */
 void         fe_alias_and_usage_check(fe_handle_t *const handle);
+
+
+void         fe_formalmodel_check (fe_handle_t *const handle);
 
 
 treenode    *fe_loadstdlib(fe_handle_t *const handle, const char *filename);

@@ -36,7 +36,7 @@ occ21_PRE_version_OBJS = fe/vti1.o fe/vti2.o fe/vti3.o fe/vti4.o fe/vti5.o \
 	fe/err1.o fe/err2.o fe/list.o fe/const1.o fe/strpool.o fe/objlib.o \
 	misc/txlib.o \
 	fe/occamfe.o fe/lex1.o fe/syn1.o fe/syn2.o fe/syn3.o fe/chk1.o \
-	fe/chk2.o fe/chk4.o fe/use1.o fe/use2.o fe/use3.o fe/use4.o fe/objrdr.o \
+	fe/chk2.o fe/chk4.o fe/use1.o fe/use2.o fe/use3.o fe/use4.o fe/use5.o fe/objrdr.o \
 	fe/objtrans.o misc/occompfe.o misc/inst.o misc/tran1.o \
 	misc/tran2.o misc/tran3.o misc/mobiles.o \
 	be/libbe.a

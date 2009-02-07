@@ -14,5 +14,5 @@ DEFS=@DEFS@ @ARCH_DEFS@ -Wall
 
 libfe_a_SOURCES = occamfe.c lex1.c syn1.c syn2.c syn3.c chk1.c chk2.c \
 chk4.c use1.c use2.c use3.c objrdr.c objtrans.c vti1.c vti2.c vti3.c \
-vti4.c vti5.c err1.c err2.c list.c const1.c strpool.c objlib.c use4.c
+vti4.c vti5.c err1.c err2.c list.c const1.c strpool.c objlib.c use4.c use5.c
 

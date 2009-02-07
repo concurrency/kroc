@@ -13,7 +13,7 @@ AM_CONFIG_HEADER(config.h)
 AC_PREREQ(2.12)
 
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE([occ21], [1.4.0])
+AM_INIT_AUTOMAKE([occ21], [1.4.1])
 
 dnl Maintainer mode not used
 
