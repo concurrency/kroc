@@ -4040,12 +4040,14 @@ PRIVATEPARAM int configcheck (treenode * tptr, void *voidptr)
 		if ((current_fe_data->fe_lang & FE_LANG_NDL) != 0) {	/* bug TS/1465 12/11/91 */
 			changestate (tptr, DValOf (tptr), configcheckstate, S_NETWORK);
 		} else if (separatelycompiled (DNameOf (tptr))) {
-			if (configcheckstate == S_NETWORK || configcheckstate == S_MAPPING)
+			if (configcheckstate == S_NETWORK || configcheckstate == S_MAPPING) {
 				invalidconfigconstruct (tptr);
+			}
 		} else {	/* locally defined */
 
-			if (configcheckstate != S_PROCESSOR)
+			if (configcheckstate != S_PROCESSOR) {
 				invalidconfigconstruct (tptr);
+			}
 			prewalkproctree (DValOf (tptr), configcheck, voidptr);
 		}
 		break;
