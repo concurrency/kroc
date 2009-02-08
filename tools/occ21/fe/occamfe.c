@@ -73,7 +73,7 @@ PRIVATE void fe_restore_local_state (fe_handle_t * const old)
 /*}}}*/
 
 /*{{{  PUBLIC fe_handle_t *fe_open */
-PUBLIC fe_handle_t *fe_open (const fe_data_t * const data)
+PUBLIC fe_handle_t *fe_open (const fe_data_t *const data)
 {
 	fe_handle_t *handle;
 	static const fe_handle_t init_copy = { 0 };	/* will be initialised to zeroes and NULLs */
@@ -189,12 +189,26 @@ printtreenl (stderr, 4, handle->tree);
 PUBLIC void fe_formalmodel_check (fe_handle_t *const handle)
 {
 	const fe_data_t *const data = handle->data_ptr;
+	const char *handle_filename = fe_lookupfilename (handle, 0);
+	char *fm_filename = (char *)memalloc (strlen (handle_filename) + 5);
 
 	DEBUG_MSG (("fe_formalmodel_check: current_fe_handle is #%X\n", (unsigned int)current_fe_handle));
 	fe_set_local_state (handle);
 
-	formalmodelcheck (handle->tree, data->fe_formalmodel);
+	sprintf (fm_filename, "%s", handle_filename ?: "default.occ");
+	if ((strlen (fm_filename) > 4) && (fm_filename[strlen(fm_filename) - 4] == '.')) {
+		int offs = strlen (fm_filename) - 4;
 
+		sprintf (fm_filename + offs, ".cspx");
+	} else {
+		int offs = strlen (fm_filename);
+
+		sprintf (fm_filename + offs, ".cspx");
+	}
+		
+	formalmodelcheck (handle->tree, data->fe_formalmodel, fm_filename);
+
+	memfree (fm_filename);
 	freeup_temp_workspace ();
 }
 /*}}}*/
@@ -340,7 +354,7 @@ PUBLIC int fe_addfilename (fe_handle_t * const handle, wordnode * const name, co
 
 /*}}}*/
 /*{{{  PUBLIC const char *fe_lookupfilename(n) */
-PUBLIC const char *fe_lookupfilename (const fe_handle_t * const handle, const int n)
+PUBLIC const char *fe_lookupfilename (const fe_handle_t *const handle, const int n)
 {
 	if ((n >= 0) && (n < handle->numfiles)) {
 		return (WNameOf (lookupfilenameptr (handle, n)->ftname));
