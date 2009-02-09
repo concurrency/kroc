@@ -61,8 +61,14 @@ etc_chain *etc_preoptimise (etc_chain *etc_code)
 	for (tmp=head; tmp; prevlast = last, last=tmp, tmp=tmp->next) {
 		if (tmp->fn < I_OPR) {
 			if ((tmp->fn == I_LDL) && last && (last->fn == I_STL) && (tmp->opd == last->opd)) {
-				tmp->fn = I_OPR + tmp->opd;
-				tmp->opd = I_XSTL;
+				if (tmp->opd >= 0) {
+					tmp->fn = I_OPR + tmp->opd;
+					tmp->opd = I_XSTL;
+				} else {
+					/* keep this, but adjust */
+					tmp->fn = I_OPR - tmp->opd;
+					tmp->opd = I_XSTLN;
+				}
 				/* remove the STL instruction in `last' */
 				if (head == last) {
 					head = tmp;

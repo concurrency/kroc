@@ -94,6 +94,11 @@ int dump_textual_etc (etc_chain *chain, char *filename)
 	}
 	res = 0;
 	inproc = 0;
+#if 0
+	for (tmp=chain; tmp; tmp = tmp->next) {
+		fprintf (stderr, "  0x%8.8X, 0x%8.8X\n", (unsigned int)tmp->fn, (unsigned int)tmp->opd);
+	}
+#endif
 	for (tmp=chain; tmp && !res; tmp=tmp->next) {
 		if (tmp->fn < I_OPR) {
 			res = dump_primary (tmp->fn, tmp->opd, dumpstr);
@@ -104,6 +109,9 @@ int dump_textual_etc (etc_chain *chain, char *filename)
 			switch (tmp->opd) {
 			case I_XSTL:
 				fprintf (outstream, "%s %d\n", dumpstr, tmp->fn - I_OPR);
+				break;
+			case I_XSTLN:
+				fprintf (outstream, "%s -%d\n", dumpstr, tmp->fn - I_OPR);
 				break;
 			case I_NCALL:
 				{
@@ -1124,6 +1132,9 @@ static int dump_secondary (int esfunc, char *buffer)
 		break;
 	case I_XSTL:
 		sprintf (buffer, "\tXSTL");
+		break;
+	case I_XSTLN:
+		sprintf (buffer, "\tXSTLN");
 		break;
 	case I_NCALL:
 		sprintf (buffer, "\tNCALL");

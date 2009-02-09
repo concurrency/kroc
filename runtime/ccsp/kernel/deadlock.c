@@ -234,7 +234,7 @@ static int deadlock_debug (int *iws_ptr, int bytes, int *did_print)
 			if ((ins_1 != INS_X86_JMPIMMS8) && (ins_1 != INS_X86_JMPIMMS32)) {
 #endif
 				#ifdef DEBUG_DEBUG
-					BMESSAGE ("%s: INS_X86_JMPIMMS=0x%2.2x, read 0x%2.2x.\n", __FILE__, INS_X86_JMPIMMS, ins_1);
+					BMESSAGE ("%s: INS_X86_JMPIMMS8=0x%2.2x, INS_X86_JMPINNS32=0x%2.2x, read 0x%2.2x.\n", __FILE__, INS_X86_JMPIMMS8, INS_X86_JMPIMMS32, ins_1);
 				#endif
 				continue;
 			}
@@ -339,7 +339,7 @@ static int deadlock_debug (int *iws_ptr, int bytes, int *did_print)
 #endif
 					/* Not a jump :( */
 					#ifdef DEBUG_DEBUG
-						BMESSAGE ("%s: Expected opcode 0xe9, found 0x%2.2x\n", __FILE__, ins_1);
+						BMESSAGE ("%s: Expected opcode 0x.., found 0x%2.2x\n", __FILE__, ins_1);
 					#endif
 					continue;
 				}
