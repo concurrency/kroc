@@ -41,7 +41,7 @@
 #define DEADLOCK_CODE_BLOCK(FN,PN,CP) \
 	__asm__ __volatile__ ( "\n" \
 		"	call *%%eax		\n" \
-		: "=a" (FN), "=b" (PN) \
+		: "=a" (FN), "=c" (PN) \
 		: "a" (CP) \
 		: "cc", "memory")
 
