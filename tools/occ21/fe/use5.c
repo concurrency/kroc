@@ -54,7 +54,8 @@ typedef enum ENUM_fmtype {
 	FM_FIELD,
 	FM_TREEREF,		/* parse-tree link (fmtree) */
 	FM_NODEREF,		/* local node reference (fmnode) */
-	FM_NAMEDPROC		/* named/parameterised process (fmproc) */
+	FM_NAMEDPROC,		/* named/parameterised process (fmproc) */
+	FM_TAGSET		/* tagged name set, from PROTOCOLs (fmtset) */
 } fmtype_e;
 
 typedef struct TAG_fmnode {
@@ -89,6 +90,11 @@ typedef struct TAG_fmnode {
 			int parms_cur, parms_max;	/* current, maximum */
 			struct TAG_fmnode *body;	/* body model */
 		} fmproc;				/* NAMEDPROC */
+		struct {
+			char *name;			/* name of the type */
+			struct TAG_fmnode **tags;	/* array of tags (fmtree's) */
+			int tags_cur, tags_max;		/* current, maximum */
+		} fmtset;				/* TAGSET */
 	} u;
 } fmnode_t;
 
@@ -276,6 +282,12 @@ PRIVATE fmnode_t *fmt_newnode (fmtype_e type, treenode *org)
 		fmn->u.fmproc.parms_max = 0;
 		fmn->u.fmproc.body = NULL;
 		break;
+	case FM_TAGSET:
+		fmn->u.fmtset.name = NULL;
+		fmn->u.fmtset.tags = NULL;
+		fmn->u.fmtset.tags_cur = 0;
+		fmn->u.fmtset.tags_max = 0;
+		break;
 	default:
 		break;
 	}
@@ -319,6 +331,27 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 			if (fmn->u.fmproc.name) {
 				memfree (fmn->u.fmproc.name);
 				fmn->u.fmproc.name = NULL;
+			}
+			break;
+		case FM_TAGSET:
+			if (deep == 2) {
+				int i;
+
+				for (i=0; i<fmn->u.fmtset.tags_cur; i++) {
+					if (fmn->u.fmtset.tags[i]) {
+						fmt_freenode (fmn->u.fmtset.tags[i], deep);
+					}
+				}
+			}
+			if (fmn->u.fmtset.tags) {
+				memfree (fmn->u.fmtset.tags);
+				fmn->u.fmtset.tags = NULL;
+				fmn->u.fmtset.tags_cur = 0;
+				fmn->u.fmtset.tags_max = 0;
+			}
+			if (fmn->u.fmtset.name) {
+				memfree (fmn->u.fmtset.name);
+				fmn->u.fmtset.name = NULL;
 			}
 			break;
 		case FM_SEQ:
@@ -525,6 +558,11 @@ PRIVATE void fmt_modprewalk (fmnode_t **nodep, int (*f1)(fmnode_t **, void *), v
 			}
 			fmt_modprewalk (&n->u.fmproc.body, f1, voidptr);
 			break;
+		case FM_TAGSET:
+			for (i=0; i<n->u.fmtset.tags_cur; i++) {
+				fmt_modprewalk (&n->u.fmtset.tags[i], f1, voidptr);
+			}
+			break;
 		case FM_SKIP:
 		case FM_STOP:
 		case FM_DIV:
@@ -640,6 +678,9 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 		case FM_NAMEDPROC:
 			fprintf (stream, "NAMEDPROC (%s) %d parms\n", fmn->u.fmproc.name ?: "(no-name)", fmn->u.fmproc.parms_cur);
 			break;
+		case FM_TAGSET:
+			fprintf (stream, "TAGSET (%s) %d tags\n", fmn->u.fmtset.name ?: "(no-name)", fmn->u.fmtset.tags_cur);
+			break;
 		default:
 			fprintf (stream, "unknown type %d!\n", (int)fmn->type);
 			break;
@@ -670,6 +711,11 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 				fmt_dumpnode (fmn->u.fmproc.parms[i], indent + 1, stream);
 			}
 			fmt_dumpnode (fmn->u.fmproc.body, indent + 1, stream);
+			break;
+		case FM_TAGSET:
+			for (i=0; i<fmn->u.fmtset.tags_cur; i++) {
+				fmt_dumpnode (fmn->u.fmtset.tags[i], indent + 1, stream);
+			}
 			break;
 		default:
 			break;
@@ -876,6 +922,16 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		fmt_writeoutindent (indent, fp);
 		fprintf (fp, "</proc>\n");
 		break;
+	case FM_TAGSET:
+		fprintf (fp, "<tagset name=\"%s\" items=\"", node->u.fmtset.name);
+		for (i=0; i<node->u.fmtset.tags_cur; i++) {
+			fmt_writeoutnode_str (node->u.fmtset.tags[i], fp);
+			if (i < (node->u.fmtset.tags_cur - 1)) {
+				fprintf (fp, ",");
+			}
+		}
+		fprintf (fp, "\" />\n");
+		break;
 	case FM_ATOM:
 		fprintf (fp, "<atom id=\"%s\" />\n", node->u.fmatom.id);
 		break;
@@ -1079,6 +1135,45 @@ PRIVATEPARAM int do_formalmodelcheck_tree (treenode *n, void *const voidptr)
 	fmmset_t *fmm = (fmmset_t *)voidptr;
 
 	switch (TagOf (n)) {
+		/*{{{  TPROTDEF*/
+	case S_TPROTDEF:
+		{
+			char *tpname = (char *)WNameOf (NNameOf (DNameOf (n)));
+			fmnode_t *fmn;
+			treenode *tags = NTypeOf (DNameOf (n));
+			treenode *walk;
+
+#if 1
+fprintf (stderr, "do_formalmodelcheck_tree(): TPROTDEF [%s]\n", tpname);
+#endif
+			fmn = fmt_newnode (FM_TAGSET, n);
+			fmn->u.fmtset.name = (char *)memalloc (strlen (tpname) + 8);
+			sprintf (fmn->u.fmtset.name, "PROT_%s", tpname);
+
+			for (walk=tags; !EndOfList (walk); walk = NextItem (walk)) {
+				treenode *tag = ThisItem (walk);
+
+				if (TagOf (tag) == N_TAGDEF) {
+					char *tagname = (char *)WNameOf (NNameOf (tag));
+					fmnode_t *fmntag = fmt_newnode (FM_TREEREF, tag);
+
+					fmntag->u.fmtree.node = tag;
+					fmntag->u.fmtree.name = (char *)memalloc (strlen (tagname) + 1);
+					sprintf (fmntag->u.fmtree.name, "%s", tagname);
+
+					fmt_addtolist (&fmn->u.fmtset.tags, &fmn->u.fmtset.tags_cur, &fmn->u.fmtset.tags_max, fmntag);
+				}
+#if 0
+fprintf (stderr, " ... : tag =");
+printtreenl (stderr, 1, tag);
+#endif
+			}
+
+			fmt_addtolist (&fmm->items, &fmm->items_cur, &fmm->items_max, fmn);
+		}
+		break;
+		/*}}}*/
+		/*{{{  PROCDEF, MPROCDECL*/
 	case S_PROCDEF:
 	case S_MPROCDECL:
 		if (!separatelycompiled (DNameOf (n))) {
@@ -1089,7 +1184,7 @@ PRIVATEPARAM int do_formalmodelcheck_tree (treenode *n, void *const voidptr)
 			treenode *walk;
 
 #if 1
-fprintf (stderr, "do_formalmodecheck_tree(): PROC [%s]\n", pname);
+fprintf (stderr, "do_formalmodelcheck_tree(): PROC [%s]\n", pname);
 #endif
 			for (walk = fparams; !EmptyList (walk); walk = NextItem (walk)) {
 				treenode *parm = ThisItem (walk);
@@ -1171,6 +1266,7 @@ fmt_dumpnode (fmnproc, 1, stderr);
 #endif
 		}
 		break;
+		/*}}}*/
 	}
 
 	switch_to_prev_workspace (old);
