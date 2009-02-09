@@ -823,7 +823,7 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 
 	fmt_writeoutindent (indent, fp);
 	if (!node) {
-		fprintf (fp, "<cspx:nullnode />\n");
+		fprintf (fp, "<nullnode />\n");
 		return;
 	}
 	
@@ -840,12 +840,12 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		default:	strcpy (sname, "invalid"); break;
 		}
 
-		fprintf (fp, "<cspx:%s>\n", sname);
+		fprintf (fp, "<%s>\n", sname);
 		for (i=0; i<node->u.fmlist.items_cur; i++) {
 			fmt_writeoutnode (node->u.fmlist.items[i], indent + 1, fp);
 		}
 		fmt_writeoutindent (indent, fp);
-		fprintf (fp, "</cspx:%s>\n", sname);
+		fprintf (fp, "</%s>\n", sname);
 		break;
 	case FM_INPUT:
 	case FM_OUTPUT:
@@ -855,14 +855,14 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		default:	strcpy (sname, "invalid"); break;
 		}
 
-		fprintf (fp, "<cspx:%s>\n", sname);
+		fprintf (fp, "<%s>\n", sname);
 		fmt_writeoutnode (node->u.fmio.lhs, indent + 1, fp);
 		fmt_writeoutnode (node->u.fmio.rhs, indent + 1, fp);
 		fmt_writeoutindent (indent, fp);
-		fprintf (fp, "</cspx:%s>\n", sname);
+		fprintf (fp, "</%s>\n", sname);
 		break;
 	case FM_NAMEDPROC:
-		fprintf (fp, "<cspx:proc name=\"%s\" events=\"", node->u.fmproc.name);
+		fprintf (fp, "<proc name=\"%s\" events=\"", node->u.fmproc.name);
 		for (i=0; i<node->u.fmproc.parms_cur; i++) {
 			fmt_writeoutnode_str (node->u.fmproc.parms[i], fp);
 			if (i < (node->u.fmproc.parms_cur - 1)) {
@@ -874,38 +874,38 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		fmt_writeoutnode (node->u.fmproc.body, indent + 1, fp);
 
 		fmt_writeoutindent (indent, fp);
-		fprintf (fp, "</cspx:proc>\n");
+		fprintf (fp, "</proc>\n");
 		break;
 	case FM_ATOM:
-		fprintf (fp, "<cspx:atom id=\"%s\" />\n", node->u.fmatom.id);
+		fprintf (fp, "<atom id=\"%s\" />\n", node->u.fmatom.id);
 		break;
 	case FM_TREEREF:
-		fprintf (fp, "<cspx:treeref name=\"");
+		fprintf (fp, "<treeref name=\"");
 		fmt_writeoutnode_str (node, fp);
 		fprintf (fp, "\" />\n");
 		break;
 	case FM_FIXPOINT:
-		fprintf (fp, "<cspx:fixpoint>\n");
+		fprintf (fp, "<fixpoint>\n");
 		fmt_writeoutnode (node->u.fmfix.id, indent + 1, fp);
 		fmt_writeoutnode (node->u.fmfix.proc, indent + 1, fp);
 
 		fmt_writeoutindent (indent, fp);
-		fprintf (fp, "</cspx:fixpoint>\n");
+		fprintf (fp, "</fixpoint>\n");
 		break;
 	case FM_SKIP:
-		fprintf (fp, "<cspx:skip />\n");
+		fprintf (fp, "<skip />\n");
 		break;
 	case FM_STOP:
-		fprintf (fp, "<cspx:stop />\n");
+		fprintf (fp, "<stop />\n");
 		break;
 	case FM_DIV:
-		fprintf (fp, "<cspx:div />\n");
+		fprintf (fp, "<div />\n");
 		break;
 	case FM_CHAOS:
-		fprintf (fp, "<cspx:chaos />\n");
+		fprintf (fp, "<chaos />\n");
 		break;
 	default:
-		fprintf (fp, "<cspx:unknown type=\"%d\">\n", (int)node->type);
+		fprintf (fp, "<unknown type=\"%d\">\n", (int)node->type);
 		break;
 	}
 }
@@ -921,15 +921,13 @@ PRIVATE void formalmodel_writeoutset (fmmset_t *fmm, FILE *fp, const char *filen
 	int i;
 
 	fprintf (fp, "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n");
-	fprintf (fp, "<cspx:namespace xmlns:cspx=\"http://www.cs.kent.ac.uk/projects/ofa/kroc/NAMESPACES/cspx\">\n");
-	fprintf (fp, "<cspx:program name=\"%s\">\n", filename);
+	fprintf (fp, "<program version=\"1.0\" name=\"%s\">\n", filename);
 
 	for (i=0; i<fmm->items_cur; i++) {
-		fmt_writeoutnode (fmm->items[i], 1, fp);
+		fmt_writeoutnode (fmm->items[i], 0, fp);
 	}
 
-	fprintf (fp, "</cspx:program>\n");
-	fprintf (fp, "</cspx:namespace>\n");
+	fprintf (fp, "</program>\n");
 }
 /*}}}*/
 /*{{{  PRIVATEPARAM int do_formalmodelgen (treenode *n, void *const voidptr)*/
