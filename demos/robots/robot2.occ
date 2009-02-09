@@ -34,6 +34,7 @@
 #INCLUDE "course.module"
 #INCLUDE "sdlraster.module"
 #INCLUDE "occSDL.module"
+#INCLUDE "rasterio.module"
 
 #INCLUDE "graphics.inc"
 #INCLUDE "hit.inc"
@@ -51,8 +52,8 @@ VAL INT BUTTON.BACKWARD IS 5:
 VAL INT BACKGROUND IS COLOUR.BLACK:
 VAL INT FOREGROUND IS COLOUR.WHITE:
 
-VAL INT WIDTH   IS 1001:		--* Width of raster
-VAL INT DEPTH   IS  651:		--* Depth of raster
+VAL INT WIDTH   IS  1012:	        --* Width of raster
+VAL INT DEPTH   IS  703:		--* Depth of raster
 VAL INT RASTERS IS    3:		--* Number of rasters
 VAL INT RANGE   IS  256:		--* Range of laser/radar/sonar
 VAL INT RADIUS  IS    8:		--* Size of robot
@@ -113,6 +114,7 @@ PROC Set.scene (RASTER raster)
 
     clear.raster (raster, COLOUR.BLACK)
 
+    #IF FALSE
     Disc (200, 200, 150, FOREGROUND, raster)
     Disc (200, 200, 100, BACKGROUND, raster)
     Rectangle (175, 200, 50, 200, BACKGROUND, raster)
@@ -129,6 +131,9 @@ PROC Set.scene (RASTER raster)
 
     Disc (WIDTH, 0, 150, FOREGROUND, raster)
     Disc (WIDTH, 0, 100, BACKGROUND, raster)
+    #ELSE
+    read.raster ("robot-track-2.png", raster)
+    #ENDIF
 
 :
 --}}}
@@ -140,12 +145,17 @@ PROC Set.scene (RASTER raster)
 --
 PROC Scene (CHAN RASTER in?, out!)
 
-  RASTER raster:
-  WHILE TRUE
-    SEQ
-      in ? raster
-      Set.scene (raster)
-      out ! raster
+  RASTER default:
+  SEQ
+    default := MOBILE [DEPTH][WIDTH]INT
+    Set.scene (default)
+
+    WHILE TRUE
+      RASTER raster:
+      SEQ
+        in ? raster
+        [raster FOR DEPTH] := [default FOR DEPTH]
+        out ! raster
 :
 
 --}}}
