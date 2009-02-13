@@ -118,6 +118,13 @@ typedef struct TAG_fmstate { /*{{{*/
 } fmstate_t;
 
 /*}}}*/
+typedef struct TAG_fmhfp { /*{{{*/
+	char *procname;
+	fmnode_t **fpts;				/* fixpoints */
+	int fpts_cur, fpts_max;				/* current, maximum */
+} fmhfp_t;
+
+/*}}}*/
 /*}}}*/
 /*{{{  private data*/
 
@@ -536,6 +543,42 @@ PRIVATE void fmt_freemset (fmmset_t *fmm)
 	return;
 }
 /*}}}*/
+/*{{{  PRIVATE fmhfp_t *fmt_newhfp (void)*/
+/*
+ *	creates a new fmhfp_t structure
+ */
+PRIVATE fmhfp_t *fmt_newhfp (void)
+{
+	fmhfp_t *hfp = (fmhfp_t *)memalloc (sizeof (fmhfp_t));
+
+	hfp->procname = NULL;
+	hfp->fpts = NULL;
+	hfp->fpts_cur = 0;
+	hfp->fpts_max = 0;
+
+	return hfp;
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_freehfp (fmhfp_t *hfp)*/
+/*
+ *	frees a fmhfp_t structure
+ */
+PRIVATE void fmt_freehfp (fmhfp_t *hfp)
+{
+	if (!hfp) {
+		fmt_error_internal (NOPOSN, "fmt_freehfp(): NULL pointer!");
+		return;
+	}
+	if (hfp->fpts) {
+		memfree (hfp->fpts);
+		hfp->fpts = NULL;
+		hfp->fpts_cur = 0;
+		hfp->fpts_max = 0;
+	}
+	memfree (hfp);
+	return;
+}	
+/*}}}*/
 /*{{{  PRIVATE void fmt_modprewalk (fmnode_t **nodep, int (*f1)(fmnode_t **, void *), void *voidptr)*/
 /*
  *	calls f1() on each node-pointer in pre-walk order.
@@ -846,26 +889,83 @@ fprintf (stderr, "fmt_simplifynode(): same type!\n");
 	return CONTINUE_WALK;
 }
 /*}}}*/
-/*{{{  PRIVATEPARAM int fmt_hoistfixpoints (fmnode_t **nodep, void *voidptr)*/
+/*{{{  PRIVATEPARAM int fmt_dohoistfixpoints (fmnode_t **nodep, void *voidptr)*/
 /*
- *	hoists fixpoints for a tree, adds as NAMEDPROCs to list in fmmset_t
+ *	hoists fixpoints for a tree, adds as NAMEDPROCs to list
  */
-PRIVATEPARAM int fmt_hoistfixpoints (fmnode_t **nodep, void *voidptr)
+PRIVATEPARAM int fmt_dohoistfixpoints (fmnode_t **nodep, void *voidptr)
 {
+	fmhfp_t *hfp = (fmhfp_t *)voidptr;
 	fmnode_t *n = *nodep;
 
 	switch (n->type) {
 	case FM_FIXPOINT:
 		{
 			fmnode_t *fmn = fmt_newnode (FM_NAMEDPROC, n->org);
+			fmnode_t *atom = n->u.fmfix.id;
 
-			/* FIXME! */
+			/* hoist fixpoints inside this one first */
+			fmt_modprewalk (&n->u.fmfix.proc, fmt_dohoistfixpoints, (void *)hfp);
+
+			if (atom->type != FM_ATOM) {
+				fmt_error_internal (NOPOSN, "fmt_dohoistfixpoints(): FIXPOINT id not ATOM");
+				return STOP_WALK;
+			}
+			fmn->u.fmproc.name = (char *)memalloc (strlen (hfp->procname) + strlen (atom->u.fmatom.id) + 3);
+			sprintf (fmn->u.fmproc.name, "%s_%s", hfp->procname, atom->u.fmatom.id);
+			fmn->u.fmproc.body = n->u.fmfix.proc;
+			fmn->u.fmproc.parms = NULL;
+			fmn->u.fmproc.parms_cur = 0;
+			fmn->u.fmproc.parms_max = 0;
+
+			n->u.fmfix.id = NULL;
+			n->u.fmfix.proc = NULL;
+
+			/* change atom identifier to match new PROC name */
+			memfree (atom->u.fmatom.id);
+			atom->u.fmatom.id = (char *)memalloc (strlen (fmn->u.fmproc.name) + 2);
+			sprintf (atom->u.fmatom.id, "%s", fmn->u.fmproc.name);
+
+			fmt_freenode (n, 1);
+			*nodep = atom;
+
+			fmt_addtolist (&hfp->fpts, &hfp->fpts_cur, &hfp->fpts_max, fmn);
 		}
 		return STOP_WALK;
 	default:
 		break;
 	}
 	return CONTINUE_WALK;
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_hoistfixpoints (fmnode_t *node, fmmset_t *fmm)*/
+/*
+ *	hoists fixpoints for a NAMEDPROC, adds to list in fmmset_t
+ */
+PRIVATE void fmt_hoistfixpoints (fmnode_t *node, fmmset_t *fmm)
+{
+	fmhfp_t *hfp = fmt_newhfp ();
+	int i;
+
+	if (node->type != FM_NAMEDPROC) {
+		fmt_error_internal (NOPOSN, "fmt_hoistfixpoints(): not NAMEDPROC!");
+		return;
+	}
+
+	hfp->procname = node->u.fmproc.name;
+
+	fmt_modprewalk (&node->u.fmproc.body, fmt_dohoistfixpoints, (void *)hfp);
+
+	for (i=0; i<hfp->fpts_cur; i++) {
+		fmnode_t *fp = hfp->fpts[i];
+
+		hfp->fpts[i] = NULL;
+		fmt_addtolist (&fmm->items, &fmm->items_cur, &fmm->items_max, fp);
+	}
+	hfp->fpts_cur = 0;
+
+	fmt_freehfp (hfp);
+	return;
 }
 /*}}}*/
 /*{{{  PRIVATE void fmt_writeoutnode_str (fmnode_t *node, FILE *fp)*/
@@ -1471,7 +1571,7 @@ fmt_dumpstate (fmstate, stderr);
 			fmt_freestate (fmstate);
 
 			fmt_modprewalk (&fmnproc, fmt_simplifynode, NULL);
-			fmt_modprewalk (&fmnproc, fmt_hoistfixpoints, (void *)fmm);
+			fmt_hoistfixpoints (fmnproc, fmm);
 
 			fmt_addtolist (&fmm->items, &fmm->items_cur, &fmm->items_max, fmnproc);
 #if 0
