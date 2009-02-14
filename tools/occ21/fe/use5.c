@@ -55,7 +55,8 @@ typedef enum ENUM_fmtype { /*{{{*/
 	FM_TREEREF,		/* parse-tree link (fmtree) */
 	FM_NODEREF,		/* local node reference (fmnode) */
 	FM_NAMEDPROC,		/* named/parameterised process (fmproc) */
-	FM_TAGSET		/* tagged name set, from PROTOCOLs (fmtset) */
+	FM_TAGSET,		/* tagged name set, from PROTOCOLs (fmtset) */
+	FM_THEN			/* list of events followed by a process (fmlist) */
 } fmtype_e;
 
 /*}}}*/
@@ -261,6 +262,7 @@ PRIVATE fmnode_t *fmt_newnode (fmtype_e type, treenode *org)
 	case FM_PAR:
 	case FM_DET:
 	case FM_NDET:
+	case FM_THEN:
 		fmn->u.fmlist.items = NULL;
 		fmn->u.fmlist.items_cur = 0;
 		fmn->u.fmlist.items_max = 0;
@@ -374,6 +376,7 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 		case FM_PAR:
 		case FM_DET:
 		case FM_NDET:
+		case FM_THEN:
 			if (deep == 2) {
 				int i;
 
@@ -579,6 +582,79 @@ PRIVATE void fmt_freehfp (fmhfp_t *hfp)
 	return;
 }	
 /*}}}*/
+
+/*{{{  PRIVATE void fmt_addtonodelist (fmnode_t *listnode, fmnode_t *item)*/
+/*
+ *	adds an item to a node list
+ */
+PRIVATE void fmt_addtonodelist (fmnode_t *listnode, fmnode_t *item)
+{
+	if (!listnode || !item) {
+		fmt_error_internal (NOPOSN, "fmt_addtonodelist(): NULL pointer!");
+		return;
+	}
+	switch (listnode->type) {
+	case FM_SEQ:
+	case FM_PAR:
+	case FM_DET:
+	case FM_NDET:
+	case FM_THEN:
+		fmt_addtolist (&listnode->u.fmlist.items, &listnode->u.fmlist.items_cur, &listnode->u.fmlist.items_max, item);
+		break;
+	default:
+		fmt_error_internal (NOPOSN, "fmt_addtonodelist(): not list capable node!");
+		break;
+	}
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_delfromnodelist (fmnode_t *listnode, int idx)*/
+/*
+ *	deletes an item from a node list
+ */
+PRIVATE void fmt_delfromnodelist (fmnode_t *listnode, int idx)
+{
+	if (!listnode) {
+		fmt_error_internal (NOPOSN, "fmt_delfromnodelist(): NULL pointer!");
+		return;
+	}
+	switch (listnode->type) {
+	case FM_SEQ:
+	case FM_PAR:
+	case FM_DET:
+	case FM_NDET:
+	case FM_THEN:
+		fmt_delfromlist (&listnode->u.fmlist.items, &listnode->u.fmlist.items_cur, &listnode->u.fmlist.items_max, idx);
+		break;
+	default:
+		fmt_error_internal (NOPOSN, "fmt_delfromnodelist(): not list capable node!");
+		break;
+	}
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_insertintonodelist (fmnode_t *listnode, int idx, fmnode_t *item)*/
+/*
+ *	inserts an item into a list of I/O processes
+ */
+PRIVATE void fmt_insertintonodelist (fmnode_t *listnode, int idx, fmnode_t *item)
+{
+	if (!listnode) {
+		fmt_error_internal (NOPOSN, "fmt_insertintonodelist(): NULL pointer!");
+		return;
+	}
+	switch (listnode->type) {
+	case FM_SEQ:
+	case FM_PAR:
+	case FM_DET:
+	case FM_NDET:
+	case FM_THEN:
+		fmt_insertintolist (&listnode->u.fmlist.items, &listnode->u.fmlist.items_cur, &listnode->u.fmlist.items_max, idx, item);
+		break;
+	default:
+		fmt_error_internal (NOPOSN, "fmt_insertintonodelist(): not list capable node!");
+		break;
+	}
+}
+/*}}}*/
 /*{{{  PRIVATE void fmt_modprewalk (fmnode_t **nodep, int (*f1)(fmnode_t **, void *), void *voidptr)*/
 /*
  *	calls f1() on each node-pointer in pre-walk order.
@@ -602,6 +678,7 @@ PRIVATE void fmt_modprewalk (fmnode_t **nodep, int (*f1)(fmnode_t **, void *), v
 		case FM_PAR:
 		case FM_DET:
 		case FM_NDET:
+		case FM_THEN:
 			for (i=0; i<n->u.fmlist.items_cur; i++) {
 				fmt_modprewalk (&n->u.fmlist.items[i], f1, voidptr);
 			}
@@ -657,6 +734,98 @@ PRIVATE void fmt_writeoutindent (int indent, FILE *fp)
 	}
 }
 /*}}}*/
+/*{{{  PRIVATE void fmt_copyprotname (char *dest, const char *src)*/
+/*
+ *	copies a protocol name from occam-pi style name to FDR style name (for a datatype name)
+ */
+PRIVATE void fmt_copyprotname (char *dest, const char *src)
+{
+	const char *ch = src;
+	char *dh;
+
+	for (dh = dest; *ch != '\0'; ch++, dh++) {
+		if (*ch == '.') {
+			*dh = '_';
+		} else if (islower (*ch)) {
+			*dh = toupper (*ch);
+		} else {
+			*dh = *ch;
+		}
+	}
+	*dh = '\0';
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_copytagname (char *dest, const char *src)*/
+/*
+ *	copies a tagname from occam-pi style name to FDR style tagname (for a datatype)
+ */
+PRIVATE void fmt_copytagname (char *dest, const char *src)
+{
+	const char *ch = src;
+	char *dh;
+
+	for (dh = dest; *ch != '\0'; ch++, dh++) {
+		if (*ch == '.') {
+			ch++;
+			if (islower (*ch)) {
+				*dh = toupper (*ch);
+			} else {
+				*dh = *ch;
+			}
+		} else {
+			if (ch == src) {
+				/* first character special */
+				if (islower (*ch)) {
+					*dh = toupper (*ch);
+				} else {
+					*dh = *ch;
+				}
+			} else if (isupper (*ch)) {
+				*dh = tolower (*ch);
+			} else {
+				*dh = *ch;
+			}
+		}
+	}
+	*dh = '\0';
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_copyvarname (char *dest, const char *src)*/
+/*
+ *	copies a variable name from occam-pi style to FDR style name
+ */
+PRIVATE void fmt_copyvarname (char *dest, const char *src)
+{
+	const char *ch = src;
+	char *dh;
+
+	for (dh = dest; *ch != '\0'; ch++, dh++) {
+		if (*ch == '.') {
+			*dh = '_';
+		} else if (isupper (*ch)) {
+			*dh = tolower (*ch);
+		} else {
+			*dh = *ch;
+		}
+	}
+	*dh = '\0';
+}
+/*}}}*/
+/*{{{  PRIVATE BOOL fmt_isevent (fmnode_t *item)*/
+/*
+ *	returns TRUE if the specified node is an event (INPUT/OUTPUT)
+ */
+PRIVATE BOOL fmt_isevent (fmnode_t *item)
+{
+	switch (item->type) {
+	case FM_INPUT:
+	case FM_OUTPUT:
+		return TRUE;
+	default:
+		return FALSE;
+	}
+}
+/*}}}*/
 
 
 /*{{{  PRIVATE fmnode_t *fmt_newatom (treenode *org)*/
@@ -692,6 +861,9 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 		switch (fmn->type) {
 		case FM_SEQ:
 			fprintf (stream, "SEQ\n");
+			break;
+		case FM_THEN:
+			fprintf (stream, "THEN\n");
 			break;
 		case FM_PAR:
 			fprintf (stream, "PAR\n");
@@ -750,6 +922,7 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 		case FM_PAR:
 		case FM_DET:
 		case FM_NDET:
+		case FM_THEN:
 			for (i=0; i<fmn->u.fmlist.items_cur; i++) {
 				fmt_dumpnode (fmn->u.fmlist.items[i], indent + 1, stream);
 			}
@@ -826,7 +999,9 @@ PRIVATE fmnode_t *fmt_findfreevar (fmstate_t *state, treenode *n)
 	while (state) {
 		for (i=0; i<state->fvars_cur; i++) {
 			if (state->fvars[i]->type == FM_TREEREF) {
-				if (state->fvars[i]->u.fmtree.node == n) {
+				if ((TagOf (n) == S_RECORDSUB) && (ASIndexOf (n) == state->fvars[i]->u.fmtree.node)) {
+					return state->fvars[i];
+				} else if (state->fvars[i]->u.fmtree.node == n) {
 					return state->fvars[i];
 				}
 			}
@@ -845,6 +1020,7 @@ PRIVATEPARAM int fmt_simplifynode (fmnode_t **nodep, void *voidptr)
 	fmnode_t *fmn = *nodep;
 
 	switch (fmn->type) {
+		/*{{{  SEQ,PAR,NDET,DET*/
 	case FM_SEQ:
 	case FM_PAR:
 	case FM_NDET:
@@ -882,7 +1058,17 @@ fprintf (stderr, "fmt_simplifynode(): same type!\n");
 				}
 			} while (changed);
 		}
+
+		/* if we're left with a single item (or just had 1 to start with), remove it */
+		if (fmn->u.fmlist.items_cur == 1) {
+			fmnode_t *item = fmn->u.fmlist.items[0];
+
+			fmt_delfromnodelist (fmn, 0);
+			*nodep = item;
+			fmt_freenode (fmn, 2);
+		}
 		break;
+		/*}}}*/
 	default:
 		break;
 	}
@@ -1048,13 +1234,15 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 	}
 	
 	switch (node->type) {
-		/*{{{  SEQ,PAR,DET,NDET*/
+		/*{{{  SEQ,PAR,DET,NDET,THEN*/
 	case FM_SEQ:
+	case FM_THEN:
 	case FM_PAR:
 	case FM_DET:
 	case FM_NDET:
 		switch (node->type) {
 		case FM_SEQ:	strcpy (sname, "seq"); break;
+		case FM_THEN:	strcpy (sname, "then"); break;
 		case FM_PAR:	strcpy (sname, "par"); break;
 		case FM_DET:	strcpy (sname, "det"); break;
 		case FM_NDET:	strcpy (sname, "ndet"); break;
@@ -1080,7 +1268,9 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 
 		fprintf (fp, "<%s>\n", sname);
 		fmt_writeoutnode (node->u.fmio.lhs, indent + 1, fp);
-		fmt_writeoutnode (node->u.fmio.rhs, indent + 1, fp);
+		if (node->u.fmio.rhs) {
+			fmt_writeoutnode (node->u.fmio.rhs, indent + 1, fp);
+		}
 		fmt_writeoutindent (indent, fp);
 		fprintf (fp, "</%s>\n", sname);
 		break;
@@ -1170,6 +1360,143 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 	}
 }
 /*}}}*/
+/*{{{  PRIVATEPARAM int fmt_doaddthen (fmnode_t **nodep, void *voidptr)*/
+/*
+ *	turns sequential lists of events into THEN processes (generates nicer output)
+ *	return STOP_WALK to stop, CONTINUE_WALK to continue
+ */
+PRIVATEPARAM int fmt_doaddthen (fmnode_t **nodep, void *voidptr)
+{
+	fmnode_t *n = *nodep;
+
+	if (!n) {
+		return STOP_WALK;
+	}
+	switch (n->type) {
+		/*{{{  SEQ -- find sequences of events*/
+	case FM_SEQ:
+		{
+			int i;
+#if 0
+fprintf (stderr, "fmt_doaddthen(): in sequence:\n");
+fmt_dumpnode (n, 1, stderr);
+#endif
+
+			for (i=0; i<n->u.fmlist.items_cur; i++) {
+				fmnode_t *itm = n->u.fmlist.items[i];
+
+				if (!itm) {
+					continue;
+				}
+				if (fmt_isevent (itm)) {
+					int j;
+
+					for (j=i+1; (j<n->u.fmlist.items_cur) && fmt_isevent (n->u.fmlist.items[j]); j++);
+					/* things from 'i' to 'j-1' inclusive are events */
+
+#if 0
+fprintf (stderr, "fmt_doaddthen(): compact from %d to %d\n", i, j-1);
+#endif
+					if (j > i) {
+						/* at least two events */
+						fmnode_t *th = fmt_newnode (FM_THEN, itm->org);
+						int k;
+
+						for (k=i; k<j; k++) {
+							fmnode_t *evitm = n->u.fmlist.items[k];
+
+							fmt_addtolist (&th->u.fmlist.items, &th->u.fmlist.items_cur, &th->u.fmlist.items_max, evitm);
+						}
+						/* remove 'i+1' to 'j-1' items from the main list */
+						for (k=i+1; k<j; k++) {
+							fmt_delfromlist (&n->u.fmlist.items, &n->u.fmlist.items_cur, &n->u.fmlist.items_max, i+1);
+						}
+						/* replace 'i' with the new THEN node */
+						n->u.fmlist.items[i] = th;
+
+						/* if the 'i+1' node exists, add to end of THEN, else add SKIP */
+						if ((i+1) < n->u.fmlist.items_cur) {
+							fmnode_t *proc = n->u.fmlist.items[i+1];
+
+							fmt_addtolist (&th->u.fmlist.items, &th->u.fmlist.items_cur, &th->u.fmlist.items_max, proc);
+							fmt_delfromlist (&n->u.fmlist.items, &n->u.fmlist.items_cur, &n->u.fmlist.items_max, i+1);
+						} else {
+							fmt_addtolist (&th->u.fmlist.items, &th->u.fmlist.items_cur, &th->u.fmlist.items_max,
+									fmt_newnode (FM_SKIP, itm->org));
+						}
+					}
+				}
+			}
+		}
+		break;
+		/*}}}*/
+	default:
+		break;
+	}
+	return CONTINUE_WALK;
+}
+/*}}}*/
+/*{{{  PRIVATEPARAM int fmt_domakeeventprocesses (fmnode_t **nodep, void *voidptr)*/
+/*
+ *	finds events outside of THEN structures and turns into processes
+ *	return STOP_WALK to stop, CONTINUE_WALK to continue
+ */
+PRIVATEPARAM int fmt_domakeeventprocesses (fmnode_t **nodep, void *voidptr)
+{
+	fmnode_t *n = *nodep;
+
+	if (!n) {
+		return STOP_WALK;
+	}
+	switch (n->type) {
+		/*{{{  THEN -- only walk last subnode*/
+	case FM_THEN:
+		{
+			int idx = n->u.fmlist.items_cur - 1;
+
+			if (idx >= 0) {
+				fmt_modprewalk (&n->u.fmlist.items[idx], fmt_domakeeventprocesses, NULL);
+			}
+		}
+		return STOP_WALK;
+		/*}}}*/
+		/*{{{  INPUT,OUTPUT -- turn into (... -> Skip)*/
+	case FM_INPUT:
+	case FM_OUTPUT:
+		{
+			fmnode_t *fmn = fmt_newnode (FM_THEN, n->org);
+
+			fmt_addtolist (&fmn->u.fmlist.items, &fmn->u.fmlist.items_cur, &fmn->u.fmlist.items_max, n);
+			fmt_addtolist (&fmn->u.fmlist.items, &fmn->u.fmlist.items_cur, &fmn->u.fmlist.items_max, fmt_newnode (FM_SKIP, n->org));
+
+			*nodep = fmn;
+		}
+		return STOP_WALK;
+		/*}}}*/
+	default:
+		break;
+	}
+	return CONTINUE_WALK;
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_postprocessmodels (fmmset_t *fmm)*/
+/*
+ *	does post-processing on a set of formal models.  This involves making sure that
+ *	processes are valid in the way they're composed (e.g. collecting up SEQ events into THENs,
+ *	making sure the last component of a THEN is a process)
+ */
+PRIVATE void fmt_postprocessmodels (fmmset_t *fmm)
+{
+	int i;
+
+	for (i=0; i<fmm->items_cur; i++) {
+		fmt_modprewalk (&fmm->items[i], fmt_doaddthen, NULL);
+		fmt_modprewalk (&fmm->items[i], fmt_domakeeventprocesses, NULL);
+		/* simplify the resulting nodes */
+		fmt_modprewalk (&fmm->items[i], fmt_simplifynode, NULL);
+	}
+}
+/*}}}*/
 
 
 /*{{{  PRIVATE void formalmodel_writeoutset (fmmset_t *fmm, FILE *fp, const char *filename)*/
@@ -1219,7 +1546,7 @@ fprintf (stderr, "do_formalmodelgen_ioexpr(): tag = %s\n", tagstring (tag));
 
 			fmn = fmt_newnode (FM_TREEREF, n);
 			fmn->u.fmtree.name = (char *)memalloc (strlen (tname) + 2);
-			sprintf (fmn->u.fmtree.name, "%s", tname);
+			fmt_copytagname (fmn->u.fmtree.name, tname);
 			fmn->u.fmtree.node = n;
 
 			*(fmstate->target) = fmn;
@@ -1250,7 +1577,7 @@ PRIVATEPARAM int do_formalmodelgen (treenode *n, void *const voidptr)
 		*(fmstate->target) = fmt_newnode (FM_STOP, n);
 		return STOP_WALK;
 		/*}}}*/
-		/*{{{  SEQ, PAR -- return*/
+		/*{{{  SEQ,PAR -- return*/
 	case S_SEQ:
 	case S_PAR:
 		{
@@ -1280,20 +1607,19 @@ PRIVATEPARAM int do_formalmodelgen (treenode *n, void *const voidptr)
 		}
 		return STOP_WALK;
 		/*}}}*/
-		/*{{{  N_PARAM -- return*/
+		/*{{{  N_PARAM, RECORDSUB -- return*/
 	case N_PARAM:
-		{
-			fmn = fmt_findfreevar (fmstate, n);
-			if (fmn) {
-				fmnode_t *tmp = fmt_newnode (FM_NODEREF, n);
+	case S_RECORDSUB:
+		fmn = fmt_findfreevar (fmstate, n);
+		if (fmn) {
+			fmnode_t *tmp = fmt_newnode (FM_NODEREF, n);
 
-				tmp->u.fmnode.node = fmn;
-				*(fmstate->target) = tmp;
-			}
+			tmp->u.fmnode.node = fmn;
+			*(fmstate->target) = tmp;
 		}
 		return STOP_WALK;
 		/*}}}*/
-		/*{{{  INPUT, OUTPUT -- return*/
+		/*{{{  INPUT,OUTPUT -- return*/
 	case S_INPUT:
 	case S_OUTPUT:
 		{
@@ -1310,6 +1636,169 @@ PRIVATEPARAM int do_formalmodelgen (treenode *n, void *const voidptr)
 				fmt_freenode (fmn, 2);
 				fmn = fmt_newnode (FM_SKIP, n);
 			}
+			fmstate->target = saved_target;
+			*(fmstate->target) = fmn;
+		}
+		return STOP_WALK;
+		/*}}}*/
+		/*{{{  IF -- return*/
+	case S_IF:
+		{
+			fmnode_t **saved_target = fmstate->target;
+			treenode *items = CBodyOf (n);
+			treenode *walk;
+			int add_stop = 1;
+
+			/* this becomes a non-deterministic choice on the processes */
+			fmn = fmt_newnode (FM_NDET, n);
+			for (walk = items; !EndOfList (walk); walk = NextItem (walk)) {
+				treenode *choice = skipspecifications (ThisItem (walk));
+
+				if (TagOf (choice) == S_CHOICE) {
+					fmnode_t *body;
+					treenode *guard = CondGuardOf (choice);
+
+					if (isconst (guard) && eval_const_treenode (guard)) {
+						/* this is a TRUE guard, so no opportunity for STOP */
+						add_stop = 0;
+					}
+					fmstate->target = &body;
+					prewalktree (CondBodyOf (choice), do_formalmodelgen, (void *)fmstate);
+					if (!body) {
+						body = fmt_newnode (FM_SKIP, choice);
+					}
+
+					fmt_addtonodelist (fmn, body);
+				}
+			}
+
+			if (add_stop) {
+				fmt_addtonodelist (fmn, fmt_newnode (FM_STOP, n));
+			}
+
+			fmstate->target = saved_target;
+			*(fmstate->target) = fmn;
+		}
+		return STOP_WALK;
+		/*}}}*/
+		/*{{{  CASE_INPUT -- return*/
+	case S_CASE_INPUT:
+		{
+			fmnode_t **saved_target = fmstate->target;
+			treenode *chan = LHSOf (n);
+			treenode *varlist = RHSOf (n);
+			treenode *walk;
+
+			/* this becomes a deterministic choice on inputs */
+			fmn = fmt_newnode (FM_DET, n);
+			for (walk = varlist; !EndOfList (walk); walk = NextItem (walk)) {
+				treenode *var = skipspecifications (ThisItem (walk));
+
+#if 0
+fprintf (stderr, "do_formalmodegen(): CASE_INPUT, variant item after specs is [%s]\n", tagstring (TagOf (var)));
+#endif
+				if (TagOf (var) == S_VARIANT) {
+					fmnode_t *seq = fmt_newnode (FM_SEQ, var);
+					fmnode_t *input = fmt_newnode (FM_INPUT, var);
+					fmnode_t *body = NULL;
+
+					fmstate->target = &input->u.fmio.lhs;
+					prewalktree (chan, do_formalmodelgen, (void *)fmstate);
+					fmstate->target = &input->u.fmio.rhs;
+					prewalktree (CondGuardOf (var), do_formalmodelgen_ioexpr, (void *)fmstate);
+
+					fmt_addtonodelist (seq, input);
+					fmstate->target = &body;
+					prewalktree (CondBodyOf (var), do_formalmodelgen, (void *)fmstate);
+					if (!body) {
+						body = fmt_newnode (FM_SKIP, var);
+					}
+					fmt_addtonodelist (seq, body);
+
+					/* and add it to the current list */
+					fmt_addtonodelist (fmn, seq);
+				}
+			}
+
+			fmstate->target = saved_target;
+			*(fmstate->target) = fmn;
+		}
+		return STOP_WALK;
+		/*}}}*/
+		/*{{{  ALT,PRIALT -- return*/
+	case S_ALT:
+	case S_PRIALT:
+		{
+			fmnode_t **saved_target = fmstate->target;
+			treenode *altlist = CBodyOf (n);
+			treenode *walk;
+			fmnode_t *ndlist = NULL;
+
+			fmn = fmt_newnode (FM_DET, n);
+			for (walk = altlist; !EndOfList (walk); walk = NextItem (walk)) {
+				treenode *alt = skipspecifications (ThisItem (walk));
+
+				if (TagOf (alt) == S_ALTERNATIVE) {
+					treenode *guard = AltGuardOf (alt);
+
+					/* avoid constant FALSE pre-conditions */
+					if (!guard || !isconst (guard) || eval_const_treenode (guard)) {
+						treenode *inode = AltInputOf (alt);
+						fmnode_t *input = NULL;
+
+						fmstate->target = &input;
+						prewalktree (inode, do_formalmodelgen, (void *)fmstate);
+						/* should be left with either an INPUT node, or a DET/NDET node for nested/CASE things */
+#if 0
+fprintf (stderr, "do_formalmodelgen(): ALTERNATIVE in ALT/PRIALT: inode =");
+printtreenl (stderr, 1, inode);
+fprintf (stderr, "do_formalmodelgen(): model for input is:\n");
+fmt_dumpnode (input, 1, stderr);
+#endif
+						if (!input) {
+							/* assume SKIP */
+							input = fmt_newnode (FM_SKIP, alt);
+						}
+						if (input->type == FM_SKIP) {
+							fmnode_t *body = NULL;
+
+							/* these make an effectively non-deterministic choice */
+							if (!ndlist) {
+								ndlist = fmt_newnode (FM_NDET, n);
+							}
+							fmstate->target = &body;
+							prewalktree (AltBodyOf (alt), do_formalmodelgen, (void *)fmstate);
+							if (!body) {
+								body = fmt_newnode (FM_SKIP, alt);
+							}
+							fmt_addtonodelist (ndlist, body);
+						} else if ((input->type == FM_DET) || (input->type == FM_NDET)) {
+							/* add directly */
+							fmt_addtonodelist (fmn, input);
+						} else {
+							fmnode_t *seq = fmt_newnode (FM_SEQ, alt);
+							fmnode_t *body = NULL;
+							
+							fmt_addtonodelist (seq, input);
+							fmstate->target = &body;
+							prewalktree (AltBodyOf (alt), do_formalmodelgen, (void *)fmstate);
+							if (!body) {
+								body = fmt_newnode (FM_SKIP, alt);
+							}
+							fmt_addtonodelist (seq, body);
+
+							fmt_addtonodelist (fmn, seq);
+						}
+					}
+				}
+			}
+
+			if (ndlist) {
+				/* non-deterministic processes to add */
+				fmt_insertintonodelist (ndlist, 0, fmn);
+				fmn = ndlist;
+			}
+
 			fmstate->target = saved_target;
 			*(fmstate->target) = fmn;
 		}
@@ -1343,17 +1832,17 @@ PRIVATEPARAM int do_formalmodelgen (treenode *n, void *const voidptr)
 				fmn->u.fmfix.proc = tmp;
 			} else {
 				/* assuming WHILE <unknown> loop */
-				fmnode_t *tmp = fmt_newnode (FM_SEQ, n);
 				fmnode_t *tmpnd = fmt_newnode (FM_NDET, n);
+				fmnode_t *tmp = fmt_newnode (FM_SEQ, n);
 				fmnode_t *idref = fmt_newnode (FM_NODEREF, n);
 
 				idref->u.fmnode.node = id;
-				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, fmn->u.fmfix.proc);
-				fmt_addtolist (&tmpnd->u.fmlist.items, &tmpnd->u.fmlist.items_cur, &tmpnd->u.fmlist.items_max, idref);
 				fmt_addtolist (&tmpnd->u.fmlist.items, &tmpnd->u.fmlist.items_cur, &tmpnd->u.fmlist.items_max,
 						fmt_newnode (FM_SKIP, n));
-				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, tmpnd);
-				fmn->u.fmfix.proc = tmp;
+				fmt_addtolist (&tmpnd->u.fmlist.items, &tmpnd->u.fmlist.items_cur, &tmpnd->u.fmlist.items_max, tmp);
+				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, fmn->u.fmfix.proc);
+				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, idref);
+				fmn->u.fmfix.proc = tmpnd;
 			}
 
 			fmstate->target = saved_target;
@@ -1384,8 +1873,8 @@ PRIVATEPARAM int do_formalmodelgen (treenode *n, void *const voidptr)
 			} else {
 				/* don't know how many, do with fixpoint */
 				fmnode_t *id = fmt_newatom (n);
-				fmnode_t *tmp = fmt_newnode (FM_SEQ, n);
 				fmnode_t *tmpnd = fmt_newnode (FM_NDET, n);
+				fmnode_t *tmp = fmt_newnode (FM_SEQ, n);
 				fmnode_t *idref = fmt_newnode (FM_NODEREF, n);
 
 				fmn = fmt_newnode (FM_FIXPOINT, n);
@@ -1399,12 +1888,12 @@ PRIVATEPARAM int do_formalmodelgen (treenode *n, void *const voidptr)
 				}
 
 				idref->u.fmnode.node = id;
-				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, fmn->u.fmfix.proc);
-				fmt_addtolist (&tmpnd->u.fmlist.items, &tmpnd->u.fmlist.items_cur, &tmpnd->u.fmlist.items_max, idref);
 				fmt_addtolist (&tmpnd->u.fmlist.items, &tmpnd->u.fmlist.items_cur, &tmpnd->u.fmlist.items_max,
 						fmt_newnode (FM_SKIP, n));
-				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, tmpnd);
-				fmn->u.fmfix.proc = tmp;
+				fmt_addtolist (&tmpnd->u.fmlist.items, &tmpnd->u.fmlist.items_cur, &tmpnd->u.fmlist.items_max, tmp);
+				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, fmn->u.fmfix.proc);
+				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, idref);
+				fmn->u.fmfix.proc = tmpnd;
 			}
 
 			fmstate->target = saved_target;
@@ -1442,7 +1931,8 @@ fprintf (stderr, "do_formalmodelcheck_tree(): TPROTDEF [%s]\n", tpname);
 #endif
 			fmn = fmt_newnode (FM_TAGSET, n);
 			fmn->u.fmtset.name = (char *)memalloc (strlen (tpname) + 8);
-			sprintf (fmn->u.fmtset.name, "PROT_%s", tpname);
+			sprintf (fmn->u.fmtset.name, "PROT_");
+			fmt_copyprotname (fmn->u.fmtset.name + 5, tpname);
 
 			for (walk=tags; !EndOfList (walk); walk = NextItem (walk)) {
 				treenode *tag = ThisItem (walk);
@@ -1453,7 +1943,7 @@ fprintf (stderr, "do_formalmodelcheck_tree(): TPROTDEF [%s]\n", tpname);
 
 					fmntag->u.fmtree.node = tag;
 					fmntag->u.fmtree.name = (char *)memalloc (strlen (tagname) + 1);
-					sprintf (fmntag->u.fmtree.name, "%s", tagname);
+					fmt_copytagname (fmntag->u.fmtree.name, tagname);
 
 					fmt_addtolist (&fmn->u.fmtset.tags, &fmn->u.fmtset.tags_cur, &fmn->u.fmtset.tags_max, fmntag);
 				}
@@ -1477,9 +1967,10 @@ printtreenl (stderr, 1, tag);
 			treenode *fparams = NParamListOf (DNameOf (n));
 			treenode *walk;
 
-#if 1
+#if 0
 fprintf (stderr, "do_formalmodelcheck_tree(): PROC [%s]\n", pname);
 #endif
+			/*{{{  collect up relevant parameters*/
 			for (walk = fparams; !EmptyList (walk); walk = NextItem (walk)) {
 				treenode *parm = ThisItem (walk);
 
@@ -1499,7 +1990,7 @@ fprintf (stderr, "do_formalmodelcheck_tree(): PROC [%s]\n", pname);
 fprintf (stderr, "do_formalmodelcheck_tree(): CHAN parameter, protocol is:");
 printtreenl (stderr, 1, proto);
 #endif
-							sprintf (str, "%s", parmname);
+							fmt_copyvarname (str, parmname);
 							pnode->u.fmtree.name = str;
 							pnode->u.fmtree.node = parm;
 							if (proto) {
@@ -1509,7 +2000,8 @@ printtreenl (stderr, 1, proto);
 										char *tpname = (char *)WNameOf (NNameOf (proto));
 										char *tpstr = (char *)memalloc (strlen (tpname) + 8);
 										
-										sprintf (tpstr, "PROT_%s", tpname);
+										sprintf (tpstr, "PROT_");
+										fmt_copyprotname (tpstr + 5, tpname);
 										pnode->u.fmtree.nodetype = proto;
 										pnode->u.fmtree.typename = tpstr;
 									}
@@ -1518,6 +2010,60 @@ printtreenl (stderr, 1, proto);
 							}
 
 							fmt_addtolist (&fmstate->fvars, &fmstate->fvars_cur, &fmstate->fvars_max, pnode);
+						} else if (isdynamicmobilechantype (type)) {
+							/* mobile channel-type! */
+							if ((TagOf (type) == S_MOBILE) && (TagOf (ARTypeOf (type)) == S_RECORD)) {
+								treenode *items = ARTypeOf (ARTypeOf (type));
+
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type items:");
+printtreenl (stderr, 1, items);
+#endif
+								/* if mobile, expecting declaration list of items */
+								while (items && (TagOf (items) == S_DECL)) {
+									treenode *dname = DNameOf (items);
+									treenode *dtype = NTypeOf (dname);
+
+									if (TagOf (dtype) == S_CHAN) {
+										/* channel of something */
+										treenode *proto = ProtocolOf (dtype);
+										fmnode_t *pnode = fmt_newnode (FM_TREEREF, dname);
+										char *itemname = (char *)WNameOf (NNameOf (dname));
+										char *str = (char *)memalloc (strlen (parmname) + strlen (itemname) + 3);
+										int slen = 0;
+#if 1
+fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type item name:");
+printtreenl (stderr, 1, dname);
+#endif
+
+										fmt_copyvarname (str, parmname);
+										slen = strlen (str);
+										str[slen] = '_';
+										slen++;
+										fmt_copyvarname (str + slen, itemname);
+										pnode->u.fmtree.name = str;
+										pnode->u.fmtree.node = dname;
+										if (proto) {
+											switch (TagOf (proto)) {
+											case N_TPROTDEF:
+												{
+													char *tpname = (char *)WNameOf (NNameOf (proto));
+													char *tpstr = (char *)memalloc (strlen (tpname) + 8);
+													
+													sprintf (tpstr, "PROT_");
+													fmt_copyprotname (tpstr + 5, tpname);
+													pnode->u.fmtree.nodetype = proto;
+													pnode->u.fmtree.typename = tpstr;
+												}
+												break;
+											}
+										}
+
+										fmt_addtolist (&fmstate->fvars, &fmstate->fvars_cur, &fmstate->fvars_max, pnode);
+									}
+									items = DBodyOf (items);
+								}
+							}
 						}
 
 #if 0
@@ -1530,6 +2076,7 @@ printtreenl (stderr, 1, type);
 					break;
 				}
 			}
+			/*}}}*/
 
 			fmstate->target = &fmstate->temp;
 			prewalkproctree (DValOf (n), do_formalmodelgen, (void *)fmstate);
@@ -1545,7 +2092,7 @@ fmt_dumpstate (fmstate, stderr);
 				fmstate->temp = NULL;
 			}
 
-			/* wrap this up */
+			/*{{{  wrap up in NAMEDPROC node*/
 			fmnproc = fmt_newnode (FM_NAMEDPROC, n);
 			fmnproc->u.fmproc.body = fmn;
 			fmnproc->u.fmproc.name = (char *)memalloc (strlen (pname) + 3);
@@ -1564,6 +2111,9 @@ fmt_dumpstate (fmstate, stderr);
 			fmnproc->u.fmproc.parms = fmstate->fvars;
 			fmnproc->u.fmproc.parms_cur = fmstate->fvars_cur;
 			fmnproc->u.fmproc.parms_max = fmstate->fvars_max;
+
+			/*}}}*/
+
 			fmstate->fvars = NULL;
 			fmstate->fvars_cur = 0;
 			fmstate->fvars_max = 0;
@@ -1611,6 +2161,7 @@ fprintf (stderr, "formalmodelcheck(): tree before check is:\n");
 printtreenl (stderr, 1, n);
 #endif
 			prewalkproctree (n, do_formalmodelcheck_tree, (void *)fmm);
+			fmt_postprocessmodels (fmm);
 
 #if 1
 fprintf (stderr, "formalmodelcheck(): got models:\n");
