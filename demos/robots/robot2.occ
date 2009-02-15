@@ -56,7 +56,7 @@ VAL INT WIDTH   IS  1012:	        --* Width of raster
 VAL INT DEPTH   IS  703:		--* Depth of raster
 VAL INT RASTERS IS    3:		--* Number of rasters
 VAL INT RANGE   IS  256:		--* Range of laser/radar/sonar
-VAL INT RADIUS  IS    8:		--* Size of robot
+VAL INT RADIUS  IS    6:		--* Size of robot
 VAL INT MID     IS   16:		--* index of middle ray
 VAL INT RAYS    IS (MID * 2) + 1:	--* number of rays
 VAL ANGLE SCAN  IS 120 * ANGLE.DEGREE:  --* laser scan sweep
