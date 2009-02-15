@@ -45,6 +45,7 @@ typedef enum ENUM_fmtype { /*{{{*/
 	FM_ATOM,		/* atom, internal identifier (fmatom) */
 	FM_INPUT,		/* input node (fmio) */
 	FM_OUTPUT,		/* output node (fmio) */
+	FM_SYNC,		/* synchronisation node (fmio) */
 	FM_DET,			/* deterministic processes (fmlist) */
 	FM_NDET,		/* non-determinstic processes (fmlist) */
 	FM_SKIP,		/* Skip */
@@ -56,7 +57,9 @@ typedef enum ENUM_fmtype { /*{{{*/
 	FM_NODEREF,		/* local node reference (fmnode) */
 	FM_NAMEDPROC,		/* named/parameterised process (fmproc) */
 	FM_TAGSET,		/* tagged name set, from PROTOCOLs (fmtset) */
-	FM_THEN			/* list of events followed by a process (fmlist) */
+	FM_THEN,		/* list of events followed by a process (fmlist) */
+	FM_EVENT,		/* single event tree reference */
+	FM_EVENTSET		/* set of events (with tree refererence at top-level for CHAN TYPE records) */
 } fmtype_e;
 
 /*}}}*/
@@ -99,6 +102,22 @@ typedef struct TAG_fmnode { /*{{{*/
 			struct TAG_fmnode **tags;	/* array of tags (fmtree's) */
 			int tags_cur, tags_max;		/* current, maximum */
 		} fmtset;				/* TAGSET */
+		struct {
+			char *name;			/* name of the event */
+			treenode *node;			/* reference to the event (N_PARAM,N_FIELD,etc.) */
+			char *typename;			/* name of the type if relevant */
+			treenode *nodetype;		/* type of parse-tree node if relevant */
+			int isclaim;			/* true if this is a synthetic CLAIM event */
+			int isrelease;			/* true if this is a synthetic RELEASE event */
+		} fmevent;				/* EVENT */
+		struct {
+			char *name;			/* name of the event */
+			treenode *node;			/* reference to the originating treenode (N_PARAM,etc.) */
+			char *typename;			/* name of the type if relevant */
+			treenode *nodetype;		/* type of parse-tree node if relevant */
+			struct TAG_fmnode **events;	/* array of events (fmevent's) */
+			int events_cur, events_max;	/* current, maximum */
+		} fmevset;				/* EVENTSET */
 	} u;
 } fmnode_t;
 
@@ -276,6 +295,7 @@ PRIVATE fmnode_t *fmt_newnode (fmtype_e type, treenode *org)
 		break;
 	case FM_INPUT:
 	case FM_OUTPUT:
+	case FM_SYNC:
 		fmn->u.fmio.lhs = NULL;
 		fmn->u.fmio.rhs = NULL;
 		break;
@@ -292,6 +312,23 @@ PRIVATE fmnode_t *fmt_newnode (fmtype_e type, treenode *org)
 		break;
 	case FM_NODEREF:
 		fmn->u.fmnode.node = NULL;
+		break;
+	case FM_EVENT:
+		fmn->u.fmevent.name = NULL;
+		fmn->u.fmevent.node = NULL;
+		fmn->u.fmevent.typename = NULL;
+		fmn->u.fmevent.nodetype = NULL;
+		fmn->u.fmevent.isclaim = 0;
+		fmn->u.fmevent.isrelease = 0;
+		break;
+	case FM_EVENTSET:
+		fmn->u.fmevset.name = NULL;
+		fmn->u.fmevset.node = NULL;
+		fmn->u.fmevset.typename = NULL;
+		fmn->u.fmevset.nodetype = NULL;
+		fmn->u.fmevset.events = NULL;
+		fmn->u.fmevset.events_cur = 0;
+		fmn->u.fmevset.events_max = 0;
 		break;
 	case FM_NAMEDPROC:
 		fmn->u.fmproc.name = NULL;
@@ -326,6 +363,7 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 	}
 	if (deep) {
 		switch (fmn->type) {
+			/*{{{  NAMEDPROC*/
 		case FM_NAMEDPROC:
 			if (deep == 2) {
 				int i;
@@ -351,6 +389,8 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 				fmn->u.fmproc.name = NULL;
 			}
 			break;
+			/*}}}*/
+			/*{{{  TAGSET*/
 		case FM_TAGSET:
 			if (deep == 2) {
 				int i;
@@ -372,6 +412,8 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 				fmn->u.fmtset.name = NULL;
 			}
 			break;
+			/*}}}*/
+			/*{{{  SEQ,PAR,DET,NDET,THEN*/
 		case FM_SEQ:
 		case FM_PAR:
 		case FM_DET:
@@ -393,6 +435,8 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 				fmn->u.fmlist.items_max = 0;
 			}
 			break;
+			/*}}}*/
+			/*{{{  FIXPOINT*/
 		case FM_FIXPOINT:
 			if (deep == 2) {
 				if (fmn->u.fmfix.id) {
@@ -405,8 +449,11 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 			fmn->u.fmfix.id = NULL;
 			fmn->u.fmfix.proc = NULL;
 			break;
+			/*}}}*/
+			/*{{{  INPUT,OUTPUT,SYNC*/
 		case FM_INPUT:
 		case FM_OUTPUT:
+		case FM_SYNC:
 			if (deep == 2) {
 				if (fmn->u.fmio.lhs) {
 					fmt_freenode (fmn->u.fmio.lhs, deep);
@@ -418,12 +465,16 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 			fmn->u.fmio.lhs = NULL;
 			fmn->u.fmio.rhs = NULL;
 			break;
+			/*}}}*/
+			/*{{{  ATOM*/
 		case FM_ATOM:
 			if (fmn->u.fmatom.id) {
 				memfree (fmn->u.fmatom.id);
 				fmn->u.fmatom.id = NULL;
 			}
 			break;
+			/*}}}*/
+			/*{{{  TREEREF*/
 		case FM_TREEREF:
 			if (fmn->u.fmtree.name) {
 				memfree (fmn->u.fmtree.name);
@@ -436,14 +487,62 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 			}
 			fmn->u.fmtree.nodetype = NULL;
 			break;
+			/*}}}*/
+			/*{{{  NODEREF*/
 		case FM_NODEREF:
 			fmn->u.fmnode.node = NULL;
 			break;
+			/*}}}*/
+			/*{{{  EVENT*/
+		case FM_EVENT:
+			if (fmn->u.fmevent.name) {
+				memfree (fmn->u.fmevent.name);
+				fmn->u.fmevent.name = NULL;
+			}
+			fmn->u.fmevent.node = NULL;
+			if (fmn->u.fmevent.typename) {
+				memfree (fmn->u.fmevent.typename);
+				fmn->u.fmevent.typename = NULL;
+			}
+			fmn->u.fmevent.nodetype = NULL;
+			break;
+			/*}}}*/
+			/*{{{  EVENTSET*/
+		case FM_EVENTSET:
+			if (fmn->u.fmevent.name) {
+				memfree (fmn->u.fmevent.name);
+				fmn->u.fmevent.name = NULL;
+			}
+			fmn->u.fmevent.node = NULL;
+			if (fmn->u.fmevent.typename) {
+				memfree (fmn->u.fmevent.typename);
+				fmn->u.fmevent.typename = NULL;
+			}
+			fmn->u.fmevent.nodetype = NULL;
+			if (deep == 2) {
+				int i;
+
+				for (i=0; i<fmn->u.fmevset.events_cur; i++) {
+					if (fmn->u.fmevset.events[i]) {
+						fmt_freenode (fmn->u.fmevset.events[i], deep);
+					}
+				}
+			}
+			if (fmn->u.fmevset.events) {
+				memfree (fmn->u.fmevset.events);
+				fmn->u.fmevset.events = NULL;
+				fmn->u.fmevset.events_cur = 0;
+				fmn->u.fmevset.events_max = 0;
+			}
+			break;
+			/*}}}*/
+			/*{{{  SKIP,STOP,DIV,CHAOS*/
 		case FM_SKIP:
 		case FM_STOP:
 		case FM_DIV:
 		case FM_CHAOS:
 			break;
+			/*}}}*/
 		default:
 			break;
 		}
@@ -601,6 +700,9 @@ PRIVATE void fmt_addtonodelist (fmnode_t *listnode, fmnode_t *item)
 	case FM_THEN:
 		fmt_addtolist (&listnode->u.fmlist.items, &listnode->u.fmlist.items_cur, &listnode->u.fmlist.items_max, item);
 		break;
+	case FM_EVENTSET:
+		fmt_addtolist (&listnode->u.fmevset.events, &listnode->u.fmevset.events_cur, &listnode->u.fmevset.events_max, item);
+		break;
 	default:
 		fmt_error_internal (NOPOSN, "fmt_addtonodelist(): not list capable node!");
 		break;
@@ -624,6 +726,9 @@ PRIVATE void fmt_delfromnodelist (fmnode_t *listnode, int idx)
 	case FM_NDET:
 	case FM_THEN:
 		fmt_delfromlist (&listnode->u.fmlist.items, &listnode->u.fmlist.items_cur, &listnode->u.fmlist.items_max, idx);
+		break;
+	case FM_EVENTSET:
+		fmt_delfromlist (&listnode->u.fmevset.events, &listnode->u.fmevset.events_cur, &listnode->u.fmevset.events_max, idx);
 		break;
 	default:
 		fmt_error_internal (NOPOSN, "fmt_delfromnodelist(): not list capable node!");
@@ -649,10 +754,22 @@ PRIVATE void fmt_insertintonodelist (fmnode_t *listnode, int idx, fmnode_t *item
 	case FM_THEN:
 		fmt_insertintolist (&listnode->u.fmlist.items, &listnode->u.fmlist.items_cur, &listnode->u.fmlist.items_max, idx, item);
 		break;
+	case FM_EVENTSET:
+		fmt_insertintolist (&listnode->u.fmevset.events, &listnode->u.fmevset.events_cur, &listnode->u.fmevset.events_max, idx, item);
+		break;
 	default:
 		fmt_error_internal (NOPOSN, "fmt_insertintonodelist(): not list capable node!");
 		break;
 	}
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_addtovarslist (fmstate_t *fmstate, fmnode_t *item)*/
+/*
+ *	adds something to the free-variables list in the given state node
+ */
+PRIVATE void fmt_addtovarslist (fmstate_t *fmstate, fmnode_t *item)
+{
+	fmt_addtolist (&fmstate->fvars, &fmstate->fvars_cur, &fmstate->fvars_max, item);
 }
 /*}}}*/
 /*{{{  PRIVATE void fmt_modprewalk (fmnode_t **nodep, int (*f1)(fmnode_t **, void *), void *voidptr)*/
@@ -705,9 +822,12 @@ PRIVATE void fmt_modprewalk (fmnode_t **nodep, int (*f1)(fmnode_t **, void *), v
 		case FM_ATOM:
 		case FM_TREEREF:
 		case FM_NODEREF:
+		case FM_EVENT:
+		case FM_EVENTSET:
 			break;
 		case FM_INPUT:
 		case FM_OUTPUT:
+		case FM_SYNC:
 			fmt_modprewalk (&n->u.fmio.lhs, f1, voidptr);
 			fmt_modprewalk (&n->u.fmio.rhs, f1, voidptr);
 			break;
@@ -820,6 +940,7 @@ PRIVATE BOOL fmt_isevent (fmnode_t *item)
 	switch (item->type) {
 	case FM_INPUT:
 	case FM_OUTPUT:
+	case FM_SYNC:
 		return TRUE;
 	default:
 		return FALSE;
@@ -895,6 +1016,9 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 		case FM_OUTPUT:
 			fprintf (stream, "OUTPUT\n");
 			break;
+		case FM_SYNC:
+			fprintf (stream, "SYNC\n");
+			break;
 		case FM_ATOM:
 			fprintf (stream, "ATOM (%s)\n", fmn->u.fmatom.id);
 			break;
@@ -906,6 +1030,18 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 			break;
 		case FM_NODEREF:
 			fprintf (stream, "NODEREF (0x%8.8x)\n", (unsigned int)fmn->u.fmnode.node);
+			break;
+		case FM_EVENT:
+			fprintf (stream, "EVENT (0x%8.8x,%s,%s,", (unsigned int)fmn->u.fmevent.node, tagstring (TagOf (fmn->u.fmevent.node)),
+					fmn->u.fmevent.name ?: "(no-name)");
+			fprintf (stream, "0x%8.8x,%s,%s)\n", (unsigned int)fmn->u.fmevent.nodetype, fmn->u.fmevent.nodetype ? tagstring (TagOf (fmn->u.fmevent.nodetype)) : "(no-type)",
+					fmn->u.fmevent.typename ?: "(no-type-name)");
+			break;
+		case FM_EVENTSET:
+			fprintf (stream, "EVENTSET (0x%8.8x,%s,%s,", (unsigned int)fmn->u.fmevset.node, tagstring (TagOf (fmn->u.fmevset.node)),
+					fmn->u.fmevset.name ?: "(no-name)");
+			fprintf (stream, "0x%8.8x,%s,%s)\n", (unsigned int)fmn->u.fmevset.nodetype, fmn->u.fmevset.nodetype ? tagstring (TagOf (fmn->u.fmevset.nodetype)) : "(no-type)",
+					fmn->u.fmevset.typename ?: "(no-type-name)");
 			break;
 		case FM_NAMEDPROC:
 			fprintf (stream, "NAMEDPROC (%s) %d parms\n", fmn->u.fmproc.name ?: "(no-name)", fmn->u.fmproc.parms_cur);
@@ -933,6 +1069,7 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 			break;
 		case FM_INPUT:
 		case FM_OUTPUT:
+		case FM_SYNC:
 			fmt_dumpnode (fmn->u.fmio.lhs, indent + 1, stream);
 			fmt_dumpnode (fmn->u.fmio.rhs, indent + 1, stream);
 			break;
@@ -948,6 +1085,11 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 		case FM_TAGSET:
 			for (i=0; i<fmn->u.fmtset.tags_cur; i++) {
 				fmt_dumpnode (fmn->u.fmtset.tags[i], indent + 1, stream);
+			}
+			break;
+		case FM_EVENTSET:
+			for (i=0; i<fmn->u.fmevset.events_cur; i++) {
+				fmt_dumpnode (fmn->u.fmevset.events[i], indent + 1, stream);
 			}
 			break;
 		default:
@@ -998,15 +1140,80 @@ PRIVATE fmnode_t *fmt_findfreevar (fmstate_t *state, treenode *n)
 
 	while (state) {
 		for (i=0; i<state->fvars_cur; i++) {
-			if (state->fvars[i]->type == FM_TREEREF) {
-				if ((TagOf (n) == S_RECORDSUB) && (ASIndexOf (n) == state->fvars[i]->u.fmtree.node)) {
-					return state->fvars[i];
-				} else if (state->fvars[i]->u.fmtree.node == n) {
-					return state->fvars[i];
+			fmnode_t *fvar = state->fvars[i];
+
+			switch (fvar->type) {
+			case FM_EVENT:
+				if (fvar->u.fmevent.node == n) {
+					return fvar;
 				}
+				break;
+			case FM_EVENTSET:
+				if (TagOf (n) == S_RECORDSUB) {
+					/* probably looking for one of the individual events, ASIndex will be the field */
+					int j;
+
+					for (j=0; j<fvar->u.fmevset.events_cur; j++) {
+						fmnode_t *ev = fvar->u.fmevset.events[j];
+
+						if ((ev->type == FM_EVENT) && !ev->u.fmevent.isclaim && !ev->u.fmevent.isrelease && (ASIndexOf (n) == ev->u.fmevent.node)) {
+							return ev;
+						}
+					}
+				} else if (fvar->u.fmevset.node == n) {
+					/* looking for the real thing */
+					return fvar;
+				}
+				break;
+			default:
+				break;
 			}
 		}
 		state = state->prev;
+	}
+	return NULL;
+}
+/*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_findfreevar_claim (fmstate_t *state, treenode *n)*/
+/*
+ *	searches free-variables for a specific tree-node's CLAIM
+ */
+PRIVATE fmnode_t *fmt_findfreevar_claim (fmstate_t *state, treenode *n)
+{
+	fmnode_t *evset = fmt_findfreevar (state, n);
+
+	if (evset && (evset->type == FM_EVENTSET)) {
+		int i;
+
+		for (i=0; i<evset->u.fmevset.events_cur; i++) {
+			fmnode_t *ev = evset->u.fmevset.events[i];
+
+			if ((ev->type == FM_EVENT) && ev->u.fmevent.isclaim) {
+				return ev;
+			}
+		}
+	}
+	return NULL;
+}
+/*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_findfreevar_release (fmstate_t *state, treenode *n)*/
+/*
+ *	searches free-variables for a specific tree-node's CLAIM
+ */
+PRIVATE fmnode_t *fmt_findfreevar_release (fmstate_t *state, treenode *n)
+{
+	fmnode_t *evset = fmt_findfreevar (state, n);
+
+	if (evset && (evset->type == FM_EVENTSET)) {
+		int i;
+
+		for (i=0; i<evset->u.fmevset.events_cur; i++) {
+			fmnode_t *ev = evset->u.fmevset.events[i];
+
+			if ((ev->type == FM_EVENT) && ev->u.fmevent.isrelease) {
+				return ev;
+			}
+		}
 	}
 	return NULL;
 }
@@ -1169,6 +1376,20 @@ PRIVATE void fmt_writeoutnode_str (fmnode_t *node, FILE *fp)
 	}
 
 	switch (node->type) {
+	case FM_EVENT:
+		if (node->u.fmevent.name) {
+			fprintf (fp, "%s", node->u.fmevent.name);
+		} else {
+			fprintf (fp, "addr0x%8.8x", (unsigned int)node->u.fmevent.node);
+		}
+		break;
+	case FM_EVENTSET:
+		if (node->u.fmevset.name) {
+			fprintf (fp, "%s", node->u.fmevset.name);
+		} else {
+			fprintf (fp, "addr0x%8.8x", (unsigned int)node->u.fmevset.node);
+		}
+		break;
 	case FM_TREEREF:
 		if (node->u.fmtree.name) {
 			fprintf (fp, "%s", node->u.fmtree.name);
@@ -1200,6 +1421,20 @@ PRIVATE void fmt_writeoutnode_typestr (fmnode_t *node, FILE *fp)
 	}
 
 	switch (node->type) {
+	case FM_EVENT:
+		if (node->u.fmevent.typename) {
+			fprintf (fp, "%s", node->u.fmevent.typename);
+		} else {
+			fprintf (fp, "addr0x%8.8x", (unsigned int)node->u.fmevent.nodetype);
+		}
+		break;
+	case FM_EVENTSET:
+		if (node->u.fmevset.typename) {
+			fprintf (fp, "%s", node->u.fmevset.typename);
+		} else {
+			fprintf (fp, "addr0x%8.8x", (unsigned int)node->u.fmevset.nodetype);
+		}
+		break;
 	case FM_TREEREF:
 		if (node->u.fmtree.typename) {
 			fprintf (fp, "%s", node->u.fmtree.typename);
@@ -1257,12 +1492,14 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		fprintf (fp, "</%s>\n", sname);
 		break;
 		/*}}}*/
-		/*{{{  INPUT,OUTPUT*/
+		/*{{{  INPUT,OUTPUT,SYNC*/
 	case FM_INPUT:
 	case FM_OUTPUT:
+	case FM_SYNC:
 		switch (node->type) {
 		case FM_INPUT:	strcpy (sname, "input"); break;
 		case FM_OUTPUT:	strcpy (sname, "output"); break;
+		case FM_SYNC:	strcpy (sname, "sync"); break;
 		default:	strcpy (sname, "invalid"); break;
 		}
 
@@ -1283,14 +1520,7 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		for (i=0; i<node->u.fmproc.parms_cur; i++) {
 			fmnode_t *p = node->u.fmproc.parms[i];
 
-			fmt_writeoutindent (indent+2, fp);
-			fprintf (fp, "<event name=\"");
-			fmt_writeoutnode_str (p, fp);
-			if ((p->type == FM_TREEREF) && (p->u.fmtree.typename)) {
-				fprintf (fp, "\" type=\"");
-				fmt_writeoutnode_typestr (node->u.fmproc.parms[i], fp);
-			}
-			fprintf (fp, "\" />\n");
+			fmt_writeoutnode (p, indent+2, fp);
 		}
 		fmt_writeoutindent (indent+1, fp);
 		fprintf (fp, "</events>\n");
@@ -1330,6 +1560,35 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		fprintf (fp, "/>\n");
 		break;
 		/*}}}*/
+		/*{{{  EVENT*/
+	case FM_EVENT:
+		fprintf (fp, "<event name=\"");
+		fmt_writeoutnode_str (node, fp);
+		fprintf (fp, "\" ");
+		if (node->u.fmevent.typename) {
+			fprintf (fp, "type=\"%s\" ", node->u.fmevent.typename);
+		}
+		fprintf (fp, "/>\n");
+		break;
+		/*}}}*/
+		/*{{{  EVENTSET*/
+	case FM_EVENTSET:
+		fprintf (fp, "<eventset name=\"");
+		fmt_writeoutnode_str (node, fp);
+		fprintf (fp, "\"");
+		if (node->u.fmevset.typename) {
+			fprintf (fp, " type=\"%s\"", node->u.fmevset.typename);
+		}
+		fprintf (fp, ">\n");
+
+		for (i=0; i<node->u.fmevset.events_cur; i++) {
+			fmt_writeoutnode (node->u.fmevset.events[i], indent + 1, fp);
+		}
+
+		fmt_writeoutindent (indent, fp);
+		fprintf (fp, "</eventset>\n");
+		break;
+		/*}}}*/
 		/*{{{  FIXPOINT*/
 	case FM_FIXPOINT:
 		fprintf (fp, "<fixpoint>\n");
@@ -1355,7 +1614,7 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		break;
 		/*}}}*/
 	default:
-		fprintf (fp, "<unknown type=\"%d\">\n", (int)node->type);
+		fprintf (fp, "<unknown type=\"%d\" />\n", (int)node->type);
 		break;
 	}
 }
@@ -1460,9 +1719,10 @@ PRIVATEPARAM int fmt_domakeeventprocesses (fmnode_t **nodep, void *voidptr)
 		}
 		return STOP_WALK;
 		/*}}}*/
-		/*{{{  INPUT,OUTPUT -- turn into (... -> Skip)*/
+		/*{{{  INPUT,OUTPUT,SYNC -- turn into (... -> Skip)*/
 	case FM_INPUT:
 	case FM_OUTPUT:
+	case FM_SYNC:
 		{
 			fmnode_t *fmn = fmt_newnode (FM_THEN, n->org);
 
@@ -1600,6 +1860,57 @@ PRIVATEPARAM int do_formalmodelgen (treenode *n, void *const voidptr)
 			if (!fmn->u.fmlist.items_cur) {
 				fmt_freenode (fmn, 2);
 				fmn = fmt_newnode (FM_SKIP, n);
+			}
+
+			fmstate->target = saved_target;
+			*(fmstate->target) = fmn;
+		}
+		return STOP_WALK;
+		/*}}}*/
+		/*{{{  REPLSEQ -- return*/
+	case S_REPLSEQ:
+		{
+			treenode *length = ReplCLengthExpOf (n);
+			fmnode_t **saved_target = fmstate->target;
+
+			if (isconst (length)) {
+				int l = eval_const_treenode (length);
+				int j;
+
+				fmn = fmt_newnode (FM_SEQ, n);
+				for (j=0; j<l; j++) {
+					fmnode_t *tmp = NULL;
+
+					fmstate->target = &tmp;
+					prewalktree (ReplCBodyOf (n), do_formalmodelgen, (void *)fmstate);
+					if (tmp) {
+						fmt_addtolist (&fmn->u.fmlist.items, &fmn->u.fmlist.items_cur, &fmn->u.fmlist.items_max, tmp);
+					}
+				}
+			} else {
+				/* don't know how many, do with fixpoint */
+				fmnode_t *id = fmt_newatom (n);
+				fmnode_t *tmpnd = fmt_newnode (FM_NDET, n);
+				fmnode_t *tmp = fmt_newnode (FM_SEQ, n);
+				fmnode_t *idref = fmt_newnode (FM_NODEREF, n);
+
+				fmn = fmt_newnode (FM_FIXPOINT, n);
+				fmn->u.fmfix.id = id;
+				fmstate->target = &fmn->u.fmfix.proc;
+
+				prewalktree (ReplCBodyOf (n), do_formalmodelgen, (void *)fmstate);
+				if (!fmn->u.fmfix.proc) {
+					/* assume Skip for body of loop */
+					fmn->u.fmfix.proc = fmt_newnode (FM_SKIP, ReplCBodyOf (n));
+				}
+
+				idref->u.fmnode.node = id;
+				fmt_addtolist (&tmpnd->u.fmlist.items, &tmpnd->u.fmlist.items_cur, &tmpnd->u.fmlist.items_max,
+						fmt_newnode (FM_SKIP, n));
+				fmt_addtolist (&tmpnd->u.fmlist.items, &tmpnd->u.fmlist.items_cur, &tmpnd->u.fmlist.items_max, tmp);
+				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, fmn->u.fmfix.proc);
+				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, idref);
+				fmn->u.fmfix.proc = tmpnd;
 			}
 
 			fmstate->target = saved_target;
@@ -1850,55 +2161,58 @@ fmt_dumpnode (input, 1, stderr);
 		}
 		return STOP_WALK;
 		/*}}}*/
-		/*{{{  REPLSEQ -- return*/
-	case S_REPLSEQ:
+		/*{{{  CLAIM -- return*/
+	case S_CLAIM:
 		{
-			treenode *length = ReplCLengthExpOf (n);
-			fmnode_t **saved_target = fmstate->target;
+			treenode *claimvar = CTempOf (n);
+			fmnode_t *cln, *rln;
 
-			if (isconst (length)) {
-				int l = eval_const_treenode (length);
-				int j;
+			cln = fmt_findfreevar_claim (fmstate, claimvar);
+			rln = fmt_findfreevar_release (fmstate, claimvar);
+			if (cln && rln) {
+				fmnode_t **saved_target = fmstate->target;
+				fmnode_t *tmp, *tmp2;
 
+				/* generate claim; body; release */
 				fmn = fmt_newnode (FM_SEQ, n);
-				for (j=0; j<l; j++) {
-					fmnode_t *tmp = NULL;
 
-					fmstate->target = &tmp;
-					prewalktree (ReplCBodyOf (n), do_formalmodelgen, (void *)fmstate);
-					if (tmp) {
-						fmt_addtolist (&fmn->u.fmlist.items, &fmn->u.fmlist.items_cur, &fmn->u.fmlist.items_max, tmp);
-					}
+				tmp2 = fmt_newnode (FM_NODEREF, n);
+				tmp2->u.fmnode.node = cln;
+
+				tmp = fmt_newnode (FM_OUTPUT, n);
+				tmp->u.fmio.lhs = tmp2;
+
+				fmt_addtonodelist (fmn, tmp);
+				tmp = NULL;
+				fmstate->target = &tmp;
+
+				prewalktree (CBodyOf (n), do_formalmodelgen, (void *)fmstate);
+				if (!tmp) {
+					/* assume Skip */
+					tmp = fmt_newnode (FM_SKIP, CBodyOf (n));
 				}
+				fmt_addtonodelist (fmn, tmp);
+
+				tmp2 = fmt_newnode (FM_NODEREF, n);
+				tmp2->u.fmnode.node = rln;
+
+				tmp = fmt_newnode (FM_OUTPUT, n);
+				tmp->u.fmio.lhs = tmp2;
+
+				fmt_addtonodelist (fmn, tmp);
+
+				fmstate->target = saved_target;
+				*(fmstate->target) = fmn;
 			} else {
-				/* don't know how many, do with fixpoint */
-				fmnode_t *id = fmt_newatom (n);
-				fmnode_t *tmpnd = fmt_newnode (FM_NDET, n);
-				fmnode_t *tmp = fmt_newnode (FM_SEQ, n);
-				fmnode_t *idref = fmt_newnode (FM_NODEREF, n);
-
-				fmn = fmt_newnode (FM_FIXPOINT, n);
-				fmn->u.fmfix.id = id;
-				fmstate->target = &fmn->u.fmfix.proc;
-
-				prewalktree (ReplCBodyOf (n), do_formalmodelgen, (void *)fmstate);
-				if (!fmn->u.fmfix.proc) {
-					/* assume Skip for body of loop */
-					fmn->u.fmfix.proc = fmt_newnode (FM_SKIP, ReplCBodyOf (n));
-				}
-
-				idref->u.fmnode.node = id;
-				fmt_addtolist (&tmpnd->u.fmlist.items, &tmpnd->u.fmlist.items_cur, &tmpnd->u.fmlist.items_max,
-						fmt_newnode (FM_SKIP, n));
-				fmt_addtolist (&tmpnd->u.fmlist.items, &tmpnd->u.fmlist.items_cur, &tmpnd->u.fmlist.items_max, tmp);
-				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, fmn->u.fmfix.proc);
-				fmt_addtolist (&tmp->u.fmlist.items, &tmp->u.fmlist.items_cur, &tmp->u.fmlist.items_max, idref);
-				fmn->u.fmfix.proc = tmpnd;
+				/* failed to find claim/release vars for this, so ignore */
+				return CONTINUE_WALK;
 			}
-
-			fmstate->target = saved_target;
-			*(fmstate->target) = fmn;
 		}
+		return STOP_WALK;
+		/*}}}*/
+		/*{{{  FINSTANCE,PINSTANCE -- return*/
+	case S_FINSTANCE:
+	case S_PINSTANCE:
 		return STOP_WALK;
 		/*}}}*/
 	default:
@@ -1981,9 +2295,9 @@ fprintf (stderr, "do_formalmodelcheck_tree(): PROC [%s]\n", pname);
 						char *parmname = (char *)WNameOf (NNameOf (parm));
 
 						if (TagOf (type) == S_CHAN) {
-							/* simple channel */
+							/*{{{  simple channel*/
 							treenode *proto = ProtocolOf (type);
-							fmnode_t *pnode = fmt_newnode (FM_TREEREF, parm);
+							fmnode_t *pnode = fmt_newnode (FM_EVENT, parm);
 							char *str = (char *)memalloc (strlen (parmname) + 2);
 
 #if 0
@@ -1991,8 +2305,8 @@ fprintf (stderr, "do_formalmodelcheck_tree(): CHAN parameter, protocol is:");
 printtreenl (stderr, 1, proto);
 #endif
 							fmt_copyvarname (str, parmname);
-							pnode->u.fmtree.name = str;
-							pnode->u.fmtree.node = parm;
+							pnode->u.fmevent.name = str;
+							pnode->u.fmevent.node = parm;
 							if (proto) {
 								switch (TagOf (proto)) {
 								case N_TPROTDEF:
@@ -2002,68 +2316,131 @@ printtreenl (stderr, 1, proto);
 										
 										sprintf (tpstr, "PROT_");
 										fmt_copyprotname (tpstr + 5, tpname);
-										pnode->u.fmtree.nodetype = proto;
-										pnode->u.fmtree.typename = tpstr;
+										pnode->u.fmevent.nodetype = proto;
+										pnode->u.fmevent.typename = tpstr;
 									}
 									break;
 								}
 							}
 
-							fmt_addtolist (&fmstate->fvars, &fmstate->fvars_cur, &fmstate->fvars_max, pnode);
+							fmt_addtovarslist (fmstate, pnode);
+							/*}}}*/
 						} else if (isdynamicmobilechantype (type)) {
-							/* mobile channel-type! */
-							if ((TagOf (type) == S_MOBILE) && (TagOf (ARTypeOf (type)) == S_RECORD)) {
-								treenode *items = ARTypeOf (ARTypeOf (type));
+							/*{{{  mobile channel-type*/
+							fmnode_t *esnode = fmt_newnode (FM_EVENTSET, parm);
+							char *str = (char *)memalloc (strlen (parmname) + 2);
+							treenode *vtype = NTypeOf (parm);
+							int is_shared = 0;
+
+							fmt_copyvarname (str, parmname);
+							esnode->u.fmevset.name = str;
+							esnode->u.fmevset.node = parm;
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type vtype:");
+printtreenl (stderr, 1, vtype);
+#endif
+							if (TagOf (vtype) == N_TYPEDECL) {
+								/* should be a mobile channel-type */
+								treenode *mtype = NTypeOf (vtype);
+								char *typename = (char *)WNameOf (NNameOf (vtype));
+								char *tstr = (char *)memalloc (strlen (typename) + 6);
+
+								sprintf (tstr, "CT_");
+								fmt_copyprotname (tstr + 3, typename);
+								esnode->u.fmevset.nodetype = vtype;
+								esnode->u.fmevset.typename = tstr;
+
+								is_shared = NTypeAttrOf (vtype) & TypeAttr_shared;
 
 #if 0
-fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type items:");
-printtreenl (stderr, 1, items);
+fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type, is_shared=%d, mtype =\n", (unsigned int)NTypeAttrOf (vtype));
+printtreenl (stderr, 1, mtype);
 #endif
-								/* if mobile, expecting declaration list of items */
-								while (items && (TagOf (items) == S_DECL)) {
-									treenode *dname = DNameOf (items);
-									treenode *dtype = NTypeOf (dname);
+								/* actual type should be the mobile record of channels */
+								if ((TagOf (mtype) == S_MOBILE) && (TagOf (ARTypeOf (type)) == S_RECORD)) {
+									treenode *items = ARTypeOf (ARTypeOf (type));
 
-									if (TagOf (dtype) == S_CHAN) {
-										/* channel of something */
-										treenode *proto = ProtocolOf (dtype);
-										fmnode_t *pnode = fmt_newnode (FM_TREEREF, dname);
-										char *itemname = (char *)WNameOf (NNameOf (dname));
-										char *str = (char *)memalloc (strlen (parmname) + strlen (itemname) + 3);
-										int slen = 0;
-#if 1
+									/* if mobile, expecting declaration list of items */
+									while (items && (TagOf (items) == S_DECL)) {
+										treenode *dname = DNameOf (items);
+										treenode *dtype = NTypeOf (dname);
+
+										if (TagOf (dtype) == S_CHAN) {
+											/*{{{  channel of something*/
+											treenode *proto = ProtocolOf (dtype);
+											fmnode_t *pnode = fmt_newnode (FM_EVENT, dname);
+											char *itemname = (char *)WNameOf (NNameOf (dname));
+											char *str = (char *)memalloc (strlen (parmname) + strlen (itemname) + 3);
+											int slen = 0;
+#if 0
 fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type item name:");
 printtreenl (stderr, 1, dname);
 #endif
 
-										fmt_copyvarname (str, parmname);
-										slen = strlen (str);
-										str[slen] = '_';
-										slen++;
-										fmt_copyvarname (str + slen, itemname);
-										pnode->u.fmtree.name = str;
-										pnode->u.fmtree.node = dname;
-										if (proto) {
-											switch (TagOf (proto)) {
-											case N_TPROTDEF:
-												{
-													char *tpname = (char *)WNameOf (NNameOf (proto));
-													char *tpstr = (char *)memalloc (strlen (tpname) + 8);
-													
-													sprintf (tpstr, "PROT_");
-													fmt_copyprotname (tpstr + 5, tpname);
-													pnode->u.fmtree.nodetype = proto;
-													pnode->u.fmtree.typename = tpstr;
+											fmt_copyvarname (str, parmname);
+											slen = strlen (str);
+											str[slen] = '_';
+											slen++;
+											fmt_copyvarname (str + slen, itemname);
+											pnode->u.fmevent.name = str;
+											pnode->u.fmevent.node = dname;
+											if (proto) {
+												switch (TagOf (proto)) {
+													/*{{{  N_TPROTDEF -- tagged protocol definition*/
+												case N_TPROTDEF:
+													{
+														char *tpname = (char *)WNameOf (NNameOf (proto));
+														char *tpstr = (char *)memalloc (strlen (tpname) + 8);
+														
+														sprintf (tpstr, "PROT_");
+														fmt_copyprotname (tpstr + 5, tpname);
+														pnode->u.fmevent.nodetype = proto;
+														pnode->u.fmevent.typename = tpstr;
+													}
+													break;
+													/*}}}*/
 												}
-												break;
 											}
-										}
 
-										fmt_addtolist (&fmstate->fvars, &fmstate->fvars_cur, &fmstate->fvars_max, pnode);
+											fmt_addtonodelist (esnode, pnode);
+											/*}}}*/
+										}
+										items = DBodyOf (items);
 									}
-									items = DBodyOf (items);
 								}
+
 							}
+
+							if (is_shared) {
+								/* add claim and release events */
+								fmnode_t *cln = fmt_newnode (FM_EVENT, parm);
+								fmnode_t *rln = fmt_newnode (FM_EVENT, parm);
+								char *str;
+								int slen = 0;
+
+								str = (char *)memalloc (strlen (parmname) + 16);
+								fmt_copyvarname (str, parmname);
+								slen = strlen (str);
+								sprintf (str + slen, "_Claim");
+								cln->u.fmevent.name = str;
+								cln->u.fmevent.node = parm;
+								cln->u.fmevent.isclaim = 1;
+
+								str = (char *)memalloc (strlen (parmname) + 16);
+								fmt_copyvarname (str, parmname);
+								slen = strlen (str);
+								sprintf (str + slen, "_Release");
+								rln->u.fmevent.name = str;
+								rln->u.fmevent.node = parm;
+								rln->u.fmevent.isrelease = 1;
+
+								fmt_addtonodelist (esnode, cln);
+								fmt_addtonodelist (esnode, rln);
+							}
+
+							fmt_addtovarslist (fmstate, esnode);
+
+							/*}}}*/
 						}
 
 #if 0
