@@ -150,6 +150,7 @@ typedef struct TAG_fmhfp { /*{{{*/
 /*{{{  private data*/
 
 PRIVATE int atom_counter = 0;
+PRIVATE int event_counter = 0;
 
 
 /*}}}*/
@@ -953,11 +954,11 @@ PRIVATE BOOL fmt_isevent (fmnode_t *item)
 	}
 }
 /*}}}*/
-/*{{{  PRIVATE fmnode_t *fmt_createeventfromvar (treenode *var)*/
+/*{{{  PRIVATE fmnode_t *fmt_createeventfromvar (treenode *var, BOOL donumber)*/
 /*
  *	creates an FM_EVENT/FM_EVENTSET based on the given 'var' namenode
  */
-PRIVATE fmnode_t *fmt_createeventfromvar (treenode *var)
+PRIVATE fmnode_t *fmt_createeventfromvar (treenode *var, BOOL donumber)
 {
 	treenode *type = chk_gettype (var);
 	char *varname = (char *)WNameOf (NNameOf (var));
@@ -966,13 +967,19 @@ PRIVATE fmnode_t *fmt_createeventfromvar (treenode *var)
 		/*{{{  simple channel*/
 		treenode *proto = ProtocolOf (type);
 		fmnode_t *pnode = fmt_newnode (FM_EVENT, var);
-		char *str = (char *)memalloc (strlen (varname) + 2);
+		char *str = (char *)memalloc (strlen (varname) + 16);
+		int slen = 0;
 
 #if 0
 fprintf (stderr, "do_formalmodelcheck_tree(): CHAN parameter, protocol is:");
 printtreenl (stderr, 1, proto);
 #endif
 		fmt_copyvarname (str, varname);
+		slen = strlen (str);
+		if (donumber) {
+			/* number this event globally */
+			sprintf (str + slen, "%d", event_counter++);
+		}
 		pnode->u.fmevent.name = str;
 		pnode->u.fmevent.node = var;
 		if (proto) {
@@ -996,11 +1003,17 @@ printtreenl (stderr, 1, proto);
 	} else if (isdynamicmobilechantype (type)) {
 		/*{{{  mobile channel-type*/
 		fmnode_t *esnode = fmt_newnode (FM_EVENTSET, var);
-		char *str = (char *)memalloc (strlen (varname) + 2);
+		char *str = (char *)memalloc (strlen (varname) + 16);
 		treenode *vtype = NTypeOf (var);
 		int is_shared = 0;
+		int slen = 0;
 
 		fmt_copyvarname (str, varname);
+		slen = strlen (str);
+		if (donumber) {
+			/* number this event globally */
+			sprintf (str + slen, "%d", event_counter++);
+		}
 		esnode->u.fmevset.name = str;
 		esnode->u.fmevset.node = var;
 #if 0
@@ -1038,7 +1051,7 @@ printtreenl (stderr, 1, mtype);
 						treenode *proto = ProtocolOf (dtype);
 						fmnode_t *pnode = fmt_newnode (FM_EVENT, dname);
 						char *itemname = (char *)WNameOf (NNameOf (dname));
-						char *str = (char *)memalloc (strlen (varname) + strlen (itemname) + 3);
+						char *str = (char *)memalloc (strlen (varname) + strlen (itemname) + 16);
 						int slen = 0;
 #if 0
 fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type item name:");
@@ -1047,6 +1060,10 @@ printtreenl (stderr, 1, dname);
 
 						fmt_copyvarname (str, varname);
 						slen = strlen (str);
+						if (donumber) {
+							/* number event globally (will be event_counter-1) */
+							slen += sprintf (str + slen, "%d", event_counter-1);
+						}
 						str[slen] = '_';
 						slen++;
 						fmt_copyvarname (str + slen, itemname);
@@ -1086,17 +1103,25 @@ printtreenl (stderr, 1, dname);
 			char *str;
 			int slen = 0;
 
-			str = (char *)memalloc (strlen (varname) + 16);
+			str = (char *)memalloc (strlen (varname) + 32);
 			fmt_copyvarname (str, varname);
 			slen = strlen (str);
+			if (donumber) {
+				/* number event globally (will be event_counter-1) */
+				slen += sprintf (str + slen, "%d", event_counter-1);
+			}
 			sprintf (str + slen, "_Claim");
 			cln->u.fmevent.name = str;
 			cln->u.fmevent.node = var;
 			cln->u.fmevent.isclaim = 1;
 
-			str = (char *)memalloc (strlen (varname) + 16);
+			str = (char *)memalloc (strlen (varname) + 32);
 			fmt_copyvarname (str, varname);
 			slen = strlen (str);
+			if (donumber) {
+				/* number event globally (will be event_counter-1) */
+				slen += sprintf (str + slen, "%d", event_counter-1);
+			}
 			sprintf (str + slen, "_Release");
 			rln->u.fmevent.name = str;
 			rln->u.fmevent.node = var;
@@ -2209,13 +2234,14 @@ fprintf (stderr, "do_formalmodegen(): CASE_INPUT, variant item after specs is [%
 			treenode *dname = DNameOf (n);
 
 			if (TagOf (dname) == N_DECL) {
-				fmnode_t *evnode = fmt_createeventfromvar (dname);
+				fmnode_t *evnode = fmt_createeventfromvar (dname, TRUE);
 
 				if (evnode) {
-#if 1
+#if 0
 fprintf (stderr, "do_formalmodelgen(): DECL/N_DECL, got model event node=\n");
 fmt_dumpnode (evnode, 1, stderr);
 #endif
+					fmt_addtovarslist (fmstate, evnode);
 					
 				}
 			}
@@ -2504,7 +2530,7 @@ fprintf (stderr, "do_formalmodelcheck_tree(): PROC [%s]\n", pname);
 					/*{{{  N_PARAM*/
 				case N_PARAM:
 					{
-						fmnode_t *evnode = fmt_createeventfromvar (parm);
+						fmnode_t *evnode = fmt_createeventfromvar (parm, FALSE);
 
 						if (evnode) {
 							fmt_addtovarslist (fmstate, evnode);
@@ -2543,11 +2569,13 @@ fmt_dumpstate (fmstate, stderr);
 			{
 				char *ch, *dh = fmnproc->u.fmproc.name;
 				dh += sprintf (dh, "P");
-				for (ch = pname; *ch != '\0'; ch++) {
+				for (ch = pname; *ch != '\0'; ch++, dh++) {
 					if ((*ch >= 'a') && (*ch <= 'z')) {
-						*(dh++) = (*ch - 'a') + 'A';
+						*dh = (*ch - 'a') + 'A';
+					} else if (*ch == '.') {
+						*dh = '_';
 					} else {
-						*(dh++) = *ch;
+						*dh = *ch;
 					}
 				}
 				*dh = '\0';
@@ -2600,7 +2628,7 @@ PUBLIC void formalmodelcheck (treenode *n, BOOL check_formalmodels, const char *
 		if (setjmp (env) == 0) {
 			fmmset_t *fmm = fmt_newmset ();
 
-#if 1
+#if 0
 fprintf (stderr, "formalmodelcheck(): tree before check is:\n");
 printtreenl (stderr, 1, n);
 #endif
