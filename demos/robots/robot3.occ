@@ -29,8 +29,12 @@
 --  * More/different commands for Manual driver
 --  * Different Auto algorithms
 
+--  Tweaked by Fred Barnes 2008, Joystick support.
+
 #INCLUDE "course.module"
 #INCLUDE "sdlraster.module"
+#INCLUDE "occSDL.module"
+#INCLUDE "rasterio.module"
 
 #INCLUDE "graphics.inc"
 #INCLUDE "hit.inc"
@@ -48,14 +52,14 @@ VAL INT BUTTON.BACKWARD IS 5:
 VAL INT BACKGROUND IS COLOUR.BLACK:
 VAL INT FOREGROUND IS COLOUR.WHITE:
 
-VAL INT WIDTH   IS 1001:		--* Width of raster
-VAL INT DEPTH   IS  651:		--* Depth of raster
+VAL INT WIDTH   IS  1012:	        --* Width of raster
+VAL INT DEPTH   IS  703:		--* Depth of raster
 VAL INT RASTERS IS    3:		--* Number of rasters
 VAL INT RANGE   IS  256:		--* Range of laser/radar/sonar
-VAL INT RADIUS  IS    8:		--* Size of robot
+VAL INT RADIUS  IS    6:		--* Size of robot
 VAL INT MID     IS   16:		--* index of middle ray
 VAL INT RAYS    IS (MID * 2) + 1:	--* number of rays
-VAL ANGLE SCAN  IS 120 * ANGLE.DEGREE:  --* laser scan sweep
+VAL ANGLE SCAN  IS 110 * ANGLE.DEGREE:  --* laser scan sweep
 
 DATA TYPE RANGES IS MOBILE []INT:	--* array of ranges
 
@@ -94,10 +98,12 @@ PROTOCOL COMMANDS
     Slower
     Clockwise
     Anticlockwise
+    SetMotion; INT; INT
     Halt
     Freeze
 :
 
+--{{{  PROC Set.scene (RASTER raster)
 --* Set scene
 --
 --  @param raster Draws the scene here
@@ -108,6 +114,7 @@ PROC Set.scene (RASTER raster)
 
     clear.raster (raster, COLOUR.BLACK)
 
+    #IF FALSE
     Disc (200, 200, 150, FOREGROUND, raster)
     Disc (200, 200, 100, BACKGROUND, raster)
     Rectangle (175, 200, 50, 200, BACKGROUND, raster)
@@ -124,29 +131,40 @@ PROC Set.scene (RASTER raster)
 
     Disc (WIDTH, 0, 150, FOREGROUND, raster)
     Disc (WIDTH, 0, 100, BACKGROUND, raster)
+    #ELSE
+    read.raster ("robot-track-2.png", raster)
+    #ENDIF
 
 :
-
+--}}}
+--{{{  PROC Scene (CHAN RASTER in?, out!)
 --* Set scene
 --
 --  @param in Receive blank raster
 --  @param out Send raster with scene
-
+--
 PROC Scene (CHAN RASTER in?, out!)
 
-  RASTER raster:
-  WHILE TRUE
-    SEQ
-      in ? raster
-      Set.scene (raster)
-      out ! raster
+  RASTER default:
+  SEQ
+    default := MOBILE [DEPTH][WIDTH]INT
+    Set.scene (default)
+
+    WHILE TRUE
+      RASTER raster:
+      SEQ
+        in ? raster
+        [raster FOR DEPTH] := [default FOR DEPTH]
+        out ! raster
 :
 
+--}}}
+--{{{  INT FUNCTION Min (VAL []INT ranges)
 --* Minimum range
-
+--
 --  @param ranges Array of ranges
 --  @return Minimum range
-
+--
 INT FUNCTION Min (VAL []INT ranges)
 
   INT result:
@@ -161,7 +179,8 @@ INT FUNCTION Min (VAL []INT ranges)
             SKIP
     RESULT result
 :
-
+--}}}
+--{{{  PROC Drone (CHAN UPDATE update?, CHAN INFO info!, CHAN RASTER in?, out!, SHARED CHAN BYTE debug!)
 --* Draw robot.
 --
 --  Pass 1: Draw robot in [@code FOREGROUND] colour;
@@ -175,7 +194,7 @@ INT FUNCTION Min (VAL []INT ranges)
 --  @param in Receive raster
 --  @param out Send raster
 --  @param debug Debug messages
-
+--
 PROC Drone (CHAN UPDATE update?, CHAN INFO info!, CHAN RASTER in?, out!, SHARED CHAN BYTE debug!)
 
   STATE s:
@@ -263,14 +282,15 @@ PROC Drone (CHAN UPDATE update?, CHAN INFO info!, CHAN RASTER in?, out!, SHARED 
           Motion; v; w
             SKIP
 :
-
+--}}}
+--{{{  INT FUNCTION Speed (VAL INT range)
 --* Speed as a function of distance.
 --
 --  Proportional to [@code log (distance)]
 --
 --  @param range Distance
 --  @return Speed
-
+--
 INT FUNCTION Speed (VAL INT range)
 
   INT result:
@@ -281,39 +301,13 @@ INT FUNCTION Speed (VAL INT range)
     RESULT result
 :
 
---* Drive robot automatically.
---
---  Slow down as minimum range approaches [@code RADIUS];
---  Reverse direction on contact.
---
---  @param s Initial state
---  @param update Send update to state
---  @param info Receive info
-
-PROC Auto.1 (VAL STATE s, CHAN UPDATE update!, CHAN INFO info?)
-
-  SEQ
-    update ! State; s			-- initialize drone
-    INITIAL INT   v IS s[V]:		-- only needs to know these
-    INITIAL ANGLE w IS s[W]:
-    WHILE TRUE
-      RANGES ranges:
-      SEQ
-        info ? ranges
-        VAL INT speed IS Speed (Min (ranges)):
-        IF
-          speed = 0
-            v := -v
-          TRUE
-            v := speed
-        update ! Motion; v; w
-:
-
+--}}}
+--{{{  INT, INT FUNCTION Heading (VAL []INT ranges)
 --* Find best heading
 --
 --  @param ranges Array of ranges
 --  @returns min, max Indices of ranges
-
+--
 INT, INT FUNCTION Heading (VAL []INT ranges)
 
   INT min, max:
@@ -352,11 +346,13 @@ INT, INT FUNCTION Heading (VAL []INT ranges)
     RESULT min, max
 :
 
+--}}}
+--{{{  INT, INT FUNCTION Heading.2 (VAL []INT ranges)
 --* Find best heading (version 2)
 --
 --  @param ranges Array of ranges
 --  @returns min, max Indices of ranges
-
+--
 INT, INT FUNCTION Heading.2 (VAL []INT ranges)
 
   INT min, max:
@@ -394,6 +390,8 @@ INT, INT FUNCTION Heading.2 (VAL []INT ranges)
 
 :
 
+--}}}
+--{{{  PROC Auto.2 (...)
 --* Drive robot automatically.
 --
 --  Turn towards best heading;
@@ -404,7 +402,7 @@ INT, INT FUNCTION Heading.2 (VAL []INT ranges)
 --  @param update Send update to state
 --  @param info Receive info
 --  @param debug Debug messages
-
+--
 PROC Auto.2 (VAL INT id, VAL STATE s, CHAN UPDATE update!, CHAN INFO info?,
              SHARED CHAN BYTE debug!)
 
@@ -472,7 +470,8 @@ PROC Auto.2 (VAL INT id, VAL STATE s, CHAN UPDATE update!, CHAN INFO info?,
             stuck := 0
         update ! Motion; v; w
 :
-
+--}}}
+--{{{  ANGLE INLINE FUNCTION ABS (VAL ANGLE w)
 ANGLE INLINE FUNCTION ABS (VAL ANGLE w)
 
   ANGLE result:
@@ -485,6 +484,8 @@ ANGLE INLINE FUNCTION ABS (VAL ANGLE w)
     RESULT result
 :
 
+--}}}
+--{{{  PROC Manual (...)
 --* Drive robot manually.
 --
 --  @param s Initial state
@@ -492,7 +493,7 @@ ANGLE INLINE FUNCTION ABS (VAL ANGLE w)
 --  @param update Send update to state
 --  @param info Receive info
 --  @param screen frame rate messages
-
+--
 PROC Manual (VAL STATE s, CHAN COMMANDS commands?, CHAN UPDATE update!, CHAN INFO info?,
              SHARED CHAN BYTE screen!)
 
@@ -506,9 +507,11 @@ PROC Manual (VAL STATE s, CHAN COMMANDS commands?, CHAN UPDATE update!, CHAN INF
 
   SEQ
     update ! State; s			-- initialize drone
+
     tim ? t.0
     INITIAL INT   v IS s[V]:		-- only needs to know these
     INITIAL ANGLE w IS s[W]:
+    INITIAL BOOL seen.setm IS FALSE:
     WHILE TRUE
       RANGES ranges:
       INITIAL BOOL flag IS FALSE:
@@ -531,13 +534,38 @@ PROC Manual (VAL STATE s, CHAN COMMANDS commands?, CHAN UPDATE update!, CHAN INF
               v, w := 0, 0
             Freeze
               commands ? CASE Freeze
+            INT ang, fwd:
+            SetMotion; ang; fwd
+              SEQ
+                v := fwd / 7
+                w := (ANGLE.DEGREE / 15) * (ANGLE ang)
+
+                -- make sure we don't run into scenary!
+                VAL INT speed IS Speed (Min (ranges)):
+                IF
+                  speed < v
+                    v := speed
+                  TRUE
+                    SKIP
+
+                seen.setm := TRUE
+
           SKIP
-            VAL INT speed IS Speed (Min (ranges)):
             IF
-              speed = 0
-                v, w := 0, 0
+              NOT seen.setm
+                VAL INT speed IS Speed (Min (ranges)):
+                IF
+                  speed = 0
+                    v := 0
+                  TRUE
+                    v := speed
               TRUE
-                v := speed
+                VAL INT speed IS Speed (Min (ranges)):
+                IF
+                  speed < v
+                    v := speed
+                  TRUE
+                    SKIP
         IF
           flag
             update ! Position; x; y
@@ -564,84 +592,136 @@ PROC Manual (VAL STATE s, CHAN COMMANDS commands?, CHAN UPDATE update!, CHAN INF
               
 :
 
+--}}}
+--{{{  PROC Events (CHAN RASTER.EVENT events?, SHARED CHAN COMMANDS commands!)
 --* Handle SDL events
 --
 --  @param events Receive SDL events
 --  @param commands Send commands to robot driver
-
+--
 --  Not realistic, but demonstrates mouse clicks, contol characters,
 --  and ordinary characters.
-
-PROC Events (CHAN RASTER.EVENT events?, CHAN COMMANDS commands!)
+--
+PROC Events (CHAN RASTER.EVENT events?, SHARED CHAN COMMANDS commands!)
 
   RASTER.EVENT event:
   WHILE TRUE
-    SEQ
+    ALT
       events ? event
-      CASE event[type]
-        RASTER.ET.KEYDOWN			-- normal keys
-          CASE event[id]
-            'q', 'x'
-              STOP
-            'a'
-              commands ! Anticlockwise
-            'c'
-              commands ! Clockwise
-            'f'
-              commands ! Faster
-            's'
-              commands ! Slower
-            'h'
-              commands ! Halt
-            ' '
-              SEQ
-                commands ! Freeze
-                RASTER.EVENT any:
-                SEQ
-                  events ? any
-                  WHILE any[type] <> RASTER.ET.KEYDOWN
-                    events ? any
-                commands ! Freeze
-            SDLK.LEFT
-              commands ! Anticlockwise
-            SDLK.RIGHT
-              commands ! Clockwise
-            SDLK.UP
-              commands ! Faster
-            SDLK.DOWN
-              commands ! Slower
-            ELSE
-              SKIP
-
-        RASTER.ET.MOUSEBUTTONDOWN		-- mouse buttons
-          SEQ
+        CASE event[type]
+          --{{{  RASTER.ET.KEYDOWN
+          RASTER.ET.KEYDOWN			-- normal keys
             CASE event[id]
-              BUTTON.LEFT
-                SKIP
-              BUTTON.MIDDLE
-                commands ! Position; INT event[x]; INT event[y]
-              BUTTON.RIGHT
-                SKIP
-              BUTTON.FOREWARD
-                commands ! Faster
-              BUTTON.BACKWARD
-                commands ! Slower
+              'q', 'x'
+                STOP
+              'a'
+                CLAIM commands!
+                  commands ! Anticlockwise
+              'c'
+                CLAIM commands!
+                  commands ! Clockwise
+              'f'
+                CLAIM commands!
+                  commands ! Faster
+              's'
+                CLAIM commands!
+                  commands ! Slower
+              'h'
+                CLAIM commands!
+                  commands ! Halt
+              ' '
+                CLAIM commands!
+                  SEQ
+                    commands ! Freeze
+                    RASTER.EVENT any:
+                    SEQ
+                      events ? any
+                      WHILE any[type] <> RASTER.ET.KEYDOWN
+                        events ? any
+                    commands ! Freeze
+              SDLK.LEFT
+                CLAIM commands!
+                  commands ! Anticlockwise
+              SDLK.RIGHT
+                CLAIM commands!
+                  commands ! Clockwise
+              SDLK.UP
+                CLAIM commands!
+                  commands ! Faster
+              SDLK.DOWN
+                CLAIM commands!
+                  commands ! Slower
               ELSE
                 SKIP
 
-        RASTER.ET.QUIT			-- click on [X]
-          STOP
+          --}}}
+          --{{{  RASTER.ET.MOUSEBUTTONDOWN
+          RASTER.ET.MOUSEBUTTONDOWN		-- mouse buttons
+            SEQ
+              CASE event[id]
+                BUTTON.LEFT
+                  SKIP
+                BUTTON.MIDDLE
+                  CLAIM commands!
+                    commands ! Position; INT event[x]; INT event[y]
+                BUTTON.RIGHT
+                  SKIP
+                BUTTON.FOREWARD
+                  CLAIM commands!
+                    commands ! Faster
+                BUTTON.BACKWARD
+                  CLAIM commands!
+                    commands ! Slower
+                ELSE
+                  SKIP
 
-        ELSE				-- anything else?
-          SKIP
+          --}}}
+          --{{{  RASTER.ET.QUIT
+          RASTER.ET.QUIT			-- click on [X]
+            STOP
+
+          --}}}
+          ELSE				-- anything else?
+            SKIP
 :
-
+--}}}
+--{{{  PROC Joystick (CT.SDLJSEVENT! ev, SHARED CHAN COMMANDS commands!)
+--* Joystick handler.
+--
+PROC Joystick (CT.SDLJSEVENT! ev, SHARED CHAN COMMANDS commands!)
+  INITIAL BOOL loop IS TRUE:
+  WHILE loop
+    SEQ
+      ev[out] ? CASE
+        INT ax.delta, bt.delta:
+        MOBILE []INT16 ax.vals:
+        MOBILE []BYTE bt.vals:
+        change; ax.delta; bt.delta; ax.vals; bt.vals
+          IF
+            (SIZE ax.vals) >= 2
+              -- update with normalised axis values
+              SEQ
+                IF
+                  ax.vals[1] < 0
+                    ax.vals[1] := 0                 -- can't go backwards!
+                  TRUE
+                    SKIP
+                CLAIM commands!
+                  commands ! SetMotion; INT ax.vals[0]; INT ax.vals[1]
+            TRUE
+              SKIP
+        quit
+          loop := FALSE
+            
+:
+--}}}
+--{{{  PROC Head (CHAN RASTER in.1?, in.2?, out!)
 --* Head of pipeline
-
+--
 --  @param in.1 Receive new raster
 --  @param in.2 Receive raster for next phase
 --  @param out Send raster
-
+--
 PROC Head (CHAN RASTER in.1?, in.2?, out!)
 
   WHILE TRUE
@@ -655,12 +735,14 @@ PROC Head (CHAN RASTER in.1?, in.2?, out!)
           out ! raster
 :
 
+--}}}
+--{{{  PROC Tail (CHAN RASTER in?, out.1!, out.2!)
 --* Tail of pipeline
-
+--
 --  @param in Receive raster
 --  @param out.1 Send raster for next phase
 --  @param out.2 Send raster completed raster
-
+--
 PROC Tail (CHAN RASTER in?, out.1!, out.2!)
 
   WHILE TRUE
@@ -674,11 +756,13 @@ PROC Tail (CHAN RASTER in?, out.1!, out.2!)
       out.2 ! raster
 :
 
+--}}}
+--{{{  PROC Clean (CHAN RASTER in?, out!)
 --* Clear raster
 --
 --  @param in Receive raster
 --  @param out Send cleaned raster
-
+--
 PROC Clean (CHAN RASTER in?, out!)
 
   WHILE TRUE
@@ -688,11 +772,15 @@ PROC Clean (CHAN RASTER in?, out!)
       out ! raster
 :
 
+--}}}
+--{{{  VAL []INT CLUT
+--* Drone colours.
 VAL []INT CLUT IS [COLOUR.RED, COLOUR.GREEN, COLOUR.BLUE,
                    COLOUR.MAGENTA, COLOUR.CYAN, COLOUR.ORANGE, COLOUR.PURPLE,
                    COLOUR.PINK, COLOUR.SKY, COLOUR.NAVY, COLOUR.MAROON,
                    COLOUR.VIOLET, COLOUR.BROWN, COLOUR.GREY]:
-                   
+--}}}
+--{{{  PROC Place (INT x, y, [][]INT raster, INT seed, SHARED CHAN BYTE debug!)
 --INT, INT, INT FUNCTION Place (VAL [][]INT raster, VAL INT seed)
   --INT x, y, my.seed:
   --VALOF
@@ -735,6 +823,8 @@ PROC Place (INT x, y, [][]INT raster, INT seed, SHARED CHAN BYTE debug!)
     Disc (x, y, RADIUS, FOREGROUND, raster)
 :
 
+--}}}
+--{{{  PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
 PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
 
   VAL INT SECOND IS 1000000:
@@ -759,31 +849,21 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
                         --[450, 550, 1,  0,  0, COLOUR.GREY   ]]:
   --VAL INT ROBOTS IS SIZE state:
 
-  VAL INT ROBOTS IS 32:
+  VAL INT ROBOTS IS 64:
   [ROBOTS]STATE s:
   --INITIAL [ROBOTS]STATE s IS state:
 
   TIMER tim:
   INT rand, seed:
 
-  INITIAL BOOL mixed IS FALSE:
-  INITIAL INT version IS 0:
-  
   SEQ
 
     CLAIM screen!
       SEQ
-        out.string ("Robot (v3), copyleft (2007) D.C.Wood and P.H.Welch*c*n",
+        out.string ("Robot (v3), Copyright (C) 2007  D.C.Wood and P.H.Welch*c*n", 0, screen!)
+        out.string ("Modifications Copyright (C) 2009 F.R.M.Barnes*c*n", 0, screen!)
+        out.string ("======================================================*c*n*n",
                     0, screen!)
-        out.string ("==================================================*c*n*n",
-                    0, screen!)
-        ask.bool ("Two types of robot? ", mixed, keyboard?, screen!)
-        IF
-          NOT mixed
-            WHILE NOT ((version = 1) OR (version = 2))
-              ask.int ("Version number (1 or 2)? ", version, 1, keyboard?, screen!)
-          TRUE
-            SKIP
 
     RASTER raster:
     SEQ
@@ -823,23 +903,14 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
           rand := ((rand - 3) * 2) + 1	-- odd (zero is bad)
           s.i[W] := rand * ANGLE.DEGREE
 
-          IF
-            mixed
-              IF
-                (i /\ 1) = 0
-                  s.i[Colour] := COLOUR.RED
-                TRUE
-                  s.i[Colour] := COLOUR.GREEN
-            TRUE
-              SEQ
-                rand, seed := random (SIZE CLUT, seed)
-                s.i[Colour] := CLUT[rand]
+          rand, seed := random (SIZE CLUT, seed)
+          s.i[Colour] := CLUT[rand]
 
       s[0] := [s[0][X], s[0][Y], 0, 0, 20, COLOUR.WHITE]
 
     CHAN RASTER source, return:
     CHAN RASTER.EVENT events:
-    CHAN COMMANDS commands:
+    SHARED! CHAN COMMANDS commands:
     CHAN RASTER b, c, e:
     [ROBOTS]CHAN RASTER d:
     [ROBOTS]CHAN UPDATE h:
@@ -852,19 +923,58 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
       -- Auto (s[0], h[0]!, j[0]?)
       Manual (s[0], commands?, h[0]!, j[0]?, screen!)
       Events (events?, commands!)
+      
+      CT.SDLJOY! j.cli:
+      SEQ
+        occ.SDL.joy.start (j.cli)
+        IF
+          DEFINED j.cli
+            SEQ
+              j.cli[in] ! connect; 0
+              j.cli[out] ? CASE
+                SHARED CT.SDLJS! stick:
+                CT.SDLJSEVENT! ev, ev2:
+                CT.SDLJSCALIBRATE! cal:
+                joystick; stick
+                  SEQ
+                    CLAIM stick!
+                      SEQ
+                        stick[in] ! enable
+                        stick[out] ? CASE event.chan; ev
+
+                    occ.SDL.joy.calibrator (ev, ev2, cal)
+
+                    CHAN BOOL skip:
+                    PAR
+                      SEQ
+                        occ.SDL.joy.docalibrate (cal!, screen!)
+                        skip ! FALSE
+                      INITIAL BOOL l.loop IS TRUE:
+                      WHILE l.loop
+                        PRI ALT
+                          skip ? l.loop
+                            SKIP
+                          ev2[out] ? CASE
+                            INT axd, btd:
+                            MOBILE []INT16 ax.vals:
+                            MOBILE []BYTE bt.vals:
+                            change; axd; btd; ax.vals; bt.vals
+                              SKIP
+                            quit
+                              SKIP
+                    -- now pass events through to manual controller
+                    Joystick (ev2, commands!)
+                error
+                  CLAIM screen!
+                    out.string ("No joysticks found, keyboard control only!*n", 0, screen!)
+          TRUE
+            CLAIM screen!
+              out.string ("Failed to initialise SDL for joystick handling!*n", 0, screen!)
       PAR i = 1 FOR ROBOTS - 1
         PAR
           Drone (h[i]?, j[i]!, d[i - 1]?, d[i]!, screen!)
-          IF
-            mixed
-              IF
-                (i /\ 1) = 0
-                  Auto.1 (s[i], h[i]!, j[i]?)
-                TRUE
-                  Auto.2 (i, s[i], h[i]!, j[i]?, screen!)
-            version = 1
-              Auto.1 (s[i], h[i]!, j[i]?)
-            version = 2
-              Auto.2 (i, s[i], h[i]!, j[i]?, screen!)
+          Auto.2 (i, s[i], h[i]!, j[i]?, screen!)
       Tail (d[ROBOTS - 1]?, e!, return!)
 :
+--}}}
+
