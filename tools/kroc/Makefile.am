@@ -25,9 +25,6 @@ dist_man1_MANS = \
 	kmakef.1 \
 	kroc.1
 
-aclocaldir = @ACLOCALDIR@
-aclocal_DATA = occbuild.m4
-
 DISTCLEANFILES = $(generated_scripts)
 
 edit = sed \
