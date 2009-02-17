@@ -40,7 +40,8 @@ libccsp_a_LIBADD = \
 	kernel/sched.o \
 	kernel/stats.o
 
-include_HEADERS = \
+krocincludedir = $(includedir)/kroc
+krocinclude_HEADERS = \
 	include/ccsp.h \
 	include/ccsp_config.h \
 	include/ccsp_consts.h \

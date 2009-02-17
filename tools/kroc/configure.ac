@@ -251,10 +251,10 @@ AC_SUBST(NOCCHOME)
 dnl new settings for kroc
 KROC_ARCHBINDIR="$bindir"
 KROC_ARCHLIBDIR="$libdir"
-KROC_ARCHINCDIR="$includedir"
+KROC_ARCHINCDIR="$includedir/kroc"
 KROC_MANDIR="$mandir"
-KROC_KROCDIR="$datadir"
-KROC_CONFIGDIR="$sysconfdir"
+KROC_KROCDIR="$datadir/kroc"
+KROC_CONFIGDIR="$sysconfdir/kroc"
 KROC_EXAMPLESDIR="$libdir/kroc/examples"
 TVM_BINDIR="$bindir"
 TVM_LIBDIR="$libdir/transterpreter"
