@@ -6,12 +6,13 @@
 ## AUTOMAKE_OPTIONS=ansi2knr
 ## config.guess and config.sub have special exceptions
 AUTOMAKE_OPTIONS=foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../m4
 
 KROC=@KROC@
 ILIBR=@ILIBR@
 
-DEFS=@DEFS@ @CCEXTRAOPTS@ @CCINCLUDES@
-EXTRALDFLAGS=@LDEXTRAOPTS@ @CCLIBPATH@
+DEFS = @DEFS@ @KROC_CCSP_CFLAGS@ @KROC_CCSP_CINCPATH@
+EXTRALDFLAGS = @KROC_CCSP_LDFLAGS@ @KROC_CCSP_LIBPATH@
 
 SUBDIRS = include io rts support
 

@@ -17,6 +17,7 @@ CFLAGS=-g -O2 -Wall
 ## AUTOMAKE_OPTIONS=ansi2knr
 ## config.guess and config.sub have special exceptions
 AUTOMAKE_OPTIONS=foreign
+ACLOCAL_AMFLAGS = -I ../../m4
 
 bin_PROGRAMS = tranx86
 

@@ -25,23 +25,8 @@ AC_CHECK_HEADERS(stdlib.h string.h strings.h sys/ioctl.h sys/time.h sys/types.h 
 
 AC_ARG_ENABLE([mobiles], AS_HELP_STRING([--disable-mobiles],[disable MOBILE data types (default enabled)]), [enable_mobiles=$enableval], [enable_mobiles=yes])
 
-dnl Checks for programs.
-AC_CHECK_PROG(KROC, kroc, kroc)
-
-CCEXTRAOPTS=$($KROC --cflags)
-CCINCLUDES=$($KROC --ccincpath)
-CCLIBPATH=$($KROC --cclibpath)
-LDEXTRAOPTS=$($KROC --ldflags)
-
-AC_MSG_CHECKING([for additional flags needed during compilation])
-AC_MSG_RESULT([$CCEXTRAOPTS])
-AC_MSG_CHECKING([path to run-time header files])
-AC_MSG_RESULT([$CCINCLUDES])
-
-AC_SUBST(CCEXTRAOPTS)
-AC_SUBST(CCINCLUDES)
-AC_SUBST(CCLIBPATH)
-AC_SUBST(LDEXTRAOPTS)
+KROC_PROG_KROC
+KROC_CCSP_FLAGS
 
 case "$host_os" in
 cygwin*)
