@@ -33,5 +33,5 @@ calltable.h: $(SCHED_SOURCE) $(MAKE_HEADER)
 ccsp_cif_stubs.h: $(SCHED_SOURCE) $(MAKE_HEADER)
 	python $(MAKE_HEADER) --cif ccsp_cif_stubs.h $(top_srcdir)/config.h $(SCHED_SOURCE)
 
-DISTCLEANFILES= kitable.h calltable.h ccsp_cif_stubs.h
+CLEANFILES= kitable.h calltable.h ccsp_cif_stubs.h
 
