@@ -33,7 +33,6 @@
 
 
 -- path to game data
-#DEFINE BASEPATH "@INSTALLED_DATA_PATH@"
 #DEFINE OPER.NAME "operator"
 
 #DEFINE USE.TELNET.IF

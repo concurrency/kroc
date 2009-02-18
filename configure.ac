@@ -72,7 +72,7 @@ AC_CONFIG_SUBDIRS(demos/ttygames)
 AC_CONFIG_SUBDIRS(tests/cgtests)
 AC_CONFIG_SUBDIRS(tests/hereticc)
 
-#AC_CONFIG_SUBDIRS(doc)
+AC_CONFIG_SUBDIRS(doc)
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
