@@ -765,7 +765,7 @@ fi
 if [ "$intree" = "" ]; then
   ocspath="$kroc_krocdir/vtlib:$kroc_krocdir/vtinclude"
 else
-  ocspath=""
+  ocspath="$intree/modules/inmoslibs/libsrc/forall"
 fi
 if [ "X$OCSEARCH" != "X" ]; then
   ocspath="$OCSEARCH:$ocspath"
@@ -776,7 +776,7 @@ if [ "$intree" = "" ]; then
   oclibpath="-L$kroc_archlibdir"
   cincludepath="-I$kroc_archincdir"
 else
-  oclibpath="@KROC_CCSP_LIBPATH@"
+  oclibpath="@KROC_CCSP_LIBPATH@ -L$intree/modules/inmoslibs/libsrc/forall"
   cincludepath="@KROC_CCSP_CINCPATH@"
 fi
 

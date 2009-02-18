@@ -88,19 +88,47 @@ dnl
 dnl OCCAM_INCLUDE(FILES, [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 AC_DEFUN([OCCAM_INCLUDE],
 [dnl
+AC_REQUIRE([OCCAM_IN_TREE])
 AC_REQUIRE([OCCAM_OCCBUILD])
+
 AC_MSG_CHECKING([for occam include files $1])
-: >conftest.occ
-for file in $1; do
-	printf >>conftest.occ '#INCLUDE "%s"\n' "$file"
-done
-printf >>conftest.occ 'PROC main ()\n  SKIP\n:\n'
-if AC_RUN_LOG([$OCCBUILD --object conftest.occ >/dev/null]); then
-	AC_MSG_RESULT([yes])
-	$2
+if test "x$KROC_BUILD_ROOT" != "x"; then
+  # In-tree build: look up those files in in-tree-modules.
+  found=yes
+  touch $KROC_BUILD_ROOT/in-tree-modules
+  for file in $1; do
+    found_this=no
+    while read module path; do
+      if test "$module" = "$file"; then
+        OCCBUILD="$OCCBUILD --search $path"
+        found_this=yes
+        break
+      fi
+    done <$KROC_BUILD_ROOT/in-tree-modules
+    if test $found_this = no; then
+      found=no
+    fi
+  done
 else
-	AC_MSG_RESULT([no])
-	$3
+  # Out-of-tree build: try compiling a program that uses those files.
+  : >conftest.occ
+  for file in $1; do
+    printf >>conftest.occ '#INCLUDE "%s"\n' "$file"
+  done
+  printf >>conftest.occ 'PROC main ()\n  SKIP\n:\n'
+  if AC_RUN_LOG([$OCCBUILD --object conftest.occ >/dev/null]); then
+    found=yes
+  else
+    found=no
+  fi
+fi
+
+if test $found = yes; then
+  AC_MSG_RESULT([yes])
+  $2
+else
+  AC_MSG_RESULT([no])
+  $3
 fi
 AC_RUN_LOG([$OCCBUILD --clean conftest.tce])
 rm -f conftest.occ
