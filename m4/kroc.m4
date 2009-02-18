@@ -21,6 +21,7 @@ dnl Get settings for compiling code against CCSP.
 AC_DEFUN([KROC_CCSP_FLAGS],
 [dnl
 AC_REQUIRE([AC_CANONICAL_SYSTEM])
+AC_REQUIRE([OCCAM_IN_TREE])
 
 KROC_CCSP_CFLAGS=""
 KROC_CCSP_CINCPATH=""
@@ -31,9 +32,7 @@ KROC_CCSP_LDFLAGS=""
 KROC_CCSP_LIBPATH=""
 KROC_CCSP_LIBS=""
 
-AC_MSG_CHECKING([whether we're in the KRoC source tree])
 if test "x$KROC_BUILD_ROOT" != "x"; then
-  AC_MSG_RESULT(yes)
   # We're configuring inside the KRoC source tree; we need to figure out the
   # flags based on the target and configure options.
 
@@ -145,7 +144,6 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   fi
 
 else
-  AC_MSG_RESULT(no)
   # We're not in the KRoC source tree, so we can just call kroc to get the
   # arguments.
   AC_MSG_ERROR(FIXME: builds outside source tree not implemented)
@@ -164,6 +162,7 @@ dnl
 dnl Find the "kroc" script, and define KROC.
 AC_DEFUN([KROC_PROG_KROC],
 [dnl
+AC_REQUIRE([OCCAM_IN_TREE])
 AC_ARG_VAR(KROC, [Path to kroc])
 if test "x$KROC_BUILD_ROOT" != "x"; then
   KROC="$KROC_BUILD_ROOT/tools/kroc/kroc --in-tree $KROC_BUILD_ROOT"
