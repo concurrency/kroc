@@ -360,6 +360,7 @@ struct namenode_s
     BIT16 n_scope;              /* Scope of declaration */
     void *n_checker;            /* Used by usage checker */
     void *n_undef;		/* Used by undefinedness checker */
+    void *n_fmcheck;		/* Used by formal-model checker */
 
 #ifdef COMPILING_TO_JCODE
     void *n_binder;             /* Used for J_CODE creation */
