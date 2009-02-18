@@ -5,6 +5,8 @@
 AC_INIT([kroc], [1.5.0-pre4], [kroc-bugs@kent.ac.uk])
 AM_INIT_AUTOMAKE([-Wall foreign])
 
+AC_CONFIG_SUBDIRS(runtime/ccsp)
+
 AC_CONFIG_SUBDIRS(tools/ilibr)
 AC_CONFIG_SUBDIRS(tools/kroc)
 AC_CONFIG_SUBDIRS(tools/mkoccdeps)
@@ -17,7 +19,6 @@ AC_CONFIG_SUBDIRS(tools/tranx86)
 #AC_CONFIG_SUBDIRS(tools/slinker)
 #AC_CONFIG_SUBDIRS(tools/tinyswig)
 
-AC_CONFIG_SUBDIRS(runtime/ccsp)
 AC_CONFIG_SUBDIRS(runtime/libkrocif)
 
 #AC_CONFIG_SUBDIRS(runtime/libtvm)
