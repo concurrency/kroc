@@ -14,6 +14,7 @@ OCCAM_OCCBUILD
 dnl Checks for occam modules.
 OCCAM_INCLUDE([course.module occSDL.module occGL.module], ,
               [AC_MSG_ERROR(Required modules not found)])
+OCCAM_PROVIDE(button.module)
 
 dnl Checks for libraries.
 AC_OUTPUT([Makefile])

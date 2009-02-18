@@ -10,4 +10,6 @@ AM_INIT_AUTOMAKE(dynproc, 1.0)
 dnl Checks for programs.
 OCCAM_OCCBUILD
 
+OCCAM_PROVIDE(dynproc.module)
+
 AC_OUTPUT([Makefile])

@@ -13,8 +13,10 @@ AM_INIT_AUTOMAKE(course-examples, 1.0)
 
 dnl Checks for programs.
 AC_PROG_MAKE_SET
-
 OCCAM_OCCBUILD
 
-AC_OUTPUT([Makefile])
+dnl Checks for occam modules.
+OCCAM_INCLUDE([course.module], ,
+              [AC_MSG_ERROR(Required modules not found)])
 
+AC_OUTPUT([Makefile])

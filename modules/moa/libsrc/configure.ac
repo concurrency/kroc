@@ -15,4 +15,9 @@ dnl Checks for libraries.
 AC_CHECK_HEADERS(stdlib.h sys/time.h)
 AC_CHECK_MYSQLCLIENT
 
+dnl Checks for occam modules.
+OCCAM_INCLUDE([cif.module], ,
+              [AC_MSG_ERROR(Required modules not found)])
+OCCAM_PROVIDE(moa.module)
+
 AC_OUTPUT([Makefile])

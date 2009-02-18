@@ -10,4 +10,6 @@ AM_INIT_AUTOMAKE(cif, 0.3)
 dnl Checks for programs.
 OCCAM_OCCBUILD
 
+OCCAM_PROVIDE(cif.module)
+
 AC_OUTPUT([Makefile])

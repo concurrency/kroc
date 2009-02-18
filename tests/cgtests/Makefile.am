@@ -4,6 +4,8 @@
 # NOTE: cgtest19 needs the '-s' flag to put KERNEL.RUN workspace in program data
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../m4
+
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \

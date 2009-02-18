@@ -33,4 +33,6 @@ esac
 dnl Define required helpers.
 AM_CONDITIONAL(COCOA_HELPER, test "x$cocoa_helper" = xyes)
 
+OCCAM_PROVIDE(occSDL.module occSDLsound.module)
+
 AC_OUTPUT([Makefile])

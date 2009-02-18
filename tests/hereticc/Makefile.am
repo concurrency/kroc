@@ -1,6 +1,8 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../m4
+
 # Disable usage checking for hereticc, since it's pathologically bad with occ21
 # at the moment.
 OCCBUILD = @OCCBUILD@ --occ21-opts '-NU'

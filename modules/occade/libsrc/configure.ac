@@ -13,5 +13,6 @@ OCCAM_OCCBUILD
 dnl Checks for occam modules.
 OCCAM_INCLUDE([file.module course.module occSDL.module raster.module sdlraster.module rasterio.module], ,
               [AC_MSG_ERROR(Required modules not found)])
+OCCAM_PROVIDE(occade.module)
 
 AC_OUTPUT([Makefile])
