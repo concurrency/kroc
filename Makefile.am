@@ -9,4 +9,4 @@ aclocal_DATA = \
 	m4/kroc.m4 \
 	m4/occbuild.m4
 
-CLEANFILES = in-tree-modules
+DISTCLEANFILES = in-tree-modules
