@@ -1,14 +1,9 @@
 # Top-level configure.ac for the KRoC tree.
+# KROC_IS_ROOT - m4/occbuild.m4 looks for this comment to find the top-level
+# directory; don't change it.
 
 AC_INIT([kroc], [1.5.0-pre4], [kroc-bugs@kent.ac.uk])
 AM_INIT_AUTOMAKE([-Wall foreign])
-
-# This variable is used by our configure macros to detect that packages are
-# being built as part of the KRoC tree rather than separately.
-# FIXME: It may be better (i.e. less confusing for automake) to detect this by
-# walking up the directory tree looking for a file...
-KROC_BUILD_ROOT=$PWD
-export KROC_BUILD_ROOT
 
 AC_CONFIG_SUBDIRS(tools/ilibr)
 AC_CONFIG_SUBDIRS(tools/kroc)
