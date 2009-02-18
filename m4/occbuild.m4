@@ -40,7 +40,7 @@ done
 cd $old_PWD
 
 if test "x$KROC_BUILD_ROOT" != "x"; then
-  AC_MSG_RESULT([yes: $KROC_BUILD_ROOT])
+  AC_MSG_RESULT([yes])
 else
   AC_MSG_RESULT([no])
 fi
@@ -85,6 +85,7 @@ fi
 AC_SUBST(OCCBUILD_CFLAGS)
 ])dnl
 dnl
+dnl Check for the presence of occam modules (or other include files).
 dnl OCCAM_INCLUDE(FILES, [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 AC_DEFUN([OCCAM_INCLUDE],
 [dnl
@@ -94,21 +95,39 @@ AC_REQUIRE([OCCAM_OCCBUILD])
 AC_MSG_CHECKING([for occam include files $1])
 if test "x$KROC_BUILD_ROOT" != "x"; then
   # In-tree build: look up those files in in-tree-modules.
+  AC_MSG_RESULT([maybe])
   found=yes
   touch $KROC_BUILD_ROOT/in-tree-modules
-  for file in $1; do
+  find_module () {
+    want_file=[$]1
+    AC_MSG_CHECKING([for in-tree include file $want_file])
     found_this=no
-    while read module path; do
-      if test "$module" = "$file"; then
+    while read file path deps; do
+      if test "$file" = "$want_file"; then
         OCCBUILD="$OCCBUILD --search $path"
         found_this=yes
+        found_deps="$deps"
         break
       fi
     done <$KROC_BUILD_ROOT/in-tree-modules
-    if test $found_this = no; then
+    if test $found_this = yes; then
+      if test "x$found_deps" = "x"; then
+        AC_MSG_RESULT(yes)
+      else
+        AC_MSG_RESULT([yes, and it needs $found_deps])
+      fi
+    else
+      AC_MSG_RESULT(no)
       found=no
     fi
+    for dep in $found_deps; do
+      find_module $dep
+    done
+  }
+  for want_file in $1; do
+    find_module $want_file
   done
+  AC_MSG_CHECKING([whether we found $1])
 else
   # Out-of-tree build: try compiling a program that uses those files.
   : >conftest.occ
@@ -125,6 +144,7 @@ fi
 
 if test $found = yes; then
   AC_MSG_RESULT([yes])
+  OCCAM_INCLUDED="$OCCAM_INCLUDED $1"
   $2
 else
   AC_MSG_RESULT([no])
@@ -132,6 +152,38 @@ else
 fi
 AC_RUN_LOG([$OCCBUILD --clean conftest.tce])
 rm -f conftest.occ
+])dnl
+dnl
+dnl Record that this package provides some modules (or other include files).
+dnl If the module is in a subdirectory, pass that as SUBDIRECTORY.
+dnl By default, the dependencies of FILES will be recorded as any files you've
+dnl checked for using OCCAM_INCLUDE already; if the dependencies are different,
+dnl pass them as DEPENDENCIES. You can pass "none" as DEPENDENCIES to force the
+dnl modules to have no dependencies.
+dnl OCCAM_PROVIDE(FILES, [SUBDIRECTORY], [DEPENDENCIES])
+AC_DEFUN([OCCAM_PROVIDE],
+[dnl
+AC_REQUIRE([OCCAM_IN_TREE])
+
+if test "x$KROC_BUILD_ROOT" != "x"; then
+  if test "x$2" = "x"; then
+    dir=`pwd`
+  else
+    dir=`pwd`/$2
+  fi
+  if test "x$3" = "x"; then
+    deps="$OCCAM_INCLUDED"
+  elif test "x$3" = "xnone"; then
+    deps=""
+  else
+    deps="$3"
+  fi
+  touch $KROC_BUILD_ROOT/in-tree-modules
+  for file in $1; do
+    (grep -v "^$file " $KROC_BUILD_ROOT/in-tree-modules; echo "$file $dir $deps") | sort >$KROC_BUILD_ROOT/in-tree-modules.new
+    mv -f $KROC_BUILD_ROOT/in-tree-modules.new $KROC_BUILD_ROOT/in-tree-modules
+  done
+fi
 ])dnl
 dnl
 AC_DEFUN([OCCAM_SWIG],
