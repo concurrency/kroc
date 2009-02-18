@@ -10,13 +10,10 @@ AM_INIT_AUTOMAKE(cif-examples, 1.0)
 dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
-
-dnl Checks for libraries.
-AC_CHECK_LIB(dl, dlsym, LIBDL="-ldl", LIBDL="")
-AC_SUBST(LIBDL)
+KROC_CCSP_FLAGS
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([cif.module], ,
+OCCAM_INCLUDE([cif.module course.module], ,
               [AC_MSG_ERROR(Required modules not found)])
 
 AC_OUTPUT([Makefile])

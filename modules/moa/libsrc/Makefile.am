@@ -1,7 +1,8 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I m4 -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@ @MYSQLCLIENT_CFLAGS@
 
@@ -23,7 +24,7 @@ includes = $(moa_includes)
 all-local: $(libs) $(includes)
 
 moa.lib: $(moa_lib_objs)
-	$(OCCBUILD) --library moa.lib --include moa.inc @MYSQLCLIENT_LIBS@ $(moa_lib_objs)
+	$(OCCBUILD) --library moa.lib --need cif --include moa.inc @MYSQLCLIENT_LIBS@ $(moa_lib_objs)
 
 install-exec-local: $(libs) $(includes)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)

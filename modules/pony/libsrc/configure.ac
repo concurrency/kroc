@@ -17,6 +17,7 @@ OCCAM_OCCBUILD
 dnl Checks for occam modules.
 OCCAM_INCLUDE([course.module sock.module file.module proc.module cif.module], ,
               [AC_MSG_ERROR(Required modules not found)])
+OCCAM_PROVIDE(pony.module)
 
 dnl Checks for headers.
 AC_CHECK_HEADERS(stdlib.h sys/time.h)

@@ -3,6 +3,7 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 
@@ -51,4 +52,7 @@ SUFFIXES = .occ .tce .so
 	$(OCCBUILD) --program $<
 
 .occ.so:
-	$(KROC) -l $<
+	$(OCCBUILD) --object $<
+	$(OCCBUILD) --library $*.lib $*.tce
+	mv liboccam_$*.so $@
+	$(OCCBUILD) --clean $*.tce $*.lib

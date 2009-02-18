@@ -23,4 +23,6 @@ dnl Checks for libraries.
 MDL_HAVE_OPENGL
 AC_CHECK_HEADERS([GL/gl.h GL/glu.h], , [AC_MSG_ERROR([OpenGL headers were not found])])
 
+OCCAM_PROVIDE(occGL.module)
+
 AC_OUTPUT([Makefile])

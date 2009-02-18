@@ -8,7 +8,6 @@ AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE(dynproc-examples, 1.0)
 
 dnl Checks for programs.
-AC_CHECK_TOOL(KROC,kroc)
 OCCAM_OCCBUILD
 
 dnl Checks for occam modules.
@@ -27,4 +26,3 @@ esac
 AM_CONDITIONAL(BUILD_SHARED, [test "$build_shared" = "yes"])
 
 AC_OUTPUT([Makefile])
-

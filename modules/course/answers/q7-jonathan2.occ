@@ -1,4 +1,5 @@
-
+#INCLUDE "course.module"
+#INCLUDE "shared_screen.module"
 
 PROC philjonathan2 (SHARED CHAN BYTE screen!)
   #USE "q7-jonathan2-1"

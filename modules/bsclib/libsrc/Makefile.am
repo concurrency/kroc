@@ -7,6 +7,7 @@
 ## AUTOMAKE_OPTIONS=ansi2knr
 ## config.guess and config.sub have special exceptions
 AUTOMAKE_OPTIONS=foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 SUBDIRS = socklib filelib proclib httplib
 if BUILD_CSPDRVLIB

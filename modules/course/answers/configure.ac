@@ -13,25 +13,10 @@ AM_INIT_AUTOMAKE(course-answers, 1.0)
 
 dnl Checks for programs.
 AC_PROG_MAKE_SET
-AC_PROG_CC
-AC_CHECK_TOOL(LD,ld)
+KROC_PROG_KROC
 
-dnl Checks for programs.
-AC_CHECK_PROG(KROC, kroc, kroc)
-
-OCTRAN=$($KROC -c --tran)
-OCTRANFLAGS=$($KROC -c --tranflags)
-
-AC_MSG_CHECKING([for kroc translator])
-AC_MSG_RESULT([$OCTRAN])
-AC_MSG_CHECKING([for kroc translator options])
-AC_MSG_RESULT([$OCTRANFLAGS])
-
-
-dnl Checks for libraries.
-
-AC_SUBST(OCTRAN)
-AC_SUBST(OCTRANFLAGS)
+dnl Checks for occam modules.
+OCCAM_INCLUDE([course.module shared_screen.module], ,
+              [AC_MSG_ERROR(Required modules not found)])
 
 AC_OUTPUT([Makefile])
-

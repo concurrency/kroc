@@ -22,6 +22,6 @@ if test "$enable_bsyscalls" = yes; then
  AC_DEFINE(BLOCKING_SYSCALLS)
 fi
 
+OCCAM_PROVIDE(udc.module)
+
 AC_OUTPUT([Makefile])
-
-

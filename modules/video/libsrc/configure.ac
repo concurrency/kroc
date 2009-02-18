@@ -23,6 +23,7 @@ AM_CONDITIONAL(HAVE_V4LCONVERT, [test $have_v4lconvert = yes])
 dnl Checks for occam modules.
 OCCAM_INCLUDE([raster.module], ,
               [AC_MSG_ERROR(Required modules not found)])
+OCCAM_PROVIDE(video.module)
 
 if test "$have_linux_videodev2" = no; then
  AC_MSG_ERROR(No linux/videodev2.h header file found)

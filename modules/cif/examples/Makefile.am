@@ -1,6 +1,8 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 
@@ -101,7 +103,7 @@ cift14: cift14.occ cift14-c.o ciftutils.o
 	$(OCCBUILD) --program $^
 
 cift15: cift15.o ciftutils.o
-	$(CC) -o $@ $^ -L$(libdir) -lccsp -lpthread @LIBDL@
+	$(CC) -o $@ $^ @KROC_CCSP_LDFLAGS@ @KROC_CCSP_LIBPATH@ -lccsp -lpthread @KROC_CCSP_LIBS@
 
 cift16: cift16.occ cift16-c.o ciftutils.o
 	$(OCCBUILD) --program $^

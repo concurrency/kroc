@@ -14,4 +14,6 @@ AM_INIT_AUTOMAKE(course, 1.0)
 dnl Checks for programs.
 OCCAM_OCCBUILD
 
+OCCAM_PROVIDE(course.module shared_screen.module ss.module)
+
 AC_OUTPUT([Makefile])
