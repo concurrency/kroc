@@ -56,5 +56,7 @@ SUFFIXES = .occ .tce .lib
 format-gen.occ: make-format.py
 	$(PYTHON) make-format.py
 
+CLEANFILES = format-gen.occ
+
 format-gen.occ: format.tce
 string.occ: math.tce
