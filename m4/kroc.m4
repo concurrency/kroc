@@ -18,9 +18,10 @@
 #
 dnl
 dnl Get settings for compiling code against CCSP.
-dnl You must have called AC_CANONICAL_SYSTEM first.
 AC_DEFUN([KROC_CCSP_FLAGS],
 [dnl
+AC_REQUIRE([AC_CANONICAL_SYSTEM])
+
 KROC_CCSP_CFLAGS=""
 KROC_CCSP_CINCPATH=""
 KROC_CCSP_ASFLAGS=""
@@ -76,7 +77,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   # If we're configuring in the tree, we also need to get our headers and
   # libraries from there.
   KROC_CCSP_CINCPATH="$KROC_CCSP_CFLAGS -I$KROC_BUILD_ROOT/runtime/ccsp/include"
-  KROC_CCSP_LIBPATH="$KROC_CCSP_LIBPATH -L$KROC_BUILD_ROOT/runtime/ccsp"
+  KROC_CCSP_LIBPATH="$KROC_CCSP_LIBPATH -L$KROC_BUILD_ROOT/runtime/ccsp -L$KROC_BUILD_ROOT/runtime/libkrocif"
 
   AC_CHECK_LIB(dl, dlsym, have_libdl=yes, have_libdl=no)
   if test $have_libdl = yes; then
@@ -163,10 +164,13 @@ dnl
 dnl Find the "kroc" script, and define KROC.
 AC_DEFUN([KROC_PROG_KROC],
 [dnl
+AC_ARG_VAR(KROC, [Path to kroc])
 if test "x$KROC_BUILD_ROOT" != "x"; then
   KROC="$KROC_BUILD_ROOT/tools/kroc/kroc --in-tree $KROC_BUILD_ROOT"
-  AC_SUBST(KROC)
 else
-  AC_CHECK_PROG(KROC, kroc, kroc)
+  AC_CHECK_PROG(KROC, kroc, kroc, no)
+  if test $KROC = no; then
+    AC_MSG_ERROR([kroc not found; set \$KROC or \$PATH appropriately])
+  fi
 fi
 ])dnl

@@ -1,6 +1,7 @@
 #
 #	occbuild definitions for autoconf
 #	Copyright (C) 2007 University of Kent
+#	Copyright (C) 2009 Adam Sampson <ats@offog.org>
 #
 #	This program is free software; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -20,9 +21,13 @@ dnl
 AC_DEFUN([OCCAM_OCCBUILD],
 [dnl
 AC_ARG_VAR(OCCBUILD, [Path to occbuild])
-AC_CHECK_PROG(OCCBUILD, occbuild, occbuild, no)
-if test $OCCBUILD = no; then
-	AC_MSG_ERROR([occbuild not found; set \$OCCBUILD or \$PATH appropriately])
+if test "x$KROC_BUILD_ROOT" != "x"; then
+  OCCBUILD="$KROC_BUILD_ROOT/tools/kroc/occbuild --in-tree $KROC_BUILD_ROOT"
+else
+  AC_CHECK_PROG(OCCBUILD, occbuild, occbuild, no)
+  if test $OCCBUILD = no; then
+    AC_MSG_ERROR([occbuild not found; set \$OCCBUILD or \$PATH appropriately])
+  fi
 fi
 dnl
 OCCBUILD_TOOLCHAIN=kroc
@@ -34,9 +39,20 @@ AM_CONDITIONAL(OCCBUILD_KROC, test "x$OCCBUILD_TOOLCHAIN" = "xkroc")
 AM_CONDITIONAL(OCCBUILD_TVM, test "x$OCCBUILD_TOOLCHAIN" = "xtvm")
 OCCBUILD="$OCCBUILD --toolchain=$OCCBUILD_TOOLCHAIN"
 dnl
-AC_MSG_CHECKING([for flags needed when compiling FFI objects])
-OCCBUILD_CFLAGS=$($OCCBUILD --cflags)
-AC_MSG_RESULT([$OCCBUILD_CFLAGS])
+if test "x$KROC_BUILD_ROOT" != "x"; then
+  if test "x$OCCBUILD_TOOLCHAIN" = "xkroc"; then
+    KROC_CCSP_FLAGS
+    OCCBUILD_CFLAGS="-DOCCBUILD_KROC $KROC_CCSP_CFLAGS $KROC_CCSP_CINCPATH"
+  elif test "x$OCCBUILD_TOOLCHAIN" = "xtvm"; then
+    OCCBUILD_CFLAGS="-DOCCBUILD_TVM"
+  else
+    AC_MSG_ERROR([don't know how to find OCCBUILD_CFLAGS in-tree for this toolchain])
+  fi
+else
+  AC_MSG_CHECKING([for flags needed when compiling FFI objects])
+  OCCBUILD_CFLAGS=$($OCCBUILD --cflags)
+  AC_MSG_RESULT([$OCCBUILD_CFLAGS])
+fi
 AC_SUBST(OCCBUILD_CFLAGS)
 ])dnl
 dnl

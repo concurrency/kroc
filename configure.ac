@@ -29,6 +29,8 @@ AC_CONFIG_SUBDIRS(runtime/libkrocif)
 
 #AC_CONFIG_SUBDIRS(tvm/posix)
 
+AC_CONFIG_SUBDIRS(modules/inmoslibs/libsrc)
+
 #AC_CONFIG_SUBDIRS(modules/bsclib/examples)
 #AC_CONFIG_SUBDIRS(modules/bsclib/libsrc)
 #AC_CONFIG_SUBDIRS(modules/button/examples)
@@ -43,7 +45,6 @@ AC_CONFIG_SUBDIRS(runtime/libkrocif)
 #AC_CONFIG_SUBDIRS(modules/dynproc/examples)
 #AC_CONFIG_SUBDIRS(modules/dynproc/libsrc)
 #AC_CONFIG_SUBDIRS(modules/fmtoutlib/libsrc)
-#AC_CONFIG_SUBDIRS(modules/inmoslibs/libsrc)
 #AC_CONFIG_SUBDIRS(modules/moa/examples)
 #AC_CONFIG_SUBDIRS(modules/moa/libsrc)
 #AC_CONFIG_SUBDIRS(modules/nocclibs/libsrc)
