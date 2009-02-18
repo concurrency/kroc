@@ -1125,6 +1125,7 @@ PUBLIC treenode *newnamenode (const int tag, const SOURCEPOSN ln, wordnode * con
 	SetNTypeAttr (nptr, 0);
 /*SetNChecker(nptr, NULL);*//* done automatically by the copy of the static variable */
 	SetNUndef (nptr, NULL);
+	SetNFMCheck (nptr, NULL);
 
 	/* specific initialisation for Vars, PROCs etc: */
 	switch (nametypeoftag (tag)) {	/* This tells us which part of the union is relevant */

@@ -206,7 +206,7 @@ PUBLIC void fe_formalmodel_check (fe_handle_t *const handle)
 		sprintf (fm_filename + offs, ".cspx");
 	}
 		
-	formalmodelcheck (handle->tree, data->fe_formalmodel, fm_filename);
+	formalmodelcheck (handle->tree, data->fe_formalmodel, fm_filename, handle);
 
 	memfree (fm_filename);
 	freeup_temp_workspace ();

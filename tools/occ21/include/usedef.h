@@ -28,7 +28,7 @@ int chan_use         (treenode *n, treenode *name);
 BOOL name_used_in_exp (treenode *name, treenode *tptr);
 
 void alias_and_usage_check (treenode *n, BOOL check_aliases, BOOL check_usage, FILE *fptr);
-void formalmodelcheck (treenode *n, BOOL check_formalmodels, const char *filename);
+void formalmodelcheck (treenode *n, BOOL check_formalmodels, const char *filename, fe_handle_t *const handle);
 
 varlist *freevarsin           (treenode *n, int scope, varlist *vlist,
                                      int usage_check);

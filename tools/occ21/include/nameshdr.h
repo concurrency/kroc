@@ -44,6 +44,9 @@
 #define NUndefOf(N)		(CHECKREAD(N,NAMENODE)->n_u.n_s.n_undef)
 #define SetNUndef(N,V)		(CHECKNODE(N,NAMENODE)->n_u.n_s.n_undef = (V))
 
+#define NFMCheckOf(N)		(CHECKREAD(N,NAMENODE)->n_u.n_s.n_fmcheck)
+#define SetNFMCheck(N,V)	(CHECKNODE(N,NAMENODE)->n_u.n_s.n_fmcheck = (V))
+
 
 #ifdef COMPILING_TO_JCODE
 #define NAddrTakenOf(N)         (CHECKREAD(N,NAMENODE)->n_u.n_s.n_addr_taken)

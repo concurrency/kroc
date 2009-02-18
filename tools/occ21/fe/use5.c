@@ -869,6 +869,15 @@ PRIVATE fmnode_t *fmt_copynode (fmnode_t *n)
 	return c;
 }
 /*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_getfmcheck (treenode *n)*/
+PRIVATE fmnode_t *fmt_getfmcheck (treenode *n)
+{
+	if (n && (nodetypeoftag (TagOf (n)) == NAMENODE)) {
+		return (fmnode_t *)NFMCheckOf (n);
+	}
+	return NULL;
+}
+/*}}}*/
 
 
 /*{{{  PRIVATE void fmt_addtonodelist (fmnode_t *listnode, fmnode_t *item)*/
@@ -2690,7 +2699,7 @@ fprintf (stderr, "do_formalmodelgen(): DECL/N_DECL, got model event node=\n");
 fmt_dumpnode (evnode, 1, stderr);
 #endif
 					fmt_addtovarslist (fmstate, evnode);
-					
+					SetNFMCheck (dname, evnode);
 				}
 			}
 			prewalktree (DBodyOf (n), do_formalmodelgen, (void *)fmstate);
@@ -2900,10 +2909,19 @@ fmt_dumpnode (input, 1, stderr);
 	case S_PINSTANCE:
 		if (!separatelycompiled (INameOf (n))) {
 			treenode *iname = INameOf (n);
+			treenode *aparams = IParamListOf (n);
+			treenode *fparams = NParamListOf (iname);
+			fmnode_t *ifm = fmt_getfmcheck (iname);
 
 #if 1
 fprintf (stderr, "do_formalmodelgen(): FINSTANCE/PINSTANCE, of local:");
 printtreenl (stderr, 1, iname);
+fprintf (stderr, "do_formalmodelgen(): formal model:\n");
+fmt_dumpnode (ifm, 1, stderr);
+fprintf (stderr, "do_formalmodelgen(): actual params:");
+printtreenl (stderr, 1, aparams);
+fprintf (stderr, "do_formalmodelgen(): formal params:");
+printtreenl (stderr, 1, fparams);
 #endif
 		}
 		return STOP_WALK;
@@ -2989,6 +3007,7 @@ fprintf (stderr, "do_formalmodelcheck_tree(): PROC [%s]\n", pname);
 
 						if (evnode) {
 							fmt_addtovarslist (fmstate, evnode);
+							SetNFMCheck (parm, evnode);
 						}
 #if 0
 fprintf (stderr, "do_formalmodelcheck_tree(): param type:");
@@ -3052,6 +3071,8 @@ fmt_dumpstate (fmstate, stderr);
 			fmt_modprewalk (&fmnproc, fmt_simplifynode, NULL);
 			fmt_hoistfixpoints (fmnproc, fmm);
 
+			SetNFMCheck (DNameOf (n), fmnproc);
+
 			fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)fmnproc);
 #if 0
 fprintf (stderr, "do_formalmodelcheck_tree(): got formal model:\n");
@@ -3066,11 +3087,23 @@ fmt_dumpnode (fmnproc, 1, stderr);
 	return CONTINUE_WALK;
 }
 /*}}}*/
-/*{{{  PUBLIC void formalmodelcheck (treenode *n, BOOL check_formalmodels, const char *filename)*/
+/*{{{  PRIVATEPARAM int do_formalmodelcheck_clearmarkers (treenode *n, void *const voidptr)*/
+/*
+ *	clears FMCheck markers in NAMENODEs
+ */
+PRIVATEPARAM int do_formalmodelcheck_clearmarkers (treenode *n, void *const voidptr)
+{
+	if (n && (nodetypeoftag (TagOf (n)) == NAMENODE)) {
+		SetNFMCheck (n, NULL);
+	}
+	return CONTINUE_WALK;
+}
+/*}}}*/
+/*{{{  PUBLIC void formalmodelcheck (treenode *n, BOOL check_formalmodels, const char *filename, fe_handle_t *const fe_handle)*/
 /* 
  *	does formal-model checking on a tree, calls do_formalmodelcheck_tree for each PROC/FUNCTION
  */
-PUBLIC void formalmodelcheck (treenode *n, BOOL check_formalmodels, const char *filename)
+PUBLIC void formalmodelcheck (treenode *n, BOOL check_formalmodels, const char *filename, fe_handle_t *const fe_handle)
 {
 	if (check_formalmodels) {
 		FILE *fp;
@@ -3084,6 +3117,7 @@ PUBLIC void formalmodelcheck (treenode *n, BOOL check_formalmodels, const char *
 		}
 		if (setjmp (env) == 0) {
 			fmmset_t *fmm = fmt_newmset ();
+			const char *fname = fe_lookupfilename (fe_handle, 0);
 
 #if 0
 fprintf (stderr, "formalmodelcheck(): tree before check is:\n");
@@ -3097,7 +3131,14 @@ fprintf (stderr, "formalmodelcheck(): got models:\n");
 fmt_dumpmset (fmm, stderr);
 #endif
 			/* write out! */
-			formalmodel_writeoutset (fmm, fp, filename);
+			formalmodel_writeoutset (fmm, fp, fname);
+
+#if 0
+fprintf (stderr, "formalmodelcheck(): tree after check is:\n");
+printtreenl (stderr, 1, n);
+#endif
+			/* clear markers from tree (all references into the formal-model set somewhere) */
+			prewalktree (n, do_formalmodelcheck_clearmarkers, NULL);
 
 			fmt_freemset (fmm);
 		}
