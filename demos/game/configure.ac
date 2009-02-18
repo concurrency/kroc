@@ -21,4 +21,4 @@ OCCAM_INCLUDE([course.module sock.module file.module string.module], ,
 INSTALLED_DATA_PATH="$datadir/examples/demos/game-data/"
 AC_SUBST(INSTALLED_DATA_PATH)
 
-AC_OUTPUT([Makefile config.inc])
+AC_OUTPUT([Makefile data/Makefile])

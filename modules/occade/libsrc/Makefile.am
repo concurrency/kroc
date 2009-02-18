@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 ACLOCAL_AMFLAGS = -I ../../../m4
 
-OCCBUILD = @OCCBUILD@ -DOCCADE.DATA.DIR="$(datadir)/occade"
+OCCBUILD = @OCCBUILD@ -DOCCADE.DATA.DIR="$(datadir)/kroc/occade"
 
 EXTRA_DIST = \
 	occade.occ \
