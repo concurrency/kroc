@@ -3,6 +3,13 @@
 AC_INIT([kroc], [1.5.0-pre4], [kroc-bugs@kent.ac.uk])
 AM_INIT_AUTOMAKE([-Wall foreign])
 
+# This variable is used by our configure macros to detect that packages are
+# being built as part of the KRoC tree rather than separately.
+# FIXME: It may be better (i.e. less confusing for automake) to detect this by
+# walking up the directory tree looking for a file...
+KROC_BUILD_ROOT=$PWD
+export KROC_BUILD_ROOT
+
 AC_CONFIG_SUBDIRS(tools/ilibr)
 AC_CONFIG_SUBDIRS(tools/kroc)
 AC_CONFIG_SUBDIRS(tools/mkoccdeps)
@@ -16,8 +23,8 @@ AC_CONFIG_SUBDIRS(tools/tranx86)
 #AC_CONFIG_SUBDIRS(tools/tinyswig)
 
 AC_CONFIG_SUBDIRS(runtime/ccsp)
+AC_CONFIG_SUBDIRS(runtime/libkrocif)
 
-#AC_CONFIG_SUBDIRS(runtime/libkrocif)
 #AC_CONFIG_SUBDIRS(runtime/libtvm)
 
 #AC_CONFIG_SUBDIRS(tvm/posix)
