@@ -772,8 +772,13 @@ if [ "X$OCSEARCH" != "X" ]; then
 fi
 
 ocsearch=
-oclibpath="@CCSP_KROC_LIBPATH@"
-cincludepath="@CCSP_KROC_CINCPATH@"
+if [ "$intree" = "" ]; then
+  oclibpath="-L$kroc_archlibdir"
+  cincludepath="-I$kroc_archincdir"
+else
+  oclibpath="@KROC_CCSP_LIBPATH@"
+  cincludepath="@KROC_CCSP_CINCPATH@"
+fi
 
 #}}}
 #{{{  use "ocspath" to add entries to "oclibpath", "ocsearch" and "cincludepath"
