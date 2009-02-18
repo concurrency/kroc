@@ -510,7 +510,7 @@ def main(args):
 		"object", "library=", "program=",
 		"install", "install-examples=", "clean", "cflags",
 		"help", "no-std-libs", "verbose",
-		"toolchain=", "search=",
+		"in-tree=", "toolchain=", "search=",
 		"occ21-opts=", "need=", "include=", "include-after=",
 		"static", "output=",
 		"prefix=", "destdir=", "target-os="
@@ -531,6 +531,7 @@ def main(args):
 	mode = None
 	target = None
 	output = None
+	in_tree = None
 	toolchain = None
 	global std_libs, verbose, search_path, occ21_opts, linker_opts, needs
 	global includes_before, includes_after, static_link
@@ -547,6 +548,8 @@ def main(args):
 			sys.exit(0)
 		elif o in ("-v", "--verbose"):
 			verbose = True
+		elif o == "--in-tree":
+			in_tree = a
 		elif o == "--toolchain":
 			if toolchain is not None:
 				die("Multiple toolchains specified")
@@ -593,11 +596,17 @@ def main(args):
 	if toolchain is None:
 		toolchain = toolchains["kroc"]()
 
+	if in_tree is not None:
+		programs["kroc"][0] = in_tree + "/tools/kroc/kroc"
+		programs["kroc"] = [programs["kroc"][0], "--in-tree", in_tree] + programs["kroc"][1:]
+		programs["ilibr"][0] = in_tree + "/tools/ilibr/ilibr"
+		programs["skroc"][0] = in_tree + "/tools/skroc/skroc"
+
 	for dir in search_path:
 		programs["cc"] += ["-L" + dir]
 		programs["kroc"] += ["-I" + dir, "-L" + dir]
 		programs["skroc"] += ["-L", dir]
-	
+
 	global patterns, build_shared
 	patterns = {
 		"libname": "occam_%s",
