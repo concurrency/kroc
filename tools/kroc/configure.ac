@@ -10,7 +10,14 @@ AC_PREREQ(2.12)
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE(kroc,1.5.0-pre4)
 
-KROC_CCSP_FLAGS
+dnl Checks for programs.
+AC_PROG_CC
+AC_CHECK_PROGS(SED, gnused gsed sed)
+
+OCCAM_TOOLCHAIN
+if test $OCCBUILD_TOOLCHAIN = kroc; then
+  KROC_CCSP_FLAGS
+fi
 
 KROC_CANONICAL_TARGET=$target
 AC_SUBST(KROC_CANONICAL_TARGET)
@@ -19,16 +26,8 @@ AC_SUBST(KROC_HOST_OS)
 KROC_HOST_CPU=$host_cpu
 AC_SUBST(KROC_HOST_CPU)
 
-dnl Checks for programs.
-
-AC_PROG_CC
-
-dnl Checks for libraries.
-
 dnl check for the dynamic linker (just so we can report it in KRoC really)
 AC_CHECK_TOOL(LD,ld)
-
-AC_CHECK_PROGS(SED, gnused gsed sed)
 
 AC_ARG_ENABLE([user-install], AS_HELP_STRING([--enable-user-install], [install configuration file(s) as dotfiles]), [enable_user_install=$enableval], [enable_user_install=no])
 

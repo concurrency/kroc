@@ -46,9 +46,24 @@ else
 fi
 ])dnl
 dnl
+dnl Determine the toolchain we're using (based on configure arguments), and set
+dnl OCCBUILD_TOOLCHAIN.
+AC_DEFUN([OCCAM_TOOLCHAIN],
+[dnl
+OCCBUILD_TOOLCHAIN=kroc
+AC_ARG_WITH([toolchain],
+            AS_HELP_STRING([--with-toolchain=ENV],
+                           [select occam toolchain to use (kroc, tvm; default kroc)]),
+            [OCCBUILD_TOOLCHAIN="$withval"])
+AM_CONDITIONAL(OCCBUILD_KROC, test "x$OCCBUILD_TOOLCHAIN" = "xkroc")
+AM_CONDITIONAL(OCCBUILD_TVM, test "x$OCCBUILD_TOOLCHAIN" = "xtvm")
+])dnl
+dnl
+dnl Find occbuild.
 AC_DEFUN([OCCAM_OCCBUILD],
 [dnl
 AC_REQUIRE([OCCAM_IN_TREE])
+AC_REQUIRE([OCCAM_TOOLCHAIN])
 AC_ARG_VAR(OCCBUILD, [Path to occbuild])
 if test "x$KROC_BUILD_ROOT" != "x"; then
   OCCBUILD="$KROC_BUILD_ROOT/tools/kroc/occbuild --in-tree $KROC_BUILD_ROOT"
@@ -59,13 +74,6 @@ else
   fi
 fi
 dnl
-OCCBUILD_TOOLCHAIN=kroc
-AC_ARG_WITH([toolchain],
-            AS_HELP_STRING([--with-toolchain=ENV],
-                           [select occam toolchain to use (kroc, tvm; default kroc)]),
-            [OCCBUILD_TOOLCHAIN="$withval"])
-AM_CONDITIONAL(OCCBUILD_KROC, test "x$OCCBUILD_TOOLCHAIN" = "xkroc")
-AM_CONDITIONAL(OCCBUILD_TVM, test "x$OCCBUILD_TOOLCHAIN" = "xtvm")
 OCCBUILD="$OCCBUILD --toolchain=$OCCBUILD_TOOLCHAIN"
 dnl
 if test "x$KROC_BUILD_ROOT" != "x"; then
