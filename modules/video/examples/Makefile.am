@@ -9,9 +9,11 @@ EXTRA_DIST = \
 	fastvid.occ \
 	vidgrab.occ
 
+if BUILD_VIDEO_EXAMPLES
 examples = \
 	fastvid \
 	vidgrab
+endif
 
 all-local: $(examples)
 

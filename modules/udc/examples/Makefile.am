@@ -15,6 +15,7 @@ EXTRA_DIST = \
 	softalt.occ \
 	softalt2.occ
 
+if BUILD_UDC_EXAMPLES
 examples = \
 	buffered \
 	commstime \
@@ -22,6 +23,7 @@ examples = \
 	socktest \
 	softalt \
 	softalt2
+endif
 
 all-local: $(examples)
 

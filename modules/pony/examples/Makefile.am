@@ -22,6 +22,7 @@ EXTRA_DIST = \
 	trace.c \
 	trace.inc
 
+if BUILD_PONY_EXAMPLES
 if HAVE_SDLRASTER
 sdlraster_examples = \
 	mandelbauer
@@ -36,6 +37,7 @@ examples = \
 	simpletest \
 	startuptest \
 	$(sdlraster_examples)
+endif
 
 all-local: $(examples)
 
