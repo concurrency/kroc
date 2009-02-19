@@ -27,6 +27,7 @@ EXTRA_DIST = \
 	cift16-c.c cift16.occ \
 	cift17-c.c cift17.occ
 
+if BUILD_CIF_EXAMPLES
 examples = \
 	cif-commstime \
 	cift1 \
@@ -46,6 +47,7 @@ examples = \
 	cift15 \
 	cift16 \
 	cift17
+endif
 
 all-local: $(examples)
 

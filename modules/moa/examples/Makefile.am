@@ -11,11 +11,13 @@ EXTRA_DIST = \
 	test1.occ \
 	test2.occ
 
+if BUILD_MOA_EXAMPLES
 examples = \
 	mysqlclient \
 	simple \
 	test1 \
 	test2
+endif
 
 all-local: $(examples)
 
