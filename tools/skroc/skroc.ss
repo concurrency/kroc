@@ -827,7 +827,7 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
 	;; Append in-tree search directories to the search path.
 	(map
 	  (lambda (dir) (append-parameter 'library-paths (format "~a/~a" in-tree dir)))
-	  '("modules/inmoslibs/forall" "tvm/posix"))
+	  '("modules/inmoslibs/libsrc/forall" "tvm/posix"))
 	]
       [else
 	;; Tack the library directory onto the end of the search path, so that
