@@ -28,21 +28,7 @@ dnl Checks for libraries.
 dnl check for the dynamic linker (just so we can report it in KRoC really)
 AC_CHECK_TOOL(LD,ld)
 
-dnl we need a GNU flavoured sed for the kroc script
-AC_CHECK_PROG(HAVE_GNUSED,gnused,yes,no)
-AC_CHECK_PROG(HAVE_GSED,gsed,yes,no)
-AC_CHECK_PROG(HAVE_SED,sed,yes,no)
-
-if test "$HAVE_GNUSED" = yes; then
- SED=gnused
-else
- if test "$HAVE_GSED" = yes; then
-  SED=gsed
- else
-  SED=sed
- fi
-fi
-AC_SUBST(SED)
+AC_CHECK_PROGS(SED, gnused gsed sed)
 
 AC_ARG_ENABLE([user-install], AS_HELP_STRING([--enable-user-install], [install configuration file(s) as dotfiles]), [enable_user_install=$enableval], [enable_user_install=no])
 
