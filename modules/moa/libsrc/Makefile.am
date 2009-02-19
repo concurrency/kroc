@@ -12,12 +12,15 @@ EXTRA_DIST = \
 	mysql.occ \
 	mysql_connector.c
 
+if BUILD_MOA
 moa_lib_objs = \
 	mysql.tce \
 	mysql_connector.o
 
 moa_libs = moa.lib
 moa_includes = moa.inc
+endif
+
 libs = $(moa_libs)
 includes = $(moa_includes)
 

@@ -10,9 +10,11 @@ EXTRA_DIST = \
 	cif.h \
 	cif.inc
 
+if BUILD_CIF
 libs = cif.lib
 includes = cif.inc
 cincludes = cif.h
+endif
 
 all-local: $(libs) $(includes)
 

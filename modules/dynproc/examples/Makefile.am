@@ -23,6 +23,7 @@ EXTRA_DIST = \
 	testpump.occ \
 	testsuspend.occ
 
+if BUILD_DYNPROC_EXAMPLES
 examples = \
 	primes \
 	testdyn \
@@ -38,6 +39,7 @@ dynprocs = \
 	sort_pump.so \
 	suspendable.so \
 	crashlib.so
+endif
 endif
 
 all-local: $(examples) $(dynprocs)

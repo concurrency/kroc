@@ -45,6 +45,7 @@ EXTRA_DIST = \
 	q7-richard-1.tce \
 	q7-richard-2.tce
 
+if BUILD_COURSE_ANSWERS
 examples = \
 	q1 \
 	q2 \
@@ -61,6 +62,7 @@ examples = \
 	q7-jonathan2 \
 	q7-nick \
 	q7-richard
+endif
 
 all-local: $(examples)
 
