@@ -597,10 +597,9 @@ def main(args):
 		toolchain = toolchains["kroc"]()
 
 	if in_tree is not None:
-		programs["kroc"][0] = in_tree + "/tools/kroc/kroc"
-		programs["kroc"] = [programs["kroc"][0], "--in-tree", in_tree] + programs["kroc"][1:]
+		programs["kroc"] = [in_tree + "/tools/kroc/kroc", "--in-tree", in_tree] + programs["kroc"][1:]
 		programs["ilibr"][0] = in_tree + "/tools/ilibr/ilibr"
-		programs["skroc"][0] = in_tree + "/tools/skroc/skroc"
+		programs["skroc"] = [in_tree + "/tools/skroc/skroc", "--in-tree", in_tree] + programs["skroc"][1:]
 
 	for dir in search_path:
 		programs["cc"] += ["-L" + dir]

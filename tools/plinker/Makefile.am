@@ -1,5 +1,6 @@
 
-AUTOMAKE_OPTIONS=foreign no-dependencies
+AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../m4
 
 PERL = perl
 SOURCES = \

@@ -5,25 +5,31 @@
 AC_INIT([kroc], [1.5.0-pre4], [kroc-bugs@kent.ac.uk])
 AM_INIT_AUTOMAKE([-Wall foreign])
 
-AC_CONFIG_SUBDIRS(runtime/ccsp)
+OCCAM_TOOLCHAIN
 
 AC_CONFIG_SUBDIRS(tools/ilibr)
 AC_CONFIG_SUBDIRS(tools/kroc)
 AC_CONFIG_SUBDIRS(tools/mkoccdeps)
 AC_CONFIG_SUBDIRS(tools/occ21)
 AC_CONFIG_SUBDIRS(tools/occamdoc)
-AC_CONFIG_SUBDIRS(tools/tranx86)
 
-#AC_CONFIG_SUBDIRS(tools/plinker)
-#AC_CONFIG_SUBDIRS(tools/skroc)
-#AC_CONFIG_SUBDIRS(tools/slinker)
-#AC_CONFIG_SUBDIRS(tools/tinyswig)
+if test $OCCBUILD_TOOLCHAIN = kroc; then
+  AC_CONFIG_SUBDIRS(runtime/ccsp)
 
-AC_CONFIG_SUBDIRS(runtime/libkrocif)
+  AC_CONFIG_SUBDIRS(tools/tranx86)
 
-#AC_CONFIG_SUBDIRS(runtime/libtvm)
+  AC_CONFIG_SUBDIRS(runtime/libkrocif)
+fi
 
-#AC_CONFIG_SUBDIRS(tvm/posix)
+if test $OCCBUILD_TOOLCHAIN = tvm; then
+  AC_CONFIG_SUBDIRS(tools/plinker)
+  AC_CONFIG_SUBDIRS(tools/skroc)
+  AC_CONFIG_SUBDIRS(tools/slinker)
+  AC_CONFIG_SUBDIRS(tools/tinyswig)
+
+  AC_CONFIG_SUBDIRS(runtime/libtvm)
+  AC_CONFIG_SUBDIRS(tvm/posix)
+fi
 
 # The modules must be built in dependency order.
 AC_CONFIG_SUBDIRS(modules/inmoslibs/libsrc)

@@ -2,7 +2,7 @@
 
 @SET_MAKE@
 
-AUTOMAKE_OPTIONS=foreign no-dependencies
+AUTOMAKE_OPTIONS = foreign no-dependencies
 ACLOCAL_AMFLAGS = -I ../../m4
 
 EXTRA_DIST = \
@@ -12,19 +12,31 @@ EXTRA_DIST = \
 	kmakemodule.in \
 	occbuild.in
 
-generated_scripts = \
+if OCCBUILD_KROC
+kroc_generated_scripts = \
 	kmakemodule \
-	kroc-setup.csh \
-	kroc-setup.sh \
-	kroc \
-	occbuild
-bin_SCRIPTS = \
-	$(generated_scripts) \
+	kroc
+
+kroc_scripts = \
 	kmakef
 
-dist_man1_MANS = \
+kroc_mans = \
 	kmakef.1 \
 	kroc.1
+endif
+
+generated_scripts = \
+	$(kroc_generated_scripts) \
+	kroc-setup.csh \
+	kroc-setup.sh \
+	occbuild
+
+bin_SCRIPTS = \
+	$(generated_scripts) \
+	$(kroc_scripts)
+
+dist_man1_MANS = \
+	$(kroc_mans)
 
 CLEANFILES = $(generated_scripts)
 
