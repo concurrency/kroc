@@ -19,8 +19,10 @@
 
 -- debugging..
 #UNDEF DEBUG
+#IF DEFINED (DEBUG)
 #PRAGMA EXTERNAL "PROC C.out.stderr (VAL []BYTE str) = 0"
 #PRAGMA EXTERNAL "PROC C.out.stderr.int (VAL INT n) = 0"
+#ENDIF
 
 #DEFINE VERSION "0.3"
 
