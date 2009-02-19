@@ -32,6 +32,11 @@ KROC_CCSP_LDFLAGS=""
 KROC_CCSP_LIBPATH=""
 KROC_CCSP_LIBS=""
 
+KROC_CCSP_ENABLE_PTHREADS=""
+KROC_CCSP_ENABLE_CTTD=""
+KROC_CCSP_ENABLE_PONY=""
+KROC_CCSP_ENABLE_MP=""
+
 if test "x$KROC_BUILD_ROOT" != "x"; then
   # We're configuring inside the KRoC source tree; we need to figure out the
   # flags based on the target and configure options.
@@ -39,19 +44,23 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   AC_ARG_ENABLE([pthreads],
                 AS_HELP_STRING([--enable-pthreads],
                                [enable pthreads support (default disabled)]),
-                enable_pthreads=$enableval, enable_pthreads=no)
+                KROC_CCSP_ENABLE_PTHREADS=$enableval,
+                KROC_CCSP_ENABLE_PTHREADS=no)
   AC_ARG_ENABLE([cttd],
                 AS_HELP_STRING([--enable-cttd],
                                [enable CHAN TYPE type description support (default disabled)]),
-                enable_cttd=$enableval, enable_cttd=no)
+                KROC_CCSP_ENABLE_CTTD=$enableval,
+                KROC_CCSP_ENABLE_CTTD=no)
   AC_ARG_ENABLE([pony],
                 AS_HELP_STRING([--enable-pony],
                                [enable pony transparent networking (default disabled)]),
-                enable_pony=$enableval, enable_pony=no)
+                KROC_CCSP_ENABLE_PONY=$enableval,
+                KROC_CCSP_ENABLE_PONY=no)
   AC_ARG_ENABLE([mp],
                 AS_HELP_STRING([--enable-mp],
                                [enable multiprocessor support (default disabled)]),
-                enable_mp=$enableval, enable_mp=no)
+                KROC_CCSP_ENABLE_MP=$enableval,
+                KROC_CCSP_ENABLE_MP=no)
 
   KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -fomit-frame-pointer -fno-defer-pop"
 
@@ -101,7 +110,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   CFLAGS="$SAVED_CFLAGS"
 
   AC_MSG_CHECKING([whether to use POSIX threads])
-  if test $enable_pthreads = yes; then
+  if test $KROC_CCSP_ENABLE_PTHREADS = yes; then
     if test $have_libpthread = yes; then
       AC_MSG_RESULT(yes)
       KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -DKROC_USES_PTHREADS"
@@ -121,7 +130,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   fi
 
   AC_MSG_CHECKING([whether to enable multiprocessor support])
-  if test $enable_mp = yes; then
+  if test $KROC_CCSP_ENABLE_MP = yes; then
     AC_MSG_RESULT(yes)
     KROC_CCSP_TRANFLAGS="$KROC_CCSP_TRANFLAGS -mp"
   else
@@ -129,12 +138,12 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   fi
 
   AC_MSG_CHECKING([what level of CHAN TYPE type descriptions to support])
-  if test $enable_pony = yes; then
+  if test $KROC_CCSP_ENABLE_PONY = yes; then
     AC_MSG_RESULT(pony)
     KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -DCHANTYPEDESC -DCHANTYPEUIO -DCHANTYPESTATE"
     KROC_CCSP_OCCFLAGS="$KROC_CCSP_OCCFLAGS -zctt -zctuio -zctknsf"
     KROC_CCSP_TRANFLAGS="$KROC_CCSP_TRANFLAGS --cttd"
-  elif test $enable_cttd = yes; then
+  elif test $KROC_CCSP_ENABLE_CTTD = yes; then
     AC_MSG_RESULT(cttd)
     KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -DCHANTYPEDESC"
     KROC_CCSP_OCCFLAGS="$KROC_CCSP_OCCFLAGS -zctt"

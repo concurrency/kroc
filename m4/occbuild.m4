@@ -160,7 +160,10 @@ dnl By default, the dependencies of FILES will be recorded as any files you've
 dnl checked for using OCCAM_INCLUDE already; if the dependencies are different,
 dnl pass them as DEPENDENCIES. You can pass "none" as DEPENDENCIES to force the
 dnl modules to have no dependencies.
-dnl OCCAM_PROVIDE(FILES, [SUBDIRECTORY], [DEPENDENCIES])
+dnl If the module may only be built sometimes (e.g. if it depends on external
+dnl libraries that may not be present on some systems), provide a shell command
+dnl as CONDITION that can be used as an "if" test.
+dnl OCCAM_PROVIDE(FILES, [SUBDIRECTORY], [DEPENDENCIES], [CONDITION])
 AC_DEFUN([OCCAM_PROVIDE],
 [dnl
 AC_REQUIRE([OCCAM_IN_TREE])
@@ -178,9 +181,14 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   else
     deps="$3"
   fi
+  if test "x$4" = "x"; then
+    condition=true
+  else
+    condition="$4"
+  fi
   touch $KROC_BUILD_ROOT/in-tree-modules
   for file in $1; do
-    (grep -v "^$file " $KROC_BUILD_ROOT/in-tree-modules; echo "$file $dir $deps") | sort >$KROC_BUILD_ROOT/in-tree-modules.new
+    (grep -v "^$file " $KROC_BUILD_ROOT/in-tree-modules; if $condition; then echo "$file $dir $deps"; fi) | sort >$KROC_BUILD_ROOT/in-tree-modules.new
     mv -f $KROC_BUILD_ROOT/in-tree-modules.new $KROC_BUILD_ROOT/in-tree-modules
   done
 fi

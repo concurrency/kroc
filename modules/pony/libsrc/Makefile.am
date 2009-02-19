@@ -28,6 +28,7 @@ EXTRA_DIST = \
 	ponylib.occ \
 	ponylibtcpip.inc
 
+if BUILD_PONY
 pony_lib_objs = \
 	ponyint1.tce \
 	ponyint2.tce \
@@ -45,7 +46,21 @@ ponyanstcpip_objs = \
 	ponyinttcpipsock.tce \
 	ponyinttcpipsockc.o
 
-all-local: pony.lib ponyanstcpip
+pony_libs = pony.lib
+pony_includes = \
+	ponyint.inc \
+	ponyintcif.inc \
+	ponyinttcpip.inc \
+	ponylib.inc \
+	ponylibtcpip.inc
+pony_tools = ponyanstcpip
+endif
+
+libs = $(pony_libs)
+includes = $(pony_includes)
+tools = $(pony_tools)
+
+all-local: $(libs) $(includes) $(tools)
 
 pony.lib: $(pony_lib_objs)
 	$(OCCBUILD) --library pony.lib --need sock --need file --need proc --need cif --include ponylib.inc --include ponylibtcpip.inc --include ponyint.inc --include ponyinttcpip.inc $(pony_lib_objs)
@@ -53,11 +68,11 @@ pony.lib: $(pony_lib_objs)
 ponyanstcpip: ponyanstcpip.occ $(ponyanstcpip_objs)
 	$(OCCBUILD) --program ponyanstcpip.occ $(ponyanstcpip_objs)
 
-install-exec-local: pony.lib ponylib.inc ponylibtcpip.inc ponyanstcpip
-	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" pony.lib ponylib.inc ponylibtcpip.inc ponyint.inc ponyinttcpip.inc ponyanstcpip
+install-exec-local: $(libs) $(includes) $(tools)
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes) $(tools)
 
 clean-local:
-	$(OCCBUILD) --clean pony.lib $(pony_lib_objs) ponyanstcpip $(ponyanstcpip_objs)
+	$(OCCBUILD) --clean $(libs) $(pony_lib_objs) $(tools) $(ponyanstcpip_objs)
 
 SUFFIXES = .occ .tce .lib
 
