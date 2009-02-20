@@ -11,35 +11,30 @@
 --      v                                v                                  |          |
 --  +-------+             +-------+  +-------+  +-------+    +-------+  +-------+      |
 --  |       |             |       |  |       |  |       |    |       |  |       |      |
---  | SDL   |------------>| scene |->| head  |->| drone |..>.| drone |->| tail  |------+
+--  | SDL   |------------>| scene |->| front |->| drone |..>.| drone |->| back  |------+
 --  | Raster|             |       |  |       |  |       |    |       |  |       |
 --  +-------+             +-------+  +-------+  +-------+    +-------+  +-------+
---    |   ^                                       ^   |        ^   |
---    |   |                                       |   |        |   |
---    |   |                                       |   v        |   v
---    |   |    +-------+                        +-------+    +-------+
---    |   +----|       |                        |       |    |       |
+--    |   ^                              ^        ^   |        ^   |
+--    |   |                              |        |   |        |   |
+--    |   |                              |        |   v        |   v
+--    |   |    +-------+                 |      +-------+    +-------+
+--    |   +----|       |------->---------+      |       |    |       |
 --    |        | event |----------->----------->|manual |    | auto  |
 --    +------>-|       |                        |       |    |       |
 --             +-------+                        +-------+    +-------+
 --  ]
 
---  To do:
---  * Scale angles etc. to reduce quantization errors
---  * More/different commands for Manual driver
---  * Different Auto algorithms
-
 --  Tweaked by Fred Barnes 2008, Joystick support.
 --  Incorporated various updates from Peter Welch (2008), 2009.
+
 
 #INCLUDE "course.module"
 #INCLUDE "sdlraster.module"
 #INCLUDE "occSDL.module"
 #INCLUDE "rastergraphics.module"
 #INCLUDE "rasterio.module"
+#INCLUDE "maths.module"
 
-#INCLUDE "graphics.inc"
-#INCLUDE "hit.inc"
 
 --*{{{  BUTTON Mouse buttons.
 
@@ -51,7 +46,7 @@ VAL INT BUTTON.BACKWARD IS 5:
 
 --*}}}
 
-VAL INT N.ROBOTS          IS   32:                --* Default number of robots.
+VAL INT N.ROBOTS          IS   64:                --* Default number of robots.
 
 VAL INT BACKGROUND        IS COLOUR.BLACK:        --* Default background colour.
 VAL INT FOREGROUND        IS COLOUR.WHITE:        --* Default foreground colour.
@@ -62,14 +57,12 @@ VAL INT N.RASTERS         IS    3:                --* Number of rasters.
 
 VAL INT MID.RAY           IS   16:                --* index of middle ray.
 VAL INT N.RAYS            IS (MID.RAY * 2) + 1:   --* number of rays.
-VAL ANGLE SCAN            IS 110 * ANGLE.DEGREE:  --* laser scan sweep.
+VAL ANGLE SCAN            IS 120 * ANGLE.DEGREE:  --* laser scan sweep.
 
 VAL INT DEFAULT.RANGE     IS  256:                --* Range of laser/radar/sonar.
 VAL INT DEFAULT.RADIUS    IS    6:                --* Size of robot.
 
 DATA TYPE RANGES IS MOBILE []INT:                 --* Array of ranges.
-
-#INCLUDE "fan.inc"
 
 --* Information returned from drone
 PROTOCOL LASER IS RANGES:               --* Range measurements.
@@ -1099,7 +1092,7 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
     laser.range := DEFAULT.RANGE
     robot.radius := DEFAULT.RADIUS
 
-    mixed := TRUE
+    mixed := FALSE
     version := 1
 
     place.robots (s, raster.width, raster.height, robot.radius, mixed)
