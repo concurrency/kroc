@@ -33,9 +33,10 @@ KROC_CCSP_LIBPATH=""
 KROC_CCSP_LIBS=""
 
 KROC_CCSP_ENABLE_PTHREADS=""
+KROC_CCSP_ENABLE_MP=""
 KROC_CCSP_ENABLE_CTTD=""
 KROC_CCSP_ENABLE_PONY=""
-KROC_CCSP_ENABLE_MP=""
+KROC_CCSP_ENABLE_DYNPROC=""
 
 if test "x$KROC_BUILD_ROOT" != "x"; then
   # We're configuring inside the KRoC source tree; we need to figure out the
@@ -46,6 +47,11 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
                                [enable pthreads support (default enabled)]),
                 KROC_CCSP_ENABLE_PTHREADS=$enableval,
                 KROC_CCSP_ENABLE_PTHREADS=yes)
+  AC_ARG_ENABLE([mp],
+                AS_HELP_STRING([--enable-mp],
+                               [enable multiprocessor support (default disabled)]),
+                KROC_CCSP_ENABLE_MP=$enableval,
+                KROC_CCSP_ENABLE_MP=no)
   AC_ARG_ENABLE([cttd],
                 AS_HELP_STRING([--enable-cttd],
                                [enable CHAN TYPE type description support (default disabled)]),
@@ -56,11 +62,11 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
                                [enable pony transparent networking (default disabled)]),
                 KROC_CCSP_ENABLE_PONY=$enableval,
                 KROC_CCSP_ENABLE_PONY=no)
-  AC_ARG_ENABLE([mp],
-                AS_HELP_STRING([--enable-mp],
-                               [enable multiprocessor support (default disabled)]),
-                KROC_CCSP_ENABLE_MP=$enableval,
-                KROC_CCSP_ENABLE_MP=no)
+  AC_ARG_ENABLE([dynproc],
+                AS_HELP_STRING([--enable-dynproc],
+                               [enable dynamic process loading (default enabled)]),
+                KROC_CCSP_ENABLE_DYNPROC=$enableval,
+                KROC_CCSP_ENABLE_DYNPROC=yes)
 
   KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -fomit-frame-pointer -fno-defer-pop"
 
@@ -78,6 +84,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
       KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -DHOSTOS_CYGWIN"
       ;;
     darwin*)
+      # Disable automatic PIC usage on Apple's GCC.
       KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -DHOSTOS_DARWIN -mdynamic-no-pic"
       ;;
   esac
@@ -90,6 +97,8 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   AC_CHECK_LIB(dl, dlsym, have_libdl=yes, have_libdl=no)
   if test $have_libdl = yes; then
     KROC_CCSP_LIBS="$KROC_CCSP_LIBS -ldl"
+  else
+    KROC_CCSP_ENABLE_DYNPROC=no
   fi
 
   AC_CHECK_LIB(elf, elf_begin, have_libelf=yes, have_libelf=no)
@@ -129,6 +138,15 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
     AC_MSG_RESULT(no)
   fi
 
+  # For multiprocessor support, we must have either pthreads or RMoX.
+  if test $KROC_CCSP_ENABLE_PTHREADS = yes; then
+    :
+  elif test $KROC_CCSP_ENABLE_RMOX = yes; then
+    :
+  else
+    KROC_CCSP_ENABLE_MP=no
+  fi
+
   AC_MSG_CHECKING([whether to enable multiprocessor support])
   if test $KROC_CCSP_ENABLE_MP = yes; then
     AC_MSG_RESULT(yes)
@@ -151,6 +169,9 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   else
     AC_MSG_RESULT(none)
   fi
+
+  AC_MSG_CHECKING([whether to enable dynamic process loading])
+  AC_MSG_RESULT($KROC_CCSP_ENABLE_DYNPROC)
 
 else
   # We're not in the KRoC source tree, so we can just call kroc to get the

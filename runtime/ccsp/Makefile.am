@@ -9,7 +9,8 @@
 
 @SET_MAKE@
 
-AUTOMAKE_OPTIONS=foreign
+AUTOMAKE_OPTIONS = foreign
+ACLOCAL_AMFLAGS = -I ../../m4
 
 SUBDIRS = include utils common kernel
 EXTRALDFLAGS=@EXTRA_LDFLAGS@
