@@ -43,7 +43,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
 
   AC_ARG_ENABLE([pthreads],
                 AS_HELP_STRING([--enable-pthreads],
-                               [enable pthreads support (default disabled)]),
+                               [enable pthreads support (default enabled)]),
                 KROC_CCSP_ENABLE_PTHREADS=$enableval,
                 KROC_CCSP_ENABLE_PTHREADS=yes)
   AC_ARG_ENABLE([cttd],
