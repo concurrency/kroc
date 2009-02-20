@@ -23,8 +23,7 @@
 /*#define DEBUG*/
 
 /*{{{  parameter block structure */
-typedef struct
-  {
+typedef struct {
   int language;
   const char *sourcefilename;
   const char *pathname;
@@ -43,21 +42,22 @@ typedef struct
   BOOL warn_on_all_errors;
   BOOL read_all_libs;
   BOOL hash_version_string;
-  BOOL visible_tags;       /* whether to make PROTOCOL tags visible */
+  BOOL visible_tags;		/* whether to make PROTOCOL tags visible */
   BOOL suppress_compat;
-  const BOOL *checkalias; /* This can be modified while parsing by #OPTION */
-  const BOOL *checkusage; /* This can be modified while parsing by #OPTION */
-  const BOOL *formalmodel; /* This can be modified while parsing by #OPTION */
-  BOOL *error_occurred;   /* Set TRUE by the error routine if an error occurs */
+  const BOOL *checkalias;	/* This can be modified while parsing by #OPTION */
+  const BOOL *checkusage;	/* This can be modified while parsing by #OPTION */
+  const BOOL *formalmodel;	/* This can be modified while parsing by #OPTION */
+  const BOOL *fm_collct;	/* This can be modified while parsing by #OPTION */
+  BOOL *error_occurred;		/* Set TRUE by the error routine if an error occurs */
   int (*process_option)(const char *s, int len, void (*error_fn)(int));
-  const int *guyinserts; /* it's a pointer cos #OPTION can change it */
-  BOOL noguy_yesasm;     /* GUY is obsolete - use ASM */
+  const int *guyinserts;	/* it's a pointer cos #OPTION can change it */
+  BOOL noguy_yesasm;		/* GUY is obsolete - use ASM */
   void (*process_filename_fn)(char *s, int maxlen);
   void (*cleanup_after_error)(void);
   void (*abort_fn)(void);
-  } occam_parms_t;
-/*}}}*/
+} occam_parms_t;
 
+/*}}}*/
 /*{{{  routines */
 /*{{{  main routines */
 treenode *occam_compiler_frontend(const occam_parms_t *occam_parms);

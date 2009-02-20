@@ -101,6 +101,7 @@ typedef struct
     BOOL               fe_checkalias;    /* TRUE if we want to alias check the source */
     BOOL               fe_checkusage;    /* TRUE if we want to usage check the source */
     BOOL               fe_formalmodel;   /* TRUE if we want to formal model check/generate the source */
+    BOOL               fe_fm_collct;     /* if TRUE, collapse CHAN TYPE PROTOCOLs into single types */
     BOOL               fe_debuguse;      /* TRUE if we want to display usage check diagnostics */
     BOOL               fe_rangechecking; /* TRUE if range checking is required */
     BOOL               fe_disable_rangechecking_in_branches; /* TRUE when configurer/ndlrdr want to disable
