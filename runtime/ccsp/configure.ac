@@ -46,7 +46,7 @@ dnl AC_ARG_ENABLE([ktraces], AS_HELP_STRING([--enable-ktraces],[enable kernel-en
 dnl AC_ARG_ENABLE([dtraces], AS_HELP_STRING([--enable-dtraces],[enable debugging traces (default disabled)]), [enable_dtraces=$enableval], [enable_dtraces=no])
 AC_ARG_ENABLE([dynproc], AS_HELP_STRING([--disable-dynproc],[disable dynamic processes (default enabled)]), [enable_dynproc=$enableval], [enable_dynproc=yes])
 AC_ARG_ENABLE([debug-dynproc], AS_HELP_STRING([--enable-debug-dynproc],[enable dynamic process debugging (default disabled)]), [enable_debug_dynproc=$enableval], [enable_debug_dynproc=no])
-AC_ARG_ENABLE([pthreads], AS_HELP_STRING([--enable-pthreads],[use pthreads library for blocking syscalls (default disabled)]), [enable_pthreads=$enableval], [enable_pthreads=no])
+AC_ARG_ENABLE([pthreads], AS_HELP_STRING([--enable-pthreads],[use pthreads library for blocking syscalls (default enabled)]), [enable_pthreads=$enableval], [enable_pthreads=yes])
 AC_ARG_ENABLE([mmap], AS_HELP_STRING([--disable-mmap],[disable mmap() based allocation (default enabled)]), [enable_mmap=$enableval], [enable_mmap=yes])
 AC_ARG_ENABLE([mp], AS_HELP_STRING([--enable-mp],[enable multi-processor support (default disabled)]), [enable_mp=$enableval], [enable_mp=no])
 AC_ARG_ENABLE([tls], AS_HELP_STRING([--enable-tls],[use thread-local-storage for scheduler pointer]), [enable_tls=$enableval], [enable_tls=yes])
