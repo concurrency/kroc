@@ -1338,7 +1338,7 @@ printtreenl (stderr, 1, proto);
 		slen = strlen (str);
 		if (donumber) {
 			/* number this event globally */
-			sprintf (str + slen, "%d", event_counter++);
+			sprintf (str + slen, "__%d", event_counter++);
 		}
 		pnode->u.fmevent.name = str;
 		pnode->u.fmevent.node = var;
@@ -1373,7 +1373,7 @@ printtreenl (stderr, 1, proto);
 		slen = strlen (str);
 		if (donumber) {
 			/* number this event globally */
-			sprintf (str + slen, "%d", event_counter++);
+			sprintf (str + slen, "__%d", event_counter++);
 		}
 		esnode->u.fmevset.name = str;
 		esnode->u.fmevset.node = var;
@@ -1423,7 +1423,7 @@ printtreenl (stderr, 1, dname);
 						slen = strlen (str);
 						if (donumber) {
 							/* number event globally (will be event_counter-1) */
-							slen += sprintf (str + slen, "%d", event_counter-1);
+							slen += sprintf (str + slen, "__%d", event_counter-1);
 						}
 						str[slen] = '_';
 						slen++;
@@ -1469,7 +1469,7 @@ printtreenl (stderr, 1, dname);
 			slen = strlen (str);
 			if (donumber) {
 				/* number event globally (will be event_counter-1) */
-				slen += sprintf (str + slen, "%d", event_counter-1);
+				slen += sprintf (str + slen, "__%d", event_counter-1);
 			}
 			sprintf (str + slen, "_Claim");
 			cln->u.fmevent.name = str;
@@ -1481,7 +1481,7 @@ printtreenl (stderr, 1, dname);
 			slen = strlen (str);
 			if (donumber) {
 				/* number event globally (will be event_counter-1) */
-				slen += sprintf (str + slen, "%d", event_counter-1);
+				slen += sprintf (str + slen, "__%d", event_counter-1);
 			}
 			sprintf (str + slen, "_Release");
 			rln->u.fmevent.name = str;
@@ -1496,6 +1496,45 @@ printtreenl (stderr, 1, dname);
 		/*}}}*/
 	}
 
+	return NULL;
+}
+/*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_createeventfromevent (fmnode_t *event)*/
+/*
+ *	creates a new event based on the given 'event' event (used when duplicating events in effect)
+ */
+PRIVATE fmnode_t *fmt_createeventfromevent (fmnode_t *event)
+{
+	if (event->type == FM_EVENT) {
+		/*{{{  simple event*/
+		fmnode_t *ev = fmt_newnode (FM_EVENT, event->org);
+		const char *evstr = event->u.fmevent.name;
+		char *str = (char *)memalloc (evstr ? (strlen (evstr) + 16) : 32);
+
+		if (!evstr) {
+			sprintf (str, "anon_%d", event_counter++);
+		} else {
+			sprintf (str, "%s__%d", evstr, event_counter++);
+		}
+		ev->u.fmevent.name = str;
+		ev->u.fmevent.node = event->u.fmevent.node;
+
+		if (event->u.fmevent.typename) {
+			str = (char *)memalloc (strlen (event->u.fmevent.typename) + 2);
+
+			sprintf (str, "%s", event->u.fmevent.typename);
+			ev->u.fmevent.typename = str;
+		}
+		ev->u.fmevent.nodetype = event->u.fmevent.nodetype;
+		ev->u.fmevent.isclaim = event->u.fmevent.isclaim;
+		ev->u.fmevent.isrelease = event->u.fmevent.isrelease;
+		ev->u.fmevent.issimplechan = event->u.fmevent.issimplechan;
+
+		return ev;
+		/*}}}*/
+	} else {
+		fmt_error_internal (NOPOSN, "fmt_createeventfromevent(): not EVENT!\n");
+	}
 	return NULL;
 }
 /*}}}*/
@@ -2547,6 +2586,80 @@ fmt_dumpnode (apar, 1, stderr);
 PRIVATE void fmt_alphabetisepar (fmnode_t *node)
 {
 	fmt_modprewalk (&node, fmt_doalphabetisepar, NULL);
+	return;
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_generatesystem (fmnode_t *node, fnmode_t **sys_fv, fmnode_t **sys_proc)*/
+/*
+ *	generates the top-level SYSTEM_.. declaration for a particular node (for FDR)
+ */
+PRIVATE void fmt_generatesystem (fmnode_t *node, fmnode_t **sys_fv, fmnode_t **sys_proc)
+{
+	fmnode_t *events, *proc, *inst;
+	int i;
+	char *str;
+
+	if (node->type != FM_NAMEDPROC) {
+		fmt_error_internal (NOPOSN, "fmt_generatesystem(): not NAMEDPROC!");
+		return;
+	}
+
+	events = fmt_newnode (FM_GLOBALEVENTS, NULL);
+	proc = fmt_newnode (FM_NAMEDPROC, NULL);
+	inst = fmt_newnode (FM_INSTANCE, NULL);
+
+	inst->u.fminst.pref = node;
+	proc->u.fmproc.body = inst;
+
+	/* do process name */
+	str = (char *)memalloc (strlen (node->u.fmproc.name) + 12);
+	sprintf (str, "SYSTEM_%s", node->u.fmproc.name);
+	proc->u.fmproc.name = str;
+
+	/* run through formal params for PROC and generate channel declarations for checking */
+	for (i=0; i<node->u.fmproc.parms_cur; i++) {
+		fmnode_t *fparam = node->u.fmproc.parms[i];
+		fmnode_t *nparm, *npref;
+
+		switch (fparam->type) {
+		case FM_EVENT:
+			nparm = fmt_createeventfromevent (fparam);
+			npref = fmt_newnode (FM_NODEREF, NULL);
+			npref->u.fmnode.node = nparm;
+
+			fmt_addtonodelist (events, nparm);
+			fmt_addtonodelist (inst, npref);
+			break;
+		default:
+			fmt_error_internal (NOPOSN, "fmt_generatesystem(): not EVENT!");
+			return;
+		}
+	}
+
+	if (!events->u.fmevset.events_cur) {
+		/* no events, so trash this */
+		fmt_freenode (events, 2);
+		events = NULL;
+	}
+
+	if (sys_fv) {
+		*sys_fv = events;
+		events = NULL;
+	} else if (events) {
+		/* don't lose! */
+		fmt_freenode (events, 2);
+		events = NULL;
+	}
+
+	if (sys_proc) {
+		*sys_proc = proc;
+		proc = NULL;
+	} else if (proc) {
+		/* don't lose! */
+		fmt_freenode (proc, 2);
+		proc = NULL;
+	}
+
 	return;
 }
 /*}}}*/
@@ -3766,6 +3879,8 @@ printtreenl (stderr, 1, tag);
 			fmnode_t *fmn = NULL, *fmnproc = NULL;
 			treenode *fparams = NParamListOf (DNameOf (n));
 			treenode *walk;
+			fmnode_t *sys_fv = NULL;
+			fmnode_t *sys_decl = NULL;
 
 #if 0
 fprintf (stderr, "do_formalmodelcheck_tree(): PROC [%s]\n", pname);
@@ -3847,10 +3962,19 @@ fmt_dumpstate (fmstate, stderr);
 			fmt_hoistfixpoints (fmnproc, fmm);
 			fmt_alphabetisepar (fmnproc);
 			fmt_hoisthiddenevents (fmnproc, fmm);
+			fmt_modprewalk (&fmnproc, fmt_simplifynode, NULL);
+			fmt_generatesystem (fmnproc, &sys_fv, &sys_decl);
 
 			SetNFMCheck (DNameOf (n), fmnproc);
 
 			fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)fmnproc);
+
+			if (sys_fv) {
+				fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)sys_fv);
+			}
+			if (sys_decl) {
+				fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)sys_decl);
+			}
 #if 0
 fprintf (stderr, "do_formalmodelcheck_tree(): got formal model:\n");
 fmt_dumpnode (fmnproc, 1, stderr);
