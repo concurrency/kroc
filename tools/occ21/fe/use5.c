@@ -60,7 +60,11 @@ typedef enum ENUM_fmtype { /*{{{*/
 	FM_THEN,		/* list of events followed by a process (fmlist) */
 	FM_EVENT,		/* single event tree reference (fmevent) */
 	FM_EVENTSET,		/* set of events (with tree refererence at top-level for CHAN TYPE records) (fmevset) */
-	FM_INSTANCE		/* instance of something (fminst) */
+	FM_INSTANCE,		/* instance of something (fminst) */
+	FM_PCHAOS,		/* parameterised chaos (fminst) */
+	FM_HIDING,		/* hidden events, also their declarations (fmhide) */
+	FM_APAR,		/* alphabetised parallel, binary (fmapar) */
+	FM_GLOBALEVENTS,	/* list of events pulled to the top-level (fmevset) */
 } fmtype_e;
 
 /*}}}*/
@@ -110,6 +114,7 @@ typedef struct TAG_fmnode { /*{{{*/
 			treenode *nodetype;		/* type of parse-tree node if relevant */
 			int isclaim;			/* true if this is a synthetic CLAIM event */
 			int isrelease;			/* true if this is a synthetic RELEASE event */
+			int issimplechan;		/* true if this is a simple channel (false indicates something complex like a channel-type or barrier) */
 		} fmevent;				/* EVENT */
 		struct {
 			char *name;			/* name of the event */
@@ -124,6 +129,16 @@ typedef struct TAG_fmnode { /*{{{*/
 			struct TAG_fmnode **args;	/* actual parameters */
 			int args_cur, args_max;		/* current, maximum */
 		} fminst;				/* INSTANCE */
+		struct {
+			struct TAG_fmnode **events;	/* various events that are in-scope */
+			int events_cur, events_max;	/* current, maximum */
+			struct TAG_fmnode *proc;	/* process */
+		} fmhide;				/* HIDING */
+		struct {
+			struct TAG_fmnode *lhs, *rhs;	/* left and right processes */
+			struct TAG_fmnode **events;	/* event-references in the union of both */
+			int events_cur, events_max;	/* current, maximum */
+		} fmapar;				/* APAR */
 	} u;
 } fmnode_t;
 
@@ -315,6 +330,7 @@ PRIVATE fmnode_t *fmt_newnode (fmtype_e type, treenode *org)
 		fmn->u.fmlist.items_max = 0;
 		break;
 	case FM_INSTANCE:
+	case FM_PCHAOS:
 		fmn->u.fminst.pref = NULL;
 		fmn->u.fminst.args = NULL;
 		fmn->u.fminst.args_cur = 0;
@@ -354,8 +370,10 @@ PRIVATE fmnode_t *fmt_newnode (fmtype_e type, treenode *org)
 		fmn->u.fmevent.nodetype = NULL;
 		fmn->u.fmevent.isclaim = 0;
 		fmn->u.fmevent.isrelease = 0;
+		fmn->u.fmevent.issimplechan = 0;
 		break;
 	case FM_EVENTSET:
+	case FM_GLOBALEVENTS:
 		fmn->u.fmevset.name = NULL;
 		fmn->u.fmevset.node = NULL;
 		fmn->u.fmevset.typename = NULL;
@@ -376,6 +394,19 @@ PRIVATE fmnode_t *fmt_newnode (fmtype_e type, treenode *org)
 		fmn->u.fmtset.tags = NULL;
 		fmn->u.fmtset.tags_cur = 0;
 		fmn->u.fmtset.tags_max = 0;
+		break;
+	case FM_HIDING:
+		fmn->u.fmhide.events = NULL;
+		fmn->u.fmhide.events_cur = 0;
+		fmn->u.fmhide.events_max = 0;
+		fmn->u.fmhide.proc = NULL;
+		break;
+	case FM_APAR:
+		fmn->u.fmapar.lhs = NULL;
+		fmn->u.fmapar.rhs = NULL;
+		fmn->u.fmapar.events = NULL;
+		fmn->u.fmapar.events_cur = 0;
+		fmn->u.fmapar.events_max = 0;
 		break;
 	default:
 		break;
@@ -470,8 +501,9 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 			}
 			break;
 			/*}}}*/
-			/*{{{  INSTANCE*/
+			/*{{{  INSTANCE,PCHAOS*/
 		case FM_INSTANCE:
+		case FM_PCHAOS:
 			if (deep == 2) {
 				int i;
 
@@ -561,8 +593,9 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 			fmn->u.fmevent.nodetype = NULL;
 			break;
 			/*}}}*/
-			/*{{{  EVENTSET*/
+			/*{{{  EVENTSET, GLOBALEVENTS*/
 		case FM_EVENTSET:
+		case FM_GLOBALEVENTS:
 			if (fmn->u.fmevent.name) {
 				memfree (fmn->u.fmevent.name);
 				fmn->u.fmevent.name = NULL;
@@ -595,6 +628,56 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 		case FM_STOP:
 		case FM_DIV:
 		case FM_CHAOS:
+			break;
+			/*}}}*/
+			/*{{{  HIDING*/
+		case FM_HIDING:
+			if (deep == 2) {
+				int i;
+
+				for (i=0; i<fmn->u.fmhide.events_cur; i++) {
+					if (fmn->u.fmhide.events[i]) {
+						fmt_freenode (fmn->u.fmhide.events[i], deep);
+					}
+				}
+				if (fmn->u.fmhide.proc) {
+					fmt_freenode (fmn->u.fmhide.proc, deep);
+				}
+			}
+			if (fmn->u.fmhide.events) {
+				memfree (fmn->u.fmhide.events);
+				fmn->u.fmhide.events = NULL;
+				fmn->u.fmhide.events_cur = 0;
+				fmn->u.fmhide.events_max = 0;
+			}
+			fmn->u.fmhide.proc = NULL;
+			break;
+			/*}}}*/
+			/*{{{  APAR*/
+		case FM_APAR:
+			if (deep == 2) {
+				int i;
+
+				if (fmn->u.fmapar.lhs) {
+					fmt_freenode (fmn->u.fmapar.lhs, deep);
+				}
+				if (fmn->u.fmapar.rhs) {
+					fmt_freenode (fmn->u.fmapar.rhs, deep);
+				}
+				for (i=0; i<fmn->u.fmapar.events_cur; i++) {
+					if (fmn->u.fmapar.events[i]) {
+						fmt_freenode (fmn->u.fmapar.events[i], deep);
+					}
+				}
+			}
+			fmn->u.fmapar.lhs = NULL;
+			fmn->u.fmapar.rhs = NULL;
+			if (fmn->u.fmapar.events) {
+				memfree (fmn->u.fmapar.events);
+				fmn->u.fmapar.events = NULL;
+				fmn->u.fmapar.events_cur = 0;
+				fmn->u.fmapar.events_max = 0;
+			}
 			break;
 			/*}}}*/
 		default:
@@ -846,12 +929,13 @@ PRIVATE fmnode_t *fmt_copynode (fmnode_t *n)
 		c->u.fmnode.node = n->u.fmnode.node;
 		break;
 		/*}}}*/
-		/*{{{  INSTANCE*/
+		/*{{{  INSTANCE,PCHAOS*/
 	case FM_INSTANCE:
+	case FM_PCHAOS:
 		{
 			int i;
 
-			c = fmt_newnode (FM_INSTANCE, n->org);
+			c = fmt_newnode (n->type, n->org);
 			c->u.fminst.pref = n->u.fminst.pref;
 
 			for (i=0; i<n->u.fminst.args_cur; i++) {
@@ -899,16 +983,24 @@ PRIVATE void fmt_addtonodelist (fmnode_t *listnode, fmnode_t *item)
 		fmt_addtolist ((void ***)&listnode->u.fmlist.items, &listnode->u.fmlist.items_cur, &listnode->u.fmlist.items_max, (void *)item);
 		break;
 	case FM_EVENTSET:
+	case FM_GLOBALEVENTS:
 		fmt_addtolist ((void ***)&listnode->u.fmevset.events, &listnode->u.fmevset.events_cur, &listnode->u.fmevset.events_max, (void *)item);
 		break;
 	case FM_TAGSET:
 		fmt_addtolist ((void ***)&listnode->u.fmtset.tags, &listnode->u.fmtset.tags_cur, &listnode->u.fmtset.tags_max, (void *)item);
 		break;
 	case FM_INSTANCE:
+	case FM_PCHAOS:
 		fmt_addtolist ((void ***)&listnode->u.fminst.args, &listnode->u.fminst.args_cur, &listnode->u.fminst.args_max, (void *)item);
 		break;
 	case FM_NAMEDPROC:
 		fmt_addtolist ((void ***)&listnode->u.fmproc.parms, &listnode->u.fmproc.parms_cur, &listnode->u.fmproc.parms_max, (void *)item);
+		break;
+	case FM_HIDING:
+		fmt_addtolist ((void ***)&listnode->u.fmhide.events, &listnode->u.fmhide.events_cur, &listnode->u.fmhide.events_max, (void *)item);
+		break;
+	case FM_APAR:
+		fmt_addtolist ((void ***)&listnode->u.fmapar.events, &listnode->u.fmapar.events_cur, &listnode->u.fmapar.events_max, (void *)item);
 		break;
 	default:
 		fmt_error_internal (NOPOSN, "fmt_addtonodelist(): not list capable node!");
@@ -935,16 +1027,24 @@ PRIVATE void fmt_delfromnodelist (fmnode_t *listnode, int idx)
 		fmt_delfromlist ((void ***)&listnode->u.fmlist.items, &listnode->u.fmlist.items_cur, &listnode->u.fmlist.items_max, idx);
 		break;
 	case FM_EVENTSET:
+	case FM_GLOBALEVENTS:
 		fmt_delfromlist ((void ***)&listnode->u.fmevset.events, &listnode->u.fmevset.events_cur, &listnode->u.fmevset.events_max, idx);
 		break;
 	case FM_TAGSET:
 		fmt_delfromlist ((void ***)&listnode->u.fmtset.tags, &listnode->u.fmtset.tags_cur, &listnode->u.fmtset.tags_max, idx);
 		break;
 	case FM_INSTANCE:
+	case FM_PCHAOS:
 		fmt_delfromlist ((void ***)&listnode->u.fminst.args, &listnode->u.fminst.args_cur, &listnode->u.fminst.args_max, idx);
 		break;
 	case FM_NAMEDPROC:
 		fmt_delfromlist ((void ***)&listnode->u.fmproc.parms, &listnode->u.fmproc.parms_cur, &listnode->u.fmproc.parms_max, idx);
+		break;
+	case FM_HIDING:
+		fmt_delfromlist ((void ***)&listnode->u.fmhide.events, &listnode->u.fmhide.events_cur, &listnode->u.fmhide.events_max, idx);
+		break;
+	case FM_APAR:
+		fmt_delfromlist ((void ***)&listnode->u.fmapar.events, &listnode->u.fmapar.events_cur, &listnode->u.fmapar.events_max, idx);
 		break;
 	default:
 		fmt_error_internal (NOPOSN, "fmt_delfromnodelist(): not list capable node!");
@@ -971,16 +1071,24 @@ PRIVATE void fmt_insertintonodelist (fmnode_t *listnode, int idx, fmnode_t *item
 		fmt_insertintolist ((void ***)&listnode->u.fmlist.items, &listnode->u.fmlist.items_cur, &listnode->u.fmlist.items_max, idx, (void *)item);
 		break;
 	case FM_EVENTSET:
+	case FM_GLOBALEVENTS:
 		fmt_insertintolist ((void ***)&listnode->u.fmevset.events, &listnode->u.fmevset.events_cur, &listnode->u.fmevset.events_max, idx, (void *)item);
 		break;
 	case FM_TAGSET:
 		fmt_insertintolist ((void ***)&listnode->u.fmtset.tags, &listnode->u.fmtset.tags_cur, &listnode->u.fmtset.tags_max, idx, (void *)item);
 		break;
 	case FM_INSTANCE:
+	case FM_PCHAOS:
 		fmt_insertintolist ((void ***)&listnode->u.fminst.args, &listnode->u.fminst.args_cur, &listnode->u.fminst.args_max, idx, (void *)item);
 		break;
 	case FM_NAMEDPROC:
 		fmt_insertintolist ((void ***)&listnode->u.fmproc.parms, &listnode->u.fmproc.parms_cur, &listnode->u.fmproc.parms_max, idx, (void *)item);
+		break;
+	case FM_HIDING:
+		fmt_insertintolist ((void ***)&listnode->u.fmhide.events, &listnode->u.fmhide.events_cur, &listnode->u.fmhide.events_max, idx, (void *)item);
+		break;
+	case FM_APAR:
+		fmt_insertintolist ((void ***)&listnode->u.fmapar.events, &listnode->u.fmapar.events_cur, &listnode->u.fmapar.events_max, idx, (void *)item);
 		break;
 	default:
 		fmt_error_internal (NOPOSN, "fmt_insertintonodelist(): not list capable node!");
@@ -1026,6 +1134,7 @@ PRIVATE void fmt_modprewalk (fmnode_t **nodep, int (*f1)(fmnode_t **, void *), v
 			}
 			break;
 		case FM_INSTANCE:
+		case FM_PCHAOS:
 			for (i=0; i<n->u.fminst.args_cur; i++) {
 				fmt_modprewalk (&n->u.fminst.args[i], f1, voidptr);
 			}
@@ -1039,6 +1148,19 @@ PRIVATE void fmt_modprewalk (fmnode_t **nodep, int (*f1)(fmnode_t **, void *), v
 				fmt_modprewalk (&n->u.fmproc.parms[i], f1, voidptr);
 			}
 			fmt_modprewalk (&n->u.fmproc.body, f1, voidptr);
+			break;
+		case FM_HIDING:
+			for (i=0; i<n->u.fmhide.events_cur; i++) {
+				fmt_modprewalk (&n->u.fmhide.events[i], f1, voidptr);
+			}
+			fmt_modprewalk (&n->u.fmhide.proc, f1, voidptr);
+			break;
+		case FM_APAR:
+			for (i=0; i<n->u.fmapar.events_cur; i++) {
+				fmt_modprewalk (&n->u.fmapar.events[i], f1, voidptr);
+			}
+			fmt_modprewalk (&n->u.fmapar.lhs, f1, voidptr);
+			fmt_modprewalk (&n->u.fmapar.rhs, f1, voidptr);
 			break;
 		case FM_TAGSET:
 			for (i=0; i<n->u.fmtset.tags_cur; i++) {
@@ -1054,6 +1176,7 @@ PRIVATE void fmt_modprewalk (fmnode_t **nodep, int (*f1)(fmnode_t **, void *), v
 		case FM_NODEREF:
 		case FM_EVENT:
 		case FM_EVENTSET:
+		case FM_GLOBALEVENTS:
 			break;
 		case FM_INPUT:
 		case FM_OUTPUT:
@@ -1177,6 +1300,20 @@ PRIVATE BOOL fmt_isevent (fmnode_t *item)
 	}
 }
 /*}}}*/
+/*{{{  PRIVATE BOOL fmt_issimpleevent (fmnode_t *item)*/
+/*
+ *	returns TRUE if the specified node is a simple channel event (EVENT)
+ */
+PRIVATE BOOL fmt_issimpleevent (fmnode_t *item)
+{
+	switch (item->type) {
+	case FM_EVENT:
+		return item->u.fmevent.issimplechan ? TRUE : FALSE;
+	default:
+		return FALSE;
+	}
+}
+/*}}}*/
 /*{{{  PRIVATE fmnode_t *fmt_createeventfromvar (treenode *var, BOOL donumber)*/
 /*
  *	creates an FM_EVENT/FM_EVENTSET based on the given 'var' namenode
@@ -1220,6 +1357,7 @@ printtreenl (stderr, 1, proto);
 				break;
 			}
 		}
+		pnode->u.fmevent.issimplechan = 1;
 
 		return pnode;
 		/*}}}*/
@@ -1570,13 +1708,24 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 					fmn->u.fmevent.typename ?: "(no-type-name)");
 			break;
 		case FM_EVENTSET:
-			fprintf (stream, "EVENTSET (0x%8.8x,%s,%s,", (unsigned int)fmn->u.fmevset.node, tagstring (TagOf (fmn->u.fmevset.node)),
+			fprintf (stream, "EVENTSET (0x%8.8x,%s,%s,", (unsigned int)fmn->u.fmevset.node,
+					fmn->u.fmevset.node ? tagstring (TagOf (fmn->u.fmevset.node)) : "(no-node)",
 					fmn->u.fmevset.name ?: "(no-name)");
-			fprintf (stream, "0x%8.8x,%s,%s)\n", (unsigned int)fmn->u.fmevset.nodetype, fmn->u.fmevset.nodetype ? tagstring (TagOf (fmn->u.fmevset.nodetype)) : "(no-type)",
+			fprintf (stream, "0x%8.8x,%s,%s)\n", (unsigned int)fmn->u.fmevset.nodetype,
+					fmn->u.fmevset.nodetype ? tagstring (TagOf (fmn->u.fmevset.nodetype)) : "(no-type)",
 					fmn->u.fmevset.typename ?: "(no-type-name)");
+			break;
+		case FM_GLOBALEVENTS:
+			fprintf (stream, "GLOBALEVENTS\n");
 			break;
 		case FM_NAMEDPROC:
 			fprintf (stream, "NAMEDPROC (%s) %d parms\n", fmn->u.fmproc.name ?: "(no-name)", fmn->u.fmproc.parms_cur);
+			break;
+		case FM_HIDING:
+			fprintf (stream, "HIDING %d events\n", fmn->u.fmhide.events_cur);
+			break;
+		case FM_APAR:
+			fprintf (stream, "APAR %d events\n", fmn->u.fmapar.events_cur);
 			break;
 		case FM_TAGSET:
 			fprintf (stream, "TAGSET (%s) %d tags\n", fmn->u.fmtset.name ?: "(no-name)", fmn->u.fmtset.tags_cur);
@@ -1594,6 +1743,9 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 			}
 			fprintf (stream, ") %d args\n", fmn->u.fminst.args_cur);
 			break;
+		case FM_PCHAOS:
+			fprintf (stream, "PCHAOS %d args\n", fmn->u.fminst.args_cur);
+			break;
 		default:
 			fprintf (stream, "unknown type %d!\n", (int)fmn->type);
 			break;
@@ -1609,6 +1761,7 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 			}
 			break;
 		case FM_INSTANCE:
+		case FM_PCHAOS:
 			for (i=0; i<fmn->u.fminst.args_cur; i++) {
 				fmt_dumpnode (fmn->u.fminst.args[i], indent + 1, stream);
 			}
@@ -1632,12 +1785,26 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 			}
 			fmt_dumpnode (fmn->u.fmproc.body, indent + 1, stream);
 			break;
+		case FM_HIDING:
+			for (i=0; i<fmn->u.fmhide.events_cur; i++) {
+				fmt_dumpnode (fmn->u.fmhide.events[i], indent + 1, stream);
+			}
+			fmt_dumpnode (fmn->u.fmhide.proc, indent + 1, stream);
+			break;
+		case FM_APAR:
+			for (i=0; i<fmn->u.fmapar.events_cur; i++) {
+				fmt_dumpnode (fmn->u.fmapar.events[i], indent + 1, stream);
+			}
+			fmt_dumpnode (fmn->u.fmapar.lhs, indent + 1, stream);
+			fmt_dumpnode (fmn->u.fmapar.rhs, indent + 1, stream);
+			break;
 		case FM_TAGSET:
 			for (i=0; i<fmn->u.fmtset.tags_cur; i++) {
 				fmt_dumpnode (fmn->u.fmtset.tags[i], indent + 1, stream);
 			}
 			break;
 		case FM_EVENTSET:
+		case FM_GLOBALEVENTS:
 			for (i=0; i<fmn->u.fmevset.events_cur; i++) {
 				fmt_dumpnode (fmn->u.fmevset.events[i], indent + 1, stream);
 			}
@@ -1982,6 +2149,407 @@ PRIVATE void fmt_hoistfixpoints (fmnode_t *node, fmmset_t *fmm)
 	return;
 }
 /*}}}*/
+/*{{{  PRIVATEPARAM in fmt_dohoisthiddenevents (fmnode_t **nodep, void *voidptr)*/
+/*
+ *	used in hoisting hidden events -- turns what was a EVENT/EVENTSET decl. in a HIDING node
+ *	(without refs) into references and moves real EVENT/EVENTSET into globalevents set (added at top-level).
+ */
+PRIVATEPARAM int fmt_dohoisthiddenevents (fmnode_t **nodep, void *voidptr)
+{
+	fmnode_t *eset = (fmnode_t *)voidptr;
+	fmnode_t *n = *nodep;
+
+	switch (n->type) {
+	case FM_HIDING:
+		{
+			int i;
+
+			for (i=0; i<n->u.fmhide.events_cur; i++) {
+				fmnode_t *ev = n->u.fmhide.events[i];
+
+				if (ev->type != FM_NODEREF) {
+					/* move this one */
+					fmnode_t *newnode = fmt_newnode (FM_NODEREF, n->org);
+
+					fmt_addtonodelist (eset, ev);
+					newnode->u.fmnode.node = ev;
+					n->u.fmhide.events[i] = newnode;
+				}
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	return CONTINUE_WALK;
+}
+/*}}}*/
+/*{{{  PRIVATE void fmm_hoisthiddenevents (fmnode_t *node, fmmset_t *fmm)*/
+/*
+ *	hoists hidden events for a HIDING nodes, adds to eventset in fmmset_t
+ */
+PRIVATE void fmt_hoisthiddenevents (fmnode_t *node, fmmset_t *fmm)
+{
+	fmnode_t *eset = fmt_newnode (FM_GLOBALEVENTS, NULL);
+	int i;
+
+	if (node->type != FM_NAMEDPROC) {
+		fmt_error_internal (NOPOSN, "fmt_hoisthiddenevents(): not NAMEDPROC!");
+		return;
+	}
+
+	fmt_modprewalk (&node->u.fmproc.body, fmt_dohoisthiddenevents, (void *)eset);
+
+	if (eset->u.fmevset.events_cur) {
+		fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)eset);
+	} else {
+		/* nothing here, trash it */
+		fmt_freenode (eset, 2);
+	}
+	return;
+}
+/*}}}*/
+/*{{{  PRIVATE int fmt_restricteventrefset (fmnode_t *evset, fmnode_t *event)*/
+/*
+ *	restricts references in an event-set (removes references to the specified event)
+ *	returns 1 if removed, 0 otherwise
+ */
+PRIVATE int fmt_restricteventrefset (fmnode_t *evset, fmnode_t *event)
+{
+	int i;
+	int r = 0;
+
+	if (evset->type != FM_EVENTSET) {
+		fmt_error_internal (NOPOSN, "fmt_restricteventrefset(): not EVENTSET!");
+		return 0;
+	}
+	for (i=0; i<evset->u.fmevset.events_cur; i++) {
+		fmnode_t *evref = evset->u.fmevset.events[i];
+
+		if ((evref->type == FM_NODEREF) && (evref->u.fmnode.node == event)) {
+			/* remove this one */
+			fmt_delfromnodelist (evset, i);
+			i--;
+			r++;
+		}
+	}
+	return r;
+}
+/*}}}*/
+/*{{{  PRIVATE int fmt_dofindfreeevents (fmnode_t **nodep, void *voidptr)*/
+/*
+ *	used when finding free-events in processes
+ */
+PRIVATE int fmt_dofindfreeevents (fmnode_t **nodep, void *voidptr)
+{
+	fmnode_t *evset = (fmnode_t *)voidptr;
+	fmnode_t *n = *nodep;
+
+	switch (n->type) {
+	case FM_NODEREF:
+		{
+			fmnode_t *ref = n->u.fmnode.node;
+
+			/* reference to event/named-event-set? */
+			if ((ref->type == FM_EVENT) || (ref->type == FM_EVENTSET)) {
+				/* yes, duplicate it */
+				fmt_addtonodelist (evset, fmt_copynode (n));
+			}
+		}
+		return STOP_WALK;
+	case FM_HIDING:
+		{
+			int i;
+
+			/* walk the body, then remove the hidden events */
+			fmt_modprewalk (&n->u.fmhide.proc, fmt_dofindfreeevents, (void *)evset);
+
+			for (i=0; i<n->u.fmhide.events_cur; i++) {
+				fmt_restricteventrefset (evset, n->u.fmhide.events[i]);
+			}
+		}
+		return STOP_WALK;
+	default:
+		break;
+	}
+	return CONTINUE_WALK;
+}
+/*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_findfreeevents (fmnode_t *proc)*/
+/*
+ *	finds free event references in a process, returns NULL if none
+ *	found, EV_EVENTSET full of NODEREF->EVENTs/EVENTSETs otherwise
+ */
+PRIVATE fmnode_t *fmt_findfreeevents (fmnode_t *proc)
+{
+	fmnode_t *evset = fmt_newnode (FM_EVENTSET, NULL);
+
+	fmt_modprewalk (&proc, fmt_dofindfreeevents, (void *)evset);
+	if (!evset->u.fmevset.events_cur) {
+		fmt_freenode (evset, 2);
+		evset = NULL;
+	}
+	return evset;
+}
+/*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_mergeinrefsetunion (fmnode_t *set, fmnode_t *evrefset)*/
+/*
+ *
+ */
+PRIVATE fmnode_t *fmt_mergeinrefsetunion (fmnode_t *set, fmnode_t *evrefset)
+{
+	int i;
+
+	if (evrefset->type != FM_EVENTSET) {
+		fmt_error_internal (NOPOSN, "fmt_mergeinrefsetunion(): ref-set not EVENTSET!");
+		return set;
+	}
+	for (i=0; i<evrefset->u.fmevset.events_cur; i++) {
+		fmnode_t *evref = evrefset->u.fmevset.events[i];
+
+		if (evref->type == FM_NODEREF) {
+			/* maybe add this one, if not already in 'set' */
+			int j;
+
+			if (!set) {
+				set = fmt_newnode (FM_EVENTSET, NULL);
+			}
+			for (j=0; j<set->u.fmevset.events_cur; j++) {
+				if ((set->u.fmevset.events[j]->type == FM_NODEREF) && (set->u.fmevset.events[j]->u.fmnode.node == evref->u.fmnode.node)) {
+					/* already got! */
+					break;
+				}
+			}
+			if (j == set->u.fmevset.events_cur) {
+				/* add copy */
+				fmt_addtonodelist (set, fmt_copynode (evref));
+			}
+		}
+	}
+	return set;
+}
+/*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_intersectrefset (fmnode_t *set1, fmnode_t *set2)*/
+/*
+ *	computes the intersection of two sets of event-node references
+ */
+PRIVATE fmnode_t *fmt_intersectrefset (fmnode_t *set1, fmnode_t *set2)
+{
+	int i;
+	fmnode_t *isect = fmt_newnode (FM_EVENTSET, NULL);
+
+	if ((set1->type != FM_EVENTSET) || (set2->type != FM_EVENTSET)) {
+		fmt_error_internal (NOPOSN, "fmt_intersectrefset(): not event-set parameters!\n");
+		return NULL;
+	}
+
+	for (i=0; i<set1->u.fmevset.events_cur; i++) {
+		fmnode_t *evref = set1->u.fmevset.events[i];
+
+		if (evref->type == FM_NODEREF) {
+			int j;
+
+			for (j=0; j<set2->u.fmevset.events_cur; j++) {
+				fmnode_t *xevref = set2->u.fmevset.events[j];
+
+				if ((xevref->type == FM_NODEREF) && (xevref->u.fmnode.node == evref->u.fmnode.node)) {
+					/* yes, duplicate into new set */
+					fmt_addtonodelist (isect, fmt_copynode (evref));
+				}
+			}
+		}
+	}
+
+	if (!isect->u.fmevset.events_cur) {
+		/* empty set, trash it */
+		fmt_freenode (isect, 2);
+		isect = NULL;
+	}
+
+	return isect;
+}
+/*}}}*/
+/*{{{  PRIVATE int fmt_doalphabetisepar (fmnode_t **nodep, void *voidptr)*/
+/*
+ *	used when alphabetising parallel processes
+ */
+PRIVATE int fmt_doalphabetisepar (fmnode_t **nodep, void *voidptr)
+{
+	fmnode_t *n = *nodep;
+
+	if ((n->type == FM_PAR) && (n->u.fmlist.items_cur > 1)) {
+		int i;
+		fmnode_t **esets = NULL;
+		int esets_cur = 0;
+		int esets_max = 0;
+
+		for (i=0; i<n->u.fmlist.items_cur; i++) {
+			fmnode_t *proc;
+			fmnode_t *evset;
+
+			/*{{{  do nested transform on each process first*/
+			fmt_modprewalk (&n->u.fmlist.items[i], fmt_doalphabetisepar, NULL);
+			proc = n->u.fmlist.items[i];
+
+			/*}}}*/
+			/*{{{  walk the body and collect up free event references*/
+			evset = fmt_findfreeevents (proc);
+			/*}}}*/
+
+			fmt_addtolist ((void ***)&esets, &esets_cur, &esets_max, (void *)evset);
+		}
+
+		/*{{{  re-order parallel processes and events so any NULL event-sets come first*/
+		{
+			int first = 0;
+			int last = n->u.fmlist.items_cur - 1;
+
+			while (first < last) {
+				while ((first < last) && (esets[first] == NULL)) {
+					first++;
+				}
+				while ((last > first) && (esets[last] != NULL)) {
+					last--;
+				}
+
+				/* first points at first non-null item, last at last null item */
+				if (first < last) {
+					fmnode_t *tmp;
+
+					tmp = n->u.fmlist.items[first];
+					n->u.fmlist.items[first] = n->u.fmlist.items[last];
+					n->u.fmlist.items[last] = tmp;
+
+					tmp = esets[first];
+					esets[first] = esets[last];
+					esets[last] = tmp;
+
+					first++, last--;
+				}
+			}
+		}
+		/*}}}*/
+		/*{{{  skip 'i' over items that have a NULL event set*/
+		for (i=0; (i<n->u.fmlist.items_cur) && !esets[i]; i++);
+
+		/*}}}*/
+		/*{{{  have the various event-sets, if 2 or more left, build alphabetised PAR tree*/
+		if ((i + 1) < n->u.fmlist.items_cur) {
+			fmnode_t *apar = NULL;
+			fmnode_t **tptr = &apar;
+			fmnode_t *rpar = fmt_newnode (FM_PAR, n->org);
+			int j;
+
+			/* trash null entries from esets */
+			for (j=0; j<i; j++) {
+				fmt_delfromlist ((void ***)&esets, &esets_cur, &esets_max, 0);
+			}
+
+			/* move remaining par items into 'rpar' */
+			while (i < n->u.fmlist.items_cur) {
+				fmnode_t *proc = n->u.fmlist.items[i];
+
+				fmt_addtonodelist (rpar, proc);
+				fmt_delfromnodelist (n, i);
+			}
+
+			for (i=0; i<rpar->u.fmlist.items_cur; i++) {
+				fmnode_t *evset = esets[i];
+				fmnode_t *evrest = NULL;
+				int j;
+
+#if 0
+fprintf (stderr, "fmt_doalphabetisepar(): PAR: r-event set %d is:\n", i);
+fmt_dumpnode (evset, 1, stderr);
+#endif
+
+				for (j=i+1; j<rpar->u.fmlist.items_cur; j++) {
+					if (esets[j]) {
+						evrest = fmt_mergeinrefsetunion (evrest, esets[j]);
+					}
+				}
+
+				if (evrest) {
+					/*{{{  calculate intersection*/
+					fmnode_t *isect = fmt_intersectrefset (evset, evrest);
+
+					fmt_freenode (evrest, 2);
+
+					if (isect) {
+						*tptr = fmt_newnode (FM_APAR, n->org);
+
+#if 0
+fprintf (stderr, "fmt_doalphabetisepar(): PAR item %d has intersection:\n", i);
+fmt_dumpnode (isect, 1, stderr);
+#endif
+						/* turn this and rest into alphabetised parallel! */
+						while (isect->u.fmevset.events_cur) {
+							fmt_addtonodelist (*tptr, isect->u.fmevset.events[0]);
+							fmt_delfromnodelist (isect, 0);
+						}
+						(*tptr)->u.fmapar.lhs = rpar->u.fmlist.items[i];
+						rpar->u.fmlist.items[i] = NULL;
+
+						tptr = &((*tptr)->u.fmapar.rhs);
+
+						fmt_freenode (isect, 2);
+					}
+					/*}}}*/
+				} else {
+					/*{{{  probably the last thing*/
+					if (i == (rpar->u.fmlist.items_cur - 1)) {
+						*tptr = rpar->u.fmlist.items[i];
+						rpar->u.fmlist.items[i] = NULL;
+					}
+					/*}}}*/
+				}
+			}
+#if 0
+fprintf (stderr, "fmt_doalphabetisepar(): apar is now:\n");
+fmt_dumpnode (apar, 1, stderr);
+#endif
+			/*{{{  if we have an alphabetised parallel, add it to the original PAR*/
+			if (apar) {
+				fmt_addtonodelist (n, apar);
+
+			}
+			/*}}}*/
+			/*{{{  trash temporary PAR*/
+			fmt_freenode (rpar, 2);
+
+			/*}}}*/
+		}
+		/*}}}*/
+
+		/*{{{  clean-up*/
+		for (i=0; i<esets_cur; i++) {
+			fmt_freenode (esets[i], 2);
+			esets[i] = NULL;
+		}
+		if (esets) {
+			memfree (esets);
+			esets = NULL;
+			esets_cur = 0;
+			esets_max = 0;
+		}
+
+		/*}}}*/
+
+		return STOP_WALK;
+	}
+	return CONTINUE_WALK;
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_alphabetisepar (fmnode_t *node)*/
+/*
+ *	alphabetises synchronising parallel processes
+ */
+PRIVATE void fmt_alphabetisepar (fmnode_t *node)
+{
+	fmt_modprewalk (&node, fmt_doalphabetisepar, NULL);
+	return;
+}
+/*}}}*/
 /*{{{  PRIVATE void fmt_writeoutnode_str (fmnode_t *node, FILE *fp)*/
 /*
  *	called to write out the string associated with a single node
@@ -2159,11 +2727,60 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		fprintf (fp, "</proc>\n");
 		break;
 		/*}}}*/
+		/*{{{  HIDING*/
+	case FM_HIDING:
+		fprintf (fp, "<hiding>\n");
+		fmt_writeoutindent (indent+1, fp);
+		fprintf (fp, "<events>\n");
+		for (i=0; i<node->u.fmhide.events_cur; i++) {
+			fmnode_t *p = node->u.fmhide.events[i];
+
+			fmt_writeoutnode (p, indent+2, fp);
+		}
+		fmt_writeoutindent (indent+1, fp);
+		fprintf (fp, "</events>\n");
+
+		fmt_writeoutnode (node->u.fmhide.proc, indent + 1, fp);
+
+		fmt_writeoutindent (indent, fp);
+		fprintf (fp, "</hiding>\n");
+		break;
+		/*}}}*/
+		/*{{{  APAR*/
+	case FM_APAR:
+		fprintf (fp, "<apar>\n");
+		fmt_writeoutindent (indent+1, fp);
+		fprintf (fp, "<events>\n");
+		for (i=0; i<node->u.fmapar.events_cur; i++) {
+			fmnode_t *p = node->u.fmapar.events[i];
+
+			fmt_writeoutnode (p, indent+2, fp);
+		}
+		fmt_writeoutindent (indent+1, fp);
+		fprintf (fp, "</events>\n");
+
+		fmt_writeoutnode (node->u.fmapar.lhs, indent+1, fp);
+		fmt_writeoutnode (node->u.fmapar.rhs, indent+1, fp);
+
+		fmt_writeoutindent (indent, fp);
+		fprintf (fp, "</apar>\n");
+		break;
+		/*}}}*/
 		/*{{{  INSTANCE*/
 	case FM_INSTANCE:
 		fprintf (fp, "<instance name=\"");
 		fmt_writeoutnode_str (node->u.fminst.pref, fp);
 		fprintf (fp, "\">\n");
+		for (i=0; i<node->u.fminst.args_cur; i++) {
+			fmt_writeoutnode (node->u.fminst.args[i], indent + 1, fp);
+		}
+		fmt_writeoutindent (indent, fp);
+		fprintf (fp, "</instance>\n");
+		break;
+		/*}}}*/
+		/*{{{  PCHAOS*/
+	case FM_PCHAOS:
+		fprintf (fp, "<instance name=\"CHAOS\">\n");
 		for (i=0; i<node->u.fminst.args_cur; i++) {
 			fmt_writeoutnode (node->u.fminst.args[i], indent + 1, fp);
 		}
@@ -2227,6 +2844,18 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 
 		fmt_writeoutindent (indent, fp);
 		fprintf (fp, "</eventset>\n");
+		break;
+		/*}}}*/
+		/*{{{  GLOBALEVENTS*/
+	case FM_GLOBALEVENTS:
+		fprintf (fp, "<globalevents>\n");
+
+		for (i=0; i<node->u.fmevset.events_cur; i++) {
+			fmt_writeoutnode (node->u.fmevset.events[i], indent + 1, fp);
+		}
+
+		fmt_writeoutindent (indent, fp);
+		fprintf (fp, "</globalevents>\n");
 		break;
 		/*}}}*/
 		/*{{{  FIXPOINT*/
@@ -2487,15 +3116,41 @@ fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 		*(fmstate->target) = fmt_newnode (FM_STOP, n);
 		return STOP_WALK;
 		/*}}}*/
-		/*{{{  SEQ,PAR -- return*/
+		/*{{{  SEQ -- return*/
 	case S_SEQ:
-	case S_PAR:
 		{
-			fmtype_e ftype = ((tag == S_SEQ) ? FM_SEQ : FM_PAR);
 			treenode *items;
 			fmnode_t **saved_target = fmstate->target;
 			
-			fmn = fmt_newnode (ftype, n);
+			fmn = fmt_newnode (FM_SEQ, n);
+			for (items = CBodyOf (n); !EndOfList (items); items = NextItem (items)) {
+				fmnode_t *tmptarget = NULL;
+
+				fmstate->target = &tmptarget;
+				prewalktree (ThisItem (items), do_formalmodelgen, (void *)fmstate);
+				if (tmptarget) {
+					/* store this */
+					fmt_addtonodelist (fmn, tmptarget);
+				}
+			}
+			/* if item-less, reduce it to a SKIP */
+			if (!fmn->u.fmlist.items_cur) {
+				fmt_freenode (fmn, 2);
+				fmn = fmt_newnode (FM_SKIP, n);
+			}
+
+			fmstate->target = saved_target;
+			*(fmstate->target) = fmn;
+		}
+		return STOP_WALK;
+		/*}}}*/
+		/*{{{  PAR -- return*/
+	case S_PAR:
+		{
+			treenode *items;
+			fmnode_t **saved_target = fmstate->target;
+			
+			fmn = fmt_newnode (FM_PAR, n);
 			for (items = CBodyOf (n); !EndOfList (items); items = NextItem (items)) {
 				fmnode_t *tmptarget = NULL;
 
@@ -2571,6 +3226,17 @@ fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 	case N_PARAM:
 	case S_RECORDSUB:
 		fmn = fmt_findfreevar (fmstate, n);
+		if (fmn) {
+			fmnode_t *tmp = fmt_newnode (FM_NODEREF, n);
+
+			tmp->u.fmnode.node = fmn;
+			*(fmstate->target) = tmp;
+		}
+		return STOP_WALK;
+		/*}}}*/
+		/*{{{  N_DECL -- return*/
+	case N_DECL:
+		fmn = fmt_getfmcheck (n);
 		if (fmn) {
 			fmnode_t *tmp = fmt_newnode (FM_NODEREF, n);
 
@@ -2689,8 +3355,34 @@ fprintf (stderr, "do_formalmodegen(): CASE_INPUT, variant item after specs is [%
 	case S_DECL:
 		{
 			treenode *dname = DNameOf (n);
+			fmnode_t *hiding = fmt_newnode (FM_HIDING, n);
 
-			if (TagOf (dname) == N_DECL) {
+#if 0
+fprintf (stderr, "do_formalmodelgen(): DECL, name is:");
+printtreenl (stderr, 1, dname);
+#endif
+			if (TagOf (dname) == S_LIST) {
+				treenode *dwalk;
+
+				for (dwalk = dname; !EndOfList (dwalk); dwalk = NextItem (dwalk)) {
+					treenode *thisname = ThisItem (dwalk);
+
+					if (TagOf (thisname) == N_DECL) {
+						fmnode_t *evnode = fmt_createeventfromvar (thisname, TRUE);
+
+						if (evnode) {
+							if (fmt_issimpleevent (evnode)) {
+								/* hide this */
+								fmt_addtonodelist (hiding, evnode);
+							} else {
+								/* push up to free vars */
+								fmt_addtovarslist (fmstate, evnode);
+							}
+							SetNFMCheck (thisname, evnode);
+						}
+					}
+				}
+			} else if (TagOf (dname) == N_DECL) {
 				fmnode_t *evnode = fmt_createeventfromvar (dname, TRUE);
 
 				if (evnode) {
@@ -2698,11 +3390,32 @@ fprintf (stderr, "do_formalmodegen(): CASE_INPUT, variant item after specs is [%
 fprintf (stderr, "do_formalmodelgen(): DECL/N_DECL, got model event node=\n");
 fmt_dumpnode (evnode, 1, stderr);
 #endif
-					fmt_addtovarslist (fmstate, evnode);
+					if (fmt_issimpleevent (evnode)) {
+						/* hide this */
+						fmt_addtonodelist (hiding, evnode);
+					} else {
+						/* push up to free vars */
+						fmt_addtovarslist (fmstate, evnode);
+					}
 					SetNFMCheck (dname, evnode);
 				}
 			}
-			prewalktree (DBodyOf (n), do_formalmodelgen, (void *)fmstate);
+
+			if (hiding->u.fmhide.events_cur > 0) {
+				/* means we are hiding something, so put this node into the tree! */
+				fmnode_t **saved_target = fmstate->target;
+
+				fmstate->target = &hiding->u.fmhide.proc;
+				prewalktree (DBodyOf (n), do_formalmodelgen, (void *)fmstate);
+
+				fmstate->target = saved_target;
+				*(fmstate->target) = hiding;
+			} else {
+				/* trash hiding and put directly into target */
+				fmt_freenode (hiding, 2);
+
+				prewalktree (DBodyOf (n), do_formalmodelgen, (void *)fmstate);
+			}
 		}
 		return STOP_WALK;
 		/*}}}*/
@@ -2908,12 +3621,14 @@ fmt_dumpnode (input, 1, stderr);
 	case S_FINSTANCE:
 	case S_PINSTANCE:
 		if (!separatelycompiled (INameOf (n))) {
+			fmnode_t **saved_target = fmstate->target;
 			treenode *iname = INameOf (n);
 			treenode *aparams = IParamListOf (n);
 			treenode *fparams = NParamListOf (iname);
 			fmnode_t *ifm = fmt_getfmcheck (iname);
+			treenode *awalk, *fwalk;
 
-#if 1
+#if 0
 fprintf (stderr, "do_formalmodelgen(): FINSTANCE/PINSTANCE, of local:");
 printtreenl (stderr, 1, iname);
 fprintf (stderr, "do_formalmodelgen(): formal model:\n");
@@ -2923,6 +3638,66 @@ printtreenl (stderr, 1, aparams);
 fprintf (stderr, "do_formalmodelgen(): formal params:");
 printtreenl (stderr, 1, fparams);
 #endif
+			if (!ifm) {
+				/*{{{  no formal model for instanced PROC, assume chaotic*/
+				fmn = fmt_newnode (FM_PCHAOS, n);
+
+				for (awalk = aparams; !EndOfList (awalk); awalk = NextItem (awalk)) {
+					fmnode_t *tmp = NULL;
+
+					fmstate->target = &tmp;
+					prewalktree (ThisItem (awalk), do_formalmodelgen, (void *)fmstate);
+
+					if (tmp) {
+						fmt_addtonodelist (fmn, tmp);
+					}
+				}
+				/*}}}*/
+			} else {
+				/*{{{  got formal model (with parameters)*/
+				int pidx;
+
+				fmn = fmt_newnode (FM_INSTANCE, n);
+				fmn->u.fminst.pref = ifm;
+
+				/* walk through formal and actual parameters */
+				pidx = 0;
+				for (awalk = aparams, fwalk = fparams; !EndOfList (awalk) && !EndOfList (fwalk); awalk = NextItem (awalk), fwalk = NextItem (fwalk)) {
+					treenode *aparam = ThisItem (awalk);
+					treenode *fparam = ThisItem (fwalk);
+					fmnode_t *fev = fmt_getfmcheck (fparam);
+
+					if (fev) {
+						fmnode_t *tmp = NULL;
+
+						/* sanity-check: this should be the event at parameter [pidx] */
+						if (pidx >= ifm->u.fmproc.parms_cur) {
+							fmt_error_internal (NOPOSN, "do_formalmodelgen(): event parameter out of range!");
+							return STOP_WALK;
+						} else if (ifm->u.fmproc.parms[pidx] != fev) {
+							fmt_error_internal (NOPOSN, "do_formalmodelgen(): event parameter does not match!");
+							return STOP_WALK;
+						} else {
+							pidx++;
+						}
+
+						/* find corresponding actual */
+						fmstate->target = &tmp;
+						prewalktree (aparam, do_formalmodelgen, (void *)fmstate);
+
+						if (!tmp) {
+							fmt_error_internal (NOPOSN, "do_formalmodelgen(): no matching actual parameter event!");
+							return STOP_WALK;
+						}
+
+						fmt_addtonodelist (fmn, tmp);
+					}
+				}
+				/*}}}*/
+			}
+
+			fmstate->target = saved_target;
+			*(fmstate->target) = fmn;
 		}
 		return STOP_WALK;
 		/*}}}*/
@@ -3070,6 +3845,8 @@ fmt_dumpstate (fmstate, stderr);
 
 			fmt_modprewalk (&fmnproc, fmt_simplifynode, NULL);
 			fmt_hoistfixpoints (fmnproc, fmm);
+			fmt_alphabetisepar (fmnproc);
+			fmt_hoisthiddenevents (fmnproc, fmm);
 
 			SetNFMCheck (DNameOf (n), fmnproc);
 

@@ -295,6 +295,7 @@ PUBLIC BOOL target_accessaligned = FALSE;
 PUBLIC BOOL enable_dtraces = FALSE;		/* debugging traces (requires run-time support) */
 PUBLIC BOOL no_undefinedness_check = FALSE;
 PUBLIC BOOL formal_model = FALSE;		/* whether or not to dump a .cspx file with a CSP model of the source */
+PUBLIC BOOL fm_collct = FALSE;			/* whether or not to collapse PROTOCOLs in a CHAN TYPE during formal-model generation */
 
 
 PUBLIC BOOL debugoutput     = TRUE; /* Whether to insert debug info into object file */
@@ -2216,6 +2217,7 @@ const arg2_descriptor cloptions[] = {
 	{"ZEW",       arg2_single,    NULL,           optzed,             HELP_ZED, "allocate workspace by variable colouring"},
 	{"ZE",        arg2_single,    NULL,           optzed,             HELP_ZED, "visible compiler library names"},
 	#endif
+	{"ZFMCCT",    arg2_single,    &fm_collct,     set_flag,           HELP_ZED, "collapse channel-type protocols in formal model"},
 	{"ZFM",       arg2_single,    &formal_model,  set_flag,           HELP_ZED, "generate formal model"},
 	/*}}}*/
 
@@ -2750,10 +2752,11 @@ PRIVATE treenode *call_occam_frontend(BOOL *const error_occurred)
 	parms.warn_on_all_errors  = warn_on_all_errors;
 	parms.read_all_libs       = read_all_libs;
 	parms.hash_version_string = hash_version_string;
-	parms.checkalias          = &checkalias; /* may be modified by #OPTION */
-	parms.checkusage          = &checkusage; /* may be modified by #OPTION */
-	parms.formalmodel         = &formal_model; /* may be modified by #OPTION */
-	parms.error_occurred      = error_occurred; /* is set if any error happens */
+	parms.checkalias          = &checkalias;	/* may be modified by #OPTION */
+	parms.checkusage          = &checkusage;	/* may be modified by #OPTION */
+	parms.formalmodel         = &formal_model;	/* may be modified by #OPTION */
+	parms.fm_collct           = &fm_collct;		/* may be modified by #OPTION */
+	parms.error_occurred      = error_occurred;	/* is set if any error happens */
 	parms.process_option      = process_option;
 	parms.guyinserts          = &guyinserts;
 	#if defined(COMPILING_TO_JCODE)
