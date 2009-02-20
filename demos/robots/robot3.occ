@@ -51,7 +51,7 @@ VAL INT BUTTON.BACKWARD IS 5:
 
 --*}}}
 
-VAL INT N.ROBOTS          IS   384:               --* Default number of robots.
+VAL INT N.ROBOTS          IS   32:                --* Default number of robots.
 
 VAL INT BACKGROUND        IS COLOUR.BLACK:        --* Default background colour.
 VAL INT FOREGROUND        IS COLOUR.WHITE:        --* Default foreground colour.
@@ -855,7 +855,12 @@ PROC back (CHAN RASTER in?, out.1!, out.2!)
       out.2 ! raster
 :
 --}}}
---{{{  
+--{{{  PROC joystick.setup.and.handler (SHARED CHAN COMMANDS commands!, SHARED CHAN BYTE screen!)
+--* Does joystick setup and handling.
+--
+-- @param commands Commands to control robot.
+-- @param screen Shared screen channel.
+--
 PROC joystick.setup.and.handler (SHARED CHAN COMMANDS commands!, SHARED CHAN BYTE screen!)
   CT.SDLJOY! j.cli:
   SEQ
@@ -908,7 +913,6 @@ PROC joystick.setup.and.handler (SHARED CHAN COMMANDS commands!, SHARED CHAN BYT
     --}}}
 :
 --}}}
-
 
 --{{{  VAL []INT CLUT
 --* Colour lookup table (used by [@code place.robots] below)
@@ -994,7 +998,7 @@ PROC place.robots ([N.ROBOTS]STATE s, VAL INT raster.width, raster.height, robot
 :
 --}}}
 
---{{{  
+--{{{  PROC welcome (CHAN BYTE out!)
 --* Prints the welcome message.
 --
 -- @param out Screen output channel (probably).
@@ -1009,7 +1013,6 @@ PROC welcome (CHAN BYTE out!)
     out.string ("==========================================================*c*n*n", 0, out!)
 :
 --}}}
-
 
 --{{{  PROC head (CHAN RASTER in.1?, in.2?, out!)
 --* Head of pipeline
@@ -1069,7 +1072,13 @@ PROC clean (CHAN RASTER in?, out!)
 :
 
 --}}}
+
 --{{{  PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
+--* Top-level process
+--
+-- @param keyboard Console keyboard channel.
+-- @param screen Shared console screen channel.
+--
 PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
 
   [N.ROBOTS]STATE s:
@@ -1090,7 +1099,7 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
     laser.range := DEFAULT.RANGE
     robot.radius := DEFAULT.RADIUS
 
-    mixed := FALSE
+    mixed := TRUE
     version := 1
 
     place.robots (s, raster.width, raster.height, robot.radius, mixed)
@@ -1143,7 +1152,7 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
       --{{{  manual control [0]
       PAR
         drone (s[0], laser.range, robot.radius, h[0]?, j[0]!, d[0]?, d[1]!, show.centre.ray)
-        manual (s[0][linear.velocity], s[0][angular.velocity], robot.radius, commands?, h[0]!, j[0]?, screen!)
+        manual (0, 0, robot.radius, commands?, h[0]!, j[0]?, screen!)
 
       --}}}
       --{{{  joystick control
