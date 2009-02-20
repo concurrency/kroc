@@ -9,7 +9,8 @@ EXTRA_DIST = \
 	kroc-setup.csh.in \
 	kroc.in \
 	kmakemodule.in \
-	occbuild.in
+	occbuild.in \
+	cspx2cspm.xsl
 
 generated_scripts = \
 	kmakemodule \
@@ -19,7 +20,8 @@ generated_scripts = \
 	occbuild
 bin_SCRIPTS = \
 	$(generated_scripts) \
-	kmakef
+	kmakef \
+	cspx2cspm.xsl
 
 dist_man1_MANS = \
 	kmakef.1 \
