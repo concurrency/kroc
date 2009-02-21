@@ -13,6 +13,8 @@ OCCAM_OCCBUILD
 build_dynproc=yes
 if test "$OCCBUILD_TOOLCHAIN" != "kroc"; then
   build_dynproc=no
+elif test "$KROC_CCSP_ENABLE_DYNPROC" != "yes"; then
+  build_dynproc=no
 fi
 
 AC_MSG_CHECKING([whether to build dynproc.module])
