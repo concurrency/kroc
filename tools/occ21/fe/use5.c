@@ -187,6 +187,8 @@ typedef struct TAG_fmnodelist { /*{{{*/
 PRIVATE int atom_counter = 0;
 PRIVATE int event_counter = 0;
 
+PRIVATE int do_coll_ct = 0;			/* collate channel-type channels/protocols */
+
 
 /*}}}*/
 /*{{{  forward decls*/
@@ -289,13 +291,43 @@ PRIVATE void fmt_insertintolist (void ***iptr, int *cptr, int *mptr, int idx, vo
 	(*iptr)[idx] = item;
 }
 /*}}}*/
-/*{{{  PRIVATE void fmt_error_now (int code, SOURCEPOSN locn, const char *string)*/
+/*{{{  PRIVATE void fmt_error_now_s (int code, SOURCEPOSN locn, const char *string)*/
+/*
+ *	generate an error immediately
+ */
+PRIVATE void fmt_error_now_s (int code, SOURCEPOSN locn, const char *string)
+{
+	msg_out_s (SEV_ERR_JMP, USE, code, locn, string);
+	return;
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_warning_s (int code, SOURCEPOSN locn, const char *string)*/
+/*
+ *	generates a warning
+ */
+PRIVATE void fmt_warning_s (int code, SOURCEPOSN locn, const char *string)
+{
+	msg_out_s (SEV_WARN, USE, code, locn, string);
+	return;
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_warning (int code, SOURCEPOSN locn)*/
+/*
+ *	generates a warning
+ */
+PRIVATE void fmt_warning (int code, SOURCEPOSN locn)
+{
+	msg_out (SEV_WARN, USE, code, locn);
+	return;
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_error_now (int code, SOURCEPOSN locn)*/
 /*
  *	generate an error immediately
  */
 PRIVATE void fmt_error_now (int code, SOURCEPOSN locn, const char *string)
 {
-	msg_out_s (SEV_ERR_JMP, USE, code, locn, string);
+	msg_out (SEV_ERR_JMP, USE, code, locn);
 	return;
 }
 /*}}}*/
@@ -929,6 +961,21 @@ PRIVATE fmnode_t *fmt_copynode (fmnode_t *n)
 		c->u.fmnode.node = n->u.fmnode.node;
 		break;
 		/*}}}*/
+		/*{{{  TREEREF*/
+	case FM_TREEREF:
+		c = fmt_newnode (FM_TREEREF, n->org);
+		if (n->u.fmtree.name) {
+			c->u.fmtree.name = (char *)memalloc (strlen (n->u.fmtree.name) + 2);
+			strcpy (c->u.fmtree.name, n->u.fmtree.name);
+		}
+		c->u.fmtree.node = n->u.fmtree.node;
+		if (n->u.fmtree.typename) {
+			c->u.fmtree.typename = (char *)memalloc (strlen (n->u.fmtree.typename) + 2);
+			strcpy (c->u.fmtree.typename, n->u.fmtree.typename);
+		}
+		c->u.fmtree.nodetype = n->u.fmtree.nodetype;
+		break;
+		/*}}}*/
 		/*{{{  INSTANCE,PCHAOS*/
 	case FM_INSTANCE:
 	case FM_PCHAOS:
@@ -960,6 +1007,219 @@ PRIVATE fmnode_t *fmt_getfmcheck (treenode *n)
 		return (fmnode_t *)NFMCheckOf (n);
 	}
 	return NULL;
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)*/
+/*
+ *	prints an fmnode_t structure (debugging)
+ */
+PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
+{
+	int i;
+
+	for (i=0; i<indent; i++) {
+		fprintf (stream, "    ");
+	}
+
+	if (!fmn) {
+		fprintf (stream, "NULL\n");
+	} else {
+		switch (fmn->type) {
+		case FM_SEQ:
+			fprintf (stream, "SEQ\n");
+			break;
+		case FM_THEN:
+			fprintf (stream, "THEN\n");
+			break;
+		case FM_PAR:
+			fprintf (stream, "PAR\n");
+			break;
+		case FM_DET:
+			fprintf (stream, "DET\n");
+			break;
+		case FM_NDET:
+			fprintf (stream, "NDET\n");
+			break;
+		case FM_SKIP:
+			fprintf (stream, "SKIP\n");
+			break;
+		case FM_STOP:
+			fprintf (stream, "STOP\n");
+			break;
+		case FM_DIV:
+			fprintf (stream, "DIV\n");
+			break;
+		case FM_CHAOS:
+			fprintf (stream, "CHAOS\n");
+			break;
+		case FM_FIXPOINT:
+			fprintf (stream, "FIXPOINT\n");
+			break;
+		case FM_INPUT:
+			fprintf (stream, "INPUT\n");
+			break;
+		case FM_OUTPUT:
+			fprintf (stream, "OUTPUT\n");
+			break;
+		case FM_SYNC:
+			fprintf (stream, "SYNC\n");
+			break;
+		case FM_ATOM:
+			fprintf (stream, "ATOM (%s)\n", fmn->u.fmatom.id);
+			break;
+		case FM_TREEREF:
+			fprintf (stream, "TREEREF (0x%8.8x,%s,%s,", (unsigned int)fmn->u.fmtree.node, tagstring (TagOf (fmn->u.fmtree.node)),
+					fmn->u.fmtree.name ?: "(no-name)");
+			fprintf (stream, "0x%8.8x,%s,%s)\n", (unsigned int)fmn->u.fmtree.nodetype, fmn->u.fmtree.nodetype ? tagstring (TagOf (fmn->u.fmtree.nodetype)) : "(no-type)",
+					fmn->u.fmtree.typename ?: "(no-type-name)");
+			break;
+		case FM_NODEREF:
+			fprintf (stream, "NODEREF (0x%8.8x)\n", (unsigned int)fmn->u.fmnode.node);
+			break;
+		case FM_EVENT:
+			fprintf (stream, "EVENT (0x%8.8x,%s,%s,", (unsigned int)fmn->u.fmevent.node, tagstring (TagOf (fmn->u.fmevent.node)),
+					fmn->u.fmevent.name ?: "(no-name)");
+			fprintf (stream, "0x%8.8x,%s,%s)\n", (unsigned int)fmn->u.fmevent.nodetype, fmn->u.fmevent.nodetype ? tagstring (TagOf (fmn->u.fmevent.nodetype)) : "(no-type)",
+					fmn->u.fmevent.typename ?: "(no-type-name)");
+			break;
+		case FM_EVENTSET:
+			fprintf (stream, "EVENTSET (0x%8.8x,%s,%s,", (unsigned int)fmn->u.fmevset.node,
+					fmn->u.fmevset.node ? tagstring (TagOf (fmn->u.fmevset.node)) : "(no-node)",
+					fmn->u.fmevset.name ?: "(no-name)");
+			fprintf (stream, "0x%8.8x,%s,%s)\n", (unsigned int)fmn->u.fmevset.nodetype,
+					fmn->u.fmevset.nodetype ? tagstring (TagOf (fmn->u.fmevset.nodetype)) : "(no-type)",
+					fmn->u.fmevset.typename ?: "(no-type-name)");
+			break;
+		case FM_GLOBALEVENTS:
+			fprintf (stream, "GLOBALEVENTS\n");
+			break;
+		case FM_NAMEDPROC:
+			fprintf (stream, "NAMEDPROC (%s) %d parms\n", fmn->u.fmproc.name ?: "(no-name)", fmn->u.fmproc.parms_cur);
+			break;
+		case FM_HIDING:
+			fprintf (stream, "HIDING %d events\n", fmn->u.fmhide.events_cur);
+			break;
+		case FM_APAR:
+			fprintf (stream, "APAR %d events\n", fmn->u.fmapar.events_cur);
+			break;
+		case FM_TAGSET:
+			fprintf (stream, "TAGSET (%s) %d tags\n", fmn->u.fmtset.name ?: "(no-name)", fmn->u.fmtset.tags_cur);
+			break;
+		case FM_INSTANCE:
+			fprintf (stream, "INSTANCE (");
+			if (!fmn->u.fminst.pref) {
+				fprintf (stream, "null");
+			} else if (fmn->u.fminst.pref->type == FM_NAMEDPROC) {
+				fprintf (stream, "OF %s", fmn->u.fminst.pref->u.fmproc.name ?: "(no-name)");
+			} else if (fmn->u.fminst.pref->type == FM_ATOM) {
+				fprintf (stream, "OF ATOM (%s)", fmn->u.fminst.pref->u.fmatom.id);
+			} else {
+				fprintf (stream, "OF unknown-%d", (int)fmn->u.fminst.pref->type);
+			}
+			fprintf (stream, ") %d args\n", fmn->u.fminst.args_cur);
+			break;
+		case FM_PCHAOS:
+			fprintf (stream, "PCHAOS %d args\n", fmn->u.fminst.args_cur);
+			break;
+		default:
+			fprintf (stream, "unknown type %d!\n", (int)fmn->type);
+			break;
+		}
+		switch (fmn->type) {
+		case FM_SEQ:
+		case FM_PAR:
+		case FM_DET:
+		case FM_NDET:
+		case FM_THEN:
+			for (i=0; i<fmn->u.fmlist.items_cur; i++) {
+				fmt_dumpnode (fmn->u.fmlist.items[i], indent + 1, stream);
+			}
+			break;
+		case FM_INSTANCE:
+		case FM_PCHAOS:
+			for (i=0; i<fmn->u.fminst.args_cur; i++) {
+				fmt_dumpnode (fmn->u.fminst.args[i], indent + 1, stream);
+			}
+			break;
+		case FM_FIXPOINT:
+			fmt_dumpnode (fmn->u.fmfix.id, indent + 1, stream);
+			fmt_dumpnode (fmn->u.fmfix.proc, indent + 1, stream);
+			break;
+		case FM_INPUT:
+		case FM_OUTPUT:
+		case FM_SYNC:
+			fmt_dumpnode (fmn->u.fmio.lhs, indent + 1, stream);
+			fmt_dumpnode (fmn->u.fmio.rhs, indent + 1, stream);
+			break;
+		case FM_NODEREF:
+			fmt_dumpnode (fmn->u.fmnode.node, indent + 1, stream);
+			break;
+		case FM_NAMEDPROC:
+			for (i=0; i<fmn->u.fmproc.parms_cur; i++) {
+				fmt_dumpnode (fmn->u.fmproc.parms[i], indent + 1, stream);
+			}
+			fmt_dumpnode (fmn->u.fmproc.body, indent + 1, stream);
+			break;
+		case FM_HIDING:
+			for (i=0; i<fmn->u.fmhide.events_cur; i++) {
+				fmt_dumpnode (fmn->u.fmhide.events[i], indent + 1, stream);
+			}
+			fmt_dumpnode (fmn->u.fmhide.proc, indent + 1, stream);
+			break;
+		case FM_APAR:
+			for (i=0; i<fmn->u.fmapar.events_cur; i++) {
+				fmt_dumpnode (fmn->u.fmapar.events[i], indent + 1, stream);
+			}
+			fmt_dumpnode (fmn->u.fmapar.lhs, indent + 1, stream);
+			fmt_dumpnode (fmn->u.fmapar.rhs, indent + 1, stream);
+			break;
+		case FM_TAGSET:
+			for (i=0; i<fmn->u.fmtset.tags_cur; i++) {
+				fmt_dumpnode (fmn->u.fmtset.tags[i], indent + 1, stream);
+			}
+			break;
+		case FM_EVENTSET:
+		case FM_GLOBALEVENTS:
+			for (i=0; i<fmn->u.fmevset.events_cur; i++) {
+				fmt_dumpnode (fmn->u.fmevset.events[i], indent + 1, stream);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_dumpstate (fmstate_t *fms, FILE *stream)*/
+/*
+ *	prints an fmstate_t structure (debugging)
+ */
+PRIVATE void fmt_dumpstate (fmstate_t *fms, FILE *stream)
+{
+	int i;
+
+	fprintf (stream, "fmstate:\n");
+	fprintf (stream, "  fvars (%d):\n", fms->fvars_cur);
+	for (i=0; i<fms->fvars_cur; i++) {
+		fmt_dumpnode (fms->fvars[i], 1, stream);
+	}
+	fprintf (stream, "  temp:\n");
+	fmt_dumpnode (fms->temp, 1, stream);
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_dumpmset (fmmset_t *fmm, FILE *stream)*/
+/*
+ *	prints an fmmset_t structure (debugging)
+ */
+PRIVATE void fmt_dumpmset (fmmset_t *fmm, FILE *stream)
+{
+	int i;
+
+	fprintf (stream, "fmmset:\n");
+	fprintf (stream, "  items (%d):\n", fmm->items_cur);
+	for (i=0; i<fmm->items_cur; i++) {
+		fmt_dumpnode (fmm->items[i], 1, stream);
+	}
 }
 /*}}}*/
 
@@ -1361,8 +1621,59 @@ printtreenl (stderr, 1, proto);
 
 		return pnode;
 		/*}}}*/
+	} else if (isdynamicmobilechantype (type) && do_coll_ct) {
+		/*{{{  mobile channel-type (collated events)*/
+		fmnode_t *esnode = fmt_newnode (FM_EVENT, var);
+		char *str = (char *)memalloc (strlen (varname) + 16);
+		treenode *vtype = NTypeOf (var);
+		int is_shared = 0;
+		int slen = 0;
+
+		fmt_copyvarname (str, varname);
+		slen = strlen (str);
+		if (donumber) {
+			/* number this event globalls */
+			sprintf (str + slen, "__%d", event_counter++);
+		}
+		esnode->u.fmevent.name = str;
+		esnode->u.fmevent.node = var;
+
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type vtype:");
+printtreenl (stderr, 1, vtype);
+#endif
+		if (TagOf (vtype) == N_TYPEDECL) {
+			/* should be a mobile channel-type */
+			treenode *orgtype = vtype;
+			fmnode_t *ref = fmt_getfmcheck (vtype);
+
+			if (!ref) {
+				/* may have been obscured by replaced names, try again */
+				vtype = DNameOf (NDeclOf (vtype));
+				ref = fmt_getfmcheck (vtype);
+			}
+
+			if (!ref) {
+				/* no event found, ignore for now.. */
+				fmt_warning_s (USE_FM_NO_CHANTYPE, LocnOf (var), (const char *)WNameOf (NNameOf (vtype)));
+			} else if (ref->type != FM_TAGSET) {
+				fmt_error_internal (NOPOSN, "do_formalmodelcheck_tree(): referenced node not TAGSET!");
+			} else {
+				/* this is a TAGSET */
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type, ref = 0x%8.8x\n", (unsigned int)ref);
+fmt_dumpnode (ref, 1, stderr);
+#endif
+				esnode->u.fmevent.typename = (char *)memalloc (strlen (ref->u.fmtset.name) + 2);
+				strcpy (esnode->u.fmevent.typename, ref->u.fmtset.name);
+				esnode->u.fmevent.nodetype = vtype;
+			}
+		}
+
+		return esnode;
+		/*}}}*/
 	} else if (isdynamicmobilechantype (type)) {
-		/*{{{  mobile channel-type*/
+		/*{{{  mobile channel-type (individual events for each channel)*/
 		fmnode_t *esnode = fmt_newnode (FM_EVENTSET, var);
 		char *str = (char *)memalloc (strlen (varname) + 16);
 		treenode *vtype = NTypeOf (var);
@@ -1673,219 +1984,6 @@ PRIVATE fmnode_t *fmt_newatom (treenode *org)
 	return fma;
 }
 /*}}}*/
-/*{{{  PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)*/
-/*
- *	prints an fmnode_t structure (debugging)
- */
-PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
-{
-	int i;
-
-	for (i=0; i<indent; i++) {
-		fprintf (stream, "    ");
-	}
-
-	if (!fmn) {
-		fprintf (stream, "NULL\n");
-	} else {
-		switch (fmn->type) {
-		case FM_SEQ:
-			fprintf (stream, "SEQ\n");
-			break;
-		case FM_THEN:
-			fprintf (stream, "THEN\n");
-			break;
-		case FM_PAR:
-			fprintf (stream, "PAR\n");
-			break;
-		case FM_DET:
-			fprintf (stream, "DET\n");
-			break;
-		case FM_NDET:
-			fprintf (stream, "NDET\n");
-			break;
-		case FM_SKIP:
-			fprintf (stream, "SKIP\n");
-			break;
-		case FM_STOP:
-			fprintf (stream, "STOP\n");
-			break;
-		case FM_DIV:
-			fprintf (stream, "DIV\n");
-			break;
-		case FM_CHAOS:
-			fprintf (stream, "CHAOS\n");
-			break;
-		case FM_FIXPOINT:
-			fprintf (stream, "FIXPOINT\n");
-			break;
-		case FM_INPUT:
-			fprintf (stream, "INPUT\n");
-			break;
-		case FM_OUTPUT:
-			fprintf (stream, "OUTPUT\n");
-			break;
-		case FM_SYNC:
-			fprintf (stream, "SYNC\n");
-			break;
-		case FM_ATOM:
-			fprintf (stream, "ATOM (%s)\n", fmn->u.fmatom.id);
-			break;
-		case FM_TREEREF:
-			fprintf (stream, "TREEREF (0x%8.8x,%s,%s,", (unsigned int)fmn->u.fmtree.node, tagstring (TagOf (fmn->u.fmtree.node)),
-					fmn->u.fmtree.name ?: "(no-name)");
-			fprintf (stream, "0x%8.8x,%s,%s)\n", (unsigned int)fmn->u.fmtree.nodetype, fmn->u.fmtree.nodetype ? tagstring (TagOf (fmn->u.fmtree.nodetype)) : "(no-type)",
-					fmn->u.fmtree.typename ?: "(no-type-name)");
-			break;
-		case FM_NODEREF:
-			fprintf (stream, "NODEREF (0x%8.8x)\n", (unsigned int)fmn->u.fmnode.node);
-			break;
-		case FM_EVENT:
-			fprintf (stream, "EVENT (0x%8.8x,%s,%s,", (unsigned int)fmn->u.fmevent.node, tagstring (TagOf (fmn->u.fmevent.node)),
-					fmn->u.fmevent.name ?: "(no-name)");
-			fprintf (stream, "0x%8.8x,%s,%s)\n", (unsigned int)fmn->u.fmevent.nodetype, fmn->u.fmevent.nodetype ? tagstring (TagOf (fmn->u.fmevent.nodetype)) : "(no-type)",
-					fmn->u.fmevent.typename ?: "(no-type-name)");
-			break;
-		case FM_EVENTSET:
-			fprintf (stream, "EVENTSET (0x%8.8x,%s,%s,", (unsigned int)fmn->u.fmevset.node,
-					fmn->u.fmevset.node ? tagstring (TagOf (fmn->u.fmevset.node)) : "(no-node)",
-					fmn->u.fmevset.name ?: "(no-name)");
-			fprintf (stream, "0x%8.8x,%s,%s)\n", (unsigned int)fmn->u.fmevset.nodetype,
-					fmn->u.fmevset.nodetype ? tagstring (TagOf (fmn->u.fmevset.nodetype)) : "(no-type)",
-					fmn->u.fmevset.typename ?: "(no-type-name)");
-			break;
-		case FM_GLOBALEVENTS:
-			fprintf (stream, "GLOBALEVENTS\n");
-			break;
-		case FM_NAMEDPROC:
-			fprintf (stream, "NAMEDPROC (%s) %d parms\n", fmn->u.fmproc.name ?: "(no-name)", fmn->u.fmproc.parms_cur);
-			break;
-		case FM_HIDING:
-			fprintf (stream, "HIDING %d events\n", fmn->u.fmhide.events_cur);
-			break;
-		case FM_APAR:
-			fprintf (stream, "APAR %d events\n", fmn->u.fmapar.events_cur);
-			break;
-		case FM_TAGSET:
-			fprintf (stream, "TAGSET (%s) %d tags\n", fmn->u.fmtset.name ?: "(no-name)", fmn->u.fmtset.tags_cur);
-			break;
-		case FM_INSTANCE:
-			fprintf (stream, "INSTANCE (");
-			if (!fmn->u.fminst.pref) {
-				fprintf (stream, "null");
-			} else if (fmn->u.fminst.pref->type == FM_NAMEDPROC) {
-				fprintf (stream, "OF %s", fmn->u.fminst.pref->u.fmproc.name ?: "(no-name)");
-			} else if (fmn->u.fminst.pref->type == FM_ATOM) {
-				fprintf (stream, "OF ATOM (%s)", fmn->u.fminst.pref->u.fmatom.id);
-			} else {
-				fprintf (stream, "OF unknown-%d", (int)fmn->u.fminst.pref->type);
-			}
-			fprintf (stream, ") %d args\n", fmn->u.fminst.args_cur);
-			break;
-		case FM_PCHAOS:
-			fprintf (stream, "PCHAOS %d args\n", fmn->u.fminst.args_cur);
-			break;
-		default:
-			fprintf (stream, "unknown type %d!\n", (int)fmn->type);
-			break;
-		}
-		switch (fmn->type) {
-		case FM_SEQ:
-		case FM_PAR:
-		case FM_DET:
-		case FM_NDET:
-		case FM_THEN:
-			for (i=0; i<fmn->u.fmlist.items_cur; i++) {
-				fmt_dumpnode (fmn->u.fmlist.items[i], indent + 1, stream);
-			}
-			break;
-		case FM_INSTANCE:
-		case FM_PCHAOS:
-			for (i=0; i<fmn->u.fminst.args_cur; i++) {
-				fmt_dumpnode (fmn->u.fminst.args[i], indent + 1, stream);
-			}
-			break;
-		case FM_FIXPOINT:
-			fmt_dumpnode (fmn->u.fmfix.id, indent + 1, stream);
-			fmt_dumpnode (fmn->u.fmfix.proc, indent + 1, stream);
-			break;
-		case FM_INPUT:
-		case FM_OUTPUT:
-		case FM_SYNC:
-			fmt_dumpnode (fmn->u.fmio.lhs, indent + 1, stream);
-			fmt_dumpnode (fmn->u.fmio.rhs, indent + 1, stream);
-			break;
-		case FM_NODEREF:
-			fmt_dumpnode (fmn->u.fmnode.node, indent + 1, stream);
-			break;
-		case FM_NAMEDPROC:
-			for (i=0; i<fmn->u.fmproc.parms_cur; i++) {
-				fmt_dumpnode (fmn->u.fmproc.parms[i], indent + 1, stream);
-			}
-			fmt_dumpnode (fmn->u.fmproc.body, indent + 1, stream);
-			break;
-		case FM_HIDING:
-			for (i=0; i<fmn->u.fmhide.events_cur; i++) {
-				fmt_dumpnode (fmn->u.fmhide.events[i], indent + 1, stream);
-			}
-			fmt_dumpnode (fmn->u.fmhide.proc, indent + 1, stream);
-			break;
-		case FM_APAR:
-			for (i=0; i<fmn->u.fmapar.events_cur; i++) {
-				fmt_dumpnode (fmn->u.fmapar.events[i], indent + 1, stream);
-			}
-			fmt_dumpnode (fmn->u.fmapar.lhs, indent + 1, stream);
-			fmt_dumpnode (fmn->u.fmapar.rhs, indent + 1, stream);
-			break;
-		case FM_TAGSET:
-			for (i=0; i<fmn->u.fmtset.tags_cur; i++) {
-				fmt_dumpnode (fmn->u.fmtset.tags[i], indent + 1, stream);
-			}
-			break;
-		case FM_EVENTSET:
-		case FM_GLOBALEVENTS:
-			for (i=0; i<fmn->u.fmevset.events_cur; i++) {
-				fmt_dumpnode (fmn->u.fmevset.events[i], indent + 1, stream);
-			}
-			break;
-		default:
-			break;
-		}
-	}
-}
-/*}}}*/
-/*{{{  PRIVATE void fmt_dumpstate (fmstate_t *fms, FILE *stream)*/
-/*
- *	prints an fmstate_t structure (debugging)
- */
-PRIVATE void fmt_dumpstate (fmstate_t *fms, FILE *stream)
-{
-	int i;
-
-	fprintf (stream, "fmstate:\n");
-	fprintf (stream, "  fvars (%d):\n", fms->fvars_cur);
-	for (i=0; i<fms->fvars_cur; i++) {
-		fmt_dumpnode (fms->fvars[i], 1, stream);
-	}
-	fprintf (stream, "  temp:\n");
-	fmt_dumpnode (fms->temp, 1, stream);
-}
-/*}}}*/
-/*{{{  PRIVATE void fmt_dumpmset (fmmset_t *fmm, FILE *stream)*/
-/*
- *	prints an fmmset_t structure (debugging)
- */
-PRIVATE void fmt_dumpmset (fmmset_t *fmm, FILE *stream)
-{
-	int i;
-
-	fprintf (stream, "fmmset:\n");
-	fprintf (stream, "  items (%d):\n", fmm->items_cur);
-	for (i=0; i<fmm->items_cur; i++) {
-		fmt_dumpnode (fmm->items[i], 1, stream);
-	}
-}
-/*}}}*/
 /*{{{  PRIVATE fmnode_t *fmt_findfreevar (fmstate_t *state, treenode *n)*/
 /*
  *	searches free-variables for a specifc tree-node
@@ -1894,6 +1992,13 @@ PRIVATE fmnode_t *fmt_findfreevar (fmstate_t *state, treenode *n)
 {
 	int i;
 
+	if (do_coll_ct && (TagOf (n) == S_RECORDSUB)) {
+		fmnode_t *ev = fmt_findfreevar (state, ASBaseOf (n));
+
+		if (ev) {
+			return ev;
+		}
+	}
 	while (state) {
 		for (i=0; i<state->fvars_cur; i++) {
 			fmnode_t *fvar = state->fvars[i];
@@ -2408,6 +2513,69 @@ PRIVATE fmnode_t *fmt_intersectrefset (fmnode_t *set1, fmnode_t *set2)
 	return isect;
 }
 /*}}}*/
+/*{{{  PRIVATE int fmt_mergetagset (fmnode_t *set, fmnode_t *other, SOURCEPOSN slocn)*/
+/*
+ *	merges tags from one set into another
+ */
+PRIVATE int fmt_mergetagset (fmnode_t *set, fmnode_t *other, SOURCEPOSN slocn, char *nameleading)
+{
+	int i;
+	int count = 0;
+
+	if ((set->type != FM_TAGSET) || (other->type != FM_TAGSET)) {
+		fmt_error_internal (NOPOSN, "fmt_mergetagset(): not TAGSET!");
+		return 0;
+	}
+
+	for (i=0; i<other->u.fmtset.tags_cur; i++) {
+		fmnode_t *tag = other->u.fmtset.tags[i];
+
+		if (tag && (tag->type == FM_TREEREF) && tag->u.fmtree.name) {
+			int j;
+			fmnode_t *copy;
+
+			/* check that we don't already have something with this name */
+			for (j=0; j<set->u.fmtset.tags_cur; j++) {
+				fmnode_t *stag = set->u.fmtset.tags[j];
+
+				if (stag && (stag->type == FM_TREEREF) && stag->u.fmtree.name) {
+					if (nameleading) {
+						int nllen = strlen (nameleading);
+
+						if (!strncmp (stag->u.fmtree.name, nameleading, nllen) && !strcmp (stag->u.fmtree.name + nllen, tag->u.fmtree.name)) {
+							fmt_error_now_s (slocn, USE_DUPLICATE_TAG_IN_MERGE, stag->u.fmtree.name);
+							return 0;
+						}
+					} else if (!strcmp (tag->u.fmtree.name, stag->u.fmtree.name)) {
+						fmt_error_now_s (slocn, USE_DUPLICATE_TAG_IN_MERGE, stag->u.fmtree.name);
+						return 0;
+					}
+				}
+			}
+			
+			/* duplicate reference and add */
+			copy = fmt_copynode (tag);
+
+			if (nameleading) {
+				/* re-create name */
+				char *nstr = (char *)memalloc (strlen (copy->u.fmtree.name) + strlen (nameleading) + 8);
+				int nlen;
+
+				fmt_copytagname (nstr, nameleading);
+				nlen = strlen (nstr);
+				sprintf (nstr + nlen, "%s", copy->u.fmtree.name);
+
+				memfree (copy->u.fmtree.name);
+				copy->u.fmtree.name = nstr;
+			}
+
+			fmt_addtonodelist (set, copy);
+			count++;
+		}
+	}
+	return count;
+}
+/*}}}*/
 /*{{{  PRIVATE int fmt_doalphabetisepar (fmnode_t **nodep, void *voidptr)*/
 /*
  *	used when alphabetising parallel processes
@@ -2629,6 +2797,23 @@ PRIVATE void fmt_generatesystem (fmnode_t *node, fmnode_t **sys_fv, fmnode_t **s
 
 			fmt_addtonodelist (events, nparm);
 			fmt_addtonodelist (inst, npref);
+			break;
+		case FM_EVENTSET:
+			{
+				int j;
+
+				/* unwind into individual events */
+				for (j=0; j<fparam->u.fmevset.events_cur; j++) {
+					fmnode_t *ev = fparam->u.fmevset.events[j];
+
+					nparm = fmt_createeventfromevent (ev);
+					npref = fmt_newnode (FM_NODEREF, NULL);
+					npref->u.fmnode.node = nparm;
+
+					fmt_addtonodelist (events, nparm);
+					fmt_addtonodelist (inst, npref);
+				}
+			}
 			break;
 		default:
 			fmt_error_internal (NOPOSN, "fmt_generatesystem(): not EVENT!");
@@ -3374,6 +3559,12 @@ fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 				/* nothing here, assume SKIP */
 				fmt_freenode (fmn, 2);
 				fmn = fmt_newnode (FM_SKIP, n);
+			} else if (do_coll_ct && fmn->u.fmio.lhs) {
+				/* FIXME: something else */
+#if 1
+fprintf (stderr, "do_formalmodelgen(): possibly fixup collated CT, fmn=\n");
+fmt_dumpnode (fmn, 1, stderr);
+#endif
 			}
 			fmstate->target = saved_target;
 			*(fmstate->target) = fmn;
@@ -3859,6 +4050,9 @@ fprintf (stderr, "do_formalmodelcheck_tree(): TPROTDEF [%s]\n", tpname);
 					fmt_copytagname (fmntag->u.fmtree.name, tagname);
 
 					fmt_addtonodelist (fmn, fmntag);
+
+					/* and tag the node */
+					SetNFMCheck (tag, fmntag);
 				}
 #if 0
 fprintf (stderr, " ... : tag =");
@@ -3867,10 +4061,90 @@ printtreenl (stderr, 1, tag);
 			}
 
 			fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)fmn);
+
+			/* and tag the node */
+			SetNFMCheck (DNameOf (n), fmn);
 		}
 		break;
 		/*}}}*/
-		/*{{{  PROCDEF, MPROCDECL*/
+		/*{{{  TYPEDECL*/
+	case S_TYPEDECL:
+		{
+			treenode *dname = DNameOf (n);
+
+			/* looking for mobile channel-types (to collate protocols in these) */
+			if (TagOf (dname) == N_TYPEDECL) {
+				treenode *type = NTypeOf (dname);
+
+				if (isdynamicmobilechantype (type)) {
+					char *tdname = (char *)WNameOf (NNameOf (dname));
+					treenode *items = ARTypeOf (MTypeOf (type));
+					treenode *walk;
+					fmnode_t *fmn;
+
+					/*
+					 * rules for this are pretty straightforward:
+					 *  - collect up tagged protocol variants, ignore duplicate names
+					 *  - single channels become individual tags
+					 */
+					fmn = fmt_newnode (FM_TAGSET, n);
+					fmn->u.fmtset.name = (char *)memalloc (strlen (tdname) + 12);
+					sprintf (fmn->u.fmtset.name, "CTPROT_");
+					fmt_copyprotname (fmn->u.fmtset.name + 7, tdname);
+
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): TYPEDECL/NTYPEDECL [%s]\n", tdname);
+#endif
+					for (walk = items; walk && (TagOf (walk) == S_DECL); walk = DBodyOf (walk)) {
+						char *tcname = (char *)WNameOf (NNameOf (DNameOf (walk)));
+						treenode *dtype = NTypeOf (DNameOf (walk));
+
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): channel item [%s], type:", tcname);
+printtreenl (stderr, 1, dtype);
+#endif
+						if (TagOf (dtype) == S_CHAN) {
+							/* channel of something, tagged protocol or regular? */
+							treenode *prot = ProtocolOf (dtype);
+
+							if (prot && (TagOf (prot) == N_TPROTDEF)) {
+								fmnode_t *other = fmt_getfmcheck (prot);
+
+								if (other && (other->type == FM_TAGSET)) {
+									/* copy out tags, which will be TREEREFs to N_FIELDs */
+									fmt_mergetagset (fmn, other, LocnOf (DNameOf (walk)), tcname);
+								}
+							} else {
+								/* we assume this is a simple channel, add as its own tag */
+								fmnode_t *tag = fmt_newnode (FM_TREEREF, DNameOf (walk));
+
+								tag->u.fmtree.name = (char *)memalloc (strlen (tcname) + 8);
+								sprintf (tag->u.fmtree.name, "Chan");
+								fmt_copytagname (tag->u.fmtree.name + 4, tcname);
+								tag->u.fmtree.node = DNameOf (walk);
+
+								fmt_addtonodelist (fmn, tag);
+							}
+						}
+					}
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): built tag set:\n");
+fmt_dumpnode (fmn, 1, stderr);
+#endif
+					fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)fmn);
+
+					/* and tag the node */
+					SetNFMCheck (dname, fmn);
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): set tag on name:");
+printtreenl (stderr, 1, dname);
+#endif
+				}
+			}
+		}
+		break;
+		/*}}}*/
+		/*{{{  PROCDEF,MPROCDECL*/
 	case S_PROCDEF:
 	case S_MPROCDECL:
 		if (!separatelycompiled (DNameOf (n))) {
@@ -4019,11 +4293,14 @@ PUBLIC void formalmodelcheck (treenode *n, BOOL check_formalmodels, const char *
 		if (setjmp (env) == 0) {
 			fmmset_t *fmm = fmt_newmset ();
 			const char *fname = fe_lookupfilename (fe_handle, 0);
+			const fe_data_t *fedata = fe_get_data_ptr (fe_handle);
 
 #if 0
 fprintf (stderr, "formalmodelcheck(): tree before check is:\n");
 printtreenl (stderr, 1, n);
 #endif
+			do_coll_ct = fedata ? fedata->fe_fm_collct : 0;
+
 			prewalkproctree (n, do_formalmodelcheck_tree, (void *)fmm);
 			fmt_postprocessmodels (fmm);
 
