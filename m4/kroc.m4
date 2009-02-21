@@ -94,8 +94,11 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   KROC_CCSP_CINCPATH="$KROC_CCSP_CFLAGS -I$KROC_BUILD_ROOT/runtime/ccsp/include -I$KROC_BUILD_ROOT/modules/cif/libsrc"
   KROC_CCSP_LIBPATH="$KROC_CCSP_LIBPATH -L$KROC_BUILD_ROOT/runtime/ccsp -L$KROC_BUILD_ROOT/runtime/libkrocif"
 
+  AC_CHECK_FUNC(dlsym, have_libc_dlsym=yes, have_libc_dlsym=no)
   AC_CHECK_LIB(dl, dlsym, have_libdl=yes, have_libdl=no)
-  if test $have_libdl = yes; then
+  if test $have_libc_dlsym = yes; then
+    :
+  elif test $have_libdl = yes; then
     KROC_CCSP_LIBS="$KROC_CCSP_LIBS -ldl"
   else
     KROC_CCSP_ENABLE_DYNPROC=no
