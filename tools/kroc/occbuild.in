@@ -425,7 +425,7 @@ class TVMToolchain:
 
 	def run(self, program, args):
 		set_ld_path()
-		run([programs["tvm"], program + ".tbc"] + args)
+		run(programs["tvm"] + [program + ".tbc"] + args)
 
 	def install(self, file):
 		bindir = get_install_dir("@TVM_BINDIR@", "/bin")
