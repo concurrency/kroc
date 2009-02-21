@@ -1345,6 +1345,10 @@ PUBLIC const char *usemessagestring (const int n)
 		return ("cannot move extended barrier `%s\'");
 	case USE_UNEXPECTED_CHAN_DIR:
 		return ("unexpected channel-direction specifier");
+	case USE_DUPLICATE_TAG_IN_MERGE:
+		return ("cannot merge tagged protocols, duplicate tag `%s\'");
+	case USE_FM_NO_CHANTYPE:
+		return ("collated protocol for channel type `%s\' not found");
 	default:
 		return (NULL);
 	}

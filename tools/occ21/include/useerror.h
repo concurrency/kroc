@@ -114,4 +114,9 @@
 #define USE_UNEXPECTED_CHAN_DIR		73	/* unexpected channel-direction specifier */
 
 /*}}}*/
+/*{{{  related to formal-model checking/generation*/
+#define USE_DUPLICATE_TAG_IN_MERGE	80	/* duplicate tag name in tag merge (-zfmcct) */
+#define USE_FM_NO_CHANTYPE		81	/* no type found for channel-type (-zfmcct) */
+
+/*}}}*/
 
