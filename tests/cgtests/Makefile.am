@@ -50,6 +50,9 @@ tests = \
 	cgtest85 cgtest86 cgtest87 cgtest88 cgtest89 \
 	cgtest90 cgtest91 cgtest92
 
+TESTS_ENVIRONMENT = $(OCCBUILD) --run
+TESTS = $(tests)
+
 cglib_lib_objs = cglib.tce
 
 libs = cglib.lib

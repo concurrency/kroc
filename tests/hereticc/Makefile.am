@@ -13,6 +13,9 @@ EXTRA_DIST = \
 tests = \
 	hereticc
 
+TESTS_ENVIRONMENT = $(OCCBUILD) --run
+TESTS = $(tests)
+
 all-local: $(tests)
 
 hereticc: hereticc.occ
