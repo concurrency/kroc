@@ -19,7 +19,7 @@ TESTS = $(tests)
 all-local: $(tests)
 
 hereticc: hereticc.occ
-	$(OCCBUILD) --program $<
+	$(OCCBUILD) --program hereticc.occ
 
 install-exec-local: $(tests)
 	$(OCCBUILD) --install-examples hereticc --prefix "$(prefix)" --destdir "$(DESTDIR)" $(tests)
