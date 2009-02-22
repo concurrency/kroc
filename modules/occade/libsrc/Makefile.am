@@ -33,6 +33,6 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 ## begin pideps dependencies
-occade.occ: $(srcdir)/occade.inc
-occade.occ: $(srcdir)/overwriting-buffer.inc
+occade.tce: $(srcdir)/occade.inc
+occade.tce: $(srcdir)/overwriting-buffer.inc
 ## end pideps dependencies

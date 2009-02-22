@@ -83,154 +83,153 @@ update-deps:
 	pideps $(addprefix -b ,$(tests)) *.occ
 
 ## begin pideps dependencies
-$(srcdir)/cgmain.occ: cglib.lib
-cgtest00: $(srcdir)/cgmain.occ
-cgtest01: $(srcdir)/cgmain.occ
-cgtest02: $(srcdir)/cgmain.occ
-cgtest03: $(srcdir)/cgmain.occ
-cgtest04: $(srcdir)/cgmain.occ
-cgtest05: $(srcdir)/cgmain.occ
-cgtest06: $(srcdir)/cgmain.occ
+cgtest00: $(srcdir)/cgmain.occ cglib.lib
+cgtest01: $(srcdir)/cgmain.occ cglib.lib
+cgtest02: $(srcdir)/cgmain.occ cglib.lib
+cgtest03: $(srcdir)/cgmain.occ cglib.lib
+cgtest04: $(srcdir)/cgmain.occ cglib.lib
+cgtest05: $(srcdir)/cgmain.occ cglib.lib
+cgtest06: $(srcdir)/cgmain.occ cglib.lib
 cgtest06: $(srcdir)/cgreal.occ
-cgtest07: $(srcdir)/cgmain.occ
-cgtest08: $(srcdir)/cgmain.occ
-cgtest09: $(srcdir)/cgmain.occ
+cgtest07: $(srcdir)/cgmain.occ cglib.lib
+cgtest08: $(srcdir)/cgmain.occ cglib.lib
+cgtest09: $(srcdir)/cgmain.occ cglib.lib
 cgtest10: $(srcdir)/cg10misc.occ
 cgtest10: $(srcdir)/cg10r32.occ
 cgtest10: $(srcdir)/cg10r64.occ
-cgtest10: $(srcdir)/cgmain.occ
+cgtest10: $(srcdir)/cgmain.occ cglib.lib
 cgtest10: $(srcdir)/cgreal.occ
 cgtest11: $(srcdir)/cg10byte.occ
 cgtest11: $(srcdir)/cg10int.occ
 cgtest11: $(srcdir)/cg10long.occ
-cgtest11: $(srcdir)/cgmain.occ
+cgtest11: $(srcdir)/cgmain.occ cglib.lib
 cgtest11: $(srcdir)/cgreal.occ
-cgtest12: $(srcdir)/cgmain.occ
-cgtest13: $(srcdir)/cgmain.occ
-cgtest14: $(srcdir)/cgmain.occ
+cgtest12: $(srcdir)/cgmain.occ cglib.lib
+cgtest13: $(srcdir)/cgmain.occ cglib.lib
+cgtest14: $(srcdir)/cgmain.occ cglib.lib
 cgtest14: $(srcdir)/cgreal.occ
-cgtest15: $(srcdir)/cgmain.occ
+cgtest15: $(srcdir)/cgmain.occ cglib.lib
 cgtest15: $(srcdir)/cgreal.occ
-cgtest16: $(srcdir)/cgmain.occ
-cgtest17: $(srcdir)/cgmain.occ
-cgtest18: $(srcdir)/cgmain.occ
-cgtest19: $(srcdir)/cgmain.occ
+cgtest16: $(srcdir)/cgmain.occ cglib.lib
+cgtest17: $(srcdir)/cgmain.occ cglib.lib
+cgtest18: $(srcdir)/cgmain.occ cglib.lib
+cgtest19: $(srcdir)/cgmain.occ cglib.lib
 cgtest19: $(srcdir)/cgreal.occ
 cgtest19: $(srcdir)/config.inc
 cgtest20: $(srcdir)/cg10i16.occ
-cgtest20: $(srcdir)/cgmain.occ
+cgtest20: $(srcdir)/cgmain.occ cglib.lib
 cgtest20: $(srcdir)/cgreal.occ
 cgtest21: $(srcdir)/cg10i32.occ
-cgtest21: $(srcdir)/cgmain.occ
+cgtest21: $(srcdir)/cgmain.occ cglib.lib
 cgtest21: $(srcdir)/cgreal.occ
 cgtest22: $(srcdir)/cg10i64.occ
-cgtest22: $(srcdir)/cgmain.occ
+cgtest22: $(srcdir)/cgmain.occ cglib.lib
 cgtest22: $(srcdir)/cgreal.occ
-cgtest23: $(srcdir)/cgmain.occ
-cgtest24: $(srcdir)/cgmain.occ
+cgtest23: $(srcdir)/cgmain.occ cglib.lib
+cgtest24: $(srcdir)/cgmain.occ cglib.lib
 cgtest24: $(srcdir)/cgreal.occ
-cgtest25: $(srcdir)/cgmain.occ
+cgtest25: $(srcdir)/cgmain.occ cglib.lib
 cgtest25: $(srcdir)/cgreal.occ
-cgtest26: $(srcdir)/cgmain.occ
+cgtest26: $(srcdir)/cgmain.occ cglib.lib
 cgtest26: $(srcdir)/cgreal.occ
-cgtest27: $(srcdir)/cgmain.occ
+cgtest27: $(srcdir)/cgmain.occ cglib.lib
 cgtest27: $(srcdir)/cgreal.occ
 cgtest50: $(srcdir)/cg50myi.occ
-cgtest50: $(srcdir)/cgmain.occ
+cgtest50: $(srcdir)/cgmain.occ cglib.lib
 cgtest50: $(srcdir)/cgreal.occ
 cgtest51: $(srcdir)/cg50myi.occ
-cgtest51: $(srcdir)/cgmain.occ
+cgtest51: $(srcdir)/cgmain.occ cglib.lib
 cgtest51: $(srcdir)/cgreal.occ
 cgtest52: $(srcdir)/cg50myi.occ
-cgtest52: $(srcdir)/cgmain.occ
+cgtest52: $(srcdir)/cgmain.occ cglib.lib
 cgtest52: $(srcdir)/cgreal.occ
 cgtest53: $(srcdir)/cg50myi.occ
-cgtest53: $(srcdir)/cgmain.occ
+cgtest53: $(srcdir)/cgmain.occ cglib.lib
 cgtest53: $(srcdir)/cgreal.occ
 cgtest54: $(srcdir)/cg50myr.occ
-cgtest54: $(srcdir)/cgmain.occ
+cgtest54: $(srcdir)/cgmain.occ cglib.lib
 cgtest54: $(srcdir)/cgreal.occ
 cgtest55: $(srcdir)/cg50myr.occ
-cgtest55: $(srcdir)/cgmain.occ
+cgtest55: $(srcdir)/cgmain.occ cglib.lib
 cgtest55: $(srcdir)/cgreal.occ
-cgtest56: $(srcdir)/cgmain.occ
+cgtest56: $(srcdir)/cgmain.occ cglib.lib
 cgtest56: $(srcdir)/cgreal.occ
 cgtest57: $(srcdir)/cg57type.occ
-cgtest57: $(srcdir)/cgmain.occ
+cgtest57: $(srcdir)/cgmain.occ cglib.lib
 cgtest57: $(srcdir)/cgreal.occ
 cgtest58: $(srcdir)/cg58arr.occ
 cgtest58: $(srcdir)/cg58rec.occ
-cgtest58: $(srcdir)/cgmain.occ
+cgtest58: $(srcdir)/cgmain.occ cglib.lib
 cgtest58: $(srcdir)/cgreal.occ
-cgtest59: $(srcdir)/cgmain.occ
+cgtest59: $(srcdir)/cgmain.occ cglib.lib
 cgtest59: $(srcdir)/cgreal.occ
 cgtest60: $(srcdir)/cg60myi.occ
-cgtest60: $(srcdir)/cgmain.occ
+cgtest60: $(srcdir)/cgmain.occ cglib.lib
 cgtest60: $(srcdir)/cgreal.occ
 cgtest61: $(srcdir)/cg60myi.occ
-cgtest61: $(srcdir)/cgmain.occ
+cgtest61: $(srcdir)/cgmain.occ cglib.lib
 cgtest61: $(srcdir)/cgreal.occ
 cgtest62: $(srcdir)/cg60myi.occ
-cgtest62: $(srcdir)/cgmain.occ
+cgtest62: $(srcdir)/cgmain.occ cglib.lib
 cgtest62: $(srcdir)/cgreal.occ
 cgtest63: $(srcdir)/cg60myi.occ
-cgtest63: $(srcdir)/cgmain.occ
+cgtest63: $(srcdir)/cgmain.occ cglib.lib
 cgtest63: $(srcdir)/cgreal.occ
 cgtest64: $(srcdir)/cg60myr.occ
-cgtest64: $(srcdir)/cgmain.occ
+cgtest64: $(srcdir)/cgmain.occ cglib.lib
 cgtest64: $(srcdir)/cgreal.occ
 cgtest65: $(srcdir)/cg60myr.occ
-cgtest65: $(srcdir)/cgmain.occ
+cgtest65: $(srcdir)/cgmain.occ cglib.lib
 cgtest65: $(srcdir)/cgreal.occ
 cgtest66: $(srcdir)/cg66cnvt.occ
-cgtest66: $(srcdir)/cgmain.occ
+cgtest66: $(srcdir)/cgmain.occ cglib.lib
 cgtest66: $(srcdir)/cgreal.occ
 cgtest67: $(srcdir)/cg67cplx.occ
-cgtest67: $(srcdir)/cgmain.occ
+cgtest67: $(srcdir)/cgmain.occ cglib.lib
 cgtest67: $(srcdir)/cgreal.occ
-cgtest70: $(srcdir)/cgmain.occ
+cgtest70: $(srcdir)/cgmain.occ cglib.lib
 cgtest70: $(srcdir)/cgreal.occ
-cgtest71: $(srcdir)/cgmain.occ
+cgtest71: $(srcdir)/cgmain.occ cglib.lib
 cgtest71: $(srcdir)/cgreal.occ
-cgtest72: $(srcdir)/cgmain.occ
+cgtest72: $(srcdir)/cgmain.occ cglib.lib
 cgtest72: $(srcdir)/cgreal.occ
-cgtest73: $(srcdir)/cgmain.occ
+cgtest73: $(srcdir)/cgmain.occ cglib.lib
 cgtest73: $(srcdir)/cgreal.occ
-cgtest74: $(srcdir)/cgmain.occ
+cgtest74: $(srcdir)/cgmain.occ cglib.lib
 cgtest74: $(srcdir)/cgreal.occ
-cgtest75: $(srcdir)/cgmain.occ
+cgtest75: $(srcdir)/cgmain.occ cglib.lib
 cgtest75: $(srcdir)/cgreal.occ
-cgtest76: $(srcdir)/cgmain.occ
+cgtest76: $(srcdir)/cgmain.occ cglib.lib
 cgtest76: $(srcdir)/cgreal.occ
-cgtest77: $(srcdir)/cgmain.occ
+cgtest77: $(srcdir)/cgmain.occ cglib.lib
 cgtest77: $(srcdir)/cgreal.occ
-cgtest78: $(srcdir)/cgmain.occ
+cgtest78: $(srcdir)/cgmain.occ cglib.lib
 cgtest78: $(srcdir)/cgreal.occ
-cgtest79: $(srcdir)/cgmain.occ
+cgtest79: $(srcdir)/cgmain.occ cglib.lib
 cgtest79: $(srcdir)/cgreal.occ
-cgtest80: $(srcdir)/cgmain.occ
+cgtest80: $(srcdir)/cgmain.occ cglib.lib
 cgtest80: $(srcdir)/cgreal.occ
-cgtest81: $(srcdir)/cgmain.occ
-cgtest82: $(srcdir)/cgmain.occ
+cgtest81: $(srcdir)/cgmain.occ cglib.lib
+cgtest82: $(srcdir)/cgmain.occ cglib.lib
 cgtest82: $(srcdir)/cgreal.occ
-cgtest83: $(srcdir)/cgmain.occ
+cgtest83: $(srcdir)/cgmain.occ cglib.lib
 cgtest83: $(srcdir)/cgreal.occ
-cgtest84: $(srcdir)/cgmain.occ
+cgtest84: $(srcdir)/cgmain.occ cglib.lib
 cgtest84: $(srcdir)/cgreal.occ
-cgtest85: $(srcdir)/cgmain.occ
+cgtest85: $(srcdir)/cgmain.occ cglib.lib
 cgtest85: $(srcdir)/cgreal.occ
-cgtest86: $(srcdir)/cgmain.occ
+cgtest86: $(srcdir)/cgmain.occ cglib.lib
 cgtest86: $(srcdir)/cgreal.occ
-cgtest87: $(srcdir)/cgmain.occ
+cgtest87: $(srcdir)/cgmain.occ cglib.lib
 cgtest87: $(srcdir)/cgreal.occ
-cgtest88: $(srcdir)/cgmain.occ
+cgtest88: $(srcdir)/cgmain.occ cglib.lib
 cgtest88: $(srcdir)/cgreal.occ
-cgtest89: $(srcdir)/cgmain.occ
+cgtest89: $(srcdir)/cgmain.occ cglib.lib
 cgtest89: $(srcdir)/cgreal.occ
-cgtest90: $(srcdir)/cgmain.occ
+cgtest90: $(srcdir)/cgmain.occ cglib.lib
 cgtest90: $(srcdir)/cgreal.occ
-cgtest91: $(srcdir)/cgmain.occ
+cgtest91: $(srcdir)/cgmain.occ cglib.lib
 cgtest91: $(srcdir)/cgreal.occ
-cgtest92: $(srcdir)/cgmain.occ
+cgtest92: $(srcdir)/cgmain.occ cglib.lib
 cgtest92: $(srcdir)/cgreal.occ
 ## end pideps dependencies

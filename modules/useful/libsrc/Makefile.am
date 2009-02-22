@@ -58,5 +58,5 @@ format-gen.occ: make-format.py
 
 CLEANFILES = format-gen.occ
 
-format-gen.occ: format.tce
-string.occ: math.tce
+format-gen.tce: format.tce
+string.tce: math.tce
