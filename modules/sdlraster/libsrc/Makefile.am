@@ -50,5 +50,5 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 #{{{  dependencies
-sdlrcompat.occ: sdlraster.tce
+sdlrcompat.tce: sdlraster.tce
 #}}}
