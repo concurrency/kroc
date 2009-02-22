@@ -24,16 +24,16 @@ examples = \
 all-local: $(examples)
 
 bounce: bounce.occ
-	$(OCCBUILD) --program $<
+	$(OCCBUILD) --program bounce.occ
 
 breakout: breakout.occ shutdown.tce
-	$(OCCBUILD) --program $< shutdown.tce
+	$(OCCBUILD) --program breakout.occ shutdown.tce
 
 collision-test: collision-test.occ
-	$(OCCBUILD) --program $<
+	$(OCCBUILD) --program collision-test.occ
 
 parrot_attack: parrot_attack.occ shutdown.tce
-	$(OCCBUILD) --program $< shutdown.tce
+	$(OCCBUILD) --program parrot_attack.occ shutdown.tce
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples occade --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)

@@ -45,16 +45,16 @@ dist_robots_DATA = \
 all-local: $(examples)
 
 robot: robot.occ graphics.tce
-	$(OCCBUILD) --program $< graphics.tce
+	$(OCCBUILD) --program robot.occ graphics.tce
 
 robot2: robot2.occ graphics.tce
-	$(OCCBUILD) --program $< graphics.tce
+	$(OCCBUILD) --program robot2.occ graphics.tce
 
 robot3: robot3.occ graphics.tce
-	$(OCCBUILD) --program $< graphics.tce
+	$(OCCBUILD) --program robot3.occ graphics.tce
 
 particles-ats: particles-ats.occ
-	$(OCCBUILD) --program $<
+	$(OCCBUILD) --program particles-ats.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples robots --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)

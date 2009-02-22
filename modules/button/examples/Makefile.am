@@ -14,7 +14,7 @@ examples = \
 all-local: $(examples)
 
 button_sample: button_sample.occ
-	$(OCCBUILD) --program $<
+	$(OCCBUILD) --program button_sample.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples button --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)

@@ -20,7 +20,7 @@ endif
 BUILT_SOURCES = firmware.h
 
 firmware.h: firmware.occ
-	$(SKROC) --no-std-libs $(SKROC_OPTS) --c -f $@ $<
+	$(SKROC) --no-std-libs $(SKROC_OPTS) --c -f firmware.h firmware.occ
 
 EXTRA_DIST = \
 	firmware.occ \
