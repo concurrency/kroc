@@ -46,7 +46,7 @@ VAL INT BUTTON.BACKWARD IS 5:
 
 --*}}}
 
-VAL INT N.ROBOTS          IS   64:                --* Default number of robots.
+VAL INT N.ROBOTS          IS   128:               --* Default number of robots.
 
 VAL INT BACKGROUND        IS COLOUR.BLACK:        --* Default background colour.
 VAL INT FOREGROUND        IS COLOUR.WHITE:        --* Default foreground colour.
@@ -134,29 +134,36 @@ ANGLE INLINE FUNCTION ABS (VAL ANGLE angle)
 --
 PROC set.scene (RASTER raster)
 
+  VAL INT d IS SIZE raster:
+  VAL INT w IS SIZE raster[0]:
+
   SEQ
 
     clear.raster (raster, COLOUR.BLACK)
 
     #IF FALSE
-    Disc (200, 200, 150, FOREGROUND, raster)
-    Disc (200, 200, 100, BACKGROUND, raster)
-    Rectangle (175, 200, 50, 200, BACKGROUND, raster)
 
-    Rectangle (500, 200, 400, 300, FOREGROUND, raster)
-    Rectangle (550, 200, 100, 250, BACKGROUND, raster)
-    Rectangle (600, 350, 200, 100, BACKGROUND, raster)
-    Rectangle (800, 250,  50, 200, BACKGROUND, raster)
-    Rectangle (700, 250, 100,  50, BACKGROUND, raster)
-    Rectangle (700, 200,  50,  50, BACKGROUND, raster)
+    fill.circle ((200*w) >> 10, (300*d) >> 10, (225*d) >> 10, FOREGROUND, raster)
+    fill.circle ((200*w) >> 10, (300*d) >> 10, (150*d) >> 10, BACKGROUND, raster)
+    fill.rectangle ((175*w) >> 10, (300*d) >> 10, (50*w) >> 10, (230*d) >> 10, BACKGROUND, raster)
 
-    Rectangle (  0, 450, 350,  50, FOREGROUND, raster)
-    Disc (350, 475, 50, FOREGROUND, raster)
+    fill.rectangle ((500*w) >> 10, (300*d) >> 10, (400*w) >> 10, (450*d) >> 10, FOREGROUND, raster)
+    fill.rectangle ((550*w) >> 10, (300*d) >> 10, (100*w) >> 10, (375*d) >> 10, BACKGROUND, raster)
+    fill.rectangle ((640*w) >> 10, (525*d) >> 10, (208 *w) >> 10, (150*d) >> 10, BACKGROUND, raster)
+    fill.rectangle ((800*w) >> 10, (375*d) >> 10,  (50*w) >> 10, (300*d) >> 10, BACKGROUND, raster)
+    fill.rectangle ((700*w) >> 10, (375*d) >> 10, (150*w) >> 10,  (75*d) >> 10, BACKGROUND, raster)
+    fill.rectangle ((700*w) >> 10, (300*d) >> 10,  (50*w) >> 10, (150*d) >> 10, BACKGROUND, raster)
 
-    Disc (WIDTH, 0, 150, FOREGROUND, raster)
-    Disc (WIDTH, 0, 100, BACKGROUND, raster)
+    fill.rectangle (0, (700*d) >> 10, (350*w) >> 10,  (75*d) >> 10, FOREGROUND, raster)
+    fill.circle ((350*w) >> 10, (738*d) >> 10, (75*d) >> 10, FOREGROUND, raster)
+                                                
+    fill.circle (w, 0, (225*d) >> 10, FOREGROUND, raster)
+    fill.circle (w, 0, (150*d) >> 10, BACKGROUND, raster)
+
     #ELSE
+
     read.raster ("robot-track-2.png", raster)
+
     #ENDIF
 
 :
@@ -427,46 +434,6 @@ PROC brain.0 (VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocit
 
 
 --}}}
---{{{  INT, INT FUNCTION min.max.indices (VAL []INT ranges)
---* Finds the indices of the min and max elements of ranges.
---
---  This starts from the middle and works outwards.  In the case
---  of a tie, the first one encountered (i.e. closest to the middle)
---  is chosen.
---
---  @param ranges Array of ranges.
---  @return The indices of the min and max elements of ranges.
---
-INT, INT FUNCTION min.max.indices (VAL []INT ranges)
-  INT min, max:
-  VALOF
-    INT min.range, max.range:
-    SEQ
-      min, max := MID.RAY, MID.RAY
-      min.range, max.range := ranges[min], ranges[max]
-      SEQ i = 1 FOR (SIZE ranges)/2
-        SEQ
-          VAL INT j IS MID.RAY + i:
-          VAL INT ranges.j IS ranges[j]:
-          IF
-            ranges.j > max.range
-              max, max.range := j, ranges.j
-            ranges.j < min.range
-              min, min.range := j, ranges.j
-            TRUE
-              SKIP
-          VAL INT j IS MID.RAY - i:
-          VAL INT ranges.j IS ranges[j]:
-          IF
-            ranges.j > max.range
-              max, max.range := j, ranges.j
-            ranges.j < min.range
-              min, min.range := j, ranges.j
-            TRUE
-              SKIP
-    RESULT min, max
-:
---}}}
 --{{{  PROC brain.1 (...)
 --* Drive robot automatically.
 --
@@ -482,47 +449,9 @@ INT, INT FUNCTION min.max.indices (VAL []INT ranges)
 PROC brain.1 (VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocity,
               VAL INT robot.radius, CHAN MOVE move!, CHAN LASER laser?)
 
-  INITIAL INT linear.velocity IS initial.linear.velocity:
-  INITIAL ANGLE angular.velocity IS initial.angular.velocity:
+  brain.0 (initial.linear.velocity, initial.angular.velocity,      -- you can do better than this!
+           robot.radius, move!, laser?)
 
-  VAL INT STUCK.TOLERANCE IS 5:
-  INITIAL INT stuck IS 0:
-
-  VAL INT robot.radius.2 IS robot.radius << 1:
-  VAL INT robot.radius.1.5 IS robot.radius + (robot.radius >> 1):
-
-  VAL ANGLE HALF.DEGREE IS ANGLE.DEGREE / 2:
-
-  WHILE TRUE
-    RANGES ranges:
-    INT min, max:
-    SEQ
-      laser ? ranges
-      min, max := min.max.indices (ranges)
-      IF
-        ranges[min] < robot.radius
-          linear.velocity, angular.velocity := -linear.velocity, angular.velocity PLUS HALF.DEGREE
-        ranges[min] < robot.radius.1.5
-          IF
-            min = MID.RAY
-              linear.velocity, angular.velocity := 0, HALF.DEGREE
-            TRUE
-              linear.velocity, angular.velocity :=  0, (ANGLE (MID.RAY MINUS min)) TIMES HALF.DEGREE
-        TRUE
-          linear.velocity, angular.velocity :=
-            compute.speed (ranges[max], robot.radius), (ANGLE (max MINUS MID.RAY)) TIMES HALF.DEGREE
-      IF
-        linear.velocity = 0
-          SEQ
-            stuck := stuck + 1
-            IF
-              stuck > STUCK.TOLERANCE
-                linear.velocity, angular.velocity := 0, angular.velocity PLUS (10*ANGLE.DEGREE)
-              TRUE
-                SKIP
-        TRUE
-          stuck := 0
-      move ! linear.velocity; angular.velocity
 :
 --}}}
 
@@ -1089,10 +1018,11 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
 
     raster.width := WIDTH
     raster.height := HEIGHT
-    laser.range := DEFAULT.RANGE
-    robot.radius := DEFAULT.RADIUS
 
-    mixed := FALSE
+    laser.range := (128*raster.width) >> 10    -- DEFAULT.RANGE
+    robot.radius := (4*raster.width) >> 10     -- DEFAULT.RADIUS
+
+    mixed := TRUE
     version := 1
 
     place.robots (s, raster.width, raster.height, robot.radius, mixed)
