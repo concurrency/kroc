@@ -9,7 +9,7 @@ EXTRA_DIST = \
 	button.occ \
 	button.inc \
 	font2.occ  \
-	nine_by_fifteen.occ
+	nine_by_fifteen.inc
 
 button_lib_objs = \
 	button.tce

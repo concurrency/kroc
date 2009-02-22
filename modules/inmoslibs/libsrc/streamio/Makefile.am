@@ -27,6 +27,7 @@ EXTRA_DIST = \
 	srreal32.occ \
 	srreal64.occ \
 	sstdout.occ \
+	streamio.inc \
 	swint.occ \
 	swint64.occ \
 	swreal32.occ \

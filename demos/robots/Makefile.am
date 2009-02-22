@@ -6,14 +6,41 @@ ACLOCAL_AMFLAGS = -I ../../m4
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
-	graphics.occ robot2.occ robot3.occ robot.occ \
-	angle.inc arc.inc circle.inc colours.inc copy.inc cordic.inc disc2.inc disc.inc dither.inc fan.inc graphics.inc hit.inc line.inc lines.inc pack.inc palette.inc rectangle.inc spectrum.inc wallpaper.inc
+	angle.inc \
+	arc.inc \
+	circle.inc \
+	colours.inc \
+	copy.inc \
+	cordic.inc \
+	disc.inc \
+	disc2.inc \
+	dither.inc \
+	fan.inc \
+	graphics.inc \
+	graphics.occ \
+	hit.inc \
+	line.inc \
+	lines.inc \
+	pack.inc \
+	palette.inc \
+	particles-ats.occ \
+	rectangle.inc \
+	robot.occ \
+	robot2.occ \
+	robot3.occ \
+	spectrum.inc \
+	wallpaper.inc
 
 examples = \
 	robot \
 	robot2 \
 	robot3 \
 	particles-ats
+
+robotsdir = $(prefix)/share/kroc/robots
+dist_robots_DATA = \
+	robot-track-1.png \
+	robot-track-2.png
 
 all-local: $(examples)
 

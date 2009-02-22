@@ -9,10 +9,8 @@ CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@ @SDL_CFLAGS@
 EXTRA_DIST = \
 	README \
 	cdx.occ \
-	cdxblast.c \
 	cdxclient.c \
 	cdxclient.h \
-	cdxmandel.occ \
 	cdxoccam.c \
 	cdxview.c \
 	netbar.inc \

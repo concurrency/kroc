@@ -32,7 +32,9 @@ generated_scripts = \
 	occbuild
 
 bin_SCRIPTS = \
-	$(generated_scripts) \
+	$(generated_scripts)
+
+dist_bin_SCRIPTS = \
 	$(kroc_scripts)
 
 dist_man1_MANS = \

@@ -9,6 +9,7 @@ OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@ -Wall
 
 EXTRA_DIST = \
+	ccvt_types.h \
 	video.inc \
 	video.occ \
 	video-v4l.c \

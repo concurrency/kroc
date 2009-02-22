@@ -25,7 +25,8 @@ EXTRA_DIST = \
 	cift14-c.c cift14.occ \
 	cift15.c \
 	cift16-c.c cift16.occ \
-	cift17-c.c cift17.occ
+	cift17-c.c cift17.occ \
+	ciftutils.c ciftutils.h
 
 if BUILD_CIF_EXAMPLES
 examples = \

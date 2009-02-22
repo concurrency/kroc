@@ -9,13 +9,18 @@ SUBDIRS = arch i386
 
 noinst_HEADERS = \
 	bsyscalls_if.h \
+	compiler.h \
+	deadlock.h \
+	debug.h \
 	debug_defs.h \
 	dmem_if.h \
 	dtrace.h \
 	dynproc.h \
 	inlining.h \
+	kernel.h \
 	mobproc.h \
 	mwsync.h \
+	mws_sync.h \
 	rts.h \
 	sched_consts.h \
 	sched_types.h \

@@ -33,6 +33,11 @@ examples = \
 	startup \
 	thread-ring
 
+shootoutdir = $(prefix)/share/kroc/shootout
+dist_shootout_DATA = \
+	revcomp-input.txt \
+	revcomp-output.txt
+
 all-local: $(examples)
 
 chameneos: chameneos.occ
