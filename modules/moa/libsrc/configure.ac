@@ -25,4 +25,4 @@ AC_MSG_RESULT($build_moa)
 AM_CONDITIONAL(BUILD_MOA, [test $build_moa = yes])
 OCCAM_PROVIDE(moa.module, , , [test $build_moa = yes])
 
-AC_OUTPUT([Makefile])
+AC_OUTPUT([Makefile doc/Makefile])

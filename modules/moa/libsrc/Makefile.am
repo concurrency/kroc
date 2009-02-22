@@ -6,6 +6,8 @@ ACLOCAL_AMFLAGS = -I m4 -I ../../../m4
 OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@ @MYSQLCLIENT_CFLAGS@
 
+SUBDIRS = doc
+
 EXTRA_DIST = \
 	m4/mysqlclient.m4 \
 	moa.inc \

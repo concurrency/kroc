@@ -8,7 +8,8 @@ CFLAGS = @CFLAGS@ @CPPFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 
 SWIG_SOURCE_FILES = \
 	gl.i \
-	glu.i
+	glu.i \
+	opengl.i
 
 SWIG_OUTPUT_FILES = \
 	opengl_wrap.c opengl_wrap.h occGL.inc

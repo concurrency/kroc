@@ -21,4 +21,4 @@ dist_man3_MANS = \
 	libstring-inmos.3
 
 EXTRA_DIST = \
-	README.ims
+	README

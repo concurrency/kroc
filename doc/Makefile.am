@@ -41,4 +41,5 @@ dist_msdoc_DATA = \
 
 pythondocdir = $(datadir)/kroc/doc/python
 dist_pythondoc_DATA = \
+	moinmoinwiki-nocc-langdef.py \
 	moinmoinwiki-occampi.py

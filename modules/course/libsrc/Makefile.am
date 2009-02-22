@@ -8,12 +8,14 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
+	utils.doc \
 	utils.occ \
 	string.occ \
 	demo_cycles.occ \
 	demo_nets.occ \
 	file_in.occ \
 	float_io.occ \
+	random.doc \
 	random.occ \
 	consts.inc \
 	shared_screen.occ \

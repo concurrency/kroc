@@ -26,7 +26,8 @@ EXTRA_DIST = \
 	ponyinttcpipstartup.occ \
 	ponylib.inc \
 	ponylib.occ \
-	ponylibtcpip.inc
+	ponylibtcpip.inc \
+	prot-conv-spec.txt
 
 if BUILD_PONY
 pony_lib_objs = \

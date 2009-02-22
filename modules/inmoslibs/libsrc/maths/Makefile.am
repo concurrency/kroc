@@ -27,6 +27,7 @@ EXTRA_DIST = \
 	dpowfl.occ \
 	dranfl.occ \
 	dsinfl.occ \
+	dtanfl.occ \
 	expfl.occ \
 	hyperfl.occ \
 	powfl.occ \

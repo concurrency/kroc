@@ -11,7 +11,6 @@ EXTRA_DIST = \
 	angle.inc \
 	arc.occ \
 	circle.occ \
-	colours.inc \
 	colourspace.occ \
 	copy.occ \
 	cordic.occ \
@@ -23,7 +22,6 @@ EXTRA_DIST = \
 	hit.occ \
 	line.occ \
 	lines.occ \
-	palette.inc \
 	rectangle.occ \
 	spectrum.occ \
 	wallpaper.occ

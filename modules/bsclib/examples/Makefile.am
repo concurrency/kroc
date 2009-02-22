@@ -19,7 +19,8 @@ EXTRA_DIST = \
 	socktcpcli.occ \
 	socktcpserv.occ \
 	sockudpcli.occ \
-	sockudpserv.occ
+	sockudpserv.occ \
+	test-getopt.sh
 
 examples = \
 	args \

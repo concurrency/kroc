@@ -31,7 +31,9 @@ EXTRA_DIST = \
 	cgtest75.occ cgtest76.occ cgtest77.occ cgtest78.occ cgtest79.occ \
 	cgtest80.occ cgtest81.occ cgtest82.occ cgtest83.occ cgtest84.occ \
 	cgtest85.occ cgtest86.occ cgtest87.occ cgtest88.occ cgtest89.occ \
-	cgtest90.occ cgtest91.occ cgtest92.occ
+	cgtest90.occ cgtest91.occ cgtest92.occ \
+	config.inc \
+	run-tests
 
 tests = \
 	cgtest00 cgtest01 cgtest02 cgtest03 cgtest04 \

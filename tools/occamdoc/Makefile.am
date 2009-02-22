@@ -5,7 +5,24 @@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
 EXTRA_DIST = \
-	occamdoc.in
+	occamdoc.in \
+	setup.py \
+	tests/abbrev.occ \
+	tests/broken.occ \
+	tests/empty.occ \
+	tests/extern.occ \
+	tests/findall.occ \
+	tests/main.occ \
+	tests/merge1.occ \
+	tests/merge2.occ \
+	tests/modref.occ \
+	tests/modrefdest.occ \
+	tests/multiarg.occ \
+	tests/multiargbad.occ \
+	tests/noheader.occ \
+	tests/spacing.occ \
+	tests/tabs.occ \
+	tests/vars.occ
 
 occamdocdir = $(datadir)/kroc/occamdoc
 dist_occamdoc_DATA = \
