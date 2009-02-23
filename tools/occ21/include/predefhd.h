@@ -313,7 +313,8 @@ typedef enum
     pragma_name_iospace,
     pragma_name_dyncall,
     pragma_name_dexternal,
-    pragma_name_export
+    pragma_name_export,
+    pragma_name_formalmodel
   } pragma_name_tag_t;
 
 /*}}}*/

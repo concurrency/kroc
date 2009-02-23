@@ -5180,6 +5180,7 @@ PRIVATE void tnestedroutines (treenode * tptr)
 			/*{{{  pragmas*/
 		case S_PRAGMA:	/* bug 829 19/9/91 */
 			switch ((pragma_name_tag_t) NModeOf (DNameOf (tptr))) {
+				/*{{{  pragma_name_dyncall*/
 			case pragma_name_dyncall:
 #if 0
 fprintf (stderr, "tnestedroutines(): PRAGMA DYNCALL:, DValOf =\n");
@@ -5242,6 +5243,8 @@ printtreenl (stderr, 4, plist);
 					geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: PRAGMA DYNCALL is not a list");
 				}
 				break;
+				/*}}}*/
+				/*{{{  pragma_name_export*/
 			case pragma_name_export:
 				if (TagOf (DValOf (tptr)) == S_LIST) {
 					treenode *v;
@@ -5347,6 +5350,7 @@ fprintf (stderr, "tnestedroutines(): EXPORT for [%s], lcbuf=[%s]\n", WNameOf (NN
 					geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: PRAGMA EXPORT is not a list");
 				}
 				break;
+				/*}}}*/
 			default:
 				tnestedroutines (DValOf (tptr));
 				break;
