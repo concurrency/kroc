@@ -200,6 +200,7 @@ PRIVATE int do_coll_ct = 0;			/* collate channel-type channels/protocols */
 /*{{{  forward decls*/
 
 PRIVATE void fmt_addtonodelist (fmnode_t *listnode, fmnode_t *item);
+PRIVATEPARAM int do_formalmodelgen (treenode *n, void *const voidptr);
 
 /*}}}*/
 
@@ -2016,17 +2017,17 @@ PRIVATE fmnode_t *fmt_newatom (treenode *org)
 	return fma;
 }
 /*}}}*/
-/*{{{  PRIVATE fmnode_t *fmt_findfreevar (fmstate_t *state, treenode *n)*/
+/*{{{  PRIVATE fmnode_t *fmt_findfreevar (treenode *n)*/
 /*
  *	searches free-variables for a specifc tree-node
  */
-PRIVATE fmnode_t *fmt_findfreevar (fmstate_t *state, treenode *n)
+PRIVATE fmnode_t *fmt_findfreevar (treenode *n)
 {
 
 	if (nodetypeoftag (TagOf (n)) == NAMENODE) {
 		return fmt_getfmcheck (n);
 	} else if (TagOf (n) == S_RECORDSUB) {
-		fmnode_t *baseev = fmt_findfreevar (state, ASBaseOf (n));
+		fmnode_t *baseev = fmt_findfreevar (ASBaseOf (n));
 		treenode *index = ASIndexOf (n);
 
 #if 0
@@ -2057,13 +2058,13 @@ printtreenl (stderr, 4, index);
 	return NULL;
 }
 /*}}}*/
-/*{{{  PRIVATE fmnode_t *fmt_findfreevar_claim (fmstate_t *state, treenode *n)*/
+/*{{{  PRIVATE fmnode_t *fmt_findfreevar_claim (treenode *n)*/
 /*
  *	searches free-variables for a specific tree-node's CLAIM
  */
-PRIVATE fmnode_t *fmt_findfreevar_claim (fmstate_t *state, treenode *n)
+PRIVATE fmnode_t *fmt_findfreevar_claim (treenode *n)
 {
-	fmnode_t *evset = fmt_findfreevar (state, n);
+	fmnode_t *evset = fmt_findfreevar (n);
 
 	if (evset && (evset->type == FM_EVENTSET)) {
 		int i;
@@ -2079,13 +2080,13 @@ PRIVATE fmnode_t *fmt_findfreevar_claim (fmstate_t *state, treenode *n)
 	return NULL;
 }
 /*}}}*/
-/*{{{  PRIVATE fmnode_t *fmt_findfreevar_release (fmstate_t *state, treenode *n)*/
+/*{{{  PRIVATE fmnode_t *fmt_findfreevar_release (treenode *n)*/
 /*
  *	searches free-variables for a specific tree-node's CLAIM
  */
-PRIVATE fmnode_t *fmt_findfreevar_release (fmstate_t *state, treenode *n)
+PRIVATE fmnode_t *fmt_findfreevar_release (treenode *n)
 {
-	fmnode_t *evset = fmt_findfreevar (state, n);
+	fmnode_t *evset = fmt_findfreevar (n);
 
 	if (evset && (evset->type == FM_EVENTSET)) {
 		int i;
@@ -2963,6 +2964,169 @@ PRIVATE void fmt_writeoutnode_typestr (fmnode_t *node, FILE *fp)
 	}
 }
 /*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_check_procdef (fmstate_t *fmstate, treenode *n)*/
+/*
+ *	generates a NAMEDPROC node for a particular PROC
+ */
+PRIVATE fmnode_t *fmt_check_procdef (fmstate_t *fmstate, treenode *n)
+{
+	char *pname = (char *)WNameOf (NNameOf (DNameOf (n)));
+	fmnode_t *fmn = NULL, *fmnproc = NULL;
+	treenode *fparams;
+	treenode *walk;
+
+	if ((TagOf (n) != S_PROCDEF) && (TagOf (n) != S_MPROCDECL)) {
+		fmt_error_internal (NOPOSN, "fmt_check_procdef(): not PROCDEF!");
+		return NULL;
+	}
+
+	fparams = NParamListOf (DNameOf (n));
+
+#if 0
+fprintf (stderr, "fmt_check_procdef(): PROC [%s]\n", pname);
+#endif
+	/*{{{  collect up relevant parameters*/
+	for (walk = fparams; !EmptyList (walk); walk = NextItem (walk)) {
+		treenode *parm = ThisItem (walk);
+
+		switch (TagOf (parm)) {
+			/*{{{  N_PARAM, N_RESULTPARAM*/
+		case N_PARAM:
+		case N_RESULTPARAM:
+			{
+				fmnode_t *evnode = fmt_createeventfromvar (parm, FALSE);
+
+				if (evnode) {
+					fmt_addtovarslist (fmstate, evnode);
+					SetNFMCheck (parm, evnode);
+				}
+			}
+			break;
+			/*}}}*/
+		default:
+			break;
+		}
+	}
+	/*}}}*/
+
+	fmstate->target = &fmstate->temp;
+	prewalkproctree (DValOf (n), do_formalmodelgen, (void *)fmstate);
+	fmstate->setref = NULL;
+
+	if (!fmstate->temp) {
+		fmn = fmt_newnode (FM_SKIP, n);
+	} else {
+		fmn = fmstate->temp;
+		fmstate->temp = NULL;
+	}
+
+	/*{{{  wrap up in NAMEDPROC node*/
+	fmnproc = fmt_newnode (FM_NAMEDPROC, n);
+	fmnproc->u.fmproc.body = fmn;
+	fmnproc->u.fmproc.name = (char *)memalloc (strlen (pname) + 3);
+	{
+		char *ch, *dh = fmnproc->u.fmproc.name;
+		dh += sprintf (dh, "P");
+		for (ch = pname; *ch != '\0'; ch++, dh++) {
+			if ((*ch >= 'a') && (*ch <= 'z')) {
+				*dh = (*ch - 'a') + 'A';
+			} else if (*ch == '.') {
+				*dh = '_';
+			} else {
+				*dh = *ch;
+			}
+		}
+		*dh = '\0';
+	}
+	fmnproc->u.fmproc.parms = fmstate->fvars;
+	fmnproc->u.fmproc.parms_cur = fmstate->fvars_cur;
+	fmnproc->u.fmproc.parms_max = fmstate->fvars_max;
+
+	/*}}}*/
+
+	fmstate->fvars = NULL;
+	fmstate->fvars_cur = 0;
+	fmstate->fvars_max = 0;
+
+	return fmnproc;
+}
+/*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_createcollatedtypedecl (treenode *n)*/
+/*
+ */
+PRIVATE fmnode_t *fmt_createcollatedtypedecl (treenode *n)
+{
+	treenode *dname, *type;
+	fmnode_t *fmn = NULL;
+
+	if (TagOf (n) != S_TYPEDECL) {
+		fmt_error_internal (NOPOSN, "fmt_createcollatedtypedecl(): not TYPEDECL!");
+		return NULL;
+	}
+	dname = DNameOf (n);
+	type = NTypeOf (dname);
+
+	if (do_coll_ct && isdynamicmobilechantype (type)) {
+		char *tdname = (char *)WNameOf (NNameOf (dname));
+		treenode *items = ARTypeOf (MTypeOf (type));
+		treenode *walk;
+
+		/*
+		 * rules for this are pretty straightforward:
+		 *  - collect up tagged protocol variants, ignore duplicate names
+		 *  - single channels become individual tags
+		 */
+		fmn = fmt_newnode (FM_TAGSET, n);
+		fmn->u.fmtset.name = (char *)memalloc (strlen (tdname) + 12);
+		sprintf (fmn->u.fmtset.name, "CTPROT_");
+		fmt_copyprotname (fmn->u.fmtset.name + 7, tdname);
+
+#if 0
+fprintf (stderr, "fmt_createcollatedtypedecl(): TYPEDECL/NTYPEDECL [%s]\n", tdname);
+#endif
+		for (walk = items; walk && (TagOf (walk) == S_DECL); walk = DBodyOf (walk)) {
+			char *tcname = (char *)WNameOf (NNameOf (DNameOf (walk)));
+			treenode *dtype = NTypeOf (DNameOf (walk));
+
+#if 0
+fprintf (stderr, "fmt_createcollatedtypedecl(): channel item [%s], type:", tcname);
+printtreenl (stderr, 1, dtype);
+#endif
+			if (TagOf (dtype) == S_CHAN) {
+				/* channel of something, tagged protocol or regular? */
+				treenode *prot = ProtocolOf (dtype);
+
+				if (prot && (TagOf (prot) == N_TPROTDEF)) {
+					fmnode_t *other = fmt_getfmcheck (prot);
+
+					if (other && (other->type == FM_TAGSET)) {
+						/* copy out tags, which will be TREEREFs to N_FIELDs */
+						fmt_mergetagset (fmn, other, LocnOf (DNameOf (walk)), tcname);
+					}
+				} else {
+					/* we assume this is a simple channel, add as its own tag */
+					fmnode_t *tag = fmt_newnode (FM_TREEREF, DNameOf (walk));
+
+					tag->u.fmtree.name = (char *)memalloc (strlen (tcname) + 8);
+					sprintf (tag->u.fmtree.name, "Chan");
+					fmt_copytagname (tag->u.fmtree.name + 4, tcname);
+					tag->u.fmtree.node = DNameOf (walk);
+
+					fmt_addtonodelist (fmn, tag);
+
+					/* and tag the node */
+					SetNFMCheck (DNameOf (walk), tag);
+				}
+			}
+		}
+#if 0
+fprintf (stderr, "fmt_createcollatedtypedecl(): built tag set:\n");
+fmt_dumpnode (fmn, 1, stderr);
+#endif
+	}
+	return fmn;
+}
+/*}}}*/
 /*{{{  PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)*/
 /*
  *	called to write out a single node to a file (recursively)
@@ -3432,7 +3596,7 @@ PRIVATEPARAM int do_formalmodelgen_ioeventof (treenode *n, void *const voidptr)
 	fmstate_t *fmstate = (fmstate_t *)voidptr;
 
 	if (tag == S_RECORDSUB) {
-		fmnode_t *baseev = fmt_findfreevar (fmstate, ASBaseOf (n));
+		fmnode_t *baseev = fmt_findfreevar (ASBaseOf (n));
 		treenode *index = ASIndexOf (n);
 
 		if (baseev && index && (TagOf (index) == N_FIELD)) {
@@ -3464,18 +3628,74 @@ PRIVATEPARAM int do_formalmodelgen (treenode *n, void *const voidptr)
 	const int tag = TagOf (n);
 	fmstate_t *fmstate = (fmstate_t *)voidptr;
 	fmnode_t *fmn;
+	fmmset_t *fmm = fmstate->setref;
 
 	switch (tag) {
-		/*{{{  PROCDEF -- return*/
+		/*{{{  PROCDEF, MPROCDECL -- return*/
 	case S_PROCDEF:
+	case S_MPROCDECL:
 		if (!separatelycompiled (DNameOf (n))) {
 			char *pname = (char *)WNameOf (NNameOf (DNameOf (n)));
+			fmstate_t *nfms = fmt_newstate ();
+			fmnode_t *fmnproc = NULL;
+			fmnode_t *sys_fv = NULL;
+			fmnode_t *sys_decl = NULL;
 
+			nfms->setref = fmm;
+			nfms->prev = fmstate;
+			fmnproc = fmt_check_procdef (nfms, n);
+			fmt_freestate (nfms);
+
+			fmt_modprewalk (&fmnproc, fmt_simplifynode, NULL);
+			fmt_hoistfixpoints (fmnproc, fmm);
+			fmt_alphabetisepar (fmnproc);
+			fmt_hoisthiddenevents (fmnproc, fmm);
+			fmt_modprewalk (&fmnproc, fmt_simplifynode, NULL);
+
+			SetNFMCheck (DNameOf (n), fmnproc);
+
+			fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)fmnproc);
+
+			if (sys_fv) {
+				fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)sys_fv);
+			}
+			if (sys_decl) {
+				fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)sys_decl);
+			}
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): got formal model:\n");
+fmt_dumpnode (fmnproc, 1, stderr);
+#endif
 #if 0
 fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 #endif
 		}
-		break;
+
+		prewalktree (DBodyOf (n), do_formalmodelgen, (void *)fmstate);
+		return STOP_WALK;
+		/*}}}*/
+		/*{{{  TYPEDECL -- return*/
+	case S_TYPEDECL:
+		{
+			treenode *dname = DNameOf (n);
+
+			/* looking for mobile channel-types (to collate protocols in these) */
+			if (TagOf (dname) == N_TYPEDECL) {
+				treenode *type = NTypeOf (dname);
+
+				if (do_coll_ct && isdynamicmobilechantype (type)) {
+					fmnode_t *fmn = fmt_createcollatedtypedecl (n);
+
+					fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)fmn);
+
+					/* and tag the node */
+					SetNFMCheck (dname, fmn);
+				}
+			}
+		}
+
+		prewalktree (DBodyOf (n), do_formalmodelgen, (void *)fmstate);
+		return STOP_WALK;
 		/*}}}*/
 		/*{{{  SKIP -- return*/
 	case S_SKIP:
@@ -3593,11 +3813,12 @@ fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 		}
 		return STOP_WALK;
 		/*}}}*/
-		/*{{{  N_DECL, N_PARAM, RECORDSUB -- return*/
+		/*{{{  N_DECL, N_PARAM, N_RESULTPARAM, RECORDSUB -- return*/
 	case N_DECL:
 	case N_PARAM:
+	case N_RESULTPARAM:
 	case S_RECORDSUB:
-		fmn = fmt_findfreevar (fmstate, n);
+		fmn = fmt_findfreevar (n);
 		if (fmn) {
 			fmnode_t *tmp = fmt_newnode (FM_NODEREF, n);
 
@@ -3606,11 +3827,52 @@ fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 		}
 		return STOP_WALK;
 		/*}}}*/
-		/*{{{  INPUT,OUTPUT -- return*/
+		/*{{{  IF -- return*/
+	case S_IF:
+		{
+			fmnode_t **saved_target = fmstate->target;
+			treenode *items = CBodyOf (n);
+			treenode *walk;
+			int add_stop = 1;
+
+			/* this becomes a non-deterministic choice on the processes */
+			fmn = fmt_newnode (FM_NDET, n);
+			for (walk = items; !EndOfList (walk); walk = NextItem (walk)) {
+				treenode *choice = skipspecifications (ThisItem (walk));
+
+				if (TagOf (choice) == S_CHOICE) {
+					fmnode_t *body = NULL;
+					treenode *guard = CondGuardOf (choice);
+
+					if (isconst (guard) && eval_const_treenode (guard)) {
+						/* this is a TRUE guard, so no opportunity for STOP */
+						add_stop = 0;
+					}
+					fmstate->target = &body;
+					prewalktree (CondBodyOf (choice), do_formalmodelgen, (void *)fmstate);
+					if (!body) {
+						body = fmt_newnode (FM_SKIP, choice);
+					}
+
+					fmt_addtonodelist (fmn, body);
+				}
+			}
+
+			if (add_stop) {
+				fmt_addtonodelist (fmn, fmt_newnode (FM_STOP, n));
+			}
+
+			fmstate->target = saved_target;
+			*(fmstate->target) = fmn;
+		}
+		return STOP_WALK;
+		/*}}}*/
+		/*{{{  INPUT,OUTPUT,TAGGED_INPUT -- return*/
 	case S_INPUT:
 	case S_OUTPUT:
+	case S_TAGGED_INPUT:
 		{
-			fmtype_e ftype = ((tag == S_INPUT) ? FM_INPUT : FM_OUTPUT);
+			fmtype_e ftype = ((tag == S_OUTPUT) ? FM_OUTPUT : FM_INPUT);
 			fmnode_t **saved_target = fmstate->target;
 			fmnode_t *saved_ioevref = fmstate->ioevref;
 
@@ -3659,46 +3921,6 @@ printtreenl (stderr, 4, n);
 
 			fmstate->target = saved_target;
 			fmstate->ioevref = saved_ioevref;
-			*(fmstate->target) = fmn;
-		}
-		return STOP_WALK;
-		/*}}}*/
-		/*{{{  IF -- return*/
-	case S_IF:
-		{
-			fmnode_t **saved_target = fmstate->target;
-			treenode *items = CBodyOf (n);
-			treenode *walk;
-			int add_stop = 1;
-
-			/* this becomes a non-deterministic choice on the processes */
-			fmn = fmt_newnode (FM_NDET, n);
-			for (walk = items; !EndOfList (walk); walk = NextItem (walk)) {
-				treenode *choice = skipspecifications (ThisItem (walk));
-
-				if (TagOf (choice) == S_CHOICE) {
-					fmnode_t *body;
-					treenode *guard = CondGuardOf (choice);
-
-					if (isconst (guard) && eval_const_treenode (guard)) {
-						/* this is a TRUE guard, so no opportunity for STOP */
-						add_stop = 0;
-					}
-					fmstate->target = &body;
-					prewalktree (CondBodyOf (choice), do_formalmodelgen, (void *)fmstate);
-					if (!body) {
-						body = fmt_newnode (FM_SKIP, choice);
-					}
-
-					fmt_addtonodelist (fmn, body);
-				}
-			}
-
-			if (add_stop) {
-				fmt_addtonodelist (fmn, fmt_newnode (FM_STOP, n));
-			}
-
-			fmstate->target = saved_target;
 			*(fmstate->target) = fmn;
 		}
 		return STOP_WALK;
@@ -3996,8 +4218,8 @@ fmt_dumpnode (input, 1, stderr);
 			treenode *claimvar = CTempOf (n);
 			fmnode_t *cln, *rln;
 
-			cln = fmt_findfreevar_claim (fmstate, claimvar);
-			rln = fmt_findfreevar_release (fmstate, claimvar);
+			cln = fmt_findfreevar_claim (claimvar);
+			rln = fmt_findfreevar_release (claimvar);
 			if (cln && rln) {
 				fmnode_t **saved_target = fmstate->target;
 				fmnode_t *tmp, *tmp2;
@@ -4115,6 +4337,20 @@ printtreenl (stderr, 1, fparams);
 						fmt_addtonodelist (fmn, tmp);
 					}
 				}
+				/* anything else must be additional events */
+				for (; pidx < ifm->u.fmproc.parms_cur; pidx++) {
+					fmnode_t *fev = ifm->u.fmproc.parms[pidx];
+					fmnode_t *dupev = fmt_createeventfromevent (fev);
+					fmnode_t *ref = fmt_newnode (FM_NODEREF, n);
+
+#if 0
+fprintf (stderr, "do_formalmodelgen(): INSTANCE: additional event:\n");
+fmt_dumpnode (dupev, 1, stderr);
+#endif
+					ref->u.fmnode.node = dupev;
+					fmt_addtonodelist (fmn, ref);
+					fmt_addtovarslist (fmstate, dupev);
+				}
 				/*}}}*/
 			}
 
@@ -4195,63 +4431,8 @@ printtreenl (stderr, 1, tag);
 				treenode *type = NTypeOf (dname);
 
 				if (do_coll_ct && isdynamicmobilechantype (type)) {
-					char *tdname = (char *)WNameOf (NNameOf (dname));
-					treenode *items = ARTypeOf (MTypeOf (type));
-					treenode *walk;
-					fmnode_t *fmn;
+					fmnode_t *fmn = fmt_createcollatedtypedecl (n);
 
-					/*
-					 * rules for this are pretty straightforward:
-					 *  - collect up tagged protocol variants, ignore duplicate names
-					 *  - single channels become individual tags
-					 */
-					fmn = fmt_newnode (FM_TAGSET, n);
-					fmn->u.fmtset.name = (char *)memalloc (strlen (tdname) + 12);
-					sprintf (fmn->u.fmtset.name, "CTPROT_");
-					fmt_copyprotname (fmn->u.fmtset.name + 7, tdname);
-
-#if 0
-fprintf (stderr, "do_formalmodelcheck_tree(): TYPEDECL/NTYPEDECL [%s]\n", tdname);
-#endif
-					for (walk = items; walk && (TagOf (walk) == S_DECL); walk = DBodyOf (walk)) {
-						char *tcname = (char *)WNameOf (NNameOf (DNameOf (walk)));
-						treenode *dtype = NTypeOf (DNameOf (walk));
-
-#if 0
-fprintf (stderr, "do_formalmodelcheck_tree(): channel item [%s], type:", tcname);
-printtreenl (stderr, 1, dtype);
-#endif
-						if (TagOf (dtype) == S_CHAN) {
-							/* channel of something, tagged protocol or regular? */
-							treenode *prot = ProtocolOf (dtype);
-
-							if (prot && (TagOf (prot) == N_TPROTDEF)) {
-								fmnode_t *other = fmt_getfmcheck (prot);
-
-								if (other && (other->type == FM_TAGSET)) {
-									/* copy out tags, which will be TREEREFs to N_FIELDs */
-									fmt_mergetagset (fmn, other, LocnOf (DNameOf (walk)), tcname);
-								}
-							} else {
-								/* we assume this is a simple channel, add as its own tag */
-								fmnode_t *tag = fmt_newnode (FM_TREEREF, DNameOf (walk));
-
-								tag->u.fmtree.name = (char *)memalloc (strlen (tcname) + 8);
-								sprintf (tag->u.fmtree.name, "Chan");
-								fmt_copytagname (tag->u.fmtree.name + 4, tcname);
-								tag->u.fmtree.node = DNameOf (walk);
-
-								fmt_addtonodelist (fmn, tag);
-
-								/* and tag the node */
-								SetNFMCheck (DNameOf (walk), tag);
-							}
-						}
-					}
-#if 0
-fprintf (stderr, "do_formalmodelcheck_tree(): built tag set:\n");
-fmt_dumpnode (fmn, 1, stderr);
-#endif
 					fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)fmn);
 
 					/* and tag the node */
@@ -4289,86 +4470,12 @@ fprintf (stderr, "do_formalmodelcheck_tree(): formal-model PRAGMA! str=[%s]\n", 
 		if (!separatelycompiled (DNameOf (n))) {
 			char *pname = (char *)WNameOf (NNameOf (DNameOf (n)));
 			fmstate_t *fmstate = fmt_newstate ();
-			fmnode_t *fmn = NULL, *fmnproc = NULL;
-			treenode *fparams = NParamListOf (DNameOf (n));
-			treenode *walk;
+			fmnode_t *fmnproc = NULL;
 			fmnode_t *sys_fv = NULL;
 			fmnode_t *sys_decl = NULL;
 
-#if 0
-fprintf (stderr, "do_formalmodelcheck_tree(): PROC [%s]\n", pname);
-#endif
-			/*{{{  collect up relevant parameters*/
-			for (walk = fparams; !EmptyList (walk); walk = NextItem (walk)) {
-				treenode *parm = ThisItem (walk);
-
-				switch (TagOf (parm)) {
-					/*{{{  N_PARAM*/
-				case N_PARAM:
-					{
-						fmnode_t *evnode = fmt_createeventfromvar (parm, FALSE);
-
-						if (evnode) {
-							fmt_addtovarslist (fmstate, evnode);
-							SetNFMCheck (parm, evnode);
-						}
-#if 0
-fprintf (stderr, "do_formalmodelcheck_tree(): param type:");
-printtreenl (stderr, 1, type);
-#endif
-					}
-					break;
-					/*}}}*/
-				default:
-					break;
-				}
-			}
-			/*}}}*/
-
-			fmstate->target = &fmstate->temp;
 			fmstate->setref = fmm;
-			prewalkproctree (DValOf (n), do_formalmodelgen, (void *)fmstate);
-			fmstate->setref = NULL;
-
-#if 0
-fprintf (stderr, "do_formalmodelcheck_tree(): got state:\n");
-fmt_dumpstate (fmstate, stderr);
-#endif
-			if (!fmstate->temp) {
-				fmn = fmt_newnode (FM_SKIP, n);
-			} else {
-				fmn = fmstate->temp;
-				fmstate->temp = NULL;
-			}
-
-			/*{{{  wrap up in NAMEDPROC node*/
-			fmnproc = fmt_newnode (FM_NAMEDPROC, n);
-			fmnproc->u.fmproc.body = fmn;
-			fmnproc->u.fmproc.name = (char *)memalloc (strlen (pname) + 3);
-			{
-				char *ch, *dh = fmnproc->u.fmproc.name;
-				dh += sprintf (dh, "P");
-				for (ch = pname; *ch != '\0'; ch++, dh++) {
-					if ((*ch >= 'a') && (*ch <= 'z')) {
-						*dh = (*ch - 'a') + 'A';
-					} else if (*ch == '.') {
-						*dh = '_';
-					} else {
-						*dh = *ch;
-					}
-				}
-				*dh = '\0';
-			}
-			fmnproc->u.fmproc.parms = fmstate->fvars;
-			fmnproc->u.fmproc.parms_cur = fmstate->fvars_cur;
-			fmnproc->u.fmproc.parms_max = fmstate->fvars_max;
-
-			/*}}}*/
-
-			fmstate->fvars = NULL;
-			fmstate->fvars_cur = 0;
-			fmstate->fvars_max = 0;
-
+			fmnproc = fmt_check_procdef (fmstate, n);
 			fmt_freestate (fmstate);
 
 			fmt_modprewalk (&fmnproc, fmt_simplifynode, NULL);
