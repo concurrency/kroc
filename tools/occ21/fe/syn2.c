@@ -6360,53 +6360,25 @@ pragma_list[] = {
 	/* No point in having LINKAGE pragma when configuring, cos we don't link
 	   after configuring - CON 11/10/90 */
 
-	{
-	"EXTERNAL", rpragma_external, O, pragma_name_external}
-	, {
-	"DEXTERNAL", rpragma_external, O, pragma_name_dexternal}
-	, {
-	"EXPORT", rpragma_namelist, CC, pragma_name_export}
-	, {
-	"LINKAGE", rpragma_string, O, pragma_name_linkage}
-	,
-#if 0
-	{
-	"NOUSAGECHECK", rpragma_namelist, O, pragma_name_shared}
-	,			/* was "SHARED" */
-	{
-	"NOTALIASED", rpragma_namelist, O, pragma_name_aliased}
-	,
-#else
-	{
-	"SHARED", rpragma_namelist, O, pragma_name_shared}
-	, {
-	"PERMITALIASES", rpragma_namelist, O, pragma_name_aliased}
-	,
-#endif
-	{
-	"ASSUMECONSTANT", rpragma_namelist, O, pragma_name_assumeconst}
-	, {
-	"COMMENT", rpragma_string, CC, pragma_name_comment}
-	, {
-	"TRANSLATE", rpragma_translate, CC, pragma_name_translate}
-	, {
-	"HARDWARE", rpragma_string, C3, pragma_name_hardware}
-	, {
-	"NESTEDTIMER", rpragma_name, O, pragma_name_nestedtimer}
-	, {
-	"NESTEDPLACE", rpragma_name, O, pragma_name_nestedplace}
-	, {
-	"NESTEDPORT", rpragma_name, O, pragma_name_nestedport}
-	, {
-	"BADLYBEHAVED", rpragma_name, O, pragma_name_badlybehaved}
-	, {
-	"DEFINED", rpragma_namelist, O, pragma_name_defined}
-	, {
-	"UNDEFINED", rpragma_namelist, O, pragma_name_undefined}
-	, {
-	"IOSPACE", rpragma_namelist, O, pragma_name_iospace}
-	, {
-	"DYNCALL", rpragma_namelist, CC, pragma_name_dyncall}
+	  { "EXTERNAL", rpragma_external, O, pragma_name_external}
+	, { "DEXTERNAL", rpragma_external, O, pragma_name_dexternal}
+	, { "EXPORT", rpragma_namelist, CC, pragma_name_export}
+	, { "LINKAGE", rpragma_string, O, pragma_name_linkage}
+	, { "SHARED", rpragma_namelist, O, pragma_name_shared}
+	, { "PERMITALIASES", rpragma_namelist, O, pragma_name_aliased}
+	, { "ASSUMECONSTANT", rpragma_namelist, O, pragma_name_assumeconst}
+	, { "COMMENT", rpragma_string, CC, pragma_name_comment}
+	, { "TRANSLATE", rpragma_translate, CC, pragma_name_translate}
+	, { "HARDWARE", rpragma_string, C3, pragma_name_hardware}
+	, { "NESTEDTIMER", rpragma_name, O, pragma_name_nestedtimer}
+	, { "NESTEDPLACE", rpragma_name, O, pragma_name_nestedplace}
+	, { "NESTEDPORT", rpragma_name, O, pragma_name_nestedport}
+	, { "BADLYBEHAVED", rpragma_name, O, pragma_name_badlybehaved}
+	, { "DEFINED", rpragma_namelist, O, pragma_name_defined}
+	, { "UNDEFINED", rpragma_namelist, O, pragma_name_undefined}
+	, { "IOSPACE", rpragma_namelist, O, pragma_name_iospace}
+	, { "DYNCALL", rpragma_namelist, CC, pragma_name_dyncall}
+	, { "FORMALMODEL", rpragma_string, O, pragma_name_formalmodel}
 };
 
 /*}}}*/

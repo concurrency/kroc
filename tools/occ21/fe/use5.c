@@ -65,6 +65,7 @@ typedef enum ENUM_fmtype { /*{{{*/
 	FM_HIDING,		/* hidden events, also their declarations (fmhide) */
 	FM_APAR,		/* alphabetised parallel, binary (fmapar) */
 	FM_GLOBALEVENTS,	/* list of events pulled to the top-level (fmevset) */
+	FM_VERB			/* verbatim output for formal-model (fmverb) */
 } fmtype_e;
 
 /*}}}*/
@@ -139,6 +140,9 @@ typedef struct TAG_fmnode { /*{{{*/
 			struct TAG_fmnode **events;	/* event-references in the union of both */
 			int events_cur, events_max;	/* current, maximum */
 		} fmapar;				/* APAR */
+		struct {
+			char *str;			/* string */
+		} fmverb;
 	} u;
 } fmnode_t;
 
@@ -157,6 +161,8 @@ typedef struct TAG_fmstate { /*{{{*/
 	fmnode_t **target;				/* where the next item goes */
 	fmmset_t *setref;				/* set reference (for finding assorted things) */
 	fmnode_t *ndlist;				/* list of non-determinstic processes collected during ALT traversals */
+
+	fmnode_t *ioevref;				/* during io-walk, event reference */
 } fmstate_t;
 
 /*}}}*/
@@ -440,6 +446,9 @@ PRIVATE fmnode_t *fmt_newnode (fmtype_e type, treenode *org)
 		fmn->u.fmapar.events_cur = 0;
 		fmn->u.fmapar.events_max = 0;
 		break;
+	case FM_VERB:
+		fmn->u.fmverb.str = NULL;
+		break;
 	default:
 		break;
 	}
@@ -712,6 +721,14 @@ PRIVATE void fmt_freenode (fmnode_t *fmn, int deep)
 			}
 			break;
 			/*}}}*/
+			/*{{{  VERB*/
+		case FM_VERB:
+			if (fmn->u.fmverb.str) {
+				memfree (fmn->u.fmverb.str);
+				fmn->u.fmverb.str = NULL;
+			}
+			break;
+			/*}}}*/
 		default:
 			break;
 		}
@@ -736,6 +753,8 @@ PRIVATE fmstate_t *fmt_newstate (void)
 	fms->target = &fms->temp;
 	fms->setref = NULL;
 	fms->ndlist = NULL;
+
+	fms->ioevref = NULL;
 
 	return fms;
 }
@@ -993,6 +1012,15 @@ PRIVATE fmnode_t *fmt_copynode (fmnode_t *n)
 		}
 		break;
 		/*}}}*/
+		/*{{{  VERB*/
+	case FM_VERB:
+		c = fmt_newnode (FM_VERB, n->org);
+		if (n->u.fmverb.str) {
+			c->u.fmverb.str = (char *)memalloc (strlen (n->u.fmverb.str) + 2);
+			strcpy (c->u.fmverb.str, n->u.fmverb.str);
+		}
+		break;
+		/*}}}*/
 	default:
 		fmt_error_internal (NOPOSN, "fmt_copynode(): unhandled type in node copy!");
 		break;
@@ -1120,6 +1148,9 @@ PRIVATE void fmt_dumpnode (fmnode_t *fmn, int indent, FILE *stream)
 			break;
 		case FM_PCHAOS:
 			fprintf (stream, "PCHAOS %d args\n", fmn->u.fminst.args_cur);
+			break;
+		case FM_VERB:
+			fprintf (stream, "VERB \"%s\"\n", fmn->u.fmverb.str ?: "(no-string)");
 			break;
 		default:
 			fprintf (stream, "unknown type %d!\n", (int)fmn->type);
@@ -1437,6 +1468,7 @@ PRIVATE void fmt_modprewalk (fmnode_t **nodep, int (*f1)(fmnode_t **, void *), v
 		case FM_EVENT:
 		case FM_EVENTSET:
 		case FM_GLOBALEVENTS:
+		case FM_VERB:
 			break;
 		case FM_INPUT:
 		case FM_OUTPUT:
@@ -1990,48 +2022,37 @@ PRIVATE fmnode_t *fmt_newatom (treenode *org)
  */
 PRIVATE fmnode_t *fmt_findfreevar (fmstate_t *state, treenode *n)
 {
-	int i;
 
-	if (do_coll_ct && (TagOf (n) == S_RECORDSUB)) {
-		fmnode_t *ev = fmt_findfreevar (state, ASBaseOf (n));
+	if (nodetypeoftag (TagOf (n)) == NAMENODE) {
+		return fmt_getfmcheck (n);
+	} else if (TagOf (n) == S_RECORDSUB) {
+		fmnode_t *baseev = fmt_findfreevar (state, ASBaseOf (n));
+		treenode *index = ASIndexOf (n);
 
-		if (ev) {
-			return ev;
-		}
-	}
-	while (state) {
-		for (i=0; i<state->fvars_cur; i++) {
-			fmnode_t *fvar = state->fvars[i];
+#if 0
+fprintf (stderr, "fmt_findfreevar(): baseev:\n");
+fmt_dumpnode (baseev, 1, stderr);
+fprintf (stderr, "fmt_findfreevar(): index:");
+printtreenl (stderr, 4, index);
+#endif
+		if (baseev && index && (TagOf (index) == N_FIELD)) {
+			if (!do_coll_ct && (baseev->type == FM_EVENTSET) && (TagOf (index) == N_FIELD)) {
+				int i;
 
-			switch (fvar->type) {
-			case FM_EVENT:
-				if (fvar->u.fmevent.node == n) {
-					return fvar;
-				}
-				break;
-			case FM_EVENTSET:
-				if (TagOf (n) == S_RECORDSUB) {
-					/* probably looking for one of the individual events, ASIndex will be the field */
-					int j;
+				/* probably looking for one of the individual events, ASIndex will be the field */
+				for (i=0; i<baseev->u.fmevset.events_cur; i++) {
+					fmnode_t *ev = baseev->u.fmevset.events[i];
 
-					for (j=0; j<fvar->u.fmevset.events_cur; j++) {
-						fmnode_t *ev = fvar->u.fmevset.events[j];
-
-						if ((ev->type == FM_EVENT) && !ev->u.fmevent.isclaim && !ev->u.fmevent.isrelease &&
-								(ASIndexOf (n) == ev->u.fmevent.node) && (ASBaseOf (n) == fvar->u.fmevset.node)) {
-							return ev;
-						}
+					if ((ev->type == FM_EVENT) && !ev->u.fmevent.isclaim && !ev->u.fmevent.isrelease &&
+							(index == ev->u.fmevent.node)) {
+						return ev;
 					}
-				} else if (fvar->u.fmevset.node == n) {
-					/* looking for the real thing */
-					return fvar;
 				}
-				break;
-			default:
-				break;
+			} else if (do_coll_ct) {
+				/* the base event is enough, piece back together later */
+				return baseev;
 			}
 		}
-		state = state->prev;
 	}
 	return NULL;
 }
@@ -3180,6 +3201,11 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		fprintf (fp, "<chaos />\n");
 		break;
 		/*}}}*/
+		/*{{{  VERB*/
+	case FM_VERB:
+		fprintf (fp, "<verb string=\"%s\" />\n", node->u.fmverb.str ?: "");
+		break;
+		/*}}}*/
 	default:
 		fprintf (fp, "<unknown type=\"%d\" />\n", (int)node->type);
 		break;
@@ -3367,7 +3393,21 @@ fprintf (stderr, "do_formalmodelgen_ioexpr(): tag = %s\n", tagstring (tag));
 
 	switch (tag) {
 	case N_TAGDEF:
-		{
+		if (do_coll_ct && fmstate->ioevref) {
+			/* means we are looking at a specific tag */
+			int i;
+
+			for (i=0; i<fmstate->ioevref->u.fmtset.tags_cur; i++) {
+				fmnode_t *tev = fmstate->ioevref->u.fmtset.tags[i];
+
+				if (tev && (tev->type == FM_TREEREF) && (tev->u.fmtree.node == n)) {
+					/* this one! */
+					fmn = fmt_copynode (tev);
+					*(fmstate->target) = fmn;
+					break;		/* for() */
+				}
+			}
+		} else {
 			char *tname = (char *)WNameOf (NNameOf (n));
 
 			fmn = fmt_newnode (FM_TREEREF, n);
@@ -3379,6 +3419,39 @@ fprintf (stderr, "do_formalmodelgen_ioexpr(): tag = %s\n", tagstring (tag));
 		}
 		return STOP_WALK;
 	}
+	return CONTINUE_WALK;
+}
+/*}}}*/
+/*{{{  PRIVATEPARAM int do_formalmodelgen_ioeventof (treenode *n, void *const voidptr)*/
+/*
+ *	finds the associated I/O reference of a channel (or similar)
+ */
+PRIVATEPARAM int do_formalmodelgen_ioeventof (treenode *n, void *const voidptr)
+{
+	int tag = TagOf (n);
+	fmstate_t *fmstate = (fmstate_t *)voidptr;
+
+	if (tag == S_RECORDSUB) {
+		fmnode_t *baseev = fmt_findfreevar (fmstate, ASBaseOf (n));
+		treenode *index = ASIndexOf (n);
+
+		if (baseev && index && (TagOf (index) == N_FIELD)) {
+			/* the base event is enough, piece back together later */
+			fmnode_t *ev = fmt_getfmcheck (index);
+
+			if (ev) {
+				*(fmstate->target) = fmt_copynode (ev);
+			}
+#if 0
+fprintf (stderr, "do_formalmodelgen_ioeventof(): baseev:\n");
+fmt_dumpnode (baseev, 1, stderr);
+fprintf (stderr, "do_formalmodelgen_ioeventof(): index:");
+printtreenl (stderr, 4, index);
+#endif
+			return STOP_WALK;
+		}
+	}
+
 	return CONTINUE_WALK;
 }
 /*}}}*/
@@ -3398,7 +3471,7 @@ PRIVATEPARAM int do_formalmodelgen (treenode *n, void *const voidptr)
 		if (!separatelycompiled (DNameOf (n))) {
 			char *pname = (char *)WNameOf (NNameOf (DNameOf (n)));
 
-#if 1
+#if 0
 fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 #endif
 		}
@@ -3520,21 +3593,11 @@ fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 		}
 		return STOP_WALK;
 		/*}}}*/
-		/*{{{  N_PARAM, RECORDSUB -- return*/
+		/*{{{  N_DECL, N_PARAM, RECORDSUB -- return*/
+	case N_DECL:
 	case N_PARAM:
 	case S_RECORDSUB:
 		fmn = fmt_findfreevar (fmstate, n);
-		if (fmn) {
-			fmnode_t *tmp = fmt_newnode (FM_NODEREF, n);
-
-			tmp->u.fmnode.node = fmn;
-			*(fmstate->target) = tmp;
-		}
-		return STOP_WALK;
-		/*}}}*/
-		/*{{{  N_DECL -- return*/
-	case N_DECL:
-		fmn = fmt_getfmcheck (n);
 		if (fmn) {
 			fmnode_t *tmp = fmt_newnode (FM_NODEREF, n);
 
@@ -3549,24 +3612,53 @@ fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 		{
 			fmtype_e ftype = ((tag == S_INPUT) ? FM_INPUT : FM_OUTPUT);
 			fmnode_t **saved_target = fmstate->target;
+			fmnode_t *saved_ioevref = fmstate->ioevref;
 
 			fmn = fmt_newnode (ftype, n);
 			fmstate->target = &fmn->u.fmio.lhs;
 			prewalktree (LHSOf (n), do_formalmodelgen, (void *)fmstate);
+
+			if (do_coll_ct && fmn->u.fmio.lhs) {
+				/*{{{  if the LHS is a single EVENT, generates from a channel-type name, prep fmstate->ioevref*/
+				fmnode_t *lhs = fmn->u.fmio.lhs;
+
+				if ((lhs->type == FM_NODEREF) && (lhs->u.fmnode.node->type == FM_EVENT)) {
+					treenode *etype = lhs->u.fmnode.node->u.fmevent.nodetype;
+
+					if (etype && (TagOf (etype) == N_TYPEDECL) && isdynamicmobilechantype (NTypeOf (etype))) {
+						fmnode_t *emodel = fmt_getfmcheck (etype);
+
+						if (emodel && (emodel->type == FM_TAGSET)) {
+							/* let the ioexpr walk happen with this */
+							fmstate->ioevref = emodel;
+						}
+					}
+				}
+				/*}}}*/
+			}
 			fmstate->target = &fmn->u.fmio.rhs;
 			prewalktree (RHSOf (n), do_formalmodelgen_ioexpr, (void *)fmstate);
+			if (do_coll_ct && fmstate->ioevref && !fmn->u.fmio.rhs) {
+				/*{{{  had event-set reference, but didn't find one -- check LHS*/
+				fmstate->target = &fmn->u.fmio.rhs;
+				prewalktree (LHSOf (n), do_formalmodelgen_ioeventof, (void *)fmstate);
+
+				/*}}}*/
+			}
 			if (!fmn->u.fmio.lhs && !fmn->u.fmio.rhs) {
 				/* nothing here, assume SKIP */
 				fmt_freenode (fmn, 2);
 				fmn = fmt_newnode (FM_SKIP, n);
-			} else if (do_coll_ct && fmn->u.fmio.lhs) {
-				/* FIXME: something else */
-#if 1
-fprintf (stderr, "do_formalmodelgen(): possibly fixup collated CT, fmn=\n");
-fmt_dumpnode (fmn, 1, stderr);
-#endif
 			}
+#if 0
+fprintf (stderr, "do_formalmodelgen(): walked IO:\n");
+fmt_dumpnode (fmn, 1, stderr);
+fprintf (stderr, "do_formalmodelgen(): from tree:");
+printtreenl (stderr, 4, n);
+#endif
+
 			fmstate->target = saved_target;
+			fmstate->ioevref = saved_ioevref;
 			*(fmstate->target) = fmn;
 		}
 		return STOP_WALK;
@@ -3615,6 +3707,7 @@ fmt_dumpnode (fmn, 1, stderr);
 	case S_CASE_INPUT:
 		{
 			fmnode_t **saved_target = fmstate->target;
+			fmnode_t *saved_ioevref = fmstate->ioevref;
 			treenode *chan = LHSOf (n);
 			treenode *varlist = RHSOf (n);
 			treenode *walk;
@@ -3634,8 +3727,32 @@ fprintf (stderr, "do_formalmodegen(): CASE_INPUT, variant item after specs is [%
 
 					fmstate->target = &input->u.fmio.lhs;
 					prewalktree (chan, do_formalmodelgen, (void *)fmstate);
+					if (do_coll_ct && input->u.fmio.lhs) {
+						/*{{{  if the LHS is a single EVENT, generates from a channel-type name, prep fmstate->ioevref*/
+						fmnode_t *lhs = input->u.fmio.lhs;
+
+						if ((lhs->type == FM_NODEREF) && (lhs->u.fmnode.node->type == FM_EVENT)) {
+							treenode *etype = lhs->u.fmnode.node->u.fmevent.nodetype;
+
+							if (etype && (TagOf (etype) == N_TYPEDECL) && isdynamicmobilechantype (NTypeOf (etype))) {
+								fmnode_t *emodel = fmt_getfmcheck (etype);
+
+								if (emodel && (emodel->type == FM_TAGSET)) {
+									/* let the ioexpr walk happen with this */
+									fmstate->ioevref = emodel;
+								}
+							}
+						}
+						/*}}}*/
+					}
 					fmstate->target = &input->u.fmio.rhs;
 					prewalktree (CondGuardOf (var), do_formalmodelgen_ioexpr, (void *)fmstate);
+#if 0
+fprintf (stderr, "do_formalmodelgen(): walked CASEINPUT:\n");
+fmt_dumpnode (input, 1, stderr);
+fprintf (stderr, "do_formalmodelgen(): from tree:");
+printtreenl (stderr, 4, n);
+#endif
 
 					fmt_addtonodelist (seq, input);
 					fmstate->target = &body;
@@ -3651,6 +3768,7 @@ fprintf (stderr, "do_formalmodegen(): CASE_INPUT, variant item after specs is [%
 			}
 
 			fmstate->target = saved_target;
+			fmstate->ioevref = saved_ioevref;
 			*(fmstate->target) = fmn;
 		}
 		return STOP_WALK;
@@ -4076,7 +4194,7 @@ printtreenl (stderr, 1, tag);
 			if (TagOf (dname) == N_TYPEDECL) {
 				treenode *type = NTypeOf (dname);
 
-				if (isdynamicmobilechantype (type)) {
+				if (do_coll_ct && isdynamicmobilechantype (type)) {
 					char *tdname = (char *)WNameOf (NNameOf (dname));
 					treenode *items = ARTypeOf (MTypeOf (type));
 					treenode *walk;
@@ -4124,6 +4242,9 @@ printtreenl (stderr, 1, dtype);
 								tag->u.fmtree.node = DNameOf (walk);
 
 								fmt_addtonodelist (fmn, tag);
+
+								/* and tag the node */
+								SetNFMCheck (DNameOf (walk), tag);
 							}
 						}
 					}
@@ -4140,6 +4261,24 @@ fprintf (stderr, "do_formalmodelcheck_tree(): set tag on name:");
 printtreenl (stderr, 1, dname);
 #endif
 				}
+			}
+		}
+		break;
+		/*}}}*/
+		/*{{{  PRAGMA*/
+	case S_PRAGMA:
+		if (((pragma_name_tag_t) NModeOf (DNameOf (n))) == pragma_name_formalmodel) {
+			if (TagOf (DValOf (n)) == S_STRING) {
+				char *str = (char *)WNameOf (CTValOf (DValOf (n)));
+				fmnode_t *fmn = fmt_newnode (FM_VERB, n);
+
+				fmn->u.fmverb.str = (char *)memalloc (strlen (str) + 2);
+				strcpy (fmn->u.fmverb.str, str);
+
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): formal-model PRAGMA! str=[%s]\n", str);
+#endif
+				fmt_addtolist ((void ***)&fmm->items, &fmm->items_cur, &fmm->items_max, (void *)fmn);
 			}
 		}
 		break;
