@@ -2116,7 +2116,7 @@ PRIVATEPARAM int fmt_simplifynode (fmnode_t **nodep, void *voidptr)
 	case FM_PAR:
 	case FM_NDET:
 	case FM_DET:
-		/* collapse similar subnodes */
+		/*{{{  collapse similar subnodes*/
 		{
 			int i, changed;
 
@@ -2149,13 +2149,38 @@ fprintf (stderr, "fmt_simplifynode(): same type!\n");
 				}
 			} while (changed);
 		}
+		/*}}}*/
+		/*{{{  collapse multiple SKIP/STOPs if present*/
+		{
+			int i;
+			int skc = 0, stc = 0;
 
-		/* if we're left with a single item (or just had 1 to start with), remove it */
+			for (i=0; i<fmn->u.fmlist.items_cur; i++) {
+				fmnode_t *item = fmn->u.fmlist.items[i];
+
+				switch (item->type) {
+				case FM_SKIP: skc++; break;
+				case FM_STOP: stc++; break;
+				default: break;
+				}
+			}
+
+			/* FIXME: incomplete! */
+		}
+		/*}}}*/
+
 		if (fmn->u.fmlist.items_cur == 1) {
+			/* if we're left with a single item (or just had 1 to start with), remove it */
 			fmnode_t *item = fmn->u.fmlist.items[0];
 
 			fmt_delfromnodelist (fmn, 0);
 			*nodep = item;
+			fmt_freenode (fmn, 2);
+		} else if (fmn->u.fmlist.items_cur == 0) {
+			/* if we're left with no items, it turns into SKIP */
+			fmnode_t *skip = fmt_newnode (FM_SKIP, fmn->org);
+
+			*nodep = skip;
 			fmt_freenode (fmn, 2);
 		}
 		break;
