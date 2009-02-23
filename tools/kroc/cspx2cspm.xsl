@@ -89,6 +89,11 @@ datatype <xsl:value-of select="@name" /> = <xsl:for-each select="child::*"><xsl:
 <!--{{{  TEMPLATE atom-->
 <xsl:template match="atom"><xsl:value-of select="@id" /></xsl:template>
 <!--}}}-->
+<!--{{{  TEMPLATE verb-->
+<xsl:template match="verb"><xsl:text>
+</xsl:text><xsl:value-of select="@string" /><xsl:text>
+</xsl:text></xsl:template>
+<!--}}}-->
 <!--{{{  TEMPLATE events/event-->
 <xsl:template match="events/event"><xsl:value-of select="@name" /></xsl:template>
 <!--}}}-->
