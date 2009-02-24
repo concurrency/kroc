@@ -14,13 +14,6 @@ OCCAM_SWIG
 
 build_occGL=yes
 
-dnl FreeBSD-specific hack to find the OpenGL headers.
-case "$target" in
-	*freebsd*)
-		CPPFLAGS="$CPPFLAGS -I/usr/local/include"
-		;;
-esac
-
 dnl Checks for libraries.
 MDL_HAVE_OPENGL
 AC_CHECK_HEADERS([GL/gl.h GL/glu.h], , [build_occGL=no])
