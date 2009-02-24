@@ -24,6 +24,9 @@ EXTRA_DIST = \
 	tests/tabs.occ \
 	tests/vars.occ
 
+bin_SCRIPTS = \
+	occamdoc
+
 occamdocdir = $(datadir)/kroc/occamdoc
 dist_occamdoc_DATA = \
 	frames.html \
@@ -43,9 +46,5 @@ occamdoc: Makefile $(srcdir)/occamdoc.in
 	$(edit) $(srcdir)/occamdoc.in >occamdoc.tmp
 	chmod +x occamdoc.tmp
 	mv occamdoc.tmp occamdoc
-
-install-exec-local:	$(occamdoc_basefiles)
-	$(mkinstalldirs) "$(DESTDIR)$(bindir)"
-	$(INSTALL_PROGRAM) "occamdoc" "$(DESTDIR)$(bindir)/occamdoc"
 
 CLEANFILES = occamdoc
