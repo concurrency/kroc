@@ -31,11 +31,13 @@ EXTRA_DIST = \
 	spectrum.inc \
 	wallpaper.inc
 
+if BUILD_ROBOTS
 examples = \
 	robot \
 	robot2 \
 	robot3 \
 	particles-ats
+endif
 
 robotsdir = $(prefix)/share/kroc/robots
 dist_robots_DATA = \

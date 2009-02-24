@@ -10,11 +10,13 @@ EXTRA_DIST = \
 	occade.inc \
 	overwriting-buffer.inc
 
+if BUILD_OCCADE
 occade_lib_objs = \
 	occade.tce
 
 libs = occade.lib
 includes = occade.inc overwriting-buffer.inc
+endif
 
 all-local: $(libs)
 

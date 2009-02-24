@@ -22,6 +22,7 @@ EXTRA_DIST = \
 	mrshadebob.occ \
 	mrtestprog.occ
 
+if BUILD_SDLRASTER_EXAMPLES
 examples = \
 	glenz \
 	imageviewer \
@@ -36,6 +37,7 @@ examples = \
 	starfield \
 	mrshadebob \
 	mrtestprog
+endif
 
 all-local: $(examples)
 
