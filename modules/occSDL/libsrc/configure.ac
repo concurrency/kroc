@@ -10,13 +10,14 @@ AM_INIT_AUTOMAKE(occSDL, 0.1)
 dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
+CFLAGS="$CFLAGS $OCCBUILD_CFLAGS"
 OCCAM_SWIG
 
 build_occSDL=yes
 build_occSDLsound=yes
 
 dnl Checks for libraries.
-AM_PATH_SDL(1.2.0, , [build_occSDL=no])
+AM_PATH_SDL(1.2.0, , [build_occSDL=no; build_occSDLsound=no])
 CFLAGS="$CFLAGS $SDL_CFLAGS"
 AC_CHECK_HEADERS([SDL/SDL_sound.h], , [build_occSDLsound=no])
 

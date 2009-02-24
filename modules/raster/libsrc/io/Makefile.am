@@ -9,7 +9,7 @@ png_flags = -DHAVE.LIBPNG
 endif
 
 OCCBUILD = @OCCBUILD@ --search ../base $(png_flags)
-CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@ @LIBPNG_CFLAGS@
+CFLAGS = @CFLAGS@ @DEFS@ @LIBPNG_CFLAGS@
 
 EXTRA_DIST = \
 	png-c.c \
@@ -21,6 +21,8 @@ if HAVE_LIBPNG
 png_objs = \
 	png-c.o \
 	png.tce
+
+png_ldadd = @LIBPNG_LIBS@
 endif
 
 rasterio_lib_objs = \
@@ -36,7 +38,7 @@ includes = $(rasterio_includes)
 all-local: $(libs) $(includes)
 
 rasterio.lib: $(rasterio_lib_objs)  
-	$(OCCBUILD) --library rasterio.lib --need raster --need course --need file @LIBPNG_LIBS@ $(rasterio_lib_objs)
+	$(OCCBUILD) --library rasterio.lib --need raster --need course --need file $(png_ldadd) $(rasterio_lib_objs)
 
 install-exec-local: $(libs) $(includes)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)

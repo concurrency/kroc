@@ -10,6 +10,7 @@ AM_INIT_AUTOMAKE(cdx, 1.0)
 dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
+CFLAGS="$CFLAGS $OCCBUILD_CFLAGS"
 
 build_cdx=yes
 
