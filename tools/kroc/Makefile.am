@@ -9,12 +9,10 @@ EXTRA_DIST = \
 	kroc-setup.sh.in \
 	kroc-setup.csh.in \
 	kroc.in \
-	kmakemodule.in \
 	occbuild.in
 
 if OCCBUILD_KROC
 kroc_generated_scripts = \
-	kmakemodule \
 	kroc
 
 kroc_scripts = \
@@ -85,7 +83,6 @@ $(generated_scripts): Makefile
 	chmod a-w $@.tmp
 	mv $@.tmp $@
 
-kmakemodule: $(srcdir)/kmakemodule.in
 kroc-setup.csh: $(srcdir)/kroc-setup.csh.in
 kroc-setup.sh: $(srcdir)/kroc-setup.sh.in
 kroc: $(srcdir)/kroc.in
