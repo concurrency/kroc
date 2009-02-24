@@ -3,6 +3,7 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 OCCAM_DEFS = @OCCAM_DEFS@
@@ -25,8 +26,10 @@ EXTRA_DIST = \
 	ponyinttcpipstartup.occ \
 	ponylib.inc \
 	ponylib.occ \
-	ponylibtcpip.inc
+	ponylibtcpip.inc \
+	prot-conv-spec.txt
 
+if BUILD_PONY
 pony_lib_objs = \
 	ponyint1.tce \
 	ponyint2.tce \
@@ -44,7 +47,21 @@ ponyanstcpip_objs = \
 	ponyinttcpipsock.tce \
 	ponyinttcpipsockc.o
 
-all-local: pony.lib ponyanstcpip
+pony_libs = pony.lib
+pony_includes = \
+	ponyint.inc \
+	ponyintcif.inc \
+	ponyinttcpip.inc \
+	ponylib.inc \
+	ponylibtcpip.inc
+pony_tools = ponyanstcpip
+endif
+
+libs = $(pony_libs)
+includes = $(pony_includes)
+tools = $(pony_tools)
+
+all-local: $(libs) $(includes) $(tools)
 
 pony.lib: $(pony_lib_objs)
 	$(OCCBUILD) --library pony.lib --need sock --need file --need proc --need cif --include ponylib.inc --include ponylibtcpip.inc --include ponyint.inc --include ponyinttcpip.inc $(pony_lib_objs)
@@ -52,11 +69,11 @@ pony.lib: $(pony_lib_objs)
 ponyanstcpip: ponyanstcpip.occ $(ponyanstcpip_objs)
 	$(OCCBUILD) --program ponyanstcpip.occ $(ponyanstcpip_objs)
 
-install-exec-local: pony.lib ponylib.inc ponylibtcpip.inc ponyanstcpip
-	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" pony.lib ponylib.inc ponylibtcpip.inc ponyint.inc ponyinttcpip.inc ponyanstcpip
+install-exec-local: $(libs) $(includes) $(tools)
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes) $(tools)
 
 clean-local:
-	$(OCCBUILD) --clean pony.lib $(pony_lib_objs) ponyanstcpip $(ponyanstcpip_objs)
+	$(OCCBUILD) --clean $(libs) $(pony_lib_objs) $(tools) $(ponyanstcpip_objs)
 
 SUFFIXES = .occ .tce .lib
 
@@ -69,34 +86,34 @@ SUFFIXES = .occ .tce .lib
 ponyintcif.o: ciftrace.h
 ## begin pideps dependencies
 $(srcdir)/ponylib.inc: $(srcdir)/ponylibtcpip.inc
-ponyanstcpip.occ: $(srcdir)/ponyinttcpip.inc
-ponyanstcpip.occ: $(srcdir)/ponylib.inc
-ponyanstcpip.occ: ponyintaux.tce
-ponyanstcpip.occ: ponyinttcpipsock.tce
-ponyint1.occ: $(srcdir)/ponyint.inc
-ponyint1.occ: $(srcdir)/ponylib.inc
-ponyint1.occ: ponyintaux.tce
-ponyint2.occ: $(srcdir)/ponyint.inc
-ponyint2.occ: $(srcdir)/ponylib.inc
-ponyint2.occ: ponyint1.tce
-ponyint3.occ: $(srcdir)/ponyint.inc
-ponyint3.occ: $(srcdir)/ponylib.inc
-ponyint3.occ: ponyint1.tce
-ponyint3.occ: ponyint2.tce
-ponyint3.occ: ponyintaux.tce
-ponyint3.occ: ponyinttcpipstartup.tce
-ponyinttcpip.occ: $(srcdir)/ponyint.inc
-ponyinttcpip.occ: $(srcdir)/ponyinttcpip.inc
-ponyinttcpip.occ: $(srcdir)/ponylib.inc
-ponyinttcpip.occ: ponyinttcpipsock.tce
-ponyinttcpipstartup.occ: $(srcdir)/ponyint.inc
-ponyinttcpipstartup.occ: $(srcdir)/ponyinttcpip.inc
-ponyinttcpipstartup.occ: $(srcdir)/ponylib.inc
-ponyinttcpipstartup.occ: ponyintaux.tce
-ponyinttcpipstartup.occ: ponyinttcpip.tce
-ponyinttcpipstartup.occ: ponyinttcpipsock.tce
-ponylib.occ: $(srcdir)/ponyint.inc
-ponylib.occ: $(srcdir)/ponyintcif.inc
-ponylib.occ: $(srcdir)/ponylib.inc
-ponylib.occ: ponyint3.tce
+ponyanstcpip.tce: $(srcdir)/ponyinttcpip.inc
+ponyanstcpip.tce: $(srcdir)/ponylib.inc
+ponyanstcpip.tce: ponyintaux.tce
+ponyanstcpip.tce: ponyinttcpipsock.tce
+ponyint1.tce: $(srcdir)/ponyint.inc
+ponyint1.tce: $(srcdir)/ponylib.inc
+ponyint1.tce: ponyintaux.tce
+ponyint2.tce: $(srcdir)/ponyint.inc
+ponyint2.tce: $(srcdir)/ponylib.inc
+ponyint2.tce: ponyint1.tce
+ponyint3.tce: $(srcdir)/ponyint.inc
+ponyint3.tce: $(srcdir)/ponylib.inc
+ponyint3.tce: ponyint1.tce
+ponyint3.tce: ponyint2.tce
+ponyint3.tce: ponyintaux.tce
+ponyint3.tce: ponyinttcpipstartup.tce
+ponyinttcpip.tce: $(srcdir)/ponyint.inc
+ponyinttcpip.tce: $(srcdir)/ponyinttcpip.inc
+ponyinttcpip.tce: $(srcdir)/ponylib.inc
+ponyinttcpip.tce: ponyinttcpipsock.tce
+ponyinttcpipstartup.tce: $(srcdir)/ponyint.inc
+ponyinttcpipstartup.tce: $(srcdir)/ponyinttcpip.inc
+ponyinttcpipstartup.tce: $(srcdir)/ponylib.inc
+ponyinttcpipstartup.tce: ponyintaux.tce
+ponyinttcpipstartup.tce: ponyinttcpip.tce
+ponyinttcpipstartup.tce: ponyinttcpipsock.tce
+ponylib.tce: $(srcdir)/ponyint.inc
+ponylib.tce: $(srcdir)/ponyintcif.inc
+ponylib.tce: $(srcdir)/ponylib.inc
+ponylib.tce: ponyint3.tce
 ## end pideps dependencies

@@ -1,6 +1,8 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 
@@ -54,5 +56,7 @@ SUFFIXES = .occ .tce .lib
 format-gen.occ: make-format.py
 	$(PYTHON) make-format.py
 
-format-gen.occ: format.tce
-string.occ: math.tce
+CLEANFILES = format-gen.occ
+
+format-gen.tce: format.tce
+string.tce: math.tce

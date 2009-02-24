@@ -10,6 +10,15 @@ AC_PREREQ(2.12)
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE(kroc,1.5.0-pre4)
 
+dnl Checks for programs.
+AC_PROG_CC
+AC_CHECK_PROGS(SED, gnused gsed sed)
+
+OCCAM_TOOLCHAIN
+if test $OCCBUILD_TOOLCHAIN = kroc; then
+  KROC_CCSP_FLAGS
+fi
+
 KROC_CANONICAL_TARGET=$target
 AC_SUBST(KROC_CANONICAL_TARGET)
 KROC_HOST_OS=$host_os
@@ -17,94 +26,10 @@ AC_SUBST(KROC_HOST_OS)
 KROC_HOST_CPU=$host_cpu
 AC_SUBST(KROC_HOST_CPU)
 
-dnl Checks for programs.
-
-AC_PROG_CC
-
-dnl Checks for libraries.
-
-AC_CHECK_LIB(dl, dlsym, dynprocs_supported=yes, dynprocs_supported=no)
-AC_MSG_CHECKING(whether dynamic procs are supported)
-AC_MSG_RESULT($dynprocs_supported)
-if test "$dynprocs_supported" = yes; then
-  DLOPTLIB="-ldl"
-else
-  DLOPTLIB=
-fi
-AC_SUBST(DLOPTLIB)
-
-AC_CHECK_LIB(elf,elf_begin,dm_with_libelf=yes,dm_with_libelf=no)
-AC_MSG_CHECKING(whether dynamic memory debugging uses libelf)
-AC_MSG_RESULT($dm_with_libelf)
-if test "$dm_with_libelf" = yes;  then
-  DMOPTLIB="-lelf"
-else
-  DMOPTLIB=
-fi
-
 dnl check for the dynamic linker (just so we can report it in KRoC really)
 AC_CHECK_TOOL(LD,ld)
 
-ARCH_LDFLAGS=""
-ARCH_ASFLAGS=""
-ARCH_DEFS=""
-
-case "${target_cpu}" in
- x86_64)
-  # 32-bit mode please
-  ARCH_DEFS="-m32"
-  ARCH_LDFLAGS="-m32 -Wl,-melf_i386"
-  ARCH_ASFLAGS="--32"
-  ;;
-esac
-
-AC_SUBST(ARCH_DEFS)
-AC_SUBST(ARCH_LDFLAGS)
-AC_SUBST(ARCH_ASFLAGS)
-
-needlibrt=
-
-case "$host_os" in
-  solaris*)
-    needlibrt=yes
-    ;;
-  *)
-    needlibrt=no
-    ;;
-esac
-
-dnl we need a GNU flavoured sed for the kroc script
-AC_CHECK_PROG(HAVE_GNUSED,gnused,yes,no)
-AC_CHECK_PROG(HAVE_GSED,gsed,yes,no)
-AC_CHECK_PROG(HAVE_SED,sed,yes,no)
-
-if test "$HAVE_GNUSED" = yes; then
- SED=gnused
-else
- if test "$HAVE_GSED" = yes; then
-  SED=gsed
- else
-  SED=sed
- fi
-fi
-AC_SUBST(SED)
-
-AC_CHECK_LIB(rt,sem_init,[have_librt=yes],[have_librt=no])
-
-case "$host_os" in
-*bsd* | *BSD*)
- SAVED_CFLAGS="$CFLAGS"
- CFLAGS="$ARCH_DEFS $CFLAGS -pthread"
- AC_CHECK_FUNC(pthread_create,[have_pthread_libcr=yes],[have_pthread_libcr=no])
- CFLAGS="$SAVED_CFLAGS"
- ;;
-esac
-
-AC_ARG_ENABLE([pthreads], AS_HELP_STRING([--enable-pthreads], [enable pthreads support (requires pthreads run-time kernel support) (default disabled)]), [enable_pthreads=$enableval], [enable_pthreads=no])
-AC_ARG_ENABLE([cttd], AS_HELP_STRING([--enable-cttd], [enable chan-type type-description support (default disabled)]), [enable_cttd=$enableval], [enable_cttd=no])
-AC_ARG_ENABLE([pony], AS_HELP_STRING([--enable-pony], [enable KRoC transparent networking (pony) support (default disabled)]), [enable_pony=$enableval], [enable_pony=no])
 AC_ARG_ENABLE([user-install], AS_HELP_STRING([--enable-user-install], [install configuration file(s) as dotfiles]), [enable_user_install=$enableval], [enable_user_install=no])
-AC_ARG_ENABLE([mp], AS_HELP_STRING([--enable-mp], [enable multi-processor support (default disabled)]), [enable_mp=$enableval], [enable_mp=no])
 
 AC_ARG_WITH([nocc], AS_HELP_STRING([--with-nocc=...], [location of NOCC (experimental)]), [nocc_dir=$withval], [nocc_dir=])
 
@@ -141,64 +66,6 @@ dnl     fi
 dnl    fi
 dnl  fi
 dnl fi
-
-
-AC_CHECK_LIB(pthread,pthread_create,[have_libpthread=yes],[have_libpthread=no])
-AC_MSG_CHECKING([whether to use POSIX threads for blocking syscalls])
-if test "$enable_pthreads" = yes; then
- if test "$have_libpthread" = yes; then
-  DEXTLIB="-lpthread"
-  if test "$needlibrt" = yes; then
-    if test "$have_librt" = yes; then
-      DEXTLIB="-lrt $DEXTLIB"
-    fi
-  fi
-  DSYSOPTS="-DKROC_USES_PTHREADS"
-  AC_MSG_RESULT(yes)
- else
-  if test "$have_pthread_libcr" = yes; then
-   DEXTLIB="-pthread"
-   DSYSOPTS="-DKROC_USES_PTHREADS"
-   AC_MSG_RESULT(yes)
-  else
-   DEXTLIB=
-   DSYSOPTS=
-   AC_MSG_RESULT(no)
-  fi
- fi
-else
- DEXTLIB=
- DSYSOPTS=
- AC_MSG_RESULT(no)
-fi
-
-AC_MSG_CHECKING([whether to use multi-processor support])
-if test "$enable_mp" = yes; then
- dnl This ends up as an option to tranx86
- TENABLEMP="-mp"
- AC_MSG_RESULT(yes)
-else
- TENABLEMP=""
- AC_MSG_RESULT(no)
-fi
-
-AC_MSG_CHECKING([whether to enable channel-type type-descriptions by default])
-AC_MSG_RESULT($enable_cttd)
-if test "$enable_pony" = yes; then
- OCCEXTRAOPTS="-zctt -zctuio -zctknsf"
- TRANEXTRAOPTS="--cttd"
- EXTCCEXTRAOPTS="-fomit-frame-pointer -fno-defer-pop -DCHANTYPEDESC -DCHANTYPEUIO -DCHANTYPESTATE"
-else
- if test "$enable_cttd" = yes; then
-  OCCEXTRAOPTS="-zctt"
-  TRANEXTRAOPTS="--cttd"
-  EXTCCEXTRAOPTS="-fomit-frame-pointer -fno-defer-pop -DCHANTYPEDESC"
- else
-  OCCEXTRAOPTS=
-  TRANEXTRAOPTS=
-  EXTCCEXTRAOPTS="-fomit-frame-pointer -fno-defer-pop"
- fi
-fi
 
 if test -n "$nocc_dir"; then
  NOCCHOME=$nocc_dir
@@ -239,22 +106,15 @@ else
  CONFFILEPREFIX=""
 fi
 
-AC_SUBST(DMOPTLIB)
-AC_SUBST(DEXTLIB)
-AC_SUBST(DSYSOPTS)
-AC_SUBST(TENABLEMP)
-AC_SUBST(OCCEXTRAOPTS)
-AC_SUBST(TRANEXTRAOPTS)
-AC_SUBST(EXTCCEXTRAOPTS)
 AC_SUBST(NOCCHOME)
 
 dnl new settings for kroc
 KROC_ARCHBINDIR="$bindir"
 KROC_ARCHLIBDIR="$libdir"
-KROC_ARCHINCDIR="$includedir"
+KROC_ARCHINCDIR="$includedir/kroc"
 KROC_MANDIR="$mandir"
-KROC_KROCDIR="$datadir"
-KROC_CONFIGDIR="$sysconfdir"
+KROC_KROCDIR="$datadir/kroc"
+KROC_CONFIGDIR="$sysconfdir/kroc"
 KROC_EXAMPLESDIR="$libdir/kroc/examples"
 TVM_BINDIR="$bindir"
 TVM_LIBDIR="$libdir/transterpreter"

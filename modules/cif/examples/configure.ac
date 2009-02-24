@@ -11,13 +11,18 @@ dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
 
-dnl Checks for libraries.
-AC_CHECK_LIB(dl, dlsym, LIBDL="-ldl", LIBDL="")
-AC_SUBST(LIBDL)
+build_cif_examples=yes
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([cif.module], ,
-              [AC_MSG_ERROR(Required modules not found)])
+OCCAM_INCLUDE([cif.module course.module], ,
+              [build_cif_examples=no])
+
+if test $build_cif_examples = yes; then
+  KROC_CCSP_FLAGS
+fi
+
+AC_MSG_CHECKING([whether to build cif examples])
+AC_MSG_RESULT($build_cif_examples)
+AM_CONDITIONAL([BUILD_CIF_EXAMPLES], [test $build_cif_examples = yes])
 
 AC_OUTPUT([Makefile])
-

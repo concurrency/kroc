@@ -1,6 +1,8 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 
@@ -32,24 +34,31 @@ EXTRA_DIST = \
 	cocoa_helper.h \
 	cocoa_helper.m
 
+if COCOA_HELPER
+cocoa_helper_objs = \
+	cocoa_helper.o
+endif
+
+if BUILD_OCCSDL
 occSDL_lib_objs = \
+	$(cocoa_helper_objs) \
 	SDL_wrap.o \
 	occSDLhelpers-c.o \
 	occSDLhelpers.tce \
 	occSDLjoy.tce
-if COCOA_HELPER
-occSDL_lib_objs += cocoa_helper.o
-endif
-
-occSDLsound_lib_objs = \
-	SDL_sound_wrap.o
 
 occSDL_libs = occSDL.lib
 occSDL_includes = occSDL.inc occSDLhelpers.inc occSDLjoy.inc
-if HAVE_SDL_SOUND
+endif
+
+if BUILD_OCCSDLSOUND
+occSDLsound_lib_objs = \
+	SDL_sound_wrap.o
+
 occSDLsound_libs = occSDLsound.lib
 occSDLsound_includes = occSDLsound.inc
 endif
+
 libs = $(occSDL_libs) $(occSDLsound_libs)
 includes = $(occSDL_includes) $(occSDLsound_includes)
 

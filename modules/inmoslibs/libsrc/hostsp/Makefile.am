@@ -61,5 +61,5 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 ## begin pideps dependencies
-spserver.occ: $(srcdir)/hostunix.occ
+spserver.tce: $(srcdir)/hostunix.occ
 ## end pideps dependencies

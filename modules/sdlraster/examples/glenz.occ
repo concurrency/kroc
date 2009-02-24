@@ -10,6 +10,7 @@
 
 #INCLUDE "course.module"
 #INCLUDE "sdlraster.module"
+#INCLUDE "maths.module"
 
 
 DATA TYPE POINT.3D

@@ -1,6 +1,8 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../m4
+
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
@@ -16,13 +18,13 @@ examples = \
 all-local: $(examples)
 
 bomberman: bomberman.occ
-	$(OCCBUILD) --program $<
+	$(OCCBUILD) --program bomberman.occ
 
 occman: occman.occ
-	$(OCCBUILD) --program $<
+	$(OCCBUILD) --program occman.occ
 
 mandelbrot: mandelbrot.occ
-	$(OCCBUILD) --program $<
+	$(OCCBUILD) --program mandelbrot.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples ttygames --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)

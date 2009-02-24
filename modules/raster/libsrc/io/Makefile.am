@@ -52,4 +52,4 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-rasterio.occ: ppmwrite.tce $(png_objs)
+rasterio.tce: ppmwrite.tce $(png_objs)

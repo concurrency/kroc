@@ -11,26 +11,19 @@ dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
 
-AC_CHECK_HEADER([linux/videodev2.h],
-		[have_linux_videodev2=yes],
-		[have_linux_videodev2=no])
+build_video=yes
 
-AC_CHECK_HEADER([libv4lconvert.h],
-                [have_v4lconvert=yes],
-		[have_v4lconvert=no])
-AM_CONDITIONAL(HAVE_V4LCONVERT, [test $have_v4lconvert = yes])
+dnl Checks for headers.
+AC_CHECK_HEADER([linux/videodev2.h], , [build_video=no])
+AC_CHECK_HEADER([libv4lconvert.h], , [build_video=no])
 
 dnl Checks for occam modules.
 OCCAM_INCLUDE([raster.module], ,
               [AC_MSG_ERROR(Required modules not found)])
 
-if test "$have_linux_videodev2" = no; then
- AC_MSG_ERROR(No linux/videodev2.h header file found)
-fi
-
-if test "$have_v4lconvert" = no; then
- AC_MSG_ERROR(No libv4lconvert.h header file found)
-fi
+AC_MSG_CHECKING([whether to build video.module])
+AC_MSG_RESULT($build_video)
+AM_CONDITIONAL(BUILD_VIDEO, [test $build_video = yes])
+OCCAM_PROVIDE(video.module, , , [test $build_video = yes])
 
 AC_OUTPUT([Makefile])
-

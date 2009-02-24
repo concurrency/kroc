@@ -1,10 +1,14 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
 
+if BUILD_DYNPROC
 libs = dynproc.lib
 includes = dynproc.inc
+endif
 
 EXTRA_DIST = \
 	$(includes)

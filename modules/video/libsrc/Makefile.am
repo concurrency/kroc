@@ -3,22 +3,26 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@ -Wall
 
 EXTRA_DIST = \
+	ccvt_types.h \
 	video.inc \
 	video.occ \
 	video-v4l.c \
 	video-v4l.h
 
+if BUILD_VIDEO
 video_lib_objs = \
 	video.tce \
 	video-v4l.o
 
 video_libs = video.lib
 video_includes = video.inc
+endif
 
 libs = $(video_libs)
 includes = $(video_includes)

@@ -3,6 +3,7 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 
@@ -18,7 +19,8 @@ EXTRA_DIST = \
 	socktcpcli.occ \
 	socktcpserv.occ \
 	sockudpcli.occ \
-	sockudpserv.occ
+	sockudpserv.occ \
+	test-getopt.sh
 
 examples = \
 	args \

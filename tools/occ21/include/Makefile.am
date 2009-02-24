@@ -22,7 +22,8 @@ imsopen.h imsstd.h imstype.h \
 imsvals.h includes.h instdef.h \
 instruct.h lexdef.h lexerror.h \
 lexhdr.h listhdr.h localfe.h maplib.h \
-memlib.h midinc.h mmmlib.h nameshdr.h \
+memlib.h midinc.h mmmlib.h mobile_types.h \
+nameshdr.h \
 objlib.h objrdr.h objtrans.h objwrt.h \
 occamfe.h occompfe.h ochdr.h ocmisc.h \
 pdata.h pdefs.h popen.h popen_re.h \

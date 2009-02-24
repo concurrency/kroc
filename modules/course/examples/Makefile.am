@@ -3,11 +3,14 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
+	README.txt \
 	bar.occ \
+	cast.occ \
 	casting.occ \
 	commstime.occ \
 	demo.occ \
@@ -22,6 +25,7 @@ EXTRA_DIST = \
 
 examples = \
 	bar \
+	cast \
 	casting \
 	commstime \
 	demo \

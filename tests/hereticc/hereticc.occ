@@ -1372,7 +1372,7 @@ PROC run.test.set (VAL []BOOL enabled, VAL INT runs, CHAN BYTE scr!, err!)
 PROC hereticc (CHAN BYTE kyb?, scr!, err!)
   INITIAL [NUM.TESTS]BOOL enabled IS [i = 0 FOR NUM.TESTS | FALSE]:
   INITIAL INT num.sets IS 1:
-  INITIAL INT runs IS 10:
+  INITIAL INT runs IS 1:
   SEQ
     --{{{  parse command-line options
     --{{{  PROC usage

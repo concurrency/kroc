@@ -22,5 +22,9 @@ AM_CONDITIONAL(HAVE_LIBPNG, [test $have_libpng = yes])
 dnl Checks for occam modules.
 OCCAM_INCLUDE([course.module file.module], ,
               [AC_MSG_ERROR(Required modules not found)])
+OCCAM_PROVIDE(raster.module, base)
+OCCAM_PROVIDE(rastergraphics.module, graphics)
+OCCAM_PROVIDE(rasterio.module, io)
+OCCAM_PROVIDE(rastertext.module, text)
 
 AC_OUTPUT([Makefile base/Makefile graphics/Makefile io/Makefile text/Makefile])

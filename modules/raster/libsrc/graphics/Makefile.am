@@ -11,7 +11,6 @@ EXTRA_DIST = \
 	angle.inc \
 	arc.occ \
 	circle.occ \
-	colours.inc \
 	colourspace.occ \
 	copy.occ \
 	cordic.occ \
@@ -23,7 +22,6 @@ EXTRA_DIST = \
 	hit.occ \
 	line.occ \
 	lines.occ \
-	palette.inc \
 	rectangle.occ \
 	spectrum.occ \
 	wallpaper.occ
@@ -73,7 +71,7 @@ SUFFIXES = .occ .tce .lib
 
 
 ## begin pideps dependencies
-arc.occ: cordic.tce
-cordic.occ: $(srcdir)/angle.inc
-spectrum.occ: $(srcdir)/graphics.inc
+arc.tce: cordic.tce
+cordic.tce: $(srcdir)/angle.inc
+spectrum.tce: $(srcdir)/graphics.inc
 ## end pideps dependencies

@@ -13,25 +13,21 @@ AM_INIT_AUTOMAKE(course-answers, 1.0)
 
 dnl Checks for programs.
 AC_PROG_MAKE_SET
-AC_PROG_CC
-AC_CHECK_TOOL(LD,ld)
+OCCAM_OCCBUILD
 
-dnl Checks for programs.
-AC_CHECK_PROG(KROC, kroc, kroc)
+build_course_answers=yes
+if test "$OCCBUILD_TOOLCHAIN" = "kroc"; then
+  KROC_PROG_KROC
+else
+  build_course_answers=no
+fi
 
-OCTRAN=$($KROC -c --tran)
-OCTRANFLAGS=$($KROC -c --tranflags)
+dnl Checks for occam modules.
+OCCAM_INCLUDE([course.module shared_screen.module], ,
+              [build_course_answers=no])
 
-AC_MSG_CHECKING([for kroc translator])
-AC_MSG_RESULT([$OCTRAN])
-AC_MSG_CHECKING([for kroc translator options])
-AC_MSG_RESULT([$OCTRANFLAGS])
-
-
-dnl Checks for libraries.
-
-AC_SUBST(OCTRAN)
-AC_SUBST(OCTRANFLAGS)
+AC_MSG_CHECKING([whether to build course answers])
+AC_MSG_RESULT($build_course_answers)
+AM_CONDITIONAL([BUILD_COURSE_ANSWERS], [test $build_course_answers = yes])
 
 AC_OUTPUT([Makefile])
-

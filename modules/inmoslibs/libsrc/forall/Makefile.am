@@ -93,7 +93,7 @@ EXTRA_DIST = \
 	ie64comp.occ \
 	ie64op.occ \
 	ie64rem.occ \
-	instrinsics.occ \
+	intrinsics.occ \
 	move2d.occ \
 	nan16.inc \
 	nan32.inc \
@@ -317,8 +317,8 @@ $(forall_late_objs): forall-early
 	$(OCCBUILD) --object $<
 
 ## begin pideps dependencies
-dargred.occ: ridiv.tce rimul.tce
-ie64op.occ: ridiv.tce rimul.tce
-r64op.occ: ridiv.tce rimul.tce
-rargred.occ: ridiv.tce
+dargred.tce: ridiv.tce rimul.tce
+ie64op.tce: ridiv.tce rimul.tce
+r64op.tce: ridiv.tce rimul.tce
+rargred.tce: ridiv.tce
 ## end pideps dependencies

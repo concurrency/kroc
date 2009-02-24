@@ -20,24 +20,10 @@ AC_CHECK_HEADERS([sys/ioctl.h sys/time.h sys/timeb.h sys/types.h])
 AC_CHECK_FUNCS([ftime gettimeofday nanosleep setitimer Sleep])
 
 #########################
-#  Configuration Options
-#########################
-
-AC_ARG_WITH([skroc], AS_HELP_STRING([--with-skroc=PATH], [specifying the path to the directory containing skroc]), [skroc=$withval], [skroc=])
-
-#########################
 #  Find skroc
 #########################
 
-SKROC_PATH="$PATH"
-if test "x$skroc" != "x"; then
-  SKROC_PATH="$skroc:$SKROC_PATH"
-fi
-
-AC_PATH_PROG([SKROC], [skroc], [no], $SKROC_PATH)
-if test "$SKROC" = "no"; then
-  AC_MSG_ERROR([skroc is required])
-fi
+TVM_PROG_SKROC
 
 #########################
 #  Host Configuration
@@ -69,11 +55,17 @@ case "$host_os" in
 esac
 
 #########################
+#  Find libtvm bits
+#########################
+
+TVM_LIBTVM
+
+#########################
 #  Defines
 #########################
 
-CFLAGS="-Wall $CFLAGS"
-LIBS="-lm -ltvm $LIBS"
+CFLAGS="-Wall $TVM_CFLAGS $CFLAGS"
+LIBS="-lm $TVM_LIBS $LIBS"
 
 # OS
 case "$x_os" in
@@ -98,24 +90,6 @@ AM_CONDITIONAL([OS_FREEBSD],	test "$x_os" = "freebsd")
 AM_CONDITIONAL([OS_LINUX],	test "$x_os" = "linux")
 AM_CONDITIONAL([OS_SOLARIS],	test "$x_os" = "solaris")
 AM_CONDITIONAL([OS_WINDOWS],	test "$x_os" = "windows")
-
-#########################
-#  Find libtvm bits
-#########################
-
-tvm_h=no
-
-AC_CHECK_LIB([tvm], [tvm_init], [], AC_MSG_ERROR([libtvm missing]))
-
-AC_CHECK_HEADER([tvm.h], [tvm_h=yes])
-AC_CHECK_HEADER([tvm/tvm.h], [tvm_h=yes])
-AC_CHECK_HEADER([kroc/tvm.h], [tvm_h=yes])
-if test "$tvm_h" = "no"; then
-  AC_MSG_ERROR([tvm.h missing])
-else
-  # Check headers again to define them
-  AC_CHECK_HEADERS([tvm.h tvm/tvm.h kroc/tvm.h])
-fi
 
 #########################
 #  Output
