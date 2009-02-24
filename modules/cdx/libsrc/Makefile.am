@@ -17,21 +17,26 @@ EXTRA_DIST = \
 	netbar.occ \
 	netbard.c
 
-bin_PROGRAMS = cdxview netbard
-cdxview_LDADD = @SDL_LIBS@
-
+if BUILD_CDX
 cdx_lib_objs = \
 	cdx.tce \
 	cdxclient.o \
 	cdxoccam.o
 
+cdx_libs = cdx.lib
+cdx_includes = cdxclient.h
+cdx_programs = cdxview
+cdxview_LDADD = @SDL_LIBS@
+
 netbar_lib_objs = \
 	netbar.tce
 
-cdx_libs = cdx.lib
-cdx_includes = cdxclient.h
 netbar_libs = netbar.lib
 netbar_includes = netbar.inc
+netbar_programs = netbard
+endif
+
+bin_PROGRAMS = $(cdx_programs) $(netbar_programs)
 libs = $(cdx_libs) $(netbar_libs)
 includes = $(cdx_includes) $(netbar_includes)
 

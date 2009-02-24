@@ -10,8 +10,14 @@ AM_INIT_AUTOMAKE(cdx-examples, 1.0)
 dnl Checks for programs.
 OCCAM_OCCBUILD
 
+build_cdx_examples=yes
+
 dnl Checks for occam modules.
 OCCAM_INCLUDE([cdx.module netbar.module snglmath.module], ,
-              [AC_MSG_ERROR(Required modules were not found)])
+              [build_cdx_examples=no])
+
+AC_MSG_CHECKING([whether to build cdx examples])
+AC_MSG_RESULT($build_cdx_examples)
+AM_CONDITIONAL([BUILD_CDX_EXAMPLES], [test $build_cdx_examples = yes])
 
 AC_OUTPUT([Makefile])
