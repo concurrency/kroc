@@ -15,11 +15,13 @@ EXTRA_DIST = \
 	shutdown.inc \
 	shutdown.occ
 
+if BUILD_OCCADE_EXAMPLES
 examples = \
 	bounce \
 	breakout \
 	collision-test \
 	parrot_attack
+endif
 
 all-local: $(examples)
 

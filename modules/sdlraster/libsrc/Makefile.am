@@ -15,14 +15,16 @@ EXTRA_DIST = \
 	sdlrcompat.inc \
 	sdlrcompat.occ
 
+if BUILD_SDLRASTER
 sdlraster_lib_objs = \
 	sdlrcompat.tce \
 	sdlraster.tce \
-	sdlrcompat-c.o 
+	sdlrcompat-c.o
 
-sdlraster_libs = sdlraster.lib
+sdlraster_libs = sdlraster.lib miniraster.lib
 sdlraster_includes = sdlraster.inc sdlrcompat.inc
-miniraster_libs = miniraster.lib
+endif
+
 libs = $(sdlraster_libs) $(miniraster_libs)
 includes = $(sdlraster_includes)
 

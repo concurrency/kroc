@@ -10,8 +10,14 @@ AM_INIT_AUTOMAKE(sdlraster-examples, 1.0)
 dnl Checks for programs.
 OCCAM_OCCBUILD
 
+build_sdlraster_examples=yes
+
 dnl Checks for occam modules.
 OCCAM_INCLUDE([sdlraster.module rasterio.module miniraster.module course.module maths.module], ,
-              [AC_MSG_ERROR(Required modules were not found)])
+              [build_sdlraster_examples=no])
+
+AC_MSG_CHECKING([whether to build sdlraster examples])
+AC_MSG_RESULT($build_sdlraster_examples)
+AM_CONDITIONAL([BUILD_SDLRASTER_EXAMPLES], [test $build_sdlraster_examples = yes])
 
 AC_OUTPUT([Makefile])
