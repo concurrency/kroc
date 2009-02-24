@@ -10,12 +10,20 @@ AM_INIT_AUTOMAKE(moa, 1.0)
 dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
+CFLAGS="$CFLAGS $OCCBUILD_CFLAGS"
 
 build_moa=yes
 
 dnl Checks for libraries.
 AC_CHECK_HEADERS(stdlib.h sys/time.h)
 AC_CHECK_MYSQLCLIENT(, , [build_moa=no])
+
+# Make sure the MySQL library is actually usable, since AC_CHECK_MYSQLCLIENT
+# doesn't try to link against it.
+old_LIBS="$LIBS"
+LIBS="$LIBS $MYSQLCLIENT_LIBS"
+AC_CHECK_FUNC(mysql_library_init, , [build_moa=no])
+LIBS="$old_LIBS"
 
 dnl Checks for occam modules.
 OCCAM_INCLUDE([cif.module], , [build_moa=no])
