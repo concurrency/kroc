@@ -15,4 +15,9 @@ dnl Checks for libraries.
 AC_CHECK_HEADERS(stdlib.h sys/time.h)
 AM_PATH_SDL(1.2.0, , [AC_MSG_ERROR(SDL not found)])
 
+dnl Checks for occam modules.
+OCCAM_INCLUDE([sock.module], ,
+              [AC_MSG_ERROR(Required modules not found)])
+OCCAM_PROVIDE(cdx.module netbar.module)
+
 AC_OUTPUT([Makefile])

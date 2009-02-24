@@ -54,6 +54,11 @@ if test "$host_os" = "cygwin"; then
 fi
 
 dnl Checks for libraries.
+OCCAM_PROVIDE(cspdrv.module, cspdrvlib, none)
+OCCAM_PROVIDE(file.module, filelib, none)
+OCCAM_PROVIDE(http.module, httplib, file.module sock.module)
+OCCAM_PROVIDE(proc.module, proclib, file.module)
+OCCAM_PROVIDE(sock.module, socklib, none)
 
 AC_OUTPUT([Makefile socklib/Makefile filelib/Makefile proclib/Makefile httplib/Makefile cspdrvlib/Makefile])
 

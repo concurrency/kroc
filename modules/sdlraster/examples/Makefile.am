@@ -1,9 +1,13 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
+	complex.inc \
+	complex_inline.inc \
 	glenz.occ \
 	imageviewer.occ \
 	mrevents.occ \

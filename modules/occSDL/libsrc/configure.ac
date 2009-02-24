@@ -12,15 +12,16 @@ AC_PROG_CC
 OCCAM_OCCBUILD
 OCCAM_SWIG
 
+build_occSDL=yes
+build_occSDLsound=yes
+
 dnl Checks for libraries.
-AM_PATH_SDL(1.2.0, [], [AC_MSG_ERROR(SDL is required)])
+AM_PATH_SDL(1.2.0, , [build_occSDL=no])
 CFLAGS="$CFLAGS $SDL_CFLAGS"
-AC_CHECK_HEADERS([SDL/SDL_sound.h],
-                 [have_sdl_sound=yes],
-                 [have_sdl_sound=no])
-AM_CONDITIONAL(HAVE_SDL_SOUND, [test $have_sdl_sound = yes])
+AC_CHECK_HEADERS([SDL/SDL_sound.h], , [build_occSDLsound=no])
 
 dnl Check for OSes needing helpers.
+cocoa_helper=no
 case "$host_os" in
  *Darwin* | *darwin*)
   cocoa_helper=yes
@@ -29,8 +30,16 @@ case "$host_os" in
  *)
   ;;
 esac
-
-dnl Define required helpers.
 AM_CONDITIONAL(COCOA_HELPER, test "x$cocoa_helper" = xyes)
+
+AC_MSG_CHECKING([whether to build occSDL.module])
+AC_MSG_RESULT($build_occSDL)
+AM_CONDITIONAL(BUILD_OCCSDL, [test $build_occSDL = yes])
+OCCAM_PROVIDE(occSDL.module, , , [test $build_occSDL = yes])
+
+AC_MSG_CHECKING([whether to build occSDLsound.module])
+AC_MSG_RESULT($build_occSDLsound)
+AM_CONDITIONAL(BUILD_OCCSDLSOUND, [test $build_occSDLsound = yes])
+OCCAM_PROVIDE(occSDLsound.module, , , [test $build_occSDLsound = yes])
 
 AC_OUTPUT([Makefile])

@@ -1,0 +1,34 @@
+# Top-level Makefile.am for the KRoC tree.
+
+ACLOCAL_AMFLAGS = -I m4
+
+SUBDIRS = @subdirs@
+
+EXTRA_DIST = \
+	.gitignore \
+	BUGS \
+	CHANGELOG \
+	README \
+	demos/README \
+	modules/button/README \
+	modules/cif/README \
+	modules/course/README \
+	modules/course/etc/README \
+	modules/course/etc/reading.list \
+	modules/dynproc/README \
+	modules/fmtoutlib/README \
+	modules/moa/README \
+	modules/nocclibs/README \
+	modules/occGL/README \
+	modules/occSDL/README \
+	modules/pony/README \
+	modules/sdlraster/README \
+	modules/udc/README
+
+aclocaldir = $(prefix)/share/aclocal
+dist_aclocal_DATA = \
+	m4/kroc.m4 \
+	m4/occbuild.m4 \
+	m4/tvm.m4
+
+DISTCLEANFILES = in-tree-modules

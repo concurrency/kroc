@@ -1,6 +1,8 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
@@ -32,5 +34,4 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-sprintf.occ: doprnt.tce
-
+sprintf.tce: doprnt.tce

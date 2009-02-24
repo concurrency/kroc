@@ -1,6 +1,8 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
@@ -12,18 +14,22 @@ EXTRA_DIST = \
 	simple_surface.occ \
 	sound_test.occ
 
-if HAVE_SDL_SOUND
-sound_examples = \
-	sound_test
-endif
-examples = \
+if BUILD_OCCSDL_EXAMPLES
+occSDL_examples = \
 	array_surface \
 	init \
 	joystick \
 	joy2 \
 	sdl_info \
-	simple_surface \
-	$(sound_examples)
+	simple_surface
+endif
+
+if BUILD_OCCSDLSOUND_EXAMPLES
+occSDLsound_examples = \
+	sound_test
+endif
+
+examples = $(occSDL_examples) $(occSDLsound_examples)
 
 all-local: $(examples)
 

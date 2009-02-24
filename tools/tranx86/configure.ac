@@ -22,15 +22,11 @@ dnl Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_STDC
 AC_PROG_MAKE_SET
-AC_CHECK_PROG(KROC, kroc, kroc)
+
+KROC_CCSP_FLAGS
 
 ARCH_DEFS=""
-CCINCLUDES=$($KROC --ccincpath)
 GNUASFLAGS=""
-
-AC_MSG_CHECKING([path to run-time header files])
-AC_MSG_RESULT([$CCINCLUDES])
-AC_SUBST(CCINCLUDES)
 
 case "$host_cpu" in
  x86_64)

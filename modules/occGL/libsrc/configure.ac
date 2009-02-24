@@ -12,6 +12,8 @@ AC_PROG_CC
 OCCAM_OCCBUILD
 OCCAM_SWIG
 
+build_occGL=yes
+
 dnl FreeBSD-specific hack to find the OpenGL headers.
 case "$target" in
 	*freebsd*)
@@ -21,6 +23,11 @@ esac
 
 dnl Checks for libraries.
 MDL_HAVE_OPENGL
-AC_CHECK_HEADERS([GL/gl.h GL/glu.h], , [AC_MSG_ERROR([OpenGL headers were not found])])
+AC_CHECK_HEADERS([GL/gl.h GL/glu.h], , [build_occGL=no])
+
+AC_MSG_CHECKING([whether to build occGL.module])
+AC_MSG_RESULT($build_occGL)
+AM_CONDITIONAL(BUILD_OCCGL, [test $build_occGL = yes])
+OCCAM_PROVIDE(occGL.module, , , [test $build_occGL = yes])
 
 AC_OUTPUT([Makefile])

@@ -4,8 +4,8 @@ AC_INIT(common/rtsmain.c)
 AM_CONFIG_HEADER(config.h)
 AC_PREREQ(2.12)
 
+AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([ccsp], [1.6.3])
-AC_CANONICAL_HOST
 
 m4_pattern_allow([^AS_DEFS$])
 
@@ -20,6 +20,8 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_CHECK_TOOL(AS,as)
 AC_CHECK_TOOL(LD,ld)
+
+KROC_CCSP_FLAGS
 
 AC_CHECK_HEADERS(stdlib.h stdarg.h malloc.h sys/param.h sys/time.h string.h strings.h sys/ioctl.h time.h)
 AC_CHECK_LIB(m, sin)
@@ -44,11 +46,8 @@ AC_ARG_ENABLE([deadlock-brief], AS_HELP_STRING([--enable-deadlock-brief],[enable
 
 dnl AC_ARG_ENABLE([ktraces], AS_HELP_STRING([--enable-ktraces],[enable kernel-entry traces (default disabled)]), [enable_ktraces=$enableval], [enable_ktraces=no])
 dnl AC_ARG_ENABLE([dtraces], AS_HELP_STRING([--enable-dtraces],[enable debugging traces (default disabled)]), [enable_dtraces=$enableval], [enable_dtraces=no])
-AC_ARG_ENABLE([dynproc], AS_HELP_STRING([--disable-dynproc],[disable dynamic processes (default enabled)]), [enable_dynproc=$enableval], [enable_dynproc=yes])
 AC_ARG_ENABLE([debug-dynproc], AS_HELP_STRING([--enable-debug-dynproc],[enable dynamic process debugging (default disabled)]), [enable_debug_dynproc=$enableval], [enable_debug_dynproc=no])
-AC_ARG_ENABLE([pthreads], AS_HELP_STRING([--enable-pthreads],[use pthreads library for blocking syscalls (default disabled)]), [enable_pthreads=$enableval], [enable_pthreads=no])
 AC_ARG_ENABLE([mmap], AS_HELP_STRING([--disable-mmap],[disable mmap() based allocation (default enabled)]), [enable_mmap=$enableval], [enable_mmap=yes])
-AC_ARG_ENABLE([mp], AS_HELP_STRING([--enable-mp],[enable multi-processor support (default disabled)]), [enable_mp=$enableval], [enable_mp=no])
 AC_ARG_ENABLE([tls], AS_HELP_STRING([--enable-tls],[use thread-local-storage for scheduler pointer]), [enable_tls=$enableval], [enable_tls=yes])
 AC_ARG_ENABLE([sse2], AS_HELP_STRING([--disable-sse2],[do not use SSE2 even if supported on build system]), [enable_sse2=$enableval], [enable_sse2=yes])
 AC_ARG_ENABLE([tuning], AS_HELP_STRING([--enable-tuning=...],[set tuning for speed or size (default speed)]), [tuning=$enableval], [tuning=default])
@@ -57,46 +56,41 @@ AC_ARG_WITH([alloc], AS_HELP_STRING([--with-alloc=...],[allocator to use (malloc
 
 #}}}
 
-#{{{  check for pthreads
+#{{{  import shared config
 
-dnl For platform-specific pthreads support
-case "$host_os" in
-*BSD* | *bsd*)
- SAVED_CFLAGS="$CFLAGS"
- CFLAGS="$CFLAGS -pthread"
- AC_CHECK_FUNC(pthread_create,[have_pthread_libcr=yes],[have_pthread_libcr=no])
- AC_MSG_CHECKING([whether this system has pthread support])
- AC_MSG_RESULT($have_pthread_libcr)
- CFLAGS="$SAVED_CFLAGS"
- ;;
-solaris*)
- LIBS="-lrt $LIBS"
- ;;
-*)
- ;;
-esac
-
-dnl For pthreads support..
-AC_CHECK_LIB(pthread,pthread_create,[have_libpthread=yes],[have_libpthread=no])
-AC_MSG_CHECKING([whether to use POSIX threads])
-if test "$enable_pthreads" = yes; then
- if test "$have_libpthread" = yes || test "$have_pthread_libcr" = yes; then
-  LIBS="-lpthread $LIBS"
-  AC_DEFINE([USE_PTHREADS],1,[define to use POSIX threads for blocking syscalls and multi-processor])
-  AC_MSG_RESULT(yes)
- else
-  AC_MSG_RESULT(no)
- fi
+if test "x$rmox" != "x"; then
+  KROC_CCSP_ENABLE_RMOX=yes
 else
- AC_MSG_RESULT(no)
+  KROC_CCSP_ENABLE_RMOX=no
+fi
+
+EXTRA_CFLAGS="$EXTRA_CFLAGS $KROC_CCSP_CFLAGS"
+EXTRA_LDFLAGS="$EXTRA_LDFLAGS $KROC_CCSP_LDFLAGS"
+LIBS="$LIBS $KROC_CCSP_LIBS"
+
+if test $KROC_CCSP_ENABLE_PTHREADS = yes; then
+  AC_DEFINE([USE_PTHREADS],1,[define to use POSIX threads for blocking syscalls and multi-processor])
+fi
+
+if test $KROC_CCSP_ENABLE_MP = yes; then
+  AC_DEFINE([ENABLE_MP],1,[define to enable multi-processor support])
+  AC_DEFINE([MAX_RUNTIME_THREADS],32,[define number of runtime threads])
+else
+  AC_DEFINE([MAX_RUNTIME_THREADS],1,[define number of runtime threads])
+fi
+
+if test $KROC_CCSP_ENABLE_DYNPROC = yes; then
+  AC_DEFINE([DYNAMIC_PROCS],1,[define to enable dynamic processes])
 fi
 
 #}}}
 #{{{  bsyscall reports
 AC_MSG_CHECKING(whether blocking system calls are supported)
-AC_MSG_RESULT($enable_pthreads)
-if test "$enable_pthreads" = no; then
- blocking_syscalls=no
+if test "$KROC_CCSP_ENABLE_PTHREADS" = no; then
+  AC_MSG_RESULT(no)
+  blocking_syscalls=no
+else
+  AC_MSG_RESULT(yes)
 fi
 
 AC_MSG_CHECKING(whether to enable blocking system calls)
@@ -439,22 +433,7 @@ if test "$useful_fpe" = yes; then
  AC_DEFINE([USEFUL_FPEDEBUG],1,[define to enable verbose FPE messages])
 fi
 
-#}}}
-#{{{  dynamic process options
-
-AC_SEARCH_LIBS(dlsym, dl, dynprocs_supported=yes, dynprocs_supported=no)
-AC_MSG_CHECKING(whether dynamic procs are supported)
-AC_MSG_RESULT($dynprocs_supported)
-if test "$dynprocs_supported" = yes; then
- if test "$rmox" != ""; then
-   enable_dynproc=no
- fi
- AC_MSG_CHECKING(whether to enable dynamic processes)
- AC_MSG_RESULT($enable_dynproc)
- if test "$enable_dynproc" = yes; then
-  AC_DEFINE([DYNAMIC_PROCS],1,[define to enable dynamic processes])
- fi
-
+if test $KROC_CCSP_ENABLE_DYNPROC = yes; then
  AC_MSG_CHECKING(whether to enable dynamic process debugging)
  AC_MSG_RESULT($enable_debug_dynproc)
  if test "$enable_debug_dynproc" = yes; then
@@ -476,30 +455,6 @@ fi
 #else
 # LIBCCSP=libccsp.so
 #fi
-
-#}}}
-#{{{  check and enable multi-processor support
-
-AC_MSG_CHECKING(whether multi-processor support is available)
-if test "$enable_pthreads" = yes; then
- AC_MSG_RESULT([yes])
-else
- if test "$rmox" = ""; then
-   AC_MSG_RESULT([no])
-   enable_mp=no
- else
-   AC_MSG_RESULT([yes])
- fi
-fi
-
-AC_MSG_CHECKING(whether to enable multi-processor support)
-AC_MSG_RESULT($enable_mp)
-if test "$enable_mp" = yes; then
- AC_DEFINE([ENABLE_MP],1,[define to enable multi-processor support])
- AC_DEFINE([MAX_RUNTIME_THREADS],32,[define number of runtime threads])
-else
- AC_DEFINE([MAX_RUNTIME_THREADS],1,[define number of runtime threads])
-fi
 
 #}}}
 #{{{  check for ualarm
@@ -561,7 +516,7 @@ fi
 #{{{  check for thread-local storage 
 
 AC_MSG_CHECKING(whether to use thread-local-storage)
-if test "$enable_tls" = no || test "$enable_mp" = no || test "$rmox" != ""; then
+if test "$enable_tls" = no || test "$KROC_CCSP_ENABLE_MP" = no || test "$rmox" != ""; then
  AC_MSG_RESULT(no)
 else
  AC_TRY_RUN([
@@ -598,8 +553,6 @@ cygwin*)
 *Darwin* | *darwin*)
  build_shared="no"
  LIBCCSP="libccsp.dylib"
- dnl Disable automatic PIC usage on Apple's GCC
- CFLAGS="$CFLAGS -mdynamic-no-pic"
  ;;
 *)
  build_shared="yes"
@@ -617,26 +570,19 @@ AM_CONDITIONAL(BUILD_SHARED, [test "$build_shared" = "yes"])
 #{{{  architecture configuration
 
 FRAMEPTR_CFLAGS="-fomit-frame-pointer"
-EXTRA_CFLAGS="-fno-strict-aliasing -Wpointer-arith -DTIME_WITH_SYS_TIME"
-ARCH_CFLAGS=""
+EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-strict-aliasing -Wpointer-arith -DTIME_WITH_SYS_TIME"
 
 bigendian=
 
 case "$host_cpu" in
-i386 | i486 | i586 | i686)
+i386 | i486 | i586 | i686 | x86_64)
   ARCH_DIR=i386
   AC_SUBST(ARCH_DIR)
   AC_DEFINE([TARGET_CPU_386],1,[define if i386 or greater target])
   bigendian=no
   ;;
-x86_64)
-  ARCH_DIR=i386
-  ARCH_CFLAGS="-m32"
-  EXTRA_LDFLAGS="-m32 -Wl,-melf_i386"
-  AC_SUBST(ARCH_DIR)
-  AC_DEFINE([TARGET_CPU_386],1,[define if i386 or greater target])
-  bigendian=no
-  ;;
+# XXX: If you're resurrecting any of the entries below, some of this will need
+# to go into kroc.m4 rather than here.
 #sparc)
 #  ARCH_DIR=sparc
 #  AC_SUBST(ARCH_DIR)
@@ -709,7 +655,7 @@ fi
 
 #}}}
 
-EXTRA_DEFS="$EXTRA_CFLAGS $FRAMEPTR_CFLAGS $ARCH_CFLAGS $RMOX_CFLAGS -DSIGNAL_TYPE_SYSV"
+EXTRA_DEFS="$EXTRA_CFLAGS $FRAMEPTR_CFLAGS $RMOX_CFLAGS -DSIGNAL_TYPE_SYSV"
 AC_SUBST(EXTRA_DEFS)
 AC_SUBST(EXTRA_LDFLAGS)
 

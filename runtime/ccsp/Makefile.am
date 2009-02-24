@@ -9,7 +9,8 @@
 
 @SET_MAKE@
 
-AUTOMAKE_OPTIONS=foreign
+AUTOMAKE_OPTIONS = foreign
+ACLOCAL_AMFLAGS = -I ../../m4
 
 SUBDIRS = include utils common kernel
 EXTRALDFLAGS=@EXTRA_LDFLAGS@
@@ -39,25 +40,6 @@ libccsp_a_LIBADD = \
 	kernel/entry.o \
 	kernel/sched.o \
 	kernel/stats.o
-
-include_HEADERS = \
-	include/ccsp.h \
-	include/ccsp_config.h \
-	include/ccsp_consts.h \
-	include/ccsp_if.h \
-	include/ccsp_cif.h \
-	include/ccsp_cif_stubs.h \
-	include/ccsp_pony.h \
-	include/ccsp_stats.h \
-	include/ccsp_timer.h \
-	include/dmem_if.h \
-	include/kiface.h \
-	include/kitable.h \
-	include/mobile_types.h \
-	include/mobproc.h \
-	include/mwsync.h \
-	include/typedesc.h \
-	include/ukcthreads_types.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ccsp-1.6.pc

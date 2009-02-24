@@ -11,14 +11,19 @@ AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE(pony-examples, 0.1)
 
 dnl Checks for programs.
-AC_PROG_CC
 OCCAM_OCCBUILD
+
+build_pony_examples=yes
 
 dnl Checks for occam modules.
 OCCAM_INCLUDE([pony.module course.module convert.module], ,
-              [AC_MSG_ERROR(Required modules not found)])
+              [build_pony_examples=no])
 OCCAM_INCLUDE([sdlraster.module],
               [have_sdlraster=yes], [have_sdlraster=no])
 AM_CONDITIONAL([HAVE_SDLRASTER], [test $have_sdlraster = yes])
+
+AC_MSG_CHECKING([whether to build pony examples])
+AC_MSG_RESULT($build_pony_examples)
+AM_CONDITIONAL([BUILD_PONY_EXAMPLES], [test $build_pony_examples = yes])
 
 AC_OUTPUT([Makefile])

@@ -27,6 +27,7 @@ EXTRA_DIST = \
 	dpowfl.occ \
 	dranfl.occ \
 	dsinfl.occ \
+	dtanfl.occ \
 	expfl.occ \
 	hyperfl.occ \
 	powfl.occ \
@@ -84,24 +85,24 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 ## begin pideps dependencies
-acosfl.occ: $(srcdir)/mathhdr.inc
-alogfl.occ: $(srcdir)/mathhdr.inc
-asinfl.occ: $(srcdir)/mathhdr.inc
-atanfl.occ: $(srcdir)/mathhdr.inc
-cosfl.occ: $(srcdir)/mathhdr.inc
-dacosfl.occ: $(srcdir)/mathhdr.inc
-dalogfl.occ: $(srcdir)/mathhdr.inc
-dasinfl.occ: $(srcdir)/mathhdr.inc
-datanfl.occ: $(srcdir)/mathhdr.inc
-dcosfl.occ: $(srcdir)/mathhdr.inc
-dexpfl.occ: $(srcdir)/mathhdr.inc
-dhyperfl.occ: $(srcdir)/mathhdr.inc
-dpowfl.occ: $(srcdir)/mathhdr.inc
-dsinfl.occ: $(srcdir)/mathhdr.inc
-dtanfl.occ: $(srcdir)/mathhdr.inc
-expfl.occ: $(srcdir)/mathhdr.inc
-hyperfl.occ: $(srcdir)/mathhdr.inc
-powfl.occ: $(srcdir)/mathhdr.inc
-sinfl.occ: $(srcdir)/mathhdr.inc
-tanfl.occ: $(srcdir)/mathhdr.inc
+acosfl.tce: $(srcdir)/mathhdr.inc
+alogfl.tce: $(srcdir)/mathhdr.inc
+asinfl.tce: $(srcdir)/mathhdr.inc
+atanfl.tce: $(srcdir)/mathhdr.inc
+cosfl.tce: $(srcdir)/mathhdr.inc
+dacosfl.tce: $(srcdir)/mathhdr.inc
+dalogfl.tce: $(srcdir)/mathhdr.inc
+dasinfl.tce: $(srcdir)/mathhdr.inc
+datanfl.tce: $(srcdir)/mathhdr.inc
+dcosfl.tce: $(srcdir)/mathhdr.inc
+dexpfl.tce: $(srcdir)/mathhdr.inc
+dhyperfl.tce: $(srcdir)/mathhdr.inc
+dpowfl.tce: $(srcdir)/mathhdr.inc
+dsinfl.tce: $(srcdir)/mathhdr.inc
+dtanfl.tce: $(srcdir)/mathhdr.inc
+expfl.tce: $(srcdir)/mathhdr.inc
+hyperfl.tce: $(srcdir)/mathhdr.inc
+powfl.tce: $(srcdir)/mathhdr.inc
+sinfl.tce: $(srcdir)/mathhdr.inc
+tanfl.tce: $(srcdir)/mathhdr.inc
 ## end pideps dependencies

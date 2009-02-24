@@ -61,8 +61,8 @@ progname=$(printf '%s' "$0" | $SED 's/^.*\///')
 
 CC=@CC@
 LD=@LD@
-ARCH_LDFLAGS="@ARCH_LDFLAGS@"
-ARCH_ASFLAGS="@ARCH_ASFLAGS@"
+ARCH_LDFLAGS="@KROC_CCSP_LDFLAGS@"
+ARCH_ASFLAGS="@KROC_CCSP_ASFLAGS@"
 
 # Only the 'kroc' program need be in the users path
 #PATH=$KROC/bin:$PATH
@@ -73,22 +73,20 @@ host_canonical="@KROC_CANONICAL_TARGET@"
 host_cpu="@KROC_HOST_CPU@"
 host_os="@KROC_HOST_OS@"
 # -kc : cgr-mp CCSP interface
-octranopts="-kc @TRANEXTRAOPTS@ @TENABLEMP@"
-ccopts="@ARCH_DEFS@"
+octranopts="-kc @KROC_CCSP_TRANFLAGS@"
+ccopts="@KROC_CCSP_CFLAGS@"
 deplibs=""
 ocllibs=""
-ocrtslibs="-lm @DLOPTLIB@ @DEXTLIB@"
-extcflags="@ARCH_DEFS@ @DSYSOPTS@ @EXTCCEXTRAOPTS@"
+ocrtslibs="-lm @KROC_CCSP_LIBS@"
+extcflags="@KROC_CCSP_CFLAGS@"
 dtraces=0
 
 case "$host_os" in
 	cygwin*)
 		octranopts="$octranopts -nsymops --cnpfx _"
-		extcflags="$extcflags -DHOSTOS_CYGWIN"
 		;;
 	darwin*)
 		octranopts="$octranopts -nsymops --cnpfx _"
-		extcflags="$extcflags -DHOSTOS_DARWIN -mdynamic-no-pic"
 		;;
 	solaris*)
 		# solaris stock assembler doesn't eat from stdin (go via tempfile)
@@ -136,7 +134,7 @@ tsuffix='tce'
 
 # Default: medium warnings
 occwopts=
-occopts="-etc -w -y -znd -znec -udo -zncc -init -xin -mobiles -mpt -zrpe @OCCEXTRAOPTS@"
+occopts="-etc -w -y -znd -znec -udo -zncc -init -xin -mobiles -mpt -zrpe @KROC_CCSP_OCCFLAGS@"
 
 case "$host_cpu" in
 	i386 | i486 | i586 | i686 | x86_64)
@@ -202,6 +200,7 @@ opts_incpaths=""
 #}}}
 
 #{{{  various local settings
+intree=
 use_occ21_revalt=1
 use_occ21_zen=1
 use_occ21_zep=1
@@ -258,7 +257,7 @@ do
 		;;
 	# These options have mandatory values.  Since we didn't find an = sign,
 	# the value must be in the next argument
-	--octran-opts | --oc-opts | --cc-opts | --nocc-opts | --linkcc)
+	--in-tree | --octran-opts | --oc-opts | --cc-opts | --nocc-opts | --linkcc)
 		optarg=$1
 		shift
 		;;
@@ -266,6 +265,11 @@ do
 
 
 	case "$option" in
+		#{{{  --in-tree*  build using tools in KRoC source tree
+	--in-tree*)
+		intree="$optarg"
+		;;
+		#}}}
 		#{{{  -b, --brief  brief warnings
 	-b | --brief)
 		occopts="$occopts -b"
@@ -614,7 +618,6 @@ do
 		#{{{  -dm  dynamic memory debugging
 	-dm )
 		printf '%s: Selecting dynamic memory debugging\n' "$progname" 1>&2
-		ocrtslibs="$ocrtslibs @DMOPTLIB@"
 		octranopts="$octranopts -dm"
 		;;
 		#}}}
@@ -742,8 +745,13 @@ kroc_krocdir="@KROC_KROCDIR@"
 #}}}
 #{{{  path-dependant options
 
-occ21="$kroc_archbindir/occ21"
-octran="$kroc_archbindir/tranx86"
+if [ "$intree" = "" ]; then
+	occ21="$kroc_archbindir/occ21"
+	octran="$kroc_archbindir/tranx86"
+else
+	occ21="$intree/tools/occ21/occ21"
+	octran="$intree/tools/tranx86/tranx86"
+fi
 
 if [ $dtraces -eq 1 ]; then
 	ocrts="-lkrocif -lccsptrace"
@@ -754,17 +762,23 @@ fi
 
 #}}}
 #{{{  build colon-separated search path for libraries
-ocspath=
-if [ "X$OCSEARCH" != "X" ]; then
-  ocspath="$OCSEARCH:$kroc_krocdir/vtlib:$kroc_krocdir/vtinclude"
-else
+if [ "$intree" = "" ]; then
   ocspath="$kroc_krocdir/vtlib:$kroc_krocdir/vtinclude"
+else
+  ocspath="$intree/modules/inmoslibs/libsrc/forall"
+fi
+if [ "X$OCSEARCH" != "X" ]; then
+  ocspath="$OCSEARCH:$ocspath"
 fi
 
 ocsearch=
-oclibpath="-L$kroc_archlibdir"
-cincludepath="-I$kroc_archincdir"
-
+if [ "$intree" = "" ]; then
+  oclibpath="-L$kroc_archlibdir"
+  cincludepath="-I$kroc_archincdir"
+else
+  oclibpath="@KROC_CCSP_LIBPATH@ -L$intree/modules/inmoslibs/libsrc/forall"
+  cincludepath="@KROC_CCSP_CINCPATH@"
+fi
 
 #}}}
 #{{{  use "ocspath" to add entries to "oclibpath", "ocsearch" and "cincludepath"

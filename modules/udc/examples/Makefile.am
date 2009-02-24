@@ -3,6 +3,7 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@ --kroc-opts "-e"
 
@@ -14,6 +15,7 @@ EXTRA_DIST = \
 	softalt.occ \
 	softalt2.occ
 
+if BUILD_UDC_EXAMPLES
 examples = \
 	buffered \
 	commstime \
@@ -21,6 +23,7 @@ examples = \
 	socktest \
 	softalt \
 	softalt2
+endif
 
 all-local: $(examples)
 

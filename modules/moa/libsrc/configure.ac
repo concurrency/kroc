@@ -11,8 +11,18 @@ dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
 
+build_moa=yes
+
 dnl Checks for libraries.
 AC_CHECK_HEADERS(stdlib.h sys/time.h)
-AC_CHECK_MYSQLCLIENT
+AC_CHECK_MYSQLCLIENT(, , [build_moa=no])
 
-AC_OUTPUT([Makefile])
+dnl Checks for occam modules.
+OCCAM_INCLUDE([cif.module], , [build_moa=no])
+
+AC_MSG_CHECKING([whether to build moa.module])
+AC_MSG_RESULT($build_moa)
+AM_CONDITIONAL(BUILD_MOA, [test $build_moa = yes])
+OCCAM_PROVIDE(moa.module, , , [test $build_moa = yes])
+
+AC_OUTPUT([Makefile doc/Makefile])

@@ -162,15 +162,24 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
         [(windows) (format "~a.exe" name)]
         [else name])))
   
+  ;; Find a tool that we want to run, either looking along the path
+  ;; or in an in-tree directory.
+  (define find-tool
+    (lambda (name in-tree-dir)
+      (let ([in-tree (get-parameter 'in-tree (lambda () #f))]
+	    [real-name (add-exe name)])
+	   (if in-tree (format "~a/~a/~a" in-tree in-tree-dir real-name)
+		       (find-executable real-name)))))
+
   (define skroc-version "0.6.2")
   (define skroc-revision (pregexp-replace* " ?\\$" "$Revision$" ""))
   (define skroc-c-year "2006")
-  
-  (define occ21 (lambda () (find-executable (add-exe "occ21"))))
-  (define slinker (lambda () (find-executable (add-exe "slinker"))))
-  (define fixme-library-slinker (lambda () (find-executable (add-exe "library2"))))
-  (define ilibr (lambda () (find-executable (add-exe "ilibr"))))
-  (define tranx86 (lambda () (find-executable (add-exe "tranx86"))))
+
+  (define occ21 (lambda () (find-tool "occ21" "tools/occ21")))
+  (define slinker (lambda () (find-tool "slinker" "tools/slinker")))
+  (define fixme-library-slinker (lambda () (find-tool "library2" "tools/slinker")))
+  (define ilibr (lambda () (find-tool "ilibr" "tools/ilibr")))
+  (define tranx86 (lambda () (find-tool "tranx86" "tools/tranx86")))
   
   (define isearch-separator 
     (case (system-type)
@@ -251,6 +260,10 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
        ;;Command line flags we only want to see once
        (once-each
+        [("--in-tree")
+	 build-root
+	 "\n\tUse tools from the KRoC source tree (internal use only)"
+	 (set-parameter! 'in-tree build-root)]
         [("--with-tvm_config_h")
          filename
          "\n\tuse a particular tvm_config.h file (or set env var SKROC_TVM_CONFIG_H)"
@@ -743,6 +756,20 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
   
   (define init
     (lambda ()
+	(set-parameter! 'output 'bytecode)
+	(set-parameter! 'library-output 'all)
+	(set-parameter! 'use-std-libs #t)
+	(set-parameter! 'target-endian #f)
+	(set-parameter! 'target-processor #f)
+	(set-parameter! 'temp-files '())
+	(set-parameter! 'keep-temp-files #f)
+	(set-parameter! 'done #f)
+        (set-parameter! 'pristine-isearch (if (getenv "ISEARCH") 
+                                            (getenv "ISEARCH") ""))
+        ))
+
+  (define read-config-file
+    (lambda ()
       ;; for the config-file, we first check if the user supplied
       ;; --with-tvm_config_h, if so, use that. If not, check for the env
       ;; variable SKROC_TVM_CONFIG_H, if set, use that. Otherwise fall back to 
@@ -750,11 +777,13 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
       (let ([config-file (get-parameter 
                            'tvm_config.h 
                            (lambda () 
-                             (get-environment 
-                               "SKROC_TVM_CONFIG_H"
-                               (lambda () 
-                                 (format "~a/include/tvm_config.h"
-                                         install-dir)))))]
+                             (let ([in-tree (get-parameter 'in-tree (lambda () #f))])
+                               (if in-tree
+                                 (format "~a/runtime/libtvm/tvm_config.h" in-tree)
+                                 (get-environment 
+                                   "SKROC_TVM_CONFIG_H"
+                                   (lambda () 
+                                     (format "~a/include/tvm_config.h" install-dir)))))))]
 	    [target-endian 'LITTLE]
 	    [target-processor 't4])
 	(if (file-exists? config-file)
@@ -769,17 +798,13 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
 		    (set! target-endian (string->symbol (list-ref endian 1))))
                  (loop (read-line ip))))))
           (warn "could not read defaults from ~a\n" config-file))
-	(set-parameter! 'output 'bytecode)
-	(set-parameter! 'library-output 'all)
-	(set-parameter! 'use-std-libs #t)
-	(set-parameter! 'target-endian target-endian)
-	(set-parameter! 'target-processor target-processor)
-	(set-parameter! 'temp-files '())
-	(set-parameter! 'keep-temp-files #f)
-	(set-parameter! 'done #f)
-        (set-parameter! 'pristine-isearch (if (getenv "ISEARCH") 
-                                            (getenv "ISEARCH") ""))
-        )))
+	;; Set the corresponding parameters if they've not been set explicitly
+	;; by the user.
+	(if (not (get-parameter 'target-endian (lambda () #f)))
+	  (set-parameter! 'target-endian target-endian))
+	(if (not (get-parameter 'target-processor (lambda () #f)))
+	  (set-parameter! 'target-processor target-processor))
+	)))
 
   (define (check-output-name-not-input-name)
     (let ([in* (get-parameter 'input-files)]
@@ -794,9 +819,22 @@ Copyright (C) 2004-2008 Matthew C. Jadud, Christian L. Jacobsen
   (init)
   ;; Parse the command-line arguments
   (parse-cmd)
-  ;; Tack the library directory onto the end of the search path, so that
-  ;; -L options will override it.
-  (append-parameter 'library-paths (format "~a/lib/transterpreter" install-dir))
+  ;; Read the configuration file
+  (read-config-file)
+  (let ([in-tree (get-parameter 'in-tree (lambda () #f))])
+    (cond
+      [in-tree
+	;; Append in-tree search directories to the search path.
+	(map
+	  (lambda (dir) (append-parameter 'library-paths (format "~a/~a" in-tree dir)))
+	  '("modules/inmoslibs/libsrc/forall" "tvm/posix"))
+	]
+      [else
+	;; Tack the library directory onto the end of the search path, so that
+	;; -L options will override it.
+	(append-parameter 'library-paths (format "~a/lib/transterpreter" install-dir))
+	]))
+
   ;; If not output filename was supplied, try to autodetect
   (fix-output-name)
   ;; Make sure we aren't about to overwrite ourselves

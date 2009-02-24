@@ -14,9 +14,16 @@ dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
 
+build_pony=yes
+if test "$OCCBUILD_TOOLCHAIN" != "kroc"; then
+  build_pony=no
+elif test "$KROC_CCSP_ENABLE_PONY" != "yes"; then
+  build_pony=no
+fi
+
 dnl Checks for occam modules.
 OCCAM_INCLUDE([course.module sock.module file.module proc.module cif.module], ,
-              [AC_MSG_ERROR(Required modules not found)])
+              [build_pony=no])
 
 dnl Checks for headers.
 AC_CHECK_HEADERS(stdlib.h sys/time.h)
@@ -38,5 +45,10 @@ if test "$have_readv" = yes; then
  fi
 fi
 AC_SUBST(OCCAM_DEFS)
+
+AC_MSG_CHECKING([whether to build pony.module])
+AC_MSG_RESULT($build_pony)
+AM_CONDITIONAL(BUILD_PONY, [test $build_pony = yes])
+OCCAM_PROVIDE(pony.module, , , [test $build_pony = yes])
 
 AC_OUTPUT([Makefile])

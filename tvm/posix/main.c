@@ -222,6 +222,7 @@ static void sigbus_handler(int num)
 }
 #endif
 #endif
+/*}}}*/
 
 /*{{{  sigalarm_handler */
 static void sigalrm_handler (int num)

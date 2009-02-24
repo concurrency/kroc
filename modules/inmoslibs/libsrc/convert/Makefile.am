@@ -74,13 +74,13 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 ## begin pideps dependencies
-hex16ta.occ: ioconv.lib
-hex32ta.occ: ioconv.lib
-hex64ta.occ: $(srcdir)/validch.occ
-hex64ta.occ: ioconv.lib
-int16ta.occ: ioconv.lib
-int32ta.occ: ioconv.lib
-stri64ta.occ: $(srcdir)/validch.occ
-strtohex.occ: $(srcdir)/validch.occ
-strtoint.occ: $(srcdir)/validch.occ
+hex16ta.tce: ioconv.lib
+hex32ta.tce: ioconv.lib
+hex64ta.tce: $(srcdir)/validch.occ
+hex64ta.tce: ioconv.lib
+int16ta.tce: ioconv.lib
+int32ta.tce: ioconv.lib
+stri64ta.tce: $(srcdir)/validch.occ
+strtohex.tce: $(srcdir)/validch.occ
+strtoint.tce: $(srcdir)/validch.occ
 ## end pideps dependencies

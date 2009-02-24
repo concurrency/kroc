@@ -3,6 +3,7 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
@@ -49,5 +50,5 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 #{{{  dependencies
-sdlrcompat.occ: sdlraster.tce
+sdlrcompat.tce: sdlraster.tce
 #}}}

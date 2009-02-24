@@ -1,6 +1,6 @@
 @SET_MAKE@
 
-imagedir = $(datadir)/occade/images
+imagedir = $(datadir)/kroc/occade/images
 
 dist_image_DATA = \
 	alien1.png \

@@ -1,16 +1,16 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@ @SDL_CFLAGS@
 
 EXTRA_DIST = \
 	README \
 	cdx.occ \
-	cdxblast.c \
 	cdxclient.c \
 	cdxclient.h \
-	cdxmandel.occ \
 	cdxoccam.c \
 	cdxview.c \
 	netbar.inc \
