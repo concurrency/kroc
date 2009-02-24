@@ -1,5 +1,25 @@
 #! /bin/sh
 
+cat <<EOF
+The build script is currently disabled while we rework the KRoC build system.
+
+If you previously did:
+  ./build --prefix=/wherever
+
+you probably now need to do this for now:
+  autoreconf -v -i -f         (the first time, after you download the tree)
+  ./configure --prefix=/wherever
+  make
+  make install
+
+If this isn't making sense to you, please use the stable branch of KRoC instead
+until we get around to fixing the build script.
+
+Thanks,
+the KRoC team
+EOF
+exit 1
+
 if [ "$BASH_VERSION" = "" ]; then
 	BASH=
 	# search for "bash" in the PATH environment
