@@ -8,8 +8,10 @@ OCCBUILD = @OCCBUILD@
 EXTRA_DIST = \
 	button_sample.occ 
 
+if BUILD_BUTTON_EXAMPLES
 examples = \
 	button_sample
+endif
 
 all-local: $(examples)
 
