@@ -37,7 +37,7 @@ GL_wrap.c GL_wrap.h occGL.inc: $(SWIG_SOURCE_FILES)
 endif
 
 occGL.lib: $(occGL_lib_objs)
-	$(OCCBUILD) --library occGL.lib --include occGL.inc @GL_LIBS@ $(occGL_lib_objs)
+	$(OCCBUILD) --library occGL.lib --include occGL.inc @LDFLAGS@ @GL_LIBS@ $(occGL_lib_objs)
 
 install-exec-local: $(libs) $(includes)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
