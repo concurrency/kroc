@@ -8,8 +8,10 @@ OCCBUILD = @OCCBUILD@
 EXTRA_DIST = \
 	simple_gl.occ
 
+if BUILD_OCCGL_EXAMPLES
 examples = \
 	simple_gl
+endif
 
 all-local: $(examples)
 

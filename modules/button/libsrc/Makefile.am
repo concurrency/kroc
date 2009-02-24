@@ -11,19 +11,27 @@ EXTRA_DIST = \
 	font2.occ  \
 	nine_by_fifteen.inc
 
+if BUILD_BUTTON
 button_lib_objs = \
 	button.tce
 
-all-local: button.lib
+button_libs = button.lib
+button_includes = button.inc
+endif
+
+libs = $(button_libs)
+includes = $(button_includes)
+
+all-local: $(libs) $(includes)
 
 button.lib: $(button_lib_objs)
 	$(OCCBUILD) --library button.lib --need occSDL --need occGL --need course --include button.inc $(button_lib_objs)
 
-install-exec-local: button.lib button.inc
-	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" button.lib button.inc
+install-exec-local: $(libs) $(includes)
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
 
 clean-local:
-	$(OCCBUILD) --clean button.lib $(button_lib_objs)
+	$(OCCBUILD) --clean $(libs) $(button_lib_objs)
 
 SUFFIXES = .occ .tce .lib
 
