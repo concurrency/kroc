@@ -7,6 +7,8 @@
 ## $Id: Makefile.am,v 1.3 1997/11/05 17:37:54 djb1 Exp $
 ##
 
+ACLOCAL_AMFLAGS = -I ../../m4
+srcdir = @srcdir@
 VPATH = @srcdir@
 INCLUDES=-I. -I@srcdir@/include
 DEFS=@DEFS@ @ARCH_DEFS@ -Wall
