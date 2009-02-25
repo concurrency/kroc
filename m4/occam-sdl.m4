@@ -10,6 +10,8 @@ dnl Test for SDL, and define SDL_CFLAGS and SDL_LIBS
 dnl
 AC_DEFUN([OCCAM_PATH_SDL],
 [dnl 
+AC_REQUIRE([AC_CANONICAL_SYSTEM])
+
 dnl Get the cflags and libraries from the sdl-config script
 dnl
 AC_ARG_WITH(sdl-prefix,[  --with-sdl-prefix=PFX   Prefix where SDL is installed (optional)],
@@ -18,6 +20,14 @@ AC_ARG_WITH(sdl-exec-prefix,[  --with-sdl-exec-prefix=PFX Exec prefix where SDL 
             sdl_exec_prefix="$withval", sdl_exec_prefix="")
 AC_ARG_ENABLE(sdltest, [  --disable-sdltest       Do not try to compile and run a test SDL program],
 		    , enable_sdltest=yes)
+
+  case "$target_os" in
+    darwin*)
+      # Don't try to run an SDL test program on MacOS -- it'll hang if there's
+      # no display.
+      enable_sdltest=no
+      ;; 
+  esac
 
   if test x$sdl_exec_prefix != x ; then
     sdl_args="$sdl_args --exec-prefix=$sdl_exec_prefix"
