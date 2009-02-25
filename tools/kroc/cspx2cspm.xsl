@@ -19,6 +19,9 @@ datatype <xsl:value-of select="@name" /> = <xsl:for-each select="child::*"><xsl:
 <!--{{{  TEMPLATE event-->
 <xsl:template match="event"><xsl:value-of select="@name" /></xsl:template>
 <!--}}}-->
+<!--{{{  TEMPLATE eventset-->
+<xsl:template match="eventset"><xsl:for-each select="child::*"><value-of select="@name" /></xsl:for-each></xsl:template>
+<!--}}}-->
 <!--{{{  TEMPLATE skip-->
 <xsl:template match="skip">SKIP</xsl:template>
 <!--}}}-->
