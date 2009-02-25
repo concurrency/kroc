@@ -237,27 +237,29 @@ PUBLIC void *memalloc (const size_t size)
 	if (size > 500 || size == 0) {
 		large_malloc += size;
 		DEBUG_MSG (("memalloc(%d), ", size));
-	} else
+	} else {
 		small_malloc += size;
+	}
 #ifdef IMS
 	/* the word below the pointer returned by malloc contains the
 	   length actually allocated
 	 */
-	if (p != NULL)
+	if (p != NULL) {
 		total_malloc += ((int *) p)[-1];
+	}
 #endif
 #endif
 	/*}}} */
-	if (size == 0)
+	if (size == 0) {
 		err_abort ("memalloc");
-	if (p == NULL)
+	}
+	if (p == NULL) {
 		/*{{{  error */
-	{
 		DEBUG_MSG (("memalloc: malloc of %d bytes returned NULL\n", size));
 		/*vtiabort(VTI_OUT_OF_SPACE, vti_locn_ptr == NULL ? NOPOSN : *vti_locn_ptr); */
 		msg_out (SEV_ABORT, ANY_MODULE, ANY_OUT_OF_SPACE, vti_locn_ptr == NULL ? NOPOSN : *vti_locn_ptr);
+		/*}}} */
 	}
-	/*}}} */
 	return p;
 }
 

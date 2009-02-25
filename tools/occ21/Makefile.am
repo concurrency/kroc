@@ -21,7 +21,7 @@ occ21_SOURCES = \
 	fe/occamfe.c fe/lex1.c fe/syn1.c fe/syn2.c fe/syn3.c fe/chk1.c \
 	fe/chk2.c fe/chk4.c fe/use1.c fe/use2.c fe/use3.c fe/use4.c fe/use5.c fe/objrdr.c \
 	fe/objtrans.c misc/occompfe.c misc/inst.c misc/tran1.c \
-	misc/tran2.c misc/tran3.c misc/mobiles.c \
+	misc/tran2.c misc/tran3.c misc/mobiles.c misc/compdyn.c \
 	be/bind1.c be/bind2.c be/bind3.c be/debug.c be/gen1.c be/gen2.c be/gen3.c \
 	be/gen4.c be/gen5.c be/gen7.c be/gen8.c be/gen9.c be/gen10.c be/gen11.c \
 	be/gen12.c be/gen13.c be/generror.c be/objwrt.c be/profile.c be/code1k.c \
@@ -44,7 +44,8 @@ occ21_SOURCES = \
 	fnilib/fnidef.h \
 	include/arg.h include/bind1def.h include/bind2def.h include/bind3def.h include/casedops.h \
 	include/casemops.h include/cfbdefs.h include/chk1def.h include/chk2def.h include/chk4def.h \
-	include/chkdef.h include/chkerror.h include/code1def.h include/compharn.h include/confdef.h \
+	include/chkdef.h include/chkerror.h include/code1def.h include/compharn.h include/compdyn.h \
+	include/confdef.h \
 	include/constdef.h include/dbgdef.h include/debugdef.h include/debughdr.h include/disalpha.h \
 	include/err2.h include/errhdr.h include/extlib.h include/feinc.h include/fnilib.h \
 	include/gen10def.h include/gen11def.h include/gen12def.h include/gen1def.h include/gen2def.h \
