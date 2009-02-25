@@ -497,11 +497,8 @@ PRIVATE char *all_opr_funcs[TOTAL_OPR_FUNC] =
 PRIVATE char **opr_funcs = &all_opr_funcs[-MIN_OPR_FUNC];
 
 /*}}}*/
-/*{{{   PUBLIC void disassemble (pos, fs, print_rel)   */
-PUBLIC void disassemble (pos, fs, print_rel)
-const long int pos;
-FILE *fs;
-int print_rel;
+/*{{{   PUBLIC void run_disassemble (pos, fs, print_rel)   */
+PUBLIC void run_disassemble (const long int pos, FILE *fs, int print_rel)
 {
   /*{{{   setup   */
   int c, print_pos, space, cpos;

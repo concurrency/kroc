@@ -239,7 +239,5 @@ AC_FUNC_MEMCMP
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(strspn strstr strtol strrchr)
 
-AC_OUTPUT([Makefile arglib/Makefile extlib/Makefile \
-fnilib/Makefile maplib/Makefile suplib/Makefile \
-tcofflib/Makefile be/Makefile fe/Makefile misc/Makefile \
-include/Makefile ], [test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h])
+AC_OUTPUT([Makefile], [test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h])
+
