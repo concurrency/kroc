@@ -1,25 +1,13 @@
-## -*- makefile -*-
-##
 ## Process this file with automake to produce Makefile.in
-##
-## $Source: /u3/export/proj/ofa/packages/occ21/RCS/Makefile.am,v $
-##
-## $Id: Makefile.am,v 1.3 1997/11/05 17:37:54 djb1 Exp $
-##
 
+AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I ../../m4
+
 srcdir = @srcdir@
 VPATH = @srcdir@
-INCLUDES=-I. -I@srcdir@/include
-DEFS=@DEFS@ @ARCH_DEFS@ -Wall
-EXTRALDFLAGS=@EXTRA_LDFLAGS@
-
-## Cannot use ansi2knr because it is under GPL
-## AUTOMAKE_OPTIONS=ansi2knr
-## config.guess and config.sub have special exceptions
-AUTOMAKE_OPTIONS=foreign
-
-## SUBDIRS = fe be misc include arglib extlib fnilib maplib suplib tcofflib
+INCLUDES = -I. -I@srcdir@/include
+DEFS = @DEFS@ @ARCH_DEFS@ -Wall
+EXTRALDFLAGS = @EXTRA_LDFLAGS@
 
 bin_PROGRAMS = occ21
 
@@ -76,10 +64,3 @@ occ21_SOURCES = \
 	include/useerror.h include/usehdr.h include/version.h include/vtierror.h include/vti.h
 
 occ21_LDFLAGS = $(EXTRALDFLAGS)
-
-
-EXTRA_DIST=
-
-# automake assumes GNU tar is called 'tar'
-# TAR = gnutar
-
