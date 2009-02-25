@@ -55,6 +55,17 @@ AC_ARG_ENABLE(sdltest, [  --disable-sdltest       Do not try to compile and run 
     SDL_CFLAGS=`$SDL_CONFIG $sdlconf_args --cflags`
     SDL_LIBS=`$SDL_CONFIG $sdlconf_args --libs`
 
+    case "$target_os" in
+      darwin*)
+        # Work around a MacOS 10.5 bug:
+        #   http://developer.apple.com/qa/qa2007/qa1567.html
+        dylib="/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib"
+        if test -f $dylib; then
+          SDL_LIBS="$SDL_LIBS -Wl,-dylib_file,$dylib:$dylib"
+        fi
+        ;; 
+    esac
+
     sdl_major_version=`$SDL_CONFIG $sdl_args --version | \
            sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
     sdl_minor_version=`$SDL_CONFIG $sdl_args --version | \
