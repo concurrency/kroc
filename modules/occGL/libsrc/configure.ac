@@ -16,6 +16,7 @@ build_occGL=yes
 
 dnl Checks for libraries.
 MDL_HAVE_OPENGL
+CFLAGS="$CFLAGS $GL_CFLAGS"
 AC_CHECK_HEADERS([GL/gl.h GL/glu.h], , [build_occGL=no])
 
 AC_MSG_CHECKING([whether to build occGL.module])
