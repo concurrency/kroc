@@ -2439,7 +2439,7 @@ static void compose_longop_i386 (tstate *ts, int sec)
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, 0, ARG_REG, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_RCL, 2, 1, ARG_CONST, 1, ARG_REG | ARG_IS8BIT, tmp_reg, ARG_REG | ARG_IS8BIT, tmp_reg));
 		constmap_remove (tmp_reg);
-		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
 		ts->stack->b_reg = tmp_reg;
 		break;
 		/*}}}*/
@@ -2458,7 +2458,7 @@ static void compose_longop_i386 (tstate *ts, int sec)
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, 0, ARG_REG, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_RCL, 2, 1, ARG_CONST, 1, ARG_REG | ARG_IS8BIT, tmp_reg, ARG_REG | ARG_IS8BIT, tmp_reg));
 		constmap_remove (tmp_reg);
-		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
 		ts->stack->b_reg = tmp_reg;
 		break;
 		/*}}}*/
