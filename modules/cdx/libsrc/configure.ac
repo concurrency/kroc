@@ -16,7 +16,7 @@ build_cdx=yes
 
 dnl Checks for libraries.
 AC_CHECK_HEADERS(stdlib.h sys/time.h)
-AM_PATH_SDL(1.2.0, , [build_cdx=no])
+OCCAM_PATH_SDL(1.2.0, , [build_cdx=no])
 
 dnl Checks for occam modules.
 OCCAM_INCLUDE([sock.module], ,

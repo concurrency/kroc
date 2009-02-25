@@ -17,7 +17,7 @@ build_occSDL=yes
 build_occSDLsound=yes
 
 dnl Checks for libraries.
-AM_PATH_SDL(1.2.0, , [build_occSDL=no; build_occSDLsound=no])
+OCCAM_PATH_SDL(1.2.0, , [build_occSDL=no; build_occSDLsound=no])
 CFLAGS="$CFLAGS $SDL_CFLAGS"
 AC_CHECK_HEADERS([SDL/SDL_sound.h], , [build_occSDLsound=no])
 
