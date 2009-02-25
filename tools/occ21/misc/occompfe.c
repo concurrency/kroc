@@ -124,7 +124,7 @@ PUBLIC treenode *occam_compiler_frontend (const occam_parms_t * const parms)
 	data->fe_checkalias = *parms->checkalias;	/* may be reset after #OPTION directive */
 	data->fe_checkusage = *parms->checkusage;	/* may be reset after #OPTION directive */
 	data->fe_formalmodel = *parms->formalmodel;	/* may be reset after #OPTION directive */
-	data->fe_fm_collct = *parms->fm_collct;		/* may be reset after #OPTION direct ve*/
+	data->fe_fm_collct = *parms->fm_collct;		/* may be reset after #OPTION directive */
 	data->fe_error_occurred = parms->error_occurred;
 	data->fe_errormode = errormode;
 	data->fe_noslot_value = NO_SLOT;

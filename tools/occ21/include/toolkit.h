@@ -183,7 +183,7 @@ extern void env_to_option (int *, char const ***, char *);
 
 extern int dis_get_char (void);
 extern void hexdump (const long int, FILE *);
-extern void disassemble (const long int, FILE *, int);
+extern void run_disassemble (const long int, FILE *, int);
 /* hexdump/disassemble (start, outfile, print_addr)   */
 /* uses: extern int diss_get_char (void);   */
 
