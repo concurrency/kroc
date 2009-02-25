@@ -76,9 +76,11 @@ extern void rtl_set_lastvreg (int reg);
 extern int rtl_get_newvreg (void);
 extern int rtl_get_lastvreg (void);
 #ifdef INSTRUCTION_HISTORY
-	extern ins_chain *compose_ins2 (char *file, long line, int ins, int ops_in, int ops_out, ...);
+	extern ins_chain *compose_ins2 (char *file, long line, int etc_ins, int ins, int ops_in, int ops_out, ...);
 	#define compose_ins(ins, ops_in, ops_out, args...) \
-		compose_ins2(__FILE__, __LINE__, ins, ops_in, ops_out, ## args)
+		compose_ins2(__FILE__, __LINE__, 0, ins, ops_in, ops_out, ## args)
+	#define compose_ins_ex(etc_ins, ins, ops_in, ops_out, args...) \
+		compose_ins2(__FILE__, __LINE__, etc_ins, ins, ops_in, ops_out, ## args)
 #else	/* INSTRUCTION_HISTORY */
 	//extern ins_chain *compose_ins (int ins, int ops_in, int ops_out, ...);
 	#define compose_ins(ins, ops_in, ops_out, args...) \
