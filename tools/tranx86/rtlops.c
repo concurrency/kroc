@@ -1645,7 +1645,7 @@ ins_chain *decode_ins (tstate *ts, char *str)
  *	creates an instruction
  */
 #ifdef INSTRUCTION_HISTORY
-ins_chain *compose_ins2 (char *file, long line, int ins, int ops_in, int ops_out, ...)
+ins_chain *compose_ins2 (char *file, long line, int etc_ins, int ins, int ops_in, int ops_out, ...)
 #else
 ins_chain *compose_ins_ex (int etc_ins, int ins, int ops_in, int ops_out, ...)
 #endif
