@@ -32,6 +32,7 @@
 #include "chkdef.h"             /* current_fe_handle etc */
 #include "predefhd.h"           /* pragmas */
 #include "lexdef.h"             /* for BOOL formal_model */
+#include "compdyn.h"
 
 /*}}}*/
 
