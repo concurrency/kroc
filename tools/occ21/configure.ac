@@ -1,11 +1,4 @@
-dnl -*- shell-script -*-
-dnl
 dnl Process this file with autoconf to produce a configure script.
-dnl
-dnl $Source: /proj/ofa/packages/occ21/RCS/configure.in,v $
-dnl
-dnl $Id: configure.in,v 1.10 1998/06/04 15:13:20 djb1 Exp $
-dnl
 
 AC_REVISION($Revision: 1.10 $)
 AC_INIT(be/bind1.c)
@@ -14,8 +7,6 @@ AC_PREREQ(2.12)
 
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([occ21], [1.4.1])
-
-dnl Maintainer mode not used
 
 dnl Checks for programs.
 AC_CHECK_TOOL(CC,gcc,:)
@@ -239,5 +230,4 @@ AC_FUNC_MEMCMP
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(strspn strstr strtol strrchr)
 
-AC_OUTPUT([Makefile], [test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h])
-
+AC_OUTPUT([Makefile])
