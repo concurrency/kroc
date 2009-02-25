@@ -24,9 +24,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifdef STD_C
 #include <stdlib.h>
-#endif
 #include <ctype.h>
 #include "toolkit.h"
 
