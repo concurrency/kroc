@@ -6,11 +6,11 @@
 # Copyright 2001, 2003 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 
-# AC_CHECK_MYSQLCLIENT([MINIMUM-VERSION [, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
+# OCCAM_CHECK_MYSQLCLIENT([MINIMUM-VERSION [, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 # Test for mysqlclient library and define MYSQLCLIENT_CFLAGS and MYSQLCLIENT_LIBS
 # MINIMUM-VERSION is what libtool reports
 #
-AC_DEFUN([AC_CHECK_MYSQLCLIENT],
+AC_DEFUN([OCCAM_CHECK_MYSQLCLIENT],
   [# Get the cflags and libraries from the mysql_config script
    #
    AC_ARG_WITH([mysqlclient-prefix],

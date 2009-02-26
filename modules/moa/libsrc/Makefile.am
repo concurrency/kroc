@@ -1,7 +1,7 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
-ACLOCAL_AMFLAGS = -I m4 -I ../../../m4
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @MYSQLCLIENT_CFLAGS@
@@ -9,7 +9,6 @@ CFLAGS = @CFLAGS@ @DEFS@ @MYSQLCLIENT_CFLAGS@
 SUBDIRS = doc
 
 EXTRA_DIST = \
-	m4/mysqlclient.m4 \
 	moa.inc \
 	mysql.occ \
 	mysql_connector.c

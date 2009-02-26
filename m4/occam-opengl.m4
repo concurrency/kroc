@@ -1,4 +1,4 @@
-dnl @synopsis MDL_HAVE_OPENGL
+dnl @synopsis OCCAM_HAVE_OPENGL
 dnl
 dnl Search for OpenGL. We search first for Mesa (a GPL'ed version of
 dnl Mesa) before a vendor's version of OpenGL, unless we were
@@ -45,7 +45,7 @@ dnl @author Matthew D. Langston <langston@SLAC.Stanford.EDU>
 dnl @version 2002-09-25
 dnl @license GPLWithACException
 
-AC_DEFUN([MDL_HAVE_OPENGL],
+AC_DEFUN([OCCAM_HAVE_OPENGL],
 [
   AC_REQUIRE([AC_PROG_CC])
   AC_REQUIRE([AC_PATH_X])
