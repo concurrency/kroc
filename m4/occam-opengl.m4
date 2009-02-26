@@ -50,6 +50,7 @@ AC_DEFUN([OCCAM_HAVE_OPENGL],
   AC_REQUIRE([AC_PROG_CC])
   AC_REQUIRE([AC_PATH_X])
   AC_REQUIRE([AC_PATH_XTRA])
+  AC_REQUIRE([OCCAM_MACOS_OPENGL])
 
   AC_CACHE_CHECK([for OpenGL], mdl_cv_have_OpenGL,
   [
@@ -105,7 +106,7 @@ fi
 
     if test -n "$LIBS"; then
       mdl_cv_have_OpenGL=yes
-      GL_LIBS="$LIBS"
+      GL_LIBS="$LIBS $OCCAM_MACOS_OPENGL_LDFLAGS"
       AC_SUBST(GL_CFLAGS)
       AC_SUBST(GL_LIBS)
     else
@@ -139,4 +140,19 @@ dnl bugfix: dont forget to cache this variables, too
 ])
 dnl endof bugfix -ainan
 
-
+dnl Using OpenGL on some versions of MacOS requires some extra linker flags.
+dnl This returns them in OCCAM_MACOS_OPENGL_LDFLAGS if necessary.
+AC_DEFUN([OCCAM_MACOS_OPENGL],
+[
+  OCCAM_MACOS_OPENGL_LDFLAGS=""
+  case "$target_os" in
+    darwin*)
+      # Work around a MacOS 10.5 bug:
+      #   http://developer.apple.com/qa/qa2007/qa1567.html
+      dylib="/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib"
+      if test -f $dylib; then
+        OCCAM_MACOS_OPENGL_LDFLAGS="-Wl,-dylib_file,$dylib:$dylib"
+      fi
+      ;; 
+  esac
+])
