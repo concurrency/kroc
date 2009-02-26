@@ -16,9 +16,9 @@ build_moa=yes
 
 dnl Checks for libraries.
 AC_CHECK_HEADERS(stdlib.h sys/time.h)
-AC_CHECK_MYSQLCLIENT(, , [build_moa=no])
+OCCAM_CHECK_MYSQLCLIENT(, , [build_moa=no])
 
-# Make sure the MySQL library is actually usable, since AC_CHECK_MYSQLCLIENT
+# Make sure the MySQL library is actually usable, since OCCAM_CHECK_MYSQLCLIENT
 # doesn't try to link against it.
 old_LIBS="$LIBS"
 LIBS="$LIBS $MYSQLCLIENT_LIBS"

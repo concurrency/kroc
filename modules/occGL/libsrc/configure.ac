@@ -15,7 +15,7 @@ OCCAM_SWIG
 build_occGL=yes
 
 dnl Checks for libraries.
-MDL_HAVE_OPENGL
+OCCAM_HAVE_OPENGL
 CPPFLAGS="$CPPFLAGS $GL_CFLAGS"
 AC_CHECK_HEADERS([GL/gl.h GL/glu.h], , [build_occGL=no])
 
