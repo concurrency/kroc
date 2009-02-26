@@ -22,7 +22,7 @@ AC_CHECK_MYSQLCLIENT(, , [build_moa=no])
 # doesn't try to link against it.
 old_LIBS="$LIBS"
 LIBS="$LIBS $MYSQLCLIENT_LIBS"
-AC_CHECK_FUNC(mysql_library_init, , [build_moa=no])
+AC_CHECK_FUNC(mysql_init, , [build_moa=no])
 LIBS="$old_LIBS"
 
 dnl Checks for occam modules.
