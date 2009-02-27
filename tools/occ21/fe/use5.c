@@ -953,6 +953,10 @@ PRIVATE fmnode_t *fmt_copynode (fmnode_t *n)
 			c->u.fmevent.typename = string_dup (n->u.fmevent.typename);
 		}
 		c->u.fmevent.nodetype = n->u.fmevent.nodetype;
+
+		c->u.fmevent.isclaim = n->u.fmevent.isclaim;
+		c->u.fmevent.isrelease = n->u.fmevent.isrelease;
+		c->u.fmevent.issimplechan = n->u.fmevent.issimplechan;
 		break;
 		/*}}}*/
 		/*{{{  NODEREF*/
@@ -1674,6 +1678,7 @@ printtreenl (stderr, 1, proto);
 		int is_shared = 0;
 		int slen = 0;
 		int notype = 0;
+		int anonct = 0;
 
 		fmt_copyvarname (str, varname);
 		slen = strlen (str);
@@ -1695,7 +1700,7 @@ printtreenl (stderr, 1, vtype);
 
 			is_shared = NTypeAttrOf (vtype) & TypeAttr_shared;
 
-#if 1
+#if 0
 fprintf (stderr, "fmt_createeventfromvar(): is_shared on TYPEDECL = %d\n", is_shared);
 #endif
 			if (!ref) {
@@ -1717,7 +1722,8 @@ fprintf (stderr, "fmt_createeventfromvar(): is_shared on TYPEDECL = %d\n", is_sh
 							unsigned int tattr = TypeAttrOf (chan);
 							
 							ref = fmt_getfmcheck (proto);
-#if 1
+							anonct = 1;
+#if 0
 fprintf (stderr, "fmt_createeventfromvar(): null decl, chan protocol (tattr=0x%8.8x, is_shared=%d) =", tattr, is_shared);
 printtreenl (stderr, 4, proto);
 fprintf (stderr, "fmt_createeventfromvar(): ref =\n");
@@ -1759,9 +1765,7 @@ fmt_dumpnode (ref, 1, stderr);
 				fmnode_t *crln = fmt_newnode (FM_EVENT, var);
 
 				esnode = fmt_newnode (FM_EVENTSET, ev->org);
-				if (notype) {
-					esnode->u.fmevset.isanonct = 1;
-				}
+				esnode->u.fmevset.isanonct = anonct;
 				fmt_addtonodelist (esnode, ev);
 
 				esnode->u.fmevset.name = string_dup (ev->u.fmevent.name);
@@ -2146,7 +2150,7 @@ PRIVATE fmnode_t *fmt_findfreevar_claim (treenode *n, fmstate_t *fmstate)
 {
 	fmnode_t *evset = fmt_findfreevar (n);
 
-#if 1
+#if 0
 fprintf (stderr, "fmt_findfreevar_claim(): here! n =");
 printtreenl (stderr, 4, n);
 fprintf (stderr, "fmt_findfreevar_claim(): evset =\n");
@@ -3494,6 +3498,7 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		if (node->u.fmevset.typename) {
 			fprintf (fp, " type=\"%s\"", node->u.fmevset.typename);
 		}
+		fprintf (fp, " anonct=\"%d\"", node->u.fmevset.isanonct);
 		fprintf (fp, ">\n");
 
 		for (i=0; i<DA_CUR (node->u.fmevset.events); i++) {
@@ -4011,6 +4016,10 @@ fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 		if (fmn) {
 			fmnode_t *tmp = fmt_newnode (FM_NODEREF, n);
 
+			if (do_coll_ct && (fmn->type == FM_EVENTSET) && fmn->u.fmevset.isanonct) {
+				/* special case, pick first event */
+				fmn = DA_NTHITEM (fmn->u.fmevset.events, 0);
+			}
 			tmp->u.fmnode.node = fmn;
 			*(fmstate->target) = tmp;
 		}
