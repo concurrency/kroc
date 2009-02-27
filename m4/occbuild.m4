@@ -93,6 +93,21 @@ fi
 AC_SUBST(OCCBUILD_CFLAGS)
 ])dnl
 dnl
+dnl Find occamdoc.
+AC_DEFUN([OCCAM_OCCAMDOC],
+[dnl
+AC_REQUIRE([OCCAM_IN_TREE])
+AC_ARG_VAR(OCCAMDOC, [Path to occamdoc])
+if test "x$KROC_BUILD_ROOT" != "x"; then
+  OCCAMDOC="$KROC_BUILD_ROOT/tools/occamdoc/occamdoc --in-tree $KROC_BUILD_ROOT"
+else
+  AC_CHECK_PROG(OCCAMDOC, occamdoc, occamdoc, no)
+  if test $OCCAMDOC = no; then
+    AC_MSG_ERROR([occamdoc not found; set \$OCCBUILD or \$PATH appropriately])
+  fi
+fi
+])dnl
+dnl
 dnl Check for the presence of occam modules (or other include files).
 dnl OCCAM_INCLUDE(FILES, [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 AC_DEFUN([OCCAM_INCLUDE],
