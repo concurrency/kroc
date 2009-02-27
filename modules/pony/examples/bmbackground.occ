@@ -19,7 +19,7 @@
 
 #INCLUDE "course.module"
 #INCLUDE "pony.module"
-#INCLUDE "trace.inc"
+#INCLUDE "useful.module"
 
 --{{{  preprocessor definitions
 --#DEFINE USE.SEND.DELAY
@@ -74,7 +74,7 @@ PROC bmbackground.mso (CHAN BYTE key?, CHAN BYTE err!)
     INT t:
     INT64 s.start, s.end, s.norm.diff:
     SEQ
-      C.trace ("Measuring normalised sample difference...")
+      trace.sn ("Measuring normalised sample difference...")
       -- Cool down
       tim ? t
       tim ? AFTER t PLUS timeout
@@ -90,7 +90,7 @@ PROC bmbackground.mso (CHAN BYTE key?, CHAN BYTE err!)
       -- Calculate the normalised sample difference
       s.norm.diff := s.end MINUS s.start
       -- Output normalised sample difference
-      C.trace.i ("    Normalised sample difference: ", INT s.norm.diff)
+      trace.sin ("    Normalised sample difference: ", INT s.norm.diff)
 :
 #ELSE
 PROC bmbackground (CHAN BYTE key?, CHAN BYTE err!)
@@ -116,18 +116,18 @@ PROC bmbackground (CHAN BYTE key?, CHAN BYTE err!)
             CASE b
               'm'
                 SEQ
-                  C.trace ("bmbackground: will be master")
+                  trace.sn ("bmbackground: will be master")
                   node.type := PONYC.NODETYPE.MASTERRESET
               's'
                 SEQ
-                  C.trace ("bmbackground: will be slave")
+                  trace.sn ("bmbackground: will be slave")
                   node.type := PONYC.NODETYPE.SLAVEWAIT
           done
             running := FALSE
     IF
       node.type = (-1)
         SEQ
-          C.trace ("bmbackground: you must specify either master (-m) or slave (-s) mode")
+          trace.sn ("bmbackground: you must specify either master (-m) or slave (-s) mode")
           STOP
       TRUE
         SKIP
@@ -169,7 +169,7 @@ PROC bmbackground (CHAN BYTE key?, CHAN BYTE err!)
               PONYC.NODETYPE.MASTERRESET
                 THING? svr:
                 SEQ
-                  C.trace ("bmbackground: Master starting, alloc...")
+                  trace.sn ("bmbackground: Master starting, alloc...")
                   CLAIM net.handle!
                     pony.alloc.us (net.handle, "thing", PONYC.SHARETYPE.UNSHARED, svr, result)
                   ASSERT (result = PONYC.RESULT.ALLOC.OK)
@@ -180,7 +180,7 @@ PROC bmbackground (CHAN BYTE key?, CHAN BYTE err!)
                   INT64 s.start, s.end, s.diff, s.norm.diff:
                   REAL32 base.rate:
                   SEQ
-                    C.trace ("Measuring base loop rate...")
+                    trace.sn ("Measuring base loop rate...")
                     -- Cool down
                     tim ? t
                     tim ? AFTER t PLUS timeout
@@ -197,13 +197,13 @@ PROC bmbackground (CHAN BYTE key?, CHAN BYTE err!)
                     s.norm.diff := s.end MINUS s.start
                     base.rate := (REAL32 ROUND s.norm.diff) / ((REAL32 ROUND timeout) / 1000000.0)
                     -- Output normalised sample difference
-                    C.trace.i ("    Base loop rate (cycles/second): ", INT ROUND base.rate)
+                    trace.sin ("    Base loop rate (cycles/second): ", INT ROUND base.rate)
                     SEQ j = 0 FOR SIZE SIZES
                       VAL INT size IS SIZES[j]:
                       MOBILE []BYTE data:
                       REAL32 rate:
                       SEQ
-                        C.trace.i ("Measuring with packet size: ", size)
+                        trace.sin ("Measuring with packet size: ", size)
                         -- Warm up
                         SEQ i = 0 FOR WARMUP.LOOPS
                           svr[c] ? data
@@ -226,17 +226,17 @@ PROC bmbackground (CHAN BYTE key?, CHAN BYTE err!)
                         s.diff := s.end MINUS s.start
                         rate := (REAL32 ROUND s.diff) / ((REAL32 ROUND time) / 1000000.0)
                         -- Output sample difference
-                        C.trace.i ("    Loop rate (cycles/second): ", INT ROUND rate)
+                        trace.sin ("    Loop rate (cycles/second): ", INT ROUND rate)
                         -- Calculate the background processing capability
                         bgpc := INT ROUND ((100.0 * rate) / base.rate)
                         -- Output the results
-                        C.trace.i ("    Background processing capability (%): ", bgpc)
+                        trace.sin ("    Background processing capability (%): ", bgpc)
                   --}}}
-                  C.trace ("bmbackground: Master done")
+                  trace.sn ("bmbackground: Master done")
               PONYC.NODETYPE.SLAVEWAIT
                 THING! cli:
                 SEQ
-                  C.trace ("bmbackground: Slave starting")
+                  trace.sn ("bmbackground: Slave starting")
                   CLAIM net.handle!
                     pony.alloc.uc (net.handle, "thing", PONYC.SHARETYPE.UNSHARED, cli, result)
                   ASSERT (result = PONYC.RESULT.ALLOC.OK)
@@ -247,7 +247,7 @@ PROC bmbackground (CHAN BYTE key?, CHAN BYTE err!)
                     TIMER tim:
                     INT t:
                     SEQ
-                      C.trace.i ("Sending with packet size: ", size)
+                      trace.sin ("Sending with packet size: ", size)
                       tim ? t
                       SEQ i = 0 FOR WARMUP.LOOPS + MEASURE.LOOPS
                         SEQ
@@ -258,7 +258,7 @@ PROC bmbackground (CHAN BYTE key?, CHAN BYTE err!)
                           tim ? AFTER t
                           #ENDIF
                   --}}}
-                  C.trace ("bmbackground: Slave done")
+                  trace.sn ("bmbackground: Slave done")
               ELSE
                 STOP
             CHAN BOOL sync:

@@ -35,7 +35,7 @@
 #INCLUDE "course.module"
 #INCLUDE "pony.module"
 #INCLUDE "convert.module"
-#INCLUDE "trace.inc"
+#INCLUDE "useful.module"
 --}}}
 --{{{  type definitions
 --* Data sent from slaves to master.

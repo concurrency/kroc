@@ -18,9 +18,7 @@ EXTRA_DIST = \
 	mandelbauer.occ \
 	simplecanceltest.occ \
 	simpletest.occ \
-	startuptest.occ \
-	trace.c \
-	trace.inc
+	startuptest.occ
 
 if BUILD_PONY_EXAMPLES
 if HAVE_SDLRASTER
@@ -45,10 +43,10 @@ install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples pony --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
 
 clean-local:
-	$(OCCBUILD) --clean $(examples) mandelbauer-c.o trace.o
+	$(OCCBUILD) --clean $(examples) mandelbauer-c.o
 
-mandelbauer: mandelbauer.occ mandelbauer-c.o trace.o
-	$(OCCBUILD) --program mandelbauer.occ mandelbauer-c.o trace.o
+mandelbauer: mandelbauer.occ mandelbauer-c.o
+	$(OCCBUILD) --program mandelbauer.occ mandelbauer-c.o
 
 SUFFIXES = .occ .tce
 
@@ -58,15 +56,5 @@ SUFFIXES = .occ .tce
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-.occ: trace.o
-	$(OCCBUILD) --program $< trace.o
-
-## begin pideps dependencies
-bmbackground.tce: $(srcdir)/trace.inc
-bmpingpongtime.tce: $(srcdir)/trace.inc
-bmthroughput.tce: $(srcdir)/trace.inc
-commstest.tce: $(srcdir)/trace.inc
-mandelbauer.tce: $(srcdir)/trace.inc
-simplecanceltest.tce: $(srcdir)/trace.inc
-simpletest.tce: $(srcdir)/trace.inc
-## end pideps dependencies
+.occ:
+	$(OCCBUILD) --program $<

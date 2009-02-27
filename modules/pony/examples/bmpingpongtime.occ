@@ -21,7 +21,7 @@
 
 #INCLUDE "course.module"
 #INCLUDE "pony.module"
-#INCLUDE "trace.inc"
+#INCLUDE "useful.module"
 
 --{{{  Sequential protocols
 PROTOCOL SEQPROT.1.1 IS [1]BYTE:
@@ -105,6 +105,21 @@ CHAN TYPE THING
 :
 --}}}
 
+--{{{  PROC trace.results
+PROC trace.results (VAL []INT data)
+  SEQ
+    SEQ i = 0 FOR SIZE data
+      SEQ
+        IF
+          i > 0
+            trace.s ("*t")
+          TRUE
+            SKIP
+        trace.i (data[i])
+    trace.s ("*n")
+:
+--}}}
+
 PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
   MOBILE []BYTE ans.name, app.name, node.name:
   INT node.type, own.node.id, result:
@@ -128,18 +143,18 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
             CASE b
               'm'
                 SEQ
-                  C.trace ("bmpingpongtime: will be master")
+                  trace.sn ("bmpingpongtime: will be master")
                   node.type := PONYC.NODETYPE.MASTERRESET
               's'
                 SEQ
-                  C.trace ("bmpingpongtime: will be slave")
+                  trace.sn ("bmpingpongtime: will be slave")
                   node.type := PONYC.NODETYPE.SLAVEWAIT
           done
             running := FALSE
     IF
       node.type = (-1)
         SEQ
-          C.trace ("bmpingpongtime: you must specify either master (-m) or slave (-s) mode")
+          trace.sn ("bmpingpongtime: you must specify either master (-m) or slave (-s) mode")
           STOP
       TRUE
         SKIP
@@ -159,17 +174,17 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
             PONYC.NODETYPE.MASTERRESET
               THING? svr:
               SEQ
-                C.trace ("bmpingpongtime: Press key to start alloc.")
+                trace.sn ("bmpingpongtime: Press key to start alloc.")
                 BYTE any:
                 key ? any
-                C.trace ("bmpingpongtime: Master starting, alloc...")
+                trace.sn ("bmpingpongtime: Master starting, alloc...")
                 CLAIM net.handle!
                   pony.alloc.us (net.handle, "thing", PONYC.SHARETYPE.UNSHARED, svr, result)
                 ASSERT (result = PONYC.RESULT.ALLOC.OK)
-                C.trace ("bmpingpongtime: Press key to quit.")
+                trace.sn ("bmpingpongtime: Press key to quit.")
                 BYTE any:
                 key ? any
-                C.trace ("bmpingpongtime: Master done")
+                trace.sn ("bmpingpongtime: Master done")
             PONYC.NODETYPE.SLAVEWAIT
               VAL []INT SIZES IS [1, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000]:
               VAL []INT LENGTHS IS [i = 1 FOR 10 | i]:
@@ -179,7 +194,7 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
               [NUM.TESTS][(SIZE SIZES) + (SIZE LENGTHS)]INT results:
               THING! cli:
               SEQ
-                C.trace ("bmpingpongtime: Slave starting")
+                trace.sn ("bmpingpongtime: Slave starting")
                 CLAIM net.handle!
                   pony.alloc.uc (net.handle, "thing", PONYC.SHARETYPE.UNSHARED, cli, result)
                 ASSERT (result = PONYC.RESULT.ALLOC.OK)
@@ -203,7 +218,7 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                     TIMER tim:
                     INT start, end:
                     SEQ
-                      C.trace.i ("bmpingpongtime: Measuring with packet size: ", size)
+                      trace.sin ("bmpingpongtime: Measuring with packet size: ", size)
                       --{{{  Run through depending on size
                       CASE size
                         1
@@ -340,8 +355,8 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                       VAL INT total IS end MINUS start:
                       VAL INT ns IS INT ROUND (((REAL32 ROUND total) * 1000.0) / (REAL32 ROUND MEASURE.LOOPS)):
                       SEQ
-                        C.trace.i ("                     Time taken (us): ", total)
-                        C.trace.i ("                     Time per communication (ns): ", ns)
+                        trace.sin ("                     Time taken (us): ", total)
+                        trace.sin ("                     Time per communication (ns): ", ns)
                         results[k][j] := ns
                 --}}}
                 --{{{  Output results for gnuplot
@@ -351,7 +366,7 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                     data[0] := SIZES[i]
                     SEQ j = 0 FOR NUM.TESTS
                       data[j + 1] := results[j][i]
-                    C.trace.results (data)
+                    trace.results (data)
                 --}}}
                 --{{{  run tests with different protocol lengths (packet size 1)
                 [1]BYTE data:
@@ -361,7 +376,7 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                     TIMER tim:
                     INT start, end:
                     SEQ
-                      C.trace.i ("bmpingpongtime: Packet size: 1. Measuring with protocol length: ", length)
+                      trace.sin ("bmpingpongtime: Packet size: 1. Measuring with protocol length: ", length)
                       --{{{  Run through depending on length
                       CASE length
                         1
@@ -468,8 +483,8 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                       VAL INT total IS end MINUS start:
                       VAL INT ns IS INT ROUND (((REAL32 ROUND total) * 1000.0) / (REAL32 ROUND MEASURE.LOOPS)):
                       SEQ
-                        C.trace.i ("                     Time taken (us): ", total)
-                        C.trace.i ("                     Time per communication (ns): ", ns)
+                        trace.sin ("                     Time taken (us): ", total)
+                        trace.sin ("                     Time per communication (ns): ", ns)
                         results[k][j] := ns
                 --}}}
                 --{{{  Output results for gnuplot
@@ -479,7 +494,7 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                     data[0] := LENGTHS[i]
                     SEQ j = 0 FOR NUM.TESTS
                       data[j + 1] := results[j][i]
-                    C.trace.results (data)
+                    trace.results (data)
                 --}}}
                 --{{{  run tests with different protocol lengths (packet size 1000)
                 [1000]BYTE data:
@@ -489,7 +504,7 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                     TIMER tim:
                     INT start, end:
                     SEQ
-                      C.trace.i ("bmpingpongtime: Packet size: 1000. Measuring with protocol length: ", length)
+                      trace.sin ("bmpingpongtime: Packet size: 1000. Measuring with protocol length: ", length)
                       --{{{  Run through depending on length
                       CASE length
                         1
@@ -596,8 +611,8 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                       VAL INT total IS end MINUS start:
                       VAL INT ns IS INT ROUND (((REAL32 ROUND total) * 1000.0) / (REAL32 ROUND MEASURE.LOOPS)):
                       SEQ
-                        C.trace.i ("                     Time taken (us): ", total)
-                        C.trace.i ("                     Time per communication (ns): ", ns)
+                        trace.sin ("                     Time taken (us): ", total)
+                        trace.sin ("                     Time per communication (ns): ", ns)
                         results[k][j] := ns
                 --}}}
                 --{{{  Output results for gnuplot
@@ -607,7 +622,7 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                     data[0] := LENGTHS[i]
                     SEQ j = 0 FOR NUM.TESTS
                       data[j + 1] := results[j][i]
-                    C.trace.results (data)
+                    trace.results (data)
                 --}}}
                 --{{{  run tests with different protocol lengths (packet size 1000000)
                 VAL INT WARMUP.LOOPS IS 100:
@@ -619,7 +634,7 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                     TIMER tim:
                     INT start, end:
                     SEQ
-                      C.trace.i ("bmpingpongtime: Packet size: 1000000. Measuring with protocol length: ", length)
+                      trace.sin ("bmpingpongtime: Packet size: 1000000. Measuring with protocol length: ", length)
                       --{{{  Run through depending on length
                       CASE length
                         1
@@ -726,8 +741,8 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                       VAL INT total IS end MINUS start:
                       VAL INT ns IS INT ROUND (((REAL32 ROUND total) * 1000.0) / (REAL32 ROUND MEASURE.LOOPS)):
                       SEQ
-                        C.trace.i ("                     Time taken (us): ", total)
-                        C.trace.i ("                     Time per communication (ns): ", ns)
+                        trace.sin ("                     Time taken (us): ", total)
+                        trace.sin ("                     Time per communication (ns): ", ns)
                         results[k][j] := ns
                 --}}}
                 --{{{  Output results for gnuplot
@@ -737,9 +752,9 @@ PROC bmpingpongtime (CHAN BYTE key?, CHAN BYTE err!)
                     data[0] := LENGTHS[i]
                     SEQ j = 0 FOR NUM.TESTS
                       data[j + 1] := results[j][i]
-                    C.trace.results (data)
+                    trace.results (data)
                 --}}}
-                C.trace ("bmpingpongtime: Slave done")
+                trace.sn ("bmpingpongtime: Slave done")
             ELSE
               STOP
           CHAN BOOL sync:
