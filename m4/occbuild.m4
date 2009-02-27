@@ -126,7 +126,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
     AC_MSG_CHECKING([for in-tree include file $want_file])
     found_this=no
     while read file path deps; do
-      if test "$file" = "$want_file"; then
+      if test "$file" = "$want_file" && test "$path" != "-"; then
         OCCBUILD="$OCCBUILD --search $path"
         found_this=yes
         found_deps="$deps"
@@ -211,7 +211,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   fi
   touch $KROC_BUILD_ROOT/in-tree-modules
   for file in $1; do
-    (grep -v "^$file " $KROC_BUILD_ROOT/in-tree-modules; if $condition; then echo "$file $dir $deps"; fi) | sort >$KROC_BUILD_ROOT/in-tree-modules.new
+    (grep -v "^$file " $KROC_BUILD_ROOT/in-tree-modules; if $condition; then echo "$file $dir $deps"; else echo "$file -"; fi) | sort >$KROC_BUILD_ROOT/in-tree-modules.new
     mv -f $KROC_BUILD_ROOT/in-tree-modules.new $KROC_BUILD_ROOT/in-tree-modules
   done
 fi
