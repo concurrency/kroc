@@ -89,6 +89,8 @@ datatype <xsl:value-of select="@name" /> = <xsl:for-each select="child::*"><xsl:
 <xsl:template match="instance"><xsl:value-of select="@name" /><xsl:if test="count (child::*) > 0">(<xsl:call-template name="cspx-aparamset" select="." />)</xsl:if>
 </xsl:template>
 <!--}}}-->
+<xsl:template match="chaos">CHAOS (<xsl:if test="count (child::*) > 0">{| <xsl:call-template name="cspx-aparamset" select="." /> |}</xsl:if>)</xsl:template><!--{{{-->
+<!--}}}-->
 <!--{{{  TEMPLATE atom-->
 <xsl:template match="atom"><xsl:value-of select="@id" /></xsl:template>
 <!--}}}-->
