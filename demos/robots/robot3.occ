@@ -122,10 +122,11 @@ DATA TYPE OPTIONS
     INT fps:                      --* Frames-per-second limiting.
     BOOL show.fps:                --* True if frames-per-second should be calculated and shown.
     BOOL rplace:                  --* Random initial placement.
+    BOOL ps3:                     --* True if using PS3 controllers (joystick) to drive.
 :
 
 --* Default simulation parameters.
-VAL OPTIONS DEFAULT.OPTIONS IS [TRUE, FALSE, 0, 128, 4, 0, TRUE, FALSE]:
+VAL OPTIONS DEFAULT.OPTIONS IS [TRUE, FALSE, 0, 128, 4, 0, FALSE, FALSE, FALSE]:
 
 
 --{{{  ANGLE INLINE FUNCTION ABS (VAL ANGLE angle)
@@ -502,11 +503,11 @@ PROC brain.1 (VAL INT id, VAL INT initial.linear.velocity, VAL ANGLE initial.ang
 --  @param commands Received commands (to drive the robot around).
 --  @param move Commands to move robot.
 --  @param laser Received laser ranges.
---  @param screen Debug and other output.
+--  @param opts Simulation parameters.
 --
 PROC manual (VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocity,
               VAL INT robot.radius, CHAN COMMANDS commands?, CHAN MOVE move!,
-              CHAN LASER laser?)
+              CHAN LASER laser?, VAL OPTIONS opts)
 
   INITIAL INT linear.velocity IS initial.linear.velocity:
   INITIAL ANGLE angular.velocity IS initial.angular.velocity:
@@ -544,8 +545,15 @@ PROC manual (VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocity
             INT ang, fwd:
             set.motion; ang; fwd
               SEQ
-                linear.velocity := fwd / 7
-                angular.velocity := (ANGLE.DEGREE / 15) * (ANGLE ang)
+                IF
+                  opts[ps3]
+                    SEQ
+                      -- use values raw
+                      linear.velocity, angular.velocity := fwd, (ANGLE ang)
+                  TRUE
+                    SEQ
+                      linear.velocity := fwd / 7
+                      angular.velocity := (ANGLE.DEGREE / 15) * (ANGLE ang)
 
                 -- make sure we don't run into scenary!
                 VAL INT speed IS compute.speed (min (ranges), robot.radius):
@@ -770,6 +778,63 @@ PROC joystick.handler (CT.SDLJSEVENT! ev, SHARED CHAN COMMANDS commands!)
             
 :
 --}}}
+--{{{  PROC joystick.handler.ps3 (CT.SDLJSEVENT! ev, SHARED CHAN COMMANDS commands!)
+--* Joystick handler for Sony PlayStation3 controllers.
+-- This uses the first two axes to compute the direction we want to travel in,
+-- and the right trigger to control speed.
+--
+-- @param ev Received joystick events.
+-- @param commands Generated commands.
+--
+PROC joystick.handler.ps3 (CT.SDLJSEVENT! ev, SHARED CHAN COMMANDS commands!)
+  INITIAL BOOL loop IS TRUE:
+  INITIAL ANGLE a.last IS 0:
+  WHILE loop
+    SEQ
+      ev[out] ? CASE
+        INT ax.delta, bt.delta:
+        MOBILE []INT16 ax.vals:
+        MOBILE []BYTE bt.vals:
+        change; ax.delta; bt.delta; ax.vals; bt.vals
+          IF
+            (SIZE ax.vals) >= 14
+              -- update with normalised axis values
+              INT vel, ang, rad:
+              ANGLE a:
+              SEQ
+                #IF FALSE
+                vel := (INT ax.vals[13]) + 32767
+                IF
+                  vel < 0
+                    vel := 0
+                  TRUE
+                    vel := vel / 668
+                #ENDIF
+                vel := 0
+                IF
+                  (ax.vals[0] <> 0) OR (ax.vals[1] <> 0)
+                    SEQ
+                      rad, a := CIDROC ((INT ax.vals[0]), (INT ax.vals[1]))
+                      IF
+                        rad < 1024
+                          a := a.last
+                        TRUE
+                          vel := rad / 6500
+                  TRUE
+                    rad, a := 0, a.last
+
+                ang := INT (a MINUS a.last)
+                a.last := a
+
+                CLAIM commands!
+                  commands ! set.motion; ang; vel
+            TRUE
+              SKIP
+        quit
+          loop := FALSE
+            
+:
+--}}}
 --{{{  PROC front (...)
 --* front of pipeline
 --
@@ -846,13 +911,14 @@ PROC back (CHAN RASTER in?, out.1!, out.2!)
       out.2 ! raster
 :
 --}}}
---{{{  PROC joystick.setup.and.handler (SHARED CHAN COMMANDS commands!, SHARED CHAN BYTE screen!)
+--{{{  PROC joystick.setup.and.handler (SHARED CHAN COMMANDS commands!, VAL OPTIONS opts, SHARED CHAN BYTE screen!)
 --* Does joystick setup and handling.
 --
 -- @param commands Commands to control robot.
+-- @param opts Simulation options.
 -- @param screen Shared screen channel.
 --
-PROC joystick.setup.and.handler (SHARED CHAN COMMANDS commands!, SHARED CHAN BYTE screen!)
+PROC joystick.setup.and.handler (SHARED CHAN COMMANDS commands!, VAL OPTIONS opts, SHARED CHAN BYTE screen!)
   CT.SDLJOY! j.cli:
   SEQ
     occ.SDL.joy.start (j.cli)
@@ -873,28 +939,38 @@ PROC joystick.setup.and.handler (SHARED CHAN COMMANDS commands!, SHARED CHAN BYT
                     stick[in] ! enable
                     stick[out] ? CASE event.chan; ev
 
-                occ.SDL.joy.calibrator (ev, ev2, cal)
+                IF
+                  opts[ps3]
+                    --{{{  PS3 controllers are solid and don't require calibration :)
+                    joystick.handler.ps3 (ev, commands!)
 
-                CHAN BOOL skip:
-                PAR
-                  SEQ
-                    occ.SDL.joy.docalibrate (cal!, screen!)
-                    skip ! FALSE
-                  INITIAL BOOL l.loop IS TRUE:
-                  WHILE l.loop
-                    PRI ALT
-                      skip ? l.loop
-                        SKIP
-                      ev2[out] ? CASE
-                        INT axd, btd:
-                        MOBILE []INT16 ax.vals:
-                        MOBILE []BYTE bt.vals:
-                        change; axd; btd; ax.vals; bt.vals
-                          SKIP
-                        quit
-                          SKIP
-                -- now pass events through to manual controller
-                joystick.handler (ev2, commands!)
+                    --}}}
+                  TRUE
+                    --{{{  ordinary control wheels do need calibration
+                    SEQ
+                      occ.SDL.joy.calibrator (ev, ev2, cal)
+
+                      CHAN BOOL skip:
+                      PAR
+                        SEQ
+                          occ.SDL.joy.docalibrate (cal!, screen!)
+                          skip ! FALSE
+                        INITIAL BOOL l.loop IS TRUE:
+                        WHILE l.loop
+                          PRI ALT
+                            skip ? l.loop
+                              SKIP
+                            ev2[out] ? CASE
+                              INT axd, btd:
+                              MOBILE []INT16 ax.vals:
+                              MOBILE []BYTE bt.vals:
+                              change; axd; btd; ax.vals; bt.vals
+                                SKIP
+                              quit
+                                SKIP
+                      -- now pass events through to manual controller
+                      joystick.handler (ev2, commands!)
+                    --}}}
             error
               CLAIM screen!
                 out.string ("No joysticks found, keyboard control only!*n", 0, screen!)
@@ -1023,7 +1099,11 @@ PROC place.robots ([N.ROBOTS]STATE s, VAL INT raster.width, raster.height, robot
 
         s.i[linear.velocity] := 1
         rand, seed := random (INT ANGLE.RIGHT, seed)
-        s.i[theta] := ANGLE (2 * rand)
+        IF
+          i = 0
+            s.i[theta] := 0                   -- manual drone must point the right way
+          TRUE
+            s.i[theta] := ANGLE (2 * rand)
         rand, seed := random (6, seed)
         rand := ((rand - 3) * 2) + 1         -- odd (zero is bad)
         s.i[angular.velocity] := rand * ANGLE.DEGREE
@@ -1139,12 +1219,13 @@ PROC process.options (OPTIONS opts, RESULT BOOL continue, CHAN BYTE screen!) --{
       out.string ("  -f N  set limit on frames-per-second*n", 0, out!)
       out.string ("  -s    show frames-per-second*n", 0, out!)
       out.string ("  -p    random initial placement*n", 0, out!)
+      out.string ("  -P    using playstation3 joystick*n", 0, out!)
   :
   --}}}
 
   CHAN GETOPT opt:
   PAR
-    file.get.options ("mhc12l:r:f:sp", opt!)
+    file.get.options ("mhc12l:r:f:spP", opt!)
     SEQ
       continue := TRUE
 
@@ -1170,6 +1251,8 @@ PROC process.options (OPTIONS opts, RESULT BOOL continue, CHAN BYTE screen!) --{
                 opts[show.fps] := TRUE
               'p'
                 opts[rplace] := TRUE
+              'P'
+                opts[ps3] := TRUE
           BYTE o:
           MOBILE []BYTE val:
           opt.arg; o; val
@@ -1320,11 +1403,11 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
             --{{{  manual control [0]
             PAR
               drone (s[0], laser.range, robot.radius, h[0]?, j[0]!, d[0]?, d[1]!, show.centre.ray)
-              manual (0, 0, robot.radius, commands?, h[0]!, j[0]?)
+              manual (0, 0, robot.radius, commands?, h[0]!, j[0]?, opts)
 
             --}}}
             --{{{  joystick control
-            joystick.setup.and.handler (commands!, screen!)
+            joystick.setup.and.handler (commands!, opts, screen!)
 
             --}}}
             back (d[N.ROBOTS]?, c!, done!)
