@@ -1772,6 +1772,8 @@ fmt_dumpnode (ref, 1, stderr);
 				crln->u.fmevent.name = (char *)smalloc (strlen (ev->u.fmevent.name) + 8);
 				sprintf (crln->u.fmevent.name, "%s_cr", ev->u.fmevent.name);
 				crln->u.fmevent.node = NULL;
+				crln->u.fmevent.isclaim = 1;
+				crln->u.fmevent.isrelease = 1;
 				crln->u.fmevent.typename = string_dup (claimreleasetags->u.fmtset.name);
 
 				fmt_addtonodelist (esnode, crln);
@@ -4016,7 +4018,7 @@ fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 		if (fmn) {
 			fmnode_t *tmp = fmt_newnode (FM_NODEREF, n);
 
-			if (do_coll_ct && (fmn->type == FM_EVENTSET) && fmn->u.fmevset.isanonct) {
+			if (do_coll_ct && (fmn->type == FM_EVENTSET)) {
 				/* special case, pick first event */
 				fmn = DA_NTHITEM (fmn->u.fmevset.events, 0);
 			}
@@ -4418,6 +4420,10 @@ fmt_dumpnode (input, 1, stderr);
 
 			cln = fmt_findfreevar_claim (claimvar, fmstate);
 			rln = fmt_findfreevar_release (claimvar, fmstate);
+#if 0
+fprintf (stderr, "do_formalmodelgen(): CLAIM: cln=\n");
+fmt_dumpnode (cln, 1, stderr);
+#endif
 			if (cln && rln) {
 				fmnode_t **saved_target = fmstate->target;
 				fmnode_t *tmp, *tmp2;
@@ -4432,7 +4438,7 @@ fmt_dumpnode (input, 1, stderr);
 				tmp = fmt_newnode (FM_OUTPUT, n);
 				tmp->u.fmio.lhs = tmp2;
 
-				if (varfm && do_coll_ct && (varfm->type == FM_EVENTSET) && varfm->u.fmevset.isanonct && claimreleasetags) {
+				if (varfm && do_coll_ct && (varfm->type == FM_EVENTSET) && claimreleasetags) {
 					/* if we have appropriate tags defined, do claim event on RHS */
 					tmp->u.fmio.rhs = fmt_copynode (DA_NTHITEM (claimreleasetags->u.fmtset.tags, 0));
 				}
@@ -4454,7 +4460,7 @@ fmt_dumpnode (input, 1, stderr);
 				tmp = fmt_newnode (FM_OUTPUT, n);
 				tmp->u.fmio.lhs = tmp2;
 
-				if (varfm && do_coll_ct && (varfm->type == FM_EVENTSET) && varfm->u.fmevset.isanonct && claimreleasetags) {
+				if (varfm && do_coll_ct && (varfm->type == FM_EVENTSET) && claimreleasetags) {
 					/* if we have appropriate tags defined, do claim event on RHS */
 					tmp->u.fmio.rhs = fmt_copynode (DA_NTHITEM (claimreleasetags->u.fmtset.tags, 1));
 				}
@@ -4711,9 +4717,11 @@ PRIVATE fmnode_t *fmt_createclaimreleasetype (void)
 
 	cln = fmt_newnode (FM_EVENT, NULL);
 	cln->u.fmevent.name = string_dup ("DoClaim");
+	cln->u.fmevent.isclaim = 1;
 	fmt_uniquename (&cln->u.fmevent.name);
 	rln = fmt_newnode (FM_EVENT, NULL);
 	rln->u.fmevent.name = string_dup ("DoRelease");
+	rln->u.fmevent.isrelease = 1;
 	fmt_uniquename (&rln->u.fmevent.name);
 
 	fmt_addtonodelist (decl, cln);
