@@ -34,4 +34,27 @@ dist_aclocal_DATA = \
 	m4/occbuild.m4 \
 	m4/tvm.m4
 
+all-local: display-message
+
+.PHONY: display-message
+display-message:
+	@modules_enabled=; \
+	modules_disabled=; \
+	touch in-tree-modules; \
+	while read file path deps; do \
+	  name="`echo $$file | sed 's,.module,,'`"; \
+	  if test "$$path" = "-"; then \
+	    modules_disabled="$$modules_disabled $$name"; \
+	  else \
+	    modules_enabled="$$modules_enabled $$name"; \
+	  fi; \
+	done <in-tree-modules; \
+	num_enabled="`echo $$modules_enabled | wc -w`"; \
+	num_disabled="`echo $$modules_disabled | wc -w`"; \
+	num_total="`echo $$modules_enabled $$modules_disabled | wc -w`"; \
+	printf "\nKRoC has now been built.\n\n"; \
+	printf "Modules enabled ($$num_enabled/$$num_total):\n $$modules_enabled\n\n"; \
+	printf "Modules disabled ($$num_disabled/$$num_total):\n $$modules_disabled\n\n"; \
+	printf "Please report problems with KRoC to <$(PACKAGE_BUGREPORT)>.\n\n"
+
 DISTCLEANFILES = in-tree-modules
