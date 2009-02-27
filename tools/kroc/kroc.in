@@ -952,7 +952,7 @@ EOF
 	fi
 	cat << EOF
   -d                     Enable post-mortem debugging
-  -dt                    Enable debugging traces
+  -di                    Enable insert debugging
   -e                     Enable user-defined channels
   -h,  --help            Print this message and exit
   -IDIRECTORY            Search DIRECTORY for occam libs & includes, C headers
@@ -995,9 +995,9 @@ Exclusive options:
   --ld                   Print path to dynamic linker (for generating shared libraries)
   --ldflags              Print linker flags to be used when building shared libraries
 Additional options:
-  -di                    Enable insert debugging
   -dm                    Enable dynamic memory debugging
   -ds                    Enable memory usage summary
+  -dt                    Enable debugging traces
   -t2, -t4, -t8, -t9     Set processor compilation class (default $proc_class)
   -O   --optimise        Enable optimisations [now default]
        --rmox            Compile for RMoX
