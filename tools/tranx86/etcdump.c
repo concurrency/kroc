@@ -46,7 +46,7 @@
 
 static int dump_primary (int prim, int operand, char *buffer);
 static int dump_secondary (int esfunc, char *buffer);
-static unsigned long tcoff_getul (unsigned char **s, int *len);
+static long tcoff_getl (unsigned char **s, int *len);
 
 
 /*{{{  char *string_of_primary (tstack *stack, int prim, int operand)*/
@@ -1463,12 +1463,12 @@ int dump_comments (etc_chain *chain)
 			if (tcoff_tag != COMMENT_TAG)
 				continue;
 
-			/* Three unsigned longs precede a COMMENT; the last is the length. */
-			tcoff_getul (&p, &tcoff_len);
-			tcoff_getul (&p, &tcoff_len);
-			comment_len = tcoff_getul (&p, &tcoff_len);
+			/* Three longs precede a COMMENT; the last is the length. */
+			tcoff_getl (&p, &tcoff_len);
+			tcoff_getl (&p, &tcoff_len);
+			comment_len = tcoff_getl (&p, &tcoff_len);
 			if (comment_len < 0 || comment_len > tcoff_len) {
-				fprintf (stderr, "%s: COMMENT has invalid length; skipping\n", progname);
+				fprintf (stderr, "%s: COMMENT has invalid length %d %d; skipping\n", progname, (int)comment_len, (int)tcoff_len);
 				continue;
 			}
 
@@ -1480,13 +1480,16 @@ int dump_comments (etc_chain *chain)
 	return 0;
 }
 /*}}}*/
-/*{{{  static unsigned long tcoff_getul (unsigned char **s)*/
+/*{{{  static long tcoff_getl (unsigned char **s)*/
 /*
- *	read an unsigned long in TCOFF format
+ *	read an long in TCOFF format
+ *
+ *	This is the inverse of tcoff_putl in tcoff_io.c.
+ *
  */
-static unsigned long tcoff_getul (unsigned char **s, int *len)
+static long tcoff_getl (unsigned char **s, int *len)
 {
-	unsigned long out = 0;
+	long out = 0;
 	int is_negative = 0;
 	unsigned char *p = *s;
 
@@ -1505,18 +1508,19 @@ static unsigned long tcoff_getul (unsigned char **s, int *len)
 		(*len)--;
 	} else {
 		int bytes = 1 << (*p - 251);
+		int i;
 		p++;
 		(*len)--;
-		while (bytes-- > 0) {
+		for (i = 0; i < bytes; i++) {
 			if (*len < 1)
 				return 0;
-			out = (out << 8) | *p++;
+			out |= (*p++) << (i * 8);
 			(*len)--;
 		}
 	}
 
 	if (is_negative)
-		out = ~out;
+		out = -out;
 	*s = p;
 	return out;
 }
