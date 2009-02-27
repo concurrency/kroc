@@ -100,6 +100,7 @@ PROC occ.SDL.joy.handler (CT.SDLJS? svr, VAL INT num)
           SEQ
             e.svr, tmp := MOBILE CT.SDLJSEVENT
 
+          INITIAL INT retrig.count IS 0:
           INITIAL BOOL running IS TRUE:
           WHILE running
             INITIAL BOOL read.now IS FALSE:
@@ -212,6 +213,7 @@ PROC occ.SDL.joy.handler (CT.SDLJS? svr, VAL INT num)
                           tmp.ax := CLONE ax.vals
                           tmp.bt := CLONE bt.vals
                           e.svr[out] ! change; axmask; btmask; tmp.ax; tmp.bt
+                          retrig.count := 0
                           boff.iv := min.iv
                       (changed > 0)
                         SEQ
@@ -222,6 +224,17 @@ PROC occ.SDL.joy.handler (CT.SDLJS? svr, VAL INT num)
                         IF
                           boff.iv < max.iv
                             SEQ
+                              IF
+                                retrig.count < 1
+                                  MOBILE []INT16 tmp.ax:
+                                  MOBILE []BYTE tmp.bt:
+                                  SEQ
+                                    tmp.ax := CLONE ax.vals
+                                    tmp.bt := CLONE bt.vals
+                                    e.svr[out] ! change; axmask; btmask; tmp.ax; tmp.bt
+                                    retrig.count := retrig.count + 1
+                                TRUE
+                                  SKIP
                               boff.iv := (boff.iv * 3) / 2
                               IF
                                 boff.iv > max.iv
