@@ -34,6 +34,7 @@
 #INCLUDE "rastergraphics.module"
 #INCLUDE "rasterio.module"
 #INCLUDE "maths.module"
+#INCLUDE "file.module"                            -- for file.get.options
 
 
 --*{{{  BUTTON Mouse buttons.
@@ -468,22 +469,16 @@ PROC brain.1 (VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocit
 --
 PROC manual (VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocity,
               VAL INT robot.radius, CHAN COMMANDS commands?, CHAN MOVE move!,
-              CHAN LASER laser?, SHARED CHAN BYTE screen!)
+              CHAN LASER laser?)
 
   INITIAL INT linear.velocity IS initial.linear.velocity:
   INITIAL ANGLE angular.velocity IS initial.angular.velocity:
 
-  TIMER tim:
-  INT t.0, t.1:
 
-  VAL INT TIME.COUNT IS 100:
-  INITIAL INT count IS 0:
-  
   VAL ANGLE D.W IS ANGLE.DEGREE / 2:
 
   SEQ
 
-    tim ? t.0
     INITIAL BOOL seen.setm IS FALSE:
     WHILE TRUE
       RANGES ranges:
@@ -550,24 +545,6 @@ PROC manual (VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocity
           TRUE
             move ! linear.velocity; angular.velocity
 
-        count := count + 1
-        IF
-          count = TIME.COUNT
-            INT time.difference:
-            SEQ
-              tim ? t.1
-              VAL INT time.difference IS t.1 MINUS t.0:
-              VAL INT frame.time IS time.difference / (TIME.COUNT*1000):
-              CLAIM screen!
-                SEQ
-                  out.string ("+++ Frame time = ", 0, screen!)
-                  out.int (frame.time, 0, screen!)
-                  out.string (" ms*c*n", 0, screen!)
-              count := 0
-              tim ? t.0
-          TRUE
-            SKIP
-              
 :
 
 --}}}
@@ -664,6 +641,61 @@ PROC event.handler (CHAN RASTER.EVENT events?, SHARED CHAN COMMANDS commands!, C
         --}}}
         ELSE				-- anything else?
           SKIP
+:
+--}}}
+PROC frame.timer (CHAN RASTER in?, out!, VAL INT fps, VAL BOOL show.fps, SHARED CHAN BYTE screen!) --{{{
+
+  VAL INT TIME.COUNT IS 100:
+  INITIAL INT count IS 0:
+  
+  TIMER tim:
+  INT t.0, t.1, t.step, t.t0:
+
+  RASTER r:
+  SEQ
+
+    IF
+      fps = 0
+        t.step := 0
+      TRUE
+        t.step := 1000000 / fps
+
+    tim ? t.0
+    t.t0 := t.0
+
+    WHILE TRUE
+      SEQ
+        in ? r
+        IF
+          t.step > 0
+            SEQ
+              t.t0 := t.t0 PLUS t.step
+              tim ? AFTER t.t0
+          TRUE
+            SKIP
+        out ! r
+
+        count := count + 1
+        IF
+          NOT show.fps
+            SKIP
+          count = TIME.COUNT
+            INT time.difference:
+            SEQ
+              tim ? t.1
+              VAL INT time.difference IS t.1 MINUS t.0:
+              VAL INT frame.time IS time.difference / (TIME.COUNT*1000):
+              CLAIM screen!
+                SEQ
+                  out.string ("+++ Frame time = ", 0, screen!)
+                  out.int (frame.time, 0, screen!)
+                  out.string (" ms*c*n", 0, screen!)
+              count := 0
+              tim ? t.0
+              t.t0 := t.0
+          TRUE
+            SKIP
+              
 :
 --}}}
 
@@ -875,7 +907,7 @@ PROC place (VAL INT robot.radius, INT x, y, [][]INT raster, INT seed)
 --  @param robot.radius Radius of the robot
 --  @param mixed Whether there are mixed brain types
 --
-PROC place.robots ([N.ROBOTS]STATE s, VAL INT raster.width, raster.height, robot.radius, VAL BOOL mixed)
+PROC place.robots ([N.ROBOTS]STATE s, VAL INT raster.width, raster.height, robot.radius, VAL BOOL mixed, rcolour)
 
   INT seed:
   RASTER raster:
@@ -906,6 +938,10 @@ PROC place.robots ([N.ROBOTS]STATE s, VAL INT raster.width, raster.height, robot
         s.i[angular.velocity] := rand * ANGLE.DEGREE
 
         IF
+          rcolour
+            SEQ
+              rand, seed := random (SIZE CLUT, seed)
+              s.i[colour] := CLUT[rand]
           mixed
             IF
               (i /\ 1) = 0
@@ -995,6 +1031,116 @@ PROC clean (CHAN RASTER in?, out!)
 
 --}}}
 
+PROC process.options (BOOL mixed, rcolour, INT version, INT ran.scale, rad.scale, fps, BOOL show.fps, RESULT BOOL continue, CHAN BYTE screen!) --{{{
+
+  PROC usage (CHAN BYTE out!) --{{{
+    SEQ
+      out.string ("usage: robot3 [options]*n", 0, out!)
+      out.string ("where options are:*n", 0, out!)
+      out.string ("  -m    mixed version 1 and 2 robots (default)*n", 0, out!)
+      out.string ("  -1    version 1 robots only*n", 0, out!)
+      out.string ("  -2    version 2 robots only*n", 0, out!)
+      out.string ("  -h    show this help*n", 0, out!)
+      out.string ("  -c    randomly coloured robots*n", 0, out!)
+      out.string ("  -r N  set robot radius scale*n", 0, out!)
+      out.string ("  -l N  set laser range scale*n", 0, out!)
+      out.string ("  -f N  set limit on frames-per-second*n", 0, out!)
+      out.string ("  -s    show frames-per-second*n", 0, out!)
+  :
+  --}}}
+
+  CHAN GETOPT opt:
+  PAR
+    file.get.options ("mhc12l:r:f:s", opt!)
+    SEQ
+      -- default is mixed, red and green
+      mixed := TRUE
+      rcolour := FALSE
+      version := 0
+      continue := TRUE
+
+      INITIAL BOOL loop IS TRUE:
+      WHILE loop
+        opt ? CASE
+          BYTE o:
+          opt; o
+            CASE o
+              'm'
+                mixed := TRUE
+              'h'
+                SEQ
+                  usage (screen!)
+                  continue := FALSE
+              '1'
+                mixed, version := FALSE, 0
+              '2'
+                mixed, version := FALSE, 1
+              'c'
+                rcolour := TRUE
+              's'
+                show.fps := TRUE
+          BYTE o:
+          MOBILE []BYTE val:
+          opt.arg; o; val
+            CASE o
+              'r'
+                BOOL p.ok:
+                SEQ
+                  p.ok, rad.scale := string.to.int (val)
+                  IF
+                    NOT p.ok
+                      SEQ
+                        out.string ("bad integer value *'", 0, screen!)
+                        out.string (val, 0, screen!)
+                        out.string ("*'*n", 0, screen!)
+                        continue := FALSE
+                    TRUE
+                      SKIP
+              'l'
+                BOOL p.ok:
+                SEQ
+                  p.ok, ran.scale := string.to.int (val)
+                  IF
+                    NOT p.ok
+                      SEQ
+                        out.string ("bad integer value *'", 0, screen!)
+                        out.string (val, 0, screen!)
+                        out.string ("*'*n", 0, screen!)
+                        continue := FALSE
+                    TRUE
+                      SKIP
+              'f'
+                BOOL p.ok:
+                SEQ
+                  p.ok, fps := string.to.int (val)
+                  IF
+                    NOT p.ok
+                      SEQ
+                        out.string ("bad integer value *'", 0, screen!)
+                        out.string (val, 0, screen!)
+                        out.string ("*'*n", 0, screen!)
+                        continue := FALSE
+                    TRUE
+                      SKIP
+          MOBILE []BYTE val:
+          arg; val
+            SEQ
+              out.string ("unrecognised argument *'", 0, screen!)
+              out.string (val, 0, screen!)
+              out.string ("*'*n", 0, screen!)
+              continue := FALSE
+          BYTE o:
+          bad; o
+            SEQ
+              out.string ("unrecognised option *'", 0, screen!)
+              screen ! o
+              out.string ("*'*n", 0, screen!)
+              continue := FALSE
+          done
+            loop := FALSE
+:
+--}}}
+
 --{{{  PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
 --* Top-level process
 --
@@ -1005,83 +1151,106 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
 
   [N.ROBOTS]STATE s:
 
-  BOOL mixed:
+  BOOL mixed, rcolour:
   INT version:            -- if not mixed, use this robot version
 
   INT raster.width, raster.height:
   INT laser.range, robot.radius:
+  INT range.scale, radius.scale:
+  INT fps:
+  BOOL show.fps:
 
+  BOOL continue:
   SEQ
 
     CLAIM screen!
       welcome (screen!)
 
+    -- this is fixed in this version (image file)
     raster.width := WIDTH
     raster.height := HEIGHT
 
-    laser.range := (128*raster.width) >> 10    -- DEFAULT.RANGE
-    robot.radius := (4*raster.width) >> 10     -- DEFAULT.RADIUS
+    -- set defaults
+    range.scale := 128
+    radius.scale := 4
 
     mixed := TRUE
-    version := 1
+    rcolour := FALSE
+    version := 0
+    fps := 0
+    show.fps := TRUE
 
-    place.robots (s, raster.width, raster.height, robot.radius, mixed)
-    #PRAGMA DEFINED s
+    CLAIM screen!
+      process.options (mixed, rcolour, version, range.scale, radius.scale, fps, show.fps, continue, screen!)
 
-    s[0][colour] := COLOUR.WHITE
+    laser.range := (range.scale*raster.width) >> 10       -- DEFAULT.RANGE
+    robot.radius := (radius.scale*raster.width) >> 10     -- DEFAULT.RADIUS
 
-    -- all set ... let's go!
 
-    CHAN RASTER source, return:
-    CHAN RASTER.EVENT events:
-    CHAN USER.CONTROL control:
-    CHAN RASTER b, c:
-    SHARED! CHAN COMMANDS commands:
+    IF
+      continue
+        SEQ
+          place.robots (s, raster.width, raster.height, robot.radius, mixed, rcolour)
+          #PRAGMA DEFINED s
 
-    [N.ROBOTS + 1]CHAN RASTER d:
-    [N.ROBOTS]CHAN MOVE h:
-    [N.ROBOTS]CHAN LASER j:
+          s[0][colour] := COLOUR.WHITE
 
-    BOOL show.centre.ray:
-    #PRAGMA SHARED show.centre.ray
+          -- all set ... let's go!
 
-    PAR
+          CHAN RASTER source, done, return:
+          CHAN RASTER.EVENT events:
+          CHAN USER.CONTROL control:
+          CHAN RASTER b, c:
+          SHARED! CHAN COMMANDS commands:
 
-      raster.display ("Robots (v3)", raster.width, raster.height, N.RASTERS, return?, source!, events!)
-      event.handler (events?, commands!, control!)
+          [N.ROBOTS + 1]CHAN RASTER d:
+          [N.ROBOTS]CHAN MOVE h:
+          [N.ROBOTS]CHAN LASER j:
 
-      scene (source?, b!)
+          BOOL show.centre.ray:
+          #PRAGMA SHARED show.centre.ray
 
-      front (b?, c?, d[0]!, control?, show.centre.ray)
+          PAR
 
-      --{{{  automatic robots [1 .. (N.ROBOTS-1)]
-      PAR i = 1 FOR N.ROBOTS - 1
-        PAR
-          drone (s[i], laser.range, robot.radius, h[i]?, j[i]!, d[i]?, d[i + 1]!, show.centre.ray)
-          VAL INT linear.velocity IS s[i][linear.velocity]:
-          VAL ANGLE angular.velocity IS s[i][angular.velocity]:
-          IF
-            mixed
-              IF
-                (i /\ 1) = 0
-                  brain.0 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
-                TRUE
-                  brain.1 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
-            version = 0
-              brain.0 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
-            version = 1
-              brain.1 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
-      --}}}
-      --{{{  manual control [0]
-      PAR
-        drone (s[0], laser.range, robot.radius, h[0]?, j[0]!, d[0]?, d[1]!, show.centre.ray)
-        manual (0, 0, robot.radius, commands?, h[0]!, j[0]?, screen!)
+            raster.display ("Robots (v3)", raster.width, raster.height, N.RASTERS, return?, source!, events!)
+            event.handler (events?, commands!, control!)
 
-      --}}}
-      --{{{  joystick control
-      joystick.setup.and.handler (commands!, screen!)
-      --}}}
-      back (d[N.ROBOTS]?, c!, return!)
+            scene (source?, b!)
+
+            front (b?, c?, d[0]!, control?, show.centre.ray)
+
+            --{{{  automatic robots [1 .. (N.ROBOTS-1)]
+            PAR i = 1 FOR N.ROBOTS - 1
+              PAR
+                drone (s[i], laser.range, robot.radius, h[i]?, j[i]!, d[i]?, d[i + 1]!, show.centre.ray)
+                VAL INT linear.velocity IS s[i][linear.velocity]:
+                VAL ANGLE angular.velocity IS s[i][angular.velocity]:
+                IF
+                  mixed
+                    IF
+                      (i /\ 1) = 0
+                        brain.0 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
+                      TRUE
+                        brain.1 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
+                  version = 0
+                    brain.0 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
+                  version = 1
+                    brain.1 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
+            --}}}
+            --{{{  manual control [0]
+            PAR
+              drone (s[0], laser.range, robot.radius, h[0]?, j[0]!, d[0]?, d[1]!, show.centre.ray)
+              manual (0, 0, robot.radius, commands?, h[0]!, j[0]?)
+
+            --}}}
+            --{{{  joystick control
+            joystick.setup.and.handler (commands!, screen!)
+
+            --}}}
+            back (d[N.ROBOTS]?, c!, done!)
+            frame.timer (done?, return!, fps, show.fps, screen!)
+      TRUE
+        SKIP
 
 :
 --}}}
