@@ -19,7 +19,7 @@
 
 #INCLUDE "course.module"
 #INCLUDE "pony.module"
-#INCLUDE "trace.inc"
+#INCLUDE "useful.module"
 
 CHAN TYPE THING
   MOBILE RECORD
@@ -88,22 +88,21 @@ PROC simpletest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
               PONYC.NODETYPE.MASTERRESET
                 THING? svr:
                 SEQ
-                  C.trace ("Master starting, alloc...")
+                  trace.sn ("Master starting, alloc...")
                   CLAIM net.handle!
                     SEQ
-                      C.trace ("1")
+                      trace.sn ("1")
                       pony.alloc.us (net.handle, "thing", PONYC.SHARETYPE.SHARED, svr, result)
-                      C.trace ("2")
-                      C.printarg (svr)
+                      trace.sn ("2")
                       --pony.alloc.us (net.handle, "thing2", PONYC.SHARETYPE.SHARED, svr, result)
-                      C.trace ("3")
-                  C.trace ("... done")
+                      trace.sn ("3")
+                  trace.sn ("... done")
                   IF
                     DEFINED svr
                       SKIP
                     TRUE
                       SEQ
-                        C.trace ("svr not defined")
+                        trace.sn ("svr not defined")
                         STOP
                   CLAIM scr!
                     SEQ
@@ -114,28 +113,28 @@ PROC simpletest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   SEQ i = 0 FOR 10
                     INT n:
                     SEQ
-                      C.trace ("Input...")
+                      trace.sn ("Input...")
                       svr[c] ? n
-                      C.trace ("... done")
+                      trace.sn ("... done")
                       CLAIM scr!
                         SEQ
                           out.string ("Input got ", 0, scr!)
                           out.int (n, 0, scr!)
                           out.string (".*n", 0, scr!)
-                  C.trace ("Master done")
+                  trace.sn ("Master done")
               PONYC.NODETYPE.SLAVEWAIT
                 SHARED THING! cli:
                 SEQ
-                  C.trace ("Slave starting, alloc...")
+                  trace.sn ("Slave starting, alloc...")
                   CLAIM net.handle!
                     pony.alloc.sc (net.handle, "thing", PONYC.SHARETYPE.UNSHARED, cli, result)
-                  C.trace ("... done")
+                  trace.sn ("... done")
                   IF
                     DEFINED cli
                       SKIP
                     TRUE
                       SEQ
-                        C.trace ("cli not defined")
+                        trace.sn ("cli not defined")
                         STOP
                   CLAIM scr!
                     SEQ
@@ -145,14 +144,14 @@ PROC simpletest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   ASSERT (result = PONYC.RESULT.ALLOC.OK)
                   SEQ i = 0 FOR 10
                     SEQ
-                      C.trace ("Output...")
+                      trace.sn ("Output...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("... claimed { ...")
+                          trace.sn ("... claimed { ...")
                           cli[c] ! i
-                          C.trace ("... } ...")
-                      C.trace ("... done")
-                  C.trace ("Slave done")
+                          trace.sn ("... } ...")
+                      trace.sn ("... done")
+                  trace.sn ("Slave done")
               ELSE
                 STOP
             CHAN BOOL sync:

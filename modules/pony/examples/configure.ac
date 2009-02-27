@@ -16,7 +16,7 @@ OCCAM_OCCBUILD
 build_pony_examples=yes
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([pony.module course.module convert.module], ,
+OCCAM_INCLUDE([pony.module course.module convert.module useful.module], ,
               [build_pony_examples=no])
 OCCAM_INCLUDE([sdlraster.module],
               [have_sdlraster=yes], [have_sdlraster=no])

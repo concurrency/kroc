@@ -24,7 +24,7 @@
 #INCLUDE "course.module"
 #INCLUDE "pony.module"
 #INCLUDE "convert.module"
-#INCLUDE "trace.inc"
+#INCLUDE "useful.module"
 #IF DEFINED (USE.SDL)
 #INCLUDE "sdlraster.module"
 #ENDIF
@@ -154,9 +154,9 @@ PROC start.pony (VAL []BYTE name, VAL INT node.type, RESULT SHARED PONY.NETHANDL
     ans.name := ""
     app.name := "mandelbauer"
     node.name := name
-    C.trace ("starting pony")
+    trace.sn ("starting pony")
     pony.startup.snh (PONYC.NETTYPE.TCPIP, ans.name, app.name, node.name, node.type, node.id, net.handle, result)
-    C.trace.i ("pony.startup result: ", result)
+    trace.sin ("pony.startup result: ", result)
     ASSERT (result = PONYC.RESULT.STARTUP.OK)
 :
 --}}}
@@ -237,7 +237,7 @@ PROC server (VAL []BYTE name, CHAN BYTE out!, VAL OPTIONS options, VAL RENDER.PA
             pony.alloc.us (net.handle, "farm", PONYC.SHARETYPE.SHARED, farm, result)
             ASSERT (result = PONYC.RESULT.ALLOC.OK)
     --}}}
-    C.trace ("started")
+    trace.sn ("started")
     SHARED CHAN WORK a.req:
     SHARED CHAN WORK.RESPONSE a.resp:
     CHAN RASTER raster.in, raster.out:
@@ -267,7 +267,7 @@ PROC server (VAL []BYTE name, CHAN BYTE out!, VAL OPTIONS options, VAL RENDER.PA
               WORKER.CT? worker:
               SEQ
                 farm[in] ? worker
-                C.trace.i ("got worker ", i)
+                trace.sin ("got worker ", i)
                 i := i + 1
                 PROC worker.handler (WORKER.CT? worker, SHARED CHAN WORK a.req?, SHARED CHAN WORK.RESPONSE a.resp!)
                   PAR
