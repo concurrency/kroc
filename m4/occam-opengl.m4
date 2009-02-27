@@ -84,7 +84,7 @@ fi
     CPPFLAGS="$GL_CFLAGS"
 
     GL_save_LIBS="$LIBS"
-    LIBS="$GL_X_LIBS"
+    LIBS="$GL_X_LIBS $OCCAM_MACOS_OPENGL_LDFLAGS"
 
 
     # Save the "AC_MSG_RESULT file descriptor" to FD 8.
