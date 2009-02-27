@@ -60,9 +60,6 @@ VAL INT MID.RAY           IS   16:                --* index of middle ray.
 VAL INT N.RAYS            IS (MID.RAY * 2) + 1:   --* number of rays.
 VAL ANGLE SCAN            IS 120 * ANGLE.DEGREE:  --* laser scan sweep.
 
-VAL INT DEFAULT.RANGE     IS  256:                --* Range of laser/radar/sonar.
-VAL INT DEFAULT.RADIUS    IS    6:                --* Size of robot.
-
 DATA TYPE RANGES IS MOBILE []INT:                 --* Array of ranges.
 
 --* Information returned from drone
@@ -84,7 +81,7 @@ DATA TYPE STATE
 -- @item Angular velocity.
 PROTOCOL MOVE IS INT; ANGLE:
 
-
+--* Update commands for manual control.
 PROTOCOL UPDATE
   CASE
     State; STATE			--* Set state
@@ -113,6 +110,23 @@ PROTOCOL USER.CONTROL
     centre.ray
     rays
 :
+
+--* Simulation parameters.
+DATA TYPE OPTIONS
+  RECORD
+    BOOL mixed:                   --* True if we should use mixed version 1 and 2 robots.
+    BOOL rcolour:                 --* True if robots should be randomly coloured regardless.
+    INT version:                  --* Version of robot to use (1 or 2).
+    INT ran.scale:                --* Laser range scale (default 128).
+    INT rad.scale:                --* Robot radius scale (default 4).
+    INT fps:                      --* Frames-per-second limiting.
+    BOOL show.fps:                --* True if frames-per-second should be calculated and shown.
+    BOOL rplace:                  --* Random initial placement.
+:
+
+--* Default simulation parameters.
+VAL OPTIONS DEFAULT.OPTIONS IS [TRUE, FALSE, 0, 128, 4, 0, TRUE, FALSE]:
+
 
 --{{{  ANGLE INLINE FUNCTION ABS (VAL ANGLE angle)
 ANGLE INLINE FUNCTION ABS (VAL ANGLE angle)
@@ -388,14 +402,15 @@ INT FUNCTION min (VAL []INT ranges)
 --  Slow down as minimum range ([@code robot.radius]) approaches.
 --  Reverse direction on contact.
 --
+--  @param id Unique identifier for this robot.
 --  @param initial.linear.velocity Initial linear velocity.
 --  @param initial.angular.velocity Initial angular velocity.
 --  @param robot.radius Robot radius.
 --  @param move Send movement instructions to drone.
 --  @param laser Receive ranges to any obstacles in our path.
 --
-PROC brain.0 (VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocity,
-              VAL INT robot.radius, CHAN MOVE move!, CHAN LASER laser?)
+PROC brain.0 (VAL INT id, initial.linear.velocity, VAL ANGLE initial.angular.velocity,
+              VAL INT robot.radius, CHAN MOVE move!, CHAN LASER laser?, SHARED CHAN BYTE scr!)
 
   INITIAL INT linear.velocity IS initial.linear.velocity:
   INITIAL ANGLE angular.velocity IS initial.angular.velocity:
@@ -410,7 +425,28 @@ PROC brain.0 (VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocit
       VAL INT velocity IS compute.speed (min (ranges), robot.radius):
       IF
         velocity = 0
-          linear.velocity := -linear.velocity
+          SEQ
+            #IF FALSE
+            CLAIM scr!
+              SEQ
+                out.string ("bot ", 0, scr!)
+                out.int (id, 0, scr!)
+                out.string (" stuck, ranges [", 0, scr!)
+                SEQ v = 0 FOR SIZE ranges
+                  SEQ
+                    out.int (ranges[v], 0, scr!)
+                    scr ! ','
+                out.string ("]*n", 0, scr!)
+            #ENDIF
+
+            IF
+              linear.velocity < 0
+                linear.velocity := 1
+              TRUE
+                linear.velocity := -1
+            -- angular.velocity := -angular.velocity
+            -- decreasing := NOT decreasing
+            --linear.velocity := -linear.velocity
         TRUE
           linear.velocity := velocity
       IF
@@ -441,17 +477,18 @@ PROC brain.0 (VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocit
 --  You decide ... :)
 --  But you must avoid obstacles and keep moving ...
 --
+--  @param id Unique identifier for this robot.
 --  @param initial.linear.velocity Initial linear velocity
 --  @param initial.angular.velocity Initial angular velocity
 --  @param robot.radius Robot radius
 --  @param move Send movement instructions to drone
 --  @param laser Receive ranges to any obstacles in our path
 --
-PROC brain.1 (VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocity,
-              VAL INT robot.radius, CHAN MOVE move!, CHAN LASER laser?)
+PROC brain.1 (VAL INT id, VAL INT initial.linear.velocity, VAL ANGLE initial.angular.velocity,
+              VAL INT robot.radius, CHAN MOVE move!, CHAN LASER laser?, SHARED CHAN BYTE screen!)
 
-  brain.0 (initial.linear.velocity, initial.angular.velocity,      -- you can do better than this!
-           robot.radius, move!, laser?)
+  brain.0 (id, initial.linear.velocity, initial.angular.velocity,      -- you can do better than this!
+           robot.radius, move!, laser?, screen!)
 
 :
 --}}}
@@ -875,39 +912,93 @@ VAL []INT CLUT IS [COLOUR.RED, COLOUR.GREEN, COLOUR.BLUE,
                    COLOUR.PINK, COLOUR.SKY, COLOUR.NAVY, COLOUR.MAROON,
                    COLOUR.VIOLET, COLOUR.BROWN, COLOUR.GREY]:
 --}}}
---{{{  PROC place (VAL INT robot.radius, INT x, y, [][]INT raster, INT seed)
+--{{{  PROC place (VAL INT robot.radius, INT x, y, [][]INT raster, INT seed, VAL OPTIONS opts)
 --* place a robot safely on the raster
 --
---  @param robot.radius The radius of the robot footprint
---  @param x Where the robot gets placed (x-coord)
---  @param y Where the robot gets placed (y-coord)
---  @param raster This must have the background in place
---  @param seed random number seed
+--  @param robot.radius The radius of the robot footprint.
+--  @param x Where the robot gets placed (x-coord).
+--  @param y Where the robot gets placed (y-coord).
+--  @param raster This must have the background in place.
+--  @param seed Random number seed.
+--  @param opts Simulation options.
 --
-PROC place (VAL INT robot.radius, INT x, y, [][]INT raster, INT seed)
+PROC place (VAL INT robot.radius, INT x, y, [][]INT raster, INT seed, VAL OPTIONS opts)
   SEQ
     VAL INT width IS SIZE raster[0]:
     VAL INT height IS SIZE raster:
     INITIAL BOOL looking IS TRUE:
-    WHILE looking
-      SEQ
-        x, seed := random (width, seed)
-        y, seed := random (height, seed)
-        looking := circle.hits (x, y, robot.radius, FOREGROUND, raster)
-    #PRAGMA DEFINED x, y                       -- avoid kroc defined analysis warning
-    fill.circle (x, y, robot.radius, FOREGROUND, raster)
+    IF
+      opts[rplace]
+        SEQ
+          WHILE looking
+            SEQ
+              x, seed := random (width, seed)
+              y, seed := random (height, seed)
+              looking := circle.hits (x, y, robot.radius, FOREGROUND, raster)
+          #PRAGMA DEFINED x, y                       -- avoid kroc defined analysis warning
+          fill.circle (x, y, robot.radius, FOREGROUND, raster)
+      TRUE
+        INT x1, x2, y1, y2:
+        SEQ
+          x1, x2 := 457+robot.radius, 556-robot.radius
+          y1, y2 := 272+robot.radius, 370-robot.radius
+
+          WHILE looking
+            INITIAL INT l.count IS 100:             -- try this many times to get a convenient placement, then try anywhere
+            SEQ
+              WHILE looking AND (l.count > 0)
+                SEQ
+                  x, seed := random ((x2 - x1), seed)
+                  y, seed := random ((y2 - y1), seed)
+                  looking := circle.hits (x1+x, y1+y, robot.radius, FOREGROUND, raster)
+                  l.count := l.count - 1
+              IF
+                l.count = 0
+                  SEQ
+                    -- failed to place in designated area, expand range
+                    x1 := x1 - (robot.radius * 3)
+                    x2 := x2 + (robot.radius * 3)
+                    y1 := y1 - (robot.radius * 3)
+                    y2 := y2 + (robot.radius * 3)
+                    IF
+                      x1 < 0
+                        x1 := 0
+                      TRUE
+                        SKIP
+                    IF
+                      x2 >= width
+                        x2 := width - 1
+                      TRUE
+                        SKIP
+                    IF
+                      y1 < 0
+                        y1 := 0
+                      TRUE
+                        SKIP
+                    IF
+                      y2 >= height
+                        y2 := height - 1
+                      TRUE
+                        SKIP
+                TRUE
+                  SKIP
+
+          #PRAGMA DEFINED x, y                       -- avoid kroc defined analysis warning
+          x := x + x1
+          y := y + y1
+          fill.circle (x, y, robot.radius, FOREGROUND, raster)
 :
 --}}}
---{{{  PROC place.robots ([N.ROBOTS]STATE s, VAL INT raster.width, raster.height, robot.radius, VAL BOOL mixed)
+--{{{  PROC place.robots ([N.ROBOTS]STATE s, VAL INT raster.width, raster.height, robot.radius, VAL OPTIONS opts)
 --* randomly place all the robots in empty space on the raster
 --
 --  @param s The robot states (to be set by this procedure)
 --  @param raster.width Width of raster
 --  @param raster.height Hieght of raster
 --  @param robot.radius Radius of the robot
---  @param mixed Whether there are mixed brain types
+--  @param opts Simulation options.
 --
-PROC place.robots ([N.ROBOTS]STATE s, VAL INT raster.width, raster.height, robot.radius, VAL BOOL mixed, rcolour)
+PROC place.robots ([N.ROBOTS]STATE s, VAL INT raster.width, raster.height, robot.radius, VAL OPTIONS opts)
 
   INT seed:
   RASTER raster:
@@ -928,7 +1019,7 @@ PROC place.robots ([N.ROBOTS]STATE s, VAL INT raster.width, raster.height, robot
       INT rand:
       SEQ
 
-        place (robot.radius, s.i[X], s.i[Y], raster, seed)
+        place (robot.radius, s.i[X], s.i[Y], raster, seed, opts)
 
         s.i[linear.velocity] := 1
         rand, seed := random (INT ANGLE.RIGHT, seed)
@@ -938,11 +1029,11 @@ PROC place.robots ([N.ROBOTS]STATE s, VAL INT raster.width, raster.height, robot
         s.i[angular.velocity] := rand * ANGLE.DEGREE
 
         IF
-          rcolour
+          opts[rcolour]
             SEQ
               rand, seed := random (SIZE CLUT, seed)
               s.i[colour] := CLUT[rand]
-          mixed
+          opts[mixed]
             IF
               (i /\ 1) = 0
                 s.i[colour] := COLOUR.RED
@@ -1031,7 +1122,8 @@ PROC clean (CHAN RASTER in?, out!)
 
 --}}}
 
-PROC process.options (BOOL mixed, rcolour, INT version, INT ran.scale, rad.scale, fps, BOOL show.fps, RESULT BOOL continue, CHAN BYTE screen!) --{{{
+
+PROC process.options (OPTIONS opts, RESULT BOOL continue, CHAN BYTE screen!) --{{{
 
   PROC usage (CHAN BYTE out!) --{{{
     SEQ
@@ -1046,17 +1138,14 @@ PROC process.options (BOOL mixed, rcolour, INT version, INT ran.scale, rad.scale
       out.string ("  -l N  set laser range scale*n", 0, out!)
       out.string ("  -f N  set limit on frames-per-second*n", 0, out!)
       out.string ("  -s    show frames-per-second*n", 0, out!)
+      out.string ("  -p    random initial placement*n", 0, out!)
   :
   --}}}
 
   CHAN GETOPT opt:
   PAR
-    file.get.options ("mhc12l:r:f:s", opt!)
+    file.get.options ("mhc12l:r:f:sp", opt!)
     SEQ
-      -- default is mixed, red and green
-      mixed := TRUE
-      rcolour := FALSE
-      version := 0
       continue := TRUE
 
       INITIAL BOOL loop IS TRUE:
@@ -1066,19 +1155,21 @@ PROC process.options (BOOL mixed, rcolour, INT version, INT ran.scale, rad.scale
           opt; o
             CASE o
               'm'
-                mixed := TRUE
+                opts[mixed] := TRUE
               'h'
                 SEQ
                   usage (screen!)
                   continue := FALSE
               '1'
-                mixed, version := FALSE, 0
+                opts[mixed], opts[version] := FALSE, 1
               '2'
-                mixed, version := FALSE, 1
+                opts[mixed], opts[version] := FALSE, 2
               'c'
-                rcolour := TRUE
+                opts[rcolour] := TRUE
               's'
-                show.fps := TRUE
+                opts[show.fps] := TRUE
+              'p'
+                opts[rplace] := TRUE
           BYTE o:
           MOBILE []BYTE val:
           opt.arg; o; val
@@ -1086,7 +1177,7 @@ PROC process.options (BOOL mixed, rcolour, INT version, INT ran.scale, rad.scale
               'r'
                 BOOL p.ok:
                 SEQ
-                  p.ok, rad.scale := string.to.int (val)
+                  p.ok, opts[rad.scale] := string.to.int (val)
                   IF
                     NOT p.ok
                       SEQ
@@ -1099,7 +1190,7 @@ PROC process.options (BOOL mixed, rcolour, INT version, INT ran.scale, rad.scale
               'l'
                 BOOL p.ok:
                 SEQ
-                  p.ok, ran.scale := string.to.int (val)
+                  p.ok, opts[ran.scale] := string.to.int (val)
                   IF
                     NOT p.ok
                       SEQ
@@ -1112,7 +1203,7 @@ PROC process.options (BOOL mixed, rcolour, INT version, INT ran.scale, rad.scale
               'f'
                 BOOL p.ok:
                 SEQ
-                  p.ok, fps := string.to.int (val)
+                  p.ok, opts[fps] := string.to.int (val)
                   IF
                     NOT p.ok
                       SEQ
@@ -1151,14 +1242,10 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
 
   [N.ROBOTS]STATE s:
 
-  BOOL mixed, rcolour:
-  INT version:            -- if not mixed, use this robot version
+  OPTIONS opts:
 
   INT raster.width, raster.height:
   INT laser.range, robot.radius:
-  INT range.scale, radius.scale:
-  INT fps:
-  BOOL show.fps:
 
   BOOL continue:
   SEQ
@@ -1171,26 +1258,19 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
     raster.height := HEIGHT
 
     -- set defaults
-    range.scale := 128
-    radius.scale := 4
-
-    mixed := TRUE
-    rcolour := FALSE
-    version := 0
-    fps := 0
-    show.fps := TRUE
+    opts := DEFAULT.OPTIONS
 
     CLAIM screen!
-      process.options (mixed, rcolour, version, range.scale, radius.scale, fps, show.fps, continue, screen!)
+      process.options (opts, continue, screen!)
 
-    laser.range := (range.scale*raster.width) >> 10       -- DEFAULT.RANGE
-    robot.radius := (radius.scale*raster.width) >> 10     -- DEFAULT.RADIUS
+    laser.range := (opts[ran.scale]*raster.width) >> 10
+    robot.radius := (opts[rad.scale]*raster.width) >> 10
 
 
     IF
       continue
         SEQ
-          place.robots (s, raster.width, raster.height, robot.radius, mixed, rcolour)
+          place.robots (s, raster.width, raster.height, robot.radius, opts)
           #PRAGMA DEFINED s
 
           s[0][colour] := COLOUR.WHITE
@@ -1226,16 +1306,16 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
                 VAL INT linear.velocity IS s[i][linear.velocity]:
                 VAL ANGLE angular.velocity IS s[i][angular.velocity]:
                 IF
-                  mixed
+                  opts[mixed]
                     IF
                       (i /\ 1) = 0
-                        brain.0 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
+                        brain.0 (i, linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?, screen!)
                       TRUE
-                        brain.1 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
-                  version = 0
-                    brain.0 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
-                  version = 1
-                    brain.1 (linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?)
+                        brain.1 (i, linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?, screen!)
+                  opts[version] = 1
+                    brain.0 (i, linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?, screen!)
+                  opts[version] = 2
+                    brain.1 (i, linear.velocity, angular.velocity, robot.radius, h[i]!, j[i]?, screen!)
             --}}}
             --{{{  manual control [0]
             PAR
@@ -1248,7 +1328,7 @@ PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
 
             --}}}
             back (d[N.ROBOTS]?, c!, done!)
-            frame.timer (done?, return!, fps, show.fps, screen!)
+            frame.timer (done?, return!, opts[fps], opts[show.fps], screen!)
       TRUE
         SKIP
 
