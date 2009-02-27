@@ -1043,7 +1043,7 @@ Report bugs to <""" + CONTACT + """>."""
 
 def main(args):
 	try:
-		opts, args = getopt.getopt(args, 'd:f:pav', ["help"])
+		opts, args = getopt.getopt(args, 'd:f:pav', ["help", "in-tree="])
 	except getopt.GetoptError:
 		usage()
 		return 1
@@ -1067,6 +1067,9 @@ def main(args):
 		elif o == "--help":
 			usage()
 			return 0
+		elif o == "--in-tree":
+			global DATADIR
+			DATADIR = a + "/tools/occamdoc"
 
 	if args == [] or not (output_format in ("xml", "html")):
 		usage()

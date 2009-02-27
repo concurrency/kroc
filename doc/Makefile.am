@@ -3,8 +3,9 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../m4
 
-SUBDIRS = sc lib
+SUBDIRS = sc lib api
 
 EXTRA_DIST = \
 	README
