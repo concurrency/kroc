@@ -82,35 +82,5 @@ AC_CONFIG_SUBDIRS(tests/hereticc)
 
 AC_CONFIG_SUBDIRS(doc)
 
-#{{{  display message
-modules_enabled=
-modules_disabled=
-while read file path deps; do
-  name="`echo $file | sed 's,.module,,'`"
-  if test "$path" = "-"; then
-    modules_disabled="$modules_disabled $name"
-  else
-    modules_enabled="$modules_enabled $name"
-  fi
-done <in-tree-modules
-num_enabled="`echo $modules_enabled | wc -w`"
-num_disabled="`echo $modules_disabled | wc -w`"
-num_total="`echo $modules_enabled $modules_disabled | wc -w`"
-
-cat <<EOF
-
-KRoC has now been configured.
-
-Modules enabled ($num_enabled/$num_total):
-  $modules_enabled
-
-Modules disabled ($num_disabled/$num_total):
-  $modules_disabled
-
-Please report problems with KRoC to <$PACKAGE_BUGREPORT>.
-
-EOF
-#}}}
-
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
