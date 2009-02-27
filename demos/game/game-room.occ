@@ -201,11 +201,11 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
         --{{{  debug
         #IF DEFINED (DEBUG)
         SEQ
-          C.out.stderr ("room() loop-start: ")
-          C.out.stderr (name)
-          C.out.stderr (" num ")
-          C.out.stderr.int (roomno)
-          C.out.stderr ("*n")
+          trace.s ("room() loop-start: ")
+          trace.s (name)
+          trace.s (" num ")
+          trace.i (roomno)
+          trace.s ("*n")
         #ENDIF
         --}}}
         PRI ALT
@@ -219,11 +219,11 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 --{{{  debug
                 #IF DEFINED (DEBUG)
                 SEQ
-                  C.out.stderr ("room() new.client: ")
-                  C.out.stderr (name)
-                  C.out.stderr (" num ")
-                  C.out.stderr.int (roomno)
-                  C.out.stderr ("*n")
+                  trace.s ("room() new.client: ")
+                  trace.s (name)
+                  trace.s (" num ")
+                  trace.i (roomno)
+                  trace.s ("*n")
                 #ENDIF
                 --}}}
                 IF
@@ -263,11 +263,11 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 --{{{  debug
                 #IF DEFINED (DEBUG)
                 SEQ
-                  C.out.stderr ("room() new.object: ")
-                  C.out.stderr (name)
-                  C.out.stderr (" num ")
-                  C.out.stderr.int (roomno)
-                  C.out.stderr ("*n")
+                  trace.s ("room() new.object: ")
+                  trace.s (name)
+                  trace.s (" num ")
+                  trace.i (roomno)
+                  trace.s ("*n")
                 #ENDIF
                 --}}}
                 IF
@@ -310,11 +310,11 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                     --{{{  debug
                     #IF DEFINED (DEBUG)
                     SEQ
-                      C.out.stderr ("room() set.link: ")
-                      C.out.stderr (name)
-                      C.out.stderr (" num ")
-                      C.out.stderr.int (roomno)
-                      C.out.stderr ("*n")
+                      trace.s ("room() set.link: ")
+                      trace.s (name)
+                      trace.s (" num ")
+                      trace.i (roomno)
+                      trace.s ("*n")
                     #ENDIF
                     --}}}
                     nexits := 0
@@ -352,11 +352,11 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                     --{{{  debug
                     #IF DEFINED (DEBUG)
                     SEQ
-                      C.out.stderr ("room() del.link: ")
-                      C.out.stderr (name)
-                      C.out.stderr (" num ")
-                      C.out.stderr.int (roomno)
-                      C.out.stderr ("*n")
+                      trace.s ("room() del.link: ")
+                      trace.s (name)
+                      trace.s (" num ")
+                      trace.i (roomno)
+                      trace.s ("*n")
                     #ENDIF
                     --}}}
                     link.ok[nesw] := FALSE
@@ -715,11 +715,11 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
         --{{{  debug
         #IF DEFINED (DEBUG)
         SEQ
-          C.out.stderr ("room() loop-end: ")
-          C.out.stderr (name)
-          C.out.stderr (" num ")
-          C.out.stderr.int (roomno)
-          C.out.stderr ("*n")
+          trace.s ("room() loop-end: ")
+          trace.s (name)
+          trace.s (" num ")
+          trace.i (roomno)
+          trace.s ("*n")
         #ENDIF
         --}}}
           
