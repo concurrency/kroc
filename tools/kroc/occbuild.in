@@ -518,6 +518,7 @@ Options for --object/--program mode:
 Options for --library mode:
   -l LIBRARY          } Passed through to native linker
   -L PATH             }
+  -r PATH             }
   -R PATH             }
   -W OPTION           }
   -m OPTION           }
@@ -555,7 +556,7 @@ def main(args):
 	for prog in programs.keys():
 		long_opts += [prog + "=", prog + "-opts="]
 	try:
-		opts, args = getopt.getopt(args, "vD:l:L:R:W:m:p:", long_opts)
+		opts, args = getopt.getopt(args, "vD:l:L:r:R:W:m:p:", long_opts)
 	except getopt.GetoptError:
 		usage(sys.stderr)
 		sys.exit(1)
@@ -600,7 +601,7 @@ def main(args):
 			occ21_opts += split_options(a)
 		elif o == "-D":
 			occ21_opts += ["-DEF", a]
-		elif o in ("-l", "-L", "-R", "-W", "-m", "-p"):
+		elif o in ("-l", "-L", "-r", "-R", "-W", "-m", "-p"):
 			linker_opts.append("%s%s" % (o, a))
 		elif o == "--need":
 			needs.append(a)
