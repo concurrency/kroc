@@ -33,7 +33,7 @@ SUFFIXES = .ss .sxml
 LINK=$(MZC) --exe $@ $(basename $@).ss
 
 .sxml.ss:
-	$(MZSCHEME) -gmt-- make-driver.ss -f $*
+	$(MZSCHEME) -t-- make-driver.ss -f $*
 
 # deps
 slinker slinker: slinker.ss $(COMMON_SRC)
