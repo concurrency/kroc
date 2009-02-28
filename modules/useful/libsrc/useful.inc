@@ -1,6 +1,7 @@
 --
 --	Definitions for the useful module
---	Copyright (C) 2008 Adam Sampson <ats@offog.org>
+--	Copyright (C) 1997 D.C. Wood <D.C.Wood@kent.ac.uk>
+--	Copyright (C) 2008, 2009 Adam Sampson <ats@offog.org>
 --
 --	This library is free software; you can redistribute it and/or
 --	modify it under the terms of the GNU Lesser General Public
@@ -70,4 +71,127 @@ REAL32 INLINE FUNCTION mag.squared3 (VAL VECTOR3 v) IS
 --}}}
 --{{{  FUNCTION dot.product3
 REAL32 INLINE FUNCTION dot.product3 (VAL VECTOR3 a, b) IS ((a[x] * b[x]) + (a[y] * b[y])) + (a[z] * b[z]):
+--}}}
+
+--{{{  DATA TYPE COMPLEX32
+--* A 2*32-bit complex number.
+DATA TYPE COMPLEX32
+  RECORD
+    REAL32 real, imag:
+:
+--}}}
+--{{{  COMPLEX32 constants
+VAL COMPLEX32 Zero.COMPLEX32 IS [0.0, 0.0]:
+VAL COMPLEX32  One.COMPLEX32 IS [1.0, 0.0]:
+VAL COMPLEX32    I.COMPLEX32 IS [0.0, 1.0]:
+--}}}
+--{{{  COMPLEX32 operations
+REAL32 INLINE FUNCTION COMPLEX32ABSSQ (VAL COMPLEX32 x) IS
+  (x[real]*x[real]) + (x[imag]*x[imag]):
+
+COMPLEX32 INLINE FUNCTION "-" (VAL COMPLEX32 x) IS
+  [-x[real], -x[imag]]:
+
+COMPLEX32 INLINE FUNCTION "~" (VAL COMPLEX32 x) IS
+  [x[real], -x[imag]]:
+
+COMPLEX32 INLINE FUNCTION "+" (VAL COMPLEX32 x, y) IS
+  [x[real] + y[real], x[imag] + y[imag]]:
+
+COMPLEX32 INLINE FUNCTION "-" (VAL COMPLEX32 x, y) IS
+  [x[real] - y[real], x[imag] - y[imag]]:
+
+COMPLEX32 INLINE FUNCTION "**" (VAL COMPLEX32 x, y) IS
+  [(x[real]*y[real]) - (x[imag]*y[imag]),
+   (x[imag]*y[real]) + (x[real]*y[imag])]:
+
+COMPLEX32 INLINE FUNCTION "**" (VAL COMPLEX32 x, VAL REAL32 r) IS
+  [x[real]*r, x[imag]*r]:
+
+COMPLEX32 INLINE FUNCTION "**" (VAL REAL32 r, VAL COMPLEX32 x) IS
+  [x[real]*r, x[imag]*r]:
+
+COMPLEX32 INLINE FUNCTION "/" (VAL COMPLEX32 x, VAL REAL32 r) IS
+  [x[real]/r, x[imag]/r]:
+
+COMPLEX32 INLINE FUNCTION REAL32TOCOMPLEX32 (VAL REAL32 x) IS
+  [x, 0.0]:
+
+BOOL INLINE FUNCTION "=" (VAL COMPLEX32 x, y) IS
+  (x[real] = y[real]) AND (x[imag] = y[imag]):
+
+BOOL INLINE FUNCTION "<>" (VAL COMPLEX32 x, y) IS
+  (x[real] <> y[real]) OR (x[imag] <> y[imag]):
+
+REAL32, REAL32 INLINE FUNCTION COMPLEX32TOREAL32 (VAL COMPLEX32 x) IS
+  x[real], x[imag]:
+
+COMPLEX32 INLINE FUNCTION COMPLEX32SQR (VAL COMPLEX32 z) IS
+  [(z[real] + z[imag])*(z[real] - z[imag]), (z[real]*z[imag])*2.0]:
+--}}}
+
+--{{{  DATA TYPE COMPLEX64
+--* A 2*64-bit complex number.
+DATA TYPE COMPLEX64
+  RECORD
+    REAL64 real, imag:
+:
+--}}}
+--{{{  COMPLEX64 constants
+VAL COMPLEX64 Zero.COMPLEX64 IS [0.0, 0.0]:
+VAL COMPLEX64  One.COMPLEX64 IS [1.0, 0.0]:
+VAL COMPLEX64    I.COMPLEX64 IS [0.0, 1.0]:
+--}}}
+--{{{  COMPLEX64 operations
+REAL64 INLINE FUNCTION COMPLEX64ABSSQ (VAL COMPLEX64 x) IS
+  (x[real]*x[real]) + (x[imag]*x[imag]):
+
+COMPLEX64 INLINE FUNCTION "-" (VAL COMPLEX64 x) IS
+  [-x[real], -x[imag]]:
+
+COMPLEX64 INLINE FUNCTION "~" (VAL COMPLEX64 x) IS
+  [x[real], -x[imag]]:
+
+COMPLEX64 INLINE FUNCTION "+" (VAL COMPLEX64 x, y) IS
+  [x[real] + y[real], x[imag] + y[imag]]:
+
+COMPLEX64 INLINE FUNCTION "-" (VAL COMPLEX64 x, y) IS
+  [x[real] - y[real], x[imag] - y[imag]]:
+
+COMPLEX64 INLINE FUNCTION "**" (VAL COMPLEX64 x, y) IS
+  [(x[real]*y[real]) - (x[imag]*y[imag]),
+   (x[imag]*y[real]) + (x[real]*y[imag])]:
+
+COMPLEX64 INLINE FUNCTION "**" (VAL COMPLEX64 x, VAL REAL64 r) IS
+  [x[real]*r, x[imag]*r]:
+
+COMPLEX64 INLINE FUNCTION "**" (VAL REAL64 r, VAL COMPLEX64 x) IS
+  [x[real]*r, x[imag]*r]:
+
+COMPLEX64 INLINE FUNCTION "/" (VAL COMPLEX64 x, VAL REAL64 r) IS
+  [x[real]/r, x[imag]/r]:
+
+COMPLEX64 INLINE FUNCTION REAL64TOCOMPLEX64 (VAL REAL64 x) IS
+  [x, 0.0]:
+
+BOOL INLINE FUNCTION "=" (VAL COMPLEX64 x, y) IS
+  (x[real] = y[real]) AND (x[imag] = y[imag]):
+
+BOOL INLINE FUNCTION "<>" (VAL COMPLEX64 x, y) IS
+  (x[real] <> y[real]) OR (x[imag] <> y[imag]):
+
+REAL64, REAL64 INLINE FUNCTION COMPLEX64TOREAL64 (VAL COMPLEX64 x) IS
+  x[real], x[imag]:
+
+COMPLEX64 INLINE FUNCTION COMPLEX32TO64 (VAL COMPLEX32 x) IS
+  [REAL64 x[real], REAL64 x[imag]]:
+
+COMPLEX32 INLINE FUNCTION COMPLEX64ROUND (VAL COMPLEX64 x) IS
+  [REAL32 ROUND x[real], REAL32 ROUND x[imag]]:
+
+COMPLEX32 INLINE FUNCTION COMPLEX64TRUNC (VAL COMPLEX64 x) IS
+  [REAL32 TRUNC x[real], REAL32 TRUNC x[imag]]:
+
+COMPLEX64 INLINE FUNCTION COMPLEX64SQR (VAL COMPLEX64 z) IS
+  [(z[real] + z[imag])*(z[real] - z[imag]), (z[real]*z[imag])*2.0]:
 --}}}

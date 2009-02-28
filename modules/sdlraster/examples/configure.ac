@@ -13,7 +13,7 @@ OCCAM_OCCBUILD
 build_sdlraster_examples=yes
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([sdlraster.module rasterio.module miniraster.module course.module maths.module], ,
+OCCAM_INCLUDE([sdlraster.module rasterio.module miniraster.module course.module maths.module useful.module], ,
               [build_sdlraster_examples=no])
 
 AC_MSG_CHECKING([whether to build sdlraster examples])
