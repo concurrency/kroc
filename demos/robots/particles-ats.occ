@@ -2,7 +2,7 @@
 
 #INCLUDE "sdlraster.module"
 #INCLUDE "course.module"
-#INCLUDE "disc.inc"
+#INCLUDE "rastergraphics.module"
 
 VAL INT time.step IS 40000:
 
@@ -163,7 +163,7 @@ PROC drawing (CHAN PART.INFO graphics?, CHAN RASTER in?, out!, SHARED CHAN BYTE 
               VAL COL.COORD co.i IS co[i]:
               IF 
                 (co.i[radius] > 0)
-                  Disc (co.i[col], co.i[row], co.i[radius], co.i[colour], r)
+                  fill.circle (co.i[col], co.i[row], co.i[radius], co.i[colour], r)
                 (co.i[radius] = 0)
                   r[co.i[row]][co.i[col]] := co.i[colour] -- draw a particle
 
