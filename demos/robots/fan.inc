@@ -1,5 +1,7 @@
 --** @module Robot
 
+#INCLUDE "rastergraphics.module"
+
 --* Draw a fan of lines radiating from a point.
 --
 --  Stop when they reach a distance of [@code r.max],
@@ -30,12 +32,12 @@ PROC Fan (VAL INT x.0, y.0, r.max, VAL ANGLE theta, phi, VAL INT c.0, c.1,
     SEQ k = 0 FOR n
       SEQ
         x, y := x.0, y.0
-        d.x, d.y := Cordic (r.max, 0, psi)
-        Line (x, y, d.x, d.y, c.0, c.1, raster)
+        d.x, d.y := CORDIC (r.max, 0, psi)
+        draw.line (x, y, d.x, d.y, c.0, c.1, raster)
         psi := psi + delta
         ANGLE junk:
-        ranges[k], junk := Cidroc (x MINUS x.0, y MINUS y.0)	-- we know the angles!
+        ranges[k], junk := CIDROC (x MINUS x.0, y MINUS y.0)	-- we know the angles!
     x, y := x.0, y.0
-    d.x, d.y := Cordic (r.max, 0, theta)
-    Line (x, y, d.x, d.y, c.0, COLOUR.RED, raster)		-- show which way we're going
+    d.x, d.y := CORDIC (r.max, 0, theta)
+    draw.line (x, y, d.x, d.y, c.0, COLOUR.RED, raster)		-- show which way we're going
 :
