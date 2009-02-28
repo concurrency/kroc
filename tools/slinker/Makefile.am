@@ -30,7 +30,7 @@ EXTRA_library2_SOURCES = $(COMMON_SRC)
 
 SUFFIXES = .ss .sxml
 
-LINK=$(MZC) --exe $@ $(basename $@).ss
+LINK = $(MZC) --exe $@ `basename $@`.ss
 
 .sxml.ss:
 	$(MZSCHEME) -t-- make-driver.ss -f $*
