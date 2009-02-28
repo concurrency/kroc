@@ -11,7 +11,7 @@ tinyswig_SOURCES = tinyswig.scm
 
 SUFFIXES = .scm
 
-LINK=$(MZC) --exe $@ $(basename $@).scm
+LINK = $(MZC) --exe $@ `basename $@`.scm
 
 # deps
 tinyswig tinyswig: tinyswig.scm tinybase.scm
