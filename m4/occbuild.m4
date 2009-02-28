@@ -118,11 +118,18 @@ AC_REQUIRE([OCCAM_OCCBUILD])
 AC_MSG_CHECKING([for occam include files $1])
 if test "x$KROC_BUILD_ROOT" != "x"; then
   # In-tree build: look up those files in in-tree-modules.
-  AC_MSG_RESULT([maybe])
+  AC_MSG_RESULT([searching tree])
   found=yes
+  checked_already=""
   touch $KROC_BUILD_ROOT/in-tree-modules
   find_module () {
     want_file=[$]1
+    for dep in $checked_already; do
+      if test "$dep" = "$want_file"; then
+        return 0
+      fi
+    done
+    checked_already="$checked_already $want_file"
     AC_MSG_CHECKING([for in-tree include file $want_file])
     found_this=no
     while read file path deps; do
@@ -133,14 +140,8 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
         break
       fi
     done <$KROC_BUILD_ROOT/in-tree-modules
-    if test $found_this = yes; then
-      if test "x$found_deps" = "x"; then
-        AC_MSG_RESULT(yes)
-      else
-        AC_MSG_RESULT([yes, and it needs $found_deps])
-      fi
-    else
-      AC_MSG_RESULT(no)
+    AC_MSG_RESULT($found_this)
+    if test $found_this = no; then
       found=no
     fi
     for dep in $found_deps; do
@@ -150,7 +151,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   for want_file in $1; do
     find_module $want_file
   done
-  AC_MSG_CHECKING([whether we found $1])
+  AC_MSG_CHECKING([whether we found $1 and dependencies])
 else
   # Out-of-tree build: try compiling a program that uses those files.
   : >conftest.occ
