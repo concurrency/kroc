@@ -484,7 +484,23 @@ PRIVATE void chk_descopename (treenode *nptr)
 		case N_VALPARAM:
 		case N_RESULTPARAM:
 			if (current_fe_data->fe_warning_unused_p) {
-				msg_out_s (SEV_WARN, CHK, CHK_PARAM_NOT_USED, locn, namestring);
+				int suppress = 0;
+
+				/* XXX: Extremely ugly hack.
+				 * Something earlier on in the usage checker
+				 * sometimes misreports unused arguments for
+				 * PROCs imported from libraries. This
+				 * suppresses the warning for things that came
+				 * from .lib files.
+				 */
+				if (locn != NOPOSN) {
+					const char *fn = fe_lookupfilename (current_fe_handle, FileNumOf (locn));
+					if (strstr (fn, ".lib") == (fn + strlen (fn) - 4))
+						suppress = 1;
+				}
+
+				if (!suppress)
+					msg_out_s (SEV_WARN, CHK, CHK_PARAM_NOT_USED, locn, namestring);
 			}
 			break;
 		case N_VALABBR:
