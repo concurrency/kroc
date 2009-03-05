@@ -90,8 +90,8 @@ PRIVATE int mappingcount;
 
 PRIVATE namestack_t namestack_attributes;
 
+
 PRIVATE int check_lexlevel;
-PRIVATE int suppress_uparam;
 
 /* used during fork handling */
 PRIVATE treenode *forking_node;
@@ -483,8 +483,24 @@ PRIVATE void chk_descopename (treenode *nptr)
 		case N_PARAM:
 		case N_VALPARAM:
 		case N_RESULTPARAM:
-			if (current_fe_data->fe_warning_unused_p && !suppress_uparam) {
-				msg_out_s (SEV_WARN, CHK, CHK_PARAM_NOT_USED, locn, namestring);
+			if (current_fe_data->fe_warning_unused_p) {
+				int suppress = 0;
+
+				/* XXX: Extremely ugly hack.
+				 * Something earlier on in the usage checker
+				 * sometimes misreports unused arguments for
+				 * PROCs imported from libraries. This
+				 * suppresses the warning for things that came
+				 * from .lib files.
+				 */
+				if (locn != NOPOSN) {
+					const char *fn = fe_lookupfilename (current_fe_handle, FileNumOf (locn));
+					if (strstr (fn, ".lib") == (fn + strlen (fn) - 4))
+						suppress = 1;
+				}
+
+				if (!suppress)
+					msg_out_s (SEV_WARN, CHK, CHK_PARAM_NOT_USED, locn, namestring);
 			}
 			break;
 		case N_VALABBR:
@@ -2370,39 +2386,8 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 						*root = (treenode *) cvalof (*root, current_scope ());
 						/*}}}  */
 					} else {
-						int saved_suppress_uparam = suppress_uparam;
-						
 						scopeandcheck (tptr);
-
-						if (*tptr) {
-							switch (TagOf (*tptr)) {
-							case S_PROCDEF:
-							case S_SFUNCDEF:
-							case S_LFUNCDEF:
-							case S_MPROCDECL:
-								{
-									switch (TagOf (DNameOf (*tptr))) {
-									case N_LIBPROCDEF:
-									case N_LIBFUNCDEF:
-									case N_LIBMPROCDECL:
-									case N_STDLIBFUNCDEF:
-									case N_STDLIBPROCDEF:
-										/* if this declaration came from library, ignore anything
-										 * about unused parameters */
-										suppress_uparam = 1;
-										break;
-									default:
-										break;
-									}
-								}
-								break;
-							default:
-								break;
-							}
-						}
-
 						descopenames (namestackmarker);
-						suppress_uparam = saved_suppress_uparam;
 					}
 					forking_node = saved_forking_node;
 					return;
@@ -4095,7 +4080,6 @@ PUBLIC void scopeandcheck_main (treenode ** const tptr, const BOOL allowpredefs,
 			configcount = 0;
 			networkcount = 0;
 			mappingcount = 0;
-			suppress_uparam = 0;
 			prewalkproctree (*tptr, configcheck, NULL);
 			if (configcount == 0 && ((current_fe_data->fe_lang & FE_LANG_NDL) == 0))	/* bug TS/1465 12/11/91 */
 				chkerr_s (CHK_ZERO_CONSTRUCT, NOPOSN, tagstring (S_CONFIG));
