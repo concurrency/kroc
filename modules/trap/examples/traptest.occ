@@ -1,0 +1,41 @@
+#INCLUDE "trap.module"
+#INCLUDE "course.module"
+#INCLUDE "useful.module"
+
+PROC main (SHARED CHAN BYTE out!)
+  VAL INT NODES IS 20:
+  VAL INT PORTS IS 50:
+
+  PROC worker (SHARED TRAP.CT! trap, VAL INT my.node, my.port)
+    TRAP.CHANNEL.CT? chan:
+    INITIAL INT seed IS ((my.node * PORTS) + my.port) << 2:
+    SEQ
+      trap.open (trap, my.port, chan)
+      PAR
+        --{{{  send
+        WHILE TRUE
+          INT dest.node, dest.port:
+          MOBILE []BYTE data:
+          SEQ
+            dest.node, seed := random (NODES, seed)
+            dest.port, seed := random (PORTS, seed)
+            format.sisi ("Hello from ", my.node, ":", my.port, data)
+            prints.isin (my.node, " -> ", dest.node, out!)
+            trap.send (trap, dest.node, dest.port, data)
+        --}}}
+        --{{{  receive
+        WHILE TRUE
+          MOBILE []BYTE data:
+          SEQ
+            chan[msg] ? data
+            prints.sissn ("  ", (my.node * 1000) + my.port, " <- ", data, out!)
+        --}}}
+  :
+
+  PAR node = 0 FOR NODES
+    SHARED TRAP.CT! trap:
+    SEQ
+      trap.start (node, trap)
+      PAR port = 0 FOR PORTS
+        worker (trap, node, port)
+:
