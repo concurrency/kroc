@@ -344,7 +344,7 @@ PRIVATE void fmt_error_now (int code, SOURCEPOSN locn, const char *string)
  */
 PRIVATE void fmt_error_internal (SOURCEPOSN locn, const char *string)
 {
-	*(int *)0 = 0;
+	// *(int *)0 = 0;
 	msg_out_s (SEV_INTERNAL, USE, USE_INTERNAL_ERROR, locn, string);
 }
 /*}}}*/
