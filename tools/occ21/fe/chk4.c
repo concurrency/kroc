@@ -90,8 +90,8 @@ PRIVATE int mappingcount;
 
 PRIVATE namestack_t namestack_attributes;
 
-
 PRIVATE int check_lexlevel;
+PRIVATE int suppress_uparam;
 
 /* used during fork handling */
 PRIVATE treenode *forking_node;
@@ -483,24 +483,8 @@ PRIVATE void chk_descopename (treenode *nptr)
 		case N_PARAM:
 		case N_VALPARAM:
 		case N_RESULTPARAM:
-			if (current_fe_data->fe_warning_unused_p) {
-				int suppress = 0;
-
-				/* XXX: Extremely ugly hack.
-				 * Something earlier on in the usage checker
-				 * sometimes misreports unused arguments for
-				 * PROCs imported from libraries. This
-				 * suppresses the warning for things that came
-				 * from .lib files.
-				 */
-				if (locn != NOPOSN) {
-					const char *fn = fe_lookupfilename (current_fe_handle, FileNumOf (locn));
-					if (strstr (fn, ".lib") == (fn + strlen (fn) - 4))
-						suppress = 1;
-				}
-
-				if (!suppress)
-					msg_out_s (SEV_WARN, CHK, CHK_PARAM_NOT_USED, locn, namestring);
+			if (current_fe_data->fe_warning_unused_p && !suppress_uparam) {
+				msg_out_s (SEV_WARN, CHK, CHK_PARAM_NOT_USED, locn, namestring);
 			}
 			break;
 		case N_VALABBR:
@@ -2086,6 +2070,7 @@ printtreenl (stderr, 4, *tptr);
 						tt = *tptr;
 						name = DNameOf (tt);
 						chklocn = LocnOf (tt);
+
 						switch (TagOf (tt)) {
 							/*{{{  ABBR, VALABBR, RETYPE, VALRETYPE, TPROTDEF, SPROTDEF, TYPEDECL */
 						case S_ABBR:
@@ -2321,37 +2306,6 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 								check_nested_properties_place (*tptr);
 							break;
 							/*}}}  */
-							/*{{{  COMMENT RECURSIVE */
-		      /***********************  Start comment out *****************************/
-							/*|*{{{  RECURSIVE*| */
-							/*case S_RECURSIVE : */
-							/*{ */
-							/*treenode *item = DValOf(tt); */
-							/*while (!EndOfList(item)) */
-							/*{ */
-							/*treenode *name = DNameOf(ThisItem(item)); */
-							/*treenode *rest = NextItem(item); */
-							/*wordnode *id = NNameOf(name); */
-							/*while (!EndOfList(rest)) */
-							/*{ */
-							/*if (id == NNameOf(DNameOf(ThisItem(rest)))) */
-							/*synerror (SYN_MULTIPLE_RECURSIVE, flocn, (BIT32)WNameOf(id)); */
-							/*rest = NextItem(rest); */
-							/*} */
-							/*addname(name, NULL); */
-							/*item = NextItem(item); */
-							/*} */
-							/*item = DValOf(tt); */
-							/*while (!EndOfList(item)) */
-							/*{ */
-							/*scopeprocorfunc(ThisItem(item)); */
-							/*item = NextItem(item); */
-							/*} */
-							/*} */
-							/*break; */
-							/*|*}}}*| */
-		       /***********************   End comment out  *****************************/
-							/*}}}  */
 							/*{{{  labeldef */
 						case S_LABELDEF:
 							/*if (insideinline)
@@ -2401,14 +2355,14 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 						}
 					}
 					current_params = NULL;	/* bug TS/1910 26/01/93 */
-					if ((*tptr != NULL) && (TagOf (*tptr) == S_VALOF))
-					{
+					if ((*tptr != NULL) && (TagOf (*tptr) == S_VALOF)) {
 						/*{{{  do checking */
 						/* Scope and check body and result list here so we can include the
 						 * preceeding specs in check of valof
 						 */
 						scopestack_t valofnamestackmarker = markscopenames ();
 						treenode *const ttt = *tptr;
+
 						scopeandcheck (VLBodyAddr (ttt));
 						descopenames (valofnamestackmarker);	/* Descope names within Valof */
 						scopeandcheck (VLResultListAddr (ttt));
@@ -2416,8 +2370,37 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 						*root = (treenode *) cvalof (*root, current_scope ());
 						/*}}}  */
 					} else {
+						int saved_suppress_uparam = suppress_uparam;
+						
 						scopeandcheck (tptr);
+
+						switch (TagOf (*tptr)) {
+						case S_PROCDEF:
+						case S_SFUNCDEF:
+						case S_LFUNCDEF:
+						case S_MPROCDECL:
+							{
+								switch (TagOf (DNameOf (*tptr))) {
+								case N_LIBPROCDEF:
+								case N_LIBFUNCDEF:
+								case N_LIBMPROCDECL:
+								case N_STDLIBFUNCDEF:
+								case N_STDLIBPROCDEF:
+									/* if this declaration came from library, ignore anything
+									 * about unused parameters */
+									suppress_uparam = 1;
+									break;
+								default:
+									break;
+								}
+							}
+							break;
+						default:
+							break;
+						}
+
 						descopenames (namestackmarker);
+						suppress_uparam = saved_suppress_uparam;
 					}
 					forking_node = saved_forking_node;
 					return;
@@ -3589,24 +3572,6 @@ printtreenl (stderr, 4, *rhs);
 				}
 				return;
 				/*}}}  */
-#if 0
-/* dear oh dear, i don't know what was going on when i wrote this.. */
-				/*{{{  arrayconstructor */
-			case S_ARRAYCONSTRUCTOR:
-				{
-					scopestack_t namestackmarker = markscopenames ();
-					scopeandcheck (ReplCStartExpAddr (t));
-					scopeandcheck (ReplCLengthExpAddr (t));
-					if (ReplCStepExpOf (t)) {
-						scopeandcheck (ReplCStepExpAddr (t));
-					}
-					addname (ReplCNameOf (t), NULL);
-					scopeandcheck (ReplCBodyAddr (t));
-					descopenames (namestackmarker);
-				}
-				return;
-				/*}}}  */
-#endif
 				/*{{{  conditional expression */
 #ifdef CONDEXP
 			case CONDEXPNODE:
@@ -3845,24 +3810,6 @@ printtreenl (stderr, 4, ARTypeOf (t));
 					}
 				}
 				return;
-				/*}}}  */
-				/*{{{  structconstructor */
-#if 0
-			case S_STRUCTCONSTRUCTOR:
-				unknown {
-					if (MOpTypeOf (t) == S_NODE) {
-						t = OpOf (t);	/* This will be a list */
-						if (!EndOfList (t))	/* Skip device type    */
-							t = NextItem (t);
-						while (!EndOfList (t)) {
-							scopeandcheck (ThisItemAddr (t));
-							t = NextItem (t);
-						}
-						*tptr = cnetnode (*tptr);
-					}
-				}
-				return;
-#endif
 				/*}}}  */
 				/*{{{  config */
 			case CONFIGNODE:
@@ -4146,6 +4093,7 @@ PUBLIC void scopeandcheck_main (treenode ** const tptr, const BOOL allowpredefs,
 			configcount = 0;
 			networkcount = 0;
 			mappingcount = 0;
+			suppress_uparam = 0;
 			prewalkproctree (*tptr, configcheck, NULL);
 			if (configcount == 0 && ((current_fe_data->fe_lang & FE_LANG_NDL) == 0))	/* bug TS/1465 12/11/91 */
 				chkerr_s (CHK_ZERO_CONSTRUCT, NOPOSN, tagstring (S_CONFIG));
