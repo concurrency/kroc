@@ -2374,29 +2374,31 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 						
 						scopeandcheck (tptr);
 
-						switch (TagOf (*tptr)) {
-						case S_PROCDEF:
-						case S_SFUNCDEF:
-						case S_LFUNCDEF:
-						case S_MPROCDECL:
-							{
-								switch (TagOf (DNameOf (*tptr))) {
-								case N_LIBPROCDEF:
-								case N_LIBFUNCDEF:
-								case N_LIBMPROCDECL:
-								case N_STDLIBFUNCDEF:
-								case N_STDLIBPROCDEF:
-									/* if this declaration came from library, ignore anything
-									 * about unused parameters */
-									suppress_uparam = 1;
-									break;
-								default:
-									break;
+						if (*tptr) {
+							switch (TagOf (*tptr)) {
+							case S_PROCDEF:
+							case S_SFUNCDEF:
+							case S_LFUNCDEF:
+							case S_MPROCDECL:
+								{
+									switch (TagOf (DNameOf (*tptr))) {
+									case N_LIBPROCDEF:
+									case N_LIBFUNCDEF:
+									case N_LIBMPROCDECL:
+									case N_STDLIBFUNCDEF:
+									case N_STDLIBPROCDEF:
+										/* if this declaration came from library, ignore anything
+										 * about unused parameters */
+										suppress_uparam = 1;
+										break;
+									default:
+										break;
+									}
 								}
+								break;
+							default:
+								break;
 							}
-							break;
-						default:
-							break;
 						}
 
 						descopenames (namestackmarker);
