@@ -60,6 +60,10 @@ AC_ARG_WITH([alloc], AS_HELP_STRING([--with-alloc=...],[allocator to use (malloc
 
 if test "x$rmox" != "x"; then
   KROC_CCSP_ENABLE_RMOX=yes
+  # other settings because we configure this out-of-tree
+  KROC_CCSP_ENABLE_MP=yes
+  KROC_CCSP_ENABLE_PTHREADS=no
+  KROC_CCSP_ENABLE_DYNPROC=no
 else
   KROC_CCSP_ENABLE_RMOX=no
 fi
