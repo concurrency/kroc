@@ -38,7 +38,7 @@ all-local: $(libs) $(includes) $(tools)
 trap.lib: $(trap_lib_objs)
 	$(OCCBUILD) --library trap.lib --need cif --need file --need sock --need useful --include trap.inc --include selector.inc $(trap_lib_objs)
 
-trapns: trapns.occ
+trapns: trapns.occ trap.lib
 	$(OCCBUILD) --program trapns.occ
 
 install-exec-local: $(libs) $(includes) $(tools)
