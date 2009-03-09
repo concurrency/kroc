@@ -115,7 +115,7 @@ void err_print_messages(FILE *fptr);
 #define FATAL_INTERNAL_BANNER "\n\
 *********************************************************************\n\
 * The compiler has detected an internal inconsistency.              *\n\
-* Please email kroc-bugs@ukc.ac.uk with a copy of the code which    *\n\
+* Please email kroc-bugs@kent.ac.uk with a copy of the code which   *\n\
 * broke the compiler, as this is probably a compiler bug.           *\n\
 * Please include the KRoC version and any other relevant details.   *\n\
 *********************************************************************\n\
