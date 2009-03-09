@@ -1337,7 +1337,7 @@ PRIVATE char *generate_typename_strings (treenode * typetree, int *length)
 		/*printf("INTERNAL COMPILER ERROR - unknown base type in generate_typename_strings\n"); */
 		/*printf("Value of invalid tag is:%d\n",TagOf(typetree)); */
 		/*printtree(stdout,0,typetree); */
-		/*printf("Contact ofa-bugs@ukc.ac.uk\n"); */
+		/*printf("Contact kroc-bugs@kent.ac.uk\n"); */
 		/*exit(1); */
 		/*break; */
 		/*}}} */
@@ -1516,7 +1516,7 @@ PRIVATE char *construct_name (treenode * default_type, treenode * tptr, int *len
 	default:
 		name = strcpy (name, "udo.ERR.\0");
 		break;
-		printf ("INTERNAL COMPILER ERROR - contact ofa-bugs@ukc.ac.uk\n");
+		printf ("INTERNAL COMPILER ERROR - contact kroc-bugs@kent.ac.uk\n");
 		printf ("report as error in construct_name, in chk1.c - Unsupported operator in switch\n");
 		exit (1);
 		/*}}} */
@@ -1645,7 +1645,7 @@ PUBLIC char *construct_mop_name (treenode *default_type, treenode *tptr, int *le
 		name = strcpy (name, "ERR.\0");
 		break;
 		/* the following is never reached */
-		printf ("INTERNAL COMPILER ERROR - contact ofa-bugs@ukc.ac.uk\n");
+		printf ("INTERNAL COMPILER ERROR - contact kroc-bugs@kent.ac.uk\n");
 		printf ("report as error in construct_mop_name, in chk1.c - Unsupported operator in switch\n");
 		exit (1);
 		/*}}} */
