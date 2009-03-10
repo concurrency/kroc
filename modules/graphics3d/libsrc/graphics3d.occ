@@ -1,0 +1,1855 @@
+--
+--	graphics3d.occ -- 3D raster graphics routines.
+--	Copyright (C) 2008-2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#INCLUDE "course.module"
+
+#INCLUDE "sdlraster.module"
+#INCLUDE "graphics3d.inc"
+
+
+--{{{  PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+--* Cube point generator.
+-- Generates a constant stream of points that represent a cube in 3D space.
+--
+-- @param out Points generated.
+-- @param ctrl Control channel.
+--
+PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+  [8]G3D.POINT3 cpnts:
+  [8]G3D.POINT3 opnts:
+
+  PROC reset ()
+    SEQ
+      opnts[0] := [1.0, 1.0, 1.0] (G3D.POINT3)
+      opnts[1] := [1.0, -1.0, 1.0] (G3D.POINT3)
+      opnts[2] := [-1.0, -1.0, 1.0] (G3D.POINT3)
+      opnts[3] := [-1.0, 1.0, 1.0] (G3D.POINT3)
+      opnts[4] := [1.0, 1.0, -1.0] (G3D.POINT3)
+      opnts[5] := [1.0, -1.0, -1.0] (G3D.POINT3)
+      opnts[6] := [-1.0, -1.0, -1.0] (G3D.POINT3)
+      opnts[7] := [-1.0, 1.0, -1.0] (G3D.POINT3)
+  :
+
+  SEQ
+    --{{{  initialise
+    reset ()
+    cpnts := opnts
+
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      MOBILE []G3D.POINT3 mpoints:
+      SEQ
+        mpoints := MOBILE [8]G3D.POINT3
+        [mpoints FOR 8] := [cpnts FOR 8]
+        out ! mpoints
+
+        INITIAL BOOL trig IS TRUE:
+        WHILE trig
+          PRI ALT
+            ctrl ? CASE
+              reset
+                SEQ
+                  reset ()
+                  cpnts := opnts
+              [3]REAL32 scale:
+              add.scale; scale
+                SEQ i = 0 FOR 8
+                  SEQ
+                    cpnts[i][x] := cpnts[i][x] * scale[0]
+                    cpnts[i][y] := cpnts[i][y] * scale[1]
+                    cpnts[i][z] := cpnts[i][z] * scale[2]
+              [3]REAL32 scale:
+              set.scale; scale
+                SEQ i = 0 FOR 8
+                  SEQ
+                    cpnts[i][x] := opnts[i][x] * scale[0]
+                    cpnts[i][y] := opnts[i][y] * scale[1]
+                    cpnts[i][z] := opnts[i][z] * scale[2]
+              [3]REAL32 trans:
+              add.trans; trans
+                SEQ i = 0 FOR 8
+                  SEQ
+                    cpnts[i][x] := cpnts[i][x] + trans[0]
+                    cpnts[i][y] := cpnts[i][y] + trans[1]
+                    cpnts[i][z] := cpnts[i][z] + trans[2]
+              [3]REAL32 trans:
+              set.trans; trans
+                SEQ i = 0 FOR 8
+                  SEQ
+                    cpnts[i][x] := opnts[i][x] + trans[0]
+                    cpnts[i][y] := opnts[i][y] + trans[1]
+                    cpnts[i][z] := opnts[i][z] + trans[2]
+            SKIP
+              trig := FALSE
+:
+--}}}
+--{{{  PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+--* Inmos butterfly logo generator.
+--
+-- @param out Points generated.
+-- @param ctrl Control channel.
+--
+PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+  [30]G3D.POINT3 pnts:
+  REAL32 fangle, fdiff:
+
+  PROC reset () --{{{
+    SEQ
+      -- top-left wing
+      pnts[0] := [-0.8, -0.8, 0.0] (G3D.POINT3)
+      pnts[1] := [-0.4, -0.8, 0.0] (G3D.POINT3)
+      pnts[2] := [-0.15, -0.6, 0.0] (G3D.POINT3)
+      pnts[3] := [-0.06, 0.2, 0.0] (G3D.POINT3)
+      pnts[4] := [-0.4, 0.5, 0.0] (G3D.POINT3)
+      pnts[5] := [-0.7, 0.5, 0.0] (G3D.POINT3)
+      pnts[6] := [-1.0, -0.6, 0.0] (G3D.POINT3)
+
+      -- top-right wing
+      pnts[7] := [0.4, -0.8, 0.0] (G3D.POINT3)
+      pnts[8] := [0.8, -0.8, 0.0] (G3D.POINT3)
+      pnts[9] := [1.0, -0.6, 0.0] (G3D.POINT3)
+      pnts[10] := [0.7, 0.5, 0.0] (G3D.POINT3)
+      pnts[11] := [0.4, 0.5, 0.0] (G3D.POINT3)
+      pnts[12] := [0.06, 0.2, 0.0] (G3D.POINT3)
+      pnts[13] := [0.15, -0.6, 0.0] (G3D.POINT3)
+
+      -- body extras
+      pnts[14] := [0.0, -0.7, 0.0] (G3D.POINT3)
+      pnts[15] := [0.0, 0.9, 0.0] (G3D.POINT3)
+
+      -- bottom-left wing
+      pnts[16] := [-0.6, 0.4, 0.0] (G3D.POINT3)
+      pnts[17] := [-0.04, 0.5, 0.0] (G3D.POINT3)
+      pnts[18] := [-0.2, 0.8, 0.0] (G3D.POINT3)
+      pnts[19] := [-0.5, 1.0, 0.0] (G3D.POINT3)
+      pnts[20] := [-0.8, 0.8, 0.0] (G3D.POINT3)
+
+      -- bottom-right wing
+      pnts[21] := [0.6, 0.4, 0.0] (G3D.POINT3)
+      pnts[22] := [0.8, 0.8, 0.0] (G3D.POINT3)
+      pnts[23] := [0.5, 1.0, 0.0] (G3D.POINT3)
+      pnts[24] := [0.2, 0.8, 0.0] (G3D.POINT3)
+      pnts[25] := [0.04, 0.5, 0.0] (G3D.POINT3)
+
+      -- feelers
+      pnts[26] := [-0.1, -0.65, 0.0] (G3D.POINT3)
+      pnts[27] := [0.1, -0.65, 0.0] (G3D.POINT3)
+      pnts[28] := [-0.2, -1.0, 0.0] (G3D.POINT3)
+      pnts[29] := [0.2, -1.0, 0.0] (G3D.POINT3)
+
+      fangle := 0.0
+      fdiff := 0.05
+  :
+  --}}}
+  PROC rot.point.y (G3D.POINT3 pnt, VAL REAL32 sin.val, cos.val) --{{{
+    REAL32 tmp:
+    SEQ
+      tmp := pnt[x]
+      pnt[x] := (pnt[x] * cos.val) + (pnt[z] * sin.val)
+      pnt[z] := (pnt[z] * cos.val) - (tmp * sin.val)
+  :
+  --}}}
+
+  SEQ
+    --{{{  initialise
+    reset ()
+
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      MOBILE []G3D.POINT3 mpoints:
+      SEQ
+        mpoints := MOBILE [30]G3D.POINT3
+        [mpoints FOR 30] := [pnts FOR 30]
+
+        -- adjust wings for fluttering :)
+        IF
+          fdiff > 0.0
+            REAL32 sin.val, cos.val:
+            SEQ
+              sin.val := SIN (fangle)
+              cos.val := COS (fangle)
+              fangle := fangle + fdiff
+
+              rot.point.y (mpoints[0], sin.val, cos.val)
+              rot.point.y (mpoints[1], sin.val, cos.val)
+              rot.point.y (mpoints[6], sin.val, cos.val)
+              rot.point.y (mpoints[5], sin.val, cos.val)
+              rot.point.y (mpoints[4], sin.val, cos.val)
+              rot.point.y (mpoints[16], sin.val, cos.val)
+              rot.point.y (mpoints[20], sin.val, cos.val)
+              rot.point.y (mpoints[19], sin.val, cos.val)
+              rot.point.y (mpoints[18], sin.val, cos.val)
+
+              sin.val := -sin.val
+
+              rot.point.y (mpoints[7], sin.val, cos.val)
+              rot.point.y (mpoints[8], sin.val, cos.val)
+              rot.point.y (mpoints[9], sin.val, cos.val)
+              rot.point.y (mpoints[10], sin.val, cos.val)
+              rot.point.y (mpoints[11], sin.val, cos.val)
+              rot.point.y (mpoints[21], sin.val, cos.val)
+              rot.point.y (mpoints[22], sin.val, cos.val)
+              rot.point.y (mpoints[23], sin.val, cos.val)
+              rot.point.y (mpoints[24], sin.val, cos.val)
+
+              IF
+                fangle > 0.5
+                  fdiff := -fdiff
+                TRUE
+                  SKIP
+          fdiff < 0.0
+            REAL32 sin.val, cos.val:
+            SEQ
+              sin.val := SIN (fangle)
+              cos.val := COS (fangle)
+              fangle := fangle + fdiff
+
+              rot.point.y (mpoints[0], sin.val, cos.val)
+              rot.point.y (mpoints[1], sin.val, cos.val)
+              rot.point.y (mpoints[6], sin.val, cos.val)
+              rot.point.y (mpoints[5], sin.val, cos.val)
+              rot.point.y (mpoints[4], sin.val, cos.val)
+              rot.point.y (mpoints[16], sin.val, cos.val)
+              rot.point.y (mpoints[20], sin.val, cos.val)
+              rot.point.y (mpoints[19], sin.val, cos.val)
+              rot.point.y (mpoints[18], sin.val, cos.val)
+
+              sin.val := -sin.val
+
+              rot.point.y (mpoints[7], sin.val, cos.val)
+              rot.point.y (mpoints[8], sin.val, cos.val)
+              rot.point.y (mpoints[9], sin.val, cos.val)
+              rot.point.y (mpoints[10], sin.val, cos.val)
+              rot.point.y (mpoints[11], sin.val, cos.val)
+              rot.point.y (mpoints[21], sin.val, cos.val)
+              rot.point.y (mpoints[22], sin.val, cos.val)
+              rot.point.y (mpoints[23], sin.val, cos.val)
+              rot.point.y (mpoints[24], sin.val, cos.val)
+
+              IF
+                fangle < (-0.5)
+                  fdiff := -fdiff
+                TRUE
+                  SKIP
+          TRUE
+            SKIP
+
+        out ! mpoints
+
+        PRI ALT
+          ctrl ? CASE
+            reset
+              reset ()
+            [3]REAL32 scale:
+            add.scale; scale
+              SEQ i = 0 FOR 30
+                SEQ
+                  pnts[i][x] := pnts[i][x] * scale[0]
+                  pnts[i][y] := pnts[i][y] * scale[1]
+                  pnts[i][z] := pnts[i][z] * scale[2]
+            [3]REAL32 scale:
+            set.scale; scale
+              SKIP
+            [3]REAL32 trans:
+            add.trans; trans
+              SEQ i = 0 FOR 30
+                SEQ
+                  pnts[i][x] := pnts[i][x] + trans[0]
+                  pnts[i][y] := pnts[i][y] + trans[1]
+                  pnts[i][z] := pnts[i][z] + trans[2]
+            [3]REAL32 trans:
+            set.trans; trans
+              SKIP
+          TRUE & SKIP
+            SKIP
+
+:
+--}}}
+--{{{  PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL ctrl?)
+--* Point rotator.
+-- Rotates an arbitrary set of points around the origin, such that it passes
+-- through the same sequence of moves repeatedly (e.g. for a spinning cube)
+--
+-- @param in 3D points in.
+-- @param out 3D points out.
+-- @param ctrl Control channel.
+--
+PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL ctrl?)
+  REAL32 angle, diff:
+  INT mode:
+
+  PROC reset ()
+    SEQ
+      angle := 0.0
+      diff := 0.0
+      mode := G3D.ROTATE.MODE.DEMO
+  :
+
+  SEQ
+
+    reset ()
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+          REAL32 inc:
+          add.increment; inc
+            SEQ
+              diff := diff + inc
+          set.mode; mode
+            SKIP
+          set.angle; angle
+            SKIP
+        MOBILE []G3D.POINT3 blk:
+        in ? blk
+          IF
+            ((diff = 0.0) AND (angle = 0.0)) OR (mode = G3D.ROTATE.MODE.NONE)
+              out ! blk
+            TRUE
+              REAL32 sin.val, cos.val:
+              MOBILE []G3D.POINT3 nblk:
+              SEQ
+                angle := angle + diff
+
+                sin.val := SIN (angle)
+                cos.val := COS (angle)
+
+                nblk := MOBILE [SIZE blk]G3D.POINT3
+
+                IF
+                  (mode /\ G3D.ROTATE.MODE.DEMO) <> 0
+                    SEQ i = 0 FOR SIZE blk
+                      REAL32 tmp:
+                      SEQ
+                        nblk[i][x] := (blk[i][x] * cos.val) + (blk[i][y] * sin.val)
+                        nblk[i][y] := (blk[i][y] * cos.val) - (blk[i][x] * sin.val)
+                        nblk[i][z] := (blk[i][z] * cos.val) - (nblk[i][x] * sin.val)
+                        nblk[i][x] := (nblk[i][x] * cos.val) + (blk[i][z] * sin.val)
+                        tmp := (nblk[i][y] * cos.val) + (nblk[i][z] * sin.val)
+                        nblk[i][z] := (nblk[i][z] * cos.val) - (nblk[i][y] * sin.val)
+                        nblk[i][y] := tmp
+                  TRUE
+                    SEQ i = 0 FOR SIZE blk
+                      SEQ
+                        nblk[i][x] := blk[i][x]
+                        nblk[i][y] := blk[i][y]
+                        nblk[i][z] := blk[i][z]
+
+                IF
+                  (mode /\ G3D.ROTATE.MODE.X) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][y]
+                        nblk[i][y] := (nblk[i][y] * cos.val) + (nblk[i][z] * sin.val)
+                        nblk[i][z] := (nblk[i][z] * cos.val) - (tmp * sin.val)
+                  (mode /\ G3D.ROTATE.MODE.NX) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][y]
+                        nblk[i][y] := (nblk[i][y] * cos.val) - (nblk[i][z] * sin.val)
+                        nblk[i][z] := (nblk[i][z] * cos.val) + (tmp * sin.val)
+                  TRUE
+                    SKIP
+                IF
+                  (mode /\ G3D.ROTATE.MODE.Y) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][x]
+                        nblk[i][x] := (nblk[i][x] * cos.val) + (nblk[i][z] * sin.val)
+                        nblk[i][z] := (nblk[i][z] * cos.val) - (tmp * sin.val)
+                  (mode /\ G3D.ROTATE.MODE.NY) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][x]
+                        nblk[i][x] := (nblk[i][x] * cos.val) - (nblk[i][z] * sin.val)
+                        nblk[i][z] := (nblk[i][z] * cos.val) + (tmp * sin.val)
+                  TRUE
+                    SKIP
+                IF
+                  (mode /\ G3D.ROTATE.MODE.Z) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][x]
+                        nblk[i][x] := (nblk[i][x] * cos.val) + (nblk[i][y] * sin.val)
+                        nblk[i][y] := (nblk[i][y] * cos.val) - (tmp * sin.val)
+                  (mode /\ G3D.ROTATE.MODE.NZ) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][x]
+                        nblk[i][x] := (nblk[i][x] * cos.val) - (nblk[i][y] * sin.val)
+                        nblk[i][y] := (nblk[i][y] * cos.val) + (tmp * sin.val)
+                  TRUE
+                    SKIP
+                 
+                out ! nblk
+:
+--}}}
+--{{{  PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 out!, CHAN G3D.PRJ.CONTROL ctrl?)
+--* Projects 3D points into 2D, preserves Z information.
+-- Maps a set of 3D points down into a set of 2D points, preserving the Z
+-- depth information for later operations.
+--
+-- @param in 3D points in.
+-- @param out 2D3 points out.
+-- @param ctrl Control channel.
+--
+PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 out!, CHAN G3D.PRJ.CONTROL ctrl?)
+  REAL32 x.scale, y.scale, z.depth:
+  REAL32 x.shift, y.shift, z.shift:
+  INT x2.shift, y2.shift:
+
+  PROC reset ()
+    SEQ
+      x.scale := 490.0
+      y.scale := 420.0
+      z.depth := 12.0
+      x.shift := 0.0
+      y.shift := 0.0
+      z.shift := 0.0
+      x2.shift := G3D.DEFAULT.WIDTH / 2
+      y2.shift := G3D.DEFAULT.HEIGHT / 2
+  :
+
+  SEQ
+
+    reset ()
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+          [2]REAL32 scale:
+          set.scaling; scale
+            SEQ
+              x.scale := scale[0]
+              y.scale := scale[1]
+          set.zdepth; z.depth
+            SKIP
+          [2]INT shft:
+          set.2dshift; shft
+            SEQ
+              x2.shift := shft[0]
+              y2.shift := shft[1]
+          [3]REAL32 shft:
+          set.3dshift; shft
+            SEQ
+              x.shift := shft[0]
+              y.shift := shft[1]
+              z.shift := shft[2]
+        MOBILE []G3D.POINT3 p3d:
+        in ? p3d
+          MOBILE []G3D.POINT2.3 p2d:
+          SEQ
+            p2d := MOBILE [SIZE p3d]G3D.POINT2.3
+
+            SEQ i = 0 FOR SIZE p3d
+              INITIAL REAL32 ez IS p3d[i][z] + z.shift:
+              SEQ
+                p2d[i][z] := ez
+                ez := ez + z.depth
+                p2d[i][x] := (INT ROUND (((p3d[i][x] + x.shift) / ez) * x.scale)) + x2.shift
+                p2d[i][y] := (INT ROUND (((p3d[i][y] + y.shift) / ez) * y.scale)) + y2.shift
+
+            out ! p2d
+:
+--}}}
+--{{{  PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--* Generates cube polygons from cube points.
+-- Expects to receive 8 points at a time, and from these generates a set of
+-- polygons that represent a cube.  Characteristics are controllable through
+-- the control channel (e.g. skip hidden surfaces).
+--
+-- @param in Points in (2D with Z-depth).
+-- @param out Polygons out.
+-- @param ctrl Control channel.
+--
+PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+  VAL [][]INT cubemap3 IS [[0,3,2],[0,1,2],
+                           [4,5,1],[4,0,1],
+                           [7,4,5],[7,6,5],
+                           [7,6,2],[7,3,2],
+                           [7,4,0],[7,3,0],
+                           [6,2,1],[6,5,1]]:
+  VAL [][]INT cubemap4 IS [[0,3,2,1],[4,0,1,5],
+                           [7,4,5,6],[3,7,6,2],
+                           [7,3,0,4],[5,1,2,6]]:
+  [12]INT pixmap3:
+  [6]INT pixmap4:
+  INITIAL BOOL trimap IS FALSE:
+  INITIAL BOOL backfaces IS FALSE:
+  SEQ
+
+    -- fairly arbitrary defaults
+    pixmap3 := [#00000080,#00000090,#00000020,#00000030,#00000050,#00000060,
+                #00000080,#00000090,#000000B0,#000000C0,#00000020,#00000030]
+    pixmap4 := [#000000FF,#0000FF00,#00FF0000,#00FFFF00,#00FF00FF,#0000FFFF]
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            SEQ
+              trimap := FALSE
+              backfaces := FALSE
+          set.trimap; trimap
+            SKIP
+          set.backfaces; backfaces
+            SKIP
+          INT fn, col:
+          set.face.colour; fn; col
+            IF
+              trimap AND ((fn >= 0) AND (fn < 12))
+                pixmap3[fn] := col
+              (NOT trimap) AND ((fn >= 0) AND (fn < 6))
+                pixmap4[fn] := col
+              TRUE
+                SKIP
+          MOBILE []INT cols:
+          set.face.colours; cols
+            INT l:
+            SEQ
+              l := SIZE cols
+              IF
+                trimap AND (l >= 12)
+                  l := 11
+                (NOT trimap) AND (l >= 6)
+                  l := 5
+                TRUE
+                  SKIP
+              SEQ i = 0 FOR l
+                IF
+                  trimap
+                    pixmap3[i] := cols[i]
+                  TRUE
+                    pixmap4[i] := cols[i]
+
+        MOBILE []G3D.POINT2.3 pnts:
+        in ? pnts
+          IF
+            (SIZE pnts) <> 8
+              SKIP
+            TRUE
+              MOBILE []G3D.POLY polys:
+              INT npoly, tpi:
+              [12]INT norms:
+              [12]INT pixels:
+              SEQ
+                IF
+                  trimap AND backfaces
+                    npoly := 12
+                  trimap
+                    npoly := 12     -- or less
+                  backfaces
+                    npoly := 6
+                  TRUE
+                    npoly := 6      -- or less
+
+                -- compute normals, based on cubic faces
+                SEQ i = 0 FOR 6
+                  INT norm:
+                  VAL [4]INT face IS cubemap4[i]:
+                  SEQ
+                    norm := ((pnts[face[3]][y] - pnts[face[0]][y]) * (pnts[face[1]][x] - pnts[face[0]][x])) -
+                            ((pnts[face[1]][y] - pnts[face[0]][y]) * (pnts[face[3]][x] - pnts[face[0]][x]))
+                    IF
+                      (NOT backfaces) AND (norm >= 0)
+                        -- not showing this face
+                        IF
+                          trimap
+                            npoly := npoly - 2
+                          TRUE
+                            npoly := npoly - 1
+                      TRUE
+                        SKIP
+                    IF
+                      trimap
+                        SEQ
+                          norms[i*2] := norm
+                          norms[(i*2)+1] := norm
+                          pixels[i*2] := pixmap3[i*2]
+                          pixels[(i*2)+1] := pixmap3[(i*2)+1]
+                      TRUE
+                        SEQ
+                          norms[i] := norm
+                          pixels[i] := pixmap4[i]
+
+                IF
+                  npoly <= 0
+                    npoly := 1
+                  TRUE
+                    SKIP
+
+                -- npoly should have the actual number of polygons needed
+                polys := MOBILE [npoly]G3D.POLY
+
+                tpi := 0
+                IF
+                  trimap
+                    SEQ i = 0 FOR 12
+                      IF
+                        (NOT backfaces) AND (norms[i] >= 0)
+                          -- not showing this face
+                          SKIP
+                        TRUE
+                          SEQ
+                            polys[tpi][npoints] := 3
+                            polys[tpi][norm] := norms[i]
+                            polys[tpi][pixel] := pixels[i]
+                            SEQ p = 0 FOR 3
+                              SEQ
+                                polys[tpi][x][p] := pnts[cubemap3[i][p]][x]
+                                polys[tpi][y][p] := pnts[cubemap3[i][p]][y]
+                                polys[tpi][z][p] := pnts[cubemap3[i][p]][z]
+                            tpi := tpi + 1
+                  TRUE
+                    SEQ i = 0 FOR 6
+                      IF
+                        (NOT backfaces) AND (norms[i] >= 0)
+                          -- not showing this face
+                          SKIP
+                        TRUE
+                          SEQ
+                            polys[tpi][npoints] := 4
+                            polys[tpi][norm] := norms[i]
+                            polys[tpi][pixel] := pixels[i]
+                            SEQ p = 0 FOR 4
+                              SEQ
+                                polys[tpi][x][p] := pnts[cubemap4[i][p]][x]
+                                polys[tpi][y][p] := pnts[cubemap4[i][p]][y]
+                                polys[tpi][z][p] := pnts[cubemap4[i][p]][z]
+                            tpi := tpi + 1
+                out ! polys
+:
+--}}}
+--{{{  PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--* Generates polygons representing the Inmos style butterfly logo.
+-- The actual pixel positions were generated by hand by tracing from
+-- an Inmos promotional video showing the butterflies running on a
+-- Transputer network.
+--
+-- @param in Points in (2D with Z-depth).
+-- @param out Polygons out.
+-- @param ctrl Control channel.
+--
+PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+
+  VAL [][]INT polymap IS [[0,1,2,3], [0,3,6,-1], [6,3,4,5],
+                          [13,7,8,12], [8,9,12,-1], [9,10,11,12],
+                          [3,17,18,16], [16,18,19,20],
+                          [12,21,24,25], [21,22,23,24],
+                          [2,14,13,15],
+                          [26,28,-1,-1], [27,29,-1,-1]]:
+  VAL [][]INT normmap IS [[0,3,5,6], [8,9,11,12], [2,14,13,15]]:
+  VAL []INT polynorms IS [0,0,0,1,1,1,0,0,1,1,2,2,2]:
+  VAL []INT polywidth IS [4,3,4,4,3,4,4,4,4,4,4,2,2]:
+  INITIAL INT pixel IS #00008080:
+  SEQ
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            SKIP
+          BOOL trimap:
+          set.trimap; trimap
+            SKIP
+          BOOL backfaces:
+          set.backfaces; backfaces
+            SKIP
+          INT fn, col:
+          set.face.colour; fn; col
+            IF
+              fn = 0
+                pixel := col
+              TRUE
+                SKIP
+          MOBILE []INT cols:
+          set.face.colours; cols
+            SKIP
+
+        MOBILE []G3D.POINT2.3 pnts:
+        in ? pnts
+          IF
+            (SIZE pnts) <> 30
+              SKIP
+            TRUE
+              MOBILE []G3D.POLY polys:
+              INT npoly, tpi:
+              [3]INT norms:
+              SEQ
+                npoly := 13
+
+                -- compute normals, based on triangular faces
+                SEQ i = 0 FOR 3
+                  INT norm:
+                  VAL [4]INT face IS normmap[i]:
+                  SEQ
+                    norm := ((pnts[face[3]][y] - pnts[face[0]][y]) * (pnts[face[1]][x] - pnts[face[0]][x])) -
+                            ((pnts[face[1]][y] - pnts[face[0]][y]) * (pnts[face[3]][x] - pnts[face[0]][x]))
+                    norms[i] := norm
+
+                polys := MOBILE [npoly]G3D.POLY
+                SEQ i = 0 FOR 13
+                  SEQ
+                    polys[i][npoints] := polywidth[i]
+                    polys[i][norm] := norms[polynorms[i]]
+                    polys[i][pixel] := pixel
+                    SEQ p = 0 FOR polywidth[i]
+                      SEQ
+                        polys[i][x][p] := pnts[polymap[i][p]][x]
+                        polys[i][y][p] := pnts[polymap[i][p]][y]
+                        polys[i][z][p] := pnts[polymap[i][p]][z]
+
+                out ! polys
+:
+--}}}
+--{{{  PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?)
+--* Converts polygons to scan-line data.
+-- Expects to receive sets of polygons on its input, which it then transforms
+-- into a set of G3D.POLY.SCAN structures.
+--
+-- @param in Polygons input.
+-- @param out Scan-line data output.
+-- @param ctrl Control channel.
+--
+PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, SHARED CHAN BYTE scr!)
+  INT vp.width, vp.height:
+
+  PROC reset ()
+    SEQ
+      vp.width := G3D.DEFAULT.WIDTH
+      vp.height := G3D.MAX.SCAN.HEIGHT
+  :
+
+  PROC do.fix (G3D.POLY.SCAN scan, VAL INT x1, y1, x2, y2) --{{{
+    INITIAL INT x1 IS x1:
+    INITIAL INT y1 IS y1:
+    INITIAL INT x2 IS x2:
+    INITIAL INT y2 IS y2:
+    SEQ
+      IF
+        y2 < y1
+          SEQ
+            -- swap points around
+            y2, y1 := y1, y2
+            x2, x1 := x1, x2
+        TRUE
+          SKIP
+
+      IF
+        y1 < scan[scan.s]
+          scan[scan.s] := y1
+        TRUE
+          SKIP
+      IF
+        y2 > scan[scan.e]
+          scan[scan.e] := y2
+        TRUE
+          SKIP
+
+      #IF FALSE
+      CLAIM scr!
+        SEQ
+          out.string ("do.fix: (halfway): ", 0, scr!)
+          out.int (x1, 0, scr!)
+          out.string (",", 0, scr!)
+          out.int (y1, 0, scr!)
+          out.string (" - ", 0, scr!)
+          out.int (x2, 0, scr!)
+          out.string (",", 0, scr!)
+          out.int (y2, 0, scr!)
+          out.string (": scan.s=", 0, scr!)
+          out.int (scan[scan.s], 0, scr!)
+          out.string (", scan.e=", 0, scr!)
+          out.int (scan[scan.e], 0, scr!)
+          out.string ("*n", 0, scr!)
+
+      #ENDIF
+      IF
+        y1 = y2
+          IF
+            (y1 >= 0) AND (y1 < vp.height)
+              SEQ
+                -- flat polygon
+                scan[start][y1] := x1
+                scan[end][y1] := x2
+            TRUE
+              SKIP
+        TRUE
+          INT x, y, step:
+          SEQ
+            -- complex polygon
+            x := x1 << 16
+            step := ((x2 - x1) << 16) / (y2 - y1)
+            x := x + step
+            y1 := y1 + 1
+
+            SEQ y = y1 FOR ((y2 - y1) + 1)
+              SEQ
+                IF
+                  (y >= 0) AND (y < vp.height)
+                    IF
+                      scan[start][y] = (-1)
+                        scan[start][y] := (x >> 16)
+                      (x >> 16) < vp.width
+                        scan[end][y] := (x >> 16)
+                      TRUE
+                        scan[end][y] := vp.width - 1
+                  TRUE
+                    SKIP
+                x := x + step
+  :
+  --}}}
+
+  SEQ
+
+    reset ()
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+        MOBILE []G3D.POLY polys:
+        in ? polys
+          MOBILE []G3D.POLY.SCAN scans:
+          SEQ
+            scans := MOBILE [SIZE polys]G3D.POLY.SCAN
+
+            SEQ i = 0 FOR SIZE polys
+              G3D.POLY.SCAN tsc IS scans[i]:
+              G3D.POLY ply IS polys[i]:
+              SEQ
+                SEQ j = 0 FOR G3D.MAX.SCAN.HEIGHT
+                  SEQ
+                    tsc[start][j] := -1
+                    tsc[end][j] := -1
+                tsc[norm] := ply[norm]
+                tsc[pixel] := ply[pixel]
+                tsc[scan.s] := G3D.MAX.SCAN.HEIGHT
+                tsc[scan.e] := 0
+
+                #IF FALSE
+                CLAIM scr!
+                  SEQ j = 0 FOR ply[npoints]
+                    SEQ
+                      out.string ("poly.scanlines: poly point ", 0, scr!)
+                      out.int (j, 0, scr!)
+                      out.string (" of ", 0, scr!)
+                      out.int (ply[npoints], 0, scr!)
+                      out.string (" at ", 0, scr!)
+                      out.int (ply[x][j], 0, scr!)
+                      out.string (",", 0, scr!)
+                      out.int (ply[y][j], 0, scr!)
+                      out.string (" [z=", 0, scr!)
+                      out.int (INT ROUND ply[z][j], 0, scr!)
+                      out.string (",n=", 0, scr!)
+                      out.int (ply[norm], 0, scr!)
+                      out.string ("]*n", 0, scr!)
+                #ENDIF
+
+                SEQ j = 0 FOR ply[npoints] - 1
+                  do.fix (tsc, ply[x][j], ply[y][j], ply[x][j+1], ply[y][j+1])
+                VAL INT j IS ply[npoints] - 1:
+                do.fix (tsc, ply[x][j], ply[y][j], ply[x][0], ply[y][0])
+
+                IF
+                  tsc[scan.s] < 0
+                    tsc[scan.s] := 0
+                  tsc[scan.s] >= vp.height
+                    tsc[scan.s] := vp.height - 1
+                  TRUE
+                    SKIP
+                IF
+                  tsc[scan.e] < 0
+                    tsc[scan.e] := 0
+                  tsc[scan.e] >= vp.height
+                    tsc[scan.e] := vp.height - 1
+                  TRUE
+                    SKIP
+            out ! scans
+:
+--}}}
+--{{{  PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
+--* Renders polygon scan-line data onto a raster.
+-- Renders polygon scan-line data onto raster.
+--
+-- @param data Polygon scan-line data input.
+-- @param rlink Raster I/O.
+-- @param ctrl Control channel.
+--
+PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, SHARED CHAN BYTE scr!)
+  INT mode:
+  INT vp.width, vp.height:
+
+  PROC reset () --{{{
+    SEQ
+      mode := G3D.RENDER.MODE.NORM
+      vp.width := G3D.DEFAULT.WIDTH
+      vp.height := G3D.MAX.SCAN.HEIGHT
+  :
+  --}}}
+  PROC glenz.poly.render (RASTER r, VAL G3D.POLY.SCAN scan) --{{{
+    SEQ i = scan[scan.s] FOR (scan[scan.e] - scan[scan.s]) + 1
+      INITIAL INT stx IS scan[start][i]:
+      IF
+        stx <> (-1)
+          INITIAL INT edx IS scan[end][i]:
+          SEQ
+            IF
+              stx >= vp.width
+                stx := vp.width - 1
+              TRUE
+                SKIP
+            IF
+              edx >= vp.width
+                edx := vp.width - 2
+              TRUE
+                SKIP
+            IF
+              edx = (-1)
+                r[i][stx] := scan[pixel]
+              TRUE
+                SEQ
+                  IF
+                    stx > edx
+                      stx, edx := edx, stx
+                    TRUE
+                      SKIP
+                  VAL [4]BYTE pixel RETYPES scan[pixel]:
+                  SEQ x = (stx + 1) FOR (edx - stx)
+                    [4]BYTE pval RETYPES r[i][x]:
+                    SEQ pv = 0 FOR 4
+                      IF
+                        pixel[pv] = #00               -- leave this component alone
+                          SKIP
+                        TRUE
+                          INITIAL INT iv IS ((INT pval[pv]) + (INT pixel[pv])) >> 1:
+                          IF
+                            iv > 245
+                              pval[pv] := #FF
+                            TRUE
+                              pval[pv] := BYTE (iv + 10)    -- tend to get brighter
+        TRUE
+          SKIP
+  :
+  --}}}
+  PROC normal.poly.render (RASTER r, VAL G3D.POLY.SCAN scan) --{{{
+    SEQ i = scan[scan.s] FOR (scan[scan.e] - scan[scan.s]) + 1
+      INITIAL INT stx IS scan[start][i]:
+      IF
+        stx <> (-1)
+          INITIAL INT edx IS scan[end][i]:
+          SEQ
+            IF
+              stx >= vp.width
+                stx := vp.width - 1
+              TRUE
+                SKIP
+            IF
+              edx >= vp.width
+                edx := vp.width - 2
+              TRUE
+                SKIP
+            IF
+              edx = (-1)
+                r[i][stx] := scan[pixel]
+              TRUE
+                SEQ
+                  IF
+                    stx > edx
+                      stx, edx := edx, stx
+                    TRUE
+                      SKIP
+                  #IF FALSE
+                  CLAIM scr!
+                    SEQ
+                      out.string ("normal.poly.render(): stx=", 0, scr!)
+                      out.int (stx, 0, scr!)
+                      out.string (", edx=", 0, scr!)
+                      out.int (edx, 0, scr!)
+                      out.string ("*n", 0, scr!)
+                  #ENDIF
+                  SEQ x = (stx + 1) FOR (edx - stx)
+                    r[i][x] := scan[pixel]
+        TRUE
+          SKIP
+  :
+  --}}}
+
+  G3D.RENDER.ENGINE! rlink.out:
+  SEQ
+
+    reset ()
+
+    INT n:
+    rlink.in[link] ? CASE set.next; n; rlink.out
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+          set.mode; mode
+            SKIP
+
+
+        rlink.in[link] ? CASE
+          RASTER r:
+          raster; r
+            --{{{  render and pass on
+            MOBILE []G3D.POLY.SCAN scans:
+            SEQ
+              data ? scans
+
+              SEQ i = 0 FOR SIZE scans
+                G3D.POLY.SCAN scan IS scans[i]:
+                SEQ
+                  IF
+                    (mode /\ G3D.RENDER.MODE.NORM) <> 0
+                      SEQ
+                        -- modify polygon scan colour according to normal
+                        INITIAL INT colour IS scan[pixel]:
+                        SEQ
+                          [4]BYTE col RETYPES colour:
+                          SEQ
+                            SEQ v = 0 FOR 4
+                              IF
+                                col[v] > 0
+                                  IF
+                                    scan[norm] >= 0
+                                      col[v] := BYTE ((((INT col[v]) * scan[norm]) >> 14) /\ #FF)
+                                    TRUE
+                                      col[v] := BYTE ((((INT col[v]) * (-scan[norm])) >> 14) /\ #FF)
+                                TRUE
+                                  SKIP
+                          scan[pixel] := colour
+                    TRUE
+                      SKIP
+                  IF
+                    (mode /\ G3D.RENDER.MODE.GLENZ) <> 0
+                      glenz.poly.render (r, scan)
+                    TRUE
+                      SEQ
+                        #IF FALSE
+                        CLAIM scr!
+                          SEQ
+                            out.string ("render.polyscans(): normal render, scan[scan.s] = ", 0, scr!)
+                            out.int (scan[scan.s], 0, scr!)
+                            out.string (", scan[scan.e] = ", 0, scr!)
+                            out.int (scan[scan.e], 0, scr!)
+                            out.string ("*n", 0, scr!)
+                        #ENDIF
+                        normal.poly.render (r, scan)
+                    TRUE
+                      SKIP
+
+              rlink.out[link] ! raster; r
+            --}}}
+          INT n:
+          G3D.RENDER.ENGINE! tmp:
+          set.next; n; tmp
+            --{{{  set next or pass on
+            IF
+              n > 0
+                rlink.out[link] ! set.next; n-1; tmp
+              TRUE
+                SEQ
+                  tmp[link] ! set.next; 0; rlink.out
+                  rlink.out := tmp
+            --}}}
+:
+--}}}
+--{{{  PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
+--* Renders polygons as a series of lines (wireframe).
+--
+-- @param data Polygons input.
+-- @param rlink Raster I/O.
+-- @param ctrl Control channel.
+-- @param scr Shared screen channel.
+--
+PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, SHARED CHAN BYTE scr!)
+  INT mode:
+  INT vp.width, vp.height:
+
+  PROC reset () --{{{
+    SEQ
+      mode := G3D.RENDER.MODE.NORM
+      vp.width := G3D.DEFAULT.WIDTH
+      IF
+        G3D.MAX.SCAN.HEIGHT > G3D.DEFAULT.HEIGHT
+          vp.height := G3D.DEFAULT.HEIGHT
+        TRUE
+          vp.height := G3D.MAX.SCAN.HEIGHT
+  :
+  --}}}
+  PROC do.line (RASTER r, VAL INT x1, y1, x2, y2, pixel) --{{{
+    INITIAL INT x1 IS x1:
+    INITIAL INT y1 IS y1:
+    INITIAL INT x2 IS x2:
+    INITIAL INT y2 IS y2:
+    SEQ
+      IF
+        y2 < y1
+          SEQ
+            -- swap points around
+            y2, y1 := y1, y2
+            x2, x1 := x1, x2
+        TRUE
+          SKIP
+
+      IF
+        y1 = y2
+          --{{{  flat horizontal line
+          IF
+            (y1 >= 0) AND (y1 < vp.height)
+              SEQ
+                IF
+                  (x1 < 0) AND (x2 < 0)
+                    SKIP
+                  (x1 >= vp.width) AND (x2 >= vp.width)
+                    SKIP
+                  TRUE
+                    SEQ
+                      IF
+                        x1 > x2
+                          x1, x2 := x2, x1
+                        TRUE
+                          SKIP
+                      IF
+                        x1 < 0
+                          x1 := 0
+                        TRUE
+                          SKIP
+                      IF
+                        x2 >= vp.width
+                          x2 := vp.width - 1
+                        TRUE
+                          SKIP
+
+                      SEQ i = x1 FOR (x2 - x1)
+                        r[y1][i] := pixel
+            TRUE
+              SKIP
+          --}}}
+        x1 = x2
+          --{{{  flat vertical line
+          IF
+            (x1 >= 0) AND (x2 < vp.width)
+              IF
+                (y1 < 0) AND (y2 < 0)
+                  SKIP
+                (y1 >= vp.height) AND (y2 >= vp.height)
+                  SKIP
+                TRUE
+                  SEQ
+                    IF
+                      y1 > y2
+                        y1, y2 := y2, y1
+                      TRUE
+                        SKIP
+                    IF
+                      y1 < 0
+                        y1 := 0
+                      TRUE
+                        SKIP
+                    IF
+                      y2 >= vp.height
+                        y2 := vp.height - 1
+                      TRUE
+                        SKIP
+
+                    SEQ j = y1 FOR (y2 - y1)
+                      r[j][x1] := pixel
+            TRUE
+              SKIP
+          --}}}
+        TRUE
+          INITIAL INT grad IS (y2 - y1) / (x2 - x1):
+          IF
+            grad = 0
+              --{{{  low gradient, draw by X
+              SEQ
+                IF
+                  x1 > x2
+                    SEQ
+                      x1, x2 := x2, x1
+                      y1, y2 := y2, y1
+                  TRUE
+                    SKIP
+
+                INT y, step:
+                SEQ
+                  y := y1 << 16
+                  step := ((y2 - y1) << 16) / (x2 - x1)
+                  y := y + step
+                  x1 := x1 + 1
+
+                  SEQ x = x1 FOR ((x2 - x1) + 1)
+                    SEQ
+                      IF
+                        (x >= 0) AND (x < vp.width)
+                          VAL INT sy IS y >> 16:
+                          IF
+                            (sy >= 0) AND (sy < vp.height)
+                              r[sy][x] := pixel
+                            TRUE
+                              SKIP
+                        TRUE
+                          SKIP
+                      y := y + step
+              --}}}
+            TRUE
+              --{{{  steep gradient, draw by Y
+              INT x, step:
+              SEQ
+                x := x1 << 16
+                step := ((x2 - x1) << 16) / (y2 - y1)
+                x := x + step
+                y1 := y1 + 1
+
+                SEQ y = y1 FOR ((y2 - y1) + 1)
+                  SEQ
+                    IF
+                      (y >= 0) AND (y < vp.height)
+                        VAL INT sx IS x >> 16:
+                        IF
+                          (sx >= 0) AND (sx < vp.width)
+                            r[y][sx] := pixel
+                          TRUE
+                            SKIP
+                      TRUE
+                        SKIP
+                    x := x + step
+              --}}}
+  :
+  --}}}
+  PROC poly.frame.render (RASTER r, VAL G3D.POLY poly) --{{{
+    IF
+      poly[npoints] < 2
+        SKIP
+      poly[npoints] = 2
+        do.line (r, poly[x][0], poly[y][0], poly[x][1], poly[y][1], poly[pixel])
+      TRUE
+        SEQ
+          SEQ i = 0 FOR poly[npoints] - 1
+            do.line (r, poly[x][i], poly[y][i], poly[x][i+1], poly[y][i+1], poly[pixel])
+          VAL INT lp IS poly[npoints] - 1:
+          do.line (r, poly[x][lp], poly[y][lp], poly[x][0], poly[y][0], poly[pixel])
+  :
+  --}}}
+
+  G3D.RENDER.ENGINE! rlink.out:
+  SEQ
+    reset ()
+
+    INT n:
+    rlink.in[link] ? CASE set.next; n; rlink.out
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+          set.mode; mode
+            SKIP
+
+        rlink.in[link] ? CASE
+          RASTER r:
+          raster; r
+            --{{{  render and pass on
+            MOBILE []G3D.POLY polys:
+            SEQ
+              data ? polys
+
+              SEQ i = 0 FOR SIZE polys
+                poly.frame.render (r, polys[i])
+
+              rlink.out[link] ! raster; r
+            --}}}
+          INT n:
+          G3D.RENDER.ENGINE! tmp:
+          set.next; n; tmp
+            --{{{  set next or pass on
+            IF
+              n > 0
+                rlink.out[link] ! set.next; n-1; tmp
+              TRUE
+                SEQ
+                  tmp[link] ! set.next; 0; rlink.out
+                  rlink.out := tmp
+            --}}}
+:
+--}}}
+--{{{  PROC orchestra1 (CHAN G3D.ROT.CONTROL rot.out!)
+--* Orchestrates components.
+--
+-- @param rot.out Rotation control out.
+--
+PROC orchestra1 (CHAN G3D.ROT.CONTROL rot.out!)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+
+    WHILE TRUE
+      SEQ
+        SEQ i = 0 FOR 20
+          SEQ
+            t := t PLUS 100000
+            tim ? AFTER t
+            rot.out ! add.increment; 0.01
+        SEQ i = 0 FOR 40
+          SEQ
+            t := t PLUS 100000
+            tim ? AFTER t
+            rot.out ! add.increment; -0.01
+        SEQ i = 0 FOR 20
+          SEQ
+            t := t PLUS 100000
+            tim ? AFTER t
+            rot.out ! add.increment; 0.01
+:
+--}}}
+
+--{{{  PROC raster.chain.head (CHAN RASTER in?, G3D.RENDER.ENGINE! head, CHAN G3D.RENDER.ENGINE! new.link?, VAL BOOL fade)
+--* Head of the raster render chain.
+--
+-- @param in Rasters in.
+-- @param head Head of raster render chain.
+-- @param new.link Channel on which new rendering engines are added.
+-- @param fade Whether to fade (TRUE) or clear (FALSE) rasters.
+--
+PROC raster.chain.head (CHAN RASTER in?, G3D.RENDER.ENGINE! head, CHAN G3D.RENDER.ENGINE! new.link?, VAL BOOL fade)
+  INITIAL INT count IS 0:
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    ALT
+      G3D.RENDER.ENGINE! tmp:
+      new.link ? tmp
+        SEQ
+          -- place last in the chain for now
+          IF
+            count = 0
+              SEQ
+                tmp[link] ! set.next; 0; head       -- initialising
+                head := tmp
+            TRUE
+              head[link] ! set.next; count - 1; tmp
+          count := count + 1
+      RASTER r:
+      in ? r
+        SEQ
+          IF
+            fade
+              SEQ y = 0 FOR SIZE r
+                SEQ x = 0 FOR SIZE r[0]
+                  [4]BYTE val RETYPES r[y][x]:
+                  SEQ i = 0 FOR 4
+                    IF
+                      val[i] > #30
+                        val [i] := val[i] - #18
+                      TRUE
+                        val[i] := #00
+            TRUE
+              raster.clear (r, #00000000)
+          head[link] ! raster; r
+:
+--}}}
+--{{{  PROC raster.chain.tail (CHAN RASTER out!, G3D.RENDER.ENGINE? tail)
+--* Tail of the raster render chain.
+--
+-- @param out Rasters out.
+-- @param tail Tail of raster render chain.
+--
+PROC raster.chain.tail (CHAN RASTER out!, G3D.RENDER.ENGINE? tail)
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    tail[link] ? CASE
+      RASTER r:
+      raster; r
+        out ! r
+      INT n:
+      G3D.RENDER.ENGINE! tmp:
+      set.next; n; tmp
+        STOP
+:
+--}}}
+--{{{  PROC raster.chain (CHAN RASTER in?, out!, CHAN G3D.RENDER.ENGINE! new.link?, VAL BOOL fade)
+--* Implements raster render chain.
+--
+-- @param in Rasters in.
+-- @param out Rasters out.
+-- @param new.link Channel on which new rendering engines are added.
+-- @param fade Whether to fade (TRUE) or clear (FALSE) rasters.
+--
+PROC raster.chain (CHAN RASTER in?, out!, CHAN G3D.RENDER.ENGINE! new.link?, VAL BOOL fade)
+  G3D.RENDER.ENGINE! cli:
+  G3D.RENDER.ENGINE? svr:
+  SEQ
+    cli, svr := MOBILE G3D.RENDER.ENGINE
+
+    PAR
+      raster.chain.head (in?, cli!, new.link?, fade)
+      raster.chain.tail (out!, svr?)
+:
+--}}}
+
+
+--{{{  PROC planar.path (CHAN G3D.PRJ.CONTROL out!, VAL REAL32 xrad, zrad, pangle, iangle, VAL INT islow, VAL [3]REAL32 pos)
+--* Moves a 3D object around a plane following an elliptical path.
+--
+-- @param out Projection control.
+-- @param xrad X-radius of path.
+-- @param zrad Z-radius of path.
+-- @param pangle Tilt in XY plane of the path.
+-- @param iangle Tilt in XZ plane of the path.
+-- @param islow Slow-down setting
+-- @param pos Initial position.
+--
+PROC planar.path (CHAN G3D.PRJ.CONTROL out!, VAL REAL32 xrad, zrad, pangle, iangle, VAL INT islow, VAL [3]REAL32 pos)
+  TIMER tim:
+  INT t:
+  REAL32 angle:
+  SEQ
+    angle := iangle
+    tim ? t
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      [3]REAL32 npos:
+      SEQ
+        t := t PLUS (20000 + islow)
+        tim ? AFTER t
+
+        npos[0] := pos[0] + (xrad * COS (angle))
+        npos[2] := pos[2] + (zrad * SIN (angle))
+        npos[1] := pos[1] + (npos[2] * SIN (pangle))
+
+        out ! set.3dshift; npos
+        angle := angle + 0.01
+:
+--}}}
+--{{{  PROC glenz.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
+--* Implements a basic "Glenz cube".
+--
+-- @param rlink.in Render link.
+-- @param width Width of raster.
+-- @param height Height of raster.
+--
+PROC glenz.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, SHARED CHAN BYTE scr!)
+  CHAN MOBILE []G3D.POINT3 gp1, gp2:
+  CHAN MOBILE []G3D.POINT2.3 gc1:
+  CHAN MOBILE []G3D.POLY pc1:
+  CHAN MOBILE []G3D.POLY.SCAN ps1:
+  CHAN G3D.GEN.CONTROL gen.ctl:
+  CHAN G3D.ROT.CONTROL rot.ctl:
+  CHAN G3D.PRJ.CONTROL prj.ctl:
+  CHAN G3D.PGN.CONTROL pgn.ctl:
+  CHAN G3D.PSC.CONTROL psc.ctl:
+  CHAN G3D.RDR.CONTROL rdr.ctl:
+  PAR
+    cubepoints.generator (gp1!, gen.ctl?) 
+    points3d.rotate (gp1?, gp2!, rot.ctl?)
+    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?)
+    cubify.points (gc1?, pc1!, pgn.ctl?)
+    poly.scanlines (pc1?, ps1!, psc.ctl?, scr!)
+    render.polyscans (ps1?, rlink.in?, rdr.ctl?, scr!)
+
+    SEQ
+      prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
+      rdr.ctl ! set.mode; G3D.RENDER.MODE.GLENZ
+      pgn.ctl ! set.trimap; FALSE
+      pgn.ctl ! set.backfaces; TRUE
+      rot.ctl ! add.increment; 0.03
+      -- orchestra1 (rot.ctl!)
+      planar.path (prj.ctl, 3.0, 4.0, 0.0, 0.0, 0, [0.0, 0.0, 0.0])
+:
+--}}}
+--{{{  PROC glenz.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)
+--* Dynamically spawns a new 'glenz.network'.
+--
+-- @param width Raster width.
+-- @param height Raster height.
+-- @param new.link Channel to communicate new object link.
+--
+PROC glenz.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, SHARED CHAN BYTE scr!)
+  G3D.RENDER.ENGINE! rlink:
+  G3D.RENDER.ENGINE? rsvr:
+  SEQ
+    rsvr, rlink := MOBILE G3D.RENDER.ENGINE
+    FORK glenz.network (rsvr?, width, height, scr!)
+    new.link ! rlink
+:
+--}}}
+--{{{  PROC glenz.network2 (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
+--* Implements a basic "Glenz cube".
+--
+-- @param rlink.in Render link.
+-- @param width Width of raster.
+-- @param height Height of raster.
+--
+PROC glenz.network2 (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, SHARED CHAN BYTE scr!)
+  CHAN MOBILE []G3D.POINT3 gp1, gp2:
+  CHAN MOBILE []G3D.POINT2.3 gc1:
+  CHAN MOBILE []G3D.POLY pc1:
+  CHAN MOBILE []G3D.POLY.SCAN ps1:
+  CHAN G3D.GEN.CONTROL gen.ctl:
+  CHAN G3D.ROT.CONTROL rot.ctl:
+  CHAN G3D.PRJ.CONTROL prj.ctl:
+  CHAN G3D.PGN.CONTROL pgn.ctl:
+  CHAN G3D.PSC.CONTROL psc.ctl:
+  CHAN G3D.RDR.CONTROL rdr.ctl:
+  PAR
+    cubepoints.generator (gp1!, gen.ctl?) 
+    points3d.rotate (gp1?, gp2!, rot.ctl?)
+    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?)
+    cubify.points (gc1?, pc1!, pgn.ctl?)
+    poly.scanlines (pc1?, ps1!, psc.ctl?, scr!)
+    render.polyscans (ps1?, rlink.in?, rdr.ctl?, scr!)
+
+    SEQ
+      gen.ctl ! add.scale; [0.5, 0.5, 2.0]
+      prj.ctl ! set.3dshift; [-4.0, 0.0, 6.0]
+      rot.ctl ! add.increment; 0.05
+      rot.ctl ! set.mode; G3D.ROTATE.MODE.Y \/ G3D.ROTATE.MODE.Z
+      rdr.ctl ! set.mode; G3D.RENDER.MODE.NORM
+      pgn.ctl ! set.trimap; FALSE
+      pgn.ctl ! set.backfaces; FALSE
+      pgn.ctl ! set.face.colours; [#000000FF,#00000080,#0000FF00,#00008000,#00FF0000,#00800000,
+                                   #0000FFFF,#00008080,#00FFFF00,#00808000,#00FF00FF,#00800080]
+      -- orchestra1 (rot.ctl!)
+      planar.path (prj.ctl!, 4.0, 4.0, 3.141, 0.0, 0, [0.0, 0.0, 2.0])
+:
+--}}}
+--{{{  PROC glenz.network2.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)
+--* Dynamically spawns a new 'glenz.network2'.
+--
+-- @param width Raster width.
+-- @param height Raster height.
+-- @param new.link Channel to communicate new object link.
+--
+PROC glenz.network2.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, SHARED CHAN BYTE scr!)
+  G3D.RENDER.ENGINE! rlink:
+  G3D.RENDER.ENGINE? rsvr:
+  SEQ
+    rsvr, rlink := MOBILE G3D.RENDER.ENGINE
+    FORK glenz.network2 (rsvr?, width, height, scr!)
+    new.link ! rlink
+:
+--}}}
+--{{{  PROC screen.cube (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
+--* Implements an on-screen cube showing the image boundary
+--
+-- @param rlink.in Render link.
+-- @param width Width of raster.
+-- @param height Height of raster.
+--
+PROC screen.cube (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, SHARED CHAN BYTE scr!)
+  CHAN MOBILE []G3D.POINT3 gp1:
+  CHAN MOBILE []G3D.POINT2.3 gc1:
+  CHAN MOBILE []G3D.POLY pc1:
+  CHAN G3D.GEN.CONTROL gen.ctl:
+  CHAN G3D.PRJ.CONTROL prj.ctl:
+  CHAN G3D.PGN.CONTROL pgn.ctl:
+  CHAN G3D.RDR.CONTROL rdr.ctl:
+  PAR
+    cubepoints.generator (gp1!, gen.ctl?)
+    points.3d.to.2d3 (gp1?, gc1!, prj.ctl?)
+    cubify.points (gc1?, pc1!, pgn.ctl?)
+    render.polyframe (pc1?, rlink.in?, rdr.ctl?, scr!)
+
+    SEQ
+      gen.ctl ! add.scale; [5.0, 5.0, 5.0]
+      gen.ctl ! add.trans; [0.0, 0.0, 3.0]
+      pgn.ctl ! set.trimap; FALSE
+      pgn.ctl ! set.backfaces; TRUE
+      pgn.ctl ! set.face.colours; [#00FFFFFF, #00FFFFFF, #00FFFFFF, #00FFFFFF, #00FFFFFF, #00FFFFFF,
+                                   #00FFFFFF, #00FFFFFF, #00FFFFFF, #00FFFFFF, #00FFFFFF, #00FFFFFF]
+      rdr.ctl ! set.mode; G3D.RENDER.MODE.NONE
+
+:
+--}}}
+--{{{  PROC screen.cube.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)
+--* Dynamically spawns a new 'screen.cube'.
+--
+-- @param width Raster width.
+-- @param height Raster height.
+-- @param new.link Channel to communicate new object link.
+--
+PROC screen.cube.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, SHARED CHAN BYTE scr!)
+  G3D.RENDER.ENGINE! rlink:
+  G3D.RENDER.ENGINE? rsvr:
+  SEQ
+    rsvr, rlink := MOBILE G3D.RENDER.ENGINE
+    FORK screen.cube (rsvr?, width, height, scr!)
+    new.link ! rlink
+:
+--}}}
+--{{{  PROC butterfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, VAL BOOL rpix)
+--* Implements a butterfly that flaps around a particular path.
+--
+-- @param rlink.in Render link.
+-- @param width Width of raster.
+-- @param height Height of raster.
+-- @param rpix Random initial placement.
+--
+PROC butterfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, VAL BOOL rpix, SHARED CHAN BYTE scr!)
+  CHAN MOBILE []G3D.POINT3 gp1, gp2:
+  CHAN MOBILE []G3D.POINT2.3 gc1:
+  CHAN MOBILE []G3D.POLY pc1:
+  CHAN MOBILE []G3D.POLY.SCAN ps1:
+  CHAN G3D.GEN.CONTROL gen.ctl:
+  CHAN G3D.ROT.CONTROL rot.ctl:
+  CHAN G3D.PRJ.CONTROL prj.ctl:
+  CHAN G3D.PGN.CONTROL pgn.ctl:
+  CHAN G3D.PSC.CONTROL psc.ctl:
+  CHAN G3D.RDR.CONTROL rdr.ctl:
+  CHAN BOOL trigger:
+  PAR
+    BOOL any:
+    SEQ
+      trigger ? any
+      fbypoints.generator (gp1!, gen.ctl?)
+
+    points3d.rotate (gp1?, gp2!, rot.ctl?)
+    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?)
+    flutterby.points (gc1?, pc1!, pgn.ctl?)
+    render.polyframe (pc1?, rlink.in?, rdr.ctl?, scr!)
+    -- poly.scanlines (pc1?, ps1!, psc.ctl?, scr!)
+    -- render.polyscans (ps1?, rlink, rdr.ctl?, scr!)
+
+    REAL32 xrad, zrad, pangle:
+    REAL32 iangle:
+    REAL32 xoffs, yoffs, zoffs:
+    INT islow:
+    SEQ
+      -- prj.ctl ! set.3dshift; [-5.0, 0.0, 6.0]
+      rot.ctl ! add.increment; 0.04
+      rot.ctl ! set.mode; G3D.ROTATE.MODE.DEMO
+      trigger ! TRUE
+      rdr.ctl ! set.mode; G3D.RENDER.MODE.GLENZ
+
+      IF
+        rpix
+          TIMER tim:
+          INT seed, val:
+          SEQ
+            tim ? seed
+            seed := (seed >> 2) + 1
+
+            [4]BYTE pix RETYPES val:
+            SEQ v = 0 FOR 3
+              INT n:
+              SEQ
+                n, seed := random (127, seed)
+                pix[v] := BYTE ((n + 100) /\ #FF)
+
+            pgn.ctl ! set.face.colour; 0; val
+
+            val, seed := random (200, seed)
+            xrad := 2.0 + ((REAL32 ROUND val) / 100.0)
+            
+            val, seed := random (500, seed)
+            xoffs := (REAL32 ROUND val) / 100.0
+            xoffs := (-2.5) + xoffs
+
+            val, seed := random (700, seed)
+            yoffs := (-4.0) + ((REAL32 ROUND val) / 100.0)
+
+            val, seed := random (100, seed)
+            pangle := (-2.141) - ((REAL32 ROUND val) / 100.0)
+
+            val, seed := random (300, seed)
+            zrad := 2.0 + ((REAL32 ROUND val) / 100.0)
+
+            val, seed := random (620, seed)
+            iangle := ((REAL32 ROUND val) / 100.0)
+
+            islow, seed := random (20000, seed)
+
+            val, seed := random (1000, seed)
+            zoffs := 2.0 + ((REAL32 ROUND val) / 100.0)
+        TRUE
+          SEQ
+            xrad := 6.0
+            zrad := 4.0
+            pangle := -2.141
+            iangle := 0.0
+
+            xoffs := 0.0
+            yoffs := 0.5
+            zoffs := 2.0
+
+            islow := 0
+
+      planar.path (prj.ctl!, xrad, zrad, pangle, iangle, islow, [xoffs, yoffs, zoffs])
+:
+--}}}
+--{{{  PROC butterfly.network.spawn (VAL INT width, height, VAL BOOL rpix, CHAN G3D.RENDER.ENGINE! new.link!, SHARED CHAN BYTE scr!)
+--* Dynamically spawns a new 'butterfly.network'.
+--
+-- @param width Raster width.
+-- @param height Raster height.
+-- @param rpix Random initial placement.
+-- @param new.link Channel to communicate new object link.
+--
+PROC butterfly.network.spawn (VAL INT width, height, VAL BOOL rpix, CHAN G3D.RENDER.ENGINE! new.link!, SHARED CHAN BYTE scr!)
+  G3D.RENDER.ENGINE! rlink:
+  G3D.RENDER.ENGINE? rsvr:
+  SEQ
+    rsvr, rlink := MOBILE G3D.RENDER.ENGINE
+    FORK butterfly.network (rsvr?, width, height, rpix, scr!)
+    new.link ! rlink
+:
+--}}}
+
+
+--{{{  PROC raster.buffer (CHAN RASTER in?, out!)
+--* Simple raster buffer.
+-- Basic raster buffer process.
+-- @param in Rasters in
+-- @param out Rasters out
+PROC raster.buffer (CHAN RASTER in?, out!)
+  WHILE TRUE
+    RASTER r:
+    SEQ
+      in ? r
+      out ! r
+:
+--}}}
+--{{{  PROC raster.timed.buffer (CHAN RASTER in?, out!, VAL INT fps, CHAN G3D.TMR.CONTROL ctrl?)
+--* Timed raster buffer.
+-- Basic raster buffer process, but limits speed through at specified number
+-- of frames-per-second.
+-- @param in Rasters in
+-- @param out Rasters out
+-- @param fps Frames per second
+-- @param ctrl Control channel
+PROC raster.timed.buffer (CHAN RASTER in?, out!, VAL INT fps, CHAN G3D.TMR.CONTROL ctrl?)
+  TIMER tim:
+  INT t:
+  VAL INT default.fps IS fps:
+  INITIAL INT fps IS default.fps:
+  SEQ
+    tim ? t
+
+    INITIAL INT to IS (1000000 / fps):
+    INITIAL BOOL running IS TRUE:
+    WHILE TRUE
+      RASTER r:
+      SEQ
+        in ? r
+        t := t PLUS to
+
+        INITIAL BOOL waiting IS TRUE:
+        WHILE waiting
+          PRI ALT
+            tim ? AFTER t
+              waiting := FALSE
+            ctrl ? CASE
+              reset
+                SEQ
+                  fps := default.fps
+                  to := 1000000 / fps
+              pause
+                SEQ
+                  ctrl ? CASE pause
+                  tim ? t
+                  t := t MINUS to
+              faster
+                SEQ
+                  IF
+                    fps < 60
+                      fps := fps + 1
+                    TRUE
+                      SKIP
+                  to := 1000000 / fps
+              slower
+                SEQ
+                  IF
+                    fps > 1
+                      fps := fps - 1
+                    TRUE
+                      SKIP
+                  to := 1000000 / fps
+              set.fps; fps
+                to := 1000000 / fps
+
+        out ! r
+:
+--}}}
+--{{{  PROC raster.fader (CHAN RASTER in?, out!)
+--* Fades rasters.
+-- Raster buffer that reduces the colour level of each of the components.
+-- @param in Rasters in
+-- @param out Rasters out
+PROC raster.fader (CHAN RASTER in?, out!)
+  WHILE TRUE
+    RASTER r:
+    SEQ
+      in ? r
+      SEQ y = 0 FOR SIZE r
+        SEQ x = 0 FOR SIZE r[0]
+          [4]BYTE val RETYPES r[y][x]:
+          SEQ i = 0 FOR 4
+            IF
+              val[i] > #30
+                val [i] := val[i] - #18
+              TRUE
+                val[i] := #00
+      out ! r
+:
+--}}}
+--{{{  PROC raster.clearer (CHAN RASTER in?, out!)
+--* Clears rasters.
+-- Raster buffer that clears rasters as they go through.
+-- @param in Rasters in
+-- @param out Rasters out
+PROC raster.clearer (CHAN RASTER in?, out!)
+  WHILE TRUE
+    RASTER r:
+    SEQ
+      in ? r
+      raster.clear (r, #00000000)
+      out ! r
+:
+--}}}
+
+
