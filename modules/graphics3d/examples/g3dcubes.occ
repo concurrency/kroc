@@ -86,9 +86,9 @@ PROC g3dcubes (CHAN BYTE kyb?, scr!) --{{{
 
     CLAIM rre!
       SEQ
-        cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 0.0, 4.0, G3D.ROTATE.MODE.Y)
-        cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 0.0, 4.0, G3D.ROTATE.MODE.X)
-        cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 0.0, 4.0, G3D.ROTATE.MODE.Z)
+        cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 0.0, 5.0, G3D.ROTATE.MODE.Y)
+        cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 0.0, 5.0, G3D.ROTATE.MODE.X)
+        cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 0.0, 5.0, G3D.ROTATE.MODE.Z)
 :
 --}}}
 
