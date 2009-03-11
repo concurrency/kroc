@@ -5,8 +5,6 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 
-SUBDIRS = 
-
 EXTRA_DIST = \
 	g3dcubes.occ \
 	g3dtest.occ
