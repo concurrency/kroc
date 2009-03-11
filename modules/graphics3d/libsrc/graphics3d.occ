@@ -935,36 +935,59 @@ PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rli
   :
   --}}}
   PROC normal.poly.render (RASTER r, VAL G3D.POLY.SCAN scan) --{{{
-    SEQ i = scan[scan.s] FOR (scan[scan.e] - scan[scan.s]) + 1
-      INITIAL INT stx IS scan[start][i]:
+    INT y.start, y.len:
+    SEQ
       IF
-        stx <> (-1)
-          INITIAL INT edx IS scan[end][i]:
-          SEQ
-            IF
-              stx >= vp.width
-                stx := vp.width - 1
-              TRUE
-                SKIP
-            IF
-              edx >= vp.width
-                edx := vp.width - 2
-              TRUE
-                SKIP
-            IF
-              edx = (-1)
-                r[i][stx] := scan[pixel]
-              TRUE
-                SEQ
-                  IF
-                    stx > edx
-                      stx, edx := edx, stx
-                    TRUE
-                      SKIP
-                  SEQ x = (stx + 1) FOR (edx - stx)
-                    r[i][x] := scan[pixel]
+        scan[scan.s] < 0
+          y.start := 0
+        TRUE
+          y.start := scan[scan.s]
+      IF
+        scan[scan.e] >= (SIZE r)
+          y.len := (SIZE r) - y.start
+        TRUE
+          y.len := (scan[scan.e] - y.start) + 1
+
+      IF
+        y.len < 0
+          y.len := 0
         TRUE
           SKIP
+
+      SEQ i = y.start FOR y.len
+        INITIAL INT stx IS scan[start][i]:
+        IF
+          stx <> (-1)
+            INITIAL INT edx IS scan[end][i]:
+            SEQ
+              IF
+                stx >= vp.width
+                  stx := vp.width - 1
+                stx < 0
+                  stx := 0
+                TRUE
+                  SKIP
+              IF
+                edx >= vp.width
+                  edx := vp.width - 2
+                edx < 0
+                  edx := 0
+                TRUE
+                  SKIP
+              IF
+                edx = (-1)
+                  r[i][stx] := scan[pixel]
+                TRUE
+                  SEQ
+                    IF
+                      stx > edx
+                        stx, edx := edx, stx
+                      TRUE
+                        SKIP
+                    SEQ x = (stx + 1) FOR (edx - stx)
+                      r[i][x] := scan[pixel]
+          TRUE
+            SKIP
   :
   --}}}
 
