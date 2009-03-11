@@ -77,10 +77,10 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
       keyboard.controller (kyb?, scr!, tmr.ctl!)
 
       CLAIM rre!
-        screen.cube.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, scr!)
+        screen.cube.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
 
       CLAIM rre!
-        glenz.network2.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, scr!)
+        glenz.network2.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
 
       TIMER tim:
       INT t:
@@ -88,7 +88,7 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
         tim ? t
         tim ? AFTER (t PLUS 5000000)
         CLAIM rre!
-          glenz.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, scr!)
+          glenz.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
 
       TIMER tim:
       INT t:
@@ -98,7 +98,7 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
         SEQ i = 0 FOR 50
           SEQ
             CLAIM rre!
-              butterfly.network.spawn (SCR.WIDTH, SCR.HEIGHT, TRUE, rre!, scr!)
+              butterfly.network.spawn (SCR.WIDTH, SCR.HEIGHT, TRUE, rre!)
 
             t := t PLUS 300000
             tim ? AFTER t
