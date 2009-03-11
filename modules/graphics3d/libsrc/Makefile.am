@@ -8,14 +8,16 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 OCCBUILD = @OCCBUILD@ --kroc-opts -d
 
 EXTRA_DIST = \
+	g3dnets.occ \
 	graphics3d.occ \
-	graphics3d.inc
+	graphics3d.inc \
+	rasterutil.occ
 
 if BUILD_GRAPHICS3D
 graphics3d_lib_objs = \
-	rasterutil.tce \
+	g3dnets.tce \
 	graphics3d.tce \
-	g3dnets.tce
+	rasterutil.tce
 
 libs = graphics3d.lib
 includes = graphics3d.inc
@@ -37,3 +39,7 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
+#{{{  dependencies
+g3dnets.tce: graphics3d.tce
+g3dnets.tce: rasterutil.tce
+#}}}
