@@ -23,6 +23,9 @@
 -- This library provides for simple 3D graphics in occam-pi, using simple
 -- rasters.
 --
+-- Note: the general [serial] techniques/algorithms used in this library
+-- are based on code from lightsrc.cpp by Marcus Lindblom.
+--
 -- @module graphics3d
 
 #IF NOT DEFINED (GRAPHICS3D.INC)
