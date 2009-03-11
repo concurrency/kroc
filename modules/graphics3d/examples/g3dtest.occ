@@ -70,8 +70,8 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
     SHARED! CHAN G3D.RENDER.ENGINE! rre:
     CHAN G3D.TMR.CONTROL tmr.ctl:
     PAR
-      raster.timed.buffer (rc1?, rc2!, 50, tmr.ctl?)
-      raster.display.simple ("Graphics test", SCR.WIDTH, SCR.HEIGHT, 1, rc2?, rc3!)
+      raster.timed.buffer (rc1?, rc2!, 40, tmr.ctl?)
+      raster.display.simple ("Graphics test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!)
       raster.chain (rc3?, rc1!, rre?, FALSE)
 
       keyboard.controller (kyb?, scr!, tmr.ctl!)

@@ -13,7 +13,9 @@ EXTRA_DIST = \
 
 if BUILD_GRAPHICS3D
 graphics3d_lib_objs = \
-	graphics3d.tce
+	rasterutil.tce \
+	graphics3d.tce \
+	g3dnets.tce
 
 libs = graphics3d.lib
 includes = graphics3d.inc

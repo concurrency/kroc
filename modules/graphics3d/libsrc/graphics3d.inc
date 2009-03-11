@@ -105,59 +105,59 @@ DATA TYPE G3D.POLY.SCAN
 --* Polygon points generator control.
 PROTOCOL G3D.GEN.CONTROL
   CASE
-    reset
-    add.scale; [3]REAL32
-    set.scale; [3]REAL32
-    add.trans; [3]REAL32
-    set.trans; [3]REAL32
+    reset                     --* Reset generator to default state.
+    add.scale; [3]REAL32      --* Add to the current scale.
+    set.scale; [3]REAL32      --* Absolutely set the scale.
+    add.trans; [3]REAL32      --* Add to the current translation.
+    set.trans; [3]REAL32      --* Absolutely set the translation.
 :
 
 --* Points rotation control.
 PROTOCOL G3D.ROT.CONTROL
   CASE
-    reset
-    add.increment; REAL32
-    set.angle; REAL32
-    set.mode; INT
+    reset                     --* Reset rotation to default state.
+    add.increment; REAL32     --* Add to the increment.
+    set.angle; REAL32         --* Absolutely set the angle of rotation.
+    set.mode; INT             --* Set the rotation mode (see [@ref G3D.ROTATE.MODE]).
 :
 
 --* Polygon points 3D-to-2D projection control.
 PROTOCOL G3D.PRJ.CONTROL
   CASE
-    reset
-    set.scaling; [2]REAL32
-    set.zdepth; REAL32
-    set.2dshift; [2]INT
-    set.3dshift; [3]REAL32
+    reset                     --* Reset projector to default state.
+    set.scaling; [2]REAL32    --* Set 2D scaling.
+    set.zdepth; REAL32        --* Set Z depth offset (pushes scene away from camera).
+    set.2dshift; [2]INT       --* Set 2D translation.
+    set.3dshift; [3]REAL32    --* Set 3D translation (applied before projection).
 :
 
 --* Polygon generator control.
 PROTOCOL G3D.PGN.CONTROL
   CASE
-    reset
-    set.trimap; BOOL
-    set.backfaces; BOOL
-    set.face.colour; INT; INT
-    set.face.colours; MOBILE []INT
+    reset                               --* Reset polygon generator to default state.
+    set.trimap; BOOL                    --* Generate triangular polygons only.
+    set.backfaces; BOOL                 --* Whether back faces of solid objects should be generated.
+    set.face.colour; INT; INT           --* Set individual face colour.
+    set.face.colours; MOBILE []INT      --* Set all face colours.
 :
 
---* Polygon scan-line control.
+--* Polygon scan-line generator control.
 PROTOCOL G3D.PSC.CONTROL
   CASE
-    reset
+    reset                     --* Resets scan-line generator to default state.
 :
 
 --* Polygon render (shader) control.
 PROTOCOL G3D.RDR.CONTROL
   CASE
-    reset
-    set.mode; INT
+    reset                     --* Resets shader to default state.
+    set.mode; INT             --* Set shader mode (see [@ref G3D.RENDER.MODE]).
 :
 
 --* Overall control for graphics pipeline.
 PROTOCOL G3D.ALL.CONTROL
   CASE
-    reset.all
+    reset.all                 --* Reset all components to default state.
 :
 
 --* Graphics pipeline speed control.
