@@ -26,7 +26,7 @@ endif
 all-local: $(libs)
 
 graphics3d.lib: $(graphics3d_lib_objs)
-	$(OCCBUILD) --library graphics3d.lib --need course --need sdlraster --include graphics3d.inc $(graphics3d_lib_objs)
+	$(OCCBUILD) --library graphics3d.lib --need course --need maths --need sdlraster --include graphics3d.inc $(graphics3d_lib_objs)
 
 install-exec-local: $(libs) $(includes)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)

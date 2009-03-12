@@ -20,6 +20,7 @@
 --** @module graphics3d
 
 #INCLUDE "course.module"
+#INCLUDE "maths.module"
 #INCLUDE "sdlraster.module"
 #INCLUDE "graphics3d.inc"
 

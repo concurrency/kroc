@@ -15,7 +15,7 @@ CFLAGS="$CFLAGS $OCCBUILD_CFLAGS"
 build_graphics3d=yes
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([course.module raster.module sdlraster.module], ,
+OCCAM_INCLUDE([course.module maths.module raster.module sdlraster.module], ,
               [build_graphics3d=no])
 
 AC_MSG_CHECKING([whether to build graphics3d.module])
