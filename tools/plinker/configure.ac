@@ -8,5 +8,5 @@ AM_INIT_AUTOMAKE(main.pl,1.0.0)
 #  Output
 #######################
 
-AC_OUTPUT([Makefile config.pl])
+AC_OUTPUT([Makefile build.pl])
 

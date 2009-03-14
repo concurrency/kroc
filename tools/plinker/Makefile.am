@@ -6,6 +6,7 @@ PERL = perl
 SOURCES = \
 	build.pl \
 	config.pl \
+	dump.pl \
 	main.pl \
 	ETC.pm \
 	Instructions.pm \
@@ -15,8 +16,14 @@ SOURCES = \
 	TEncode.pm \
 	TVM.pm	
 
-all-local: plinker.pl
+generated = \
+	plinker.pl \
+	tce-dump.pl
 
-plinker.pl: $(SOURCES) 
+bin_SCRIPTS = $(generated)
+
+all-local: $(generated)
+
+$(generated): $(SOURCES) 
 	$(PERL) build.pl
 
