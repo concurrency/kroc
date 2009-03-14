@@ -10,12 +10,17 @@ use strict;
 
 require 'config.pl';
 
-my $in = 'main.pl';
-my $out = 'plinker.pl';
+my %build = (
+	'main.pl' => 'plinker.pl',
+	'dump.pl' => 'tce-dump.pl'
+);
 my %included;
 
 write_file ('store.pl', compile_store ());
-write_file ($out, include_file ($in));
+foreach my $in (sort (keys (%build))) {
+	my $out = $build{$in};
+	write_file ($out, include_file ($in));
+}
 
 exit 0;
 
