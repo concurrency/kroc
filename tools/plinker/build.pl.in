@@ -1,24 +1,29 @@
 #!/usr/bin/env perl
 
-require 'Instructions.pm';
-require 'TCOFF.pm';
+# Note: make sure you edit build.pl.in not build.pl.
+
+require '@srcdir@/PLinker.pm';
+require '@srcdir@/Instructions.pm';
+require '@srcdir@/TCOFF.pm';
 
 package main;
 
 use Data::Dumper;
 use strict;
 
-require 'config.pl';
+my $PREFIX = "@prefix@";
+my $SRCDIR = "@srcdir@";
 
 my %build = (
 	'main.pl' => 'plinker.pl',
 	'dump.pl' => 'tce-dump.pl'
 );
-my %included;
 
+my %included;
 write_file ('store.pl', compile_store ());
 foreach my $in (sort (keys (%build))) {
 	my $out = $build{$in};
+	%included = (); # FIXME: different dependencies for each file
 	write_file ($out, include_file ($in));
 }
 
@@ -36,13 +41,13 @@ sub write_file ($$) {
 sub compile_store {
 	my $store = {};
 	Transputer::Instructions::compile (
-		$store, "../occ21/include/instruct.h"
+		$store, "$SRCDIR/../occ21/include/instruct.h"
 	);
 	Transputer::TCOFF::compile (
-		$store, "../occ21/include/tcoff.h"
+		$store, "$SRCDIR/../occ21/include/tcoff.h"
 	);
 	Transterpreter::Instructions::compile (
-		$store, "../../runtime/libtvm/"
+		$store, "$SRCDIR/../../runtime/libtvm/"
 	);
 	return Data::Dumper->new ([$store], ['STORE'])->Dump;
 }

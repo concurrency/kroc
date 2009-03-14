@@ -1,3 +1,0 @@
-my $PREFIX = "@prefix@";
-my $SRCDIR = "@srcdir@";
-
