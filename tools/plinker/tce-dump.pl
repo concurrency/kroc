@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 #  Perl code for linking and assembling bytecode for the TVM
-#  Copyright (C) 2008 Carl Ritson <cgr@kent.ac.uk>
+#  Copyright (C) 2008, 2009 Carl Ritson <cgr@kent.ac.uk>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,21 +18,19 @@
 #  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-use strict;
-use Data::Dumper;
-
 require 'ETC.pm';
 require 'TCOFF.pm';
 
-# Constants
-my $instruct_h	= "/Users/cgr/src/kroc-svn/tools/occ21/include/instruct.h";
-my $tcoff_h	= "/Users/cgr/src/kroc-svn/tools/occ21/include/tcoff.h";
+package main;
+
+use strict;
+use Data::Dumper;
 
 # ETC Decoder
-my $etc		= new Transputer::ETC ($instruct_h);
+my $etc		= new Transputer::ETC ();
 
 # TCOFF Decoder
-my $tcoff	= new Transputer::TCOFF ($tcoff_h);
+my $tcoff	= new Transputer::TCOFF ();
 
 # Command Line Parsing
 my $file = shift;
