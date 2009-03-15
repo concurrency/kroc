@@ -150,6 +150,33 @@ def set_ld_path():
 		path += ":" + old_path
 	os.putenv(var, path)
 
+def build_isearch():
+	dirs = search_path
+	if in_tree is not None:
+		dirs += [
+			in_tree + "/modules/inmoslibs/libsrc/forall",
+			in_tree + "/modules/inmoslibs/libsrc/maths",
+			in_tree + "/modules/inmoslibs/libsrc/convert",
+			]
+	else:
+		kroc_dir = "@KROC_KROCDIR@"
+		dirs += [
+			kroc_dir + "/vtlib",
+			kroc_dir + "/vtinclude",
+			]
+	path = [os.path.join(os.getcwd(), dir) for dir in dirs]
+	old_path = os.getenv("ISEARCH")
+	if old_path is not None:
+		path += old_path.split(':')
+	
+	return path
+
+def set_isearch():
+	"""Set ISEARCH using search path.  This is for the benefit of occ21."""
+	
+	path = ":".join(build_isearch())
+	os.putenv("ISEARCH", path)
+
 def make_static(library, objs):
 	"""Link a bunch of native objects into a static library."""
 
@@ -246,6 +273,32 @@ def get_install_dir(default, default_suffix):
 		dir = prefix + default_suffix
 
 	return destdir + dir
+
+def get_uselibs(etc_file):
+	comments = capture(programs["tce-dump.pl"] + ["-C", etc_file])
+	uselibs = re.findall("\.USELIB\s+(.*)\n", comments)
+	return uselibs
+
+def resolve_library(lib):
+	for dir in build_isearch():
+		path = os.path.join(dir, lib + ".lib")
+		if os.path.exists(path):
+			return path
+	return None
+
+def resolve_libraries(libs):
+	result = []
+	paths = {}
+	while len(libs) > 0:
+		next = []
+		for lib in libs:
+			path = resolve_library(lib)
+			if path is not None and not paths.has_key(path):
+				result.append(path)
+				paths[path] = True
+				next += get_uselibs(path)
+		libs = next
+	return result
 
 class KRoCToolchain:
 	def kroc_cmd(self):
@@ -374,18 +427,25 @@ class KRoCToolchain:
 		print tidy_spaces(cflags)
 
 class TVMToolchain:
-	def skroc_cmd(self):
-		cmd = programs["skroc"] + []
-		cmd += ["--occ21-opts", " ".join(occ21_opts + ["-DEF", "OCCBUILD.TVM"])]
+	def plinker_cmd(self):
+		# Might need to do something here if the system can execute perl directly.
+		return programs["plinker.pl"]
+
+	def occ21_cmd(self):
+		cmd = programs["occ21"] + []
+		cmd += ["-etc", "-w", "-y", "-znd", "-znec", "-udo", "-zncc", "-init", "-xin", "-mobiles", "-zrpe", "-zcxdiv", "-zcxrem", "-zep", "-t8", "-zqa" ]
+		cmd += occ21_opts
+		cmd += ["-DEF", "OCCBUILD.TVM"]
 		return cmd
 
 	def object(self, source):
-		run(self.skroc_cmd() + ["--tce", source])
+		run(self.occ21_cmd() + [source])
 
 	def library(self, occam_objs, native_objs, base):
 		def custom(f):
 			if occam_objs != []:
 				f.write('#USE "%s.lib"\n' % base)
+				f.write('#PRAGMA COMMENT ".USELIB %s"\n' % base)
 				f.write("#PRAGMA COMMENT \"(spragma (uselib %s))\"\n" % base)
 			if native_objs != []:
 				f.write("#PRAGMA COMMENT \"(spragma (dynlib %s))\"\n"
@@ -399,7 +459,7 @@ class TVMToolchain:
 		if occam_objs == []:
 			make_stub(base + ".lib")
 		else:
-			run(programs["skroc"] + ["-f", base, "--library"] + occam_objs)
+			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
 
 	def program(self, occam_objs, native_objs, base, output = None):
 		if output is None:
@@ -411,7 +471,17 @@ class TVMToolchain:
 			# the slinker currently won't do the right thing if you
 			# use a .tce file that you haven't actually #USEd.
 
-		run(self.skroc_cmd() + ["-f", output + ".tbc", base + ".occ"] + occam_objs)
+		self.object(base + ".occ")
+		occam_objs = [ base + ".tce" ] + occam_objs
+		
+		libs = []
+		for obj in occam_objs:
+			libs += get_uselibs(obj)
+		if std_libs:
+			libs.append("forall")
+		occam_objs += resolve_libraries(libs)
+		occam_objs.reverse()
+		run(self.plinker_cmd() + ["-o", output + ".tbc"] + occam_objs)
 
 		# Generate a wrapper script (because we have to produce
 		# something with the target name, and it might as well be
@@ -460,7 +530,6 @@ class TVMToolchain:
 			pass
 		elif ext == "lib":
 			delete(base + ".lbb")
-			delete(base + ".precomp")
 			delete(patterns["so"] % base)
 			delete(base + ".module")
 		elif ext == "":
@@ -469,7 +538,7 @@ class TVMToolchain:
 
 	def cflags(self):
 		print "-DOCCBUILD_TVM"
-		# FIXME: skroc doesn't currently have a cflags mode
+		# FIXME: what cflags?
 
 def usage(f):
 	print >>f, """occbuild, version """ + VERSION + """
@@ -541,7 +610,7 @@ Report bugs to <""" + CONTACT + """>."""
 
 def main(args):
 	# Get default program locations and arguments from the environment.
-	for prog in ("cc", "ar", "ranlib", "kroc", "ilibr", "install", "skroc", "tvm"):
+	for prog in ("cc", "ar", "ranlib", "kroc", "ilibr", "install", "occ21", "plinker.pl", "tce-dump.pl", "tvm"):
 		programs[prog] = split_options(os.getenv(prog.upper(), prog))
 
 	long_opts = [
@@ -639,13 +708,14 @@ def main(args):
 	if in_tree is not None:
 		programs["kroc"] = [in_tree + "/tools/kroc/kroc", "--in-tree", in_tree] + programs["kroc"][1:]
 		programs["ilibr"] = [in_tree + "/tools/ilibr/ilibr"] + programs["ilibr"][1:]
-		programs["skroc"] = [in_tree + "/tools/skroc/skroc", "--in-tree", in_tree] + programs["skroc"][1:]
+		programs["plinker.pl"] = [in_tree + "/tools/plinker/plinker.pl"] + programs["plinker.pl"][1:]
+		programs["tce-dump.pl"] = [in_tree + "/tools/plinker/tce-dump.pl"] + programs["tce-dump.pl"][1:]
 		programs["tvm"] = [in_tree + "/tvm/posix/tvm"] + programs["tvm"][1:]
 
+	set_isearch()
 	for dir in search_path:
 		programs["cc"] += ["-L" + dir]
 		programs["kroc"] += ["-I" + dir, "-L" + dir]
-		programs["skroc"] += ["-L", dir]
 
 	global patterns, build_shared
 	patterns = {
