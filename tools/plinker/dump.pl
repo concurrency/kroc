@@ -33,35 +33,50 @@ my $etc		= new Transputer::ETC ();
 my $tcoff	= new Transputer::TCOFF ();
 
 # Command Line Parsing
-my $file = shift;
-if (!$file) {
-	print "tce-dump.pl <file>\n";
+my ($first, @files) = @ARGV;
+my $comments;
+if ($first eq '-C') {
+	$comments = 1;
+} elsif ($first) {
+	unshift (@files, $first) if $first ne '--';
+}
+
+if (!@files) {
+	print "tce-dump.pl [-C] <file> [<file> ...]\n";
 	exit 1;
 }
 
-# Decode
-my $data = $tcoff->read_file ($file);
-die "Failed to read $file" if !$data;
+foreach my $file (@files) {
+	# Decode
+	my $data = $tcoff->read_file ($file);
+	die "Failed to read $file" if !$data;
 
-# Textualise
-foreach my $section (@{$data->{'LOAD_TEXT'}}) {
-	my @text	= $etc->decode_load_text ($section->{'data'});
-	my $indent	= "";
+	if ($comments) {
+		foreach my $comment (@{$data->{'COMMENT'}}) {
+			print $comment->{'data'}, "\n";
+		}
+	} else {
+		# Textualise
+		foreach my $section (@{$data->{'LOAD_TEXT'}}) {
+			my @text	= $etc->decode_load_text ($section->{'data'});
+			my $indent	= "";
 
-	if (!@text) {
-		print STDERR "Failed to decode a text segment...\n";
-		next;
-	}
+			if (!@text) {
+				print STDERR "Failed to decode a text segment...\n";
+				next;
+			}
 
-	foreach my $op (@text) {
-		my $name = $op->{'name'};
+			foreach my $op (@text) {
+				my $name = $op->{'name'};
 
-		print_op ($indent, $op);
-		
-		if ($name eq '.PROC') {
-			$indent = "\t";
-		} elsif ($name eq '.GLOBALEND' || $name eq '.SECTIONLAB') {
-			$indent = "";
+				print_op ($indent, $op);
+				
+				if ($name eq '.PROC') {
+					$indent = "\t";
+				} elsif ($name eq '.GLOBALEND' || $name eq '.SECTIONLAB') {
+					$indent = "";
+				}
+			}
 		}
 	}
 }
