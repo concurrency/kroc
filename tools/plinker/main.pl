@@ -53,7 +53,7 @@ if ($first eq '-o') {
 }
 
 if (!$output || !@files) {
-	print "plinker.pl [-o <name>] <file> [<file>]\n";
+	print "plinker.pl [-o <name>] <file> [<file> ...]\n";
 	exit 1;
 }
 
