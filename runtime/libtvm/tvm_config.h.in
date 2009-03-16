@@ -62,6 +62,9 @@
 /* define to T9000 short ops */
 #undef TVM_SHORT_OPS
 
+/* define for type shadowing */
+#undef TVM_TYPE_SHADOW
+
 /* define to allow FPU usage */
 #undef TVM_USE_FPU
 

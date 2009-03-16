@@ -104,3 +104,40 @@ BYTEPTR _tvm_memset (BYTEPTR s, WORD c, UWORD n)
 }
 #endif
 
+#ifdef TVM_TYPE_SHADOW
+void copy_type_shadow (ECTX ectx, BYTEPTR dst, BYTEPTR src, WORD count)
+{
+	unsigned int s = (unsigned int) src;
+
+	if (s >= ectx->shadow_start && (s + ((unsigned int) count)) <= ectx->shadow_end) {
+		unsigned int d = (unsigned int) dst;
+		if (d >= ectx->shadow_start && (d + ((unsigned int) count)) <= ectx->shadow_end) {
+			unsigned int 	length	= (count + (WORD_BITS - 1)) >> WSH;
+			BYTE 		*tc_d	= ectx->type_store + (((d - ectx->shadow_start)) >> WSH);
+			BYTE 		*tc_s	= ectx->type_store + (((s - ectx->shadow_start)) >> WSH);
+			
+			while (length--) {
+				*(tc_d++) = *(tc_s++);
+			}
+		}
+	} else {
+		fill_type_shadow (ectx, dst, count, STYPE_DATA);
+	}
+}
+
+void fill_type_shadow (ECTX ectx, BYTEPTR ptr, WORD count, WORD type)
+{
+	unsigned int p = (unsigned int) ptr;
+
+	if (p >= ectx->shadow_start && (p + ((unsigned int) count)) <= ectx->shadow_end) {
+		unsigned int 	offset	= ((p - ectx->shadow_start)) >> WSH;
+		unsigned int 	length	= (count + (WORD_BITS - 1)) >> WSH;
+		BYTE 		*tc	= ectx->type_store + offset;
+		
+		while (length--) {
+			*(tc++) = (BYTE) type;
+		}
+	}
+}
+#endif /* TVM_TYPE_SHADOW */
+

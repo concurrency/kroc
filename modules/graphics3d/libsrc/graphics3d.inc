@@ -24,7 +24,7 @@
 -- rasters.
 --
 -- Note: the general [serial] techniques/algorithms used in this library
--- are based on code from lightsrc.cpp by Marcus Lindblom.
+-- are based on code from lightsrc.cpp and glenz.cpp by Marcus Lindblom.
 --
 -- @module graphics3d
 
@@ -166,27 +166,33 @@ PROTOCOL G3D.ALL.CONTROL
 --* Graphics pipeline speed control.
 PROTOCOL G3D.TMR.CONTROL
   CASE
-    reset
-    pause
-    faster
-    slower
-    set.fps; INT
+    reset                     --* Resets the timer control.
+    pause                     --* Pause/unpause the rasters flowing through the network.
+    faster                    --* Go faster.
+    slower                    --* Go slower.
+    set.fps; INT              --* Set frames-per-second absolutely.
 :
 
 --}}}
+--{{{  render-engine channel-type and protocols
 
 CHAN TYPE G3D.RENDER.ENGINE:
 
+--* Graphics pipeline link protocol.
 PROTOCOL G3D.RENDER.ENGINE.LINK
   CASE
-    raster; RASTER
-    set.next; INT; G3D.RENDER.ENGINE!
+    raster; RASTER                          --* Raster to render on and forward.
+    set.next; INT; G3D.RENDER.ENGINE!       --* Set the next renderer in the pipeline.
+                                            -- The integer passed is used to identify
+                                            -- which particular 'next' to replace (counts down).
 :
 
 CHAN TYPE G3D.RENDER.ENGINE
   MOBILE RECORD
-    CHAN G3D.RENDER.ENGINE.LINK link?:
+    CHAN G3D.RENDER.ENGINE.LINK link?:      --* Link channel.
 :
+
+--}}}
 
 #ENDIF
 

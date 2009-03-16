@@ -183,18 +183,19 @@ typedef struct _mt_array_internal_t {
 /*}}}*/
 /*{{{ TYPE 2: mobile channel bundle
  *   - flag bit 0 indicates sharing (0 = unshared),
- *   - flag bit 1 indicate whether to allocate additional space
- *     for pony/etc support (0 = don't allocate).
+ *   - flag bit 1 indicates pony channel
+ *   - flag bit 2 indicates external channel
  *   - flag bits 3-11 code number of channels.
  */
 #define MT_CB			2
-#define MT_CB_SHARED		(0x1 << MT_FLAGS_SHIFT)
-#define MT_CB_STATE_SPACE	(0x2 << MT_FLAGS_SHIFT)
+#define MT_CB_SHARED_BIT	0
+#define MT_CB_SHARED		((1 << MT_CB_SHARED_BIT) << MT_FLAGS_SHIFT)
+#define MT_CB_PONY_BIT		1
+#define MT_CB_PONY		((1 << MT_CB_PONY_BIT) << MT_FLAGS_SHIFT)
+#define MT_CB_EXTERNAL_BIT	2
+#define MT_CB_EXTERNAL		((1 << MT_CB_EXTERNAL_BIT) << MT_FLAGS_SHIFT)
 #define MT_CB_CHANNELS_SHIFT	(MT_FLAGS_SHIFT + 3)
 #define MT_CB_CHANNELS(X)	(((X) >> MT_CB_CHANNELS_SHIFT) & 0xFF)
-/* lock constants */
-#define MT_CB_CLIENT		0x0
-#define MT_CB_SERVER		0x1
 
 #ifdef MT_DEFINES
 /* externally visible channel bundle structure */
@@ -216,22 +217,27 @@ typedef struct _mt_cb_t {
 /* internally visible channel bundle structures */
 #define MT_CB_PTR_OFFSET 	2
 typedef struct _mt_cb_internal_t {
+	/* external state	*/
+	/* pony state		*/
+	/* shared locks		*/
 	word		ref_count;
 	word		type;
 
 	mt_cb_t		cb;
 } _PACK_STRUCT mt_cb_internal_t;
-
-#define MT_CB_SHARED_PTR_OFFSET \
-	(2 + (2 * (sizeof(mt_sem_t) / sizeof(word))))
-typedef struct _mt_cb_shared_internal_t {
-	mt_sem_t	sem[2];
-	word		ref_count;
-	word		type;
-
-	mt_cb_t		cb;
-} _PACK_STRUCT mt_cb_shared_internal_t;
 #endif /* MT_DEFINES */
+
+/* lock constants */
+#define MT_CB_CLIENT		0x0
+#define MT_CB_SERVER		0x1
+#define MT_CB_PONY_LOCK		0x2
+#ifdef MT_TVM
+#define MT_CB_LOCK_PTR(mt,lock) \
+	(wordptr_minus (mt, sizeof(mt_sem_t) * (lock)))
+#else /* !MT_TVM */
+#define MT_CB_LOCK_PTR(mt,lock) \
+	((mt_sem_t *)(((word *)(mt)) - (sizeof(mt_sem_t) * (lock))))
+#endif /* !MT_TVM */
 
 /*}}}*/
 /*{{{ TYPE 3: mobile barrier

@@ -80,6 +80,7 @@ TVM_INSTRUCTION (ins_adc)
 
 	/* Areg gets result, Breg and Creg stay the same */
 	AREG = result;
+	SET_AREGt(STYPE_DATA);
 
 	CLEAR(OREG);
 
@@ -114,6 +115,13 @@ TVM_INSTRUCTION (ins_adc)
 
 TVM_INSTRUCTION (ins_ajw)
 {
+	#ifdef TVM_TYPE_SHADOW
+	/* Release memory */
+	if(OREG < 0) {
+		fill_type_shadow(ectx, (BYTEPTR)WPTR, (-OREG) << WSH, STYPE_UNDEF);
+	}
+	#endif
+
 	/* Add the value in the operand register to the workspace pointer. */
 	WPTR = wordptr_plus(WPTR, OREG);
 
@@ -190,15 +198,15 @@ TVM_INSTRUCTION (ins_ajw)
 TVM_INSTRUCTION (ins_call)
 {
 	/* Store registers in a new stack frame */
-	write_word(wordptr_minus(WPTR, 4 - 0), (WORD)IPTR);
-	write_word(wordptr_minus(WPTR, 4 - 1), AREG);
-	write_word(wordptr_minus(WPTR, 4 - 2), BREG);
-	write_word(wordptr_minus(WPTR, 4 - 3), CREG);
+	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 0), (WORD)IPTR, STYPE_RET);
+	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 1), AREG, AREGt);
+	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 2), BREG, BREGt);
+	write_word_and_type(ectx, wordptr_minus(WPTR, 4 - 3), CREG, CREGt);
 	/* Actually allocate the stack frame */
 	WPTR = wordptr_minus(WPTR, 4);
 
 	/* Set the AREG to the old IPTR */
-	AREG = (WORD)IPTR;
+	STACK1((WORD)IPTR, STYPE_BC);
 
 	/* Set the new IPTR from the OREG */
 	IPTR = byteptr_plus(IPTR, OREG);
@@ -244,12 +252,12 @@ TVM_INSTRUCTION (ins_cj)
 		IPTR = byteptr_plus(IPTR, OREG);
 
 		/* Stack is left untouched */
-		STACK(AREG, BREG, CREG);
+		/* STACK(AREG, BREG, CREG); */
 	}
 	else
 	{
 		/* Pop the stack */
-		STACK(BREG, CREG, UNDEFINE(CREG));
+		STACK2(BREG, CREG, BREGt, CREGt);
 	}
 
 	CLEAR(OREG);
@@ -289,6 +297,7 @@ TVM_INSTRUCTION (ins_eqc)
 		AREG = 0; /* Set AREG to false */
 	}
 
+	SET_AREGt(STYPE_DATA);
 	CLEAR(OREG);
 
 	return ECTX_CONTINUE;
@@ -354,7 +363,7 @@ TVM_INSTRUCTION (ins_j)
 TVM_INSTRUCTION (ins_ldc)
 {
 	/* Push the stack down and put the constant on the top of the stack (AREG) */
-	STACK(OREG, AREG, BREG);
+	STACK(OREG, AREG, BREG, STYPE_DATA, AREGt, BREGt);
 
 	CLEAR(OREG);
 
@@ -386,7 +395,8 @@ TVM_INSTRUCTION (ins_ldc)
 TVM_INSTRUCTION (ins_ldl)
 {
 	/* Push the stack down and read a value from from memory(OREG+WPTR) */
-	STACK(read_word(wordptr_plus(WPTR, OREG)), AREG, BREG);
+	WORDPTR offset = wordptr_plus(WPTR, OREG);
+	STACK(read_word(offset), AREG, BREG, read_type(ectx, offset), AREGt, BREGt);
 
 	CLEAR(OREG);
 
@@ -424,7 +434,8 @@ TVM_INSTRUCTION (ins_ldl)
 TVM_INSTRUCTION (ins_ldlp)
 {
 	/* Push WPTR+OREG onto the stack */
-	STACK((WORD)wordptr_plus(WPTR, OREG), AREG, BREG);
+	STACK((WORD)wordptr_plus(WPTR, OREG), AREG, BREG,
+		STYPE_WS, AREGt, BREGt);
 
 	CLEAR(OREG);
 
@@ -450,7 +461,9 @@ TVM_INSTRUCTION (ins_ldlp)
 TVM_INSTRUCTION (ins_ldnl)
 {
 	/* Read from memory(AREG+OREG) */
-	AREG = read_word(wordptr_plus((WORDPTR)AREG, OREG));
+	WORDPTR offset = wordptr_plus((WORDPTR)AREG, OREG);
+	AREG = read_word(offset);
+	SET_AREGt(read_type(ectx, offset));
 
 	CLEAR(OREG);
 
@@ -477,6 +490,7 @@ TVM_INSTRUCTION (ins_ldnlp)
 {
 	/* Add the OREG to the AREG and store it in the AREG */
 	AREG = (WORD)wordptr_plus((WORDPTR)AREG, OREG);
+	/* Type signature unchanged */
 
 	CLEAR(OREG);
 
@@ -505,14 +519,11 @@ TVM_INSTRUCTION (ins_ldnlp)
 TVM_INSTRUCTION (ins_stl)
 {
 	/* Put the top of the stack into mem(WPTR + OREG) */
-	write_word(wordptr_plus(WPTR, OREG), AREG);
-
-	/* Pop the stack */
-	STACK(BREG, CREG, UNDEFINE(CREG));
-
+	write_word_and_type(ectx, wordptr_plus(WPTR, OREG), AREG, AREGt);
 	CLEAR(OREG);
-
-	return ECTX_CONTINUE;
+	
+	/* Pop the stack */
+	STACK2_RET(BREG, CREG, BREGt, CREGt);
 }
 
 /* 0xE_ - stnl - store non-local */
@@ -537,14 +548,11 @@ TVM_INSTRUCTION (ins_stl)
 TVM_INSTRUCTION (ins_stnl)
 {
 	/* Put value in BREG into mem(AREG + OREG) */
-	write_word(wordptr_plus((WORDPTR)AREG, OREG), BREG);
-
-	/* Pop the stack */
-	STACK(CREG, UNDEFINE(BREG), UNDEFINE(CREG));
-	
+	write_word_and_type(ectx, wordptr_plus((WORDPTR)AREG, OREG), BREG, BREGt);
 	CLEAR(OREG);
 
-	return ECTX_CONTINUE;
+	/* Pop the stack */
+	STACK2_RET(BREG, CREG, BREGt, CREGt);
 }
 
 

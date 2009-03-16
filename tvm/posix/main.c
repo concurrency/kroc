@@ -6,6 +6,7 @@
  */
 
 #include "tvm_posix.h"
+#include <tvm_tbc.h>
 
 /*{{{  Global State */
 char			*prog_name 	= NULL;
@@ -14,138 +15,30 @@ char			**tvm_argv	= NULL;
 /*}}}*/
 
 /*{{{  Static State  */
-static tvm_t		tvm;
-static tvm_ectx_t	firmware_ctx, user_ctx;
-static volatile WORD	alarm_set	= 0;
-static volatile WORD	alarm_time	= 0;
+static ECTX		firmware, user;
+static bytecode_t	*fw_bc, *us_bc;
 /*}}}*/
 
 /*{{{  Firmware */
-static WORDPTR		firmware_memory;
-static WORD		firmware_memory_len;
 static WORD		kyb_channel, scr_channel, err_channel;
 static WORD 		tlp_argv[] = { (WORD) &kyb_channel, (WORD) &scr_channel, (WORD) &err_channel };
-
-#define ws_size		firmware_ws_size
-#define vs_size		firmware_vs_size
-#define ms_size		firmware_ms_size
-#define inst_size	firmware_bytecode_len
-#define transputercode	firmware_bytecode
-#include "firmware.h"
-#undef ws_size
-#undef vs_size
-#undef ms_size
-#undef inst_size
-#undef transputercode
-/*}}}*/
-
-/*{{{  User */
-static WORDPTR		user_memory;
-static WORD		user_memory_len;
-static WORD		ws_size, vs_size, ms_size;
-static BYTEPTR		bytecode;
-static WORD		bytecode_len;
-/*}}}*/
-
-/*{{{  tvm_get_time */
-#if defined(HAVE_GETTIMEOFDAY)
-static WORD tvm_get_time (ECTX ectx)
-{
-	struct timeval t;
-
-	gettimeofday (&t, 0);
-
-	return (WORD) ((t.tv_sec * 1000000) + t.tv_usec);
-}
-#elif defined(WIN32)
-static WORD tvm_get_time (ECTX ectx)
-{
-	/*
-	http://msdn.microsoft.com/library/default.asp?url=/library/en-us/sysinfo/base/filetime_str.asp
-	"The FILETIME structure is a 64-bit value representing the number of 
-	 100-nanosecond intervals since January 1, 1601 (UTC)."
-	*/
-	ULARGE_INTEGER usecs;
-	FILETIME time;
-	
-	/* Get the system time */
-	GetSystemTimeAsFileTime (&time);
-	
-	/* Put it into a structure we can work with, and turn it into usecs
-	 * See: 
-	 *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winprog/winprog/ularge_integer_str.asp
-	 */
-	memcpy (&usecs, &time, sizeof(FILETIME));
-	usecs.QuadPart = usecs.QuadPart / 10;
-
-	/* Return the clock, just the lower parts thankyou */
-	return usecs.LowPart;
-}
-#elif defined(HAVE_FTIME)
-static WORD tvm_get_time (ECTX ectx)
-{
-	struct timeb milli;
-
-	ftime (&milli);
-	
-	return (WORD) (milli.millitm + (milli.time * 1000));
-}
-#endif
-/*}}}*/
-
-/*{{{  tvm_set_alarm */
-#if defined(HAVE_SETITIMER)
-#define HAVE_SET_ALARM
-static void tvm_set_alarm (ECTX ectx)
-{
-	struct itimerval timeout;
-	unsigned int t;
-	WORD now;
-
-	if (alarm_set && TIME_AFTER(ectx->tnext, alarm_time)) {
-		return;
-	}
-
-	now = ectx->get_time (ectx);
-	t = ectx->tnext - now;
-
-	if (TIME_AFTER(now, ectx->tnext) || (t == 0)) {
-		ectx->modify_sync_flags (ectx, SFLAG_TQ, 0);
-		alarm_set = 0;
-	}
-
-	timeout.it_interval.tv_sec	= 0;
-	timeout.it_interval.tv_usec	= 0;
-	timeout.it_value.tv_sec		= t / 1000000;
-	timeout.it_value.tv_usec	= t % 1000000;
-
-	alarm_set = 1;
-	alarm_time = ectx->tnext;
-
-	if (setitimer (ITIMER_REAL, &timeout, NULL) != 0) {
-		/* Behave like busy-wait if setitimer fails. */
-		ectx->modify_sync_flags (ectx, SFLAG_TQ, 0);
-		alarm_set = 0;
-	}
-}
-#endif
 /*}}}*/
 
 /*{{{  tvm_sleep */
 static void tvm_sleep (void)
 {
-	WORD now	= firmware_ctx.get_time (&firmware_ctx);
+	WORD now	= firmware->get_time (firmware);
 	WORD timeout	= 0;
 	int set		= 0;
 
-	if (firmware_ctx.tptr != NOT_PROCESS_P) {
-		timeout = firmware_ctx.tnext;
+	if (firmware->tptr != NOT_PROCESS_P) {
+		timeout = firmware->tnext;
 		set++;
 	}
 
-	if (user_ctx.tptr != NOT_PROCESS_P) {
-		if (!set || TIME_BEFORE(user_ctx.tnext, timeout)) {
-			timeout = user_ctx.tnext;
+	if (user->tptr != NOT_PROCESS_P) {
+		if (!set || TIME_BEFORE(user->tnext, timeout)) {
+			timeout = user->tnext;
 			set++;
 		}
 	}
@@ -168,68 +61,6 @@ static void tvm_sleep (void)
 			#endif
 		}
 	}
-}
-/*}}}*/
-
-/*{{{  Old stuff for recycling */
-/* Not sure where to define these, they could be platform specific */
-#define EXIT_SIGSEGV 139
-#define EXIT_SIGBUS 138
-
-#if 0
-static void sigsegv_handler(int num)
-{
-	/* Set the signal back to the default so we dont get into
-	 * some kind of ugly loop should we segfault in here */
-	signal(SIGSEGV, SIG_DFL);
-
-	print_crash(EXIT_SIGSEGV);
-	printf("Segmentation fault (%d)\n", num);
-	printf("\n");
-	print_state();
-	printf("exiting... (segmentation fault)\n");
-
-	if(code_start <= iptr && iptr < code_end)
-	{
-		print_debug_info(filename);
-	}
-
-	/* 139 */
-	exit(EXIT_SIGSEGV); /* This seems to be what a segfaulted program returns */
-}
-
-#if !defined(WIN32) && !defined(CYGWIN)
-/* Borland does not have sigbus */
-static void sigbus_handler(int num)
-{
-	/* Set the signal back to the default so we dont get into
-	 * some kind of ugly loop should we segfault in here */
-	signal(SIGBUS, SIG_DFL);
-
-	print_crash(EXIT_SIGBUS);
-	printf("Bus error (%d)\n", num);
-	printf("\n");
-	print_state();
-	printf("exiting... (bus error)\n");
-
-	if(code_start <= iptr && iptr < code_end)
-	{
-		print_debug_info(filename);
-	}
-
-	/* 138 */
-	exit(EXIT_SIGBUS); /* This seems to be what a buserrored program returns */
-}
-#endif
-#endif
-/*}}}*/
-
-/*{{{  sigalarm_handler */
-static void sigalrm_handler (int num)
-{
-	firmware_ctx.sflags	|= SFLAG_TQ;
-	user_ctx.sflags		|= SFLAG_TQ;
-	alarm_set		= 0;
 }
 /*}}}*/
 
@@ -274,202 +105,80 @@ static void usage (FILE *out)
 	fprintf (out, "Usage: %s <filename>\n", prog_name);
 }
 
-static void add_system_functions (ECTX ectx)
-{
-	ectx->get_time = tvm_get_time;
-	#ifdef HAVE_SET_ALARM
-	ectx->set_alarm = tvm_set_alarm;
-	#endif
-}
-
 static int install_firmware_ctx (void)
 {
-	WORDPTR ws, vs, ms;
-	ECTX firmware = &firmware_ctx;
-
-	tvm_ectx_init (&tvm, firmware);
-	add_system_functions (firmware);
-	install_sffi (firmware);
-
-	firmware_memory_len = tvm_ectx_memory_size (
-		firmware,
-		"!??", 3,
-		firmware_ws_size, 
-		firmware_vs_size, 
-		firmware_ms_size
-	);
-
-	firmware_memory = malloc (sizeof(WORD) * firmware_memory_len);
-	if (firmware_memory == NULL) {
-		return error_out ("unable to allocate firmware memory (%d words)", firmware_memory_len);
+	if ((fw_bc = load_bytecode ("firmware.tbc")) == NULL) {
+		fprintf (stderr, 
+			"Failed to load/decode firmware.tbc\n"
+		);
+		return -1;
 	}
 
-	tvm_ectx_layout (
-		firmware, firmware_memory,
-		"!??", 3,
-		firmware_ws_size, 
-		firmware_vs_size, 
-		firmware_ms_size,
-		&ws, &vs, &ms
-	);
-	
-	return tvm_ectx_install_tlp (
-		firmware, (BYTEPTR) firmware_bytecode, ws, vs, ms,
-		"!??", 3, tlp_argv
-	);
-}
-
-static int read_big_endian_int (FILE *fh, int *value)
-{
-	int ret;
-
-	if ((ret = fread (value, sizeof(int), 1, fh)) != 1) {
-		return error_out ("read error (%d)", ret);
+	if ((firmware = allocate_ectx (fw_bc, "!??", tlp_argv)) == NULL) {
+		return -1;
 	}
-	
-	#if !defined(TVM_BIG_ENDIAN)
-	*value = SwapFourBytes (*value);
-	#endif
 
 	return 0;
 }
 
-static int read_bytecode (const char *fn)
-{
-	FILE *fh = fopen (fn, "rb");
-	char header[4];
-	int len, ret;
-	int bc_start, bc_length;
-
-	if (fh == NULL) {
-		return error_out ("unable to open \"%s\"", fn);
+static EXT_CHAN_ENTRY ext_chans[] = {
+	{
+		.typehash	= 0,
+		.in		= NULL,
+		.out		= NULL,
+		.mt_in		= vc0_mt_in,
+		.mt_out		= NULL
 	}
-
-	if (fseek (fh, 0, SEEK_END) < 0) {
-		return error_out ("unable to seek to file end", fn);
-	}
-
-	len = (int) ftell (fh);
-
-	if (fseek (fh, 0, SEEK_SET) < 0) {
-		return error_out ("unable to seek to file start", fn);
-	}
-
-	/* 'TBZ\0' + 2x4 + (4, 4, 4) + (4, 4, 4) + (4, 4, 4) + (4, 4, 4, 4) = 64 */
-	if (len <= 64) {
-		return error_out_no_errno ("file size %d is too small", len);
-	}
-
-	if ((ret = fread (header, sizeof(header), 1, fh)) != 1) {
-		return error_out ("read incorrect (%d)", ret);
-	}
-
-	if (memcmp (header, "tbz\0", 4)) {
-		return error_out_no_errno ("file header does not match");
-	}
-
-	if (fseek (fh, 3 * 4, SEEK_SET) < 0) {
-		return error_out ("unable to seek to bytecode descriptor", fn);
-	}
-	
-	if (read_big_endian_int (fh, &bc_start)) {
-		return -1;
-	}
-	if (read_big_endian_int (fh, &bc_length)) {
-		return -1;
-	}
-
-	if (fseek (fh, bc_start, SEEK_SET) < 0) {
-		return error_out ("unable to seek to bytecode", fn);
-	}
-
-	if ((ret = fread (header, sizeof(header), 1, fh)) != 1) {
-		return error_out ("read incorrect (%d)", ret);
-	}
-
-	if (memcmp (header, "tvm\2", 4)) {
-		fprintf (stderr, "%02x%02x%02x%02x\n", header[0], header[1], header[2], header[3]);
-		return error_out_no_errno ("bytecode header does not match");
-	}
-
-	if (read_big_endian_int (fh, &ws_size)) {
-		return -1;
-	}
-	if (read_big_endian_int (fh, &vs_size)) {
-		return -1;
-	}
-	if (read_big_endian_int (fh, &ms_size)) {
-		return -1;
-	}
-
-	bytecode_len	= bc_length - (4 * sizeof(int));
-	bytecode 	= (BYTEPTR) malloc (bytecode_len);
-
-	if (bytecode == NULL) {
-		return error_out ("unable to allocate bytecode memory (%d bytes)", bytecode_len);
-	}
-
-	if ((ret = fread (bytecode, 1, bytecode_len, fh)) != bytecode_len) {
-		return error_out ("failed reading bytecode (%d of %d bytes)", ret, bytecode_len);
-	}
-
-	fclose (fh);
-
-	return 0;
-}
+};
+static const int ext_chans_length = sizeof (ext_chans) / sizeof (EXT_CHAN_ENTRY);
 
 static int install_user_ctx (const char *fn)
 {
-	#if defined(TVM_DYNAMIC_MEMORY) && defined(TVM_OCCAM_PI)
-	const char *tlp_fmt = "?!!F";
-	const int tlp_argc = 4;
-	#else
-	const char *tlp_fmt = "?!!";
-	const int tlp_argc = 3;
-	#endif /* !TVM_DYNAMIC_MEMORY || !TVM_OCCAM_PI */
+	const char *const tlp_fmt = "?!!";
+	tbc_t *tbc;
+	char *tlp;
 
-	WORDPTR ws, vs, ms;
-	ECTX user = &user_ctx;
-
-	if (read_bytecode (fn)) {
-		error_out_no_errno ("unable to read bytecode");
+	if ((us_bc = load_bytecode (fn)) == NULL) {
+		fprintf (stderr, 
+			"Failed to load/decode %s\n",
+			fn
+		);
 		return -1;
 	}
 
-	tvm_ectx_init (&tvm, user);
-	user->pri = 1; /* lower priority */
-	add_system_functions (user);
-	install_sffi (user);
+	tbc = us_bc->tbc;
 
-	user_memory_len = tvm_ectx_memory_size (
-		user,
-		tlp_fmt, tlp_argc, 
-		ws_size, vs_size, ms_size
-	);
-
-	user_memory = (WORDPTR) malloc (sizeof (WORD) * user_memory_len);
-	if (user_memory == NULL) {
-		return error_out ("failed to allocate user memory (%d words)", user_memory_len);
+	if (tbc->tlp != NULL) {
+		tlp = tbc->tlp->fmt;
+		if (tlp == NULL) {
+			tlp = (char *) tlp_fmt;
+		} else if (strcmp (tlp, "") == 0) {
+			/* OK */
+		} else if (strcmp (tlp, "?!!F") == 0) {
+			/* OK */
+		} else if (strcmp (tlp, "?!!") == 0) {
+			/* OK */
+		} else {
+			error_out_no_errno ("unsupported top-level-process format: \"%s\"", tlp);
+			return -1;
+		}
+	} else {
+		tlp = (char *) tlp_fmt;
 	}
 
-	tvm_ectx_layout (
-		user, user_memory,
-		tlp_fmt, tlp_argc, 
-		ws_size, 
-		vs_size, 
-		ms_size,
-		&ws, &vs, &ms
-	);
+	if ((user = allocate_ectx (us_bc, tlp, tlp_argv)) == NULL) {
+		return -1;
+	}
 
-	return tvm_ectx_install_tlp (
-		user, bytecode, ws, vs, ms,
-		tlp_fmt, tlp_argc, tlp_argv
-	);
+	user->ext_chan_table		= ext_chans;
+	user->ext_chan_table_length	= ext_chans_length;
+
+	return 0;
 }
 
 static int run_firmware (void)
 {
-	int ret = tvm_run (&firmware_ctx);
+	int ret = tvm_run (firmware);
 
 	if (ret == ECTX_SLEEP) {
 		return ret; /* OK - timer sleep */
@@ -479,14 +188,14 @@ static int run_firmware (void)
 	}
 
 	/* Being here means something unexpected happened... */
-	fprintf (stderr, "Firmware failed; state = %c\n", firmware_ctx.state);
+	fprintf (stderr, "Firmware failed; state = %c\n", firmware->state);
 	
 	return ECTX_ERROR;
 }
 
 static int run_user (void)
 {
-	int ret = tvm_run_count (&user_ctx, 10000);
+	int ret = tvm_run_count (user, 10000);
 
 	switch (ret) {
 		case ECTX_PREEMPT:
@@ -495,7 +204,7 @@ static int run_user (void)
 		case ECTX_TIME_SLICE:
 			return ret; /* OK */
 		case ECTX_EMPTY:
-			if (tvm_ectx_waiting_on (&user_ctx, user_memory, user_memory_len)) {
+			if (tvm_ectx_waiting_on (user, user->priv.memory, user->priv.memory_length)) {
 				return ret; /* OK - waiting for firmware */
 			}
 			break;
@@ -566,7 +275,7 @@ int main (int argc, char *argv[])
 		fn = argv[1];
 	}
 
-	tvm_init (&tvm);
+	init_vm ();
 
 	if (install_firmware_ctx () < 0) {
 		error_out_no_errno ("failed to install firmware");
@@ -581,17 +290,13 @@ int main (int argc, char *argv[])
 	scr_channel = NOT_PROCESS_P;
 	err_channel = NOT_PROCESS_P;
 
-	#if defined(SIGALRM) && defined(HAVE_SET_ALARM)
-	signal (SIGALRM, sigalrm_handler);
-	#endif
-
 	for (;;) {
 		f_ret = run_firmware ();
 		u_ret = run_user ();
 
 		if ((f_ret == ECTX_EMPTY || f_ret == ECTX_SLEEP) &&
 			(u_ret == ECTX_EMPTY || u_ret == ECTX_SLEEP)) {
-			if (firmware_ctx.fptr == NOT_PROCESS_P && user_ctx.fptr == NOT_PROCESS_P) {
+			if (firmware->fptr == NOT_PROCESS_P && user->fptr == NOT_PROCESS_P) {
 				tvm_sleep ();
 			}
 		} else if (f_ret == ECTX_ERROR || u_ret == ECTX_ERROR) {
@@ -604,18 +309,47 @@ int main (int argc, char *argv[])
 	}
 	
 	if (u_ret == ECTX_ERROR) {
+		tbc_t *tbc = user->priv.bytecode->tbc;
+
+		if (tbc->debug) {
+			tbc_dbg_t	*dbg = tbc->debug;
+			tbc_lnd_t	*ln;
+			tenc_str_t 	*file;
+			int offset = user->iptr - tbc->bytecode;
+			int i = 0;
+
+			while (i < dbg->n_lnd) {
+				if (dbg->lnd[i].offset > offset) {
+					break;
+				}
+				i++;
+			}
+			ln = &(dbg->lnd[i - 1]);
+
+			file = dbg->files;
+			for (i = 0; i < ln->file; ++i) {
+				file = file->next;
+			}
+
+			fprintf (stderr,
+				"Error at %s:%d\n",
+				file->str, ln->line
+			);
+		}
+
 		/* FIXME: more debugging */
 		fprintf (stderr, 
 			"Program failed, state = %c, eflags = %08x\n",
-			user_ctx.state, user_ctx.eflags
+			user->state, user->eflags
 		);
 
 		return 1;
 	}
 	
-	free (firmware_memory);
-	free (user_memory);
-	free (bytecode);
+	free_ectx (firmware);
+	free_ectx (user);
+	free_bytecode (fw_bc);
+	free_bytecode (us_bc);
 
 	#ifdef TVM_PROFILING
 	output_profiling ();

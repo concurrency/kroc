@@ -8,8 +8,11 @@ SKROC_OPTS = #@SKROC_OPTS@
 bin_PROGRAMS = tvm
 tvm_SOURCES = \
 	firmware.h \
+	introspect.c \
 	main.c \
-	sffi.c
+	sffi.c \
+	tbc.c \
+	vm.c
 
 if OS_WINDOWS
 tvm_SOURCES += win32_io.c

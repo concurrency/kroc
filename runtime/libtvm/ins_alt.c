@@ -57,7 +57,7 @@ TVM_INSTRUCTION (ins_dist)
 		}
 	}
 	
-	STACK_RET (fired, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK1_RET (fired, STYPE_DATA);
 }
 
 /* 0x2F - 0x22 0xFF - disc - disable channel */
@@ -86,7 +86,7 @@ TVM_INSTRUCTION (ins_disc)
 		} 
 	}
 
-	STACK_RET (fired, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK1_RET (fired, STYPE_DATA);
 }
 
 
@@ -109,7 +109,7 @@ TVM_INSTRUCTION (ins_diss)
 		}
 	}
 
-	STACK_RET (fired, CREG, UNDEFINE(CREG));
+	STACK2_RET (fired, CREG, STYPE_DATA, CREGt);
 }
 
 
@@ -172,7 +172,7 @@ TVM_INSTRUCTION (ins_enbt)
 	}
 	
 	/* Remove the timeout from the stack */
-	STACK_RET (guard, CREG, UNDEFINE(CREG));
+	STACK2_RET (guard, CREG, STYPE_DATA, CREGt);
 }
 
 /* 0x48 - 0x24 0xF8 - enbc - enable channel */
@@ -195,7 +195,7 @@ TVM_INSTRUCTION (ins_enbc)
 	}
 
 	/* Remove channel pointer from the stack */
-	STACK_RET (guard, CREG, UNDEFINE(CREG));
+	STACK2_RET (guard, CREG, STYPE_DATA, CREGt);
 }
 
 /* 0x49 - 0x24 0xF9 - enbs - enable skip */
