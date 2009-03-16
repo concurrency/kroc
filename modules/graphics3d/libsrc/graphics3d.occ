@@ -543,17 +543,11 @@ PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 
             out ! p2d
 :
 --}}}
---{{{  PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--{{{  PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, SHARED CHAN BYTE debug!)
 --* Generates cube polygons from cube points.
--- Expects to receive 8 points at a time, and from these generates a set of
--- polygons that represent a cube.  Characteristics are controllable through
--- the control channel (e.g. skip hidden surfaces).
+-- @private
 --
--- @param in Points in (2D with Z-depth).
--- @param out Polygons out.
--- @param ctrl Control channel.
---
-PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, SHARED CHAN BYTE debug!)
   VAL [][]INT cubemap3 IS [[0,3,2],[0,1,2],
                            [4,5,1],[4,0,1],
                            [7,4,5],[7,6,5],
@@ -578,14 +572,21 @@ PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!,
     WHILE running
       PRI ALT
         ctrl ? CASE
+          --{{{  reset: reset
           reset
             SEQ
               trimap := FALSE
               backfaces := FALSE
+          --}}}
+          --{{{  set.trimap: triangular polygon generation control
           set.trimap; trimap
             SKIP
+          --}}}
+          --{{{  set.backfaces: backface generation control
           set.backfaces; backfaces
             SKIP
+          --}}}
+          --{{{  set.face.colour: set individual face colour
           INT fn, col:
           set.face.colour; fn; col
             IF
@@ -595,6 +596,8 @@ PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!,
                 pixmap4[fn] := col
               TRUE
                 SKIP
+          --}}}
+          --{{{  set.face.colours: set all face colours
           MOBILE []INT cols:
           set.face.colours; cols
             INT l:
@@ -613,6 +616,7 @@ PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!,
                     pixmap3[i] := cols[i]
                   TRUE
                     pixmap4[i] := cols[i]
+          --}}}
 
         MOBILE []G3D.POINT2.3 pnts:
         in ? pnts
@@ -685,6 +689,13 @@ PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!,
                           SEQ
                             polys[tpi][npoints] := 3
                             polys[tpi][norm] := norms[i]
+                            #IF FALSE --{{{  debug
+                            CLAIM debug!
+                              SEQ
+                                out.string ("cubify.points: face normal ", 0, debug!)
+                                out.int (polys[tpi][norm], 0, debug!)
+                                out.string ("*n", 0, debug!)
+                            #ENDIF --}}}
                             polys[tpi][pixel] := pixels[i]
                             SEQ p = 0 FOR 3
                               SEQ
@@ -702,6 +713,13 @@ PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!,
                           SEQ
                             polys[tpi][npoints] := 4
                             polys[tpi][norm] := norms[i]
+                            #IF FALSE --{{{  debug
+                            CLAIM debug!
+                              SEQ
+                                out.string ("cubify.points: face normal ", 0, debug!)
+                                out.int (polys[tpi][norm], 0, debug!)
+                                out.string ("*n", 0, debug!)
+                            #ENDIF --}}}
                             polys[tpi][pixel] := pixels[i]
                             SEQ p = 0 FOR 4
                               SEQ
@@ -710,6 +728,26 @@ PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!,
                                 polys[tpi][z][p] := pnts[cubemap4[i][p]][z]
                             tpi := tpi + 1
                 out ! polys
+:
+--}}}
+--{{{  PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--* Generates cube polygons from cube points.
+-- Expects to receive 8 points at a time, and from these generates a set of
+-- polygons that represent a cube.  Characteristics are controllable through
+-- the control channel (e.g. skip hidden surfaces).
+--
+-- @param in Points in (2D with Z-depth).
+-- @param out Polygons out.
+-- @param ctrl Control channel.
+--
+PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+  SHARED! CHAN BYTE ch:
+  CHAN BOOL kill:
+  PAR
+    SEQ
+      cubify.points.int (in?, out!, ctrl?, ch!)
+      kill ! FALSE
+    debug.writer (ch?, kill?)
 :
 --}}}
 --{{{  PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
