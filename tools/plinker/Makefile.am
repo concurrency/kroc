@@ -5,7 +5,6 @@ ACLOCAL_AMFLAGS = -I ../../m4
 PERL = perl
 SOURCES = \
 	build.pl \
-	config.pl \
 	dump.pl \
 	main.pl \
 	ETC.pm \
