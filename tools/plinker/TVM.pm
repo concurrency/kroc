@@ -29,6 +29,7 @@ sub new ($$) {
 
 sub assemble ($@) {
 	my ($self, @labels) = @_;
+	my $verbose = $self->{'verbose'};
 	my @bytecode;
 	my %debug;
 	my $pos = 0;
@@ -39,7 +40,7 @@ sub assemble ($@) {
 			$label->{'name'}, 
 			$pos,
 			$label->{'length'}
-		);
+		) if $verbose;
 
 		while ($pos < $label->{'pos'}) {
 			push (@bytecode, "\0");
@@ -59,13 +60,15 @@ sub assemble ($@) {
 				my $bytes = $op->{'bytes'};
 				push (@bytecode, @$bytes);
 				$pos += scalar (@$bytes);
-
-				for (my $i = 0; $i < 23; ++$i) { print " "; }
-				printf ('%-16s', $name);
-				for (my $i = 0; $i < @$bytes; ++$i) {
-					printf ('%02x ', unpack ('C', $bytes->[$i]));
+				
+				if ($verbose) {
+					for (my $i = 0; $i < 23; ++$i) { print " "; }
+					printf ('%-16s', $name);
+					for (my $i = 0; $i < @$bytes; ++$i) {
+						printf ('%02x ', unpack ('C', $bytes->[$i]));
+					}
+					print "\n";
 				}
-				print "\n";
 			} elsif ($name =~ /^\.FILENAME$/) {
 				$debug{$pos} = {} if !$debug{$pos};
 				$debug{$pos}->{'file'} = $op->{'arg'};
@@ -77,11 +80,13 @@ sub assemble ($@) {
 				push (@bytecode, @bytes);
 				$pos += scalar (@bytes);
 				
-				for (my $i = 0; $i < 23; ++$i) { print " "; }
-				for (my $i = 0; $i < @bytes; ++$i) {
-					printf ('%02x ', unpack ('C', $bytes[$i]));
+				if ($verbose) {
+					for (my $i = 0; $i < 23; ++$i) { print " "; }
+					for (my $i = 0; $i < @bytes; ++$i) {
+						printf ('%02x ', unpack ('C', $bytes[$i]));
+					}
+					print "\n";
 				}
-				print "\n";
 			}
 		}
 	}

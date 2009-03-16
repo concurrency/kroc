@@ -41,19 +41,37 @@ my $tcoff	= new Transputer::TCOFF ();
 # TVM helper
 my $tvm		= new Transterpreter::VM ();
 
-# Command Line Parsing
-my ($first, @files) = @ARGV;
+# Options
 my $output;
-if ($first eq '-o') {
-	$output = shift @files;
-} else {
-	unshift (@files, $first) if $first ne '--';
+my $verbose;
+my @files;
+
+# Command Line Parsing
+my @args	= @ARGV;
+my $options 	= 1;
+while (my $arg = shift @args) {
+	if ($options && $arg eq '--') {
+		$options 		= 0;
+	} elsif ($options && $arg eq '-v') {
+		$verbose		= 1;
+		$etc->{'verbose'} 	= 1;
+		$linker->{'verbose'} 	= 1;
+		$tcoff->{'verbose'}	= 1;
+		$tvm->{'verbose'} 	= 1;
+	} elsif ($options && $arg eq '-o') {
+		$output 		= shift @args;
+	} else {
+		push (@files, $arg);
+	}
+}
+
+if (!$output) {
 	$output = $files[-1];
 	$output =~ s/\.tce$/.tbc/i;
 }
 
 if (!$output || !@files) {
-	print "plinker.pl [-o <name>] <file> [<file> ...]\n";
+	print "plinker.pl [-v] [-o <name>] <file> [<file> ...]\n";
 	exit 1;
 }
 
@@ -110,8 +128,10 @@ my $entry_point = $symbols->{$jentry};
 die "Unable to find symbol definition for entry point $jentry"
 	if !defined ($entry_point) || !exists ($entry_point->{'definition'});
 
-print 	"Target:\n",
-	format_symbol_definition ($entry_point->{'definition'}, "  ");
+if ($verbose) {
+	print 	"Target:\n",
+		format_symbol_definition ($entry_point->{'definition'}, "  ");
+}
 
 # Link
 my @labels = $linker->link ($entry_point->{'string'}, @etc);
