@@ -20,10 +20,10 @@ AC_CHECK_HEADERS([sys/ioctl.h sys/time.h sys/timeb.h sys/types.h])
 AC_CHECK_FUNCS([ftime gettimeofday nanosleep setitimer Sleep])
 
 #########################
-#  Find skroc
+#  Find occbuild
 #########################
 
-TVM_PROG_SKROC
+OCCAM_OCCBUILD
 
 #########################
 #  Host Configuration

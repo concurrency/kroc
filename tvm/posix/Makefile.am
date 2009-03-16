@@ -1,13 +1,11 @@
+@SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I ../../m4
-
-SKROC = @SKROC@
-SKROC_OPTS = #@SKROC_OPTS@
+OCCBUILD = @OCCBUILD@
 
 bin_PROGRAMS = tvm
 tvm_SOURCES = \
-	firmware.h \
 	introspect.c \
 	main.c \
 	sffi.c \
@@ -20,15 +18,16 @@ else
 tvm_SOURCES += unix_io.c
 endif
 
-BUILT_SOURCES = firmware.h
+all-local: firmware.tbc
 
-firmware.h: firmware.occ
-	$(SKROC) --no-std-libs $(SKROC_OPTS) --c -f firmware.h firmware.occ
+firmware.tbc: firmware.occ
+	$(OCCBUILD) --no-std-libs --program $<
 
 EXTRA_DIST = \
 	firmware.occ \
+	introspect.inc \
 	tvmspecials.inc
 
-CLEANFILES = \
-	firmware.h firmware.tce
+clean-local:
+	$(OCCBUILD) --clean firmware.tbc
 
