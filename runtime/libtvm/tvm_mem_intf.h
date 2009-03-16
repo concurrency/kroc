@@ -112,6 +112,35 @@ extern double read_wordd(WORDPTR ptr);
 #define write_wordd(LOC,VAL)		( *((double *)(LOC)) ) = (VAL)
 
 #define wordptr_real_address(LOC)	( LOC )
+
+#ifdef TVM_TYPE_SHADOW
+static TVM_INLINE WORD _read_type(ECTX ectx, BYTEPTR ptr)
+{
+	unsigned int p = (unsigned int) ptr;
+	if (p >= ectx->shadow_start && p <= ectx->shadow_end) {
+		unsigned int offset = ((p - ectx->shadow_start)) >> WSH;
+		return (WORD) ectx->type_store[offset];
+	} else {
+		return STYPE_DATA;
+	}
+}
+static TVM_INLINE void _write_type(ECTX ectx, BYTEPTR ptr, WORD val)
+{
+	unsigned int p = (unsigned int) ptr;
+	if (p >= ectx->shadow_start && p <= ectx->shadow_end) {
+		unsigned int offset = ((p - ectx->shadow_start)) >> WSH;
+		ectx->type_store[offset] = (BYTE) val;
+	}
+}
+#define read_type(CTX,LOC)		\
+	( _read_type ((CTX), (BYTEPTR) (LOC) ) )
+#define write_type(CTX,LOC,VAL)		\
+	_write_type ((CTX), (BYTEPTR) (LOC), (VAL))
+#else /* !TVM_TYPE_SHADOW */
+#define read_type(CTX,LOC)
+#define write_type(CTX,LOC,VAL)
+#endif /* !TVM_TYPE_SHADOW */
+
 /*}}}*/
 #endif
 
@@ -132,6 +161,19 @@ extern double read_wordd(WORDPTR ptr);
 	write_word (wordptr_offset (ptr, type, field), (WORD) (data))
 #define read_mt_type(ptr) \
 	(read_word (wordptr_minus ((ptr), 1)))
+
+#define write_word_and_type(CTX,LOC,VAL,TYPE)	\
+	do {					\
+		WORDPTR loc = (LOC);		\
+		write_word (loc, (VAL));	\
+		write_type ((CTX), loc, (TYPE));\
+	} while (0);
+#define write_byte_and_type(CTX,LOC,VAL,TYPE)	\
+	do {					\
+		BYTEPTR loc = (LOC);		\
+		write_byte (loc, (VAL));	\
+		write_type ((CTX), loc, (TYPE));\
+	} while (0);
 /*}}}*/
 
 #endif /* !TVM_MEM_INTF */

@@ -1,0 +1,319 @@
+
+#INCLUDE "../introspect.inc"
+#INCLUDE "../../../runtime/libtvm/instructions.inc"
+
+PROC out.repeat (VAL BYTE ch, VAL INT n, CHAN BYTE out!)
+  --{{{  
+  IF
+    n > 0
+      SEQ i = 0 FOR n
+        out ! ch
+    TRUE
+      SKIP
+  --}}}
+:
+
+PROC out.ch (VAL BYTE ch, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out.repeat (' ', field - 1, out!)
+    out ! ch
+  --}}}
+:
+
+PROC out.string (VAL []BYTE s, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  VAL INT length IS SIZE s:
+  SEQ
+    out.repeat (' ', field - length, out!)
+    SEQ i = 0 FOR length
+      out ! s[i]
+  --}}}
+:
+
+PROC out.int (VAL INT n, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  IF
+    n = (MOSTNEG INT)
+      --{{{  minint
+      out.string ("-2147483648", field, out!)
+      --}}}
+    n = 0
+      --{{{  zero
+      SEQ
+        IF
+          1 < field
+            out.repeat (' ', field - 1, out!)
+          TRUE
+            SKIP
+        out ! '0'
+      --}}}
+    TRUE
+      --{{{  anything else
+      VAL INT max.digits IS 20:
+      [max.digits]INT D:
+      INT x, i:
+      SEQ
+        --{{{  check negative
+        IF
+          n < 0
+            x := -n
+          TRUE         -- (n > 0)
+            x := n
+        --}}}
+        --{{{  decompose
+        SEQ
+          i := 0
+          WHILE x > 0
+            SEQ
+              D[i] := x\10
+              x := x/10
+              i := i + 1
+        --}}}
+        --{{{  pad
+        IF
+          n > 0
+            out.repeat (' ', field - i, out!)
+          TRUE
+            SEQ
+              out.repeat (' ', (field - 1) - i, out!)
+              out ! '-'
+        --}}}
+        --{{{  output
+        #PRAGMA DEFINED D
+        WHILE i > 0
+          SEQ
+            i := i - 1
+            out ! BYTE (D[i] + (INT '0'))
+        --}}}
+      --}}}
+  --}}}
+:
+
+PROC out.hex (VAL INT n, VAL INT field, CHAN BYTE out!)
+  IF
+    n = (MOSTNEG INT)
+      out.string ("#80000000", field, out!)
+    n = 0
+      out.string ("#00000000", field, out!)
+    TRUE
+      --{{{  anything else
+      VAL []BYTE cmap IS "0123456789ABCDEF":
+      INT x, i:
+      SEQ
+        x := n
+        IF
+          field = 0
+            i := 8
+          TRUE
+            i := (field - 1)
+        IF
+          i > 0
+            SEQ
+              out ! '#'
+              WHILE i > 0
+                SEQ
+                  out ! cmap[((x >> ((i - 1) << 2)) /\ #0000000F)]
+                  i := i - 1
+          TRUE
+            SKIP
+      --}}}  
+:
+
+PROTOCOL P.TRACE
+  CASE
+    executing; ADDR; IPTR
+    start.process; ADDR
+    fork.process; ADDR
+    end.process; ADDR
+    rename.process; ADDR; ADDR
+    call; IPTR
+    return; IPTR
+    input; ADDR
+    output; ADDR
+:
+
+PROC trace (CT.VM.CTL! vm.ctl, CHAN P.TRACE out!)
+  VAL INT INS.OPR IS #F:
+  ADDR id: 
+  IPTR iptr:
+  SEQ
+    VM.STATE state:
+    SEQ
+      vm.ctl[request] ! get.state 
+      vm.ctl[response] ? CASE state; state
+      id, iptr := state[wptr], state[iptr]
+    
+    WHILE TRUE 
+      ADDR new.id:
+      INT op, arg:
+      SEQ 
+        -- report present process position 
+        out ! executing; id; iptr 
+        -- start process and end process 
+        vm.ctl[request] ! step 
+        vm.ctl[response] ? CASE decoded; iptr; op; arg 
+        IF 
+          op = INS.OPR 
+            VM.STATE state: 
+            SEQ
+              vm.ctl[request] ! get.state 
+              vm.ctl[response] ? CASE state; state 
+              CASE arg 
+                INS.STARTP
+                  -- process workspace is on the operand stack 
+                  out ! start.process; ADDR state[stack][0] 
+                INS.ENDP, INS.PROC.END
+                  out ! end.process; id
+                INS.IN
+                  out ! input; ADDR state[stack][1]
+                INS.MT.IN
+                  out ! input; ADDR state[stack][0]
+                INS.OUT, INS.OUTBYTE, INS.OUTWORD
+                  out ! output; ADDR state[stack][1]
+                INS.MT.OUT
+                  out ! output; ADDR state[stack][0]
+                INS.PROC.START
+                  out ! fork.process; ADDR state[stack][1]
+                ELSE 
+                  SKIP 
+          TRUE 
+            SKIP 
+        -- workspace pointer altering operations 
+        vm.ctl[request] ! dispatch; op; arg
+        vm.ctl[response] ? CASE dispatched; iptr; new.id 
+        IF 
+          (op = INS.AJW) OR (op = INS.CALL)
+            SEQ
+              out ! rename.process; id; new.id
+              IF
+                op = INS.CALL
+                  out ! call; iptr
+                TRUE
+                  SKIP
+          (op = INS.OPR)
+            CASE arg
+              INS.RET
+                SEQ
+                  out ! rename.process; id; new.id
+                  out ! return; iptr
+              ELSE
+                SKIP
+          TRUE 
+            SKIP 
+        -- update workspace pointer 
+        id := new.id
+:
+
+PROC decode.trace (CT.BYTECODE! bc, CHAN P.TRACE in?, CHAN BYTE out!)
+  INITIAL ADDR id IS 0:
+  WHILE TRUE
+    in ? CASE
+      IPTR iptr:
+      executing; id; iptr
+        SEQ
+          bc[request] ! get.line.info; iptr
+          bc[response] ? CASE
+            INT file, line:
+            line.info; file; line
+              MOBILE []BYTE fn:
+              SEQ
+                bc[request] ! get.file; file
+                bc[response] ? CASE file; fn
+                out.hex (INT id, 0, out!)
+                out.string (" @ ", 0, out!)
+                out.string (fn, 0, out!)
+                out ! ':'
+                out.int (line, 0, out!)
+                out ! '*n'
+            INT n:
+            error; n
+              SKIP
+      ADDR process:
+      start.process; process
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" start ", 0, out!)
+          out.hex (INT process, 0, out!)
+          out ! '*n'
+      ADDR process:
+      fork.process; process
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" fork ", 0, out!)
+          out.hex (INT process, 0, out!)
+          out ! '*n'
+      ADDR process:
+      end.process; process
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" end*n", 0, out!)
+      ADDR old, new:
+      rename.process; old; new
+        SEQ
+          out.hex (INT old, 0, out!)
+          out.string (" => ", 0, out!)
+          out.hex (INT new, 0, out!)
+          out ! '*n'
+      IPTR iptr:
+      call; iptr
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" call ", 0, out!)
+          bc[request] ! get.symbol.at; iptr
+          bc[response] ? CASE
+            MOBILE []BYTE name, desc:
+            INT ws, vs:
+            symbol; iptr; name; desc; ws; vs
+              out.string (name, 0, out!)
+            INT n:
+            error; n
+              SKIP
+          out ! '*n'
+      IPTR iptr:
+      return; iptr
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" return*n", 0, out!)
+      ADDR chan:
+      input; chan
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" input from ", 0, out!)
+          out.hex (INT chan, 0, out!)
+          out ! '*n'
+      ADDR chan:
+      output; chan
+        SEQ
+          out.hex (INT id, 0, out!)
+          out.string (" output to ", 0, out!)
+          out.hex (INT chan, 0, out!)
+          out ! '*n'
+:
+
+PROC tracer (CHAN BYTE kyb?, scr!, err!)
+  CHAN CT.VM! vc0:
+  PLACE vc0 AT #0:
+  CT.VM! vm:
+  INT n:
+  SEQ
+    vc0 ? vm
+    vm[request] ! load.bytecode; "commstime.tbc"
+    vm[response] ? CASE
+      CT.BYTECODE! bc:
+      bytecode; bc
+        CT.VM.CTL! vm.ctl:
+        SEQ
+          bc[request] ! create.vm
+          bc[response] ? CASE 
+            vm; vm.ctl
+              CHAN P.TRACE td:
+              PAR
+                trace (vm.ctl, td!)
+                decode.trace (bc, td?, scr!)
+            error; n
+              err ! 'e'
+      error; n
+        SKIP
+:
+

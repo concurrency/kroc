@@ -45,6 +45,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #endif
 
+#include <stdio.h>
+#include "ins_names.h"
+
 #define WS_PAD	4
 #define VS_PAD	1
 
@@ -102,6 +105,23 @@ void tvm_ectx_init (tvm_t *tvm, ECTX ectx)
 	#endif
 }
 
+void tvm_ectx_release (ECTX ectx)
+{
+	tvm_t *tvm = ectx->tvm;
+	
+	if (ectx == tvm->head) {
+		tvm->head = ectx->next;
+	} else {
+		ECTX p = tvm->head;
+		while (p->next != ectx)
+			p = p->next;
+		p->next = ectx->next;
+	}
+
+	ectx->tvm	= NULL;
+	ectx->next	= NULL;
+}
+
 void tvm_ectx_reset (ECTX ectx)
 {
 	ectx->state 	= ECTX_INIT;
@@ -113,20 +133,29 @@ void tvm_ectx_reset (ECTX ectx)
 	AREG 		= 0;
 	BREG 		= 0;
 	CREG 		= 0;
+	SET_AREGt (STYPE_UNDEF);
+	SET_BREGt (STYPE_UNDEF);
+	SET_CREGt (STYPE_UNDEF);
 
 	/* setup scheduler queues */
 	WPTR = (WORDPTR) NOT_PROCESS_P;
 	FPTR = (WORDPTR) NOT_PROCESS_P;
 	BPTR = (WORDPTR) NOT_PROCESS_P;
 	TPTR = (WORDPTR) NOT_PROCESS_P;
+
+	/* type shadow */
+	#ifdef TVM_TYPE_SHADOW
+	ectx->shadow_start	= 0;
+	ectx->shadow_end	= 0;
+	ectx->type_store	= NULL;
+	#endif
 }
 
-static int calc_frame_size (const int tlp_argc, const int vs, const int ms, const int pad)
+static int calc_frame_size (const int tlp_argc, const int vs, const int pad)
 {
 	int frame_size = 1 + tlp_argc;
 	
 	frame_size += (vs ? 1 : 0);
-	frame_size += (ms ? 1 : 0);
 
 	/* Stack frame has a minimum size of 4 */
 	if (pad && (frame_size < 4)) {
@@ -138,25 +167,24 @@ static int calc_frame_size (const int tlp_argc, const int vs, const int ms, cons
 
 WORD tvm_ectx_memory_size (ECTX ectx,
 		const char *tlp_fmt, const int tlp_argc,
-		WORD ws_size, WORD vs_size, WORD ms_size)
+		WORD ws_size, WORD vs_size)
 {
-	int frame_size = calc_frame_size (tlp_argc, vs_size, ms_size, 1);
+	int frame_size = calc_frame_size (tlp_argc, vs_size, 1);
 
 	/* The plus 1 in here is for the shutdown bytecode */
-	return frame_size + 1 + ws_size + vs_size + ms_size + WS_PAD + VS_PAD;
+	return frame_size + 1 + ws_size + vs_size + WS_PAD + VS_PAD;
 }
 
 void tvm_ectx_layout (ECTX ectx, WORDPTR base,
 		const char *tlp_fmt, const int tlp_argc,
-		WORD ws_size, WORD vs_size, WORD ms_size,
-		WORDPTR *ws, WORDPTR *vs, WORDPTR *ms)
+		WORD ws_size, WORD vs_size,
+		WORDPTR *ws, WORDPTR *vs)
 {
-	int frame_size = calc_frame_size (tlp_argc, vs_size, ms_size, 1);
+	int frame_size = calc_frame_size (tlp_argc, vs_size, 1);
 	
 	/* The plus 1 in here is for the shutdown bytecode */
 	*ws = wordptr_plus (base, frame_size + ws_size + 1 + WS_PAD);
 	*vs = vs_size ? *ws : 0;
-	*ms = ms_size ? wordptr_plus (*ws, vs_size + VS_PAD) : 0;
 }
 
 /*
@@ -164,7 +192,7 @@ void tvm_ectx_layout (ECTX ectx, WORDPTR base,
  * and stack frame for an execution context.
  */
 int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
-		WORDPTR ws, WORDPTR vs, WORDPTR ms,
+		WORDPTR ws, WORDPTR vs,
 		const char *fmt, int argc, const WORD argv[])
 {
 	WORDPTR fb = 0;
@@ -240,9 +268,10 @@ int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 	WPTR = wordptr_minus (WPTR, 1);
 	write_byte (byteptr_plus ((BYTEPTR) WPTR, 0), 0x2F);
 	write_byte (byteptr_plus ((BYTEPTR) WPTR, 1), 0xFE);
+	write_type (ectx, WPTR, STYPE_DATA);
 
 	/* Pad stack frame */
-	frame_size = calc_frame_size (argc, (WORD) vs, (WORD) ms, 0);
+	frame_size = calc_frame_size (argc, (WORD) vs, 0);
 	if (frame_size < 4) {
 		WPTR = wordptr_minus (WPTR, 4 - frame_size);
 		frame_size = 4;
@@ -252,32 +281,42 @@ int tvm_ectx_install_tlp (ECTX ectx, BYTEPTR code,
 	if (fb) {
 		WPTR = wordptr_minus (WPTR, 1);
 		write_word (WPTR, (WORD) fb);
+		write_type (ectx, WPTR, STYPE_MT);
 	}
 
-	/* Set up mobilespace pointer */
-	if (ms) {
-		WPTR = wordptr_minus (WPTR, 1);
-		write_word (WPTR, (WORD) ms);
-	}
-	
 	/* Set up vectorspace pointer */
 	if (vs) {
 		WPTR = wordptr_minus (WPTR, 1);
 		write_word (WPTR, (WORD) vs);
+		write_type (ectx, WPTR, STYPE_VS);
 	}
 	
 	/* Set up arguments */
-	for(i = ectx->tlp_argc - 1; i >= 0; i--) {
+	for (i = ectx->tlp_argc - 1; i >= 0; i--) {
 		if (ectx->tlp_fmt[i] != 'F') {
 			WPTR = wordptr_minus (WPTR, 1);
 			write_word (WPTR, ectx->tlp_argv[i]);
 		}
+		#ifdef TVM_TYPE_SHADOW
+		switch (ectx->tlp_fmt[i]) {
+			case '?': case '!':
+				write_type (ectx, WPTR, STYPE_MOBILE);
+				break;
+			case 'C': case 'S': case 'F': case 'M':
+				write_type (ectx, WPTR, STYPE_MT);
+				break;
+			default:
+				write_type (ectx, WPTR, STYPE_DATA);
+				break;
+		}
+		#endif
 	}
 
 	/* Store the return pointer, to completion byte code */
 	/* FIXME: this won't work for virtual memory right? */
 	WPTR = wordptr_minus (WPTR, 1);
 	write_word (WPTR, (WORD) wordptr_plus (WPTR, frame_size));
+	write_type (ectx, WPTR, STYPE_WS);
 
 	return 0;
 }
@@ -434,33 +473,63 @@ int tvm_ectx_waiting_on (ECTX ectx, WORDPTR ws_base, WORD ws_len)
 	return 0; /* no dependencies */
 }
 
+static TVM_INLINE BYTE decode_next (ECTX ectx)
+{
+	BYTE instr;
+	
+	/* Read the instruction */
+	#if defined(MEMORY_INTF_BIGENDIAN)
+	instr = *IPTR; /* FIXME */
+	#else
+	instr = read_byte (IPTR);
+	#endif
+	
+	#if 0
+	printf ("%p %02x ", IPTR, instr);
+	if ((instr & 0xF0) != 0xF0) {
+		printf ("%8s", pri_name[(instr >> 4) & 0xF]);
+	} else {
+		printf ("%8s", sec_name[OREG | (instr & 0xF)]);
+	}
+	printf (" %08x %08x %08x %08x\n", 
+		OREG | (instr & 0xF), AREG, BREG, CREG);
+	#endif
+
+	/* Increment instruction pointer */
+	IPTR = byteptr_plus (IPTR, 1);
+	
+	/* Put the least significant bits in OREG */
+	OREG |= (instr & 0x0f);
+
+	return instr;
+}
+
+static int do_dispatch (ECTX ectx, BYTE instr)
+{
+	#ifdef TVM_DISPATCH_SWITCH
+	return dispatch_instruction (ectx, instr);
+	#else
+	/* Use the other bits to index into the jump table */
+	return primaries[instr >> 4] (ectx);
+	#endif
+}
+
+BYTE tvm_decode_instruction (ECTX ectx)
+{
+	return decode_next (ectx);
+}
+
+int tvm_dispatch_instruction (ECTX ectx, BYTE instr)
+{
+	return do_dispatch (ectx, instr);
+}
+
 int tvm_dispatch (ECTX ectx, UWORD cycles)
 {
 	int ret;
 
 	do {
-		BYTE instr;
-		
-		/* Read the instruction */
-		#if defined(MEMORY_INTF_BIGENDIAN)
-		instr = *IPTR; /* FIXME */
-		#else
-		instr = read_byte (IPTR);
-		#endif
-		
-		/* Increment instruction pointer */
-		IPTR = byteptr_plus (IPTR, 1);
-
-		/* Put the least significant bits in OREG */
-		OREG |= (instr & 0x0f);
-
-		#ifdef TVM_DISPATCH_SWITCH
-		ret = dispatch_instruction (ectx, instr);
-		#else
-		/* Use the other bits to index into the jump table */
-		ret = primaries[instr >> 4] (ectx);
-		#endif
-		
+		ret = do_dispatch (ectx, decode_next (ectx));
 		cycles -= 2;
 	} while (cycles && !ret);
 

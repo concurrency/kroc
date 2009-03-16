@@ -43,7 +43,7 @@ TVM_INSTRUCTION (ins_proc_alloc)
 	
 	ws = mt_alloc_data (ectx, MT_SIMPLE | MT_MAKE_TYPE (MT_DATA), words << WSH);
 
-	STACK_RET ((WORD) ws, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK1_RET ((WORD) ws, STYPE_MT);
 }
 
 /* 0x230 - 0x22 0x23 0xF0 - proc_param - pass parameter into workspace */
@@ -142,14 +142,14 @@ TVM_INSTRUCTION (ins_proc_end)
 TVM_INSTRUCTION (ins_getaff)
 {
 	/* Always return an empty (0) affinity mask. */
-	STACK_RET (0, AREG, BREG);
+	STACK_RET (0, AREG, BREG, STYPE_DATA, AREGt, BREGt);
 }
 
 /* 0x236 - 0x22 0x23 0xF6 - setaff - set processor affinity */
 TVM_INSTRUCTION (ins_setaff)
 {
 	/* Ignore the new affinity mask. */
-	STACK_RET (BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET (BREG, CREG, BREGt, CREGt);
 }
 
 #endif /* TVM_OCCAM_PI */
@@ -158,6 +158,6 @@ TVM_INSTRUCTION (ins_setaff)
 TVM_INSTRUCTION (ins_getpas)
 {
 	/* Always return an empty (0) affinity mask, with priority 0. */
-	STACK_RET (0, AREG, BREG);
+	STACK_RET (0, AREG, BREG, STYPE_DATA, AREGt, BREGt);
 }
 

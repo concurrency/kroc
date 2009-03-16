@@ -42,7 +42,7 @@ static int write_screen (ECTX ectx, WORD args[])
 /* PROC write.error (VAL BYTE ch) */
 static int write_error (ECTX ectx, WORD args[])
 {
-	fputc (read_byte (args[0]), stderr);
+	fputc (args[0], stderr);
 	fflush (stderr);
 	return SFFI_OK;
 }

@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* 0x5A - 0x25 0xFA - dup - duplicate top of stack */
 TVM_INSTRUCTION (ins_dup)
 {
-	STACK_RET(AREG, AREG, BREG);
+	STACK_RET(AREG, AREG, BREG, AREGt, AREGt, BREGt);
 }
 
 /****************************************************************************
@@ -45,6 +45,6 @@ TVM_INSTRUCTION (ins_wsubdb)
 	 * a shift followed by a WSUB or BSUB when accessing double word
 	 * array items.
 	 */
-	STACK_RET((WORD)wordptr_plus((WORDPTR)AREG, BREG * 2), CREG, UNDEFINE(CREG));
+	STACK2_RET((WORD)wordptr_plus((WORDPTR)AREG, BREG * 2), CREG, AREGt, CREGt);
 }
 

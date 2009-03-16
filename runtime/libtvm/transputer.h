@@ -74,6 +74,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define NONE_SELECTED_O		(-1)
 /*}}}*/
 
+/*{{{  Shadow types */
+enum {
+	STYPE_UNDEF	= 0,	/* Undefined/unknown type */
+	STYPE_DATA	= 1,	/* Generic data */
+	STYPE_WS	= 2,	/* Workspace Pointer */
+	STYPE_BC	= 3,	/* Bytecode Pointer */
+	STYPE_MT	= 4,	/* Mobile Type Pointer */
+	STYPE_CHAN	= 5,	/* Channel */
+	STYPE_MOBILE	= 6,	/* Pointer into Mobile Memory */
+	STYPE_NULL	= 7,	/* NULL Pointer */
+	STYPE_VS	= 8,	/* Vectorspace Pointer */
+	STYPE_RET	= 9	/* Return Address (in call-stack) */
+};
+/*}}}*/
+
 /*{{{  Error flags */
 enum {
 	EFLAG_SETERR 	= (1 << 0),	/* Error flag set by SETERR */
@@ -125,6 +140,27 @@ typedef struct {
 	EXT_CHAN_MT_FUNCTION	mt_in;
 	EXT_CHAN_MT_FUNCTION	mt_out;
 } EXT_CHAN_ENTRY;
+
+typedef void (*EXT_CB_FREE_FUNCTION)(ECTX ectx, void *data);
+typedef int (*EXT_CB_IO_FUNCTION)(ECTX ectx, void *data, WORDPTR channel, BYTEPTR address, WORD count);
+typedef int (*EXT_CB_MT_FUNCTION)(ECTX ectx, void *data, WORDPTR channel, WORDPTR address);
+typedef int (*EXT_CB_XABLE_FUNCTION)(ECTX ectx, void *data, WORDPTR channel);
+typedef struct {
+	EXT_CB_IO_FUNCTION	in;
+	EXT_CB_IO_FUNCTION	out;
+	EXT_CB_IO_FUNCTION	swap;
+	EXT_CB_MT_FUNCTION	mt_in;
+	EXT_CB_MT_FUNCTION	mt_out;
+	EXT_CB_XABLE_FUNCTION	xable;
+	EXT_CB_IO_FUNCTION	xin;
+	EXT_CB_MT_FUNCTION	mt_xin;
+	EXT_CB_FREE_FUNCTION	free;
+} EXT_CB_INTERFACE;
+
+typedef struct {
+	EXT_CB_INTERFACE	*interface;
+	void			*data;
+} mt_cb_ext_t;
 /*}}}*/
 
 /*{{{   Foreign function interface prototypes. */
@@ -150,6 +186,13 @@ struct _tvm_ectx_t {
 	WORD		areg;	/* Evaluation stack */
 	WORD		breg;	/* Evaluation stack */
 	WORD		creg;	/* Evaluation stack */
+	WORD 		_creg;	/* Special case CREG storage */
+	#ifdef TVM_TYPE_SHADOW
+	WORD		aregT;
+	WORD		bregT;
+	WORD		cregT;
+	WORD		_cregT;
+	#endif /* TVM_TYPE_SHADOW */
 
 	WORD		pri;	/* Priority */
 
@@ -158,13 +201,18 @@ struct _tvm_ectx_t {
 	WORDPTR		bptr;	/* Back pointer (scheduler queue) */
 	WORDPTR		tptr;	/* Timer queue pointer */
 	WORD		tnext;	/* Timeout register */
-
-	WORD 		_creg;	/* Special case CREG storage */
 	
 	WORD 		eflags;	/* Error flags */
 	WORD 		state;	/* Context state */
 
 	volatile WORD 	sflags;	/* Synchronisation flags */
+
+	/* Type store */
+	#ifdef TVM_TYPE_SHADOW
+	unsigned int	shadow_start;
+	unsigned int	shadow_end;
+	BYTE		*type_store;
+	#endif /* TVM_TYPE_SHADOW */
 
 	/* Implementation functions */
 	void		(*add_to_queue)
@@ -260,7 +308,8 @@ enum {
 	ECTX_TIME_SLICE		= 't'
 };
 enum {
-	_ECTX_DESCHEDULE	= -1
+	_ECTX_DESCHEDULE	= -1,
+	_ECTX_BYPASS		= -2
 };
 /*}}}*/
 
@@ -283,6 +332,20 @@ enum {
 #define BREG	(ectx->breg)
 #define CREG	(ectx->creg)
 #define OREG	(ectx->oreg)
+
+#define AREGt	(ectx->aregT)
+#define BREGt	(ectx->bregT)
+#define CREGt	(ectx->cregT)
+#ifdef TVM_TYPE_SHADOW
+#define SET_AREGt(X)	do { AREGt = (X); } while (0)
+#define SET_BREGt(X)	do { BREGt = (X); } while (0)
+#define SET_CREGt(X)	do { CREGt = (X); } while (0)
+#else /* !TVM_TYPE_SHADOW */
+#define SET_AREGt(X)	do { } while (0)
+#define SET_BREGt(X)	do { } while (0)
+#define SET_CREGt(X)	do { } while (0)
+#endif /* !TVM_TYPE_SHADOW */
+
 
 #define FPTR	(ectx->fptr)
 #define BPTR	(ectx->bptr)
