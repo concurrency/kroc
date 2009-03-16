@@ -19,10 +19,64 @@
 
 --** @module graphics3d
 
+-- Note: the general [serial] techniques/algorithms used in this library
+-- are based on code from lightsrc.cpp and glenz.cpp by Marcus Lindblom.
+
+#INCLUDE "course.module"
 #INCLUDE "maths.module"
 #INCLUDE "sdlraster.module"
 #INCLUDE "graphics3d.inc"
 
+
+--{{{  PROC debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
+--* Debugging routine.
+-- @private
+PROC debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
+
+  #PRAGMA EXTERNAL "PROC C.out.stderr (VAL []BYTE str) = 0"
+
+  [512]BYTE buffer:
+  INT buf.len:
+  SEQ
+    buf.len := 0
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        kill ? running
+          running := FALSE
+        BYTE ch:
+        in ? ch
+          INITIAL BOOL flush IS FALSE:
+          SEQ
+            IF
+              ch = #00
+                flush := TRUE
+              buf.len = ((SIZE buffer) - 2)
+                SEQ
+                  buffer[buf.len] := ch
+                  flush := TRUE
+                  buf.len := buf.len + 1
+              TRUE
+                SEQ
+                  buffer[buf.len] := ch
+                  buf.len := buf.len + 1
+                  IF
+                    ch = '*n'
+                      flush := TRUE
+                    TRUE
+                      SKIP
+
+            IF
+              flush AND (buf.len > 0)
+                --{{{  flush buffer
+                SEQ
+                  C.out.stderr ([buffer FOR buf.len])
+                  buf.len := 0
+                --}}}
+              TRUE
+                SKIP
+:
+--}}}
 
 --{{{  PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
 --* Cube point generator.
@@ -741,30 +795,25 @@ PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY ou
                 out ! polys
 :
 --}}}
---{{{  PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?)
+--{{{  PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, SHARED CHAN BYTE debug!)
 --* Converts polygons to scan-line data.
--- Expects to receive sets of polygons on its input, which it then transforms
--- into a set of G3D.POLY.SCAN structures.
---
--- @param in Polygons input.
--- @param out Scan-line data output.
--- @param ctrl Control channel.
---
-PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?)
+-- @private
+PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, SHARED CHAN BYTE debug!)
   INT vp.width, vp.height:
 
-  PROC reset ()
+  PROC reset () --{{{
     SEQ
       vp.width := G3D.DEFAULT.WIDTH
       vp.height := G3D.MAX.SCAN.HEIGHT
   :
-
+  --}}}
   PROC do.fix (G3D.POLY.SCAN scan, VAL INT x1, y1, x2, y2) --{{{
     INITIAL INT x1 IS x1:
     INITIAL INT y1 IS y1:
     INITIAL INT x2 IS x2:
     INITIAL INT y2 IS y2:
     SEQ
+      --{{{  make sure line goes in the same direction (y2 >= y1)
       IF
         y2 < y1
           SEQ
@@ -773,7 +822,8 @@ PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out
             x2, x1 := x1, x2
         TRUE
           SKIP
-
+      --}}}
+      --{{{  scan limit
       IF
         y1 < scan[scan.s]
           scan[scan.s] := y1
@@ -784,7 +834,7 @@ PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out
           scan[scan.e] := y2
         TRUE
           SKIP
-
+      --}}}
       IF
         y1 = y2
           IF
@@ -793,11 +843,40 @@ PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out
                 -- flat polygon
                 scan[start][y1] := x1
                 scan[end][y1] := x2
+
+                #IF FALSE
+                --{{{  debug
+                CLAIM debug!
+                  SEQ
+                    out.string ("polygon: do.fix: flat (", 0, debug!)
+                    out.int (x1, 0, debug!)
+                    out.string ("-", 0, debug!)
+                    out.int (x2, 0, debug!)
+                    out.string (",", 0, debug!)
+                    out.int (y1, 0, debug!)
+                    out.string (")*n", 0, debug!)
+                --}}}
+                #ENDIF
             TRUE
               SKIP
         TRUE
           INT x, y, step:
           SEQ
+            #IF FALSE
+            --{{{  debug
+            CLAIM debug!
+              SEQ
+                out.string ("polygon: do.fix: complex (", 0, debug!)
+                out.int (x1, 0, debug!)
+                out.string (",", 0, debug!)
+                out.int (y1, 0, debug!)
+                out.string (") - (", 0, debug!)
+                out.int (x2, 0, debug!)
+                out.string (",", 0, debug!)
+                out.int (y2, 0, debug!)
+                out.string (")*n", 0, debug!)
+            --}}}
+            #ENDIF
             -- complex polygon
             x := x1 << 16
             step := ((x2 - x1) << 16) / (y2 - y1)
@@ -808,13 +887,18 @@ PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out
               SEQ
                 IF
                   (y >= 0) AND (y < vp.height)
-                    IF
-                      scan[start][y] = (-1)
-                        scan[start][y] := (x >> 16)
-                      (x >> 16) < vp.width
-                        scan[end][y] := (x >> 16)
-                      TRUE
-                        scan[end][y] := vp.width - 1
+                    INITIAL INT shx IS (x >> 16):
+                    SEQ
+                      IF
+                        x < 0
+                          shx := shx - 65536
+                        TRUE
+                          SKIP
+                      IF
+                        scan[start][y] = (MOSTNEG INT)
+                          scan[start][y] := shx
+                        TRUE
+                          scan[end][y] := shx
                   TRUE
                     SKIP
                 x := x + step
@@ -843,8 +927,8 @@ PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out
               SEQ
                 SEQ j = 0 FOR G3D.MAX.SCAN.HEIGHT
                   SEQ
-                    tsc[start][j] := -1
-                    tsc[end][j] := -1
+                    tsc[start][j] := MOSTNEG INT
+                    tsc[end][j] := MOSTNEG INT
                 tsc[norm] := ply[norm]
                 tsc[pixel] := ply[pixel]
                 tsc[scan.s] := G3D.MAX.SCAN.HEIGHT
@@ -869,17 +953,33 @@ PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out
                     tsc[scan.e] := vp.height - 1
                   TRUE
                     SKIP
+
             out ! scans
 :
 --}}}
---{{{  PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
---* Renders polygon scan-line data onto a raster.
+--{{{  PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?)
+--* Converts polygons to scan-line data.
+-- Expects to receive sets of polygons on its input, which it then transforms
+-- into a set of G3D.POLY.SCAN structures.
 --
--- @param data Polygon scan-line data input.
--- @param rlink Raster I/O.
+-- @param in Polygons input.
+-- @param out Scan-line data output.
 -- @param ctrl Control channel.
 --
-PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
+PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?)
+  SHARED! CHAN BYTE ch:
+  CHAN BOOL kill:
+  PAR
+    SEQ
+      poly.scanlines.int (in?, out!, ctrl?, ch!)
+      kill ! FALSE
+    debug.writer (ch?, kill?)
+:
+--}}}
+--{{{  PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
+--* Renders polygon scan-line data onto a raster.
+-- @private
+PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, SHARED CHAN BYTE debug!)
   INT mode:
   INT vp.width, vp.height:
 
@@ -891,48 +991,96 @@ PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rli
   :
   --}}}
   PROC glenz.poly.render (RASTER r, VAL G3D.POLY.SCAN scan) --{{{
-    SEQ i = scan[scan.s] FOR (scan[scan.e] - scan[scan.s]) + 1
-      INITIAL INT stx IS scan[start][i]:
+    INT y.start, y.len:
+    SEQ
       IF
-        stx <> (-1)
-          INITIAL INT edx IS scan[end][i]:
-          SEQ
-            IF
-              stx >= vp.width
-                stx := vp.width - 1
-              TRUE
-                SKIP
-            IF
-              edx >= vp.width
-                edx := vp.width - 2
-              TRUE
-                SKIP
-            IF
-              edx = (-1)
-                r[i][stx] := scan[pixel]
-              TRUE
-                SEQ
-                  IF
-                    stx > edx
-                      stx, edx := edx, stx
-                    TRUE
-                      SKIP
-                  VAL [4]BYTE pixel RETYPES scan[pixel]:
-                  SEQ x = (stx + 1) FOR (edx - stx)
-                    [4]BYTE pval RETYPES r[i][x]:
-                    SEQ pv = 0 FOR 4
-                      IF
-                        pixel[pv] = #00               -- leave this component alone
-                          SKIP
-                        TRUE
-                          INITIAL INT iv IS ((INT pval[pv]) + (INT pixel[pv])) >> 1:
-                          IF
-                            iv > 245
-                              pval[pv] := #FF
-                            TRUE
-                              pval[pv] := BYTE (iv + 10)    -- tend to get brighter
+        scan[scan.s] < 0
+          y.start := 0
+        TRUE
+          y.start := scan[scan.s]
+      IF
+        scan[scan.e] >= (SIZE r)
+          y.len := (SIZE r) - y.start
+        TRUE
+          y.len := (scan[scan.e] - y.start) + 1
+
+      IF
+        y.len < 0
+          y.len := 0
         TRUE
           SKIP
+
+      #IF FALSE --{{{  debug
+      CLAIM debug!
+        SEQ
+          out.string ("glenz.poly.render(): scan from ", 0, debug!)
+          out.int (y.start, 0, debug!)
+          out.string (" for ", 0, debug!)
+          out.int (y.len, 0, debug!)
+          out.string (" raw scans:*n", 0, debug!)
+
+          SEQ i = y.start FOR y.len
+            SEQ
+              out.string ("  (", 0, debug!)
+              out.int (scan[start][i], 0, debug!)
+              out.string ("-", 0, debug!)
+              out.int (scan[end][i], 0, debug!)
+              out.string (")", 0, debug!)
+
+          out.string ("*n", 0, debug!)
+      #ENDIF --}}}
+
+      SEQ i = y.start FOR y.len
+        INITIAL INT stx IS scan[start][i]:
+        IF
+          stx > (MOSTNEG INT)
+            INITIAL INT edx IS scan[end][i]:
+            SEQ
+              IF
+                edx = (MOSTNEG INT)
+                  -- single point
+                  edx := stx
+                edx < stx
+                  -- swap
+                  stx, edx := edx, stx
+                TRUE
+                  SKIP
+              IF
+                (stx >= vp.width) AND (edx >= vp.width)
+                  -- off right-hand edge
+                  SKIP
+                (stx < 0) AND (edx < 0)
+                  -- off left-hand edge
+                  SKIP
+                TRUE
+                  SEQ
+                    IF
+                      stx < 0
+                        stx := 0
+                      TRUE
+                        SKIP
+                    IF
+                      edx >= vp.width
+                        edx := vp.width - 1
+                      TRUE
+                        SKIP
+
+                    VAL [4]BYTE pixel RETYPES scan[pixel]:
+                    SEQ x = stx FOR (edx - stx)
+                      [4]BYTE pval RETYPES r[i][x]:
+                      SEQ pv = 0 FOR 4
+                        IF
+                          pixel[pv] = #00               -- leave this component alone
+                            SKIP
+                          TRUE
+                            INITIAL INT iv IS ((INT pval[pv]) + (INT pixel[pv])) >> 1:
+                            IF
+                              iv > 245
+                                pval[pv] := #FF
+                              TRUE
+                                pval[pv] := BYTE (iv + 10)    -- tend to get brighter
+          TRUE
+            SKIP
   :
   --}}}
   PROC normal.poly.render (RASTER r, VAL G3D.POLY.SCAN scan) --{{{
@@ -955,37 +1103,61 @@ PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rli
         TRUE
           SKIP
 
+      #IF FALSE --{{{  debug
+      CLAIM debug!
+        SEQ
+          out.string ("normal.poly.render(): scan from ", 0, debug!)
+          out.int (y.start, 0, debug!)
+          out.string (" for ", 0, debug!)
+          out.int (y.len, 0, debug!)
+          out.string (" raw scans:*n", 0, debug!)
+
+          SEQ i = y.start FOR y.len
+            SEQ
+              out.string ("  (", 0, debug!)
+              out.int (scan[start][i], 0, debug!)
+              out.string ("-", 0, debug!)
+              out.int (scan[end][i], 0, debug!)
+              out.string (")", 0, debug!)
+
+          out.string ("*n", 0, debug!)
+      #ENDIF --}}}
+
       SEQ i = y.start FOR y.len
         INITIAL INT stx IS scan[start][i]:
         IF
-          stx <> (-1)
+          stx > (MOSTNEG INT)
             INITIAL INT edx IS scan[end][i]:
             SEQ
               IF
-                stx >= vp.width
-                  stx := vp.width - 1
-                stx < 0
-                  stx := 0
+                edx = (MOSTNEG INT)
+                  -- single point
+                  edx := stx
+                edx < stx
+                  -- swap
+                  stx, edx := edx, stx
                 TRUE
                   SKIP
               IF
-                edx >= vp.width
-                  edx := vp.width - 2
-                edx < 0
-                  edx := 0
-                TRUE
+                (stx >= vp.width) AND (edx >= vp.width)
+                  -- off right-hand edge
                   SKIP
-              IF
-                edx = (-1)
-                  r[i][stx] := scan[pixel]
+                (stx < 0) AND (edx < 0)
+                  -- off left-hand edge
+                  SKIP
                 TRUE
                   SEQ
                     IF
-                      stx > edx
-                        stx, edx := edx, stx
+                      stx < 0
+                        stx := 0
                       TRUE
                         SKIP
-                    SEQ x = (stx + 1) FOR (edx - stx)
+                    IF
+                      edx >= vp.width
+                        edx := vp.width - 1
+                      TRUE
+                        SKIP
+                    SEQ x = stx FOR (edx - stx)
                       r[i][x] := scan[pixel]
           TRUE
             SKIP
@@ -1024,6 +1196,13 @@ PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rli
                   IF
                     (mode /\ G3D.RENDER.MODE.NORM) <> 0
                       SEQ
+                        #IF FALSE --{{{  debug
+                        CLAIM debug!
+                          SEQ
+                            out.string ("render with normal bias = ", 0, debug!)
+                            out.int (scan[norm], 0, debug!)
+                            out.string ("*n", 0, debug!)
+                        #ENDIF --}}}
                         -- modify polygon scan colour according to normal
                         INITIAL INT colour IS scan[pixel]:
                         SEQ
@@ -1065,6 +1244,23 @@ PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rli
                   tmp[link] ! set.next; 0; rlink.out
                   rlink.out := tmp
             --}}}
+:
+--}}}
+--{{{  PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
+--* Renders polygon scan-line data onto a raster.
+--
+-- @param data Polygon scan-line data input.
+-- @param rlink Raster I/O.
+-- @param ctrl Control channel.
+--
+PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
+  SHARED! CHAN BYTE ch:
+  CHAN BOOL kill:
+  PAR
+    SEQ
+      render.polyscans.int (data?, rlink.in?, ctrl?, ch!)
+      kill ! TRUE
+    debug.writer (ch?, kill?)
 :
 --}}}
 --{{{  PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
