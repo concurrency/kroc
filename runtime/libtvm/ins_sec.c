@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #include "ins_sec.h"
 
-
 /****************************************************************************
  *                   0xF_              0xF_              0xF_               *
  ****************************************************************************/
@@ -32,19 +31,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* 0x00 - 0xF0 - rev - reverse */
 TVM_INSTRUCTION (ins_rev)
 {
-	STACK_RET(BREG, AREG, CREG);
+	STACK_RET(BREG, AREG, CREG, BREGt, AREGt, CREGt);
 }
 
 /* 0x01 - 0xF1 - lb - load byte */
 TVM_INSTRUCTION (ins_lb)
 {
-	STACK_RET((WORD)read_byte((BYTEPTR)AREG),BREG,CREG);
+	STACK_RET((WORD)read_byte((BYTEPTR)AREG), BREG, CREG, STYPE_DATA, BREGt, CREGt);
 }
 
 /* 0x02 - 0xF2 - bsub - byte subscript */
 TVM_INSTRUCTION (ins_bsub)
 {
-	STACK_RET((WORD)byteptr_plus((BYTEPTR) AREG, BREG), CREG, UNDEFINE(CREG));
+	STACK2_RET((WORD)byteptr_plus((BYTEPTR) AREG, BREG), CREG, PICK_POINTER_TYPE (AREGt, BREGt), CREGt);
 }
 
 /* 0x03 - 0xF3 - endp - end process */
@@ -76,7 +75,7 @@ TVM_INSTRUCTION (ins_endp)
 		write_word(wordptr_plus((WORDPTR)AREG, 1), 
 				read_word(wordptr_plus((WORDPTR)AREG, 1)) - 1);
 		/* The entire stack becomes undefined */
-		//STACK(UNDEFINE(AREG), UNDEFINE(BREG), UNDEFINE(CREG));
+		UNDEFINE_STACK();
 		/* Run the next process */
 		RUN_NEXT_ON_QUEUE_RET();
 	}
@@ -86,7 +85,7 @@ TVM_INSTRUCTION (ins_endp)
 TVM_INSTRUCTION (ins_diff)
 {
 	/* Unsigned subtract */
-	STACK_RET((WORD)((UWORD) BREG) - ((UWORD) AREG), CREG, UNDEFINE(CREG));
+	STACK2_RET((WORD)((UWORD) BREG) - ((UWORD) AREG), CREG, PICK_POINTER_TYPE(AREGt, BREGt), CREGt);
 }
 
 /* 0x05 - 0xF5 - add - addition */
@@ -100,7 +99,7 @@ TVM_INSTRUCTION (ins_add)
 		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 
-	STACK_RET(result, CREG, UNDEFINE(CREG));
+	STACK2_RET(result, CREG, STYPE_DATA, CREGt);
 }
 
 /* 0x06 - 0xF6 - gcall - general call */
@@ -113,6 +112,7 @@ TVM_INSTRUCTION (ins_gcall)
 	 */
 	temp = AREG;
 	AREG = (WORD)IPTR;
+	SET_AREGt (STYPE_BC);
 	IPTR = (BYTEPTR)temp;
 
 	/* FIXME: This is not the INMOS GCALL, it has been modified by fred (I
@@ -126,7 +126,7 @@ TVM_INSTRUCTION (ins_gcall)
 /* 0x08 - 0xF8 - prod - Unchecked Multiplication (product) */
 TVM_INSTRUCTION (ins_prod)
 {
-	STACK_RET(AREG * BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(AREG * BREG, CREG, STYPE_DATA, CREGt);
 }
 
 /* 0x09 - 0xF9 - gt - greater than */
@@ -134,11 +134,11 @@ TVM_INSTRUCTION (ins_gt)
 {
 	if(BREG > AREG)
 	{
-		STACK_RET(1, CREG, UNDEFINE(CREG));
+		STACK2_RET(1, CREG, STYPE_DATA, CREGt);
 	}
 	else
 	{
-		STACK_RET(0, CREG, UNDEFINE(CREG));
+		STACK2_RET(0, CREG, STYPE_DATA, CREGt);
 	}
 }
 
@@ -146,8 +146,7 @@ TVM_INSTRUCTION (ins_gt)
 TVM_INSTRUCTION (ins_wsub)
 {
 	/* FIXME: Same check as for bsub */
-	/*STACK((WORD)((WORD *) AREG) + BREG, CREG, UNDEFINE(CREG));*/
-	STACK_RET((WORD)wordptr_plus((WORDPTR)AREG, BREG), CREG, UNDEFINE(CREG));
+	STACK2_RET((WORD)wordptr_plus((WORDPTR)AREG, BREG), CREG, AREGt, CREGt);
 }
 
 /* 0x0C - 0xFC - sub - subtract */
@@ -161,7 +160,7 @@ TVM_INSTRUCTION (ins_sub)
 		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 
-	STACK_RET(BREG - AREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(BREG - AREG, CREG, STYPE_DATA, CREGt);
 }
 
 /* 0x0D - 0xFD - startp - star process */
@@ -192,7 +191,7 @@ TVM_INSTRUCTION (ins_csub0)
 	{
 		SET_ERROR_FLAG(EFLAG_INTERR);
 	}
-	STACK_RET(BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(BREG, CREG, BREGt, CREGt);
 }
 
 /* 0x15 - 0x21 0xF5 - stopp - stop process */
@@ -214,7 +213,7 @@ TVM_INSTRUCTION (ins_ladd)
 		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 
-	STACK_RET(result, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK1_RET(result, STYPE_DATA);
 }
 
 /* 0x19 - 0x21 0xF9 - norm - normalise */
@@ -223,7 +222,7 @@ TVM_INSTRUCTION (ins_norm)
 	CREG = 0;
 	if(AREG == 0 && BREG == 0)
 	{
-		STACK(AREG, BREG, 2 * WORD_BITS);
+		STACK(AREG, BREG, 2 * WORD_BITS, AREGt, BREGt, STYPE_DATA);
 	}
 	else
 	{
@@ -336,14 +335,14 @@ again2:
 	BREG = (un21*b + un0 - q0*v) >> s;
 	AREG = q1*b + q0;
 
-	STACK_RET(AREG, BREG, UNDEFINE(CREG));
+	STACK2_RET(AREG, BREG, STYPE_DATA, STYPE_DATA);
 }
 #endif /* TVM_WORD_LENGTH >= 4 */
 
 /* 0x1B - 0x21 0xFB - ldpi - load pointer to instruction */
 TVM_INSTRUCTION (ins_ldpi)
 {
-	STACK_RET((WORD)byteptr_plus(IPTR, AREG), BREG, CREG);
+	STACK_RET((WORD)byteptr_plus(IPTR, AREG), BREG, CREG, STYPE_BC, BREGt, CREGt);
 }
 
 /* 0x1D - 0x21 0xFD - xdble - extend to double */
@@ -351,12 +350,12 @@ TVM_INSTRUCTION (ins_xdble)
 {
 	if(AREG < 0)
 	{
-		STACK_RET(AREG, -1, BREG);
+		STACK_RET(AREG, -1, BREG, AREGt, STYPE_DATA, CREGt);
 	}
 	else
 	{
 		/* AREG >= 0 */
-		STACK_RET(AREG, 0, BREG);
+		STACK_RET(AREG, 0, BREG, AREGt, STYPE_DATA, CREGt);
 	}
 }
 
@@ -368,7 +367,7 @@ TVM_INSTRUCTION (ins_rem)
 		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 	
-	STACK_RET((BREG % AREG), CREG, UNDEFINE(CREG));	
+	STACK2_RET((BREG % AREG), CREG, STYPE_DATA, CREGt);
 }
 
 
@@ -380,6 +379,8 @@ TVM_INSTRUCTION (ins_rem)
 TVM_INSTRUCTION (ins_ret)
 {
 	BYTEPTR ret_addr = (BYTEPTR)read_word(WPTR);
+
+	fill_type_shadow(ectx, (BYTEPTR)WPTR, 4 << WSH, STYPE_UNDEF);
 
 	IPTR = ret_addr;
 	WPTR = wordptr_plus(WPTR, 4);
@@ -418,7 +419,7 @@ TVM_INSTRUCTION (ins_lend)
 	/* FIXME: I dont think the soccam instruction set the stack properly, it
 	 * should use the stack macro, it dont (this is related to the first comment
 	 * in this function  */
-	STACK_RET(AREG, BREG, UNDEFINE(CREG));
+	STACK2_RET(AREG, BREG, AREGt, BREGt);
 }
 
 /* 0x2C - 0x22 0xFC - div - divide */
@@ -429,7 +430,7 @@ TVM_INSTRUCTION (ins_div)
 		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 	
-	STACK_RET(BREG / AREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(BREG / AREG, CREG, STYPE_DATA, CREGt);
 }
  
 
@@ -483,7 +484,7 @@ TVM_INSTRUCTION (ins_lmul)
 	AREG = res;
 	BREG = BREG + carry;
 	
-	STACK_RET(AREG, BREG, UNDEFINE(CREG));
+	STACK2_RET(AREG, BREG, STYPE_DATA, STYPE_DATA);
 #if 0
 	/*FIXME: not tested...*/
 	/*FIXME: the hi calculation has a nasty warning that the thing we are sticking in it does not fit. */
@@ -507,13 +508,13 @@ TVM_INSTRUCTION (ins_lmul)
 /* 0x32 - 0x23 F2 - not - bitwise complement */
 TVM_INSTRUCTION (ins_not)
 {
-	STACK_RET(~AREG, BREG, CREG);
+	STACK_RET(~AREG, BREG, CREG, AREGt, BREGt, CREGt);
 }
 
 /* 0x33 - 0x23 F3 - xor - bitwise exclusive or */
 TVM_INSTRUCTION (ins_xor)
 {
-	STACK_RET(AREG ^ BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(AREG ^ BREG, CREG, STYPE_DATA, CREGt);
 }
 
 #if TVM_WORD_LENGTH >= 4
@@ -544,7 +545,7 @@ TVM_INSTRUCTION (ins_lshr)
 		BREG = BREG | bit;
 	}
 
-	STACK_RET(BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(BREG, CREG, STYPE_DATA, STYPE_DATA);
 #if 0
 	/*FIXME: not tested...*/
 	/* lo does not need to be long, bits rightshifted out of lo are supposed to 
@@ -593,7 +594,7 @@ TVM_INSTRUCTION (ins_lshl)
 		CREG = CREG | bit;
 	}
 
-	STACK_RET(BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(BREG, CREG, STYPE_DATA, STYPE_DATA);
 #if 0
 	/* From: Hackers Delight
 	 * y1 = x1 << n | x0 >> (32 -n) | x0 << (n - 32)
@@ -652,7 +653,7 @@ TVM_INSTRUCTION (ins_lsum)
 	WORD result = resnocarry + (CREG & 1);
 	WORD carry = ((UWORD) ((BREG & AREG) | ((BREG | AREG) & ~resnocarry)) >> (WORD_BITS - 1));
 
-	STACK_RET(result, carry, UNDEFINE(CREG));
+	STACK2_RET(result, carry, STYPE_DATA, STYPE_DATA);
 }
 
 
@@ -667,7 +668,7 @@ TVM_INSTRUCTION (ins_lsub)
 		SET_ERROR_FLAG(EFLAG_INTOV);
 	}
 
-	STACK_RET(result, UNDEFINE(CREG), UNDEFINE(BREG));
+	STACK1_RET(result, STYPE_DATA);
 }
 	
 /* 0x39 - 0x23 0xF9 - runp - run process */
@@ -679,9 +680,9 @@ TVM_INSTRUCTION (ins_runp)
 /* 0x3B - 0x23 0xFB - sb - store byte */
 TVM_INSTRUCTION (ins_sb)
 {
-	write_byte((BYTEPTR)AREG, (BYTE)BREG);
+	write_byte_and_type(ectx, (BYTEPTR)AREG, (BYTE)BREG, STYPE_DATA);
 
-	STACK_RET(CREG, UNDEFINE(BREG), UNDEFINE(CREG));
+	STACK1_RET(CREG, CREGt);
 }
 
 
@@ -692,47 +693,12 @@ TVM_INSTRUCTION (ins_gajw)
 
 	WPTR = (WORDPTR)AREG;
 	AREG = tmp;
+	SET_AREGt (STYPE_WS);
 
 	return ECTX_CONTINUE;
 }
 
-/* WARNING: saveh as implemented here does not work as described in the
- * instruction set manual (p. 145), but rather works as described here:
- *     saveh       #3E         Save queue registers
- *   This instruction saves the queue registers (assuming that there is no
- *   priority, and therefore only one set of queue registers). It saves FPTR,
- *   BPTR, and TPTR.
- *   This instruction could be modified in the future to take an argument in
- *   a unused register, to enable the possibility of specifying a priority level
- *   (if the transterpreter is running with different priority levels).
- *     Areg' = Breg
- *     Breg' = Creg
- *     Creg' = undefined
- *     Iptr' = NextInst
- *     Mem' = Mem (+) { (Index Areg 0) -> Fptr,
- *                      (Index Areg 1) -> Bptr,
- *                      (Index Areg 2) -> Tptr }
- *   This differs from the original instruction which saves only Fptr and Bptr.
- *   In the transterpreter it is also neccesary to save the Tptr, as this is
- *   stored in a 'register' and not in a special memory location as on the
- *   original Transputers. The original instruction also dealt with the high
- *   priority registers, we have no priority, so this is not applicable.
- */
-/* 0x3E - 0x23 0xFE - saveh - Save queue registers */
-TVM_INSTRUCTION (ins_saveh)
-{
-	write_word(wordptr_plus((WORDPTR) AREG, 0), (WORD) FPTR);
-	write_word(wordptr_plus((WORDPTR) AREG, 1), (WORD) BPTR);
-	write_word(wordptr_plus((WORDPTR) AREG, 2), (WORD) TPTR);
 
-	/* printf("fptr: 0x%x; bptr: 0x%x; TPTR: 0x%x (WPTR: 0x%x; IPTR: 0x%x)\n", FPTR, BPTR, TPTR[pri], WPTR, IPTR); */
-
-	/* Bump the stack */
-	STACK_RET(BREG, CREG, UNDEFINE(CREG));
-}
-
-
-	
 /****************************************************************************
  *              0x24 0xF_         0x24 0xF_         0x24 0xF_               *
  ****************************************************************************/
@@ -750,10 +716,12 @@ TVM_INSTRUCTION (ins_shr)
 	 * for this, and not do it where it is not needed.
 	 */
 	/* STACK(((UWORD) ((UWORD) BREG) >> ((UWORD) AREG)), CREG, UNDEFINE(CREG)); */
-	STACK_RET(
+	STACK2_RET(
 			((unsigned) AREG >= WORD_BITS) ? 0 :
 			((UWORD) ((UWORD) BREG) >> ((UWORD) AREG)), 
-			CREG, UNDEFINE(CREG));
+			CREG,
+			STYPE_DATA,
+			CREGt);
 }
 
 /* 0x41 - 0x24 0xF1 - shl - shift left (logical) */
@@ -765,21 +733,23 @@ TVM_INSTRUCTION (ins_shl)
 	 * for this, and not do it where it is not needed.
 	 */
 	/* STACK(((UWORD) BREG) << ((UWORD) AREG), CREG, UNDEFINE(CREG)); */
-	STACK_RET(
+	STACK2_RET(
 			((unsigned) AREG >= WORD_BITS) ? 0 : ((UWORD) BREG) << ((UWORD) AREG),
-			CREG, UNDEFINE(CREG));
+			CREG,
+			STYPE_DATA,
+			CREGt);
 }
 
 /* 0x42 - 0x24 0xF2 - mint - minimum integer */
 TVM_INSTRUCTION (ins_mint)
 {
-	STACK_RET(MIN_INT, AREG, BREG);
+	STACK_RET(MIN_INT, AREG, BREG, STYPE_DATA, AREGt, BREGt);
 }
 
 /* 0x46 - 0x24 0xF6 - and - bitwise and */
 TVM_INSTRUCTION (ins_and)
 {
-	STACK_RET(AREG & BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(AREG & BREG, CREG, STYPE_DATA, CREGt);
 }
 
 /* 0x4A - 0x24 0xFA - move - move message */
@@ -787,13 +757,14 @@ TVM_INSTRUCTION (ins_move)
 {
 	
 	tvm_memcpy((BYTEPTR) BREG, (BYTEPTR) CREG, AREG);
+	copy_type_shadow(ectx, (BYTEPTR) BREG, (BYTEPTR) CREG, AREG);
 	UNDEFINE_STACK_RET();
 }
 
 /* 0x4B - 0x24 0xFB - or - or */
 TVM_INSTRUCTION (ins_or)
 {
-	STACK_RET(AREG | BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(AREG | BREG, CREG, STYPE_DATA, CREGt);
 }
 
 /* 0x4C - 0x24 0xFC - csngl - check single */
@@ -804,7 +775,7 @@ TVM_INSTRUCTION (ins_csngl)
 		SET_ERROR_FLAG(EFLAG_INTERR);
 	}
 
-	STACK_RET(AREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(AREG, CREG, AREGt, CREGt);
 }
 
 /* 0x4D - 0x24 0xFD - ccnt1 - check count from 1 */
@@ -815,7 +786,7 @@ TVM_INSTRUCTION (ins_ccnt1)
 		SET_ERROR_FLAG(EFLAG_INTERR);
 	}
 	
-	STACK_RET(BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(BREG, CREG, BREGt, CREGt);
 }
 
 /* 0x4F - 0x24 0xFF - ldiff - Long Difference */
@@ -827,7 +798,7 @@ TVM_INSTRUCTION (ins_ldiff)
 	WORD equiv = (BREG & AREG) - (BREG | AREG) - 1;
 	WORD carry = ((UWORD) ((~BREG & AREG) | (equiv & result)) >> (WORD_BITS - 1));
 
-	STACK_RET(result, carry, UNDEFINE(CREG));
+	STACK2_RET(result, carry, STYPE_DATA, STYPE_DATA);
 }
 
 /****************************************************************************
@@ -837,7 +808,7 @@ TVM_INSTRUCTION (ins_ldiff)
 /* 0x52 - 0x25 0xF2 - sum - sum */
 TVM_INSTRUCTION (ins_sum)
 {
-	STACK_RET(AREG + BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(AREG + BREG, CREG, PICK_POINTER_TYPE (AREGt, BREGt), CREGt);
 }
 
 /* 0x53 - 0x25 0xF3 - mul - multiply */
@@ -855,7 +826,7 @@ TVM_INSTRUCTION (ins_mul)
 	 *
 	 * See Hackers Delight p. 29-32
 	 */
-	STACK_RET(BREG * AREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(BREG * AREG, CREG, PICK_POINTER_TYPE (AREGt, BREGt), CREGt);
 }
 
 /* 0x55 - 0x25 0xF5 - stoperr - stop on error */
@@ -886,7 +857,7 @@ TVM_INSTRUCTION (ins_cword)
 		SET_ERROR_FLAG(EFLAG_INTERR);
 	}
 
-	STACK_RET(BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(BREG, CREG, BREGt, CREGt);
 }
 
 /****************************************************************************
@@ -896,7 +867,7 @@ TVM_INSTRUCTION (ins_cword)
 /* 0x79 - 0x27 0xF9 - pop - pop top of stack */
 TVM_INSTRUCTION (ins_pop)
 {
-	STACK_RET(BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET(BREG, CREG, BREGt, CREGt);
 }
 
 /****************************************************************************

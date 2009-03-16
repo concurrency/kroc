@@ -17,7 +17,6 @@
 #endif /* WIN32 */
 
 #include "stiw.h"
-#include "tbzutil.h"
 
 #ifdef WIN32
 #define LIBRARY_EXT ".dll"

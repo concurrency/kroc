@@ -25,12 +25,14 @@ AC_CHECK_HEADERS([sys/types.h math.h inttypes.h])
 AC_ARG_ENABLE([custom-memory-ops], AC_HELP_STRING([--enable-custom-memory-ops], [provide for overriding memcpy/memset]), [custom_memory_ops=$enableval], [custom_memory_ops=no])
 AC_ARG_ENABLE([dispatch-switch], AS_HELP_STRING([--disable-dispatch-switch], [dispatch using jump tables rather than a switch statement]), [dispatch_switch=$enableval], [dispatch_switch=yes])
 AC_ARG_WITH([endian], AC_HELP_STRING([--with-endian=...], [endian mode: big/little/host, default: host]), [endian=$withval], [endian=host])
+AC_ARG_ENABLE([external-channel-bundles], AC_HELP_STRING([--enable-external-channel-bundles], [enable support for externally hooked channel bundles]), [external_channel_bundles=$enableval], [external_channel_bundles=no])
 AC_ARG_WITH([memory-allocator], AC_HELP_STRING([--with-memory-allocator=...], [select memory allocator: none/malloc/tlsf, default host dependent]), [memory_allocator=$withval], [memory_allocator=auto])
 AC_ARG_ENABLE([profiling], AC_HELP_STRING([--enable-profiling], [enable support for (bytecode) profiling]), [profiling=$enableval], [profiling=no])
 AC_ARG_WITH([python], AS_HELP_STRING([--with-python=PATH], [use python, optionally specifying the path to the python executable directory]), [python=$withval], [python=])
 AC_ARG_ENABLE([occam-pi], AC_HELP_STRING([--disable-occam-pi], [disable support for occam-pi, actual support level depends on memory allocator]), [enable_pi=$enableval], [enable_pi=yes])
 AC_ARG_ENABLE([t9000-short-ops], AC_HELP_STRING([--enable-t9000-short-ops],[enable T9000 instructions for dealing with 16bit/8bit data]), [t9000_short_ops=$enableval], [t9000_short_ops=no])
 AC_ARG_WITH([transputer], AC_HELP_STRING([--with-transputer=...],[transputer to emulate: t2/t4/t8, default is host-dependent]), [transputer=$withval], [transputer=auto])
+AC_ARG_ENABLE([type-shadow], AC_HELP_STRING([--enable-type-shadow], [enable shadowing of registers and memory with type information for debugging]), [type_shadow=$enableval], [type_shadow=no])
 
 #########################
 #  Host Configuration
@@ -188,6 +190,13 @@ else
   AC_DEFINE([TVM_LITTLE_ENDIAN], 1, [define for little-endian TVM])
 fi
 
+# External Channel Bundles
+if test "$external_channel_bundles" = "yes"; then
+  if test "x$enable_pi" = "xyes"; then
+    AC_DEFINE([TVM_EXTERNAL_CHANNEL_BUNDLES], 1, [define for external channel bundles])
+  fi
+fi
+
 # FPU
 if test "$x_fpu" = "yes"; then
   AC_DEFINE([TVM_USE_FPU], 1, [define to allow FPU usage])
@@ -276,6 +285,11 @@ case "$transputer" in
     ;;
 esac
 
+# Type Shadow
+if test "$type_shadow" = "yes"; then
+  AC_DEFINE([TVM_TYPE_SHADOW], 1, [define for type shadowing])
+fi
+
 # Word length
 AC_DEFINE_UNQUOTED([TVM_WORD_LENGTH], [$word_length], [define emulated word length])
 
@@ -286,6 +300,7 @@ AC_DEFINE_UNQUOTED([TVM_WORD_LENGTH], [$word_length], [define emulated word leng
 AC_MSG_NOTICE([----------------------------------------------------])
 AC_MSG_NOTICE([dispatch-switch : $dispatch_switch])
 AC_MSG_NOTICE([endian          : $endian])
+AC_MSG_NOTICE([external bundles: $external_channel_bundles])
 AC_MSG_NOTICE([FPU             : $x_fpu])
 AC_MSG_NOTICE([memory allocator: $memory_allocator])
 AC_MSG_NOTICE([memory ops      : $memory_ops])
@@ -294,6 +309,7 @@ AC_MSG_NOTICE([OS support      : $x_os])
 AC_MSG_NOTICE([profiling       : $profiling])
 AC_MSG_NOTICE([T9000 short ops : $t9000_short_ops])
 AC_MSG_NOTICE([transputer      : $transputer])
+AC_MSG_NOTICE([type shadow     : $type_shadow])
 AC_MSG_NOTICE([word length     : $word_length])
 AC_MSG_NOTICE([----------------------------------------------------])
 

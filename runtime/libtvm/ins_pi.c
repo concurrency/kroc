@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* 0x23 - 0x22 0xF3 - boolinvert */
 TVM_INSTRUCTION (ins_boolinvert)
 {
-	STACK_RET ((AREG == 0 ? 1 : 0), BREG, CREG);
+	STACK_RET ((AREG == 0 ? 1 : 0), BREG, CREG, STYPE_DATA, BREGt, CREGt);
 }
 
 /* 0x28 - 0x22 0xF8 - reschedule */
@@ -43,7 +43,7 @@ TVM_INSTRUCTION (ins_reschedule)
 /* 0x24 - 0x22 0xF4 - widenshort */
 TVM_INSTRUCTION (ins_widenshort)
 {
-	STACK_RET (((WORD) ((HWORD) AREG)), BREG, CREG);
+	STACK_RET (((WORD) ((HWORD) AREG)), BREG, CREG, STYPE_DATA, BREGt, CREGt);
 }
 
 /* 0x25 - 0x22 0xF5 - fficall */
@@ -130,8 +130,8 @@ TVM_INSTRUCTION (ins_lend3)
 	return ECTX_CONTINUE;
 }
 
-/* 0x27 - 0x22 0xF7 - lendbw - backwards loopend */
-TVM_INSTRUCTION (ins_lendbw)
+/* 0x27 - 0x22 0xF7 - lendb - backwards loopend */
+TVM_INSTRUCTION (ins_lendb)
 {
 	/* Loop start offset comes in from AREG */
 	/* Loop control block ptr in BREG */
@@ -257,20 +257,23 @@ TVM_INSTRUCTION (ins_ext_mt_out)
 TVM_INSTRUCTION (ins_getpri)
 {
 	/* Always return priority 0. */
-	STACK_RET (0, AREG, BREG);
+	STACK_RET (0, AREG, BREG, STYPE_DATA, AREGt, BREGt);
 }
 
 /* 0xA5 - 0x2A 0xF5 - setpri - set priority */
 TVM_INSTRUCTION (ins_setpri)
 {
 	/* Ignore the new priority. */
-	STACK_RET (BREG, CREG, UNDEFINE(CREG));
+	STACK2_RET (BREG, CREG, BREGt, CREGt);
 }
 
 /* 0xAD - 0x2A 0xFD - ins_savecreg - save the creg */
 TVM_INSTRUCTION (ins_savecreg)
 {
 	ectx->_creg = CREG;
+	#ifdef TVM_TYPE_SHADOW
+	ectx->_cregT = CREGt;
+	#endif
 	return ECTX_CONTINUE;
 }
 
@@ -278,6 +281,7 @@ TVM_INSTRUCTION (ins_savecreg)
 TVM_INSTRUCTION (ins_restorecreg)
 {
 	CREG = ectx->_creg;
+	SET_CREGt (ectx->_cregT);
 	return ECTX_CONTINUE;
 }
 
@@ -381,6 +385,17 @@ TVM_INSTRUCTION (ins_sem_release)
  *              0x2E 0xF_         0x2E 0xF_         0x2E 0xF_               *
  ****************************************************************************/
 
+/* 0xE0 - 0x2E 0xF0 - checknotnull - Check Pointer Not NULL */
+TVM_INSTRUCTION (ins_checknotnull)
+{
+	if (AREG != (WORD) NULL_P) {
+		/* stack untouched */
+		return ECTX_CONTINUE;
+	} else {
+		SET_ERROR_FLAG_RET (EFLAG_SETERR);
+	}
+}
+
 /* 0xE8 - 0x2E 0xF8 - xable - Extended Channel I/O Enable */
 TVM_INSTRUCTION (ins_xable)
 {
@@ -389,6 +404,22 @@ TVM_INSTRUCTION (ins_xable)
 
 	/* This is like a single guard ALT */
 	/* If channel is empty, then alt on it */
+
+	#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
+	if (chan_value & 2) {
+		WORDPTR cb		= (WORDPTR) (chan_value & (~3));
+		EXT_CB_INTERFACE *intf	= (EXT_CB_INTERFACE *) read_offset (cb, mt_cb_ext_t, interface);
+		void *ext_data 		= (void *) read_offset (cb, mt_cb_ext_t, data);
+		if (intf != NULL) {
+			if (intf->xable != NULL) {
+				return intf->xable (ectx, ext_data, chan_ptr);
+			}
+		}
+		
+		SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
+	}
+	else
+	#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
 	if (chan_value == NOT_PROCESS_P) {
 		/* Save state, set ALT to waiting */
 		WORKSPACE_SET (WPTR, WS_STATE, WAITING_P);
@@ -406,6 +437,16 @@ TVM_INSTRUCTION (ins_xable)
 	UNDEFINE_STACK_RET ();
 }
 
+#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
+TVM_HELPER int channel_ext_xin (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len)
+{
+	if (intf->xin != NULL)
+		return intf->xin (ectx, ext_data, chan_ptr, data_ptr, data_len);
+	else
+		SET_ERROR_FLAG_RET (EFLAG_EXTCHAN);
+}
+#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
+
 /* 0xE9 - 0x2E 0xF9 - xin - Extended Input */
 TVM_INSTRUCTION (ins_xin)
 {
@@ -421,7 +462,8 @@ TVM_INSTRUCTION (ins_xin)
 		ectx,
 		chan_ptr, data_ptr, data_len,
 		&requeue,
-		channel_input, channel_dc_input
+		channel_input, channel_dc_input,
+		IF_EXTERNAL_CHANNEL_BUNDLES (channel_ext_xin)
 	);
 
 	if (ret > 0) {
@@ -465,6 +507,6 @@ TVM_INSTRUCTION (ins_xend)
 /* 0xFD - 0x2F 0xFD - null - put null onto the stack */
 TVM_INSTRUCTION (ins_null)
 {
-	STACK_RET ((WORD) NULL_P, AREG, BREG);
+	STACK_RET ((WORD) NULL_P, AREG, BREG, STYPE_NULL, AREGt, BREGt);
 }
 

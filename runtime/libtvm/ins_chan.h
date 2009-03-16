@@ -25,21 +25,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 typedef int (*CHAN_IO_OK)(ECTX, BYTEPTR, WORD, WORDPTR);
 typedef int (*CHAN_IO_DC)(ECTX, BYTEPTR, WORD);
+typedef int (*CHAN_IO_EXT)(ECTX, EXT_CB_INTERFACE *, void *, WORDPTR, BYTEPTR, WORD);
 
 TVM_HELPER_PROTO int channel_input (ECTX ectx, BYTEPTR dst_ptr, WORD len, WORDPTR src_wptr);
 TVM_HELPER_PROTO int channel_output (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr);
 TVM_HELPER_PROTO int channel_dc_input (ECTX ectx, BYTEPTR dst_ptr, WORD len);
 TVM_HELPER_PROTO int channel_dc_nop (ECTX ectx, BYTEPTR ptr, WORD len);
 TVM_HELPER_PROTO int channel_swap (ECTX ectx, BYTEPTR src_ptr, WORD len, WORDPTR dst_wptr);
+#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
+TVM_HELPER_PROTO int channel_ext_input (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len);
+TVM_HELPER_PROTO int channel_ext_output (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len);
+TVM_HELPER_PROTO int channel_ext_swap (ECTX ectx, EXT_CB_INTERFACE *intf, void *ext_data, WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len);
+#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
 TVM_HELPER_PROTO int chan_io (ECTX ectx, 
 			WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len, 
-			WORDPTR *requeue, CHAN_IO_OK data, CHAN_IO_DC dc);
+			WORDPTR *requeue, CHAN_IO_OK data, CHAN_IO_DC dc,
+			CHAN_IO_EXT ext);
 TVM_HELPER_PROTO int chan_std_io (ECTX ectx,
 			WORDPTR chan_ptr, BYTEPTR data_ptr, WORD data_len,
-			CHAN_IO_OK data, CHAN_IO_DC dc);
+			CHAN_IO_OK data, CHAN_IO_DC dc,
+			CHAN_IO_EXT ext);
 TVM_HELPER_PROTO int chan_in (ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR write_start);
 TVM_HELPER_PROTO int chan_out (ECTX ectx, WORD num_bytes, WORDPTR chan_ptr, BYTEPTR read_start);
 TVM_HELPER_PROTO int chan_swap (ECTX ectx, WORDPTR chan_ptr, WORDPTR data_ptr);
+
+#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
+#define IF_EXTERNAL_CHANNEL_BUNDLES(X) X
+#else
+#define IF_EXTERNAL_CHANNEL_BUNDLES(X) NULL
+#endif /* !TVM_EXTERNAL_CHANNEL_BUNDLES */
 
 /****************************************************************************
  *                   0xF_              0xF_              0xF_               *

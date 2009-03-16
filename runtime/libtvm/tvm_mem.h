@@ -70,14 +70,32 @@ extern BYTEPTR _tvm_memset (BYTEPTR s, WORD c, UWORD n);
 #endif /* !TVM_USE_MEMCPY */
 /*}}}*/
 
-/*{{{  void swap_data_word (WORDPTR a_ptr, WORDPTR b_ptr) */
+/*{{{  copy_type_shadow/fill_type_shadow */
+#ifdef TVM_TYPE_SHADOW
+extern void copy_type_shadow (ECTX ectx, BYTEPTR dst, BYTEPTR src, WORD count);
+extern void fill_type_shadow (ECTX ectx, BYTEPTR ptr, WORD count, WORD type);
+#else /* !TVM_TYPE_SHADOW */
+#define copy_type_shadow(CTX,DST,SRC,CNT) \
+	do { } while (0)
+#define fill_type_shadow(CTX,PTR,CNT,VAL) \
+	do { } while (0)
+#endif /* !TVM_TYPE_SHADOW */
+/*}}}*/
+
+/*{{{  void swap_data_word (ECTX ectx, WORDPTR a_ptr, WORDPTR b_ptr) */
 TVM_UNUSED_OK
-static TVM_INLINE void swap_data_word (WORDPTR a_ptr, WORDPTR b_ptr)
+static TVM_INLINE void swap_data_word (ECTX ectx, WORDPTR a_ptr, WORDPTR b_ptr)
 {
 	WORD a_data = read_word (a_ptr);
 	WORD b_data = read_word (b_ptr);
 	write_word (b_ptr, a_data);
 	write_word (a_ptr, b_data);
+	#ifdef TVM_TYPE_SHADOW
+	a_data = read_type (ectx, a_ptr);
+	b_data = read_type (ectx, b_ptr);
+	write_type (ectx, b_ptr, a_data);
+	write_type (ectx, a_ptr, b_data);
+	#endif /* TVM_TYPE_SHADOW */
 }
 /*}}}*/
 

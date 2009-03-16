@@ -77,6 +77,24 @@ def output_file(bits, fn):
 		os.rename(fn, fn + ".old")	
 	os.rename(fn + ".new", fn)
 
+def write_ins_header(defs, fn):
+	keys = defs.keys()
+	keys.sort(lambda a, b: cmp(ins_key_to_int(a), ins_key_to_int(b)))
+	
+	bits = ["-- Generated automatically by make-dispatch.py; do not modify!\n\n"]
+	for k in keys:
+		if k == "F_":
+			pass
+		else:
+			(c, h, name) = defs[k]
+			name = name.replace("ins_", "").upper()
+			name = name.replace("_", ".")
+			if k[1] == '_':
+				k = k.replace("_", "")
+			bits.append("VAL INT INS.%s IS #%s:\n" % (name, k))
+	
+	output_file(bits, fn)
+
 def write_names(defs, fn):
 	keys = defs.keys()
 	keys.sort(lambda a, b: cmp(ins_key_to_int(a), ins_key_to_int(b)))
@@ -272,6 +290,7 @@ def main(inputs, output_dir=None):
 	output['sec']    = "jumptbl_sec.c"
 	output['ex_sec'] = "jumptbl_ex_sec.c"
 	output['names']  = "ins_names.h"
+	output_ins_header = "instructions.inc"
 
 	if output_dir:
 		for key in output:
@@ -283,6 +302,7 @@ def main(inputs, output_dir=None):
 	write_switch(defs, output['switch'])
 	write_jumptables(defs, output['pri'], output['sec'], output['ex_sec'])
 	write_names(defs, output['names'])
+	write_ins_header(defs, output_ins_header)
 
 if __name__ == "__main__":
 	from optparse import OptionParser

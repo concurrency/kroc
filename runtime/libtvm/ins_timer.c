@@ -51,7 +51,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 TVM_INSTRUCTION (ins_ldtimer)
 {
 	/* Load current time onto stack */
-	STACK_RET(ectx->get_time(ectx), AREG, BREG);
+	STACK_RET(ectx->get_time(ectx), AREG, BREG, STYPE_DATA, AREGt, BREGt);
 }
 
 /* 0x2B - 0x22 0xFB - tin - timer input */

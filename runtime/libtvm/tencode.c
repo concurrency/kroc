@@ -19,72 +19,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "tvm.h"
+#include "tvm_tbc.h"
 
-typedef struct _tenc_element_t {
-	char		id[5];
-	UWORD		length;
-	union {
-		WORD	s_int;
-		UWORD	u_int;
-		char	*str;
-		BYTE	*bytes;
-	} data;
-	BYTE		*next;
-} tenc_element_t;
-
-typedef struct _tenc_str_t tenc_str_t;
-struct _tenc_str_t {
-	tenc_str_t	*next;
-	char		*str;
-};
-
-typedef struct _tbc_tlp_t {
-	char		*fmt;
-	char		*desc;
-} tbc_tlp_t;
-
-typedef struct _tbc_ffi_entry_t {
-	char	 	*symbol;
-	char		*library;
-} tbc_ffi_entry_t;
-
-typedef struct _tbc_ffi_t {
-	tenc_str_t 	*libraries;
-	int		n_symbols;
-	tenc_str_t	*symbols;
-	tbc_ffi_entry_t	*map;
-} tbc_ffi_t;
-
-typedef struct _tbc_lni_entry_t tbc_lni_entry_t;
-struct _tbc_lni_entry_t {
-	unsigned int 		offset;
-	unsigned int		file;
-	unsigned int		line;
-};
-
-typedef struct _tbc_lni_t {
-	tenc_str_t	*files;
-	int		n_entries;
-	tbc_lni_entry_t	*entries;
-} tbc_lni_t;
-
-typedef struct _tbc_t {
-	/* Must fit in 10 words: */
-	unsigned int	endian;		/* 1 */
-	unsigned int	ws;		/* 2 */
-	unsigned int	vs;		/* 3 */
-	unsigned int	ms;		/* 4 */
-	
-	unsigned int	bytecode_len;	/* 5 */
-	BYTE		*bytecode;	/* 6 */
-
-	tbc_tlp_t	*tlp;		/* 7 */
-
-	tbc_ffi_t	*ffi;		/* 8 */
-	tbc_lni_t	*lni;		/* 9 */
-} tbc_t;
-
-static WORD decode_int (BYTE *src)
+WORD tenc_decode_int (BYTE *src)
 {
 	WORD value = *((WORD *) src);
 	#if defined (TVM_BIG_ENDIAN)
@@ -98,7 +35,7 @@ static WORD decode_int (BYTE *src)
 	#endif
 }
 
-static int decode_element (BYTE *src, int *length, tenc_element_t *element)
+int tenc_decode_element (BYTE *src, int *length, tenc_element_t *element)
 {
 	if (*length < (sizeof (WORD) + 4)) {
 		return -1;
@@ -106,7 +43,7 @@ static int decode_element (BYTE *src, int *length, tenc_element_t *element)
 
 	memcpy (element->id, src, 4);
 	element->id[4] 	= '\0';
-	element->length = decode_int (src + 4);
+	element->length = tenc_decode_int (src + 4);
 	element->next	= src + (sizeof (WORD) + 4);
 	*length		-= (sizeof (WORD) + 4);
 
@@ -117,9 +54,12 @@ static int decode_element (BYTE *src, int *length, tenc_element_t *element)
 	} else if (*length < element->length) {
 		return -1;
 	} else {
+		const int align_mask = (sizeof (WORD) - 1);
 		int bytes = element->length;
 
-		bytes += ((sizeof (WORD)) - (bytes & (sizeof (WORD) - 1)));
+		if (bytes & align_mask) {
+			bytes += (sizeof (WORD)) - (bytes & align_mask);
+		}
 		
 		element->data.bytes 	= element->next;
 		element->next		+= bytes;
@@ -138,9 +78,10 @@ static int ids_match (const char *a, const char *b)
 	return 1;
 }
 
-static int walk_to_element (BYTE *data, int *length, const char *id, tenc_element_t *element) {
+int tenc_walk_to_element (BYTE *data, int *length, const char *id, tenc_element_t *element)
+{
 	while (*length > 0) {
-		int ret = decode_element (data, length, element);
+		int ret = tenc_decode_element (data, length, element);
 
 		if (ret < 0) {
 			return ret;
@@ -161,7 +102,7 @@ static int load_uint (BYTE **data, int *length, const char *id, UWORD *dst)
 	tenc_element_t element;
 	int ret;
 
-	if ((ret = walk_to_element (*data, length, id, &element)) < 0)
+	if ((ret = tenc_walk_to_element (*data, length, id, &element)) < 0)
 		return ret;
 	
 	*dst 	= element.data.u_int;
@@ -180,7 +121,7 @@ static int load_str (BYTE **data, int *length, const char *id, char **dst)
 	tenc_element_t element;
 	int ret;
 
-	if ((ret = walk_to_element (*data, length, id, &element)) < 0)
+	if ((ret = tenc_walk_to_element (*data, length, id, &element)) < 0)
 		return ret;
 	
 	/* Make sure the string has room for a terminator */
@@ -231,7 +172,7 @@ static tbc_tlp_t *decode_tlp (BYTE *head, const tenc_element_t *tlp_element)
 	if (load_str (&data, &length, "fmtS", &(tlp->fmt)) < 0)
 		return NULL;
 	
-	if (load_str (&data, &length, "tlpS", &(tlp->desc)) < 0)
+	if (load_str (&data, &length, "symS", &(tlp->symbol)) < 0)
 		return NULL;
 	
 	return tlp;
@@ -245,19 +186,19 @@ static tbc_ffi_t *decode_ffi (BYTE *head, const tenc_element_t *ffi_element)
 	BYTE 		*data	= ffi_element->data.bytes;
 	int 		length	= ffi_element->length;
 
-	if (walk_to_element (data, &length, "libL", &element) < 0)
+	if (tenc_walk_to_element (data, &length, "libL", &element) < 0)
 		return NULL;
 	
 	ffi->libraries	= decode_strs (element.data.bytes, element.length, "libS");
 	data		= element.next;
 	
-	if (walk_to_element (data, &length, "symL", &element) < 0)
+	if (tenc_walk_to_element (data, &length, "symL", &element) < 0)
 		return NULL;
 
 	ffi->symbols	= decode_strs (element.data.bytes, element.length, "symS");
 	data		= element.next;
 
-	if (walk_to_element (data, &length, "mapL", &element) < 0)
+	if (tenc_walk_to_element (data, &length, "mapL", &element) < 0)
 		return NULL;
 	
 	ffi->n_symbols	= 0;
@@ -299,48 +240,90 @@ static tbc_ffi_t *decode_ffi (BYTE *head, const tenc_element_t *ffi_element)
 	return ffi;
 }
 
-static tbc_lni_t *decode_lni (BYTE *head, const tenc_element_t *lni_element)
+static tbc_dbg_t *decode_debug (BYTE *head, const tenc_element_t *dbg_element)
 {
 	tenc_element_t 	element;
-	tbc_lni_t	*lni	= (tbc_lni_t *) head;
-	BYTE 		*data	= lni_element->data.bytes;
-	int 		length	= lni_element->length;
-	int		idx	= 0;
+	tbc_dbg_t	*dbg	= (tbc_dbg_t *) head;
+	BYTE 		*data	= dbg_element->data.bytes;
+	int 		length	= dbg_element->length;
 
-	if (walk_to_element (data, &length, "fn L", &element) < 0)
+	if (tenc_walk_to_element (data, &length, "fn L", &element) < 0)
 		return NULL;
-	
-	lni->files 	= decode_strs (element.data.bytes, element.length, "fn S");
-	lni->entries 	= (tbc_lni_entry_t *) element.next;
+
+	dbg->files 	= decode_strs (element.data.bytes, element.length, "fn S");
 	data		= element.next;
 	
+	if (tenc_walk_to_element (data, &length, "lndB", &element) < 0)
+		return NULL;
+
+	dbg->lnd 	= (tbc_lnd_t *) element.data.bytes;
+	dbg->n_lnd	= element.length / ((sizeof (int)) * 3);
+	
+	data		= element.data.bytes;
+	length		= element.length / (sizeof (int));
+
 	while (length > 0) {
-		tbc_lni_entry_t *ent 		= lni->entries + idx;
-		BYTE 		*lnd_data;
-		int 		lnd_length;
-
-		if (walk_to_element (data, &length, "lndL", &element) < 0)
-			break;
-
-		lnd_length 	= element.length;
-		lnd_data 	= element.data.bytes;
-		if (load_uint (&lnd_data, &lnd_length, "offU", &(ent->offset)) < 0)
-			break;
-		if (load_uint (&lnd_data, &lnd_length, "fniU", &(ent->file)) < 0)
-			break;
-		if (load_uint (&lnd_data, &lnd_length, "ln U", &(ent->line)) < 0)
-			break;
-
-		data = element.next;
-		idx++;
+		*((int *) data) = tenc_decode_int (data);
+		data += sizeof (int);
+		length--;
 	}
 
-	lni->n_entries = idx;
-
-	return lni;
+	return dbg;
 }
 
-int tencode_tbc_decode (BYTE *data, int length, tbc_t **ptr)
+static tbc_sym_t *decode_symbols (const tenc_element_t *stb_element)
+{
+	tenc_element_t	element;
+	tbc_sym_t	*head	= NULL;
+	tbc_sym_t	*sym	= NULL;
+	BYTE 		*data	= stb_element->data.bytes;
+	int 		length	= stb_element->length;
+
+	while (length > 0) {
+		BYTE 		*s_data;
+		int		s_length;
+
+		if (tenc_walk_to_element (data, &length, "symL", &element) < 0)
+			return NULL;
+
+		if (head == NULL) {
+			head 		= (tbc_sym_t *) data;
+			sym		= head;
+		} else {
+			sym->next	= (tbc_sym_t *) data;
+			sym		= sym->next;
+		}
+
+		s_data		= element.data.bytes;
+		s_length	= element.length;
+		data		= element.next;
+
+		if (load_uint (&s_data, &s_length, "offU", &(sym->offset)) < 0)
+			return NULL;
+		if (load_str (&s_data, &s_length, "symS", &(sym->name)) < 0)
+			return NULL;
+
+		sym->ws		= 0;
+		sym->vs		= 0;
+		sym->definition	= NULL;
+		sym->next	= NULL;
+
+		if (s_length > 0) {
+			if (load_str (&s_data, &s_length, "defS", &(sym->definition)) < 0)
+				continue;
+			if (load_uint (&s_data, &s_length, "ws U", &(sym->ws)) < 0)
+				continue;
+			if (load_uint (&s_data, &s_length, "vs U", &(sym->vs)) < 0)
+				continue;
+
+		}
+	}
+
+	return head;
+}
+
+
+int tbc_decode (BYTE *data, int length, tbc_t **ptr)
 {
 	tenc_element_t 	element;
 	tbc_t 		*tbc	= (tbc_t *) data;
@@ -354,10 +337,8 @@ int tencode_tbc_decode (BYTE *data, int length, tbc_t **ptr)
 		return ret;
 	if ((ret = load_uint (&data, &length, "vs U", &(tbc->vs))) < 0)
 		return ret;
-	if ((ret = load_uint (&data, &length, "ms U", &(tbc->ms))) < 0)
-		return ret;
 
-	if ((ret = walk_to_element (data, &length, "bc B", &element)) < 0)
+	if ((ret = tenc_walk_to_element (data, &length, "bc B", &element)) < 0)
 		return ret;
 	
 	tbc->bytecode_len	= element.length;
@@ -365,21 +346,26 @@ int tencode_tbc_decode (BYTE *data, int length, tbc_t **ptr)
 	data			= element.next;
 
 	/* Decode optional elements */
+	tbc->tlp	= NULL;
+	tbc->symbols	= NULL;
+	tbc->ffi	= NULL;
+	tbc->debug	= NULL;
 
-	tbc->tlp = NULL;
-	tbc->ffi = NULL;
-	tbc->lni = NULL;
+	/* Copy pointer */
+	*ptr 		= tbc;
 
 	while (length > 0) {
-		if (decode_element (data, &length, &element) < 0)
+		if (tenc_decode_element (data, &length, &element) < 0)
 			return 0; /* ignore errors */
 
 		if (ids_match (element.id, "tlpL")) {
 			tbc->tlp = decode_tlp (data, &element); 
 		} else if (ids_match (element.id, "ffiL")) {
 			tbc->ffi = decode_ffi (data, &element);
-		} else if (ids_match (element.id, "lniL")) {
-			tbc->lni = decode_lni (data, &element);
+		} else if (ids_match (element.id, "stbL")) {
+			tbc->symbols = decode_symbols (&element);
+		} else if (ids_match (element.id, "dbgL")) {
+			tbc->debug = decode_debug (data, &element);
 		}
 
 		data = element.next;

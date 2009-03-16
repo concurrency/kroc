@@ -24,17 +24,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "instructions.h"
 #include "tvm_types.h"
 
-/* 0x23 - 0x22 0xF2 - boolinvert */
+/* 0x23 - 0x22 0xF3 - boolinvert */
 TVM_INSTRUCTION_PROTO (ins_boolinvert);
-/* 0x24 - 0x22 0xF4 - boolinvert */
+/* 0x24 - 0x22 0xF4 - widenshort */
 TVM_INSTRUCTION_PROTO (ins_widenshort);
 /* 0x25 - 0x22 0xF5 - fficall */
 TVM_INSTRUCTION_PROTO (ins_fficall);
 /* 0x26 - 0x22 0xF6 - lend3 - loopend3 (for step in replicators) */
 TVM_INSTRUCTION_PROTO (ins_lend3);
-/* 0x27 - 0x22 0xF7 - lendbw - backwards loopend */
-TVM_INSTRUCTION_PROTO (ins_lendbw);
-/* 0x23 - 0x22 0xF3 - reschedule */
+/* 0x27 - 0x22 0xF7 - lendb - backwards loopend */
+TVM_INSTRUCTION_PROTO (ins_lendb);
+/* 0x28 - 0x22 0xF8 - reschedule */
 TVM_INSTRUCTION_PROTO (ins_reschedule);
 
 #ifdef TVM_OCCAM_PI
@@ -82,6 +82,8 @@ TVM_INSTRUCTION_PROTO (ins_sem_release);
  *              0x2E 0xF_         0x2E 0xF_         0x2E 0xF_               *
  ****************************************************************************/
 
+/* 0xE0 - 0x2E 0xF0 - checknotnull - Check Pointer Not NULL */
+TVM_INSTRUCTION_PROTO (ins_checknotnull);
 /* 0xE8 - 0x2E 0xF8 - xable - Extended Input Enable */
 TVM_INSTRUCTION_PROTO (ins_xable);
 /* 0xE9 - 0x2E 0xF9 - xin - Extended Input */
