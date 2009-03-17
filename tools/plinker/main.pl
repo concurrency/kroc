@@ -80,6 +80,8 @@ my $last_file;
 my $endian;
 my %etc_file;
 my @etc;
+my $objects = [];
+
 foreach my $file (@files) {
 	my $data = $tcoff->read_file ($file);
 	die "Failed to read $file" if !$data;
@@ -100,15 +102,28 @@ foreach my $file (@files) {
 		if (!@text) {
 			print STDERR "Failed to decode a text section in $file...\n";
 		} else {
-			my $ref = \@text;
+			my $ref = { 'file' => $file, 'etc' => \@text };
 			push (@texts, $ref);
 			$etc_file{$ref} = $data;
 		}
 	}
 
-	push (@etc, \@texts) if @texts;
+	# Separate objects and libraries
+	if ($file =~ /\.tce$/i) {
+		push (@$objects, @texts);
+	} elsif (@texts) {
+		if (@$objects) {
+			push (@etc, $objects);
+			$objects = [];
+		}
+		push (@etc, \@texts);
+	}
+
 	$last_file = $data;
 }
+
+push (@etc, $objects) if @$objects;
+$objects = [];
 
 # Check we have some ETC to work with
 die "No valid data loaded (invalid ETC files?)" if !@etc;
@@ -117,7 +132,7 @@ die "No valid data loaded (invalid ETC files?)" if !@etc;
 my $symbols 	= $last_file->{'symbols'};
 my $jentry;
 my $last_texts	= $etc[@etc - 1];
-my $last_text	= $last_texts->[@$last_texts - 1];
+my $last_text	= $last_texts->[@$last_texts - 1]->{'etc'};
 foreach my $op (@$last_text) {
 	if ($op->{'name'} eq '.JUMPENTRY') {
 		$jentry = $op->{'arg'};

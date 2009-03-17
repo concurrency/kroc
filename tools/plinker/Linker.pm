@@ -49,9 +49,11 @@ sub link ($$@) {
 	foreach my $texts (@etc) {
 		my @data;
 		
-		foreach my $etc (@$texts) {
+		foreach my $text (@$texts) {
 			my ($current, %labels, @procs);
 			my $align	= 0;
+			my $etc		= $text->{'etc'};
+			my $file	= $text->{'file'};
 			my $filename	= undef;
 			my $line	= undef;
 
@@ -122,7 +124,22 @@ sub link ($$@) {
 							if !exists ($ffi{$arg});
 					}
 				} elsif ($name eq '.GLOBAL') {
+					if (exists ($globals{$arg})) {
+						my $current 	= $globals{$arg};
+						my $c_file	= $current->{'loci'}->{'file'};
+						my $c_fn	= $current->{'loci'}->{'filename'};
+						my $c_ln	= $current->{'loci'}->{'line'};
+						print STDERR 
+							"Warning: multiple definitions of global name '$arg'\n",
+							"\tOld symbol is from $c_fn($c_file), line $c_ln.";
+							"\tNew symbol is from $filename($file), line $line.";
+					}
 					$globals{$arg}		= $current;
+					$current->{'loci'}	= {
+						'file'		=> $file,
+						'filename'	=> $filename,
+						'line'		=> $line
+					};
 				} elsif ($name eq '.GLOBALEND') {
 					$globals{$arg}->{'end'}	= $current;
 				}
@@ -134,8 +151,13 @@ sub link ($$@) {
 			# Resolve local labels
 			foreach_label (\%labels, \&resolve_labels, $n);
 			
-			# Queue other passes
-			push (@data, { 'labels' => \%labels, 'procs' => \@procs });
+			# Queue data for other passes
+			push (@data, { 
+				'file' 		=> $file, 
+				'filename' 	=> $filename, 
+				'labels' 	=> \%labels, 
+				'procs' 	=> \@procs
+			});
 			$n++;
 		}
 
