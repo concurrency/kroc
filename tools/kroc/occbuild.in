@@ -288,12 +288,15 @@ def resolve_library(lib):
 	return None
 
 def resolve_libraries(libs):
+	paths = {}
 	result = []
 	for lib in libs:
 		path = resolve_library(lib)
 		if path is None:
 			die("Unable to resolve library: ", lib)
-		result.append(path)
+		if not paths.has_key(path):
+			result.append(path)
+			paths[path] = True
 	return result
 
 class KRoCToolchain:
