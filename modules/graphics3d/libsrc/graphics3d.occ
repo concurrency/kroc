@@ -644,8 +644,8 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
                   INT norm:
                   VAL [4]INT face IS cubemap4[i]:
                   SEQ
-                    norm := ((pnts[face[3]][y] - pnts[face[0]][y]) * (pnts[face[1]][x] - pnts[face[0]][x])) -
-                            ((pnts[face[1]][y] - pnts[face[0]][y]) * (pnts[face[3]][x] - pnts[face[0]][x]))
+                    norm := ((pnts[face[3]][y] MINUS pnts[face[0]][y]) TIMES (pnts[face[1]][x] MINUS pnts[face[0]][x])) MINUS
+                            ((pnts[face[1]][y] MINUS pnts[face[0]][y]) TIMES (pnts[face[3]][x] MINUS pnts[face[0]][x]))
                     IF
                       (NOT backfaces) AND (norm >= 0)
                         -- not showing this face
