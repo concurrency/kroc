@@ -93,6 +93,7 @@ foreach my $file (@files) {
 	}
 
 	# Decode text sections
+	my @texts;
 	foreach my $section (@{$data->{'LOAD_TEXT'}}) {
 		my @text = $etc->decode_load_text ($section->{'data'});
 
@@ -100,11 +101,12 @@ foreach my $file (@files) {
 			print STDERR "Failed to decode a text section in $file...\n";
 		} else {
 			my $ref = \@text;
-			push (@etc, $ref);
+			push (@texts, $ref);
 			$etc_file{$ref} = $data;
 		}
 	}
 
+	push (@etc, \@texts) if @texts;
 	$last_file = $data;
 }
 
