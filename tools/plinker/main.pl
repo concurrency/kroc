@@ -116,7 +116,9 @@ die "No valid data loaded (invalid ETC files?)" if !@etc;
 # Pick Entry Point
 my $symbols 	= $last_file->{'symbols'};
 my $jentry;
-foreach my $op (@{$etc[@etc - 1]}) {
+my $last_texts	= $etc[@etc - 1];
+my $last_text	= $last_texts->[@$last_texts - 1];
+foreach my $op (@$last_text) {
 	if ($op->{'name'} eq '.JUMPENTRY') {
 		$jentry = $op->{'arg'};
 	}
