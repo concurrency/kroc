@@ -41,6 +41,7 @@ destdir = ""
 target_os = "@KROC_HOST_OS@"
 patterns = None
 build_shared = True
+isearch = []
 
 def warn(*s):
 	print >>sys.stderr, "occbuild: " + "".join(map(str, s))
@@ -169,13 +170,13 @@ def build_isearch():
 	old_path = os.getenv("ISEARCH")
 	if old_path is not None:
 		path += old_path.split(':')
-	
-	return path
+	global isearch
+	isearch = path
 
 def set_isearch():
 	"""Set ISEARCH using search path.  This is for the benefit of occ21."""
-	
-	path = ":".join(build_isearch())
+	build_isearch()
+	path = ":".join(isearch)
 	os.putenv("ISEARCH", path)
 
 def make_static(library, objs):
@@ -281,7 +282,9 @@ def get_uselibs(etc_file):
 	return uselibs
 
 def resolve_library(lib):
-	for dir in build_isearch():
+	if os.path.exists(lib + ".lib"):
+		return lib + ".lib"
+	for dir in isearch:
 		path = os.path.join(dir, lib + ".lib")
 		if os.path.exists(path):
 			return path
