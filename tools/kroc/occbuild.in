@@ -157,6 +157,7 @@ def build_isearch():
 			in_tree + "/modules/inmoslibs/libsrc/forall",
 			in_tree + "/modules/inmoslibs/libsrc/maths",
 			in_tree + "/modules/inmoslibs/libsrc/convert",
+			in_tree + "/tvm/posix", # FIXME: is there a better way?
 			]
 	else:
 		kroc_dir = "@KROC_KROCDIR@"
@@ -288,16 +289,11 @@ def resolve_library(lib):
 
 def resolve_libraries(libs):
 	result = []
-	paths = {}
-	while len(libs) > 0:
-		next = []
-		for lib in libs:
-			path = resolve_library(lib)
-			if path is not None and not paths.has_key(path):
-				result.append(path)
-				paths[path] = True
-				next += get_uselibs(path)
-		libs = next
+	for lib in libs:
+		path = resolve_library(lib)
+		if path is None:
+			die("Unable to resolve library: ", lib)
+		result.append(path)
 	return result
 
 class KRoCToolchain:
@@ -475,13 +471,13 @@ class TVMToolchain:
 		occam_objs = [ base + ".tce" ] + occam_objs
 		
 		libs = []
-		for obj in occam_objs:
-			libs += get_uselibs(obj)
 		if std_libs:
 			libs.append("forall")
-		occam_objs += resolve_libraries(libs)
+		for obj in occam_objs:
+			libs += get_uselibs(obj)
+		libs = resolve_libraries(libs)
 		occam_objs.reverse()
-		run(self.plinker_cmd() + ["-o", output + ".tbc"] + occam_objs)
+		run(self.plinker_cmd() + ["-o", output + ".tbc"] + libs + occam_objs)
 
 		# Generate a wrapper script (because we have to produce
 		# something with the target name, and it might as well be
