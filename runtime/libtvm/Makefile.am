@@ -27,7 +27,9 @@ noinst_HEADERS = \
 	jumptbl_sec.h \
 	scheduler.h
 
-include_HEADERS = \
+tvmincludedir = $(includedir)/tvm
+
+tvminclude_HEADERS = \
 	mobile_types.h \
 	transputer.h \
 	tvm.h \
