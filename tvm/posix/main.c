@@ -105,11 +105,37 @@ static void usage (FILE *out)
 	fprintf (out, "Usage: %s <filename>\n", prog_name);
 }
 
+static int file_exists (const char *fn)
+{
+	/* fopen is more portable than say stat(2) */
+	FILE *fh = fopen (fn, "r");
+
+	if (fh != NULL) {
+		fclose (fh);
+		return 1;
+	}
+
+	return 0;
+}
+
 static int install_firmware_ctx (void)
 {
-	if ((fw_bc = load_bytecode ("firmware.tbc")) == NULL) {
+	static const char *firmware_path 	= TVM_FIRMWARE_PATH "tvm-posix.tbc";
+	static const char *posix_tbc		= "tvm-posix.tbc";
+	char *firmware_file			= getenv ("TVM_FIRMWARE_FILE");
+
+	if (firmware_file == NULL) {
+		if (file_exists (posix_tbc)) {
+			firmware_file = (char *) posix_tbc;
+		} else {
+			firmware_file = (char *) firmware_path;
+		}
+	}
+
+	if ((fw_bc = load_bytecode (firmware_file)) == NULL) {
 		fprintf (stderr, 
-			"Failed to load/decode firmware.tbc\n"
+			"Failed to load/decode %s\n",
+			firmware_file
 		);
 		return -1;
 	}

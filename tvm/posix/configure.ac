@@ -64,7 +64,7 @@ TVM_LIBTVM
 #  Defines
 #########################
 
-CFLAGS="-Wall $TVM_CFLAGS $CFLAGS"
+CFLAGS="-Wall $TVM_CFLAGS -DTVM_FIRMWARE_PATH='\"$datadir/tvm/firmware/\"' $CFLAGS"
 LIBS="-lm $TVM_LIBS $LIBS"
 
 # OS

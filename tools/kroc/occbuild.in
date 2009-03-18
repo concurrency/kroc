@@ -151,7 +151,7 @@ def set_ld_path():
 		path += ":" + old_path
 	os.putenv(var, path)
 
-def build_isearch():
+def build_isearch(tc_isearch):
 	dirs = search_path
 	if in_tree is not None:
 		dirs += [
@@ -161,11 +161,7 @@ def build_isearch():
 			in_tree + "/tvm/posix", # FIXME: is there a better way?
 			]
 	else:
-		kroc_dir = "@KROC_KROCDIR@"
-		dirs += [
-			kroc_dir + "/vtlib",
-			kroc_dir + "/vtinclude",
-			]
+		dirs += tc_isearch
 	path = [os.path.join(os.getcwd(), dir) for dir in dirs]
 	old_path = os.getenv("ISEARCH")
 	if old_path is not None:
@@ -173,9 +169,9 @@ def build_isearch():
 	global isearch
 	isearch = path
 
-def set_isearch():
+def set_isearch(tc_isearch):
 	"""Set ISEARCH using search path.  This is for the benefit of occ21."""
-	build_isearch()
+	build_isearch(tc_isearch)
 	path = ":".join(isearch)
 	os.putenv("ISEARCH", path)
 
@@ -427,6 +423,11 @@ class KRoCToolchain:
 		cflags += " " + capture(programs["kroc"] + ["--cflags"])
 		cflags += " " + capture(programs["kroc"] + ["--ccincpath"])
 		print tidy_spaces(cflags)
+	
+	def isearch(self):
+		krocdir = get_install_dir("@KROC_KROCDIR@", "/share/kroc")
+		return [ krocdir + "/vtlib", krocdir + "/vtinclude" ]
+
 
 class TVMToolchain:
 	def plinker_cmd(self):
@@ -501,25 +502,28 @@ class TVMToolchain:
 
 	def install(self, file):
 		bindir = get_install_dir("@TVM_BINDIR@", "/bin")
-		tvmdir = get_install_dir("@TVM_LIBDIR@", "/lib/transterpreter")
+		includedir = get_install_dir("@TVM_ARCHINCDIR@", "/include/tvm")
+		libdir = get_install_dir("@TVM_LIBDIR@", "/lib/tvm")
+		tvmdir = get_install_dir("@TVM_TVMDIR@", "/share/tvm")
+		vtlibdir = krocdir + "/vtlib"
+		vtincludedir = krocdir + "/vtinclude"
 
 		(base, ext) = split_ext(file)
 		if ext == "lib":
 			if not is_stub(file):
-				install(file, tvmdir, False)
-				install(base + ".precomp", tvmdir, False)
-			install(patterns["so"] % base, tvmdir, True)
-			install(base + ".module", tvmdir, False)
+				install(file, vtlibdir, False)
+			install(patterns["so"] % base, libdir, True)
+			install(base + ".module", vtincludedir, False)
 		elif ext == "inc":
-			install(file, tvmdir, False)
+			install(file, vtincludedir, False)
 		elif ext == "h":
-			install(file, tvmdir, False)
+			install(file, includedir, False)
 		elif ext == "":
 			install(file, bindir, True)
 			install(base + ".tbc", bindir, False)
 
 	def install_examples(self, package, file):
-		examplesdir = "%s/%s" % (get_install_dir("@TVM_EXAMPLESDIR@", "/lib/transterpreter/examples"), package)
+		examplesdir = "%s/%s" % (get_install_dir("@TVM_EXAMPLESDIR@", "/lib/tvm/examples"), package)
 
 		(base, ext) = split_ext(file)
 		if ext == "":
@@ -541,6 +545,10 @@ class TVMToolchain:
 	def cflags(self):
 		print "-DOCCBUILD_TVM"
 		# FIXME: what cflags?
+	
+	def isearch(self):
+		tvmdir = get_install_dir("@TVM_TVMDIR@", "/share/tvm")
+		return [ tvmdir + "/vtlib", tvmdir + "/vtinclude" ]
 
 def usage(f):
 	print >>f, """occbuild, version """ + VERSION + """
@@ -714,7 +722,7 @@ def main(args):
 		programs["tce-dump.pl"] = [in_tree + "/tools/plinker/tce-dump.pl"] + programs["tce-dump.pl"][1:]
 		programs["tvm"] = [in_tree + "/tvm/posix/tvm"] + programs["tvm"][1:]
 
-	set_isearch()
+	set_isearch(toolchain.isearch())
 	for dir in search_path:
 		programs["cc"] += ["-L" + dir]
 		programs["kroc"] += ["-I" + dir, "-L" + dir]

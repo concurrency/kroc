@@ -18,16 +18,26 @@ else
 tvm_SOURCES += unix_io.c
 endif
 
-all-local: firmware.tbc
+all-local: tvm-posix.tbc
 
-firmware.tbc: firmware.occ
+tvmvtincludedir = $(datadir)/tvm/vtinclude
+tvmfirmwaredir = $(datadir)/tvm/firmware
+
+tvmvtinclude_HEADERS = \
+	introspect.inc \
+	tvmspecials.inc
+
+tvmfirmware_DATA = \
+	tvm-posix.tbc
+
+tvm-posix.tbc: tvm-posix.occ
 	$(OCCBUILD) --no-std-libs --program $<
 
 EXTRA_DIST = \
-	firmware.occ \
+	tvm-posix.occ \
 	introspect.inc \
 	tvmspecials.inc
 
 clean-local:
-	$(OCCBUILD) --clean firmware.tbc
+	$(OCCBUILD) --clean tvm-posix.tbc
 
