@@ -103,16 +103,23 @@ DATA TYPE G3D.POLY.SCAN
 :
 
 --}}}
---{{{  protocols for controlling components
+--{{{  protocols and channel-types for controlling components
+
+--* Generator trigger channel-type.
+CHAN TYPE G3D.TRIG
+  MOBILE RECORD
+    CHAN INT trig?:
+:
 
 --* Polygon points generator control.
 PROTOCOL G3D.GEN.CONTROL
   CASE
-    reset                     --* Reset generator to default state.
-    add.scale; [3]REAL32      --* Add to the current scale.
-    set.scale; [3]REAL32      --* Absolutely set the scale.
-    add.trans; [3]REAL32      --* Add to the current translation.
-    set.trans; [3]REAL32      --* Absolutely set the translation.
+    reset                           --* Reset generator to default state.
+    add.scale; [3]REAL32            --* Add to the current scale.
+    set.scale; [3]REAL32            --* Absolutely set the scale.
+    add.trans; [3]REAL32            --* Add to the current translation.
+    set.trans; [3]REAL32            --* Absolutely set the translation.
+    set.trigger; BOOL; G3D.TRIG?    --* Set trigger control.
 :
 
 --* Points rotation control.

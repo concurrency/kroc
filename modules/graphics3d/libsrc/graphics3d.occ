@@ -102,6 +102,8 @@ PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL c
       opnts[7] := [-1.0, 1.0, -1.0] (G3D.POINT3)
   :
 
+  G3D.TRIG? trg:
+  INITIAL BOOL have.trg IS FALSE:
   SEQ
     --{{{  initialise
     reset ()
@@ -122,6 +124,8 @@ PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL c
                 SEQ
                   reset ()
                   cpnts := CLONE opnts
+              set.trigger; have.trg; trg
+                SKIP
               [3]REAL32 scale:
               add.scale; scale
                 SEQ i = 0 FOR 8
@@ -150,7 +154,10 @@ PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL c
                     cpnts[i][x] := opnts[i][x] + trans[0]
                     cpnts[i][y] := opnts[i][y] + trans[1]
                     cpnts[i][z] := opnts[i][z] + trans[2]
-            SKIP
+            INT any:
+            have.trg & trg[trig] ? any
+              trig := FALSE
+            (NOT have.trg) & SKIP
               trig := FALSE
 :
 --}}}
@@ -225,6 +232,8 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
   :
   --}}}
 
+  G3D.TRIG? trg:
+  INITIAL BOOL have.trg IS FALSE:
   SEQ
     --{{{  initialise
     reset ()
@@ -237,7 +246,7 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
       SEQ
         mpoints := CLONE pnts
 
-        -- adjust wings for fluttering.
+        --{{{  adjust wings for fluttering.
         IF
           fdiff > 0.0
             REAL32 sin.val, cos.val:
@@ -309,6 +318,7 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
                   SKIP
           TRUE
             SKIP
+        --}}}
 
         out ! mpoints
 
@@ -318,6 +328,8 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
             ctrl ? CASE
               reset
                 reset ()
+              set.trigger; have.trg; trg
+                SKIP
               [3]REAL32 scale:
               add.scale; scale
                 SEQ i = 0 FOR 30
@@ -338,7 +350,10 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
               [3]REAL32 trans:
               set.trans; trans
                 SKIP
-            SKIP
+            INT any:
+            have.trg & trg[trig] ? any
+              trig := FALSE
+            (NOT have.trg) & SKIP
               trig := FALSE
 
 :
