@@ -64,6 +64,7 @@ AC_DEFUN([OCCAM_OCCBUILD],
 [dnl
 AC_REQUIRE([OCCAM_IN_TREE])
 AC_REQUIRE([OCCAM_TOOLCHAIN])
+
 AC_ARG_VAR(OCCBUILD, [Path to occbuild])
 if test "x$KROC_BUILD_ROOT" != "x"; then
   OCCBUILD="$KROC_BUILD_ROOT/tools/kroc/occbuild --in-tree $KROC_BUILD_ROOT"
@@ -73,9 +74,9 @@ else
     AC_MSG_ERROR([occbuild not found; set \$OCCBUILD or \$PATH appropriately])
   fi
 fi
-dnl
+
 OCCBUILD="$OCCBUILD --toolchain=$OCCBUILD_TOOLCHAIN"
-dnl
+
 if test "x$KROC_BUILD_ROOT" != "x"; then
   if test "x$OCCBUILD_TOOLCHAIN" = "xkroc"; then
     KROC_CCSP_FLAGS
@@ -91,6 +92,9 @@ else
   AC_MSG_RESULT([$OCCBUILD_CFLAGS])
 fi
 AC_SUBST(OCCBUILD_CFLAGS)
+
+OCCBUILD_API_VERSION=2
+AC_SUBST(OCCBUILD_API_VERSION)
 ])dnl
 dnl
 dnl Find occamdoc.

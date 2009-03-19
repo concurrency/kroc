@@ -3,9 +3,15 @@
 # directory; don't change it.
 
 AC_INIT([kroc], [1.5.0-pre4], [kroc-bugs@kent.ac.uk])
+AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 OCCAM_TOOLCHAIN
+OCCAM_OCCBUILD
+
+if test "x$OCCBUILD_API_VERSION" != x2; then
+  AC_MSG_ERROR([this configure script has been built with an out-of-date version of `occbuild.m4'; try clearing your `ACLOCAL' environment variable.])
+fi
 
 AC_CONFIG_SUBDIRS(tools/ilibr)
 AC_CONFIG_SUBDIRS(tools/kroc)
