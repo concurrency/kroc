@@ -505,12 +505,14 @@ class TVMToolchain:
 		includedir = get_install_dir("@TVM_ARCHINCDIR@", "/include/tvm")
 		libdir = get_install_dir("@TVM_LIBDIR@", "/lib/tvm")
 		tvmdir = get_install_dir("@TVM_TVMDIR@", "/share/tvm")
-		vtlibdir = krocdir + "/vtlib"
-		vtincludedir = krocdir + "/vtinclude"
+		vtlibdir = tvmdir + "/vtlib"
+		vtincludedir = tvmdir + "/vtinclude"
 
+		print "install " + file
 		(base, ext) = split_ext(file)
 		if ext == "lib":
 			if not is_stub(file):
+				print file + " => " + vtlibdir
 				install(file, vtlibdir, False)
 			install(patterns["so"] % base, libdir, True)
 			install(base + ".module", vtincludedir, False)
