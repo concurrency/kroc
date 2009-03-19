@@ -177,16 +177,32 @@ static int install_user_ctx (const char *fn)
 	tbc = us_bc->tbc;
 
 	if (tbc->tlp != NULL) {
+		int valid = 1;
+
 		tlp = tbc->tlp->fmt;
+		
 		if (tlp == NULL) {
 			tlp = (char *) tlp_fmt;
 		} else if (strcmp (tlp, "") == 0) {
 			/* OK */
-		} else if (strcmp (tlp, "?!!F") == 0) {
-			/* OK */
-		} else if (strcmp (tlp, "?!!") == 0) {
-			/* OK */
-		} else {
+		} else if (strlen (tlp) == 3 || strlen (tlp) == 4) {
+			if (tlp[0] == '?' || tlp[0] == '.') {
+				/* OK */
+			} else if (tlp[1] == '!' || tlp[1] == '.') {
+				/* OK */
+			} else if (tlp[2] == '!' || tlp[2] == '.') {
+				/* OK */
+			} else if (strlen (tlp) == 4) {
+				if (tlp[3] == 'F') {
+					/* OK */
+				} else {
+					valid = 0;
+				}
+			} else {
+				valid = 0;
+			}
+		}
+		if (!valid) {
 			error_out_no_errno ("unsupported top-level-process format: \"%s\"", tlp);
 			return -1;
 		}
