@@ -441,6 +441,13 @@ class TVMToolchain:
 		cmd += ["-DEF", "OCCBUILD.TVM"]
 		return cmd
 
+	def set_firmware(self):
+		if in_tree is not None:
+			firmware = os.getenv("TVM_FIRMWARE_FILE")
+			if firmware is None:
+				firmware = os.path.join(os.getcwd(), in_tree + "/tvm/posix/tvm-posix.tbc")
+				os.putenv("TVM_FIRMWARE_FILE", firmware)
+
 	def object(self, source):
 		run(self.occ21_cmd() + [source])
 
@@ -498,6 +505,7 @@ class TVMToolchain:
 
 	def run(self, program, args):
 		set_ld_path()
+		self.set_firmware()
 		run(programs["tvm"] + [program + ".tbc"] + args)
 
 	def install(self, file):
@@ -512,7 +520,6 @@ class TVMToolchain:
 		(base, ext) = split_ext(file)
 		if ext == "lib":
 			if not is_stub(file):
-				print file + " => " + vtlibdir
 				install(file, vtlibdir, False)
 			install(patterns["so"] % base, libdir, True)
 			install(base + ".module", vtincludedir, False)

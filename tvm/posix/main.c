@@ -125,10 +125,12 @@ static int install_firmware_ctx (void)
 	char *firmware_file			= getenv ("TVM_FIRMWARE_FILE");
 
 	if (firmware_file == NULL) {
-		if (file_exists (posix_tbc)) {
+		firmware_file = (char *) firmware_path;
+
+		if (file_exists (firmware_file)) {
+			/* do nothing */
+		} else if (file_exists (posix_tbc)) {
 			firmware_file = (char *) posix_tbc;
-		} else {
-			firmware_file = (char *) firmware_path;
 		}
 	}
 
