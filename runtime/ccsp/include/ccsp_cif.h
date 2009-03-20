@@ -399,6 +399,15 @@ static inline void MRelease (Workspace wptr, void *ptr)
 
 /*{{{ Mobile Types */
 /*{{{  void *MTAlloc (Workspace wptr, word type, word size) */
+
+/**
+ * Allocates a mobile.  See mobile_types.h for a explanation of the latter two
+ * parameters, which describe the structure of the mobile type.  This is
+ * necessary in case you have nested mobiles, and allows the CCSP kernel to
+ * handle moving the inner mobiles.
+ *
+ * @return The pointer to the mobile data (such as an mt_array_t).
+ */
 static inline void *MTAlloc (Workspace wptr, word type, word size)
 {
 	void *ptr;
@@ -407,6 +416,14 @@ static inline void *MTAlloc (Workspace wptr, word type, word size)
 }
 /*}}}*/
 /*{{{  void *MTClone (Workspace wptr, void *ptr) */
+
+/**
+ * Clones the given mobile data.  You only need pass a pointer to the data,
+ * not a pointer-to-a-pointer as in some other functions.  For arrays, what
+ * you pass should be of type mt_array_t*.
+ *
+ * @return A pointer to the cloned data.
+ */
 static inline void *MTClone (Workspace wptr, void *ptr)
 {
 	void *clone;
@@ -415,18 +432,42 @@ static inline void *MTClone (Workspace wptr, void *ptr)
 }
 /*}}}*/
 /*{{{  void MTRelease (Workspace wptr, void *ptr) */
+
+/**
+ * Releases (frees) the given mobile data.  You only need pass a pointer to
+ * the data, not a pointer-to-a-pointer as in some other functions.  Therefore
+ * it's up to you to NULL your pointer afterwards.
+ *
+ * Do not pass a NULL pointer to this function (check yourself before calling).
+ */
 static inline void MTRelease (Workspace wptr, void *ptr)
 {
 	ccsp_cif_X_mt_release (wptr, ptr);
 }
 /*}}}*/
 /*{{{  void MTChanIn (Workspace wptr, Channel *c, void **pptr) */
+
+/**
+ * Reads from the given channel into the given mobile.  You must pass in a
+ * pointer to your pointer-to-mobile-data, so that it can be modified.  It is
+ * up to you to make sure that any previous mobile referred to by that pointer
+ * has already been released before calling (using MTRelease), as the contents
+ * of your pointer-to-mobile-data will be blindly overwritten.  For arrays,
+ * the parameter should be of type mt_array_t**.
+ */
 static inline void MTChanIn (Workspace wptr, Channel *c, void **pptr)
 {
 	ccsp_cif_Y_mt_in (wptr, c, pptr);
 }
 /*}}}*/
 /*{{{  void MTChanOut (Workspace wptr, Channel *c, void **pptr) */
+
+/**
+ * Writes to the given channel from the given mobile.  You must pass in a
+ * pointer to your pointer-to-mobile-data, so that it can be modified (it will
+ * be set to NULL once the output has completed). For arrays, the parameter
+ * should be of type mt_array_t**.
+ */
 static inline void MTChanOut (Workspace wptr, Channel *c, void **pptr)
 {
 	ccsp_cif_Y_mt_out (wptr, c, pptr);
