@@ -28,10 +28,10 @@
 #INCLUDE "graphics3d.inc"
 
 
---{{{  PROC debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
+--{{{  PROC g3d.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 --* Debugging routine.
 -- @private
-PROC debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
+PROC g3d.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 
   #PRAGMA EXTERNAL "PROC C.out.stderr (VAL []BYTE str) = 0"
 
@@ -755,7 +755,7 @@ PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!,
     SEQ
       cubify.points.int (in?, out!, ctrl?, ch!)
       kill ! FALSE
-    debug.writer (ch?, kill?)
+    g3d.debug.writer (ch?, kill?)
 :
 --}}}
 --{{{  PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
@@ -1015,7 +1015,7 @@ PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out
     SEQ
       poly.scanlines.int (in?, out!, ctrl?, ch!)
       kill ! FALSE
-    debug.writer (ch?, kill?)
+    g3d.debug.writer (ch?, kill?)
 :
 --}}}
 --{{{  PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
@@ -1302,7 +1302,7 @@ PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rli
     SEQ
       render.polyscans.int (data?, rlink.in?, ctrl?, ch!)
       kill ! TRUE
-    debug.writer (ch?, kill?)
+    g3d.debug.writer (ch?, kill?)
 :
 --}}}
 --{{{  PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
