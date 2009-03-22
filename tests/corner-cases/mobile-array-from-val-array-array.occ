@@ -1,0 +1,26 @@
+PROTOCOL MY.REQ
+  CASE
+    load.image; MOBILE []BYTE
+:
+
+CHAN TYPE MY.CT
+  MOBILE RECORD
+    CHAN MY.REQ req?:
+:
+
+VAL [1][]BYTE files IS ["blah"]:
+
+PROC main ()
+  MY.CT! cli:
+  MY.CT? svr:
+  SEQ
+    cli, svr := MOBILE MY.CT
+
+    -- Change this to FALSE to avoid the crash.
+    #IF TRUE
+    cli[req] ! load.image; files[0]
+    #ELSE
+    VAL []BYTE file IS files[0]:
+    cli[req] ! load.image; file
+    #ENDIF
+:
