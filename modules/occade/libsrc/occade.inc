@@ -128,6 +128,8 @@ PROTOCOL OCCADE.SPRITE.REQ
     collisions; BOOL
     --* Get the size of the sprite. Returns [@code get.size].
     get.size
+    --* Get the position of the sprite. Returns [@code get.position].
+    get.position
     --* Make the sprite exit.
     -- Use [@ref occade.finish.input] rather than sending this by hand, since
     -- that'll mop up any remaining collision reports too.
@@ -142,6 +144,10 @@ PROTOCOL OCCADE.SPRITE.RESP
     --* The size of the sprite.
     -- @item w, h Width and height in pixels
     get.size; INT; INT
+    --* The position of the sprite.
+    -- @item x, y Coordinates
+    -- @item centre Whether the sprite is centred on those coordinates
+    get.position; INT; INT; BOOL
 :
 
 --* Channel bundle for controlling sprites.
