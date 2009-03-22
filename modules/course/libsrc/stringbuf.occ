@@ -180,6 +180,7 @@ PROC buffer.set.bin8 ([]BYTE buf, INT len, VAL BYTE n)
 -- @param len Length of valid data in buffer.
 -- @param ip integer portion alignment.
 -- @param dp decimal portion alignment.
+-- @param n Value to put in buffer.
 --
 PROC buffer.set.real32 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL32 n)
   [32]BYTE v.buf:
