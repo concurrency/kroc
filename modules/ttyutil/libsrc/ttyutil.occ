@@ -271,10 +271,15 @@ PROC ttyutil.keyhandler (CHAN BYTE in?, CHAN INT kill?, CHAN INT out!)
 -- @param y Y position on screen.
 -- @param width Width of menu.
 -- @param height Height of menu.
+-- @param border Whether or not to draw a border.
 -- @param in Menu control channel (including keys).
 -- @param out Display output channel.
 --
-PROC ttyutil.menu (VAL INT x, y, width, height, CHAN TTYUTIL.MENU in?, SHARED CHAN TTYUTIL.DPY out!)
+PROC ttyutil.menu (VAL INT x, y, width, height, VAL BOOL border, CHAN TTYUTIL.MENU in?, SHARED CHAN TTYUTIL.DPY out!)
+
+  VAL []BYTE sel.attr IS [ANSI.BOLD, ANSI.FG.WHITE, ANSI.BG.BLUE]:
+  VAL []BYTE unsel.attr IS [ANSI.FG.WHITE, ANSI.BG.BLACK, ANSI.NORMAL]:
+  VAL []BYTE def.attr IS [ANSI.FG.WHITE, ANSI.BG.BLACK, ANSI.NORMAL]:
 
   --{{{  PROC ttyutil.menu.itemhandler (VAL INT x, y, width, TU.MENU.ITEM? ctl, TTYUTIL.MENUITEM! link, SHARED CHAN TTYUTIL.DPY out!)
   --* Individual menu item handler.
@@ -314,11 +319,11 @@ PROC ttyutil.menu (VAL INT x, y, width, height, CHAN TTYUTIL.MENU in?, SHARED CH
                   -- out ! following; 3
                   IF
                     selected
-                      out ! colours; [ANSI.FG.WHITE, ANSI.BG.BLUE]
+                      out ! colours; sel.attr
                     TRUE
-                      out ! colours; [ANSI.BOLD, ANSI.FG.BLUE, ANSI.BG.BLACK]
+                      out ! colours; unsel.attr
                   out ! string.xy; x; y; CLONE str
-                  out ! colours; [ANSI.NORMAL, ANSI.FG.WHITE, ANSI.BG.BLACK]
+                  out ! colours; def.attr
             TRUE
               SKIP
           --}}}
@@ -367,6 +372,10 @@ PROC ttyutil.menu (VAL INT x, y, width, height, CHAN TTYUTIL.MENU in?, SHARED CH
   MOBILE []TU.MENU.ITEM! links:
   MOBILE []BOOL valid:
   INT n.items, top.item, sel.item:
+  INITIAL INT height IS height:
+  INITIAL INT width IS width:
+  INITIAL INT y IS y:
+  INITIAL INT x IS x:
   SEQ
     --{{{  initialise
     SEQ
@@ -382,6 +391,44 @@ PROC ttyutil.menu (VAL INT x, y, width, height, CHAN TTYUTIL.MENU in?, SHARED CH
 
       #PRAGMA DEFINED links
       #PRAGMA DEFINED valid
+    --}}}
+    --{{{  draw border if necessary
+    IF
+      border
+        MOBILE []BYTE sides:
+        SEQ
+          -- draw
+          sides := MOBILE [width]BYTE
+          sides[0] := '|'
+          SEQ i = 1 FOR width - 2
+            sides[i] := ' '
+          sides[width - 1] := '|'
+
+          CLAIM out!
+            SEQ
+              out ! following; 0
+              out ! colours; def.attr
+
+              SEQ i = 1 FOR height - 2
+                out ! string.xy; x; y + i; CLONE sides
+
+              sides[0] := ','
+              SEQ i = 1 FOR width - 2
+                sides[i] := '-'
+              sides[width - 1] := '.'
+              out ! string.xy; x; y; CLONE sides
+
+              sides[0] := '`'
+              sides[width - 1] := '*''
+              out ! string.xy; x; y + (height - 1); CLONE sides
+
+          -- adjust position of real menu
+          height := height - 2
+          width := width - 4
+          x := x + 2
+          y := y + 1
+      TRUE
+        SKIP
     --}}}
 
     FORKING
@@ -443,7 +490,7 @@ PROC ttyutil.menu (VAL INT x, y, width, height, CHAN TTYUTIL.MENU in?, SHARED CH
                 CASE key
                   KEY.UP
                     IF
-                      top.item > 0
+                      ((sel.item - top.item) < (height / 2)) AND (top.item > 0)
                         --{{{  scroll menu upwards by reducing top.item
                         INT vis:
                         SEQ
@@ -484,7 +531,7 @@ PROC ttyutil.menu (VAL INT x, y, width, height, CHAN TTYUTIL.MENU in?, SHARED CH
                         SKIP
                   KEY.DOWN
                     IF
-                      ((sel.item - top.item) > (height / 2)) AND (((n.items - height) - top.item) > 0)
+                      ((sel.item - top.item) >= (height / 2)) AND (((n.items - height) - top.item) > 0)
                         --{{{  scroll menu downwards by incrementing top.item
                         INT vis:
                         SEQ

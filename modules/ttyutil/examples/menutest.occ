@@ -91,10 +91,10 @@ PROC menutest (CHAN BYTE kyb?, scr!)
       CLAIM dpy!
         dpy ! clear.screen
 
-      ttyutil.menu (10, 2, 30, 10, menu?, dpy!)
+      ttyutil.menu (10, 2, 30, 10, TRUE, menu?, dpy!)
 
     SEQ
-      SEQ i = 0 FOR 5
+      SEQ i = 0 FOR 20
         -- create menu items
         TTYUTIL.MENUITEM? i.svr:
         TTYUTIL.MENUITEM! i.cli:
