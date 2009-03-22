@@ -69,6 +69,15 @@ PROC main ()
             SEQ
               little[req] ! move; x; 240; TRUE
 
+              INT pos.x, pos.y:
+              BOOL centre:
+              SEQ
+                little[req] ! get.position
+                little[resp] ? CASE get.position; pos.x; pos.y; centre
+                ASSERT (pos.x = x)
+                ASSERT (pos.y = 240)
+                ASSERT (centre)
+
               INITIAL BOOL colliding IS TRUE:
               WHILE colliding
                 PRI ALT

@@ -955,6 +955,8 @@ PROC occade.sprite.server (SHARED OCCADE! handle, OCCADE.SPRITE? svr, VAL INT us
                     handle[req] ! get.sprite.size; id
                     handle[resp] ? CASE get.sprite.size; w; h
                 svr[resp] ! get.size; w; h
+            get.position
+              svr[resp] ! get.position; info[x]; info[y]; info[centre]
             quit
               --{{{
               SEQ
