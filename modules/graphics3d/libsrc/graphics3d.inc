@@ -127,6 +127,7 @@ PROTOCOL G3D.ROT.CONTROL
   CASE
     reset                     --* Reset rotation to default state.
     add.increment; REAL32     --* Add to the increment.
+    set.increment; REAL32     --* Absolutely set the increment.
     set.angle; REAL32         --* Absolutely set the angle of rotation.
     set.mode; INT             --* Set the rotation mode (see [@ref G3D.ROTATE.MODE]).
 :
