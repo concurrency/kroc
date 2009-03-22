@@ -81,7 +81,9 @@ PROC menutest (CHAN BYTE kyb?, scr!)
   CHAN INT keys, keys.kill:
   CHAN TTYUTIL.MENU menu:
   PAR
-    ttyutil.display (dpy?, scr!)
+    SEQ
+      cursor.invisible (scr!)
+      ttyutil.display (dpy?, scr!)
     ttyutil.keyhandler (kyb?, keys.kill?, keys!)
 
     SEQ
