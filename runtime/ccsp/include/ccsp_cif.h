@@ -575,6 +575,15 @@ static inline Workspace ProcAlloc (Workspace wptr, word args, word stack)
 	do { (ws)[(n) + 1] = (word) (param); } while (0)
 /*}}}*/
 /*{{{  void ProcMTCopy (Workspace wptr, Workspace ws, word n, void *ptr) */
+
+/**
+ * Copies the mobile data from the workspace wptr (the current workspace) into
+ * the workspace ws (the new process's workspace), in slot n.  You should pass
+ * a pointer-to-mobile-data, not a pointer-to-a-pointer as in some other
+ * methods.  The process should then use ProcGetParam (with the exact same
+ * type as you pass to this function) to retrieve the parameter.  For arrays,
+ * the type of ptr should be mt_array_t*.
+ */
 static inline void ProcMTCopy (Workspace wptr, Workspace ws, word n, void *ptr)
 {
 	ws -= CIF_PROCESS_WORDS;
@@ -583,6 +592,15 @@ static inline void ProcMTCopy (Workspace wptr, Workspace ws, word n, void *ptr)
 }
 /*}}}*/
 /*{{{  void ProcMTMove (Workspace wptr, Workspace ws, word n, void *pptr) */
+
+/**
+ * Moves the mobile data from the workspace wptr (the current workspace) into
+ * the workspace ws (the new process's workspace), in slot n.  You should pass
+ * a pointer-to-a-pointer-to-mobile-data; the pointed-to-pointer will be set
+ * to NULL after this call.  The process should then use ProcGetParam (with
+ * the type of pointer-to-mobile-data -- one less indirection level) to
+ * retrieve the parameter.  For arrays, the type of pptr should be mt_array_t**.
+ */
 static inline void ProcMTMove (Workspace wptr, Workspace ws, word n, void *pptr)
 {
 	ws -= CIF_PROCESS_WORDS;
