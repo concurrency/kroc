@@ -63,3 +63,4 @@ SUFFIXES = .occ .tce .lib
 $(shared_screen_lib_objs): course.lib
 demo_nets.tce: demo_cycles.tce
 string.tce: utils.tce
+stringbuf.tce: float_io.tce

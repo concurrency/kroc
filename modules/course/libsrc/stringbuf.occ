@@ -17,6 +17,8 @@
 --	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 --
 
+#USE "float_io"
+
 --** @module course
 
 --{{{  PROC buffer.set.string ([]BYTE buf, INT len, VAL []BYTE to.add)
@@ -169,6 +171,22 @@ PROC buffer.set.bin8 ([]BYTE buf, INT len, VAL BYTE n)
           left, len := left - 1, len + 1
       TRUE
         SKIP
+:
+--}}}
+--{{{  PROC buffer.set.real32 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL32 n)
+--* Adds a REAL32 value to a string buffer.
+--
+-- @param buf String buffer.
+-- @param len Length of valid data in buffer.
+-- @param ip integer portion alignment.
+-- @param dp decimal portion alignment.
+--
+PROC buffer.set.real32 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL32 n)
+  [32]BYTE v.buf:
+  INT v.len:
+  SEQ
+    course.REAL32TOSTRING (v.len, v.buf, n, ip, dp)
+    buffer.set.string (buf, len, [v.buf FOR v.len])
 :
 --}}}
 
