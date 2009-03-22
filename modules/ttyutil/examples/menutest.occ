@@ -1,0 +1,116 @@
+--
+--	menutest.occ -- menu test for ttyutil library
+--	Copyright (C) 2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#INCLUDE "course.module"
+#INCLUDE "ttyutil.module"
+
+PROC menuitem.handler (VAL INT id, TTYUTIL.MENUITEM? link)
+  MOBILE []BYTE str:
+  INT len, value:
+  SEQ
+
+    str := MOBILE [40]BYTE
+    len := 0
+    value := 0
+
+    buffer.set.string (str, len, "item ")
+    buffer.set.int (str, len, id)
+    buffer.set.string (str, len, " = ")
+    buffer.set.int (str, len, value)
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      INITIAL BOOL update IS FALSE:
+      INITIAL BOOL reset IS FALSE:
+      SEQ
+        link[in] ? CASE
+          get.text
+            update := TRUE
+          key.left
+            SEQ
+              value := value MINUS 1000
+              reset := TRUE
+          key.right
+            SEQ
+              value := value PLUS 1000
+              reset := TRUE
+          INT k:
+          key.other; k
+            SKIP
+          quit
+            running := FALSE
+
+        IF
+          reset
+            SEQ
+              len := 0
+
+              buffer.set.string (str, len, "item ")
+              buffer.set.int (str, len, id)
+              buffer.set.string (str, len, " = ")
+              buffer.set.int (str, len, value)
+
+              update := TRUE
+          TRUE
+            SKIP
+        IF
+          update
+            link[out] ! text; [str FOR len]
+          TRUE
+            SKIP
+:
+
+PROC menutest (CHAN BYTE kyb?, scr!)
+  SHARED! CHAN TTYUTIL.DPY dpy:
+  CHAN INT keys, keys.kill:
+  CHAN TTYUTIL.MENU menu:
+  PAR
+    ttyutil.display (dpy?, scr!)
+    ttyutil.keyhandler (kyb?, keys.kill?, keys!)
+
+    SEQ
+      -- clear screen and run menu process
+      CLAIM dpy!
+        dpy ! clear.screen
+
+      ttyutil.menu (10, 2, 30, 10, menu?, dpy!)
+
+    SEQ
+      SEQ i = 0 FOR 5
+        -- create menu items
+        TTYUTIL.MENUITEM? i.svr:
+        TTYUTIL.MENUITEM! i.cli:
+        SEQ
+          i.svr, i.cli := MOBILE TTYUTIL.MENUITEM
+
+          FORK menuitem.handler (i, i.svr)
+          menu ! add.item; i.cli
+
+      -- filter keystrokes to menu
+      WHILE TRUE
+        INT key:
+        SEQ
+          keys ? key
+          CASE key
+            KEY.UP, KEY.DOWN, KEY.LEFT, KEY.RIGHT, '*n'
+              menu ! key.in; key
+            ELSE
+              SKIP
+:
+
