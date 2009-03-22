@@ -18,21 +18,17 @@
 --
 
 #INCLUDE "course.module"
+#INCLUDE "useful.module"
 #INCLUDE "ttyutil.module"
 
 PROC menuitem.handler (VAL INT id, TTYUTIL.MENUITEM? link)
   MOBILE []BYTE str:
-  INT len, value:
+  INT value:
   SEQ
 
-    str := MOBILE [40]BYTE
-    len := 0
     value := 0
 
-    buffer.set.string (str, len, "item ")
-    buffer.set.int (str, len, id)
-    buffer.set.string (str, len, " = ")
-    buffer.set.int (str, len, value)
+    format.sisi ("item ", id, " = ", value, str)
 
     INITIAL BOOL running IS TRUE:
     WHILE running
@@ -59,19 +55,15 @@ PROC menuitem.handler (VAL INT id, TTYUTIL.MENUITEM? link)
         IF
           reset
             SEQ
-              len := 0
 
-              buffer.set.string (str, len, "item ")
-              buffer.set.int (str, len, id)
-              buffer.set.string (str, len, " = ")
-              buffer.set.int (str, len, value)
+              format.sisi ("item ", id, " = ", value, str)
 
               update := TRUE
           TRUE
             SKIP
         IF
           update
-            link[out] ! text; [str FOR len]
+            link[out] ! text; CLONE str
           TRUE
             SKIP
 :
