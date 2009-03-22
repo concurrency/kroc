@@ -168,6 +168,11 @@ PROC g3d.rot.control.delta (CHAN G3D.ROT.CONTROL in?, out.0!, out.1!)
         SEQ
           out.0 ! add.increment; v
           out.1 ! add.increment; v
+      REAL32 v:
+      set.increment; v
+        SEQ
+          out.0 ! set.increment; v
+          out.1 ! set.increment; v
       REAL32 a:
       set.angle; a
         SEQ

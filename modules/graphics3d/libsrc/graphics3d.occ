@@ -393,6 +393,8 @@ PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL c
           add.increment; inc
             SEQ
               diff := diff + inc
+          set.increment; diff
+            SKIP
           set.mode; mode
             SKIP
           set.angle; angle
