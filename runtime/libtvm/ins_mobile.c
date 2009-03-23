@@ -778,8 +778,8 @@ TVM_INSTRUCTION (ins_mt_xchg)
 /* 0x23E - 0x22 0x23 0xFE - mt_lock - lock a mobile type */
 TVM_INSTRUCTION (ins_mt_lock)
 {
-	WORDPTR mt	= (WORDPTR) BREG;
-	WORD	lock	= AREG << 1;
+	WORDPTR mt	= wordptr_minus ((WORDPTR) BREG, MT_CB_PTR_OFFSET);
+	WORD	lock	= AREG;
 	WORDPTR ptr	= MT_CB_LOCK_PTR (mt, lock);
 
 	return tvm_sem_claim (ectx, ptr);
@@ -788,8 +788,8 @@ TVM_INSTRUCTION (ins_mt_lock)
 /* 0x23F - 0x22 0x23 0xFF - mt_unlock - unlock a mobile type */
 TVM_INSTRUCTION (ins_mt_unlock)
 {
-	WORDPTR mt	= (WORDPTR) BREG;
-	WORD	lock	= AREG << 1;
+	WORDPTR mt	= wordptr_minus ((WORDPTR) BREG, MT_CB_PTR_OFFSET);
+	WORD	lock	= AREG;
 	WORDPTR ptr	= MT_CB_LOCK_PTR (mt, lock);
 
 	return tvm_sem_release (ectx, ptr);
