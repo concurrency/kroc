@@ -445,6 +445,14 @@ static inline void MTRelease (Workspace wptr, void *ptr)
 	ccsp_cif_X_mt_release (wptr, ptr);
 }
 /*}}}*/
+/*{{{  void *MTResize (Workspace wptr, word type, void *ptr, word param) */
+static inline void *MTResize (Workspace wptr, word type, void *ptr, word param)
+{
+	void *result;
+	ccsp_cif_X_mt_resize (wptr, type, ptr, param, result);
+	return result;
+}
+/*}}}*/
 /*{{{  void MTChanIn (Workspace wptr, Channel *c, void **pptr) */
 
 /**
