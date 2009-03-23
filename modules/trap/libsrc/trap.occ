@@ -22,10 +22,9 @@
 #INCLUDE "file.module"
 #INCLUDE "sock.module"
 #INCLUDE "useful.module"
+#INCLUDE "selector.module"
 
 #INCLUDE "trap.inc"
-#INCLUDE "selector.inc"
-#USE "selector"
 
 --{{{  internal types
 DATA TYPE PACKET.HEADER
@@ -431,6 +430,7 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
 :
 --}}}
 --{{{  PROC trap.start
+--* Start the Trap server.
 PROC trap.start (VAL INT node, RESULT SHARED TRAP.CT! control)
   TRAP.CT? svr:
   SEQ

@@ -17,12 +17,14 @@ EXTRA_DIST = \
 	trap.occ
 
 if BUILD_TRAP
-trap_lib_objs = \
+selector_lib_objs = \
 	selector-c.o \
-	selector.tce \
+	selector.tce
+
+trap_lib_objs = \
 	trap.tce
 
-trap_libs = trap.lib
+trap_libs = selector.lib trap.lib
 trap_includes = \
 	selector.inc \
 	trap.inc
@@ -35,8 +37,11 @@ tools = $(trap_tools)
 
 all-local: $(libs) $(includes) $(tools)
 
+selector.lib: $(selector_lib_objs)
+	$(OCCBUILD) --library selector.lib --need cif --include selector.inc $(selector_lib_objs)
+
 trap.lib: $(trap_lib_objs)
-	$(OCCBUILD) --library trap.lib --need cif --need file --need sock --need useful --include trap.inc --include selector.inc $(trap_lib_objs)
+	$(OCCBUILD) --library trap.lib --need selector --need file --need sock --need useful --include trap.inc $(trap_lib_objs)
 
 trapns: trapns.occ trap.lib
 	$(OCCBUILD) --program trapns.occ
@@ -45,7 +50,7 @@ install-exec-local: $(libs) $(includes) $(tools)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes) $(tools)
 
 clean-local:
-	$(OCCBUILD) --clean $(libs) $(trap_lib_objs) $(tools) $(trapanstcpip_objs)
+	$(OCCBUILD) --clean $(libs) $(selector_lib_objs) $(trap_lib_objs) $(tools)
 
 SUFFIXES = .occ .tce .lib
 
@@ -57,7 +62,6 @@ SUFFIXES = .occ .tce .lib
 
 #{{{ dependencies
 selector.tce: selector.inc
-trap.tce: selector.inc
-trap.tce: selector.tce
+trap.tce: selector.lib
 trap.tce: trap.inc
 #}}}

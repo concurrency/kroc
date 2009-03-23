@@ -17,25 +17,28 @@
 --	<http://www.gnu.org/licenses/>.
 --
 
---** Nameserver for Trap.
+--** @module trap
 
 #INCLUDE "sock.module"
 #INCLUDE "useful.module"
 #INCLUDE "trap.module"
 
 --{{{  CHAN TYPE ORACLE.CT
+--* @private
 PROTOCOL ORACLE.REQ
   CASE
     register; INT; INT; INT
     lookup; INT                     --* Replies [@ref found] or [@ref not.found].
 :
 
+--* @private
 PROTOCOL ORACLE.RESP
   CASE
     found; INT; INT
     not.found
 :
 
+--* @private
 CHAN TYPE ORACLE.CT
   MOBILE RECORD
     CHAN ORACLE.REQ req?:
