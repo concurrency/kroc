@@ -161,6 +161,12 @@ static inline mt_cb_t *MTAllocChanType (Workspace wptr, int channels, bool share
 	return MTAlloc (wptr, type, channels);
 }
 /*}}}*/
+/*{{{ mt_array_t *MTResize1D (Workspace wptr, mt_array_t *array, int new_size) */
+static inline mt_array_t *MTResize1D (Workspace wptr, mt_array_t *array, int new_size)
+{
+	return (mt_array_t *) MTResize (wptr, MT_RESIZE_DATA, array, new_size);
+}
+/*}}}*/
 /*}}}*/
 
 #endif
