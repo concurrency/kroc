@@ -552,7 +552,7 @@ TVM_INSTRUCTION (ins_stnl)
 	CLEAR(OREG);
 
 	/* Pop the stack */
-	STACK2_RET(BREG, CREG, BREGt, CREGt);
+	STACK1_RET(CREG, CREGt);
 }
 
 
