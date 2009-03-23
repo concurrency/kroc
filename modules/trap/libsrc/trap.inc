@@ -17,7 +17,7 @@
 --	<http://www.gnu.org/licenses/>.
 --
 
---** Trap: an asynchronous network messaging system for occam-pi.
+--** An asynchronous network messaging system for occam-pi.
 --
 -- The Trap nameserver [@text trapns] must be running in order for Trap
 -- programs to find each other. By default, it will assume the nameserver is
@@ -39,9 +39,10 @@ DATA TYPE TRAP.NS.PACKET
 --}}}
 
 --{{{  CHAN TYPE TRAP.CHANNEL.CT
+--* Interface for a listening Trap port.
 CHAN TYPE TRAP.CHANNEL.CT
   MOBILE RECORD
-    CHAN MOBILE []BYTE msg?:
+    CHAN MOBILE []BYTE msg?: --* Messages received from the port.
 :
 --}}}
 
@@ -57,6 +58,7 @@ PROTOCOL TRAP.RESP
     opened; TRAP.CHANNEL.CT?
 :
 
+--* Handle to the Trap server.
 CHAN TYPE TRAP.CT
   MOBILE RECORD
     CHAN TRAP.REQ req?:

@@ -17,6 +17,8 @@
 --	<http://www.gnu.org/licenses/>.
 --
 
+--** @module selector
+
 #INCLUDE "cif.module"
 #INCLUDE "selector.inc"
 
@@ -62,6 +64,7 @@ PROC selector.delayed.add (SHARED SELECTOR.CT! sel, VAL INT fd, events, SHARED C
 :
 --}}}
 --{{{  PROC selector.start
+--* Start an IO selector.
 PROC selector.start (RESULT SHARED SELECTOR.CT! sel)
   SELECTOR.CT? svr:
   SEQ
