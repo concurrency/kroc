@@ -128,6 +128,15 @@ static inline int ProcAlt (Workspace wptr, ...)
 }
 /*}}}*/
 /*{{{ mt_array_t *MTAllocArray (Workspace wptr, word element_type, int dimensions, ...) */
+/**
+ * Allocates an array (using MTAlloc) with the given element_type.  You pass
+ * the number of dimensions in the dimensions variable, and then pass that
+ * many dimensions in the var-args bit of the function.  The size that will be
+ * allocated will be the element size (as CCSP interprets element_type)
+ * multiplied by the product of all the dimensions.  If you want to allocate
+ * an array of MT_DATA (where CCSP can't know the element size) use
+ * MTAllocDataArray.
+ */
 static inline mt_array_t *MTAllocArray (Workspace wptr, word element_type, int dimensions, ...)
 {
 	va_list ap;
@@ -141,6 +150,36 @@ static inline mt_array_t *MTAllocArray (Workspace wptr, word element_type, int d
 	va_end (ap);
 
 	array = MTAlloc (wptr, MT_MAKE_ARRAY_TYPE (dimensions, element_type), size);
+
+	va_start (ap, dimensions);
+	for (i = 0; i < dimensions; i++)
+		array->dimensions[i] = va_arg (ap, int);
+	va_end (ap);
+
+	return array;
+}
+/*}}}*/
+/*{{{ mt_array_t *MTAllocDataArray (Workspace wptr, word element_type, int dimensions, ...) */
+/**
+ * Allocates an array (using MTAlloc) of MT_DATA with the given size.  You
+ * pass the number of dimensions in the dimensions variable, and then pass
+ * that many dimensions in the var-args bit of the function.  The size that
+ * will be allocated will be the element_size multiplied by the product of all
+ * the dimensions.
+ */
+static inline mt_array_t *MTAllocDataArray (Workspace wptr, int element_size, int dimensions, ...)
+{
+	va_list ap;
+	int size = element_size;
+	mt_array_t *array;
+	int i;
+
+	va_start (ap, dimensions);
+	for (i = 0; i < dimensions; i++)
+		size *= va_arg (ap, int);
+	va_end (ap);
+
+	array = MTAlloc (wptr, MT_MAKE_ARRAY_TYPE (dimensions, (MT_MAKE_NUM(MT_NUM_BYTE))), size);
 
 	va_start (ap, dimensions);
 	for (i = 0; i < dimensions; i++)
