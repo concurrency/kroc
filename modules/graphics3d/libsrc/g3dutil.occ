@@ -20,6 +20,8 @@
 #INCLUDE "sdlraster.module"
 #INCLUDE "graphics3d.inc"
 
+--** @module graphics3d
+
 --{{{  PROC g3d.point3.delta (CHAN MOBILE []G3D.POINT3 in?, out.0!, out.1!)
 --* Delta for mobile arrays of the [@ref G3D.POINT3] type.
 --
