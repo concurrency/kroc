@@ -27,7 +27,8 @@
 -- occade.start.input]). Unlike 1980s micros, you've got a 24-bit display and
 -- potentially thousands of sprites to play with.
 --
--- Image files referenced below must be in BMP format. Any areas coloured [@ref
+-- Image files referenced below must either be in BMP format, or in any format
+-- supported by the [@ref rasterio] module (e.g. PNG). Any areas coloured [@ref
 -- OCCADE.TRANSPARENT.COLOUR] will appear transparent. Note, however, that
 -- collision detection is currently done simply by using the bounding boxes of
 -- the sprites -- so don't leave big borders around your images unless you want
