@@ -31,10 +31,10 @@
 #define LIBRARY_PFIX ""
 #elif defined _MAC_UNIX
 #define LIBRARY_EXT ".dylib"
-#define LIBRARY_PFIX "lib"
+#define LIBRARY_PFIX "liboccam"
 #else
 #define LIBRARY_EXT ".so"
-#define LIBRARY_PFIX "lib"
+#define LIBRARY_PFIX "liboccam"
 #endif
 
 #ifdef WIN32
@@ -109,14 +109,15 @@ static LIB_HANDLE load_library (char *name)
 	
 	buffer[sizeof(buffer) - 1] = '\0';
 
-	snprintf (buffer, sizeof (buffer) - 1, "%s%s%s",
+	snprintf (buffer, sizeof (buffer) - 1, "%s%s%s%s",
+		TVM_LIBRARY_PATH,
 		LIBRARY_PFIX, name, LIBRARY_EXT
 	);
 	if ((handle = _load_library (buffer)) == NULL) {
-		snprintf (buffer, sizeof (buffer) - 1, "%s%s%s%s",
-			TVM_LIBRARY_PATH,
+		snprintf (buffer, sizeof (buffer) - 1, "%s%s%s",
 			LIBRARY_PFIX, name, LIBRARY_EXT
 		);
+		handle = _load_library (buffer);
 	}
 
 	return handle;
@@ -135,7 +136,7 @@ int build_ffi_table (bytecode_t *bc)
 	bc->ffi_table		= NULL;
 	bc->ffi_table_length 	= 0;
 	bc->dll_handles		= NULL;
-	
+
 	if (ffi == NULL)
 		return 1;
 	if (ffi->n_symbols <= 0)
