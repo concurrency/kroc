@@ -427,6 +427,9 @@ class KRoCToolchain:
 	def isearch(self):
 		krocdir = get_install_dir("@KROC_KROCDIR@", "/share/kroc")
 		return [ krocdir + "/vtlib", krocdir + "/vtinclude" ]
+	
+	def update_patterns(self,patterns):
+		pass
 
 
 class TVMToolchain:
@@ -561,6 +564,12 @@ class TVMToolchain:
 	def isearch(self):
 		tvmdir = get_install_dir("@TVM_TVMDIR@", "/share/tvm")
 		return [ tvmdir + "/vtlib", tvmdir + "/vtinclude" ]
+	
+	def update_patterns(self,patterns):
+		for key in patterns.keys():
+			patterns[key] = re.sub('occam_', 'occam_tvm_', patterns[key])
+
+			
 
 def usage(f):
 	print >>f, """occbuild, version """ + VERSION + """
@@ -752,6 +761,8 @@ def main(args):
 	elif target_os.startswith("darwin"):
 		patterns["so"] = "liboccam_%s.dylib"
 		build_shared = False
+
+	toolchain.update_patterns(patterns)
 
 	if mode == "object":
 		if args == []:
