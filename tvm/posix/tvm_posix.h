@@ -83,7 +83,7 @@ struct _bytecode_t {
 	tbc_t		*tbc;
 	FFI_TABLE_ENTRY	*ffi_table;
 	int		ffi_table_length;
-	void		**dll_handles;
+	void		*dll_handles;
 };
 /*}}}*/
 

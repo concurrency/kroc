@@ -64,8 +64,10 @@ TVM_LIBTVM
 #  Defines
 #########################
 
-CFLAGS="-Wall $TVM_CFLAGS -DTVM_FIRMWARE_PATH='\"$datadir/tvm/firmware/\"' $CFLAGS"
+CFLAGS="-Wall $TVM_CFLAGS $CFLAGS"
 LIBS="-lm $TVM_LIBS $LIBS"
+TVM_FIRMWARE_PATH="$datadir/tvm/firmware/"
+TVM_LIBRARY_PATH="$libdir/tvm/"
 
 # OS
 case "$x_os" in
@@ -82,8 +84,13 @@ case "$x_os" in
     LIBS="$LIBS -ldl -lrt -lm9x -lsunmath"
     ;;
   windows)
+    TVM_FIRMWARE_PATH="$datadir\\tvm\\firmware\\"
+    TVM_LIBRARY_PATH="$libdir\\tvm\\"
     ;;
 esac
+
+CFLAGS="$CFLAGS -DTVM_FIRMWARE_PATH='\"$TVM_FIRMWARE_PATH\"'"
+CFLAGS="$CFLAGS -DTVM_LIBRARY_PATH='\"$TVM_LIBRARY_PATH\"'"
 
 AM_CONDITIONAL([OS_DARWIN],	test "$x_os" = "darwin")
 AM_CONDITIONAL([OS_FREEBSD],	test "$x_os" = "freebsd")
