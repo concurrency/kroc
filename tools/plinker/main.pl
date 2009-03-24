@@ -104,7 +104,7 @@ foreach my $file (@files) {
 		} else {
 			my $ref = { 'file' => $file, 'etc' => \@text };
 			push (@texts, $ref);
-			$etc_file{$ref} = $data;
+			$etc_file{\@text} = $data;
 		}
 	}
 
@@ -180,6 +180,47 @@ my $tenc		= new Transterpreter::TEncode (
 # Top-Level-Process
 $tlp->add ('fmtS', build_format_string ($entry_point->{'definition'}));
 $tlp->add ('symS', $entry_point->{'string'});
+
+# FFI
+my %ffi_libs;
+my @ffi_symbols;
+foreach my $label (@labels) {
+	next if !exists ($label->{'ffi_index'});
+	die if !$label->{'source'};
+
+	$ffi_symbols[$label->{'ffi_index'}] = '_' . $label->{'ffi_symbol'};
+	
+	my $comments = $etc_file{$label->{'source'}}->{'COMMENT'};
+
+	# Search comments
+	foreach my $comment (@$comments) {
+		my $data = $comment->{'data'};
+		if ($data =~ /\(spragma\s+\(dynlib\s+(.*)\)\)/) {
+			my $library = $1;
+			$ffi_libs{$library}++;
+		}
+	}
+}
+
+if (@ffi_symbols) {
+	my $libs = new Transterpreter::TEncode ();
+	my $syms = new Transterpreter::TEncode ();
+	my $map	= new Transterpreter::TEncode ();
+
+	$ffi->add ('libL' => $libs);
+	$ffi->add ('symL' => $syms);
+	$ffi->add ('mapL' => $map);
+
+	foreach my $lib (sort (keys (%ffi_libs))) {
+		$libs->add ('libS' => $lib);
+	}
+	foreach my $sym (@ffi_symbols) {
+		$syms->add ('symS' => $sym);
+	}
+	foreach my $sym (@ffi_symbols) {
+		$map->add ('idxI' => -1);
+	}
+}
 
 # Symbol Table
 foreach my $label (@labels) {
