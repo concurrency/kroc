@@ -41,19 +41,37 @@ my $tcoff	= new Transputer::TCOFF ();
 # TVM helper
 my $tvm		= new Transterpreter::VM ();
 
-# Command Line Parsing
-my ($first, @files) = @ARGV;
+# Options
 my $output;
-if ($first eq '-o') {
-	$output = shift @files;
-} else {
-	unshift (@files, $first) if $first ne '--';
+my $verbose;
+my @files;
+
+# Command Line Parsing
+my @args	= @ARGV;
+my $options 	= 1;
+while (my $arg = shift @args) {
+	if ($options && $arg eq '--') {
+		$options 		= 0;
+	} elsif ($options && $arg eq '-v') {
+		$verbose		= 1;
+		$etc->{'verbose'} 	= 1;
+		$linker->{'verbose'} 	= 1;
+		$tcoff->{'verbose'}	= 1;
+		$tvm->{'verbose'} 	= 1;
+	} elsif ($options && $arg eq '-o') {
+		$output 		= shift @args;
+	} else {
+		push (@files, $arg);
+	}
+}
+
+if (!$output) {
 	$output = $files[-1];
 	$output =~ s/\.tce$/.tbc/i;
 }
 
 if (!$output || !@files) {
-	print "plinker.pl [-o <name>] <file> [<file> ...]\n";
+	print "plinker.pl [-v] [-o <name>] <file> [<file> ...]\n";
 	exit 1;
 }
 
@@ -62,6 +80,8 @@ my $last_file;
 my $endian;
 my %etc_file;
 my @etc;
+my $objects = [];
+
 foreach my $file (@files) {
 	my $data = $tcoff->read_file ($file);
 	die "Failed to read $file" if !$data;
@@ -75,20 +95,35 @@ foreach my $file (@files) {
 	}
 
 	# Decode text sections
+	my @texts;
 	foreach my $section (@{$data->{'LOAD_TEXT'}}) {
 		my @text = $etc->decode_load_text ($section->{'data'});
 
 		if (!@text) {
 			print STDERR "Failed to decode a text section in $file...\n";
 		} else {
-			my $ref = \@text;
-			push (@etc, $ref);
-			$etc_file{$ref} = $data;
+			my $ref = { 'file' => $file, 'etc' => \@text };
+			push (@texts, $ref);
+			$etc_file{\@text} = $data;
 		}
+	}
+
+	# Separate objects and libraries
+	if ($file =~ /\.tce$/i) {
+		push (@$objects, @texts);
+	} elsif (@texts) {
+		if (@$objects) {
+			push (@etc, $objects);
+			$objects = [];
+		}
+		push (@etc, \@texts);
 	}
 
 	$last_file = $data;
 }
+
+push (@etc, $objects) if @$objects;
+$objects = [];
 
 # Check we have some ETC to work with
 die "No valid data loaded (invalid ETC files?)" if !@etc;
@@ -96,7 +131,9 @@ die "No valid data loaded (invalid ETC files?)" if !@etc;
 # Pick Entry Point
 my $symbols 	= $last_file->{'symbols'};
 my $jentry;
-foreach my $op (@{$etc[@etc - 1]}) {
+my $last_texts	= $etc[@etc - 1];
+my $last_text	= $last_texts->[@$last_texts - 1]->{'etc'};
+foreach my $op (@$last_text) {
 	if ($op->{'name'} eq '.JUMPENTRY') {
 		$jentry = $op->{'arg'};
 	}
@@ -110,8 +147,10 @@ my $entry_point = $symbols->{$jentry};
 die "Unable to find symbol definition for entry point $jentry"
 	if !defined ($entry_point) || !exists ($entry_point->{'definition'});
 
-print 	"Target:\n",
-	format_symbol_definition ($entry_point->{'definition'}, "  ");
+if ($verbose) {
+	print 	"Target:\n",
+		format_symbol_definition ($entry_point->{'definition'}, "  ");
+}
 
 # Link
 my @labels = $linker->link ($entry_point->{'string'}, @etc);
@@ -141,6 +180,47 @@ my $tenc		= new Transterpreter::TEncode (
 # Top-Level-Process
 $tlp->add ('fmtS', build_format_string ($entry_point->{'definition'}));
 $tlp->add ('symS', $entry_point->{'string'});
+
+# FFI
+my %ffi_libs;
+my @ffi_symbols;
+foreach my $label (@labels) {
+	if (exists ($label->{'ffi_index'})) {
+		$ffi_symbols[$label->{'ffi_index'}] = '_' . $label->{'ffi_symbol'};
+	}
+	if (exists ($label->{'source'})) {
+		my $comments = $etc_file{$label->{'source'}}->{'COMMENT'};
+
+		# Search comments
+		foreach my $comment (@$comments) {
+			my $data = $comment->{'data'};
+			if ($data =~ /\(spragma\s+\(dynlib\s+(.*)\)\)/) {
+				my $library = $1;
+				$ffi_libs{$library}++;
+			}
+		}
+	}
+}
+
+if (@ffi_symbols) {
+	my $libs = new Transterpreter::TEncode ();
+	my $syms = new Transterpreter::TEncode ();
+	my $map	= new Transterpreter::TEncode ();
+
+	$ffi->add ('libL' => $libs);
+	$ffi->add ('symL' => $syms);
+	$ffi->add ('mapL' => $map);
+
+	foreach my $lib (sort (keys (%ffi_libs))) {
+		$libs->add ('libS' => $lib);
+	}
+	foreach my $sym (@ffi_symbols) {
+		$syms->add ('symS' => $sym);
+	}
+	foreach my $sym (@ffi_symbols) {
+		$map->add ('idxI' => -1);
+	}
+}
 
 # Symbol Table
 foreach my $label (@labels) {

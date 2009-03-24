@@ -9,6 +9,7 @@ require '@srcdir@/TCOFF.pm';
 package main;
 
 use Data::Dumper;
+use Fcntl ':mode';
 use strict;
 
 my $PREFIX = "@prefix@";
@@ -23,8 +24,12 @@ my %included;
 write_file ('store.pl', compile_store ());
 foreach my $in (sort (keys (%build))) {
 	my $out = $build{$in};
-	%included = (); # FIXME: different dependencies for each file
+	# Clear dependencies.
+	%included = ();
+	# Process input to output.
 	write_file ($out, include_file ($in));
+	# Make output executable.
+	chmod (S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH, $out);
 }
 
 exit 0;

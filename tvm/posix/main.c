@@ -105,11 +105,39 @@ static void usage (FILE *out)
 	fprintf (out, "Usage: %s <filename>\n", prog_name);
 }
 
+static int file_exists (const char *fn)
+{
+	/* fopen is more portable than say stat(2) */
+	FILE *fh = fopen (fn, "r");
+
+	if (fh != NULL) {
+		fclose (fh);
+		return 1;
+	}
+
+	return 0;
+}
+
 static int install_firmware_ctx (void)
 {
-	if ((fw_bc = load_bytecode ("firmware.tbc")) == NULL) {
+	static const char *firmware_path 	= TVM_FIRMWARE_PATH "tvm-posix.tbc";
+	static const char *posix_tbc		= "tvm-posix.tbc";
+	char *firmware_file			= getenv ("TVM_FIRMWARE_FILE");
+
+	if (firmware_file == NULL) {
+		firmware_file = (char *) firmware_path;
+
+		if (file_exists (firmware_file)) {
+			/* do nothing */
+		} else if (file_exists (posix_tbc)) {
+			firmware_file = (char *) posix_tbc;
+		}
+	}
+
+	if ((fw_bc = load_bytecode (firmware_file)) == NULL) {
 		fprintf (stderr, 
-			"Failed to load/decode firmware.tbc\n"
+			"Failed to load/decode %s\n",
+			firmware_file
 		);
 		return -1;
 	}
@@ -149,16 +177,32 @@ static int install_user_ctx (const char *fn)
 	tbc = us_bc->tbc;
 
 	if (tbc->tlp != NULL) {
+		int valid = 1;
+
 		tlp = tbc->tlp->fmt;
+		
 		if (tlp == NULL) {
 			tlp = (char *) tlp_fmt;
 		} else if (strcmp (tlp, "") == 0) {
 			/* OK */
-		} else if (strcmp (tlp, "?!!F") == 0) {
-			/* OK */
-		} else if (strcmp (tlp, "?!!") == 0) {
-			/* OK */
-		} else {
+		} else if (strlen (tlp) == 3 || strlen (tlp) == 4) {
+			if (tlp[0] == '?' || tlp[0] == '.') {
+				/* OK */
+			} else if (tlp[1] == '!' || tlp[1] == '.') {
+				/* OK */
+			} else if (tlp[2] == '!' || tlp[2] == '.') {
+				/* OK */
+			} else if (strlen (tlp) == 4) {
+				if (tlp[3] == 'F') {
+					/* OK */
+				} else {
+					valid = 0;
+				}
+			} else {
+				valid = 0;
+			}
+		}
+		if (!valid) {
 			error_out_no_errno ("unsupported top-level-process format: \"%s\"", tlp);
 			return -1;
 		}

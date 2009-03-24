@@ -76,12 +76,20 @@ typedef struct _tvm_ectx_priv_t {
 
 /*{{{  bc_t - bytecode data */
 struct _bytecode_t {
-	int	refcount;
-	char 	*source;
-	BYTE	*data;
-	int	length;
-	tbc_t	*tbc;
+	int		refcount;
+	char 		*source;
+	BYTE		*data;
+	int		length;
+	tbc_t		*tbc;
+	FFI_TABLE_ENTRY	*ffi_table;
+	int		ffi_table_length;
+	void		*dll_handles;
 };
+/*}}}*/
+
+/*{{{  ffi.c */
+extern int build_ffi_table (bytecode_t *bc);
+extern void release_ffi_table (bytecode_t *bc);
 /*}}}*/
 
 /*{{{  introspect.c */

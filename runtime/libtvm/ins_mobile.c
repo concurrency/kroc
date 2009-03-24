@@ -334,8 +334,8 @@ static int mt_clone_array (ECTX ectx, WORDPTR ptr, UWORD type, WORDPTR *ret)
 			}
 			write_word (dst_data, (WORD) inner_ptr);
 
-			dst_data = wordptr_plus (dst_dim, 1);
-			src_data = wordptr_plus (src_dim, 1);
+			dst_data = wordptr_plus (dst_data, 1);
+			src_data = wordptr_plus (src_data, 1);
 		}
 	}
 
@@ -778,8 +778,8 @@ TVM_INSTRUCTION (ins_mt_xchg)
 /* 0x23E - 0x22 0x23 0xFE - mt_lock - lock a mobile type */
 TVM_INSTRUCTION (ins_mt_lock)
 {
-	WORDPTR mt	= (WORDPTR) BREG;
-	WORD	lock	= AREG << 1;
+	WORDPTR mt	= wordptr_minus ((WORDPTR) BREG, MT_CB_PTR_OFFSET);
+	WORD	lock	= AREG;
 	WORDPTR ptr	= MT_CB_LOCK_PTR (mt, lock);
 
 	return tvm_sem_claim (ectx, ptr);
@@ -788,8 +788,8 @@ TVM_INSTRUCTION (ins_mt_lock)
 /* 0x23F - 0x22 0x23 0xFF - mt_unlock - unlock a mobile type */
 TVM_INSTRUCTION (ins_mt_unlock)
 {
-	WORDPTR mt	= (WORDPTR) BREG;
-	WORD	lock	= AREG << 1;
+	WORDPTR mt	= wordptr_minus ((WORDPTR) BREG, MT_CB_PTR_OFFSET);
+	WORD	lock	= AREG;
 	WORDPTR ptr	= MT_CB_LOCK_PTR (mt, lock);
 
 	return tvm_sem_release (ectx, ptr);
@@ -1034,6 +1034,104 @@ TVM_INSTRUCTION (ins_mt_bind)
 	STACK1_RET ((WORD) ptr, STYPE_MT);
 }
 
+/* 0x24D - 0x22 0x24 0xFD - mt_resize - resize a mobile type */
+TVM_INSTRUCTION (ins_mt_resize)
+{
+	WORD	resize_type 	= AREG;
+	WORDPTR	ptr		= (WORDPTR) BREG;
+	WORD	arg		= CREG;
+
+	if ((resize_type == MT_RESIZE_DATA) && (ptr != NULL)) {
+		UWORD new_size 	= (UWORD) arg;
+		UWORD type 	= read_mt_type (ptr);
+
+		if ((type & MT_SIMPLE) && (MT_TYPE(type) == MT_ARRAY)) {
+			WORDPTR ma 		= wordptr_minus (ptr, MT_ARRAY_PTR_OFFSET);
+			UWORD inner_type 	= MT_ARRAY_INNER_TYPE(type);
+			UWORD old_size		= (UWORD) read_offset (ma, mt_array_internal_t, size);
+
+			if (MT_TYPE(inner_type) == MT_ARRAY_OPTS) {
+				inner_type = MT_ARRAY_OPTS_INNER(inner_type);
+			}
+			
+			/* Reallocate the array if it needs to grow, or if it
+			 * shrinks to less than 50% of the allocated memory.
+			 */
+			if ((old_size < new_size) || (new_size < (old_size >> 1))) {
+				WORDPTR dst_dim, src_dim, dst_data, src_data;
+				WORDPTR	dst;
+				WORDPTR	src		= ma;
+				UWORD count		= old_size < new_size ? old_size : new_size;
+				UWORD dimensions	= MT_ARRAY_DIM(type);
+				UWORD size_shift;
+
+				dst = mt_alloc_array_int (ectx, type, new_size, 0, &size_shift);
+
+				dst_dim = wordptr_offset (dst, mt_array_internal_t, array.dimensions);
+				src_dim = wordptr_offset (src, mt_array_internal_t, array.dimensions);
+
+				while (dimensions--) {
+					write_word (dst_dim, read_word (src_dim));
+					dst_dim = wordptr_plus (dst_dim, 1);
+					src_dim = wordptr_plus (src_dim, 1);
+				}
+
+				dst_data = (WORDPTR) read_offset (dst, mt_array_internal_t, array.data);
+				src_data = (WORDPTR) read_offset (src, mt_array_internal_t, array.data);
+
+				if (MT_TYPE(inner_type) == MT_NUM) {
+					tvm_memcpy (
+						(BYTEPTR) dst_data, 
+						(BYTEPTR) src_data, 
+						count << size_shift
+					);
+				} else {
+					while (count--) {
+						WORDPTR inner_ptr = (WORDPTR) read_word (src_data);
+						
+						write_word (dst_data, (WORD) inner_ptr);
+						write_word (src_data, (WORD) NULL_P);
+
+						dst_data = wordptr_plus (dst_data, 1);
+						src_data = wordptr_plus (src_data, 1);
+					}
+					if (new_size > old_size) {
+						count = new_size - old_size;
+						while (count--) {
+							write_word (dst_data, NULL_P);
+							dst_data = wordptr_plus (dst_data, 1);
+						}
+					}
+				}
+
+				mt_release_simple (ectx, ptr, type);
+				ptr = wordptr_plus (dst, MT_ARRAY_PTR_OFFSET);
+			} else if (old_size > new_size) {
+				if (MT_TYPE(inner_type) != MT_NUM) {
+					WORDPTR data = (WORDPTR) 
+						read_offset (ma, mt_array_internal_t, array.data);
+					word count      = old_size - new_size;
+					while (count--) {
+						WORDPTR	p = (WORDPTR) read_word (data);
+						if (p != NULL_P) {
+							mt_release (ectx, p);
+							write_word (data, NULL_P);
+						}
+						data = wordptr_plus (data, 1);
+					}
+				}
+			}
+		} else {
+			STACK1 (NULL_P, STYPE_NULL);
+			SET_ERROR_FLAG_RET (EFLAG_MT);
+		}
+	} else {
+		STACK1 (NULL_P, STYPE_NULL);
+		SET_ERROR_FLAG_RET (EFLAG_MT);
+	}
+
+	STACK1_RET ((WORD) ptr, STYPE_MT);
+}
 
 /*{{{  void *tvm_mt_alloc (ECTX ectx, UWORD type, UWORD size)*/
 void *tvm_mt_alloc (ECTX ectx, UWORD type, UWORD size)

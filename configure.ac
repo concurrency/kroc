@@ -29,9 +29,13 @@ fi
 
 if test $OCCBUILD_TOOLCHAIN = tvm; then
   AC_CONFIG_SUBDIRS(tools/plinker)
-  AC_CONFIG_SUBDIRS(tools/skroc)
-  AC_CONFIG_SUBDIRS(tools/slinker)
-  AC_CONFIG_SUBDIRS(tools/tinyswig)
+  
+  # FIXME: Make these dependent on Scheme
+  if false; then
+    AC_CONFIG_SUBDIRS(tools/skroc)
+    AC_CONFIG_SUBDIRS(tools/slinker)
+    AC_CONFIG_SUBDIRS(tools/tinyswig)
+  fi
 
   AC_CONFIG_SUBDIRS(runtime/libtvm)
   AC_CONFIG_SUBDIRS(tvm/posix)

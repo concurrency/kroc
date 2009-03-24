@@ -213,22 +213,7 @@ static tbc_ffi_t *decode_ffi (BYTE *head, const tenc_element_t *ffi_element)
 			return NULL;
 
 		ffi->map[ffi->n_symbols].symbol = sym->str;
-
-		if (lib_idx < 0) {
-			ffi->map[ffi->n_symbols].library = NULL;
-		} else {
-			tenc_str_t *lib = ffi->libraries;
-			
-			while (lib != NULL && lib_idx > 0) {
-				lib_idx--;
-				lib = lib->next;
-			}
-
-			if (lib == NULL)
-				return NULL;
-
-			ffi->map[ffi->n_symbols].library = lib->str;
-		}
+		ffi->map[ffi->n_symbols].library = lib_idx;
 
 		ffi->n_symbols++;
 		sym = sym->next;

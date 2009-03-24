@@ -81,10 +81,14 @@ void free_bytecode (bytecode_t *bc)
 {
 	if (--bc->refcount)
 		return;
+	
+	if (bc->ffi_table != NULL)
+		release_ffi_table (bc);
 	if (bc->source != NULL)
 		free (bc->source);
 	if (bc->data != NULL)
 		free (bc->data);
+	
 	free (bc);
 }
 
@@ -95,17 +99,20 @@ bytecode_t *load_bytecode (const char *file)
 	bc->refcount	= 1;
 	bc->source 	= strdup (file);
 	bc->data	= NULL;
+	bc->ffi_table	= NULL;
 
-	if (read_tbc_file (file, &(bc->data), &(bc->length))) {
-		free_bytecode (bc);
-		return NULL;
-	}
+	if (read_tbc_file (file, &(bc->data), &(bc->length)))
+		goto errout;
 
-	if ((bc->tbc = decode_tbc (bc->data, bc->length)) == NULL) {
-		free_bytecode (bc);
-		return NULL;
-	}
+	if ((bc->tbc = decode_tbc (bc->data, bc->length)) == NULL)
+		goto errout;
 
+	if (!build_ffi_table (bc))
+		goto errout;
+	
 	return bc;
+errout:
+	free_bytecode (bc);
+	return NULL;
 }
 

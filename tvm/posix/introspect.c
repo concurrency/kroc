@@ -734,7 +734,11 @@ static int vm_ctl_read_int16 (ECTX ectx, c_state_t *c)
 
 static int vm_ctl_read_type (ECTX ectx, c_state_t *c)
 {
+	#ifdef TVM_TYPE_SHADOW
 	WORD type = read_type (ectx, (BYTEPTR) c->p.argv[0].data.word);
+	#else
+	WORD type = STYPE_UNDEF;
+	#endif
 	return send_message (ectx, c, &(vm_ctl_re[VM_CTL_RE_TYPE]), type);
 }
 

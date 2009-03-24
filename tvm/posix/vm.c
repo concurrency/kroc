@@ -145,6 +145,9 @@ ECTX allocate_ectx (bytecode_t *bc, const char *tlp, WORD *argv)
 	add_system_functions (vm);
 	install_sffi (vm);
 
+	vm->ffi_table 		= bc->ffi_table;
+	vm->ffi_table_length 	= bc->ffi_table_length;
+
 	mem_len = tvm_ectx_memory_size (
 		vm,
 		tlp, strlen (tlp), 

@@ -41,6 +41,7 @@ destdir = ""
 target_os = "@KROC_HOST_OS@"
 patterns = None
 build_shared = True
+isearch = []
 
 def warn(*s):
 	print >>sys.stderr, "occbuild: " + "".join(map(str, s))
@@ -140,6 +141,8 @@ def set_ld_path():
 	if in_tree is not None:
 		dirs += [
 			in_tree + "/modules/inmoslibs/libsrc/forall",
+			in_tree + "/modules/bsclibs/libsrc/filelib",
+			in_tree + "/modules/course/libsrc",
 			in_tree + "/runtime/ccsp",
 			in_tree + "/runtime/libkrocif",
 			in_tree + "/runtime/libtvm",
@@ -149,6 +152,30 @@ def set_ld_path():
 	if old_path is not None:
 		path += ":" + old_path
 	os.putenv(var, path)
+
+def build_isearch(tc_isearch):
+	dirs = search_path
+	if in_tree is not None:
+		dirs += [
+			in_tree + "/modules/inmoslibs/libsrc/forall",
+			in_tree + "/modules/inmoslibs/libsrc/maths",
+			in_tree + "/modules/inmoslibs/libsrc/convert",
+			in_tree + "/tvm/posix", # FIXME: is there a better way?
+			]
+	else:
+		dirs += tc_isearch
+	path = [os.path.join(os.getcwd(), dir) for dir in dirs]
+	old_path = os.getenv("ISEARCH")
+	if old_path is not None:
+		path += old_path.split(':')
+	global isearch
+	isearch = path
+
+def set_isearch(tc_isearch):
+	"""Set ISEARCH using search path.  This is for the benefit of occ21."""
+	build_isearch(tc_isearch)
+	path = ":".join(isearch)
+	os.putenv("ISEARCH", path)
 
 def make_static(library, objs):
 	"""Link a bunch of native objects into a static library."""
@@ -246,6 +273,32 @@ def get_install_dir(default, default_suffix):
 		dir = prefix + default_suffix
 
 	return destdir + dir
+
+def get_uselibs(etc_file):
+	comments = capture(programs["tce-dump.pl"] + ["-C", etc_file])
+	uselibs = re.findall("\.USELIB\s+(.*)\n", comments)
+	return uselibs
+
+def resolve_library(lib):
+	if os.path.exists(lib + ".lib"):
+		return lib + ".lib"
+	for dir in isearch:
+		path = os.path.join(dir, lib + ".lib")
+		if os.path.exists(path):
+			return path
+	return None
+
+def resolve_libraries(libs):
+	paths = {}
+	result = []
+	for lib in libs:
+		path = resolve_library(lib)
+		if path is None:
+			die("Unable to resolve library: ", lib)
+		if not paths.has_key(path):
+			result.append(path)
+			paths[path] = True
+	return result
 
 class KRoCToolchain:
 	def kroc_cmd(self):
@@ -372,20 +425,42 @@ class KRoCToolchain:
 		cflags += " " + capture(programs["kroc"] + ["--cflags"])
 		cflags += " " + capture(programs["kroc"] + ["--ccincpath"])
 		print tidy_spaces(cflags)
+	
+	def isearch(self):
+		krocdir = get_install_dir("@KROC_KROCDIR@", "/share/kroc")
+		return [ krocdir + "/vtlib", krocdir + "/vtinclude" ]
+	
+	def update_patterns(self,patterns):
+		pass
+
 
 class TVMToolchain:
-	def skroc_cmd(self):
-		cmd = programs["skroc"] + []
-		cmd += ["--occ21-opts", " ".join(occ21_opts + ["-DEF", "OCCBUILD.TVM"])]
+	def plinker_cmd(self):
+		# Might need to do something here if the system can execute perl directly.
+		return programs["plinker.pl"]
+
+	def occ21_cmd(self):
+		cmd = programs["occ21"] + []
+		cmd += ["-etc", "-w", "-y", "-znd", "-znec", "-udo", "-zncc", "-init", "-xin", "-mobiles", "-zrpe", "-zcxdiv", "-zcxrem", "-zep", "-t8", "-zqa" ]
+		cmd += occ21_opts
+		cmd += ["-DEF", "OCCBUILD.TVM"]
 		return cmd
 
+	def set_firmware(self):
+		if in_tree is not None:
+			firmware = os.getenv("TVM_FIRMWARE_FILE")
+			if firmware is None:
+				firmware = os.path.join(os.getcwd(), in_tree + "/tvm/posix/tvm-posix.tbc")
+				os.putenv("TVM_FIRMWARE_FILE", firmware)
+
 	def object(self, source):
-		run(self.skroc_cmd() + ["--tce", source])
+		run(self.occ21_cmd() + [source])
 
 	def library(self, occam_objs, native_objs, base):
 		def custom(f):
 			if occam_objs != []:
 				f.write('#USE "%s.lib"\n' % base)
+				f.write('#PRAGMA COMMENT ".USELIB %s"\n' % base)
 				f.write("#PRAGMA COMMENT \"(spragma (uselib %s))\"\n" % base)
 			if native_objs != []:
 				f.write("#PRAGMA COMMENT \"(spragma (dynlib %s))\"\n"
@@ -399,7 +474,7 @@ class TVMToolchain:
 		if occam_objs == []:
 			make_stub(base + ".lib")
 		else:
-			run(programs["skroc"] + ["-f", base, "--library"] + occam_objs)
+			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
 
 	def program(self, occam_objs, native_objs, base, output = None):
 		if output is None:
@@ -411,7 +486,17 @@ class TVMToolchain:
 			# the slinker currently won't do the right thing if you
 			# use a .tce file that you haven't actually #USEd.
 
-		run(self.skroc_cmd() + ["-f", output + ".tbc", base + ".occ"] + occam_objs)
+		self.object(base + ".occ")
+		occam_objs = [ base + ".tce" ] + occam_objs
+		
+		libs = []
+		if std_libs:
+			libs.append("forall")
+		for obj in occam_objs:
+			libs += get_uselibs(obj)
+		libs = resolve_libraries(libs)
+		occam_objs.reverse()
+		run(self.plinker_cmd() + ["-o", output + ".tbc"] + libs + occam_objs)
 
 		# Generate a wrapper script (because we have to produce
 		# something with the target name, and it might as well be
@@ -425,33 +510,41 @@ class TVMToolchain:
 
 	def run(self, program, args):
 		set_ld_path()
+		self.set_firmware()
 		run(programs["tvm"] + [program + ".tbc"] + args)
 
 	def install(self, file):
 		bindir = get_install_dir("@TVM_BINDIR@", "/bin")
-		tvmdir = get_install_dir("@TVM_LIBDIR@", "/lib/transterpreter")
+		includedir = get_install_dir("@TVM_ARCHINCDIR@", "/include/tvm")
+		libdir = get_install_dir("@TVM_LIBDIR@", "/lib/tvm")
+		tvmdir = get_install_dir("@TVM_TVMDIR@", "/share/tvm")
+		vtlibdir = tvmdir + "/vtlib"
+		vtincludedir = tvmdir + "/vtinclude"
 
+		print "install " + file
 		(base, ext) = split_ext(file)
 		if ext == "lib":
 			if not is_stub(file):
-				install(file, tvmdir, False)
-				install(base + ".precomp", tvmdir, False)
-			install(patterns["so"] % base, tvmdir, True)
-			install(base + ".module", tvmdir, False)
+				install(file, vtlibdir, False)
+			install(patterns["so"] % base, libdir, True)
+			install(base + ".module", vtincludedir, False)
 		elif ext == "inc":
-			install(file, tvmdir, False)
+			install(file, vtincludedir, False)
 		elif ext == "h":
-			install(file, tvmdir, False)
+			install(file, includedir, False)
 		elif ext == "":
 			install(file, bindir, True)
 			install(base + ".tbc", bindir, False)
 
 	def install_examples(self, package, file):
-		examplesdir = "%s/%s" % (get_install_dir("@TVM_EXAMPLESDIR@", "/lib/transterpreter/examples"), package)
+		examplesdir = "%s/%s" % (get_install_dir("@TVM_EXAMPLESDIR@", "/lib/tvm/examples"), package)
 
 		(base, ext) = split_ext(file)
 		if ext == "":
 			install(file, examplesdir, True)
+			install(base + ".tbc", examplesdir, False)
+		elif ext == "tbc":
+			install(base + ".tbc", examplesdir, False)
 
 	def clean(self, file):
 		delete(file)
@@ -460,7 +553,6 @@ class TVMToolchain:
 			pass
 		elif ext == "lib":
 			delete(base + ".lbb")
-			delete(base + ".precomp")
 			delete(patterns["so"] % base)
 			delete(base + ".module")
 		elif ext == "":
@@ -469,7 +561,17 @@ class TVMToolchain:
 
 	def cflags(self):
 		print "-DOCCBUILD_TVM"
-		# FIXME: skroc doesn't currently have a cflags mode
+		# FIXME: what cflags?
+	
+	def isearch(self):
+		tvmdir = get_install_dir("@TVM_TVMDIR@", "/share/tvm")
+		return [ tvmdir + "/vtlib", tvmdir + "/vtinclude" ]
+	
+	def update_patterns(self,patterns):
+		for key in patterns.keys():
+			patterns[key] = re.sub('occam_', 'occam_tvm_', patterns[key])
+
+			
 
 def usage(f):
 	print >>f, """occbuild, version """ + VERSION + """
@@ -541,7 +643,7 @@ Report bugs to <""" + CONTACT + """>."""
 
 def main(args):
 	# Get default program locations and arguments from the environment.
-	for prog in ("cc", "ar", "ranlib", "kroc", "ilibr", "install", "skroc", "tvm"):
+	for prog in ("cc", "ar", "ranlib", "kroc", "ilibr", "install", "occ21", "plinker.pl", "tce-dump.pl", "tvm"):
 		programs[prog] = split_options(os.getenv(prog.upper(), prog))
 
 	long_opts = [
@@ -639,13 +741,14 @@ def main(args):
 	if in_tree is not None:
 		programs["kroc"] = [in_tree + "/tools/kroc/kroc", "--in-tree", in_tree] + programs["kroc"][1:]
 		programs["ilibr"] = [in_tree + "/tools/ilibr/ilibr"] + programs["ilibr"][1:]
-		programs["skroc"] = [in_tree + "/tools/skroc/skroc", "--in-tree", in_tree] + programs["skroc"][1:]
+		programs["plinker.pl"] = [in_tree + "/tools/plinker/plinker.pl"] + programs["plinker.pl"][1:]
+		programs["tce-dump.pl"] = [in_tree + "/tools/plinker/tce-dump.pl"] + programs["tce-dump.pl"][1:]
 		programs["tvm"] = [in_tree + "/tvm/posix/tvm"] + programs["tvm"][1:]
 
+	set_isearch(toolchain.isearch())
 	for dir in search_path:
 		programs["cc"] += ["-L" + dir]
 		programs["kroc"] += ["-I" + dir, "-L" + dir]
-		programs["skroc"] += ["-L", dir]
 
 	global patterns, build_shared
 	patterns = {
@@ -660,6 +763,8 @@ def main(args):
 	elif target_os.startswith("darwin"):
 		patterns["so"] = "liboccam_%s.dylib"
 		build_shared = False
+
+	toolchain.update_patterns(patterns)
 
 	if mode == "object":
 		if args == []:
