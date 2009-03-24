@@ -28,10 +28,10 @@
 #INCLUDE "graphics3d.inc"
 
 
---{{{  PROC debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
+--{{{  PROC g3d.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 --* Debugging routine.
 -- @private
-PROC debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
+PROC g3d.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 
   #PRAGMA EXTERNAL "PROC C.out.stderr (VAL []BYTE str) = 0"
 
@@ -102,6 +102,8 @@ PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL c
       opnts[7] := [-1.0, 1.0, -1.0] (G3D.POINT3)
   :
 
+  G3D.TRIG? trg:
+  INITIAL BOOL have.trg IS FALSE:
   SEQ
     --{{{  initialise
     reset ()
@@ -122,6 +124,8 @@ PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL c
                 SEQ
                   reset ()
                   cpnts := CLONE opnts
+              set.trigger; have.trg; trg
+                SKIP
               [3]REAL32 scale:
               add.scale; scale
                 SEQ i = 0 FOR 8
@@ -150,7 +154,10 @@ PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL c
                     cpnts[i][x] := opnts[i][x] + trans[0]
                     cpnts[i][y] := opnts[i][y] + trans[1]
                     cpnts[i][z] := opnts[i][z] + trans[2]
-            SKIP
+            INT any:
+            have.trg & trg[trig] ? any
+              trig := FALSE
+            (NOT have.trg) & SKIP
               trig := FALSE
 :
 --}}}
@@ -225,6 +232,8 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
   :
   --}}}
 
+  G3D.TRIG? trg:
+  INITIAL BOOL have.trg IS FALSE:
   SEQ
     --{{{  initialise
     reset ()
@@ -237,7 +246,7 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
       SEQ
         mpoints := CLONE pnts
 
-        -- adjust wings for fluttering.
+        --{{{  adjust wings for fluttering.
         IF
           fdiff > 0.0
             REAL32 sin.val, cos.val:
@@ -309,6 +318,7 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
                   SKIP
           TRUE
             SKIP
+        --}}}
 
         out ! mpoints
 
@@ -318,6 +328,8 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
             ctrl ? CASE
               reset
                 reset ()
+              set.trigger; have.trg; trg
+                SKIP
               [3]REAL32 scale:
               add.scale; scale
                 SEQ i = 0 FOR 30
@@ -338,7 +350,10 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
               [3]REAL32 trans:
               set.trans; trans
                 SKIP
-            SKIP
+            INT any:
+            have.trg & trg[trig] ? any
+              trig := FALSE
+            (NOT have.trg) & SKIP
               trig := FALSE
 
 :
@@ -378,6 +393,8 @@ PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL c
           add.increment; inc
             SEQ
               diff := diff + inc
+          set.increment; diff
+            SKIP
           set.mode; mode
             SKIP
           set.angle; angle
@@ -486,7 +503,7 @@ PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 
   REAL32 x.shift, y.shift, z.shift:
   INT x2.shift, y2.shift:
 
-  PROC reset ()
+  PROC reset () --{{{
     SEQ
       x.scale := 490.0
       y.scale := 420.0
@@ -497,6 +514,7 @@ PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 
       x2.shift := G3D.DEFAULT.WIDTH / 2
       y2.shift := G3D.DEFAULT.HEIGHT / 2
   :
+  --}}}
 
   SEQ
 
@@ -546,17 +564,10 @@ PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 
 --{{{  PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, SHARED CHAN BYTE debug!)
 --* Generates cube polygons from cube points.
 -- @private
---
 PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, SHARED CHAN BYTE debug!)
-  VAL [][]INT cubemap3 IS [[0,3,2],[0,1,2],
-                           [4,5,1],[4,0,1],
-                           [7,4,5],[7,6,5],
-                           [7,6,2],[7,3,2],
-                           [7,4,0],[7,3,0],
-                           [6,2,1],[6,5,1]]:
-  VAL [][]INT cubemap4 IS [[0,3,2,1],[4,0,1,5],
-                           [7,4,5,6],[3,7,6,2],
-                           [7,3,0,4],[5,1,2,6]]:
+  VAL [][]INT cubemap3 IS [[0,3,2],[0,1,2],[4,5,1],[4,0,1],[7,4,5],[7,6,5],
+                           [7,6,2],[7,3,2],[7,4,0],[7,3,0],[6,2,1],[6,5,1]]:
+  VAL [][]INT cubemap4 IS [[0,3,2,1],[4,0,1,5],[7,4,5,6],[3,7,6,2],[7,3,0,4],[5,1,2,6]]:
   [12]INT pixmap3:
   [6]INT pixmap4:
   INITIAL BOOL trimap IS FALSE:
@@ -564,8 +575,7 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
   SEQ
 
     -- fairly arbitrary defaults
-    pixmap3 := [#00000080,#00000090,#00000020,#00000030,#00000050,#00000060,
-                #00000080,#00000090,#000000B0,#000000C0,#00000020,#00000030]
+    pixmap3 := [#00000080,#00000090,#00000020,#00000030,#00000050,#00000060,#00000080,#00000090,#000000B0,#000000C0,#00000020,#00000030]
     pixmap4 := [#000000FF,#0000FF00,#00FF0000,#00FFFF00,#00FF00FF,#0000FFFF]
 
     INITIAL BOOL running IS TRUE:
@@ -644,8 +654,8 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
                   INT norm:
                   VAL [4]INT face IS cubemap4[i]:
                   SEQ
-                    norm := ((pnts[face[3]][y] - pnts[face[0]][y]) * (pnts[face[1]][x] - pnts[face[0]][x])) -
-                            ((pnts[face[1]][y] - pnts[face[0]][y]) * (pnts[face[3]][x] - pnts[face[0]][x]))
+                    norm := ((pnts[face[3]][y] MINUS pnts[face[0]][y]) TIMES (pnts[face[1]][x] MINUS pnts[face[0]][x])) MINUS
+                            ((pnts[face[1]][y] MINUS pnts[face[0]][y]) TIMES (pnts[face[3]][x] MINUS pnts[face[0]][x]))
                     IF
                       (NOT backfaces) AND (norm >= 0)
                         -- not showing this face
@@ -747,7 +757,7 @@ PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!,
     SEQ
       cubify.points.int (in?, out!, ctrl?, ch!)
       kill ! FALSE
-    debug.writer (ch?, kill?)
+    g3d.debug.writer (ch?, kill?)
 :
 --}}}
 --{{{  PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
@@ -762,13 +772,9 @@ PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!,
 --
 PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
 
-  VAL [][]INT polymap IS [[0,1,2,3], [0,3,6,-1], [6,3,4,5],
-                          [13,7,8,12], [8,9,12,-1], [9,10,11,12],
-                          [3,17,18,16], [16,18,19,20],
-                          [12,21,24,25], [21,22,23,24],
-                          [2,14,13,15],
-                          [26,28,-1,-1], [27,29,-1,-1]]:
-  VAL [][]INT normmap IS [[0,3,5,6], [8,9,11,12], [2,14,13,15]]:
+  VAL [][]INT polymap IS [[0,1,2,3],[0,3,6,-1],[6,3,4,5],[13,7,8,12],[8,9,12,-1],[9,10,11,12],[3,17,18,16],
+                          [16,18,19,20],[12,21,24,25],[21,22,23,24],[2,14,13,15],[26,28,-1,-1],[27,29,-1,-1]]:
+  VAL [][]INT normmap IS [[0,3,5,6],[8,9,11,12],[2,14,13,15]]:
   VAL []INT polynorms IS [0,0,0,1,1,1,0,0,1,1,2,2,2]:
   VAL []INT polywidth IS [4,3,4,4,3,4,4,4,4,4,4,2,2]:
   INITIAL INT pixel IS #00008080:
@@ -1011,7 +1017,7 @@ PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out
     SEQ
       poly.scanlines.int (in?, out!, ctrl?, ch!)
       kill ! FALSE
-    debug.writer (ch?, kill?)
+    g3d.debug.writer (ch?, kill?)
 :
 --}}}
 --{{{  PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
@@ -1288,7 +1294,7 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
 --* Renders polygon scan-line data onto a raster.
 --
 -- @param data Polygon scan-line data input.
--- @param rlink Raster I/O.
+-- @param rlink.in Raster I/O.
 -- @param ctrl Control channel.
 --
 PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
@@ -1298,14 +1304,14 @@ PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rli
     SEQ
       render.polyscans.int (data?, rlink.in?, ctrl?, ch!)
       kill ! TRUE
-    debug.writer (ch?, kill?)
+    g3d.debug.writer (ch?, kill?)
 :
 --}}}
 --{{{  PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
 --* Renders polygons as a series of lines (wireframe).
 --
 -- @param data Polygons input.
--- @param rlink Raster I/O.
+-- @param rlink.in Raster I/O.
 -- @param ctrl Control channel.
 --
 PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
@@ -1605,4 +1611,5 @@ PROC raster.chain (CHAN RASTER in?, out!, CHAN G3D.RENDER.ENGINE! new.link?, VAL
       raster.chain.tail (out!, svr?)
 :
 --}}}
+
 

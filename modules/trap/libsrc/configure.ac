@@ -18,6 +18,6 @@ OCCAM_INCLUDE([file.module sock.module useful.module cif.module], ,
 AC_MSG_CHECKING([whether to build trap.module])
 AC_MSG_RESULT($build_trap)
 AM_CONDITIONAL(BUILD_TRAP, [test $build_trap = yes])
-OCCAM_PROVIDE(trap.module, , , [test $build_trap = yes])
+OCCAM_PROVIDE(selector.module trap.module, , , [test $build_trap = yes])
 
 AC_OUTPUT([Makefile])

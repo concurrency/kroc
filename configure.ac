@@ -3,9 +3,15 @@
 # directory; don't change it.
 
 AC_INIT([kroc], [1.5.0-pre4], [kroc-bugs@kent.ac.uk])
+AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 OCCAM_TOOLCHAIN
+OCCAM_OCCBUILD
+
+if test "x$OCCBUILD_API_VERSION" != x2; then
+  AC_MSG_ERROR([this configure script has been built with an out-of-date version of `occbuild.m4'; try clearing your `ACLOCAL' environment variable.])
+fi
 
 AC_CONFIG_SUBDIRS(tools/ilibr)
 AC_CONFIG_SUBDIRS(tools/kroc)
@@ -48,6 +54,7 @@ AC_CONFIG_SUBDIRS(modules/useful/libsrc)
 AC_CONFIG_SUBDIRS(modules/fmtoutlib/libsrc)
 AC_CONFIG_SUBDIRS(modules/cdx/libsrc)
 AC_CONFIG_SUBDIRS(modules/trap/libsrc)
+AC_CONFIG_SUBDIRS(modules/ttyutil/libsrc)
 AC_CONFIG_SUBDIRS(modules/moa/libsrc)
 AC_CONFIG_SUBDIRS(modules/raster/libsrc)
 AC_CONFIG_SUBDIRS(modules/occSDL/libsrc)
@@ -75,6 +82,7 @@ AC_CONFIG_SUBDIRS(modules/pony/examples)
 AC_CONFIG_SUBDIRS(modules/raster/examples)
 AC_CONFIG_SUBDIRS(modules/sdlraster/examples)
 AC_CONFIG_SUBDIRS(modules/trap/examples)
+AC_CONFIG_SUBDIRS(modules/ttyutil/examples)
 AC_CONFIG_SUBDIRS(modules/udc/examples)
 AC_CONFIG_SUBDIRS(modules/useful/examples)
 AC_CONFIG_SUBDIRS(modules/video/examples)
