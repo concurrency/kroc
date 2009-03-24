@@ -6,6 +6,7 @@ OCCBUILD = @OCCBUILD@
 
 bin_PROGRAMS = tvm
 tvm_SOURCES = \
+	ffi.c \
 	introspect.c \
 	main.c \
 	sffi.c \
