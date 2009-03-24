@@ -51,7 +51,7 @@ typedef struct _tbc_tlp_t {
 
 typedef struct _tbc_ffi_entry_t {
 	char	 	*symbol;
-	char		*library;
+	int		library;
 } tbc_ffi_entry_t;
 
 typedef struct _tbc_ffi_t {
