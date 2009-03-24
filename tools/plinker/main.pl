@@ -185,19 +185,19 @@ $tlp->add ('symS', $entry_point->{'string'});
 my %ffi_libs;
 my @ffi_symbols;
 foreach my $label (@labels) {
-	next if !exists ($label->{'ffi_index'});
-	die if !$label->{'source'};
+	if (exists ($label->{'ffi_index'})) {
+		$ffi_symbols[$label->{'ffi_index'}] = '_' . $label->{'ffi_symbol'};
+	}
+	if (exists ($label->{'source'})) {
+		my $comments = $etc_file{$label->{'source'}}->{'COMMENT'};
 
-	$ffi_symbols[$label->{'ffi_index'}] = '_' . $label->{'ffi_symbol'};
-	
-	my $comments = $etc_file{$label->{'source'}}->{'COMMENT'};
-
-	# Search comments
-	foreach my $comment (@$comments) {
-		my $data = $comment->{'data'};
-		if ($data =~ /\(spragma\s+\(dynlib\s+(.*)\)\)/) {
-			my $library = $1;
-			$ffi_libs{$library}++;
+		# Search comments
+		foreach my $comment (@$comments) {
+			my $data = $comment->{'data'};
+			if ($data =~ /\(spragma\s+\(dynlib\s+(.*)\)\)/) {
+				my $library = $1;
+				$ffi_libs{$library}++;
+			}
 		}
 	}
 }
