@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef WIN32
+#ifdef TVM_OS_WINDOWS
 #define BYTE WIN_BYTE
 #define WORD WIN_WORD
 #define UWORD WIN_UWORD
@@ -24,20 +24,20 @@
 #else
 #include <dlfcn.h>
 #include <unistd.h>
-#endif /* WIN32 */
+#endif /* TVM_OS_WINDOWS */
 
-#ifdef WIN32
+#if defined(TVM_OS_WINDOWS)
 #define LIBRARY_EXT ".dll"
 #define LIBRARY_PFIX ""
-#elif defined _MAC_UNIX
+#elif defined(TVM_OS_DARWIN)
 #define LIBRARY_EXT ".dylib"
-#define LIBRARY_PFIX "liboccam"
+#define LIBRARY_PFIX "lib"
 #else
 #define LIBRARY_EXT ".so"
-#define LIBRARY_PFIX "liboccam"
+#define LIBRARY_PFIX "lib"
 #endif
 
-#ifdef WIN32
+#ifdef TVM_OS_WINDOWS
 typedef HINSTANCE LIB_HANDLE;
 
 static const char *library_error_str (void) 
@@ -78,7 +78,7 @@ static void *get_symbol (LIB_HANDLE handle, char *name)
 {
 	return GetProcAddress (handle, name);
 }
-#else /* !WIN32 */
+#else /* !TVM_OS_WINDOWS */
 typedef void *LIB_HANDLE;
 
 static const char *library_error_str (void)
@@ -100,7 +100,7 @@ static void *get_symbol (LIB_HANDLE handle, char *name)
 {
 	return dlsym (handle, name);
 }
-#endif /* !WIN32 */
+#endif /* !TVM_OS_WINDOWS */
 
 static LIB_HANDLE load_library (char *name)
 {
@@ -109,12 +109,12 @@ static LIB_HANDLE load_library (char *name)
 	
 	buffer[sizeof(buffer) - 1] = '\0';
 
-	snprintf (buffer, sizeof (buffer) - 1, "%s%s%s%s",
-		TVM_LIBRARY_PATH,
+	snprintf (buffer, sizeof (buffer) - 1, "%s%s%s",
 		LIBRARY_PFIX, name, LIBRARY_EXT
 	);
 	if ((handle = _load_library (buffer)) == NULL) {
-		snprintf (buffer, sizeof (buffer) - 1, "%s%s%s",
+		snprintf (buffer, sizeof (buffer) - 1, "%s%s%s%s",
+			TVM_LIBRARY_PATH,
 			LIBRARY_PFIX, name, LIBRARY_EXT
 		);
 		handle = _load_library (buffer);
@@ -144,15 +144,17 @@ int build_ffi_table (bytecode_t *bc)
 	
 	/* Load libraries */
 	for (str = ffi->libraries; str != NULL; str = str->next) {
+		if (str->str == NULL)
+			break;
 		n_libs++;
 	}
 	
 	libs 		= (LIB_HANDLE *) malloc (sizeof (LIB_HANDLE) * (n_libs + 1));
 	lib_names 	= (char **) malloc (sizeof (char *) * n_libs);
 
-	for (i = 0, str = ffi->libraries; str != NULL; str = str->next) {
+	for (i = 0, str = ffi->libraries; i < n_libs; ++i, str = str->next) {
 		LIB_HANDLE *lib = load_library (str->str);
-
+		
 		if (lib != NULL) {
 			libs[i] 	= lib;
 			lib_names[i] 	= str->str;
@@ -187,8 +189,9 @@ int build_ffi_table (bytecode_t *bc)
 				);
 			}
 		} else {
-			for (lib_n = 0; lib_n < n_libs && sym == NULL; ++lib_n) {
-				sym = get_symbol (libs[lib_n], name);
+			for (lib_n = 0; lib_n < n_libs; ++lib_n) {
+				if ((sym = get_symbol (libs[lib_n], name)) != NULL)
+					break;
 			}
 			if (sym == NULL) {
 				fprintf (stderr,
