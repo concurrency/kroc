@@ -4016,13 +4016,19 @@ K_CALL_DEFINE_3_1 (X_mt_resize)
 			 * shrinks to less than 50% of the allocated memory.
 			 */
 			if ((ma->size < new_size) || (new_size < (ma->size / 2))) {
+				word dimensions	= MT_ARRAY_DIM(type);
 				mt_array_internal_t *new;
-				word size_shift, count;
+				word i, size_shift, count;
 				
 				new = mt_alloc_array_internal (
 					sched->allocator, type, new_size, false, &size_shift
 				);
 				count = ma->size < new->size ? ma->size : new->size;
+
+				for (i = 0; i < dimensions; ++i) {
+					new->array.dimensions[i] = ma->array.dimensions[i];
+				}
+
 				if (MT_TYPE(inner_type) != MT_NUM) {
 					word **dst = (word **) new->array.data;
 					word **src = (word **) ma->array.data;

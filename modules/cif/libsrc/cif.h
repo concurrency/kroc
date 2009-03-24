@@ -207,14 +207,16 @@ static inline mt_cb_t *MTAllocChanType (Workspace wptr, int channels, bool share
  * new array and copying across all the data that will fit inside the new
  * array.  You should use the return pointer instead of the one you passed in
  * (since the array might have been re-allocated in a new location).  The
- * final parameter is the new length (in terms of array elements).  This
- * function does *not* (necessarily) modify the dimensions of the mt_array_t,
- * so you should do that yourself after the function has returned.
- *
+ * final parameter is the new length (in terms of array elements).
  */
 static inline mt_array_t *MTResize1D (Workspace wptr, mt_array_t *array, int new_size)
 {
-	return (mt_array_t *) MTResize (wptr, MT_RESIZE_DATA, array, new_size);
+	mt_array_t *ma = (mt_array_t *) MTResize (wptr, MT_RESIZE_DATA, array, new_size);
+	
+	if (ma != NULL)
+		ma->dimensions[0] = new_size;
+
+	return ma;
 }
 /*}}}*/
 /*}}}*/
