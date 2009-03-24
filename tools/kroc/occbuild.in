@@ -537,6 +537,9 @@ class TVMToolchain:
 		(base, ext) = split_ext(file)
 		if ext == "":
 			install(file, examplesdir, True)
+			install(base + ".tbc", examplesdir, False)
+		elif ext == "tbc":
+			install(base + ".tbc", examplesdir, False)
 
 	def clean(self, file):
 		delete(file)
