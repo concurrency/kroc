@@ -141,6 +141,8 @@ def set_ld_path():
 	if in_tree is not None:
 		dirs += [
 			in_tree + "/modules/inmoslibs/libsrc/forall",
+			in_tree + "/modules/bsclibs/libsrc/filelib",
+			in_tree + "/modules/course/libsrc",
 			in_tree + "/runtime/ccsp",
 			in_tree + "/runtime/libkrocif",
 			in_tree + "/runtime/libtvm",
