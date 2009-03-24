@@ -113,7 +113,7 @@ static LIB_HANDLE load_library (char *name)
 		LIBRARY_PFIX, name, LIBRARY_EXT
 	);
 	if ((handle = _load_library (buffer)) == NULL) {
-		snprintf (buffer, sizeof (buffer) - 1, "%s%s%s%s",
+		snprintf (buffer, sizeof (buffer), "%s%s%s%s",
 			TVM_LIBRARY_PATH,
 			LIBRARY_PFIX, name, LIBRARY_EXT
 		);
