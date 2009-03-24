@@ -1,8 +1,18 @@
+/*
+ * ffi.c - Foreign Function Interface support functions
+ * 
+ * Copyright (C) 2004-2008 Christian L. Jacobsen, Matthew C. Jadud, Damian J. Dimmich
+ * Copyright (C) 2008  Carl G. Ritson
+ *
+ */
+
+#include "tvm_posix.h"
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
-#ifdef WIN32
+#ifdef TVM_OS_WINDOWS
 #define BYTE WIN_BYTE
 #define WORD WIN_WORD
 #define UWORD WIN_UWORD
@@ -14,279 +24,244 @@
 #else
 #include <dlfcn.h>
 #include <unistd.h>
-#endif /* WIN32 */
+#endif /* TVM_OS_WINDOWS */
 
-#include "stiw.h"
-
-#ifdef WIN32
+#if defined(TVM_OS_WINDOWS)
 #define LIBRARY_EXT ".dll"
 #define LIBRARY_PFIX ""
-#elif defined _MAC_UNIX
+#elif defined(TVM_OS_DARWIN)
 #define LIBRARY_EXT ".dylib"
 #define LIBRARY_PFIX "lib"
 #else
 #define LIBRARY_EXT ".so"
 #define LIBRARY_PFIX "lib"
 #endif
-#define DIRECTORY_PFIX "transterpreter/"
 
-extern int get_file_size(FILE *fp, char* file_name, char* app_name);
-
-const char *error_name = "stiw FFI loader";
-
-#ifdef WIN32
+#ifdef TVM_OS_WINDOWS
 typedef HINSTANCE LIB_HANDLE;
-/* Returns error message for last error */
-const char* library_error_str(void) 
+
+static const char *library_error_str (void) 
 { 
-    LPVOID lpMsgBuf;
-    DWORD dw = GetLastError(); 
+	LPVOID lpMsgBuf;
+	DWORD dw = GetLastError (); 
 
-    FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-        FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,
-        dw,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR) &lpMsgBuf,
-        0, NULL );
+	FormatMessage (
+			FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+			FORMAT_MESSAGE_FROM_SYSTEM,
+			NULL,
+			dw,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR) &lpMsgBuf,
+			0, NULL 
+	);
 
-    /* 
-		printf( "failed with error %d: %s", dw, lpMsgBuf); 
-    LocalFree(lpMsgBuf);
-		Is it ok that we dont bother to free this anymore? The program is going 
-		to quit right afterwards anyway...
-		*/
-		return (char *) lpMsgBuf;
+	/* 
+	   printf( "failed with error %d: %s", dw, lpMsgBuf); 
+	   LocalFree(lpMsgBuf);
+	   Is it ok that we dont bother to free this anymore? The program is going 
+	   to quit right afterwards anyway...
+	   */
+	return (char *) lpMsgBuf;
 }
 
-HINSTANCE load_library(char *filename)
+static LIB_HANDLE _load_library (char *filename)
 {
-	return LoadLibrary(filename);
+	return LoadLibrary (filename);
 }
 
-void *get_symbol(LIB_HANDLE sohandle, char *name)
+static void unload_library (LIB_HANDLE handle)
 {
-	return GetProcAddress(sohandle, name);
+	/* FIXME: add this code...? */
 }
-#else
+
+static void *get_symbol (LIB_HANDLE handle, char *name)
+{
+	return GetProcAddress (handle, name);
+}
+#else /* !TVM_OS_WINDOWS */
 typedef void *LIB_HANDLE;
-const char* library_error_str(void)
+
+static const char *library_error_str (void)
 {
-	return dlerror();
+	return dlerror ();
 }
 
-/* Wrap dlopen */
-LIB_HANDLE load_library(char *filename)
+static LIB_HANDLE _load_library (char *filename)
 {
-  void *lib_ptr;
-	char *newlibname;
-	lib_ptr = dlopen(filename, RTLD_NOW);
-
-  /* Attempt to load a library from the transterpreter library directory if its not found */
-	if (lib_ptr == NULL) {
-	  newlibname = (char *)malloc(strlen(filename) + strlen(DIRECTORY_PFIX));
-		strcpy(newlibname, DIRECTORY_PFIX);
-		strcat(newlibname, filename);
-	  lib_ptr = dlopen(newlibname, RTLD_NOW);
-		free(newlibname);
-	}
-
-	return lib_ptr; 
+	return dlopen (filename, RTLD_NOW);
 }
 
-void *get_symbol(LIB_HANDLE sohandle, char *name)
+static void unload_library (LIB_HANDLE handle)
 {
-	return dlsym(sohandle, name);
+	dlclose (handle);
 }
-#endif
 
-/* A structure which contains information about loaded libraries */
-struct lib
+static void *get_symbol (LIB_HANDLE handle, char *name)
 {
-	char *name;
-	LIB_HANDLE solib;
-};
+	return dlsym (handle, name);
+}
+#endif /* !TVM_OS_WINDOWS */
 
-int setup_ffi_table(char *tbc_file)
+static LIB_HANDLE load_library (char *name)
 {
-	FILE *ffi_file_fp;
-	char *ffi_file;
-	long file_size, table_start;
-	FFI_TABLE_ENTRY *ffi_table_ptr;
-
-	char header[8];
-	int num_libraries;
-	struct lib *libraries = NULL;
+	LIB_HANDLE handle;
+	char buffer[4096];
 	
-	int i;
+	buffer[sizeof(buffer) - 1] = '\0';
 
-	ffi_table = NULL;
-
-	/* We need a new filename to load the ffi file, set up some memory */
-	ffi_file = strdup(tbc_file);
-	/* Now replace the extension with .ffi, we know that the extension is
-	 * allways going to be three chars, ie .tbc, so we can just overwrite
-	 * the last three chars in the string with "ffi", */
-  /* But only if its not a tbz file */
-  if(file_type == TBZ)
-  {
-    /* Is there any FFI at all??? If no, just return. */
-    if(ffi_start == 0)
-      return 0;
-  }
-  else
-  {
-    strcpy(ffi_file + (strlen(ffi_file) - 3), "ffi");
-  }
-
-	/* Now open in the file */
-	ffi_file_fp = fopen(ffi_file, "rb");
-	if(ffi_file_fp == NULL)
-	{
-		/* The file's not there; nothing to load. */
-		return 0;
-	}
-  /* If we are reading from a TBZ, then seek to the right place */
-  if(file_type == TBZ)
-  {
-    fseek(ffi_file_fp, ffi_start, SEEK_SET);
-    file_size = ffi_length;
-  }
-  else
-    file_size = get_file_size(ffi_file_fp, ffi_file, "");
-
-	if (fread(header, 1, 8, ffi_file_fp) != 8)
-	{
-		printf("%s: error reading header from %s\n", error_name, ffi_file);
-		goto error;
-	}
-	if (memcmp("ffitvm\0\0", header, 8) != 0)
-	{
-		printf("%s: %s contains an invalid header\n", error_name, ffi_file);
-		goto error;
+	snprintf (buffer, sizeof (buffer) - 1, "%s%s%s",
+		LIBRARY_PFIX, name, LIBRARY_EXT
+	);
+	if ((handle = _load_library (buffer)) == NULL) {
+		snprintf (buffer, sizeof (buffer), "%s%s%s%s",
+			TVM_LIBRARY_PATH,
+			LIBRARY_PFIX, name, LIBRARY_EXT
+		);
+		handle = _load_library (buffer);
 	}
 
-	if (fread(&num_libraries, sizeof num_libraries, 1, ffi_file_fp) != 1)
-	{
-		printf("%s: error reading num_libraries from %s\n", error_name, ffi_file);
-		goto error;
+	return handle;
+}
+
+int build_ffi_table (bytecode_t *bc)
+{
+	FFI_TABLE_ENTRY *table		= NULL;
+	LIB_HANDLE 	*libs		= NULL;
+	tbc_ffi_t	*ffi 		= bc->tbc->ffi;
+	char 		**lib_names	= NULL;
+	int 		n_libs		= 0;	
+	tenc_str_t	*str;
+	int 		i;
+	
+	bc->ffi_table		= NULL;
+	bc->ffi_table_length 	= 0;
+	bc->dll_handles		= NULL;
+
+	if (ffi == NULL)
+		return 1;
+	if (ffi->n_symbols <= 0)
+		return 1;
+	
+	/* Load libraries */
+	for (str = ffi->libraries; str != NULL; str = str->next) {
+		if (str->str == NULL)
+			break;
+		n_libs++;
 	}
-#ifdef HOST_BIGENDIAN
-	num_libraries = SwapFourBytes(num_libraries);
-#endif
+	
+	libs 		= (LIB_HANDLE *) malloc (sizeof (LIB_HANDLE) * (n_libs + 1));
+	lib_names 	= (char **) malloc (sizeof (char *) * n_libs);
 
-	libraries = (struct lib *) malloc(num_libraries * sizeof *libraries);
-
-	/* Load the libraries */
-	for (i = 0; i < num_libraries; i++)
-	{
-		char length;
-
-		/* First we have the length of the string (including null) */
-		if (fread(&length, 1, 1, ffi_file_fp) != 1)
-		{
-			printf("%s: error reading library name length from %s\n", error_name, ffi_file);
-			goto error;
-		}
-
-		/* Make us some new memory to put the name in, few more bytes so we can
-		 * put an extension and prefix on the name plus one for \0*/
-		libraries[i].name = (char *) malloc(length + strlen(LIBRARY_EXT) + strlen(LIBRARY_PFIX));
-
-		/* Read the name */
-		if (fread(&libraries[i].name[strlen(LIBRARY_PFIX)], 1, length, ffi_file_fp) != length)
-		{
-			printf("%s: error reading library name from %s\n", error_name, ffi_file);
-			goto error;
-		}
-
-		/* Add a prefix without \0*/
-		strncpy(libraries[i].name, LIBRARY_PFIX, strlen(LIBRARY_PFIX));
-
-		/* Add an extension */
-		strcat(libraries[i].name, LIBRARY_EXT);
-		// FIXME: This is debug code that should dissapear once tested on all platforms.
-		/*printf("Loading %s, allocated %i\n", libraries[i].name, length + strlen(LIBRARY_EXT) + strlen(LIBRARY_PFIX) ); */
-
-		/* Load the library */
-		libraries[i].solib = load_library(libraries[i].name);
-		if(libraries[i].solib == NULL)
-		{
-			printf("%s: failed to open library %s: %s\n", error_name, libraries[i].name, library_error_str());
-			goto error;
+	for (i = 0, str = ffi->libraries; i < n_libs; ++i, str = str->next) {
+		LIB_HANDLE *lib = load_library (str->str);
+		
+		if (lib != NULL) {
+			libs[i] 	= lib;
+			lib_names[i] 	= str->str;
+		} else {
+			fprintf (stderr,
+				"Failed to open library %s: %s\n", 
+				str->str, library_error_str()
+			);
+			goto errout;
 		}
 	}
+	libs[n_libs] = NULL;
 
-	/* Advance to next 64-bit aligned address */
-	table_start = ftell(ffi_file_fp);
-	if (table_start % 8 != 0) {
-		table_start += 8 - (table_start % 8);
-		if (fseek(ffi_file_fp, table_start, SEEK_SET) == -1)
-		{
-			printf("%s: seek failed on %s\n", error_name, ffi_file);
-			goto error;
-		}
+	/* Build FFI table */
+	table = malloc (sizeof (FFI_TABLE_ENTRY) * ffi->n_symbols);
+	for (i = 0; i < ffi->n_symbols; ++i) {
+		table[i].func = NULL;
+		table[i].name = NULL;
 	}
 
-	{
-		int table_size = file_size;
+	for (i = 0; i < ffi->n_symbols; ++i) {
+		char 		*name	= ffi->map[i].symbol;
+		void 		*sym	= NULL;
+		int 		lib_n	= ffi->map[i].library;
 
-		ffi_table = (FFI_TABLE_ENTRY *) malloc(table_size);
-		memset(ffi_table, 0, table_size);
-		if (fread(ffi_table, 1, table_size, ffi_file_fp) != table_size)
-		{
-			printf("%s: error reading FFI table from %s\n", error_name, ffi_file);
-			goto error;
-		}
-	}
-
-	/* Resolve all the references in the table */
-	for (ffi_table_ptr = ffi_table; (int) ffi_table_ptr->name != 0; ffi_table_ptr++)
-	{
-		int name_offset = (int) ffi_table_ptr->name;
-#ifdef HOST_BIGENDIAN
-		name_offset = SwapFourBytes(name_offset);
-#endif
-		ffi_table_ptr->name = ((char *) ffi_table) + name_offset;
-		ffi_table_ptr->func = NULL;
-
-		/* Try resolving from all loaded libraries */
-		for(i = 0; i < num_libraries; i++)
-		{
-			FFI_FUNCTION symbol_ptr = (FFI_FUNCTION) get_symbol(libraries[i].solib, ffi_table_ptr->name);
-
-			if (symbol_ptr != NULL)
-			{
-				if (ffi_table_ptr->func != NULL)
-				{
-					printf("%s: symbol %s defined multiple times\n", error_name, ffi_table_ptr->name);
-					goto error;
-				} else {
-					ffi_table_ptr->func = symbol_ptr;
-				}
+		if ((lib_n >= 0) && (lib_n < n_libs)) {
+			sym = get_symbol (libs[lib_n], name);
+			if (sym == NULL) {
+				fprintf (stderr,
+					"Unable to find symbol '%s' in library '%s'.\n",
+					name, lib_names[lib_n]
+				);
+			}
+		} else {
+			for (lib_n = 0; lib_n < n_libs; ++lib_n) {
+				if ((sym = get_symbol (libs[lib_n], name)) != NULL)
+					break;
+			}
+			if (sym == NULL) {
+				fprintf (stderr,
+					"Unable to find symbol '%s'.\n",
+					name
+				);
 			}
 		}
 
-		/* Check that we resolved the symbol to an ffi call */
-		if (ffi_table_ptr->func == NULL)
-		{
-			printf("%s: failed to resolve %s: %s\n", error_name, ffi_table_ptr->name, library_error_str());
-			goto error;
+		if (sym != NULL) {
+			int lib_len	= strlen (lib_names[lib_n]);
+			int name_len 	= strlen (name);
+			table[i].func	= (FFI_FUNCTION) sym;
+			table[i].name	= malloc (lib_len + name_len + 2);
+			sprintf (table[i].name, "%s:%s", lib_names[lib_n], name);
+		} else {
+			goto errout;
 		}
 	}
 
-	for (i = 0; i < num_libraries; i++)
-	{
-		free(libraries[i].name);
-	}
-	free(libraries);
-	fclose(ffi_file_fp);
-	free(ffi_file);
-	return 0;
+	bc->ffi_table		= table;
+	bc->ffi_table_length 	= ffi->n_symbols;
+	bc->dll_handles		= (void *) libs;
 
-error:
-	exit(1);
+	free (lib_names);
+
+	return ffi->n_symbols;
+
+errout:
+	if (table != NULL) {
+		for (i = 0; i < ffi->n_symbols; ++i) {
+			if (table[i].name != NULL)
+				free (table[i].name);
+		}
+		free (table);
+	}
+	
+	if (libs != NULL) {
+		for (i = 0; i < n_libs; ++i) {
+			if (libs[i] != NULL)
+				unload_library (libs[i]);
+		}
+		free (libs);
+		free (lib_names);
+	}
+	
+	return 0;
 }
 
+void release_ffi_table (bytecode_t *bc)
+{
+	if (bc->ffi_table != NULL) {
+		FFI_TABLE_ENTRY *table	= bc->ffi_table;
+		LIB_HANDLE 	*libs	= (LIB_HANDLE *) bc->dll_handles;
+		int n_symbols		= bc->ffi_table_length;
+		int i;
+	
+		if (table != NULL) {
+			for (i = 0; i < n_symbols; ++i) {
+				free (table[i].name);
+			}
+			free (table);
+		}
+		
+		if (libs != NULL) {
+			for (i = 0; libs[i] != NULL; ++i) {
+				unload_library (libs[i]);
+			}
+			free (libs);
+		}
+	}
+}
 

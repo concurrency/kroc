@@ -233,10 +233,10 @@ typedef struct _mt_cb_internal_t {
 #define MT_CB_PONY_LOCK		0x2
 #ifdef MT_TVM
 #define MT_CB_LOCK_PTR(mt,lock) \
-	(wordptr_minus (mt, sizeof(mt_sem_t) * (lock)))
+	(wordptr_minus (mt, (sizeof(mt_sem_t) / sizeof(word)) * (lock + 1)))
 #else /* !MT_TVM */
 #define MT_CB_LOCK_PTR(mt,lock) \
-	((mt_sem_t *)(((word *)(mt)) - (sizeof(mt_sem_t) * (lock))))
+	((mt_sem_t *)(((word *)(mt)) - (sizeof(mt_sem_t) * (lock + 1))))
 #endif /* !MT_TVM */
 
 /*}}}*/

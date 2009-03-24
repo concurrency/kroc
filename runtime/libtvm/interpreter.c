@@ -45,8 +45,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "scheduler.h"
 #endif
 
+/* #define DEBUG_INTERPRETER 1 */
+
+#if defined(DEBUG_INTERPRETER)
 #include <stdio.h>
 #include "ins_names.h"
+#endif
 
 #define WS_PAD	4
 #define VS_PAD	1
@@ -484,7 +488,7 @@ static TVM_INLINE BYTE decode_next (ECTX ectx)
 	instr = read_byte (IPTR);
 	#endif
 	
-	#if 0
+	#if defined(DEBUG_INTERPRETER)
 	printf ("%p %02x ", IPTR, instr);
 	if ((instr & 0xF0) != 0xF0) {
 		printf ("%8s", pri_name[(instr >> 4) & 0xF]);
@@ -493,7 +497,7 @@ static TVM_INLINE BYTE decode_next (ECTX ectx)
 	}
 	printf (" %08x %08x %08x %08x\n", 
 		OREG | (instr & 0xF), AREG, BREG, CREG);
-	#endif
+	#endif /* DEBUG_INTERPRETER */
 
 	/* Increment instruction pointer */
 	IPTR = byteptr_plus (IPTR, 1);

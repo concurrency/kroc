@@ -131,8 +131,10 @@ TVM_HELPER int chan_io (ECTX ectx,
 
 	*requeue = (WORDPTR) chan_value;
 
+	#ifdef TVM_TYPE_SHADOW
 	if (read_type (ectx, chan_ptr) != STYPE_CHAN)
 		write_type (ectx, chan_ptr, STYPE_CHAN);
+	#endif
 
 	if (chan_value != NOT_PROCESS_P) {
 		#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES

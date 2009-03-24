@@ -43,100 +43,137 @@ sub link ($$@) {
 	# State
 	my %ffi;
 	my %globals;
+	my $n = 0;
 
 	# Tranform ETC
-	for (my $i = 0; $i < @etc; ++$i) {
-		my ($current, %labels, @procs);
-		my $etc		= $etc[$i];
-		my $align	= 0;
-		my $filename	= undef;
-		my $line	= undef;
+	foreach my $texts (@etc) {
+		my @data;
+		
+		foreach my $text (@$texts) {
+			my ($current, %labels, @procs);
+			my $align	= 0;
+			my $etc		= $text->{'etc'};
+			my $file	= $text->{'file'};
+			my $filename	= undef;
+			my $line	= undef;
 
-		# Initial operation translation
-		expand_etc_ops ($etc, $instructions);
+			# Initial operation translation
+			expand_etc_ops ($etc, $instructions);
 
-		# Build ETC stream for each label
-		# Identify PROCs and global symbols
-		# Carry alignment
-		# Carry file names and line numbers
-		foreach my $op (@$etc) {
-			my $name	= $op->{'name'};
-			my $arg		= $op->{'arg'};
+			# Build ETC stream for each label
+			# Identify PROCs and global symbols
+			# Carry alignment
+			# Carry file names and line numbers
+			foreach my $op (@$etc) {
+				my $name	= $op->{'name'};
+				my $arg		= $op->{'arg'};
 
-			if ($name eq '.ALIGN') {
-				$align	= $arg;
-			} elsif ($name =~ /^\.(SET|SECTION)LAB$/) {
-				my $label = 'L' . $i . ':' . $arg;
-				my @inst;
+				if ($name eq '.ALIGN') {
+					$align	= $arg;
+				} elsif ($name =~ /^\.(SET|SECTION)LAB$/) {
+					my $label = 'L' . $n . ':' . $arg;
+					my @inst;
 
-				die "Label collision $label" 
-					if exists ($labels{$label});
+					die "Label collision $label" 
+						if exists ($labels{$label});
+					
+					if ($filename) {
+						push (@inst, { 
+							'name'	=> '.FILENAME',
+							'arg'	=> $filename
+						});
+					}
+					if (defined ($line)) {
+						push (@inst, {
+							'name'	=> '.LINE',
+							'arg'	=> $line
+						});
+					}
+					if ($align) {
+						push (@inst, {
+							'name'	=> '.ALIGN',
+							'arg'	=> $align
+						});
+					}
+
+					my $new = { 
+						'name'		=> $label, 
+						'prev'		=> $current, 
+						'inst'		=> \@inst,
+						'align'		=> $align,
+						'source'	=> $etc
+					};
+
+					$current->{'next'} 	= $new;
+					$current 		= $new;
+					$labels{$label}		= $new;
+
+					$align			= 0;
+				} elsif ($name eq '.FILENAME') {
+					$filename		= $arg;
+				} elsif ($name eq '.LINE') {
+					$line			= $arg;
+				} elsif ($name eq '.PROC') {
+					$current->{'symbol'}	= $arg;
+					push (@procs, $current);
+				} elsif ($name eq '.STUBNAME') {
+					$current->{'stub'}	= $arg;
+					$current->{'symbol'}	= $arg;
+					if ($arg =~ /^(C|BX?)\./) {
+						$ffi{$arg} = $current
+							if !exists ($ffi{$arg});
+					}
+				} elsif ($name eq '.GLOBAL') {
+					if (exists ($globals{$arg})) {
+						my $current 	= $globals{$arg};
+						my $c_file	= $current->{'loci'}->{'file'};
+						my $c_fn	= $current->{'loci'}->{'filename'};
+						my $c_ln	= $current->{'loci'}->{'line'};
+						print STDERR 
+							"Warning: multiple definitions of global name '$arg'\n",
+							"\tOld symbol is from $c_fn($c_file), line $c_ln.";
+							"\tNew symbol is from $filename($file), line $line.";
+					}
+					$globals{$arg}		= $current;
+					$current->{'loci'}	= {
+						'file'		=> $file,
+						'filename'	=> $filename,
+						'line'		=> $line
+					};
+				} elsif ($name eq '.GLOBALEND') {
+					$globals{$arg}->{'end'}	= $current;
+				}
 				
-				if ($filename) {
-					push (@inst, { 
-						'name'	=> '.FILENAME',
-						'arg'	=> $filename
-					});
-				}
-				if (defined ($line)) {
-					push (@inst, {
-						'name'	=> '.LINE',
-						'arg'	=> $line
-					});
-				}
-				if ($align) {
-					push (@inst, {
-						'name'	=> '.ALIGN',
-						'arg'	=> $align
-					});
-				}
-
-				my $new = { 
-					'name'		=> $label, 
-					'prev'		=> $current, 
-					'inst'		=> \@inst,
-					'align'		=> $align,
-					'source'	=> $etc
-				};
-
-				$current->{'next'} 	= $new;
-				$current 		= $new;
-				$labels{$label}		= $new;
-
-				$align			= 0;
-			} elsif ($name eq '.FILENAME') {
-				$filename		= $arg;
-			} elsif ($name eq '.LINE') {
-				$line			= $arg;
-			} elsif ($name eq '.PROC') {
-				$current->{'symbol'}	= $arg;
-				push (@procs, $current);
-			} elsif ($name eq '.STUBNAME') {
-				$current->{'stub'}	= $arg;
-				$current->{'symbol'}	= $arg;
-				if ($arg =~ /^(C|BX?)\./) {
-					$ffi{$arg} = $current
-						if !exists ($ffi{$arg});
-				}
-			} elsif ($name eq '.GLOBAL') {
-				$globals{$arg}		= $current;
-			} elsif ($name eq '.GLOBALEND') {
-				$globals{$arg}->{'end'}	= $current;
+				push (@{$current->{'inst'}}, $op)
+					if $current; 
 			}
+
+			# Resolve local labels
+			foreach_label (\%labels, \&resolve_labels, $n);
 			
-			push (@{$current->{'inst'}}, $op)
-				if $current; 
+			# Queue data for other passes
+			push (@data, { 
+				'file' 		=> $file, 
+				'filename' 	=> $filename, 
+				'labels' 	=> \%labels, 
+				'procs' 	=> \@procs
+			});
+			$n++;
 		}
 
-		# Transform Passes
-		foreach_label (\%labels, \&resolve_labels, $i);
-		foreach_label (\%labels, \&resolve_globals, \%globals, \%ffi);
-		foreach_label (\%labels, \&build_data_blocks);
-		foreach_label (\%labels, \&add_data_lengths);
-		foreach_label (\%labels, \&isolate_static_sections);
-		tag_and_index_code_blocks (\@procs);
-		separate_code_blocks (\@procs);
-		foreach_label (\%labels, \&build_proc_dependencies);
+		foreach my $d (@data) {
+			my $labels 	= $d->{'labels'};
+			my $procs	= $d->{'procs'};
+			
+			# Transform Passes
+			foreach_label ($labels, \&resolve_globals, \%globals, \%ffi);
+			foreach_label ($labels, \&build_data_blocks);
+			foreach_label ($labels, \&add_data_lengths);
+			foreach_label ($labels, \&isolate_static_sections);
+			tag_and_index_code_blocks ($procs);
+			separate_code_blocks ($procs);
+			foreach_label ($labels, \&build_proc_dependencies);
+		}
 	}
 
 	if (!exists ($globals{$entry_point})) {

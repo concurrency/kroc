@@ -69,8 +69,10 @@ edit = sed \
 	-e 's|@KROC_KROCDIR[@]|$(KROC_KROCDIR)|g' \
 	-e 's|@KROC_CONFIGDIR[@]|$(KROC_CONFIGDIR)|g' \
 	-e 's|@KROC_EXAMPLESDIR[@]|$(KROC_EXAMPLESDIR)|g' \
+	-e 's|@TVM_ARCHINCDIR[@]|$(TVM_ARCHINCDIR)|g' \
 	-e 's|@TVM_BINDIR[@]|$(TVM_BINDIR)|g' \
 	-e 's|@TVM_LIBDIR[@]|$(TVM_LIBDIR)|g' \
+	-e 's|@TVM_TVMDIR[@]|$(TVM_TVMDIR)|g' \
 	-e 's|@TVM_EXAMPLESDIR[@]|$(TVM_EXAMPLESDIR)|g' \
 	-e 's|@ACLOCALDIR[@]|$(ACLOCALDIR)|g' \
 	-e 's|@CONFFILEPREFIX[@]|$(CONFFILEPREFIX)|g' \
