@@ -995,6 +995,12 @@ PROC aff.switch (VAL INT runs, cycles, MOBILE BARRIER b, SHARED CHAN INT results
               SKIP
     --}}}
 
+    IF
+      (SIZE affinity) = 0
+        affinity := [ 1 ]
+      TRUE
+        SKIP
+
     SEQ i = 0 FOR runs
       SEQ
         SYNC b
