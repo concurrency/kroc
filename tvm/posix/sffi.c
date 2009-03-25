@@ -52,9 +52,12 @@ static int get_argv (ECTX ectx, WORD args[])
 {
 	WORDPTR	argc	= (WORDPTR) args[0];
 	WORDPTR	argv	= (WORDPTR) args[1];
-	
-	write_word (argc, tvm_argc);
-	write_word (argv, (WORD) tvm_argv);
+
+	fprintf (stderr, "ECTX %p, args = %p\n", ectx, args);
+	fprintf (stderr, "tvm_argc = %d, tvm_argv = %p\n", tvm_argc, tvm_argv);
+
+	write_word (argc, tvm_argc - 1);
+	write_word (argv, (WORD) &(tvm_argv[1]));
 	
 	return SFFI_OK;
 }
