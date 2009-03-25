@@ -540,7 +540,7 @@ PROC file.num.args (RESULT INT n)
 #IF DEFINED (OCCBUILD.TVM)
     INT argc, argv:
     SEQ
-      C.tvmspecial.5.get.cmdline.ptr (argc, argv)
+      tvm.get.cmdline.ptr (argc, argv)
       C.fl.tvm.set.args (argc, argv)
 #ENDIF
     C.fl.num.args (n)
@@ -567,7 +567,7 @@ PROC file.nth.arg (VAL INT n, RESULT []BYTE arg, RESULT INT len)
 #IF DEFINED (OCCBUILD.TVM)
     INT argc, argv:
     SEQ
-      C.tvmspecial.5.get.cmdline.ptr (argc, argv)
+      tvm.get.cmdline.ptr (argc, argv)
       C.fl.tvm.set.args (argc, argv)
 #ENDIF
     C.fl.nth.arg (n, arg, len)
