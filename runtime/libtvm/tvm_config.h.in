@@ -32,6 +32,9 @@
 /* define to emulate a T8 processor */
 #undef TVM_EMULATE_T8
 
+/* define for external channel bundles */
+#undef TVM_EXTERNAL_CHANNEL_BUNDLES
+
 /* define for little-endian TVM */
 #undef TVM_LITTLE_ENDIAN
 

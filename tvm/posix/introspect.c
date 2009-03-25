@@ -8,6 +8,8 @@
 #include "tvm_posix.h"
 #include <tvm_tbc.h>
 
+#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
+
 #define MT_DEFINES	1
 #define MT_TVM		1
 #include <mobile_types.h>
@@ -1165,3 +1167,4 @@ int vc0_mt_in (ECTX ectx, WORDPTR address)
 }
 /*}}}*/
 
+#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
