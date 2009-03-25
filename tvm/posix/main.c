@@ -150,6 +150,7 @@ static int install_firmware_ctx (void)
 }
 
 static EXT_CHAN_ENTRY ext_chans[] = {
+#ifdef TVM_EXTERNAL_CHANNEL_BUNDLES
 	{
 		.typehash	= 0,
 		.in		= NULL,
@@ -157,6 +158,7 @@ static EXT_CHAN_ENTRY ext_chans[] = {
 		.mt_in		= vc0_mt_in,
 		.mt_out		= NULL
 	}
+#endif /* TVM_EXTERNAL_CHANNEL_BUNDLES */
 };
 static const int ext_chans_length = sizeof (ext_chans) / sizeof (EXT_CHAN_ENTRY);
 
