@@ -189,6 +189,9 @@ def make_shared(library, objs, extra_opts = []):
 	opts = []
 	if target_os.startswith("darwin"):
 		opts = ["-dynamiclib", "-read_only_relocs", "suppress"]
+	elif (target_os.startswith("solaris")
+	      and programs["cc"][0].find("gcc") == -1):
+		opts = ["-G"]
 	else:
 		opts = ["-shared"]
 
