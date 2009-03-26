@@ -32,7 +32,7 @@ tvmfirmware_DATA = \
 	tvm-posix.tbc
 
 tvm-posix.tbc: tvm-posix.occ
-	$(OCCBUILD) --no-std-libs --program $<
+	$(OCCBUILD) --no-std-libs --program tvm-posix.occ
 
 EXTRA_DIST = \
 	tvm-posix.occ \
