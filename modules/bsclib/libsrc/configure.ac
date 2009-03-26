@@ -34,6 +34,9 @@ if test "$have_readv" = yes; then
  fi
 fi
 
+dnl Checks for libraries
+OCCAM_SOCK_LIBS
+
 if test "x$OCCBUILD_TOOLCHAIN" = "xkroc"; then
  SAVED_CPPFLAGS="$CFLAGS"
  CPPFLAGS="$CPPFLAGS $OCCBUILD_CFLAGS"
