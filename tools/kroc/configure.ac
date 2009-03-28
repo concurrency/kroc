@@ -4,11 +4,11 @@ dnl Process this file with autoconf to produce a configure script.
 dnl
 
 AC_REVISION($Revision: 1.1 $)
-AC_INIT([kroc.in],[1.5.0-pre4],[kroc-bugs@kent.ac.uk])
+AC_INIT([kroc.in],[1.5.0-pre5],[kroc-bugs@kent.ac.uk])
 AC_PREREQ(2.12)
 
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(kroc,1.5.0-pre4)
+AM_INIT_AUTOMAKE(kroc,1.5.0-pre5)
 
 dnl Checks for programs.
 AC_PROG_CC
