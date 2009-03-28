@@ -1117,12 +1117,13 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                           pixel[pv] = #00               -- leave this component alone
                             SKIP
                           TRUE
-                            INITIAL INT iv IS ((INT pval[pv]) + (INT pixel[pv])) >> 1:
-                            IF
-                              iv > 245
-                                pval[pv] := #FF
-                              TRUE
-                                pval[pv] := BYTE (iv + 10)    -- tend to get brighter
+                            pval[pv] := pval[pv] \/ pixel[pv]
+                            --INITIAL INT iv IS ((INT pval[pv]) + (INT pixel[pv])) >> 1:
+                            --IF
+                            --  iv > 245
+                            --    pval[pv] := #FF
+                            --  TRUE
+                            --    pval[pv] := BYTE (iv + 10)    -- tend to get brighter
           TRUE
             SKIP
   :
