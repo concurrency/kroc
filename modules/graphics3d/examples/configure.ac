@@ -13,7 +13,7 @@ OCCAM_OCCBUILD
 build_graphics3d_examples=yes
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([course.module sdlraster.module graphics3d.module maths.module ttyutil.module], ,
+OCCAM_INCLUDE([course.module sdlraster.module graphics3d.module maths.module ttyutil.module useful.module], ,
               [build_graphics3d_examples=no])
 
 AC_MSG_CHECKING([whether to build graphics3d examples])

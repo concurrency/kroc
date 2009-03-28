@@ -22,6 +22,7 @@
 #INCLUDE "graphics3d.module"
 #INCLUDE "maths.module"
 #INCLUDE "ttyutil.module"
+#INCLUDE "useful.module"
 
 PROC display ()
   SKIP
@@ -50,19 +51,15 @@ PROC cube.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, CHAN G3D.
 PROC real32.menu (VAL []BYTE name, TTYUTIL.MENUITEM? link, VAL REAL32 ival, min.val, max.val, delta, CHAN REAL32 out!) --{{{
   INITIAL REAL32 val IS ival:
   MOBILE []BYTE str:
-  INT len:
 
   PROC set.string ()
+    VAL [15]BYTE padding IS "               ":
+    INITIAL INT plen IS (SIZE padding) - (SIZE name):
     SEQ
-      len := 0
-
-      buffer.set.string (str, len, name)
-      buffer.set.string (str, len, ": ")
-      buffer.set.real32 (str, len, 4, 2, val)
+      format.sssr (name, [padding FOR plen], ": ", val, str)
   :
 
   SEQ
-    str := MOBILE [40]BYTE
     set.string ()
 
     out ! val
@@ -110,7 +107,7 @@ PROC real32.menu (VAL []BYTE name, TTYUTIL.MENUITEM? link, VAL REAL32 ival, min.
 
         IF
           update
-            link[out] ! text; [str FOR len]
+            link[out] ! text; CLONE str
           TRUE
             SKIP
 :
@@ -118,19 +115,15 @@ PROC real32.menu (VAL []BYTE name, TTYUTIL.MENUITEM? link, VAL REAL32 ival, min.
 PROC int.menu (VAL []BYTE name, TTYUTIL.MENUITEM? link, VAL INT ival, min.val, max.val, delta, CHAN INT out!) --{{{
   INITIAL INT val IS ival:
   MOBILE []BYTE str:
-  INT len:
 
   PROC set.string ()
+    VAL [15]BYTE padding IS "               ":
+    INITIAL INT plen IS (SIZE padding) - (SIZE name):
     SEQ
-      len := 0
-
-      buffer.set.string (str, len, name)
-      buffer.set.string (str, len, ": ")
-      buffer.set.int (str, len, val)
+      format.sssi (name, [padding FOR plen], ": ", val, str)
   :
 
   SEQ
-    str := MOBILE [40]BYTE
     set.string ()
 
     out ! val
@@ -178,7 +171,7 @@ PROC int.menu (VAL []BYTE name, TTYUTIL.MENUITEM? link, VAL INT ival, min.val, m
 
         IF
           update
-            link[out] ! text; [str FOR len]
+            link[out] ! text; CLONE str
           TRUE
             SKIP
 :
@@ -186,19 +179,12 @@ PROC int.menu (VAL []BYTE name, TTYUTIL.MENUITEM? link, VAL INT ival, min.val, m
 PROC bool.menu (VAL []BYTE name, TTYUTIL.MENUITEM? link, VAL BOOL ival, CHAN BOOL out!) --{{{
   INITIAL BOOL val IS ival:
   MOBILE []BYTE str:
-  INT len:
 
   PROC set.string ()
+    VAL [15]BYTE padding IS "               ":
+    INITIAL INT plen IS (SIZE padding) - (SIZE name):
     SEQ
-      len := 0
-
-      buffer.set.string (str, len, name)
-      buffer.set.string (str, len, ": ")
-      IF
-        val
-          buffer.set.string (str, len, "true")
-        TRUE
-          buffer.set.string (str, len, "false")
+      format.sssb (name, [padding FOR plen], ": ", val, str)
   :
 
   SEQ
@@ -240,7 +226,7 @@ PROC bool.menu (VAL []BYTE name, TTYUTIL.MENUITEM? link, VAL BOOL ival, CHAN BOO
 
         IF
           update
-            link[out] ! text; [str FOR len]
+            link[out] ! text; CLONE str
           TRUE
             SKIP
 :
@@ -250,17 +236,14 @@ PROC render.mode.menu (TTYUTIL.MENUITEM? link, CHAN G3D.RDR.CONTROL rdr.ctl!) --
   MOBILE []BYTE str:
 
   PROC set.string ()
-    CASE val
-      0
-        str := "rdr-mode: none"
-      1
-        str := "rdr-mode: glenz"
-      2
-        str := "rdr-mode: norm"
-      3
-        str := "rdr-mode: glenz+norm"
-      ELSE
-        str := "invalid"
+    VAL [15]BYTE padding IS "render-mode    ":
+    VAL [4][10]BYTE names IS ["none      ", "glenz     ", "norm      ", "glenz+norm"]:
+    SEQ
+      IF
+        (val >= 0) AND (val < (SIZE names))
+          format.sss (padding, ": ", names[val], str)
+        TRUE
+          format.sss (padding, ": ", "invalid", str)
   :
 
   VAL []INT modes IS [G3D.RENDER.MODE.NONE, G3D.RENDER.MODE.GLENZ, G3D.RENDER.MODE.NORM, G3D.RENDER.MODE.GLENZ \/ G3D.RENDER.MODE.NORM]:
@@ -313,43 +296,22 @@ PROC render.mode.menu (TTYUTIL.MENUITEM? link, CHAN G3D.RDR.CONTROL rdr.ctl!) --
 PROC rotate.mode.menu (TTYUTIL.MENUITEM? link, SHARED CHAN G3D.ROT.CONTROL rot.ctl!) --{{{  
   INITIAL INT val IS 0:
   MOBILE []BYTE str:
-  INT len:
 
   PROC set.string ()
+    VAL [15]BYTE padding IS "rotate-mode    ":
+    VAL [9][4]BYTE names IS ["none", "demo", "X   ", "Y   ", "Z   ", "XY  ", "XZ  ", "YZ  ", "XYZ "]:
     SEQ
-      len := 0
-
-      buffer.set.string (str, len, "rot-mode: ")
-      CASE val
-        0
-          buffer.set.string (str, len, "none")
-        1
-          buffer.set.string (str, len, "demo")
-        2
-          buffer.set.string (str, len, "X")
-        3
-          buffer.set.string (str, len, "Y")
-        4
-          buffer.set.string (str, len, "Z")
-        5
-          buffer.set.string (str, len, "XY")
-        6
-          buffer.set.string (str, len, "XZ")
-        7
-          buffer.set.string (str, len, "YZ")
-        8
-          buffer.set.string (str, len, "XYZ")
-        ELSE
-          buffer.set.string (str, len, "invalid")
+      IF
+        (val >= 0) AND (val < (SIZE names))
+          format.sss (padding, ": ", names[val], str)
+        TRUE
+          format.sss (padding, ": ", "invalid", str)
   :
 
   VAL []INT modes IS [G3D.ROTATE.MODE.NONE, G3D.ROTATE.MODE.DEMO, G3D.ROTATE.MODE.X, G3D.ROTATE.MODE.Y, G3D.ROTATE.MODE.Z,
                       G3D.ROTATE.MODE.X \/ G3D.ROTATE.MODE.Y, G3D.ROTATE.MODE.X \/ G3D.ROTATE.MODE.Z,
                       G3D.ROTATE.MODE.Y \/ G3D.ROTATE.MODE.Z, (G3D.ROTATE.MODE.X \/ G3D.ROTATE.MODE.Y) \/ G3D.ROTATE.MODE.Z]:
   SEQ
-    str := MOBILE [40]BYTE
-    len := 0
-
     set.string ()
     CLAIM rot.ctl!
       rot.ctl ! set.mode; modes[val]
@@ -392,7 +354,7 @@ PROC rotate.mode.menu (TTYUTIL.MENUITEM? link, SHARED CHAN G3D.ROT.CONTROL rot.c
 
         IF
           update
-            link[out] ! text; [str FOR len]
+            link[out] ! text; CLONE str
           TRUE
             SKIP
 :
