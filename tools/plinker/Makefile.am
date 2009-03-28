@@ -7,6 +7,7 @@ SOURCES = \
 	build.pl \
 	dump.pl \
 	main.pl \
+	llvm.pl \
 	ETC.pm \
 	Instructions.pm \
 	Linker.pm \
@@ -16,6 +17,7 @@ SOURCES = \
 	TVM.pm	
 
 generated = \
+	llvm-coder.pl \
 	plinker.pl \
 	tce-dump.pl
 
