@@ -263,7 +263,7 @@ PROC ttyutil.keyhandler (CHAN BYTE in?, CHAN INT kill?, CHAN INT out!)
 :
 --}}}
 
---{{{  
+--{{{  PROC ttyutil.menu (VAL INT x, y, width, height, VAL BOOL border, CHAN TTYUTIL.MENU in?, SHARED CHAN TTYUTIL.DPY out!)
 --* Produces a controllable on-screen menu.
 -- Expects the first inputs to be addition of new menu items.
 --
@@ -328,7 +328,24 @@ PROC ttyutil.menu (VAL INT x, y, width, height, VAL BOOL border, CHAN TTYUTIL.ME
               SKIP
           --}}}
           --{{{  wait for update or other
-          ALT
+          PRI ALT
+            link[out] ? CASE
+              text; str
+                SEQ
+                  IF
+                    (SIZE str) > width
+                      INITIAL MOBILE []BYTE tmp IS [str FOR width]:
+                      SEQ
+                        str := tmp
+                    (SIZE str) < width
+                      INITIAL MOBILE []BYTE tmp IS MOBILE [width]BYTE:
+                      SEQ
+                        [tmp FOR SIZE str] := str
+                        SEQ i = SIZE str FOR width - (SIZE str)
+                          tmp[i] := ' '
+                        str := tmp
+                    TRUE
+                      SKIP
             ctl[in] ? CASE
               select; selected
                 SKIP
@@ -347,23 +364,6 @@ PROC ttyutil.menu (VAL INT x, y, width, height, VAL BOOL border, CHAN TTYUTIL.ME
                 SEQ
                   running := FALSE
                   link[in] ! quit
-            link[out] ? CASE
-              text; str
-                SEQ
-                  IF
-                    (SIZE str) > width
-                      INITIAL MOBILE []BYTE tmp IS [str FOR width]:
-                      SEQ
-                        str := tmp
-                    (SIZE str) < width
-                      INITIAL MOBILE []BYTE tmp IS MOBILE [width]BYTE:
-                      SEQ
-                        [tmp FOR SIZE str] := str
-                        SEQ i = SIZE str FOR width - (SIZE str)
-                          tmp[i] := ' '
-                        str := tmp
-                    TRUE
-                      SKIP
           --}}}
   :
   --}}}
@@ -466,7 +466,72 @@ PROC ttyutil.menu (VAL INT x, y, width, height, VAL BOOL border, CHAN TTYUTIL.ME
                           SEQ
                             sel.item := n.items
                             links[sel.item][in] ! select; TRUE
+                          --}}}
+                        TRUE
+                          SKIP
 
+                      n.items := n.items + 1
+            --}}}
+            TTYUTIL.MENUITEM! itm:
+            INT idx:
+            insert.item; idx; itm --{{{
+              SEQ
+                IF
+                  n.items = MAX.MENU.ITEMS
+                    --{{{  can't do this, kill it
+                    SEQ
+                      itm[in] ! quit
+                    --}}}
+                  TRUE
+                    TU.MENU.ITEM? svr:
+                    INT init.y:
+                    SEQ
+                      IF
+                        idx < 0
+                          idx := 0
+                        idx > n.items
+                          idx := n.items
+                        TRUE
+                          SKIP
+
+                      --{{{  shuffle along
+                      IF
+                        idx < n.items
+                          SEQ i = (n.items - 1) FOR (n.items - idx) STEP -1
+                            INT niy:
+                            SEQ
+                              niy := (top.item + (i + 1))
+                              IF
+                                niy < height
+                                  niy := niy + y
+                                TRUE
+                                  niy := -1
+
+                              links[i+1] := links[i]
+                              valid[i+1] := valid[i]
+
+                              links[i+1][in] ! set.y; niy
+                        TRUE
+                          SKIP
+                      --}}}
+
+                      svr, links[idx] := MOBILE TU.MENU.ITEM
+                      valid[idx] := TRUE
+                      init.y := (top.item + idx)
+                      IF
+                        init.y < height
+                          init.y := init.y + y
+                        TRUE
+                          init.y := -1
+
+                      FORK ttyutil.menu.itemhandler (x, init.y, width, svr?, itm!, out!)
+
+                      IF
+                        sel.item < 0
+                          --{{{  select this one
+                          SEQ
+                            sel.item := idx
+                            links[sel.item][in] ! select; TRUE
                           --}}}
                         TRUE
                           SKIP
@@ -482,6 +547,70 @@ PROC ttyutil.menu (VAL INT x, y, width, height, VAL BOOL border, CHAN TTYUTIL.ME
                     TRUE
                       SKIP
                 running := FALSE
+            --}}}
+            INT idx:
+            del.item; idx --{{{
+              IF
+                (idx < 0) OR (idx >= n.items)
+                  SKIP      -- item doesn't exist
+                NOT valid[idx]
+                  SKIP      -- invalid item
+                TRUE
+                  --{{{  remove item at idx, shuffle rest up
+                  SEQ
+                    links[idx][in] ! quit
+                    valid[idx] := FALSE
+
+                    IF
+                      sel.item = idx
+                        --{{{  unselect
+                        links[sel.item][in] ! select; FALSE
+                        --}}}
+                      TRUE
+                        SKIP
+                    --{{{  shuffle along
+                    IF
+                      idx < (n.items - 1)
+                        SEQ i = idx FOR (n.items - (idx + 1))
+                          INT niy:
+                          SEQ
+                            niy := (top.item + i)
+                            IF
+                              niy < height
+                                niy := niy + y
+                              TRUE
+                                niy := -1
+
+                            links[i] := links[i + 1]
+                            valid[i] := valid[i + 1]
+
+                            links[i][in] ! set.y; niy
+                      TRUE
+                        SKIP
+                    --}}}
+
+                    n.items := n.items - 1
+
+                    IF
+                      sel.item > idx
+                        -- will have moved down
+                        sel.item := sel.item - 1
+                      sel.item = idx
+                        -- new selection
+                        IF
+                          sel.item >= n.items
+                            SEQ
+                              sel.item := n.items - 1
+                              IF
+                                sel.item >= 0
+                                  links[sel.item][in] ! select; TRUE
+                                TRUE
+                                  SKIP
+                          TRUE
+                            SKIP
+                      TRUE
+                        SKIP
+                  --}}}
             --}}}
             INT key:
             key.in; key --{{{
