@@ -123,6 +123,7 @@ PROTOCOL TTYUTIL.MENU.IN
 PROTOCOL TTYUTIL.MENU.OUT
   CASE
     text; MOBILE []BYTE                       --* Text update for menu.
+    remove                                    --* Remove this item (self).
 :
 
 --* Menu item channel type.
@@ -136,6 +137,8 @@ CHAN TYPE TTYUTIL.MENUITEM
 PROTOCOL TTYUTIL.MENU
   CASE
     add.item; TTYUTIL.MENUITEM!               --* Add menu item.
+    insert.item; INT; TTYUTIL.MENUITEM!       --* Add menu item at a specific position.
+    del.item; INT                             --* Delete a particular item.
     quit                                      --* Shutdown menu.
 
     key.in; INT                               --* Incoming key press.
