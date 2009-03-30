@@ -1,6 +1,8 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
@@ -18,6 +20,7 @@ EXTRA_DIST = \
 	mrshadebob.occ \
 	mrtestprog.occ
 
+if BUILD_SDLRASTER_EXAMPLES
 examples = \
 	glenz \
 	imageviewer \
@@ -32,6 +35,7 @@ examples = \
 	starfield \
 	mrshadebob \
 	mrtestprog
+endif
 
 all-local: $(examples)
 

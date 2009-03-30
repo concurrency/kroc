@@ -2,6 +2,7 @@
  *	Type definitions for C scheduler and occam support
  *	Copyright (C) 1998 Jim Moores
  *	Modifications (C) 1999-2007 Fred Barnes <frmb@kent.ac.uk>
+ *	Modifications (C) 2007-2008 Carl Ritson <cgr@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -270,7 +271,7 @@ struct _sched_t {
 static inline void init_sched_t (sched_t *sched) {
 	int i;
 
-	for (i = 0; i < 16; ++i) {
+	for (i = 0; i < 32; ++i) {
 		sched->mdparam[i] = 0xffffffff;
 	}
 

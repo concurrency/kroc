@@ -581,7 +581,7 @@ PRIVATE const vti_keyword_t vti_keyword_table[] =
 	, {S_BAREXTEND, NULL, "BARRIER.EXTEND", NULL, NULL, DOPNODE, NONE}
 	, {S_NEW_BARRIER, NULL, NULL, "NEW_BARRIER", NULL, TYPENODE, NONE}
 	, {S_HIDDEN_TYPE, NULL, NULL, "HIDDENTYPE", NULL, NAMENODE, NONE}
-	, {S_TYPEHASHOF, NULL, NULL, "TYPEHASHOF", NULL, MOPNODE, NONE}
+	, {S_TYPEHASHOF, "TYPEHASHOF", NULL, "TYPEHASHOF", NULL, MOPNODE, CC}
 	, {S_ANYPROCTYPE, "MOBILE.PROC", NULL, "ANYPROCTYPE", NULL, LEAFNODE, CC}
 	, {S_ENROLL, "ENROLL", NULL, "ENROLL", NULL, NONODE, CC}
 	, {S_BUFFERED, "BUFFERED", NULL, "BUFFERED", NULL, TYPENODE, CC}
@@ -592,6 +592,14 @@ PRIVATE const vti_keyword_t vti_keyword_table[] =
 	, {S_ADDROF, "ADDROF", NULL, NULL, NULL, MOPNODE, CC}
 	, {S_HWADDROF, "HWADDROF", NULL, NULL, NULL, MOPNODE, CC}
 	, {S_ANYMOBILETYPE, "MOBILE.ANY", NULL, "ANYMOBILETYPE", NULL, LEAFNODE, CC}
+
+	, {S_UINT, "UINT", NULL, NULL, NULL, LEAFNODE, A}
+	, {S_UINT16, "UINT16", NULL, NULL, NULL, LEAFNODE, A}
+	, {S_UINT32, "UINT32", NULL, NULL, NULL, LEAFNODE, A}
+	, {S_UINT64, "UINT64", NULL, NULL, NULL, LEAFNODE, A}
+
+	, {S_DYNCALL, "DYNCALL", NULL, NULL, NULL, NONODE, CC}
+	, {S_TYPEHASHCHECK, "TYPEHASHCHECK", NULL, NULL, NULL, DOPNODE, CC}
 };
 
 #define MAX_TAG ((int)(sizeof(vti_keyword_table)/sizeof(vti_keyword_table[0])))
@@ -1196,8 +1204,8 @@ PRIVATE void printdecllist (FILE * const fptr, const int indent, treenode * n)
 }
 
 /*}}}*/
-/*{{{  PUBLIC void printexp(tptr)*/
-PUBLIC void printexp (FILE * const fptr, treenode * tptr)
+/*{{{  PUBLIC void printexp (FILE *const fptr, treenode *tptr)*/
+PUBLIC void printexp (FILE *const fptr, treenode *tptr)
 {
 	while (tptr != NULL)
 		switch (TagOf (tptr))
@@ -1222,6 +1230,7 @@ PUBLIC void printexp (FILE * const fptr, treenode * tptr)
 		case S_CLONE:
 		case S_ADDROF:
 		case S_HWADDROF:
+		case S_TYPEHASHOF:
 #endif
 			ptag (fptr, S_LPAREN);
 			ptag (fptr, TagOf (tptr));
@@ -1643,6 +1652,14 @@ PUBLIC void printtree (FILE * const fptr, int indent, treenode * n)
 			if (IForkedOf (n)) {
 				fprintf (fptr, " FORKED");
 			}
+			if (IDynmemOf (n)) {
+				fprintf (fptr, " DYNCALL");
+			}
+			if (IDynaddrOf (n)) {
+				fprintf (fptr, " AT");
+				printtree (fptr, indent + 2, IDynaddrOf (n));
+			}
+
 			indent += 2;
 			printtree (fptr, indent, INameOf (n));
 			n = IParamListOf (n);
@@ -1724,6 +1741,12 @@ PUBLIC void printtree (FILE * const fptr, int indent, treenode * n)
 					}
 					if (NPSuspendsOf (DNameOf (n))) {
 						fprintf (fptr, " (suspends)");
+					}
+					if (NPDyncallOf (DNameOf (n))) {
+						fprintf (fptr, " (dyncall)");
+					}
+					if (NFMCheckOf (DNameOf (n))) {
+						fprintf (fptr, " [fmcheck]");
 					}
 					break;
 				default:
@@ -1948,6 +1971,9 @@ PUBLIC void printtree (FILE * const fptr, int indent, treenode * n)
 							fprintf (fptr, "[~~] ");
 						}
 						break;
+					}
+					if (NFMCheckOf (n)) {
+						fprintf (fptr, "[fmcheck] ");
 					}
 					if (TagOf (n) == N_TAGDEF) {
 						fprintf (fptr, "[TV:%d] ", (int)NTValueOf (n));
@@ -2540,6 +2566,12 @@ PRIVATE void printsrcdecl (FILE * const fptr, const int indent, treenode * const
 		if (NPRecursiveOf (nptr)) {
 			fprintf (fptr, " (recursive)");
 		}
+		if (NPDyncallOf (nptr)) {
+			fprintf (fptr, " (dyncall)");
+		}
+		if (NFMCheckOf (nptr)) {
+			fprintf (fptr, " [fmcheck]");
+		}
 		printsrc (fptr, indent + 2, DValOf (tptr));
 		setsrcindent (fptr, indent);
 		fputs (":\n", fptr);
@@ -2662,6 +2694,9 @@ PRIVATE void printsrcdecl (FILE * const fptr, const int indent, treenode * const
 		}
 		if (NPRecursiveOf (nptr)) {
 			fprintf (fptr, " (recursive)");
+		}
+		if (NPDyncallOf (nptr)) {
+			fprintf (fptr, " (dyncall)");
 		}
 		printsrc (fptr, indent + 2, DValOf (tptr));
 		setsrcindent (fptr, indent);

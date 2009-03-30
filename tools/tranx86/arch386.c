@@ -2439,7 +2439,7 @@ static void compose_longop_i386 (tstate *ts, int sec)
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, 0, ARG_REG, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_RCL, 2, 1, ARG_CONST, 1, ARG_REG | ARG_IS8BIT, tmp_reg, ARG_REG | ARG_IS8BIT, tmp_reg));
 		constmap_remove (tmp_reg);
-		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
 		ts->stack->b_reg = tmp_reg;
 		break;
 		/*}}}*/
@@ -2458,7 +2458,7 @@ static void compose_longop_i386 (tstate *ts, int sec)
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_CONST, 0, ARG_REG, tmp_reg));
 		add_to_ins_chain (compose_ins (INS_RCL, 2, 1, ARG_CONST, 1, ARG_REG | ARG_IS8BIT, tmp_reg, ARG_REG | ARG_IS8BIT, tmp_reg));
 		constmap_remove (tmp_reg);
-		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 2, 0, ARG_REG, tmp_reg));
+		add_to_ins_chain (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, tmp_reg));
 		ts->stack->b_reg = tmp_reg;
 		break;
 		/*}}}*/
@@ -3305,7 +3305,7 @@ static void compose_entry_prolog_i386 (tstate *ts)
 	add_to_rtl_chain (trtl);
 
 	if (!(options.kernel_interface & KRNLIFACE_MP)) {
-		/* setup stack frame with EntryPointTable */
+		/*{{{  setup stack frame with EntryPointTable*/
 		int new_reg, tmp_reg2;
 
 		new_reg = tstack_newreg (ts->stack);
@@ -3339,9 +3339,26 @@ static void compose_entry_prolog_i386 (tstate *ts)
 		add_to_ins_chain (compose_ins (INS_MOVE, 1, 1, ARG_REG, REG_SPTR, ARG_REG, ts->stack->old_a_reg));
 		add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_CONST | ARG_ISCONST, KIFACE_TABLEOFFS_I386 << 2, ARG_REG, ts->stack->old_a_reg, ARG_REG, ts->stack->old_a_reg));
 		compose_kcall_i386 (ts, K_RTTHREADINIT, 1, 0);
+		/*}}}*/
 	}
 
 	compose_kcall_i386 (ts, K_PAUSE, 0, 0);
+	flush_ins_chain ();
+
+	return;
+}
+/*}}}*/
+/*{{{  static void compose_rmox_entry_prolog_i386 (tstate *ts, rmoxmode_e rmode)*/
+/*
+ *	generates the standard prologue code for an RMoX main module.
+ */
+static void compose_rmox_entry_prolog_i386 (tstate *ts, rmoxmode_e rmode)
+{
+	char sbuffer[128];
+
+	sprintf (sbuffer, "RMoX entry prolog for mode %d", (int)rmode);
+	add_to_ins_chain (compose_ins (INS_ANNO, 1, 0, ARG_TEXT, string_dup (sbuffer)));
+
 	flush_ins_chain ();
 
 	return;
@@ -3865,6 +3882,7 @@ arch_t *init_arch_i386 (int mclass)
 	arch->compose_cif_call = compose_cif_call_i386;
 
 	arch->compose_entry_prolog = compose_entry_prolog_i386;
+	arch->compose_rmox_entry_prolog = compose_rmox_entry_prolog_i386;
 	arch->compose_fp_set_fround = compose_fp_set_fround_i386;
 	arch->compose_fp_init = compose_fp_init_i386;
 	arch->compose_reset_fregs = compose_reset_fregs_i386;

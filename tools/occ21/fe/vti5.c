@@ -844,6 +844,9 @@ PUBLIC void xml_printtree (FILE *const fptr, int indent, treenode *n)
 			if (IRecursiveOf (n)) {
 				fprintf (fptr, " recursive=\"true\"");
 			}
+			if (IDynmemOf (n)) {
+				fprintf (fptr, " dynmem=\"true\"");
+			}
 			fprintf (fptr, ">\n");
 
 			xml_printtree (fptr, indent + 1, INameOf (n));

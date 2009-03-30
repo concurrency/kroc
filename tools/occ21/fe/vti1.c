@@ -237,27 +237,29 @@ PUBLIC void *memalloc (const size_t size)
 	if (size > 500 || size == 0) {
 		large_malloc += size;
 		DEBUG_MSG (("memalloc(%d), ", size));
-	} else
+	} else {
 		small_malloc += size;
+	}
 #ifdef IMS
 	/* the word below the pointer returned by malloc contains the
 	   length actually allocated
 	 */
-	if (p != NULL)
+	if (p != NULL) {
 		total_malloc += ((int *) p)[-1];
+	}
 #endif
 #endif
 	/*}}} */
-	if (size == 0)
+	if (size == 0) {
 		err_abort ("memalloc");
-	if (p == NULL)
+	}
+	if (p == NULL) {
 		/*{{{  error */
-	{
 		DEBUG_MSG (("memalloc: malloc of %d bytes returned NULL\n", size));
 		/*vtiabort(VTI_OUT_OF_SPACE, vti_locn_ptr == NULL ? NOPOSN : *vti_locn_ptr); */
 		msg_out (SEV_ABORT, ANY_MODULE, ANY_OUT_OF_SPACE, vti_locn_ptr == NULL ? NOPOSN : *vti_locn_ptr);
+		/*}}} */
 	}
-	/*}}} */
 	return p;
 }
 
@@ -988,8 +990,7 @@ newhiddenparamnode (const int t, const SOURCEPOSN ln, treenode * const e, const 
 #endif
 /*}}}*/
 /*{{{  treenode *newinstancenode (t, ln, n, p)*/
-treenode *
-newinstancenode (const int t, const SOURCEPOSN ln, treenode * const n, treenode * const p)
+treenode *newinstancenode (const int t, const SOURCEPOSN ln, treenode * const n, treenode * const p)
 {
 	treenode *nptr = (treenode *) newvec (TREENODEBASE + sizeof (struct instancenode_s));
 	checknodetype (t, INSTANCENODE);
@@ -1004,6 +1005,8 @@ newinstancenode (const int t, const SOURCEPOSN ln, treenode * const n, treenode 
 	SetIRecursive (nptr, 0);
 	SetIFork (nptr, 0);
 	SetIForked (nptr, 0);
+	SetIDynmem (nptr, 0);
+	SetIDynaddr (nptr, NULL);
 	SetIRPSlots (nptr, 0);
 #ifdef MOBILES
 	SetIRMSPOffset (nptr, 0);
@@ -1124,6 +1127,7 @@ PUBLIC treenode *newnamenode (const int tag, const SOURCEPOSN ln, wordnode * con
 	SetNTypeAttr (nptr, 0);
 /*SetNChecker(nptr, NULL);*//* done automatically by the copy of the static variable */
 	SetNUndef (nptr, NULL);
+	SetNFMCheck (nptr, NULL);
 
 	/* specific initialisation for Vars, PROCs etc: */
 	switch (nametypeoftag (tag)) {	/* This tells us which part of the union is relevant */
@@ -1140,6 +1144,7 @@ PUBLIC treenode *newnamenode (const int tag, const SOURCEPOSN ln, wordnode * con
 		SetNPRecursive (nptr, 0);
 		SetNPForks (nptr, 0);
 		SetNPSuspends (nptr, 0);
+		SetNPDyncall (nptr, 0);
 		break;
 	default:
 		break;

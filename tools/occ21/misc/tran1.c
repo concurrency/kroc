@@ -501,6 +501,10 @@ PRIVATE void trans_constructor_assign (treenode ** tptr)
 #endif
 	int subscript;
 
+#if 0
+fprintf (stderr, "trans_constructor_assign(): *tptr =");
+printtreenl (stderr, 4, *tptr);
+#endif
 	/*if (!issimplelocal(lhs, trans_lexlevel)) */
 	if (!issimplelocal (lhs, trans_lexlevel) && !islocal (lhs, trans_lexlevel))
 		tptr = create_local_abbreviation (&lhs, tptr);
@@ -538,6 +542,9 @@ PRIVATE void trans_constructor_assign (treenode ** tptr)
 
 	freenode (&rhs);
 	freenode (&ass);
+#if 0
+fprintf (stderr, "trans_constructor_assign(): returning!\n");
+#endif
 }
 
 /*}}}  */
@@ -3057,46 +3064,50 @@ printtreenl (stderr, 4, result);
 			}
 			break;
 			/*}}}  */
-			/*{{{  CONSTRUCTOR */
-		case LITNODE:	/* S_CONSTRUCTOR */
-			if (is_sub_expression && trans_params->abbr_constructors && !no_anonymous_vars) {	/* bug TS/1455 5/11/91 */
-				treenode *name;
-				/* we must run trans on the sub-expressions _after_
-				   structuring the assignments. */
+			/*{{{  literal nodes */
+		case LITNODE:
+			if (TagOf (t) == S_CONSTRUCTOR) {
+				/*{{{  constructor simplification*/
+				if (is_sub_expression && trans_params->abbr_constructors && !no_anonymous_vars) {	/* bug TS/1455 5/11/91 */
+					treenode *name;
+					/* we must run trans on the sub-expressions _after_
+					   structuring the assignments. */
 /*sub_transexp(OpAddr(t), FALSE); *//* will be a major expression of the abbr */
 
-				name = create_abbreviation (t, TRUE);
-				create_initialised_constructor (name);	/* bug TS/1263 11/05/92 */
+					name = create_abbreviation (t, TRUE);
+					create_initialised_constructor (name);	/* bug TS/1263 11/05/92 */
 
 #ifdef OCCAM2_5
-				/* This can't happen - it is impossible for the abbreviation
-				   to overwrite the node, because the abbreviation must precede the
-				   whole process/expression.
-				   NOT TRUE: it can now happen when a constructor is listed
-				   as the result of a VALOF.
-				 */
-				if (*tptr == t)	/* the abbreviation has not overwritten this node */
-					*tptr = name;
-				else {
-					/* we have transformed the current node from 'expression' into
-					   VAL name IS expression :
-					   VALOF
-					   SKIP
-					   RESULT expression
-					   We now need to overwrite the 'expression' in result list
-					   with the name of the abbreviation.
+					/* This can't happen - it is impossible for the abbreviation
+					   to overwrite the node, because the abbreviation must precede the
+					   whole process/expression.
+					   NOT TRUE: it can now happen when a constructor is listed
+					   as the result of a VALOF.
 					 */
-					treenode *const resultlist = VLResultListOf (skipspecifications (*tptr));
-					/*fprintf(outfile, "sub_transexp: trans const -> VALOF at trans_locn:%d\n", trans_locn); */
-					NewItem (name, resultlist);
-				}
+					if (*tptr == t)	{ /* the abbreviation has not overwritten this node */
+						*tptr = name;
+					} else {
+						/* we have transformed the current node from 'expression' into
+						   VAL name IS expression :
+						   VALOF
+						   SKIP
+						   RESULT expression
+						   We now need to overwrite the 'expression' in result list
+						   with the name of the abbreviation.
+						 */
+						treenode *const resultlist = VLResultListOf (skipspecifications (*tptr));
+						/*fprintf(outfile, "sub_transexp: trans const -> VALOF at trans_locn:%d\n", trans_locn); */
+						NewItem (name, resultlist);
+					}
 #else
-				*tptr = name;
+					*tptr = name;
 #endif
 
-				trans (DValAddr (NDeclOf (name)));	/* run this _after_ restructuring */
+					trans (DValAddr (NDeclOf (name)));	/* run this _after_ restructuring */
 
-				return;
+					return;
+				}
+				/*}}}*/
 			}
 			tptr = LitExpAddr (t);
 			break;
@@ -3338,11 +3349,11 @@ printtreenl (stderr, 4, *tptr);
 
 /*}}}  */
 /*{{{  PRIVATE void transexp (treenode **const tptr, const BOOL is_sub_expression) */
-PRIVATE void transexp (treenode **const tptr, const BOOL is_sub_expression)
 /* This simply calls sub_transexp, and folds the resulting expression tree,
    incase any functions have been in-lined, which provide opportunities for
    constant propagation.
 */
+PRIVATE void transexp (treenode **const tptr, const BOOL is_sub_expression)
 {
 #if 0
 fprintf (stderr, "tran2: transexp (enter): *tptr = ");
@@ -3458,6 +3469,10 @@ printtreenl (stderr, 4, prot);
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 		case S_ARRAY:		/* fixed-size array here */
@@ -3664,13 +3679,17 @@ printtreenl (stderr, 4, c_temp);
 			}
 			break;
 			/*}}}*/
-			/*{{{  S_BOOL S_BYTE S_INT S_INT16 S_INT32 S_INT64 S_REAL32 S_REAL64  break*/
+			/*{{{  S_BOOL S_BYTE S_INT S_INT16 S_INT32 S_INT64 S_UINT S_INT16 S_UINT32 S_UINT64 S_REAL32 S_REAL64  break*/
 		case S_BOOL:
 		case S_BYTE:
 		case S_INT:
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 			{
@@ -3803,13 +3822,17 @@ printtreenl (stderr, 4, n_temp);
 #endif
 
 	switch (TagOf (protocol)) {
-		/*{{{  BOOL BYTE INT INT16 INT32 INT64 REAL32 REAL64 ARRAY  break*/
+		/*{{{  BOOL BYTE INT INT16 INT32 INT64 UINT UINT16 UINT32 UINT64 REAL32 REAL64 ARRAY  break*/
 	case S_BOOL:
 	case S_BYTE:
 	case S_INT:
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_ARRAY:		/* fixed-size array here */
@@ -4685,6 +4708,9 @@ printtreenl (stderr, 4, LeafLinkOf (t));
 					}
 #endif
 					transexp (IParamListAddr (t), TRUE);	/* do params first */
+					if (IDynaddrOf (t)) {
+						transexp (IDynaddrAddr (t), TRUE);
+					}
 					/* added for bug TS/1530 11/12/91 */
 					while (isspecification (*tptr))	{
 						/* incase anon vars have been added */
@@ -4795,6 +4821,20 @@ printtreenl (stderr, 4, *tptr);
 fprintf (stderr, "did trans_suspended_instance, *tptr now: ");
 printtreenl (stderr, 4, *tptr);
 #endif
+				}
+
+				/* check for instance of something that must be called dynamically */
+				if (NPDyncallOf (name)) {
+#if 0
+fprintf (stderr, "trans: instance of NPDyncall thing, t =");
+printtreenl (stderr, 4, t);
+#endif
+					switch (tag) {
+					case S_PINSTANCE:
+					case S_FINSTANCE:
+						SetIDynmem (t, 1);
+						break;
+					}
 				}
 			}
 			going = FALSE;

@@ -1,0 +1,59 @@
+--
+--	Trap basic functionality test
+--	Copyright (C) 2008, 2009 Adam Sampson <ats@offog.org>
+--
+--	This program is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this program.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+#INCLUDE "trap.module"
+#INCLUDE "course.module"
+#INCLUDE "useful.module"
+
+PROC main (SHARED CHAN BYTE out!)
+  VAL INT NODES IS 20:
+  VAL INT PORTS IS 50:
+
+  PROC worker (SHARED TRAP.CT! trap, VAL INT my.node, my.port)
+    TRAP.CHANNEL.CT? chan:
+    INITIAL INT seed IS ((my.node * PORTS) + my.port) << 2:
+    SEQ
+      trap.open (trap, my.port, chan)
+      PAR
+        --{{{  send
+        WHILE TRUE
+          INT dest.node, dest.port:
+          MOBILE []BYTE data:
+          SEQ
+            dest.node, seed := random (NODES, seed)
+            dest.port, seed := random (PORTS, seed)
+            format.sisi ("Hello from ", my.node, ":", my.port, data)
+            prints.isin (my.node, " -> ", dest.node, out!)
+            trap.send (trap, dest.node, dest.port, data)
+        --}}}
+        --{{{  receive
+        WHILE TRUE
+          MOBILE []BYTE data:
+          SEQ
+            chan[msg] ? data
+            prints.sissn ("  ", (my.node * 1000) + my.port, " <- ", data, out!)
+        --}}}
+  :
+
+  PAR node = 0 FOR NODES
+    SHARED TRAP.CT! trap:
+    SEQ
+      trap.start (node, trap)
+      PAR port = 0 FOR PORTS
+        worker (trap, node, port)
+:

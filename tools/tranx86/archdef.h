@@ -97,6 +97,7 @@ typedef struct TAG_arch_t {
 	void (*compose_cif_call)(tstate *, int,char *, ins_chain **, ins_chain **);		/* state, inlined, name, ret-1st-instr, ret-last-instr */
 
 	void (*compose_entry_prolog)(tstate *);						/* state */
+	void (*compose_rmox_entry_prolog)(tstate *, rmoxmode_e);			/* state, RMoX mode */
 	void (*compose_fp_set_fround)(tstate *, int);					/* state, mode */
 	void (*compose_fp_init)(tstate *);						/* state */
 	void (*compose_reset_fregs)(tstate *);						/* state */

@@ -58,7 +58,7 @@ PROC stickmonitor(CHAN STICK stick!, CHAN BYTE kyb?,  err!)
             button.values[i] := tmp
             --out.int((INT button.values[i]), 0, err!)
             --out.string(", ",0,err!) 
-        out.string("*n ",0,err!) 
+        -- out.string("*n ",0,err!) 
         stick ! buttons; button.values
         ALT
           BYTE tmp:
@@ -95,7 +95,7 @@ PROC stickprinter(CHAN STICK stick?, CHAN BYTE scr!)
             SEQ
               out.int((INT button.values[i]), 0, scr!)
               out.string(", ",0,scr!) 
-          out.string("*n",0,scr!) 
+          out.string("*c",0,scr!) 
       quit
         run := FALSE
 :

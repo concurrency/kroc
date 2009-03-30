@@ -1,6 +1,7 @@
 # Process this file with automake to produce Makefile.in
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 # The ordering here is significant, owing to dependencies between modules.
 SUBDIRS = \
@@ -20,4 +21,4 @@ dist_man3_MANS = \
 	libstring-inmos.3
 
 EXTRA_DIST = \
-	README.ims
+	README

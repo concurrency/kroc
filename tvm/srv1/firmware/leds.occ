@@ -1,0 +1,50 @@
+#INCLUDE "defBF537.inc"
+#INCLUDE "srv1.inc"
+
+PROTOCOL P.LED
+  CASE
+    disconnected  = 0
+    led           = 1; INT; BOOL
+:
+
+PROC leds (CHAN P.LED in?)
+  PLACED [PORTGIO.LEN]INT16 port.g.io PORTGIO.ADDR:
+  INITIAL [2]BOOL status IS [FALSE, FALSE]:
+  SEQ
+    -- Setup LED ports
+    safe.set.register.16(port.g.io[PORTGIO.DIR], #0300, 0)
+    -- Turn off LEDs
+    port.g.io[PORTGIO.SET] := #0300
+    
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      INITIAL INT clear IS 0:
+      INITIAL INT set IS 0:
+      SEQ
+        in ? CASE
+          disconnected
+            done := TRUE
+          INT i:
+          BOOL b:
+          led; i; b
+            IF
+              (i > 0) AND (i <= (SIZE status))
+                status[i - 1] := b
+              TRUE
+                SKIP
+
+        SEQ i = 0 FOR SIZE status
+          VAL INT bit IS (1 << (i + 8)):
+          IF
+            status[i]
+              clear := clear \/ bit
+            TRUE
+              set := set \/ bit
+        
+        port.g.io[PORTGIO.CLEAR]  := INT16 clear
+        port.g.io[PORTGIO.SET]    := INT16 set
+
+    -- Turn off LEDs
+    port.g.io[PORTGIO.SET] := #0300
+:
+

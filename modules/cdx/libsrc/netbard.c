@@ -26,7 +26,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
 
 void die(const char *msg, const char *err) {
 	fprintf(stderr, "%s%s%s\n",

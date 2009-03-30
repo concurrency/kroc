@@ -171,6 +171,13 @@
 
 #define SYN_E_TYPE 238
 
+/*{{{  dynamic proc call and related syntax errors*/
+#define SYN_E_DYNCALL_PROCCALL 239
+#define SYN_E_DYNCALL_PROCPARAMS 240
+#define SYN_E_TYPEHASH 241
+
+/*}}}*/
+
 /* These were used by a very early version of the configurer: */
 /*#define SYN_INVALID_SET_ITEM      250*/
 /*#define SYN_E_LINK_DEL            251*/

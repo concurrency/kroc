@@ -58,14 +58,14 @@ typedef struct _ccsp_sched_t {
 #undef _PACK_STRUCT
 
 #if defined(USE_TLS)
-extern __thread	ccsp_sched_t 	*_ccsp_scheduler;
-#define ccsp_scheduler		_ccsp_scheduler
+  extern __thread	ccsp_sched_t 	*_ccsp_scheduler;
+  #define ccsp_scheduler		_ccsp_scheduler
 #elif defined(ENABLE_MP)
-ccsp_sched_t 			*local_scheduler (void);
-#define ccsp_scheduler		(local_scheduler ())
+  ccsp_sched_t 				*local_scheduler (void);
+  #define ccsp_scheduler		(local_scheduler ())
 #else
-extern ccsp_sched_t		*_ccsp_scheduler;
-#define ccsp_scheduler		_ccsp_scheduler
+  extern ccsp_sched_t			*_ccsp_scheduler;
+  #define ccsp_scheduler		_ccsp_scheduler
 #endif
 
 extern void			**_ccsp_calltable;

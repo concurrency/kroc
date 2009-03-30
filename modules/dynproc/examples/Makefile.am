@@ -3,6 +3,7 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 
@@ -22,6 +23,7 @@ EXTRA_DIST = \
 	testpump.occ \
 	testsuspend.occ
 
+if BUILD_DYNPROC_EXAMPLES
 examples = \
 	primes \
 	testdyn \
@@ -38,6 +40,7 @@ dynprocs = \
 	suspendable.so \
 	crashlib.so
 endif
+endif
 
 all-local: $(examples) $(dynprocs)
 
@@ -51,4 +54,7 @@ SUFFIXES = .occ .tce .so
 	$(OCCBUILD) --program $<
 
 .occ.so:
-	$(KROC) -l $<
+	$(OCCBUILD) --object $<
+	$(OCCBUILD) --library $*.lib $*.tce
+	mv liboccam_$*.so $@
+	$(OCCBUILD) --clean $*.tce $*.lib

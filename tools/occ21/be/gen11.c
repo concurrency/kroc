@@ -542,6 +542,7 @@ PRIVATE void endianadjustpointer (treenode *const nptr)
 		case S_BYTE:
 		case S_BOOL:
 		case S_INT16:
+		case S_UINT16:
 			if (target_bigendian) {
 				adjust = bytesperword - bytesinscalar (type);
 			}
@@ -832,7 +833,6 @@ PRIVATE void gendynmobilearraycreate (treenode *const dest, treenode *const src,
 	treenode *had_temp = NULL;
 	treenode *basetype = NULL;
 	int basebytes = 0;
-	int skiplab = newlab ();
 
 	gencomment0 ("{{{  gendynmobilearraycreate");
 	/* maybe free dest */
@@ -858,8 +858,7 @@ printtreenl (stderr, 4, dest);
 		genprimary (I_LDC, 0);
 	} else {
 		texp (ARDimLengthOf (src), regs);
-		gensecondary (I_DUP);
-		genbranch (I_CJ, skiplab);
+		/* do not skip anymore, allocate zero-length mobiles arrays as real */
 	}
 
 	if (dynchan) {
@@ -920,14 +919,17 @@ printtreenl (stderr, 4, dest);
 					shift 		= 0;
 					break;
 				case S_INT16:
+				case S_UINT16:
 					i_type 		= MT_NUM_INT16;
 					shift 		= 1;
 					break;
 				case S_INT32:
+				case S_UINT32:
 					i_type	 	= MT_NUM_INT32;
 					shift 		= 2;
 					break;
 				case S_INT64:
+				case S_UINT64:
 					i_type 		= MT_NUM_INT64;
 					shift 		= 3;
 					break;
@@ -940,6 +942,7 @@ printtreenl (stderr, 4, dest);
 					shift		= 3;
 					break;
 				case S_INT:
+				case S_UINT:
 					switch (WSH) {
 						case 0: i_type = MT_NUM_BYTE; break;
 						case 1: i_type = MT_NUM_INT16; break;
@@ -1272,7 +1275,6 @@ fprintf (stderr, "src (presumably something which we need to evaluate) =");
 printtreenl (stderr, 4, src);
 #endif
 	if (!empty) {
-		setlab (skiplab);
 		throw_the_result_away ();
 	}
 
@@ -2486,6 +2488,12 @@ fprintf (stderr, "gen11: loadhiddentypeof(): dynmobileproctype: type =");
 printtreenl (stderr, 4, type);
 #endif
 		loadconstant (typehash (NTypeOf (MTypeOf (type))));
+	} else {
+#if 0
+fprintf (stderr, "gen11: loadhiddentypeof(): non-mobile type:");
+printtreenl (stderr, 4, type);
+#endif
+		loadconstant (typehash (type));
 	}
 	return;
 }
@@ -2572,7 +2580,7 @@ PRIVATE void mapanychantypeassign (treenode **const dest, treenode **const src, 
 /*
  *	generates code to assign from/to a MOBILE.CHAN
  */
-PRIVATE void genanychantypeassign (treenode *const dest, treenode *const src, int regs)
+PRIVATE void genanychantypeassign (treenode *const dest, treenode *const src, int regs, treenode *action)
 {
 	const BOOL dutagged = (TagOf (dest) == S_UNDEFINED);
 	const BOOL sutagged = (TagOf (src) == S_UNDEFINED);
@@ -2602,6 +2610,10 @@ printtreenl (stderr, 4, gettype_main_orig (rsrc));
 		storehiddentypeof (rdest, (regs == MANY_REGS) ? (MAXREGS - 1) : (regs - 1));
 	} else {
 		int skiplab = newlab ();
+
+		if (action) {
+			new_occam_line (action, TRUE, TRUE, FALSE);
+		}
 
 		/* need to check it's the correct type */
 		if (stype != S_ANYCHANTYPE) {
@@ -3038,7 +3050,7 @@ fprintf (stderr, "gen11: movearrayitem (word = %d, regs = %d, dirn = %s), tptr =
 printtreenl (stderr, 4, tptr);
 #endif
 	if ((dirn != MOVEDIRN_LOADPTR) && !use_shortintops &&	/* T9000 shorts 17/7/91 */
-	    (type == S_INT16) && (targetintsize != S_INT16)) {
+	    ((type == S_INT16) || (type == S_UINT16)) && (targetintsize != S_INT16)) {
 		badtag (genlocn, type, "movearrayitem");
 	} else {
 		if (((dirn & (MOVEDIRN_LOADEXT | MOVEDIRN_LOAD)) != 0) && directload (P_EXP, tptr, be_lexlevel)) {
@@ -3885,8 +3897,9 @@ fprintf (stderr, "mapsimpleassign(): going recursive at 1\n");
 			mapmoveqopd (destmode, dest, sourcemode, source);
 			break;
 			/*}}} */
-			/*{{{  INT16 on 32-bit machine */
+			/*{{{  INT16/UINT16 on 32-bit machine */
 		case S_INT16:
+		case S_UINT16:
 			if (isaddressableopd (sourcemode, *source) || isconstopd (sourcemode, *source)) {
 				const BOOL needtempdest = needtemptoload (destmode, *dest);
 				const BOOL notconst = !isconstopd (sourcemode, *source);
@@ -4373,9 +4386,9 @@ printtreenl (stderr, 4, sourcetype);
 #endif
 
 		if (!source_devaccess && !dest_devaccess && ((b == 1) || ((b == bytesperword) &&
-			check_aligned (source, (int) b) && check_aligned (dest, (int) b))
-			|| ((b < bytesperword) && (b == 2) && use_shortintops &&	/* T9000 shorts 17/7/91 */
-			check_aligned (source, (int) b) && check_aligned (dest, (int) b)))) {
+				check_aligned (source, (int) b) && check_aligned (dest, (int) b))
+				|| ((b < bytesperword) && (b == 2) && use_shortintops &&	/* T9000 shorts 17/7/91 */
+				check_aligned (source, (int) b) && check_aligned (dest, (int) b)))) {
 			/*{{{  can be optimised to a load and a store */
 
 			const int size_tag = (b == 1) ? S_BYTE : (b == 2) ? S_INT16 : targetintsize;
@@ -4629,7 +4642,7 @@ fprintf (stderr, "tsimpleassign: MOBILE := MOBILE assignment\n");
 			/*}}}*/
 		} else if (ntypeof (source) == S_ANYCHANTYPE) {
 			/*{{{  assignment from MOBILE.CHAN to regular mobile-chan (return)*/
-			genanychantypeassign (dest, source, regs);
+			genanychantypeassign (dest, source, regs, dest);
 			return;
 			/*}}}*/
 		} else if (ntypeof (source) == S_ANYPROCTYPE) {
@@ -4643,7 +4656,7 @@ fprintf (stderr, "tsimpleassign: MOBILE := MOBILE assignment\n");
 		}
 	} else if (ntypeof (dest) == S_ANYCHANTYPE) {
 		/*{{{  assignment to MOBILE.CHAN  (return)*/
-		genanychantypeassign (dest, source, regs);
+		genanychantypeassign (dest, source, regs, dest);
 		return;
 		/*}}}*/
 	} else if (ntypeof (dest) == S_ANYPROCTYPE) {
@@ -4805,8 +4818,9 @@ fprintf (stderr, "  gen11: tsimpleassign: array source is in IOSPACE\n");
 			movepointer (MOVEDIRN_STORE, I_STNL, 0, type, NULL, dest_devaccess);
 			break;
 			/*}}} */
-			/*{{{  INT16 on 32-bit machine */
+			/*{{{  INT16/UINT16 on 32-bit machine */
 		case S_INT16:	/* we must be on a 32-bit machine */
+		case S_UINT16:
 			if (use_shortintops) {	/* T9000 shorts 17/7/91 *//* equivalent code to BYTE etc */
 				destmode = ptrmodeof (destmode);
 				tload2regs (sourcemode, source, destmode, dest, FALSE, FALSE);

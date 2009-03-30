@@ -50,6 +50,7 @@ typedef enum {
 	RTL_WSVS = 23,			/* wsvs */
 	RTL_CODEMAP = 24,		/* codemap */
 	RTL_PUBLICENDNAMEDLABEL = 25,	/* label_name */
+	RTL_DYNCODEENTRY = 26		/* dyncode */
 } rtl_t;
 
 /* forwards */
@@ -91,6 +92,14 @@ typedef struct TAG_rtl_chain {
 		struct {
 			struct TAG_procinf *pinf;
 		} codemap;
+		struct {
+			char *label_name;
+			char *fcn_name;
+			int ws_slots;
+			int vs_slots;
+			unsigned int typehash;
+			rmoxmode_e rmoxmode;
+		} dyncode;
 		char *label_name;
 		char *stub_name;
 	} u;
@@ -277,6 +286,7 @@ typedef struct TAG_ins_arg {
 #define ArgConst(X)	((X)->regconst)
 #define ArgCC(X)	ArgConst(X)
 #define ArgLabel(X)	((X)->regconst)
+#define ArgFLabel(X)	((X)->regconst)
 #define ArgName(X)	(char *)((X)->regconst)
 #define ArgDisp(X)	((X)->disp)
 #define ArgHasDisp(X)	((X)->flags & ARG_DISP)

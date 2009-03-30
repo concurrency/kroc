@@ -31,8 +31,8 @@
 
 #INCLUDE "course.module"
 #INCLUDE "sdlraster.module"
+#INCLUDE "rastergraphics.module"
 
-#INCLUDE "graphics.inc"
 #INCLUDE "hit.inc"
 
 --*{ BUTTON Mouse buttons
@@ -122,7 +122,7 @@ PROC Source (VAL INT delay, CHAN RASTER in?, out!)
         tim ? AFTER t
         in ? raster
         clear.raster (raster, #000000)
-        Rectangle (5, 5, 10, 10, c, raster)	-- tell-tail
+        fill.rectangle (5, 5, 10, 10, c, raster)	-- tell-tail
         c := (COLOUR.RED + COLOUR.GREEN) - c
         out ! raster
 :
@@ -139,22 +139,22 @@ PROC Scene (CHAN RASTER in?, out!)
     SEQ
       in ? raster
 
-      Disc (200, 200, 150, FOREGROUND, raster)
-      Disc (200, 200, 100, BACKGROUND, raster)
-      Rectangle (175, 200, 50, 200, BACKGROUND, raster)
+      fill.circle (200, 200, 150, FOREGROUND, raster)
+      fill.circle (200, 200, 100, BACKGROUND, raster)
+      fill.rectangle (175, 200, 50, 200, BACKGROUND, raster)
 
-      Rectangle (500, 200, 400, 300, FOREGROUND, raster)
-      Rectangle (550, 200, 100, 250, BACKGROUND, raster)
-      Rectangle (600, 350, 200, 100, BACKGROUND, raster)
-      Rectangle (800, 250,  50, 200, BACKGROUND, raster)
-      Rectangle (700, 250, 100,  50, BACKGROUND, raster)
-      Rectangle (700, 200,  50,  50, BACKGROUND, raster)
+      fill.rectangle (500, 200, 400, 300, FOREGROUND, raster)
+      fill.rectangle (550, 200, 100, 250, BACKGROUND, raster)
+      fill.rectangle (600, 350, 200, 100, BACKGROUND, raster)
+      fill.rectangle (800, 250,  50, 200, BACKGROUND, raster)
+      fill.rectangle (700, 250, 100,  50, BACKGROUND, raster)
+      fill.rectangle (700, 200,  50,  50, BACKGROUND, raster)
 
-      Rectangle (  0, 450, 350,  50, FOREGROUND, raster)
-      Disc (350, 475, 50, FOREGROUND, raster)
+      fill.rectangle (  0, 450, 350,  50, FOREGROUND, raster)
+      fill.circle (350, 475, 50, FOREGROUND, raster)
 
-      Disc (WIDTH, 0, 150, FOREGROUND, raster)
-      Disc (WIDTH, 0, 100, BACKGROUND, raster)
+      fill.circle (WIDTH, 0, 150, FOREGROUND, raster)
+      fill.circle (WIDTH, 0, 100, BACKGROUND, raster)
 
       out ! raster
 :
@@ -215,24 +215,24 @@ PROC Drone (CHAN UPDATE update?, CHAN INFO info!, CHAN RASTER in?, out!)
         SEQ
 
           in ? raster
-          Disc (x, y, RADIUS, FOREGROUND, raster)	-- mark as target
+          fill.circle (x, y, RADIUS, FOREGROUND, raster)	-- mark as target
           out ! raster
 
           in ? raster
-          Disc (x, y, RADIUS, BACKGROUND, raster)	-- unmark self
+          fill.circle (x, y, RADIUS, BACKGROUND, raster)	-- unmark self
           Fan (x, y, RANGE, theta, ANGLE.RIGHT / 2,
                FOREGROUND, COLOUR.YELLOW, ranges, raster)
-          Disc (x, y, RADIUS, FOREGROUND, raster)	-- mark again
+          fill.circle (x, y, RADIUS, FOREGROUND, raster)	-- mark again
           out ! raster
 
           in ? raster
-          Disc (x, y, RADIUS, colour, raster)
+          fill.circle (x, y, RADIUS, colour, raster)
           hit := Hit (x, y, RADIUS, FOREGROUND, raster)
           IF
             hit
               SEQ
-                Disc (x, y, RADIUS - 3, COLOUR.BLACK, raster)
-                Disc (x, y, RADIUS - 6, COLOUR.WHITE, raster)
+                fill.circle (x, y, RADIUS - 3, COLOUR.BLACK, raster)
+                fill.circle (x, y, RADIUS - 6, COLOUR.WHITE, raster)
             TRUE
               SKIP
           out ! raster
@@ -243,7 +243,7 @@ PROC Drone (CHAN UPDATE update?, CHAN INFO info!, CHAN RASTER in?, out!)
             TRUE
               SKIP
           theta := theta PLUS w
-          d.x, d.y := Cordic (v, 0, theta)
+          d.x, d.y := CORDIC (v, 0, theta)
           x, y := x + d.x, y + d.y
           info ! ranges
 

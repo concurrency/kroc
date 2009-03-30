@@ -420,6 +420,12 @@ PUBLIC const char *synmessagestring (const int n)
 		return "chan-type direction specifier";
 		/*}}}*/
 		/*{{{  frmb: other stuff*/
+	case SYN_E_DYNCALL_PROCCALL:
+		return "procedure call";
+	case SYN_E_DYNCALL_PROCPARAMS:
+		return "procedure parameters";
+	case SYN_E_TYPEHASH:
+		return "type-hash";
 	case SYN_REC_TYPE_NOT_MOBILE:
 		return "recursive channel-type must be MOBILE";
 	case SYN_UNEXPECTED_CHANDIR:
@@ -1160,6 +1166,10 @@ PUBLIC const char *chkmessagestring (const int n)
 		return ("missing type for parameter");
 	case CHK_ANYMOBILETYPE_MISMATCH:
 		return ("can only communicate mobiles on a CHAN OF MOBILE.ANY");
+	case CHK_CALLAT_NOT_DYNAMIC:
+		return ("cannot call non-dynamic PROC %s at specified address");
+	case CHK_BAD_DYNCALL_TYPE:
+		return ("%s cannot be exported as a dynamic call");
 		/*}}}*/
 		/*{{{  buffered channel errors*/
 	case CHK_BUFCHAN_NOTCONST:
@@ -1335,6 +1345,10 @@ PUBLIC const char *usemessagestring (const int n)
 		return ("cannot move extended barrier `%s\'");
 	case USE_UNEXPECTED_CHAN_DIR:
 		return ("unexpected channel-direction specifier");
+	case USE_DUPLICATE_TAG_IN_MERGE:
+		return ("cannot merge tagged protocols, duplicate tag `%s\'");
+	case USE_FM_NO_CHANTYPE:
+		return ("collated protocol for channel type `%s\' not found");
 	default:
 		return (NULL);
 	}

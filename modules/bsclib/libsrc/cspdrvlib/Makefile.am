@@ -10,8 +10,10 @@ CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 
 EXTRA_DIST = \
 	cspdrvc.c \
+	cspdrvc.h \
 	cspdrvlib.inc \
-	cspdrvlib.occ
+	cspdrvlib.occ \
+	cspioctl.h
 
 cspdrv_lib_objs = \
 	cspdrvc.o \

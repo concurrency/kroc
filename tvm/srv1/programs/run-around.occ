@@ -1,0 +1,41 @@
+#INCLUDE "external_srv_ffi_pragmas.occ"
+
+VAL INT MILLIS IS 1:
+VAL INT SECONDS IS (1000 * MILLIS):
+
+PROC delay.millis(VAL INT milli)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS (milli * MILLIS)
+:
+
+
+PROC delay.seconds (VAL INT sec)
+  delay.millis(sec * SECONDS)
+:
+
+PROC flash.lasers()
+  WHILE TRUE
+    SEQ
+      ffi.lasers.on()
+      delay.seconds(1)
+      ffi.lasers.off()
+      delay.seconds(1)
+:
+ 
+PROC drive.around()
+  WHILE TRUE
+    SEQ
+      ffi.setPWM(40,40)
+      delay.millis(300)
+      ffi.setPWM(0,60)
+      delay.millis(300)
+:
+
+PROC main ()
+  PAR
+    flash.lasers()
+    drive.around()
+:

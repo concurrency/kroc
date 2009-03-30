@@ -23,6 +23,7 @@
 -- FIXME: These definitions should be inside the test PROCs, but that confuses
 -- tranx86 at the moment.
 
+#IF DEFINED (OCCBUILD.KROC)
 --{{{  definitions for tests
 --{{{  definitions for test0
 PROC TYPE PT.0 IS (CHAN INT in?, out!):
@@ -157,12 +158,14 @@ MOBILE PROC config.multiply (CHAN INT config?, in?, out!) IMPLEMENTS PT.3
 :
 --}}}
 --}}}
+#ENDIF
 
 PROC cgtest92 (CHAN OF BYTE keyb?, scr!, err!)
 
   #INCLUDE "cgmain.occ"
   #INCLUDE "cgreal.occ"
 
+  #IF DEFINED (OCCBUILD.KROC)
   --{{{  tests
   --{{{  test0 -- simple PROC TYPEs
   PROC test0 ()
@@ -323,14 +326,17 @@ PROC cgtest92 (CHAN OF BYTE keyb?, scr!, err!)
   :
   --}}}
   --}}}
+  #ENDIF
 
   SEQ
     init ("CG test 92", "PROC TYPEs")
+    #IF DEFINED (OCCBUILD.KROC)
     test0 ()
     test1 ()
     test2 ()
     test3 ()
     test4 ()
+    #ENDIF
     finish ()
 :
 

@@ -412,11 +412,11 @@ def parse_decl(f):
 				t = "constant"
 			return (t, m.group(3), m.group(1))
 
-		tag_re = re.compile(r'^([^: ]+)(\s*;(.*))?$')
+		tag_re = re.compile(r'^([^: ]+)(\s*=\s*[0-9]+)?(\s*;(.*))?$')
 		m = tag_re.match(s)
 		if m is not None:
-			if m.group(3) is not None:
-				items = parse_protocol(m.group(3))
+			if m.group(4) is not None:
+				items = parse_protocol(m.group(4))
 			else:
 				items = None
 			return ("tag", m.group(1), s, items)
@@ -711,9 +711,11 @@ def free_text_to_xml(doc, descr, parent):
 				level = 0
 				while 1:
 					c = f.read(1)
-					if c == "]" and level == 0:
+					if c == "":
 						break
-					if c == "[":
+					elif c == "]" and level == 0:
+						break
+					elif c == "[":
 						level += 1
 					elif c == "]":
 						level -= 1
@@ -1041,7 +1043,7 @@ Report bugs to <""" + CONTACT + """>."""
 
 def main(args):
 	try:
-		opts, args = getopt.getopt(args, 'd:f:pav', ["help"])
+		opts, args = getopt.getopt(args, 'd:f:pav', ["help", "in-tree="])
 	except getopt.GetoptError:
 		usage()
 		return 1
@@ -1065,6 +1067,9 @@ def main(args):
 		elif o == "--help":
 			usage()
 			return 0
+		elif o == "--in-tree":
+			global DATADIR
+			DATADIR = a + "/tools/occamdoc"
 
 	if args == [] or not (output_format in ("xml", "html")):
 		usage()

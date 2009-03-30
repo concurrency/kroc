@@ -1,6 +1,8 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 
@@ -23,8 +25,10 @@ EXTRA_DIST = \
 	cift14-c.c cift14.occ \
 	cift15.c \
 	cift16-c.c cift16.occ \
-	cift17-c.c cift17.occ
+	cift17-c.c cift17.occ \
+	ciftutils.c ciftutils.h
 
+if BUILD_CIF_EXAMPLES
 examples = \
 	cif-commstime \
 	cift1 \
@@ -44,6 +48,7 @@ examples = \
 	cift15 \
 	cift16 \
 	cift17
+endif
 
 all-local: $(examples)
 
@@ -56,58 +61,58 @@ clean-local:
 SUFFIXES = .occ
 
 cif-commstime: cif-commstime.occ cif-commstime-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cif-commstime.occ cif-commstime-c.o ciftutils.o
 
 cift1: cift1.occ cift1-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift1.occ cift1-c.o ciftutils.o
 
 cift2: cift2.occ cift2-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift2.occ cift2-c.o ciftutils.o
 
 cift3: cift3.occ cift3-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift3.occ cift3-c.o ciftutils.o
 
 cift4: cift4.occ cift4-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift4.occ cift4-c.o ciftutils.o
 
 cift5: cift5.occ cift5-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift5.occ cift5-c.o ciftutils.o
 
 cift6: cift6.occ cift6-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift6.occ cift6-c.o ciftutils.o
 
 cift7: cift7.occ cift7-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift7.occ cift7-c.o ciftutils.o
 
 cift8: cift8.occ cift8-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift8.occ cift8-c.o ciftutils.o
 
 cift9: cift9.occ cift9-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift9.occ cift9-c.o ciftutils.o
 
 cift10: cift10.occ cift10-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift10.occ cift10-c.o ciftutils.o
 
 cift11: cift11.occ cift11-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift11.occ cift11-c.o ciftutils.o
 
 cift12: cift12.occ cift12-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift12.occ cift12-c.o ciftutils.o
 
 cift13: cift13.occ cift13-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift13.occ cift13-c.o ciftutils.o
 
 cift14: cift14.occ cift14-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift14.occ cift14-c.o ciftutils.o
 
 cift15: cift15.o ciftutils.o
-	$(CC) -o $@ $^ -L$(libdir) -lccsp -lpthread @LIBDL@
+	$(CC) -o cift15 cift15.o ciftutils.o @KROC_CCSP_LDFLAGS@ @KROC_CCSP_LIBPATH@ -lccsp -lpthread @KROC_CCSP_LIBS@
 
 cift16: cift16.occ cift16-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift16.occ cift16-c.o ciftutils.o
 
 cift17: cift17.occ cift17-c.o ciftutils.o
-	$(OCCBUILD) --program $^
+	$(OCCBUILD) --program cift17.occ cift17-c.o ciftutils.o
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<

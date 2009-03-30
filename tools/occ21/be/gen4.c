@@ -282,9 +282,19 @@ printtreenl (stderr, 4, tptr);
 	case S_ADDROF:
 	case S_HWADDROF:
 	case S_CLONE:
-	case S_TYPEHASHOF:
 		return regsfor (OpOf (tptr));
 #endif
+	case S_TYPEHASHOF:
+		switch (TagOf (OpOf (tptr))) {
+		case N_PROCDEF:
+		case N_LIBPROCDEF:
+		case N_STDLIBPROCDEF:
+		case N_SCPROCDEF:
+			return 1;			/* these end up constant */
+		default:
+			return regsfor (OpOf (tptr));
+		}
+		break;
 		/*}}} */
 		/*{{{  dyadic operators */
 	case S_ADD:
@@ -434,12 +444,13 @@ printtreenl (stderr, 4, tptr);
 			   return max_INT32(2, regsfor(OpOf(tptr))); */
 			if ((CONVERSIONCHECKING || (!use_shortintops && isshortint (sourcetype)))	/* bug 1367 14/8/91 */
 			    &&hasgreaterrange (sourcetype, desttype)) {
-				if (use_shortintops && (desttype == S_BYTE || desttype == S_INT16))
+				if (use_shortintops && ((desttype == S_BYTE) || (desttype == S_INT16) || (desttype == S_UINT16)))
 					return regsfor (OpOf (tptr));
 				return (int) max_INT32 (2, regsfor (OpOf (tptr)));
 			} else if (hasgreaterrange (desttype, sourcetype) && issignedtype (sourcetype)) {
-				if (use_shortintops && sourcetype == S_INT16)
+				if (use_shortintops && ((sourcetype == S_INT16) || (sourcetype == S_UINT16))) {
 					return regsfor (OpOf (tptr));
+				}
 				return (int) max_INT32 (2, regsfor (OpOf (tptr)));
 			} else
 				return regsfor (OpOf (tptr));
@@ -692,9 +703,21 @@ PRIVATE int revsfor (treenode * tptr, int regs)
 		if (isdynmobilearray (OpOf (tptr))) {
 			return 0;
 		} else {
-			return revsfor (dimexpof (OpOf (tptr), 0), regs);
+			return revsfor (OpOf (tptr), regs);
 		}
 #endif	/* MOBILES */
+	case S_TYPEHASHOF:
+		switch (TagOf (OpOf (tptr))) {
+		case N_PROCDEF:
+		case N_LIBPROCDEF:
+		case N_STDLIBPROCDEF:
+		case N_SCPROCDEF:
+		case N_INLINEPROCDEF:
+			return 0;			/* these will be constant expressions */
+		default:
+			return revsfor (OpOf (tptr), regs);
+		}
+		break;
 	case S_SEGSTART:
 		return revsfor (SStartExpOf (OpOf (tptr)), regs);
 		/*}}} */
@@ -1487,12 +1510,11 @@ PUBLIC void ttypeconversion (const int sourcetype, const int desttype)
 	}
 	/*}}} */
 
-	if (CONVERSIONCHECKING && shrinking)
+	if (CONVERSIONCHECKING && shrinking) {
 		/*{{{  we have to check the range */
-	{
 		/* we know that sourcetype is <= S_INT32, and desttype <= S_INT32(?) */
 		/* T9000_alpha_noxsword bug; I_CBU and I_CS are OK */
-		if (has_shortintops && desttype == S_BYTE) {
+		if (has_shortintops && (desttype == S_BYTE)) {
 			/*{{{  T9000_gamma_carryin */
 			if (T9000_gamma_carryin (&tx_global)) {
 				gensecondary (I_CSU);
@@ -1500,31 +1522,27 @@ PUBLIC void ttypeconversion (const int sourcetype, const int desttype)
 			}
 			/*}}} */
 			gensecondary (I_CBU);
-		} else if (has_shortintops && desttype == S_INT16) {
-			if (!T9000_gamma_carryin (&tx_global))
+		} else if (has_shortintops && (desttype == S_INT16)) {
+			if (!T9000_gamma_carryin (&tx_global)) {
 				gensecondary (I_CS);
-		} else if (issignedtype (desttype))
+			}
+		} else if (issignedtype (desttype)) {
 			/*{{{  use cword */
-		{
 			loadconstant (checkmask (desttype));
 			gensecondary (I_CWORD);
-		}
-		/*}}} */
-		else
+			/*}}} */
+		} else {
 			/*{{{  use csub0 */
-		{
 			loadconstant (checkmask (desttype));
 			gensecondary (I_CSUB0);
+			/*}}} */
 		}
 		/*}}} */
-	}
-	/*}}} */
-	else if (hasgreaterrange (desttype, sourcetype) && issignedtype (sourcetype))
+	} else if (hasgreaterrange (desttype, sourcetype) && issignedtype (sourcetype)) {
 		/*{{{  extend to full word */
 		/* desttype > sourcetype and sourcetype is signed, means that
 		   sourcetype = S_INT16, or sourcetype = S_INT32.
 		   In practice, only S_INT16 ever gets here! */
-	{
 		if (use_shortintops && sourcetype == S_INT16) {
 			/* we have already loaded the value as sign extended */
 			/* gensecondary(I_XSWORD); */
@@ -1538,8 +1556,8 @@ PUBLIC void ttypeconversion (const int sourcetype, const int desttype)
 				genwidenshort ();
 			}
 		}
+		/*}}} */
 	}
-	/*}}} */
 }
 
 /*}}}*/
@@ -1640,7 +1658,7 @@ printtreenl (stderr, 4, tptr);
 		/*}}}  */
 		/*{{{  DEFINED*/
 	case S_DEFINED:
-		loadmobile_nochk (OpOf (tptr));		/* automatically the correct BOOL result */
+		loadmobile_real (OpOf (tptr));		/* automatically the correct BOOL result */
 		break;
 		/*}}}*/
 #endif
@@ -1956,14 +1974,62 @@ else fprintf (stderr, "\n    [NULL]\n");
 	case S_HIDDEN_TYPE:
 		loadhiddentypeof (HExpOf (tptr), regs);
 		break;
+#endif /* MOBILES */
 	case S_TYPEHASHOF:
+		{
+			treenode *op = OpOf (tptr);
+
 #if 0
 fprintf (stderr, "texp_main(): S_TYPEHASHOF: OpOf (tptr) = ");
-printtreenl (stderr, 4, OpOf (tptr));
+printtreenl (stderr, 4, op);
 #endif
-		loadhiddentypeof (OpOf (tptr), regs);
+			switch (TagOf (op)) {
+			case N_PROCDEF:
+			case N_LIBPROCDEF:
+			case N_STDLIBPROCDEF:
+			case N_SCPROCDEF:
+			case N_INLINEPROCDEF:
+				/* loading typehash of a PROC, this means the paramter list normally */
+				{
+					treenode *param_list = NParamListOf (op);
+					treenode **savep_vsp = NULL;
+					treenode *save_vsp = NULL;
+					unsigned int thash;
+					
+					/* if the parameter list has a vectorspace pointer in it, remove for purposes of typehash generation */
+					for (savep_vsp = &param_list; savep_vsp && !EndOfList (*savep_vsp); savep_vsp = NextItemAddr (*savep_vsp)) {
+						save_vsp = ThisItem (*savep_vsp);
+
+						if (TagOf (save_vsp) == S_PARAM_VSP) {
+							break;		/* for() */
+						}
+					}
+					if (savep_vsp && EndOfList (*savep_vsp)) {
+						savep_vsp = NULL;
+					}
+					
+					if (savep_vsp) {
+						save_vsp = *savep_vsp;
+						*savep_vsp = NULL;
+					}
+					thash = typehash (param_list);
+					if (savep_vsp) {
+						*savep_vsp = save_vsp;
+					}
+
+					loadconstant (thash);
+				}
+				break;
+			default:
+#ifdef MOBILES
+				loadhiddentypeof (op, regs);
+#else
+				loadconstant (typehash (op));
+#endif
+				break;
+			}
+		}
 		break;
-#endif /* MOBILES */
 	case S_HIDDEN_PARAM:
 		texp_main (HExpOf (tptr), regs, signextend_result);
 		break;

@@ -435,6 +435,11 @@
 
 #define CHK_CLAIM_VAR_BADDIRSPEC	331
 
+/* dynamic call related errors */
+#define CHK_CALLAT_NOT_DYNAMIC		332
+#define CHK_BAD_DYNCALL_TYPE		333
+
+
 /*}}}*/
 /*{{{  error macros */
 #define chkerr(N,L)      msg_out  (SEV_ERR,CHK,(N),(L))

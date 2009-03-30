@@ -1,0 +1,171 @@
+import os.path
+
+# Import the global localironment
+Import('env')
+
+# Clone the environment so we don"t make it 
+# all dirty. ("Dirty, dirty.")
+local = env.Clone()
+
+
+
+# Create a local configuration context; we will
+# close it before the end of this script.
+conf = local.Configure(config_h = 'config.h', help = False)
+
+conf.Define('TARGET_OS_IS_UNIX', 
+        1, 'Set if compiling ilibr & tcofflib under a UNIX.')
+conf.Define('COMPILER_IS_GCC', 
+        1, 'Set if compiling ilibr & tcofflib with GCC.')
+conf.Define('TARGET_CPU_IS_I386', 
+        1, 'Set if compiling for an x86 platform.')
+conf.Define('OC', 
+        1, 'Unconditional')
+conf.Define('OCCAM2_5', 
+        1, 'Unconditional')
+conf.Define('TARGET_CANONICAL', 
+        '"i386"', 'Target CPU')
+# TARGET_IS_BIGENDIAN
+# TARGET_ACCESSALIGNED
+conf.Define('CODE_GEN_KROC_ASM', 
+        1, 'Define to target KROC ETC.')
+conf.Define('USER_DEFINED_OPERATORS', 
+        1, 'To enable user-defined operators.')
+conf.Define('MOBILES', 
+        1, 'Default enabled.')
+#conf.Define('DEBUG', 0, 'Default disabled.')
+#conf.Define('DEBUG_NEXTSYMB', 0, 'Default disabled.')
+conf.Define('PROCESS_PRIORITY', 
+        1, 'Default enabled.')
+conf.Define('CAN_USE_INLINE', 
+        1, 'Depends on compiler... GCC OK?')
+#conf.Define('BACKENDTRACE', 0, 'Default disabled.')
+conf.Define('INITIAL_DECL', 
+        1, 'Default enabled.')
+conf.Define('VERSION', '"1.4.0"', 'This has not changed for 10 years... why start now?')
+
+conf.CheckTypeSize('signed int')
+
+# tcofflib wants 'stdlib.h'
+conf.CheckCHeader('stdlib.h')
+conf.CheckCHeader('stdarg.h')
+conf.CheckCHeader('malloc.h')
+
+# Finish the configuration section.
+local = conf.Finish()
+
+# Append the appropriate CCFLAGS for compiling 
+# mkoccdeps; in particular, make known that we have
+# a 'config.h' file.
+local.Append(CPPDEFINES = 'HAVE_CONFIG_H')
+
+
+# FIXME: This might be useful elsewhere...
+def Files(string, path=None):
+    '''Helper which like split takes a sring and splits it. 
+    It is however posible to set a path to be prepended to each file
+    in the list, which makes it easier to define a list of files which
+    all live in a different directory.'''
+    lst = Split(string)
+    if path: return [os.path.join(path, f) for f in lst]
+    return lst
+
+# Adam discovered some time ago that there is a bad 
+# set of dependencies burried in here. So, we'll build
+# in that order, too. I wouldn't go changing these stages
+# unless you know what you're doing.
+# FIXME: Actually, scons doesn't give a flying fink about the order these
+# things are provided? ie ordering does not translate to buildorder, unless
+# explicit/implicit dependencies are specified/found OR an order only relation
+# ship is specified with requires...
+# If SCons can figure out the dependencies that makes things we can remove 
+# these comments
+stage01 = local.Object(
+        ['fe/vti1.c', 'fe/vti2.c', 'fe/vti3.c', 'fe/vti4.c',
+         'fe/vti5.c', 'fe/err1.c', 'fe/err2.c', 'fe/list.c',
+         'fe/const1.c', 'fe/strpool.c', 'fe/objlib.c', 'misc/txlib.c',
+         'fe/occamfe.c', 'fe/lex1.c', 'fe/syn1.c', 'fe/syn2.c',
+         'fe/syn3.c', 'fe/chk1.c', 'fe/chk2.c', 'fe/chk4.c',
+         'fe/use1.c', 'fe/use2.c', 'fe/use3.c', 'fe/use4.c',
+         'fe/objrdr.c', 'fe/objtrans.c', 'misc/occompfe.c', 
+         'misc/inst.c', 'misc/tran1.c', 'misc/tran2.c', 'misc/tran3.c',
+         'misc/mobiles.c'], 
+        CPPPATH = ['.', 'include'])
+
+be_srcs = Files('''
+        bind1.c bind2.c bind3.c debug.c gen1.c gen2.c gen3.c
+        gen4.c gen5.c gen7.c gen8.c gen9.c gen10.c gen11.c gen12.c
+        gen13.c generror.c objwrt.c profile.c code1k.c
+        ''', path='be')
+stage02 = local.Library(
+        'be/be', 
+        be_srcs,
+        CPPPATH = ['.', 'include', 'be'])
+
+stage03 = local.Object('version.c', CPPPATH = ['.', 'include'])
+
+stage04 = ['misc/harness.c']
+
+arglib_srcs = Files('arg.c argnew.c argcmn.c', path='arglib')
+stage05 = local.Library(
+        'arglib/arglib', 
+        arglib_srcs,
+        CPPPATH = ['.', 'include', 'arglib'])
+
+extlib_srcs = Files('''
+        extconv.c exti8.c exti16.c exti32.c exti64.c
+        extlong.c extr32.c extr64.c extstr.c extui8.c
+        extui16.c extui32.c extui64.c
+        ''', path='extlib')
+stage06 = local.Library(
+        'extlib/extlib', 
+        extlib_srcs,
+        CPPPATH = ['.', 'include', 'extlib'])
+
+fnilib_srcs = Files('fni.c popen.c', path='fnilib')
+stage07 = local.Library(
+        'fnilib/fnilib', 
+        fnilib_srcs,
+        CPPPATH = ['.', 'include', 'fnilib'])
+
+maplib_srcs = Files('mapwrt1.c', path='maplib')
+stage08 = local.Library(
+        'maplib/maplib', 
+        maplib_srcs,
+        CPPPATH = ['.', 'include', 'maplib'])
+
+suplib_srcs = Files('sort.c strlwr.c strupr.c', path='suplib')
+stage09 = local.Library(
+        'suplib/suplib', 
+        suplib_srcs, 
+        CPPPATH = ['.', 'include', 'suplib'])
+
+tcofflib_srcs = Files('''
+        alloc1.c alloc2.c disassem.c hexdump.c 
+        command1.c command2.c command3.c command4.c command6.c 
+        com.c error.c 
+        strutil3.c strutil4.c strutil5.c strutil6.c strutil7.c
+        tcoff_io.c lff_io.c
+        ''', path='tcofflib')
+stage10 = local.Library(
+        'tcofflib/tcofflib', 
+        tcofflib_srcs,
+        CPPPATH = ['.', 'include', 'tcofflib']) 
+
+
+
+# Feed the object files and libraries to the builder in the order
+# they are defined in. 
+# FIXME: Again, order here probably does not matter, see above
+occ21 = local.Program(
+        target = 'occ21',  
+        source = [stage01, stage02, stage03, stage04, stage05, stage06,
+                  stage07, stage08, stage09, stage10],
+        CPPPATH = ['.', 'include'],
+        LIBPATH = ['arglib', 'extlib', 'fnilib', 'maplib', 'suplib', 'tcofflib']
+        )
+
+
+
+env['OCC21']        = occ21
+env.AppendENVPath('SKROCPATH', os.path.dirname(occ21[0].abspath))

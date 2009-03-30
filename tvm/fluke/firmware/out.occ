@@ -1,0 +1,244 @@
+#IF NOT DEFINED (OUT.OCC)
+#DEFINE OUT.OCC
+
+--
+--	Course.lib/Utilities - Output functions
+--	Copyright (C) 1997-2008  P.H. Welch, C.G. Ritson
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--*{{{  ASCII Character values.
+VAL BYTE NULL IS 0:          --* ASCII NUL
+VAL BYTE BELL IS 7:          --* ASCII BEL - terminal bell
+VAL BYTE BACK IS 8:          --* ASCII BS - backspace key
+VAL BYTE ESCAPE IS 27:       --* ASCII ESC - escape key
+VAL BYTE DELETE IS 127:      --* ASCII DEL - delete key
+--*}}}
+
+--{{{  special constants
+VAL BYTE FLUSH IS 255:       --* Flush output buffer
+VAL BYTE END.OF.FILE IS 255: --* End of file
+--}}}
+
+--*{{{  COMPARE.STRING Return values from [@ref compare.string].
+VAL INT string.less IS -1:   --* Left less than right
+VAL INT string.same IS 0:    --* Left and right the same
+VAL INT string.more IS 1:    --* Left more than right
+--*}}}
+
+
+--{{{  PROC out.repeat (VAL BYTE ch, VAL INT n, CHAN BYTE out!)
+--* Write a character repeatedly to a channel.
+-- This outputs [@code ch] down the channel [@code out] [@code n] times. If
+-- [@code n] is negative, nothing happens.
+-- @param ch Character
+-- @param n Number of times to output (negative values result in no output)
+-- @param out Channel to write to
+PROC out.repeat (VAL BYTE ch, VAL INT n, CHAN BYTE out!)
+  --{{{  
+  IF
+    n > 0
+      SEQ i = 0 FOR n
+        out ! ch
+    TRUE
+      SKIP
+  --}}}
+:
+--}}}
+--{{{  PROC out.ch (VAL BYTE ch, VAL INT field, CHAN BYTE out!)
+--* Write a character to a channel.
+-- This outputs [@code ch] in a fieldwidth [@code field] down [@code out].  If
+-- the fieldwidth is too wide for [@code ch], it right-justifies [@code ch]
+-- with spaces on the left.  If the field is not wide enough, it prints the
+-- [@code ch] anyway.  These rules for fieldwidth are the same as those used by
+-- the Pascal [@text write] procedure.
+-- @param ch Character
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.ch (VAL BYTE ch, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  SEQ
+    out.repeat (' ', field - 1, out!)
+    out ! ch
+  --}}}
+:
+--}}}
+--{{{  PROC out.string (VAL []BYTE s, VAL INT field, CHAN BYTE out!)
+--* Write a string to a channel.
+-- This outputs [@code s] in a fieldwidth [@code field] down [@code out].
+-- @param s String
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.string (VAL []BYTE s, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  VAL INT length IS SIZE s:
+  SEQ
+    out.repeat (' ', field - length, out!)
+    SEQ i = 0 FOR length
+      out ! s[i]
+  --}}}
+:
+--}}}
+--{{{  PROC out.byte (VAL BYTE b, VAL INT field, CHAN BYTE out!)
+--* Write a byte in decimal to a channel.
+-- This outputs [@code b] in a fieldwidth [@code field] down [@code out].  If
+-- the fieldwidth is too wide for [@code b], it right-justifies [@code b] with
+-- spaces on the left.  If the field is not wide enough, it prints the [@code
+-- b] anyway.  These rules for fieldwidth are the same as those used by the
+-- Pascal [@text write] procedure.
+-- @param b Byte
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.byte (VAL BYTE b, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  VAL BYTE hundreds IS b/100:
+  VAL BYTE rest IS b\100:
+  VAL BYTE tens IS rest/10:
+  VAL BYTE ones IS rest\10:
+  IF
+    hundreds > 0
+      SEQ
+        out.repeat (' ', field - 3, out!)
+        out ! hundreds + '0'
+        out ! tens + '0'
+        out ! ones + '0'
+    tens > 0
+      SEQ
+        out.repeat (' ', field - 2, out!)
+        out ! tens + '0'
+        out ! ones + '0'
+    TRUE
+      SEQ
+        out.repeat (' ', field - 1, out!)
+        out ! ones + '0'
+  --}}}
+:
+--}}}
+--{{{  PROC out.int (VAL INT n, VAL INT field, CHAN BYTE out!)
+--* Write an integer in decimal to a channel.
+-- This outputs [@code n] in a fieldwidth [@code field] down [@code out].  The
+-- rules for fieldwidth are as [@ref out.byte].
+-- @param n Integer
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.int (VAL INT n, VAL INT field, CHAN BYTE out!)
+  --{{{  
+  IF
+    n = (MOSTNEG INT)
+      --{{{  minint
+      out.string ("-2147483648", field, out!)
+      --}}}
+    n = 0
+      --{{{  zero
+      SEQ
+        IF
+          1 < field
+            out.repeat (' ', field - 1, out!)
+          TRUE
+            SKIP
+        out ! '0'
+      --}}}
+    TRUE
+      --{{{  anything else
+      VAL INT max.digits IS 20:
+      [max.digits]INT D:
+      INT x, i:
+      SEQ
+        --{{{  check negative
+        IF
+          n < 0
+            x := -n
+          TRUE         -- (n > 0)
+            x := n
+        --}}}
+        --{{{  decompose
+        SEQ
+          i := 0
+          WHILE x > 0
+            SEQ
+              D[i] := x\10
+              x := x/10
+              i := i + 1
+        --}}}
+        --{{{  pad
+        IF
+          n > 0
+            out.repeat (' ', field - i, out!)
+          TRUE
+            SEQ
+              out.repeat (' ', (field - 1) - i, out!)
+              out ! '-'
+        --}}}
+        --{{{  output
+        #PRAGMA DEFINED D
+        WHILE i > 0
+          SEQ
+            i := i - 1
+            out ! BYTE (D[i] + (INT '0'))
+        --}}}
+      --}}}
+  --}}}
+:
+--}}}
+--{{{  PROC out.hex (VAL INT n, VAL INT field, CHAN BYTE out!)
+--* Write an integer in hexadecimal to a channel.
+-- Aside from the output base, this behaves like [@ref out.int].
+-- @param n Integer
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.hex (VAL INT n, VAL INT field, CHAN BYTE out!)
+  IF
+    n = (MOSTNEG INT)
+      out.string ("#80000000", field, out!)
+    n = 0
+      out.string ("#00000000", field, out!)
+    TRUE
+      --{{{  anything else
+      VAL []BYTE cmap IS "0123456789ABCDEF":
+      INT x, i:
+      SEQ
+        x := n
+        IF
+          field = 0
+            i := 8
+          TRUE
+            i := (field - 1)
+        IF
+          i > 0
+            SEQ
+              out ! '#'
+              WHILE i > 0
+                SEQ
+                  out ! cmap[((x >> ((i - 1) << 2)) /\ #0000000F)]
+                  i := i - 1
+          TRUE
+            SKIP
+      --}}}  
+:
+--}}}
+
+--{{{  PROC out.hex.byte (VAL BYTE b, CHAN BYTE out!)
+PROC out.hex.byte (VAL BYTE b, CHAN BYTE out!)
+  VAL []BYTE cmap IS "0123456789ABCDEF":
+  VAL INT b IS (INT b):
+  SEQ
+    out ! '#'
+    out ! cmap[(b >> 4) /\ #F]
+    out ! cmap[b /\ #F]
+:
+--}}}
+
+#ENDIF -- !OUT.OCC

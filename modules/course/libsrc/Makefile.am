@@ -3,16 +3,20 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
+	utils.doc \
 	utils.occ \
 	string.occ \
+	stringbuf.occ \
 	demo_cycles.occ \
 	demo_nets.occ \
 	file_in.occ \
 	float_io.occ \
+	random.doc \
 	random.occ \
 	consts.inc \
 	shared_screen.occ \
@@ -21,6 +25,7 @@ EXTRA_DIST = \
 course_lib_objs = \
 	utils.tce \
 	string.tce \
+	stringbuf.tce \
 	demo_cycles.tce \
 	demo_nets.tce \
 	file_in.tce \
@@ -56,5 +61,6 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 $(shared_screen_lib_objs): course.lib
-demo_nets.occ: demo_cycles.tce
-string.occ: utils.tce
+demo_nets.tce: demo_cycles.tce
+string.tce: utils.tce
+stringbuf.tce: float_io.tce

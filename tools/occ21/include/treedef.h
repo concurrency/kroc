@@ -190,8 +190,10 @@ struct instancenode_s
     struct tnode_s *i_nameptr;		/* Symbol table entry for called proc */
     struct tnode_s *i_paramlist;	/* List of actual parameters */
     struct tnode_s *i_fork;		/* Associated FORKING bit of tree */
-    unsigned int i_rinstance:1;		/* recursive instance of a PROC/FUNCTION ? */
-    unsigned int i_forked:1;		/* forked instance of a PROC ? */
+    struct tnode_s *i_dynaddr;		/* Address expression associated with a dynamic call (special) */
+    unsigned int i_rinstance:1;		/* recursive instance of a PROC/FUNCTION? */
+    unsigned int i_forked:1;		/* forked instance of a PROC? */
+    unsigned int i_dynmem:1;		/* dynamically allocated instance of a PROC/FUNCTION? */
     unsigned int i_rparamslots:15;	/* slots required for generating/passing parameters */
 #ifdef MOBILES
     unsigned int i_rmspoffset;		/* offset of recursive mobilespace (yes, really needed here..) */
@@ -358,6 +360,7 @@ struct namenode_s
     BIT16 n_scope;              /* Scope of declaration */
     void *n_checker;            /* Used by usage checker */
     void *n_undef;		/* Used by undefinedness checker */
+    void *n_fmcheck;		/* Used by formal-model checker */
 
 #ifdef COMPILING_TO_JCODE
     void *n_binder;             /* Used for J_CODE creation */
@@ -412,6 +415,7 @@ struct namenode_s
         unsigned int      n_recursive:1;    /* Is something recursive */
 	unsigned int      n_forks:1;	    /* Does something have free FORKs ? */
 	unsigned int      n_suspends:1;	    /* whether something SUSPENDs */
+	unsigned int      n_dyncall:1;      /* whether we must always DYNCALL something */
       } n_proc;
       /*}}}*/
       /*{{{  n_var  - variables and most others*/

@@ -2,8 +2,9 @@
  *	Transputer style kernel in mixed C/asm
  *	Copyright (C) 1998 Jim Moores
  *	Based on the KRoC/sparc kernel Copyright (C) 1994-2000 D.C. Wood and P.H. Welch
- *	RMOX hacks copyright (C) 2002 Fred Barnes and Brian Vinter
+ *	RMoX hacks copyright (C) 2002 Fred Barnes and Brian Vinter
  *	Portions copyright (C) 1999-2005 Fred Barnes <frmb@kent.ac.uk>
+ *	Portions copyright (C) 2005-2008 Carl Ritson <cgr@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -104,6 +105,7 @@
 word *inttab[RMOX_NUM_INTERRUPTS];			/* interrupt process linkage (Wptr of waiting process) */
 volatile word intcount[RMOX_NUM_INTERRUPTS];		/* count of interrupts received */
 extern void no_dynamic_process_support (void);
+
 #endif
 /*}}}*/
 /*{{{  global variables*/
@@ -111,6 +113,9 @@ extern void no_dynamic_process_support (void);
 __thread sched_t	*_ccsp_scheduler		CACHELINE_ALIGN;
 #elif defined(ENABLE_MP) && defined(USE_PTHREADS)
 static pthread_key_t 	scheduler_key			CACHELINE_ALIGN;
+#elif defined(ENABLE_MP) && defined(RMOX_BUILD)
+static sched_t		*_ccsp_schedulers[RMOX_MAX_CPUS]	CACHELINE_ALIGN;
+static sched_t		*_ccsp_default_scheduler	CACHELINE_ALIGN = NULL;
 #else
 sched_t			*_ccsp_scheduler 		CACHELINE_ALIGN = NULL;
 #endif 
@@ -259,13 +264,16 @@ int ccsp_use_tls (void)
 static void NO_RETURN REGPARM kernel_scheduler (sched_t *sched);
 /*{{{  scheduler pointer storage */
 #if defined(USE_TLS)
+
 static int init_local_schedulers (void) { return 0; }
 #define set_local_scheduler(X)	do { _ccsp_scheduler = (X); } while (0)
 sched_t *local_scheduler(void)
 {
 	return _ccsp_scheduler;
 }
+
 #elif defined(ENABLE_MP) && defined(USE_PTHREADS)
+
 static pthread_key_t scheduler_key;
 
 static int init_local_schedulers (void)
@@ -283,14 +291,84 @@ inline sched_t *local_scheduler (void)
 {
 	return (sched_t *) pthread_getspecific (scheduler_key);
 }
-#else
-/* CGR FIXME: insert suitable RMOX code */
+
+#elif defined(ENABLE_MP) && defined(RMOX_BUILD)
+
+static int (*rmox_cpu_identifier)(void) = NULL;
+
+/* called from RMoX code to provide a function that can
+ * return a CPU identifier
+ */
+void set_cpu_identifier_fcn (int (*fcn)(void))
+{
+	rmox_cpu_identifier = fcn;
+}
+
+static int init_local_schedulers (void)
+{
+	int i;
+
+	for (i=0; i<RMOX_MAX_CPUS; i++) {
+		_ccsp_schedulers[i] = NULL;
+	}
+	rmox_cpu_identifier = NULL;
+
+	return 0;
+}
+
+static inline void set_local_scheduler (sched_t *scheduler)
+{
+	if (!rmox_cpu_identifier) {
+		_ccsp_default_scheduler = scheduler;
+	} else {
+		int cpuid = rmox_cpu_identifier ();
+
+#if 0
+		printk ("set_local_scheduler(): cpuid = %d, scheduler = %p\n", cpuid, scheduler);
+#endif
+		_ccsp_schedulers[cpuid] = scheduler;
+	}
+	return;
+}
+
+void set_sched_fromdefault (void)
+{
+	if (!rmox_cpu_identifier) {
+		printk ("set_sched_fromdefault(): no CPU identifier code!\n");
+	} else {
+		int cpuid = rmox_cpu_identifier ();
+
+#if 0
+		printk ("set_sched_fromdefault(): cpuid = %d, scheduler = %p\n", cpuid, _ccsp_default_scheduler);
+#endif
+		_ccsp_schedulers[cpuid] = _ccsp_default_scheduler;
+	}
+}
+
+inline sched_t *local_scheduler (void)
+{
+	if (!rmox_cpu_identifier) {
+		return _ccsp_default_scheduler;
+	} else {
+		int cpuid = rmox_cpu_identifier ();
+		sched_t *sch = _ccsp_schedulers[cpuid];
+
+		if (!sch) {
+			sch = _ccsp_default_scheduler;
+		}
+		return sch;
+	}
+}
+
+#else	/* !USE_TLS, !(ENABLE_MP && USE_PTHREADS), !RMOX_BUILD */
+
 static int init_local_schedulers (void) { return 0; }
 #define set_local_scheduler(X)	do { _ccsp_scheduler = (X); } while (0)
 sched_t *local_scheduler(void)
 {
 	return _ccsp_scheduler;
 }
+
 #endif
 /*}}}*/
 /*{{{  batch state */
@@ -1968,6 +2046,9 @@ K_CALL_DEFINE_1_0 (Y_rtthreadinit)
 	word i, tried;
 	
 	ENTRY_TRACE (Y_rtthreadinit, "(%08x)", att_val (&enabled_threads));
+#if 0
+BMESSAGE0 ("Y_rtthreadinit()\n");
+#endif
 
 	sched			= (sched_t *) stack;
 	allocator 		= dmem_new_allocator ();
@@ -2082,7 +2163,11 @@ static void kernel_common_error (word *Wptr, sched_t *sched, unsigned int return
 		if (ccsp_ignore_errors) {
 			kernel_scheduler (sched);
 		} else {
+#if defined(RMOX_BUILD)
+			BMESSAGE ("application error, stopped. (%s)\n", name ?: "(unknown)");
+#else
 			BMESSAGE ("application error, stopped.\n");
+#endif
 			ccsp_kernel_exit (1, return_address);
 		}
 	}
@@ -2998,10 +3083,15 @@ static REGPARM void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr
 #endif
 /*}}}*/
 /*{{{  mobile type operations */
-/*{{{ mobile_type_error() */
+/*{{{ mobile_type_error(), mobile_type_error_type() */
 #define mobile_type_error() \
 	do { \
 		BMESSAGE ("mobile typing error (%s:%d)\n", __FILE__, __LINE__); \
+		ccsp_kernel_exit (1, 0); \
+	} while (0)
+#define mobile_type_error_type(X) \
+	do { \
+		BMESSAGE ("mobile typing error (%s:%d), type 0x%8.8x\n", __FILE__, __LINE__, (unsigned int)(X)); \
 		ccsp_kernel_exit (1, 0); \
 	} while (0)
 /*}}}*/
@@ -3077,6 +3167,12 @@ static INLINE word *mt_alloc_array (void *allocator, word type, word size)
 	word size_shift;
 	
 	ma = mt_alloc_array_internal (allocator, type, size, true, &size_shift);
+#if 0
+fprintf (stderr, "mt_alloc_array(): here, size = %d, type=0x%8.8x, ptr = %p\n",
+		(int)size, (unsigned int)type, ma);
+fprintf (stderr, " ditto()        : ptr = 0x%8.8x, size = 0x%8.8x\n",
+		((unsigned int *)ma)[0], ((unsigned int *)ma)[1]);
+#endif
 
 	return ((word *) ma) + MT_ARRAY_PTR_OFFSET;
 }
@@ -3357,7 +3453,7 @@ static INLINE word *mt_clone_simple (sched_t *sched, word *ptr, word type)
 				return dst;
 			}
 		default:
-			mobile_type_error ();
+			mobile_type_error_type (MT_TYPE (type));
 			return NULL;
 	}
 }
@@ -3920,13 +4016,19 @@ K_CALL_DEFINE_3_1 (X_mt_resize)
 			 * shrinks to less than 50% of the allocated memory.
 			 */
 			if ((ma->size < new_size) || (new_size < (ma->size / 2))) {
+				word dimensions	= MT_ARRAY_DIM(type);
 				mt_array_internal_t *new;
-				word size_shift, count;
+				word i, size_shift, count;
 				
 				new = mt_alloc_array_internal (
 					sched->allocator, type, new_size, false, &size_shift
 				);
 				count = ma->size < new->size ? ma->size : new->size;
+
+				for (i = 0; i < dimensions; ++i) {
+					new->array.dimensions[i] = ma->array.dimensions[i];
+				}
+
 				if (MT_TYPE(inner_type) != MT_NUM) {
 					word **dst = (word **) new->array.data;
 					word **src = (word **) ma->array.data;

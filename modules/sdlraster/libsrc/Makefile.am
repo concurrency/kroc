@@ -3,6 +3,7 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
@@ -14,14 +15,16 @@ EXTRA_DIST = \
 	sdlrcompat.inc \
 	sdlrcompat.occ
 
+if BUILD_SDLRASTER
 sdlraster_lib_objs = \
 	sdlrcompat.tce \
 	sdlraster.tce \
-	sdlrcompat-c.o 
+	sdlrcompat-c.o
 
-sdlraster_libs = sdlraster.lib
+sdlraster_libs = sdlraster.lib miniraster.lib
 sdlraster_includes = sdlraster.inc sdlrcompat.inc
-miniraster_libs = miniraster.lib
+endif
+
 libs = $(sdlraster_libs) $(miniraster_libs)
 includes = $(sdlraster_includes)
 
@@ -49,5 +52,5 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 #{{{  dependencies
-sdlrcompat.occ: sdlraster.tce
+sdlrcompat.tce: sdlraster.tce
 #}}}

@@ -3,11 +3,14 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
 	args.occ \
+	getopt.occ \
+	getoptlong.occ \
 	lsdemo.occ \
 	pingdemo.occ \
 	sockdaytime.occ \
@@ -16,10 +19,13 @@ EXTRA_DIST = \
 	socktcpcli.occ \
 	socktcpserv.occ \
 	sockudpcli.occ \
-	sockudpserv.occ
+	sockudpserv.occ \
+	test-getopt.sh
 
 examples = \
 	args \
+	getopt \
+	getoptlong \
 	lsdemo \
 	sockdaytime \
 	sockstreamcli \

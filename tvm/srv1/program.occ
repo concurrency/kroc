@@ -1,0 +1,29 @@
+#INCLUDE "external_srv_ffi_pragmas.occ"
+
+VAL INT MILLIS          IS 1:
+VAL INT SECONDS         IS (1000 * MILLIS):
+
+PROC print.bytes(CHAN BYTE ch?)
+  BYTE c:
+  WHILE TRUE
+    SEQ
+      ch ? c
+      ffi.print.char(c)
+:
+
+PROC main ()
+  TIMER tim:
+  CHAN BYTE c: 
+  PAR
+    print.bytes(c?)
+    WHILE TRUE
+      INT t:
+      SEQ
+        tim ? t
+        tim ? AFTER t PLUS (2 * SECONDS)
+        c ! 'H'
+        c ! 'e'
+        c ! 'l'
+        c ! 'l'
+        c ! 'o'
+:

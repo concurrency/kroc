@@ -1,8 +1,10 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
+
 OCCBUILD = @OCCBUILD@
-CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
+CFLAGS = @CFLAGS@ @DEFS@
 
 SWIG_SOURCE_FILES = \
 	SDL.i \
@@ -27,26 +29,36 @@ EXTRA_DIST = \
 	occSDLhelpers-c.c \
 	occSDLhelpers.inc \
 	occSDLhelpers.occ \
+	occSDLjoy.inc \
+	occSDLjoy.occ \
 	cocoa_helper.h \
 	cocoa_helper.m
 
-occSDL_lib_objs = \
-	SDL_wrap.o \
-	occSDLhelpers-c.o \
-	occSDLhelpers.tce
 if COCOA_HELPER
-occSDL_lib_objs += cocoa_helper.o
+cocoa_helper_objs = \
+	cocoa_helper.o
 endif
 
+if BUILD_OCCSDL
+occSDL_lib_objs = \
+	$(cocoa_helper_objs) \
+	SDL_wrap.o \
+	occSDLhelpers-c.o \
+	occSDLhelpers.tce \
+	occSDLjoy.tce
+
+occSDL_libs = occSDL.lib
+occSDL_includes = occSDL.inc occSDLhelpers.inc occSDLjoy.inc
+endif
+
+if BUILD_OCCSDLSOUND
 occSDLsound_lib_objs = \
 	SDL_sound_wrap.o
 
-occSDL_libs = occSDL.lib
-occSDL_includes = occSDL.inc occSDLhelpers.inc
-if HAVE_SDL_SOUND
 occSDLsound_libs = occSDLsound.lib
 occSDLsound_includes = occSDLsound.inc
 endif
+
 libs = $(occSDL_libs) $(occSDLsound_libs)
 includes = $(occSDL_includes) $(occSDLsound_includes)
 
@@ -58,7 +70,7 @@ SDL_wrap.c SDL_wrap.h occSDL.inc: $(SWIG_SOURCE_FILES)
 endif
 
 occSDL.lib: $(occSDL_lib_objs)
-	$(OCCBUILD) --library occSDL.lib --include occSDL.inc --include occSDLhelpers.inc @SDL_LIBS@ $(occSDL_lib_objs)
+	$(OCCBUILD) --library occSDL.lib --include occSDL.inc --include occSDLhelpers.inc --include occSDLjoy.inc @SDL_LIBS@ $(occSDL_lib_objs)
 
 if HAVE_SWIG_OCCAM
 SDL_sound_wrap.c SDL_sound_wrap.h occSDLsound.inc: $(SWIG_SOURCE_FILES)

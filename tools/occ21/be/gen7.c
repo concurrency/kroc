@@ -475,16 +475,18 @@ genboolassertion (treenode * tptr, BOOL correctsense, treenode * const error_tpt
 	genprimary (I_LDC, 1);
 	gensecondary (correctsense ? I_CCNT1 : I_CSUB0);
 #else
+	if (error_tptr != NULL) {
+		new_occam_line (error_tptr, TRUE, TRUE, FALSE);
+	} else {
+		new_occam_line (tptr, TRUE, FALSE, FALSE);
+	}
 	{
 		int continue_label = newlab ();
+
 		tguard (tptr, !correctsense, continue_label);
 		gensecondary (I_SETERR);
 		setlab (continue_label);
 	}
-	if (error_tptr != NULL)
-		new_occam_line (error_tptr, TRUE, TRUE, FALSE);
-	else
-		new_occam_line (tptr, TRUE, FALSE, FALSE);
 #endif
 	checkerror_controlled (mode);
 	throw_the_result_away ();

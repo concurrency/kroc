@@ -661,7 +661,7 @@ static int expand_args_to_regs(ins_chain *ins)
 	cond_reg = ArgReg(cond_ins->out_args[0]);
 	/* Constrain this register */
 	rtl_insert_instr_before (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, ArgReg(cond_ins->out_args[0]), ARG_REG, MIPS_KROC_TMP_REG), cond_ins);
-	rtl_insert_instr_after (compose_ins (INS_UNCONSTRAIN_REG, 2, 0, ARG_REG, ArgReg(cond_ins->out_args[0]), ARG_REG, MIPS_KROC_TMP_REG), cond_ins);
+	rtl_insert_instr_after (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, ArgReg(cond_ins->out_args[0])), cond_ins);
 
 	/* Look back and find references to the label at instruction ins */
 	cur_ins = cond_ins;
@@ -726,7 +726,7 @@ static int expand_args_to_regs(ins_chain *ins)
 
 				/* We must now have found an instruction whichs output value we need, constrain */
 				rtl_insert_instr_before (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, ArgReg(cur_ins->out_args[0]), ARG_REG, MIPS_KROC_TMP_REG), cur_ins);
-				rtl_insert_instr_after (compose_ins (INS_UNCONSTRAIN_REG, 2, 0, ARG_REG, ArgReg(cur_ins->out_args[0]), ARG_REG, MIPS_KROC_TMP_REG), cur_ins);
+				rtl_insert_instr_after (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, ArgReg(cur_ins->out_args[0])), cur_ins);
 			}
 			else
 				cur_ins = find_next_ins_backward(cur_ins);
@@ -872,7 +872,7 @@ static int rtl_prevalidate_instr_mips (ins_chain *ins)
 					 * whichs output we are going to use are put in an appropriate register
 					 */
 					rtl_insert_instr_before (compose_ins (INS_CONSTRAIN_REG, 2, 0, ARG_REG, ArgReg(ins->out_args[0]), ARG_REG, MIPS_KROC_TMP_REG), ins);
-					rtl_insert_instr_after (compose_ins (INS_UNCONSTRAIN_REG, 2, 0, ARG_REG, ArgReg(ins->out_args[0]), ARG_REG, MIPS_KROC_TMP_REG), ins);
+					rtl_insert_instr_after (compose_ins (INS_UNCONSTRAIN_REG, 1, 0, ARG_REG, ArgReg(ins->out_args[0])), ins);
 
 					return 1;
 				} /* SETcc, cc=CC_Z,CC_NZ: INS_SETLABEL */
@@ -2209,6 +2209,7 @@ arch_t *init_arch_mips (int mclass)
 	arch->compose_bcall = compose_bcall_mips;
 
 	arch->compose_entry_prolog = compose_entry_prolog_mips;
+	arch->compose_rmox_entry_prolog = NULL;
 	arch->compose_fp_set_fround = compose_fp_set_fround_mips;
 	arch->compose_fp_init = compose_fp_init_mips;
 	arch->compose_reset_fregs = compose_reset_fregs_mips;

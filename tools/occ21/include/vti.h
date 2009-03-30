@@ -421,6 +421,8 @@ const treenode *checkread_fn(const treenode *tptr, nodetypeoftag_t nodetype, con
 #define IRecursiveOf(T)		(CHECKREAD(T,INSTANCENODE)->n_u.i_s.i_rinstance)
 #define IForkOf(T)		(CHECKREAD(T,INSTANCENODE)->n_u.i_s.i_fork)
 #define IForkedOf(T)		(CHECKREAD(T,INSTANCENODE)->n_u.i_s.i_forked)
+#define IDynmemOf(T)		(CHECKREAD(T,INSTANCENODE)->n_u.i_s.i_dynmem)
+#define IDynaddrOf(T)		(CHECKREAD(T,INSTANCENODE)->n_u.i_s.i_dynaddr)
 #define IRPSlotsOf(T)		(CHECKREAD(T,INSTANCENODE)->n_u.i_s.i_rparamslots)
 #ifdef MOBILES
 #define IRMSPOffsetOf(T)	(CHECKREAD(T,INSTANCENODE)->n_u.i_s.i_rmspoffset)
@@ -432,6 +434,8 @@ const treenode *checkread_fn(const treenode *tptr, nodetypeoftag_t nodetype, con
 #define SetIRecursive(T,V)	(CHECKNODE(T,INSTANCENODE)->n_u.i_s.i_rinstance = (V))
 #define SetIFork(T,V)		(CHECKNODE(T,INSTANCENODE)->n_u.i_s.i_fork = (V))
 #define SetIForked(T,V)		(CHECKNODE(T,INSTANCENODE)->n_u.i_s.i_forked = (V))
+#define SetIDynmem(T,V)		(CHECKNODE(T,INSTANCENODE)->n_u.i_s.i_dynmem = (V))
+#define SetIDynaddr(T,V)	(CHECKNODE(T,INSTANCENODE)->n_u.i_s.i_dynaddr = (V))
 #define SetIRPSlots(T,V)	(CHECKNODE(T,INSTANCENODE)->n_u.i_s.i_rparamslots = (V))
 #ifdef MOBILES
 #define SetIRMSPOffset(T,V)	(CHECKNODE(T,INSTANCENODE)->n_u.i_s.i_rmspoffset = (V))
@@ -440,6 +444,7 @@ const treenode *checkread_fn(const treenode *tptr, nodetypeoftag_t nodetype, con
 #define INameAddr(T)      (&(CHECKNODE(T,INSTANCENODE)->n_u.i_s.i_nameptr))
 #define IParamListAddr(T) (&(CHECKNODE(T,INSTANCENODE)->n_u.i_s.i_paramlist))
 #define ILoadSeqAddr(T)   (&(CHECKNODE(T,INSTANCENODE)->n_u.i_s.i_loadseq))
+#define IDynaddrAddr(T)   (&(CHECKNODE(T,INSTANCENODE)->n_u.i_s.i_dynaddr))
 /*}}}*/
 /*{{{  listnode*/
 #define LeftOf(T)       (CHECKREAD(T,LISTNODE)->n_u.ls_s.ls_left)

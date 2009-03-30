@@ -128,6 +128,15 @@ static inline int ProcAlt (Workspace wptr, ...)
 }
 /*}}}*/
 /*{{{ mt_array_t *MTAllocArray (Workspace wptr, word element_type, int dimensions, ...) */
+/**
+ * Allocates an array (using MTAlloc) with the given element_type.  You pass
+ * the number of dimensions in the dimensions variable, and then pass that
+ * many dimensions in the var-args bit of the function.  The size that will be
+ * allocated will be the element size (as CCSP interprets element_type)
+ * multiplied by the product of all the dimensions.  If you want to allocate
+ * an array of MT_DATA (where CCSP can't know the element size) use
+ * MTAllocDataArray.
+ */
 static inline mt_array_t *MTAllocArray (Workspace wptr, word element_type, int dimensions, ...)
 {
 	va_list ap;
@@ -150,6 +159,36 @@ static inline mt_array_t *MTAllocArray (Workspace wptr, word element_type, int d
 	return array;
 }
 /*}}}*/
+/*{{{ mt_array_t *MTAllocDataArray (Workspace wptr, word element_type, int dimensions, ...) */
+/**
+ * Allocates an array (using MTAlloc) of MT_DATA with the given size.  You
+ * pass the number of dimensions in the dimensions variable, and then pass
+ * that many dimensions in the var-args bit of the function.  The size that
+ * will be allocated will be the element_size multiplied by the product of all
+ * the dimensions.
+ */
+static inline mt_array_t *MTAllocDataArray (Workspace wptr, int element_size, int dimensions, ...)
+{
+	va_list ap;
+	int size = element_size;
+	mt_array_t *array;
+	int i;
+
+	va_start (ap, dimensions);
+	for (i = 0; i < dimensions; i++)
+		size *= va_arg (ap, int);
+	va_end (ap);
+
+	array = MTAlloc (wptr, MT_MAKE_ARRAY_TYPE (dimensions, (MT_MAKE_NUM(MT_NUM_BYTE))), size);
+
+	va_start (ap, dimensions);
+	for (i = 0; i < dimensions; i++)
+		array->dimensions[i] = va_arg (ap, int);
+	va_end (ap);
+
+	return array;
+}
+/*}}}*/
 /*{{{ mt_cb_t *MTAllocChanType (Workspace wptr, int channels, bool shared) */
 static inline mt_cb_t *MTAllocChanType (Workspace wptr, int channels, bool shared)
 {
@@ -159,6 +198,25 @@ static inline mt_cb_t *MTAllocChanType (Workspace wptr, int channels, bool share
 		type |= MT_CB_SHARED;
 
 	return MTAlloc (wptr, type, channels);
+}
+/*}}}*/
+/*{{{ mt_array_t *MTResize1D (Workspace wptr, mt_array_t *array, int new_size) */
+
+/**
+ * Resizes a one-dimensional mobile array, either in-place or by allocating a
+ * new array and copying across all the data that will fit inside the new
+ * array.  You should use the return pointer instead of the one you passed in
+ * (since the array might have been re-allocated in a new location).  The
+ * final parameter is the new length (in terms of array elements).
+ */
+static inline mt_array_t *MTResize1D (Workspace wptr, mt_array_t *array, int new_size)
+{
+	mt_array_t *ma = (mt_array_t *) MTResize (wptr, MT_RESIZE_DATA, array, new_size);
+	
+	if (ma != NULL)
+		ma->dimensions[0] = new_size;
+
+	return ma;
 }
 /*}}}*/
 /*}}}*/

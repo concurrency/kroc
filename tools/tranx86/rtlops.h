@@ -76,9 +76,11 @@ extern void rtl_set_lastvreg (int reg);
 extern int rtl_get_newvreg (void);
 extern int rtl_get_lastvreg (void);
 #ifdef INSTRUCTION_HISTORY
-	extern ins_chain *compose_ins2 (char *file, long line, int ins, int ops_in, int ops_out, ...);
+	extern ins_chain *compose_ins2 (char *file, long line, int etc_ins, int ins, int ops_in, int ops_out, ...);
 	#define compose_ins(ins, ops_in, ops_out, args...) \
-		compose_ins2(__FILE__, __LINE__, ins, ops_in, ops_out, ## args)
+		compose_ins2(__FILE__, __LINE__, 0, ins, ops_in, ops_out, ## args)
+	#define compose_ins_ex(etc_ins, ins, ops_in, ops_out, args...) \
+		compose_ins2(__FILE__, __LINE__, etc_ins, ins, ops_in, ops_out, ## args)
 #else	/* INSTRUCTION_HISTORY */
 	//extern ins_chain *compose_ins (int ins, int ops_in, int ops_out, ...);
 	#define compose_ins(ins, ops_in, ops_out, args...) \
@@ -88,12 +90,16 @@ extern int rtl_get_lastvreg (void);
 extern int rtl_const_bitwidth (int val, int issigned);
 extern int rtl_instr_width (ins_chain *ins);
 extern int rtl_classify_instr (ins_chain *ins);
+extern int rtl_cleanup_flabels (rtl_chain *rtl_code);
+extern ins_chain *rtl_cleanup_code (ins_chain *ins);
+extern rtl_chain *rtl_cleanup_code_all (rtl_chain *rtl);
 extern int rtl_link_jumps (rtl_chain *);
 extern int rtl_destructive_sequence (ins_chain *first, ins_chain *last);
 extern int rtl_compare_args (ins_arg *arg1, ins_arg *arg2);
 extern int rtl_arg_in_sequence (ins_arg *arg, ins_chain *first, ins_chain *last);
 extern ins_chain *rtl_next_instr (ins_chain *ins);
 extern ins_chain *rtl_prev_instr (ins_chain *ins);
+extern ins_chain *rtl_last_instr (rtl_chain *rtl);
 extern int rtl_result_of_const_compare (int c1, int c2, int cond);
 extern ins_labrefs *rtl_add_labref (ins_labrefs *labrefs, ins_chain *ins);
 extern int rtl_del_labref (ins_labrefs *labrefs, ins_chain *ins);

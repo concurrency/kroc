@@ -20,9 +20,7 @@
 
 #INCLUDE "course.module"
 #INCLUDE "sdlraster.module"
-
-#INCLUDE "complex.inc"
-#INCLUDE "complex_inline.inc"
+#INCLUDE "useful.module"
 
 VAL INT XRASTER.WIDTH IS 320:
 VAL INT XRASTER.HEIGHT IS 200:

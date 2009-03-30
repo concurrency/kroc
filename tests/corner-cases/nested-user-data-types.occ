@@ -1,0 +1,19 @@
+VAL INT MSIZE IS 32 :
+DATA TYPE COLUMN IS [MSIZE]REAL32:
+DATA TYPE MATRIX IS [MSIZE]COLUMN:
+
+PROC main()
+  CHAN COLUMN c:
+  PAR
+    MATRIX a:
+    c ! a[0]
+
+    -- Change this to FALSE to get rid of the error.
+    #IF TRUE
+    DATA TYPE BLOCK IS MATRIX:
+    BLOCK a:
+    #ELSE
+    MATRIX a:
+    #ENDIF
+    c ? a[0]
+:

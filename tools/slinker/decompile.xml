@@ -1,0 +1,69 @@
+<process>
+  <begin>
+    <par>
+      tcoff2bin
+      decode
+      specialize-trivially
+      specialize-nontrivially
+      propagate-line-numbers
+      tag-instructions
+      get-and-remove-filename
+      remove-useless-text
+      remove-unknown-things
+      show-annotation
+      jentry2jump
+      unify-jumps
+      find-globalnames
+      unify-labels
+      fix-jumps
+      expand-loopend
+      fix-load-labels
+      get-and-remove-spaces
+      expand-notprocess-annotated
+    </par>
+    <seq>
+      resolve-stubnames-picky
+      strip-labels
+      remove-redundant-jumps2
+      renumber2
+      inst2binary
+      data-bytes2binary
+      boolinvert2binary
+      insert-alignment
+      show-annotation
+      jumps2binary
+      load-labels2binary
+    </seq>
+    <branch switch="*OUTPUT-FORMAT*">
+      <output-c>
+	<seq>binary2c</seq>
+      </output-c>
+
+      <output-bytecode>
+	<seq>binary2bytecode</seq>
+      </output-bytecode>
+
+      <output-lx>
+	<seq>binary2lx</seq>
+      </output-lx>
+
+    </branch>
+  </begin>
+</process>
+
+
+
+<!-- Commenting out the optimization option. It doesn't work.
+     <branch switch="*OPTIMISATION*">
+       <all>
+	 <seq>jumps-and-loads2binary</seq>
+       </all>
+       
+       <none>
+	 <seq>
+	   insert-alignment
+	   jumps2binary
+	   load-labels2binary
+	 </seq>
+       </none> 
+     </branch> -->

@@ -24,6 +24,7 @@
  *  use3 - builds up lists of free variables for procs / functions
  *         alias checks if required
  *         calls usage checker in use2 if required
+ *         also calls undefinedness checker in use4
  *
  *****************************************************************************/
 
@@ -977,6 +978,7 @@ PRIVATE void aliascheckexp (treenode *n, use_mode_t use_mode)
 		case S_BYTESIN:
 		case S_OFFSETOF:
 #endif
+		case S_TYPEHASHOF:
 			return;
 			/*}}} */
 			/*{{{  dyadics */

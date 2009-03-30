@@ -44,6 +44,9 @@
 #define NUndefOf(N)		(CHECKREAD(N,NAMENODE)->n_u.n_s.n_undef)
 #define SetNUndef(N,V)		(CHECKNODE(N,NAMENODE)->n_u.n_s.n_undef = (V))
 
+#define NFMCheckOf(N)		(CHECKREAD(N,NAMENODE)->n_u.n_s.n_fmcheck)
+#define SetNFMCheck(N,V)	(CHECKNODE(N,NAMENODE)->n_u.n_s.n_fmcheck = (V))
+
 
 #ifdef COMPILING_TO_JCODE
 #define NAddrTakenOf(N)         (CHECKREAD(N,NAMENODE)->n_u.n_s.n_addr_taken)
@@ -99,6 +102,7 @@
 #define NPRecursiveOf(N)	(CHECKREAD(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_recursive)
 #define NPForksOf(N)		(CHECKREAD(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_forks)
 #define NPSuspendsOf(N)		(CHECKREAD(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_suspends)
+#define NPDyncallOf(N)		(CHECKREAD(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_dyncall)
 
 #define SetNPLabel(N,V)         (CHECKNODE(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_label    = (V))
 #define SetNPMapLabel(N,V)	(CHECKNODE(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_maplabel = (V))
@@ -123,6 +127,7 @@
 #define SetNPRecursive(N,V)	(CHECKNODE(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_recursive    = (V))
 #define SetNPForks(N,V)		(CHECKNODE(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_forks        = (V))
 #define SetNPSuspends(N,V)	(CHECKNODE(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_suspends     = (V))
+#define SetNPDyncall(N,V)	(CHECKNODE(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_dyncall      = (V))
 
 #define SetNPParams(N,V) ( CHECKNODE(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_params = \
         (CHECKNODE(N,NAMENODE)->n_u.n_s.n_un.n_proc.n_params & 0xffff0000) | (((int)(V)) & 0xffff) )

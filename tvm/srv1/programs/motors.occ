@@ -1,0 +1,67 @@
+#INCLUDE "config.inc"
+#INCLUDE "defBF534.inc"
+
+PROC set.pwm (VAL INT left, right)
+  INITIAL INT left IS left:
+  INITIAL INT right IS right:
+  PLACED [PORTHIO.LEN]INT port.h.io PORTHIO.ADDR:
+  #PRAGMA DEFINED port.h.io
+  PLACED [TIMER2.LEN]INT timer2 TIMER2.ADDR:
+  PLACED [TIMER3.LEN]INT timer3 TIMER3.ADDR:
+  INT h.val:
+  SEQ
+    h.val := port.h.io[PORTHIO]
+    IF
+      left < 0
+        -- clear left direction bit
+        h.val, left := h.val /\ #FFDF, -left
+      TRUE
+        -- turn on left direction bit
+        h.val := (h.val /\ #FFDF) \/ #0020
+    IF
+      right < 0
+        -- clear right direction bit
+        h.val, right := h.val /\ #FFEF, -right
+      TRUE
+        -- turn on right direction bit
+        h.val := (h.val /\ #FFEF) \/ #0010
+
+    IF
+      left > 100
+        left := 100
+      left < 1
+        left := 1
+      TRUE
+        SKIP
+    IF
+      right > 100
+        right := 100
+      right < 1
+        right := 1
+      TRUE
+        SKIP
+
+    timer2[TIMER2.WIDTH] := ((PERIPHERAL.CLOCK / 1000) * left) / 100
+    timer3[TIMER3.WIDTH] := ((PERIPHERAL.CLOCK / 1000) * right) / 100
+:
+
+PROC sleep.ms (VAL INT ms)
+  TIMER time:
+  INT now:
+  SEQ
+    time ? now
+    time ? AFTER (now PLUS ms)
+:
+
+PROC test ()
+  SEQ
+    set.pwm (0, 0)
+    sleep.ms (1000)
+    set.pwm (50, 50)
+    sleep.ms (1000)
+    set.pwm (0, 50)
+    sleep.ms (1000)
+    set.pwm (50, 0)
+    sleep.ms (1000)
+    set.pwm (0, 0)
+:

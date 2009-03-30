@@ -1314,15 +1314,39 @@ PRIVATE treenode *cpragma (treenode * volatile tptr, treenode * last_decl, treen
 			}
 			break;
 			/*}}}  */
+			/*{{{  DYNCALL, EXPORT*/
+		case pragma_name_dyncall:
+		case pragma_name_export:
+			{
+				treenode *l;
+
+				for (l = DValOf (tptr); !EndOfList (l); l = NextItem (l)) {
+					treenode *pname = ThisItem (l);
+
+					switch (TagOf (pname)) {
+					case N_PROCDEF:
+					case N_LFUNCDEF:
+					case N_SFUNCDEF:
+						break;
+					default:
+						chkreport_s (CHK_BAD_DYNCALL_TYPE, chklocn, WNameOf (NNameOf (pname)));
+						break;
+					}
+				}
+			}
+			break;
+			/*}}}*/
 			/*{{{  everything else */
 		case pragma_name_linkage:
 		case pragma_name_translate:
 		case pragma_name_external:
+		case pragma_name_dexternal:
 		case pragma_name_comment:
 		case pragma_name_hardware:
 		case pragma_name_defined:
 		case pragma_name_undefined:
 		case pragma_name_iospace:
+		case pragma_name_formalmodel:
 			break;
 			/*}}}  */
 		}
@@ -1495,6 +1519,10 @@ PRIVATE void scopeprocorfunc (treenode *const tptr)
 	treenode *const old_proc = current_proc;
 
 
+#if 0
+fprintf (stderr, "scopeprocorfunc(): here, params are:");
+printtreenl (stderr, 4, params);
+#endif
 	insidepripar = FALSE;
 	nestedpripar = FALSE;
 	nestedtimer = FALSE;
@@ -1504,6 +1532,7 @@ PRIVATE void scopeprocorfunc (treenode *const tptr)
 	insideseparatelycompiledsc = separatelycompiled (name);
 	current_proc = name;
 	check_lexlevel++;
+	treenode *p;
 
 	/*{{{  scope and check result types */
 #ifdef OCCAM2_5
@@ -1524,88 +1553,88 @@ PRIVATE void scopeprocorfunc (treenode *const tptr)
 	/*}}}*/
 
 	/*{{{  scope parameters */
-	{
-		treenode *p;
-		for (p = params; !EndOfList (p); p = NextItem (p)) {
+	for (p = params; !EndOfList (p); p = NextItem (p)) {
+		treenode *thisparam = ThisItem (p);
+
 #ifdef MOBILES
-			if (!NTypeOf (ThisItem (p))) {
-				chkreport (CHK_PARAM_MISSING_TYPE, chklocn);
-			}
-			/* capture any dynamic mobile chan-type parameters, which will still say S_ASINPUT/S_ASOUTPUT from the parser */
+		if (!NTypeOf (thisparam)) {
+			chkreport (CHK_PARAM_MISSING_TYPE, chklocn);
+		}
+		/* capture any dynamic mobile chan-type parameters, which will still say S_ASINPUT/S_ASOUTPUT from the parser */
 #if 0
 fprintf (stderr, "scopeprocorfunc: checking param = ");
-printtreenl (stderr, 4, ThisItem (p));
+printtreenl (stderr, 4, thisparam);
 fprintf (stderr, "scopeprocorfunc: type tree = ");
-printtreenl (stderr, 4, NTypeOf (ThisItem (p)));
+printtreenl (stderr, 4, NTypeOf (thisparam));
 #endif
-			if (TagOf (NTypeOf (ThisItem (p))) == S_ANONCHANTYPE) {
-				/*{{{  anonymous channel-types*/
-				fixup_anonchantype_end (ThisItemAddr (p));
-				/*}}}*/
-			}
-			/* also sort out CHAN of chan-type parameters, which have been specifier-fixed by now */
-			if ((TagOf (NTypeOf (ThisItem (p))) == S_CHAN) &&
-					((TagOf (ProtocolOf (NTypeOf (ThisItem (p)))) == S_ASINPUT) || (TagOf (ProtocolOf (NTypeOf (ThisItem (p)))) == S_ASOUTPUT))) {
-				const BOOL was_input = (TagOf (ProtocolOf (NTypeOf (ThisItem (p)))) == S_ASINPUT);
-				const BOOL shared = ((OpTypeAttrOf (ProtocolOf (NTypeOf (ThisItem (p)))) & TypeAttr_shared) == TypeAttr_shared);
-				treenode *curtype, *typecopy;
+		if (TagOf (NTypeOf (thisparam)) == S_ANONCHANTYPE) {
+			/*{{{  anonymous channel-types*/
+			fixup_anonchantype_end (ThisItemAddr (p));
+			thisparam = ThisItem (p);
+			/*}}}*/
+		}
+		/* also sort out CHAN of chan-type parameters, which have been specifier-fixed by now */
+		if ((TagOf (NTypeOf (thisparam)) == S_CHAN) &&
+				((TagOf (ProtocolOf (NTypeOf (thisparam))) == S_ASINPUT) || (TagOf (ProtocolOf (NTypeOf (thisparam))) == S_ASOUTPUT))) {
+			const BOOL was_input = (TagOf (ProtocolOf (NTypeOf (thisparam))) == S_ASINPUT);
+			const BOOL shared = ((OpTypeAttrOf (ProtocolOf (NTypeOf (thisparam))) & TypeAttr_shared) == TypeAttr_shared);
+			treenode *curtype, *typecopy;
 
-				/* temporarily fix type for scoping */
-				SetProtocol (NTypeOf (ThisItem (p)), OpOf (ProtocolOf (NTypeOf (ThisItem (p)))));
-				scopeandcheck (NTypeAddr (ThisItem (p)));
+			/* temporarily fix type for scoping */
+			SetProtocol (NTypeOf (thisparam), OpOf (ProtocolOf (NTypeOf (thisparam))));
+			scopeandcheck (NTypeAddr (thisparam));
 
-				if (TagOf (ProtocolOf (NTypeOf (ThisItem (p)))) == N_TYPEDECL) {
-					const int old = switch_to_real_workspace ();
-					/* okay, it's a channel of a type-decl, sort it */
+			if (TagOf (ProtocolOf (NTypeOf (thisparam))) == N_TYPEDECL) {
+				const int old = switch_to_real_workspace ();
+				/* okay, it's a channel of a type-decl, sort it */
 #if 0
 fprintf (stderr, "scopeprocorfunc: found CHAN of chan-type, type after scoping is: ");
-printtreenl (stderr, 4, NTypeOf (ThisItem (p)));
+printtreenl (stderr, 4, NTypeOf (thisparam));
 #endif
-					curtype = ProtocolOf (NTypeOf (ThisItem (p)));
-					typecopy = newnamenode (TagOf (curtype), LocnOf (curtype), NNameOf (curtype), NTypeOf (curtype),
-							NDeclOf (curtype), NLexLevelOf (curtype), NScopeOf (curtype), NModeOf (curtype));
-					SetNTypeAttr (typecopy, (was_input ? TypeAttr_marked_in : TypeAttr_marked_out) | (shared ? TypeAttr_shared : 0));
-					SetProtocol (NTypeOf (ThisItem (p)), typecopy);
-					switch_to_prev_workspace (old);
-				}
-			} else if ((TagOf (NTypeOf (ThisItem (p))) == S_ASINPUT) || (TagOf (NTypeOf (ThisItem (p))) == S_ASOUTPUT)) {
-				/* which way ? */
-				const BOOL was_input = (TagOf (NTypeOf (ThisItem (p))) == S_ASINPUT);
-				/* shared ? */
-				const BOOL shared = ((OpTypeAttrOf (NTypeOf (ThisItem (p))) & TypeAttr_shared) == TypeAttr_shared);
-				/* const int old = switch_to_real_workspace (); */
-				treenode *curtype, *typecopy;
-
-				/* temporarily fix type for scoping */
-				SetNType (ThisItem (p), OpOf (NTypeOf (ThisItem (p))));
-				scopeandcheck (NTypeAddr (ThisItem (p)));
-				if (TagOf (NTypeOf (ThisItem (p))) == N_TYPEDECL) {
-					/* okay, it's a typedecl, sort it */
-					const int old = switch_to_real_workspace ();
-					curtype = NTypeOf (ThisItem (p));
-					typecopy = newnamenode (TagOf (curtype), LocnOf (curtype), NNameOf (curtype), NTypeOf (curtype),
-							NDeclOf (curtype), NLexLevelOf (curtype), NScopeOf (curtype), NModeOf (curtype));
-
-					SetNTypeAttr (typecopy, (was_input ? TypeAttr_marked_in : TypeAttr_marked_out) | (shared ? TypeAttr_shared : 0));
-					SetNType (ThisItem (p), typecopy);
-					switch_to_prev_workspace (old);
-				}
-				/* switch_to_prev_workspace (old); */
-			} else {
-				scopeandcheck (NTypeAddr (ThisItem (p)));
+				curtype = ProtocolOf (NTypeOf (thisparam));
+				typecopy = newnamenode (TagOf (curtype), LocnOf (curtype), NNameOf (curtype), NTypeOf (curtype),
+						NDeclOf (curtype), NLexLevelOf (curtype), NScopeOf (curtype), NModeOf (curtype));
+				SetNTypeAttr (typecopy, (was_input ? TypeAttr_marked_in : TypeAttr_marked_out) | (shared ? TypeAttr_shared : 0));
+				SetProtocol (NTypeOf (thisparam), typecopy);
+				switch_to_prev_workspace (old);
 			}
+		} else if ((TagOf (NTypeOf (thisparam)) == S_ASINPUT) || (TagOf (NTypeOf (thisparam)) == S_ASOUTPUT)) {
+			/* which way ? */
+			const BOOL was_input = (TagOf (NTypeOf (thisparam)) == S_ASINPUT);
+			/* shared ? */
+			const BOOL shared = ((OpTypeAttrOf (NTypeOf (thisparam)) & TypeAttr_shared) == TypeAttr_shared);
+			/* const int old = switch_to_real_workspace (); */
+			treenode *curtype, *typecopy;
+
+			/* temporarily fix type for scoping */
+			SetNType (thisparam, OpOf (NTypeOf (thisparam)));
+			scopeandcheck (NTypeAddr (thisparam));
+			if (TagOf (NTypeOf (thisparam)) == N_TYPEDECL) {
+				/* okay, it's a typedecl, sort it */
+				const int old = switch_to_real_workspace ();
+				curtype = NTypeOf (thisparam);
+				typecopy = newnamenode (TagOf (curtype), LocnOf (curtype), NNameOf (curtype), NTypeOf (curtype),
+						NDeclOf (curtype), NLexLevelOf (curtype), NScopeOf (curtype), NModeOf (curtype));
+
+				SetNTypeAttr (typecopy, (was_input ? TypeAttr_marked_in : TypeAttr_marked_out) | (shared ? TypeAttr_shared : 0));
+				SetNType (thisparam, typecopy);
+				switch_to_prev_workspace (old);
+			}
+			/* switch_to_prev_workspace (old); */
+		} else {
+			scopeandcheck (NTypeAddr (thisparam));
+		}
 #if 0
 fprintf (stderr, "scopeprocorfunc: new param = ");
-printtreenl (stderr, 4, ThisItem (p));
+printtreenl (stderr, 4, thisparam);
 fprintf (stderr, "   scopeprocorfunc: type-tree = ");
-printtreenl (stderr, 4, NTypeOf (ThisItem (p)));
+printtreenl (stderr, 4, NTypeOf (thisparam));
 #endif
 
 #else	/* !MOBILES */
-			scopeandcheck (NTypeAddr (ThisItem (p)));
+		scopeandcheck (NTypeAddr (thisparam));
 #endif	/* !MOBILES */
-			cparamdecltype (NTypeOf (ThisItem (p)));
-		}
+		cparamdecltype (NTypeOf (thisparam));
 	}
 	/*}}}  */
 	params = (treenode *) cparmlist (params, TagOf (tptr), LocnOf (tptr), insideseparatelycompiledsc);
@@ -2312,13 +2341,17 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 							case pragma_name_defined:
 							case pragma_name_undefined:
 							case pragma_name_iospace:
+							case pragma_name_dyncall:
+							case pragma_name_export:
 								scopeandcheck (DValAddr (tt));
 								break;
 							case pragma_name_linkage:
 							case pragma_name_translate:
 							case pragma_name_external:
+							case pragma_name_dexternal:
 							case pragma_name_comment:
 							case pragma_name_hardware:
+							case pragma_name_formalmodel:
 								break;
 							}
 							cpragma (tt, last_decl, current_params);
@@ -3243,6 +3276,15 @@ fprintf (stderr, "scopeandcheck: INSTANCENODE: param checking; ctvar = NULL\n");
 					}
 					/*}}}  */
 
+					if (IDynaddrOf (t)) {
+						if (IDynmemOf (t) == FALSE) {
+							chkerr_s (CHK_CALLAT_NOT_DYNAMIC, chklocn, WNameOf (NNameOf (name)));
+						}
+
+						scopeandcheck (IDynaddrAddr (t));
+					}
+
+
 					if (insidepripar && (TagOf (name) != N_DECL) && NPNestedPriParOf (name)) {
 						/* N.B. tag is N_DECL if the lookupname failed */
 						chkerr_s (CHK_NESTED_PRI_PROC, chklocn, WNameOf (NNameOf (name)));
@@ -3444,6 +3486,32 @@ if (TagOf (t) == S_CLONE) {
 				/*{{{  dyadics             break */
 			case DOPNODE:
 				switch (tag) {
+				case S_TYPEHASHCHECK:
+					/* expecting some type-tree on the left, integer on the right */
+					{
+						treenode **lhs = LeftOpAddr (t);
+						treenode **rhs = RightOpAddr (t);
+						treenode *lhsv = NULL;
+
+						scopeandcheck (lhs);
+						scopeandcheck (rhs);
+
+						/* FIXME: this needs checking, may not be able to do much until the back-end has been through it,
+							as it is after this where certain type-hash affecting things are set! */
+#if 0
+fprintf (stderr, "scopeandcheck(): removing typehashcheck for:");
+printtreenl (stderr, 4, *lhs);
+fprintf (stderr, "scopeandcheck(): against typehash:", mtypehash);
+printtreenl (stderr, 4, *rhs);
+#endif
+
+						lhsv = *lhs;
+						*lhs = NULL;
+						freenode (tptr);
+						*tptr = lhsv;
+						return;
+					}
+					break;
 				case S_GUYCODE:
 				case S_GUYSTEP:
 					scopeandcheck (RightOpAddr (t));
@@ -3924,12 +3992,14 @@ PRIVATEPARAM int configcheck (treenode * tptr, void *voidptr)
 		if ((current_fe_data->fe_lang & FE_LANG_NDL) != 0) {	/* bug TS/1465 12/11/91 */
 			changestate (tptr, DValOf (tptr), configcheckstate, S_NETWORK);
 		} else if (separatelycompiled (DNameOf (tptr))) {
-			if (configcheckstate == S_NETWORK || configcheckstate == S_MAPPING)
+			if (configcheckstate == S_NETWORK || configcheckstate == S_MAPPING) {
 				invalidconfigconstruct (tptr);
+			}
 		} else {	/* locally defined */
 
-			if (configcheckstate != S_PROCESSOR)
+			if (configcheckstate != S_PROCESSOR) {
 				invalidconfigconstruct (tptr);
+			}
 			prewalkproctree (DValOf (tptr), configcheck, voidptr);
 		}
 		break;

@@ -10,9 +10,14 @@ AM_INIT_AUTOMAKE(raster, 0.1)
 dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
+CFLAGS="$CFLAGS $OCCBUILD_CFLAGS"
 
 dnl Checks for libraries.
 PKG_CHECK_MODULES([LIBPNG], [libpng], [have_libpng=yes], [have_libpng=no])
+old_LIBS="$LIBS"
+LIBS="$LIBS $LIBPNG_LIBS"
+AC_CHECK_FUNC(png_init_io, , [have_libpng=no])
+LIBS="$old_LIBS"
 if ! test $OCCBUILD_TOOLCHAIN = kroc; then
 	# FIXME: PNG support currently requires CCSP's interface.
 	have_libpng=no
@@ -22,5 +27,9 @@ AM_CONDITIONAL(HAVE_LIBPNG, [test $have_libpng = yes])
 dnl Checks for occam modules.
 OCCAM_INCLUDE([course.module file.module], ,
               [AC_MSG_ERROR(Required modules not found)])
+OCCAM_PROVIDE(raster.module, base)
+OCCAM_PROVIDE(rastergraphics.module, graphics)
+OCCAM_PROVIDE(rasterio.module, io)
+OCCAM_PROVIDE(rastertext.module, text)
 
 AC_OUTPUT([Makefile base/Makefile graphics/Makefile io/Makefile text/Makefile])

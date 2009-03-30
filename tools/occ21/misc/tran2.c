@@ -1153,7 +1153,7 @@ PUBLIC int inputtypeof (treenode * const tptr)
  *****************************************************************************/
 PUBLIC BOOL isshortint (const int type)
 {
-	return (type == S_INT16) && (targetintsize == S_INT32);
+	return ((type == S_INT16) || (type == S_UINT16)) && ((targetintsize == S_INT32) || (targetintsize == S_UINT32));
 }
 
 /*}}}  */
@@ -1166,7 +1166,8 @@ PUBLIC BOOL isshortint (const int type)
  *****************************************************************************/
 PUBLIC BOOL isshorttype (const int type)
 {
-	return (type == S_BOOL) || (type == S_BYTE) || ((targetintsize == S_INT32) && (type == S_INT16));
+	return (type == S_BOOL) || (type == S_BYTE) ||
+		(((targetintsize == S_INT32) || (targetintsize == S_UINT32)) && ((type == S_INT16) || (type == S_UINT16)));
 }
 
 /*}}}  */
@@ -1179,7 +1180,7 @@ PUBLIC BOOL isshorttype (const int type)
  *****************************************************************************/
 PUBLIC BOOL istargetintsize (int type)
 {
-	return ((type == S_INT) || (type == targetintsize) || ((type == S_REAL32) && (targetintsize == S_INT32)) || (type == S_CHAN));
+	return ((type == S_INT) || (type == S_UINT) || (type == targetintsize) || ((type == S_REAL32) && ((targetintsize == S_INT32) || (targetintsize == S_UINT32))) || (type == S_CHAN));
 }
 
 /*}}}  */
@@ -1231,8 +1232,8 @@ PUBLIC BOOL fitsinword (const int type)
  *****************************************************************************/
 PUBLIC BOOL isdoublelength (const int type)
 {
-	return ((targetintsize == S_INT16) && (type == S_INT32 || type == S_REAL32))
-		|| ((targetintsize == S_INT32) && (type == S_INT64 || type == S_REAL64));
+	return (((targetintsize == S_INT16) || (targetintsize == S_UINT16)) && ((type == S_INT32) || (type == S_UINT32) || (type == S_REAL32)))
+		|| (((targetintsize == S_INT32) || (targetintsize == S_UINT32)) && ((type == S_INT64) || (type == S_UINT64) || (type == S_REAL64)));
 }
 
 /*}}}  */
@@ -1245,7 +1246,7 @@ PUBLIC BOOL isdoublelength (const int type)
  *****************************************************************************/
 PUBLIC BOOL isquadlength (const int type)
 {
-	return (targetintsize == S_INT16) && (type == S_INT64 || type == S_REAL64);
+	return ((targetintsize == S_INT16) || (targetintsize == S_UINT16)) && ((type == S_INT64) || (type == S_UINT64) || (type == S_REAL64));
 }
 
 /*}}}  */
@@ -2109,31 +2110,39 @@ PUBLIC constformat_t constformat_of_const (const int type, const INT32 lo, const
 			    && !T9000_alpha_badmint (&tx_global))
 				return constformat_mint32_ldnlp;
 			if (!T9000_instruction_timings || opt_space) {	/* bug 1371 15/8/91 */
-				if (lo <= ADCNEG_INT32 && !T9000_alpha_badmint (&tx_global))
+				if (lo <= ADCNEG_INT32 && !T9000_alpha_badmint (&tx_global)) {
 					return constformat_mint32_adc;
-				if (lo == MOSTPOS_INT32 && !T9000_alpha_badmint (&tx_global))
+				}
+				if (lo == MOSTPOS_INT32 && !T9000_alpha_badmint (&tx_global)) {
 					return constformat_mint32_not;
+				}
 				if (has_fp_support) {
-					if ((lo >= LDINF_NEG_WORD) && (lo <= LDINF_POS_WORD) && ((lo & 0x3) == 0))
+					if ((lo >= LDINF_NEG_WORD) && (lo <= LDINF_POS_WORD) && ((lo & 0x3) == 0)) {
 						return constformat_ldinf_ldnlp;
-					if ((lo >= LDINF_NEG_BYTE) && (lo <= LDINF_POS_BYTE))
+					}
+					if ((lo >= LDINF_NEG_BYTE) && (lo <= LDINF_POS_BYTE)) {
 						return constformat_ldinf_adc;
+					}
 				}
 			}
 		} else if (targetintsize == S_INT16) {
-			if ((lo <= LDNLPNEG_INT16) && ((lo & 0x1) /*(lo % bytesperword) */  == 0))
+			if ((lo <= LDNLPNEG_INT16) && ((lo & 0x1) /*(lo % bytesperword) */  == 0)) {
 				return constformat_mint16_ldnlp;
-			if (lo <= ADCNEG_INT16)
+			}
+			if (lo <= ADCNEG_INT16) {
 				return constformat_mint16_adc;
+			}
 		}
 
-		if (ilength (lo) > const_max_bytes)
+		if (ilength (lo) > const_max_bytes) {
 			return constformat_table;
+		}
 	} else if (isdoublelength (type)) {
 		if (((lo != MOSTNEG_INT32) && (ilength (lo) > const_max_bytes))
-		    || ((bytesperword > 2) &&	/* added 16/7/91 for bug 1195 - CON */
-			(hi != MOSTNEG_INT32) && (ilength (hi) > const_max_bytes)))
+				|| ((bytesperword > 2) &&	/* added 16/7/91 for bug 1195 - CON */
+				(hi != MOSTNEG_INT32) && (ilength (hi) > const_max_bytes))) {
 			return constformat_table;
+		}
 	}
 
 	return constformat_ldc;

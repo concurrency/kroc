@@ -3050,6 +3050,7 @@ arch_t *init_arch_ppc (int mclass)
 	arch->compose_bcall = compose_bcall_ppc;
 
 	arch->compose_entry_prolog = compose_entry_prolog_ppc;
+	arch->compose_rmox_entry_prolog = NULL;
 	arch->compose_fp_set_fround = compose_fp_set_fround_ppc;
 	arch->compose_fp_init = compose_fp_init_ppc;
 	arch->compose_reset_fregs = compose_reset_fregs_ppc;

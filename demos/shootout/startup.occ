@@ -1,0 +1,5 @@
+PROC main (CHAN BYTE out!)
+  VAL []BYTE s IS "hello world*n":
+  SEQ i = 0 FOR SIZE s
+    out ! s[i]
+:

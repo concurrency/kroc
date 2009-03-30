@@ -1,18 +1,22 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
-OCCBUILD = @OCCBUILD@ -DOCCADE.DATA.DIR="$(datadir)/occade"
+ACLOCAL_AMFLAGS = -I ../../../m4
+
+OCCBUILD = @OCCBUILD@ -DOCCADE.DATA.DIR="$(datadir)/kroc/occade"
 
 EXTRA_DIST = \
 	occade.occ \
 	occade.inc \
 	overwriting-buffer.inc
 
+if BUILD_OCCADE
 occade_lib_objs = \
 	occade.tce
 
 libs = occade.lib
 includes = occade.inc overwriting-buffer.inc
+endif
 
 all-local: $(libs)
 
@@ -31,6 +35,6 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 ## begin pideps dependencies
-occade.occ: $(srcdir)/occade.inc
-occade.occ: $(srcdir)/overwriting-buffer.inc
+occade.tce: $(srcdir)/occade.inc
+occade.tce: $(srcdir)/overwriting-buffer.inc
 ## end pideps dependencies

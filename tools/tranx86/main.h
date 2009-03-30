@@ -95,6 +95,15 @@
 #define INTERNAL_FLOATCONV 0x20		/* need a floating-point conversion constant */
 #define INTERNAL_ALIGNEDCODE 0x40	/* if code needs to be sensibly aligned */
 
+typedef enum {
+	RM_NONE = 0,			/* not building for RMoX */
+	RM_APP = 1,			/* building RMoX application */
+	RM_DRV = 2,			/* building RMoX device driver */
+	RM_SRV = 3,			/* building RMoX service */
+	RM_FS = 4,			/* building RMoX file-system handler */
+	RM_NET = 5			/* building RMoX network driver */
+} rmoxmode_e;
+
 typedef struct {
 	/* general options */
 	int not_main_module;
@@ -109,6 +118,7 @@ typedef struct {
 	int gstabs;
 	int drop_assembler;
 	int tlp_interface;		/* overrides automatic checking */
+	rmoxmode_e rmoxmode;
 	/* debugging */
 	int debug_options;
 	int diagnostics;
@@ -131,6 +141,8 @@ typedef struct {
 	int mpenable;			/* whether multi-processor support is enabled in the run-time */
 	int nocc_codegen;		/* non-zero if generating code compiled by NOCC */
 	int underflow_error;		/* whether FP underflow is an error */
+	char *etab_filename;		/* if non-NULL, write exports to this file */
+	FILE *etabfile;			/* if non-NULL, writing EXPORTs to this file */
 } optstruct;
 
 #ifndef __MAIN_C

@@ -82,6 +82,7 @@ static int dmcount;
 /*{{{  static char *modify_name (char *name)*/
 /*
  *	modifies an outgoing name
+ *	NOTE: this returns a pointer into a static area.
  */
 static char *modify_name (char *name)
 {
@@ -113,7 +114,7 @@ static char *modify_name (char *name)
 	rbuf[j] = '\0';
 
 	const char *prepend = NULL;
-	if ((rbuf[0] == '_') || (!strncmp (rbuf, "O_", 2)) || (name[0] == '&') || (name[0] == '@')) {
+	if ((rbuf[0] == '_') || (!strncmp (rbuf, "O_", 2)) || (!strncmp (rbuf, "DCR_", 4)) || (name[0] == '&') || (name[0] == '@')) {
 		/* skip */
 	} else if (name[0] == '^') {
 		prepend = "E_";
@@ -1016,6 +1017,34 @@ int dump_asm386_stream (rtl_chain *rtl_code, FILE *stream)
 				fprintf (stream, "%s:\n", label);
 			}
 			break;
+		case RTL_DYNCODEENTRY:
+			{
+				const char *label = modify_name (tmp->u.dyncode.label_name);
+				const char *flabel;
+
+				if (!seen_data) {
+					fprintf (stream, ".data\n");
+					seen_data = 1;
+				}
+
+				fprintf (stream, ".globl %s\n", label);
+				fprintf (stream, ".align 4\n");
+				fprintf (stream, "%s:\n", label);
+
+				flabel = modify_name (tmp->u.dyncode.fcn_name);
+				fprintf (stream, "\t.long %s, %d, %d, 0x%x\n", flabel,
+						tmp->u.dyncode.ws_slots, tmp->u.dyncode.vs_slots, tmp->u.dyncode.typehash);
+
+				if (tmp->u.dyncode.rmoxmode != RM_NONE) {
+					/* add some extra information with details about what we're compiling */
+					fprintf (stream, ".globl rmox_modname\n");
+					fprintf (stream, "rmox_modname: .asciz \"%s\"\n", tmp->u.dyncode.fcn_name ?: "");
+					fprintf (stream, ".align 4\n");
+					fprintf (stream, ".globl rmox_modtype\n");
+					fprintf (stream, "rmox_modtype: .long %d\n", (int)tmp->u.dyncode.rmoxmode);
+				}
+			}
+			break;
 		case RTL_PUBLICENDNAMEDLABEL:
 			if (!options.disable_symbol_ops) {
 				const char *label = modify_name (tmp->u.label_name);
@@ -1032,14 +1061,18 @@ int dump_asm386_stream (rtl_chain *rtl_code, FILE *stream)
 				seen_data = 1;
 			}
 			const char *pfx = options.extref_prefix ? options.extref_prefix : "";
-			fprintf (stream, ".globl %s_wsbytes\n", pfx);
-			fprintf (stream, "%s_wsbytes: .long %d\n", pfx, tmp->u.wsvs.ws_bytes);
-			fprintf (stream, ".globl %s_wsadjust\n", pfx);
-			fprintf (stream, "%s_wsadjust: .long %d\n", pfx, tmp->u.wsvs.ws_adjust);
-			fprintf (stream, ".globl %s_vsbytes\n", pfx);
-			fprintf (stream, "%s_vsbytes: .long %d\n", pfx, tmp->u.wsvs.vs_bytes);
-			fprintf (stream, ".globl %s_msbytes\n", pfx);
-			fprintf (stream, "%s_msbytes: .long %d\n", pfx, tmp->u.wsvs.ms_bytes);
+
+			if (options.rmoxmode == RM_NONE) {
+				/* only generate these if not compiling for RMoX */
+				fprintf (stream, ".globl %s_wsbytes\n", pfx);
+				fprintf (stream, "%s_wsbytes: .long %d\n", pfx, tmp->u.wsvs.ws_bytes);
+				fprintf (stream, ".globl %s_wsadjust\n", pfx);
+				fprintf (stream, "%s_wsadjust: .long %d\n", pfx, tmp->u.wsvs.ws_adjust);
+				fprintf (stream, ".globl %s_vsbytes\n", pfx);
+				fprintf (stream, "%s_vsbytes: .long %d\n", pfx, tmp->u.wsvs.vs_bytes);
+				fprintf (stream, ".globl %s_msbytes\n", pfx);
+				fprintf (stream, "%s_msbytes: .long %d\n", pfx, tmp->u.wsvs.ms_bytes);
+			}
 			break;
 		case RTL_UNDEFINED:
 		case RTL_CODELINE:

@@ -1,0 +1,122 @@
+#INCLUDE "srv1.inc"
+#INCLUDE "delay.inc"
+#INCLUDE "out.occ"
+
+VAL INT width IS 320:
+VAL INT height IS 256:
+
+DATA TYPE UYVY
+  PACKED RECORD
+    BYTE u:
+    BYTE y.0:
+    BYTE v:
+    BYTE y.1:
+:
+
+INT FUNCTION calc.avg.luma (VAL INT scan.width, VAL []BYTE frame)
+  INT avg.luma:
+  VALOF
+    VAL []UYVY image RETYPES frame:
+    -- Set the start position at 1/16 offset of both width and height.
+    VAL INT start.pos IS ((SIZE image) >> 4) + (scan.width >> 4):
+    SEQ
+      avg.luma := 0
+      -- Step 1/8's across the height of the image.
+      SEQ y = start.pos FOR 8 STEP ((SIZE image) >> 3)
+        -- Step 1/8's across the scanned width of the image.
+        SEQ pos = y FOR 8 STEP (scan.width >> 4)
+          VAL pixel IS image[pos]:
+          SEQ
+            avg.luma := avg.luma + (INT pixel[y.0])
+      -- Divide by 64, the number of sampled pixels.
+      avg.luma := avg.luma >> 6
+    RESULT avg.luma
+:
+
+PROC get.image (CAMERA! camera, CHAN MOBILE []BYTE frames!)
+  MOBILE []BYTE frame:
+  SEQ
+    -- Start camera
+    camera[req] ! set.stream.mode; width; height
+    camera[rsp] ? CASE ok
+    
+    -- Let it adjust to light level then freeze settings
+    camera[req] ! set.auto.adjust; TRUE
+    camera[rsp] ? CASE ok
+    delay.s (3)
+    camera[req] ! set.auto.adjust; FALSE
+    camera[rsp] ? CASE ok
+
+    -- Sample frames
+    WHILE TRUE
+      SEQ
+        camera[req] ! get.frame
+        camera[rsp] ? CASE frame; frame
+        frames ! frame
+:
+
+PROC avg.luma (CHAN MOBILE []BYTE frames?, CHAN INT luma!)
+  MOBILE []BYTE frame:
+  WHILE TRUE
+    SEQ
+      frames ? frame
+      luma ! calc.avg.luma (width, frame)
+:
+
+PROC is.dark (CHAN INT luma?, CHAN BOOL dark!)
+  WHILE TRUE
+    INT avg.luma:
+    SEQ
+      luma ? avg.luma
+      dark ! (avg.luma < 64)
+:
+
+PROC change.delta (CHAN BOOL in?, out.0!, out.1!)
+  BOOL this:
+  SEQ
+    in ? this
+
+    WHILE TRUE
+      BOOL new:
+      SEQ
+        PAR
+          out.0 ! this
+          out.1 ! this
+
+        in ? new
+        WHILE new = this
+          in ? new
+
+        this := new
+:
+
+PROC control.lasers (CHAN BOOL is.dark?, LASER! lasers)
+  WHILE TRUE
+    BOOL dark:
+    SEQ
+      is.dark ? dark
+      lasers[req] ! all; dark
+:
+
+PROC control.leds (CHAN BOOL is.dark?, SYSTEM! system)
+  WHILE TRUE
+    BOOL dark:
+    SEQ
+      is.dark ? dark
+      system[req] ! set.led; 1; dark
+      system[req] ! set.led; 2; dark
+:
+
+PROC multi.dark (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTEM! system)
+  CHAN MOBILE []BYTE frames:
+  CHAN BOOL dark, dark.0, dark.1:
+  CHAN INT luma:
+  PAR
+    get.image (camera, frames!)
+    avg.luma (frames?, luma!)
+    is.dark (luma?, dark!)
+    change.delta (dark?, dark.0!, dark.1!)
+    control.lasers (dark.0?, lasers)
+    control.leds (dark.1?, system)
+:
+

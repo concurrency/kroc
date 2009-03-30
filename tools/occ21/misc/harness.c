@@ -272,6 +272,7 @@ PUBLIC BOOL reverse_alt_disable = FALSE;
 PUBLIC BOOL disable_dynmem = FALSE;
 PUBLIC BOOL no_placed_chans = FALSE;
 PUBLIC BOOL mobile_size_field = FALSE;
+PUBLIC BOOL main_dynentry = FALSE;
 #if defined(INITIAL_DECL)
 PUBLIC BOOL initial_decl = FALSE;
 #endif
@@ -293,6 +294,8 @@ PUBLIC BOOL target_accessaligned = FALSE;
 #endif
 PUBLIC BOOL enable_dtraces = FALSE;		/* debugging traces (requires run-time support) */
 PUBLIC BOOL no_undefinedness_check = FALSE;
+PUBLIC BOOL formal_model = FALSE;		/* whether or not to dump a .cspx file with a CSP model of the source */
+PUBLIC BOOL fm_collct = FALSE;			/* whether or not to collapse PROTOCOLs in a CHAN TYPE during formal-model generation */
 
 
 PUBLIC BOOL debugoutput     = TRUE; /* Whether to insert debug info into object file */
@@ -359,7 +362,6 @@ PUBLIC const BOOL configuring = FALSE;
 
 PUBLIC BOOL barrier_rbpe = FALSE;
 
-PUBLIC BOOL no_undefineness_check = FALSE;
 /*}}}*/
 
 /*}}}*/
@@ -2178,8 +2180,9 @@ const arg2_descriptor cloptions[] = {
 	#endif
 	/*}}}*/
 
-	/*{{{  zd - ze*/
+	/*{{{  zd - zf*/
 	#if !defined(COMPILING_TO_JCODE)
+	{"ZDME",      arg2_single,    &main_dynentry, set_flag,           HELP_ZED, "dynamic top-level entry point"},
 	{"ZD",        arg2_single,    NULL,           optzed,             HELP_ZED, "disassemble after crunch"},
 	{"ZEN",       arg2_single,    &enhanced_alt_enable, set_flag,     HELP_FUL, "use enhanced ALT enabling"},
 	{"ZEP",       arg2_single,    &alt_preenable, set_flag,           HELP_FUL, "use ALT pre-enabling sequence"},
@@ -2214,6 +2217,8 @@ const arg2_descriptor cloptions[] = {
 	{"ZEW",       arg2_single,    NULL,           optzed,             HELP_ZED, "allocate workspace by variable colouring"},
 	{"ZE",        arg2_single,    NULL,           optzed,             HELP_ZED, "visible compiler library names"},
 	#endif
+	{"ZFMCCT",    arg2_single,    &fm_collct,     set_flag,           HELP_ZED, "collapse channel-type protocols in formal model"},
+	{"ZFM",       arg2_single,    &formal_model,  set_flag,           HELP_ZED, "generate formal model"},
 	/*}}}*/
 
 	/*{{{  zg - zl*/
@@ -2747,9 +2752,11 @@ PRIVATE treenode *call_occam_frontend(BOOL *const error_occurred)
 	parms.warn_on_all_errors  = warn_on_all_errors;
 	parms.read_all_libs       = read_all_libs;
 	parms.hash_version_string = hash_version_string;
-	parms.checkalias          = &checkalias; /* may be modified by #OPTION */
-	parms.checkusage          = &checkusage; /* may be modified by #OPTION */
-	parms.error_occurred      = error_occurred; /* is set if any error happens */
+	parms.checkalias          = &checkalias;	/* may be modified by #OPTION */
+	parms.checkusage          = &checkusage;	/* may be modified by #OPTION */
+	parms.formalmodel         = &formal_model;	/* may be modified by #OPTION */
+	parms.fm_collct           = &fm_collct;		/* may be modified by #OPTION */
+	parms.error_occurred      = error_occurred;	/* is set if any error happens */
 	parms.process_option      = process_option;
 	parms.guyinserts          = &guyinserts;
 	#if defined(COMPILING_TO_JCODE)

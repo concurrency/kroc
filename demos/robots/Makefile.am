@@ -1,35 +1,43 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../m4
+
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
-	graphics.occ robot2.occ robot.occ \
-	angle.inc arc.inc circle.inc colours.inc copy.inc cordic.inc disc2.inc disc.inc dither.inc fan.inc graphics.inc hit.inc line.inc lines.inc pack.inc palette.inc rectangle.inc spectrum.inc wallpaper.inc
+	fan.inc \
+	hit.inc \
+	particles-ats.occ \
+	robot.occ \
+	robot2.occ \
+	robot3.occ
 
+if BUILD_ROBOTS
 examples = \
+	particles-ats \
 	robot \
 	robot2 \
-	particles-ats
+	robot3
+endif
+
+robotsdir = $(prefix)/share/kroc/robots
+dist_robots_DATA = \
+	robot-track-1.png \
+	robot-track-2.png
 
 all-local: $(examples)
-
-robot: robot.occ graphics.tce
-	$(OCCBUILD) --program $< graphics.tce
-
-robot2: robot2.occ graphics.tce
-	$(OCCBUILD) --program $< graphics.tce
-
-particles-ats: particles-ats.occ
-	$(OCCBUILD) --program $<
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples robots --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
 
 clean-local:
-	$(OCCBUILD) --clean $(examples) graphics.tce
+	$(OCCBUILD) --clean $(examples)
 
 SUFFIXES = .occ .tce .lib
 
 .occ.tce:
 	$(OCCBUILD) --object $<
+
+.occ:
+	$(OCCBUILD) --program $<

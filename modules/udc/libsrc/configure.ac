@@ -11,6 +11,9 @@ dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
 
+build_udc=no
+AC_ARG_ENABLE([udc], AS_HELP_STRING([--enable-udc], [enable (old) user-defined channels]), [build_udc=yes])
+
 dnl Checks for headers.
 AC_CHECK_HEADERS(stdlib.h sys/time.h)
 
@@ -22,6 +25,9 @@ if test "$enable_bsyscalls" = yes; then
  AC_DEFINE(BLOCKING_SYSCALLS)
 fi
 
+AC_MSG_CHECKING([whether to build udc.module])
+AC_MSG_RESULT($build_udc)
+AM_CONDITIONAL(BUILD_UDC, [test $build_udc = yes])
+OCCAM_PROVIDE(udc.module, , , [test $build_udc = yes])
+
 AC_OUTPUT([Makefile])
-
-

@@ -18,6 +18,9 @@
 --
 --** @module useful
 
+--{{{  includes
+#INCLUDE "course.module"
+--}}}
 --{{{  externals
 #PRAGMA EXTERNAL "PROC C.format.print.stderr (VAL []BYTE s) = 0"
 --}}}
@@ -65,5 +68,23 @@ PROC format.int (RESULT []BYTE s, RESULT INT i, VAL INT n)
           s[i] := '-'
       TRUE
         SKIP
+:
+--}}}
+--{{{  PROC format.real32
+--* Format a real in decimal.
+-- @private
+PROC format.real32 (RESULT []BYTE s, RESULT INT size, VAL REAL32 n)
+  course.REAL32TOSTRING (size, s, n, 0, 0)
+:
+--}}}
+--{{{  PROC format.bool
+--* Format a boolean.
+-- @private
+PROC format.bool (RESULT [5]BYTE s, RESULT INT size, VAL BOOL b)
+  IF
+    b
+      s, size := "TRUE ", 4
+    TRUE
+      s, size := "FALSE", 5
 :
 --}}}

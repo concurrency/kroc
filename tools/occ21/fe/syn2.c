@@ -53,6 +53,8 @@ PRIVATE treenode *rspecifier_constr (void);
 PRIVATE treenode *rtypeoroperand (void);
 PRIVATE treenode *rspecorexprlist (BOOL * specflag);
 #endif
+PRIVATE int rtypehash (treenode **tptr);
+
 #ifdef USER_DEFINED_OPERATORS
 extern BOOL user_defined_operators;
 #endif
@@ -194,6 +196,7 @@ PRIVATE BOOL mustbeexp (const int s)
 	case S_ADDROF:
 	case S_HWADDROF:
 #endif
+	case S_TYPEHASHOF:
 	case S_SUBTRACT:
 	case S_MINUS:
 	case S_BITNOT:
@@ -1150,11 +1153,13 @@ PRIVATE treenode *roperand (void)
 				nextsymb ();
 #else
 				ss = rspecifier ();
-				if (ss == NULL)
+				if (ss == NULL) {
 					return NULL;
+				}
 #endif
-				if (checkfor (S_RPAREN))
+				if (checkfor (S_RPAREN)) {
 					return NULL;
+				}
 				/*}}} */
 			}
 			node = newlitnode (s, locn, (treenode *) w, ss);
@@ -1263,6 +1268,8 @@ printtreenl (stderr, 4, node);
 #ifdef MOBILES
 	case S_ADDROF:
 	case S_HWADDROF:
+#endif
+	case S_TYPEHASHOF:
 		{
 			const int s = symb;
 			treenode *op;
@@ -1274,7 +1281,6 @@ printtreenl (stderr, 4, node);
 			node = newmopnode (s, locn, op, 0);
 		}
 		break;
-#endif
 	default:
 		synerr_e (SYN_E_OPERAND, flocn, symb);
 		break;
@@ -1451,9 +1457,10 @@ PUBLIC treenode *rexp (void)
 		}
 		/*}}} */
 #ifdef MOBILES
-		/*{{{  case S_ADDROF S_HWADDROF */
+		/*{{{  case S_ADDROF S_HWADDROF S_TYPEHASHOF*/
 	case S_ADDROF:
 	case S_HWADDROF:
+	case S_TYPEHASHOF:
 		{
 			treenode *op = roperand ();
 			return (op == NULL ? NULL : rrestofexp (op, locn));
@@ -1554,6 +1561,10 @@ PUBLIC treenode *rexp (void)
 				case S_INT16:
 				case S_INT32:
 				case S_INT64:
+				case S_UINT:
+				case S_UINT16:
+				case S_UINT32:
+				case S_UINT64:
 				case S_REAL32:
 				case S_REAL64:
 					op = newtypenode (S_NEW_ARRAY, locn, dimlist, newleafnode (symb, locn));
@@ -1574,6 +1585,10 @@ PUBLIC treenode *rexp (void)
 					case S_INT16:
 					case S_INT32:
 					case S_INT64:
+					case S_UINT:
+					case S_UINT16:
+					case S_UINT32:
+					case S_UINT64:
 					case S_REAL32:
 					case S_REAL64:
 						op = newtypenode (S_NEW_ARRAY, locn, dimlist, newtypenode (S_CHAN, locn, NULL, newleafnode (symb, locn)));
@@ -1662,6 +1677,10 @@ PUBLIC treenode *rexp (void)
 						case S_INT16:
 						case S_INT32:
 						case S_INT64:
+						case S_UINT:
+						case S_UINT16:
+						case S_UINT32:
+						case S_UINT64:
 						case S_REAL32:
 						case S_REAL64:
 							*basehook = newleafnode (symb, locn);
@@ -1730,6 +1749,10 @@ PUBLIC treenode *rexp (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 		{
@@ -2384,6 +2407,10 @@ fprintf (stderr, "rspecorexpr: it was a VALOF\n");
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 		{
@@ -2549,6 +2576,10 @@ fprintf (stderr, "rspecorexpr: it was a VALOF\n");
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_NAME:
@@ -2595,6 +2626,10 @@ fprintf (stderr, "rspecorexpr: it was a primative type or name, and rtypeetc() w
 						case S_INT16:
 						case S_INT32:
 						case S_INT64:
+						case S_UINT:
+						case S_UINT16:
+						case S_UINT32:
+						case S_UINT64:
 						case S_REAL32:
 						case S_REAL64:
 							CASE_CONFIG_TYPE
@@ -3106,6 +3141,10 @@ PRIVATE treenode *rpsub (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 		{
@@ -3278,6 +3317,10 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 		s = newleafnode (symb, locn);
 		nextsymb ();
 		if (symb == S_COLON2) {
@@ -3295,6 +3338,10 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_REAL32:
 			case S_REAL64:
 				t = newleafnode (symb, alocn);
@@ -3345,6 +3392,10 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 			s = newtypenode (S_MOBILE, locn, NULL, newleafnode (symb, locn));
@@ -3473,6 +3524,7 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 			if (!name) {
 				return NULL;
 			}
+			rtypehash (&name);
 #ifdef MOBILES
 			/* might have a direction specifier here if the NAME is a channel-type */
 			if (symb == S_INPUT) {
@@ -3810,6 +3862,10 @@ PRIVATE treenode *rspecifier_constr (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_TIMER:
@@ -4216,6 +4272,10 @@ PUBLIC treenode *rinitialspec (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 		CASE_CONFIG_TYPE {
@@ -4308,6 +4368,10 @@ PUBLIC treenode *rresultspec (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	CASE_CONFIG_TYPE
@@ -4355,6 +4419,36 @@ PUBLIC treenode *rresultspec (void)
 	}
 }
 /*}}}  */
+/*{{{  PRIVATE void rtypehash (treenode **tptr)*/
+/*
+ *	parses a typehash attached to a name-node
+ *	(usually) for external declaration processing.
+ *	Returns non-zero if a declaration was found and parsed.
+ */
+PRIVATE int rtypehash (treenode **tptr)
+{
+	SOURCEPOSN locn = flocn;
+
+	if ((lexmode != LEX_DEXTERNAL) || (symb != S_AMPERSAT)) {
+		return 0;
+	}
+
+	nextsymb ();
+	if (symb != S_UINTLIT) {
+		synerr_e (SYN_E_TYPEHASH, flocn, symb);
+	} else {
+		treenode *val = roperand ();
+
+#if 0
+fprintf (stderr, "rtypehash(): got specifier, value =");
+printtreenl (stderr, 4, val);
+#endif
+		*tptr = newdopnode (S_TYPEHASHCHECK, locn, *tptr, val, 0);
+	}
+
+	return 1;
+}
+/*}}}*/
 /*{{{  PUBLIC treenode *rspecifier ()*/
 /* On error, leaves symb unchanged */
 /* Actually allows PORTs, although they are strictly illegal */
@@ -4370,6 +4464,10 @@ PUBLIC treenode *rspecifier (void)
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_TIMER:
@@ -4535,6 +4633,7 @@ fprintf (stderr, "rspecifier: putting SHARED in TypeAttr of CHAN\n");
 					synerr_e (SYN_E_SPECIFIER, flocn, symb);
 					return NULL;
 				}
+				rtypehash (&name);
 				/* ought to have a channel-direction specifier (for the type) here */
 				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
 					name = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, flocn, name, S_CHAN);
@@ -4615,6 +4714,11 @@ fprintf (stderr, "rspecifier: putting SHARED in TypeAttr of CHAN\n");
 			treenode *name;
 
 			name = (treenode *)rname ();
+
+			if ((lexmode == LEX_DEXTERNAL) && (symb == S_AMPERSAT)) {
+				/* means there is a typehash attached to the name */
+				rtypehash (&name);
+			}
 #ifdef MOBILES
 			if (symb == S_INPUT) {
 				name = newmopnode (S_ASINPUT, locn, name, S_NAME);
@@ -4743,6 +4847,7 @@ if (symb == S_NAME) {
 				synerr_e (SYN_E_SPECIFIER, flocn, symb);
 				return NULL;
 			}
+			rtypehash (&t);
 			/* ought to have a channel-direction specifier (for the type) here */
 			if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
 				t = newmopnode ((symb == S_INPUT) ? S_ASINPUT : S_ASOUTPUT, flocn, t, S_CHAN);
@@ -4854,6 +4959,10 @@ printtreenl (stderr, 4, t);
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 	case S_PORT:
@@ -4907,7 +5016,7 @@ printtreenl (stderr, 4, t);
 		break;
 		/*}}}*/
 #endif
-		/*{{{  default */
+		/*{{{  default (probably a name)*/
 	default:
 		{
 			BOOL copy_type_tree = TRUE;
@@ -4917,6 +5026,7 @@ printtreenl (stderr, 4, t);
 			if ((name = rname ()) == NULL) {
 				return NULL;
 			}
+			rtypehash ((treenode **)&name);
 			if (symb == S_NAME) {
 				t = (treenode *) name;
 				name = NULL;	/* force the next read of name */
@@ -4925,7 +5035,8 @@ printtreenl (stderr, 4, t);
 			}
 #endif
 			/*}}} */
-			if (t == NULL) {	/* We have had no specifier */
+			if (t == NULL) {
+				/*{{{  We have had no specifier*/
 #ifdef MOBILES
 				if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
 					/* probably a channel-type direction specifier.  should have a name next */
@@ -4945,9 +5056,10 @@ printtreenl (stderr, 4, t);
 					synerr_e (SYN_E_SPECIFIER, locn, symb);
 					return NULL;
 				}
+				/*}}}*/
 #ifdef MOBILES
 			} else if ((symb == S_INPUT) || (symb == S_OUTPUT)) {
-				/* another channel-type direction specifier?  should have a name next */
+				/*{{{  another channel-type direction specifier?  should have a name next*/
 				const int csymb = symb;
 
 				nextsymb ();
@@ -4972,8 +5084,10 @@ printtreenl (stderr, 4, t);
 								((csymb == S_INPUT) ? TypeAttr_marked_in : TypeAttr_marked_out));
 					}
 				}
+				/*}}}*/
 #endif
 			} else if (copy_type_tree) {
+				/*{{{  make a new copy of the type tree*/
 				treenode *ttype;
 
 				/* make a new copy of t */
@@ -4986,6 +5100,7 @@ printtreenl (stderr, 4, t);
 				if ((TagOf (ttype) == S_CHAN) || (TagOf (ttype) == S_PORT)) {
 					SetTypeAttr (ttype, TypeAttrOf (ttype) & ~(TypeAttr_marked_in | TypeAttr_marked_out));
 				}
+				/*}}}*/
 			}
 		}
 		break;
@@ -5234,6 +5349,7 @@ PRIVATE treenode *rprocdef (void)
 	BOOL recursive = FALSE;
 	BOOL forks = FALSE;
 	BOOL suspends = FALSE;
+	BOOL dyncall = FALSE;
 
 	DEBUG_MSG (("rprocdef... "));
 	foundroutine = TRUE;
@@ -5344,11 +5460,20 @@ PRIVATE treenode *rprocdef (void)
 		break;
 	}
 	/*}}}*/
+	/*{{{  if DEXTERNAL, make sure we always call instances dynamically*/
+	if (lexmode == LEX_DEXTERNAL) {
+		dyncall = 1;
+	}
+	/*}}}*/
 
 	syn_lexlevel = oldlexlevel;
 	retptr = declare (S_PROCDEF, locn, params, name, pbody);
 	{
 		treenode *const nptr = DNameOf (retptr);
+#if 0
+fprintf (stderr, "rprocdef(): lexmode = %d, nptr =", (int)lexmode);
+printtreenl (stderr, 4, nptr);
+#endif
 
 		if (endlocn != NOPOSN) {
 			DEBUG_MSG (("locn = %8lX, endlocn = %8lX\n", locn, endlocn));
@@ -5368,6 +5493,9 @@ PRIVATE treenode *rprocdef (void)
 fprintf (stderr, "syn2: rprocdef: FORKs!\n");
 #endif
 			SetNPForks (nptr, 1);
+		}
+		if (dyncall) {
+			SetNPDyncall (nptr, 1);
 		}
 		if (suspends) {
 			SetNPSuspends (nptr, 1);
@@ -5614,6 +5742,18 @@ PRIVATE int param_type_string (treenode *typetree, char *rbuf, int *rlen, int rs
 	case S_INT64:
 		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "INT64");
 		break;
+	case S_UINT:
+		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "UINT");
+		break;
+	case S_UINT16:
+		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "UINT16");
+		break;
+	case S_UINT32:
+		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "UINT32");
+		break;
+	case S_UINT64:
+		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "UINT64");
+		break;
 	case S_BOOL:
 		xlen = snprintf (rbuf + *rlen, rsize - *rlen, "BOOL");
 		break;
@@ -5659,6 +5799,7 @@ PUBLIC treenode *rfunctiondef (treenode *typelist, SOURCEPOSN locn, int indent)
 	treenode *fntype;	/* Funtion type node */
 	BOOL inline_decl = FALSE;
 	BOOL recursive = FALSE;
+	BOOL dyncall = FALSE;
 	SOURCEPOSN endlocn;
 	const int oldlexlevel = syn_lexlevel;
 #ifdef USER_DEFINED_OPERATORS
@@ -5847,14 +5988,14 @@ fprintf (stderr, "syn2: rfunctiondef(): UDO: modified code gave namelength = %d,
 				goto error;
 			/*}}} */
 
-			while (ignorecomments (indent + 2), symb != S_VALOF && symbindent == indent + 2)
+			while (ignorecomments (indent + 2), symb != S_VALOF && symbindent == indent + 2) {
 				/*{{{  parse leading specification */
-			{
 				*fbodyptr = rspecification ();
-				if (*fbodyptr != NULL)
+				if (*fbodyptr != NULL) {
 					fbodyptr = DBodyAddr (*fbodyptr);
+				}
+				/*}}} */
 			}
-			/*}}} */
 
 			/*{{{  parse VALOF */
 			if ((*fbodyptr = rvalof ()) == NULL)
@@ -5890,6 +6031,13 @@ fprintf (stderr, "syn2: rfunctiondef(): UDO: modified code gave namelength = %d,
 		}
 		/*}}} */
 	}
+	/*{{{  if DEXTERNAL, make sure we always call instances dynamically*/
+	if (lexmode == LEX_DEXTERNAL) {
+		dyncall = 1;
+	}
+
+	/*}}}*/
+
 	syn_lexlevel = oldlexlevel;
 	retptr = declare (t, locn, fntype, name, fbody);
 	{
@@ -5905,6 +6053,9 @@ fprintf (stderr, "syn2: rfunctiondef(): UDO: modified code gave namelength = %d,
 		}
 		if (recursive) {
 			SetNPRecursive (nptr, 1);
+		}
+		if (dyncall) {
+			SetNPDyncall (nptr, 1);
 		}
 	}
 	if (checknlindent (indent)) {
@@ -5992,15 +6143,16 @@ PRIVATEPARAM treenode *rpragma_external (wordnode * const pragma_name, const pra
 	USE_VAR (tag);		/* prevent unused variable warning */
 	if ((symb == S_STRING) || (symb == S_STRINGCONT)) {
 		treenode *const str = rstring ();
-		const BOOL ok = open_file (WNameOf (CTValOf (str)), LEX_EXTERNAL, indent);
+		const BOOL ok = open_file (WNameOf (CTValOf (str)), (pragma_name_tag == pragma_name_dexternal) ? LEX_DEXTERNAL : LEX_EXTERNAL, indent);
 		if (ok) {
 			treenode *const pragma_nptr = declname (N_DECL, locn, pragma_name, NULL, NULL);
 			SetNMode (pragma_nptr, pragma_name_tag);
 			tptr = newdeclnode (S_PRAGMA, locn, pragma_nptr, str, NULL);
 
-			if (current_fe_data->fe_information)
+			if (current_fe_data->fe_information) {
 				fprintf (current_fe_data->fe_outfile, "%s %s \"%s\"\n",
 					 tagstring (S_PRAGMA), WNameOf (pragma_name), WNameOf (CTValOf (str)));
+			}
 			nextsymb ();
 		} else
 			nextline ();
@@ -6105,9 +6257,10 @@ PRIVATEPARAM treenode *rpragma_translate (wordnode * const pragma_name, const pr
 								addtofront (newconsttablenode
 									    (S_STRING, flocn, lookupword (literalv, literalp), NULL), NULL)), NULL);
 
-				if (current_fe_data->fe_information)
+				if (current_fe_data->fe_information) {
 					fprintf (current_fe_data->fe_outfile, "%s %s %s \"%s\"\n",
 						 tagstring (S_PRAGMA), WNameOf (pragma_name), WNameOf (wptr), literalv);
+				}
 			}
 		} else if (symb == S_STRINGCONT)
 			synerr_i (SYN_STRING_TOO_LONG, flocn, MAXSTRING_SIZE);
@@ -6207,47 +6360,25 @@ pragma_list[] = {
 	/* No point in having LINKAGE pragma when configuring, cos we don't link
 	   after configuring - CON 11/10/90 */
 
-	{
-	"EXTERNAL", rpragma_external, O, pragma_name_external}
-	, {
-	"LINKAGE", rpragma_string, O, pragma_name_linkage}
-	,
-#if 0
-	{
-	"NOUSAGECHECK", rpragma_namelist, O, pragma_name_shared}
-	,			/* was "SHARED" */
-	{
-	"NOTALIASED", rpragma_namelist, O, pragma_name_aliased}
-	,
-#else
-	{
-	"SHARED", rpragma_namelist, O, pragma_name_shared}
-	, {
-	"PERMITALIASES", rpragma_namelist, O, pragma_name_aliased}
-	,
-#endif
-	{
-	"ASSUMECONSTANT", rpragma_namelist, O, pragma_name_assumeconst}
-	, {
-	"COMMENT", rpragma_string, CC, pragma_name_comment}
-	, {
-	"TRANSLATE", rpragma_translate, CC, pragma_name_translate}
-	, {
-	"HARDWARE", rpragma_string, C3, pragma_name_hardware}
-	, {
-	"NESTEDTIMER", rpragma_name, O, pragma_name_nestedtimer}
-	, {
-	"NESTEDPLACE", rpragma_name, O, pragma_name_nestedplace}
-	, {
-	"NESTEDPORT", rpragma_name, O, pragma_name_nestedport}
-	, {
-	"BADLYBEHAVED", rpragma_name, O, pragma_name_badlybehaved}
-	, {
-	"DEFINED", rpragma_namelist, O, pragma_name_defined}
-	, {
-	"UNDEFINED", rpragma_namelist, O, pragma_name_undefined}
-	, {
-	"IOSPACE", rpragma_namelist, O, pragma_name_iospace}
+	  { "EXTERNAL", rpragma_external, O, pragma_name_external}
+	, { "DEXTERNAL", rpragma_external, O, pragma_name_dexternal}
+	, { "EXPORT", rpragma_namelist, CC, pragma_name_export}
+	, { "LINKAGE", rpragma_string, O, pragma_name_linkage}
+	, { "SHARED", rpragma_namelist, O, pragma_name_shared}
+	, { "PERMITALIASES", rpragma_namelist, O, pragma_name_aliased}
+	, { "ASSUMECONSTANT", rpragma_namelist, O, pragma_name_assumeconst}
+	, { "COMMENT", rpragma_string, CC, pragma_name_comment}
+	, { "TRANSLATE", rpragma_translate, CC, pragma_name_translate}
+	, { "HARDWARE", rpragma_string, C3, pragma_name_hardware}
+	, { "NESTEDTIMER", rpragma_name, O, pragma_name_nestedtimer}
+	, { "NESTEDPLACE", rpragma_name, O, pragma_name_nestedplace}
+	, { "NESTEDPORT", rpragma_name, O, pragma_name_nestedport}
+	, { "BADLYBEHAVED", rpragma_name, O, pragma_name_badlybehaved}
+	, { "DEFINED", rpragma_namelist, O, pragma_name_defined}
+	, { "UNDEFINED", rpragma_namelist, O, pragma_name_undefined}
+	, { "IOSPACE", rpragma_namelist, O, pragma_name_iospace}
+	, { "DYNCALL", rpragma_namelist, CC, pragma_name_dyncall}
+	, { "FORMALMODEL", rpragma_string, O, pragma_name_formalmodel}
 };
 
 /*}}}*/
@@ -6279,6 +6410,17 @@ PRIVATE treenode *rpragma (void)
 		wptr = lookupword ("DEFINED", 7);
 		if (current_fe_data->fe_lang & O) {
 			return rpragma_namelist (wptr, pragma_name_defined, 0, -1);		/* don't care about the indentation following this */
+		}
+		synwarn_s (SYN_BAD_PRAGMA_NAME, flocn, WNameOf (wptr));
+		nextline ();
+		return NULL;
+	}
+	/* and with DYNCALL */
+	if (symb == S_DYNCALL) {
+		nextsymb ();
+		wptr = lookupword ("DYNCALL", 7);
+		if (current_fe_data->fe_lang & O) {
+			return rpragma_namelist (wptr, pragma_name_dyncall, 0, -1);
 		}
 		synwarn_s (SYN_BAD_PRAGMA_NAME, flocn, WNameOf (wptr));
 		nextline ();
@@ -6360,6 +6502,10 @@ fprintf (stderr, "rspecification...\n");
 			case S_INT16:
 			case S_INT32:
 			case S_INT64:
+			case S_UINT:
+			case S_UINT16:
+			case S_UINT32:
+			case S_UINT64:
 			case S_REAL32:
 			case S_REAL64:
 			case S_CHAN:
@@ -6465,6 +6611,10 @@ fprintf (stderr, "rspecification...\n");
 	case S_INT16:
 	case S_INT32:
 	case S_INT64:
+	case S_UINT:
+	case S_UINT16:
+	case S_UINT32:
+	case S_UINT64:
 	case S_REAL32:
 	case S_REAL64:
 #ifndef MOBILES			/* don't allow records of channels and catch CHAN here */
@@ -6696,9 +6846,8 @@ fprintf (stderr, "rspecification: putting TypeAttr_shared in CHAN\n");
 		}
 		/*}}} */
 		/*{{{  S_NETWORK: */
-#if 1				/*def CONFIG */
-		CASE_CONFIG_SPEC return (rconfigdef ());
-#endif
+	CASE_CONFIG_SPEC
+		return (rconfigdef ());
 		/*}}} */
 		/*{{{  S_PLACE */
 	case S_PLACE:
@@ -6810,8 +6959,14 @@ fprintf (stderr, "rspecification: putting TypeAttr_shared in CHAN\n");
 	case S_PRAGMA:		/* bug 829 19/9/91 */
 		{
 			treenode *tptr = rpragma ();
-			if (tptr == NULL)
+
+			if (tptr == NULL) {
 				goto error2;
+			}
+#if 0
+fprintf (stderr, "rspecification(): parsed PRAGMA, got:\n");
+printtreenl (stderr, 4, tptr);
+#endif
 			return tptr;
 		}
 		/*}}} */
@@ -7071,6 +7226,10 @@ fprintf (stderr, "rleadingspecs...\n");
 		case S_INT16:
 		case S_INT32:
 		case S_INT64:
+		case S_UINT:
+		case S_UINT16:
+		case S_UINT32:
+		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
 			{

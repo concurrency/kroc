@@ -178,6 +178,8 @@ extern BOOL mpp_check_at_act;		/* checks for a "terminated" mobile process at th
 extern BOOL map_all_procs;
 extern BOOL target_bigendian;		/* whether the target is bigendian */
 extern BOOL target_accessaligned;	/* whether the target requires aligned memory accesses */
+extern BOOL main_dynentry;		/* if TRUE generates a DYNCALL entrypoint for the top-level process */
+
 /*}}}  */
 
 #endif /* _compharn_LOADED */

@@ -4,6 +4,8 @@
 # NOTE: cgtest19 needs the '-s' flag to put KERNEL.RUN workspace in program data
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../m4
+
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
@@ -29,7 +31,9 @@ EXTRA_DIST = \
 	cgtest75.occ cgtest76.occ cgtest77.occ cgtest78.occ cgtest79.occ \
 	cgtest80.occ cgtest81.occ cgtest82.occ cgtest83.occ cgtest84.occ \
 	cgtest85.occ cgtest86.occ cgtest87.occ cgtest88.occ cgtest89.occ \
-	cgtest90.occ cgtest91.occ cgtest92.occ
+	cgtest90.occ cgtest91.occ cgtest92.occ \
+	config.inc \
+	run-tests
 
 tests = \
 	cgtest00 cgtest01 cgtest02 cgtest03 cgtest04 \
@@ -48,6 +52,9 @@ tests = \
 	cgtest85 cgtest86 cgtest87 cgtest88 cgtest89 \
 	cgtest90 cgtest91 cgtest92
 
+TESTS_ENVIRONMENT = $(OCCBUILD) --run
+TESTS = $(tests)
+
 cglib_lib_objs = cglib.tce
 
 libs = cglib.lib
@@ -56,6 +63,215 @@ all-local: $(libs) $(tests)
 
 cglib.lib: $(cglib_lib_objs)
 	$(OCCBUILD) --library cglib.lib $(cglib_lib_objs)
+
+#{{{  build rules for cgtests
+cgtest00: cgtest00.occ cglib.lib
+	$(OCCBUILD) --program cgtest00.occ
+
+cgtest01: cgtest01.occ cglib.lib
+	$(OCCBUILD) --program cgtest01.occ
+
+cgtest02: cgtest02.occ cglib.lib
+	$(OCCBUILD) --program cgtest02.occ
+
+cgtest03: cgtest03.occ cglib.lib
+	$(OCCBUILD) --program cgtest03.occ
+
+cgtest04: cgtest04.occ cglib.lib
+	$(OCCBUILD) --program cgtest04.occ
+
+cgtest05: cgtest05.occ cglib.lib
+	$(OCCBUILD) --program cgtest05.occ
+
+cgtest06: cgtest06.occ cglib.lib
+	$(OCCBUILD) --program cgtest06.occ
+
+cgtest07: cgtest07.occ cglib.lib
+	$(OCCBUILD) --program cgtest07.occ
+
+cgtest08: cgtest08.occ cglib.lib
+	$(OCCBUILD) --program cgtest08.occ
+
+cgtest09: cgtest09.occ cglib.lib
+	$(OCCBUILD) --program cgtest09.occ
+
+cgtest10: cgtest10.occ cglib.lib
+	$(OCCBUILD) --program cgtest10.occ
+
+cgtest11: cgtest11.occ cglib.lib
+	$(OCCBUILD) --program cgtest11.occ
+
+cgtest12: cgtest12.occ cglib.lib
+	$(OCCBUILD) --program cgtest12.occ
+
+cgtest13: cgtest13.occ cglib.lib
+	$(OCCBUILD) --program cgtest13.occ
+
+cgtest14: cgtest14.occ cglib.lib
+	$(OCCBUILD) --program cgtest14.occ
+
+cgtest15: cgtest15.occ cglib.lib
+	$(OCCBUILD) --program cgtest15.occ
+
+cgtest16: cgtest16.occ cglib.lib
+	$(OCCBUILD) --program cgtest16.occ
+
+cgtest17: cgtest17.occ cglib.lib
+	$(OCCBUILD) --program cgtest17.occ
+
+cgtest18: cgtest18.occ cglib.lib
+	$(OCCBUILD) --program cgtest18.occ
+
+cgtest19: cgtest19.occ cglib.lib
+	$(OCCBUILD) --program cgtest19.occ
+
+cgtest20: cgtest20.occ cglib.lib
+	$(OCCBUILD) --program cgtest20.occ
+
+cgtest21: cgtest21.occ cglib.lib
+	$(OCCBUILD) --program cgtest21.occ
+
+cgtest22: cgtest22.occ cglib.lib
+	$(OCCBUILD) --program cgtest22.occ
+
+cgtest23: cgtest23.occ cglib.lib
+	$(OCCBUILD) --program cgtest23.occ
+
+cgtest24: cgtest24.occ cglib.lib
+	$(OCCBUILD) --program cgtest24.occ
+
+cgtest25: cgtest25.occ cglib.lib
+	$(OCCBUILD) --program cgtest25.occ
+
+cgtest26: cgtest26.occ cglib.lib
+	$(OCCBUILD) --program cgtest26.occ
+
+cgtest27: cgtest27.occ cglib.lib
+	$(OCCBUILD) --program cgtest27.occ
+
+cgtest50: cgtest50.occ cglib.lib
+	$(OCCBUILD) --program cgtest50.occ
+
+cgtest51: cgtest51.occ cglib.lib
+	$(OCCBUILD) --program cgtest51.occ
+
+cgtest52: cgtest52.occ cglib.lib
+	$(OCCBUILD) --program cgtest52.occ
+
+cgtest53: cgtest53.occ cglib.lib
+	$(OCCBUILD) --program cgtest53.occ
+
+cgtest54: cgtest54.occ cglib.lib
+	$(OCCBUILD) --program cgtest54.occ
+
+cgtest55: cgtest55.occ cglib.lib
+	$(OCCBUILD) --program cgtest55.occ
+
+cgtest56: cgtest56.occ cglib.lib
+	$(OCCBUILD) --program cgtest56.occ
+
+cgtest57: cgtest57.occ cglib.lib
+	$(OCCBUILD) --program cgtest57.occ
+
+cgtest58: cgtest58.occ cglib.lib
+	$(OCCBUILD) --program cgtest58.occ
+
+cgtest59: cgtest59.occ cglib.lib
+	$(OCCBUILD) --program cgtest59.occ
+
+cgtest60: cgtest60.occ cglib.lib
+	$(OCCBUILD) --program cgtest60.occ
+
+cgtest61: cgtest61.occ cglib.lib
+	$(OCCBUILD) --program cgtest61.occ
+
+cgtest62: cgtest62.occ cglib.lib
+	$(OCCBUILD) --program cgtest62.occ
+
+cgtest63: cgtest63.occ cglib.lib
+	$(OCCBUILD) --program cgtest63.occ
+
+cgtest64: cgtest64.occ cglib.lib
+	$(OCCBUILD) --program cgtest64.occ
+
+cgtest65: cgtest65.occ cglib.lib
+	$(OCCBUILD) --program cgtest65.occ
+
+cgtest66: cgtest66.occ cglib.lib
+	$(OCCBUILD) --program cgtest66.occ
+
+cgtest67: cgtest67.occ cglib.lib
+	$(OCCBUILD) --program cgtest67.occ
+
+cgtest70: cgtest70.occ cglib.lib
+	$(OCCBUILD) --program cgtest70.occ
+
+cgtest71: cgtest71.occ cglib.lib
+	$(OCCBUILD) --program cgtest71.occ
+
+cgtest72: cgtest72.occ cglib.lib
+	$(OCCBUILD) --program cgtest72.occ
+
+cgtest73: cgtest73.occ cglib.lib
+	$(OCCBUILD) --program cgtest73.occ
+
+cgtest74: cgtest74.occ cglib.lib
+	$(OCCBUILD) --program cgtest74.occ
+
+cgtest75: cgtest75.occ cglib.lib
+	$(OCCBUILD) --program cgtest75.occ
+
+cgtest76: cgtest76.occ cglib.lib
+	$(OCCBUILD) --program cgtest76.occ
+
+cgtest77: cgtest77.occ cglib.lib
+	$(OCCBUILD) --program cgtest77.occ
+
+cgtest78: cgtest78.occ cglib.lib
+	$(OCCBUILD) --program cgtest78.occ
+
+cgtest79: cgtest79.occ cglib.lib
+	$(OCCBUILD) --program cgtest79.occ
+
+cgtest80: cgtest80.occ cglib.lib
+	$(OCCBUILD) --program cgtest80.occ
+
+cgtest81: cgtest81.occ cglib.lib
+	$(OCCBUILD) --program cgtest81.occ
+
+cgtest82: cgtest82.occ cglib.lib
+	$(OCCBUILD) --program cgtest82.occ
+
+cgtest83: cgtest83.occ cglib.lib
+	$(OCCBUILD) --program cgtest83.occ
+
+cgtest84: cgtest84.occ cglib.lib
+	$(OCCBUILD) --program cgtest84.occ
+
+cgtest85: cgtest85.occ cglib.lib
+	$(OCCBUILD) --program cgtest85.occ
+
+cgtest86: cgtest86.occ cglib.lib
+	$(OCCBUILD) --program cgtest86.occ
+
+cgtest87: cgtest87.occ cglib.lib
+	$(OCCBUILD) --program cgtest87.occ
+
+cgtest88: cgtest88.occ cglib.lib
+	$(OCCBUILD) --program cgtest88.occ
+
+cgtest89: cgtest89.occ cglib.lib
+	$(OCCBUILD) --program cgtest89.occ
+
+cgtest90: cgtest90.occ cglib.lib
+	$(OCCBUILD) --program cgtest90.occ
+
+cgtest91: cgtest91.occ cglib.lib
+	$(OCCBUILD) --program cgtest91.occ
+
+cgtest92: cgtest92.occ cglib.lib
+	$(OCCBUILD) --program cgtest92.occ
+#}}}
 
 install-exec-local: $(libs) $(tests)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs)
@@ -69,161 +285,157 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-.occ:
-	$(OCCBUILD) --program $<
-
 update-deps:
 	pideps $(addprefix -b ,$(tests)) *.occ
 
 ## begin pideps dependencies
-$(srcdir)/cgmain.occ: cglib.lib
-cgtest00: $(srcdir)/cgmain.occ
-cgtest01: $(srcdir)/cgmain.occ
-cgtest02: $(srcdir)/cgmain.occ
-cgtest03: $(srcdir)/cgmain.occ
-cgtest04: $(srcdir)/cgmain.occ
-cgtest05: $(srcdir)/cgmain.occ
-cgtest06: $(srcdir)/cgmain.occ
-cgtest06: $(srcdir)/cgreal.occ
-cgtest07: $(srcdir)/cgmain.occ
-cgtest08: $(srcdir)/cgmain.occ
-cgtest09: $(srcdir)/cgmain.occ
-cgtest10: $(srcdir)/cg10misc.occ
-cgtest10: $(srcdir)/cg10r32.occ
-cgtest10: $(srcdir)/cg10r64.occ
-cgtest10: $(srcdir)/cgmain.occ
-cgtest10: $(srcdir)/cgreal.occ
-cgtest11: $(srcdir)/cg10byte.occ
-cgtest11: $(srcdir)/cg10int.occ
-cgtest11: $(srcdir)/cg10long.occ
-cgtest11: $(srcdir)/cgmain.occ
-cgtest11: $(srcdir)/cgreal.occ
-cgtest12: $(srcdir)/cgmain.occ
-cgtest13: $(srcdir)/cgmain.occ
-cgtest14: $(srcdir)/cgmain.occ
-cgtest14: $(srcdir)/cgreal.occ
-cgtest15: $(srcdir)/cgmain.occ
-cgtest15: $(srcdir)/cgreal.occ
-cgtest16: $(srcdir)/cgmain.occ
-cgtest17: $(srcdir)/cgmain.occ
-cgtest18: $(srcdir)/cgmain.occ
-cgtest19: $(srcdir)/cgmain.occ
-cgtest19: $(srcdir)/cgreal.occ
-cgtest19: $(srcdir)/config.inc
-cgtest20: $(srcdir)/cg10i16.occ
-cgtest20: $(srcdir)/cgmain.occ
-cgtest20: $(srcdir)/cgreal.occ
-cgtest21: $(srcdir)/cg10i32.occ
-cgtest21: $(srcdir)/cgmain.occ
-cgtest21: $(srcdir)/cgreal.occ
-cgtest22: $(srcdir)/cg10i64.occ
-cgtest22: $(srcdir)/cgmain.occ
-cgtest22: $(srcdir)/cgreal.occ
-cgtest23: $(srcdir)/cgmain.occ
-cgtest24: $(srcdir)/cgmain.occ
-cgtest24: $(srcdir)/cgreal.occ
-cgtest25: $(srcdir)/cgmain.occ
-cgtest25: $(srcdir)/cgreal.occ
-cgtest26: $(srcdir)/cgmain.occ
-cgtest26: $(srcdir)/cgreal.occ
-cgtest27: $(srcdir)/cgmain.occ
-cgtest27: $(srcdir)/cgreal.occ
-cgtest50: $(srcdir)/cg50myi.occ
-cgtest50: $(srcdir)/cgmain.occ
-cgtest50: $(srcdir)/cgreal.occ
-cgtest51: $(srcdir)/cg50myi.occ
-cgtest51: $(srcdir)/cgmain.occ
-cgtest51: $(srcdir)/cgreal.occ
-cgtest52: $(srcdir)/cg50myi.occ
-cgtest52: $(srcdir)/cgmain.occ
-cgtest52: $(srcdir)/cgreal.occ
-cgtest53: $(srcdir)/cg50myi.occ
-cgtest53: $(srcdir)/cgmain.occ
-cgtest53: $(srcdir)/cgreal.occ
-cgtest54: $(srcdir)/cg50myr.occ
-cgtest54: $(srcdir)/cgmain.occ
-cgtest54: $(srcdir)/cgreal.occ
-cgtest55: $(srcdir)/cg50myr.occ
-cgtest55: $(srcdir)/cgmain.occ
-cgtest55: $(srcdir)/cgreal.occ
-cgtest56: $(srcdir)/cgmain.occ
-cgtest56: $(srcdir)/cgreal.occ
-cgtest57: $(srcdir)/cg57type.occ
-cgtest57: $(srcdir)/cgmain.occ
-cgtest57: $(srcdir)/cgreal.occ
-cgtest58: $(srcdir)/cg58arr.occ
-cgtest58: $(srcdir)/cg58rec.occ
-cgtest58: $(srcdir)/cgmain.occ
-cgtest58: $(srcdir)/cgreal.occ
-cgtest59: $(srcdir)/cgmain.occ
-cgtest59: $(srcdir)/cgreal.occ
-cgtest60: $(srcdir)/cg60myi.occ
-cgtest60: $(srcdir)/cgmain.occ
-cgtest60: $(srcdir)/cgreal.occ
-cgtest61: $(srcdir)/cg60myi.occ
-cgtest61: $(srcdir)/cgmain.occ
-cgtest61: $(srcdir)/cgreal.occ
-cgtest62: $(srcdir)/cg60myi.occ
-cgtest62: $(srcdir)/cgmain.occ
-cgtest62: $(srcdir)/cgreal.occ
-cgtest63: $(srcdir)/cg60myi.occ
-cgtest63: $(srcdir)/cgmain.occ
-cgtest63: $(srcdir)/cgreal.occ
-cgtest64: $(srcdir)/cg60myr.occ
-cgtest64: $(srcdir)/cgmain.occ
-cgtest64: $(srcdir)/cgreal.occ
-cgtest65: $(srcdir)/cg60myr.occ
-cgtest65: $(srcdir)/cgmain.occ
-cgtest65: $(srcdir)/cgreal.occ
-cgtest66: $(srcdir)/cg66cnvt.occ
-cgtest66: $(srcdir)/cgmain.occ
-cgtest66: $(srcdir)/cgreal.occ
-cgtest67: $(srcdir)/cg67cplx.occ
-cgtest67: $(srcdir)/cgmain.occ
-cgtest67: $(srcdir)/cgreal.occ
-cgtest70: $(srcdir)/cgmain.occ
-cgtest70: $(srcdir)/cgreal.occ
-cgtest71: $(srcdir)/cgmain.occ
-cgtest71: $(srcdir)/cgreal.occ
-cgtest72: $(srcdir)/cgmain.occ
-cgtest72: $(srcdir)/cgreal.occ
-cgtest73: $(srcdir)/cgmain.occ
-cgtest73: $(srcdir)/cgreal.occ
-cgtest74: $(srcdir)/cgmain.occ
-cgtest74: $(srcdir)/cgreal.occ
-cgtest75: $(srcdir)/cgmain.occ
-cgtest75: $(srcdir)/cgreal.occ
-cgtest76: $(srcdir)/cgmain.occ
-cgtest76: $(srcdir)/cgreal.occ
-cgtest77: $(srcdir)/cgmain.occ
-cgtest77: $(srcdir)/cgreal.occ
-cgtest78: $(srcdir)/cgmain.occ
-cgtest78: $(srcdir)/cgreal.occ
-cgtest79: $(srcdir)/cgmain.occ
-cgtest79: $(srcdir)/cgreal.occ
-cgtest80: $(srcdir)/cgmain.occ
-cgtest80: $(srcdir)/cgreal.occ
-cgtest81: $(srcdir)/cgmain.occ
-cgtest82: $(srcdir)/cgmain.occ
-cgtest82: $(srcdir)/cgreal.occ
-cgtest83: $(srcdir)/cgmain.occ
-cgtest83: $(srcdir)/cgreal.occ
-cgtest84: $(srcdir)/cgmain.occ
-cgtest84: $(srcdir)/cgreal.occ
-cgtest85: $(srcdir)/cgmain.occ
-cgtest85: $(srcdir)/cgreal.occ
-cgtest86: $(srcdir)/cgmain.occ
-cgtest86: $(srcdir)/cgreal.occ
-cgtest87: $(srcdir)/cgmain.occ
-cgtest87: $(srcdir)/cgreal.occ
-cgtest88: $(srcdir)/cgmain.occ
-cgtest88: $(srcdir)/cgreal.occ
-cgtest89: $(srcdir)/cgmain.occ
-cgtest89: $(srcdir)/cgreal.occ
-cgtest90: $(srcdir)/cgmain.occ
-cgtest90: $(srcdir)/cgreal.occ
-cgtest91: $(srcdir)/cgmain.occ
-cgtest91: $(srcdir)/cgreal.occ
-cgtest92: $(srcdir)/cgmain.occ
-cgtest92: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest00.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest01.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest02.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest03.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest04.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest05.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest06.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest06.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest07.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest08.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest09.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest10.occ: $(srcdir)/cg10misc.occ
+$(srcdir)/cgtest10.occ: $(srcdir)/cg10r32.occ
+$(srcdir)/cgtest10.occ: $(srcdir)/cg10r64.occ
+$(srcdir)/cgtest10.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest10.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest11.occ: $(srcdir)/cg10byte.occ
+$(srcdir)/cgtest11.occ: $(srcdir)/cg10int.occ
+$(srcdir)/cgtest11.occ: $(srcdir)/cg10long.occ
+$(srcdir)/cgtest11.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest11.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest12.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest13.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest14.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest14.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest15.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest15.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest16.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest17.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest18.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest19.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest19.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest19.occ: $(srcdir)/config.inc
+$(srcdir)/cgtest20.occ: $(srcdir)/cg10i16.occ
+$(srcdir)/cgtest20.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest20.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest21.occ: $(srcdir)/cg10i32.occ
+$(srcdir)/cgtest21.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest21.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest22.occ: $(srcdir)/cg10i64.occ
+$(srcdir)/cgtest22.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest22.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest23.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest24.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest24.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest25.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest25.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest26.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest26.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest27.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest27.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest50.occ: $(srcdir)/cg50myi.occ
+$(srcdir)/cgtest50.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest50.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest51.occ: $(srcdir)/cg50myi.occ
+$(srcdir)/cgtest51.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest51.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest52.occ: $(srcdir)/cg50myi.occ
+$(srcdir)/cgtest52.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest52.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest53.occ: $(srcdir)/cg50myi.occ
+$(srcdir)/cgtest53.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest53.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest54.occ: $(srcdir)/cg50myr.occ
+$(srcdir)/cgtest54.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest54.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest55.occ: $(srcdir)/cg50myr.occ
+$(srcdir)/cgtest55.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest55.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest56.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest56.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest57.occ: $(srcdir)/cg57type.occ
+$(srcdir)/cgtest57.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest57.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest58.occ: $(srcdir)/cg58arr.occ
+$(srcdir)/cgtest58.occ: $(srcdir)/cg58rec.occ
+$(srcdir)/cgtest58.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest58.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest59.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest59.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest60.occ: $(srcdir)/cg60myi.occ
+$(srcdir)/cgtest60.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest60.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest61.occ: $(srcdir)/cg60myi.occ
+$(srcdir)/cgtest61.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest61.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest62.occ: $(srcdir)/cg60myi.occ
+$(srcdir)/cgtest62.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest62.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest63.occ: $(srcdir)/cg60myi.occ
+$(srcdir)/cgtest63.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest63.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest64.occ: $(srcdir)/cg60myr.occ
+$(srcdir)/cgtest64.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest64.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest65.occ: $(srcdir)/cg60myr.occ
+$(srcdir)/cgtest65.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest65.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest66.occ: $(srcdir)/cg66cnvt.occ
+$(srcdir)/cgtest66.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest66.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest67.occ: $(srcdir)/cg67cplx.occ
+$(srcdir)/cgtest67.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest67.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest70.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest70.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest71.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest71.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest72.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest72.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest73.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest73.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest74.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest74.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest75.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest75.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest76.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest76.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest77.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest77.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest78.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest78.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest79.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest79.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest80.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest80.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest81.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest82.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest82.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest83.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest83.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest84.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest84.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest85.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest85.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest86.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest86.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest87.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest87.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest88.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest88.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest89.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest89.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest90.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest90.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest91.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest91.occ: $(srcdir)/cgreal.occ
+$(srcdir)/cgtest92.occ: $(srcdir)/cgmain.occ
+$(srcdir)/cgtest92.occ: $(srcdir)/cgreal.occ
 ## end pideps dependencies

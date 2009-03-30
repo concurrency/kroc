@@ -81,7 +81,7 @@ VAL INT Cancel.delay IS 100000:
 --{{{  USE/INCLUDE declarations
 #INCLUDE "course.module"
 #INCLUDE "pony.module"
-#INCLUDE "trace.inc"
+#INCLUDE "useful.module"
 --}}}
 
 --{{{  Declarations
@@ -409,18 +409,18 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
             CASE b
               'm'
                 SEQ
-                  C.trace ("commstest: will be master")
+                  trace.sn ("commstest: will be master")
                   node.type := PONYC.NODETYPE.MASTERRESET
               's'
                 SEQ
-                  C.trace ("commstest: will be slave")
+                  trace.sn ("commstest: will be slave")
                   node.type := PONYC.NODETYPE.SLAVEWAIT
           done
             running := FALSE
     IF
       node.type = (-1)
         SEQ
-          C.trace ("commstest: you must specify either master (-m) or slave (-s) mode")
+          trace.sn ("commstest: you must specify either master (-m) or slave (-s) mode")
           STOP
       TRUE
         SKIP
@@ -433,19 +433,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                                  net.handle,
                                  err.handle, err.point,
                                  msg.handle, result)
-    C.trace.i ("commstest: pony startup result: ", result)
+    trace.sin ("commstest: pony startup result: ", result)
     --}}}
     IF
       result = PONYC.RESULT.STARTUP.OK
         PAR
           --{{{  Message outputter
           SEQ
-            C.trace ("commstest: starting message outputter")
+            trace.sn ("commstest: starting message outputter")
             pony.msg.out.so.ue (msg.handle, scr!, err!)
-            C.trace ("commstest: message outputter finished")
+            trace.sn ("commstest: message outputter finished")
           --}}}
           SEQ
-            C.trace.i ("commstest: own node-ID: ", own.node.id)
+            trace.sin ("commstest: own node-ID: ", own.node.id)
             CASE node.type
               --{{{  PONYC.NODETYPE.MASTERRESET
               PONYC.NODETYPE.MASTERRESET
@@ -456,16 +456,15 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                 #ENDIF
                 SEQ
                   --{{{  Startup
-                  C.trace ("commstest: master starting, alloc...")
+                  trace.sn ("commstest: master starting, alloc...")
                   CLAIM net.handle!
                     SEQ
                       #IF DEFINED (TEST.CANCEL)
                       pony.alloc.ss (net.handle, "thing", PONYC.SHARETYPE.SHARED, svr, result)
                       #ELSE
                       pony.alloc.us (net.handle, "thing", PONYC.SHARETYPE.SHARED, svr, result)
-                      C.printarg (svr)
                       #ENDIF
-                  C.trace.i ("commstest: ... done, alloc result: ", result)
+                  trace.sin ("commstest: ... done, alloc result: ", result)
                   ASSERT (DEFINED svr)
                   ASSERT (result = PONYC.RESULT.ALLOC.OK)
                   --}}}
@@ -481,17 +480,17 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   SEQ i = 0 FOR Iterations
                     INT x, y, z:
                     SEQ
-                      C.trace.i ("commstest: starting input cycle ", i)
+                      trace.sin ("commstest: starting input cycle ", i)
 
                       --{{{  TEST.INT
                       #IF DEFINED (TEST.INT)
-                      C.trace ("commstest: input int...")
+                      trace.sn ("commstest: input int...")
                       x := MOSTNEG INT
                       #IF DEFINED (TEST.CANCEL)
                       INT x:
                       CLAIM svr
                         SEQ
-                          C.trace ("commstest: ... claimed { input dummy INT...")
+                          trace.sn ("commstest: ... claimed { input dummy INT...")
                           svr[int] ? x
                           ASSERT (x = i)
                           #IF DEFINED (TEST.CANCEL.DELAY)
@@ -501,19 +500,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             tim ? t
                             tim ? AFTER t PLUS Cancel.delay
                           #ENDIF
-                          C.trace ("commstest: ... dummy INT inputted } ...")
+                          trace.sn ("commstest: ... dummy INT inputted } ...")
                       CLAIM svr
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                       #ELSE
                       SEQ
                         SEQ
                       #ENDIF
                           svr[int] ? x
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... } ...")
+                          trace.sn ("commstest: ... } ...")
                           #ENDIF
-                      C.trace.i ("commstest: ... done, read: ", x)
+                      trace.sin ("commstest: ... done, read: ", x)
                       ASSERT (x = i)
                       #ENDIF
                       --}}}
@@ -522,12 +521,12 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       #IF DEFINED (TEST.INT16)
                       INITIAL INT16 x IS MOSTNEG INT16:
                       SEQ
-                        C.trace ("commstest: input int16...")
+                        trace.sn ("commstest: input int16...")
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -537,19 +536,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[int16] ? x
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         ASSERT (x = (INT16 i))
                       #ENDIF
                       --}}}
@@ -558,12 +557,12 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       #IF DEFINED (TEST.INT32)
                       INITIAL INT32 x IS MOSTNEG INT32:
                       SEQ
-                        C.trace ("commstest: input int32...")
+                        trace.sn ("commstest: input int32...")
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -573,19 +572,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[int32] ? x
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         ASSERT (x = (INT32 i))
                       #ENDIF
                       --}}}
@@ -594,12 +593,12 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       #IF DEFINED (TEST.INT64)
                       INITIAL INT64 x IS MOSTNEG INT64:
                       SEQ
-                        C.trace ("commstest: input int64...")
+                        trace.sn ("commstest: input int64...")
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -609,19 +608,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[int64] ? x
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         ASSERT (x = (INT64 i))
                       #ENDIF
                       --}}}
@@ -630,12 +629,12 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       #IF DEFINED (TEST.BYTE)
                       INITIAL BYTE x IS MOSTNEG BYTE:
                       SEQ
-                        C.trace ("commstest: input byte...")
+                        trace.sn ("commstest: input byte...")
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -645,19 +644,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[byte] ? x
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         ASSERT (x = (BYTE i))
                       #ENDIF
                       --}}}
@@ -671,12 +670,12 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             x := TRUE
                           TRUE
                             x := FALSE
-                        C.trace ("commstest: input bool...")
+                        trace.sn ("commstest: input bool...")
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -686,19 +685,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[bool] ? x
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         IF
                           (i \ 2) = 0
                             ASSERT (x = FALSE)
@@ -711,12 +710,12 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       #IF DEFINED (TEST.REAL32)
                       INITIAL REAL32 x IS 999.0:
                       SEQ
-                        C.trace ("commstest: input real32...")
+                        trace.sn ("commstest: input real32...")
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -726,19 +725,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[real32] ? x
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         ASSERT (x = 555.666)
                       #ENDIF
                       --}}}
@@ -747,12 +746,12 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       #IF DEFINED (TEST.REAL64)
                       INITIAL REAL64 x IS 999.0:
                       SEQ
-                        C.trace ("commstest: input real64...")
+                        trace.sn ("commstest: input real64...")
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -762,33 +761,33 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[real64] ? x
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         ASSERT (x = 777.888)
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.INT.EXTENDED
                       #IF DEFINED (TEST.INT.EXTENDED)
-                      C.trace ("commstest: input int (extended input)...")
+                      trace.sn ("commstest: input int (extended input)...")
                       x := MOSTNEG INT
-                      C.trace ("commstest: ... before input ...")
+                      trace.sn ("commstest: ... before input ...")
                       #IF DEFINED (TEST.CANCEL)
                       INT x:
                       CLAIM svr
                         SEQ
-                          C.trace ("commstest: ... claimed { input dummy INT...")
+                          trace.sn ("commstest: ... claimed { input dummy INT...")
                           svr[int] ? x
                           ASSERT (x = i)
                           #IF DEFINED (TEST.CANCEL.DELAY)
@@ -798,33 +797,33 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             tim ? t
                             tim ? AFTER t PLUS Cancel.delay
                           #ENDIF
-                          C.trace ("commstest: ... dummy INT inputted } ...")
+                          trace.sn ("commstest: ... dummy INT inputted } ...")
                       CLAIM svr
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                       #ELSE
                       SEQ
                         SEQ
                       #ENDIF
                           svr[int.e] ?? x
                             SEQ
-                              C.trace ("commstest: ... inside input ...")
+                              trace.sn ("commstest: ... inside input ...")
                               #IF DEFINED (TEST.EXTENDED.WAIT.KEY)
-                              C.trace ("commstest: hit a key:")
+                              trace.sn ("commstest: hit a key:")
                               BYTE b:
                               key ? b
                               #ENDIF
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                      C.trace.i ("commstest: ... done, read: ", x)
+                      trace.sin ("commstest: ... done, read: ", x)
                       ASSERT (x = i)
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.SIMPLE.RECORD
                       #IF DEFINED (TEST.SIMPLE.RECORD)
-                      C.trace ("commstest: input simple.record...")
+                      trace.sn ("commstest: input simple.record...")
                       SIMPLE.RECORD r:
                       SEQ
                         r := [MOSTNEG INT, MOSTNEG INT, MOSTNEG INT, [i = 0 FOR 10 | MOSTNEG INT], [MOSTNEG INT, MOSTNEG INT, MOSTNEG INT]]
@@ -832,7 +831,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -842,26 +841,26 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[simple.record] ? r
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace.i ("commstest: ... done, read 1: ", r[a])
-                        C.trace.i ("commstest:           read 2: ", r[b])
-                        C.trace.i ("commstest:           read 3: ", r[c])
-                        C.trace.i ("commstest:    read array[0]: ", r[array][0])
-                        C.trace.i ("commstest: ...read array[9]: ", r[array][9])
-                        C.trace.i ("commstest:   read record[a]: ", r[record][a])
-                        C.trace.i ("commstest:   read record[b]: ", r[record][b])
-                        C.trace.i ("commstest: ..read record[c]: ", r[record][c])
+                        trace.sin ("commstest: ... done, read 1: ", r[a])
+                        trace.sin ("commstest:           read 2: ", r[b])
+                        trace.sin ("commstest:           read 3: ", r[c])
+                        trace.sin ("commstest:    read array[0]: ", r[array][0])
+                        trace.sin ("commstest: ...read array[9]: ", r[array][9])
+                        trace.sin ("commstest:   read record[a]: ", r[record][a])
+                        trace.sin ("commstest:   read record[b]: ", r[record][b])
+                        trace.sin ("commstest: ..read record[c]: ", r[record][c])
                         ASSERT (r[a] = i)
                         ASSERT (r[b] = (i + 1))
                         ASSERT (r[c] = (i + 2))
@@ -875,13 +874,13 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.SIMPLE.PROTO
                       #IF DEFINED (TEST.SIMPLE.PROTO)
-                      C.trace ("commstest: input simple.proto...")
+                      trace.sn ("commstest: input simple.proto...")
                       x, y, z := MOSTNEG INT, MOSTNEG INT, MOSTNEG INT
                       #IF DEFINED (TEST.CANCEL)
                       INT x:
                       CLAIM svr
                         SEQ
-                          C.trace ("commstest: ... claimed { input dummy INT...")
+                          trace.sn ("commstest: ... claimed { input dummy INT...")
                           svr[int] ? x
                           ASSERT (x = i)
                           #IF DEFINED (TEST.CANCEL.DELAY)
@@ -891,21 +890,21 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             tim ? t
                             tim ? AFTER t PLUS Cancel.delay
                           #ENDIF
-                          C.trace ("commstest: ... dummy INT inputted } ...")
+                          trace.sn ("commstest: ... dummy INT inputted } ...")
                       CLAIM svr
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                       #ELSE
                       SEQ
                         SEQ
                       #ENDIF
                           svr[simple.proto] ? x ; y ; z
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... } ...")
+                          trace.sn ("commstest: ... } ...")
                           #ENDIF
-                      C.trace.i ("commstest: ... done, read 1: ", x)
-                      C.trace.i ("commstest:           read 2: ", y)
-                      C.trace.i ("commstest:           read 3: ", z)
+                      trace.sin ("commstest: ... done, read 1: ", x)
+                      trace.sin ("commstest:           read 2: ", y)
+                      trace.sin ("commstest:           read 3: ", z)
                       ASSERT (x = i)
                       ASSERT (y = (i + 1))
                       ASSERT (z = (i + 2))
@@ -914,14 +913,14 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.SIMPLE.PROTO.EXTENDED
                       #IF DEFINED (TEST.SIMPLE.PROTO.EXTENDED)
-                      C.trace ("commstest: input simple.proto (extended input)...")
+                      trace.sn ("commstest: input simple.proto (extended input)...")
                       x, y, z := MOSTNEG INT, MOSTNEG INT, MOSTNEG INT
-                      C.trace ("commstest: ... before input ...")
+                      trace.sn ("commstest: ... before input ...")
                       #IF DEFINED (TEST.CANCEL)
                       INT x:
                       CLAIM svr
                         SEQ
-                          C.trace ("commstest: ... claimed { input dummy INT...")
+                          trace.sn ("commstest: ... claimed { input dummy INT...")
                           svr[int] ? x
                           ASSERT (x = i)
                           #IF DEFINED (TEST.CANCEL.DELAY)
@@ -931,28 +930,28 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             tim ? t
                             tim ? AFTER t PLUS Cancel.delay
                           #ENDIF
-                          C.trace ("commstest: ... dummy INT inputted } ...")
+                          trace.sn ("commstest: ... dummy INT inputted } ...")
                       CLAIM svr
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                       #ELSE
                       SEQ
                         SEQ
                       #ENDIF
                           svr[simple.proto.e] ?? x ; y ; z
                             SEQ
-                              C.trace ("commstest: ... inside input ...")
+                              trace.sn ("commstest: ... inside input ...")
                               #IF DEFINED (TEST.EXTENDED.WAIT.KEY)
-                              C.trace ("commstest: hit a key:")
+                              trace.sn ("commstest: hit a key:")
                               BYTE b:
                               key ? b
                               #ENDIF
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                      C.trace.i ("commstest: ... done, read 1: ", x)
-                      C.trace.i ("commstest:           read 2: ", y)
-                      C.trace.i ("commstest:           read 3: ", z)
+                      trace.sin ("commstest: ... done, read 1: ", x)
+                      trace.sin ("commstest:           read 2: ", y)
+                      trace.sin ("commstest:           read 3: ", z)
                       ASSERT (x = i)
                       ASSERT (y = (i + 1))
                       ASSERT (z = (i + 2))
@@ -961,14 +960,14 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.ARRAY.1D
                       #IF DEFINED (TEST.ARRAY.1D)
-                      C.trace ("commstest: input array.1d...")
+                      trace.sn ("commstest: input array.1d...")
                       INITIAL [10]INT a IS [i = 0 FOR 10 | MOSTNEG INT]:
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -978,20 +977,20 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[array.1d] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace.i ("commstest: ... done, read 0: ", a[0])
-                        C.trace.i ("commstest:       ... read 9: ", a[9])
+                        trace.sin ("commstest: ... done, read 0: ", a[0])
+                        trace.sin ("commstest:       ... read 9: ", a[9])
                         SEQ j = 0 FOR SIZE a
                           ASSERT (a[j] = (i + j))
                       #ENDIF
@@ -999,14 +998,14 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.ARRAY.1D.OF.RECORD
                       #IF DEFINED (TEST.ARRAY.1D.OF.RECORD)
-                      C.trace ("commstest: input array.1d.of.record...")
+                      trace.sn ("commstest: input array.1d.of.record...")
                       [10]SIMPLE.RECORD a:
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1016,19 +1015,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[array.1d.of.record] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         SEQ j = 0 FOR SIZE a
                           SEQ
                             ASSERT (a[j][a] = (i + j))
@@ -1044,14 +1043,14 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.ARRAY.2D
                       #IF DEFINED (TEST.ARRAY.2D)
-                      C.trace ("commstest: input array.2d...")
+                      trace.sn ("commstest: input array.2d...")
                       [3][3]INT a:
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1061,20 +1060,20 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[array.2d] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace.i ("commstest: ... done, read 0, 0: ", a[0][0])
-                        C.trace.i ("commstest:       ... read 2, 2: ", a[2][2])
+                        trace.sin ("commstest: ... done, read 0, 0: ", a[0][0])
+                        trace.sin ("commstest:       ... read 2, 2: ", a[2][2])
                         SEQ j = 0 FOR 3
                           SEQ k = 0 FOR 3
                             ASSERT (a[j][k] = ((i + j) + k))
@@ -1083,14 +1082,14 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.ARRAY.2D.OF.RECORD
                       #IF DEFINED (TEST.ARRAY.2D.OF.RECORD)
-                      C.trace ("commstest: input array.2d.of.record...")
+                      trace.sn ("commstest: input array.2d.of.record...")
                       [3][3]SIMPLE.RECORD a:
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1100,19 +1099,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[array.2d.of.record] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         SEQ j = 0 FOR 3
                           SEQ k = 0 FOR 3
                             SEQ
@@ -1129,13 +1128,13 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.TAGGED.PROTO
                       #IF DEFINED (TEST.TAGGED.PROTO)
-                      C.trace ("commstest: input tagged.proto...")
+                      trace.sn ("commstest: input tagged.proto...")
                       x, y, z := MOSTNEG INT, MOSTNEG INT, MOSTNEG INT
                       #IF DEFINED (TEST.CANCEL)
                       INT x:
                       CLAIM svr
                         SEQ
-                          C.trace ("commstest: ... claimed { input dummy INT...")
+                          trace.sn ("commstest: ... claimed { input dummy INT...")
                           svr[int] ? x
                           ASSERT (x = i)
                           #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1145,10 +1144,10 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             tim ? t
                             tim ? AFTER t PLUS Cancel.delay
                           #ENDIF
-                          C.trace ("commstest: ... dummy INT inputted } ...")
+                          trace.sn ("commstest: ... dummy INT inputted } ...")
                       CLAIM svr
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                       #ELSE
                       SEQ
                         SEQ
@@ -1170,15 +1169,15 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                                 ASSERT (y = (i + 1))
                                 ASSERT (z = (i + 2))
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... } ...")
+                          trace.sn ("commstest: ... } ...")
                           #ENDIF
-                      C.trace.i ("commstest: ... done, read: ", x)
+                      trace.sin ("commstest: ... done, read: ", x)
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.COUNTED.PROTO.SINGLE
                       #IF DEFINED (TEST.COUNTED.PROTO.SINGLE)
-                      C.trace ("commstest: input counted.proto.single...")
+                      trace.sn ("commstest: input counted.proto.single...")
                       VAL INT want.len IS i \ 10:
                       INT len:
                       INITIAL [10]INT a IS [i = 0 FOR 10 | MOSTNEG INT]:
@@ -1187,7 +1186,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1197,19 +1196,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[counted.proto.single] ? len::a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace.i ("commstest: ... done, read len: ", len)
+                        trace.sin ("commstest: ... done, read len: ", len)
                         ASSERT (len = want.len)
                         SEQ j = 0 FOR want.len
                           ASSERT (a[j] = (i + j))
@@ -1218,7 +1217,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.COUNTED.PROTO.1ST
                       #IF DEFINED (TEST.COUNTED.PROTO.1ST)
-                      C.trace ("commstest: input counted.proto.1st...")
+                      trace.sn ("commstest: input counted.proto.1st...")
                       VAL INT want.len IS i \ 10:
                       INT len:
                       INITIAL [10]INT a IS [i = 0 FOR 10 | MOSTNEG INT]:
@@ -1227,7 +1226,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1237,19 +1236,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[counted.proto.1st] ? len::a; y
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace.i ("commstest: ... done, read len: ", len)
+                        trace.sin ("commstest: ... done, read len: ", len)
                         ASSERT (len = want.len)
                         SEQ j = 0 FOR want.len
                           ASSERT (a[j] = (i + j))
@@ -1259,7 +1258,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.COUNTED.PROTO.2ND
                       #IF DEFINED (TEST.COUNTED.PROTO.2ND)
-                      C.trace ("commstest: input counted.proto.2nd...")
+                      trace.sn ("commstest: input counted.proto.2nd...")
                       VAL INT want.len IS i \ 10:
                       INT len:
                       INITIAL [10]INT a IS [i = 0 FOR 10 | MOSTNEG INT]:
@@ -1268,7 +1267,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1278,19 +1277,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[counted.proto.2nd] ? x; len::a; y
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace.i ("commstest: ... done, read len: ", len)
+                        trace.sin ("commstest: ... done, read len: ", len)
                         ASSERT (len = want.len)
                         ASSERT (x = i)
                         SEQ j = 0 FOR want.len
@@ -1301,7 +1300,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.MOBILE.INT
                       #IF DEFINED (TEST.MOBILE.INT)
-                      C.trace ("commstest: input mobile.int...")
+                      trace.sn ("commstest: input mobile.int...")
                       MOBILE INT x:
                       SEQ
                         x := MOSTNEG INT
@@ -1309,7 +1308,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1319,33 +1318,33 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[mobile.int] ? x
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace.i ("commstest: ... done, read: ", x)
+                        trace.sin ("commstest: ... done, read: ", x)
                         ASSERT (x = i)
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.ARRAY.FIXED.1D
                       #IF DEFINED (TEST.MOBILE.ARRAY.FIXED.1D)
-                      C.trace ("commstest: input mobile.array.fixed.1d...")
+                      trace.sn ("commstest: input mobile.array.fixed.1d...")
                       INITIAL MOBILE [10]INT a IS [i = 0 FOR 10 | MOSTNEG INT]:
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1355,20 +1354,20 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[mobile.array.fixed.1d] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace.i ("commstest: ... done, read 0: ", a[0])
-                        C.trace.i ("commstest:       ... read 9: ", a[9])
+                        trace.sin ("commstest: ... done, read 0: ", a[0])
+                        trace.sin ("commstest:       ... read 9: ", a[9])
                         SEQ j = 0 FOR SIZE a
                           ASSERT (a[j] = (i + j))
                       #ENDIF
@@ -1376,14 +1375,14 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.MOBILE.ARRAY.FIXED.1D.OF.RECORD
                       #IF DEFINED (TEST.MOBILE.ARRAY.FIXED.1D.OF.RECORD)
-                      C.trace ("commstest: input mobile.array.fixed.1d.of.record...")
+                      trace.sn ("commstest: input mobile.array.fixed.1d.of.record...")
                       MOBILE [10]SIMPLE.RECORD a:
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1393,19 +1392,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[mobile.array.fixed.1d.of.record] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         SEQ j = 0 FOR SIZE a
                           SEQ
                             ASSERT (a[j][a] = (i + j))
@@ -1421,14 +1420,14 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.MOBILE.ARRAY.FIXED.2D
                       #IF DEFINED (TEST.MOBILE.ARRAY.FIXED.2D)
-                      C.trace ("commstest: input mobile.array.fixed.2d...")
+                      trace.sn ("commstest: input mobile.array.fixed.2d...")
                       MOBILE [3][3]INT a:
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1438,20 +1437,20 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[mobile.array.fixed.2d] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace.i ("commstest: ... done, read 0, 0: ", a[0][0])
-                        C.trace.i ("commstest:       ... read 2, 2: ", a[2][2])
+                        trace.sin ("commstest: ... done, read 0, 0: ", a[0][0])
+                        trace.sin ("commstest:       ... read 2, 2: ", a[2][2])
                         SEQ j = 0 FOR 3
                           SEQ k = 0 FOR 3
                             ASSERT (a[j][k] = ((i + j) + k))
@@ -1460,14 +1459,14 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.MOBILE.ARRAY.FIXED.2D.OF.RECORD
                       #IF DEFINED (TEST.MOBILE.ARRAY.FIXED.2D.OF.RECORD)
-                      C.trace ("commstest: input mobile.array.fixed.2d.of.record...")
+                      trace.sn ("commstest: input mobile.array.fixed.2d.of.record...")
                       MOBILE [3][3]SIMPLE.RECORD a:
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1477,19 +1476,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[mobile.array.fixed.2d.of.record] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         SEQ j = 0 FOR 3
                           SEQ k = 0 FOR 3
                             SEQ
@@ -1506,7 +1505,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.MOBILE.RECORD
                       #IF DEFINED (TEST.MOBILE.RECORD)
-                      C.trace ("commstest: input mobile.record...")
+                      trace.sn ("commstest: input mobile.record...")
                       MOBILE.RECORD r:
                       SEQ
                         r[a] := MOSTNEG INT
@@ -1518,7 +1517,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1528,26 +1527,26 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[mobile.record] ? r
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
-                        C.trace.i ("commstest: ... done, read 1: ", r[a])
-                        C.trace.i ("commstest:           read 2: ", r[b])
-                        C.trace.i ("commstest:           read 3: ", r[c])
-                        C.trace.i ("commstest:    read array[0]: ", r[array][0])
-                        C.trace.i ("commstest: .. read array[9]: ", r[array][9])
-                        C.trace.i ("commstest:   read record[a]: ", r[record][a])
-                        C.trace.i ("commstest:   read record[b]: ", r[record][b])
-                        C.trace.i ("commstest: ..read record[c]: ", r[record][c])
+                        trace.sin ("commstest: ... done, read 1: ", r[a])
+                        trace.sin ("commstest:           read 2: ", r[b])
+                        trace.sin ("commstest:           read 3: ", r[c])
+                        trace.sin ("commstest:    read array[0]: ", r[array][0])
+                        trace.sin ("commstest: .. read array[9]: ", r[array][9])
+                        trace.sin ("commstest:   read record[a]: ", r[record][a])
+                        trace.sin ("commstest:   read record[b]: ", r[record][b])
+                        trace.sin ("commstest: ..read record[c]: ", r[record][c])
                         ASSERT (r[a] = i)
                         ASSERT (r[b] = (i + 1))
                         ASSERT (r[c] = (i + 2))
@@ -1561,7 +1560,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.MOBILE.ARRAY.DYN.1D
                       #IF DEFINED (TEST.MOBILE.ARRAY.DYN.1D)
-                      C.trace ("commstest: input mobile.array.dyn.1d...")
+                      trace.sn ("commstest: input mobile.array.dyn.1d...")
                       MOBILE []INT a:
                       SEQ
                         ASSERT (NOT (DEFINED a))
@@ -1569,7 +1568,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1579,30 +1578,30 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[mobile.array.dyn.1d] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
                         ASSERT ((i = 0) OR (DEFINED a))
                         ASSERT ((SIZE a) = i)
                         SEQ j = 0 FOR i
                           SEQ
-                            C.trace.i ("commstest: ... done, read: ", a[j])
+                            trace.sin ("commstest: ... done, read: ", a[j])
                             ASSERT (a[j] = (i + j))
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.ARRAY.DYN.1D.OF.RECORD
                       #IF DEFINED (TEST.MOBILE.ARRAY.DYN.1D.OF.RECORD)
-                      C.trace ("commstest: input mobile.array.dyn.1d.of.record...")
+                      trace.sn ("commstest: input mobile.array.dyn.1d.of.record...")
                       MOBILE []SIMPLE.RECORD a:
                       SEQ
                         ASSERT (NOT (DEFINED a))
@@ -1610,7 +1609,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1620,21 +1619,21 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[mobile.array.dyn.1d.of.record] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
                         ASSERT ((i = 0) OR (DEFINED a))
                         ASSERT ((SIZE a) = i)
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         SEQ j = 0 FOR i
                           SEQ
                             ASSERT (a[j][a] = (i + j))
@@ -1650,7 +1649,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.MOBILE.ARRAY.DYN.2D
                       #IF DEFINED (TEST.MOBILE.ARRAY.DYN.2D)
-                      C.trace ("commstest: input mobile.array.dyn.2d...")
+                      trace.sn ("commstest: input mobile.array.dyn.2d...")
                       MOBILE [][]INT a:
                       SEQ
                         ASSERT (NOT (DEFINED a))
@@ -1658,7 +1657,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1668,22 +1667,22 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[mobile.array.dyn.2d] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
                         ASSERT ((i = 0) OR (DEFINED a))
                         ASSERT ((SIZE a) = i)
                         ASSERT ((i = 0) OR ((SIZE a[0]) = i))
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         SEQ j = 0 FOR i
                           SEQ k = 0 FOR i
                             ASSERT (a[j][k] = ((i + j) + k))
@@ -1692,7 +1691,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                       --{{{  TEST.MOBILE.ARRAY.DYN.2D.OF.RECORD
                       #IF DEFINED (TEST.MOBILE.ARRAY.DYN.2D.OF.RECORD)
-                      C.trace ("commstest: input mobile.array.dyn.2d.of.record...")
+                      trace.sn ("commstest: input mobile.array.dyn.2d.of.record...")
                       MOBILE [][]SIMPLE.RECORD a:
                       SEQ
                         ASSERT (NOT (DEFINED a))
@@ -1700,7 +1699,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         INT x:
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { input dummy INT...")
+                            trace.sn ("commstest: ... claimed { input dummy INT...")
                             svr[int] ? x
                             ASSERT (x = i)
                             #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1710,22 +1709,22 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               tim ? t
                               tim ? AFTER t PLUS Cancel.delay
                             #ENDIF
-                            C.trace ("commstest: ... dummy INT inputted } ...")
+                            trace.sn ("commstest: ... dummy INT inputted } ...")
                         CLAIM svr
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                         #ELSE
                         SEQ
                           SEQ
                         #ENDIF
                             svr[mobile.array.dyn.2d.of.record] ? a
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... } ...")
+                            trace.sn ("commstest: ... } ...")
                             #ENDIF
                         ASSERT ((i = 0) OR (DEFINED a))
                         ASSERT ((SIZE a) = i)
                         ASSERT ((i = 0) OR ((SIZE a[0]) = i))
-                        C.trace ("commstest: ... done")
+                        trace.sn ("commstest: ... done")
                         SEQ j = 0 FOR i
                           SEQ k = 0 FOR i
                             SEQ
@@ -1745,19 +1744,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       SEQ j = 0 FOR 2
                         SEQ i = 0 FOR 2
                           SEQ
-                            C.trace ("commstest: input chantype.uc...")
+                            trace.sn ("commstest: input chantype.uc...")
                             IF
                               i = 0
-                                C.trace ("commstest: ... for first time...")
+                                trace.sn ("commstest: ... for first time...")
                               TRUE
-                                C.trace ("commstest: ... for next time...")
+                                trace.sn ("commstest: ... for next time...")
                             SIMPLER.CHANTYPE! xcli:
                             SEQ
                               #IF DEFINED (TEST.CANCEL)
                               INT x:
                               CLAIM svr
                                 SEQ
-                                  C.trace ("commstest: ... claimed { input dummy INT...")
+                                  trace.sn ("commstest: ... claimed { input dummy INT...")
                                   svr[int] ? x
                                   ASSERT (x = i)
                                   #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1767,30 +1766,30 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                                     tim ? t
                                     tim ? AFTER t PLUS Cancel.delay
                                   #ENDIF
-                                  C.trace ("commstest: ... dummy INT inputted } ...")
+                                  trace.sn ("commstest: ... dummy INT inputted } ...")
                               CLAIM svr
                                 SEQ
-                                  C.trace ("commstest: ... claimed { ...")
+                                  trace.sn ("commstest: ... claimed { ...")
                               #ELSE
                               SEQ
                                 SEQ
                               #ENDIF
                                   svr[chantype.uc] ? xcli
                                   #IF DEFINED (TEST.CANCEL)
-                                  C.trace ("commstest: ... } ...")
+                                  trace.sn ("commstest: ... } ...")
                                   #ENDIF
-                              C.trace ("commstest: ... done, doing input from received chantype...")
+                              trace.sn ("commstest: ... done, doing input from received chantype...")
                               xcli[c] ? x
-                              C.trace.i ("commstest: ... done, read: ", x)
+                              trace.sin ("commstest: ... done, read: ", x)
                               ASSERT (x = i)
-                              C.trace ("commstest: sending chantype back...")
+                              trace.sn ("commstest: sending chantype back...")
                               #IF DEFINED (TEST.CANCEL)
                               CLAIM svr
                               #ELSE
                               SEQ
                               #ENDIF
                                 svr[chantype.uc.return] ! xcli
-                              C.trace ("commstest: ... done")
+                              trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
@@ -1799,19 +1798,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       SEQ j = 0 FOR 2
                         SEQ i = 0 FOR 2
                           SEQ
-                            C.trace ("commstest: input chantype.us...")
+                            trace.sn ("commstest: input chantype.us...")
                             IF
                               i = 0
-                                C.trace ("commstest: ... for first time...")
+                                trace.sn ("commstest: ... for first time...")
                               TRUE
-                                C.trace ("commstest: ... for next time...")
+                                trace.sn ("commstest: ... for next time...")
                             SIMPLE.CHANTYPE? xsvr:
                             SEQ
                               #IF DEFINED (TEST.CANCEL)
                               INT x:
                               CLAIM svr
                                 SEQ
-                                  C.trace ("commstest: ... claimed { input dummy INT...")
+                                  trace.sn ("commstest: ... claimed { input dummy INT...")
                                   svr[int] ? x
                                   ASSERT (x = i)
                                   #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1821,30 +1820,30 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                                     tim ? t
                                     tim ? AFTER t PLUS Cancel.delay
                                   #ENDIF
-                                  C.trace ("commstest: ... dummy INT inputted } ...")
+                                  trace.sn ("commstest: ... dummy INT inputted } ...")
                               CLAIM svr
                                 SEQ
-                                  C.trace ("commstest: ... claimed { ...")
+                                  trace.sn ("commstest: ... claimed { ...")
                               #ELSE
                               SEQ
                                 SEQ
                               #ENDIF
                                   svr[chantype.us] ? xsvr
                                   #IF DEFINED (TEST.CANCEL)
-                                  C.trace ("commstest: ... } ...")
+                                  trace.sn ("commstest: ... } ...")
                                   #ENDIF
-                              C.trace ("commstest: ... done, doing input from received chantype...")
+                              trace.sn ("commstest: ... done, doing input from received chantype...")
                               xsvr[c] ? x
-                              C.trace.i ("commstest: ... done, read: ", x)
+                              trace.sin ("commstest: ... done, read: ", x)
                               ASSERT (x = i)
-                              C.trace ("commstest: sending chantype back...")
+                              trace.sn ("commstest: sending chantype back...")
                               #IF DEFINED (TEST.CANCEL)
                               CLAIM svr
                               #ELSE
                               SEQ
                               #ENDIF
                                 svr[chantype.us.return] ! xsvr
-                              C.trace ("commstest: ... done")
+                              trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
@@ -1853,19 +1852,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       SEQ j = 0 FOR 2
                         SEQ i = 0 FOR 2
                           SEQ
-                            C.trace ("commstest: input chantype.sc...")
+                            trace.sn ("commstest: input chantype.sc...")
                             IF
                               i = 0
-                                C.trace ("commstest: ... for first time...")
+                                trace.sn ("commstest: ... for first time...")
                               TRUE
-                                C.trace ("commstest: ... for next time...")
+                                trace.sn ("commstest: ... for next time...")
                             SHARED SIMPLER.CHANTYPE! xcli:
                             SEQ
                               #IF DEFINED (TEST.CANCEL)
                               INT x:
                               CLAIM svr
                                 SEQ
-                                  C.trace ("commstest: ... claimed { input dummy INT...")
+                                  trace.sn ("commstest: ... claimed { input dummy INT...")
                                   svr[int] ? x
                                   ASSERT (x = i)
                                   #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1875,31 +1874,31 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                                     tim ? t
                                     tim ? AFTER t PLUS Cancel.delay
                                   #ENDIF
-                                  C.trace ("commstest: ... dummy INT inputted } ...")
+                                  trace.sn ("commstest: ... dummy INT inputted } ...")
                               CLAIM svr
                                 SEQ
-                                  C.trace ("commstest: ... claimed { ...")
+                                  trace.sn ("commstest: ... claimed { ...")
                               #ELSE
                               SEQ
                                 SEQ
                               #ENDIF
                                   svr[chantype.sc] ? xcli
                                   #IF DEFINED (TEST.CANCEL)
-                                  C.trace ("commstest: ... } ...")
+                                  trace.sn ("commstest: ... } ...")
                                   #ENDIF
-                              C.trace ("commstest: ... done, doing input from received chantype...")
+                              trace.sn ("commstest: ... done, doing input from received chantype...")
                               CLAIM xcli
                                 xcli[c] ? x
-                              C.trace.i ("commstest: ... done, read: ", x)
+                              trace.sin ("commstest: ... done, read: ", x)
                               ASSERT (x = i)
-                              C.trace ("commstest: sending chantype back...")
+                              trace.sn ("commstest: sending chantype back...")
                               #IF DEFINED (TEST.CANCEL)
                               CLAIM svr
                               #ELSE
                               SEQ
                               #ENDIF
                                 svr[chantype.sc.return] ! xcli
-                              C.trace ("commstest: ... done")
+                              trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
@@ -1908,19 +1907,19 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       SEQ j = 0 FOR 2
                         SEQ i = 0 FOR 2
                           SEQ
-                            C.trace ("commstest: input chantype.ss...")
+                            trace.sn ("commstest: input chantype.ss...")
                             IF
                               i = 0
-                                C.trace ("commstest: ... for first time...")
+                                trace.sn ("commstest: ... for first time...")
                               TRUE
-                                C.trace ("commstest: ... for next time...")
+                                trace.sn ("commstest: ... for next time...")
                             SHARED SIMPLE.CHANTYPE? xsvr:
                             SEQ
                               #IF DEFINED (TEST.CANCEL)
                               INT x:
                               CLAIM svr
                                 SEQ
-                                  C.trace ("commstest: ... claimed { input dummy INT...")
+                                  trace.sn ("commstest: ... claimed { input dummy INT...")
                                   svr[int] ? x
                                   ASSERT (x = i)
                                   #IF DEFINED (TEST.CANCEL.DELAY)
@@ -1930,35 +1929,35 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                                     tim ? t
                                     tim ? AFTER t PLUS Cancel.delay
                                   #ENDIF
-                                  C.trace ("commstest: ... dummy INT inputted } ...")
+                                  trace.sn ("commstest: ... dummy INT inputted } ...")
                               CLAIM svr
                                 SEQ
-                                  C.trace ("commstest: ... claimed { ...")
+                                  trace.sn ("commstest: ... claimed { ...")
                               #ELSE
                               SEQ
                                 SEQ
                               #ENDIF
                                   svr[chantype.ss] ? xsvr
                                   #IF DEFINED (TEST.CANCEL)
-                                  C.trace ("commstest: ... } ...")
+                                  trace.sn ("commstest: ... } ...")
                                   #ENDIF
-                              C.trace ("commstest: ... done, doing input from received chantype...")
+                              trace.sn ("commstest: ... done, doing input from received chantype...")
                               CLAIM xsvr
                                 xsvr[c] ? x
-                              C.trace.i ("commstest: ... done, read: ", x)
+                              trace.sin ("commstest: ... done, read: ", x)
                               ASSERT (x = i)
-                              C.trace ("commstest: sending chantype back...")
+                              trace.sn ("commstest: sending chantype back...")
                               #IF DEFINED (TEST.CANCEL)
                               CLAIM svr
                               #ELSE
                               SEQ
                               #ENDIF
                                 svr[chantype.ss.return] ! xsvr
-                              C.trace ("commstest: ... done")
+                              trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
-                      C.trace.i ("commstest: finished input cycle ", i)
+                      trace.sin ("commstest: finished input cycle ", i)
 
                   --{{{  TEST.CHANTYPE.EOI
                   #IF DEFINED (TEST.CHANTYPE.EOI)
@@ -1971,33 +1970,31 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   THING.EOI.RETURN? svr.eoi.return:
                   SEQ
                     --{{{  Startup
-                    C.trace ("commstest: alloc svr.eoi...")
+                    trace.sn ("commstest: alloc svr.eoi...")
                     CLAIM net.handle!
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         pony.alloc.ss (net.handle, "thing.eoi", PONYC.SHARETYPE.UNSHARED, svr.eoi, result)
                         #ELSE
                         pony.alloc.us (net.handle, "thing.eoi", PONYC.SHARETYPE.UNSHARED, svr.eoi, result)
-                        C.printarg (svr.eoi)
                         #ENDIF
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED svr.eoi)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
-                    C.trace ("commstest: alloc svr.eoi.return...")
+                    trace.sn ("commstest: alloc svr.eoi.return...")
                     CLAIM net.handle!
                       SEQ
                         pony.alloc.us (net.handle, "thing.eoi.return", PONYC.SHARETYPE.UNSHARED, svr.eoi.return, result)
-                        C.printarg (svr.eoi.return)
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED svr.eoi.return)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                     --}}}
-                    C.trace ("commstest: input chantype.eoi...")
+                    trace.sn ("commstest: input chantype.eoi...")
                     #IF DEFINED (TEST.CANCEL)
                     INT x:
                     CLAIM svr.eoi
                       SEQ
-                        C.trace ("commstest: ... claimed { input dummy INT...")
+                        trace.sn ("commstest: ... claimed { input dummy INT...")
                         svr.eoi[int] ? x
                         ASSERT (x = 55)
                         #IF DEFINED (TEST.CANCEL.DELAY)
@@ -2007,49 +2004,49 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                           tim ? t
                           tim ? AFTER t PLUS Cancel.delay
                         #ENDIF
-                        C.trace ("commstest: ... dummy INT inputted } ...")
+                        trace.sn ("commstest: ... dummy INT inputted } ...")
                     CLAIM svr.eoi
                       SEQ
-                        C.trace ("commstest: ... claimed { ...")
+                        trace.sn ("commstest: ... claimed { ...")
                     #ELSE
                     SEQ
                       SEQ
                     #ENDIF
                         svr.eoi[chantype.eoi] ? xcli.eoi
                         #IF DEFINED (TEST.CANCEL)
-                        C.trace ("commstest: ... } ...")
+                        trace.sn ("commstest: ... } ...")
                         #ENDIF
-                    C.trace ("commstest: ... done, doing internal comm...")
+                    trace.sn ("commstest: ... done, doing internal comm...")
                     PAR
                       INITIAL INT x IS MOSTNEG INT:
                       SEQ
-                        C.trace ("commstest: ... inputting...")
+                        trace.sn ("commstest: ... inputting...")
                         #IF DEFINED (TEST.CANCEL)
                         CLAIM svr.eoi
                         #ELSE
                         SEQ
                         #ENDIF
                           svr.eoi[int] ? x
-                        C.trace.i ("commstest: ... input done, read: ", x)
+                        trace.sin ("commstest: ... input done, read: ", x)
                         ASSERT (x = 55555)
                       SEQ
-                        C.trace ("commstest: ... outputting 55555...")
+                        trace.sn ("commstest: ... outputting 55555...")
                         xcli.eoi[int] ! 55555
-                        C.trace ("commstest: ... output done")
-                    C.trace ("commstest: ... internal comm done")
-                    C.trace ("commstest: sending chantype.eoi back...")
+                        trace.sn ("commstest: ... output done")
+                    trace.sn ("commstest: ... internal comm done")
+                    trace.sn ("commstest: sending chantype.eoi back...")
                     svr.eoi.return[chantype.eoi.return] ! xcli.eoi
-                    C.trace ("commstest: ... done")
+                    trace.sn ("commstest: ... done")
                     INITIAL INT x IS MOSTNEG INT:
                     SEQ
-                      C.trace ("commstest: inputting from returned chantype.eoi...")
+                      trace.sn ("commstest: inputting from returned chantype.eoi...")
                       #IF DEFINED (TEST.CANCEL)
                       CLAIM svr.eoi
                       #ELSE
                       SEQ
                       #ENDIF
                         svr.eoi[int] ? x
-                      C.trace.i ("commstest: ... input done, read: ", x)
+                      trace.sin ("commstest: ... input done, read: ", x)
                       ASSERT (x = 555)
                   #ENDIF
                   --}}}
@@ -2065,33 +2062,31 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   THING.EOI.SHARED.RETURN? svr.eoi.shared.return:
                   SEQ
                     --{{{  Startup
-                    C.trace ("commstest: alloc svr.eoi.shared...")
+                    trace.sn ("commstest: alloc svr.eoi.shared...")
                     CLAIM net.handle!
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         pony.alloc.ss (net.handle, "thing.eoi.shared", PONYC.SHARETYPE.SHARED, svr.eoi.shared, result)
                         #ELSE
                         pony.alloc.us (net.handle, "thing.eoi.shared", PONYC.SHARETYPE.SHARED, svr.eoi.shared, result)
-                        C.printarg (svr.eoi.shared)
                         #ENDIF
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED svr.eoi.shared)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
-                    C.trace ("commstest: alloc svr.eoi.shared.return...")
+                    trace.sn ("commstest: alloc svr.eoi.shared.return...")
                     CLAIM net.handle!
                       SEQ
                         pony.alloc.us (net.handle, "thing.eoi.shared.return", PONYC.SHARETYPE.UNSHARED, svr.eoi.shared.return, result)
-                        C.printarg (svr.eoi.shared.return)
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED svr.eoi.shared.return)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                     --}}}
-                    C.trace ("commstest: input chantype.eoi.shared...")
+                    trace.sn ("commstest: input chantype.eoi.shared...")
                     #IF DEFINED (TEST.CANCEL)
                     INT x:
                     CLAIM svr.eoi.shared
                       SEQ
-                        C.trace ("commstest: ... claimed { input dummy INT...")
+                        trace.sn ("commstest: ... claimed { input dummy INT...")
                         svr.eoi.shared[int] ? x
                         ASSERT (x = 66)
                         #IF DEFINED (TEST.CANCEL.DELAY)
@@ -2101,50 +2096,50 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                           tim ? t
                           tim ? AFTER t PLUS Cancel.delay
                         #ENDIF
-                        C.trace ("commstest: ... dummy INT inputted } ...")
+                        trace.sn ("commstest: ... dummy INT inputted } ...")
                     CLAIM svr.eoi.shared
                       SEQ
-                        C.trace ("commstest: ... claimed { ...")
+                        trace.sn ("commstest: ... claimed { ...")
                     #ELSE
                     SEQ
                       SEQ
                     #ENDIF
                         svr.eoi.shared[chantype.eoi.shared] ? xcli.eoi.shared
                         #IF DEFINED (TEST.CANCEL)
-                        C.trace ("commstest: ... } ...")
+                        trace.sn ("commstest: ... } ...")
                         #ENDIF
-                    C.trace ("commstest: ... done, doing internal comm...")
+                    trace.sn ("commstest: ... done, doing internal comm...")
                     PAR
                       INITIAL INT x IS MOSTNEG INT:
                       SEQ
-                        C.trace ("commstest: ... inputting...")
+                        trace.sn ("commstest: ... inputting...")
                         #IF DEFINED (TEST.CANCEL)
                         CLAIM svr.eoi.shared
                         #ELSE
                         SEQ
                         #ENDIF
                           svr.eoi.shared[int] ? x
-                        C.trace.i ("commstest: ... input done, read: ", x)
+                        trace.sin ("commstest: ... input done, read: ", x)
                         ASSERT (x = 66666)
                       SEQ
-                        C.trace ("commstest: ... outputting 66666...")
+                        trace.sn ("commstest: ... outputting 66666...")
                         CLAIM xcli.eoi.shared
                           xcli.eoi.shared[int] ! 66666
-                        C.trace ("commstest: ... output done")
-                    C.trace ("commstest: ... internal comm done")
-                    C.trace ("commstest: sending chantype.eoi.shared back...")
+                        trace.sn ("commstest: ... output done")
+                    trace.sn ("commstest: ... internal comm done")
+                    trace.sn ("commstest: sending chantype.eoi.shared back...")
                     svr.eoi.shared.return[chantype.eoi.shared.return] ! xcli.eoi.shared
-                    C.trace ("commstest: ... done")
+                    trace.sn ("commstest: ... done")
                     INITIAL INT x IS MOSTNEG INT:
                     SEQ
-                      C.trace ("commstest: inputting from returned chantype.eoi.shared...")
+                      trace.sn ("commstest: inputting from returned chantype.eoi.shared...")
                       #IF DEFINED (TEST.CANCEL)
                       CLAIM svr.eoi.shared
                       #ELSE
                       SEQ
                       #ENDIF
                         svr.eoi.shared[int] ? x
-                      C.trace.i ("commstest: ... input done, read: ", x)
+                      trace.sin ("commstest: ... input done, read: ", x)
                       ASSERT (x = 666)
                   #ENDIF
                   --}}}
@@ -2160,35 +2155,33 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   THING.EOI.SPROTO.RETURN? svr.eoi.sproto.return:
                   SEQ
                     --{{{  Startup
-                    C.trace ("commstest: alloc svr.eoi.sproto...")
+                    trace.sn ("commstest: alloc svr.eoi.sproto...")
                     CLAIM net.handle!
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         pony.alloc.ss (net.handle, "thing.eoi.sproto", PONYC.SHARETYPE.UNSHARED, svr.eoi.sproto, result)
                         #ELSE
                         pony.alloc.us (net.handle, "thing.eoi.sproto", PONYC.SHARETYPE.UNSHARED, svr.eoi.sproto, result)
-                        C.printarg (svr.eoi.sproto)
                         #ENDIF
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED svr.eoi.sproto)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
-                    C.trace ("commstest: alloc svr.eoi.sproto.return...")
+                    trace.sn ("commstest: alloc svr.eoi.sproto.return...")
                     CLAIM net.handle!
                       SEQ
                         pony.alloc.us (net.handle, "thing.eoi.sproto.return", PONYC.SHARETYPE.UNSHARED, svr.eoi.sproto.return, result)
-                        C.printarg (svr.eoi.sproto.return)
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED svr.eoi.sproto.return)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                     --}}}
-                    C.trace ("commstest: input chantype.eoi.sproto...")
+                    trace.sn ("commstest: input chantype.eoi.sproto...")
                     INITIAL INT x IS MOSTNEG INT:
                     SEQ
                       #IF DEFINED (TEST.CANCEL)
                       INT x:
                       CLAIM svr.eoi.sproto
                         SEQ
-                          C.trace ("commstest: ... claimed { input dummy INT...")
+                          trace.sn ("commstest: ... claimed { input dummy INT...")
                           svr.eoi.sproto[int] ? x
                           ASSERT (x = 77)
                           #IF DEFINED (TEST.CANCEL.DELAY)
@@ -2198,50 +2191,50 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             tim ? t
                             tim ? AFTER t PLUS Cancel.delay
                           #ENDIF
-                          C.trace ("commstest: ... dummy INT inputted } ...")
+                          trace.sn ("commstest: ... dummy INT inputted } ...")
                       CLAIM svr.eoi.sproto
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                       #ELSE
                       SEQ
                         SEQ
                       #ENDIF
                           svr.eoi.sproto[chantype.eoi.sproto] ? x; xcli.eoi.sproto
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... } ...")
+                          trace.sn ("commstest: ... } ...")
                           #ENDIF
                       ASSERT (x = 12345)
-                    C.trace ("commstest: ... done, doing internal comm...")
+                    trace.sn ("commstest: ... done, doing internal comm...")
                     PAR
                       INITIAL INT x IS MOSTNEG INT:
                       SEQ
-                        C.trace ("commstest: ... inputting...")
+                        trace.sn ("commstest: ... inputting...")
                         #IF DEFINED (TEST.CANCEL)
                         CLAIM svr.eoi.sproto
                         #ELSE
                         SEQ
                         #ENDIF
                           svr.eoi.sproto[int] ? x
-                        C.trace.i ("commstest: ... input done, read: ", x)
+                        trace.sin ("commstest: ... input done, read: ", x)
                         ASSERT (x = 77777)
                       SEQ
-                        C.trace ("commstest: ... outputting 77777...")
+                        trace.sn ("commstest: ... outputting 77777...")
                         xcli.eoi.sproto[int] ! 77777
-                        C.trace ("commstest: ... output done")
-                    C.trace ("commstest: ... internal comm done")
-                    C.trace ("commstest: sending chantype.eoi.sproto back...")
+                        trace.sn ("commstest: ... output done")
+                    trace.sn ("commstest: ... internal comm done")
+                    trace.sn ("commstest: sending chantype.eoi.sproto back...")
                     svr.eoi.sproto.return[chantype.eoi.sproto.return] ! xcli.eoi.sproto
-                    C.trace ("commstest: ... done")
+                    trace.sn ("commstest: ... done")
                     INITIAL INT x IS MOSTNEG INT:
                     SEQ
-                      C.trace ("commstest: inputting from returned chantype.eoi.sproto...")
+                      trace.sn ("commstest: inputting from returned chantype.eoi.sproto...")
                       #IF DEFINED (TEST.CANCEL)
                       CLAIM svr.eoi.sproto
                       #ELSE
                       SEQ
                       #ENDIF
                         svr.eoi.sproto[int] ? x
-                      C.trace.i ("commstest: ... input done, read: ", x)
+                      trace.sin ("commstest: ... input done, read: ", x)
                       ASSERT (x = 777)
                   #ENDIF
                   --}}}
@@ -2257,35 +2250,33 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   THING.EOI.SPROTO.2.RETURN? svr.eoi.sproto.2.return:
                   SEQ
                     --{{{  Startup
-                    C.trace ("commstest: alloc svr.eoi.sproto.2...")
+                    trace.sn ("commstest: alloc svr.eoi.sproto.2...")
                     CLAIM net.handle!
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
                         pony.alloc.ss (net.handle, "thing.eoi.sproto.2", PONYC.SHARETYPE.UNSHARED, svr.eoi.sproto.2, result)
                         #ELSE
                         pony.alloc.us (net.handle, "thing.eoi.sproto.2", PONYC.SHARETYPE.UNSHARED, svr.eoi.sproto.2, result)
-                        C.printarg (svr.eoi.sproto.2)
                         #ENDIF
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED svr.eoi.sproto.2)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
-                    C.trace ("commstest: alloc svr.eoi.sproto.2.return...")
+                    trace.sn ("commstest: alloc svr.eoi.sproto.2.return...")
                     CLAIM net.handle!
                       SEQ
                         pony.alloc.us (net.handle, "thing.eoi.sproto.2.return", PONYC.SHARETYPE.UNSHARED, svr.eoi.sproto.2.return, result)
-                        C.printarg (svr.eoi.sproto.2.return)
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED svr.eoi.sproto.2.return)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                     --}}}
-                    C.trace ("commstest: input chantype.eoi.sproto.2...")
+                    trace.sn ("commstest: input chantype.eoi.sproto.2...")
                     INITIAL INT x IS MOSTNEG INT:
                     SEQ
                       #IF DEFINED (TEST.CANCEL)
                       INT x:
                       CLAIM svr.eoi.sproto.2
                         SEQ
-                          C.trace ("commstest: ... claimed { input dummy INT...")
+                          trace.sn ("commstest: ... claimed { input dummy INT...")
                           svr.eoi.sproto.2[int] ? x
                           ASSERT (x = 88)
                           #IF DEFINED (TEST.CANCEL.DELAY)
@@ -2295,69 +2286,69 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             tim ? t
                             tim ? AFTER t PLUS Cancel.delay
                           #ENDIF
-                          C.trace ("commstest: ... dummy INT inputted } ...")
+                          trace.sn ("commstest: ... dummy INT inputted } ...")
                       CLAIM svr.eoi.sproto.2
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                       #ELSE
                       SEQ
                         SEQ
                       #ENDIF
                           svr.eoi.sproto.2[chantype.eoi.sproto.2] ? xcli.eoi.sproto.2; x
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... } ...")
+                          trace.sn ("commstest: ... } ...")
                           #ENDIF
                       ASSERT (x = 67890)
-                    C.trace ("commstest: ... done, doing internal comm...")
+                    trace.sn ("commstest: ... done, doing internal comm...")
                     PAR
                       INITIAL INT x IS MOSTNEG INT:
                       SEQ
-                        C.trace ("commstest: ... inputting...")
+                        trace.sn ("commstest: ... inputting...")
                         #IF DEFINED (TEST.CANCEL)
                         CLAIM svr.eoi.sproto.2
                         #ELSE
                         SEQ
                         #ENDIF
                           svr.eoi.sproto.2[int] ? x
-                        C.trace.i ("commstest: ... input done, read: ", x)
+                        trace.sin ("commstest: ... input done, read: ", x)
                         ASSERT (x = 88888)
                       SEQ
-                        C.trace ("commstest: ... outputting 88888...")
+                        trace.sn ("commstest: ... outputting 88888...")
                         xcli.eoi.sproto.2[int] ! 88888
-                        C.trace ("commstest: ... output done")
-                    C.trace ("commstest: ... internal comm done")
-                    C.trace ("commstest: sending chantype.eoi.sproto.2 back...")
+                        trace.sn ("commstest: ... output done")
+                    trace.sn ("commstest: ... internal comm done")
+                    trace.sn ("commstest: sending chantype.eoi.sproto.2 back...")
                     svr.eoi.sproto.2.return[chantype.eoi.sproto.2.return] ! xcli.eoi.sproto.2
-                    C.trace ("commstest: ... done")
+                    trace.sn ("commstest: ... done")
                     INITIAL INT x IS MOSTNEG INT:
                     SEQ
-                      C.trace ("commstest: inputting from returned chantype.eoi.sproto.2...")
+                      trace.sn ("commstest: inputting from returned chantype.eoi.sproto.2...")
                       #IF DEFINED (TEST.CANCEL)
                       CLAIM svr.eoi.sproto.2
                       #ELSE
                       SEQ
                       #ENDIF
                         svr.eoi.sproto.2[int] ? x
-                      C.trace.i ("commstest: ... input done, read: ", x)
+                      trace.sin ("commstest: ... input done, read: ", x)
                       ASSERT (x = 888)
                   #ENDIF
                   --}}}
 
-                  C.trace ("commstest: master done")
+                  trace.sn ("commstest: master done")
               --}}}
               --{{{  PONYC.NODETYPE.SLAVEWAIT
               PONYC.NODETYPE.SLAVEWAIT
                 SHARED THING! cli:
                 SEQ
                   --{{{  Startup
-                  C.trace ("commstest: slave starting, alloc...")
+                  trace.sn ("commstest: slave starting, alloc...")
                   CLAIM net.handle!
                     #IF DEFINED (TEST.CANCEL)
                     pony.alloc.sc (net.handle, "thing", PONYC.SHARETYPE.SHARED, cli, result)
                     #ELSE
                     pony.alloc.sc (net.handle, "thing", PONYC.SHARETYPE.UNSHARED, cli, result)
                     #ENDIF
-                  C.trace.i ("commstest: ... done, alloc result: ", result)
+                  trace.sin ("commstest: ... done, alloc result: ", result)
                   ASSERT (DEFINED cli)
                   ASSERT (result = PONYC.RESULT.ALLOC.OK)
                   --}}}
@@ -2372,236 +2363,236 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
 
                   SEQ i = 0 FOR Iterations
                     SEQ
-                      C.trace.i ("commstest: starting output cycle ", i)
+                      trace.sin ("commstest: starting output cycle ", i)
 
                       --{{{  TEST.INT
                       #IF DEFINED (TEST.INT)
-                      C.trace ("commstest: output int...")
+                      trace.sn ("commstest: output int...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[int] ! i
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.INT16
                       #IF DEFINED (TEST.INT16)
-                      C.trace ("commstest: output int16...")
+                      trace.sn ("commstest: output int16...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[int16] ! INT16 i
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.INT32
                       #IF DEFINED (TEST.INT32)
-                      C.trace ("commstest: output int32...")
+                      trace.sn ("commstest: output int32...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[int32] ! INT32 i
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.INT64
                       #IF DEFINED (TEST.INT64)
-                      C.trace ("commstest: output int64...")
+                      trace.sn ("commstest: output int64...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[int64] ! INT64 i
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.BYTE
                       #IF DEFINED (TEST.BYTE)
-                      C.trace ("commstest: output byte...")
+                      trace.sn ("commstest: output byte...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[byte] ! BYTE i
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.BOOL
                       #IF DEFINED (TEST.BOOL)
-                      C.trace ("commstest: output bool...")
+                      trace.sn ("commstest: output bool...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           IF
                             (i \ 2) = 0
                               cli[bool] ! FALSE
                             TRUE
                               cli[bool] ! TRUE
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.REAL32
                       #IF DEFINED (TEST.REAL32)
-                      C.trace ("commstest: output real32...")
+                      trace.sn ("commstest: output real32...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[real32] ! 555.666
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.REAL64
                       #IF DEFINED (TEST.REAL64)
-                      C.trace ("commstest: output real64...")
+                      trace.sn ("commstest: output real64...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[real64] ! 777.888
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.INT.EXTENDED
                       #IF DEFINED (TEST.INT.EXTENDED)
-                      C.trace ("commstest: output int (for extended input)...")
+                      trace.sn ("commstest: output int (for extended input)...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[int.e] ! i
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.SIMPLE.RECORD
                       #IF DEFINED (TEST.SIMPLE.RECORD)
-                      C.trace ("commstest: output simple.record...")
+                      trace.sn ("commstest: output simple.record...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[simple.record] ! [i, i + 1, i + 2, [j = 0 FOR 10 | i + j], [i, i + 1, i + 2]]
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.SIMPLE.PROTO
                       #IF DEFINED (TEST.SIMPLE.PROTO)
-                      C.trace ("commstest: output simple.proto...")
+                      trace.sn ("commstest: output simple.proto...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[simple.proto] ! i ; i + 1 ; i + 2
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.SIMPLE.PROTO.EXTENDED
                       #IF DEFINED (TEST.SIMPLE.PROTO.EXTENDED)
-                      C.trace ("commstest: output simple.proto (for extended input)...")
+                      trace.sn ("commstest: output simple.proto (for extended input)...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[simple.proto.e] ! i ; i + 1 ; i + 2
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.ARRAY.1D
                       #IF DEFINED (TEST.ARRAY.1D)
-                      C.trace ("commstest: output array.1d...")
+                      trace.sn ("commstest: output array.1d...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[array.1d] ! [j = 0 FOR 10 | i + j]
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.ARRAY.1D.OF.RECORD
                       #IF DEFINED (TEST.ARRAY.1D.OF.RECORD)
-                      C.trace ("commstest: output array.1d.of.record...")
+                      trace.sn ("commstest: output array.1d.of.record...")
                       [10]SIMPLE.RECORD a:
                       SEQ
                         SEQ j = 0 FOR SIZE a
@@ -2616,42 +2607,42 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             a[j][record][c] := ((i + j) + 2)
                         CLAIM cli!
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... output dummy INT...")
+                            trace.sn ("commstest: ... output dummy INT...")
                             cli[int] ! i
-                            C.trace ("commstest: ... dummy INT outputted ...")
+                            trace.sn ("commstest: ... dummy INT outputted ...")
                             #ENDIF
                             cli[array.1d.of.record] ! a
-                            C.trace ("commstest: ... } ...")
-                        C.trace ("commstest: ... done")
+                            trace.sn ("commstest: ... } ...")
+                        trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.ARRAY.2D
                       #IF DEFINED (TEST.ARRAY.2D)
-                      C.trace ("commstest: output array.2d...")
+                      trace.sn ("commstest: output array.2d...")
                       CLAIM cli!
                         [3][3]INT a:
                         SEQ
                           SEQ j = 0 FOR 3
                             SEQ k = 0 FOR 3
                               a[j][k] := (i + j) + k
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[array.2d] ! a
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.ARRAY.2D.OF.RECORD
                       #IF DEFINED (TEST.ARRAY.2D.OF.RECORD)
-                      C.trace ("commstest: output array.2d.of.record...")
+                      trace.sn ("commstest: output array.2d.of.record...")
                       [3][3]SIMPLE.RECORD a:
                       SEQ
                         SEQ j = 0 FOR 3
@@ -2667,28 +2658,28 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               a[j][k][record][c] := ((i + (j + k)) + 2)
                         CLAIM cli!
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... output dummy INT...")
+                            trace.sn ("commstest: ... output dummy INT...")
                             cli[int] ! i
-                            C.trace ("commstest: ... dummy INT outputted ...")
+                            trace.sn ("commstest: ... dummy INT outputted ...")
                             #ENDIF
                             cli[array.2d.of.record] ! a
-                            C.trace ("commstest: ... } ...")
-                        C.trace ("commstest: ... done")
+                            trace.sn ("commstest: ... } ...")
+                        trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.TAGGED.PROTO
                       #IF DEFINED (TEST.TAGGED.PROTO)
-                      C.trace ("commstest: output tagged.proto...")
+                      trace.sn ("commstest: output tagged.proto...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           CASE i \ 3
                             0
@@ -2697,105 +2688,105 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               cli[tagged.proto] ! second ; i ; i + 1
                             2
                               cli[tagged.proto] ! third ; i ; i + 1 ; i + 2
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.COUNTED.PROTO.SINGLE
                       #IF DEFINED (TEST.COUNTED.PROTO.SINGLE)
-                      C.trace ("commstest: output counted.proto.single...")
+                      trace.sn ("commstest: output counted.proto.single...")
                       CLAIM cli!
                         VAL []INT a IS [j = 0 FOR 10 | i + j]:
                         VAL INT len IS i \ 10:
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[counted.proto.single] ! len::[a FOR len]
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.COUNTED.PROTO.1ST
                       #IF DEFINED (TEST.COUNTED.PROTO.1ST)
-                      C.trace ("commstest: output counted.proto.1st...")
+                      trace.sn ("commstest: output counted.proto.1st...")
                       CLAIM cli!
                         VAL []INT a IS [j = 0 FOR 10 | i + j]:
                         VAL INT len IS i \ 10:
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[counted.proto.1st] ! len::[a FOR len]; i + 1
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.COUNTED.PROTO.2ND
                       #IF DEFINED (TEST.COUNTED.PROTO.2ND)
-                      C.trace ("commstest: output counted.proto.2nd...")
+                      trace.sn ("commstest: output counted.proto.2nd...")
                       CLAIM cli!
                         VAL []INT a IS [j = 0 FOR 10 | i + j]:
                         VAL INT len IS i \ 10:
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[counted.proto.2nd] ! i; len::[a FOR len]; i + 1
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.INT
                       #IF DEFINED (TEST.MOBILE.INT)
-                      C.trace ("commstest: output mobile.int...")
+                      trace.sn ("commstest: output mobile.int...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[mobile.int] ! i
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.ARRAY.FIXED.1D
                       #IF DEFINED (TEST.MOBILE.ARRAY.FIXED.1D)
-                      C.trace ("commstest: output mobile.array.fixed.1d...")
+                      trace.sn ("commstest: output mobile.array.fixed.1d...")
                       CLAIM cli!
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[mobile.array.fixed.1d] ! [j = 0 FOR 10 | i + j]
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.ARRAY.FIXED.1D.OF.RECORD
                       #IF DEFINED (TEST.MOBILE.ARRAY.FIXED.1D.OF.RECORD)
-                      C.trace ("commstest: output mobile.array.fixed.1d.of.record...")
+                      trace.sn ("commstest: output mobile.array.fixed.1d.of.record...")
                       MOBILE [10]SIMPLE.RECORD a:
                       SEQ
                         SEQ j = 0 FOR SIZE a
@@ -2810,42 +2801,42 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             a[j][record][c] := ((i + j) + 2)
                         CLAIM cli!
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... output dummy INT...")
+                            trace.sn ("commstest: ... output dummy INT...")
                             cli[int] ! i
-                            C.trace ("commstest: ... dummy INT outputted ...")
+                            trace.sn ("commstest: ... dummy INT outputted ...")
                             #ENDIF
                             cli[mobile.array.fixed.1d.of.record] ! a
-                            C.trace ("commstest: ... } ...")
-                        C.trace ("commstest: ... done")
+                            trace.sn ("commstest: ... } ...")
+                        trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.ARRAY.FIXED.2D
                       #IF DEFINED (TEST.MOBILE.ARRAY.FIXED.2D)
-                      C.trace ("commstest: output mobile.array.fixed.2d...")
+                      trace.sn ("commstest: output mobile.array.fixed.2d...")
                       CLAIM cli!
                         MOBILE [3][3]INT a:
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           SEQ j = 0 FOR 3
                             SEQ k = 0 FOR 3
                               a[j][k] := (i + j) + k
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[mobile.array.fixed.2d] ! a
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.ARRAY.FIXED.2D.OF.RECORD
                       #IF DEFINED (TEST.MOBILE.ARRAY.FIXED.2D.OF.RECORD)
-                      C.trace ("commstest: output mobile.array.fixed.2d.of.record...")
+                      trace.sn ("commstest: output mobile.array.fixed.2d.of.record...")
                       MOBILE [3][3]SIMPLE.RECORD a:
                       SEQ
                         SEQ j = 0 FOR 3
@@ -2861,21 +2852,21 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               a[j][k][record][c] := ((i + (j + k)) + 2)
                         CLAIM cli!
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... output dummy INT...")
+                            trace.sn ("commstest: ... output dummy INT...")
                             cli[int] ! i
-                            C.trace ("commstest: ... dummy INT outputted ...")
+                            trace.sn ("commstest: ... dummy INT outputted ...")
                             #ENDIF
                             cli[mobile.array.fixed.2d.of.record] ! a
-                            C.trace ("commstest: ... } ...")
-                        C.trace ("commstest: ... done")
+                            trace.sn ("commstest: ... } ...")
+                        trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.RECORD
                       #IF DEFINED (TEST.MOBILE.RECORD)
-                      C.trace ("commstest: output mobile.record...")
+                      trace.sn ("commstest: output mobile.record...")
                       CLAIM cli!
                         MOBILE.RECORD r:
                         SEQ
@@ -2886,42 +2877,42 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                           r[record][a] := i
                           r[record][b] := i + 1
                           r[record][c] := i + 2
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[mobile.record] ! r
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.ARRAY.DYN.1D
                       #IF DEFINED (TEST.MOBILE.ARRAY.DYN.1D)
-                      C.trace ("commstest: output mobile.array.dyn.1d...")
+                      trace.sn ("commstest: output mobile.array.dyn.1d...")
                       CLAIM cli!
                         MOBILE []INT a:
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           a := MOBILE [i]INT
                           SEQ j = 0 FOR i
                             a[j] := (i + j)
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[mobile.array.dyn.1d] ! a
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.ARRAY.DYN.1D.OF.RECORD
                       #IF DEFINED (TEST.MOBILE.ARRAY.DYN.1D.OF.RECORD)
-                      C.trace ("commstest: output mobile.array.dyn.1d.of.record...")
+                      trace.sn ("commstest: output mobile.array.dyn.1d.of.record...")
                       MOBILE []SIMPLE.RECORD a:
                       SEQ
                         a := MOBILE [i]SIMPLE.RECORD
@@ -2937,43 +2928,43 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                             a[j][record][c] := ((i + j) + 2)
                         CLAIM cli!
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... output dummy INT...")
+                            trace.sn ("commstest: ... output dummy INT...")
                             cli[int] ! i
-                            C.trace ("commstest: ... dummy INT outputted ...")
+                            trace.sn ("commstest: ... dummy INT outputted ...")
                             #ENDIF
                             cli[mobile.array.dyn.1d.of.record] ! a
-                            C.trace ("commstest: ... } ...")
-                        C.trace ("commstest: ... done")
+                            trace.sn ("commstest: ... } ...")
+                        trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.ARRAY.DYN.2D
                       #IF DEFINED (TEST.MOBILE.ARRAY.DYN.2D)
-                      C.trace ("commstest: output mobile.array.dyn.2d...")
+                      trace.sn ("commstest: output mobile.array.dyn.2d...")
                       CLAIM cli!
                         MOBILE [][]INT a:
                         SEQ
-                          C.trace ("commstest: ... claimed { ...")
+                          trace.sn ("commstest: ... claimed { ...")
                           a := MOBILE [i][i]INT
                           SEQ j = 0 FOR i
                             SEQ k = 0 FOR i
                               a[j][k] := (i + j) + k
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli[int] ! i
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli[mobile.array.dyn.2d] ! a
-                          C.trace ("commstest: ... } ...")
-                      C.trace ("commstest: ... done")
+                          trace.sn ("commstest: ... } ...")
+                      trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
                       --{{{  TEST.MOBILE.ARRAY.DYN.2D.OF.RECORD
                       #IF DEFINED (TEST.MOBILE.ARRAY.DYN.2D.OF.RECORD)
-                      C.trace ("commstest: output mobile.array.dyn.2d.of.record...")
+                      trace.sn ("commstest: output mobile.array.dyn.2d.of.record...")
                       MOBILE [][]SIMPLE.RECORD a:
                       SEQ
                         a := MOBILE [i][i]SIMPLE.RECORD
@@ -2990,15 +2981,15 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                               a[j][k][record][c] := ((i + (j + k)) + 2)
                         CLAIM cli!
                           SEQ
-                            C.trace ("commstest: ... claimed { ...")
+                            trace.sn ("commstest: ... claimed { ...")
                             #IF DEFINED (TEST.CANCEL)
-                            C.trace ("commstest: ... output dummy INT...")
+                            trace.sn ("commstest: ... output dummy INT...")
                             cli[int] ! i
-                            C.trace ("commstest: ... dummy INT outputted ...")
+                            trace.sn ("commstest: ... dummy INT outputted ...")
                             #ENDIF
                             cli[mobile.array.dyn.2d.of.record] ! a
-                            C.trace ("commstest: ... } ...")
-                        C.trace ("commstest: ... done")
+                            trace.sn ("commstest: ... } ...")
+                        trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
@@ -3021,40 +3012,40 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                                 CLAIM net.handle
                                   INT result:
                                   SEQ
-                                    C.trace (message)
+                                    trace.sn (message)
                                     pony.alloc.uc (net.handle, ext.name, PONYC.SHARETYPE.UNSHARED, xcli, result)
-                                    C.trace.i ("commstest: ... xcli done, alloc result: ", result)
+                                    trace.sin ("commstest: ... xcli done, alloc result: ", result)
                                     ASSERT (DEFINED xcli)
                                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                                     pony.alloc.us (net.handle, ext.name, PONYC.SHARETYPE.UNSHARED, xsvr, result)
-                                    C.trace.i ("commstest: ... xsvr done, alloc result: ", result)
+                                    trace.sin ("commstest: ... xsvr done, alloc result: ", result)
                                     ASSERT (DEFINED xsvr)
                                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                           SEQ i = 0 FOR 2
                             SEQ
-                              C.trace ("commstest: output chantype.uc...")
+                              trace.sn ("commstest: output chantype.uc...")
                               IF
                                 i = 0
-                                  C.trace ("commstest: ... for first time...")
+                                  trace.sn ("commstest: ... for first time...")
                                 TRUE
-                                  C.trace ("commstest: ... for next time...")
+                                  trace.sn ("commstest: ... for next time...")
                               CLAIM cli!
                                 SEQ
-                                  C.trace ("commstest: ... claimed { ...")
+                                  trace.sn ("commstest: ... claimed { ...")
                                   #IF DEFINED (TEST.CANCEL)
-                                  C.trace ("commstest: ... output dummy INT...")
+                                  trace.sn ("commstest: ... output dummy INT...")
                                   cli[int] ! i
-                                  C.trace ("commstest: ... dummy INT outputted ...")
+                                  trace.sn ("commstest: ... dummy INT outputted ...")
                                   #ENDIF
                                   cli[chantype.uc] ! xcli
-                                  C.trace ("commstest: ... } ...")
-                              C.trace ("commstest: ... done, doing output on sent chantype...")
+                                  trace.sn ("commstest: ... } ...")
+                              trace.sn ("commstest: ... done, doing output on sent chantype...")
                               xsvr[c] ! i
-                              C.trace ("commstest: ... done")
-                              C.trace ("commstest: input chantype.uc back...")
+                              trace.sn ("commstest: ... done")
+                              trace.sn ("commstest: input chantype.uc back...")
                               CLAIM cli!
                                 cli[chantype.uc.return] ? xcli
-                              C.trace ("commstest: ... done")
+                              trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
@@ -3077,40 +3068,40 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                                 CLAIM net.handle
                                   INT result:
                                   SEQ
-                                    C.trace (message)
+                                    trace.sn (message)
                                     pony.alloc.uc (net.handle, ext.name, PONYC.SHARETYPE.UNSHARED, xcli, result)
-                                    C.trace.i ("commstest: ... xcli done, alloc result: ", result)
+                                    trace.sin ("commstest: ... xcli done, alloc result: ", result)
                                     ASSERT (DEFINED xcli)
                                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                                     pony.alloc.us (net.handle, ext.name, PONYC.SHARETYPE.UNSHARED, xsvr, result)
-                                    C.trace.i ("commstest: ... xsvr done, alloc result: ", result)
+                                    trace.sin ("commstest: ... xsvr done, alloc result: ", result)
                                     ASSERT (DEFINED xsvr)
                                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                           SEQ i = 0 FOR 2
                             SEQ
-                              C.trace ("commstest: output chantype.us...")
+                              trace.sn ("commstest: output chantype.us...")
                               IF
                                 i = 0
-                                  C.trace ("commstest: ... for first time...")
+                                  trace.sn ("commstest: ... for first time...")
                                 TRUE
-                                  C.trace ("commstest: ... for next time...")
+                                  trace.sn ("commstest: ... for next time...")
                               CLAIM cli!
                                 SEQ
-                                  C.trace ("commstest: ... claimed { ...")
+                                  trace.sn ("commstest: ... claimed { ...")
                                   #IF DEFINED (TEST.CANCEL)
-                                  C.trace ("commstest: ... output dummy INT...")
+                                  trace.sn ("commstest: ... output dummy INT...")
                                   cli[int] ! i
-                                  C.trace ("commstest: ... dummy INT outputted ...")
+                                  trace.sn ("commstest: ... dummy INT outputted ...")
                                   #ENDIF
                                   cli[chantype.us] ! xsvr
-                                  C.trace ("commstest: ... } ...")
-                              C.trace ("commstest: ... done, doing output on sent chantype...")
+                                  trace.sn ("commstest: ... } ...")
+                              trace.sn ("commstest: ... done, doing output on sent chantype...")
                               xcli[c] ! i
-                              C.trace ("commstest: ... done")
-                              C.trace ("commstest: input chantype.us back...")
+                              trace.sn ("commstest: ... done")
+                              trace.sn ("commstest: input chantype.us back...")
                               CLAIM cli!
                                 cli[chantype.us.return] ? xsvr
-                              C.trace ("commstest: ... done")
+                              trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
@@ -3133,40 +3124,40 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                                 CLAIM net.handle
                                   INT result:
                                   SEQ
-                                    C.trace (message)
+                                    trace.sn (message)
                                     pony.alloc.sc (net.handle, ext.name, PONYC.SHARETYPE.UNSHARED, xcli, result)
-                                    C.trace.i ("commstest: ... xcli done, alloc result: ", result)
+                                    trace.sin ("commstest: ... xcli done, alloc result: ", result)
                                     ASSERT (DEFINED xcli)
                                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                                     pony.alloc.us (net.handle, ext.name, PONYC.SHARETYPE.SHARED, xsvr, result)
-                                    C.trace.i ("commstest: ... xsvr done, alloc result: ", result)
+                                    trace.sin ("commstest: ... xsvr done, alloc result: ", result)
                                     ASSERT (DEFINED xsvr)
                                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                           SEQ i = 0 FOR 2
                             SEQ
-                              C.trace ("commstest: output chantype.sc...")
+                              trace.sn ("commstest: output chantype.sc...")
                               IF
                                 i = 0
-                                  C.trace ("commstest: ... for first time...")
+                                  trace.sn ("commstest: ... for first time...")
                                 TRUE
-                                  C.trace ("commstest: ... for next time...")
+                                  trace.sn ("commstest: ... for next time...")
                               CLAIM cli!
                                 SEQ
-                                  C.trace ("commstest: ... claimed { ...")
+                                  trace.sn ("commstest: ... claimed { ...")
                                   #IF DEFINED (TEST.CANCEL)
-                                  C.trace ("commstest: ... output dummy INT...")
+                                  trace.sn ("commstest: ... output dummy INT...")
                                   cli[int] ! i
-                                  C.trace ("commstest: ... dummy INT outputted ...")
+                                  trace.sn ("commstest: ... dummy INT outputted ...")
                                   #ENDIF
                                   cli[chantype.sc] ! xcli
-                                  C.trace ("commstest: ... } ...")
-                              C.trace ("commstest: ... done, doing output on sent chantype...")
+                                  trace.sn ("commstest: ... } ...")
+                              trace.sn ("commstest: ... done, doing output on sent chantype...")
                               xsvr[c] ! i
-                              C.trace ("commstest: ... done")
-                              C.trace ("commstest: input chantype.sc back...")
+                              trace.sn ("commstest: ... done")
+                              trace.sn ("commstest: input chantype.sc back...")
                               CLAIM cli!
                                 cli[chantype.sc.return] ? xcli
-                              C.trace ("commstest: ... done")
+                              trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
@@ -3189,44 +3180,44 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                                 CLAIM net.handle
                                   INT result:
                                   SEQ
-                                    C.trace (message)
+                                    trace.sn (message)
                                     pony.alloc.uc (net.handle, ext.name, PONYC.SHARETYPE.SHARED, xcli, result)
-                                    C.trace.i ("commstest: ... xcli done, alloc result: ", result)
+                                    trace.sin ("commstest: ... xcli done, alloc result: ", result)
                                     ASSERT (DEFINED xcli)
                                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                                     pony.alloc.ss (net.handle, ext.name, PONYC.SHARETYPE.UNSHARED, xsvr, result)
-                                    C.trace.i ("commstest: ... xsvr done, alloc result: ", result)
+                                    trace.sin ("commstest: ... xsvr done, alloc result: ", result)
                                     ASSERT (DEFINED xsvr)
                                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                           SEQ i = 0 FOR 2
                             SEQ
-                              C.trace ("commstest: output chantype.ss...")
+                              trace.sn ("commstest: output chantype.ss...")
                               IF
                                 i = 0
-                                  C.trace ("commstest: ... for first time...")
+                                  trace.sn ("commstest: ... for first time...")
                                 TRUE
-                                  C.trace ("commstest: ... for next time...")
+                                  trace.sn ("commstest: ... for next time...")
                               CLAIM cli!
                                 SEQ
-                                  C.trace ("commstest: ... claimed { ...")
+                                  trace.sn ("commstest: ... claimed { ...")
                                   #IF DEFINED (TEST.CANCEL)
-                                  C.trace ("commstest: ... output dummy INT...")
+                                  trace.sn ("commstest: ... output dummy INT...")
                                   cli[int] ! i
-                                  C.trace ("commstest: ... dummy INT outputted ...")
+                                  trace.sn ("commstest: ... dummy INT outputted ...")
                                   #ENDIF
                                   cli[chantype.ss] ! xsvr
-                                  C.trace ("commstest: ... } ...")
-                              C.trace ("commstest: ... done, doing output on sent chantype...")
+                                  trace.sn ("commstest: ... } ...")
+                              trace.sn ("commstest: ... done, doing output on sent chantype...")
                               xcli[c] ! i
-                              C.trace ("commstest: ... done")
-                              C.trace ("commstest: input chantype.ss back...")
+                              trace.sn ("commstest: ... done")
+                              trace.sn ("commstest: input chantype.ss back...")
                               CLAIM cli!
                                 cli[chantype.ss.return] ? xsvr
-                              C.trace ("commstest: ... done")
+                              trace.sn ("commstest: ... done")
                       #ENDIF
                       --}}}
 
-                      C.trace.i ("commstest: finished output cycle ", i)
+                      trace.sin ("commstest: finished output cycle ", i)
 
                   --{{{  TEST.CHANTYPE.EOI
                   #IF DEFINED (TEST.CHANTYPE.EOI)
@@ -3234,7 +3225,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   THING.EOI.RETURN! cli.eoi.return:
                   SEQ
                     --{{{  Startup
-                    C.trace ("commstest: alloc cli.eoi...")
+                    trace.sn ("commstest: alloc cli.eoi...")
                     CLAIM net.handle!
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
@@ -3242,31 +3233,31 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         #ELSE
                         pony.alloc.uc (net.handle, "thing.eoi", PONYC.SHARETYPE.UNSHARED, cli.eoi, result)
                         #ENDIF
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED cli.eoi)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
-                    C.trace ("commstest: alloc cli.eoi.return...")
+                    trace.sn ("commstest: alloc cli.eoi.return...")
                     CLAIM net.handle!
                       SEQ
                         pony.alloc.uc (net.handle, "thing.eoi.return", PONYC.SHARETYPE.UNSHARED, cli.eoi.return, result)
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED cli.eoi.return)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                     --}}}
-                    C.trace ("commstest: output chantype.eoi...")
+                    trace.sn ("commstest: output chantype.eoi...")
                     #IF DEFINED (TEST.CANCEL)
-                    C.trace ("commstest: ... output dummy INT...")
+                    trace.sn ("commstest: ... output dummy INT...")
                     cli.eoi[int] ! 55
-                    C.trace ("commstest: ... dummy INT outputted ...")
+                    trace.sn ("commstest: ... dummy INT outputted ...")
                     #ENDIF
                     cli.eoi[chantype.eoi] ! cli.eoi
-                    C.trace ("commstest: ... done")
-                    C.trace ("commstest: input chantype.eoi back...")
+                    trace.sn ("commstest: ... done")
+                    trace.sn ("commstest: input chantype.eoi back...")
                     cli.eoi.return[chantype.eoi.return] ? cli.eoi
-                    C.trace ("commstest: ... done")
-                    C.trace ("commstest: ... outputting 555 to returned chantype.eoi...")
+                    trace.sn ("commstest: ... done")
+                    trace.sn ("commstest: ... outputting 555 to returned chantype.eoi...")
                     cli.eoi[int] ! 555
-                    C.trace ("commstest: ... output done")
+                    trace.sn ("commstest: ... output done")
                   #ENDIF
                   --}}}
 
@@ -3276,7 +3267,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   THING.EOI.SHARED.RETURN! cli.eoi.shared.return:
                   SEQ
                     --{{{  Startup
-                    C.trace ("commstest: alloc cli.eoi.shared...")
+                    trace.sn ("commstest: alloc cli.eoi.shared...")
                     CLAIM net.handle!
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
@@ -3284,37 +3275,37 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         #ELSE
                         pony.alloc.sc (net.handle, "thing.eoi.shared", PONYC.SHARETYPE.UNSHARED, cli.eoi.shared, result)
                         #ENDIF
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED cli.eoi.shared)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
-                    C.trace ("commstest: alloc cli.eoi.shared.return...")
+                    trace.sn ("commstest: alloc cli.eoi.shared.return...")
                     CLAIM net.handle!
                       SEQ
                         pony.alloc.uc (net.handle, "thing.eoi.shared.return", PONYC.SHARETYPE.UNSHARED, cli.eoi.shared.return, result)
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED cli.eoi.shared.return)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                     --}}}
-                    C.trace ("commstest: output chantype.eoi.shared...")
+                    trace.sn ("commstest: output chantype.eoi.shared...")
                     SHARED THING.EOI.SHARED! xcli.eoi.shared:
                     SEQ
                       xcli.eoi.shared := cli.eoi.shared
                       CLAIM cli.eoi.shared
                         SEQ
                           #IF DEFINED (TEST.CANCEL)
-                          C.trace ("commstest: ... output dummy INT...")
+                          trace.sn ("commstest: ... output dummy INT...")
                           cli.eoi.shared[int] ! 66
-                          C.trace ("commstest: ... dummy INT outputted ...")
+                          trace.sn ("commstest: ... dummy INT outputted ...")
                           #ENDIF
                           cli.eoi.shared[chantype.eoi.shared] ! xcli.eoi.shared
-                    C.trace ("commstest: ... done")
-                    C.trace ("commstest: input chantype.eoi.shared back...")
+                    trace.sn ("commstest: ... done")
+                    trace.sn ("commstest: input chantype.eoi.shared back...")
                     cli.eoi.shared.return[chantype.eoi.shared.return] ? cli.eoi.shared
-                    C.trace ("commstest: ... done")
-                    C.trace ("commstest: ... outputting 666 to returned chantype.eoi.shared...")
+                    trace.sn ("commstest: ... done")
+                    trace.sn ("commstest: ... outputting 666 to returned chantype.eoi.shared...")
                     CLAIM cli.eoi.shared
                       cli.eoi.shared[int] ! 666
-                    C.trace ("commstest: ... output done")
+                    trace.sn ("commstest: ... output done")
                   #ENDIF
                   --}}}
 
@@ -3324,7 +3315,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   THING.EOI.SPROTO.RETURN! cli.eoi.sproto.return:
                   SEQ
                     --{{{  Startup
-                    C.trace ("commstest: alloc cli.eoi.sproto...")
+                    trace.sn ("commstest: alloc cli.eoi.sproto...")
                     CLAIM net.handle!
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
@@ -3332,31 +3323,31 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         #ELSE
                         pony.alloc.uc (net.handle, "thing.eoi.sproto", PONYC.SHARETYPE.UNSHARED, cli.eoi.sproto, result)
                         #ENDIF
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED cli.eoi.sproto)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
-                    C.trace ("commstest: alloc cli.eoi.sproto.return...")
+                    trace.sn ("commstest: alloc cli.eoi.sproto.return...")
                     CLAIM net.handle!
                       SEQ
                         pony.alloc.uc (net.handle, "thing.eoi.sproto.return", PONYC.SHARETYPE.UNSHARED, cli.eoi.sproto.return, result)
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED cli.eoi.sproto.return)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                     --}}}
-                    C.trace ("commstest: output chantype.eoi.sproto...")
+                    trace.sn ("commstest: output chantype.eoi.sproto...")
                     #IF DEFINED (TEST.CANCEL)
-                    C.trace ("commstest: ... output dummy INT...")
+                    trace.sn ("commstest: ... output dummy INT...")
                     cli.eoi.sproto[int] ! 77
-                    C.trace ("commstest: ... dummy INT outputted ...")
+                    trace.sn ("commstest: ... dummy INT outputted ...")
                     #ENDIF
                     cli.eoi.sproto[chantype.eoi.sproto] ! 12345; cli.eoi.sproto
-                    C.trace ("commstest: ... done")
-                    C.trace ("commstest: input chantype.eoi.sproto back...")
+                    trace.sn ("commstest: ... done")
+                    trace.sn ("commstest: input chantype.eoi.sproto back...")
                     cli.eoi.sproto.return[chantype.eoi.sproto.return] ? cli.eoi.sproto
-                    C.trace ("commstest: ... done")
-                    C.trace ("commstest: ... outputting 777 to returned chantype.eoi.sproto...")
+                    trace.sn ("commstest: ... done")
+                    trace.sn ("commstest: ... outputting 777 to returned chantype.eoi.sproto...")
                     cli.eoi.sproto[int] ! 777
-                    C.trace ("commstest: ... output done")
+                    trace.sn ("commstest: ... output done")
                   #ENDIF
                   --}}}
 
@@ -3366,7 +3357,7 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                   THING.EOI.SPROTO.2.RETURN! cli.eoi.sproto.2.return:
                   SEQ
                     --{{{  Startup
-                    C.trace ("commstest: alloc cli.eoi.sproto.2...")
+                    trace.sn ("commstest: alloc cli.eoi.sproto.2...")
                     CLAIM net.handle!
                       SEQ
                         #IF DEFINED (TEST.CANCEL)
@@ -3374,35 +3365,35 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                         #ELSE
                         pony.alloc.uc (net.handle, "thing.eoi.sproto.2", PONYC.SHARETYPE.UNSHARED, cli.eoi.sproto.2, result)
                         #ENDIF
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED cli.eoi.sproto.2)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
-                    C.trace ("commstest: alloc cli.eoi.sproto.2.return...")
+                    trace.sn ("commstest: alloc cli.eoi.sproto.2.return...")
                     CLAIM net.handle!
                       SEQ
                         pony.alloc.uc (net.handle, "thing.eoi.sproto.2.return", PONYC.SHARETYPE.UNSHARED, cli.eoi.sproto.2.return, result)
-                    C.trace.i ("commstest: ... done, alloc result: ", result)
+                    trace.sin ("commstest: ... done, alloc result: ", result)
                     ASSERT (DEFINED cli.eoi.sproto.2.return)
                     ASSERT (result = PONYC.RESULT.ALLOC.OK)
                     --}}}
-                    C.trace ("commstest: output chantype.eoi.sproto.2...")
+                    trace.sn ("commstest: output chantype.eoi.sproto.2...")
                     #IF DEFINED (TEST.CANCEL)
-                    C.trace ("commstest: ... output dummy INT...")
+                    trace.sn ("commstest: ... output dummy INT...")
                     cli.eoi.sproto.2[int] ! 88
-                    C.trace ("commstest: ... dummy INT outputted ...")
+                    trace.sn ("commstest: ... dummy INT outputted ...")
                     #ENDIF
                     cli.eoi.sproto.2[chantype.eoi.sproto.2] ! cli.eoi.sproto.2; 67890
-                    C.trace ("commstest: ... done")
-                    C.trace ("commstest: input chantype.eoi.sproto.2 back...")
+                    trace.sn ("commstest: ... done")
+                    trace.sn ("commstest: input chantype.eoi.sproto.2 back...")
                     cli.eoi.sproto.2.return[chantype.eoi.sproto.2.return] ? cli.eoi.sproto.2
-                    C.trace ("commstest: ... done")
-                    C.trace ("commstest: ... outputting 888 to returned chantype.eoi.sproto.2...")
+                    trace.sn ("commstest: ... done")
+                    trace.sn ("commstest: ... outputting 888 to returned chantype.eoi.sproto.2...")
                     cli.eoi.sproto.2[int] ! 888
-                    C.trace ("commstest: ... output done")
+                    trace.sn ("commstest: ... output done")
                   #ENDIF
                   --}}}
 
-                  C.trace ("commstest: slave done")
+                  trace.sn ("commstest: slave done")
               --}}}
               ELSE
                 STOP
@@ -3410,10 +3401,10 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
             PAR
               --{{{  Shutdown
               SEQ
-                C.trace ("commstest: calling shutdown process")
+                trace.sn ("commstest: calling shutdown process")
                 CLAIM net.handle
                   pony.shutdown (net.handle)
-                C.trace ("commstest: shutdown process done")
+                trace.sn ("commstest: shutdown process done")
                 sync ! TRUE
               --}}}
               --{{{  Errors and shutdown of error-handler
@@ -3425,15 +3416,15 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                 PRI ALT
                   BOOL any:
                   sync ? any
-                    C.trace ("commstest: shutdown sync")
+                    trace.sn ("commstest: shutdown sync")
                   tim ? AFTER t PLUS 10000000
-                    C.trace ("commstest: shutdown timeout")
-                C.trace ("commstest: getting errors after initial error-point...")
+                    trace.sn ("commstest: shutdown timeout")
+                trace.sn ("commstest: getting errors after initial error-point...")
                 INITIAL MOBILE []INT null.int.array IS MOBILE [0]INT:
                 pony.err.get.errs.after (err.handle, err.point,
                                          TRUE, TRUE, TRUE, null.int.array,
                                          err.array, result)
-                C.trace.i ("commstest: ... done, number of errors: ", SIZE err.array)
+                trace.sin ("commstest: ... done, number of errors: ", SIZE err.array)
                 #IF FALSE
                 CLAIM scr!
                   SEQ i = 0 FOR (SIZE err.array)
@@ -3450,14 +3441,14 @@ PROC commstest (CHAN BYTE key?, SHARED CHAN BYTE scr!, CHAN BYTE err!)
                       out.int (err.array[i][err.code], 0, scr!)
                       out.string ("*n", 0, scr!)
                 #ENDIF
-                C.trace ("commstest: shutting down error-handler")
+                trace.sn ("commstest: shutting down error-handler")
                 pony.err.shutdown (err.handle)
-                C.trace ("commstest: error-handler shutdown finished")
+                trace.sn ("commstest: error-handler shutdown finished")
               --}}}
       TRUE
         SKIP
     --{{{  Exit message
-    C.trace ("commstest: Finished! :)")
+    trace.sn ("commstest: Finished! :)")
     --}}}
 :
 

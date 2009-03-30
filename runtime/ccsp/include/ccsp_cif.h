@@ -399,6 +399,15 @@ static inline void MRelease (Workspace wptr, void *ptr)
 
 /*{{{ Mobile Types */
 /*{{{  void *MTAlloc (Workspace wptr, word type, word size) */
+
+/**
+ * Allocates a mobile.  See mobile_types.h for a explanation of the latter two
+ * parameters, which describe the structure of the mobile type.  This is
+ * necessary in case you have nested mobiles, and allows the CCSP kernel to
+ * handle moving the inner mobiles.
+ *
+ * @return The pointer to the mobile data (such as an mt_array_t).
+ */
 static inline void *MTAlloc (Workspace wptr, word type, word size)
 {
 	void *ptr;
@@ -407,6 +416,14 @@ static inline void *MTAlloc (Workspace wptr, word type, word size)
 }
 /*}}}*/
 /*{{{  void *MTClone (Workspace wptr, void *ptr) */
+
+/**
+ * Clones the given mobile data.  You only need pass a pointer to the data,
+ * not a pointer-to-a-pointer as in some other functions.  For arrays, what
+ * you pass should be of type mt_array_t*.
+ *
+ * @return A pointer to the cloned data.
+ */
 static inline void *MTClone (Workspace wptr, void *ptr)
 {
 	void *clone;
@@ -415,18 +432,50 @@ static inline void *MTClone (Workspace wptr, void *ptr)
 }
 /*}}}*/
 /*{{{  void MTRelease (Workspace wptr, void *ptr) */
+
+/**
+ * Releases (frees) the given mobile data.  You only need pass a pointer to
+ * the data, not a pointer-to-a-pointer as in some other functions.  Therefore
+ * it's up to you to NULL your pointer afterwards.
+ *
+ * Do not pass a NULL pointer to this function (check yourself before calling).
+ */
 static inline void MTRelease (Workspace wptr, void *ptr)
 {
 	ccsp_cif_X_mt_release (wptr, ptr);
 }
 /*}}}*/
+/*{{{  void *MTResize (Workspace wptr, word type, void *ptr, word param) */
+static inline void *MTResize (Workspace wptr, word type, void *ptr, word param)
+{
+	void *result;
+	ccsp_cif_X_mt_resize (wptr, type, ptr, param, result);
+	return result;
+}
+/*}}}*/
 /*{{{  void MTChanIn (Workspace wptr, Channel *c, void **pptr) */
+
+/**
+ * Reads from the given channel into the given mobile.  You must pass in a
+ * pointer to your pointer-to-mobile-data, so that it can be modified.  It is
+ * up to you to make sure that any previous mobile referred to by that pointer
+ * has already been released before calling (using MTRelease), as the contents
+ * of your pointer-to-mobile-data will be blindly overwritten.  For arrays,
+ * the parameter should be of type mt_array_t**.
+ */
 static inline void MTChanIn (Workspace wptr, Channel *c, void **pptr)
 {
 	ccsp_cif_Y_mt_in (wptr, c, pptr);
 }
 /*}}}*/
 /*{{{  void MTChanOut (Workspace wptr, Channel *c, void **pptr) */
+
+/**
+ * Writes to the given channel from the given mobile.  You must pass in a
+ * pointer to your pointer-to-mobile-data, so that it can be modified (it will
+ * be set to NULL once the output has completed). For arrays, the parameter
+ * should be of type mt_array_t**.
+ */
 static inline void MTChanOut (Workspace wptr, Channel *c, void **pptr)
 {
 	ccsp_cif_Y_mt_out (wptr, c, pptr);
@@ -534,6 +583,15 @@ static inline Workspace ProcAlloc (Workspace wptr, word args, word stack)
 	do { (ws)[(n) + 1] = (word) (param); } while (0)
 /*}}}*/
 /*{{{  void ProcMTCopy (Workspace wptr, Workspace ws, word n, void *ptr) */
+
+/**
+ * Copies the mobile data from the workspace wptr (the current workspace) into
+ * the workspace ws (the new process's workspace), in slot n.  You should pass
+ * a pointer-to-mobile-data, not a pointer-to-a-pointer as in some other
+ * methods.  The process should then use ProcGetParam (with the exact same
+ * type as you pass to this function) to retrieve the parameter.  For arrays,
+ * the type of ptr should be mt_array_t*.
+ */
 static inline void ProcMTCopy (Workspace wptr, Workspace ws, word n, void *ptr)
 {
 	ws -= CIF_PROCESS_WORDS;
@@ -542,6 +600,15 @@ static inline void ProcMTCopy (Workspace wptr, Workspace ws, word n, void *ptr)
 }
 /*}}}*/
 /*{{{  void ProcMTMove (Workspace wptr, Workspace ws, word n, void *pptr) */
+
+/**
+ * Moves the mobile data from the workspace wptr (the current workspace) into
+ * the workspace ws (the new process's workspace), in slot n.  You should pass
+ * a pointer-to-a-pointer-to-mobile-data; the pointed-to-pointer will be set
+ * to NULL after this call.  The process should then use ProcGetParam (with
+ * the type of pointer-to-mobile-data -- one less indirection level) to
+ * retrieve the parameter.  For arrays, the type of pptr should be mt_array_t**.
+ */
 static inline void ProcMTMove (Workspace wptr, Workspace ws, word n, void *pptr)
 {
 	ws -= CIF_PROCESS_WORDS;

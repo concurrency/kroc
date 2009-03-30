@@ -1,0 +1,50 @@
+Import('env')
+local = env.Clone()
+
+course_lib_srcs = Split('''
+    utils.occ
+    string.occ
+    demo_cycles.occ
+    demo_nets.occ
+    file_in.occ
+    float_io.occ
+    random.occ
+    ''')
+
+shared_screen_lib_srcs = Split('''
+    shared_screen.occ
+    ''')
+shared_screen_lib_objs = \
+        [local.OccamObject(f, INCPATH='.') for f in shared_screen_lib_srcs]
+
+
+
+course_lib = local.OccamLibrary(
+        'course.lib',
+        course_lib_srcs,
+        INCPATH='.',
+        OCCBUILDFLAGS='--include consts.inc')
+
+def mk_shared_screen(lib_name):
+    return local.OccamLibrary(
+            lib_name,
+            shared_screen_lib_objs,
+            INCPATH='.',
+            OCCBUILDFLAGS='--need course --include shared_screen.inc')
+
+sharedscreen_lib = mk_shared_screen('shared_screen.lib')
+# Build ss.lib too for backwards compatibility.
+mk_shared_screen('ss.lib')
+
+# FIXME: Autodepend???
+local.Depends('shared_screen.tce', course_lib)
+local.Depends('demo_nets.occ', 'demo_cycles.tce')
+local.Depends('string.occ', 'utils.tce')
+
+
+env['OCCLIBS']['course'] = dict(
+        dep=course_lib,
+        inc=Dir('.'))
+env['OCCLIBS']['shared_screen'] = dict(
+        dep=sharedscreen_lib,
+        inc=Dir('.'))

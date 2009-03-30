@@ -2,34 +2,49 @@
 
 @SET_MAKE@
 
-AUTOMAKE_OPTIONS=foreign no-dependencies
+AUTOMAKE_OPTIONS = foreign no-dependencies
 
-EXTRA_DIST=to-html.xsl frames.html occamdoc.css occamdoc.in
-DISTCLEANFILES=occamdoc
+EXTRA_DIST = \
+	occamdoc.in \
+	setup.py \
+	tests/abbrev.occ \
+	tests/broken.occ \
+	tests/empty.occ \
+	tests/extern.occ \
+	tests/findall.occ \
+	tests/main.occ \
+	tests/merge1.occ \
+	tests/merge2.occ \
+	tests/modref.occ \
+	tests/modrefdest.occ \
+	tests/multiarg.occ \
+	tests/multiargbad.occ \
+	tests/noheader.occ \
+	tests/spacing.occ \
+	tests/tabs.occ \
+	tests/vars.occ
 
-occamdoc_basefiles=to-html.xsl frames.html occamdoc.css
-occamdoc_programs=occamdoc
+bin_SCRIPTS = \
+	occamdoc
 
-dist_man1_MANS=occamdoc.1
+occamdocdir = $(datadir)/kroc/occamdoc
+dist_occamdoc_DATA = \
+	frames.html \
+	occamdoc.css \
+	to-html.xsl
 
-all-local:	$(occamdoc_basefiles) $(occamdoc_programs)
+dist_man1_MANS = occamdoc.1
+
+all-local: occamdoc
 
 edit = sed \
-	-e 's,@OCCAMDOCDATA\@,$(datadir)/occamdoc,g' \
+	-e 's,@OCCAMDOCDATA\@,$(occamdocdir),g' \
 	-e 's,@XSLTPROC\@,@XSLTPROC@,g'
 
-occamdoc:	Makefile $(srcdir)/occamdoc.in
+occamdoc: Makefile $(srcdir)/occamdoc.in
 	rm -f occamdoc occamdoc.tmp
 	$(edit) $(srcdir)/occamdoc.in >occamdoc.tmp
 	chmod +x occamdoc.tmp
 	mv occamdoc.tmp occamdoc
 
-install-exec-local:	$(occamdoc_basefiles)
-	$(mkinstalldirs) "$(DESTDIR)$(bindir)"
-	$(INSTALL_PROGRAM) "occamdoc" "$(DESTDIR)$(bindir)/occamdoc"
-	$(mkinstalldirs) "$(DESTDIR)$(datadir)/occamdoc"
-	$(INSTALL_DATA) "to-html.xsl" "$(DESTDIR)$(datadir)/occamdoc/to-html.xsl"
-	$(INSTALL_DATA) "frames.html" "$(DESTDIR)$(datadir)/occamdoc/frames.html"
-	$(INSTALL_DATA) "occamdoc.css" "$(DESTDIR)$(datadir)/occamdoc/occamdoc.css"
-
-
+CLEANFILES = occamdoc

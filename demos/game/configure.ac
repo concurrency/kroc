@@ -14,22 +14,11 @@ AM_INIT_AUTOMAKE(game-demo, 1.0)
 dnl Checks for programs.
 OCCAM_OCCBUILD
 
-dnl AC_PROG_MAKE_SET
-dnl AC_PROG_CC
-dnl AM_PROG_CC_STDC
-dnl AC_CHECK_TOOL(LD,ld)
+dnl Checks for occam modules.
+OCCAM_INCLUDE([course.module sock.module file.module string.module], ,
+              [AC_MSG_ERROR(Required modules not found)])
 
-dnl AM_C_PROTOTYPES
-
-dnl Checks for programs.
-dnl AC_CHECK_PROG(KROC, kroc, kroc)
-
-dnl Checks for libraries.
-
-OCCAM_INCLUDE([course.module sock.module file.module],,[AC_MSG_ERROR(Required modules not found)])
-
-INSTALLED_DATA_PATH="$DESTDIR$datadir/examples/demos/game-data/"
+INSTALLED_DATA_PATH="$datadir/examples/demos/game-data/"
 AC_SUBST(INSTALLED_DATA_PATH)
 
-AC_OUTPUT([Makefile config.inc])
-
+AC_OUTPUT([Makefile data/Makefile])

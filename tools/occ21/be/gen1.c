@@ -62,6 +62,7 @@
 #include "gen12def.h"
 #include "code1def.h"
 #include "debugdef.h"
+#include "objlib.h"
 #include "objwrt.h"
 #include "profile.h"
 #include "predefhd.h"
@@ -766,12 +767,6 @@ printtreenl (stderr, 4, nptr);
 					tdecl_mark_debug_info (nptr, debug_marked);
 					zero_local_var (nptr);
 					break;
-#if 0				/* bug 328 11/9/90 */
-				case S_INT16:
-					if (targetintsize == S_INT32)
-						zero_local_var (nptr);
-					break;
-#endif
 					/*}}} */
 					/*{{{  ARRAY if CHAN initialise each element to MINT */
 				case S_ARRAY:
@@ -3623,14 +3618,13 @@ PUBLIC void tprocess (treenode * tptr)
 					const int is_client = (NTypeAttrOf (ct_type) & TypeAttr_marked_out);
 					const int lock = (is_client ? MT_CB_CLIENT : MT_CB_SERVER);
 					const int pony_offset = chans;					/* offset of pony state in words */
-					/*}}}*/
+
 					gencomment0 ("begin claim semaphore");
 					loadmobile (ct_nptr);
 					genchecknotnull ();
 					loadconstant (lock);
 					gensecondary (I_MT_LOCK);
 					gencomment0 ("end claim semaphore");
-					/*}}}*/
 					/*{{{  if chan-type operations or kroc-net specials are enabled, signal claim/set state*/
 					if (kroc_chantype_desc) {
 						gencomment0 ("{{{  kroc chantype special");
@@ -5183,13 +5177,193 @@ PRIVATE void tnestedroutines (treenode * tptr)
 				break;
 			}
 			/*}}} */
+			/*{{{  pragmas*/
+		case S_PRAGMA:	/* bug 829 19/9/91 */
+			switch ((pragma_name_tag_t) NModeOf (DNameOf (tptr))) {
+				/*{{{  pragma_name_dyncall*/
+			case pragma_name_dyncall:
+#if 0
+fprintf (stderr, "tnestedroutines(): PRAGMA DYNCALL:, DValOf =\n");
+printtreenl (stderr, 4, DValOf (tptr));
+#endif
+				if (TagOf (DValOf (tptr)) == S_LIST) {
+					treenode *v;
+					
+					for (v = DValOf (tptr); !EndOfList (v); v = NextItem (v)) {
+						treenode *vv = ThisItem (v);
+
+						switch (TagOf (vv)) {
+						case N_PROCDEF:
+						case N_LFUNCDEF:
+						case N_SFUNCDEF:
+							{
+								treenode *plist = NParamListOf (vv);
+								INT32 ws, vs, thash;
+
+								getprocwsandvs (vv, &ws, &vs);
+								/* remember to carve off any VS parameter before hashing */
+								{
+									treenode **savep_vsp = NULL;
+									treenode *save_vsp = NULL;
+
+									/* if the parameter list has a vectorspace pointer in it, remove for purposes of typehash generation */
+									for (savep_vsp = &plist; savep_vsp && !EndOfList (*savep_vsp); savep_vsp = NextItemAddr (*savep_vsp)) {
+										save_vsp = ThisItem (*savep_vsp);
+
+										if (TagOf (save_vsp) == S_PARAM_VSP) {
+											break;		/* for() */
+										}
+									}
+									if (savep_vsp && EndOfList (*savep_vsp)) {
+										savep_vsp = NULL;
+									}
+									
+									if (savep_vsp) {
+										save_vsp = *savep_vsp;
+										*savep_vsp = NULL;
+									}
+									thash = typehash (plist);
+									if (savep_vsp) {
+										*savep_vsp = save_vsp;
+									}
+								}
+#if 0
+fprintf (stderr, "tnestedroutines(): DYNCALL for [%s], thash = 0x%8.8X, plist =", WNameOf (NNameOf (vv)), (unsigned int)thash);
+printtreenl (stderr, 4, plist);
+#endif
+								gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
+							}
+							break;
+						default:
+							geninternal_is (GEN_ERROR_IN_ROUTINE, 2, "tnestedroutines: unsupported type for DYNCALL");
+							break;
+						}
+					}
+				} else {
+					geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: PRAGMA DYNCALL is not a list");
+				}
+				break;
+				/*}}}*/
+				/*{{{  pragma_name_export*/
+			case pragma_name_export:
+				if (TagOf (DValOf (tptr)) == S_LIST) {
+					treenode *v;
+					
+					for (v = DValOf (tptr); !EndOfList (v); v = NextItem (v)) {
+						treenode *vv = ThisItem (v);
+
+						switch (TagOf (vv)) {
+						case N_PROCDEF:
+						case N_LFUNCDEF:
+						case N_SFUNCDEF:
+							{
+								wordnode *nameptr = translate_from_internal (NNameOf (vv));
+								const char *desc_buffer;
+								char *lcbuf;
+								int lclen, i;
+								treenode *plist = NParamListOf (vv);
+								INT32 ws, vs, thash;
+								int pcount = 0;
+
+								desc_buffer = create_descriptor_string (be_get_fe_handle (), vv, nameptr, 1, 0, 1);
+								/* the descriptor may be split over several lines; count until we reach a closing parenthesis */
+#if 1
+#endif
+								for (lclen=0; (desc_buffer[lclen] != '\0') && (desc_buffer[lclen] != '('); lclen++);
+								if (desc_buffer[lclen] == '(') {
+									/* start of parameter list */
+									pcount = 1;
+									for (lclen++; (desc_buffer[lclen] != '\0') && pcount; lclen++) {
+										switch (desc_buffer[lclen]) {
+										case '(':
+											pcount++;
+											break;
+										case ')':
+											pcount--;
+											break;
+										}
+									}
+
+									if (desc_buffer[lclen-1] == ')') {
+										/* found it! */
+									} else {
+										geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: damaged descriptor string for EXPORT");
+									}
+								} else {
+									geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: damaged descriptor string for EXPORT");
+									return;
+								}
+
+								lcbuf = memalloc (lclen + 2);
+								memcpy (lcbuf, desc_buffer, lclen);
+								/* go through and turn newlines into spaces */
+								for (i=0; i < lclen; i++) {
+									if (lcbuf[i] == '\n') {
+										lcbuf[i] = ' ';
+									}
+								}
+								lcbuf[lclen] = '\0';
+#if 0
+fprintf (stderr, "tnestedroutines(): EXPORT for [%s], lcbuf=[%s]\n", WNameOf (NNameOf (vv)), lcbuf);
+#endif
+
+								gencommentv (".MAGIC EXPORT %s", lcbuf);
+								memfree (lcbuf);
+
+								getprocwsandvs (vv, &ws, &vs);
+
+								/* remember to carve off any VS parameter before hashing */
+								{
+									treenode **savep_vsp = NULL;
+									treenode *save_vsp = NULL;
+
+									/* if the parameter list has a vectorspace pointer in it, remove for purposes of typehash generation */
+									for (savep_vsp = &plist; savep_vsp && !EndOfList (*savep_vsp); savep_vsp = NextItemAddr (*savep_vsp)) {
+										save_vsp = ThisItem (*savep_vsp);
+
+										if (TagOf (save_vsp) == S_PARAM_VSP) {
+											break;		/* for() */
+										}
+									}
+									if (savep_vsp && EndOfList (*savep_vsp)) {
+										savep_vsp = NULL;
+									}
+									
+									if (savep_vsp) {
+										save_vsp = *savep_vsp;
+										*savep_vsp = NULL;
+									}
+									thash = typehash (plist);
+									if (savep_vsp) {
+										*savep_vsp = save_vsp;
+									}
+								}
+								gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
+							}
+							break;
+						default:
+							geninternal_is (GEN_ERROR_IN_ROUTINE, 2, "tnestedroutines: unsupported type for EXPORT");
+							break;
+						}
+					}
+				} else {
+					geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: PRAGMA EXPORT is not a list");
+				}
+				break;
+				/*}}}*/
+			default:
+				tnestedroutines (DValOf (tptr));
+				break;
+			}
+			tptr = DBodyOf (tptr);
+			break;
+			/*}}}*/
 			/*{{{  other specification */
 		case S_ABBR:
 		case S_RETYPE:
 		case S_DECL:
 		case S_TPROTDEF:
 		case S_SPROTDEF:
-		case S_PRAGMA:	/* bug 829 19/9/91 */
 #ifdef MOBILES
 		case S_PROCTYPEDECL:
 #endif
@@ -5635,7 +5809,7 @@ PUBLIC void tmain (treenode * tptr)
 		int num_procs_declared = 0;
 
 		/* set nptr to the last PROC/FUNCTION declared */
-		for (t = tptr; TagOf (t) != S_END; t = DBodyOf (t))
+		for (t = tptr; TagOf (t) != S_END; t = DBodyOf (t)) {
 			switch (TagOf (t)) {
 			case S_PROCDEF:
 #ifdef MOBILES
@@ -5649,8 +5823,47 @@ PUBLIC void tmain (treenode * tptr)
 			default:
 				break;
 			}
-		if (nptr != NULL)	/* should suppress if not a main module */
-			coder_jumptoentrypoint (nptr);
+		}
+		if (nptr != NULL) {	/* should suppress if not a main module */
+			if (main_dynentry) {
+				INT32 ws, vs;
+				treenode *nplist = NParamListOf (nptr);
+				treenode **savep_vsp = NULL;
+				treenode *save_vsp = NULL;
+				unsigned int thash;
+				
+				getprocwsandvs (nptr, &ws, &vs);
+
+				/* if the parameter list has a vectorspace pointer in it, remove for purposes of typehash generation */
+				for (savep_vsp = &nplist; savep_vsp && !EndOfList (*savep_vsp); savep_vsp = NextItemAddr (*savep_vsp)) {
+					save_vsp = ThisItem (*savep_vsp);
+
+					if (TagOf (save_vsp) == S_PARAM_VSP) {
+						break;		/* for() */
+					}
+				}
+				if (savep_vsp && EndOfList (*savep_vsp)) {
+					savep_vsp = NULL;
+				}
+				
+				if (savep_vsp) {
+					save_vsp = *savep_vsp;
+					*savep_vsp = NULL;
+				}
+				thash = typehash (nplist);
+				if (savep_vsp) {
+					*savep_vsp = save_vsp;
+				}
+
+#if 0
+fprintf (stderr, "tmain(): generating dynamic entry-point for main routine, thash is 0x%8.8x, ws = %d, vs = %d\n", thash, ws, vs);
+#endif
+
+				gencommentv (".MAGIC MAINDYNCALL %s %d %d %8.8X", WNameOf (NNameOf (nptr)), ws, vs, thash);
+			} else {
+				coder_jumptoentrypoint (nptr);
+			}
+		}
 	}
 	/*}}} */
 	if ((sampling_profiling || line_profiling || cgraph_profiling) && profile_table->count_table_size > 0) {

@@ -122,6 +122,7 @@ int main (int argc, char **argv)
 	options.annotate_output = 0;
 	options.drop_assembler = 0;
 	options.gstabs = 0;
+	options.rmoxmode = RM_NONE;
 	options.debug_options = 0;
 	options.diagnostics = 0;
 	options.use_cpuid = 0;
@@ -155,6 +156,8 @@ int main (int argc, char **argv)
 	options.mpenable = 0;
 	options.nocc_codegen = 0;
 	options.underflow_error = 0;
+	options.etab_filename = NULL;
+	options.etabfile = NULL;
 
 	glob_in_icount = 0;
 	glob_out_icount = 0;
@@ -606,6 +609,35 @@ int main (int argc, char **argv)
 				options.use_cttd = 1;
 			} else if (!strcmp (*walk + 2, "underflow-error")) {
 				options.underflow_error = 1;
+			} else if (!strcmp (*walk + 2, "exporttab")) {
+				i++, walk++;
+				if ((i == argc) || !*walk) {
+					fprintf (stderr, "%s: option %s requires an argument\n", progname, walk[-1]);
+					exit (EXIT_FAILURE);
+				}
+				options.etab_filename = *walk;
+			} else if (!strcmp (*walk + 2, "rmoxmode")) {
+				i++, walk++;
+				if ((i == argc) || !*walk) {
+					fprintf (stderr, "%s: option %s requires an argument\n", progname, walk[-1]);
+					exit (EXIT_FAILURE);
+				}
+				if (options.rmoxmode != RM_NONE) {
+					fprintf (stderr, "%s: warning: RMoX mode is already set!\n", progname);
+				} else if (!strcmp (*walk, "app")) {
+					options.rmoxmode = RM_APP;
+				} else if (!strcmp (*walk, "drv")) {
+					options.rmoxmode = RM_DRV;
+				} else if (!strcmp (*walk, "srv")) {
+					options.rmoxmode = RM_SRV;
+				} else if (!strcmp (*walk, "fs")) {
+					options.rmoxmode = RM_FS;
+				} else if (!strcmp (*walk, "net")) {
+					options.rmoxmode = RM_NET;
+				} else {
+					fprintf (stderr, "%s: error: unknown RMoX mode [%s]\n", progname, *walk);
+					exit (EXIT_FAILURE);
+				}
 			} else {
 				goto unknown_option;
 			}
@@ -648,6 +680,29 @@ int main (int argc, char **argv)
 		options.extref_prefix = string_dup ("");
 	} else {
 		options.extref_prefix = string_dup (options.extref_prefix);
+	}
+
+	/* fixup export table dump file if requested */
+	if (options.etab_filename && (!strlen (options.etab_filename) || !strcmp (options.etab_filename, "."))) {
+		/* means pick something sensible based on the source filename */
+		for (i=strlen (input_filename)-1; (input_filename[i] != '.') && i>0; i--);
+		if (!i) {
+			i = strlen (input_filename);
+		}
+		options.etab_filename = (char *)smalloc (i+5);
+		memcpy (options.etab_filename, input_filename, i);
+		strcpy (options.etab_filename + i, ".etab");
+	} else if (options.etab_filename) {
+		char *copy = string_dup (options.etab_filename);
+
+		options.etab_filename = copy;
+	}
+
+	if (options.etab_filename) {
+		/* remove the file if it exists */
+		if (!access (options.etab_filename, W_OK)) {
+			unlink (options.etab_filename);
+		}
 	}
 	
 #ifdef HOST_CPU_IS_I486
@@ -694,7 +749,7 @@ int main (int argc, char **argv)
 	if (options.verbose) {
 		printf ("%s: generating %s code.\n", progname, machine_class_str (options.machine_class));
 	}
-	/* fisup output_filename */
+	/* fixup output_filename */
 	if (!output_filename) {
 		for (i=strlen (input_filename)-1; (input_filename[i] != '.') && i>0; i--);
 		if (!i) {
@@ -752,6 +807,11 @@ int main (int argc, char **argv)
 		close_netc_file ();
 	} else {
 		close_tce_file ();
+	}
+
+	if (options.etabfile) {
+		fclose (options.etabfile);
+		options.etabfile = NULL;
 	}
 
 	#ifdef TRACE_MEMORY
@@ -1135,6 +1195,11 @@ static void usage (FILE *stream)
 	fprintf (stream, "\t--cttd        input compiled with chan-type type descriptions\n");
 	fprintf (stream, "\t--underflow-error\n");
 	fprintf (stream, "\t              treat floating-point underflow as an error\n");
+	fprintf (stream, "\t--exporttab <file>\n");
+	fprintf (stream, "\t              write EXPORT table to specified file (removes if none)\n");
+	fprintf (stream, "\t--rmoxmode <type>\n");
+	fprintf (stream, "\t              generate alternate RMoX main module prolog, <type> is one\n");
+	fprintf (stream, "\t              of: app, drv, srv, fs, net\n");
 	fprintf (stream, "\n");
 	fprintf (stream, "\t-V | --version    dump version and exit\n");
 	fprintf (stream, "\t-h | --help       this help text\n");

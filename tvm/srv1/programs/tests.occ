@@ -1,0 +1,59 @@
+#INCLUDE "srv1.inc"
+#INCLUDE "delay.inc"
+#INCLUDE "out.occ"
+
+PROC test.lasers(LASER! l)
+  SEQ
+    l[req] ! left; TRUE
+    delay.s(2)
+    l[req] ! right; TRUE
+    delay.s(2)
+    l[req] ! left; FALSE
+    delay.s(2)
+    l[req] ! right; FALSE
+    delay.s(2)
+    l[req] ! all; TRUE
+    delay.s(2)
+    l[req] ! all; FALSE
+:
+
+PROC test.leds(SYSTEM! sys)
+  SEQ
+    sys[req] ! set.led; 1; TRUE
+    delay.s(2)
+    sys[req] ! set.led; 1; FALSE
+    delay.s(2)
+    sys[req] ! set.led; 2; TRUE
+    delay.s(2)
+    sys[req] ! set.led; 2; FALSE
+    delay.s(2)
+    sys[req] ! set.led; 1; TRUE
+    sys[req] ! set.led; 2; TRUE
+    delay.s(2)
+    sys[req] ! set.led; 1; FALSE
+    sys[req] ! set.led; 2; FALSE
+:
+
+PROC test.motors (MOTOR! m)
+  SEQ
+    SEQ i = 1 FOR 5
+      INT speed:
+      SEQ
+        speed := (i * 20)
+        m[req] ! all; speed; speed
+        delay.s(2)
+        speed := -speed
+        m[req] ! all; speed; speed
+        delay.s(2)
+:
+
+PROC tests (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTEM! system)
+  SEQ
+    out.string("SRV-1 Test Program (of Doom)*n", 0, console[out]!)
+    out.string("Testing death lasers*n", 0, console[out]!)
+    test.lasers(lasers)
+    out.string("Testing less deadly LED*'s*n", 0, console[out]!)
+    test.leds(system)
+    out.string("Testing harmless motors*n", 0, console[out]!)
+    test.motors(motors)
+:

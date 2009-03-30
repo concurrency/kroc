@@ -34,6 +34,9 @@ if test "$have_readv" = yes; then
  fi
 fi
 
+dnl Checks for libraries
+OCCAM_SOCK_LIBS
+
 if test "x$OCCBUILD_TOOLCHAIN" = "xkroc"; then
  SAVED_CPPFLAGS="$CFLAGS"
  CPPFLAGS="$CPPFLAGS $OCCBUILD_CFLAGS"
@@ -54,6 +57,11 @@ if test "$host_os" = "cygwin"; then
 fi
 
 dnl Checks for libraries.
+OCCAM_PROVIDE(cspdrv.module, cspdrvlib, none, [test $cspdrvlib = yes])
+OCCAM_PROVIDE(file.module, filelib, none)
+OCCAM_PROVIDE(http.module, httplib, file.module sock.module)
+OCCAM_PROVIDE(proc.module, proclib, file.module)
+OCCAM_PROVIDE(sock.module, socklib, none)
 
 AC_OUTPUT([Makefile socklib/Makefile filelib/Makefile proclib/Makefile httplib/Makefile cspdrvlib/Makefile])
 

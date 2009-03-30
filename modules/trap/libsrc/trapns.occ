@@ -1,0 +1,182 @@
+--
+--	Nameserver for Trap
+--	Copyright (C) 2008, 2009 Adam Sampson <ats@offog.org>
+--
+--	This program is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this program.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** @module trap
+
+#INCLUDE "sock.module"
+#INCLUDE "useful.module"
+#INCLUDE "trap.module"
+
+--{{{  CHAN TYPE ORACLE.CT
+--* @private
+PROTOCOL ORACLE.REQ
+  CASE
+    register; INT; INT; INT
+    lookup; INT                     --* Replies [@ref found] or [@ref not.found].
+:
+
+--* @private
+PROTOCOL ORACLE.RESP
+  CASE
+    found; INT; INT
+    not.found
+:
+
+--* @private
+CHAN TYPE ORACLE.CT
+  MOBILE RECORD
+    CHAN ORACLE.REQ req?:
+    CHAN ORACLE.RESP resp!:
+:
+--}}}
+
+PROC main (SHARED CHAN BYTE out!)
+  --{{{  PROC oracle
+  PROC oracle (ORACLE.CT? svr, SHARED CHAN BYTE out!)
+    DATA TYPE REG
+      RECORD
+        INT id, addr, port:
+    :
+    INITIAL MOBILE []REG regs IS MOBILE [1]REG:
+    INITIAL INT count IS 0:
+
+    WHILE TRUE
+      svr[req] ? CASE
+        INT id, addr, port:
+        register; id; addr; port
+          --{{{  register
+          INT n:
+          SEQ
+            IF
+              IF i = 0 FOR count
+                regs[i][id] = id
+                  --{{{  found existing
+                  n := i
+                  --}}}
+              TRUE
+                --{{{  new entry
+                SEQ
+                  --{{{  stretch array if too small
+                  IF
+                    count = (SIZE regs)
+                      RESIZE.MOBILE.ARRAY.1D (regs, 2 * (count + 1))
+                    TRUE
+                      SKIP
+                  --}}}
+                  n := count
+                  count := count + 1
+                --}}}
+            regs[n] := [id, addr, port]
+            prints.sisin ("registered ", id, " at ", addr, out!)
+          --}}}
+        INT id:
+        lookup; id
+          --{{{  lookup
+          IF
+            IF i = 0 FOR count
+              regs[i][id] = id
+                SEQ
+                  prints.sisin ("found ", id, " at ", regs[i][addr], out!)
+                  svr[resp] ! found; regs[i][addr]; regs[i][port]
+            TRUE
+              SEQ
+                prints.sin ("didn*'t find ", id, out!)
+                svr[resp] ! not.found
+          --}}}
+  :
+  --}}}
+  --{{{  PROC handler
+  PROC handler (VAL SOCKET sock, SHARED ORACLE.CT! cli, SHARED CHAN BYTE out!)
+    INITIAL SOCKET sock IS sock:
+    INITIAL BOOL running IS TRUE:
+    TRAP.NS.PACKET packet:
+    INT result:
+    SEQ
+      --{{{  find address
+      socket.getpeername (sock, result)
+      running := (result = 0)
+      --}}}
+      prints.sin ("connected from ", sock[remote.addr], out!)
+      WHILE running
+        SEQ
+          []BYTE buf RETYPES packet:
+          socket.fullread (sock, buf, SIZE buf, result)
+          IF
+            result = (BYTESIN (packet))
+              --{{{  got request
+              CASE packet[cmd]
+                'r'
+                  --{{{  register
+                  CLAIM cli
+                    cli[req] ! register; packet[arg0]; sock[remote.addr]; packet[arg1]
+                  --}}}
+                'l'
+                  --{{{  lookup
+                  TRAP.NS.PACKET out.packet:
+                  SEQ
+                    CLAIM cli
+                      SEQ
+                        cli[req] ! lookup; packet[arg0]
+                        cli[resp] ? CASE
+                          found; out.packet[arg0]; out.packet[arg1]
+                            out.packet[cmd] := 'y'
+                          not.found
+                            out.packet[cmd] := 'n'
+                    VAL []BYTE buf RETYPES out.packet:
+                    SEQ
+                      socket.fullwrite (sock, buf, result)
+                      running := (result = (SIZE buf))
+                  --}}}
+                ELSE
+                  running := FALSE
+              --}}}
+            TRUE
+              running := FALSE
+      prints.sin ("disconnected from ", sock[remote.addr], out!)
+      socket.close (sock)
+  :
+  --}}}
+
+  SHARED ORACLE.CT! cli:
+  ORACLE.CT? svr:
+  SOCKET listen:
+  INT result:
+  SEQ
+    prints.sn ("trap nameserver starting", out!)
+    --{{{  start oracle
+    cli, svr := MOBILE ORACLE.CT
+    FORK oracle (svr, out!)
+    --}}}
+    --{{{  bind listen socket
+    listen[local.addr] := INADDR.ANY
+    listen[local.port] := TRAP.NS.PORT
+    trap.bind.socket (listen)
+    --}}}
+    --{{{  accept connections
+    WHILE TRUE
+      SOCKET sock:
+      SEQ
+        socket.accept (listen, sock, result)
+        IF
+          result <> (-1)
+            FORK handler (sock, cli, out!)
+          TRUE
+            SKIP
+    --}}}
+:

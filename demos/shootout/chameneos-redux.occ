@@ -1,0 +1,259 @@
+
+#INCLUDE "convert.module"
+#INCLUDE "course.module"
+#INCLUDE "file.module"
+
+DATA TYPE COLOUR IS BYTE:
+
+VAL COLOUR BLUE    IS 0:
+VAL COLOUR RED     IS 1:
+VAL COLOUR YELLOW  IS 2:
+
+DATA TYPE CREATURE
+  RECORD
+    BYTE name:
+    COLOUR colour:
+:
+
+CHAN TYPE CT.CREATURE:
+
+PROTOCOL P.MEET
+  CASE
+    met; CT.CREATURE!
+    pall; CREATURE
+    game.over
+:
+
+CHAN TYPE CT.CREATURE
+  MOBILE RECORD
+    CHAN P.MEET meet?:
+    CHAN CREATURE result!: 
+    CHAN CT.CREATURE! return?:
+:
+
+PROTOCOL P.MALL IS CT.CREATURE!:
+
+PROC mall (VAL INT exchanges, CHAN P.MALL in?, CHAN BOOL shutdown?)
+  SEQ
+    SEQ i = 0 FOR exchanges
+      CT.CREATURE! first:
+      CT.CREATURE! second:
+      SEQ
+        in ? first
+        in ? second
+        first[meet] ! met; second
+        first[return] ! first
+
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      PRI ALT
+        CT.CREATURE! creature:
+        in ? creature
+          creature[meet] ! game.over
+        shutdown ? done
+          done := TRUE
+:
+
+COLOUR FUNCTION compliment.colour (VAL COLOUR a, b)
+  COLOUR res:
+  VALOF
+    IF
+      a = BLUE
+        IF
+          b = BLUE
+            res := BLUE
+          b = RED
+            res := YELLOW
+          b = YELLOW
+            res := RED
+      a = RED
+        IF
+          b = BLUE
+            res := YELLOW
+          b = RED
+            res := RED
+          b = YELLOW
+            res := BLUE
+      a = YELLOW
+        IF
+          b = BLUE
+            res := RED
+          b = RED
+            res := BLUE
+          b = YELLOW
+            res := YELLOW
+    RESULT res
+:
+
+PROC out.int.word (VAL INT n, CHAN BYTE out!)
+  CASE n
+    0
+      out.string ("zero", 0, out!)
+    1
+      out.string ("one", 0, out!)
+    2
+      out.string ("two", 0, out!)
+    3
+      out.string ("three", 0, out!)
+    4
+      out.string ("four", 0, out!)
+    5
+      out.string ("five", 0, out!)
+    6
+      out.string ("six", 0, out!)
+    7
+      out.string ("seven", 0, out!)
+    8
+      out.string ("eight", 0, out!)
+    9
+      out.string ("nine", 0, out!)
+:
+
+PROC out.text.int (VAL INT n, CHAN BYTE out!)
+  INITIAL INT n IS n:
+  INITIAL INT p IS 0:
+  [16]INT digits:
+  SEQ
+    WHILE n > 10
+      SEQ
+        digits[p] := n \ 10
+        n, p := n / 10, p + 1
+    digits[p] := n
+    WHILE p >= 0
+      SEQ
+        out.int.word (digits[p], out!)
+        out ! ' '
+        p := p - 1
+    out ! '*n'
+:
+
+PROC out.colour (VAL COLOUR colour, CHAN BYTE out!)
+  CASE colour
+    BLUE
+      out.string ("blue", 0, out!)
+    RED
+      out.string ("red", 0, out!)
+    YELLOW
+      out.string ("yellow", 0, out!)
+:
+
+PROC creature (VAL BYTE name, VAL COLOUR initial.colour, SHARED CHAN P.MALL mall!, SHARED CHAN INT out!)
+  INITIAL CREATURE self IS [ name, initial.colour ]:
+  INITIAL INT meetings IS 0:
+  CT.CREATURE! cli:
+  CT.CREATURE? svr:
+  SEQ
+    cli, svr := MOBILE CT.CREATURE
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      CREATURE other:
+      SEQ
+        CLAIM mall!
+          mall ! cli
+        svr[meet] ? CASE
+          CT.CREATURE! other:
+          met; other
+            SEQ
+              svr[return] ? cli
+              other[meet] ! pall; self
+              other[result] ? self
+              other[return] ! other
+              meetings := meetings + 1
+          CREATURE other:
+          pall; other
+            SEQ
+              self[colour] := compliment.colour (self[colour], other[colour])
+              other[colour] := self[colour]
+              svr[result] ! other
+              svr[return] ? cli
+              meetings := meetings + 1
+          game.over
+            done := TRUE
+    CLAIM out!
+      out ! meetings
+:
+
+PROC game (VAL INT exchanges, VAL []COLOUR colours, SHARED CHAN BYTE out!)
+  SHARED! CHAN P.MALL mall.req:
+  SHARED! CHAN INT creature.out:
+  CHAN BOOL mall.shutdown:
+  PAR
+    mall (exchanges, mall.req?, mall.shutdown?)
+    SEQ
+      CLAIM out!
+        SEQ
+          SEQ i = 0 FOR SIZE colours
+            SEQ
+              out.colour (colours[i], out!)
+              out ! ' '
+          out ! '*n'
+
+      PAR
+        PAR i = 0 FOR SIZE colours
+          creature (BYTE i, colours[i], mall.req!, creature.out!)
+        CLAIM out!
+          INITIAL INT total IS 0:
+          SEQ
+            SEQ i = 0 FOR SIZE colours
+              INT meetings:
+              SEQ
+                creature.out ? meetings
+                out.int (meetings, 0, out!)
+                out.string (" zero*n", 0, out!)
+                total := total + meetings
+            out ! ' '
+            out.text.int (total, out!)
+            out ! '*n'
+      
+      mall.shutdown ! TRUE
+:
+
+PROC print.pair (VAL COLOUR a, b, CHAN BYTE out!)
+  SEQ
+    out.colour (a, out!)
+    out.string (" + ", 0, out!)
+    out.colour (b, out!)
+    out.string (" -> ", 0, out!)
+    out.colour (compliment.colour (a, b), out!)
+    out ! '*n'
+:
+
+PROC print.colours (SHARED CHAN BYTE out!)
+  CLAIM out!
+    SEQ
+      print.pair (BLUE, BLUE, out!)
+      print.pair (BLUE, RED, out!)
+      print.pair (BLUE, YELLOW, out!)
+      print.pair (RED, BLUE, out!)
+      print.pair (RED, RED, out!)
+      print.pair (RED, YELLOW, out!)
+      print.pair (YELLOW, BLUE, out!)
+      print.pair (YELLOW, RED, out!)
+      print.pair (YELLOW, YELLOW, out!)
+      out ! '*n'
+:
+
+PROC get.n (RESULT INT n)
+  [64]BYTE str:
+  BOOL error:
+  INT len:
+  SEQ
+    file.nth.arg (1, str, len)
+    STRINGTOINT (error, n, [str FOR len])
+    IF
+      error
+        n := 600
+      TRUE
+        SKIP
+:
+
+PROC chameneos (SHARED CHAN BYTE kyb?, scr!, err!)
+  VAL []COLOUR round.1 IS [ BLUE, RED, YELLOW ]:
+  VAL []COLOUR round.2 IS [ BLUE, RED, YELLOW, RED, YELLOW, BLUE, RED, YELLOW, RED, BLUE ]:
+  INT n:
+  SEQ
+    get.n (n)
+    print.colours (scr!)
+    game (n, round.1, scr!)
+    game (n, round.2, scr!)
+:

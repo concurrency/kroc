@@ -1,0 +1,44 @@
+#INCLUDE "defBF537.inc"
+#INCLUDE "srv1.inc"
+
+PROC lasers (LASER? srv)
+  PLACED [PORTHIO.LEN]INT16 port.h.io PORTHIO.ADDR:
+  INITIAL BOOL left IS FALSE:
+  INITIAL BOOL right IS FALSE:
+  SEQ
+    -- Setup laser ports
+    safe.set.register.16(port.h.io[PORTHIO.DIR], #0380, 0)
+    -- Turn off lasers
+    port.h.io[PORTHIO.CLEAR] := #0380
+    
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      INITIAL INT bits IS 0:
+      SEQ
+        srv[req] ? CASE
+          disconnected
+            done := TRUE
+          left; left
+            SKIP
+          right; right
+            SKIP
+          BOOL b:
+          all; b
+            left, right := b, b
+        IF
+          left
+            bits := bits \/ #0080
+          TRUE
+            SKIP
+        IF
+          right
+            bits := bits \/ #0200
+          TRUE
+            SKIP
+        port.h.io[PORTHIO.CLEAR]  := INT16 (bits >< #0380)
+        port.h.io[PORTHIO.SET]    := INT16 bits
+
+    -- Turn off lasers
+    port.h.io[PORTHIO.CLEAR] := #0380
+:
+

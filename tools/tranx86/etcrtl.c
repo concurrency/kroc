@@ -122,7 +122,8 @@ static void generate_call (tstate *ts, etc_chain *etc_code, arch_t *arch, int st
 	int i = 0;
 
 	/* handle special calling sequences here (spares pain in optimisation) */
-	/* NOTE: these should never be called directly! -- stubtable.[ch] and translation of I_CALL inline these (can help reduce cache displacement) */
+	/* NOTE: these should never be called directly! -- stubtable.[ch] and translation of
+	 * I_CALL inline these (can help reduce cache displacement) */
 
 	switch (d_str[0]) {
 	case 'B':
@@ -262,7 +263,12 @@ rtl_chain *etc_to_rtl (etc_chain *etc_code, arch_t *arch)
 
 	/* module header */
 	if (!options.not_main_module) {
-		arch->compose_entry_prolog (ts);
+		if (options.rmoxmode != RM_NONE) {
+			/* generate alternative RMoX entry prolog */
+			arch->compose_rmox_entry_prolog (ts, options.rmoxmode);
+		} else {
+			arch->compose_entry_prolog (ts);
+		}
 	}
 	trtl = new_rtl ();
 	trtl->type = RTL_SETNAMEDLABEL;
@@ -1535,6 +1541,7 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 						ts->magic_pending |= TS_MAGIC_TYPEDESC;
 						tstate_clear_fixups (ts);
 					} else if (!strncmp (arg, "FIXUP", (arglen < 5) ? arglen : 5)) {
+						/*{{{  state fixup*/
 						int xlab, xoffs, xolab;
 
 						if (sscanf (arg, "FIXUP %d %d %d", &xlab, &xoffs, &xolab) == 3) {
@@ -1543,6 +1550,124 @@ fprintf (stderr, "ETCS4: PROCENTRY %*s, setting ts->cpinfo = %p\n", etc_code->o_
 						} else {
 							fprintf (stderr, "%s: error: broken fixup data: %*s\n", progname, etc_code->o_len - 7, etc_code->o_bytes + 7);
 						}
+						/*}}}*/
+					} else if (!strncmp (arg, "DYNCALL", (arglen < 7) ? arglen : 7)) {
+						/*{{{  indicator to generate dynamic call stub data*/
+						/* expecting name and 3 numeric arguments, last hexadecimal */
+						if (arglen < 22) {
+							fprintf (stderr, "%s: error: broken DYNCALL data: %*s\n", progname,
+									etc_code->o_len - 7, etc_code->o_bytes + 7);
+						} else {
+							unsigned int ws, vs, thash;
+							char *ch, *pname;
+							int left, pnlen;
+
+							pname = arg + 8;
+							left = arglen - 8;
+							for (ch=pname; (left > 0) && (*ch != ' '); ch++, left--);
+							pnlen = (int)(ch - pname);
+							for (; (left > 0) && (*ch == ' '); ch++, left--);
+
+							if (sscanf (ch, "%d %d %x", &ws, &vs, &thash) != 3) {
+								fprintf (stderr, "%s: error: broken DYNCALL data: %*s\n",
+										progname, etc_code->o_len - 7, etc_code->o_bytes + 7);
+							} else {
+								flush_ins_chain ();
+								trtl = new_rtl ();
+								trtl->type = RTL_DYNCODEENTRY;
+								trtl->u.dyncode.fcn_name = string_ndup (pname, pnlen);
+
+								ch = (char *)smalloc (pnlen + 6);
+								snprintf (ch, pnlen + 6, "DCR_%s", trtl->u.dyncode.fcn_name);
+								trtl->u.dyncode.label_name = ch;
+#if 0
+fprintf (stderr, "DYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dyncode.label_name, trtl->u.dyncode.fcn_name);
+#endif
+								trtl->u.dyncode.ws_slots = ws;
+								trtl->u.dyncode.vs_slots = vs;
+								trtl->u.dyncode.typehash = thash;
+								add_to_rtl_chain (trtl);
+							}
+						}
+						/*}}}*/
+					} else if (!strncmp (arg, "MAINDYNCALL", (arglen < 11) ? arglen : 11)) {
+						/*{{{  indicator to generate dynamic call stub data for "main" routine*/
+						/* expecting name and 3 numeric arguments, last hexadecimal */
+						if (arglen < 26) {
+							fprintf (stderr, "%s: error: broken MAINDYNCALL data: %*s\n", progname,
+									etc_code->o_len - 7, etc_code->o_bytes + 7);
+						} else {
+							unsigned int ws, vs, thash;
+							char *ch, *pname;
+							int left, pnlen;
+
+							pname = arg + 12;
+							left = arglen - 12;
+							for (ch=pname; (left > 0) && (*ch != ' '); ch++, left--);
+							pnlen = (int)(ch - pname);
+							for (; (left > 0) && (*ch == ' '); ch++, left--);
+
+							if (sscanf (ch, "%d %d %x", &ws, &vs, &thash) != 3) {
+								fprintf (stderr, "%s: error: broken MAINDYNCALL data: %*s\n",
+										progname, etc_code->o_len - 7, etc_code->o_bytes + 7);
+							} else {
+								flush_ins_chain ();
+								trtl = new_rtl ();
+								trtl->type = RTL_DYNCODEENTRY;
+								trtl->u.dyncode.fcn_name = string_ndup (pname, pnlen);
+								trtl->u.dyncode.rmoxmode = options.rmoxmode;
+								switch (options.rmoxmode) {
+								case RM_NONE:
+									trtl->u.dyncode.label_name = string_dup ("DCR_occam_start");
+									break;
+								case RM_APP:
+									trtl->u.dyncode.label_name = string_dup ("DCR_rmox_app_main");
+									break;
+								case RM_DRV:
+									trtl->u.dyncode.label_name = string_dup ("DCR_rmox_drv_main");
+									break;
+								case RM_SRV:
+									trtl->u.dyncode.label_name = string_dup ("DCR_rmox_srv_main");
+									break;
+								case RM_FS:
+									trtl->u.dyncode.label_name = string_dup ("DCR_rmox_fs_main");
+									break;
+								case RM_NET:
+									trtl->u.dyncode.label_name = string_dup ("DCR_rmox_net_main");
+									break;
+								}
+#if 0
+fprintf (stderr, "MAINDYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dyncode.label_name, trtl->u.dyncode.fcn_name);
+#endif
+								trtl->u.dyncode.ws_slots = ws;
+								trtl->u.dyncode.vs_slots = vs;
+								trtl->u.dyncode.typehash = thash;
+								add_to_rtl_chain (trtl);
+
+								/* set jentry_name, as this effectively replaces that */
+								if (ts->jentry_name) {
+									sfree (ts->jentry_name);
+									ts->jentry_name = NULL;
+								}
+								ts->jentry_name = string_ndup (pname, pnlen);
+							}
+						}
+						/*}}}*/
+					} else if (!strncmp (arg, "EXPORT", (arglen < 6) ? arglen : 6)) {
+						/*{{{  exported procedure information, contains signature*/
+						if (options.etab_filename && !options.etabfile) {
+							/* open file */
+							options.etabfile = fopen (options.etab_filename, "w");
+							if (!options.etabfile) {
+								fprintf (stderr, "%s: error: failed to open %s for writing: %s\n",
+										progname, options.etab_filename, strerror (errno));
+							}
+						}
+
+						if (options.etabfile) {
+							fprintf (options.etabfile, "%s\n", arg + 7);
+						}
+						/*}}}*/
 					} else {
 						/* unknown magic comment */
 						fprintf (stderr, "%s: warning: unknown magic: %*s\n", progname, etc_code->o_len - 7, etc_code->o_bytes + 7);
