@@ -820,8 +820,8 @@ PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY ou
                   INT norm:
                   VAL [4]INT face IS normmap[i]:
                   SEQ
-                    norm := ((pnts[face[3]][y] - pnts[face[0]][y]) * (pnts[face[1]][x] - pnts[face[0]][x])) -
-                            ((pnts[face[1]][y] - pnts[face[0]][y]) * (pnts[face[3]][x] - pnts[face[0]][x]))
+                    norm := ((pnts[face[3]][y] MINUS pnts[face[0]][y]) TIMES (pnts[face[1]][x] - pnts[face[0]][x])) MINUS
+                            ((pnts[face[1]][y] MINUS pnts[face[0]][y]) TIMES (pnts[face[3]][x] - pnts[face[0]][x]))
                     norms[i] := norm
 
                 polys := MOBILE [npoly]G3D.POLY
