@@ -21,7 +21,7 @@
 #INCLUDE "sdlraster.module"
 #INCLUDE "graphics3d.module"
 
-VAL INT N.BUTTERFLIES IS 250:
+VAL INT N.BUTTERFLIES IS 400:
 
 --{{{  PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
 --* Implements a butterfly that crosses the screen, starts in a random location.
@@ -127,7 +127,7 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
     CHAN G3D.TMR.CONTROL tmr.ctl:
     PAR
       raster.timed.buffer (rc1?, rc2!, 40, tmr.ctl?)
-      raster.display.simple ("Inmos Butterflies", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!)
+      raster.display.simple ("Inmos Butterflies", SCR.WIDTH, SCR.HEIGHT, 4, rc2?, rc3!)
       raster.chain (rc3?, rc1!, rre?, FALSE)
 
       SEQ i = 0 FOR N.BUTTERFLIES
