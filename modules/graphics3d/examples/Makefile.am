@@ -8,13 +8,15 @@ OCCBUILD = @OCCBUILD@
 EXTRA_DIST = \
 	g3dcubes.occ \
 	g3dcube.occ \
-	g3dtest.occ
+	g3dtest.occ \
+	butterflies.occ
 
 if BUILD_GRAPHICS3D_EXAMPLES
 examples = \
 	g3dcubes \
 	g3dcube \
-	g3dtest
+	g3dtest \
+	butterflies
 endif
 
 all-local: $(examples)
@@ -27,6 +29,9 @@ g3dcubes: g3dcubes.occ
 
 g3dcube: g3dcube.occ
 	$(OCCBUILD) --program g3dcube.occ
+
+butterflies: butterflies.occ
+	$(OCCBUILD) --program butterflies.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples graphics3d --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
