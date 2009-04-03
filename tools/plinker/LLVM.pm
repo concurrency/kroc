@@ -32,7 +32,7 @@ $GRAPH = {
 	'LDL'		=> { 'out' => 1 },
 	'ADC'		=> { 'in' => 1, 'out' => 1 },
 	'CALL'		=> { 'in' => 3, 'out' => 0 }, # actually 3,3
-	'CJ'		=> { 'in' => 3, 'out' => 3 },
+	'CJ'		=> { 'in' => 3, 'out' => 2 },
 	'AJW'		=> { 'wptr' => 1 },
 	'EQC'		=> { 'in' => 1, 'out' => 1 },
 	'STL'		=> { 'in' => 1 },
@@ -175,6 +175,9 @@ $GRAPH = {
 	'EXT_MT_IN'	=> { 'in' => 2 },
 	'EXT_MT_OUT'	=> { 'in' => 2 },
 	'MT_RESIZE'	=> { 'in' => 3, 'out' => 1 },
+	'LEND'		=> { 'in' => 1 },
+	'LEND3'		=> { 'in' => 1 },
+	'LENDB'		=> { 'in' => 1 }
 };
 
 
@@ -476,19 +479,11 @@ sub expand_etc_ops ($) {
 			my $end		= ($arg[1] =~ /^L(\d+)$/)[0];
 			splice (@$etc, $i, 1, 
 				$arg[0],
-				{ 'name' => 'LDC', 'arg' => [ "L$end", "L$start" ]	},
-				{ 'name' => $name					},
+				{ 'name' => $name, 'arg' => "L$start"			},
 				{ 'name' => '.SETLAB', 'arg' => $end			}
 			);
 		} elsif ($name =~ /^\.SL([RL])IMM$/) {
 			$op->{'name'} = "SH$1";
-			splice (@$etc, $i, 1,
-				{ 'name' => 'SAVECREG'				},
-				{ 'name' => 'LDC', 'arg' => $op->{'arg'}	},
-				$op,
-				{ 'name' => 'RESTORECREG'			}
-			);
-			delete ($op->{'arg'});
 		}
 	}
 }
@@ -603,60 +598,87 @@ sub preprocess_etc ($$$) {
 	foreach_label (\%labels, \&resolve_globals, $globals, {});
 	foreach_label (\%labels, \&build_data_blocks);
 	foreach_label (\%labels, \&add_data_lengths);
-	foreach_label (\%labels, \&isolate_static_sections);
+	#foreach_label (\%labels, \&isolate_static_sections);
 	tag_and_index_code_blocks (\@procs);
 	separate_code_blocks (\@procs);
 }
 
-sub code_proc ($$) {
-	my ($self, $proc) = @_;
-	my $reg_n = 0;
-	my $wptr_n = 0;
-	my @stack;
+sub define_registers ($$) {
+	my ($self, $labels) = @_;
+	my ($reg_n, $freg_n, $wptr_n) = (0, 0, 0);
 	my $wptr = sprintf ('wptr_%d', $wptr_n++);
+	my (@stack, @fstack);
 
-	foreach my $label (@{$proc->{'labels'}}) {
-		print $label->{'name'}, " ", join (', ', @stack), " ($wptr)\n";
+	foreach my $label (@$labels) {
+		print $label->{'name'}, " ", join (', ', @stack, @fstack), " ($wptr)\n";
 		
 		$label->{'in'} = [ @stack ];
+		$label->{'fin'} = [ @fstack ];
 		$label->{'wptr'} = $wptr;
 
 		foreach my $inst (@{$label->{'inst'}}) {
 			my $name = $inst->{'name'};
 			next if $name =~ /^\./;
-			my (@in, @out);
+			my (@in, @out, @fin, @fout);
 			my $data	= $GRAPH->{$name};
-			my $in		= $data->{'in'};
-			my $out		= $data->{'out'};
-			for (my $i = 0; $i < $in; ++$i) {
-				my $reg = shift (@stack) || 'null';
-				unshift (@in, $reg);
+			for (my $i = 0; $i < $data->{'in'}; ++$i) {
+				my $reg = shift (@stack);
+				push (@in, $reg) if $reg;
+			}
+			my $out = $data->{'out'};
+			if ($name eq 'CJ') {
+				$out = @in - ($data->{'in'} - $out);
 			}
 			for (my $i = 0; $i < $out; ++$i) {
 				my $reg = sprintf ('reg_%d', $reg_n++);
 				unshift (@out, $reg);
 				unshift (@stack, $reg);
 			}
-			$inst->{'in'} = \@in;
-			$inst->{'out'} = \@out;
+			for (my $i = 0; $i < $data->{'fin'}; ++$i) {
+				my $reg = shift (@fstack) || 'null';
+				unshift (@in, $reg);
+			}
+			for (my $i = 0; $i < $data->{'fout'}; ++$i) {
+				my $reg = sprintf ('freg_%d', $freg_n++);
+				unshift (@out, $reg);
+				unshift (@stack, $reg);
+			}
+			$inst->{'in'} = \@in if @in;
+			$inst->{'out'} = \@out if @out;
+			$inst->{'fin'} = \@fin if @fin;
+			$inst->{'fout'} = \@fout if @fout;
 			$inst->{'wptr'} = $wptr;
 			if ($data->{'wptr'}) {
 				$wptr = sprintf ('wptr_%d', $wptr_n++);
 				$inst->{'_wptr'} = $wptr;
 			}
 			print "\t";
-			print join (', ', @in), " => " if @in;
+			print join (', ', @in, @fin), " => " if @in || @fin;
 			print $name;
-			print " => ", join (', ', @out) if @out;
+			if ($inst->{'label_arg'}) {
+				print ' ', $inst->{'arg'}->{'name'};
+			}
+			print " => ", join (', ', @out, @fout) if @out || @fout;
 			if ($data->{'wptr'}) {
 				print " (", $inst->{'wptr'}, ' => ', $inst->{'_wptr'}, ")";
 			}
 			print "\n";
+
+			@stack = @stack[0..2] if @stack > 3;
+			@fstack = @fstack[0..2] if @fstack > 3;
 		}
 		
 		$label->{'out'} = [ @stack ];
+		$label->{'fout'} = [ @fstack ];
 		$label->{'_wptr'} = $wptr;
 	}
+}	
+
+sub code_proc ($$) {
+	my ($self, $proc) = @_;
+	
+	print "-- ", $proc->{'symbol'}, "\n";
+	$self->define_registers ($proc->{'labels'});
 }
 
 sub generate ($$) {
