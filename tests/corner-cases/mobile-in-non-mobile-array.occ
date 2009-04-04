@@ -1,0 +1,19 @@
+-- This should fail to compile for two reasons:
+-- - it has a MOBILE RECORD containing a declaration of an []INT;
+-- - it has a RECORD containing a MOBILE RECORD.
+-- The combination crashes occ21.
+
+DATA TYPE FOO
+  MOBILE RECORD
+    []INT x:
+:
+
+DATA TYPE BAR
+  RECORD
+    FOO f:
+:
+
+PROC main ()
+  BAR b:
+  SKIP
+:
