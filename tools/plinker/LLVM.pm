@@ -610,7 +610,7 @@ sub define_registers ($$) {
 	my (@stack, @fstack);
 
 	foreach my $label (@$labels) {
-		print $label->{'name'}, " ", join (', ', @stack, @fstack), " ($wptr)\n";
+		#print $label->{'name'}, " ", join (', ', @stack, @fstack), " ($wptr)\n";
 		
 		$label->{'in'} = [ @stack ];
 		$label->{'fin'} = [ @fstack ];
@@ -652,18 +652,19 @@ sub define_registers ($$) {
 				$wptr = sprintf ('wptr_%d', $wptr_n++);
 				$inst->{'_wptr'} = $wptr;
 			}
-			print "\t";
-			print join (', ', @in, @fin), " => " if @in || @fin;
-			print $name;
-			if ($inst->{'label_arg'}) {
-				print ' ', $inst->{'arg'}->{'name'};
+			if (0) {
+				print "\t";
+				print join (', ', @in, @fin), " => " if @in || @fin;
+				print $name;
+				if ($inst->{'label_arg'}) {
+					print ' ', $inst->{'arg'}->{'name'};
+				}
+				print " => ", join (', ', @out, @fout) if @out || @fout;
+				if ($data->{'wptr'}) {
+					print " (", $inst->{'wptr'}, ' => ', $inst->{'_wptr'}, ")";
+				}
+				print "\n";
 			}
-			print " => ", join (', ', @out, @fout) if @out || @fout;
-			if ($data->{'wptr'}) {
-				print " (", $inst->{'wptr'}, ' => ', $inst->{'_wptr'}, ")";
-			}
-			print "\n";
-
 			@stack = @stack[0..2] if @stack > 3;
 			@fstack = @fstack[0..2] if @fstack > 3;
 		}
@@ -689,12 +690,94 @@ sub build_phi_nodes ($$) {
 	}
 }
 
+sub output_regs ($) {
+	my $regs = shift;
+	return if !$regs;
+	my @out;
+	foreach my $reg (@$regs) {
+		push (@out, '%' . $reg);
+	}
+	print join (', ', @out);
+}
+
+sub generate_proc ($$) {
+	my ($self, $proc) = @_;
+	
+	print 'define void @O_', $proc->{'symbol'}, 
+		'(i32 *%', $proc->{'labels'}->[0]->{'wptr'}, ') {', "\n";
+	foreach my $label (@{$proc->{'labels'}}) {
+		my ($name, $insts) = ($label->{'name'}, $label->{'inst'});
+		print $label->{'name'}, ":\n";
+		if ($label->{'phi'}) {
+			my $in = $label->{'in'} || [];
+			my $fin = $label->{'fin'} || [];
+			my @vars = (@$in, @$fin);
+			my %var_map;
+			my %type;
+			foreach my $var (@$in) {
+				$type{$var} = 'i32'; # FIXME: i32
+			}
+			foreach my $var (@$fin) {
+				$type{$var} = 'double';
+			}
+			foreach my $slabel (keys (%{$label->{'phi'}})) {
+				my @svars = $label->{'phi'}->{$slabel};
+				for (my $i = 0; $i < @vars; ++$i) {
+					$var_map{$vars[$i]} = '[ %' . $svars[$i] . ', %' . $slabel . ']';
+				}
+			}
+			foreach my $var (@vars) {
+				print 	"\t", '%', $var, 
+					' = phi ', $type{$var}, ' ', join (' ', @{$var_map{$var}}),
+					"\n";
+			}
+		}
+		foreach my $inst (@$insts) {
+			my $name 	= $inst->{'name'};
+			next if $name =~ /^\./;
+			
+			my $data	= $GRAPH->{$name};
+			my $in 		= $inst->{'in'} || [];
+			my $fin 	= $inst->{'fin'} || [];
+			my $out 	= $inst->{'out'} || [];
+			my $fout 	= $inst->{'fout'} || [];
+			
+			if ($data->{'generator'}) {
+				&{$data->{'generator'}}($proc, $label, $inst);
+			} elsif (@$out + @$fout == 1) {
+				print "\t";
+				output_regs ($out);
+				output_regs ($fout);
+				print " = call op_", $name, " (%", $inst->{'wptr'};
+				print ', ', $inst->{'arg'} if exists ($inst->{'arg'});
+				print ', ' if (@$in + @$fin > 0);
+				output_regs ($in);
+				output_regs ($fin);
+				print ")\n";
+			} else {
+				print "\t";
+				print '%', $inst->{'_wptr'}, ' = ' if $inst->{'_wptr'};
+				print "call op_", $name, " (%", $inst->{'wptr'};
+				print ', ', $inst->{'arg'} if exists ($inst->{'arg'});
+				print ', ' if (@$in + @$fin > 0);
+				output_regs ($in);
+				output_regs ($fin);
+				output_regs ($out);
+				output_regs ($fout);
+				print ")\n";
+			}
+		}
+	}
+	print "}\n";
+}
+
 sub code_proc ($$) {
 	my ($self, $proc) = @_;
 	
 	print "-- ", $proc->{'symbol'}, "\n";
 	$self->define_registers ($proc->{'labels'});
 	$self->build_phi_nodes ($proc->{'labels'});
+	$self->generate_proc ($proc);
 }
 
 sub generate ($$) {
