@@ -19,7 +19,7 @@
 
 --** @module forall
 
-#IF (TARGET.BITS.PER.WORD > 16)
+#IF (TARGET.BITS.PER.WORD > 16) AND (NOT (DEFINED(COMPILER.TOCK)))
 
 --{{{  #options and #comments
 #OPTION "E V W"  -- no compiler libs, no vector space, full ASMs
