@@ -31,7 +31,7 @@ $GRAPH = {
 	'LDNLP'		=> { 'in' => 1, 'out' => 1 },
 	'LDL'		=> { 'out' => 1 },
 	'ADC'		=> { 'in' => 1, 'out' => 1 },
-	'CALL'		=> { 'in' => 3, 'out' => 0 }, # actually 3,3
+	'CALL'		=> { 'in' => 3, 'out' => 0, 'vstack' => 1 }, # actually 3,3
 	'CJ'		=> { 'in' => 3, 'out' => 2 },
 	'AJW'		=> { 'wptr' => 1 },
 	'EQC'		=> { 'in' => 1, 'out' => 1 },
@@ -43,30 +43,30 @@ $GRAPH = {
 	'ENDP'		=> { 'in' => 1 },
 	'DIFF'		=> { 'in' => 2, 'out' => 1 },
 	'ADD'		=> { 'in' => 2, 'out' => 1 },
-	'GCALL'		=> { 'in' => 3 }, # check
+	'GCALL'		=> { 'in' => 3, 'vstack' => 1 }, # check
 	'IN'		=> { 'in' => 3 },
 	'PROD'		=> { 'in' => 2, 'out' => 1 },
 	'GT'		=> { 'in' => 2, 'out' => 1 },
 	'WSUB'		=> { 'in' => 2, 'out' => 1 },
 	'OUT'		=> { 'in' => 3 },
 	'SUB'		=> { 'in' => 2, 'out' => 1 },
-	'STARTP'	=> { 'in' => 3 },
-	'OUTBYTE'	=> { 'in' => 2 },
-	'OUTWORD'	=> { 'in' => 2 },
-	'SETERR'	=> { 'in' => 1 },
-	'MRELEASEP'	=> { 'in' => 1 },
+	'STARTP'	=> { 'in' => 3, 'vstack' => 1 },
+	'OUTBYTE'	=> { 'in' => 2, 'vstack' => 1 },
+	'OUTWORD'	=> { 'in' => 2, 'vstack' => 1 },
+	'SETERR'	=> { 'in' => 1, 'vstack' => 1 },
+	'MRELEASEP'	=> { 'in' => 1, 'vstack' => 1 },
 	'CSUB0'		=> { 'in' => 1 },
 	'EXTVRFY' 	=> { 'in' => 2 },
-	'STOPP'		=> { },
+	'STOPP'		=> { 'vstack' => 1 },
 	'LADD'		=> { 'in' => 3, 'out' => 1 },
 	'NORM'		=> { 'in' => 3, 'out' => 3 },
 	'LDIV'		=> { 'in' => 3, 'out' => 2 },
 	'REM'		=> { 'in' => 2, 'out' => 2 },
-	'LDTIMER'	=> { 'out' => 1 },
-	'TIN'		=> { 'in' => 1 },
+	'LDTIMER'	=> { 'out' => 1, 'vstack' => 1 },
+	'TIN'		=> { 'in' => 1, 'vstack' => 1 },
 	'DIV'		=> { 'in' => 2, 'out' => 2 },
-	'DIST'		=> { 'in' => 3, 'out' => 1 },
-	'DISS'		=> { 'in' => 2, 'out' => 1 },
+	'DIST'		=> { 'in' => 3, 'out' => 1, 'vstack' => 1 },
+	'DISS'		=> { 'in' => 2, 'out' => 1, 'vstack' => 1 },
 	'LMUL'		=> { 'in' => 3, 'out' => 2 },
 	'NOT'		=> { 'in' => 1, 'out' => 1 },
 	'XOR'		=> { 'in' => 2, 'out' => 1 },
@@ -74,32 +74,32 @@ $GRAPH = {
 	'LSHL'		=> { 'in' => 3, 'out' => 2 },
 	'LSUM'		=> { 'in' => 3, 'out' => 2 },
 	'LSUB'		=> { 'in' => 3, 'out' => 2 },
-	'RUNP'		=> { 'in' => 1 },
+	'RUNP'		=> { 'in' => 1, 'vstack' => 1 },
 	'SB'		=> { 'in' => 2 },
 	'GAJW'		=> { 'in' => 1, 'out' => 1, 'wptr' => 1 },
 	'SHR'		=> { 'in' => 2, 'out' => 1 },
 	'SHL'		=> { 'in' => 2, 'out' => 1 },
 	'MINT'		=> { 'out' => 1 },
 	'AND'		=> { 'in' => 2, 'out' => 1 },
-	'ENBT'		=> { 'in' => 2, 'out' => 1 },
-	'ENBC'		=> { 'in' => 2, 'out' => 1 },
-	'ENBS'		=> { 'in' => 1, 'out' => 1 },
+	'ENBT'		=> { 'in' => 2, 'out' => 1, 'vstack' => 1 },
+	'ENBC'		=> { 'in' => 2, 'out' => 1, 'vstack' => 1 },
+	'ENBS'		=> { 'in' => 1, 'out' => 1, 'vstack' => 1 },
 	'MOVE'		=> { 'in' => 3 },
 	'OR'		=> { 'in' => 2, 'out' => 1 },
 	'LDIFF'		=> { 'in' => 3, 'out' => 2 },
 	'SUM'		=> { 'in' => 2, 'out' => 1 },
 	'MUL'		=> { 'in' => 2, 'out' => 1 },
 	'DUP'		=> { 'in' => 1, 'out' => 2 },
-	'EXTIN'		=> { 'in' => 3 },
-	'EXTOUT'	=> { 'in' => 3 },
+	'EXTIN'		=> { 'in' => 3, 'vstack' => 1 },
+	'EXTOUT'	=> { 'in' => 3, 'vstack' => 1 },
 	'POSTNORMSN'	=> { 'in' => 3, 'out' => 3 },
 	'ROUNDSN'	=> { 'in' => 3, 'out' => 1 },
-	'ENBC3'		=> { 'in' => 3, 'out' => 1 },
+	'ENBC3'		=> { 'in' => 3, 'out' => 1, 'vstack' => 1 },
 	'LDINF'		=> { 'out' => 1 },
 	'POP'		=> { 'in' => 1 },
 	'WSUBDB'	=> { 'in' => 2, 'out' => 1 },
 	'FPLDNLDBI'	=> { 'in' => 2, 'fout' => 1 },
-	'FPCHKERR'	=> { },
+	'FPCHKERR'	=> { 'vstack' => 1 },
 	'FPSTNLDB'	=> { 'in' => 1, 'fin' => 1 },
 	'FPLDNLSNI'	=> { 'in' => 2, 'fout' => 1 },
 	'FPADD'		=> { 'fin' => 2, 'fout' => 1 },
@@ -116,22 +116,22 @@ $GRAPH = {
 	'FPEQ'		=> { 'fin' => 2, 'out' => 1 },
 	'FPI32TOR32'	=> { 'in' => 1, 'fout' => 1 },
 	'FPI32TOR64'	=> { 'in' => 1, 'fout' => 1 },
-	'ENBT3'		=> { 'in' => 3, 'out' => 1 },
+	'ENBT3'		=> { 'in' => 3, 'out' => 1, 'vstack' => 1 },
 	'FPB32TOR64'	=> { 'in' => 1, 'fout' => 1 },
 	'FPRTOI32'	=> { 'fin' => 1, 'fout' => 1 },
 	'FPSTNLI32'	=> { 'in' => 1, 'fin' => 1 },
 	'FPLDZEROSN'	=> { 'fout' => 1 },
 	'FPLDZERODB'	=> { 'fout' => 1 },
 	'FPINT'		=> { 'fin' => 1, 'fout' => 1 },
-	'GETPRI'	=> { 'out' => 1 },
+	'GETPRI'	=> { 'out' => 1, 'vstack' => 1 },
 	'FPDUP'		=> { 'fin' => 1, 'fout' => 2 },
 	'FPREV'		=> { 'fin' => 2, 'fout' => 2 },
-	'SETPRI'	=> { 'in' => 1 },
+	'SETPRI'	=> { 'in' => 1, 'vstack' => 1 },
 	'FPLDNLADDDB'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
 	'FPLDNLMULDB'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
 	'FPLDNLADDSN'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
 	'FPLDNLMULSN'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
-	'ENBS3'		=> { 'in' => 2, 'out' => 1 },
+	'ENBS3'		=> { 'in' => 2, 'out' => 1, 'vstack' => 1 },
 	'FPREM'		=> { 'fin' => 2, 'fout' => 1 },
 	'FPDIVBY2'	=> { 'fin' => 1, 'fout' => 1 },
 	'FPMULBY2'	=> { 'fin' => 1, 'fout' => 1 },
@@ -141,40 +141,40 @@ $GRAPH = {
 	'FPR64TOR32'	=> { 'fin' => 1, 'fout' => 1 },
 	'FPEXPDEC32'	=> { 'fin' => 1, 'fout' => 1 },
 	'FPABS'		=> { 'fin' => 1, 'fout' => 1 },
-	'MALLOC'	=> { 'in' => 1, 'out' => 1 },
-	'MRELEASE'	=> { 'in' => 1 },
-	'XABLE'		=> { },
-	'XIN'		=> { 'in' => 3 },
-	'XEND'		=> { },
+	'MALLOC'	=> { 'in' => 1, 'out' => 1, 'vstack' => 1 },
+	'MRELEASE'	=> { 'in' => 1, 'vstack' => 1 },
+	'XABLE'		=> { 'vstack' => 1 },
+	'XIN'		=> { 'in' => 3, 'vstack' => 1 },
+	'XEND'		=> { 'vstack' => 1 },
 	'NULL'		=> { 'out' => 1 },
-	'PROC_ALLOC'	=> { 'in' => 2, 'out' => 1 },
-	'PROC_PARAM'	=> { 'in' => 3 },
-	'PROC_MT_COPY'	=> { 'in' => 3 },
-	'PROC_MT_MOVE'	=> { 'in' => 3 },
-	'PROC_START'	=> { 'in' => 3 },
-	'PROC_END'	=> { 'in' => 1 },
-	'GETAFF'	=> { 'out' => 1 },
-	'SETAFF'	=> { 'in' => 1 },
-	'GETPAS'	=> { 'out' => 1 },
-	'MT_ALLOC'	=> { 'in' => 2, 'out' => 1 },
-	'MT_RELEASE'	=> { 'in' => 1 },
-	'MT_CLONE'	=> { 'in' => 1, 'out' => 1 },
-	'MT_IN'		=> { 'in' => 2 },
-	'MT_OUT'	=> { 'in' => 2 },
-	'MT_XCHG'	=> { 'in' => 2 },
-	'MT_LOCK'	=> { 'in' => 2 },
-	'MT_UNLOCK'	=> { 'in' => 2 },
-	'MT_ENROLL'	=> { 'in' => 2 },
-	'MT_RESIGN'	=> { 'in' => 2 },
-	'MT_SYNC'	=> { 'in' => 1 },
-	'MT_XIN'	=> { 'in' => 2 },
-	'MT_XOUT'	=> { 'in' => 2 },
-	'MT_XXCHG'	=> { 'in' => 2 },
-	'MT_DCLONE'	=> { 'in' => 3, 'out' => 1 },
-	'MT_BIND'	=> { 'in' => 3, 'out' => 1 },
-	'EXT_MT_IN'	=> { 'in' => 2 },
-	'EXT_MT_OUT'	=> { 'in' => 2 },
-	'MT_RESIZE'	=> { 'in' => 3, 'out' => 1 },
+	'PROC_ALLOC'	=> { 'in' => 2, 'out' => 1, 'vstack' => 1 },
+	'PROC_PARAM'	=> { 'in' => 3, 'vstack' => 1 },
+	'PROC_MT_COPY'	=> { 'in' => 3, 'vstack' => 1 },
+	'PROC_MT_MOVE'	=> { 'in' => 3, 'vstack' => 1 },
+	'PROC_START'	=> { 'in' => 3, 'vstack' => 1 },
+	'PROC_END'	=> { 'in' => 1, 'vstack' => 1 },
+	'GETAFF'	=> { 'out' => 1, 'vstack' => 1 },
+	'SETAFF'	=> { 'in' => 1, 'vstack' => 1 },
+	'GETPAS'	=> { 'out' => 1, 'vstack' => 1 },
+	'MT_ALLOC'	=> { 'in' => 2, 'out' => 1, 'vstack' => 1 },
+	'MT_RELEASE'	=> { 'in' => 1, 'vstack' => 1 },
+	'MT_CLONE'	=> { 'in' => 1, 'out' => 1, 'vstack' => 1 },
+	'MT_IN'		=> { 'in' => 2, 'vstack' => 1 },
+	'MT_OUT'	=> { 'in' => 2, 'vstack' => 1 },
+	'MT_XCHG'	=> { 'in' => 2, 'vstack' => 1 },
+	'MT_LOCK'	=> { 'in' => 2, 'vstack' => 1 },
+	'MT_UNLOCK'	=> { 'in' => 2, 'vstack' => 1 },
+	'MT_ENROLL'	=> { 'in' => 2, 'vstack' => 1 },
+	'MT_RESIGN'	=> { 'in' => 2, 'vstack' => 1 },
+	'MT_SYNC'	=> { 'in' => 1, 'vstack' => 1 },
+	'MT_XIN'	=> { 'in' => 2, 'vstack' => 1 },
+	'MT_XOUT'	=> { 'in' => 2, 'vstack' => 1 },
+	'MT_XXCHG'	=> { 'in' => 2, 'vstack' => 1 },
+	'MT_DCLONE'	=> { 'in' => 3, 'out' => 1, 'vstack' => 1 },
+	'MT_BIND'	=> { 'in' => 3, 'out' => 1, 'vstack' => 1 },
+	'EXT_MT_IN'	=> { 'in' => 2, 'vstack' => 1 },
+	'EXT_MT_OUT'	=> { 'in' => 2, 'vstack' => 1 },
+	'MT_RESIZE'	=> { 'in' => 3, 'out' => 1, 'vstack' => 1 },
 	'LEND'		=> { 'in' => 1 },
 	'LEND3'		=> { 'in' => 1 },
 	'LENDB'		=> { 'in' => 1 }
@@ -307,7 +307,7 @@ sub new_sub_label ($$$$) {
 	return $new;
 }
 
-sub isolate_static_sections ($$) {
+sub isolate_branches ($$) {
 	my ($labels, $label) = @_;
 	
 	return if $label->{'data'};
@@ -318,7 +318,7 @@ sub isolate_static_sections ($$) {
 	my $cinst	= [];
 	for (my $i = 0; $i < @inst; ++$i) {
 		my $inst = $inst[$i];
-		if ($inst->{'label_arg'}) {
+		if ($inst->{'name'} =~ /^C?J$/i && $inst->{'label_arg'}) {
 			if (@$cinst > 0) {
 				$current->{'inst'}	= $cinst;
 				$current		= new_sub_label (
@@ -598,7 +598,7 @@ sub preprocess_etc ($$$) {
 	foreach_label (\%labels, \&resolve_globals, $globals, {});
 	foreach_label (\%labels, \&build_data_blocks);
 	foreach_label (\%labels, \&add_data_lengths);
-	#foreach_label (\%labels, \&isolate_static_sections);
+	foreach_label (\%labels, \&isolate_branches);
 	tag_and_index_code_blocks (\@procs);
 	separate_code_blocks (\@procs);
 }
@@ -674,11 +674,27 @@ sub define_registers ($$) {
 	}
 }	
 
+sub build_phi_nodes ($$) {
+	my ($self, $labels) = @_;
+
+	foreach my $label (@$labels) {
+		my $lname = $label->{'name'};
+
+		foreach my $inst (@{$label->{'inst'}}) {
+			next if $inst->{'name'} ne 'CJ';
+			my $tlabel = $inst->{'arg'};
+			$tlabel->{'phi'} = {} if !$tlabel->{'phi'};
+			$tlabel->{'phi'}->{$lname} = $inst->{'in'};
+		}
+	}
+}
+
 sub code_proc ($$) {
 	my ($self, $proc) = @_;
 	
 	print "-- ", $proc->{'symbol'}, "\n";
 	$self->define_registers ($proc->{'labels'});
+	$self->build_phi_nodes ($proc->{'labels'});
 }
 
 sub generate ($$) {
