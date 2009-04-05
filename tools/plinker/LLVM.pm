@@ -24,32 +24,48 @@ use vars qw($GRAPH);
 use Data::Dumper;
 
 $GRAPH = {
-	'J' 		=> { 'in' => 3, 'generator' => \&gen_j },
-	'LDLP'		=> { 'out' => 1, 'generator' => \&gen_ldlp },
-	'LDNL'		=> { 'in' => 1, 'out' => 1, 'generator' => \&gen_ldnl },
-	'LDC'		=> { 'out' => 1, 'generator' => \&gen_ldc },
-	'LDNLP'		=> { 'in' => 1, 'out' => 1, 'generator' => \&gen_ldnlp },
-	'LDL'		=> { 'out' => 1, 'generator' => \&gen_ldl },
-	'ADC'		=> { 'in' => 1, 'out' => 1 },
-	'CALL'		=> { 'in' => 3, 'out' => 0, 'vstack' => 1 }, # actually 3,3
-	'CJ'		=> { 'in' => 3, 'out' => 2, 'generator' => \&gen_cj },
-	'AJW'		=> { 'wptr' => 1, 'generator' => \&gen_ajw },
+	'J' 		=> { 'in' => 3, 
+			'generator' => \&gen_j },
+	'LDLP'		=> { 'out' => 1, 
+			'generator' => \&gen_ldlp },
+	'LDNL'		=> { 'in' => 1, 'out' => 1, 
+			'generator' => \&gen_ldnl },
+	'LDC'		=> { 'out' => 1, 
+			'generator' => \&gen_ldc },
+	'LDNLP'		=> { 'in' => 1, 'out' => 1, 
+			'generator' => \&gen_ldnlp },
+	'LDL'		=> { 'out' => 1, 
+			'generator' => \&gen_ldl },
+	'ADC'		=> { 'in' => 1, 'out' => 1, 
+			'generator' => \&gen_adc },
+	'CALL'		=> { 'in' => 3, 'out' => 0, 'vstack' => 1, 
+			'generator' => \&gen_call }, # actually out is 3
+	'CJ'		=> { 'in' => 3, 'out' => 2, 
+			'generator' => \&gen_cj },
+	'AJW'		=> { 'wptr' => 1, 
+			'generator' => \&gen_ajw },
 	'EQC'		=> { 'in' => 1, 'out' => 1 },
-	'STL'		=> { 'in' => 1, 'generator' => \&gen_stl },
-	'STNL'		=> { 'in' => 2, 'generator' => \&gen_stnl },
-	'REV'		=> { 'in' => 2, 'out' => 2 },
+	'STL'		=> { 'in' => 1, 
+			'generator' => \&gen_stl },
+	'STNL'		=> { 'in' => 2, 
+			'generator' => \&gen_stnl },
+	'REV'		=> { 'in' => 2, 'out' => 2,
+			'generator' => \&gen_rev },
 	'LB'		=> { 'in' => 1, 'out' => 1 },
 	'BSUB'		=> { 'in' => 2, 'out' => 1 },
 	'ENDP'		=> { 'in' => 1 },
-	'DIFF'		=> { 'in' => 2, 'out' => 1 },
-	'ADD'		=> { 'in' => 2, 'out' => 1 },
+	'DIFF'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_diff },
+	'ADD'		=> { 'in' => 2, 'out' => 1, 
+			'generator' => \&gen_add },
 	'GCALL'		=> { 'in' => 3, 'vstack' => 1 }, # check
 	'IN'		=> { 'in' => 3 },
 	'PROD'		=> { 'in' => 2, 'out' => 1 },
 	'GT'		=> { 'in' => 2, 'out' => 1 },
 	'WSUB'		=> { 'in' => 2, 'out' => 1 },
 	'OUT'		=> { 'in' => 3 },
-	'SUB'		=> { 'in' => 2, 'out' => 1 },
+	'SUB'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_sub },
 	'STARTP'	=> { 'in' => 3, 'vstack' => 1 },
 	'OUTBYTE'	=> { 'in' => 2, 'vstack' => 1 },
 	'OUTWORD'	=> { 'in' => 2, 'vstack' => 1 },
@@ -87,9 +103,12 @@ $GRAPH = {
 	'MOVE'		=> { 'in' => 3 },
 	'OR'		=> { 'in' => 2, 'out' => 1 },
 	'LDIFF'		=> { 'in' => 3, 'out' => 2 },
-	'SUM'		=> { 'in' => 2, 'out' => 1 },
-	'MUL'		=> { 'in' => 2, 'out' => 1 },
-	'DUP'		=> { 'in' => 1, 'out' => 2, 'generator' => \&gen_dup },
+	'SUM'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_sum },
+	'MUL'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_mul },
+	'DUP'		=> { 'in' => 1, 'out' => 2, 
+			'generator' => \&gen_dup },
 	'EXTIN'		=> { 'in' => 3, 'vstack' => 1 },
 	'EXTOUT'	=> { 'in' => 3, 'vstack' => 1 },
 	'POSTNORMSN'	=> { 'in' => 3, 'out' => 3 },
@@ -726,14 +745,20 @@ sub workspace_type {
 	return $self->int_type . '*';
 }
 
-sub reset_tmp_reg ($) {
+sub reset_tmp ($) {
 	my $self = shift;
-	$self->{'tmp_reg'} = 0;
+	$self->{'tmp_n'} = 0;
+}
+
+sub tmp_label ($) {
+	my $self = shift;
+	my $n = $self->{'tmp_n'}++;
+	return "tmp_$n";
 }
 
 sub tmp_reg ($) {
 	my $self = shift;
-	my $n = $self->{'tmp_reg'}++;
+	my $n = $self->{'tmp_n'}++;
 	return "tmp_$n";
 }
 
@@ -757,6 +782,41 @@ sub gen_cj ($$$$) {
 		)
 	);
 }
+
+sub gen_call ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	my @asm;
+	
+	my $in = $inst->{'in'};
+	if (exists ($inst->{'fin'})) {
+		push (@asm, "; WARNING: point stack is not empty at point of call");
+	}
+
+	my $new_wptr = $self->tmp_reg ();
+	push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+		$new_wptr,
+		$self->workspace_type, $inst->{'wptr'},
+		$self->index_type, -4
+	));
+
+	for (my $i = 0; $i < @$in; ++$i) {
+		my $tmp_reg = $self->tmp_reg ();
+		push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+			$tmp_reg,
+			$self->workspace_type, $new_wptr,
+			$self->index_type, ($i + 1)
+		));
+		push (@asm, sprintf ('store %s %%%s, %s %%%s',
+			$self->int_type, $in->[$i],
+			$self->workspace_type, $tmp_reg
+		));
+	}
+
+	# FIXME: do call
+	push (@asm, 'call...');
+
+	return @asm;
+}	
 
 sub gen_ajw ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
@@ -872,6 +932,111 @@ sub gen_dup ($$$$) {
 	return @asm;
 }
 
+sub _gen_checked_arithmetic ($$$$$) {
+	my ($self, $proc, $label, $inst, $func) = @_;
+	my @asm;
+	my $in		= $inst->{'in'};
+	my $res 	= $self->tmp_reg ();
+	my $overflow 	= $self->tmp_reg ();
+	my $tmp		= $self->tmp_label ();
+	my $error_lab	= $tmp . '_overflow';
+	my $ok_lab	= $tmp . '_ok';
+
+	push (@asm, sprintf ('%%%s = call {%s, i1} %s (%s %%%s, %s %%%s)',
+		$res, 
+		$self->int_type,
+		$func,
+		$self->int_type, $in->[0],
+		$self->int_type, $in->[1]
+	));
+	push (@asm, sprintf ('%%%s = extractvalue {%s, i1} %%%s, 0',
+		$inst->{'out'}->[0],
+		$self->int_type,
+		$res
+	));
+	push (@asm, sprintf ('%%%s = extractvalue {%s, i1} %%%s, 1',
+		$overflow,
+		$self->int_type,
+		$res
+	));
+	push (@asm, sprintf ('br i1 %%%s, label %%%s, label %%%s',
+		$overflow,
+		$error_lab,
+		$ok_lab
+	));
+	push (@asm, $error_lab . ':');
+	# FIXME: generate CAUSEERROR
+	push (@asm, $ok_lab . ':');
+
+	return @asm;
+}
+
+sub gen_add ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->_gen_checked_arithmetic (
+		$proc, $label, $inst,
+		'@llvm.sadd.with.overflow.' . $self->int_type
+	);
+}
+
+sub gen_adc ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $tmp_reg = $self->tmp_reg ();
+	my @ldc = $self->gen_ldc ($proc, $label, { 
+		'arg' => $inst->{'arg'},
+		'out' => [ $tmp_reg ]
+	});
+	my @add = $self->gen_add ($proc, $label, {
+		'in' => [ @{$inst->{'in'}}, $tmp_reg ],
+		'out' => $inst->{'out'}
+	});
+	return (@ldc, @add);
+}
+
+sub gen_sub ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->_gen_checked_arithmetic (
+		$proc, $label, $inst,
+		'@llvm.ssub.with.overflow.' . $self->int_type
+	);
+}
+
+sub gen_mul ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->_gen_checked_arithmetic (
+		$proc, $label, $inst,
+		'@llvm.smul.with.overflow.' . $self->int_type
+	);
+}
+
+sub gen_sum ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return sprintf ('%%%s = add %s %%%s, %%%s',
+		$inst->{'out'}->[0],
+		$self->int_type,
+		$inst->{'in'}->[0],
+		$inst->{'in'}->[1]
+	);
+}	
+
+sub gen_diff ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return sprintf ('%%%s = sub %s %%%s, %%%s',
+		$inst->{'out'}->[0],
+		$self->int_type,
+		$inst->{'in'}->[0],
+		$inst->{'in'}->[1]
+	);
+}	
+
+sub gen_rev ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	return (
+		sprintf ('%%%s = %%%s', $inst->{'out'}->[0], $inst->{'in'}->[1]),
+		sprintf ('%%%s = %%%s', $inst->{'out'}->[1], $inst->{'in'}->[0])
+	);
+}
+
 sub generate_proc ($$) {
 	my ($self, $proc) = @_;
 	
@@ -935,7 +1100,8 @@ sub generate_proc ($$) {
 			if ($data->{'generator'}) {
 				my @lines = &{$data->{'generator'}}($self, $proc, $label, $inst);
 				foreach my $line (@lines) {
-					print "\t", $line, "\n";
+					print "\t" if $line !~ /^[a-zA-Z0-9\$\._]+:/;
+					print $line, "\n";
 				}
 			} elsif (@$out + @$fout == 1) {
 				print "\t";
@@ -962,7 +1128,7 @@ sub generate_proc ($$) {
 sub code_proc ($$) {
 	my ($self, $proc) = @_;
 	
-	$self->reset_tmp_reg ();
+	$self->reset_tmp ();
 
 	print "; ", $proc->{'symbol'}, "\n";
 	$self->define_registers ($proc->{'labels'});
