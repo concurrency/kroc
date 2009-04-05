@@ -255,7 +255,7 @@ def install(file, dir, is_exec):
 			os.makedirs(dir)
 		except OSError:
 			die("Unable to create directory: ", dir)
-	cmd = programs["install"] + []
+	cmd = programs["install"][:]
 	if is_exec:
 		cmd += ["-m755"]
 	else:
@@ -305,7 +305,7 @@ def resolve_libraries(libs):
 
 class KRoCToolchain:
 	def kroc_cmd(self):
-		cmd = programs["kroc"] + []
+		cmd = programs["kroc"][:]
 		cmd += ["--oc-opts", " ".join(occ21_opts + ["-DEF", "OCCBUILD.KROC"])]
 		if static_link:
 			cmd += ["--cc-opts", "-static"]
@@ -443,7 +443,7 @@ class TVMToolchain:
 		return programs["plinker.pl"]
 
 	def occ21_cmd(self):
-		cmd = programs["occ21"] + []
+		cmd = programs["occ21"][:]
 		cmd += ["-etc", "-w", "-y", "-znd", "-znec", "-udo", "-zncc", "-init", "-xin", "-mobiles", "-zrpe", "-zcxdiv", "-zcxrem", "-zep", "-t8", "-zqa" ]
 		cmd += occ21_opts
 		cmd += ["-DEF", "OCCBUILD.TVM"]
