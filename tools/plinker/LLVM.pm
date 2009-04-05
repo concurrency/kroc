@@ -685,7 +685,7 @@ sub build_phi_nodes ($$) {
 			next if $inst->{'name'} ne 'CJ';
 			my $tlabel = $inst->{'arg'};
 			$tlabel->{'phi'} = {} if !$tlabel->{'phi'};
-			$tlabel->{'phi'}->{$lname} = $inst->{'in'};
+			$tlabel->{'phi'}->{$lname} = [ $label->{'wptr'}, @{$inst->{'in'}} ];
 		}
 	}
 }
@@ -700,6 +700,22 @@ sub output_regs ($) {
 	print join (', ', @out);
 }
 
+sub int_type {
+	my $self = shift;
+	return 'i32'; # FIXME:
+}
+
+sub float_type {
+	my $self = shift;
+	return 'double';
+}
+
+sub workspace_type {
+	my $self = shift;
+	return $self->int_type . '*';
+}
+
+
 sub generate_proc ($$) {
 	my ($self, $proc) = @_;
 	
@@ -709,23 +725,30 @@ sub generate_proc ($$) {
 		my ($name, $insts) = ($label->{'name'}, $label->{'inst'});
 		print $label->{'name'}, ":\n";
 		if ($label->{'phi'}) {
-			my $in = $label->{'in'} || [];
-			my $fin = $label->{'fin'} || [];
-			my @vars = (@$in, @$fin);
-			my %var_map;
-			my %type;
+			my $wptr	= $label->{'wptr'};
+			my $in 		= $label->{'in'} || [];
+			my $fin 	= $label->{'fin'} || [];
+			my @vars 	= ( $wptr, @$in, @$fin );
+			my %var_map 	= ( map { $_ => [] } @vars ); # build hash of arrays for each var
+			my %type 	= ( $wptr => $self->workspace_type );
 			foreach my $var (@$in) {
-				$type{$var} = 'i32'; # FIXME: i32
+				$type{$var} = $self->int_type;
 			}
 			foreach my $var (@$fin) {
-				$type{$var} = 'double';
+				$type{$var} = $self->float_type;
 			}
+			my $wptr_same = 1;
 			foreach my $slabel (keys (%{$label->{'phi'}})) {
-				my @svars = $label->{'phi'}->{$slabel};
+				my $svars = $label->{'phi'}->{$slabel};
 				for (my $i = 0; $i < @vars; ++$i) {
-					$var_map{$vars[$i]} = '[ %' . $svars[$i] . ', %' . $slabel . ']';
+					$wptr_same = $wptr_same && $vars[$i] eq $svars->[$i]
+						if $i == 0;
+					push (@{$var_map{$vars[$i]}},
+						'[ %' . $svars->[$i] . ', %' . $slabel . ' ]'
+					);
 				}
 			}
+			shift @vars if $wptr_same;
 			foreach my $var (@vars) {
 				print 	"\t", '%', $var, 
 					' = phi ', $type{$var}, ' ', join (' ', @{$var_map{$var}}),
