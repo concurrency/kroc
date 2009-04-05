@@ -44,7 +44,8 @@ $GRAPH = {
 			'generator' => \&gen_cj },
 	'AJW'		=> { 'wptr' => 1, 
 			'generator' => \&gen_ajw },
-	'EQC'		=> { 'in' => 1, 'out' => 1 },
+	'EQC'		=> { 'in' => 1, 'out' => 1,
+			'generator' => \&gen_eqc },
 	'STL'		=> { 'in' => 1, 
 			'generator' => \&gen_stl },
 	'STNL'		=> { 'in' => 2, 
@@ -60,8 +61,10 @@ $GRAPH = {
 			'generator' => \&gen_add },
 	'GCALL'		=> { 'in' => 3, 'vstack' => 1 }, # check
 	'IN'		=> { 'in' => 3 },
-	'PROD'		=> { 'in' => 2, 'out' => 1 },
-	'GT'		=> { 'in' => 2, 'out' => 1 },
+	'PROD'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_prod },
+	'GT'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_gt },
 	'WSUB'		=> { 'in' => 2, 'out' => 1 },
 	'OUT'		=> { 'in' => 3 },
 	'SUB'		=> { 'in' => 2, 'out' => 1,
@@ -84,8 +87,10 @@ $GRAPH = {
 	'DIST'		=> { 'in' => 3, 'out' => 1, 'vstack' => 1 },
 	'DISS'		=> { 'in' => 2, 'out' => 1, 'vstack' => 1 },
 	'LMUL'		=> { 'in' => 3, 'out' => 2 },
-	'NOT'		=> { 'in' => 1, 'out' => 1 },
-	'XOR'		=> { 'in' => 2, 'out' => 1 },
+	'NOT'		=> { 'in' => 1, 'out' => 1,
+			'generator' => \&gen_not },
+	'XOR'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_xor },
 	'LSHR'		=> { 'in' => 3, 'out' => 2 },
 	'LSHL'		=> { 'in' => 3, 'out' => 2 },
 	'LSUM'		=> { 'in' => 3, 'out' => 2 },
@@ -93,15 +98,20 @@ $GRAPH = {
 	'RUNP'		=> { 'in' => 1, 'vstack' => 1 },
 	'SB'		=> { 'in' => 2 },
 	'GAJW'		=> { 'in' => 1, 'out' => 1, 'wptr' => 1 },
-	'SHR'		=> { 'in' => 2, 'out' => 1 },
-	'SHL'		=> { 'in' => 2, 'out' => 1 },
-	'MINT'		=> { 'out' => 1 },
-	'AND'		=> { 'in' => 2, 'out' => 1 },
+	'SHR'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_shr },
+	'SHL'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_shl },
+	'MINT'		=> { 'out' => 1,
+			'generator' => \&gen_mint },
+	'AND'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_and },
 	'ENBT'		=> { 'in' => 2, 'out' => 1, 'vstack' => 1 },
 	'ENBC'		=> { 'in' => 2, 'out' => 1, 'vstack' => 1 },
 	'ENBS'		=> { 'in' => 1, 'out' => 1, 'vstack' => 1 },
 	'MOVE'		=> { 'in' => 3 },
-	'OR'		=> { 'in' => 2, 'out' => 1 },
+	'OR'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_or },
 	'LDIFF'		=> { 'in' => 3, 'out' => 2 },
 	'SUM'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_sum },
@@ -115,7 +125,8 @@ $GRAPH = {
 	'ROUNDSN'	=> { 'in' => 3, 'out' => 1 },
 	'ENBC3'		=> { 'in' => 3, 'out' => 1, 'vstack' => 1 },
 	'LDINF'		=> { 'out' => 1 },
-	'POP'		=> { 'in' => 1 },
+	'POP'		=> { 'in' => 1,
+			'generator' => \&gen_nop },
 	'WSUBDB'	=> { 'in' => 2, 'out' => 1 },
 	'FPLDNLDBI'	=> { 'in' => 2, 'fout' => 1 },
 	'FPCHKERR'	=> { 'vstack' => 1 },
@@ -165,7 +176,8 @@ $GRAPH = {
 	'XABLE'		=> { 'vstack' => 1 },
 	'XIN'		=> { 'in' => 3, 'vstack' => 1 },
 	'XEND'		=> { 'vstack' => 1 },
-	'NULL'		=> { 'out' => 1 },
+	'NULL'		=> { 'out' => 1,
+			'generator' => \&gen_null },
 	'PROC_ALLOC'	=> { 'in' => 2, 'out' => 1, 'vstack' => 1 },
 	'PROC_PARAM'	=> { 'in' => 3, 'vstack' => 1 },
 	'PROC_MT_COPY'	=> { 'in' => 3, 'vstack' => 1 },
@@ -771,9 +783,10 @@ sub gen_cj ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $tmp_reg = $self->tmp_reg ();
 	return (
-		sprintf ('%%%s = trunc %s %%%s to i1',
+		sprintf ('%%%s = icmp eq %s %%%s, %d',
 			$tmp_reg,
-			$self->int_type, $inst->{'in'}->[0]
+			$self->int_type, $inst->{'in'}->[0],
+			0
 		),
 		sprintf ('br i1 %%%s, label %%%s, label %%%s',
 			$tmp_reg,
@@ -834,6 +847,25 @@ sub gen_ldc ($$$$) {
 		$self->int_type,
 		$inst->{'arg'}
 	);
+}
+
+sub gen_mint ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $type = $self->int_type;
+	my $bits = ($type =~ /i(\d+)/)[0];
+	my $mint = (1 << ($bits - 1));
+	return $self->gen_ldc ($proc, $label, {
+		'out' => $inst->{'out'},
+		'arg' => $mint
+	});
+}
+
+sub gen_null ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->gen_ldc ($proc, $label, {
+		'out' => $inst->{'out'},
+		'arg' => 0
+	});
 }
 
 sub _gen_ldlp ($$) {
@@ -1014,8 +1046,7 @@ sub gen_sum ($$$$) {
 	return sprintf ('%%%s = add %s %%%s, %%%s',
 		$inst->{'out'}->[0],
 		$self->int_type,
-		$inst->{'in'}->[0],
-		$inst->{'in'}->[1]
+		$inst->{'in'}->[0], $inst->{'in'}->[1]
 	);
 }	
 
@@ -1024,8 +1055,16 @@ sub gen_diff ($$$$) {
 	return sprintf ('%%%s = sub %s %%%s, %%%s',
 		$inst->{'out'}->[0],
 		$self->int_type,
-		$inst->{'in'}->[0],
-		$inst->{'in'}->[1]
+		$inst->{'in'}->[0], $inst->{'in'}->[1]
+	);
+}	
+
+sub gen_prod ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return sprintf ('%%%s = mul %s %%%s, %%%s',
+		$inst->{'out'}->[0],
+		$self->int_type,
+		$inst->{'in'}->[0], $inst->{'in'}->[1]
 	);
 }	
 
@@ -1035,6 +1074,86 @@ sub gen_rev ($$$$) {
 		sprintf ('%%%s = %%%s', $inst->{'out'}->[0], $inst->{'in'}->[1]),
 		sprintf ('%%%s = %%%s', $inst->{'out'}->[1], $inst->{'in'}->[0])
 	);
+}
+
+sub gen_eqc ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	my $tmp_reg = $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = icmp eq %s %%%s, %d', 
+			$tmp_reg, 
+			$self->int_type,
+			$inst->{'in'}->[0], $inst->{'arg'}
+		),
+		sprintf ('%%%s = zext i1 %%%s to %s', 
+			$inst->{'out'}->[0], 
+			$tmp_reg,
+			$self->int_type
+		)
+	);
+}
+
+sub gen_gt ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	my $tmp_reg = $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = icmp gt %s %%%s, %%%s', 
+			$tmp_reg,
+			$self->int_type,
+			$inst->{'in'}->[0], $inst->{'in'}->[1]
+		),
+		sprintf ('%%%s = zext i1 %%%s to %s', 
+			$inst->{'out'}->[0], 
+			$tmp_reg,
+			$self->int_type
+		)
+	);
+}
+
+
+sub _gen_bitop ($$$@) { 
+	my ($self, $inst, $op, @in) = @_;
+	return sprintf ('%%%s = %s %s %%%s, %d',
+		$inst->{'out'}->[0],
+		$op,
+		$self->int_type, 
+		@in
+	);
+}
+
+sub gen_not ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->_gen_bitop ($inst, 'xor', @{$inst->{'in'}}, -1);
+}
+
+sub gen_xor ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->_gen_bitop ($inst, 'xor', @{$inst->{'in'}});
+}
+
+sub gen_or ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->_gen_bitop ($inst, 'xor', @{$inst->{'in'}});
+}
+
+sub gen_and ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->_gen_bitop ($inst, 'and', @{$inst->{'in'}});
+}
+
+sub gen_shr ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->_gen_bitop ($inst, 'lshr', @{$inst->{'in'}});
+}
+
+sub gen_shl ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->_gen_bitop ($inst, 'shl', @{$inst->{'in'}});
+}
+
+sub gen_nop ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	return ();
 }
 
 sub generate_proc ($$) {
