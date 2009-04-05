@@ -24,19 +24,19 @@ use vars qw($GRAPH);
 use Data::Dumper;
 
 $GRAPH = {
-	'J' 		=> { 'in' => 3 },
-	'LDLP'		=> { 'out' => 1 },
-	'LDNL'		=> { 'in' => 1, 'out' => 1 },
+	'J' 		=> { 'in' => 3, 'generator' => \&gen_j },
+	'LDLP'		=> { 'out' => 1, 'generator' => \&gen_ldlp },
+	'LDNL'		=> { 'in' => 1, 'out' => 1, 'generator' => \&gen_ldnl },
 	'LDC'		=> { 'out' => 1, 'generator' => \&gen_ldc },
-	'LDNLP'		=> { 'in' => 1, 'out' => 1 },
+	'LDNLP'		=> { 'in' => 1, 'out' => 1, 'generator' => \&gen_ldnlp },
 	'LDL'		=> { 'out' => 1, 'generator' => \&gen_ldl },
 	'ADC'		=> { 'in' => 1, 'out' => 1 },
 	'CALL'		=> { 'in' => 3, 'out' => 0, 'vstack' => 1 }, # actually 3,3
-	'CJ'		=> { 'in' => 3, 'out' => 2 },
+	'CJ'		=> { 'in' => 3, 'out' => 2, 'generator' => \&gen_cj },
 	'AJW'		=> { 'wptr' => 1, 'generator' => \&gen_ajw },
 	'EQC'		=> { 'in' => 1, 'out' => 1 },
-	'STL'		=> { 'in' => 1 },
-	'STNL'		=> { 'in' => 2 },
+	'STL'		=> { 'in' => 1, 'generator' => \&gen_stl },
+	'STNL'		=> { 'in' => 2, 'generator' => \&gen_stnl },
 	'REV'		=> { 'in' => 2, 'out' => 2 },
 	'LB'		=> { 'in' => 1, 'out' => 1 },
 	'BSUB'		=> { 'in' => 2, 'out' => 1 },
@@ -89,7 +89,7 @@ $GRAPH = {
 	'LDIFF'		=> { 'in' => 3, 'out' => 2 },
 	'SUM'		=> { 'in' => 2, 'out' => 1 },
 	'MUL'		=> { 'in' => 2, 'out' => 1 },
-	'DUP'		=> { 'in' => 1, 'out' => 2 },
+	'DUP'		=> { 'in' => 1, 'out' => 2, 'generator' => \&gen_dup },
 	'EXTIN'		=> { 'in' => 3, 'vstack' => 1 },
 	'EXTOUT'	=> { 'in' => 3, 'vstack' => 1 },
 	'POSTNORMSN'	=> { 'in' => 3, 'out' => 3 },
@@ -212,7 +212,7 @@ sub resolve_inst_label ($$$$) {
 	foreach my $arg (ref ($arg) =~ /^ARRAY/ ? @$arg : $arg) {
 		if ($arg =~ /^L([0-9_\.]+)$/) {
 			my $num	= $1;
-			my $n	= 'L' . $fn . ':' . $num;
+			my $n	= 'L' . $fn . '.' . $num;
 			if (!exists ($labels->{$n})) {
 				die "Undefined label $n";
 			} else {
@@ -512,7 +512,7 @@ sub preprocess_etc ($$$) {
 		if ($name eq '.ALIGN') {
 			$align	= $arg;
 		} elsif ($name =~ /^\.(SET|SECTION)LAB$/) {
-			my $label = 'L' . $fn . ':' . $arg;
+			my $label = 'L' . $fn . '.' . $arg;
 			my @inst;
 
 			die "Label collision $label" 
@@ -690,12 +690,14 @@ sub build_phi_nodes ($$) {
 	}
 }
 
-sub output_regs ($) {
-	my $regs = shift;
-	return if !$regs;
+sub output_regs (@) {
+	my (@regs) = @_;
+	return if !@regs;
 	my @out;
-	foreach my $reg (@$regs) {
-		push (@out, '%' . $reg);
+	foreach my $regs (@regs) {
+		foreach my $reg (@$regs) {
+			push (@out, '%' . $reg);
+		}
 	}
 	print join (', ', @out);
 }
@@ -724,10 +726,36 @@ sub workspace_type {
 	return $self->int_type . '*';
 }
 
+sub reset_tmp_reg ($) {
+	my $self = shift;
+	$self->{'tmp_reg'} = 0;
+}
+
 sub tmp_reg ($) {
 	my $self = shift;
 	my $n = $self->{'tmp_reg'}++;
 	return "tmp_$n";
+}
+
+sub gen_j ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return 'br label %' . $inst->{'arg'}->{'name'};
+}
+
+sub gen_cj ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $tmp_reg = $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = trunc %s %%%s to i1',
+			$tmp_reg,
+			$self->int_type, $inst->{'in'}->[0]
+		),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$tmp_reg,
+			$inst->{'arg'}->{'name'},
+			$label->{'next'}->{'name'}
+		)
+	);
 }
 
 sub gen_ajw ($$$$) {
@@ -748,26 +776,101 @@ sub gen_ldc ($$$$) {
 	);
 }
 
-sub gen_ldl ($$$$) {
-	my ($self, $proc, $label, $inst) = @_;
-	my (@addr, $tmp_reg);
+sub _gen_ldlp ($$) {
+	my ($self, $inst) = @_;
+	my ($reg, @asm);
 	if ($inst->{'arg'} != 0) {
-		$tmp_reg = $self->tmp_reg ();
-		push (@addr, 
+		$reg = $self->tmp_reg ();
+		push (@asm, 
 			sprintf ('%%%s = getelementptr %s %%%s, %s %d',
-				$tmp_reg, 
+				$reg, 
 				$self->workspace_type, $inst->{'wptr'},
 				$self->index_type, $inst->{'arg'}
 		));
 	} else {
-		$tmp_reg = $inst->{'wptr'};
+		$reg = $inst->{'wptr'};
 	}
+	return ($reg, @asm);
+}
+
+sub gen_ldlp ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my ($tmp_reg, @asm) = $self->_gen_ldlp ($inst);
+	my $conv = sprintf ('%%%s = ptrtoint %s %%%s, %s',
+		$inst->{'out'}->[0],
+		$self->workspace_type,
+		$tmp_reg,
+		$self->int_type
+	);
+	return (@asm, $conv);
+}
+
+sub gen_ldl ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my ($tmp_reg, @asm) = $self->_gen_ldlp ($inst);
 	my $load = sprintf ('%%%s = load %s %%%s',
 		$inst->{'out'}->[0],
 		$self->workspace_type, $tmp_reg
 	);
-	return (@addr, $load);
+	return (@asm, $load);
 }	
+
+sub gen_stl ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	my ($tmp_reg, @asm) = $self->_gen_ldlp ($inst);
+	my $store = sprintf ('store %s %%%s, %s %%%s',
+		$self->int_type, $inst->{'in'}->[0],
+		$self->workspace_type, $tmp_reg
+	);
+	return (@asm, $store);
+}
+
+sub _gen_ldnlp ($$) {
+	my ($self, $inst) = @_;
+	my ($reg, @asm);
+	if ($inst->{'arg'} != 0) {
+		$reg = $self->tmp_reg ();
+		push (@asm, 
+			sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+				$reg, 
+				$self->int_type . '*', $inst->{'in'}->[0],
+				$self->index_type, $inst->{'arg'}
+		));
+	} else {
+		$reg = $inst->{'in'}->[0];
+	}
+	return ($reg, @asm);
+}
+
+sub gen_ldnl ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my ($tmp_reg, @asm) = $self->_gen_ldnlp ($inst);
+	my $load = sprintf ('%%%s = load %s %%%s',
+		$inst->{'out'}->[0],
+		$self->workspace_type, $tmp_reg
+	);
+	return (@asm, $load);
+}	
+
+sub gen_stnl ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	my ($tmp_reg, @asm) = $self->_gen_ldnlp ($inst);
+	my $store = sprintf ('store %s %%%s, %s %%%s',
+		$self->int_type, $inst->{'in'}->[1],
+		$self->workspace_type, $tmp_reg
+	);
+	return (@asm, $store);
+}
+
+sub gen_dup ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my @asm;
+	my $in = $inst->{'in'}->[0];
+	foreach my $reg (@{$inst->{'out'}}) {
+		push (@asm, sprintf ('%%%s = %%%s', $reg, $in));
+	}
+	return @asm;
+}
 
 sub generate_proc ($$) {
 	my ($self, $proc) = @_;
@@ -811,6 +914,17 @@ sub generate_proc ($$) {
 		foreach my $inst (@$insts) {
 			my $name 	= $inst->{'name'};
 			next if $name =~ /^\./;
+
+			print "\t; $name";
+			if (exists ($inst->{'arg'})) {
+				print " ";
+				if (exists ($inst->{'label_arg'})) {
+					print $inst->{'arg'}->{'name'};
+				} else {
+					print $inst->{'arg'};
+				}
+			}
+			print "\n";
 			
 			my $data	= $GRAPH->{$name};
 			my $in 		= $inst->{'in'} || [];
@@ -825,13 +939,11 @@ sub generate_proc ($$) {
 				}
 			} elsif (@$out + @$fout == 1) {
 				print "\t";
-				output_regs ($out);
-				output_regs ($fout);
+				output_regs ($out, $fout);
 				print " = call op_", $name, " (%", $inst->{'wptr'};
 				print ', ', $inst->{'arg'} if exists ($inst->{'arg'});
 				print ', ' if (@$in + @$fin > 0);
-				output_regs ($in);
-				output_regs ($fin);
+				output_regs ($in, $fin);
 				print ")\n";
 			} else {
 				print "\t";
@@ -839,10 +951,7 @@ sub generate_proc ($$) {
 				print "call op_", $name, " (%", $inst->{'wptr'};
 				print ', ', $inst->{'arg'} if exists ($inst->{'arg'});
 				print ', ' if (@$in + @$fin > 0);
-				output_regs ($in);
-				output_regs ($fin);
-				output_regs ($out);
-				output_regs ($fout);
+				output_regs ($in, $fin, $out, $fout);
 				print ")\n";
 			}
 		}
@@ -853,7 +962,9 @@ sub generate_proc ($$) {
 sub code_proc ($$) {
 	my ($self, $proc) = @_;
 	
-	print "-- ", $proc->{'symbol'}, "\n";
+	$self->reset_tmp_reg ();
+
+	print "; ", $proc->{'symbol'}, "\n";
 	$self->define_registers ($proc->{'labels'});
 	$self->build_phi_nodes ($proc->{'labels'});
 	$self->generate_proc ($proc);
