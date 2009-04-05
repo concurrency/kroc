@@ -27,13 +27,13 @@ $GRAPH = {
 	'J' 		=> { 'in' => 3 },
 	'LDLP'		=> { 'out' => 1 },
 	'LDNL'		=> { 'in' => 1, 'out' => 1 },
-	'LDC'		=> { 'out' => 1 },
+	'LDC'		=> { 'out' => 1, 'generator' => \&gen_ldc },
 	'LDNLP'		=> { 'in' => 1, 'out' => 1 },
-	'LDL'		=> { 'out' => 1 },
+	'LDL'		=> { 'out' => 1, 'generator' => \&gen_ldl },
 	'ADC'		=> { 'in' => 1, 'out' => 1 },
 	'CALL'		=> { 'in' => 3, 'out' => 0, 'vstack' => 1 }, # actually 3,3
 	'CJ'		=> { 'in' => 3, 'out' => 2 },
-	'AJW'		=> { 'wptr' => 1 },
+	'AJW'		=> { 'wptr' => 1, 'generator' => \&gen_ajw },
 	'EQC'		=> { 'in' => 1, 'out' => 1 },
 	'STL'		=> { 'in' => 1 },
 	'STNL'		=> { 'in' => 2 },
@@ -705,6 +705,15 @@ sub int_type {
 	return 'i32'; # FIXME:
 }
 
+sub index_type {
+	my $self = shift;
+	if ($self->int_type eq 'i64') {
+		return 'i64';
+	} else {
+		return 'i32';
+	}
+}
+
 sub float_type {
 	my $self = shift;
 	return 'double';
@@ -715,6 +724,50 @@ sub workspace_type {
 	return $self->int_type . '*';
 }
 
+sub tmp_reg ($) {
+	my $self = shift;
+	my $n = $self->{'tmp_reg'}++;
+	return "tmp_$n";
+}
+
+sub gen_ajw ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+		$inst->{'_wptr'},
+		$self->workspace_type, $inst->{'wptr'},
+		$self->index_type, $inst->{'arg'}
+	);
+}
+
+sub gen_ldc ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return sprintf ('%%%s = %s %s',
+		$inst->{'out'}->[0],
+		$self->int_type,
+		$inst->{'arg'}
+	);
+}
+
+sub gen_ldl ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my (@addr, $tmp_reg);
+	if ($inst->{'arg'} != 0) {
+		$tmp_reg = $self->tmp_reg ();
+		push (@addr, 
+			sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+				$tmp_reg, 
+				$self->workspace_type, $inst->{'wptr'},
+				$self->index_type, $inst->{'arg'}
+		));
+	} else {
+		$tmp_reg = $inst->{'wptr'};
+	}
+	my $load = sprintf ('%%%s = load %s %%%s',
+		$inst->{'out'}->[0],
+		$self->workspace_type, $tmp_reg
+	);
+	return (@addr, $load);
+}	
 
 sub generate_proc ($$) {
 	my ($self, $proc) = @_;
@@ -766,7 +819,10 @@ sub generate_proc ($$) {
 			my $fout 	= $inst->{'fout'} || [];
 			
 			if ($data->{'generator'}) {
-				&{$data->{'generator'}}($proc, $label, $inst);
+				my @lines = &{$data->{'generator'}}($self, $proc, $label, $inst);
+				foreach my $line (@lines) {
+					print "\t", $line, "\n";
+				}
 			} elsif (@$out + @$fout == 1) {
 				print "\t";
 				output_regs ($out);
