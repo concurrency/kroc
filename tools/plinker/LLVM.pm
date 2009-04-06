@@ -215,6 +215,11 @@ $GRAPH = {
 sub new ($$) {
 	my ($class) = @_;
 	my $self = bless {}, $class;
+	$self->{'constants'}	= {};
+	$self->{'globals'}	= {};
+	$self->{'source_files'}	= {};
+	$self->{'source_file'}	= undef;
+	$self->{'source_line'} 	= 0;
 	return $self;
 }
 
@@ -730,7 +735,7 @@ sub output_regs (@) {
 			push (@out, '%' . $reg);
 		}
 	}
-	print join (', ', @out);
+	return join (', ', @out);
 }
 
 sub int_type {
@@ -772,6 +777,52 @@ sub tmp_reg ($) {
 	my $self = shift;
 	my $n = $self->{'tmp_n'}++;
 	return "tmp_$n";
+}
+
+sub new_constant ($$$) {
+	my ($self, $name, $value) = @_;
+	die "Trying to create duplicate constant" if exists ($self->{'constants'}->{$name});
+	$self->{'constants'}->{$name} = $value;
+}
+
+sub new_generated_constant ($$) {
+	my ($self, $value) = @_;
+	my $name = sprintf ('C_%d', $self->{'constant_n'}++);
+	$self->new_constant ($name, $value);
+	return $name;
+}
+
+sub source_file {
+	my ($self, $file) = @_;
+	if (defined ($file)) {
+		$self->{'source_file'} = $self->{'source_files'}->{$file};
+		if (!$self->{'source_file'}) {
+			my $constant = $self->new_generated_constant (
+				{ 'str' => $file }
+			);
+			$self->{'source_files'}->{$file} = $constant;
+			$self->{'source_file'} = $constant;
+		}
+	}
+	return $self->{'source_file'};
+}
+
+sub source_line {
+	my ($self, $line) = @_;
+	if (defined ($line)) {
+		$self->{'source_line'} = $line;
+	}
+	return $self->{'source_line'};
+}
+
+sub _gen_error ($$$$$) {
+	my ($self, $proc, $label, $inst, $type) = @_;
+	return sprintf ('call void @etc_error_%s (%s %%%s, i8* @%s, %s %s)',
+		$type,
+		$self->workspace_type, $inst->{'wptr'},
+		$self->source_file,
+		$self->int_type, $self->source_line
+	);
 }
 
 sub gen_j ($$$$) {
@@ -853,7 +904,7 @@ sub gen_mint ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $type = $self->int_type;
 	my $bits = ($type =~ /i(\d+)/)[0];
-	my $mint = (1 << ($bits - 1));
+	my $mint = -(1 << ($bits - 1));
 	return $self->gen_ldc ($proc, $label, {
 		'out' => $inst->{'out'},
 		'arg' => $mint
@@ -997,7 +1048,7 @@ sub _gen_checked_arithmetic ($$$$$) {
 		$ok_lab
 	));
 	push (@asm, $error_lab . ':');
-	# FIXME: generate CAUSEERROR
+	push (@asm, $self->_gen_error ($proc, $label, $inst, 'overflow'));
 	push (@asm, $ok_lab . ':');
 
 	return @asm;
@@ -1015,12 +1066,13 @@ sub gen_adc ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $tmp_reg = $self->tmp_reg ();
 	my @ldc = $self->gen_ldc ($proc, $label, { 
-		'arg' => $inst->{'arg'},
-		'out' => [ $tmp_reg ]
+		'arg' 	=> $inst->{'arg'},
+		'out' 	=> [ $tmp_reg ]
 	});
 	my @add = $self->gen_add ($proc, $label, {
-		'in' => [ @{$inst->{'in'}}, $tmp_reg ],
-		'out' => $inst->{'out'}
+		'wptr'	=> $inst->{'wptr'},
+		'in' 	=> [ @{$inst->{'in'}}, $tmp_reg ],
+		'out'	=> $inst->{'out'}
 	});
 	return (@ldc, @add);
 }
@@ -1158,12 +1210,17 @@ sub gen_nop ($$$$) {
 
 sub generate_proc ($$) {
 	my ($self, $proc) = @_;
-	
-	print 'define void @O_', $proc->{'symbol'}, 
-		'(i32 *%', $proc->{'labels'}->[0]->{'wptr'}, ') {', "\n";
+	my @asm;
+
+	push (@asm, join ('', 
+		'define void @O_', $proc->{'symbol'}, 
+			'(i32 *%', $proc->{'labels'}->[0]->{'wptr'}, ') {'
+	));
 	foreach my $label (@{$proc->{'labels'}}) {
 		my ($name, $insts) = ($label->{'name'}, $label->{'inst'});
-		print $label->{'name'}, ":\n";
+		push (@asm, 
+			$label->{'name'} . ':'
+		);
 		if ($label->{'phi'}) {
 			my $wptr	= $label->{'wptr'};
 			my $in 		= $label->{'in'} || [];
@@ -1190,25 +1247,34 @@ sub generate_proc ($$) {
 			}
 			shift @vars if $wptr_same;
 			foreach my $var (@vars) {
-				print 	"\t", '%', $var, 
-					' = phi ', $type{$var}, ' ', join (' ', @{$var_map{$var}}),
-					"\n";
+				push (@asm, join ('', 
+					"\t", '%', $var, 
+					' = phi ', $type{$var}, ' ', join (' ', @{$var_map{$var}})
+				));
 			}
 		}
 		foreach my $inst (@$insts) {
 			my $name 	= $inst->{'name'};
-			next if $name =~ /^\./;
-
-			print "\t; $name";
+			
+			if ($name =~ /^\./) {
+				if ($name eq '.LINE') {
+					$self->source_line ($inst->{'arg'});
+				} elsif ($name eq '.FILENAME') {
+					$self->source_file ($inst->{'arg'});
+				}
+				next;
+			}
+			
+			my $line = "\t; $name";
 			if (exists ($inst->{'arg'})) {
-				print " ";
+				$line .= " ";
 				if (exists ($inst->{'label_arg'})) {
-					print $inst->{'arg'}->{'name'};
+					$line .= $inst->{'arg'}->{'name'};
 				} else {
-					print $inst->{'arg'};
+					$line .= $inst->{'arg'};
 				}
 			}
-			print "\n";
+			push (@asm, $line);
 			
 			my $data	= $GRAPH->{$name};
 			my $in 		= $inst->{'in'} || [];
@@ -1219,29 +1285,63 @@ sub generate_proc ($$) {
 			if ($data->{'generator'}) {
 				my @lines = &{$data->{'generator'}}($self, $proc, $label, $inst);
 				foreach my $line (@lines) {
-					print "\t" if $line !~ /^[a-zA-Z0-9\$\._]+:/;
-					print $line, "\n";
+					if ($line =~ /^[a-zA-Z0-9\$\._]+:/) {
+						push (@asm, $line);
+					} else {
+						push (@asm, "\t" . $line);
+					}
 				}
 			} elsif (@$out + @$fout == 1) {
-				print "\t";
-				output_regs ($out, $fout);
-				print " = call op_", $name, " (%", $inst->{'wptr'};
-				print ', ', $inst->{'arg'} if exists ($inst->{'arg'});
-				print ', ' if (@$in + @$fin > 0);
-				output_regs ($in, $fin);
-				print ")\n";
+				my $line = "\t";
+				$line .= output_regs ($out, $fout);
+				$line .= " = call op_" . $name . " (%" . $inst->{'wptr'};
+				$line .= ', ' . $inst->{'arg'} if exists ($inst->{'arg'});
+				$line .= ', ' if (@$in + @$fin > 0);
+				$line .= output_regs ($in, $fin);
+				$line .= ')';
+				push (@asm, $line);
 			} else {
-				print "\t";
-				print '%', $inst->{'_wptr'}, ' = ' if $inst->{'_wptr'};
-				print "call op_", $name, " (%", $inst->{'wptr'};
-				print ', ', $inst->{'arg'} if exists ($inst->{'arg'});
-				print ', ' if (@$in + @$fin > 0);
-				output_regs ($in, $fin, $out, $fout);
-				print ")\n";
+				my $line = "\t";
+				$line .= '%', $inst->{'_wptr'}, ' = ' if $inst->{'_wptr'};
+				$line .= "call op_" . $name . " (%" . $inst->{'wptr'};
+				$line .= ', ' . $inst->{'arg'} if exists ($inst->{'arg'});
+				$line .= ', ' if (@$in + @$fin > 0);
+				$line .= output_regs ($in, $fin, $out, $fout);
+				$line .= ")";
+				push (@asm, $line);
 			}
 		}
 	}
-	print "}\n";
+	push (@asm, '}');
+
+	return @asm;
+}
+
+sub code_constants ($) {
+	my $self = shift;
+	my $constants = $self->{'constants'};
+	my @asm;
+
+	foreach my $name (sort (keys (%$constants))) {
+		my $value = $constants->{$name};
+		if (exists ($value->{'str'})) {
+			my $str = $value->{'str'};
+			my @chr = split (//, $str);
+			foreach my $chr (@chr) {
+				$chr = 'i8 ' . ord ($chr);
+			}
+			push (@chr, 'i8 0');
+			push (@asm, "; \@$name = \"$str\"");
+			push (@asm, sprintf ('@%s_value = internal constant [ %d x i8 ] [ %s ]',
+				$name, scalar (@chr), join (', ', @chr)
+			));
+			push (@asm, sprintf ('@%s = internal constant i8* @%s_value',
+				$name, $name
+			));
+		}
+	}
+
+	return @asm;
 }
 
 sub code_proc ($$) {
@@ -1249,10 +1349,11 @@ sub code_proc ($$) {
 	
 	$self->reset_tmp ();
 
-	print "; ", $proc->{'symbol'}, "\n";
 	$self->define_registers ($proc->{'labels'});
 	$self->build_phi_nodes ($proc->{'labels'});
-	$self->generate_proc ($proc);
+	
+	my $comments = "; " . $proc->{'symbol'};
+	return ($comments, $self->generate_proc ($proc));
 }
 
 sub generate ($$) {
@@ -1260,15 +1361,28 @@ sub generate ($$) {
 	my $verbose = $self->{'verbose'};
 	my $file	= $text->{'file'};
 	my $etc		= $text->{'etc'};
-	my @assembly;
 
-	$self->{'globals'} = {};
 	$self->preprocess_etc ($file, $etc);
+
+	my @header;
+	# for debugging
+	push (@header, sprintf ('declare void @etc_error_overflow (%s, i8*, %s)',
+		$self->workspace_type, $self->int_type
+	));
+
+	my @proc_asm;
 	foreach my $proc (@{$self->{'procs'}}) {
-		$self->code_proc ($proc);
+		push (@proc_asm, $self->code_proc ($proc));
+	}
+	
+	my @const_asm 	= $self->code_constants ();
+	
+	my @ret 	= (@header, @const_asm, @proc_asm);
+	foreach my $line (@ret) {
+		print $line, "\n";
 	}
 
-	return \@assembly;
+	return \@ret;
 }
 
 1;
