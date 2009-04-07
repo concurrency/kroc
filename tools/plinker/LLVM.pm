@@ -74,13 +74,16 @@ $GRAPH = {
 	'OUTWORD'	=> { 'in' => 2, 'vstack' => 1 },
 	'SETERR'	=> { 'in' => 1, 'vstack' => 1 },
 	'MRELEASEP'	=> { 'in' => 1, 'vstack' => 1 },
-	'CSUB0'		=> { 'in' => 1 },
+	'CSUB0'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_csub0 },
 	'EXTVRFY' 	=> { 'in' => 2 },
 	'STOPP'		=> { 'vstack' => 1 },
 	'LADD'		=> { 'in' => 3, 'out' => 1 },
 	'NORM'		=> { 'in' => 3, 'out' => 3 },
 	'LDIV'		=> { 'in' => 3, 'out' => 2 },
 	'REM'		=> { 'in' => 2, 'out' => 2 },
+	'RET'		=> {
+			'generator' => \&gen_ret },
 	'LDTIMER'	=> { 'out' => 1, 'vstack' => 1 },
 	'TIN'		=> { 'in' => 1, 'vstack' => 1 },
 	'DIV'		=> { 'in' => 2, 'out' => 2 },
@@ -206,7 +209,8 @@ $GRAPH = {
 	'EXT_MT_IN'	=> { 'in' => 2, 'vstack' => 1 },
 	'EXT_MT_OUT'	=> { 'in' => 2, 'vstack' => 1 },
 	'MT_RESIZE'	=> { 'in' => 3, 'out' => 1, 'vstack' => 1 },
-	'LEND'		=> { 'in' => 1 },
+	'LEND'		=> { 'in' => 1,
+		'generator' => \&gen_lend },
 	'LEND3'		=> { 'in' => 1 },
 	'LENDB'		=> { 'in' => 1 }
 };
@@ -354,7 +358,7 @@ sub isolate_branches ($$) {
 	my $cinst	= [];
 	for (my $i = 0; $i < @inst; ++$i) {
 		my $inst = $inst[$i];
-		if ($inst->{'name'} =~ /^C?J$/i && $inst->{'label_arg'}) {
+		if ($inst->{'name'} =~ /^(J|CJ|LEND|CALL)$/i && $inst->{'label_arg'}) {
 			if (@$cinst > 0) {
 				$current->{'inst'}	= $cinst;
 				$current		= new_sub_label (
@@ -877,7 +881,7 @@ sub gen_call ($$$$) {
 	}
 
 	# FIXME: do call
-	push (@asm, 'call...');
+	#push (@asm, 'call...');
 
 	return @asm;
 }	
@@ -893,10 +897,11 @@ sub gen_ajw ($$$$) {
 
 sub gen_ldc ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	return sprintf ('%%%s = %s %s',
+	return sprintf ('%%%s = bitcast %s %s to %s',
 		$inst->{'out'}->[0],
 		$self->int_type,
-		$inst->{'arg'}
+		$inst->{'arg'},
+		$self->int_type
 	);
 }
 
@@ -939,7 +944,7 @@ sub _gen_ldlp ($$) {
 sub gen_ldlp ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my ($tmp_reg, @asm) = $self->_gen_ldlp ($inst);
-	my $conv = sprintf ('%%%s = ptrtoint %s %%%s, %s',
+	my $conv = sprintf ('%%%s = ptrtoint %s %%%s to %s',
 		$inst->{'out'}->[0],
 		$self->workspace_type,
 		$tmp_reg,
@@ -1010,7 +1015,9 @@ sub gen_dup ($$$$) {
 	my @asm;
 	my $in = $inst->{'in'}->[0];
 	foreach my $reg (@{$inst->{'out'}}) {
-		push (@asm, sprintf ('%%%s = %%%s', $reg, $in));
+		push (@asm, sprintf ('%%%s = bitcast %s %%%s to %s', 
+			$reg, $self->int_type, $in, $self->int_type
+		));
 	}
 	return @asm;
 }
@@ -1022,7 +1029,7 @@ sub _gen_checked_arithmetic ($$$$$) {
 	my $res 	= $self->tmp_reg ();
 	my $overflow 	= $self->tmp_reg ();
 	my $tmp		= $self->tmp_label ();
-	my $error_lab	= $tmp . '_overflow';
+	my $error_lab	= $tmp . '_overflow_error';
 	my $ok_lab	= $tmp . '_ok';
 
 	push (@asm, sprintf ('%%%s = call {%s, i1} %s (%s %%%s, %s %%%s)',
@@ -1049,6 +1056,7 @@ sub _gen_checked_arithmetic ($$$$$) {
 	));
 	push (@asm, $error_lab . ':');
 	push (@asm, $self->_gen_error ($proc, $label, $inst, 'overflow'));
+	push (@asm, sprintf ('br label %%%s', $ok_lab));
 	push (@asm, $ok_lab . ':');
 
 	return @asm;
@@ -1123,7 +1131,12 @@ sub gen_prod ($$$$) {
 sub gen_rev ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
 	return (
-		sprintf ('%%%s = %%%s', $inst->{'out'}->[0], $inst->{'in'}->[1]),
+		sprintf ('%%%s = %s %%%s to %s', 
+			$inst->{'out'}->[0],
+			$self->int_type,
+			$inst->{'in'}->[1],
+			$self->int_type
+		),
 		sprintf ('%%%s = %%%s', $inst->{'out'}->[1], $inst->{'in'}->[0])
 	);
 }
@@ -1149,7 +1162,7 @@ sub gen_gt ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $tmp_reg = $self->tmp_reg ();
 	return (
-		sprintf ('%%%s = icmp gt %s %%%s, %%%s', 
+		sprintf ('%%%s = icmp sgt %s %%%s, %%%s', 
 			$tmp_reg,
 			$self->int_type,
 			$inst->{'in'}->[0], $inst->{'in'}->[1]
@@ -1208,6 +1221,104 @@ sub gen_nop ($$$$) {
 	return ();
 }
 
+sub gen_ret ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return 'ret void';
+}
+
+sub gen_csub0 ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $error 	= $self->tmp_reg ();
+	my $tmp		= $self->tmp_label ();
+	my $error_lab	= $tmp . '_bounds_error';
+	my $ok_lab	= $tmp . '_ok';
+	my @asm;
+	push (@asm, sprintf ('%%%s = bitcast %s %%%s to %s',
+		$inst->{'out'}->[0], $self->int_type, $inst->{'in'}->[1], $self->int_type
+	));
+	push (@asm, sprintf ('%%%s = icmp uge %s %%%s, %%%s',
+		$error, $self->int_type, $inst->{'in'}->[1], $inst->{'in'}->[0]
+	));
+	push (@asm, sprintf ('br i1 %%%s, label %%%s, label %%%s',
+		$error, $error_lab, $ok_lab
+	));
+	push (@asm, $error_lab . ':');
+	push (@asm, $self->_gen_error ($proc, $label, $inst, 'bounds'));
+	push (@asm, sprintf ('br label %%%s', $ok_lab));
+	push (@asm, $ok_lab . ':');
+
+	return @asm;
+}
+
+sub gen_lend ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $block_ptr		= $self->tmp_reg ();
+	my $index_ptr		= $self->tmp_reg ();
+	my $block_cnt		= $self->tmp_reg ();
+	my $new_block_cnt	= $self->tmp_reg ();
+	my $index_cnt		= $self->tmp_reg ();
+	my $new_index_cnt	= $self->tmp_reg ();
+	my $loop_cond		= $self->tmp_reg ();
+	my $loop_lab		= $self->tmp_label ();
+	my @asm;
+	push (@asm, sprintf ('%%%s = inttoptr %s %%%s to %s',
+		$index_ptr, $self->int_type, $inst->{'in'}->[0], $self->int_type . '*'
+	));
+	push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+		$block_ptr,
+		$self->int_type . '*', $index_ptr,
+		$self->index_type, 1
+	));
+	push (@asm, sprintf ('%%%s = load %s %%%s',
+		$block_cnt,
+		$self->int_type . '*', $block_ptr
+	));
+	push (@asm, sprintf ('%%%s = sub %s %%%s, %d',
+		$new_block_cnt,
+		$self->int_type, $block_cnt, 1
+	));
+	push (@asm, sprintf ('store %s %%%s, %s %%%s',
+		$self->int_type, $new_block_cnt,
+		$self->int_type . '*', $block_ptr
+	));
+	push (@asm, sprintf ('%%%s = icmp ugt %s %%%s, %d',
+		$loop_cond,
+		$self->int_type, $new_block_cnt, 0
+	));
+	push (@asm, sprintf ('br i1 %%%s, label %%%s, label %%%s',
+		$loop_cond, $loop_lab, $label->{'next'}->{'name'}
+	));
+	push (@asm, $loop_lab . ':');
+	push (@asm, sprintf ('%%%s = load %s %%%s',
+		$index_cnt,
+		$self->int_type . '*', $index_ptr
+	));
+	push (@asm, sprintf ('%%%s = add %s %%%s, %d',
+		$new_index_cnt,
+		$self->int_type, $index_cnt, 1
+	));
+	push (@asm, sprintf ('store %s %%%s, %s %%%s',
+		$self->int_type, $new_index_cnt,
+		$self->int_type . '*', $index_ptr
+	));
+	push (@asm, $self->gen_j ($proc, $label, $inst));
+
+	return @asm;
+}
+
+sub format_lines (@) {
+	my @lines = @_;
+	my @asm;
+	foreach my $line (@lines) {
+		if ($line =~ /^[a-zA-Z0-9\$\._]+:/) {
+			push (@asm, $line);
+		} else {
+			push (@asm, "\t" . $line);
+		}
+	}
+	return @asm;
+}
+
 sub generate_proc ($$) {
 	my ($self, $proc) = @_;
 	my @asm;
@@ -1218,6 +1329,7 @@ sub generate_proc ($$) {
 	));
 	foreach my $label (@{$proc->{'labels'}}) {
 		my ($name, $insts) = ($label->{'name'}, $label->{'inst'});
+		my $last_inst;
 		push (@asm, 
 			$label->{'name'} . ':'
 		);
@@ -1284,17 +1396,11 @@ sub generate_proc ($$) {
 			
 			if ($data->{'generator'}) {
 				my @lines = &{$data->{'generator'}}($self, $proc, $label, $inst);
-				foreach my $line (@lines) {
-					if ($line =~ /^[a-zA-Z0-9\$\._]+:/) {
-						push (@asm, $line);
-					} else {
-						push (@asm, "\t" . $line);
-					}
-				}
+				push (@asm, format_lines (@lines));
 			} elsif (@$out + @$fout == 1) {
 				my $line = "\t";
 				$line .= output_regs ($out, $fout);
-				$line .= " = call op_" . $name . " (%" . $inst->{'wptr'};
+				$line .= " = call void \@op_" . $name . " (%" . $inst->{'wptr'};
 				$line .= ', ' . $inst->{'arg'} if exists ($inst->{'arg'});
 				$line .= ', ' if (@$in + @$fin > 0);
 				$line .= output_regs ($in, $fin);
@@ -1303,13 +1409,24 @@ sub generate_proc ($$) {
 			} else {
 				my $line = "\t";
 				$line .= '%', $inst->{'_wptr'}, ' = ' if $inst->{'_wptr'};
-				$line .= "call op_" . $name . " (%" . $inst->{'wptr'};
+				$line .= "call void \@op_" . $name . " (%" . $inst->{'wptr'};
 				$line .= ', ' . $inst->{'arg'} if exists ($inst->{'arg'});
 				$line .= ', ' if (@$in + @$fin > 0);
 				$line .= output_regs ($in, $fin, $out, $fout);
 				$line .= ")";
 				push (@asm, $line);
 			}
+			
+			$last_inst = $inst;
+		}
+		if ($last_inst->{'name'} !~ /^(J|CJ|LEND|RET)$/) {
+			my $next_label = $label->{'next'};
+			push (@asm, format_lines (
+				$self->gen_j ($proc, $label, {
+					'wptr' 	=> $last_inst->{'wptr'},
+					'arg'	=> $next_label
+				})
+			));
 		}
 	}
 	push (@asm, '}');
