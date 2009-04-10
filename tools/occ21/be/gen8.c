@@ -2619,7 +2619,7 @@ gencomment0 ("gen non-register param 2..0");
 				/*{{{  free dynamic mobile something */
 				const int skiplab = newlab ();
 				gencomment0 ("{{{ free dynamic MOBILE parameter (after FORK)");
-				if (isdynmobilearray (exp)) {
+				if (isdynmobilearray (exp) && !paramtable[i].pvalparam) {
 					genprimary (I_LDL, slot + 1);
 				} else {
 					genprimary (I_LDL, slot);
