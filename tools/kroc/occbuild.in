@@ -585,9 +585,12 @@ class TockToolchain:
 
 	def object(self, source):
 		need_mods = needs[:]
+		impl = []
 		if std_libs:
 			need_mods.append("forall")
-		run(self.tock_cmd(["-c"]) + [source]) #["-u" + m for m in need_mods] +
+			impl.append("-u")
+			impl.append("forall")
+		run(self.tock_cmd(["-c"]) + impl + [source]) #["-u" + m for m in need_mods] +
 		(base, ext) = split_ext(source)
 		make_stub(base + ".tce")
 
@@ -609,7 +612,7 @@ class TockToolchain:
 		def custom(f):
 #			for need in resolved_mods:
 #				f.write('#INCLUDE "%s"\n' % need)
-			f.write('#USE "' + base + '"\n')
+			f.write('#INCLUDE "' + base + '.tock.inc"\n')
 		make_module(base, custom)
 
 		lib_opts.append(patterns["rtlink"] % "ccsp")
@@ -644,6 +647,8 @@ class TockToolchain:
 	def program(self, occam_objs, native_objs, base, output = None):
 		if output is None:
 			output = base
+		if std_libs:
+			need_mods.append("forall")
 		run(self.tock_cmd(["-o", output, base + ".occ"] + ["--external-link"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs))
 
 	def run(self, program, args):
@@ -699,7 +704,10 @@ class TockToolchain:
 	def cflags(self):
 		cflags = "-DOCCBUILD_KROC"
 		print tidy_spaces(cflags)
-
+	def isearch(self):
+		return capture(programs["tock"] + ["--module-path"]).strip().split(":") + capture(programs["tock"] + ["--include-path"]).strip().split(":") + capture(programs["tock"] + ["--lib-path"]).strip().split(":")
+	def update_patterns(self,patterns):
+		pass
 
 def usage(f):
 	print >>f, """occbuild, version """ + VERSION + """
