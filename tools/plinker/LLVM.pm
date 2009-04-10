@@ -730,6 +730,7 @@ sub build_phi_nodes ($$) {
 	}
 }
 
+
 sub output_regs (@) {
 	my (@regs) = @_;
 	return if !@regs;
@@ -819,13 +820,36 @@ sub source_line {
 	return $self->{'source_line'};
 }
 
+sub int_constant ($$) {
+	my ($self, $int) = @_;
+	my $int_type = $self->int_type;
+	return sprintf ('bitcast %s %d to %s', $int_type, $int, $int_type)
+}
+
+sub single_assignment ($$$$) {
+	my ($self, $type, $src, $dst) = @_;
+	return sprintf ('%%%s = bitcast %s %%%s to %s', $dst, $type, $src, $type);
+}
+
+sub global_ptr_value ($$$) {
+	my ($self, $type, $global) = @_;
+	my $tmp_reg = $self->tmp_reg ();
+	return ($tmp_reg, 
+		sprintf ('%%%s = load %s* @%s', $tmp_reg, $type, $global)
+	);
+}
+
 sub _gen_error ($$$$$) {
 	my ($self, $proc, $label, $inst, $type) = @_;
-	return sprintf ('call void @etc_error_%s (%s %%%s, i8* @%s, %s %s)',
-		$type,
-		$self->workspace_type, $inst->{'wptr'},
-		$self->source_file,
-		$self->int_type, $self->source_line
+	my ($source_reg, $source_asm) = $self->global_ptr_value ('i8*', $self->source_file);
+	return (
+		$source_asm,
+		sprintf ('call void @etc_error_%s (%s %%%s, i8* %%%s, %s %s)',
+			$type,
+			$self->workspace_type, $inst->{'wptr'},
+			$source_reg,
+			$self->int_type, $self->source_line
+		)
 	);
 }
 
@@ -897,11 +921,9 @@ sub gen_ajw ($$$$) {
 
 sub gen_ldc ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	return sprintf ('%%%s = bitcast %s %s to %s',
+	return sprintf ('%%%s = %s',
 		$inst->{'out'}->[0],
-		$self->int_type,
-		$inst->{'arg'},
-		$self->int_type
+		$self->int_constant ($inst->{'arg'})
 	);
 }
 
@@ -976,16 +998,24 @@ sub gen_stl ($$$$) {
 sub _gen_ldnlp ($$) {
 	my ($self, $inst) = @_;
 	my ($reg, @asm);
+	my $ptr_reg = $self->tmp_reg ();
+	push (@asm,
+		sprintf ('%%%s = inttoptr %s %%%s to %s',
+			$ptr_reg, 
+			$self->int_type, $inst->{'in'}->[0], 
+			$self->int_type . '*'
+		)
+	);
 	if ($inst->{'arg'} != 0) {
 		$reg = $self->tmp_reg ();
 		push (@asm, 
 			sprintf ('%%%s = getelementptr %s %%%s, %s %d',
 				$reg, 
-				$self->int_type . '*', $inst->{'in'}->[0],
+				$self->int_type . '*', $ptr_reg,
 				$self->index_type, $inst->{'arg'}
 		));
 	} else {
-		$reg = $inst->{'in'}->[0];
+		$reg = $ptr_reg;
 	}
 	return ($reg, @asm);
 }
@@ -1015,9 +1045,9 @@ sub gen_dup ($$$$) {
 	my @asm;
 	my $in = $inst->{'in'}->[0];
 	foreach my $reg (@{$inst->{'out'}}) {
-		push (@asm, sprintf ('%%%s = bitcast %s %%%s to %s', 
-			$reg, $self->int_type, $in, $self->int_type
-		));
+		push (@asm, $self->single_assignment (
+			$self->int_type, $inst->{'in'}->[0], $reg
+		)); 
 	}
 	return @asm;
 }
@@ -1233,8 +1263,8 @@ sub gen_csub0 ($$$$) {
 	my $error_lab	= $tmp . '_bounds_error';
 	my $ok_lab	= $tmp . '_ok';
 	my @asm;
-	push (@asm, sprintf ('%%%s = bitcast %s %%%s to %s',
-		$inst->{'out'}->[0], $self->int_type, $inst->{'in'}->[1], $self->int_type
+	push (@asm, $self->single_assignment (
+		$self->int_type, $inst->{'in'}->[1], $inst->{'out'}->[0]
 	));
 	push (@asm, sprintf ('%%%s = icmp uge %s %%%s, %%%s',
 		$error, $self->int_type, $inst->{'in'}->[1], $inst->{'in'}->[0]
@@ -1452,8 +1482,8 @@ sub code_constants ($) {
 			push (@asm, sprintf ('@%s_value = internal constant [ %d x i8 ] [ %s ]',
 				$name, scalar (@chr), join (', ', @chr)
 			));
-			push (@asm, sprintf ('@%s = internal constant i8* @%s_value',
-				$name, $name
+			push (@asm, sprintf ('@%s = internal constant i8* getelementptr ([ %d x i8 ]* @%s_value, i32 0, i32 0)',
+				$name, scalar (@chr), $name
 			));
 		}
 	}
@@ -1473,6 +1503,16 @@ sub code_proc ($$) {
 	return ($comments, $self->generate_proc ($proc));
 }
 
+sub intrinsics ($) {
+	my $self = shift;
+	my $int = $self->int_type;
+	return (
+		"declare { $int, i1 } \@llvm.sadd.with.overflow.$int ($int, $int)",
+		"declare { $int, i1 } \@llvm.smul.with.overflow.$int ($int, $int)",
+		"declare { $int, i1 } \@llvm.ssub.with.overflow.$int ($int, $int)"
+	);
+}
+
 sub generate ($$) {
 	my ($self, $text) = @_;
 	my $verbose = $self->{'verbose'};
@@ -1481,8 +1521,11 @@ sub generate ($$) {
 
 	$self->preprocess_etc ($file, $etc);
 
-	my @header;
+	my @header = $self->intrinsics;
 	# for debugging
+	push (@header, sprintf ('declare void @etc_error_bounds (%s, i8*, %s)',
+		$self->workspace_type, $self->int_type
+	));
 	push (@header, sprintf ('declare void @etc_error_overflow (%s, i8*, %s)',
 		$self->workspace_type, $self->int_type
 	));
