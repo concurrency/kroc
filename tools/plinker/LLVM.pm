@@ -855,12 +855,31 @@ sub _gen_error ($$$$$) {
 
 sub gen_j ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	return 'br label %' . $inst->{'arg'}->{'name'};
+	my @params = ( sprintf ('%s %%%s', $self->workspace_type, $inst->{'wptr'}) );
+	if ($inst->{'in'}) {
+		for (my $i = 0; $i < @{$inst->{'in'}}; ++$i) {
+			push (@params, sprintf ('%s %%%s', $self->int_type, $inst->{'in'}->[$i]));
+		}
+	}
+	if ($inst->{'fin'}) {
+		for (my $i = 0; $i < @{$inst->{'fin'}}; ++$i) {
+			push (@params, sprintf ('%s %%%s', $self->float_type, $inst->{'fin'}->[$i]));
+		}
+	}
+	return (
+		sprintf ('tail call void %s (%s)',
+			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
+			join (', ', @params)
+		),
+		'unreachable'
+	);
 }
 
 sub gen_cj ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $tmp_reg = $self->tmp_reg ();
+	my $jump_label = $self->tmp_label ();
+	my $cont_label = $self->tmp_label ();
 	return (
 		sprintf ('%%%s = icmp eq %s %%%s, %d',
 			$tmp_reg,
@@ -869,9 +888,23 @@ sub gen_cj ($$$$) {
 		),
 		sprintf ('br i1 %%%s, label %%%s, label %%%s',
 			$tmp_reg,
-			$inst->{'arg'}->{'name'},
-			$label->{'next'}->{'name'}
-		)
+			$jump_label, $cont_label
+		),
+		$jump_label . ':',
+		sprintf ('tail call void %s (%s %%%s)',
+			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
+			$self->workspace_type,
+			$inst->{'wptr'}
+		),
+		'unreachable',
+		'ret void',
+		$cont_label . ':',
+		sprintf ('tail call void %s (%s %%%s)',
+			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
+			$self->workspace_type,
+			$inst->{'wptr'}
+		),
+		'unreachable'
 	);
 }
 
@@ -881,7 +914,7 @@ sub gen_call ($$$$) {
 	
 	my $in = $inst->{'in'};
 	if (exists ($inst->{'fin'})) {
-		push (@asm, "; WARNING: point stack is not empty at point of call");
+		push (@asm, "; WARNING: stack is not empty at point of call");
 	}
 
 	my $new_wptr = $self->tmp_reg ();
@@ -889,6 +922,16 @@ sub gen_call ($$$$) {
 		$new_wptr,
 		$self->workspace_type, $inst->{'wptr'},
 		$self->index_type, -4
+	));
+
+	my $ret_ptr = $self->tmp_reg ();
+	push (@asm, sprintf ('%%%s = load %s %s',
+		$ret_ptr, $self->int_type . '*',
+		$proc->{'call_prefix'} . $label->{'next'}->{'name'}
+	));
+	push (@asm, sprintf ('store %s %%%s, %s %%%s',
+		$self->int_type, $ret_ptr,
+		$self->workspace_type, $new_wptr
 	));
 
 	for (my $i = 0; $i < @$in; ++$i) {
@@ -904,8 +947,12 @@ sub gen_call ($$$$) {
 		));
 	}
 
-	# FIXME: do call
-	#push (@asm, 'call...');
+	push (@asm, sprintf ('tail call void @O_%s (%s %%%s)',
+		$inst->{'arg'}->{'symbol'},
+		$self->workspace_type,
+		$new_wptr
+	));
+	push (@asm, 'unreachable');
 
 	return @asm;
 }	
@@ -1205,7 +1252,6 @@ sub gen_gt ($$$$) {
 	);
 }
 
-
 sub _gen_bitop ($$$@) { 
 	my ($self, $inst, $op, @in) = @_;
 	return sprintf ('%%%s = %s %s %%%s, %d',
@@ -1253,7 +1299,24 @@ sub gen_nop ($$$$) {
 
 sub gen_ret ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	return 'ret void';
+	my $jump_val = $self->tmp_reg ();
+	my $jump_ptr = $self->tmp_reg ();
+	my @asm;
+	push (@asm, sprintf ('%%%s = load %s %%%s',
+		$jump_val, 
+		$self->workspace_type, $inst->{'wptr'}
+	));
+	push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s)*',
+		$jump_ptr, 
+		$self->int_type, $jump_val, 
+		$self->workspace_type
+	));
+	push (@asm, sprintf ('tail call void %%%s (%s %%%s)',
+		$jump_ptr,
+		$self->workspace_type, $inst->{'wptr'}
+	));
+	push (@asm, 'unreachable');
+	return @asm;
 }
 
 sub gen_csub0 ($$$$) {
@@ -1290,6 +1353,7 @@ sub gen_lend ($$$$) {
 	my $new_index_cnt	= $self->tmp_reg ();
 	my $loop_cond		= $self->tmp_reg ();
 	my $loop_lab		= $self->tmp_label ();
+	my $next_lab		= $self->tmp_label ();
 	my @asm;
 	push (@asm, sprintf ('%%%s = inttoptr %s %%%s to %s',
 		$index_ptr, $self->int_type, $inst->{'in'}->[0], $self->int_type . '*'
@@ -1316,7 +1380,7 @@ sub gen_lend ($$$$) {
 		$self->int_type, $new_block_cnt, 0
 	));
 	push (@asm, sprintf ('br i1 %%%s, label %%%s, label %%%s',
-		$loop_cond, $loop_lab, $label->{'next'}->{'name'}
+		$loop_cond, $loop_lab, $next_lab
 	));
 	push (@asm, $loop_lab . ':');
 	push (@asm, sprintf ('%%%s = load %s %%%s',
@@ -1331,7 +1395,9 @@ sub gen_lend ($$$$) {
 		$self->int_type, $new_index_cnt,
 		$self->int_type . '*', $index_ptr
 	));
-	push (@asm, $self->gen_j ($proc, $label, $inst));
+	push (@asm, $self->gen_j ($proc, $label, { 'wptr' => $inst->{'wptr'}, 'arg' => $inst->{'arg'} }));
+	push (@asm, 'ret void');
+	push (@asm, $next_lab . ':');
 
 	return @asm;
 }
@@ -1340,7 +1406,7 @@ sub format_lines (@) {
 	my @lines = @_;
 	my @asm;
 	foreach my $line (@lines) {
-		if ($line =~ /^[a-zA-Z0-9\$\._]+:/) {
+		if ($line =~ /^[a-zA-Z0-9\$\._]+:/ || $line =~ /[{}]\s*$/) {
 			push (@asm, $line);
 		} else {
 			push (@asm, "\t" . $line);
@@ -1351,19 +1417,46 @@ sub format_lines (@) {
 
 sub generate_proc ($$) {
 	my ($self, $proc) = @_;
+	my $symbol 	= '@O_' . $proc->{'symbol'};
+	my $call_pfix 	= $symbol . '_';
 	my @asm;
 
-	push (@asm, join ('', 
-		'define void @O_', $proc->{'symbol'}, 
-			'(i32 *%', $proc->{'labels'}->[0]->{'wptr'}, ') {'
+	$proc->{'call_prefix'} = $call_pfix;
+
+	push (@asm, format_lines (
+		sprintf ('define void %s (%s %%wptr) {', 
+			$symbol,
+			$self->workspace_type
+		),
+		'entry:',
+		sprintf ('tail call void %s (%s %%wptr)',
+			$call_pfix . $proc->{'labels'}->[0]->{'name'},
+			$self->workspace_type
+		),
+		'unreachable',
+		'ret void',
+		'}'
 	));
+
 	foreach my $label (@{$proc->{'labels'}}) {
 		my ($name, $insts) = ($label->{'name'}, $label->{'inst'});
 		my $last_inst;
-		push (@asm, 
-			$label->{'name'} . ':'
-		);
-		if ($label->{'phi'}) {
+
+		if (1) {
+			my @params = ( sprintf ('%s %%%s', $self->workspace_type, $label->{'wptr'}) );
+			for (my $i = 0; $i < @{$label->{'in'}}; ++$i) {
+				push (@params, sprintf ('%s %%%s', $self->int_type, $label->{'in'}->[$i]));
+			}
+			for (my $i = 0; $i < @{$label->{'fin'}}; ++$i) {
+				push (@params, sprintf ('%s %%%s', $self->float_type, $label->{'fin'}->[$i]));
+			}
+			push (@asm,
+				sprintf ('define private fastcc void %s_%s (%s) {',
+					$symbol, $name,
+					join (', ', @params)
+			));
+			push (@asm, $name . ':');
+		} elsif ($label->{'phi'}) {
 			my $wptr	= $label->{'wptr'};
 			my $in 		= $label->{'in'} || [];
 			my $fin 	= $label->{'fin'} || [];
@@ -1395,6 +1488,7 @@ sub generate_proc ($$) {
 				));
 			}
 		}
+		
 		foreach my $inst (@$insts) {
 			my $name 	= $inst->{'name'};
 			
@@ -1449,17 +1543,21 @@ sub generate_proc ($$) {
 			
 			$last_inst = $inst;
 		}
-		if ($last_inst->{'name'} !~ /^(J|CJ|LEND|RET)$/) {
+
+		if ($last_inst->{'name'} !~ /^(J|CALL|CJ|RET)$/) {
 			my $next_label = $label->{'next'};
 			push (@asm, format_lines (
 				$self->gen_j ($proc, $label, {
-					'wptr' 	=> $last_inst->{'wptr'},
+					'in'	=> $next_label->{'in'},
+					'fin'	=> $next_label->{'fin'},
+					'wptr' 	=> $next_label->{'wptr'},
 					'arg'	=> $next_label
 				})
 			));
 		}
+		push (@asm, format_lines ('ret void', '}'));
 	}
-	push (@asm, '}');
+	#push (@asm, '}') if !$prev_call;
 
 	return @asm;
 }
