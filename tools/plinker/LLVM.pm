@@ -53,7 +53,8 @@ $GRAPH = {
 	'REV'		=> { 'in' => 2, 'out' => 2,
 			'generator' => \&gen_rev },
 	'LB'		=> { 'in' => 1, 'out' => 1 },
-	'BSUB'		=> { 'in' => 2, 'out' => 1 },
+	'BSUB'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_bsub },
 	'ENDP'		=> { 'in' => 1 },
 	'DIFF'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_diff },
@@ -65,7 +66,8 @@ $GRAPH = {
 			'generator' => \&gen_prod },
 	'GT'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_gt },
-	'WSUB'		=> { 'in' => 2, 'out' => 1 },
+	'WSUB'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_wsub },
 	'OUT'		=> { 'in' => 3 },
 	'SUB'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_sub },
@@ -751,6 +753,19 @@ sub int_type {
 	return 'i32'; # FIXME:
 }
 
+sub int_length {
+	my $self = shift;
+	my $type = shift || $self->int_type;
+	if ($type eq 'i16') {
+		return 2;
+	} elsif ($type eq 'i32') {
+		return 4;
+	} elsif ($type eq 'i64') {
+		return 8;
+	}
+	die "Unknown integer type $type";
+}
+
 sub index_type {
 	my $self = shift;
 	if ($self->int_type eq 'i64') {
@@ -1313,6 +1328,7 @@ sub gen_nop ($$$$) {
 	return ();
 }
 
+
 sub gen_ret ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $jump_val = $self->tmp_reg ();
@@ -1356,6 +1372,28 @@ sub gen_csub0 ($$$$) {
 	push (@asm, $ok_lab . ':');
 
 	return @asm;
+}
+
+sub gen_bsub ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->gen_sum ($proc, $label, $inst);
+}
+
+sub gen_wsub ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	my $tmp_reg = $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = mul %s %%%s, %d',
+			$tmp_reg,
+			$self->int_type, $inst->{'in'}->[1],
+			$self->int_type, $self->int_length
+		),
+		$self->gen_sum ($proc, $label, {
+			'wptr' 	=> $inst->{'wptr'},
+			'in'	=> [ $inst->{'in'}->[0], $tmp_reg ],
+			'out'	=> $inst->{'out'}
+		})
+	);
 }
 
 sub gen_lend ($$$$) {
