@@ -81,6 +81,8 @@ $GRAPH = {
 	'LADD'		=> { 'in' => 3, 'out' => 1 },
 	'NORM'		=> { 'in' => 3, 'out' => 3 },
 	'LDIV'		=> { 'in' => 3, 'out' => 2 },
+	'LDPI'		=> { 
+			'generator' => \&gen_nop },
 	'REM'		=> { 'in' => 2, 'out' => 2 },
 	'RET'		=> {
 			'generator' => \&gen_ret },
@@ -453,11 +455,12 @@ sub expand_etc_ops ($) {
 					$l1->{'arg'}	= [ $l1->{'arg'}, 'L' . $l2->{'arg'} ];
 					$etc->[$i]	= $l1;
 				} else {
-					$l1->{'arg'} 	= [ $l1->{'arg'}, 'LDPI' ];
-					splice (@$etc, $i, 1, 
-						$l1,
-						{ 'name' => 'LDPI' }
-					);
+					#$l1->{'arg'} 	= [ $l1->{'arg'}, 'LDPI' ];
+					#splice (@$etc, $i, 1, 
+					#	$l1,
+					#	{ 'name' => 'LDPI' }
+					#);
+					splice (@$etc, $i, 1, $l1);
 				}
 			} else {
 				$etc->[$i] = $arg;
@@ -867,11 +870,10 @@ sub gen_j ($$$$) {
 		}
 	}
 	return (
-		sprintf ('tail call void %s (%s)',
+		sprintf ('tail call void %s (%s) noreturn nounwind',
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
 			join (', ', @params)
-		),
-		'unreachable'
+		)
 	);
 }
 
@@ -891,20 +893,18 @@ sub gen_cj ($$$$) {
 			$jump_label, $cont_label
 		),
 		$jump_label . ':',
-		sprintf ('tail call void %s (%s %%%s)',
+		sprintf ('tail call void %s (%s %%%s) noreturn nounwind',
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
 			$self->workspace_type,
 			$inst->{'wptr'}
 		),
-		'unreachable',
 		'ret void',
 		$cont_label . ':',
-		sprintf ('tail call void %s (%s %%%s)',
+		sprintf ('tail call void %s (%s %%%s) noreturn nounwind',
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
 			$self->workspace_type,
 			$inst->{'wptr'}
-		),
-		'unreachable'
+		)
 	);
 }
 
@@ -947,12 +947,11 @@ sub gen_call ($$$$) {
 		));
 	}
 
-	push (@asm, sprintf ('tail call void @O_%s (%s %%%s)',
+	push (@asm, sprintf ('tail call void @O_%s (%s %%%s) noreturn nounwind',
 		$inst->{'arg'}->{'symbol'},
 		$self->workspace_type,
 		$new_wptr
 	));
-	push (@asm, 'unreachable');
 
 	return @asm;
 }	
@@ -968,10 +967,27 @@ sub gen_ajw ($$$$) {
 
 sub gen_ldc ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	return sprintf ('%%%s = %s',
-		$inst->{'out'}->[0],
-		$self->int_constant ($inst->{'arg'})
-	);
+	my $arg = $inst->{'arg'};
+	if (ref ($arg)) {
+		my $name 	= $arg->{'name'};
+		my $tmp_reg 	= $self->tmp_reg ();
+
+		$self->new_constant ($name, $arg)
+			if !exists ($self->{'constants'}->{$name});
+
+		return (
+			sprintf ('%%%s = load i8** @%s', $tmp_reg, $name),
+			sprintf ('%%%s = ptrtoint i8* %%%s to %s',
+				$inst->{'out'}->[0], $tmp_reg,
+				$self->int_type
+			)
+		);
+	} else {
+		return sprintf ('%%%s = %s',
+			$inst->{'out'}->[0],
+			$self->int_constant ($arg)
+		);
+	}
 }
 
 sub gen_mint ($$$$) {
@@ -1311,11 +1327,10 @@ sub gen_ret ($$$$) {
 		$self->int_type, $jump_val, 
 		$self->workspace_type
 	));
-	push (@asm, sprintf ('tail call void %%%s (%s %%%s)',
+	push (@asm, sprintf ('tail call void %%%s (%s %%%s) noreturn nounwind',
 		$jump_ptr,
 		$self->workspace_type, $inst->{'wptr'}
 	));
-	push (@asm, 'unreachable');
 	return @asm;
 }
 
@@ -1429,11 +1444,10 @@ sub generate_proc ($$) {
 			$self->workspace_type
 		),
 		'entry:',
-		sprintf ('tail call void %s (%s %%wptr)',
+		sprintf ('tail call void %s (%s %%wptr) noreturn nounwind',
 			$call_pfix . $proc->{'labels'}->[0]->{'name'},
 			$self->workspace_type
 		),
-		'unreachable',
 		'ret void',
 		'}'
 	));
@@ -1505,6 +1519,12 @@ sub generate_proc ($$) {
 			if (exists ($inst->{'arg'})) {
 				$line .= " ";
 				if (exists ($inst->{'label_arg'})) {
+					# FIXME: debug
+					if (ref ($inst->{'arg'}) =~ /ARRAY/) {
+						print $name, "\n";
+						exit 0;
+					}
+					# FIXME: /debug
 					$line .= $inst->{'arg'}->{'name'};
 				} else {
 					$line .= $inst->{'arg'};
@@ -1569,21 +1589,32 @@ sub code_constants ($) {
 
 	foreach my $name (sort (keys (%$constants))) {
 		my $value = $constants->{$name};
+		my $align = undef;
+		my @data;
 		if (exists ($value->{'str'})) {
 			my $str = $value->{'str'};
-			my @chr = split (//, $str);
-			foreach my $chr (@chr) {
-				$chr = 'i8 ' . ord ($chr);
+			@data = split (//, $str);
+			foreach my $chr (@data) {
+				$chr = ord ($chr);
 			}
-			push (@chr, 'i8 0');
+			push (@data, 0);
 			push (@asm, "; \@$name = \"$str\"");
-			push (@asm, sprintf ('@%s_value = internal constant [ %d x i8 ] [ %s ]',
-				$name, scalar (@chr), join (', ', @chr)
-			));
-			push (@asm, sprintf ('@%s = internal constant i8* getelementptr ([ %d x i8 ]* @%s_value, i32 0, i32 0)',
-				$name, scalar (@chr), $name
-			));
+		} elsif (exists ($value->{'data'})) {
+			$align = $value->{'align'};
+			@data = unpack ('C*', $value->{'data'}); 
 		}
+		
+		foreach my $val (@data) {
+			$val = sprintf ('i8 %d', $val);
+		}
+
+		push (@asm, sprintf ('@%s_value = internal constant [ %d x i8 ] [ %s ]%s',
+			$name, scalar (@data), join (', ', @data),
+			($align ? ', align ' . (2 ** $align) : '')
+		));
+		push (@asm, sprintf ('@%s = internal constant i8* getelementptr ([ %d x i8 ]* @%s_value, i32 0, i32 0)',
+			$name, scalar (@data), $name
+		));
 	}
 
 	return @asm;
