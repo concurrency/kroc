@@ -79,7 +79,8 @@ $GRAPH = {
 	# Constants
 	'LDC'		=> { 'out' => 1, 
 			'generator' => \&gen_ldc },
-	'LDINF'		=> { 'out' => 1 },
+	'LDINF'		=> { 'out' => 1,
+			'generator' => \&gen_ldinf },
 	'NULL'		=> { 'out' => 1,
 			'generator' => \&gen_null },
 	'MINT'		=> { 'out' => 1,
@@ -125,6 +126,7 @@ $GRAPH = {
 	'POSTNORMSN'	=> { 'in' => 3, 'out' => 3 },
 	'ROUNDSN'	=> { 'in' => 3, 'out' => 1 },
 	# Long Arithmetic
+	'XDBLE'		=> { 'in' => 1, 'out' => 2 },
 	'LADD'		=> { 'in' => 3, 'out' => 1 },
 	'LDIFF'		=> { 'in' => 3, 'out' => 2 },
 	'LDIV'		=> { 'in' => 3, 'out' => 2 },
@@ -245,6 +247,7 @@ sub new ($$) {
 	$self->{'source_files'}	= {};
 	$self->{'source_file'}	= undef;
 	$self->{'source_line'} 	= 0;
+	$self->{'header'}	= {};
 	return $self;
 }
 
@@ -1074,6 +1077,11 @@ sub gen_ldc ($$$$) {
 	}
 }
 
+sub gen_ldinf ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->int_constant (0x7f800000);
+}
+
 sub gen_mint ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $type = $self->int_type;
@@ -1852,7 +1860,13 @@ sub generate ($$) {
 	push (@header, sprintf ('declare void @etc_error_bounds (%s, i8*, %s)',
 		$self->workspace_type, $self->int_type
 	));
+	push (@header, sprintf ('declare void @etc_error_div (%s, i8*, %s)',
+		$self->workspace_type, $self->int_type
+	));
 	push (@header, sprintf ('declare void @etc_error_overflow (%s, i8*, %s)',
+		$self->workspace_type, $self->int_type
+	));
+	push (@header, sprintf ('declare void @etc_error_set (%s, i8*, %s)',
 		$self->workspace_type, $self->int_type
 	));
 
@@ -1862,7 +1876,10 @@ sub generate ($$) {
 	}
 	
 	my @const_asm 	= $self->code_constants ();
-	
+	foreach my $elem (sort (keys (%{$self->{'header'}}))) {
+		push (@header, @{$self->{'header'}->{$elem}});
+	}
+
 	my @ret 	= (@header, @const_asm, @proc_asm);
 	foreach my $line (@ret) {
 		print $line, "\n";
