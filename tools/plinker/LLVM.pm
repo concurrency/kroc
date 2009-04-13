@@ -30,7 +30,7 @@ $GRAPH = {
 	'CJ'		=> { 'branching' => 1, 'in' => 3, 'out' => 2,
 			'generator' => \&gen_cj },
 	'GCALL'		=> { 'branching' => 1, 'in' => 3,
-			'generator' => \&gen_gcall }, # check
+			'generator' => \&gen_call }, # check
 	'J' 		=> { 'branching' => 1, 'in' => 3,
 			'generator' => \&gen_j },
 	'LEND'		=> { 'branching' => 1, 'in' => 1,
@@ -100,8 +100,10 @@ $GRAPH = {
 	'SUB'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_sub },
 	'NORM'		=> { 'in' => 3, 'out' => 3 },
-	'REM'		=> { 'in' => 2, 'out' => 2 },
-	'DIV'		=> { 'in' => 2, 'out' => 2 },
+	'REM'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_divrem },
+	'DIV'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_divrem },
 	'NOT'		=> { 'in' => 1, 'out' => 1,
 			'generator' => \&gen_not },
 	'XOR'		=> { 'in' => 2, 'out' => 1,
@@ -1303,6 +1305,59 @@ sub gen_prod ($$$$) {
 	);
 }	
 
+sub gen_divrem ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $mint 	= $self->tmp_reg ();
+	my $cond_a_0	= $self->tmp_reg ();
+	my $cond_a_m1	= $self->tmp_reg ();
+	my $cond_b_mint	= $self->tmp_reg ();
+	my $cond_error0	= $self->tmp_reg ();
+	my $cond_error1	= $self->tmp_reg ();
+	my $tmp		= $self->tmp_label ();
+	my $error_lab	= $tmp . '_div_error';
+	my $ok_lab	= $tmp . '_ok';
+	my @asm;
+
+	push (@asm, $self->gen_mint ($proc, $label, { 'out' => [ $mint ] }));
+	push (@asm, sprintf ('%%%s = icmp eq %s %%%s, -1',
+		$cond_a_m1, 
+		$self->int_type, $inst->{'in'}->[0]
+	));
+	push (@asm, sprintf ('%%%s = icmp eq %s %%%s, %%%s',
+		$cond_b_mint, 
+		$self->int_type, $inst->{'in'}->[1],
+		$mint
+	));
+	push (@asm, sprintf ('%%%s = and i1 %%%s, %%%s',
+		$cond_error0, 
+		$cond_a_m1, $cond_b_mint
+	));
+	push (@asm, sprintf ('%%%s = icmp eq %s %%%s, 0',
+		$cond_a_0, 
+		$self->int_type, $inst->{'in'}->[0]
+	));
+	push (@asm, sprintf ('%%%s = or i1 %%%s, %%%s',
+		$cond_error1, 
+		$cond_error0, $cond_a_0
+	));
+	push (@asm, sprintf ('br i1 %%%s, label %%%s, label %%%s',
+		$cond_error1,
+		$error_lab, $ok_lab
+	));
+	push (@asm, $error_lab . ':');
+	push (@asm, $self->_gen_error ($proc, $label, $inst, 'div'));
+	push (@asm, sprintf ('br label %%%s', $ok_lab));
+	push (@asm, $ok_lab . ':');
+	push (@asm, sprintf ('%%%s = %s %s %%%s, %%%s',
+		$inst->{'out'}->[0],
+		($inst->{'name'} eq 'REM' ? 'srem' : 'sdiv'),
+		$self->int_type,
+		$inst->{'in'}->[1], $inst->{'in'}->[0]
+	));
+
+	return @asm;
+}
+
 sub gen_rev ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
 	return (
@@ -1389,7 +1444,6 @@ sub gen_nop ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	return ();
 }
-
 
 sub gen_ret ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
