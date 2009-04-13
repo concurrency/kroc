@@ -72,7 +72,7 @@ $GRAPH = {
 	'WSUB'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_wsub },
 	'WSUBDB'	=> { 'in' => 2, 'out' => 1,
-			'generator' => \&gen_wsubdb },
+			'generator' => \&gen_wsub },
 	'CSUB0'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_csub0 },
 	'MOVE'		=> { 'in' => 3 },
@@ -192,13 +192,11 @@ $GRAPH = {
 	'ENBT'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1 },
 	'ENBT3'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1 },
 	'ENBC'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1 },
+	'ENBC3'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1 },
 	'ENBS'		=> { 'kcall' => 1, 'in' => 1, 'out' => 1 },
 	'ENBS3'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1 },
 	'EXTIN'		=> { 'kcall' => 1, 'in' => 3 },
 	'EXTOUT'	=> { 'kcall' => 1, 'in' => 3 },
-	'ENBC3'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1 },
-	'GETPRI'	=> { 'kcall' => 1, 'out' => 1 },
-	'SETPRI'	=> { 'kcall' => 1, 'in' => 1 },
 	'MALLOC'	=> { 'kcall' => 1, 'in' => 1, 'out' => 1 },
 	'MRELEASE'	=> { 'kcall' => 1, 'in' => 1 },
 	'XABLE'		=> { 'kcall' => 1 },
@@ -213,6 +211,8 @@ $GRAPH = {
 	'GETAFF'	=> { 'kcall' => 1, 'out' => 1 },
 	'SETAFF'	=> { 'kcall' => 1, 'in' => 1 },
 	'GETPAS'	=> { 'kcall' => 1, 'out' => 1 },
+	'GETPRI'	=> { 'kcall' => 1, 'out' => 1 },
+	'SETPRI'	=> { 'kcall' => 1, 'in' => 1 },
 	'MT_ALLOC'	=> { 'kcall' => 1, 'in' => 2, 'out' => 1 },
 	'MT_RELEASE'	=> { 'kcall' => 1, 'in' => 1 },
 	'MT_CLONE'	=> { 'kcall' => 1, 'in' => 1, 'out' => 1 },
@@ -244,6 +244,18 @@ sub new ($$) {
 	$self->{'source_file'}	= undef;
 	$self->{'source_line'} 	= 0;
 	return $self;
+}
+
+sub message ($$$) {
+	my ($self, $warning, $msg) = @_;
+	my $file = $self->{'constants'}->{$self->source_file}->{'str'};
+	my $line = $self->source_line;
+
+	if ($warning) {
+		print STDERR "$file:$line $msg\n";
+	} else {
+		print "$file:$line $msg\n";
+	}
 }
 
 sub foreach_label ($$@) {
@@ -941,11 +953,14 @@ sub gen_cj ($$$$) {
 
 sub gen_call ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
+	my $name = $inst->{'name'};
 	my @asm;
 	
 	my $in = $inst->{'in'};
 	if (exists ($inst->{'fin'})) {
-		push (@asm, "; WARNING: stack is not empty at point of call");
+		my $msg = "WARNING: floating point stack is not empty at point of call";
+		$self->message (1, $msg);
+		push (@asm, "; $msg");
 	}
 
 	my $new_wptr = $self->tmp_reg ();
@@ -965,24 +980,44 @@ sub gen_call ($$$$) {
 		$self->workspace_type, $new_wptr
 	));
 
-	for (my $i = 0; $i < @$in; ++$i) {
-		my $tmp_reg = $self->tmp_reg ();
-		push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
-			$tmp_reg,
-			$self->workspace_type, $new_wptr,
-			$self->index_type, ($i + 1)
+	if ($name eq 'CALL') {
+		for (my $i = 0; $i < @$in; ++$i) {
+			my $tmp_reg = $self->tmp_reg ();
+			push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+				$tmp_reg,
+				$self->workspace_type, $new_wptr,
+				$self->index_type, ($i + 1)
+			));
+			push (@asm, sprintf ('store %s %%%s, %s %%%s',
+				$self->int_type, $in->[$i],
+				$self->workspace_type, $tmp_reg
+			));
+		}
+	} elsif (($name eq 'GCALL') && $in) {
+		my $msg = "WARNING: stack is not empty at point of general call";
+		$self->message (1, $msg);
+		push (@asm, "; $msg");
+	}	
+
+	if ($inst->{'name'} eq 'GCALL') {
+		my $jump_ptr = $self->tmp_reg ();
+		push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s)',
+			$jump_ptr,
+			$self->int_type, $in->[0],
+			$self->workspace_type
 		));
-		push (@asm, sprintf ('store %s %%%s, %s %%%s',
-			$self->int_type, $in->[$i],
-			$self->workspace_type, $tmp_reg
+		push (@asm, sprintf ('tail call void %%%s (%s %%%s) noreturn nounwind',
+			$jump_ptr,
+			$self->workspace_type,
+			$new_wptr
+		));
+	} else {
+		push (@asm, sprintf ('tail call void @O_%s (%s %%%s) noreturn nounwind',
+			$inst->{'arg'}->{'symbol'},
+			$self->workspace_type,
+			$new_wptr
 		));
 	}
-
-	push (@asm, sprintf ('tail call void @O_%s (%s %%%s) noreturn nounwind',
-		$inst->{'arg'}->{'symbol'},
-		$self->workspace_type,
-		$new_wptr
-	));
 
 	return @asm;
 }	
@@ -993,6 +1028,22 @@ sub gen_ajw ($$$$) {
 		$inst->{'_wptr'},
 		$self->workspace_type, $inst->{'wptr'},
 		$self->index_type, $inst->{'arg'}
+	);
+}
+
+sub gen_gajw ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return (
+		sprintf ('%%%s = ptrtoint %s %%%s to %s',
+			$self->{'out'}->[0], 
+			$self->workspace_type, $inst->{'wptr'},
+			$self->int_type
+		),
+		sprintf ('%%%s = inttoptr %s %%%s to %s',
+			$inst->{'_wptr'}, 
+			$self->int_type, $self->{'in'}->[0],
+			$self->workspace_type
+		)
 	);
 }
 
@@ -1255,13 +1306,8 @@ sub gen_prod ($$$$) {
 sub gen_rev ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
 	return (
-		sprintf ('%%%s = %s %%%s to %s', 
-			$inst->{'out'}->[0],
-			$self->int_type,
-			$inst->{'in'}->[1],
-			$self->int_type
-		),
-		sprintf ('%%%s = %%%s', $inst->{'out'}->[1], $inst->{'in'}->[0])
+		$self->single_assignment ($self->int_type, $inst->{'in'}->[0], $inst->{'out'}->[1]),
+		$self->single_assignment ($self->int_type, $inst->{'in'}->[1], $inst->{'out'}->[0])
 	);
 }
 
@@ -1402,7 +1448,7 @@ sub gen_wsub ($$$$) {
 		sprintf ('%%%s = mul %s %%%s, %d',
 			$tmp_reg,
 			$self->int_type, $inst->{'in'}->[1],
-			$self->int_type, $self->int_length
+			$self->int_length * ($inst->{'name'} eq 'WSUBDB' ? 2 : 1)
 		),
 		$self->gen_sum ($proc, $label, {
 			'wptr' 	=> $inst->{'wptr'},
@@ -1410,6 +1456,49 @@ sub gen_wsub ($$$$) {
 			'out'	=> $inst->{'out'}
 		})
 	);
+}
+
+sub gen_lb ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	my $byte_ptr = $self->tmp_reg ();
+	my $byte_val = $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = inttoptr %s %%%s to i8*',
+			$byte_ptr, 
+			$self->int_type, $inst->{'in'}->[0], 
+		),
+		sprintf ('%%%s = load i8* %%%s',
+			$byte_val, $byte_ptr
+		),
+		sprintf ('%%%s = zext i8 %%%s to %s',
+			$inst->{'out'}->[0],
+			$byte_val, $self->int_type
+		)
+	);
+}
+
+sub gen_sb ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	my $byte_ptr = $self->tmp_reg ();
+	my $byte_val = $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = inttoptr %s %%%s to i8*',
+			$byte_ptr, 
+			$self->int_type, $inst->{'in'}->[0], 
+		),
+		sprintf ('%%%s = trunc %s %%%s to i8',
+			$byte_val, 
+			$self->int_type, $inst->{'in'}->[1]
+		),
+		sprintf ('%%%s = load i8* %%%s',
+			$byte_ptr, $byte_val
+		)
+	);
+}
+
+sub gen_seterr ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->_gen_error ($proc, $label, $inst, 'set');
 }
 
 sub gen_lend ($$$$) {
