@@ -182,7 +182,8 @@ $GRAPH = {
 	'ENDP'		=> { 'kcall' => 1, 'in' => 1 },
 	'IN'		=> { 'kcall' => 1, 'in' => 3 },
 	'OUT'		=> { 'kcall' => 1, 'in' => 3 },
-	'STARTP'	=> { 'kcall' => 1, 'in' => 3 },
+	'STARTP'	=> { 'kcall' => 1, 'in' => 2,
+		'symbol' => 'Y_startp' },
 	'OUTBYTE'	=> { 'kcall' => 1, 'in' => 2 },
 	'OUTWORD'	=> { 'kcall' => 1, 'in' => 2 },
 	'MRELEASEP'	=> { 'kcall' => 1, 'in' => 1 },
@@ -922,7 +923,7 @@ sub gen_j ($$$$) {
 		}
 	}
 	return (
-		sprintf ('tail call void %s (%s) noreturn nounwind',
+		sprintf ('tail call void %s (%s) noreturn',
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
 			join (', ', @params)
 		)
@@ -945,7 +946,7 @@ sub gen_cj ($$$$) {
 			$jump_label, $cont_label
 		),
 		$jump_label . ':',
-		sprintf ('tail call void %s (%s %%sched, %s %%%s) noreturn nounwind',
+		sprintf ('tail call void %s (%s %%sched, %s %%%s) noreturn',
 			$self->int_type,
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
 			$self->workspace_type,
@@ -953,7 +954,7 @@ sub gen_cj ($$$$) {
 		),
 		'ret void',
 		$cont_label . ':',
-		sprintf ('tail call void %s (%s %%sched, %s %%%s) noreturn nounwind',
+		sprintf ('tail call void %s (%s %%sched, %s %%%s) noreturn',
 			$self->int_type,
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
 			$self->workspace_type,
@@ -965,7 +966,7 @@ sub gen_cj ($$$$) {
 sub gen_call ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
 	my $name = $inst->{'name'};
-	my @asm;
+	my (@asm, @params);
 	
 	my $in = $inst->{'in'};
 	if (exists ($inst->{'fin'})) {
@@ -1008,29 +1009,50 @@ sub gen_call ($$$$) {
 		my $msg = "WARNING: stack is not empty at point of general call";
 		$self->message (1, $msg);
 		push (@asm, "; $msg");
-	}	
+	} else {
+		foreach my $param (@$in) {
+			push (@params, sprintf ('%s %%%s',
+				$self->int_type, $param
+			));
+		}
+	}
 
-	if ($inst->{'name'} eq 'GCALL') {
+	if ($name eq 'GCALL') {
 		my $jump_ptr = $self->tmp_reg ();
 		push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s, %s)',
 			$jump_ptr,
 			$self->int_type, $in->[0],
 			$self->int_type, $self->workspace_type
 		));
-		push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn nounwind',
+		push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn',
 			$jump_ptr,
 			$self->int_type,
 			$self->workspace_type,
 			$new_wptr
 		));
-	} else {
-		push (@asm, sprintf ('tail call void @O_%s (%s %%sched, %s %%%s) noreturn nounwind',
+	} elsif ($name eq 'CALL') {
+		push (@asm, sprintf ('tail call void @O_%s (%s %%sched, %s %%%s) noreturn',
 			$inst->{'arg'}->{'symbol'},
 			$self->int_type,
 			$self->workspace_type,
 			$new_wptr
 		));
-	}
+	} else {
+		my $new_wptr = $self->tmp_reg ();
+		push (@asm, sprintf ('%%%s = call %s @%s (%s %%sched, %s %%%s%s%s)',
+			$new_wptr,
+			$self->workspace_type,
+			$name,
+			$self->int_type,
+			$self->workspace_type,
+			$new_wptr,
+			@params ? ',' : '',
+			join (', ', @params)
+		));
+		push (@asm, $self->gen_ret (
+			$proc, $label, { 'wptr' => $new_wptr }
+		));
+	}	
 
 	return @asm;
 }	
@@ -1475,7 +1497,7 @@ sub gen_ret ($$$$) {
 		$self->int_type, $jump_val, 
 		$self->int_type, $self->workspace_type
 	));
-	push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn nounwind',
+	push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn',
 		$jump_ptr,
 		$self->int_type,
 		$self->workspace_type, $inst->{'wptr'}
@@ -1631,6 +1653,39 @@ sub gen_lend ($$$$) {
 	return @asm;
 }
 
+sub _gen_kcall ($$$$$) {
+	my ($self, $proc, $label, $inst, $name) = @_;
+	if ($name =~ /^X_/) {
+		
+	} elsif ($name =~ /^Y_/) {
+		if (!exists ($self->{'header'}->{$name})) {
+			my @param = ($self->int_type, $self->workspace_type);
+			for (my $i = 0; $i < @{$inst->{'in'}}; ++$i) {
+				push (@param, $self->int_type);
+			}
+			$self->{'header'}->{$name} = sprintf (
+				'define %s @%s (%s)',
+				$self->workspace_type, $name, join (', ', @param)
+			);
+		}
+		return $self->gen_call ($proc, $label, {
+			'name' 	=> $name,
+			'in'	=> $inst->{'in'},
+			'wptr'	=> $inst->{'wptr'}
+		});
+	} else {
+		die "Unknown kernel call $name";
+	}
+}
+
+sub gen_kcall ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $data = $GRAPH->{$inst->{'name'}};
+	print "data = $data, ", $data->{'symbol'}, "\n";
+	print Dumper ($data);
+	return $self->_gen_kcall ($proc, $label, $inst, $data->{'symbol'});
+}
+
 sub format_lines (@) {
 	my @lines = @_;
 	my @asm;
@@ -1658,7 +1713,7 @@ sub generate_proc ($$) {
 			$self->int_type, $self->workspace_type
 		),
 		'entry:',
-		sprintf ('tail call void %s (%s %%sched, %s %%wptr) noreturn nounwind',
+		sprintf ('tail call void %s (%s %%sched, %s %%wptr) noreturn',
 			$call_pfix . $proc->{'labels'}->[0]->{'name'},
 			$self->int_type, $self->workspace_type
 		),
@@ -1720,7 +1775,8 @@ sub generate_proc ($$) {
 			}
 		}
 		
-		foreach my $inst (@$insts) {
+		for (my $inst_idx = 0; $inst_idx < @$insts; ++$inst_idx) {
+			my $inst	= $insts->[$inst_idx];
 			my $name 	= $inst->{'name'};
 			
 			if ($name =~ /^\./) {
@@ -1738,8 +1794,14 @@ sub generate_proc ($$) {
 				if (exists ($inst->{'label_arg'})) {
 					# FIXME: debug
 					if (ref ($inst->{'arg'}) =~ /ARRAY/) {
-						print $name, "\n";
-						exit 0;
+						if ($label->{'next'}->{'inst'}->[0]->{'name'} eq 'STARTP') {
+							$inst->{'arg'} = $inst->{'arg'}->[0];
+						} else {
+							print "X1 $name ", $inst->{'arg'}->[0]->{'name'},
+								" ", $inst->{'arg'}->[1]->{'name'}, "\n";
+							print $label->{'next'}->{'name'}, "\n";
+							exit 0;
+						}
 					}
 					# FIXME: /debug
 					$line .= $inst->{'arg'}->{'name'};
@@ -1757,6 +1819,9 @@ sub generate_proc ($$) {
 			
 			if ($data->{'generator'}) {
 				my @lines = &{$data->{'generator'}}($self, $proc, $label, $inst);
+				push (@asm, format_lines (@lines));
+			} elsif ($data->{'kcall'}) {
+				my @lines = $self->gen_kcall ($proc, $label, $inst);
 				push (@asm, format_lines (@lines));
 			} elsif (@$out + @$fout == 1) {
 				my $line = "\t";
