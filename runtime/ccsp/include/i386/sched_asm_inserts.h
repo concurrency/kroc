@@ -31,7 +31,7 @@
 
 /*{{{  architecture dependent kernel call declarations */
 #define _K_CALL_DEFINE(X) \
-	static void __attribute__ ((regparm(3))) kernel_##X (word param0, sched_t *sched, word *Wptr)
+	static word *__attribute__ ((regparm(3))) kernel_##X (word param0, sched_t *sched, word *Wptr)
 #define _K_CALL_DEFINE_O(X) \
 	static word __attribute__ ((regparm(3))) kernel_##X (word param0, sched_t *sched, word *Wptr)
 #define K_CALL_DEFINE_0_0(X) _K_CALL_DEFINE(X)
@@ -50,9 +50,9 @@
 #define K_CALL_PTR(X) \
 	((void *) (kernel_##X))
 
-#define K_CALL_HEADER \
-	__attribute__ ((unused)) \
-	unsigned int return_address = (unsigned int) __builtin_return_address (0);
+#define K_CALL_HEADER
+#define K_CALL_Y_HEADER \
+	__attribute__ ((unused)) word return_address = (word) (Wptr)[Iptr];
 #define K_CALL_PARAM(N) \
 	((N) == 0 ? param0 : sched->cparam[(N) - 1])
 /*}}}*/
@@ -114,22 +114,16 @@
 	((word *) sched->stack)[-1] = (word) (R)
 
 #define K_ZERO_OUT() \
-	return
-#define K_ZERO_OUT_JUMP(R) \
-	do { \
-		_SET_RETURN_ADDRESS (R);\
-		K_ZERO_OUT ();		\
-	} while (0)
+	return 0;
 #define K_ZERO_OUT_JRET() \
 	do { \
 		TRACE_RETURN (Wptr[Iptr]); \
-		__asm__ __volatile__ ("			\n" \
-			"	movl	%0, %%ebp	\n" \
-			"	movl	(%%esi), %%esp	\n" \
-			"	jmp	*-4(%%ebp)	\n" \
-			: /* no outputs */ \
-			: "g" (Wptr), "S" (sched) \
-			: "memory"); \
+		return Wptr;		\
+	} while (0)
+#define K_ZERO_OUT_JUMP(R) \
+	do { \
+		Wptr[Iptr] = (word)(R);	\
+		K_ZERO_OUT_JRET ();	\
 	} while (0)
 
 #define K_ONE_OUT(A) \
