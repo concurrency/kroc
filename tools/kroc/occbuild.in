@@ -31,6 +31,7 @@ in_tree = None
 programs = {}
 search_path = []
 occ21_opts = []
+tock_opts = []
 linker_opts = []
 needs = []
 includes_before = []
@@ -581,6 +582,7 @@ class TockToolchain:
 			cmd += ["-I" + ":".join(search_path)]
 		if static_link:
 			cmd += ["--compiler-flags", "-static"]
+		cmd += tock_opts
 		return cmd
 
 	def object(self, source):
@@ -592,6 +594,7 @@ class TockToolchain:
 			impl.append("forall")
 		run(self.tock_cmd(["-c"]) + impl + [source]) #["-u" + m for m in need_mods] +
 		(base, ext) = split_ext(source)
+#TODO we should only make the stub if compilation succeeded and put out a .tock.o file
 		make_stub(base + ".tce")
 
 	def library(self, occam_objs, native_objs, base):
@@ -612,7 +615,12 @@ class TockToolchain:
 		def custom(f):
 #			for need in resolved_mods:
 #				f.write('#INCLUDE "%s"\n' % need)
-			f.write('#INCLUDE "' + base + '.tock.inc"\n')
+			f.write("-- Objs: " + " ".join(occam_objs) + "\n")
+			for obj in occam_objs:
+				g = open (split_ext(obj)[0] + ".tock.inc","r")
+				contents = g.read()
+				f.write(contents)
+				g.close
 		make_module(base, custom)
 
 		lib_opts.append(patterns["rtlink"] % "ccsp")
@@ -626,13 +634,6 @@ class TockToolchain:
 
 #		if occam_objs == []:
 		make_stub(base + ".lib")
-		f = open (base + ".tock.inc", "w")
-		for obj in occam_objs:
-			g = open (split_ext(obj)[0] + ".tock.inc","r")
-			contents = g.read()
-			f.write(contents)
-			g.close
-		f.close
 		f = open (base + ".tock.h", "w")
 		for obj in occam_objs:
 			g = open (split_ext(obj)[0] + ".tock.h","r")
@@ -810,7 +811,7 @@ def main(args):
 	output = None
 	toolchain = None
 	global std_libs, verbose, in_tree, search_path
-	global occ21_opts, linker_opts, needs
+	global occ21_opts, tock_opts, linker_opts, needs
 	global includes_before, includes_after, static_link
 	global prefix, destdir, examples, target_os
 	for (o, a) in opts:
@@ -840,6 +841,7 @@ def main(args):
 			occ21_opts += split_options(a)
 		elif o == "-D":
 			occ21_opts += ["-DEF", a]
+			tock_opts += ["-D", a]
 		elif o in ("-l", "-L", "-r", "-R", "-W", "-m", "-p"):
 			linker_opts.append("%s%s" % (o, a))
 		elif o == "--need":
