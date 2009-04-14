@@ -683,8 +683,8 @@ sub preprocess_etc ($$$) {
 
 sub define_registers ($$) {
 	my ($self, $labels) = @_;
-	my ($reg_n, $freg_n, $wptr_n) = (0, 0, 0);
-	my $wptr = sprintf ('wptr_%d', $wptr_n++);
+	my ($reg_n, $freg_n, $wptr_n) 	= (0, 0, 0);
+	my $wptr			= sprintf ('wptr_%d', $wptr_n++);
 	my (@stack, @fstack);
 
 	foreach my $label (@$labels) {
@@ -895,8 +895,9 @@ sub _gen_error ($$$$$) {
 	my ($source_reg, $source_asm) = $self->global_ptr_value ('i8*', $self->source_file);
 	return (
 		$source_asm,
-		sprintf ('call void @etc_error_%s (%s %%%s, i8* %%%s, %s %s)',
+		sprintf ('call void @etc_error_%s (%s %%sched, %s %%%s, i8* %%%s, %s %s)',
 			$type,
+			$self->int_type,
 			$self->workspace_type, $inst->{'wptr'},
 			$source_reg,
 			$self->int_type, $self->source_line
@@ -906,7 +907,10 @@ sub _gen_error ($$$$$) {
 
 sub gen_j ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	my @params = ( sprintf ('%s %%%s', $self->workspace_type, $inst->{'wptr'}) );
+	my @params = ( 
+		sprintf ('%s %%sched', $self->int_type),
+		sprintf ('%s %%%s', $self->workspace_type, $inst->{'wptr'})
+	);
 	if ($inst->{'in'}) {
 		for (my $i = 0; $i < @{$inst->{'in'}}; ++$i) {
 			push (@params, sprintf ('%s %%%s', $self->int_type, $inst->{'in'}->[$i]));
@@ -941,14 +945,16 @@ sub gen_cj ($$$$) {
 			$jump_label, $cont_label
 		),
 		$jump_label . ':',
-		sprintf ('tail call void %s (%s %%%s) noreturn nounwind',
+		sprintf ('tail call void %s (%s %%sched, %s %%%s) noreturn nounwind',
+			$self->int_type,
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
 			$self->workspace_type,
 			$inst->{'wptr'}
 		),
 		'ret void',
 		$cont_label . ':',
-		sprintf ('tail call void %s (%s %%%s) noreturn nounwind',
+		sprintf ('tail call void %s (%s %%sched, %s %%%s) noreturn nounwind',
+			$self->int_type,
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
 			$self->workspace_type,
 			$inst->{'wptr'}
@@ -1006,19 +1012,21 @@ sub gen_call ($$$$) {
 
 	if ($inst->{'name'} eq 'GCALL') {
 		my $jump_ptr = $self->tmp_reg ();
-		push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s)',
+		push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s, %s)',
 			$jump_ptr,
 			$self->int_type, $in->[0],
-			$self->workspace_type
+			$self->int_type, $self->workspace_type
 		));
-		push (@asm, sprintf ('tail call void %%%s (%s %%%s) noreturn nounwind',
+		push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn nounwind',
 			$jump_ptr,
+			$self->int_type,
 			$self->workspace_type,
 			$new_wptr
 		));
 	} else {
-		push (@asm, sprintf ('tail call void @O_%s (%s %%%s) noreturn nounwind',
+		push (@asm, sprintf ('tail call void @O_%s (%s %%sched, %s %%%s) noreturn nounwind',
 			$inst->{'arg'}->{'symbol'},
+			$self->int_type,
 			$self->workspace_type,
 			$new_wptr
 		));
@@ -1462,13 +1470,14 @@ sub gen_ret ($$$$) {
 		$jump_val, 
 		$self->workspace_type, $inst->{'wptr'}
 	));
-	push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s)*',
+	push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s, %s)*',
 		$jump_ptr, 
 		$self->int_type, $jump_val, 
-		$self->workspace_type
+		$self->int_type, $self->workspace_type
 	));
-	push (@asm, sprintf ('tail call void %%%s (%s %%%s) noreturn nounwind',
+	push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn nounwind',
 		$jump_ptr,
+		$self->int_type,
 		$self->workspace_type, $inst->{'wptr'}
 	));
 	return @asm;
@@ -1644,14 +1653,14 @@ sub generate_proc ($$) {
 	$proc->{'call_prefix'} = $call_pfix;
 
 	push (@asm, format_lines (
-		sprintf ('define void %s (%s %%wptr) {', 
+		sprintf ('define void %s (%s %%sched, %s %%wptr) {', 
 			$symbol,
-			$self->workspace_type
+			$self->int_type, $self->workspace_type
 		),
 		'entry:',
-		sprintf ('tail call void %s (%s %%wptr) noreturn nounwind',
+		sprintf ('tail call void %s (%s %%sched, %s %%wptr) noreturn nounwind',
 			$call_pfix . $proc->{'labels'}->[0]->{'name'},
-			$self->workspace_type
+			$self->int_type, $self->workspace_type
 		),
 		'ret void',
 		'}'
@@ -1662,7 +1671,10 @@ sub generate_proc ($$) {
 		my $last_inst;
 
 		if (1) {
-			my @params = ( sprintf ('%s %%%s', $self->workspace_type, $label->{'wptr'}) );
+			my @params = (
+				sprintf ('%s %%sched', $self->int_type),
+				sprintf ('%s %%%s', $self->workspace_type, $label->{'wptr'})
+			);
 			for (my $i = 0; $i < @{$label->{'in'}}; ++$i) {
 				push (@params, sprintf ('%s %%%s', $self->int_type, $label->{'in'}->[$i]));
 			}
@@ -1857,17 +1869,17 @@ sub generate ($$) {
 
 	my @header = $self->intrinsics;
 	# for debugging
-	push (@header, sprintf ('declare void @etc_error_bounds (%s, i8*, %s)',
-		$self->workspace_type, $self->int_type
+	push (@header, sprintf ('declare void @etc_error_bounds (%s, %s, i8*, %s)',
+		$self->int_type, $self->workspace_type, $self->int_type
 	));
-	push (@header, sprintf ('declare void @etc_error_div (%s, i8*, %s)',
-		$self->workspace_type, $self->int_type
+	push (@header, sprintf ('declare void @etc_error_div (%s, %s, i8*, %s)',
+		$self->int_type, $self->workspace_type, $self->int_type
 	));
-	push (@header, sprintf ('declare void @etc_error_overflow (%s, i8*, %s)',
-		$self->workspace_type, $self->int_type
+	push (@header, sprintf ('declare void @etc_error_overflow (%s, %s, i8*, %s)',
+		$self->int_type, $self->workspace_type, $self->int_type
 	));
-	push (@header, sprintf ('declare void @etc_error_set (%s, i8*, %s)',
-		$self->workspace_type, $self->int_type
+	push (@header, sprintf ('declare void @etc_error_set (%s, %s, i8*, %s)',
+		$self->int_type, $self->workspace_type, $self->int_type
 	));
 
 	my @proc_asm;
