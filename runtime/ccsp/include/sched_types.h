@@ -326,7 +326,7 @@ typedef struct _ccsp_sem_t {
 /*}}}*/
 
 /*{{{  ccsp_barrier_t */
-typedef REGPARM word *(*ccsp_barrier_sync_t) (sched_t *, void *, word *);
+typedef REGPARM void (*ccsp_barrier_sync_t) (sched_t *, void *, word *);
 typedef REGPARM void (*ccsp_barrier_enroll_t) (sched_t *, void *, word);
 typedef REGPARM void (*ccsp_barrier_resign_t) (sched_t *, void *, word);
 typedef struct _ccsp_barrier_t {
