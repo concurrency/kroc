@@ -261,7 +261,7 @@ int ccsp_use_tls (void)
 /*}}}*/
 
 /*{{{  scheduler support defines/functions */
-static REGPARM word *kernel_scheduler (sched_t *sched);
+static void NO_RETURN REGPARM kernel_scheduler (sched_t *sched);
 /*{{{  scheduler pointer storage */
 #if defined(USE_TLS)
 
@@ -550,8 +550,8 @@ static TRIVIAL void save_priofinity (sched_t *sched, word *Wptr)
 	Wptr[Priofinity] = sched->priofinity;
 }
 /*}}}*/
-/*{{{  static TRIVIAL void save_return (sched_t *sched, word *Wptr, word return_address)*/
-static TRIVIAL void save_return (sched_t *sched, word *Wptr, word return_address)
+/*{{{  static TRIVIAL void save_return (sched_t *sched, word *Wptr, unsigned int return_address)*/
+static TRIVIAL void save_return (sched_t *sched, word *Wptr, unsigned int return_address)
 {
 	Wptr[Iptr] = (word) return_address;
 }
@@ -1838,8 +1838,8 @@ void ccsp_kernel_init (void)
 /*}}}*/
 
 /*{{{  scheduler */
-/*{{{  word *kernel_scheduler (sched_t *sched)*/
-static word * REGPARM kernel_scheduler (sched_t *sched)
+/*{{{  void kernel_scheduler (void)*/
+static void NO_RETURN REGPARM kernel_scheduler (sched_t *sched)
 {
 	word *Wptr = NotProcess_p;
 	
@@ -1987,7 +1987,9 @@ static word * REGPARM kernel_scheduler (sched_t *sched)
 		}
 	} while (Wptr == NotProcess_p);
 
-	return Wptr;
+	K_ZERO_OUT_JRET ();
+	
+	no_return ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_fastscheduler (void)*/
@@ -2002,7 +2004,6 @@ static word * REGPARM kernel_scheduler (sched_t *sched)
  */
 K_CALL_DEFINE_0_0 (Y_fastscheduler)
 {
-	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_fastscheduler);
 
@@ -2021,12 +2022,8 @@ K_CALL_DEFINE_0_0 (Y_fastscheduler)
  */
 K_CALL_DEFINE_0_0 (Y_occscheduler)
 {
-	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
-
-	Wptr = kernel_scheduler (sched);
-	
-	K_ZERO_OUT_JRET ();
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_Y_rtthreadinit (void)*/
@@ -2041,7 +2038,7 @@ K_CALL_DEFINE_0_0 (Y_occscheduler)
  */
 K_CALL_DEFINE_1_0 (Y_rtthreadinit)
 {
-	K_CALL_Y_HEADER;
+	K_CALL_HEADER;
 
 	unsigned int stack = K_CALL_PARAM(0);
 	word *fptr = (word *) sched;
@@ -2124,11 +2121,10 @@ BMESSAGE0 ("Y_rtthreadinit()\n");
 
 	if (Wptr != NotProcess_p) {
 		sched->stats.startp++;
+		K_ZERO_OUT_JRET ();
 	} else {
-		Wptr = kernel_scheduler (sched);
+		kernel_scheduler (sched);
 	}
-	
-	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_shutdown (void)*/
@@ -2141,18 +2137,16 @@ BMESSAGE0 ("Y_rtthreadinit()\n");
  */
 K_CALL_DEFINE_0_0 (Y_shutdown)
 {
-	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE (Y_shutdown, "");
 	att_set (&(ccsp_shutdown), true);
-	Wptr = kernel_scheduler (sched);
-	K_ZERO_OUT_JRET ();
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*}}}*/
 /*{{{  error entry-points */
-/*{{{  static word *kernel_common_error (...) */
-static word *kernel_common_error (word *Wptr, sched_t *sched, unsigned int return_address, char *name)
+/*{{{  static void kernel_common_error (...) */
+static void kernel_common_error (word *Wptr, sched_t *sched, unsigned int return_address, char *name)
 {
 #if defined(DYNAMIC_PROCS) && !defined(RMOX_BUILD)
 	d_process *kr_dptr;
@@ -2162,12 +2156,12 @@ static word *kernel_common_error (word *Wptr, sched_t *sched, unsigned int retur
 	if (faulting_dynproc ((word **)&(Wptr), &return_address, name, &kr_dptr)) {
 		BMESSAGE ("dynamic process generated a fault, killed it.\n");
 		switch_priofinity (sched, kr_dptr->holding_priofinity);
-		save_return (sched, Wptr, return_address);
+		K_ZERO_OUT_JUMP (return_address);
 	} else
 #endif
 	{
 		if (ccsp_ignore_errors) {
-			Wptr = kernel_scheduler (sched);
+			kernel_scheduler (sched);
 		} else {
 #if defined(RMOX_BUILD)
 			BMESSAGE ("application error, stopped. (%s)\n", name ?: "(unknown)");
@@ -2177,7 +2171,6 @@ static word *kernel_common_error (word *Wptr, sched_t *sched, unsigned int retur
 			ccsp_kernel_exit (1, return_address);
 		}
 	}
-	return Wptr;
 }
 /*}}}*/
 /*{{{  void kernel_Y_zero_div (void)*/
@@ -2192,14 +2185,12 @@ static word *kernel_common_error (word *Wptr, sched_t *sched, unsigned int retur
  */
 K_CALL_DEFINE_4_0 (Y_zero_div)
 {
-	K_CALL_Y_HEADER;
 	error_info info;
 
 	K_CALL_PARAMS_4 (info.info2, info.info1, info.proc_info, info.filename_info);
 	
 	handle_zerodiv_error (&info);
-	Wptr = kernel_common_error (Wptr, sched, return_address, "zero_div");
-	K_ZERO_OUT_JRET ();
+	kernel_common_error (Wptr, sched, return_address, "zero_div");
 }
 /*}}}*/
 /*{{{  void kernel_Y_overflow (void)*/
@@ -2214,15 +2205,12 @@ K_CALL_DEFINE_4_0 (Y_zero_div)
  */
 K_CALL_DEFINE_4_0 (Y_overflow)
 {
-	K_CALL_Y_HEADER;
 	error_info info;
 
 	K_CALL_PARAMS_4 (info.info2, info.info1, info.proc_info, info.filename_info);
 
 	handle_overflow_error (&info);
-	Wptr = kernel_common_error (Wptr, sched, return_address, "overflow");
-
-	K_ZERO_OUT_JRET ();
+	kernel_common_error (Wptr, sched, return_address, "overflow");
 }
 /*}}}*/
 /*{{{  void kernel_Y_floaterr (void)*/
@@ -2237,16 +2225,13 @@ K_CALL_DEFINE_4_0 (Y_overflow)
  */
 K_CALL_DEFINE_5_0 (Y_floaterr)
 {
-	K_CALL_Y_HEADER;
 	error_info info;
 	word fpu_status;
 
 	K_CALL_PARAMS_5 (info.info2, info.info1, info.proc_info, info.filename_info, fpu_status);
 	
 	handle_fp_error (&info, fpu_status);
-	Wptr = kernel_common_error (Wptr, sched, return_address, "floaterr");
-	
-	K_ZERO_OUT_JRET ();
+	kernel_common_error (Wptr, sched, return_address, "floaterr");
 }
 /*}}}*/
 /*{{{  void kernel_Y_Seterr (void)*/
@@ -2261,16 +2246,13 @@ K_CALL_DEFINE_5_0 (Y_floaterr)
  */
 K_CALL_DEFINE_4_0 (Y_Seterr)
 {
-	K_CALL_Y_HEADER;
 	error_info info;
 
 	K_CALL_PARAMS_4 (info.info2, info.info1, info.proc_info, info.filename_info);
 	ENTRY_TRACE (Y_Seterr, "%p, %p, %x, %x", (void *)info.proc_info, (void *)info.filename_info, info.info2, info.info1);
 	
 	handle_seterr (&info);
-	Wptr = kernel_common_error (Wptr, sched, return_address, "Seterr");
-	
-	K_ZERO_OUT_JRET ();
+	kernel_common_error (Wptr, sched, return_address, "Seterr");
 }
 /*}}}*/
 /*{{{  void kernel_Y_BSeterr (void)*/
@@ -2285,14 +2267,11 @@ K_CALL_DEFINE_4_0 (Y_Seterr)
  */
 K_CALL_DEFINE_0_0 (Y_BSeterr)
 {
-	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
 
 	ENTRY_TRACE0 (Y_BSeterr);
 	
-	Wptr = kernel_common_error (Wptr, sched, return_address, "BSeterr");
-	
-	K_ZERO_OUT_JRET ();
+	kernel_common_error (Wptr, sched, return_address, "BSeterr");
 }
 /*}}}*/
 /*{{{  void kernel_Y_BNSeterr (void)*/
@@ -2307,13 +2286,10 @@ K_CALL_DEFINE_0_0 (Y_BSeterr)
  */
 K_CALL_DEFINE_0_0 (Y_BNSeterr)
 {
-	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_BNSeterr);
 
-	Wptr = kernel_common_error (Wptr, sched, 0, "BNSeterr");
-	
-	K_ZERO_OUT_JRET ();
+	kernel_common_error (Wptr, sched, 0, "BNSeterr");
 }
 /*}}}*/
 /*{{{  void kernel_Y_RangeCheckError (void)*/
@@ -2328,16 +2304,13 @@ K_CALL_DEFINE_0_0 (Y_BNSeterr)
  */
 K_CALL_DEFINE_4_0 (Y_RangeCheckError)
 {
-	K_CALL_Y_HEADER;
 	error_info info;
 
 	K_CALL_PARAMS_4 (info.info2, info.info1, info.proc_info, info.filename_info);
 	ENTRY_TRACE (Y_RangeCheckError, "%p, %p, %x, %x", (void *)info.proc_info, (void *)info.filename_info, info.info2, info.info1);
 
 	handle_range_error (&info);
-	Wptr = kernel_common_error (Wptr, sched, return_address, "RangeCheckError");
-	
-	K_ZERO_OUT_JRET ();
+	kernel_common_error (Wptr, sched, return_address, "RangeCheckError");
 }
 /*}}}*/
 /*{{{  void kernel_Y_BasicRangeError (void)*/
@@ -2352,14 +2325,11 @@ K_CALL_DEFINE_4_0 (Y_RangeCheckError)
  */
 K_CALL_DEFINE_0_0 (Y_BasicRangeError)
 {
-	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_BasicRangeError);
 
 	BMESSAGE ("range error.\n");
-	Wptr = kernel_common_error (Wptr, sched, return_address, "BasicRangeError");
-	
-	K_ZERO_OUT_JRET ();
+	kernel_common_error (Wptr, sched, return_address, "BasicRangeError");
 }
 /*}}}*/
 /*{{{  void dump_trap_info (unsigned int return_address, word a_val, word b_val, word c_val)*/
@@ -2396,7 +2366,6 @@ void dump_trap_info (word *Wptr, word *Fptr, word *Bptr, unsigned int return_add
  */
 K_CALL_DEFINE_2_0 (Y_dtrace)
 {
-	K_CALL_Y_HEADER;
 	unsigned int trapval_A, trapval_B, trapval_C;
 	
 	K_CALL_PARAMS_2 (trapval_A, trapval_B);
@@ -2408,6 +2377,28 @@ K_CALL_DEFINE_2_0 (Y_dtrace)
 }
 /*}}}*/
 #endif	/* defined(ENABLE_DTRACES) && !defined(RMOX_BUILD) */
+/*{{{  void kernel_X_trap (void)*/
+/*
+ *	trap entry-point
+ *
+ *	@SYMBOL:	X_trap
+ *	@INPUT:		3
+ *	@OUTPUT: 	3
+ *	@CALL: 		K_TRAP
+ *	@PRIO:		0
+ */
+K_CALL_DEFINE_3_3 (X_trap)
+{
+	unsigned int trapval_A, trapval_B, trapval_C;
+	
+	K_CALL_PARAMS_3 (trapval_A, trapval_B, trapval_C);
+	ENTRY_TRACE (X_trap, "0x%x, 0x%x, 0x%x", trapval_A, trapval_B, trapval_C);
+	
+	dump_trap_info (Wptr, sched->curb.Fptr, sched->curb.Bptr, return_address, trapval_A, trapval_B, trapval_C);
+
+	K_THREE_OUT (trapval_A, trapval_B, trapval_C);
+}
+/*}}}*/
 /*{{{  void kernel_Y_unsupported (void)*/
 /*
  *	this handles unsupported kernel calls
@@ -2437,22 +2428,18 @@ K_CALL_DEFINE_2_0 (Y_dtrace)
  *	@HANDLE:	K_MIN, K_MOUT, K_MIN64, K_MOUT64, K_XMIN, K_XMIN64
  *	@HANDLE:	K_MINN, K_MOUTN, K_XMINN
  *	@HANDLE:	K_FBAR_INIT, K_FBAR_SYNC, K_FBAR_ENROLL, K_FBAR_RESIGN
- *	@HANDLE:	K_TRAP
  */
 K_CALL_DEFINE_0_0 (Y_unsupported)
 {
-	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_unsupported);
 
 	if (ccsp_ignore_errors) {
-		Wptr = kernel_scheduler (sched);
+		kernel_scheduler (sched);
 	} else {
 		BMESSAGE ("unsupported kernel call.\n");
 		ccsp_kernel_exit (1, return_address);
 	}
-
-	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
 /*}}}*/
@@ -2512,14 +2499,14 @@ static INLINE word *sem_dequeue (ccsp_sem_t *sem) {
 	}
 }
 /*}}}*/
-/*{{{  static INLINE word *sem_claim (sched_t *sched, word *Wptr, ccsp_sem_t *sem)*/
-static INLINE word *sem_claim (sched_t *sched, word *Wptr, ccsp_sem_t *sem)
+/*{{{  static INLINE void sem_claim (sched_t *sched, word *Wptr, unsigned int return_address, ccsp_sem_t *sem)*/
+static INLINE void sem_claim (sched_t *sched, word *Wptr, unsigned int return_address, ccsp_sem_t *sem)
 {
 	word *ptr, val;
 
 	if ((val = atw_val (&(sem->bptr))) == (NotProcess_p | 1)) {
 		if (atw_cas (&(sem->bptr), val, NotProcess_p)) {
-			return Wptr;
+			return;
 		}
 		/* We could read barrier here, but because of the 
 		 * previous CAS our cache is probably clean.
@@ -2531,6 +2518,7 @@ static INLINE word *sem_claim (sched_t *sched, word *Wptr, ccsp_sem_t *sem)
 
 	save_priofinity (sched, Wptr);
 	Wptr[Link] = NotProcess_p;
+	save_return (sched, Wptr, return_address);
 	weak_write_barrier ();
 
 	while (!atw_cas (&(sem->bptr), val, (word) Wptr)) {
@@ -2556,7 +2544,7 @@ static INLINE word *sem_claim (sched_t *sched, word *Wptr, ccsp_sem_t *sem)
 		}
 	}
 
-	return kernel_scheduler (sched);
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  static INLINE void sem_release (sched_t *sched, ccsp_sem_t *sem)*/
@@ -2766,8 +2754,8 @@ static REGPARM void bar_resign (sched_t *sched, bar_t *bar, word resign_count)
 	}
 }
 /*}}}*/
-/*{{{  static word *bar_sync (sched_t *sched, bar_t *bar, word *Wptr)*/
-static REGPARM word *bar_sync (sched_t *sched, bar_t *bar, word *Wptr)
+/*{{{  static void bar_sync (sched_t *sched, bar_t *bar, word *Wptr)*/
+static REGPARM void bar_sync (sched_t *sched, bar_t *bar, word *Wptr)
 {
 	bar_head_t *head;
 	word bsize, hdata, state;
@@ -2890,13 +2878,15 @@ static REGPARM word *bar_sync (sched_t *sched, bar_t *bar, word *Wptr)
 
 			if (atw_cas (&(bar->state), state, BAR_STATE (1, tag, BAR_SYNCING))) {
 				bar_complete (sched, bar, tag);
-				return kernel_scheduler (sched);
+				kernel_scheduler (sched);
+				return;
 			}
 		} else {
 			word count = BAR_COUNT(state);
 			word new_state = BAR_STATE (count - 1, tag, state & BAR_SYNCING);
 			if (atw_cas (&(bar->state), state, new_state))  {
-				return kernel_scheduler (sched);
+				kernel_scheduler (sched);
+				return;
 			}
 		}
 
@@ -2928,8 +2918,8 @@ static REGPARM void fork_bar_resign (sched_t *sched, word *bar, word count)
 	/* no operation */
 }
 /*}}}*/
-/*{{{  static word *fork_bar_sync (sched_t *sched, word *bar, word *Wptr)*/
-static REGPARM word *fork_bar_sync (sched_t *sched, word *bar, word *Wptr)
+/*{{{  static void fork_bar_sync (sched_t *sched, word *bar, word *Wptr)*/
+static REGPARM void fork_bar_sync (sched_t *sched, word *bar, word *Wptr)
 {
 	mt_barrier_internal_t *mb = (mt_barrier_internal_t *)
 		(((byte *) (bar - MT_BARRIER_PTR_OFFSET)) - (3 * sizeof (void *)));
@@ -2940,9 +2930,9 @@ static REGPARM word *fork_bar_sync (sched_t *sched, word *bar, word *Wptr)
 
 	if (atw_dec_z (&(mb->ref_count))) {
 		dmem_thread_release (sched->allocator, mb);
-		return Wptr;
+		K_ZERO_OUT_JRET ();
 	} else {
-		return kernel_scheduler (sched);
+		kernel_scheduler (sched);
 	}
 }
 /*}}}*/
@@ -3016,8 +3006,8 @@ static REGPARM void mproc_bar_resign (sched_t *sched, mproc_bar_t *bar, word cou
 	}	
 }
 /*}}}*/
-/*{{{  static word *mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)*/
-static REGPARM word *mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)
+/*{{{  static void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)*/
+static REGPARM void mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wptr)
 {
 	word retry = false;
 	
@@ -3058,7 +3048,8 @@ static REGPARM word *mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wpt
 				mproc_bar_complete (sched, bar);
 			}
 			
-			return Wptr;
+			K_ZERO_OUT_JRET ();
+			return;
 		} else {
 			/* not last process: queue */
 			word *bptr;
@@ -3079,7 +3070,8 @@ static REGPARM word *mproc_bar_sync (sched_t *sched, mproc_bar_t *bar, word *Wpt
 			}
 
 			if (atw_cas (&(bar->state), state, state - 1)) {
-				return kernel_scheduler (sched);
+				kernel_scheduler (sched);
+				return;
 			}
 
 			/* retry: loop */
@@ -3634,8 +3626,8 @@ void ccsp_mt_release (void *ptr)
 
 /*{{{  blocking system calls */
 #if !defined(RMOX_BUILD) && defined(BLOCKING_SYSCALLS)
-/*{{{  static word *kernel_bsc_dispatch (...)*/
-static word *kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, word *Wptr, void *b_func, void *b_param, int adjust)
+/*{{{  static void kernel_bsc_dispatch (...)*/
+static void kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, word *Wptr, void *b_func, void *b_param, int adjust)
 {
 	bsc_batch_t *job;
 
@@ -3666,7 +3658,7 @@ static word *kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, w
 
 	bsyscall_dispatch (job);
 	
-	return kernel_scheduler (sched);
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_Y_b_dispatch (void)*/
@@ -3683,15 +3675,12 @@ static word *kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, w
  */
 K_CALL_DEFINE_2_0 (Y_b_dispatch)
 {
-	K_CALL_Y_HEADER;
 	void *b_func, *b_param;
 	
 	K_CALL_PARAMS_2 (b_func, b_param);
 	ENTRY_TRACE (Y_b_dispatch, "%p, %p", (void *)b_func, (void *)b_param);
 
-	Wptr = kernel_bsc_dispatch (sched, return_address, Wptr, b_func, b_param, 0);
-	
-	K_ZERO_OUT_JRET ();
+	kernel_bsc_dispatch (sched, return_address, Wptr, b_func, b_param, 0);
 }
 /*}}}*/
 /*{{{  void kernel_Y_bx_dispatch (void)*/
@@ -3708,15 +3697,12 @@ K_CALL_DEFINE_2_0 (Y_b_dispatch)
  */
 K_CALL_DEFINE_2_0 (Y_bx_dispatch)
 {
-	K_CALL_Y_HEADER;
 	void *b_func, *b_param;
 	
 	K_CALL_PARAMS_2 (b_func, b_param);
 	ENTRY_TRACE (Y_bx_dispatch, "%p, %p", (void *)b_func, (void *)b_param);
 
-	Wptr = kernel_bsc_dispatch (sched, return_address, Wptr, b_func, b_param, 1);
-
-	K_ZERO_OUT_JRET ();
+	kernel_bsc_dispatch (sched, return_address, Wptr, b_func, b_param, 1);
 }
 /*}}}*/
 /*{{{  void kernel_X_bx_kill (void)*/
@@ -4184,9 +4170,8 @@ K_CALL_DEFINE_2_1 (X_fmul)
  */
 K_CALL_DEFINE_2_0 (Y_startp)
 {
-	K_CALL_Y_HEADER;
+	unsigned int start_offset;
 	word *workspace;
-	word start_offset;
 
 	K_CALL_PARAMS_2 (workspace, start_offset);
 	ENTRY_TRACE (Y_startp, "%p, %d", workspace, start_offset);
@@ -4198,7 +4183,7 @@ K_CALL_DEFINE_2_0 (Y_startp)
 	}
 	
 	save_priofinity (sched, workspace);
-	save_return (sched, workspace, start_offset);
+	save_return (sched, workspace, return_address + start_offset);
 	enqueue_process_nopri (sched, workspace);
 	sched->stats.startp++;
 
@@ -4206,11 +4191,12 @@ K_CALL_DEFINE_2_0 (Y_startp)
 
 	if ((--sched->dispatches) <= 0) {
 		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
 		enqueue_to_batch_front (&(sched->curb), Wptr);
-		Wptr = kernel_scheduler (sched);
+		kernel_scheduler (sched);
 	}
 	
-	K_ZERO_OUT_JRET ();
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_X_runp (void)*/
@@ -4248,16 +4234,14 @@ K_CALL_DEFINE_1_0 (X_runp)
  */
 K_CALL_DEFINE_0_0 (Y_pause)
 {
-	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_pause);
 
 	save_priofinity (sched, Wptr);
+	save_return (sched, Wptr, return_address);
 	enqueue_process_nopri (sched, Wptr);
 	
-	Wptr = kernel_scheduler (sched);
-
-	K_ZERO_OUT_JRET ();
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_Y_stopp (void)*/
@@ -4272,15 +4256,13 @@ K_CALL_DEFINE_0_0 (Y_pause)
  */
 K_CALL_DEFINE_0_0 (Y_stopp)
 {
-	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_stopp);
 
 	save_priofinity (sched, Wptr);
+	save_return (sched, Wptr, return_address);
 
-	Wptr = kernel_scheduler (sched);
-
-	K_ZERO_OUT_JRET ();
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_Y_endp (void)*/
@@ -4295,11 +4277,13 @@ K_CALL_DEFINE_0_0 (Y_stopp)
  */
 K_CALL_DEFINE_1_0 (Y_endp)
 {
-	K_CALL_Y_HEADER;
 	word *ptr;
 	
 	K_CALL_PARAMS_1 (ptr);
 	ENTRY_TRACE (Y_endp, "%p", ptr);
+
+	/* save the return address for CIF */
+	save_return (sched, Wptr, return_address);
 
 	if (atw_dec_z (&(ptr[Count]))) {
 		ptr[Priofinity] = ptr[SavedPriority];
@@ -4310,9 +4294,7 @@ K_CALL_DEFINE_1_0 (Y_endp)
 		sched->stats.endp++;
 	}
 
-	Wptr = kernel_scheduler (sched);
-	
-	K_ZERO_OUT_JRET ();
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_X_par_enroll (void)*/
@@ -4349,7 +4331,6 @@ K_CALL_DEFINE_2_0 (X_par_enroll)
  */
 K_CALL_DEFINE_1_0 (Y_mreleasep)
 {
-	K_CALL_Y_HEADER;
 	word *ptr, adjust;
 	
 	K_CALL_PARAMS_1 (adjust);
@@ -4364,9 +4345,7 @@ K_CALL_DEFINE_1_0 (Y_mreleasep)
 		sched->mdparam[15] = (word) adjust;
 	}
 
-	Wptr = kernel_scheduler (sched);
-	
-	K_ZERO_OUT_JRET ();
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  void kernel_X_proc_alloc (void)*/
@@ -4479,7 +4458,6 @@ K_CALL_DEFINE_3_0 (X_proc_mt_move)
  */
 K_CALL_DEFINE_3_0 (Y_proc_start)
 {
-	K_CALL_Y_HEADER;
 	word code, offset, *ws;
 
 	K_CALL_PARAMS_3 (offset, ws, code);
@@ -4496,11 +4474,12 @@ K_CALL_DEFINE_3_0 (Y_proc_start)
 
 	if ((--sched->dispatches) <= 0) {
 		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
 		enqueue_to_batch_front (&(sched->curb), Wptr);
-		Wptr = kernel_scheduler (sched);
+		kernel_scheduler (sched);
+	} else {
+		K_ZERO_OUT ();
 	}
-	
-	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_proc_end (void)*/
@@ -4515,7 +4494,6 @@ K_CALL_DEFINE_3_0 (Y_proc_start)
  */
 K_CALL_DEFINE_1_0 (Y_proc_end)
 {
-	K_CALL_Y_HEADER;
 	word *ws;
 
 	K_CALL_PARAMS_1 (ws);
@@ -4524,9 +4502,7 @@ K_CALL_DEFINE_1_0 (Y_proc_end)
 	mt_release_simple (sched, ws, MT_MAKE_TYPE (MT_DATA));
 	sched->stats.proc_end++;
 
-	Wptr = kernel_scheduler (sched);
-	
-	K_ZERO_OUT_JRET ();
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*{{{  word *ccsp_proc_alloc (word flags, word words)*/
@@ -4569,7 +4545,6 @@ K_CALL_DEFINE_0_1 (X_getaff)
  */
 K_CALL_DEFINE_1_0 (Y_setaff)
 {
-	K_CALL_Y_HEADER;
 	unsigned int affinity;
 	
 	K_CALL_PARAMS_1 (affinity);
@@ -4593,11 +4568,13 @@ K_CALL_DEFINE_1_0 (Y_setaff)
 
 	if (affinity != PAffinity (sched->priofinity)) {
 		Wptr[Priofinity] = BuildPriofinity (affinity, PPriority (sched->priofinity));
+		save_return (sched, Wptr, return_address);
 		enqueue_process (sched, Wptr);
 		Wptr = get_process_or_reschedule (sched);
+		K_ZERO_OUT_JRET ();
+	} else {
+		K_ZERO_OUT ();
 	}
-
-	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
 /*{{{  void kernel_X_getpas (void)*/
@@ -4646,7 +4623,6 @@ K_CALL_DEFINE_0_1 (X_getpri)
  */
 K_CALL_DEFINE_1_0 (Y_setpri)
 {
-	K_CALL_Y_HEADER;
 	int priority;
 	
 	K_CALL_PARAMS_1 (priority);
@@ -4660,6 +4636,7 @@ K_CALL_DEFINE_1_0 (Y_setpri)
 	
 	if (priority != PPriority (sched->priofinity)) {
 		Wptr[Priofinity] = BuildPriofinity (PAffinity (sched->priofinity), priority);
+		save_return (sched, Wptr, return_address);
 		enqueue_process (sched, Wptr);
 		Wptr = get_process_or_reschedule (sched);
 		K_ZERO_OUT_JRET ();
@@ -4716,11 +4693,11 @@ static INLINE void kernel_chan_io_mobile (sched_t *sched, word flags, word *src,
 	}
 }
 /*}}}*/
-/*{{{  static INLINE word *kernel_chan_io (...)*/
+/*{{{  static INLINE void kernel_chan_io (...)*/
 /*
  *	channel input and output
  */
-static INLINE word *kernel_chan_io (word flags, word *Wptr, sched_t *sched, word *channel_address, byte *pointer, unsigned int count)
+static INLINE void kernel_chan_io (word flags, word *Wptr, sched_t *sched, word *channel_address, byte *pointer, unsigned int count)
 {
 	byte *destination_address, *source_address;
 	word temp;
@@ -4734,10 +4711,12 @@ static INLINE word *kernel_chan_io (word flags, word *Wptr, sched_t *sched, word
 
 		temp = atw_swap (channel_address, (word) Wptr);
 		if (temp == NotProcess_p) {
-			return kernel_scheduler (sched);
+			kernel_scheduler (sched);
+			return;
 		} else if (temp & 1) {
 			trigger_alt_guard (sched, temp);
-			return kernel_scheduler (sched);
+			kernel_scheduler (sched);
+			return;
 		}
 	}
 	
@@ -4769,24 +4748,22 @@ static INLINE word *kernel_chan_io (word flags, word *Wptr, sched_t *sched, word
 		Wptr = reschedule_point (sched, Wptr, (word *) temp);
 	}
 
-	return Wptr;
+	K_ZERO_OUT_JRET ();
 }
 #define BUILD_CHANNEL_IO(symbol,count,flags) \
 K_CALL_DEFINE_2_0 (symbol)		\
 {					\
-	K_CALL_Y_HEADER;		\
 	word *channel_address;		\
 	byte *pointer;			\
 					\
 	K_CALL_PARAMS_2 (channel_address, pointer); \
-	Wptr = kernel_chan_io ((flags), Wptr, sched, channel_address, pointer, count); \
-	K_ZERO_OUT_JRET ();		\
+	save_return (sched, Wptr, return_address); \
+	kernel_chan_io ((flags), Wptr, sched, channel_address, pointer, count); \
 }
 
 #define BUILD_CHANNEL_COUNTED_IO(symbol,shift,flags) \
 K_CALL_DEFINE_3_0 (symbol)		\
 {					\
-	K_CALL_Y_HEADER;		\
 	word count, *channel_address;	\
 	byte *pointer;			\
 					\
@@ -4794,8 +4771,8 @@ K_CALL_DEFINE_3_0 (symbol)		\
 	if ((shift)) {			\
 		count <<= (shift);	\
 	}				\
-	Wptr = kernel_chan_io ((flags), Wptr, sched, channel_address, pointer, count); \
-	K_ZERO_OUT_JRET ();		\
+	save_return (sched, Wptr, return_address); \
+	kernel_chan_io ((flags), Wptr, sched, channel_address, pointer, count); \
 }
 /*}}}*/
 /*{{{  Y_in8 */
@@ -4870,19 +4847,18 @@ BUILD_CHANNEL_COUNTED_IO (Y_out, 0, CIO_OUTPUT)
  */
 K_CALL_DEFINE_2_0 (Y_outbyte)
 {
-	K_CALL_Y_HEADER;
 	word *channel_address;
 	byte *pointer;
 	word value;
 
 	K_CALL_PARAMS_2 (value, channel_address);
 
+	save_return (sched, Wptr, return_address);
+
 	pointer		= (byte *) Wptr;
 	*pointer	= (byte) value;
 	
-	Wptr = kernel_chan_io (CIO_OUTPUT, Wptr, sched, channel_address, pointer, 1);
-	
-	K_ZERO_OUT_JRET ();
+	kernel_chan_io (CIO_OUTPUT, Wptr, sched, channel_address, pointer, 1);
 }
 /*}}}*/
 /*{{{  void kernel_Y_outword (void)*/
@@ -4897,19 +4873,18 @@ K_CALL_DEFINE_2_0 (Y_outbyte)
  */
 K_CALL_DEFINE_2_0 (Y_outword)
 {
-	K_CALL_Y_HEADER;
 	word *channel_address;
 	byte *pointer;
 	word value;
 	
 	K_CALL_PARAMS_2 (value, channel_address);
 	
+	save_return (sched, Wptr, return_address);
+
 	Wptr[0]	= value;
 	pointer	= (byte *) Wptr;
 	
-	Wptr = kernel_chan_io (CIO_OUTPUT, Wptr, sched, channel_address, pointer, sizeof (word));
-	
-	K_ZERO_OUT_JRET ();
+	kernel_chan_io (CIO_OUTPUT, Wptr, sched, channel_address, pointer, sizeof (word));
 }
 /*}}}*/
 /*{{{  void kernel_Y_xable (void)*/
@@ -4925,7 +4900,6 @@ K_CALL_DEFINE_2_0 (Y_outword)
  */
 K_CALL_DEFINE_1_0 (Y_xable)
 {
-	K_CALL_Y_HEADER;
 	word *channel_address, temp;
 	
 	K_CALL_PARAMS_1 (channel_address);
@@ -4936,20 +4910,23 @@ K_CALL_DEFINE_1_0 (Y_xable)
 	if (temp == NotProcess_p || (temp & 1)) {
 		atw_set (&(Wptr[State]), ALT_WAITING | 1);
 		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
 		weak_write_barrier ();
 
 		temp = atw_swap (channel_address, ((word) Wptr) | 1);
 		if (temp == NotProcess_p) {
-			Wptr = kernel_scheduler (sched);
+			kernel_scheduler (sched);
+			return;
 		} else if (temp & 1) {
 			trigger_alt_guard (sched, temp);
-			Wptr = kernel_scheduler (sched);
-		} else {
-			atw_set (channel_address, temp);
+			kernel_scheduler (sched);
+			return;
 		}
+
+		atw_set (channel_address, temp);
 	}
 
-	K_ZERO_OUT_JRET ();
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_X_xend (void)*/
@@ -5086,23 +5063,23 @@ K_CALL_DEFINE_0_1 (X_ldtimer)
  */
 K_CALL_DEFINE_1_0 (Y_tin)
 {
-	K_CALL_Y_HEADER;
 	Time now, wait_time;
 	
 	K_CALL_PARAMS_1 (wait_time);
 	ENTRY_TRACE (Y_tin, "%d", wait_time);
 
 	now = Time_GetTime(sched);
-	
+
 	if (!Time_AFTER (now, wait_time)) {
 		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
 		wait_time++; /* from T9000 book... */
 		SetTimeField(Wptr, wait_time);
 		add_to_timer_queue (sched, Wptr, wait_time, false);
-		Wptr = kernel_scheduler (sched);
+		kernel_scheduler (sched);
 	}
 	
-	K_ZERO_OUT_JRET ();
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_fasttin (void)*/
@@ -5117,18 +5094,16 @@ K_CALL_DEFINE_1_0 (Y_tin)
  */
 K_CALL_DEFINE_1_0 (Y_fasttin)
 {
-	K_CALL_Y_HEADER;
 	Time wait_time;
 
 	K_CALL_PARAMS_1 (wait_time);
 	ENTRY_TRACE (Y_fasttin, "%d", wait_time);
 
 	save_priofinity (sched, Wptr);
+	save_return (sched, Wptr, return_address);
 	add_to_timer_queue (sched, Wptr, wait_time, false);
 
-	Wptr = kernel_scheduler (sched);
-	
-	K_ZERO_OUT_JRET ();
+	kernel_scheduler (sched);
 }
 /*}}}*/
 /*}}}*/
@@ -5176,25 +5151,27 @@ K_CALL_DEFINE_0_0 (X_talt)
 	K_ZERO_OUT ();
 }
 /*}}}*/
-/*{{{  static INLINE word *kernel_altend (word *Wptr, sched_t *sched, bool jump)*/
-static INLINE word *kernel_altend (word *Wptr, sched_t *sched, bool jump)
+/*{{{  static INLINE void kernel_altend (word *Wptr, sched_t *sched, unsigned int return_address, bool jump)*/
+static INLINE void kernel_altend (word *Wptr, sched_t *sched, unsigned int return_address, bool jump)
 {
 	word state = atw_val (&(Wptr[State]));
 
 	if (jump) {
-		save_return (sched, Wptr, Wptr[Temp]);
+		return_address += Wptr[Temp];
 	}
+
+	save_return (sched, Wptr, return_address);
 	
 	if (unlikely (state != 1)) {
 		save_priofinity (sched, Wptr);
 		weak_write_barrier ();
 
 		if (!atw_dec_z (&(Wptr[State]))) {
-			Wptr = kernel_scheduler (sched);
+			kernel_scheduler (sched);
 		}
 	}
-
-	return Wptr;
+	
+	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_altend (void)*/
@@ -5209,13 +5186,10 @@ static INLINE word *kernel_altend (word *Wptr, sched_t *sched, bool jump)
  */
 K_CALL_DEFINE_0_0 (Y_altend)
 {
-	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_altend);
 
-	Wptr = kernel_altend (Wptr, sched, true);
-
-	K_ZERO_OUT_JRET ();
+	kernel_altend (Wptr, sched, return_address, true);
 }
 /*}}}*/
 /*{{{  void kernel_Y_caltend (void)*/
@@ -5230,13 +5204,10 @@ K_CALL_DEFINE_0_0 (Y_altend)
  */
 K_CALL_DEFINE_0_0 (Y_caltend)
 {
-	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_caltend);
 
-	Wptr = kernel_altend (Wptr, sched, false);
-
-	K_ZERO_OUT_JRET ();
+	kernel_altend (Wptr, sched, return_address, false);
 }
 /*}}}*/
 /*{{{  void kernel_Y_altwt (void)*/
@@ -5251,7 +5222,6 @@ K_CALL_DEFINE_0_0 (Y_caltend)
  */
 K_CALL_DEFINE_0_0 (Y_altwt)
 {
-	K_CALL_Y_HEADER;
 	word state;
 
 	K_CALL_PARAMS_0 ();
@@ -5263,16 +5233,17 @@ K_CALL_DEFINE_0_0 (Y_altwt)
 		word nstate = (state | ALT_WAITING) & (~(ALT_ENABLING | ALT_NOT_READY));
 		
 		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
 		weak_write_barrier ();
 		
 		if (likely (atw_cas (&(Wptr[State]), state, nstate))) {
-			Wptr = kernel_scheduler (sched);
+			kernel_scheduler (sched);
 		}
-	} else {
-		atw_clear_bit (&(Wptr[State]), ALT_ENABLING_BIT);
 	}
+	
+	atw_clear_bit (&(Wptr[State]), ALT_ENABLING_BIT);
 
-	K_ZERO_OUT_JRET ();
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_taltwt (void)*/
@@ -5287,10 +5258,8 @@ K_CALL_DEFINE_0_0 (Y_altwt)
  */
 K_CALL_DEFINE_0_0 (Y_taltwt)
 {
-	K_CALL_Y_HEADER;
 	Time now;
 	word state;
-	word valid = true;
 
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (Y_taltwt);
@@ -5308,6 +5277,7 @@ K_CALL_DEFINE_0_0 (Y_taltwt)
 			tqnode_t *tn = NULL;
 
 			save_priofinity (sched, Wptr);
+			save_return (sched, Wptr, return_address);
 
 			if (Wptr[TLink] == TimeSet_p) {
 				tn = add_to_timer_queue (sched, Wptr, GetTimeField(Wptr), true);
@@ -5318,8 +5288,7 @@ K_CALL_DEFINE_0_0 (Y_taltwt)
 			weak_write_barrier ();
 			
 			if (likely (atw_cas (&(Wptr[State]), state, nstate))) {
-				Wptr = kernel_scheduler (sched);
-				valid = false;
+				kernel_scheduler (sched);
 			} else if (tn != NULL) {
 				Wptr[TLink] = TimeSet_p;
 				delete_tqnode (sched, tn);
@@ -5329,19 +5298,17 @@ K_CALL_DEFINE_0_0 (Y_taltwt)
 		}
 	}
 
-	if (valid) {
-		SetTimeField (Wptr, now);
-		atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
-	}
+	SetTimeField (Wptr, now);
+	atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
 
-	K_ZERO_OUT_JRET ();
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{ static INLINE void kernel_enbc (...)*/
 /*
  *	enable channel
  */
-static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, word return_address, word **channel_address, bool jump, bool set_address)
+static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, unsigned int return_address, word **channel_address, bool jump, bool set_address)
 {
 	const word ptr = (((word) Wptr) | 1);
 	word temp = atw_val (channel_address);
@@ -5352,6 +5319,7 @@ static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, word return_address,
 			atw_set (channel_address, temp);
 			if (jump) {
 				atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
+				save_return (sched, Wptr, return_address);
 				K_ZERO_OUT_JRET ();
 			} else if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
 				atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
@@ -5366,11 +5334,12 @@ static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, word return_address,
 	} else if (temp != ptr) {
 		if (jump) {
 			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
+			save_return (sched, Wptr, return_address);
 			K_ZERO_OUT_JRET ();
 		} else if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
 			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
 			if (set_address) {
-				atw_set (&(Wptr[Temp]), return_address);
+				Wptr[Temp] = return_address;
 			}
 		}
 		return true;
@@ -5400,7 +5369,7 @@ K_CALL_DEFINE_2_1 (X_enbc)
 		K_ONE_OUT (false);
 	}
 	
-	kernel_enbc (Wptr, sched, 0, channel_address, false, false);
+	kernel_enbc (Wptr, sched, return_address, channel_address, false, false);
 
 	K_ONE_OUT (true);
 }
@@ -5417,7 +5386,6 @@ K_CALL_DEFINE_2_1 (X_enbc)
  */
 K_CALL_DEFINE_2_0 (Y_enbc2)
 {
-	K_CALL_Y_HEADER;
 	unsigned int process_address;
 	word **channel_address;
 
@@ -5441,7 +5409,6 @@ K_CALL_DEFINE_2_0 (Y_enbc2)
  */
 K_CALL_DEFINE_3_1 (Y_enbc3)
 {
-	K_CALL_Y_HEADER;
 	unsigned int process_address;
 	word **channel_address, guard;
 
@@ -5488,7 +5455,7 @@ static INLINE void kernel_enbs (word *Wptr, unsigned int return_address, bool ju
 	} else if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
 		atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
 		if (set_address) {
-			atw_set (&(Wptr[Temp]), return_address);
+			Wptr[Temp] = return_address;
 		}
 	}
 }
@@ -5531,7 +5498,6 @@ K_CALL_DEFINE_1_1 (X_enbs)
  */
 K_CALL_DEFINE_1_0 (Y_enbs2)
 {
-	K_CALL_Y_HEADER;
 	unsigned int process_address;
 
 	K_CALL_PARAMS_1 (process_address);
@@ -5554,7 +5520,6 @@ K_CALL_DEFINE_1_0 (Y_enbs2)
  */
 K_CALL_DEFINE_2_1 (Y_enbs3)
 {
-	K_CALL_Y_HEADER;
 	unsigned int process_address;
 	word guard;
 
@@ -5567,7 +5532,6 @@ K_CALL_DEFINE_2_1 (Y_enbs3)
 
 	kernel_enbs (Wptr, 0, true, false);
 
-	/* FIXME: ... */
 	K_ONE_OUT_JUMP (process_address, true);
 }
 /*}}}*/
@@ -5597,7 +5561,7 @@ K_CALL_DEFINE_1_1 (X_cenbs)
 /*
  *	enable timer
  */
-static INLINE bool kernel_enbt (word *Wptr, sched_t *sched, word return_address, Time timeout, bool jump, bool check, bool set_address)
+static INLINE bool kernel_enbt (word *Wptr, sched_t *sched, unsigned int return_address, Time timeout, bool jump, bool check, bool set_address)
 {
 	Time now = (jump || check) ? Time_GetTime (sched) : 0;
 
@@ -5606,11 +5570,12 @@ static INLINE bool kernel_enbt (word *Wptr, sched_t *sched, word return_address,
 		SetTimeField (Wptr, now);
 		if (jump) {
 			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
+			save_return (sched, Wptr, return_address);
 			K_ZERO_OUT_JRET ();
 		} else if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
 			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
 			if (set_address) {
-				atw_set (&(Wptr[Temp]), return_address);
+				Wptr[Temp] = return_address;
 			}
 		}
 		return true;
@@ -5663,7 +5628,6 @@ K_CALL_DEFINE_2_1 (X_enbt)
  */
 K_CALL_DEFINE_2_0 (Y_enbt2)
 {
-	K_CALL_Y_HEADER;
 	unsigned int process_address;
 	Time timeout;
 
@@ -5687,7 +5651,6 @@ K_CALL_DEFINE_2_0 (Y_enbt2)
  */
 K_CALL_DEFINE_3_1 (Y_enbt3)
 {
-	K_CALL_Y_HEADER;
 	unsigned int process_address;
 	Time timeout;
 	word guard;
@@ -6023,15 +5986,14 @@ K_CALL_DEFINE_3_1 (X_ndist)
  */
 K_CALL_DEFINE_1_0 (Y_sem_claim)
 {
-	K_CALL_Y_HEADER;
 	ccsp_sem_t *sem;
 	
 	K_CALL_PARAMS_1 (sem);
 	ENTRY_TRACE (Y_sem_claim, "%p", sem);
 
-	Wptr = sem_claim (sched, Wptr, sem);
+	sem_claim (sched, Wptr, return_address, sem);
 
-	K_ZERO_OUT_JRET ();
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_X_sem_release (void)*/
@@ -6086,7 +6048,6 @@ K_CALL_DEFINE_1_0 (X_sem_init)
  */
 K_CALL_DEFINE_2_0 (Y_mt_lock)
 {
-	K_CALL_Y_HEADER;
 	mt_cb_shared_internal_t *cb;
 	word *ptr, type;
 	
@@ -6099,9 +6060,9 @@ K_CALL_DEFINE_2_0 (Y_mt_lock)
 	ASSERT ( cb->type & MT_CB_SHARED );
 	ASSERT ( type == MT_CB_CLIENT || type == MT_CB_SERVER );
 
-	Wptr = sem_claim (sched, Wptr, &(cb->sem[type]));
+	sem_claim (sched, Wptr, return_address, &(cb->sem[type]));
 
-	K_ZERO_OUT_JRET ();
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_X_mt_unlock (void)*/
@@ -6145,15 +6106,14 @@ K_CALL_DEFINE_2_0 (X_mt_unlock)
  */
 K_CALL_DEFINE_1_0 (Y_mt_sync)
 {
-	K_CALL_Y_HEADER;
 	ccsp_barrier_t *bar;
 	
 	K_CALL_PARAMS_1 (bar);
 	ENTRY_TRACE (Y_mt_sync, "%p", bar);
 	
-	Wptr = bar->sync (sched, &(bar->data), Wptr);
+	save_return (sched, Wptr, return_address);
 
-	K_ZERO_OUT_JRET ();
+	bar->sync (sched, &(bar->data), Wptr);
 }
 /*}}}*/
 /*{{{  void kernel_X_mt_resign (void)*/
@@ -6251,7 +6211,6 @@ void ccsp_interrupt_handler (int irq)
  */
 K_CALL_DEFINE_2_0 (Y_wait_int)
 {
-	K_CALL_Y_HEADER;
 	word number, mask;
 
 	K_CALL_PARAMS_2 (number, mask);
@@ -6261,8 +6220,7 @@ K_CALL_DEFINE_2_0 (Y_wait_int)
 	if (inttab[number]) {
 		MESSAGE ("scheduler: ieee, someone already waiting for this interrupt!\n");
 		/* blind reschedule */
-		Wptr = kernel_scheduler (sched);
-		K_ZERO_OUT_JRET ();
+		kernel_scheduler (sched);
 	}
 	
 	cli ();
@@ -6270,18 +6228,19 @@ K_CALL_DEFINE_2_0 (Y_wait_int)
 	if (!intcount[number]) {
 		/* no interrupt yet */
 		save_priofinity (sched, Wptr);
+		save_return (sched, Wptr, return_address);
 		Wptr[Temp] = 0;
 		inttab[number] = Wptr;
+		sti ();
 		
-		Wptr = kernel_scheduler (sched);
+		kernel_scheduler (sched);
 	} else {
 		Wptr[Temp] = intcount[number];
 		intcount[number] = 0;
+		sti ();
+
+		K_ZERO_OUT ();
 	}
-
-	sti ();
-
-	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
 #endif	/* defined(RMOX_BUILD) */
@@ -6292,7 +6251,7 @@ K_CALL_DEFINE_2_0 (Y_wait_int)
 /*
  *	dynamic kernel run entry point (and resume point)
  *
- *	@SYMBOL:	Y_kernel_run
+ *	@SYMBOL:	X_kernel_run
  *	@INPUT:		1
  *	@OUTPUT: 	0
  *	@CALL: 		K_KERNEL_RUN
@@ -6300,14 +6259,13 @@ K_CALL_DEFINE_2_0 (Y_wait_int)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_1_0 (Y_kernel_run)
+K_CALL_DEFINE_1_0 (X_kernel_run)
 {
-	K_CALL_Y_HEADER;
 	unsigned int kr_param;
 	d_process *kr_dptr;
 	
 	K_CALL_PARAMS_1 (kr_param);
-	ENTRY_TRACE (Y_kernel_run, "%p", (void *)kr_param);
+	ENTRY_TRACE (X_kernel_run, "%p", (void *)kr_param);
 
 	kr_dptr = dynproc_startprocess ((int *)kr_param, K_CALL_PTR (Y_dynproc_exit));
 	kr_dptr->holding_wptr 		= Wptr;
@@ -6330,9 +6288,7 @@ K_CALL_DEFINE_1_0 (Y_kernel_run)
 		return_address 		= (word) kr_dptr->entrypoint;
 	}
 
-	save_return (sched, Wptr, return_address);
-
-	K_ZERO_OUT_JRET ();
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_dynproc_suspend (void)*/
@@ -6349,7 +6305,6 @@ K_CALL_DEFINE_1_0 (Y_kernel_run)
  */
 K_CALL_DEFINE_1_0 (Y_dynproc_suspend)
 {
-	K_CALL_Y_HEADER;
 	word *ds_param;
 	
 	K_CALL_PARAMS_1 (ds_param);
@@ -6358,11 +6313,10 @@ K_CALL_DEFINE_1_0 (Y_dynproc_suspend)
 	/* ds_param should point at the argument-set (VAL DPROCESS p, INT result) */
 	if (dynproc_suspendprocess ((d_process *)(ds_param[0]), (int *)(ds_param[1]), Wptr, return_address, sched->priofinity)) {
 		/* failed */
+		K_ZERO_OUT ();
 	} else {
-		Wptr = kernel_scheduler (sched);
+		kernel_scheduler (sched);
 	}
-
-	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_dynproc_exit (void)*/
@@ -6379,7 +6333,6 @@ K_CALL_DEFINE_1_0 (Y_dynproc_suspend)
  */
 K_CALL_DEFINE_0_0 (Y_dynproc_exit)
 {
-	K_CALL_Y_HEADER;
 	d_process *kr_dptr;
 	word *kr_wptr;
 	
@@ -6482,11 +6435,14 @@ K_CALL_DEFINE_1_1 (X_mppclone)
 
 	K_CALL_PARAMS_1 (process_address);
 
-	process_address = (word) mpcb_mpp_clone ((mp_ctrlblk *)process_address);
+	process_address = (word)mpcb_mpp_clone ((mp_ctrlblk *)process_address);
 	if (process_address == NotProcess_p) {
-		/* FIXME: ... */
-		BMESSAGE ("mobile process CLONE error at 0x%x, Wptr = 0x%x.\n", 0, (unsigned int)Wptr);
-		ccsp_kernel_exit (1, 0);
+		if (ccsp_ignore_errors) {
+			kernel_scheduler (sched);
+		} else {
+			BMESSAGE ("mobile process CLONE error at 0x%x, Wptr = 0x%x.\n", return_address, (unsigned int)Wptr);
+			ccsp_kernel_exit (1, return_address);
+		}
 	}
 	
 	K_ONE_OUT (process_address);
@@ -6506,7 +6462,6 @@ K_CALL_DEFINE_1_1 (X_mppclone)
  */
 K_CALL_DEFINE_3_0 (Y_mppserialise)
 {
-	K_CALL_Y_HEADER;
 	unsigned int count, process_address;
 	word **channel_address;
 	byte *destination_address;
@@ -6516,12 +6471,15 @@ K_CALL_DEFINE_3_0 (Y_mppserialise)
 	/* actually pass a pointer to it, may need to nullify */
 	process_address = ((word *)(*channel_address))[Pointer];
 	if (!mpcb_mpp_serialise ((mp_ctrlblk **)process_address, (unsigned int *)process_address + 1, (int *)destination_address, (int *)count)) {
-		/* FIXME: ... */
-		BMESSAGE ("mobile process serialise error at 0x%x, Wptr = 0x%x.\n", return_address, (unsigned int)Wptr);
-		ccsp_kernel_exit (1, return_address);
+		if (ccsp_ignore_errors) {
+			kernel_scheduler (sched);
+		} else {
+			BMESSAGE ("mobile process serialise error at 0x%x, Wptr = 0x%x.\n", return_address, (unsigned int)Wptr);
+			ccsp_kernel_exit (1, return_address);
+		}
 	}
 
-	K_ZERO_OUT_JRET ();
+	K_ZERO_OUT ();
 }
 /*}}}*/
 /*{{{  void kernel_Y_mppdeserialise (void)*/
@@ -6538,7 +6496,6 @@ K_CALL_DEFINE_3_0 (Y_mppserialise)
  */
 K_CALL_DEFINE_3_0 (Y_mppdeserialise)
 {
-	K_CALL_Y_HEADER;
 	unsigned int count, process_address;
 	word **channel_address;
 	byte *source_address;
@@ -6548,11 +6505,15 @@ K_CALL_DEFINE_3_0 (Y_mppdeserialise)
 	/* pass a pointer to the ws locn */
 	process_address = ((word *)(*channel_address))[Pointer];
 	if (!mpcb_mpp_deserialise ((int)source_address, (int)count, (mp_ctrlblk **)process_address, (unsigned int *)process_address + 1)) {
-		BMESSAGE ("mobile process serialise error at 0x%x, Wptr = 0x%x.\n", return_address, (unsigned int)Wptr);
-		ccsp_kernel_exit (1, return_address);
+		if (ccsp_ignore_errors) {
+			kernel_scheduler (sched);
+		} else {
+			BMESSAGE ("mobile process serialise error at 0x%x, Wptr = 0x%x.\n", return_address, (unsigned int)Wptr);
+			ccsp_kernel_exit (1, return_address);
+		}
 	}
 
-	K_ZERO_OUT_JRET ();
+	K_ZERO_OUT ();
 }
 /*}}}*/
 #endif	/* defined(RMOX_BUILD) || !defined(DYNAMIC_PROCS) */
