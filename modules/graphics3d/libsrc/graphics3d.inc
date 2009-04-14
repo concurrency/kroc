@@ -97,10 +97,18 @@ DATA TYPE G3D.POLY.SCAN
   RECORD
     [G3D.MAX.SCAN.HEIGHT]INT start:
     [G3D.MAX.SCAN.HEIGHT]INT end:
+    [G3D.MAX.SCAN.HEIGHT]INT z.start:
+    [G3D.MAX.SCAN.HEIGHT]INT z.end:
     INT norm:
     INT scan.s, scan.e:
     INT pixel:
 :
+
+--}}}
+--{{{  other data-types
+
+--* Z-buffer is a 2D array of integers, passed around with rasters.
+DATA TYPE ZBUFFER IS MOBILE [][]INT:
 
 --}}}
 --{{{  protocols and channel-types for controlling components
@@ -189,7 +197,7 @@ CHAN TYPE G3D.RENDER.ENGINE:
 --* Graphics pipeline link protocol.
 PROTOCOL G3D.RENDER.ENGINE.LINK
   CASE
-    raster; RASTER                          --* Raster to render on and forward.
+    raster; RASTER; ZBUFFER                 --* Raster to render on and forward.
     set.next; INT; G3D.RENDER.ENGINE!       --* Set the next renderer in the pipeline.
                                             -- The integer passed is used to identify
                                             -- which particular 'next' to replace (counts down).

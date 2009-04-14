@@ -1034,7 +1034,7 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
       vp.height := G3D.MAX.SCAN.HEIGHT
   :
   --}}}
-  PROC glenz.poly.render (RASTER r, VAL G3D.POLY.SCAN scan) --{{{
+  PROC glenz.poly.render (RASTER r, ZBUFFER zb, VAL G3D.POLY.SCAN scan) --{{{
     INT y.start, y.len:
     SEQ
       IF
@@ -1127,7 +1127,7 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
             SKIP
   :
   --}}}
-  PROC normal.poly.render (RASTER r, VAL G3D.POLY.SCAN scan) --{{{
+  PROC normal.poly.render (RASTER r, ZBUFFER zb, VAL G3D.POLY.SCAN scan) --{{{
     INT y.start, y.len:
     SEQ
       IF
@@ -1228,7 +1228,8 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
 
         rlink.in[link] ? CASE
           RASTER r:
-          raster; r
+          ZBUFFER zb:
+          raster; r; zb
             --{{{  render and pass on
             MOBILE []G3D.POLY.SCAN scans:
             SEQ
@@ -1267,14 +1268,14 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                       SKIP
                   IF
                     (mode /\ G3D.RENDER.MODE.GLENZ) <> 0
-                      glenz.poly.render (r, scan)
+                      glenz.poly.render (r, zb, scan)
                     TRUE
                       SEQ
-                        normal.poly.render (r, scan)
+                        normal.poly.render (r, zb, scan)
                     TRUE
                       SKIP
 
-              rlink.out[link] ! raster; r
+              rlink.out[link] ! raster; r; zb
             --}}}
           INT n:
           G3D.RENDER.ENGINE! tmp:
@@ -1503,7 +1504,8 @@ PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in
 
         rlink.in[link] ? CASE
           RASTER r:
-          raster; r
+          ZBUFFER zb:
+          raster; r; zb
             --{{{  render and pass on
             MOBILE []G3D.POLY polys:
             SEQ
@@ -1512,7 +1514,7 @@ PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in
               SEQ i = 0 FOR SIZE polys
                 poly.frame.render (r, polys[i])
 
-              rlink.out[link] ! raster; r
+              rlink.out[link] ! raster; r; zb
             --}}}
           INT n:
           G3D.RENDER.ENGINE! tmp:
@@ -1556,11 +1558,22 @@ PROC raster.chain.head (CHAN RASTER in?, G3D.RENDER.ENGINE! head, CHAN G3D.RENDE
           count := count + 1
       RASTER r:
       in ? r
+        ZBUFFER zb:
+        INT xd, yd:
         SEQ
+          yd := SIZE r
+          xd := SIZE r[0]
+          -- create Z buffer matching raster size
+
+          zb := MOBILE [yd][xd]INT
+          SEQ y = 0 FOR yd
+            SEQ x = 0 FOR xd
+              zb[y][x] := 0
+
           IF
             fade
-              SEQ y = 0 FOR SIZE r
-                SEQ x = 0 FOR SIZE r[0]
+              SEQ y = 0 FOR yd
+                SEQ x = 0 FOR xd
                   [4]BYTE val RETYPES r[y][x]:
                   SEQ i = 0 FOR 4
                     IF
@@ -1570,7 +1583,8 @@ PROC raster.chain.head (CHAN RASTER in?, G3D.RENDER.ENGINE! head, CHAN G3D.RENDE
                         val[i] := #00
             TRUE
               raster.clear (r, #00000000)
-          head[link] ! raster; r
+
+          head[link] ! raster; r; zb
 :
 --}}}
 --{{{  PROC raster.chain.tail (CHAN RASTER out!, G3D.RENDER.ENGINE? tail)
@@ -1584,7 +1598,8 @@ PROC raster.chain.tail (CHAN RASTER out!, G3D.RENDER.ENGINE? tail)
   WHILE running
     tail[link] ? CASE
       RASTER r:
-      raster; r
+      ZBUFFER zb:
+      raster; r; zb
         out ! r
       INT n:
       G3D.RENDER.ENGINE! tmp:
