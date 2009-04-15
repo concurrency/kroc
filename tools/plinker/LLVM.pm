@@ -179,7 +179,8 @@ $GRAPH = {
 	'FPEXPDEC32'	=> { 'fin' => 1, 'fout' => 1 },
 	'FPABS'		=> { 'fin' => 1, 'fout' => 1 },
 	# Kernel
-	'ENDP'		=> { 'kcall' => 1, 'in' => 1 },
+	'ENDP'		=> { 'kcall' => 1, 'in' => 1,
+		'symbol' => 'Y_endp' },
 	'IN'		=> { 'kcall' => 1, 'in' => 3 },
 	'OUT'		=> { 'kcall' => 1, 'in' => 3 },
 	'STARTP'	=> { 'kcall' => 1, 'in' => 2,
@@ -215,7 +216,8 @@ $GRAPH = {
 	'PROC_END'	=> { 'kcall' => 1, 'in' => 1 },
 	'GETAFF'	=> { 'kcall' => 1, 'out' => 1 },
 	'SETAFF'	=> { 'kcall' => 1, 'in' => 1 },
-	'GETPAS'	=> { 'kcall' => 1, 'out' => 1 },
+	'GETPAS'	=> { 'kcall' => 1, 'out' => 1, 
+		'symbol' => 'X_getpas' },
 	'GETPRI'	=> { 'kcall' => 1, 'out' => 1 },
 	'SETPRI'	=> { 'kcall' => 1, 'in' => 1 },
 	'MT_ALLOC'	=> { 'kcall' => 1, 'in' => 2, 'out' => 1 },
@@ -814,6 +816,11 @@ sub float_type {
 	return 'double';
 }
 
+sub sched_type {
+	my $self = shift;
+	return 'i8*';
+}
+
 sub workspace_type {
 	my $self = shift;
 	return $self->int_type . '*';
@@ -898,7 +905,7 @@ sub _gen_error ($$$$$) {
 		$source_asm,
 		sprintf ('call void @etc_error_%s (%s %%sched, %s %%%s, i8* %%%s, %s %s)',
 			$type,
-			$self->int_type,
+			$self->sched_type,
 			$self->workspace_type, $inst->{'wptr'},
 			$source_reg,
 			$self->int_type, $self->source_line
@@ -909,7 +916,7 @@ sub _gen_error ($$$$$) {
 sub gen_j ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my @params = ( 
-		sprintf ('%s %%sched', $self->int_type),
+		sprintf ('%s %%sched', $self->sched_type),
 		sprintf ('%s %%%s', $self->workspace_type, $inst->{'wptr'})
 	);
 	if ($inst->{'in'}) {
@@ -947,16 +954,16 @@ sub gen_cj ($$$$) {
 		),
 		$jump_label . ':',
 		sprintf ('tail call void %s (%s %%sched, %s %%%s) noreturn',
-			$self->int_type,
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
+			$self->sched_type,
 			$self->workspace_type,
 			$inst->{'wptr'}
 		),
 		'ret void',
 		$cont_label . ':',
 		sprintf ('tail call void %s (%s %%sched, %s %%%s) noreturn',
-			$self->int_type,
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
+			$self->sched_type,
 			$self->workspace_type,
 			$inst->{'wptr'}
 		)
@@ -966,7 +973,8 @@ sub gen_cj ($$$$) {
 sub gen_call ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
 	my $name = $inst->{'name'};
-	my (@asm, @params);
+	my $wptr = $inst->{'wptr'};
+	my (@asm, @params, $new_wptr);
 	
 	my $in = $inst->{'in'};
 	if (exists ($inst->{'fin'})) {
@@ -975,45 +983,57 @@ sub gen_call ($$$$) {
 		push (@asm, "; $msg");
 	}
 
-	my $new_wptr = $self->tmp_reg ();
-	push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
-		$new_wptr,
-		$self->workspace_type, $inst->{'wptr'},
-		$self->index_type, -4
-	));
+	if ($name =~ /^G?CALL$/ || $inst->{'reschedule'}) {
+		my $iptr_offset = 0;
 
-	my $ret_ptr = $self->tmp_reg ();
-	push (@asm, sprintf ('%%%s = load %s %s',
-		$ret_ptr, $self->int_type . '*',
-		$proc->{'call_prefix'} . $label->{'next'}->{'name'}
-	));
-	push (@asm, sprintf ('store %s %%%s, %s %%%s',
-		$self->int_type, $ret_ptr,
-		$self->workspace_type, $new_wptr
-	));
+		$new_wptr = $self->tmp_reg ();
 
-	if ($name eq 'CALL') {
-		for (my $i = 0; $i < @$in; ++$i) {
-			my $tmp_reg = $self->tmp_reg ();
-			push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
-				$tmp_reg,
-				$self->workspace_type, $new_wptr,
-				$self->index_type, ($i + 1)
-			));
-			push (@asm, sprintf ('store %s %%%s, %s %%%s',
-				$self->int_type, $in->[$i],
-				$self->workspace_type, $tmp_reg
-			));
+		if ($inst->{'reschedule'}) {
+			$iptr_offset = -1;
+		} elsif ($name eq 'CALL') {
+			$iptr_offset = -4;
 		}
-	} elsif (($name eq 'GCALL') && $in) {
-		my $msg = "WARNING: stack is not empty at point of general call";
-		$self->message (1, $msg);
-		push (@asm, "; $msg");
-	} else {
-		foreach my $param (@$in) {
-			push (@params, sprintf ('%s %%%s',
-				$self->int_type, $param
-			));
+
+		push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+			$new_wptr,
+			$self->workspace_type, $wptr,
+			$self->index_type,
+			$iptr_offset
+		));
+
+		my $ret_ptr = $self->tmp_reg ();
+		push (@asm, sprintf ('%%%s = load %s %s',
+			$ret_ptr, $self->int_type . '*',
+			$proc->{'call_prefix'} . $label->{'next'}->{'name'}
+		));
+		push (@asm, sprintf ('store %s %%%s, %s %%%s',
+			$self->int_type, $ret_ptr,
+			$self->workspace_type, $new_wptr
+		));
+
+		if ($name eq 'CALL') {
+			for (my $i = 0; $i < @$in; ++$i) {
+				my $tmp_reg = $self->tmp_reg ();
+				push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+					$tmp_reg,
+					$self->workspace_type, $new_wptr,
+					$self->index_type, ($i + 1)
+				));
+				push (@asm, sprintf ('store %s %%%s, %s %%%s',
+					$self->int_type, $in->[$i],
+					$self->workspace_type, $tmp_reg
+				));
+			}
+		} elsif (($name eq 'GCALL') && $in) {
+			my $msg = "WARNING: stack is not empty at point of general call";
+			$self->message (1, $msg);
+			push (@asm, "; $msg");
+		} else {
+			foreach my $param (@$in) {
+				push (@params, sprintf ('%s %%%s',
+					$self->int_type, $param
+				));
+			}
 		}
 	}
 
@@ -1026,32 +1046,64 @@ sub gen_call ($$$$) {
 		));
 		push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn',
 			$jump_ptr,
-			$self->int_type,
+			$self->sched_type,
 			$self->workspace_type,
-			$new_wptr
+			$wptr
 		));
 	} elsif ($name eq 'CALL') {
 		push (@asm, sprintf ('tail call void @O_%s (%s %%sched, %s %%%s) noreturn',
 			$inst->{'arg'}->{'symbol'},
-			$self->int_type,
+			$self->sched_type,
 			$self->workspace_type,
 			$new_wptr
 		));
 	} else {
-		my $new_wptr = $self->tmp_reg ();
+		my $ret = $inst->{'out'} && @{$inst->{'out'}} ? $inst->{'out'}->[0] : $self->tmp_reg ();
+
 		push (@asm, sprintf ('%%%s = call %s @%s (%s %%sched, %s %%%s%s%s)',
-			$new_wptr,
+			$ret,
 			$self->workspace_type,
 			$name,
-			$self->int_type,
+			$self->sched_type,
 			$self->workspace_type,
-			$new_wptr,
-			@params ? ',' : '',
+			$wptr,
+			@params ? ', ' : '',
 			join (', ', @params)
 		));
-		push (@asm, $self->gen_ret (
-			$proc, $label, { 'wptr' => $new_wptr }
-		));
+		
+		if ($inst->{'reschedule'}) {
+			my $jump_ptr_ptr = $self->tmp_reg ();
+			my $jump_ptr 	= $self->tmp_reg ();
+			my $jump_val 	= $self->tmp_reg ();
+			my $new_wptr	= $ret;
+			push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+				$jump_ptr_ptr,
+				$self->workspace_type, $new_wptr,
+				$self->index_type, -1
+			));
+			push (@asm, sprintf ('%%%s = load %s %%%s',
+				$jump_val, 
+				$self->workspace_type, $inst->{'wptr'}
+			));
+			push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s, %s)*',
+				$jump_ptr, 
+				$self->int_type, $jump_val, 
+				$self->sched_type, $self->workspace_type
+			));
+			push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn',
+				$jump_ptr,
+				$self->sched_type,
+				$self->workspace_type, $new_wptr
+			));
+		} else {
+			my $next_label = $label->{'next'};
+			push (@asm, $self->gen_j ($proc, $label, {
+				'in'	=> $next_label->{'in'},
+				'fin'	=> $next_label->{'fin'},
+				'wptr' 	=> $next_label->{'wptr'},
+				'arg'	=> $next_label
+			}));
+		}
 	}	
 
 	return @asm;
@@ -1487,6 +1539,7 @@ sub gen_ret ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $jump_val = $self->tmp_reg ();
 	my $jump_ptr = $self->tmp_reg ();
+	my $new_wptr = $self->tmp_reg ();
 	my @asm;
 	push (@asm, sprintf ('%%%s = load %s %%%s',
 		$jump_val, 
@@ -1495,12 +1548,17 @@ sub gen_ret ($$$$) {
 	push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s, %s)*',
 		$jump_ptr, 
 		$self->int_type, $jump_val, 
-		$self->int_type, $self->workspace_type
+		$self->sched_type, $self->workspace_type
+	));
+	push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+		$new_wptr,
+		$self->workspace_type, $inst->{'wptr'},
+		$self->index_type, 4
 	));
 	push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn',
 		$jump_ptr,
-		$self->int_type,
-		$self->workspace_type, $inst->{'wptr'}
+		$self->sched_type,
+		$self->workspace_type, $new_wptr
 	));
 	return @asm;
 }
@@ -1654,35 +1712,40 @@ sub gen_lend ($$$$) {
 }
 
 sub _gen_kcall ($$$$$) {
-	my ($self, $proc, $label, $inst, $name) = @_;
-	if ($name =~ /^X_/) {
+	my ($self, $proc, $label, $inst, $symbol) = @_;
+	my $name 	= 'kernel_' . $symbol;
+	my $reschedule 	= $symbol =~ /^Y_/ ? 1 : 0;
+	
+	die "Unknown kernel call $symbol" if $symbol !~ /^[XY]_/;
+
+	if (!exists ($self->{'header'}->{$name})) {
+		my @param = ($self->sched_type, $self->workspace_type);
 		
-	} elsif ($name =~ /^Y_/) {
-		if (!exists ($self->{'header'}->{$name})) {
-			my @param = ($self->int_type, $self->workspace_type);
+		if ($inst->{'in'}) {
 			for (my $i = 0; $i < @{$inst->{'in'}}; ++$i) {
 				push (@param, $self->int_type);
 			}
-			$self->{'header'}->{$name} = sprintf (
-				'define %s @%s (%s)',
-				$self->workspace_type, $name, join (', ', @param)
-			);
 		}
-		return $self->gen_call ($proc, $label, {
-			'name' 	=> $name,
-			'in'	=> $inst->{'in'},
-			'wptr'	=> $inst->{'wptr'}
-		});
-	} else {
-		die "Unknown kernel call $name";
+		
+		$self->{'header'}->{$name} = [ sprintf (
+			'define %s @%s (%s)',
+			$reschedule ? $self->workspace_type : $self->int_type, 
+			$name, join (', ', @param)
+		) ];
 	}
+	
+	return $self->gen_call ($proc, $label, {
+		'name' 		=> $name,
+		'in'		=> $inst->{'in'},
+		'out'		=> $inst->{'out'},
+		'wptr'		=> $inst->{'wptr'},
+		'reschedule' 	=> $reschedule
+	});
 }
 
 sub gen_kcall ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $data = $GRAPH->{$inst->{'name'}};
-	print "data = $data, ", $data->{'symbol'}, "\n";
-	print Dumper ($data);
 	return $self->_gen_kcall ($proc, $label, $inst, $data->{'symbol'});
 }
 
@@ -1710,12 +1773,12 @@ sub generate_proc ($$) {
 	push (@asm, format_lines (
 		sprintf ('define void %s (%s %%sched, %s %%wptr) {', 
 			$symbol,
-			$self->int_type, $self->workspace_type
+			$self->sched_type, $self->workspace_type
 		),
 		'entry:',
 		sprintf ('tail call void %s (%s %%sched, %s %%wptr) noreturn',
 			$call_pfix . $proc->{'labels'}->[0]->{'name'},
-			$self->int_type, $self->workspace_type
+			$self->sched_type, $self->workspace_type
 		),
 		'ret void',
 		'}'
@@ -1727,7 +1790,7 @@ sub generate_proc ($$) {
 
 		if (1) {
 			my @params = (
-				sprintf ('%s %%sched', $self->int_type),
+				sprintf ('%s %%sched', $self->sched_type),
 				sprintf ('%s %%%s', $self->workspace_type, $label->{'wptr'})
 			);
 			for (my $i = 0; $i < @{$label->{'in'}}; ++$i) {
@@ -1846,7 +1909,8 @@ sub generate_proc ($$) {
 			$last_inst = $inst;
 		}
 
-		if ($last_inst->{'name'} !~ /^(J|CALL|CJ|RET)$/) {
+		my $last_data = $GRAPH->{$last_inst->{'name'}};
+		if ($last_inst->{'name'} ne 'RET' && !($last_data->{'branching'} || $last_data->{'kcall'})) {
 			my $next_label = $label->{'next'};
 			push (@asm, format_lines (
 				$self->gen_j ($proc, $label, {
