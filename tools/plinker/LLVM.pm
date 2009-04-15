@@ -901,10 +901,15 @@ sub global_ptr_value ($$$) {
 sub _gen_error ($$$$$) {
 	my ($self, $proc, $label, $inst, $type) = @_;
 	my ($source_reg, $source_asm) = $self->global_ptr_value ('i8*', $self->source_file);
+	my $symbol = 'etc_error_' . $type;
+	$self->{'header'}->{$symbol} = [ 
+		sprintf ('declare void @%s (%s, %s, i8*, %s)',
+			$symbol, $self->sched_type, $self->workspace_type, $self->int_type
+	)];
 	return (
 		$source_asm,
-		sprintf ('call void @etc_error_%s (%s %%sched, %s %%%s, i8* %%%s, %s %s)',
-			$type,
+		sprintf ('call void @%s (%s %%sched, %s %%%s, i8* %%%s, %s %s)',
+			$symbol,
 			$self->sched_type,
 			$self->workspace_type, $inst->{'wptr'},
 			$source_reg,
@@ -1062,7 +1067,7 @@ sub gen_call ($$$$) {
 
 		push (@asm, sprintf ('%%%s = call %s @%s (%s %%sched, %s %%%s%s%s)',
 			$ret,
-			$self->workspace_type,
+			$inst->{'reschedule'} ? $self->workspace_type : $self->int_type,
 			$name,
 			$self->sched_type,
 			$self->workspace_type,
@@ -1728,7 +1733,7 @@ sub _gen_kcall ($$$$$) {
 		}
 		
 		$self->{'header'}->{$name} = [ sprintf (
-			'define %s @%s (%s)',
+			'declare %s @%s (%s)',
 			$reschedule ? $self->workspace_type : $self->int_type, 
 			$name, join (', ', @param)
 		) ];
@@ -1997,19 +2002,6 @@ sub generate ($$) {
 	$self->preprocess_etc ($file, $etc);
 
 	my @header = $self->intrinsics;
-	# for debugging
-	push (@header, sprintf ('declare void @etc_error_bounds (%s, %s, i8*, %s)',
-		$self->int_type, $self->workspace_type, $self->int_type
-	));
-	push (@header, sprintf ('declare void @etc_error_div (%s, %s, i8*, %s)',
-		$self->int_type, $self->workspace_type, $self->int_type
-	));
-	push (@header, sprintf ('declare void @etc_error_overflow (%s, %s, i8*, %s)',
-		$self->int_type, $self->workspace_type, $self->int_type
-	));
-	push (@header, sprintf ('declare void @etc_error_set (%s, %s, i8*, %s)',
-		$self->int_type, $self->workspace_type, $self->int_type
-	));
 
 	my @proc_asm;
 	foreach my $proc (@{$self->{'procs'}}) {
