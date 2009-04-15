@@ -303,7 +303,64 @@ def resolve_libraries(libs):
 			paths[path] = True
 	return result
 
-class KRoCToolchain:
+class Toolchain:
+	"""An occam toolchain. This class is abstract, and only here for
+	documentation of the methods that all toolchains need to support."""
+
+	def object(self, source):
+		"""Compile single source file (e.g. foo.occ), giving foo.tce."""
+		pass
+
+	def library(self, occam_objs, native_objs, base):
+		"""Link occam object files (.tce) and native object files (.o)
+		into a library, giving base.lib."""
+		pass
+
+	def program(self, occam_objs, native_objs, base, output = None):
+		"""Compile base.occ, and link it with occam object files (.tce)
+		and native object files (.o) into an executable, giving
+		output (or some default name if not specified)."""
+		pass
+
+	def run(self, program, args):
+		"""Run executable program. (This may involve setting up
+		environment variables or using an interpreter.)"""
+		pass
+
+	def install(self, file):
+		"""Install file (and its associated files) into an appropriate
+		directory based on its extension -- .lib, .inc, .h, or nothing
+		for an executable.  Executables should be installed into a
+		directory that will be in the user's path."""
+		pass
+
+	def install_examples(self, package, file):
+		"""Install a program executable that is an example for a
+		package; this will typically not be on the user's path."""
+		pass
+
+	def clean(self, file):
+		"""Delete file along with any other files that were generated
+		during its compilation."""
+		pass
+
+	def cflags(self):
+		"""Print to stdout the CFLAGS necessary when compiling native
+		objects for this toolchain. This should at least include
+		-DOCCBUILD_nameoftoolchain."""
+		pass
+
+	def isearch(self):
+		"""Return a list of directories that should be included in
+		ISEARCH."""
+		pass
+
+	def update_patterns(self, patterns):
+		"""Adjust the patterns dict -- for example, changing library
+		prefixes to something other than the default."""
+		pass
+
+class KRoCToolchain(Toolchain):
 	def kroc_cmd(self):
 		cmd = programs["kroc"][:]
 		cmd += ["--oc-opts", " ".join(occ21_opts + ["-DEF", "OCCBUILD.KROC"])]
@@ -433,10 +490,10 @@ class KRoCToolchain:
 		krocdir = get_install_dir("@KROC_KROCDIR@", "/share/kroc")
 		return [krocdir + "/vtlib", krocdir + "/vtinclude"]
 	
-	def update_patterns(self,patterns):
+	def update_patterns(self, patterns):
 		pass
 
-class TVMToolchain:
+class TVMToolchain(Toolchain):
 	def plinker_cmd(self):
 		# Might need to do something here if the system can execute perl directly.
 		return programs["plinker.pl"]
@@ -573,7 +630,7 @@ class TVMToolchain:
 		tvmdir = get_install_dir("@TVM_TVMDIR@", "/share/tvm")
 		return [tvmdir + "/vtlib", tvmdir + "/vtinclude"]
 	
-	def update_patterns(self,patterns):
+	def update_patterns(self, patterns):
 		for key in patterns.keys():
 			patterns[key] = patterns[key].replace('occam_', 'occam_tvm_')
 
