@@ -431,11 +431,10 @@ class KRoCToolchain:
 	
 	def isearch(self):
 		krocdir = get_install_dir("@KROC_KROCDIR@", "/share/kroc")
-		return [ krocdir + "/vtlib", krocdir + "/vtinclude" ]
+		return [krocdir + "/vtlib", krocdir + "/vtinclude"]
 	
 	def update_patterns(self,patterns):
 		pass
-
 
 class TVMToolchain:
 	def plinker_cmd(self):
@@ -444,7 +443,12 @@ class TVMToolchain:
 
 	def occ21_cmd(self):
 		cmd = programs["occ21"][:]
-		cmd += ["-etc", "-w", "-y", "-znd", "-znec", "-udo", "-zncc", "-init", "-xin", "-mobiles", "-zrpe", "-zcxdiv", "-zcxrem", "-zep", "-t8", "-zqa" ]
+		cmd += [
+			"-etc", "-w", "-y", "-znd", "-znec",
+			"-udo", "-zncc", "-init", "-xin",
+			"-mobiles", "-zrpe", "-zcxdiv", "-zcxrem",
+			"-zep", "-t8", "-zqa"
+			]
 		cmd += occ21_opts
 		cmd += ["-DEF", "OCCBUILD.TVM"]
 		return cmd
@@ -524,7 +528,6 @@ class TVMToolchain:
 		vtlibdir = tvmdir + "/vtlib"
 		vtincludedir = tvmdir + "/vtinclude"
 
-		print "install " + file
 		(base, ext) = split_ext(file)
 		if ext == "lib":
 			if not is_stub(file):
@@ -568,13 +571,11 @@ class TVMToolchain:
 	
 	def isearch(self):
 		tvmdir = get_install_dir("@TVM_TVMDIR@", "/share/tvm")
-		return [ tvmdir + "/vtlib", tvmdir + "/vtinclude" ]
+		return [tvmdir + "/vtlib", tvmdir + "/vtinclude"]
 	
 	def update_patterns(self,patterns):
 		for key in patterns.keys():
-			patterns[key] = re.sub('occam_', 'occam_tvm_', patterns[key])
-
-			
+			patterns[key] = patterns[key].replace('occam_', 'occam_tvm_')
 
 def usage(f):
 	print >>f, """occbuild, version """ + VERSION + """
