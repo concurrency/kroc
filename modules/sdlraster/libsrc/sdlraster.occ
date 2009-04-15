@@ -87,7 +87,7 @@ PROC raster.clear (RASTER r, VAL INT colour)
 --}}}
 
 --{{{  PROC raster.one.place.buffer
---* One-place raster.one.place.buffer.
+--* One-place raster buffer.
 -- @private
 PROC raster.one.place.buffer (CHAN RASTER in?, out!, VAL INT width, height)
   INITIAL RASTER r IS MOBILE [height][width]INT:
