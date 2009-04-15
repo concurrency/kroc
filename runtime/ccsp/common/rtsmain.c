@@ -171,8 +171,8 @@ void ccsp_exit (int status, bool dump_core)
 }
 /*}}}*/
 
-/*{{{  bool ccsp_init (void)*/
-bool ccsp_init (void)
+/*{{{  bool ccsp_init (void (*kernel_entry)(void *))*/
+bool ccsp_init (void (*kernel_entry)(void *))
 {
 	#ifdef DEBUG_RTS
 	ccsp_trace = true;

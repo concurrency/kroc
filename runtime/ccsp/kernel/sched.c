@@ -55,7 +55,6 @@
 #include <arch/asm_ops.h>
 #include <arch/atomics.h>
 #include <arch/sched_asm_inserts.h>
-#include <calltable.h>
 #include <ccsp_timer.h>
 
 #define MT_CCSP 1
@@ -121,8 +120,6 @@ sched_t			*_ccsp_scheduler 		CACHELINE_ALIGN = NULL;
 #endif 
 
 ccsp_global_t		_ccsp				CACHELINE_ALIGN = {};
-
-void 			**_ccsp_calltable		CACHELINE_ALIGN = NULL;
 /*}}}*/
 
 /*{{{  ENTRY_TRACE macros*/
@@ -1830,8 +1827,6 @@ void ccsp_kernel_init (void)
 {
 	/* initialise run-time */
 	init_ccsp_global_t (&_ccsp);
-	build_calltable (_ccsp.calltable);
-	_ccsp_calltable = _ccsp.calltable;
 	init_local_schedulers ();
 
 }
@@ -2000,7 +1995,7 @@ static word * REGPARM kernel_scheduler (sched_t *sched)
  *	@CALL: 		K_FASTSCHEDULER
  *	@PRIO:		50
  */
-K_CALL_DEFINE_0_0 (Y_fastscheduler)
+K_CALL_DEFINE_Y_0_0 (fastscheduler)
 {
 	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
@@ -2019,7 +2014,7 @@ K_CALL_DEFINE_0_0 (Y_fastscheduler)
  *	@CALL: 		K_OCCSCHEDULER
  *	@PRIO:		50
  */
-K_CALL_DEFINE_0_0 (Y_occscheduler)
+K_CALL_DEFINE_Y_0_0 (occscheduler)
 {
 	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
@@ -2039,12 +2034,11 @@ K_CALL_DEFINE_0_0 (Y_occscheduler)
  *	@CALL: 		K_RTTHREADINIT
  *	@PRIO:		10
  */
-K_CALL_DEFINE_1_0 (Y_rtthreadinit)
+K_CALL_DEFINE_Y_1_0 (rtthreadinit)
 {
 	K_CALL_Y_HEADER;
 
-	unsigned int stack = K_CALL_PARAM(0);
-	word *fptr = (word *) sched;
+	word *fptr = (word *) K_CALL_PARAM(0);
 	void *allocator;
 	word i, tried;
 	
@@ -2053,12 +2047,9 @@ K_CALL_DEFINE_1_0 (Y_rtthreadinit)
 BMESSAGE0 ("Y_rtthreadinit()\n");
 #endif
 
-	sched			= (sched_t *) stack;
 	allocator 		= dmem_new_allocator ();
 	init_sched_t (sched);
-	memcpy (sched->calltable, ccsp_calltable, sizeof(void *) * K_MAX_SUPPORTED);
 	sched->allocator 	= allocator;
-	sched->stack		= stack;
 	sched->priofinity	= BuildPriofinity (0, (MAX_PRIORITY_LEVELS / 2));
 	
 	set_local_scheduler (sched);
@@ -2139,7 +2130,7 @@ BMESSAGE0 ("Y_rtthreadinit()\n");
  *	@CALL: 		K_SHUTDOWN
  *	@PRIO:		10
  */
-K_CALL_DEFINE_0_0 (Y_shutdown)
+K_CALL_DEFINE_Y_0_0 (shutdown)
 {
 	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
@@ -2190,7 +2181,7 @@ static word *kernel_common_error (word *Wptr, sched_t *sched, unsigned int retur
  *	@CALL: 		K_ZERODIV
  *	@PRIO:		0
  */
-K_CALL_DEFINE_4_0 (Y_zero_div)
+K_CALL_DEFINE_Y_4_0 (zero_div)
 {
 	K_CALL_Y_HEADER;
 	error_info info;
@@ -2212,7 +2203,7 @@ K_CALL_DEFINE_4_0 (Y_zero_div)
  *	@CALL: 		K_OVERFLOW
  *	@PRIO:		0
  */
-K_CALL_DEFINE_4_0 (Y_overflow)
+K_CALL_DEFINE_Y_4_0 (overflow)
 {
 	K_CALL_Y_HEADER;
 	error_info info;
@@ -2235,7 +2226,7 @@ K_CALL_DEFINE_4_0 (Y_overflow)
  *	@CALL: 		K_FLOATERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_5_0 (Y_floaterr)
+K_CALL_DEFINE_Y_5_0 (floaterr)
 {
 	K_CALL_Y_HEADER;
 	error_info info;
@@ -2259,7 +2250,7 @@ K_CALL_DEFINE_5_0 (Y_floaterr)
  *	@CALL: 		K_SETERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_4_0 (Y_Seterr)
+K_CALL_DEFINE_Y_4_0 (Seterr)
 {
 	K_CALL_Y_HEADER;
 	error_info info;
@@ -2283,7 +2274,7 @@ K_CALL_DEFINE_4_0 (Y_Seterr)
  *	@CALL: 		K_BSETERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_0_0 (Y_BSeterr)
+K_CALL_DEFINE_Y_0_0 (BSeterr)
 {
 	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
@@ -2305,7 +2296,7 @@ K_CALL_DEFINE_0_0 (Y_BSeterr)
  *	@CALL: 		K_BNSETERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_0_0 (Y_BNSeterr)
+K_CALL_DEFINE_Y_0_0 (BNSeterr)
 {
 	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
@@ -2326,7 +2317,7 @@ K_CALL_DEFINE_0_0 (Y_BNSeterr)
  *	@CALL: 		K_RANGERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_4_0 (Y_RangeCheckError)
+K_CALL_DEFINE_Y_4_0 (RangeCheckError)
 {
 	K_CALL_Y_HEADER;
 	error_info info;
@@ -2350,7 +2341,7 @@ K_CALL_DEFINE_4_0 (Y_RangeCheckError)
  *	@CALL: 		K_BRANGERR
  *	@PRIO:		0
  */
-K_CALL_DEFINE_0_0 (Y_BasicRangeError)
+K_CALL_DEFINE_Y_0_0 (BasicRangeError)
 {
 	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
@@ -2394,7 +2385,7 @@ void dump_trap_info (word *Wptr, word *Fptr, word *Bptr, unsigned int return_add
  *	@DEPEND:	ENABLE_DTRACES
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_2_0 (Y_dtrace)
+K_CALL_DEFINE_Y_2_0 (dtrace)
 {
 	K_CALL_Y_HEADER;
 	unsigned int trapval_A, trapval_B, trapval_C;
@@ -2439,7 +2430,7 @@ K_CALL_DEFINE_2_0 (Y_dtrace)
  *	@HANDLE:	K_FBAR_INIT, K_FBAR_SYNC, K_FBAR_ENROLL, K_FBAR_RESIGN
  *	@HANDLE:	K_TRAP
  */
-K_CALL_DEFINE_0_0 (Y_unsupported)
+K_CALL_DEFINE_Y_0_0 (unsupported)
 {
 	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
@@ -3681,7 +3672,7 @@ static word *kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, w
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_2_0 (Y_b_dispatch)
+K_CALL_DEFINE_Y_2_0 (b_dispatch)
 {
 	K_CALL_Y_HEADER;
 	void *b_func, *b_param;
@@ -3706,7 +3697,7 @@ K_CALL_DEFINE_2_0 (Y_b_dispatch)
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_2_0 (Y_bx_dispatch)
+K_CALL_DEFINE_Y_2_0 (bx_dispatch)
 {
 	K_CALL_Y_HEADER;
 	void *b_func, *b_param;
@@ -3731,7 +3722,7 @@ K_CALL_DEFINE_2_0 (Y_bx_dispatch)
  *	@DEPEND:	BLOCKING_SYSCALLS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_1_1 (X_bx_kill)
+K_CALL_DEFINE_X_1_1 (bx_kill)
 {
 	word *ptr;
 	int result;
@@ -3757,7 +3748,7 @@ K_CALL_DEFINE_1_1 (X_bx_kill)
  *	@CALL: 		K_MT_ALLOC
  *	@PRIO:		100
  */
-K_CALL_DEFINE_2_1 (X_mt_alloc)
+K_CALL_DEFINE_X_2_1 (mt_alloc)
 {
 	word *ptr, type, size;
 	
@@ -3779,7 +3770,7 @@ K_CALL_DEFINE_2_1 (X_mt_alloc)
  *	@CALL: 		K_MT_RELEASE
  *	@PRIO:		100
  */
-K_CALL_DEFINE_1_0 (X_mt_release)
+K_CALL_DEFINE_X_1_0 (mt_release)
 {
 	word *ptr;
 	
@@ -3801,7 +3792,7 @@ K_CALL_DEFINE_1_0 (X_mt_release)
  *	@CALL: 		K_MT_CLONE
  *	@PRIO:		100
  */
-K_CALL_DEFINE_1_1 (X_mt_clone)
+K_CALL_DEFINE_X_1_1 (mt_clone)
 {
 	word *dst, *src;
 	
@@ -3823,7 +3814,7 @@ K_CALL_DEFINE_1_1 (X_mt_clone)
  *	@CALL: 		K_MT_DCLONE
  *	@PRIO:		60
  */
-K_CALL_DEFINE_3_1 (X_mt_dclone)
+K_CALL_DEFINE_X_3_1 (mt_dclone)
 {
 	word bytes, *dst, type;
 	void *src;
@@ -3854,7 +3845,7 @@ K_CALL_DEFINE_3_1 (X_mt_dclone)
  *	@CALL: 		K_MALLOC
  *	@PRIO:		110
  */
-K_CALL_DEFINE_1_1 (X_malloc)
+K_CALL_DEFINE_X_1_1 (malloc)
 {
 	word *ptr, size;
 	
@@ -3881,7 +3872,7 @@ K_CALL_DEFINE_1_1 (X_malloc)
  *	@CALL: 		K_MRELEASE
  *	@PRIO:		110
  */
-K_CALL_DEFINE_1_0 (X_mrelease)
+K_CALL_DEFINE_X_1_0 (mrelease)
 {
 	word *ptr;
 	
@@ -3903,7 +3894,7 @@ K_CALL_DEFINE_1_0 (X_mrelease)
  *	@CALL: 		K_MT_BIND
  *	@PRIO:		50
  */
-K_CALL_DEFINE_3_1 (X_mt_bind)
+K_CALL_DEFINE_X_3_1 (mt_bind)
 {
 	word bind_type, *data, *ptr, type;
 	
@@ -4007,7 +3998,7 @@ K_CALL_DEFINE_3_1 (X_mt_bind)
  *	@CALL: 		K_MT_RESIZE
  *	@PRIO:		50
  */
-K_CALL_DEFINE_3_1 (X_mt_resize)
+K_CALL_DEFINE_X_3_1 (mt_resize)
 {
 	word arg, *ptr, resize_type;
 	
@@ -4093,6 +4084,7 @@ K_CALL_DEFINE_3_1 (X_mt_resize)
 }
 /*}}}*/
 /*}}}*/
+#if 0
 /*{{{  numerics */
 /*{{{  void kernel_X_norm (void)*/
 /*
@@ -4104,7 +4096,7 @@ K_CALL_DEFINE_3_1 (X_mt_resize)
  *	@CALL: 		K_NORM
  *	@PRIO:		50
  */
-K_CALL_DEFINE_2_3 (X_norm)
+K_CALL_DEFINE_X_2_3 (norm)
 {
 	unsigned int Areg, Breg, Creg;
 	
@@ -4128,6 +4120,7 @@ K_CALL_DEFINE_2_3 (X_norm)
 	K_THREE_OUT (Areg, Breg, Creg);
 }
 /*}}}*/
+#endif
 /*{{{  void kernel_X_fmul (void)*/
 /*
  *	FMUL implementation (easier in C..)
@@ -4138,7 +4131,7 @@ K_CALL_DEFINE_2_3 (X_norm)
  *	@CALL: 		K_FMUL
  *	@PRIO:		50
  */
-K_CALL_DEFINE_2_1 (X_fmul)
+K_CALL_DEFINE_X_2_1 (fmul)
 {
 	long long tmp_long;
 	int hi_word, lo_word;
@@ -4182,7 +4175,7 @@ K_CALL_DEFINE_2_1 (X_fmul)
  *	@CALL: 		K_STARTP
  *	@PRIO:		90
  */
-K_CALL_DEFINE_2_0 (Y_startp)
+K_CALL_DEFINE_Y_2_0 (startp)
 {
 	K_CALL_Y_HEADER;
 	word *workspace;
@@ -4223,7 +4216,7 @@ K_CALL_DEFINE_2_0 (Y_startp)
  *	@CALL: 		K_RUNP
  *	@PRIO:		80
  */
-K_CALL_DEFINE_1_0 (X_runp)
+K_CALL_DEFINE_X_1_0 (runp)
 {
 	word *other_workspace;
 	
@@ -4246,7 +4239,7 @@ K_CALL_DEFINE_1_0 (X_runp)
  *	@CALL: 		K_PAUSE
  *	@PRIO:		80
  */
-K_CALL_DEFINE_0_0 (Y_pause)
+K_CALL_DEFINE_Y_0_0 (pause)
 {
 	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
@@ -4270,7 +4263,7 @@ K_CALL_DEFINE_0_0 (Y_pause)
  *	@CALL: 		K_STOPP
  *	@PRIO:		80
  */
-K_CALL_DEFINE_0_0 (Y_stopp)
+K_CALL_DEFINE_Y_0_0 (stopp)
 {
 	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
@@ -4293,7 +4286,7 @@ K_CALL_DEFINE_0_0 (Y_stopp)
  *	@CALL: 		K_ENDP
  *	@PRIO:		90
  */
-K_CALL_DEFINE_1_0 (Y_endp)
+K_CALL_DEFINE_Y_1_0 (endp)
 {
 	K_CALL_Y_HEADER;
 	word *ptr;
@@ -4325,7 +4318,7 @@ K_CALL_DEFINE_1_0 (Y_endp)
  *	@CALL: 		K_PAR_ENROLL
  *	@PRIO:		50
  */
-K_CALL_DEFINE_2_0 (X_par_enroll)
+K_CALL_DEFINE_X_2_0 (par_enroll)
 {
 	word count, *ptr;
 	
@@ -4347,7 +4340,7 @@ K_CALL_DEFINE_2_0 (X_par_enroll)
  *	@CALL: 		K_MRELEASEP
  *	@PRIO:		90
  */
-K_CALL_DEFINE_1_0 (Y_mreleasep)
+K_CALL_DEFINE_Y_1_0 (mreleasep)
 {
 	K_CALL_Y_HEADER;
 	word *ptr, adjust;
@@ -4379,7 +4372,7 @@ K_CALL_DEFINE_1_0 (Y_mreleasep)
  *	@CALL: 		K_PROC_ALLOC
  *	@PRIO:		90
  */
-K_CALL_DEFINE_2_1 (X_proc_alloc)
+K_CALL_DEFINE_X_2_1 (proc_alloc)
 {
 	word flags, words, *ws;
 
@@ -4401,7 +4394,7 @@ K_CALL_DEFINE_2_1 (X_proc_alloc)
  *	@CALL: 		K_PROC_PARAM
  *	@PRIO:		90
  */
-K_CALL_DEFINE_3_0 (X_proc_param)
+K_CALL_DEFINE_X_3_0 (proc_param)
 {
 	word offset, param, *ws;
 
@@ -4423,7 +4416,7 @@ K_CALL_DEFINE_3_0 (X_proc_param)
  *	@CALL: 		K_PROC_MT_COPY
  *	@PRIO:		90
  */
-K_CALL_DEFINE_3_0 (X_proc_mt_copy)
+K_CALL_DEFINE_X_3_0 (proc_mt_copy)
 {
 	word offset, *ptr, *ws;
 
@@ -4449,7 +4442,7 @@ K_CALL_DEFINE_3_0 (X_proc_mt_copy)
  *	@CALL: 		K_PROC_MT_MOVE
  *	@PRIO:		90
  */
-K_CALL_DEFINE_3_0 (X_proc_mt_move)
+K_CALL_DEFINE_X_3_0 (proc_mt_move)
 {
 	word offset, *ptr, **pptr, *ws;
 
@@ -4477,7 +4470,7 @@ K_CALL_DEFINE_3_0 (X_proc_mt_move)
  *	@CALL: 		K_PROC_START
  *	@PRIO:		90
  */
-K_CALL_DEFINE_3_0 (Y_proc_start)
+K_CALL_DEFINE_Y_3_0 (proc_start)
 {
 	K_CALL_Y_HEADER;
 	word code, offset, *ws;
@@ -4513,7 +4506,7 @@ K_CALL_DEFINE_3_0 (Y_proc_start)
  *	@CALL: 		K_PROC_END
  *	@PRIO:		90
  */
-K_CALL_DEFINE_1_0 (Y_proc_end)
+K_CALL_DEFINE_Y_1_0 (proc_end)
 {
 	K_CALL_Y_HEADER;
 	word *ws;
@@ -4550,7 +4543,7 @@ word *ccsp_proc_alloc (word flags, word words)
  *	@CALL: 		K_GETAFF
  *	@PRIO:		30
  */
-K_CALL_DEFINE_0_1 (X_getaff)
+K_CALL_DEFINE_X_0_1 (getaff)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_getaff);
@@ -4567,7 +4560,7 @@ K_CALL_DEFINE_0_1 (X_getaff)
  *	@CALL: 		K_SETAFF
  *	@PRIO:		30
  */
-K_CALL_DEFINE_1_0 (Y_setaff)
+K_CALL_DEFINE_Y_1_0 (setaff)
 {
 	K_CALL_Y_HEADER;
 	unsigned int affinity;
@@ -4610,7 +4603,7 @@ K_CALL_DEFINE_1_0 (Y_setaff)
  *	@CALL: 		K_GETPAS
  *	@PRIO:		80
  */
-K_CALL_DEFINE_0_1 (X_getpas)
+K_CALL_DEFINE_X_0_1 (getpas)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_getpas);
@@ -4627,7 +4620,7 @@ K_CALL_DEFINE_0_1 (X_getpas)
  *	@CALL: 		K_GETPRI
  *	@PRIO:		30
  */
-K_CALL_DEFINE_0_1 (X_getpri)
+K_CALL_DEFINE_X_0_1 (getpri)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_getpri);
@@ -4644,7 +4637,7 @@ K_CALL_DEFINE_0_1 (X_getpri)
  *	@CALL: 		K_SETPRI
  *	@PRIO:		30
  */
-K_CALL_DEFINE_1_0 (Y_setpri)
+K_CALL_DEFINE_Y_1_0 (setpri)
 {
 	K_CALL_Y_HEADER;
 	int priority;
@@ -4772,7 +4765,7 @@ static INLINE word *kernel_chan_io (word flags, word *Wptr, sched_t *sched, word
 	return Wptr;
 }
 #define BUILD_CHANNEL_IO(symbol,count,flags) \
-K_CALL_DEFINE_2_0 (symbol)		\
+K_CALL_DEFINE_Y_2_0 (symbol)		\
 {					\
 	K_CALL_Y_HEADER;		\
 	word *channel_address;		\
@@ -4784,7 +4777,7 @@ K_CALL_DEFINE_2_0 (symbol)		\
 }
 
 #define BUILD_CHANNEL_COUNTED_IO(symbol,shift,flags) \
-K_CALL_DEFINE_3_0 (symbol)		\
+K_CALL_DEFINE_Y_3_0 (symbol)		\
 {					\
 	K_CALL_Y_HEADER;		\
 	word count, *channel_address;	\
@@ -4806,7 +4799,7 @@ K_CALL_DEFINE_3_0 (symbol)		\
  *	@CALL: 		K_IN8
  *	@PRIO:		100
  */
-BUILD_CHANNEL_IO (Y_in8, 1, CIO_INPUT)
+BUILD_CHANNEL_IO (in8, 1, CIO_INPUT)
 /*}}}*/
 /*{{{  Y_in32 */
 /*
@@ -4816,7 +4809,7 @@ BUILD_CHANNEL_IO (Y_in8, 1, CIO_INPUT)
  *	@CALL: 		K_IN32
  *	@PRIO:		100
  */
-BUILD_CHANNEL_IO (Y_in32, 4, CIO_INPUT)
+BUILD_CHANNEL_IO (in32, 4, CIO_INPUT)
 /*}}}*/
 /*{{{  Y_out8 */
 /*
@@ -4826,7 +4819,7 @@ BUILD_CHANNEL_IO (Y_in32, 4, CIO_INPUT)
  *	@CALL: 		K_OUT8
  *	@PRIO:		100
  */
-BUILD_CHANNEL_IO (Y_out8, 1, CIO_OUTPUT)
+BUILD_CHANNEL_IO (out8, 1, CIO_OUTPUT)
 /*}}}*/
 /*{{{  Y_out32 */
 /*
@@ -4836,7 +4829,7 @@ BUILD_CHANNEL_IO (Y_out8, 1, CIO_OUTPUT)
  *	@CALL: 		K_OUT32
  *	@PRIO:		100
  */
-BUILD_CHANNEL_IO (Y_out32, 4, CIO_OUTPUT)
+BUILD_CHANNEL_IO (out32, 4, CIO_OUTPUT)
 /*}}}*/
 /*{{{  Y_in */
 /*
@@ -4846,7 +4839,7 @@ BUILD_CHANNEL_IO (Y_out32, 4, CIO_OUTPUT)
  *	@CALL: 		K_IN
  *	@PRIO:		110
  */
-BUILD_CHANNEL_COUNTED_IO (Y_in, 0, CIO_INPUT)
+BUILD_CHANNEL_COUNTED_IO (in, 0, CIO_INPUT)
 /*}}}*/
 /*{{{  Y_out */
 /*
@@ -4856,7 +4849,7 @@ BUILD_CHANNEL_COUNTED_IO (Y_in, 0, CIO_INPUT)
  *	@CALL: 		K_OUT
  *	@PRIO:		110
  */
-BUILD_CHANNEL_COUNTED_IO (Y_out, 0, CIO_OUTPUT)
+BUILD_CHANNEL_COUNTED_IO (out, 0, CIO_OUTPUT)
 /*}}}*/
 /*{{{  void kernel_Y_outbyte (void)*/
 /*
@@ -4868,7 +4861,7 @@ BUILD_CHANNEL_COUNTED_IO (Y_out, 0, CIO_OUTPUT)
  *	@CALL: 		K_OUTBYTE
  *	@PRIO:		100
  */
-K_CALL_DEFINE_2_0 (Y_outbyte)
+K_CALL_DEFINE_Y_2_0 (outbyte)
 {
 	K_CALL_Y_HEADER;
 	word *channel_address;
@@ -4895,7 +4888,7 @@ K_CALL_DEFINE_2_0 (Y_outbyte)
  *	@CALL: 		K_OUTWORD
  *	@PRIO:		100
  */
-K_CALL_DEFINE_2_0 (Y_outword)
+K_CALL_DEFINE_Y_2_0 (outword)
 {
 	K_CALL_Y_HEADER;
 	word *channel_address;
@@ -4923,7 +4916,7 @@ K_CALL_DEFINE_2_0 (Y_outword)
  *	@CALL: 		K_XABLE
  *	@PRIO:		70
  */
-K_CALL_DEFINE_1_0 (Y_xable)
+K_CALL_DEFINE_Y_1_0 (xable)
 {
 	K_CALL_Y_HEADER;
 	word *channel_address, temp;
@@ -4963,7 +4956,7 @@ K_CALL_DEFINE_1_0 (Y_xable)
  *	@CALL: 		K_XEND
  *	@PRIO:		70
  */
-K_CALL_DEFINE_1_0 (X_xend)
+K_CALL_DEFINE_X_1_0 (xend)
 {
 	word *channel_address, *ptr;
 
@@ -4988,7 +4981,7 @@ K_CALL_DEFINE_1_0 (X_xend)
  *	@CALL: 		K_XIN
  *	@PRIO:		90
  */
-BUILD_CHANNEL_COUNTED_IO (Y_xin, 0, CIO_EXTENDED | CIO_INPUT)
+BUILD_CHANNEL_COUNTED_IO (xin, 0, CIO_EXTENDED | CIO_INPUT)
 /*}}}*/
 /*{{{  Y_mt_in */
 /*
@@ -4998,7 +4991,7 @@ BUILD_CHANNEL_COUNTED_IO (Y_xin, 0, CIO_EXTENDED | CIO_INPUT)
  *	@CALL: 		K_MT_IN
  *	@PRIO:		100
  */
-BUILD_CHANNEL_IO (Y_mt_in, 0, CIO_MOBILE | CIO_INPUT)
+BUILD_CHANNEL_IO (mt_in, 0, CIO_MOBILE | CIO_INPUT)
 /*}}}*/
 /*{{{  Y_mt_out */
 /*
@@ -5008,7 +5001,7 @@ BUILD_CHANNEL_IO (Y_mt_in, 0, CIO_MOBILE | CIO_INPUT)
  *	@CALL: 		K_MT_OUT
  *	@PRIO:		100
  */
-BUILD_CHANNEL_IO (Y_mt_out, 0, CIO_MOBILE | CIO_OUTPUT)
+BUILD_CHANNEL_IO (mt_out, 0, CIO_MOBILE | CIO_OUTPUT)
 /*}}}*/
 /*{{{  Y_mt_xchg */
 /*
@@ -5018,7 +5011,7 @@ BUILD_CHANNEL_IO (Y_mt_out, 0, CIO_MOBILE | CIO_OUTPUT)
  *	@CALL: 		K_MT_XCHG
  *	@PRIO:		100
  */
-BUILD_CHANNEL_IO (Y_mt_xchg, 0, CIO_MOBILE | CIO_EXCHANGE)
+BUILD_CHANNEL_IO (mt_xchg, 0, CIO_MOBILE | CIO_EXCHANGE)
 /*}}}*/
 /*{{{  Y_mt_xin */
 /*
@@ -5028,7 +5021,7 @@ BUILD_CHANNEL_IO (Y_mt_xchg, 0, CIO_MOBILE | CIO_EXCHANGE)
  *	@CALL: 		K_MT_XIN
  *	@PRIO:		100
  */
-BUILD_CHANNEL_IO (Y_mt_xin, 0, CIO_EXTENDED | CIO_MOBILE | CIO_INPUT)
+BUILD_CHANNEL_IO (mt_xin, 0, CIO_EXTENDED | CIO_MOBILE | CIO_INPUT)
 /*}}}*/
 /*{{{  Y_mt_xout */
 /*
@@ -5038,7 +5031,7 @@ BUILD_CHANNEL_IO (Y_mt_xin, 0, CIO_EXTENDED | CIO_MOBILE | CIO_INPUT)
  *	@CALL: 		K_MT_XOUT
  *	@PRIO:		100
  */
-BUILD_CHANNEL_IO (Y_mt_xout, 0, CIO_EXTENDED | CIO_MOBILE | CIO_OUTPUT)
+BUILD_CHANNEL_IO (mt_xout, 0, CIO_EXTENDED | CIO_MOBILE | CIO_OUTPUT)
 /*}}}*/
 /*{{{  Y_mt_xxchg */
 /*
@@ -5048,7 +5041,7 @@ BUILD_CHANNEL_IO (Y_mt_xout, 0, CIO_EXTENDED | CIO_MOBILE | CIO_OUTPUT)
  *	@CALL: 		K_MT_XXCHG
  *	@PRIO:		100
  */
-BUILD_CHANNEL_IO (Y_mt_xxchg, 0, CIO_EXTENDED | CIO_MOBILE | CIO_EXCHANGE)
+BUILD_CHANNEL_IO (mt_xxchg, 0, CIO_EXTENDED | CIO_MOBILE | CIO_EXCHANGE)
 /*}}}*/
 /*}}}*/
 /*{{{  timers */
@@ -5062,7 +5055,7 @@ BUILD_CHANNEL_IO (Y_mt_xxchg, 0, CIO_EXTENDED | CIO_MOBILE | CIO_EXCHANGE)
  *	@CALL: 		K_LDTIMER
  *	@PRIO:		90
  */
-K_CALL_DEFINE_0_1 (X_ldtimer)
+K_CALL_DEFINE_X_0_1 (ldtimer)
 {
 	Time now;
 	
@@ -5084,7 +5077,7 @@ K_CALL_DEFINE_0_1 (X_ldtimer)
  *	@CALL: 		K_TIN
  *	@PRIO:		80
  */
-K_CALL_DEFINE_1_0 (Y_tin)
+K_CALL_DEFINE_Y_1_0 (tin)
 {
 	K_CALL_Y_HEADER;
 	Time now, wait_time;
@@ -5115,7 +5108,7 @@ K_CALL_DEFINE_1_0 (Y_tin)
  *	@CALL: 		K_FASTTIN
  *	@PRIO:		80
  */
-K_CALL_DEFINE_1_0 (Y_fasttin)
+K_CALL_DEFINE_Y_1_0 (fasttin)
 {
 	K_CALL_Y_HEADER;
 	Time wait_time;
@@ -5143,7 +5136,7 @@ K_CALL_DEFINE_1_0 (Y_fasttin)
  *	@CALL: 		K_ALT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_0_0 (X_alt)
+K_CALL_DEFINE_X_0_0 (alt)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_alt);
@@ -5164,7 +5157,7 @@ K_CALL_DEFINE_0_0 (X_alt)
  *	@CALL: 		K_TALT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_0_0 (X_talt)
+K_CALL_DEFINE_X_0_0 (talt)
 {
 	K_CALL_PARAMS_0 ();
 	ENTRY_TRACE0 (X_talt);
@@ -5207,7 +5200,7 @@ static INLINE word *kernel_altend (word *Wptr, sched_t *sched, bool jump)
  *	@CALL: 		K_ALTEND
  *	@PRIO:		70
  */
-K_CALL_DEFINE_0_0 (Y_altend)
+K_CALL_DEFINE_Y_0_0 (altend)
 {
 	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
@@ -5228,7 +5221,7 @@ K_CALL_DEFINE_0_0 (Y_altend)
  *	@CALL: 		K_CALTEND
  *	@PRIO:		70
  */
-K_CALL_DEFINE_0_0 (Y_caltend)
+K_CALL_DEFINE_Y_0_0 (caltend)
 {
 	K_CALL_Y_HEADER;
 	K_CALL_PARAMS_0 ();
@@ -5249,7 +5242,7 @@ K_CALL_DEFINE_0_0 (Y_caltend)
  *	@CALL: 		K_ALTWT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_0_0 (Y_altwt)
+K_CALL_DEFINE_Y_0_0 (altwt)
 {
 	K_CALL_Y_HEADER;
 	word state;
@@ -5285,7 +5278,7 @@ K_CALL_DEFINE_0_0 (Y_altwt)
  *	@CALL: 		K_TALTWT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_0_0 (Y_taltwt)
+K_CALL_DEFINE_Y_0_0 (taltwt)
 {
 	K_CALL_Y_HEADER;
 	Time now;
@@ -5389,7 +5382,7 @@ static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, word return_address,
  *	@CALL: 		K_ENBC
  *	@PRIO:		80
  */
-K_CALL_DEFINE_2_1 (X_enbc)
+K_CALL_DEFINE_X_2_1 (enbc)
 {
 	word **channel_address, guard;
 
@@ -5415,7 +5408,7 @@ K_CALL_DEFINE_2_1 (X_enbc)
  *	@CALL: 		K_ENBC2
  *	@PRIO:		80
  */
-K_CALL_DEFINE_2_0 (Y_enbc2)
+K_CALL_DEFINE_Y_2_0 (enbc2)
 {
 	K_CALL_Y_HEADER;
 	unsigned int process_address;
@@ -5429,6 +5422,7 @@ K_CALL_DEFINE_2_0 (Y_enbc2)
 	K_ZERO_OUT ();
 }
 /*}}}*/
+#if 0 /* FIXME: jump and output */
 /*{{{  void kernel_Y_enbc3 (void)*/
 /*
  *	enable channel (with ready address)
@@ -5439,7 +5433,7 @@ K_CALL_DEFINE_2_0 (Y_enbc2)
  *	@CALL: 		K_ENBC3
  *	@PRIO:		80
  */
-K_CALL_DEFINE_3_1 (Y_enbc3)
+K_CALL_DEFINE_Y_3_1 (enbc3)
 {
 	K_CALL_Y_HEADER;
 	unsigned int process_address;
@@ -5457,6 +5451,7 @@ K_CALL_DEFINE_3_1 (Y_enbc3)
 	K_ONE_OUT (true);
 }
 /*}}}*/
+#endif
 /*{{{  void kernel_X_cenbc (void)*/
 /*
  *	CIF enable channel (2 param)
@@ -5467,7 +5462,7 @@ K_CALL_DEFINE_3_1 (Y_enbc3)
  *	@CALL: 		K_CENBC
  *	@PRIO:		80
  */
-K_CALL_DEFINE_2_1 (X_cenbc)
+K_CALL_DEFINE_X_2_1 (cenbc)
 {
 	word **channel_address, id;
 
@@ -5503,7 +5498,7 @@ static INLINE void kernel_enbs (word *Wptr, unsigned int return_address, bool ju
  *	@CALL: 		K_ENBS
  *	@PRIO:		60
  */
-K_CALL_DEFINE_1_1 (X_enbs)
+K_CALL_DEFINE_X_1_1 (enbs)
 {
 	word guard;
 
@@ -5529,7 +5524,7 @@ K_CALL_DEFINE_1_1 (X_enbs)
  *	@CALL: 		K_ENBS2
  *	@PRIO:		60
  */
-K_CALL_DEFINE_1_0 (Y_enbs2)
+K_CALL_DEFINE_Y_1_0 (enbs2)
 {
 	K_CALL_Y_HEADER;
 	unsigned int process_address;
@@ -5542,6 +5537,7 @@ K_CALL_DEFINE_1_0 (Y_enbs2)
 	K_ZERO_OUT_JUMP (process_address);
 }
 /*}}}*/
+#if 0 /* FIXME: jump and output */
 /*{{{  void kernel_Y_enbs3 (void)*/
 /*
  *	enable skip guard (with ready address)
@@ -5552,7 +5548,7 @@ K_CALL_DEFINE_1_0 (Y_enbs2)
  *	@CALL: 		K_ENBS3
  *	@PRIO:		60
  */
-K_CALL_DEFINE_2_1 (Y_enbs3)
+K_CALL_DEFINE_Y_2_1 (enbs3)
 {
 	K_CALL_Y_HEADER;
 	unsigned int process_address;
@@ -5571,6 +5567,7 @@ K_CALL_DEFINE_2_1 (Y_enbs3)
 	K_ONE_OUT_JUMP (process_address, true);
 }
 /*}}}*/
+#endif
 /*{{{  void kernel_X_cenbs (void)*/
 /*
  *	CIF enable skip guard
@@ -5581,7 +5578,7 @@ K_CALL_DEFINE_2_1 (Y_enbs3)
  *	@CALL: 		K_CENBS
  *	@PRIO:		60
  */
-K_CALL_DEFINE_1_1 (X_cenbs)
+K_CALL_DEFINE_X_1_1 (cenbs)
 {
 	word id;
 
@@ -5634,7 +5631,7 @@ static INLINE bool kernel_enbt (word *Wptr, sched_t *sched, word return_address,
  *	@CALL: 		K_ENBT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_2_1 (X_enbt)
+K_CALL_DEFINE_X_2_1 (enbt)
 {
 	Time timeout;
 	word guard;
@@ -5661,7 +5658,7 @@ K_CALL_DEFINE_2_1 (X_enbt)
  *	@CALL: 		K_ENBT2
  *	@PRIO:		70
  */
-K_CALL_DEFINE_2_0 (Y_enbt2)
+K_CALL_DEFINE_Y_2_0 (enbt2)
 {
 	K_CALL_Y_HEADER;
 	unsigned int process_address;
@@ -5675,6 +5672,7 @@ K_CALL_DEFINE_2_0 (Y_enbt2)
 	K_ZERO_OUT ();
 }
 /*}}}*/
+#if 0 /* FIXME: jump and output */
 /*{{{  void kernel_Y_enbt3 (void)*/
 /*
  *	enable timer (with ready address)
@@ -5685,7 +5683,7 @@ K_CALL_DEFINE_2_0 (Y_enbt2)
  *	@CALL: 		K_ENBT3
  *	@PRIO:		70
  */
-K_CALL_DEFINE_3_1 (Y_enbt3)
+K_CALL_DEFINE_Y_3_1 (enbt3)
 {
 	K_CALL_Y_HEADER;
 	unsigned int process_address;
@@ -5704,6 +5702,7 @@ K_CALL_DEFINE_3_1 (Y_enbt3)
 	K_ONE_OUT (true);
 }
 /*}}}*/
+#endif
 /*{{{  void kernel_X_cenbt (void)*/
 /*
  *	CIF enable timer
@@ -5714,7 +5713,7 @@ K_CALL_DEFINE_3_1 (Y_enbt3)
  *	@CALL: 		K_CENBT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_2_1 (X_cenbt)
+K_CALL_DEFINE_X_2_1 (cenbt)
 {
 	Time id, timeout;
 
@@ -5758,7 +5757,7 @@ static INLINE word kernel_disc (word *Wptr, unsigned int process_address, word *
  *	@CALL: 		K_DISC
  *	@PRIO:		80
  */
-K_CALL_DEFINE_3_1 (X_disc)
+K_CALL_DEFINE_X_3_1 (disc)
 {
 	unsigned int process_address;
 	word **channel_address, guard;
@@ -5783,7 +5782,7 @@ K_CALL_DEFINE_3_1 (X_disc)
  *	@CALL: 		K_CDISC
  *	@PRIO:		80
  */
-K_CALL_DEFINE_2_1 (X_cdisc)
+K_CALL_DEFINE_X_2_1 (cdisc)
 {
 	word **channel_address, id;
 
@@ -5803,7 +5802,7 @@ K_CALL_DEFINE_2_1 (X_cdisc)
  *	@CALL: 		K_NDISC
  *	@PRIO:		80
  */
-K_CALL_DEFINE_3_1 (X_ndisc)
+K_CALL_DEFINE_X_3_1 (ndisc)
 {
 	unsigned int process_address;
 	word **channel_address, guard;
@@ -5828,7 +5827,7 @@ K_CALL_DEFINE_3_1 (X_ndisc)
  *	@CALL: 		K_DISS
  *	@PRIO:		60
  */
-K_CALL_DEFINE_2_1 (X_diss)
+K_CALL_DEFINE_X_2_1 (diss)
 {
 	unsigned int process_address;
 	word fired, guard;
@@ -5857,7 +5856,7 @@ K_CALL_DEFINE_2_1 (X_diss)
  *	@CALL: 		K_CDISS
  *	@PRIO:		60
  */
-K_CALL_DEFINE_1_1 (X_cdiss)
+K_CALL_DEFINE_X_1_1 (cdiss)
 {
 	word id;
 
@@ -5882,7 +5881,7 @@ K_CALL_DEFINE_1_1 (X_cdiss)
  *	@CALL: 		K_NDISS
  *	@PRIO:		60
  */
-K_CALL_DEFINE_2_1 (X_ndiss)
+K_CALL_DEFINE_X_2_1 (ndiss)
 {
 	unsigned int fired, guard, process_address;
 
@@ -5949,7 +5948,7 @@ static INLINE word kernel_dist (word *Wptr, sched_t *sched, unsigned int process
  *	@CALL: 		K_DIST
  *	@PRIO:		70
  */
-K_CALL_DEFINE_3_1 (X_dist)
+K_CALL_DEFINE_X_3_1 (dist)
 {
 	unsigned int process_address;
 	Time timeout;
@@ -5975,7 +5974,7 @@ K_CALL_DEFINE_3_1 (X_dist)
  *	@CALL: 		K_CDIST
  *	@PRIO:		70
  */
-K_CALL_DEFINE_2_1 (X_cdist)
+K_CALL_DEFINE_X_2_1 (cdist)
 {
 	Time id, timeout;
 	
@@ -5995,7 +5994,7 @@ K_CALL_DEFINE_2_1 (X_cdist)
  *	@CALL: 		K_NDIST
  *	@PRIO:		70
  */
-K_CALL_DEFINE_3_1 (X_ndist)
+K_CALL_DEFINE_X_3_1 (ndist)
 {
 	unsigned int process_address;
 	Time timeout;
@@ -6021,7 +6020,7 @@ K_CALL_DEFINE_3_1 (X_ndist)
  *	@CALL: 		K_SEM_CLAIM
  *	@PRIO:		90
  */
-K_CALL_DEFINE_1_0 (Y_sem_claim)
+K_CALL_DEFINE_Y_1_0 (sem_claim)
 {
 	K_CALL_Y_HEADER;
 	ccsp_sem_t *sem;
@@ -6042,7 +6041,7 @@ K_CALL_DEFINE_1_0 (Y_sem_claim)
  *	@CALL: 		K_SEM_RELEASE
  *	@PRIO:		90
  */
-K_CALL_DEFINE_1_0 (X_sem_release)
+K_CALL_DEFINE_X_1_0 (sem_release)
 {
 	ccsp_sem_t *sem;
 	
@@ -6062,7 +6061,7 @@ K_CALL_DEFINE_1_0 (X_sem_release)
  *	@CALL: 		K_SEM_INIT
  *	@PRIO:		70
  */
-K_CALL_DEFINE_1_0 (X_sem_init)
+K_CALL_DEFINE_X_1_0 (sem_init)
 {
 	ccsp_sem_t *sem;
 	
@@ -6084,7 +6083,7 @@ K_CALL_DEFINE_1_0 (X_sem_init)
  *	@CALL: 		K_MT_LOCK
  *	@PRIO:		90
  */
-K_CALL_DEFINE_2_0 (Y_mt_lock)
+K_CALL_DEFINE_Y_2_0 (mt_lock)
 {
 	K_CALL_Y_HEADER;
 	mt_cb_shared_internal_t *cb;
@@ -6114,7 +6113,7 @@ K_CALL_DEFINE_2_0 (Y_mt_lock)
  *	@CALL: 		K_MT_UNLOCK
  *	@PRIO:		90
  */
-K_CALL_DEFINE_2_0 (X_mt_unlock)
+K_CALL_DEFINE_X_2_0 (mt_unlock)
 {
 	mt_cb_shared_internal_t *cb;
 	word *ptr, type;
@@ -6143,7 +6142,7 @@ K_CALL_DEFINE_2_0 (X_mt_unlock)
  *	@CALL: 		K_MT_SYNC
  *	@PRIO:		90
  */
-K_CALL_DEFINE_1_0 (Y_mt_sync)
+K_CALL_DEFINE_Y_1_0 (mt_sync)
 {
 	K_CALL_Y_HEADER;
 	ccsp_barrier_t *bar;
@@ -6164,7 +6163,7 @@ K_CALL_DEFINE_1_0 (Y_mt_sync)
  *	@CALL: 		K_MT_RESIGN
  *	@PRIO:		80
  */
-K_CALL_DEFINE_2_0 (X_mt_resign)
+K_CALL_DEFINE_X_2_0 (mt_resign)
 {
 	ccsp_barrier_t *bar;
 	word count;
@@ -6185,7 +6184,7 @@ K_CALL_DEFINE_2_0 (X_mt_resign)
  *	@CALL: 		K_MT_ENROLL
  *	@PRIO:		80
  */
-K_CALL_DEFINE_2_0 (X_mt_enroll)
+K_CALL_DEFINE_X_2_0 (mt_enroll)
 {
 	ccsp_barrier_t *bar;
 	word count;
@@ -6249,7 +6248,7 @@ void ccsp_interrupt_handler (int irq)
  *	@PRIO:		50
  *	@DEPEND:	RMOX_BUILD
  */
-K_CALL_DEFINE_2_0 (Y_wait_int)
+K_CALL_DEFINE_Y_2_0 (wait_int)
 {
 	K_CALL_Y_HEADER;
 	word number, mask;
@@ -6288,6 +6287,36 @@ K_CALL_DEFINE_2_0 (Y_wait_int)
 /*}}}*/
 /*{{{  dynamic/mobile-processes */
 #if !defined(RMOX_BUILD) && defined(DYNAMIC_PROCS)
+/*{{{  void kernel_Y_dynproc_exit (void)*/
+/*
+ *	entered when dynamic process finishes
+ *
+ *	@SYMBOL:	Y_dynproc_exit
+ *	@INPUT:		0
+ *	@OUTPUT: 	0
+ *	@CALL: 		K_DYNPROC_EXIT
+ *	@PRIO:		0
+ *	@DEPEND:	DYNAMIC_PROCS
+ *	@INCOMPATIBLE:	RMOX_BUILD
+ */
+K_CALL_DEFINE_Y_0_0 (dynproc_exit)
+{
+	K_CALL_Y_HEADER;
+	d_process *kr_dptr;
+	word *kr_wptr;
+	
+	K_CALL_PARAMS_0 ();
+	ENTRY_TRACE0 (Y_dynproc_exit);
+
+	kr_wptr 		= (word *) (((word) Wptr) - (4 * sizeof(word)));
+	kr_dptr 		= dynproc_endprocess (kr_wptr);
+	*(kr_dptr->result) 	= DPROCESS_FINISHED;
+	Wptr 			= kr_dptr->holding_wptr;
+	switch_priofinity (sched, kr_dptr->holding_priofinity);
+
+	K_ZERO_OUT_JUMP (kr_dptr->holding_raddr);
+}
+/*}}}*/
 /*{{{  void kernel_X_kernel_run (void)*/
 /*
  *	dynamic kernel run entry point (and resume point)
@@ -6300,7 +6329,7 @@ K_CALL_DEFINE_2_0 (Y_wait_int)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_1_0 (Y_kernel_run)
+K_CALL_DEFINE_Y_1_0 (kernel_run)
 {
 	K_CALL_Y_HEADER;
 	unsigned int kr_param;
@@ -6347,7 +6376,7 @@ K_CALL_DEFINE_1_0 (Y_kernel_run)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_1_0 (Y_dynproc_suspend)
+K_CALL_DEFINE_Y_1_0 (dynproc_suspend)
 {
 	K_CALL_Y_HEADER;
 	word *ds_param;
@@ -6365,36 +6394,6 @@ K_CALL_DEFINE_1_0 (Y_dynproc_suspend)
 	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
-/*{{{  void kernel_Y_dynproc_exit (void)*/
-/*
- *	entered when dynamic process finishes
- *
- *	@SYMBOL:	Y_dynproc_exit
- *	@INPUT:		0
- *	@OUTPUT: 	0
- *	@CALL: 		K_DYNPROC_EXIT
- *	@PRIO:		0
- *	@DEPEND:	DYNAMIC_PROCS
- *	@INCOMPATIBLE:	RMOX_BUILD
- */
-K_CALL_DEFINE_0_0 (Y_dynproc_exit)
-{
-	K_CALL_Y_HEADER;
-	d_process *kr_dptr;
-	word *kr_wptr;
-	
-	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (Y_dynproc_exit);
-
-	kr_wptr 		= (word *) (((word) Wptr) - (4 * sizeof(word)));
-	kr_dptr 		= dynproc_endprocess (kr_wptr);
-	*(kr_dptr->result) 	= DPROCESS_FINISHED;
-	Wptr 			= kr_dptr->holding_wptr;
-	switch_priofinity (sched, kr_dptr->holding_priofinity);
-
-	K_ZERO_OUT_JUMP (kr_dptr->holding_raddr);
-}
-/*}}}*/
 /*{{{  void kernel_X_ldwsmap (void)*/
 /*
  *	load workspace-map
@@ -6407,7 +6406,7 @@ K_CALL_DEFINE_0_0 (Y_dynproc_exit)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_2_0 (X_ldwsmap)
+K_CALL_DEFINE_X_2_0 (ldwsmap)
 {
 	unsigned int code_offset, process_address;
 	
@@ -6430,7 +6429,7 @@ K_CALL_DEFINE_2_0 (X_ldwsmap)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_2_0 (X_ulwsmap)
+K_CALL_DEFINE_X_2_0 (ulwsmap)
 {
 	unsigned int code_offset, process_address;
 	
@@ -6453,7 +6452,7 @@ K_CALL_DEFINE_2_0 (X_ulwsmap)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_1_0 (X_rmwsmap)
+K_CALL_DEFINE_X_1_0 (rmwsmap)
 {
 	unsigned int process_address;
 	
@@ -6476,7 +6475,7 @@ K_CALL_DEFINE_1_0 (X_rmwsmap)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_1_1 (X_mppclone)
+K_CALL_DEFINE_X_1_1 (mppclone)
 {
 	unsigned int process_address;
 
@@ -6504,7 +6503,7 @@ K_CALL_DEFINE_1_1 (X_mppclone)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_3_0 (Y_mppserialise)
+K_CALL_DEFINE_Y_3_0 (mppserialise)
 {
 	K_CALL_Y_HEADER;
 	unsigned int count, process_address;
@@ -6536,7 +6535,7 @@ K_CALL_DEFINE_3_0 (Y_mppserialise)
  *	@DEPEND:	DYNAMIC_PROCS
  *	@INCOMPATIBLE:	RMOX_BUILD
  */
-K_CALL_DEFINE_3_0 (Y_mppdeserialise)
+K_CALL_DEFINE_Y_3_0 (mppdeserialise)
 {
 	K_CALL_Y_HEADER;
 	unsigned int count, process_address;
@@ -6558,6 +6557,7 @@ K_CALL_DEFINE_3_0 (Y_mppdeserialise)
 #endif	/* defined(RMOX_BUILD) || !defined(DYNAMIC_PROCS) */
 /*}}}*/
 
+#if 0
 /*{{{  CIF stubs */
 /*{{{  void *kernel_CIF_endp_resume_stub (void)*/
 /*
@@ -6599,4 +6599,5 @@ static void *kernel_CIF_proc_stub (void)
 }
 /*}}}*/
 /*}}}*/
+#endif
 

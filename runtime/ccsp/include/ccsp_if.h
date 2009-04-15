@@ -20,7 +20,7 @@
 #ifndef __CCSP_IF_H
 #define __CCSP_IF_H
 
-extern bool ccsp_init (void);
+extern bool ccsp_init (void (*)(void *));
 extern void ccsp_exit (int, bool);
 
 extern void ccsp_default_exit_handler (int, bool);
@@ -33,9 +33,6 @@ extern void ccsp_set_external_event_hook (bool bsc, bool (*ready)(void), bool (*
 
 extern void ccsp_set_branding (char *);
 extern void ccsp_set_error_mode (int);
-
-extern void ccsp_kernel_entry (word *, word *);
-extern void ccsp_occam_entry (void *, unsigned int, word, word *, word *);
 
 extern void ccsp_cif_bcall0_stub (word *);
 extern void ccsp_cif_bcall1_stub (word *);

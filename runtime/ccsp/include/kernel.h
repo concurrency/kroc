@@ -45,9 +45,6 @@ extern ccsp_global_t 		_ccsp;
 #define sleeping_threads	(_ccsp.sleeping_threads)
 #define schedulers		(_ccsp.schedulers)
 #define ccsp_shutdown		(_ccsp.shutdown)
-#define ccsp_calltable		(_ccsp.calltable)
-
-extern void 			**_ccsp_calltable;
 
 sched_t *local_scheduler (void);
 void ccsp_kernel_init (void);

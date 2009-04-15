@@ -737,7 +737,7 @@ unsigned int ccsp_spin_us (void)
 /*{{{  static void *user_thread (void *arg)*/
 static void *user_thread (void *arg)
 {
-	ccsp_kernel_entry (NotProcess_p, NotProcess_p);
+	ccsp.kernel_entry (malloc (sizeof (ccsp_sched_t)));
 	return NULL;
 } 
 /*}}}*/

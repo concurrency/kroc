@@ -30,31 +30,50 @@
 #define I386_SCHED_ASM_INSERTS_H
 
 /*{{{  architecture dependent kernel call declarations */
-#define _K_CALL_DEFINE(X) \
-	static word *__attribute__ ((regparm(3))) kernel_##X (word param0, sched_t *sched, word *Wptr)
-#define _K_CALL_DEFINE_O(X) \
-	static word __attribute__ ((regparm(3))) kernel_##X (word param0, sched_t *sched, word *Wptr)
-#define K_CALL_DEFINE_0_0(X) _K_CALL_DEFINE(X)
-#define K_CALL_DEFINE_1_0(X) _K_CALL_DEFINE(X)
-#define K_CALL_DEFINE_2_0(X) _K_CALL_DEFINE(X)
-#define K_CALL_DEFINE_3_0(X) _K_CALL_DEFINE(X)
-#define K_CALL_DEFINE_4_0(X) _K_CALL_DEFINE(X)
-#define K_CALL_DEFINE_5_0(X) _K_CALL_DEFINE(X)
-#define K_CALL_DEFINE_0_1(X) _K_CALL_DEFINE_O(X)
-#define K_CALL_DEFINE_1_1(X) _K_CALL_DEFINE_O(X)
-#define K_CALL_DEFINE_2_1(X) _K_CALL_DEFINE_O(X)
-#define K_CALL_DEFINE_3_1(X) _K_CALL_DEFINE_O(X)
-#define K_CALL_DEFINE_2_3(X) _K_CALL_DEFINE_O(X)
-#define K_CALL_DEFINE_3_3(X) _K_CALL_DEFINE_O(X)
+#define K_CALL_DEFINE___0(R,X) \
+	R kernel_##X (sched_t *sched, word *Wptr)
+#define K_CALL_DEFINE___1(R,X) \
+	R kernel_##X (sched_t *sched, word *Wptr, word param0)
+#define K_CALL_DEFINE___2(R,X) \
+	R kernel_##X (sched_t *sched, word *Wptr, \
+				word param0, word param1)
+#define K_CALL_DEFINE___3(R,X) \
+	R kernel_##X (sched_t *sched, word *Wptr, \
+				word param0, word param1, word param2)
+#define K_CALL_DEFINE___4(R,X) \
+	R kernel_##X (sched_t *sched, word *Wptr, \
+				word param0, word param1, word param2, word param3)
+#define K_CALL_DEFINE___5(R,X) \
+	R kernel_##X (sched_t *sched, word *Wptr, \
+				word param0, word param1, word param2, word param3, word param4)
 
-#define K_CALL_PTR(X) \
-	((void *) (kernel_##X))
+#define K_CALL_DEFINE_Y_0_0(X) K_CALL_DEFINE___0(word*,Y_##X)
+#define K_CALL_DEFINE_Y_1_0(X) K_CALL_DEFINE___1(word*,Y_##X)
+#define K_CALL_DEFINE_Y_2_0(X) K_CALL_DEFINE___2(word*,Y_##X)
+#define K_CALL_DEFINE_Y_3_0(X) K_CALL_DEFINE___3(word*,Y_##X)
+#define K_CALL_DEFINE_Y_4_0(X) K_CALL_DEFINE___4(word*,Y_##X)
+#define K_CALL_DEFINE_Y_5_0(X) K_CALL_DEFINE___5(word*,Y_##X)
 
-#define K_CALL_HEADER
+#define K_CALL_DEFINE_X_0_0(X) K_CALL_DEFINE___0(word,X_##X)
+#define K_CALL_DEFINE_X_1_0(X) K_CALL_DEFINE___1(word,X_##X)
+#define K_CALL_DEFINE_X_2_0(X) K_CALL_DEFINE___2(word,X_##X)
+#define K_CALL_DEFINE_X_3_0(X) K_CALL_DEFINE___3(word,X_##X)
+#define K_CALL_DEFINE_X_4_0(X) K_CALL_DEFINE___3(word,X_##X)
+#define K_CALL_DEFINE_X_0_1(X) K_CALL_DEFINE___0(word,X_##X)
+#define K_CALL_DEFINE_X_1_1(X) K_CALL_DEFINE___1(word,X_##X)
+#define K_CALL_DEFINE_X_2_1(X) K_CALL_DEFINE___2(word,X_##X)
+#define K_CALL_DEFINE_X_3_1(X) K_CALL_DEFINE___3(word,X_##X)
+
+#define K_CALL_DEFINE_X_2_3(X) K_CALL_DEFINE___2(word,X_##X)
+#define K_CALL_DEFINE_X_3_3(X) K_CALL_DEFINE___3(word,X_##X)
+
+#define K_CALL_PTR(X) (kernel_##X)
+
+#define K_CALL_HEADER \
+	__attribute__ ((unused)) word ___filler = 0;
 #define K_CALL_Y_HEADER \
 	__attribute__ ((unused)) word return_address = (word) (Wptr)[Iptr];
-#define K_CALL_PARAM(N) \
-	((N) == 0 ? param0 : sched->cparam[(N) - 1])
+#define K_CALL_PARAM(N) (param##N)
 /*}}}*/
 
 /*{{{  debugging support */
@@ -84,6 +103,7 @@
 #endif /* CHECKING_MODE */
 /*}}}*/
 
+#if 0
 /*{{{  _K_SETGLABEL - internal global label define for inside asm blocks */
 #define LABEL_ALIGN ".p2align 4	\n"
 #ifndef NO_ASM_TYPE_DIRECTIVE
@@ -108,6 +128,7 @@
 	".globl "#X"	\n" \
 	"	"#X":	\n"
 /*}}}*/
+#endif
 
 /*{{{  outgoing entry-point macros*/
 #define _SET_RETURN_ADDRESS(R) \
@@ -148,6 +169,7 @@
 	} while (0)
 /*}}}*/
 
+#if 0
 /*{{{  entry and label functions */
 #define K_ENTRY(init,stack,Wptr,Fptr) \
 	__asm__ __volatile__ ("				\n" \
@@ -216,6 +238,7 @@
 		: "i" (offsetof(sched_t, calltable[call])), "i" (offset * sizeof(word)) \
 		: "memory")
 /*}}}*/
+#endif
 
 #endif /* I386_SCHED_ASM_INSERTS */
 

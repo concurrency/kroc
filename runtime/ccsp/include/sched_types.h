@@ -202,13 +202,6 @@ static inline void init_tqnode_t (tqnode_t *tn) {
 
 /*{{{  sched_t */
 struct _sched_t {
-	/** stack pointer	- must be at the right offset **/
-	unsigned int	stack;
-	/** call params		- must be at the right offset **/
-	word		cparam[5];
-	/** calltable		- must be at the right offset **/
-	void		*calltable[K_MAX_SUPPORTED];
-
 	/** local debug state **/
 	word 		mdparam[32];
 
@@ -378,7 +371,7 @@ typedef struct _ccsp_global_t {
 
 	sched_t		*schedulers[MAX_RUNTIME_THREADS]	CACHELINE_ALIGN;
 	word		pad1[CACHELINE_WORDS]			CACHELINE_ALIGN;
-	void		*calltable[K_MAX_SUPPORTED]		CACHELINE_ALIGN;
+	void		(*kernel_entry)(void *)			CACHELINE_ALIGN;
 } _PACK_STRUCT ccsp_global_t;
 
 static inline void init_ccsp_global_t (ccsp_global_t *ccsp) {
@@ -392,6 +385,8 @@ static inline void init_ccsp_global_t (ccsp_global_t *ccsp) {
 	for (i = 0; i < MAX_RUNTIME_THREADS; ++i) {
 		ccsp->schedulers[i] = NULL;
 	}
+
+	ccsp->kernel_entry = NULL;
 }
 /*}}}*/
 

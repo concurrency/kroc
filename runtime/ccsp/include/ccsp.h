@@ -40,9 +40,6 @@
 #include "ccsp_stats.h"
 
 typedef struct _ccsp_sched_t {
-	unsigned int    stack;
-	word		cparam[5];
-	void		*calltable[K_MAX_SUPPORTED];
 	word		mdparam[32];
 	unsigned int	index;
 	unsigned int	id;
@@ -67,8 +64,6 @@ typedef struct _ccsp_sched_t {
   extern ccsp_sched_t			*_ccsp_scheduler;
   #define ccsp_scheduler		_ccsp_scheduler
 #endif
-
-extern void			**_ccsp_calltable;
 
 #endif	/* !__CCSP_H */
 
