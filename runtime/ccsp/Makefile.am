@@ -37,7 +37,6 @@ libccsp_a_LIBADD = \
 	kernel/bsyscalls.o \
 	kernel/deadlock.o \
 	kernel/dynproc.o \
-	kernel/entry.o \
 	kernel/sched.o \
 	kernel/stats.o
 

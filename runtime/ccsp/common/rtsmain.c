@@ -171,8 +171,8 @@ void ccsp_exit (int status, bool dump_core)
 }
 /*}}}*/
 
-/*{{{  bool ccsp_init (void (*kernel_entry)(void *))*/
-bool ccsp_init (void (*kernel_entry)(void *))
+/*{{{  bool ccsp_init (void (*code_entry)(void *, word *))*/
+bool ccsp_init (void (*code_entry)(void *, word *))
 {
 	#ifdef DEBUG_RTS
 	ccsp_trace = true;
@@ -195,7 +195,7 @@ bool ccsp_init (void (*kernel_entry)(void *))
 	ccsp_init_dtraces ();
 	#endif
 
-	ccsp_kernel_init ();
+	ccsp_kernel_init (code_entry);
 	ccsp_deadlock_init ();
 
 	#if defined(BLOCKING_SYSCALLS)

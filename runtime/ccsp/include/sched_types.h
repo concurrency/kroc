@@ -371,7 +371,7 @@ typedef struct _ccsp_global_t {
 
 	sched_t		*schedulers[MAX_RUNTIME_THREADS]	CACHELINE_ALIGN;
 	word		pad1[CACHELINE_WORDS]			CACHELINE_ALIGN;
-	void		(*kernel_entry)(void *)			CACHELINE_ALIGN;
+	void		(*code_entry)(void *, word *)		CACHELINE_ALIGN;
 } _PACK_STRUCT ccsp_global_t;
 
 static inline void init_ccsp_global_t (ccsp_global_t *ccsp) {
@@ -386,7 +386,7 @@ static inline void init_ccsp_global_t (ccsp_global_t *ccsp) {
 		ccsp->schedulers[i] = NULL;
 	}
 
-	ccsp->kernel_entry = NULL;
+	ccsp->code_entry = NULL;
 }
 /*}}}*/
 

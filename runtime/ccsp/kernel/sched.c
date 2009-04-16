@@ -1822,13 +1822,13 @@ void do_queue_process (word *ws)
 /*}}}*/
 /*}}}*/
 
-/*{{{  void ccsp_kernel_init (void)*/
-void ccsp_kernel_init (void)
+/*{{{  void ccsp_kernel_init (void (*code_entry)(void *, word *))*/
+void ccsp_kernel_init (void (*code_entry)(void *, word *))
 {
 	/* initialise run-time */
 	init_ccsp_global_t (&_ccsp);
 	init_local_schedulers ();
-
+	_ccsp.code_entry = code_entry;
 }
 /*}}}*/
 
@@ -2020,104 +2020,6 @@ K_CALL_DEFINE_Y_0_0 (occscheduler)
 	K_CALL_PARAMS_0 ();
 
 	Wptr = kernel_scheduler (sched);
-	
-	K_ZERO_OUT_JRET ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_rtthreadinit (void)*/
-/*
- *	call-in for a run-time thread as it starts up
- *
- *	@SYMBOL:	Y_rtthreadinit
- *	@INPUT:		1
- *	@OUTPUT: 	0
- *	@CALL: 		K_RTTHREADINIT
- *	@PRIO:		10
- */
-K_CALL_DEFINE_Y_1_0 (rtthreadinit)
-{
-	K_CALL_Y_HEADER;
-
-	word *fptr = (word *) K_CALL_PARAM(0);
-	void *allocator;
-	word i, tried;
-	
-	ENTRY_TRACE (Y_rtthreadinit, "(%08x)", att_val (&enabled_threads));
-#if 0
-BMESSAGE0 ("Y_rtthreadinit()\n");
-#endif
-
-	allocator 		= dmem_new_allocator ();
-	init_sched_t (sched);
-	sched->allocator 	= allocator;
-	sched->priofinity	= BuildPriofinity (0, (MAX_PRIORITY_LEVELS / 2));
-	
-	set_local_scheduler (sched);
-
-#if !defined(RMOX_BUILD)
-	ccsp_init_signal_pipe (sched);
-#endif
-	allocate_to_free_list (sched, MAX_PRIORITY_LEVELS * 2);
-	for (i = 0; i < MAX_PRIORITY_LEVELS; ++i) {
-		sched->rq[i].pending = allocate_batch (sched);
-	}
-	new_curb (sched);
-
-	while (fptr != NotProcess_p) {
-		word *next = (word *) fptr[Link];
-		fptr[Priofinity] = sched->priofinity;
-		enqueue_process_nopri (sched, fptr);
-		sched->stats.startp++;
-		fptr = next;
-	}
-
-	tried = 0;
-	do {
-		int available = (~(att_val (&enabled_threads))) & (~tried);
-		int n = bsf (available);
-
-		if (available == 0) {
-			BMESSAGE0 ("attempted to start more runtime threads than supported\n");
-			ccsp_kernel_exit (1, (word) Wptr);
-		}
-			
-		tried 		|= (1 << n);
-		sched->index    = n;
-		sched->id 	= 1 << n;
-
-	} while (!atw_cas ((word *) &(schedulers[sched->index]), (word) NULL, (word) sched));
-
-	if (!(att_val (&enabled_threads) & (~sched->id))) {
-		/* first run-time thread setups up timing then starts the rest */
-		#if defined(ENABLE_CPU_TIMERS)
-		ccsp_initial_cpu_speed (&(sched->cpu_factor), &(sched->cpu_khz));
-		#endif /* defined(ENABLE_CPU_TIMERS) */
-
-		#if defined(RMOX_BUILD)
-		sched->spin = 0;
-		#else
-		setup_spin (sched);
-		#endif /* defined (RMOX_BUILD) */
-
-		att_set_bit (&enabled_threads, sched->index);
-		
-		ccsp_start_threads ();
-	} else {
-		/* copy calibration from another thread */
-		unsigned int other 	= bsf (att_val (&enabled_threads));
-		#if defined(ENABLE_CPU_TIMERS)
-		sched->cpu_factor 	= schedulers[other]->cpu_factor;
-		sched->cpu_khz 		= schedulers[other]->cpu_khz;
-		#endif
-		sched->spin 		= schedulers[other]->spin;
-		att_set_bit (&enabled_threads, sched->index);
-	}
-
-	if (Wptr != NotProcess_p) {
-		sched->stats.startp++;
-	} else {
-		Wptr = kernel_scheduler (sched);
-	}
 	
 	K_ZERO_OUT_JRET ();
 }
@@ -6601,3 +6503,87 @@ static void *kernel_CIF_proc_stub (void)
 /*}}}*/
 #endif
 
+/*{{{  void ccsp_kernel_entry (word *Wptr, void *fptr)*/
+void ccsp_kernel_entry (word *Wptr, word *fptr)
+{
+	sched_t *sched;
+	void *allocator;
+	word i, tried;
+	
+	allocator 		= dmem_new_allocator ();
+	sched			= (sched_t *) 
+		dmem_thread_alloc (allocator, sizeof (sched_t));
+	init_sched_t (sched);
+	sched->allocator 	= allocator;
+	sched->priofinity	= BuildPriofinity (0, (MAX_PRIORITY_LEVELS / 2));
+	
+	set_local_scheduler (sched);
+
+#if !defined(RMOX_BUILD)
+	ccsp_init_signal_pipe (sched);
+#endif
+	allocate_to_free_list (sched, MAX_PRIORITY_LEVELS * 2);
+	for (i = 0; i < MAX_PRIORITY_LEVELS; ++i) {
+		sched->rq[i].pending = allocate_batch (sched);
+	}
+	new_curb (sched);
+
+	while (fptr != NotProcess_p) {
+		word *next = (word *) fptr[Link];
+		fptr[Priofinity] = sched->priofinity;
+		enqueue_process_nopri (sched, fptr);
+		sched->stats.startp++;
+		fptr = next;
+	}
+
+	tried = 0;
+	do {
+		int available = (~(att_val (&enabled_threads))) & (~tried);
+		int n = bsf (available);
+
+		if (available == 0) {
+			BMESSAGE0 ("attempted to start more runtime threads than supported\n");
+			ccsp_kernel_exit (1, (word) Wptr);
+		}
+			
+		tried 		|= (1 << n);
+		sched->index    = n;
+		sched->id 	= 1 << n;
+
+	} while (!atw_cas ((word *) &(schedulers[sched->index]), (word) NULL, (word) sched));
+
+	if (!(att_val (&enabled_threads) & (~sched->id))) {
+		/* first run-time thread setups up timing then starts the rest */
+		#if defined(ENABLE_CPU_TIMERS)
+		ccsp_initial_cpu_speed (&(sched->cpu_factor), &(sched->cpu_khz));
+		#endif /* defined(ENABLE_CPU_TIMERS) */
+
+		#if defined(RMOX_BUILD)
+		sched->spin = 0;
+		#else
+		setup_spin (sched);
+		#endif /* defined (RMOX_BUILD) */
+
+		att_set_bit (&enabled_threads, sched->index);
+		
+		ccsp_start_threads ();
+	} else {
+		/* copy calibration from another thread */
+		unsigned int other 	= bsf (att_val (&enabled_threads));
+		#if defined(ENABLE_CPU_TIMERS)
+		sched->cpu_factor 	= schedulers[other]->cpu_factor;
+		sched->cpu_khz 		= schedulers[other]->cpu_khz;
+		#endif
+		sched->spin 		= schedulers[other]->spin;
+		att_set_bit (&enabled_threads, sched->index);
+	}
+
+	if (Wptr != NotProcess_p) {
+		sched->stats.startp++;
+	} else {
+		Wptr = kernel_scheduler (sched);
+	}
+	
+	_ccsp.code_entry (sched, Wptr); 
+}
+/*}}}*/

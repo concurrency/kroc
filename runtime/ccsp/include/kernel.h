@@ -47,7 +47,7 @@ extern ccsp_global_t 		_ccsp;
 #define ccsp_shutdown		(_ccsp.shutdown)
 
 sched_t *local_scheduler (void);
-void ccsp_kernel_init (void);
+void ccsp_kernel_init (void (*code_entry)(void *, word *));
 
 int not_on_any_queue (unsigned int ws_base, unsigned int ws_limit);
 int remove_from_any_queue (unsigned int ws_base, unsigned int ws_limit);

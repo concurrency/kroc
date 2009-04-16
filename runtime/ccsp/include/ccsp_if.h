@@ -20,7 +20,8 @@
 #ifndef __CCSP_IF_H
 #define __CCSP_IF_H
 
-extern bool ccsp_init (void (*)(void *));
+extern bool ccsp_init (void (*)(void *, word *));
+extern void ccsp_kernel_entry (word *, word *);
 extern void ccsp_exit (int, bool);
 
 extern void ccsp_default_exit_handler (int, bool);
