@@ -577,12 +577,16 @@ class TVMToolchain:
 
 class TockToolchain:
 	def tock_cmd(self, args):
-		cmd = programs["tock"] + ["-v"] + args + []
+		cmd = programs["tock"] + ["-k", "--run-indent", "-v"] + []
 		if search_path != []:
 			cmd += ["-I" + ":".join(search_path)]
+			for dir in search_path:
+				cmd += ["--compiler-flags", "-I" + dir]
+				cmd += ["--linker-flags", "-L" + dir]
 		if static_link:
 			cmd += ["--compiler-flags", "-static"]
 		cmd += tock_opts
+		cmd += args
 		return cmd
 
 	def object(self, source):
@@ -591,7 +595,7 @@ class TockToolchain:
 		if std_libs:
 			need_mods.append("forall")
 			impl.append("-u")
-			impl.append("forall")
+			impl.append("forall.module")
 		run(self.tock_cmd(["-c"]) + impl + [source]) #["-u" + m for m in need_mods] +
 		(base, ext) = split_ext(source)
 #TODO we should only make the stub if compilation succeeded and put out a .tock.o file
@@ -616,11 +620,16 @@ class TockToolchain:
 #			for need in resolved_mods:
 #				f.write('#INCLUDE "%s"\n' % need)
 			f.write("-- Objs: " + " ".join(occam_objs) + "\n")
+			if occam_objs != []:
+				f.write("#PRAGMA TOCKSIZES \".module\"\n")
+				f.write("#PRAGMA TOCKINCLUDE \".module\"\n")
+			if native_objs != [] or occam_objs != []:
+				f.write("#PRAGMA TOCKNATIVELINK \"" + (patterns["link"] % base) + "\"\n")
 			for obj in occam_objs:
 				g = open (split_ext(obj)[0] + ".tock.inc","r")
 				contents = g.read()
 				f.write(contents)
-				g.close
+				g.close()
 		make_module(base, custom)
 
 		lib_opts.append(patterns["rtlink"] % "ccsp")
@@ -634,13 +643,26 @@ class TockToolchain:
 
 #		if occam_objs == []:
 		make_stub(base + ".lib")
-		f = open (base + ".tock.h", "w")
+		f = open (base + ".module.tock.h", "w")
 		for obj in occam_objs:
 			g = open (split_ext(obj)[0] + ".tock.h","r")
 			contents = g.read()
 			f.write(contents)
-			g.close
-		f.close
+			g.close()
+		f.close()
+
+		f = open (base + ".module.tock.sizes", "w")
+		all_sizes = [split_ext(obj)[0] + ".tock.sizes" for obj in occam_objs]
+		for sizes in all_sizes:
+			g = open (sizes,"r")
+			for line in g:
+				match = re.match("DependsOnSizes\\s+\"(.*)\"", line);
+				if match is None:
+					f.write(line)
+				elif not (match.group(1) in all_sizes):
+					f.write(line)
+			g.close()
+		f.close()
 
 #		else:
 #			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
@@ -648,9 +670,15 @@ class TockToolchain:
 	def program(self, occam_objs, native_objs, base, output = None):
 		if output is None:
 			output = base
+		need_mods = needs[:]
+		impl = []
 		if std_libs:
 			need_mods.append("forall")
-		run(self.tock_cmd(["-o", output, base + ".occ"] + ["--external-link"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs))
+			impl.append("-u")
+			impl.append("forall.module")
+
+		run(self.tock_cmd(["--linker-flags", " ".join(native_objs)] + impl + ["-o", output]) + [base + ".occ"])
+#" ".join([split_ext(o)[0] + ".tock.o" for o in occam_objs] +
 
 	def run(self, program, args):
 		if not "/" in program:
@@ -707,8 +735,11 @@ class TockToolchain:
 		print tidy_spaces(cflags)
 	def isearch(self):
 		return capture(programs["tock"] + ["--module-path"]).strip().split(":") + capture(programs["tock"] + ["--include-path"]).strip().split(":") + capture(programs["tock"] + ["--lib-path"]).strip().split(":")
+
 	def update_patterns(self,patterns):
-		pass
+		for key in patterns.keys():
+			patterns[key] = patterns[key].replace('occam_', 'occam_tock_')
+
 
 def usage(f):
 	print >>f, """occbuild, version """ + VERSION + """
