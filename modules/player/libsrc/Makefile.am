@@ -4,6 +4,6 @@ AUTOMAKE_OPTIONS = foreign no-dependencies
 
 # The ordering here is significant, owing to dependencies between modules.
 SUBDIRS = \
-	player2.0
+	occplayer
 
 EXTRA_DIST = pioneerutils.inc
