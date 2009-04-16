@@ -129,8 +129,8 @@ PROC buffer.set.hex ([]BYTE buf, INT len, VAL INT n)
           INITIAL BYTE bits IS BYTE (v /\ #0F):
           INITIAL INT s IS n.chars:
           IF
-            bits > #09
-              chars[s], n.chars, v := ('A' PLUS (bits MINUS #0A)), s + 1, v >> 4
+            bits > #09(BYTE)
+              chars[s], n.chars, v := ('A' PLUS (bits MINUS #0A(BYTE))), s + 1, v >> 4
             TRUE
               chars[s], n.chars, v := ('0' PLUS bits), s + 1, v >> 4
 
@@ -159,7 +159,7 @@ PROC buffer.set.hex ([]BYTE buf, INT len, VAL INT n)
 PROC buffer.set.bin8 ([]BYTE buf, INT len, VAL BYTE n)
   INITIAL INT left IS (SIZE buf) - len:
   SEQ i = 7 FOR 8 STEP -1
-    VAL BYTE b IS (1 << i):
+    VAL BYTE b IS (1(BYTE) << i):
     IF
       left > 0
         SEQ

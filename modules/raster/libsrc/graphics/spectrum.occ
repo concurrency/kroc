@@ -40,14 +40,14 @@ BYTE, BYTE, BYTE FUNCTION map.to.components.spectrum (VAL REAL64 x)
 
   BYTE INLINE FUNCTION smooth (VAL REAL64 x) IS
   --BYTE ROUND (x * MAX64):			-- linear
-    BYTE ROUND ((x * (2.0 - x)) * MAX64):	-- quadratic
+    BYTE ROUND ((x * (2.0(REAL64) - x)) * MAX64):	-- quadratic
 
   BYTE r, g, b:
   VALOF
     REAL64 f:
     INT i:
     SEQ
-      f := x * 8.0				-- 0 <= x < 1.0
+      f := x * 8.0(REAL64)				-- 0 <= x < 1.0
       i := INT TRUNC f				-- 0 <= i < 8
       f := f - (REAL64 ROUND i)			-- 0 <= f < 1.0
       CASE i \ 8				-- just in case
@@ -56,15 +56,15 @@ BYTE, BYTE, BYTE FUNCTION map.to.components.spectrum (VAL REAL64 x)
         1
           r, g, b := MAX, smooth (f), 0		-- "red" to "yellow"
         2
-          r, g, b := smooth (1.0 - f), MAX, 0	-- "yellow" to "green"
+          r, g, b := smooth (1.0(REAL64) - f), MAX, 0	-- "yellow" to "green"
         3
           r, g, b := 0, MAX, smooth (f)		-- "green" to "cyan"
         4
-          r, g, b := 0, smooth (1.0 - f), MAX	-- "cyan" to "blue"
+          r, g, b := 0, smooth (1.0(REAL64) - f), MAX	-- "cyan" to "blue"
         5
           r, g, b := smooth (f), 0, MAX		-- "blue" to "magenta"
         6
-          r, g, b := MAX, 0, smooth (1.0 - f)	-- "magenta" to "red"
+          r, g, b := MAX, 0, smooth (1.0(REAL64) - f)	-- "magenta" to "red"
         7
           r, g, b := MAX, smooth (f), smooth(f)	-- "red" to white
     RESULT r, g, b
@@ -79,29 +79,29 @@ BYTE, BYTE, BYTE FUNCTION map.to.components.wheel (VAL REAL64 x)
 
   BYTE INLINE FUNCTION smooth (VAL REAL64 x) IS
   --BYTE ROUND (x * MAX64):			-- linear
-    BYTE ROUND ((x * (2.0 - x)) * MAX64):	-- quadratic
+    BYTE ROUND ((x * (2.0(REAL64) - x)) * MAX64):	-- quadratic
 
   BYTE r, g, b:
   VALOF
     REAL64 f:
     INT i:
     SEQ
-      f := x * 6.0				-- 0 <= x < 1.0
+      f := x * 6.0(REAL64)				-- 0 <= x < 1.0
       i := INT TRUNC f				-- 0 <= i < 8
       f := f - (REAL64 ROUND i)			-- 0 <= f < 1.0
       CASE i \ 6				-- just in case
         0
           r, g, b := MAX, smooth (f), 0		-- "red" to "yellow"
         1
-          r, g, b := smooth (1.0 - f), MAX, 0	-- "yellow" to "green"
+          r, g, b := smooth (1.0(REAL64) - f), MAX, 0	-- "yellow" to "green"
         2
           r, g, b := 0, MAX, smooth (f)		-- "green" to "cyan"
         3
-          r, g, b := 0, smooth (1.0 - f), MAX	-- "cyan" to "blue"
+          r, g, b := 0, smooth (1.0(REAL64) - f), MAX	-- "cyan" to "blue"
         4
           r, g, b := smooth (f), 0, MAX		-- "blue" to "magenta"
         5
-          r, g, b := MAX, 0, smooth (1.0 - f)	-- "magenta" to "red"
+          r, g, b := MAX, 0, smooth (1.0(REAL64) - f)	-- "magenta" to "red"
     RESULT r, g, b
 :
 
@@ -161,9 +161,9 @@ INT FUNCTION map.colour.spectrum (VAL REAL64 x, VAL INT permute)
   INT c:
   VALOF
     IF
-      x >= 1.0
+      x >= 1.0(REAL64)
         c := #FFFFFF				-- white
-      x < 0.0
+      x < 0.0(REAL64)
         c := #404040				-- dark grey
       TRUE
         BYTE r, g, b:
@@ -190,7 +190,7 @@ INT FUNCTION map.colour.wheel (VAL REAL64 x, VAL INT permute)
   INT c:
   VALOF
     IF
-      x < 0.0
+      x < 0.0(REAL64)
         c := #FFFFFF				-- white
       TRUE
         BYTE r, g, b:

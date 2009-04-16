@@ -88,18 +88,18 @@ PROC out.string (VAL []BYTE s, VAL INT field, CHAN BYTE out!)
 -- @param out Channel to write to
 PROC out.byte (VAL BYTE b, VAL INT field, CHAN BYTE out!)
   --{{{  
-  VAL BYTE hundreds IS b/100:
-  VAL BYTE rest IS b\100:
-  VAL BYTE tens IS rest/10:
-  VAL BYTE ones IS rest\10:
+  VAL BYTE hundreds IS b/100(BYTE):
+  VAL BYTE rest IS b\100(BYTE):
+  VAL BYTE tens IS rest/10(BYTE):
+  VAL BYTE ones IS rest\10(BYTE):
   IF
-    hundreds > 0
+    hundreds > 0(BYTE)
       SEQ
         out.repeat (' ', field - 3, out!)
         out ! hundreds + '0'
         out ! tens + '0'
         out ! ones + '0'
-    tens > 0
+    tens > 0(BYTE)
       SEQ
         out.repeat (' ', field - 2, out!)
         out ! tens + '0'
