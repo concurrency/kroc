@@ -181,12 +181,16 @@ $GRAPH = {
 	# Kernel
 	'ENDP'		=> { 'kcall' => 1, 'in' => 1,
 		'symbol' => 'Y_endp' },
-	'IN'		=> { 'kcall' => 1, 'in' => 3 },
-	'OUT'		=> { 'kcall' => 1, 'in' => 3 },
+	'IN'		=> { 'kcall' => 1, 'in' => 3,
+		'symbol' => 'Y_in' },
+	'OUT'		=> { 'kcall' => 1, 'in' => 3,
+		'symbol' => 'Y_out' },
 	'STARTP'	=> { 'kcall' => 1, 'in' => 2,
 		'symbol' => 'Y_startp' },
-	'OUTBYTE'	=> { 'kcall' => 1, 'in' => 2 },
-	'OUTWORD'	=> { 'kcall' => 1, 'in' => 2 },
+	'OUTBYTE'	=> { 'kcall' => 1, 'in' => 2,
+		'symbol' => 'Y_outbyte' },
+	'OUTWORD'	=> { 'kcall' => 1, 'in' => 2,
+		'symbol' => 'Y_outword' },
 	'MRELEASEP'	=> { 'kcall' => 1, 'in' => 1 },
 	'EXTVRFY' 	=> { 'kcall' => 1, 'in' => 2 },
 	'STOPP'		=> { 'kcall' => 1 },
@@ -944,6 +948,7 @@ sub gen_j ($$$$) {
 
 sub gen_cj ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
+	my $next_label = $label->{'next'};
 	my $tmp_reg = $self->tmp_reg ();
 	my $jump_label = $self->tmp_label ();
 	my $cont_label = $self->tmp_label ();
@@ -966,34 +971,38 @@ sub gen_cj ($$$$) {
 		),
 		'ret void',
 		$cont_label . ':',
-		sprintf ('tail call void %s (%s %%sched, %s %%%s) noreturn',
-			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
-			$self->sched_type,
-			$self->workspace_type,
-			$inst->{'wptr'}
-		)
+		$self->gen_j ($proc, $label, {
+			'in'	=> $next_label->{'in'},
+			'fin'	=> $next_label->{'fin'},
+			'wptr' 	=> $next_label->{'wptr'},
+			'arg'	=> $next_label
+		})
 	);
 }
 
 sub gen_call ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
-	my $name = $inst->{'name'};
-	my $wptr = $inst->{'wptr'};
+	my $name 	= $inst->{'name'};
+	my $wptr 	= $inst->{'wptr'};
+	my $in		= $inst->{'in'};
+	my $symbol 	= ref ($inst->{'arg'}) =~ /HASH/ ? $inst->{'arg'}->{'symbol'} : '';
+	my $ffi		= ($symbol =~ m/^(C|B|BX)\./)[0];
+	my $reschedule	= $inst->{'reschedule'};
+	my $tail_call	= 1;
 	my (@asm, @params, $new_wptr);
 	
-	my $in = $inst->{'in'};
 	if (exists ($inst->{'fin'})) {
 		my $msg = "WARNING: floating point stack is not empty at point of call";
 		$self->message (1, $msg);
 		push (@asm, "; $msg");
 	}
 
-	if ($name =~ /^G?CALL$/ || $inst->{'reschedule'}) {
+	if ($name =~ /^G?CALL$/ || $reschedule) {
 		my $iptr_offset = 0;
 
 		$new_wptr = $self->tmp_reg ();
 
-		if ($inst->{'reschedule'}) {
+		if ($reschedule) {
 			$iptr_offset = -1;
 		} elsif ($name eq 'CALL') {
 			$iptr_offset = -4;
@@ -1006,15 +1015,17 @@ sub gen_call ($$$$) {
 			$iptr_offset
 		));
 
-		my $ret_ptr = $self->tmp_reg ();
-		push (@asm, sprintf ('%%%s = load %s %s',
-			$ret_ptr, $self->int_type . '*',
-			$proc->{'call_prefix'} . $label->{'next'}->{'name'}
-		));
-		push (@asm, sprintf ('store %s %%%s, %s %%%s',
-			$self->int_type, $ret_ptr,
-			$self->workspace_type, $new_wptr
-		));
+		if ($ffi ne 'C') {
+			my $ret_ptr = $self->tmp_reg ();
+			push (@asm, sprintf ('%%%s = load %s %s',
+				$ret_ptr, $self->int_type . '*',
+				$proc->{'call_prefix'} . $label->{'next'}->{'name'}
+			));
+			push (@asm, sprintf ('store %s %%%s, %s %%%s',
+				$self->int_type, $ret_ptr,
+				$self->workspace_type, $new_wptr
+			));
+		}
 
 		if ($name eq 'CALL') {
 			for (my $i = 0; $i < @$in; ++$i) {
@@ -1041,6 +1052,51 @@ sub gen_call ($$$$) {
 			}
 		}
 	}
+	
+	if ($ffi) {
+		$symbol =~ s/^(C|B|BX)//;
+		$symbol =~ s/\./_/g;
+
+		$self->{'header'}->{$symbol} = [
+			sprintf ('declare void @%s (%s)', 
+				$symbol, $self->workspace_type
+			)
+		] if !exists ($self->{'header'}->{$symbol});
+
+		my $args_ptr = $self->tmp_reg ();
+		push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+			$args_ptr,
+			$self->workspace_type, $new_wptr,
+			$self->index_type, 1
+		));
+		$in = [ $args_ptr ];
+		
+		if ($ffi =~ /B/) {
+			my $args_ptr = $self->tmp_reg ();
+			my $func_ptr = $self->tmp_reg ();
+			
+			push (@asm, sprintf ('%%%s = ptrtoint %s %%%s to %s',
+				$args_ptr,
+				$self->workspace_type, $in->[0],
+				$self->int_type
+			));
+			push (@asm, sprintf ('%%%s = load %s @%s',
+				$func_ptr,
+				$self->int_type . '*', $symbol
+			));
+			$in = [ $func_ptr, $args_ptr ];
+
+			if ($ffi eq 'B') {
+				$name = 'Y_b_dispatch';
+			} elsif ($ffi eq 'BX') {
+				$name = 'Y_bx_dispatch';
+			}
+			$reschedule = 1;
+		} else {
+			$tail_call = 0;
+		}
+	}
+
 
 	if ($name eq 'GCALL') {
 		my $jump_ptr = $self->tmp_reg ();
@@ -1056,27 +1112,35 @@ sub gen_call ($$$$) {
 			$wptr
 		));
 	} elsif ($name eq 'CALL') {
-		push (@asm, sprintf ('tail call void @O_%s (%s %%sched, %s %%%s) noreturn',
-			$inst->{'arg'}->{'symbol'},
-			$self->sched_type,
-			$self->workspace_type,
-			$new_wptr
-		));
+		if (!$ffi) {
+			push (@asm, sprintf ('tail call void @O_%s (%s %%sched, %s %%%s) noreturn',
+				$symbol,
+				$self->sched_type,
+				$self->workspace_type,
+				$new_wptr
+			));
+		} else {
+			push (@asm, sprintf ('call void @%s (%s %%%s)',
+				$symbol,
+				$self->workspace_type,
+				$in->[0]
+			));
+		}	
 	} else {
 		my $ret = $inst->{'out'} && @{$inst->{'out'}} ? $inst->{'out'}->[0] : $self->tmp_reg ();
 
 		push (@asm, sprintf ('%%%s = call %s @%s (%s %%sched, %s %%%s%s%s)',
 			$ret,
-			$inst->{'reschedule'} ? $self->workspace_type : $self->int_type,
+			$reschedule ? $self->workspace_type : $self->int_type,
 			$name,
 			$self->sched_type,
 			$self->workspace_type,
-			$wptr,
+			$ffi ? $new_wptr : $wptr,
 			@params ? ', ' : '',
 			join (', ', @params)
 		));
 		
-		if ($inst->{'reschedule'}) {
+		if ($reschedule) {
 			my $jump_ptr_ptr = $self->tmp_reg ();
 			my $jump_ptr 	= $self->tmp_reg ();
 			my $jump_val 	= $self->tmp_reg ();
@@ -1101,15 +1165,19 @@ sub gen_call ($$$$) {
 				$self->workspace_type, $new_wptr
 			));
 		} else {
-			my $next_label = $label->{'next'};
-			push (@asm, $self->gen_j ($proc, $label, {
-				'in'	=> $next_label->{'in'},
-				'fin'	=> $next_label->{'fin'},
-				'wptr' 	=> $next_label->{'wptr'},
-				'arg'	=> $next_label
-			}));
+			$tail_call = 0;
 		}
-	}	
+	}
+
+	if (!$tail_call) {
+		my $next_label = $label->{'next'};
+		push (@asm, $self->gen_j ($proc, $label, {
+			'in'	=> $next_label->{'in'},
+			'fin'	=> $next_label->{'fin'},
+			'wptr' 	=> $next_label->{'wptr'},
+			'arg'	=> $next_label
+		}));
+	}
 
 	return @asm;
 }	
@@ -1646,8 +1714,8 @@ sub gen_sb ($$$$) {
 			$byte_val, 
 			$self->int_type, $inst->{'in'}->[1]
 		),
-		sprintf ('%%%s = load i8* %%%s',
-			$byte_ptr, $byte_val
+		sprintf ('store i8 %%%s, i8* %%%s',
+			$byte_val, $byte_ptr
 		)
 	);
 }
@@ -1721,7 +1789,7 @@ sub _gen_kcall ($$$$$) {
 	my $name 	= 'kernel_' . $symbol;
 	my $reschedule 	= $symbol =~ /^Y_/ ? 1 : 0;
 	
-	die "Unknown kernel call $symbol" if $symbol !~ /^[XY]_/;
+	die "Unknown kernel call " . $inst->{'name'} . " ($symbol)" if $symbol !~ /^[XY]_/;
 
 	if (!exists ($self->{'header'}->{$name})) {
 		my @param = ($self->sched_type, $self->workspace_type);
