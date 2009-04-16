@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
 OCCBUILD = @OCCBUILD@
-CFLAGS = @CFLAGS@ @DEFS@
+CFLAGS = @CFLAGS@ @DEFS@ @PLAYER_CFLAGS@
 
 SWIG_SOURCE_FILES = \
 	occamplayer.i \
