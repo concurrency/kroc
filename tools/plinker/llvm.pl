@@ -117,9 +117,8 @@ my $entry_point;
 if ($standalone) {
 	# Pick Entry Point
 	my $symbols 	= $last_file->{'symbols'};
+	my $last_text	= $etc[@etc - 1]->{'etc'};
 	my $jentry;
-	my $last_texts	= $etc[@etc - 1];
-	my $last_text	= $last_texts->[@$last_texts - 1]->{'etc'};
 	foreach my $op (@$last_text) {
 		if ($op->{'name'} eq '.JUMPENTRY') {
 			$jentry = $op->{'arg'};
@@ -140,8 +139,14 @@ if ($standalone) {
 	}
 }
 
-foreach my $text (@etc) {
-	$llvm->generate ($text);
+my @asm = $llvm->generate (@etc);
+
+if ($entry_point) {
+	push (@asm, $llvm->entry_point ($entry_point));
+}
+
+foreach my $line (@asm) {
+	print $line, "\n";
 }
 
 # FIXME: do more stuff!

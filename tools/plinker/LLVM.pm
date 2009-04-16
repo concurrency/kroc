@@ -788,6 +788,11 @@ sub output_regs (@) {
 	return join (', ', @out);
 }
 
+sub proc_prefix {
+	my $self = shift;
+	return 'O_';
+}
+
 sub int_type {
 	my $self = shift;
 	return 'i32'; # FIXME:
@@ -1133,8 +1138,8 @@ sub gen_call ($$$$) {
 		));
 	} elsif ($name eq 'CALL') {
 		if (!$ffi) {
-			push (@asm, sprintf ('tail call void @O_%s (%s %%sched, %s %%%s) noreturn',
-				$symbol,
+			push (@asm, sprintf ('tail call void @%s%s (%s %%sched, %s %%%s) noreturn',
+				$self->proc_prefix, $symbol,
 				$self->sched_type,
 				$self->workspace_type,
 				$new_wptr
@@ -1857,18 +1862,19 @@ sub format_lines (@) {
 	my @lines = @_;
 	my @asm;
 	foreach my $line (@lines) {
-		if ($line =~ /^[a-zA-Z0-9\$\._]+:/ || $line =~ /[{}]\s*$/) {
+		if ($line =~ /^[a-zA-Z0-9\$\._]+:/ || $line =~ /[{}]\s*$/ || $line =~ /^de(clare|fine)/) {
 			push (@asm, $line);
 		} else {
 			push (@asm, "\t" . $line);
 		}
+		push (@asm, '') if $line =~ /^(}|declare)/;
 	}
 	return @asm;
 }
 
 sub generate_proc ($$) {
 	my ($self, $proc) = @_;
-	my $symbol 	= '@O_' . $proc->{'symbol'};
+	my $symbol 	= '@' . $self->proc_prefix . $proc->{'symbol'};
 	my $call_pfix 	= $symbol . '_';
 	my @asm;
 
@@ -2105,32 +2111,95 @@ sub intrinsics ($) {
 	);
 }
 
-sub generate ($$) {
-	my ($self, $text) = @_;
+sub generate ($@) {
+	my ($self, @texts) = @_;
 	my $verbose = $self->{'verbose'};
-	my $file	= $text->{'file'};
-	my $etc		= $text->{'etc'};
-
-	$self->preprocess_etc ($file, $etc);
-
-	my @header = $self->intrinsics;
-
 	my @proc_asm;
-	foreach my $proc (@{$self->{'procs'}}) {
-		push (@proc_asm, $self->code_proc ($proc));
+	
+	foreach my $text (@texts) {
+		my $file	= $text->{'file'};
+		my $etc		= $text->{'etc'};
+
+		$self->preprocess_etc ($file, $etc);
+
+		foreach my $proc (@{$self->{'procs'}}) {
+			push (@proc_asm, $self->code_proc ($proc));
+		}
 	}
 	
+	my @header 	= $self->intrinsics;
 	my @const_asm 	= $self->code_constants ();
 	foreach my $elem (sort (keys (%{$self->{'header'}}))) {
 		push (@header, @{$self->{'header'}->{$elem}});
 	}
 
-	my @ret 	= (@header, @const_asm, @proc_asm);
-	foreach my $line (@ret) {
-		print $line, "\n";
-	}
+	return (@header, @const_asm, @proc_asm);
+}
 
-	return \@ret;
+sub entry_point ($$) {
+	my ($self, $symbol) = @_;
+	my $name	= $symbol->{'string'};
+	my $ws		= $symbol->{'ws'};
+	my $vs		= $symbol->{'vs'};
+	my $ms		= $symbol->{'ms'};
+	my @asm;
+
+	push (@asm,
+		sprintf ('declare %s @occam_start (%s, i8**, i8*, i8*, %s, %s, %s)',
+			$self->int_type, 
+			$self->int_type, 
+			$self->int_type, $self->int_type, $self->int_type
+		),
+
+		sprintf ('define void @code_entry (%s %%sched, %s %%wptr) {',
+			$self->sched_type, $self->workspace_type
+		),
+		sprintf ('%%iptr_ptr = getelementptr %s %%wptr, %s %d',
+			$self->workspace_type,
+			$self->index_type, -1
+		),
+		sprintf ('%%iptr_val = load %s %%iptr_ptr',
+			$self->workspace_type
+		),
+		sprintf ('%%iptr = inttoptr %s %%iptr_val to %s',
+			$self->int_type,
+			$self->func_type . '*'
+		),
+		sprintf ('tail call void %%iptr (%s %%sched, %s %%wptr) noreturn',
+			$self->sched_type,
+			$self->workspace_type
+		),
+		'ret void',
+		'}',
+
+		sprintf ('define %s @main (%s %%argc, i8** %%argv) {',
+			$self->int_type, $self->int_type
+		),
+		'entry:',
+		"; ENTRY POINT: $name, WS = $ws, VS = $vs, MS = $ms",
+		sprintf ('%%code_entry = bitcast %s @code_entry to i8*',
+			$self->func_type . '*'
+		),
+		sprintf ('%%start_proc = bitcast %s @%s%s to i8*',
+			$self->func_type . '*',
+			$self->proc_prefix,
+			$name
+		),
+		sprintf ('%%ret = call %s @occam_start (%s %%argc, i8** %%argv, '
+			 	. 'i8* %%code_entry, i8* %%start_proc, %s %d, %s %d, %s %d)',
+			$self->int_type,
+			$self->int_type,
+			$self->int_type, $ws,
+			$self->int_type, $vs,
+			$self->int_type, $ms
+		),
+		sprintf ('ret %s %%ret',
+			$self->int_type
+		),
+		'}'
+	);
+
+	return format_lines (@asm); 
 }
 
 1;
