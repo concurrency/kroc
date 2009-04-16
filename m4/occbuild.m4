@@ -86,7 +86,8 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   elif test "x$OCCBUILD_TOOLCHAIN" = "xtvm"; then
     OCCBUILD_CFLAGS="-DOCCBUILD_TVM"
   elif test "x$OCCBUILD_TOOLCHAIN" = "xtock"; then
-    OCCBUILD_CFLAGS="-DOCCBUILD_TOCK"
+    KROC_CCSP_FLAGS
+    OCCBUILD_CFLAGS="-DOCCBUILD_TOCK $KROC_CCSP_CFLAGS $KROC_CCSP_CINCPATH"
   else
     AC_MSG_ERROR([don't know how to find OCCBUILD_CFLAGS in-tree for this toolchain])
   fi
