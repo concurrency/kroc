@@ -825,6 +825,11 @@ sub sched_type {
 	return 'i8*';
 }
 
+sub func_type {
+	my $self = shift;
+	return sprintf ('void (%s, %s)', $self->sched_type, $self->workspace_type)
+}
+
 sub workspace_type {
 	my $self = shift;
 	return $self->int_type . '*';
@@ -1017,12 +1022,19 @@ sub gen_call ($$$$) {
 
 		if ($ffi ne 'C') {
 			my $ret_ptr = $self->tmp_reg ();
-			push (@asm, sprintf ('%%%s = load %s %s',
-				$ret_ptr, $self->int_type . '*',
+			my $ret_val = $self->tmp_reg ();
+			push (@asm, sprintf ('%%%s = bitcast %s %s to i8*',
+				$ret_ptr,
+				$self->func_type . '*' ,
 				$proc->{'call_prefix'} . $label->{'next'}->{'name'}
 			));
+			push (@asm, sprintf ('%%%s = ptrtoint i8* %%%s to %s',
+				$ret_val, 
+				$ret_ptr,
+				$self->int_type
+			));
 			push (@asm, sprintf ('store %s %%%s, %s %%%s',
-				$self->int_type, $ret_ptr,
+				$self->int_type, $ret_val,
 				$self->workspace_type, $new_wptr
 			));
 		}
@@ -1072,25 +1084,33 @@ sub gen_call ($$$$) {
 		$in = [ $args_ptr ];
 		
 		if ($ffi =~ /B/) {
-			my $args_ptr = $self->tmp_reg ();
+			my $args_val = $self->tmp_reg ();
 			my $func_ptr = $self->tmp_reg ();
+			my $func_val = $self->tmp_reg ();
 			
 			push (@asm, sprintf ('%%%s = ptrtoint %s %%%s to %s',
-				$args_ptr,
+				$args_val,
 				$self->workspace_type, $in->[0],
 				$self->int_type
 			));
-			push (@asm, sprintf ('%%%s = load %s @%s',
-				$func_ptr,
-				$self->int_type . '*', $symbol
+			push (@asm, sprintf ('%%%s = bitcast %s @%s to i8*',
+				$func_ptr, 
+				$self->func_type . '*', $symbol
 			));
-			$in = [ $func_ptr, $args_ptr ];
+			push (@asm, sprintf ('%%%s = ptrtoint i8* %%%s to %s',
+				$func_val,
+				$func_ptr,
+				$self->int_type
+			));
+
+			$in = [ $func_val, $args_val ];
 
 			if ($ffi eq 'B') {
 				$name = 'Y_b_dispatch';
 			} elsif ($ffi eq 'BX') {
 				$name = 'Y_bx_dispatch';
 			}
+
 			$reschedule = 1;
 		} else {
 			$tail_call = 0;
@@ -1212,15 +1232,26 @@ sub gen_ldc ($$$$) {
 	my $arg = $inst->{'arg'};
 	if (ref ($arg)) {
 		my $name 	= $arg->{'name'};
-		my $tmp_reg 	= $self->tmp_reg ();
+		my (@load, $tmp_reg);
 
-		$self->new_constant ($name, $arg)
-			if !exists ($self->{'constants'}->{$name});
+		if ($arg->{'data'}) {
+			$self->new_constant ($name, $arg)
+				if !exists ($self->{'constants'}->{$name});
+			($tmp_reg, @load) = $self->global_ptr_value ('i8*', $name);
+		} else {
+			$tmp_reg = $self->tmp_reg ();
+			@load = ( sprintf ('%%%s = bitcast %s %s to i8*',
+				$tmp_reg, 
+				$self->func_type . '*',
+				$proc->{'call_prefix'} . $name
+			));
+		}
 
 		return (
-			sprintf ('%%%s = load i8** @%s', $tmp_reg, $name),
+			@load,
 			sprintf ('%%%s = ptrtoint i8* %%%s to %s',
-				$inst->{'out'}->[0], $tmp_reg,
+				$inst->{'out'}->[0], 
+				$tmp_reg,
 				$self->int_type
 			)
 		);
@@ -1862,22 +1893,35 @@ sub generate_proc ($$) {
 		my $last_inst;
 
 		if (1) {
+			my $sym_name = sprintf ('%s_%s', $symbol, $name);
+			my @types = ( $self->sched_type, $self->workspace_type );
 			my @params = (
 				sprintf ('%s %%sched', $self->sched_type),
 				sprintf ('%s %%%s', $self->workspace_type, $label->{'wptr'})
 			);
 			for (my $i = 0; $i < @{$label->{'in'}}; ++$i) {
+				push (@types, $self->int_type);
 				push (@params, sprintf ('%s %%%s', $self->int_type, $label->{'in'}->[$i]));
 			}
 			for (my $i = 0; $i < @{$label->{'fin'}}; ++$i) {
+				push (@types, $self->float_type);
 				push (@params, sprintf ('%s %%%s', $self->float_type, $label->{'fin'}->[$i]));
 			}
+			
+			$self->{'header'}->{$sym_name} = [
+				sprintf ('declare fastcc void %s (%s)',
+					$sym_name,
+					join (', ', @types)
+				)
+			];
+			
 			push (@asm,
-				sprintf ('define private fastcc void %s_%s (%s) {',
-					$symbol, $name,
+				sprintf ('define private fastcc void %s (%s) {',
+					$sym_name,
 					join (', ', @params)
 			));
 			push (@asm, $name . ':');
+
 		} elsif ($label->{'phi'}) {
 			my $wptr	= $label->{'wptr'};
 			my $in 		= $label->{'in'} || [];
