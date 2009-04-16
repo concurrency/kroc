@@ -1,0 +1,27 @@
+#INCLUDE "occ_player.inc"
+PROC robot.init()
+  playerc.client.t client:
+  playerc.mclient.t mclient:
+  --playerc.position.t position:
+  playerc.laser.t laser:
+  VAL INT player.port IS 6666:
+  INITIAL INT index IS 0:
+  INITIAL [10]BYTE host IS "localhost*#00":
+  INT success:
+  SEQ
+    -- Null terminate the host string
+    --host[9] := 0
+    -- Create a playerc client
+    -- Set the mclient structure to NULL
+    mclient := 0
+    playerc.client.create(client, mclient, host, player.port)
+:
+
+PROC t(CHAN BYTE kyb, scr, err)
+  SEQ
+    scr ! 'm'
+    scr ! 'o'
+    scr ! 'o'
+    scr ! '*n'
+:
+
