@@ -50,7 +50,7 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-points.inc: gen-arcs.ss
-	mzscheme -f gen-arcs.ss >points.inc
+points.inc: gen-arcs.py
+	$(PYTHON) gen-arcs.py >points.inc
 
 CLEANFILES = points.inc

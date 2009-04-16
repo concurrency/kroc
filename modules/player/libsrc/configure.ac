@@ -12,6 +12,7 @@ AC_PROG_CC
 OCCAM_OCCBUILD
 CFLAGS="$CFLAGS $OCCBUILD_CFLAGS"
 OCCAM_SWIG
+AM_PATH_PYTHON([2.2], [], [exit 1])
 
 build_occplayer=yes
 build_player=yes
