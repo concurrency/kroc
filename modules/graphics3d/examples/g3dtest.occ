@@ -80,7 +80,7 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
         screen.cube.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
 
       CLAIM rre!
-        glenz.network2.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+        normal.network2.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
 
       TIMER tim:
       INT t:
@@ -88,7 +88,7 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
         tim ? t
         tim ? AFTER (t PLUS 5000000)
         CLAIM rre!
-          glenz.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+          normal.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
 
       TIMER tim:
       INT t:
