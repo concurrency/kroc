@@ -2,7 +2,7 @@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
-OCCBUILD = @OCCBUILD@
+OCCBUILD = @OCCBUILD@ --search ../occplayer
 CFLAGS = @CFLAGS@ @DEFS@
 
 EXTRA_DIST = \
