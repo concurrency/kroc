@@ -21,7 +21,7 @@
 #INCLUDE "sdlraster.module"
 #INCLUDE "graphics3d.module"
 
-VAL INT N.BUTTERFLIES IS 400:
+VAL INT N.BUTTERFLIES IS 200:
 
 --{{{  PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
 --* Implements a butterfly that crosses the screen, starts in a random location.
@@ -49,7 +49,9 @@ PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
     points3d.rotate (gp1?, gp2!, rot.ctl?)
     points.3d.to.2d3 (gp2?, gc1!, prj.ctl?)
     flutterby.points (gc1?, pc1!, pgn.ctl?)
-    render.polyframe (pc1?, rlink.in?, rdr.ctl?)
+    poly.scanlines (pc1?, ps1!, psc.ctl?)
+    render.polyscans (ps1?, rlink.in?, rdr.ctl?)
+    -- render.polyframe (pc1?, rlink.in?, rdr.ctl?)
 
     INT seed:
     TIMER tim:
@@ -69,8 +71,8 @@ PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
         INT t:
         INT val:
         SEQ
-          yoff, seed := random (160, seed)
-          yoff := yoff - 80
+          yoff, seed := random (120, seed)
+          yoff := yoff - 60
           zoff, seed := random (200, seed)
           zoff := zoff - 100
           speed, seed := random (10, seed)
@@ -88,6 +90,9 @@ PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
               pix[v] := BYTE ((n + 100) /\ #FF)
 
           pgn.ctl ! set.face.colour; 0; val
+          pgn.ctl ! set.backfaces; TRUE
+          pgn.ctl ! set.trimap; FALSE
+          rdr.ctl ! set.mode; G3D.RENDER.MODE.NONE
 
           tim ? t
           WHILE xpos < 24.0
@@ -97,6 +102,9 @@ PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
               xpos := xpos + ((REAL32 TRUNC speed) / 10.0)
 
               RESCHEDULE ()
+              RESCHEDULE ()
+              RESCHEDULE ()
+
 :
 --}}}
 --{{{  PROC bfly.network.spawn (VAL INT width, height, SHARED CHAN G3D.RENDER.ENGINE! new.link!)

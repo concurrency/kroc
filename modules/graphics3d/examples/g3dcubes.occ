@@ -53,9 +53,9 @@ PROC cube.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, VAL REAL3
         ELSE
           SKIP
       prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
-      rdr.ctl ! set.mode; G3D.RENDER.MODE.GLENZ \/ G3D.RENDER.MODE.NORM
+      rdr.ctl ! set.mode; G3D.RENDER.MODE.NORM
       pgn.ctl ! set.trimap; FALSE
-      pgn.ctl ! set.backfaces; TRUE
+      pgn.ctl ! set.backfaces; FALSE
       pgn.ctl ! set.face.colours; [#00000080,#00005050,#00008000,#00505000,#00800000,#00500050]
       rot.ctl ! set.mode; rmode
       rot.ctl ! set.angle; iangle
@@ -77,6 +77,7 @@ PROC g3dcubes (CHAN BYTE kyb?, scr!) --{{{
   CHAN RASTER rc1, rc2, rc3:
   SHARED! CHAN G3D.RENDER.ENGINE! rre:
   CHAN G3D.TMR.CONTROL tmr.ctl:
+  CHAN BOOL go:
   PAR
     raster.timed.buffer (rc1?, rc2!, 60, tmr.ctl?)
     raster.display.simple ("Graphics test", G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, 3, rc2?, rc3!)
@@ -84,9 +85,15 @@ PROC g3dcubes (CHAN BYTE kyb?, scr!) --{{{
 
     CLAIM rre!
       SEQ
-        cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 0.0, 6.0, G3D.ROTATE.MODE.Y)
-        cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 0.0, 5.0, G3D.ROTATE.MODE.X)
-        cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 0.0, 5.0, G3D.ROTATE.MODE.Z)
+        tmr.ctl ! set.fps; 4
+        SEQ ia = 0 FOR 6
+          INITIAL REAL32 iang IS (PI / 3.0) * (REAL32 ROUND ia):
+          SEQ
+            cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, iang, 5.0, G3D.ROTATE.MODE.Y)
+            cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, iang, 5.0, G3D.ROTATE.MODE.X)
+            cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, iang, 5.0, G3D.ROTATE.MODE.Z)
+        tmr.ctl ! set.fps; 60
+
 :
 --}}}
 
