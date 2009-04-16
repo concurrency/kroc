@@ -1,4 +1,4 @@
-%module occ_playerc
+%module occplayerc
 %{
 #include <libplayerc/playerc.h>
 %}

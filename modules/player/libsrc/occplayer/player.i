@@ -1,4 +1,4 @@
-%module occ_player
+%module occplayer
 // playerc.i is includeded at the end of this file, as it depends on it.
 %include "stdint.i"
 %{

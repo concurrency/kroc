@@ -1,34 +1,56 @@
 @SET_MAKE@
 
-AUTOMAKE_OPTIONS=foreign no-dependencies
+AUTOMAKE_OPTIONS = foreign no-dependencies
 
+OCCBUILD = @OCCBUILD@
+CFLAGS = @CFLAGS@ @DEFS@
 
-SKROC_LIBS=@LIBRARY_DIRS@
-SKROC=@top_srcdir@/skroc/@SKROC@
-OLD_PATH := $(PATH)
-override PATH = @top_srcdir@/skroc:@top_srcdir@/slinker:$(OLD_PATH)
+EXTRA_DIST = \
+	debug.occ \
+	gen-arcs.ss \
+	misc.c \
+	misc.inc \
+	pioneer_hud.inc \
+	pioneerutils.inc \
+	player.inc
 
-SUFFIXES= .occ .lib .precomp
+if BUILD_PLAYER
+player_lib_objs = \
+	debug.tce \
+	misc.o
 
-occlibdir = $(prefix)/lib/transterpreter
+player_libs = player.lib
+player_includes = \
+	misc.inc \
+	pioneer_hud.inc \
+	pioneerutils.inc \
+	player.inc \
+	points.inc
+endif
 
-occlib_DATA = player.inc pioneer_hud.inc points.inc misc.so debug.occ misc.inc
+libs = $(player_libs)
+includes = $(player_includes)
+
+all-local: $(libs) $(includes)
+
+player.lib: $(player_lib_objs)
+	$(OCCBUILD) --library player.lib --need occplayer --include player.inc $(player_lib_objs)
+
+install-exec-local: $(libs) $(includes)
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
+
+clean-local:
+	$(OCCBUILD) --clean $(libs) $(player_lib_objs)
+
+SUFFIXES = .occ .tce .lib
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+.occ.tce:
+	$(OCCBUILD) --object $<
 
 points.inc: gen-arcs.ss
-	mzscheme -mgf gen-arcs.ss > points.inc
+	mzscheme -f gen-arcs.ss >points.inc
 
-#Couldn't get elif or else if to work... hmm..
-
-if MAC
-dynflag=-dynamiclib
-else
-dynflag=-shared
-endif
-if SOLARIS
-dynflag+=-mimpure-text
-endif
-
-misc.so: misc.c
-	$(CC) $(dynflag) -o misc.so misc.c
-
-CLEANFILES=points.inc misc.so 
+CLEANFILES = points.inc
