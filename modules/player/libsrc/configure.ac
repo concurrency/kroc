@@ -37,6 +37,6 @@ OCCAM_PROVIDE(occplayer.module, occplayer, , [test $build_occplayer = yes])
 AC_MSG_CHECKING([whether to build player.module])
 AC_MSG_RESULT($build_player)
 AM_CONDITIONAL(BUILD_PLAYER, [test $build_player = yes])
-OCCAM_PROVIDE(player.module, library, occplayer.module, [test $build_player = yes])
+OCCAM_PROVIDE(player.module, player, occplayer.module, [test $build_player = yes])
 
-AC_OUTPUT([Makefile library/Makefile occplayer/Makefile])
+AC_OUTPUT([Makefile player/Makefile occplayer/Makefile])
