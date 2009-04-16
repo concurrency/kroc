@@ -21,7 +21,7 @@ if test $OCCBUILD_TOOLCHAIN != tock; then
 fi
 AC_CONFIG_SUBDIRS(tools/occamdoc)
 
-if test $OCCBUILD_TOOLCHAIN = kroc -o test $OCCBUILD_TOOLCHAIN = tock; then
+if test $OCCBUILD_TOOLCHAIN = kroc -o $OCCBUILD_TOOLCHAIN = tock; then
   AC_CONFIG_SUBDIRS(runtime/ccsp)
 fi
 
