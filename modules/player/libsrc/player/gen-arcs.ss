@@ -2,7 +2,7 @@
 
 (define num.points 181)
 (define radius 40)
-(define-struct point (x y) (make-inspector))
+(define-struct point (x y))
 (define displacement.x 0.0)
 (define displacement.y 8.0)
 (define PI 3.14159265534897)
