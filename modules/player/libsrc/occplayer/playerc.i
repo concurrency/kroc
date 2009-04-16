@@ -1580,6 +1580,9 @@ underlyling driver.
 
 @param intensity Intensity flag; set to 1 to enable reflection intensity data.
 
+@param scanning_frequency Scanning frequency in Hz. Valid values depend on the
+underlyling driver.
+
 @returns Returns 0 on success, non-zero otherwise.  Use
 playerc_error_str() to get a descriptive error message.
 
@@ -1588,7 +1591,8 @@ int playerc_laser_set_config(playerc_laser_t *device,
                              double min_angle, double max_angle,
                              double resolution,
                              double range_res,
-                             unsigned char intensity);
+                             unsigned char intensity,
+                             double scanning_frequency);
 
 /** @brief Get the laser configuration.
 
@@ -1605,6 +1609,9 @@ underlyling driver.
 
 @param intensity Intensity flag; set to 1 to enable reflection intensity data.
 
+@param scanning_frequency Scanning frequency in Hz. Valid values depend on the
+underlyling driver.
+
 @returns Returns 0 on success, non-zero otherwise.  Use
 playerc_error_str() to get a descriptive error message.
 
@@ -1614,7 +1621,8 @@ int playerc_laser_get_config(playerc_laser_t *device,
                              double *max_angle,
                              double *resolution,
                              double *range_res,
-                             unsigned char *intensity);
+                             unsigned char *intensity,
+                             double *scanning_frequency);
 
 /** @brief Get the laser geometry.
 
