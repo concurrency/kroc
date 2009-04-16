@@ -1,49 +1,42 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(pioneerutils.inc)
+AC_INIT(occplayer/player.i)
 AC_PREREQ(2.12)
 
 dnl for automake 1.1 
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(occplayer, 0.1)
+AM_INIT_AUTOMAKE(player, 0.2)
 
 dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
+CFLAGS="$CFLAGS $OCCBUILD_CFLAGS"
 OCCAM_SWIG
 
-dnl Checks for libraries.
-AC_ARG_WITH(player,AS_HELP_STRING(--with-player[=DIR],compile player bindings), , player=maybe)
-if test "x$with_player" != xno ; then
-	# User explicitly wanted player, but no swig
-	if test "x$player" = "xmaybe" && test "x$swig_occampi" = "xno" ; then
-		AC_MSG_WARN([No occam-pi enabled SWIG found, not generating Player wrapper])
-	else
-		if test "x$swig_occampi" = "xno" ; then
-			AC_MSG_ERROR([No occam-pi enabled SWIG found, cannot generate Player wrapper])
-		fi
-		# Set up paths maybe
-		if test -d "$with_player/include/player-2.0"; then
-			CPPFLAGS="$CPPFLAGS -I$with_player/include/player-2.0"
-		fi
-		if test -d $with_readline/lib; then
-			LDFLAGS="$LDFLAGS -L$with_player/lib"
-		fi
-		# Check for things
-		AC_CHECK_LIB(playerc,playerc_client_connect,[playerlib=yes],[playerlib=no],[-lm])
-		AC_CHECK_HEADERS([libplayerc/playerc.h libplayercore/player.h \
-											libplayercore/playercommon.h libplayercore/error.h \
-											libplayerxdr/playerxdr.h],[playerh=yes],[playerh=no])
+build_occplayer=yes
+build_player=yes
 
-		player=no
-		if test "x$playerlib" = "xyes" && test "x$playerh" = "xyes" ; then
-			player=yes
-		else
-			AC_MSG_NOTICE([No Player installation found, will not compile the Player wrapper])
-		fi
-	fi
+dnl Checks for libraries.
+PKG_CHECK_MODULES([PLAYER], [playerc playercore playerxdr], , [build_occplayer=no])
+old_LIBS="$LIBS"
+LIBS="$LIBS $PLAYER_LIBS"
+AC_CHECK_FUNC(playerc_client_connect, , [build_occplayer=no])
+LIBS="$old_LIBS"
+if test "x$HAVE_SWIG_OCCAM" = "xno"; then
+	build_occplayer=no
+fi
+if test "x$build_occplayer" = "xno"; then
+	build_player=no
 fi
 
+AC_MSG_CHECKING([whether to build occplayer.module])
+AC_MSG_RESULT($build_occplayer)
+AM_CONDITIONAL(BUILD_OCCPLAYER, [test $build_occplayer = yes])
+OCCAM_PROVIDE(occplayer.module, occplayer, , [test $build_occplayer = yes])
 
+AC_MSG_CHECKING([whether to build player.module])
+AC_MSG_RESULT($build_player)
+AM_CONDITIONAL(BUILD_PLAYER, [test $build_player = yes])
+OCCAM_PROVIDE(player.module, library, occplayer.module, [test $build_player = yes])
 
-AC_OUTPUT([Makefile])
+AC_OUTPUT([Makefile library/Makefile occplayer/Makefile])

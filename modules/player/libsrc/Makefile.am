@@ -1,9 +1,8 @@
 # Process this file with automake to produce Makefile.in
 
+@SET_MAKE@
+
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../../m4
 
-# The ordering here is significant, owing to dependencies between modules.
-SUBDIRS = \
-	occplayer
-
-EXTRA_DIST = pioneerutils.inc
+SUBDIRS = occplayer library
