@@ -31,7 +31,7 @@ INT FUNCTION UINT16.TO.INT (VAL INT16 v) --{{{
   INT r:
   VALOF
     SEQ
-      r := INT (v /\ #7FFF)
+      r := INT (v /\ #7FFF(INT16))
       IF
         ((INT v) /\ #8000) <> 0
           r := r \/ #00008000
@@ -282,7 +282,7 @@ PROC occ.SDL.wait.button (CT.SDLJSEVENT! ev, RESULT INT btn)
               -- yes, which one?
               IF
                 IF i = 0 FOR SIZE bt.vals
-                  ((bt.delta /\ (1 << i)) <> 0) AND (bt.vals[i] = 1)
+                  ((bt.delta /\ (1 << i)) <> 0) AND (bt.vals[i] = 1(BYTE))
                     btn, loop := i, FALSE
                 TRUE
                   SKIP        -- probably a button up event
@@ -317,7 +317,7 @@ PROC occ.SDL.wait.button.axes (CT.SDLJSEVENT! ev, RESULT INT btn, RESULT MOBILE 
               -- yes, which one?
               IF
                 IF i = 0 FOR SIZE bt.vals
-                  ((bt.delta /\ (1 << i)) <> 0) AND (bt.vals[i] = 1)
+                  ((bt.delta /\ (1 << i)) <> 0) AND (bt.vals[i] = 1(BYTE))
                     SEQ
                       btn, loop := i, FALSE
                       ax.res := ax.vals
@@ -350,7 +350,7 @@ PROC occ.SDL.waitfor.button (CT.SDLJSEVENT! ev, VAL INT btn)
       change; ax.delta; bt.delta; ax.vals; bt.vals
         --{{{  change event, was it the right button?
         IF
-          ((bt.delta /\ (1 << btn)) <> 0) AND (bt.vals[btn] = 1)
+          ((bt.delta /\ (1 << btn)) <> 0) AND (bt.vals[btn] = 1(BYTE))
             loop := FALSE
           TRUE
             SKIP
@@ -378,7 +378,7 @@ PROC occ.SDL.waitfor.button.axes (CT.SDLJSEVENT! ev, VAL INT btn, RESULT MOBILE 
       change; ax.delta; bt.delta; ax.vals; bt.vals
         --{{{  change event, was it the right button?
         IF
-          ((bt.delta /\ (1 << btn)) <> 0) AND (bt.vals[btn] = 1)
+          ((bt.delta /\ (1 << btn)) <> 0) AND (bt.vals[btn] = 1(BYTE))
             SEQ
               loop := FALSE
               ax.res := ax.vals
@@ -463,7 +463,7 @@ PROC occ.SDL.joy.calibrate (CT.SDLJSCALIBRATE? svr, CT.SDLJSEVENT! ev.in, CT.SDL
     MOBILE []INT16 ax.vals:
     MOBILE []BYTE bt.vals:
     SEQ
-      occ.SDL.joy.doread (ev.in!, ax.vals, bt.vals)
+      occ.SDL.joy.doread (ev.in, ax.vals, bt.vals)
       nbtns := SIZE bt.vals
       naxes := SIZE ax.vals
 
@@ -561,7 +561,7 @@ PROC occ.SDL.joy.calibrate (CT.SDLJSCALIBRATE? svr, CT.SDLJSEVENT! ev.in, CT.SDL
                     TRUE
                       SKIP
                   IF
-                    bt.vals[i] <> #00
+                    bt.vals[i] <> #00(BYTE)
                       INITIAL INT tbtn IS b.map[i]:
                       new.bt[tbtn] := bt.vals[i]
                     TRUE
@@ -660,10 +660,11 @@ PROC occ.SDL.joy.server (CT.SDLJOY? svr)
               FORK occ.SDL.joy.handler (svr, i)
 
               -- get settings
-              CLAIM clis[i]
+              SHARED CT.SDLJS! clis.i IS clis[i]:
+              CLAIM clis.i
                 SEQ
-                  clis[i][in] ! query
-                  clis[i][out] ? CASE query; js.info[i]
+                  clis.i[in] ! query
+                  clis.i[out] ? CASE query; js.info[i]
 
           INITIAL BOOL running IS TRUE:
           WHILE running
