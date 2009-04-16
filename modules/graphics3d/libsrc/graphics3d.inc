@@ -67,11 +67,10 @@ DATA TYPE G3D.POINT3
     REAL32 x, y, z:
 :
 
---* Integer point in 2D space, retains original Z as a REAL32.
+--* Integer point in 2D space, original Z multiplied up.
 DATA TYPE G3D.POINT2.3
   RECORD
-    INT x, y:
-    REAL32 z:
+    INT x, y, z:
 :
 
 --* Integer point in 2D space.
@@ -81,12 +80,12 @@ DATA TYPE G3D.POINT2
 :
 --}}}
 --{{{  polygon types
---* General polygon in 2D space, retails original Z as REAL32s.
+--* General polygon in 2D space, orignal Z multiplied up.
 DATA TYPE G3D.POLY
   RECORD
     [G3D.MAX.POLY.POINTS]INT x:
     [G3D.MAX.POLY.POINTS]INT y:
-    [G3D.MAX.POLY.POINTS]REAL32 z:
+    [G3D.MAX.POLY.POINTS]INT z:
     INT npoints:
     INT norm:
     INT pixel:
