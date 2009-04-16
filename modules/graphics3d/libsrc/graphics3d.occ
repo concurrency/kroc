@@ -27,6 +27,8 @@
 #INCLUDE "sdlraster.module"
 #INCLUDE "graphics3d.inc"
 
+VAL REAL32 CONST.ZBSCALE IS 100.0:
+VAL INT CONST.ZBADD IS 16384:
 
 --{{{  PROC g3d.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 --* Debugging routine.
@@ -553,7 +555,7 @@ PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 
             SEQ i = 0 FOR SIZE p3d
               INITIAL REAL32 ez IS p3d[i][z] + z.shift:
               SEQ
-                p2d[i][z] := ez
+                p2d[i][z] := (INT ROUND (ez * CONST.ZBSCALE)) + CONST.ZBADD
                 ez := ez + z.depth
                 p2d[i][x] := (INT ROUND (((p3d[i][x] + x.shift) / ez) * x.scale)) + x2.shift
                 p2d[i][y] := (INT ROUND (((p3d[i][y] + y.shift) / ez) * y.scale)) + y2.shift
@@ -851,7 +853,7 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
       vp.height := G3D.MAX.SCAN.HEIGHT
   :
   --}}}
-  PROC do.fix (G3D.POLY.SCAN scan, VAL INT x1, y1, x2, y2) --{{{
+  PROC do.fix (G3D.POLY.SCAN scan, VAL INT x1, y1, z1, x2, y2, z2) --{{{
     INITIAL INT x1 IS x1:
     INITIAL INT y1 IS y1:
     INITIAL INT x2 IS x2:
@@ -881,12 +883,15 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
       --}}}
       IF
         y1 = y2
+          --{{{  flat polygon
           IF
             (y1 >= 0) AND (y1 < vp.height)
               SEQ
                 -- flat polygon
                 scan[start][y1] := x1
                 scan[end][y1] := x2
+                scan[z.start][y1] := z1
+                scan[z.end][y1] := z2
 
                 #IF FALSE
                 --{{{  debug
@@ -903,8 +908,9 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                 #ENDIF
             TRUE
               SKIP
+          --}}}
         TRUE
-          INT x, y, step:
+          INT x, y, z, step, z.step:
           SEQ
             #IF FALSE
             --{{{  debug
@@ -925,6 +931,8 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
             x := x1 << 16
             step := ((x2 - x1) << 16) / (y2 - y1)
             x := x + step
+            z := z1
+            z.step := (z2 - z1) / (y2 - y1)
             y1 := y1 + 1
 
             SEQ y = y1 FOR ((y2 - y1) + 1)
@@ -940,12 +948,17 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                           SKIP
                       IF
                         scan[start][y] = (MOSTNEG INT)
-                          scan[start][y] := shx
+                          SEQ
+                            scan[start][y] := shx
+                            scan[z.start][y] := z
                         TRUE
-                          scan[end][y] := shx
+                          SEQ
+                            scan[end][y] := shx
+                            scan[z.end][y] := z
                   TRUE
                     SKIP
                 x := x + step
+                z := z + z.step
   :
   --}}}
 
@@ -973,15 +986,19 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                   SEQ
                     tsc[start][j] := MOSTNEG INT
                     tsc[end][j] := MOSTNEG INT
+                    tsc[z.start][j] := 0
+                    tsc[z.end][j] := 0
                 tsc[norm] := ply[norm]
                 tsc[pixel] := ply[pixel]
                 tsc[scan.s] := G3D.MAX.SCAN.HEIGHT
                 tsc[scan.e] := 0
 
                 SEQ j = 0 FOR ply[npoints] - 1
-                  do.fix (tsc, ply[x][j], ply[y][j], ply[x][j+1], ply[y][j+1])
+                  SEQ
+                    do.fix (tsc, ply[x][j], ply[y][j], ply[z][j], ply[x][j+1], ply[y][j+1], ply[z][j+1])
                 VAL INT j IS ply[npoints] - 1:
-                do.fix (tsc, ply[x][j], ply[y][j], ply[x][0], ply[y][0])
+                SEQ
+                  do.fix (tsc, ply[x][j], ply[y][j], ply[z][j], ply[x][0], ply[y][0], ply[z][0])
 
                 IF
                   tsc[scan.s] < 0
@@ -1172,16 +1189,29 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
         IF
           stx > (MOSTNEG INT)
             INITIAL INT edx IS scan[end][i]:
+            INITIAL INT stz IS scan[z.start][i]:
+            INITIAL INT edz IS scan[z.end][i]:
+            INT z.step:
             SEQ
               IF
                 edx = (MOSTNEG INT)
                   -- single point
-                  edx := stx
+                  SEQ
+                    edx := stx
+                    edz := stz
                 edx < stx
                   -- swap
-                  stx, edx := edx, stx
+                  SEQ
+                    stx, edx := edx, stx
+                    stz, edz := edz, stz
                 TRUE
                   SKIP
+              
+              IF
+                edx = stx
+                  z.step := 0
+                TRUE
+                  z.step := (edz - stz) / (edx - stx)
               IF
                 (stx >= vp.width) AND (edx >= vp.width)
                   -- off right-hand edge
@@ -1190,19 +1220,30 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                   -- off left-hand edge
                   SKIP
                 TRUE
+                  INT z:
                   SEQ
-                    IF
-                      stx < 0
-                        stx := 0
-                      TRUE
-                        SKIP
-                    IF
-                      edx >= vp.width
-                        edx := vp.width - 1
-                      TRUE
-                        SKIP
+                    z := stz
                     SEQ x = stx FOR (edx - stx)
-                      r[i][x] := scan[pixel]
+                      SEQ
+                        IF
+                          x < 0
+                            SKIP
+                          x >= vp.width
+                            SKIP
+                          TRUE
+                            SEQ
+                              IF
+                                zb[i][x] = 0
+                                  SEQ
+                                    r[i][x] := scan[pixel]
+                                    zb[i][x] := z
+                                zb[i][x] < z
+                                  SKIP
+                                TRUE
+                                  SEQ
+                                    r[i][x] := scan[pixel]
+                                    zb[i][x] := z
+                        z := z + z.step
           TRUE
             SKIP
   :
