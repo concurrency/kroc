@@ -17,7 +17,9 @@ EXTRA_DIST = \
 	reverse-complement.occ \
 	spectralnorm.occ \
 	startup.occ \
-	thread-ring.occ
+	thread-ring.occ \
+	threads.occ \
+	threads-flow.occ
 
 examples = \
 	chameneos \
@@ -31,7 +33,9 @@ examples = \
 	reverse-complement \
 	spectralnorm \
 	startup \
-	thread-ring
+	thread-ring \
+	threads \
+	threads-flow
 
 shootoutdir = $(prefix)/share/kroc/shootout
 dist_shootout_DATA = \
@@ -75,6 +79,12 @@ startup: startup.occ
 
 thread-ring: thread-ring.occ
 	$(OCCBUILD) --program thread-ring.occ
+
+threads: threads.occ
+	$(OCCBUILD) --program threads.occ
+
+threads-flow: threads-flow.occ
+	$(OCCBUILD) --program threads-flow.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples shootout --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
