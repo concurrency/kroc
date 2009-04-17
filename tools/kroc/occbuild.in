@@ -140,10 +140,11 @@ def set_ld_path():
 
 	dirs = ["."] + search_path
 	if in_tree is not None:
+		# forall and the runtime support libraries are not included
+		# explicitly in the search path, so we must add them.
+		# Other modules should have been listed as dependencies.
 		dirs += [
 			in_tree + "/modules/inmoslibs/libsrc/forall",
-			in_tree + "/modules/bsclibs/libsrc/filelib",
-			in_tree + "/modules/course/libsrc",
 			in_tree + "/runtime/ccsp",
 			in_tree + "/runtime/libkrocif",
 			in_tree + "/runtime/libtvm",
@@ -157,11 +158,12 @@ def set_ld_path():
 def build_isearch(tc_isearch):
 	dirs = search_path
 	if in_tree is not None:
+		# forall and the TVM specials are not included explicitly in
+		# the search path, so we must add them. Other modules should
+		# have been listed as dependencies.
 		dirs += [
 			in_tree + "/modules/inmoslibs/libsrc/forall",
-			in_tree + "/modules/inmoslibs/libsrc/maths",
-			in_tree + "/modules/inmoslibs/libsrc/convert",
-			in_tree + "/tvm/posix", # FIXME: is there a better way?
+			in_tree + "/tvm/posix",
 			]
 	else:
 		dirs += tc_isearch
