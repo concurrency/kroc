@@ -705,6 +705,13 @@ class TockToolchain:
 
 #		if occam_objs == []:
 		make_stub(base + ".lib")
+		f = open(base + ".lib.tock.inc", "w")
+		f.write("#INCLUDE \"" + base + ".module\"\n")
+		f.close()
+		f = open(base + ".lib.tock.h", "w")
+		f.write("#include \"" + base + ".module.tock.h\"\n")
+		f.close()
+
 		f = open (base + ".module.tock.h", "w")
 		for obj in occam_objs:
 			g = open (split_ext(obj)[0] + ".tock.h","r")
