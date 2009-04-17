@@ -1813,9 +1813,14 @@ sub gen_lend ($$$$) {
 		$self->int_type, $new_index_cnt,
 		$self->int_type . '*', $index_ptr
 	));
-	push (@asm, $self->gen_j ($proc, $label, { 'wptr' => $inst->{'wptr'}, 'arg' => $inst->{'arg'} }));
+	push (@asm, $self->gen_j ($proc, $label, 
+		{ 'wptr' => $inst->{'wptr'}, 'arg' => $inst->{'arg'} }
+	));
 	push (@asm, 'ret void');
 	push (@asm, $next_lab . ':');
+	push (@asm, $self->gen_j ($proc, $label, 
+		{ 'wptr' => $inst->{'wptr'}, 'arg' => $label->{'next'} }
+	));
 
 	return @asm;
 }
