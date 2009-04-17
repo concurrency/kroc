@@ -34,11 +34,15 @@ $GRAPH = {
 	'J' 		=> { 'branching' => 1, 'in' => 3,
 			'generator' => \&gen_j },
 	'LEND'		=> { 'branching' => 1, 'in' => 1,
-		'generator' => \&gen_lend },
-	'LEND3'		=> { 'branching' => 1, 'in' => 1 },
-	'LENDB'		=> { 'branching' => 1, 'in' => 1 },
+			'generator' => \&gen_lend },
+	'LEND3'		=> { 'branching' => 1, 'in' => 1,
+			'generator' => \&gen_lend },
+	'LENDB'		=> { 'branching' => 1, 'in' => 1,
+			'generator' => \&gen_lend },
 	'RET'		=> { # Intentionally not 'branching' => 1,
 			'generator' => \&gen_ret },
+	'TABLE'		=> { 'branching' => 1, 'in' => 1,
+			'generator' => \&gen_table },
 	# Workspace/Operand Stack
 	'AJW'		=> { 'wptr' => 1, 
 			'generator' => \&gen_ajw },
@@ -581,27 +585,11 @@ sub expand_etc_ops ($) {
 					}
 					$done = 1;
 				}
-				my $size_op		= {
-					'name'		=> 'LDC',
-					'arg'		=> 0
-				};
 				$op->{'name'}		= 'TABLE';
 				$op->{'arg'}		= \@arg;
 				$op->{'label_arg'}	= 1;
 				$op->{'table'}		= \@table;
-				$op->{'size_op'}	= $size_op;
-				my $mlab = $labn + (++$labo / 10.0);
-				my $jlab = $labn + (++$labo / 10.0);
-				splice (@$etc, $i, 1,
-					{},
-					$size_op,
-					{ 'name' => 'PROD'	},
-					{ 'name' => 'LDC', 'arg' => [ "L$jlab", "L$mlab" ] },
-					{ 'name' => 'LDPI'	},
-					{ 'name' => '.SETLAB', 'arg' => $mlab		},
-					{ 'name' => 'BSUB'	},
-					{ 'name' => 'GCALL'	},
-					{ 'name' => '.SETLAB', 'arg' => $jlab		},
+				splice (@$etc, $i, @arg + 1,
 					$op
 				);
 			} elsif (!exists ($IGNORE_SPECIAL{$name})) {
@@ -1259,6 +1247,46 @@ sub gen_call ($$$$) {
 	return @asm;
 }	
 
+sub gen_table ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $prefix	= $self->tmp_label () . '_';
+	my $otherwise 	= $prefix . 'otherwise';
+	my $targets 	= $inst->{'arg'};
+	my (@asm, @jump_asm, @jump_labels);
+	
+	for (my $i = 0; $i < @$targets; ++$i) {
+		my $target 	= $targets->[$i];
+		my $lab 	= $prefix . $i;
+		push (@jump_labels, $lab);
+		push (@jump_asm, $lab . ':');
+		push (@jump_asm, $self->gen_j ($proc, $label, 
+			{ 'arg' => $target, 'wptr' => $inst->{'wptr'} }
+		));
+		push (@jump_asm, 'ret void');
+	}
+
+	push (@asm, sprintf ('switch %s %%%s, label %%%s [ %s %d, label %%%s',
+		$self->int_type,
+		$inst->{'in'}->[0],
+		$otherwise,
+		$self->int_type, 0, $jump_labels[0]
+	));
+	for (my $i = 1; $i < @jump_labels; ++$i) {
+		push (@asm, sprintf ('  %s %d, label %%%s%s',
+			$self->int_type, $i, $jump_labels[$i],
+			$i == (@jump_labels - 1) ? ' ]' : ''
+		));
+	}
+	push (@asm, @jump_asm);
+	push (@asm, $otherwise . ':');
+	push (@asm, 'unreachable');
+	push (@asm, $self->gen_j ($proc, $label, 
+		{ 'arg' => $label->{'next'}, 'wptr' => $inst->{'wptr'} }
+	));
+
+	return @asm;
+}
+
 sub gen_ajw ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	return sprintf ('%%%s = getelementptr %s %%%s, %s %d',
@@ -1830,9 +1858,12 @@ sub gen_lend ($$$$) {
 	my $loop_lab		= $self->tmp_label ();
 	my $next_lab		= $self->tmp_label ();
 	my @asm;
+	
+	# Generate pointer to index block
 	push (@asm, sprintf ('%%%s = inttoptr %s %%%s to %s',
 		$index_ptr, $self->int_type, $inst->{'in'}->[0], $self->int_type . '*'
 	));
+	# Decrement index
 	push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
 		$block_ptr,
 		$self->int_type . '*', $index_ptr,
@@ -1850,6 +1881,8 @@ sub gen_lend ($$$$) {
 		$self->int_type, $new_block_cnt,
 		$self->int_type . '*', $block_ptr
 	));
+
+	# Compare index to zero
 	push (@asm, sprintf ('%%%s = icmp ugt %s %%%s, %d',
 		$loop_cond,
 		$self->int_type, $new_block_cnt, 0
@@ -1857,23 +1890,56 @@ sub gen_lend ($$$$) {
 	push (@asm, sprintf ('br i1 %%%s, label %%%s, label %%%s',
 		$loop_cond, $loop_lab, $next_lab
 	));
+
+	# index > 0, Keep looping
 	push (@asm, $loop_lab . ':');
+	
+	# Update count
 	push (@asm, sprintf ('%%%s = load %s %%%s',
 		$index_cnt,
 		$self->int_type . '*', $index_ptr
 	));
-	push (@asm, sprintf ('%%%s = add %s %%%s, %d',
-		$new_index_cnt,
-		$self->int_type, $index_cnt, 1
-	));
+
+	if ($inst->{'name'} eq 'LEND') {
+		push (@asm, sprintf ('%%%s = add %s %%%s, %d',
+			$new_index_cnt,
+			$self->int_type, $index_cnt, 1
+		));
+	} elsif ($inst->{'name'} eq 'LENDB') {
+		push (@asm, sprintf ('%%%s = sub %s %%%s, %d',
+			$new_index_cnt,
+			$self->int_type, $index_cnt, 1
+		));
+	} else {
+		my $step_ptr = $self->tmp_reg ();
+		my $step_val = $self->tmp_reg ();
+		push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
+			$step_ptr,
+			$self->int_type . '*', $index_ptr,
+			$self->index_type, 2
+		));
+		push (@asm, sprintf ('%%%s = load %s %%%s',
+			$step_val,
+			$self->int_type . '*', $step_ptr
+		));
+		push (@asm, sprintf ('%%%s = add %s %%%s, %%%s',
+			$new_index_cnt,
+			$self->int_type, $index_cnt, $step_val
+		));
+	}
+
 	push (@asm, sprintf ('store %s %%%s, %s %%%s',
 		$self->int_type, $new_index_cnt,
 		$self->int_type . '*', $index_ptr
 	));
+
+	# Loop
 	push (@asm, $self->gen_j ($proc, $label, 
 		{ 'wptr' => $inst->{'wptr'}, 'arg' => $inst->{'arg'} }
 	));
 	push (@asm, 'ret void');
+	
+	# index = 0, Exit loop
 	push (@asm, $next_lab . ':');
 	push (@asm, $self->gen_j ($proc, $label, 
 		{ 'wptr' => $inst->{'wptr'}, 'arg' => $label->{'next'} }
@@ -2040,19 +2106,22 @@ sub generate_proc ($$) {
 			if (exists ($inst->{'arg'})) {
 				$line .= " ";
 				if (exists ($inst->{'label_arg'})) {
-					# FIXME: debug
 					if (ref ($inst->{'arg'}) =~ /ARRAY/) {
-						if ($label->{'next'}->{'inst'}->[0]->{'name'} eq 'STARTP') {
+						if ($name eq 'LDC' && @{$inst->{'arg'}} == 2) {
 							$inst->{'arg'} = $inst->{'arg'}->[0];
+							$line .= $inst->{'arg'}->{'name'};
+						} elsif ($name eq 'TABLE') {
+							my @names = map { $_->{'name'} } @{$inst->{'arg'}};
+							$line .= join (', ', @names);
 						} else {
-							print "X1 $name ", $inst->{'arg'}->[0]->{'name'},
-								" ", $inst->{'arg'}->[1]->{'name'}, "\n";
-							print $label->{'next'}->{'name'}, "\n";
+							my @names = map { $_->{'name'} } @{$inst->{'arg'}};
+							print STDERR "Unknown label array for $name ",
+								join (', ', @names), "\n";
 							exit 0;
 						}
+					} else {
+						$line .= $inst->{'arg'}->{'name'};
 					}
-					# FIXME: /debug
-					$line .= $inst->{'arg'}->{'name'};
 				} else {
 					$line .= $inst->{'arg'};
 				}
