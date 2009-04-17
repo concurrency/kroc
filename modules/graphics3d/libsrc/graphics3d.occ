@@ -27,8 +27,8 @@
 #INCLUDE "sdlraster.module"
 #INCLUDE "graphics3d.inc"
 
-VAL REAL32 CONST.ZBSCALE IS 100.0:
-VAL INT CONST.ZBADD IS 16384:
+VAL REAL32 CONST.ZBSCALE IS 256.0:
+VAL INT CONST.ZBADD IS 8192:
 
 --{{{  PROC g3d.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 --* Debugging routine.
@@ -846,11 +846,13 @@ PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY ou
 -- @private
 PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, SHARED CHAN BYTE debug!)
   INT vp.width, vp.height:
+  BOOL zcolour:
 
   PROC reset () --{{{
     SEQ
       vp.width := G3D.DEFAULT.WIDTH
       vp.height := G3D.MAX.SCAN.HEIGHT
+      zcolour := FALSE
   :
   --}}}
   PROC do.fix (G3D.POLY.SCAN scan, VAL INT x1, y1, z1, x2, y2, z2) --{{{
@@ -972,6 +974,8 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
         ctrl ? CASE
           reset
             reset ()
+          set.zcolour; zcolour
+            SKIP
         MOBILE []G3D.POLY polys:
         in ? polys
           MOBILE []G3D.POLY.SCAN scans:
@@ -989,7 +993,46 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                     tsc[z.start][j] := 0
                     tsc[z.end][j] := 0
                 tsc[norm] := ply[norm]
-                tsc[pixel] := ply[pixel]
+                IF
+                  zcolour
+                    INT avgz:
+                    SEQ
+                      avgz := 0
+                      SEQ j = 0 FOR ply[npoints]
+                        avgz := avgz + ply[z][j]
+                      avgz := (avgz / ply[npoints])
+
+                      -- avgz := (-(avgz - CONST.ZBADD)) + CONST.ZBADD
+
+                      #IF FALSE
+                      CLAIM debug!
+                        SEQ
+                          out.string ("avgz for zcolour = ", 0, debug!)
+                          out.int (avgz, 0, debug!)
+                          out.string ("*n", 0, debug!)
+                      #ENDIF
+
+                      INITIAL INT colour IS ply[pixel]:
+                      SEQ
+                        [4]BYTE col RETYPES colour:
+                        SEQ
+                          SEQ v = 0 FOR 4
+                            IF
+                              col[v] > 0
+                                INT t:
+                                SEQ
+                                  t := ((INT col[v]) * avgz) >> 13
+                                  IF
+                                    t > 255
+                                      col[v] := #FF
+                                    TRUE
+                                      col[v] := BYTE t
+                              TRUE
+                                SKIP
+                        tsc[pixel] := colour
+
+                  TRUE
+                    tsc[pixel] := ply[pixel]
                 tsc[scan.s] := G3D.MAX.SCAN.HEIGHT
                 tsc[scan.e] := 0
 
@@ -1281,6 +1324,7 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                 SEQ
                   IF
                     (mode /\ G3D.RENDER.MODE.NORM) <> 0
+                      --{{{  modify polygon scan colour according to normal
                       SEQ
                         #IF FALSE --{{{  debug
                         CLAIM debug!
@@ -1289,7 +1333,7 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                             out.int (scan[norm], 0, debug!)
                             out.string ("*n", 0, debug!)
                         #ENDIF --}}}
-                        -- modify polygon scan colour according to normal
+                        
                         INITIAL INT colour IS scan[pixel]:
                         SEQ
                           [4]BYTE col RETYPES colour:
@@ -1297,14 +1341,22 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                             SEQ v = 0 FOR 4
                               IF
                                 col[v] > 0
-                                  IF
-                                    scan[norm] >= 0
-                                      col[v] := BYTE ((((INT col[v]) * scan[norm]) >> 14) /\ #FF)
-                                    TRUE
-                                      col[v] := BYTE ((((INT col[v]) * (-scan[norm])) >> 14) /\ #FF)
+                                  INT t:
+                                  SEQ
+                                    IF
+                                      scan[norm] >= 0
+                                        t := ((INT col[v]) * scan[norm]) >> 13
+                                      TRUE
+                                        t := ((INT col[v]) * (-scan[norm])) >> 13
+                                    IF
+                                      t > 255
+                                        col[v] := #FF
+                                      TRUE
+                                        col[v] := BYTE t
                                 TRUE
                                   SKIP
                           scan[pixel] := colour
+                      --}}}
                     TRUE
                       SKIP
                   IF

@@ -163,6 +163,7 @@ PROTOCOL G3D.PGN.CONTROL
 PROTOCOL G3D.PSC.CONTROL
   CASE
     reset                     --* Resets scan-line generator to default state.
+    set.zcolour; BOOL         --* Whether the pixel colour used is adjusted for Z depth.
 :
 
 --* Polygon render (shader) control.
