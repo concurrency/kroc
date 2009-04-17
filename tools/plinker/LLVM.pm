@@ -123,6 +123,8 @@ $GRAPH = {
 			'generator' => \&gen_sum },
 	'MUL'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_mul },
+	'BOOLINVERT'	=> { 'in' => 1, 'out' => 1,
+			'generator' => \&gen_boolinvert },
 	'POSTNORMSN'	=> { 'in' => 3, 'out' => 3 },
 	'ROUNDSN'	=> { 'in' => 3, 'out' => 1 },
 	# Long Arithmetic
@@ -1639,6 +1641,11 @@ sub gen_shl ($$$$) {
 	return $self->_gen_bitop ($inst, 'shl', @{$inst->{'in'}});
 }
 
+sub gen_boolinvert ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return $self->_gen_bitop ($inst, 'xor', @{$inst->{'in'}}, 1);
+}
+
 sub gen_nop ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
 	return ();
@@ -2156,6 +2163,13 @@ sub entry_point ($$) {
 			$self->int_type, $self->int_type, $self->int_type
 		),
 
+		sprintf ('define private fastcc void @code_exit (%s %%sched, %s %%wptr) {',
+			$self->sched_type,
+			$self->workspace_type
+		),
+		'ret void',
+		'}',
+
 		sprintf ('define void @code_entry (%s %%sched, %s %%wptr) {',
 			$self->sched_type, $self->workspace_type
 		),
@@ -2170,7 +2184,17 @@ sub entry_point ($$) {
 			$self->int_type,
 			$self->func_type . '*'
 		),
-		sprintf ('call fastcc void %%iptr (%s %%sched, %s %%wptr)',
+		sprintf ('%%ret_ptr = bitcast %s @code_exit to i8*',
+			$self->func_type . '*',
+		),
+		sprintf ('%%ret_val = ptrtoint i8* %%ret_ptr to %s',
+			$self->int_type
+		),
+		sprintf ('store %s %%ret_val, %s %%wptr',
+			$self->int_type,
+			$self->workspace_type
+		),
+		sprintf ('tail call fastcc void %%iptr (%s %%sched, %s %%wptr)',
 			$self->sched_type,
 			$self->workspace_type
 		),
