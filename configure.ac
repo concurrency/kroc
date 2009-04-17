@@ -16,12 +16,16 @@ fi
 AC_CONFIG_SUBDIRS(tools/ilibr)
 AC_CONFIG_SUBDIRS(tools/kroc)
 AC_CONFIG_SUBDIRS(tools/mkoccdeps)
-AC_CONFIG_SUBDIRS(tools/occ21)
+if test $OCCBUILD_TOOLCHAIN != tock; then
+  AC_CONFIG_SUBDIRS(tools/occ21)
+fi
 AC_CONFIG_SUBDIRS(tools/occamdoc)
 
-if test $OCCBUILD_TOOLCHAIN = kroc; then
+if test $OCCBUILD_TOOLCHAIN = kroc -o $OCCBUILD_TOOLCHAIN = tock; then
   AC_CONFIG_SUBDIRS(runtime/ccsp)
+fi
 
+if test $OCCBUILD_TOOLCHAIN = kroc; then
   AC_CONFIG_SUBDIRS(tools/tranx86)
 
   AC_CONFIG_SUBDIRS(runtime/libkrocif)

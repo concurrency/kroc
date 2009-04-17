@@ -284,7 +284,7 @@ PROC occade.image.cache (CHAN OCCADE.TO.IMAGE.CACHE in?, CHAN SDL.Surface out!)
                       occ.SDL.blit.raster (r, 0, 0, SIZE r[0], SIZE r, surface, 0, 0)
                     --}}}
                 surfaces[num.loaded] := surface
-                names[num.loaded] := name
+                names[num.loaded] := CLONE name
                 num.loaded := num.loaded + 1
               --}}}
             TRUE
@@ -715,10 +715,18 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
                       from.cache ? font.surface
 
                       get.SDL.Surface.w (font.w, font.surface)
-                      occade.check.sdl ((font.w \ 16) = 0, "Bad font image size")
+                      MOBILE []BYTE err:
+                      SEQ
+                        err := "Bad font image width: "
+                        occade.append.int(err, font.w)
+                        occade.check.sdl ((font.w \ 16) = 0, err)
                       font.w := font.w / 16
                       get.SDL.Surface.h (font.h, font.surface)
-                      occade.check.sdl ((font.h \ 16) = 0, "Bad font image size")
+                      MOBILE []BYTE err:
+                      SEQ
+                        err := "Bad font image height: "
+                        occade.append.int(err, font.h)
+                        occade.check.sdl ((font.h \ 16) = 0, err)
                       font.h := font.h / 16
                       --}}}
                       --{{{ render text to a new surface

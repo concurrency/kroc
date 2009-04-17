@@ -29,6 +29,11 @@
 
 #INCLUDE "realvals.inc"
 
+#IF DEFINED(COMPILER.TOCK)
+#USE "roundsn"
+#USE "unpacksn"
+#ENDIF
+
 --{{{  
 REAL32 FUNCTION SQRT (VAL REAL32 X)
 
