@@ -138,6 +138,7 @@
 	return 0;
 #define K_ZERO_OUT_JRET() \
 	do { \
+		EXIT_TRACE (); \
 		TRACE_RETURN (Wptr[Iptr]); \
 		return Wptr;		\
 	} while (0)

@@ -122,24 +122,28 @@ sched_t			*_ccsp_scheduler 		CACHELINE_ALIGN = NULL;
 ccsp_global_t		_ccsp				CACHELINE_ALIGN = {};
 /*}}}*/
 
+#define ENABLE_KTRACES
+
 /*{{{  ENTRY_TRACE macros*/
 #ifdef ENABLE_KTRACES
-
-	static word the_stackptr;
-
-	#define ENTRY_TRACE(X, FMT, args...) \
-		LOAD_ESP (the_stackptr); \
-		MESSAGE ("<enter>   "#X" [0x%x,0x%8.8x,%p,%p,%p,%p] (esp=%8.8x) [%d:%d] ", (unsigned int)PPriority, (unsigned int)PState, Wptr, Fptr, Bptr, Tptr, the_stackptr, \
-				(mdparam1 == 0xffffffff) ? 0 : ((mdparam1 >> 16) & 0xffff), (mdparam1 == 0xffffffff) ? 0 : (mdparam1 & 0xffff)); \
-		if ((MaskedPPriority < 0) || (MaskedPPriority >= MAX_PRIORITY_LEVELS)) { MESSAGE ("b0rked!\n"); ccsp_kernel_exit(0,(int)Wptr); } \
-		MESSAGE ("(" FMT ")\n", ##args)
 	#define ENTRY_TRACE0(X) \
-		LOAD_ESP (the_stackptr); \
-		MESSAGE ("<enter>   "#X" [0x%x,0x%8.8x,%p,%p,%p,%p] (esp=%8.8x) [%d:%d]\n", (unsigned int)PPriority, (unsigned int)PState, Wptr, Fptr, Bptr, Tptr, the_stackptr, \
-				(mdparam1 == 0xffffffff) ? 0 : ((mdparam1 >> 16) & 0xffff), (mdparam1 == 0xffffffff) ? 0 : (mdparam1 & 0xffff))
+		do {		\
+			MESSAGE ("<enter>   "#X" [sched=%p, Wptr=%p]\n", sched, Wptr); \
+		} while (0)
+	#define ENTRY_TRACE(X, FMT, args...) 	\
+		do {				\
+			ENTRY_TRACE0(X); 	\
+			MESSAGE ("          args = (" FMT ")\n", ##args); \
+		} while (0)
+	#define EXIT_TRACE() 	\
+		do {		\
+			MESSAGE ("<exit>    [sched=%p, Wptr=%p, Iptr=%p]\n", \
+				sched, Wptr, (void *)Wptr[Iptr]); \
+		} while (0)
 #else	/* !ENABLE_KTRACES */
 	#define ENTRY_TRACE(X, FMT, args...)
 	#define ENTRY_TRACE0(X)
+	#define EXIT_TRACE()
 #endif	/* !ENABLE_KTRACES */
 
 
@@ -1981,6 +1985,8 @@ static word * REGPARM kernel_scheduler (sched_t *sched)
 			Wptr = dequeue_from_curb (sched);
 		}
 	} while (Wptr == NotProcess_p);
+
+	EXIT_TRACE ();
 
 	return Wptr;
 }
@@ -3905,7 +3911,7 @@ K_CALL_DEFINE_X_3_1 (mt_resize)
 	word arg, *ptr, resize_type;
 	
 	K_CALL_PARAMS_3 (resize_type, ptr, arg);
-	ENTRY_TRACE (X_mt_resize, "%08x %p %08x", resize, ptr, arg);
+	ENTRY_TRACE (X_mt_resize, "%08x %p %08x", resize_type, ptr, arg);
 
 	if ((resize_type == MT_RESIZE_DATA) && (ptr != NULL)) {
 		word new_size	= arg;
@@ -4084,7 +4090,7 @@ K_CALL_DEFINE_Y_2_0 (startp)
 	word start_offset;
 
 	K_CALL_PARAMS_2 (workspace, start_offset);
-	ENTRY_TRACE (Y_startp, "%p, %d", workspace, start_offset);
+	ENTRY_TRACE (Y_startp, "%p %p", workspace, (void *) start_offset);
 
 	SAFETY {
 		if (sched->curb.Fptr != NotProcess_p) {
@@ -4674,6 +4680,7 @@ K_CALL_DEFINE_Y_2_0 (symbol)		\
 	byte *pointer;			\
 					\
 	K_CALL_PARAMS_2 (channel_address, pointer); \
+	ENTRY_TRACE (Y_##symbol, "%p %p", channel_address, pointer); \
 	Wptr = kernel_chan_io ((flags), Wptr, sched, channel_address, pointer, count); \
 	K_ZERO_OUT_JRET ();		\
 }
@@ -4686,6 +4693,7 @@ K_CALL_DEFINE_Y_3_0 (symbol)		\
 	byte *pointer;			\
 					\
 	K_CALL_PARAMS_3 (count, channel_address, pointer); \
+	ENTRY_TRACE (Y_##symbol, "%d %p %p", count, channel_address, pointer); \
 	if ((shift)) {			\
 		count <<= (shift);	\
 	}				\
@@ -4771,6 +4779,7 @@ K_CALL_DEFINE_Y_2_0 (outbyte)
 	word value;
 
 	K_CALL_PARAMS_2 (value, channel_address);
+	ENTRY_TRACE (Y_outbyte, "%02x %p", value, channel_address);
 
 	pointer		= (byte *) Wptr;
 	*pointer	= (byte) value;
@@ -4798,6 +4807,7 @@ K_CALL_DEFINE_Y_2_0 (outword)
 	word value;
 	
 	K_CALL_PARAMS_2 (value, channel_address);
+	ENTRY_TRACE (Y_outword, "%08x %p", value, channel_address);
 	
 	Wptr[0]	= value;
 	pointer	= (byte *) Wptr;
@@ -5369,7 +5379,7 @@ K_CALL_DEFINE_X_2_1 (cenbc)
 	word **channel_address, id;
 
 	K_CALL_PARAMS_2 (id, channel_address);
-	ENTRY_TRACE (X_cenbc, "%d %p (ready = %d), %p", id, channel_address, (*channel_address != NotProcess_p) && (*channel_address != Wptr));
+	ENTRY_TRACE (X_cenbc, "%d %p (ready = %d)", id, channel_address, (*channel_address != NotProcess_p) && (*channel_address != Wptr));
 
 	K_ONE_OUT (kernel_enbc (Wptr, sched, id, channel_address, false, true));
 }
@@ -5432,7 +5442,7 @@ K_CALL_DEFINE_Y_1_0 (enbs2)
 	unsigned int process_address;
 
 	K_CALL_PARAMS_1 (process_address);
-	ENTRY_TRACE (X_enbs2, "%p", process_address);
+	ENTRY_TRACE (X_enbs2, "%p", (void *) process_address);
 
 	kernel_enbs (Wptr, 0, true, false);
 
@@ -5992,7 +6002,7 @@ K_CALL_DEFINE_Y_2_0 (mt_lock)
 	word *ptr, type;
 	
 	K_CALL_PARAMS_2 (type, ptr);
-	ENTRY_TRACE (Y_mt_lock, "%p, %08x", type, ptr);
+	ENTRY_TRACE (Y_mt_lock, "%08x %p", type, ptr);
 
 	cb = (mt_cb_shared_internal_t *) (ptr - MT_CB_SHARED_PTR_OFFSET);
 
@@ -6021,7 +6031,7 @@ K_CALL_DEFINE_X_2_0 (mt_unlock)
 	word *ptr, type;
 	
 	K_CALL_PARAMS_2 (type, ptr);
-	ENTRY_TRACE (X_mt_unlock, "%p", type, ptr);
+	ENTRY_TRACE (X_mt_unlock, "%08x %p", type, ptr);
 
 	cb = (mt_cb_shared_internal_t *) (ptr - MT_CB_SHARED_PTR_OFFSET);
 	
@@ -6584,6 +6594,8 @@ void ccsp_kernel_entry (word *Wptr, word *fptr)
 		Wptr = kernel_scheduler (sched);
 	}
 	
+	fprintf (stderr, "calling code_entry %p (%p, %p)\n", 
+		_ccsp.code_entry, sched, Wptr);
 	_ccsp.code_entry (sched, Wptr); 
 }
 /*}}}*/
