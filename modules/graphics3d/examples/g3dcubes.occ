@@ -42,21 +42,22 @@ PROC cube.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, VAL REAL3
     render.polyscans (ps1?, rlink.in?, rdr.ctl?)
 
     SEQ
-      gen.ctl ! set.scale; [1.0, 1.0, 1.0]
+      gen.ctl ! set.scale; [0.5, 0.5, 0.5]
       CASE rmode
         G3D.ROTATE.MODE.X
-          gen.ctl ! set.trans; [0.0, radius, 0.0]
+          gen.ctl ! add.trans; [0.0, radius, 0.0]
         G3D.ROTATE.MODE.Y
-          gen.ctl ! set.trans; [0.0, 0.0, radius]
+          gen.ctl ! add.trans; [0.0, 0.0, radius]
         G3D.ROTATE.MODE.Z
-          gen.ctl ! set.trans; [radius, 0.0, 0.0]
+          gen.ctl ! add.trans; [radius, 0.0, 0.0]
         ELSE
           SKIP
       prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
-      rdr.ctl ! set.mode; G3D.RENDER.MODE.NORM
+      rdr.ctl ! set.mode; G3D.RENDER.MODE.NONE
       pgn.ctl ! set.trimap; FALSE
       pgn.ctl ! set.backfaces; FALSE
       pgn.ctl ! set.face.colours; [#00000080,#00005050,#00008000,#00505000,#00800000,#00500050]
+      psc.ctl ! set.zcolour; TRUE
       rot.ctl ! set.mode; rmode
       rot.ctl ! set.angle; iangle
       rot.ctl ! add.increment; (PI / 64.0)

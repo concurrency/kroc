@@ -21,7 +21,7 @@
 #INCLUDE "sdlraster.module"
 #INCLUDE "graphics3d.module"
 
-VAL INT N.BUTTERFLIES IS 200:
+VAL INT N.BUTTERFLIES IS 20:
 
 --{{{  PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
 --* Implements a butterfly that crosses the screen, starts in a random location.
@@ -42,8 +42,11 @@ PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
   CHAN INT trigger:
   PAR
     INT trig:
+    INT pri:
     SEQ
       trigger ? trig
+      GETPRI (pri)
+      SETPRI (pri + 1)
       fbypoints.generator (gp1!, gen.ctl?)
 
     points3d.rotate (gp1?, gp2!, rot.ctl?)
@@ -55,15 +58,21 @@ PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
 
     INT seed:
     TIMER tim:
+    INT pri:
     SEQ
+      GETPRI (pri)
+      SETPRI (pri + 1)
+
       rot.ctl ! set.mode; G3D.ROTATE.MODE.X \/ G3D.ROTATE.MODE.Y
       rot.ctl ! set.angle; PI / 2.0
 
       prj.ctl ! set.3dshift; [-12.0, 0.0, 0.0]
+      psc.ctl ! set.zcolour; TRUE
       trigger ! 0
 
       tim ? seed
       seed := (seed >> 2) + 1
+
 
       WHILE TRUE
         INT yoff, zoff, speed:
@@ -100,10 +109,6 @@ PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
               prj.ctl ! set.3dshift; [xpos, ypos, zpos]
 
               xpos := xpos + ((REAL32 TRUNC speed) / 10.0)
-
-              RESCHEDULE ()
-              RESCHEDULE ()
-              RESCHEDULE ()
 
 :
 --}}}
