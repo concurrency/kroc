@@ -53,10 +53,12 @@ AC_DEFUN([OCCAM_TOOLCHAIN],
 OCCBUILD_TOOLCHAIN=kroc
 AC_ARG_WITH([toolchain],
             AS_HELP_STRING([--with-toolchain=ENV],
-                           [select occam toolchain to use (kroc, tvm; default kroc)]),
+                           [select occam toolchain to use (kroc, tvm, tock; default kroc)]),
             [OCCBUILD_TOOLCHAIN="$withval"])
 AM_CONDITIONAL(OCCBUILD_KROC, test "x$OCCBUILD_TOOLCHAIN" = "xkroc")
 AM_CONDITIONAL(OCCBUILD_TVM, test "x$OCCBUILD_TOOLCHAIN" = "xtvm")
+AM_CONDITIONAL(OCCBUILD_TOCK, test "x$OCCBUILD_TOOLCHAIN" = "xtock")
+AC_CHECK_PROG(TOCK, tock, tock, no)
 ])dnl
 dnl
 dnl Find occbuild.
@@ -83,6 +85,9 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
     OCCBUILD_CFLAGS="-DOCCBUILD_KROC $KROC_CCSP_CFLAGS $KROC_CCSP_CINCPATH"
   elif test "x$OCCBUILD_TOOLCHAIN" = "xtvm"; then
     OCCBUILD_CFLAGS="-DOCCBUILD_TVM"
+  elif test "x$OCCBUILD_TOOLCHAIN" = "xtock"; then
+    KROC_CCSP_FLAGS
+    OCCBUILD_CFLAGS="-DOCCBUILD_TOCK $KROC_CCSP_CFLAGS $KROC_CCSP_CINCPATH"
   else
     AC_MSG_ERROR([don't know how to find OCCBUILD_CFLAGS in-tree for this toolchain])
   fi

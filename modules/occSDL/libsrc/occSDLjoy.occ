@@ -463,7 +463,7 @@ PROC occ.SDL.joy.calibrate (CT.SDLJSCALIBRATE? svr, CT.SDLJSEVENT! ev.in, CT.SDL
     MOBILE []INT16 ax.vals:
     MOBILE []BYTE bt.vals:
     SEQ
-      occ.SDL.joy.doread (ev.in!, ax.vals, bt.vals)
+      occ.SDL.joy.doread (ev.in, ax.vals, bt.vals)
       nbtns := SIZE bt.vals
       naxes := SIZE ax.vals
 
@@ -660,10 +660,11 @@ PROC occ.SDL.joy.server (CT.SDLJOY? svr)
               FORK occ.SDL.joy.handler (svr, i)
 
               -- get settings
-              CLAIM clis[i]
+              SHARED CT.SDLJS! clis.i IS clis[i]:
+              CLAIM clis.i
                 SEQ
-                  clis[i][in] ! query
-                  clis[i][out] ? CASE query; js.info[i]
+                  clis.i[in] ! query
+                  clis.i[out] ? CASE query; js.info[i]
 
           INITIAL BOOL running IS TRUE:
           WHILE running

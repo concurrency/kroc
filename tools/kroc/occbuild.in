@@ -31,6 +31,7 @@ in_tree = None
 programs = {}
 search_path = []
 occ21_opts = []
+tock_opts = []
 linker_opts = []
 needs = []
 includes_before = []
@@ -634,6 +635,172 @@ class TVMToolchain(Toolchain):
 		for key in patterns.keys():
 			patterns[key] = patterns[key].replace('occam_', 'occam_tvm_')
 
+class TockToolchain:
+	def tock_cmd(self, args):
+		cmd = programs["tock"] + ["-k", "--run-indent", "-v"] + []
+		if search_path != []:
+			cmd += ["-I" + ":".join(search_path)]
+			for dir in search_path:
+				cmd += ["--compiler-flags", "-I" + dir]
+				cmd += ["--linker-flags", "-L" + dir]
+		if static_link:
+			cmd += ["--compiler-flags", "-static"]
+		cmd += tock_opts
+		cmd += args
+		return cmd
+
+	def object(self, source):
+		need_mods = needs[:]
+		impl = []
+		if std_libs:
+			need_mods.append("forall")
+			impl.append("-u")
+			impl.append("forall.module")
+		run(self.tock_cmd(["-c"]) + impl + [source]) #["-u" + m for m in need_mods] +
+		(base, ext) = split_ext(source)
+#TODO we should only make the stub if compilation succeeded and put out a .tock.o file
+		make_stub(base + ".tce")
+
+	def library(self, occam_objs, native_objs, base):
+		need_mods = needs[:]
+		if std_libs:
+			need_mods.append("forall")
+
+		# Look for all the other modules we need.
+		full_path = search_path + ["."] + capture(programs["tock"] + ["--module-path"]).strip().split(":")
+		lib_opts = []
+		resolved_mods = []
+		for need in need_mods:
+			fn = find_in_path("%s.module" % need, full_path)
+			if fn is None:
+				die("Cannot find module ", need, " in search path ", ":".join(full_path))
+			resolved_mods += [fn]
+
+		def custom(f):
+#			for need in resolved_mods:
+#				f.write('#INCLUDE "%s"\n' % need)
+			f.write("-- Objs: " + " ".join(occam_objs) + "\n")
+			if occam_objs != []:
+				f.write("#PRAGMA TOCKSIZES \".module\"\n")
+				f.write("#PRAGMA TOCKINCLUDE \".module\"\n")
+			if native_objs != [] or occam_objs != []:
+				f.write("#PRAGMA TOCKNATIVELINK \"" + (patterns["link"] % base) + "\"\n")
+			for obj in occam_objs:
+				g = open (split_ext(obj)[0] + ".tock.inc","r")
+				contents = g.read()
+				f.write(contents)
+				g.close()
+		make_module(base, custom)
+
+		lib_opts.append(patterns["rtlink"] % "ccsp")
+
+		objs = [split_ext(o)[0] + ".tock.o" for o in occam_objs] + native_objs
+		if objs != []:
+			make_static(patterns["a"] % base, objs)
+
+			if build_shared:
+				make_shared(patterns["so"] % base, objs, lib_opts)
+
+#		if occam_objs == []:
+		make_stub(base + ".lib")
+		f = open (base + ".module.tock.h", "w")
+		for obj in occam_objs:
+			g = open (split_ext(obj)[0] + ".tock.h","r")
+			contents = g.read()
+			f.write(contents)
+			g.close()
+		f.close()
+
+		f = open (base + ".module.tock.sizes", "w")
+		all_sizes = [split_ext(obj)[0] + ".tock.sizes" for obj in occam_objs]
+		for sizes in all_sizes:
+			g = open (sizes,"r")
+			for line in g:
+				match = re.match("DependsOnSizes\\s+\"(.*)\"", line);
+				if match is None:
+					f.write(line)
+				elif not (match.group(1) in all_sizes):
+					f.write(line)
+			g.close()
+		f.close()
+
+#		else:
+#			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
+
+	def program(self, occam_objs, native_objs, base, output = None):
+		if output is None:
+			output = base
+		need_mods = needs[:]
+		impl = []
+		if std_libs:
+			need_mods.append("forall")
+			impl.append("-u")
+			impl.append("forall.module")
+
+		run(self.tock_cmd(["--linker-flags", " ".join(native_objs)] + impl + ["-o", output]) + [base + ".occ"])
+#" ".join([split_ext(o)[0] + ".tock.o" for o in occam_objs] +
+
+	def run(self, program, args):
+		if not "/" in program:
+			program = "./" + program
+		set_ld_path()
+		run([program] + args)
+
+	def install(self, file):
+		bindir = get_install_dir("@KROC_ARCHBINDIR@", "/bin")
+		libdir = capture(programs["tock"] + ["--lib-path"]).strip()
+		moduledir = capture(programs["tock"] + ["--module-path"]).strip()
+		includedir = capture(programs["tock"] + ["--include-path"]).strip()
+
+		(base, ext) = split_ext(file)
+		if ext == "lib":
+			if not is_stub(file):
+				install(file, libdir, False)
+			install(patterns["a"] % base, libdir, True)
+			if build_shared:
+				install(patterns["so"] % base, libdir, True)
+			install(base + ".module", moduledir, False)
+		elif ext == "inc":
+			install(file, includedir, False)
+		elif ext == "h":
+			install(file, includedir, False)
+		elif ext == "":
+			install(file, bindir, True)
+
+	def install_examples(self, package, file):
+		examplesdir = examplesdir
+		examplesdir = "%s/%s" % (get_install_dir("@KROC_EXAMPLESDIR@", "/lib/tock/examples"), package)
+
+		(base, ext) = split_ext(file)
+		if ext == "":
+			install(file, examplesdir, True)
+
+	def clean(self, file):
+		delete(file)
+		(base, ext) = split_ext(file)
+		if ext == "tce":
+			delete(base + ".o")
+			delete(base + ".etc")
+			delete(base + ".s")
+		elif ext == "lib":
+			delete(base + ".lbb")
+			delete(patterns["a"] % base)
+			delete(patterns["so"] % base)
+			delete(base + ".module")
+		elif ext == "":
+			self.clean(base + ".tce")
+#TODO add clean rules for the Tock stuff!
+	def cflags(self):
+		cflags = "-DOCCBUILD_KROC"
+		print tidy_spaces(cflags)
+	def isearch(self):
+		return capture(programs["tock"] + ["--module-path"]).strip().split(":") + capture(programs["tock"] + ["--include-path"]).strip().split(":") + capture(programs["tock"] + ["--lib-path"]).strip().split(":")
+
+	def update_patterns(self,patterns):
+		for key in patterns.keys():
+			patterns[key] = patterns[key].replace('occam_', 'occam_tock_')
+
+
 def usage(f):
 	print >>f, """occbuild, version """ + VERSION + """
 Compile occam-pi libraries and programs
@@ -704,7 +871,7 @@ Report bugs to <""" + CONTACT + """>."""
 
 def main(args):
 	# Get default program locations and arguments from the environment.
-	for prog in ("cc", "ar", "ranlib", "kroc", "ilibr", "install", "occ21", "plinker.pl", "tce-dump.pl", "tvm"):
+	for prog in ("cc", "ar", "ranlib", "kroc", "ilibr", "install", "occ21", "plinker.pl", "tce-dump.pl", "tock", "tvm"):
 		programs[prog] = split_options(os.getenv(prog.upper(), prog))
 
 	long_opts = [
@@ -726,6 +893,7 @@ def main(args):
 
 	toolchains = {
 		"kroc": KRoCToolchain,
+		"tock": TockToolchain,
 		"tvm": TVMToolchain,
 		}
 
@@ -734,7 +902,7 @@ def main(args):
 	output = None
 	toolchain = None
 	global std_libs, verbose, in_tree, search_path
-	global occ21_opts, linker_opts, needs
+	global occ21_opts, tock_opts, linker_opts, needs
 	global includes_before, includes_after, static_link
 	global prefix, destdir, examples, target_os
 	for (o, a) in opts:
@@ -764,6 +932,7 @@ def main(args):
 			occ21_opts += split_options(a)
 		elif o == "-D":
 			occ21_opts += ["-DEF", a]
+			tock_opts += ["-D", a]
 		elif o in ("-l", "-L", "-r", "-R", "-W", "-m", "-p"):
 			linker_opts.append("%s%s" % (o, a))
 		elif o == "--need":

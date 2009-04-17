@@ -514,7 +514,7 @@ void _fl_select (int *ws) { r_select ((int *)(ws[0]), (int)(ws[1]), (int *)(ws[2
 /*}}}*/
 
 /*{{{  command-line access stuff */
-#if (defined OCCBUILD_KROC)
+#if (defined OCCBUILD_KROC) || (defined OCCBUILD_TOCK)
 extern int kroc_argc;
 extern char **kroc_argv;
 #elif (defined OCCBUILD_TVM)
