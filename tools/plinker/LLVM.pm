@@ -949,7 +949,7 @@ sub gen_j ($$$$) {
 		}
 	}
 	return (
-		sprintf ('tail call void %s (%s) noreturn',
+		sprintf ('tail call fastcc void %s (%s) noreturn',
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
 			join (', ', @params)
 		)
@@ -973,7 +973,7 @@ sub gen_cj ($$$$) {
 			$jump_label, $cont_label
 		),
 		$jump_label . ':',
-		sprintf ('tail call void %s (%s %%sched, %s %%%s) noreturn',
+		sprintf ('tail call fastcc void %s (%s %%sched, %s %%%s) noreturn',
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
 			$self->sched_type,
 			$self->workspace_type,
@@ -1130,7 +1130,7 @@ sub gen_call ($$$$) {
 			$self->int_type, $in->[0],
 			$self->int_type, $self->workspace_type
 		));
-		push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn',
+		push (@asm, sprintf ('tail call fastcc void %%%s (%s %%sched, %s %%%s) noreturn',
 			$jump_ptr,
 			$self->sched_type,
 			$self->workspace_type,
@@ -1138,7 +1138,7 @@ sub gen_call ($$$$) {
 		));
 	} elsif ($name eq 'CALL') {
 		if (!$ffi) {
-			push (@asm, sprintf ('tail call void @%s%s (%s %%sched, %s %%%s) noreturn',
+			push (@asm, sprintf ('tail call fastcc void @%s%s (%s %%sched, %s %%%s) noreturn',
 				$self->proc_prefix, $symbol,
 				$self->sched_type,
 				$self->workspace_type,
@@ -1177,14 +1177,14 @@ sub gen_call ($$$$) {
 			));
 			push (@asm, sprintf ('%%%s = load %s %%%s',
 				$jump_val, 
-				$self->workspace_type, $inst->{'wptr'}
+				$self->workspace_type, $jump_ptr_ptr
 			));
 			push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s, %s)*',
 				$jump_ptr, 
 				$self->int_type, $jump_val, 
 				$self->sched_type, $self->workspace_type
 			));
-			push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn',
+			push (@asm, sprintf ('tail call fastcc void %%%s (%s %%sched, %s %%%s) noreturn',
 				$jump_ptr,
 				$self->sched_type,
 				$self->workspace_type, $new_wptr
@@ -1664,7 +1664,7 @@ sub gen_ret ($$$$) {
 		$self->workspace_type, $inst->{'wptr'},
 		$self->index_type, 4
 	));
-	push (@asm, sprintf ('tail call void %%%s (%s %%sched, %s %%%s) noreturn',
+	push (@asm, sprintf ('tail call fastcc void %%%s (%s %%sched, %s %%%s) noreturn',
 		$jump_ptr,
 		$self->sched_type,
 		$self->workspace_type, $new_wptr
@@ -1881,12 +1881,12 @@ sub generate_proc ($$) {
 	$proc->{'call_prefix'} = $call_pfix;
 
 	push (@asm, format_lines (
-		sprintf ('define void %s (%s %%sched, %s %%wptr) {', 
+		sprintf ('define fastcc void %s (%s %%sched, %s %%wptr) {', 
 			$symbol,
 			$self->sched_type, $self->workspace_type
 		),
 		'entry:',
-		sprintf ('tail call void %s (%s %%sched, %s %%wptr) noreturn',
+		sprintf ('tail call fastcc void %s (%s %%sched, %s %%wptr) noreturn',
 			$call_pfix . $proc->{'labels'}->[0]->{'name'},
 			$self->sched_type, $self->workspace_type
 		),
@@ -2165,7 +2165,7 @@ sub entry_point ($$) {
 			$self->int_type,
 			$self->func_type . '*'
 		),
-		sprintf ('tail call void %%iptr (%s %%sched, %s %%wptr) noreturn',
+		sprintf ('call fastcc void %%iptr (%s %%sched, %s %%wptr)',
 			$self->sched_type,
 			$self->workspace_type
 		),
