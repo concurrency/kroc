@@ -112,11 +112,7 @@ DATA TYPE ZBUFFER IS MOBILE [][]INT:
 --}}}
 --{{{  protocols and channel-types for controlling components
 
---* Generator trigger channel-type.
-CHAN TYPE G3D.TRIG
-  MOBILE RECORD
-    CHAN INT trig?:
-:
+CHAN TYPE G3D.GEN.LINK:
 
 --* Polygon points generator control.
 PROTOCOL G3D.GEN.CONTROL
@@ -126,7 +122,7 @@ PROTOCOL G3D.GEN.CONTROL
     set.scale; [3]REAL32            --* Absolutely set the scale.
     add.trans; [3]REAL32            --* Add to the current translation.
     set.trans; [3]REAL32            --* Absolutely set the translation.
-    set.trigger; BOOL; G3D.TRIG?    --* Set trigger control.
+    relink; G3D.GEN.LINK?           --* Reconnect I/O channels.
 :
 
 --* Points rotation control.
@@ -187,6 +183,15 @@ PROTOCOL G3D.TMR.CONTROL
     faster                    --* Go faster.
     slower                    --* Go slower.
     set.fps; INT              --* Set frames-per-second absolutely.
+:
+
+--}}}
+--{{{  combined channel-types for component control
+CHAN TYPE G3D.GEN.LINK
+  MOBILE RECORD
+    CHAN INT trigger?:
+    CHAN MOBILE []G3D.POINT3 out!:
+    CHAN G3D.GEN.CONTROL ctrl?:
 :
 
 --}}}
