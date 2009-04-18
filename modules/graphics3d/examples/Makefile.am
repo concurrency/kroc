@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 ACLOCAL_AMFLAGS = -I ../../../m4
 
-OCCBUILD = @OCCBUILD@
+OCCBUILD = @OCCBUILD@ --kroc-opts -d
 
 EXTRA_DIST = \
 	g3dcubes.occ \
