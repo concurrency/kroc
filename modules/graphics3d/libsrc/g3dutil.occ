@@ -138,17 +138,6 @@ PROC g3d.gen.control.delta (CHAN G3D.GEN.CONTROL in?, out.0!, out.1!)
         SEQ
           out.0 ! set.trans; v
           out.1 ! set.trans; v
-      BOOL set:
-      G3D.TRIG? ts:
-      set.trigger; set; ts
-        SEQ
-          -- only forwards channel-end to second process
-          G3D.TRIG? t.svr:
-          G3D.TRIG! t.cli:
-          SEQ
-            t.svr, t.cli := MOBILE G3D.TRIG
-            out.0 ! set.trigger; FALSE; t.svr
-          out.1 ! set.trigger; set; ts
 :
 --}}}
 --{{{  PROC g3d.rot.control.delta (CHAN G3D.ROT.CONTROL in?, out.0!, out.1!)

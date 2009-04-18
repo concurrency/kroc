@@ -99,32 +99,34 @@ PROC planar.path (CHAN G3D.PRJ.CONTROL out!, VAL REAL32 xrad, zrad, pangle, iang
 -- @param height Height of raster.
 --
 PROC glenz.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
-  CHAN MOBILE []G3D.POINT3 gp1, gp2:
-  CHAN MOBILE []G3D.POINT2.3 gc1:
-  CHAN MOBILE []G3D.POLY pc1:
-  CHAN MOBILE []G3D.POLY.SCAN ps1:
-  CHAN G3D.GEN.CONTROL gen.ctl:
-  CHAN G3D.ROT.CONTROL rot.ctl:
-  CHAN G3D.PRJ.CONTROL prj.ctl:
-  CHAN G3D.PGN.CONTROL pgn.ctl:
-  CHAN G3D.PSC.CONTROL psc.ctl:
-  CHAN G3D.RDR.CONTROL rdr.ctl:
-  PAR
-    cubepoints.generator (gp1!, gen.ctl?) 
-    points3d.rotate (gp1?, gp2!, rot.ctl?)
-    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?)
-    cubify.points (gc1?, pc1!, pgn.ctl?)
-    poly.scanlines (pc1?, ps1!, psc.ctl?)
-    render.polyscans (ps1?, rlink.in?, rdr.ctl?)
+  SEQ
+    CHAN INT trigger:
+    CHAN MOBILE []G3D.POINT3 gp1, gp2:
+    CHAN MOBILE []G3D.POINT2.3 gc1:
+    CHAN MOBILE []G3D.POLY pc1:
+    CHAN MOBILE []G3D.POLY.SCAN ps1:
+    CHAN G3D.GEN.CONTROL gen.ctl:
+    CHAN G3D.ROT.CONTROL rot.ctl:
+    CHAN G3D.PRJ.CONTROL prj.ctl:
+    CHAN G3D.PGN.CONTROL pgn.ctl:
+    CHAN G3D.PSC.CONTROL psc.ctl:
+    CHAN G3D.RDR.CONTROL rdr.ctl:
+    PAR
+      cubepoints.generator (trigger?, gp1!, gen.ctl?)
+      points3d.rotate (gp1?, gp2!, rot.ctl?)
+      points.3d.to.2d3 (gp2?, gc1!, prj.ctl?, width, height)
+      cubify.points (gc1?, pc1!, pgn.ctl?)
+      poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
+      render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, width, height)
 
-    SEQ
-      prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
-      rdr.ctl ! set.mode; G3D.RENDER.MODE.GLENZ
-      pgn.ctl ! set.trimap; FALSE
-      pgn.ctl ! set.backfaces; TRUE
-      rot.ctl ! add.increment; 0.03
-      -- rotate.orchestra1 (rot.ctl!)
-      planar.path (prj.ctl, 3.0, 4.0, 0.0, 0.0, 0, [0.0, 0.0, 0.0])
+      SEQ
+        prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
+        rdr.ctl ! set.mode; G3D.RENDER.MODE.GLENZ
+        pgn.ctl ! set.trimap; FALSE
+        pgn.ctl ! set.backfaces; TRUE
+        rot.ctl ! add.increment; 0.03
+        -- rotate.orchestra1 (rot.ctl!)
+        planar.path (prj.ctl, 3.0, 4.0, 0.0, 0.0, 0, [0.0, 0.0, 0.0])
 :
 --}}}
 --{{{  PROC glenz.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)
@@ -151,32 +153,34 @@ PROC glenz.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.lin
 -- @param height Height of raster.
 --
 PROC normal.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
-  CHAN MOBILE []G3D.POINT3 gp1, gp2:
-  CHAN MOBILE []G3D.POINT2.3 gc1:
-  CHAN MOBILE []G3D.POLY pc1:
-  CHAN MOBILE []G3D.POLY.SCAN ps1:
-  CHAN G3D.GEN.CONTROL gen.ctl:
-  CHAN G3D.ROT.CONTROL rot.ctl:
-  CHAN G3D.PRJ.CONTROL prj.ctl:
-  CHAN G3D.PGN.CONTROL pgn.ctl:
-  CHAN G3D.PSC.CONTROL psc.ctl:
-  CHAN G3D.RDR.CONTROL rdr.ctl:
-  PAR
-    cubepoints.generator (gp1!, gen.ctl?) 
-    points3d.rotate (gp1?, gp2!, rot.ctl?)
-    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?)
-    cubify.points (gc1?, pc1!, pgn.ctl?)
-    poly.scanlines (pc1?, ps1!, psc.ctl?)
-    render.polyscans (ps1?, rlink.in?, rdr.ctl?)
+  SEQ
+    CHAN INT trigger:
+    CHAN MOBILE []G3D.POINT3 gp1, gp2:
+    CHAN MOBILE []G3D.POINT2.3 gc1:
+    CHAN MOBILE []G3D.POLY pc1:
+    CHAN MOBILE []G3D.POLY.SCAN ps1:
+    CHAN G3D.GEN.CONTROL gen.ctl:
+    CHAN G3D.ROT.CONTROL rot.ctl:
+    CHAN G3D.PRJ.CONTROL prj.ctl:
+    CHAN G3D.PGN.CONTROL pgn.ctl:
+    CHAN G3D.PSC.CONTROL psc.ctl:
+    CHAN G3D.RDR.CONTROL rdr.ctl:
+    PAR
+      cubepoints.generator (trigger?, gp1!, gen.ctl?)
+      points3d.rotate (gp1?, gp2!, rot.ctl?)
+      points.3d.to.2d3 (gp2?, gc1!, prj.ctl?, width, height)
+      cubify.points (gc1?, pc1!, pgn.ctl?)
+      poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
+      render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, width, height)
 
-    SEQ
-      prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
-      rdr.ctl ! set.mode; G3D.RENDER.MODE.NORM
-      pgn.ctl ! set.trimap; FALSE
-      pgn.ctl ! set.backfaces; FALSE
-      rot.ctl ! add.increment; 0.03
-      -- rotate.orchestra1 (rot.ctl!)
-      planar.path (prj.ctl, 3.0, 4.0, 0.0, 0.0, 0, [0.0, 0.0, 0.0])
+      SEQ
+        prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
+        rdr.ctl ! set.mode; G3D.RENDER.MODE.NORM
+        pgn.ctl ! set.trimap; FALSE
+        pgn.ctl ! set.backfaces; FALSE
+        rot.ctl ! add.increment; 0.03
+        -- rotate.orchestra1 (rot.ctl!)
+        planar.path (prj.ctl, 3.0, 4.0, 0.0, 0.0, 0, [0.0, 0.0, 0.0])
 :
 --}}}
 --{{{  PROC normal.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)
@@ -203,36 +207,39 @@ PROC normal.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.li
 -- @param height Height of raster.
 --
 PROC glenz.network2 (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
-  CHAN MOBILE []G3D.POINT3 gp1, gp2:
-  CHAN MOBILE []G3D.POINT2.3 gc1:
-  CHAN MOBILE []G3D.POLY pc1:
-  CHAN MOBILE []G3D.POLY.SCAN ps1:
-  CHAN G3D.GEN.CONTROL gen.ctl:
-  CHAN G3D.ROT.CONTROL rot.ctl:
-  CHAN G3D.PRJ.CONTROL prj.ctl:
-  CHAN G3D.PGN.CONTROL pgn.ctl:
-  CHAN G3D.PSC.CONTROL psc.ctl:
-  CHAN G3D.RDR.CONTROL rdr.ctl:
-  PAR
-    cubepoints.generator (gp1!, gen.ctl?) 
-    points3d.rotate (gp1?, gp2!, rot.ctl?)
-    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?)
-    cubify.points (gc1?, pc1!, pgn.ctl?)
-    poly.scanlines (pc1?, ps1!, psc.ctl?)
-    render.polyscans (ps1?, rlink.in?, rdr.ctl?)
+  SEQ
 
-    SEQ
-      gen.ctl ! add.scale; [0.5, 0.5, 2.0]
-      prj.ctl ! set.3dshift; [-4.0, 0.0, 6.0]
-      rot.ctl ! add.increment; 0.05
-      rot.ctl ! set.mode; G3D.ROTATE.MODE.Y \/ G3D.ROTATE.MODE.Z
-      rdr.ctl ! set.mode; G3D.RENDER.MODE.GLENZ \/ G3D.RENDER.MODE.NORM
-      pgn.ctl ! set.trimap; FALSE
-      pgn.ctl ! set.backfaces; FALSE
-      pgn.ctl ! set.face.colours; [#000000FF,#00000080,#0000FF00,#00008000,#00FF0000,#00800000,
-                                   #0000FFFF,#00008080,#00FFFF00,#00808000,#00FF00FF,#00800080]
-      -- rotate.orchestra1 (rot.ctl!)
-      planar.path (prj.ctl!, 4.0, 4.0, 3.141, 0.0, 0, [0.0, 0.0, 2.0])
+    CHAN INT trigger:
+    CHAN MOBILE []G3D.POINT3 gp1, gp2:
+    CHAN MOBILE []G3D.POINT2.3 gc1:
+    CHAN MOBILE []G3D.POLY pc1:
+    CHAN MOBILE []G3D.POLY.SCAN ps1:
+    CHAN G3D.GEN.CONTROL gen.ctl:
+    CHAN G3D.ROT.CONTROL rot.ctl:
+    CHAN G3D.PRJ.CONTROL prj.ctl:
+    CHAN G3D.PGN.CONTROL pgn.ctl:
+    CHAN G3D.PSC.CONTROL psc.ctl:
+    CHAN G3D.RDR.CONTROL rdr.ctl:
+    PAR
+      cubepoints.generator (trigger?, gp1!, gen.ctl?)
+      points3d.rotate (gp1?, gp2!, rot.ctl?)
+      points.3d.to.2d3 (gp2?, gc1!, prj.ctl?, width, height)
+      cubify.points (gc1?, pc1!, pgn.ctl?)
+      poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
+      render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, width, height)
+
+      SEQ
+        gen.ctl ! add.scale; [0.5, 0.5, 2.0]
+        prj.ctl ! set.3dshift; [-4.0, 0.0, 6.0]
+        rot.ctl ! add.increment; 0.05
+        rot.ctl ! set.mode; G3D.ROTATE.MODE.Y \/ G3D.ROTATE.MODE.Z
+        rdr.ctl ! set.mode; G3D.RENDER.MODE.GLENZ \/ G3D.RENDER.MODE.NORM
+        pgn.ctl ! set.trimap; FALSE
+        pgn.ctl ! set.backfaces; FALSE
+        pgn.ctl ! set.face.colours; [#000000FF,#00000080,#0000FF00,#00008000,#00FF0000,#00800000,
+                                     #0000FFFF,#00008080,#00FFFF00,#00808000,#00FF00FF,#00800080]
+        -- rotate.orchestra1 (rot.ctl!)
+        planar.path (prj.ctl!, 4.0, 4.0, 3.141, 0.0, 0, [0.0, 0.0, 2.0])
 :
 --}}}
 --{{{  PROC glenz.network2.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)
@@ -259,6 +266,7 @@ PROC glenz.network2.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.li
 -- @param height Height of raster.
 --
 PROC normal.network2 (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
+  CHAN INT trigger:
   CHAN MOBILE []G3D.POINT3 gp1, gp2:
   CHAN MOBILE []G3D.POINT2.3 gc1:
   CHAN MOBILE []G3D.POLY pc1:
@@ -270,12 +278,12 @@ PROC normal.network2 (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
   CHAN G3D.PSC.CONTROL psc.ctl:
   CHAN G3D.RDR.CONTROL rdr.ctl:
   PAR
-    cubepoints.generator (gp1!, gen.ctl?) 
+    cubepoints.generator (trigger?, gp1!, gen.ctl?) 
     points3d.rotate (gp1?, gp2!, rot.ctl?)
-    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?)
+    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?, width, height)
     cubify.points (gc1?, pc1!, pgn.ctl?)
-    poly.scanlines (pc1?, ps1!, psc.ctl?)
-    render.polyscans (ps1?, rlink.in?, rdr.ctl?)
+    poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
+    render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, width, height)
 
     SEQ
       gen.ctl ! add.scale; [0.5, 0.5, 2.0]
@@ -315,6 +323,7 @@ PROC normal.network2.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.l
 -- @param height Height of raster.
 --
 PROC screen.cube (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
+  CHAN INT trigger:
   CHAN MOBILE []G3D.POINT3 gp1:
   CHAN MOBILE []G3D.POINT2.3 gc1:
   CHAN MOBILE []G3D.POLY pc1:
@@ -323,10 +332,10 @@ PROC screen.cube (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
   CHAN G3D.PGN.CONTROL pgn.ctl:
   CHAN G3D.RDR.CONTROL rdr.ctl:
   PAR
-    cubepoints.generator (gp1!, gen.ctl?)
-    points.3d.to.2d3 (gp1?, gc1!, prj.ctl?)
+    cubepoints.generator (trigger?, gp1!, gen.ctl?)
+    points.3d.to.2d3 (gp1?, gc1!, prj.ctl?, width, height)
     cubify.points (gc1?, pc1!, pgn.ctl?)
-    render.polyframe (pc1?, rlink.in?, rdr.ctl?)
+    render.polyframe.trigger (pc1?, rlink.in?, rdr.ctl?, trigger!, width, height)
 
     SEQ
       gen.ctl ! add.scale; [5.0, 5.0, 5.0]
@@ -364,6 +373,7 @@ PROC screen.cube.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!
 -- @param rpix Random initial placement.
 --
 PROC butterfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, VAL BOOL rpix)
+  CHAN INT trigger:
   CHAN MOBILE []G3D.POINT3 gp1, gp2:
   CHAN MOBILE []G3D.POINT2.3 gc1:
   CHAN MOBILE []G3D.POLY pc1:
@@ -374,17 +384,17 @@ PROC butterfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, VAL 
   CHAN G3D.PGN.CONTROL pgn.ctl:
   CHAN G3D.PSC.CONTROL psc.ctl:
   CHAN G3D.RDR.CONTROL rdr.ctl:
-  CHAN BOOL trigger:
+  CHAN BOOL l.trig:
   PAR
-    BOOL any:
     SEQ
-      trigger ? any
-      fbypoints.generator (gp1!, gen.ctl?)
+      BOOL any:
+      l.trig ? any
+      fbypoints.generator (trigger?, gp1!, gen.ctl?)
 
     points3d.rotate (gp1?, gp2!, rot.ctl?)
-    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?)
+    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?, width, height)
     flutterby.points (gc1?, pc1!, pgn.ctl?)
-    render.polyframe (pc1?, rlink.in?, rdr.ctl?)
+    render.polyframe.trigger (pc1?, rlink.in?, rdr.ctl?, trigger!, width, height)
     -- poly.scanlines (pc1?, ps1!, psc.ctl?)
     -- render.polyscans (ps1?, rlink, rdr.ctl?)
 
@@ -396,7 +406,7 @@ PROC butterfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, VAL 
       -- prj.ctl ! set.3dshift; [-5.0, 0.0, 6.0]
       rot.ctl ! add.increment; 0.04
       rot.ctl ! set.mode; G3D.ROTATE.MODE.DEMO
-      trigger ! TRUE
+      l.trig ! TRUE
       rdr.ctl ! set.mode; G3D.RENDER.MODE.GLENZ
 
       IF

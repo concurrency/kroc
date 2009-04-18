@@ -41,6 +41,8 @@ PROC g3d.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
   INT buf.len:
   SEQ
     buf.len := 0
+    #PRAGMA DEFINED buffer
+
     INITIAL BOOL running IS TRUE:
     WHILE running
       PRI ALT
@@ -80,17 +82,18 @@ PROC g3d.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 :
 --}}}
 
---{{{  PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+--{{{  PROC cubepoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
 --* Cube point generator.
 -- Generates a constant stream of points that represent a cube in 3D space.
 --
+-- @param trigger Trigger channel.
 -- @param out Points generated.
 -- @param ctrl Control channel.
 --
-PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+PROC cubepoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
   MOBILE []G3D.POINT3 cpnts, opnts:
 
-  PROC reset ()
+  PROC reset () --{{{
     SEQ
       opnts := MOBILE [8]G3D.POINT3
 
@@ -103,9 +106,8 @@ PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL c
       opnts[6] := [-1.0, -1.0, -1.0] (G3D.POINT3)
       opnts[7] := [-1.0, 1.0, -1.0] (G3D.POINT3)
   :
+  --}}}
 
-  G3D.TRIG? trg:
-  INITIAL BOOL have.trg IS FALSE:
   SEQ
     --{{{  initialise
     reset ()
@@ -116,62 +118,63 @@ PROC cubepoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL c
     INITIAL BOOL running IS TRUE:
     WHILE running
       SEQ
-        out ! CLONE cpnts
-
-        INITIAL BOOL trig IS TRUE:
-        WHILE trig
-          PRI ALT
-            ctrl ? CASE
-              reset
+        PRI ALT
+          ctrl ? CASE
+            reset
+              SEQ
+                reset ()
+                cpnts := CLONE opnts
+            [3]REAL32 scale:
+            add.scale; scale
+              --{{{  add scale (to cpnts)
+              SEQ i = 0 FOR 8
                 SEQ
-                  reset ()
-                  cpnts := CLONE opnts
-              set.trigger; have.trg; trg
-                SKIP
-              [3]REAL32 scale:
-              add.scale; scale
-                SEQ i = 0 FOR 8
-                  SEQ
-                    cpnts[i][x] := cpnts[i][x] * scale[0]
-                    cpnts[i][y] := cpnts[i][y] * scale[1]
-                    cpnts[i][z] := cpnts[i][z] * scale[2]
-              [3]REAL32 scale:
-              set.scale; scale
-                SEQ i = 0 FOR 8
-                  SEQ
-                    cpnts[i][x] := opnts[i][x] * scale[0]
-                    cpnts[i][y] := opnts[i][y] * scale[1]
-                    cpnts[i][z] := opnts[i][z] * scale[2]
-              [3]REAL32 trans:
-              add.trans; trans
-                SEQ i = 0 FOR 8
-                  SEQ
-                    cpnts[i][x] := cpnts[i][x] + trans[0]
-                    cpnts[i][y] := cpnts[i][y] + trans[1]
-                    cpnts[i][z] := cpnts[i][z] + trans[2]
-              [3]REAL32 trans:
-              set.trans; trans
-                SEQ i = 0 FOR 8
-                  SEQ
-                    cpnts[i][x] := opnts[i][x] + trans[0]
-                    cpnts[i][y] := opnts[i][y] + trans[1]
-                    cpnts[i][z] := opnts[i][z] + trans[2]
-            INT any:
-            have.trg & trg[trig] ? any
-              trig := FALSE
-            (NOT have.trg) & SKIP
-              trig := FALSE
+                  cpnts[i][x] := cpnts[i][x] * scale[0]
+                  cpnts[i][y] := cpnts[i][y] * scale[1]
+                  cpnts[i][z] := cpnts[i][z] * scale[2]
+              --}}}
+            [3]REAL32 scale:
+            set.scale; scale
+              --{{{  set scale (from opnts)
+              SEQ i = 0 FOR 8
+                SEQ
+                  cpnts[i][x] := opnts[i][x] * scale[0]
+                  cpnts[i][y] := opnts[i][y] * scale[1]
+                  cpnts[i][z] := opnts[i][z] * scale[2]
+              --}}}
+            [3]REAL32 trans:
+            add.trans; trans
+              --{{{  add translation (to cpnts)
+              SEQ i = 0 FOR 8
+                SEQ
+                  cpnts[i][x] := cpnts[i][x] + trans[0]
+                  cpnts[i][y] := cpnts[i][y] + trans[1]
+                  cpnts[i][z] := cpnts[i][z] + trans[2]
+              --}}}
+            [3]REAL32 trans:
+            set.trans; trans
+              --{{{  set translation (from opnts)
+              SEQ i = 0 FOR 8
+                SEQ
+                  cpnts[i][x] := opnts[i][x] + trans[0]
+                  cpnts[i][y] := opnts[i][y] + trans[1]
+                  cpnts[i][z] := opnts[i][z] + trans[2]
+              --}}}
+          INT any:
+          trigger ? any
+            out ! CLONE cpnts
 :
 --}}}
---{{{  PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+--{{{  PROC fbypoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
 --* Inmos butterfly logo generator.
 -- The pixel positions were generated by tracing from an Inmos promotional
 -- video showing the butterflies running on a Transputer network.
 --
+-- @param trigger Trigger channel.
 -- @param out Points generated.
 -- @param ctrl Control channel.
 --
-PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+PROC fbypoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
   MOBILE []G3D.POINT3 pnts:
   REAL32 fangle, fdiff:
 
@@ -234,8 +237,6 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
   :
   --}}}
 
-  G3D.TRIG? trg:
-  INITIAL BOOL have.trg IS FALSE:
   SEQ
     --{{{  initialise
     reset ()
@@ -244,120 +245,113 @@ PROC fbypoints.generator (CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ct
 
     INITIAL BOOL running IS TRUE:
     WHILE running
-      MOBILE []G3D.POINT3 mpoints:
       SEQ
-        mpoints := CLONE pnts
 
-        --{{{  adjust wings for fluttering.
-        IF
-          fdiff > 0.0
-            REAL32 sin.val, cos.val:
+        PRI ALT
+          INT any:
+          trigger ? any
+            MOBILE []G3D.POINT3 mpoints:
             SEQ
-              sin.val := SIN (fangle)
-              cos.val := COS (fangle)
-              fangle := fangle + fdiff
+              mpoints := CLONE pnts
 
-              rot.point.y (mpoints[0], sin.val, cos.val)
-              rot.point.y (mpoints[1], sin.val, cos.val)
-              rot.point.y (mpoints[6], sin.val, cos.val)
-              rot.point.y (mpoints[5], sin.val, cos.val)
-              rot.point.y (mpoints[4], sin.val, cos.val)
-              rot.point.y (mpoints[16], sin.val, cos.val)
-              rot.point.y (mpoints[20], sin.val, cos.val)
-              rot.point.y (mpoints[19], sin.val, cos.val)
-              rot.point.y (mpoints[18], sin.val, cos.val)
-
-              sin.val := -sin.val
-
-              rot.point.y (mpoints[7], sin.val, cos.val)
-              rot.point.y (mpoints[8], sin.val, cos.val)
-              rot.point.y (mpoints[9], sin.val, cos.val)
-              rot.point.y (mpoints[10], sin.val, cos.val)
-              rot.point.y (mpoints[11], sin.val, cos.val)
-              rot.point.y (mpoints[21], sin.val, cos.val)
-              rot.point.y (mpoints[22], sin.val, cos.val)
-              rot.point.y (mpoints[23], sin.val, cos.val)
-              rot.point.y (mpoints[24], sin.val, cos.val)
-
+              --{{{  adjust wings for fluttering.
               IF
-                fangle > 0.5
-                  fdiff := -fdiff
+                fdiff > 0.0
+                  REAL32 sin.val, cos.val:
+                  SEQ
+                    sin.val := SIN (fangle)
+                    cos.val := COS (fangle)
+                    fangle := fangle + fdiff
+
+                    rot.point.y (mpoints[0], sin.val, cos.val)
+                    rot.point.y (mpoints[1], sin.val, cos.val)
+                    rot.point.y (mpoints[6], sin.val, cos.val)
+                    rot.point.y (mpoints[5], sin.val, cos.val)
+                    rot.point.y (mpoints[4], sin.val, cos.val)
+                    rot.point.y (mpoints[16], sin.val, cos.val)
+                    rot.point.y (mpoints[20], sin.val, cos.val)
+                    rot.point.y (mpoints[19], sin.val, cos.val)
+                    rot.point.y (mpoints[18], sin.val, cos.val)
+
+                    sin.val := -sin.val
+
+                    rot.point.y (mpoints[7], sin.val, cos.val)
+                    rot.point.y (mpoints[8], sin.val, cos.val)
+                    rot.point.y (mpoints[9], sin.val, cos.val)
+                    rot.point.y (mpoints[10], sin.val, cos.val)
+                    rot.point.y (mpoints[11], sin.val, cos.val)
+                    rot.point.y (mpoints[21], sin.val, cos.val)
+                    rot.point.y (mpoints[22], sin.val, cos.val)
+                    rot.point.y (mpoints[23], sin.val, cos.val)
+                    rot.point.y (mpoints[24], sin.val, cos.val)
+
+                    IF
+                      fangle > 0.5
+                        fdiff := -fdiff
+                      TRUE
+                        SKIP
+                fdiff < 0.0
+                  REAL32 sin.val, cos.val:
+                  SEQ
+                    sin.val := SIN (fangle)
+                    cos.val := COS (fangle)
+                    fangle := fangle + fdiff
+
+                    rot.point.y (mpoints[0], sin.val, cos.val)
+                    rot.point.y (mpoints[1], sin.val, cos.val)
+                    rot.point.y (mpoints[6], sin.val, cos.val)
+                    rot.point.y (mpoints[5], sin.val, cos.val)
+                    rot.point.y (mpoints[4], sin.val, cos.val)
+                    rot.point.y (mpoints[16], sin.val, cos.val)
+                    rot.point.y (mpoints[20], sin.val, cos.val)
+                    rot.point.y (mpoints[19], sin.val, cos.val)
+                    rot.point.y (mpoints[18], sin.val, cos.val)
+
+                    sin.val := -sin.val
+
+                    rot.point.y (mpoints[7], sin.val, cos.val)
+                    rot.point.y (mpoints[8], sin.val, cos.val)
+                    rot.point.y (mpoints[9], sin.val, cos.val)
+                    rot.point.y (mpoints[10], sin.val, cos.val)
+                    rot.point.y (mpoints[11], sin.val, cos.val)
+                    rot.point.y (mpoints[21], sin.val, cos.val)
+                    rot.point.y (mpoints[22], sin.val, cos.val)
+                    rot.point.y (mpoints[23], sin.val, cos.val)
+                    rot.point.y (mpoints[24], sin.val, cos.val)
+
+                    IF
+                      fangle < (-0.5)
+                        fdiff := -fdiff
+                      TRUE
+                        SKIP
                 TRUE
                   SKIP
-          fdiff < 0.0
-            REAL32 sin.val, cos.val:
-            SEQ
-              sin.val := SIN (fangle)
-              cos.val := COS (fangle)
-              fangle := fangle + fdiff
+              --}}}
 
-              rot.point.y (mpoints[0], sin.val, cos.val)
-              rot.point.y (mpoints[1], sin.val, cos.val)
-              rot.point.y (mpoints[6], sin.val, cos.val)
-              rot.point.y (mpoints[5], sin.val, cos.val)
-              rot.point.y (mpoints[4], sin.val, cos.val)
-              rot.point.y (mpoints[16], sin.val, cos.val)
-              rot.point.y (mpoints[20], sin.val, cos.val)
-              rot.point.y (mpoints[19], sin.val, cos.val)
-              rot.point.y (mpoints[18], sin.val, cos.val)
-
-              sin.val := -sin.val
-
-              rot.point.y (mpoints[7], sin.val, cos.val)
-              rot.point.y (mpoints[8], sin.val, cos.val)
-              rot.point.y (mpoints[9], sin.val, cos.val)
-              rot.point.y (mpoints[10], sin.val, cos.val)
-              rot.point.y (mpoints[11], sin.val, cos.val)
-              rot.point.y (mpoints[21], sin.val, cos.val)
-              rot.point.y (mpoints[22], sin.val, cos.val)
-              rot.point.y (mpoints[23], sin.val, cos.val)
-              rot.point.y (mpoints[24], sin.val, cos.val)
-
-              IF
-                fangle < (-0.5)
-                  fdiff := -fdiff
-                TRUE
-                  SKIP
-          TRUE
-            SKIP
-        --}}}
-
-        out ! mpoints
-
-        INITIAL BOOL trig IS TRUE:
-        WHILE trig
-          PRI ALT
-            ctrl ? CASE
-              reset
-                reset ()
-              set.trigger; have.trg; trg
-                SKIP
-              [3]REAL32 scale:
-              add.scale; scale
-                SEQ i = 0 FOR 30
-                  SEQ
-                    pnts[i][x] := pnts[i][x] * scale[0]
-                    pnts[i][y] := pnts[i][y] * scale[1]
-                    pnts[i][z] := pnts[i][z] * scale[2]
-              [3]REAL32 scale:
-              set.scale; scale
-                SKIP
-              [3]REAL32 trans:
-              add.trans; trans
-                SEQ i = 0 FOR 30
-                  SEQ
-                    pnts[i][x] := pnts[i][x] + trans[0]
-                    pnts[i][y] := pnts[i][y] + trans[1]
-                    pnts[i][z] := pnts[i][z] + trans[2]
-              [3]REAL32 trans:
-              set.trans; trans
-                SKIP
-            INT any:
-            have.trg & trg[trig] ? any
-              trig := FALSE
-            (NOT have.trg) & SKIP
-              trig := FALSE
-
+              out ! mpoints
+          ctrl ? CASE
+            reset
+              reset ()
+            [3]REAL32 scale:
+            add.scale; scale
+              SEQ i = 0 FOR 30
+                SEQ
+                  pnts[i][x] := pnts[i][x] * scale[0]
+                  pnts[i][y] := pnts[i][y] * scale[1]
+                  pnts[i][z] := pnts[i][z] * scale[2]
+            [3]REAL32 scale:
+            set.scale; scale
+              SKIP
+            [3]REAL32 trans:
+            add.trans; trans
+              SEQ i = 0 FOR 30
+                SEQ
+                  pnts[i][x] := pnts[i][x] + trans[0]
+                  pnts[i][y] := pnts[i][y] + trans[1]
+                  pnts[i][z] := pnts[i][z] + trans[2]
+            [3]REAL32 trans:
+            set.trans; trans
+              SKIP
 :
 --}}}
 --{{{  PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL ctrl?)
@@ -491,7 +485,7 @@ PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL c
                 out ! nblk
 :
 --}}}
---{{{  PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 out!, CHAN G3D.PRJ.CONTROL ctrl?)
+--{{{  PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 out!, CHAN G3D.PRJ.CONTROL ctrl?, VAL INT width, height)
 --* Projects 3D points into 2D, preserves Z information.
 -- Maps a set of 3D points down into a set of 2D points, preserving the Z
 -- depth information for later operations.
@@ -499,8 +493,9 @@ PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL c
 -- @param in 3D points in.
 -- @param out 2D3 points out.
 -- @param ctrl Control channel.
+-- @param width,height Display dimensions.
 --
-PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 out!, CHAN G3D.PRJ.CONTROL ctrl?)
+PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 out!, CHAN G3D.PRJ.CONTROL ctrl?, VAL INT width, height)
   REAL32 x.scale, y.scale, z.depth:
   REAL32 x.shift, y.shift, z.shift:
   INT x2.shift, y2.shift:
@@ -513,8 +508,8 @@ PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 
       x.shift := 0.0
       y.shift := 0.0
       z.shift := 0.0
-      x2.shift := G3D.DEFAULT.WIDTH / 2
-      y2.shift := G3D.DEFAULT.HEIGHT / 2
+      x2.shift := width / 2
+      y2.shift := height / 2
   :
   --}}}
 
@@ -841,17 +836,17 @@ PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY ou
                 out ! polys
 :
 --}}}
---{{{  PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, SHARED CHAN BYTE debug!)
+--{{{  PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, SHARED CHAN BYTE debug!, VAL INT width, height)
 --* Converts polygons to scan-line data.
 -- @private
-PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, SHARED CHAN BYTE debug!)
+PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, SHARED CHAN BYTE debug!, VAL INT width, height)
   INT vp.width, vp.height:
   BOOL zcolour:
 
   PROC reset () --{{{
     SEQ
-      vp.width := G3D.DEFAULT.WIDTH
-      vp.height := G3D.MAX.SCAN.HEIGHT
+      vp.width := width
+      vp.height := height
       zcolour := FALSE
   :
   --}}}
@@ -1061,7 +1056,7 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
             out ! scans
 :
 --}}}
---{{{  PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?)
+--{{{  PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, VAL INT width, height)
 --* Converts polygons to scan-line data.
 -- Expects to receive sets of polygons on its input, which it then transforms
 -- into a set of G3D.POLY.SCAN structures.
@@ -1069,28 +1064,29 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
 -- @param in Polygons input.
 -- @param out Scan-line data output.
 -- @param ctrl Control channel.
+-- @param width,height Display dimensions.
 --
-PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?)
+PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, VAL INT width, height)
   SHARED! CHAN BYTE ch:
   CHAN BOOL kill:
   PAR
     SEQ
-      poly.scanlines.int (in?, out!, ctrl?, ch!)
+      poly.scanlines.int (in?, out!, ctrl?, ch!, width, height)
       kill ! FALSE
     g3d.debug.writer (ch?, kill?)
 :
 --}}}
---{{{  PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
+--{{{  PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL BOOL use.trigger, VAL INT width, height)
 --* Renders polygon scan-line data onto a raster.
 -- @private
-PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, SHARED CHAN BYTE debug!)
+PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, SHARED CHAN BYTE debug!, CHAN INT trigger!, VAL BOOL use.trigger, VAL INT width, height)
   INT mode:
   INT vp.width, vp.height:
 
   PROC reset () --{{{
     SEQ
       mode := G3D.RENDER.MODE.NORM
-      vp.width := G3D.DEFAULT.WIDTH
+      vp.width := width
       vp.height := G3D.MAX.SCAN.HEIGHT
   :
   --}}}
@@ -1317,6 +1313,12 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
             --{{{  render and pass on
             MOBILE []G3D.POLY.SCAN scans:
             SEQ
+              IF
+                use.trigger
+                  trigger ! 0               -- trigger generator
+                TRUE
+                  SKIP
+
               data ? scans
 
               SEQ i = 0 FOR SIZE scans
@@ -1384,41 +1386,58 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
             --}}}
 :
 --}}}
---{{{  PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
+--{{{  PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, VAL INT width, height)
 --* Renders polygon scan-line data onto a raster.
 --
 -- @param data Polygon scan-line data input.
 -- @param rlink.in Raster I/O.
 -- @param ctrl Control channel.
+-- @param width,height Display dimensions.
 --
-PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
+PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, VAL INT width, height)
   SHARED! CHAN BYTE ch:
   CHAN BOOL kill:
   PAR
     SEQ
-      render.polyscans.int (data?, rlink.in?, ctrl?, ch!)
+      CHAN INT dummy:
+      render.polyscans.int (data?, rlink.in?, ctrl?, ch!, dummy!, FALSE, width, height)
       kill ! TRUE
     g3d.debug.writer (ch?, kill?)
 :
 --}}}
---{{{  PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
---* Renders polygons as a series of lines (wireframe).
+--{{{  PROC render.polyscans.trigger (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL INT width, height)
+--* Renders polygon scan-line data onto a raster, sends triggers back to generator process.
 --
--- @param data Polygons input.
+-- @param data Polygon scan-line data input.
 -- @param rlink.in Raster I/O.
 -- @param ctrl Control channel.
+-- @param trigger Triggers for generator.
+-- @param width,height Display dimensions.
 --
-PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?)
+PROC render.polyscans.trigger (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL INT width, height)
+  SHARED! CHAN BYTE ch:
+  CHAN BOOL kill:
+  PAR
+    SEQ
+      render.polyscans.int (data?, rlink.in?, ctrl?, ch!, trigger!, TRUE, width, height)
+      kill ! TRUE
+    g3d.debug.writer (ch?, kill?)
+:
+--}}}
+--{{{  PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL BOOL use.trigger, VAL INT width, height)
+--* Renders wireframe polygons (directly from polygon data).
+-- @private
+PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL BOOL use.trigger, VAL INT width, height)
   INT mode:
   INT vp.width, vp.height:
 
   PROC reset () --{{{
     SEQ
       mode := G3D.RENDER.MODE.NORM
-      vp.width := G3D.DEFAULT.WIDTH
+      vp.width := width
       IF
-        G3D.MAX.SCAN.HEIGHT > G3D.DEFAULT.HEIGHT
-          vp.height := G3D.DEFAULT.HEIGHT
+        G3D.MAX.SCAN.HEIGHT > height
+          vp.height := height
         TRUE
           vp.height := G3D.MAX.SCAN.HEIGHT
   :
@@ -1602,6 +1621,12 @@ PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in
             --{{{  render and pass on
             MOBILE []G3D.POLY polys:
             SEQ
+              IF
+                use.trigger
+                  trigger ! 0                   -- trigger generator and wait
+                TRUE
+                  SKIP
+
               data ? polys
 
               SEQ i = 0 FOR SIZE polys
@@ -1623,6 +1648,34 @@ PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in
             --}}}
 :
 --}}}
+--{{{  PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, VAL INT width, height)
+--* Renders polygons as a series of lines (wireframe).
+--
+-- @param data Polygons input.
+-- @param rlink.in Raster I/O.
+-- @param ctrl Control channel.
+-- @param width,height Display dimensions.
+--
+PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, VAL INT width, height)
+  SEQ
+    CHAN INT dummy:
+    render.polyframe.int (data?, rlink.in?, ctrl?, dummy!, FALSE, width, height)
+:
+--}}}
+--{{{  PROC render.polyframe.trigger (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL INT width, height)
+--* Renders polygons as a series of lines (wireframe).
+--
+-- @param data Polygons input.
+-- @param rlink.in Raster I/O.
+-- @param ctrl Control channel.
+-- @param trigger Generator trigger channel.
+-- @param width,height Display dimensions.
+--
+PROC render.polyframe.trigger (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL INT width, height)
+  SEQ
+    render.polyframe.int (data?, rlink.in?, ctrl?, trigger!, TRUE, width, height)
+:
+--}}}
 
 --{{{  PROC raster.chain.head (CHAN RASTER in?, G3D.RENDER.ENGINE! head, CHAN G3D.RENDER.ENGINE! new.link?, VAL BOOL fade)
 --* Head of the raster render chain.
@@ -1636,7 +1689,7 @@ PROC raster.chain.head (CHAN RASTER in?, G3D.RENDER.ENGINE! head, CHAN G3D.RENDE
   INITIAL INT count IS 0:
   INITIAL BOOL running IS TRUE:
   WHILE running
-    ALT
+    PRI ALT
       G3D.RENDER.ENGINE! tmp:
       new.link ? tmp
         SEQ
