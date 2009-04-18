@@ -100,7 +100,7 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
             CLAIM rre!
               butterfly.network.spawn (SCR.WIDTH, SCR.HEIGHT, TRUE, rre!)
 
-            t := t PLUS 300000
+            t := t PLUS 30000
             tim ? AFTER t
 :
 --}}}
