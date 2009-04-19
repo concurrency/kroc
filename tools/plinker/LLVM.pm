@@ -833,6 +833,14 @@ sub proc_prefix {
 	return 'O_';
 }
 
+sub symbol_to_proc_name ($$) {
+	my ($self, $symbol) = @_;
+	$symbol =~ s/\./_/gs;
+	$symbol =~ s/[\^\*\&\@\$]//gs;
+	$symbol =~ s/\%.*$//;
+	return $self->proc_prefix . $symbol;
+}
+
 sub int_type {
 	my $self = shift;
 	return 'i32'; # FIXME:
@@ -1183,8 +1191,8 @@ sub gen_call ($$$$) {
 		));
 	} elsif ($name eq 'CALL') {
 		if (!$ffi) {
-			push (@asm, sprintf ('tail call fastcc void @%s%s (%s %%sched, %s %%%s) noreturn',
-				$self->proc_prefix, $symbol,
+			push (@asm, sprintf ('tail call fastcc void @%s (%s %%sched, %s %%%s) noreturn',
+				$self->symbol_to_proc_name ($symbol),
 				$self->sched_type,
 				$self->workspace_type,
 				$new_wptr
@@ -2016,12 +2024,11 @@ sub format_lines (@) {
 
 sub generate_proc ($$) {
 	my ($self, $proc) = @_;
-	my $symbol 	= '@' . $self->proc_prefix . $proc->{'symbol'};
+	my $symbol 	= '@' . $self->symbol_to_proc_name ($proc->{'symbol'});
 	my $call_pfix 	= $symbol . '_';
 	my @asm;
 
 	$proc->{'call_prefix'} = $call_pfix;
-
 	
 	push (@asm, format_lines (
 		sprintf ('define fastcc void %s (%s %%sched, %s %%wptr) {', 
@@ -2036,15 +2043,6 @@ sub generate_proc ($$) {
 		'ret void',
 		'}'
 	));
-
-	# Alias for C linking
-	if ($symbol =~ /\./) {
-		my $alias = $symbol;
-		$alias =~ s/\./_/g;
-		push (@asm, sprintf ('%s = alias %s %s',
-			$alias, $self->func_type . '*', $symbol
-		));
-	}
 
 	foreach my $label (@{$proc->{'labels'}}) {
 		my ($name, $insts) = ($label->{'name'}, $label->{'inst'});
@@ -2407,10 +2405,9 @@ sub entry_point ($$) {
 		sprintf ('%%code_entry = bitcast %s @code_entry to i8*',
 			$self->func_type . '*'
 		),
-		sprintf ('%%start_proc = bitcast %s @%s%s to i8*',
+		sprintf ('%%start_proc = bitcast %s @%s to i8*',
 			$self->func_type . '*',
-			$self->proc_prefix,
-			$name
+			$self->symbol_to_proc_name ($name)
 		),
 		sprintf ('%%ret = call %s @occam_start (%s %%argc, i8** %%argv'
 			 	. ', i8* %%code_entry, i8** getelementptr ([ %d x i8* ]* @tlp_desc, i32 0, i32 0)'
