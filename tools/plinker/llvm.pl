@@ -44,7 +44,7 @@ my @files;
 
 # Command Line Parsing
 my @args	= @ARGV;
-my $standalone	= 0;
+my $standalone	= 1;
 my $options 	= 1;
 while (my $arg = shift @args) {
 	if ($options && $arg eq '--') {
@@ -53,10 +53,12 @@ while (my $arg = shift @args) {
 		$verbose		= 1;
 		$etc->{'verbose'} 	= 1;
 		$tcoff->{'verbose'}	= 1;
-	} elsif ($options && $arg eq '-s') {
-		$standalone		= 1;
+	} elsif ($options && $arg eq '-c') {
+		$standalone		= 0;
 	} elsif ($options && $arg eq '-o') {
 		$output 		= shift @args;
+	} elsif ($options && $arg =~ /^-/) {
+		print STDERR "Ignoring unknown option: $arg\n";
 	} else {
 		push (@files, $arg);
 	}
@@ -64,11 +66,11 @@ while (my $arg = shift @args) {
 
 if (!$output) {
 	$output = $files[-1];
-	$output =~ s/\.tce$/.llvm/i;
+	$output =~ s/\.tce$//i;
 }
 
 if (!$output || !@files) {
-	print "llvm-coder.pl [-v] [-s] [-o <name>] <file>\n";
+	print "lletc.pl [-v] [-s] [-o <name>] <file>\n";
 	exit 1;
 }
 
@@ -134,7 +136,7 @@ if ($standalone) {
 		if !defined ($entry_point) || !exists ($entry_point->{'definition'});
 
 	if ($verbose) {
-		print 	"Target:\n",
+		print 	"Entry Point Target:\n",
 			format_symbol_definition ($entry_point->{'definition'}, "  ");
 	}
 }
@@ -145,11 +147,50 @@ if ($entry_point) {
 	push (@asm, $llvm->entry_point ($entry_point));
 }
 
-foreach my $line (@asm) {
-	print $line, "\n";
+if (!@asm) {
+	print STDERR "Assembly generation failed...\n";
+	exit 0;
 }
 
-# FIXME: do more stuff!
+print "Writing $output.ll (", scalar (@asm), " lines)\n" if $verbose;
+my $fh;
+open ($fh, ">$output.ll") || die "unable to open output file $output.ll";
+foreach my $line (@asm) {
+	print $fh $line, "\n";
+}
+close ($fh);
+
+my $as = $ENV{'LLVM-AS'} || 'llvm-as';
+my @as_cmd = ($as, '-f', $output . '.ll');
+print "Running: ", join (' ', @as_cmd), "\n" if $verbose;
+if (system (@as_cmd)) {
+	print STDERR "Assembly code to bitcode conversion failed...\n";
+	exit 1;
+} elsif (!$verbose) {
+	unlink ($output . '.ll');
+}
+
+my $llc = $ENV{'LLC'} || 'llc';
+my @llc_cmd = ($llc, '-tailcallopt', '-f', $output . '.bc');
+print "Running: ", join (' ', @llc_cmd), "\n" if $verbose;
+if (system (@llc_cmd)) {
+	print STDERR "Bitcode to system assembly conversion failed...\n";
+	exit 1;
+} elsif (!$verbose) {
+	unlink ($output . '.bc');
+}
+
+my $cc = $ENV{'CC'} || 'cc';
+my @cc_cmd = ($cc, '-O', '-c', $output . '.s');
+print "Running: ", join (' ', @cc_cmd), "\n" if $verbose;
+if (system (@cc_cmd)) {
+	print STDERR "Assembly to object file failed...\n";
+	exit 1;
+} elsif (!$verbose) {
+	unlink ($output . '.s');
+}
+
+print "Output: $output.o\n" if $verbose;
 
 exit 0;
 

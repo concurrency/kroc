@@ -16,7 +16,7 @@ my $PREFIX = "@prefix@";
 my $SRCDIR = "@srcdir@";
 
 my %build = (
-	'llvm.pl' => 'llvm-coder.pl',
+	'llvm.pl' => 'lletc.pl',
 	'main.pl' => 'plinker.pl',
 	'dump.pl' => 'tce-dump.pl'
 );
