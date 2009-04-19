@@ -24,7 +24,9 @@ endif
 libkrocif_a_SOURCES =
 libkrocif_a_LIBADD = \
 	io/io.o io/input.o io/output.o \
-	rts/occam_entry.o rts/rtsmain.o rts/tty.o rts/userproc.o \
+	rts/error.o \
+	rts/occam_entry.o rts/rtsmain.o \
+	rts/tty.o rts/userproc.o \
 	support/spinterf.o support/spunix.o
 
 all-local: libkrocif.a $(shared_libs)
