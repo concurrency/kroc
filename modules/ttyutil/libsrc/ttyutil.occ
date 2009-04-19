@@ -391,6 +391,7 @@ PROC ttyutil.menu (VAL INT x, y, width, height, VAL BOOL border, CHAN TTYUTIL.ME
 
       #PRAGMA DEFINED links
       #PRAGMA DEFINED valid
+      SKIP
     --}}}
     --{{{  draw border if necessary
     IF
