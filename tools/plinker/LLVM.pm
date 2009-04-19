@@ -2164,24 +2164,19 @@ sub generate_proc ($$) {
 			} elsif ($data->{'kcall'}) {
 				my @lines = $self->gen_kcall ($proc, $label, $inst);
 				push (@asm, format_lines (@lines));
-			} elsif (@$out + @$fout == 1) {
-				my $line = "\t";
-				$line .= output_regs ($out, $fout);
-				$line .= " = call void \@op_" . $name . " (%" . $inst->{'wptr'};
-				$line .= ', ' . $inst->{'arg'} if exists ($inst->{'arg'});
-				$line .= ', ' if (@$in + @$fin > 0);
-				$line .= output_regs ($in, $fin);
-				$line .= ')';
-				push (@asm, $line);
 			} else {
-				my $line = "\t";
-				$line .= '%', $inst->{'_wptr'}, ' = ' if $inst->{'_wptr'};
-				$line .= "call void \@op_" . $name . " (%" . $inst->{'wptr'};
-				$line .= ', ' . $inst->{'arg'} if exists ($inst->{'arg'});
-				$line .= ', ' if (@$in + @$fin > 0);
-				$line .= output_regs ($in, $fin, $out, $fout);
-				$line .= ")";
-				push (@asm, $line);
+				# NOP unknown instructions for debugging
+				push (@asm, '; NOP');
+				foreach my $reg (@$out) {
+					push (@asm, sprintf ('%%%s = bitcast %s 0 to %s',
+						$reg, $self->int_type, $self->int_type
+					));
+				}
+				foreach my $reg (@$fout) {
+					push (@asm, sprintf ('%%%s = bitcast %s 0 to %s',
+						$reg, $self->float_type, $self->float_type
+					));
+				}
 			}
 			
 			$last_inst = $inst;
