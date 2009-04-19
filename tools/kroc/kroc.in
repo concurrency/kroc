@@ -747,10 +747,12 @@ kroc_krocdir="@KROC_KROCDIR@"
 
 if [ "$intree" = "" ]; then
 	occ21="$kroc_archbindir/occ21"
-	octran="$kroc_archbindir/tranx86"
+	octran="$kroc_archbindir/lletc.pl"
+	tcedump="$kroc_archbindir/tce-dump.pl"
 else
 	occ21="$intree/tools/occ21/occ21"
-	octran="$intree/tools/tranx86/tranx86"
+	octran="$intree/tools/plinker/lletc.pl"
+	tcedump="$intree/tools/plinker/tce-dump.pl"
 fi
 
 if [ $dtraces -eq 1 ]; then
@@ -1038,7 +1040,7 @@ parse_pragmas () {
 
 	# For .USELIB directives, add the library to the list if it's not
 	# already been used.
-	libs=$($octran -C "$tcefile" | awk '/^\.USELIB / { ORS=" "; print $2 }')
+	libs=$($tcedump -C "$tcefile" | awk '/^\.USELIB / { ORS=" "; print $2 }')
 	for lib in $libs; do
 		opt="-loccam_$lib"
 
@@ -1057,7 +1059,7 @@ parse_pragmas () {
 	done
 
 	# For .LDFLAGS directives, add the flags to the CC options.
-	opts=$($octran -C "$tcefile" | awk '/^\.LDFLAGS / { ORS=" "; for (i = 2; i <= NF; i++) { print $i } }')
+	opts=$($tcedump -C "$tcefile" | awk '/^\.LDFLAGS / { ORS=" "; for (i = 2; i <= NF; i++) { print $i } }')
 	if [ "$verbose" -a "$opts" != "" ] ; then
 		printf '%s: Using extra linker options %s\n' "$progname" "$opts" 1>&2
 	fi
