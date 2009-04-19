@@ -11,6 +11,7 @@ SOURCES = \
 	ETC.pm \
 	Instructions.pm \
 	Linker.pm \
+	LLVM.pm \
 	PLinker.pm \
 	TCOFF.pm \
 	TEncode.pm \

@@ -1036,7 +1036,7 @@ sub gen_call ($$$$) {
 	my $wptr 	= $inst->{'wptr'};
 	my $in		= $inst->{'in'};
 	my $symbol 	= ref ($inst->{'arg'}) =~ /HASH/ ? $inst->{'arg'}->{'symbol'} : '';
-	my $ffi		= ($symbol =~ m/^(C|B|BX)\./)[0];
+	my $ffi		= ($symbol =~ m/^(C|BX?)\./)[0];
 	my $reschedule	= $inst->{'reschedule'};
 	my $tail_call	= 1;
 	my (@asm, @params, $new_wptr);
@@ -1101,17 +1101,11 @@ sub gen_call ($$$$) {
 			my $msg = "WARNING: stack is not empty at point of general call";
 			$self->message (1, $msg);
 			push (@asm, "; $msg");
-		} else {
-			foreach my $param (@$in) {
-				push (@params, sprintf ('%s %%%s',
-					$self->int_type, $param
-				));
-			}
 		}
 	}
 	
 	if ($ffi) {
-		$symbol =~ s/^(C|B|BX)//;
+		$symbol =~ s/^(C|BX?)//;
 		$symbol =~ s/\./_/g;
 
 		$self->{'header'}->{$symbol} = [
@@ -1138,9 +1132,9 @@ sub gen_call ($$$$) {
 				$self->workspace_type, $in->[0],
 				$self->int_type
 			));
-			push (@asm, sprintf ('%%%s = bitcast %s @%s to i8*',
+			push (@asm, sprintf ('%%%s = bitcast void (%s)* @%s to i8*',
 				$func_ptr, 
-				$self->func_type . '*', $symbol
+				$self->workspace_type, $symbol
 			));
 			push (@asm, sprintf ('%%%s = ptrtoint i8* %%%s to %s',
 				$func_val,
@@ -1150,18 +1144,29 @@ sub gen_call ($$$$) {
 
 			$in = [ $func_val, $args_val ];
 
+			# Transform CALL into kernel call
+
 			if ($ffi eq 'B') {
 				$name = 'Y_b_dispatch';
 			} elsif ($ffi eq 'BX') {
 				$name = 'Y_bx_dispatch';
 			}
-
-			$reschedule = 1;
+			
+			$name 		= $self->def_kcall ($name, { 'in' => $in });
+			$ffi 		= undef;
+			$reschedule	= 1;
 		} else {
 			$tail_call = 0;
 		}
 	}
 
+	if ($name !~ /^G?CALL$/) {
+		foreach my $param (@$in) {
+			push (@params, sprintf ('%s %%%s',
+				$self->int_type, $param
+			));
+		}
+	}
 
 	if ($name eq 'GCALL') {
 		my $jump_ptr = $self->tmp_reg ();
@@ -1948,12 +1953,10 @@ sub gen_lend ($$$$) {
 	return @asm;
 }
 
-sub _gen_kcall ($$$$$) {
-	my ($self, $proc, $label, $inst, $symbol) = @_;
+sub def_kcall ($$$) {
+	my ($self, $symbol, $inst) = @_;
 	my $name 	= 'kernel_' . $symbol;
-	my $reschedule 	= $symbol =~ /^Y_/ ? 1 : 0;
-	
-	die "Unknown kernel call " . $inst->{'name'} . " ($symbol)" if $symbol !~ /^[XY]_/;
+	my $reschedule	= $symbol =~ /^Y_/ ? 1 : 0;
 
 	if (!exists ($self->{'header'}->{$name})) {
 		my @param = ($self->sched_type, $self->workspace_type);
@@ -1970,7 +1973,18 @@ sub _gen_kcall ($$$$$) {
 			$name, join (', ', @param)
 		) ];
 	}
+
+	return $name;
+}
+
+sub _gen_kcall ($$$$$) {
+	my ($self, $proc, $label, $inst, $symbol) = @_;
+	my $reschedule 	= $symbol =~ /^Y_/ ? 1 : 0;
 	
+	die "Unknown kernel call " . $inst->{'name'} . " ($symbol)" if $symbol !~ /^[XY]_/;
+
+	my $name = $self->def_kcall ($symbol, $inst);
+
 	return $self->gen_call ($proc, $label, {
 		'name' 		=> $name,
 		'in'		=> $inst->{'in'},

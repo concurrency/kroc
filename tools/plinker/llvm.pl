@@ -58,7 +58,8 @@ while (my $arg = shift @args) {
 	} elsif ($options && $arg eq '-o') {
 		$output 		= shift @args;
 	} elsif ($options && $arg =~ /^-/) {
-		print STDERR "Ignoring unknown option: $arg\n";
+		warnerr ("ignoring unknown option: $arg");
+		shift @args if $arg eq '--cnpfx';
 	} else {
 		push (@files, $arg);
 	}
@@ -148,7 +149,7 @@ if ($entry_point) {
 }
 
 if (!@asm) {
-	print STDERR "Assembly generation failed...\n";
+	warnerr ("assembly generation failed");
 	exit 0;
 }
 
@@ -164,7 +165,7 @@ my $as = $ENV{'LLVM-AS'} || 'llvm-as';
 my @as_cmd = ($as, '-f', $output . '.ll');
 print "Running: ", join (' ', @as_cmd), "\n" if $verbose;
 if (system (@as_cmd)) {
-	print STDERR "Assembly code to bitcode conversion failed...\n";
+	warnerr ("assembly code to bitcode conversion failed");
 	exit 1;
 } elsif (!$verbose) {
 	unlink ($output . '.ll');
@@ -174,7 +175,7 @@ my $llc = $ENV{'LLC'} || 'llc';
 my @llc_cmd = ($llc, '-tailcallopt', '-f', $output . '.bc');
 print "Running: ", join (' ', @llc_cmd), "\n" if $verbose;
 if (system (@llc_cmd)) {
-	print STDERR "Bitcode to system assembly conversion failed...\n";
+	warnerr ("bitcode to system assembly conversion failed");
 	exit 1;
 } elsif (!$verbose) {
 	unlink ($output . '.bc');
@@ -184,7 +185,7 @@ my $cc = $ENV{'CC'} || 'cc';
 my @cc_cmd = ($cc, '-O', '-c', $output . '.s');
 print "Running: ", join (' ', @cc_cmd), "\n" if $verbose;
 if (system (@cc_cmd)) {
-	print STDERR "Assembly to object file failed...\n";
+	warnerr ("system assembly to object file failed");
 	exit 1;
 } elsif (!$verbose) {
 	unlink ($output . '.s');
@@ -193,6 +194,11 @@ if (system (@cc_cmd)) {
 print "Output: $output.o\n" if $verbose;
 
 exit 0;
+
+sub warnerr (@) {
+	my @m = @_;
+	print STDERR "lletc.pl: ", @m, "\n";
+}
 
 sub format_symbol_definition {
 	my ($def, $prefix) 	= @_;
