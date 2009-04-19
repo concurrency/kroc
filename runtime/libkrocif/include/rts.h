@@ -91,8 +91,9 @@ extern int using_screen;
 extern int using_error;
 extern int do_print_memstats;
 extern int occam_uses_keyboard (void);
-extern void _occ_enter (void);
-extern int _occ_exit (void);
+extern void occam_entry (char **tlp_desc,
+			void *start_proc, 
+			int ws, int vs, int ms);
 /*}}}*/
 
 /*{{{ userproc.c */
@@ -100,7 +101,10 @@ extern FILE *kroc_in;
 extern FILE *kroc_out;
 extern FILE *kroc_err;
 
-extern void user_process (bool is_a_tty);
+extern void user_process (bool is_a_tty,
+			char **tlp_desc,
+			void *start_proc, 
+			int ws, int vs, int ms);
 /*}}}*/
 
 /*{{{ rtsmain.c */
@@ -113,7 +117,11 @@ extern char **kroc_argv;
 extern void user_bad_exit (void);
 extern void user_good_exit (void);
 
-extern int main (int argc, char **argv);
+extern int occam_start (int argc, char **argv, 
+			void *code_entry, 
+			char **tlp_desc,
+			void *start_proc, 
+			int ws, int vs, int ms);
 /*}}}*/
 
 /*{{{ tty.c */

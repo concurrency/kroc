@@ -20,7 +20,7 @@
 #ifndef __KROCIO_H
 #define __KROCIO_H
 
-extern int init_occam_io (int tlpiface);
+extern int init_occam_io (void);
 extern bool kbd_ready (void);
 extern bool process_blocked_on_kbd (void);
 

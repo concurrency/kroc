@@ -72,9 +72,8 @@ int do_print_memstats = 0;
 /*}}}*/
 
 #define DEBUG_PRINT(fmt,...)	fprintf (stderr, fmt, ## __VA_ARGS__) /* ISO C */
-#define INITIAL_WS_SEP		128
-#define INITIAL_VS_SEP		256
-#define INITIAL_WS              ((_wsbytes + INITIAL_WS_SEP + _vsbytes + INITIAL_VS_SEP))
+#define WS_SEP			32
+#define VS_SEP			64
 
 /*{{{  int occam_uses_keyboard (void)*/
 /*
@@ -94,48 +93,75 @@ int occam_uses_keyboard (void)
 }
 /*}}}*/
 
-/*{{{  void _occ_enter (void)*/
+/*{{{  void occam_start (void)*/
 /*
  *	called to initialise and run the occam program
  */
-void _occ_enter (void)
+void occam_entry (char **tlp_desc,
+		void *start_proc, 
+		int ws_words, int vs_words, int ms_words)
 {
 	word *Wptr, *Fptr, *Bptr;
+	word *fbar = NULL;
+	int initial_ws = ws_words + WS_SEP + vs_words + VS_SEP; 
 	int wspptr, i;
 
 	#ifdef DEBUG_KERNEL
 	DEBUG_PRINT ("in _enter()\n");
 	#endif
 
-	init_occam_io (_occam_tlp_iface);
+	init_occam_io ();
 
-	ws = (byte *) dmem_alloc (INITIAL_WS);
+	ws = (byte *) dmem_alloc (initial_ws * sizeof (word));
 	if (!ws) {
-		DEBUG_PRINT ("KRoC: fatal: unable to allocate workspace/vectorspace (%d bytes)\n", INITIAL_WS);
+		DEBUG_PRINT ("KRoC: fatal: unable to allocate workspace/vectorspace (%d words)\n", initial_ws);
 		user_bad_exit ();
 	} else {
 		/* initialise the workspace/vectorspace with (MOSTNEG INT) */
-
-		for (i=0; i < (INITIAL_WS >> 2); i++) {
+		for (i = 0; i < initial_ws; i++) {
 			((word *) ws)[i] = MostNeg;
 		}
 		
 		#if defined(DM_DEBUG) && (DM_DEBUG == 1)
-		extadd_ord_mem (ws, _wsbytes + INITIAL_WS_SEP, MODE_READ | MODE_WRITE);
-		if (_vsbytes) {
-			extadd_ord_mem (ws + (_wsbytes + INITIAL_WS_SEP + 128), _vsbytes, MODE_READ | MODE_WRITE);
+		extadd_ord_mem (ws, (ws_words + WS_SEP) * sizeof (word), MODE_READ | MODE_WRITE);
+		if (vs_words) {
+			extadd_ord_mem (vs, vs_words * sizeof (word), MODE_READ | MODE_WRITE);
 		}
 		#endif
 	}
-	Wptr = (word *)ws;
+	if (vs_words) {
+		vs = ws + ((ws_words + WS_SEP + (VS_SEP / 2)) * sizeof (word));
+	} else {
+		vs = NULL;
+	}
+
+	if (ms_words) {
+		ms = (byte *) dmem_alloc (ms_words * sizeof (word));
+		#if defined(DM_DEBUG) && (DM_DEBUG == 1)
+			extadd_ord_mem (ms, ms_words * sizeof (word), MODE_READ | MODE_WRITE);
+		#endif
+		/* initialise mobile-space to MOSTNEG INT */
+		for (i = 0; i < ms_words; i++) {
+			((word *) ms)[i] = MostNeg;
+		}
+		#ifdef DEBUG_KERNEL
+		DEBUG_PRINT ("KRoC: passing mobilespace pointer to application (%p for %d words)\n", ms, _msbytes >> 2);
+		#endif
+	} else {
+		ms = NULL;
+	}
+	
+	Wptr = (word *) ws;
 
 	#ifdef DEBUG_KERNEL
-	DEBUG_PRINT ( "allocated %d bytes for workspace and vectorspace.\n", INITIAL_WS );
+	DEBUG_PRINT ( "allocated %d bytes for workspace and vectorspace.\n", initial_ws);
 	#endif
 
-	Wptr = (word *)((byte *)Wptr + _wsbytes + (INITIAL_WS_SEP >> 1));
-	wspptr = 1;
+	Wptr 		= Wptr + ws_words + (WS_SEP / 2);
+	Wptr[Iptr] 	= (word) start_proc;
+	wspptr 		= 1;
 
+	#if 0
 	/* check for any MPP barrier at the top-level */
 	if (_occam_tlp_iface & TLP_MPP_BARRIER) {
 		Wptr[wspptr++] 	= (word) NULL;
@@ -146,106 +172,41 @@ void _occ_enter (void)
 		extadd_ord_mem (kse_ptrs, 3 * sizeof (int), MODE_READ | MODE_WRITE);
 		#endif
 	}
+	#endif
+	
 	do_print_memstats = (_occam_tlp_iface & TLP_PRINT_MEMSTATS);
-	switch (_occam_tlp_iface & ~TLP_EFLAGMASK) {
-	case TLP_FSTS:
-		Wptr[wspptr++] = (word) NULL;		/* causes fault */
-		Wptr[wspptr++] = (word) NULL;		/* causes fault */
-		break;
-	case TLP_FSTSMEM:
-		Wptr[wspptr++] = (word) NULL;		/* causes fault */
-		Wptr[wspptr++] = (word) NULL;		/* causes fault */
-		Wptr[wspptr++] = (word) NULL;		/* causes fault */
-		break;
-	case TLP_FSTSSIZEDMEM:
-		Wptr[wspptr++] = (word) NULL;		/* causes fault */
-		Wptr[wspptr++] = (word) NULL;		/* causes fault */
-		Wptr[wspptr++] = (word) NULL;		/* causes fault */
-		Wptr[wspptr++] = 0;			/* dimemsion */
-		break;
-	default:
-		switch (_occam_tlp_iface & ~TLP_SHAREDMASK & ~TLP_EFLAGMASK) {		/* mask out shared -- and EFLAGs */
-		case TLP_NULL:
-			break;
-		case TLP_KYB:
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[0]) : (word) kbd_chan_addr ();
+	
+	for (i = 0; tlp_desc[i] != NULL; ++i) {
+		const char *name = (const char *) tlp_desc[i];
+		if (strcmp (name, "keyboard?") == 0) {
 			using_keyboard = 1;
-			break;
-		case TLP_SCR:
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[1]) : (word) scr_chan_addr ();
+			Wptr[wspptr++] = (word) kbd_chan_addr ();
+		} else if (strcmp (name, "screen!") == 0) {
 			using_screen = 1;
-			break;
-		case TLP_ERR:
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[2]) : (word) err_chan_addr ();
+			Wptr[wspptr++] = (word) scr_chan_addr ();
+		} else if (strcmp (name, "error!") == 0) {
 			using_error = 1;
-			break;
-		case TLP_KYBSCR:
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[0]) : (word) kbd_chan_addr ();
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[1]) : (word) scr_chan_addr ();
-			using_keyboard = using_screen = 1;
-			break;
-		case TLP_KYBERR:
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[0]) : (word) kbd_chan_addr ();
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[2]) : (word) err_chan_addr ();
-			using_keyboard = using_error = 1;
-			break;
-		case TLP_SCRERR:
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[1]) : (word) scr_chan_addr ();
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[2]) : (word) err_chan_addr ();
-			using_screen = using_error = 1;
-			break;
-		case TLP_KYBSCRERR:
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[0]) : (word) kbd_chan_addr ();
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[1]) : (word) scr_chan_addr ();
-			Wptr[wspptr++] = (_occam_tlp_iface & TLP_MPP_BARRIER) ? (word)&(kse_ptrs[2]) : (word) err_chan_addr ();
-			using_keyboard = using_screen = using_error = 1;
-			break;
-		default:
-			fprintf (stderr, "KRoC: fatal: unknown interface code for top-level occam process (%d)\n", _occam_tlp_iface);
-			user_bad_exit();
-			break;
+			Wptr[wspptr++] = (word) err_chan_addr ();
+		} else if (strcmp (name, "VSPTR") == 0) {
+			Wptr[wspptr++] = (word) vs;
+		} else if (strcmp (name, "MSPTR") == 0) {
+			Wptr[wspptr++] = (word) ms;
+		} else if (strcmp (name, "FBARPTR") == 0) {
+			if (fbar != NULL) {
+				fbar = (word *) ccsp_mt_alloc (MT_MAKE_BARRIER (MT_BARRIER_FORKING), 0);
+			}
+			Wptr[wspptr++] = (word) fbar;
+		} else {
+			Wptr[wspptr++] = 0;
 		}
-		break;
-	}
-
-	if (_vsbytes) {
-		vs = ws + (_wsbytes + INITIAL_WS_SEP + 128);
-		Wptr[wspptr++] = (word) vs;
-	}
-
-	if (_msbytes) {
-		ms = (byte *) dmem_alloc (_msbytes);
-		#if defined(DM_DEBUG) && (DM_DEBUG == 1)
-			extadd_ord_mem (ms, _msbytes, MODE_READ | MODE_WRITE);
-		#endif
-		/* initialise mobile-space to MOSTNEG INT */
-		for (i = 0; i < (_msbytes >> 2); i++) {
-			((word *) ms)[i] = MostNeg;
-		}
-		Wptr[wspptr++] = (word) ms;
-	} else {
-		ms = NULL;
 	}
 	
-	#ifdef DEBUG_KERNEL
-	DEBUG_PRINT ("KRoC: passing mobilespace pointer to application (%p for %d words)\n", ms, _msbytes >> 2);
-	#endif
-
-	/* if the FORK barrier is required, add it */
-	if (_occam_tlp_iface & TLP_FORK_BARRIER) {
-		Wptr[wspptr++] = (word) ccsp_mt_alloc (MT_MAKE_BARRIER (MT_BARRIER_FORKING), 0);
-	}
-	
-	#ifdef DEBUG_KERNEL
-	DEBUG_PRINT ("Wptr=%p  ws=%p  vs=%p  _wsbytes=%d  _vsbytes=%d\n", Wptr, ws, vs, _wsbytes, _vsbytes );
-	#endif
-
 	Fptr = NotProcess_p;
 	Bptr = NotProcess_p;
 
 	#if defined(ENABLE_DTRACES)
 	/* set process/application workspace */
-	do_dtrace ("IWAL", ws, _wsbytes);
+	do_dtrace ("IWAL", ws, ws_words * sizeof (word));
 	#endif
 
 	/* put the screen and error processes on the run-queue.  init_occam_io makes sure
@@ -269,26 +230,16 @@ void _occ_enter (void)
 	DEBUG_PRINT ("about to call _occam_start()\n");
 	#endif
 
-	ccsp_set_error_mode (_occam_errormode);
-	ccsp_occam_entry (ws, _wsbytes + INITIAL_WS_SEP, (word) _occam_start, Wptr, Fptr);
-}
-/*}}}*/
-
-/*{{{  int _occ_exit (void)*/
-/*
- *	cleans up after the occam program has finished
- */
-int _occ_exit (void)
-{
+	//ccsp_set_error_mode (_occam_errormode);
+	ccsp_kernel_entry (Wptr, Fptr);
+	
 	if (ms) {
 		dmem_release (ms);
 	}
 	
 	dmem_release (ws);
 
-	ws = vs = NULL;
-
-	return 0;
+	ws = vs = ms = NULL;
 }
 /*}}}*/
 

@@ -96,11 +96,11 @@ static word **setup_chan (word init_state)
 }
 /*}}}*/
 
-/*{{{  void init_occam_io (int tlpiface)*/
+/*{{{  void init_occam_io (void)*/
 /*
  *	initialises the occam IO workspaces
  */
-int init_occam_io (int tlpiface)
+int init_occam_io (void)
 {
 	int i;
 

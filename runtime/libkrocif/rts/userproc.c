@@ -198,8 +198,11 @@ static void set_user_process_signals (void)
 
 /* user-process code below here */
 
-/*{{{  void user_process (bool is_a_tty)*/
-void user_process (bool is_a_tty)
+/*{{{  int user_process (bool is_a_tty)*/
+void user_process (bool is_a_tty,
+     			char **tlp_desc,
+     			void *start_proc,
+    			int ws, int vs, int ms)
 {
 	static int sigjmpcode;
 
@@ -217,10 +220,10 @@ void user_process (bool is_a_tty)
 	}
 	set_user_process_signals ();
 
-	_occ_enter ();
+	occam_entry (tlp_desc, start_proc, ws, vs, ms);
 
-	/* bad exit - fell through */
-	userproc_exit (1, 0);
+	/* good exit */
+	userproc_exit (0, 0);
 
 signalled:
 	switch (sigjmpcode) {

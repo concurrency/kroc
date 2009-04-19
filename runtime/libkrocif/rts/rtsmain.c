@@ -89,10 +89,11 @@ static void exit_handler (int status, bool core)
 /*
  *	start here
  */
-#ifdef __GNUC__
-__attribute__ ((weak))
-#endif
-int main (int argc, char **argv)
+int occam_start (int argc, char **argv, 
+			void *code_entry, 
+			char **tlp_desc,
+			void *start_proc, 
+			int ws, int vs, int ms)
 {
 	kroc_argc = argc;
 	kroc_argv = argv;
@@ -109,7 +110,7 @@ int main (int argc, char **argv)
 
 	ccsp_set_branding ("KRoC");
 
-	if (!ccsp_init()) {
+	if (!ccsp_init (code_entry)) {
 		if (stdin_is_tty && occam_uses_keyboard ()) {
 			restore_tty_state ();
 		}
@@ -123,7 +124,7 @@ int main (int argc, char **argv)
 	}
 
 	init_kbdio (stdin_is_tty);
-	user_process (stdin_is_tty);
+	user_process (stdin_is_tty, tlp_desc, start_proc, ws, vs, ms);
 
 	return 0;
 }
