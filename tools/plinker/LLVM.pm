@@ -2022,6 +2022,7 @@ sub generate_proc ($$) {
 
 	$proc->{'call_prefix'} = $call_pfix;
 
+	
 	push (@asm, format_lines (
 		sprintf ('define fastcc void %s (%s %%sched, %s %%wptr) {', 
 			$symbol,
@@ -2035,6 +2036,15 @@ sub generate_proc ($$) {
 		'ret void',
 		'}'
 	));
+
+	# Alias for C linking
+	if ($symbol =~ /\./) {
+		my $alias = $symbol;
+		$alias =~ s/\./_/g;
+		push (@asm, sprintf ('%s = alias %s %s',
+			$alias, $self->func_type . '*', $symbol
+		));
+	}
 
 	foreach my $label (@{$proc->{'labels'}}) {
 		my ($name, $insts) = ($label->{'name'}, $label->{'inst'});
