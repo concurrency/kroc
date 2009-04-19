@@ -19,6 +19,10 @@ AC_CONFIG_SUBDIRS(tools/mkoccdeps)
 AC_CONFIG_SUBDIRS(tools/occ21)
 AC_CONFIG_SUBDIRS(tools/occamdoc)
 
+if test $OCCBUILD_TOOLCHAIN = kroc || test $OCCBUILD_TOOLCHAIN = tvm; then
+  AC_CONFIG_SUBDIRS(tools/plinker)
+fi
+
 if test $OCCBUILD_TOOLCHAIN = kroc; then
   AC_CONFIG_SUBDIRS(runtime/ccsp)
 
@@ -28,8 +32,6 @@ if test $OCCBUILD_TOOLCHAIN = kroc; then
 fi
 
 if test $OCCBUILD_TOOLCHAIN = tvm; then
-  AC_CONFIG_SUBDIRS(tools/plinker)
-  
   # FIXME: Make these dependent on Scheme
   if false; then
     AC_CONFIG_SUBDIRS(tools/skroc)
