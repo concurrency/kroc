@@ -2333,15 +2333,20 @@ sub entry_point ($$) {
 			$self->int_type, 
 			$self->int_type, 
 			$self->int_type, $self->int_type, $self->int_type
-		),
+		)
+	);
 
+	push (@asm,
 		sprintf ('define private fastcc void @code_exit (%s %%sched, %s %%wptr) {',
 			$self->sched_type,
 			$self->workspace_type
 		),
+		# FIXME: handle fork barrier
 		'ret void',
-		'}',
-
+		'}'
+	);
+	
+	push (@asm,
 		sprintf ('define void @code_entry (%s %%sched, %s %%wptr) {',
 			$self->sched_type, $self->workspace_type
 		),
@@ -2372,7 +2377,9 @@ sub entry_point ($$) {
 		),
 		'ret void',
 		'}',
+	);
 
+	push (@asm, 
 		sprintf ('define %s @main (%s %%argc, i8** %%argv) {',
 			$self->int_type, $self->int_type
 		),
