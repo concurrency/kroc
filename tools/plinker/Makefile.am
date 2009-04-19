@@ -17,7 +17,7 @@ SOURCES = \
 	TVM.pm	
 
 generated = \
-	llvm-coder.pl \
+	lletc.pl \
 	plinker.pl \
 	tce-dump.pl
 
