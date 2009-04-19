@@ -22,7 +22,7 @@ AC_CONFIG_SUBDIRS(tools/occamdoc)
 if test $OCCBUILD_TOOLCHAIN = kroc; then
   AC_CONFIG_SUBDIRS(runtime/ccsp)
 
-  AC_CONFIG_SUBDIRS(tools/tranx86)
+  #AC_CONFIG_SUBDIRS(tools/tranx86)
 
   AC_CONFIG_SUBDIRS(runtime/libkrocif)
 fi
