@@ -1990,12 +1990,12 @@ sub format_lines (@) {
 	my @lines = @_;
 	my @asm;
 	foreach my $line (@lines) {
-		if ($line =~ /^[a-zA-Z0-9\$\._]+:/ || $line =~ /[{}]\s*$/ || $line =~ /^de(clare|fine)/) {
+		if ($line =~ /^(\@|[a-zA-Z0-9\$\._]+:|de(clare|fine))/ || $line =~ /[{}]\s*$/) {
 			push (@asm, $line);
 		} else {
 			push (@asm, "\t" . $line);
 		}
-		push (@asm, '') if $line =~ /^(}|declare)/;
+		push (@asm, '') if $line =~ /^([@}]|declare)/;
 	}
 	return @asm;
 }
@@ -2267,16 +2267,69 @@ sub generate ($@) {
 	return (@header, @const_asm, @proc_asm);
 }
 
+sub build_tlp_desc {
+	my ($self, $symbol)	= @_;
+	my $def			= $symbol->{'definition'};
+	my ($params)		= ($def =~ m/PROC\s+\S+\(([^\)]+)\)/s);
+	my @params		= split (/,/, $params);
+	my @tlp;
+
+	foreach my $param (@params) {
+		my $shared = 0;
+		
+		if ($param =~ /^FIXED SHARED/) {
+			$param =~ s/^FIXED SHARED\s*//;
+			$shared = 1;
+		}
+		
+		if ($param =~ m/^CHAN\s+OF\s+(\S+)\s+(\S+)/) {
+			my ($type, $name)	= ($1, $2);
+			my ($dir)		= ($name =~ m/([\?!])$/);
+			if (!$dir) {
+				($dir) = ($def =~ m/$name([\?!])/gs);
+				$dir = '.' if !$dir;
+			}
+			$name = 'keyboard?' 	if $name =~ /(kyb|key(board)?)/ && $dir =~ /[.?]/;
+			$name = 'screen!' 	if $name =~ /(scr(een)?)/ && $dir =~ /[.!]/;
+			$name = 'error!' 	if $name =~ /(err(or)?)/ && $dir =~ /[.!]/;
+			push (@tlp, $name);
+		} else {
+			push (@tlp, 'unknown');
+		}
+	}
+
+	push (@tlp, 'VSPTR') 	if $symbol->{'vs'};
+	push (@tlp, 'MSPTR')	if $symbol->{'ms'};
+	push (@tlp, 'FBARPTR') 	if $def =~ /PROC.*\(.*\).*FORK/;
+
+	return @tlp;
+}
+
 sub entry_point ($$) {
 	my ($self, $symbol) = @_;
 	my $name	= $symbol->{'string'};
 	my $ws		= $symbol->{'ws'};
 	my $vs		= $symbol->{'vs'};
 	my $ms		= $symbol->{'ms'};
+	my @tlp_desc	= $self->build_tlp_desc ($symbol); 
 	my @asm;
 
+	my @tlp_elem;
+	for (my $i = 0; $i < @tlp_desc; ++$i) {
+		my $elem = $tlp_desc[$i];
+		push (@asm, sprintf ('@tlp_%d = internal constant [ %d x i8 ] c"%s\00"',
+			$i, length ($tlp_desc[$i]) + 1, $tlp_desc[$i]
+		));
+		push (@tlp_elem, sprintf ('i8* getelementptr ([ %d x i8 ]* @tlp_%d, i32 0, i32 0)',
+			length ($tlp_desc[$i]) + 1, $i
+		));
+	}
+
+	push (@asm, sprintf ('@tlp_desc = internal constant [ %d x i8* ] [ %s, i8* null ]',
+		@tlp_elem + 1, join (', ', @tlp_elem) 
+	));
 	push (@asm,
-		sprintf ('declare %s @occam_start (%s, i8**, i8*, i8*, %s, %s, %s)',
+		sprintf ('declare %s @occam_start (%s, i8**, i8*, i8**, i8*, %s, %s, %s)',
 			$self->int_type, 
 			$self->int_type, 
 			$self->int_type, $self->int_type, $self->int_type
@@ -2333,10 +2386,12 @@ sub entry_point ($$) {
 			$self->proc_prefix,
 			$name
 		),
-		sprintf ('%%ret = call %s @occam_start (%s %%argc, i8** %%argv, '
-			 	. 'i8* %%code_entry, i8* %%start_proc, %s %d, %s %d, %s %d)',
+		sprintf ('%%ret = call %s @occam_start (%s %%argc, i8** %%argv'
+			 	. ', i8* %%code_entry, i8** getelementptr ([ %d x i8* ]* @tlp_desc, i32 0, i32 0)'
+				. ', i8* %%start_proc, %s %d, %s %d, %s %d)',
 			$self->int_type,
 			$self->int_type,
+			@tlp_elem + 1,
 			$self->int_type, $ws,
 			$self->int_type, $vs,
 			$self->int_type, $ms
