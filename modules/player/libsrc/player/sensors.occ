@@ -1,6 +1,7 @@
 --** @module player
 
 #INCLUDE "occplayer.module"
+#INCLUDE "useful.module"
 
 #INCLUDE "player.inc"
 #USE "debug"
@@ -24,14 +25,12 @@ BOOL FUNCTION check(VAL []INT data, VAL INT start, end)
     IF 
       end < start
         SEQ
-          magic.string("End larger than start.")
-          magic.newline()
-          STOP
+          trace.sn ("End larger than start.")
+          CAUSEERROR ()
       (end - start) > (SIZE data)
         SEQ
-          magic.string("(End - Start) > size of array.")
-          magic.newline()
-          STOP
+          trace.sn ("(End - Start) > size of array.")
+          CAUSEERROR ()
       TRUE
         SKIP
     RESULT result
