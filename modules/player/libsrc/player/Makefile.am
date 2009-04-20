@@ -8,20 +8,16 @@ CFLAGS = @CFLAGS@ @DEFS@
 EXTRA_DIST = \
 	debug.occ \
 	gen-arcs.ss \
-	misc.c \
-	misc.inc \
 	pioneer_hud.inc \
 	pioneerutils.inc \
 	player.inc
 
 if BUILD_PLAYER
 player_lib_objs = \
-	debug.tce \
-	misc.o
+	debug.tce
 
 player_libs = player.lib
 player_includes = \
-	misc.inc \
 	pioneer_hud.inc \
 	pioneerutils.inc \
 	player.inc \
