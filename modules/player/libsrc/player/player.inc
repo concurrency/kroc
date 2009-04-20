@@ -1,4 +1,4 @@
-#INCLUDE "occ_player.inc"
+#INCLUDE "occplayer.module"
 #INCLUDE "debug.occ"
 
 -- SYMBOLIC CONSTANTS
