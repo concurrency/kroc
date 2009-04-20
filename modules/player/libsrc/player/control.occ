@@ -8,25 +8,45 @@
 -- laser.read : struct vint rint rint
 -- Queries the laser.t structure; returns the 
 -- distance and angle for a given sample number.
-PROC laser.read(playerc.laser.t laser,
+PROC laser.read(VAL playerc.laser.t laser,
                 VAL INT sample,
                 RESULT INT dist,
                 RESULT INT angle)
+  #IF TRUE
+  -- FIXME: temporary hack until I add array accessors back to SWIG
+  INT ptr:
+  SEQ
+    playerc.laser.t.scan.get(laser, ptr)
+    PLACED [2]REAL64 data AT ptr + (sample * (BYTESIN (REAL64))):
+    SEQ
+      dist := (INT ROUND(100.0 * data[0]))
+      angle := (INT ROUND(data[1] * 57.3))
+  #ELSE
   REAL64 result:
   SEQ
-    get.playerc.laser.t.scan(result, laser, sample, 0)
+    playerc.laser.t.scan.get.at(laser, sample, 0, result)
     dist := (INT ROUND(100.0 * result))
-    get.playerc.laser.t.scan(result, laser, sample, 1)
+    playerc.laser.t.scan.get.at(laser, sample, 1, result)
     angle := (INT ROUND(result * 57.3))
+  #ENDIF
 :
 
-PROC sonar.read(playerc.sonar.t sonar,
+PROC sonar.read(VAL playerc.sonar.t sonar,
                 VAL INT sample,
                 RESULT INT dist)
+  #IF TRUE
+  -- FIXME: temporary hack until I add array accessors back to SWIG
+  INT ptr:
+  SEQ
+    playerc.sonar.t.scan.get(sonar, ptr)
+    PLACED [1]REAL64 data AT ptr + (sample * (BYTESIN (REAL64))):
+    dist := (INT ROUND(100.0 * data[0]))
+  #ELSE
   REAL64 result:
   SEQ
-    get.playerc.sonar.t.scan(result, sonar, sample)
+    playerc.sonar.t.scan.get.at(sonar, sample, result)
     dist := (INT ROUND(100.0 * result))
+  #ENDIF
 :
 
 PROC robot.delay(VAL INT time)
@@ -42,6 +62,12 @@ PROC robot.delay(VAL INT time)
     debug.newline(debug.time)
 :
 
+--* Read new data for a client.
+PROC client.refresh (VAL playerc.client.t client)
+  INT success:
+  playerc.client.read (client, success)
+:
+
 -- This process protects clients when reading data from player and also
 -- updates the data by doing a playerc.client.read
 --
@@ -50,29 +76,29 @@ PROC robot.delay(VAL INT time)
 -- short time of each other, we may regard the data as not yet stale, and give
 -- them that instead of doing a whole new playerc.client.read.
 -- playerc.client.read is probably a reasonably expensive operation
-PROC refresh.process.moo(playerc.client.t client, []CHAN BOOL clients)
+PROC refresh.process.moo(VAL playerc.client.t client, []CHAN BOOL clients)
   WHILE TRUE
     PRI ALT i = 0 FOR SIZE clients   -- Should be a FAIR ALT
       BOOL dummy:
       #IF FALSE
       clients[i] ? dummy            -- Client requests entry to critical region
         SEQ
-          playerc.client.read(client)  -- Data is refreshed, client can now enter region
+          client.refresh(client)       -- Data is refreshed, client can now enter region
           clients[i] ? dummy           -- Client leaves critical region
           clients[i] ? dummy           -- Client leaves critical region
       #ELSE
       clients[i] ?? dummy            -- Client requests entry to critical region
-        playerc.client.read(client)  -- Data is refreshed, client can now enter region
+        client.refresh(client)       -- Data is refreshed, client can now enter region
         clients[i] ? dummy           -- Client leaves critical region
       #ENDIF
 :
 
-PROC refresh.process(playerc.client.t client, []CHAN BOOL clients)
+PROC refresh.process(VAL playerc.client.t client, []CHAN BOOL clients)
   TIMER tim:
   INT last.read:
   VAL INT min.read.delay IS 500000:
   SEQ
-    playerc.client.read(client)  -- Data is refreshed
+    client.refresh(client)       -- Data is refreshed
     tim ? last.read              -- Record when we last read anything
     WHILE TRUE
       PRI ALT i = 0 FOR SIZE clients   -- Should be a FAIR ALT
@@ -84,7 +110,7 @@ PROC refresh.process(playerc.client.t client, []CHAN BOOL clients)
             IF
               t AFTER (last.read PLUS min.read.delay)
                 SEQ
-                  playerc.client.read(client)  -- Data is refreshed, client can now enter region
+                  client.refresh(client)       -- Data is refreshed, client can now enter region
                   tim ? last.read              -- Record when we last read something
               TRUE
                 SKIP
@@ -111,7 +137,7 @@ PROC refresh.process(playerc.client.t client, []CHAN BOOL clients)
 --    careful that we dont get overlapping reads such that the refresh process
 --    is never re-enabled (possibly allowing only one read each on a refresh)
 #IF FALSE
-PROC refresh.process.old(playerc.client.t client, VAL INT Hz, []CHAN BOOL clients)
+PROC refresh.process.old(VAL playerc.client.t client, VAL INT Hz, []CHAN BOOL clients)
   VAL INT delay IS second/Hz:
   INITIAL BOOL enabled IS TRUE:
   INITIAL INT  enabled.by IS -1:
@@ -145,7 +171,7 @@ PROC refresh.process.old(playerc.client.t client, VAL INT Hz, []CHAN BOOL client
 :
 #ENDIF
 
-PROC laser.loop(playerc.laser.t laser,
+PROC laser.loop(VAL playerc.laser.t laser,
                 CHAN BOOL refresh.reading!, CHAN LASER sick!)
   WHILE TRUE
     LASER laser.data:
@@ -162,7 +188,7 @@ PROC laser.loop(playerc.laser.t laser,
       sick ! laser.data
 :
 
-PROC sonar.loop(playerc.sonar.t sonar,
+PROC sonar.loop(VAL playerc.sonar.t sonar,
                 CHAN BOOL refresh.reading!, CHAN SONAR devan!)
   WHILE TRUE
     SONAR sonar.data:
@@ -214,44 +240,45 @@ PROC robot.init(RESULT playerc.client.t client,
     -- Create a playerc client
     -- Set the mclient structure to NULL
     mclient := 0
-    playerc.client.create(client, mclient, host, player.port)
+    playerc.client.create(mclient, host, player.port, client)
     --check.success((INT client), "Failed to create client structure.")
-    playerc.client.connect(success, client)
+    playerc.client.connect(client, success)
     check.success(success, "Failed to connect to Stage.") 
-    playerc.client.datamode(success, client, (BYTE PLAYER.DATAMODE.PULL))
+    playerc.client.datamode(client, BYTE PLAYER.DATAMODE.PULL, success)
     check.success(success, "Failed to set datamode.")
-    playerc.client.set.replace.rule(success, client, -1, -1, PLAYER.MSGTYPE.DATA, -1, 1)
+    playerc.client.set.replace.rule(client, -1, -1, PLAYER.MSGTYPE.DATA, -1, 1, success)
     check.success(success, "Failed to set replacement rule")
-    --playerc.client.datafreq(success, client, poll.freq.in.hz)
+    --playerc.client.datafreq(client, poll.freq.in.hz, success)
     --check.success(success, "Failed to set data frequency")
     
     -- We want to be able to drive this robot around, so
     -- we need to initialize the position proxy, as well as the
     -- motors. (That's the 'enable' call.)
-    playerc.position2d.create(position, client, index)
-    playerc.position2d.subscribe(success, position, PLAYER.OPEN.MODE)
-    playerc.position2d.enable(success, position, 1)
+    playerc.position2d.create(client, index, position)
+    playerc.position2d.subscribe(position, PLAYER.OPEN.MODE, success)
+    playerc.position2d.enable(position, 1, success)
     -- WARNING: The success variable could be put to use here...
     
     -- Likewise, I want a laser sampler. I'll have
     -- to look at setting up the ultrasound rangers as well
-    playerc.laser.create(laser, client, index)
-    playerc.laser.subscribe(success, laser, PLAYER.OPEN.MODE)
-    playerc.laser.set.config(success, laser, (REAL64 (-(PI/2.0))), (REAL64 (PI/2.0)), 100.0, 1.0, 1)
+    playerc.laser.create(client, index, laser)
+    playerc.laser.subscribe(laser, PLAYER.OPEN.MODE, success)
+    -- FIXME: I don't know if this is how the frequency works
+    playerc.laser.set.config(laser, (REAL64 (-(PI/2.0))), (REAL64 (PI/2.0)), 100.0, 1.0, 1, REAL64 ROUND poll.freq.in.hz, success)
     -- WARNING: And again, checking for success might be nice.
 
-    playerc.sonar.create(sonar, client, index)
-    playerc.sonar.subscribe(success, sonar, PLAYER.OPEN.MODE)
+    playerc.sonar.create(client, index, sonar)
+    playerc.sonar.subscribe(sonar, PLAYER.OPEN.MODE, success)
     -- WARNING: And again, checking for success might be nice.
     
     -- Refresh, to clear the pipes
     SEQ i = 0 FOR 5
       SEQ
         --magic.int(i)
-        playerc.client.read(client)
+        client.refresh(client)
 :
 
-PROC motor.loop.old (playerc.position2d.t position, CHAN MOTORS moto?)
+PROC motor.loop.old (VAL playerc.position2d.t position, CHAN MOTORS moto?)
   INT success:
   TIMER tim:
   INT t:
@@ -268,26 +295,26 @@ PROC motor.loop.old (playerc.position2d.t position, CHAN MOTORS moto?)
       PRI ALT
         INT x,y,a:
         moto ? x ; y ; a
-          playerc.position2d.set.cmd.vel(success, position,
+          playerc.position2d.set.cmd.vel(position,
             ((REAL64 ROUND x)/100.0),
             ((REAL64 ROUND y)/100.0),
             ((REAL64 ROUND a)/100.0),
-            1)
+            1, success)
         tim ? AFTER t PLUS 1000
           SKIP
 :
 
-PROC motor.loop(playerc.position2d.t position, CHAN MOTORS moto?)
+PROC motor.loop(VAL playerc.position2d.t position, CHAN MOTORS moto?)
   INT success:
   WHILE TRUE
     INT x,y,a:
     SEQ
       moto ? x ; y ; a
-      playerc.position2d.set.cmd.vel(success, position,
+      playerc.position2d.set.cmd.vel(position,
         ((REAL64 ROUND x)/100.0),
         ((REAL64 ROUND y)/100.0),
         ((REAL64 ROUND a)/100.0),
-        1)
+        1, success)
 :
 
 
