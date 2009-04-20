@@ -19,3 +19,14 @@ VAL INT MAX.HOST.NAME.LENGTH IS 1024:
 PROTOCOL MOTORS IS INT ; INT ; INT:
 DATA TYPE LASER IS [num.laser.samples]INT:
 DATA TYPE SONAR IS [num.sonar.samples]INT:
+
+VAL BOOL debug.info IS FALSE:
+VAL INT debug.ffi IS 1:
+VAL INT debug.sick IS 2:
+VAL INT debug.motor IS 3:
+VAL INT debug.success.check IS 4:
+VAL INT debug.time IS 5:
+VAL INT debug.ha IS 6:
+VAL INT debug.peek IS 7:
+VAL INT debug.read IS 8:
+VAL INT debug.always IS 9:

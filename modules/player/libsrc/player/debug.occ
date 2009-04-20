@@ -1,15 +1,9 @@
 --** @module player
 
-VAL BOOL debug.info IS FALSE:
-VAL INT debug.ffi IS 1:
-VAL INT debug.sick IS 2:
-VAL INT debug.motor IS 3:
-VAL INT debug.success.check IS 4:
-VAL INT debug.time IS 5:
-VAL INT debug.ha IS 6:
-VAL INT debug.peek IS 7:
-VAL INT debug.read IS 8:
-VAL INT debug.always IS 9:
+#INCLUDE "useful.module"
+
+#INCLUDE "player.inc"
+
 --VAL []INT show.debugs IS [debug.success.check, debug.ha, debug.ffi]:
 --VAL []INT show.debugs IS [debug.success.check, debug.peek, debug.read]:
 --VAL []INT show.debugs IS [debug.always, debug.success.check]:
@@ -30,13 +24,13 @@ BOOL FUNCTION in.debugs(VAL INT id)
 :
 
 PROC debug.init()
-  magic.debug.init()
+  SKIP
 :
 
 PROC debug.string(VAL INT id, VAL []BYTE str)
   IF
     in.debugs(id)
-      magic.string(str)
+      trace.s (str)
     TRUE
       SKIP
 :
@@ -44,7 +38,7 @@ PROC debug.string(VAL INT id, VAL []BYTE str)
 PROC debug.int(VAL INT id, VAL INT i)
   IF
     in.debugs(id)
-      magic.int(i)
+      trace.i (i)
     TRUE
       SKIP
 :
@@ -52,7 +46,7 @@ PROC debug.int(VAL INT id, VAL INT i)
 PROC debug.newline(VAL INT id)
   IF
     in.debugs(id)
-      magic.newline()
+      trace.n ()
     TRUE
       SKIP
 :
