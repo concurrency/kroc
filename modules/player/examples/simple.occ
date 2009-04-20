@@ -1,0 +1,5 @@
+#INCLUDE "player.module"
+
+PROC main ()
+  SKIP
+:
