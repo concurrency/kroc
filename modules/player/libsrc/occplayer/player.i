@@ -6,4 +6,5 @@
 %}
 
 %include <libplayercore/player.h>
+%include <libplayercore/player_interfaces.h>
 %include <libplayerc/playerc.h>
