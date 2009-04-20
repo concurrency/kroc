@@ -1,7 +1,7 @@
-#INCLUDE "occSDL.inc"
-#INCLUDE "occOPENGL.inc"
-#USE "course.lib"
-#USE "snglmath.lib"
+#INCLUDE "occSDL.module"
+#INCLUDE "occGL.module"
+#INCLUDE "course.module"
+#INCLUDE "maths.module"
 
 #IF NOT (DEFINED (HUD.SHINY))
 #DEFINE HUD.FAST
