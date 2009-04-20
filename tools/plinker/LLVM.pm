@@ -27,7 +27,7 @@ $GRAPH = {
 	# Branching
 	'CALL'		=> { 'branching' => 1, 'in' => 3, 'out' => 0, 
 			'generator' => \&gen_call }, # actually out is 3
-	'CJ'		=> { 'branching' => 1, 'in' => 3, 'out' => 2,
+	'CJ'		=> { 'branching' => 1, 'in' => 3, 'out' => 2, 'fin' => 3,
 			'generator' => \&gen_cj },
 	'GCALL'		=> { 'branching' => 1, 'in' => 3,
 			'generator' => \&gen_call }, # check
@@ -385,7 +385,7 @@ sub resolve_inst_globals ($$$$$) {
 				$inst->{'arg'} = $ffi->{$n};
 				$ffi->{$n}->{'refs'}++;
 			} else {
-				#die "Undefined global reference $n";
+				die "Undefined global reference $n";
 			}
 		}
 	}
@@ -736,43 +736,68 @@ sub define_registers ($$) {
 
 	foreach my $label (@$labels) {
 		#print $label->{'name'}, " ", join (', ', @stack, @fstack), " ($wptr)\n";
-		
+		my $carry = 0;
+
 		$label->{'in'} = [ @stack ];
 		$label->{'fin'} = [ @fstack ];
 		$label->{'wptr'} = $wptr;
 
 		foreach my $inst (@{$label->{'inst'}}) {
 			my $name = $inst->{'name'};
-			next if $name =~ /^\./;
-			my (@in, @out, @fin, @fout);
+			
+			if ($name =~ /^\./) {
+				# Special Operations
+				my $arg = $inst->{'arg'};
+				if ($name eq '.FUNCRETURN') {
+					$carry = $arg;
+					print STDERR "$name $arg\n";
+				} elsif ($name eq '.FUNCRESULTS') {
+					my @regs;
+					for (my $i = 0; $i < $arg; ++$i) {
+						push (@regs, sprintf ('reg_%d', $reg_n++));
+					}
+					$label->{'in'} = [ @regs ];
+					@stack = @regs;
+					print STDERR "$name $arg\n";
+				}
+				next;
+			}
+			
 			my $data	= $GRAPH->{$name};
-			for (my $i = 0; $i < $data->{'in'}; ++$i) {
+			my $in 		= $name eq 'RET' ? $carry : $data->{'in'};
+			my $out 	= $data->{'out'};
+			my (@in, @out, @fin, @fout);
+
+			for (my $i = 0; $i < $in; ++$i) {
 				my $reg = shift (@stack);
 				push (@in, $reg) if $reg;
 			}
-			my $out = $data->{'out'};
-			if ($name eq 'CJ') {
-				$out = @in - ($data->{'in'} - $out);
+			for (my $i = 0; $i < $data->{'fin'}; ++$i) {
+				my $reg = shift (@fstack);
+				push (@fin, $reg) if $reg;
 			}
+			
+			if ($name eq 'CJ') {
+				$out = @in - ($in - $out);
+			}
+			
 			for (my $i = 0; $i < $out; ++$i) {
 				my $reg = sprintf ('reg_%d', $reg_n++);
 				unshift (@out, $reg);
 				unshift (@stack, $reg);
 			}
-			for (my $i = 0; $i < $data->{'fin'}; ++$i) {
-				my $reg = shift (@fstack) || 'null';
-				unshift (@in, $reg);
-			}
 			for (my $i = 0; $i < $data->{'fout'}; ++$i) {
 				my $reg = sprintf ('freg_%d', $freg_n++);
-				unshift (@out, $reg);
-				unshift (@stack, $reg);
+				unshift (@fout, $reg);
+				unshift (@fstack, $reg);
 			}
-			$inst->{'in'} = \@in if @in;
-			$inst->{'out'} = \@out if @out;
-			$inst->{'fin'} = \@fin if @fin;
-			$inst->{'fout'} = \@fout if @fout;
+			
+			$inst->{'in'} = \@in;
+			$inst->{'out'} = \@out;
+			$inst->{'fin'} = \@fin;
+			$inst->{'fout'} = \@fout;
 			$inst->{'wptr'} = $wptr;
+			
 			if ($data->{'wptr'}) {
 				$wptr = sprintf ('wptr_%d', $wptr_n++);
 				$inst->{'_wptr'} = $wptr;
@@ -815,6 +840,27 @@ sub build_phi_nodes ($$) {
 	}
 }
 
+sub build_label_types ($$) {
+	my ($self, $labels) = @_;
+
+	foreach my $label (@$labels) {
+		my $name = $label->{'name'};
+		
+		my @param;
+		foreach my $reg (@{$label->{'in'}}) {
+			push (@param, $self->int_type);
+		}
+		foreach my $reg (@{$label->{'fin'}}) {
+			push (@param, $self->float_type);
+		}
+		
+		$label->{'type'} = sprintf ('void (%s, %s%s%s)',
+			$self->sched_type, $self->workspace_type,
+			@param ? ', ' : '',
+			join (', ', @param)
+		);
+	}
+}
 
 sub output_regs (@) {
 	my (@regs) = @_;
@@ -986,16 +1032,14 @@ sub gen_j ($$$$) {
 		sprintf ('%s %%sched', $self->sched_type),
 		sprintf ('%s %%%s', $self->workspace_type, $inst->{'wptr'})
 	);
-	if ($inst->{'in'}) {
-		for (my $i = 0; $i < @{$inst->{'in'}}; ++$i) {
-			push (@params, sprintf ('%s %%%s', $self->int_type, $inst->{'in'}->[$i]));
-		}
+	
+	for (my $i = 0; $i < @{$inst->{'in'}}; ++$i) {
+		push (@params, sprintf ('%s %%%s', $self->int_type, $inst->{'in'}->[$i]));
 	}
-	if ($inst->{'fin'}) {
-		for (my $i = 0; $i < @{$inst->{'fin'}}; ++$i) {
-			push (@params, sprintf ('%s %%%s', $self->float_type, $inst->{'fin'}->[$i]));
-		}
+	for (my $i = 0; $i < @{$inst->{'fin'}}; ++$i) {
+		push (@params, sprintf ('%s %%%s', $self->float_type, $inst->{'fin'}->[$i]));
 	}
+	
 	return (
 		sprintf ('tail call fastcc void %s (%s) noreturn',
 			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
@@ -1006,14 +1050,42 @@ sub gen_j ($$$$) {
 
 sub gen_cj ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	my $next_label = $label->{'next'};
-	my $tmp_reg = $self->tmp_reg ();
-	my $jump_label = $self->tmp_label ();
-	my $cont_label = $self->tmp_label ();
+	my $next_label 	= $label->{'next'};
+	my $arg		= $inst->{'arg'};
+	my $tmp_reg 	= $self->tmp_reg ();
+	my $jump_label 	= $self->tmp_label ();
+	my $cont_label 	= $self->tmp_label ();
+	my $in		= $inst->{'in'};
+	my $fin		= $inst->{'fin'};
+	my $a_in	= $arg->{'in'}; 
+	my $a_fin	= $arg->{'fin'};
+	my (@asm, @jump_in, @jump_fin, @cont_in);
+	
+	if (@$in < @$a_in || @$fin < @$a_fin) {
+		my $msg = sprintf (
+			'ERROR: not enough registers to fill conditional jump target stack (%d,%d < %d,%d)',
+			scalar (@$in), scalar (@$fin),  
+			scalar (@$a_in), scalar (@$a_fin) 
+		);
+		$self->message (1, $msg);
+		push (@asm, "; $msg");
+	}
+
+	for (my $i = 0; $i < @$a_in; ++$i) {
+		$jump_in[$i] = $in->[$i];
+	}
+	for (my $i = 0; $i < @$a_fin; ++$i) {
+		$jump_fin[$i] = $fin->[$i];
+	}
+
+	@cont_in = [ @$in ];
+	shift (@cont_in);
+
 	return (
+		@asm,
 		sprintf ('%%%s = icmp eq %s %%%s, %d',
 			$tmp_reg,
-			$self->int_type, $inst->{'in'}->[0],
+			$self->int_type, $in->[0],
 			0
 		),
 		sprintf ('br i1 %%%s, label %%%s, label %%%s',
@@ -1021,18 +1093,18 @@ sub gen_cj ($$$$) {
 			$jump_label, $cont_label
 		),
 		$jump_label . ':',
-		sprintf ('tail call fastcc void %s (%s %%sched, %s %%%s) noreturn',
-			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
-			$self->sched_type,
-			$self->workspace_type,
-			$inst->{'wptr'}
-		),
+		$self->gen_j ($proc, $label, {
+			'in' 	=> \@jump_in,
+			'fin'	=> \@jump_fin,
+			'wptr'	=> $inst->{'wptr'},
+			'arg'	=> $arg
+		}),
 		'ret void',
 		$cont_label . ':',
 		$self->gen_j ($proc, $label, {
-			'in'	=> $next_label->{'in'},
+			'in'	=> \@cont_in,
 			'fin'	=> $next_label->{'fin'},
-			'wptr' 	=> $next_label->{'wptr'},
+			'wptr' 	=> $inst->{'wptr'},
 			'arg'	=> $next_label
 		})
 	);
@@ -1074,12 +1146,13 @@ sub gen_call ($$$$) {
 		));
 
 		if ($ffi ne 'C') {
-			my $ret_ptr = $self->tmp_reg ();
-			my $ret_val = $self->tmp_reg ();
+			my $next_label 	= $label->{'next'};
+			my $ret_ptr 	= $self->tmp_reg ();
+			my $ret_val 	= $self->tmp_reg ();
 			push (@asm, sprintf ('%%%s = bitcast %s %s to i8*',
 				$ret_ptr,
-				$self->func_type . '*' ,
-				$proc->{'call_prefix'} . $label->{'next'}->{'name'}
+				$next_label->{'type'} . '*' ,
+				$proc->{'call_prefix'} . $next_label->{'name'}
 			));
 			push (@asm, sprintf ('%%%s = ptrtoint i8* %%%s to %s',
 				$ret_val, 
@@ -1340,7 +1413,7 @@ sub gen_ldc ($$$$) {
 			$tmp_reg = $self->tmp_reg ();
 			@load = ( sprintf ('%%%s = bitcast %s %s to i8*',
 				$tmp_reg, 
-				$self->func_type . '*',
+				$arg->{'type'} . '*',
 				$proc->{'call_prefix'} . $name
 			));
 		}
@@ -1747,26 +1820,41 @@ sub gen_ret ($$$$) {
 	my $jump_val = $self->tmp_reg ();
 	my $jump_ptr = $self->tmp_reg ();
 	my $new_wptr = $self->tmp_reg ();
-	my @asm;
+	my @types = ( $self->sched_type, $self->workspace_type );
+	my @param = ( 
+		sprintf ('%s %%sched', $self->sched_type) ,
+		sprintf ('%s %%%s', $self->workspace_type, $new_wptr)
+	);
+	my @asm;	
+
+	foreach my $key ([ 'in', $self->int_type ], [ 'fin', $self->float_type ]) {
+		my ($key, $type) = @$key;
+		next if !$inst->{$key};
+		foreach my $reg (@{$inst->{$key}}) {
+			push (@types, $type);
+			push (@param, sprintf ('%s %%%s', $type, $reg));
+		}
+	}
+
 	push (@asm, sprintf ('%%%s = load %s %%%s',
 		$jump_val, 
 		$self->workspace_type, $inst->{'wptr'}
 	));
-	push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s, %s)*',
+	push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s)*',
 		$jump_ptr, 
-		$self->int_type, $jump_val, 
-		$self->sched_type, $self->workspace_type
+		$self->int_type, $jump_val,
+		join (', ', @types)
 	));
 	push (@asm, sprintf ('%%%s = getelementptr %s %%%s, %s %d',
 		$new_wptr,
 		$self->workspace_type, $inst->{'wptr'},
 		$self->index_type, 4
 	));
-	push (@asm, sprintf ('tail call fastcc void %%%s (%s %%sched, %s %%%s) noreturn',
+	push (@asm, sprintf ('tail call fastcc void %%%s (%s) noreturn',
 		$jump_ptr,
-		$self->sched_type,
-		$self->workspace_type, $new_wptr
+		join (', ', @param)
 	));
+	
 	return @asm;
 }
 
@@ -2148,6 +2236,11 @@ sub generate_proc ($$) {
 					$line .= $inst->{'arg'};
 				}
 			}
+			$line .= "\t{ ";
+			$line .= '(' . join (', ', @{$inst->{'in'}}, @{$inst->{'fin'}}) . ')';
+			$line .= ' => ';
+			$line .= '(' . join (', ', @{$inst->{'out'}}, @{$inst->{'fout'}}) . ')';
+			$line .= ' }';
 			push (@asm, $line);
 			
 			my $data	= $GRAPH->{$name};
@@ -2171,7 +2264,7 @@ sub generate_proc ($$) {
 					));
 				}
 				foreach my $reg (@$fout) {
-					push (@asm, sprintf ('%%%s = bitcast %s 0 to %s',
+					push (@asm, sprintf ('%%%s = bitcast %s 0.0 to %s',
 						$reg, $self->float_type, $self->float_type
 					));
 				}
@@ -2243,7 +2336,8 @@ sub code_proc ($$) {
 	$self->reset_tmp ();
 
 	$self->define_registers ($proc->{'labels'});
-	$self->build_phi_nodes ($proc->{'labels'});
+	#$self->build_phi_nodes ($proc->{'labels'});
+	$self->build_label_types ($proc->{'labels'});
 	
 	my $comments = "; " . $proc->{'symbol'};
 	return ($comments, $self->generate_proc ($proc));
