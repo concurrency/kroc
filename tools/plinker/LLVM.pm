@@ -132,15 +132,24 @@ $GRAPH = {
 	'POSTNORMSN'	=> { 'in' => 3, 'out' => 3 },
 	'ROUNDSN'	=> { 'in' => 3, 'out' => 1 },
 	# Long Arithmetic
-	'XDBLE'		=> { 'in' => 1, 'out' => 2 },
-	'LADD'		=> { 'in' => 3, 'out' => 1 },
-	'LDIFF'		=> { 'in' => 3, 'out' => 2 },
-	'LDIV'		=> { 'in' => 3, 'out' => 2 },
-	'LMUL'		=> { 'in' => 3, 'out' => 2 },
-	'LSHR'		=> { 'in' => 3, 'out' => 2 },
-	'LSHL'		=> { 'in' => 3, 'out' => 2 },
-	'LSUM'		=> { 'in' => 3, 'out' => 2 },
-	'LSUB'		=> { 'in' => 3, 'out' => 2 },
+	'XDBLE'		=> { 'in' => 1, 'out' => 2,
+			'generator' => \&gen_xdble },
+	'LADD'		=> { 'in' => 3, 'out' => 1,
+			'generator' => \&gen_ladd },
+	'LDIFF'		=> { 'in' => 3, 'out' => 2,
+			'generator' => \&gen_ldiff },
+	'LDIV'		=> { 'in' => 3, 'out' => 2,
+			'generator' => \&gen_ldiv },
+	'LMUL'		=> { 'in' => 3, 'out' => 2,
+			'generator' => \&gen_lmul },
+	'LSHR'		=> { 'in' => 3, 'out' => 2,
+			'generator' => \&gen_lshift },
+	'LSHL'		=> { 'in' => 3, 'out' => 2,
+			'generator' => \&gen_lshift },
+	'LSUM'		=> { 'in' => 3, 'out' => 2,
+			'generator' => \&gen_lsum },
+	'LSUB'		=> { 'in' => 3, 'out' => 2,
+			'generator' => \&gen_lsub },
 	# Errors
 	'SETERR'	=> {
 			'generator' => \&gen_seterr },
@@ -890,6 +899,19 @@ sub int_type {
 	return 'i32'; # FIXME:
 }
 
+sub long_type {
+	my $self = shift;
+	my $type = $self->int_type;
+	if ($type eq 'i32') {
+		return 'i64';
+	} elsif ($type eq 'i16') {
+		return 'i32';
+	} elsif ($type eq 'i64') {
+		return 'i128'; # FIXME: err...
+	}
+	die "unknown integer type $type";
+}
+
 sub int_length {
 	my $self = shift;
 	my $type = shift || $self->int_type;
@@ -900,7 +922,12 @@ sub int_length {
 	} elsif ($type eq 'i64') {
 		return 8;
 	}
-	die "Unknown integer type $type";
+	die "unknown integer type $type";
+}
+
+sub int_bits {
+	my $self = shift;
+	return $self->int_length * 8;
 }
 
 sub index_type {
@@ -1778,13 +1805,22 @@ sub gen_gt ($$$$) {
 }
 
 sub _gen_bitop ($$$@) { 
-	my ($self, $inst, $op, @in) = @_;
-	return sprintf ('%%%s = %s %s %%%s, %d',
-		$inst->{'out'}->[0],
-		$op,
-		$self->int_type, 
-		@in
-	);
+	my ($self, $inst, $op, $a, $b) = @_;
+	if ($b =~ /[^\d-]/) {
+		return sprintf ('%%%s = %s %s %%%s, %%%s',
+			$inst->{'out'}->[0],
+			$op,
+			$self->int_type, $a,
+			$b
+		);
+	} else {
+		return sprintf ('%%%s = %s %s %%%s, %d',
+			$inst->{'out'}->[0],
+			$op,
+			$self->int_type, $a,
+			$b
+		);
+	}
 }
 
 sub gen_not ($$$$) { 
@@ -2106,6 +2142,146 @@ sub gen_kcall ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $data = $GRAPH->{$inst->{'name'}};
 	return $self->_gen_kcall ($proc, $label, $inst, $data->{'symbol'});
+}
+
+sub _gen_long ($$$$) {
+	my ($self, $lo, $hi, $out) = @_;
+	my $long_lo = $self->tmp_reg ();
+	my $long_hi = $self->tmp_reg ();
+	my $long_tmp = $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = zext %s %%%s to %s',
+			$long_lo, $self->int_type, $lo, $self->long_type
+		),
+		sprintf ('%%%s = zext %s %%%s to %s',
+			$long_hi, $self->int_type, $hi, $self->long_type
+		),
+		sprintf ('%%%s = shl %s %%%s, %d',
+			$long_tmp, $self->long_type, $hi, $self->int_bits
+		),
+		sprintf ('%%%s = or %s %%%s, %%%s',
+			$out, $self->long_type, $long_lo, $long_tmp
+		)
+	);
+}
+
+sub _gen_long_split ($$$$) {
+	my ($self, $in, $lo, $hi) = @_;
+	my $long_tmp = $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$lo, $self->long_type, $in, $self->int_type
+		),
+		sprintf ('%%%s = lshr %s %%%s, %d',
+			$long_tmp, $self->long_type, $in, $self->int_bits
+		),
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$hi, $self->long_type, $long_tmp, $self->int_type
+		)
+	);
+}
+
+sub gen_xdble ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return (
+		$self->single_assignment (
+			$self->int_type, $inst->{'out'}->[0], $inst->{'in'}->[0]
+		),
+		sprintf ('%%%s = ashr %s %%%s, %d',
+			$inst->{'out'}->[1],
+			$self->int_type, $inst->{'in'}->[0],
+			$self->int_bits - 1
+		)
+	);
+}
+
+sub gen_ladd ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $tmp_1 = $self->tmp_reg ();
+	my $tmp_2 = $self->tmp_reg ();
+	my @asm;
+	push (@asm, $self->gen_add ($proc, $label, {
+		'in' 	=> [ $inst->{'in'}->[0], $inst->{'in'}->[1] ],
+		'out' 	=> [ $tmp_1 ],
+		'wptr'	=> $inst->{'wptr'}
+	}));
+	push (@asm, $self->gen_and ($proc, $label, {
+		'in' 	=> [ $inst->{'in'}->[2], 1 ],
+		'out' 	=> [ $tmp_2 ],
+		'wptr'	=> $inst->{'wptr'}
+	}));
+	push (@asm, $self->gen_add ($proc, $label, {
+		'in' 	=> [ $tmp_1, $tmp_2 ],
+		'out' 	=> $inst->{'out'},
+		'wptr'	=> $inst->{'wptr'}
+	}));
+	return @asm;
+}
+
+sub gen_ldiff ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	#FIXME!!!
+}
+
+sub gen_ldiv ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	#FIXME!!!
+}
+
+sub gen_lmul ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $long_val_a 	= $self->tmp_reg ();
+	my $long_val_b 	= $self->tmp_reg ();
+	my $long_val_c 	= $self->tmp_reg ();
+	my $mul_res	= $self->tmp_reg ();
+	my $sum_res	= $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = sext %s %%%s to %s',
+			$long_val_a, $self->int_type, $inst->{'in'}->[0], $self->long_type
+		),
+		sprintf ('%%%s = sext %s %%%s to %s',
+			$long_val_b, $self->int_type, $inst->{'in'}->[1], $self->long_type
+		),	
+		sprintf ('%%%s = zext %s %%%s to %s',
+			$long_val_c, $self->int_type, $inst->{'in'}->[2], $self->long_type
+		),
+		sprintf ('%%%s = mul %s %%%s, %%%s',
+			$mul_res, $self->long_type, $long_val_a, $long_val_b
+		),
+		sprintf ('%%%s = add %s %%%s, %%%s',
+			$sum_res, $self->long_type, $mul_res, $long_val_c
+		),
+		$self->_gen_long_split ($sum_res, @{$inst->{'out'}})
+	);
+}
+
+sub gen_lshift ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $long_val 	= $self->tmp_reg ();
+	my $long_res 	= $self->tmp_reg ();
+	my $shift	= $self->tmp_reg ();
+	return (
+		$self->_gen_long ($inst->{'in'}->[1], $inst->{'in'}->[2], $long_val),
+		sprintf ('%%%s = zext %s %%%s to %s',
+			$shift, $self->int_type, $inst->{'in'}->[0], $self->long_type
+		),
+		sprintf ('%%%s = %s %s %%%s, %%%s',
+			$long_res, 
+			$inst->{'name'} eq 'LSHR' ? 'lshr' : 'lshl',
+			$self->long_type, $long_val, $shift
+		),
+		$self->_gen_long_split ($long_res, @{$inst->{'out'}})
+	);
+}
+
+sub gen_lsum ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	#FIXME!!!
+}
+
+sub gen_lsub ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	#FIXME!!!
 }
 
 sub format_lines (@) {
