@@ -25,13 +25,13 @@ use Data::Dumper;
 
 $GRAPH = {
 	# Branching
-	'CALL'		=> { 'branching' => 1, 'in' => 3, 'out' => 0, 
+	'CALL'		=> { 'branching' => 1, 'in' => 3, 'fin' => 3, 
 			'generator' => \&gen_call }, # actually out is 3
 	'CJ'		=> { 'branching' => 1, 'in' => 3, 'out' => 2, 'fin' => 3,
 			'generator' => \&gen_cj },
-	'GCALL'		=> { 'branching' => 1, 'in' => 3,
+	'GCALL'		=> { 'branching' => 1, 'in' => 3, 'fin' => 3,
 			'generator' => \&gen_call }, # check
-	'J' 		=> { 'branching' => 1, 'in' => 3,
+	'J' 		=> { 'branching' => 1, 'in' => 3, 'fin' => 3,
 			'generator' => \&gen_j },
 	'LEND'		=> { 'branching' => 1, 'in' => 1,
 			'generator' => \&gen_lend },
@@ -1058,7 +1058,7 @@ sub gen_cj ($$$$) {
 	my $fin		= $inst->{'fin'};
 	my $a_in	= $arg->{'in'}; 
 	my $a_fin	= $arg->{'fin'};
-	my (@asm, @jump_in, @jump_fin, @cont_in);
+	my (@asm, @cont_in);
 	
 	if (@$in < @$a_in || @$fin < @$a_fin) {
 		my $msg = sprintf (
@@ -1070,14 +1070,7 @@ sub gen_cj ($$$$) {
 		push (@asm, "; $msg");
 	}
 
-	for (my $i = 0; $i < @$a_in; ++$i) {
-		$jump_in[$i] = $in->[$i];
-	}
-	for (my $i = 0; $i < @$a_fin; ++$i) {
-		$jump_fin[$i] = $fin->[$i];
-	}
-
-	@cont_in = [ @$in ];
+	@cont_in = ( @$in );
 	shift (@cont_in);
 
 	return (
@@ -1093,8 +1086,8 @@ sub gen_cj ($$$$) {
 		),
 		$jump_label . ':',
 		$self->gen_j ($proc, $label, {
-			'in' 	=> \@jump_in,
-			'fin'	=> \@jump_fin,
+			'in' 	=> $in,
+			'fin'	=> $fin,
 			'wptr'	=> $inst->{'wptr'},
 			'arg'	=> $arg
 		}),
@@ -1177,8 +1170,8 @@ sub gen_call ($$$$) {
 					$self->workspace_type, $tmp_reg
 				));
 			}
-		} elsif (($name eq 'GCALL') && $in) {
-			my $msg = "WARNING: stack is not empty at point of general call";
+		} elsif (($name eq 'GCALL') && @$in > 1) {
+			my $msg = "WARNING: stack has excess operands at point of general call";
 			$self->message (1, $msg);
 			push (@asm, "; $msg");
 		}
@@ -1250,10 +1243,10 @@ sub gen_call ($$$$) {
 
 	if ($name eq 'GCALL') {
 		my $jump_ptr = $self->tmp_reg ();
-		push (@asm, sprintf ('%%%s = inttoptr %s %%%s to void (%s, %s)',
+		push (@asm, sprintf ('%%%s = inttoptr %s %%%s to %s',
 			$jump_ptr,
 			$self->int_type, $in->[0],
-			$self->int_type, $self->workspace_type
+			$self->func_type . '*'
 		));
 		push (@asm, sprintf ('tail call fastcc void %%%s (%s %%sched, %s %%%s) noreturn',
 			$jump_ptr,
@@ -1393,13 +1386,13 @@ sub gen_gajw ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	return (
 		sprintf ('%%%s = ptrtoint %s %%%s to %s',
-			$self->{'out'}->[0], 
+			$inst->{'out'}->[0], 
 			$self->workspace_type, $inst->{'wptr'},
 			$self->int_type
 		),
 		sprintf ('%%%s = inttoptr %s %%%s to %s',
 			$inst->{'_wptr'}, 
-			$self->int_type, $self->{'in'}->[0],
+			$self->int_type, $inst->{'in'}->[0],
 			$self->workspace_type
 		)
 	);
@@ -1514,10 +1507,18 @@ sub gen_stl ($$$$) {
 	return (@asm, $store);
 }
 
-sub _gen_ldnlp ($$) {
-	my ($self, $inst) = @_;
-	my ($reg, @asm);
-	my $ptr_reg = $self->tmp_reg ();
+sub _gen_ldnlp ($@) {
+	my ($self, $inst, $out_reg) = @_;
+	my (@asm, $ptr_reg);
+	
+	$out_reg = $self->tmp_reg () if !$out_reg;
+	
+	if ($inst->{'arg'} != 0) {
+		$ptr_reg = $self->tmp_reg ();
+	} else {
+		$ptr_reg = $out_reg;
+	}
+
 	push (@asm,
 		sprintf ('%%%s = inttoptr %s %%%s to %s',
 			$ptr_reg, 
@@ -1526,17 +1527,21 @@ sub _gen_ldnlp ($$) {
 		)
 	);
 	if ($inst->{'arg'} != 0) {
-		$reg = $self->tmp_reg ();
 		push (@asm, 
 			sprintf ('%%%s = getelementptr %s %%%s, %s %d',
-				$reg, 
+				$out_reg, 
 				$self->int_type . '*', $ptr_reg,
 				$self->index_type, $inst->{'arg'}
 		));
-	} else {
-		$reg = $ptr_reg;
 	}
-	return ($reg, @asm);
+	
+	return ($out_reg, @asm);
+}
+
+sub gen_ldnlp ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my ($reg, @asm) = $self->_gen_ldnlp ($inst, $inst->{'out'}->[0]);
+	return @asm;
 }
 
 sub gen_ldnl ($$$$) {
