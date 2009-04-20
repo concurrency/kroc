@@ -7,8 +7,7 @@ CFLAGS = @CFLAGS@ @DEFS@ @PLAYER_CFLAGS@
 
 SWIG_SOURCE_FILES = \
 	occamplayer.i \
-	player.i \
-	playerc.i
+	player.i
 
 SWIG_OUTPUT_FILES = \
 	player_wrap.c player_wrap.h occplayer.inc
@@ -32,7 +31,7 @@ all-local: $(libs) $(includes)
 
 if HAVE_SWIG_OCCAM
 player_wrap.c player_wrap.h occplayer.inc: $(SWIG_SOURCE_FILES)
-	$(SWIG_OCCAM) player.i
+	$(SWIG_OCCAM) @PLAYER_CFLAGS@ player.i
 endif
 
 occplayer.lib: $(occplayer_lib_objs)
