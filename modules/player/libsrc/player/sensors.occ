@@ -1,3 +1,10 @@
+--** @module player
+
+#INCLUDE "occplayer.module"
+
+#INCLUDE "player.inc"
+#USE "debug"
+
 VAL INT MAX.LASER.VALUE IS 800:
 VAL INT MAX.SONAR.VALUE IS 500:
 --DATA TYPE LASER IS [180]INT:

@@ -6,22 +6,22 @@ OCCBUILD = @OCCBUILD@ --search ../occplayer
 CFLAGS = @CFLAGS@ @DEFS@
 
 EXTRA_DIST = \
+	control.occ \
 	debug.occ \
-	gen-arcs.ss \
-	pioneer_hud.inc \
-	pioneerutils.inc \
-	player.inc
+	gen-arcs.py \
+	hud.occ \
+	player.inc \
+	sensors.occ
 
 if BUILD_PLAYER
 player_lib_objs = \
-	debug.tce
+	control.tce \
+	debug.tce \
+	hud.tce \
+	sensors.tce
 
 player_libs = player.lib
-player_includes = \
-	pioneer_hud.inc \
-	pioneerutils.inc \
-	player.inc \
-	points.inc
+player_includes = player.inc
 endif
 
 libs = $(player_libs)
@@ -50,3 +50,14 @@ points.inc: gen-arcs.py
 	$(PYTHON) gen-arcs.py >points.inc
 
 CLEANFILES = points.inc
+
+## begin pideps dependencies
+control.tce: $(srcdir)/player.inc
+control.tce: debug.tce
+hud.tce: $(srcdir)/player.inc
+hud.tce: $(srcdir)/points.inc
+hud.tce: control.tce
+hud.tce: debug.tce
+sensors.tce: $(srcdir)/player.inc
+sensors.tce: debug.tce
+## end pideps dependencies

@@ -1,4 +1,4 @@
-#INCLUDE "misc.inc"
+--** @module player
 
 VAL BOOL debug.info IS FALSE:
 VAL INT debug.ffi IS 1:

@@ -1,7 +1,13 @@
+--** @module player
+
 #INCLUDE "occSDL.module"
 #INCLUDE "occGL.module"
 #INCLUDE "course.module"
 #INCLUDE "maths.module"
+
+#INCLUDE "player.inc"
+#USE "control"
+#USE "debug"
 
 #IF NOT (DEFINED (HUD.SHINY))
 #DEFINE HUD.FAST
