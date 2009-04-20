@@ -114,9 +114,9 @@ $GRAPH = {
 			'generator' => \&gen_xor },
 	'SB'		=> { 'in' => 2,
 			'generator' => \&gen_sb },
-	'SHR'		=> { 'in' => 2, 'out' => 1,
+	'SHR'		=> { 'in' => 1, 'out' => 1,
 			'generator' => \&gen_shr },
-	'SHL'		=> { 'in' => 2, 'out' => 1,
+	'SHL'		=> { 'in' => 1, 'out' => 1,
 			'generator' => \&gen_shl },
 	'AND'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_and },
@@ -385,7 +385,7 @@ sub resolve_inst_globals ($$$$$) {
 				$inst->{'arg'} = $ffi->{$n};
 				$ffi->{$n}->{'refs'}++;
 			} else {
-				die "Undefined global reference $n";
+				#die "Undefined global reference $n";
 			}
 		}
 	}
@@ -750,7 +750,6 @@ sub define_registers ($$) {
 				my $arg = $inst->{'arg'};
 				if ($name eq '.FUNCRETURN') {
 					$carry = $arg;
-					print STDERR "$name $arg\n";
 				} elsif ($name eq '.FUNCRESULTS') {
 					my @regs;
 					for (my $i = 0; $i < $arg; ++$i) {
@@ -758,7 +757,6 @@ sub define_registers ($$) {
 					}
 					$label->{'in'} = [ @regs ];
 					@stack = @regs;
-					print STDERR "$name $arg\n";
 				}
 				next;
 			}
@@ -1028,21 +1026,22 @@ sub _gen_error ($$$$$) {
 
 sub gen_j ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	my @params = ( 
+	my $arg 	= $inst->{'arg'};
+	my @params 	= (
 		sprintf ('%s %%sched', $self->sched_type),
 		sprintf ('%s %%%s', $self->workspace_type, $inst->{'wptr'})
 	);
 	
-	for (my $i = 0; $i < @{$inst->{'in'}}; ++$i) {
+	for (my $i = 0; $i < @{$arg->{'in'}}; ++$i) {
 		push (@params, sprintf ('%s %%%s', $self->int_type, $inst->{'in'}->[$i]));
 	}
-	for (my $i = 0; $i < @{$inst->{'fin'}}; ++$i) {
+	for (my $i = 0; $i < @{$arg->{'fin'}}; ++$i) {
 		push (@params, sprintf ('%s %%%s', $self->float_type, $inst->{'fin'}->[$i]));
 	}
 	
 	return (
 		sprintf ('tail call fastcc void %s (%s) noreturn',
-			$proc->{'call_prefix'} . $inst->{'arg'}->{'name'},
+			$proc->{'call_prefix'} . $arg->{'name'},
 			join (', ', @params)
 		)
 	);
@@ -1264,8 +1263,16 @@ sub gen_call ($$$$) {
 		));
 	} elsif ($name eq 'CALL') {
 		if (!$ffi) {
+			my $symbol = $self->symbol_to_proc_name ($symbol);
+
+			$self->{'header'}->{$symbol} = [
+				sprintf ('declare void @%s (%s, %s)', 
+					$symbol, $self->sched_type, $self->workspace_type
+				)
+			] if !exists ($self->{'header'}->{$symbol});
+			
 			push (@asm, sprintf ('tail call fastcc void @%s (%s %%sched, %s %%%s) noreturn',
-				$self->symbol_to_proc_name ($symbol),
+				$symbol,
 				$self->sched_type,
 				$self->workspace_type,
 				$new_wptr
@@ -1797,12 +1804,12 @@ sub gen_and ($$$$) {
 
 sub gen_shr ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
-	return $self->_gen_bitop ($inst, 'lshr', @{$inst->{'in'}});
+	return $self->_gen_bitop ($inst, 'lshr', @{$inst->{'in'}}, $inst->{'arg'});
 }
 
 sub gen_shl ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
-	return $self->_gen_bitop ($inst, 'shl', @{$inst->{'in'}});
+	return $self->_gen_bitop ($inst, 'shl', @{$inst->{'in'}}, $inst->{'arg'});
 }
 
 sub gen_boolinvert ($$$$) {
