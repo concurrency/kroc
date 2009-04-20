@@ -13,7 +13,7 @@ OCCAM_OCCBUILD
 build_player_examples=yes
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([player.module], ,
+OCCAM_INCLUDE([occplayer.module player.module], ,
               [build_player_examples=no])
 
 AC_MSG_CHECKING([whether to build player examples])

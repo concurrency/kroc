@@ -6,11 +6,13 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
+	hudtest.occ \
 	simple.occ \
 	startrobot.occ
 
 if BUILD_PLAYER_EXAMPLES
 player_examples = \
+	hudtest \
 	simple \
 	startrobot
 endif

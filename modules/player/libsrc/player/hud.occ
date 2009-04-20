@@ -1,5 +1,6 @@
 --** @module player
 
+#INCLUDE "occplayer.module"
 #INCLUDE "occSDL.module"
 #INCLUDE "occGL.module"
 #INCLUDE "course.module"
@@ -68,25 +69,25 @@ PROC keyevent()
   INT re:
   INITIAL BOOL quit IS FALSE:
   SEQ
-    create.SDL.Event(event)
+    new.SDL.Event(event)
     WHILE NOT quit
       SEQ 
         tim ? wait
         tim ? AFTER wait PLUS delay
         tim ? wait
-        SDL.PollEvent(re, event)
+        SDL.PollEvent(event, re)
         tim ? AFTER wait PLUS delay
         IF
           re > 0
             SEQ
-              get.SDL.Event.type(type, event)
+              SDL.Event.type.get(event, type)
               IF 
                 (INT type) = SDL.KEYDOWN
                   INT key:
                   SEQ
                     keyevent := (SDL.KeyboardEvent event)
-                    get.SDL.KeyboardEvent.keysym(keyinfo, keyevent)
-                    get.SDL.keysym.sym(key, keyinfo)
+                    SDL.KeyboardEvent.keysym.get(keyevent, keyinfo)
+                    SDL.keysym.sym.get(keyinfo, key)
                 (INT type) = SDL.KEYUP
                   SKIP 
                 (INT type) = SDL.MOUSEBUTTONDOWN
@@ -309,7 +310,7 @@ PROC pioneer.hud(CHAN LASER laser.data)
   VAL INT err.const IS 100:
   INITIAL INT width, height IS 500, 500:
   SEQ
-    SDL.Init(result, SDL.INIT.VIDEO)
+    SDL.Init(SDL.INIT.VIDEO, result)
     --{{{ Test to see if SDL init failed, quit if it did
     IF
       result <> 0
@@ -328,11 +329,11 @@ PROC pioneer.hud(CHAN LASER laser.data)
     -- Set up OpenGL
     INT re:
     SEQ
-      SDL.GL.SetAttribute(re, SDL.GL.RED.SIZE, 5)
-      SDL.GL.SetAttribute(re, SDL.GL.GREEN.SIZE, 5)
-      SDL.GL.SetAttribute(re, SDL.GL.BLUE.SIZE, 5)
-      SDL.GL.SetAttribute(re, SDL.GL.DOUBLEBUFFER, 1)
-      SDL.SetVideoMode(surface, width, height, 16, SDL.OPENGL)
+      SDL.GL.SetAttribute(SDL.GL.RED.SIZE, 5, re)
+      SDL.GL.SetAttribute(SDL.GL.GREEN.SIZE, 5, re)
+      SDL.GL.SetAttribute(SDL.GL.BLUE.SIZE, 5, re)
+      SDL.GL.SetAttribute(SDL.GL.DOUBLEBUFFER, 1, re)
+      SDL.SetVideoMode(width, height, 16, SDL.OPENGL, surface)
     --{{{ Test to see if OpenGL init failed, qiut if it did
     IF
       (INT surface) = 0
@@ -394,26 +395,3 @@ PROC pioneer.hud.LL(CHAN LASER sick.in?, sick.out!, VAL BOOL enabled)
           sick.out ! sick.data
 :
 
---PROC test(CHAN BYTE keyboard?, screen!, error!)
-PROC test()
-  CHAN LASER data:
-  PAR
-    pioneer.hud(data?)
-    WHILE TRUE
-      LASER d:
-      INT t:
-      TIMER tim:
-      SEQ
-        SEQ count = 0 FOR 180
-          SEQ
-            tim ? t
-            tim ? AFTER t PLUS 10000
-            SEQ i = 0 FOR 180
-              IF
-                (i > count) AND (i < (count + 10))
-                  d[i] := 10
-                TRUE
-                  d[i] := 39
-            #PRAGMA DEFINED d
-            data ! d
-:

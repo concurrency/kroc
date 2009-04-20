@@ -31,7 +31,7 @@ if test "x$build_occplayer" = "xno"; then
 fi
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([useful.module], ,
+OCCAM_INCLUDE([useful.module occSDL.module occGL.module course.module maths.module], ,
               [build_player=no])
 
 AC_MSG_CHECKING([whether to build occplayer.module])
@@ -42,6 +42,6 @@ OCCAM_PROVIDE(occplayer.module, occplayer, none, [test $build_occplayer = yes])
 AC_MSG_CHECKING([whether to build player.module])
 AC_MSG_RESULT($build_player)
 AM_CONDITIONAL(BUILD_PLAYER, [test $build_player = yes])
-OCCAM_PROVIDE(player.module, player, occplayer.module useful.module, [test $build_player = yes])
+OCCAM_PROVIDE(player.module, player, occplayer.module useful.module occSDL.module occGL.module course.module maths.module, [test $build_player = yes])
 
 AC_OUTPUT([Makefile player/Makefile occplayer/Makefile])
