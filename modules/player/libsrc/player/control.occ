@@ -456,9 +456,3 @@ PROC delta.S(CHAN SONAR devan.in?, devan.out.1!, devan.out.2!)
         devan.out.1 ! data
         devan.out.2 ! data
 :
-
-
-PROC just.for.good.measure()
-  magic.string("You ran the library. Try again.*n*c")
-:
-
