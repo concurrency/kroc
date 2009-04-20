@@ -58,7 +58,7 @@ while (my $arg = shift @args) {
 	} elsif ($options && $arg eq '-o') {
 		$output 		= shift @args;
 	} elsif ($options && $arg =~ /^-/) {
-		warnerr ("ignoring unknown option: $arg");
+		warnerr ("ignoring unknown option: $arg") if $verbose;
 		shift @args if $arg eq '--cnpfx';
 	} else {
 		push (@files, $arg);
