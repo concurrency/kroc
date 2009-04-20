@@ -237,9 +237,3 @@ PROC sonar.black.hole(CHAN SONAR in?)
     SONAR tmp:
     in ? tmp
 :
-
-
--- Incase some dumkopfen executes the library.
-PROC oops()
-  SKIP
-:
