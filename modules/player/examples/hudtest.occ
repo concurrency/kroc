@@ -1,0 +1,24 @@
+#INCLUDE "player.module"
+
+PROC test()
+  CHAN LASER data:
+  PAR
+    pioneer.hud(data?)
+    WHILE TRUE
+      LASER d:
+      INT t:
+      TIMER tim:
+      SEQ
+        SEQ count = 0 FOR 180
+          SEQ
+            tim ? t
+            tim ? AFTER t PLUS 10000
+            SEQ i = 0 FOR 180
+              IF
+                (i > count) AND (i < (count + 10))
+                  d[i] := 10
+                TRUE
+                  d[i] := 39
+            #PRAGMA DEFINED d
+            data ! d
+:

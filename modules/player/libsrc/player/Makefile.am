@@ -30,7 +30,7 @@ includes = $(player_includes)
 all-local: $(libs) $(includes)
 
 player.lib: $(player_lib_objs)
-	$(OCCBUILD) --library player.lib --need occplayer --need useful --include player.inc $(player_lib_objs)
+	$(OCCBUILD) --library player.lib --need occplayer --need useful --need occSDL --need occGL --need course --need maths --include player.inc $(player_lib_objs)
 
 install-exec-local: $(libs) $(includes)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
