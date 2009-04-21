@@ -135,9 +135,9 @@ $GRAPH = {
 	'XDBLE'		=> { 'in' => 1, 'out' => 2,
 			'generator' => \&gen_xdble },
 	'LADD'		=> { 'in' => 3, 'out' => 1,
-			'generator' => \&gen_ladd },
+			'generator' => \&gen_laddsub },
 	'LDIFF'		=> { 'in' => 3, 'out' => 2,
-			'generator' => \&gen_ldiff },
+			'generator' => \&gen_ldiffsum },
 	'LDIV'		=> { 'in' => 3, 'out' => 2,
 			'generator' => \&gen_ldiv },
 	'LMUL'		=> { 'in' => 3, 'out' => 2,
@@ -147,9 +147,9 @@ $GRAPH = {
 	'LSHL'		=> { 'in' => 3, 'out' => 2,
 			'generator' => \&gen_lshift },
 	'LSUM'		=> { 'in' => 3, 'out' => 2,
-			'generator' => \&gen_lsum },
+			'generator' => \&gen_ldiffsum },
 	'LSUB'		=> { 'in' => 3, 'out' => 2,
-			'generator' => \&gen_lsub },
+			'generator' => \&gen_laddsub },
 	# Errors
 	'SETERR'	=> {
 			'generator' => \&gen_seterr },
@@ -2157,7 +2157,7 @@ sub _gen_long ($$$$) {
 			$long_hi, $self->int_type, $hi, $self->long_type
 		),
 		sprintf ('%%%s = shl %s %%%s, %d',
-			$long_tmp, $self->long_type, $hi, $self->int_bits
+			$long_tmp, $self->long_type, $long_hi, $self->int_bits
 		),
 		sprintf ('%%%s = or %s %%%s, %%%s',
 			$out, $self->long_type, $long_lo, $long_tmp
@@ -2195,61 +2195,94 @@ sub gen_xdble ($$$$) {
 	);
 }
 
-sub gen_ladd ($$$$) {
+sub gen_laddsub ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	my $tmp_1 = $self->tmp_reg ();
-	my $tmp_2 = $self->tmp_reg ();
-	my @asm;
-	push (@asm, $self->gen_add ($proc, $label, {
-		'in' 	=> [ $inst->{'in'}->[0], $inst->{'in'}->[1] ],
-		'out' 	=> [ $tmp_1 ],
-		'wptr'	=> $inst->{'wptr'}
-	}));
-	push (@asm, $self->gen_and ($proc, $label, {
-		'in' 	=> [ $inst->{'in'}->[2], 1 ],
-		'out' 	=> [ $tmp_2 ],
-		'wptr'	=> $inst->{'wptr'}
-	}));
-	push (@asm, $self->gen_add ($proc, $label, {
-		'in' 	=> [ $tmp_1, $tmp_2 ],
-		'out' 	=> $inst->{'out'},
-		'wptr'	=> $inst->{'wptr'}
-	}));
-	return @asm;
+	my $long_val_a 	= $self->tmp_reg ();
+	my $long_val_b 	= $self->tmp_reg ();
+	my $long_val_c 	= $self->tmp_reg ();
+	my $carry	= $self->tmp_reg ();
+	my $res_tmp	= $self->tmp_reg ();
+	my $res		= $self->tmp_reg ();
+	my $out_ext	= $self->tmp_reg ();
+	my $ne_res	= $self->tmp_reg ();
+	my $tmp		= $self->tmp_label ();
+	my $error_lab	= $tmp . '_overflow_error';
+	my $ok_lab	= $tmp . '_ok';
+	my $out		= $inst->{'out'}->[0];
+	my $op		= $inst->{'name'} eq 'LADD' ? 'add' : 'sub';
+	return (
+		sprintf ('%%%s = sext %s %%%s to %s',
+			$long_val_a, $self->int_type, $inst->{'in'}->[0], $self->long_type
+		),
+		sprintf ('%%%s = sext %s %%%s to %s',
+			$long_val_b, $self->int_type, $inst->{'in'}->[1], $self->long_type
+		),	
+		sprintf ('%%%s = trunc %s %%%s to i1',
+			$carry, $self->int_type, $inst->{'in'}->[2]
+		),
+		sprintf ('%%%s = zext i1 %%%s to %s',
+			$long_val_c, $carry, $self->long_type
+		),
+		sprintf ('%%%s = %s %s %%%s, %%%s',
+			$res_tmp, $op, $self->long_type, $long_val_b, $long_val_a
+		),
+		sprintf ('%%%s = %s %s %%%s, %%%s',
+			$res, $op, $self->long_type, $res_tmp, $long_val_c
+		),
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$out, $self->long_type, $res, $self->int_type
+		),
+		sprintf ('%%%s = sext %s %%%s to %s',
+			$out_ext, $self->int_type, $out, $self->long_type
+		),
+		sprintf ('%%%s = icmp ne %s %%%s, %%%s',
+			$ne_res, $self->long_type, $res, $out_ext
+		),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$ne_res, $ok_lab, $error_lab
+		),
+		
+		$error_lab . ':',
+		$self->_gen_error ($proc, $label, $inst, 'overflow'),
+		sprintf ('br label %%%s', $ok_lab),
+		
+		$ok_lab . ':'
+	);
 }
 
-sub gen_ldiff ($$$$) {
+sub gen_ldiffsum ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $res_1	= $self->tmp_reg ();
-	my $b_diff_a	= $self->tmp_reg ();
+	my $b_op_a	= $self->tmp_reg ();
 	my $carry_1	= $self->tmp_reg ();
 	my $res_2	= $self->tmp_reg ();
 	my $carry_2	= $self->tmp_reg ();
 	my $carry	= $self->tmp_reg ();
+	my $op		= $inst->{'name'} eq 'LDIFF' ? 'usub' : 'uadd';
 	return (
-		sprintf ('%%%s = call { %s, i1 } @llvm.usub.with.overflow.%s (%s %%%s, %s %%%s)',
+		sprintf ('%%%s = call { %s, i1 } @llvm.%s.with.overflow.%s (%s %%%s, %s %%%s)',
 			$res_1, 
-			$self->int_type, $self->int_type, 
+			$self->int_type, $op, $self->int_type, 
 			$self->int_type, $inst->{'in'}->[1],
 			$self->int_type, $inst->{'in'}->[0]
 		),
 		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 0',
-			$b_diff_a, $self->int_type, $res_1
+			$b_op_a, $self->int_type, $res_1
 		),
 		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 1',
 			$carry_1, $self->int_type, $res_1
 		),
-		sprintf ('%%%s = call { %s, i1 } @llvm.usub.with.overflow.%s (%s %%%s, %s %%%s)',
+		sprintf ('%%%s = call { %s, i1 } @llvm.%s.with.overflow.%s (%s %%%s, %s %%%s)',
 			$res_2, 
-			$self->int_type, $self->int_type, 
-			$self->int_type, $b_diff_a,
+			$self->int_type, $op, $self->int_type, 
+			$self->int_type, $b_op_a,
 			$self->int_type, $inst->{'in'}->[2]
 		),
 		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 0',
 			$inst->{'out'}->[0], $self->int_type, $res_1
 		),
 		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 1',
-			$carry_1, $self->int_type, $res_1
+			$carry_2, $self->int_type, $res_1
 		),
 		sprintf ('%%%s = or i1 %%%s, %%%s',
 			$carry, $carry_1, $carry_2
@@ -2345,21 +2378,11 @@ sub gen_lshift ($$$$) {
 		),
 		sprintf ('%%%s = %s %s %%%s, %%%s',
 			$long_res, 
-			$inst->{'name'} eq 'LSHR' ? 'lshr' : 'lshl',
+			$inst->{'name'} eq 'LSHR' ? 'lshr' : 'shl',
 			$self->long_type, $long_val, $shift
 		),
 		$self->_gen_long_split ($long_res, @{$inst->{'out'}})
 	);
-}
-
-sub gen_lsum ($$$$) {
-	my ($self, $proc, $label, $inst) = @_;
-	#FIXME!!!
-}
-
-sub gen_lsub ($$$$) {
-	my ($self, $proc, $label, $inst) = @_;
-	#FIXME!!!
 }
 
 sub format_lines (@) {
@@ -2614,6 +2637,7 @@ sub intrinsics ($) {
 	my $int = $self->int_type;
 	return (
 		"declare { $int, i1 } \@llvm.sadd.with.overflow.$int ($int, $int)",
+		"declare { $int, i1 } \@llvm.uadd.with.overflow.$int ($int, $int)",
 		"declare { $int, i1 } \@llvm.smul.with.overflow.$int ($int, $int)",
 		"declare { $int, i1 } \@llvm.ssub.with.overflow.$int ($int, $int)",
 		"declare { $int, i1 } \@llvm.usub.with.overflow.$int ($int, $int)"
