@@ -21,7 +21,7 @@
 #include "SDL_wrap.h"
 
 /* C.occ.SDL.make.surface (VAL [][]INT pixels, RESULT SDL.Surface surface) */
-DLLPREFIX void _occ_SDL_make_surface (int w[])
+void _occ_SDL_make_surface (int w[])
 {
 	int *pixels = (int *) w[0];
 	int height = w[1], width = w[2];
@@ -30,4 +30,3 @@ DLLPREFIX void _occ_SDL_make_surface (int w[])
 	*surface = SDL_CreateRGBSurfaceFrom (pixels, width, height, 32, width * 4,
 	                                     0x00FF0000, 0x0000FF00, 0x000000FF, 0);
 }
-

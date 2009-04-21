@@ -63,13 +63,13 @@ PROC occ.SDL.joy.handler (CT.SDLJS? svr, VAL INT num)
     boff.iv := min.iv
     reporting := FALSE
 
-    SDL.JoystickOpen (sptr, num)
+    SDL.JoystickOpen (num, sptr)
 
     IF
       sptr <> 0
         SEQ
-          SDL.JoystickNumAxes (nr.axes, sptr)
-          SDL.JoystickNumButtons (nr.btns, sptr)
+          SDL.JoystickNumAxes (sptr, nr.axes)
+          SDL.JoystickNumButtons (sptr, nr.btns)
       TRUE
         nr.axes, nr.btns := 0, 0
 
@@ -88,12 +88,12 @@ PROC occ.SDL.joy.handler (CT.SDLJS? svr, VAL INT num)
           SEQ i = 0 FOR nr.axes
             INT16 tmp:
             SEQ
-              SDL.JoystickGetAxis (tmp, sptr, i)
+              SDL.JoystickGetAxis (sptr, i, tmp)
               ax.vals[i] := tmp
           SEQ i = 0 FOR nr.btns
             BYTE tmp:
             SEQ
-              SDL.JoystickGetButton (tmp, sptr, i)
+              SDL.JoystickGetButton (sptr, i, tmp)
               bt.vals[i] := tmp
 
           CT.SDLJSEVENT! tmp:
@@ -177,12 +177,12 @@ PROC occ.SDL.joy.handler (CT.SDLJS? svr, VAL INT num)
                     SEQ i = 0 FOR nr.axes
                       INT16 tmp:
                       SEQ
-                        SDL.JoystickGetAxis (tmp, sptr, i)
+                        SDL.JoystickGetAxis (sptr, i, tmp)
                         ax.vals[i] := tmp
                     SEQ i = 0 FOR nr.btns
                       BYTE tmp:
                       SEQ
-                        SDL.JoystickGetButton (tmp, sptr, i)
+                        SDL.JoystickGetButton (sptr, i, tmp)
                         bt.vals[i] := tmp
 
                     #PRAGMA DEFINED ax.vals
@@ -637,7 +637,7 @@ PROC occ.SDL.joy.calibrator (CT.SDLJSEVENT! ev.in, RESULT CT.SDLJSEVENT! ev.out,
 PROC occ.SDL.joy.server (CT.SDLJOY? svr)
   INT result:
   SEQ
-    SDL.Init (result, SDL.INIT.JOYSTICK)
+    SDL.Init (SDL.INIT.JOYSTICK, result)
     IF
       result = 0
         INT j.count:
@@ -648,7 +648,7 @@ PROC occ.SDL.joy.server (CT.SDLJOY? svr)
 
           INT r2:
           SEQ
-            SDL.JoystickEventState (r2, SDL.IGNORE)
+            SDL.JoystickEventState (SDL.IGNORE, r2)
 
           clis := MOBILE [j.count]SHARED CT.SDLJS!
           js.info := MOBILE [j.count][SDLJS.ITEMS]INT
