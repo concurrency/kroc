@@ -106,14 +106,21 @@
 # define _CRT_SECURE_NO_DEPRECATE
 #endif
 
-DLLPREFIX void _SDL_Init (word w[])
-
-{
-  *(INT(w[0])) = SDL_Init ((VAL_INT(w[1])));
-  return;
+/*{{{  function SDL_Init */
+SWIGEXPORT void _SDL_Init (word occ_args[]) {
+  Uint32 arg1 ;
+  int result;
+  
+  {
+    arg1 = (Uint32) occ_args[0]; 
+  }result = (int)SDL_Init(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
 }
 
 
+/*}}}*/
 
     #ifdef COCOA_HELPER
     extern void SDLCocoaInit();  /* To be called before any SDL functions */
@@ -129,481 +136,1429 @@ DLLPREFIX void _SDL_Init (word w[])
       return SDL_Init(flags | SDL_INIT_NOPARACHUTE);
     }
 
-DLLPREFIX void _occ_SDL_Init (word w[])
-
-{
-  *(INT(w[0])) = occ_SDL_Init ((VAL_INT(w[1])));
-  return;
+/*{{{  function occ_SDL_Init */
+SWIGEXPORT void _occ_SDL_Init (word occ_args[]) {
+  Uint32 arg1 ;
+  int result;
+  
+  {
+    arg1 = (Uint32) occ_args[0]; 
+  }result = (int)occ_SDL_Init(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
 }
 
 
-DLLPREFIX void _SDL_InitSubSystem (word w[])
-
-{
-  *(INT(w[0])) = SDL_InitSubSystem ((VAL_INT(w[1])));
-  return;
+/*}}}*/
+/*{{{  function SDL_InitSubSystem */
+SWIGEXPORT void _SDL_InitSubSystem (word occ_args[]) {
+  Uint32 arg1 ;
+  int result;
+  
+  {
+    arg1 = (Uint32) occ_args[0]; 
+  }result = (int)SDL_InitSubSystem(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
 }
 
 
-DLLPREFIX void _SDL_QuitSubSystem (word w[])
-
-{
-  SDL_QuitSubSystem ((VAL_INT(w[0])));
-  return;
+/*}}}*/
+/*{{{  function SDL_QuitSubSystem */
+SWIGEXPORT void _SDL_QuitSubSystem (word occ_args[]) {
+  Uint32 arg1 ;
+  
+  {
+    arg1 = (Uint32) occ_args[0]; 
+  }SDL_QuitSubSystem(arg1);
 }
 
 
-DLLPREFIX void _SDL_WasInit (word w[])
-
-{
-  *(INT(w[0])) = SDL_WasInit ((VAL_INT(w[1])));
-  return;
+/*}}}*/
+/*{{{  function SDL_WasInit */
+SWIGEXPORT void _SDL_WasInit (word occ_args[]) {
+  Uint32 arg1 ;
+  Uint32 result;
+  
+  {
+    arg1 = (Uint32) occ_args[0]; 
+  }result = (Uint32)SDL_WasInit(arg1);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
 }
 
 
-DLLPREFIX void _SDL_Quit ()
-
-{
-  SDL_Quit ();
-  return;
+/*}}}*/
+/*{{{  function SDL_Quit */
+SWIGEXPORT void _SDL_Quit (word occ_args[]) {
+  SDL_Quit();
 }
 
 
-/*Start of SDL_Rect wrappers*/
-DLLPREFIX void _create_SDL_Rect(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_Rect));
+/*}}}*/
+/*{{{  struct SDL_Rect */
+/*{{{  function SDL_Rect_x_set */
+SWIGEXPORT void _SDL_Rect_x_set (word occ_args[]) {
+  SDL_Rect *arg1 = (SDL_Rect *) 0 ;
+  Sint16 arg2 ;
+  
+  {
+    arg1 = (SDL_Rect *) occ_args[0]; 
+  }{
+    arg2 = (Sint16) occ_args[1]; 
+  }if (arg1) (arg1)->x = arg2;
+  
 }
 
-DLLPREFIX void _delete_SDL_Rect(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
+
+/*}}}*/
+/*{{{  function SDL_Rect_x_get */
+SWIGEXPORT void _SDL_Rect_x_get (word occ_args[]) {
+  SDL_Rect *arg1 = (SDL_Rect *) 0 ;
+  Sint16 result;
+  
+  {
+    arg1 = (SDL_Rect *) occ_args[0]; 
+  }result = (Sint16) ((arg1)->x);
+  {
+    *((Sint16 *) occ_args[1]) = result; 
+  }
 }
 
-DLLPREFIX void _get_SDL_Rect_x (word occ_args[])
-{
-	SDL_Rect *foo = ((SDL_Rect *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->x);
-}
-DLLPREFIX void _set_SDL_Rect_x (word occ_args[])
-{
-	SDL_Rect *foo = ((SDL_Rect *) occ_args[1]);
-	foo->x = (Sint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Rect_y (word occ_args[])
-{
-	SDL_Rect *foo = ((SDL_Rect *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->y);
-}
-DLLPREFIX void _set_SDL_Rect_y (word occ_args[])
-{
-	SDL_Rect *foo = ((SDL_Rect *) occ_args[1]);
-	foo->y = (Sint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Rect_w (word occ_args[])
-{
-	SDL_Rect *foo = ((SDL_Rect *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->w);
-}
-DLLPREFIX void _set_SDL_Rect_w (word occ_args[])
-{
-	SDL_Rect *foo = ((SDL_Rect *) occ_args[1]);
-	foo->w = (Uint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Rect_h (word occ_args[])
-{
-	SDL_Rect *foo = ((SDL_Rect *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->h);
-}
-DLLPREFIX void _set_SDL_Rect_h (word occ_args[])
-{
-	SDL_Rect *foo = ((SDL_Rect *) occ_args[1]);
-	foo->h = (Uint16) VAL_INT16(occ_args[0]);
-}
-/*End of SDL.Rect wrappers*/
 
-/*Start of SDL_Color wrappers*/
-DLLPREFIX void _create_SDL_Color(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_Color));
+/*}}}*/
+/*{{{  function SDL_Rect_y_set */
+SWIGEXPORT void _SDL_Rect_y_set (word occ_args[]) {
+  SDL_Rect *arg1 = (SDL_Rect *) 0 ;
+  Sint16 arg2 ;
+  
+  {
+    arg1 = (SDL_Rect *) occ_args[0]; 
+  }{
+    arg2 = (Sint16) occ_args[1]; 
+  }if (arg1) (arg1)->y = arg2;
+  
 }
 
-DLLPREFIX void _delete_SDL_Color(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
+
+/*}}}*/
+/*{{{  function SDL_Rect_y_get */
+SWIGEXPORT void _SDL_Rect_y_get (word occ_args[]) {
+  SDL_Rect *arg1 = (SDL_Rect *) 0 ;
+  Sint16 result;
+  
+  {
+    arg1 = (SDL_Rect *) occ_args[0]; 
+  }result = (Sint16) ((arg1)->y);
+  {
+    *((Sint16 *) occ_args[1]) = result; 
+  }
 }
 
-DLLPREFIX void _get_SDL_Color_r (word occ_args[])
-{
-	SDL_Color *foo = ((SDL_Color *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->r);
-}
-DLLPREFIX void _set_SDL_Color_r (word occ_args[])
-{
-	SDL_Color *foo = ((SDL_Color *) occ_args[1]);
-	foo->r = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Color_g (word occ_args[])
-{
-	SDL_Color *foo = ((SDL_Color *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->g);
-}
-DLLPREFIX void _set_SDL_Color_g (word occ_args[])
-{
-	SDL_Color *foo = ((SDL_Color *) occ_args[1]);
-	foo->g = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Color_b (word occ_args[])
-{
-	SDL_Color *foo = ((SDL_Color *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->b);
-}
-DLLPREFIX void _set_SDL_Color_b (word occ_args[])
-{
-	SDL_Color *foo = ((SDL_Color *) occ_args[1]);
-	foo->b = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Color_unused (word occ_args[])
-{
-	SDL_Color *foo = ((SDL_Color *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->unused);
-}
-DLLPREFIX void _set_SDL_Color_unused (word occ_args[])
-{
-	SDL_Color *foo = ((SDL_Color *) occ_args[1]);
-	foo->unused = (Uint8) VAL_BYTE(occ_args[0]);
-}
-/*End of SDL.Color wrappers*/
 
-/*Start of SDL_Palette wrappers*/
-DLLPREFIX void _create_SDL_Palette(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_Palette));
+/*}}}*/
+/*{{{  function SDL_Rect_w_set */
+SWIGEXPORT void _SDL_Rect_w_set (word occ_args[]) {
+  SDL_Rect *arg1 = (SDL_Rect *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_Rect *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->w = arg2;
+  
 }
 
-DLLPREFIX void _delete_SDL_Palette(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
+
+/*}}}*/
+/*{{{  function SDL_Rect_w_get */
+SWIGEXPORT void _SDL_Rect_w_get (word occ_args[]) {
+  SDL_Rect *arg1 = (SDL_Rect *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_Rect *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->w);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
 }
 
-DLLPREFIX void _get_SDL_Palette_ncolors (word occ_args[])
-{
-	SDL_Palette *foo = ((SDL_Palette *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->ncolors);
-}
-DLLPREFIX void _set_SDL_Palette_ncolors (word occ_args[])
-{
-	SDL_Palette *foo = ((SDL_Palette *) occ_args[1]);
-	foo->ncolors = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Palette_colors (word occ_args[])
-{
-	SDL_Palette *foo = ((SDL_Palette *) occ_args[1]);
-	*((void **) occ_args[0]) = (void *) foo->colors;
-}
-/*End of SDL.Palette wrappers*/
 
-/*Start of SDL_PixelFormat wrappers*/
-DLLPREFIX void _create_SDL_PixelFormat(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_PixelFormat));
+/*}}}*/
+/*{{{  function SDL_Rect_h_set */
+SWIGEXPORT void _SDL_Rect_h_set (word occ_args[]) {
+  SDL_Rect *arg1 = (SDL_Rect *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_Rect *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->h = arg2;
+  
 }
 
-DLLPREFIX void _delete_SDL_PixelFormat(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
+
+/*}}}*/
+/*{{{  function SDL_Rect_h_get */
+SWIGEXPORT void _SDL_Rect_h_get (word occ_args[]) {
+  SDL_Rect *arg1 = (SDL_Rect *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_Rect *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->h);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
 }
 
-DLLPREFIX void _get_SDL_PixelFormat_palette (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*((void **) occ_args[0]) = (void *) foo->palette;
-}
-DLLPREFIX void _get_SDL_PixelFormat_BitsPerPixel (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->BitsPerPixel);
-}
-DLLPREFIX void _set_SDL_PixelFormat_BitsPerPixel (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->BitsPerPixel = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_BytesPerPixel (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->BytesPerPixel);
-}
-DLLPREFIX void _set_SDL_PixelFormat_BytesPerPixel (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->BytesPerPixel = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Rloss (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->Rloss);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Rloss (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Rloss = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Gloss (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->Gloss);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Gloss (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Gloss = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Bloss (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->Bloss);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Bloss (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Bloss = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Aloss (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->Aloss);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Aloss (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Aloss = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Rshift (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->Rshift);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Rshift (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Rshift = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Gshift (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->Gshift);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Gshift (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Gshift = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Bshift (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->Bshift);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Bshift (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Bshift = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Ashift (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->Ashift);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Ashift (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Ashift = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Rmask (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->Rmask);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Rmask (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Rmask = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Gmask (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->Gmask);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Gmask (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Gmask = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Bmask (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->Bmask);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Bmask (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Bmask = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_Amask (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->Amask);
-}
-DLLPREFIX void _set_SDL_PixelFormat_Amask (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->Amask = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_colorkey (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->colorkey);
-}
-DLLPREFIX void _set_SDL_PixelFormat_colorkey (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->colorkey = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_PixelFormat_alpha (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->alpha);
-}
-DLLPREFIX void _set_SDL_PixelFormat_alpha (word occ_args[])
-{
-	SDL_PixelFormat *foo = ((SDL_PixelFormat *) occ_args[1]);
-	foo->alpha = (Uint8) VAL_BYTE(occ_args[0]);
-}
-/*End of SDL.PixelFormat wrappers*/
 
-/*Start of SDL_Surface wrappers*/
-DLLPREFIX void _create_SDL_Surface(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_Surface));
+/*}}}*/
+/*{{{  function new_SDL_Rect */
+SWIGEXPORT void _new_SDL_Rect (word occ_args[]) {
+  SDL_Rect *result = 0 ;
+  
+  result = (SDL_Rect *)(SDL_Rect *) calloc(1, sizeof(SDL_Rect));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
 }
 
-DLLPREFIX void _delete_SDL_Surface(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
+
+/*}}}*/
+/*{{{  function delete_SDL_Rect */
+SWIGEXPORT void _delete_SDL_Rect (word occ_args[]) {
+  SDL_Rect *arg1 = (SDL_Rect *) 0 ;
+  
+  {
+    arg1 = (SDL_Rect *) occ_args[0]; 
+  }free((char *) arg1);
+  
 }
 
-DLLPREFIX void _get_SDL_Surface_flags (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->flags);
-}
-DLLPREFIX void _set_SDL_Surface_flags (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	foo->flags = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Surface_format (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*((void **) occ_args[0]) = (void *) foo->format;
-}
-DLLPREFIX void _get_SDL_Surface_w (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->w);
-}
-DLLPREFIX void _set_SDL_Surface_w (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	foo->w = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Surface_h (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->h);
-}
-DLLPREFIX void _set_SDL_Surface_h (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	foo->h = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Surface_pitch (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->pitch);
-}
-DLLPREFIX void _set_SDL_Surface_pitch (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	foo->pitch = (Uint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Surface_pixels (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->pixels);
-}
-DLLPREFIX void _set_SDL_Surface_pixels (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	foo->pixels = (void *) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Surface_offset (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->offset);
-}
-DLLPREFIX void _set_SDL_Surface_offset (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	foo->offset = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Surface_clip_rect (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*((void **) occ_args[0]) = (void *) &foo->clip_rect;
-}
-DLLPREFIX void _get_SDL_Surface_unused1 (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->unused1);
-}
-DLLPREFIX void _set_SDL_Surface_unused1 (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	foo->unused1 = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Surface_locked (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->locked);
-}
-DLLPREFIX void _set_SDL_Surface_locked (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	foo->locked = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Surface_format_version (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->format_version);
-}
-DLLPREFIX void _set_SDL_Surface_format_version (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	foo->format_version = (unsigned int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Surface_refcount (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->refcount);
-}
-DLLPREFIX void _set_SDL_Surface_refcount (word occ_args[])
-{
-	SDL_Surface *foo = ((SDL_Surface *) occ_args[1]);
-	foo->refcount = (int) VAL_INT(occ_args[0]);
-}
-/*End of SDL.Surface wrappers*/
 
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_Color */
+/*{{{  function SDL_Color_r_set */
+SWIGEXPORT void _SDL_Color_r_set (word occ_args[]) {
+  SDL_Color *arg1 = (SDL_Color *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_Color *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->r = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Color_r_get */
+SWIGEXPORT void _SDL_Color_r_get (word occ_args[]) {
+  SDL_Color *arg1 = (SDL_Color *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_Color *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->r);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Color_g_set */
+SWIGEXPORT void _SDL_Color_g_set (word occ_args[]) {
+  SDL_Color *arg1 = (SDL_Color *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_Color *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->g = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Color_g_get */
+SWIGEXPORT void _SDL_Color_g_get (word occ_args[]) {
+  SDL_Color *arg1 = (SDL_Color *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_Color *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->g);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Color_b_set */
+SWIGEXPORT void _SDL_Color_b_set (word occ_args[]) {
+  SDL_Color *arg1 = (SDL_Color *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_Color *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->b = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Color_b_get */
+SWIGEXPORT void _SDL_Color_b_get (word occ_args[]) {
+  SDL_Color *arg1 = (SDL_Color *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_Color *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->b);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Color_unused_set */
+SWIGEXPORT void _SDL_Color_unused_set (word occ_args[]) {
+  SDL_Color *arg1 = (SDL_Color *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_Color *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->unused = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Color_unused_get */
+SWIGEXPORT void _SDL_Color_unused_get (word occ_args[]) {
+  SDL_Color *arg1 = (SDL_Color *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_Color *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->unused);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_Color */
+SWIGEXPORT void _new_SDL_Color (word occ_args[]) {
+  SDL_Color *result = 0 ;
+  
+  result = (SDL_Color *)(SDL_Color *) calloc(1, sizeof(SDL_Color));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_Color */
+SWIGEXPORT void _delete_SDL_Color (word occ_args[]) {
+  SDL_Color *arg1 = (SDL_Color *) 0 ;
+  
+  {
+    arg1 = (SDL_Color *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_Palette */
+/*{{{  function SDL_Palette_ncolors_set */
+SWIGEXPORT void _SDL_Palette_ncolors_set (word occ_args[]) {
+  SDL_Palette *arg1 = (SDL_Palette *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_Palette *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->ncolors = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Palette_ncolors_get */
+SWIGEXPORT void _SDL_Palette_ncolors_get (word occ_args[]) {
+  SDL_Palette *arg1 = (SDL_Palette *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Palette *) occ_args[0]; 
+  }result = (int) ((arg1)->ncolors);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Palette_colors_set */
+SWIGEXPORT void _SDL_Palette_colors_set (word occ_args[]) {
+  SDL_Palette *arg1 = (SDL_Palette *) 0 ;
+  SDL_Color *arg2 = (SDL_Color *) 0 ;
+  
+  {
+    arg1 = (SDL_Palette *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Color *) occ_args[1]; 
+  }if (arg1) (arg1)->colors = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Palette_colors_get */
+SWIGEXPORT void _SDL_Palette_colors_get (word occ_args[]) {
+  SDL_Palette *arg1 = (SDL_Palette *) 0 ;
+  SDL_Color *result = 0 ;
+  
+  {
+    arg1 = (SDL_Palette *) occ_args[0]; 
+  }result = (SDL_Color *) ((arg1)->colors);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_Palette */
+SWIGEXPORT void _new_SDL_Palette (word occ_args[]) {
+  SDL_Palette *result = 0 ;
+  
+  result = (SDL_Palette *)(SDL_Palette *) calloc(1, sizeof(SDL_Palette));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_Palette */
+SWIGEXPORT void _delete_SDL_Palette (word occ_args[]) {
+  SDL_Palette *arg1 = (SDL_Palette *) 0 ;
+  
+  {
+    arg1 = (SDL_Palette *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_PixelFormat */
+/*{{{  function SDL_PixelFormat_palette_set */
+SWIGEXPORT void _SDL_PixelFormat_palette_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  SDL_Palette *arg2 = (SDL_Palette *) 0 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Palette *) occ_args[1]; 
+  }if (arg1) (arg1)->palette = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_palette_get */
+SWIGEXPORT void _SDL_PixelFormat_palette_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  SDL_Palette *result = 0 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (SDL_Palette *) ((arg1)->palette);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_BitsPerPixel_set */
+SWIGEXPORT void _SDL_PixelFormat_BitsPerPixel_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->BitsPerPixel = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_BitsPerPixel_get */
+SWIGEXPORT void _SDL_PixelFormat_BitsPerPixel_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->BitsPerPixel);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_BytesPerPixel_set */
+SWIGEXPORT void _SDL_PixelFormat_BytesPerPixel_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->BytesPerPixel = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_BytesPerPixel_get */
+SWIGEXPORT void _SDL_PixelFormat_BytesPerPixel_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->BytesPerPixel);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Rloss_set */
+SWIGEXPORT void _SDL_PixelFormat_Rloss_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->Rloss = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Rloss_get */
+SWIGEXPORT void _SDL_PixelFormat_Rloss_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->Rloss);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Gloss_set */
+SWIGEXPORT void _SDL_PixelFormat_Gloss_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->Gloss = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Gloss_get */
+SWIGEXPORT void _SDL_PixelFormat_Gloss_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->Gloss);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Bloss_set */
+SWIGEXPORT void _SDL_PixelFormat_Bloss_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->Bloss = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Bloss_get */
+SWIGEXPORT void _SDL_PixelFormat_Bloss_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->Bloss);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Aloss_set */
+SWIGEXPORT void _SDL_PixelFormat_Aloss_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->Aloss = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Aloss_get */
+SWIGEXPORT void _SDL_PixelFormat_Aloss_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->Aloss);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Rshift_set */
+SWIGEXPORT void _SDL_PixelFormat_Rshift_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->Rshift = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Rshift_get */
+SWIGEXPORT void _SDL_PixelFormat_Rshift_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->Rshift);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Gshift_set */
+SWIGEXPORT void _SDL_PixelFormat_Gshift_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->Gshift = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Gshift_get */
+SWIGEXPORT void _SDL_PixelFormat_Gshift_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->Gshift);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Bshift_set */
+SWIGEXPORT void _SDL_PixelFormat_Bshift_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->Bshift = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Bshift_get */
+SWIGEXPORT void _SDL_PixelFormat_Bshift_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->Bshift);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Ashift_set */
+SWIGEXPORT void _SDL_PixelFormat_Ashift_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->Ashift = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Ashift_get */
+SWIGEXPORT void _SDL_PixelFormat_Ashift_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->Ashift);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Rmask_set */
+SWIGEXPORT void _SDL_PixelFormat_Rmask_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->Rmask = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Rmask_get */
+SWIGEXPORT void _SDL_PixelFormat_Rmask_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->Rmask);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Gmask_set */
+SWIGEXPORT void _SDL_PixelFormat_Gmask_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->Gmask = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Gmask_get */
+SWIGEXPORT void _SDL_PixelFormat_Gmask_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->Gmask);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Bmask_set */
+SWIGEXPORT void _SDL_PixelFormat_Bmask_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->Bmask = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Bmask_get */
+SWIGEXPORT void _SDL_PixelFormat_Bmask_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->Bmask);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Amask_set */
+SWIGEXPORT void _SDL_PixelFormat_Amask_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->Amask = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_Amask_get */
+SWIGEXPORT void _SDL_PixelFormat_Amask_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->Amask);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_colorkey_set */
+SWIGEXPORT void _SDL_PixelFormat_colorkey_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->colorkey = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_colorkey_get */
+SWIGEXPORT void _SDL_PixelFormat_colorkey_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->colorkey);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_alpha_set */
+SWIGEXPORT void _SDL_PixelFormat_alpha_set (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->alpha = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PixelFormat_alpha_get */
+SWIGEXPORT void _SDL_PixelFormat_alpha_get (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->alpha);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_PixelFormat */
+SWIGEXPORT void _new_SDL_PixelFormat (word occ_args[]) {
+  SDL_PixelFormat *result = 0 ;
+  
+  result = (SDL_PixelFormat *)(SDL_PixelFormat *) calloc(1, sizeof(SDL_PixelFormat));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_PixelFormat */
+SWIGEXPORT void _delete_SDL_PixelFormat (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_Surface */
+/*{{{  function SDL_Surface_flags_set */
+SWIGEXPORT void _SDL_Surface_flags_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->flags = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_flags_get */
+SWIGEXPORT void _SDL_Surface_flags_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->flags);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_format_set */
+SWIGEXPORT void _SDL_Surface_format_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_PixelFormat *arg2 = (SDL_PixelFormat *) 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (SDL_PixelFormat *) occ_args[1]; 
+  }if (arg1) (arg1)->format = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_format_get */
+SWIGEXPORT void _SDL_Surface_format_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_PixelFormat *result = 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (SDL_PixelFormat *) ((arg1)->format);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_w_set */
+SWIGEXPORT void _SDL_Surface_w_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->w = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_w_get */
+SWIGEXPORT void _SDL_Surface_w_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (int) ((arg1)->w);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_h_set */
+SWIGEXPORT void _SDL_Surface_h_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->h = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_h_get */
+SWIGEXPORT void _SDL_Surface_h_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (int) ((arg1)->h);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_pitch_set */
+SWIGEXPORT void _SDL_Surface_pitch_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->pitch = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_pitch_get */
+SWIGEXPORT void _SDL_Surface_pitch_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->pitch);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_pixels_set */
+SWIGEXPORT void _SDL_Surface_pixels_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  void *arg2 = (void *) 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (void *) occ_args[1]; 
+  }if (arg1) (arg1)->pixels = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_pixels_get */
+SWIGEXPORT void _SDL_Surface_pixels_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  void *result = 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (void *) ((arg1)->pixels);
+  {
+    *((void * *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_offset_set */
+SWIGEXPORT void _SDL_Surface_offset_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->offset = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_offset_get */
+SWIGEXPORT void _SDL_Surface_offset_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (int) ((arg1)->offset);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_hwdata_set */
+SWIGEXPORT void _SDL_Surface_hwdata_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  struct private_hwdata *arg2 = (struct private_hwdata *) 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (struct private_hwdata *) occ_args[1]; 
+  }if (arg1) (arg1)->hwdata = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_hwdata_get */
+SWIGEXPORT void _SDL_Surface_hwdata_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  struct private_hwdata *result = 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (struct private_hwdata *) ((arg1)->hwdata);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_clip_rect_set */
+SWIGEXPORT void _SDL_Surface_clip_rect_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg2 = (SDL_Rect *) 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Rect *) occ_args[1]; 
+  }if (arg1) (arg1)->clip_rect = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_clip_rect_get */
+SWIGEXPORT void _SDL_Surface_clip_rect_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Rect *result = 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (SDL_Rect *)& ((arg1)->clip_rect);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_unused1_set */
+SWIGEXPORT void _SDL_Surface_unused1_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->unused1 = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_unused1_get */
+SWIGEXPORT void _SDL_Surface_unused1_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->unused1);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_locked_set */
+SWIGEXPORT void _SDL_Surface_locked_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->locked = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_locked_get */
+SWIGEXPORT void _SDL_Surface_locked_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->locked);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_map_set */
+SWIGEXPORT void _SDL_Surface_map_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  struct SDL_BlitMap *arg2 = (struct SDL_BlitMap *) 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (struct SDL_BlitMap *) occ_args[1]; 
+  }if (arg1) (arg1)->map = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_map_get */
+SWIGEXPORT void _SDL_Surface_map_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  struct SDL_BlitMap *result = 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (struct SDL_BlitMap *) ((arg1)->map);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_format_version_set */
+SWIGEXPORT void _SDL_Surface_format_version_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  unsigned int arg2 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (unsigned int) occ_args[1]; 
+  }if (arg1) (arg1)->format_version = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_format_version_get */
+SWIGEXPORT void _SDL_Surface_format_version_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  unsigned int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (unsigned int) ((arg1)->format_version);
+  {
+    *((unsigned int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_refcount_set */
+SWIGEXPORT void _SDL_Surface_refcount_set (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->refcount = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Surface_refcount_get */
+SWIGEXPORT void _SDL_Surface_refcount_get (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (int) ((arg1)->refcount);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_Surface */
+SWIGEXPORT void _new_SDL_Surface (word occ_args[]) {
+  SDL_Surface *result = 0 ;
+  
+  result = (SDL_Surface *)(SDL_Surface *) calloc(1, sizeof(SDL_Surface));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_Surface */
+SWIGEXPORT void _delete_SDL_Surface (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
 
 void occ_get_SDL_Surface_pixels(int pixels[], SDL_Surface *surface)
 {
@@ -638,2013 +1593,5586 @@ void occ_get_SDL_Surface_pixels(int pixels[], SDL_Surface *surface)
 	}
 }
 
-DLLPREFIX void _occ_get_SDL_Surface_pixels (word w[])
-
-{
-  occ_get_SDL_Surface_pixels ((INT(w[0])), ((SDL_Surface*)(*INT(w[2]))));
-  return;
-}
-
-
-/*Start of SDL_VideoInfo wrappers*/
-DLLPREFIX void _create_SDL_VideoInfo(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_VideoInfo));
-}
-
-DLLPREFIX void _delete_SDL_VideoInfo(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_VideoInfo_hw_available (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->hw_available);
-}
-DLLPREFIX void _set_SDL_VideoInfo_hw_available (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->hw_available = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_wm_available (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->wm_available);
-}
-DLLPREFIX void _set_SDL_VideoInfo_wm_available (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->wm_available = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_UnusedBits1 (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->UnusedBits1);
-}
-DLLPREFIX void _set_SDL_VideoInfo_UnusedBits1 (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->UnusedBits1 = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_UnusedBits2 (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->UnusedBits2);
-}
-DLLPREFIX void _set_SDL_VideoInfo_UnusedBits2 (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->UnusedBits2 = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_blit_hw (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->blit_hw);
-}
-DLLPREFIX void _set_SDL_VideoInfo_blit_hw (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->blit_hw = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_blit_hw_CC (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->blit_hw_CC);
-}
-DLLPREFIX void _set_SDL_VideoInfo_blit_hw_CC (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->blit_hw_CC = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_blit_hw_A (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->blit_hw_A);
-}
-DLLPREFIX void _set_SDL_VideoInfo_blit_hw_A (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->blit_hw_A = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_blit_sw (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->blit_sw);
-}
-DLLPREFIX void _set_SDL_VideoInfo_blit_sw (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->blit_sw = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_blit_sw_CC (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->blit_sw_CC);
-}
-DLLPREFIX void _set_SDL_VideoInfo_blit_sw_CC (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->blit_sw_CC = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_blit_sw_A (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->blit_sw_A);
-}
-DLLPREFIX void _set_SDL_VideoInfo_blit_sw_A (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->blit_sw_A = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_blit_fill (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->blit_fill);
-}
-DLLPREFIX void _set_SDL_VideoInfo_blit_fill (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->blit_fill = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_UnusedBits3 (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->UnusedBits3);
-}
-DLLPREFIX void _set_SDL_VideoInfo_UnusedBits3 (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->UnusedBits3 = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_video_mem (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->video_mem);
-}
-DLLPREFIX void _set_SDL_VideoInfo_video_mem (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	foo->video_mem = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_VideoInfo_vfmt (word occ_args[])
-{
-	SDL_VideoInfo *foo = ((SDL_VideoInfo *) occ_args[1]);
-	*((void **) occ_args[0]) = (void *) foo->vfmt;
-}
-/*End of SDL.VideoInfo wrappers*/
-
-/*Start of SDL_Overlay wrappers*/
-DLLPREFIX void _create_SDL_Overlay(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_Overlay));
-}
-
-DLLPREFIX void _delete_SDL_Overlay(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_Overlay_format (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->format);
-}
-DLLPREFIX void _set_SDL_Overlay_format (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	foo->format = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Overlay_w (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->w);
-}
-DLLPREFIX void _set_SDL_Overlay_w (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	foo->w = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Overlay_h (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->h);
-}
-DLLPREFIX void _set_SDL_Overlay_h (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	foo->h = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Overlay_planes (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->planes);
-}
-DLLPREFIX void _set_SDL_Overlay_planes (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	foo->planes = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Overlay_pitches (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->pitches);
-}
-DLLPREFIX void _set_SDL_Overlay_pitches (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	foo->pitches = (Uint16 *) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Overlay_pixels (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->pixels);
-}
-DLLPREFIX void _set_SDL_Overlay_pixels (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	foo->pixels = (Uint8 **) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Overlay_hw_overlay (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->hw_overlay);
-}
-DLLPREFIX void _set_SDL_Overlay_hw_overlay (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	foo->hw_overlay = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_Overlay_UnusedBits (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->UnusedBits);
-}
-DLLPREFIX void _set_SDL_Overlay_UnusedBits (word occ_args[])
-{
-	SDL_Overlay *foo = ((SDL_Overlay *) occ_args[1]);
-	foo->UnusedBits = (Uint32) VAL_INT(occ_args[0]);
-}
-/*End of SDL.Overlay wrappers*/
-
-DLLPREFIX void _SDL_VideoInit (word w[])
-
-{
-  *(INT(w[0])) = SDL_VideoInit ((BYTE(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_VideoQuit ()
-
-{
-  SDL_VideoQuit ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_VideoDriverName (word w[])
-
-{
-  *(BYTE(w[0])) = SDL_VideoDriverName ((BYTE(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GetVideoSurface (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_GetVideoSurface ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_GetVideoInfo (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_GetVideoInfo ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_VideoModeOK (word w[])
-
-{
-  *(INT(w[0])) = SDL_VideoModeOK ((VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_ListModes (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_ListModes (((SDL_PixelFormat*)(*INT(w[1]))), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_SetVideoMode (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_SetVideoMode ((VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_UpdateRects (word w[])
-
-{
-  SDL_UpdateRects (((SDL_Surface*)(*INT(w[0]))), (VAL_INT(w[1])), ((SDL_Rect*)(*INT(w[2]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_UpdateRect (word w[])
-
-{
-  SDL_UpdateRect (((SDL_Surface*)(*INT(w[0]))), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_Flip (word w[])
-
-{
-  *(INT(w[0])) = SDL_Flip (((SDL_Surface*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_SetGamma (word w[])
-
-{
-  *(INT(w[0])) = SDL_SetGamma ((VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_REAL32(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_SetGammaRamp (word w[])
-
-{
-  *(INT(w[0])) = SDL_SetGammaRamp ((INT16(w[1])), (INT16(w[2])), (INT16(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GetGammaRamp (word w[])
-
-{
-  *(INT(w[0])) = SDL_GetGammaRamp ((INT16(w[1])), (INT16(w[2])), (INT16(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_SetColors (word w[])
-
-{
-  *(INT(w[0])) = SDL_SetColors (((SDL_Surface*)(*INT(w[1]))), ((SDL_Color*)(*INT(w[2]))), (VAL_INT(w[3])), (VAL_INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_SetPalette (word w[])
-
-{
-  *(INT(w[0])) = SDL_SetPalette (((SDL_Surface*)(*INT(w[1]))), (VAL_INT(w[2])), ((SDL_Color*)(*INT(w[3]))), (VAL_INT(w[4])), (VAL_INT(w[5])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_MapRGB (word w[])
-
-{
-  *(INT(w[0])) = SDL_MapRGB (((SDL_PixelFormat*)(*INT(w[1]))), (VAL_BYTE(w[2])), (VAL_BYTE(w[3])), (VAL_BYTE(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_MapRGBA (word w[])
-
-{
-  *(INT(w[0])) = SDL_MapRGBA (((SDL_PixelFormat*)(*INT(w[1]))), (VAL_BYTE(w[2])), (VAL_BYTE(w[3])), (VAL_BYTE(w[4])), (VAL_BYTE(w[5])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GetRGB (word w[])
-
-{
-  SDL_GetRGB ((VAL_INT(w[0])), ((SDL_PixelFormat*)(*INT(w[1]))), (BYTE(w[2])), (BYTE(w[3])), (BYTE(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GetRGBA (word w[])
-
-{
-  SDL_GetRGBA ((VAL_INT(w[0])), ((SDL_PixelFormat*)(*INT(w[1]))), (BYTE(w[2])), (BYTE(w[3])), (BYTE(w[4])), (BYTE(w[5])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_CreateRGBSurface (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_CreateRGBSurface ((VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])), (VAL_INT(w[6])), (VAL_INT(w[7])), (VAL_INT(w[8])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_CreateRGBSurfaceFrom (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_CreateRGBSurfaceFrom ((INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])), (VAL_INT(w[6])), (VAL_INT(w[7])), (VAL_INT(w[8])), (VAL_INT(w[9])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_FreeSurface (word w[])
-
-{
-  SDL_FreeSurface (((SDL_Surface*)(*INT(w[0]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_LockSurface (word w[])
-
-{
-  *(INT(w[0])) = SDL_LockSurface (((SDL_Surface*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_UnlockSurface (word w[])
-
-{
-  SDL_UnlockSurface (((SDL_Surface*)(*INT(w[0]))));
-  return;
-}
-
-
+/*{{{  function occ_get_SDL_Surface_pixels */
+SWIGEXPORT void _occ_get_SDL_Surface_pixels (word occ_args[]) {
+  int *arg1 ;
+  SDL_Surface *arg2 = (SDL_Surface *) 0 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Surface *) occ_args[2]; 
+  }occ_get_SDL_Surface_pixels(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  struct SDL_VideoInfo */
+/*{{{  function SDL_VideoInfo_hw_available_set */
+SWIGEXPORT void _SDL_VideoInfo_hw_available_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->hw_available = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_hw_available_get */
+SWIGEXPORT void _SDL_VideoInfo_hw_available_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->hw_available);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_wm_available_set */
+SWIGEXPORT void _SDL_VideoInfo_wm_available_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->wm_available = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_wm_available_get */
+SWIGEXPORT void _SDL_VideoInfo_wm_available_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->wm_available);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_UnusedBits1_set */
+SWIGEXPORT void _SDL_VideoInfo_UnusedBits1_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->UnusedBits1 = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_UnusedBits1_get */
+SWIGEXPORT void _SDL_VideoInfo_UnusedBits1_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->UnusedBits1);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_UnusedBits2_set */
+SWIGEXPORT void _SDL_VideoInfo_UnusedBits2_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->UnusedBits2 = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_UnusedBits2_get */
+SWIGEXPORT void _SDL_VideoInfo_UnusedBits2_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->UnusedBits2);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_hw_set */
+SWIGEXPORT void _SDL_VideoInfo_blit_hw_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->blit_hw = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_hw_get */
+SWIGEXPORT void _SDL_VideoInfo_blit_hw_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->blit_hw);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_hw_CC_set */
+SWIGEXPORT void _SDL_VideoInfo_blit_hw_CC_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->blit_hw_CC = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_hw_CC_get */
+SWIGEXPORT void _SDL_VideoInfo_blit_hw_CC_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->blit_hw_CC);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_hw_A_set */
+SWIGEXPORT void _SDL_VideoInfo_blit_hw_A_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->blit_hw_A = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_hw_A_get */
+SWIGEXPORT void _SDL_VideoInfo_blit_hw_A_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->blit_hw_A);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_sw_set */
+SWIGEXPORT void _SDL_VideoInfo_blit_sw_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->blit_sw = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_sw_get */
+SWIGEXPORT void _SDL_VideoInfo_blit_sw_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->blit_sw);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_sw_CC_set */
+SWIGEXPORT void _SDL_VideoInfo_blit_sw_CC_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->blit_sw_CC = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_sw_CC_get */
+SWIGEXPORT void _SDL_VideoInfo_blit_sw_CC_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->blit_sw_CC);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_sw_A_set */
+SWIGEXPORT void _SDL_VideoInfo_blit_sw_A_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->blit_sw_A = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_sw_A_get */
+SWIGEXPORT void _SDL_VideoInfo_blit_sw_A_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->blit_sw_A);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_fill_set */
+SWIGEXPORT void _SDL_VideoInfo_blit_fill_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->blit_fill = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_blit_fill_get */
+SWIGEXPORT void _SDL_VideoInfo_blit_fill_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->blit_fill);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_UnusedBits3_set */
+SWIGEXPORT void _SDL_VideoInfo_UnusedBits3_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->UnusedBits3 = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_UnusedBits3_get */
+SWIGEXPORT void _SDL_VideoInfo_UnusedBits3_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->UnusedBits3);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_video_mem_set */
+SWIGEXPORT void _SDL_VideoInfo_video_mem_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->video_mem = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_video_mem_get */
+SWIGEXPORT void _SDL_VideoInfo_video_mem_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->video_mem);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_vfmt_set */
+SWIGEXPORT void _SDL_VideoInfo_vfmt_set (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  SDL_PixelFormat *arg2 = (SDL_PixelFormat *) 0 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }{
+    arg2 = (SDL_PixelFormat *) occ_args[1]; 
+  }if (arg1) (arg1)->vfmt = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoInfo_vfmt_get */
+SWIGEXPORT void _SDL_VideoInfo_vfmt_get (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  SDL_PixelFormat *result = 0 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }result = (SDL_PixelFormat *) ((arg1)->vfmt);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_VideoInfo */
+SWIGEXPORT void _new_SDL_VideoInfo (word occ_args[]) {
+  SDL_VideoInfo *result = 0 ;
+  
+  result = (SDL_VideoInfo *)(SDL_VideoInfo *) calloc(1, sizeof(SDL_VideoInfo));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_VideoInfo */
+SWIGEXPORT void _delete_SDL_VideoInfo (word occ_args[]) {
+  SDL_VideoInfo *arg1 = (SDL_VideoInfo *) 0 ;
+  
+  {
+    arg1 = (SDL_VideoInfo *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_Overlay */
+/*{{{  function SDL_Overlay_format_set */
+SWIGEXPORT void _SDL_Overlay_format_set (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->format = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_format_get */
+SWIGEXPORT void _SDL_Overlay_format_get (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->format);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_w_set */
+SWIGEXPORT void _SDL_Overlay_w_set (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->w = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_w_get */
+SWIGEXPORT void _SDL_Overlay_w_get (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }result = (int) ((arg1)->w);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_h_set */
+SWIGEXPORT void _SDL_Overlay_h_set (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->h = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_h_get */
+SWIGEXPORT void _SDL_Overlay_h_get (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }result = (int) ((arg1)->h);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_planes_set */
+SWIGEXPORT void _SDL_Overlay_planes_set (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->planes = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_planes_get */
+SWIGEXPORT void _SDL_Overlay_planes_get (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }result = (int) ((arg1)->planes);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_pitches_set */
+SWIGEXPORT void _SDL_Overlay_pitches_set (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  Uint16 *arg2 = (Uint16 *) 0 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }{
+    arg2 = (Uint16 *) occ_args[1]; 
+  }if (arg1) (arg1)->pitches = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_pitches_get */
+SWIGEXPORT void _SDL_Overlay_pitches_get (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  Uint16 *result = 0 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }result = (Uint16 *) ((arg1)->pitches);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_pixels_set */
+SWIGEXPORT void _SDL_Overlay_pixels_set (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  Uint8 **arg2 = (Uint8 **) 0 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }{
+    arg2 = (Uint8 **) occ_args[1]; 
+  }if (arg1) (arg1)->pixels = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_pixels_get */
+SWIGEXPORT void _SDL_Overlay_pixels_get (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  Uint8 **result = 0 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }result = (Uint8 **) ((arg1)->pixels);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_hwfuncs_set */
+SWIGEXPORT void _SDL_Overlay_hwfuncs_set (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  struct private_yuvhwfuncs *arg2 = (struct private_yuvhwfuncs *) 0 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }{
+    arg2 = (struct private_yuvhwfuncs *) occ_args[1]; 
+  }if (arg1) (arg1)->hwfuncs = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_hwfuncs_get */
+SWIGEXPORT void _SDL_Overlay_hwfuncs_get (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  struct private_yuvhwfuncs *result = 0 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }result = (struct private_yuvhwfuncs *) ((arg1)->hwfuncs);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_hwdata_set */
+SWIGEXPORT void _SDL_Overlay_hwdata_set (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  struct private_yuvhwdata *arg2 = (struct private_yuvhwdata *) 0 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }{
+    arg2 = (struct private_yuvhwdata *) occ_args[1]; 
+  }if (arg1) (arg1)->hwdata = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_hwdata_get */
+SWIGEXPORT void _SDL_Overlay_hwdata_get (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  struct private_yuvhwdata *result = 0 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }result = (struct private_yuvhwdata *) ((arg1)->hwdata);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_hw_overlay_set */
+SWIGEXPORT void _SDL_Overlay_hw_overlay_set (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->hw_overlay = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_hw_overlay_get */
+SWIGEXPORT void _SDL_Overlay_hw_overlay_get (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->hw_overlay);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_UnusedBits_set */
+SWIGEXPORT void _SDL_Overlay_UnusedBits_set (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->UnusedBits = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Overlay_UnusedBits_get */
+SWIGEXPORT void _SDL_Overlay_UnusedBits_get (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->UnusedBits);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_Overlay */
+SWIGEXPORT void _new_SDL_Overlay (word occ_args[]) {
+  SDL_Overlay *result = 0 ;
+  
+  result = (SDL_Overlay *)(SDL_Overlay *) calloc(1, sizeof(SDL_Overlay));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_Overlay */
+SWIGEXPORT void _delete_SDL_Overlay (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  function SDL_VideoInit */
+SWIGEXPORT void _SDL_VideoInit (word occ_args[]) {
+  char *arg1 = (char *) 0 ;
+  Uint32 arg2 ;
+  int result;
+  
+  {
+    arg1 = (char *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[2]; 
+  }result = (int)SDL_VideoInit((char const *)arg1,arg2);
+  {
+    *((int *) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoQuit */
+SWIGEXPORT void _SDL_VideoQuit (word occ_args[]) {
+  SDL_VideoQuit();
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoDriverName */
+SWIGEXPORT void _SDL_VideoDriverName (word occ_args[]) {
+  char *arg1 = (char *) 0 ;
+  int arg2 ;
+  char *result = 0 ;
+  
+  {
+    arg1 = (char *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[2]; 
+  }result = (char *)SDL_VideoDriverName(arg1,arg2);
+  {
+    *((void **) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetVideoSurface */
+SWIGEXPORT void _SDL_GetVideoSurface (word occ_args[]) {
+  SDL_Surface *result = 0 ;
+  
+  result = (SDL_Surface *)SDL_GetVideoSurface();
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetVideoInfo */
+SWIGEXPORT void _SDL_GetVideoInfo (word occ_args[]) {
+  SDL_VideoInfo *result = 0 ;
+  
+  result = (SDL_VideoInfo *)SDL_GetVideoInfo();
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_VideoModeOK */
+SWIGEXPORT void _SDL_VideoModeOK (word occ_args[]) {
+  int arg1 ;
+  int arg2 ;
+  int arg3 ;
+  Uint32 arg4 ;
+  int result;
+  
+  {
+    arg1 = (int) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }{
+    arg3 = (int) occ_args[2]; 
+  }{
+    arg4 = (Uint32) occ_args[3]; 
+  }result = (int)SDL_VideoModeOK(arg1,arg2,arg3,arg4);
+  {
+    *((int *) occ_args[4]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ListModes */
+SWIGEXPORT void _SDL_ListModes (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint32 arg2 ;
+  SDL_Rect **result = 0 ;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }result = (SDL_Rect **)SDL_ListModes(arg1,arg2);
+  {
+    *((void **) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SetVideoMode */
+SWIGEXPORT void _SDL_SetVideoMode (word occ_args[]) {
+  int arg1 ;
+  int arg2 ;
+  int arg3 ;
+  Uint32 arg4 ;
+  SDL_Surface *result = 0 ;
+  
+  {
+    arg1 = (int) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }{
+    arg3 = (int) occ_args[2]; 
+  }{
+    arg4 = (Uint32) occ_args[3]; 
+  }result = (SDL_Surface *)SDL_SetVideoMode(arg1,arg2,arg3,arg4);
+  {
+    *((void **) occ_args[4]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UpdateRects */
+SWIGEXPORT void _SDL_UpdateRects (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int arg2 ;
+  SDL_Rect *arg3 = (SDL_Rect *) 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }{
+    arg3 = (SDL_Rect *) occ_args[2]; 
+  }SDL_UpdateRects(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UpdateRect */
+SWIGEXPORT void _SDL_UpdateRect (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Sint32 arg2 ;
+  Sint32 arg3 ;
+  Uint32 arg4 ;
+  Uint32 arg5 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (Sint32) occ_args[1]; 
+  }{
+    arg3 = (Sint32) occ_args[2]; 
+  }{
+    arg4 = (Uint32) occ_args[3]; 
+  }{
+    arg5 = (Uint32) occ_args[4]; 
+  }SDL_UpdateRect(arg1,arg2,arg3,arg4,arg5);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Flip */
+SWIGEXPORT void _SDL_Flip (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (int)SDL_Flip(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SetGamma */
+SWIGEXPORT void _SDL_SetGamma (word occ_args[]) {
+  float arg1 ;
+  float arg2 ;
+  float arg3 ;
+  int result;
+  
+  {
+    arg1 = (float) occ_args[0]; 
+  }{
+    arg2 = (float) occ_args[1]; 
+  }{
+    arg3 = (float) occ_args[2]; 
+  }result = (int)SDL_SetGamma(arg1,arg2,arg3);
+  {
+    *((int *) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SetGammaRamp */
+SWIGEXPORT void _SDL_SetGammaRamp (word occ_args[]) {
+  Uint16 *arg1 = (Uint16 *) 0 ;
+  Uint16 *arg2 = (Uint16 *) 0 ;
+  Uint16 *arg3 = (Uint16 *) 0 ;
+  int result;
+  
+  {
+    arg1 = (Uint16 *) occ_args[0]; 
+  }{
+    arg2 = (Uint16 *) occ_args[2]; 
+  }{
+    arg3 = (Uint16 *) occ_args[4]; 
+  }result = (int)SDL_SetGammaRamp((unsigned short const *)arg1,(unsigned short const *)arg2,(unsigned short const *)arg3);
+  {
+    *((int *) occ_args[6]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetGammaRamp */
+SWIGEXPORT void _SDL_GetGammaRamp (word occ_args[]) {
+  Uint16 *arg1 = (Uint16 *) 0 ;
+  Uint16 *arg2 = (Uint16 *) 0 ;
+  Uint16 *arg3 = (Uint16 *) 0 ;
+  int result;
+  
+  {
+    arg1 = (Uint16 *) occ_args[0]; 
+  }{
+    arg2 = (Uint16 *) occ_args[2]; 
+  }{
+    arg3 = (Uint16 *) occ_args[4]; 
+  }result = (int)SDL_GetGammaRamp(arg1,arg2,arg3);
+  {
+    *((int *) occ_args[6]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SetColors */
+SWIGEXPORT void _SDL_SetColors (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Color *arg2 = (SDL_Color *) 0 ;
+  int arg3 ;
+  int arg4 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Color *) occ_args[1]; 
+  }{
+    arg3 = (int) occ_args[2]; 
+  }{
+    arg4 = (int) occ_args[3]; 
+  }result = (int)SDL_SetColors(arg1,arg2,arg3,arg4);
+  {
+    *((int *) occ_args[4]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SetPalette */
+SWIGEXPORT void _SDL_SetPalette (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int arg2 ;
+  SDL_Color *arg3 = (SDL_Color *) 0 ;
+  int arg4 ;
+  int arg5 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }{
+    arg3 = (SDL_Color *) occ_args[2]; 
+  }{
+    arg4 = (int) occ_args[3]; 
+  }{
+    arg5 = (int) occ_args[4]; 
+  }result = (int)SDL_SetPalette(arg1,arg2,arg3,arg4,arg5);
+  {
+    *((int *) occ_args[5]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MapRGB */
+SWIGEXPORT void _SDL_MapRGB (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  Uint8 arg3 ;
+  Uint8 arg4 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }{
+    arg3 = (Uint8) occ_args[2]; 
+  }{
+    arg4 = (Uint8) occ_args[3]; 
+  }result = (Uint32)SDL_MapRGB(arg1,arg2,arg3,arg4);
+  {
+    *((Uint32 *) occ_args[4]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MapRGBA */
+SWIGEXPORT void _SDL_MapRGBA (word occ_args[]) {
+  SDL_PixelFormat *arg1 = (SDL_PixelFormat *) 0 ;
+  Uint8 arg2 ;
+  Uint8 arg3 ;
+  Uint8 arg4 ;
+  Uint8 arg5 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_PixelFormat *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }{
+    arg3 = (Uint8) occ_args[2]; 
+  }{
+    arg4 = (Uint8) occ_args[3]; 
+  }{
+    arg5 = (Uint8) occ_args[4]; 
+  }result = (Uint32)SDL_MapRGBA(arg1,arg2,arg3,arg4,arg5);
+  {
+    *((Uint32 *) occ_args[5]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetRGB */
+SWIGEXPORT void _SDL_GetRGB (word occ_args[]) {
+  Uint32 arg1 ;
+  SDL_PixelFormat *arg2 = (SDL_PixelFormat *) 0 ;
+  Uint8 *arg3 = (Uint8 *) 0 ;
+  Uint8 *arg4 = (Uint8 *) 0 ;
+  Uint8 *arg5 = (Uint8 *) 0 ;
+  
+  {
+    arg1 = (Uint32) occ_args[0]; 
+  }{
+    arg2 = (SDL_PixelFormat *) occ_args[1]; 
+  }{
+    arg3 = (Uint8 *) occ_args[2]; 
+  }{
+    arg4 = (Uint8 *) occ_args[4]; 
+  }{
+    arg5 = (Uint8 *) occ_args[6]; 
+  }SDL_GetRGB(arg1,arg2,arg3,arg4,arg5);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetRGBA */
+SWIGEXPORT void _SDL_GetRGBA (word occ_args[]) {
+  Uint32 arg1 ;
+  SDL_PixelFormat *arg2 = (SDL_PixelFormat *) 0 ;
+  Uint8 *arg3 = (Uint8 *) 0 ;
+  Uint8 *arg4 = (Uint8 *) 0 ;
+  Uint8 *arg5 = (Uint8 *) 0 ;
+  Uint8 *arg6 = (Uint8 *) 0 ;
+  
+  {
+    arg1 = (Uint32) occ_args[0]; 
+  }{
+    arg2 = (SDL_PixelFormat *) occ_args[1]; 
+  }{
+    arg3 = (Uint8 *) occ_args[2]; 
+  }{
+    arg4 = (Uint8 *) occ_args[4]; 
+  }{
+    arg5 = (Uint8 *) occ_args[6]; 
+  }{
+    arg6 = (Uint8 *) occ_args[8]; 
+  }SDL_GetRGBA(arg1,arg2,arg3,arg4,arg5,arg6);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_CreateRGBSurface */
+SWIGEXPORT void _SDL_CreateRGBSurface (word occ_args[]) {
+  Uint32 arg1 ;
+  int arg2 ;
+  int arg3 ;
+  int arg4 ;
+  Uint32 arg5 ;
+  Uint32 arg6 ;
+  Uint32 arg7 ;
+  Uint32 arg8 ;
+  SDL_Surface *result = 0 ;
+  
+  {
+    arg1 = (Uint32) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }{
+    arg3 = (int) occ_args[2]; 
+  }{
+    arg4 = (int) occ_args[3]; 
+  }{
+    arg5 = (Uint32) occ_args[4]; 
+  }{
+    arg6 = (Uint32) occ_args[5]; 
+  }{
+    arg7 = (Uint32) occ_args[6]; 
+  }{
+    arg8 = (Uint32) occ_args[7]; 
+  }result = (SDL_Surface *)SDL_CreateRGBSurface(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+  {
+    *((void **) occ_args[8]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_CreateRGBSurfaceFrom */
+SWIGEXPORT void _SDL_CreateRGBSurfaceFrom (word occ_args[]) {
+  void *arg1 = (void *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  int arg4 ;
+  int arg5 ;
+  Uint32 arg6 ;
+  Uint32 arg7 ;
+  Uint32 arg8 ;
+  Uint32 arg9 ;
+  SDL_Surface *result = 0 ;
+  
+  {
+    arg1 = (void *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }{
+    arg3 = (int) occ_args[2]; 
+  }{
+    arg4 = (int) occ_args[3]; 
+  }{
+    arg5 = (int) occ_args[4]; 
+  }{
+    arg6 = (Uint32) occ_args[5]; 
+  }{
+    arg7 = (Uint32) occ_args[6]; 
+  }{
+    arg8 = (Uint32) occ_args[7]; 
+  }{
+    arg9 = (Uint32) occ_args[8]; 
+  }result = (SDL_Surface *)SDL_CreateRGBSurfaceFrom(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+  {
+    *((void **) occ_args[9]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_FreeSurface */
+SWIGEXPORT void _SDL_FreeSurface (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }SDL_FreeSurface(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_LockSurface */
+SWIGEXPORT void _SDL_LockSurface (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (int)SDL_LockSurface(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UnlockSurface */
+SWIGEXPORT void _SDL_UnlockSurface (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }SDL_UnlockSurface(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_LoadBMP_RW */
+SWIGEXPORT void _SDL_LoadBMP_RW (word occ_args[]) {
+  SDL_RWops *arg1 = (SDL_RWops *) 0 ;
+  int arg2 ;
+  SDL_Surface *result = 0 ;
+  
+  {
+    arg1 = (SDL_RWops *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }result = (SDL_Surface *)SDL_LoadBMP_RW(arg1,arg2);
+  {
+    *((void **) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
 
 /* Convenience macro -- load a surface from a file */
-SDL_Surface *  occ_SDL_LoadBMP(char file[])	
+SDL_Surface *occ_SDL_LoadBMP(const char file[])
 {
 	return SDL_LoadBMP_RW(SDL_RWFromFile(file, "rb"), 1);
 }
 /* Convenience macro -- save a surface to a file */
-SDL_Surface * occ_SDL_SaveBMP(SDL_Surface *surface, char file[])
+int occ_SDL_SaveBMP(SDL_Surface *surface, const char file[])
 {
 	return SDL_SaveBMP_RW(surface, SDL_RWFromFile(file, "wb"), 1);
 }
 
-DLLPREFIX void _occ_SDL_LoadBMP (word w[])
-
-{
-  (*INT(w[0])) = (int) occ_SDL_LoadBMP ((BYTE(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _occ_SDL_SaveBMP (word w[])
-
-{
-  (*INT(w[0])) = (int) occ_SDL_SaveBMP (((SDL_Surface*)(*INT(w[1]))), (BYTE(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_SetColorKey (word w[])
-
-{
-  *(INT(w[0])) = SDL_SetColorKey (((SDL_Surface*)(*INT(w[1]))), (VAL_INT(w[2])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_SetAlpha (word w[])
-
-{
-  *(INT(w[0])) = SDL_SetAlpha (((SDL_Surface*)(*INT(w[1]))), (VAL_INT(w[2])), (VAL_BYTE(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_SetClipRect (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_SetClipRect (((SDL_Surface*)(*INT(w[1]))), ((SDL_Rect*)(*INT(w[2]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GetClipRect (word w[])
-
-{
-  SDL_GetClipRect (((SDL_Surface*)(*INT(w[0]))), ((SDL_Rect*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_ConvertSurface (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_ConvertSurface (((SDL_Surface*)(*INT(w[1]))), ((SDL_PixelFormat*)(*INT(w[2]))), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_BlitSurface (word w[])
-
-{
-  *(INT(w[0])) = SDL_BlitSurface (((SDL_Surface*)(*INT(w[1]))), ((SDL_Rect*)(*INT(w[2]))), ((SDL_Surface*)(*INT(w[3]))), ((SDL_Rect*)(*INT(w[4]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_UpperBlit (word w[])
-
-{
-  *(INT(w[0])) = SDL_UpperBlit (((SDL_Surface*)(*INT(w[1]))), ((SDL_Rect*)(*INT(w[2]))), ((SDL_Surface*)(*INT(w[3]))), ((SDL_Rect*)(*INT(w[4]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_LowerBlit (word w[])
-
-{
-  *(INT(w[0])) = SDL_LowerBlit (((SDL_Surface*)(*INT(w[1]))), ((SDL_Rect*)(*INT(w[2]))), ((SDL_Surface*)(*INT(w[3]))), ((SDL_Rect*)(*INT(w[4]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_FillRect (word w[])
-
-{
-  *(INT(w[0])) = SDL_FillRect (((SDL_Surface*)(*INT(w[1]))), ((SDL_Rect*)(*INT(w[2]))), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_DisplayFormat (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_DisplayFormat (((SDL_Surface*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_DisplayFormatAlpha (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_DisplayFormatAlpha (((SDL_Surface*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_CreateYUVOverlay (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_CreateYUVOverlay ((VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), ((SDL_Surface*)(*INT(w[4]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_LockYUVOverlay (word w[])
-
-{
-  *(INT(w[0])) = SDL_LockYUVOverlay (((SDL_Overlay*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_UnlockYUVOverlay (word w[])
-
-{
-  SDL_UnlockYUVOverlay (((SDL_Overlay*)(*INT(w[0]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_DisplayYUVOverlay (word w[])
-
-{
-  *(INT(w[0])) = SDL_DisplayYUVOverlay (((SDL_Overlay*)(*INT(w[1]))), ((SDL_Rect*)(*INT(w[2]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_FreeYUVOverlay (word w[])
-
-{
-  SDL_FreeYUVOverlay (((SDL_Overlay*)(*INT(w[0]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GL_LoadLibrary (word w[])
-
-{
-  *(INT(w[0])) = SDL_GL_LoadLibrary ((BYTE(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GL_GetProcAddress (word w[])
-
-{
-  SDL_GL_GetProcAddress ((BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GL_SetAttribute (word w[])
-
-{
-  *(INT(w[0])) = SDL_GL_SetAttribute ((VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GL_GetAttribute (word w[])
-
-{
-  *(INT(w[0])) = SDL_GL_GetAttribute ((VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GL_SwapBuffers ()
-
-{
-  SDL_GL_SwapBuffers ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_GL_UpdateRects (word w[])
-
-{
-  SDL_GL_UpdateRects ((VAL_INT(w[0])), ((SDL_Rect*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GL_Lock ()
-
-{
-  SDL_GL_Lock ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_GL_Unlock ()
-
-{
-  SDL_GL_Unlock ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_WM_SetCaption (word w[])
-
-{
-  SDL_WM_SetCaption ((BYTE(w[0])), (BYTE(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_WM_GetCaption (word w[])
-
-{
-  SDL_WM_GetCaption ((BYTE(w[0])), (BYTE(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_WM_SetIcon (word w[])
-
-{
-  SDL_WM_SetIcon (((SDL_Surface*)(*INT(w[0]))), (BYTE(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_WM_IconifyWindow (word w[])
-
-{
-  *(INT(w[0])) = SDL_WM_IconifyWindow ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_WM_ToggleFullScreen (word w[])
-
-{
-  *(INT(w[0])) = SDL_WM_ToggleFullScreen (((SDL_Surface*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_WM_GrabInput (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_WM_GrabInput ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_SoftStretch (word w[])
-
-{
-  *(INT(w[0])) = SDL_SoftStretch (((SDL_Surface*)(*INT(w[1]))), ((SDL_Rect*)(*INT(w[2]))), ((SDL_Surface*)(*INT(w[3]))), ((SDL_Rect*)(*INT(w[4]))));
-  return;
-}
-
-
-/*Start of SDL_keysym wrappers*/
-DLLPREFIX void _create_SDL_keysym(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_keysym));
-}
-
-DLLPREFIX void _delete_SDL_keysym(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_keysym_scancode (word occ_args[])
-{
-	SDL_keysym *foo = ((SDL_keysym *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->scancode);
-}
-DLLPREFIX void _set_SDL_keysym_scancode (word occ_args[])
-{
-	SDL_keysym *foo = ((SDL_keysym *) occ_args[1]);
-	foo->scancode = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_keysym_sym (word occ_args[])
-{
-	SDL_keysym *foo = ((SDL_keysym *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->sym);
-}
-DLLPREFIX void _set_SDL_keysym_sym (word occ_args[])
-{
-	SDL_keysym *foo = ((SDL_keysym *) occ_args[1]);
-	foo->sym = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_keysym_mod (word occ_args[])
-{
-	SDL_keysym *foo = ((SDL_keysym *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->mod);
-}
-DLLPREFIX void _set_SDL_keysym_mod (word occ_args[])
-{
-	SDL_keysym *foo = ((SDL_keysym *) occ_args[1]);
-	foo->mod = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_keysym_unicode (word occ_args[])
-{
-	SDL_keysym *foo = ((SDL_keysym *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->unicode);
-}
-DLLPREFIX void _set_SDL_keysym_unicode (word occ_args[])
-{
-	SDL_keysym *foo = ((SDL_keysym *) occ_args[1]);
-	foo->unicode = (Uint16) VAL_INT16(occ_args[0]);
-}
-/*End of SDL.keysym wrappers*/
-
-DLLPREFIX void _SDL_EnableUNICODE (word w[])
-
-{
-  *(INT(w[0])) = SDL_EnableUNICODE ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_EnableKeyRepeat (word w[])
-
-{
-  *(INT(w[0])) = SDL_EnableKeyRepeat ((VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GetKeyState (word w[])
-
-{
-  *(BYTE(w[0])) = SDL_GetKeyState ((INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GetModState (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_GetModState ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_SetModState (word w[])
-
-{
-  SDL_SetModState ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GetKeyName (word w[])
-
-{
-  *(BYTE(w[0])) = SDL_GetKeyName ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_NumJoysticks (word w[])
-
-{
-  *(INT(w[0])) = SDL_NumJoysticks ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickName (word w[])
-
-{
-  *(BYTE(w[0])) = SDL_JoystickName ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickOpen (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_JoystickOpen ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickOpened (word w[])
-
-{
-  *(INT(w[0])) = SDL_JoystickOpened ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickIndex (word w[])
-
-{
-  *(INT(w[0])) = SDL_JoystickIndex (((SDL_Joystick*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickNumAxes (word w[])
-
-{
-  *(INT(w[0])) = SDL_JoystickNumAxes (((SDL_Joystick*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickNumBalls (word w[])
-
-{
-  *(INT(w[0])) = SDL_JoystickNumBalls (((SDL_Joystick*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickNumHats (word w[])
-
-{
-  *(INT(w[0])) = SDL_JoystickNumHats (((SDL_Joystick*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickNumButtons (word w[])
-
-{
-  *(INT(w[0])) = SDL_JoystickNumButtons (((SDL_Joystick*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickUpdate ()
-
-{
-  SDL_JoystickUpdate ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickEventState (word w[])
-
-{
-  *(INT(w[0])) = SDL_JoystickEventState ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickGetAxis (word w[])
-
-{
-  *(INT16(w[0])) = SDL_JoystickGetAxis (((SDL_Joystick*)(*INT(w[1]))), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickGetHat (word w[])
-
-{
-  *(BYTE(w[0])) = SDL_JoystickGetHat (((SDL_Joystick*)(*INT(w[1]))), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickGetBall (word w[])
-
-{
-  *(INT(w[0])) = SDL_JoystickGetBall (((SDL_Joystick*)(*INT(w[1]))), (VAL_INT(w[2])), (INT(w[3])), (INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickGetButton (word w[])
-
-{
-  *(BYTE(w[0])) = SDL_JoystickGetButton (((SDL_Joystick*)(*INT(w[1]))), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_JoystickClose (word w[])
-
-{
-  SDL_JoystickClose (((SDL_Joystick*)(*INT(w[0]))));
-  return;
-}
-
-
-/*Start of SDL_AudioSpec wrappers*/
-DLLPREFIX void _create_SDL_AudioSpec(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_AudioSpec));
-}
-
-DLLPREFIX void _delete_SDL_AudioSpec(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_AudioSpec_freq (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->freq);
-}
-DLLPREFIX void _set_SDL_AudioSpec_freq (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	foo->freq = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioSpec_format (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->format);
-}
-DLLPREFIX void _set_SDL_AudioSpec_format (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	foo->format = (Uint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioSpec_channels (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->channels);
-}
-DLLPREFIX void _set_SDL_AudioSpec_channels (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	foo->channels = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioSpec_silence (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->silence);
-}
-DLLPREFIX void _set_SDL_AudioSpec_silence (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	foo->silence = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioSpec_samples (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->samples);
-}
-DLLPREFIX void _set_SDL_AudioSpec_samples (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	foo->samples = (Uint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioSpec_padding (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->padding);
-}
-DLLPREFIX void _set_SDL_AudioSpec_padding (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	foo->padding = (Uint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioSpec_size (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->size);
-}
-DLLPREFIX void _set_SDL_AudioSpec_size (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	foo->size = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioSpec_callback (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->callback);
-}
-DLLPREFIX void _set_SDL_AudioSpec_callback (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	foo->callback = (void (*)(void *,Uint8 *,int)) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioSpec_userdata (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->userdata);
-}
-DLLPREFIX void _set_SDL_AudioSpec_userdata (word occ_args[])
-{
-	SDL_AudioSpec *foo = ((SDL_AudioSpec *) occ_args[1]);
-	foo->userdata = (void *) VAL_INT(occ_args[0]);
-}
-/*End of SDL.AudioSpec wrappers*/
-
-/*Start of SDL_AudioCVT wrappers*/
-DLLPREFIX void _create_SDL_AudioCVT(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_AudioCVT));
-}
-
-DLLPREFIX void _delete_SDL_AudioCVT(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_AudioCVT_needed (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->needed);
-}
-DLLPREFIX void _set_SDL_AudioCVT_needed (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	foo->needed = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioCVT_src_format (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->src_format);
-}
-DLLPREFIX void _set_SDL_AudioCVT_src_format (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	foo->src_format = (Uint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioCVT_dst_format (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->dst_format);
-}
-DLLPREFIX void _set_SDL_AudioCVT_dst_format (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	foo->dst_format = (Uint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioCVT_rate_incr (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	*(REAL64(occ_args[0])) = CAST_REAL64(foo->rate_incr);
-}
-DLLPREFIX void _set_SDL_AudioCVT_rate_incr (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	foo->rate_incr = (double) VAL_REAL64(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioCVT_buf (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->buf);
-}
-DLLPREFIX void _set_SDL_AudioCVT_buf (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	foo->buf = (Uint8 *) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioCVT_len (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->len);
-}
-DLLPREFIX void _set_SDL_AudioCVT_len (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	foo->len = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioCVT_len_cvt (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->len_cvt);
-}
-DLLPREFIX void _set_SDL_AudioCVT_len_cvt (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	foo->len_cvt = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioCVT_len_mult (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->len_mult);
-}
-DLLPREFIX void _set_SDL_AudioCVT_len_mult (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	foo->len_mult = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioCVT_len_ratio (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	*(REAL64(occ_args[0])) = CAST_REAL64(foo->len_ratio);
-}
-DLLPREFIX void _set_SDL_AudioCVT_len_ratio (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	foo->len_ratio = (double) VAL_REAL64(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_AudioCVT_filter_index (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->filter_index);
-}
-DLLPREFIX void _set_SDL_AudioCVT_filter_index (word occ_args[])
-{
-	SDL_AudioCVT *foo = ((SDL_AudioCVT *) occ_args[1]);
-	foo->filter_index = (int) VAL_INT(occ_args[0]);
-}
-/*End of SDL.AudioCVT wrappers*/
-
-DLLPREFIX void _SDL_AudioDriverName (word w[])
-
-{
-  *(BYTE(w[0])) = SDL_AudioDriverName ((BYTE(w[1])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_OpenAudio (word w[])
-
-{
-  *(INT(w[0])) = SDL_OpenAudio (((SDL_AudioSpec*)(*INT(w[1]))), ((SDL_AudioSpec*)(*INT(w[2]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_GetAudioStatus (word w[])
-
-{
-  (*INT(w[0])) = (int) SDL_GetAudioStatus ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_PauseAudio (word w[])
-
-{
-  SDL_PauseAudio ((VAL_INT(w[0])));
-  return;
-}
-
-
-
-SDL_AudioSpec * occ_SDL_LoadWAV(char file[], SDL_AudioSpec *spec, Uint8 audio_buf[], Uint32 audio_len[]) {
-	return SDL_LoadWAV_RW(SDL_RWFromFile(file, "rb"),1, spec,audio_buf,audio_len);
-}
-
-DLLPREFIX void _occ_SDL_LoadWAV (word w[])
-
-{
-  (*INT(w[0])) = (int) occ_SDL_LoadWAV ((BYTE(w[1])), ((SDL_AudioSpec*)(*INT(w[3]))), (BYTE(w[4])), (INT(w[6])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_FreeWAV (word w[])
-
-{
-  SDL_FreeWAV ((BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_BuildAudioCVT (word w[])
-
-{
-  *(INT(w[0])) = SDL_BuildAudioCVT (((SDL_AudioCVT*)(*INT(w[1]))), (VAL_INT16(w[2])), (VAL_BYTE(w[3])), (VAL_INT(w[4])), (VAL_INT16(w[5])), (VAL_BYTE(w[6])), (VAL_INT(w[7])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_ConvertAudio (word w[])
-
-{
-  *(INT(w[0])) = SDL_ConvertAudio (((SDL_AudioCVT*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_MixAudio (word w[])
-
-{
-  SDL_MixAudio ((BYTE(w[0])), (BYTE(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_LockAudio ()
-
-{
-  SDL_LockAudio ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_UnlockAudio ()
-
-{
-  SDL_UnlockAudio ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_CloseAudio ()
-
-{
-  SDL_CloseAudio ();
-  return;
-}
-
-
-/*Start of SDL_ActiveEvent wrappers*/
-DLLPREFIX void _create_SDL_ActiveEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_ActiveEvent));
-}
-
-DLLPREFIX void _delete_SDL_ActiveEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_ActiveEvent_type (word occ_args[])
-{
-	SDL_ActiveEvent *foo = ((SDL_ActiveEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_ActiveEvent_type (word occ_args[])
-{
-	SDL_ActiveEvent *foo = ((SDL_ActiveEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_ActiveEvent_gain (word occ_args[])
-{
-	SDL_ActiveEvent *foo = ((SDL_ActiveEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->gain);
-}
-DLLPREFIX void _set_SDL_ActiveEvent_gain (word occ_args[])
-{
-	SDL_ActiveEvent *foo = ((SDL_ActiveEvent *) occ_args[1]);
-	foo->gain = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_ActiveEvent_state (word occ_args[])
-{
-	SDL_ActiveEvent *foo = ((SDL_ActiveEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->state);
-}
-DLLPREFIX void _set_SDL_ActiveEvent_state (word occ_args[])
-{
-	SDL_ActiveEvent *foo = ((SDL_ActiveEvent *) occ_args[1]);
-	foo->state = (Uint8) VAL_BYTE(occ_args[0]);
-}
-/*End of SDL.ActiveEvent wrappers*/
-
-/*Start of SDL_KeyboardEvent wrappers*/
-DLLPREFIX void _create_SDL_KeyboardEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_KeyboardEvent));
-}
-
-DLLPREFIX void _delete_SDL_KeyboardEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_KeyboardEvent_type (word occ_args[])
-{
-	SDL_KeyboardEvent *foo = ((SDL_KeyboardEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_KeyboardEvent_type (word occ_args[])
-{
-	SDL_KeyboardEvent *foo = ((SDL_KeyboardEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_KeyboardEvent_which (word occ_args[])
-{
-	SDL_KeyboardEvent *foo = ((SDL_KeyboardEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->which);
-}
-DLLPREFIX void _set_SDL_KeyboardEvent_which (word occ_args[])
-{
-	SDL_KeyboardEvent *foo = ((SDL_KeyboardEvent *) occ_args[1]);
-	foo->which = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_KeyboardEvent_state (word occ_args[])
-{
-	SDL_KeyboardEvent *foo = ((SDL_KeyboardEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->state);
-}
-DLLPREFIX void _set_SDL_KeyboardEvent_state (word occ_args[])
-{
-	SDL_KeyboardEvent *foo = ((SDL_KeyboardEvent *) occ_args[1]);
-	foo->state = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_KeyboardEvent_keysym (word occ_args[])
-{
-	SDL_KeyboardEvent *foo = ((SDL_KeyboardEvent *) occ_args[1]);
-	*((void **) occ_args[0]) = (void *) &foo->keysym;
-}
-/*End of SDL.KeyboardEvent wrappers*/
-
-/*Start of SDL_MouseMotionEvent wrappers*/
-DLLPREFIX void _create_SDL_MouseMotionEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_MouseMotionEvent));
-}
-
-DLLPREFIX void _delete_SDL_MouseMotionEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_MouseMotionEvent_type (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_MouseMotionEvent_type (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_MouseMotionEvent_which (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->which);
-}
-DLLPREFIX void _set_SDL_MouseMotionEvent_which (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	foo->which = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_MouseMotionEvent_state (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->state);
-}
-DLLPREFIX void _set_SDL_MouseMotionEvent_state (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	foo->state = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_MouseMotionEvent_x (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->x);
-}
-DLLPREFIX void _set_SDL_MouseMotionEvent_x (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	foo->x = (Uint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_MouseMotionEvent_y (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->y);
-}
-DLLPREFIX void _set_SDL_MouseMotionEvent_y (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	foo->y = (Uint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_MouseMotionEvent_xrel (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->xrel);
-}
-DLLPREFIX void _set_SDL_MouseMotionEvent_xrel (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	foo->xrel = (Sint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_MouseMotionEvent_yrel (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->yrel);
-}
-DLLPREFIX void _set_SDL_MouseMotionEvent_yrel (word occ_args[])
-{
-	SDL_MouseMotionEvent *foo = ((SDL_MouseMotionEvent *) occ_args[1]);
-	foo->yrel = (Sint16) VAL_INT16(occ_args[0]);
-}
-/*End of SDL.MouseMotionEvent wrappers*/
-
-/*Start of SDL_MouseButtonEvent wrappers*/
-DLLPREFIX void _create_SDL_MouseButtonEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_MouseButtonEvent));
-}
-
-DLLPREFIX void _delete_SDL_MouseButtonEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_MouseButtonEvent_type (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_MouseButtonEvent_type (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_MouseButtonEvent_which (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->which);
-}
-DLLPREFIX void _set_SDL_MouseButtonEvent_which (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	foo->which = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_MouseButtonEvent_button (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->button);
-}
-DLLPREFIX void _set_SDL_MouseButtonEvent_button (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	foo->button = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_MouseButtonEvent_state (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->state);
-}
-DLLPREFIX void _set_SDL_MouseButtonEvent_state (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	foo->state = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_MouseButtonEvent_x (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->x);
-}
-DLLPREFIX void _set_SDL_MouseButtonEvent_x (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	foo->x = (Uint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_MouseButtonEvent_y (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->y);
-}
-DLLPREFIX void _set_SDL_MouseButtonEvent_y (word occ_args[])
-{
-	SDL_MouseButtonEvent *foo = ((SDL_MouseButtonEvent *) occ_args[1]);
-	foo->y = (Uint16) VAL_INT16(occ_args[0]);
-}
-/*End of SDL.MouseButtonEvent wrappers*/
-
-/*Start of SDL_JoyAxisEvent wrappers*/
-DLLPREFIX void _create_SDL_JoyAxisEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_JoyAxisEvent));
-}
-
-DLLPREFIX void _delete_SDL_JoyAxisEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_JoyAxisEvent_type (word occ_args[])
-{
-	SDL_JoyAxisEvent *foo = ((SDL_JoyAxisEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_JoyAxisEvent_type (word occ_args[])
-{
-	SDL_JoyAxisEvent *foo = ((SDL_JoyAxisEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyAxisEvent_which (word occ_args[])
-{
-	SDL_JoyAxisEvent *foo = ((SDL_JoyAxisEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->which);
-}
-DLLPREFIX void _set_SDL_JoyAxisEvent_which (word occ_args[])
-{
-	SDL_JoyAxisEvent *foo = ((SDL_JoyAxisEvent *) occ_args[1]);
-	foo->which = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyAxisEvent_axis (word occ_args[])
-{
-	SDL_JoyAxisEvent *foo = ((SDL_JoyAxisEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->axis);
-}
-DLLPREFIX void _set_SDL_JoyAxisEvent_axis (word occ_args[])
-{
-	SDL_JoyAxisEvent *foo = ((SDL_JoyAxisEvent *) occ_args[1]);
-	foo->axis = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyAxisEvent_value (word occ_args[])
-{
-	SDL_JoyAxisEvent *foo = ((SDL_JoyAxisEvent *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->value);
-}
-DLLPREFIX void _set_SDL_JoyAxisEvent_value (word occ_args[])
-{
-	SDL_JoyAxisEvent *foo = ((SDL_JoyAxisEvent *) occ_args[1]);
-	foo->value = (Sint16) VAL_INT16(occ_args[0]);
-}
-/*End of SDL.JoyAxisEvent wrappers*/
-
-/*Start of SDL_JoyBallEvent wrappers*/
-DLLPREFIX void _create_SDL_JoyBallEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_JoyBallEvent));
-}
-
-DLLPREFIX void _delete_SDL_JoyBallEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_JoyBallEvent_type (word occ_args[])
-{
-	SDL_JoyBallEvent *foo = ((SDL_JoyBallEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_JoyBallEvent_type (word occ_args[])
-{
-	SDL_JoyBallEvent *foo = ((SDL_JoyBallEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyBallEvent_which (word occ_args[])
-{
-	SDL_JoyBallEvent *foo = ((SDL_JoyBallEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->which);
-}
-DLLPREFIX void _set_SDL_JoyBallEvent_which (word occ_args[])
-{
-	SDL_JoyBallEvent *foo = ((SDL_JoyBallEvent *) occ_args[1]);
-	foo->which = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyBallEvent_ball (word occ_args[])
-{
-	SDL_JoyBallEvent *foo = ((SDL_JoyBallEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->ball);
-}
-DLLPREFIX void _set_SDL_JoyBallEvent_ball (word occ_args[])
-{
-	SDL_JoyBallEvent *foo = ((SDL_JoyBallEvent *) occ_args[1]);
-	foo->ball = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyBallEvent_xrel (word occ_args[])
-{
-	SDL_JoyBallEvent *foo = ((SDL_JoyBallEvent *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->xrel);
-}
-DLLPREFIX void _set_SDL_JoyBallEvent_xrel (word occ_args[])
-{
-	SDL_JoyBallEvent *foo = ((SDL_JoyBallEvent *) occ_args[1]);
-	foo->xrel = (Sint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyBallEvent_yrel (word occ_args[])
-{
-	SDL_JoyBallEvent *foo = ((SDL_JoyBallEvent *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->yrel);
-}
-DLLPREFIX void _set_SDL_JoyBallEvent_yrel (word occ_args[])
-{
-	SDL_JoyBallEvent *foo = ((SDL_JoyBallEvent *) occ_args[1]);
-	foo->yrel = (Sint16) VAL_INT16(occ_args[0]);
-}
-/*End of SDL.JoyBallEvent wrappers*/
-
-/*Start of SDL_JoyHatEvent wrappers*/
-DLLPREFIX void _create_SDL_JoyHatEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_JoyHatEvent));
-}
-
-DLLPREFIX void _delete_SDL_JoyHatEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_JoyHatEvent_type (word occ_args[])
-{
-	SDL_JoyHatEvent *foo = ((SDL_JoyHatEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_JoyHatEvent_type (word occ_args[])
-{
-	SDL_JoyHatEvent *foo = ((SDL_JoyHatEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyHatEvent_which (word occ_args[])
-{
-	SDL_JoyHatEvent *foo = ((SDL_JoyHatEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->which);
-}
-DLLPREFIX void _set_SDL_JoyHatEvent_which (word occ_args[])
-{
-	SDL_JoyHatEvent *foo = ((SDL_JoyHatEvent *) occ_args[1]);
-	foo->which = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyHatEvent_hat (word occ_args[])
-{
-	SDL_JoyHatEvent *foo = ((SDL_JoyHatEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->hat);
-}
-DLLPREFIX void _set_SDL_JoyHatEvent_hat (word occ_args[])
-{
-	SDL_JoyHatEvent *foo = ((SDL_JoyHatEvent *) occ_args[1]);
-	foo->hat = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyHatEvent_value (word occ_args[])
-{
-	SDL_JoyHatEvent *foo = ((SDL_JoyHatEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->value);
-}
-DLLPREFIX void _set_SDL_JoyHatEvent_value (word occ_args[])
-{
-	SDL_JoyHatEvent *foo = ((SDL_JoyHatEvent *) occ_args[1]);
-	foo->value = (Uint8) VAL_BYTE(occ_args[0]);
-}
-/*End of SDL.JoyHatEvent wrappers*/
-
-/*Start of SDL_JoyButtonEvent wrappers*/
-DLLPREFIX void _create_SDL_JoyButtonEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_JoyButtonEvent));
-}
-
-DLLPREFIX void _delete_SDL_JoyButtonEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_JoyButtonEvent_type (word occ_args[])
-{
-	SDL_JoyButtonEvent *foo = ((SDL_JoyButtonEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_JoyButtonEvent_type (word occ_args[])
-{
-	SDL_JoyButtonEvent *foo = ((SDL_JoyButtonEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyButtonEvent_which (word occ_args[])
-{
-	SDL_JoyButtonEvent *foo = ((SDL_JoyButtonEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->which);
-}
-DLLPREFIX void _set_SDL_JoyButtonEvent_which (word occ_args[])
-{
-	SDL_JoyButtonEvent *foo = ((SDL_JoyButtonEvent *) occ_args[1]);
-	foo->which = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyButtonEvent_button (word occ_args[])
-{
-	SDL_JoyButtonEvent *foo = ((SDL_JoyButtonEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->button);
-}
-DLLPREFIX void _set_SDL_JoyButtonEvent_button (word occ_args[])
-{
-	SDL_JoyButtonEvent *foo = ((SDL_JoyButtonEvent *) occ_args[1]);
-	foo->button = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_JoyButtonEvent_state (word occ_args[])
-{
-	SDL_JoyButtonEvent *foo = ((SDL_JoyButtonEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->state);
-}
-DLLPREFIX void _set_SDL_JoyButtonEvent_state (word occ_args[])
-{
-	SDL_JoyButtonEvent *foo = ((SDL_JoyButtonEvent *) occ_args[1]);
-	foo->state = (Uint8) VAL_BYTE(occ_args[0]);
-}
-/*End of SDL.JoyButtonEvent wrappers*/
-
-/*Start of SDL_ResizeEvent wrappers*/
-DLLPREFIX void _create_SDL_ResizeEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_ResizeEvent));
-}
-
-DLLPREFIX void _delete_SDL_ResizeEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_ResizeEvent_type (word occ_args[])
-{
-	SDL_ResizeEvent *foo = ((SDL_ResizeEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_ResizeEvent_type (word occ_args[])
-{
-	SDL_ResizeEvent *foo = ((SDL_ResizeEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_ResizeEvent_w (word occ_args[])
-{
-	SDL_ResizeEvent *foo = ((SDL_ResizeEvent *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->w);
-}
-DLLPREFIX void _set_SDL_ResizeEvent_w (word occ_args[])
-{
-	SDL_ResizeEvent *foo = ((SDL_ResizeEvent *) occ_args[1]);
-	foo->w = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_ResizeEvent_h (word occ_args[])
-{
-	SDL_ResizeEvent *foo = ((SDL_ResizeEvent *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->h);
-}
-DLLPREFIX void _set_SDL_ResizeEvent_h (word occ_args[])
-{
-	SDL_ResizeEvent *foo = ((SDL_ResizeEvent *) occ_args[1]);
-	foo->h = (int) VAL_INT(occ_args[0]);
-}
-/*End of SDL.ResizeEvent wrappers*/
-
-/*Start of SDL_ExposeEvent wrappers*/
-DLLPREFIX void _create_SDL_ExposeEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_ExposeEvent));
-}
-
-DLLPREFIX void _delete_SDL_ExposeEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_ExposeEvent_type (word occ_args[])
-{
-	SDL_ExposeEvent *foo = ((SDL_ExposeEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_ExposeEvent_type (word occ_args[])
-{
-	SDL_ExposeEvent *foo = ((SDL_ExposeEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-/*End of SDL.ExposeEvent wrappers*/
-
-/*Start of SDL_QuitEvent wrappers*/
-DLLPREFIX void _create_SDL_QuitEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_QuitEvent));
-}
-
-DLLPREFIX void _delete_SDL_QuitEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_QuitEvent_type (word occ_args[])
-{
-	SDL_QuitEvent *foo = ((SDL_QuitEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_QuitEvent_type (word occ_args[])
-{
-	SDL_QuitEvent *foo = ((SDL_QuitEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-/*End of SDL.QuitEvent wrappers*/
-
-/*Start of SDL_UserEvent wrappers*/
-DLLPREFIX void _create_SDL_UserEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_UserEvent));
-}
-
-DLLPREFIX void _delete_SDL_UserEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_UserEvent_type (word occ_args[])
-{
-	SDL_UserEvent *foo = ((SDL_UserEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_UserEvent_type (word occ_args[])
-{
-	SDL_UserEvent *foo = ((SDL_UserEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_UserEvent_code (word occ_args[])
-{
-	SDL_UserEvent *foo = ((SDL_UserEvent *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->code);
-}
-DLLPREFIX void _set_SDL_UserEvent_code (word occ_args[])
-{
-	SDL_UserEvent *foo = ((SDL_UserEvent *) occ_args[1]);
-	foo->code = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_UserEvent_data1 (word occ_args[])
-{
-	SDL_UserEvent *foo = ((SDL_UserEvent *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->data1);
-}
-DLLPREFIX void _set_SDL_UserEvent_data1 (word occ_args[])
-{
-	SDL_UserEvent *foo = ((SDL_UserEvent *) occ_args[1]);
-	foo->data1 = (void *) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_UserEvent_data2 (word occ_args[])
-{
-	SDL_UserEvent *foo = ((SDL_UserEvent *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->data2);
-}
-DLLPREFIX void _set_SDL_UserEvent_data2 (word occ_args[])
-{
-	SDL_UserEvent *foo = ((SDL_UserEvent *) occ_args[1]);
-	foo->data2 = (void *) VAL_INT(occ_args[0]);
-}
-/*End of SDL.UserEvent wrappers*/
-
-/*Start of SDL_SysWMEvent wrappers*/
-DLLPREFIX void _create_SDL_SysWMEvent(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(SDL_SysWMEvent));
-}
-
-DLLPREFIX void _delete_SDL_SysWMEvent(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_SDL_SysWMEvent_type (word occ_args[])
-{
-	SDL_SysWMEvent *foo = ((SDL_SysWMEvent *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->type);
-}
-DLLPREFIX void _set_SDL_SysWMEvent_type (word occ_args[])
-{
-	SDL_SysWMEvent *foo = ((SDL_SysWMEvent *) occ_args[1]);
-	foo->type = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_SDL_SysWMEvent_msg (word occ_args[])
-{
-	SDL_SysWMEvent *foo = ((SDL_SysWMEvent *) occ_args[1]);
-	*((void **) occ_args[0]) = (void *) foo->msg;
-}
-/*End of SDL.SysWMEvent wrappers*/
-
-DLLPREFIX void _create_SDL_Event(word w[])
-{
-	*((void **) w[0]) = (void *) malloc(sizeof(SDL_Event));
-}
-
-DLLPREFIX void _delete_SDL_Event(word w[])
-{
-	free(((void *) w[0]));
-}
-
-
-  /*Added in from SWIG wrapper SDL_event.i*/
-	Uint8 get_SDL_Event_type(SDL_Event *event ) {
-		return event->type;
-	}
-
-DLLPREFIX void _get_SDL_Event_type (word w[])
-
-{
-  *(BYTE(w[0])) = get_SDL_Event_type (((SDL_Event*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_PumpEvents ()
-
-{
-  SDL_PumpEvents ();
-  return;
-}
-
-
-DLLPREFIX void _SDL_PeepEvents (word w[])
-
-{
-  *(INT(w[0])) = SDL_PeepEvents (((SDL_Event*)(*INT(w[1]))), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_PollEvent (word w[])
-
-{
-  *(INT(w[0])) = SDL_PollEvent (((SDL_Event*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_WaitEvent (word w[])
-
-{
-  *(INT(w[0])) = SDL_WaitEvent (((SDL_Event*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_PushEvent (word w[])
-
-{
-  *(INT(w[0])) = SDL_PushEvent (((SDL_Event*)(*INT(w[1]))));
-  return;
-}
-
-
-DLLPREFIX void _SDL_EventState (word w[])
-
-{
-  *(BYTE(w[0])) = SDL_EventState ((VAL_BYTE(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-
-	inline static void occ_SDL_GetError(char err_str[], int err_str_len, int *str_len)
-	{
-  	char *err = SDL_GetError();
-
-  	*str_len = 0;
-
-  	while(*str_len < err_str_len && err[*str_len] != '\0')
-    	err_str[*str_len] = err[(*str_len)++];
-		return;
-	}
-
-DLLPREFIX void _occ_SDL_GetError (word w[])
-
-{
-  occ_SDL_GetError ((BYTE(w[0])), (VAL_INT(w[2])), (INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _SDL_ClearError ()
-
-{
-  SDL_ClearError ();
-  return;
-}
-
-
+/*{{{  function occ_SDL_LoadBMP */
+SWIGEXPORT void _occ_SDL_LoadBMP (word occ_args[]) {
+  char *arg1 ;
+  SDL_Surface *result = 0 ;
+  
+  {
+    arg1 = (char *) occ_args[0]; 
+  }result = (SDL_Surface *)occ_SDL_LoadBMP((char const (*))arg1);
+  {
+    *((void **) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function occ_SDL_SaveBMP */
+SWIGEXPORT void _occ_SDL_SaveBMP (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  char *arg2 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (char *) occ_args[1]; 
+  }result = (int)occ_SDL_SaveBMP(arg1,(char const (*))arg2);
+  {
+    *((int *) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SetColorKey */
+SWIGEXPORT void _SDL_SetColorKey (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Uint32 arg2 ;
+  Uint32 arg3 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }{
+    arg3 = (Uint32) occ_args[2]; 
+  }result = (int)SDL_SetColorKey(arg1,arg2,arg3);
+  {
+    *((int *) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SetAlpha */
+SWIGEXPORT void _SDL_SetAlpha (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Uint32 arg2 ;
+  Uint8 arg3 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }{
+    arg3 = (Uint8) occ_args[2]; 
+  }result = (int)SDL_SetAlpha(arg1,arg2,arg3);
+  {
+    *((int *) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SetClipRect */
+SWIGEXPORT void _SDL_SetClipRect (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg2 = (SDL_Rect *) 0 ;
+  SDL_bool result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Rect *) occ_args[1]; 
+  }result = (SDL_bool)SDL_SetClipRect(arg1,(struct SDL_Rect const *)arg2);
+  {
+    *((SDL_bool *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetClipRect */
+SWIGEXPORT void _SDL_GetClipRect (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg2 = (SDL_Rect *) 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Rect *) occ_args[1]; 
+  }SDL_GetClipRect(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ConvertSurface */
+SWIGEXPORT void _SDL_ConvertSurface (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_PixelFormat *arg2 = (SDL_PixelFormat *) 0 ;
+  Uint32 arg3 ;
+  SDL_Surface *result = 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (SDL_PixelFormat *) occ_args[1]; 
+  }{
+    arg3 = (Uint32) occ_args[2]; 
+  }result = (SDL_Surface *)SDL_ConvertSurface(arg1,arg2,arg3);
+  {
+    *((void **) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_BlitSurface */
+SWIGEXPORT void _SDL_BlitSurface (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg2 = (SDL_Rect *) 0 ;
+  SDL_Surface *arg3 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg4 = (SDL_Rect *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Rect *) occ_args[1]; 
+  }{
+    arg3 = (SDL_Surface *) occ_args[2]; 
+  }{
+    arg4 = (SDL_Rect *) occ_args[3]; 
+  }result = (int)SDL_BlitSurface(arg1,arg2,arg3,arg4);
+  {
+    *((int *) occ_args[4]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UpperBlit */
+SWIGEXPORT void _SDL_UpperBlit (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg2 = (SDL_Rect *) 0 ;
+  SDL_Surface *arg3 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg4 = (SDL_Rect *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Rect *) occ_args[1]; 
+  }{
+    arg3 = (SDL_Surface *) occ_args[2]; 
+  }{
+    arg4 = (SDL_Rect *) occ_args[3]; 
+  }result = (int)SDL_UpperBlit(arg1,arg2,arg3,arg4);
+  {
+    *((int *) occ_args[4]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_LowerBlit */
+SWIGEXPORT void _SDL_LowerBlit (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg2 = (SDL_Rect *) 0 ;
+  SDL_Surface *arg3 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg4 = (SDL_Rect *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Rect *) occ_args[1]; 
+  }{
+    arg3 = (SDL_Surface *) occ_args[2]; 
+  }{
+    arg4 = (SDL_Rect *) occ_args[3]; 
+  }result = (int)SDL_LowerBlit(arg1,arg2,arg3,arg4);
+  {
+    *((int *) occ_args[4]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_FillRect */
+SWIGEXPORT void _SDL_FillRect (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg2 = (SDL_Rect *) 0 ;
+  Uint32 arg3 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Rect *) occ_args[1]; 
+  }{
+    arg3 = (Uint32) occ_args[2]; 
+  }result = (int)SDL_FillRect(arg1,arg2,arg3);
+  {
+    *((int *) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_DisplayFormat */
+SWIGEXPORT void _SDL_DisplayFormat (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Surface *result = 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (SDL_Surface *)SDL_DisplayFormat(arg1);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_DisplayFormatAlpha */
+SWIGEXPORT void _SDL_DisplayFormatAlpha (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Surface *result = 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (SDL_Surface *)SDL_DisplayFormatAlpha(arg1);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_CreateYUVOverlay */
+SWIGEXPORT void _SDL_CreateYUVOverlay (word occ_args[]) {
+  int arg1 ;
+  int arg2 ;
+  Uint32 arg3 ;
+  SDL_Surface *arg4 = (SDL_Surface *) 0 ;
+  SDL_Overlay *result = 0 ;
+  
+  {
+    arg1 = (int) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }{
+    arg3 = (Uint32) occ_args[2]; 
+  }{
+    arg4 = (SDL_Surface *) occ_args[3]; 
+  }result = (SDL_Overlay *)SDL_CreateYUVOverlay(arg1,arg2,arg3,arg4);
+  {
+    *((void **) occ_args[4]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_LockYUVOverlay */
+SWIGEXPORT void _SDL_LockYUVOverlay (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }result = (int)SDL_LockYUVOverlay(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UnlockYUVOverlay */
+SWIGEXPORT void _SDL_UnlockYUVOverlay (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }SDL_UnlockYUVOverlay(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_DisplayYUVOverlay */
+SWIGEXPORT void _SDL_DisplayYUVOverlay (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  SDL_Rect *arg2 = (SDL_Rect *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Rect *) occ_args[1]; 
+  }result = (int)SDL_DisplayYUVOverlay(arg1,arg2);
+  {
+    *((int *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_FreeYUVOverlay */
+SWIGEXPORT void _SDL_FreeYUVOverlay (word occ_args[]) {
+  SDL_Overlay *arg1 = (SDL_Overlay *) 0 ;
+  
+  {
+    arg1 = (SDL_Overlay *) occ_args[0]; 
+  }SDL_FreeYUVOverlay(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GL_LoadLibrary */
+SWIGEXPORT void _SDL_GL_LoadLibrary (word occ_args[]) {
+  char *arg1 = (char *) 0 ;
+  int result;
+  
+  {
+    arg1 = (char *) occ_args[0]; 
+  }result = (int)SDL_GL_LoadLibrary((char const *)arg1);
+  {
+    *((int *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GL_GetProcAddress */
+SWIGEXPORT void _SDL_GL_GetProcAddress (word occ_args[]) {
+  char *arg1 = (char *) 0 ;
+  void *result = 0 ;
+  
+  {
+    arg1 = (char *) occ_args[0]; 
+  }result = (void *)SDL_GL_GetProcAddress((char const *)arg1);
+  {
+    *((void * *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GL_SetAttribute */
+SWIGEXPORT void _SDL_GL_SetAttribute (word occ_args[]) {
+  SDL_GLattr arg1 ;
+  int arg2 ;
+  int result;
+  
+  {
+    arg1 = (SDL_GLattr) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }result = (int)SDL_GL_SetAttribute(arg1,arg2);
+  {
+    *((int *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GL_GetAttribute */
+SWIGEXPORT void _SDL_GL_GetAttribute (word occ_args[]) {
+  SDL_GLattr arg1 ;
+  int *arg2 = (int *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_GLattr) occ_args[0]; 
+  }{
+    arg2 = (int *) occ_args[1]; 
+  }result = (int)SDL_GL_GetAttribute(arg1,arg2);
+  {
+    *((int *) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GL_SwapBuffers */
+SWIGEXPORT void _SDL_GL_SwapBuffers (word occ_args[]) {
+  SDL_GL_SwapBuffers();
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GL_UpdateRects */
+SWIGEXPORT void _SDL_GL_UpdateRects (word occ_args[]) {
+  int arg1 ;
+  SDL_Rect *arg2 = (SDL_Rect *) 0 ;
+  
+  {
+    arg1 = (int) occ_args[0]; 
+  }{
+    arg2 = (SDL_Rect *) occ_args[1]; 
+  }SDL_GL_UpdateRects(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GL_Lock */
+SWIGEXPORT void _SDL_GL_Lock (word occ_args[]) {
+  SDL_GL_Lock();
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GL_Unlock */
+SWIGEXPORT void _SDL_GL_Unlock (word occ_args[]) {
+  SDL_GL_Unlock();
+}
+
+
+/*}}}*/
+/*{{{  function SDL_WM_SetCaption */
+SWIGEXPORT void _SDL_WM_SetCaption (word occ_args[]) {
+  char *arg1 ;
+  char *arg2 ;
+  
+  {
+    arg1 = (char *) occ_args[0]; 
+  }{
+    arg2 = (char *) occ_args[2]; 
+  }SDL_WM_SetCaption((char const (*))arg1,(char const (*))arg2);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_WM_GetCaption */
+SWIGEXPORT void _SDL_WM_GetCaption (word occ_args[]) {
+  char **arg1 = (char **) 0 ;
+  char **arg2 = (char **) 0 ;
+  
+  {
+    arg1 = (char **) occ_args[0]; 
+  }{
+    arg2 = (char **) occ_args[1]; 
+  }SDL_WM_GetCaption(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_WM_SetIcon */
+SWIGEXPORT void _SDL_WM_SetIcon (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  Uint8 *arg2 = (Uint8 *) 0 ;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (Uint8 *) occ_args[1]; 
+  }SDL_WM_SetIcon(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_WM_IconifyWindow */
+SWIGEXPORT void _SDL_WM_IconifyWindow (word occ_args[]) {
+  int result;
+  
+  result = (int)SDL_WM_IconifyWindow();
+  {
+    *((int *) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_WM_ToggleFullScreen */
+SWIGEXPORT void _SDL_WM_ToggleFullScreen (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }result = (int)SDL_WM_ToggleFullScreen(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_WM_GrabInput */
+SWIGEXPORT void _SDL_WM_GrabInput (word occ_args[]) {
+  SDL_GrabMode arg1 ;
+  SDL_GrabMode result;
+  
+  {
+    arg1 = (SDL_GrabMode) occ_args[0]; 
+  }result = (SDL_GrabMode)SDL_WM_GrabInput(arg1);
+  {
+    *((SDL_GrabMode *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SoftStretch */
+SWIGEXPORT void _SDL_SoftStretch (word occ_args[]) {
+  SDL_Surface *arg1 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg2 = (SDL_Rect *) 0 ;
+  SDL_Surface *arg3 = (SDL_Surface *) 0 ;
+  SDL_Rect *arg4 = (SDL_Rect *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Surface *) occ_args[0]; 
+  }{
+    arg2 = (SDL_Rect *) occ_args[1]; 
+  }{
+    arg3 = (SDL_Surface *) occ_args[2]; 
+  }{
+    arg4 = (SDL_Rect *) occ_args[3]; 
+  }result = (int)SDL_SoftStretch(arg1,arg2,arg3,arg4);
+  {
+    *((int *) occ_args[4]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  struct SDL_keysym */
+/*{{{  function SDL_keysym_scancode_set */
+SWIGEXPORT void _SDL_keysym_scancode_set (word occ_args[]) {
+  SDL_keysym *arg1 = (SDL_keysym *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_keysym *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->scancode = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_keysym_scancode_get */
+SWIGEXPORT void _SDL_keysym_scancode_get (word occ_args[]) {
+  SDL_keysym *arg1 = (SDL_keysym *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_keysym *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->scancode);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_keysym_sym_set */
+SWIGEXPORT void _SDL_keysym_sym_set (word occ_args[]) {
+  SDL_keysym *arg1 = (SDL_keysym *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_keysym *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->sym = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_keysym_sym_get */
+SWIGEXPORT void _SDL_keysym_sym_get (word occ_args[]) {
+  SDL_keysym *arg1 = (SDL_keysym *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_keysym *) occ_args[0]; 
+  }result = (int) ((arg1)->sym);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_keysym_mod_set */
+SWIGEXPORT void _SDL_keysym_mod_set (word occ_args[]) {
+  SDL_keysym *arg1 = (SDL_keysym *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_keysym *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->mod = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_keysym_mod_get */
+SWIGEXPORT void _SDL_keysym_mod_get (word occ_args[]) {
+  SDL_keysym *arg1 = (SDL_keysym *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_keysym *) occ_args[0]; 
+  }result = (int) ((arg1)->mod);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_keysym_unicode_set */
+SWIGEXPORT void _SDL_keysym_unicode_set (word occ_args[]) {
+  SDL_keysym *arg1 = (SDL_keysym *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_keysym *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->unicode = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_keysym_unicode_get */
+SWIGEXPORT void _SDL_keysym_unicode_get (word occ_args[]) {
+  SDL_keysym *arg1 = (SDL_keysym *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_keysym *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->unicode);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_keysym */
+SWIGEXPORT void _new_SDL_keysym (word occ_args[]) {
+  SDL_keysym *result = 0 ;
+  
+  result = (SDL_keysym *)(SDL_keysym *) calloc(1, sizeof(SDL_keysym));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_keysym */
+SWIGEXPORT void _delete_SDL_keysym (word occ_args[]) {
+  SDL_keysym *arg1 = (SDL_keysym *) 0 ;
+  
+  {
+    arg1 = (SDL_keysym *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  function SDL_EnableUNICODE */
+SWIGEXPORT void _SDL_EnableUNICODE (word occ_args[]) {
+  int arg1 ;
+  int result;
+  
+  {
+    arg1 = (int) occ_args[0]; 
+  }result = (int)SDL_EnableUNICODE(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_EnableKeyRepeat */
+SWIGEXPORT void _SDL_EnableKeyRepeat (word occ_args[]) {
+  int arg1 ;
+  int arg2 ;
+  int result;
+  
+  {
+    arg1 = (int) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }result = (int)SDL_EnableKeyRepeat(arg1,arg2);
+  {
+    *((int *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetKeyState */
+SWIGEXPORT void _SDL_GetKeyState (word occ_args[]) {
+  int *arg1 = (int *) 0 ;
+  Uint8 *result = 0 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }result = (Uint8 *)SDL_GetKeyState(arg1);
+  {
+    *((void **) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetModState */
+SWIGEXPORT void _SDL_GetModState (word occ_args[]) {
+  SDLMod result;
+  
+  result = (SDLMod)SDL_GetModState();
+  {
+    *((SDLMod *) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SetModState */
+SWIGEXPORT void _SDL_SetModState (word occ_args[]) {
+  SDLMod arg1 ;
+  
+  {
+    arg1 = (SDLMod) occ_args[0]; 
+  }SDL_SetModState(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetKeyName */
+SWIGEXPORT void _SDL_GetKeyName (word occ_args[]) {
+  SDLKey arg1 ;
+  char *result = 0 ;
+  
+  {
+    arg1 = (SDLKey) occ_args[0]; 
+  }result = (char *)SDL_GetKeyName(arg1);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_NumJoysticks */
+SWIGEXPORT void _SDL_NumJoysticks (word occ_args[]) {
+  int result;
+  
+  result = (int)SDL_NumJoysticks();
+  {
+    *((int *) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickName */
+SWIGEXPORT void _SDL_JoystickName (word occ_args[]) {
+  int arg1 ;
+  char *result = 0 ;
+  
+  {
+    arg1 = (int) occ_args[0]; 
+  }result = (char *)SDL_JoystickName(arg1);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickOpen */
+SWIGEXPORT void _SDL_JoystickOpen (word occ_args[]) {
+  int arg1 ;
+  SDL_Joystick *result = 0 ;
+  
+  {
+    arg1 = (int) occ_args[0]; 
+  }result = (SDL_Joystick *)SDL_JoystickOpen(arg1);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickOpened */
+SWIGEXPORT void _SDL_JoystickOpened (word occ_args[]) {
+  int arg1 ;
+  int result;
+  
+  {
+    arg1 = (int) occ_args[0]; 
+  }result = (int)SDL_JoystickOpened(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickIndex */
+SWIGEXPORT void _SDL_JoystickIndex (word occ_args[]) {
+  SDL_Joystick *arg1 = (SDL_Joystick *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Joystick *) occ_args[0]; 
+  }result = (int)SDL_JoystickIndex(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickNumAxes */
+SWIGEXPORT void _SDL_JoystickNumAxes (word occ_args[]) {
+  SDL_Joystick *arg1 = (SDL_Joystick *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Joystick *) occ_args[0]; 
+  }result = (int)SDL_JoystickNumAxes(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickNumBalls */
+SWIGEXPORT void _SDL_JoystickNumBalls (word occ_args[]) {
+  SDL_Joystick *arg1 = (SDL_Joystick *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Joystick *) occ_args[0]; 
+  }result = (int)SDL_JoystickNumBalls(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickNumHats */
+SWIGEXPORT void _SDL_JoystickNumHats (word occ_args[]) {
+  SDL_Joystick *arg1 = (SDL_Joystick *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Joystick *) occ_args[0]; 
+  }result = (int)SDL_JoystickNumHats(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickNumButtons */
+SWIGEXPORT void _SDL_JoystickNumButtons (word occ_args[]) {
+  SDL_Joystick *arg1 = (SDL_Joystick *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Joystick *) occ_args[0]; 
+  }result = (int)SDL_JoystickNumButtons(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickUpdate */
+SWIGEXPORT void _SDL_JoystickUpdate (word occ_args[]) {
+  SDL_JoystickUpdate();
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickEventState */
+SWIGEXPORT void _SDL_JoystickEventState (word occ_args[]) {
+  int arg1 ;
+  int result;
+  
+  {
+    arg1 = (int) occ_args[0]; 
+  }result = (int)SDL_JoystickEventState(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickGetAxis */
+SWIGEXPORT void _SDL_JoystickGetAxis (word occ_args[]) {
+  SDL_Joystick *arg1 = (SDL_Joystick *) 0 ;
+  int arg2 ;
+  Sint16 result;
+  
+  {
+    arg1 = (SDL_Joystick *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }result = (Sint16)SDL_JoystickGetAxis(arg1,arg2);
+  {
+    *((Sint16 *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickGetHat */
+SWIGEXPORT void _SDL_JoystickGetHat (word occ_args[]) {
+  SDL_Joystick *arg1 = (SDL_Joystick *) 0 ;
+  int arg2 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_Joystick *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }result = (Uint8)SDL_JoystickGetHat(arg1,arg2);
+  {
+    *((Uint8 *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickGetBall */
+SWIGEXPORT void _SDL_JoystickGetBall (word occ_args[]) {
+  SDL_Joystick *arg1 = (SDL_Joystick *) 0 ;
+  int arg2 ;
+  int *arg3 = (int *) 0 ;
+  int *arg4 = (int *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Joystick *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }{
+    arg3 = (int *) occ_args[2]; 
+  }{
+    arg4 = (int *) occ_args[4]; 
+  }result = (int)SDL_JoystickGetBall(arg1,arg2,arg3,arg4);
+  {
+    *((int *) occ_args[6]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickGetButton */
+SWIGEXPORT void _SDL_JoystickGetButton (word occ_args[]) {
+  SDL_Joystick *arg1 = (SDL_Joystick *) 0 ;
+  int arg2 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_Joystick *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }result = (Uint8)SDL_JoystickGetButton(arg1,arg2);
+  {
+    *((Uint8 *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoystickClose */
+SWIGEXPORT void _SDL_JoystickClose (word occ_args[]) {
+  SDL_Joystick *arg1 = (SDL_Joystick *) 0 ;
+  
+  {
+    arg1 = (SDL_Joystick *) occ_args[0]; 
+  }SDL_JoystickClose(arg1);
+}
+
+
+/*}}}*/
+/*{{{  struct SDL_AudioSpec */
+/*{{{  function SDL_AudioSpec_freq_set */
+SWIGEXPORT void _SDL_AudioSpec_freq_set (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->freq = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_freq_get */
+SWIGEXPORT void _SDL_AudioSpec_freq_get (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }result = (int) ((arg1)->freq);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_format_set */
+SWIGEXPORT void _SDL_AudioSpec_format_set (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->format = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_format_get */
+SWIGEXPORT void _SDL_AudioSpec_format_get (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->format);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_channels_set */
+SWIGEXPORT void _SDL_AudioSpec_channels_set (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->channels = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_channels_get */
+SWIGEXPORT void _SDL_AudioSpec_channels_get (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->channels);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_silence_set */
+SWIGEXPORT void _SDL_AudioSpec_silence_set (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->silence = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_silence_get */
+SWIGEXPORT void _SDL_AudioSpec_silence_get (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->silence);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_samples_set */
+SWIGEXPORT void _SDL_AudioSpec_samples_set (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->samples = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_samples_get */
+SWIGEXPORT void _SDL_AudioSpec_samples_get (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->samples);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_padding_set */
+SWIGEXPORT void _SDL_AudioSpec_padding_set (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->padding = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_padding_get */
+SWIGEXPORT void _SDL_AudioSpec_padding_get (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->padding);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_size_set */
+SWIGEXPORT void _SDL_AudioSpec_size_set (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->size = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_size_get */
+SWIGEXPORT void _SDL_AudioSpec_size_get (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->size);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_callback_set */
+SWIGEXPORT void _SDL_AudioSpec_callback_set (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  void (*arg2)(void *,Uint8 *,int) = (void (*)(void *,Uint8 *,int)) 0 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }{
+    arg2 = (void (*)(void *,Uint8 *,int)) occ_args[1]; 
+  }if (arg1) (arg1)->callback = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_callback_get */
+SWIGEXPORT void _SDL_AudioSpec_callback_get (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  void (*result)(void *,Uint8 *,int) = 0 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }result = (void (*)(void *,Uint8 *,int)) ((arg1)->callback);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_userdata_set */
+SWIGEXPORT void _SDL_AudioSpec_userdata_set (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  void *arg2 = (void *) 0 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }{
+    arg2 = (void *) occ_args[1]; 
+  }if (arg1) (arg1)->userdata = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioSpec_userdata_get */
+SWIGEXPORT void _SDL_AudioSpec_userdata_get (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  void *result = 0 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }result = (void *) ((arg1)->userdata);
+  {
+    *((void * *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_AudioSpec */
+SWIGEXPORT void _new_SDL_AudioSpec (word occ_args[]) {
+  SDL_AudioSpec *result = 0 ;
+  
+  result = (SDL_AudioSpec *)(SDL_AudioSpec *) calloc(1, sizeof(SDL_AudioSpec));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_AudioSpec */
+SWIGEXPORT void _delete_SDL_AudioSpec (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_AudioCVT */
+/*{{{  function SDL_AudioCVT_needed_set */
+SWIGEXPORT void _SDL_AudioCVT_needed_set (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->needed = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_needed_get */
+SWIGEXPORT void _SDL_AudioCVT_needed_get (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }result = (int) ((arg1)->needed);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_src_format_set */
+SWIGEXPORT void _SDL_AudioCVT_src_format_set (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->src_format = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_src_format_get */
+SWIGEXPORT void _SDL_AudioCVT_src_format_get (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->src_format);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_dst_format_set */
+SWIGEXPORT void _SDL_AudioCVT_dst_format_set (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->dst_format = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_dst_format_get */
+SWIGEXPORT void _SDL_AudioCVT_dst_format_get (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->dst_format);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_rate_incr_set */
+SWIGEXPORT void _SDL_AudioCVT_rate_incr_set (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  double arg2 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }{
+    arg2 = (double) occ_args[1]; 
+  }if (arg1) (arg1)->rate_incr = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_rate_incr_get */
+SWIGEXPORT void _SDL_AudioCVT_rate_incr_get (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  double result;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }result = (double) ((arg1)->rate_incr);
+  {
+    *((double *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_buf_set */
+SWIGEXPORT void _SDL_AudioCVT_buf_set (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  Uint8 *arg2 = (Uint8 *) 0 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }{
+    arg2 = (Uint8 *) occ_args[1]; 
+  }if (arg1) (arg1)->buf = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_buf_get */
+SWIGEXPORT void _SDL_AudioCVT_buf_get (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  Uint8 *result = 0 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }result = (Uint8 *) ((arg1)->buf);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_len_set */
+SWIGEXPORT void _SDL_AudioCVT_len_set (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->len = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_len_get */
+SWIGEXPORT void _SDL_AudioCVT_len_get (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }result = (int) ((arg1)->len);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_len_cvt_set */
+SWIGEXPORT void _SDL_AudioCVT_len_cvt_set (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->len_cvt = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_len_cvt_get */
+SWIGEXPORT void _SDL_AudioCVT_len_cvt_get (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }result = (int) ((arg1)->len_cvt);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_len_mult_set */
+SWIGEXPORT void _SDL_AudioCVT_len_mult_set (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->len_mult = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_len_mult_get */
+SWIGEXPORT void _SDL_AudioCVT_len_mult_get (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }result = (int) ((arg1)->len_mult);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_len_ratio_set */
+SWIGEXPORT void _SDL_AudioCVT_len_ratio_set (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  double arg2 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }{
+    arg2 = (double) occ_args[1]; 
+  }if (arg1) (arg1)->len_ratio = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_len_ratio_get */
+SWIGEXPORT void _SDL_AudioCVT_len_ratio_get (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  double result;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }result = (double) ((arg1)->len_ratio);
+  {
+    *((double *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_filter_index_set */
+SWIGEXPORT void _SDL_AudioCVT_filter_index_set (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->filter_index = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_AudioCVT_filter_index_get */
+SWIGEXPORT void _SDL_AudioCVT_filter_index_get (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }result = (int) ((arg1)->filter_index);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_AudioCVT */
+SWIGEXPORT void _new_SDL_AudioCVT (word occ_args[]) {
+  SDL_AudioCVT *result = 0 ;
+  
+  result = (SDL_AudioCVT *)(SDL_AudioCVT *) calloc(1, sizeof(SDL_AudioCVT));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_AudioCVT */
+SWIGEXPORT void _delete_SDL_AudioCVT (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  function SDL_AudioDriverName */
+SWIGEXPORT void _SDL_AudioDriverName (word occ_args[]) {
+  char *arg1 ;
+  int arg2 ;
+  char *result = 0 ;
+  
+  {
+    arg1 = (char *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[2]; 
+  }result = (char *)SDL_AudioDriverName(arg1,arg2);
+  {
+    *((void **) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_OpenAudio */
+SWIGEXPORT void _SDL_OpenAudio (word occ_args[]) {
+  SDL_AudioSpec *arg1 = (SDL_AudioSpec *) 0 ;
+  SDL_AudioSpec *arg2 = (SDL_AudioSpec *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_AudioSpec *) occ_args[0]; 
+  }{
+    arg2 = (SDL_AudioSpec *) occ_args[1]; 
+  }result = (int)SDL_OpenAudio(arg1,arg2);
+  {
+    *((int *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetAudioStatus */
+SWIGEXPORT void _SDL_GetAudioStatus (word occ_args[]) {
+  SDL_audiostatus result;
+  
+  result = (SDL_audiostatus)SDL_GetAudioStatus();
+  {
+    *((SDL_audiostatus *) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PauseAudio */
+SWIGEXPORT void _SDL_PauseAudio (word occ_args[]) {
+  int arg1 ;
+  
+  {
+    arg1 = (int) occ_args[0]; 
+  }SDL_PauseAudio(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_LoadWAV_RW */
+SWIGEXPORT void _SDL_LoadWAV_RW (word occ_args[]) {
+  SDL_RWops *arg1 = (SDL_RWops *) 0 ;
+  int arg2 ;
+  SDL_AudioSpec *arg3 = (SDL_AudioSpec *) 0 ;
+  Uint8 **arg4 = (Uint8 **) 0 ;
+  Uint32 *arg5 = (Uint32 *) 0 ;
+  SDL_AudioSpec *result = 0 ;
+  
+  {
+    arg1 = (SDL_RWops *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }{
+    arg3 = (SDL_AudioSpec *) occ_args[2]; 
+  }{
+    arg4 = (Uint8 **) occ_args[3]; 
+  }{
+    arg5 = (Uint32 *) occ_args[4]; 
+  }result = (SDL_AudioSpec *)SDL_LoadWAV_RW(arg1,arg2,arg3,arg4,arg5);
+  {
+    *((void **) occ_args[6]) = result; 
+  }
+}
+
+
+/*}}}*/
+
+void occ_SDL_LoadWAV(const char file[], SDL_AudioSpec *spec, Uint8 audio_buf[], Uint32 *audio_len) {
+        Uint8 *buf;
+        Uint32 len;
+        SDL_AudioSpec *rc = SDL_LoadWAV_RW(SDL_RWFromFile(file, "rb"), 1, spec, &buf, &len);
+        if (rc == NULL) {
+                *audio_len = -1;
+                return;
+        }
+
+        if (len <= *audio_len) {
+                memcpy(audio_buf, buf, len);
+                *audio_len = len;
+        } else {
+                *audio_len = -2;
+        }
+
+        SDL_FreeWAV(buf);
+}
+
+/*{{{  function occ_SDL_LoadWAV */
+SWIGEXPORT void _occ_SDL_LoadWAV (word occ_args[]) {
+  char *arg1 ;
+  SDL_AudioSpec *arg2 = (SDL_AudioSpec *) 0 ;
+  Uint8 *arg3 ;
+  Uint32 *arg4 = (Uint32 *) 0 ;
+  
+  {
+    arg1 = (char *) occ_args[0]; 
+  }{
+    arg2 = (SDL_AudioSpec *) occ_args[2]; 
+  }{
+    arg3 = (unsigned char *) occ_args[3]; 
+  }{
+    arg4 = (Uint32 *) occ_args[5]; 
+  }occ_SDL_LoadWAV((char const (*))arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_FreeWAV */
+SWIGEXPORT void _SDL_FreeWAV (word occ_args[]) {
+  Uint8 *arg1 = (Uint8 *) 0 ;
+  
+  {
+    arg1 = (Uint8 *) occ_args[0]; 
+  }SDL_FreeWAV(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_BuildAudioCVT */
+SWIGEXPORT void _SDL_BuildAudioCVT (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  Uint16 arg2 ;
+  Uint8 arg3 ;
+  int arg4 ;
+  Uint16 arg5 ;
+  Uint8 arg6 ;
+  int arg7 ;
+  int result;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }{
+    arg3 = (Uint8) occ_args[2]; 
+  }{
+    arg4 = (int) occ_args[3]; 
+  }{
+    arg5 = (Uint16) occ_args[4]; 
+  }{
+    arg6 = (Uint8) occ_args[5]; 
+  }{
+    arg7 = (int) occ_args[6]; 
+  }result = (int)SDL_BuildAudioCVT(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+  {
+    *((int *) occ_args[7]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ConvertAudio */
+SWIGEXPORT void _SDL_ConvertAudio (word occ_args[]) {
+  SDL_AudioCVT *arg1 = (SDL_AudioCVT *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_AudioCVT *) occ_args[0]; 
+  }result = (int)SDL_ConvertAudio(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MixAudio */
+SWIGEXPORT void _SDL_MixAudio (word occ_args[]) {
+  Uint8 *arg1 = (Uint8 *) 0 ;
+  Uint8 *arg2 = (Uint8 *) 0 ;
+  Uint32 arg3 ;
+  int arg4 ;
+  
+  {
+    arg1 = (Uint8 *) occ_args[0]; 
+  }{
+    arg2 = (Uint8 *) occ_args[2]; 
+  }{
+    arg3 = (Uint32) occ_args[4]; 
+  }{
+    arg4 = (int) occ_args[5]; 
+  }SDL_MixAudio(arg1,(unsigned char const *)arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_LockAudio */
+SWIGEXPORT void _SDL_LockAudio (word occ_args[]) {
+  SDL_LockAudio();
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UnlockAudio */
+SWIGEXPORT void _SDL_UnlockAudio (word occ_args[]) {
+  SDL_UnlockAudio();
+}
+
+
+/*}}}*/
+/*{{{  function SDL_CloseAudio */
+SWIGEXPORT void _SDL_CloseAudio (word occ_args[]) {
+  SDL_CloseAudio();
+}
+
+
+/*}}}*/
+/*{{{  struct SDL_ActiveEvent */
+/*{{{  function SDL_ActiveEvent_type_set */
+SWIGEXPORT void _SDL_ActiveEvent_type_set (word occ_args[]) {
+  SDL_ActiveEvent *arg1 = (SDL_ActiveEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_ActiveEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ActiveEvent_type_get */
+SWIGEXPORT void _SDL_ActiveEvent_type_get (word occ_args[]) {
+  SDL_ActiveEvent *arg1 = (SDL_ActiveEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_ActiveEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ActiveEvent_gain_set */
+SWIGEXPORT void _SDL_ActiveEvent_gain_set (word occ_args[]) {
+  SDL_ActiveEvent *arg1 = (SDL_ActiveEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_ActiveEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->gain = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ActiveEvent_gain_get */
+SWIGEXPORT void _SDL_ActiveEvent_gain_get (word occ_args[]) {
+  SDL_ActiveEvent *arg1 = (SDL_ActiveEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_ActiveEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->gain);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ActiveEvent_state_set */
+SWIGEXPORT void _SDL_ActiveEvent_state_set (word occ_args[]) {
+  SDL_ActiveEvent *arg1 = (SDL_ActiveEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_ActiveEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->state = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ActiveEvent_state_get */
+SWIGEXPORT void _SDL_ActiveEvent_state_get (word occ_args[]) {
+  SDL_ActiveEvent *arg1 = (SDL_ActiveEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_ActiveEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->state);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_ActiveEvent */
+SWIGEXPORT void _new_SDL_ActiveEvent (word occ_args[]) {
+  SDL_ActiveEvent *result = 0 ;
+  
+  result = (SDL_ActiveEvent *)(SDL_ActiveEvent *) calloc(1, sizeof(SDL_ActiveEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_ActiveEvent */
+SWIGEXPORT void _delete_SDL_ActiveEvent (word occ_args[]) {
+  SDL_ActiveEvent *arg1 = (SDL_ActiveEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_ActiveEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_KeyboardEvent */
+/*{{{  function SDL_KeyboardEvent_type_set */
+SWIGEXPORT void _SDL_KeyboardEvent_type_set (word occ_args[]) {
+  SDL_KeyboardEvent *arg1 = (SDL_KeyboardEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_KeyboardEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_KeyboardEvent_type_get */
+SWIGEXPORT void _SDL_KeyboardEvent_type_get (word occ_args[]) {
+  SDL_KeyboardEvent *arg1 = (SDL_KeyboardEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_KeyboardEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_KeyboardEvent_which_set */
+SWIGEXPORT void _SDL_KeyboardEvent_which_set (word occ_args[]) {
+  SDL_KeyboardEvent *arg1 = (SDL_KeyboardEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_KeyboardEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->which = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_KeyboardEvent_which_get */
+SWIGEXPORT void _SDL_KeyboardEvent_which_get (word occ_args[]) {
+  SDL_KeyboardEvent *arg1 = (SDL_KeyboardEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_KeyboardEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->which);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_KeyboardEvent_state_set */
+SWIGEXPORT void _SDL_KeyboardEvent_state_set (word occ_args[]) {
+  SDL_KeyboardEvent *arg1 = (SDL_KeyboardEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_KeyboardEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->state = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_KeyboardEvent_state_get */
+SWIGEXPORT void _SDL_KeyboardEvent_state_get (word occ_args[]) {
+  SDL_KeyboardEvent *arg1 = (SDL_KeyboardEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_KeyboardEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->state);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_KeyboardEvent_keysym_set */
+SWIGEXPORT void _SDL_KeyboardEvent_keysym_set (word occ_args[]) {
+  SDL_KeyboardEvent *arg1 = (SDL_KeyboardEvent *) 0 ;
+  SDL_keysym *arg2 = (SDL_keysym *) 0 ;
+  
+  {
+    arg1 = (SDL_KeyboardEvent *) occ_args[0]; 
+  }{
+    arg2 = (SDL_keysym *) occ_args[1]; 
+  }if (arg1) (arg1)->keysym = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_KeyboardEvent_keysym_get */
+SWIGEXPORT void _SDL_KeyboardEvent_keysym_get (word occ_args[]) {
+  SDL_KeyboardEvent *arg1 = (SDL_KeyboardEvent *) 0 ;
+  SDL_keysym *result = 0 ;
+  
+  {
+    arg1 = (SDL_KeyboardEvent *) occ_args[0]; 
+  }result = (SDL_keysym *)& ((arg1)->keysym);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_KeyboardEvent */
+SWIGEXPORT void _new_SDL_KeyboardEvent (word occ_args[]) {
+  SDL_KeyboardEvent *result = 0 ;
+  
+  result = (SDL_KeyboardEvent *)(SDL_KeyboardEvent *) calloc(1, sizeof(SDL_KeyboardEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_KeyboardEvent */
+SWIGEXPORT void _delete_SDL_KeyboardEvent (word occ_args[]) {
+  SDL_KeyboardEvent *arg1 = (SDL_KeyboardEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_KeyboardEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_MouseMotionEvent */
+/*{{{  function SDL_MouseMotionEvent_type_set */
+SWIGEXPORT void _SDL_MouseMotionEvent_type_set (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_type_get */
+SWIGEXPORT void _SDL_MouseMotionEvent_type_get (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_which_set */
+SWIGEXPORT void _SDL_MouseMotionEvent_which_set (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->which = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_which_get */
+SWIGEXPORT void _SDL_MouseMotionEvent_which_get (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->which);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_state_set */
+SWIGEXPORT void _SDL_MouseMotionEvent_state_set (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->state = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_state_get */
+SWIGEXPORT void _SDL_MouseMotionEvent_state_get (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->state);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_x_set */
+SWIGEXPORT void _SDL_MouseMotionEvent_x_set (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->x = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_x_get */
+SWIGEXPORT void _SDL_MouseMotionEvent_x_get (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->x);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_y_set */
+SWIGEXPORT void _SDL_MouseMotionEvent_y_set (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->y = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_y_get */
+SWIGEXPORT void _SDL_MouseMotionEvent_y_get (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->y);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_xrel_set */
+SWIGEXPORT void _SDL_MouseMotionEvent_xrel_set (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Sint16 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }{
+    arg2 = (Sint16) occ_args[1]; 
+  }if (arg1) (arg1)->xrel = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_xrel_get */
+SWIGEXPORT void _SDL_MouseMotionEvent_xrel_get (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Sint16 result;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }result = (Sint16) ((arg1)->xrel);
+  {
+    *((Sint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_yrel_set */
+SWIGEXPORT void _SDL_MouseMotionEvent_yrel_set (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Sint16 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }{
+    arg2 = (Sint16) occ_args[1]; 
+  }if (arg1) (arg1)->yrel = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseMotionEvent_yrel_get */
+SWIGEXPORT void _SDL_MouseMotionEvent_yrel_get (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  Sint16 result;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }result = (Sint16) ((arg1)->yrel);
+  {
+    *((Sint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_MouseMotionEvent */
+SWIGEXPORT void _new_SDL_MouseMotionEvent (word occ_args[]) {
+  SDL_MouseMotionEvent *result = 0 ;
+  
+  result = (SDL_MouseMotionEvent *)(SDL_MouseMotionEvent *) calloc(1, sizeof(SDL_MouseMotionEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_MouseMotionEvent */
+SWIGEXPORT void _delete_SDL_MouseMotionEvent (word occ_args[]) {
+  SDL_MouseMotionEvent *arg1 = (SDL_MouseMotionEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_MouseMotionEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_MouseButtonEvent */
+/*{{{  function SDL_MouseButtonEvent_type_set */
+SWIGEXPORT void _SDL_MouseButtonEvent_type_set (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseButtonEvent_type_get */
+SWIGEXPORT void _SDL_MouseButtonEvent_type_get (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseButtonEvent_which_set */
+SWIGEXPORT void _SDL_MouseButtonEvent_which_set (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->which = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseButtonEvent_which_get */
+SWIGEXPORT void _SDL_MouseButtonEvent_which_get (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->which);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseButtonEvent_button_set */
+SWIGEXPORT void _SDL_MouseButtonEvent_button_set (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->button = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseButtonEvent_button_get */
+SWIGEXPORT void _SDL_MouseButtonEvent_button_get (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->button);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseButtonEvent_state_set */
+SWIGEXPORT void _SDL_MouseButtonEvent_state_set (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->state = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseButtonEvent_state_get */
+SWIGEXPORT void _SDL_MouseButtonEvent_state_get (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->state);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseButtonEvent_x_set */
+SWIGEXPORT void _SDL_MouseButtonEvent_x_set (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->x = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseButtonEvent_x_get */
+SWIGEXPORT void _SDL_MouseButtonEvent_x_get (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->x);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseButtonEvent_y_set */
+SWIGEXPORT void _SDL_MouseButtonEvent_y_set (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->y = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_MouseButtonEvent_y_get */
+SWIGEXPORT void _SDL_MouseButtonEvent_y_get (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->y);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_MouseButtonEvent */
+SWIGEXPORT void _new_SDL_MouseButtonEvent (word occ_args[]) {
+  SDL_MouseButtonEvent *result = 0 ;
+  
+  result = (SDL_MouseButtonEvent *)(SDL_MouseButtonEvent *) calloc(1, sizeof(SDL_MouseButtonEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_MouseButtonEvent */
+SWIGEXPORT void _delete_SDL_MouseButtonEvent (word occ_args[]) {
+  SDL_MouseButtonEvent *arg1 = (SDL_MouseButtonEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_MouseButtonEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_JoyAxisEvent */
+/*{{{  function SDL_JoyAxisEvent_type_set */
+SWIGEXPORT void _SDL_JoyAxisEvent_type_set (word occ_args[]) {
+  SDL_JoyAxisEvent *arg1 = (SDL_JoyAxisEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyAxisEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyAxisEvent_type_get */
+SWIGEXPORT void _SDL_JoyAxisEvent_type_get (word occ_args[]) {
+  SDL_JoyAxisEvent *arg1 = (SDL_JoyAxisEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyAxisEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyAxisEvent_which_set */
+SWIGEXPORT void _SDL_JoyAxisEvent_which_set (word occ_args[]) {
+  SDL_JoyAxisEvent *arg1 = (SDL_JoyAxisEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyAxisEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->which = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyAxisEvent_which_get */
+SWIGEXPORT void _SDL_JoyAxisEvent_which_get (word occ_args[]) {
+  SDL_JoyAxisEvent *arg1 = (SDL_JoyAxisEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyAxisEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->which);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyAxisEvent_axis_set */
+SWIGEXPORT void _SDL_JoyAxisEvent_axis_set (word occ_args[]) {
+  SDL_JoyAxisEvent *arg1 = (SDL_JoyAxisEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyAxisEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->axis = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyAxisEvent_axis_get */
+SWIGEXPORT void _SDL_JoyAxisEvent_axis_get (word occ_args[]) {
+  SDL_JoyAxisEvent *arg1 = (SDL_JoyAxisEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyAxisEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->axis);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyAxisEvent_value_set */
+SWIGEXPORT void _SDL_JoyAxisEvent_value_set (word occ_args[]) {
+  SDL_JoyAxisEvent *arg1 = (SDL_JoyAxisEvent *) 0 ;
+  Sint16 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyAxisEvent *) occ_args[0]; 
+  }{
+    arg2 = (Sint16) occ_args[1]; 
+  }if (arg1) (arg1)->value = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyAxisEvent_value_get */
+SWIGEXPORT void _SDL_JoyAxisEvent_value_get (word occ_args[]) {
+  SDL_JoyAxisEvent *arg1 = (SDL_JoyAxisEvent *) 0 ;
+  Sint16 result;
+  
+  {
+    arg1 = (SDL_JoyAxisEvent *) occ_args[0]; 
+  }result = (Sint16) ((arg1)->value);
+  {
+    *((Sint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_JoyAxisEvent */
+SWIGEXPORT void _new_SDL_JoyAxisEvent (word occ_args[]) {
+  SDL_JoyAxisEvent *result = 0 ;
+  
+  result = (SDL_JoyAxisEvent *)(SDL_JoyAxisEvent *) calloc(1, sizeof(SDL_JoyAxisEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_JoyAxisEvent */
+SWIGEXPORT void _delete_SDL_JoyAxisEvent (word occ_args[]) {
+  SDL_JoyAxisEvent *arg1 = (SDL_JoyAxisEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_JoyAxisEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_JoyBallEvent */
+/*{{{  function SDL_JoyBallEvent_type_set */
+SWIGEXPORT void _SDL_JoyBallEvent_type_set (word occ_args[]) {
+  SDL_JoyBallEvent *arg1 = (SDL_JoyBallEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyBallEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyBallEvent_type_get */
+SWIGEXPORT void _SDL_JoyBallEvent_type_get (word occ_args[]) {
+  SDL_JoyBallEvent *arg1 = (SDL_JoyBallEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyBallEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyBallEvent_which_set */
+SWIGEXPORT void _SDL_JoyBallEvent_which_set (word occ_args[]) {
+  SDL_JoyBallEvent *arg1 = (SDL_JoyBallEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyBallEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->which = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyBallEvent_which_get */
+SWIGEXPORT void _SDL_JoyBallEvent_which_get (word occ_args[]) {
+  SDL_JoyBallEvent *arg1 = (SDL_JoyBallEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyBallEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->which);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyBallEvent_ball_set */
+SWIGEXPORT void _SDL_JoyBallEvent_ball_set (word occ_args[]) {
+  SDL_JoyBallEvent *arg1 = (SDL_JoyBallEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyBallEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->ball = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyBallEvent_ball_get */
+SWIGEXPORT void _SDL_JoyBallEvent_ball_get (word occ_args[]) {
+  SDL_JoyBallEvent *arg1 = (SDL_JoyBallEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyBallEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->ball);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyBallEvent_xrel_set */
+SWIGEXPORT void _SDL_JoyBallEvent_xrel_set (word occ_args[]) {
+  SDL_JoyBallEvent *arg1 = (SDL_JoyBallEvent *) 0 ;
+  Sint16 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyBallEvent *) occ_args[0]; 
+  }{
+    arg2 = (Sint16) occ_args[1]; 
+  }if (arg1) (arg1)->xrel = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyBallEvent_xrel_get */
+SWIGEXPORT void _SDL_JoyBallEvent_xrel_get (word occ_args[]) {
+  SDL_JoyBallEvent *arg1 = (SDL_JoyBallEvent *) 0 ;
+  Sint16 result;
+  
+  {
+    arg1 = (SDL_JoyBallEvent *) occ_args[0]; 
+  }result = (Sint16) ((arg1)->xrel);
+  {
+    *((Sint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyBallEvent_yrel_set */
+SWIGEXPORT void _SDL_JoyBallEvent_yrel_set (word occ_args[]) {
+  SDL_JoyBallEvent *arg1 = (SDL_JoyBallEvent *) 0 ;
+  Sint16 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyBallEvent *) occ_args[0]; 
+  }{
+    arg2 = (Sint16) occ_args[1]; 
+  }if (arg1) (arg1)->yrel = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyBallEvent_yrel_get */
+SWIGEXPORT void _SDL_JoyBallEvent_yrel_get (word occ_args[]) {
+  SDL_JoyBallEvent *arg1 = (SDL_JoyBallEvent *) 0 ;
+  Sint16 result;
+  
+  {
+    arg1 = (SDL_JoyBallEvent *) occ_args[0]; 
+  }result = (Sint16) ((arg1)->yrel);
+  {
+    *((Sint16 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_JoyBallEvent */
+SWIGEXPORT void _new_SDL_JoyBallEvent (word occ_args[]) {
+  SDL_JoyBallEvent *result = 0 ;
+  
+  result = (SDL_JoyBallEvent *)(SDL_JoyBallEvent *) calloc(1, sizeof(SDL_JoyBallEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_JoyBallEvent */
+SWIGEXPORT void _delete_SDL_JoyBallEvent (word occ_args[]) {
+  SDL_JoyBallEvent *arg1 = (SDL_JoyBallEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_JoyBallEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_JoyHatEvent */
+/*{{{  function SDL_JoyHatEvent_type_set */
+SWIGEXPORT void _SDL_JoyHatEvent_type_set (word occ_args[]) {
+  SDL_JoyHatEvent *arg1 = (SDL_JoyHatEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyHatEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyHatEvent_type_get */
+SWIGEXPORT void _SDL_JoyHatEvent_type_get (word occ_args[]) {
+  SDL_JoyHatEvent *arg1 = (SDL_JoyHatEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyHatEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyHatEvent_which_set */
+SWIGEXPORT void _SDL_JoyHatEvent_which_set (word occ_args[]) {
+  SDL_JoyHatEvent *arg1 = (SDL_JoyHatEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyHatEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->which = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyHatEvent_which_get */
+SWIGEXPORT void _SDL_JoyHatEvent_which_get (word occ_args[]) {
+  SDL_JoyHatEvent *arg1 = (SDL_JoyHatEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyHatEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->which);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyHatEvent_hat_set */
+SWIGEXPORT void _SDL_JoyHatEvent_hat_set (word occ_args[]) {
+  SDL_JoyHatEvent *arg1 = (SDL_JoyHatEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyHatEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->hat = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyHatEvent_hat_get */
+SWIGEXPORT void _SDL_JoyHatEvent_hat_get (word occ_args[]) {
+  SDL_JoyHatEvent *arg1 = (SDL_JoyHatEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyHatEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->hat);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyHatEvent_value_set */
+SWIGEXPORT void _SDL_JoyHatEvent_value_set (word occ_args[]) {
+  SDL_JoyHatEvent *arg1 = (SDL_JoyHatEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyHatEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->value = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyHatEvent_value_get */
+SWIGEXPORT void _SDL_JoyHatEvent_value_get (word occ_args[]) {
+  SDL_JoyHatEvent *arg1 = (SDL_JoyHatEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyHatEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->value);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_JoyHatEvent */
+SWIGEXPORT void _new_SDL_JoyHatEvent (word occ_args[]) {
+  SDL_JoyHatEvent *result = 0 ;
+  
+  result = (SDL_JoyHatEvent *)(SDL_JoyHatEvent *) calloc(1, sizeof(SDL_JoyHatEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_JoyHatEvent */
+SWIGEXPORT void _delete_SDL_JoyHatEvent (word occ_args[]) {
+  SDL_JoyHatEvent *arg1 = (SDL_JoyHatEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_JoyHatEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_JoyButtonEvent */
+/*{{{  function SDL_JoyButtonEvent_type_set */
+SWIGEXPORT void _SDL_JoyButtonEvent_type_set (word occ_args[]) {
+  SDL_JoyButtonEvent *arg1 = (SDL_JoyButtonEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyButtonEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyButtonEvent_type_get */
+SWIGEXPORT void _SDL_JoyButtonEvent_type_get (word occ_args[]) {
+  SDL_JoyButtonEvent *arg1 = (SDL_JoyButtonEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyButtonEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyButtonEvent_which_set */
+SWIGEXPORT void _SDL_JoyButtonEvent_which_set (word occ_args[]) {
+  SDL_JoyButtonEvent *arg1 = (SDL_JoyButtonEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyButtonEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->which = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyButtonEvent_which_get */
+SWIGEXPORT void _SDL_JoyButtonEvent_which_get (word occ_args[]) {
+  SDL_JoyButtonEvent *arg1 = (SDL_JoyButtonEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyButtonEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->which);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyButtonEvent_button_set */
+SWIGEXPORT void _SDL_JoyButtonEvent_button_set (word occ_args[]) {
+  SDL_JoyButtonEvent *arg1 = (SDL_JoyButtonEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyButtonEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->button = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyButtonEvent_button_get */
+SWIGEXPORT void _SDL_JoyButtonEvent_button_get (word occ_args[]) {
+  SDL_JoyButtonEvent *arg1 = (SDL_JoyButtonEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyButtonEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->button);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyButtonEvent_state_set */
+SWIGEXPORT void _SDL_JoyButtonEvent_state_set (word occ_args[]) {
+  SDL_JoyButtonEvent *arg1 = (SDL_JoyButtonEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_JoyButtonEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->state = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_JoyButtonEvent_state_get */
+SWIGEXPORT void _SDL_JoyButtonEvent_state_get (word occ_args[]) {
+  SDL_JoyButtonEvent *arg1 = (SDL_JoyButtonEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_JoyButtonEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->state);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_JoyButtonEvent */
+SWIGEXPORT void _new_SDL_JoyButtonEvent (word occ_args[]) {
+  SDL_JoyButtonEvent *result = 0 ;
+  
+  result = (SDL_JoyButtonEvent *)(SDL_JoyButtonEvent *) calloc(1, sizeof(SDL_JoyButtonEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_JoyButtonEvent */
+SWIGEXPORT void _delete_SDL_JoyButtonEvent (word occ_args[]) {
+  SDL_JoyButtonEvent *arg1 = (SDL_JoyButtonEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_JoyButtonEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_ResizeEvent */
+/*{{{  function SDL_ResizeEvent_type_set */
+SWIGEXPORT void _SDL_ResizeEvent_type_set (word occ_args[]) {
+  SDL_ResizeEvent *arg1 = (SDL_ResizeEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_ResizeEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ResizeEvent_type_get */
+SWIGEXPORT void _SDL_ResizeEvent_type_get (word occ_args[]) {
+  SDL_ResizeEvent *arg1 = (SDL_ResizeEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_ResizeEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ResizeEvent_w_set */
+SWIGEXPORT void _SDL_ResizeEvent_w_set (word occ_args[]) {
+  SDL_ResizeEvent *arg1 = (SDL_ResizeEvent *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_ResizeEvent *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->w = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ResizeEvent_w_get */
+SWIGEXPORT void _SDL_ResizeEvent_w_get (word occ_args[]) {
+  SDL_ResizeEvent *arg1 = (SDL_ResizeEvent *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_ResizeEvent *) occ_args[0]; 
+  }result = (int) ((arg1)->w);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ResizeEvent_h_set */
+SWIGEXPORT void _SDL_ResizeEvent_h_set (word occ_args[]) {
+  SDL_ResizeEvent *arg1 = (SDL_ResizeEvent *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_ResizeEvent *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->h = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ResizeEvent_h_get */
+SWIGEXPORT void _SDL_ResizeEvent_h_get (word occ_args[]) {
+  SDL_ResizeEvent *arg1 = (SDL_ResizeEvent *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_ResizeEvent *) occ_args[0]; 
+  }result = (int) ((arg1)->h);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_ResizeEvent */
+SWIGEXPORT void _new_SDL_ResizeEvent (word occ_args[]) {
+  SDL_ResizeEvent *result = 0 ;
+  
+  result = (SDL_ResizeEvent *)(SDL_ResizeEvent *) calloc(1, sizeof(SDL_ResizeEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_ResizeEvent */
+SWIGEXPORT void _delete_SDL_ResizeEvent (word occ_args[]) {
+  SDL_ResizeEvent *arg1 = (SDL_ResizeEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_ResizeEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_ExposeEvent */
+/*{{{  function SDL_ExposeEvent_type_set */
+SWIGEXPORT void _SDL_ExposeEvent_type_set (word occ_args[]) {
+  SDL_ExposeEvent *arg1 = (SDL_ExposeEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_ExposeEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ExposeEvent_type_get */
+SWIGEXPORT void _SDL_ExposeEvent_type_get (word occ_args[]) {
+  SDL_ExposeEvent *arg1 = (SDL_ExposeEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_ExposeEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_ExposeEvent */
+SWIGEXPORT void _new_SDL_ExposeEvent (word occ_args[]) {
+  SDL_ExposeEvent *result = 0 ;
+  
+  result = (SDL_ExposeEvent *)(SDL_ExposeEvent *) calloc(1, sizeof(SDL_ExposeEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_ExposeEvent */
+SWIGEXPORT void _delete_SDL_ExposeEvent (word occ_args[]) {
+  SDL_ExposeEvent *arg1 = (SDL_ExposeEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_ExposeEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_QuitEvent */
+/*{{{  function SDL_QuitEvent_type_set */
+SWIGEXPORT void _SDL_QuitEvent_type_set (word occ_args[]) {
+  SDL_QuitEvent *arg1 = (SDL_QuitEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_QuitEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_QuitEvent_type_get */
+SWIGEXPORT void _SDL_QuitEvent_type_get (word occ_args[]) {
+  SDL_QuitEvent *arg1 = (SDL_QuitEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_QuitEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_QuitEvent */
+SWIGEXPORT void _new_SDL_QuitEvent (word occ_args[]) {
+  SDL_QuitEvent *result = 0 ;
+  
+  result = (SDL_QuitEvent *)(SDL_QuitEvent *) calloc(1, sizeof(SDL_QuitEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_QuitEvent */
+SWIGEXPORT void _delete_SDL_QuitEvent (word occ_args[]) {
+  SDL_QuitEvent *arg1 = (SDL_QuitEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_QuitEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_UserEvent */
+/*{{{  function SDL_UserEvent_type_set */
+SWIGEXPORT void _SDL_UserEvent_type_set (word occ_args[]) {
+  SDL_UserEvent *arg1 = (SDL_UserEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_UserEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UserEvent_type_get */
+SWIGEXPORT void _SDL_UserEvent_type_get (word occ_args[]) {
+  SDL_UserEvent *arg1 = (SDL_UserEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_UserEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UserEvent_code_set */
+SWIGEXPORT void _SDL_UserEvent_code_set (word occ_args[]) {
+  SDL_UserEvent *arg1 = (SDL_UserEvent *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (SDL_UserEvent *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->code = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UserEvent_code_get */
+SWIGEXPORT void _SDL_UserEvent_code_get (word occ_args[]) {
+  SDL_UserEvent *arg1 = (SDL_UserEvent *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_UserEvent *) occ_args[0]; 
+  }result = (int) ((arg1)->code);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UserEvent_data1_set */
+SWIGEXPORT void _SDL_UserEvent_data1_set (word occ_args[]) {
+  SDL_UserEvent *arg1 = (SDL_UserEvent *) 0 ;
+  void *arg2 = (void *) 0 ;
+  
+  {
+    arg1 = (SDL_UserEvent *) occ_args[0]; 
+  }{
+    arg2 = (void *) occ_args[1]; 
+  }if (arg1) (arg1)->data1 = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UserEvent_data1_get */
+SWIGEXPORT void _SDL_UserEvent_data1_get (word occ_args[]) {
+  SDL_UserEvent *arg1 = (SDL_UserEvent *) 0 ;
+  void *result = 0 ;
+  
+  {
+    arg1 = (SDL_UserEvent *) occ_args[0]; 
+  }result = (void *) ((arg1)->data1);
+  {
+    *((void * *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UserEvent_data2_set */
+SWIGEXPORT void _SDL_UserEvent_data2_set (word occ_args[]) {
+  SDL_UserEvent *arg1 = (SDL_UserEvent *) 0 ;
+  void *arg2 = (void *) 0 ;
+  
+  {
+    arg1 = (SDL_UserEvent *) occ_args[0]; 
+  }{
+    arg2 = (void *) occ_args[1]; 
+  }if (arg1) (arg1)->data2 = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_UserEvent_data2_get */
+SWIGEXPORT void _SDL_UserEvent_data2_get (word occ_args[]) {
+  SDL_UserEvent *arg1 = (SDL_UserEvent *) 0 ;
+  void *result = 0 ;
+  
+  {
+    arg1 = (SDL_UserEvent *) occ_args[0]; 
+  }result = (void *) ((arg1)->data2);
+  {
+    *((void * *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_UserEvent */
+SWIGEXPORT void _new_SDL_UserEvent (word occ_args[]) {
+  SDL_UserEvent *result = 0 ;
+  
+  result = (SDL_UserEvent *)(SDL_UserEvent *) calloc(1, sizeof(SDL_UserEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_UserEvent */
+SWIGEXPORT void _delete_SDL_UserEvent (word occ_args[]) {
+  SDL_UserEvent *arg1 = (SDL_UserEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_UserEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct SDL_SysWMEvent */
+/*{{{  function SDL_SysWMEvent_type_set */
+SWIGEXPORT void _SDL_SysWMEvent_type_set (word occ_args[]) {
+  SDL_SysWMEvent *arg1 = (SDL_SysWMEvent *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_SysWMEvent *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SysWMEvent_type_get */
+SWIGEXPORT void _SDL_SysWMEvent_type_get (word occ_args[]) {
+  SDL_SysWMEvent *arg1 = (SDL_SysWMEvent *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_SysWMEvent *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SysWMEvent_msg_set */
+SWIGEXPORT void _SDL_SysWMEvent_msg_set (word occ_args[]) {
+  SDL_SysWMEvent *arg1 = (SDL_SysWMEvent *) 0 ;
+  SDL_SysWMmsg *arg2 = (SDL_SysWMmsg *) 0 ;
+  
+  {
+    arg1 = (SDL_SysWMEvent *) occ_args[0]; 
+  }{
+    arg2 = (SDL_SysWMmsg *) occ_args[1]; 
+  }if (arg1) (arg1)->msg = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SysWMEvent_msg_get */
+SWIGEXPORT void _SDL_SysWMEvent_msg_get (word occ_args[]) {
+  SDL_SysWMEvent *arg1 = (SDL_SysWMEvent *) 0 ;
+  SDL_SysWMmsg *result = 0 ;
+  
+  {
+    arg1 = (SDL_SysWMEvent *) occ_args[0]; 
+  }result = (SDL_SysWMmsg *) ((arg1)->msg);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_SysWMEvent */
+SWIGEXPORT void _new_SDL_SysWMEvent (word occ_args[]) {
+  SDL_SysWMEvent *result = 0 ;
+  
+  result = (SDL_SysWMEvent *)(SDL_SysWMEvent *) calloc(1, sizeof(SDL_SysWMEvent));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_SysWMEvent */
+SWIGEXPORT void _delete_SDL_SysWMEvent (word occ_args[]) {
+  SDL_SysWMEvent *arg1 = (SDL_SysWMEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_SysWMEvent *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  union SDL_Event */
+/*{{{  function SDL_Event_type_set */
+SWIGEXPORT void _SDL_Event_type_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->type = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_type_get */
+SWIGEXPORT void _SDL_Event_type_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->type);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_active_set */
+SWIGEXPORT void _SDL_Event_active_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_ActiveEvent *arg2 = (SDL_ActiveEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_ActiveEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->active = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_active_get */
+SWIGEXPORT void _SDL_Event_active_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_ActiveEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_ActiveEvent *)& ((arg1)->active);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_key_set */
+SWIGEXPORT void _SDL_Event_key_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_KeyboardEvent *arg2 = (SDL_KeyboardEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_KeyboardEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->key = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_key_get */
+SWIGEXPORT void _SDL_Event_key_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_KeyboardEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_KeyboardEvent *)& ((arg1)->key);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_motion_set */
+SWIGEXPORT void _SDL_Event_motion_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_MouseMotionEvent *arg2 = (SDL_MouseMotionEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_MouseMotionEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->motion = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_motion_get */
+SWIGEXPORT void _SDL_Event_motion_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_MouseMotionEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_MouseMotionEvent *)& ((arg1)->motion);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_button_set */
+SWIGEXPORT void _SDL_Event_button_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_MouseButtonEvent *arg2 = (SDL_MouseButtonEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_MouseButtonEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->button = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_button_get */
+SWIGEXPORT void _SDL_Event_button_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_MouseButtonEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_MouseButtonEvent *)& ((arg1)->button);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_jaxis_set */
+SWIGEXPORT void _SDL_Event_jaxis_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_JoyAxisEvent *arg2 = (SDL_JoyAxisEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_JoyAxisEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->jaxis = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_jaxis_get */
+SWIGEXPORT void _SDL_Event_jaxis_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_JoyAxisEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_JoyAxisEvent *)& ((arg1)->jaxis);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_jball_set */
+SWIGEXPORT void _SDL_Event_jball_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_JoyBallEvent *arg2 = (SDL_JoyBallEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_JoyBallEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->jball = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_jball_get */
+SWIGEXPORT void _SDL_Event_jball_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_JoyBallEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_JoyBallEvent *)& ((arg1)->jball);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_jhat_set */
+SWIGEXPORT void _SDL_Event_jhat_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_JoyHatEvent *arg2 = (SDL_JoyHatEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_JoyHatEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->jhat = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_jhat_get */
+SWIGEXPORT void _SDL_Event_jhat_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_JoyHatEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_JoyHatEvent *)& ((arg1)->jhat);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_jbutton_set */
+SWIGEXPORT void _SDL_Event_jbutton_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_JoyButtonEvent *arg2 = (SDL_JoyButtonEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_JoyButtonEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->jbutton = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_jbutton_get */
+SWIGEXPORT void _SDL_Event_jbutton_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_JoyButtonEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_JoyButtonEvent *)& ((arg1)->jbutton);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_resize_set */
+SWIGEXPORT void _SDL_Event_resize_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_ResizeEvent *arg2 = (SDL_ResizeEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_ResizeEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->resize = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_resize_get */
+SWIGEXPORT void _SDL_Event_resize_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_ResizeEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_ResizeEvent *)& ((arg1)->resize);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_expose_set */
+SWIGEXPORT void _SDL_Event_expose_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_ExposeEvent *arg2 = (SDL_ExposeEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_ExposeEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->expose = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_expose_get */
+SWIGEXPORT void _SDL_Event_expose_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_ExposeEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_ExposeEvent *)& ((arg1)->expose);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_quit_set */
+SWIGEXPORT void _SDL_Event_quit_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_QuitEvent *arg2 = (SDL_QuitEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_QuitEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->quit = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_quit_get */
+SWIGEXPORT void _SDL_Event_quit_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_QuitEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_QuitEvent *)& ((arg1)->quit);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_user_set */
+SWIGEXPORT void _SDL_Event_user_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_UserEvent *arg2 = (SDL_UserEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_UserEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->user = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_user_get */
+SWIGEXPORT void _SDL_Event_user_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_UserEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_UserEvent *)& ((arg1)->user);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_syswm_set */
+SWIGEXPORT void _SDL_Event_syswm_set (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_SysWMEvent *arg2 = (SDL_SysWMEvent *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (SDL_SysWMEvent *) occ_args[1]; 
+  }if (arg1) (arg1)->syswm = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function SDL_Event_syswm_get */
+SWIGEXPORT void _SDL_Event_syswm_get (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  SDL_SysWMEvent *result = 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (SDL_SysWMEvent *)& ((arg1)->syswm);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_SDL_Event */
+SWIGEXPORT void _new_SDL_Event (word occ_args[]) {
+  SDL_Event *result = 0 ;
+  
+  result = (SDL_Event *)(SDL_Event *) calloc(1, sizeof(SDL_Event));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_SDL_Event */
+SWIGEXPORT void _delete_SDL_Event (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  function SDL_PumpEvents */
+SWIGEXPORT void _SDL_PumpEvents (word occ_args[]) {
+  SDL_PumpEvents();
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PeepEvents */
+SWIGEXPORT void _SDL_PeepEvents (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  int arg2 ;
+  SDL_eventaction arg3 ;
+  Uint32 arg4 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }{
+    arg3 = (SDL_eventaction) occ_args[2]; 
+  }{
+    arg4 = (Uint32) occ_args[3]; 
+  }result = (int)SDL_PeepEvents(arg1,arg2,arg3,arg4);
+  {
+    *((int *) occ_args[4]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PollEvent */
+SWIGEXPORT void _SDL_PollEvent (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (int)SDL_PollEvent(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_WaitEvent */
+SWIGEXPORT void _SDL_WaitEvent (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (int)SDL_WaitEvent(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_PushEvent */
+SWIGEXPORT void _SDL_PushEvent (word occ_args[]) {
+  SDL_Event *arg1 = (SDL_Event *) 0 ;
+  int result;
+  
+  {
+    arg1 = (SDL_Event *) occ_args[0]; 
+  }result = (int)SDL_PushEvent(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_SetEventFilter */
+SWIGEXPORT void _SDL_SetEventFilter (word occ_args[]) {
+  SDL_EventFilter arg1 = (SDL_EventFilter) 0 ;
+  
+  {
+    arg1 = (SDL_EventFilter) occ_args[0]; 
+  }SDL_SetEventFilter(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetEventFilter */
+SWIGEXPORT void _SDL_GetEventFilter (word occ_args[]) {
+  SDL_EventFilter result;
+  
+  result = (SDL_EventFilter)SDL_GetEventFilter();
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_EventState */
+SWIGEXPORT void _SDL_EventState (word occ_args[]) {
+  Uint8 arg1 ;
+  int arg2 ;
+  Uint8 result;
+  
+  {
+    arg1 = (Uint8) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }result = (Uint8)SDL_EventState(arg1,arg2);
+  {
+    *((Uint8 *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+
+inline static int occ_SDL_GetError(char err_str[], int err_str_len) {
+        const char *err = SDL_GetError();
+
+        int len = 0;
+        while (len < err_str_len && err[len] != '\0') {
+                err_str[len] = err[len];
+                len++;
+        }
+
+        return len;
+}
+
+/*{{{  function occ_SDL_GetError */
+SWIGEXPORT void _occ_SDL_GetError (word occ_args[]) {
+  char *arg1 ;
+  int arg2 ;
+  int result;
+  
+  {
+    arg1 = (char *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[2]; 
+  }result = (int)occ_SDL_GetError(arg1,arg2);
+  {
+    *((int *) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_GetError */
+SWIGEXPORT void _SDL_GetError (word occ_args[]) {
+  char *result = 0 ;
+  
+  result = (char *)SDL_GetError();
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function SDL_ClearError */
+SWIGEXPORT void _SDL_ClearError (word occ_args[]) {
+  SDL_ClearError();
+}
+
+
+/*}}}*/
