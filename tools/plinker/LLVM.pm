@@ -2220,12 +2220,86 @@ sub gen_ladd ($$$$) {
 
 sub gen_ldiff ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	#FIXME!!!
+	my $res_1	= $self->tmp_reg ();
+	my $b_diff_a	= $self->tmp_reg ();
+	my $carry_1	= $self->tmp_reg ();
+	my $res_2	= $self->tmp_reg ();
+	my $carry_2	= $self->tmp_reg ();
+	my $carry	= $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = call { %s, i1 } @llvm.usub.with.overflow.%s (%s %%%s, %s %%%s)',
+			$res_1, 
+			$self->int_type, $self->int_type, 
+			$self->int_type, $inst->{'in'}->[1],
+			$self->int_type, $inst->{'in'}->[0]
+		),
+		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 0',
+			$b_diff_a, $self->int_type, $res_1
+		),
+		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 1',
+			$carry_1, $self->int_type, $res_1
+		),
+		sprintf ('%%%s = call { %s, i1 } @llvm.usub.with.overflow.%s (%s %%%s, %s %%%s)',
+			$res_2, 
+			$self->int_type, $self->int_type, 
+			$self->int_type, $b_diff_a,
+			$self->int_type, $inst->{'in'}->[2]
+		),
+		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 0',
+			$inst->{'out'}->[0], $self->int_type, $res_1
+		),
+		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 1',
+			$carry_1, $self->int_type, $res_1
+		),
+		sprintf ('%%%s = or i1 %%%s, %%%s',
+			$carry, $carry_1, $carry_2
+		),
+		sprintf ('%%%s = zext i1 %%%s to %s',
+			$inst->{'out'}->[1], $carry, $self->int_type
+		)
+	);
 }
 
 sub gen_ldiv ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	#FIXME!!!
+	my $overflow	= $self->tmp_reg ();
+	my $long_val 	= $self->tmp_reg ();
+	my $long_a 	= $self->tmp_reg ();
+	my $div_res	= $self->tmp_reg ();
+	my $rem_res	= $self->tmp_reg ();
+	my $tmp		= $self->tmp_label ();
+	my $error_lab	= $tmp . '_overflow_error';
+	my $ok_lab	= $tmp . '_ok';
+	return (
+		sprintf ('%%%s = icmp uge %s %%%s, %%%s',
+			$overflow, $self->int_type, $inst->{'in'}->[2], $inst->{'in'}->[0]
+		),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$overflow, $error_lab, $ok_lab
+		),
+
+		$error_lab . ':',
+		$self->_gen_error ($proc, $label, $inst, 'overflow'),
+		sprintf ('br label %%%s', $ok_lab),
+		
+		$ok_lab . ':',
+		$self->_gen_long ($inst->{'in'}->[1], $inst->{'in'}->[2], $long_val),
+		sprintf ('%%%s = zext %s %%%s to %s',
+			$long_a, $self->int_type, $inst->{'in'}->[0], $self->long_type
+		),
+		sprintf ('%%%s = udiv %s %%%s, %%%s',
+			$div_res, $self->long_type, $long_val, $long_a
+		),
+		sprintf ('%%%s = urem %s %%%s, %%%s',
+			$rem_res, $self->long_type, $long_val, $long_a
+		),
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$inst->{'out'}->[0], $self->long_type, $div_res, $self->int_type
+		),
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$inst->{'out'}->[1], $self->long_type, $rem_res, $self->int_type
+		)
+	);
 }
 
 sub gen_lmul ($$$$) {
@@ -2233,6 +2307,7 @@ sub gen_lmul ($$$$) {
 	my $long_val_a 	= $self->tmp_reg ();
 	my $long_val_b 	= $self->tmp_reg ();
 	my $long_val_c 	= $self->tmp_reg ();
+	my $carry	= $self->tmp_reg ();
 	my $mul_res	= $self->tmp_reg ();
 	my $sum_res	= $self->tmp_reg ();
 	return (
@@ -2242,8 +2317,11 @@ sub gen_lmul ($$$$) {
 		sprintf ('%%%s = sext %s %%%s to %s',
 			$long_val_b, $self->int_type, $inst->{'in'}->[1], $self->long_type
 		),	
-		sprintf ('%%%s = zext %s %%%s to %s',
-			$long_val_c, $self->int_type, $inst->{'in'}->[2], $self->long_type
+		sprintf ('%%%s = trunc %s %%%s to i1',
+			$carry, $self->int_type, $inst->{'in'}->[2]
+		),
+		sprintf ('%%%s = zext i1 %%%s to %s',
+			$long_val_c, $carry, $self->long_type
 		),
 		sprintf ('%%%s = mul %s %%%s, %%%s',
 			$mul_res, $self->long_type, $long_val_a, $long_val_b
@@ -2537,7 +2615,8 @@ sub intrinsics ($) {
 	return (
 		"declare { $int, i1 } \@llvm.sadd.with.overflow.$int ($int, $int)",
 		"declare { $int, i1 } \@llvm.smul.with.overflow.$int ($int, $int)",
-		"declare { $int, i1 } \@llvm.ssub.with.overflow.$int ($int, $int)"
+		"declare { $int, i1 } \@llvm.ssub.with.overflow.$int ($int, $int)",
+		"declare { $int, i1 } \@llvm.usub.with.overflow.$int ($int, $int)"
 	);
 }
 
