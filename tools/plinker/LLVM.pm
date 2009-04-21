@@ -155,7 +155,8 @@ $GRAPH = {
 			'generator' => \&gen_seterr },
 	'FPCHKERR'	=> { },
 	# Floating Point
-	'FPLDNLDBI'	=> { 'in' => 2, 'fout' => 1 },
+	'FPLDNLDBI'	=> { 'in' => 2, 'fout' => 1,
+			'generator' => \&gen_fpldnldbi },
 	'FPSTNLDB'	=> { 'in' => 1, 'fin' => 1 },
 	'FPLDNLSNI'	=> { 'in' => 2, 'fout' => 1 },
 	'FPADD'		=> { 'fin' => 2, 'fout' => 1 },
@@ -939,9 +940,32 @@ sub index_type {
 	}
 }
 
+sub fp_single_type {
+	my $self = shift;
+	return 'float';
+}
+
+sub fp_double_type {
+	my $self = shift;
+	return 'double';
+}
+
 sub float_type {
 	my $self = shift;
 	return 'double';
+}
+
+sub float_length {
+	my $self = shift;
+	my $type = shift || $self->int_type;
+	if ($type eq 'float') {
+		return 4;
+	} elsif ($type eq 'double') {
+		return 8;
+	} elsif ($type eq 'fp128') {
+		return 16;
+	}
+	die "unknown float type $type";
 }
 
 sub sched_type {
@@ -2382,6 +2406,64 @@ sub gen_lshift ($$$$) {
 			$self->long_type, $long_val, $shift
 		),
 		$self->_gen_long_split ($long_res, @{$inst->{'out'}})
+	);
+}
+
+sub numeric_conversion ($$$$$) {
+	my ($self, $src_type, $src, $dst_type, $dst) = @_;
+	if ($src_type ne $dst_type) {
+		my $src_float = $src_type eq $self->fp_single_type
+			||	$src_type eq $self->fp_double_type
+			||	$src_type eq $self->float_type;
+		my $dst_float = $dst_type eq $self->fp_single_type
+			||	$dst_type eq $self->fp_double_type
+			||	$dst_type eq $self->float_type;
+		my $op;
+
+		if ($src_float && $dst_float) {
+			$op = 	$self->float_length ($src_type) < $self->float_length ($dst_type) 
+				? 'fpext' : 'fptrunc'
+		} elsif ($src_float) {
+			$op = 'fptosi';
+		} elsif ($dst_float) {
+			$op = 'sitofp';
+		} else {
+			$op = 	$self->int_length ($src_type) < $self->int_length ($dst_type) 
+				? 'sext' : 'trunc'
+		}
+		
+		return sprintf ('%%%s = fpext %s %%%s to %s',
+			$dst, $src_type, $src, $dst_type
+		);
+	} else {
+		return $self->single_assignment ($src_type, $src, $dst);
+	}
+}
+
+sub gen_fpldnldbi ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $d_ptr 	= $self->tmp_reg ();
+	my $d_ptr_idxd 	= $self->tmp_reg ();
+	my $d_val	= $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = inttoptr %s %%%s to %s*',
+			$d_ptr, 
+			$self->int_type, $inst->{'in'}->[0],
+			$self->fp_double_type
+		),
+		sprintf ('%%%s = getelementptr %s* %%%s, %s %%%s',
+			$d_ptr_idxd,
+			$self->fp_double_type, $d_ptr,
+			$self->int_type, $inst->{'in'}->[1]
+		),
+		sprintf ('%%%s = load %s* %%%s',
+			$d_val,
+			$self->fp_double_type, $d_ptr_idxd
+		),
+		$self->numeric_conversion (
+			$self->fp_double_type, $d_val, 
+			$self->float_type, $inst->{'out'}->[0]
+		)
 	);
 }
 
