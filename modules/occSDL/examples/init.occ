@@ -3,13 +3,13 @@
 
 PROC init(CHAN BYTE kyb?, scr!, err!)
   INT result:
-  --INITIAL INT flags IS (((((SDL.INIT.VIDEO) \/ SDL.INIT.AUDIO) \/ SDL.INIT.CDROM) \/ SDL.INIT.JOYSTICK) \/ SDL.INIT.NOPARACHUTE): 
-  INITIAL INT flags IS SDL.INIT.EVERYTHING:
+  --VAL INT flags IS (((((SDL.INIT.VIDEO) \/ SDL.INIT.AUDIO) \/ SDL.INIT.CDROM) \/ SDL.INIT.JOYSTICK) \/ SDL.INIT.NOPARACHUTE): 
+  VAL INT flags IS SDL.INIT.EVERYTHING:
   SEQ
     out.string("Initialising SDL...*c*n", 0, scr!)
     flush(scr!)
 
-    SDL.Init(result, flags)
+    SDL.Init(flags, result)
 
     out.string("Initialised SDL (Status: ", 0, scr!)
     out.int(result, 0, scr!)

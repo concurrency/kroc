@@ -79,7 +79,7 @@ PROC raster.clear (RASTER r, VAL INT colour)
     ASSERT (box <> 0)
     INITIAL SDL.Rect rect IS 0:
     INITIAL INT c IS colour:
-    SDL.FillRect (result, box, rect, c)
+    SDL.FillRect (box, rect, c, result)
     ASSERT (result = 0)
     SDL.FreeSurface (box)
 :
@@ -108,7 +108,7 @@ PROC raster.convert.event (SDL.Event event, RESULT RASTER.EVENT ev)
   BYTE type:
   SEQ
     ev := [-1, 0, 0, 0, 0]
-    get.SDL.Event.type (type, event)
+    SDL.Event.type.get (event, type)
     CASE INT type
       SDL.QUIT
         --{{{  quit event
@@ -124,12 +124,12 @@ PROC raster.convert.event (SDL.Event event, RESULT RASTER.EVENT ev)
               ev[type] := RASTER.ET.KEYDOWN
             SDL.KEYUP
               ev[type] := RASTER.ET.KEYUP
-          INITIAL SDL.KeyboardEvent ke IS SDL.KeyboardEvent event:
-          get.SDL.KeyboardEvent.keysym (sym, ke)
+          VAL SDL.KeyboardEvent ke IS SDL.KeyboardEvent event:
+          SDL.KeyboardEvent.keysym.get (ke, sym)
           -- Temporary variable used here to avoid a KRoC bug.
-          get.SDL.keysym.sym (n, sym)
+          SDL.keysym.sym.get (sym, n)
           ev[id] := n
-          get.SDL.keysym.mod (n, sym)
+          SDL.keysym.mod.get (sym, n)
           ev[mod] := n
         --}}}
       SDL.MOUSEBUTTONDOWN, SDL.MOUSEBUTTONUP
@@ -140,17 +140,17 @@ PROC raster.convert.event (SDL.Event event, RESULT RASTER.EVENT ev)
               ev[type] := RASTER.ET.MOUSEBUTTONDOWN
             SDL.MOUSEBUTTONUP
               ev[type] := RASTER.ET.MOUSEBUTTONUP
-          INITIAL SDL.MouseButtonEvent me IS SDL.MouseButtonEvent event:
+          VAL SDL.MouseButtonEvent me IS SDL.MouseButtonEvent event:
           BYTE b:
           INT16 n:
           SEQ
-            get.SDL.MouseButtonEvent.button (b, me)
+            SDL.MouseButtonEvent.button.get (me, b)
             ev[id] := INT b
             -- Temporary variable used here to avoid a KRoC
             -- bug.
-            get.SDL.MouseButtonEvent.x (n, me)
+            SDL.MouseButtonEvent.x.get (me, n)
             ev[x] := n
-            get.SDL.MouseButtonEvent.y (n, me)
+            SDL.MouseButtonEvent.y.get (me, n)
             ev[y] := n
           SDLMod mod:
           SEQ
@@ -161,12 +161,12 @@ PROC raster.convert.event (SDL.Event event, RESULT RASTER.EVENT ev)
         --{{{  mouse motion event
         SEQ
           ev[type] := RASTER.ET.MOUSEMOTION
-          INITIAL SDL.MouseMotionEvent me IS SDL.MouseMotionEvent event:
+          VAL SDL.MouseMotionEvent me IS SDL.MouseMotionEvent event:
           INT16 n:
           SEQ
-            get.SDL.MouseMotionEvent.x (n, me)
+            SDL.MouseMotionEvent.x.get (me, n)
             ev[x] := n
-            get.SDL.MouseMotionEvent.y (n, me)
+            SDL.MouseMotionEvent.y.get (me, n)
             ev[y] := n
         --}}}
       SDL.VIDEOEXPOSE
@@ -192,14 +192,14 @@ PROC raster.events (SDL.Surface screen, CHAN RASTER.EVENT out!, CHAN BOOL kill?)
     SEQ
       -- Ignore the error; this won't work on all displays.
       INT result:
-      SDL.WM.ToggleFullScreen (result, screen)
+      SDL.WM.ToggleFullScreen (screen, result)
       is.fullscreen := NOT is.fullscreen
   :
   --}}}
 
   SEQ
     --{{{  initialise
-    create.SDL.Event (event)
+    new.SDL.Event (event)
     tim ? next.update
     --}}}
 
@@ -213,7 +213,7 @@ PROC raster.events (SDL.Surface screen, CHAN RASTER.EVENT out!, CHAN BOOL kill?)
             WHILE checking
               INT result:
               SEQ
-                SDL.PollEvent (result, event)
+                SDL.PollEvent (event, result)
                 IF
                   result > 0
                     --{{{  decode event
@@ -223,11 +223,11 @@ PROC raster.events (SDL.Surface screen, CHAN RASTER.EVENT out!, CHAN BOOL kill?)
                       --{{{  check for special keys
                       VAL INT ANY.ALT IS (KMOD.LALT \/ KMOD.RALT) \/ (KMOD.LMETA \/ KMOD.RMETA):
                       IF
-                        (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = SDLK.RETURN) AND ((ev[mod] /\ ANY.ALT) <> 0)
+                        (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = (INT SDLK.RETURN)) AND ((ev[mod] /\ ANY.ALT) <> 0)
                           --{{{  Alt-Enter: toggle full-screen mode
                           toggle.fullscreen ()
                           --}}}
-                        (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = SDLK.BACKSPACE) AND ((ev[mod] /\ ANY.ALT) <> 0)
+                        (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = (INT SDLK.BACKSPACE)) AND ((ev[mod] /\ ANY.ALT) <> 0)
                           --{{{  Alt-Backspace: STOP
                           SEQ
                             --{{{  leave full-screen mode first
@@ -287,7 +287,7 @@ PROC raster.display (VAL []BYTE title, VAL INT width, height, num.rasters,
     ASSERT (num.rasters >= 1)
     ASSERT (num.rasters <= MAX.RASTERS)
 
-    occ.SDL.Init (result, SDL.INIT.VIDEO)
+    occ.SDL.Init (SDL.INIT.VIDEO, result)
     ASSERT (result = 0)
 
     MOBILE []BYTE titlez:
@@ -295,8 +295,9 @@ PROC raster.display (VAL []BYTE title, VAL INT width, height, num.rasters,
       occ.SDL.zero.terminate (title, titlez)
       SDL.WM.SetCaption (titlez, titlez)
 
-    SDL.SetVideoMode (screen, width, height, 32,
-                      (SDL.HWSURFACE \/ SDL.DOUBLEBUF) \/ SDL.ANYFORMAT)
+    SDL.SetVideoMode (width, height, 32,
+                      (SDL.HWSURFACE \/ SDL.DOUBLEBUF) \/ SDL.ANYFORMAT,
+                      screen)
     ASSERT (screen <> 0)
     --}}}
 
@@ -326,7 +327,7 @@ PROC raster.display (VAL []BYTE title, VAL INT width, height, num.rasters,
                 --{{{  update screen
                 SEQ
                   occ.SDL.blit.raster (r, 0, 0, SIZE r[0], SIZE r, screen, 0, 0)
-                  SDL.Flip (result, screen)
+                  SDL.Flip (screen, result)
                   ASSERT (result = 0)
                 --}}}
 
