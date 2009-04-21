@@ -208,11 +208,12 @@ PROC occade.get.transparent (SDL.Surface surface, INT colour)
   SEQ
     SDL.PixelFormat format:
     SEQ
-      get.SDL.Surface.format (format, surface)
-      SDL.MapRGB (colour, format,
+      SDL.Surface.format.get (surface, format)
+      SDL.MapRGB (format,
                   OCCADE.TRANSPARENT.COLOUR[0],
                   OCCADE.TRANSPARENT.COLOUR[1],
-                  OCCADE.TRANSPARENT.COLOUR[2])
+                  OCCADE.TRANSPARENT.COLOUR[2],
+                  colour)
 :
 --}}}
 
@@ -223,7 +224,7 @@ PROC occade.make.transparent (SDL.Surface surface)
   INT result, key:
   SEQ
     occade.get.transparent (surface, key)
-    SDL.SetColorKey (result, surface, SDL.SRCCOLORKEY \/ SDL.RLEACCEL, key)
+    SDL.SetColorKey (surface, SDL.SRCCOLORKEY \/ SDL.RLEACCEL, key, result)
     occade.check.sdl (result = 0, "Failed to make surface transparent")
 :
 --}}}
@@ -271,15 +272,16 @@ PROC occade.image.cache (CHAN OCCADE.TO.IMAGE.CACHE in?, CHAN SDL.Surface out!)
                     MOBILE []BYTE namez:
                     SEQ
                       occ.SDL.zero.terminate (real.name, namez)
-                      occ.SDL.LoadBMP (surface, namez)
+                      occ.SDL.LoadBMP (namez, surface)
                     --}}}
                   TRUE
                     --{{{  use rasterio
                     RASTER r:
                     SEQ
                       read.raster (real.name, r)
-                      SDL.CreateRGBSurface (surface, SDL.HWSURFACE,
-                                            SIZE r[0], SIZE r, 24, 0, 0, 0, 0)
+                      SDL.CreateRGBSurface (SDL.HWSURFACE,
+                                            SIZE r[0], SIZE r, 24, 0, 0, 0, 0,
+                                            surface)
                       occade.check.sdl (surface <> 0, "Creating raster image surface failed")
                       occ.SDL.blit.raster (r, 0, 0, SIZE r[0], SIZE r, surface, 0, 0)
                     --}}}
@@ -324,7 +326,7 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
     SEQ
       -- Ignore the error; this won't work on all displays.
       INT result:
-      SDL.WM.ToggleFullScreen (result, screen)
+      SDL.WM.ToggleFullScreen (screen, result)
       is.fullscreen := NOT is.fullscreen
   :
   --}}}
@@ -334,7 +336,7 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
     INITIAL BOOL running IS TRUE:
     WHILE running
       SEQ
-        SDL.PollEvent (result, event)
+        SDL.PollEvent (event, result)
         IF
           result = 0
             running := FALSE
@@ -351,11 +353,11 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
                   --{{{  unknown event
                   SKIP
                   --}}}
-                (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = SDLK.RETURN) AND ((ev[mod] /\ ANY.ALT) <> 0)
+                (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = (INT SDLK.RETURN)) AND ((ev[mod] /\ ANY.ALT) <> 0)
                   --{{{  Alt-Enter: toggle full-screen mode
                   toggle.fullscreen ()
                   --}}}
-                (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = SDLK.BACKSPACE) AND ((ev[mod] /\ ANY.ALT) <> 0)
+                (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = (INT SDLK.BACKSPACE)) AND ((ev[mod] /\ ANY.ALT) <> 0)
                   --{{{  Alt-Backspace: STOP
                   SEQ
                     --{{{  leave full-screen mode first
@@ -550,7 +552,7 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
                   SKIP
             --}}}
 
-            SDL.Flip (result, screen)
+            SDL.Flip (screen, result)
             occade.check.sdl (result = 0, "Flip failed")
         TRUE
           SKIP
@@ -564,7 +566,7 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
     --{{{ start up
     SETPRI (PRI.DISPLAY)
 
-    occ.SDL.Init (result, SDL.INIT.VIDEO)
+    occ.SDL.Init (SDL.INIT.VIDEO, result)
     occade.check.sdl (result = 0, "SDL startup failed")
 
     MOBILE []BYTE app.namez:
@@ -572,16 +574,18 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
       occ.SDL.zero.terminate (app.name, app.namez)
       SDL.WM.SetCaption (app.namez, app.namez)
 
-    SDL.SetVideoMode (screen, params[width], params[height], params[depth],
-                      (SDL.HWSURFACE \/ SDL.DOUBLEBUF) \/ SDL.ANYFORMAT)
+    SDL.SetVideoMode (params[width], params[height], params[depth],
+                      (SDL.HWSURFACE \/ SDL.DOUBLEBUF) \/ SDL.ANYFORMAT,
+                      screen)
     occade.check.sdl (screen <> 0, "Setting video mode failed")
 
-    SDL.CreateRGBSurface (playfield, SDL.HWSURFACE,
+    SDL.CreateRGBSurface (SDL.HWSURFACE,
                           params[width], params[height], params[depth],
-                          0, 0, 0, 0)
+                          0, 0, 0, 0,
+                          playfield)
     occade.check.sdl (playfield <> 0, "Creating playfield surface failed")
 
-    create.SDL.Event (event)
+    new.SDL.Event (event)
 
     SEQ i = 0 FOR MAX.SPRITES
       SEQ
@@ -608,8 +612,8 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
                 SEQ
                   to.cache ! image; name
                   from.cache ? surface
-                  get.SDL.Surface.w (w, surface)
-                  get.SDL.Surface.h (h, surface)
+                  SDL.Surface.w.get (surface, w)
+                  SDL.Surface.h.get (surface, h)
                   occ.SDL.blit (surface, 0, 0, w, h, playfield, x, y)
 
                   need.update := need.update \/ UPDATE.ALL
@@ -670,9 +674,9 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
                       to.cache ! image; name
                       from.cache ? s[surface]
                       -- FIXME: Temporary variable used here to work around a KRoC bug
-                      get.SDL.Surface.w (n, s[surface])
+                      SDL.Surface.w.get (s[surface], n)
                       s[w] := n
-                      get.SDL.Surface.h (n, s[surface])
+                      SDL.Surface.h.get (s[surface], n)
                       s[h] := n
                       need.update := need.update \/ UPDATE.SPRITES
                 --}}}
@@ -683,15 +687,17 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
                 IF
                   IF i = 0 FOR num.sprites
                     sprites[i][id] = id
+                      SDL.Surface surface:
                       SPRITE s IS sprites[i]:
                       SEQ
                         free.sprite (s)
                         --{{{ create a new surface
                         s[w] := SIZE r[0]
                         s[h] := SIZE r
-                        SDL.CreateRGBSurface (s[surface], SDL.HWSURFACE,
-                                              s[w], s[h], 24, 0, 0, 0, 0)
-                        occade.check.sdl (s[surface] <> 0, "Creating raster surface failed")
+                        SDL.CreateRGBSurface (SDL.HWSURFACE, s[w], s[h], 24, 0, 0, 0, 0,
+                                              surface)
+                        occade.check.sdl (surface <> 0, "Creating raster surface failed")
+                        s[surface] := surface
                         s[free.surface] := TRUE
                         --}}}
                         occ.SDL.blit.raster (r, 0, 0, SIZE r[0], SIZE r, s[surface], 0, 0)
@@ -708,20 +714,20 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
                   sprites[i][id] = id
                     SPRITE s IS sprites[i]:
                     INT font.w, font.h:
-                    SDL.Surface font.surface:
+                    SDL.Surface surface, font.surface:
                     SEQ
                       --{{{ fetch the font
                       to.cache ! image; font
                       from.cache ? font.surface
 
-                      get.SDL.Surface.w (font.w, font.surface)
+                      SDL.Surface.w.get (font.surface, font.w)
                       MOBILE []BYTE err:
                       SEQ
                         err := "Bad font image width: "
                         occade.append.int(err, font.w)
                         occade.check.sdl ((font.w \ 16) = 0, err)
                       font.w := font.w / 16
-                      get.SDL.Surface.h (font.h, font.surface)
+                      SDL.Surface.h.get (font.surface, font.h)
                       MOBILE []BYTE err:
                       SEQ
                         err := "Bad font image height: "
@@ -733,15 +739,16 @@ PROC occade.display.server (OCCADE? svr, VAL OCCADE.PARAMS params, VAL []BYTE ap
                       free.sprite (s)
                       s[w] := font.w * (SIZE text)
                       s[h] := font.h
-                      SDL.CreateRGBSurface (s[surface], SDL.HWSURFACE,
-                                            s[w], s[h], 24, 0, 0, 0, 0)
-                      occade.check.sdl (s[surface] <> 0, "Creating text surface failed")
+                      SDL.CreateRGBSurface (SDL.HWSURFACE, s[w], s[h], 24, 0, 0, 0, 0,
+                                            surface)
+                      occade.check.sdl (surface <> 0, "Creating text surface failed")
+                      s[surface] := surface
                       s[free.surface] := TRUE
                       INT key:
                       INITIAL SDL.Rect null IS 0:
                       SEQ
                         occade.get.transparent (s[surface], key)
-                        SDL.FillRect (result, s[surface], null, key)
+                        SDL.FillRect (s[surface], null, key, result)
                         occade.check.sdl (result = 0, "Clearing text surface failed")
                       SEQ i = 0 FOR SIZE text
                         VAL INT row IS (INT text[i]) / 16:

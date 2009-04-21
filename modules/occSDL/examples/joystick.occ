@@ -15,15 +15,15 @@ PROC stickmonitor(CHAN STICK stick!, CHAN BYTE kyb?,  err!)
   INITIAL BOOL run IS TRUE:
   SEQ
     -- Set joystick event queue update manaually
-    SDL.JoystickEventState(result, SDL.IGNORE)
+    SDL.JoystickEventState(SDL.IGNORE, result)
     ASSERT(result = SDL.IGNORE)
     -- Open Joystick
-    SDL.JoystickOpen(stick.pointer, stick.index)
+    SDL.JoystickOpen(stick.index, stick.pointer)
     ASSERT(stick.pointer <> 0)
-    SDL.JoystickNumAxes(nr.of.axes, stick.pointer)
-    SDL.JoystickNumButtons(nr.of.buttons, stick.pointer)
-    SDL.JoystickNumHats(hats, stick.pointer)
-    SDL.JoystickNumBalls(balls, stick.pointer)
+    SDL.JoystickNumAxes(stick.pointer, nr.of.axes)
+    SDL.JoystickNumButtons(stick.pointer, nr.of.buttons)
+    SDL.JoystickNumHats(stick.pointer, hats)
+    SDL.JoystickNumBalls(stick.pointer, balls)
     out.string("Nr of axes, buttons, hats, balls on joystick ", 0, err!)
     out.int(stick.index, 0, err!)
     out.string(" is ", 0, err!)
@@ -48,13 +48,13 @@ PROC stickmonitor(CHAN STICK stick!, CHAN BYTE kyb?,  err!)
         INT16 tmp:
         SEQ i = 0 FOR nr.of.axes
           SEQ 
-            SDL.JoystickGetAxis(tmp, stick.pointer, i) 
+            SDL.JoystickGetAxis(stick.pointer, i, tmp)
             axis.values[i] := tmp
         stick ! axes; axis.values
         BYTE tmp:
         SEQ i = 0 FOR nr.of.buttons 
           SEQ 
-            SDL.JoystickGetButton(tmp, stick.pointer, i) 
+            SDL.JoystickGetButton(stick.pointer, i, tmp)
             button.values[i] := tmp
             --out.int((INT button.values[i]), 0, err!)
             --out.string(", ",0,err!) 
@@ -105,7 +105,7 @@ PROC main(CHAN BYTE kyb?, scr!, err!)
   INT result:
   CHAN STICK stick:
   SEQ
-    SDL.Init(result, SDL.INIT.JOYSTICK)
+    SDL.Init(SDL.INIT.JOYSTICK, result)
     ASSERT(result = 0)
     SDL.NumJoysticks(num.joysticks)
     IF 
