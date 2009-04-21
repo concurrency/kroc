@@ -106,314 +106,842 @@
 # define _CRT_SECURE_NO_DEPRECATE
 #endif
 
-/*Start of Sound_AudioInfo wrappers*/
-DLLPREFIX void _create_Sound_AudioInfo(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(Sound_AudioInfo));
-}
-
-DLLPREFIX void _delete_Sound_AudioInfo(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_Sound_AudioInfo_format (word occ_args[])
-{
-	Sound_AudioInfo *foo = ((Sound_AudioInfo *) occ_args[1]);
-	*(INT16(occ_args[0])) = CAST_INT16(foo->format);
-}
-DLLPREFIX void _set_Sound_AudioInfo_format (word occ_args[])
-{
-	Sound_AudioInfo *foo = ((Sound_AudioInfo *) occ_args[1]);
-	foo->format = (Uint16) VAL_INT16(occ_args[0]);
-}
-DLLPREFIX void _get_Sound_AudioInfo_channels (word occ_args[])
-{
-	Sound_AudioInfo *foo = ((Sound_AudioInfo *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->channels);
-}
-DLLPREFIX void _set_Sound_AudioInfo_channels (word occ_args[])
-{
-	Sound_AudioInfo *foo = ((Sound_AudioInfo *) occ_args[1]);
-	foo->channels = (Uint8) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_Sound_AudioInfo_rate (word occ_args[])
-{
-	Sound_AudioInfo *foo = ((Sound_AudioInfo *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->rate);
-}
-DLLPREFIX void _set_Sound_AudioInfo_rate (word occ_args[])
-{
-	Sound_AudioInfo *foo = ((Sound_AudioInfo *) occ_args[1]);
-	foo->rate = (Uint32) VAL_INT(occ_args[0]);
-}
-/*End of Sound.AudioInfo wrappers*/
-
-/*Start of Sound_DecoderInfo wrappers*/
-DLLPREFIX void _create_Sound_DecoderInfo(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(Sound_DecoderInfo));
-}
-
-DLLPREFIX void _delete_Sound_DecoderInfo(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_Sound_DecoderInfo_extensions (word occ_args[])
-{
-	Sound_DecoderInfo *foo = ((Sound_DecoderInfo *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->extensions);
-}
-DLLPREFIX void _set_Sound_DecoderInfo_extensions (word occ_args[])
-{
-	Sound_DecoderInfo *foo = ((Sound_DecoderInfo *) occ_args[1]);
-	foo->extensions = (char const **) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_Sound_DecoderInfo_description (word occ_args[])
-{
-	Sound_DecoderInfo *foo = ((Sound_DecoderInfo *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->description);
-}
-DLLPREFIX void _set_Sound_DecoderInfo_description (word occ_args[])
-{
-	Sound_DecoderInfo *foo = ((Sound_DecoderInfo *) occ_args[1]);
-	foo->description = (char const *) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_Sound_DecoderInfo_author (word occ_args[])
-{
-	Sound_DecoderInfo *foo = ((Sound_DecoderInfo *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->author);
-}
-DLLPREFIX void _set_Sound_DecoderInfo_author (word occ_args[])
-{
-	Sound_DecoderInfo *foo = ((Sound_DecoderInfo *) occ_args[1]);
-	foo->author = (char const *) VAL_BYTE(occ_args[0]);
-}
-DLLPREFIX void _get_Sound_DecoderInfo_url (word occ_args[])
-{
-	Sound_DecoderInfo *foo = ((Sound_DecoderInfo *) occ_args[1]);
-	*(BYTE(occ_args[0])) = CAST_BYTE(foo->url);
-}
-DLLPREFIX void _set_Sound_DecoderInfo_url (word occ_args[])
-{
-	Sound_DecoderInfo *foo = ((Sound_DecoderInfo *) occ_args[1]);
-	foo->url = (char const *) VAL_BYTE(occ_args[0]);
-}
-/*End of Sound.DecoderInfo wrappers*/
-
-/*Start of Sound_Sample wrappers*/
-DLLPREFIX void _create_Sound_Sample(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(Sound_Sample));
-}
-
-DLLPREFIX void _delete_Sound_Sample(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_Sound_Sample_decoder (word occ_args[])
-{
-	Sound_Sample *foo = ((Sound_Sample *) occ_args[1]);
-	*((void **) occ_args[0]) = (void *) foo->decoder;
-}
-DLLPREFIX void _get_Sound_Sample_desired (word occ_args[])
-{
-	Sound_Sample *foo = ((Sound_Sample *) occ_args[1]);
-	*((void **) occ_args[0]) = (void *) &foo->desired;
-}
-DLLPREFIX void _get_Sound_Sample_actual (word occ_args[])
-{
-	Sound_Sample *foo = ((Sound_Sample *) occ_args[1]);
-	*((void **) occ_args[0]) = (void *) &foo->actual;
-}
-DLLPREFIX void _get_Sound_Sample_buffer (word occ_args[])
-{
-	Sound_Sample *foo = ((Sound_Sample *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->buffer);
-}
-DLLPREFIX void _set_Sound_Sample_buffer (word occ_args[])
-{
-	Sound_Sample *foo = ((Sound_Sample *) occ_args[1]);
-	foo->buffer = (void *) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_Sound_Sample_buffer_size (word occ_args[])
-{
-	Sound_Sample *foo = ((Sound_Sample *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->buffer_size);
-}
-DLLPREFIX void _set_Sound_Sample_buffer_size (word occ_args[])
-{
-	Sound_Sample *foo = ((Sound_Sample *) occ_args[1]);
-	foo->buffer_size = (Uint32) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_Sound_Sample_flags (word occ_args[])
-{
-	Sound_Sample *foo = ((Sound_Sample *) occ_args[1]);
-	*((void **) occ_args[0]) = (void *) &foo->flags;
-}
-/*End of Sound.Sample wrappers*/
-
-/*Start of Sound_Version wrappers*/
-DLLPREFIX void _create_Sound_Version(word occ_args[])
-{
-	*((void **) occ_args[0]) = (void *) malloc(sizeof(Sound_Version));
-}
-
-DLLPREFIX void _delete_Sound_Version(word occ_args[])
-{
-	free(*((void **) occ_args[0]));
-}
-
-DLLPREFIX void _get_Sound_Version_major (word occ_args[])
-{
-	Sound_Version *foo = ((Sound_Version *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->major);
-}
-DLLPREFIX void _set_Sound_Version_major (word occ_args[])
-{
-	Sound_Version *foo = ((Sound_Version *) occ_args[1]);
-	foo->major = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_Sound_Version_minor (word occ_args[])
-{
-	Sound_Version *foo = ((Sound_Version *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->minor);
-}
-DLLPREFIX void _set_Sound_Version_minor (word occ_args[])
-{
-	Sound_Version *foo = ((Sound_Version *) occ_args[1]);
-	foo->minor = (int) VAL_INT(occ_args[0]);
-}
-DLLPREFIX void _get_Sound_Version_patch (word occ_args[])
-{
-	Sound_Version *foo = ((Sound_Version *) occ_args[1]);
-	*(INT(occ_args[0])) = CAST_INT(foo->patch);
-}
-DLLPREFIX void _set_Sound_Version_patch (word occ_args[])
-{
-	Sound_Version *foo = ((Sound_Version *) occ_args[1]);
-	foo->patch = (int) VAL_INT(occ_args[0]);
-}
-/*End of Sound.Version wrappers*/
-
-DLLPREFIX void _Sound_GetLinkedVersion (word w[])
-
-{
-  Sound_GetLinkedVersion (((Sound_Version*)(*INT(w[0]))));
-  return;
+/*{{{  struct Sound_AudioInfo */
+/*{{{  function Sound_AudioInfo_format_set */
+SWIGEXPORT void _Sound_AudioInfo_format_set (word occ_args[]) {
+  Sound_AudioInfo *arg1 = (Sound_AudioInfo *) 0 ;
+  Uint16 arg2 ;
+  
+  {
+    arg1 = (Sound_AudioInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint16) occ_args[1]; 
+  }if (arg1) (arg1)->format = arg2;
+  
 }
 
 
-DLLPREFIX void _Sound_Init (word w[])
-
-{
-  *(INT(w[0])) = Sound_Init ();
-  return;
+/*}}}*/
+/*{{{  function Sound_AudioInfo_format_get */
+SWIGEXPORT void _Sound_AudioInfo_format_get (word occ_args[]) {
+  Sound_AudioInfo *arg1 = (Sound_AudioInfo *) 0 ;
+  Uint16 result;
+  
+  {
+    arg1 = (Sound_AudioInfo *) occ_args[0]; 
+  }result = (Uint16) ((arg1)->format);
+  {
+    *((Uint16 *) occ_args[1]) = result; 
+  }
 }
 
 
-DLLPREFIX void _Sound_Quit (word w[])
-
-{
-  *(INT(w[0])) = Sound_Quit ();
-  return;
+/*}}}*/
+/*{{{  function Sound_AudioInfo_channels_set */
+SWIGEXPORT void _Sound_AudioInfo_channels_set (word occ_args[]) {
+  Sound_AudioInfo *arg1 = (Sound_AudioInfo *) 0 ;
+  Uint8 arg2 ;
+  
+  {
+    arg1 = (Sound_AudioInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint8) occ_args[1]; 
+  }if (arg1) (arg1)->channels = arg2;
+  
 }
 
 
-DLLPREFIX void _Sound_AvailableDecoders (word w[])
-
-{
-  (*INT(w[0])) = (int) Sound_AvailableDecoders ();
-  return;
+/*}}}*/
+/*{{{  function Sound_AudioInfo_channels_get */
+SWIGEXPORT void _Sound_AudioInfo_channels_get (word occ_args[]) {
+  Sound_AudioInfo *arg1 = (Sound_AudioInfo *) 0 ;
+  Uint8 result;
+  
+  {
+    arg1 = (Sound_AudioInfo *) occ_args[0]; 
+  }result = (Uint8) ((arg1)->channels);
+  {
+    *((Uint8 *) occ_args[1]) = result; 
+  }
 }
 
 
-
-	inline static void occ_Sound_GetError(char err_str[], int err_str_len, int *str_len)
-	{
-  	char *err = Sound_GetError();
-
-  	*str_len = 0;
-
-  	while(*str_len < err_str_len && err[*str_len] != '\0')
-    	err_str[*str_len] = err[(*str_len)++];
-		return;
-	}
-
-DLLPREFIX void _occ_Sound_GetError (word w[])
-
-{
-  occ_Sound_GetError ((BYTE(w[0])), (VAL_INT(w[2])), (INT(w[3])));
-  return;
+/*}}}*/
+/*{{{  function Sound_AudioInfo_rate_set */
+SWIGEXPORT void _Sound_AudioInfo_rate_set (word occ_args[]) {
+  Sound_AudioInfo *arg1 = (Sound_AudioInfo *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (Sound_AudioInfo *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->rate = arg2;
+  
 }
 
 
-DLLPREFIX void _Sound_ClearError ()
-
-{
-  Sound_ClearError ();
-  return;
+/*}}}*/
+/*{{{  function Sound_AudioInfo_rate_get */
+SWIGEXPORT void _Sound_AudioInfo_rate_get (word occ_args[]) {
+  Sound_AudioInfo *arg1 = (Sound_AudioInfo *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (Sound_AudioInfo *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->rate);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
 }
 
 
-DLLPREFIX void _Sound_NewSampleFromFile (word w[])
-
-{
-  (*INT(w[0])) = (int) Sound_NewSampleFromFile ((BYTE(w[1])), ((Sound_AudioInfo*)(*INT(w[3]))), (VAL_INT(w[4])));
-  return;
+/*}}}*/
+/*{{{  function new_Sound_AudioInfo */
+SWIGEXPORT void _new_Sound_AudioInfo (word occ_args[]) {
+  Sound_AudioInfo *result = 0 ;
+  
+  result = (Sound_AudioInfo *)(Sound_AudioInfo *) calloc(1, sizeof(Sound_AudioInfo));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
 }
 
 
-DLLPREFIX void _Sound_FreeSample (word w[])
-
-{
-  Sound_FreeSample (((Sound_Sample*)(*INT(w[0]))));
-  return;
+/*}}}*/
+/*{{{  function delete_Sound_AudioInfo */
+SWIGEXPORT void _delete_Sound_AudioInfo (word occ_args[]) {
+  Sound_AudioInfo *arg1 = (Sound_AudioInfo *) 0 ;
+  
+  {
+    arg1 = (Sound_AudioInfo *) occ_args[0]; 
+  }free((char *) arg1);
+  
 }
 
 
-DLLPREFIX void _Sound_SetBufferSize (word w[])
-
-{
-  *(INT(w[0])) = Sound_SetBufferSize (((Sound_Sample*)(*INT(w[1]))), (VAL_INT(w[2])));
-  return;
+/*}}}*/
+/*}}}*/
+/*{{{  struct Sound_DecoderInfo */
+/*{{{  function Sound_DecoderInfo_extensions_set */
+SWIGEXPORT void _Sound_DecoderInfo_extensions_set (word occ_args[]) {
+  Sound_DecoderInfo *arg1 = (Sound_DecoderInfo *) 0 ;
+  char **arg2 = (char **) 0 ;
+  
+  {
+    arg1 = (Sound_DecoderInfo *) occ_args[0]; 
+  }{
+    arg2 = (char **) occ_args[1]; 
+  }if (arg1) (arg1)->extensions = (char const **)arg2;
+  
 }
 
 
-DLLPREFIX void _Sound_Decode (word w[])
-
-{
-  *(INT(w[0])) = Sound_Decode (((Sound_Sample*)(*INT(w[1]))));
-  return;
+/*}}}*/
+/*{{{  function Sound_DecoderInfo_extensions_get */
+SWIGEXPORT void _Sound_DecoderInfo_extensions_get (word occ_args[]) {
+  Sound_DecoderInfo *arg1 = (Sound_DecoderInfo *) 0 ;
+  char **result = 0 ;
+  
+  {
+    arg1 = (Sound_DecoderInfo *) occ_args[0]; 
+  }result = (char **) ((arg1)->extensions);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
 }
 
 
-DLLPREFIX void _Sound_DecodeAll (word w[])
-
-{
-  *(INT(w[0])) = Sound_DecodeAll (((Sound_Sample*)(*INT(w[1]))));
-  return;
+/*}}}*/
+/*{{{  function Sound_DecoderInfo_description_set */
+SWIGEXPORT void _Sound_DecoderInfo_description_set (word occ_args[]) {
+  Sound_DecoderInfo *arg1 = (Sound_DecoderInfo *) 0 ;
+  char *arg2 = (char *) 0 ;
+  
+  {
+    arg1 = (Sound_DecoderInfo *) occ_args[0]; 
+  }{
+    arg2 = (char *) occ_args[1]; 
+  }{
+    if (arg2) {
+      arg1->description = (char const *) malloc(strlen((const char *)arg2)+1);
+      strcpy((char *)arg1->description, (const char *)arg2);
+    } else {
+      arg1->description = 0;
+    }
+  }
 }
 
 
-DLLPREFIX void _Sound_Rewind (word w[])
-
-{
-  *(INT(w[0])) = Sound_Rewind (((Sound_Sample*)(*INT(w[1]))));
-  return;
+/*}}}*/
+/*{{{  function Sound_DecoderInfo_description_get */
+SWIGEXPORT void _Sound_DecoderInfo_description_get (word occ_args[]) {
+  Sound_DecoderInfo *arg1 = (Sound_DecoderInfo *) 0 ;
+  char *result = 0 ;
+  
+  {
+    arg1 = (Sound_DecoderInfo *) occ_args[0]; 
+  }result = (char *) ((arg1)->description);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
 }
 
 
-DLLPREFIX void _Sound_Seek (word w[])
-
-{
-  *(INT(w[0])) = Sound_Seek (((Sound_Sample*)(*INT(w[1]))), (VAL_INT(w[2])));
-  return;
+/*}}}*/
+/*{{{  function Sound_DecoderInfo_author_set */
+SWIGEXPORT void _Sound_DecoderInfo_author_set (word occ_args[]) {
+  Sound_DecoderInfo *arg1 = (Sound_DecoderInfo *) 0 ;
+  char *arg2 = (char *) 0 ;
+  
+  {
+    arg1 = (Sound_DecoderInfo *) occ_args[0]; 
+  }{
+    arg2 = (char *) occ_args[1]; 
+  }{
+    if (arg2) {
+      arg1->author = (char const *) malloc(strlen((const char *)arg2)+1);
+      strcpy((char *)arg1->author, (const char *)arg2);
+    } else {
+      arg1->author = 0;
+    }
+  }
 }
 
 
+/*}}}*/
+/*{{{  function Sound_DecoderInfo_author_get */
+SWIGEXPORT void _Sound_DecoderInfo_author_get (word occ_args[]) {
+  Sound_DecoderInfo *arg1 = (Sound_DecoderInfo *) 0 ;
+  char *result = 0 ;
+  
+  {
+    arg1 = (Sound_DecoderInfo *) occ_args[0]; 
+  }result = (char *) ((arg1)->author);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_DecoderInfo_url_set */
+SWIGEXPORT void _Sound_DecoderInfo_url_set (word occ_args[]) {
+  Sound_DecoderInfo *arg1 = (Sound_DecoderInfo *) 0 ;
+  char *arg2 = (char *) 0 ;
+  
+  {
+    arg1 = (Sound_DecoderInfo *) occ_args[0]; 
+  }{
+    arg2 = (char *) occ_args[1]; 
+  }{
+    if (arg2) {
+      arg1->url = (char const *) malloc(strlen((const char *)arg2)+1);
+      strcpy((char *)arg1->url, (const char *)arg2);
+    } else {
+      arg1->url = 0;
+    }
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_DecoderInfo_url_get */
+SWIGEXPORT void _Sound_DecoderInfo_url_get (word occ_args[]) {
+  Sound_DecoderInfo *arg1 = (Sound_DecoderInfo *) 0 ;
+  char *result = 0 ;
+  
+  {
+    arg1 = (Sound_DecoderInfo *) occ_args[0]; 
+  }result = (char *) ((arg1)->url);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_Sound_DecoderInfo */
+SWIGEXPORT void _new_Sound_DecoderInfo (word occ_args[]) {
+  Sound_DecoderInfo *result = 0 ;
+  
+  result = (Sound_DecoderInfo *)(Sound_DecoderInfo *) calloc(1, sizeof(Sound_DecoderInfo));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_Sound_DecoderInfo */
+SWIGEXPORT void _delete_Sound_DecoderInfo (word occ_args[]) {
+  Sound_DecoderInfo *arg1 = (Sound_DecoderInfo *) 0 ;
+  
+  {
+    arg1 = (Sound_DecoderInfo *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct Sound_Sample */
+/*{{{  function Sound_Sample_decoder_set */
+SWIGEXPORT void _Sound_Sample_decoder_set (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Sound_DecoderInfo *arg2 = (Sound_DecoderInfo *) 0 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }{
+    arg2 = (Sound_DecoderInfo *) occ_args[1]; 
+  }if (arg1) (arg1)->decoder = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Sample_decoder_get */
+SWIGEXPORT void _Sound_Sample_decoder_get (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Sound_DecoderInfo *result = 0 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }result = (Sound_DecoderInfo *) ((arg1)->decoder);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Sample_desired_set */
+SWIGEXPORT void _Sound_Sample_desired_set (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Sound_AudioInfo *arg2 = (Sound_AudioInfo *) 0 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }{
+    arg2 = (Sound_AudioInfo *) occ_args[1]; 
+  }if (arg1) (arg1)->desired = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Sample_desired_get */
+SWIGEXPORT void _Sound_Sample_desired_get (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Sound_AudioInfo *result = 0 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }result = (Sound_AudioInfo *)& ((arg1)->desired);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Sample_actual_set */
+SWIGEXPORT void _Sound_Sample_actual_set (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Sound_AudioInfo *arg2 = (Sound_AudioInfo *) 0 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }{
+    arg2 = (Sound_AudioInfo *) occ_args[1]; 
+  }if (arg1) (arg1)->actual = *arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Sample_actual_get */
+SWIGEXPORT void _Sound_Sample_actual_get (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Sound_AudioInfo *result = 0 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }result = (Sound_AudioInfo *)& ((arg1)->actual);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Sample_buffer_set */
+SWIGEXPORT void _Sound_Sample_buffer_set (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  void *arg2 = (void *) 0 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }{
+    arg2 = (void *) occ_args[1]; 
+  }if (arg1) (arg1)->buffer = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Sample_buffer_get */
+SWIGEXPORT void _Sound_Sample_buffer_get (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  void *result = 0 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }result = (void *) ((arg1)->buffer);
+  {
+    *((void * *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Sample_buffer_size_set */
+SWIGEXPORT void _Sound_Sample_buffer_size_set (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Uint32 arg2 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }if (arg1) (arg1)->buffer_size = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Sample_buffer_size_get */
+SWIGEXPORT void _Sound_Sample_buffer_size_get (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }result = (Uint32) ((arg1)->buffer_size);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Sample_flags_set */
+SWIGEXPORT void _Sound_Sample_flags_set (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Sound_SampleFlags arg2 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }{
+    arg2 = (Sound_SampleFlags) occ_args[1]; 
+  }if (arg1) (arg1)->flags = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Sample_flags_get */
+SWIGEXPORT void _Sound_Sample_flags_get (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Sound_SampleFlags result;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }result = (Sound_SampleFlags) ((arg1)->flags);
+  {
+    *((Sound_SampleFlags *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_Sound_Sample */
+SWIGEXPORT void _new_Sound_Sample (word occ_args[]) {
+  Sound_Sample *result = 0 ;
+  
+  result = (Sound_Sample *)(Sound_Sample *) calloc(1, sizeof(Sound_Sample));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_Sound_Sample */
+SWIGEXPORT void _delete_Sound_Sample (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  struct Sound_Version */
+/*{{{  function Sound_Version_major_set */
+SWIGEXPORT void _Sound_Version_major_set (word occ_args[]) {
+  Sound_Version *arg1 = (Sound_Version *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (Sound_Version *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->major = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Version_major_get */
+SWIGEXPORT void _Sound_Version_major_get (word occ_args[]) {
+  Sound_Version *arg1 = (Sound_Version *) 0 ;
+  int result;
+  
+  {
+    arg1 = (Sound_Version *) occ_args[0]; 
+  }result = (int) ((arg1)->major);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Version_minor_set */
+SWIGEXPORT void _Sound_Version_minor_set (word occ_args[]) {
+  Sound_Version *arg1 = (Sound_Version *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (Sound_Version *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->minor = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Version_minor_get */
+SWIGEXPORT void _Sound_Version_minor_get (word occ_args[]) {
+  Sound_Version *arg1 = (Sound_Version *) 0 ;
+  int result;
+  
+  {
+    arg1 = (Sound_Version *) occ_args[0]; 
+  }result = (int) ((arg1)->minor);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Version_patch_set */
+SWIGEXPORT void _Sound_Version_patch_set (word occ_args[]) {
+  Sound_Version *arg1 = (Sound_Version *) 0 ;
+  int arg2 ;
+  
+  {
+    arg1 = (Sound_Version *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[1]; 
+  }if (arg1) (arg1)->patch = arg2;
+  
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Version_patch_get */
+SWIGEXPORT void _Sound_Version_patch_get (word occ_args[]) {
+  Sound_Version *arg1 = (Sound_Version *) 0 ;
+  int result;
+  
+  {
+    arg1 = (Sound_Version *) occ_args[0]; 
+  }result = (int) ((arg1)->patch);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function new_Sound_Version */
+SWIGEXPORT void _new_Sound_Version (word occ_args[]) {
+  Sound_Version *result = 0 ;
+  
+  result = (Sound_Version *)(Sound_Version *) calloc(1, sizeof(Sound_Version));
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function delete_Sound_Version */
+SWIGEXPORT void _delete_Sound_Version (word occ_args[]) {
+  Sound_Version *arg1 = (Sound_Version *) 0 ;
+  
+  {
+    arg1 = (Sound_Version *) occ_args[0]; 
+  }free((char *) arg1);
+  
+}
+
+
+/*}}}*/
+/*}}}*/
+/*{{{  function Sound_GetLinkedVersion */
+SWIGEXPORT void _Sound_GetLinkedVersion (word occ_args[]) {
+  Sound_Version *arg1 = (Sound_Version *) 0 ;
+  
+  {
+    arg1 = (Sound_Version *) occ_args[0]; 
+  }Sound_GetLinkedVersion(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Init */
+SWIGEXPORT void _Sound_Init (word occ_args[]) {
+  int result;
+  
+  result = (int)Sound_Init();
+  {
+    *((int *) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Quit */
+SWIGEXPORT void _Sound_Quit (word occ_args[]) {
+  int result;
+  
+  result = (int)Sound_Quit();
+  {
+    *((int *) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_AvailableDecoders */
+SWIGEXPORT void _Sound_AvailableDecoders (word occ_args[]) {
+  Sound_DecoderInfo **result = 0 ;
+  
+  result = (Sound_DecoderInfo **)Sound_AvailableDecoders();
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_GetError */
+SWIGEXPORT void _Sound_GetError (word occ_args[]) {
+  char *result = 0 ;
+  
+  result = (char *)Sound_GetError();
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+
+inline static int occ_Sound_GetError(char err_str[], int err_str_len) {
+        const char *err = Sound_GetError();
+
+        int len = 0;
+        while (len < err_str_len && err[len] != '\0') {
+                err_str[len] = err[len];
+                len++;
+        }
+
+        return len;
+}
+
+/*{{{  function occ_Sound_GetError */
+SWIGEXPORT void _occ_Sound_GetError (word occ_args[]) {
+  char *arg1 ;
+  int arg2 ;
+  int result;
+  
+  {
+    arg1 = (char *) occ_args[0]; 
+  }{
+    arg2 = (int) occ_args[2]; 
+  }result = (int)occ_Sound_GetError(arg1,arg2);
+  {
+    *((int *) occ_args[3]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_ClearError */
+SWIGEXPORT void _Sound_ClearError (word occ_args[]) {
+  Sound_ClearError();
+}
+
+
+/*}}}*/
+/*{{{  function Sound_NewSample */
+SWIGEXPORT void _Sound_NewSample (word occ_args[]) {
+  SDL_RWops *arg1 = (SDL_RWops *) 0 ;
+  char *arg2 ;
+  Sound_AudioInfo *arg3 = (Sound_AudioInfo *) 0 ;
+  Uint32 arg4 ;
+  Sound_Sample *result = 0 ;
+  
+  {
+    arg1 = (SDL_RWops *) occ_args[0]; 
+  }{
+    arg2 = (char *) occ_args[1]; 
+  }{
+    arg3 = (Sound_AudioInfo *) occ_args[3]; 
+  }{
+    arg4 = (Uint32) occ_args[4]; 
+  }result = (Sound_Sample *)Sound_NewSample(arg1,(char const (*))arg2,arg3,arg4);
+  {
+    *((void **) occ_args[5]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_NewSampleFromFile */
+SWIGEXPORT void _Sound_NewSampleFromFile (word occ_args[]) {
+  char *arg1 ;
+  Sound_AudioInfo *arg2 = (Sound_AudioInfo *) 0 ;
+  Uint32 arg3 ;
+  Sound_Sample *result = 0 ;
+  
+  {
+    arg1 = (char *) occ_args[0]; 
+  }{
+    arg2 = (Sound_AudioInfo *) occ_args[2]; 
+  }{
+    arg3 = (Uint32) occ_args[3]; 
+  }result = (Sound_Sample *)Sound_NewSampleFromFile((char const (*))arg1,arg2,arg3);
+  {
+    *((void **) occ_args[4]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_FreeSample */
+SWIGEXPORT void _Sound_FreeSample (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }Sound_FreeSample(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function Sound_SetBufferSize */
+SWIGEXPORT void _Sound_SetBufferSize (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Uint32 arg2 ;
+  int result;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }result = (int)Sound_SetBufferSize(arg1,arg2);
+  {
+    *((int *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Decode */
+SWIGEXPORT void _Sound_Decode (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }result = (Uint32)Sound_Decode(arg1);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_DecodeAll */
+SWIGEXPORT void _Sound_DecodeAll (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Uint32 result;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }result = (Uint32)Sound_DecodeAll(arg1);
+  {
+    *((Uint32 *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Rewind */
+SWIGEXPORT void _Sound_Rewind (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  int result;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }result = (int)Sound_Rewind(arg1);
+  {
+    *((int *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function Sound_Seek */
+SWIGEXPORT void _Sound_Seek (word occ_args[]) {
+  Sound_Sample *arg1 = (Sound_Sample *) 0 ;
+  Uint32 arg2 ;
+  int result;
+  
+  {
+    arg1 = (Sound_Sample *) occ_args[0]; 
+  }{
+    arg2 = (Uint32) occ_args[1]; 
+  }result = (int)Sound_Seek(arg1,arg2);
+  {
+    *((int *) occ_args[2]) = result; 
+  }
+}
+
+
+/*}}}*/
 
 /* Global flag determining decode status */
 static volatile int global_done_flag = 0;
@@ -433,7 +961,7 @@ static volatile int global_done_flag = 0;
    the first_time flag is set to 1 if it is not the first time this callback
    is being called. */
 Uint8 *decoded_ptr = 0;
-Uint32 *decoded_bytes = 0;
+Uint32 decoded_bytes = 0;
 Uint8 first_time = 0; 
 
 static void audio_callback(void *userdata, Uint8 *stream, int len)
@@ -483,8 +1011,8 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
    }
 } 
 
-static int get_audio_callback_ptr() {
-    return (int)audio_callback;
+static void *get_audio_callback_ptr() {
+    return (void *) audio_callback;
 }
 
 static int check_if_done_playing(){
@@ -492,19 +1020,27 @@ static int check_if_done_playing(){
 }
 
 
-DLLPREFIX void _get_audio_callback_ptr (word w[])
-
-{
-  *(INT(w[0])) = get_audio_callback_ptr ();
-  return;
+/*{{{  function get_audio_callback_ptr */
+SWIGEXPORT void _get_audio_callback_ptr (word occ_args[]) {
+  void *result = 0 ;
+  
+  result = (void *)get_audio_callback_ptr();
+  {
+    *((void * *) occ_args[0]) = result; 
+  }
 }
 
 
-DLLPREFIX void _check_if_done_playing (word w[])
-
-{
-  *(INT(w[0])) = check_if_done_playing ();
-  return;
+/*}}}*/
+/*{{{  function check_if_done_playing */
+SWIGEXPORT void _check_if_done_playing (word occ_args[]) {
+  int result;
+  
+  result = (int)check_if_done_playing();
+  {
+    *((int *) occ_args[0]) = result; 
+  }
 }
 
 
+/*}}}*/
