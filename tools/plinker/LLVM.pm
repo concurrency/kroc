@@ -128,7 +128,8 @@ $GRAPH = {
 			'generator' => \&gen_mul },
 	'BOOLINVERT'	=> { 'in' => 1, 'out' => 1,
 			'generator' => \&gen_boolinvert },
-	'NORM'		=> { 'in' => 3, 'out' => 3 },
+	'NORM'		=> { 'in' => 3, 'out' => 3,
+			'generator' => \&gen_norm },
 	'POSTNORMSN'	=> { 'in' => 3, 'out' => 3 },
 	'ROUNDSN'	=> { 'in' => 3, 'out' => 1 },
 	# Long Arithmetic
@@ -2911,6 +2912,125 @@ sub gen_fpldnlop ($$$$) {
 	);
 }
 
+sub gen_norm ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	
+	my $a		= $inst->{'in'}->[0];
+	my $b		= $inst->{'in'}->[1];
+
+	my $tmp 	= $self->tmp_label ();
+	my $b0_lab 	= $tmp . '_b0';
+	my $a_shift_lab = $tmp . '_a_shift';
+	my $b_shift_lab = $tmp . '_b_shift';
+	my $cont_lab 	= $tmp . '_continue';
+	my $cmp_b 	= $self->tmp_label ();
+	my $cmp_a 	= $self->tmp_label ();
+
+	my $a_shift_a_out	= $self->tmp_reg ();
+	my $a_shift_b_out	= $self->tmp_reg ();
+	my $a_shift_c_out	= $self->tmp_reg ();
+	my $b_shift_a_out	= $self->tmp_reg ();
+	my $b_shift_b_out	= $self->tmp_reg ();
+	my $b_shift_c_out	= $self->tmp_reg ();
+	my $a_shift_tmp		= $self->tmp_reg ();
+	my $b_shift_tmp		= $self->tmp_reg ();
+	my $b_shift_b_tmp0	= $self->tmp_reg ();
+	my $b_shift_b_tmp1	= $self->tmp_reg ();
+	my $b_shift_b_tmp2	= $self->tmp_reg ();
+
+	return (
+		sprintf ('%%%s = icmp eq %s %%%s, 0', 
+			$cmp_b, $self->int_type, $b),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s', 
+			$cmp_b, $b0_lab, $b_shift_lab),
+		
+
+		$b0_lab . ':',
+		sprintf ('%%%s = icmp eq %s %%%s, 0',
+			$cmp_a, $self->int_type, $a),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$cmp_a, $cont_lab, $a_shift_lab),
+		
+
+		$a_shift_lab . ':',
+		sprintf ('%%%s = call %s @llvm.ctlz.%s (%s %%%s)',
+			$a_shift_tmp,
+			$self->int_type, $self->int_type, $self->int_type,
+			$a
+		),
+		sprintf ('%%%s = bitcast %s 0 to %s',
+			$a_shift_a_out,
+			$self->int_type, $self->int_type
+		),
+		sprintf ('%%%s = shl %s %%%s, %%%s',
+			$a_shift_b_out,
+			$self->int_type, $a, $a_shift_tmp
+		),
+		sprintf ('%%%s = add %s %%%s, %d',
+			$a_shift_c_out,
+			$self->int_type, $a_shift_tmp, $self->int_bits
+		),
+		sprintf ('br label %%%s', $cont_lab), 
+	
+
+		$b_shift_lab . ':',
+		sprintf ('%%%s = call %s @llvm.ctlz.%s (%s %%%s)',
+			$b_shift_tmp,
+			$self->int_type, $self->int_type, $self->int_type,
+			$b
+		),
+		sprintf ('%%%s = shl %s %%%s, %%%s',
+			$b_shift_a_out,
+			$self->int_type, $a, $b_shift_tmp
+		),
+		sprintf ('%%%s = shl %s %%%s, %%%s',
+			$b_shift_b_tmp0,
+			$self->int_type, $b, $b_shift_tmp
+		),
+		sprintf ('%%%s = sub %s %d, %%%s',
+			$b_shift_b_tmp1,
+			$self->int_type, $self->int_bits, $b_shift_b_tmp0
+		),
+		sprintf ('%%%s = ashr %s %%%s, %%%s',
+			$b_shift_b_tmp2,
+			$self->int_type, $a, $b_shift_b_tmp1
+		),
+		sprintf ('%%%s = or %s %%%s, %%%s',
+			$b_shift_b_out,
+			$self->int_type, $b_shift_b_tmp0, $b_shift_b_tmp2
+		),
+		sprintf ('%%%s = bitcast %s %%%s to %s',
+			$b_shift_c_out,
+			$self->int_type, $b_shift_tmp, $self->int_type
+		),
+		sprintf ('br label %%%s', $cont_lab), 
+
+
+		$cont_lab . ':',
+		sprintf ('%%%s = phi %s [ 0, %%%s ], [ %%%s, %%%s ], [ %%%s, %%%s ]',
+			$inst->{'out'}->[0],
+			$self->int_type, 
+			$b0_lab,
+			$a_shift_a_out, $a_shift_lab,
+			$b_shift_a_out, $b_shift_lab
+		),
+		sprintf ('%%%s = phi %s [ 0, %%%s ], [ %%%s, %%%s ], [ %%%s, %%%s ]',
+			$inst->{'out'}->[1],
+			$self->int_type, 
+			$b0_lab,
+			$a_shift_b_out, $a_shift_lab,
+			$b_shift_b_out, $b_shift_lab
+		),
+		sprintf ('%%%s = phi %s [ %d, %%%s ], [ %%%s, %%%s ], [ %%%s, %%%s ]',
+			$inst->{'out'}->[2],
+			$self->int_type, 
+			$self->int_bits * 2, $b0_lab,
+			$a_shift_c_out, $a_shift_lab,
+			$b_shift_c_out, $b_shift_lab
+		)
+	);
+}
+
 sub format_lines (@) {
 	my @lines = @_;
 	my @asm;
@@ -3164,6 +3284,7 @@ sub intrinsics ($) {
 	my $self = shift;
 	my $int = $self->int_type;
 	return (
+		"declare $int \@llvm.ctlz.$int ($int)",
 		"declare { $int, i1 } \@llvm.sadd.with.overflow.$int ($int, $int)",
 		"declare { $int, i1 } \@llvm.uadd.with.overflow.$int ($int, $int)",
 		"declare { $int, i1 } \@llvm.smul.with.overflow.$int ($int, $int)",
