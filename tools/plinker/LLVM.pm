@@ -175,34 +175,53 @@ $GRAPH = {
 			'generator' => \&gen_fpi32to },
 	'FPB32TOR64'	=> { 'in' => 1, 'fout' => 1,
 			'generator' => \&gen_fpi32to },
-	'FPRTOI32'	=> { 'fin' => 1, 'fout' => 1 },
-	'FPADD'		=> { 'fin' => 2, 'fout' => 1 },
-	'FPSUB'		=> { 'fin' => 2, 'fout' => 1 },
-	'FPMUL'		=> { 'fin' => 2, 'fout' => 1 },
-	'FPDIV'		=> { 'fin' => 2, 'fout' => 1 },
+	'FPRTOI32'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fprtoi32 },
+	'FPR32TOR64'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpnop },
+	'FPR64TOR32'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpnop },
+	'FPLDZEROSN'	=> { 'fout' => 1,
+			'generator' => \&gen_fpldzero },
+	'FPLDZERODB'	=> { 'fout' => 1,
+			'generator' => \&gen_fpldzero },
+	'FPADD'		=> { 'fin' => 2, 'fout' => 1,
+			'generator' => \&gen_fparithop },
+	'FPSUB'		=> { 'fin' => 2, 'fout' => 1,
+			'generator' => \&gen_fparithop },
+	'FPMUL'		=> { 'fin' => 2, 'fout' => 1,
+			'generator' => \&gen_fparithop },
+	'FPDIV'		=> { 'fin' => 2, 'fout' => 1,
+			'generator' => \&gen_fparithop },
+	'FPREM'		=> { 'fin' => 2, 'fout' => 1,
+			'generator' => \&gen_fparithop },
 	'FPNAN'		=> { 'fin' => 1, 'fout' => 1, 'out' => 1 },
 	'FPORDERED'	=> { 'fin' => 2, 'fout' => 2, 'out' => 1 },
 	'FPNOTFINITE'	=> { 'fin' => 1, 'fout' => 1, 'out' => 1 },
 	'FPGT'		=> { 'fin' => 2, 'out' => 1 },
 	'FPEQ'		=> { 'fin' => 2, 'out' => 1 },
-	'FPLDZEROSN'	=> { 'fout' => 1 },
-	'FPLDZERODB'	=> { 'fout' => 1 },
-	'FPINT'		=> { 'fin' => 1, 'fout' => 1 },
-	'FPDUP'		=> { 'fin' => 1, 'fout' => 2 },
-	'FPREV'		=> { 'fin' => 2, 'fout' => 2 },
+	'FPINT'		=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpint },
+	'FPDUP'		=> { 'fin' => 1, 'fout' => 2,
+			'generator' => \&gen_dup },
+	'FPREV'		=> { 'fin' => 2, 'fout' => 2,
+			'generator' => \&gen_rev },
+	'FPDIVBY2'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpxby2 },
+	'FPMULBY2'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpxby2 },
+	'FPSQRT'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpsqrt },
+	'FPRZ'		=> { 
+			'generator' => \&gen_nop },
+	'FPEXPDEC32'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpexpdec32 },
+	'FPABS'		=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpabs },
 	'FPLDNLADDDB'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
 	'FPLDNLMULDB'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
 	'FPLDNLADDSN'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
 	'FPLDNLMULSN'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
-	'FPREM'		=> { 'fin' => 2, 'fout' => 1 },
-	'FPDIVBY2'	=> { 'fin' => 1, 'fout' => 1 },
-	'FPMULBY2'	=> { 'fin' => 1, 'fout' => 1 },
-	'FPSQRT'	=> { 'fin' => 1, 'fout' => 1 },
-	'FPRZ'		=> { },
-	'FPR32TOR64'	=> { 'fin' => 1, 'fout' => 1 },
-	'FPR64TOR32'	=> { 'fin' => 1, 'fout' => 1 },
-	'FPEXPDEC32'	=> { 'fin' => 1, 'fout' => 1 },
-	'FPABS'		=> { 'fin' => 1, 'fout' => 1 },
 	# Kernel
 	'ENDP'		=> { 'kcall' => 1, 'in' => 1,
 		'symbol' => 'Y_endp' },
@@ -970,6 +989,17 @@ sub float_type {
 	return 'double';
 }
 
+sub intrinsic_type ($$) {
+	my ($self, $type) = @_;
+	if ($type eq 'float') {
+		return 'f32';
+	} elsif ($type eq 'double') {
+		return 'f64';
+	} else {
+		return $type;
+	}
+}
+
 sub float_length {
 	my $self = shift;
 	my $type = shift || $self->int_type;
@@ -1632,11 +1662,12 @@ sub gen_stnl ($$$$) {
 
 sub gen_dup ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
+	my $f = $inst->{'name'} =~ /^F/ ? 'f' : '';
 	my @asm;
-	my $in = $inst->{'in'}->[0];
-	foreach my $reg (@{$inst->{'out'}}) {
+	my $in = $inst->{$f . 'in'}->[0];
+	foreach my $reg (@{$inst->{$f . 'out'}}) {
 		push (@asm, $self->single_assignment (
-			$self->int_type, $inst->{'in'}->[0], $reg
+			$f ? $self->float_type : $self->int_type, $in, $reg
 		)); 
 	}
 	return @asm;
@@ -1803,9 +1834,11 @@ sub gen_divrem ($$$$) {
 
 sub gen_rev ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
+	my $f 		= $inst->{'name'} =~ /^F/ ? 'f' : '';
+	my $type 	= $f ? $self->float_type : $self->int_type;
 	return (
-		$self->single_assignment ($self->int_type, $inst->{'in'}->[0], $inst->{'out'}->[1]),
-		$self->single_assignment ($self->int_type, $inst->{'in'}->[1], $inst->{'out'}->[0])
+		$self->single_assignment ($type, $inst->{$f . 'in'}->[0], $inst->{$f . 'out'}->[1]),
+		$self->single_assignment ($type, $inst->{$f . 'in'}->[1], $inst->{$f . 'out'}->[0])
 	);
 }
 
@@ -2570,14 +2603,141 @@ sub gen_fpi32to ($$$$) {
 
 sub gen_fprtoi32 ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
+	return $self->numeric_conversion (
+		$self->float_type, $inst->{'fin'}->[0],
+		$self->int_type, $inst->{'out'}->[0],
+		$inst->{'rounding'}
+	);
 }
 
-sub gen_fpr32tor64 ($$$$) {
+sub gen_fpnop ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
+	my @asm;
+	for (my $i = 0; $i < @{$inst->{'fin'}}; ++$i) {
+		push (@asm, $self->single_assignment (
+			$self->float_type, $inst->{'fin'}->[$i], $inst->{'fout'}->[$i]
+		));
+	}
+	return @asm;
 }
 
-sub gen_fpr64tor32 ($$$$) {
+sub gen_fpldzero ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
+	return sprintf ('%%%s = bitcast %s 0.0 to %s',
+		$inst->{'fout'}->[0], $self->float_type, $self->float_type
+	);
+}
+
+sub gen_fparithop ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my ($op) = ($inst->{'name'} =~ /FP(.*)/);
+	$op =~ tr/A-Z/a-z/;
+	$op = 'f' . $op if $op =~ /(div|rem)/;
+	return sprintf ('%%%s = %s %s %%%s, %%%s',
+		$inst->{'fout'}->[0],
+		$op,
+		$self->float_type,
+		$inst->{'fin'}->[1],
+		$inst->{'fin'}->[0]
+	);
+}
+
+sub gen_fpxby2 ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my ($op) = ($inst->{'name'} =~ /FP(.*)BY2/);
+	$op =~ tr/A-Z/a-z/;
+	$op = 'f' . $op;
+	return sprintf ('%%%s = %s %s %%%s, 2.0',
+		$inst->{'fout'}->[0],
+		$op,
+		$self->float_type,
+		$inst->{'fin'}->[0]
+	);
+}
+
+sub gen_fpsqrt ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $i_type 	= $self->instrinsic_type ($self->float_type);
+	my $func 	= '@llvm.sqrt.' . $i_type;
+	
+	$self->{'header'}->{$func} = [
+		sprintf ('define %s %s (%s)',
+			$self->float_type, $func, $self->float_type
+		)
+	];
+	
+	return sprintf ('%%%s = call %s %s (%s %%%s)',
+		$inst->{'fout'}->[0],
+		$func,
+		$self->float_type,
+		$self->float_type, $inst->{'fin'}->[0]
+	);
+}
+
+sub gen_fpint ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $tmp = $self->tmp_reg ();
+	return (
+		$self->numeric_conversion (
+			$self->float_type, $inst->{'fin'}->[0],
+			$self->int_type, $tmp,
+			$inst->{'rounding'}
+		),
+		$self->numeric_conversion (
+			$self->int_type, $tmp,
+			$self->float_type, $inst->{'fout'}->[0],
+			$inst->{'rounding'}
+		)
+	);
+}
+
+sub gen_fpexpdec32 ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	return sprintf ('%%%s = fdiv %s %%%s, %.1f',
+		$inst->{'fout'}->[0],
+		$self->float_type,
+		$inst->{'fin'}->[0],
+		2.0 ** 32
+	);
+}
+
+sub gen_fpabs ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $cmp		= $self->tmp_reg ();
+	my $tmp 	= $self->tmp_label ();
+	my $inv_label 	= $tmp . '_invert';
+	my $nop_label 	= $tmp . '_do_nothing';
+	my $cont_label 	= $tmp . '_continue';
+	my $res1	= $self->tmp_reg ();
+	my $res2	= $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = fcmp oge %s %%%s, 0.0',
+			$cmp,
+			$self->float_type, $inst->{'fin'}->[0]
+		),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$cmp,
+			$nop_label, $inv_label
+		),
+
+		$nop_label . ':',
+		$self->single_assignment ($self->float_type, $inst->{'fin'}->[0], $res1),
+		'br label ' . $cont_label,
+
+		$inv_label . ':',
+		sprintf ('%%%s = sub %s 0.0, %%%s',
+			$res2,
+			$self->float_type, $inst->{'fin'}->[0]
+		),
+		'br label ' . $cont_label,
+
+		$cont_label . ':',
+		sprintf ('%%%s = phi %s [ %%%s, %%%s ], [ %%%s, %%%s ]',
+			$inst->{'fout'}->[0],
+			$res1, $nop_label,
+			$res2, $inv_label
+		)
+	);
 }
 
 sub format_lines (@) {
