@@ -226,10 +226,14 @@ $GRAPH = {
 			'generator' => \&gen_fpexpdec32 },
 	'FPABS'		=> { 'fin' => 1, 'fout' => 1,
 			'generator' => \&gen_fpabs },
-	'FPLDNLADDDB'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
-	'FPLDNLMULDB'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
-	'FPLDNLADDSN'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
-	'FPLDNLMULSN'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1 },
+	'FPLDNLADDDB'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpldnlop },
+	'FPLDNLMULDB'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpldnlop },
+	'FPLDNLADDSN'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpldnlop },
+	'FPLDNLMULSN'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpldnlop },
 	# Kernel
 	'ENDP'		=> { 'kcall' => 1, 'in' => 1,
 		'symbol' => 'Y_endp' },
@@ -2673,7 +2677,7 @@ sub gen_fpldzero ($$$$) {
 
 sub gen_fparithop ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	my ($op) = ($inst->{'name'} =~ /FP(.*)/);
+	my ($op) = ($inst->{'name'} =~ m/FP(.*)/);
 	$op =~ tr/A-Z/a-z/;
 	$op = 'f' . $op if $op =~ /(div|rem)/;
 	return sprintf ('%%%s = %s %s %%%s, %%%s',
@@ -2861,7 +2865,7 @@ sub gen_fpordered ($$$$) {
 
 sub gen_fpcmp ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	my $op = $inst->{'name'} =~ /gt/ ? 'ogt' : 'oeq';
+	my $op = $inst->{'name'} =~ /GT/ ? 'ogt' : 'oeq';
 	my $cmp = $self->tmp_reg ();
 	return (
 		sprintf ('%%%s = fcmp %s %s %%%s, %%%s',
@@ -2873,6 +2877,27 @@ sub gen_fpcmp ($$$$) {
 			$inst->{'out'}->[0],
 			$cmp,
 			$self->int_type
+		)
+	);
+}
+
+sub gen_fpldnlop ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $val = $self->tmp_reg ();
+	my ($op) = ($inst->{'name'} =~ m/LDNL(.{3})/);
+	$op =~ tr/A-Z/a-z/;
+	return (
+		$self->gen_fpldnl ($proc, $label, {
+			'name' 		=> $inst->{'name'},
+			'in'		=> $inst->{'in'},
+			'fout'		=> [ $val ],
+			'rounding'	=> $inst->{'rounding'}
+		}),
+		sprintf ('%%%s = %s %s %%%s, %%%s',
+			$inst->{'fout'}->[0],
+			$op, $self->float_type,
+			$inst->{'fin'}->[0], 
+			$val
 		)
 	);
 }
