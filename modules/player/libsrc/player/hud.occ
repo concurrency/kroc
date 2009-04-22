@@ -203,7 +203,7 @@ PROC laser.scan(VAL REAL32 x, y, CHAN LASER data.points?, CHAN BOOL render.go!)
   -- for these, and then scale the arc for every marker?
   PROC gen.markers(RESULT INT list, VAL []INT markers)
     SEQ 
-      glGenLists(list, SIZE markers)
+      glGenLists(SIZE markers, list)
       glNewList(list, GL.COMPILE)
       SEQ
         glColor4f(0.05, 0.05, 0.7, 0.2)
