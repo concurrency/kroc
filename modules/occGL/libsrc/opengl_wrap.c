@@ -106,3059 +106,5537 @@
 # define _CRT_SECURE_NO_DEPRECATE
 #endif
 
-DLLPREFIX void _glClearIndex (word w[])
-
-{
-  glClearIndex ((VAL_REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glClearColor (word w[])
-
-{
-  glClearColor ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_REAL32(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glClear (word w[])
-
-{
-  glClear ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexMask (word w[])
-
-{
-  glIndexMask ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColorMask (word w[])
-
-{
-  glColorMask ((VAL_BYTE(w[0])), (VAL_BYTE(w[1])), (VAL_BYTE(w[2])), (VAL_BYTE(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glAlphaFunc (word w[])
-
-{
-  glAlphaFunc ((VAL_INT(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glBlendFunc (word w[])
-
-{
-  glBlendFunc ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glLogicOp (word w[])
-
-{
-  glLogicOp ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glCullFace (word w[])
-
-{
-  glCullFace ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glFrontFace (word w[])
-
-{
-  glFrontFace ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glPointSize (word w[])
-
-{
-  glPointSize ((VAL_REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glLineWidth (word w[])
-
-{
-  glLineWidth ((VAL_REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glLineStipple (word w[])
-
-{
-  glLineStipple ((VAL_INT(w[0])), (VAL_INT16(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glPolygonMode (word w[])
-
-{
-  glPolygonMode ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glPolygonOffset (word w[])
-
-{
-  glPolygonOffset ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glPolygonStipple (word w[])
-
-{
-  glPolygonStipple ((BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glGetPolygonStipple (word w[])
-
-{
-  glGetPolygonStipple ((BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glEdgeFlag (word w[])
-
-{
-  glEdgeFlag ((VAL_BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glEdgeFlagv (word w[])
-
-{
-  glEdgeFlagv ((BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glScissor (word w[])
-
-{
-  glScissor ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glClipPlane (word w[])
-
-{
-  glClipPlane ((VAL_INT(w[0])), (REAL64(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glGetClipPlane (word w[])
-
-{
-  glGetClipPlane ((VAL_INT(w[0])), (REAL64(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glDrawBuffer (word w[])
-
-{
-  glDrawBuffer ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glReadBuffer (word w[])
-
-{
-  glReadBuffer ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glEnable (word w[])
-
-{
-  glEnable ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glDisable (word w[])
-
-{
-  glDisable ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIsEnabled (word w[])
-
-{
-  *(BYTE(w[0])) = glIsEnabled ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glEnableClientState (word w[])
-
-{
-  glEnableClientState ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glDisableClientState (word w[])
-
-{
-  glDisableClientState ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glGetBooleanv (word w[])
-
-{
-  glGetBooleanv ((VAL_INT(w[0])), (BYTE(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glGetDoublev (word w[])
-
-{
-  glGetDoublev ((VAL_INT(w[0])), (REAL64(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glGetFloatv (word w[])
-
-{
-  glGetFloatv ((VAL_INT(w[0])), (REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glGetIntegerv (word w[])
-
-{
-  glGetIntegerv ((VAL_INT(w[0])), (INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glPushAttrib (word w[])
-
-{
-  glPushAttrib ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glPopAttrib ()
-
-{
-  glPopAttrib ();
-  return;
-}
-
-
-DLLPREFIX void _glPushClientAttrib (word w[])
-
-{
-  glPushClientAttrib ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glPopClientAttrib ()
-
-{
-  glPopClientAttrib ();
-  return;
-}
-
-
-DLLPREFIX void _glRenderMode (word w[])
-
-{
-  *(INT(w[0])) = glRenderMode ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glGetError (word w[])
-
-{
-  *(INT(w[0])) = glGetError ();
-  return;
-}
-
-
-DLLPREFIX void _glGetString (word w[])
-
-{
-  *(BYTE(w[0])) = glGetString ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glFinish ()
-
-{
-  glFinish ();
-  return;
-}
-
-
-DLLPREFIX void _glFlush ()
-
-{
-  glFlush ();
-  return;
-}
-
-
-DLLPREFIX void _glHint (word w[])
-
-{
-  glHint ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glClearDepth (word w[])
-
-{
-  glClearDepth ((VAL_REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glDepthFunc (word w[])
-
-{
-  glDepthFunc ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glDepthMask (word w[])
-
-{
-  glDepthMask ((VAL_BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glDepthRange (word w[])
-
-{
-  glDepthRange ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glClearAccum (word w[])
-
-{
-  glClearAccum ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_REAL32(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glAccum (word w[])
-
-{
-  glAccum ((VAL_INT(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glMatrixMode (word w[])
-
-{
-  glMatrixMode ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glOrtho (word w[])
-
-{
-  glOrtho ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])), (VAL_REAL64(w[4])), (VAL_REAL64(w[5])));
-  return;
-}
-
-
-DLLPREFIX void _glFrustum (word w[])
-
-{
-  glFrustum ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])), (VAL_REAL64(w[4])), (VAL_REAL64(w[5])));
-  return;
-}
-
-
-DLLPREFIX void _glViewport (word w[])
-
-{
-  glViewport ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glPushMatrix ()
-
-{
-  glPushMatrix ();
-  return;
-}
-
-
-DLLPREFIX void _glPopMatrix ()
-
-{
-  glPopMatrix ();
-  return;
-}
-
-
-DLLPREFIX void _glLoadIdentity ()
-
-{
-  glLoadIdentity ();
-  return;
-}
-
-
-DLLPREFIX void _glLoadMatrixd (word w[])
-
-{
-  glLoadMatrixd ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glLoadMatrixf (word w[])
-
-{
-  glLoadMatrixf ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glMultMatrixd (word w[])
-
-{
-  glMultMatrixd ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glMultMatrixf (word w[])
-
-{
-  glMultMatrixf ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRotated (word w[])
-
-{
-  glRotated ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glRotatef (word w[])
-
-{
-  glRotatef ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_REAL32(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glScaled (word w[])
-
-{
-  glScaled ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glScalef (word w[])
-
-{
-  glScalef ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTranslated (word w[])
-
-{
-  glTranslated ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTranslatef (word w[])
-
-{
-  glTranslatef ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glIsList (word w[])
-
-{
-  *(BYTE(w[0])) = glIsList ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glDeleteLists (word w[])
-
-{
-  glDeleteLists ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glGenLists (word w[])
-
-{
-  *(INT(w[0])) = glGenLists ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glNewList (word w[])
-
-{
-  glNewList ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glEndList ()
-
-{
-  glEndList ();
-  return;
-}
-
-
-DLLPREFIX void _glCallList (word w[])
-
-{
-  glCallList ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glCallLists (word w[])
-
-{
-  glCallLists ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glListBase (word w[])
-
-{
-  glListBase ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glBegin (word w[])
-
-{
-  glBegin ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glEnd ()
-
-{
-  glEnd ();
-  return;
-}
-
-
-DLLPREFIX void _glVertex2d (word w[])
-
-{
-  glVertex2d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex2f (word w[])
-
-{
-  glVertex2f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex2i (word w[])
-
-{
-  glVertex2i ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex2s (word w[])
-
-{
-  glVertex2s ((VAL_INT16(w[0])), (VAL_INT16(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex3d (word w[])
-
-{
-  glVertex3d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex3f (word w[])
-
-{
-  glVertex3f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex3i (word w[])
-
-{
-  glVertex3i ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex3s (word w[])
-
-{
-  glVertex3s ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex4d (word w[])
-
-{
-  glVertex4d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex4f (word w[])
-
-{
-  glVertex4f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_REAL32(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex4i (word w[])
-
-{
-  glVertex4i ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex4s (word w[])
-
-{
-  glVertex4s ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])), (VAL_INT16(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex2dv (word w[])
-
-{
-  glVertex2dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex2fv (word w[])
-
-{
-  glVertex2fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex2iv (word w[])
-
-{
-  glVertex2iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex2sv (word w[])
-
-{
-  glVertex2sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex3dv (word w[])
-
-{
-  glVertex3dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex3fv (word w[])
-
-{
-  glVertex3fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex3iv (word w[])
-
-{
-  glVertex3iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex3sv (word w[])
-
-{
-  glVertex3sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex4dv (word w[])
-
-{
-  glVertex4dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex4fv (word w[])
-
-{
-  glVertex4fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex4iv (word w[])
-
-{
-  glVertex4iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glVertex4sv (word w[])
-
-{
-  glVertex4sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glNormal3b (word w[])
-
-{
-  glNormal3b ((VAL_BYTE(w[0])), (VAL_BYTE(w[1])), (VAL_BYTE(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glNormal3d (word w[])
-
-{
-  glNormal3d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glNormal3f (word w[])
-
-{
-  glNormal3f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glNormal3i (word w[])
-
-{
-  glNormal3i ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glNormal3s (word w[])
-
-{
-  glNormal3s ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glNormal3bv (word w[])
-
-{
-  glNormal3bv ((BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glNormal3dv (word w[])
-
-{
-  glNormal3dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glNormal3fv (word w[])
-
-{
-  glNormal3fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glNormal3iv (word w[])
-
-{
-  glNormal3iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glNormal3sv (word w[])
-
-{
-  glNormal3sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexd (word w[])
-
-{
-  glIndexd ((VAL_REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexf (word w[])
-
-{
-  glIndexf ((VAL_REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexi (word w[])
-
-{
-  glIndexi ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexs (word w[])
-
-{
-  glIndexs ((VAL_INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexub (word w[])
-
-{
-  glIndexub ((VAL_BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexdv (word w[])
-
-{
-  glIndexdv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexfv (word w[])
-
-{
-  glIndexfv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexiv (word w[])
-
-{
-  glIndexiv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexsv (word w[])
-
-{
-  glIndexsv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexubv (word w[])
-
-{
-  glIndexubv ((BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3b (word w[])
-
-{
-  glColor3b ((VAL_BYTE(w[0])), (VAL_BYTE(w[1])), (VAL_BYTE(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3d (word w[])
-
-{
-  glColor3d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3f (word w[])
-
-{
-  glColor3f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3i (word w[])
-
-{
-  glColor3i ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3s (word w[])
-
-{
-  glColor3s ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3ub (word w[])
-
-{
-  glColor3ub ((VAL_BYTE(w[0])), (VAL_BYTE(w[1])), (VAL_BYTE(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3ui (word w[])
-
-{
-  glColor3ui ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3us (word w[])
-
-{
-  glColor3us ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4b (word w[])
-
-{
-  glColor4b ((VAL_BYTE(w[0])), (VAL_BYTE(w[1])), (VAL_BYTE(w[2])), (VAL_BYTE(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4d (word w[])
-
-{
-  glColor4d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4f (word w[])
-
-{
-  glColor4f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_REAL32(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4i (word w[])
-
-{
-  glColor4i ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4s (word w[])
-
-{
-  glColor4s ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])), (VAL_INT16(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4ub (word w[])
-
-{
-  glColor4ub ((VAL_BYTE(w[0])), (VAL_BYTE(w[1])), (VAL_BYTE(w[2])), (VAL_BYTE(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4ui (word w[])
-
-{
-  glColor4ui ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4us (word w[])
-
-{
-  glColor4us ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])), (VAL_INT16(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3bv (word w[])
-
-{
-  glColor3bv ((BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3dv (word w[])
-
-{
-  glColor3dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3fv (word w[])
-
-{
-  glColor3fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3iv (word w[])
-
-{
-  glColor3iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3sv (word w[])
-
-{
-  glColor3sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3ubv (word w[])
-
-{
-  glColor3ubv ((BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3uiv (word w[])
-
-{
-  glColor3uiv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor3usv (word w[])
-
-{
-  glColor3usv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4bv (word w[])
-
-{
-  glColor4bv ((BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4dv (word w[])
-
-{
-  glColor4dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4fv (word w[])
-
-{
-  glColor4fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4iv (word w[])
-
-{
-  glColor4iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4sv (word w[])
-
-{
-  glColor4sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4ubv (word w[])
-
-{
-  glColor4ubv ((BYTE(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4uiv (word w[])
-
-{
-  glColor4uiv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glColor4usv (word w[])
-
-{
-  glColor4usv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord1d (word w[])
-
-{
-  glTexCoord1d ((VAL_REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord1f (word w[])
-
-{
-  glTexCoord1f ((VAL_REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord1i (word w[])
-
-{
-  glTexCoord1i ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord1s (word w[])
-
-{
-  glTexCoord1s ((VAL_INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord2d (word w[])
-
-{
-  glTexCoord2d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord2f (word w[])
-
-{
-  glTexCoord2f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord2i (word w[])
-
-{
-  glTexCoord2i ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord2s (word w[])
-
-{
-  glTexCoord2s ((VAL_INT16(w[0])), (VAL_INT16(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord3d (word w[])
-
-{
-  glTexCoord3d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord3f (word w[])
-
-{
-  glTexCoord3f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord3i (word w[])
-
-{
-  glTexCoord3i ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord3s (word w[])
-
-{
-  glTexCoord3s ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord4d (word w[])
-
-{
-  glTexCoord4d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord4f (word w[])
-
-{
-  glTexCoord4f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_REAL32(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord4i (word w[])
-
-{
-  glTexCoord4i ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord4s (word w[])
-
-{
-  glTexCoord4s ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])), (VAL_INT16(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord1dv (word w[])
-
-{
-  glTexCoord1dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord1fv (word w[])
-
-{
-  glTexCoord1fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord1iv (word w[])
-
-{
-  glTexCoord1iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord1sv (word w[])
-
-{
-  glTexCoord1sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord2dv (word w[])
-
-{
-  glTexCoord2dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord2fv (word w[])
-
-{
-  glTexCoord2fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord2iv (word w[])
-
-{
-  glTexCoord2iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord2sv (word w[])
-
-{
-  glTexCoord2sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord3dv (word w[])
-
-{
-  glTexCoord3dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord3fv (word w[])
-
-{
-  glTexCoord3fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord3iv (word w[])
-
-{
-  glTexCoord3iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord3sv (word w[])
-
-{
-  glTexCoord3sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord4dv (word w[])
-
-{
-  glTexCoord4dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord4fv (word w[])
-
-{
-  glTexCoord4fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord4iv (word w[])
-
-{
-  glTexCoord4iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoord4sv (word w[])
-
-{
-  glTexCoord4sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos2d (word w[])
-
-{
-  glRasterPos2d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos2f (word w[])
-
-{
-  glRasterPos2f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos2i (word w[])
-
-{
-  glRasterPos2i ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos2s (word w[])
-
-{
-  glRasterPos2s ((VAL_INT16(w[0])), (VAL_INT16(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos3d (word w[])
-
-{
-  glRasterPos3d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos3f (word w[])
-
-{
-  glRasterPos3f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos3i (word w[])
-
-{
-  glRasterPos3i ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos3s (word w[])
-
-{
-  glRasterPos3s ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos4d (word w[])
-
-{
-  glRasterPos4d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos4f (word w[])
-
-{
-  glRasterPos4f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_REAL32(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos4i (word w[])
-
-{
-  glRasterPos4i ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos4s (word w[])
-
-{
-  glRasterPos4s ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])), (VAL_INT16(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos2dv (word w[])
-
-{
-  glRasterPos2dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos2fv (word w[])
-
-{
-  glRasterPos2fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos2iv (word w[])
-
-{
-  glRasterPos2iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos2sv (word w[])
-
-{
-  glRasterPos2sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos3dv (word w[])
-
-{
-  glRasterPos3dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos3fv (word w[])
-
-{
-  glRasterPos3fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos3iv (word w[])
-
-{
-  glRasterPos3iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos3sv (word w[])
-
-{
-  glRasterPos3sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos4dv (word w[])
-
-{
-  glRasterPos4dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos4fv (word w[])
-
-{
-  glRasterPos4fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos4iv (word w[])
-
-{
-  glRasterPos4iv ((INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRasterPos4sv (word w[])
-
-{
-  glRasterPos4sv ((INT16(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glRectd (word w[])
-
-{
-  glRectd ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glRectf (word w[])
-
-{
-  glRectf ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_REAL32(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glRecti (word w[])
-
-{
-  glRecti ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glRects (word w[])
-
-{
-  glRects ((VAL_INT16(w[0])), (VAL_INT16(w[1])), (VAL_INT16(w[2])), (VAL_INT16(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glRectdv (word w[])
-
-{
-  glRectdv ((REAL64(w[0])), (REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glRectfv (word w[])
-
-{
-  glRectfv ((REAL32(w[0])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glRectiv (word w[])
-
-{
-  glRectiv ((INT(w[0])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glRectsv (word w[])
-
-{
-  glRectsv ((INT16(w[0])), (INT16(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glVertexPointer (word w[])
-
-{
-  glVertexPointer ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glNormalPointer (word w[])
-
-{
-  glNormalPointer ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glColorPointer (word w[])
-
-{
-  glColorPointer ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glIndexPointer (word w[])
-
-{
-  glIndexPointer ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexCoordPointer (word w[])
-
-{
-  glTexCoordPointer ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glEdgeFlagPointer (word w[])
-
-{
-  glEdgeFlagPointer ((VAL_INT(w[0])), (INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glGetPointerv (word w[])
-
-{
-  glGetPointerv ((VAL_INT(w[0])), (INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glArrayElement (word w[])
-
-{
-  glArrayElement ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glDrawArrays (word w[])
-
-{
-  glDrawArrays ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glDrawElements (word w[])
-
-{
-  glDrawElements ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glInterleavedArrays (word w[])
-
-{
-  glInterleavedArrays ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glShadeModel (word w[])
-
-{
-  glShadeModel ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glLightf (word w[])
-
-{
-  glLightf ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glLighti (word w[])
-
-{
-  glLighti ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glLightfv (word w[])
-
-{
-  glLightfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glLightiv (word w[])
-
-{
-  glLightiv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetLightfv (word w[])
-
-{
-  glGetLightfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetLightiv (word w[])
-
-{
-  glGetLightiv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glLightModelf (word w[])
-
-{
-  glLightModelf ((VAL_INT(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glLightModeli (word w[])
-
-{
-  glLightModeli ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glLightModelfv (word w[])
-
-{
-  glLightModelfv ((VAL_INT(w[0])), (REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glLightModeliv (word w[])
-
-{
-  glLightModeliv ((VAL_INT(w[0])), (INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glMaterialf (word w[])
-
-{
-  glMaterialf ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glMateriali (word w[])
-
-{
-  glMateriali ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glMaterialfv (word w[])
-
-{
-  glMaterialfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glMaterialiv (word w[])
-
-{
-  glMaterialiv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetMaterialfv (word w[])
-
-{
-  glGetMaterialfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetMaterialiv (word w[])
-
-{
-  glGetMaterialiv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glColorMaterial (word w[])
-
-{
-  glColorMaterial ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glPixelZoom (word w[])
-
-{
-  glPixelZoom ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glPixelStoref (word w[])
-
-{
-  glPixelStoref ((VAL_INT(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glPixelStorei (word w[])
-
-{
-  glPixelStorei ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glPixelTransferf (word w[])
-
-{
-  glPixelTransferf ((VAL_INT(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glPixelTransferi (word w[])
-
-{
-  glPixelTransferi ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glPixelMapfv (word w[])
-
-{
-  glPixelMapfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glPixelMapuiv (word w[])
-
-{
-  glPixelMapuiv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glPixelMapusv (word w[])
-
-{
-  glPixelMapusv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT16(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetPixelMapfv (word w[])
-
-{
-  glGetPixelMapfv ((VAL_INT(w[0])), (REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glGetPixelMapuiv (word w[])
-
-{
-  glGetPixelMapuiv ((VAL_INT(w[0])), (INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glGetPixelMapusv (word w[])
-
-{
-  glGetPixelMapusv ((VAL_INT(w[0])), (INT16(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glBitmap (word w[])
-
-{
-  glBitmap ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_REAL32(w[2])), (VAL_REAL32(w[3])), (VAL_REAL32(w[4])), (VAL_REAL32(w[5])), (BYTE(w[6])));
-  return;
-}
-
-
-DLLPREFIX void _glReadPixels (word w[])
-
-{
-  glReadPixels ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])), (INT(w[6])));
-  return;
-}
-
-
-DLLPREFIX void _glDrawPixels (word w[])
-
-{
-  glDrawPixels ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _glCopyPixels (word w[])
-
-{
-  glCopyPixels ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _glStencilFunc (word w[])
-
-{
-  glStencilFunc ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glStencilMask (word w[])
-
-{
-  glStencilMask ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glStencilOp (word w[])
-
-{
-  glStencilOp ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glClearStencil (word w[])
-
-{
-  glClearStencil ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glTexGend (word w[])
-
-{
-  glTexGend ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexGenf (word w[])
-
-{
-  glTexGenf ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexGeni (word w[])
-
-{
-  glTexGeni ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexGendv (word w[])
-
-{
-  glTexGendv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexGenfv (word w[])
-
-{
-  glTexGenfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexGeniv (word w[])
-
-{
-  glTexGeniv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetTexGendv (word w[])
-
-{
-  glGetTexGendv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetTexGenfv (word w[])
-
-{
-  glGetTexGenfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetTexGeniv (word w[])
-
-{
-  glGetTexGeniv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexEnvf (word w[])
-
-{
-  glTexEnvf ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexEnvi (word w[])
-
-{
-  glTexEnvi ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexEnvfv (word w[])
-
-{
-  glTexEnvfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexEnviv (word w[])
-
-{
-  glTexEnviv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetTexEnvfv (word w[])
-
-{
-  glGetTexEnvfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetTexEnviv (word w[])
-
-{
-  glGetTexEnviv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexParameterf (word w[])
-
-{
-  glTexParameterf ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexParameteri (word w[])
-
-{
-  glTexParameteri ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexParameterfv (word w[])
-
-{
-  glTexParameterfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glTexParameteriv (word w[])
-
-{
-  glTexParameteriv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetTexParameterfv (word w[])
-
-{
-  glGetTexParameterfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetTexParameteriv (word w[])
-
-{
-  glGetTexParameteriv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetTexLevelParameterfv (word w[])
-
-{
-  glGetTexLevelParameterfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (REAL32(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glGetTexLevelParameteriv (word w[])
-
-{
-  glGetTexLevelParameteriv ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glTexImage1D (word w[])
-
-{
-  glTexImage1D ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])), (VAL_INT(w[6])), (INT(w[7])));
-  return;
-}
-
-
-DLLPREFIX void _glTexImage2D (word w[])
-
-{
-  glTexImage2D ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])), (VAL_INT(w[6])), (VAL_INT(w[7])), (INT(w[8])));
-  return;
-}
-
-
-DLLPREFIX void _glGetTexImage (word w[])
-
-{
-  glGetTexImage ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _glGenTextures (word w[])
-
-{
-  glGenTextures ((VAL_INT(w[0])), (INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glDeleteTextures (word w[])
-
-{
-  glDeleteTextures ((VAL_INT(w[0])), (INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glBindTexture (word w[])
-
-{
-  glBindTexture ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glPrioritizeTextures (word w[])
-
-{
-  glPrioritizeTextures ((VAL_INT(w[0])), (INT(w[1])), (REAL32(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _glAreTexturesResident (word w[])
-
-{
-  *(BYTE(w[0])) = glAreTexturesResident ((VAL_INT(w[1])), (INT(w[2])), (BYTE(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _glIsTexture (word w[])
-
-{
-  *(BYTE(w[0])) = glIsTexture ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glTexSubImage1D (word w[])
-
-{
-  glTexSubImage1D ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])), (INT(w[6])));
-  return;
-}
-
-
-DLLPREFIX void _glTexSubImage2D (word w[])
-
-{
-  glTexSubImage2D ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])), (VAL_INT(w[6])), (VAL_INT(w[7])), (INT(w[8])));
-  return;
-}
-
-
-DLLPREFIX void _glCopyTexImage1D (word w[])
-
-{
-  glCopyTexImage1D ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])), (VAL_INT(w[6])));
-  return;
-}
-
-
-DLLPREFIX void _glCopyTexImage2D (word w[])
-
-{
-  glCopyTexImage2D ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])), (VAL_INT(w[6])), (VAL_INT(w[7])));
-  return;
-}
-
-
-DLLPREFIX void _glCopyTexSubImage1D (word w[])
-
-{
-  glCopyTexSubImage1D ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])));
-  return;
-}
-
-
-DLLPREFIX void _glCopyTexSubImage2D (word w[])
-
-{
-  glCopyTexSubImage2D ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])), (VAL_INT(w[6])), (VAL_INT(w[7])));
-  return;
-}
-
-
-DLLPREFIX void _glMap1d (word w[])
-
-{
-  glMap1d ((VAL_INT(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (REAL64(w[5])));
-  return;
-}
-
-
-DLLPREFIX void _glMap1f (word w[])
-
-{
-  glMap1f ((VAL_INT(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (REAL32(w[5])));
-  return;
-}
-
-
-DLLPREFIX void _glMap2d (word w[])
-
-{
-  glMap2d ((VAL_INT(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_REAL64(w[5])), (VAL_REAL64(w[6])), (VAL_INT(w[7])), (VAL_INT(w[8])), (REAL64(w[9])));
-  return;
-}
-
-
-DLLPREFIX void _glMap2f (word w[])
-
-{
-  glMap2f ((VAL_INT(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_REAL32(w[5])), (VAL_REAL32(w[6])), (VAL_INT(w[7])), (VAL_INT(w[8])), (REAL32(w[9])));
-  return;
-}
-
-
-DLLPREFIX void _glGetMapdv (word w[])
-
-{
-  glGetMapdv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetMapfv (word w[])
-
-{
-  glGetMapfv ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glGetMapiv (word w[])
-
-{
-  glGetMapiv ((VAL_INT(w[0])), (VAL_INT(w[1])), (INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalCoord1d (word w[])
-
-{
-  glEvalCoord1d ((VAL_REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalCoord1f (word w[])
-
-{
-  glEvalCoord1f ((VAL_REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalCoord1dv (word w[])
-
-{
-  glEvalCoord1dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalCoord1fv (word w[])
-
-{
-  glEvalCoord1fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalCoord2d (word w[])
-
-{
-  glEvalCoord2d ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalCoord2f (word w[])
-
-{
-  glEvalCoord2f ((VAL_REAL32(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalCoord2dv (word w[])
-
-{
-  glEvalCoord2dv ((REAL64(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalCoord2fv (word w[])
-
-{
-  glEvalCoord2fv ((REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glMapGrid1d (word w[])
-
-{
-  glMapGrid1d ((VAL_INT(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glMapGrid1f (word w[])
-
-{
-  glMapGrid1f ((VAL_INT(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glMapGrid2d (word w[])
-
-{
-  glMapGrid2d ((VAL_INT(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_INT(w[3])), (VAL_REAL64(w[4])), (VAL_REAL64(w[5])));
-  return;
-}
-
-
-DLLPREFIX void _glMapGrid2f (word w[])
-
-{
-  glMapGrid2f ((VAL_INT(w[0])), (VAL_REAL32(w[1])), (VAL_REAL32(w[2])), (VAL_INT(w[3])), (VAL_REAL32(w[4])), (VAL_REAL32(w[5])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalPoint1 (word w[])
-
-{
-  glEvalPoint1 ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalPoint2 (word w[])
-
-{
-  glEvalPoint2 ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalMesh1 (word w[])
-
-{
-  glEvalMesh1 ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glEvalMesh2 (word w[])
-
-{
-  glEvalMesh2 ((VAL_INT(w[0])), (VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _glFogf (word w[])
-
-{
-  glFogf ((VAL_INT(w[0])), (VAL_REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glFogi (word w[])
-
-{
-  glFogi ((VAL_INT(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glFogfv (word w[])
-
-{
-  glFogfv ((VAL_INT(w[0])), (REAL32(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glFogiv (word w[])
-
-{
-  glFogiv ((VAL_INT(w[0])), (INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glFeedbackBuffer (word w[])
-
-{
-  glFeedbackBuffer ((VAL_INT(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _glPassThrough (word w[])
-
-{
-  glPassThrough ((VAL_REAL32(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glSelectBuffer (word w[])
-
-{
-  glSelectBuffer ((VAL_INT(w[0])), (INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _glInitNames ()
-
-{
-  glInitNames ();
-  return;
-}
-
-
-DLLPREFIX void _glLoadName (word w[])
-
-{
-  glLoadName ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glPushName (word w[])
-
-{
-  glPushName ((VAL_INT(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _glPopName ()
-
-{
-  glPopName ();
-  return;
-}
-
-
-DLLPREFIX void _gluBeginCurve (word w[])
-
-{
-  gluBeginCurve (((GLUnurbs*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluBeginPolygon (word w[])
-
-{
-  gluBeginPolygon (((GLUtesselator*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluBeginSurface (word w[])
-
-{
-  gluBeginSurface (((GLUnurbs*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluBeginTrim (word w[])
-
-{
-  gluBeginTrim (((GLUnurbs*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluCylinder (word w[])
-
-{
-  gluCylinder (((GLUquadric*)(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])), (VAL_INT(w[4])), (VAL_INT(w[5])));
-  return;
-}
-
-
-DLLPREFIX void _gluDeleteNurbsRenderer (word w[])
-
-{
-  gluDeleteNurbsRenderer (((GLUnurbs*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluDeleteQuadric (word w[])
-
-{
-  gluDeleteQuadric (((GLUquadric*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluDeleteTess (word w[])
-
-{
-  gluDeleteTess (((GLUtesselator*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluDisk (word w[])
-
-{
-  gluDisk (((GLUquadric*)(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _gluEndCurve (word w[])
-
-{
-  gluEndCurve (((GLUnurbs*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluEndPolygon (word w[])
-
-{
-  gluEndPolygon (((GLUtesselator*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluEndSurface (word w[])
-
-{
-  gluEndSurface (((GLUnurbs*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluEndTrim (word w[])
-
-{
-  gluEndTrim (((GLUnurbs*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluErrorString (word w[])
-
-{
-  *(BYTE(w[0])) = gluErrorString ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _gluGetNurbsProperty (word w[])
-
-{
-  gluGetNurbsProperty (((GLUnurbs*)(w[0])), (VAL_INT(w[1])), (REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _gluGetString (word w[])
-
-{
-  *(BYTE(w[0])) = gluGetString ((VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _gluGetTessProperty (word w[])
-
-{
-  gluGetTessProperty (((GLUtesselator*)(w[0])), (VAL_INT(w[1])), (REAL64(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _gluLoadSamplingMatrices (word w[])
-
-{
-  gluLoadSamplingMatrices (((GLUnurbs*)(w[0])), (REAL32(w[1])), (REAL32(w[2])), (INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _gluLookAt (word w[])
-
-{
-  gluLookAt ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])), (VAL_REAL64(w[4])), (VAL_REAL64(w[5])), (VAL_REAL64(w[6])), (VAL_REAL64(w[7])), (VAL_REAL64(w[8])));
-  return;
-}
-
-
-DLLPREFIX void _gluNewNurbsRenderer (word w[])
-
-{
-  (w[0]) = (GLUnurbs *)gluNewNurbsRenderer ();
-  return;
-}
-
-
-DLLPREFIX void _gluNewQuadric (word w[])
-
-{
-  (w[0]) = (GLUquadric *)gluNewQuadric ();
-  return;
-}
-
-
-DLLPREFIX void _gluNewTess (word w[])
-
-{
-  (w[0]) = (GLUtesselator *)gluNewTess ();
-  return;
-}
-
-
-DLLPREFIX void _gluNextContour (word w[])
-
-{
-  gluNextContour (((GLUtesselator*)(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _gluNurbsCurve (word w[])
-
-{
-  gluNurbsCurve (((GLUnurbs*)(w[0])), (VAL_INT(w[1])), (REAL32(w[2])), (VAL_INT(w[3])), (REAL32(w[4])), (VAL_INT(w[5])), (VAL_INT(w[6])));
-  return;
-}
-
-
-DLLPREFIX void _gluNurbsProperty (word w[])
-
-{
-  gluNurbsProperty (((GLUnurbs*)(w[0])), (VAL_INT(w[1])), (VAL_REAL32(w[2])));
-  return;
-}
-
-
-DLLPREFIX void _gluNurbsSurface (word w[])
-
-{
-  gluNurbsSurface (((GLUnurbs*)(w[0])), (VAL_INT(w[1])), (REAL32(w[2])), (VAL_INT(w[3])), (REAL32(w[4])), (VAL_INT(w[5])), (VAL_INT(w[6])), (REAL32(w[7])), (VAL_INT(w[8])), (VAL_INT(w[9])), (VAL_INT(w[10])));
-  return;
-}
-
-
-DLLPREFIX void _gluOrtho2D (word w[])
-
-{
-  gluOrtho2D ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _gluPartialDisk (word w[])
-
-{
-  gluPartialDisk (((GLUquadric*)(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (VAL_REAL64(w[5])), (VAL_REAL64(w[6])));
-  return;
-}
-
-
-DLLPREFIX void _gluPerspective (word w[])
-
-{
-  gluPerspective ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _gluPickMatrix (word w[])
-
-{
-  gluPickMatrix ((VAL_REAL64(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])), (INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _gluProject (word w[])
-
-{
-  *(INT(w[0])) = gluProject ((VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])), (REAL64(w[4])), (REAL64(w[5])), (INT(w[6])), (REAL64(w[7])), (REAL64(w[8])), (REAL64(w[9])));
-  return;
-}
-
-
-DLLPREFIX void _gluPwlCurve (word w[])
-
-{
-  gluPwlCurve (((GLUnurbs*)(w[0])), (VAL_INT(w[1])), (REAL32(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])));
-  return;
-}
-
-
-DLLPREFIX void _gluQuadricDrawStyle (word w[])
-
-{
-  gluQuadricDrawStyle (((GLUquadric*)(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _gluQuadricNormals (word w[])
-
-{
-  gluQuadricNormals (((GLUquadric*)(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _gluQuadricOrientation (word w[])
-
-{
-  gluQuadricOrientation (((GLUquadric*)(w[0])), (VAL_INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _gluQuadricTexture (word w[])
-
-{
-  gluQuadricTexture (((GLUquadric*)(w[0])), (VAL_BYTE(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _gluScaleImage (word w[])
-
-{
-  *(INT(w[0])) = gluScaleImage ((VAL_INT(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])), (VAL_INT(w[4])), (INT(w[5])), (VAL_INT(w[6])), (VAL_INT(w[7])), (VAL_INT(w[8])), (INT(w[9])));
-  return;
-}
-
-
-DLLPREFIX void _gluSphere (word w[])
-
-{
-  gluSphere (((GLUquadric*)(w[0])), (VAL_REAL64(w[1])), (VAL_INT(w[2])), (VAL_INT(w[3])));
-  return;
-}
-
-
-DLLPREFIX void _gluTessBeginContour (word w[])
-
-{
-  gluTessBeginContour (((GLUtesselator*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluTessBeginPolygon (word w[])
-
-{
-  gluTessBeginPolygon (((GLUtesselator*)(w[0])), (INT(w[1])));
-  return;
-}
-
-
-DLLPREFIX void _gluTessEndContour (word w[])
-
-{
-  gluTessEndContour (((GLUtesselator*)(w[0])));
-  return;
-}
-
-
-DLLPREFIX void _gluTessEndPolygon (word w[])
-
-{
-  gluTessEndPolygon (((GLUtesselator*)(w[0])));
-  return;
+/*{{{  function glClearIndex */
+SWIGEXPORT void _glClearIndex (word occ_args[]) {
+  GLfloat arg1 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }glClearIndex(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glClearColor */
+SWIGEXPORT void _glClearColor (word occ_args[]) {
+  GLclampf arg1 ;
+  GLclampf arg2 ;
+  GLclampf arg3 ;
+  GLclampf arg4 ;
+  
+  {
+    arg1 = (GLclampf) occ_args[0]; 
+  }{
+    arg2 = (GLclampf) occ_args[1]; 
+  }{
+    arg3 = (GLclampf) occ_args[2]; 
+  }{
+    arg4 = (GLclampf) occ_args[3]; 
+  }glClearColor(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glClear */
+SWIGEXPORT void _glClear (word occ_args[]) {
+  GLbitfield arg1 ;
+  
+  {
+    arg1 = (GLbitfield) occ_args[0]; 
+  }glClear(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIndexMask */
+SWIGEXPORT void _glIndexMask (word occ_args[]) {
+  GLuint arg1 ;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }glIndexMask(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColorMask */
+SWIGEXPORT void _glColorMask (word occ_args[]) {
+  GLboolean arg1 ;
+  GLboolean arg2 ;
+  GLboolean arg3 ;
+  GLboolean arg4 ;
+  
+  {
+    arg1 = (GLboolean) occ_args[0]; 
+  }{
+    arg2 = (GLboolean) occ_args[1]; 
+  }{
+    arg3 = (GLboolean) occ_args[2]; 
+  }{
+    arg4 = (GLboolean) occ_args[3]; 
+  }glColorMask(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glAlphaFunc */
+SWIGEXPORT void _glAlphaFunc (word occ_args[]) {
+  GLenum arg1 ;
+  GLclampf arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLclampf) occ_args[1]; 
+  }glAlphaFunc(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glBlendFunc */
+SWIGEXPORT void _glBlendFunc (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }glBlendFunc(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glLogicOp */
+SWIGEXPORT void _glLogicOp (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glLogicOp(arg1);
 }
-
-
-DLLPREFIX void _gluTessNormal (word w[])
-
-{
-  gluTessNormal (((GLUtesselator*)(w[0])), (VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])));
-  return;
+
+
+/*}}}*/
+/*{{{  function glCullFace */
+SWIGEXPORT void _glCullFace (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glCullFace(arg1);
 }
 
-
-DLLPREFIX void _gluTessProperty (word w[])
-
-{
-  gluTessProperty (((GLUtesselator*)(w[0])), (VAL_INT(w[1])), (VAL_REAL64(w[2])));
-  return;
+
+/*}}}*/
+/*{{{  function glFrontFace */
+SWIGEXPORT void _glFrontFace (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glFrontFace(arg1);
 }
 
 
-DLLPREFIX void _gluTessVertex (word w[])
-
-{
-  gluTessVertex (((GLUtesselator*)(w[0])), (REAL64(w[1])), (INT(w[2])));
-  return;
+/*}}}*/
+/*{{{  function glPointSize */
+SWIGEXPORT void _glPointSize (word occ_args[]) {
+  GLfloat arg1 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }glPointSize(arg1);
 }
 
 
-DLLPREFIX void _gluUnProject (word w[])
-
-{
-  *(INT(w[0])) = gluUnProject ((VAL_REAL64(w[1])), (VAL_REAL64(w[2])), (VAL_REAL64(w[3])), (REAL64(w[4])), (REAL64(w[5])), (INT(w[6])), (REAL64(w[7])), (REAL64(w[8])), (REAL64(w[9])));
-  return;
-}
+/*}}}*/
+/*{{{  function glLineWidth */
+SWIGEXPORT void _glLineWidth (word occ_args[]) {
+  GLfloat arg1 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }glLineWidth(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glLineStipple */
+SWIGEXPORT void _glLineStipple (word occ_args[]) {
+  GLint arg1 ;
+  GLushort arg2 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLushort) occ_args[1]; 
+  }glLineStipple(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glPolygonMode */
+SWIGEXPORT void _glPolygonMode (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }glPolygonMode(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glPolygonOffset */
+SWIGEXPORT void _glPolygonOffset (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }glPolygonOffset(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glPolygonStipple */
+SWIGEXPORT void _glPolygonStipple (word occ_args[]) {
+  GLubyte *arg1 = (GLubyte *) 0 ;
+  
+  {
+    arg1 = (GLubyte *) occ_args[0]; 
+  }glPolygonStipple((unsigned char const *)arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glGetPolygonStipple */
+SWIGEXPORT void _glGetPolygonStipple (word occ_args[]) {
+  GLubyte *arg1 = (GLubyte *) 0 ;
+  
+  {
+    arg1 = (GLubyte *) occ_args[0]; 
+  }glGetPolygonStipple(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glEdgeFlag */
+SWIGEXPORT void _glEdgeFlag (word occ_args[]) {
+  GLboolean arg1 ;
+  
+  {
+    arg1 = (GLboolean) occ_args[0]; 
+  }glEdgeFlag(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glEdgeFlagv */
+SWIGEXPORT void _glEdgeFlagv (word occ_args[]) {
+  GLboolean *arg1 = (GLboolean *) 0 ;
+  
+  {
+    arg1 = (GLboolean *) occ_args[0]; 
+  }glEdgeFlagv((unsigned char const *)arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glScissor */
+SWIGEXPORT void _glScissor (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLsizei arg3 ;
+  GLsizei arg4 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLsizei) occ_args[2]; 
+  }{
+    arg4 = (GLsizei) occ_args[3]; 
+  }glScissor(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glClipPlane */
+SWIGEXPORT void _glClipPlane (word occ_args[]) {
+  GLenum arg1 ;
+  GLdouble *arg2 = (GLdouble *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLdouble *) occ_args[1]; 
+  }glClipPlane(arg1,(double const *)arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glGetClipPlane */
+SWIGEXPORT void _glGetClipPlane (word occ_args[]) {
+  GLenum arg1 ;
+  GLdouble *arg2 = (GLdouble *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLdouble *) occ_args[1]; 
+  }glGetClipPlane(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glDrawBuffer */
+SWIGEXPORT void _glDrawBuffer (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glDrawBuffer(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glReadBuffer */
+SWIGEXPORT void _glReadBuffer (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glReadBuffer(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glEnable */
+SWIGEXPORT void _glEnable (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glEnable(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glDisable */
+SWIGEXPORT void _glDisable (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glDisable(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIsEnabled */
+SWIGEXPORT void _glIsEnabled (word occ_args[]) {
+  GLenum arg1 ;
+  GLboolean result;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }result = (GLboolean)glIsEnabled(arg1);
+  {
+    *((GLboolean *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function glEnableClientState */
+SWIGEXPORT void _glEnableClientState (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glEnableClientState(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glDisableClientState */
+SWIGEXPORT void _glDisableClientState (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glDisableClientState(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glGetBooleanv */
+SWIGEXPORT void _glGetBooleanv (word occ_args[]) {
+  GLenum arg1 ;
+  GLboolean *arg2 = (GLboolean *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLboolean *) occ_args[1]; 
+  }glGetBooleanv(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glGetDoublev */
+SWIGEXPORT void _glGetDoublev (word occ_args[]) {
+  GLenum arg1 ;
+  GLdouble *arg2 = (GLdouble *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLdouble *) occ_args[1]; 
+  }glGetDoublev(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glGetFloatv */
+SWIGEXPORT void _glGetFloatv (word occ_args[]) {
+  GLenum arg1 ;
+  GLfloat *arg2 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLfloat *) occ_args[1]; 
+  }glGetFloatv(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glGetIntegerv */
+SWIGEXPORT void _glGetIntegerv (word occ_args[]) {
+  GLenum arg1 ;
+  GLint *arg2 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint *) occ_args[1]; 
+  }glGetIntegerv(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glPushAttrib */
+SWIGEXPORT void _glPushAttrib (word occ_args[]) {
+  GLbitfield arg1 ;
+  
+  {
+    arg1 = (GLbitfield) occ_args[0]; 
+  }glPushAttrib(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glPopAttrib */
+SWIGEXPORT void _glPopAttrib (word occ_args[]) {
+  glPopAttrib();
+}
+
 
+/*}}}*/
+/*{{{  function glPushClientAttrib */
+SWIGEXPORT void _glPushClientAttrib (word occ_args[]) {
+  GLbitfield arg1 ;
+  
+  {
+    arg1 = (GLbitfield) occ_args[0]; 
+  }glPushClientAttrib(arg1);
+}
+
 
+/*}}}*/
+/*{{{  function glPopClientAttrib */
+SWIGEXPORT void _glPopClientAttrib (word occ_args[]) {
+  glPopClientAttrib();
+}
+
+
+/*}}}*/
+/*{{{  function glRenderMode */
+SWIGEXPORT void _glRenderMode (word occ_args[]) {
+  GLenum arg1 ;
+  GLint result;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }result = (GLint)glRenderMode(arg1);
+  {
+    *((GLint *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function glGetError */
+SWIGEXPORT void _glGetError (word occ_args[]) {
+  GLenum result;
+  
+  result = (GLenum)glGetError();
+  {
+    *((GLenum *) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function glGetString */
+SWIGEXPORT void _glGetString (word occ_args[]) {
+  GLenum arg1 ;
+  GLubyte *result = 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }result = (GLubyte *)glGetString(arg1);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function glFinish */
+SWIGEXPORT void _glFinish (word occ_args[]) {
+  glFinish();
+}
+
+
+/*}}}*/
+/*{{{  function glFlush */
+SWIGEXPORT void _glFlush (word occ_args[]) {
+  glFlush();
+}
+
+
+/*}}}*/
+/*{{{  function glHint */
+SWIGEXPORT void _glHint (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }glHint(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glClearDepth */
+SWIGEXPORT void _glClearDepth (word occ_args[]) {
+  GLclampd arg1 ;
+  
+  {
+    arg1 = (GLclampd) occ_args[0]; 
+  }glClearDepth(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glDepthFunc */
+SWIGEXPORT void _glDepthFunc (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glDepthFunc(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glDepthMask */
+SWIGEXPORT void _glDepthMask (word occ_args[]) {
+  GLboolean arg1 ;
+  
+  {
+    arg1 = (GLboolean) occ_args[0]; 
+  }glDepthMask(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glDepthRange */
+SWIGEXPORT void _glDepthRange (word occ_args[]) {
+  GLclampd arg1 ;
+  GLclampd arg2 ;
+  
+  {
+    arg1 = (GLclampd) occ_args[0]; 
+  }{
+    arg2 = (GLclampd) occ_args[1]; 
+  }glDepthRange(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glClearAccum */
+SWIGEXPORT void _glClearAccum (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  GLfloat arg4 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }{
+    arg4 = (GLfloat) occ_args[3]; 
+  }glClearAccum(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glAccum */
+SWIGEXPORT void _glAccum (word occ_args[]) {
+  GLenum arg1 ;
+  GLfloat arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }glAccum(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glMatrixMode */
+SWIGEXPORT void _glMatrixMode (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glMatrixMode(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glOrtho */
+SWIGEXPORT void _glOrtho (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  GLdouble arg5 ;
+  GLdouble arg6 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }{
+    arg5 = (GLdouble) occ_args[4]; 
+  }{
+    arg6 = (GLdouble) occ_args[5]; 
+  }glOrtho(arg1,arg2,arg3,arg4,arg5,arg6);
+}
+
+
+/*}}}*/
+/*{{{  function glFrustum */
+SWIGEXPORT void _glFrustum (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  GLdouble arg5 ;
+  GLdouble arg6 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }{
+    arg5 = (GLdouble) occ_args[4]; 
+  }{
+    arg6 = (GLdouble) occ_args[5]; 
+  }glFrustum(arg1,arg2,arg3,arg4,arg5,arg6);
+}
+
+
+/*}}}*/
+/*{{{  function glViewport */
+SWIGEXPORT void _glViewport (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLsizei arg3 ;
+  GLsizei arg4 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLsizei) occ_args[2]; 
+  }{
+    arg4 = (GLsizei) occ_args[3]; 
+  }glViewport(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glPushMatrix */
+SWIGEXPORT void _glPushMatrix (word occ_args[]) {
+  glPushMatrix();
+}
+
+
+/*}}}*/
+/*{{{  function glPopMatrix */
+SWIGEXPORT void _glPopMatrix (word occ_args[]) {
+  glPopMatrix();
+}
+
+
+/*}}}*/
+/*{{{  function glLoadIdentity */
+SWIGEXPORT void _glLoadIdentity (word occ_args[]) {
+  glLoadIdentity();
+}
+
+
+/*}}}*/
+/*{{{  function glLoadMatrixd */
+SWIGEXPORT void _glLoadMatrixd (word occ_args[]) {
+  GLdouble *arg1 = (GLdouble *) 0 ;
+  
+  {
+    arg1 = (GLdouble *) occ_args[0]; 
+  }glLoadMatrixd((double const *)arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glLoadMatrixf */
+SWIGEXPORT void _glLoadMatrixf (word occ_args[]) {
+  GLfloat *arg1 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLfloat *) occ_args[0]; 
+  }glLoadMatrixf((float const *)arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glMultMatrixd */
+SWIGEXPORT void _glMultMatrixd (word occ_args[]) {
+  GLdouble *arg1 = (GLdouble *) 0 ;
+  
+  {
+    arg1 = (GLdouble *) occ_args[0]; 
+  }glMultMatrixd((double const *)arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glMultMatrixf */
+SWIGEXPORT void _glMultMatrixf (word occ_args[]) {
+  GLfloat *arg1 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLfloat *) occ_args[0]; 
+  }glMultMatrixf((float const *)arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRotated */
+SWIGEXPORT void _glRotated (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }glRotated(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glRotatef */
+SWIGEXPORT void _glRotatef (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  GLfloat arg4 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }{
+    arg4 = (GLfloat) occ_args[3]; 
+  }glRotatef(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glScaled */
+SWIGEXPORT void _glScaled (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }glScaled(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glScalef */
+SWIGEXPORT void _glScalef (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glScalef(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTranslated */
+SWIGEXPORT void _glTranslated (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }glTranslated(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTranslatef */
+SWIGEXPORT void _glTranslatef (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glTranslatef(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glIsList */
+SWIGEXPORT void _glIsList (word occ_args[]) {
+  GLuint arg1 ;
+  GLboolean result;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }result = (GLboolean)glIsList(arg1);
+  {
+    *((GLboolean *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function glDeleteLists */
+SWIGEXPORT void _glDeleteLists (word occ_args[]) {
+  GLuint arg1 ;
+  GLsizei arg2 ;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }{
+    arg2 = (GLsizei) occ_args[1]; 
+  }glDeleteLists(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glGenLists */
+SWIGEXPORT void _glGenLists (word occ_args[]) {
+  GLsizei arg1 ;
+  GLuint result;
+  
+  {
+    arg1 = (GLsizei) occ_args[0]; 
+  }result = (GLuint)glGenLists(arg1);
+  {
+    *((GLuint *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function glNewList */
+SWIGEXPORT void _glNewList (word occ_args[]) {
+  GLuint arg1 ;
+  GLenum arg2 ;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }glNewList(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glEndList */
+SWIGEXPORT void _glEndList (word occ_args[]) {
+  glEndList();
+}
+
+
+/*}}}*/
+/*{{{  function glCallList */
+SWIGEXPORT void _glCallList (word occ_args[]) {
+  GLuint arg1 ;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }glCallList(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glCallLists */
+SWIGEXPORT void _glCallLists (word occ_args[]) {
+  GLsizei arg1 ;
+  GLenum arg2 ;
+  GLvoid *arg3 = (GLvoid *) 0 ;
+  
+  {
+    arg1 = (GLsizei) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLvoid *) occ_args[2]; 
+  }glCallLists(arg1,arg2,(void const *)arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glListBase */
+SWIGEXPORT void _glListBase (word occ_args[]) {
+  GLuint arg1 ;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }glListBase(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glBegin */
+SWIGEXPORT void _glBegin (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glBegin(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glEnd */
+SWIGEXPORT void _glEnd (word occ_args[]) {
+  glEnd();
+}
+
+
+/*}}}*/
+/*{{{  function glVertex2d */
+SWIGEXPORT void _glVertex2d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }glVertex2d(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex2f */
+SWIGEXPORT void _glVertex2f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }glVertex2f(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex2i */
+SWIGEXPORT void _glVertex2i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }glVertex2i(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex2s */
+SWIGEXPORT void _glVertex2s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }glVertex2s(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex3d */
+SWIGEXPORT void _glVertex3d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }glVertex3d(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex3f */
+SWIGEXPORT void _glVertex3f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glVertex3f(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex3i */
+SWIGEXPORT void _glVertex3i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }glVertex3i(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex3s */
+SWIGEXPORT void _glVertex3s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  GLshort arg3 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }{
+    arg3 = (GLshort) occ_args[2]; 
+  }glVertex3s(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex4d */
+SWIGEXPORT void _glVertex4d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }glVertex4d(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex4f */
+SWIGEXPORT void _glVertex4f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  GLfloat arg4 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }{
+    arg4 = (GLfloat) occ_args[3]; 
+  }glVertex4f(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex4i */
+SWIGEXPORT void _glVertex4i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  GLint arg4 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }glVertex4i(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex4s */
+SWIGEXPORT void _glVertex4s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  GLshort arg3 ;
+  GLshort arg4 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }{
+    arg3 = (GLshort) occ_args[2]; 
+  }{
+    arg4 = (GLshort) occ_args[3]; 
+  }glVertex4s(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex2dv */
+SWIGEXPORT void _glVertex2dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glVertex2dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex2fv */
+SWIGEXPORT void _glVertex2fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glVertex2fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex2iv */
+SWIGEXPORT void _glVertex2iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glVertex2iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex2sv */
+SWIGEXPORT void _glVertex2sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glVertex2sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex3dv */
+SWIGEXPORT void _glVertex3dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glVertex3dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex3fv */
+SWIGEXPORT void _glVertex3fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glVertex3fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex3iv */
+SWIGEXPORT void _glVertex3iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glVertex3iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex3sv */
+SWIGEXPORT void _glVertex3sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glVertex3sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex4dv */
+SWIGEXPORT void _glVertex4dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glVertex4dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex4fv */
+SWIGEXPORT void _glVertex4fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glVertex4fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex4iv */
+SWIGEXPORT void _glVertex4iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glVertex4iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glVertex4sv */
+SWIGEXPORT void _glVertex4sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glVertex4sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glNormal3b */
+SWIGEXPORT void _glNormal3b (word occ_args[]) {
+  GLbyte arg1 ;
+  GLbyte arg2 ;
+  GLbyte arg3 ;
+  
+  {
+    arg1 = (GLbyte) occ_args[0]; 
+  }{
+    arg2 = (GLbyte) occ_args[1]; 
+  }{
+    arg3 = (GLbyte) occ_args[2]; 
+  }glNormal3b(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glNormal3d */
+SWIGEXPORT void _glNormal3d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }glNormal3d(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glNormal3f */
+SWIGEXPORT void _glNormal3f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glNormal3f(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glNormal3i */
+SWIGEXPORT void _glNormal3i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }glNormal3i(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glNormal3s */
+SWIGEXPORT void _glNormal3s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  GLshort arg3 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }{
+    arg3 = (GLshort) occ_args[2]; 
+  }glNormal3s(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glNormal3bv */
+SWIGEXPORT void _glNormal3bv (word occ_args[]) {
+  GLbyte *arg1 ;
+  
+  {
+    arg1 = (signed char *) occ_args[0]; 
+  }glNormal3bv((signed char const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glNormal3dv */
+SWIGEXPORT void _glNormal3dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glNormal3dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glNormal3fv */
+SWIGEXPORT void _glNormal3fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glNormal3fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glNormal3iv */
+SWIGEXPORT void _glNormal3iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glNormal3iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glNormal3sv */
+SWIGEXPORT void _glNormal3sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glNormal3sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIndexd */
+SWIGEXPORT void _glIndexd (word occ_args[]) {
+  GLdouble arg1 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }glIndexd(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIndexf */
+SWIGEXPORT void _glIndexf (word occ_args[]) {
+  GLfloat arg1 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }glIndexf(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIndexi */
+SWIGEXPORT void _glIndexi (word occ_args[]) {
+  GLint arg1 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }glIndexi(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIndexs */
+SWIGEXPORT void _glIndexs (word occ_args[]) {
+  GLshort arg1 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }glIndexs(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIndexub */
+SWIGEXPORT void _glIndexub (word occ_args[]) {
+  GLubyte arg1 ;
+  
+  {
+    arg1 = (GLubyte) occ_args[0]; 
+  }glIndexub(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIndexdv */
+SWIGEXPORT void _glIndexdv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glIndexdv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIndexfv */
+SWIGEXPORT void _glIndexfv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glIndexfv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIndexiv */
+SWIGEXPORT void _glIndexiv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glIndexiv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIndexsv */
+SWIGEXPORT void _glIndexsv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glIndexsv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glIndexubv */
+SWIGEXPORT void _glIndexubv (word occ_args[]) {
+  GLubyte *arg1 ;
+  
+  {
+    arg1 = (unsigned char *) occ_args[0]; 
+  }glIndexubv((unsigned char const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3b */
+SWIGEXPORT void _glColor3b (word occ_args[]) {
+  GLbyte arg1 ;
+  GLbyte arg2 ;
+  GLbyte arg3 ;
+  
+  {
+    arg1 = (GLbyte) occ_args[0]; 
+  }{
+    arg2 = (GLbyte) occ_args[1]; 
+  }{
+    arg3 = (GLbyte) occ_args[2]; 
+  }glColor3b(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3d */
+SWIGEXPORT void _glColor3d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }glColor3d(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3f */
+SWIGEXPORT void _glColor3f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glColor3f(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3i */
+SWIGEXPORT void _glColor3i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }glColor3i(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3s */
+SWIGEXPORT void _glColor3s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  GLshort arg3 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }{
+    arg3 = (GLshort) occ_args[2]; 
+  }glColor3s(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3ub */
+SWIGEXPORT void _glColor3ub (word occ_args[]) {
+  GLubyte arg1 ;
+  GLubyte arg2 ;
+  GLubyte arg3 ;
+  
+  {
+    arg1 = (GLubyte) occ_args[0]; 
+  }{
+    arg2 = (GLubyte) occ_args[1]; 
+  }{
+    arg3 = (GLubyte) occ_args[2]; 
+  }glColor3ub(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3ui */
+SWIGEXPORT void _glColor3ui (word occ_args[]) {
+  GLuint arg1 ;
+  GLuint arg2 ;
+  GLuint arg3 ;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }{
+    arg2 = (GLuint) occ_args[1]; 
+  }{
+    arg3 = (GLuint) occ_args[2]; 
+  }glColor3ui(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3us */
+SWIGEXPORT void _glColor3us (word occ_args[]) {
+  GLushort arg1 ;
+  GLushort arg2 ;
+  GLushort arg3 ;
+  
+  {
+    arg1 = (GLushort) occ_args[0]; 
+  }{
+    arg2 = (GLushort) occ_args[1]; 
+  }{
+    arg3 = (GLushort) occ_args[2]; 
+  }glColor3us(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4b */
+SWIGEXPORT void _glColor4b (word occ_args[]) {
+  GLbyte arg1 ;
+  GLbyte arg2 ;
+  GLbyte arg3 ;
+  GLbyte arg4 ;
+  
+  {
+    arg1 = (GLbyte) occ_args[0]; 
+  }{
+    arg2 = (GLbyte) occ_args[1]; 
+  }{
+    arg3 = (GLbyte) occ_args[2]; 
+  }{
+    arg4 = (GLbyte) occ_args[3]; 
+  }glColor4b(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4d */
+SWIGEXPORT void _glColor4d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }glColor4d(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4f */
+SWIGEXPORT void _glColor4f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  GLfloat arg4 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }{
+    arg4 = (GLfloat) occ_args[3]; 
+  }glColor4f(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4i */
+SWIGEXPORT void _glColor4i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  GLint arg4 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }glColor4i(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4s */
+SWIGEXPORT void _glColor4s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  GLshort arg3 ;
+  GLshort arg4 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }{
+    arg3 = (GLshort) occ_args[2]; 
+  }{
+    arg4 = (GLshort) occ_args[3]; 
+  }glColor4s(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4ub */
+SWIGEXPORT void _glColor4ub (word occ_args[]) {
+  GLubyte arg1 ;
+  GLubyte arg2 ;
+  GLubyte arg3 ;
+  GLubyte arg4 ;
+  
+  {
+    arg1 = (GLubyte) occ_args[0]; 
+  }{
+    arg2 = (GLubyte) occ_args[1]; 
+  }{
+    arg3 = (GLubyte) occ_args[2]; 
+  }{
+    arg4 = (GLubyte) occ_args[3]; 
+  }glColor4ub(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4ui */
+SWIGEXPORT void _glColor4ui (word occ_args[]) {
+  GLuint arg1 ;
+  GLuint arg2 ;
+  GLuint arg3 ;
+  GLuint arg4 ;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }{
+    arg2 = (GLuint) occ_args[1]; 
+  }{
+    arg3 = (GLuint) occ_args[2]; 
+  }{
+    arg4 = (GLuint) occ_args[3]; 
+  }glColor4ui(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4us */
+SWIGEXPORT void _glColor4us (word occ_args[]) {
+  GLushort arg1 ;
+  GLushort arg2 ;
+  GLushort arg3 ;
+  GLushort arg4 ;
+  
+  {
+    arg1 = (GLushort) occ_args[0]; 
+  }{
+    arg2 = (GLushort) occ_args[1]; 
+  }{
+    arg3 = (GLushort) occ_args[2]; 
+  }{
+    arg4 = (GLushort) occ_args[3]; 
+  }glColor4us(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3bv */
+SWIGEXPORT void _glColor3bv (word occ_args[]) {
+  GLbyte *arg1 ;
+  
+  {
+    arg1 = (signed char *) occ_args[0]; 
+  }glColor3bv((signed char const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3dv */
+SWIGEXPORT void _glColor3dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glColor3dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3fv */
+SWIGEXPORT void _glColor3fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glColor3fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3iv */
+SWIGEXPORT void _glColor3iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glColor3iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3sv */
+SWIGEXPORT void _glColor3sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glColor3sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3ubv */
+SWIGEXPORT void _glColor3ubv (word occ_args[]) {
+  GLubyte *arg1 ;
+  
+  {
+    arg1 = (unsigned char *) occ_args[0]; 
+  }glColor3ubv((unsigned char const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3uiv */
+SWIGEXPORT void _glColor3uiv (word occ_args[]) {
+  GLuint *arg1 ;
+  
+  {
+    arg1 = (unsigned int *) occ_args[0]; 
+  }glColor3uiv((unsigned int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor3usv */
+SWIGEXPORT void _glColor3usv (word occ_args[]) {
+  GLushort *arg1 ;
+  
+  {
+    arg1 = (unsigned short *) occ_args[0]; 
+  }glColor3usv((unsigned short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4bv */
+SWIGEXPORT void _glColor4bv (word occ_args[]) {
+  GLbyte *arg1 ;
+  
+  {
+    arg1 = (signed char *) occ_args[0]; 
+  }glColor4bv((signed char const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4dv */
+SWIGEXPORT void _glColor4dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glColor4dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4fv */
+SWIGEXPORT void _glColor4fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glColor4fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4iv */
+SWIGEXPORT void _glColor4iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glColor4iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4sv */
+SWIGEXPORT void _glColor4sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glColor4sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4ubv */
+SWIGEXPORT void _glColor4ubv (word occ_args[]) {
+  GLubyte *arg1 ;
+  
+  {
+    arg1 = (unsigned char *) occ_args[0]; 
+  }glColor4ubv((unsigned char const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4uiv */
+SWIGEXPORT void _glColor4uiv (word occ_args[]) {
+  GLuint *arg1 ;
+  
+  {
+    arg1 = (unsigned int *) occ_args[0]; 
+  }glColor4uiv((unsigned int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glColor4usv */
+SWIGEXPORT void _glColor4usv (word occ_args[]) {
+  GLushort *arg1 ;
+  
+  {
+    arg1 = (unsigned short *) occ_args[0]; 
+  }glColor4usv((unsigned short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord1d */
+SWIGEXPORT void _glTexCoord1d (word occ_args[]) {
+  GLdouble arg1 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }glTexCoord1d(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord1f */
+SWIGEXPORT void _glTexCoord1f (word occ_args[]) {
+  GLfloat arg1 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }glTexCoord1f(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord1i */
+SWIGEXPORT void _glTexCoord1i (word occ_args[]) {
+  GLint arg1 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }glTexCoord1i(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord1s */
+SWIGEXPORT void _glTexCoord1s (word occ_args[]) {
+  GLshort arg1 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }glTexCoord1s(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord2d */
+SWIGEXPORT void _glTexCoord2d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }glTexCoord2d(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord2f */
+SWIGEXPORT void _glTexCoord2f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }glTexCoord2f(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord2i */
+SWIGEXPORT void _glTexCoord2i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }glTexCoord2i(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord2s */
+SWIGEXPORT void _glTexCoord2s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }glTexCoord2s(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord3d */
+SWIGEXPORT void _glTexCoord3d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }glTexCoord3d(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord3f */
+SWIGEXPORT void _glTexCoord3f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glTexCoord3f(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord3i */
+SWIGEXPORT void _glTexCoord3i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }glTexCoord3i(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord3s */
+SWIGEXPORT void _glTexCoord3s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  GLshort arg3 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }{
+    arg3 = (GLshort) occ_args[2]; 
+  }glTexCoord3s(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord4d */
+SWIGEXPORT void _glTexCoord4d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }glTexCoord4d(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord4f */
+SWIGEXPORT void _glTexCoord4f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  GLfloat arg4 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }{
+    arg4 = (GLfloat) occ_args[3]; 
+  }glTexCoord4f(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord4i */
+SWIGEXPORT void _glTexCoord4i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  GLint arg4 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }glTexCoord4i(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord4s */
+SWIGEXPORT void _glTexCoord4s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  GLshort arg3 ;
+  GLshort arg4 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }{
+    arg3 = (GLshort) occ_args[2]; 
+  }{
+    arg4 = (GLshort) occ_args[3]; 
+  }glTexCoord4s(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord1dv */
+SWIGEXPORT void _glTexCoord1dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glTexCoord1dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord1fv */
+SWIGEXPORT void _glTexCoord1fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glTexCoord1fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord1iv */
+SWIGEXPORT void _glTexCoord1iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glTexCoord1iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord1sv */
+SWIGEXPORT void _glTexCoord1sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glTexCoord1sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord2dv */
+SWIGEXPORT void _glTexCoord2dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glTexCoord2dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord2fv */
+SWIGEXPORT void _glTexCoord2fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glTexCoord2fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord2iv */
+SWIGEXPORT void _glTexCoord2iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glTexCoord2iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord2sv */
+SWIGEXPORT void _glTexCoord2sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glTexCoord2sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord3dv */
+SWIGEXPORT void _glTexCoord3dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glTexCoord3dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord3fv */
+SWIGEXPORT void _glTexCoord3fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glTexCoord3fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord3iv */
+SWIGEXPORT void _glTexCoord3iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glTexCoord3iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord3sv */
+SWIGEXPORT void _glTexCoord3sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glTexCoord3sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord4dv */
+SWIGEXPORT void _glTexCoord4dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glTexCoord4dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord4fv */
+SWIGEXPORT void _glTexCoord4fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glTexCoord4fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord4iv */
+SWIGEXPORT void _glTexCoord4iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glTexCoord4iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexCoord4sv */
+SWIGEXPORT void _glTexCoord4sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glTexCoord4sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos2d */
+SWIGEXPORT void _glRasterPos2d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }glRasterPos2d(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos2f */
+SWIGEXPORT void _glRasterPos2f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }glRasterPos2f(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos2i */
+SWIGEXPORT void _glRasterPos2i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }glRasterPos2i(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos2s */
+SWIGEXPORT void _glRasterPos2s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }glRasterPos2s(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos3d */
+SWIGEXPORT void _glRasterPos3d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }glRasterPos3d(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos3f */
+SWIGEXPORT void _glRasterPos3f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glRasterPos3f(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos3i */
+SWIGEXPORT void _glRasterPos3i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }glRasterPos3i(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos3s */
+SWIGEXPORT void _glRasterPos3s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  GLshort arg3 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }{
+    arg3 = (GLshort) occ_args[2]; 
+  }glRasterPos3s(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos4d */
+SWIGEXPORT void _glRasterPos4d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }glRasterPos4d(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos4f */
+SWIGEXPORT void _glRasterPos4f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  GLfloat arg4 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }{
+    arg4 = (GLfloat) occ_args[3]; 
+  }glRasterPos4f(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos4i */
+SWIGEXPORT void _glRasterPos4i (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  GLint arg4 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }glRasterPos4i(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos4s */
+SWIGEXPORT void _glRasterPos4s (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  GLshort arg3 ;
+  GLshort arg4 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }{
+    arg3 = (GLshort) occ_args[2]; 
+  }{
+    arg4 = (GLshort) occ_args[3]; 
+  }glRasterPos4s(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos2dv */
+SWIGEXPORT void _glRasterPos2dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glRasterPos2dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos2fv */
+SWIGEXPORT void _glRasterPos2fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glRasterPos2fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos2iv */
+SWIGEXPORT void _glRasterPos2iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glRasterPos2iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos2sv */
+SWIGEXPORT void _glRasterPos2sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glRasterPos2sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos3dv */
+SWIGEXPORT void _glRasterPos3dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glRasterPos3dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos3fv */
+SWIGEXPORT void _glRasterPos3fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glRasterPos3fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos3iv */
+SWIGEXPORT void _glRasterPos3iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glRasterPos3iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos3sv */
+SWIGEXPORT void _glRasterPos3sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glRasterPos3sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos4dv */
+SWIGEXPORT void _glRasterPos4dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glRasterPos4dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos4fv */
+SWIGEXPORT void _glRasterPos4fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glRasterPos4fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos4iv */
+SWIGEXPORT void _glRasterPos4iv (word occ_args[]) {
+  GLint *arg1 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }glRasterPos4iv((int const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRasterPos4sv */
+SWIGEXPORT void _glRasterPos4sv (word occ_args[]) {
+  GLshort *arg1 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }glRasterPos4sv((short const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glRectd */
+SWIGEXPORT void _glRectd (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }glRectd(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glRectf */
+SWIGEXPORT void _glRectf (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  GLfloat arg4 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }{
+    arg4 = (GLfloat) occ_args[3]; 
+  }glRectf(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glRecti */
+SWIGEXPORT void _glRecti (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  GLint arg4 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }glRecti(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glRects */
+SWIGEXPORT void _glRects (word occ_args[]) {
+  GLshort arg1 ;
+  GLshort arg2 ;
+  GLshort arg3 ;
+  GLshort arg4 ;
+  
+  {
+    arg1 = (GLshort) occ_args[0]; 
+  }{
+    arg2 = (GLshort) occ_args[1]; 
+  }{
+    arg3 = (GLshort) occ_args[2]; 
+  }{
+    arg4 = (GLshort) occ_args[3]; 
+  }glRects(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glRectdv */
+SWIGEXPORT void _glRectdv (word occ_args[]) {
+  GLdouble *arg1 ;
+  GLdouble *arg2 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }{
+    arg2 = (double *) occ_args[2]; 
+  }glRectdv((double const (*))arg1,(double const (*))arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glRectfv */
+SWIGEXPORT void _glRectfv (word occ_args[]) {
+  GLfloat *arg1 ;
+  GLfloat *arg2 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }{
+    arg2 = (float *) occ_args[2]; 
+  }glRectfv((float const (*))arg1,(float const (*))arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glRectiv */
+SWIGEXPORT void _glRectiv (word occ_args[]) {
+  GLint *arg1 ;
+  GLint *arg2 ;
+  
+  {
+    arg1 = (int *) occ_args[0]; 
+  }{
+    arg2 = (int *) occ_args[2]; 
+  }glRectiv((int const (*))arg1,(int const (*))arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glRectsv */
+SWIGEXPORT void _glRectsv (word occ_args[]) {
+  GLshort *arg1 ;
+  GLshort *arg2 ;
+  
+  {
+    arg1 = (short *) occ_args[0]; 
+  }{
+    arg2 = (short *) occ_args[2]; 
+  }glRectsv((short const (*))arg1,(short const (*))arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glArrayElement */
+SWIGEXPORT void _glArrayElement (word occ_args[]) {
+  GLint arg1 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }glArrayElement(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glDrawArrays */
+SWIGEXPORT void _glDrawArrays (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLsizei arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLsizei) occ_args[2]; 
+  }glDrawArrays(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glShadeModel */
+SWIGEXPORT void _glShadeModel (word occ_args[]) {
+  GLenum arg1 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }glShadeModel(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glLightf */
+SWIGEXPORT void _glLightf (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glLightf(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glLighti */
+SWIGEXPORT void _glLighti (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }glLighti(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glLightfv */
+SWIGEXPORT void _glLightfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (float *) occ_args[2]; 
+  }glLightfv(arg1,arg2,(float const (*))arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glLightiv */
+SWIGEXPORT void _glLightiv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (int *) occ_args[2]; 
+  }glLightiv(arg1,arg2,(int const (*))arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetLightfv */
+SWIGEXPORT void _glGetLightfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (float *) occ_args[2]; 
+  }glGetLightfv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetLightiv */
+SWIGEXPORT void _glGetLightiv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (int *) occ_args[2]; 
+  }glGetLightiv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glLightModelf */
+SWIGEXPORT void _glLightModelf (word occ_args[]) {
+  GLenum arg1 ;
+  GLfloat arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }glLightModelf(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glLightModeli */
+SWIGEXPORT void _glLightModeli (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }glLightModeli(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glLightModelfv */
+SWIGEXPORT void _glLightModelfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLfloat *arg2 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLfloat *) occ_args[1]; 
+  }glLightModelfv(arg1,(float const *)arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glLightModeliv */
+SWIGEXPORT void _glLightModeliv (word occ_args[]) {
+  GLenum arg1 ;
+  GLint *arg2 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint *) occ_args[1]; 
+  }glLightModeliv(arg1,(int const *)arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glMaterialf */
+SWIGEXPORT void _glMaterialf (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glMaterialf(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glMateriali */
+SWIGEXPORT void _glMateriali (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }glMateriali(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glMaterialfv */
+SWIGEXPORT void _glMaterialfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (float *) occ_args[2]; 
+  }glMaterialfv(arg1,arg2,(float const (*))arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glMaterialiv */
+SWIGEXPORT void _glMaterialiv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (int *) occ_args[2]; 
+  }glMaterialiv(arg1,arg2,(int const (*))arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetMaterialfv */
+SWIGEXPORT void _glGetMaterialfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (float *) occ_args[2]; 
+  }glGetMaterialfv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetMaterialiv */
+SWIGEXPORT void _glGetMaterialiv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (int *) occ_args[2]; 
+  }glGetMaterialiv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glColorMaterial */
+SWIGEXPORT void _glColorMaterial (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }glColorMaterial(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glPixelZoom */
+SWIGEXPORT void _glPixelZoom (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }glPixelZoom(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glPixelStoref */
+SWIGEXPORT void _glPixelStoref (word occ_args[]) {
+  GLenum arg1 ;
+  GLfloat arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }glPixelStoref(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glPixelStorei */
+SWIGEXPORT void _glPixelStorei (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }glPixelStorei(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glPixelTransferf */
+SWIGEXPORT void _glPixelTransferf (word occ_args[]) {
+  GLenum arg1 ;
+  GLfloat arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }glPixelTransferf(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glPixelTransferi */
+SWIGEXPORT void _glPixelTransferi (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }glPixelTransferi(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glPixelMapfv */
+SWIGEXPORT void _glPixelMapfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLfloat *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (float *) occ_args[2]; 
+  }glPixelMapfv(arg1,arg2,(float const (*))arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glPixelMapuiv */
+SWIGEXPORT void _glPixelMapuiv (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLuint *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (unsigned int *) occ_args[2]; 
+  }glPixelMapuiv(arg1,arg2,(unsigned int const (*))arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glPixelMapusv */
+SWIGEXPORT void _glPixelMapusv (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLushort *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (unsigned short *) occ_args[2]; 
+  }glPixelMapusv(arg1,arg2,(unsigned short const (*))arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetPixelMapfv */
+SWIGEXPORT void _glGetPixelMapfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLfloat *arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (float *) occ_args[1]; 
+  }glGetPixelMapfv(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glGetPixelMapuiv */
+SWIGEXPORT void _glGetPixelMapuiv (word occ_args[]) {
+  GLenum arg1 ;
+  GLuint *arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (unsigned int *) occ_args[1]; 
+  }glGetPixelMapuiv(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glGetPixelMapusv */
+SWIGEXPORT void _glGetPixelMapusv (word occ_args[]) {
+  GLenum arg1 ;
+  GLushort *arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (unsigned short *) occ_args[1]; 
+  }glGetPixelMapusv(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glBitmap */
+SWIGEXPORT void _glBitmap (word occ_args[]) {
+  GLsizei arg1 ;
+  GLsizei arg2 ;
+  GLfloat arg3 ;
+  GLfloat arg4 ;
+  GLfloat arg5 ;
+  GLfloat arg6 ;
+  GLubyte *arg7 ;
+  
+  {
+    arg1 = (GLsizei) occ_args[0]; 
+  }{
+    arg2 = (GLsizei) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }{
+    arg4 = (GLfloat) occ_args[3]; 
+  }{
+    arg5 = (GLfloat) occ_args[4]; 
+  }{
+    arg6 = (GLfloat) occ_args[5]; 
+  }{
+    arg7 = (unsigned char *) occ_args[6]; 
+  }glBitmap(arg1,arg2,arg3,arg4,arg5,arg6,(unsigned char const (*))arg7);
+}
+
+
+/*}}}*/
+/*{{{  function glCopyPixels */
+SWIGEXPORT void _glCopyPixels (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  GLsizei arg3 ;
+  GLsizei arg4 ;
+  GLenum arg5 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLsizei) occ_args[2]; 
+  }{
+    arg4 = (GLsizei) occ_args[3]; 
+  }{
+    arg5 = (GLenum) occ_args[4]; 
+  }glCopyPixels(arg1,arg2,arg3,arg4,arg5);
+}
+
+
+/*}}}*/
+/*{{{  function glStencilFunc */
+SWIGEXPORT void _glStencilFunc (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLuint arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLuint) occ_args[2]; 
+  }glStencilFunc(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glStencilMask */
+SWIGEXPORT void _glStencilMask (word occ_args[]) {
+  GLuint arg1 ;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }glStencilMask(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glStencilOp */
+SWIGEXPORT void _glStencilOp (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLenum arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLenum) occ_args[2]; 
+  }glStencilOp(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glClearStencil */
+SWIGEXPORT void _glClearStencil (word occ_args[]) {
+  GLint arg1 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }glClearStencil(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glTexGend */
+SWIGEXPORT void _glTexGend (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLdouble arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }glTexGend(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexGenf */
+SWIGEXPORT void _glTexGenf (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glTexGenf(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexGeni */
+SWIGEXPORT void _glTexGeni (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }glTexGeni(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexGendv */
+SWIGEXPORT void _glTexGendv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLdouble *arg3 = (GLdouble *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLdouble *) occ_args[2]; 
+  }glTexGendv(arg1,arg2,(double const *)arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexGenfv */
+SWIGEXPORT void _glTexGenfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[2]; 
+  }glTexGenfv(arg1,arg2,(float const *)arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexGeniv */
+SWIGEXPORT void _glTexGeniv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint *arg3 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLint *) occ_args[2]; 
+  }glTexGeniv(arg1,arg2,(int const *)arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetTexGendv */
+SWIGEXPORT void _glGetTexGendv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLdouble *arg3 = (GLdouble *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLdouble *) occ_args[2]; 
+  }glGetTexGendv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetTexGenfv */
+SWIGEXPORT void _glGetTexGenfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[2]; 
+  }glGetTexGenfv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetTexGeniv */
+SWIGEXPORT void _glGetTexGeniv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint *arg3 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLint *) occ_args[2]; 
+  }glGetTexGeniv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexEnvf */
+SWIGEXPORT void _glTexEnvf (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glTexEnvf(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexEnvi */
+SWIGEXPORT void _glTexEnvi (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }glTexEnvi(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexEnvfv */
+SWIGEXPORT void _glTexEnvfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[2]; 
+  }glTexEnvfv(arg1,arg2,(float const *)arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexEnviv */
+SWIGEXPORT void _glTexEnviv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint *arg3 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLint *) occ_args[2]; 
+  }glTexEnviv(arg1,arg2,(int const *)arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetTexEnvfv */
+SWIGEXPORT void _glGetTexEnvfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[2]; 
+  }glGetTexEnvfv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetTexEnviv */
+SWIGEXPORT void _glGetTexEnviv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint *arg3 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLint *) occ_args[2]; 
+  }glGetTexEnviv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexParameterf */
+SWIGEXPORT void _glTexParameterf (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glTexParameterf(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexParameteri */
+SWIGEXPORT void _glTexParameteri (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }glTexParameteri(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexParameterfv */
+SWIGEXPORT void _glTexParameterfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[2]; 
+  }glTexParameterfv(arg1,arg2,(float const *)arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glTexParameteriv */
+SWIGEXPORT void _glTexParameteriv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint *arg3 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLint *) occ_args[2]; 
+  }glTexParameteriv(arg1,arg2,(int const *)arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetTexParameterfv */
+SWIGEXPORT void _glGetTexParameterfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[2]; 
+  }glGetTexParameterfv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetTexParameteriv */
+SWIGEXPORT void _glGetTexParameteriv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint *arg3 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLint *) occ_args[2]; 
+  }glGetTexParameteriv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetTexLevelParameterfv */
+SWIGEXPORT void _glGetTexLevelParameterfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLenum arg3 ;
+  GLfloat *arg4 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLenum) occ_args[2]; 
+  }{
+    arg4 = (GLfloat *) occ_args[3]; 
+  }glGetTexLevelParameterfv(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glGetTexLevelParameteriv */
+SWIGEXPORT void _glGetTexLevelParameteriv (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLenum arg3 ;
+  GLint *arg4 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLenum) occ_args[2]; 
+  }{
+    arg4 = (GLint *) occ_args[3]; 
+  }glGetTexLevelParameteriv(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function glGenTextures */
+SWIGEXPORT void _glGenTextures (word occ_args[]) {
+  GLsizei arg1 ;
+  GLuint *arg2 ;
+  
+  {
+    arg1 = (GLsizei) occ_args[0]; 
+  }{
+    arg2 = (unsigned int *) occ_args[1]; 
+  }glGenTextures(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glDeleteTextures */
+SWIGEXPORT void _glDeleteTextures (word occ_args[]) {
+  GLsizei arg1 ;
+  GLuint *arg2 ;
+  
+  {
+    arg1 = (GLsizei) occ_args[0]; 
+  }{
+    arg2 = (unsigned int *) occ_args[1]; 
+  }glDeleteTextures(arg1,(unsigned int const (*))arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glBindTexture */
+SWIGEXPORT void _glBindTexture (word occ_args[]) {
+  GLenum arg1 ;
+  GLuint arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLuint) occ_args[1]; 
+  }glBindTexture(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glPrioritizeTextures */
+SWIGEXPORT void _glPrioritizeTextures (word occ_args[]) {
+  GLsizei arg1 ;
+  GLuint *arg2 ;
+  GLclampf *arg3 = (GLclampf *) 0 ;
+  
+  {
+    arg1 = (GLsizei) occ_args[0]; 
+  }{
+    arg2 = (unsigned int *) occ_args[1]; 
+  }{
+    arg3 = (GLclampf *) occ_args[3]; 
+  }glPrioritizeTextures(arg1,(unsigned int const (*))arg2,(float const *)arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glAreTexturesResident */
+SWIGEXPORT void _glAreTexturesResident (word occ_args[]) {
+  GLsizei arg1 ;
+  GLuint *arg2 ;
+  GLboolean *arg3 = (GLboolean *) 0 ;
+  GLboolean result;
+  
+  {
+    arg1 = (GLsizei) occ_args[0]; 
+  }{
+    arg2 = (unsigned int *) occ_args[1]; 
+  }{
+    arg3 = (GLboolean *) occ_args[3]; 
+  }result = (GLboolean)glAreTexturesResident(arg1,(unsigned int const (*))arg2,arg3);
+  {
+    *((GLboolean *) occ_args[5]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function glIsTexture */
+SWIGEXPORT void _glIsTexture (word occ_args[]) {
+  GLuint arg1 ;
+  GLboolean result;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }result = (GLboolean)glIsTexture(arg1);
+  {
+    *((GLboolean *) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function glCopyTexImage1D */
+SWIGEXPORT void _glCopyTexImage1D (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLenum arg3 ;
+  GLint arg4 ;
+  GLint arg5 ;
+  GLsizei arg6 ;
+  GLint arg7 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLenum) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }{
+    arg6 = (GLsizei) occ_args[5]; 
+  }{
+    arg7 = (GLint) occ_args[6]; 
+  }glCopyTexImage1D(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+}
+
+
+/*}}}*/
+/*{{{  function glCopyTexImage2D */
+SWIGEXPORT void _glCopyTexImage2D (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLenum arg3 ;
+  GLint arg4 ;
+  GLint arg5 ;
+  GLsizei arg6 ;
+  GLsizei arg7 ;
+  GLint arg8 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLenum) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }{
+    arg6 = (GLsizei) occ_args[5]; 
+  }{
+    arg7 = (GLsizei) occ_args[6]; 
+  }{
+    arg8 = (GLint) occ_args[7]; 
+  }glCopyTexImage2D(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+}
+
+
+/*}}}*/
+/*{{{  function glCopyTexSubImage1D */
+SWIGEXPORT void _glCopyTexSubImage1D (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  GLint arg4 ;
+  GLint arg5 ;
+  GLsizei arg6 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }{
+    arg6 = (GLsizei) occ_args[5]; 
+  }glCopyTexSubImage1D(arg1,arg2,arg3,arg4,arg5,arg6);
+}
+
+
+/*}}}*/
+/*{{{  function glCopyTexSubImage2D */
+SWIGEXPORT void _glCopyTexSubImage2D (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  GLint arg4 ;
+  GLint arg5 ;
+  GLint arg6 ;
+  GLsizei arg7 ;
+  GLsizei arg8 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }{
+    arg6 = (GLint) occ_args[5]; 
+  }{
+    arg7 = (GLsizei) occ_args[6]; 
+  }{
+    arg8 = (GLsizei) occ_args[7]; 
+  }glCopyTexSubImage2D(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+}
+
+
+/*}}}*/
+/*{{{  function glMap1d */
+SWIGEXPORT void _glMap1d (word occ_args[]) {
+  GLenum arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLint arg4 ;
+  GLint arg5 ;
+  GLdouble *arg6 = (GLdouble *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }{
+    arg6 = (GLdouble *) occ_args[5]; 
+  }glMap1d(arg1,arg2,arg3,arg4,arg5,(double const *)arg6);
+}
+
+
+/*}}}*/
+/*{{{  function glMap1f */
+SWIGEXPORT void _glMap1f (word occ_args[]) {
+  GLenum arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  GLint arg4 ;
+  GLint arg5 ;
+  GLfloat *arg6 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }{
+    arg6 = (GLfloat *) occ_args[5]; 
+  }glMap1f(arg1,arg2,arg3,arg4,arg5,(float const *)arg6);
+}
+
+
+/*}}}*/
+/*{{{  function glMap2d */
+SWIGEXPORT void _glMap2d (word occ_args[]) {
+  GLenum arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLint arg4 ;
+  GLint arg5 ;
+  GLdouble arg6 ;
+  GLdouble arg7 ;
+  GLint arg8 ;
+  GLint arg9 ;
+  GLdouble *arg10 = (GLdouble *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }{
+    arg6 = (GLdouble) occ_args[5]; 
+  }{
+    arg7 = (GLdouble) occ_args[6]; 
+  }{
+    arg8 = (GLint) occ_args[7]; 
+  }{
+    arg9 = (GLint) occ_args[8]; 
+  }{
+    arg10 = (GLdouble *) occ_args[9]; 
+  }glMap2d(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,(double const *)arg10);
+}
+
+
+/*}}}*/
+/*{{{  function glMap2f */
+SWIGEXPORT void _glMap2f (word occ_args[]) {
+  GLenum arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  GLint arg4 ;
+  GLint arg5 ;
+  GLfloat arg6 ;
+  GLfloat arg7 ;
+  GLint arg8 ;
+  GLint arg9 ;
+  GLfloat *arg10 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }{
+    arg6 = (GLfloat) occ_args[5]; 
+  }{
+    arg7 = (GLfloat) occ_args[6]; 
+  }{
+    arg8 = (GLint) occ_args[7]; 
+  }{
+    arg9 = (GLint) occ_args[8]; 
+  }{
+    arg10 = (GLfloat *) occ_args[9]; 
+  }glMap2f(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,(float const *)arg10);
+}
+
+
+/*}}}*/
+/*{{{  function glGetMapdv */
+SWIGEXPORT void _glGetMapdv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLdouble *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (double *) occ_args[2]; 
+  }glGetMapdv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetMapfv */
+SWIGEXPORT void _glGetMapfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (float *) occ_args[2]; 
+  }glGetMapfv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glGetMapiv */
+SWIGEXPORT void _glGetMapiv (word occ_args[]) {
+  GLenum arg1 ;
+  GLenum arg2 ;
+  GLint *arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (int *) occ_args[2]; 
+  }glGetMapiv(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalCoord1d */
+SWIGEXPORT void _glEvalCoord1d (word occ_args[]) {
+  GLdouble arg1 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }glEvalCoord1d(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalCoord1f */
+SWIGEXPORT void _glEvalCoord1f (word occ_args[]) {
+  GLfloat arg1 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }glEvalCoord1f(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalCoord1dv */
+SWIGEXPORT void _glEvalCoord1dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glEvalCoord1dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalCoord1fv */
+SWIGEXPORT void _glEvalCoord1fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glEvalCoord1fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalCoord2d */
+SWIGEXPORT void _glEvalCoord2d (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }glEvalCoord2d(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalCoord2f */
+SWIGEXPORT void _glEvalCoord2f (word occ_args[]) {
+  GLfloat arg1 ;
+  GLfloat arg2 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }glEvalCoord2f(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalCoord2dv */
+SWIGEXPORT void _glEvalCoord2dv (word occ_args[]) {
+  GLdouble *arg1 ;
+  
+  {
+    arg1 = (double *) occ_args[0]; 
+  }glEvalCoord2dv((double const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalCoord2fv */
+SWIGEXPORT void _glEvalCoord2fv (word occ_args[]) {
+  GLfloat *arg1 ;
+  
+  {
+    arg1 = (float *) occ_args[0]; 
+  }glEvalCoord2fv((float const (*))arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glMapGrid1d */
+SWIGEXPORT void _glMapGrid1d (word occ_args[]) {
+  GLint arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }glMapGrid1d(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glMapGrid1f */
+SWIGEXPORT void _glMapGrid1f (word occ_args[]) {
+  GLint arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }glMapGrid1f(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glMapGrid2d */
+SWIGEXPORT void _glMapGrid2d (word occ_args[]) {
+  GLint arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLint arg4 ;
+  GLdouble arg5 ;
+  GLdouble arg6 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLdouble) occ_args[4]; 
+  }{
+    arg6 = (GLdouble) occ_args[5]; 
+  }glMapGrid2d(arg1,arg2,arg3,arg4,arg5,arg6);
+}
+
+
+/*}}}*/
+/*{{{  function glMapGrid2f */
+SWIGEXPORT void _glMapGrid2f (word occ_args[]) {
+  GLint arg1 ;
+  GLfloat arg2 ;
+  GLfloat arg3 ;
+  GLint arg4 ;
+  GLfloat arg5 ;
+  GLfloat arg6 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLfloat) occ_args[4]; 
+  }{
+    arg6 = (GLfloat) occ_args[5]; 
+  }glMapGrid2f(arg1,arg2,arg3,arg4,arg5,arg6);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalPoint1 */
+SWIGEXPORT void _glEvalPoint1 (word occ_args[]) {
+  GLint arg1 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }glEvalPoint1(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalPoint2 */
+SWIGEXPORT void _glEvalPoint2 (word occ_args[]) {
+  GLint arg1 ;
+  GLint arg2 ;
+  
+  {
+    arg1 = (GLint) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }glEvalPoint2(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalMesh1 */
+SWIGEXPORT void _glEvalMesh1 (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }glEvalMesh1(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glEvalMesh2 */
+SWIGEXPORT void _glEvalMesh2 (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  GLint arg4 ;
+  GLint arg5 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }glEvalMesh2(arg1,arg2,arg3,arg4,arg5);
+}
+
+
+/*}}}*/
+/*{{{  function glFogf */
+SWIGEXPORT void _glFogf (word occ_args[]) {
+  GLenum arg1 ;
+  GLfloat arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLfloat) occ_args[1]; 
+  }glFogf(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glFogi */
+SWIGEXPORT void _glFogi (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }glFogi(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glFogfv */
+SWIGEXPORT void _glFogfv (word occ_args[]) {
+  GLenum arg1 ;
+  GLfloat *arg2 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLfloat *) occ_args[1]; 
+  }glFogfv(arg1,(float const *)arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glFogiv */
+SWIGEXPORT void _glFogiv (word occ_args[]) {
+  GLenum arg1 ;
+  GLint *arg2 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLint *) occ_args[1]; 
+  }glFogiv(arg1,(int const *)arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glFeedbackBuffer */
+SWIGEXPORT void _glFeedbackBuffer (word occ_args[]) {
+  GLsizei arg1 ;
+  GLenum arg2 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLsizei) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[2]; 
+  }glFeedbackBuffer(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function glPassThrough */
+SWIGEXPORT void _glPassThrough (word occ_args[]) {
+  GLfloat arg1 ;
+  
+  {
+    arg1 = (GLfloat) occ_args[0]; 
+  }glPassThrough(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glSelectBuffer */
+SWIGEXPORT void _glSelectBuffer (word occ_args[]) {
+  GLsizei arg1 ;
+  GLuint *arg2 = (GLuint *) 0 ;
+  
+  {
+    arg1 = (GLsizei) occ_args[0]; 
+  }{
+    arg2 = (GLuint *) occ_args[1]; 
+  }glSelectBuffer(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function glInitNames */
+SWIGEXPORT void _glInitNames (word occ_args[]) {
+  glInitNames();
+}
+
+
+/*}}}*/
+/*{{{  function glLoadName */
+SWIGEXPORT void _glLoadName (word occ_args[]) {
+  GLuint arg1 ;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }glLoadName(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glPushName */
+SWIGEXPORT void _glPushName (word occ_args[]) {
+  GLuint arg1 ;
+  
+  {
+    arg1 = (GLuint) occ_args[0]; 
+  }glPushName(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function glPopName */
+SWIGEXPORT void _glPopName (word occ_args[]) {
+  glPopName();
+}
+
+
+/*}}}*/
+/*{{{  function gluBeginCurve */
+SWIGEXPORT void _gluBeginCurve (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }gluBeginCurve(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluBeginPolygon */
+SWIGEXPORT void _gluBeginPolygon (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }gluBeginPolygon(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluBeginSurface */
+SWIGEXPORT void _gluBeginSurface (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }gluBeginSurface(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluBeginTrim */
+SWIGEXPORT void _gluBeginTrim (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }gluBeginTrim(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluCylinder */
+SWIGEXPORT void _gluCylinder (word occ_args[]) {
+  GLUquadric *arg1 = (GLUquadric *) 0 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  GLint arg5 ;
+  GLint arg6 ;
+  
+  {
+    arg1 = (GLUquadric *) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }{
+    arg6 = (GLint) occ_args[5]; 
+  }gluCylinder(arg1,arg2,arg3,arg4,arg5,arg6);
+}
+
+
+/*}}}*/
+/*{{{  function gluDeleteNurbsRenderer */
+SWIGEXPORT void _gluDeleteNurbsRenderer (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }gluDeleteNurbsRenderer(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluDeleteQuadric */
+SWIGEXPORT void _gluDeleteQuadric (word occ_args[]) {
+  GLUquadric *arg1 = (GLUquadric *) 0 ;
+  
+  {
+    arg1 = (GLUquadric *) occ_args[0]; 
+  }gluDeleteQuadric(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluDeleteTess */
+SWIGEXPORT void _gluDeleteTess (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }gluDeleteTess(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluDisk */
+SWIGEXPORT void _gluDisk (word occ_args[]) {
+  GLUquadric *arg1 = (GLUquadric *) 0 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLint arg4 ;
+  GLint arg5 ;
+  
+  {
+    arg1 = (GLUquadric *) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }gluDisk(arg1,arg2,arg3,arg4,arg5);
+}
+
+
+/*}}}*/
+/*{{{  function gluEndCurve */
+SWIGEXPORT void _gluEndCurve (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }gluEndCurve(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluEndPolygon */
+SWIGEXPORT void _gluEndPolygon (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }gluEndPolygon(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluEndSurface */
+SWIGEXPORT void _gluEndSurface (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }gluEndSurface(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluEndTrim */
+SWIGEXPORT void _gluEndTrim (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }gluEndTrim(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluErrorString */
+SWIGEXPORT void _gluErrorString (word occ_args[]) {
+  GLenum arg1 ;
+  GLubyte *result = 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }result = (GLubyte *)gluErrorString(arg1);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function gluGetNurbsProperty */
+SWIGEXPORT void _gluGetNurbsProperty (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  GLenum arg2 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[2]; 
+  }gluGetNurbsProperty(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function gluGetString */
+SWIGEXPORT void _gluGetString (word occ_args[]) {
+  GLenum arg1 ;
+  GLubyte *result = 0 ;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }result = (GLubyte *)gluGetString(arg1);
+  {
+    *((void **) occ_args[1]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function gluGetTessProperty */
+SWIGEXPORT void _gluGetTessProperty (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  GLenum arg2 ;
+  GLdouble *arg3 = (GLdouble *) 0 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLdouble *) occ_args[2]; 
+  }gluGetTessProperty(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function gluLoadSamplingMatrices */
+SWIGEXPORT void _gluLoadSamplingMatrices (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  GLfloat *arg2 = (GLfloat *) 0 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  GLint *arg4 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }{
+    arg2 = (GLfloat *) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[3]; 
+  }{
+    arg4 = (GLint *) occ_args[5]; 
+  }gluLoadSamplingMatrices(arg1,(float const *)arg2,(float const *)arg3,(int const *)arg4);
+}
+
+
+/*}}}*/
+/*{{{  function gluLookAt */
+SWIGEXPORT void _gluLookAt (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  GLdouble arg5 ;
+  GLdouble arg6 ;
+  GLdouble arg7 ;
+  GLdouble arg8 ;
+  GLdouble arg9 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }{
+    arg5 = (GLdouble) occ_args[4]; 
+  }{
+    arg6 = (GLdouble) occ_args[5]; 
+  }{
+    arg7 = (GLdouble) occ_args[6]; 
+  }{
+    arg8 = (GLdouble) occ_args[7]; 
+  }{
+    arg9 = (GLdouble) occ_args[8]; 
+  }gluLookAt(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+}
+
+
+/*}}}*/
+/*{{{  function gluNewNurbsRenderer */
+SWIGEXPORT void _gluNewNurbsRenderer (word occ_args[]) {
+  GLUnurbs *result = 0 ;
+  
+  result = (GLUnurbs *)gluNewNurbsRenderer();
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function gluNewQuadric */
+SWIGEXPORT void _gluNewQuadric (word occ_args[]) {
+  GLUquadric *result = 0 ;
+  
+  result = (GLUquadric *)gluNewQuadric();
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function gluNewTess */
+SWIGEXPORT void _gluNewTess (word occ_args[]) {
+  GLUtesselator *result = 0 ;
+  
+  result = (GLUtesselator *)gluNewTess();
+  {
+    *((void **) occ_args[0]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function gluNextContour */
+SWIGEXPORT void _gluNextContour (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  GLenum arg2 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }gluNextContour(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function gluNurbsCurve */
+SWIGEXPORT void _gluNurbsCurve (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  GLint arg2 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  GLint arg4 ;
+  GLfloat *arg5 = (GLfloat *) 0 ;
+  GLint arg6 ;
+  GLenum arg7 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[4]; 
+  }{
+    arg5 = (GLfloat *) occ_args[5]; 
+  }{
+    arg6 = (GLint) occ_args[7]; 
+  }{
+    arg7 = (GLenum) occ_args[8]; 
+  }gluNurbsCurve(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+}
+
+
+/*}}}*/
+/*{{{  function gluNurbsProperty */
+SWIGEXPORT void _gluNurbsProperty (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  GLenum arg2 ;
+  GLfloat arg3 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLfloat) occ_args[2]; 
+  }gluNurbsProperty(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function gluNurbsSurface */
+SWIGEXPORT void _gluNurbsSurface (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  GLint arg2 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  GLint arg4 ;
+  GLfloat *arg5 = (GLfloat *) 0 ;
+  GLint arg6 ;
+  GLint arg7 ;
+  GLfloat *arg8 = (GLfloat *) 0 ;
+  GLint arg9 ;
+  GLint arg10 ;
+  GLenum arg11 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[4]; 
+  }{
+    arg5 = (GLfloat *) occ_args[5]; 
+  }{
+    arg6 = (GLint) occ_args[7]; 
+  }{
+    arg7 = (GLint) occ_args[8]; 
+  }{
+    arg8 = (GLfloat *) occ_args[9]; 
+  }{
+    arg9 = (GLint) occ_args[11]; 
+  }{
+    arg10 = (GLint) occ_args[12]; 
+  }{
+    arg11 = (GLenum) occ_args[13]; 
+  }gluNurbsSurface(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
+}
+
+
+/*}}}*/
+/*{{{  function gluOrtho2D */
+SWIGEXPORT void _gluOrtho2D (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }gluOrtho2D(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function gluPartialDisk */
+SWIGEXPORT void _gluPartialDisk (word occ_args[]) {
+  GLUquadric *arg1 = (GLUquadric *) 0 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLint arg4 ;
+  GLint arg5 ;
+  GLdouble arg6 ;
+  GLdouble arg7 ;
+  
+  {
+    arg1 = (GLUquadric *) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }{
+    arg5 = (GLint) occ_args[4]; 
+  }{
+    arg6 = (GLdouble) occ_args[5]; 
+  }{
+    arg7 = (GLdouble) occ_args[6]; 
+  }gluPartialDisk(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+}
+
+
+/*}}}*/
+/*{{{  function gluPerspective */
+SWIGEXPORT void _gluPerspective (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }gluPerspective(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function gluPickMatrix */
+SWIGEXPORT void _gluPickMatrix (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  GLint *arg5 = (GLint *) 0 ;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }{
+    arg5 = (GLint *) occ_args[4]; 
+  }gluPickMatrix(arg1,arg2,arg3,arg4,arg5);
+}
+
+
+/*}}}*/
+/*{{{  function gluProject */
+SWIGEXPORT void _gluProject (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble *arg4 = (GLdouble *) 0 ;
+  GLdouble *arg5 = (GLdouble *) 0 ;
+  GLint *arg6 = (GLint *) 0 ;
+  GLdouble *arg7 = (GLdouble *) 0 ;
+  GLdouble *arg8 = (GLdouble *) 0 ;
+  GLdouble *arg9 = (GLdouble *) 0 ;
+  GLint result;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble *) occ_args[3]; 
+  }{
+    arg5 = (GLdouble *) occ_args[5]; 
+  }{
+    arg6 = (GLint *) occ_args[7]; 
+  }{
+    arg7 = (GLdouble *) occ_args[9]; 
+  }{
+    arg8 = (GLdouble *) occ_args[11]; 
+  }{
+    arg9 = (GLdouble *) occ_args[13]; 
+  }result = (GLint)gluProject(arg1,arg2,arg3,(double const *)arg4,(double const *)arg5,(int const *)arg6,arg7,arg8,arg9);
+  {
+    *((GLint *) occ_args[15]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function gluPwlCurve */
+SWIGEXPORT void _gluPwlCurve (word occ_args[]) {
+  GLUnurbs *arg1 = (GLUnurbs *) 0 ;
+  GLint arg2 ;
+  GLfloat *arg3 = (GLfloat *) 0 ;
+  GLint arg4 ;
+  GLenum arg5 ;
+  
+  {
+    arg1 = (GLUnurbs *) occ_args[0]; 
+  }{
+    arg2 = (GLint) occ_args[1]; 
+  }{
+    arg3 = (GLfloat *) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[4]; 
+  }{
+    arg5 = (GLenum) occ_args[5]; 
+  }gluPwlCurve(arg1,arg2,arg3,arg4,arg5);
+}
+
+
+/*}}}*/
+/*{{{  function gluQuadricDrawStyle */
+SWIGEXPORT void _gluQuadricDrawStyle (word occ_args[]) {
+  GLUquadric *arg1 = (GLUquadric *) 0 ;
+  GLenum arg2 ;
+  
+  {
+    arg1 = (GLUquadric *) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }gluQuadricDrawStyle(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function gluQuadricNormals */
+SWIGEXPORT void _gluQuadricNormals (word occ_args[]) {
+  GLUquadric *arg1 = (GLUquadric *) 0 ;
+  GLenum arg2 ;
+  
+  {
+    arg1 = (GLUquadric *) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }gluQuadricNormals(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function gluQuadricOrientation */
+SWIGEXPORT void _gluQuadricOrientation (word occ_args[]) {
+  GLUquadric *arg1 = (GLUquadric *) 0 ;
+  GLenum arg2 ;
+  
+  {
+    arg1 = (GLUquadric *) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }gluQuadricOrientation(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function gluQuadricTexture */
+SWIGEXPORT void _gluQuadricTexture (word occ_args[]) {
+  GLUquadric *arg1 = (GLUquadric *) 0 ;
+  GLboolean arg2 ;
+  
+  {
+    arg1 = (GLUquadric *) occ_args[0]; 
+  }{
+    arg2 = (GLboolean) occ_args[1]; 
+  }gluQuadricTexture(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function gluScaleImage */
+SWIGEXPORT void _gluScaleImage (word occ_args[]) {
+  GLenum arg1 ;
+  GLsizei arg2 ;
+  GLsizei arg3 ;
+  GLenum arg4 ;
+  void *arg5 = (void *) 0 ;
+  GLsizei arg6 ;
+  GLsizei arg7 ;
+  GLenum arg8 ;
+  GLvoid *arg9 = (GLvoid *) 0 ;
+  GLint result;
+  
+  {
+    arg1 = (GLenum) occ_args[0]; 
+  }{
+    arg2 = (GLsizei) occ_args[1]; 
+  }{
+    arg3 = (GLsizei) occ_args[2]; 
+  }{
+    arg4 = (GLenum) occ_args[3]; 
+  }{
+    arg5 = (void *) occ_args[4]; 
+  }{
+    arg6 = (GLsizei) occ_args[5]; 
+  }{
+    arg7 = (GLsizei) occ_args[6]; 
+  }{
+    arg8 = (GLenum) occ_args[7]; 
+  }{
+    arg9 = (GLvoid *) occ_args[8]; 
+  }result = (GLint)gluScaleImage(arg1,arg2,arg3,arg4,(void const *)arg5,arg6,arg7,arg8,arg9);
+  {
+    *((GLint *) occ_args[9]) = result; 
+  }
+}
+
+
+/*}}}*/
+/*{{{  function gluSphere */
+SWIGEXPORT void _gluSphere (word occ_args[]) {
+  GLUquadric *arg1 = (GLUquadric *) 0 ;
+  GLdouble arg2 ;
+  GLint arg3 ;
+  GLint arg4 ;
+  
+  {
+    arg1 = (GLUquadric *) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLint) occ_args[2]; 
+  }{
+    arg4 = (GLint) occ_args[3]; 
+  }gluSphere(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function gluTessBeginContour */
+SWIGEXPORT void _gluTessBeginContour (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }gluTessBeginContour(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluTessBeginPolygon */
+SWIGEXPORT void _gluTessBeginPolygon (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  GLvoid *arg2 = (GLvoid *) 0 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }{
+    arg2 = (GLvoid *) occ_args[1]; 
+  }gluTessBeginPolygon(arg1,arg2);
+}
+
+
+/*}}}*/
+/*{{{  function gluTessEndContour */
+SWIGEXPORT void _gluTessEndContour (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }gluTessEndContour(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluTessEndPolygon */
+SWIGEXPORT void _gluTessEndPolygon (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }gluTessEndPolygon(arg1);
+}
+
+
+/*}}}*/
+/*{{{  function gluTessNormal */
+SWIGEXPORT void _gluTessNormal (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble arg4 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble) occ_args[3]; 
+  }gluTessNormal(arg1,arg2,arg3,arg4);
+}
+
+
+/*}}}*/
+/*{{{  function gluTessProperty */
+SWIGEXPORT void _gluTessProperty (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  GLenum arg2 ;
+  GLdouble arg3 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }{
+    arg2 = (GLenum) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }gluTessProperty(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function gluTessVertex */
+SWIGEXPORT void _gluTessVertex (word occ_args[]) {
+  GLUtesselator *arg1 = (GLUtesselator *) 0 ;
+  GLdouble *arg2 = (GLdouble *) 0 ;
+  GLvoid *arg3 = (GLvoid *) 0 ;
+  
+  {
+    arg1 = (GLUtesselator *) occ_args[0]; 
+  }{
+    arg2 = (GLdouble *) occ_args[1]; 
+  }{
+    arg3 = (GLvoid *) occ_args[3]; 
+  }gluTessVertex(arg1,arg2,arg3);
+}
+
+
+/*}}}*/
+/*{{{  function gluUnProject */
+SWIGEXPORT void _gluUnProject (word occ_args[]) {
+  GLdouble arg1 ;
+  GLdouble arg2 ;
+  GLdouble arg3 ;
+  GLdouble *arg4 = (GLdouble *) 0 ;
+  GLdouble *arg5 = (GLdouble *) 0 ;
+  GLint *arg6 = (GLint *) 0 ;
+  GLdouble *arg7 = (GLdouble *) 0 ;
+  GLdouble *arg8 = (GLdouble *) 0 ;
+  GLdouble *arg9 = (GLdouble *) 0 ;
+  GLint result;
+  
+  {
+    arg1 = (GLdouble) occ_args[0]; 
+  }{
+    arg2 = (GLdouble) occ_args[1]; 
+  }{
+    arg3 = (GLdouble) occ_args[2]; 
+  }{
+    arg4 = (GLdouble *) occ_args[3]; 
+  }{
+    arg5 = (GLdouble *) occ_args[5]; 
+  }{
+    arg6 = (GLint *) occ_args[7]; 
+  }{
+    arg7 = (GLdouble *) occ_args[9]; 
+  }{
+    arg8 = (GLdouble *) occ_args[11]; 
+  }{
+    arg9 = (GLdouble *) occ_args[13]; 
+  }result = (GLint)gluUnProject(arg1,arg2,arg3,(double const *)arg4,(double const *)arg5,(int const *)arg6,arg7,arg8,arg9);
+  {
+    *((GLint *) occ_args[15]) = result; 
+  }
+}
+
+
+/*}}}*/
