@@ -156,26 +156,35 @@ $GRAPH = {
 	'FPCHKERR'	=> { },
 	# Floating Point
 	'FPLDNLDBI'	=> { 'in' => 2, 'fout' => 1,
-			'generator' => \&gen_fpldnldbi },
-	'FPSTNLDB'	=> { 'in' => 1, 'fin' => 1 },
-	'FPLDNLSNI'	=> { 'in' => 2, 'fout' => 1 },
+			'generator' => \&gen_fpldnl },
+	'FPLDNLSNI'	=> { 'in' => 2, 'fout' => 1,
+			'generator' => \&gen_fpldnl },
+	'FPLDNLDB'	=> { 'in' => 1, 'fout' => 1,
+			'generator' => \&gen_fpldnl },
+	'FPLDNLSN'	=> { 'in' => 1, 'fout' => 1,
+			'generator' => \&gen_fpldnl },
+	'FPSTNLDB'	=> { 'in' => 1, 'fin' => 1,
+			'generator' => \&gen_fpstnl },
+	'FPSTNLSN'	=> { 'in' => 1, 'fin' => 1,
+			'generator' => \&gen_fpstnl },
+	'FPSTNLI32'	=> { 'in' => 1, 'fin' => 1,
+			'generator' => \&gen_fpstnl },
+	'FPI32TOR32'	=> { 'in' => 1, 'fout' => 1,
+			'generator' => \&gen_fpi32to,
+	'FPI32TOR64'	=> { 'in' => 1, 'fout' => 1 },
+			'generator' => \&gen_fpi32to },
+	'FPB32TOR64'	=> { 'in' => 1, 'fout' => 1,
+			'generator' => \&gen_fpi32to },
+	'FPRTOI32'	=> { 'fin' => 1, 'fout' => 1 },
 	'FPADD'		=> { 'fin' => 2, 'fout' => 1 },
-	'FPSTNLSN'	=> { 'in' => 1, 'fin' => 1 },
 	'FPSUB'		=> { 'fin' => 2, 'fout' => 1 },
-	'FPLDNLDB'	=> { 'in' => 1, 'fout' => 1 },
 	'FPMUL'		=> { 'fin' => 2, 'fout' => 1 },
 	'FPDIV'		=> { 'fin' => 2, 'fout' => 1 },
-	'FPLDNLSN'	=> { 'in' => 1, 'fout' => 1 },
 	'FPNAN'		=> { 'fin' => 1, 'fout' => 1, 'out' => 1 },
 	'FPORDERED'	=> { 'fin' => 2, 'fout' => 2, 'out' => 1 },
 	'FPNOTFINITE'	=> { 'fin' => 1, 'fout' => 1, 'out' => 1 },
 	'FPGT'		=> { 'fin' => 2, 'out' => 1 },
 	'FPEQ'		=> { 'fin' => 2, 'out' => 1 },
-	'FPI32TOR32'	=> { 'in' => 1, 'fout' => 1 },
-	'FPI32TOR64'	=> { 'in' => 1, 'fout' => 1 },
-	'FPB32TOR64'	=> { 'in' => 1, 'fout' => 1 },
-	'FPRTOI32'	=> { 'fin' => 1, 'fout' => 1 },
-	'FPSTNLI32'	=> { 'in' => 1, 'fin' => 1 },
 	'FPLDZEROSN'	=> { 'fout' => 1 },
 	'FPLDZERODB'	=> { 'fout' => 1 },
 	'FPINT'		=> { 'fin' => 1, 'fout' => 1 },
@@ -898,6 +907,12 @@ sub symbol_to_proc_name ($$) {
 sub int_type {
 	my $self = shift;
 	return 'i32'; # FIXME:
+}
+
+# virtual type
+sub uint_type {
+	my $self = shift;
+	return 'uint';
 }
 
 sub long_type {
@@ -2409,8 +2424,8 @@ sub gen_lshift ($$$$) {
 	);
 }
 
-sub numeric_conversion ($$$$$) {
-	my ($self, $src_type, $src, $dst_type, $dst) = @_;
+sub numeric_conversion {
+	my ($self, $src_type, $src, $dst_type, $dst, $rounding) = @_;
 	if ($src_type ne $dst_type) {
 		my $src_float = $src_type eq $self->fp_single_type
 			||	$src_type eq $self->fp_double_type
@@ -2418,53 +2433,151 @@ sub numeric_conversion ($$$$$) {
 		my $dst_float = $dst_type eq $self->fp_single_type
 			||	$dst_type eq $self->fp_double_type
 			||	$dst_type eq $self->float_type;
-		my $op;
+		my (@asm, $op);
 
 		if ($src_float && $dst_float) {
 			$op = 	$self->float_length ($src_type) < $self->float_length ($dst_type) 
 				? 'fpext' : 'fptrunc'
 		} elsif ($src_float) {
+			$rounding = 'nearest' if !$rounding;
+			if ($rounding eq 'nearest') {
+				my $tmp = $self->tmp_reg ();
+				push (@asm, sprintf ('%%%s = add %s %%%s, 0.5',
+					$tmp, $src_type, $src
+				));
+				$src = $tmp;
+			}
 			$op = 'fptosi';
 		} elsif ($dst_float) {
-			$op = 'sitofp';
+			if ($src_type eq $self->uint_type) {
+				$src_type 	= $self->int_type;
+				$op		= 'uitofp';
+			} else {
+				$op 		= 'sitofp';
+			}
 		} else {
 			$op = 	$self->int_length ($src_type) < $self->int_length ($dst_type) 
 				? 'sext' : 'trunc'
 		}
 		
-		return sprintf ('%%%s = fpext %s %%%s to %s',
-			$dst, $src_type, $src, $dst_type
+		return (
+			@asm,
+			sprintf ('%%%s = fpext %s %%%s to %s',
+				$dst, $src_type, $src, $dst_type
+			)
 		);
 	} else {
 		return $self->single_assignment ($src_type, $src, $dst);
 	}
 }
 
-sub gen_fpldnldbi ($$$$) {
+sub gen_fpldnl ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $type	= $inst->{'name'} =~ /SN/ ? 
+		$self->fp_single_type : $self->fp_double_type;
+	my $d_ptr 	= $self->tmp_reg ();
+	my $d_val	= $self->tmp_reg ();
+	my @asm;
+
+	push (@asm, sprintf ('%%%s = inttoptr %s %%%s to %s*',
+		$d_ptr, 
+		$self->int_type, $inst->{'in'}->[0],
+		$type
+	));
+	if ($inst->{'name'} =~ /I$/) {
+		my $d_ptr_tmp 	= $d_ptr;
+		$d_ptr 		= $self->tmp_reg ();
+		push (@asm, sprintf ('%%%s = getelementptr %s* %%%s, %s %%%s',
+			$d_ptr,
+			$type, $d_ptr_tmp,
+			$self->int_type, $inst->{'in'}->[1]
+		));
+	};
+
+	return (
+		@asm,
+		sprintf ('%%%s = load %s* %%%s',
+			$d_val,
+			$type, $d_ptr
+		),
+		$self->numeric_conversion (
+			$type, $d_val, 
+			$self->float_type, $inst->{'fout'}->[0],
+			$inst->{'rounding'}
+		)
+	);
+}
+
+sub gen_fpstnl ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $d_ptr 	= $self->tmp_reg ();
-	my $d_ptr_idxd 	= $self->tmp_reg ();
 	my $d_val	= $self->tmp_reg ();
+	my $type;
+
+	if ($inst->{'name'} =~ /SN/) {
+		$type = $self->fp_single_type;
+	} elsif ($inst->{'name'} =~ /I32/) {
+		$type = $self->int_type;
+	} else {
+		$type = $self->fp_double_type;
+	}
+
 	return (
+		$self->numeric_conversion (
+			$self->float_type, $inst->{'fin'}->[0], 
+			$type, $d_val,
+			$inst->{'rounding'}
+		),
 		sprintf ('%%%s = inttoptr %s %%%s to %s*',
 			$d_ptr, 
 			$self->int_type, $inst->{'in'}->[0],
-			$self->fp_double_type
+			$type
 		),
-		sprintf ('%%%s = getelementptr %s* %%%s, %s %%%s',
-			$d_ptr_idxd,
-			$self->fp_double_type, $d_ptr,
-			$self->int_type, $inst->{'in'}->[1]
+		sprintf ('store %s %%%s, %s* %%%s',
+			$type, $d_val, 
+			$type, $d_ptr
 		),
-		sprintf ('%%%s = load %s* %%%s',
-			$d_val,
-			$self->fp_double_type, $d_ptr_idxd
+	);
+}
+
+sub gen_fpi32to ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $name 	= $inst->{'name'};
+	my $src_type 	= $name =~ /b32/ ? 
+		$self->uint_type : $self->int_type;
+	my $dst_type 	= $name =~ /r32/ ? 
+		$self->fp_single_type : $self->fp_double_type;
+	my $int_val 	= $self->tmp_reg ();
+	my $fp_val	= $self->tmp_reg ();
+	return (
+		$self->gen_ldnl ($self, $proc, $label, {
+			'in' 	=> $inst->{'in'},
+			'out' 	=> [ $int_val ],
+			'arg'	=> 0
+		}),
+		$self->numeric_conversion (
+			$src_type, $int_val,
+			$dst_type, $fp_val,
+			$inst->{'rounding'}
 		),
 		$self->numeric_conversion (
-			$self->fp_double_type, $d_val, 
-			$self->float_type, $inst->{'out'}->[0]
+			$dst_type, $fp_val,
+			$self->float_type, $inst->{'fout'}->[0],
+			$inst->{'rounding'}
 		)
 	);
+}
+
+sub gen_fprtoi32 ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+}
+
+sub gen_fpr32tor64 ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+}
+
+sub gen_fpr64tor32 ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
 }
 
 sub format_lines (@) {
