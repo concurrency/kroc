@@ -173,8 +173,8 @@ $GRAPH = {
 	'FPSTNLI32'	=> { 'in' => 1, 'fin' => 1,
 			'generator' => \&gen_fpstnl },
 	'FPI32TOR32'	=> { 'in' => 1, 'fout' => 1,
-			'generator' => \&gen_fpi32to,
-	'FPI32TOR64'	=> { 'in' => 1, 'fout' => 1 },
+			'generator' => \&gen_fpi32to },
+	'FPI32TOR64'	=> { 'in' => 1, 'fout' => 1,
 			'generator' => \&gen_fpi32to },
 	'FPB32TOR64'	=> { 'in' => 1, 'fout' => 1,
 			'generator' => \&gen_fpi32to },
@@ -1024,6 +1024,11 @@ sub float_type {
 	return 'double';
 }
 
+sub is_float_type {
+	my ($self, $type) = @_;
+	return ($type =~ /^(float|double|fp128)$/) ? 1 : 0;
+}
+
 sub intrinsic_type ($$) {
 	my ($self, $type) = @_;
 	if ($type eq 'float') {
@@ -1683,8 +1688,13 @@ sub _gen_ldnlp ($@) {
 
 sub gen_ldnlp ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	my ($reg, @asm) = $self->_gen_ldnlp ($inst, $inst->{'out'}->[0]);
-	return @asm;
+	my ($reg, @asm) = $self->_gen_ldnlp ($inst);
+	my $to_int = sprintf ('%%%s = ptrtoint %s* %%%s to %s',
+		$inst->{'out'}->[0],
+		$self->int_type, $reg,
+		$self->int_type
+	);
+	return (@asm, $to_int);
 }
 
 sub gen_ldnl ($$$$) {
@@ -2506,15 +2516,12 @@ sub gen_lshift ($$$$) {
 
 sub numeric_conversion {
 	my ($self, $src_type, $src, $dst_type, $dst, $rounding) = @_;
-	if ($src_type ne $dst_type) {
-		my $src_float = $src_type eq $self->fp_single_type
-			||	$src_type eq $self->fp_double_type
-			||	$src_type eq $self->float_type;
-		my $dst_float = $dst_type eq $self->fp_single_type
-			||	$dst_type eq $self->fp_double_type
-			||	$dst_type eq $self->float_type;
-		my (@asm, $op);
 
+	if ($src_type ne $dst_type) {
+		my $src_float = $self->is_float_type ($src_type);
+		my $dst_float = $self->is_float_type ($dst_type);
+		my (@asm, $op);
+		
 		if ($src_float && $dst_float) {
 			$op = 	$self->float_length ($src_type) < $self->float_length ($dst_type) 
 				? 'fpext' : 'fptrunc'
@@ -2542,8 +2549,8 @@ sub numeric_conversion {
 		
 		return (
 			@asm,
-			sprintf ('%%%s = fpext %s %%%s to %s',
-				$dst, $src_type, $src, $dst_type
+			sprintf ('%%%s = %s %s %%%s to %s',
+				$dst, $op, $src_type, $src, $dst_type
 			)
 		);
 	} else {
@@ -2630,7 +2637,7 @@ sub gen_fpi32to ($$$$) {
 	my $int_val 	= $self->tmp_reg ();
 	my $fp_val	= $self->tmp_reg ();
 	return (
-		$self->gen_ldnl ($self, $proc, $label, {
+		$self->gen_ldnl ($proc, $label, {
 			'in' 	=> $inst->{'in'},
 			'out' 	=> [ $int_val ],
 			'arg'	=> 0
@@ -2829,6 +2836,8 @@ sub gen_fpnotfinite ($$$$) {
 				$new_cmp, $cmp, $this_cmp
 			));
 			$cmp = $new_cmp;
+		} else {
+			$cmp = $this_cmp;
 		}
 	}
 	push (@asm, sprintf ('%%%s = zext i1 %%%s to %s',
@@ -3063,6 +3072,7 @@ sub generate_proc ($$) {
 				push (@asm, format_lines (@lines));
 			} else {
 				# NOP unknown instructions for debugging
+				$self->message (1, "Generating NOP for $name");
 				push (@asm, '; NOP');
 				foreach my $reg (@$out) {
 					push (@asm, sprintf ('%%%s = bitcast %s 0 to %s',
