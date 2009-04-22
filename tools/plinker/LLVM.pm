@@ -153,7 +153,10 @@ $GRAPH = {
 	# Errors
 	'SETERR'	=> {
 			'generator' => \&gen_seterr },
-	'FPCHKERR'	=> { },
+	'FPCHKERR'	=> { 
+			'generator' => \&gen_nop },
+	'FPCHKI32'	=> { 'fin' => 1, 'fout' => 1 },
+	'FPCHKI64'	=> { 'fin' => 1, 'fout' => 1 },
 	# Floating Point
 	'FPLDNLDBI'	=> { 'in' => 2, 'fout' => 1,
 			'generator' => \&gen_fpldnl },
@@ -195,11 +198,16 @@ $GRAPH = {
 			'generator' => \&gen_fparithop },
 	'FPREM'		=> { 'fin' => 2, 'fout' => 1,
 			'generator' => \&gen_fparithop },
-	'FPNAN'		=> { 'fin' => 1, 'fout' => 1, 'out' => 1 },
-	'FPORDERED'	=> { 'fin' => 2, 'fout' => 2, 'out' => 1 },
-	'FPNOTFINITE'	=> { 'fin' => 1, 'fout' => 1, 'out' => 1 },
-	'FPGT'		=> { 'fin' => 2, 'out' => 1 },
-	'FPEQ'		=> { 'fin' => 2, 'out' => 1 },
+	'FPNAN'		=> { 'fin' => 1, 'fout' => 1, 'out' => 1,
+			'generator' => \&gen_fpnan },
+	'FPNOTFINITE'	=> { 'fin' => 1, 'fout' => 1, 'out' => 1,
+			'generator' => \&gen_fpnotfinite },
+	'FPORDERED'	=> { 'fin' => 2, 'fout' => 2, 'out' => 1,
+			'generator' => \&gen_fpordered },
+	'FPGT'		=> { 'fin' => 2, 'out' => 1,
+			'generator' => \&gen_fpcmp },
+	'FPEQ'		=> { 'fin' => 2, 'out' => 1,
+			'generator' => \&gen_fpcmp },
 	'FPINT'		=> { 'fin' => 1, 'fout' => 1,
 			'generator' => \&gen_fpint },
 	'FPDUP'		=> { 'fin' => 1, 'fout' => 2,
@@ -898,6 +906,29 @@ sub build_label_types ($$) {
 	}
 }
 
+sub define_rounding ($$) {
+	my ($self, $labels) = @_;
+	my $mode = 'nearest';
+
+	foreach my $label (@$labels) {
+		foreach my $inst (@{$label->{'inst'}}) {
+			my $name = $inst->{'name'};
+			if ($name eq 'FPRZ') {
+				$mode = 'zero';
+			} elsif ($name eq 'FPRM') {
+				$mode = 'nearest';
+			} elsif ($name eq 'FPRP') {
+				$mode = '+infinity';
+			} elsif ($name eq 'FPRN') {
+				$mode = '-infinity';
+			} elsif ($name =~ /^FP/) {
+				$inst->{'rounding'} = $mode;
+				$mode = 'nearest';
+			}
+		}
+	}
+}
+
 sub output_regs (@) {
 	my (@regs) = @_;
 	return if !@regs;
@@ -1026,6 +1057,18 @@ sub func_type {
 sub workspace_type {
 	my $self = shift;
 	return $self->int_type . '*';
+}
+
+sub infinity {
+	my $self = shift;
+	my $type = shift || $self->float_type;
+	if ($type eq 'float') {
+		return ('0xff800000', '0x7f800000');
+	} elsif ($type eq 'double') {
+		return ('0xfff0000000000000', '0x7ff0000000000000');
+	} else {
+		die "infinity not defined for type $type";
+	}
 }
 
 sub reset_tmp ($) {
@@ -2740,6 +2783,100 @@ sub gen_fpabs ($$$$) {
 	);
 }
 
+sub gen_fpnan ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $cmp = $self->tmp_reg ();
+	# FIXME: this is probably not complete
+	return (
+		$self->single_assignment (
+			$self->float_type, 
+			$inst->{'fin'}->[0], $inst->{'fout'}->[0]
+		),
+		sprintf ('%%%s = fcmp ord %s %%%s, 0.0',
+			$cmp,
+			$self->float_type, $inst->{'fout'}->[0]
+		),
+		sprintf ('%%%s = zext i1 %%%s to %s',
+			$inst->{'out'}->[0],
+			$cmp,
+			$self->int_type
+		)
+	);
+}
+
+sub gen_fpnotfinite ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my @infinity 	= $self->infinity;
+	my $val 	= $inst->{'fout'}->[0];
+	my (@asm, $cmp);
+	push (@asm, $self->single_assignment (
+		$self->float_type,
+		$inst->{'fin'}->[0],
+		$inst->{'fout'}->[0]
+	));
+	foreach my $infinity (@infinity) {
+		my $this_cmp = $self->tmp_reg ();
+		push (@asm, sprintf ('%%%s = fcmp ueq %s %%%s, %s',
+			$this_cmp, $self->float_type, $val, $infinity
+		));
+		if ($cmp) {
+			my $new_cmp = $self->tmp_reg ();
+			push (@asm, sprintf ('%%%s = or i1 %%%s, %%%s',
+				$new_cmp, $cmp, $this_cmp
+			));
+			$cmp = $new_cmp;
+		}
+	}
+	push (@asm, sprintf ('%%%s = zext i1 %%%s to %s',
+		$inst->{'out'}->[0],
+		$cmp,
+		$self->int_type
+	));
+	return @asm;
+}
+
+sub gen_fpordered ($$$$) { 
+	my ($self, $proc, $label, $inst) = @_;
+	my $cmp = $self->tmp_reg ();
+	return (
+		$self->single_assignment (
+			$self->float_type, 
+			$inst->{'fin'}->[0], $inst->{'fout'}->[0]
+		),
+		$self->single_assignment (
+			$self->float_type, 
+			$inst->{'fin'}->[1], $inst->{'fout'}->[1]
+		),
+		sprintf ('%%%s = fcmp ord %s %%%s, %%%s',
+			$cmp,
+			$self->float_type, @{$inst->{'fout'}}
+		),
+		sprintf ('%%%s = zext i1 %%%s to %s',
+			$inst->{'out'}->[0],
+			$cmp,
+			$self->int_type
+		)
+	);
+}
+
+sub gen_fpcmp ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $op = $inst->{'name'} =~ /gt/ ? 'ogt' : 'oeq';
+	my $cmp = $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = fcmp %s %s %%%s, %%%s',
+			$cmp,
+			$op, $self->float_type, 
+			$inst->{'fin'}->[1], $inst->{'fin'}->[0]
+		),
+		sprintf ('%%%s = zext i1 %%%s to %s',
+			$inst->{'out'}->[0],
+			$cmp,
+			$self->int_type
+		)
+	);
+}
+
 sub format_lines (@) {
 	my @lines = @_;
 	my @asm;
@@ -2982,6 +3119,7 @@ sub code_proc ($$) {
 	$self->define_registers ($proc->{'labels'});
 	#$self->build_phi_nodes ($proc->{'labels'});
 	$self->build_label_types ($proc->{'labels'});
+	$self->define_rounding ($proc->{'labels'});
 	
 	my $comments = "; " . $proc->{'symbol'};
 	return ($comments, $self->generate_proc ($proc));
