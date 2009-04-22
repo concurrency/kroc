@@ -4332,7 +4332,7 @@ SWIGEXPORT void _SDL_AudioCVT_rate_incr_set (word occ_args[]) {
   {
     arg1 = (SDL_AudioCVT *) occ_args[0]; 
   }{
-    arg2 = (double) occ_args[1]; 
+    arg2 = * ((double *) occ_args[1]); 
   }if (arg1) (arg1)->rate_incr = arg2;
   
 }
@@ -4482,7 +4482,7 @@ SWIGEXPORT void _SDL_AudioCVT_len_ratio_set (word occ_args[]) {
   {
     arg1 = (SDL_AudioCVT *) occ_args[0]; 
   }{
-    arg2 = (double) occ_args[1]; 
+    arg2 = * ((double *) occ_args[1]); 
   }if (arg1) (arg1)->len_ratio = arg2;
   
 }
