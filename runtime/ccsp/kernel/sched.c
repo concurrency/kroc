@@ -5255,10 +5255,7 @@ static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, word return_address,
 		temp = atw_swap (channel_address, ptr);
 		if (temp != NotProcess_p) {
 			atw_set (channel_address, temp);
-			if (jump) {
-				atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
-				K_ZERO_OUT_JRET ();
-			} else if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
+			if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
 				atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
 				if (set_address) {
 					atw_set (&(Wptr[Temp]), return_address);
@@ -5269,10 +5266,7 @@ static INLINE bool kernel_enbc (word *Wptr, sched_t *sched, word return_address,
 			atw_inc (&(Wptr[State]));
 		}
 	} else if (temp != ptr) {
-		if (jump) {
-			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
-			K_ZERO_OUT_JRET ();
-		} else if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
+		if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
 			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
 			if (set_address) {
 				atw_set (&(Wptr[Temp]), return_address);
@@ -5310,60 +5304,6 @@ K_CALL_DEFINE_X_2_1 (enbc)
 	K_ONE_OUT (true);
 }
 /*}}}*/
-/*{{{  void kernel_Y_enbc2 (void)*/
-/*
- *	enable channel (2 param, with ready address)
- *
- *	@SYMBOL:	Y_enbc2
- *	@INPUT:		2
- *	@OUTPUT: 	0
- *	@CALL: 		K_ENBC2
- *	@PRIO:		80
- */
-K_CALL_DEFINE_Y_2_0 (enbc2)
-{
-	K_CALL_Y_HEADER;
-	unsigned int process_address;
-	word **channel_address;
-
-	K_CALL_PARAMS_2 (process_address, channel_address);
-	ENTRY_TRACE (Y_enbc2, "%p (ready = %d), %p", channel_address, (*channel_address != NotProcess_p) && (*channel_address != Wptr), (void *)process_address);
-
-	kernel_enbc (Wptr, sched, process_address, channel_address, true, false);
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-#if 0 /* FIXME: jump and output */
-/*{{{  void kernel_Y_enbc3 (void)*/
-/*
- *	enable channel (with ready address)
- *
- *	@SYMBOL:	Y_enbc3
- *	@INPUT:		3
- *	@OUTPUT: 	1
- *	@CALL: 		K_ENBC3
- *	@PRIO:		80
- */
-K_CALL_DEFINE_Y_3_1 (enbc3)
-{
-	K_CALL_Y_HEADER;
-	unsigned int process_address;
-	word **channel_address, guard;
-
-	K_CALL_PARAMS_3 (process_address, guard, channel_address);
-	ENTRY_TRACE (Y_enbc3, "%d, %p (ready = %d), %p", guard, channel_address, guard && (*channel_address != NotProcess_p) && (*channel_address != Wptr), (void *)process_address);
-
-	if (!guard) {
-		K_ONE_OUT (false);
-	}
-	
-	kernel_enbc (Wptr, sched, process_address, channel_address, true, false);
-
-	K_ONE_OUT (true);
-}
-/*}}}*/
-#endif
 /*{{{  void kernel_X_cenbc (void)*/
 /*
  *	CIF enable channel (2 param)
@@ -5388,11 +5328,9 @@ K_CALL_DEFINE_X_2_1 (cenbc)
 /*
  *	enable skip guard
  */
-static INLINE void kernel_enbs (word *Wptr, unsigned int return_address, bool jump, bool set_address)
+static INLINE void kernel_enbs (word *Wptr, unsigned int return_address, bool set_address)
 {
-	if (jump) {
-		atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
-	} else if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
+	if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
 		atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
 		if (set_address) {
 			atw_set (&(Wptr[Temp]), return_address);
@@ -5421,65 +5359,11 @@ K_CALL_DEFINE_X_1_1 (enbs)
 		K_ONE_OUT (false);
 	}
 	
-	kernel_enbs (Wptr, 0, false, false);
+	kernel_enbs (Wptr, 0, false);
 
 	K_ONE_OUT (true);
 }
 /*}}}*/
-/*{{{  void kernel_Y_enbs2 (void)*/
-/*
- *	enable skip guard (1 param, with ready address)
- *
- *	@SYMBOL:	Y_enbs2
- *	@INPUT:		1
- *	@OUTPUT: 	0
- *	@CALL: 		K_ENBS2
- *	@PRIO:		60
- */
-K_CALL_DEFINE_Y_1_0 (enbs2)
-{
-	K_CALL_Y_HEADER;
-	unsigned int process_address;
-
-	K_CALL_PARAMS_1 (process_address);
-	ENTRY_TRACE (X_enbs2, "%p", (void *) process_address);
-
-	kernel_enbs (Wptr, 0, true, false);
-
-	K_ZERO_OUT_JUMP (process_address);
-}
-/*}}}*/
-#if 0 /* FIXME: jump and output */
-/*{{{  void kernel_Y_enbs3 (void)*/
-/*
- *	enable skip guard (with ready address)
- *
- *	@SYMBOL:	Y_enbs3
- *	@INPUT:		2
- *	@OUTPUT: 	1
- *	@CALL: 		K_ENBS3
- *	@PRIO:		60
- */
-K_CALL_DEFINE_Y_2_1 (enbs3)
-{
-	K_CALL_Y_HEADER;
-	unsigned int process_address;
-	word guard;
-
-	K_CALL_PARAMS_2 (process_address, guard);
-	ENTRY_TRACE (Y_enbs3, "%d %p", process_address, guard);
-
-	if (!guard) {
-		K_ONE_OUT (false);
-	}
-
-	kernel_enbs (Wptr, 0, true, false);
-
-	/* FIXME: ... */
-	K_ONE_OUT_JUMP (process_address, true);
-}
-/*}}}*/
-#endif
 /*{{{  void kernel_X_cenbs (void)*/
 /*
  *	CIF enable skip guard
@@ -5497,7 +5381,7 @@ K_CALL_DEFINE_X_1_1 (cenbs)
 	K_CALL_PARAMS_1 (id);
 	ENTRY_TRACE (X_cenbs, "%d", id);
 
-	kernel_enbs (Wptr, id, false, true);
+	kernel_enbs (Wptr, id, true);
 
 	K_ONE_OUT (true);
 }
@@ -5513,10 +5397,7 @@ static INLINE bool kernel_enbt (word *Wptr, sched_t *sched, word return_address,
 	if ((jump || check) && !Time_AFTER (timeout, now)) {
 		Wptr[TLink] = TimeSet_p;
 		SetTimeField (Wptr, now);
-		if (jump) {
-			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
-			K_ZERO_OUT_JRET ();
-		} else if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
+		if (atw_val (&(Wptr[State])) & ALT_NOT_READY) {
 			atw_and (&(Wptr[State]), ~(ALT_NOT_READY | ALT_ENABLING));
 			if (set_address) {
 				atw_set (&(Wptr[Temp]), return_address);
@@ -5560,61 +5441,6 @@ K_CALL_DEFINE_X_2_1 (enbt)
 	K_ONE_OUT (true);
 }
 /*}}}*/
-/*{{{  void kernel_Y_enbt2 (void)*/
-/*
- *	enable timer (with ready address)
- *
- *	@SYMBOL:	Y_enbt2
- *	@INPUT:		2
- *	@OUTPUT: 	0
- *	@CALL: 		K_ENBT2
- *	@PRIO:		70
- */
-K_CALL_DEFINE_Y_2_0 (enbt2)
-{
-	K_CALL_Y_HEADER;
-	unsigned int process_address;
-	Time timeout;
-
-	K_CALL_PARAMS_2 (process_address, timeout);
-	ENTRY_TRACE (Y_enbt2, "%d, %p", timeout, (void *)process_address);
-
-	kernel_enbt (Wptr, sched, process_address, timeout, true, false, false);
-
-	K_ZERO_OUT ();
-}
-/*}}}*/
-#if 0 /* FIXME: jump and output */
-/*{{{  void kernel_Y_enbt3 (void)*/
-/*
- *	enable timer (with ready address)
- *
- *	@SYMBOL:	Y_enbt3
- *	@INPUT:		3
- *	@OUTPUT: 	1
- *	@CALL: 		K_ENBT3
- *	@PRIO:		70
- */
-K_CALL_DEFINE_Y_3_1 (enbt3)
-{
-	K_CALL_Y_HEADER;
-	unsigned int process_address;
-	Time timeout;
-	word guard;
-
-	K_CALL_PARAMS_3 (process_address, guard, timeout);
-	ENTRY_TRACE (Y_enbt3, "%d, %d, %p", guard, timeout, (void *)process_address);
-
-	if (!guard) {
-		K_ONE_OUT (false);
-	}
-	
-	kernel_enbt (Wptr, sched, process_address, timeout, true, false, false);
-
-	K_ONE_OUT (true);
-}
-/*}}}*/
-#endif
 /*{{{  void kernel_X_cenbt (void)*/
 /*
  *	CIF enable timer
