@@ -219,6 +219,8 @@ $GRAPH = {
 			'generator' => \&gen_fpint },
 	'FPDUP'		=> { 'fin' => 1, 'fout' => 2,
 			'generator' => \&gen_dup },
+	'FPPOP'		=> { 'fin' => 1,
+			'generator' => \&gen_nop },
 	'FPREV'		=> { 'fin' => 2, 'fout' => 2,
 			'generator' => \&gen_rev },
 	'FPDIVBY2'	=> { 'fin' => 1, 'fout' => 1,
@@ -590,8 +592,7 @@ sub expand_etc_ops ($) {
 	my ($etc) = @_;
 	my %IGNORE_SPECIAL = (
 		'CONTRJOIN'	=> 1,
-		'CONTRSPLIT'	=> 1,
-		'FPPOP'		=> 1
+		'CONTRSPLIT'	=> 1
 	);
 	my ($labn, $labo) = (0, 0);
 	
@@ -2712,7 +2713,7 @@ sub gen_fpxby2 ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my ($op) = ($inst->{'name'} =~ /FP(.*)BY2/);
 	$op =~ tr/A-Z/a-z/;
-	$op = 'f' . $op;
+	$op = 'f' . $op if $op =~ /(div|rem)/;
 	return sprintf ('%%%s = %s %s %%%s, 2.0',
 		$inst->{'fout'}->[0],
 		$op,
@@ -2723,19 +2724,19 @@ sub gen_fpxby2 ($$$$) {
 
 sub gen_fpsqrt ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	my $i_type 	= $self->instrinsic_type ($self->float_type);
+	my $i_type 	= $self->intrinsic_type ($self->float_type);
 	my $func 	= '@llvm.sqrt.' . $i_type;
 	
 	$self->{'header'}->{$func} = [
-		sprintf ('define %s %s (%s)',
+		sprintf ('declare %s %s (%s)',
 			$self->float_type, $func, $self->float_type
 		)
 	];
 	
 	return sprintf ('%%%s = call %s %s (%s %%%s)',
 		$inst->{'fout'}->[0],
-		$func,
 		$self->float_type,
+		$func,
 		$self->float_type, $inst->{'fin'}->[0]
 	);
 }
@@ -2788,18 +2789,19 @@ sub gen_fpabs ($$$$) {
 
 		$nop_label . ':',
 		$self->single_assignment ($self->float_type, $inst->{'fin'}->[0], $res1),
-		'br label ' . $cont_label,
+		sprintf ('br label %%%s', $cont_label),
 
 		$inv_label . ':',
 		sprintf ('%%%s = sub %s 0.0, %%%s',
 			$res2,
 			$self->float_type, $inst->{'fin'}->[0]
 		),
-		'br label ' . $cont_label,
+		sprintf ('br label %%%s', $cont_label),
 
 		$cont_label . ':',
 		sprintf ('%%%s = phi %s [ %%%s, %%%s ], [ %%%s, %%%s ]',
 			$inst->{'fout'}->[0],
+			$self->float_type,
 			$res1, $nop_label,
 			$res2, $inv_label
 		)
