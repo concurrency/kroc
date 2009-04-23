@@ -79,7 +79,8 @@ $GRAPH = {
 			'generator' => \&gen_wsub },
 	'CSUB0'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_csub0 },
-	'MOVE'		=> { 'in' => 3 },
+	'MOVE'		=> { 'in' => 3,
+			'generator' => \&gen_move },
 	# Constants
 	'LDC'		=> { 'out' => 1, 
 			'generator' => \&gen_ldc },
@@ -132,6 +133,9 @@ $GRAPH = {
 			'generator' => \&gen_norm },
 	'POSTNORMSN'	=> { 'in' => 3, 'out' => 3 },
 	'ROUNDSN'	=> { 'in' => 3, 'out' => 1 },
+	# Shorts and Bytes
+	'WIDENSHORT'	=> { 'in' => 1, 'out' => 1,
+			'generator' => \&gen_widenshort },
 	# Long Arithmetic
 	'XDBLE'		=> { 'in' => 1, 'out' => 2,
 			'generator' => \&gen_xdble },
@@ -156,6 +160,8 @@ $GRAPH = {
 			'generator' => \&gen_seterr },
 	'FPCHKERR'	=> { 
 			'generator' => \&gen_nop },
+	'CWORD'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_cword },
 	'FPCHKI32'	=> { 'fin' => 1, 'fout' => 1 },
 	'FPCHKI64'	=> { 'fin' => 1, 'fout' => 1 },
 	# Floating Point
@@ -962,6 +968,11 @@ sub symbol_to_proc_name ($$) {
 sub int_type {
 	my $self = shift;
 	return 'i32'; # FIXME:
+}
+
+sub short_type {
+	my $self = shift;
+	return 'i16';
 }
 
 # virtual type
@@ -3031,6 +3042,74 @@ sub gen_norm ($$$$) {
 	);
 }
 
+sub gen_move ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $src_ptr = $self->tmp_reg ();
+	my $dst_ptr = $self->tmp_reg ();
+	# FIXME: should this be memmove, not memcpy?
+	return (
+		sprintf ('%%%s = inttoptr %s %%%s to i8*',
+			$src_ptr, $self->int_type, $inst->{'in'}->[2]
+		),
+		sprintf ('%%%s = inttoptr %s %%%s to i8*',
+			$dst_ptr, $self->int_type, $inst->{'in'}->[1]
+		),
+		sprintf ('call void @llvm.memcpy.%s (i8* %%%s, i8* %%%s, %s %%%s, i32 0)',
+			$self->int_type, $dst_ptr, $src_ptr, $self->int_type, $inst->{'in'}->[0]
+		)
+	);
+}
+
+sub gen_widenshort ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $s_val = $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$s_val, $self->int_type, $inst->{'in'}->[0], $self->short_type
+		),
+		sprintf ('%%%s = sext %s %%%s to %s',
+			$inst->{'out'}->[0], $self->short_type, $s_val, $self->int_type
+		)
+	);
+}
+
+sub gen_cword ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $a		= $inst->{'in'}->[0];
+	my $b		= $inst->{'out'}->[0];
+	my $neg_a	= $self->tmp_reg ();
+	my $cmp_0	= $self->tmp_reg ();
+	my $cmp_1	= $self->tmp_reg ();
+	my $error_cond	= $self->tmp_reg ();
+	my $tmp		= $self->tmp_label ();
+	my $error_lab	= $tmp . '_error';
+	my $ok_lab	= $tmp . '_ok';
+	return (
+		$self->single_assignment ($self->int_type, $inst->{'in'}->[1], $b),
+		sprintf ('%%%s = sub %s 0, %%%s',
+			$neg_a, $self->int_type, $a
+		),
+		sprintf ('%%%s = icmp sge %s %%%s, %%%s',
+			$cmp_0, $self->int_type, $b, $a
+		),
+		sprintf ('%%%s = icmp slt %s %%%s, %%%s',
+			$cmp_1, $self->int_type, $b, $neg_a
+		),
+		sprintf ('%%%s = or i1 %%%s, %%%s',
+			$error_cond, $cmp_0, $cmp_1
+		),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$error_cond, $error_lab, $ok_lab
+		),
+
+		$error_lab . ':',
+		$self->_gen_error ($proc, $label, $inst, 'overflow'),
+		sprintf ('br label %%%s', $ok_lab),
+
+		$ok_lab . ':'
+	);
+}
+
 sub format_lines (@) {
 	my @lines = @_;
 	my @asm;
@@ -3285,6 +3364,7 @@ sub intrinsics ($) {
 	my $int = $self->int_type;
 	return (
 		"declare $int \@llvm.ctlz.$int ($int)",
+		"declare void \@llvm.memcpy.$int (i8*, i8*, $int, i32)",
 		"declare { $int, i1 } \@llvm.sadd.with.overflow.$int ($int, $int)",
 		"declare { $int, i1 } \@llvm.uadd.with.overflow.$int ($int, $int)",
 		"declare { $int, i1 } \@llvm.smul.with.overflow.$int ($int, $int)",
