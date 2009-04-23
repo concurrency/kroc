@@ -115,7 +115,7 @@ SWIGEXPORT void _Sound_AudioInfo_format_set (word occ_args[]) {
   {
     arg1 = (Sound_AudioInfo *) occ_args[0]; 
   }{
-    arg2 = (Uint16) occ_args[1]; 
+    arg2 = * ((Uint16 *) &occ_args[1]); 
   }if (arg1) (arg1)->format = arg2;
   
 }
@@ -145,7 +145,7 @@ SWIGEXPORT void _Sound_AudioInfo_channels_set (word occ_args[]) {
   {
     arg1 = (Sound_AudioInfo *) occ_args[0]; 
   }{
-    arg2 = (Uint8) occ_args[1]; 
+    arg2 = * ((Uint8 *) &occ_args[1]); 
   }if (arg1) (arg1)->channels = arg2;
   
 }
@@ -175,7 +175,7 @@ SWIGEXPORT void _Sound_AudioInfo_rate_set (word occ_args[]) {
   {
     arg1 = (Sound_AudioInfo *) occ_args[0]; 
   }{
-    arg2 = (Uint32) occ_args[1]; 
+    arg2 = * ((Uint32 *) &occ_args[1]); 
   }if (arg1) (arg1)->rate = arg2;
   
 }
@@ -485,7 +485,7 @@ SWIGEXPORT void _Sound_Sample_buffer_set (word occ_args[]) {
   {
     arg1 = (Sound_Sample *) occ_args[0]; 
   }{
-    arg2 = (void *) occ_args[1]; 
+    arg2 = * ((void * *) &occ_args[1]); 
   }if (arg1) (arg1)->buffer = arg2;
   
 }
@@ -515,7 +515,7 @@ SWIGEXPORT void _Sound_Sample_buffer_size_set (word occ_args[]) {
   {
     arg1 = (Sound_Sample *) occ_args[0]; 
   }{
-    arg2 = (Uint32) occ_args[1]; 
+    arg2 = * ((Uint32 *) &occ_args[1]); 
   }if (arg1) (arg1)->buffer_size = arg2;
   
 }
@@ -545,7 +545,7 @@ SWIGEXPORT void _Sound_Sample_flags_set (word occ_args[]) {
   {
     arg1 = (Sound_Sample *) occ_args[0]; 
   }{
-    arg2 = (Sound_SampleFlags) occ_args[1]; 
+    arg2 = * ((Sound_SampleFlags *) &occ_args[1]); 
   }if (arg1) (arg1)->flags = arg2;
   
 }
@@ -601,7 +601,7 @@ SWIGEXPORT void _Sound_Version_major_set (word occ_args[]) {
   {
     arg1 = (Sound_Version *) occ_args[0]; 
   }{
-    arg2 = (int) occ_args[1]; 
+    arg2 = * ((int *) &occ_args[1]); 
   }if (arg1) (arg1)->major = arg2;
   
 }
@@ -631,7 +631,7 @@ SWIGEXPORT void _Sound_Version_minor_set (word occ_args[]) {
   {
     arg1 = (Sound_Version *) occ_args[0]; 
   }{
-    arg2 = (int) occ_args[1]; 
+    arg2 = * ((int *) &occ_args[1]); 
   }if (arg1) (arg1)->minor = arg2;
   
 }
@@ -661,7 +661,7 @@ SWIGEXPORT void _Sound_Version_patch_set (word occ_args[]) {
   {
     arg1 = (Sound_Version *) occ_args[0]; 
   }{
-    arg2 = (int) occ_args[1]; 
+    arg2 = * ((int *) &occ_args[1]); 
   }if (arg1) (arg1)->patch = arg2;
   
 }
@@ -789,7 +789,7 @@ SWIGEXPORT void _occ_Sound_GetError (word occ_args[]) {
   {
     arg1 = (char *) occ_args[0]; 
   }{
-    arg2 = (int) occ_args[2]; 
+    arg2 = * ((int *) &occ_args[2]); 
   }result = (int)occ_Sound_GetError(arg1,arg2);
   {
     *((int *) occ_args[3]) = result; 
@@ -820,7 +820,7 @@ SWIGEXPORT void _Sound_NewSample (word occ_args[]) {
   }{
     arg3 = (Sound_AudioInfo *) occ_args[3]; 
   }{
-    arg4 = (Uint32) occ_args[4]; 
+    arg4 = * ((Uint32 *) &occ_args[4]); 
   }result = (Sound_Sample *)Sound_NewSample(arg1,(char const (*))arg2,arg3,arg4);
   {
     *((void **) occ_args[5]) = result; 
@@ -841,7 +841,7 @@ SWIGEXPORT void _Sound_NewSampleFromFile (word occ_args[]) {
   }{
     arg2 = (Sound_AudioInfo *) occ_args[2]; 
   }{
-    arg3 = (Uint32) occ_args[3]; 
+    arg3 = * ((Uint32 *) &occ_args[3]); 
   }result = (Sound_Sample *)Sound_NewSampleFromFile((char const (*))arg1,arg2,arg3);
   {
     *((void **) occ_args[4]) = result; 
@@ -870,7 +870,7 @@ SWIGEXPORT void _Sound_SetBufferSize (word occ_args[]) {
   {
     arg1 = (Sound_Sample *) occ_args[0]; 
   }{
-    arg2 = (Uint32) occ_args[1]; 
+    arg2 = * ((Uint32 *) &occ_args[1]); 
   }result = (int)Sound_SetBufferSize(arg1,arg2);
   {
     *((int *) occ_args[2]) = result; 
@@ -933,7 +933,7 @@ SWIGEXPORT void _Sound_Seek (word occ_args[]) {
   {
     arg1 = (Sound_Sample *) occ_args[0]; 
   }{
-    arg2 = (Uint32) occ_args[1]; 
+    arg2 = * ((Uint32 *) &occ_args[1]); 
   }result = (int)Sound_Seek(arg1,arg2);
   {
     *((int *) occ_args[2]) = result; 
