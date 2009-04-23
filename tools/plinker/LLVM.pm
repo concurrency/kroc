@@ -163,6 +163,8 @@ $GRAPH = {
 			'generator' => \&gen_seterr },
 	'FPCHKERR'	=> { 
 			'generator' => \&gen_nop },
+	'CCNT1'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_ccnt1 },
 	'CWORD'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_cword },
 	'FPCHKI32'	=> { 'fin' => 1, 'fout' => 1,
@@ -249,6 +251,8 @@ $GRAPH = {
 	'FPLDNLMULSN'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1,
 			'generator' => \&gen_fpldnlop },
 	# Kernel
+	'RESCHEDULE'	=> { 'kcall' => 1,
+		'symbol' => 'Y_pause' },
 	'ENDP'		=> { 'kcall' => 1, 'in' => 1,
 		'symbol' => 'Y_endp' },
 	'IN'		=> { 'kcall' => 1, 'in' => 3,
@@ -348,15 +352,28 @@ $GRAPH = {
 		'symbol' => 'Y_taltwt' },
 	'ALTEND'	=> { 'kcall' => 1, 
 		'symbol' => 'Y_altend' },
-	'ENBT'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1 },
-	'ENBT3'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1 },
-	'ENBC'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1 },
-	'ENBC3'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1 },
-	'ENBS'		=> { 'kcall' => 1, 'in' => 1, 'out' => 1 },
-	'ENBS3'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1 },
-	'DISC'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1 },
-	'DIST'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1 },
-	'DISS'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1 },
+	'ENBT'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1,
+		'symbol' => 'X_enbt' },
+	'ENBT3'		=> { 'in' => 3, 'out' => 1,
+		'generator' => \&gen_enb3 },
+	'ENBC'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1,
+		'symbol' => 'X_enbc' },
+	'ENBC3'		=> { 'in' => 3, 'out' => 1,
+		'generator' => \&gen_enb3 },
+	'ENBS'		=> { 'kcall' => 1, 'in' => 1, 'out' => 1,
+		'symbol' => 'X_enbs' },
+	'ENBS3'		=> { 'in' => 2, 'out' => 1,
+		'generator' => \&gen_enb3 },
+	'DISC'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1,
+		'symbol' => 'X_disc' },
+	'NDISC'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1,
+		'symbol' => 'X_ndisc' },
+	'DIST'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1,
+		'symbol' => 'X_dist' },
+	'NDIST'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1,
+		'symbol' => 'X_ndist' },
+	'DISS'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1,
+		'symbol' => 'X_diss' },
 	# External Channels
 	'EXTVRFY' 	=> { 'kcall' => 1, 'in' => 2 },
 	'EXTIN'		=> { 'kcall' => 1, 'in' => 3 },
@@ -826,6 +843,8 @@ sub define_registers ($$) {
 					my $reg = sprintf ('freg_%d', $freg_n++);
 					$label->{'fin'} = [ $reg ];
 					@fstack 	= ( $reg );
+				} elsif ($name eq '.TSDEPTH') {
+					@stack = () if $arg == 0;
 				}
 				next;
 			}
@@ -1287,7 +1306,7 @@ sub gen_call ($$$$) {
 	my $tail_call	= 1;
 	my (@asm, @params, $new_wptr);
 	
-	if (exists ($inst->{'fin'})) {
+	if ($inst->{'fin'} && @{$inst->{'fin'}}) {
 		my $msg = "WARNING: floating point stack is not empty at point of call";
 		$self->message (1, $msg);
 		push (@asm, "; $msg");
@@ -1490,7 +1509,7 @@ sub gen_call ($$$$) {
 				$self->workspace_type, $new_wptr
 			));
 		} else {
-			$tail_call = 0;
+			$tail_call = $inst->{'no_tail'};
 		}
 	}
 
@@ -2289,7 +2308,8 @@ sub _gen_kcall ($$$$$) {
 		'in'		=> $inst->{'in'},
 		'out'		=> $inst->{'out'},
 		'wptr'		=> $inst->{'wptr'},
-		'reschedule' 	=> $reschedule
+		'reschedule' 	=> $reschedule,
+		'no_tail'	=> $inst->{'no_tail'}
 	});
 }
 
@@ -3162,6 +3182,40 @@ sub gen_widenshort ($$$$) {
 	);
 }
 
+# FIXME: CCNT1 and CWORD are very similar
+sub gen_ccnt1 ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $a		= $inst->{'in'}->[0];
+	my $b		= $inst->{'out'}->[0];
+	my $cmp_0	= $self->tmp_reg ();
+	my $cmp_1	= $self->tmp_reg ();
+	my $error_cond	= $self->tmp_reg ();
+	my $tmp		= $self->tmp_label ();
+	my $error_lab	= $tmp . '_error';
+	my $ok_lab	= $tmp . '_ok';
+	return (
+		$self->single_assignment ($self->int_type, $inst->{'in'}->[1], $b),
+		sprintf ('%%%s = icmp eq %s %%%s, 0',
+			$cmp_0, $self->int_type, $b
+		),
+		sprintf ('%%%s = icmp ugt %s %%%s, %%%s',
+			$cmp_1, $self->int_type, $b, $a
+		),
+		sprintf ('%%%s = or i1 %%%s, %%%s',
+			$error_cond, $cmp_0, $cmp_1
+		),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$error_cond, $error_lab, $ok_lab
+		),
+
+		$error_lab . ':',
+		$self->_gen_error ($proc, $label, $inst, 'set'),
+		sprintf ('br label %%%s', $ok_lab),
+
+		$ok_lab . ':'
+	);
+}
+
 sub gen_cword ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $a		= $inst->{'in'}->[0];
@@ -3196,6 +3250,58 @@ sub gen_cword ($$$$) {
 		sprintf ('br label %%%s', $ok_lab),
 
 		$ok_lab . ':'
+	);
+}
+
+sub gen_enb3 ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my ($name)	= ($inst->{'name'} =~ m/^([A-Z]+)\d+$/);
+	
+	my $jump	= $inst->{'in'}->[0];
+	my $guard	= $inst->{'in'}->[1];
+	my $opt		= $inst->{'in'}->[2];
+	
+	my $ret		= $inst->{'out'}->[0];
+	my $n_guard	= $self->tmp_reg ();
+	my $jump_ptr	= $self->tmp_reg ();
+	
+	my $tmp		= $self->tmp_label ();
+	my $jump_lab	= $tmp . '_ready';
+	my $cont_lab	= $tmp . '_continue';
+	my $next_label	= $label->{'next'};
+	
+	return (
+		$self->gen_kcall ($proc, $label, {
+			'wptr'		=> $inst->{'wptr'},
+			'name' 		=> $name,
+			'in'		=> $opt ? [ $guard, $opt ] : [ $guard ],
+			'out'		=> [ $ret ],
+			'no_tail'	=> 1
+		}),
+		sprintf ('%%%s = trunc %s %%%s to i1',
+			$n_guard, 
+			$self->int_type, $ret
+		),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$n_guard,
+			$jump_lab, $cont_lab
+		),
+
+		$jump_lab . ':',
+		sprintf ('%%%s = inttoptr %s %%%s to %s',
+			$jump_ptr,
+			$self->int_type, $jump,
+			$self->func_type . '*'
+		),
+		sprintf ('tail call fastcc void %%%s (%s %%sched, %s %%%s) noreturn',
+			$jump_ptr,
+			$self->sched_type,
+			$self->workspace_type,
+			$inst->{'wptr'}
+		),
+		'ret void',
+
+		$cont_lab . ':'
 	);
 }
 
