@@ -40,6 +40,7 @@ $GRAPH = {
 	'LENDB'		=> { 'branching' => 1, 'in' => 1,
 			'generator' => \&gen_lend },
 	'RET'		=> { # Intentionally not 'branching' => 1,
+			'fin' => 3, # Eats floating point stack
 			'generator' => \&gen_ret },
 	'TABLE'		=> { 'branching' => 1, 'in' => 1,
 			'generator' => \&gen_table },
@@ -155,6 +156,8 @@ $GRAPH = {
 			'generator' => \&gen_ldiffsum },
 	'LSUB'		=> { 'in' => 3, 'out' => 2,
 			'generator' => \&gen_laddsub },
+	'I64TOREAL'	=> { 'in' => 1, 'fout' => 1,
+			'generator' => \&gen_i64toreal },
 	# Errors
 	'SETERR'	=> {
 			'generator' => \&gen_seterr },
@@ -162,8 +165,10 @@ $GRAPH = {
 			'generator' => \&gen_nop },
 	'CWORD'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_cword },
-	'FPCHKI32'	=> { 'fin' => 1, 'fout' => 1 },
-	'FPCHKI64'	=> { 'fin' => 1, 'fout' => 1 },
+	'FPCHKI32'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpchki },
+	'FPCHKI64'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fpchki },
 	# Floating Point
 	'FPLDNLDBI'	=> { 'in' => 2, 'fout' => 1,
 			'generator' => \&gen_fpldnl },
@@ -794,7 +799,8 @@ sub define_registers ($$) {
 
 	foreach my $label (@$labels) {
 		#print $label->{'name'}, " ", join (', ', @stack, @fstack), " ($wptr)\n";
-		my $carry = 0;
+		my $carry 	= 0;
+		my $generated 	= 0;
 
 		$label->{'in'} = [ @stack ];
 		$label->{'fin'} = [ @fstack ];
@@ -808,16 +814,23 @@ sub define_registers ($$) {
 				my $arg = $inst->{'arg'};
 				if ($name eq '.FUNCRETURN') {
 					$carry = $arg;
-				} elsif ($name eq '.FUNCRESULTS') {
+				} elsif (!$generated && $name eq '.FUNCRESULTS') {
 					my @regs;
 					for (my $i = 0; $i < $arg; ++$i) {
 						push (@regs, sprintf ('reg_%d', $reg_n++));
 					}
 					$label->{'in'} = [ @regs ];
 					@stack = @regs;
+				} elsif (!$generated && $name eq '.REALRESULT') {
+					# $arg = 1 is single, $arg = 2 is double
+					my $reg = sprintf ('freg_%d', $freg_n++);
+					$label->{'fin'} = [ $reg ];
+					@fstack 	= ( $reg );
 				}
 				next;
 			}
+
+			$generated++;
 			
 			my $data	= $GRAPH->{$name};
 			my $in 		= $name eq 'RET' ? $carry : $data->{'in'};
@@ -2527,6 +2540,32 @@ sub gen_lshift ($$$$) {
 	);
 }
 
+sub gen_i64toreal ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $ptr		= $inst->{'in'}->[0];
+	my $lo		= $self->tmp_reg ();
+	my $hi		= $self->tmp_reg ();
+	my $long_val 	= $self->tmp_reg ();
+	return (
+		$self->gen_ldnl ($proc, $label, {
+			'in'	=> [ $ptr ],
+			'out'	=> [ $lo ],
+			'arg'	=> 0
+		}),
+		$self->gen_ldnl ($proc, $label, {
+			'in'	=> [ $ptr ],
+			'out'	=> [ $hi ],
+			'arg'	=> 1
+		}),
+		$self->_gen_long ($lo, $hi, $long_val),
+		$self->numeric_conversion (
+			$self->long_type, $long_val,
+			$self->float_type, $inst->{'fout'}->[0],
+			$inst->{'rounding'}
+		)
+	);
+}
+
 sub numeric_conversion {
 	my ($self, $src_type, $src, $dst_type, $dst, $rounding) = @_;
 
@@ -2668,12 +2707,60 @@ sub gen_fpi32to ($$$$) {
 	);
 }
 
+sub gen_fpchki ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $val = $inst->{'fin'}->[0];
+	my @asm;
+
+	if ($inst->{'fout'}) {
+		my $out = $inst->{'fout'}->[0];
+		push (@asm, $self->single_assignment (
+			$self->float_type, $val, $out
+		));
+		$val = $out;
+	}
+
+	my $cmp_lower 	= $self->tmp_reg ();
+	my $cmp_upper 	= $self->tmp_reg ();
+	my $error_cond	= $self->tmp_reg ();
+	my $tmp		= $self->tmp_label ();
+	my $error_lab	= $tmp . '_overflow';
+	my $ok_lab	= $tmp . '_ok';
+	my ($bits)	= ($inst->{'name'} =~ m/(\d+)$/);
+
+	return (
+		@asm,
+		sprintf ('%%%s = fcmp olt %s %%%s, %.1f',
+			$cmp_lower, $self->float_type, $val, -(2 ** ($bits - 1))
+		),
+		sprintf ('%%%s = fcmp oge %s %%%s, %.1f',
+			$cmp_upper, $self->float_type, $val, (2 ** ($bits - 1))
+		),
+		sprintf ('%%%s = or i1 %%%s, %%%s',
+			$error_cond, $cmp_lower, $cmp_upper
+		),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$error_cond, $error_lab, $ok_lab
+		),
+
+		$error_lab . ':',
+		$self->_gen_error ($proc, $label, $inst, 'overflow'),
+		sprintf ('br label %%%s', $ok_lab),
+
+		$ok_lab . ':'
+	);
+}
+
 sub gen_fprtoi32 ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	return $self->numeric_conversion (
-		$self->float_type, $inst->{'fin'}->[0],
-		$self->int_type, $inst->{'out'}->[0],
-		$inst->{'rounding'}
+	my $int_tmp = $self->tmp_reg ();
+	return (
+		$self->gen_fpint ($proc, $label, $inst),
+		$self->gen_fpchki ($proc, $label, {
+			'name'	=> 'FPCHKI32',
+			'wptr'	=> $inst->{'wptr'},
+			'fin'	=> $inst->{'fout'}
+		})
 	);
 }
 
