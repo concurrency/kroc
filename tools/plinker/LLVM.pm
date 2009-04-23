@@ -374,6 +374,8 @@ $GRAPH = {
 		'symbol' => 'X_ndist' },
 	'DISS'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1,
 		'symbol' => 'X_diss' },
+	'NDISS'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1,
+		'symbol' => 'X_ndiss' },
 	# External Channels
 	'EXTVRFY' 	=> { 'kcall' => 1, 'in' => 2 },
 	'EXTIN'		=> { 'kcall' => 1, 'in' => 3 },
