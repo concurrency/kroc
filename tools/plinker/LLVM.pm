@@ -762,7 +762,13 @@ sub preprocess_etc ($$$) {
 		} elsif ($name eq '.LINE') {
 			$line			= $arg;
 		} elsif ($name eq '.PROC') {
-			$current->{'symbol'}	= $arg;
+			my $symbol = $arg;
+			if ($current->{'global'}) {
+				$symbol = $current->{'global'};
+			} else {
+				$symbol = $current->{'name'} . '__' . $symbol;
+			}
+			$current->{'symbol'} = $symbol;
 			push (@procs, $current);
 		} elsif ($name eq '.STUBNAME') {
 			$current->{'stub'}	= $arg;
@@ -783,6 +789,7 @@ sub preprocess_etc ($$$) {
 					"\tNew symbol is from $filename($file), line $line.";
 			}
 			$globals->{$arg}	= $current;
+			$current->{'global'}	= $arg;
 			$current->{'loci'}	= {
 				'file'		=> $file,
 				'filename'	=> $filename,
@@ -3330,7 +3337,8 @@ sub generate_proc ($$) {
 	$proc->{'call_prefix'} = $call_pfix;
 	
 	push (@asm, format_lines (
-		sprintf ('define fastcc void %s (%s %%sched, %s %%wptr) {', 
+		sprintf ('define %sfastcc void %s (%s %%sched, %s %%wptr) {',
+			$proc->{'global'} ? '' : 'private ',
 			$symbol,
 			$self->sched_type, $self->workspace_type
 		),
