@@ -14,10 +14,12 @@ SWIG_OUTPUT_FILES = \
 
 EXTRA_DIST = \
 	$(SWIG_SOURCE_FILES) \
-	$(SWIG_OUTPUT_FILES)
+	$(SWIG_OUTPUT_FILES) \
+	helpers.occ
 
 if BUILD_OCCPLAYER
 occplayer_lib_objs = \
+	helpers.tce \
 	player_wrap.o
 
 occplayer_libs = occplayer.lib
@@ -53,3 +55,7 @@ SUFFIXES = .occ .tce .lib
 
 # FIXME: These should be shipped with the source.
 CLEANFILES = $(SWIG_OUTPUT_FILES)
+
+## begin pideps dependencies
+helpers.tce: $(srcdir)/occplayer.inc
+## end pideps dependencies
