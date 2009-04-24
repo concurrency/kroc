@@ -165,6 +165,10 @@ $GRAPH = {
 			'generator' => \&gen_nop },
 	'CCNT1'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_ccnt1 },
+	'CHECKNOTNULL'	=> { 'in' => 1, 'out' => 1,
+			'generator' => \&gen_checknotnull },
+	'CSNGL'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_csngl },
 	'CWORD'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_cword },
 	'FPCHKI32'	=> { 'fin' => 1, 'fout' => 1,
@@ -284,7 +288,7 @@ $GRAPH = {
 	'XIN'		=> { 'kcall' => 1, 'in' => 3,
 		'symbol' => 'Y_xin' },
 	'XEND'		=> { 'kcall' => 1,
-		'symbol' => 'Y_xend' },
+		'symbol' => 'X_xend' },
 	'PROC_ALLOC'	=> { 'kcall' => 1, 'in' => 2, 'out' => 1,
 		'symbol' => 'X_proc_alloc' },
 	'PROC_PARAM'	=> { 'kcall' => 1, 'in' => 3,
@@ -1132,6 +1136,11 @@ sub workspace_type {
 	return $self->int_type . '*';
 }
 
+sub null {
+	my $self = shift;
+	return 0;
+}
+
 sub infinity {
 	my $self = shift;
 	my $type = shift || $self->float_type;
@@ -1243,12 +1252,16 @@ sub gen_j ($$$$) {
 		sprintf ('%s %%sched', $self->sched_type),
 		sprintf ('%s %%%s', $self->workspace_type, $inst->{'wptr'})
 	);
-	
-	for (my $i = 0; $i < @{$arg->{'in'}}; ++$i) {
-		push (@params, sprintf ('%s %%%s', $self->int_type, $inst->{'in'}->[$i]));
+
+	if ($arg->{'in'}) {
+		for (my $i = 0; $i < @{$arg->{'in'}}; ++$i) {
+			push (@params, sprintf ('%s %%%s', $self->int_type, $inst->{'in'}->[$i]));
+		}
 	}
-	for (my $i = 0; $i < @{$arg->{'fin'}}; ++$i) {
-		push (@params, sprintf ('%s %%%s', $self->float_type, $inst->{'fin'}->[$i]));
+	if ($arg->{'out'}) {
+		for (my $i = 0; $i < @{$arg->{'fin'}}; ++$i) {
+			push (@params, sprintf ('%s %%%s', $self->float_type, $inst->{'fin'}->[$i]));
+		}
 	}
 	
 	return (
@@ -1684,7 +1697,7 @@ sub gen_null ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	return $self->gen_ldc ($proc, $label, {
 		'out' => $inst->{'out'},
-		'arg' => 0
+		'arg' => $self->null
 	});
 }
 
@@ -2407,6 +2420,48 @@ sub gen_xdble ($$$$) {
 	);
 }
 
+sub _gen_csngl {
+	my ($self, $proc, $label, $inst, $val, $val_trunc) = @_;
+
+	$val_trunc = $self->tmp_reg () if !$val_trunc;
+
+	my $val_ext	= $self->tmp_reg ();
+	my $error_cond	= $self->tmp_reg ();
+	my $tmp		= $self->tmp_label ();
+	my $error_lab	= $tmp . '_overflow_error';
+	my $ok_lab	= $tmp . '_ok';
+
+	return (
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$val_trunc, $self->long_type, $val, $self->int_type
+		),
+		sprintf ('%%%s = sext %s %%%s to %s',
+			$val_ext, $self->int_type, $val_trunc, $self->long_type
+		),
+		sprintf ('%%%s = icmp ne %s %%%s, %%%s',
+			$error_cond, $self->long_type, $val, $val_ext
+		),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$error_cond, $error_lab, $ok_lab
+		),
+		
+		$error_lab . ':',
+		$self->_gen_error ($proc, $label, $inst, 'overflow'),
+		sprintf ('br label %%%s', $ok_lab),
+		
+		$ok_lab . ':'
+	);
+}
+
+sub gen_csngl ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $long_val = $self->tmp_reg ();
+	return (
+		$self->_gen_long ($inst->{'in'}->[0], $inst->{'in'}->[1], $long_val),
+		$self->_gen_csngl ($proc, $label, $inst, $long_val, $inst->{'out'}->[0])
+	);
+}	
+
 sub gen_laddsub ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $long_val_a 	= $self->tmp_reg ();
@@ -2415,11 +2470,6 @@ sub gen_laddsub ($$$$) {
 	my $carry	= $self->tmp_reg ();
 	my $res_tmp	= $self->tmp_reg ();
 	my $res		= $self->tmp_reg ();
-	my $out_ext	= $self->tmp_reg ();
-	my $ne_res	= $self->tmp_reg ();
-	my $tmp		= $self->tmp_label ();
-	my $error_lab	= $tmp . '_overflow_error';
-	my $ok_lab	= $tmp . '_ok';
 	my $out		= $inst->{'out'}->[0];
 	my $op		= $inst->{'name'} eq 'LADD' ? 'add' : 'sub';
 	return (
@@ -2441,24 +2491,7 @@ sub gen_laddsub ($$$$) {
 		sprintf ('%%%s = %s %s %%%s, %%%s',
 			$res, $op, $self->long_type, $res_tmp, $long_val_c
 		),
-		sprintf ('%%%s = trunc %s %%%s to %s',
-			$out, $self->long_type, $res, $self->int_type
-		),
-		sprintf ('%%%s = sext %s %%%s to %s',
-			$out_ext, $self->int_type, $out, $self->long_type
-		),
-		sprintf ('%%%s = icmp ne %s %%%s, %%%s',
-			$ne_res, $self->long_type, $res, $out_ext
-		),
-		sprintf ('br i1 %%%s, label %%%s, label %%%s',
-			$ne_res, $ok_lab, $error_lab
-		),
-		
-		$error_lab . ':',
-		$self->_gen_error ($proc, $label, $inst, 'overflow'),
-		sprintf ('br label %%%s', $ok_lab),
-		
-		$ok_lab . ':'
+		$self->_gen_csngl ($proc, $label, $inst, $res, $out)
 	);
 }
 
@@ -3284,6 +3317,31 @@ sub gen_cword ($$$$) {
 
 		$error_lab . ':',
 		$self->_gen_error ($proc, $label, $inst, 'overflow'),
+		sprintf ('br label %%%s', $ok_lab),
+
+		$ok_lab . ':'
+	);
+}
+
+sub gen_checknotnull ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $in		= $inst->{'in'}->[0];
+	my $out		= $inst->{'out'}->[0];
+	my $error_cond	= $self->tmp_reg ();
+	my $tmp		= $self->tmp_label ();
+	my $error_lab	= $tmp . '_null';
+	my $ok_lab	= $tmp . '_ok';
+	return (
+		$self->single_assignment ($self->int_type, $in, $out),
+		sprintf ('%%%s = icmp eq %s %%%s, %d',
+			$error_cond, $self->int_type, $in, $self->null
+		),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$error_cond, $error_lab, $ok_lab
+		),
+
+		$error_lab . ':',
+		$self->_gen_error ($proc, $label, $inst, 'null'),
 		sprintf ('br label %%%s', $ok_lab),
 
 		$ok_lab . ':'
