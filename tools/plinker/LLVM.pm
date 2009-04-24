@@ -254,6 +254,13 @@ $GRAPH = {
 			'generator' => \&gen_fpldnlop },
 	'FPLDNLMULSN'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1,
 			'generator' => \&gen_fpldnlop },
+	# Helpers
+	'INDIRECT_AREG'	=> { 'in' => 3, 'out' => 3,
+			'generator' => \&gen_indirect_reg },
+	'INDIRECT_BREG'	=> { 'in' => 3, 'out' => 3,
+			'generator' => \&gen_indirect_reg },
+	'INDIRECT_CREG'	=> { 'in' => 3, 'out' => 3,
+			'generator' => \&gen_indirect_reg },
 	# Kernel
 	'RESCHEDULE'	=> { 'kcall' => 1,
 		'symbol' => 'Y_pause' },
@@ -380,6 +387,13 @@ $GRAPH = {
 		'symbol' => 'X_diss' },
 	'NDISS'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1,
 		'symbol' => 'X_ndiss' },
+	# Mobile Processes
+	'LDWSMAP'	=> { 'kcall' => 1, 'in' => 2,
+		'symbol' => 'X_ldwsmap' },
+	'ULWSMAP'	=> { 'kcall' => 1, 'in' => 2,
+		'symbol' => 'X_ulwsmap' },
+	'RMWSMAP'	=> { 'kcall' => 1, 'in' => 1,
+		'symbol' => 'X_rmwsmap' },
 	# External Channels
 	'EXTVRFY' 	=> { 'kcall' => 1, 'in' => 2 },
 	'EXTIN'		=> { 'kcall' => 1, 'in' => 3 },
@@ -3398,6 +3412,29 @@ sub gen_enb3 ($$$$) {
 
 		$cont_lab . ':'
 	);
+}
+
+sub gen_indirect_reg ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my @regs = ( 'A', 'B', 'C' );
+	my ($reg) = ($inst->{'name'} =~ m/INDIRECT_(.)REG/);
+	my @asm;
+	for (my $i = 0; $i < @{$inst->{'in'}}; ++$i) {
+		if ($regs[$i] eq $reg) {
+			push (@asm, $self->gen_ldnl ($proc, $label, {
+				'in'	=> [ $inst->{'in'}->[$i] ],
+				'out'	=> [ $inst->{'out'}->[$i] ],
+				'arg'	=> 0
+			}));
+		} else {
+			push (@asm, $self->single_assignment (
+				$self->int_type, 
+				$inst->{'in'}->[$i],
+				$inst->{'out'}->[$i]
+			));
+		}
+	}
+	return @asm;
 }
 
 sub format_lines (@) {
