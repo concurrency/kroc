@@ -154,7 +154,7 @@ $GRAPH = {
 			'generator' => \&gen_lshift },
 	'LSUM'		=> { 'in' => 3, 'out' => 2,
 			'generator' => \&gen_ldiffsum },
-	'LSUB'		=> { 'in' => 3, 'out' => 2,
+	'LSUB'		=> { 'in' => 3, 'out' => 1,
 			'generator' => \&gen_laddsub },
 	'I64TOREAL'	=> { 'in' => 1, 'fout' => 1,
 			'generator' => \&gen_i64toreal },
@@ -404,6 +404,7 @@ sub message ($$$) {
 
 	if ($warning) {
 		print STDERR "$file:$line $msg\n";
+		die if $warning > 1;
 	} else {
 		print "$file:$line $msg\n";
 	}
@@ -832,7 +833,8 @@ sub define_registers ($$) {
 		$label->{'fin'} = [ @fstack ];
 		$label->{'wptr'} = $wptr;
 
-		foreach my $inst (@{$label->{'inst'}}) {
+		for (my $i = 0; $i < @{$label->{'inst'}}; ++$i) {
+			my $inst = $label->{'inst'}->[$i];
 			my $name = $inst->{'name'};
 			
 			if ($name =~ /^\./) {
@@ -840,7 +842,7 @@ sub define_registers ($$) {
 				my $arg = $inst->{'arg'};
 				if ($name eq '.FUNCRETURN') {
 					$carry = $arg;
-				} elsif (!$generated && $name eq '.FUNCRESULTS') {
+				} elsif ($name eq '.FUNCRESULTS') {
 					my @regs;
 					for (my $i = 0; $i < $arg; ++$i) {
 						push (@regs, sprintf ('reg_%d', $reg_n++));
@@ -853,12 +855,20 @@ sub define_registers ($$) {
 					$label->{'fin'} = [ $reg ];
 					@fstack 	= ( $reg );
 				} elsif ($name eq '.TSDEPTH') {
-					@stack = () if $arg == 0;
+					while (@stack > $arg) {
+						pop (@stack);
+					}
 				}
 				next;
 			}
-
+			
 			$generated++;
+
+			splice (@{$label->{'inst'}}, $i, 1, 
+				{ 'name' => '.STACKS', 'stack' => [ @stack ], 'fstack' => [ @fstack ] },
+				$inst
+			);
+			$i += 1;
 			
 			my $data	= $GRAPH->{$name};
 			my $in 		= $name eq 'RET' ? $carry : $data->{'in'};
@@ -1612,11 +1622,29 @@ sub gen_ldc ($$$$) {
 				if !exists ($self->{'constants'}->{$name});
 			($tmp_reg, @load) = $self->global_ptr_value ('i8*', $name);
 		} else {
+			my $symbol;
+			
+			if ($arg->{'proc'} eq $proc) {
+				$symbol = $proc->{'call_prefix'} . $name;
+			} elsif ($arg->{'proc'} eq $arg) {
+				$symbol = '@' . $self->symbol_to_proc_name ($proc->{'symbol'});
+				
+				$self->{'header'}->{$symbol} = [
+					sprintf ('declare void %s (%s, %s)', 
+						$symbol, $self->sched_type, $self->workspace_type
+					)
+				] if !exists ($self->{'header'}->{$symbol});
+			} else {
+				$self->message (2, 
+					"attempting to reference a label in a different process..."
+				);
+			}
+
 			$tmp_reg = $self->tmp_reg ();
 			@load = ( sprintf ('%%%s = bitcast %s %s to i8*',
 				$tmp_reg, 
 				$arg->{'type'} . '*',
-				$proc->{'call_prefix'} . $name
+				$symbol
 			));
 		}
 
@@ -2369,7 +2397,7 @@ sub gen_xdble ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	return (
 		$self->single_assignment (
-			$self->int_type, $inst->{'out'}->[0], $inst->{'in'}->[0]
+			$self->int_type, $inst->{'in'}->[0], $inst->{'out'}->[0]
 		),
 		sprintf ('%%%s = ashr %s %%%s, %d',
 			$inst->{'out'}->[1],
@@ -3427,6 +3455,20 @@ sub generate_proc ($$) {
 					$self->source_line ($inst->{'arg'});
 				} elsif ($name eq '.FILENAME') {
 					$self->source_file ($inst->{'arg'});
+				} elsif ($name eq '.STACKS') {
+					my @stack = @{$inst->{'stack'}};
+					my @fstack = @{$inst->{'fstack'}};
+					my $text;
+					$text .= "STACK = " . join (', ', @stack) if @stack;
+					$text .= (@stack ? ", " : '') . 
+						" FSTACK = " . join (', ', @fstack) if @fstack;
+					push (@asm, format_lines ("; $text")) if $text;
+				} elsif ($name ne '.OCCCOMMENT') {
+					my $arg = $inst->{'arg'};
+					if (!ref ($arg)) {
+						$arg =~ s/\n//gs;
+						push (@asm, format_lines ("; $name $arg"));
+					}
 				}
 				next;
 			}
