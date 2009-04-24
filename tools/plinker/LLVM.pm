@@ -33,11 +33,11 @@ $GRAPH = {
 			'generator' => \&gen_call }, # check
 	'J' 		=> { 'branching' => 1, 'in' => 3, 'fin' => 3,
 			'generator' => \&gen_j },
-	'LEND'		=> { 'branching' => 1, 'in' => 1,
+	'LEND'		=> { 'branching' => 1, 'in' => 3,
 			'generator' => \&gen_lend },
-	'LEND3'		=> { 'branching' => 1, 'in' => 1,
+	'LEND3'		=> { 'branching' => 1, 'in' => 3,
 			'generator' => \&gen_lend },
-	'LENDB'		=> { 'branching' => 1, 'in' => 1,
+	'LENDB'		=> { 'branching' => 1, 'in' => 3,
 			'generator' => \&gen_lend },
 	'RET'		=> { # Intentionally not 'branching' => 1,
 			'fin' => 3, # Eats floating point stack
