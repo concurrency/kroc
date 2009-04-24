@@ -116,10 +116,14 @@ $GRAPH = {
 			'generator' => \&gen_xor },
 	'SB'		=> { 'in' => 2,
 			'generator' => \&gen_sb },
-	'SHR'		=> { 'in' => 1, 'out' => 1,
-			'generator' => \&gen_shr },
-	'SHL'		=> { 'in' => 1, 'out' => 1,
-			'generator' => \&gen_shl },
+	'SHR'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_shift },
+	'SHL'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_shift },
+	'XSHR'		=> { 'in' => 1, 'out' => 1,
+			'generator' => \&gen_shift },
+	'XSHL'		=> { 'in' => 1, 'out' => 1,
+			'generator' => \&gen_shift },
 	'AND'		=> { 'in' => 2, 'out' => 1,
 			'generator' => \&gen_and },
 	'OR'		=> { 'in' => 2, 'out' => 1,
@@ -709,7 +713,7 @@ sub expand_etc_ops ($) {
 				{ 'name' => '.SETLAB', 'arg' => $end			}
 			);
 		} elsif ($name =~ /^\.SL([RL])IMM$/) {
-			$op->{'name'} = "SH$1";
+			$op->{'name'} = "XSH$1";
 		}
 	}
 }
@@ -779,7 +783,7 @@ sub preprocess_etc ($$$) {
 		} elsif ($name eq '.FILENAME') {
 			$filename		= $arg;
 		} elsif ($name eq '.LINE') {
-			$line			= $arg;
+			$line			= $arg + 1;
 		} elsif ($name eq '.PROC') {
 			my $symbol = $arg;
 			if ($current->{'global'}) {
@@ -2043,7 +2047,7 @@ sub gen_gt ($$$$) {
 }
 
 sub _gen_bitop ($$$@) { 
-	my ($self, $inst, $op, $a, $b) = @_;
+	my ($self, $inst, $op, $a, $b, undef) = @_;
 	if ($b =~ /[^\d-]/) {
 		return sprintf ('%%%s = %s %s %%%s, %%%s',
 			$inst->{'out'}->[0],
@@ -2081,14 +2085,12 @@ sub gen_and ($$$$) {
 	return $self->_gen_bitop ($inst, 'and', @{$inst->{'in'}});
 }
 
-sub gen_shr ($$$$) { 
+sub gen_shift ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
-	return $self->_gen_bitop ($inst, 'lshr', @{$inst->{'in'}}, $inst->{'arg'});
-}
-
-sub gen_shl ($$$$) { 
-	my ($self, $proc, $label, $inst) = @_;
-	return $self->_gen_bitop ($inst, 'shl', @{$inst->{'in'}}, $inst->{'arg'});
+	my $op 		= $inst->{'name'} =~ /L$/ ? 'shl' : 'lshr';
+	my $val 	= @{$inst->{'in'}} == 2 ? $inst->{'in'}->[1] : $inst->{'in'}->[0];
+	my $shift 	= @{$inst->{'in'}} == 2 ? $inst->{'in'}->[0] : $inst->{'arg'};
+	return $self->_gen_bitop ($inst, $op, $val, $shift);
 }
 
 sub gen_boolinvert ($$$$) {
@@ -2155,7 +2157,7 @@ sub gen_csub0 ($$$$) {
 		$self->int_type, $inst->{'in'}->[1], $inst->{'out'}->[0]
 	));
 	push (@asm, sprintf ('%%%s = icmp uge %s %%%s, %%%s',
-		$error, $self->int_type, $inst->{'in'}->[1], $inst->{'in'}->[0]
+		$error, $self->int_type, $inst->{'out'}->[0], $inst->{'in'}->[0]
 	));
 	push (@asm, sprintf ('br i1 %%%s, label %%%s, label %%%s',
 		$error, $error_lab, $ok_lab
@@ -3547,7 +3549,7 @@ sub generate_proc ($$) {
 			
 			if ($name =~ /^\./) {
 				if ($name eq '.LINE') {
-					$self->source_line ($inst->{'arg'});
+					$self->source_line ($inst->{'arg'} + 1);
 				} elsif ($name eq '.FILENAME') {
 					$self->source_file ($inst->{'arg'});
 				} elsif ($name eq '.STACKS') {
