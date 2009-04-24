@@ -28,7 +28,7 @@ window
 # load an environment bitmap
 map
 ( 
-  bitmap "bc2.png"
+  bitmap "big-circle.png"
   size [32 32]
 )
 

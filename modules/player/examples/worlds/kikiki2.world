@@ -28,7 +28,7 @@ window
 # load an environment bitmap
 map
 ( 
-  bitmap "kikiki2.png"
+  bitmap "kikiki.png"
   size [32 32]
 )
 
