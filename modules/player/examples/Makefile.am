@@ -5,6 +5,8 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@
 
+SUBDIRS = worlds
+
 EXTRA_DIST = \
 	hudtest.occ \
 	simple.occ \

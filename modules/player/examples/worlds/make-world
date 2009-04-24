@@ -1,0 +1,153 @@
+#!/usr/bin/mzscheme -gqr
+
+#|
+
+  ./make-world <dirname>
+ 
+  Creates a directory, and copies the minimal files in necessary to 
+  create a player/stage world. You can then:
+
+  cd <dirname>
+  player <dirname>.cfg
+
+  and see your world in action. You may want to edit it, though.
+|#
+
+(require (lib "cmdline.ss")
+	 (lib "date.ss")
+	 (lib "pregexp.ss"))
+
+(define dir (void))
+(define bots 1)
+(define world-size 16)
+(define forceit? #f)
+
+(define cp
+  (lambda (file)
+    (let ([destfile (pregexp-replace "defaults/" file "")])
+      (cond
+	[(and forceit? (file-exists? (format "~a/~a" dir destfile)))
+	 (delete-file (format"~a/~a" dir destfile))
+	 (copy-file file (format "~a/~a" dir destfile))]
+	[(not (file-exists? (format "~a/~a" dir file)))
+	 (copy-file file (format "~a/~a" dir destfile))]
+	[else (error 'cp "Trying to copy ~a/~a over ~a/~a~n"
+		     dir file dir destfile)]))))
+
+(define cp-regexp
+  (lambda (type)
+    (let ([op (begin
+		(if (and forceit? 
+			(file-exists? (format "~a/~a.~a" dir dir type)))
+		 (delete-file (format "~a/~a.~a" dir dir type)))
+	       (open-output-file (format "~a/~a.~a"
+					dir 
+					dir
+					type)))]
+	  [ip (open-input-file (format "defaults/default.~a" type))])
+      (let loop ([line (read-line ip)])
+	(unless (eof-object? line)
+		(fprintf op
+			 "~a~n"
+			 (let ()
+			   (set! line
+				 (regexp-replace* "<NAME>" line dir))
+			   (set! line
+				 (regexp-replace* "<DATE>" line
+						  (date->string
+						   (seconds->date
+						    (current-seconds)))))
+			   line))
+		(loop (read-line ip))))
+      (insert-robots op type)
+      (close-input-port ip)
+      (close-output-port op))))
+
+
+(define insert-robots
+  (lambda (op type)
+    (define (port i) (+ 6665 i))
+    (define (provides str i) (format "~a:~a:0" (port i) str))
+    (let loop ([i 0])
+      (unless (>= i bots)
+	      (if (equal? type "cfg")
+		  (fprintf op 
+			   (apply string-append
+				  (map (lambda (s)
+					 (format "~a~n" s))
+				       (list
+					"driver"
+					"("
+					"\tname \"stage\""
+					(format "\tprovides [~s ~s ~s]"
+						(provides "position2d" i)
+						(provides "laser" i)
+						(provides "sonar" i)
+						;; Power does not work in
+						;; stage 2.0.1
+						;;(provides "power" i)
+						)
+					(format "\tmodel \"Johnny~a\"" i)
+					")"
+					" "
+					))))
+		  (fprintf op
+			   (apply string-append
+				  (map (lambda (s)
+					 (format "~a~n" s))
+				       (list
+					"pioneer2dx"
+					"("
+					(format "\tname \"Johnny~a\"" i)
+					"\tcolor \"red\""
+					(format "\tpose [~a.0 ~a.0 ~a.0]"
+						(- (random world-size) (/ world-size 2))
+						(- (random world-size) (/ world-size 2))
+						(random 360))
+
+					"\tsick_laser( )"
+					")"
+					" "))))
+		  )
+	      (loop (add1 i))))))
+
+
+(command-line
+ "make-word"
+ (current-command-line-arguments)
+ (once-each
+  (("-r" "--robots") robots
+   "Number of robots in the simulation"
+   (set! bots (string->number robots)))
+  (("-s" "--world-size") size
+   "Size of the world in meters (default = 16)"
+   (set! world-size (string->number size)))
+  (("-f" "--force") 
+   "Create stuff even if it already exists, does not copy a default PNG in place"
+   (set! forceit? #t)))
+ (args
+  (directory)
+  (set! dir directory)
+  (if (and (directory-exists? dir) (not forceit?))
+      (error 'make-world "World directory already exists: ~a" dir)
+      (begin
+	;; First, make the directory and copy the basic files in
+	 (if (not (directory-exists? dir)) (make-directory dir))
+	(cp "defaults/pioneer.inc")
+	(cp "defaults/sick.inc")
+	(cp "defaults/map.inc")
+	;; If we are forcing it then we will keep the png 
+	;; that was already there
+	(if (not forceit?)
+	  (begin
+	    (cp "defaults/default.png")
+	    (rename-file-or-directory 
+	     (format "~a/default.png" dir)
+	     (format "~a/~a.png" dir dir))))
+
+	;; Now, copy in the two default files, doing 
+	;; regexp to replace name, date.
+	(cp-regexp "world")
+	(cp-regexp "cfg")
+	
+	(exit)))))
