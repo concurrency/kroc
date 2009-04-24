@@ -9,12 +9,14 @@ SUBDIRS = worlds
 
 EXTRA_DIST = \
 	hudtest.occ \
+	properties.occ \
 	simple.occ \
 	startrobot.occ
 
 if BUILD_PLAYER_EXAMPLES
 player_examples = \
 	hudtest \
+	properties \
 	simple \
 	startrobot
 endif
