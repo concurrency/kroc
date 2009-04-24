@@ -12,7 +12,6 @@ dist_worlds_DATA = \
 	angles.png \
 	angles.world \
 	bc2.cfg \
-	bc2.png \
 	bc2.world \
 	beacons.inc \
 	big-circle.cfg \
@@ -30,7 +29,6 @@ dist_worlds_DATA = \
 	kikiki.png \
 	kikiki.world \
 	kikiki2.cfg \
-	kikiki2.png \
 	kikiki2.world \
 	map.inc \
 	one-pillar.cfg \
