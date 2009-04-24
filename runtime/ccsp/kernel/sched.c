@@ -122,8 +122,6 @@ sched_t			*_ccsp_scheduler 		CACHELINE_ALIGN = NULL;
 ccsp_global_t		_ccsp				CACHELINE_ALIGN = {};
 /*}}}*/
 
-#define ENABLE_KTRACES
-
 /*{{{  ENTRY_TRACE macros*/
 #ifdef ENABLE_KTRACES
 	#define ENTRY_TRACE0(X) \
