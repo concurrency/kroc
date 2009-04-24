@@ -47,3 +47,9 @@ void etc_error_set (void *sched, word *Wptr, char *file, int line)
 	user_bad_exit ();
 }
 
+void etc_error_null (void *sched, word *Wptr, char *file, int line)
+{
+	MESSAGE ("Null pointer check error at %s:%d (Wptr = %p)\n", file, line, Wptr);
+	user_bad_exit ();
+}
+
