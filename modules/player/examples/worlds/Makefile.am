@@ -13,6 +13,8 @@ dist_worlds_DATA = \
 	angles.world \
 	bc2.cfg \
 	bc2.world \
+	bc6.cfg \
+	bc6.world \
 	beacons.inc \
 	big-circle.cfg \
 	big-circle.png \
