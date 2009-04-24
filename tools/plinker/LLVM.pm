@@ -783,7 +783,7 @@ sub preprocess_etc ($$$) {
 		} elsif ($name eq '.FILENAME') {
 			$filename		= $arg;
 		} elsif ($name eq '.LINE') {
-			$line			= $arg + 1;
+			$line			= $arg;
 		} elsif ($name eq '.PROC') {
 			my $symbol = $arg;
 			if ($current->{'global'}) {
@@ -1857,8 +1857,8 @@ sub _gen_checked_arithmetic ($$$$$) {
 		$res, 
 		$self->int_type,
 		$func,
-		$self->int_type, $in->[0],
-		$self->int_type, $in->[1]
+		$self->int_type, $in->[1],
+		$self->int_type, $in->[0]
 	));
 	push (@asm, sprintf ('%%%s = extractvalue {%s, i1} %%%s, 0',
 		$inst->{'out'}->[0],
@@ -1936,7 +1936,7 @@ sub gen_diff ($$$$) {
 	return sprintf ('%%%s = sub %s %%%s, %%%s',
 		$inst->{'out'}->[0],
 		$self->int_type,
-		$inst->{'in'}->[0], $inst->{'in'}->[1]
+		$inst->{'in'}->[1], $inst->{'in'}->[0]
 	);
 }	
 
@@ -2036,7 +2036,7 @@ sub gen_gt ($$$$) {
 		sprintf ('%%%s = icmp sgt %s %%%s, %%%s', 
 			$tmp_reg,
 			$self->int_type,
-			$inst->{'in'}->[0], $inst->{'in'}->[1]
+			$inst->{'in'}->[1], $inst->{'in'}->[0]
 		),
 		sprintf ('%%%s = zext i1 %%%s to %s', 
 			$inst->{'out'}->[0], 
@@ -3549,7 +3549,7 @@ sub generate_proc ($$) {
 			
 			if ($name =~ /^\./) {
 				if ($name eq '.LINE') {
-					$self->source_line ($inst->{'arg'} + 1);
+					$self->source_line ($inst->{'arg'});
 				} elsif ($name eq '.FILENAME') {
 					$self->source_file ($inst->{'arg'});
 				} elsif ($name eq '.STACKS') {
