@@ -11,14 +11,16 @@ EXTRA_DIST = \
 	gen-arcs.py \
 	hud.occ \
 	player.inc \
-	sensors.occ
+	sensors.occ \
+	vehicles.occ
 
 if BUILD_PLAYER
 player_lib_objs = \
 	control.tce \
 	debug.tce \
 	hud.tce \
-	sensors.tce
+	sensors.tce \
+	vehicles.tce
 
 player_libs = player.lib
 player_includes = player.inc
@@ -54,10 +56,14 @@ CLEANFILES = points.inc
 ## begin pideps dependencies
 control.tce: $(srcdir)/player.inc
 control.tce: debug.tce
+debug.tce: $(srcdir)/player.inc
 hud.tce: $(srcdir)/player.inc
 hud.tce: $(srcdir)/points.inc
 hud.tce: control.tce
 hud.tce: debug.tce
 sensors.tce: $(srcdir)/player.inc
 sensors.tce: debug.tce
+vehicles.tce: $(srcdir)/player.inc
+vehicles.tce: control.tce
+vehicles.tce: sensors.tce
 ## end pideps dependencies
