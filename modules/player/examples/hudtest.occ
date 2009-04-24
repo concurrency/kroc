@@ -9,11 +9,11 @@ PROC test()
       INT t:
       TIMER tim:
       SEQ
-        SEQ count = 0 FOR 180
+        SEQ count = 0 FOR num.laser.samples
           SEQ
             tim ? t
             tim ? AFTER t PLUS 10000
-            SEQ i = 0 FOR 180
+            SEQ i = 0 FOR num.laser.samples
               IF
                 (i > count) AND (i < (count + 10))
                   d[i] := 10
