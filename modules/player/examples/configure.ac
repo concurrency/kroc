@@ -20,4 +20,4 @@ AC_MSG_CHECKING([whether to build player examples])
 AC_MSG_RESULT($build_player_examples)
 AM_CONDITIONAL([BUILD_PLAYER_EXAMPLES], [test $build_player_examples = yes])
 
-AC_OUTPUT([Makefile])
+AC_OUTPUT([Makefile worlds/Makefile])
