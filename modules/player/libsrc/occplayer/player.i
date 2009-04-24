@@ -6,7 +6,7 @@
 %}
 
 // XXX: This shouldn't be necessary, but some Player functions use it.
-typedef long size_t;
+typedef int size_t;
 
 %include <libplayercore/player.h>
 %include <libplayercore/player_interfaces.h>
