@@ -8,6 +8,7 @@ OCCBUILD = @OCCBUILD@
 SUBDIRS = worlds
 
 EXTRA_DIST = \
+	blobfinder.occ \
 	hudtest.occ \
 	properties.occ \
 	simple.occ \
@@ -15,6 +16,7 @@ EXTRA_DIST = \
 
 if BUILD_PLAYER_EXAMPLES
 player_examples = \
+	blobfinder \
 	hudtest \
 	properties \
 	simple \
