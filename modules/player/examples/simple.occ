@@ -19,7 +19,7 @@ PROC main (CHAN BYTE out!)
     ASSERT (result = 0)
 
     -- Make the robot spin!
-    playerc.position2d.set.cmd.vel (position2d, 0.0, 0.0, REAL64 ROUND (deg.to.rad (40.0)), 1, result)
+    playerc.position2d.set.cmd.vel (position2d, 0.0, 0.0, REAL64 ROUND (deg.to.rad (40.0)), PLAYER.POSITION2D.CMD.VEL, result)
     ASSERT (result = 0)
 
     SEQ i = 0 FOR 200
