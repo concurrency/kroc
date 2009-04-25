@@ -2737,11 +2737,25 @@ sub numeric_conversion {
 		} elsif ($src_float) {
 			$rounding = 'nearest' if !$rounding;
 			if ($rounding eq 'nearest') {
-				my $tmp = $self->tmp_reg ();
-				push (@asm, sprintf ('%%%s = add %s %%%s, 0.5',
-					$tmp, $src_type, $src
-				));
-				$src = $tmp;
+				my $neg_cond	= $self->tmp_reg ();
+				my $neg_val	= $self->tmp_reg ();
+				my $add_val	= $self->tmp_reg ();
+				my $n_src 	= $self->tmp_reg ();
+				push (@asm, 
+					sprintf ('%%%s = fcmp ult %s %%%s, 0.0',
+						$neg_cond, $src_type, $src
+					),
+					sprintf ('%%%s = uitofp i1 %%%s to %s',
+						$neg_val, $neg_cond, $src_type
+					),
+					sprintf ('%%%s = sub %s 0.5, %%%s',
+						$add_val, $src_type, $neg_val
+					),
+					sprintf ('%%%s = add %s %%%s, %%%s',
+						$n_src, $src_type, $src, $add_val
+					)
+				);
+				$src = $n_src;
 			}
 			$op = 'fptosi';
 		} elsif ($dst_float) {
@@ -3191,9 +3205,9 @@ sub gen_norm ($$$$) {
 	my $b_shift_c_out	= $self->tmp_reg ();
 	my $a_shift_tmp		= $self->tmp_reg ();
 	my $b_shift_tmp		= $self->tmp_reg ();
+	my $b_shift_a_shift	= $self->tmp_reg ();
 	my $b_shift_b_tmp0	= $self->tmp_reg ();
 	my $b_shift_b_tmp1	= $self->tmp_reg ();
-	my $b_shift_b_tmp2	= $self->tmp_reg ();
 
 	return (
 		sprintf ('%%%s = icmp eq %s %%%s, 0', 
@@ -3245,16 +3259,16 @@ sub gen_norm ($$$$) {
 			$self->int_type, $b, $b_shift_tmp
 		),
 		sprintf ('%%%s = sub %s %d, %%%s',
-			$b_shift_b_tmp1,
-			$self->int_type, $self->int_bits, $b_shift_b_tmp0
+			$b_shift_a_shift,
+			$self->int_type, $self->int_bits, $b_shift_tmp
 		),
 		sprintf ('%%%s = ashr %s %%%s, %%%s',
-			$b_shift_b_tmp2,
-			$self->int_type, $a, $b_shift_b_tmp1
+			$b_shift_b_tmp1,
+			$self->int_type, $a, $b_shift_a_shift
 		),
 		sprintf ('%%%s = or %s %%%s, %%%s',
 			$b_shift_b_out,
-			$self->int_type, $b_shift_b_tmp0, $b_shift_b_tmp2
+			$self->int_type, $b_shift_b_tmp0, $b_shift_b_tmp1
 		),
 		sprintf ('%%%s = bitcast %s %%%s to %s',
 			$b_shift_c_out,
