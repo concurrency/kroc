@@ -2077,7 +2077,7 @@ sub gen_xor ($$$$) {
 
 sub gen_or ($$$$) { 
 	my ($self, $proc, $label, $inst) = @_;
-	return $self->_gen_bitop ($inst, 'xor', @{$inst->{'in'}});
+	return $self->_gen_bitop ($inst, 'or', @{$inst->{'in'}});
 }
 
 sub gen_and ($$$$) { 
