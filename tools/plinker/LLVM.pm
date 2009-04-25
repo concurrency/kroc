@@ -136,6 +136,7 @@ $GRAPH = {
 			'generator' => \&gen_boolinvert },
 	'NORM'		=> { 'in' => 3, 'out' => 3,
 			'generator' => \&gen_norm },
+	'FMUL'		=> { 'in' => 2, 'out' => 1 },
 	'POSTNORMSN'	=> { 'in' => 3, 'out' => 3 },
 	'ROUNDSN'	=> { 'in' => 3, 'out' => 1 },
 	# Shorts and Bytes
@@ -3060,7 +3061,7 @@ sub gen_fpnan ($$$$) {
 			$self->float_type, 
 			$inst->{'fin'}->[0], $inst->{'fout'}->[0]
 		),
-		sprintf ('%%%s = fcmp ord %s %%%s, 0.0',
+		sprintf ('%%%s = fcmp uno %s %%%s, 0.0',
 			$cmp,
 			$self->float_type, $inst->{'fout'}->[0]
 		),
