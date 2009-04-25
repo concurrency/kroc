@@ -2453,22 +2453,6 @@ sub _gen_long ($$$$) {
 	);
 }
 
-sub _gen_long_split ($$$$) {
-	my ($self, $in, $lo, $hi) = @_;
-	my $long_tmp = $self->tmp_reg ();
-	return (
-		sprintf ('%%%s = trunc %s %%%s to %s',
-			$lo, $self->long_type, $in, $self->int_type
-		),
-		sprintf ('%%%s = lshr %s %%%s, %d',
-			$long_tmp, $self->long_type, $in, $self->int_bits
-		),
-		sprintf ('%%%s = trunc %s %%%s to %s',
-			$hi, $self->long_type, $long_tmp, $self->int_type
-		)
-	);
-}
-
 sub gen_xdble ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	return (
@@ -2560,9 +2544,11 @@ sub gen_laddsub ($$$$) {
 
 sub gen_ldiffsum ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
+	
 	my $res_1	= $self->tmp_reg ();
 	my $b_op_a	= $self->tmp_reg ();
 	my $carry_1	= $self->tmp_reg ();
+	my $c_tmp	= $self->tmp_reg ();
 	my $res_2	= $self->tmp_reg ();
 	my $carry_2	= $self->tmp_reg ();
 	my $carry	= $self->tmp_reg ();
@@ -2580,19 +2566,22 @@ sub gen_ldiffsum ($$$$) {
 		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 1',
 			$carry_1, $self->int_type, $res_1
 		),
+		sprintf ('%%%s = and %s %%%s, 1',
+			$c_tmp, $self->int_type, $inst->{'in'}->[2]
+		),
 		sprintf ('%%%s = call { %s, i1 } @llvm.%s.with.overflow.%s (%s %%%s, %s %%%s)',
 			$res_2, 
 			$self->int_type, $op, $self->int_type, 
 			$self->int_type, $b_op_a,
-			$self->int_type, $inst->{'in'}->[2]
+			$self->int_type, $c_tmp
 		),
 		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 0',
-			$inst->{'out'}->[0], $self->int_type, $res_1
+			$inst->{'out'}->[0], $self->int_type, $res_2
 		),
 		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 1',
-			$carry_2, $self->int_type, $res_1
+			$carry_2, $self->int_type, $res_2
 		),
-		sprintf ('%%%s = or i1 %%%s, %%%s',
+		sprintf ('%%%s = xor i1 %%%s, %%%s',
 			$carry, $carry_1, $carry_2
 		),
 		sprintf ('%%%s = zext i1 %%%s to %s',
@@ -2648,21 +2637,18 @@ sub gen_lmul ($$$$) {
 	my $long_val_a 	= $self->tmp_reg ();
 	my $long_val_b 	= $self->tmp_reg ();
 	my $long_val_c 	= $self->tmp_reg ();
-	my $carry	= $self->tmp_reg ();
 	my $mul_res	= $self->tmp_reg ();
 	my $sum_res	= $self->tmp_reg ();
+	my $long_tmp	= $self->tmp_reg ();
 	return (
-		sprintf ('%%%s = sext %s %%%s to %s',
+		sprintf ('%%%s = zext %s %%%s to %s',
 			$long_val_a, $self->int_type, $inst->{'in'}->[0], $self->long_type
 		),
-		sprintf ('%%%s = sext %s %%%s to %s',
+		sprintf ('%%%s = zext %s %%%s to %s',
 			$long_val_b, $self->int_type, $inst->{'in'}->[1], $self->long_type
 		),	
-		sprintf ('%%%s = trunc %s %%%s to i1',
-			$carry, $self->int_type, $inst->{'in'}->[2]
-		),
-		sprintf ('%%%s = zext i1 %%%s to %s',
-			$long_val_c, $carry, $self->long_type
+		sprintf ('%%%s = zext %s %%%s to %s',
+			$long_val_c, $self->int_type, $inst->{'in'}->[2], $self->long_type
 		),
 		sprintf ('%%%s = mul %s %%%s, %%%s',
 			$mul_res, $self->long_type, $long_val_a, $long_val_b
@@ -2670,15 +2656,24 @@ sub gen_lmul ($$$$) {
 		sprintf ('%%%s = add %s %%%s, %%%s',
 			$sum_res, $self->long_type, $mul_res, $long_val_c
 		),
-		$self->_gen_long_split ($sum_res, @{$inst->{'out'}})
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$inst->{'out'}->[0], $self->long_type, $sum_res, $self->int_type
+		),
+		sprintf ('%%%s = lshr %s %%%s, %d',
+			$long_tmp, $self->long_type, $sum_res, $self->int_bits
+		),
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$inst->{'out'}->[1], $self->long_type, $long_tmp, $self->int_type
+		)
 	);
 }
 
 sub gen_lshift ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $long_val 	= $self->tmp_reg ();
-	my $long_res 	= $self->tmp_reg ();
 	my $shift	= $self->tmp_reg ();
+	my $long_res 	= $self->tmp_reg ();
+	my $long_tmp 	= $self->tmp_reg ();
 	return (
 		$self->_gen_long ($inst->{'in'}->[1], $inst->{'in'}->[2], $long_val),
 		sprintf ('%%%s = zext %s %%%s to %s',
@@ -2689,7 +2684,15 @@ sub gen_lshift ($$$$) {
 			$inst->{'name'} eq 'LSHR' ? 'lshr' : 'shl',
 			$self->long_type, $long_val, $shift
 		),
-		$self->_gen_long_split ($long_res, @{$inst->{'out'}})
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$inst->{'out'}->[0], $self->long_type, $long_res, $self->int_type
+		),
+		sprintf ('%%%s = lshr %s %%%s, %d',
+			$long_tmp, $self->long_type, $long_res, $self->int_bits
+		),
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$inst->{'out'}->[1], $self->long_type, $long_tmp, $self->int_type
+		)
 	);
 }
 
