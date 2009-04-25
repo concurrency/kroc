@@ -2090,7 +2090,48 @@ sub gen_shift ($$$$) {
 	my $op 		= $inst->{'name'} =~ /L$/ ? 'shl' : 'lshr';
 	my $val 	= @{$inst->{'in'}} == 2 ? $inst->{'in'}->[1] : $inst->{'in'}->[0];
 	my $shift 	= @{$inst->{'in'}} == 2 ? $inst->{'in'}->[0] : $inst->{'arg'};
-	return $self->_gen_bitop ($inst, $op, $val, $shift);
+	
+	if ($shift =~ /^[A-Z]/i) {
+		# Dynamic shift, tests required to check it is valid at runtime
+		my $valid_shift	= $self->tmp_reg ();
+		my $res		= $self->tmp_reg ();
+		my $tmp		= $self->tmp_label ();
+		my $set_lab	= $tmp . '_set';
+		my $shift_lab	= $tmp . '_shift';
+		my $cont_lab	= $tmp . '_continue';
+		return (
+			sprintf ('%%%s = icmp ult %s %%%s, %d',
+				$valid_shift, $self->int_type, $shift, $self->int_bits
+			),
+			sprintf ('br i1 %%%s, label %%%s, label %%%s',
+				$valid_shift, $shift_lab, $set_lab
+			),
+
+			$shift_lab . ':',
+			$self->_gen_bitop ({ 'out' => [ $res ] }, $op, $val, $shift),
+			sprintf ('br label %%%s', $cont_lab),
+			
+			$set_lab . ':',
+			sprintf ('br label %%%s', $cont_lab),
+
+			$cont_lab . ':',
+			sprintf ('%%%s = phi %s [ 0, %%%s ], [ %%%s, %%%s ]',
+				$inst->{'out'}->[0],
+				$self->int_type,
+				$set_lab,
+				$res, $shift_lab
+			)
+		);
+	} elsif ($shift >= 0 && $shift < $self->int_bits) {
+		# Valid static shift
+		return $self->_gen_bitop ($inst, $op, $val, $shift);
+	} else {
+		# Value shifted out of range
+		return $self->gen_ldc ($proc, $label, {
+			'arg' => 0, 
+			'out' => $inst->{'out'} 
+		});
+	}
 }
 
 sub gen_boolinvert ($$$$) {
