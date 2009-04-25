@@ -1666,7 +1666,7 @@ sub gen_ldc ($$$$) {
 			if ($arg->{'proc'} eq $proc) {
 				$symbol = $proc->{'call_prefix'} . $name;
 			} elsif ($arg->{'proc'} eq $arg) {
-				$symbol = '@' . $self->symbol_to_proc_name ($proc->{'symbol'});
+				$symbol = '@' . $self->symbol_to_proc_name ($arg->{'symbol'});
 				
 				$self->{'header'}->{$symbol} = [
 					sprintf ('declare void %s (%s, %s)', 
