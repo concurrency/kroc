@@ -5297,9 +5297,11 @@ K_CALL_DEFINE_X_2_1 (enbc)
 		K_ONE_OUT (false);
 	}
 	
-	kernel_enbc (Wptr, sched, 0, channel_address, false, false);
-
-	K_ONE_OUT (true);
+	if (kernel_enbc (Wptr, sched, 0, channel_address, false, false)) {
+		K_ONE_OUT (-true); /* -1 */
+	} else {
+		K_ONE_OUT (true); /* 1 */
+	}
 }
 /*}}}*/
 /*{{{  void kernel_X_cenbc (void)*/
@@ -5359,7 +5361,7 @@ K_CALL_DEFINE_X_1_1 (enbs)
 	
 	kernel_enbs (Wptr, 0, false);
 
-	K_ONE_OUT (true);
+	K_ONE_OUT (-true); /* -1 */
 }
 /*}}}*/
 /*{{{  void kernel_X_cenbs (void)*/
@@ -5434,9 +5436,11 @@ K_CALL_DEFINE_X_2_1 (enbt)
 		K_ONE_OUT (false);
 	}
 	
-	kernel_enbt (Wptr, sched, 0, timeout, false, false, false);
-
-	K_ONE_OUT (true);
+	if (kernel_enbt (Wptr, sched, 0, timeout, false, false, false)) {
+		K_ONE_OUT (-true); /* -1 */
+	} else {
+		K_ONE_OUT (true); /* 1 */
+	}
 }
 /*}}}*/
 /*{{{  void kernel_X_cenbt (void)*/
