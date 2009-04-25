@@ -220,7 +220,7 @@ $GRAPH = {
 	'FPDIV'		=> { 'fin' => 2, 'fout' => 1,
 			'generator' => \&gen_fparithop },
 	'FPREM'		=> { 'fin' => 2, 'fout' => 1,
-			'generator' => \&gen_fparithop },
+			'generator' => \&gen_fprem },
 	'FPNAN'		=> { 'fin' => 1, 'fout' => 1, 'out' => 1,
 			'generator' => \&gen_fpnan },
 	'FPNOTFINITE'	=> { 'fin' => 1, 'fout' => 1, 'out' => 1,
@@ -2964,6 +2964,41 @@ sub gen_fparithop ($$$$) {
 		$self->float_type,
 		$inst->{'fin'}->[1],
 		$inst->{'fin'}->[0]
+	);
+}
+
+sub gen_fprem ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $div_res	= $self->tmp_reg ();
+	my $div_int	= $self->tmp_reg ();
+	my $div_float	= $self->tmp_reg ();
+	my $mul_res	= $self->tmp_reg ();
+	return (
+		$self->gen_fparithop ($proc, $label, {
+			'name'	=> 'FPDIV',
+			'fin'	=> $inst->{'fin'},
+			'fout'	=> [ $div_res ]
+		}),
+		$self->numeric_conversion (
+			$self->float_type, $div_res,
+			$self->long_type, $div_int,
+			'nearest'
+		),
+		$self->numeric_conversion (
+			$self->long_type, $div_int,
+			$self->float_type, $div_float,
+			'nearest'
+		),
+		sprintf ('%%%s = mul %s %%%s, %%%s',
+			$mul_res,
+			$self->float_type,
+			$inst->{'fin'}->[0], $div_float
+		),
+		sprintf ('%%%s = sub %s %%%s, %%%s',
+			$inst->{'fout'}->[0],
+			$self->float_type,
+			$inst->{'fin'}->[1], $mul_res
+		)
 	);
 }
 
