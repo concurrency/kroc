@@ -136,7 +136,8 @@ $GRAPH = {
 			'generator' => \&gen_boolinvert },
 	'NORM'		=> { 'in' => 3, 'out' => 3,
 			'generator' => \&gen_norm },
-	'FMUL'		=> { 'in' => 2, 'out' => 1 },
+	'FMUL'		=> { 'in' => 2, 'out' => 1,
+			'generator' => \&gen_fmul },
 	'POSTNORMSN'	=> { 'in' => 3, 'out' => 3 },
 	'ROUNDSN'	=> { 'in' => 3, 'out' => 1 },
 	# Shorts and Bytes
@@ -2633,6 +2634,22 @@ sub gen_ldiv ($$$$) {
 	);
 }
 
+sub _gen_long_split ($$$$) {
+	my ($self, $in, $lo, $hi) = @_;
+	my $long_tmp = $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$lo, $self->long_type, $in, $self->int_type
+		),
+		sprintf ('%%%s = lshr %s %%%s, %d',
+			$long_tmp, $self->long_type, $in, $self->int_bits
+		),
+		sprintf ('%%%s = trunc %s %%%s to %s',
+			$hi, $self->long_type, $long_tmp, $self->int_type
+		)
+	);
+}
+
 sub gen_lmul ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $long_val_a 	= $self->tmp_reg ();
@@ -2640,7 +2657,6 @@ sub gen_lmul ($$$$) {
 	my $long_val_c 	= $self->tmp_reg ();
 	my $mul_res	= $self->tmp_reg ();
 	my $sum_res	= $self->tmp_reg ();
-	my $long_tmp	= $self->tmp_reg ();
 	return (
 		sprintf ('%%%s = zext %s %%%s to %s',
 			$long_val_a, $self->int_type, $inst->{'in'}->[0], $self->long_type
@@ -2657,15 +2673,7 @@ sub gen_lmul ($$$$) {
 		sprintf ('%%%s = add %s %%%s, %%%s',
 			$sum_res, $self->long_type, $mul_res, $long_val_c
 		),
-		sprintf ('%%%s = trunc %s %%%s to %s',
-			$inst->{'out'}->[0], $self->long_type, $sum_res, $self->int_type
-		),
-		sprintf ('%%%s = lshr %s %%%s, %d',
-			$long_tmp, $self->long_type, $sum_res, $self->int_bits
-		),
-		sprintf ('%%%s = trunc %s %%%s to %s',
-			$inst->{'out'}->[1], $self->long_type, $long_tmp, $self->int_type
-		)
+		$self->_gen_long_split ($sum_res, $inst->{'out'}->[0], $inst->{'out'}->[1])
 	);
 }
 
@@ -2685,15 +2693,7 @@ sub gen_lshift ($$$$) {
 			$inst->{'name'} eq 'LSHR' ? 'lshr' : 'shl',
 			$self->long_type, $long_val, $shift
 		),
-		sprintf ('%%%s = trunc %s %%%s to %s',
-			$inst->{'out'}->[0], $self->long_type, $long_res, $self->int_type
-		),
-		sprintf ('%%%s = lshr %s %%%s, %d',
-			$long_tmp, $self->long_type, $long_res, $self->int_bits
-		),
-		sprintf ('%%%s = trunc %s %%%s to %s',
-			$inst->{'out'}->[1], $self->long_type, $long_tmp, $self->int_type
-		)
+		$self->_gen_long_split ($long_res, $inst->{'out'}->[0], $inst->{'out'}->[1])
 	);
 }
 
@@ -3337,11 +3337,62 @@ sub gen_norm ($$$$) {
 	);
 }
 
+sub gen_fmul ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $long_a	= $self->tmp_reg ();
+	my $long_b 	= $self->tmp_reg ();
+	my $long_mul 	= $self->tmp_reg ();
+	my $long_res 	= $self->tmp_reg ();
+	my $lo_val	= $self->tmp_reg ();
+	my $hi_val	= $self->tmp_reg ();
+	my $lo_lt_0_tmp	= $self->tmp_reg ();
+	my $lo_lt_0	= $self->tmp_reg ();
+	my $lo_mint	= $self->tmp_reg ();
+	my $hi_bit0	= $self->tmp_reg ();
+	my $plus_tmp	= $self->tmp_reg ();
+	my $plus_val	= $self->tmp_reg ();
+	return (
+		sprintf ('%%%s = sext %s %%%s to %s',
+			$long_a, $self->int_type, $inst->{'in'}->[0], $self->long_type
+		),
+		sprintf ('%%%s = sext %s %%%s to %s',
+			$long_b, $self->int_type, $inst->{'in'}->[1], $self->long_type
+		),
+		sprintf ('%%%s = mul %s %%%s, %%%s',
+			$long_mul, $self->long_type, $long_a, $long_b
+		),
+		sprintf ('%%%s = shl %s %%%s, 1',
+			$long_res, $self->long_type, $long_mul
+		),
+		$self->_gen_long_split ($long_res, $lo_val, $hi_val),
+		sprintf ('%%%s = icmp slt %s %%%s, 0',
+			$lo_lt_0_tmp, $self->int_type, $lo_val,
+		),
+		sprintf ('%%%s = zext i1 %%%s to %s',
+			$lo_lt_0, $lo_lt_0_tmp, $self->int_type
+		),
+		sprintf ('%%%s = lshr %s %%%s, %d',
+			$lo_mint, $self->int_type, $lo_val, $self->int_bits - 1
+		),
+		sprintf ('%%%s = and %s %%%s, 1',
+			$hi_bit0, $self->int_type, $hi_val
+		),
+		sprintf ('%%%s = or %s %%%s, %%%s',
+			$plus_tmp, $self->int_type, $lo_mint, $hi_bit0
+		),
+		sprintf ('%%%s = and %s %%%s, %%%s',
+			$plus_val, $self->int_type, $plus_tmp, $lo_lt_0
+		),
+		sprintf ('%%%s = add %s %%%s, %%%s',
+			$inst->{'out'}->[0], $self->int_type, $hi_val, $plus_val
+		)
+	);
+}
+
 sub gen_move ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my $src_ptr = $self->tmp_reg ();
 	my $dst_ptr = $self->tmp_reg ();
-	# FIXME: should this be memmove, not memcpy?
 	return (
 		sprintf ('%%%s = inttoptr %s %%%s to i8*',
 			$src_ptr, $self->int_type, $inst->{'in'}->[2]
