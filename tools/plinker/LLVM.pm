@@ -367,16 +367,22 @@ $GRAPH = {
 		'symbol' => 'Y_taltwt' },
 	'ALTEND'	=> { 'kcall' => 1, 
 		'symbol' => 'Y_altend' },
-	'ENBT'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1,
+	'_ENBT'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1,
 		'symbol' => 'X_enbt' },
+	'_ENBC'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1,
+		'symbol' => 'X_enbc' },
+	'_ENBS'		=> { 'kcall' => 1, 'in' => 1, 'out' => 1,
+		'symbol' => 'X_enbs' },
+	'ENBT'		=> { 'in' => 2, 'out' => 1,
+		'generator' => \&gen_enb1 },
+	'ENBC'		=> { 'in' => 2, 'out' => 1,
+		'generator' => \&gen_enb1 },
+	'ENBS'		=> { 'in' => 1, 'out' => 1,
+		'generator' => \&gen_enb1 },
 	'ENBT3'		=> { 'in' => 3, 'out' => 1,
 		'generator' => \&gen_enb3 },
-	'ENBC'		=> { 'kcall' => 1, 'in' => 2, 'out' => 1,
-		'symbol' => 'X_enbc' },
 	'ENBC3'		=> { 'in' => 3, 'out' => 1,
 		'generator' => \&gen_enb3 },
-	'ENBS'		=> { 'kcall' => 1, 'in' => 1, 'out' => 1,
-		'symbol' => 'X_enbs' },
 	'ENBS3'		=> { 'in' => 2, 'out' => 1,
 		'generator' => \&gen_enb3 },
 	'DISC'		=> { 'kcall' => 1, 'in' => 3, 'out' => 1,
@@ -3405,9 +3411,32 @@ sub gen_checknotnull ($$$$) {
 	);
 }
 
+sub gen_enb1 ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $name	= '_' . $inst->{'name'};
+	my $guard	= $inst->{'in'}->[0];
+	my $opt		= $inst->{'in'}->[1];
+	my $ret		= $inst->{'out'}->[0];
+	my $ret_tmp	= $self->tmp_reg ();
+	
+	return (
+		$self->gen_kcall ($proc, $label, {
+			'wptr'		=> $inst->{'wptr'},
+			'name' 		=> $name,
+			'in'		=> $opt ? [ $guard, $opt ] : [ $guard ],
+			'out'		=> [ $ret_tmp ],
+			'no_tail'	=> 1
+		}),
+		sprintf ('%%%s = and %s %%%s, 1',
+			$ret, 
+			$self->int_type, $ret_tmp
+		)
+	);
+}
+
 sub gen_enb3 ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	my ($name)	= ($inst->{'name'} =~ m/^([A-Z]+)\d+$/);
+	my $name	= '_' . ($inst->{'name'} =~ m/^([A-Z]+)\d+$/)[0];
 	
 	my $jump	= $inst->{'in'}->[0];
 	my $guard	= $inst->{'in'}->[1];
@@ -3430,7 +3459,7 @@ sub gen_enb3 ($$$$) {
 			'out'		=> [ $ret ],
 			'no_tail'	=> 1
 		}),
-		sprintf ('%%%s = trunc %s %%%s to i1',
+		sprintf ('%%%s = icmp eq %s %%%s, -1',
 			$n_guard, 
 			$self->int_type, $ret
 		),
