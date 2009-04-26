@@ -1012,21 +1012,23 @@ static WARM word *reschedule_point (sched_t *sched, word *Wptr, word *other)
 			enqueue_process (sched, other);
 			save_priofinity (sched, Wptr);
 			enqueue_process_nopri (sched, Wptr);
-			kernel_scheduler (sched);
+			return kernel_scheduler (sched);
 		} else {
 			enqueue_process (sched, other);
 			return Wptr;
 		}
+	} else {
+		return schedule_point (sched, Wptr, other);
 	}
-	return schedule_point (sched, Wptr, other);
 }
 /*}}}*/
 /*{{{  static TRIVIAL word *get_process_or_reschedule (sched_t *sched)*/
 static TRIVIAL word *get_process_or_reschedule (sched_t *sched)
 {
 	if (end_of_curb (sched))
-		kernel_scheduler (sched);
-	return dequeue_from_curb (sched);
+		return kernel_scheduler (sched);
+	else
+		return dequeue_from_curb (sched);
 }
 
 /*}}}*/
@@ -4561,10 +4563,9 @@ K_CALL_DEFINE_Y_1_0 (setpri)
 		Wptr[Priofinity] = BuildPriofinity (PAffinity (sched->priofinity), priority);
 		enqueue_process (sched, Wptr);
 		Wptr = get_process_or_reschedule (sched);
-		K_ZERO_OUT_JRET ();
-	} else {
-		K_ZERO_OUT ();
 	}
+	
+	K_ZERO_OUT_JRET ();
 }
 /*}}}*/
 /*}}}*/
@@ -6422,8 +6423,6 @@ void ccsp_kernel_entry (word *Wptr, word *fptr)
 		Wptr = kernel_scheduler (sched);
 	}
 	
-	fprintf (stderr, "calling code_entry %p (%p, %p)\n", 
-		_ccsp.code_entry, sched, Wptr);
 	_ccsp.code_entry (sched, Wptr); 
 }
 /*}}}*/
