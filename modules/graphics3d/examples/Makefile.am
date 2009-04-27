@@ -6,32 +6,37 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 OCCBUILD = @OCCBUILD@ --kroc-opts -d
 
 EXTRA_DIST = \
-	g3dcubes.occ \
+	butterflies.occ \
+	g3dcogs.occ \
 	g3dcube.occ \
-	g3dtest.occ \
-	butterflies.occ
+	g3dcubes.occ \
+	g3dtest.occ 
 
 if BUILD_GRAPHICS3D_EXAMPLES
 examples = \
-	g3dcubes \
+	butterflies \
+	g3dcogs \
 	g3dcube \
-	g3dtest \
-	butterflies
+	g3dcubes \
+	g3dtest
 endif
 
 all-local: $(examples)
 
-g3dtest: g3dtest.occ
-	$(OCCBUILD) --program g3dtest.occ
+butterflies: butterflies.occ
+	$(OCCBUILD) --program butterflies.occ
 
-g3dcubes: g3dcubes.occ
-	$(OCCBUILD) --program g3dcubes.occ
+g3dcogs: g3dcogs.occ
+	$(OCCBUILD) --program g3dcogs.occ
 
 g3dcube: g3dcube.occ
 	$(OCCBUILD) --program g3dcube.occ
 
-butterflies: butterflies.occ
-	$(OCCBUILD) --program butterflies.occ
+g3dcubes: g3dcubes.occ
+	$(OCCBUILD) --program g3dcubes.occ
+
+g3dtest: g3dtest.occ
+	$(OCCBUILD) --program g3dtest.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples graphics3d --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
