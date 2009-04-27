@@ -104,7 +104,6 @@ PROC cogpoints.generator (CHAN INT trigger?, VAL INT nteeth, VAL REAL32 i.rad, o
   PROC reset () --{{{
     SEQ
       npoints := (nteeth * 8) + 2
-      height := 1.0
 
       cpnts := MOBILE [npoints]G3D.POINT3
 
@@ -142,7 +141,9 @@ PROC cogpoints.generator (CHAN INT trigger?, VAL INT nteeth, VAL REAL32 i.rad, o
 
   SEQ
     --{{{  initialise
+    height := 1.0
     reset ()
+
     --}}}
 
     INITIAL BOOL running IS TRUE:
@@ -154,10 +155,18 @@ PROC cogpoints.generator (CHAN INT trigger?, VAL INT nteeth, VAL REAL32 i.rad, o
               reset ()
             [3]REAL32 scale:
             add.scale; scale
-              SKIP
+              SEQ i = 0 FOR npoints
+                SEQ
+                  cpnts[i][x] := cpnts[i][x] * scale[0]
+                  cpnts[i][y] := cpnts[i][y] * scale[1]
+                  cpnts[i][z] := cpnts[i][z] * scale[2]
             [3]REAL32 scale:
             set.scale; scale
-              SKIP
+              SEQ i = 0 FOR npoints
+                SEQ
+                  cpnts[i][x] := cpnts[i][x] * scale[0]
+                  cpnts[i][y] := cpnts[i][y] * scale[1]
+                  cpnts[i][z] := cpnts[i][z] * scale[2]
             [3]REAL32 trans:
             add.trans; trans
               SKIP
