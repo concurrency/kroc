@@ -27,8 +27,8 @@
 #INCLUDE "sdlraster.module"
 #INCLUDE "graphics3d.inc"
 
-VAL REAL32 CONST.ZBSCALE IS 256.0:
-VAL INT CONST.ZBADD IS 8192:
+VAL REAL32 CONST.ZBSCALE IS 1024.0:
+VAL INT CONST.ZBADD IS 16384:
 
 --{{{  PROC g3d.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 --* Debugging routine.
@@ -82,6 +82,93 @@ PROC g3d.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 :
 --}}}
 
+--{{{  PROC cogpoints.generator (...)
+--* Cog points generator.
+-- Generates a stream of points that represent a cog in 3D space (laying down flat by default).
+--
+-- @param trigger Trigger channel.
+-- @param nteeth Number of teeth on the cog.
+-- @param i.rad Inner radius (where teeth start).
+-- @param o.rad Outer raduis (where teeth end).
+-- @param i.ang Inner tooth angle (between teeth bottoms).
+-- @param o.ang Outer tooth angle (of teeth ends).
+-- @param out Generated points.
+-- @param ctrl Control channel.
+--
+PROC cogpoints.generator (CHAN INT trigger?, VAL INT nteeth, VAL REAL32 i.rad, o.rad, i.ang, o.ang,
+                          CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+  MOBILE []G3D.POINT3 cpnts:
+  INT npoints:
+  REAL32 height:
+
+  PROC reset () --{{{
+    SEQ
+      npoints := (nteeth * 8) + 2
+      height := 1.0
+
+      cpnts := MOBILE [npoints]G3D.POINT3
+
+      #PRAGMA DEFINED cpnts
+
+      INITIAL INT pskip IS nteeth * 4:
+      INITIAL REAL32 apt IS (PI * 2.0) / (REAL32 ROUND nteeth):
+      INITIAL REAL32 i.ang IS (i.ang / 2.0):
+      INITIAL REAL32 o.ang IS (o.ang / 2.0):
+      SEQ i = 0 FOR nteeth
+        REAL32 aoffs:
+        INT pstart:
+        SEQ
+          aoffs := apt * (REAL32 ROUND i)
+          pstart := i * 4
+          cpnts[pstart + 0] := [i.rad * SIN (aoffs-i.ang), 0.0, i.rad * COS (aoffs-i.ang)]
+          cpnts[pstart + 1] := [o.rad * SIN (aoffs-o.ang), 0.0, o.rad * COS (aoffs-o.ang)]
+          IF
+            o.ang = 0.0
+              cpnts[pstart + 2] := cpnts[pstart + 1]
+            TRUE
+              cpnts[pstart + 2] := [o.rad * SIN (aoffs+o.ang), 0.0, o.rad * COS (aoffs+o.ang)]
+          cpnts[pstart + 3] := [i.rad * SIN (aoffs+i.ang), 0.0, i.rad * COS (aoffs+i.ang)]
+
+          SEQ j = 0 FOR 4
+            SEQ
+              cpnts[(pstart + j) + pskip] := cpnts[pstart + j]
+              cpnts[(pstart + j)][y] := -(height / 2.0)
+              cpnts[(pstart + j) + pskip][y] := (height / 2.0)
+      -- last two points are top and bottom centres
+      cpnts[npoints - 2] := [0.0, -(height / 2.0), 0.0]
+      cpnts[npoints - 1] := [0.0, height / 2.0, 0.0]
+  :
+  --}}}
+
+  SEQ
+    --{{{  initialise
+    reset ()
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      SEQ
+        PRI ALT
+          ctrl ? CASE
+            reset
+              reset ()
+            [3]REAL32 scale:
+            add.scale; scale
+              SKIP
+            [3]REAL32 scale:
+            set.scale; scale
+              SKIP
+            [3]REAL32 trans:
+            add.trans; trans
+              SKIP
+            [3]REAL32 trans:
+            set.trans; trans
+              SKIP
+          INT any:
+          trigger ? any
+            out ! CLONE cpnts
+:
+--}}}
 --{{{  PROC cubepoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
 --* Cube point generator.
 -- Generates a constant stream of points that represent a cube in 3D space.
@@ -411,6 +498,8 @@ PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL c
 
                 nblk := MOBILE [SIZE blk]G3D.POINT3
 
+                #PRAGMA DEFINED nblk
+
                 IF
                   (mode /\ G3D.ROTATE.MODE.DEMO) <> 0
                     SEQ i = 0 FOR SIZE blk
@@ -547,6 +636,8 @@ PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 
           SEQ
             p2d := MOBILE [SIZE p3d]G3D.POINT2.3
 
+            #PRAGMA DEFINED p2d
+
             SEQ i = 0 FOR SIZE p3d
               INITIAL REAL32 ez IS p3d[i][z] + z.shift:
               SEQ
@@ -556,6 +647,120 @@ PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 
                 p2d[i][y] := (INT ROUND (((p3d[i][y] + y.shift) / ez) * y.scale)) + y2.shift
 
             out ! p2d
+:
+--}}}
+--{{{  PROC cogify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--* Generates cog polygons from cog-points.
+-- Expects to receive (nteeth * 8) points at a time, and from these generates a
+-- set of polygons that represent a solid cog.
+--
+-- @param in Points in.
+-- @param nteeth Number of cog teeth.
+-- @param out Polygons out.
+-- @param ctrl Control channel.
+--
+PROC cogify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT nteeth, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+
+  PROC set.poly.point (G3D.POLY p, VAL INT pi, VAL G3D.POINT2.3 pnt) --{{{
+    SEQ
+      p[x][pi] := pnt[x]
+      p[y][pi] := pnt[y]
+      p[z][pi] := pnt[z]
+  :
+  --}}}
+
+  INITIAL INT lpts IS (nteeth * 8):
+  INITIAL INT bpts IS (nteeth * 4):
+  INITIAL BOOL backfaces IS FALSE:
+  [10]INT pixmap:
+  [10][4]INT polymap:
+  VAL INT BSIDE IS #00010000:       -- bit
+  VAL INT LAST IS #00020000:        -- bit
+  SEQ
+    --{{{  initialise
+    -- arbitrary defaults
+    pixmap := [#000000C0,#0000A0A0,#0000A0A0,#000000C0,#000000C0,#000000C0,#0000A0A0,#000000C0,#0000A0A0,#0000A0A0]
+
+    SEQ
+      polymap[0] := [0, 3, 2, 1]
+      polymap[1] := [LAST, 3, 0, -1]
+      polymap[2] := [LAST, 4, 3, -1]
+      polymap[3] := [0, 3, BSIDE + 3, BSIDE]
+      polymap[4] := [1, 2, BSIDE + 2, BSIDE + 1]
+      polymap[5] := [BSIDE + 3, BSIDE + 2, 2, 3]
+      polymap[6] := [3, 4, BSIDE + 4, BSIDE + 3]
+      polymap[7] := [BSIDE, BSIDE + 1, BSIDE + 2, BSIDE + 3]
+      polymap[8] := [LAST + 1, BSIDE, BSIDE + 3, -1]
+      polymap[9] := [LAST + 1, BSIDE + 3, BSIDE + 4, -1]
+
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset --{{{
+            SEQ
+              backfaces := FALSE
+          --}}}
+          BOOL trimap:
+          set.trimap; trimap --{{{
+            SKIP
+          --}}}
+          set.backfaces; backfaces --{{{
+            SKIP
+          --}}}
+
+        MOBILE []G3D.POINT2.3 pnts:
+        in ? pnts
+          IF
+            (SIZE pnts) <> ((nteeth * 8) + 2)
+              SKIP
+            TRUE
+              MOBILE []G3D.POLY polys:
+              INT npoly:
+              SEQ
+                npoly := nteeth * 10
+
+                polys := MOBILE [npoly]G3D.POLY
+
+                SEQ i = 0 FOR nteeth
+                  --{{{  for each tooth, create a set of 10 polygons
+                  INT pstart:
+                  INT nstart:
+                  SEQ
+                    pstart := i * 10        -- polygon start for this tooth
+                    nstart := i * 4         -- point start for this tooth
+
+                    SEQ p = 0 FOR 10
+                      INT np:
+                      SEQ
+                        IF
+                          polymap[p][3] = (-1)
+                            np := 3
+                          TRUE
+                            np := 4
+
+                        polys[pstart + p][npoints] := np
+                        polys[pstart + p][norm] := 0
+                        polys[pstart + p][pixel] := pixmap[p]
+
+                        SEQ j = 0 FOR np
+                          INT v:
+                          SEQ
+                            v := polymap[p][j]
+                            IF
+                              (v /\ BSIDE) <> 0
+                                v := ((nstart + (v /\ (~BSIDE))) \ bpts) + bpts
+                              (v /\ LAST) <> 0
+                                v := (v /\ (~LAST)) + lpts
+                              TRUE
+                                v := (nstart + (v /\ (~BSIDE))) \ bpts
+
+                            set.poly.point (polys[pstart + p], j, pnts[v])
+                  --}}}
+
+                out ! polys
 :
 --}}}
 --{{{  PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, SHARED CHAN BYTE debug!)
@@ -636,6 +841,7 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
               [12]INT norms:
               [12]INT pixels:
               SEQ
+                --{{{  number of polygons
                 IF
                   trimap AND backfaces
                     npoly := 12
@@ -645,8 +851,8 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
                     npoly := 6
                   TRUE
                     npoly := 6      -- or less
-
-                -- compute normals, based on cubic faces
+                --}}}
+                --{{{  compute normals, based on cubic faces
                 SEQ i = 0 FOR 6
                   INT norm:
                   VAL [4]INT face IS cubemap4[i]:
@@ -674,7 +880,8 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
                         SEQ
                           norms[i] := norm
                           pixels[i] := pixmap4[i]
-
+                --}}}
+                --{{{  allocate polys
                 IF
                   npoly <= 0
                     npoly := 1
@@ -683,6 +890,9 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
 
                 -- npoly should have the actual number of polygons needed
                 polys := MOBILE [npoly]G3D.POLY
+
+                #PRAGMA DEFINED polys, norms, pixels
+                --}}}
 
                 tpi := 0
                 IF
@@ -822,6 +1032,9 @@ PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY ou
                     norms[i] := norm
 
                 polys := MOBILE [npoly]G3D.POLY
+
+                #PRAGMA DEFINED polys
+
                 SEQ i = 0 FOR 13
                   SEQ
                     polys[i][npoints] := polywidth[i]
@@ -929,7 +1142,7 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
             step := ((x2 - x1) << 16) / (y2 - y1)
             x := x + step
             z := z1
-            z.step := (z2 - z1) / (y2 - y1)
+            z.step := (z2 - z1) / ((y2 - y1) + 1)
             y1 := y1 + 1
 
             SEQ y = y1 FOR ((y2 - y1) + 1)
@@ -1272,16 +1485,12 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                           TRUE
                             SEQ
                               IF
-                                zb[i][x] = 0
+                                (zb[i][x] = 0) OR (zb[i][x] > z)
                                   SEQ
                                     r[i][x] := scan[pixel]
                                     zb[i][x] := z
-                                zb[i][x] < z
-                                  SKIP
                                 TRUE
-                                  SEQ
-                                    r[i][x] := scan[pixel]
-                                    zb[i][x] := z
+                                  SKIP
                         z := z + z.step
           TRUE
             SKIP
