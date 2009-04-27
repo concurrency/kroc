@@ -77,7 +77,9 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
       keyboard.controller (kyb?, scr!, tmr.ctl!)
 
       CLAIM rre!
-        screen.cube.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+        SEQ
+          screen.cube.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+          glenz.cog.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 10, 2.0, 3.0, (PI / 36.0) * 5.0, (PI / 36.0) * 2.0)
 
       CLAIM rre!
         normal.network2.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
@@ -88,7 +90,8 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
         tim ? t
         tim ? AFTER (t PLUS 5000000)
         CLAIM rre!
-          normal.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+          SEQ
+            normal.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
 
       TIMER tim:
       INT t:
