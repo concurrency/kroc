@@ -57,7 +57,7 @@ PROC cube.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, VAL REAL3
       rdr.ctl ! set.mode; G3D.RENDER.MODE.NONE
       pgn.ctl ! set.trimap; FALSE
       pgn.ctl ! set.backfaces; FALSE
-      pgn.ctl ! set.face.colours; [#00000080,#00005050,#00008000,#00505000,#00800000,#00500050]
+      pgn.ctl ! set.face.colours; [#000000F0,#0000B0B0,#0000F000,#00B0B000,#00F00000,#00B000B0]
       psc.ctl ! set.zcolour; TRUE
       rot.ctl ! set.mode; rmode
       rot.ctl ! set.angle; iangle

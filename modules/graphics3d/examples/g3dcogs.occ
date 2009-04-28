@@ -53,6 +53,7 @@ PROC cog.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, nteeth, co
         TRUE
           pgn.ctl ! set.backfaces; FALSE
       pgn.ctl ! set.face.colours; [colour,colour,colour,colour,colour,colour,colour,colour,colour,colour]
+      psc.ctl ! set.zcolour; TRUE
       rot.ctl ! set.mode; G3D.ROTATE.MODE.Y
       rot.ctl ! add.increment; velocity
 :
@@ -84,28 +85,28 @@ PROC g3dcogs (CHAN BYTE kyb?, scr!) --{{{
         tmr.ctl ! set.fps; 5
         cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 8, #000000FF, 2.0, 3.0,
                             (PI / 64.0) * 10.0, (PI / 64.0) * 3.0, 1.0, 2.0, 3.0, -1.0, 0.03,
-                            G3D.RENDER.MODE.NORM)
+                            G3D.RENDER.MODE.NONE)
 
         cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 6, #0000FF00, 1.0, 2.0,
                             (PI / 64.0) * 12.0, (PI / 64.0) * 5.0, 3.0, -2.0, 2.7, 0.5, -0.04,
-                            G3D.RENDER.MODE.NORM)
+                            G3D.RENDER.MODE.NONE)
         cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 12, #0000FF00, 3.0, 4.0,
                             (PI / 64.0) * 8.0, (PI / 64.0) * 2.0, 0.8, -2.0, 1.0, 0.5, -0.04,
-                            G3D.RENDER.MODE.NORM)
+                            G3D.RENDER.MODE.NONE)
 
         cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 6, #00FF0000, 1.0, 1.7,
                             (PI / 64.0) * 12.0, (PI / 64.0) * 5.0, 3.0, 3.1, 0.5, 1.0, 0.08,
-                            G3D.RENDER.MODE.NORM)
+                            G3D.RENDER.MODE.NONE)
         cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 12, #00800000, 3.0, 4.0,
                             (PI / 64.0) * 7.0, (PI / 64.0) * 2.0, 1.0, 3.1, -1.7, 1.0, 0.08,
-                            G3D.RENDER.MODE.GLENZ \/ G3D.RENDER.MODE.NORM)
+                            G3D.RENDER.MODE.NONE)
 
         cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 6, #00000080, 1.0, 2.0,
-                            (PI / 64.0) * 12.0, (PI / 64.0) * 5.0, 3.0, -2.0, -2.2, 0.5, -0.2,
-                            G3D.RENDER.MODE.GLENZ \/ G3D.RENDER.MODE.NORM)
+                            (PI / 64.0) * 12.0, (PI / 64.0) * 5.0, 3.0, -2.0, -2.2, 0.5, -0.16,
+                            G3D.RENDER.MODE.NONE)
         cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 12, #00000080, 3.0, 4.0,
-                            (PI / 64.0) * 8.0, (PI / 64.0) * 2.0, 0.8, -2.0, -3.8, 0.5, -0.2,
-                            G3D.RENDER.MODE.GLENZ \/ G3D.RENDER.MODE.NORM)
+                            (PI / 64.0) * 8.0, (PI / 64.0) * 2.0, 0.8, -2.0, -4.3, 0.5, -0.16,
+                            G3D.RENDER.MODE.NONE)
 
         tmr.ctl ! set.fps; 60
 :
