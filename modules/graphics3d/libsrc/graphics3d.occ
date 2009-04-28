@@ -1745,11 +1745,13 @@ PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlin
           vp.height := G3D.MAX.SCAN.HEIGHT
   :
   --}}}
-  PROC do.line (RASTER r, VAL INT x1, y1, x2, y2, pixel) --{{{
+  PROC do.line (RASTER r, ZBUFFER zb, VAL INT x1, y1, z1, x2, y2, z2, pixel) --{{{
     INITIAL INT x1 IS x1:
     INITIAL INT y1 IS y1:
+    INITIAL INT z1 IS z1:
     INITIAL INT x2 IS x2:
     INITIAL INT y2 IS y2:
+    INITIAL INT z2 IS z2:
     SEQ
       IF
         y2 < y1
@@ -1757,6 +1759,7 @@ PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlin
             -- swap points around
             y2, y1 := y1, y2
             x2, x1 := x1, x2
+            z2, z1 := z1, z2
         TRUE
           SKIP
 
@@ -1772,25 +1775,36 @@ PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlin
                   (x1 >= vp.width) AND (x2 >= vp.width)
                     SKIP
                   TRUE
+                    INT zdiff, z:
                     SEQ
                       IF
                         x1 > x2
                           x1, x2 := x2, x1
                         TRUE
                           SKIP
+
                       IF
-                        x1 < 0
-                          x1 := 0
+                        x2 = x1
+                          zdiff := 0
                         TRUE
-                          SKIP
-                      IF
-                        x2 >= vp.width
-                          x2 := vp.width - 1
-                        TRUE
-                          SKIP
+                          zdiff := (z2 - z1) / (x2 - x1)
+                      z := z1
 
                       SEQ i = x1 FOR (x2 - x1)
-                        r[y1][i] := pixel
+                        SEQ
+                          IF
+                            i < 0
+                              SKIP
+                            i >= vp.width
+                              SKIP
+                            (zb[y1][i] = 0) OR (zb[y1][i] > z)
+                              SEQ
+                                zb[y1][i] := z
+                                r[y1][i] := pixel
+                            TRUE
+                              SKIP
+                          z := z + zdiff
+
             TRUE
               SKIP
           --}}}
@@ -1804,25 +1818,31 @@ PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlin
                 (y1 >= vp.height) AND (y2 >= vp.height)
                   SKIP
                 TRUE
+                  INT zdiff, z:
                   SEQ
                     IF
                       y1 > y2
                         y1, y2 := y2, y1
                       TRUE
                         SKIP
-                    IF
-                      y1 < 0
-                        y1 := 0
-                      TRUE
-                        SKIP
-                    IF
-                      y2 >= vp.height
-                        y2 := vp.height - 1
-                      TRUE
-                        SKIP
+
+                    zdiff := (z2 - z1) / (y2 - y1)
+                    z := z1
 
                     SEQ j = y1 FOR (y2 - y1)
-                      r[j][x1] := pixel
+                      SEQ
+                        IF
+                          j < 0
+                            SKIP
+                          j >= vp.height
+                            SKIP
+                          (zb[j][x1] = 0) OR (zb[j][x1] > z)
+                            SEQ
+                              zb[j][x1] := z
+                              r[j][x1] := pixel
+                          TRUE
+                            SKIP
+                        z := z + zdiff
             TRUE
               SKIP
           --}}}
@@ -1837,15 +1857,24 @@ PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlin
                     SEQ
                       x1, x2 := x2, x1
                       y1, y2 := y2, y1
+                      z1, z2 := z2, z1
                   TRUE
                     SKIP
 
                 INT y, step:
+                INT z, zdiff:
                 SEQ
                   y := y1 << 16
                   step := ((y2 - y1) << 16) / (x2 - x1)
                   y := y + step
                   x1 := x1 + 1
+
+                  IF
+                    x2 = x1
+                      zdiff := 0
+                    TRUE
+                      zdiff := (z2 - z1) / (x2 - x1)
+                  z := z1
 
                   SEQ x = x1 FOR ((x2 - x1) + 1)
                     SEQ
@@ -1853,22 +1882,35 @@ PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlin
                         (x >= 0) AND (x < vp.width)
                           VAL INT sy IS y >> 16:
                           IF
-                            (sy >= 0) AND (sy < vp.height)
-                              r[sy][x] := pixel
+                            (sy < 0) OR (sy >= vp.height)
+                              SKIP
+                            (zb[sy][x] = 0) OR (zb[sy][x] > z)
+                              SEQ
+                                zb[sy][x] := z
+                                r[sy][x] := pixel
                             TRUE
                               SKIP
                         TRUE
                           SKIP
                       y := y + step
+                      z := z + zdiff
               --}}}
             TRUE
               --{{{  steep gradient, draw by Y
               INT x, step:
+              INT z, zdiff:
               SEQ
                 x := x1 << 16
                 step := ((x2 - x1) << 16) / (y2 - y1)
                 x := x + step
                 y1 := y1 + 1
+
+                IF
+                  y2 = y1
+                    zdiff := 0
+                  TRUE
+                    zdiff := (z2 - z1) / (y2 - y1)
+                z := z1
 
                 SEQ y = y1 FOR ((y2 - y1) + 1)
                   SEQ
@@ -1876,28 +1918,33 @@ PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlin
                       (y >= 0) AND (y < vp.height)
                         VAL INT sx IS x >> 16:
                         IF
-                          (sx >= 0) AND (sx < vp.width)
-                            r[y][sx] := pixel
+                          (sx < 0) OR (sx >= vp.width)
+                            SKIP
+                          (zb[y][sx] = 0) OR (zb[y][sx] > z)
+                            SEQ
+                              zb[y][sx] := z
+                              r[y][sx] := pixel
                           TRUE
                             SKIP
                       TRUE
                         SKIP
                     x := x + step
+                    z := z + zdiff
               --}}}
   :
   --}}}
-  PROC poly.frame.render (RASTER r, VAL G3D.POLY poly) --{{{
+  PROC poly.frame.render (RASTER r, ZBUFFER zb, VAL G3D.POLY poly) --{{{
     IF
       poly[npoints] < 2
         SKIP
       poly[npoints] = 2
-        do.line (r, poly[x][0], poly[y][0], poly[x][1], poly[y][1], poly[pixel])
+        do.line (r, zb, poly[x][0], poly[y][0], poly[z][0], poly[x][1], poly[y][1], poly[z][1], poly[pixel])
       TRUE
         SEQ
           SEQ i = 0 FOR poly[npoints] - 1
-            do.line (r, poly[x][i], poly[y][i], poly[x][i+1], poly[y][i+1], poly[pixel])
+            do.line (r, zb, poly[x][i], poly[y][i], poly[z][i], poly[x][i+1], poly[y][i+1], poly[z][i+1], poly[pixel])
           VAL INT lp IS poly[npoints] - 1:
-          do.line (r, poly[x][lp], poly[y][lp], poly[x][0], poly[y][0], poly[pixel])
+          do.line (r, zb, poly[x][lp], poly[y][lp], poly[z][lp], poly[x][0], poly[y][0], poly[z][0], poly[pixel])
   :
   --}}}
 
@@ -1933,7 +1980,7 @@ PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlin
               data ? polys
 
               SEQ i = 0 FOR SIZE polys
-                poly.frame.render (r, polys[i])
+                poly.frame.render (r, zb, polys[i])
 
               rlink.out[link] ! raster; r; zb
             --}}}
