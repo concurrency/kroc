@@ -135,6 +135,13 @@ PROTOCOL G3D.ROT.CONTROL
     set.mode; INT             --* Set the rotation mode (see [@ref G3D.ROTATE.MODE]).
 :
 
+--* Points translation control.
+PROTOCOL G3D.TRN.CONTROL
+  CASE
+    reset                     --* Reset translation to default state (0, 0, 0).
+    set.3dshift; [3]REAL32    --* Set 3D translation.
+:
+
 --* Polygon points 3D-to-2D projection control.
 PROTOCOL G3D.PRJ.CONTROL
   CASE
