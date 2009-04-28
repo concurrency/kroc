@@ -583,6 +583,45 @@ PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL c
                 out ! nblk
 :
 --}}}
+--{{{  PROC points3d.translate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.TRN.CONTROL ctrl?)
+--* Point translator.
+-- Translates an arbitrary set of points in 3D space.
+--
+-- @param in 3D points in.
+-- @param out 3D points out.
+-- @param ctrl Control channel.
+--
+PROC points3d.translate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.TRN.CONTROL ctrl?)
+  [3]REAL32 trans:
+
+  PROC reset ()
+    SEQ
+      trans := [0.0, 0.0, 0.0]
+  :
+
+  SEQ
+
+    reset ()
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+          set.3dshift; trans
+            SKIP
+        MOBILE []G3D.POINT3 blk:
+        in ? blk
+          SEQ
+            SEQ i = 0 FOR SIZE blk
+              SEQ
+                blk[i][x] := blk[i][x] + trans[0]
+                blk[i][y] := blk[i][y] + trans[1]
+                blk[i][z] := blk[i][z] + trans[2]
+            out ! blk
+:
+--}}}
 --{{{  PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 out!, CHAN G3D.PRJ.CONTROL ctrl?, VAL INT width, height)
 --* Projects 3D points into 2D, preserves Z information.
 -- Maps a set of 3D points down into a set of 2D points, preserving the Z
@@ -1264,14 +1303,12 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                       IF
                         zcolour
                           --{{{  colour based on z-depth and (real) y-size
-                          INT zdiff, ydiff:
-                          INT zmin, zmax, ymin, ymax:
+                          INT zdiff:
+                          INT zmin, zmax:
                           INT factor:
                           SEQ
                             zmin := ply[z][0]
                             zmax := ply[z][0]
-                            ymin := ply[y][0]
-                            ymax := ply[y][0]
 
                             SEQ j = 1 FOR ply[npoints] - 1
                               SEQ
@@ -1282,24 +1319,14 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                                     zmax := ply[z][j]
                                   TRUE
                                     SKIP
-                                IF
-                                  ply[y][j] < ymin
-                                    ymin := ply[y][j]
-                                  ply[y][j] > ymax
-                                    ymax := ply[y][j]
-                                  TRUE
-                                    SKIP
 
                             zdiff := zmax - zmin
-                            ydiff := ymax - ymin
 
                             #IF FALSE
                             CLAIM debug!
                               SEQ
-                                out.string ("zdiff,ydiff for zcolour = ", 0, debug!)
+                                out.string ("zdiff for zcolour = ", 0, debug!)
                                 out.int (zdiff, 0, debug!)
-                                out.string (",", 0, debug!)
-                                out.int (ydiff, 0, debug!)
                                 out.string ("*n", 0, debug!)
                             #ENDIF
 
@@ -1307,7 +1334,7 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                               zdiff = 0
                                 factor := 256
                               TRUE
-                                factor := (512 * ydiff) / zdiff
+                                factor := (256 * 256) / zdiff
 
                             -- avgz := (-(avgz - CONST.ZBADD)) + CONST.ZBADD
 
