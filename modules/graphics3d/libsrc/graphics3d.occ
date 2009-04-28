@@ -1263,22 +1263,53 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                     SEQ
                       IF
                         zcolour
-                          INT avgz:
+                          --{{{  colour based on z-depth and (real) y-size
+                          INT zdiff, ydiff:
+                          INT zmin, zmax, ymin, ymax:
+                          INT factor:
                           SEQ
-                            avgz := 0
-                            SEQ j = 0 FOR ply[npoints]
-                              avgz := avgz + ply[z][j]
-                            avgz := (avgz / ply[npoints])
+                            zmin := ply[z][0]
+                            zmax := ply[z][0]
+                            ymin := ply[y][0]
+                            ymax := ply[y][0]
 
-                            -- avgz := (-(avgz - CONST.ZBADD)) + CONST.ZBADD
+                            SEQ j = 1 FOR ply[npoints] - 1
+                              SEQ
+                                IF
+                                  ply[z][j] < zmin
+                                    zmin := ply[z][j]
+                                  ply[z][j] > zmax
+                                    zmax := ply[z][j]
+                                  TRUE
+                                    SKIP
+                                IF
+                                  ply[y][j] < ymin
+                                    ymin := ply[y][j]
+                                  ply[y][j] > ymax
+                                    ymax := ply[y][j]
+                                  TRUE
+                                    SKIP
+
+                            zdiff := zmax - zmin
+                            ydiff := ymax - ymin
 
                             #IF FALSE
                             CLAIM debug!
                               SEQ
-                                out.string ("avgz for zcolour = ", 0, debug!)
-                                out.int (avgz, 0, debug!)
+                                out.string ("zdiff,ydiff for zcolour = ", 0, debug!)
+                                out.int (zdiff, 0, debug!)
+                                out.string (",", 0, debug!)
+                                out.int (ydiff, 0, debug!)
                                 out.string ("*n", 0, debug!)
                             #ENDIF
+
+                            IF
+                              zdiff = 0
+                                factor := 256
+                              TRUE
+                                factor := (512 * ydiff) / zdiff
+
+                            -- avgz := (-(avgz - CONST.ZBADD)) + CONST.ZBADD
 
                             INITIAL INT colour IS ply[pixel]:
                             SEQ
@@ -1289,16 +1320,19 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                                     col[v] > 0
                                       INT t:
                                       SEQ
-                                        t := ((INT col[v]) * avgz) >> 13
+                                        t := (factor * (INT col[v])) >> 8
                                         IF
                                           t > 255
                                             col[v] := #FF
+                                          t < 10
+                                            col[v] := #10
                                           TRUE
                                             col[v] := BYTE t
                                     TRUE
                                       SKIP
                               tsc[pixel] := colour
 
+                          --}}}
                         TRUE
                           tsc[pixel] := ply[pixel]
                       tsc[scan.s] := G3D.MAX.SCAN.HEIGHT
