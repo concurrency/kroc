@@ -53,9 +53,6 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-# FIXME: These should be shipped with the source.
-CLEANFILES = $(SWIG_OUTPUT_FILES)
-
 ## begin pideps dependencies
 helpers.tce: $(srcdir)/occplayer.inc
 ## end pideps dependencies
