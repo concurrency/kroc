@@ -107,6 +107,13 @@
 #endif
 
 /*{{{  struct player_devaddr_t */
+/*{{{  sizeof_player_devaddr_t */
+SWIGEXPORT void _sizeof_player_devaddr_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_devaddr_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_devaddr_t_host_set */
 SWIGEXPORT void _player_devaddr_t_host_set (word occ_args[]) {
   player_devaddr_t *arg1 = (player_devaddr_t *) 0 ;
@@ -253,6 +260,13 @@ SWIGEXPORT void _delete_player_devaddr_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_msghdr_t */
+/*{{{  sizeof_player_msghdr_t */
+SWIGEXPORT void _sizeof_player_msghdr_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_msghdr_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_msghdr_t_addr_set */
 SWIGEXPORT void _player_msghdr_t_addr_set (word occ_args[]) {
   player_msghdr_t *arg1 = (player_msghdr_t *) 0 ;
@@ -459,6 +473,13 @@ SWIGEXPORT void _delete_player_msghdr_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_null_t */
+/*{{{  sizeof_player_null_t */
+SWIGEXPORT void _sizeof_player_null_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_null_t);
+}
+
+
+/*}}}*/
 /*{{{  function new_player_null_t */
 SWIGEXPORT void _new_player_null_t (word occ_args[]) {
   player_null_t *result = 0 ;
@@ -485,6 +506,13 @@ SWIGEXPORT void _delete_player_null_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_point_2d_t */
+/*{{{  sizeof_player_point_2d_t */
+SWIGEXPORT void _sizeof_player_point_2d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_point_2d_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_point_2d_t_px_set */
 SWIGEXPORT void _player_point_2d_t_px_set (word occ_args[]) {
   player_point_2d_t *arg1 = (player_point_2d_t *) 0 ;
@@ -571,6 +599,13 @@ SWIGEXPORT void _delete_player_point_2d_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_point_3d_t */
+/*{{{  sizeof_player_point_3d_t */
+SWIGEXPORT void _sizeof_player_point_3d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_point_3d_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_point_3d_t_px_set */
 SWIGEXPORT void _player_point_3d_t_px_set (word occ_args[]) {
   player_point_3d_t *arg1 = (player_point_3d_t *) 0 ;
@@ -687,6 +722,13 @@ SWIGEXPORT void _delete_player_point_3d_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_orientation_3d_t */
+/*{{{  sizeof_player_orientation_3d_t */
+SWIGEXPORT void _sizeof_player_orientation_3d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_orientation_3d_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_orientation_3d_t_proll_set */
 SWIGEXPORT void _player_orientation_3d_t_proll_set (word occ_args[]) {
   player_orientation_3d_t *arg1 = (player_orientation_3d_t *) 0 ;
@@ -803,6 +845,13 @@ SWIGEXPORT void _delete_player_orientation_3d_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_pose2d_t */
+/*{{{  sizeof_player_pose2d_t */
+SWIGEXPORT void _sizeof_player_pose2d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_pose2d_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_pose2d_t_px_set */
 SWIGEXPORT void _player_pose2d_t_px_set (word occ_args[]) {
   player_pose2d_t *arg1 = (player_pose2d_t *) 0 ;
@@ -919,6 +968,13 @@ SWIGEXPORT void _delete_player_pose2d_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_pose3d_t */
+/*{{{  sizeof_player_pose3d_t */
+SWIGEXPORT void _sizeof_player_pose3d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_pose3d_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_pose3d_t_px_set */
 SWIGEXPORT void _player_pose3d_t_px_set (word occ_args[]) {
   player_pose3d_t *arg1 = (player_pose3d_t *) 0 ;
@@ -1125,6 +1181,13 @@ SWIGEXPORT void _delete_player_pose3d_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_bbox2d_t */
+/*{{{  sizeof_player_bbox2d_t */
+SWIGEXPORT void _sizeof_player_bbox2d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_bbox2d_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_bbox2d_t_sw_set */
 SWIGEXPORT void _player_bbox2d_t_sw_set (word occ_args[]) {
   player_bbox2d_t *arg1 = (player_bbox2d_t *) 0 ;
@@ -1211,6 +1274,13 @@ SWIGEXPORT void _delete_player_bbox2d_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_bbox3d_t */
+/*{{{  sizeof_player_bbox3d_t */
+SWIGEXPORT void _sizeof_player_bbox3d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_bbox3d_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_bbox3d_t_sw_set */
 SWIGEXPORT void _player_bbox3d_t_sw_set (word occ_args[]) {
   player_bbox3d_t *arg1 = (player_bbox3d_t *) 0 ;
@@ -1327,6 +1397,13 @@ SWIGEXPORT void _delete_player_bbox3d_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_blackboard_entry_t */
+/*{{{  sizeof_player_blackboard_entry_t */
+SWIGEXPORT void _sizeof_player_blackboard_entry_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_blackboard_entry_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_blackboard_entry_t_key_count_set */
 SWIGEXPORT void _player_blackboard_entry_t_key_count_set (word occ_args[]) {
   player_blackboard_entry_t *arg1 = (player_blackboard_entry_t *) 0 ;
@@ -1667,6 +1744,13 @@ SWIGEXPORT void _delete_player_blackboard_entry_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_segment_t */
+/*{{{  sizeof_player_segment_t */
+SWIGEXPORT void _sizeof_player_segment_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_segment_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_segment_t_x0_set */
 SWIGEXPORT void _player_segment_t_x0_set (word occ_args[]) {
   player_segment_t *arg1 = (player_segment_t *) 0 ;
@@ -1813,6 +1897,13 @@ SWIGEXPORT void _delete_player_segment_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_extent2d_t */
+/*{{{  sizeof_player_extent2d_t */
+SWIGEXPORT void _sizeof_player_extent2d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_extent2d_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_extent2d_t_x0_set */
 SWIGEXPORT void _player_extent2d_t_x0_set (word occ_args[]) {
   player_extent2d_t *arg1 = (player_extent2d_t *) 0 ;
@@ -1959,6 +2050,13 @@ SWIGEXPORT void _delete_player_extent2d_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_color_t */
+/*{{{  sizeof_player_color_t */
+SWIGEXPORT void _sizeof_player_color_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_color_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_color_t_alpha_set */
 SWIGEXPORT void _player_color_t_alpha_set (word occ_args[]) {
   player_color_t *arg1 = (player_color_t *) 0 ;
@@ -2105,6 +2203,13 @@ SWIGEXPORT void _delete_player_color_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_bool_t */
+/*{{{  sizeof_player_bool_t */
+SWIGEXPORT void _sizeof_player_bool_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_bool_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_bool_t_state_set */
 SWIGEXPORT void _player_bool_t_state_set (word occ_args[]) {
   player_bool_t *arg1 = (player_bool_t *) 0 ;
@@ -2161,6 +2266,13 @@ SWIGEXPORT void _delete_player_bool_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_uint32_t */
+/*{{{  sizeof_player_uint32_t */
+SWIGEXPORT void _sizeof_player_uint32_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_uint32_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_uint32_t_value_set */
 SWIGEXPORT void _player_uint32_t_value_set (word occ_args[]) {
   player_uint32_t *arg1 = (player_uint32_t *) 0 ;
@@ -2217,6 +2329,13 @@ SWIGEXPORT void _delete_player_uint32_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_capabilities_req_t */
+/*{{{  sizeof_player_capabilities_req_t */
+SWIGEXPORT void _sizeof_player_capabilities_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_capabilities_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_capabilities_req_t_type_set */
 SWIGEXPORT void _player_capabilities_req_t_type_set (word occ_args[]) {
   player_capabilities_req_t *arg1 = (player_capabilities_req_t *) 0 ;
@@ -2303,6 +2422,13 @@ SWIGEXPORT void _delete_player_capabilities_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_intprop_req_t */
+/*{{{  sizeof_player_intprop_req_t */
+SWIGEXPORT void _sizeof_player_intprop_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_intprop_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_intprop_req_t_key_count_set */
 SWIGEXPORT void _player_intprop_req_t_key_count_set (word occ_args[]) {
   player_intprop_req_t *arg1 = (player_intprop_req_t *) 0 ;
@@ -2426,6 +2552,13 @@ SWIGEXPORT void _delete_player_intprop_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_dblprop_req_t */
+/*{{{  sizeof_player_dblprop_req_t */
+SWIGEXPORT void _sizeof_player_dblprop_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_dblprop_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_dblprop_req_t_key_count_set */
 SWIGEXPORT void _player_dblprop_req_t_key_count_set (word occ_args[]) {
   player_dblprop_req_t *arg1 = (player_dblprop_req_t *) 0 ;
@@ -2549,6 +2682,13 @@ SWIGEXPORT void _delete_player_dblprop_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_strprop_req_t */
+/*{{{  sizeof_player_strprop_req_t */
+SWIGEXPORT void _sizeof_player_strprop_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_strprop_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_strprop_req_t_key_count_set */
 SWIGEXPORT void _player_strprop_req_t_key_count_set (word occ_args[]) {
   player_strprop_req_t *arg1 = (player_strprop_req_t *) 0 ;
@@ -2709,6 +2849,13 @@ SWIGEXPORT void _delete_player_strprop_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_speech_cmd_t */
+/*{{{  sizeof_player_speech_cmd_t */
+SWIGEXPORT void _sizeof_player_speech_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_speech_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_speech_cmd_t_string_count_set */
 SWIGEXPORT void _player_speech_cmd_t_string_count_set (word occ_args[]) {
   player_speech_cmd_t *arg1 = (player_speech_cmd_t *) 0 ;
@@ -2802,6 +2949,13 @@ SWIGEXPORT void _delete_player_speech_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_camera_data_t */
+/*{{{  sizeof_player_camera_data_t */
+SWIGEXPORT void _sizeof_player_camera_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_camera_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_camera_data_t_width_set */
 SWIGEXPORT void _player_camera_data_t_width_set (word occ_args[]) {
   player_camera_data_t *arg1 = (player_camera_data_t *) 0 ;
@@ -3068,6 +3222,13 @@ SWIGEXPORT void _delete_player_camera_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_actuator_t */
+/*{{{  sizeof_player_actarray_actuator_t */
+SWIGEXPORT void _sizeof_player_actarray_actuator_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_actuator_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_actuator_t_position_set */
 SWIGEXPORT void _player_actarray_actuator_t_position_set (word occ_args[]) {
   player_actarray_actuator_t *arg1 = (player_actarray_actuator_t *) 0 ;
@@ -3244,6 +3405,13 @@ SWIGEXPORT void _delete_player_actarray_actuator_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_data_t */
+/*{{{  sizeof_player_actarray_data_t */
+SWIGEXPORT void _sizeof_player_actarray_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_data_t_actuators_count_set */
 SWIGEXPORT void _player_actarray_data_t_actuators_count_set (word occ_args[]) {
   player_actarray_data_t *arg1 = (player_actarray_data_t *) 0 ;
@@ -3360,6 +3528,13 @@ SWIGEXPORT void _delete_player_actarray_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_actuatorgeom_t */
+/*{{{  sizeof_player_actarray_actuatorgeom_t */
+SWIGEXPORT void _sizeof_player_actarray_actuatorgeom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_actuatorgeom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_actuatorgeom_t_type_set */
 SWIGEXPORT void _player_actarray_actuatorgeom_t_type_set (word occ_args[]) {
   player_actarray_actuatorgeom_t *arg1 = (player_actarray_actuatorgeom_t *) 0 ;
@@ -3686,6 +3861,13 @@ SWIGEXPORT void _delete_player_actarray_actuatorgeom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_geom_t */
+/*{{{  sizeof_player_actarray_geom_t */
+SWIGEXPORT void _sizeof_player_actarray_geom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_geom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_geom_t_actuators_count_set */
 SWIGEXPORT void _player_actarray_geom_t_actuators_count_set (word occ_args[]) {
   player_actarray_geom_t *arg1 = (player_actarray_geom_t *) 0 ;
@@ -3832,6 +4014,13 @@ SWIGEXPORT void _delete_player_actarray_geom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_position_cmd_t */
+/*{{{  sizeof_player_actarray_position_cmd_t */
+SWIGEXPORT void _sizeof_player_actarray_position_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_position_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_position_cmd_t_joint_set */
 SWIGEXPORT void _player_actarray_position_cmd_t_joint_set (word occ_args[]) {
   player_actarray_position_cmd_t *arg1 = (player_actarray_position_cmd_t *) 0 ;
@@ -3918,6 +4107,13 @@ SWIGEXPORT void _delete_player_actarray_position_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_multi_position_cmd_t */
+/*{{{  sizeof_player_actarray_multi_position_cmd_t */
+SWIGEXPORT void _sizeof_player_actarray_multi_position_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_multi_position_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_multi_position_cmd_t_positions_count_set */
 SWIGEXPORT void _player_actarray_multi_position_cmd_t_positions_count_set (word occ_args[]) {
   player_actarray_multi_position_cmd_t *arg1 = (player_actarray_multi_position_cmd_t *) 0 ;
@@ -4004,6 +4200,13 @@ SWIGEXPORT void _delete_player_actarray_multi_position_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_speed_cmd_t */
+/*{{{  sizeof_player_actarray_speed_cmd_t */
+SWIGEXPORT void _sizeof_player_actarray_speed_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_speed_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_speed_cmd_t_joint_set */
 SWIGEXPORT void _player_actarray_speed_cmd_t_joint_set (word occ_args[]) {
   player_actarray_speed_cmd_t *arg1 = (player_actarray_speed_cmd_t *) 0 ;
@@ -4090,6 +4293,13 @@ SWIGEXPORT void _delete_player_actarray_speed_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_multi_speed_cmd_t */
+/*{{{  sizeof_player_actarray_multi_speed_cmd_t */
+SWIGEXPORT void _sizeof_player_actarray_multi_speed_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_multi_speed_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_multi_speed_cmd_t_speeds_count_set */
 SWIGEXPORT void _player_actarray_multi_speed_cmd_t_speeds_count_set (word occ_args[]) {
   player_actarray_multi_speed_cmd_t *arg1 = (player_actarray_multi_speed_cmd_t *) 0 ;
@@ -4176,6 +4386,13 @@ SWIGEXPORT void _delete_player_actarray_multi_speed_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_home_cmd_t */
+/*{{{  sizeof_player_actarray_home_cmd_t */
+SWIGEXPORT void _sizeof_player_actarray_home_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_home_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_home_cmd_t_joint_set */
 SWIGEXPORT void _player_actarray_home_cmd_t_joint_set (word occ_args[]) {
   player_actarray_home_cmd_t *arg1 = (player_actarray_home_cmd_t *) 0 ;
@@ -4232,6 +4449,13 @@ SWIGEXPORT void _delete_player_actarray_home_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_current_cmd_t */
+/*{{{  sizeof_player_actarray_current_cmd_t */
+SWIGEXPORT void _sizeof_player_actarray_current_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_current_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_current_cmd_t_joint_set */
 SWIGEXPORT void _player_actarray_current_cmd_t_joint_set (word occ_args[]) {
   player_actarray_current_cmd_t *arg1 = (player_actarray_current_cmd_t *) 0 ;
@@ -4318,6 +4542,13 @@ SWIGEXPORT void _delete_player_actarray_current_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_multi_current_cmd_t */
+/*{{{  sizeof_player_actarray_multi_current_cmd_t */
+SWIGEXPORT void _sizeof_player_actarray_multi_current_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_multi_current_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_multi_current_cmd_t_currents_count_set */
 SWIGEXPORT void _player_actarray_multi_current_cmd_t_currents_count_set (word occ_args[]) {
   player_actarray_multi_current_cmd_t *arg1 = (player_actarray_multi_current_cmd_t *) 0 ;
@@ -4404,6 +4635,13 @@ SWIGEXPORT void _delete_player_actarray_multi_current_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_power_config_t */
+/*{{{  sizeof_player_actarray_power_config_t */
+SWIGEXPORT void _sizeof_player_actarray_power_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_power_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_power_config_t_value_set */
 SWIGEXPORT void _player_actarray_power_config_t_value_set (word occ_args[]) {
   player_actarray_power_config_t *arg1 = (player_actarray_power_config_t *) 0 ;
@@ -4460,6 +4698,13 @@ SWIGEXPORT void _delete_player_actarray_power_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_brakes_config_t */
+/*{{{  sizeof_player_actarray_brakes_config_t */
+SWIGEXPORT void _sizeof_player_actarray_brakes_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_brakes_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_brakes_config_t_value_set */
 SWIGEXPORT void _player_actarray_brakes_config_t_value_set (word occ_args[]) {
   player_actarray_brakes_config_t *arg1 = (player_actarray_brakes_config_t *) 0 ;
@@ -4516,6 +4761,13 @@ SWIGEXPORT void _delete_player_actarray_brakes_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_speed_config_t */
+/*{{{  sizeof_player_actarray_speed_config_t */
+SWIGEXPORT void _sizeof_player_actarray_speed_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_speed_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_speed_config_t_joint_set */
 SWIGEXPORT void _player_actarray_speed_config_t_joint_set (word occ_args[]) {
   player_actarray_speed_config_t *arg1 = (player_actarray_speed_config_t *) 0 ;
@@ -4602,6 +4854,13 @@ SWIGEXPORT void _delete_player_actarray_speed_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_actarray_accel_config_t */
+/*{{{  sizeof_player_actarray_accel_config_t */
+SWIGEXPORT void _sizeof_player_actarray_accel_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_actarray_accel_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_actarray_accel_config_t_joint_set */
 SWIGEXPORT void _player_actarray_accel_config_t_joint_set (word occ_args[]) {
   player_actarray_accel_config_t *arg1 = (player_actarray_accel_config_t *) 0 ;
@@ -4688,6 +4947,13 @@ SWIGEXPORT void _delete_player_actarray_accel_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_health_cpu_t */
+/*{{{  sizeof_player_health_cpu_t */
+SWIGEXPORT void _sizeof_player_health_cpu_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_health_cpu_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_health_cpu_t_idle_set */
 SWIGEXPORT void _player_health_cpu_t_idle_set (word occ_args[]) {
   player_health_cpu_t *arg1 = (player_health_cpu_t *) 0 ;
@@ -4804,6 +5070,13 @@ SWIGEXPORT void _delete_player_health_cpu_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_health_memory_t */
+/*{{{  sizeof_player_health_memory_t */
+SWIGEXPORT void _sizeof_player_health_memory_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_health_memory_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_health_memory_t_total_set */
 SWIGEXPORT void _player_health_memory_t_total_set (word occ_args[]) {
   player_health_memory_t *arg1 = (player_health_memory_t *) 0 ;
@@ -4920,6 +5193,13 @@ SWIGEXPORT void _delete_player_health_memory_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_health_data_t */
+/*{{{  sizeof_player_health_data_t */
+SWIGEXPORT void _sizeof_player_health_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_health_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_health_data_t_cpu_usage_set */
 SWIGEXPORT void _player_health_data_t_cpu_usage_set (word occ_args[]) {
   player_health_data_t *arg1 = (player_health_data_t *) 0 ;
@@ -5036,6 +5316,13 @@ SWIGEXPORT void _delete_player_health_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_pointcloud3d_element_t */
+/*{{{  sizeof_player_pointcloud3d_element_t */
+SWIGEXPORT void _sizeof_player_pointcloud3d_element_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_pointcloud3d_element_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_pointcloud3d_element_t_point_set */
 SWIGEXPORT void _player_pointcloud3d_element_t_point_set (word occ_args[]) {
   player_pointcloud3d_element_t *arg1 = (player_pointcloud3d_element_t *) 0 ;
@@ -5122,6 +5409,13 @@ SWIGEXPORT void _delete_player_pointcloud3d_element_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_pointcloud3d_data_t */
+/*{{{  sizeof_player_pointcloud3d_data_t */
+SWIGEXPORT void _sizeof_player_pointcloud3d_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_pointcloud3d_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_pointcloud3d_data_t_points_count_set */
 SWIGEXPORT void _player_pointcloud3d_data_t_points_count_set (word occ_args[]) {
   player_pointcloud3d_data_t *arg1 = (player_pointcloud3d_data_t *) 0 ;
@@ -5208,6 +5502,13 @@ SWIGEXPORT void _delete_player_pointcloud3d_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_aio_data_t */
+/*{{{  sizeof_player_aio_data_t */
+SWIGEXPORT void _sizeof_player_aio_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_aio_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_aio_data_t_voltages_count_set */
 SWIGEXPORT void _player_aio_data_t_voltages_count_set (word occ_args[]) {
   player_aio_data_t *arg1 = (player_aio_data_t *) 0 ;
@@ -5294,6 +5595,13 @@ SWIGEXPORT void _delete_player_aio_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_aio_cmd_t */
+/*{{{  sizeof_player_aio_cmd_t */
+SWIGEXPORT void _sizeof_player_aio_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_aio_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_aio_cmd_t_id_set */
 SWIGEXPORT void _player_aio_cmd_t_id_set (word occ_args[]) {
   player_aio_cmd_t *arg1 = (player_aio_cmd_t *) 0 ;
@@ -5380,6 +5688,13 @@ SWIGEXPORT void _delete_player_aio_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_sonar_data_t */
+/*{{{  sizeof_player_sonar_data_t */
+SWIGEXPORT void _sizeof_player_sonar_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_sonar_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_sonar_data_t_ranges_count_set */
 SWIGEXPORT void _player_sonar_data_t_ranges_count_set (word occ_args[]) {
   player_sonar_data_t *arg1 = (player_sonar_data_t *) 0 ;
@@ -5466,6 +5781,13 @@ SWIGEXPORT void _delete_player_sonar_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_sonar_geom_t */
+/*{{{  sizeof_player_sonar_geom_t */
+SWIGEXPORT void _sizeof_player_sonar_geom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_sonar_geom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_sonar_geom_t_poses_count_set */
 SWIGEXPORT void _player_sonar_geom_t_poses_count_set (word occ_args[]) {
   player_sonar_geom_t *arg1 = (player_sonar_geom_t *) 0 ;
@@ -5552,6 +5874,13 @@ SWIGEXPORT void _delete_player_sonar_geom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_sonar_power_config_t */
+/*{{{  sizeof_player_sonar_power_config_t */
+SWIGEXPORT void _sizeof_player_sonar_power_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_sonar_power_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_sonar_power_config_t_state_set */
 SWIGEXPORT void _player_sonar_power_config_t_state_set (word occ_args[]) {
   player_sonar_power_config_t *arg1 = (player_sonar_power_config_t *) 0 ;
@@ -5608,6 +5937,13 @@ SWIGEXPORT void _delete_player_sonar_power_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_data_t */
+/*{{{  sizeof_player_position1d_data_t */
+SWIGEXPORT void _sizeof_player_position1d_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_data_t_pos_set */
 SWIGEXPORT void _player_position1d_data_t_pos_set (word occ_args[]) {
   player_position1d_data_t *arg1 = (player_position1d_data_t *) 0 ;
@@ -5754,6 +6090,13 @@ SWIGEXPORT void _delete_player_position1d_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_cmd_vel_t */
+/*{{{  sizeof_player_position1d_cmd_vel_t */
+SWIGEXPORT void _sizeof_player_position1d_cmd_vel_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_cmd_vel_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_cmd_vel_t_vel_set */
 SWIGEXPORT void _player_position1d_cmd_vel_t_vel_set (word occ_args[]) {
   player_position1d_cmd_vel_t *arg1 = (player_position1d_cmd_vel_t *) 0 ;
@@ -5840,6 +6183,13 @@ SWIGEXPORT void _delete_player_position1d_cmd_vel_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_cmd_pos_t */
+/*{{{  sizeof_player_position1d_cmd_pos_t */
+SWIGEXPORT void _sizeof_player_position1d_cmd_pos_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_cmd_pos_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_cmd_pos_t_pos_set */
 SWIGEXPORT void _player_position1d_cmd_pos_t_pos_set (word occ_args[]) {
   player_position1d_cmd_pos_t *arg1 = (player_position1d_cmd_pos_t *) 0 ;
@@ -5956,6 +6306,13 @@ SWIGEXPORT void _delete_player_position1d_cmd_pos_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_geom_t */
+/*{{{  sizeof_player_position1d_geom_t */
+SWIGEXPORT void _sizeof_player_position1d_geom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_geom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_geom_t_pose_set */
 SWIGEXPORT void _player_position1d_geom_t_pose_set (word occ_args[]) {
   player_position1d_geom_t *arg1 = (player_position1d_geom_t *) 0 ;
@@ -6042,6 +6399,13 @@ SWIGEXPORT void _delete_player_position1d_geom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_power_config_t */
+/*{{{  sizeof_player_position1d_power_config_t */
+SWIGEXPORT void _sizeof_player_position1d_power_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_power_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_power_config_t_state_set */
 SWIGEXPORT void _player_position1d_power_config_t_state_set (word occ_args[]) {
   player_position1d_power_config_t *arg1 = (player_position1d_power_config_t *) 0 ;
@@ -6098,6 +6462,13 @@ SWIGEXPORT void _delete_player_position1d_power_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_velocity_mode_config_t */
+/*{{{  sizeof_player_position1d_velocity_mode_config_t */
+SWIGEXPORT void _sizeof_player_position1d_velocity_mode_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_velocity_mode_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_velocity_mode_config_t_value_set */
 SWIGEXPORT void _player_position1d_velocity_mode_config_t_value_set (word occ_args[]) {
   player_position1d_velocity_mode_config_t *arg1 = (player_position1d_velocity_mode_config_t *) 0 ;
@@ -6154,6 +6525,13 @@ SWIGEXPORT void _delete_player_position1d_velocity_mode_config_t (word occ_args[
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_reset_odom_config_t */
+/*{{{  sizeof_player_position1d_reset_odom_config_t */
+SWIGEXPORT void _sizeof_player_position1d_reset_odom_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_reset_odom_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_reset_odom_config_t_value_set */
 SWIGEXPORT void _player_position1d_reset_odom_config_t_value_set (word occ_args[]) {
   player_position1d_reset_odom_config_t *arg1 = (player_position1d_reset_odom_config_t *) 0 ;
@@ -6210,6 +6588,13 @@ SWIGEXPORT void _delete_player_position1d_reset_odom_config_t (word occ_args[]) 
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_position_mode_req_t */
+/*{{{  sizeof_player_position1d_position_mode_req_t */
+SWIGEXPORT void _sizeof_player_position1d_position_mode_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_position_mode_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_position_mode_req_t_state_set */
 SWIGEXPORT void _player_position1d_position_mode_req_t_state_set (word occ_args[]) {
   player_position1d_position_mode_req_t *arg1 = (player_position1d_position_mode_req_t *) 0 ;
@@ -6266,6 +6651,13 @@ SWIGEXPORT void _delete_player_position1d_position_mode_req_t (word occ_args[]) 
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_set_odom_req_t */
+/*{{{  sizeof_player_position1d_set_odom_req_t */
+SWIGEXPORT void _sizeof_player_position1d_set_odom_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_set_odom_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_set_odom_req_t_pos_set */
 SWIGEXPORT void _player_position1d_set_odom_req_t_pos_set (word occ_args[]) {
   player_position1d_set_odom_req_t *arg1 = (player_position1d_set_odom_req_t *) 0 ;
@@ -6322,6 +6714,13 @@ SWIGEXPORT void _delete_player_position1d_set_odom_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_speed_pid_req_t */
+/*{{{  sizeof_player_position1d_speed_pid_req_t */
+SWIGEXPORT void _sizeof_player_position1d_speed_pid_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_speed_pid_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_speed_pid_req_t_kp_set */
 SWIGEXPORT void _player_position1d_speed_pid_req_t_kp_set (word occ_args[]) {
   player_position1d_speed_pid_req_t *arg1 = (player_position1d_speed_pid_req_t *) 0 ;
@@ -6438,6 +6837,13 @@ SWIGEXPORT void _delete_player_position1d_speed_pid_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_position_pid_req_t */
+/*{{{  sizeof_player_position1d_position_pid_req_t */
+SWIGEXPORT void _sizeof_player_position1d_position_pid_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_position_pid_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_position_pid_req_t_kp_set */
 SWIGEXPORT void _player_position1d_position_pid_req_t_kp_set (word occ_args[]) {
   player_position1d_position_pid_req_t *arg1 = (player_position1d_position_pid_req_t *) 0 ;
@@ -6554,6 +6960,13 @@ SWIGEXPORT void _delete_player_position1d_position_pid_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position1d_speed_prof_req_t */
+/*{{{  sizeof_player_position1d_speed_prof_req_t */
+SWIGEXPORT void _sizeof_player_position1d_speed_prof_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position1d_speed_prof_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position1d_speed_prof_req_t_speed_set */
 SWIGEXPORT void _player_position1d_speed_prof_req_t_speed_set (word occ_args[]) {
   player_position1d_speed_prof_req_t *arg1 = (player_position1d_speed_prof_req_t *) 0 ;
@@ -6640,6 +7053,13 @@ SWIGEXPORT void _delete_player_position1d_speed_prof_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_dio_data_t */
+/*{{{  sizeof_player_dio_data_t */
+SWIGEXPORT void _sizeof_player_dio_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_dio_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_dio_data_t_count_set */
 SWIGEXPORT void _player_dio_data_t_count_set (word occ_args[]) {
   player_dio_data_t *arg1 = (player_dio_data_t *) 0 ;
@@ -6726,6 +7146,13 @@ SWIGEXPORT void _delete_player_dio_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_dio_cmd_t */
+/*{{{  sizeof_player_dio_cmd_t */
+SWIGEXPORT void _sizeof_player_dio_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_dio_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_dio_cmd_t_count_set */
 SWIGEXPORT void _player_dio_cmd_t_count_set (word occ_args[]) {
   player_dio_cmd_t *arg1 = (player_dio_cmd_t *) 0 ;
@@ -6812,6 +7239,13 @@ SWIGEXPORT void _delete_player_dio_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_localize_hypoth_t */
+/*{{{  sizeof_player_localize_hypoth_t */
+SWIGEXPORT void _sizeof_player_localize_hypoth_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_localize_hypoth_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_localize_hypoth_t_mean_set */
 SWIGEXPORT void _player_localize_hypoth_t_mean_set (word occ_args[]) {
   player_localize_hypoth_t *arg1 = (player_localize_hypoth_t *) 0 ;
@@ -6916,6 +7350,13 @@ SWIGEXPORT void _delete_player_localize_hypoth_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_localize_data_t */
+/*{{{  sizeof_player_localize_data_t */
+SWIGEXPORT void _sizeof_player_localize_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_localize_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_localize_data_t_pending_count_set */
 SWIGEXPORT void _player_localize_data_t_pending_count_set (word occ_args[]) {
   player_localize_data_t *arg1 = (player_localize_data_t *) 0 ;
@@ -7062,6 +7503,13 @@ SWIGEXPORT void _delete_player_localize_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_localize_set_pose_t */
+/*{{{  sizeof_player_localize_set_pose_t */
+SWIGEXPORT void _sizeof_player_localize_set_pose_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_localize_set_pose_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_localize_set_pose_t_mean_set */
 SWIGEXPORT void _player_localize_set_pose_t_mean_set (word occ_args[]) {
   player_localize_set_pose_t *arg1 = (player_localize_set_pose_t *) 0 ;
@@ -7136,6 +7584,13 @@ SWIGEXPORT void _delete_player_localize_set_pose_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_localize_particle_t */
+/*{{{  sizeof_player_localize_particle_t */
+SWIGEXPORT void _sizeof_player_localize_particle_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_localize_particle_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_localize_particle_t_pose_set */
 SWIGEXPORT void _player_localize_particle_t_pose_set (word occ_args[]) {
   player_localize_particle_t *arg1 = (player_localize_particle_t *) 0 ;
@@ -7222,6 +7677,13 @@ SWIGEXPORT void _delete_player_localize_particle_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_localize_get_particles_t */
+/*{{{  sizeof_player_localize_get_particles_t */
+SWIGEXPORT void _sizeof_player_localize_get_particles_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_localize_get_particles_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_localize_get_particles_t_mean_set */
 SWIGEXPORT void _player_localize_get_particles_t_mean_set (word occ_args[]) {
   player_localize_get_particles_t *arg1 = (player_localize_get_particles_t *) 0 ;
@@ -7368,6 +7830,13 @@ SWIGEXPORT void _delete_player_localize_get_particles_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ptz_data_t */
+/*{{{  sizeof_player_ptz_data_t */
+SWIGEXPORT void _sizeof_player_ptz_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ptz_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ptz_data_t_pan_set */
 SWIGEXPORT void _player_ptz_data_t_pan_set (word occ_args[]) {
   player_ptz_data_t *arg1 = (player_ptz_data_t *) 0 ;
@@ -7574,6 +8043,13 @@ SWIGEXPORT void _delete_player_ptz_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ptz_cmd_t */
+/*{{{  sizeof_player_ptz_cmd_t */
+SWIGEXPORT void _sizeof_player_ptz_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ptz_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ptz_cmd_t_pan_set */
 SWIGEXPORT void _player_ptz_cmd_t_pan_set (word occ_args[]) {
   player_ptz_cmd_t *arg1 = (player_ptz_cmd_t *) 0 ;
@@ -7750,6 +8226,13 @@ SWIGEXPORT void _delete_player_ptz_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ptz_req_status_t */
+/*{{{  sizeof_player_ptz_req_status_t */
+SWIGEXPORT void _sizeof_player_ptz_req_status_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ptz_req_status_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ptz_req_status_t_status_set */
 SWIGEXPORT void _player_ptz_req_status_t_status_set (word occ_args[]) {
   player_ptz_req_status_t *arg1 = (player_ptz_req_status_t *) 0 ;
@@ -7806,6 +8289,13 @@ SWIGEXPORT void _delete_player_ptz_req_status_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ptz_geom_t */
+/*{{{  sizeof_player_ptz_geom_t */
+SWIGEXPORT void _sizeof_player_ptz_geom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ptz_geom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ptz_geom_t_pos_set */
 SWIGEXPORT void _player_ptz_geom_t_pos_set (word occ_args[]) {
   player_ptz_geom_t *arg1 = (player_ptz_geom_t *) 0 ;
@@ -7892,6 +8382,13 @@ SWIGEXPORT void _delete_player_ptz_geom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ptz_req_generic_t */
+/*{{{  sizeof_player_ptz_req_generic_t */
+SWIGEXPORT void _sizeof_player_ptz_req_generic_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ptz_req_generic_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ptz_req_generic_t_config_count_set */
 SWIGEXPORT void _player_ptz_req_generic_t_config_count_set (word occ_args[]) {
   player_ptz_req_generic_t *arg1 = (player_ptz_req_generic_t *) 0 ;
@@ -7978,6 +8475,13 @@ SWIGEXPORT void _delete_player_ptz_req_generic_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ptz_req_control_mode_t */
+/*{{{  sizeof_player_ptz_req_control_mode_t */
+SWIGEXPORT void _sizeof_player_ptz_req_control_mode_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ptz_req_control_mode_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ptz_req_control_mode_t_mode_set */
 SWIGEXPORT void _player_ptz_req_control_mode_t_mode_set (word occ_args[]) {
   player_ptz_req_control_mode_t *arg1 = (player_ptz_req_control_mode_t *) 0 ;
@@ -8034,6 +8538,13 @@ SWIGEXPORT void _delete_player_ptz_req_control_mode_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_blobfinder_blob_t */
+/*{{{  sizeof_player_blobfinder_blob_t */
+SWIGEXPORT void _sizeof_player_blobfinder_blob_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_blobfinder_blob_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_blobfinder_blob_t_id_set */
 SWIGEXPORT void _player_blobfinder_blob_t_id_set (word occ_args[]) {
   player_blobfinder_blob_t *arg1 = (player_blobfinder_blob_t *) 0 ;
@@ -8360,6 +8871,13 @@ SWIGEXPORT void _delete_player_blobfinder_blob_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_blobfinder_data_t */
+/*{{{  sizeof_player_blobfinder_data_t */
+SWIGEXPORT void _sizeof_player_blobfinder_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_blobfinder_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_blobfinder_data_t_width_set */
 SWIGEXPORT void _player_blobfinder_data_t_width_set (word occ_args[]) {
   player_blobfinder_data_t *arg1 = (player_blobfinder_data_t *) 0 ;
@@ -8506,6 +9024,13 @@ SWIGEXPORT void _delete_player_blobfinder_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_blobfinder_color_config_t */
+/*{{{  sizeof_player_blobfinder_color_config_t */
+SWIGEXPORT void _sizeof_player_blobfinder_color_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_blobfinder_color_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_blobfinder_color_config_t_channel_set */
 SWIGEXPORT void _player_blobfinder_color_config_t_channel_set (word occ_args[]) {
   player_blobfinder_color_config_t *arg1 = (player_blobfinder_color_config_t *) 0 ;
@@ -8742,6 +9267,13 @@ SWIGEXPORT void _delete_player_blobfinder_color_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_blobfinder_imager_config_t */
+/*{{{  sizeof_player_blobfinder_imager_config_t */
+SWIGEXPORT void _sizeof_player_blobfinder_imager_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_blobfinder_imager_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_blobfinder_imager_config_t_brightness_set */
 SWIGEXPORT void _player_blobfinder_imager_config_t_brightness_set (word occ_args[]) {
   player_blobfinder_imager_config_t *arg1 = (player_blobfinder_imager_config_t *) 0 ;
@@ -8888,6 +9420,13 @@ SWIGEXPORT void _delete_player_blobfinder_imager_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_gripper_data_t */
+/*{{{  sizeof_player_gripper_data_t */
+SWIGEXPORT void _sizeof_player_gripper_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_gripper_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_gripper_data_t_state_set */
 SWIGEXPORT void _player_gripper_data_t_state_set (word occ_args[]) {
   player_gripper_data_t *arg1 = (player_gripper_data_t *) 0 ;
@@ -9004,6 +9543,13 @@ SWIGEXPORT void _delete_player_gripper_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_gripper_geom_t */
+/*{{{  sizeof_player_gripper_geom_t */
+SWIGEXPORT void _sizeof_player_gripper_geom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_gripper_geom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_gripper_geom_t_pose_set */
 SWIGEXPORT void _player_gripper_geom_t_pose_set (word occ_args[]) {
   player_gripper_geom_t *arg1 = (player_gripper_geom_t *) 0 ;
@@ -9180,6 +9726,13 @@ SWIGEXPORT void _delete_player_gripper_geom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ranger_geom_t */
+/*{{{  sizeof_player_ranger_geom_t */
+SWIGEXPORT void _sizeof_player_ranger_geom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ranger_geom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ranger_geom_t_pose_set */
 SWIGEXPORT void _player_ranger_geom_t_pose_set (word occ_args[]) {
   player_ranger_geom_t *arg1 = (player_ranger_geom_t *) 0 ;
@@ -9386,6 +9939,13 @@ SWIGEXPORT void _delete_player_ranger_geom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ranger_data_range_t */
+/*{{{  sizeof_player_ranger_data_range_t */
+SWIGEXPORT void _sizeof_player_ranger_data_range_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ranger_data_range_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ranger_data_range_t_ranges_count_set */
 SWIGEXPORT void _player_ranger_data_range_t_ranges_count_set (word occ_args[]) {
   player_ranger_data_range_t *arg1 = (player_ranger_data_range_t *) 0 ;
@@ -9472,6 +10032,13 @@ SWIGEXPORT void _delete_player_ranger_data_range_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ranger_data_rangepose_t */
+/*{{{  sizeof_player_ranger_data_rangepose_t */
+SWIGEXPORT void _sizeof_player_ranger_data_rangepose_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ranger_data_rangepose_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ranger_data_rangepose_t_data_set */
 SWIGEXPORT void _player_ranger_data_rangepose_t_data_set (word occ_args[]) {
   player_ranger_data_rangepose_t *arg1 = (player_ranger_data_rangepose_t *) 0 ;
@@ -9558,6 +10125,13 @@ SWIGEXPORT void _delete_player_ranger_data_rangepose_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ranger_data_intns_t */
+/*{{{  sizeof_player_ranger_data_intns_t */
+SWIGEXPORT void _sizeof_player_ranger_data_intns_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ranger_data_intns_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ranger_data_intns_t_intensities_count_set */
 SWIGEXPORT void _player_ranger_data_intns_t_intensities_count_set (word occ_args[]) {
   player_ranger_data_intns_t *arg1 = (player_ranger_data_intns_t *) 0 ;
@@ -9644,6 +10218,13 @@ SWIGEXPORT void _delete_player_ranger_data_intns_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ranger_data_intnspose_t */
+/*{{{  sizeof_player_ranger_data_intnspose_t */
+SWIGEXPORT void _sizeof_player_ranger_data_intnspose_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ranger_data_intnspose_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ranger_data_intnspose_t_data_set */
 SWIGEXPORT void _player_ranger_data_intnspose_t_data_set (word occ_args[]) {
   player_ranger_data_intnspose_t *arg1 = (player_ranger_data_intnspose_t *) 0 ;
@@ -9730,6 +10311,13 @@ SWIGEXPORT void _delete_player_ranger_data_intnspose_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ranger_power_config_t */
+/*{{{  sizeof_player_ranger_power_config_t */
+SWIGEXPORT void _sizeof_player_ranger_power_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ranger_power_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ranger_power_config_t_state_set */
 SWIGEXPORT void _player_ranger_power_config_t_state_set (word occ_args[]) {
   player_ranger_power_config_t *arg1 = (player_ranger_power_config_t *) 0 ;
@@ -9786,6 +10374,13 @@ SWIGEXPORT void _delete_player_ranger_power_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ranger_intns_config_t */
+/*{{{  sizeof_player_ranger_intns_config_t */
+SWIGEXPORT void _sizeof_player_ranger_intns_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ranger_intns_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ranger_intns_config_t_state_set */
 SWIGEXPORT void _player_ranger_intns_config_t_state_set (word occ_args[]) {
   player_ranger_intns_config_t *arg1 = (player_ranger_intns_config_t *) 0 ;
@@ -9842,6 +10437,13 @@ SWIGEXPORT void _delete_player_ranger_intns_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ranger_config_t */
+/*{{{  sizeof_player_ranger_config_t */
+SWIGEXPORT void _sizeof_player_ranger_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ranger_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ranger_config_t_min_angle_set */
 SWIGEXPORT void _player_ranger_config_t_min_angle_set (word occ_args[]) {
   player_ranger_config_t *arg1 = (player_ranger_config_t *) 0 ;
@@ -10048,6 +10650,13 @@ SWIGEXPORT void _delete_player_ranger_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_power_data_t */
+/*{{{  sizeof_player_power_data_t */
+SWIGEXPORT void _sizeof_player_power_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_power_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_power_data_t_valid_set */
 SWIGEXPORT void _player_power_data_t_valid_set (word occ_args[]) {
   player_power_data_t *arg1 = (player_power_data_t *) 0 ;
@@ -10254,6 +10863,13 @@ SWIGEXPORT void _delete_player_power_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_power_chargepolicy_config_t */
+/*{{{  sizeof_player_power_chargepolicy_config_t */
+SWIGEXPORT void _sizeof_player_power_chargepolicy_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_power_chargepolicy_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_power_chargepolicy_config_t_enable_input_set */
 SWIGEXPORT void _player_power_chargepolicy_config_t_enable_input_set (word occ_args[]) {
   player_power_chargepolicy_config_t *arg1 = (player_power_chargepolicy_config_t *) 0 ;
@@ -10340,6 +10956,13 @@ SWIGEXPORT void _delete_player_power_chargepolicy_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_log_set_write_state_t */
+/*{{{  sizeof_player_log_set_write_state_t */
+SWIGEXPORT void _sizeof_player_log_set_write_state_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_log_set_write_state_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_log_set_write_state_t_state_set */
 SWIGEXPORT void _player_log_set_write_state_t_state_set (word occ_args[]) {
   player_log_set_write_state_t *arg1 = (player_log_set_write_state_t *) 0 ;
@@ -10396,6 +11019,13 @@ SWIGEXPORT void _delete_player_log_set_write_state_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_log_set_read_state_t */
+/*{{{  sizeof_player_log_set_read_state_t */
+SWIGEXPORT void _sizeof_player_log_set_read_state_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_log_set_read_state_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_log_set_read_state_t_state_set */
 SWIGEXPORT void _player_log_set_read_state_t_state_set (word occ_args[]) {
   player_log_set_read_state_t *arg1 = (player_log_set_read_state_t *) 0 ;
@@ -10452,6 +11082,13 @@ SWIGEXPORT void _delete_player_log_set_read_state_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_log_set_read_rewind_t */
+/*{{{  sizeof_player_log_set_read_rewind_t */
+SWIGEXPORT void _sizeof_player_log_set_read_rewind_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_log_set_read_rewind_t);
+}
+
+
+/*}}}*/
 /*{{{  function new_player_log_set_read_rewind_t */
 SWIGEXPORT void _new_player_log_set_read_rewind_t (word occ_args[]) {
   player_log_set_read_rewind_t *result = 0 ;
@@ -10478,6 +11115,13 @@ SWIGEXPORT void _delete_player_log_set_read_rewind_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_log_get_state_t */
+/*{{{  sizeof_player_log_get_state_t */
+SWIGEXPORT void _sizeof_player_log_get_state_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_log_get_state_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_log_get_state_t_type_set */
 SWIGEXPORT void _player_log_get_state_t_type_set (word occ_args[]) {
   player_log_get_state_t *arg1 = (player_log_get_state_t *) 0 ;
@@ -10564,6 +11208,13 @@ SWIGEXPORT void _delete_player_log_get_state_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_log_set_filename_t */
+/*{{{  sizeof_player_log_set_filename_t */
+SWIGEXPORT void _sizeof_player_log_set_filename_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_log_set_filename_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_log_set_filename_t_filename_count_set */
 SWIGEXPORT void _player_log_set_filename_t_filename_count_set (word occ_args[]) {
   player_log_set_filename_t *arg1 = (player_log_set_filename_t *) 0 ;
@@ -10637,6 +11288,13 @@ SWIGEXPORT void _delete_player_log_set_filename_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_data_t */
+/*{{{  sizeof_player_position3d_data_t */
+SWIGEXPORT void _sizeof_player_position3d_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position3d_data_t_pos_set */
 SWIGEXPORT void _player_position3d_data_t_pos_set (word occ_args[]) {
   player_position3d_data_t *arg1 = (player_position3d_data_t *) 0 ;
@@ -10753,6 +11411,13 @@ SWIGEXPORT void _delete_player_position3d_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_cmd_pos_t */
+/*{{{  sizeof_player_position3d_cmd_pos_t */
+SWIGEXPORT void _sizeof_player_position3d_cmd_pos_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_cmd_pos_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position3d_cmd_pos_t_pos_set */
 SWIGEXPORT void _player_position3d_cmd_pos_t_pos_set (word occ_args[]) {
   player_position3d_cmd_pos_t *arg1 = (player_position3d_cmd_pos_t *) 0 ;
@@ -10869,6 +11534,13 @@ SWIGEXPORT void _delete_player_position3d_cmd_pos_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_cmd_vel_t */
+/*{{{  sizeof_player_position3d_cmd_vel_t */
+SWIGEXPORT void _sizeof_player_position3d_cmd_vel_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_cmd_vel_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position3d_cmd_vel_t_vel_set */
 SWIGEXPORT void _player_position3d_cmd_vel_t_vel_set (word occ_args[]) {
   player_position3d_cmd_vel_t *arg1 = (player_position3d_cmd_vel_t *) 0 ;
@@ -10955,6 +11627,13 @@ SWIGEXPORT void _delete_player_position3d_cmd_vel_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_geom_t */
+/*{{{  sizeof_player_position3d_geom_t */
+SWIGEXPORT void _sizeof_player_position3d_geom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_geom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position3d_geom_t_pose_set */
 SWIGEXPORT void _player_position3d_geom_t_pose_set (word occ_args[]) {
   player_position3d_geom_t *arg1 = (player_position3d_geom_t *) 0 ;
@@ -11041,6 +11720,13 @@ SWIGEXPORT void _delete_player_position3d_geom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_power_config_t */
+/*{{{  sizeof_player_position3d_power_config_t */
+SWIGEXPORT void _sizeof_player_position3d_power_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_power_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position3d_power_config_t_state_set */
 SWIGEXPORT void _player_position3d_power_config_t_state_set (word occ_args[]) {
   player_position3d_power_config_t *arg1 = (player_position3d_power_config_t *) 0 ;
@@ -11097,6 +11783,13 @@ SWIGEXPORT void _delete_player_position3d_power_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_position_mode_req_t */
+/*{{{  sizeof_player_position3d_position_mode_req_t */
+SWIGEXPORT void _sizeof_player_position3d_position_mode_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_position_mode_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position3d_position_mode_req_t_value_set */
 SWIGEXPORT void _player_position3d_position_mode_req_t_value_set (word occ_args[]) {
   player_position3d_position_mode_req_t *arg1 = (player_position3d_position_mode_req_t *) 0 ;
@@ -11153,6 +11846,13 @@ SWIGEXPORT void _delete_player_position3d_position_mode_req_t (word occ_args[]) 
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_velocity_mode_config_t */
+/*{{{  sizeof_player_position3d_velocity_mode_config_t */
+SWIGEXPORT void _sizeof_player_position3d_velocity_mode_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_velocity_mode_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position3d_velocity_mode_config_t_value_set */
 SWIGEXPORT void _player_position3d_velocity_mode_config_t_value_set (word occ_args[]) {
   player_position3d_velocity_mode_config_t *arg1 = (player_position3d_velocity_mode_config_t *) 0 ;
@@ -11209,6 +11909,13 @@ SWIGEXPORT void _delete_player_position3d_velocity_mode_config_t (word occ_args[
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_set_odom_req_t */
+/*{{{  sizeof_player_position3d_set_odom_req_t */
+SWIGEXPORT void _sizeof_player_position3d_set_odom_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_set_odom_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position3d_set_odom_req_t_pos_set */
 SWIGEXPORT void _player_position3d_set_odom_req_t_pos_set (word occ_args[]) {
   player_position3d_set_odom_req_t *arg1 = (player_position3d_set_odom_req_t *) 0 ;
@@ -11265,6 +11972,13 @@ SWIGEXPORT void _delete_player_position3d_set_odom_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_reset_odom_config_t */
+/*{{{  sizeof_player_position3d_reset_odom_config_t */
+SWIGEXPORT void _sizeof_player_position3d_reset_odom_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_reset_odom_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function new_player_position3d_reset_odom_config_t */
 SWIGEXPORT void _new_player_position3d_reset_odom_config_t (word occ_args[]) {
   player_position3d_reset_odom_config_t *result = 0 ;
@@ -11291,6 +12005,13 @@ SWIGEXPORT void _delete_player_position3d_reset_odom_config_t (word occ_args[]) 
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_speed_pid_req_t */
+/*{{{  sizeof_player_position3d_speed_pid_req_t */
+SWIGEXPORT void _sizeof_player_position3d_speed_pid_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_speed_pid_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position3d_speed_pid_req_t_kp_set */
 SWIGEXPORT void _player_position3d_speed_pid_req_t_kp_set (word occ_args[]) {
   player_position3d_speed_pid_req_t *arg1 = (player_position3d_speed_pid_req_t *) 0 ;
@@ -11407,6 +12128,13 @@ SWIGEXPORT void _delete_player_position3d_speed_pid_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_position_pid_req_t */
+/*{{{  sizeof_player_position3d_position_pid_req_t */
+SWIGEXPORT void _sizeof_player_position3d_position_pid_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_position_pid_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position3d_position_pid_req_t_kp_set */
 SWIGEXPORT void _player_position3d_position_pid_req_t_kp_set (word occ_args[]) {
   player_position3d_position_pid_req_t *arg1 = (player_position3d_position_pid_req_t *) 0 ;
@@ -11523,6 +12251,13 @@ SWIGEXPORT void _delete_player_position3d_position_pid_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position3d_speed_prof_req_t */
+/*{{{  sizeof_player_position3d_speed_prof_req_t */
+SWIGEXPORT void _sizeof_player_position3d_speed_prof_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position3d_speed_prof_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position3d_speed_prof_req_t_speed_set */
 SWIGEXPORT void _player_position3d_speed_prof_req_t_speed_set (word occ_args[]) {
   player_position3d_speed_prof_req_t *arg1 = (player_position3d_speed_prof_req_t *) 0 ;
@@ -11609,6 +12344,13 @@ SWIGEXPORT void _delete_player_position3d_speed_prof_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_opaque_data_t */
+/*{{{  sizeof_player_opaque_data_t */
+SWIGEXPORT void _sizeof_player_opaque_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_opaque_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_opaque_data_t_data_count_set */
 SWIGEXPORT void _player_opaque_data_t_data_count_set (word occ_args[]) {
   player_opaque_data_t *arg1 = (player_opaque_data_t *) 0 ;
@@ -11695,6 +12437,13 @@ SWIGEXPORT void _delete_player_opaque_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_gps_data_t */
+/*{{{  sizeof_player_gps_data_t */
+SWIGEXPORT void _sizeof_player_gps_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_gps_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_gps_data_t_time_sec_set */
 SWIGEXPORT void _player_gps_data_t_time_sec_set (word occ_args[]) {
   player_gps_data_t *arg1 = (player_gps_data_t *) 0 ;
@@ -12111,6 +12860,13 @@ SWIGEXPORT void _delete_player_gps_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_simulation_data_t */
+/*{{{  sizeof_player_simulation_data_t */
+SWIGEXPORT void _sizeof_player_simulation_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_simulation_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_simulation_data_t_data_set */
 SWIGEXPORT void _player_simulation_data_t_data_set (word occ_args[]) {
   player_simulation_data_t *arg1 = (player_simulation_data_t *) 0 ;
@@ -12167,6 +12923,13 @@ SWIGEXPORT void _delete_player_simulation_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_simulation_cmd_t */
+/*{{{  sizeof_player_simulation_cmd_t */
+SWIGEXPORT void _sizeof_player_simulation_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_simulation_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_simulation_cmd_t_cmd_set */
 SWIGEXPORT void _player_simulation_cmd_t_cmd_set (word occ_args[]) {
   player_simulation_cmd_t *arg1 = (player_simulation_cmd_t *) 0 ;
@@ -12223,6 +12986,13 @@ SWIGEXPORT void _delete_player_simulation_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_simulation_pose2d_req_t */
+/*{{{  sizeof_player_simulation_pose2d_req_t */
+SWIGEXPORT void _sizeof_player_simulation_pose2d_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_simulation_pose2d_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_simulation_pose2d_req_t_name_count_set */
 SWIGEXPORT void _player_simulation_pose2d_req_t_name_count_set (word occ_args[]) {
   player_simulation_pose2d_req_t *arg1 = (player_simulation_pose2d_req_t *) 0 ;
@@ -12346,6 +13116,13 @@ SWIGEXPORT void _delete_player_simulation_pose2d_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_simulation_pose3d_req_t */
+/*{{{  sizeof_player_simulation_pose3d_req_t */
+SWIGEXPORT void _sizeof_player_simulation_pose3d_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_simulation_pose3d_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_simulation_pose3d_req_t_name_count_set */
 SWIGEXPORT void _player_simulation_pose3d_req_t_name_count_set (word occ_args[]) {
   player_simulation_pose3d_req_t *arg1 = (player_simulation_pose3d_req_t *) 0 ;
@@ -12499,6 +13276,13 @@ SWIGEXPORT void _delete_player_simulation_pose3d_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_simulation_property_req_t */
+/*{{{  sizeof_player_simulation_property_req_t */
+SWIGEXPORT void _sizeof_player_simulation_property_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_simulation_property_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_simulation_property_req_t_name_count_set */
 SWIGEXPORT void _player_simulation_property_req_t_name_count_set (word occ_args[]) {
   player_simulation_property_req_t *arg1 = (player_simulation_property_req_t *) 0 ;
@@ -12726,6 +13510,13 @@ SWIGEXPORT void _delete_player_simulation_property_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_laser_data_t */
+/*{{{  sizeof_player_laser_data_t */
+SWIGEXPORT void _sizeof_player_laser_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_laser_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_laser_data_t_min_angle_set */
 SWIGEXPORT void _player_laser_data_t_min_angle_set (word occ_args[]) {
   player_laser_data_t *arg1 = (player_laser_data_t *) 0 ;
@@ -13022,6 +13813,13 @@ SWIGEXPORT void _delete_player_laser_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_laser_data_scanpose_t */
+/*{{{  sizeof_player_laser_data_scanpose_t */
+SWIGEXPORT void _sizeof_player_laser_data_scanpose_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_laser_data_scanpose_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_laser_data_scanpose_t_scan_set */
 SWIGEXPORT void _player_laser_data_scanpose_t_scan_set (word occ_args[]) {
   player_laser_data_scanpose_t *arg1 = (player_laser_data_scanpose_t *) 0 ;
@@ -13108,6 +13906,13 @@ SWIGEXPORT void _delete_player_laser_data_scanpose_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_laser_geom_t */
+/*{{{  sizeof_player_laser_geom_t */
+SWIGEXPORT void _sizeof_player_laser_geom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_laser_geom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_laser_geom_t_pose_set */
 SWIGEXPORT void _player_laser_geom_t_pose_set (word occ_args[]) {
   player_laser_geom_t *arg1 = (player_laser_geom_t *) 0 ;
@@ -13194,6 +13999,13 @@ SWIGEXPORT void _delete_player_laser_geom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_laser_config_t */
+/*{{{  sizeof_player_laser_config_t */
+SWIGEXPORT void _sizeof_player_laser_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_laser_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_laser_config_t_min_angle_set */
 SWIGEXPORT void _player_laser_config_t_min_angle_set (word occ_args[]) {
   player_laser_config_t *arg1 = (player_laser_config_t *) 0 ;
@@ -13430,6 +14242,13 @@ SWIGEXPORT void _delete_player_laser_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_laser_power_config_t */
+/*{{{  sizeof_player_laser_power_config_t */
+SWIGEXPORT void _sizeof_player_laser_power_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_laser_power_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_laser_power_config_t_state_set */
 SWIGEXPORT void _player_laser_power_config_t_state_set (word occ_args[]) {
   player_laser_power_config_t *arg1 = (player_laser_power_config_t *) 0 ;
@@ -13486,6 +14305,13 @@ SWIGEXPORT void _delete_player_laser_power_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_laser_get_id_config_t */
+/*{{{  sizeof_player_laser_get_id_config_t */
+SWIGEXPORT void _sizeof_player_laser_get_id_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_laser_get_id_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_laser_get_id_config_t_serial_number_set */
 SWIGEXPORT void _player_laser_get_id_config_t_serial_number_set (word occ_args[]) {
   player_laser_get_id_config_t *arg1 = (player_laser_get_id_config_t *) 0 ;
@@ -13542,6 +14368,13 @@ SWIGEXPORT void _delete_player_laser_get_id_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_laser_set_filter_config_t */
+/*{{{  sizeof_player_laser_set_filter_config_t */
+SWIGEXPORT void _sizeof_player_laser_set_filter_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_laser_set_filter_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_laser_set_filter_config_t_filter_type_set */
 SWIGEXPORT void _player_laser_set_filter_config_t_filter_type_set (word occ_args[]) {
   player_laser_set_filter_config_t *arg1 = (player_laser_set_filter_config_t *) 0 ;
@@ -13646,6 +14479,13 @@ SWIGEXPORT void _delete_player_laser_set_filter_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_limb_data_t */
+/*{{{  sizeof_player_limb_data_t */
+SWIGEXPORT void _sizeof_player_limb_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_limb_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_limb_data_t_position_set */
 SWIGEXPORT void _player_limb_data_t_position_set (word occ_args[]) {
   player_limb_data_t *arg1 = (player_limb_data_t *) 0 ;
@@ -13792,6 +14632,13 @@ SWIGEXPORT void _delete_player_limb_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_limb_setpose_cmd_t */
+/*{{{  sizeof_player_limb_setpose_cmd_t */
+SWIGEXPORT void _sizeof_player_limb_setpose_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_limb_setpose_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_limb_setpose_cmd_t_position_set */
 SWIGEXPORT void _player_limb_setpose_cmd_t_position_set (word occ_args[]) {
   player_limb_setpose_cmd_t *arg1 = (player_limb_setpose_cmd_t *) 0 ;
@@ -13908,6 +14755,13 @@ SWIGEXPORT void _delete_player_limb_setpose_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_limb_setposition_cmd_t */
+/*{{{  sizeof_player_limb_setposition_cmd_t */
+SWIGEXPORT void _sizeof_player_limb_setposition_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_limb_setposition_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_limb_setposition_cmd_t_position_set */
 SWIGEXPORT void _player_limb_setposition_cmd_t_position_set (word occ_args[]) {
   player_limb_setposition_cmd_t *arg1 = (player_limb_setposition_cmd_t *) 0 ;
@@ -13964,6 +14818,13 @@ SWIGEXPORT void _delete_player_limb_setposition_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_limb_vecmove_cmd_t */
+/*{{{  sizeof_player_limb_vecmove_cmd_t */
+SWIGEXPORT void _sizeof_player_limb_vecmove_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_limb_vecmove_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_limb_vecmove_cmd_t_direction_set */
 SWIGEXPORT void _player_limb_vecmove_cmd_t_direction_set (word occ_args[]) {
   player_limb_vecmove_cmd_t *arg1 = (player_limb_vecmove_cmd_t *) 0 ;
@@ -14050,6 +14911,13 @@ SWIGEXPORT void _delete_player_limb_vecmove_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_limb_power_req_t */
+/*{{{  sizeof_player_limb_power_req_t */
+SWIGEXPORT void _sizeof_player_limb_power_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_limb_power_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_limb_power_req_t_value_set */
 SWIGEXPORT void _player_limb_power_req_t_value_set (word occ_args[]) {
   player_limb_power_req_t *arg1 = (player_limb_power_req_t *) 0 ;
@@ -14106,6 +14974,13 @@ SWIGEXPORT void _delete_player_limb_power_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_limb_brakes_req_t */
+/*{{{  sizeof_player_limb_brakes_req_t */
+SWIGEXPORT void _sizeof_player_limb_brakes_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_limb_brakes_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_limb_brakes_req_t_value_set */
 SWIGEXPORT void _player_limb_brakes_req_t_value_set (word occ_args[]) {
   player_limb_brakes_req_t *arg1 = (player_limb_brakes_req_t *) 0 ;
@@ -14162,6 +15037,13 @@ SWIGEXPORT void _delete_player_limb_brakes_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_limb_geom_req_t */
+/*{{{  sizeof_player_limb_geom_req_t */
+SWIGEXPORT void _sizeof_player_limb_geom_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_limb_geom_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_limb_geom_req_t_basePos_set */
 SWIGEXPORT void _player_limb_geom_req_t_basePos_set (word occ_args[]) {
   player_limb_geom_req_t *arg1 = (player_limb_geom_req_t *) 0 ;
@@ -14218,6 +15100,13 @@ SWIGEXPORT void _delete_player_limb_geom_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_limb_speed_req_t */
+/*{{{  sizeof_player_limb_speed_req_t */
+SWIGEXPORT void _sizeof_player_limb_speed_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_limb_speed_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_limb_speed_req_t_speed_set */
 SWIGEXPORT void _player_limb_speed_req_t_speed_set (word occ_args[]) {
   player_limb_speed_req_t *arg1 = (player_limb_speed_req_t *) 0 ;
@@ -14274,6 +15163,13 @@ SWIGEXPORT void _delete_player_limb_speed_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_joystick_data_t */
+/*{{{  sizeof_player_joystick_data_t */
+SWIGEXPORT void _sizeof_player_joystick_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_joystick_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_joystick_data_t_pos_set */
 SWIGEXPORT void _player_joystick_data_t_pos_set (word occ_args[]) {
   player_joystick_data_t *arg1 = (player_joystick_data_t *) 0 ;
@@ -14366,6 +15262,13 @@ SWIGEXPORT void _delete_player_joystick_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_blinkenlight_data_t */
+/*{{{  sizeof_player_blinkenlight_data_t */
+SWIGEXPORT void _sizeof_player_blinkenlight_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_blinkenlight_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_blinkenlight_data_t_enable_set */
 SWIGEXPORT void _player_blinkenlight_data_t_enable_set (word occ_args[]) {
   player_blinkenlight_data_t *arg1 = (player_blinkenlight_data_t *) 0 ;
@@ -14512,6 +15415,13 @@ SWIGEXPORT void _delete_player_blinkenlight_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_blinkenlight_cmd_t */
+/*{{{  sizeof_player_blinkenlight_cmd_t */
+SWIGEXPORT void _sizeof_player_blinkenlight_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_blinkenlight_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_blinkenlight_cmd_t_id_set */
 SWIGEXPORT void _player_blinkenlight_cmd_t_id_set (word occ_args[]) {
   player_blinkenlight_cmd_t *arg1 = (player_blinkenlight_cmd_t *) 0 ;
@@ -14688,6 +15598,13 @@ SWIGEXPORT void _delete_player_blinkenlight_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_blinkenlight_cmd_power_t */
+/*{{{  sizeof_player_blinkenlight_cmd_power_t */
+SWIGEXPORT void _sizeof_player_blinkenlight_cmd_power_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_blinkenlight_cmd_power_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_blinkenlight_cmd_power_t_id_set */
 SWIGEXPORT void _player_blinkenlight_cmd_power_t_id_set (word occ_args[]) {
   player_blinkenlight_cmd_power_t *arg1 = (player_blinkenlight_cmd_power_t *) 0 ;
@@ -14774,6 +15691,13 @@ SWIGEXPORT void _delete_player_blinkenlight_cmd_power_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_blinkenlight_cmd_color_t */
+/*{{{  sizeof_player_blinkenlight_cmd_color_t */
+SWIGEXPORT void _sizeof_player_blinkenlight_cmd_color_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_blinkenlight_cmd_color_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_blinkenlight_cmd_color_t_id_set */
 SWIGEXPORT void _player_blinkenlight_cmd_color_t_id_set (word occ_args[]) {
   player_blinkenlight_cmd_color_t *arg1 = (player_blinkenlight_cmd_color_t *) 0 ;
@@ -14860,6 +15784,13 @@ SWIGEXPORT void _delete_player_blinkenlight_cmd_color_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_blinkenlight_cmd_flash_t */
+/*{{{  sizeof_player_blinkenlight_cmd_flash_t */
+SWIGEXPORT void _sizeof_player_blinkenlight_cmd_flash_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_blinkenlight_cmd_flash_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_blinkenlight_cmd_flash_t_id_set */
 SWIGEXPORT void _player_blinkenlight_cmd_flash_t_id_set (word occ_args[]) {
   player_blinkenlight_cmd_flash_t *arg1 = (player_blinkenlight_cmd_flash_t *) 0 ;
@@ -14976,6 +15907,13 @@ SWIGEXPORT void _delete_player_blinkenlight_cmd_flash_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_speech_recognition_data_t */
+/*{{{  sizeof_player_speech_recognition_data_t */
+SWIGEXPORT void _sizeof_player_speech_recognition_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_speech_recognition_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_speech_recognition_data_t_text_count_set */
 SWIGEXPORT void _player_speech_recognition_data_t_text_count_set (word occ_args[]) {
   player_speech_recognition_data_t *arg1 = (player_speech_recognition_data_t *) 0 ;
@@ -15069,6 +16007,13 @@ SWIGEXPORT void _delete_player_speech_recognition_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_fiducial_item_t */
+/*{{{  sizeof_player_fiducial_item_t */
+SWIGEXPORT void _sizeof_player_fiducial_item_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_fiducial_item_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_fiducial_item_t_id_set */
 SWIGEXPORT void _player_fiducial_item_t_id_set (word occ_args[]) {
   player_fiducial_item_t *arg1 = (player_fiducial_item_t *) 0 ;
@@ -15185,6 +16130,13 @@ SWIGEXPORT void _delete_player_fiducial_item_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_fiducial_data_t */
+/*{{{  sizeof_player_fiducial_data_t */
+SWIGEXPORT void _sizeof_player_fiducial_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_fiducial_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_fiducial_data_t_fiducials_count_set */
 SWIGEXPORT void _player_fiducial_data_t_fiducials_count_set (word occ_args[]) {
   player_fiducial_data_t *arg1 = (player_fiducial_data_t *) 0 ;
@@ -15271,6 +16223,13 @@ SWIGEXPORT void _delete_player_fiducial_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_fiducial_geom_t */
+/*{{{  sizeof_player_fiducial_geom_t */
+SWIGEXPORT void _sizeof_player_fiducial_geom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_fiducial_geom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_fiducial_geom_t_pose_set */
 SWIGEXPORT void _player_fiducial_geom_t_pose_set (word occ_args[]) {
   player_fiducial_geom_t *arg1 = (player_fiducial_geom_t *) 0 ;
@@ -15387,6 +16346,13 @@ SWIGEXPORT void _delete_player_fiducial_geom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_fiducial_fov_t */
+/*{{{  sizeof_player_fiducial_fov_t */
+SWIGEXPORT void _sizeof_player_fiducial_fov_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_fiducial_fov_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_fiducial_fov_t_min_range_set */
 SWIGEXPORT void _player_fiducial_fov_t_min_range_set (word occ_args[]) {
   player_fiducial_fov_t *arg1 = (player_fiducial_fov_t *) 0 ;
@@ -15503,6 +16469,13 @@ SWIGEXPORT void _delete_player_fiducial_fov_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_fiducial_id_t */
+/*{{{  sizeof_player_fiducial_id_t */
+SWIGEXPORT void _sizeof_player_fiducial_id_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_fiducial_id_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_fiducial_id_t_id_set */
 SWIGEXPORT void _player_fiducial_id_t_id_set (word occ_args[]) {
   player_fiducial_id_t *arg1 = (player_fiducial_id_t *) 0 ;
@@ -15559,6 +16532,13 @@ SWIGEXPORT void _delete_player_fiducial_id_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_bumper_data_t */
+/*{{{  sizeof_player_bumper_data_t */
+SWIGEXPORT void _sizeof_player_bumper_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_bumper_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_bumper_data_t_bumpers_count_set */
 SWIGEXPORT void _player_bumper_data_t_bumpers_count_set (word occ_args[]) {
   player_bumper_data_t *arg1 = (player_bumper_data_t *) 0 ;
@@ -15645,6 +16625,13 @@ SWIGEXPORT void _delete_player_bumper_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_bumper_define_t */
+/*{{{  sizeof_player_bumper_define_t */
+SWIGEXPORT void _sizeof_player_bumper_define_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_bumper_define_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_bumper_define_t_pose_set */
 SWIGEXPORT void _player_bumper_define_t_pose_set (word occ_args[]) {
   player_bumper_define_t *arg1 = (player_bumper_define_t *) 0 ;
@@ -15761,6 +16748,13 @@ SWIGEXPORT void _delete_player_bumper_define_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_bumper_geom_t */
+/*{{{  sizeof_player_bumper_geom_t */
+SWIGEXPORT void _sizeof_player_bumper_geom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_bumper_geom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_bumper_geom_t_bumper_def_count_set */
 SWIGEXPORT void _player_bumper_geom_t_bumper_def_count_set (word occ_args[]) {
   player_bumper_geom_t *arg1 = (player_bumper_geom_t *) 0 ;
@@ -15847,6 +16841,13 @@ SWIGEXPORT void _delete_player_bumper_geom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_graphics3d_cmd_draw_t */
+/*{{{  sizeof_player_graphics3d_cmd_draw_t */
+SWIGEXPORT void _sizeof_player_graphics3d_cmd_draw_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_graphics3d_cmd_draw_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_graphics3d_cmd_draw_t_draw_mode_set */
 SWIGEXPORT void _player_graphics3d_cmd_draw_t_draw_mode_set (word occ_args[]) {
   player_graphics3d_cmd_draw_t *arg1 = (player_graphics3d_cmd_draw_t *) 0 ;
@@ -15993,6 +16994,13 @@ SWIGEXPORT void _delete_player_graphics3d_cmd_draw_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_graphics3d_cmd_translate_t */
+/*{{{  sizeof_player_graphics3d_cmd_translate_t */
+SWIGEXPORT void _sizeof_player_graphics3d_cmd_translate_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_graphics3d_cmd_translate_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_graphics3d_cmd_translate_t_x_set */
 SWIGEXPORT void _player_graphics3d_cmd_translate_t_x_set (word occ_args[]) {
   player_graphics3d_cmd_translate_t *arg1 = (player_graphics3d_cmd_translate_t *) 0 ;
@@ -16109,6 +17117,13 @@ SWIGEXPORT void _delete_player_graphics3d_cmd_translate_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_graphics3d_cmd_rotate_t */
+/*{{{  sizeof_player_graphics3d_cmd_rotate_t */
+SWIGEXPORT void _sizeof_player_graphics3d_cmd_rotate_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_graphics3d_cmd_rotate_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_graphics3d_cmd_rotate_t_a_set */
 SWIGEXPORT void _player_graphics3d_cmd_rotate_t_a_set (word occ_args[]) {
   player_graphics3d_cmd_rotate_t *arg1 = (player_graphics3d_cmd_rotate_t *) 0 ;
@@ -16255,6 +17270,13 @@ SWIGEXPORT void _delete_player_graphics3d_cmd_rotate_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_wsn_node_data_t */
+/*{{{  sizeof_player_wsn_node_data_t */
+SWIGEXPORT void _sizeof_player_wsn_node_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_wsn_node_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_wsn_node_data_t_light_set */
 SWIGEXPORT void _player_wsn_node_data_t_light_set (word occ_args[]) {
   player_wsn_node_data_t *arg1 = (player_wsn_node_data_t *) 0 ;
@@ -16581,6 +17603,13 @@ SWIGEXPORT void _delete_player_wsn_node_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_wsn_data_t */
+/*{{{  sizeof_player_wsn_data_t */
+SWIGEXPORT void _sizeof_player_wsn_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_wsn_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_wsn_data_t_node_type_set */
 SWIGEXPORT void _player_wsn_data_t_node_type_set (word occ_args[]) {
   player_wsn_data_t *arg1 = (player_wsn_data_t *) 0 ;
@@ -16727,6 +17756,13 @@ SWIGEXPORT void _delete_player_wsn_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_wsn_cmd_t */
+/*{{{  sizeof_player_wsn_cmd_t */
+SWIGEXPORT void _sizeof_player_wsn_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_wsn_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_wsn_cmd_t_node_id_set */
 SWIGEXPORT void _player_wsn_cmd_t_node_id_set (word occ_args[]) {
   player_wsn_cmd_t *arg1 = (player_wsn_cmd_t *) 0 ;
@@ -16873,6 +17909,13 @@ SWIGEXPORT void _delete_player_wsn_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_wsn_power_config_t */
+/*{{{  sizeof_player_wsn_power_config_t */
+SWIGEXPORT void _sizeof_player_wsn_power_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_wsn_power_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_wsn_power_config_t_node_id_set */
 SWIGEXPORT void _player_wsn_power_config_t_node_id_set (word occ_args[]) {
   player_wsn_power_config_t *arg1 = (player_wsn_power_config_t *) 0 ;
@@ -16989,6 +18032,13 @@ SWIGEXPORT void _delete_player_wsn_power_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_wsn_datatype_config_t */
+/*{{{  sizeof_player_wsn_datatype_config_t */
+SWIGEXPORT void _sizeof_player_wsn_datatype_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_wsn_datatype_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_wsn_datatype_config_t_value_set */
 SWIGEXPORT void _player_wsn_datatype_config_t_value_set (word occ_args[]) {
   player_wsn_datatype_config_t *arg1 = (player_wsn_datatype_config_t *) 0 ;
@@ -17045,6 +18095,13 @@ SWIGEXPORT void _delete_player_wsn_datatype_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_wsn_datafreq_config_t */
+/*{{{  sizeof_player_wsn_datafreq_config_t */
+SWIGEXPORT void _sizeof_player_wsn_datafreq_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_wsn_datafreq_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_wsn_datafreq_config_t_node_id_set */
 SWIGEXPORT void _player_wsn_datafreq_config_t_node_id_set (word occ_args[]) {
   player_wsn_datafreq_config_t *arg1 = (player_wsn_datafreq_config_t *) 0 ;
@@ -17161,6 +18218,13 @@ SWIGEXPORT void _delete_player_wsn_datafreq_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_wifi_link_t */
+/*{{{  sizeof_player_wifi_link_t */
+SWIGEXPORT void _sizeof_player_wifi_link_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_wifi_link_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_wifi_link_t_mac_count_set */
 SWIGEXPORT void _player_wifi_link_t_mac_count_set (word occ_args[]) {
   player_wifi_link_t *arg1 = (player_wifi_link_t *) 0 ;
@@ -17511,6 +18575,13 @@ SWIGEXPORT void _delete_player_wifi_link_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_wifi_data_t */
+/*{{{  sizeof_player_wifi_data_t */
+SWIGEXPORT void _sizeof_player_wifi_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_wifi_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_wifi_data_t_links_count_set */
 SWIGEXPORT void _player_wifi_data_t_links_count_set (word occ_args[]) {
   player_wifi_data_t *arg1 = (player_wifi_data_t *) 0 ;
@@ -17824,6 +18895,13 @@ SWIGEXPORT void _delete_player_wifi_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_wifi_mac_req_t */
+/*{{{  sizeof_player_wifi_mac_req_t */
+SWIGEXPORT void _sizeof_player_wifi_mac_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_wifi_mac_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_wifi_mac_req_t_mac_count_set */
 SWIGEXPORT void _player_wifi_mac_req_t_mac_count_set (word occ_args[]) {
   player_wifi_mac_req_t *arg1 = (player_wifi_mac_req_t *) 0 ;
@@ -17898,6 +18976,13 @@ SWIGEXPORT void _delete_player_wifi_mac_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_wifi_iwspy_addr_req_t */
+/*{{{  sizeof_player_wifi_iwspy_addr_req_t */
+SWIGEXPORT void _sizeof_player_wifi_iwspy_addr_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_wifi_iwspy_addr_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_wifi_iwspy_addr_req_t_address_set */
 SWIGEXPORT void _player_wifi_iwspy_addr_req_t_address_set (word occ_args[]) {
   player_wifi_iwspy_addr_req_t *arg1 = (player_wifi_iwspy_addr_req_t *) 0 ;
@@ -17941,6 +19026,13 @@ SWIGEXPORT void _delete_player_wifi_iwspy_addr_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_graphics2d_cmd_points_t */
+/*{{{  sizeof_player_graphics2d_cmd_points_t */
+SWIGEXPORT void _sizeof_player_graphics2d_cmd_points_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_graphics2d_cmd_points_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_graphics2d_cmd_points_t_points_count_set */
 SWIGEXPORT void _player_graphics2d_cmd_points_t_points_count_set (word occ_args[]) {
   player_graphics2d_cmd_points_t *arg1 = (player_graphics2d_cmd_points_t *) 0 ;
@@ -18057,6 +19149,13 @@ SWIGEXPORT void _delete_player_graphics2d_cmd_points_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_graphics2d_cmd_polyline_t */
+/*{{{  sizeof_player_graphics2d_cmd_polyline_t */
+SWIGEXPORT void _sizeof_player_graphics2d_cmd_polyline_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_graphics2d_cmd_polyline_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_graphics2d_cmd_polyline_t_points_count_set */
 SWIGEXPORT void _player_graphics2d_cmd_polyline_t_points_count_set (word occ_args[]) {
   player_graphics2d_cmd_polyline_t *arg1 = (player_graphics2d_cmd_polyline_t *) 0 ;
@@ -18173,6 +19272,13 @@ SWIGEXPORT void _delete_player_graphics2d_cmd_polyline_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_graphics2d_cmd_polygon_t */
+/*{{{  sizeof_player_graphics2d_cmd_polygon_t */
+SWIGEXPORT void _sizeof_player_graphics2d_cmd_polygon_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_graphics2d_cmd_polygon_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_graphics2d_cmd_polygon_t_points_count_set */
 SWIGEXPORT void _player_graphics2d_cmd_polygon_t_points_count_set (word occ_args[]) {
   player_graphics2d_cmd_polygon_t *arg1 = (player_graphics2d_cmd_polygon_t *) 0 ;
@@ -18349,6 +19455,13 @@ SWIGEXPORT void _delete_player_graphics2d_cmd_polygon_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_vectormap_feature_data_t */
+/*{{{  sizeof_player_vectormap_feature_data_t */
+SWIGEXPORT void _sizeof_player_vectormap_feature_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_vectormap_feature_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_vectormap_feature_data_t_name_count_set */
 SWIGEXPORT void _player_vectormap_feature_data_t_name_count_set (word occ_args[]) {
   player_vectormap_feature_data_t *arg1 = (player_vectormap_feature_data_t *) 0 ;
@@ -18569,6 +19682,13 @@ SWIGEXPORT void _delete_player_vectormap_feature_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_vectormap_layer_info_t */
+/*{{{  sizeof_player_vectormap_layer_info_t */
+SWIGEXPORT void _sizeof_player_vectormap_layer_info_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_vectormap_layer_info_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_vectormap_layer_info_t_name_count_set */
 SWIGEXPORT void _player_vectormap_layer_info_t_name_count_set (word occ_args[]) {
   player_vectormap_layer_info_t *arg1 = (player_vectormap_layer_info_t *) 0 ;
@@ -18692,6 +19812,13 @@ SWIGEXPORT void _delete_player_vectormap_layer_info_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_vectormap_layer_data_t */
+/*{{{  sizeof_player_vectormap_layer_data_t */
+SWIGEXPORT void _sizeof_player_vectormap_layer_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_vectormap_layer_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_vectormap_layer_data_t_name_count_set */
 SWIGEXPORT void _player_vectormap_layer_data_t_name_count_set (word occ_args[]) {
   player_vectormap_layer_data_t *arg1 = (player_vectormap_layer_data_t *) 0 ;
@@ -18845,6 +19972,13 @@ SWIGEXPORT void _delete_player_vectormap_layer_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_vectormap_info_t */
+/*{{{  sizeof_player_vectormap_info_t */
+SWIGEXPORT void _sizeof_player_vectormap_info_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_vectormap_info_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_vectormap_info_t_srid_set */
 SWIGEXPORT void _player_vectormap_info_t_srid_set (word occ_args[]) {
   player_vectormap_info_t *arg1 = (player_vectormap_info_t *) 0 ;
@@ -18991,6 +20125,13 @@ SWIGEXPORT void _delete_player_vectormap_info_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_imu_data_state_t */
+/*{{{  sizeof_player_imu_data_state_t */
+SWIGEXPORT void _sizeof_player_imu_data_state_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_imu_data_state_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_imu_data_state_t_pose_set */
 SWIGEXPORT void _player_imu_data_state_t_pose_set (word occ_args[]) {
   player_imu_data_state_t *arg1 = (player_imu_data_state_t *) 0 ;
@@ -19047,6 +20188,13 @@ SWIGEXPORT void _delete_player_imu_data_state_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_imu_data_calib_t */
+/*{{{  sizeof_player_imu_data_calib_t */
+SWIGEXPORT void _sizeof_player_imu_data_calib_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_imu_data_calib_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_imu_data_calib_t_accel_x_set */
 SWIGEXPORT void _player_imu_data_calib_t_accel_x_set (word occ_args[]) {
   player_imu_data_calib_t *arg1 = (player_imu_data_calib_t *) 0 ;
@@ -19343,6 +20491,13 @@ SWIGEXPORT void _delete_player_imu_data_calib_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_imu_data_quat_t */
+/*{{{  sizeof_player_imu_data_quat_t */
+SWIGEXPORT void _sizeof_player_imu_data_quat_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_imu_data_quat_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_imu_data_quat_t_calib_data_set */
 SWIGEXPORT void _player_imu_data_quat_t_calib_data_set (word occ_args[]) {
   player_imu_data_quat_t *arg1 = (player_imu_data_quat_t *) 0 ;
@@ -19519,6 +20674,13 @@ SWIGEXPORT void _delete_player_imu_data_quat_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_imu_data_euler_t */
+/*{{{  sizeof_player_imu_data_euler_t */
+SWIGEXPORT void _sizeof_player_imu_data_euler_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_imu_data_euler_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_imu_data_euler_t_calib_data_set */
 SWIGEXPORT void _player_imu_data_euler_t_calib_data_set (word occ_args[]) {
   player_imu_data_euler_t *arg1 = (player_imu_data_euler_t *) 0 ;
@@ -19605,6 +20767,13 @@ SWIGEXPORT void _delete_player_imu_data_euler_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_imu_datatype_config_t */
+/*{{{  sizeof_player_imu_datatype_config_t */
+SWIGEXPORT void _sizeof_player_imu_datatype_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_imu_datatype_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_imu_datatype_config_t_value_set */
 SWIGEXPORT void _player_imu_datatype_config_t_value_set (word occ_args[]) {
   player_imu_datatype_config_t *arg1 = (player_imu_datatype_config_t *) 0 ;
@@ -19661,6 +20830,13 @@ SWIGEXPORT void _delete_player_imu_datatype_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_imu_reset_orientation_config_t */
+/*{{{  sizeof_player_imu_reset_orientation_config_t */
+SWIGEXPORT void _sizeof_player_imu_reset_orientation_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_imu_reset_orientation_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_imu_reset_orientation_config_t_value_set */
 SWIGEXPORT void _player_imu_reset_orientation_config_t_value_set (word occ_args[]) {
   player_imu_reset_orientation_config_t *arg1 = (player_imu_reset_orientation_config_t *) 0 ;
@@ -19717,6 +20893,13 @@ SWIGEXPORT void _delete_player_imu_reset_orientation_config_t (word occ_args[]) 
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_mcom_data_t */
+/*{{{  sizeof_player_mcom_data_t */
+SWIGEXPORT void _sizeof_player_mcom_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_mcom_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_mcom_data_t_full_set */
 SWIGEXPORT void _player_mcom_data_t_full_set (word occ_args[]) {
   player_mcom_data_t *arg1 = (player_mcom_data_t *) 0 ;
@@ -19840,6 +21023,13 @@ SWIGEXPORT void _delete_player_mcom_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_mcom_config_t */
+/*{{{  sizeof_player_mcom_config_t */
+SWIGEXPORT void _sizeof_player_mcom_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_mcom_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_mcom_config_t_command_set */
 SWIGEXPORT void _player_mcom_config_t_command_set (word occ_args[]) {
   player_mcom_config_t *arg1 = (player_mcom_config_t *) 0 ;
@@ -20023,6 +21213,13 @@ SWIGEXPORT void _delete_player_mcom_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_mcom_return_t */
+/*{{{  sizeof_player_mcom_return_t */
+SWIGEXPORT void _sizeof_player_mcom_return_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_mcom_return_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_mcom_return_t_type_set */
 SWIGEXPORT void _player_mcom_return_t_type_set (word occ_args[]) {
   player_mcom_return_t *arg1 = (player_mcom_return_t *) 0 ;
@@ -20176,6 +21373,13 @@ SWIGEXPORT void _delete_player_mcom_return_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_device_devlist_t */
+/*{{{  sizeof_player_device_devlist_t */
+SWIGEXPORT void _sizeof_player_device_devlist_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_device_devlist_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_device_devlist_t_devices_count_set */
 SWIGEXPORT void _player_device_devlist_t_devices_count_set (word occ_args[]) {
   player_device_devlist_t *arg1 = (player_device_devlist_t *) 0 ;
@@ -20232,6 +21436,13 @@ SWIGEXPORT void _delete_player_device_devlist_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_device_driverinfo_t */
+/*{{{  sizeof_player_device_driverinfo_t */
+SWIGEXPORT void _sizeof_player_device_driverinfo_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_device_driverinfo_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_device_driverinfo_t_addr_set */
 SWIGEXPORT void _player_device_driverinfo_t_addr_set (word occ_args[]) {
   player_device_driverinfo_t *arg1 = (player_device_driverinfo_t *) 0 ;
@@ -20335,6 +21546,13 @@ SWIGEXPORT void _delete_player_device_driverinfo_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_device_req_t */
+/*{{{  sizeof_player_device_req_t */
+SWIGEXPORT void _sizeof_player_device_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_device_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_device_req_t_addr_set */
 SWIGEXPORT void _player_device_req_t_addr_set (word occ_args[]) {
   player_device_req_t *arg1 = (player_device_req_t *) 0 ;
@@ -20468,6 +21686,13 @@ SWIGEXPORT void _delete_player_device_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_device_datamode_req_t */
+/*{{{  sizeof_player_device_datamode_req_t */
+SWIGEXPORT void _sizeof_player_device_datamode_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_device_datamode_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_device_datamode_req_t_mode_set */
 SWIGEXPORT void _player_device_datamode_req_t_mode_set (word occ_args[]) {
   player_device_datamode_req_t *arg1 = (player_device_datamode_req_t *) 0 ;
@@ -20524,6 +21749,13 @@ SWIGEXPORT void _delete_player_device_datamode_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_device_auth_req_t */
+/*{{{  sizeof_player_device_auth_req_t */
+SWIGEXPORT void _sizeof_player_device_auth_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_device_auth_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_device_auth_req_t_auth_key_count_set */
 SWIGEXPORT void _player_device_auth_req_t_auth_key_count_set (word occ_args[]) {
   player_device_auth_req_t *arg1 = (player_device_auth_req_t *) 0 ;
@@ -20598,6 +21830,13 @@ SWIGEXPORT void _delete_player_device_auth_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_device_nameservice_req_t */
+/*{{{  sizeof_player_device_nameservice_req_t */
+SWIGEXPORT void _sizeof_player_device_nameservice_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_device_nameservice_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_device_nameservice_req_t_name_count_set */
 SWIGEXPORT void _player_device_nameservice_req_t_name_count_set (word occ_args[]) {
   player_device_nameservice_req_t *arg1 = (player_device_nameservice_req_t *) 0 ;
@@ -20702,6 +21941,13 @@ SWIGEXPORT void _delete_player_device_nameservice_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_add_replace_rule_req_t */
+/*{{{  sizeof_player_add_replace_rule_req_t */
+SWIGEXPORT void _sizeof_player_add_replace_rule_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_add_replace_rule_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_add_replace_rule_req_t_interf_set */
 SWIGEXPORT void _player_add_replace_rule_req_t_interf_set (word occ_args[]) {
   player_add_replace_rule_req_t *arg1 = (player_add_replace_rule_req_t *) 0 ;
@@ -20878,6 +22124,13 @@ SWIGEXPORT void _delete_player_add_replace_rule_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_data_t */
+/*{{{  sizeof_player_position2d_data_t */
+SWIGEXPORT void _sizeof_player_position2d_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_data_t_pos_set */
 SWIGEXPORT void _player_position2d_data_t_pos_set (word occ_args[]) {
   player_position2d_data_t *arg1 = (player_position2d_data_t *) 0 ;
@@ -20994,6 +22247,13 @@ SWIGEXPORT void _delete_player_position2d_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_cmd_vel_t */
+/*{{{  sizeof_player_position2d_cmd_vel_t */
+SWIGEXPORT void _sizeof_player_position2d_cmd_vel_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_cmd_vel_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_cmd_vel_t_vel_set */
 SWIGEXPORT void _player_position2d_cmd_vel_t_vel_set (word occ_args[]) {
   player_position2d_cmd_vel_t *arg1 = (player_position2d_cmd_vel_t *) 0 ;
@@ -21080,6 +22340,13 @@ SWIGEXPORT void _delete_player_position2d_cmd_vel_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_cmd_pos_t */
+/*{{{  sizeof_player_position2d_cmd_pos_t */
+SWIGEXPORT void _sizeof_player_position2d_cmd_pos_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_cmd_pos_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_cmd_pos_t_pos_set */
 SWIGEXPORT void _player_position2d_cmd_pos_t_pos_set (word occ_args[]) {
   player_position2d_cmd_pos_t *arg1 = (player_position2d_cmd_pos_t *) 0 ;
@@ -21196,6 +22463,13 @@ SWIGEXPORT void _delete_player_position2d_cmd_pos_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_cmd_car_t */
+/*{{{  sizeof_player_position2d_cmd_car_t */
+SWIGEXPORT void _sizeof_player_position2d_cmd_car_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_cmd_car_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_cmd_car_t_velocity_set */
 SWIGEXPORT void _player_position2d_cmd_car_t_velocity_set (word occ_args[]) {
   player_position2d_cmd_car_t *arg1 = (player_position2d_cmd_car_t *) 0 ;
@@ -21282,6 +22556,13 @@ SWIGEXPORT void _delete_player_position2d_cmd_car_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_cmd_vel_head_t */
+/*{{{  sizeof_player_position2d_cmd_vel_head_t */
+SWIGEXPORT void _sizeof_player_position2d_cmd_vel_head_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_cmd_vel_head_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_cmd_vel_head_t_velocity_set */
 SWIGEXPORT void _player_position2d_cmd_vel_head_t_velocity_set (word occ_args[]) {
   player_position2d_cmd_vel_head_t *arg1 = (player_position2d_cmd_vel_head_t *) 0 ;
@@ -21368,6 +22649,13 @@ SWIGEXPORT void _delete_player_position2d_cmd_vel_head_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_geom_t */
+/*{{{  sizeof_player_position2d_geom_t */
+SWIGEXPORT void _sizeof_player_position2d_geom_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_geom_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_geom_t_pose_set */
 SWIGEXPORT void _player_position2d_geom_t_pose_set (word occ_args[]) {
   player_position2d_geom_t *arg1 = (player_position2d_geom_t *) 0 ;
@@ -21454,6 +22742,13 @@ SWIGEXPORT void _delete_player_position2d_geom_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_power_config_t */
+/*{{{  sizeof_player_position2d_power_config_t */
+SWIGEXPORT void _sizeof_player_position2d_power_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_power_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_power_config_t_state_set */
 SWIGEXPORT void _player_position2d_power_config_t_state_set (word occ_args[]) {
   player_position2d_power_config_t *arg1 = (player_position2d_power_config_t *) 0 ;
@@ -21510,6 +22805,13 @@ SWIGEXPORT void _delete_player_position2d_power_config_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_velocity_mode_config_t */
+/*{{{  sizeof_player_position2d_velocity_mode_config_t */
+SWIGEXPORT void _sizeof_player_position2d_velocity_mode_config_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_velocity_mode_config_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_velocity_mode_config_t_value_set */
 SWIGEXPORT void _player_position2d_velocity_mode_config_t_value_set (word occ_args[]) {
   player_position2d_velocity_mode_config_t *arg1 = (player_position2d_velocity_mode_config_t *) 0 ;
@@ -21566,6 +22868,13 @@ SWIGEXPORT void _delete_player_position2d_velocity_mode_config_t (word occ_args[
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_position_mode_req_t */
+/*{{{  sizeof_player_position2d_position_mode_req_t */
+SWIGEXPORT void _sizeof_player_position2d_position_mode_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_position_mode_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_position_mode_req_t_state_set */
 SWIGEXPORT void _player_position2d_position_mode_req_t_state_set (word occ_args[]) {
   player_position2d_position_mode_req_t *arg1 = (player_position2d_position_mode_req_t *) 0 ;
@@ -21622,6 +22931,13 @@ SWIGEXPORT void _delete_player_position2d_position_mode_req_t (word occ_args[]) 
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_set_odom_req_t */
+/*{{{  sizeof_player_position2d_set_odom_req_t */
+SWIGEXPORT void _sizeof_player_position2d_set_odom_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_set_odom_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_set_odom_req_t_pose_set */
 SWIGEXPORT void _player_position2d_set_odom_req_t_pose_set (word occ_args[]) {
   player_position2d_set_odom_req_t *arg1 = (player_position2d_set_odom_req_t *) 0 ;
@@ -21678,6 +22994,13 @@ SWIGEXPORT void _delete_player_position2d_set_odom_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_speed_pid_req_t */
+/*{{{  sizeof_player_position2d_speed_pid_req_t */
+SWIGEXPORT void _sizeof_player_position2d_speed_pid_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_speed_pid_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_speed_pid_req_t_kp_set */
 SWIGEXPORT void _player_position2d_speed_pid_req_t_kp_set (word occ_args[]) {
   player_position2d_speed_pid_req_t *arg1 = (player_position2d_speed_pid_req_t *) 0 ;
@@ -21794,6 +23117,13 @@ SWIGEXPORT void _delete_player_position2d_speed_pid_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_position_pid_req_t */
+/*{{{  sizeof_player_position2d_position_pid_req_t */
+SWIGEXPORT void _sizeof_player_position2d_position_pid_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_position_pid_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_position_pid_req_t_kp_set */
 SWIGEXPORT void _player_position2d_position_pid_req_t_kp_set (word occ_args[]) {
   player_position2d_position_pid_req_t *arg1 = (player_position2d_position_pid_req_t *) 0 ;
@@ -21910,6 +23240,13 @@ SWIGEXPORT void _delete_player_position2d_position_pid_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_position2d_speed_prof_req_t */
+/*{{{  sizeof_player_position2d_speed_prof_req_t */
+SWIGEXPORT void _sizeof_player_position2d_speed_prof_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_position2d_speed_prof_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_position2d_speed_prof_req_t_speed_set */
 SWIGEXPORT void _player_position2d_speed_prof_req_t_speed_set (word occ_args[]) {
   player_position2d_speed_prof_req_t *arg1 = (player_position2d_speed_prof_req_t *) 0 ;
@@ -21996,6 +23333,13 @@ SWIGEXPORT void _delete_player_position2d_speed_prof_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_planner_data_t */
+/*{{{  sizeof_player_planner_data_t */
+SWIGEXPORT void _sizeof_player_planner_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_planner_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_planner_data_t_valid_set */
 SWIGEXPORT void _player_planner_data_t_valid_set (word occ_args[]) {
   player_planner_data_t *arg1 = (player_planner_data_t *) 0 ;
@@ -22232,6 +23576,13 @@ SWIGEXPORT void _delete_player_planner_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_planner_cmd_t */
+/*{{{  sizeof_player_planner_cmd_t */
+SWIGEXPORT void _sizeof_player_planner_cmd_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_planner_cmd_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_planner_cmd_t_goal_set */
 SWIGEXPORT void _player_planner_cmd_t_goal_set (word occ_args[]) {
   player_planner_cmd_t *arg1 = (player_planner_cmd_t *) 0 ;
@@ -22288,6 +23639,13 @@ SWIGEXPORT void _delete_player_planner_cmd_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_planner_waypoints_req_t */
+/*{{{  sizeof_player_planner_waypoints_req_t */
+SWIGEXPORT void _sizeof_player_planner_waypoints_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_planner_waypoints_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_planner_waypoints_req_t_waypoints_count_set */
 SWIGEXPORT void _player_planner_waypoints_req_t_waypoints_count_set (word occ_args[]) {
   player_planner_waypoints_req_t *arg1 = (player_planner_waypoints_req_t *) 0 ;
@@ -22374,6 +23732,13 @@ SWIGEXPORT void _delete_player_planner_waypoints_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_planner_enable_req_t */
+/*{{{  sizeof_player_planner_enable_req_t */
+SWIGEXPORT void _sizeof_player_planner_enable_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_planner_enable_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_planner_enable_req_t_state_set */
 SWIGEXPORT void _player_planner_enable_req_t_state_set (word occ_args[]) {
   player_planner_enable_req_t *arg1 = (player_planner_enable_req_t *) 0 ;
@@ -22430,6 +23795,13 @@ SWIGEXPORT void _delete_player_planner_enable_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_map_info_t */
+/*{{{  sizeof_player_map_info_t */
+SWIGEXPORT void _sizeof_player_map_info_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_map_info_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_map_info_t_scale_set */
 SWIGEXPORT void _player_map_info_t_scale_set (word occ_args[]) {
   player_map_info_t *arg1 = (player_map_info_t *) 0 ;
@@ -22576,6 +23948,13 @@ SWIGEXPORT void _delete_player_map_info_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_map_data_t */
+/*{{{  sizeof_player_map_data_t */
+SWIGEXPORT void _sizeof_player_map_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_map_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_map_data_t_col_set */
 SWIGEXPORT void _player_map_data_t_col_set (word occ_args[]) {
   player_map_data_t *arg1 = (player_map_data_t *) 0 ;
@@ -22782,6 +24161,13 @@ SWIGEXPORT void _delete_player_map_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_map_data_vector_t */
+/*{{{  sizeof_player_map_data_vector_t */
+SWIGEXPORT void _sizeof_player_map_data_vector_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_map_data_vector_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_map_data_vector_t_minx_set */
 SWIGEXPORT void _player_map_data_vector_t_minx_set (word occ_args[]) {
   player_map_data_vector_t *arg1 = (player_map_data_vector_t *) 0 ;
@@ -22988,6 +24374,13 @@ SWIGEXPORT void _delete_player_map_data_vector_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_audio_wav_t */
+/*{{{  sizeof_player_audio_wav_t */
+SWIGEXPORT void _sizeof_player_audio_wav_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_audio_wav_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_audio_wav_t_data_count_set */
 SWIGEXPORT void _player_audio_wav_t_data_count_set (word occ_args[]) {
   player_audio_wav_t *arg1 = (player_audio_wav_t *) 0 ;
@@ -23104,6 +24497,13 @@ SWIGEXPORT void _delete_player_audio_wav_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_audio_seq_item_t */
+/*{{{  sizeof_player_audio_seq_item_t */
+SWIGEXPORT void _sizeof_player_audio_seq_item_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_audio_seq_item_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_audio_seq_item_t_freq_set */
 SWIGEXPORT void _player_audio_seq_item_t_freq_set (word occ_args[]) {
   player_audio_seq_item_t *arg1 = (player_audio_seq_item_t *) 0 ;
@@ -23250,6 +24650,13 @@ SWIGEXPORT void _delete_player_audio_seq_item_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_audio_seq_t */
+/*{{{  sizeof_player_audio_seq_t */
+SWIGEXPORT void _sizeof_player_audio_seq_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_audio_seq_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_audio_seq_t_tones_count_set */
 SWIGEXPORT void _player_audio_seq_t_tones_count_set (word occ_args[]) {
   player_audio_seq_t *arg1 = (player_audio_seq_t *) 0 ;
@@ -23336,6 +24743,13 @@ SWIGEXPORT void _delete_player_audio_seq_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_audio_mixer_channel_t */
+/*{{{  sizeof_player_audio_mixer_channel_t */
+SWIGEXPORT void _sizeof_player_audio_mixer_channel_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_audio_mixer_channel_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_audio_mixer_channel_t_amplitude_set */
 SWIGEXPORT void _player_audio_mixer_channel_t_amplitude_set (word occ_args[]) {
   player_audio_mixer_channel_t *arg1 = (player_audio_mixer_channel_t *) 0 ;
@@ -23452,6 +24866,13 @@ SWIGEXPORT void _delete_player_audio_mixer_channel_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_audio_mixer_channel_list_t */
+/*{{{  sizeof_player_audio_mixer_channel_list_t */
+SWIGEXPORT void _sizeof_player_audio_mixer_channel_list_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_audio_mixer_channel_list_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_audio_mixer_channel_list_t_channels_count_set */
 SWIGEXPORT void _player_audio_mixer_channel_list_t_channels_count_set (word occ_args[]) {
   player_audio_mixer_channel_list_t *arg1 = (player_audio_mixer_channel_list_t *) 0 ;
@@ -23538,6 +24959,13 @@ SWIGEXPORT void _delete_player_audio_mixer_channel_list_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_audio_mixer_channel_detail_t */
+/*{{{  sizeof_player_audio_mixer_channel_detail_t */
+SWIGEXPORT void _sizeof_player_audio_mixer_channel_detail_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_audio_mixer_channel_detail_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_audio_mixer_channel_detail_t_name_count_set */
 SWIGEXPORT void _player_audio_mixer_channel_detail_t_name_count_set (word occ_args[]) {
   player_audio_mixer_channel_detail_t *arg1 = (player_audio_mixer_channel_detail_t *) 0 ;
@@ -23661,6 +25089,13 @@ SWIGEXPORT void _delete_player_audio_mixer_channel_detail_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_audio_mixer_channel_list_detail_t */
+/*{{{  sizeof_player_audio_mixer_channel_list_detail_t */
+SWIGEXPORT void _sizeof_player_audio_mixer_channel_list_detail_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_audio_mixer_channel_list_detail_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_audio_mixer_channel_list_detail_t_details_count_set */
 SWIGEXPORT void _player_audio_mixer_channel_list_detail_t_details_count_set (word occ_args[]) {
   player_audio_mixer_channel_list_detail_t *arg1 = (player_audio_mixer_channel_list_detail_t *) 0 ;
@@ -23807,6 +25242,13 @@ SWIGEXPORT void _delete_player_audio_mixer_channel_list_detail_t (word occ_args[
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_audio_sample_t */
+/*{{{  sizeof_player_audio_sample_t */
+SWIGEXPORT void _sizeof_player_audio_sample_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_audio_sample_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_audio_sample_t_sample_set */
 SWIGEXPORT void _player_audio_sample_t_sample_set (word occ_args[]) {
   player_audio_sample_t *arg1 = (player_audio_sample_t *) 0 ;
@@ -23893,6 +25335,13 @@ SWIGEXPORT void _delete_player_audio_sample_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_audio_sample_item_t */
+/*{{{  sizeof_player_audio_sample_item_t */
+SWIGEXPORT void _sizeof_player_audio_sample_item_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_audio_sample_item_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_audio_sample_item_t_index_set */
 SWIGEXPORT void _player_audio_sample_item_t_index_set (word occ_args[]) {
   player_audio_sample_item_t *arg1 = (player_audio_sample_item_t *) 0 ;
@@ -23949,6 +25398,13 @@ SWIGEXPORT void _delete_player_audio_sample_item_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_audio_sample_rec_req_t */
+/*{{{  sizeof_player_audio_sample_rec_req_t */
+SWIGEXPORT void _sizeof_player_audio_sample_rec_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_audio_sample_rec_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_audio_sample_rec_req_t_index_set */
 SWIGEXPORT void _player_audio_sample_rec_req_t_index_set (word occ_args[]) {
   player_audio_sample_rec_req_t *arg1 = (player_audio_sample_rec_req_t *) 0 ;
@@ -24035,6 +25491,13 @@ SWIGEXPORT void _delete_player_audio_sample_rec_req_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_audio_state_t */
+/*{{{  sizeof_player_audio_state_t */
+SWIGEXPORT void _sizeof_player_audio_state_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_audio_state_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_audio_state_t_state_set */
 SWIGEXPORT void _player_audio_state_t_state_set (word occ_args[]) {
   player_audio_state_t *arg1 = (player_audio_state_t *) 0 ;
@@ -24091,6 +25554,13 @@ SWIGEXPORT void _delete_player_audio_state_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_rfid_tag_t */
+/*{{{  sizeof_player_rfid_tag_t */
+SWIGEXPORT void _sizeof_player_rfid_tag_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_rfid_tag_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_rfid_tag_t_type_set */
 SWIGEXPORT void _player_rfid_tag_t_type_set (word occ_args[]) {
   player_rfid_tag_t *arg1 = (player_rfid_tag_t *) 0 ;
@@ -24214,6 +25684,13 @@ SWIGEXPORT void _delete_player_rfid_tag_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_rfid_data_t */
+/*{{{  sizeof_player_rfid_data_t */
+SWIGEXPORT void _sizeof_player_rfid_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_rfid_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_rfid_data_t_tags_count_set */
 SWIGEXPORT void _player_rfid_data_t_tags_count_set (word occ_args[]) {
   player_rfid_data_t *arg1 = (player_rfid_data_t *) 0 ;
@@ -24300,6 +25777,13 @@ SWIGEXPORT void _delete_player_rfid_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ir_data_t */
+/*{{{  sizeof_player_ir_data_t */
+SWIGEXPORT void _sizeof_player_ir_data_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ir_data_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ir_data_t_voltages_count_set */
 SWIGEXPORT void _player_ir_data_t_voltages_count_set (word occ_args[]) {
   player_ir_data_t *arg1 = (player_ir_data_t *) 0 ;
@@ -24446,6 +25930,13 @@ SWIGEXPORT void _delete_player_ir_data_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ir_pose_t */
+/*{{{  sizeof_player_ir_pose_t */
+SWIGEXPORT void _sizeof_player_ir_pose_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ir_pose_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ir_pose_t_poses_count_set */
 SWIGEXPORT void _player_ir_pose_t_poses_count_set (word occ_args[]) {
   player_ir_pose_t *arg1 = (player_ir_pose_t *) 0 ;
@@ -24532,6 +26023,13 @@ SWIGEXPORT void _delete_player_ir_pose_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct player_ir_power_req_t */
+/*{{{  sizeof_player_ir_power_req_t */
+SWIGEXPORT void _sizeof_player_ir_power_req_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (player_ir_power_req_t);
+}
+
+
+/*}}}*/
 /*{{{  function player_ir_power_req_t_state_set */
 SWIGEXPORT void _player_ir_power_req_t_state_set (word occ_args[]) {
   player_ir_power_req_t *arg1 = (player_ir_power_req_t *) 0 ;
@@ -24618,6 +26116,13 @@ SWIGEXPORT void _playerc_add_xdr_ftable (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_client_item_t */
+/*{{{  sizeof_playerc_client_item_t */
+SWIGEXPORT void _sizeof_playerc_client_item_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_client_item_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_client_item_t_header_set */
 SWIGEXPORT void _playerc_client_item_t_header_set (word occ_args[]) {
   playerc_client_item_t *arg1 = (playerc_client_item_t *) 0 ;
@@ -24704,6 +26209,13 @@ SWIGEXPORT void _delete_playerc_client_item_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct playerc_mclient_t */
+/*{{{  sizeof_playerc_mclient_t */
+SWIGEXPORT void _sizeof_playerc_mclient_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_mclient_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_mclient_t_client_count_set */
 SWIGEXPORT void _playerc_mclient_t_client_count_set (word occ_args[]) {
   playerc_mclient_t *arg1 = (playerc_mclient_t *) 0 ;
@@ -24897,6 +26409,13 @@ SWIGEXPORT void _playerc_mclient_read (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_device_info_t */
+/*{{{  sizeof_playerc_device_info_t */
+SWIGEXPORT void _sizeof_playerc_device_info_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_device_info_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_device_info_t_addr_set */
 SWIGEXPORT void _playerc_device_info_t_addr_set (word occ_args[]) {
   playerc_device_info_t *arg1 = (playerc_device_info_t *) 0 ;
@@ -24970,6 +26489,13 @@ SWIGEXPORT void _delete_playerc_device_info_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct playerc_client_t */
+/*{{{  sizeof_playerc_client_t */
+SWIGEXPORT void _sizeof_playerc_client_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_client_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_client_t_id_set */
 SWIGEXPORT void _playerc_client_t_id_set (word occ_args[]) {
   playerc_client_t *arg1 = (playerc_client_t *) 0 ;
@@ -26228,6 +27754,13 @@ SWIGEXPORT void _playerc_client_write (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_device_t */
+/*{{{  sizeof_playerc_device_t */
+SWIGEXPORT void _sizeof_playerc_device_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_device_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_device_t_id_set */
 SWIGEXPORT void _playerc_device_t_id_set (word occ_args[]) {
   playerc_device_t *arg1 = (playerc_device_t *) 0 ;
@@ -26863,6 +28396,13 @@ SWIGEXPORT void _playerc_device_set_strprop (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_aio_t */
+/*{{{  sizeof_playerc_aio_t */
+SWIGEXPORT void _sizeof_playerc_aio_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_aio_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_aio_t_info_set */
 SWIGEXPORT void _playerc_aio_t_info_set (word occ_args[]) {
   playerc_aio_t *arg1 = (playerc_aio_t *) 0 ;
@@ -27080,6 +28620,13 @@ SWIGEXPORT void _playerc_aio_get_data (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_actarray_t */
+/*{{{  sizeof_playerc_actarray_t */
+SWIGEXPORT void _sizeof_playerc_actarray_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_actarray_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_actarray_t_info_set */
 SWIGEXPORT void _playerc_actarray_t_info_set (word occ_args[]) {
   playerc_actarray_t *arg1 = (playerc_actarray_t *) 0 ;
@@ -27681,6 +29228,13 @@ SWIGEXPORT void _playerc_actarray_accel_config (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_audio_t */
+/*{{{  sizeof_playerc_audio_t */
+SWIGEXPORT void _sizeof_playerc_audio_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_audio_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_audio_t_info_set */
 SWIGEXPORT void _playerc_audio_t_info_set (word occ_args[]) {
   playerc_audio_t *arg1 = (playerc_audio_t *) 0 ;
@@ -28210,6 +29764,13 @@ SWIGEXPORT void _playerc_audio_get_mixer_details (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_blackboard_t */
+/*{{{  sizeof_playerc_blackboard_t */
+SWIGEXPORT void _sizeof_playerc_blackboard_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_blackboard_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_blackboard_t_info_set */
 SWIGEXPORT void _playerc_blackboard_t_info_set (word occ_args[]) {
   playerc_blackboard_t *arg1 = (playerc_blackboard_t *) 0 ;
@@ -28583,6 +30144,13 @@ SWIGEXPORT void _playerc_blackboard_set_double (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_blinkenlight_t */
+/*{{{  sizeof_playerc_blinkenlight_t */
+SWIGEXPORT void _sizeof_playerc_blinkenlight_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_blinkenlight_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_blinkenlight_t_info_set */
 SWIGEXPORT void _playerc_blinkenlight_t_info_set (word occ_args[]) {
   playerc_blinkenlight_t *arg1 = (playerc_blinkenlight_t *) 0 ;
@@ -28950,6 +30518,13 @@ SWIGEXPORT void _playerc_blinkenlight_blink (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_blobfinder_t */
+/*{{{  sizeof_playerc_blobfinder_t */
+SWIGEXPORT void _sizeof_playerc_blobfinder_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_blobfinder_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_blobfinder_t_info_set */
 SWIGEXPORT void _playerc_blobfinder_t_info_set (word occ_args[]) {
   playerc_blobfinder_t *arg1 = (playerc_blobfinder_t *) 0 ;
@@ -29188,6 +30763,13 @@ SWIGEXPORT void _playerc_blobfinder_unsubscribe (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_bumper_t */
+/*{{{  sizeof_playerc_bumper_t */
+SWIGEXPORT void _sizeof_playerc_bumper_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_bumper_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_bumper_t_info_set */
 SWIGEXPORT void _playerc_bumper_t_info_set (word occ_args[]) {
   playerc_bumper_t *arg1 = (playerc_bumper_t *) 0 ;
@@ -29441,6 +31023,13 @@ SWIGEXPORT void _playerc_bumper_get_geom (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_camera_t */
+/*{{{  sizeof_playerc_camera_t */
+SWIGEXPORT void _sizeof_playerc_camera_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_camera_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_camera_t_info_set */
 SWIGEXPORT void _playerc_camera_t_info_set (word occ_args[]) {
   playerc_camera_t *arg1 = (playerc_camera_t *) 0 ;
@@ -29824,6 +31413,13 @@ SWIGEXPORT void _playerc_camera_save (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_dio_t */
+/*{{{  sizeof_playerc_dio_t */
+SWIGEXPORT void _sizeof_playerc_dio_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_dio_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_dio_t_info_set */
 SWIGEXPORT void _playerc_dio_t_info_set (word occ_args[]) {
   playerc_dio_t *arg1 = (playerc_dio_t *) 0 ;
@@ -30023,6 +31619,13 @@ SWIGEXPORT void _playerc_dio_set_output (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_fiducial_t */
+/*{{{  sizeof_playerc_fiducial_t */
+SWIGEXPORT void _sizeof_playerc_fiducial_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_fiducial_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_fiducial_t_info_set */
 SWIGEXPORT void _playerc_fiducial_t_info_set (word occ_args[]) {
   playerc_fiducial_t *arg1 = (playerc_fiducial_t *) 0 ;
@@ -30246,6 +31849,13 @@ SWIGEXPORT void _playerc_fiducial_get_geom (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_gps_t */
+/*{{{  sizeof_playerc_gps_t */
+SWIGEXPORT void _sizeof_playerc_gps_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_gps_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_gps_t_info_set */
 SWIGEXPORT void _playerc_gps_t_info_set (word occ_args[]) {
   playerc_gps_t *arg1 = (playerc_gps_t *) 0 ;
@@ -30724,6 +32334,13 @@ SWIGEXPORT void _playerc_gps_unsubscribe (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_graphics2d_t */
+/*{{{  sizeof_playerc_graphics2d_t */
+SWIGEXPORT void _sizeof_playerc_graphics2d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_graphics2d_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_graphics2d_t_info_set */
 SWIGEXPORT void _playerc_graphics2d_t_info_set (word occ_args[]) {
   playerc_graphics2d_t *arg1 = (playerc_graphics2d_t *) 0 ;
@@ -30905,6 +32522,13 @@ SWIGEXPORT void _playerc_graphics2d_clear (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_graphics3d_t */
+/*{{{  sizeof_playerc_graphics3d_t */
+SWIGEXPORT void _sizeof_playerc_graphics3d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_graphics3d_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_graphics3d_t_info_set */
 SWIGEXPORT void _playerc_graphics3d_t_info_set (word occ_args[]) {
   playerc_graphics3d_t *arg1 = (playerc_graphics3d_t *) 0 ;
@@ -31137,6 +32761,13 @@ SWIGEXPORT void _playerc_graphics3d_rotate (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_gripper_t */
+/*{{{  sizeof_playerc_gripper_t */
+SWIGEXPORT void _sizeof_playerc_gripper_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_gripper_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_gripper_t_info_set */
 SWIGEXPORT void _playerc_gripper_t_info_set (word occ_args[]) {
   playerc_gripper_t *arg1 = (playerc_gripper_t *) 0 ;
@@ -31599,6 +33230,13 @@ SWIGEXPORT void _playerc_gripper_get_geom (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_health_t */
+/*{{{  sizeof_playerc_health_t */
+SWIGEXPORT void _sizeof_playerc_health_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_health_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_health_t_info_set */
 SWIGEXPORT void _playerc_health_t_info_set (word occ_args[]) {
   playerc_health_t *arg1 = (playerc_health_t *) 0 ;
@@ -31807,6 +33445,13 @@ SWIGEXPORT void _playerc_health_unsubscribe (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_ir_t */
+/*{{{  sizeof_playerc_ir_t */
+SWIGEXPORT void _sizeof_playerc_ir_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_ir_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_ir_t_info_set */
 SWIGEXPORT void _playerc_ir_t_info_set (word occ_args[]) {
   playerc_ir_t *arg1 = (playerc_ir_t *) 0 ;
@@ -32000,6 +33645,13 @@ SWIGEXPORT void _playerc_ir_get_geom (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_laser_t */
+/*{{{  sizeof_playerc_laser_t */
+SWIGEXPORT void _sizeof_playerc_laser_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_laser_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_laser_t_info_set */
 SWIGEXPORT void _playerc_laser_t_info_set (word occ_args[]) {
   playerc_laser_t *arg1 = (playerc_laser_t *) 0 ;
@@ -32732,6 +34384,13 @@ SWIGEXPORT void _playerc_laser_printout (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_limb_t */
+/*{{{  sizeof_playerc_limb_t */
+SWIGEXPORT void _sizeof_playerc_limb_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_limb_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_limb_t_info_set */
 SWIGEXPORT void _playerc_limb_t_info_set (word occ_args[]) {
   playerc_limb_t *arg1 = (playerc_limb_t *) 0 ;
@@ -33102,6 +34761,13 @@ SWIGEXPORT void _playerc_limb_speed_config (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_localize_particle_t */
+/*{{{  sizeof_playerc_localize_particle_t */
+SWIGEXPORT void _sizeof_playerc_localize_particle_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_localize_particle_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_localize_particle_t_pose_set */
 SWIGEXPORT void _playerc_localize_particle_t_pose_set (word occ_args[]) {
   playerc_localize_particle_t *arg1 = (playerc_localize_particle_t *) 0 ;
@@ -33176,6 +34842,13 @@ SWIGEXPORT void _delete_playerc_localize_particle_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct playerc_localize_t */
+/*{{{  sizeof_playerc_localize_t */
+SWIGEXPORT void _sizeof_playerc_localize_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_localize_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_localize_t_info_set */
 SWIGEXPORT void _playerc_localize_t_info_set (word occ_args[]) {
   playerc_localize_t *arg1 = (playerc_localize_t *) 0 ;
@@ -33738,6 +35411,13 @@ SWIGEXPORT void _playerc_localize_get_particles (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_log_t */
+/*{{{  sizeof_playerc_log_t */
+SWIGEXPORT void _sizeof_playerc_log_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_log_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_log_t_info_set */
 SWIGEXPORT void _playerc_log_t_info_set (word occ_args[]) {
   playerc_log_t *arg1 = (playerc_log_t *) 0 ;
@@ -34000,6 +35680,13 @@ SWIGEXPORT void _playerc_log_set_filename (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_map_t */
+/*{{{  sizeof_playerc_map_t */
+SWIGEXPORT void _sizeof_playerc_map_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_map_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_map_t_info_set */
 SWIGEXPORT void _playerc_map_t_info_set (word occ_args[]) {
   playerc_map_t *arg1 = (playerc_map_t *) 0 ;
@@ -34473,6 +36160,13 @@ SWIGEXPORT void _playerc_map_get_vector (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_vectormap_t */
+/*{{{  sizeof_playerc_vectormap_t */
+SWIGEXPORT void _sizeof_playerc_vectormap_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_vectormap_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_vectormap_t_info_set */
 SWIGEXPORT void _playerc_vectormap_t_info_set (word occ_args[]) {
   playerc_vectormap_t *arg1 = (playerc_vectormap_t *) 0 ;
@@ -34854,6 +36548,13 @@ SWIGEXPORT void _playerc_vectormap_get_feature_data (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_opaque_t */
+/*{{{  sizeof_playerc_opaque_t */
+SWIGEXPORT void _sizeof_playerc_opaque_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_opaque_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_opaque_t_info_set */
 SWIGEXPORT void _playerc_opaque_t_info_set (word occ_args[]) {
   playerc_opaque_t *arg1 = (playerc_opaque_t *) 0 ;
@@ -35071,6 +36772,13 @@ SWIGEXPORT void _playerc_opaque_req (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_planner_t */
+/*{{{  sizeof_playerc_planner_t */
+SWIGEXPORT void _sizeof_playerc_planner_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_planner_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_planner_t_info_set */
 SWIGEXPORT void _playerc_planner_t_info_set (word occ_args[]) {
   playerc_planner_t *arg1 = (playerc_planner_t *) 0 ;
@@ -35666,6 +37374,13 @@ SWIGEXPORT void _playerc_planner_enable (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_position1d_t */
+/*{{{  sizeof_playerc_position1d_t */
+SWIGEXPORT void _sizeof_playerc_position1d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_position1d_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_position1d_t_info_set */
 SWIGEXPORT void _playerc_position1d_t_info_set (word occ_args[]) {
   playerc_position1d_t *arg1 = (playerc_position1d_t *) 0 ;
@@ -36057,6 +37772,13 @@ SWIGEXPORT void _playerc_position1d_set_odom (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_position2d_t */
+/*{{{  sizeof_playerc_position2d_t */
+SWIGEXPORT void _sizeof_playerc_position2d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_position2d_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_position2d_t_info_set */
 SWIGEXPORT void _playerc_position2d_t_info_set (word occ_args[]) {
   playerc_position2d_t *arg1 = (playerc_position2d_t *) 0 ;
@@ -36577,6 +38299,13 @@ SWIGEXPORT void _playerc_position2d_set_odom (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_position3d_t */
+/*{{{  sizeof_playerc_position3d_t */
+SWIGEXPORT void _sizeof_playerc_position3d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_position3d_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_position3d_t_info_set */
 SWIGEXPORT void _playerc_position3d_t_info_set (word occ_args[]) {
   playerc_position3d_t *arg1 = (playerc_position3d_t *) 0 ;
@@ -37361,6 +39090,13 @@ SWIGEXPORT void _playerc_position3d_reset_odom (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_power_t */
+/*{{{  sizeof_playerc_power_t */
+SWIGEXPORT void _sizeof_playerc_power_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_power_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_power_t_info_set */
 SWIGEXPORT void _playerc_power_t_info_set (word occ_args[]) {
   playerc_power_t *arg1 = (playerc_power_t *) 0 ;
@@ -37659,6 +39395,13 @@ SWIGEXPORT void _playerc_power_unsubscribe (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_ptz_t */
+/*{{{  sizeof_playerc_ptz_t */
+SWIGEXPORT void _sizeof_playerc_ptz_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_ptz_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_ptz_t_info_set */
 SWIGEXPORT void _playerc_ptz_t_info_set (word occ_args[]) {
   playerc_ptz_t *arg1 = (playerc_ptz_t *) 0 ;
@@ -37984,6 +39727,13 @@ SWIGEXPORT void _playerc_ptz_set_control_mode (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_ranger_t */
+/*{{{  sizeof_playerc_ranger_t */
+SWIGEXPORT void _sizeof_playerc_ranger_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_ranger_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_ranger_t_info_set */
 SWIGEXPORT void _playerc_ranger_t_info_set (word occ_args[]) {
   playerc_ranger_t *arg1 = (playerc_ranger_t *) 0 ;
@@ -38789,6 +40539,13 @@ SWIGEXPORT void _playerc_ranger_get_config (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_sonar_t */
+/*{{{  sizeof_playerc_sonar_t */
+SWIGEXPORT void _sizeof_playerc_sonar_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_sonar_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_sonar_t_info_set */
 SWIGEXPORT void _playerc_sonar_t_info_set (word occ_args[]) {
   playerc_sonar_t *arg1 = (playerc_sonar_t *) 0 ;
@@ -39042,6 +40799,13 @@ SWIGEXPORT void _playerc_sonar_get_geom (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_wifi_link_t */
+/*{{{  sizeof_playerc_wifi_link_t */
+SWIGEXPORT void _sizeof_playerc_wifi_link_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_wifi_link_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_wifi_link_t_mac_set */
 SWIGEXPORT void _playerc_wifi_link_t_mac_set (word occ_args[]) {
   playerc_wifi_link_t *arg1 = (playerc_wifi_link_t *) 0 ;
@@ -39302,6 +41066,13 @@ SWIGEXPORT void _delete_playerc_wifi_link_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct playerc_wifi_t */
+/*{{{  sizeof_playerc_wifi_t */
+SWIGEXPORT void _sizeof_playerc_wifi_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_wifi_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_wifi_t_info_set */
 SWIGEXPORT void _playerc_wifi_t_info_set (word occ_args[]) {
   playerc_wifi_t *arg1 = (playerc_wifi_t *) 0 ;
@@ -39515,6 +41286,13 @@ SWIGEXPORT void _playerc_wifi_get_link (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_simulation_t */
+/*{{{  sizeof_playerc_simulation_t */
+SWIGEXPORT void _sizeof_playerc_simulation_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_simulation_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_simulation_t_info_set */
 SWIGEXPORT void _playerc_simulation_t_info_set (word occ_args[]) {
   playerc_simulation_t *arg1 = (playerc_simulation_t *) 0 ;
@@ -39816,6 +41594,13 @@ SWIGEXPORT void _playerc_simulation_get_property (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_speech_t */
+/*{{{  sizeof_playerc_speech_t */
+SWIGEXPORT void _sizeof_playerc_speech_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_speech_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_speech_t_info_set */
 SWIGEXPORT void _playerc_speech_t_info_set (word occ_args[]) {
   playerc_speech_t *arg1 = (playerc_speech_t *) 0 ;
@@ -39952,6 +41737,13 @@ SWIGEXPORT void _playerc_speech_say (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_speechrecognition_t */
+/*{{{  sizeof_playerc_speechrecognition_t */
+SWIGEXPORT void _sizeof_playerc_speechrecognition_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_speechrecognition_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_speechrecognition_t_info_set */
 SWIGEXPORT void _playerc_speechrecognition_t_info_set (word occ_args[]) {
   playerc_speechrecognition_t *arg1 = (playerc_speechrecognition_t *) 0 ;
@@ -40167,6 +41959,13 @@ SWIGEXPORT void _playerc_speechrecognition_unsubscribe (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_rfidtag_t */
+/*{{{  sizeof_playerc_rfidtag_t */
+SWIGEXPORT void _sizeof_playerc_rfidtag_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_rfidtag_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_rfidtag_t_type_set */
 SWIGEXPORT void _playerc_rfidtag_t_type_set (word occ_args[]) {
   playerc_rfidtag_t *arg1 = (playerc_rfidtag_t *) 0 ;
@@ -40283,6 +42082,13 @@ SWIGEXPORT void _delete_playerc_rfidtag_t (word occ_args[]) {
 /*}}}*/
 /*}}}*/
 /*{{{  struct playerc_rfid_t */
+/*{{{  sizeof_playerc_rfid_t */
+SWIGEXPORT void _sizeof_playerc_rfid_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_rfid_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_rfid_t_info_set */
 SWIGEXPORT void _playerc_rfid_t_info_set (word occ_args[]) {
   playerc_rfid_t *arg1 = (playerc_rfid_t *) 0 ;
@@ -40461,6 +42267,13 @@ SWIGEXPORT void _playerc_rfid_unsubscribe (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_pointcloud3d_t */
+/*{{{  sizeof_playerc_pointcloud3d_t */
+SWIGEXPORT void _sizeof_playerc_pointcloud3d_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_pointcloud3d_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_pointcloud3d_t_info_set */
 SWIGEXPORT void _playerc_pointcloud3d_t_info_set (word occ_args[]) {
   playerc_pointcloud3d_t *arg1 = (playerc_pointcloud3d_t *) 0 ;
@@ -40639,6 +42452,13 @@ SWIGEXPORT void _playerc_pointcloud3d_unsubscribe (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_imu_t */
+/*{{{  sizeof_playerc_imu_t */
+SWIGEXPORT void _sizeof_playerc_imu_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_imu_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_imu_t_info_set */
 SWIGEXPORT void _playerc_imu_t_info_set (word occ_args[]) {
   playerc_imu_t *arg1 = (playerc_imu_t *) 0 ;
@@ -40973,6 +42793,13 @@ SWIGEXPORT void _playerc_imu_reset_orientation (word occ_args[]) {
 
 /*}}}*/
 /*{{{  struct playerc_wsn_t */
+/*{{{  sizeof_playerc_wsn_t */
+SWIGEXPORT void _sizeof_playerc_wsn_t (word occ_args[]) {
+  *((int *) occ_args[0]) = sizeof (playerc_wsn_t);
+}
+
+
+/*}}}*/
 /*{{{  function playerc_wsn_t_info_set */
 SWIGEXPORT void _playerc_wsn_t_info_set (word occ_args[]) {
   playerc_wsn_t *arg1 = (playerc_wsn_t *) 0 ;
