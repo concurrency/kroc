@@ -45,8 +45,15 @@ PROC robot (VAL INT id)
           playerc.blobfinder.t.blobs.count.get (blobfinder, count)
           playerc.blobfinder.t.blobs.get (blobfinder, blobs)
 
-          INITIAL player.blobfinder.blob.t blob IS player.blobfinder.blob.t blobs:
+          -- Slight oddity: ...blobs.get is defined using the playerc... type
+          -- rather than the player... one, so we need to cast the pointer it
+          -- returns to the player... type.
+          VAL player.blobfinder.blob.t blobs IS player.blobfinder.blob.t blobs:
+
           SEQ i = 0 FOR count
+            -- Index into the array of blobs.
+            VAL player.blobfinder.blob.t blob IS blobs @ i:
+
             INT x, y, area:
             SEQ
               player.blobfinder.blob.t.x.get (blob, x)
@@ -80,10 +87,6 @@ PROC robot (VAL INT id)
                   --}}}
                 TRUE
                   SKIP
-
-              --{{{  advance the pointer to the next blob
-              blob := blob + 40  -- XXX: that's sizeof(player_blobfinder_blob_t)
-              --}}}
         --}}}
         IF
           chasing
