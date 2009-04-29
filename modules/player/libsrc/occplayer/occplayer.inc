@@ -2795,6 +2795,19 @@ VAL INT PLAYERC.BLACKBOARD.DATA.SUBTYPE.INT IS 2:
 VAL INT PLAYERC.BLACKBOARD.DATA.SUBTYPE.DOUBLE IS 3:
 --}}}
 --{{{  struct player_devaddr_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.devaddr.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_devaddr_t].
+INT INLINE FUNCTION sizeof.player.devaddr.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.devaddr.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_devaddr_t].
+player.devaddr.t INLINE FUNCTION "@" (VAL player.devaddr.t ptr, VAL INT offset) IS
+  player.devaddr.t ((INT ptr) + (sizeof.player.devaddr.t () * offset)):
+--}}}
 --{{{  function player_devaddr_t_host_set
 #PRAGMA EXTERNAL "PROC C.player.devaddr.t.host.set (VAL player.devaddr.t self, VAL INT host) = 0"
 --* Foreign function [@text player_devaddr_t_host_set].
@@ -2867,6 +2880,19 @@ INLINE PROC delete.player.devaddr.t (VAL player.devaddr.t self)
 --}}}
 --}}}
 --{{{  struct player_msghdr_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.msghdr.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_msghdr_t].
+INT INLINE FUNCTION sizeof.player.msghdr.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.msghdr.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_msghdr_t].
+player.msghdr.t INLINE FUNCTION "@" (VAL player.msghdr.t ptr, VAL INT offset) IS
+  player.msghdr.t ((INT ptr) + (sizeof.player.msghdr.t () * offset)):
+--}}}
 --{{{  function player_msghdr_t_addr_set
 #PRAGMA EXTERNAL "PROC C.player.msghdr.t.addr.set (VAL player.msghdr.t self, VAL player.devaddr.t addr) = 0"
 --* Foreign function [@text player_msghdr_t_addr_set].
@@ -2967,6 +2993,19 @@ INLINE PROC delete.player.msghdr.t (VAL player.msghdr.t self)
 --}}}
 --}}}
 --{{{  struct player_null_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.null.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_null_t].
+INT INLINE FUNCTION sizeof.player.null.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.null.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_null_t].
+player.null.t INLINE FUNCTION "@" (VAL player.null.t ptr, VAL INT offset) IS
+  player.null.t ((INT ptr) + (sizeof.player.null.t () * offset)):
+--}}}
 --{{{  function new_player_null_t
 #PRAGMA EXTERNAL "PROC C.new.player.null.t (RESULT player.null.t return.value) = 0"
 --* Foreign function [@text new_player_null_t].
@@ -2983,6 +3022,19 @@ INLINE PROC delete.player.null.t (VAL player.null.t self)
 --}}}
 --}}}
 --{{{  struct player_point_2d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.point.2d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_point_2d_t].
+INT INLINE FUNCTION sizeof.player.point.2d.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.point.2d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_point_2d_t].
+player.point.2d.t INLINE FUNCTION "@" (VAL player.point.2d.t ptr, VAL INT offset) IS
+  player.point.2d.t ((INT ptr) + (sizeof.player.point.2d.t () * offset)):
+--}}}
 --{{{  function player_point_2d_t_px_set
 #PRAGMA EXTERNAL "PROC C.player.point.2d.t.px.set (VAL player.point.2d.t self, VAL REAL64 px) = 0"
 --* Foreign function [@text player_point_2d_t_px_set].
@@ -3027,6 +3079,19 @@ INLINE PROC delete.player.point.2d.t (VAL player.point.2d.t self)
 --}}}
 --}}}
 --{{{  struct player_point_3d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.point.3d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_point_3d_t].
+INT INLINE FUNCTION sizeof.player.point.3d.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.point.3d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_point_3d_t].
+player.point.3d.t INLINE FUNCTION "@" (VAL player.point.3d.t ptr, VAL INT offset) IS
+  player.point.3d.t ((INT ptr) + (sizeof.player.point.3d.t () * offset)):
+--}}}
 --{{{  function player_point_3d_t_px_set
 #PRAGMA EXTERNAL "PROC C.player.point.3d.t.px.set (VAL player.point.3d.t self, VAL REAL64 px) = 0"
 --* Foreign function [@text player_point_3d_t_px_set].
@@ -3085,6 +3150,19 @@ INLINE PROC delete.player.point.3d.t (VAL player.point.3d.t self)
 --}}}
 --}}}
 --{{{  struct player_orientation_3d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.orientation.3d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_orientation_3d_t].
+INT INLINE FUNCTION sizeof.player.orientation.3d.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.orientation.3d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_orientation_3d_t].
+player.orientation.3d.t INLINE FUNCTION "@" (VAL player.orientation.3d.t ptr, VAL INT offset) IS
+  player.orientation.3d.t ((INT ptr) + (sizeof.player.orientation.3d.t () * offset)):
+--}}}
 --{{{  function player_orientation_3d_t_proll_set
 #PRAGMA EXTERNAL "PROC C.player.orientation.3d.t.proll.set (VAL player.orientation.3d.t self, VAL REAL64 proll) = 0"
 --* Foreign function [@text player_orientation_3d_t_proll_set].
@@ -3143,6 +3221,19 @@ INLINE PROC delete.player.orientation.3d.t (VAL player.orientation.3d.t self)
 --}}}
 --}}}
 --{{{  struct player_pose2d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.pose2d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_pose2d_t].
+INT INLINE FUNCTION sizeof.player.pose2d.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.pose2d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_pose2d_t].
+player.pose2d.t INLINE FUNCTION "@" (VAL player.pose2d.t ptr, VAL INT offset) IS
+  player.pose2d.t ((INT ptr) + (sizeof.player.pose2d.t () * offset)):
+--}}}
 --{{{  function player_pose2d_t_px_set
 #PRAGMA EXTERNAL "PROC C.player.pose2d.t.px.set (VAL player.pose2d.t self, VAL REAL64 px) = 0"
 --* Foreign function [@text player_pose2d_t_px_set].
@@ -3201,6 +3292,19 @@ INLINE PROC delete.player.pose2d.t (VAL player.pose2d.t self)
 --}}}
 --}}}
 --{{{  struct player_pose3d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.pose3d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_pose3d_t].
+INT INLINE FUNCTION sizeof.player.pose3d.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.pose3d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_pose3d_t].
+player.pose3d.t INLINE FUNCTION "@" (VAL player.pose3d.t ptr, VAL INT offset) IS
+  player.pose3d.t ((INT ptr) + (sizeof.player.pose3d.t () * offset)):
+--}}}
 --{{{  function player_pose3d_t_px_set
 #PRAGMA EXTERNAL "PROC C.player.pose3d.t.px.set (VAL player.pose3d.t self, VAL REAL64 px) = 0"
 --* Foreign function [@text player_pose3d_t_px_set].
@@ -3301,6 +3405,19 @@ INLINE PROC delete.player.pose3d.t (VAL player.pose3d.t self)
 --}}}
 --}}}
 --{{{  struct player_bbox2d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.bbox2d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_bbox2d_t].
+INT INLINE FUNCTION sizeof.player.bbox2d.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.bbox2d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_bbox2d_t].
+player.bbox2d.t INLINE FUNCTION "@" (VAL player.bbox2d.t ptr, VAL INT offset) IS
+  player.bbox2d.t ((INT ptr) + (sizeof.player.bbox2d.t () * offset)):
+--}}}
 --{{{  function player_bbox2d_t_sw_set
 #PRAGMA EXTERNAL "PROC C.player.bbox2d.t.sw.set (VAL player.bbox2d.t self, VAL REAL64 sw) = 0"
 --* Foreign function [@text player_bbox2d_t_sw_set].
@@ -3345,6 +3462,19 @@ INLINE PROC delete.player.bbox2d.t (VAL player.bbox2d.t self)
 --}}}
 --}}}
 --{{{  struct player_bbox3d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.bbox3d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_bbox3d_t].
+INT INLINE FUNCTION sizeof.player.bbox3d.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.bbox3d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_bbox3d_t].
+player.bbox3d.t INLINE FUNCTION "@" (VAL player.bbox3d.t ptr, VAL INT offset) IS
+  player.bbox3d.t ((INT ptr) + (sizeof.player.bbox3d.t () * offset)):
+--}}}
 --{{{  function player_bbox3d_t_sw_set
 #PRAGMA EXTERNAL "PROC C.player.bbox3d.t.sw.set (VAL player.bbox3d.t self, VAL REAL64 sw) = 0"
 --* Foreign function [@text player_bbox3d_t_sw_set].
@@ -3403,6 +3533,19 @@ INLINE PROC delete.player.bbox3d.t (VAL player.bbox3d.t self)
 --}}}
 --}}}
 --{{{  struct player_blackboard_entry_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.blackboard.entry.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_blackboard_entry_t].
+INT INLINE FUNCTION sizeof.player.blackboard.entry.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.blackboard.entry.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_blackboard_entry_t].
+player.blackboard.entry.t INLINE FUNCTION "@" (VAL player.blackboard.entry.t ptr, VAL INT offset) IS
+  player.blackboard.entry.t ((INT ptr) + (sizeof.player.blackboard.entry.t () * offset)):
+--}}}
 --{{{  function player_blackboard_entry_t_key_count_set
 #PRAGMA EXTERNAL "PROC C.player.blackboard.entry.t.key.count.set (VAL player.blackboard.entry.t self, VAL INT key.count) = 0"
 --* Foreign function [@text player_blackboard_entry_t_key_count_set].
@@ -3559,6 +3702,19 @@ INLINE PROC delete.player.blackboard.entry.t (VAL player.blackboard.entry.t self
 --}}}
 --}}}
 --{{{  struct player_segment_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.segment.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_segment_t].
+INT INLINE FUNCTION sizeof.player.segment.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.segment.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_segment_t].
+player.segment.t INLINE FUNCTION "@" (VAL player.segment.t ptr, VAL INT offset) IS
+  player.segment.t ((INT ptr) + (sizeof.player.segment.t () * offset)):
+--}}}
 --{{{  function player_segment_t_x0_set
 #PRAGMA EXTERNAL "PROC C.player.segment.t.x0.set (VAL player.segment.t self, VAL REAL64 x0) = 0"
 --* Foreign function [@text player_segment_t_x0_set].
@@ -3631,6 +3787,19 @@ INLINE PROC delete.player.segment.t (VAL player.segment.t self)
 --}}}
 --}}}
 --{{{  struct player_extent2d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.extent2d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_extent2d_t].
+INT INLINE FUNCTION sizeof.player.extent2d.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.extent2d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_extent2d_t].
+player.extent2d.t INLINE FUNCTION "@" (VAL player.extent2d.t ptr, VAL INT offset) IS
+  player.extent2d.t ((INT ptr) + (sizeof.player.extent2d.t () * offset)):
+--}}}
 --{{{  function player_extent2d_t_x0_set
 #PRAGMA EXTERNAL "PROC C.player.extent2d.t.x0.set (VAL player.extent2d.t self, VAL REAL64 x0) = 0"
 --* Foreign function [@text player_extent2d_t_x0_set].
@@ -3703,6 +3872,19 @@ INLINE PROC delete.player.extent2d.t (VAL player.extent2d.t self)
 --}}}
 --}}}
 --{{{  struct player_color_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.color.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_color_t].
+INT INLINE FUNCTION sizeof.player.color.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.color.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_color_t].
+player.color.t INLINE FUNCTION "@" (VAL player.color.t ptr, VAL INT offset) IS
+  player.color.t ((INT ptr) + (sizeof.player.color.t () * offset)):
+--}}}
 --{{{  function player_color_t_alpha_set
 #PRAGMA EXTERNAL "PROC C.player.color.t.alpha.set (VAL player.color.t self, VAL BYTE alpha) = 0"
 --* Foreign function [@text player_color_t_alpha_set].
@@ -3775,6 +3957,19 @@ INLINE PROC delete.player.color.t (VAL player.color.t self)
 --}}}
 --}}}
 --{{{  struct player_bool_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.bool.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_bool_t].
+INT INLINE FUNCTION sizeof.player.bool.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.bool.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_bool_t].
+player.bool.t INLINE FUNCTION "@" (VAL player.bool.t ptr, VAL INT offset) IS
+  player.bool.t ((INT ptr) + (sizeof.player.bool.t () * offset)):
+--}}}
 --{{{  function player_bool_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.bool.t.state.set (VAL player.bool.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_bool_t_state_set].
@@ -3805,6 +4000,19 @@ INLINE PROC delete.player.bool.t (VAL player.bool.t self)
 --}}}
 --}}}
 --{{{  struct player_uint32_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.uint32.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_uint32_t].
+INT INLINE FUNCTION sizeof.player.uint32.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.uint32.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_uint32_t].
+player.uint32.t INLINE FUNCTION "@" (VAL player.uint32.t ptr, VAL INT offset) IS
+  player.uint32.t ((INT ptr) + (sizeof.player.uint32.t () * offset)):
+--}}}
 --{{{  function player_uint32_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.uint32.t.value.set (VAL player.uint32.t self, VAL INT value) = 0"
 --* Foreign function [@text player_uint32_t_value_set].
@@ -3835,6 +4043,19 @@ INLINE PROC delete.player.uint32.t (VAL player.uint32.t self)
 --}}}
 --}}}
 --{{{  struct player_capabilities_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.capabilities.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_capabilities_req_t].
+INT INLINE FUNCTION sizeof.player.capabilities.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.capabilities.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_capabilities_req_t].
+player.capabilities.req.t INLINE FUNCTION "@" (VAL player.capabilities.req.t ptr, VAL INT offset) IS
+  player.capabilities.req.t ((INT ptr) + (sizeof.player.capabilities.req.t () * offset)):
+--}}}
 --{{{  function player_capabilities_req_t_type_set
 #PRAGMA EXTERNAL "PROC C.player.capabilities.req.t.type.set (VAL player.capabilities.req.t self, VAL INT type) = 0"
 --* Foreign function [@text player_capabilities_req_t_type_set].
@@ -3879,6 +4100,19 @@ INLINE PROC delete.player.capabilities.req.t (VAL player.capabilities.req.t self
 --}}}
 --}}}
 --{{{  struct player_intprop_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.intprop.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_intprop_req_t].
+INT INLINE FUNCTION sizeof.player.intprop.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.intprop.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_intprop_req_t].
+player.intprop.req.t INLINE FUNCTION "@" (VAL player.intprop.req.t ptr, VAL INT offset) IS
+  player.intprop.req.t ((INT ptr) + (sizeof.player.intprop.req.t () * offset)):
+--}}}
 --{{{  function player_intprop_req_t_key_count_set
 #PRAGMA EXTERNAL "PROC C.player.intprop.req.t.key.count.set (VAL player.intprop.req.t self, VAL INT key.count) = 0"
 --* Foreign function [@text player_intprop_req_t_key_count_set].
@@ -3937,6 +4171,19 @@ INLINE PROC delete.player.intprop.req.t (VAL player.intprop.req.t self)
 --}}}
 --}}}
 --{{{  struct player_dblprop_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.dblprop.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_dblprop_req_t].
+INT INLINE FUNCTION sizeof.player.dblprop.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.dblprop.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_dblprop_req_t].
+player.dblprop.req.t INLINE FUNCTION "@" (VAL player.dblprop.req.t ptr, VAL INT offset) IS
+  player.dblprop.req.t ((INT ptr) + (sizeof.player.dblprop.req.t () * offset)):
+--}}}
 --{{{  function player_dblprop_req_t_key_count_set
 #PRAGMA EXTERNAL "PROC C.player.dblprop.req.t.key.count.set (VAL player.dblprop.req.t self, VAL INT key.count) = 0"
 --* Foreign function [@text player_dblprop_req_t_key_count_set].
@@ -3995,6 +4242,19 @@ INLINE PROC delete.player.dblprop.req.t (VAL player.dblprop.req.t self)
 --}}}
 --}}}
 --{{{  struct player_strprop_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.strprop.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_strprop_req_t].
+INT INLINE FUNCTION sizeof.player.strprop.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.strprop.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_strprop_req_t].
+player.strprop.req.t INLINE FUNCTION "@" (VAL player.strprop.req.t ptr, VAL INT offset) IS
+  player.strprop.req.t ((INT ptr) + (sizeof.player.strprop.req.t () * offset)):
+--}}}
 --{{{  function player_strprop_req_t_key_count_set
 #PRAGMA EXTERNAL "PROC C.player.strprop.req.t.key.count.set (VAL player.strprop.req.t self, VAL INT key.count) = 0"
 --* Foreign function [@text player_strprop_req_t_key_count_set].
@@ -4067,6 +4327,19 @@ INLINE PROC delete.player.strprop.req.t (VAL player.strprop.req.t self)
 --}}}
 --}}}
 --{{{  struct player_speech_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.speech.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_speech_cmd_t].
+INT INLINE FUNCTION sizeof.player.speech.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.speech.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_speech_cmd_t].
+player.speech.cmd.t INLINE FUNCTION "@" (VAL player.speech.cmd.t ptr, VAL INT offset) IS
+  player.speech.cmd.t ((INT ptr) + (sizeof.player.speech.cmd.t () * offset)):
+--}}}
 --{{{  function player_speech_cmd_t_string_count_set
 #PRAGMA EXTERNAL "PROC C.player.speech.cmd.t.string.count.set (VAL player.speech.cmd.t self, VAL INT string.count) = 0"
 --* Foreign function [@text player_speech_cmd_t_string_count_set].
@@ -4111,6 +4384,19 @@ INLINE PROC delete.player.speech.cmd.t (VAL player.speech.cmd.t self)
 --}}}
 --}}}
 --{{{  struct player_camera_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.camera.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_camera_data_t].
+INT INLINE FUNCTION sizeof.player.camera.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.camera.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_camera_data_t].
+player.camera.data.t INLINE FUNCTION "@" (VAL player.camera.data.t ptr, VAL INT offset) IS
+  player.camera.data.t ((INT ptr) + (sizeof.player.camera.data.t () * offset)):
+--}}}
 --{{{  function player_camera_data_t_width_set
 #PRAGMA EXTERNAL "PROC C.player.camera.data.t.width.set (VAL player.camera.data.t self, VAL INT width) = 0"
 --* Foreign function [@text player_camera_data_t_width_set].
@@ -4239,6 +4525,19 @@ INLINE PROC delete.player.camera.data.t (VAL player.camera.data.t self)
 --}}}
 --}}}
 --{{{  struct player_actarray_actuator_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.actuator.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_actuator_t].
+INT INLINE FUNCTION sizeof.player.actarray.actuator.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.actuator.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_actuator_t].
+player.actarray.actuator.t INLINE FUNCTION "@" (VAL player.actarray.actuator.t ptr, VAL INT offset) IS
+  player.actarray.actuator.t ((INT ptr) + (sizeof.player.actarray.actuator.t () * offset)):
+--}}}
 --{{{  function player_actarray_actuator_t_position_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.actuator.t.position.set (VAL player.actarray.actuator.t self, VAL REAL32 position) = 0"
 --* Foreign function [@text player_actarray_actuator_t_position_set].
@@ -4325,6 +4624,19 @@ INLINE PROC delete.player.actarray.actuator.t (VAL player.actarray.actuator.t se
 --}}}
 --}}}
 --{{{  struct player_actarray_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_data_t].
+INT INLINE FUNCTION sizeof.player.actarray.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_data_t].
+player.actarray.data.t INLINE FUNCTION "@" (VAL player.actarray.data.t ptr, VAL INT offset) IS
+  player.actarray.data.t ((INT ptr) + (sizeof.player.actarray.data.t () * offset)):
+--}}}
 --{{{  function player_actarray_data_t_actuators_count_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.data.t.actuators.count.set (VAL player.actarray.data.t self, VAL INT actuators.count) = 0"
 --* Foreign function [@text player_actarray_data_t_actuators_count_set].
@@ -4383,6 +4695,19 @@ INLINE PROC delete.player.actarray.data.t (VAL player.actarray.data.t self)
 --}}}
 --}}}
 --{{{  struct player_actarray_actuatorgeom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.actuatorgeom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_actuatorgeom_t].
+INT INLINE FUNCTION sizeof.player.actarray.actuatorgeom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.actuatorgeom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_actuatorgeom_t].
+player.actarray.actuatorgeom.t INLINE FUNCTION "@" (VAL player.actarray.actuatorgeom.t ptr, VAL INT offset) IS
+  player.actarray.actuatorgeom.t ((INT ptr) + (sizeof.player.actarray.actuatorgeom.t () * offset)):
+--}}}
 --{{{  function player_actarray_actuatorgeom_t_type_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.actuatorgeom.t.type.set (VAL player.actarray.actuatorgeom.t self, VAL BYTE type) = 0"
 --* Foreign function [@text player_actarray_actuatorgeom_t_type_set].
@@ -4539,6 +4864,19 @@ INLINE PROC delete.player.actarray.actuatorgeom.t (VAL player.actarray.actuatorg
 --}}}
 --}}}
 --{{{  struct player_actarray_geom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.geom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_geom_t].
+INT INLINE FUNCTION sizeof.player.actarray.geom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.geom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_geom_t].
+player.actarray.geom.t INLINE FUNCTION "@" (VAL player.actarray.geom.t ptr, VAL INT offset) IS
+  player.actarray.geom.t ((INT ptr) + (sizeof.player.actarray.geom.t () * offset)):
+--}}}
 --{{{  function player_actarray_geom_t_actuators_count_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.geom.t.actuators.count.set (VAL player.actarray.geom.t self, VAL INT actuators.count) = 0"
 --* Foreign function [@text player_actarray_geom_t_actuators_count_set].
@@ -4611,6 +4949,19 @@ INLINE PROC delete.player.actarray.geom.t (VAL player.actarray.geom.t self)
 --}}}
 --}}}
 --{{{  struct player_actarray_position_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.position.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_position_cmd_t].
+INT INLINE FUNCTION sizeof.player.actarray.position.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.position.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_position_cmd_t].
+player.actarray.position.cmd.t INLINE FUNCTION "@" (VAL player.actarray.position.cmd.t ptr, VAL INT offset) IS
+  player.actarray.position.cmd.t ((INT ptr) + (sizeof.player.actarray.position.cmd.t () * offset)):
+--}}}
 --{{{  function player_actarray_position_cmd_t_joint_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.position.cmd.t.joint.set (VAL player.actarray.position.cmd.t self, VAL INT joint) = 0"
 --* Foreign function [@text player_actarray_position_cmd_t_joint_set].
@@ -4655,6 +5006,19 @@ INLINE PROC delete.player.actarray.position.cmd.t (VAL player.actarray.position.
 --}}}
 --}}}
 --{{{  struct player_actarray_multi_position_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.multi.position.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_multi_position_cmd_t].
+INT INLINE FUNCTION sizeof.player.actarray.multi.position.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.multi.position.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_multi_position_cmd_t].
+player.actarray.multi.position.cmd.t INLINE FUNCTION "@" (VAL player.actarray.multi.position.cmd.t ptr, VAL INT offset) IS
+  player.actarray.multi.position.cmd.t ((INT ptr) + (sizeof.player.actarray.multi.position.cmd.t () * offset)):
+--}}}
 --{{{  function player_actarray_multi_position_cmd_t_positions_count_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.multi.position.cmd.t.positions.count.set (VAL player.actarray.multi.position.cmd.t self, VAL INT positions.count) = 0"
 --* Foreign function [@text player_actarray_multi_position_cmd_t_positions_count_set].
@@ -4699,6 +5063,19 @@ INLINE PROC delete.player.actarray.multi.position.cmd.t (VAL player.actarray.mul
 --}}}
 --}}}
 --{{{  struct player_actarray_speed_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.speed.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_speed_cmd_t].
+INT INLINE FUNCTION sizeof.player.actarray.speed.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.speed.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_speed_cmd_t].
+player.actarray.speed.cmd.t INLINE FUNCTION "@" (VAL player.actarray.speed.cmd.t ptr, VAL INT offset) IS
+  player.actarray.speed.cmd.t ((INT ptr) + (sizeof.player.actarray.speed.cmd.t () * offset)):
+--}}}
 --{{{  function player_actarray_speed_cmd_t_joint_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.speed.cmd.t.joint.set (VAL player.actarray.speed.cmd.t self, VAL INT joint) = 0"
 --* Foreign function [@text player_actarray_speed_cmd_t_joint_set].
@@ -4743,6 +5120,19 @@ INLINE PROC delete.player.actarray.speed.cmd.t (VAL player.actarray.speed.cmd.t 
 --}}}
 --}}}
 --{{{  struct player_actarray_multi_speed_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.multi.speed.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_multi_speed_cmd_t].
+INT INLINE FUNCTION sizeof.player.actarray.multi.speed.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.multi.speed.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_multi_speed_cmd_t].
+player.actarray.multi.speed.cmd.t INLINE FUNCTION "@" (VAL player.actarray.multi.speed.cmd.t ptr, VAL INT offset) IS
+  player.actarray.multi.speed.cmd.t ((INT ptr) + (sizeof.player.actarray.multi.speed.cmd.t () * offset)):
+--}}}
 --{{{  function player_actarray_multi_speed_cmd_t_speeds_count_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.multi.speed.cmd.t.speeds.count.set (VAL player.actarray.multi.speed.cmd.t self, VAL INT speeds.count) = 0"
 --* Foreign function [@text player_actarray_multi_speed_cmd_t_speeds_count_set].
@@ -4787,6 +5177,19 @@ INLINE PROC delete.player.actarray.multi.speed.cmd.t (VAL player.actarray.multi.
 --}}}
 --}}}
 --{{{  struct player_actarray_home_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.home.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_home_cmd_t].
+INT INLINE FUNCTION sizeof.player.actarray.home.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.home.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_home_cmd_t].
+player.actarray.home.cmd.t INLINE FUNCTION "@" (VAL player.actarray.home.cmd.t ptr, VAL INT offset) IS
+  player.actarray.home.cmd.t ((INT ptr) + (sizeof.player.actarray.home.cmd.t () * offset)):
+--}}}
 --{{{  function player_actarray_home_cmd_t_joint_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.home.cmd.t.joint.set (VAL player.actarray.home.cmd.t self, VAL INT joint) = 0"
 --* Foreign function [@text player_actarray_home_cmd_t_joint_set].
@@ -4817,6 +5220,19 @@ INLINE PROC delete.player.actarray.home.cmd.t (VAL player.actarray.home.cmd.t se
 --}}}
 --}}}
 --{{{  struct player_actarray_current_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.current.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_current_cmd_t].
+INT INLINE FUNCTION sizeof.player.actarray.current.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.current.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_current_cmd_t].
+player.actarray.current.cmd.t INLINE FUNCTION "@" (VAL player.actarray.current.cmd.t ptr, VAL INT offset) IS
+  player.actarray.current.cmd.t ((INT ptr) + (sizeof.player.actarray.current.cmd.t () * offset)):
+--}}}
 --{{{  function player_actarray_current_cmd_t_joint_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.current.cmd.t.joint.set (VAL player.actarray.current.cmd.t self, VAL INT joint) = 0"
 --* Foreign function [@text player_actarray_current_cmd_t_joint_set].
@@ -4861,6 +5277,19 @@ INLINE PROC delete.player.actarray.current.cmd.t (VAL player.actarray.current.cm
 --}}}
 --}}}
 --{{{  struct player_actarray_multi_current_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.multi.current.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_multi_current_cmd_t].
+INT INLINE FUNCTION sizeof.player.actarray.multi.current.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.multi.current.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_multi_current_cmd_t].
+player.actarray.multi.current.cmd.t INLINE FUNCTION "@" (VAL player.actarray.multi.current.cmd.t ptr, VAL INT offset) IS
+  player.actarray.multi.current.cmd.t ((INT ptr) + (sizeof.player.actarray.multi.current.cmd.t () * offset)):
+--}}}
 --{{{  function player_actarray_multi_current_cmd_t_currents_count_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.multi.current.cmd.t.currents.count.set (VAL player.actarray.multi.current.cmd.t self, VAL INT currents.count) = 0"
 --* Foreign function [@text player_actarray_multi_current_cmd_t_currents_count_set].
@@ -4905,6 +5334,19 @@ INLINE PROC delete.player.actarray.multi.current.cmd.t (VAL player.actarray.mult
 --}}}
 --}}}
 --{{{  struct player_actarray_power_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.power.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_power_config_t].
+INT INLINE FUNCTION sizeof.player.actarray.power.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.power.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_power_config_t].
+player.actarray.power.config.t INLINE FUNCTION "@" (VAL player.actarray.power.config.t ptr, VAL INT offset) IS
+  player.actarray.power.config.t ((INT ptr) + (sizeof.player.actarray.power.config.t () * offset)):
+--}}}
 --{{{  function player_actarray_power_config_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.power.config.t.value.set (VAL player.actarray.power.config.t self, VAL BYTE value) = 0"
 --* Foreign function [@text player_actarray_power_config_t_value_set].
@@ -4935,6 +5377,19 @@ INLINE PROC delete.player.actarray.power.config.t (VAL player.actarray.power.con
 --}}}
 --}}}
 --{{{  struct player_actarray_brakes_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.brakes.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_brakes_config_t].
+INT INLINE FUNCTION sizeof.player.actarray.brakes.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.brakes.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_brakes_config_t].
+player.actarray.brakes.config.t INLINE FUNCTION "@" (VAL player.actarray.brakes.config.t ptr, VAL INT offset) IS
+  player.actarray.brakes.config.t ((INT ptr) + (sizeof.player.actarray.brakes.config.t () * offset)):
+--}}}
 --{{{  function player_actarray_brakes_config_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.brakes.config.t.value.set (VAL player.actarray.brakes.config.t self, VAL BYTE value) = 0"
 --* Foreign function [@text player_actarray_brakes_config_t_value_set].
@@ -4965,6 +5420,19 @@ INLINE PROC delete.player.actarray.brakes.config.t (VAL player.actarray.brakes.c
 --}}}
 --}}}
 --{{{  struct player_actarray_speed_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.speed.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_speed_config_t].
+INT INLINE FUNCTION sizeof.player.actarray.speed.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.speed.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_speed_config_t].
+player.actarray.speed.config.t INLINE FUNCTION "@" (VAL player.actarray.speed.config.t ptr, VAL INT offset) IS
+  player.actarray.speed.config.t ((INT ptr) + (sizeof.player.actarray.speed.config.t () * offset)):
+--}}}
 --{{{  function player_actarray_speed_config_t_joint_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.speed.config.t.joint.set (VAL player.actarray.speed.config.t self, VAL INT joint) = 0"
 --* Foreign function [@text player_actarray_speed_config_t_joint_set].
@@ -5009,6 +5477,19 @@ INLINE PROC delete.player.actarray.speed.config.t (VAL player.actarray.speed.con
 --}}}
 --}}}
 --{{{  struct player_actarray_accel_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.actarray.accel.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_actarray_accel_config_t].
+INT INLINE FUNCTION sizeof.player.actarray.accel.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.actarray.accel.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_actarray_accel_config_t].
+player.actarray.accel.config.t INLINE FUNCTION "@" (VAL player.actarray.accel.config.t ptr, VAL INT offset) IS
+  player.actarray.accel.config.t ((INT ptr) + (sizeof.player.actarray.accel.config.t () * offset)):
+--}}}
 --{{{  function player_actarray_accel_config_t_joint_set
 #PRAGMA EXTERNAL "PROC C.player.actarray.accel.config.t.joint.set (VAL player.actarray.accel.config.t self, VAL INT joint) = 0"
 --* Foreign function [@text player_actarray_accel_config_t_joint_set].
@@ -5053,6 +5534,19 @@ INLINE PROC delete.player.actarray.accel.config.t (VAL player.actarray.accel.con
 --}}}
 --}}}
 --{{{  struct player_health_cpu_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.health.cpu.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_health_cpu_t].
+INT INLINE FUNCTION sizeof.player.health.cpu.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.health.cpu.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_health_cpu_t].
+player.health.cpu.t INLINE FUNCTION "@" (VAL player.health.cpu.t ptr, VAL INT offset) IS
+  player.health.cpu.t ((INT ptr) + (sizeof.player.health.cpu.t () * offset)):
+--}}}
 --{{{  function player_health_cpu_t_idle_set
 #PRAGMA EXTERNAL "PROC C.player.health.cpu.t.idle.set (VAL player.health.cpu.t self, VAL REAL32 idle) = 0"
 --* Foreign function [@text player_health_cpu_t_idle_set].
@@ -5111,6 +5605,19 @@ INLINE PROC delete.player.health.cpu.t (VAL player.health.cpu.t self)
 --}}}
 --}}}
 --{{{  struct player_health_memory_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.health.memory.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_health_memory_t].
+INT INLINE FUNCTION sizeof.player.health.memory.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.health.memory.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_health_memory_t].
+player.health.memory.t INLINE FUNCTION "@" (VAL player.health.memory.t ptr, VAL INT offset) IS
+  player.health.memory.t ((INT ptr) + (sizeof.player.health.memory.t () * offset)):
+--}}}
 --{{{  function player_health_memory_t_total_set
 #PRAGMA EXTERNAL "PROC C.player.health.memory.t.total.set (VAL player.health.memory.t self, VAL INT64 total) = 0"
 --* Foreign function [@text player_health_memory_t_total_set].
@@ -5169,6 +5676,19 @@ INLINE PROC delete.player.health.memory.t (VAL player.health.memory.t self)
 --}}}
 --}}}
 --{{{  struct player_health_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.health.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_health_data_t].
+INT INLINE FUNCTION sizeof.player.health.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.health.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_health_data_t].
+player.health.data.t INLINE FUNCTION "@" (VAL player.health.data.t ptr, VAL INT offset) IS
+  player.health.data.t ((INT ptr) + (sizeof.player.health.data.t () * offset)):
+--}}}
 --{{{  function player_health_data_t_cpu_usage_set
 #PRAGMA EXTERNAL "PROC C.player.health.data.t.cpu.usage.set (VAL player.health.data.t self, VAL player.health.cpu.t cpu.usage) = 0"
 --* Foreign function [@text player_health_data_t_cpu_usage_set].
@@ -5227,6 +5747,19 @@ INLINE PROC delete.player.health.data.t (VAL player.health.data.t self)
 --}}}
 --}}}
 --{{{  struct player_pointcloud3d_element_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.pointcloud3d.element.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_pointcloud3d_element_t].
+INT INLINE FUNCTION sizeof.player.pointcloud3d.element.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.pointcloud3d.element.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_pointcloud3d_element_t].
+player.pointcloud3d.element.t INLINE FUNCTION "@" (VAL player.pointcloud3d.element.t ptr, VAL INT offset) IS
+  player.pointcloud3d.element.t ((INT ptr) + (sizeof.player.pointcloud3d.element.t () * offset)):
+--}}}
 --{{{  function player_pointcloud3d_element_t_point_set
 #PRAGMA EXTERNAL "PROC C.player.pointcloud3d.element.t.point.set (VAL player.pointcloud3d.element.t self, VAL player.point.3d.t point) = 0"
 --* Foreign function [@text player_pointcloud3d_element_t_point_set].
@@ -5271,6 +5804,19 @@ INLINE PROC delete.player.pointcloud3d.element.t (VAL player.pointcloud3d.elemen
 --}}}
 --}}}
 --{{{  struct player_pointcloud3d_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.pointcloud3d.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_pointcloud3d_data_t].
+INT INLINE FUNCTION sizeof.player.pointcloud3d.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.pointcloud3d.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_pointcloud3d_data_t].
+player.pointcloud3d.data.t INLINE FUNCTION "@" (VAL player.pointcloud3d.data.t ptr, VAL INT offset) IS
+  player.pointcloud3d.data.t ((INT ptr) + (sizeof.player.pointcloud3d.data.t () * offset)):
+--}}}
 --{{{  function player_pointcloud3d_data_t_points_count_set
 #PRAGMA EXTERNAL "PROC C.player.pointcloud3d.data.t.points.count.set (VAL player.pointcloud3d.data.t self, VAL INT points.count) = 0"
 --* Foreign function [@text player_pointcloud3d_data_t_points_count_set].
@@ -5315,6 +5861,19 @@ INLINE PROC delete.player.pointcloud3d.data.t (VAL player.pointcloud3d.data.t se
 --}}}
 --}}}
 --{{{  struct player_aio_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.aio.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_aio_data_t].
+INT INLINE FUNCTION sizeof.player.aio.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.aio.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_aio_data_t].
+player.aio.data.t INLINE FUNCTION "@" (VAL player.aio.data.t ptr, VAL INT offset) IS
+  player.aio.data.t ((INT ptr) + (sizeof.player.aio.data.t () * offset)):
+--}}}
 --{{{  function player_aio_data_t_voltages_count_set
 #PRAGMA EXTERNAL "PROC C.player.aio.data.t.voltages.count.set (VAL player.aio.data.t self, VAL INT voltages.count) = 0"
 --* Foreign function [@text player_aio_data_t_voltages_count_set].
@@ -5359,6 +5918,19 @@ INLINE PROC delete.player.aio.data.t (VAL player.aio.data.t self)
 --}}}
 --}}}
 --{{{  struct player_aio_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.aio.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_aio_cmd_t].
+INT INLINE FUNCTION sizeof.player.aio.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.aio.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_aio_cmd_t].
+player.aio.cmd.t INLINE FUNCTION "@" (VAL player.aio.cmd.t ptr, VAL INT offset) IS
+  player.aio.cmd.t ((INT ptr) + (sizeof.player.aio.cmd.t () * offset)):
+--}}}
 --{{{  function player_aio_cmd_t_id_set
 #PRAGMA EXTERNAL "PROC C.player.aio.cmd.t.id.set (VAL player.aio.cmd.t self, VAL INT id) = 0"
 --* Foreign function [@text player_aio_cmd_t_id_set].
@@ -5403,6 +5975,19 @@ INLINE PROC delete.player.aio.cmd.t (VAL player.aio.cmd.t self)
 --}}}
 --}}}
 --{{{  struct player_sonar_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.sonar.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_sonar_data_t].
+INT INLINE FUNCTION sizeof.player.sonar.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.sonar.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_sonar_data_t].
+player.sonar.data.t INLINE FUNCTION "@" (VAL player.sonar.data.t ptr, VAL INT offset) IS
+  player.sonar.data.t ((INT ptr) + (sizeof.player.sonar.data.t () * offset)):
+--}}}
 --{{{  function player_sonar_data_t_ranges_count_set
 #PRAGMA EXTERNAL "PROC C.player.sonar.data.t.ranges.count.set (VAL player.sonar.data.t self, VAL INT ranges.count) = 0"
 --* Foreign function [@text player_sonar_data_t_ranges_count_set].
@@ -5447,6 +6032,19 @@ INLINE PROC delete.player.sonar.data.t (VAL player.sonar.data.t self)
 --}}}
 --}}}
 --{{{  struct player_sonar_geom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.sonar.geom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_sonar_geom_t].
+INT INLINE FUNCTION sizeof.player.sonar.geom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.sonar.geom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_sonar_geom_t].
+player.sonar.geom.t INLINE FUNCTION "@" (VAL player.sonar.geom.t ptr, VAL INT offset) IS
+  player.sonar.geom.t ((INT ptr) + (sizeof.player.sonar.geom.t () * offset)):
+--}}}
 --{{{  function player_sonar_geom_t_poses_count_set
 #PRAGMA EXTERNAL "PROC C.player.sonar.geom.t.poses.count.set (VAL player.sonar.geom.t self, VAL INT poses.count) = 0"
 --* Foreign function [@text player_sonar_geom_t_poses_count_set].
@@ -5491,6 +6089,19 @@ INLINE PROC delete.player.sonar.geom.t (VAL player.sonar.geom.t self)
 --}}}
 --}}}
 --{{{  struct player_sonar_power_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.sonar.power.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_sonar_power_config_t].
+INT INLINE FUNCTION sizeof.player.sonar.power.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.sonar.power.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_sonar_power_config_t].
+player.sonar.power.config.t INLINE FUNCTION "@" (VAL player.sonar.power.config.t ptr, VAL INT offset) IS
+  player.sonar.power.config.t ((INT ptr) + (sizeof.player.sonar.power.config.t () * offset)):
+--}}}
 --{{{  function player_sonar_power_config_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.sonar.power.config.t.state.set (VAL player.sonar.power.config.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_sonar_power_config_t_state_set].
@@ -5521,6 +6132,19 @@ INLINE PROC delete.player.sonar.power.config.t (VAL player.sonar.power.config.t 
 --}}}
 --}}}
 --{{{  struct player_position1d_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_data_t].
+INT INLINE FUNCTION sizeof.player.position1d.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_data_t].
+player.position1d.data.t INLINE FUNCTION "@" (VAL player.position1d.data.t ptr, VAL INT offset) IS
+  player.position1d.data.t ((INT ptr) + (sizeof.player.position1d.data.t () * offset)):
+--}}}
 --{{{  function player_position1d_data_t_pos_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.data.t.pos.set (VAL player.position1d.data.t self, VAL REAL32 pos) = 0"
 --* Foreign function [@text player_position1d_data_t_pos_set].
@@ -5593,6 +6217,19 @@ INLINE PROC delete.player.position1d.data.t (VAL player.position1d.data.t self)
 --}}}
 --}}}
 --{{{  struct player_position1d_cmd_vel_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.cmd.vel.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_cmd_vel_t].
+INT INLINE FUNCTION sizeof.player.position1d.cmd.vel.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.cmd.vel.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_cmd_vel_t].
+player.position1d.cmd.vel.t INLINE FUNCTION "@" (VAL player.position1d.cmd.vel.t ptr, VAL INT offset) IS
+  player.position1d.cmd.vel.t ((INT ptr) + (sizeof.player.position1d.cmd.vel.t () * offset)):
+--}}}
 --{{{  function player_position1d_cmd_vel_t_vel_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.cmd.vel.t.vel.set (VAL player.position1d.cmd.vel.t self, VAL REAL32 vel) = 0"
 --* Foreign function [@text player_position1d_cmd_vel_t_vel_set].
@@ -5637,6 +6274,19 @@ INLINE PROC delete.player.position1d.cmd.vel.t (VAL player.position1d.cmd.vel.t 
 --}}}
 --}}}
 --{{{  struct player_position1d_cmd_pos_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.cmd.pos.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_cmd_pos_t].
+INT INLINE FUNCTION sizeof.player.position1d.cmd.pos.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.cmd.pos.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_cmd_pos_t].
+player.position1d.cmd.pos.t INLINE FUNCTION "@" (VAL player.position1d.cmd.pos.t ptr, VAL INT offset) IS
+  player.position1d.cmd.pos.t ((INT ptr) + (sizeof.player.position1d.cmd.pos.t () * offset)):
+--}}}
 --{{{  function player_position1d_cmd_pos_t_pos_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.cmd.pos.t.pos.set (VAL player.position1d.cmd.pos.t self, VAL REAL32 pos) = 0"
 --* Foreign function [@text player_position1d_cmd_pos_t_pos_set].
@@ -5695,6 +6345,19 @@ INLINE PROC delete.player.position1d.cmd.pos.t (VAL player.position1d.cmd.pos.t 
 --}}}
 --}}}
 --{{{  struct player_position1d_geom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.geom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_geom_t].
+INT INLINE FUNCTION sizeof.player.position1d.geom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.geom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_geom_t].
+player.position1d.geom.t INLINE FUNCTION "@" (VAL player.position1d.geom.t ptr, VAL INT offset) IS
+  player.position1d.geom.t ((INT ptr) + (sizeof.player.position1d.geom.t () * offset)):
+--}}}
 --{{{  function player_position1d_geom_t_pose_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.geom.t.pose.set (VAL player.position1d.geom.t self, VAL player.pose3d.t pose) = 0"
 --* Foreign function [@text player_position1d_geom_t_pose_set].
@@ -5739,6 +6402,19 @@ INLINE PROC delete.player.position1d.geom.t (VAL player.position1d.geom.t self)
 --}}}
 --}}}
 --{{{  struct player_position1d_power_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.power.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_power_config_t].
+INT INLINE FUNCTION sizeof.player.position1d.power.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.power.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_power_config_t].
+player.position1d.power.config.t INLINE FUNCTION "@" (VAL player.position1d.power.config.t ptr, VAL INT offset) IS
+  player.position1d.power.config.t ((INT ptr) + (sizeof.player.position1d.power.config.t () * offset)):
+--}}}
 --{{{  function player_position1d_power_config_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.power.config.t.state.set (VAL player.position1d.power.config.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_position1d_power_config_t_state_set].
@@ -5769,6 +6445,19 @@ INLINE PROC delete.player.position1d.power.config.t (VAL player.position1d.power
 --}}}
 --}}}
 --{{{  struct player_position1d_velocity_mode_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.velocity.mode.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_velocity_mode_config_t].
+INT INLINE FUNCTION sizeof.player.position1d.velocity.mode.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.velocity.mode.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_velocity_mode_config_t].
+player.position1d.velocity.mode.config.t INLINE FUNCTION "@" (VAL player.position1d.velocity.mode.config.t ptr, VAL INT offset) IS
+  player.position1d.velocity.mode.config.t ((INT ptr) + (sizeof.player.position1d.velocity.mode.config.t () * offset)):
+--}}}
 --{{{  function player_position1d_velocity_mode_config_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.velocity.mode.config.t.value.set (VAL player.position1d.velocity.mode.config.t self, VAL INT value) = 0"
 --* Foreign function [@text player_position1d_velocity_mode_config_t_value_set].
@@ -5799,6 +6488,19 @@ INLINE PROC delete.player.position1d.velocity.mode.config.t (VAL player.position
 --}}}
 --}}}
 --{{{  struct player_position1d_reset_odom_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.reset.odom.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_reset_odom_config_t].
+INT INLINE FUNCTION sizeof.player.position1d.reset.odom.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.reset.odom.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_reset_odom_config_t].
+player.position1d.reset.odom.config.t INLINE FUNCTION "@" (VAL player.position1d.reset.odom.config.t ptr, VAL INT offset) IS
+  player.position1d.reset.odom.config.t ((INT ptr) + (sizeof.player.position1d.reset.odom.config.t () * offset)):
+--}}}
 --{{{  function player_position1d_reset_odom_config_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.reset.odom.config.t.value.set (VAL player.position1d.reset.odom.config.t self, VAL INT value) = 0"
 --* Foreign function [@text player_position1d_reset_odom_config_t_value_set].
@@ -5829,6 +6531,19 @@ INLINE PROC delete.player.position1d.reset.odom.config.t (VAL player.position1d.
 --}}}
 --}}}
 --{{{  struct player_position1d_position_mode_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.position.mode.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_position_mode_req_t].
+INT INLINE FUNCTION sizeof.player.position1d.position.mode.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.position.mode.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_position_mode_req_t].
+player.position1d.position.mode.req.t INLINE FUNCTION "@" (VAL player.position1d.position.mode.req.t ptr, VAL INT offset) IS
+  player.position1d.position.mode.req.t ((INT ptr) + (sizeof.player.position1d.position.mode.req.t () * offset)):
+--}}}
 --{{{  function player_position1d_position_mode_req_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.position.mode.req.t.state.set (VAL player.position1d.position.mode.req.t self, VAL INT state) = 0"
 --* Foreign function [@text player_position1d_position_mode_req_t_state_set].
@@ -5859,6 +6574,19 @@ INLINE PROC delete.player.position1d.position.mode.req.t (VAL player.position1d.
 --}}}
 --}}}
 --{{{  struct player_position1d_set_odom_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.set.odom.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_set_odom_req_t].
+INT INLINE FUNCTION sizeof.player.position1d.set.odom.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.set.odom.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_set_odom_req_t].
+player.position1d.set.odom.req.t INLINE FUNCTION "@" (VAL player.position1d.set.odom.req.t ptr, VAL INT offset) IS
+  player.position1d.set.odom.req.t ((INT ptr) + (sizeof.player.position1d.set.odom.req.t () * offset)):
+--}}}
 --{{{  function player_position1d_set_odom_req_t_pos_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.set.odom.req.t.pos.set (VAL player.position1d.set.odom.req.t self, VAL REAL32 pos) = 0"
 --* Foreign function [@text player_position1d_set_odom_req_t_pos_set].
@@ -5889,6 +6617,19 @@ INLINE PROC delete.player.position1d.set.odom.req.t (VAL player.position1d.set.o
 --}}}
 --}}}
 --{{{  struct player_position1d_speed_pid_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.speed.pid.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_speed_pid_req_t].
+INT INLINE FUNCTION sizeof.player.position1d.speed.pid.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.speed.pid.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_speed_pid_req_t].
+player.position1d.speed.pid.req.t INLINE FUNCTION "@" (VAL player.position1d.speed.pid.req.t ptr, VAL INT offset) IS
+  player.position1d.speed.pid.req.t ((INT ptr) + (sizeof.player.position1d.speed.pid.req.t () * offset)):
+--}}}
 --{{{  function player_position1d_speed_pid_req_t_kp_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.speed.pid.req.t.kp.set (VAL player.position1d.speed.pid.req.t self, VAL REAL32 kp) = 0"
 --* Foreign function [@text player_position1d_speed_pid_req_t_kp_set].
@@ -5947,6 +6688,19 @@ INLINE PROC delete.player.position1d.speed.pid.req.t (VAL player.position1d.spee
 --}}}
 --}}}
 --{{{  struct player_position1d_position_pid_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.position.pid.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_position_pid_req_t].
+INT INLINE FUNCTION sizeof.player.position1d.position.pid.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.position.pid.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_position_pid_req_t].
+player.position1d.position.pid.req.t INLINE FUNCTION "@" (VAL player.position1d.position.pid.req.t ptr, VAL INT offset) IS
+  player.position1d.position.pid.req.t ((INT ptr) + (sizeof.player.position1d.position.pid.req.t () * offset)):
+--}}}
 --{{{  function player_position1d_position_pid_req_t_kp_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.position.pid.req.t.kp.set (VAL player.position1d.position.pid.req.t self, VAL REAL32 kp) = 0"
 --* Foreign function [@text player_position1d_position_pid_req_t_kp_set].
@@ -6005,6 +6759,19 @@ INLINE PROC delete.player.position1d.position.pid.req.t (VAL player.position1d.p
 --}}}
 --}}}
 --{{{  struct player_position1d_speed_prof_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position1d.speed.prof.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position1d_speed_prof_req_t].
+INT INLINE FUNCTION sizeof.player.position1d.speed.prof.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position1d.speed.prof.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position1d_speed_prof_req_t].
+player.position1d.speed.prof.req.t INLINE FUNCTION "@" (VAL player.position1d.speed.prof.req.t ptr, VAL INT offset) IS
+  player.position1d.speed.prof.req.t ((INT ptr) + (sizeof.player.position1d.speed.prof.req.t () * offset)):
+--}}}
 --{{{  function player_position1d_speed_prof_req_t_speed_set
 #PRAGMA EXTERNAL "PROC C.player.position1d.speed.prof.req.t.speed.set (VAL player.position1d.speed.prof.req.t self, VAL REAL32 speed) = 0"
 --* Foreign function [@text player_position1d_speed_prof_req_t_speed_set].
@@ -6049,6 +6816,19 @@ INLINE PROC delete.player.position1d.speed.prof.req.t (VAL player.position1d.spe
 --}}}
 --}}}
 --{{{  struct player_dio_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.dio.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_dio_data_t].
+INT INLINE FUNCTION sizeof.player.dio.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.dio.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_dio_data_t].
+player.dio.data.t INLINE FUNCTION "@" (VAL player.dio.data.t ptr, VAL INT offset) IS
+  player.dio.data.t ((INT ptr) + (sizeof.player.dio.data.t () * offset)):
+--}}}
 --{{{  function player_dio_data_t_count_set
 #PRAGMA EXTERNAL "PROC C.player.dio.data.t.count.set (VAL player.dio.data.t self, VAL INT count) = 0"
 --* Foreign function [@text player_dio_data_t_count_set].
@@ -6093,6 +6873,19 @@ INLINE PROC delete.player.dio.data.t (VAL player.dio.data.t self)
 --}}}
 --}}}
 --{{{  struct player_dio_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.dio.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_dio_cmd_t].
+INT INLINE FUNCTION sizeof.player.dio.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.dio.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_dio_cmd_t].
+player.dio.cmd.t INLINE FUNCTION "@" (VAL player.dio.cmd.t ptr, VAL INT offset) IS
+  player.dio.cmd.t ((INT ptr) + (sizeof.player.dio.cmd.t () * offset)):
+--}}}
 --{{{  function player_dio_cmd_t_count_set
 #PRAGMA EXTERNAL "PROC C.player.dio.cmd.t.count.set (VAL player.dio.cmd.t self, VAL INT count) = 0"
 --* Foreign function [@text player_dio_cmd_t_count_set].
@@ -6137,6 +6930,19 @@ INLINE PROC delete.player.dio.cmd.t (VAL player.dio.cmd.t self)
 --}}}
 --}}}
 --{{{  struct player_localize_hypoth_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.localize.hypoth.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_localize_hypoth_t].
+INT INLINE FUNCTION sizeof.player.localize.hypoth.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.localize.hypoth.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_localize_hypoth_t].
+player.localize.hypoth.t INLINE FUNCTION "@" (VAL player.localize.hypoth.t ptr, VAL INT offset) IS
+  player.localize.hypoth.t ((INT ptr) + (sizeof.player.localize.hypoth.t () * offset)):
+--}}}
 --{{{  function player_localize_hypoth_t_mean_set
 #PRAGMA EXTERNAL "PROC C.player.localize.hypoth.t.mean.set (VAL player.localize.hypoth.t self, VAL player.pose2d.t mean) = 0"
 --* Foreign function [@text player_localize_hypoth_t_mean_set].
@@ -6189,6 +6995,19 @@ INLINE PROC delete.player.localize.hypoth.t (VAL player.localize.hypoth.t self)
 --}}}
 --}}}
 --{{{  struct player_localize_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.localize.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_localize_data_t].
+INT INLINE FUNCTION sizeof.player.localize.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.localize.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_localize_data_t].
+player.localize.data.t INLINE FUNCTION "@" (VAL player.localize.data.t ptr, VAL INT offset) IS
+  player.localize.data.t ((INT ptr) + (sizeof.player.localize.data.t () * offset)):
+--}}}
 --{{{  function player_localize_data_t_pending_count_set
 #PRAGMA EXTERNAL "PROC C.player.localize.data.t.pending.count.set (VAL player.localize.data.t self, VAL INT pending.count) = 0"
 --* Foreign function [@text player_localize_data_t_pending_count_set].
@@ -6261,6 +7080,19 @@ INLINE PROC delete.player.localize.data.t (VAL player.localize.data.t self)
 --}}}
 --}}}
 --{{{  struct player_localize_set_pose_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.localize.set.pose.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_localize_set_pose_t].
+INT INLINE FUNCTION sizeof.player.localize.set.pose.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.localize.set.pose.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_localize_set_pose_t].
+player.localize.set.pose.t INLINE FUNCTION "@" (VAL player.localize.set.pose.t ptr, VAL INT offset) IS
+  player.localize.set.pose.t ((INT ptr) + (sizeof.player.localize.set.pose.t () * offset)):
+--}}}
 --{{{  function player_localize_set_pose_t_mean_set
 #PRAGMA EXTERNAL "PROC C.player.localize.set.pose.t.mean.set (VAL player.localize.set.pose.t self, VAL player.pose2d.t mean) = 0"
 --* Foreign function [@text player_localize_set_pose_t_mean_set].
@@ -6299,6 +7131,19 @@ INLINE PROC delete.player.localize.set.pose.t (VAL player.localize.set.pose.t se
 --}}}
 --}}}
 --{{{  struct player_localize_particle_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.localize.particle.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_localize_particle_t].
+INT INLINE FUNCTION sizeof.player.localize.particle.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.localize.particle.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_localize_particle_t].
+player.localize.particle.t INLINE FUNCTION "@" (VAL player.localize.particle.t ptr, VAL INT offset) IS
+  player.localize.particle.t ((INT ptr) + (sizeof.player.localize.particle.t () * offset)):
+--}}}
 --{{{  function player_localize_particle_t_pose_set
 #PRAGMA EXTERNAL "PROC C.player.localize.particle.t.pose.set (VAL player.localize.particle.t self, VAL player.pose2d.t pose) = 0"
 --* Foreign function [@text player_localize_particle_t_pose_set].
@@ -6343,6 +7188,19 @@ INLINE PROC delete.player.localize.particle.t (VAL player.localize.particle.t se
 --}}}
 --}}}
 --{{{  struct player_localize_get_particles_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.localize.get.particles.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_localize_get_particles_t].
+INT INLINE FUNCTION sizeof.player.localize.get.particles.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.localize.get.particles.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_localize_get_particles_t].
+player.localize.get.particles.t INLINE FUNCTION "@" (VAL player.localize.get.particles.t ptr, VAL INT offset) IS
+  player.localize.get.particles.t ((INT ptr) + (sizeof.player.localize.get.particles.t () * offset)):
+--}}}
 --{{{  function player_localize_get_particles_t_mean_set
 #PRAGMA EXTERNAL "PROC C.player.localize.get.particles.t.mean.set (VAL player.localize.get.particles.t self, VAL player.pose2d.t mean) = 0"
 --* Foreign function [@text player_localize_get_particles_t_mean_set].
@@ -6415,6 +7273,19 @@ INLINE PROC delete.player.localize.get.particles.t (VAL player.localize.get.part
 --}}}
 --}}}
 --{{{  struct player_ptz_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ptz.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ptz_data_t].
+INT INLINE FUNCTION sizeof.player.ptz.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ptz.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ptz_data_t].
+player.ptz.data.t INLINE FUNCTION "@" (VAL player.ptz.data.t ptr, VAL INT offset) IS
+  player.ptz.data.t ((INT ptr) + (sizeof.player.ptz.data.t () * offset)):
+--}}}
 --{{{  function player_ptz_data_t_pan_set
 #PRAGMA EXTERNAL "PROC C.player.ptz.data.t.pan.set (VAL player.ptz.data.t self, VAL REAL32 pan) = 0"
 --* Foreign function [@text player_ptz_data_t_pan_set].
@@ -6515,6 +7386,19 @@ INLINE PROC delete.player.ptz.data.t (VAL player.ptz.data.t self)
 --}}}
 --}}}
 --{{{  struct player_ptz_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ptz.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ptz_cmd_t].
+INT INLINE FUNCTION sizeof.player.ptz.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ptz.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ptz_cmd_t].
+player.ptz.cmd.t INLINE FUNCTION "@" (VAL player.ptz.cmd.t ptr, VAL INT offset) IS
+  player.ptz.cmd.t ((INT ptr) + (sizeof.player.ptz.cmd.t () * offset)):
+--}}}
 --{{{  function player_ptz_cmd_t_pan_set
 #PRAGMA EXTERNAL "PROC C.player.ptz.cmd.t.pan.set (VAL player.ptz.cmd.t self, VAL REAL32 pan) = 0"
 --* Foreign function [@text player_ptz_cmd_t_pan_set].
@@ -6601,6 +7485,19 @@ INLINE PROC delete.player.ptz.cmd.t (VAL player.ptz.cmd.t self)
 --}}}
 --}}}
 --{{{  struct player_ptz_req_status_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ptz.req.status.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ptz_req_status_t].
+INT INLINE FUNCTION sizeof.player.ptz.req.status.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ptz.req.status.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ptz_req_status_t].
+player.ptz.req.status.t INLINE FUNCTION "@" (VAL player.ptz.req.status.t ptr, VAL INT offset) IS
+  player.ptz.req.status.t ((INT ptr) + (sizeof.player.ptz.req.status.t () * offset)):
+--}}}
 --{{{  function player_ptz_req_status_t_status_set
 #PRAGMA EXTERNAL "PROC C.player.ptz.req.status.t.status.set (VAL player.ptz.req.status.t self, VAL INT status) = 0"
 --* Foreign function [@text player_ptz_req_status_t_status_set].
@@ -6631,6 +7528,19 @@ INLINE PROC delete.player.ptz.req.status.t (VAL player.ptz.req.status.t self)
 --}}}
 --}}}
 --{{{  struct player_ptz_geom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ptz.geom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ptz_geom_t].
+INT INLINE FUNCTION sizeof.player.ptz.geom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ptz.geom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ptz_geom_t].
+player.ptz.geom.t INLINE FUNCTION "@" (VAL player.ptz.geom.t ptr, VAL INT offset) IS
+  player.ptz.geom.t ((INT ptr) + (sizeof.player.ptz.geom.t () * offset)):
+--}}}
 --{{{  function player_ptz_geom_t_pos_set
 #PRAGMA EXTERNAL "PROC C.player.ptz.geom.t.pos.set (VAL player.ptz.geom.t self, VAL player.pose3d.t pos) = 0"
 --* Foreign function [@text player_ptz_geom_t_pos_set].
@@ -6675,6 +7585,19 @@ INLINE PROC delete.player.ptz.geom.t (VAL player.ptz.geom.t self)
 --}}}
 --}}}
 --{{{  struct player_ptz_req_generic_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ptz.req.generic.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ptz_req_generic_t].
+INT INLINE FUNCTION sizeof.player.ptz.req.generic.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ptz.req.generic.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ptz_req_generic_t].
+player.ptz.req.generic.t INLINE FUNCTION "@" (VAL player.ptz.req.generic.t ptr, VAL INT offset) IS
+  player.ptz.req.generic.t ((INT ptr) + (sizeof.player.ptz.req.generic.t () * offset)):
+--}}}
 --{{{  function player_ptz_req_generic_t_config_count_set
 #PRAGMA EXTERNAL "PROC C.player.ptz.req.generic.t.config.count.set (VAL player.ptz.req.generic.t self, VAL INT config.count) = 0"
 --* Foreign function [@text player_ptz_req_generic_t_config_count_set].
@@ -6719,6 +7642,19 @@ INLINE PROC delete.player.ptz.req.generic.t (VAL player.ptz.req.generic.t self)
 --}}}
 --}}}
 --{{{  struct player_ptz_req_control_mode_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ptz.req.control.mode.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ptz_req_control_mode_t].
+INT INLINE FUNCTION sizeof.player.ptz.req.control.mode.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ptz.req.control.mode.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ptz_req_control_mode_t].
+player.ptz.req.control.mode.t INLINE FUNCTION "@" (VAL player.ptz.req.control.mode.t ptr, VAL INT offset) IS
+  player.ptz.req.control.mode.t ((INT ptr) + (sizeof.player.ptz.req.control.mode.t () * offset)):
+--}}}
 --{{{  function player_ptz_req_control_mode_t_mode_set
 #PRAGMA EXTERNAL "PROC C.player.ptz.req.control.mode.t.mode.set (VAL player.ptz.req.control.mode.t self, VAL INT mode) = 0"
 --* Foreign function [@text player_ptz_req_control_mode_t_mode_set].
@@ -6749,6 +7685,19 @@ INLINE PROC delete.player.ptz.req.control.mode.t (VAL player.ptz.req.control.mod
 --}}}
 --}}}
 --{{{  struct player_blobfinder_blob_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.blobfinder.blob.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_blobfinder_blob_t].
+INT INLINE FUNCTION sizeof.player.blobfinder.blob.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.blobfinder.blob.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_blobfinder_blob_t].
+player.blobfinder.blob.t INLINE FUNCTION "@" (VAL player.blobfinder.blob.t ptr, VAL INT offset) IS
+  player.blobfinder.blob.t ((INT ptr) + (sizeof.player.blobfinder.blob.t () * offset)):
+--}}}
 --{{{  function player_blobfinder_blob_t_id_set
 #PRAGMA EXTERNAL "PROC C.player.blobfinder.blob.t.id.set (VAL player.blobfinder.blob.t self, VAL INT id) = 0"
 --* Foreign function [@text player_blobfinder_blob_t_id_set].
@@ -6905,6 +7854,19 @@ INLINE PROC delete.player.blobfinder.blob.t (VAL player.blobfinder.blob.t self)
 --}}}
 --}}}
 --{{{  struct player_blobfinder_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.blobfinder.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_blobfinder_data_t].
+INT INLINE FUNCTION sizeof.player.blobfinder.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.blobfinder.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_blobfinder_data_t].
+player.blobfinder.data.t INLINE FUNCTION "@" (VAL player.blobfinder.data.t ptr, VAL INT offset) IS
+  player.blobfinder.data.t ((INT ptr) + (sizeof.player.blobfinder.data.t () * offset)):
+--}}}
 --{{{  function player_blobfinder_data_t_width_set
 #PRAGMA EXTERNAL "PROC C.player.blobfinder.data.t.width.set (VAL player.blobfinder.data.t self, VAL INT width) = 0"
 --* Foreign function [@text player_blobfinder_data_t_width_set].
@@ -6977,6 +7939,19 @@ INLINE PROC delete.player.blobfinder.data.t (VAL player.blobfinder.data.t self)
 --}}}
 --}}}
 --{{{  struct player_blobfinder_color_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.blobfinder.color.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_blobfinder_color_config_t].
+INT INLINE FUNCTION sizeof.player.blobfinder.color.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.blobfinder.color.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_blobfinder_color_config_t].
+player.blobfinder.color.config.t INLINE FUNCTION "@" (VAL player.blobfinder.color.config.t ptr, VAL INT offset) IS
+  player.blobfinder.color.config.t ((INT ptr) + (sizeof.player.blobfinder.color.config.t () * offset)):
+--}}}
 --{{{  function player_blobfinder_color_config_t_channel_set
 #PRAGMA EXTERNAL "PROC C.player.blobfinder.color.config.t.channel.set (VAL player.blobfinder.color.config.t self, VAL INT channel) = 0"
 --* Foreign function [@text player_blobfinder_color_config_t_channel_set].
@@ -7091,6 +8066,19 @@ INLINE PROC delete.player.blobfinder.color.config.t (VAL player.blobfinder.color
 --}}}
 --}}}
 --{{{  struct player_blobfinder_imager_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.blobfinder.imager.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_blobfinder_imager_config_t].
+INT INLINE FUNCTION sizeof.player.blobfinder.imager.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.blobfinder.imager.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_blobfinder_imager_config_t].
+player.blobfinder.imager.config.t INLINE FUNCTION "@" (VAL player.blobfinder.imager.config.t ptr, VAL INT offset) IS
+  player.blobfinder.imager.config.t ((INT ptr) + (sizeof.player.blobfinder.imager.config.t () * offset)):
+--}}}
 --{{{  function player_blobfinder_imager_config_t_brightness_set
 #PRAGMA EXTERNAL "PROC C.player.blobfinder.imager.config.t.brightness.set (VAL player.blobfinder.imager.config.t self, VAL INT brightness) = 0"
 --* Foreign function [@text player_blobfinder_imager_config_t_brightness_set].
@@ -7163,6 +8151,19 @@ INLINE PROC delete.player.blobfinder.imager.config.t (VAL player.blobfinder.imag
 --}}}
 --}}}
 --{{{  struct player_gripper_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.gripper.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_gripper_data_t].
+INT INLINE FUNCTION sizeof.player.gripper.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.gripper.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_gripper_data_t].
+player.gripper.data.t INLINE FUNCTION "@" (VAL player.gripper.data.t ptr, VAL INT offset) IS
+  player.gripper.data.t ((INT ptr) + (sizeof.player.gripper.data.t () * offset)):
+--}}}
 --{{{  function player_gripper_data_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.gripper.data.t.state.set (VAL player.gripper.data.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_gripper_data_t_state_set].
@@ -7221,6 +8222,19 @@ INLINE PROC delete.player.gripper.data.t (VAL player.gripper.data.t self)
 --}}}
 --}}}
 --{{{  struct player_gripper_geom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.gripper.geom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_gripper_geom_t].
+INT INLINE FUNCTION sizeof.player.gripper.geom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.gripper.geom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_gripper_geom_t].
+player.gripper.geom.t INLINE FUNCTION "@" (VAL player.gripper.geom.t ptr, VAL INT offset) IS
+  player.gripper.geom.t ((INT ptr) + (sizeof.player.gripper.geom.t () * offset)):
+--}}}
 --{{{  function player_gripper_geom_t_pose_set
 #PRAGMA EXTERNAL "PROC C.player.gripper.geom.t.pose.set (VAL player.gripper.geom.t self, VAL player.pose3d.t pose) = 0"
 --* Foreign function [@text player_gripper_geom_t_pose_set].
@@ -7307,6 +8321,19 @@ INLINE PROC delete.player.gripper.geom.t (VAL player.gripper.geom.t self)
 --}}}
 --}}}
 --{{{  struct player_ranger_geom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ranger.geom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ranger_geom_t].
+INT INLINE FUNCTION sizeof.player.ranger.geom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ranger.geom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ranger_geom_t].
+player.ranger.geom.t INLINE FUNCTION "@" (VAL player.ranger.geom.t ptr, VAL INT offset) IS
+  player.ranger.geom.t ((INT ptr) + (sizeof.player.ranger.geom.t () * offset)):
+--}}}
 --{{{  function player_ranger_geom_t_pose_set
 #PRAGMA EXTERNAL "PROC C.player.ranger.geom.t.pose.set (VAL player.ranger.geom.t self, VAL player.pose3d.t pose) = 0"
 --* Foreign function [@text player_ranger_geom_t_pose_set].
@@ -7407,6 +8434,19 @@ INLINE PROC delete.player.ranger.geom.t (VAL player.ranger.geom.t self)
 --}}}
 --}}}
 --{{{  struct player_ranger_data_range_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ranger.data.range.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ranger_data_range_t].
+INT INLINE FUNCTION sizeof.player.ranger.data.range.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ranger.data.range.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ranger_data_range_t].
+player.ranger.data.range.t INLINE FUNCTION "@" (VAL player.ranger.data.range.t ptr, VAL INT offset) IS
+  player.ranger.data.range.t ((INT ptr) + (sizeof.player.ranger.data.range.t () * offset)):
+--}}}
 --{{{  function player_ranger_data_range_t_ranges_count_set
 #PRAGMA EXTERNAL "PROC C.player.ranger.data.range.t.ranges.count.set (VAL player.ranger.data.range.t self, VAL INT ranges.count) = 0"
 --* Foreign function [@text player_ranger_data_range_t_ranges_count_set].
@@ -7451,6 +8491,19 @@ INLINE PROC delete.player.ranger.data.range.t (VAL player.ranger.data.range.t se
 --}}}
 --}}}
 --{{{  struct player_ranger_data_rangepose_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ranger.data.rangepose.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ranger_data_rangepose_t].
+INT INLINE FUNCTION sizeof.player.ranger.data.rangepose.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ranger.data.rangepose.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ranger_data_rangepose_t].
+player.ranger.data.rangepose.t INLINE FUNCTION "@" (VAL player.ranger.data.rangepose.t ptr, VAL INT offset) IS
+  player.ranger.data.rangepose.t ((INT ptr) + (sizeof.player.ranger.data.rangepose.t () * offset)):
+--}}}
 --{{{  function player_ranger_data_rangepose_t_data_set
 #PRAGMA EXTERNAL "PROC C.player.ranger.data.rangepose.t.data.set (VAL player.ranger.data.rangepose.t self, VAL player.ranger.data.range.t data) = 0"
 --* Foreign function [@text player_ranger_data_rangepose_t_data_set].
@@ -7495,6 +8548,19 @@ INLINE PROC delete.player.ranger.data.rangepose.t (VAL player.ranger.data.rangep
 --}}}
 --}}}
 --{{{  struct player_ranger_data_intns_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ranger.data.intns.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ranger_data_intns_t].
+INT INLINE FUNCTION sizeof.player.ranger.data.intns.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ranger.data.intns.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ranger_data_intns_t].
+player.ranger.data.intns.t INLINE FUNCTION "@" (VAL player.ranger.data.intns.t ptr, VAL INT offset) IS
+  player.ranger.data.intns.t ((INT ptr) + (sizeof.player.ranger.data.intns.t () * offset)):
+--}}}
 --{{{  function player_ranger_data_intns_t_intensities_count_set
 #PRAGMA EXTERNAL "PROC C.player.ranger.data.intns.t.intensities.count.set (VAL player.ranger.data.intns.t self, VAL INT intensities.count) = 0"
 --* Foreign function [@text player_ranger_data_intns_t_intensities_count_set].
@@ -7539,6 +8605,19 @@ INLINE PROC delete.player.ranger.data.intns.t (VAL player.ranger.data.intns.t se
 --}}}
 --}}}
 --{{{  struct player_ranger_data_intnspose_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ranger.data.intnspose.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ranger_data_intnspose_t].
+INT INLINE FUNCTION sizeof.player.ranger.data.intnspose.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ranger.data.intnspose.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ranger_data_intnspose_t].
+player.ranger.data.intnspose.t INLINE FUNCTION "@" (VAL player.ranger.data.intnspose.t ptr, VAL INT offset) IS
+  player.ranger.data.intnspose.t ((INT ptr) + (sizeof.player.ranger.data.intnspose.t () * offset)):
+--}}}
 --{{{  function player_ranger_data_intnspose_t_data_set
 #PRAGMA EXTERNAL "PROC C.player.ranger.data.intnspose.t.data.set (VAL player.ranger.data.intnspose.t self, VAL player.ranger.data.intns.t data) = 0"
 --* Foreign function [@text player_ranger_data_intnspose_t_data_set].
@@ -7583,6 +8662,19 @@ INLINE PROC delete.player.ranger.data.intnspose.t (VAL player.ranger.data.intnsp
 --}}}
 --}}}
 --{{{  struct player_ranger_power_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ranger.power.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ranger_power_config_t].
+INT INLINE FUNCTION sizeof.player.ranger.power.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ranger.power.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ranger_power_config_t].
+player.ranger.power.config.t INLINE FUNCTION "@" (VAL player.ranger.power.config.t ptr, VAL INT offset) IS
+  player.ranger.power.config.t ((INT ptr) + (sizeof.player.ranger.power.config.t () * offset)):
+--}}}
 --{{{  function player_ranger_power_config_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.ranger.power.config.t.state.set (VAL player.ranger.power.config.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_ranger_power_config_t_state_set].
@@ -7613,6 +8705,19 @@ INLINE PROC delete.player.ranger.power.config.t (VAL player.ranger.power.config.
 --}}}
 --}}}
 --{{{  struct player_ranger_intns_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ranger.intns.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ranger_intns_config_t].
+INT INLINE FUNCTION sizeof.player.ranger.intns.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ranger.intns.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ranger_intns_config_t].
+player.ranger.intns.config.t INLINE FUNCTION "@" (VAL player.ranger.intns.config.t ptr, VAL INT offset) IS
+  player.ranger.intns.config.t ((INT ptr) + (sizeof.player.ranger.intns.config.t () * offset)):
+--}}}
 --{{{  function player_ranger_intns_config_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.ranger.intns.config.t.state.set (VAL player.ranger.intns.config.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_ranger_intns_config_t_state_set].
@@ -7643,6 +8748,19 @@ INLINE PROC delete.player.ranger.intns.config.t (VAL player.ranger.intns.config.
 --}}}
 --}}}
 --{{{  struct player_ranger_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ranger.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ranger_config_t].
+INT INLINE FUNCTION sizeof.player.ranger.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ranger.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ranger_config_t].
+player.ranger.config.t INLINE FUNCTION "@" (VAL player.ranger.config.t ptr, VAL INT offset) IS
+  player.ranger.config.t ((INT ptr) + (sizeof.player.ranger.config.t () * offset)):
+--}}}
 --{{{  function player_ranger_config_t_min_angle_set
 #PRAGMA EXTERNAL "PROC C.player.ranger.config.t.min.angle.set (VAL player.ranger.config.t self, VAL REAL64 min.angle) = 0"
 --* Foreign function [@text player_ranger_config_t_min_angle_set].
@@ -7743,6 +8861,19 @@ INLINE PROC delete.player.ranger.config.t (VAL player.ranger.config.t self)
 --}}}
 --}}}
 --{{{  struct player_power_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.power.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_power_data_t].
+INT INLINE FUNCTION sizeof.player.power.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.power.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_power_data_t].
+player.power.data.t INLINE FUNCTION "@" (VAL player.power.data.t ptr, VAL INT offset) IS
+  player.power.data.t ((INT ptr) + (sizeof.player.power.data.t () * offset)):
+--}}}
 --{{{  function player_power_data_t_valid_set
 #PRAGMA EXTERNAL "PROC C.player.power.data.t.valid.set (VAL player.power.data.t self, VAL INT valid) = 0"
 --* Foreign function [@text player_power_data_t_valid_set].
@@ -7843,6 +8974,19 @@ INLINE PROC delete.player.power.data.t (VAL player.power.data.t self)
 --}}}
 --}}}
 --{{{  struct player_power_chargepolicy_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.power.chargepolicy.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_power_chargepolicy_config_t].
+INT INLINE FUNCTION sizeof.player.power.chargepolicy.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.power.chargepolicy.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_power_chargepolicy_config_t].
+player.power.chargepolicy.config.t INLINE FUNCTION "@" (VAL player.power.chargepolicy.config.t ptr, VAL INT offset) IS
+  player.power.chargepolicy.config.t ((INT ptr) + (sizeof.player.power.chargepolicy.config.t () * offset)):
+--}}}
 --{{{  function player_power_chargepolicy_config_t_enable_input_set
 #PRAGMA EXTERNAL "PROC C.player.power.chargepolicy.config.t.enable.input.set (VAL player.power.chargepolicy.config.t self, VAL BYTE enable.input) = 0"
 --* Foreign function [@text player_power_chargepolicy_config_t_enable_input_set].
@@ -7887,6 +9031,19 @@ INLINE PROC delete.player.power.chargepolicy.config.t (VAL player.power.chargepo
 --}}}
 --}}}
 --{{{  struct player_log_set_write_state_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.log.set.write.state.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_log_set_write_state_t].
+INT INLINE FUNCTION sizeof.player.log.set.write.state.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.log.set.write.state.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_log_set_write_state_t].
+player.log.set.write.state.t INLINE FUNCTION "@" (VAL player.log.set.write.state.t ptr, VAL INT offset) IS
+  player.log.set.write.state.t ((INT ptr) + (sizeof.player.log.set.write.state.t () * offset)):
+--}}}
 --{{{  function player_log_set_write_state_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.log.set.write.state.t.state.set (VAL player.log.set.write.state.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_log_set_write_state_t_state_set].
@@ -7917,6 +9074,19 @@ INLINE PROC delete.player.log.set.write.state.t (VAL player.log.set.write.state.
 --}}}
 --}}}
 --{{{  struct player_log_set_read_state_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.log.set.read.state.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_log_set_read_state_t].
+INT INLINE FUNCTION sizeof.player.log.set.read.state.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.log.set.read.state.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_log_set_read_state_t].
+player.log.set.read.state.t INLINE FUNCTION "@" (VAL player.log.set.read.state.t ptr, VAL INT offset) IS
+  player.log.set.read.state.t ((INT ptr) + (sizeof.player.log.set.read.state.t () * offset)):
+--}}}
 --{{{  function player_log_set_read_state_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.log.set.read.state.t.state.set (VAL player.log.set.read.state.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_log_set_read_state_t_state_set].
@@ -7947,6 +9117,19 @@ INLINE PROC delete.player.log.set.read.state.t (VAL player.log.set.read.state.t 
 --}}}
 --}}}
 --{{{  struct player_log_set_read_rewind_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.log.set.read.rewind.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_log_set_read_rewind_t].
+INT INLINE FUNCTION sizeof.player.log.set.read.rewind.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.log.set.read.rewind.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_log_set_read_rewind_t].
+player.log.set.read.rewind.t INLINE FUNCTION "@" (VAL player.log.set.read.rewind.t ptr, VAL INT offset) IS
+  player.log.set.read.rewind.t ((INT ptr) + (sizeof.player.log.set.read.rewind.t () * offset)):
+--}}}
 --{{{  function new_player_log_set_read_rewind_t
 #PRAGMA EXTERNAL "PROC C.new.player.log.set.read.rewind.t (RESULT player.log.set.read.rewind.t return.value) = 0"
 --* Foreign function [@text new_player_log_set_read_rewind_t].
@@ -7963,6 +9146,19 @@ INLINE PROC delete.player.log.set.read.rewind.t (VAL player.log.set.read.rewind.
 --}}}
 --}}}
 --{{{  struct player_log_get_state_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.log.get.state.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_log_get_state_t].
+INT INLINE FUNCTION sizeof.player.log.get.state.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.log.get.state.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_log_get_state_t].
+player.log.get.state.t INLINE FUNCTION "@" (VAL player.log.get.state.t ptr, VAL INT offset) IS
+  player.log.get.state.t ((INT ptr) + (sizeof.player.log.get.state.t () * offset)):
+--}}}
 --{{{  function player_log_get_state_t_type_set
 #PRAGMA EXTERNAL "PROC C.player.log.get.state.t.type.set (VAL player.log.get.state.t self, VAL BYTE type) = 0"
 --* Foreign function [@text player_log_get_state_t_type_set].
@@ -8007,6 +9203,19 @@ INLINE PROC delete.player.log.get.state.t (VAL player.log.get.state.t self)
 --}}}
 --}}}
 --{{{  struct player_log_set_filename_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.log.set.filename.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_log_set_filename_t].
+INT INLINE FUNCTION sizeof.player.log.set.filename.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.log.set.filename.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_log_set_filename_t].
+player.log.set.filename.t INLINE FUNCTION "@" (VAL player.log.set.filename.t ptr, VAL INT offset) IS
+  player.log.set.filename.t ((INT ptr) + (sizeof.player.log.set.filename.t () * offset)):
+--}}}
 --{{{  function player_log_set_filename_t_filename_count_set
 #PRAGMA EXTERNAL "PROC C.player.log.set.filename.t.filename.count.set (VAL player.log.set.filename.t self, VAL INT filename.count) = 0"
 --* Foreign function [@text player_log_set_filename_t_filename_count_set].
@@ -8045,6 +9254,19 @@ INLINE PROC delete.player.log.set.filename.t (VAL player.log.set.filename.t self
 --}}}
 --}}}
 --{{{  struct player_position3d_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_data_t].
+INT INLINE FUNCTION sizeof.player.position3d.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_data_t].
+player.position3d.data.t INLINE FUNCTION "@" (VAL player.position3d.data.t ptr, VAL INT offset) IS
+  player.position3d.data.t ((INT ptr) + (sizeof.player.position3d.data.t () * offset)):
+--}}}
 --{{{  function player_position3d_data_t_pos_set
 #PRAGMA EXTERNAL "PROC C.player.position3d.data.t.pos.set (VAL player.position3d.data.t self, VAL player.pose3d.t pos) = 0"
 --* Foreign function [@text player_position3d_data_t_pos_set].
@@ -8103,6 +9325,19 @@ INLINE PROC delete.player.position3d.data.t (VAL player.position3d.data.t self)
 --}}}
 --}}}
 --{{{  struct player_position3d_cmd_pos_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.cmd.pos.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_cmd_pos_t].
+INT INLINE FUNCTION sizeof.player.position3d.cmd.pos.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.cmd.pos.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_cmd_pos_t].
+player.position3d.cmd.pos.t INLINE FUNCTION "@" (VAL player.position3d.cmd.pos.t ptr, VAL INT offset) IS
+  player.position3d.cmd.pos.t ((INT ptr) + (sizeof.player.position3d.cmd.pos.t () * offset)):
+--}}}
 --{{{  function player_position3d_cmd_pos_t_pos_set
 #PRAGMA EXTERNAL "PROC C.player.position3d.cmd.pos.t.pos.set (VAL player.position3d.cmd.pos.t self, VAL player.pose3d.t pos) = 0"
 --* Foreign function [@text player_position3d_cmd_pos_t_pos_set].
@@ -8161,6 +9396,19 @@ INLINE PROC delete.player.position3d.cmd.pos.t (VAL player.position3d.cmd.pos.t 
 --}}}
 --}}}
 --{{{  struct player_position3d_cmd_vel_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.cmd.vel.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_cmd_vel_t].
+INT INLINE FUNCTION sizeof.player.position3d.cmd.vel.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.cmd.vel.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_cmd_vel_t].
+player.position3d.cmd.vel.t INLINE FUNCTION "@" (VAL player.position3d.cmd.vel.t ptr, VAL INT offset) IS
+  player.position3d.cmd.vel.t ((INT ptr) + (sizeof.player.position3d.cmd.vel.t () * offset)):
+--}}}
 --{{{  function player_position3d_cmd_vel_t_vel_set
 #PRAGMA EXTERNAL "PROC C.player.position3d.cmd.vel.t.vel.set (VAL player.position3d.cmd.vel.t self, VAL player.pose3d.t vel) = 0"
 --* Foreign function [@text player_position3d_cmd_vel_t_vel_set].
@@ -8205,6 +9453,19 @@ INLINE PROC delete.player.position3d.cmd.vel.t (VAL player.position3d.cmd.vel.t 
 --}}}
 --}}}
 --{{{  struct player_position3d_geom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.geom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_geom_t].
+INT INLINE FUNCTION sizeof.player.position3d.geom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.geom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_geom_t].
+player.position3d.geom.t INLINE FUNCTION "@" (VAL player.position3d.geom.t ptr, VAL INT offset) IS
+  player.position3d.geom.t ((INT ptr) + (sizeof.player.position3d.geom.t () * offset)):
+--}}}
 --{{{  function player_position3d_geom_t_pose_set
 #PRAGMA EXTERNAL "PROC C.player.position3d.geom.t.pose.set (VAL player.position3d.geom.t self, VAL player.pose3d.t pose) = 0"
 --* Foreign function [@text player_position3d_geom_t_pose_set].
@@ -8249,6 +9510,19 @@ INLINE PROC delete.player.position3d.geom.t (VAL player.position3d.geom.t self)
 --}}}
 --}}}
 --{{{  struct player_position3d_power_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.power.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_power_config_t].
+INT INLINE FUNCTION sizeof.player.position3d.power.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.power.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_power_config_t].
+player.position3d.power.config.t INLINE FUNCTION "@" (VAL player.position3d.power.config.t ptr, VAL INT offset) IS
+  player.position3d.power.config.t ((INT ptr) + (sizeof.player.position3d.power.config.t () * offset)):
+--}}}
 --{{{  function player_position3d_power_config_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.position3d.power.config.t.state.set (VAL player.position3d.power.config.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_position3d_power_config_t_state_set].
@@ -8279,6 +9553,19 @@ INLINE PROC delete.player.position3d.power.config.t (VAL player.position3d.power
 --}}}
 --}}}
 --{{{  struct player_position3d_position_mode_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.position.mode.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_position_mode_req_t].
+INT INLINE FUNCTION sizeof.player.position3d.position.mode.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.position.mode.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_position_mode_req_t].
+player.position3d.position.mode.req.t INLINE FUNCTION "@" (VAL player.position3d.position.mode.req.t ptr, VAL INT offset) IS
+  player.position3d.position.mode.req.t ((INT ptr) + (sizeof.player.position3d.position.mode.req.t () * offset)):
+--}}}
 --{{{  function player_position3d_position_mode_req_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.position3d.position.mode.req.t.value.set (VAL player.position3d.position.mode.req.t self, VAL INT value) = 0"
 --* Foreign function [@text player_position3d_position_mode_req_t_value_set].
@@ -8309,6 +9596,19 @@ INLINE PROC delete.player.position3d.position.mode.req.t (VAL player.position3d.
 --}}}
 --}}}
 --{{{  struct player_position3d_velocity_mode_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.velocity.mode.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_velocity_mode_config_t].
+INT INLINE FUNCTION sizeof.player.position3d.velocity.mode.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.velocity.mode.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_velocity_mode_config_t].
+player.position3d.velocity.mode.config.t INLINE FUNCTION "@" (VAL player.position3d.velocity.mode.config.t ptr, VAL INT offset) IS
+  player.position3d.velocity.mode.config.t ((INT ptr) + (sizeof.player.position3d.velocity.mode.config.t () * offset)):
+--}}}
 --{{{  function player_position3d_velocity_mode_config_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.position3d.velocity.mode.config.t.value.set (VAL player.position3d.velocity.mode.config.t self, VAL INT value) = 0"
 --* Foreign function [@text player_position3d_velocity_mode_config_t_value_set].
@@ -8339,6 +9639,19 @@ INLINE PROC delete.player.position3d.velocity.mode.config.t (VAL player.position
 --}}}
 --}}}
 --{{{  struct player_position3d_set_odom_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.set.odom.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_set_odom_req_t].
+INT INLINE FUNCTION sizeof.player.position3d.set.odom.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.set.odom.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_set_odom_req_t].
+player.position3d.set.odom.req.t INLINE FUNCTION "@" (VAL player.position3d.set.odom.req.t ptr, VAL INT offset) IS
+  player.position3d.set.odom.req.t ((INT ptr) + (sizeof.player.position3d.set.odom.req.t () * offset)):
+--}}}
 --{{{  function player_position3d_set_odom_req_t_pos_set
 #PRAGMA EXTERNAL "PROC C.player.position3d.set.odom.req.t.pos.set (VAL player.position3d.set.odom.req.t self, VAL player.pose3d.t pos) = 0"
 --* Foreign function [@text player_position3d_set_odom_req_t_pos_set].
@@ -8369,6 +9682,19 @@ INLINE PROC delete.player.position3d.set.odom.req.t (VAL player.position3d.set.o
 --}}}
 --}}}
 --{{{  struct player_position3d_reset_odom_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.reset.odom.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_reset_odom_config_t].
+INT INLINE FUNCTION sizeof.player.position3d.reset.odom.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.reset.odom.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_reset_odom_config_t].
+player.position3d.reset.odom.config.t INLINE FUNCTION "@" (VAL player.position3d.reset.odom.config.t ptr, VAL INT offset) IS
+  player.position3d.reset.odom.config.t ((INT ptr) + (sizeof.player.position3d.reset.odom.config.t () * offset)):
+--}}}
 --{{{  function new_player_position3d_reset_odom_config_t
 #PRAGMA EXTERNAL "PROC C.new.player.position3d.reset.odom.config.t (RESULT player.position3d.reset.odom.config.t return.value) = 0"
 --* Foreign function [@text new_player_position3d_reset_odom_config_t].
@@ -8385,6 +9711,19 @@ INLINE PROC delete.player.position3d.reset.odom.config.t (VAL player.position3d.
 --}}}
 --}}}
 --{{{  struct player_position3d_speed_pid_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.speed.pid.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_speed_pid_req_t].
+INT INLINE FUNCTION sizeof.player.position3d.speed.pid.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.speed.pid.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_speed_pid_req_t].
+player.position3d.speed.pid.req.t INLINE FUNCTION "@" (VAL player.position3d.speed.pid.req.t ptr, VAL INT offset) IS
+  player.position3d.speed.pid.req.t ((INT ptr) + (sizeof.player.position3d.speed.pid.req.t () * offset)):
+--}}}
 --{{{  function player_position3d_speed_pid_req_t_kp_set
 #PRAGMA EXTERNAL "PROC C.player.position3d.speed.pid.req.t.kp.set (VAL player.position3d.speed.pid.req.t self, VAL REAL32 kp) = 0"
 --* Foreign function [@text player_position3d_speed_pid_req_t_kp_set].
@@ -8443,6 +9782,19 @@ INLINE PROC delete.player.position3d.speed.pid.req.t (VAL player.position3d.spee
 --}}}
 --}}}
 --{{{  struct player_position3d_position_pid_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.position.pid.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_position_pid_req_t].
+INT INLINE FUNCTION sizeof.player.position3d.position.pid.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.position.pid.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_position_pid_req_t].
+player.position3d.position.pid.req.t INLINE FUNCTION "@" (VAL player.position3d.position.pid.req.t ptr, VAL INT offset) IS
+  player.position3d.position.pid.req.t ((INT ptr) + (sizeof.player.position3d.position.pid.req.t () * offset)):
+--}}}
 --{{{  function player_position3d_position_pid_req_t_kp_set
 #PRAGMA EXTERNAL "PROC C.player.position3d.position.pid.req.t.kp.set (VAL player.position3d.position.pid.req.t self, VAL REAL32 kp) = 0"
 --* Foreign function [@text player_position3d_position_pid_req_t_kp_set].
@@ -8501,6 +9853,19 @@ INLINE PROC delete.player.position3d.position.pid.req.t (VAL player.position3d.p
 --}}}
 --}}}
 --{{{  struct player_position3d_speed_prof_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position3d.speed.prof.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position3d_speed_prof_req_t].
+INT INLINE FUNCTION sizeof.player.position3d.speed.prof.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position3d.speed.prof.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position3d_speed_prof_req_t].
+player.position3d.speed.prof.req.t INLINE FUNCTION "@" (VAL player.position3d.speed.prof.req.t ptr, VAL INT offset) IS
+  player.position3d.speed.prof.req.t ((INT ptr) + (sizeof.player.position3d.speed.prof.req.t () * offset)):
+--}}}
 --{{{  function player_position3d_speed_prof_req_t_speed_set
 #PRAGMA EXTERNAL "PROC C.player.position3d.speed.prof.req.t.speed.set (VAL player.position3d.speed.prof.req.t self, VAL REAL32 speed) = 0"
 --* Foreign function [@text player_position3d_speed_prof_req_t_speed_set].
@@ -8545,6 +9910,19 @@ INLINE PROC delete.player.position3d.speed.prof.req.t (VAL player.position3d.spe
 --}}}
 --}}}
 --{{{  struct player_opaque_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.opaque.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_opaque_data_t].
+INT INLINE FUNCTION sizeof.player.opaque.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.opaque.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_opaque_data_t].
+player.opaque.data.t INLINE FUNCTION "@" (VAL player.opaque.data.t ptr, VAL INT offset) IS
+  player.opaque.data.t ((INT ptr) + (sizeof.player.opaque.data.t () * offset)):
+--}}}
 --{{{  function player_opaque_data_t_data_count_set
 #PRAGMA EXTERNAL "PROC C.player.opaque.data.t.data.count.set (VAL player.opaque.data.t self, VAL INT data.count) = 0"
 --* Foreign function [@text player_opaque_data_t_data_count_set].
@@ -8589,6 +9967,19 @@ INLINE PROC delete.player.opaque.data.t (VAL player.opaque.data.t self)
 --}}}
 --}}}
 --{{{  struct player_gps_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.gps.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_gps_data_t].
+INT INLINE FUNCTION sizeof.player.gps.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.gps.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_gps_data_t].
+player.gps.data.t INLINE FUNCTION "@" (VAL player.gps.data.t ptr, VAL INT offset) IS
+  player.gps.data.t ((INT ptr) + (sizeof.player.gps.data.t () * offset)):
+--}}}
 --{{{  function player_gps_data_t_time_sec_set
 #PRAGMA EXTERNAL "PROC C.player.gps.data.t.time.sec.set (VAL player.gps.data.t self, VAL INT time.sec) = 0"
 --* Foreign function [@text player_gps_data_t_time_sec_set].
@@ -8787,6 +10178,19 @@ INLINE PROC delete.player.gps.data.t (VAL player.gps.data.t self)
 --}}}
 --}}}
 --{{{  struct player_simulation_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.simulation.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_simulation_data_t].
+INT INLINE FUNCTION sizeof.player.simulation.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.simulation.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_simulation_data_t].
+player.simulation.data.t INLINE FUNCTION "@" (VAL player.simulation.data.t ptr, VAL INT offset) IS
+  player.simulation.data.t ((INT ptr) + (sizeof.player.simulation.data.t () * offset)):
+--}}}
 --{{{  function player_simulation_data_t_data_set
 #PRAGMA EXTERNAL "PROC C.player.simulation.data.t.data.set (VAL player.simulation.data.t self, VAL BYTE data) = 0"
 --* Foreign function [@text player_simulation_data_t_data_set].
@@ -8817,6 +10221,19 @@ INLINE PROC delete.player.simulation.data.t (VAL player.simulation.data.t self)
 --}}}
 --}}}
 --{{{  struct player_simulation_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.simulation.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_simulation_cmd_t].
+INT INLINE FUNCTION sizeof.player.simulation.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.simulation.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_simulation_cmd_t].
+player.simulation.cmd.t INLINE FUNCTION "@" (VAL player.simulation.cmd.t ptr, VAL INT offset) IS
+  player.simulation.cmd.t ((INT ptr) + (sizeof.player.simulation.cmd.t () * offset)):
+--}}}
 --{{{  function player_simulation_cmd_t_cmd_set
 #PRAGMA EXTERNAL "PROC C.player.simulation.cmd.t.cmd.set (VAL player.simulation.cmd.t self, VAL BYTE cmd) = 0"
 --* Foreign function [@text player_simulation_cmd_t_cmd_set].
@@ -8847,6 +10264,19 @@ INLINE PROC delete.player.simulation.cmd.t (VAL player.simulation.cmd.t self)
 --}}}
 --}}}
 --{{{  struct player_simulation_pose2d_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.simulation.pose2d.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_simulation_pose2d_req_t].
+INT INLINE FUNCTION sizeof.player.simulation.pose2d.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.simulation.pose2d.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_simulation_pose2d_req_t].
+player.simulation.pose2d.req.t INLINE FUNCTION "@" (VAL player.simulation.pose2d.req.t ptr, VAL INT offset) IS
+  player.simulation.pose2d.req.t ((INT ptr) + (sizeof.player.simulation.pose2d.req.t () * offset)):
+--}}}
 --{{{  function player_simulation_pose2d_req_t_name_count_set
 #PRAGMA EXTERNAL "PROC C.player.simulation.pose2d.req.t.name.count.set (VAL player.simulation.pose2d.req.t self, VAL INT name.count) = 0"
 --* Foreign function [@text player_simulation_pose2d_req_t_name_count_set].
@@ -8905,6 +10335,19 @@ INLINE PROC delete.player.simulation.pose2d.req.t (VAL player.simulation.pose2d.
 --}}}
 --}}}
 --{{{  struct player_simulation_pose3d_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.simulation.pose3d.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_simulation_pose3d_req_t].
+INT INLINE FUNCTION sizeof.player.simulation.pose3d.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.simulation.pose3d.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_simulation_pose3d_req_t].
+player.simulation.pose3d.req.t INLINE FUNCTION "@" (VAL player.simulation.pose3d.req.t ptr, VAL INT offset) IS
+  player.simulation.pose3d.req.t ((INT ptr) + (sizeof.player.simulation.pose3d.req.t () * offset)):
+--}}}
 --{{{  function player_simulation_pose3d_req_t_name_count_set
 #PRAGMA EXTERNAL "PROC C.player.simulation.pose3d.req.t.name.count.set (VAL player.simulation.pose3d.req.t self, VAL INT name.count) = 0"
 --* Foreign function [@text player_simulation_pose3d_req_t_name_count_set].
@@ -8977,6 +10420,19 @@ INLINE PROC delete.player.simulation.pose3d.req.t (VAL player.simulation.pose3d.
 --}}}
 --}}}
 --{{{  struct player_simulation_property_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.simulation.property.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_simulation_property_req_t].
+INT INLINE FUNCTION sizeof.player.simulation.property.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.simulation.property.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_simulation_property_req_t].
+player.simulation.property.req.t INLINE FUNCTION "@" (VAL player.simulation.property.req.t ptr, VAL INT offset) IS
+  player.simulation.property.req.t ((INT ptr) + (sizeof.player.simulation.property.req.t () * offset)):
+--}}}
 --{{{  function player_simulation_property_req_t_name_count_set
 #PRAGMA EXTERNAL "PROC C.player.simulation.property.req.t.name.count.set (VAL player.simulation.property.req.t self, VAL INT name.count) = 0"
 --* Foreign function [@text player_simulation_property_req_t_name_count_set].
@@ -9077,6 +10533,19 @@ INLINE PROC delete.player.simulation.property.req.t (VAL player.simulation.prope
 --}}}
 --}}}
 --{{{  struct player_laser_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.laser.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_laser_data_t].
+INT INLINE FUNCTION sizeof.player.laser.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.laser.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_laser_data_t].
+player.laser.data.t INLINE FUNCTION "@" (VAL player.laser.data.t ptr, VAL INT offset) IS
+  player.laser.data.t ((INT ptr) + (sizeof.player.laser.data.t () * offset)):
+--}}}
 --{{{  function player_laser_data_t_min_angle_set
 #PRAGMA EXTERNAL "PROC C.player.laser.data.t.min.angle.set (VAL player.laser.data.t self, VAL REAL32 min.angle) = 0"
 --* Foreign function [@text player_laser_data_t_min_angle_set].
@@ -9219,6 +10688,19 @@ INLINE PROC delete.player.laser.data.t (VAL player.laser.data.t self)
 --}}}
 --}}}
 --{{{  struct player_laser_data_scanpose_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.laser.data.scanpose.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_laser_data_scanpose_t].
+INT INLINE FUNCTION sizeof.player.laser.data.scanpose.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.laser.data.scanpose.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_laser_data_scanpose_t].
+player.laser.data.scanpose.t INLINE FUNCTION "@" (VAL player.laser.data.scanpose.t ptr, VAL INT offset) IS
+  player.laser.data.scanpose.t ((INT ptr) + (sizeof.player.laser.data.scanpose.t () * offset)):
+--}}}
 --{{{  function player_laser_data_scanpose_t_scan_set
 #PRAGMA EXTERNAL "PROC C.player.laser.data.scanpose.t.scan.set (VAL player.laser.data.scanpose.t self, VAL player.laser.data.t scan) = 0"
 --* Foreign function [@text player_laser_data_scanpose_t_scan_set].
@@ -9263,6 +10745,19 @@ INLINE PROC delete.player.laser.data.scanpose.t (VAL player.laser.data.scanpose.
 --}}}
 --}}}
 --{{{  struct player_laser_geom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.laser.geom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_laser_geom_t].
+INT INLINE FUNCTION sizeof.player.laser.geom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.laser.geom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_laser_geom_t].
+player.laser.geom.t INLINE FUNCTION "@" (VAL player.laser.geom.t ptr, VAL INT offset) IS
+  player.laser.geom.t ((INT ptr) + (sizeof.player.laser.geom.t () * offset)):
+--}}}
 --{{{  function player_laser_geom_t_pose_set
 #PRAGMA EXTERNAL "PROC C.player.laser.geom.t.pose.set (VAL player.laser.geom.t self, VAL player.pose3d.t pose) = 0"
 --* Foreign function [@text player_laser_geom_t_pose_set].
@@ -9307,6 +10802,19 @@ INLINE PROC delete.player.laser.geom.t (VAL player.laser.geom.t self)
 --}}}
 --}}}
 --{{{  struct player_laser_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.laser.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_laser_config_t].
+INT INLINE FUNCTION sizeof.player.laser.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.laser.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_laser_config_t].
+player.laser.config.t INLINE FUNCTION "@" (VAL player.laser.config.t ptr, VAL INT offset) IS
+  player.laser.config.t ((INT ptr) + (sizeof.player.laser.config.t () * offset)):
+--}}}
 --{{{  function player_laser_config_t_min_angle_set
 #PRAGMA EXTERNAL "PROC C.player.laser.config.t.min.angle.set (VAL player.laser.config.t self, VAL REAL32 min.angle) = 0"
 --* Foreign function [@text player_laser_config_t_min_angle_set].
@@ -9421,6 +10929,19 @@ INLINE PROC delete.player.laser.config.t (VAL player.laser.config.t self)
 --}}}
 --}}}
 --{{{  struct player_laser_power_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.laser.power.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_laser_power_config_t].
+INT INLINE FUNCTION sizeof.player.laser.power.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.laser.power.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_laser_power_config_t].
+player.laser.power.config.t INLINE FUNCTION "@" (VAL player.laser.power.config.t ptr, VAL INT offset) IS
+  player.laser.power.config.t ((INT ptr) + (sizeof.player.laser.power.config.t () * offset)):
+--}}}
 --{{{  function player_laser_power_config_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.laser.power.config.t.state.set (VAL player.laser.power.config.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_laser_power_config_t_state_set].
@@ -9451,6 +10972,19 @@ INLINE PROC delete.player.laser.power.config.t (VAL player.laser.power.config.t 
 --}}}
 --}}}
 --{{{  struct player_laser_get_id_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.laser.get.id.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_laser_get_id_config_t].
+INT INLINE FUNCTION sizeof.player.laser.get.id.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.laser.get.id.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_laser_get_id_config_t].
+player.laser.get.id.config.t INLINE FUNCTION "@" (VAL player.laser.get.id.config.t ptr, VAL INT offset) IS
+  player.laser.get.id.config.t ((INT ptr) + (sizeof.player.laser.get.id.config.t () * offset)):
+--}}}
 --{{{  function player_laser_get_id_config_t_serial_number_set
 #PRAGMA EXTERNAL "PROC C.player.laser.get.id.config.t.serial.number.set (VAL player.laser.get.id.config.t self, VAL INT serial.number) = 0"
 --* Foreign function [@text player_laser_get_id_config_t_serial_number_set].
@@ -9481,6 +11015,19 @@ INLINE PROC delete.player.laser.get.id.config.t (VAL player.laser.get.id.config.
 --}}}
 --}}}
 --{{{  struct player_laser_set_filter_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.laser.set.filter.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_laser_set_filter_config_t].
+INT INLINE FUNCTION sizeof.player.laser.set.filter.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.laser.set.filter.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_laser_set_filter_config_t].
+player.laser.set.filter.config.t INLINE FUNCTION "@" (VAL player.laser.set.filter.config.t ptr, VAL INT offset) IS
+  player.laser.set.filter.config.t ((INT ptr) + (sizeof.player.laser.set.filter.config.t () * offset)):
+--}}}
 --{{{  function player_laser_set_filter_config_t_filter_type_set
 #PRAGMA EXTERNAL "PROC C.player.laser.set.filter.config.t.filter.type.set (VAL player.laser.set.filter.config.t self, VAL BYTE filter.type) = 0"
 --* Foreign function [@text player_laser_set_filter_config_t_filter_type_set].
@@ -9533,6 +11080,19 @@ INLINE PROC delete.player.laser.set.filter.config.t (VAL player.laser.set.filter
 --}}}
 --}}}
 --{{{  struct player_limb_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.limb.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_limb_data_t].
+INT INLINE FUNCTION sizeof.player.limb.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.limb.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_limb_data_t].
+player.limb.data.t INLINE FUNCTION "@" (VAL player.limb.data.t ptr, VAL INT offset) IS
+  player.limb.data.t ((INT ptr) + (sizeof.player.limb.data.t () * offset)):
+--}}}
 --{{{  function player_limb_data_t_position_set
 #PRAGMA EXTERNAL "PROC C.player.limb.data.t.position.set (VAL player.limb.data.t self, VAL player.point.3d.t position) = 0"
 --* Foreign function [@text player_limb_data_t_position_set].
@@ -9605,6 +11165,19 @@ INLINE PROC delete.player.limb.data.t (VAL player.limb.data.t self)
 --}}}
 --}}}
 --{{{  struct player_limb_setpose_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.limb.setpose.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_limb_setpose_cmd_t].
+INT INLINE FUNCTION sizeof.player.limb.setpose.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.limb.setpose.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_limb_setpose_cmd_t].
+player.limb.setpose.cmd.t INLINE FUNCTION "@" (VAL player.limb.setpose.cmd.t ptr, VAL INT offset) IS
+  player.limb.setpose.cmd.t ((INT ptr) + (sizeof.player.limb.setpose.cmd.t () * offset)):
+--}}}
 --{{{  function player_limb_setpose_cmd_t_position_set
 #PRAGMA EXTERNAL "PROC C.player.limb.setpose.cmd.t.position.set (VAL player.limb.setpose.cmd.t self, VAL player.point.3d.t position) = 0"
 --* Foreign function [@text player_limb_setpose_cmd_t_position_set].
@@ -9663,6 +11236,19 @@ INLINE PROC delete.player.limb.setpose.cmd.t (VAL player.limb.setpose.cmd.t self
 --}}}
 --}}}
 --{{{  struct player_limb_setposition_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.limb.setposition.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_limb_setposition_cmd_t].
+INT INLINE FUNCTION sizeof.player.limb.setposition.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.limb.setposition.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_limb_setposition_cmd_t].
+player.limb.setposition.cmd.t INLINE FUNCTION "@" (VAL player.limb.setposition.cmd.t ptr, VAL INT offset) IS
+  player.limb.setposition.cmd.t ((INT ptr) + (sizeof.player.limb.setposition.cmd.t () * offset)):
+--}}}
 --{{{  function player_limb_setposition_cmd_t_position_set
 #PRAGMA EXTERNAL "PROC C.player.limb.setposition.cmd.t.position.set (VAL player.limb.setposition.cmd.t self, VAL player.point.3d.t position) = 0"
 --* Foreign function [@text player_limb_setposition_cmd_t_position_set].
@@ -9693,6 +11279,19 @@ INLINE PROC delete.player.limb.setposition.cmd.t (VAL player.limb.setposition.cm
 --}}}
 --}}}
 --{{{  struct player_limb_vecmove_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.limb.vecmove.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_limb_vecmove_cmd_t].
+INT INLINE FUNCTION sizeof.player.limb.vecmove.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.limb.vecmove.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_limb_vecmove_cmd_t].
+player.limb.vecmove.cmd.t INLINE FUNCTION "@" (VAL player.limb.vecmove.cmd.t ptr, VAL INT offset) IS
+  player.limb.vecmove.cmd.t ((INT ptr) + (sizeof.player.limb.vecmove.cmd.t () * offset)):
+--}}}
 --{{{  function player_limb_vecmove_cmd_t_direction_set
 #PRAGMA EXTERNAL "PROC C.player.limb.vecmove.cmd.t.direction.set (VAL player.limb.vecmove.cmd.t self, VAL player.point.3d.t direction) = 0"
 --* Foreign function [@text player_limb_vecmove_cmd_t_direction_set].
@@ -9737,6 +11336,19 @@ INLINE PROC delete.player.limb.vecmove.cmd.t (VAL player.limb.vecmove.cmd.t self
 --}}}
 --}}}
 --{{{  struct player_limb_power_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.limb.power.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_limb_power_req_t].
+INT INLINE FUNCTION sizeof.player.limb.power.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.limb.power.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_limb_power_req_t].
+player.limb.power.req.t INLINE FUNCTION "@" (VAL player.limb.power.req.t ptr, VAL INT offset) IS
+  player.limb.power.req.t ((INT ptr) + (sizeof.player.limb.power.req.t () * offset)):
+--}}}
 --{{{  function player_limb_power_req_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.limb.power.req.t.value.set (VAL player.limb.power.req.t self, VAL BYTE value) = 0"
 --* Foreign function [@text player_limb_power_req_t_value_set].
@@ -9767,6 +11379,19 @@ INLINE PROC delete.player.limb.power.req.t (VAL player.limb.power.req.t self)
 --}}}
 --}}}
 --{{{  struct player_limb_brakes_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.limb.brakes.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_limb_brakes_req_t].
+INT INLINE FUNCTION sizeof.player.limb.brakes.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.limb.brakes.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_limb_brakes_req_t].
+player.limb.brakes.req.t INLINE FUNCTION "@" (VAL player.limb.brakes.req.t ptr, VAL INT offset) IS
+  player.limb.brakes.req.t ((INT ptr) + (sizeof.player.limb.brakes.req.t () * offset)):
+--}}}
 --{{{  function player_limb_brakes_req_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.limb.brakes.req.t.value.set (VAL player.limb.brakes.req.t self, VAL BYTE value) = 0"
 --* Foreign function [@text player_limb_brakes_req_t_value_set].
@@ -9797,6 +11422,19 @@ INLINE PROC delete.player.limb.brakes.req.t (VAL player.limb.brakes.req.t self)
 --}}}
 --}}}
 --{{{  struct player_limb_geom_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.limb.geom.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_limb_geom_req_t].
+INT INLINE FUNCTION sizeof.player.limb.geom.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.limb.geom.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_limb_geom_req_t].
+player.limb.geom.req.t INLINE FUNCTION "@" (VAL player.limb.geom.req.t ptr, VAL INT offset) IS
+  player.limb.geom.req.t ((INT ptr) + (sizeof.player.limb.geom.req.t () * offset)):
+--}}}
 --{{{  function player_limb_geom_req_t_basePos_set
 #PRAGMA EXTERNAL "PROC C.player.limb.geom.req.t.basePos.set (VAL player.limb.geom.req.t self, VAL player.point.3d.t basePos) = 0"
 --* Foreign function [@text player_limb_geom_req_t_basePos_set].
@@ -9827,6 +11465,19 @@ INLINE PROC delete.player.limb.geom.req.t (VAL player.limb.geom.req.t self)
 --}}}
 --}}}
 --{{{  struct player_limb_speed_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.limb.speed.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_limb_speed_req_t].
+INT INLINE FUNCTION sizeof.player.limb.speed.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.limb.speed.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_limb_speed_req_t].
+player.limb.speed.req.t INLINE FUNCTION "@" (VAL player.limb.speed.req.t ptr, VAL INT offset) IS
+  player.limb.speed.req.t ((INT ptr) + (sizeof.player.limb.speed.req.t () * offset)):
+--}}}
 --{{{  function player_limb_speed_req_t_speed_set
 #PRAGMA EXTERNAL "PROC C.player.limb.speed.req.t.speed.set (VAL player.limb.speed.req.t self, VAL REAL32 speed) = 0"
 --* Foreign function [@text player_limb_speed_req_t_speed_set].
@@ -9857,6 +11508,19 @@ INLINE PROC delete.player.limb.speed.req.t (VAL player.limb.speed.req.t self)
 --}}}
 --}}}
 --{{{  struct player_joystick_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.joystick.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_joystick_data_t].
+INT INLINE FUNCTION sizeof.player.joystick.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.joystick.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_joystick_data_t].
+player.joystick.data.t INLINE FUNCTION "@" (VAL player.joystick.data.t ptr, VAL INT offset) IS
+  player.joystick.data.t ((INT ptr) + (sizeof.player.joystick.data.t () * offset)):
+--}}}
 --{{{  function player_joystick_data_t_pos_set
 #PRAGMA EXTERNAL "PROC C.player.joystick.data.t.pos.set (VAL player.joystick.data.t self, [3]INT pos) = 0"
 --* Foreign function [@text player_joystick_data_t_pos_set].
@@ -9903,6 +11567,19 @@ INLINE PROC delete.player.joystick.data.t (VAL player.joystick.data.t self)
 --}}}
 --}}}
 --{{{  struct player_blinkenlight_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.blinkenlight.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_blinkenlight_data_t].
+INT INLINE FUNCTION sizeof.player.blinkenlight.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.blinkenlight.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_blinkenlight_data_t].
+player.blinkenlight.data.t INLINE FUNCTION "@" (VAL player.blinkenlight.data.t ptr, VAL INT offset) IS
+  player.blinkenlight.data.t ((INT ptr) + (sizeof.player.blinkenlight.data.t () * offset)):
+--}}}
 --{{{  function player_blinkenlight_data_t_enable_set
 #PRAGMA EXTERNAL "PROC C.player.blinkenlight.data.t.enable.set (VAL player.blinkenlight.data.t self, VAL BYTE enable) = 0"
 --* Foreign function [@text player_blinkenlight_data_t_enable_set].
@@ -9975,6 +11652,19 @@ INLINE PROC delete.player.blinkenlight.data.t (VAL player.blinkenlight.data.t se
 --}}}
 --}}}
 --{{{  struct player_blinkenlight_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.blinkenlight.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_blinkenlight_cmd_t].
+INT INLINE FUNCTION sizeof.player.blinkenlight.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.blinkenlight.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_blinkenlight_cmd_t].
+player.blinkenlight.cmd.t INLINE FUNCTION "@" (VAL player.blinkenlight.cmd.t ptr, VAL INT offset) IS
+  player.blinkenlight.cmd.t ((INT ptr) + (sizeof.player.blinkenlight.cmd.t () * offset)):
+--}}}
 --{{{  function player_blinkenlight_cmd_t_id_set
 #PRAGMA EXTERNAL "PROC C.player.blinkenlight.cmd.t.id.set (VAL player.blinkenlight.cmd.t self, VAL INT16 id) = 0"
 --* Foreign function [@text player_blinkenlight_cmd_t_id_set].
@@ -10061,6 +11751,19 @@ INLINE PROC delete.player.blinkenlight.cmd.t (VAL player.blinkenlight.cmd.t self
 --}}}
 --}}}
 --{{{  struct player_blinkenlight_cmd_power_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.blinkenlight.cmd.power.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_blinkenlight_cmd_power_t].
+INT INLINE FUNCTION sizeof.player.blinkenlight.cmd.power.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.blinkenlight.cmd.power.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_blinkenlight_cmd_power_t].
+player.blinkenlight.cmd.power.t INLINE FUNCTION "@" (VAL player.blinkenlight.cmd.power.t ptr, VAL INT offset) IS
+  player.blinkenlight.cmd.power.t ((INT ptr) + (sizeof.player.blinkenlight.cmd.power.t () * offset)):
+--}}}
 --{{{  function player_blinkenlight_cmd_power_t_id_set
 #PRAGMA EXTERNAL "PROC C.player.blinkenlight.cmd.power.t.id.set (VAL player.blinkenlight.cmd.power.t self, VAL INT16 id) = 0"
 --* Foreign function [@text player_blinkenlight_cmd_power_t_id_set].
@@ -10105,6 +11808,19 @@ INLINE PROC delete.player.blinkenlight.cmd.power.t (VAL player.blinkenlight.cmd.
 --}}}
 --}}}
 --{{{  struct player_blinkenlight_cmd_color_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.blinkenlight.cmd.color.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_blinkenlight_cmd_color_t].
+INT INLINE FUNCTION sizeof.player.blinkenlight.cmd.color.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.blinkenlight.cmd.color.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_blinkenlight_cmd_color_t].
+player.blinkenlight.cmd.color.t INLINE FUNCTION "@" (VAL player.blinkenlight.cmd.color.t ptr, VAL INT offset) IS
+  player.blinkenlight.cmd.color.t ((INT ptr) + (sizeof.player.blinkenlight.cmd.color.t () * offset)):
+--}}}
 --{{{  function player_blinkenlight_cmd_color_t_id_set
 #PRAGMA EXTERNAL "PROC C.player.blinkenlight.cmd.color.t.id.set (VAL player.blinkenlight.cmd.color.t self, VAL INT16 id) = 0"
 --* Foreign function [@text player_blinkenlight_cmd_color_t_id_set].
@@ -10149,6 +11865,19 @@ INLINE PROC delete.player.blinkenlight.cmd.color.t (VAL player.blinkenlight.cmd.
 --}}}
 --}}}
 --{{{  struct player_blinkenlight_cmd_flash_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.blinkenlight.cmd.flash.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_blinkenlight_cmd_flash_t].
+INT INLINE FUNCTION sizeof.player.blinkenlight.cmd.flash.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.blinkenlight.cmd.flash.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_blinkenlight_cmd_flash_t].
+player.blinkenlight.cmd.flash.t INLINE FUNCTION "@" (VAL player.blinkenlight.cmd.flash.t ptr, VAL INT offset) IS
+  player.blinkenlight.cmd.flash.t ((INT ptr) + (sizeof.player.blinkenlight.cmd.flash.t () * offset)):
+--}}}
 --{{{  function player_blinkenlight_cmd_flash_t_id_set
 #PRAGMA EXTERNAL "PROC C.player.blinkenlight.cmd.flash.t.id.set (VAL player.blinkenlight.cmd.flash.t self, VAL INT16 id) = 0"
 --* Foreign function [@text player_blinkenlight_cmd_flash_t_id_set].
@@ -10207,6 +11936,19 @@ INLINE PROC delete.player.blinkenlight.cmd.flash.t (VAL player.blinkenlight.cmd.
 --}}}
 --}}}
 --{{{  struct player_speech_recognition_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.speech.recognition.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_speech_recognition_data_t].
+INT INLINE FUNCTION sizeof.player.speech.recognition.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.speech.recognition.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_speech_recognition_data_t].
+player.speech.recognition.data.t INLINE FUNCTION "@" (VAL player.speech.recognition.data.t ptr, VAL INT offset) IS
+  player.speech.recognition.data.t ((INT ptr) + (sizeof.player.speech.recognition.data.t () * offset)):
+--}}}
 --{{{  function player_speech_recognition_data_t_text_count_set
 #PRAGMA EXTERNAL "PROC C.player.speech.recognition.data.t.text.count.set (VAL player.speech.recognition.data.t self, VAL INT text.count) = 0"
 --* Foreign function [@text player_speech_recognition_data_t_text_count_set].
@@ -10251,6 +11993,19 @@ INLINE PROC delete.player.speech.recognition.data.t (VAL player.speech.recogniti
 --}}}
 --}}}
 --{{{  struct player_fiducial_item_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.fiducial.item.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_fiducial_item_t].
+INT INLINE FUNCTION sizeof.player.fiducial.item.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.fiducial.item.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_fiducial_item_t].
+player.fiducial.item.t INLINE FUNCTION "@" (VAL player.fiducial.item.t ptr, VAL INT offset) IS
+  player.fiducial.item.t ((INT ptr) + (sizeof.player.fiducial.item.t () * offset)):
+--}}}
 --{{{  function player_fiducial_item_t_id_set
 #PRAGMA EXTERNAL "PROC C.player.fiducial.item.t.id.set (VAL player.fiducial.item.t self, VAL INT id) = 0"
 --* Foreign function [@text player_fiducial_item_t_id_set].
@@ -10309,6 +12064,19 @@ INLINE PROC delete.player.fiducial.item.t (VAL player.fiducial.item.t self)
 --}}}
 --}}}
 --{{{  struct player_fiducial_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.fiducial.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_fiducial_data_t].
+INT INLINE FUNCTION sizeof.player.fiducial.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.fiducial.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_fiducial_data_t].
+player.fiducial.data.t INLINE FUNCTION "@" (VAL player.fiducial.data.t ptr, VAL INT offset) IS
+  player.fiducial.data.t ((INT ptr) + (sizeof.player.fiducial.data.t () * offset)):
+--}}}
 --{{{  function player_fiducial_data_t_fiducials_count_set
 #PRAGMA EXTERNAL "PROC C.player.fiducial.data.t.fiducials.count.set (VAL player.fiducial.data.t self, VAL INT fiducials.count) = 0"
 --* Foreign function [@text player_fiducial_data_t_fiducials_count_set].
@@ -10353,6 +12121,19 @@ INLINE PROC delete.player.fiducial.data.t (VAL player.fiducial.data.t self)
 --}}}
 --}}}
 --{{{  struct player_fiducial_geom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.fiducial.geom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_fiducial_geom_t].
+INT INLINE FUNCTION sizeof.player.fiducial.geom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.fiducial.geom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_fiducial_geom_t].
+player.fiducial.geom.t INLINE FUNCTION "@" (VAL player.fiducial.geom.t ptr, VAL INT offset) IS
+  player.fiducial.geom.t ((INT ptr) + (sizeof.player.fiducial.geom.t () * offset)):
+--}}}
 --{{{  function player_fiducial_geom_t_pose_set
 #PRAGMA EXTERNAL "PROC C.player.fiducial.geom.t.pose.set (VAL player.fiducial.geom.t self, VAL player.pose3d.t pose) = 0"
 --* Foreign function [@text player_fiducial_geom_t_pose_set].
@@ -10411,6 +12192,19 @@ INLINE PROC delete.player.fiducial.geom.t (VAL player.fiducial.geom.t self)
 --}}}
 --}}}
 --{{{  struct player_fiducial_fov_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.fiducial.fov.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_fiducial_fov_t].
+INT INLINE FUNCTION sizeof.player.fiducial.fov.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.fiducial.fov.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_fiducial_fov_t].
+player.fiducial.fov.t INLINE FUNCTION "@" (VAL player.fiducial.fov.t ptr, VAL INT offset) IS
+  player.fiducial.fov.t ((INT ptr) + (sizeof.player.fiducial.fov.t () * offset)):
+--}}}
 --{{{  function player_fiducial_fov_t_min_range_set
 #PRAGMA EXTERNAL "PROC C.player.fiducial.fov.t.min.range.set (VAL player.fiducial.fov.t self, VAL REAL32 min.range) = 0"
 --* Foreign function [@text player_fiducial_fov_t_min_range_set].
@@ -10469,6 +12263,19 @@ INLINE PROC delete.player.fiducial.fov.t (VAL player.fiducial.fov.t self)
 --}}}
 --}}}
 --{{{  struct player_fiducial_id_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.fiducial.id.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_fiducial_id_t].
+INT INLINE FUNCTION sizeof.player.fiducial.id.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.fiducial.id.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_fiducial_id_t].
+player.fiducial.id.t INLINE FUNCTION "@" (VAL player.fiducial.id.t ptr, VAL INT offset) IS
+  player.fiducial.id.t ((INT ptr) + (sizeof.player.fiducial.id.t () * offset)):
+--}}}
 --{{{  function player_fiducial_id_t_id_set
 #PRAGMA EXTERNAL "PROC C.player.fiducial.id.t.id.set (VAL player.fiducial.id.t self, VAL INT id) = 0"
 --* Foreign function [@text player_fiducial_id_t_id_set].
@@ -10499,6 +12306,19 @@ INLINE PROC delete.player.fiducial.id.t (VAL player.fiducial.id.t self)
 --}}}
 --}}}
 --{{{  struct player_bumper_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.bumper.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_bumper_data_t].
+INT INLINE FUNCTION sizeof.player.bumper.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.bumper.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_bumper_data_t].
+player.bumper.data.t INLINE FUNCTION "@" (VAL player.bumper.data.t ptr, VAL INT offset) IS
+  player.bumper.data.t ((INT ptr) + (sizeof.player.bumper.data.t () * offset)):
+--}}}
 --{{{  function player_bumper_data_t_bumpers_count_set
 #PRAGMA EXTERNAL "PROC C.player.bumper.data.t.bumpers.count.set (VAL player.bumper.data.t self, VAL INT bumpers.count) = 0"
 --* Foreign function [@text player_bumper_data_t_bumpers_count_set].
@@ -10543,6 +12363,19 @@ INLINE PROC delete.player.bumper.data.t (VAL player.bumper.data.t self)
 --}}}
 --}}}
 --{{{  struct player_bumper_define_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.bumper.define.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_bumper_define_t].
+INT INLINE FUNCTION sizeof.player.bumper.define.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.bumper.define.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_bumper_define_t].
+player.bumper.define.t INLINE FUNCTION "@" (VAL player.bumper.define.t ptr, VAL INT offset) IS
+  player.bumper.define.t ((INT ptr) + (sizeof.player.bumper.define.t () * offset)):
+--}}}
 --{{{  function player_bumper_define_t_pose_set
 #PRAGMA EXTERNAL "PROC C.player.bumper.define.t.pose.set (VAL player.bumper.define.t self, VAL player.pose3d.t pose) = 0"
 --* Foreign function [@text player_bumper_define_t_pose_set].
@@ -10601,6 +12434,19 @@ INLINE PROC delete.player.bumper.define.t (VAL player.bumper.define.t self)
 --}}}
 --}}}
 --{{{  struct player_bumper_geom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.bumper.geom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_bumper_geom_t].
+INT INLINE FUNCTION sizeof.player.bumper.geom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.bumper.geom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_bumper_geom_t].
+player.bumper.geom.t INLINE FUNCTION "@" (VAL player.bumper.geom.t ptr, VAL INT offset) IS
+  player.bumper.geom.t ((INT ptr) + (sizeof.player.bumper.geom.t () * offset)):
+--}}}
 --{{{  function player_bumper_geom_t_bumper_def_count_set
 #PRAGMA EXTERNAL "PROC C.player.bumper.geom.t.bumper.def.count.set (VAL player.bumper.geom.t self, VAL INT bumper.def.count) = 0"
 --* Foreign function [@text player_bumper_geom_t_bumper_def_count_set].
@@ -10645,6 +12491,19 @@ INLINE PROC delete.player.bumper.geom.t (VAL player.bumper.geom.t self)
 --}}}
 --}}}
 --{{{  struct player_graphics3d_cmd_draw_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.graphics3d.cmd.draw.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_graphics3d_cmd_draw_t].
+INT INLINE FUNCTION sizeof.player.graphics3d.cmd.draw.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.graphics3d.cmd.draw.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_graphics3d_cmd_draw_t].
+player.graphics3d.cmd.draw.t INLINE FUNCTION "@" (VAL player.graphics3d.cmd.draw.t ptr, VAL INT offset) IS
+  player.graphics3d.cmd.draw.t ((INT ptr) + (sizeof.player.graphics3d.cmd.draw.t () * offset)):
+--}}}
 --{{{  function player_graphics3d_cmd_draw_t_draw_mode_set
 #PRAGMA EXTERNAL "PROC C.player.graphics3d.cmd.draw.t.draw.mode.set (VAL player.graphics3d.cmd.draw.t self, VAL INT draw.mode) = 0"
 --* Foreign function [@text player_graphics3d_cmd_draw_t_draw_mode_set].
@@ -10717,6 +12576,19 @@ INLINE PROC delete.player.graphics3d.cmd.draw.t (VAL player.graphics3d.cmd.draw.
 --}}}
 --}}}
 --{{{  struct player_graphics3d_cmd_translate_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.graphics3d.cmd.translate.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_graphics3d_cmd_translate_t].
+INT INLINE FUNCTION sizeof.player.graphics3d.cmd.translate.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.graphics3d.cmd.translate.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_graphics3d_cmd_translate_t].
+player.graphics3d.cmd.translate.t INLINE FUNCTION "@" (VAL player.graphics3d.cmd.translate.t ptr, VAL INT offset) IS
+  player.graphics3d.cmd.translate.t ((INT ptr) + (sizeof.player.graphics3d.cmd.translate.t () * offset)):
+--}}}
 --{{{  function player_graphics3d_cmd_translate_t_x_set
 #PRAGMA EXTERNAL "PROC C.player.graphics3d.cmd.translate.t.x.set (VAL player.graphics3d.cmd.translate.t self, VAL REAL64 x) = 0"
 --* Foreign function [@text player_graphics3d_cmd_translate_t_x_set].
@@ -10775,6 +12647,19 @@ INLINE PROC delete.player.graphics3d.cmd.translate.t (VAL player.graphics3d.cmd.
 --}}}
 --}}}
 --{{{  struct player_graphics3d_cmd_rotate_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.graphics3d.cmd.rotate.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_graphics3d_cmd_rotate_t].
+INT INLINE FUNCTION sizeof.player.graphics3d.cmd.rotate.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.graphics3d.cmd.rotate.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_graphics3d_cmd_rotate_t].
+player.graphics3d.cmd.rotate.t INLINE FUNCTION "@" (VAL player.graphics3d.cmd.rotate.t ptr, VAL INT offset) IS
+  player.graphics3d.cmd.rotate.t ((INT ptr) + (sizeof.player.graphics3d.cmd.rotate.t () * offset)):
+--}}}
 --{{{  function player_graphics3d_cmd_rotate_t_a_set
 #PRAGMA EXTERNAL "PROC C.player.graphics3d.cmd.rotate.t.a.set (VAL player.graphics3d.cmd.rotate.t self, VAL REAL64 a) = 0"
 --* Foreign function [@text player_graphics3d_cmd_rotate_t_a_set].
@@ -10847,6 +12732,19 @@ INLINE PROC delete.player.graphics3d.cmd.rotate.t (VAL player.graphics3d.cmd.rot
 --}}}
 --}}}
 --{{{  struct player_wsn_node_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.wsn.node.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_wsn_node_data_t].
+INT INLINE FUNCTION sizeof.player.wsn.node.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.wsn.node.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_wsn_node_data_t].
+player.wsn.node.data.t INLINE FUNCTION "@" (VAL player.wsn.node.data.t ptr, VAL INT offset) IS
+  player.wsn.node.data.t ((INT ptr) + (sizeof.player.wsn.node.data.t () * offset)):
+--}}}
 --{{{  function player_wsn_node_data_t_light_set
 #PRAGMA EXTERNAL "PROC C.player.wsn.node.data.t.light.set (VAL player.wsn.node.data.t self, VAL REAL32 light) = 0"
 --* Foreign function [@text player_wsn_node_data_t_light_set].
@@ -11003,6 +12901,19 @@ INLINE PROC delete.player.wsn.node.data.t (VAL player.wsn.node.data.t self)
 --}}}
 --}}}
 --{{{  struct player_wsn_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.wsn.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_wsn_data_t].
+INT INLINE FUNCTION sizeof.player.wsn.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.wsn.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_wsn_data_t].
+player.wsn.data.t INLINE FUNCTION "@" (VAL player.wsn.data.t ptr, VAL INT offset) IS
+  player.wsn.data.t ((INT ptr) + (sizeof.player.wsn.data.t () * offset)):
+--}}}
 --{{{  function player_wsn_data_t_node_type_set
 #PRAGMA EXTERNAL "PROC C.player.wsn.data.t.node.type.set (VAL player.wsn.data.t self, VAL INT node.type) = 0"
 --* Foreign function [@text player_wsn_data_t_node_type_set].
@@ -11075,6 +12986,19 @@ INLINE PROC delete.player.wsn.data.t (VAL player.wsn.data.t self)
 --}}}
 --}}}
 --{{{  struct player_wsn_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.wsn.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_wsn_cmd_t].
+INT INLINE FUNCTION sizeof.player.wsn.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.wsn.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_wsn_cmd_t].
+player.wsn.cmd.t INLINE FUNCTION "@" (VAL player.wsn.cmd.t ptr, VAL INT offset) IS
+  player.wsn.cmd.t ((INT ptr) + (sizeof.player.wsn.cmd.t () * offset)):
+--}}}
 --{{{  function player_wsn_cmd_t_node_id_set
 #PRAGMA EXTERNAL "PROC C.player.wsn.cmd.t.node.id.set (VAL player.wsn.cmd.t self, VAL INT node.id) = 0"
 --* Foreign function [@text player_wsn_cmd_t_node_id_set].
@@ -11147,6 +13071,19 @@ INLINE PROC delete.player.wsn.cmd.t (VAL player.wsn.cmd.t self)
 --}}}
 --}}}
 --{{{  struct player_wsn_power_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.wsn.power.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_wsn_power_config_t].
+INT INLINE FUNCTION sizeof.player.wsn.power.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.wsn.power.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_wsn_power_config_t].
+player.wsn.power.config.t INLINE FUNCTION "@" (VAL player.wsn.power.config.t ptr, VAL INT offset) IS
+  player.wsn.power.config.t ((INT ptr) + (sizeof.player.wsn.power.config.t () * offset)):
+--}}}
 --{{{  function player_wsn_power_config_t_node_id_set
 #PRAGMA EXTERNAL "PROC C.player.wsn.power.config.t.node.id.set (VAL player.wsn.power.config.t self, VAL INT node.id) = 0"
 --* Foreign function [@text player_wsn_power_config_t_node_id_set].
@@ -11205,6 +13142,19 @@ INLINE PROC delete.player.wsn.power.config.t (VAL player.wsn.power.config.t self
 --}}}
 --}}}
 --{{{  struct player_wsn_datatype_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.wsn.datatype.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_wsn_datatype_config_t].
+INT INLINE FUNCTION sizeof.player.wsn.datatype.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.wsn.datatype.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_wsn_datatype_config_t].
+player.wsn.datatype.config.t INLINE FUNCTION "@" (VAL player.wsn.datatype.config.t ptr, VAL INT offset) IS
+  player.wsn.datatype.config.t ((INT ptr) + (sizeof.player.wsn.datatype.config.t () * offset)):
+--}}}
 --{{{  function player_wsn_datatype_config_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.wsn.datatype.config.t.value.set (VAL player.wsn.datatype.config.t self, VAL BYTE value) = 0"
 --* Foreign function [@text player_wsn_datatype_config_t_value_set].
@@ -11235,6 +13185,19 @@ INLINE PROC delete.player.wsn.datatype.config.t (VAL player.wsn.datatype.config.
 --}}}
 --}}}
 --{{{  struct player_wsn_datafreq_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.wsn.datafreq.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_wsn_datafreq_config_t].
+INT INLINE FUNCTION sizeof.player.wsn.datafreq.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.wsn.datafreq.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_wsn_datafreq_config_t].
+player.wsn.datafreq.config.t INLINE FUNCTION "@" (VAL player.wsn.datafreq.config.t ptr, VAL INT offset) IS
+  player.wsn.datafreq.config.t ((INT ptr) + (sizeof.player.wsn.datafreq.config.t () * offset)):
+--}}}
 --{{{  function player_wsn_datafreq_config_t_node_id_set
 #PRAGMA EXTERNAL "PROC C.player.wsn.datafreq.config.t.node.id.set (VAL player.wsn.datafreq.config.t self, VAL INT node.id) = 0"
 --* Foreign function [@text player_wsn_datafreq_config_t_node_id_set].
@@ -11293,6 +13256,19 @@ INLINE PROC delete.player.wsn.datafreq.config.t (VAL player.wsn.datafreq.config.
 --}}}
 --}}}
 --{{{  struct player_wifi_link_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.wifi.link.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_wifi_link_t].
+INT INLINE FUNCTION sizeof.player.wifi.link.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.wifi.link.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_wifi_link_t].
+player.wifi.link.t INLINE FUNCTION "@" (VAL player.wifi.link.t ptr, VAL INT offset) IS
+  player.wifi.link.t ((INT ptr) + (sizeof.player.wifi.link.t () * offset)):
+--}}}
 --{{{  function player_wifi_link_t_mac_count_set
 #PRAGMA EXTERNAL "PROC C.player.wifi.link.t.mac.count.set (VAL player.wifi.link.t self, VAL INT mac.count) = 0"
 --* Foreign function [@text player_wifi_link_t_mac_count_set].
@@ -11459,6 +13435,19 @@ INLINE PROC delete.player.wifi.link.t (VAL player.wifi.link.t self)
 --}}}
 --}}}
 --{{{  struct player_wifi_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.wifi.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_wifi_data_t].
+INT INLINE FUNCTION sizeof.player.wifi.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.wifi.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_wifi_data_t].
+player.wifi.data.t INLINE FUNCTION "@" (VAL player.wifi.data.t ptr, VAL INT offset) IS
+  player.wifi.data.t ((INT ptr) + (sizeof.player.wifi.data.t () * offset)):
+--}}}
 --{{{  function player_wifi_data_t_links_count_set
 #PRAGMA EXTERNAL "PROC C.player.wifi.data.t.links.count.set (VAL player.wifi.data.t self, VAL INT links.count) = 0"
 --* Foreign function [@text player_wifi_data_t_links_count_set].
@@ -11609,6 +13598,19 @@ INLINE PROC delete.player.wifi.data.t (VAL player.wifi.data.t self)
 --}}}
 --}}}
 --{{{  struct player_wifi_mac_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.wifi.mac.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_wifi_mac_req_t].
+INT INLINE FUNCTION sizeof.player.wifi.mac.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.wifi.mac.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_wifi_mac_req_t].
+player.wifi.mac.req.t INLINE FUNCTION "@" (VAL player.wifi.mac.req.t ptr, VAL INT offset) IS
+  player.wifi.mac.req.t ((INT ptr) + (sizeof.player.wifi.mac.req.t () * offset)):
+--}}}
 --{{{  function player_wifi_mac_req_t_mac_count_set
 #PRAGMA EXTERNAL "PROC C.player.wifi.mac.req.t.mac.count.set (VAL player.wifi.mac.req.t self, VAL INT mac.count) = 0"
 --* Foreign function [@text player_wifi_mac_req_t_mac_count_set].
@@ -11647,6 +13649,19 @@ INLINE PROC delete.player.wifi.mac.req.t (VAL player.wifi.mac.req.t self)
 --}}}
 --}}}
 --{{{  struct player_wifi_iwspy_addr_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.wifi.iwspy.addr.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_wifi_iwspy_addr_req_t].
+INT INLINE FUNCTION sizeof.player.wifi.iwspy.addr.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.wifi.iwspy.addr.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_wifi_iwspy_addr_req_t].
+player.wifi.iwspy.addr.req.t INLINE FUNCTION "@" (VAL player.wifi.iwspy.addr.req.t ptr, VAL INT offset) IS
+  player.wifi.iwspy.addr.req.t ((INT ptr) + (sizeof.player.wifi.iwspy.addr.req.t () * offset)):
+--}}}
 --{{{  function player_wifi_iwspy_addr_req_t_address_set
 #PRAGMA EXTERNAL "PROC C.player.wifi.iwspy.addr.req.t.address.set (VAL player.wifi.iwspy.addr.req.t self, [32]BYTE address) = 0"
 --* Foreign function [@text player_wifi_iwspy_addr_req_t_address_set].
@@ -11671,6 +13686,19 @@ INLINE PROC delete.player.wifi.iwspy.addr.req.t (VAL player.wifi.iwspy.addr.req.
 --}}}
 --}}}
 --{{{  struct player_graphics2d_cmd_points_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.graphics2d.cmd.points.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_graphics2d_cmd_points_t].
+INT INLINE FUNCTION sizeof.player.graphics2d.cmd.points.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.graphics2d.cmd.points.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_graphics2d_cmd_points_t].
+player.graphics2d.cmd.points.t INLINE FUNCTION "@" (VAL player.graphics2d.cmd.points.t ptr, VAL INT offset) IS
+  player.graphics2d.cmd.points.t ((INT ptr) + (sizeof.player.graphics2d.cmd.points.t () * offset)):
+--}}}
 --{{{  function player_graphics2d_cmd_points_t_points_count_set
 #PRAGMA EXTERNAL "PROC C.player.graphics2d.cmd.points.t.points.count.set (VAL player.graphics2d.cmd.points.t self, VAL INT points.count) = 0"
 --* Foreign function [@text player_graphics2d_cmd_points_t_points_count_set].
@@ -11729,6 +13757,19 @@ INLINE PROC delete.player.graphics2d.cmd.points.t (VAL player.graphics2d.cmd.poi
 --}}}
 --}}}
 --{{{  struct player_graphics2d_cmd_polyline_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.graphics2d.cmd.polyline.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_graphics2d_cmd_polyline_t].
+INT INLINE FUNCTION sizeof.player.graphics2d.cmd.polyline.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.graphics2d.cmd.polyline.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_graphics2d_cmd_polyline_t].
+player.graphics2d.cmd.polyline.t INLINE FUNCTION "@" (VAL player.graphics2d.cmd.polyline.t ptr, VAL INT offset) IS
+  player.graphics2d.cmd.polyline.t ((INT ptr) + (sizeof.player.graphics2d.cmd.polyline.t () * offset)):
+--}}}
 --{{{  function player_graphics2d_cmd_polyline_t_points_count_set
 #PRAGMA EXTERNAL "PROC C.player.graphics2d.cmd.polyline.t.points.count.set (VAL player.graphics2d.cmd.polyline.t self, VAL INT points.count) = 0"
 --* Foreign function [@text player_graphics2d_cmd_polyline_t_points_count_set].
@@ -11787,6 +13828,19 @@ INLINE PROC delete.player.graphics2d.cmd.polyline.t (VAL player.graphics2d.cmd.p
 --}}}
 --}}}
 --{{{  struct player_graphics2d_cmd_polygon_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.graphics2d.cmd.polygon.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_graphics2d_cmd_polygon_t].
+INT INLINE FUNCTION sizeof.player.graphics2d.cmd.polygon.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.graphics2d.cmd.polygon.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_graphics2d_cmd_polygon_t].
+player.graphics2d.cmd.polygon.t INLINE FUNCTION "@" (VAL player.graphics2d.cmd.polygon.t ptr, VAL INT offset) IS
+  player.graphics2d.cmd.polygon.t ((INT ptr) + (sizeof.player.graphics2d.cmd.polygon.t () * offset)):
+--}}}
 --{{{  function player_graphics2d_cmd_polygon_t_points_count_set
 #PRAGMA EXTERNAL "PROC C.player.graphics2d.cmd.polygon.t.points.count.set (VAL player.graphics2d.cmd.polygon.t self, VAL INT points.count) = 0"
 --* Foreign function [@text player_graphics2d_cmd_polygon_t_points_count_set].
@@ -11873,6 +13927,19 @@ INLINE PROC delete.player.graphics2d.cmd.polygon.t (VAL player.graphics2d.cmd.po
 --}}}
 --}}}
 --{{{  struct player_vectormap_feature_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.vectormap.feature.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_vectormap_feature_data_t].
+INT INLINE FUNCTION sizeof.player.vectormap.feature.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.vectormap.feature.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_vectormap_feature_data_t].
+player.vectormap.feature.data.t INLINE FUNCTION "@" (VAL player.vectormap.feature.data.t ptr, VAL INT offset) IS
+  player.vectormap.feature.data.t ((INT ptr) + (sizeof.player.vectormap.feature.data.t () * offset)):
+--}}}
 --{{{  function player_vectormap_feature_data_t_name_count_set
 #PRAGMA EXTERNAL "PROC C.player.vectormap.feature.data.t.name.count.set (VAL player.vectormap.feature.data.t self, VAL INT name.count) = 0"
 --* Foreign function [@text player_vectormap_feature_data_t_name_count_set].
@@ -11973,6 +14040,19 @@ INLINE PROC delete.player.vectormap.feature.data.t (VAL player.vectormap.feature
 --}}}
 --}}}
 --{{{  struct player_vectormap_layer_info_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.vectormap.layer.info.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_vectormap_layer_info_t].
+INT INLINE FUNCTION sizeof.player.vectormap.layer.info.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.vectormap.layer.info.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_vectormap_layer_info_t].
+player.vectormap.layer.info.t INLINE FUNCTION "@" (VAL player.vectormap.layer.info.t ptr, VAL INT offset) IS
+  player.vectormap.layer.info.t ((INT ptr) + (sizeof.player.vectormap.layer.info.t () * offset)):
+--}}}
 --{{{  function player_vectormap_layer_info_t_name_count_set
 #PRAGMA EXTERNAL "PROC C.player.vectormap.layer.info.t.name.count.set (VAL player.vectormap.layer.info.t self, VAL INT name.count) = 0"
 --* Foreign function [@text player_vectormap_layer_info_t_name_count_set].
@@ -12031,6 +14111,19 @@ INLINE PROC delete.player.vectormap.layer.info.t (VAL player.vectormap.layer.inf
 --}}}
 --}}}
 --{{{  struct player_vectormap_layer_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.vectormap.layer.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_vectormap_layer_data_t].
+INT INLINE FUNCTION sizeof.player.vectormap.layer.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.vectormap.layer.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_vectormap_layer_data_t].
+player.vectormap.layer.data.t INLINE FUNCTION "@" (VAL player.vectormap.layer.data.t ptr, VAL INT offset) IS
+  player.vectormap.layer.data.t ((INT ptr) + (sizeof.player.vectormap.layer.data.t () * offset)):
+--}}}
 --{{{  function player_vectormap_layer_data_t_name_count_set
 #PRAGMA EXTERNAL "PROC C.player.vectormap.layer.data.t.name.count.set (VAL player.vectormap.layer.data.t self, VAL INT name.count) = 0"
 --* Foreign function [@text player_vectormap_layer_data_t_name_count_set].
@@ -12103,6 +14196,19 @@ INLINE PROC delete.player.vectormap.layer.data.t (VAL player.vectormap.layer.dat
 --}}}
 --}}}
 --{{{  struct player_vectormap_info_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.vectormap.info.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_vectormap_info_t].
+INT INLINE FUNCTION sizeof.player.vectormap.info.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.vectormap.info.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_vectormap_info_t].
+player.vectormap.info.t INLINE FUNCTION "@" (VAL player.vectormap.info.t ptr, VAL INT offset) IS
+  player.vectormap.info.t ((INT ptr) + (sizeof.player.vectormap.info.t () * offset)):
+--}}}
 --{{{  function player_vectormap_info_t_srid_set
 #PRAGMA EXTERNAL "PROC C.player.vectormap.info.t.srid.set (VAL player.vectormap.info.t self, VAL INT srid) = 0"
 --* Foreign function [@text player_vectormap_info_t_srid_set].
@@ -12175,6 +14281,19 @@ INLINE PROC delete.player.vectormap.info.t (VAL player.vectormap.info.t self)
 --}}}
 --}}}
 --{{{  struct player_imu_data_state_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.imu.data.state.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_imu_data_state_t].
+INT INLINE FUNCTION sizeof.player.imu.data.state.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.imu.data.state.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_imu_data_state_t].
+player.imu.data.state.t INLINE FUNCTION "@" (VAL player.imu.data.state.t ptr, VAL INT offset) IS
+  player.imu.data.state.t ((INT ptr) + (sizeof.player.imu.data.state.t () * offset)):
+--}}}
 --{{{  function player_imu_data_state_t_pose_set
 #PRAGMA EXTERNAL "PROC C.player.imu.data.state.t.pose.set (VAL player.imu.data.state.t self, VAL player.pose3d.t pose) = 0"
 --* Foreign function [@text player_imu_data_state_t_pose_set].
@@ -12205,6 +14324,19 @@ INLINE PROC delete.player.imu.data.state.t (VAL player.imu.data.state.t self)
 --}}}
 --}}}
 --{{{  struct player_imu_data_calib_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.imu.data.calib.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_imu_data_calib_t].
+INT INLINE FUNCTION sizeof.player.imu.data.calib.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.imu.data.calib.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_imu_data_calib_t].
+player.imu.data.calib.t INLINE FUNCTION "@" (VAL player.imu.data.calib.t ptr, VAL INT offset) IS
+  player.imu.data.calib.t ((INT ptr) + (sizeof.player.imu.data.calib.t () * offset)):
+--}}}
 --{{{  function player_imu_data_calib_t_accel_x_set
 #PRAGMA EXTERNAL "PROC C.player.imu.data.calib.t.accel.x.set (VAL player.imu.data.calib.t self, VAL REAL32 accel.x) = 0"
 --* Foreign function [@text player_imu_data_calib_t_accel_x_set].
@@ -12347,6 +14479,19 @@ INLINE PROC delete.player.imu.data.calib.t (VAL player.imu.data.calib.t self)
 --}}}
 --}}}
 --{{{  struct player_imu_data_quat_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.imu.data.quat.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_imu_data_quat_t].
+INT INLINE FUNCTION sizeof.player.imu.data.quat.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.imu.data.quat.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_imu_data_quat_t].
+player.imu.data.quat.t INLINE FUNCTION "@" (VAL player.imu.data.quat.t ptr, VAL INT offset) IS
+  player.imu.data.quat.t ((INT ptr) + (sizeof.player.imu.data.quat.t () * offset)):
+--}}}
 --{{{  function player_imu_data_quat_t_calib_data_set
 #PRAGMA EXTERNAL "PROC C.player.imu.data.quat.t.calib.data.set (VAL player.imu.data.quat.t self, VAL player.imu.data.calib.t calib.data) = 0"
 --* Foreign function [@text player_imu_data_quat_t_calib_data_set].
@@ -12433,6 +14578,19 @@ INLINE PROC delete.player.imu.data.quat.t (VAL player.imu.data.quat.t self)
 --}}}
 --}}}
 --{{{  struct player_imu_data_euler_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.imu.data.euler.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_imu_data_euler_t].
+INT INLINE FUNCTION sizeof.player.imu.data.euler.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.imu.data.euler.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_imu_data_euler_t].
+player.imu.data.euler.t INLINE FUNCTION "@" (VAL player.imu.data.euler.t ptr, VAL INT offset) IS
+  player.imu.data.euler.t ((INT ptr) + (sizeof.player.imu.data.euler.t () * offset)):
+--}}}
 --{{{  function player_imu_data_euler_t_calib_data_set
 #PRAGMA EXTERNAL "PROC C.player.imu.data.euler.t.calib.data.set (VAL player.imu.data.euler.t self, VAL player.imu.data.calib.t calib.data) = 0"
 --* Foreign function [@text player_imu_data_euler_t_calib_data_set].
@@ -12477,6 +14635,19 @@ INLINE PROC delete.player.imu.data.euler.t (VAL player.imu.data.euler.t self)
 --}}}
 --}}}
 --{{{  struct player_imu_datatype_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.imu.datatype.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_imu_datatype_config_t].
+INT INLINE FUNCTION sizeof.player.imu.datatype.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.imu.datatype.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_imu_datatype_config_t].
+player.imu.datatype.config.t INLINE FUNCTION "@" (VAL player.imu.datatype.config.t ptr, VAL INT offset) IS
+  player.imu.datatype.config.t ((INT ptr) + (sizeof.player.imu.datatype.config.t () * offset)):
+--}}}
 --{{{  function player_imu_datatype_config_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.imu.datatype.config.t.value.set (VAL player.imu.datatype.config.t self, VAL BYTE value) = 0"
 --* Foreign function [@text player_imu_datatype_config_t_value_set].
@@ -12507,6 +14678,19 @@ INLINE PROC delete.player.imu.datatype.config.t (VAL player.imu.datatype.config.
 --}}}
 --}}}
 --{{{  struct player_imu_reset_orientation_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.imu.reset.orientation.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_imu_reset_orientation_config_t].
+INT INLINE FUNCTION sizeof.player.imu.reset.orientation.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.imu.reset.orientation.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_imu_reset_orientation_config_t].
+player.imu.reset.orientation.config.t INLINE FUNCTION "@" (VAL player.imu.reset.orientation.config.t ptr, VAL INT offset) IS
+  player.imu.reset.orientation.config.t ((INT ptr) + (sizeof.player.imu.reset.orientation.config.t () * offset)):
+--}}}
 --{{{  function player_imu_reset_orientation_config_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.imu.reset.orientation.config.t.value.set (VAL player.imu.reset.orientation.config.t self, VAL INT value) = 0"
 --* Foreign function [@text player_imu_reset_orientation_config_t_value_set].
@@ -12537,6 +14721,19 @@ INLINE PROC delete.player.imu.reset.orientation.config.t (VAL player.imu.reset.o
 --}}}
 --}}}
 --{{{  struct player_mcom_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.mcom.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_mcom_data_t].
+INT INLINE FUNCTION sizeof.player.mcom.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.mcom.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_mcom_data_t].
+player.mcom.data.t INLINE FUNCTION "@" (VAL player.mcom.data.t ptr, VAL INT offset) IS
+  player.mcom.data.t ((INT ptr) + (sizeof.player.mcom.data.t () * offset)):
+--}}}
 --{{{  function player_mcom_data_t_full_set
 #PRAGMA EXTERNAL "PROC C.player.mcom.data.t.full.set (VAL player.mcom.data.t self, VAL BYTE full) = 0"
 --* Foreign function [@text player_mcom_data_t_full_set].
@@ -12595,6 +14792,19 @@ INLINE PROC delete.player.mcom.data.t (VAL player.mcom.data.t self)
 --}}}
 --}}}
 --{{{  struct player_mcom_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.mcom.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_mcom_config_t].
+INT INLINE FUNCTION sizeof.player.mcom.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.mcom.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_mcom_config_t].
+player.mcom.config.t INLINE FUNCTION "@" (VAL player.mcom.config.t ptr, VAL INT offset) IS
+  player.mcom.config.t ((INT ptr) + (sizeof.player.mcom.config.t () * offset)):
+--}}}
 --{{{  function player_mcom_config_t_command_set
 #PRAGMA EXTERNAL "PROC C.player.mcom.config.t.command.set (VAL player.mcom.config.t self, VAL INT command) = 0"
 --* Foreign function [@text player_mcom_config_t_command_set].
@@ -12681,6 +14891,19 @@ INLINE PROC delete.player.mcom.config.t (VAL player.mcom.config.t self)
 --}}}
 --}}}
 --{{{  struct player_mcom_return_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.mcom.return.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_mcom_return_t].
+INT INLINE FUNCTION sizeof.player.mcom.return.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.mcom.return.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_mcom_return_t].
+player.mcom.return.t INLINE FUNCTION "@" (VAL player.mcom.return.t ptr, VAL INT offset) IS
+  player.mcom.return.t ((INT ptr) + (sizeof.player.mcom.return.t () * offset)):
+--}}}
 --{{{  function player_mcom_return_t_type_set
 #PRAGMA EXTERNAL "PROC C.player.mcom.return.t.type.set (VAL player.mcom.return.t self, VAL INT type) = 0"
 --* Foreign function [@text player_mcom_return_t_type_set].
@@ -12753,6 +14976,19 @@ INLINE PROC delete.player.mcom.return.t (VAL player.mcom.return.t self)
 --}}}
 --}}}
 --{{{  struct player_device_devlist_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.device.devlist.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_device_devlist_t].
+INT INLINE FUNCTION sizeof.player.device.devlist.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.device.devlist.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_device_devlist_t].
+player.device.devlist.t INLINE FUNCTION "@" (VAL player.device.devlist.t ptr, VAL INT offset) IS
+  player.device.devlist.t ((INT ptr) + (sizeof.player.device.devlist.t () * offset)):
+--}}}
 --{{{  function player_device_devlist_t_devices_count_set
 #PRAGMA EXTERNAL "PROC C.player.device.devlist.t.devices.count.set (VAL player.device.devlist.t self, VAL INT devices.count) = 0"
 --* Foreign function [@text player_device_devlist_t_devices_count_set].
@@ -12785,6 +15021,19 @@ INLINE PROC delete.player.device.devlist.t (VAL player.device.devlist.t self)
 --}}}
 --}}}
 --{{{  struct player_device_driverinfo_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.device.driverinfo.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_device_driverinfo_t].
+INT INLINE FUNCTION sizeof.player.device.driverinfo.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.device.driverinfo.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_device_driverinfo_t].
+player.device.driverinfo.t INLINE FUNCTION "@" (VAL player.device.driverinfo.t ptr, VAL INT offset) IS
+  player.device.driverinfo.t ((INT ptr) + (sizeof.player.device.driverinfo.t () * offset)):
+--}}}
 --{{{  function player_device_driverinfo_t_addr_set
 #PRAGMA EXTERNAL "PROC C.player.device.driverinfo.t.addr.set (VAL player.device.driverinfo.t self, VAL player.devaddr.t addr) = 0"
 --* Foreign function [@text player_device_driverinfo_t_addr_set].
@@ -12837,6 +15086,19 @@ INLINE PROC delete.player.device.driverinfo.t (VAL player.device.driverinfo.t se
 --}}}
 --}}}
 --{{{  struct player_device_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.device.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_device_req_t].
+INT INLINE FUNCTION sizeof.player.device.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.device.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_device_req_t].
+player.device.req.t INLINE FUNCTION "@" (VAL player.device.req.t ptr, VAL INT offset) IS
+  player.device.req.t ((INT ptr) + (sizeof.player.device.req.t () * offset)):
+--}}}
 --{{{  function player_device_req_t_addr_set
 #PRAGMA EXTERNAL "PROC C.player.device.req.t.addr.set (VAL player.device.req.t self, VAL player.devaddr.t addr) = 0"
 --* Foreign function [@text player_device_req_t_addr_set].
@@ -12903,6 +15165,19 @@ INLINE PROC delete.player.device.req.t (VAL player.device.req.t self)
 --}}}
 --}}}
 --{{{  struct player_device_datamode_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.device.datamode.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_device_datamode_req_t].
+INT INLINE FUNCTION sizeof.player.device.datamode.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.device.datamode.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_device_datamode_req_t].
+player.device.datamode.req.t INLINE FUNCTION "@" (VAL player.device.datamode.req.t ptr, VAL INT offset) IS
+  player.device.datamode.req.t ((INT ptr) + (sizeof.player.device.datamode.req.t () * offset)):
+--}}}
 --{{{  function player_device_datamode_req_t_mode_set
 #PRAGMA EXTERNAL "PROC C.player.device.datamode.req.t.mode.set (VAL player.device.datamode.req.t self, VAL BYTE mode) = 0"
 --* Foreign function [@text player_device_datamode_req_t_mode_set].
@@ -12933,6 +15208,19 @@ INLINE PROC delete.player.device.datamode.req.t (VAL player.device.datamode.req.
 --}}}
 --}}}
 --{{{  struct player_device_auth_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.device.auth.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_device_auth_req_t].
+INT INLINE FUNCTION sizeof.player.device.auth.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.device.auth.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_device_auth_req_t].
+player.device.auth.req.t INLINE FUNCTION "@" (VAL player.device.auth.req.t ptr, VAL INT offset) IS
+  player.device.auth.req.t ((INT ptr) + (sizeof.player.device.auth.req.t () * offset)):
+--}}}
 --{{{  function player_device_auth_req_t_auth_key_count_set
 #PRAGMA EXTERNAL "PROC C.player.device.auth.req.t.auth.key.count.set (VAL player.device.auth.req.t self, VAL INT auth.key.count) = 0"
 --* Foreign function [@text player_device_auth_req_t_auth_key_count_set].
@@ -12971,6 +15259,19 @@ INLINE PROC delete.player.device.auth.req.t (VAL player.device.auth.req.t self)
 --}}}
 --}}}
 --{{{  struct player_device_nameservice_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.device.nameservice.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_device_nameservice_req_t].
+INT INLINE FUNCTION sizeof.player.device.nameservice.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.device.nameservice.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_device_nameservice_req_t].
+player.device.nameservice.req.t INLINE FUNCTION "@" (VAL player.device.nameservice.req.t ptr, VAL INT offset) IS
+  player.device.nameservice.req.t ((INT ptr) + (sizeof.player.device.nameservice.req.t () * offset)):
+--}}}
 --{{{  function player_device_nameservice_req_t_name_count_set
 #PRAGMA EXTERNAL "PROC C.player.device.nameservice.req.t.name.count.set (VAL player.device.nameservice.req.t self, VAL INT name.count) = 0"
 --* Foreign function [@text player_device_nameservice_req_t_name_count_set].
@@ -13023,6 +15324,19 @@ INLINE PROC delete.player.device.nameservice.req.t (VAL player.device.nameservic
 --}}}
 --}}}
 --{{{  struct player_add_replace_rule_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.add.replace.rule.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_add_replace_rule_req_t].
+INT INLINE FUNCTION sizeof.player.add.replace.rule.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.add.replace.rule.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_add_replace_rule_req_t].
+player.add.replace.rule.req.t INLINE FUNCTION "@" (VAL player.add.replace.rule.req.t ptr, VAL INT offset) IS
+  player.add.replace.rule.req.t ((INT ptr) + (sizeof.player.add.replace.rule.req.t () * offset)):
+--}}}
 --{{{  function player_add_replace_rule_req_t_interf_set
 #PRAGMA EXTERNAL "PROC C.player.add.replace.rule.req.t.interf.set (VAL player.add.replace.rule.req.t self, VAL INT interf) = 0"
 --* Foreign function [@text player_add_replace_rule_req_t_interf_set].
@@ -13109,6 +15423,19 @@ INLINE PROC delete.player.add.replace.rule.req.t (VAL player.add.replace.rule.re
 --}}}
 --}}}
 --{{{  struct player_position2d_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_data_t].
+INT INLINE FUNCTION sizeof.player.position2d.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_data_t].
+player.position2d.data.t INLINE FUNCTION "@" (VAL player.position2d.data.t ptr, VAL INT offset) IS
+  player.position2d.data.t ((INT ptr) + (sizeof.player.position2d.data.t () * offset)):
+--}}}
 --{{{  function player_position2d_data_t_pos_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.data.t.pos.set (VAL player.position2d.data.t self, VAL player.pose2d.t pos) = 0"
 --* Foreign function [@text player_position2d_data_t_pos_set].
@@ -13167,6 +15494,19 @@ INLINE PROC delete.player.position2d.data.t (VAL player.position2d.data.t self)
 --}}}
 --}}}
 --{{{  struct player_position2d_cmd_vel_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.cmd.vel.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_cmd_vel_t].
+INT INLINE FUNCTION sizeof.player.position2d.cmd.vel.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.cmd.vel.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_cmd_vel_t].
+player.position2d.cmd.vel.t INLINE FUNCTION "@" (VAL player.position2d.cmd.vel.t ptr, VAL INT offset) IS
+  player.position2d.cmd.vel.t ((INT ptr) + (sizeof.player.position2d.cmd.vel.t () * offset)):
+--}}}
 --{{{  function player_position2d_cmd_vel_t_vel_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.cmd.vel.t.vel.set (VAL player.position2d.cmd.vel.t self, VAL player.pose2d.t vel) = 0"
 --* Foreign function [@text player_position2d_cmd_vel_t_vel_set].
@@ -13211,6 +15551,19 @@ INLINE PROC delete.player.position2d.cmd.vel.t (VAL player.position2d.cmd.vel.t 
 --}}}
 --}}}
 --{{{  struct player_position2d_cmd_pos_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.cmd.pos.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_cmd_pos_t].
+INT INLINE FUNCTION sizeof.player.position2d.cmd.pos.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.cmd.pos.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_cmd_pos_t].
+player.position2d.cmd.pos.t INLINE FUNCTION "@" (VAL player.position2d.cmd.pos.t ptr, VAL INT offset) IS
+  player.position2d.cmd.pos.t ((INT ptr) + (sizeof.player.position2d.cmd.pos.t () * offset)):
+--}}}
 --{{{  function player_position2d_cmd_pos_t_pos_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.cmd.pos.t.pos.set (VAL player.position2d.cmd.pos.t self, VAL player.pose2d.t pos) = 0"
 --* Foreign function [@text player_position2d_cmd_pos_t_pos_set].
@@ -13269,6 +15622,19 @@ INLINE PROC delete.player.position2d.cmd.pos.t (VAL player.position2d.cmd.pos.t 
 --}}}
 --}}}
 --{{{  struct player_position2d_cmd_car_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.cmd.car.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_cmd_car_t].
+INT INLINE FUNCTION sizeof.player.position2d.cmd.car.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.cmd.car.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_cmd_car_t].
+player.position2d.cmd.car.t INLINE FUNCTION "@" (VAL player.position2d.cmd.car.t ptr, VAL INT offset) IS
+  player.position2d.cmd.car.t ((INT ptr) + (sizeof.player.position2d.cmd.car.t () * offset)):
+--}}}
 --{{{  function player_position2d_cmd_car_t_velocity_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.cmd.car.t.velocity.set (VAL player.position2d.cmd.car.t self, VAL REAL64 velocity) = 0"
 --* Foreign function [@text player_position2d_cmd_car_t_velocity_set].
@@ -13313,6 +15679,19 @@ INLINE PROC delete.player.position2d.cmd.car.t (VAL player.position2d.cmd.car.t 
 --}}}
 --}}}
 --{{{  struct player_position2d_cmd_vel_head_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.cmd.vel.head.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_cmd_vel_head_t].
+INT INLINE FUNCTION sizeof.player.position2d.cmd.vel.head.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.cmd.vel.head.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_cmd_vel_head_t].
+player.position2d.cmd.vel.head.t INLINE FUNCTION "@" (VAL player.position2d.cmd.vel.head.t ptr, VAL INT offset) IS
+  player.position2d.cmd.vel.head.t ((INT ptr) + (sizeof.player.position2d.cmd.vel.head.t () * offset)):
+--}}}
 --{{{  function player_position2d_cmd_vel_head_t_velocity_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.cmd.vel.head.t.velocity.set (VAL player.position2d.cmd.vel.head.t self, VAL REAL64 velocity) = 0"
 --* Foreign function [@text player_position2d_cmd_vel_head_t_velocity_set].
@@ -13357,6 +15736,19 @@ INLINE PROC delete.player.position2d.cmd.vel.head.t (VAL player.position2d.cmd.v
 --}}}
 --}}}
 --{{{  struct player_position2d_geom_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.geom.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_geom_t].
+INT INLINE FUNCTION sizeof.player.position2d.geom.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.geom.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_geom_t].
+player.position2d.geom.t INLINE FUNCTION "@" (VAL player.position2d.geom.t ptr, VAL INT offset) IS
+  player.position2d.geom.t ((INT ptr) + (sizeof.player.position2d.geom.t () * offset)):
+--}}}
 --{{{  function player_position2d_geom_t_pose_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.geom.t.pose.set (VAL player.position2d.geom.t self, VAL player.pose3d.t pose) = 0"
 --* Foreign function [@text player_position2d_geom_t_pose_set].
@@ -13401,6 +15793,19 @@ INLINE PROC delete.player.position2d.geom.t (VAL player.position2d.geom.t self)
 --}}}
 --}}}
 --{{{  struct player_position2d_power_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.power.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_power_config_t].
+INT INLINE FUNCTION sizeof.player.position2d.power.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.power.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_power_config_t].
+player.position2d.power.config.t INLINE FUNCTION "@" (VAL player.position2d.power.config.t ptr, VAL INT offset) IS
+  player.position2d.power.config.t ((INT ptr) + (sizeof.player.position2d.power.config.t () * offset)):
+--}}}
 --{{{  function player_position2d_power_config_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.power.config.t.state.set (VAL player.position2d.power.config.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_position2d_power_config_t_state_set].
@@ -13431,6 +15836,19 @@ INLINE PROC delete.player.position2d.power.config.t (VAL player.position2d.power
 --}}}
 --}}}
 --{{{  struct player_position2d_velocity_mode_config_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.velocity.mode.config.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_velocity_mode_config_t].
+INT INLINE FUNCTION sizeof.player.position2d.velocity.mode.config.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.velocity.mode.config.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_velocity_mode_config_t].
+player.position2d.velocity.mode.config.t INLINE FUNCTION "@" (VAL player.position2d.velocity.mode.config.t ptr, VAL INT offset) IS
+  player.position2d.velocity.mode.config.t ((INT ptr) + (sizeof.player.position2d.velocity.mode.config.t () * offset)):
+--}}}
 --{{{  function player_position2d_velocity_mode_config_t_value_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.velocity.mode.config.t.value.set (VAL player.position2d.velocity.mode.config.t self, VAL INT value) = 0"
 --* Foreign function [@text player_position2d_velocity_mode_config_t_value_set].
@@ -13461,6 +15879,19 @@ INLINE PROC delete.player.position2d.velocity.mode.config.t (VAL player.position
 --}}}
 --}}}
 --{{{  struct player_position2d_position_mode_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.position.mode.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_position_mode_req_t].
+INT INLINE FUNCTION sizeof.player.position2d.position.mode.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.position.mode.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_position_mode_req_t].
+player.position2d.position.mode.req.t INLINE FUNCTION "@" (VAL player.position2d.position.mode.req.t ptr, VAL INT offset) IS
+  player.position2d.position.mode.req.t ((INT ptr) + (sizeof.player.position2d.position.mode.req.t () * offset)):
+--}}}
 --{{{  function player_position2d_position_mode_req_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.position.mode.req.t.state.set (VAL player.position2d.position.mode.req.t self, VAL INT state) = 0"
 --* Foreign function [@text player_position2d_position_mode_req_t_state_set].
@@ -13491,6 +15922,19 @@ INLINE PROC delete.player.position2d.position.mode.req.t (VAL player.position2d.
 --}}}
 --}}}
 --{{{  struct player_position2d_set_odom_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.set.odom.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_set_odom_req_t].
+INT INLINE FUNCTION sizeof.player.position2d.set.odom.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.set.odom.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_set_odom_req_t].
+player.position2d.set.odom.req.t INLINE FUNCTION "@" (VAL player.position2d.set.odom.req.t ptr, VAL INT offset) IS
+  player.position2d.set.odom.req.t ((INT ptr) + (sizeof.player.position2d.set.odom.req.t () * offset)):
+--}}}
 --{{{  function player_position2d_set_odom_req_t_pose_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.set.odom.req.t.pose.set (VAL player.position2d.set.odom.req.t self, VAL player.pose2d.t pose) = 0"
 --* Foreign function [@text player_position2d_set_odom_req_t_pose_set].
@@ -13521,6 +15965,19 @@ INLINE PROC delete.player.position2d.set.odom.req.t (VAL player.position2d.set.o
 --}}}
 --}}}
 --{{{  struct player_position2d_speed_pid_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.speed.pid.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_speed_pid_req_t].
+INT INLINE FUNCTION sizeof.player.position2d.speed.pid.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.speed.pid.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_speed_pid_req_t].
+player.position2d.speed.pid.req.t INLINE FUNCTION "@" (VAL player.position2d.speed.pid.req.t ptr, VAL INT offset) IS
+  player.position2d.speed.pid.req.t ((INT ptr) + (sizeof.player.position2d.speed.pid.req.t () * offset)):
+--}}}
 --{{{  function player_position2d_speed_pid_req_t_kp_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.speed.pid.req.t.kp.set (VAL player.position2d.speed.pid.req.t self, VAL REAL32 kp) = 0"
 --* Foreign function [@text player_position2d_speed_pid_req_t_kp_set].
@@ -13579,6 +16036,19 @@ INLINE PROC delete.player.position2d.speed.pid.req.t (VAL player.position2d.spee
 --}}}
 --}}}
 --{{{  struct player_position2d_position_pid_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.position.pid.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_position_pid_req_t].
+INT INLINE FUNCTION sizeof.player.position2d.position.pid.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.position.pid.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_position_pid_req_t].
+player.position2d.position.pid.req.t INLINE FUNCTION "@" (VAL player.position2d.position.pid.req.t ptr, VAL INT offset) IS
+  player.position2d.position.pid.req.t ((INT ptr) + (sizeof.player.position2d.position.pid.req.t () * offset)):
+--}}}
 --{{{  function player_position2d_position_pid_req_t_kp_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.position.pid.req.t.kp.set (VAL player.position2d.position.pid.req.t self, VAL REAL32 kp) = 0"
 --* Foreign function [@text player_position2d_position_pid_req_t_kp_set].
@@ -13637,6 +16107,19 @@ INLINE PROC delete.player.position2d.position.pid.req.t (VAL player.position2d.p
 --}}}
 --}}}
 --{{{  struct player_position2d_speed_prof_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.position2d.speed.prof.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_position2d_speed_prof_req_t].
+INT INLINE FUNCTION sizeof.player.position2d.speed.prof.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.position2d.speed.prof.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_position2d_speed_prof_req_t].
+player.position2d.speed.prof.req.t INLINE FUNCTION "@" (VAL player.position2d.speed.prof.req.t ptr, VAL INT offset) IS
+  player.position2d.speed.prof.req.t ((INT ptr) + (sizeof.player.position2d.speed.prof.req.t () * offset)):
+--}}}
 --{{{  function player_position2d_speed_prof_req_t_speed_set
 #PRAGMA EXTERNAL "PROC C.player.position2d.speed.prof.req.t.speed.set (VAL player.position2d.speed.prof.req.t self, VAL REAL32 speed) = 0"
 --* Foreign function [@text player_position2d_speed_prof_req_t_speed_set].
@@ -13681,6 +16164,19 @@ INLINE PROC delete.player.position2d.speed.prof.req.t (VAL player.position2d.spe
 --}}}
 --}}}
 --{{{  struct player_planner_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.planner.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_planner_data_t].
+INT INLINE FUNCTION sizeof.player.planner.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.planner.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_planner_data_t].
+player.planner.data.t INLINE FUNCTION "@" (VAL player.planner.data.t ptr, VAL INT offset) IS
+  player.planner.data.t ((INT ptr) + (sizeof.player.planner.data.t () * offset)):
+--}}}
 --{{{  function player_planner_data_t_valid_set
 #PRAGMA EXTERNAL "PROC C.player.planner.data.t.valid.set (VAL player.planner.data.t self, VAL BYTE valid) = 0"
 --* Foreign function [@text player_planner_data_t_valid_set].
@@ -13795,6 +16291,19 @@ INLINE PROC delete.player.planner.data.t (VAL player.planner.data.t self)
 --}}}
 --}}}
 --{{{  struct player_planner_cmd_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.planner.cmd.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_planner_cmd_t].
+INT INLINE FUNCTION sizeof.player.planner.cmd.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.planner.cmd.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_planner_cmd_t].
+player.planner.cmd.t INLINE FUNCTION "@" (VAL player.planner.cmd.t ptr, VAL INT offset) IS
+  player.planner.cmd.t ((INT ptr) + (sizeof.player.planner.cmd.t () * offset)):
+--}}}
 --{{{  function player_planner_cmd_t_goal_set
 #PRAGMA EXTERNAL "PROC C.player.planner.cmd.t.goal.set (VAL player.planner.cmd.t self, VAL player.pose2d.t goal) = 0"
 --* Foreign function [@text player_planner_cmd_t_goal_set].
@@ -13825,6 +16334,19 @@ INLINE PROC delete.player.planner.cmd.t (VAL player.planner.cmd.t self)
 --}}}
 --}}}
 --{{{  struct player_planner_waypoints_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.planner.waypoints.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_planner_waypoints_req_t].
+INT INLINE FUNCTION sizeof.player.planner.waypoints.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.planner.waypoints.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_planner_waypoints_req_t].
+player.planner.waypoints.req.t INLINE FUNCTION "@" (VAL player.planner.waypoints.req.t ptr, VAL INT offset) IS
+  player.planner.waypoints.req.t ((INT ptr) + (sizeof.player.planner.waypoints.req.t () * offset)):
+--}}}
 --{{{  function player_planner_waypoints_req_t_waypoints_count_set
 #PRAGMA EXTERNAL "PROC C.player.planner.waypoints.req.t.waypoints.count.set (VAL player.planner.waypoints.req.t self, VAL INT waypoints.count) = 0"
 --* Foreign function [@text player_planner_waypoints_req_t_waypoints_count_set].
@@ -13869,6 +16391,19 @@ INLINE PROC delete.player.planner.waypoints.req.t (VAL player.planner.waypoints.
 --}}}
 --}}}
 --{{{  struct player_planner_enable_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.planner.enable.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_planner_enable_req_t].
+INT INLINE FUNCTION sizeof.player.planner.enable.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.planner.enable.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_planner_enable_req_t].
+player.planner.enable.req.t INLINE FUNCTION "@" (VAL player.planner.enable.req.t ptr, VAL INT offset) IS
+  player.planner.enable.req.t ((INT ptr) + (sizeof.player.planner.enable.req.t () * offset)):
+--}}}
 --{{{  function player_planner_enable_req_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.planner.enable.req.t.state.set (VAL player.planner.enable.req.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_planner_enable_req_t_state_set].
@@ -13899,6 +16434,19 @@ INLINE PROC delete.player.planner.enable.req.t (VAL player.planner.enable.req.t 
 --}}}
 --}}}
 --{{{  struct player_map_info_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.map.info.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_map_info_t].
+INT INLINE FUNCTION sizeof.player.map.info.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.map.info.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_map_info_t].
+player.map.info.t INLINE FUNCTION "@" (VAL player.map.info.t ptr, VAL INT offset) IS
+  player.map.info.t ((INT ptr) + (sizeof.player.map.info.t () * offset)):
+--}}}
 --{{{  function player_map_info_t_scale_set
 #PRAGMA EXTERNAL "PROC C.player.map.info.t.scale.set (VAL player.map.info.t self, VAL REAL32 scale) = 0"
 --* Foreign function [@text player_map_info_t_scale_set].
@@ -13971,6 +16519,19 @@ INLINE PROC delete.player.map.info.t (VAL player.map.info.t self)
 --}}}
 --}}}
 --{{{  struct player_map_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.map.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_map_data_t].
+INT INLINE FUNCTION sizeof.player.map.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.map.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_map_data_t].
+player.map.data.t INLINE FUNCTION "@" (VAL player.map.data.t ptr, VAL INT offset) IS
+  player.map.data.t ((INT ptr) + (sizeof.player.map.data.t () * offset)):
+--}}}
 --{{{  function player_map_data_t_col_set
 #PRAGMA EXTERNAL "PROC C.player.map.data.t.col.set (VAL player.map.data.t self, VAL INT col) = 0"
 --* Foreign function [@text player_map_data_t_col_set].
@@ -14071,6 +16632,19 @@ INLINE PROC delete.player.map.data.t (VAL player.map.data.t self)
 --}}}
 --}}}
 --{{{  struct player_map_data_vector_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.map.data.vector.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_map_data_vector_t].
+INT INLINE FUNCTION sizeof.player.map.data.vector.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.map.data.vector.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_map_data_vector_t].
+player.map.data.vector.t INLINE FUNCTION "@" (VAL player.map.data.vector.t ptr, VAL INT offset) IS
+  player.map.data.vector.t ((INT ptr) + (sizeof.player.map.data.vector.t () * offset)):
+--}}}
 --{{{  function player_map_data_vector_t_minx_set
 #PRAGMA EXTERNAL "PROC C.player.map.data.vector.t.minx.set (VAL player.map.data.vector.t self, VAL REAL32 minx) = 0"
 --* Foreign function [@text player_map_data_vector_t_minx_set].
@@ -14171,6 +16745,19 @@ INLINE PROC delete.player.map.data.vector.t (VAL player.map.data.vector.t self)
 --}}}
 --}}}
 --{{{  struct player_audio_wav_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.audio.wav.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_audio_wav_t].
+INT INLINE FUNCTION sizeof.player.audio.wav.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.audio.wav.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_audio_wav_t].
+player.audio.wav.t INLINE FUNCTION "@" (VAL player.audio.wav.t ptr, VAL INT offset) IS
+  player.audio.wav.t ((INT ptr) + (sizeof.player.audio.wav.t () * offset)):
+--}}}
 --{{{  function player_audio_wav_t_data_count_set
 #PRAGMA EXTERNAL "PROC C.player.audio.wav.t.data.count.set (VAL player.audio.wav.t self, VAL INT data.count) = 0"
 --* Foreign function [@text player_audio_wav_t_data_count_set].
@@ -14229,6 +16816,19 @@ INLINE PROC delete.player.audio.wav.t (VAL player.audio.wav.t self)
 --}}}
 --}}}
 --{{{  struct player_audio_seq_item_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.audio.seq.item.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_audio_seq_item_t].
+INT INLINE FUNCTION sizeof.player.audio.seq.item.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.audio.seq.item.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_audio_seq_item_t].
+player.audio.seq.item.t INLINE FUNCTION "@" (VAL player.audio.seq.item.t ptr, VAL INT offset) IS
+  player.audio.seq.item.t ((INT ptr) + (sizeof.player.audio.seq.item.t () * offset)):
+--}}}
 --{{{  function player_audio_seq_item_t_freq_set
 #PRAGMA EXTERNAL "PROC C.player.audio.seq.item.t.freq.set (VAL player.audio.seq.item.t self, VAL REAL32 freq) = 0"
 --* Foreign function [@text player_audio_seq_item_t_freq_set].
@@ -14301,6 +16901,19 @@ INLINE PROC delete.player.audio.seq.item.t (VAL player.audio.seq.item.t self)
 --}}}
 --}}}
 --{{{  struct player_audio_seq_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.audio.seq.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_audio_seq_t].
+INT INLINE FUNCTION sizeof.player.audio.seq.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.audio.seq.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_audio_seq_t].
+player.audio.seq.t INLINE FUNCTION "@" (VAL player.audio.seq.t ptr, VAL INT offset) IS
+  player.audio.seq.t ((INT ptr) + (sizeof.player.audio.seq.t () * offset)):
+--}}}
 --{{{  function player_audio_seq_t_tones_count_set
 #PRAGMA EXTERNAL "PROC C.player.audio.seq.t.tones.count.set (VAL player.audio.seq.t self, VAL INT tones.count) = 0"
 --* Foreign function [@text player_audio_seq_t_tones_count_set].
@@ -14345,6 +16958,19 @@ INLINE PROC delete.player.audio.seq.t (VAL player.audio.seq.t self)
 --}}}
 --}}}
 --{{{  struct player_audio_mixer_channel_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.audio.mixer.channel.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_audio_mixer_channel_t].
+INT INLINE FUNCTION sizeof.player.audio.mixer.channel.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.audio.mixer.channel.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_audio_mixer_channel_t].
+player.audio.mixer.channel.t INLINE FUNCTION "@" (VAL player.audio.mixer.channel.t ptr, VAL INT offset) IS
+  player.audio.mixer.channel.t ((INT ptr) + (sizeof.player.audio.mixer.channel.t () * offset)):
+--}}}
 --{{{  function player_audio_mixer_channel_t_amplitude_set
 #PRAGMA EXTERNAL "PROC C.player.audio.mixer.channel.t.amplitude.set (VAL player.audio.mixer.channel.t self, VAL REAL32 amplitude) = 0"
 --* Foreign function [@text player_audio_mixer_channel_t_amplitude_set].
@@ -14403,6 +17029,19 @@ INLINE PROC delete.player.audio.mixer.channel.t (VAL player.audio.mixer.channel.
 --}}}
 --}}}
 --{{{  struct player_audio_mixer_channel_list_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.audio.mixer.channel.list.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_audio_mixer_channel_list_t].
+INT INLINE FUNCTION sizeof.player.audio.mixer.channel.list.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.audio.mixer.channel.list.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_audio_mixer_channel_list_t].
+player.audio.mixer.channel.list.t INLINE FUNCTION "@" (VAL player.audio.mixer.channel.list.t ptr, VAL INT offset) IS
+  player.audio.mixer.channel.list.t ((INT ptr) + (sizeof.player.audio.mixer.channel.list.t () * offset)):
+--}}}
 --{{{  function player_audio_mixer_channel_list_t_channels_count_set
 #PRAGMA EXTERNAL "PROC C.player.audio.mixer.channel.list.t.channels.count.set (VAL player.audio.mixer.channel.list.t self, VAL INT channels.count) = 0"
 --* Foreign function [@text player_audio_mixer_channel_list_t_channels_count_set].
@@ -14447,6 +17086,19 @@ INLINE PROC delete.player.audio.mixer.channel.list.t (VAL player.audio.mixer.cha
 --}}}
 --}}}
 --{{{  struct player_audio_mixer_channel_detail_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.audio.mixer.channel.detail.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_audio_mixer_channel_detail_t].
+INT INLINE FUNCTION sizeof.player.audio.mixer.channel.detail.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.audio.mixer.channel.detail.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_audio_mixer_channel_detail_t].
+player.audio.mixer.channel.detail.t INLINE FUNCTION "@" (VAL player.audio.mixer.channel.detail.t ptr, VAL INT offset) IS
+  player.audio.mixer.channel.detail.t ((INT ptr) + (sizeof.player.audio.mixer.channel.detail.t () * offset)):
+--}}}
 --{{{  function player_audio_mixer_channel_detail_t_name_count_set
 #PRAGMA EXTERNAL "PROC C.player.audio.mixer.channel.detail.t.name.count.set (VAL player.audio.mixer.channel.detail.t self, VAL INT name.count) = 0"
 --* Foreign function [@text player_audio_mixer_channel_detail_t_name_count_set].
@@ -14505,6 +17157,19 @@ INLINE PROC delete.player.audio.mixer.channel.detail.t (VAL player.audio.mixer.c
 --}}}
 --}}}
 --{{{  struct player_audio_mixer_channel_list_detail_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.audio.mixer.channel.list.detail.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_audio_mixer_channel_list_detail_t].
+INT INLINE FUNCTION sizeof.player.audio.mixer.channel.list.detail.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.audio.mixer.channel.list.detail.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_audio_mixer_channel_list_detail_t].
+player.audio.mixer.channel.list.detail.t INLINE FUNCTION "@" (VAL player.audio.mixer.channel.list.detail.t ptr, VAL INT offset) IS
+  player.audio.mixer.channel.list.detail.t ((INT ptr) + (sizeof.player.audio.mixer.channel.list.detail.t () * offset)):
+--}}}
 --{{{  function player_audio_mixer_channel_list_detail_t_details_count_set
 #PRAGMA EXTERNAL "PROC C.player.audio.mixer.channel.list.detail.t.details.count.set (VAL player.audio.mixer.channel.list.detail.t self, VAL INT details.count) = 0"
 --* Foreign function [@text player_audio_mixer_channel_list_detail_t_details_count_set].
@@ -14577,6 +17242,19 @@ INLINE PROC delete.player.audio.mixer.channel.list.detail.t (VAL player.audio.mi
 --}}}
 --}}}
 --{{{  struct player_audio_sample_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.audio.sample.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_audio_sample_t].
+INT INLINE FUNCTION sizeof.player.audio.sample.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.audio.sample.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_audio_sample_t].
+player.audio.sample.t INLINE FUNCTION "@" (VAL player.audio.sample.t ptr, VAL INT offset) IS
+  player.audio.sample.t ((INT ptr) + (sizeof.player.audio.sample.t () * offset)):
+--}}}
 --{{{  function player_audio_sample_t_sample_set
 #PRAGMA EXTERNAL "PROC C.player.audio.sample.t.sample.set (VAL player.audio.sample.t self, VAL player.audio.wav.t sample) = 0"
 --* Foreign function [@text player_audio_sample_t_sample_set].
@@ -14621,6 +17299,19 @@ INLINE PROC delete.player.audio.sample.t (VAL player.audio.sample.t self)
 --}}}
 --}}}
 --{{{  struct player_audio_sample_item_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.audio.sample.item.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_audio_sample_item_t].
+INT INLINE FUNCTION sizeof.player.audio.sample.item.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.audio.sample.item.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_audio_sample_item_t].
+player.audio.sample.item.t INLINE FUNCTION "@" (VAL player.audio.sample.item.t ptr, VAL INT offset) IS
+  player.audio.sample.item.t ((INT ptr) + (sizeof.player.audio.sample.item.t () * offset)):
+--}}}
 --{{{  function player_audio_sample_item_t_index_set
 #PRAGMA EXTERNAL "PROC C.player.audio.sample.item.t.index.set (VAL player.audio.sample.item.t self, VAL INT index) = 0"
 --* Foreign function [@text player_audio_sample_item_t_index_set].
@@ -14651,6 +17342,19 @@ INLINE PROC delete.player.audio.sample.item.t (VAL player.audio.sample.item.t se
 --}}}
 --}}}
 --{{{  struct player_audio_sample_rec_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.audio.sample.rec.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_audio_sample_rec_req_t].
+INT INLINE FUNCTION sizeof.player.audio.sample.rec.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.audio.sample.rec.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_audio_sample_rec_req_t].
+player.audio.sample.rec.req.t INLINE FUNCTION "@" (VAL player.audio.sample.rec.req.t ptr, VAL INT offset) IS
+  player.audio.sample.rec.req.t ((INT ptr) + (sizeof.player.audio.sample.rec.req.t () * offset)):
+--}}}
 --{{{  function player_audio_sample_rec_req_t_index_set
 #PRAGMA EXTERNAL "PROC C.player.audio.sample.rec.req.t.index.set (VAL player.audio.sample.rec.req.t self, VAL INT index) = 0"
 --* Foreign function [@text player_audio_sample_rec_req_t_index_set].
@@ -14695,6 +17399,19 @@ INLINE PROC delete.player.audio.sample.rec.req.t (VAL player.audio.sample.rec.re
 --}}}
 --}}}
 --{{{  struct player_audio_state_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.audio.state.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_audio_state_t].
+INT INLINE FUNCTION sizeof.player.audio.state.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.audio.state.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_audio_state_t].
+player.audio.state.t INLINE FUNCTION "@" (VAL player.audio.state.t ptr, VAL INT offset) IS
+  player.audio.state.t ((INT ptr) + (sizeof.player.audio.state.t () * offset)):
+--}}}
 --{{{  function player_audio_state_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.audio.state.t.state.set (VAL player.audio.state.t self, VAL INT state) = 0"
 --* Foreign function [@text player_audio_state_t_state_set].
@@ -14725,6 +17442,19 @@ INLINE PROC delete.player.audio.state.t (VAL player.audio.state.t self)
 --}}}
 --}}}
 --{{{  struct player_rfid_tag_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.rfid.tag.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_rfid_tag_t].
+INT INLINE FUNCTION sizeof.player.rfid.tag.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.rfid.tag.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_rfid_tag_t].
+player.rfid.tag.t INLINE FUNCTION "@" (VAL player.rfid.tag.t ptr, VAL INT offset) IS
+  player.rfid.tag.t ((INT ptr) + (sizeof.player.rfid.tag.t () * offset)):
+--}}}
 --{{{  function player_rfid_tag_t_type_set
 #PRAGMA EXTERNAL "PROC C.player.rfid.tag.t.type.set (VAL player.rfid.tag.t self, VAL INT type) = 0"
 --* Foreign function [@text player_rfid_tag_t_type_set].
@@ -14783,6 +17513,19 @@ INLINE PROC delete.player.rfid.tag.t (VAL player.rfid.tag.t self)
 --}}}
 --}}}
 --{{{  struct player_rfid_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.rfid.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_rfid_data_t].
+INT INLINE FUNCTION sizeof.player.rfid.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.rfid.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_rfid_data_t].
+player.rfid.data.t INLINE FUNCTION "@" (VAL player.rfid.data.t ptr, VAL INT offset) IS
+  player.rfid.data.t ((INT ptr) + (sizeof.player.rfid.data.t () * offset)):
+--}}}
 --{{{  function player_rfid_data_t_tags_count_set
 #PRAGMA EXTERNAL "PROC C.player.rfid.data.t.tags.count.set (VAL player.rfid.data.t self, VAL INT tags.count) = 0"
 --* Foreign function [@text player_rfid_data_t_tags_count_set].
@@ -14827,6 +17570,19 @@ INLINE PROC delete.player.rfid.data.t (VAL player.rfid.data.t self)
 --}}}
 --}}}
 --{{{  struct player_ir_data_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ir.data.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ir_data_t].
+INT INLINE FUNCTION sizeof.player.ir.data.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ir.data.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ir_data_t].
+player.ir.data.t INLINE FUNCTION "@" (VAL player.ir.data.t ptr, VAL INT offset) IS
+  player.ir.data.t ((INT ptr) + (sizeof.player.ir.data.t () * offset)):
+--}}}
 --{{{  function player_ir_data_t_voltages_count_set
 #PRAGMA EXTERNAL "PROC C.player.ir.data.t.voltages.count.set (VAL player.ir.data.t self, VAL INT voltages.count) = 0"
 --* Foreign function [@text player_ir_data_t_voltages_count_set].
@@ -14899,6 +17655,19 @@ INLINE PROC delete.player.ir.data.t (VAL player.ir.data.t self)
 --}}}
 --}}}
 --{{{  struct player_ir_pose_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ir.pose.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ir_pose_t].
+INT INLINE FUNCTION sizeof.player.ir.pose.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ir.pose.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ir_pose_t].
+player.ir.pose.t INLINE FUNCTION "@" (VAL player.ir.pose.t ptr, VAL INT offset) IS
+  player.ir.pose.t ((INT ptr) + (sizeof.player.ir.pose.t () * offset)):
+--}}}
 --{{{  function player_ir_pose_t_poses_count_set
 #PRAGMA EXTERNAL "PROC C.player.ir.pose.t.poses.count.set (VAL player.ir.pose.t self, VAL INT poses.count) = 0"
 --* Foreign function [@text player_ir_pose_t_poses_count_set].
@@ -14943,6 +17712,19 @@ INLINE PROC delete.player.ir.pose.t (VAL player.ir.pose.t self)
 --}}}
 --}}}
 --{{{  struct player_ir_power_req_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.player.ir.power.req.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text player_ir_power_req_t].
+INT INLINE FUNCTION sizeof.player.ir.power.req.t ()
+  INT size:
+  VALOF
+    C.sizeof.player.ir.power.req.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text player_ir_power_req_t].
+player.ir.power.req.t INLINE FUNCTION "@" (VAL player.ir.power.req.t ptr, VAL INT offset) IS
+  player.ir.power.req.t ((INT ptr) + (sizeof.player.ir.power.req.t () * offset)):
+--}}}
 --{{{  function player_ir_power_req_t_state_set
 #PRAGMA EXTERNAL "PROC C.player.ir.power.req.t.state.set (VAL player.ir.power.req.t self, VAL BYTE state) = 0"
 --* Foreign function [@text player_ir_power_req_t_state_set].
@@ -14987,6 +17769,19 @@ INLINE PROC playerc.add.xdr.ftable (VAL INT flist, VAL INT replace, RESULT INT r
 :
 --}}}
 --{{{  struct playerc_client_item_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.client.item.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_client_item_t].
+INT INLINE FUNCTION sizeof.playerc.client.item.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.client.item.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_client_item_t].
+playerc.client.item.t INLINE FUNCTION "@" (VAL playerc.client.item.t ptr, VAL INT offset) IS
+  playerc.client.item.t ((INT ptr) + (sizeof.playerc.client.item.t () * offset)):
+--}}}
 --{{{  function playerc_client_item_t_header_set
 #PRAGMA EXTERNAL "PROC C.playerc.client.item.t.header.set (VAL playerc.client.item.t self, VAL player.msghdr.t header) = 0"
 --* Foreign function [@text playerc_client_item_t_header_set].
@@ -15031,6 +17826,19 @@ INLINE PROC delete.playerc.client.item.t (VAL playerc.client.item.t self)
 --}}}
 --}}}
 --{{{  struct playerc_mclient_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.mclient.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_mclient_t].
+INT INLINE FUNCTION sizeof.playerc.mclient.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.mclient.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_mclient_t].
+playerc.mclient.t INLINE FUNCTION "@" (VAL playerc.mclient.t ptr, VAL INT offset) IS
+  playerc.mclient.t ((INT ptr) + (sizeof.playerc.mclient.t () * offset)):
+--}}}
 --{{{  function playerc_mclient_t_client_count_set
 #PRAGMA EXTERNAL "PROC C.playerc.mclient.t.client.count.set (VAL playerc.mclient.t self, VAL INT client.count) = 0"
 --* Foreign function [@text playerc_mclient_t_client_count_set].
@@ -15126,6 +17934,19 @@ INLINE PROC playerc.mclient.read (VAL playerc.mclient.t mclient, VAL INT timeout
 :
 --}}}
 --{{{  struct playerc_device_info_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.device.info.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_device_info_t].
+INT INLINE FUNCTION sizeof.playerc.device.info.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.device.info.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_device_info_t].
+playerc.device.info.t INLINE FUNCTION "@" (VAL playerc.device.info.t ptr, VAL INT offset) IS
+  playerc.device.info.t ((INT ptr) + (sizeof.playerc.device.info.t () * offset)):
+--}}}
 --{{{  function playerc_device_info_t_addr_set
 #PRAGMA EXTERNAL "PROC C.playerc.device.info.t.addr.set (VAL playerc.device.info.t self, VAL player.devaddr.t addr) = 0"
 --* Foreign function [@text playerc_device_info_t_addr_set].
@@ -15164,6 +17985,19 @@ INLINE PROC delete.playerc.device.info.t (VAL playerc.device.info.t self)
 --}}}
 --}}}
 --{{{  struct playerc_client_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.client.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_client_t].
+INT INLINE FUNCTION sizeof.playerc.client.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.client.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_client_t].
+playerc.client.t INLINE FUNCTION "@" (VAL playerc.client.t ptr, VAL INT offset) IS
+  playerc.client.t ((INT ptr) + (sizeof.playerc.client.t () * offset)):
+--}}}
 --{{{  function playerc_client_t_id_set
 #PRAGMA EXTERNAL "PROC C.playerc.client.t.id.set (VAL playerc.client.t self, VAL INT id) = 0"
 --* Foreign function [@text playerc_client_t_id_set].
@@ -15704,6 +18538,19 @@ INLINE PROC playerc.client.write (VAL playerc.client.t client, VAL underscore.pl
 :
 --}}}
 --{{{  struct playerc_device_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.device.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_device_t].
+INT INLINE FUNCTION sizeof.playerc.device.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.device.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_device_t].
+playerc.device.t INLINE FUNCTION "@" (VAL playerc.device.t ptr, VAL INT offset) IS
+  playerc.device.t ((INT ptr) + (sizeof.playerc.device.t () * offset)):
+--}}}
 --{{{  function playerc_device_t_id_set
 #PRAGMA EXTERNAL "PROC C.playerc.device.t.id.set (VAL playerc.device.t self, VAL INT id) = 0"
 --* Foreign function [@text playerc_device_t_id_set].
@@ -15983,6 +18830,19 @@ INLINE PROC playerc.device.set.strprop (VAL playerc.device.t device, []BYTE prop
 :
 --}}}
 --{{{  struct playerc_aio_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.aio.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_aio_t].
+INT INLINE FUNCTION sizeof.playerc.aio.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.aio.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_aio_t].
+playerc.aio.t INLINE FUNCTION "@" (VAL playerc.aio.t ptr, VAL INT offset) IS
+  playerc.aio.t ((INT ptr) + (sizeof.playerc.aio.t () * offset)):
+--}}}
 --{{{  function playerc_aio_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.aio.t.info.set (VAL playerc.aio.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_aio_t_info_set].
@@ -16083,6 +18943,19 @@ INLINE PROC playerc.aio.get.data (VAL playerc.aio.t device, VAL INT index, RESUL
 :
 --}}}
 --{{{  struct playerc_actarray_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.actarray.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_actarray_t].
+INT INLINE FUNCTION sizeof.playerc.actarray.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.actarray.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_actarray_t].
+playerc.actarray.t INLINE FUNCTION "@" (VAL playerc.actarray.t ptr, VAL INT offset) IS
+  playerc.actarray.t ((INT ptr) + (sizeof.playerc.actarray.t () * offset)):
+--}}}
 --{{{  function playerc_actarray_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.actarray.t.info.set (VAL playerc.actarray.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_actarray_t_info_set].
@@ -16337,6 +19210,19 @@ INLINE PROC playerc.actarray.accel.config (VAL playerc.actarray.t device, VAL IN
 :
 --}}}
 --{{{  struct playerc_audio_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.audio.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_audio_t].
+INT INLINE FUNCTION sizeof.playerc.audio.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.audio.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_audio_t].
+playerc.audio.t INLINE FUNCTION "@" (VAL playerc.audio.t ptr, VAL INT offset) IS
+  playerc.audio.t ((INT ptr) + (sizeof.playerc.audio.t () * offset)):
+--}}}
 --{{{  function playerc_audio_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.audio.t.info.set (VAL playerc.audio.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_audio_t_info_set].
@@ -16563,6 +19449,19 @@ INLINE PROC playerc.audio.get.mixer.details (VAL playerc.audio.t device, RESULT 
 :
 --}}}
 --{{{  struct playerc_blackboard_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.blackboard.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_blackboard_t].
+INT INLINE FUNCTION sizeof.playerc.blackboard.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.blackboard.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_blackboard_t].
+playerc.blackboard.t INLINE FUNCTION "@" (VAL playerc.blackboard.t ptr, VAL INT offset) IS
+  playerc.blackboard.t ((INT ptr) + (sizeof.playerc.blackboard.t () * offset)):
+--}}}
 --{{{  function playerc_blackboard_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.blackboard.t.info.set (VAL playerc.blackboard.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_blackboard_t_info_set].
@@ -16712,6 +19611,19 @@ INLINE PROC playerc.blackboard.set.double (VAL playerc.blackboard.t device, VAL 
 :
 --}}}
 --{{{  struct playerc_blinkenlight_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.blinkenlight.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_blinkenlight_t].
+INT INLINE FUNCTION sizeof.playerc.blinkenlight.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.blinkenlight.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_blinkenlight_t].
+playerc.blinkenlight.t INLINE FUNCTION "@" (VAL playerc.blinkenlight.t ptr, VAL INT offset) IS
+  playerc.blinkenlight.t ((INT ptr) + (sizeof.playerc.blinkenlight.t () * offset)):
+--}}}
 --{{{  function playerc_blinkenlight_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.blinkenlight.t.info.set (VAL playerc.blinkenlight.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_blinkenlight_t_info_set].
@@ -16875,6 +19787,19 @@ INLINE PROC playerc.blinkenlight.blink (VAL playerc.blinkenlight.t device, VAL I
 :
 --}}}
 --{{{  struct playerc_blobfinder_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.blobfinder.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_blobfinder_t].
+INT INLINE FUNCTION sizeof.playerc.blobfinder.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.blobfinder.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_blobfinder_t].
+playerc.blobfinder.t INLINE FUNCTION "@" (VAL playerc.blobfinder.t ptr, VAL INT offset) IS
+  playerc.blobfinder.t ((INT ptr) + (sizeof.playerc.blobfinder.t () * offset)):
+--}}}
 --{{{  function playerc_blobfinder_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.blobfinder.t.info.set (VAL playerc.blobfinder.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_blobfinder_t_info_set].
@@ -16989,6 +19914,19 @@ INLINE PROC playerc.blobfinder.unsubscribe (VAL playerc.blobfinder.t device, RES
 :
 --}}}
 --{{{  struct playerc_bumper_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.bumper.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_bumper_t].
+INT INLINE FUNCTION sizeof.playerc.bumper.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.bumper.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_bumper_t].
+playerc.bumper.t INLINE FUNCTION "@" (VAL playerc.bumper.t ptr, VAL INT offset) IS
+  playerc.bumper.t ((INT ptr) + (sizeof.playerc.bumper.t () * offset)):
+--}}}
 --{{{  function playerc_bumper_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.bumper.t.info.set (VAL playerc.bumper.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_bumper_t_info_set].
@@ -17110,6 +20048,19 @@ INLINE PROC playerc.bumper.get.geom (VAL playerc.bumper.t device, RESULT INT ret
 :
 --}}}
 --{{{  struct playerc_camera_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.camera.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_camera_t].
+INT INLINE FUNCTION sizeof.playerc.camera.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.camera.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_camera_t].
+playerc.camera.t INLINE FUNCTION "@" (VAL playerc.camera.t ptr, VAL INT offset) IS
+  playerc.camera.t ((INT ptr) + (sizeof.playerc.camera.t () * offset)):
+--}}}
 --{{{  function playerc_camera_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.camera.t.info.set (VAL playerc.camera.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_camera_t_info_set].
@@ -17294,6 +20245,19 @@ INLINE PROC playerc.camera.save (VAL playerc.camera.t device, VAL []BYTE filenam
 :
 --}}}
 --{{{  struct playerc_dio_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.dio.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_dio_t].
+INT INLINE FUNCTION sizeof.playerc.dio.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.dio.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_dio_t].
+playerc.dio.t INLINE FUNCTION "@" (VAL playerc.dio.t ptr, VAL INT offset) IS
+  playerc.dio.t ((INT ptr) + (sizeof.playerc.dio.t () * offset)):
+--}}}
 --{{{  function playerc_dio_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.dio.t.info.set (VAL playerc.dio.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_dio_t_info_set].
@@ -17387,6 +20351,19 @@ INLINE PROC playerc.dio.set.output (VAL playerc.dio.t device, VAL BYTE output.co
 :
 --}}}
 --{{{  struct playerc_fiducial_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.fiducial.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_fiducial_t].
+INT INLINE FUNCTION sizeof.playerc.fiducial.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.fiducial.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_fiducial_t].
+playerc.fiducial.t INLINE FUNCTION "@" (VAL playerc.fiducial.t ptr, VAL INT offset) IS
+  playerc.fiducial.t ((INT ptr) + (sizeof.playerc.fiducial.t () * offset)):
+--}}}
 --{{{  function playerc_fiducial_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.fiducial.t.info.set (VAL playerc.fiducial.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_fiducial_t_info_set].
@@ -17494,6 +20471,19 @@ INLINE PROC playerc.fiducial.get.geom (VAL playerc.fiducial.t device, RESULT INT
 :
 --}}}
 --{{{  struct playerc_gps_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.gps.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_gps_t].
+INT INLINE FUNCTION sizeof.playerc.gps.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.gps.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_gps_t].
+playerc.gps.t INLINE FUNCTION "@" (VAL playerc.gps.t ptr, VAL INT offset) IS
+  playerc.gps.t ((INT ptr) + (sizeof.playerc.gps.t () * offset)):
+--}}}
 --{{{  function playerc_gps_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.gps.t.info.set (VAL playerc.gps.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_gps_t_info_set].
@@ -17720,6 +20710,19 @@ INLINE PROC playerc.gps.unsubscribe (VAL playerc.gps.t device, RESULT INT return
 :
 --}}}
 --{{{  struct playerc_graphics2d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.graphics2d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_graphics2d_t].
+INT INLINE FUNCTION sizeof.playerc.graphics2d.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.graphics2d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_graphics2d_t].
+playerc.graphics2d.t INLINE FUNCTION "@" (VAL playerc.graphics2d.t ptr, VAL INT offset) IS
+  playerc.graphics2d.t ((INT ptr) + (sizeof.playerc.graphics2d.t () * offset)):
+--}}}
 --{{{  function playerc_graphics2d_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.graphics2d.t.info.set (VAL playerc.graphics2d.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_graphics2d_t_info_set].
@@ -17809,6 +20812,19 @@ INLINE PROC playerc.graphics2d.clear (VAL playerc.graphics2d.t device, RESULT IN
 :
 --}}}
 --{{{  struct playerc_graphics3d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.graphics3d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_graphics3d_t].
+INT INLINE FUNCTION sizeof.playerc.graphics3d.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.graphics3d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_graphics3d_t].
+playerc.graphics3d.t INLINE FUNCTION "@" (VAL playerc.graphics3d.t ptr, VAL INT offset) IS
+  playerc.graphics3d.t ((INT ptr) + (sizeof.playerc.graphics3d.t () * offset)):
+--}}}
 --{{{  function playerc_graphics3d_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.graphics3d.t.info.set (VAL playerc.graphics3d.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_graphics3d_t_info_set].
@@ -17910,6 +20926,19 @@ INLINE PROC playerc.graphics3d.rotate (VAL playerc.graphics3d.t device, VAL REAL
 :
 --}}}
 --{{{  struct playerc_gripper_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.gripper.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_gripper_t].
+INT INLINE FUNCTION sizeof.playerc.gripper.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.gripper.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_gripper_t].
+playerc.gripper.t INLINE FUNCTION "@" (VAL playerc.gripper.t ptr, VAL INT offset) IS
+  playerc.gripper.t ((INT ptr) + (sizeof.playerc.gripper.t () * offset)):
+--}}}
 --{{{  function playerc_gripper_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.gripper.t.info.set (VAL playerc.gripper.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_gripper_t_info_set].
@@ -18129,6 +21158,19 @@ INLINE PROC playerc.gripper.get.geom (VAL playerc.gripper.t device, RESULT INT r
 :
 --}}}
 --{{{  struct playerc_health_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.health.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_health_t].
+INT INLINE FUNCTION sizeof.playerc.health.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.health.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_health_t].
+playerc.health.t INLINE FUNCTION "@" (VAL playerc.health.t ptr, VAL INT offset) IS
+  playerc.health.t ((INT ptr) + (sizeof.playerc.health.t () * offset)):
+--}}}
 --{{{  function playerc_health_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.health.t.info.set (VAL playerc.health.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_health_t_info_set].
@@ -18229,6 +21271,19 @@ INLINE PROC playerc.health.unsubscribe (VAL playerc.health.t device, RESULT INT 
 :
 --}}}
 --{{{  struct playerc_ir_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.ir.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_ir_t].
+INT INLINE FUNCTION sizeof.playerc.ir.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.ir.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_ir_t].
+playerc.ir.t INLINE FUNCTION "@" (VAL playerc.ir.t ptr, VAL INT offset) IS
+  playerc.ir.t ((INT ptr) + (sizeof.playerc.ir.t () * offset)):
+--}}}
 --{{{  function playerc_ir_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.ir.t.info.set (VAL playerc.ir.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_ir_t_info_set].
@@ -18322,6 +21377,19 @@ INLINE PROC playerc.ir.get.geom (VAL playerc.ir.t device, RESULT INT return.valu
 :
 --}}}
 --{{{  struct playerc_laser_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.laser.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_laser_t].
+INT INLINE FUNCTION sizeof.playerc.laser.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.laser.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_laser_t].
+playerc.laser.t INLINE FUNCTION "@" (VAL playerc.laser.t ptr, VAL INT offset) IS
+  playerc.laser.t ((INT ptr) + (sizeof.playerc.laser.t () * offset)):
+--}}}
 --{{{  function playerc_laser_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.laser.t.info.set (VAL playerc.laser.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_laser_t_info_set].
@@ -18649,6 +21717,19 @@ INLINE PROC playerc.laser.printout (VAL playerc.laser.t device, VAL []BYTE prefi
 :
 --}}}
 --{{{  struct playerc_limb_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.limb.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_limb_t].
+INT INLINE FUNCTION sizeof.playerc.limb.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.limb.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_limb_t].
+playerc.limb.t INLINE FUNCTION "@" (VAL playerc.limb.t ptr, VAL INT offset) IS
+  playerc.limb.t ((INT ptr) + (sizeof.playerc.limb.t () * offset)):
+--}}}
 --{{{  function playerc_limb_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.limb.t.info.set (VAL playerc.limb.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_limb_t_info_set].
@@ -18798,6 +21879,19 @@ INLINE PROC playerc.limb.speed.config (VAL playerc.limb.t device, VAL REAL32 spe
 :
 --}}}
 --{{{  struct playerc_localize_particle_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.localize.particle.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_localize_particle_t].
+INT INLINE FUNCTION sizeof.playerc.localize.particle.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.localize.particle.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_localize_particle_t].
+playerc.localize.particle.t INLINE FUNCTION "@" (VAL playerc.localize.particle.t ptr, VAL INT offset) IS
+  playerc.localize.particle.t ((INT ptr) + (sizeof.playerc.localize.particle.t () * offset)):
+--}}}
 --{{{  function playerc_localize_particle_t_pose_set
 #PRAGMA EXTERNAL "PROC C.playerc.localize.particle.t.pose.set (VAL playerc.localize.particle.t self, [3]REAL64 pose) = 0"
 --* Foreign function [@text playerc_localize_particle_t_pose_set].
@@ -18836,6 +21930,19 @@ INLINE PROC delete.playerc.localize.particle.t (VAL playerc.localize.particle.t 
 --}}}
 --}}}
 --{{{  struct playerc_localize_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.localize.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_localize_t].
+INT INLINE FUNCTION sizeof.playerc.localize.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.localize.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_localize_t].
+playerc.localize.t INLINE FUNCTION "@" (VAL playerc.localize.t ptr, VAL INT offset) IS
+  playerc.localize.t ((INT ptr) + (sizeof.playerc.localize.t () * offset)):
+--}}}
 --{{{  function playerc_localize_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.localize.t.info.set (VAL playerc.localize.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_localize_t_info_set].
@@ -19098,6 +22205,19 @@ INLINE PROC playerc.localize.get.particles (VAL playerc.localize.t device, RESUL
 :
 --}}}
 --{{{  struct playerc_log_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.log.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_log_t].
+INT INLINE FUNCTION sizeof.playerc.log.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.log.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_log_t].
+playerc.log.t INLINE FUNCTION "@" (VAL playerc.log.t ptr, VAL INT offset) IS
+  playerc.log.t ((INT ptr) + (sizeof.playerc.log.t () * offset)):
+--}}}
 --{{{  function playerc_log_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.log.t.info.set (VAL playerc.log.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_log_t_info_set].
@@ -19219,6 +22339,19 @@ INLINE PROC playerc.log.set.filename (VAL playerc.log.t device, VAL []BYTE fname
 :
 --}}}
 --{{{  struct playerc_map_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.map.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_map_t].
+INT INLINE FUNCTION sizeof.playerc.map.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.map.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_map_t].
+playerc.map.t INLINE FUNCTION "@" (VAL playerc.map.t ptr, VAL INT offset) IS
+  playerc.map.t ((INT ptr) + (sizeof.playerc.map.t () * offset)):
+--}}}
 --{{{  function playerc_map_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.map.t.info.set (VAL playerc.map.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_map_t_info_set].
@@ -19439,6 +22572,19 @@ INLINE PROC playerc.map.get.vector (VAL playerc.map.t device, RESULT INT return.
 :
 --}}}
 --{{{  struct playerc_vectormap_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.vectormap.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_vectormap_t].
+INT INLINE FUNCTION sizeof.playerc.vectormap.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.vectormap.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_vectormap_t].
+playerc.vectormap.t INLINE FUNCTION "@" (VAL playerc.vectormap.t ptr, VAL INT offset) IS
+  playerc.vectormap.t ((INT ptr) + (sizeof.playerc.vectormap.t () * offset)):
+--}}}
 --{{{  function playerc_vectormap_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.vectormap.t.info.set (VAL playerc.vectormap.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_vectormap_t_info_set].
@@ -19616,6 +22762,19 @@ INLINE PROC playerc.vectormap.get.feature.data (VAL playerc.vectormap.t device, 
 :
 --}}}
 --{{{  struct playerc_opaque_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.opaque.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_opaque_t].
+INT INLINE FUNCTION sizeof.playerc.opaque.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.opaque.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_opaque_t].
+playerc.opaque.t INLINE FUNCTION "@" (VAL playerc.opaque.t ptr, VAL INT offset) IS
+  playerc.opaque.t ((INT ptr) + (sizeof.playerc.opaque.t () * offset)):
+--}}}
 --{{{  function playerc_opaque_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.opaque.t.info.set (VAL playerc.opaque.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_opaque_t_info_set].
@@ -19716,6 +22875,19 @@ INLINE PROC playerc.opaque.req (VAL playerc.opaque.t device, VAL player.opaque.d
 :
 --}}}
 --{{{  struct playerc_planner_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.planner.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_planner_t].
+INT INLINE FUNCTION sizeof.playerc.planner.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.planner.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_planner_t].
+playerc.planner.t INLINE FUNCTION "@" (VAL playerc.planner.t ptr, VAL INT offset) IS
+  playerc.planner.t ((INT ptr) + (sizeof.playerc.planner.t () * offset)):
+--}}}
 --{{{  function playerc_planner_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.planner.t.info.set (VAL playerc.planner.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_planner_t_info_set].
@@ -19991,6 +23163,19 @@ INLINE PROC playerc.planner.enable (VAL playerc.planner.t device, VAL INT state,
 :
 --}}}
 --{{{  struct playerc_position1d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.position1d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_position1d_t].
+INT INLINE FUNCTION sizeof.playerc.position1d.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.position1d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_position1d_t].
+playerc.position1d.t INLINE FUNCTION "@" (VAL playerc.position1d.t ptr, VAL INT offset) IS
+  playerc.position1d.t ((INT ptr) + (sizeof.playerc.position1d.t () * offset)):
+--}}}
 --{{{  function playerc_position1d_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.position1d.t.info.set (VAL playerc.position1d.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_position1d_t_info_set].
@@ -20163,6 +23348,19 @@ INLINE PROC playerc.position1d.set.odom (VAL playerc.position1d.t device, VAL RE
 :
 --}}}
 --{{{  struct playerc_position2d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.position2d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_position2d_t].
+INT INLINE FUNCTION sizeof.playerc.position2d.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.position2d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_position2d_t].
+playerc.position2d.t INLINE FUNCTION "@" (VAL playerc.position2d.t ptr, VAL INT offset) IS
+  playerc.position2d.t ((INT ptr) + (sizeof.playerc.position2d.t () * offset)):
+--}}}
 --{{{  function playerc_position2d_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.position2d.t.info.set (VAL playerc.position2d.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_position2d_t_info_set].
@@ -20384,6 +23582,19 @@ INLINE PROC playerc.position2d.set.odom (VAL playerc.position2d.t device, VAL RE
 :
 --}}}
 --{{{  struct playerc_position3d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.position3d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_position3d_t].
+INT INLINE FUNCTION sizeof.playerc.position3d.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.position3d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_position3d_t].
+playerc.position3d.t INLINE FUNCTION "@" (VAL playerc.position3d.t ptr, VAL INT offset) IS
+  playerc.position3d.t ((INT ptr) + (sizeof.playerc.position3d.t () * offset)):
+--}}}
 --{{{  function playerc_position3d_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.position3d.t.info.set (VAL playerc.position3d.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_position3d_t_info_set].
@@ -20710,6 +23921,19 @@ INLINE PROC playerc.position3d.reset.odom (VAL playerc.position3d.t device, RESU
 :
 --}}}
 --{{{  struct playerc_power_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.power.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_power_t].
+INT INLINE FUNCTION sizeof.playerc.power.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.power.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_power_t].
+playerc.power.t INLINE FUNCTION "@" (VAL playerc.power.t ptr, VAL INT offset) IS
+  playerc.power.t ((INT ptr) + (sizeof.playerc.power.t () * offset)):
+--}}}
 --{{{  function playerc_power_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.power.t.info.set (VAL playerc.power.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_power_t_info_set].
@@ -20852,6 +24076,19 @@ INLINE PROC playerc.power.unsubscribe (VAL playerc.power.t device, RESULT INT re
 :
 --}}}
 --{{{  struct playerc_ptz_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.ptz.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_ptz_t].
+INT INLINE FUNCTION sizeof.playerc.ptz.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.ptz.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_ptz_t].
+playerc.ptz.t INLINE FUNCTION "@" (VAL playerc.ptz.t ptr, VAL INT offset) IS
+  playerc.ptz.t ((INT ptr) + (sizeof.playerc.ptz.t () * offset)):
+--}}}
 --{{{  function playerc_ptz_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.ptz.t.info.set (VAL playerc.ptz.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_ptz_t_info_set].
@@ -20994,6 +24231,19 @@ INLINE PROC playerc.ptz.set.control.mode (VAL playerc.ptz.t device, VAL INT mode
 :
 --}}}
 --{{{  struct playerc_ranger_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.ranger.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_ranger_t].
+INT INLINE FUNCTION sizeof.playerc.ranger.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.ranger.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_ranger_t].
+playerc.ranger.t INLINE FUNCTION "@" (VAL playerc.ranger.t ptr, VAL INT offset) IS
+  playerc.ranger.t ((INT ptr) + (sizeof.playerc.ranger.t () * offset)):
+--}}}
 --{{{  function playerc_ranger_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.ranger.t.info.set (VAL playerc.ranger.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_ranger_t_info_set].
@@ -21353,6 +24603,19 @@ INLINE PROC playerc.ranger.get.config (VAL playerc.ranger.t device, []REAL64 min
 :
 --}}}
 --{{{  struct playerc_sonar_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.sonar.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_sonar_t].
+INT INLINE FUNCTION sizeof.playerc.sonar.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.sonar.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_sonar_t].
+playerc.sonar.t INLINE FUNCTION "@" (VAL playerc.sonar.t ptr, VAL INT offset) IS
+  playerc.sonar.t ((INT ptr) + (sizeof.playerc.sonar.t () * offset)):
+--}}}
 --{{{  function playerc_sonar_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.sonar.t.info.set (VAL playerc.sonar.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_sonar_t_info_set].
@@ -21474,6 +24737,19 @@ INLINE PROC playerc.sonar.get.geom (VAL playerc.sonar.t device, RESULT INT retur
 :
 --}}}
 --{{{  struct playerc_wifi_link_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.wifi.link.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_wifi_link_t].
+INT INLINE FUNCTION sizeof.playerc.wifi.link.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.wifi.link.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_wifi_link_t].
+playerc.wifi.link.t INLINE FUNCTION "@" (VAL playerc.wifi.link.t ptr, VAL INT offset) IS
+  playerc.wifi.link.t ((INT ptr) + (sizeof.playerc.wifi.link.t () * offset)):
+--}}}
 --{{{  function playerc_wifi_link_t_mac_set
 #PRAGMA EXTERNAL "PROC C.playerc.wifi.link.t.mac.set (VAL playerc.wifi.link.t self, [32]BYTE mac) = 0"
 --* Foreign function [@text playerc_wifi_link_t_mac_set].
@@ -21598,6 +24874,19 @@ INLINE PROC delete.playerc.wifi.link.t (VAL playerc.wifi.link.t self)
 --}}}
 --}}}
 --{{{  struct playerc_wifi_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.wifi.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_wifi_t].
+INT INLINE FUNCTION sizeof.playerc.wifi.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.wifi.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_wifi_t].
+playerc.wifi.t INLINE FUNCTION "@" (VAL playerc.wifi.t ptr, VAL INT offset) IS
+  playerc.wifi.t ((INT ptr) + (sizeof.playerc.wifi.t () * offset)):
+--}}}
 --{{{  function playerc_wifi_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.wifi.t.info.set (VAL playerc.wifi.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_wifi_t_info_set].
@@ -21699,6 +24988,19 @@ INLINE PROC playerc.wifi.get.link (VAL playerc.wifi.t device, VAL INT link, RESU
 :
 --}}}
 --{{{  struct playerc_simulation_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.simulation.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_simulation_t].
+INT INLINE FUNCTION sizeof.playerc.simulation.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.simulation.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_simulation_t].
+playerc.simulation.t INLINE FUNCTION "@" (VAL playerc.simulation.t ptr, VAL INT offset) IS
+  playerc.simulation.t ((INT ptr) + (sizeof.playerc.simulation.t () * offset)):
+--}}}
 --{{{  function playerc_simulation_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.simulation.t.info.set (VAL playerc.simulation.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_simulation_t_info_set].
@@ -21799,6 +25101,19 @@ INLINE PROC playerc.simulation.get.property (VAL playerc.simulation.t device, []
 :
 --}}}
 --{{{  struct playerc_speech_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.speech.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_speech_t].
+INT INLINE FUNCTION sizeof.playerc.speech.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.speech.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_speech_t].
+playerc.speech.t INLINE FUNCTION "@" (VAL playerc.speech.t ptr, VAL INT offset) IS
+  playerc.speech.t ((INT ptr) + (sizeof.playerc.speech.t () * offset)):
+--}}}
 --{{{  function playerc_speech_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.speech.t.info.set (VAL playerc.speech.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_speech_t_info_set].
@@ -21864,6 +25179,19 @@ INLINE PROC playerc.speech.say (VAL playerc.speech.t device, []BYTE var0, RESULT
 :
 --}}}
 --{{{  struct playerc_speechrecognition_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.speechrecognition.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_speechrecognition_t].
+INT INLINE FUNCTION sizeof.playerc.speechrecognition.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.speechrecognition.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_speechrecognition_t].
+playerc.speechrecognition.t INLINE FUNCTION "@" (VAL playerc.speechrecognition.t ptr, VAL INT offset) IS
+  playerc.speechrecognition.t ((INT ptr) + (sizeof.playerc.speechrecognition.t () * offset)):
+--}}}
 --{{{  function playerc_speechrecognition_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.speechrecognition.t.info.set (VAL playerc.speechrecognition.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_speechrecognition_t_info_set].
@@ -21964,6 +25292,19 @@ INLINE PROC playerc.speechrecognition.unsubscribe (VAL playerc.speechrecognition
 :
 --}}}
 --{{{  struct playerc_rfidtag_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.rfidtag.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_rfidtag_t].
+INT INLINE FUNCTION sizeof.playerc.rfidtag.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.rfidtag.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_rfidtag_t].
+playerc.rfidtag.t INLINE FUNCTION "@" (VAL playerc.rfidtag.t ptr, VAL INT offset) IS
+  playerc.rfidtag.t ((INT ptr) + (sizeof.playerc.rfidtag.t () * offset)):
+--}}}
 --{{{  function playerc_rfidtag_t_type_set
 #PRAGMA EXTERNAL "PROC C.playerc.rfidtag.t.type.set (VAL playerc.rfidtag.t self, VAL INT type) = 0"
 --* Foreign function [@text playerc_rfidtag_t_type_set].
@@ -22022,6 +25363,19 @@ INLINE PROC delete.playerc.rfidtag.t (VAL playerc.rfidtag.t self)
 --}}}
 --}}}
 --{{{  struct playerc_rfid_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.rfid.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_rfid_t].
+INT INLINE FUNCTION sizeof.playerc.rfid.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.rfid.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_rfid_t].
+playerc.rfid.t INLINE FUNCTION "@" (VAL playerc.rfid.t ptr, VAL INT offset) IS
+  playerc.rfid.t ((INT ptr) + (sizeof.playerc.rfid.t () * offset)):
+--}}}
 --{{{  function playerc_rfid_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.rfid.t.info.set (VAL playerc.rfid.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_rfid_t_info_set].
@@ -22108,6 +25462,19 @@ INLINE PROC playerc.rfid.unsubscribe (VAL playerc.rfid.t device, RESULT INT retu
 :
 --}}}
 --{{{  struct playerc_pointcloud3d_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.pointcloud3d.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_pointcloud3d_t].
+INT INLINE FUNCTION sizeof.playerc.pointcloud3d.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.pointcloud3d.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_pointcloud3d_t].
+playerc.pointcloud3d.t INLINE FUNCTION "@" (VAL playerc.pointcloud3d.t ptr, VAL INT offset) IS
+  playerc.pointcloud3d.t ((INT ptr) + (sizeof.playerc.pointcloud3d.t () * offset)):
+--}}}
 --{{{  function playerc_pointcloud3d_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.pointcloud3d.t.info.set (VAL playerc.pointcloud3d.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_pointcloud3d_t_info_set].
@@ -22194,6 +25561,19 @@ INLINE PROC playerc.pointcloud3d.unsubscribe (VAL playerc.pointcloud3d.t device,
 :
 --}}}
 --{{{  struct playerc_imu_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.imu.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_imu_t].
+INT INLINE FUNCTION sizeof.playerc.imu.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.imu.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_imu_t].
+playerc.imu.t INLINE FUNCTION "@" (VAL playerc.imu.t ptr, VAL INT offset) IS
+  playerc.imu.t ((INT ptr) + (sizeof.playerc.imu.t () * offset)):
+--}}}
 --{{{  function playerc_imu_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.imu.t.info.set (VAL playerc.imu.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_imu_t_info_set].
@@ -22350,6 +25730,19 @@ INLINE PROC playerc.imu.reset.orientation (VAL playerc.imu.t device, VAL INT val
 :
 --}}}
 --{{{  struct playerc_wsn_t
+--{{{  pointer arithmetic
+#PRAGMA EXTERNAL "PROC C.sizeof.playerc.wsn.t (RESULT INT size) = 0"
+--* Get size of foreign structure [@text playerc_wsn_t].
+INT INLINE FUNCTION sizeof.playerc.wsn.t ()
+  INT size:
+  VALOF
+    C.sizeof.playerc.wsn.t (size)
+    RESULT size
+:
+--* Index a pointer to foreign structure [@text playerc_wsn_t].
+playerc.wsn.t INLINE FUNCTION "@" (VAL playerc.wsn.t ptr, VAL INT offset) IS
+  playerc.wsn.t ((INT ptr) + (sizeof.playerc.wsn.t () * offset)):
+--}}}
 --{{{  function playerc_wsn_t_info_set
 #PRAGMA EXTERNAL "PROC C.playerc.wsn.t.info.set (VAL playerc.wsn.t self, VAL playerc.device.t info) = 0"
 --* Foreign function [@text playerc_wsn_t_info_set].
