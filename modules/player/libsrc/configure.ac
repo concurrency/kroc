@@ -23,9 +23,6 @@ old_LIBS="$LIBS"
 LIBS="$LIBS $PLAYER_LIBS"
 AC_CHECK_FUNC(playerc_client_connect, , [build_occplayer=no])
 LIBS="$old_LIBS"
-if test "x$HAVE_SWIG_OCCAM" = "xno"; then
-	build_occplayer=no
-fi
 if test "x$build_occplayer" = "xno"; then
 	build_player=no
 fi
