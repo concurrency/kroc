@@ -22,14 +22,16 @@
 #INCLUDE "graphics3d.module"
 #INCLUDE "maths.module"
 
-PROC cog.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, nteeth, colour, VAL REAL32 tsize, chs, tx, ty, tz, velocity) --{{{
-  REAL32 i.r, o.r, i.a, o.a:
+PROC cog.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, nteeth, colour, VAL REAL32 tsize, chs, tx, ty, tz, velocity, cadj) --{{{
+  REAL32 i.r, o.r, i.a, o.a, t.a:
   SEQ
     o.r := (((REAL32 ROUND nteeth) * 3.0) * tsize) / (2.0 * PI)
     o.a := ASIN (tsize / o.r)
-
     i.r := o.r - tsize
     i.a := ASIN ((tsize * 1.3) / i.r)
+
+    -- angle that each tooth occupies
+    t.a := (2.0 * PI) / (REAL32 ROUND nteeth)
 
     CHAN INT trigger:
     CHAN MOBILE []G3D.POINT3 gp1, gp2, gp3, gp4:
@@ -62,18 +64,19 @@ PROC cog.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, nteeth, co
         psc.ctl ! set.zcolour; TRUE
         pgn.ctl ! set.face.colours; [colour,colour,colour,colour,colour,colour,colour,colour,colour,colour]
         rot1.ctl ! set.mode; G3D.ROTATE.MODE.Y
+        rot1.ctl ! set.angle; (t.a * cadj)
         rot1.ctl ! add.increment; velocity
         rot2.ctl ! set.mode; G3D.ROTATE.MODE.X
         --rot2.ctl ! set.angle; -(PI / 4.0)
         rot2.ctl ! add.increment; -0.01
 :
 --}}}
-PROC cog.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT nteeth, colour, VAL REAL32 tsize, chs, tx, ty, tz, velocity) --{{{
+PROC cog.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT nteeth, colour, VAL REAL32 tsize, chs, tx, ty, tz, velocity, cadj) --{{{
   G3D.RENDER.ENGINE! rlink:
   G3D.RENDER.ENGINE? rsvr:
   SEQ
     rsvr, rlink := MOBILE G3D.RENDER.ENGINE
-    FORK cog.network (rsvr?, width, height, nteeth, colour, tsize, chs, tx, ty, tz, velocity)
+    FORK cog.network (rsvr?, width, height, nteeth, colour, tsize, chs, tx, ty, tz, velocity, cadj)
     new.link ! rlink
 :
 --}}}
@@ -92,9 +95,12 @@ PROC g3dcog2 (CHAN BYTE kyb?, scr!) --{{{
       INITIAL REAL32 sratio IS (0.03 * 12.0):
       SEQ
         tmr.ctl ! set.fps; 5
-        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 8, #00FFFF00, 1.0, 1.0, -4.0, 0.0, 0.0, sratio / 8.0)
-        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 6, #0000FFFF, 1.0, 3.0, 2.0, 0.0, 0.0, -(sratio / 6.0))
-        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 10, #00FF00FF, 1.0, 1.0, 2.0, 2.0, 0.0, -(sratio / 6.0))
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 8,  #00FFFF00, 1.0, 1.0, -4.0,  -3.0, 0.0, sratio / 8.0, 0.0)
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 6,  #0000FFFF, 1.0, 3.0, 2.0,   -3.0, 0.0, -(sratio / 6.0), 0.0)
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 12, #000000FF, 0.7, 1.0, 2.0,   -1.0, 0.0, -(sratio / 6.0), 0.0)
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 6,  #00FF0000, 0.7, 3.0, -3.2,  0.0, 2.2, sratio / 3.0, 1.0)
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 6,  #0000FF00, 0.7, 1.0, -1.2,  1.0, -1.0, -(sratio / 3.0), 0.5)
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 18, #00FF00FF, 0.7, 1.0, 5.1,   1.0, -5.0, sratio / 9.0, 0.0)
         tmr.ctl ! set.fps; 60
 :
 --}}}
