@@ -19,8 +19,8 @@
 
 --** @module graphics3d
 
--- Note: the general [serial] techniques/algorithms used in this library
--- are based on code from lightsrc.cpp and glenz.cpp by Marcus Lindblom.
+-- Note: the general [serial] polygon scanline and render techniques/algorithms used
+-- in this library are based on code from lightsrc.cpp and glenz.cpp by Marcus Lindblom.
 
 #INCLUDE "course.module"
 #INCLUDE "maths.module"
@@ -82,6 +82,98 @@ PROC g3d.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 :
 --}}}
 
+--{{{  PROC flatpolypoints.generator (CHAN INT trigger?, VAL INT npoints, VAL REAL32 rad, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+--* Flat 3D polygon generator.
+-- Generates a regular N-sided polygon in 3D space (laying down flat by default).
+--
+-- @param trigger Trigger channel.
+-- @param npoints Number of points.
+-- @param rad Radius (of points from centre).
+-- @param out Generated points.
+-- @param ctrl Control channel.
+--
+PROC flatpolypoints.generator (CHAN INT trigger?, VAL INT npoints, VAL REAL32 rad, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+  MOBILE []G3D.POINT3 cpnts:
+  INT npnts:
+  REAL32 height:
+
+  PROC reset () --{{{
+    SEQ
+      npnts := (npoints * 2) + 2
+
+      cpnts := MOBILE [npnts]G3D.POINT3
+
+      #PRAGMA DEFINED cpnts
+
+      INITIAL REAL32 apt IS (PI * 2.0) / (REAL32 ROUND npoints):
+      SEQ i = 0 FOR npoints
+        REAL32 aoffs:
+        SEQ
+          aoffs := apt * (REAL32 ROUND i)
+          cpnts[i] := [rad * SIN (aoffs), -(height / 2.0), rad * COS (aoffs)]
+          cpnts[i+npoints] := cpnts[i]
+          cpnts[i+npoints][y] := height / 2.0
+
+      -- last two points are top and bottom centres
+      cpnts[npnts - 2] := [0.0, -(height / 2.0), 0.0]
+      cpnts[npnts - 1] := [0.0, height / 2.0, 0.0]
+
+  :
+  --}}}
+
+  SEQ
+    --{{{  initialise
+    height := 1.0
+    reset ()
+
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      SEQ
+        PRI ALT
+          ctrl ? CASE
+            reset
+              reset ()
+            [3]REAL32 scale:
+            add.scale; scale
+              SEQ i = 0 FOR npnts
+                SEQ
+                  cpnts[i][x] := cpnts[i][x] * scale[0]
+                  cpnts[i][y] := cpnts[i][y] * scale[1]
+                  cpnts[i][z] := cpnts[i][z] * scale[2]
+            [3]REAL32 scale:
+            set.scale; scale
+              SEQ
+                height := 1.0
+                reset ()
+                SEQ i = 0 FOR npnts
+                  SEQ
+                    cpnts[i][x] := cpnts[i][x] * scale[0]
+                    cpnts[i][y] := cpnts[i][y] * scale[1]
+                    cpnts[i][z] := cpnts[i][z] * scale[2]
+            [3]REAL32 trans:
+            add.trans; trans
+              SEQ i = 0 FOR npnts
+                SEQ
+                  cpnts[i][x] := cpnts[i][x] + trans[0]
+                  cpnts[i][y] := cpnts[i][y] + trans[1]
+                  cpnts[i][z] := cpnts[i][z] + trans[2]
+            [3]REAL32 trans:
+            set.trans; trans
+              SEQ
+                height := 1.0
+                reset ()
+                SEQ i = 0 FOR npnts
+                  SEQ
+                    cpnts[i][x] := cpnts[i][x] + trans[0]
+                    cpnts[i][y] := cpnts[i][y] + trans[1]
+                    cpnts[i][z] := cpnts[i][z] + trans[2]
+          INT any:
+          trigger ? any
+            out ! CLONE cpnts
+:
+--}}}
 --{{{  PROC cogpoints.generator (...)
 --* Cog points generator.
 -- Generates a stream of points that represent a cog in 3D space (laying down flat by default).
@@ -162,17 +254,31 @@ PROC cogpoints.generator (CHAN INT trigger?, VAL INT nteeth, VAL REAL32 i.rad, o
                   cpnts[i][z] := cpnts[i][z] * scale[2]
             [3]REAL32 scale:
             set.scale; scale
-              SEQ i = 0 FOR npoints
-                SEQ
-                  cpnts[i][x] := cpnts[i][x] * scale[0]
-                  cpnts[i][y] := cpnts[i][y] * scale[1]
-                  cpnts[i][z] := cpnts[i][z] * scale[2]
+              SEQ
+                height := 1.0
+                reset ()
+                SEQ i = 0 FOR npoints
+                  SEQ
+                    cpnts[i][x] := cpnts[i][x] * scale[0]
+                    cpnts[i][y] := cpnts[i][y] * scale[1]
+                    cpnts[i][z] := cpnts[i][z] * scale[2]
             [3]REAL32 trans:
             add.trans; trans
-              SKIP
+              SEQ i = 0 FOR npoints
+                SEQ
+                  cpnts[i][x] := cpnts[i][x] + trans[0]
+                  cpnts[i][y] := cpnts[i][y] + trans[1]
+                  cpnts[i][z] := cpnts[i][z] + trans[2]
             [3]REAL32 trans:
             set.trans; trans
-              SKIP
+              SEQ
+                height := 1.0
+                reset ()
+                SEQ i = 0 FOR npoints
+                  SEQ
+                    cpnts[i][x] := cpnts[i][x] + trans[0]
+                    cpnts[i][y] := cpnts[i][y] + trans[1]
+                    cpnts[i][z] := cpnts[i][z] + trans[2]
           INT any:
           trigger ? any
             out ! CLONE cpnts
@@ -450,6 +556,7 @@ PROC fbypoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, CHAN
               SKIP
 :
 --}}}
+
 --{{{  PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL ctrl?)
 --* Point rotator.
 -- Rotates an arbitrary set of points around the origin, such that it passes
@@ -622,6 +729,45 @@ PROC points3d.translate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.TRN.CONTRO
             out ! blk
 :
 --}}}
+--{{{  PROC points3d.scale (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.SCL.CONTROL ctrl?)
+--* Point scaler.
+-- Scales an arbitrary set of points in 3D space.
+--
+-- @param in 3D points in.
+-- @param out 3D points out.
+-- @param ctrl Control channel.
+--
+PROC points3d.scale (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.SCL.CONTROL ctrl?)
+  [3]REAL32 scale:
+
+  PROC reset ()
+    SEQ
+      scale := [1.0, 1.0, 1.0]
+  :
+
+  SEQ
+    reset ()
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+          set.3dscale; scale
+            SKIP
+        MOBILE []G3D.POINT3 blk:
+        in ? blk
+          SEQ
+            SEQ i = 0 FOR SIZE blk
+              SEQ
+                blk[i][x] := blk[i][x] * scale[0]
+                blk[i][y] := blk[i][y] * scale[1]
+                blk[i][z] := blk[i][z] * scale[2]
+            out ! blk
+:
+--}}}
+
 --{{{  PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 out!, CHAN G3D.PRJ.CONTROL ctrl?, VAL INT width, height)
 --* Projects 3D points into 2D, preserves Z information.
 -- Maps a set of 3D points down into a set of 2D points, preserving the Z
@@ -697,9 +843,161 @@ PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 
             out ! p2d
 :
 --}}}
+
+--{{{  PROC flatpolify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--* Generates flat polygons from poly-points.
+-- Expects to receive ((npoints * 2) + 2) points at a time, and from these generates a set of polygons that
+-- represents a flat 3D regular polygon.
+--
+-- @param in Points in.
+-- @param npoints Number of polygon points.
+-- @param out Polygons out.
+-- @param ctrl Control channel.
+--
+PROC flatpolify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+
+  PROC set.poly.point (G3D.POLY p, VAL INT pi, VAL G3D.POINT2.3 pnt) --{{{
+    SEQ
+      p[x][pi] := pnt[x]
+      p[y][pi] := pnt[y]
+      p[z][pi] := pnt[z]
+  :
+  --}}}
+
+  INITIAL INT lpts IS (npoints * 2):
+  INITIAL INT bpnts IS npoints:
+  INITIAL BOOL backfaces IS FALSE:
+  [3]INT pixmap:
+  [3][4]INT polymap:
+  VAL INT BSIDE IS #00010000:       -- bit
+  VAL INT LAST IS #00020000:        -- bit
+  SEQ
+    --{{{  initialise
+    pixmap := [#00C00000,#0000C000,#000000C0]
+
+    SEQ
+      polymap[0] := [0, 1, BSIDE + 1, BSIDE]
+      polymap[1] := [0, LAST, 1, -1]
+      polymap[2] := [BSIDE, BSIDE + 1, LAST + 1, -1]
+    --}}}
+
+    INT FUNCTION compute.poly.normal (VAL G3D.POLY poly) --{{{
+      INT r:
+      VALOF
+        IF
+          poly[npoints] = 4
+            r := ((poly[y][3] MINUS poly[y][0]) TIMES (poly[x][1] MINUS poly[x][0])) MINUS
+                  ((poly[y][1] MINUS poly[y][0]) TIMES (poly[x][3] MINUS poly[x][0]))
+          poly[npoints] = 3
+            r := ((poly[y][2] MINUS poly[y][0]) TIMES (poly[x][1] MINUS poly[x][0])) MINUS
+                  ((poly[y][1] MINUS poly[y][0]) TIMES (poly[x][2] MINUS poly[x][0]))
+          TRUE
+            r := 0
+        RESULT r
+    :
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset --{{{
+            SEQ
+              backfaces := FALSE
+          --}}}
+          BOOL trimap:
+          set.trimap; trimap --{{{
+            SKIP
+          --}}}
+          set.backfaces; backfaces --{{{
+            SKIP
+          --}}}
+          INT fn, col:
+          set.face.colour; fn; col --{{{
+            IF
+              (fn >= 0) AND (fn < (SIZE pixmap))
+                pixmap[fn] := col
+              TRUE
+                SKIP
+          --}}}
+          MOBILE []INT cols:
+          set.face.colours; cols --{{{
+            INT l:
+            SEQ
+              l := SIZE cols
+              IF
+                l >= (SIZE pixmap)
+                  l := SIZE pixmap
+                TRUE
+                  SKIP
+              SEQ i = 0 FOR l
+                pixmap[i] := cols[i]
+          --}}}
+
+        MOBILE []G3D.POINT2.3 pnts:
+        in ? pnts
+          IF
+            (SIZE pnts) <> ((npoints * 2) + 2)
+              SKIP
+            TRUE
+              MOBILE []G3D.POLY polys:
+              INT npoly:
+              SEQ
+                npoly := npoints * 3
+
+                polys := MOBILE [npoly]G3D.POLY
+
+                SEQ i = 0 FOR npoints
+                  --{{{  for each bit, create a set of 3 polygons
+                  INT pstart:
+                  INT nstart:
+                  SEQ
+                    pstart := i * 3         -- polygon start for this tooth
+                    nstart := i             -- point start for this tooth
+
+                    SEQ p = 0 FOR 3
+                      INT np, norm:
+                      SEQ
+                        IF
+                          polymap[p][3] = (-1)
+                            np := 3
+                          TRUE
+                            np := 4
+
+                        SEQ j = 0 FOR np
+                          INT v:
+                          SEQ
+                            v := polymap[p][j]
+                            IF
+                              (v /\ BSIDE) <> 0
+                                v := ((nstart + (v /\ (~BSIDE))) \ bpnts) + bpnts
+                              (v /\ LAST) <> 0
+                                v := (v /\ (~LAST)) + lpts
+                              TRUE
+                                v := (nstart + (v /\ (~BSIDE))) \ bpnts
+
+                            set.poly.point (polys[pstart + p], j, pnts[v])
+
+                        polys[pstart + p][npoints] := np
+                        norm := compute.poly.normal (polys[pstart + p])
+
+                        polys[pstart + p][norm] := norm
+                        polys[pstart + p][pixel] := pixmap[p]
+                        
+                        IF
+                          (NOT backfaces) AND (norm >= 0)
+                            polys[pstart + p][npoints] := 0
+                          TRUE
+                            SKIP
+
+                  --}}}
+
+                out ! polys
+:
+--}}}
 --{{{  PROC cogify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
 --* Generates cog polygons from cog-points.
--- Expects to receive (nteeth * 8) points at a time, and from these generates a
+-- Expects to receive ((nteeth * 8) + 2) points at a time, and from these generates a
 -- set of polygons that represent a solid cog.
 --
 -- @param in Points in.
@@ -743,7 +1041,7 @@ PROC cogify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT nteeth, CHAN MOBILE 
 
     --}}}
 
-    INT FUNCTION compute.poly.normal (VAL G3D.POLY poly)
+    INT FUNCTION compute.poly.normal (VAL G3D.POLY poly) --{{{
       INT r:
       VALOF
         IF
@@ -757,6 +1055,7 @@ PROC cogify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT nteeth, CHAN MOBILE 
             r := 0
         RESULT r
     :
+    --}}}
 
     INITIAL BOOL running IS TRUE:
     WHILE running
@@ -1142,6 +1441,7 @@ PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY ou
                 out ! polys
 :
 --}}}
+
 --{{{  PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, SHARED CHAN BYTE debug!, VAL INT width, height)
 --* Converts polygons to scan-line data.
 -- @private

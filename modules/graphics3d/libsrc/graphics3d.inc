@@ -142,6 +142,13 @@ PROTOCOL G3D.TRN.CONTROL
     set.3dshift; [3]REAL32    --* Set 3D translation.
 :
 
+--* Points scaler control.
+PROTOCOL G3D.SCL.CONTROL
+  CASE
+    reset                     --* Reset scale to default state (1, 1, 1)
+    set.3dscale; [3]REAL32    --* Set 3D scaling.
+:
+
 --* Polygon points 3D-to-2D projection control.
 PROTOCOL G3D.PRJ.CONTROL
   CASE
