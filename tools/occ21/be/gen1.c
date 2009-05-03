@@ -890,6 +890,7 @@ printf ("tdespecification..()\n");
 		{
 			treenode *t = DNameOf (tptr);
 
+			new_occam_line (tptr, TRUE, TRUE, FALSE);
 			if (TagOf (t) == S_LIST) {
 				for (; !EndOfList (t); t = NextItem (t)) {
 					tdedecl (ThisItem (t));
@@ -912,7 +913,7 @@ printf ("tdespecification..()\n");
 					/* need to de-scope this back into the RHS */
 					/* int i, ndim; */
 
-					new_occam_line (tptr, TRUE, TRUE, TRUE);
+					new_occam_line (tptr, TRUE, TRUE, FALSE);
 					/* ndim = dynmobiledimensioncount (lhstype); */
 #if 0
 fprintf (stderr, "gen1: tdespecification: dynamic MOBILE array abbreviation.  ndim = %d, lhstype = ", ndim);
@@ -923,7 +924,7 @@ printtreenl (stderr, 4, lhstype);
 					genmobileunpack ((DValOf (tptr)), FALSE, TRUE);
 				} else if (isdynmobilechantype (nptr)) {
 					/* de-scope back to the RHS */
-					new_occam_line (tptr, TRUE, TRUE, TRUE);
+					new_occam_line (tptr, TRUE, TRUE, FALSE);
 #if 0
 fprintf (stderr, "gen1: tdespecification(): channel-type abbreviation.  rhstype = ");
 printtreenl (stderr, 4, rhstype);
@@ -3576,6 +3577,7 @@ PUBLIC void tprocess (treenode * tptr)
 			/* .. generate code to initialise the barrier hanging off here */
 			{
 				treenode *b_nptr = DNameOf (CBodyOf (tptr));
+
 				/* barrier is initialised here, but it could be done in tdecl() as well */
 				/*{{{  initialise the barrier*/
 				gencomment0 ("{{{  fork-setup");
