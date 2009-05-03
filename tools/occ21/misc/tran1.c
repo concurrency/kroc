@@ -4465,7 +4465,7 @@ fprintf (stderr, "trans: FORKING: b_nptr (usecount %d) = ", NVUseCountOf (b_nptr
 printtreenl (stderr, 4, b_nptr);
 #endif
 					if (NVUseCountOf (b_nptr) == 0) {
-						/* yup, unused.  update *tptr */
+						/* yes, unused.  update *tptr */
 						*tptr = DBodyOf (CBodyOf (t));
 					} else {
 						tptr = CBodyAddr (t);
