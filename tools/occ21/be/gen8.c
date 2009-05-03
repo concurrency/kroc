@@ -1873,22 +1873,6 @@ printtreenl (stderr, 4, tptr);
 			genprimary (I_STL, FORK_SETUP_TEMP_VS);
 		}
 		/*}}}*/
-		#if 0
-		/*{{{  save barrier pointer in new workspace*/
-		if (IForkOf (tptr)) {
-			loadname (DNameOf (CBodyOf (IForkOf (tptr))), 0);
-		} else {
-			loadfb ();
-			/* gensecondary (I_NULL); */
-		}
-		genprimary (I_LDL, FORK_SETUP_TEMP);
-		loadconstant ((alloc_ws_slots - MIN_FORK_SLOTS) + FORK_BARRIER);
-		gensecondary (I_PROC_MT_COPY);
-		#endif
-		#if 0
-		genprimary (I_STNL, FORK_BARRIER);
-		#endif
-		/*}}}*/
 #ifdef MOBILES
 		/*{{{  if mobilespace required, sort out FORK_SETUP_TEMP_MS */
 		if (alloc_ms_slots) {
@@ -2297,7 +2281,7 @@ printtreenl (stderr, 4, *(paramtable[i].pparamexp));
 
 				if (ptype & PROC_FORKED) {
 					/* slot = ((1 - MIN_FORK_SLOTS) - nparams) + i; */
-					slot += alloc_ws_slots - MIN_FORK_SLOTS;
+					slot += (alloc_ws_slots - MIN_FORK_SLOTS);
 				} else if (ptype & PROC_DYNCALL) {
 					slot += (1 - MIN_DYNCALL_SLOTS);
 				} else if (ptype & PROC_REC) {
@@ -2427,6 +2411,9 @@ gencomment1 ("gen non-register param %d..", i);
 	/*{{{  add a fork barrier if required*/
 	if ((ptype & PROC_FORKED) && (fb_param_slot == -255)) {
 		gencomment0 ("{{{  add hidden fork barrier");
+#if 0
+fprintf (stderr, "gen8/tinstance(): adding hidden fork barrier, IForkOf (tptr) @%p\n", IForkOf (tptr));
+#endif
 		if (IForkOf (tptr)) {
 			loadname (DNameOf (CBodyOf (IForkOf (tptr))), 0);
 		} else {

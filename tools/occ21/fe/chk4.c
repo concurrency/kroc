@@ -2371,6 +2371,7 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 						}
 					}
 					current_params = NULL;	/* bug TS/1910 26/01/93 */
+					forking_node = saved_forking_node;
 					if ((*tptr != NULL) && (TagOf (*tptr) == S_VALOF)) {
 						/*{{{  do checking */
 						/* Scope and check body and result list here so we can include the
@@ -2389,7 +2390,6 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 						scopeandcheck (tptr);
 						descopenames (namestackmarker);
 					}
-					forking_node = saved_forking_node;
 					return;
 				}
 				/*}}}  */
@@ -2613,9 +2613,15 @@ printtreenl (stderr, 4, extbars);
 
 						forking_node = t;
 						forking_lexlevel = check_lexlevel;
+#if 0
+fprintf (stderr, "scopeandcheck(): FORKING: set forking_node to %p before body-check\n", t);
+#endif
 						/* scope-and-check contained process */
 						scopeandcheck (CBodyAddr (t));
 
+#if 0
+fprintf (stderr, "scopeandcheck(): FORKING: after body check, forking_node is %p\n", t);
+#endif
 						forking_node = old_forking_node;
 						forking_lexlevel = old_forking_lexlevel;
 
@@ -3335,6 +3341,9 @@ fprintf (stderr, "scopeandcheck: INSTANCENODE: param checking; ctvar = NULL\n");
 
 					/* check that a FORK'd PROC is within a FORKING */
 					if ((tag == S_PINSTANCE) && IForkedOf (t)) {
+#if 0
+fprintf (stderr, "scopeandcheck(): INSTANCE, IForkedOf set, forking_node = %p\n", forking_node);
+#endif
 						if (!forking_node && 0 /* FIXME: compiling for dynamic-process library */) {
 							chkerr (CHK_NO_LOCAL_FORKING, chklocn);
 						} else if (!forking_node) {
