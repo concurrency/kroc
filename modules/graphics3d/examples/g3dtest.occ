@@ -82,7 +82,9 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
           glenz.cog.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 10, 2.0, 3.0, (PI / 36.0) * 5.0, (PI / 36.0) * 2.0)
 
       CLAIM rre!
-        normal.network2.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+        SEQ
+          normal.network2.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+          zdepth.flatpoly.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 11, 2.0)
 
       TIMER tim:
       INT t:

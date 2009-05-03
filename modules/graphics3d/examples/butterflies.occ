@@ -21,7 +21,7 @@
 #INCLUDE "sdlraster.module"
 #INCLUDE "graphics3d.module"
 
-VAL INT N.BUTTERFLIES IS 400:
+VAL INT N.BUTTERFLIES IS 200:
 
 --{{{  PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
 --* Implements a butterfly that crosses the screen, starts in a random location.
