@@ -204,12 +204,13 @@ static void bsc_cleanup_job (void *arg)
 {
 	bsc_batch_t *job = (bsc_batch_t *) arg;
 
+	if (job->bsc.killable) {
+		atw_set ((word *) job->bsc.ws_arg[0], 0);
+	}
+	
+	job->wptr[Link]		= NotProcess_p;
 	job->wptr[Priofinity] 	= job->priofinity;
 	job->wptr[Iptr] 	= job->bsc.iptr;
-	
-	if (job->bsc.adjust != 0) {
-		atw_set ((word *) job->bsc.ws_arg[-1], 0);
-	}
 
 	schedule_batch ((batch_t *) job);
 
@@ -262,7 +263,7 @@ static void *bsc_thread (void *arg)
 			pthread_mutex_unlock (&(pool->lock));
 			
 			/* execute call */
-			if (job->bsc.adjust == 0) {
+			if (!job->bsc.killable) {
 				weak_write_barrier ();
 				job->bsc.func ((word *) job->bsc.ws_arg);
 				weak_write_barrier ();
@@ -270,27 +271,26 @@ static void *bsc_thread (void *arg)
 				word temp;
 
 				job->bsc.thread = (word) &self;
-				job->bsc.ws_arg = job->bsc.ws_arg + job->bsc.adjust;
 				pthread_cleanup_push (bsc_cleanup_prepool, pool);
 				pthread_cleanup_push (bsc_cleanup_job, job);
 
 				weak_write_barrier ();
 				
 				/* start: cancellable region (after swap) */
-				temp = atw_swap ((word *) job->bsc.ws_arg[-1], (word) job);
+				temp = atw_swap ((word *) job->bsc.ws_arg[0], (word) job);
 				if (temp == 0 || temp == 2) {
 					weak_write_barrier ();
-					job->bsc.func ((word *) job->bsc.ws_arg);
+					job->bsc.func ((word *) (&(job->bsc.ws_arg[1])));
 					weak_write_barrier ();
 					
-					if (!atw_cas ((word *) job->bsc.ws_arg[-1], (word) job, 0)) {
+					if (!atw_cas ((word *) job->bsc.ws_arg[0], (word) job, 0)) {
 						/* we got cancelled - shouldn't be here */
 						pthread_testcancel ();
 						BMESSAGE ("killable bsyscall reached bad place.\n");
 						pthread_exit (NULL);
 					}
 				} else {
-					temp = atw_swap ((word *) job->bsc.ws_arg[-1], 2);
+					temp = atw_swap ((word *) job->bsc.ws_arg[0], 2);
 					if (temp != (word) job) {
 						/* we got cancelled - shouldn't be here */
 						pthread_testcancel ();

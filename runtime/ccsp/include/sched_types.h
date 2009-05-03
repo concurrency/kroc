@@ -125,7 +125,7 @@ struct _bsc_job_t {
 	word		*ws_arg;			/* argument to func */
 	void		(*func)(word *);		/* function to execute */
 	word		iptr;				/* return address */
-	int		adjust;				/* workspace adjustment */
+	int		killable;			/* killable call */
 	word		thread;				/* pthread pointer */
 } _PACK_STRUCT;
 

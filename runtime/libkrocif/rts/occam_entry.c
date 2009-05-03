@@ -75,21 +75,31 @@ int do_print_memstats = 0;
 #define WS_SEP			32
 #define VS_SEP			64
 
+/*{{{  void occam_parse_tlp (char **tlp_desc)*/
+void occam_parse_tlp (char **tlp_desc)
+{
+	int i;
+	for (i = 0; tlp_desc[i] != NULL; ++i) {
+		const char *name = (const char *) tlp_desc[i];
+		
+		if (strcmp (name, "keyboard?") == 0) {
+			using_keyboard = 1;
+		} else if (strcmp (name, "screen!") == 0) {
+			using_screen = 1;
+		} else if (strcmp (name, "error!") == 0) {
+			using_error = 1;
+		}
+	}
+}
+/*}}}*/
+
 /*{{{  int occam_uses_keyboard (void)*/
 /*
  *	returns non-zero if the keyboard channel was specified at the top-level
  */
 int occam_uses_keyboard (void)
 {
-	switch (_occam_tlp_iface & ~TLP_SHAREDMASK & ~TLP_EFLAGMASK) {		/* mask out shared -- and EFLAGs */
-	case TLP_KYB:
-	case TLP_KYBSCR:
-	case TLP_KYBERR:
-	case TLP_KYBSCRERR:
-		using_keyboard = 1;
-		return 1;
-	}
-	return 0;
+	return using_keyboard;
 }
 /*}}}*/
 
@@ -179,13 +189,10 @@ void occam_entry (char **tlp_desc,
 	for (i = 0; tlp_desc[i] != NULL; ++i) {
 		const char *name = (const char *) tlp_desc[i];
 		if (strcmp (name, "keyboard?") == 0) {
-			using_keyboard = 1;
 			Wptr[wspptr++] = (word) kbd_chan_addr ();
 		} else if (strcmp (name, "screen!") == 0) {
-			using_screen = 1;
 			Wptr[wspptr++] = (word) scr_chan_addr ();
 		} else if (strcmp (name, "error!") == 0) {
-			using_error = 1;
 			Wptr[wspptr++] = (word) err_chan_addr ();
 		} else if (strcmp (name, "VSPTR") == 0) {
 			Wptr[wspptr++] = (word) vs;

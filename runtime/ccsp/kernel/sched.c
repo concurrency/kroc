@@ -3534,16 +3534,15 @@ void ccsp_mt_release (void *ptr)
 /*{{{  blocking system calls */
 #if !defined(RMOX_BUILD) && defined(BLOCKING_SYSCALLS)
 /*{{{  static word *kernel_bsc_dispatch (...)*/
-static word *kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, word *Wptr, void *b_func, void *b_param, int adjust)
+static word *kernel_bsc_dispatch (sched_t *sched, word *Wptr, void *b_func, void *b_param, int killable)
 {
 	bsc_batch_t *job;
 
 	#ifdef BLOCKING_DEBUG
 	{
-		int dummy, i;
-		(void)&dummy;
-		MESSAGE ("kernel_bsc_dispatch: return_address = %p, b_param = %p, b_func = %p, Wptr = %p, adjust = %d\n",
-			(void *)return_address, (void *)b_param, (void *)b_func, (void *)Wptr, adjust);
+		int i;
+		MESSAGE ("kernel_bsc_dispatch: b_param = %p, b_func = %p, Wptr = %p, killable = %d\n",
+			(void *)b_param, (void *)b_func, (void *)Wptr, killable);
 		for (i=6; i >= -5; i-=2) {
 			MESSAGE ("\tWptr[%-2d] @ (0x%8.8x) = 0x%8.8x", i, (unsigned int)&(Wptr[i]), (unsigned int)Wptr[i]);
 			MESSAGE ("\tWptr[%-2d] @ (0x%8.8x) = 0x%8.8x\n", i-1, (unsigned int)&(Wptr[i-1]), (unsigned int)Wptr[i-1]);
@@ -3551,8 +3550,6 @@ static word *kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, w
 	}
 	#endif
 	
-	Wptr[Link]	= NotProcess_p;
-
 	job 		= (bsc_batch_t *) allocate_batch (sched);
 	job->wptr 	= Wptr;
 	job->bptr 	= Wptr;
@@ -3560,8 +3557,8 @@ static word *kernel_bsc_dispatch (sched_t *sched, unsigned int return_address, w
 	job->priofinity = sched->priofinity;
 	job->bsc.ws_arg = (word *) b_param;
 	job->bsc.func	= (void (*)(word *)) b_func;
-	job->bsc.iptr	= (word) return_address;
-	job->bsc.adjust	= adjust;
+	job->bsc.iptr	= (word) job->bsc.ws_arg[-1];
+	job->bsc.killable = killable;
 
 	bsyscall_dispatch (job);
 	
@@ -3588,7 +3585,7 @@ K_CALL_DEFINE_Y_2_0 (b_dispatch)
 	K_CALL_PARAMS_2 (b_func, b_param);
 	ENTRY_TRACE (Y_b_dispatch, "%p, %p", (void *)b_func, (void *)b_param);
 
-	Wptr = kernel_bsc_dispatch (sched, return_address, Wptr, b_func, b_param, 0);
+	Wptr = kernel_bsc_dispatch (sched, Wptr, b_func, b_param, 0);
 	
 	K_ZERO_OUT_JRET ();
 }
@@ -3613,7 +3610,7 @@ K_CALL_DEFINE_Y_2_0 (bx_dispatch)
 	K_CALL_PARAMS_2 (b_func, b_param);
 	ENTRY_TRACE (Y_bx_dispatch, "%p, %p", (void *)b_func, (void *)b_param);
 
-	Wptr = kernel_bsc_dispatch (sched, return_address, Wptr, b_func, b_param, 1);
+	Wptr = kernel_bsc_dispatch (sched, Wptr, b_func, b_param, 1);
 
 	K_ZERO_OUT_JRET ();
 }

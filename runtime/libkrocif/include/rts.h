@@ -90,6 +90,7 @@ extern int using_keyboard;
 extern int using_screen;
 extern int using_error;
 extern int do_print_memstats;
+extern void occam_parse_tlp (char **tlp_desc);
 extern int occam_uses_keyboard (void);
 extern void occam_entry (char **tlp_desc,
 			void *start_proc, 

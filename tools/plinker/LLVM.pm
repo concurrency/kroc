@@ -1537,7 +1537,7 @@ sub gen_call ($$$$) {
 			$name,
 			$self->sched_type,
 			$self->workspace_type,
-			$ffi ? $new_wptr : $wptr,
+			$ffi eq 'C' ? $new_wptr : $wptr,
 			@params ? ', ' : '',
 			join (', ', @params)
 		));

@@ -101,6 +101,7 @@ int occam_start (int argc, char **argv,
 	savecmdline (argc, argv);
 
 	stdin_is_tty = isatty (0);
+	occam_parse_tlp (tlp_desc);
 
 	if (stdin_is_tty && occam_uses_keyboard ()) {
 		save_tty_state ();
