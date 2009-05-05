@@ -8,18 +8,21 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 OCCBUILD = @OCCBUILD@ --kroc-opts -d
 
 EXTRA_DIST = \
+	g3dchess.inc \
+	g3dchess.occ \
 	g3dnets.occ \
-	graphics3d.occ \
+	g3dutil.occ \
 	graphics3d.inc \
-	rasterutil.occ \
-	g3dutil.occ
+	graphics3d.occ \
+	rasterutil.occ
 
 if BUILD_GRAPHICS3D
 graphics3d_lib_objs = \
+	g3dchess.tce \
 	g3dnets.tce \
+	g3dutil.tce \
 	graphics3d.tce \
-	rasterutil.tce \
-	g3dutil.tce
+	rasterutil.tce
 
 libs = graphics3d.lib
 includes = graphics3d.inc
@@ -28,7 +31,7 @@ endif
 all-local: $(libs)
 
 graphics3d.lib: $(graphics3d_lib_objs)
-	$(OCCBUILD) --library graphics3d.lib --need course --need maths --need sdlraster --include graphics3d.inc $(graphics3d_lib_objs)
+	$(OCCBUILD) --library graphics3d.lib --need course --need maths --need sdlraster --include graphics3d.inc --include g3dchess.inc $(graphics3d_lib_objs)
 
 install-exec-local: $(libs) $(includes)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)

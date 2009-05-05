@@ -552,7 +552,7 @@ PROC glenz.cog.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new
 --
 -- @param rlink.in Render link.
 -- @param width Width of raster.
--- @parma height Height of raster.
+-- @param height Height of raster.
 -- @param npoints Number of points.
 -- @param rad Radius.
 --
@@ -611,7 +611,7 @@ PROC glenz.flatpoly.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE
 --
 -- @param rlink.in Render link.
 -- @param width Width of raster.
--- @parma height Height of raster.
+-- @param height Height of raster.
 -- @param npoints Number of points.
 -- @param rad Radius.
 --
