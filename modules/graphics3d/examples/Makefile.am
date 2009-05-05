@@ -7,6 +7,7 @@ OCCBUILD = @OCCBUILD@ --kroc-opts -d
 
 EXTRA_DIST = \
 	butterflies.occ \
+	g3dchess.occ \
 	g3dcog2.occ \
 	g3dcogs.occ \
 	g3dcube.occ \
@@ -16,6 +17,7 @@ EXTRA_DIST = \
 if BUILD_GRAPHICS3D_EXAMPLES
 examples = \
 	butterflies \
+	g3dchess \
 	g3dcog2 \
 	g3dcogs \
 	g3dcube \
@@ -27,6 +29,9 @@ all-local: $(examples)
 
 butterflies: butterflies.occ
 	$(OCCBUILD) --program butterflies.occ
+
+g3dchess: g3dchess.occ
+	$(OCCBUILD) --program g3dchess.occ
 
 g3dcog2: g3dcog2.occ
 	$(OCCBUILD) --program g3dcog2.occ
