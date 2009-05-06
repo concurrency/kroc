@@ -245,10 +245,10 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
             --}}}
   :
   --}}}
-  --{{{  PROC retry.inbound
-  PROC retry.inbound (VAL PACKET.HEADER header, MOBILE []BYTE data, SHARED CHAN DATA.IN data.in!)
+  --{{{  PROC loopback
+  PROC loopback (VAL INT after, VAL PACKET.HEADER header, MOBILE []BYTE data, SHARED CHAN DATA.IN data.in!)
     SEQ
-      delay (500000)
+      delay (after)
       CLAIM data.in!
         data.in ! header; data
   :
@@ -353,14 +353,19 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
           MOBILE []BYTE data:
           send; dest.node; dest.port; data
             --{{{
-            INT n:
-            PACKET.HEADER header:
+            VAL PACKET.HEADER header IS [dest.port, SIZE data]:
             SEQ
               --{{{  find outbound
               IF
+                dest.node = node
+                  --{{{  sending to self
+                  FORK loopback (0, header, data, data.in!)
+                  --}}}
                 IF i = 0 FOR num.outbounds
                   outbound.nodes[i] = dest.node
-                    n := i
+                    --{{{  found existing outbound
+                    outbounds[i][req] ! header; data
+                    --}}}
                 NOT have.ns
                   trap.check (FALSE, "in standalone mode; cannot make outgoing connections")
                 TRUE
@@ -426,17 +431,14 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
                         --}}}
                     trace.sn ("connected")
 
-                    n := num.outbounds
-                    outbounds[n], svr := MOBILE OUTBOUND
-                    outbound.nodes[n] := dest.node
-                    num.outbounds := num.outbounds + 1
+                    outbounds[num.outbounds], svr := MOBILE OUTBOUND
+                    outbound.nodes[num.outbounds] := dest.node
 
                     FORK outbound (sel, sock, svr)
+                    outbounds[num.outbounds][req] ! header; data
+
+                    num.outbounds := num.outbounds + 1
                   --}}}
-              --}}}
-              --{{{  send to it
-              header := [dest.port, SIZE data]
-              outbounds[n][req] ! header; data
               --}}}
             --}}}
         PACKET.HEADER header:
@@ -450,7 +452,7 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
             TRUE
               SEQ
                 trace.sin ("retrying packet for unknown port ", header[port])
-                FORK retry.inbound (header, data, data.in!)
+                FORK loopback (50000, header, data, data.in!)
           --}}}
 :
 --}}}
