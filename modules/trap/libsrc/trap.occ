@@ -264,6 +264,7 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
 
   INT result:
   MOBILE []BYTE ns.host:
+  INITIAL BOOL have.ns IS FALSE:
   SOCKET to.ns:
   SOCKET listen:
   SHARED SELECTOR.CT! sel:
@@ -295,7 +296,11 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
       socket.addr.of.host (ns.host, addr, result)
       trap.check (result = 0, "could not look up nameserver name")
       socket.create.connect.tcp (to.ns, addr, TRAP.NS.PORT, result)
-      trap.check (result = 0, "could not connect to nameserver")
+      IF
+        result = 0
+          have.ns := TRUE
+        TRUE
+          trace.sn ("trap: could not connect to nameserver; operating in standalone mode")
     --}}}
     --{{{  bind listen socket
     listen[local.addr] := INADDR.ANY
@@ -305,15 +310,19 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
     trap.check (result = 0, "getsockname on listen socket failed")
     --}}}
     --{{{  register with nameserver
-    TRAP.NS.PACKET packet:
-    SEQ
-      packet[cmd] := 'r'
-      packet[arg0] := node
-      packet[arg1] := INT listen[local.port]
-      VAL []BYTE buf RETYPES packet:
-      SEQ
-        socket.fullwrite (to.ns, buf, result)
-        trap.check (result = (SIZE buf), "write to nameserver failed")
+    IF
+      have.ns
+        TRAP.NS.PACKET packet:
+        SEQ
+          packet[cmd] := 'r'
+          packet[arg0] := node
+          packet[arg1] := INT listen[local.port]
+          VAL []BYTE buf RETYPES packet:
+          SEQ
+            socket.fullwrite (to.ns, buf, result)
+            trap.check (result = (SIZE buf), "write to nameserver failed")
+      TRUE
+        SKIP
     --}}}
     selector.start (sel)
     FORK accepter (sel, listen, data.in!)
@@ -352,6 +361,8 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
                 IF i = 0 FOR num.outbounds
                   outbound.nodes[i] = dest.node
                     n := i
+                NOT have.ns
+                  trap.check (FALSE, "in standalone mode; cannot make outgoing connections")
                 TRUE
                   --{{{  start new outbound
                   INT dest.addr, dest.tcpport:
