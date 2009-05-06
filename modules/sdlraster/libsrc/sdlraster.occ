@@ -124,6 +124,9 @@ PROC raster.convert.event (SDL.Event event, RESULT RASTER.EVENT ev)
               ev[type] := RASTER.ET.KEYDOWN
             SDL.KEYUP
               ev[type] := RASTER.ET.KEYUP
+          -- XXX: This only works because the raster.module key/modifier
+          -- constants were deliberately chosen to match SDL. We may need to be
+          -- smarter here in the future.
           VAL SDL.KeyboardEvent ke IS SDL.KeyboardEvent event:
           SDL.KeyboardEvent.keysym.get (ke, sym)
           -- Temporary variable used here to avoid a KRoC bug.
