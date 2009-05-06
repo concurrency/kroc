@@ -224,13 +224,13 @@ PROC raster.events (SDL.Surface screen, CHAN RASTER.EVENT out!, CHAN BOOL kill?)
                     SEQ
                       raster.convert.event (event, ev)
                       --{{{  check for special keys
-                      VAL INT ANY.ALT IS (KMOD.LALT \/ KMOD.RALT) \/ (KMOD.LMETA \/ KMOD.RMETA):
+                      VAL INT ANY.ALT IS (RASTER.MOD.LALT \/ RASTER.MOD.RALT) \/ (RASTER.MOD.LMETA \/ RASTER.MOD.RMETA):
                       IF
-                        (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = (INT SDLK.RETURN)) AND ((ev[mod] /\ ANY.ALT) <> 0)
+                        (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = RASTER.KEY.RETURN) AND ((ev[mod] /\ ANY.ALT) <> 0)
                           --{{{  Alt-Enter: toggle full-screen mode
                           toggle.fullscreen ()
                           --}}}
-                        (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = (INT SDLK.BACKSPACE)) AND ((ev[mod] /\ ANY.ALT) <> 0)
+                        (ev[type] = RASTER.ET.KEYDOWN) AND (ev[id] = RASTER.KEY.BACKSPACE) AND ((ev[mod] /\ ANY.ALT) <> 0)
                           --{{{  Alt-Backspace: STOP
                           SEQ
                             --{{{  leave full-screen mode first
