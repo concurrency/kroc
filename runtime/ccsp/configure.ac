@@ -28,7 +28,7 @@ AC_CHECK_LIB(m, sin)
 
 #{{{  options parsing
 
-AC_ARG_ENABLE([cpu-timers], AS_HELP_STRING([--disable-cpu-timers], [disable CPU timers (default enabled)]), [cpu_timers=$enableval],[cpu_timers=default])
+AC_ARG_ENABLE([cpu-timers], AS_HELP_STRING([--enable-cpu-timers], [enable CPU timers (default disabled)]), [cpu_timers=$enableval],[cpu_timers=no])
 
 dnl AC_ARG_ENABLE([debug-debug], AS_HELP_STRING([--enable-debug-debug], [enable occam debugging debug messages (default disabled)]), [debug_debug=$enableval], [debug_debug=no])
 dnl AC_ARG_ENABLE([dm-debug], AS_HELP_STRING([--enable-dm-debug], [enable dynamic memory debugging (default disabled)]), [enable_dm_debug=$enableval], [enable_dm_debug=no])
@@ -353,17 +353,6 @@ AC_MSG_CHECKING(whether CPU timers are supported)
 AC_MSG_RESULT($cpu_timers_supported)
 if test "$cpu_timers_supported" = no; then
  cpu_timers=no
-else
- if test "$cpu_timers" = default; then
-  case "$host_os" in
-   Darwin* | darwin*)
-    cpu_timers=no
-    ;;
-   *)
-    cpu_timers=yes
-    ;;
-   esac
- fi
 fi
 
 AC_MSG_CHECKING(whether to enable CPU timers)
