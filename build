@@ -40,7 +40,6 @@ Common options:
                              (you must specify this; e.g. /usr/local)
   --with-toolchain=tvm       Build the Transterpreter toolchain
                              (default: build the KRoC toolchain)
-  --enable-mp                Enable multiprocessor support
   --enable-pony              Enable pony networking support
 
 If you are working on KRoC itself, or building packages of it, you
