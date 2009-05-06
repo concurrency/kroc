@@ -41,18 +41,32 @@ CHAN TYPE OUTBOUND
 :
 --}}}
 
+--{{{  PROC trap.check (VAL BOOL cond, VAL []BYTE message)
+--* Check that a condition holds; if not, print the message and die.
+-- This is essentially a slightly more user-friendly [@ref ASSERT].
+-- @private
+PROC trap.check (VAL BOOL cond, VAL []BYTE message)
+  IF
+    cond
+      SKIP
+    TRUE
+      SEQ
+        trace.ssn ("trap: fatal error: ", message)
+        CAUSEERROR ()
+:
+--}}}
 --{{{  PROC trap.bind.socket
 PROC trap.bind.socket (SOCKET listen)
   INT result:
   SEQ
     socket.create.tcp (listen)
-    ASSERT (listen[fd] <> (-1))
+    trap.check (listen[fd] <> (-1), "could not open listen socket")
     socket.setsockopt (listen, SOL.SOCKET, SO.REUSEADDR, 1, result)
-    ASSERT (result = 0)
+    trap.check (result = 0, "could not set socket options")
     socket.bind (listen, result)
-    ASSERT (result = 0)
+    trap.check (result = 0, "could not bind socket")
     socket.listen (listen, 32, result)
-    ASSERT (result = 0)
+    trap.check (result = 0, "could not listen on socket")
 :
 --}}}
 --{{{  PROC trap.server
@@ -111,7 +125,7 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
               INT sent:
               SEQ
                 file.write (sock[fd], [buf FOR used], sent)
-                ASSERT (sent >= 0)
+                trap.check (sent >= 0, "socket write failed")
 
                 used := used - sent
                 SEQ i = 0 FOR used
@@ -265,7 +279,7 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
           [256]BYTE buf:
           SEQ
             file.read (fd, buf, result)
-            ASSERT (result <> (-1))
+            trap.check (result <> (-1), "read from .trap.ns failed")
             ns.host := [buf FOR result]
             rstrip.string (ns.host)
             file.close (fd, result)
@@ -279,16 +293,16 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
     INT addr:
     SEQ
       socket.addr.of.host (ns.host, addr, result)
-      ASSERT (result = 0)
+      trap.check (result = 0, "could not look up nameserver name")
       socket.create.connect.tcp (to.ns, addr, TRAP.NS.PORT, result)
-      ASSERT (result = 0)
+      trap.check (result = 0, "could not connect to nameserver")
     --}}}
     --{{{  bind listen socket
     listen[local.addr] := INADDR.ANY
     listen[local.port] := 0
     trap.bind.socket (listen)
     socket.getsockname (listen, result)
-    ASSERT (result = 0)
+    trap.check (result = 0, "getsockname on listen socket failed")
     --}}}
     --{{{  register with nameserver
     TRAP.NS.PACKET packet:
@@ -299,7 +313,7 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
       VAL []BYTE buf RETYPES packet:
       SEQ
         socket.fullwrite (to.ns, buf, result)
-        ASSERT (result = (SIZE buf))
+        trap.check (result = (SIZE buf), "write to nameserver failed")
     --}}}
     selector.start (sel)
     FORK accepter (sel, listen, data.in!)
@@ -370,13 +384,13 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
                             VAL []BYTE buf RETYPES packet:
                             SEQ
                               socket.fullwrite (to.ns, buf, result)
-                              ASSERT (result = (SIZE buf))
+                              trap.check (result = (SIZE buf), "write to nameserver failed")
                             --}}}
                             --{{{  read response
                             []BYTE buf RETYPES packet:
                             SEQ
                               socket.fullread (to.ns, buf, SIZE buf, result)
-                              ASSERT (result = (SIZE buf))
+                              trap.check (result = (SIZE buf), "read from nameserver failed")
                             CASE packet[cmd]
                               'y'
                                 SEQ
