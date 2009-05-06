@@ -534,11 +534,11 @@ PROC bar (SHARED OCCADE! occade, CHAN BOOL quit?)
             RASTER.ET.KEYDOWN
               --{{{
               CASE event[id]
-                INT SDLK.LEFT
+                RASTER.KEY.LEFT
                   SEQ
                     dir := -1
                     move ()
-                INT SDLK.RIGHT
+                RASTER.KEY.RIGHT
                   SEQ
                     dir := 1
                     move ()
@@ -548,13 +548,13 @@ PROC bar (SHARED OCCADE! occade, CHAN BOOL quit?)
             RASTER.ET.KEYUP
               --{{{
               CASE event[id]
-                INT SDLK.LEFT
+                RASTER.KEY.LEFT
                   IF
                     dir = (-1)
                       dir := 0
                     TRUE
                       SKIP
-                INT SDLK.RIGHT
+                RASTER.KEY.RIGHT
                   IF
                     dir = 1
                       dir := 0
