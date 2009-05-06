@@ -1,0 +1,6 @@
+-- This generates bad assembly with older tranx86 when pony is enabled.
+
+PROC stop (SHARED CHAN BYTE screen!)
+  CLAIM screen!
+    STOP
+:
