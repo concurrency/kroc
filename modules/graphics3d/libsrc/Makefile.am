@@ -48,3 +48,15 @@ SUFFIXES = .occ .tce .lib
 g3dnets.tce: graphics3d.tce
 g3dnets.tce: rasterutil.tce
 #}}}
+
+## begin pideps dependencies
+g3dchess.tce: $(srcdir)/g3dchess.inc
+g3dchess.tce: $(srcdir)/graphics3d.inc
+g3dchess.tce: graphics3d.tce
+g3dnets.tce: $(srcdir)/graphics3d.inc
+g3dnets.tce: graphics3d.tce
+g3dnets.tce: rasterutil.tce
+g3dutil.tce: $(srcdir)/graphics3d.inc
+graphics3d.tce: $(srcdir)/graphics3d.inc
+rasterutil.tce: $(srcdir)/graphics3d.inc
+## end pideps dependencies
