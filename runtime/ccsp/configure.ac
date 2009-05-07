@@ -32,6 +32,7 @@ AC_ARG_ENABLE([cpu-timers], AS_HELP_STRING([--enable-cpu-timers], [enable CPU ti
 
 dnl AC_ARG_ENABLE([debug-debug], AS_HELP_STRING([--enable-debug-debug], [enable occam debugging debug messages (default disabled)]), [debug_debug=$enableval], [debug_debug=no])
 dnl AC_ARG_ENABLE([dm-debug], AS_HELP_STRING([--enable-dm-debug], [enable dynamic memory debugging (default disabled)]), [enable_dm_debug=$enableval], [enable_dm_debug=no])
+enable_dm_debug=no
 AC_ARG_ENABLE([generate-cores], AS_HELP_STRING([--enable-generate-cores],[enable core dump generation on errornous exit (default disabled)]), [generate_cores=$enableval], [generate_cores=no])
 AC_ARG_ENABLE([usegv], AS_HELP_STRING([--enable-usegv],[enable useful information on SEGV (default disabled)]), [useful_segv=$enableval], [useful_segv=no])
 AC_ARG_ENABLE([ufpe], AS_HELP_STRING([--enable-ufpe],[enable useful FPE information (default disabled)]), [useful_fpe=$enableval], [useful_fpe=no])
@@ -370,22 +371,22 @@ if test "$debug_debug" = yes; then
  AC_DEFINE([DEBUG_DEBUG],1,[define to enable debug debugging])
 fi
 
-AC_CHECK_HEADER(gelf.h, [have_gelf_h=yes], [have_gelf_h=no])
-AC_MSG_CHECKING(whether gelf.h is present)
-AC_MSG_RESULT($have_gelf_h)
-
-AC_CHECK_HEADER(libelf.h, [have_libelf_h=yes], [have_libelf_h=no])
-AC_MSG_CHECKING(whether libelf.h is present)
-AC_MSG_RESULT($have_libelf_h)
-
-AC_CHECK_LIB(elf, elf_begin, have_libelf=yes, have_libelf=no)
-AC_MSG_CHECKING(whether libelf is installed and has elf_begin)
-AC_MSG_RESULT($have_libelf)
-
 AC_MSG_CHECKING(whether to enable dynamic memory debugging)
 AC_MSG_RESULT($enable_dm_debug)
 
 if test "$enable_dm_debug" = yes; then
+ AC_CHECK_HEADER(gelf.h, [have_gelf_h=yes], [have_gelf_h=no])
+ AC_MSG_CHECKING(whether gelf.h is present)
+ AC_MSG_RESULT($have_gelf_h)
+
+ AC_CHECK_HEADER(libelf.h, [have_libelf_h=yes], [have_libelf_h=no])
+ AC_MSG_CHECKING(whether libelf.h is present)
+ AC_MSG_RESULT($have_libelf_h)
+
+ AC_CHECK_LIB(elf, elf_begin, have_libelf=yes, have_libelf=no)
+ AC_MSG_CHECKING(whether libelf is installed and has elf_begin)
+ AC_MSG_RESULT($have_libelf)
+
  AC_DEFINE([DM_DEBUG],1,[define to enable dynamic memory debugging])
  if test "$have_libelf_h" = yes; then
   if test "$have_libelf" = yes; then
