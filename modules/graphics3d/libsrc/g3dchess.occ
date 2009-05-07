@@ -31,11 +31,12 @@
 --
 -- @param trigger Trigger channel.
 -- @param npoints Number of points around the outside.
+-- @param piece Particular piece (defines how the topping is handled, see [@ref G3D.CP]).
 -- @param profile Y/rad pairs for the piece.
 -- @param out Generated points.
 -- @param ctrl Control channel.
 --
-PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
   MOBILE []G3D.POINT3 cpnts:
   INT npnts:
 
@@ -73,18 +74,20 @@ PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, VAL [][2]REAL32 
       SEQ
         PRI ALT
           ctrl ? CASE
-            reset
+            reset --{{{
               reset ()
+            --}}}
             [3]REAL32 scale:
-            add.scale; scale
+            add.scale; scale --{{{
               SEQ
                 SEQ i = 0 FOR npnts
                   SEQ
                     cpnts[i][x] := cpnts[i][x] * scale[0]
                     cpnts[i][y] := cpnts[i][y] * scale[1]
                     cpnts[i][z] := cpnts[i][z] * scale[2]
+            --}}}
             [3]REAL32 scale:
-            set.scale; scale
+            set.scale; scale --{{{
               SEQ
                 reset ()
                 SEQ i = 0 FOR npnts
@@ -92,16 +95,18 @@ PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, VAL [][2]REAL32 
                     cpnts[i][x] := cpnts[i][x] * scale[0]
                     cpnts[i][y] := cpnts[i][y] * scale[1]
                     cpnts[i][z] := cpnts[i][z] * scale[2]
+            --}}}
             [3]REAL32 trans:
-            add.trans; trans
+            add.trans; trans --{{{
               SEQ
                 SEQ i = 0 FOR npnts
                   SEQ
                     cpnts[i][x] := cpnts[i][x] + trans[0]
                     cpnts[i][y] := cpnts[i][y] + trans[1]
                     cpnts[i][z] := cpnts[i][z] + trans[2]
+            --}}}
             [3]REAL32 trans:
-            set.trans; trans
+            set.trans; trans --{{{
               SEQ
                 reset ()
                 SEQ i = 0 FOR npnts
@@ -109,21 +114,23 @@ PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, VAL [][2]REAL32 
                     cpnts[i][x] := cpnts[i][x] + trans[0]
                     cpnts[i][y] := cpnts[i][y] + trans[1]
                     cpnts[i][z] := cpnts[i][z] + trans[2]
+            --}}}
           INT any:
           trigger ? any
             out ! CLONE cpnts
 :
 --}}}
---{{{  PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--{{{  PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
 --* Generates chess-style polygons from points.
 --
 -- @param in Points in.
 -- @param npoints Number of points around the base of the object.
+-- @param piece Particular piece (defines how the topping is handled, see [@ref G3D.CP]).
 -- @param profile Profile for the piece.
 -- @param out Polygons out.
 -- @param ctrl Control channel.
 --
-PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
 
   PROC set.poly.point (G3D.POLY p, VAL INT pi, VAL G3D.POINT2.3 pnt) --{{{
     SEQ
@@ -281,7 +288,7 @@ PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, VAL [][2]
 PROC chesspiece.rot0 (CHAN INT trigger?, VAL INT width, height, piece, npoints, CHAN MOBILE []G3D.POLY out!, CHAN G3D.GEN.CONTROL gen.ctl?, CHAN G3D.PRJ.CONTROL prj.ctl?, CHAN G3D.PGN.CONTROL pgn.ctl?)
   -- Various piece profiles
 
-  VAL [][2]REAL32 PROFILE.ROOK IS [[1.0, 0.5], [0.8, 0.5], [0.6, 0.4], [-0.2, 0.4], [-0.4, 0.5], [-0.7, 0.5]]:
+  VAL [][2]REAL32 PROFILE.ROOK IS [[1.0, 0.5], [0.8, 0.5], [0.6, 0.4], [-0.2, 0.4], [-0.4, 0.5], [-0.8, 0.5], [-0.8, 0.3], [-0.6, 0.3]]:
 
   CHAN MOBILE []G3D.POINT3 gp1, gp2:
   CHAN MOBILE []G3D.POINT2.3 gc1:
@@ -292,12 +299,12 @@ PROC chesspiece.rot0 (CHAN INT trigger?, VAL INT width, height, piece, npoints, 
     CASE piece
       G3D.CP.ROOK
         PAR
-          chesspoints.generator (trigger?, npoints, PROFILE.ROOK, gp1!, gen.ctl?)
-          chessify.points (gc1?, npoints, PROFILE.ROOK, out!, pgn.ctl?)
+          chesspoints.generator (trigger?, npoints, G3D.CP.ROOK, PROFILE.ROOK, gp1!, gen.ctl?)
+          chessify.points (gc1?, npoints, G3D.CP.ROOK, PROFILE.ROOK, out!, pgn.ctl?)
 
     SEQ
       rot.ctl ! set.mode; G3D.ROTATE.MODE.DEMO
-      rot.ctl ! add.increment; 0.02
+      rot.ctl ! add.increment; 0.03
 :
 --}}}
 
