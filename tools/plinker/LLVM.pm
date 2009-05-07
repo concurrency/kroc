@@ -260,6 +260,14 @@ $GRAPH = {
 			'generator' => \&gen_fpldnlop },
 	'FPLDNLMULSN'	=> { 'in' => 1, 'fin' => 1, 'fout' => 1,
 			'generator' => \&gen_fpldnlop },
+	'R32COS'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fcossin },
+	'R32SIN'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fcossin },
+	'R64COS'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fcossin },
+	'R64SIN'	=> { 'fin' => 1, 'fout' => 1,
+			'generator' => \&gen_fcossin },
 	# Helpers
 	'INDIRECT_AREG'	=> { 'in' => 3, 'out' => 3,
 			'generator' => \&gen_indirect_reg },
@@ -3215,6 +3223,27 @@ sub gen_fpldnlop ($$$$) {
 			$inst->{'fin'}->[0], 
 			$val
 		)
+	);
+}
+
+sub gen_fcossin ($$$$) {
+	my ($self, $proc, $label, $inst) = @_;
+	my $i_type 	= $self->intrinsic_type ($self->float_type);
+	my $op = ($inst->{'name'} =~ /\d+([A-Z]{3})/)[0];
+	$op =~ tr/A-Z/a-z/;
+	my $func 	= '@llvm.' . $op . '.' . $i_type;
+	
+	$self->{'header'}->{$func} = [
+		sprintf ('declare %s %s (%s)',
+			$self->float_type, $func, $self->float_type
+		)
+	];
+	
+	return sprintf ('%%%s = call %s %s (%s %%%s)',
+		$inst->{'fout'}->[0],
+		$self->float_type,
+		$func,
+		$self->float_type, $inst->{'fin'}->[0]
 	);
 }
 
