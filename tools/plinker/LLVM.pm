@@ -3257,9 +3257,12 @@ sub gen_norm ($$$$) {
 	my $b0_lab 	= $tmp . '_b0';
 	my $a_shift_lab = $tmp . '_a_shift';
 	my $b_shift_lab = $tmp . '_b_shift';
+	my $no_shift_lab= $tmp . '_no_shift';
 	my $cont_lab 	= $tmp . '_continue';
-	my $cmp_b 	= $self->tmp_label ();
-	my $cmp_a 	= $self->tmp_label ();
+
+	my $cmp_shift	= $self->tmp_reg ();
+	my $cmp_b 	= $self->tmp_reg ();
+	my $cmp_a 	= $self->tmp_reg ();
 
 	my $a_shift_a_out	= $self->tmp_reg ();
 	my $a_shift_b_out	= $self->tmp_reg ();
@@ -3277,7 +3280,7 @@ sub gen_norm ($$$$) {
 		sprintf ('%%%s = icmp eq %s %%%s, 0', 
 			$cmp_b, $self->int_type, $b),
 		sprintf ('br i1 %%%s, label %%%s, label %%%s', 
-			$cmp_b, $b0_lab, $b_shift_lab),
+			$cmp_b, $b0_lab, $no_shift_lab),
 		
 
 		$b0_lab . ':',
@@ -3307,13 +3310,19 @@ sub gen_norm ($$$$) {
 		),
 		sprintf ('br label %%%s', $cont_lab), 
 	
-
-		$b_shift_lab . ':',
+		$no_shift_lab . ':',
 		sprintf ('%%%s = call %s @llvm.ctlz.%s (%s %%%s)',
 			$b_shift_tmp,
 			$self->int_type, $self->int_type, $self->int_type,
 			$b
 		),
+		sprintf ('%%%s = icmp ne %s %%%s, 0',
+			$cmp_shift, $self->int_type, $b_shift_tmp),
+		sprintf ('br i1 %%%s, label %%%s, label %%%s',
+			$cmp_shift, $b_shift_lab, $cont_lab),
+
+
+		$b_shift_lab . ':',
 		sprintf ('%%%s = shl %s %%%s, %%%s',
 			$b_shift_a_out,
 			$self->int_type, $a, $b_shift_tmp
@@ -3342,24 +3351,27 @@ sub gen_norm ($$$$) {
 
 
 		$cont_lab . ':',
-		sprintf ('%%%s = phi %s [ 0, %%%s ], [ %%%s, %%%s ], [ %%%s, %%%s ]',
+		sprintf ('%%%s = phi %s [ 0, %%%s ], [ %%%s, %%%s ], [ %%%s, %%%s ], [ %%%s, %%%s ]',
 			$inst->{'out'}->[0],
 			$self->int_type, 
 			$b0_lab,
+			$a, $no_shift_lab,
 			$a_shift_a_out, $a_shift_lab,
 			$b_shift_a_out, $b_shift_lab
 		),
-		sprintf ('%%%s = phi %s [ 0, %%%s ], [ %%%s, %%%s ], [ %%%s, %%%s ]',
+		sprintf ('%%%s = phi %s [ 0, %%%s ], [ %%%s, %%%s ], [ %%%s, %%%s ], [ %%%s, %%%s ]',
 			$inst->{'out'}->[1],
 			$self->int_type, 
 			$b0_lab,
+			$b, $no_shift_lab,
 			$a_shift_b_out, $a_shift_lab,
 			$b_shift_b_out, $b_shift_lab
 		),
-		sprintf ('%%%s = phi %s [ %d, %%%s ], [ %%%s, %%%s ], [ %%%s, %%%s ]',
+		sprintf ('%%%s = phi %s [ %d, %%%s ], [ %d, %%%s ], [ %%%s, %%%s ], [ %%%s, %%%s ]',
 			$inst->{'out'}->[2],
 			$self->int_type, 
 			$self->int_bits * 2, $b0_lab,
+			0, $no_shift_lab,
 			$a_shift_c_out, $a_shift_lab,
 			$b_shift_c_out, $b_shift_lab
 		)
