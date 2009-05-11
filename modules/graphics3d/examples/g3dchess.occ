@@ -43,7 +43,9 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
 
       SEQ
         CLAIM rre!
-          chesspiece.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, G3D.CP.ROOK, 64)
+          SEQ
+            chessboard.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 8, 1.2, 0.3)
+            chesspiece.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, G3D.CP.ROOK, 16)
 :
 --}}}
 
