@@ -1004,6 +1004,7 @@ Exclusive options:
   --ccincpath            Print path to occam include files in CC -I.. form
   --ld                   Print path to dynamic linker (for generating shared libraries)
   --ldflags              Print linker flags to be used when building shared libraries
+  --krocdir              Print path to kroc data files
 Additional options:
   -dm                    Enable dynamic memory debugging
   -ds                    Enable memory usage summary
