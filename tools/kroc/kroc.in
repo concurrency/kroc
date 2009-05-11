@@ -225,6 +225,7 @@ showld=
 showas=
 showldflags=
 showasflags=
+showkrocpath=
 delete_temp=yes
 enable_udc=
 skip_link=
@@ -710,6 +711,11 @@ do
 		usenocc=1
 		;;
 		#}}}
+		#{{{  --krocdir  show directory where KRoC data files are kept
+	--krocdir)
+		showkrocpath=1
+		;;
+		#}}}
 		#{{{  -z, --all-help  show all options
 	-z | --all-help)
 		showall=1
@@ -913,6 +919,10 @@ if [ $showas ]; then
 fi
 if [ $showasflags ]; then
 	printf '%s\n' "$ARCH_ASFLAGS"
+	exit 0
+fi
+if [ $showkrocpath ]; then
+	printf '%s\n' "$kroc_krocdir"
 	exit 0
 fi
 

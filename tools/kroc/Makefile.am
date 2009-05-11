@@ -38,7 +38,7 @@ dist_bin_SCRIPTS = \
 dist_man1_MANS = \
 	$(kroc_mans)
 
-xsltdir = $(prefix)/share/xslt
+xsltdir = $(KROC_KROCDIR)/xslt
 dist_xslt_DATA = \
 	cspx2cspm.xsl
 
