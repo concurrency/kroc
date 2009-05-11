@@ -48,6 +48,7 @@ typedef struct {
   const BOOL *checkusage;	/* This can be modified while parsing by #OPTION */
   const BOOL *formalmodel;	/* This can be modified while parsing by #OPTION */
   const BOOL *fm_collct;	/* This can be modified while parsing by #OPTION */
+  BOOL fm_toplevelonly;
   BOOL *error_occurred;		/* Set TRUE by the error routine if an error occurs */
   int (*process_option)(const char *s, int len, void (*error_fn)(int));
   const int *guyinserts;	/* it's a pointer cos #OPTION can change it */

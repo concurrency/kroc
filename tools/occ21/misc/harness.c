@@ -496,6 +496,7 @@ PRIVATE BOOL print_all_messages    = FALSE;
 PRIVATE BOOL setymode              = FALSE;
 PRIVATE BOOL t450a_workarounds_flag = TRUE;
 PRIVATE BOOL suppress_call_compatibility_check = FALSE;
+PRIVATE BOOL fm_toplevelonly       = FALSE; /* whether to consider the top-level only in formal-model generation (requires -zfm) */
 
 PRIVATE FILE *errfile;
 
@@ -2218,6 +2219,7 @@ const arg2_descriptor cloptions[] = {
 	{"ZE",        arg2_single,    NULL,           optzed,             HELP_ZED, "visible compiler library names"},
 	#endif
 	{"ZFMCCT",    arg2_single,    &fm_collct,     set_flag,           HELP_ZED, "collapse channel-type protocols in formal model"},
+	{"ZFMTLO",    arg2_single,    &fm_toplevelonly,set_flag,          HELP_ZED, "do not generate formal models for #INCLUDEd material"},
 	{"ZFM",       arg2_single,    &formal_model,  set_flag,           HELP_ZED, "generate formal model"},
 	/*}}}*/
 
@@ -2756,6 +2758,7 @@ PRIVATE treenode *call_occam_frontend(BOOL *const error_occurred)
 	parms.checkusage          = &checkusage;	/* may be modified by #OPTION */
 	parms.formalmodel         = &formal_model;	/* may be modified by #OPTION */
 	parms.fm_collct           = &fm_collct;		/* may be modified by #OPTION */
+	parms.fm_toplevelonly     = fm_toplevelonly;
 	parms.error_occurred      = error_occurred;	/* is set if any error happens */
 	parms.process_option      = process_option;
 	parms.guyinserts          = &guyinserts;

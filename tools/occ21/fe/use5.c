@@ -190,6 +190,7 @@ PRIVATE int atom_counter = 0;
 PRIVATE int event_counter = 0;
 
 PRIVATE int do_coll_ct = 0;			/* collate channel-type channels/protocols */
+PRIVATE int do_toplevelonly = 0;		/* do not generate output for #INCLUDEd things */
 
 #define FMSTRINGTABLEBITS 5
 STATICSTRINGHASH (fmstrent_t *, fmstringtable, FMSTRINGTABLEBITS);
@@ -2104,6 +2105,15 @@ PRIVATEPARAM int fmt_docontainsevents (fmnode_t **nodep, void *voidptr)
 	case FM_EVENTSET:
 		*evp = 1;
 		break;
+	case FM_NODEREF:
+		{
+			fmnode_t *refd = n->u.fmnode.node;		/* referenced node */
+
+			if (refd && ((refd->type == FM_EVENT) || (refd->type == FM_EVENTSET))) {
+				*evp = 1;
+			}
+		}
+		break;
 	default:
 		break;
 	}
@@ -3454,12 +3464,33 @@ PRIVATE void fmt_writeoutnode (fmnode_t *node, int indent, FILE *fp)
 		node = node->u.fmnode.node;
 	}
 
-	fmt_writeoutindent (indent, fp);
 	if (!node) {
+		fmt_writeoutindent (indent, fp);
 		fprintf (fp, "<nullnode />\n");
 		return;
 	}
-	
+
+#if 0
+fprintf (stderr, "fmt_writeoutnode(): FileNumOf (node->org) = %d, nodetype = %d\n", node->org ? FileNumOf (LocnOf (node->org)) : -1, (int)node->type);
+#endif
+
+	if (do_toplevelonly) {
+		/* check to see if this is a node we should ignore */
+		switch (node->type) {
+		case FM_NAMEDPROC:
+		case FM_TAGSET:
+			if (node->org && (FileNumOf (LocnOf (node->org)) > 0)) {
+				/* something not defined in a top-level file, so ignore */
+				return;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	fmt_writeoutindent (indent, fp);
+
 	switch (node->type) {
 		/*{{{  SEQ,PAR,DET,NDET,THEN*/
 	case FM_SEQ:
@@ -3826,6 +3857,54 @@ PRIVATE void fmt_postprocessmodels (fmmset_t *fmm)
 		fmt_modprewalk (DA_NTHITEMADDR (fmm->items, i), fmt_simplifynode, NULL);
 		fmt_modprewalk (DA_NTHITEMADDR (fmm->items, i), fmt_lsimplifynode, NULL);
 	}
+}
+/*}}}*/
+/*{{{  PRIVATE void fmt_eatdecllist (fmstate_t *fmstate, treenode *dname, fmnode_t *hiding)*/
+/*
+ *	soaks up names in a declaration, either places in 'hiding' node, or scoops up into state's set
+ */
+PRIVATE void fmt_eatdecllist (fmstate_t *fmstate, treenode *dname, fmnode_t *hiding)
+{
+	if (TagOf (dname) == S_LIST) {
+		treenode *dwalk;
+
+		for (dwalk = dname; !EndOfList (dwalk); dwalk = NextItem (dwalk)) {
+			treenode *thisname = ThisItem (dwalk);
+
+			if (TagOf (thisname) == N_DECL) {
+				fmnode_t *evnode = fmt_createeventfromvar (thisname, TRUE, fmstate);
+
+				if (evnode) {
+					if (fmt_issimpleevent (evnode)) {
+						/* hide this */
+						fmt_addtonodelist (hiding, evnode);
+					} else {
+						/* push up to free vars */
+						fmt_addtovarslist (fmstate, evnode);
+					}
+					SetNFMCheck (thisname, evnode);
+				}
+			}
+		}
+	} else if (TagOf (dname) == N_DECL) {
+		fmnode_t *evnode = fmt_createeventfromvar (dname, TRUE, fmstate);
+
+		if (evnode) {
+#if 0
+fprintf (stderr, "do_formalmodelgen(): DECL/N_DECL, got model event node=\n");
+fmt_dumpnode (evnode, 1, stderr);
+#endif
+			if (fmt_issimpleevent (evnode)) {
+				/* hide this */
+				fmt_addtonodelist (hiding, evnode);
+			} else {
+				/* push up to free vars */
+				fmt_addtovarslist (fmstate, evnode);
+			}
+			SetNFMCheck (dname, evnode);
+		}
+	}
+
 }
 /*}}}*/
 
@@ -4299,11 +4378,20 @@ printtreenl (stderr, 4, n);
 			treenode *chan = LHSOf (n);
 			treenode *varlist = RHSOf (n);
 			treenode *walk;
+			fmnode_t *hiding = fmt_newnode (FM_HIDING, n);
 
 			/* this becomes a deterministic choice on inputs */
 			fmn = fmt_newnode (FM_DET, n);
 			for (walk = varlist; !EndOfList (walk); walk = NextItem (walk)) {
-				treenode *var = skipspecifications (ThisItem (walk));
+				treenode *var = ThisItem (walk);
+				
+				/* possible we have relevant specifications as part of the CASE inputs, collect these */
+				while (isspecification (var)) {
+					if (TagOf (var) == S_DECL) {
+						fmt_eatdecllist (fmstate, DNameOf (var), hiding);
+					}
+					var = DBodyOf (var);
+				}
 
 #if 0
 fprintf (stderr, "do_formalmodegen(): CASE_INPUT, variant item after specs is [%s]\n", tagstring (TagOf (var)));
@@ -4356,10 +4444,23 @@ printtreenl (stderr, 4, n);
 					fmt_addtonodelist (fmn, seq);
 				}
 			}
+#if 0
+fprintf (stderr, "do_formalmodelgen(): walked CASEINPUTs, whole model is:\n");
+fmt_dumpnode (fmn, 1, stderr);
+#endif
 
 			fmstate->target = saved_target;
 			fmstate->ioevref = saved_ioevref;
-			*(fmstate->target) = fmn;
+
+			if (DA_CUR (hiding->u.fmhide.events) > 0) {
+				/* means some events before CASE variants got hidden, so pull these out */
+				hiding->u.fmhide.proc = fmn;
+				*(fmstate->target) = hiding;
+			} else {
+				fmt_freenode (hiding, 2);
+
+				*(fmstate->target) = fmn;
+			}
 		}
 		return STOP_WALK;
 		/*}}}*/
@@ -4373,45 +4474,7 @@ printtreenl (stderr, 4, n);
 fprintf (stderr, "do_formalmodelgen(): DECL, name is:");
 printtreenl (stderr, 1, dname);
 #endif
-			if (TagOf (dname) == S_LIST) {
-				treenode *dwalk;
-
-				for (dwalk = dname; !EndOfList (dwalk); dwalk = NextItem (dwalk)) {
-					treenode *thisname = ThisItem (dwalk);
-
-					if (TagOf (thisname) == N_DECL) {
-						fmnode_t *evnode = fmt_createeventfromvar (thisname, TRUE, fmstate);
-
-						if (evnode) {
-							if (fmt_issimpleevent (evnode)) {
-								/* hide this */
-								fmt_addtonodelist (hiding, evnode);
-							} else {
-								/* push up to free vars */
-								fmt_addtovarslist (fmstate, evnode);
-							}
-							SetNFMCheck (thisname, evnode);
-						}
-					}
-				}
-			} else if (TagOf (dname) == N_DECL) {
-				fmnode_t *evnode = fmt_createeventfromvar (dname, TRUE, fmstate);
-
-				if (evnode) {
-#if 0
-fprintf (stderr, "do_formalmodelgen(): DECL/N_DECL, got model event node=\n");
-fmt_dumpnode (evnode, 1, stderr);
-#endif
-					if (fmt_issimpleevent (evnode)) {
-						/* hide this */
-						fmt_addtonodelist (hiding, evnode);
-					} else {
-						/* push up to free vars */
-						fmt_addtovarslist (fmstate, evnode);
-					}
-					SetNFMCheck (dname, evnode);
-				}
-			}
+			fmt_eatdecllist (fmstate, dname, hiding);
 
 			if (DA_CUR (hiding->u.fmhide.events) > 0) {
 				/* means we are hiding something, so put this node into the tree! */
@@ -4984,6 +5047,7 @@ fprintf (stderr, "formalmodelcheck(): tree before check is:\n");
 printtreenl (stderr, 1, n);
 #endif
 			do_coll_ct = fedata ? fedata->fe_fm_collct : 0;
+			do_toplevelonly = fedata ? fedata->fe_fm_toplevelonly : 0;
 
 			/* init string-table */
 			stringhash_sinit (fmstringtable, FMSTRINGTABLEBITS);
