@@ -955,8 +955,9 @@ PUBLIC BOOL isspecification (treenode * tptr)
  *****************************************************************************/
 PUBLIC treenode *skipspecifications (treenode * tptr)
 {
-	while (isspecification (tptr))
+	while (isspecification (tptr)) {
 		tptr = DBodyOf (tptr);
+	}
 	return (tptr);
 }
 

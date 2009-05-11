@@ -2610,7 +2610,7 @@ PUBLIC BOOL isconst (treenode * tptr)
 			return overlaps_are_const;
 			/*}}}  */
 		default:
-			badtag ( /*chklocn */ LocnOf (tptr), TagOf (tptr), "isconst");
+			badtag (LocnOf (tptr), TagOf (tptr), "isconst");
 		}
 	return (FALSE);
 }

@@ -125,6 +125,7 @@ PUBLIC treenode *occam_compiler_frontend (const occam_parms_t * const parms)
 	data->fe_checkusage = *parms->checkusage;	/* may be reset after #OPTION directive */
 	data->fe_formalmodel = *parms->formalmodel;	/* may be reset after #OPTION directive */
 	data->fe_fm_collct = *parms->fm_collct;		/* may be reset after #OPTION directive */
+	data->fe_fm_toplevelonly = parms->fm_toplevelonly;
 	data->fe_error_occurred = parms->error_occurred;
 	data->fe_errormode = errormode;
 	data->fe_noslot_value = NO_SLOT;
@@ -227,7 +228,7 @@ PUBLIC treenode *occam_compiler_frontend (const occam_parms_t * const parms)
 	}
 	/*}}} */
 	/*{{{  formal model check/generation*/
-	if ((fe_get_errorcount (handle) == 0) && !parms->onlylex) {
+	if ((fe_get_errorcount (handle) == 0) && !parms->onlylex && !parms->nochecking) {
 		fe_formalmodel_check (handle);
 	}
 	/*}}}*/
