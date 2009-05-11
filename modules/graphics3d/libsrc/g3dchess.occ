@@ -26,6 +26,59 @@
 #INCLUDE "g3dchess.inc"
 #USE "graphics3d"
 
+
+--{{{  PROC g3dchess.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
+--* Debugging routine.
+-- @private
+PROC g3dchess.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
+
+  #PRAGMA EXTERNAL "PROC C.out.stderr (VAL []BYTE str) = 0"
+
+  [512]BYTE buffer:
+  INT buf.len:
+  SEQ
+    buf.len := 0
+    #PRAGMA DEFINED buffer
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        kill ? running
+          running := FALSE
+        BYTE ch:
+        in ? ch
+          INITIAL BOOL flush IS FALSE:
+          SEQ
+            IF
+              ch = #00
+                flush := TRUE
+              buf.len = ((SIZE buffer) - 2)
+                SEQ
+                  buffer[buf.len] := ch
+                  flush := TRUE
+                  buf.len := buf.len + 1
+              TRUE
+                SEQ
+                  buffer[buf.len] := ch
+                  buf.len := buf.len + 1
+                  IF
+                    ch = '*n'
+                      flush := TRUE
+                    TRUE
+                      SKIP
+
+            IF
+              flush AND (buf.len > 0)
+                --{{{  flush buffer
+                SEQ
+                  C.out.stderr ([buffer FOR buf.len])
+                  buf.len := 0
+                --}}}
+              TRUE
+                SKIP
+:
+--}}}
+
 --{{{  PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
 --* Chess piece points generator.
 --
@@ -36,7 +89,7 @@
 -- @param out Generated points.
 -- @param ctrl Control channel.
 --
-PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+PROC chesspoints.generator.int (CHAN INT trigger?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?, CHAN BYTE scr!)
   MOBILE []G3D.POINT3 cpnts:
   INT npnts:
 
@@ -118,6 +171,134 @@ PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, piece, VAL [][2]
           INT any:
           trigger ? any
             out ! CLONE cpnts
+:
+
+PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+  CHAN BYTE write:
+  CHAN BOOL kill:
+  PAR
+    SEQ
+      chesspoints.generator.int (trigger?, npoints, piece, profile, out!, ctrl?, write!)
+      kill ! FALSE
+    g3dchess.debug.writer (write?, kill?)
+:
+--}}}
+--{{{  PROC chessboardpoints.generator (CHAN INT trigger?, VAL INT dim, VAL REAL32 width, height, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+--* Chess board points generator.
+--
+-- @param trigger Trigger channel.
+-- @param dim Number of squares along one edge.
+-- @param width Width of each square.
+-- @param height Height of the board.
+-- @param out Generated points.
+-- @param ctrl Control channel.
+--
+PROC chessboardpoints.generator.int (CHAN INT trigger?, VAL INT dim, VAL REAL32 width, height, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?, CHAN BYTE scr!)
+  MOBILE []G3D.POINT3 cpnts:
+  INT npnts:
+
+  PROC reset () --{{{
+    INT lpnt:
+    SEQ
+      npnts := ((dim + 1) * (dim + 1)) + 4
+      cpnts := MOBILE [npnts]G3D.POINT3
+
+      -- top grid of points
+      SEQ j = 0 FOR dim + 1
+        INITIAL REAL32 py IS ((REAL32 ROUND (j - (dim / 2))) * width):
+        SEQ i = 0 FOR dim + 1
+          INITIAL REAL32 px IS ((REAL32 ROUND (i - (dim / 2))) * width):
+          SEQ
+            cpnts[((dim + 1) * j) + i] := [px, -(height / 2.0), py]
+      lpnt := (dim + 1) * (dim + 1)
+
+      -- bottom corner points
+      cpnts[lpnt + 0] := [((REAL32 ROUND (-(dim / 2))) * width), (height / 2.0), ((REAL32 ROUND (-(dim / 2))) * width)]
+      cpnts[lpnt + 1] := [((REAL32 ROUND (dim - (dim / 2))) * width), (height / 2.0), ((REAL32 ROUND (-(dim / 2))) * width)]
+      cpnts[lpnt + 2] := [((REAL32 ROUND (dim - (dim / 2))) * width), (height / 2.0), ((REAL32 ROUND (dim - (dim / 2))) * width)]
+      cpnts[lpnt + 3] := [((REAL32 ROUND (-(dim / 2))) * width), (height / 2.0), ((REAL32 ROUND (dim - (dim / 2))) * width)]
+
+      #IF FALSE
+      SEQ v = 0 FOR npnts
+        SEQ
+          out.string ("point ", 0, scr!)
+          out.int (v, 0, scr!)
+          out.string (" = [", 0, scr!)
+          out.real32 (cpnts[v][x], 0, 2, scr!)
+          out.string (",", 0, scr!)
+          out.real32 (cpnts[v][y], 0, 2, scr!)
+          out.string (",", 0, scr!)
+          out.real32 (cpnts[v][z], 0, 2, scr!)
+          out.string ("]*n", 0, scr!)
+      #ENDIF
+  :
+  --}}}
+
+  SEQ
+    --{{{  initialise
+    reset ()
+
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      SEQ
+        PRI ALT
+          ctrl ? CASE
+            reset --{{{
+              reset ()
+            --}}}
+            [3]REAL32 scale:
+            add.scale; scale --{{{
+              SEQ
+                SEQ i = 0 FOR npnts
+                  SEQ
+                    cpnts[i][x] := cpnts[i][x] * scale[0]
+                    cpnts[i][y] := cpnts[i][y] * scale[1]
+                    cpnts[i][z] := cpnts[i][z] * scale[2]
+            --}}}
+            [3]REAL32 scale:
+            set.scale; scale --{{{
+              SEQ
+                reset ()
+                SEQ i = 0 FOR npnts
+                  SEQ
+                    cpnts[i][x] := cpnts[i][x] * scale[0]
+                    cpnts[i][y] := cpnts[i][y] * scale[1]
+                    cpnts[i][z] := cpnts[i][z] * scale[2]
+            --}}}
+            [3]REAL32 trans:
+            add.trans; trans --{{{
+              SEQ
+                SEQ i = 0 FOR npnts
+                  SEQ
+                    cpnts[i][x] := cpnts[i][x] + trans[0]
+                    cpnts[i][y] := cpnts[i][y] + trans[1]
+                    cpnts[i][z] := cpnts[i][z] + trans[2]
+            --}}}
+            [3]REAL32 trans:
+            set.trans; trans --{{{
+              SEQ
+                reset ()
+                SEQ i = 0 FOR npnts
+                  SEQ
+                    cpnts[i][x] := cpnts[i][x] + trans[0]
+                    cpnts[i][y] := cpnts[i][y] + trans[1]
+                    cpnts[i][z] := cpnts[i][z] + trans[2]
+            --}}}
+          INT any:
+          trigger ? any
+            out ! CLONE cpnts
+:
+
+PROC chessboardpoints.generator (CHAN INT trigger?, VAL INT dim, VAL REAL32 width, height, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+  CHAN BYTE write:
+  CHAN BOOL kill:
+  PAR
+    SEQ
+      chessboardpoints.generator.int (trigger?, dim, width, height, out!, ctrl?, write!)
+      kill ! FALSE
+    g3dchess.debug.writer (write?, kill?)
 :
 --}}}
 --{{{  PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
@@ -231,6 +412,7 @@ PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VA
 
         MOBILE []G3D.POINT2.3 pnts:
         in ? pnts
+          --{{{  generate polygons
           IF
             (SIZE pnts) <> ((npoints * (SIZE profile)) + 2)
               SKIP
@@ -269,6 +451,198 @@ PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VA
                         SKIP
 
                 out ! polys
+          --}}}
+:
+--}}}
+--{{{  PROC chessboardify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--* Turns chessboard points into polygons
+--
+-- @param in Points in.
+-- @param dim Number of squares along one edge.
+-- @param out Generated points.
+-- @param ctrl Control channel.
+--
+PROC chessboardify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, CHAN BYTE scr!)
+
+  PROC set.poly.point (G3D.POLY p, VAL INT pi, VAL G3D.POINT2.3 pnt) --{{{
+    SEQ
+      p[x][pi] := pnt[x]
+      p[y][pi] := pnt[y]
+      p[z][pi] := pnt[z]
+  :
+  --}}}
+  INT FUNCTION compute.poly.normal (VAL G3D.POLY poly) --{{{
+    INT r:
+    VALOF
+      r := ((poly[y][3] MINUS poly[y][0]) TIMES (poly[x][1] MINUS poly[x][0])) MINUS
+            ((poly[y][1] MINUS poly[y][0]) TIMES (poly[x][3] MINUS poly[x][0]))
+      RESULT r
+  :
+  --}}}
+
+  DATA TYPE PPNT IS [4]INT:
+
+  [3]INT pixmap:
+  MOBILE []PPNT polymap:
+  INITIAL INT npoints IS ((dim + 1) * (dim + 1)) + 4:
+  INITIAL BOOL backfaces IS FALSE:
+  INITIAL INT npolys IS (dim * dim) + 5:
+  SEQ
+
+    --{{{  initialise
+    polymap := MOBILE [npolys]PPNT
+
+    -- top faces
+    SEQ j = 0 FOR dim
+      INITIAL INT rp IS j * (dim + 1):
+      INITIAL INT nrp IS (j + 1) * (dim + 1):
+      SEQ i = 0 FOR dim
+        INITIAL INT pno IS (j * dim) + i:
+        SEQ
+          polymap[pno] := [nrp + i, rp + i, rp + (i+1), nrp + (i+1)]
+          --polymap[pno] := [nrp + (i+1), rp + (i+1), rp + i, nrp + i]
+
+          #IF FALSE
+          SEQ
+            out.string ("poly ", 0, scr!)
+            out.int (pno, 0, scr!)
+            out.string (" = [", 0, scr!)
+            SEQ v = 0 FOR 4
+              SEQ
+                out.int (polymap[pno][v], 0, scr!)
+                IF
+                  v = 3
+                    out.string ("]", 0, scr!)
+                  TRUE
+                    out.string (",", 0, scr!)
+            out.string ("*n", 0, scr!)
+
+          #ENDIF
+
+    -- other faces
+    INT vp, ep:
+    SEQ
+      vp := (dim * dim)
+      ep := ((dim+1) * (dim+1))
+
+      polymap[vp + 0] := [dim, 0, ep, ep+1]
+      polymap[vp + 1] := [ep-1, dim, ep+1, ep+2]
+      polymap[vp + 2] := [ep-(dim+1),ep-1,ep+2,ep+3]
+      polymap[vp + 3] := [0,ep-(dim+1),ep+3,ep]
+      polymap[vp + 4] := [ep+2, ep+1, ep, ep+3]
+
+    --}}}
+
+    -- colouring
+    pixmap := [#00204020, #00A0A0FF, #00101010]
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset --{{{
+            SEQ
+              backfaces := FALSE
+          --}}}
+          BOOL trimap:
+          set.trimap; trimap --{{{
+            SKIP
+          --}}}
+          set.backfaces; backfaces --{{{
+            SKIP
+          --}}}
+          INT fn, col:
+          set.face.colour; fn; col --{{{
+            IF
+              (fn >= 0) AND (fn < (SIZE pixmap))
+                pixmap[fn] := col
+              TRUE
+                SKIP
+          --}}}
+          MOBILE []INT cols:
+          set.face.colours; cols --{{{
+            INT l:
+            SEQ
+              l := SIZE cols
+              IF
+                l >= (SIZE pixmap)
+                  l := SIZE pixmap
+                TRUE
+                  SKIP
+              SEQ i = 0 FOR l
+                pixmap[i] := cols[i]
+          --}}}
+
+        MOBILE []G3D.POINT2.3 pnts:
+        in ? pnts
+          --{{{  generate polygons
+          IF
+            (SIZE pnts) <> npoints
+              SKIP
+            TRUE
+              MOBILE []G3D.POLY polys:
+              SEQ
+                polys := MOBILE [npolys]G3D.POLY
+
+                -- main faces
+                INITIAL INT rsel IS 1:
+                SEQ j = 0 FOR dim
+                  INITIAL INT csel IS rsel:
+                  SEQ
+                    SEQ i = 0 FOR dim
+                      INITIAL INT pno IS (j * dim) + i:
+                      INT norm:
+                      SEQ
+                        polys[pno][npoints] := 4
+
+                        SEQ k = 0 FOR 4
+                          set.poly.point (polys[pno], k, pnts[polymap[pno][k]])
+
+                        norm := compute.poly.normal (polys[pno])
+
+                        polys[pno][norm] := norm
+                        polys[pno][pixel] := pixmap[csel]
+                        csel := 1 - csel
+
+                        IF
+                          (NOT backfaces) AND (norm >= 0)
+                            polys[pno][npoints] := 0
+                          TRUE
+                            SKIP
+                    rsel := 1 - rsel
+
+                -- sides
+                SEQ i = (dim * dim) FOR 5
+                  INT norm:
+                  SEQ
+                    polys[i][npoints] := 4
+
+                    SEQ k = 0 FOR 4
+                      set.poly.point (polys[i], k, pnts[polymap[i][k]])
+
+                    norm := compute.poly.normal (polys[i])
+
+                    polys[i][norm] := norm
+                    polys[i][pixel] := pixmap[2]
+
+                    IF
+                      (NOT backfaces) AND (norm >= 0)
+                        polys[i][npoints] := 0
+                      TRUE
+                        SKIP
+
+                out ! polys
+          --}}}
+:
+
+PROC chessboardify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+  CHAN BYTE write:
+  CHAN BOOL kill:
+  PAR
+    SEQ
+      chessboardify.points.int (in?, dim, out!, ctrl?, write!)
+      kill ! FALSE
+    g3dchess.debug.writer (write?, kill?)
 :
 --}}}
 
@@ -303,12 +677,12 @@ PROC chesspiece.rot0 (CHAN INT trigger?, VAL INT width, height, piece, npoints, 
           chessify.points (gc1?, npoints, G3D.CP.ROOK, PROFILE.ROOK, out!, pgn.ctl?)
 
     SEQ
-      rot.ctl ! set.mode; G3D.ROTATE.MODE.DEMO
-      rot.ctl ! add.increment; 0.03
+      rot.ctl ! set.mode; G3D.ROTATE.MODE.Y
+      rot.ctl ! add.increment; 0.04
 :
 --}}}
 
---{{{  
+--{{{  PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, piece, npoints)
 --* Implements a basic chess piece (zdepth style).
 --
 -- @param rlink.in Render link.
@@ -336,11 +710,11 @@ PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, pie
       rdr.ctl ! set.mode; G3D.RENDER.MODE.NONE
       pgn.ctl ! set.backfaces; FALSE
       psc.ctl ! set.zcolour; TRUE
-      gen.ctl ! set.scale; [4.0, 4.0, 4.0]
+      gen.ctl ! set.scale; [2.0, 2.0, 2.0]
 
 :
 --}}}
---{{{  
+--{{{  PROC chesspiece.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT piece, npoints)
 --* Dynamically spawns a new 'chesspiece.network'.
 --
 -- @param width Raster width.
@@ -358,4 +732,63 @@ PROC chesspiece.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! ne
     new.link ! rlink
 :
 --}}}
+--{{{  PROC chessboard.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, dim, VAL REAL32 sqw, bh)
+--* Implements a basic chess board (zdepth style).
+--
+-- @param rlink.in Render link.
+-- @param width Width of raster.
+-- @param height Height of raster.
+-- @param dim Board dimension.
+-- @param sqw Width of each square.
+-- @param bh Board height.
+--
+PROC chessboard.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, dim, VAL REAL32 sqw, bh)
+  CHAN INT trigger:
+  CHAN MOBILE []G3D.POINT3 gp1, gp2:
+  CHAN MOBILE []G3D.POINT2.3 gc1:
+  CHAN MOBILE []G3D.POLY pc1:
+  CHAN MOBILE []G3D.POLY.SCAN ps1:
+  CHAN G3D.GEN.CONTROL gen.ctl:
+  CHAN G3D.ROT.CONTROL rot.ctl:
+  CHAN G3D.PRJ.CONTROL prj.ctl:
+  CHAN G3D.PGN.CONTROL pgn.ctl:
+  CHAN G3D.PSC.CONTROL psc.ctl:
+  CHAN G3D.RDR.CONTROL rdr.ctl:
+  PAR
+    chessboardpoints.generator (trigger?, dim, sqw, bh, gp1!, gen.ctl?)
+    points3d.rotate (gp1?, gp2!, rot.ctl?)
+    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?, width, height)
+    chessboardify.points (gc1?, dim, pc1!, pgn.ctl?)
+    poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
+    render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, width, height)
+
+    SEQ
+      prj.ctl ! set.3dshift; [0.0, 3.5, 0.0]
+      rdr.ctl ! set.mode; G3D.RENDER.MODE.NORM
+      pgn.ctl ! set.backfaces; FALSE
+      psc.ctl ! set.zcolour; FALSE
+      rot.ctl ! set.mode; G3D.ROTATE.MODE.Y
+      rot.ctl ! add.increment; 0.02
+:
+--}}}
+--{{{  PROC chessboard.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT dim, VAL REAL32 sqw, bh)
+--* Spawns a new 'chessboard.network'.
+--
+-- @param width Raster width.
+-- @param height Raster height.
+-- @param new.link Channel to communicate new object link.
+-- @param dim Board dimension.
+-- @param sqw Size of each square.
+-- @param bh Board height.
+--
+PROC chessboard.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT dim, VAL REAL32 sqw, bh)
+  G3D.RENDER.ENGINE! rlink:
+  G3D.RENDER.ENGINE? rsvr:
+  SEQ
+    rsvr, rlink := MOBILE G3D.RENDER.ENGINE
+    FORK chessboard.network (rsvr?, width, height, dim, sqw, bh)
+    new.link ! rlink
+:
+--}}}
+
 
