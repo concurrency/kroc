@@ -79,7 +79,7 @@ PROC g3dchess.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 :
 --}}}
 
---{{{  PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+--{{{  PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?, CHAN BYTE scr!)
 --* Chess piece points generator.
 --
 -- @param trigger Trigger channel.
@@ -88,6 +88,7 @@ PROC g3dchess.debug.writer (CHAN BYTE in?, CHAN BOOL kill?)
 -- @param profile Y/rad pairs for the piece.
 -- @param out Generated points.
 -- @param ctrl Control channel.
+-- @param scr Screen channel.
 --
 PROC chesspoints.generator.int (CHAN INT trigger?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?, CHAN BYTE scr!)
   MOBILE []G3D.POINT3 cpnts:
@@ -183,7 +184,7 @@ PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, piece, VAL [][2]
     g3dchess.debug.writer (write?, kill?)
 :
 --}}}
---{{{  PROC chessboardpoints.generator (CHAN INT trigger?, VAL INT dim, VAL REAL32 width, height, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+--{{{  PROC chessboardpoints.generator (CHAN INT trigger?, VAL INT dim, VAL REAL32 width, height, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?, CHAN BYTE scr!)
 --* Chess board points generator.
 --
 -- @param trigger Trigger channel.
@@ -192,6 +193,7 @@ PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, piece, VAL [][2]
 -- @param height Height of the board.
 -- @param out Generated points.
 -- @param ctrl Control channel.
+-- @param scr Screen channel.
 --
 PROC chessboardpoints.generator.int (CHAN INT trigger?, VAL INT dim, VAL REAL32 width, height, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?, CHAN BYTE scr!)
   MOBILE []G3D.POINT3 cpnts:
@@ -454,13 +456,14 @@ PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VA
           --}}}
 :
 --}}}
---{{{  PROC chessboardify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--{{{  PROC chessboardify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, CHAN BYTE scr!)
 --* Turns chessboard points into polygons
 --
 -- @param in Points in.
 -- @param dim Number of squares along one edge.
 -- @param out Generated points.
 -- @param ctrl Control channel.
+-- @param scr Screen channel.
 --
 PROC chessboardify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, CHAN BYTE scr!)
 
