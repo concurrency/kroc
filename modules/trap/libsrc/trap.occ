@@ -79,7 +79,8 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
 
       SHARED! CHAN SELECTOR.SIGNAL? new.sock.svr:
       SELECTOR.SIGNAL? sock.svr:
-      INITIAL BOOL selecting IS FALSE:
+      INITIAL BOOL want.svr IS FALSE:
+      INITIAL BOOL got.svr IS FALSE:
 
       INITIAL MOBILE []BYTE buf IS MOBILE [65536]BYTE:
       INITIAL INT used IS 0:
@@ -95,9 +96,11 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
           used := used + (SIZE s)
 
           IF
-            (NOT selecting) AND (used > 0)
+            (NOT want.svr) AND (used > 0)
               --{{{  start selecting
-              FORK selector.delayed.add (sel, sock[fd], SELECT.WRITE, new.sock.svr!)
+              SEQ
+                want.svr := TRUE
+                FORK selector.delayed.add (sel, sock[fd], SELECT.WRITE, new.sock.svr!)
               --}}}
             TRUE
               SKIP
@@ -116,10 +119,10 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
               add.to.buf (data)
             --}}}
 
-          (NOT selecting) & new.sock.svr ? sock.svr
-            selecting := TRUE
+          (NOT got.svr) & new.sock.svr ? sock.svr
+            got.svr := TRUE
 
-          selecting & sock.svr[signal] ? CASE
+          got.svr & sock.svr[signal] ? CASE
             ready
               --{{{
               INT sent:
@@ -132,9 +135,9 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
                   buf[i] := buf[i + sent]
 
                 IF
-                  selecting AND (used = 0)
+                  used = 0
                     SEQ
-                      selecting := FALSE
+                      want.svr, got.svr := FALSE, FALSE
                       sock.svr[ack] ! remove
                   TRUE
                     sock.svr[ack] ! again
