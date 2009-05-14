@@ -228,6 +228,30 @@ CHAN TYPE G3D.RENDER.ENGINE
 :
 
 --}}}
+--{{{  scene transformation channel-type and protocols
+
+CHAN TYPE G3D.SCENE.TRANS:
+
+--* Scene rotate pipeline link protocol.
+PROTOCOL G3D.SCENE.TRANS.LINK
+  CASE
+    reset                                   --* Reset to default settings.
+    set.pre.3dshift; [3]REAL32              --* Set 3D shift (before rotation).
+    set.rot.angle; REAL32                   --* Set angle of rotation.
+    set.rot.diff; REAL32                    --* Set difference for continuous rotation.
+    set.rot.mode; INT                       --* Set rotation mode (see [@ref G3D.ROTATE]).
+
+    set.next; INT; G3D.SCENE.TRANS!         --* Set the next scene transformer in a pipeline.
+                                            -- The integer passed is used to identify which
+                                            -- particular 'next' to replace (counts down).
+:
+
+CHAN TYPE G3D.SCENE.TRANS
+  MOBILE RECORD
+    CHAN G3D.SCENE.TRANS.LINK link?:        --* Link channel.
+:
+
+--}}}
 
 #ENDIF
 
