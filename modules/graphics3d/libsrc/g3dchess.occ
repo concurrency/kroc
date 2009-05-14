@@ -185,17 +185,10 @@ PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, piece, VAL [][2]
 :
 --}}}
 --{{{  PROC chessboardpoints.generator (CHAN INT trigger?, VAL INT dim, VAL REAL32 width, height, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?, CHAN BYTE scr!)
---* Chess board points generator.
---
--- @param trigger Trigger channel.
--- @param dim Number of squares along one edge.
--- @param width Width of each square.
--- @param height Height of the board.
--- @param out Generated points.
--- @param ctrl Control channel.
--- @param scr Screen channel.
---
-PROC chessboardpoints.generator.int (CHAN INT trigger?, VAL INT dim, VAL REAL32 width, height, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?, CHAN BYTE scr!)
+
+--* Chess board points generator (helper).
+-- @private
+PROC chessboardpoints.generator.int (CHAN INT trigger?, VAL INT dim, VAL REAL32 width, height, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?, CHAN BYTE scr!) --{{{
   MOBILE []G3D.POINT3 cpnts:
   INT npnts:
 
@@ -292,7 +285,18 @@ PROC chessboardpoints.generator.int (CHAN INT trigger?, VAL INT dim, VAL REAL32 
           trigger ? any
             out ! CLONE cpnts
 :
+--}}}
 
+
+--* Chess board points generator.
+--
+-- @param trigger Trigger channel.
+-- @param dim Number of squares along one edge.
+-- @param width Width of each square.
+-- @param height Height of the board.
+-- @param out Generated points.
+-- @param ctrl Control channel.
+--
 PROC chessboardpoints.generator (CHAN INT trigger?, VAL INT dim, VAL REAL32 width, height, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
   CHAN BYTE write:
   CHAN BOOL kill:
@@ -456,16 +460,11 @@ PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VA
           --}}}
 :
 --}}}
---{{{  PROC chessboardify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, CHAN BYTE scr!)
---* Turns chessboard points into polygons
---
--- @param in Points in.
--- @param dim Number of squares along one edge.
--- @param out Generated points.
--- @param ctrl Control channel.
--- @param scr Screen channel.
---
-PROC chessboardify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, CHAN BYTE scr!)
+--{{{  PROC chessboardify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+
+--* Turns chessboard points into polygons (helper).
+-- @private
+PROC chessboardify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, CHAN BYTE scr!) --{{{
 
   PROC set.poly.point (G3D.POLY p, VAL INT pi, VAL G3D.POINT2.3 pnt) --{{{
     SEQ
@@ -637,7 +636,15 @@ PROC chessboardify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN
                 out ! polys
           --}}}
 :
+--}}}
 
+--* Turns chessboard points into polygons.
+--
+-- @param in Points in.
+-- @param dim Number of squares along one edge.
+-- @param out Generated points.
+-- @param ctrl Control channel.
+--
 PROC chessboardify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
   CHAN BYTE write:
   CHAN BOOL kill:
@@ -649,8 +656,8 @@ PROC chessboardify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOB
 :
 --}}}
 
---{{{  PROC chesspiece.rot0 (CHAN INT trigger?, VAL INT width, height, piece, npoints, CHAN G3D.POLY out!, CHAN G3D.GEN.CONTROL gen.ctl?, CHAN G3D.PRJ.CONTROL prj.ctl?, CHAN G3D.PGN.CONTROL pgn.ctl?)
---* Instantiates a particular chess piece with no rotation control.
+--{{{  PROC chesspiece.rot1 (CHAN INT trigger?, VAL INT width, height, piece, npoints, CHAN MOBILE []G3D.POLY out!, G3DC.PIECE.CTL? svr, VAL INT bdim, VAL REAL32 sqw, bh, G3D.SCENE.TRANS? sct)
+--* Instantiates a particular chess piece with single rotation control.
 --
 -- @param trigger Trigger input channel.
 -- @param width Width of the target raster.
@@ -658,34 +665,56 @@ PROC chessboardify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOB
 -- @param piece Particular piece (see [@ref G3D.CP]).
 -- @param npoints Number of points around the circumference.
 -- @param out Generated polygons out.
--- @param gen.ctl Generator control channel.
--- @param prj.ctl Projector control channel.
--- @param pgn.ctl Polygonify control channel.
+-- @param svr Piece control channel-end.
+-- @param bdim Board dimension.
+-- @param sqw Board square width.
+-- @param bh Board height.
+-- @param sct Scene transform control channel-end.
 --
-PROC chesspiece.rot0 (CHAN INT trigger?, VAL INT width, height, piece, npoints, CHAN MOBILE []G3D.POLY out!, CHAN G3D.GEN.CONTROL gen.ctl?, CHAN G3D.PRJ.CONTROL prj.ctl?, CHAN G3D.PGN.CONTROL pgn.ctl?)
+PROC chesspiece.rot1 (CHAN INT trigger?, VAL INT width, height, piece, npoints, CHAN MOBILE []G3D.POLY out!, G3DC.PIECE.CTL? svr, VAL INT bdim, VAL REAL32 sqw, bh, G3D.SCENE.TRANS? sct)
   -- Various piece profiles
 
-  VAL [][2]REAL32 PROFILE.ROOK IS [[1.0, 0.5], [0.8, 0.5], [0.6, 0.4], [-0.2, 0.4], [-0.4, 0.5], [-0.8, 0.5], [-0.8, 0.3], [-0.6, 0.3]]:
+  VAL [][2]REAL32 PROFILE.ROOK IS [[0.0, 0.5], [-0.2, 0.5], [-0.4, 0.4], [-1.2, 0.4], [-1.4, 0.5], [-1.8, 0.5], [-1.8, 0.3], [-1.6, 0.3]]:
+  VAL [][2]REAL32 PROFILE.PAWN IS [[0.0, 0.4], [-0.2, 0.4], [-0.4, 0.2], [-1.0, 0.2], [-1.2, 0.4], [-1.4, 0.2]]:
 
-  CHAN MOBILE []G3D.POINT3 gp1, gp2:
+  CHAN MOBILE []G3D.POINT3 gp1, gp2, gp3:
   CHAN MOBILE []G3D.POINT2.3 gc1:
-  CHAN G3D.ROT.CONTROL rot.ctl:
+  CHAN G3D.TRN.CONTROL trn.ctl:
   PAR
-    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?, width, height)
-    points3d.rotate (gp1?, gp2!, rot.ctl?)
+    --{{{  generator
     CASE piece
       G3D.CP.ROOK
-        PAR
-          chesspoints.generator (trigger?, npoints, G3D.CP.ROOK, PROFILE.ROOK, gp1!, gen.ctl?)
-          chessify.points (gc1?, npoints, G3D.CP.ROOK, PROFILE.ROOK, out!, pgn.ctl?)
+        chesspoints.generator (trigger?, npoints, piece, PROFILE.ROOK, gp1!, svr[gen.ctl]?)
+      G3D.CP.PAWN
+        chesspoints.generator (trigger?, npoints, piece, PROFILE.PAWN, gp1!, svr[gen.ctl]?)
+    --}}}
+    points3d.translate (gp1?, gp2!, trn.ctl?)
+    points3d.transrotate (gp2?, gp3!, sct?)
+    points.3d.to.2d3 (gp3?, gc1!, svr[prj.ctl]?, width, height)
+    --{{{  polygon-ify
+    CASE piece
+      G3D.CP.ROOK
+        chessify.points (gc1?, npoints, piece, PROFILE.ROOK, out!, svr[pgn.ctl]?)
+      G3D.CP.PAWN
+        chessify.points (gc1?, npoints, piece, PROFILE.PAWN, out!, svr[pgn.ctl]?)
+    --}}}
+    --{{{  local handling
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      svr[in] ? CASE
+        INT x, y:
+        set.pos; x; y
+          REAL32 rx, ry:
+          SEQ
+            rx := (sqw * ((REAL32 ROUND (bdim - 1)) / 2.0)) - (sqw * (REAL32 ROUND x))
+            ry := (sqw * ((REAL32 ROUND (bdim - 1)) / 2.0)) - (sqw * (REAL32 ROUND y))
 
-    SEQ
-      rot.ctl ! set.mode; G3D.ROTATE.MODE.Y
-      rot.ctl ! add.increment; 0.04
+            trn.ctl ! set.3dshift; [rx, 0.0, ry]
+    --}}}
 :
 --}}}
 
---{{{  PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, piece, npoints)
+--{{{  PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, piece, npoints, bdim, VAL REAL32 sqw, bh, G3DC.PIECE.CTL? svr, G3D.SCENE.TRANS? sct)
 --* Implements a basic chess piece (zdepth style).
 --
 -- @param rlink.in Render link.
@@ -693,31 +722,40 @@ PROC chesspiece.rot0 (CHAN INT trigger?, VAL INT width, height, piece, npoints, 
 -- @param height Height of raster.
 -- @param piece Particular piece (see [@ref G3D.CP]).
 -- @param npoints Number of points around the circumference.
+-- @param bdim Board dimension.
+-- @param sqw Board square width.
+-- @param bh Board height.
+-- @param svr Piece control channel-end.
+-- @param sct Scene transform control channel-end.
 --
-PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, piece, npoints)
+PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, piece, npoints, bdim, VAL REAL32 sqw, bh, G3DC.PIECE.CTL? svr, G3D.SCENE.TRANS? sct)
   CHAN INT trigger:
   CHAN MOBILE []G3D.POLY pc1:
   CHAN MOBILE []G3D.POLY.SCAN ps1:
-  CHAN G3D.GEN.CONTROL gen.ctl:
-  CHAN G3D.PRJ.CONTROL prj.ctl:
-  CHAN G3D.PGN.CONTROL pgn.ctl:
   CHAN G3D.PSC.CONTROL psc.ctl:
   CHAN G3D.RDR.CONTROL rdr.ctl:
   PAR
-    chesspiece.rot0 (trigger?, width, height, piece, npoints, pc1!, gen.ctl?, prj.ctl?, pgn.ctl?)
+    chesspiece.rot1 (trigger?, width, height, piece, npoints, pc1!, svr?, bdim, sqw, bh, sct?)
     poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
     render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, width, height)
 
     SEQ
-      prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
       rdr.ctl ! set.mode; G3D.RENDER.MODE.NONE
-      pgn.ctl ! set.backfaces; FALSE
       psc.ctl ! set.zcolour; TRUE
-      gen.ctl ! set.scale; [2.0, 2.0, 2.0]
 
 :
 --}}}
---{{{  PROC chesspiece.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT piece, npoints)
+--{{{  PROC chesspiece.init (G3DC.PIECE.CTL! ctl)
+--* Initialises chess piece rendering settings.
+-- @private
+PROC chesspiece.init (G3DC.PIECE.CTL! ctl)
+  SEQ
+    ctl[prj.ctl] ! set.3dshift; [0.0, 0.0, 0.0]
+    ctl[pgn.ctl] ! set.backfaces; FALSE
+    ctl[gen.ctl] ! set.scale; [0.8, 1.0, 0.8]
+:
+--}}}
+--{{{  PROC chesspiece.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT piece, npoints, bdim, VAL REAL32 sqw, bh, RESULT G3DC.PIECE.CTL! pctl, RESULT G3D.SCENE.TRANS! sti)
 --* Dynamically spawns a new 'chesspiece.network'.
 --
 -- @param width Raster width.
@@ -725,17 +763,27 @@ PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, pie
 -- @param new.link Channel to communicate new object link.
 -- @param piece Particular piece (see [@ref G3D.CP]).
 -- @param npoints Number of points around the circumference.
+-- @param bdim Board dimension.
+-- @param sqw Board square width.
+-- @param bh Board height.
+-- @param pctl Piece control channel-end (returned).
+-- @param sti Returned scene transform client channel-end.
 --
-PROC chesspiece.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT piece, npoints)
+PROC chesspiece.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT piece, npoints, bdim, VAL REAL32 sqw, bh, RESULT G3DC.PIECE.CTL! pctl, RESULT G3D.SCENE.TRANS! sti)
   G3D.RENDER.ENGINE! rlink:
   G3D.RENDER.ENGINE? rsvr:
+  G3DC.PIECE.CTL? psvr:
+  G3D.SCENE.TRANS? sct:
   SEQ
     rsvr, rlink := MOBILE G3D.RENDER.ENGINE
-    FORK chesspiece.network (rsvr?, width, height, piece, npoints)
+    psvr, pctl := MOBILE G3DC.PIECE.CTL
+    sct, sti := MOBILE G3D.SCENE.TRANS
+    FORK chesspiece.network (rsvr?, width, height, piece, npoints, bdim, sqw, bh, psvr?, sct?)
+    chesspiece.init (pctl!)
     new.link ! rlink
 :
 --}}}
---{{{  PROC chessboard.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, dim, VAL REAL32 sqw, bh)
+--{{{  PROC chessboard.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, dim, VAL REAL32 sqw, bh, G3D.SCENE.TRANS? sct)
 --* Implements a basic chess board (zdepth style).
 --
 -- @param rlink.in Render link.
@@ -744,37 +792,36 @@ PROC chesspiece.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! ne
 -- @param dim Board dimension.
 -- @param sqw Width of each square.
 -- @param bh Board height.
+-- @param sct Scene transform control.
 --
-PROC chessboard.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, dim, VAL REAL32 sqw, bh)
+PROC chessboard.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, dim, VAL REAL32 sqw, bh, G3D.SCENE.TRANS? sct)
   CHAN INT trigger:
   CHAN MOBILE []G3D.POINT3 gp1, gp2:
   CHAN MOBILE []G3D.POINT2.3 gc1:
   CHAN MOBILE []G3D.POLY pc1:
   CHAN MOBILE []G3D.POLY.SCAN ps1:
   CHAN G3D.GEN.CONTROL gen.ctl:
-  CHAN G3D.ROT.CONTROL rot.ctl:
   CHAN G3D.PRJ.CONTROL prj.ctl:
   CHAN G3D.PGN.CONTROL pgn.ctl:
   CHAN G3D.PSC.CONTROL psc.ctl:
   CHAN G3D.RDR.CONTROL rdr.ctl:
   PAR
     chessboardpoints.generator (trigger?, dim, sqw, bh, gp1!, gen.ctl?)
-    points3d.rotate (gp1?, gp2!, rot.ctl?)
+    points3d.transrotate (gp1?, gp2!, sct?)
     points.3d.to.2d3 (gp2?, gc1!, prj.ctl?, width, height)
     chessboardify.points (gc1?, dim, pc1!, pgn.ctl?)
     poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
     render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, width, height)
 
     SEQ
-      prj.ctl ! set.3dshift; [0.0, 3.5, 0.0]
+      gen.ctl ! set.trans; [0.0, bh / 2.0, 0.0]
+      prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
       rdr.ctl ! set.mode; G3D.RENDER.MODE.NORM
       pgn.ctl ! set.backfaces; FALSE
       psc.ctl ! set.zcolour; FALSE
-      rot.ctl ! set.mode; G3D.ROTATE.MODE.Y
-      rot.ctl ! add.increment; 0.02
 :
 --}}}
---{{{  PROC chessboard.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT dim, VAL REAL32 sqw, bh)
+--{{{  PROC chessboard.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT dim, VAL REAL32 sqw, bh, RESULT G3D.SCENE.TRANS! sti)
 --* Spawns a new 'chessboard.network'.
 --
 -- @param width Raster width.
@@ -783,13 +830,16 @@ PROC chessboard.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, dim
 -- @param dim Board dimension.
 -- @param sqw Size of each square.
 -- @param bh Board height.
+-- @param sti Returned scene-transform client channel-end.
 --
-PROC chessboard.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT dim, VAL REAL32 sqw, bh)
+PROC chessboard.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT dim, VAL REAL32 sqw, bh, RESULT G3D.SCENE.TRANS! sti)
   G3D.RENDER.ENGINE! rlink:
   G3D.RENDER.ENGINE? rsvr:
+  G3D.SCENE.TRANS? sct:
   SEQ
     rsvr, rlink := MOBILE G3D.RENDER.ENGINE
-    FORK chessboard.network (rsvr?, width, height, dim, sqw, bh)
+    sct, sti := MOBILE G3D.SCENE.TRANS
+    FORK chessboard.network (rsvr?, width, height, dim, sqw, bh, sct?)
     new.link ! rlink
 :
 --}}}

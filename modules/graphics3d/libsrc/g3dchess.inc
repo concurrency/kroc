@@ -30,5 +30,20 @@ VAL INT G3D.CP.KING IS 6:               --* King.
 
 --*}}}
 
+--* Chess piece control.
+PROTOCOL G3DC.PIECE.CTL.IN
+  CASE
+    set.pos; INT; INT                   --* Set piece position on board (0-7,0-7).
+:
+
+--* Used to control a particular piece.
+CHAN TYPE G3DC.PIECE.CTL
+  MOBILE RECORD
+    CHAN G3DC.PIECE.CTL.IN in?:         --* Piece control.
+    CHAN G3D.GEN.CONTROL gen.ctl?:      --* Piece generator control.
+    CHAN G3D.PRJ.CONTROL prj.ctl?:      --* Projector control.
+    CHAN G3D.PGN.CONTROL pgn.ctl?:      --* Polygon convert control.
+:
+
 #ENDIF      -- G3DCHESS.INC
 
