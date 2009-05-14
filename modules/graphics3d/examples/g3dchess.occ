@@ -41,11 +41,41 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
       raster.display.simple ("Chess test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!)
       raster.chain (rc3?, rc1!, rre?, FALSE)
 
+      G3DC.PIECE.CTL! p1.ctl:
+      G3D.SCENE.TRANS! sc1.ctl:
       SEQ
         CLAIM rre!
           SEQ
-            chessboard.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 8, 1.2, 0.3)
-            chesspiece.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, G3D.CP.ROOK, 16)
+            chessboard.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 8, 1.2, 0.3, sc1.ctl)
+  
+        --{{{  black pawns
+        SEQ i = 0 FOR 8
+          G3DC.PIECE.CTL! p.ctl:
+          G3D.SCENE.TRANS! sct:
+          SEQ
+            CLAIM rre!
+              chesspiece.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, G3D.CP.PAWN, 8, 8, 1.2, 0.3, p.ctl, sct)
+            sc1.ctl[link] ! set.next; 100; sct
+            p.ctl[in] ! set.pos; 1; i
+            p.ctl[pgn.ctl] ! set.face.colours; [#00000000,#00101010,#00000000]
+        --}}}
+        --{{{  white pawns
+        SEQ i = 0 FOR 8
+          G3DC.PIECE.CTL! p.ctl:
+          G3D.SCENE.TRANS! sct:
+          SEQ
+            CLAIM rre!
+              chesspiece.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, G3D.CP.PAWN, 8, 8, 1.2, 0.3, p.ctl, sct)
+            sc1.ctl[link] ! set.next; 100; sct
+            p.ctl[in] ! set.pos; 6; i
+            p.ctl[pgn.ctl] ! set.face.colours; [#00000000,#00A0A0A0,#00000000]
+        --}}}
+
+        sc1.ctl[link] ! set.pre.3dshift; [0.0, 3.5, 0.0]
+
+        -- start the whole thing rotating
+        sc1.ctl[link] ! set.rot.mode; G3D.ROTATE.MODE.Y
+        sc1.ctl[link] ! set.rot.diff; 0.02
 :
 --}}}
 
