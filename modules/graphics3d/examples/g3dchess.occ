@@ -29,15 +29,68 @@
 -- @private
 --
 PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
+
+  DATA TYPE PIECE.INFO
+    RECORD
+      INT piece:
+      INT colour:
+      INT x, y:
+  :
+
   VAL INT SCR.WIDTH IS G3D.DEFAULT.WIDTH:
   VAL INT SCR.HEIGHT IS G3D.DEFAULT.HEIGHT:
+  [32]PIECE.INFO pieces:
   SEQ
+
+    --{{{  setup pieces
+    SEQ
+      -- colours
+      SEQ i = 0 FOR 16
+        pieces[i][colour] := #00101010
+      SEQ i = 16 FOR 16
+        pieces[i][colour] := #00A0A0A0
+
+      -- positions
+      SEQ i = 0 FOR 8
+        SEQ
+          pieces[i+0][x] := i
+          pieces[i+0][y] := 0
+          pieces[i+8][x] := i
+          pieces[i+8][y] := 1
+          pieces[i+16][x] := i
+          pieces[i+16][y] := 6
+          pieces[i+24][x] := i
+          pieces[i+24][y] := 7
+
+      -- pieces
+      SEQ i = 0 FOR 8
+        SEQ
+          pieces[i+8][piece] := G3D.CP.PAWN
+          pieces[i+16][piece] := G3D.CP.PAWN
+
+      pieces[0][piece] := G3D.CP.ROOK
+      pieces[1][piece] := 0
+      pieces[2][piece] := G3D.CP.BISHOP
+      pieces[3][piece] := G3D.CP.QUEEN
+      pieces[4][piece] := G3D.CP.KING
+      pieces[5][piece] := G3D.CP.BISHOP
+      pieces[6][piece] := 0
+      pieces[7][piece] := G3D.CP.ROOK
+      pieces[24][piece] := G3D.CP.ROOK
+      pieces[25][piece] := 0
+      pieces[26][piece] := G3D.CP.BISHOP
+      pieces[27][piece] := G3D.CP.QUEEN
+      pieces[28][piece] := G3D.CP.KING
+      pieces[29][piece] := G3D.CP.BISHOP
+      pieces[30][piece] := 0
+      pieces[31][piece] := G3D.CP.ROOK
+    --}}}
 
     CHAN RASTER rc1, rc2, rc3:
     SHARED! CHAN G3D.RENDER.ENGINE! rre:
     CHAN G3D.TMR.CONTROL tmr.ctl:
     PAR
-      raster.timed.buffer (rc1?, rc2!, 60, tmr.ctl?)
+      raster.timed.buffer (rc1?, rc2!, 25, tmr.ctl?)
       raster.display.simple ("Chess test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!)
       raster.chain (rc3?, rc1!, rre?, FALSE)
 
@@ -48,33 +101,31 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
           SEQ
             chessboard.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 8, 1.2, 0.3, sc1.ctl)
   
-        --{{{  black pawns
-        SEQ i = 0 FOR 8
-          G3DC.PIECE.CTL! p.ctl:
-          G3D.SCENE.TRANS! sct:
-          SEQ
-            CLAIM rre!
-              chesspiece.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, G3D.CP.PAWN, 8, 8, 1.2, 0.3, p.ctl, sct)
-            sc1.ctl[link] ! set.next; 100; sct
-            p.ctl[in] ! set.pos; 1; i
-            p.ctl[pgn.ctl] ! set.face.colours; [#00000000,#00101010,#00000000]
-        --}}}
-        --{{{  white pawns
-        SEQ i = 0 FOR 8
-          G3DC.PIECE.CTL! p.ctl:
-          G3D.SCENE.TRANS! sct:
-          SEQ
-            CLAIM rre!
-              chesspiece.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, G3D.CP.PAWN, 8, 8, 1.2, 0.3, p.ctl, sct)
-            sc1.ctl[link] ! set.next; 100; sct
-            p.ctl[in] ! set.pos; 6; i
-            p.ctl[pgn.ctl] ! set.face.colours; [#00000000,#00A0A0A0,#00000000]
+        --{{{  create pieces
+        SEQ i = 0 FOR SIZE pieces
+          IF
+            pieces[i][piece] > 0
+              G3DC.PIECE.CTL! p.ctl:
+              G3D.SCENE.TRANS! sct:
+              SEQ
+                CLAIM rre!
+                  chesspiece.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, pieces[i][piece], 8, 8, 1.2, 0.3, p.ctl, sct)
+                sc1.ctl[link] ! set.next; i; sct
+                p.ctl[in] ! set.pos; pieces[i][y]; pieces[i][x]
+                p.ctl[pgn.ctl] ! set.face.colours; [#00000000,pieces[i][colour],#00000000]
+            TRUE
+              SKIP
         --}}}
 
         sc1.ctl[link] ! set.pre.3dshift; [0.0, 3.5, 0.0]
 
         -- start the whole thing rotating
-        sc1.ctl[link] ! set.rot.mode; G3D.ROTATE.MODE.Y
+        TIMER tim:
+        INT t:
+        SEQ
+          tim ? t
+          tim ? AFTER (t PLUS 1000000)
+        sc1.ctl[link] ! set.rot.mode; G3D.ROTATE.MODE.DEMO
         sc1.ctl[link] ! set.rot.diff; 0.02
 :
 --}}}
