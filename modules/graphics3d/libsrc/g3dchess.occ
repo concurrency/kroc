@@ -99,6 +99,8 @@ PROC chesspoints.generator.int (CHAN INT trigger?, VAL INT npoints, piece, VAL [
       npnts := (npoints * (SIZE profile)) + 2
       cpnts := MOBILE [npnts]G3D.POINT3
 
+      #PRAGMA DEFINED cpnts
+
       SEQ v = 0 FOR SIZE profile
         VAL [2]REAL32 pp IS profile[v]:
         INITIAL INT sp IS (v * npoints):
@@ -197,6 +199,8 @@ PROC chessboardpoints.generator.int (CHAN INT trigger?, VAL INT dim, VAL REAL32 
     SEQ
       npnts := ((dim + 1) * (dim + 1)) + 4
       cpnts := MOBILE [npnts]G3D.POINT3
+
+      #PRAGMA DEFINED cpnts
 
       -- top grid of points
       SEQ j = 0 FOR dim + 1
@@ -676,6 +680,9 @@ PROC chesspiece.rot1 (CHAN INT trigger?, VAL INT width, height, piece, npoints, 
 
   VAL [][2]REAL32 PROFILE.ROOK IS [[0.0, 0.5], [-0.2, 0.5], [-0.4, 0.4], [-1.2, 0.4], [-1.4, 0.5], [-1.8, 0.5], [-1.8, 0.3], [-1.6, 0.3]]:
   VAL [][2]REAL32 PROFILE.PAWN IS [[0.0, 0.4], [-0.2, 0.4], [-0.4, 0.2], [-1.0, 0.2], [-1.2, 0.4], [-1.4, 0.2]]:
+  VAL [][2]REAL32 PROFILE.QUEEN IS [[0.0, 0.5], [-0.2, 0.5], [-0.4, 0.3], [-1.6, 0.3], [-1.7, 0.5], [-1.8, 0.4], [-1.6, 0.3], [-2.2, 0.1]]:
+  VAL [][2]REAL32 PROFILE.KING IS [[0.0, 0.5], [-0.2, 0.5], [-0.4, 0.4], [-1.6, 0.4], [-1.7, 0.5], [-1.8, 0.1], [-2.2, 0.1], [-2.2, 0.3], [-2.3, 0.3], [-2.3, 0.1], [-2.5, 0.1]]:
+  VAL [][2]REAL32 PROFILE.BISHOP IS [[0.0, 0.4], [-0.2, 0.4], [-0.4, 0.2], [-1.3, 0.2], [-1.4, 0.4], [-1.6, 0.4], [-1.9, 0.1]]:
 
   CHAN MOBILE []G3D.POINT3 gp1, gp2, gp3:
   CHAN MOBILE []G3D.POINT2.3 gc1:
@@ -687,6 +694,12 @@ PROC chesspiece.rot1 (CHAN INT trigger?, VAL INT width, height, piece, npoints, 
         chesspoints.generator (trigger?, npoints, piece, PROFILE.ROOK, gp1!, svr[gen.ctl]?)
       G3D.CP.PAWN
         chesspoints.generator (trigger?, npoints, piece, PROFILE.PAWN, gp1!, svr[gen.ctl]?)
+      G3D.CP.QUEEN
+        chesspoints.generator (trigger?, npoints, piece, PROFILE.QUEEN, gp1!, svr[gen.ctl]?)
+      G3D.CP.KING
+        chesspoints.generator (trigger?, npoints, piece, PROFILE.KING, gp1!, svr[gen.ctl]?)
+      G3D.CP.BISHOP
+        chesspoints.generator (trigger?, npoints, piece, PROFILE.BISHOP, gp1!, svr[gen.ctl]?)
     --}}}
     points3d.translate (gp1?, gp2!, trn.ctl?)
     points3d.transrotate (gp2?, gp3!, sct?)
@@ -697,6 +710,12 @@ PROC chesspiece.rot1 (CHAN INT trigger?, VAL INT width, height, piece, npoints, 
         chessify.points (gc1?, npoints, piece, PROFILE.ROOK, out!, svr[pgn.ctl]?)
       G3D.CP.PAWN
         chessify.points (gc1?, npoints, piece, PROFILE.PAWN, out!, svr[pgn.ctl]?)
+      G3D.CP.QUEEN
+        chessify.points (gc1?, npoints, piece, PROFILE.QUEEN, out!, svr[pgn.ctl]?)
+      G3D.CP.KING
+        chessify.points (gc1?, npoints, piece, PROFILE.KING, out!, svr[pgn.ctl]?)
+      G3D.CP.BISHOP
+        chessify.points (gc1?, npoints, piece, PROFILE.BISHOP, out!, svr[pgn.ctl]?)
     --}}}
     --{{{  local handling
     INITIAL BOOL running IS TRUE:
