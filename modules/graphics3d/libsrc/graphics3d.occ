@@ -2562,6 +2562,13 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                                   INT t:
                                   SEQ
                                     IF
+                                      scan[norm] >= #01000000
+                                        scan[norm] := #00FFFFFF
+                                      scan[norm] <= #FF000000
+                                        scan[norm] := #FF000000
+                                      TRUE
+                                        SKIP
+                                    IF
                                       scan[norm] >= 0
                                         t := ((INT col[v]) * scan[norm]) >> 12
                                       TRUE
