@@ -687,6 +687,7 @@ PROC chesspiece.rot1 (CHAN INT trigger?, VAL INT width, height, piece, npoints, 
   CHAN MOBILE []G3D.POINT3 gp1, gp2, gp3:
   CHAN MOBILE []G3D.POINT2.3 gc1:
   CHAN G3D.TRN.CONTROL trn.ctl:
+  CHAN G3D.PRJ.CONTROL prj.ctl:
   PAR
     --{{{  generator
     CASE piece
@@ -702,8 +703,8 @@ PROC chesspiece.rot1 (CHAN INT trigger?, VAL INT width, height, piece, npoints, 
         chesspoints.generator (trigger?, npoints, piece, PROFILE.BISHOP, gp1!, svr[gen.ctl]?)
     --}}}
     points3d.translate (gp1?, gp2!, trn.ctl?)
-    points3d.transrotate (gp2?, gp3!, sct?)
-    points.3d.to.2d3 (gp3?, gc1!, svr[prj.ctl]?, width, height)
+    points3d.transrotate.prj (gp2?, gp3!, sct?, svr[prj.ctl]?, prj.ctl!)
+    points.3d.to.2d3 (gp3?, gc1!, prj.ctl?, width, height)
     --{{{  polygon-ify
     CASE piece
       G3D.CP.ROOK
@@ -820,21 +821,21 @@ PROC chessboard.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, dim
   CHAN MOBILE []G3D.POLY pc1:
   CHAN MOBILE []G3D.POLY.SCAN ps1:
   CHAN G3D.GEN.CONTROL gen.ctl:
-  CHAN G3D.PRJ.CONTROL prj.ctl:
+  CHAN G3D.PRJ.CONTROL prj.ctl1, prj.ctl2:
   CHAN G3D.PGN.CONTROL pgn.ctl:
   CHAN G3D.PSC.CONTROL psc.ctl:
   CHAN G3D.RDR.CONTROL rdr.ctl:
   PAR
     chessboardpoints.generator (trigger?, dim, sqw, bh, gp1!, gen.ctl?)
-    points3d.transrotate (gp1?, gp2!, sct?)
-    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?, width, height)
+    points3d.transrotate.prj (gp1?, gp2!, sct?, prj.ctl1?, prj.ctl2!)
+    points.3d.to.2d3 (gp2?, gc1!, prj.ctl2?, width, height)
     chessboardify.points (gc1?, dim, pc1!, pgn.ctl?)
     poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
     render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, width, height)
 
     SEQ
       gen.ctl ! set.trans; [0.0, bh / 2.0, 0.0]
-      prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
+      prj.ctl1 ! set.3dshift; [0.0, 0.0, 0.0]
       rdr.ctl ! set.mode; G3D.RENDER.MODE.NORM
       pgn.ctl ! set.backfaces; FALSE
       psc.ctl ! set.zcolour; FALSE
