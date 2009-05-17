@@ -70,20 +70,20 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
           pieces[i+16][piece] := G3D.CP.PAWN
 
       pieces[0][piece] := G3D.CP.ROOK
-      pieces[1][piece] := 0
+      pieces[1][piece] := G3D.CP.KNIGHT
       pieces[2][piece] := G3D.CP.BISHOP
       pieces[3][piece] := G3D.CP.QUEEN
       pieces[4][piece] := G3D.CP.KING
       pieces[5][piece] := G3D.CP.BISHOP
-      pieces[6][piece] := 0
+      pieces[6][piece] := G3D.CP.KNIGHT
       pieces[7][piece] := G3D.CP.ROOK
       pieces[24][piece] := G3D.CP.ROOK
-      pieces[25][piece] := 0
+      pieces[25][piece] := G3D.CP.KNIGHT
       pieces[26][piece] := G3D.CP.BISHOP
       pieces[27][piece] := G3D.CP.QUEEN
       pieces[28][piece] := G3D.CP.KING
       pieces[29][piece] := G3D.CP.BISHOP
-      pieces[30][piece] := 0
+      pieces[30][piece] := G3D.CP.KNIGHT
       pieces[31][piece] := G3D.CP.ROOK
     --}}}
 
