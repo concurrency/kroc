@@ -234,6 +234,7 @@ dumpxml=
 usenocc=
 nocc="@NOCCHOME@/nocc"
 noccopts="--specs-file @NOCCHOME@/nocc.specs.xml"
+linkstatic=0
 
 
 #}}}
@@ -711,6 +712,11 @@ do
 		usenocc=1
 		;;
 		#}}}
+		#{{{  --static  link to static binary
+	--static)
+		linkstatic=1
+		;;
+		#}}}
 		#{{{  --krocdir  show directory where KRoC data files are kept
 	--krocdir)
 		showkrocpath=1
@@ -1017,6 +1023,7 @@ Additional options:
   --xml                  Generate XML tree
   --nocc                 Use NOCC compiler (experimental)
   --linkcc <prog>        Use <prog> to link instead of $cc
+  --static               Link to static binary
 EOF
 	if [ $use_occ21_revalt -eq 1 ]; then
 		printf '       --no-revalt       Do not use reversed ALT disabling sequence (default enabled)\n'
@@ -1360,7 +1367,19 @@ elif [ $skip_link ]; then
 elif [ "X$rmoxlink" != "X" ]; then
 	cmd="$ld -o $efile -r $objs"
 else
-	cmd="$cc $ccopts $objs $oclibpath $cincludepath $ocllibs $ocrts $ocrtslibs $extraccopts -o $efile"
+	if [ $linkstatic -eq 1 ]; then
+		# need to add in pthread library if we're using that
+		USEPTHREAD=0
+		printf '%s\n' "$extcflags" | grep KROC_USES_PTHREADS > /dev/null && USEPTHREAD=1
+
+		if [ $USEPTHREAD -eq 1 ]; then
+			cmd="$cc $ccopts $objs $oclibpath $cincludepath $ocllibs $ocrts $ocrtslibs $extraccopts -static -o $efile -lpthread"
+		else
+			cmd="$cc $ccopts $objs $oclibpath $cincludepath $ocllibs $ocrts $ocrtslibs $extraccopts -static -o $efile"
+		fi
+	else
+		cmd="$cc $ccopts $objs $oclibpath $cincludepath $ocllibs $ocrts $ocrtslibs $extraccopts -o $efile"
+	fi
 fi
 if [ $verbose ]; then
 	printf '%s\n' "$cmd"  1>&2
