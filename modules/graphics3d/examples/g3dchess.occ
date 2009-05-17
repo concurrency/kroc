@@ -21,6 +21,7 @@
 #INCLUDE "sdlraster.module"
 #INCLUDE "graphics3d.module"
 
+
 --{{{  PROC main (...)
 --* Top-level process.
 --
@@ -89,17 +90,26 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
     CHAN RASTER rc1, rc2, rc3:
     SHARED! CHAN G3D.RENDER.ENGINE! rre:
     CHAN G3D.TMR.CONTROL tmr.ctl:
+    CHAN RASTER.EVENT events:
+    CHAN G3D.SCENE.TRANS! sclink:
     PAR
       raster.timed.buffer (rc1?, rc2!, 25, tmr.ctl?)
-      raster.display.simple ("Chess test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!)
+      raster.display ("Chess test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!, events!)
       raster.chain (rc3?, rc1!, rre?, FALSE)
 
-      G3DC.PIECE.CTL! p1.ctl:
-      G3D.SCENE.TRANS! sc1.ctl:
+      G3D.SCENE.TRANS! sc.ctl:
       SEQ
-        CLAIM rre!
-          SEQ
-            chessboard.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 8, 1.2, 0.3, sc1.ctl)
+        g3d.scene.spawn (sc.ctl)
+        sc.ctl[link] ! set.pre.3dshift; [0.0, 3.5, 0.0]
+
+        g3d.scene.camera (events?, sclink?, sc.ctl!)
+
+      SEQ
+        G3D.SCENE.TRANS! sc.tmp:
+        SEQ
+          CLAIM rre!
+            chessboard.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 8, 1.2, 0.3, sc.tmp)
+          sclink ! sc.tmp
   
         --{{{  create pieces
         SEQ i = 0 FOR SIZE pieces
@@ -109,24 +119,14 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
               G3D.SCENE.TRANS! sct:
               SEQ
                 CLAIM rre!
-                  chesspiece.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, pieces[i][piece], 8, 8, 1.2, 0.3, p.ctl, sct)
-                sc1.ctl[link] ! set.next; i; sct
+                  chesspiece.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, pieces[i][piece], 6, 8, 1.2, 0.3, p.ctl, sct)
+                sclink ! sct
                 p.ctl[in] ! set.pos; pieces[i][y]; pieces[i][x]
                 p.ctl[pgn.ctl] ! set.face.colours; [#00000000,pieces[i][colour],#00000000]
             TRUE
               SKIP
         --}}}
 
-        sc1.ctl[link] ! set.pre.3dshift; [0.0, 3.5, 0.0]
-
-        -- start the whole thing rotating
-        TIMER tim:
-        INT t:
-        SEQ
-          tim ? t
-          tim ? AFTER (t PLUS 1000000)
-        sc1.ctl[link] ! set.rot.mode; G3D.ROTATE.MODE.DEMO
-        sc1.ctl[link] ! set.rot.diff; 0.02
 :
 --}}}
 
