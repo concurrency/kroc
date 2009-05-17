@@ -228,7 +228,30 @@ CHAN TYPE G3D.RENDER.ENGINE
 :
 
 --}}}
---{{{  scene transformation channel-type and protocols
+--{{{  scene transformation constants, channel-type and protocols
+
+--*{{{  G3D.SCENE.RO Scene rotation ordering.
+VAL INT G3D.SCENE.RO.NONE IS #0000:             --* No rotations applied
+VAL INT G3D.SCENE.RO.X IS #0001:                --* Rotate on X axis only.
+VAL INT G3D.SCENE.RO.Y IS #0002:                --* Rotate on Y axis only.
+VAL INT G3D.SCENE.RO.Z IS #0003:                --* Rotate on Z axis only.
+VAL INT G3D.SCENE.RO.YX IS #0012:               --* Rotate on Y then X.
+VAL INT G3D.SCENE.RO.ZX IS #0013:               --* Rotate on Z then X.
+VAL INT G3D.SCENE.RO.XY IS #0021:               --* Rotate on X then Y.
+VAL INT G3D.SCENE.RO.ZY IS #0023:               --* Rotate on Z then Y.
+VAL INT G3D.SCENE.RO.XZ IS #0031:               --* Rotate on X then Z.
+VAL INT G3D.SCENE.RO.YZ IS #0032:               --* Rotate on Y then Z.
+VAL INT G3D.SCENE.RO.ZYX IS #0123:              --* Rotate on Z then Y then X.
+VAL INT G3D.SCENE.RO.YZX IS #0132:              --* Rotate on Y then Z then X.
+VAL INT G3D.SCENE.RO.ZXY IS #0213:              --* Rotate on Z then X then Y.
+VAL INT G3D.SCENE.RO.XZY IS #0231:              --* Rotate on X then Z then Y.
+VAL INT G3D.SCENE.RO.YXZ IS #0312:              --* Rotate on Y then X then Z.
+VAL INT G3D.SCENE.RO.XYZ IS #0321:              --* Rotate on X then Y then Z.
+--*}}}
+
+-- Note: the general "scene" control connects into transform, rotate and
+-- 3D projection control.  In effect allows the "camera" to be moved and
+-- manipulated.
 
 CHAN TYPE G3D.SCENE.TRANS:
 
@@ -236,10 +259,12 @@ CHAN TYPE G3D.SCENE.TRANS:
 PROTOCOL G3D.SCENE.TRANS.LINK
   CASE
     reset                                   --* Reset to default settings.
-    set.pre.3dshift; [3]REAL32              --* Set 3D shift (before rotation).
-    set.rot.angle; REAL32                   --* Set angle of rotation.
-    set.rot.diff; REAL32                    --* Set difference for continuous rotation.
-    set.rot.mode; INT                       --* Set rotation mode (see [@ref G3D.ROTATE]).
+    set.pre.3dshift; [3]REAL32              --* Set 3D shift (before rotation, determines centre of scene).
+    set.rot.angles; [3]REAL32               --* Set rotations in X, Y and Z planes.
+    set.rot.order; INT                      --* Set rotation order (see [@ref G3D.SCENE.RO]).
+    set.rot.diffs; [3]REAL32                --* Set differences for continuous rotation.
+    set.post.3dshift; [3]REAL32             --* Set 3D shift (after rotation, determines camera position).
+    set.xyscale; [2]REAL32                  --* Set X-Y scaling (lens angle).
 
     set.next; INT; G3D.SCENE.TRANS!         --* Set the next scene transformer in a pipeline.
                                             -- The integer passed is used to identify which
