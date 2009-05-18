@@ -181,6 +181,7 @@ PROTOCOL G3D.RDR.CONTROL
   CASE
     reset                     --* Resets shader to default state.
     set.mode; INT             --* Set shader mode (see [@ref G3D.RENDER.MODE]).
+    set.polyid; INT           --* Set polygon ID (0-255).
 :
 
 --* Overall control for graphics pipeline.
