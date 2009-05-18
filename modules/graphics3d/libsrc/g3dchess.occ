@@ -818,6 +818,7 @@ PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, pie
 
     SEQ
       rdr.ctl ! set.mode; G3D.RENDER.MODE.NONE
+      rdr.ctl ! set.polyid; 42
       psc.ctl ! set.zcolour; TRUE
 
 :

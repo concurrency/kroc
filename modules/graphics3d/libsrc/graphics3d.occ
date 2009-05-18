@@ -2300,7 +2300,7 @@ PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out
 --* Renders polygon scan-line data onto a raster.
 -- @private
 PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, SHARED CHAN BYTE debug!, CHAN INT trigger!, VAL BOOL use.trigger, VAL INT width, height)
-  INT mode:
+  INT mode, polyid:
   INT vp.width, vp.height:
 
   PROC reset () --{{{
@@ -2308,6 +2308,7 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
       mode := G3D.RENDER.MODE.NORM
       vp.width := width
       vp.height := G3D.MAX.SCAN.HEIGHT
+      polyid := 0
   :
   --}}}
   PROC glenz.poly.render (RASTER r, ZBUFFER zb, VAL G3D.POLY.SCAN scan) --{{{
@@ -2388,17 +2389,19 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                     VAL [4]BYTE pixel RETYPES scan[pixel]:
                     SEQ x = stx FOR (edx - stx)
                       [4]BYTE pval RETYPES r[i][x]:
-                      SEQ pv = 0 FOR 4
-                        IF
-                          pixel[pv] = #00               -- leave this component alone
-                            SKIP
-                          TRUE
-                            INITIAL INT iv IS ((INT pval[pv]) + (INT pixel[pv])) >> 1:
-                            IF
-                              iv > 247
-                                pval[pv] := #FF
-                              TRUE
-                                pval[pv] := BYTE (iv + 8)    -- tend to get brighter
+                      SEQ
+                        pval[0] := BYTE polyid
+                        SEQ pv = 1 FOR 3
+                          IF
+                            pixel[pv] = #00               -- leave this component alone
+                              SKIP
+                            TRUE
+                              INITIAL INT iv IS ((INT pval[pv]) + (INT pixel[pv])) >> 1:
+                              IF
+                                iv > 247
+                                  pval[pv] := #FF
+                                TRUE
+                                  pval[pv] := BYTE (iv + 8)    -- tend to get brighter
           TRUE
             SKIP
   :
@@ -2494,7 +2497,7 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                               IF
                                 (zb[i][x] = 0) OR (zb[i][x] > z)
                                   SEQ
-                                    r[i][x] := scan[pixel]
+                                    r[i][x] := (scan[pixel] /\ #00FFFFFF) \/ (polyid << 24)
                                     zb[i][x] := z
                                 TRUE
                                   SKIP
@@ -2520,6 +2523,8 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
             reset ()
           set.mode; mode
             SKIP
+          set.polyid; polyid
+            polyid := polyid /\ #FF
 
 
         rlink.in[link] ? CASE
@@ -2588,10 +2593,7 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                     (mode /\ G3D.RENDER.MODE.GLENZ) <> 0
                       glenz.poly.render (r, zb, scan)
                     TRUE
-                      SEQ
-                        normal.poly.render (r, zb, scan)
-                    TRUE
-                      SKIP
+                      normal.poly.render (r, zb, scan)
 
               rlink.out[link] ! raster; r; zb
             --}}}
@@ -3040,6 +3042,101 @@ PROC raster.chain (CHAN RASTER in?, out!, CHAN G3D.RENDER.ENGINE! new.link?, VAL
     PAR
       raster.chain.head (in?, cli!, new.link?, fade)
       raster.chain.tail (out!, svr?)
+:
+--}}}
+
+--{{{  PROC raster.polyidclick (CHAN RASTER in?, out!, CHAN RASTER.EVENT ev.in?, ev.out!, CHAN INT ids.out!, VAL INT dclk)
+--* Connects into the raster chain and event pipeline to extract IDs (0-255) of polygons.
+-- Responds to single or double click.
+--
+-- @param in Rasters in.
+-- @param out Rasters out.
+-- @param ev.in Events in.
+-- @param ev.out Events out.
+-- @param ids.out Polygon IDs out (extracted from high 8 bits of the rendered pixel).
+-- @param dclk Double click time (0 = single click).
+--
+PROC raster.polyidclick (CHAN RASTER in?, out!, CHAN RASTER.EVENT ev.in?, ev.out!, CHAN INT ids.out!, VAL INT dclk)
+  INT report:
+  INT rx, ry:
+  INT t1:
+  TIMER tim:
+  BOOL timing:
+  SEQ
+    report := 0
+    timing := FALSE
+    rx := 0
+    ry := 0
+    tim ? t1
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        timing & tim ? AFTER t1
+          --{{{  double-click timeout
+          SEQ
+            report := 0
+            timing := FALSE
+          --}}}
+        RASTER.EVENT ev:
+        ev.in ? ev
+          --{{{  handle event
+          SEQ
+            IF
+              ev[type] = RASTER.ET.MOUSEBUTTONDOWN
+                IF
+                  dclk = 0
+                    SEQ
+                      -- single clicks only
+                      report := 1
+                      rx := INT ev[x]
+                      ry := INT ev[y]
+                  TRUE
+                    SEQ
+                      -- double click needed
+                      IF
+                        report = 0
+                          SEQ
+                            -- first of double click
+                            tim ? t1
+                            t1 := t1 PLUS dclk
+                            timing := TRUE
+                            report := 1
+                            rx := INT ev[x]
+                            ry := INT ev[y]
+                        report = 1
+                          SEQ
+                            -- double click in time
+                            report := 2
+                            timing := FALSE
+                        TRUE
+                          SKIP
+              TRUE
+                SKIP
+            ev.out ! ev
+          --}}}
+        RASTER r:
+        in ? r
+          --{{{  raster on its way through
+          SEQ
+            IF
+              report = 0
+                SKIP
+              ((dclk = 0) AND (report = 1)) OR ((dclk <> 0) AND (report = 2))
+                SEQ
+                  IF
+                    ((rx < 0) OR (ry < 0)) OR ((ry >= (SIZE r)) OR (rx >= (SIZE r[0])))
+                      SKIP        -- out of raster bounds
+                    TRUE
+                      INT id:
+                      SEQ
+                        id := (r[ry][rx] >> 24) /\ #FF
+                        ids.out ! id
+                  report := 0
+              TRUE
+                SKIP
+            out ! r
+          --}}}
 :
 --}}}
 
