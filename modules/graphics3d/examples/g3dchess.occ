@@ -31,6 +31,19 @@
 --
 PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
 
+  PROC id.dump (CHAN INT in?, SHARED CHAN BYTE out!) --{{{
+    WHILE TRUE
+      INT i:
+      SEQ
+        in ? i
+        CLAIM out!
+          SEQ
+            out.string ("poly.id click: ", 0, out!)
+            out.int (i, 0, out!)
+            out.string ("*n", 0, out!)
+  :
+  --}}}
+
   DATA TYPE PIECE.INFO
     RECORD
       INT piece:
@@ -87,22 +100,26 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
       pieces[31][piece] := G3D.CP.ROOK
     --}}}
 
-    CHAN RASTER rc1, rc2, rc3:
+    CHAN RASTER rc1, rc2, rc3, rc4:
     SHARED! CHAN G3D.RENDER.ENGINE! rre:
     CHAN G3D.TMR.CONTROL tmr.ctl:
-    CHAN RASTER.EVENT events:
+    CHAN RASTER.EVENT events, events.in:
     CHAN G3D.SCENE.TRANS! sclink:
+    CHAN INT poly.id:
     PAR
       raster.timed.buffer (rc1?, rc2!, 25, tmr.ctl?)
       raster.display ("Chess test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!, events!)
-      raster.chain (rc3?, rc1!, rre?, FALSE)
+      raster.chain (rc3?, rc4!, rre?, FALSE)
+      raster.polyidclick (rc4?, rc1!, events?, events.in!, poly.id!, 250000)
+
+      id.dump (poly.id?, scr!)
 
       G3D.SCENE.TRANS! sc.ctl:
       SEQ
         g3d.scene.spawn (sc.ctl)
         sc.ctl[link] ! set.pre.3dshift; [0.0, 3.5, 0.0]
 
-        g3d.scene.camera (events?, sclink?, sc.ctl!)
+        g3d.scene.camera (events.in?, sclink?, sc.ctl!)
 
       SEQ
         G3D.SCENE.TRANS! sc.tmp:
