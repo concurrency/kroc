@@ -140,6 +140,7 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
                 sclink ! sct
                 p.ctl[in] ! set.pos; pieces[i][y]; pieces[i][x]
                 p.ctl[pgn.ctl] ! set.face.colours; [#00000000,pieces[i][colour],#00000000]
+                p.ctl[rdr.ctl] ! set.polyid; i + 1
             TRUE
               SKIP
         --}}}
