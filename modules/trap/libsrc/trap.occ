@@ -41,7 +41,7 @@ CHAN TYPE OUTBOUND
 :
 --}}}
 
---{{{  PROC trap.check (VAL BOOL cond, VAL []BYTE message)
+--{{{  PROC trap.check
 --* Check that a condition holds; if not, print the message and die.
 -- This is essentially a slightly more user-friendly [@ref ASSERT].
 -- @private
