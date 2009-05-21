@@ -43,6 +43,7 @@ CHAN TYPE G3DC.PIECE.CTL
     CHAN G3D.GEN.CONTROL gen.ctl?:      --* Piece generator control.
     CHAN G3D.PRJ.CONTROL prj.ctl?:      --* Projector control.
     CHAN G3D.PGN.CONTROL pgn.ctl?:      --* Polygon convert control.
+    CHAN G3D.RDR.CONTROL rdr.ctl?:      --* Render control.
 :
 
 #ENDIF      -- G3DCHESS.INC

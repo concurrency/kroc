@@ -89,6 +89,7 @@ DATA TYPE G3D.POLY
     INT npoints:
     INT norm:
     INT pixel:
+    INT polyid:
 :
 
 --* Scan-line converted polygon in 2D space.
@@ -101,6 +102,7 @@ DATA TYPE G3D.POLY.SCAN
     INT norm:
     INT scan.s, scan.e:
     INT pixel:
+    INT polyid:
 :
 
 --}}}
