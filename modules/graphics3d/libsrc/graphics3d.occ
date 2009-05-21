@@ -1567,6 +1567,7 @@ PROC flatpolify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, CHAN MO
                         polys[pstart + p][npoints] := np
                         norm := compute.poly.normal (polys[pstart + p])
 
+                        polys[pstart + p][polyid] := 0
                         polys[pstart + p][norm] := norm
                         polys[pstart + p][pixel] := pixmap[p]
                         
@@ -1727,6 +1728,7 @@ PROC cogify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT nteeth, CHAN MOBILE 
                         polys[pstart + p][npoints] := np
                         norm := compute.poly.normal (polys[pstart + p])
 
+                        polys[pstart + p][polyid] := 0
                         polys[pstart + p][norm] := norm
                         polys[pstart + p][pixel] := pixmap[p]
                         
@@ -1892,6 +1894,7 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
                                 out.string ("*n", 0, debug!)
                             #ENDIF --}}}
                             polys[tpi][pixel] := pixels[i]
+                            polys[tpi][polyid] := 0
                             SEQ p = 0 FOR 3
                               SEQ
                                 polys[tpi][x][p] := pnts[cubemap3[i][p]][x]
@@ -1916,6 +1919,7 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
                                 out.string ("*n", 0, debug!)
                             #ENDIF --}}}
                             polys[tpi][pixel] := pixels[i]
+                            polys[tpi][polyid] := 0
                             SEQ p = 0 FOR 4
                               SEQ
                                 polys[tpi][x][p] := pnts[cubemap4[i][p]][x]
@@ -2018,6 +2022,7 @@ PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY ou
                     polys[i][npoints] := polywidth[i]
                     polys[i][norm] := norms[polynorms[i]]
                     polys[i][pixel] := pixel
+                    polys[i][polyid] := 0
                     SEQ p = 0 FOR polywidth[i]
                       SEQ
                         polys[i][x][p] := pnts[polymap[i][p]][x]
@@ -2180,6 +2185,7 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                     tsc[z.start][j] := 0
                     tsc[z.end][j] := 0
                 tsc[norm] := ply[norm]
+                tsc[polyid] := ply[polyid]
 
                 IF
                   ply[npoints] < 3
@@ -2512,8 +2518,20 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
 
     reset ()
 
-    INT n:
-    rlink.in[link] ? CASE set.next; n; rlink.out
+    INITIAL BOOL init.done IS FALSE:
+    WHILE NOT init.done
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+          set.mode; mode
+            SKIP
+          set.polyid; polyid
+            polyid := polyid /\ #FF
+
+        INT n:
+        rlink.in[link] ? CASE set.next; n; rlink.out
+          init.done := TRUE
 
     INITIAL BOOL running IS TRUE:
     WHILE running
