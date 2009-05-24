@@ -329,7 +329,7 @@ PROC chessboardpoints.generator (CHAN INT trigger?, VAL INT dim, VAL REAL32 widt
     g3dchess.debug.writer (write?, kill?)
 :
 --}}}
---{{{  PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--{{{  PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, CHAN BOOL hide?)
 --* Generates chess-style polygons from points.
 --
 -- @param in Points in.
@@ -338,8 +338,9 @@ PROC chessboardpoints.generator (CHAN INT trigger?, VAL INT dim, VAL REAL32 widt
 -- @param profile Profile for the piece.
 -- @param out Polygons out.
 -- @param ctrl Control channel.
+-- @param hide Hide control channel.
 --
-PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, CHAN BOOL hide?)
 
   PROC set.poly.point (G3D.POLY p, VAL INT pi, VAL G3D.POINT2.3 pnt) --{{{
     SEQ
@@ -373,9 +374,11 @@ PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VA
   INT npolys:
   BOOL pointy.top:
   INT polyid:
+  BOOL hidden:
   SEQ
     --{{{  initialise
     polyid := 0
+    hidden := FALSE
 
     -- need 'npoints' polygons for each side ((SIZE profile) - 1), plus 'npoints' at the top and bottom
     -- if the last profile point is a point, minus that
@@ -473,6 +476,10 @@ PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VA
           set.polyid; polyid --{{{
             polyid := polyid /\ #FF
           --}}}
+        hide ? hidden
+          --{{{  hiding
+          SKIP
+          --}}}
 
         MOBILE []G3D.POINT2.3 pnts:
         in ? pnts
@@ -480,6 +487,11 @@ PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VA
           IF
             (SIZE pnts) <> ((npoints * (SIZE profile)) + 2)
               SKIP
+            hidden
+              MOBILE []G3D.POLY polys:
+              SEQ
+                polys := MOBILE [0]G3D.POLY
+                out ! polys
             TRUE
               MOBILE []G3D.POLY polys:
               INT npoly:
@@ -645,7 +657,6 @@ PROC chessboardify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN
               inc.polyid := (polyid /\ #100) <> 0
               polyid := polyid /\ #FF
           --}}}
-
         MOBILE []G3D.POINT2.3 pnts:
         in ? pnts
           --{{{  generate polygons
@@ -660,7 +671,7 @@ PROC chessboardify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN
                 ipid := polyid + 1
 
                 -- main faces
-                INITIAL INT rsel IS 1:
+                INITIAL INT rsel IS 0:
                 SEQ j = 0 FOR dim
                   INITIAL INT csel IS rsel:
                   SEQ
@@ -769,6 +780,7 @@ PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, pie
   CHAN MOBILE []G3D.POINT2.3 gc1:
   CHAN G3D.TRN.CONTROL trn.ctl:
   CHAN G3D.PRJ.CONTROL prj.ctl:
+  CHAN BOOL hide:
   PAR
     --{{{  generator
     CASE piece
@@ -791,17 +803,17 @@ PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, pie
     --{{{  polygon-ify
     CASE piece
       G3D.CP.ROOK
-        chessify.points (gc1?, npoints, piece, PROFILE.ROOK, pc1!, svr[pgn.ctl]?)
+        chessify.points (gc1?, npoints, piece, PROFILE.ROOK, pc1!, svr[pgn.ctl]?, hide?)
       G3D.CP.PAWN
-        chessify.points (gc1?, npoints, piece, PROFILE.PAWN, pc1!, svr[pgn.ctl]?)
+        chessify.points (gc1?, npoints, piece, PROFILE.PAWN, pc1!, svr[pgn.ctl]?, hide?)
       G3D.CP.QUEEN
-        chessify.points (gc1?, npoints, piece, PROFILE.QUEEN, pc1!, svr[pgn.ctl]?)
+        chessify.points (gc1?, npoints, piece, PROFILE.QUEEN, pc1!, svr[pgn.ctl]?, hide?)
       G3D.CP.KING
-        chessify.points (gc1?, npoints, piece, PROFILE.KING, pc1!, svr[pgn.ctl]?)
+        chessify.points (gc1?, npoints, piece, PROFILE.KING, pc1!, svr[pgn.ctl]?, hide?)
       G3D.CP.BISHOP
-        chessify.points (gc1?, npoints, piece, PROFILE.BISHOP, pc1!, svr[pgn.ctl]?)
+        chessify.points (gc1?, npoints, piece, PROFILE.BISHOP, pc1!, svr[pgn.ctl]?, hide?)
       G3D.CP.KNIGHT
-        chessify.points (gc1?, npoints, piece, PROFILE.KNIGHT, pc1!, svr[pgn.ctl]?)
+        chessify.points (gc1?, npoints, piece, PROFILE.KNIGHT, pc1!, svr[pgn.ctl]?, hide?)
     --}}}
     --{{{  local handling for svr[in] (and state)
     INT bx, by:
@@ -830,6 +842,9 @@ PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, pie
               ry := (sqw * ((REAL32 ROUND (bdim - 1)) / 2.0)) - (sqw * (REAL32 ROUND by))
 
               trn.ctl ! set.3dshift; [rx, 0.0, ry]
+          BOOL hidden:
+          hide; hidden
+            hide ! hidden
     --}}}
 
     poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
