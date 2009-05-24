@@ -169,6 +169,7 @@ PROTOCOL G3D.PGN.CONTROL
     set.backfaces; BOOL                 --* Whether back faces of solid objects should be generated.
     set.face.colour; INT; INT           --* Set individual face colour.
     set.face.colours; MOBILE []INT      --* Set all face colours.
+    set.polyid; INT                     --* Set polygon ID (0-255).
 :
 
 --* Polygon scan-line generator control.
@@ -183,7 +184,6 @@ PROTOCOL G3D.RDR.CONTROL
   CASE
     reset                     --* Resets shader to default state.
     set.mode; INT             --* Set shader mode (see [@ref G3D.RENDER.MODE]).
-    set.polyid; INT           --* Set polygon ID (0-255).
 :
 
 --* Overall control for graphics pipeline.

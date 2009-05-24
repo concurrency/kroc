@@ -1457,9 +1457,11 @@ PROC flatpolify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, CHAN MO
   [3][4]INT polymap:
   VAL INT BSIDE IS #00010000:       -- bit
   VAL INT LAST IS #00020000:        -- bit
+  INT polyid:
   SEQ
     --{{{  initialise
     pixmap := [#00C00000,#0000C000,#000000C0]
+    polyid := 0
 
     SEQ
       polymap[0] := [0, 1, BSIDE + 1, BSIDE]
@@ -1519,6 +1521,9 @@ PROC flatpolify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, CHAN MO
               SEQ i = 0 FOR l
                 pixmap[i] := cols[i]
           --}}}
+          set.polyid; polyid --{{{
+            polyid := polyid /\ #FF
+          --}}}
 
         MOBILE []G3D.POINT2.3 pnts:
         in ? pnts
@@ -1567,7 +1572,7 @@ PROC flatpolify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, CHAN MO
                         polys[pstart + p][npoints] := np
                         norm := compute.poly.normal (polys[pstart + p])
 
-                        polys[pstart + p][polyid] := 0
+                        polys[pstart + p][polyid] := polyid
                         polys[pstart + p][norm] := norm
                         polys[pstart + p][pixel] := pixmap[p]
                         
@@ -1609,10 +1614,12 @@ PROC cogify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT nteeth, CHAN MOBILE 
   [10][4]INT polymap:
   VAL INT BSIDE IS #00010000:       -- bit
   VAL INT LAST IS #00020000:        -- bit
+  INT polyid:
   SEQ
     --{{{  initialise
     -- arbitrary defaults
     pixmap := [#000000C0,#0000A0A0,#0000A0A0,#000000C0,#000000C0,#000000C0,#0000A0A0,#000000C0,#0000A0A0,#0000A0A0]
+    polyid := 0
 
     SEQ
       polymap[0] := [0, 3, 2, 1]
@@ -1680,6 +1687,9 @@ PROC cogify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT nteeth, CHAN MOBILE 
               SEQ i = 0 FOR l
                 pixmap[i] := cols[i]
           --}}}
+          set.polyid; polyid --{{{
+            polyid := polyid /\ #FF
+          --}}}
 
         MOBILE []G3D.POINT2.3 pnts:
         in ? pnts
@@ -1728,7 +1738,7 @@ PROC cogify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT nteeth, CHAN MOBILE 
                         polys[pstart + p][npoints] := np
                         norm := compute.poly.normal (polys[pstart + p])
 
-                        polys[pstart + p][polyid] := 0
+                        polys[pstart + p][polyid] := polyid
                         polys[pstart + p][norm] := norm
                         polys[pstart + p][pixel] := pixmap[p]
                         
@@ -1754,11 +1764,14 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
   [6]INT pixmap4:
   INITIAL BOOL trimap IS FALSE:
   INITIAL BOOL backfaces IS FALSE:
+  INT polyid:
   SEQ
 
     -- fairly arbitrary defaults
     pixmap3 := [#00000080,#00000090,#00000020,#00000030,#00000050,#00000060,#00000080,#00000090,#000000B0,#000000C0,#00000020,#00000030]
     pixmap4 := [#000000FF,#0000FF00,#00FF0000,#00FFFF00,#00FF00FF,#0000FFFF]
+
+    polyid := 0
 
     INITIAL BOOL running IS TRUE:
     WHILE running
@@ -1808,6 +1821,10 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
                     pixmap3[i] := cols[i]
                   TRUE
                     pixmap4[i] := cols[i]
+          --}}}
+          --{{{  set.polyid: set polygon ID
+          set.polyid; polyid
+            polyid := polyid /\ #FF
           --}}}
 
         MOBILE []G3D.POINT2.3 pnts:
@@ -1894,7 +1911,7 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
                                 out.string ("*n", 0, debug!)
                             #ENDIF --}}}
                             polys[tpi][pixel] := pixels[i]
-                            polys[tpi][polyid] := 0
+                            polys[tpi][polyid] := polyid
                             SEQ p = 0 FOR 3
                               SEQ
                                 polys[tpi][x][p] := pnts[cubemap3[i][p]][x]
@@ -1919,7 +1936,7 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
                                 out.string ("*n", 0, debug!)
                             #ENDIF --}}}
                             polys[tpi][pixel] := pixels[i]
-                            polys[tpi][polyid] := 0
+                            polys[tpi][polyid] := polyid
                             SEQ p = 0 FOR 4
                               SEQ
                                 polys[tpi][x][p] := pnts[cubemap4[i][p]][x]
@@ -1967,7 +1984,10 @@ PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY ou
   VAL []INT polynorms IS [0,0,0,1,1,1,0,0,1,1,2,2,2]:
   VAL []INT polywidth IS [4,3,4,4,3,4,4,4,4,4,4,2,2]:
   INITIAL INT pixel IS #00008080:
+  INT polyid:
   SEQ
+
+    polyid := 0
 
     INITIAL BOOL running IS TRUE:
     WHILE running
@@ -1991,6 +2011,8 @@ PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY ou
           MOBILE []INT cols:
           set.face.colours; cols
             SKIP
+          set.polyid; polyid
+            polyid := polyid /\ #FF
 
         MOBILE []G3D.POINT2.3 pnts:
         in ? pnts
@@ -2022,7 +2044,7 @@ PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY ou
                     polys[i][npoints] := polywidth[i]
                     polys[i][norm] := norms[polynorms[i]]
                     polys[i][pixel] := pixel
-                    polys[i][polyid] := 0
+                    polys[i][polyid] := polyid
                     SEQ p = 0 FOR polywidth[i]
                       SEQ
                         polys[i][x][p] := pnts[polymap[i][p]][x]
@@ -2306,7 +2328,7 @@ PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out
 --* Renders polygon scan-line data onto a raster.
 -- @private
 PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, SHARED CHAN BYTE debug!, CHAN INT trigger!, VAL BOOL use.trigger, VAL INT width, height)
-  INT mode, polyid:
+  INT mode:
   INT vp.width, vp.height:
 
   PROC reset () --{{{
@@ -2314,7 +2336,6 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
       mode := G3D.RENDER.MODE.NORM
       vp.width := width
       vp.height := G3D.MAX.SCAN.HEIGHT
-      polyid := 0
   :
   --}}}
   PROC glenz.poly.render (RASTER r, ZBUFFER zb, VAL G3D.POLY.SCAN scan) --{{{
@@ -2396,7 +2417,7 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                     SEQ x = stx FOR (edx - stx)
                       [4]BYTE pval RETYPES r[i][x]:
                       SEQ
-                        pval[0] := BYTE polyid
+                        pval[0] := BYTE scan[polyid]
                         SEQ pv = 1 FOR 3
                           IF
                             pixel[pv] = #00               -- leave this component alone
@@ -2503,7 +2524,7 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                               IF
                                 (zb[i][x] = 0) OR (zb[i][x] > z)
                                   SEQ
-                                    r[i][x] := (scan[pixel] /\ #00FFFFFF) \/ (polyid << 24)
+                                    r[i][x] := (scan[pixel] /\ #00FFFFFF) \/ (scan[polyid] << 24)
                                     zb[i][x] := z
                                 TRUE
                                   SKIP
@@ -2526,8 +2547,6 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
             reset ()
           set.mode; mode
             SKIP
-          set.polyid; polyid
-            polyid := polyid /\ #FF
 
         INT n:
         rlink.in[link] ? CASE set.next; n; rlink.out
@@ -2541,9 +2560,6 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
             reset ()
           set.mode; mode
             SKIP
-          set.polyid; polyid
-            polyid := polyid /\ #FF
-
 
         rlink.in[link] ? CASE
           RASTER r:
