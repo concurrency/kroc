@@ -294,6 +294,19 @@ PROC chess.engine (CT.GAME.ENGINE? svr, SHARED CHAN BYTE scr!)
 
                   IF
                     is.move
+                      SEQ
+                        IF
+                          (dstart + 4) > (SIZE str)
+                            is.move := FALSE
+                          [str FROM dstart FOR 3] = "..."
+                            is.move := FALSE
+                          TRUE
+                            SKIP
+                    TRUE
+                      SKIP
+
+                  IF
+                    is.move
                       decode := TRUE
                     TRUE
                       from.chessprog ! message; str
@@ -451,16 +464,16 @@ PROC chess.game (CHAN G3D.SCENE.TRANS! sclink!, VAL INT width, height, bdim, SHA
       pieces[0][piece] := G3D.CP.ROOK
       pieces[1][piece] := G3D.CP.KNIGHT
       pieces[2][piece] := G3D.CP.BISHOP
-      pieces[3][piece] := G3D.CP.QUEEN
-      pieces[4][piece] := G3D.CP.KING
+      pieces[3][piece] := G3D.CP.KING
+      pieces[4][piece] := G3D.CP.QUEEN
       pieces[5][piece] := G3D.CP.BISHOP
       pieces[6][piece] := G3D.CP.KNIGHT
       pieces[7][piece] := G3D.CP.ROOK
       pieces[24][piece] := G3D.CP.ROOK
       pieces[25][piece] := G3D.CP.KNIGHT
       pieces[26][piece] := G3D.CP.BISHOP
-      pieces[27][piece] := G3D.CP.QUEEN
-      pieces[28][piece] := G3D.CP.KING
+      pieces[27][piece] := G3D.CP.KING
+      pieces[28][piece] := G3D.CP.QUEEN
       pieces[29][piece] := G3D.CP.BISHOP
       pieces[30][piece] := G3D.CP.KNIGHT
       pieces[31][piece] := G3D.CP.ROOK
@@ -549,7 +562,7 @@ PROC chess.game (CHAN G3D.SCENE.TRANS! sclink!, VAL INT width, height, bdim, SHA
                 (((bx >= 0) AND (by >= 0)) AND ((pid >= 0) AND (sel.pid >= 0))) AND (pid <> sel.pid)
                   --{{{  two different pieces involved, take?
                   SEQ
-                    SKIP
+                    engine[in] ! try.move; [pieces[sel.pid][x], pieces[sel.pid][y], bx, by]
                   --}}}
                 pid >= 0
                   --{{{  select or unselect a piece
@@ -590,7 +603,7 @@ PROC chess.game (CHAN G3D.SCENE.TRANS! sclink!, VAL INT width, height, bdim, SHA
           [4]INT pos:
           move.square; pos
             --{{{  move something on the board
-            INT pid:
+            INT pid, t.pid:
             INT bx, by:
             SEQ
               -- find it (again maybe!)
@@ -604,11 +617,34 @@ PROC chess.game (CHAN G3D.SCENE.TRANS! sclink!, VAL INT width, height, bdim, SHA
                 TRUE
                   SEQ
                     pid := -1
+
+              IF
+                IF i = 0 FOR 32
+                  (pieces[i][x] = pos[2]) AND (pieces[i][y] = pos[3])
+                    t.pid := i
+                TRUE
+                  SEQ
+                    t.pid := -1
               
               IF
                 pid >= 0
                   SEQ
                     -- do move
+                    IF
+                      (t.pid >= 0) AND (pid <> t.pid)
+                        SEQ
+                          -- something at the target location, remove it from the game ;)
+                          #IF TRUE --{{{  debug
+                          CLAIM scr!
+                            SEQ
+                              out.string ("removing piece ID ", 0, scr!)
+                              out.int (t.pid, 0, scr!)
+                              out.string (" from board*n", 0, scr!)
+                          #ENDIF --}}}
+                          ctls[t.pid][in] ! hide; TRUE
+                      TRUE
+                        SKIP
+
                     ctls[pid][in] ! move.pos; pos[2]; pos[3]
 
                     pieces[pid][x] := pos[2]
