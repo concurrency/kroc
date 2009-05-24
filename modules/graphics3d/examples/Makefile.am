@@ -5,6 +5,10 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 
 OCCBUILD = @OCCBUILD@ --kroc-opts -d
 
+if USE_GNUCHESS
+OCCBUILD += --kroc-opts '--oc-opts="-def GNUCHESS=@GNUCHESS@"'
+endif
+
 EXTRA_DIST = \
 	butterflies.occ \
 	g3dchess.occ \
