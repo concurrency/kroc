@@ -35,6 +35,7 @@ PROTOCOL G3DC.PIECE.CTL.IN
   CASE
     set.pos; INT; INT                   --* Set piece position on board (0-7,0-7).
     move.pos; INT; INT                  --* Move piece to specified position (animate!).
+    hide; BOOL                          --* Whether to make hidden.
 :
 
 --* Used to control a particular piece.
