@@ -818,33 +818,64 @@ PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, pie
     --{{{  local handling for svr[in] (and state)
     INT bx, by:
     REAL32 rx, ry:
+    BOOL moving:
+    TIMER tim:
+    INT t:
+    REAL32 dx, dy:
+    INT sleft:
     SEQ
       bx := 0
       by := 0
       rx := 0.0
       ry := 0.0
 
+      tim ? t
+      moving := FALSE
+      dx := 0.0
+      dy := 0.0
+      sleft := 0
+
       INITIAL BOOL running IS TRUE:
       WHILE running
-        svr[in] ? CASE
-          set.pos; bx; by
-            SEQ
-              rx := (sqw * ((REAL32 ROUND (bdim - 1)) / 2.0)) - (sqw * (REAL32 ROUND bx))
-              ry := (sqw * ((REAL32 ROUND (bdim - 1)) / 2.0)) - (sqw * (REAL32 ROUND by))
+        PRI ALT
+          svr[in] ? CASE
+            set.pos; bx; by
+              SEQ
+                rx := (sqw * ((REAL32 ROUND (bdim - 1)) / 2.0)) - (sqw * (REAL32 ROUND bx))
+                ry := (sqw * ((REAL32 ROUND (bdim - 1)) / 2.0)) - (sqw * (REAL32 ROUND by))
 
-              trn.ctl ! set.3dshift; [rx, 0.0, ry]
-          INT x, y:
-          move.pos; x; y
-            SEQ
-              bx := x
-              by := y
-              rx := (sqw * ((REAL32 ROUND (bdim - 1)) / 2.0)) - (sqw * (REAL32 ROUND bx))
-              ry := (sqw * ((REAL32 ROUND (bdim - 1)) / 2.0)) - (sqw * (REAL32 ROUND by))
+                trn.ctl ! set.3dshift; [rx, 0.0, ry]
+            INT x, y:
+            move.pos; x; y
+              REAL32 nrx, nry:
+              SEQ
+                -- current position is rx,ry
+                bx := x
+                by := y
+                nrx := (sqw * ((REAL32 ROUND (bdim - 1)) / 2.0)) - (sqw * (REAL32 ROUND bx))
+                nry := (sqw * ((REAL32 ROUND (bdim - 1)) / 2.0)) - (sqw * (REAL32 ROUND by))
+                dx := (nrx - rx) / 20.0
+                dy := (nry - ry) / 20.0
+                sleft := 20
+                tim ? t
+                moving := TRUE
 
+            BOOL hidden:
+            hide; hidden
+              hide ! hidden
+
+          moving & tim ? AFTER t
+            SEQ
+              rx := rx + dx
+              ry := ry + dy
+              sleft := sleft - 1
+              IF
+                sleft = 0
+                  moving := FALSE
+                TRUE
+                  t := t PLUS 50000
               trn.ctl ! set.3dshift; [rx, 0.0, ry]
-          BOOL hidden:
-          hide; hidden
-            hide ! hidden
+
     --}}}
 
     poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
