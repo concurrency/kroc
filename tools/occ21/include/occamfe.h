@@ -103,6 +103,9 @@ typedef struct
     BOOL               fe_formalmodel;   /* TRUE if we want to formal model check/generate the source */
     BOOL               fe_fm_collct;     /* if TRUE, collapse CHAN TYPE PROTOCOLs into single types */
     BOOL               fe_fm_toplevelonly; /* if TRUE, only generate models for things in the top-level file (not included material) */
+    BOOL               fe_fm_nocr;       /* if TRUE, do not generate separate claim/release events */
+    BOOL               fe_fm_inlinecr;   /* if TRUE, inline claim/release events into channel-types */
+    BOOL               fe_fm_comm;       /* if TRUE, include acquire/lose events for channel-ends */
     BOOL               fe_debuguse;      /* TRUE if we want to display usage check diagnostics */
     BOOL               fe_rangechecking; /* TRUE if range checking is required */
     BOOL               fe_disable_rangechecking_in_branches; /* TRUE when configurer/ndlrdr want to disable

@@ -191,6 +191,9 @@ PRIVATE int event_counter = 0;
 
 PRIVATE int do_coll_ct = 0;			/* collate channel-type channels/protocols */
 PRIVATE int do_toplevelonly = 0;		/* do not generate output for #INCLUDEd things */
+PRIVATE int do_nocr = 0;			/* do not generate separate claim/release events for shared channel-ends */
+PRIVATE int do_inlinecr = 0;			/* generate inline events for claim/release in the mobile channel-type */
+PRIVATE int do_comm = 0;			/* generate events for acquisition/loss of mobile channel-ends */
 
 #define FMSTRINGTABLEBITS 5
 STATICSTRINGHASH (fmstrent_t *, fmstringtable, FMSTRINGTABLEBITS);
@@ -5048,6 +5051,9 @@ printtreenl (stderr, 1, n);
 #endif
 			do_coll_ct = fedata ? fedata->fe_fm_collct : 0;
 			do_toplevelonly = fedata ? fedata->fe_fm_toplevelonly : 0;
+			do_nocr = fedata ? fedata->fe_fm_nocr : 0;
+			do_inlinecr = fedata ? fedata->fe_fm_inlinecr : 0;
+			do_comm = fedata ? fedata->fe_fm_comm : 0;
 
 			/* init string-table */
 			stringhash_sinit (fmstringtable, FMSTRINGTABLEBITS);
