@@ -58,7 +58,6 @@ AC_ARG_WITH([toolchain],
 AM_CONDITIONAL(OCCBUILD_KROC, test "x$OCCBUILD_TOOLCHAIN" = "xkroc")
 AM_CONDITIONAL(OCCBUILD_TVM, test "x$OCCBUILD_TOOLCHAIN" = "xtvm")
 AM_CONDITIONAL(OCCBUILD_TOCK, test "x$OCCBUILD_TOOLCHAIN" = "xtock")
-AC_CHECK_PROG(TOCK, tock, tock, no)
 ])dnl
 dnl
 dnl Find occbuild.
@@ -86,6 +85,8 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   elif test "x$OCCBUILD_TOOLCHAIN" = "xtvm"; then
     OCCBUILD_CFLAGS="-DOCCBUILD_TVM"
   elif test "x$OCCBUILD_TOOLCHAIN" = "xtock"; then
+    AC_CHECK_PROG(TOCK, tock, tock,
+                  [AC_MSG_ERROR([configuring for tock toolchain, but tock was not found])])
     KROC_CCSP_FLAGS
     OCCBUILD_CFLAGS="-DOCCBUILD_TOCK $KROC_CCSP_CFLAGS $KROC_CCSP_CINCPATH"
   else
