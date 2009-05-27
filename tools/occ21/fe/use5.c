@@ -104,7 +104,7 @@ typedef struct TAG_fmnode { /*{{{*/
 		} fmproc;				/* NAMEDPROC */
 		struct {
 			char *name;			/* name of the type */
-			DYNARRAY (struct TAG_fmnode *, tags);	/* array of tags (TREEREFs) */
+			DYNARRAY (struct TAG_fmnode *, tags);	/* array of tags (TREEREFs, or possibly EVENTs) */
 		} fmtset;				/* TAGSET */
 		struct {
 			char *name;			/* name of the event */
@@ -1768,7 +1768,7 @@ fmt_dumpnode (ref, 1, stderr);
 				esnode->u.fmevent.nodetype = vtype;
 			}
 
-			if (is_shared) {
+			if (is_shared && !do_inlinecr) {
 				fmnode_t *ev = esnode;
 				fmnode_t *crln = fmt_newnode (FM_EVENT, var);
 
@@ -2222,6 +2222,36 @@ fmt_dumpnode (evset, 1, stderr);
 
 				if ((ev->type == FM_EVENT) && ev->u.fmevent.isclaim) {
 					return ev;
+				}
+			}
+		}
+	} else if (evset && do_inlinecr && (evset->type == FM_EVENT)) {
+		/* look for inline claim */
+		treenode *type = evset->u.fmevent.nodetype;
+
+		if (type) {
+			fmnode_t *evtype = fmt_getfmcheck (type);
+
+#if 0
+fprintf (stderr, "fmt_findfreevar_claim(): inlinecr, EVENT, type =");
+printtreenl (stderr, 4, type);
+fprintf (stderr, "fmt_findfreevar_claim(): inlinecr, evtype =");
+fmt_dumpnode (evtype, 1, stderr);
+#endif
+
+			if (evtype && (evtype->type == FM_TAGSET)) {
+				int i;
+
+				for (i=0; i<DA_CUR (evtype->u.fmtset.tags); i++) {
+					fmnode_t *tag = DA_NTHITEM (evtype->u.fmtset.tags, i);
+
+					if ((tag->type == FM_EVENT) && tag->u.fmevent.isclaim) {
+#if 1
+fprintf (stderr, "fmt_findfreevar_claim(): inlinecr, EVENT, return =\n");
+fmt_dumpnode (tag, 1, stderr);
+#endif
+						return tag;
+					}
 				}
 			}
 		}
@@ -3389,6 +3419,23 @@ printtreenl (stderr, 1, dtype);
 				}
 			}
 		}
+
+		if (do_inlinecr) {
+			/* create inline claim/release events */
+			fmnode_t *cln = fmt_newnode (FM_EVENT, type);
+			fmnode_t *rln = fmt_newnode (FM_EVENT, type);
+
+			cln->u.fmevent.name = string_dup ("DoClaim");
+			cln->u.fmevent.node = type;
+			cln->u.fmevent.isclaim = 1;
+
+			rln->u.fmevent.name = string_dup ("DoRelease");
+			rln->u.fmevent.node = type;
+			rln->u.fmevent.isrelease = 1;
+
+			fmt_addtonodelist (fmn, cln);
+			fmt_addtonodelist (fmn, rln);
+		}
 #if 0
 fprintf (stderr, "fmt_createcollatedtypedecl(): built tag set:\n");
 fmt_dumpnode (fmn, 1, stderr);
@@ -4096,13 +4143,15 @@ fprintf (stderr, "do_formalmodelgen(): PROCDEF! [%s]\n", pname);
 			if (TagOf (dname) == N_TYPEDECL) {
 				treenode *type = NTypeOf (dname);
 
-				if (do_coll_ct && isdynamicmobilechantype (type)) {
-					fmnode_t *fmn = fmt_createcollatedtypedecl (n);
+				if (isdynamicmobilechantype (type)) {
+					if (do_coll_ct) {
+						fmnode_t *fmn = fmt_createcollatedtypedecl (n);
 
-					dynarray_add (fmm->items, fmn);
+						dynarray_add (fmm->items, fmn);
 
-					/* and tag the node */
-					SetNFMCheck (dname, fmn);
+						/* and tag the node */
+						SetNFMCheck (dname, fmn);
+					}
 				}
 			}
 		}
@@ -4671,7 +4720,10 @@ fmt_dumpnode (input, 1, stderr);
 		/*}}}*/
 		/*{{{  CLAIM -- return*/
 	case S_CLAIM:
-		{
+		if (do_nocr) {
+			/* no claim or release */
+			return CONTINUE_WALK;
+		} else {
 			treenode *claimvar = CTempOf (n);
 			fmnode_t *cln, *rln;
 
@@ -4695,7 +4747,9 @@ fmt_dumpnode (cln, 1, stderr);
 				tmp = fmt_newnode (FM_OUTPUT, n);
 				tmp->u.fmio.lhs = tmp2;
 
-				if (varfm && do_coll_ct && (varfm->type == FM_EVENTSET) && claimreleasetags) {
+				if (varfm && do_inlinecr && (varfm->type == FM_EVENTSET)) {
+					/* inline claim/release */
+				} else if (varfm && do_coll_ct && (varfm->type == FM_EVENTSET) && claimreleasetags) {
 					/* if we have appropriate tags defined, do claim event on RHS */
 					tmp->u.fmio.rhs = fmt_copynode (DA_NTHITEM (claimreleasetags->u.fmtset.tags, 0));
 				}
@@ -5058,7 +5112,7 @@ printtreenl (stderr, 1, n);
 			/* init string-table */
 			stringhash_sinit (fmstringtable, FMSTRINGTABLEBITS);
 
-			if (do_coll_ct) {
+			if (do_coll_ct && !do_inlinecr) {
 				fmnode_t *fmn = fmt_createclaimreleasetype ();
 
 				dynarray_add (fmm->items, fmn);
