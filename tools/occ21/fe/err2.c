@@ -1241,9 +1241,9 @@ PUBLIC const char *usemessagestring (const int n)
 	case USE_FORK_FREE_VAR_SCOPE:
 		return "free variable `%s' must be declared outside FORKING";
 	case USE_UNSHARED_FORK_FREE_VAR:
-		return "free variable `%s' in FORKed process is not SHARED";
+		return "free variable `%s' in FORKed process is not shared";
 	case USE_UNSHARED_FORK_FREE_MVAR:
-		return "free MOBILE `%s' must be explicitly SHARED";
+		return "free mobile variable `%s' in FORKed process is not shared";
 	case USE_FORK_FREE_VARS:
 		return "process being FORKed uses free variable '%s', a FORKING block is required to enforce its scope";
 		/*}}} */
