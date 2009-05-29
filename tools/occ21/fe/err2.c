@@ -1049,7 +1049,7 @@ PUBLIC const char *chkmessagestring (const int n)
 	case CHK_EMPTY_FORKING:
 		return ("FORKING does not contain any FORKs");
 	case CHK_FORK_PARAM_NOT_SHARED:
-		return ("parameter %d must be explicitly #PRAGMA SHARED");
+		return ("parameter %d to FORKed process is not shared");
 	case CHK_FORK_PARAM_NOT_IMPLEMENTED:
 		return ("parameter %d type not implemented yet!");
 	case CHK_NO_INLINE_FORK:
@@ -1241,7 +1241,7 @@ PUBLIC const char *usemessagestring (const int n)
 	case USE_FORK_FREE_VAR_SCOPE:
 		return "free variable `%s' must be declared outside FORKING";
 	case USE_UNSHARED_FORK_FREE_VAR:
-		return "free variable `%s' must be explicitly #PRAGMA SHARED";
+		return "free variable `%s' in FORKed process is not SHARED";
 	case USE_UNSHARED_FORK_FREE_MVAR:
 		return "free MOBILE `%s' must be explicitly SHARED";
 	case USE_FORK_FREE_VARS:
