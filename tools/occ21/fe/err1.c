@@ -62,7 +62,7 @@ PRIVATE messagestring_fn_t msgstring_fn[MAX_MODULES];	/* init to NULL */
 
 /*}}}  */
 /*{{{  constants */
-#define MAX_ERRORS 100
+#define MAX_ERRORS 10
 
 /*This is used to scan the file for errors;
   if lines are longer than this it will display the 'window' around an
