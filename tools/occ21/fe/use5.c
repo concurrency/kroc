@@ -70,9 +70,20 @@ typedef enum ENUM_fmtype { /*{{{*/
 } fmtype_e;
 
 /*}}}*/
+typedef enum ENUM_fmflags { /*{{{*/
+	FMF_NONE = 0x0000,
+	FMF_ISCLAIM = 0x0001,		/* is CLAIM related */
+	FMF_ISRELEASE = 0x0002,		/* is RELEASE related */
+	FMF_ISDEFINE = 0x0004,		/* is DEFINE related */
+	FMF_ISUNDEFINE = 0x0008,	/* is UNDEFINE related */
+	FMF_ISSIMPLECHAN = 0x0010,	/* is a simple channel */
+} fmflags_e;
+
+/*}}}*/
 typedef struct TAG_fmnode { /*{{{*/
 	fmtype_e type;
 	treenode *org;		/* where it originated */
+	fmflags_e flags;	/* assorted node flags */
 	union {
 		struct {
 			DYNARRAY (struct TAG_fmnode *, items);	/* items */
@@ -111,9 +122,6 @@ typedef struct TAG_fmnode { /*{{{*/
 			treenode *node;			/* reference to the event (N_PARAM,N_FIELD,etc.) */
 			char *typename;			/* name of the type if relevant */
 			treenode *nodetype;		/* type of parse-tree node if relevant */
-			int isclaim;			/* true if this is a synthetic CLAIM event */
-			int isrelease;			/* true if this is a synthetic RELEASE event */
-			int issimplechan;		/* true if this is a simple channel (false indicates something complex like a channel-type or barrier) */
 		} fmevent;				/* EVENT */
 		struct {
 			char *name;			/* name of the event */
@@ -406,6 +414,7 @@ PRIVATE fmnode_t *fmt_newnode (fmtype_e type, treenode *org)
 
 	fmn->type = type;
 	fmn->org = org;
+	fmn->flags = FMF_NONE;
 
 	switch (type) {
 	case FM_SEQ:
@@ -452,9 +461,6 @@ PRIVATE fmnode_t *fmt_newnode (fmtype_e type, treenode *org)
 		fmn->u.fmevent.node = NULL;
 		fmn->u.fmevent.typename = NULL;
 		fmn->u.fmevent.nodetype = NULL;
-		fmn->u.fmevent.isclaim = 0;
-		fmn->u.fmevent.isrelease = 0;
-		fmn->u.fmevent.issimplechan = 0;
 		break;
 	case FM_EVENTSET:
 	case FM_GLOBALEVENTS:
@@ -962,9 +968,7 @@ PRIVATE fmnode_t *fmt_copynode (fmnode_t *n)
 		}
 		c->u.fmevent.nodetype = n->u.fmevent.nodetype;
 
-		c->u.fmevent.isclaim = n->u.fmevent.isclaim;
-		c->u.fmevent.isrelease = n->u.fmevent.isrelease;
-		c->u.fmevent.issimplechan = n->u.fmevent.issimplechan;
+		c->flags = n->flags;
 		break;
 		/*}}}*/
 		/*{{{  NODEREF*/
@@ -1626,7 +1630,7 @@ PRIVATE BOOL fmt_issimpleevent (fmnode_t *item)
 {
 	switch (item->type) {
 	case FM_EVENT:
-		return item->u.fmevent.issimplechan ? TRUE : FALSE;
+		return (item->flags & FMF_ISSIMPLECHAN) ? TRUE : FALSE;
 	default:
 		return FALSE;
 	}
@@ -1674,7 +1678,7 @@ printtreenl (stderr, 1, proto);
 				break;
 			}
 		}
-		pnode->u.fmevent.issimplechan = 1;
+		pnode->flags |= FMF_ISSIMPLECHAN;
 
 		return pnode;
 		/*}}}*/
@@ -1780,8 +1784,7 @@ fmt_dumpnode (ref, 1, stderr);
 				crln->u.fmevent.name = (char *)smalloc (strlen (ev->u.fmevent.name) + 8);
 				sprintf (crln->u.fmevent.name, "%s_cr", ev->u.fmevent.name);
 				crln->u.fmevent.node = NULL;
-				crln->u.fmevent.isclaim = 1;
-				crln->u.fmevent.isrelease = 1;
+				crln->flags = FMF_ISCLAIM | FMF_ISRELEASE;
 				crln->u.fmevent.typename = string_dup (claimreleasetags->u.fmtset.name);
 
 				fmt_addtonodelist (esnode, crln);
@@ -1911,7 +1914,7 @@ fmt_dumpnode (protofm, 1, stderr);
 			sprintf (str + slen, "_Claim");
 			cln->u.fmevent.name = str;
 			cln->u.fmevent.node = var;
-			cln->u.fmevent.isclaim = 1;
+			cln->flags = FMF_ISCLAIM;
 
 			str = (char *)memalloc (strlen (varname) + 32);
 			fmt_copyvarname (str, varname);
@@ -1923,7 +1926,7 @@ fmt_dumpnode (protofm, 1, stderr);
 			sprintf (str + slen, "_Release");
 			rln->u.fmevent.name = str;
 			rln->u.fmevent.node = var;
-			rln->u.fmevent.isrelease = 1;
+			rln->flags = FMF_ISRELEASE;
 
 			fmt_addtonodelist (esnode, cln);
 			fmt_addtonodelist (esnode, rln);
@@ -1964,9 +1967,7 @@ PRIVATE fmnode_t *fmt_createeventfromevent (fmnode_t *event)
 			ev->u.fmevent.typename = str;
 		}
 		ev->u.fmevent.nodetype = event->u.fmevent.nodetype;
-		ev->u.fmevent.isclaim = event->u.fmevent.isclaim;
-		ev->u.fmevent.isrelease = event->u.fmevent.isrelease;
-		ev->u.fmevent.issimplechan = event->u.fmevent.issimplechan;
+		ev->flags = event->flags;
 
 		return ev;
 		/*}}}*/
@@ -2182,7 +2183,7 @@ printtreenl (stderr, 4, index);
 				for (i=0; i<DA_CUR (baseev->u.fmevset.events); i++) {
 					fmnode_t *ev = DA_NTHITEM (baseev->u.fmevset.events, i);
 
-					if ((ev->type == FM_EVENT) && !ev->u.fmevent.isclaim && !ev->u.fmevent.isrelease &&
+					if ((ev->type == FM_EVENT) && !(ev->flags & FMF_ISCLAIM) && !(ev->flags & FMF_ISRELEASE) &&
 							(index == ev->u.fmevent.node)) {
 						return ev;
 					}
@@ -2220,7 +2221,7 @@ fmt_dumpnode (evset, 1, stderr);
 			for (i=0; i<DA_CUR (evset->u.fmevset.events); i++) {
 				fmnode_t *ev = DA_NTHITEM (evset->u.fmevset.events, i);
 
-				if ((ev->type == FM_EVENT) && ev->u.fmevent.isclaim) {
+				if ((ev->type == FM_EVENT) && (ev->flags & FMF_ISCLAIM)) {
 					return ev;
 				}
 			}
@@ -2245,12 +2246,12 @@ fmt_dumpnode (evtype, 1, stderr);
 				for (i=0; i<DA_CUR (evtype->u.fmtset.tags); i++) {
 					fmnode_t *tag = DA_NTHITEM (evtype->u.fmtset.tags, i);
 
-					if ((tag->type == FM_EVENT) && tag->u.fmevent.isclaim) {
-#if 1
+					if (tag->flags & FMF_ISCLAIM) {
+#if 0
 fprintf (stderr, "fmt_findfreevar_claim(): inlinecr, EVENT, return =\n");
-fmt_dumpnode (tag, 1, stderr);
+fmt_dumpnode (evset, 1, stderr);
 #endif
-						return tag;
+						return evset;
 					}
 				}
 			}
@@ -2277,8 +2278,154 @@ PRIVATE fmnode_t *fmt_findfreevar_release (treenode *n, fmstate_t *fmstate)
 			for (i=0; i<DA_CUR (evset->u.fmevset.events); i++) {
 				fmnode_t *ev = DA_NTHITEM (evset->u.fmevset.events, i);
 
-				if ((ev->type == FM_EVENT) && ev->u.fmevent.isrelease) {
+				if ((ev->type == FM_EVENT) && (ev->flags & FMF_ISRELEASE)) {
 					return ev;
+				}
+			}
+		}
+	} else if (evset && do_inlinecr && (evset->type == FM_EVENT)) {
+		/* look for inline release */
+		treenode *type = evset->u.fmevent.nodetype;
+
+		if (type) {
+			fmnode_t *evtype = fmt_getfmcheck (type);
+
+#if 0
+fprintf (stderr, "fmt_findfreevar_release(): inlinecr, EVENT, type =");
+printtreenl (stderr, 4, type);
+fprintf (stderr, "fmt_findfreevar_release(): inlinecr, evtype =");
+fmt_dumpnode (evtype, 1, stderr);
+#endif
+
+			if (evtype && (evtype->type == FM_TAGSET)) {
+				int i;
+
+				for (i=0; i<DA_CUR (evtype->u.fmtset.tags); i++) {
+					fmnode_t *tag = DA_NTHITEM (evtype->u.fmtset.tags, i);
+
+					if (tag->flags & FMF_ISRELEASE) {
+#if 0
+fprintf (stderr, "fmt_findfreevar_release(): inlinecr, EVENT, return =\n");
+fmt_dumpnode (evset, 1, stderr);
+#endif
+						return evset;
+					}
+				}
+			}
+		}
+	}
+	return NULL;
+}
+/*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_findclaimin (fmnode_t *evset)*/
+/*
+ *	finds the specific claim event in a tag-set
+ */
+PRIVATE fmnode_t *fmt_findclaimin (fmnode_t *evset)
+{
+	if (evset && do_inlinecr && (evset->type == FM_EVENT)) {
+		/* look for inline claim */
+		treenode *type = evset->u.fmevent.nodetype;
+
+		if (type) {
+			fmnode_t *evtype = fmt_getfmcheck (type);
+
+			if (evtype && (evtype->type == FM_TAGSET)) {
+				int i;
+
+				for (i=0; i<DA_CUR (evtype->u.fmtset.tags); i++) {
+					fmnode_t *tag = DA_NTHITEM (evtype->u.fmtset.tags, i);
+
+					if (tag->flags & FMF_ISCLAIM) {
+						return tag;
+					}
+				}
+			}
+		}
+	}
+	return NULL;
+}
+/*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_findreleasein (fmnode_t *evset)*/
+/*
+ *	finds the specific release event in a tag-set
+ */
+PRIVATE fmnode_t *fmt_findreleasein (fmnode_t *evset)
+{
+	if (evset && do_inlinecr && (evset->type == FM_EVENT)) {
+		/* look for inline release */
+		treenode *type = evset->u.fmevent.nodetype;
+
+		if (type) {
+			fmnode_t *evtype = fmt_getfmcheck (type);
+
+			if (evtype && (evtype->type == FM_TAGSET)) {
+				int i;
+
+				for (i=0; i<DA_CUR (evtype->u.fmtset.tags); i++) {
+					fmnode_t *tag = DA_NTHITEM (evtype->u.fmtset.tags, i);
+
+					if (tag->flags & FMF_ISRELEASE) {
+						return tag;
+					}
+				}
+			}
+		}
+	}
+	return NULL;
+}
+/*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_finddefinein (fmnode_t *evset)*/
+/*
+ *	finds the specific define event in a tag-set
+ */
+PRIVATE fmnode_t *fmt_finddefinein (fmnode_t *evset)
+{
+	if (evset && do_comm && (evset->type == FM_EVENT)) {
+		/* look for inline define */
+		treenode *type = evset->u.fmevent.nodetype;
+
+		if (type) {
+			fmnode_t *evtype = fmt_getfmcheck (type);
+
+			if (evtype && (evtype->type == FM_TAGSET)) {
+				int i;
+
+				for (i=0; i<DA_CUR (evtype->u.fmtset.tags); i++) {
+					fmnode_t *tag = DA_NTHITEM (evtype->u.fmtset.tags, i);
+
+					if (tag->flags & FMF_ISDEFINE) {
+						return tag;
+					}
+				}
+			}
+		}
+	}
+	return NULL;
+}
+/*}}}*/
+/*{{{  PRIVATE fmnode_t *fmt_findundefinein (fmnode_t *evset)*/
+/*
+ *	finds the specific undefine event in a tag-set
+ */
+PRIVATE fmnode_t *fmt_findundefinein (fmnode_t *evset)
+{
+	if (evset && do_comm && (evset->type == FM_EVENT)) {
+		/* look for inline undefine */
+		treenode *type = evset->u.fmevent.nodetype;
+
+		if (type) {
+			fmnode_t *evtype = fmt_getfmcheck (type);
+
+			if (evtype && (evtype->type == FM_TAGSET)) {
+				int i;
+
+				for (i=0; i<DA_CUR (evtype->u.fmtset.tags); i++) {
+					fmnode_t *tag = DA_NTHITEM (evtype->u.fmtset.tags, i);
+
+					if (tag->flags & FMF_ISUNDEFINE) {
+						return tag;
+					}
 				}
 			}
 		}
@@ -3422,19 +3569,47 @@ printtreenl (stderr, 1, dtype);
 
 		if (do_inlinecr) {
 			/* create inline claim/release events */
-			fmnode_t *cln = fmt_newnode (FM_EVENT, type);
-			fmnode_t *rln = fmt_newnode (FM_EVENT, type);
+			fmnode_t *tag;
 
-			cln->u.fmevent.name = string_dup ("DoClaim");
-			cln->u.fmevent.node = type;
-			cln->u.fmevent.isclaim = 1;
+			tag = fmt_newnode (FM_TREEREF, dname);
+			tag->u.fmtree.name = (char *)memalloc (strlen (fmn->u.fmtset.name) + 8);
+			sprintf (tag->u.fmtree.name, "DoClaim");
+			fmt_copytagname (tag->u.fmtree.name + 7, tdname);
+			fmt_uniquename (&tag->u.fmtree.name);
+			tag->u.fmtree.node = dname;
+			tag->flags = FMF_ISCLAIM;
+			fmt_addtonodelist (fmn, tag);
 
-			rln->u.fmevent.name = string_dup ("DoRelease");
-			rln->u.fmevent.node = type;
-			rln->u.fmevent.isrelease = 1;
+			tag = fmt_newnode (FM_TREEREF, dname);
+			tag->u.fmtree.name = (char *)memalloc (strlen (fmn->u.fmtset.name) + 10);
+			sprintf (tag->u.fmtree.name, "DoRelease");
+			fmt_copytagname (tag->u.fmtree.name + 9, tdname);
+			fmt_uniquename (&tag->u.fmtree.name);
+			tag->u.fmtree.node = dname;
+			tag->flags = FMF_ISRELEASE;
+			fmt_addtonodelist (fmn, tag);
+		}
+		if (do_comm) {
+			/* create inline define/undefine events */
+			fmnode_t *tag;
 
-			fmt_addtonodelist (fmn, cln);
-			fmt_addtonodelist (fmn, rln);
+			tag = fmt_newnode (FM_TREEREF, dname);
+			tag->u.fmtree.name = (char *)memalloc (strlen (fmn->u.fmtset.name) + 9);
+			sprintf (tag->u.fmtree.name, "DoDefine");
+			fmt_copytagname (tag->u.fmtree.name + 8, tdname);
+			fmt_uniquename (&tag->u.fmtree.name);
+			tag->u.fmtree.node = dname;
+			tag->flags = FMF_ISDEFINE;
+			fmt_addtonodelist (fmn, tag);
+
+			tag = fmt_newnode (FM_TREEREF, dname);
+			tag->u.fmtree.name = (char *)memalloc (strlen (fmn->u.fmtset.name) + 11);
+			sprintf (tag->u.fmtree.name, "DoUndefine");
+			fmt_copytagname (tag->u.fmtree.name + 10, tdname);
+			fmt_uniquename (&tag->u.fmtree.name);
+			tag->u.fmtree.node = dname;
+			tag->flags = FMF_ISUNDEFINE;
+			fmt_addtonodelist (fmn, tag);
 		}
 #if 0
 fprintf (stderr, "fmt_createcollatedtypedecl(): built tag set:\n");
@@ -4747,8 +4922,18 @@ fmt_dumpnode (cln, 1, stderr);
 				tmp = fmt_newnode (FM_OUTPUT, n);
 				tmp->u.fmio.lhs = tmp2;
 
-				if (varfm && do_inlinecr && (varfm->type == FM_EVENTSET)) {
-					/* inline claim/release */
+				if (varfm && do_inlinecr && (varfm->type == FM_EVENT)) {
+					/* inline claim */
+					fmnode_t *cev;
+
+					cev = fmt_newnode (FM_NODEREF, n);
+					cev->u.fmnode.node = fmt_findclaimin (cln);
+
+					tmp->u.fmio.rhs = cev;
+#if 0
+fprintf (stderr, "do_formalmodelgen(): CLAIM: cev=\n");
+fmt_dumpnode (cev, 1, stderr);
+#endif
 				} else if (varfm && do_coll_ct && (varfm->type == FM_EVENTSET) && claimreleasetags) {
 					/* if we have appropriate tags defined, do claim event on RHS */
 					tmp->u.fmio.rhs = fmt_copynode (DA_NTHITEM (claimreleasetags->u.fmtset.tags, 0));
@@ -4771,7 +4956,15 @@ fmt_dumpnode (cln, 1, stderr);
 				tmp = fmt_newnode (FM_OUTPUT, n);
 				tmp->u.fmio.lhs = tmp2;
 
-				if (varfm && do_coll_ct && (varfm->type == FM_EVENTSET) && claimreleasetags) {
+				if (varfm && do_inlinecr && (varfm->type == FM_EVENT)) {
+					/* inline release */
+					fmnode_t *rev;
+
+					rev = fmt_newnode (FM_NODEREF, n);
+					rev->u.fmnode.node = fmt_findreleasein (rln);
+
+					tmp->u.fmio.rhs = rev;
+				} else if (varfm && do_coll_ct && (varfm->type == FM_EVENTSET) && claimreleasetags) {
 					/* if we have appropriate tags defined, do claim event on RHS */
 					tmp->u.fmio.rhs = fmt_copynode (DA_NTHITEM (claimreleasetags->u.fmtset.tags, 1));
 				}
@@ -4808,7 +5001,56 @@ printtreenl (stderr, 1, aparams);
 fprintf (stderr, "do_formalmodelgen(): formal params:");
 printtreenl (stderr, 1, fparams);
 #endif
-			if (!ifm) {
+			if ((TagOf (iname) == N_PREDEFPROC) && (NModeOf (iname) == PD_ALLOC_CHAN_TYPE)) {
+				/*{{{  special case: channel-type allocation (defines)*/
+				if (do_comm) {
+					/* two defining events for the channel-ends involved */
+					fmn = fmt_newnode (FM_SEQ, n);
+
+					for (awalk = aparams; !EndOfList (awalk); awalk = NextItem (awalk)) {
+						fmnode_t *tmp = NULL;
+
+						fmstate->target = &tmp;
+						prewalktree (ThisItem (awalk), do_formalmodelgen, (void *)fmstate);
+
+						if (tmp) {
+							/* expecting an event (channel-end) */
+#if 0
+fprintf (stderr, "do_formalmodelgen(): instance of ALLOC_CHAN_TYPE, tmp M(aparam) =\n");
+fmt_dumpnode (tmp, 1, stderr);
+#endif
+							if ((tmp->type == FM_NODEREF) && tmp->u.fmnode.node && (tmp->u.fmnode.node->type == FM_EVENT)) {
+								fmnode_t *def_ev = fmt_finddefinein (tmp->u.fmnode.node);
+
+								if (def_ev) {
+									/* defining event */
+									fmnode_t *output = fmt_newnode (FM_OUTPUT, n);
+
+									output->u.fmio.lhs = tmp;
+									output->u.fmio.rhs = fmt_copynode (def_ev);
+
+									fmt_addtonodelist (fmn, output);
+								} else {
+									/* trash it */
+									tmp->u.fmnode.node = NULL;
+									fmt_freenode (tmp, 2);
+								}
+							} else {
+								/* trash it */
+								tmp->u.fmnode.node = NULL;
+								fmt_freenode (tmp, 2);
+							}
+						}
+					}
+				} else {
+					fmn = fmt_newnode (FM_SKIP, n);
+				}
+#if 0
+fprintf (stderr, "do_formalmodelgen(): instance of ALLOC_CHAN_TYPE, fmn =\n");
+fmt_dumpnode (fmn, 1, stderr);
+#endif
+				/*}}}*/
+			} else if (!ifm) {
 				/*{{{  no formal model for instanced PROC, assume chaotic*/
 				fmn = fmt_newnode (FM_PCHAOS, n);
 
@@ -5065,11 +5307,11 @@ PRIVATE fmnode_t *fmt_createclaimreleasetype (void)
 
 	cln = fmt_newnode (FM_EVENT, NULL);
 	cln->u.fmevent.name = string_dup ("DoClaim");
-	cln->u.fmevent.isclaim = 1;
+	cln->flags = FMF_ISCLAIM;
 	fmt_uniquename (&cln->u.fmevent.name);
 	rln = fmt_newnode (FM_EVENT, NULL);
 	rln->u.fmevent.name = string_dup ("DoRelease");
-	rln->u.fmevent.isrelease = 1;
+	rln->flags = FMF_ISRELEASE;
 	fmt_uniquename (&rln->u.fmevent.name);
 
 	fmt_addtonodelist (decl, cln);
