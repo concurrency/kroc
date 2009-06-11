@@ -46,7 +46,7 @@ A TEncode stream begins with the special 'tenc' or 'TEnc' Element, the Integer o
   Stream  := { Element }
   TEncode := Header, Stream
 
-Decoders should ignore elements they do not understand or care about.  If multiple elements with the same identifier exist in the same stream and the decoder does not expect multiple instances, then the decode should use the first encountered.  When defining a stream, new elements may be freely added to its definition accross versions; however, the order of elements must be maintain in order to keep parsing simple.
+Decoders should ignore elements they do not understand or care about.  If multiple elements with the same identifier exist in the same stream and the decoder does not expect multiple instances, then the decode should use the first encountered.  When defining a stream, new elements may be freely added to its definition across versions; however, the order of elements must be maintained in order to keep parsing simple.
 
 -- Transterpreter Byte Code (TBC)
 
@@ -100,4 +100,4 @@ TEnc <stream length>
         <bytecode offset> <file index> <line number>
 	... further elements ...
 
-  ... futher tbcL elements (e.g. alternate endian) ...
+  ... further tbcL elements (e.g. alternate endian) ...
