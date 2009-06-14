@@ -4206,6 +4206,7 @@ printtreenl (stderr, 4, udv_xcvar->nameof);
 		/* merge variable states together */
 		vstack_merge_while (udv_vstacklevel, udv_vstacklevel - 1);
 		udv_vstacklevel--;
+		udv_fixup_defined (CondGuardAddr (n));				/* turns UDVCONSTEXP nodes into CONSTEXP, or removes them */
 		break;
 		/*}}}*/
 		/*{{{  IF*/

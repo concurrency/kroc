@@ -1971,7 +1971,43 @@ PRIVATE fmnode_t *fmt_createeventfromevent (fmnode_t *event)
 
 		return ev;
 		/*}}}*/
+	} else if (event->type == FM_EVENTSET) {
+		/*{{{  set of events*/
+		fmnode_t *ev = fmt_newnode (FM_EVENTSET, event->org);
+		const char *evstr = event->u.fmevset.name;
+		char *str = (char *)memalloc (evstr ? (strlen (evstr) + 16) : 32);
+		int i;
+
+		if (!evstr) {
+			sprintf (str, "anon_%d", event_counter++);
+		} else {
+			sprintf (str, "%s__%d", evstr, event_counter++);
+		}
+		ev->u.fmevset.name = str;
+		ev->u.fmevset.node = event->u.fmevset.node;
+
+		if (event->u.fmevset.typename) {
+			str = (char *)memalloc (strlen (event->u.fmevset.typename) + 2);
+
+			sprintf (str, "%s", event->u.fmevset.typename);
+			ev->u.fmevset.typename = str;
+		}
+		ev->u.fmevset.nodetype = event->u.fmevset.nodetype;
+		ev->u.fmevset.isanonct = event->u.fmevset.isanonct;
+
+		/* duplicate sub-events */
+		for (i=0; i<DA_CUR (event->u.fmevset.events); i++) {
+			fmnode_t *xev = fmt_createeventfromevent (DA_NTHITEM (event->u.fmevset.events, i));
+
+			dynarray_add (ev->u.fmevset.events, xev);
+		}
+
+		/*}}}*/
 	} else {
+#if 1
+fprintf (stderr, "fmt_createeventfromevent(): about to go pop, event =\n");
+fmt_dumpnode (event, 1, stderr);
+#endif
 		fmt_error_internal (NOPOSN, "fmt_createeventfromevent(): not EVENT!\n");
 	}
 	return NULL;
