@@ -35,11 +35,12 @@ sub assemble ($@) {
 	my $pos = 0;
 
 	foreach my $label (@labels) {
-		printf ("0x%05x %-6s  % 3d  % 3d\n",
+		printf ("0x%05x %-6s  % 3d  % 3d  %s\n",
 			$label->{'pos'},
-			$label->{'name'}, 
+			$label->{'name'},
 			$pos,
-			$label->{'length'}
+			$label->{'length'},
+			$label->{'symbol'}
 		) if $verbose;
 
 		while ($pos < $label->{'pos'}) {
