@@ -18,7 +18,7 @@ build_occplayer=yes
 build_player=yes
 
 dnl Checks for libraries.
-PKG_CHECK_MODULES([PLAYER], [playerc >= 2.1.0 playercore playerxdr], , [build_occplayer=no])
+OCCAM_PKG_CHECK_MODULES([PLAYER], [playerc >= 2.1.0 playercore playerxdr], , [build_occplayer=no])
 old_LIBS="$LIBS"
 LIBS="$LIBS $PLAYER_LIBS"
 AC_CHECK_FUNC(playerc_client_connect, , [build_occplayer=no])
