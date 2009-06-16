@@ -13,7 +13,7 @@ OCCAM_OCCBUILD
 CFLAGS="$CFLAGS $OCCBUILD_CFLAGS"
 
 dnl Checks for libraries.
-PKG_CHECK_MODULES([LIBPNG], [libpng], [have_libpng=yes], [have_libpng=no])
+OCCAM_PKG_CHECK_MODULES([LIBPNG], [libpng], [have_libpng=yes], [have_libpng=no])
 old_LIBS="$LIBS"
 LIBS="$LIBS $LIBPNG_LIBS"
 AC_CHECK_FUNC(png_init_io, , [have_libpng=no])
