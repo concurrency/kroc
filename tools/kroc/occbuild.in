@@ -809,6 +809,11 @@ class TockToolchain:
 		for key in patterns.keys():
 			patterns[key] = patterns[key].replace('occam_', 'occam_tock_')
 
+toolchains = {
+	"kroc": KRoCToolchain,
+	"tock": TockToolchain,
+	"tvm": TVMToolchain,
+	}
 
 def usage(f):
 	print >>f, """occbuild, version """ + VERSION + """
@@ -842,7 +847,7 @@ Usage:
 Options for all modes:
   -v, --verbose       Print progress reports to stderr
   --help              Show usage
-  --toolchain CHAIN   Use toolchain CHAIN (kroc or tvm, default kroc)
+  --toolchain CHAIN   Use toolchain CHAIN (""" + "/".join(safe_sorted(toolchains.keys())) + """, default @OCCBUILD_TOOLCHAIN@)
   --search DIR        Add DIR to search path for include files and libraries
   --target-os OS      Override OS target for binaries, e.g. Darwin or Linux
 
@@ -899,12 +904,6 @@ def main(args):
 	except getopt.GetoptError:
 		usage(sys.stderr)
 		sys.exit(1)
-
-	toolchains = {
-		"kroc": KRoCToolchain,
-		"tock": TockToolchain,
-		"tvm": TVMToolchain,
-		}
 
 	mode = None
 	target = None
@@ -974,7 +973,7 @@ def main(args):
 		sys.exit(1)
 
 	if toolchain is None:
-		toolchain = toolchains["kroc"]()
+		toolchain = toolchains["@OCCBUILD_TOOLCHAIN@"]()
 
 	programs["tvm_installed"] = programs["tvm"]
 	if in_tree is not None:
