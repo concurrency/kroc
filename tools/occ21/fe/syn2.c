@@ -6282,11 +6282,8 @@ PRIVATEPARAM treenode *rpragma_translate (wordnode * const pragma_name, const pr
 PRIVATEPARAM treenode *rpragma_namelist (wordnode * const pragma_name, const pragma_name_tag_t pragma_name_tag, int tag, const int indent)
 {
 	treenode *tptr = NULL;
-#if 0
-	treenode *const rhs = (treenode *) rname ();	/* if ok, this also skips past the name */
-#else
 	treenode *const rhs = rlist (rname_treenode, S_COMMA);
-#endif
+
 	USE_VAR (tag);		/* prevent unused variable warning */
 	if (rhs != NULL) {
 		treenode *const pragma_nptr = declname (N_DECL, flocn, pragma_name, NULL, NULL);
@@ -6296,13 +6293,13 @@ PRIVATEPARAM treenode *rpragma_namelist (wordnode * const pragma_name, const pra
 		if (current_fe_data->fe_information) {
 #if 0
 			fprintf (current_fe_data->fe_outfile, "%s %s %s\n", tagstring (S_PRAGMA), WNameOf (pragma_name), WNameOf (rhs));
-#else
+#endif
 			treenode *n;
 			fprintf (current_fe_data->fe_outfile, "%s %s", tagstring (S_PRAGMA), WNameOf (pragma_name));
-			for (n = rhs; !EndOfList (n); n = NextItem (n))
+			for (n = rhs; !EndOfList (n); n = NextItem (n)) {
 				fprintf (current_fe_data->fe_outfile, "%s %s", n == rhs ? "" : ",", WNameOf ((wordnode *) ThisItem (n)));
+			}
 			fputc ('\n', current_fe_data->fe_outfile);
-#endif
 		}
 	}
 	if (indent >= 0) {
@@ -6379,6 +6376,7 @@ pragma_list[] = {
 	, { "IOSPACE", rpragma_namelist, O, pragma_name_iospace}
 	, { "DYNCALL", rpragma_namelist, CC, pragma_name_dyncall}
 	, { "FORMALMODEL", rpragma_string, O, pragma_name_formalmodel}
+	, { "FMTYPES", rpragma_namelist, CC, pragma_name_fmtypes}
 };
 
 /*}}}*/

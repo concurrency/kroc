@@ -1169,7 +1169,13 @@ PUBLIC const char *chkmessagestring (const int n)
 	case CHK_CALLAT_NOT_DYNAMIC:
 		return ("cannot call non-dynamic PROC %s at specified address");
 	case CHK_BAD_DYNCALL_TYPE:
+		return ("invalid type in DYNCALL pragma");
+	case CHK_BAD_DYNCALL_NAMEDTYPE:
 		return ("%s cannot be exported as a dynamic call");
+	case CHK_BAD_FMTYPES_TYPE:
+		return ("invalid type in FMTYPES pragma");
+	case CHK_BAD_FMTYPES_NAMEDTYPE:
+		return ("%s is not a valid type for FMTYPES pragma");
 		/*}}}*/
 		/*{{{  buffered channel errors*/
 	case CHK_BUFCHAN_NOTCONST:
