@@ -293,6 +293,34 @@ PUBLIC BOOL isdynamicmobilechantype (treenode *const t)
 	return FALSE;
 }
 /*}}}*/
+/*{{{  PUBLIC BOOL issamedynamicmobilechantype (treenode *const t1, treenode *const t2)*/
+/*
+ *	determines whether two mobile channel structures are the "same".
+ */
+PUBLIC BOOL issamedynamicmobilechantype (treenode *const t1, treenode *const t2)
+{
+	if (!t1 || !t2) {
+		return FALSE;
+	}
+	if (TagOf (t1) != TagOf (t2)) {
+		return FALSE;
+	}
+	if (TagOf (t1) == N_TYPEDECL) {
+		treenode *n1 = (treenode *)NNameOf (t1);
+		treenode *n2 = (treenode *)NNameOf (t2);
+
+		if (n1 == n2) {
+			return TRUE;
+		}
+#if 0
+fprintf (stderr, "issamedynamicmobilechantype(): n1 at %p, n2 at %p\n", n1, n2);
+#endif
+	} else {
+		return issame (t1, t2);
+	}
+	return FALSE;
+}
+/*}}}*/
 
 /*{{{  PUBLIC BOOL istypetag*/
 PUBLIC BOOL istypetag (const int tag)
