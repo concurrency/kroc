@@ -21,6 +21,21 @@
 
 #INCLUDE "maths.module"
 
+--{{{  FUNCTION abs.int
+--* Remove the sign from an integer.
+-- @param n Input value
+-- @return [@code -n] if [@code n] is negative, else [@code n]
+INT FUNCTION abs.int (VAL INT n)
+  INT result:
+  VALOF
+    IF
+      n < 0
+        result := -n
+      TRUE
+        result := n
+    RESULT result
+:
+--}}}
 --{{{  FUNCTION min.int
 --* Find the lesser of two integers.
 -- @param a, b Integers to compare

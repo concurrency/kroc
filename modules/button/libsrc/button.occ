@@ -190,16 +190,16 @@ PROC eventmonitor(CHAN INPUT input!)
   INT re:
   INITIAL BOOL quit IS FALSE:
   SEQ
-    create.SDL.Event(event)
+    new.SDL.Event(event)
     WHILE NOT quit
       SEQ 
         tim ? wait
         tim ? AFTER wait PLUS delay
-        SDL.PollEvent(re, event)
+        SDL.PollEvent(event, re)
         IF
           re > 0
             SEQ
-              get.SDL.Event.type(type, event)
+              SDL.Event.type.get(event, type)
               IF 
                 -- If someone hits the little X in the corner of the window 
                 -- or does alt+f4 kinda thing
@@ -211,8 +211,8 @@ PROC eventmonitor(CHAN INPUT input!)
                   INT key:
                   SEQ
                     keyevent := (SDL.KeyboardEvent event)
-                    get.SDL.KeyboardEvent.keysym(keyinfo, keyevent)
-                    get.SDL.keysym.sym(key, keyinfo)
+                    SDL.KeyboardEvent.keysym.get(keyevent, keyinfo)
+                    SDL.keysym.sym.get(keyinfo, key)
                     --FIXME for ctrl and alt etc...
                     input ! kyb; (BYTE key)
                     IF
@@ -229,9 +229,9 @@ PROC eventmonitor(CHAN INPUT input!)
                 (INT type) = SDL.MOUSEBUTTONDOWN
                   SEQ
                     click := (SDL.MouseButtonEvent event)
-                    get.SDL.MouseButtonEvent.x(xpos, click)
-                    get.SDL.MouseButtonEvent.y(ypos, click)
-                    get.SDL.MouseButtonEvent.button(button, click)
+                    SDL.MouseButtonEvent.x.get(click, xpos)
+                    SDL.MouseButtonEvent.y.get(click, ypos)
+                    SDL.MouseButtonEvent.button.get(click, button)
                     input ! mousedown; button; xpos; ypos
                 INT16 xpos, ypos:
                 BYTE button:
@@ -239,9 +239,9 @@ PROC eventmonitor(CHAN INPUT input!)
                 (INT type) = SDL.MOUSEBUTTONUP
                   SEQ
                     click := (SDL.MouseButtonEvent event)
-                    get.SDL.MouseButtonEvent.x(xpos, click)
-                    get.SDL.MouseButtonEvent.y(ypos, click)
-                    get.SDL.MouseButtonEvent.button(button, click)
+                    SDL.MouseButtonEvent.x.get(click, xpos)
+                    SDL.MouseButtonEvent.y.get(click, ypos)
+                    SDL.MouseButtonEvent.button.get(click, button)
                     input ! mouseup; button; xpos; ypos
                 TRUE
                   SKIP
@@ -257,7 +257,7 @@ PROC setup.gfx(CHAN BYTE scr!, RESULT INT font.offset, VAL INT sizex, sizey)
   VAL INT err.const IS 100:
   INITIAL INT width, height IS sizex, sizey:
   SEQ
-    occ.SDL.Init(result, SDL.INIT.VIDEO)
+    occ.SDL.Init(SDL.INIT.VIDEO, result)
     IF
       result <> 0
         [err.const]BYTE err.str:
@@ -271,11 +271,11 @@ PROC setup.gfx(CHAN BYTE scr!, RESULT INT font.offset, VAL INT sizex, sizey)
       TRUE
         INT re:
         SEQ
-          SDL.GL.SetAttribute(re, SDL.GL.RED.SIZE, 5)
-          SDL.GL.SetAttribute(re, SDL.GL.GREEN.SIZE, 5)
-          SDL.GL.SetAttribute(re, SDL.GL.BLUE.SIZE, 5)
-          SDL.GL.SetAttribute(re, SDL.GL.DOUBLEBUFFER, 1)
-          SDL.SetVideoMode(surface, width, height, 16, SDL.OPENGL)
+          SDL.GL.SetAttribute(SDL.GL.RED.SIZE, 5, re)
+          SDL.GL.SetAttribute(SDL.GL.GREEN.SIZE, 5, re)
+          SDL.GL.SetAttribute(SDL.GL.BLUE.SIZE, 5, re)
+          SDL.GL.SetAttribute(SDL.GL.DOUBLEBUFFER, 1, re)
+          SDL.SetVideoMode(width, height, 16, SDL.OPENGL, surface)
           IF
             (INT surface) = 0
               [100]BYTE err.str:

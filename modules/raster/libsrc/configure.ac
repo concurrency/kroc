@@ -13,14 +13,16 @@ OCCAM_OCCBUILD
 CFLAGS="$CFLAGS $OCCBUILD_CFLAGS"
 
 dnl Checks for libraries.
-PKG_CHECK_MODULES([LIBPNG], [libpng], [have_libpng=yes], [have_libpng=no])
+OCCAM_PKG_CHECK_MODULES([LIBPNG], [libpng], [have_libpng=yes], [have_libpng=no])
 old_LIBS="$LIBS"
 LIBS="$LIBS $LIBPNG_LIBS"
 AC_CHECK_FUNC(png_init_io, , [have_libpng=no])
 LIBS="$old_LIBS"
 if ! test $OCCBUILD_TOOLCHAIN = kroc; then
-	# FIXME: PNG support currently requires CCSP's interface.
-	have_libpng=no
+	if ! test $OCCBUILD_TOOLCHAIN = tock; then
+		# FIXME: PNG support currently requires CCSP's interface.
+		have_libpng=no
+	fi
 fi
 AM_CONDITIONAL(HAVE_LIBPNG, [test $have_libpng = yes])
 

@@ -16,12 +16,16 @@ fi
 AC_CONFIG_SUBDIRS(tools/ilibr)
 AC_CONFIG_SUBDIRS(tools/kroc)
 AC_CONFIG_SUBDIRS(tools/mkoccdeps)
-AC_CONFIG_SUBDIRS(tools/occ21)
+if test $OCCBUILD_TOOLCHAIN != tock; then
+  AC_CONFIG_SUBDIRS(tools/occ21)
+fi
 AC_CONFIG_SUBDIRS(tools/occamdoc)
 
-if test $OCCBUILD_TOOLCHAIN = kroc; then
+if test $OCCBUILD_TOOLCHAIN = kroc -o $OCCBUILD_TOOLCHAIN = tock; then
   AC_CONFIG_SUBDIRS(runtime/ccsp)
+fi
 
+if test $OCCBUILD_TOOLCHAIN = kroc; then
   AC_CONFIG_SUBDIRS(tools/tranx86)
 
   AC_CONFIG_SUBDIRS(runtime/libkrocif)
@@ -64,6 +68,7 @@ AC_CONFIG_SUBDIRS(modules/occGL/libsrc)
 AC_CONFIG_SUBDIRS(modules/button/libsrc)
 AC_CONFIG_SUBDIRS(modules/video/libsrc)
 AC_CONFIG_SUBDIRS(modules/graphics3d/libsrc)
+AC_CONFIG_SUBDIRS(modules/player/libsrc)
 
 AC_CONFIG_SUBDIRS(modules/bsclib/examples)
 AC_CONFIG_SUBDIRS(modules/button/examples)
@@ -78,6 +83,8 @@ AC_CONFIG_SUBDIRS(modules/moa/examples)
 AC_CONFIG_SUBDIRS(modules/occGL/examples)
 AC_CONFIG_SUBDIRS(modules/occSDL/examples)
 AC_CONFIG_SUBDIRS(modules/occade/examples)
+AC_CONFIG_SUBDIRS(modules/player/examples)
+AC_CONFIG_SUBDIRS(modules/player/exercises)
 AC_CONFIG_SUBDIRS(modules/pony/examples)
 AC_CONFIG_SUBDIRS(modules/raster/examples)
 AC_CONFIG_SUBDIRS(modules/sdlraster/examples)

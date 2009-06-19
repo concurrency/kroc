@@ -48,10 +48,10 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
                 KROC_CCSP_ENABLE_PTHREADS=$enableval,
                 KROC_CCSP_ENABLE_PTHREADS=yes)
   AC_ARG_ENABLE([mp],
-                AS_HELP_STRING([--enable-mp],
-                               [enable multiprocessor support (default disabled)]),
+                AS_HELP_STRING([--disable-mp],
+                               [disable multiprocessor support (default enabled)]),
                 KROC_CCSP_ENABLE_MP=$enableval,
-                KROC_CCSP_ENABLE_MP=no)
+                KROC_CCSP_ENABLE_MP=yes)
   AC_ARG_ENABLE([cttd],
                 AS_HELP_STRING([--enable-cttd],
                                [enable CHAN TYPE type description support (default disabled)]),

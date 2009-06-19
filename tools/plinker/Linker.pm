@@ -56,6 +56,8 @@ sub link ($$@) {
 			my $file	= $text->{'file'};
 			my $filename	= undef;
 			my $line	= undef;
+			my $global	= undef; # present global
+			my $n_inst	= 0;     # "real" instructions in present/last global
 
 			# Initial operation translation
 			expand_etc_ops ($etc, $instructions);
@@ -109,6 +111,7 @@ sub link ($$@) {
 					$labels{$label}		= $new;
 
 					$align			= 0;
+					$n_inst			= 0;
 				} elsif ($name eq '.FILENAME') {
 					$filename		= $arg;
 				} elsif ($name eq '.LINE') {
@@ -134,6 +137,8 @@ sub link ($$@) {
 							"\tOld symbol is from $c_fn($c_file), line $c_ln.";
 							"\tNew symbol is from $filename($file), line $line.";
 					}
+					$n_inst			= 0;
+					$global			= $arg;
 					$globals{$arg}		= $current;
 					$current->{'loci'}	= {
 						'file'		=> $file,
@@ -142,6 +147,15 @@ sub link ($$@) {
 					};
 				} elsif ($name eq '.GLOBALEND') {
 					$globals{$arg}->{'end'}	= $current;
+					$global			= undef;
+				} elsif ($name eq '.JUMPENTRY') {
+					if ($global && !$n_inst) {
+						$globals{$global} = {
+							'jump_entry' => $arg
+						}
+					};
+				} elsif ($name !~ /^\./) {
+					$n_inst++;
 				}
 				
 				push (@{$current->{'inst'}}, $op)
@@ -167,6 +181,7 @@ sub link ($$@) {
 			
 			# Transform Passes
 			foreach_label ($labels, \&resolve_globals, \%globals, \%ffi);
+			foreach_label ($labels, \&follow_jump_entries, \%globals, \%ffi);
 			foreach_label ($labels, \&build_data_blocks);
 			foreach_label ($labels, \&add_data_lengths);
 			foreach_label ($labels, \&isolate_static_sections);
@@ -364,13 +379,12 @@ sub resolve_inst_globals ($$$$$) {
 			my $n = $arg->{'stub'};
 			if (exists ($globals->{$n})) {
 				$inst->{'arg'} = $globals->{$n};
-				$globals->{$n}->{'refs'}++;
 			} elsif (exists ($ffi->{$n})) {
 				$inst->{'arg'} = $ffi->{$n};
-				$ffi->{$n}->{'refs'}++;
 			} else {
 				die "Undefined global reference $n";
 			}
+			$inst->{'arg'}->{'refs'}++;
 		}
 	}
 }
@@ -378,6 +392,30 @@ sub resolve_inst_globals ($$$$$) {
 sub resolve_globals ($$$$) {
 	my ($labels, $label, $globals, $ffi) = @_;
 	foreach_inst ($labels, $label, \&resolve_inst_globals, $globals, $ffi);
+}
+
+sub follow_jump_entry_inst ($$$$$) {
+	my ($labels, $label, $inst, $globals, $ffi) = @_;
+	if (ref ($inst->{'arg'}) =~ /^HASH/ && $inst->{'arg'}->{'jump_entry'}) {
+		my $arg = $inst->{'arg'};
+		while ($arg->{'jump_entry'}) {
+			my $n = $arg->{'jump_entry'};
+			if (exists ($globals->{$n})) {
+				$arg = $globals->{$n};
+			} elsif (exists ($ffi->{$n})) {
+				$arg = $ffi->{$n};
+			} else {
+				die "Undefined global reference $n (in jump entry)";
+			}
+		}
+		$inst->{'arg'} = $arg;
+		$arg->{'refs'}++;
+	}
+}
+
+sub follow_jump_entries ($$$$) {
+	my ($labels, $label, $globals, $ffi) = @_;
+	foreach_inst ($labels, $label, \&follow_jump_entry_inst, $globals, $ffi);
 }
 
 sub build_data_blocks ($$) {

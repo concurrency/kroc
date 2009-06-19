@@ -1329,7 +1329,34 @@ PRIVATE treenode *cpragma (treenode * volatile tptr, treenode * last_decl, treen
 					case N_SFUNCDEF:
 						break;
 					default:
-						chkreport_s (CHK_BAD_DYNCALL_TYPE, chklocn, WNameOf (NNameOf (pname)));
+						if (nodetypeoftag (TagOf (pname)) == NAMENODE) {
+							chkreport_s (CHK_BAD_DYNCALL_NAMEDTYPE, chklocn, WNameOf (NNameOf (pname)));
+						} else {
+							chkreport (CHK_BAD_DYNCALL_TYPE, chklocn);
+						}
+						break;
+					}
+				}
+			}
+			break;
+			/*}}}*/
+			/*{{{  FMTYPES*/
+		case pragma_name_fmtypes:
+			{
+				treenode *l;
+
+				for (l = DValOf (tptr); !EndOfList (l); l = NextItem (l)) {
+					treenode *pitem = ThisItem (l);
+
+					switch (TagOf (pitem)) {
+					case N_TYPEDECL:
+						break;
+					default:
+						if (nodetypeoftag (TagOf (pitem)) == NAMENODE) {
+							chkreport_s (CHK_BAD_FMTYPES_NAMEDTYPE, chklocn, WNameOf (NNameOf (pitem)));
+						} else {
+							chkreport (CHK_BAD_FMTYPES_TYPE, chklocn);
+						}
 						break;
 					}
 				}
@@ -2343,6 +2370,7 @@ fprintf (stderr, "scopeandcheck: S_DECL: had ASINPUT/ASOUTPUT, adjusting DNameOf
 							case pragma_name_iospace:
 							case pragma_name_dyncall:
 							case pragma_name_export:
+							case pragma_name_fmtypes:
 								scopeandcheck (DValAddr (tt));
 								break;
 							case pragma_name_linkage:

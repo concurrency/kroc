@@ -431,6 +431,23 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
       int.type ()
       record.type ()
   :
+  
+  PROC test7()
+    PROC proc.set.array([]BYTE s)
+      SEQ i = 0 FOR SIZE s
+        s[i] := BYTE i
+    :
+
+    BYTE FUNCTION func.get.array(VAL []BYTE s, VAL INT i) IS s[i]:
+
+    MOBILE []MOBILE []BYTE foo:
+    SEQ
+      foo := MOBILE [10] MOBILE[] BYTE
+      foo[4] := MOBILE [20]BYTE
+      proc.set.array(foo[4])
+      SEQ i = 0 FOR 20
+        check.BYTE(func.get.array(foo[4], i), BYTE i, "test7")
+  :
 
   --}}}
   --}}}  
@@ -450,6 +467,8 @@ PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
     test5 ()
     title ("RESIZE.MOBILE.ARRAY")
     test6 ()
+    title ("MOBILE arrays of MOBILE arrays")
+    test7 ()
     finish ()
 :
 

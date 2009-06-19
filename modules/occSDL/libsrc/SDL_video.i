@@ -16,20 +16,20 @@
 typedef struct SDL_Rect {
 	Sint16 x, y;
 	Uint16 w, h;
-}; //SDL_Rect;
+} SDL_Rect;
 
 typedef struct SDL_Color {
 	Uint8 r;
 	Uint8 g;
 	Uint8 b;
 	Uint8 unused;
-}; // SDL_Color;
+} SDL_Color;
 #define SDL_Colour SDL_Color
 
 typedef struct SDL_Palette {
 	int       ncolors;
 	SDL_Color *colors;
-} ; //SDL_Palette;
+} SDL_Palette;
 
 /* Everything in the pixel format structure is read-only */
 typedef struct SDL_PixelFormat {
@@ -53,7 +53,7 @@ typedef struct SDL_PixelFormat {
 	Uint32 colorkey;
 	/* Alpha value information (per-surface alpha) */
 	Uint8  alpha;
-}; //SDL_PixelFormat;
+} SDL_PixelFormat;
 
 /* typedef for private surface blitting functions */
 struct SDL_Surface;
@@ -90,7 +90,7 @@ typedef struct SDL_Surface {
 
 	/* Reference count -- used when freeing surface */
 	int refcount;				/* Read-mostly */
-}; //SDL_Surface;
+} SDL_Surface;
 
 %runtime %{
 void occ_get_SDL_Surface_pixels(int pixels[], SDL_Surface *surface)
@@ -173,7 +173,7 @@ typedef struct SDL_VideoInfo {
 	Uint32 UnusedBits3  :16;
 	Uint32 video_mem;	/* The total amount of video memory (in K) */
 	SDL_PixelFormat *vfmt;	/* Value: The format of the video surface */
-}; //SDL_VideoInfo;
+} SDL_VideoInfo;
 
 
 /* The most common video overlay formats.
@@ -204,7 +204,7 @@ typedef struct SDL_Overlay {
 	/* Special flags */
 	Uint32 hw_overlay :1;	/* Flag: This overlay hardware accelerated? */
 	Uint32 UnusedBits :31;
-}; // SDL_Overlay;
+} SDL_Overlay;
 
 
 /* Public enumeration for setting the OpenGL window attributes. */
@@ -548,7 +548,7 @@ extern  void  SDL_UnlockSurface(SDL_Surface *surface);
  * Returns the new surface, or NULL if there was an error.
  * The new surface should be freed with SDL_FreeSurface().
  */
-//extern  SDL_Surface *  SDL_LoadBMP_RW(SDL_RWops *src, int freesrc);
+extern  SDL_Surface *  SDL_LoadBMP_RW(SDL_RWops *src, int freesrc);
 
 /*SWIG: The two following functions are normally defined as macros in SDL
  Here, they get plonked as functions into the wrapper itself and do
@@ -556,19 +556,19 @@ extern  void  SDL_UnlockSurface(SDL_Surface *surface);
  That way we can easily use them from occam :)*/
 %runtime %{
 /* Convenience macro -- load a surface from a file */
-SDL_Surface *  occ_SDL_LoadBMP(char file[])	
+SDL_Surface *occ_SDL_LoadBMP(const char file[])
 {
 	return SDL_LoadBMP_RW(SDL_RWFromFile(file, "rb"), 1);
 }
 /* Convenience macro -- save a surface to a file */
-SDL_Surface * occ_SDL_SaveBMP(SDL_Surface *surface, char file[])
+int occ_SDL_SaveBMP(SDL_Surface *surface, const char file[])
 {
 	return SDL_SaveBMP_RW(surface, SDL_RWFromFile(file, "wb"), 1);
 }
 %}
 /*Function def's for the above two 'functions' so swig generates wrappers for them :)*/
-SDL_Surface *  occ_SDL_LoadBMP(char file[]);
-SDL_Surface * occ_SDL_SaveBMP(SDL_Surface *surface, char file[]);
+SDL_Surface *occ_SDL_LoadBMP(const char file[]);
+int occ_SDL_SaveBMP(SDL_Surface *surface, const char file[]);
 
 
 /*

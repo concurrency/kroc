@@ -17,7 +17,6 @@ EXTRA_DIST = \
 	close.occ \
 	command.occ \
 	conv.occ \
-	core.occ \
 	echoline.occ \
 	eof.occ \
 	exists.occ \
@@ -56,6 +55,7 @@ EXTRA_DIST = \
 	soread.occ \
 	sowrite.occ \
 	spread.occ \
+	spsocore.occ \
 	spwrite.occ \
 	system.occ \
 	tell.occ \
@@ -79,7 +79,6 @@ hostio_lib_objs = \
 	close.tce \
 	command.tce \
 	conv.tce \
-	core.tce \
 	echoline.tce \
 	eof.tce \
 	exists.tce \
@@ -118,6 +117,7 @@ hostio_lib_objs = \
 	soread.tce \
 	sowrite.tce \
 	spread.tce \
+	spsocore.tce \
 	spwrite.tce \
 	system.tce \
 	tell.tce \
@@ -156,7 +156,6 @@ splib_lib_objs = \
 	close.tce \
 	command.tce \
 	conv.tce \
-	core.tce \
 	eof.tce \
 	exit.tce \
 	ferror.tce \
@@ -177,6 +176,7 @@ splib_lib_objs = \
 	soread.tce \
 	sowrite.tce \
 	spread.tce \
+	spsocore.tce \
 	spwrite.tce \
 	system.tce \
 	tell.tce \
@@ -214,7 +214,6 @@ close.tce: $(srcdir)/hostio.inc
 close.tce: $(srcdir)/unixerrs.inc
 command.tce: $(srcdir)/hostio.inc
 command.tce: conv.tce
-core.tce: $(srcdir)/hostio.inc
 echoline.tce: $(srcdir)/hostio.inc
 echoline.tce: splib.lib
 eof.tce: $(srcdir)/hostio.inc
@@ -282,6 +281,7 @@ sowrite.tce: spwrite.tce
 spread.tce: $(srcdir)/hostio.inc
 spread.tce: $(srcdir)/unixerrs.inc
 spread.tce: conv.tce
+spsocore.tce: $(srcdir)/hostio.inc
 spwrite.tce: $(srcdir)/hostio.inc
 spwrite.tce: $(srcdir)/unixerrs.inc
 spwrite.tce: conv.tce

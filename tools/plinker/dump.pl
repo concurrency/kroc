@@ -53,7 +53,9 @@ foreach my $file (@files) {
 
 	if ($comments) {
 		foreach my $comment (@{$data->{'COMMENT'}}) {
-			print $comment->{'data'}, "\n";
+			my $data = $comment->{'data'};
+			$data =~ s/\p{IsCntrl}//gs;
+			print "$data\n";
 		}
 	} else {
 		# Textualise

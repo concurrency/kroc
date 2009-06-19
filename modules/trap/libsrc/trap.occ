@@ -41,18 +41,32 @@ CHAN TYPE OUTBOUND
 :
 --}}}
 
+--{{{  PROC trap.check
+--* Check that a condition holds; if not, print the message and die.
+-- This is essentially a slightly more user-friendly [@ref ASSERT].
+-- @private
+PROC trap.check (VAL BOOL cond, VAL []BYTE message)
+  IF
+    cond
+      SKIP
+    TRUE
+      SEQ
+        trace.ssn ("trap: fatal error: ", message)
+        CAUSEERROR ()
+:
+--}}}
 --{{{  PROC trap.bind.socket
 PROC trap.bind.socket (SOCKET listen)
   INT result:
   SEQ
     socket.create.tcp (listen)
-    ASSERT (listen[fd] <> (-1))
+    trap.check (listen[fd] <> (-1), "could not open listen socket")
     socket.setsockopt (listen, SOL.SOCKET, SO.REUSEADDR, 1, result)
-    ASSERT (result = 0)
+    trap.check (result = 0, "could not set socket options")
     socket.bind (listen, result)
-    ASSERT (result = 0)
+    trap.check (result = 0, "could not bind socket")
     socket.listen (listen, 32, result)
-    ASSERT (result = 0)
+    trap.check (result = 0, "could not listen on socket")
 :
 --}}}
 --{{{  PROC trap.server
@@ -65,7 +79,8 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
 
       SHARED! CHAN SELECTOR.SIGNAL? new.sock.svr:
       SELECTOR.SIGNAL? sock.svr:
-      INITIAL BOOL selecting IS FALSE:
+      INITIAL BOOL want.svr IS FALSE:
+      INITIAL BOOL got.svr IS FALSE:
 
       INITIAL MOBILE []BYTE buf IS MOBILE [65536]BYTE:
       INITIAL INT used IS 0:
@@ -81,9 +96,11 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
           used := used + (SIZE s)
 
           IF
-            (NOT selecting) AND (used > 0)
+            (NOT want.svr) AND (used > 0)
               --{{{  start selecting
-              FORK selector.delayed.add (sel, sock[fd], SELECT.WRITE, new.sock.svr!)
+              SEQ
+                want.svr := TRUE
+                FORK selector.delayed.add (sel, sock[fd], SELECT.WRITE, new.sock.svr!)
               --}}}
             TRUE
               SKIP
@@ -102,25 +119,25 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
               add.to.buf (data)
             --}}}
 
-          (NOT selecting) & new.sock.svr ? sock.svr
-            selecting := TRUE
+          (NOT got.svr) & new.sock.svr ? sock.svr
+            got.svr := TRUE
 
-          selecting & sock.svr[signal] ? CASE
+          got.svr & sock.svr[signal] ? CASE
             ready
               --{{{
               INT sent:
               SEQ
                 file.write (sock[fd], [buf FOR used], sent)
-                ASSERT (sent >= 0)
+                trap.check (sent >= 0, "socket write failed")
 
                 used := used - sent
                 SEQ i = 0 FOR used
                   buf[i] := buf[i + sent]
 
                 IF
-                  selecting AND (used = 0)
+                  used = 0
                     SEQ
-                      selecting := FALSE
+                      want.svr, got.svr := FALSE, FALSE
                       sock.svr[ack] ! remove
                   TRUE
                     sock.svr[ack] ! again
@@ -231,10 +248,10 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
             --}}}
   :
   --}}}
-  --{{{  PROC retry.inbound
-  PROC retry.inbound (VAL PACKET.HEADER header, MOBILE []BYTE data, SHARED CHAN DATA.IN data.in!)
+  --{{{  PROC loopback
+  PROC loopback (VAL INT after, VAL PACKET.HEADER header, MOBILE []BYTE data, SHARED CHAN DATA.IN data.in!)
     SEQ
-      delay (500000)
+      delay (after)
       CLAIM data.in!
         data.in ! header; data
   :
@@ -250,6 +267,7 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
 
   INT result:
   MOBILE []BYTE ns.host:
+  INITIAL BOOL have.ns IS FALSE:
   SOCKET to.ns:
   SOCKET listen:
   SHARED SELECTOR.CT! sel:
@@ -265,7 +283,7 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
           [256]BYTE buf:
           SEQ
             file.read (fd, buf, result)
-            ASSERT (result <> (-1))
+            trap.check (result <> (-1), "read from .trap.ns failed")
             ns.host := [buf FOR result]
             rstrip.string (ns.host)
             file.close (fd, result)
@@ -279,27 +297,35 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
     INT addr:
     SEQ
       socket.addr.of.host (ns.host, addr, result)
-      ASSERT (result = 0)
+      trap.check (result = 0, "could not look up nameserver name")
       socket.create.connect.tcp (to.ns, addr, TRAP.NS.PORT, result)
-      ASSERT (result = 0)
+      IF
+        result = 0
+          have.ns := TRUE
+        TRUE
+          trace.sn ("trap: could not connect to nameserver; operating in standalone mode")
     --}}}
     --{{{  bind listen socket
     listen[local.addr] := INADDR.ANY
     listen[local.port] := 0
     trap.bind.socket (listen)
     socket.getsockname (listen, result)
-    ASSERT (result = 0)
+    trap.check (result = 0, "getsockname on listen socket failed")
     --}}}
     --{{{  register with nameserver
-    TRAP.NS.PACKET packet:
-    SEQ
-      packet[cmd] := 'r'
-      packet[arg0] := node
-      packet[arg1] := INT listen[local.port]
-      VAL []BYTE buf RETYPES packet:
-      SEQ
-        socket.fullwrite (to.ns, buf, result)
-        ASSERT (result = (SIZE buf))
+    IF
+      have.ns
+        TRAP.NS.PACKET packet:
+        SEQ
+          packet[cmd] := 'r'
+          packet[arg0] := node
+          packet[arg1] := INT listen[local.port]
+          VAL []BYTE buf RETYPES packet:
+          SEQ
+            socket.fullwrite (to.ns, buf, result)
+            trap.check (result = (SIZE buf), "write to nameserver failed")
+      TRUE
+        SKIP
     --}}}
     selector.start (sel)
     FORK accepter (sel, listen, data.in!)
@@ -330,14 +356,21 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
           MOBILE []BYTE data:
           send; dest.node; dest.port; data
             --{{{
-            INT n:
-            PACKET.HEADER header:
+            VAL PACKET.HEADER header IS [dest.port, SIZE data]:
             SEQ
               --{{{  find outbound
               IF
+                dest.node = node
+                  --{{{  sending to self
+                  FORK loopback (0, header, data, data.in!)
+                  --}}}
                 IF i = 0 FOR num.outbounds
                   outbound.nodes[i] = dest.node
-                    n := i
+                    --{{{  found existing outbound
+                    outbounds[i][req] ! header; data
+                    --}}}
+                NOT have.ns
+                  trap.check (FALSE, "in standalone mode; cannot make outgoing connections")
                 TRUE
                   --{{{  start new outbound
                   INT dest.addr, dest.tcpport:
@@ -370,13 +403,13 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
                             VAL []BYTE buf RETYPES packet:
                             SEQ
                               socket.fullwrite (to.ns, buf, result)
-                              ASSERT (result = (SIZE buf))
+                              trap.check (result = (SIZE buf), "write to nameserver failed")
                             --}}}
                             --{{{  read response
                             []BYTE buf RETYPES packet:
                             SEQ
                               socket.fullread (to.ns, buf, SIZE buf, result)
-                              ASSERT (result = (SIZE buf))
+                              trap.check (result = (SIZE buf), "read from nameserver failed")
                             CASE packet[cmd]
                               'y'
                                 SEQ
@@ -401,17 +434,14 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
                         --}}}
                     trace.sn ("connected")
 
-                    n := num.outbounds
-                    outbounds[n], svr := MOBILE OUTBOUND
-                    outbound.nodes[n] := dest.node
-                    num.outbounds := num.outbounds + 1
+                    outbounds[num.outbounds], svr := MOBILE OUTBOUND
+                    outbound.nodes[num.outbounds] := dest.node
 
                     FORK outbound (sel, sock, svr)
+                    outbounds[num.outbounds][req] ! header; data
+
+                    num.outbounds := num.outbounds + 1
                   --}}}
-              --}}}
-              --{{{  send to it
-              header := [dest.port, SIZE data]
-              outbounds[n][req] ! header; data
               --}}}
             --}}}
         PACKET.HEADER header:
@@ -425,7 +455,7 @@ PROC trap.server (VAL INT node, TRAP.CT? svr)
             TRUE
               SEQ
                 trace.sin ("retrying packet for unknown port ", header[port])
-                FORK retry.inbound (header, data, data.in!)
+                FORK loopback (50000, header, data, data.in!)
           --}}}
 :
 --}}}

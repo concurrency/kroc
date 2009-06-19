@@ -331,24 +331,23 @@ typedef struct
  *
  * \sa Sound_ClearError
  */
+const char *  Sound_GetError(void);
 
-// custom wrapper for sound_geterror
 %runtime %{
-	inline static void occ_Sound_GetError(char err_str[], int err_str_len, int *str_len)
-	{
-  	char *err = Sound_GetError();
+inline static int occ_Sound_GetError(char err_str[], int err_str_len) {
+        const char *err = Sound_GetError();
 
-  	*str_len = 0;
+        int len = 0;
+        while (len < err_str_len && err[len] != '\0') {
+                err_str[len] = err[len];
+                len++;
+        }
 
-  	while(*str_len < err_str_len && err[*str_len] != '\0')
-    	err_str[*str_len] = err[(*str_len)++];
-		return;
-	}
+        return len;
+}
 %}
 
-extern void occ_Sound_GetError(char err_str[], int err_str_len, int *str_len);
-/* Use occ_Sound_GetError instead */
-// const char *  Sound_GetError(void);
+extern int occ_Sound_GetError(char err_str[], int err_str_len);
 
 
 /**
@@ -434,10 +433,10 @@ extern void occ_Sound_GetError(char err_str[], int err_str_len, int *str_len);
  * \sa Sound_Rewind
  * \sa Sound_FreeSample
  */
-// Sound_Sample *  Sound_NewSample(SDL_RWops *rw,
-//                                                   const char ext[],
-//                                                   Sound_AudioInfo *desired,
-//                                                   Uint32 bufferSize);
+Sound_Sample *  Sound_NewSample(SDL_RWops *rw,
+                                const char ext[],
+                                Sound_AudioInfo *desired,
+                                Uint32 bufferSize);
 
 /**
  * \fn Sound_Sample *Sound_NewSampleFromFile(const char *filename, Sound_AudioInfo *desired, Uint32 bufferSize)
@@ -672,7 +671,7 @@ static volatile int global_done_flag = 0;
    the first_time flag is set to 1 if it is not the first time this callback
    is being called. */
 Uint8 *decoded_ptr = 0;
-Uint32 *decoded_bytes = 0;
+Uint32 decoded_bytes = 0;
 Uint8 first_time = 0; 
 
 static void audio_callback(void *userdata, Uint8 *stream, int len)
@@ -722,8 +721,8 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
    }
 } 
 
-static int get_audio_callback_ptr() {
-    return (int)audio_callback;
+static void *get_audio_callback_ptr() {
+    return (void *) audio_callback;
 }
 
 static int check_if_done_playing(){
@@ -736,7 +735,7 @@ static int check_if_done_playing(){
    rather than SDL_Sound, although the callback does make use of SDL_Sound functions. */
 
 /* Use this to get the callback so the sound keeps playing once started */
-static int get_audio_callback_ptr(); 
+static void *get_audio_callback_ptr(); 
 /* Use this to check if the file finished playing */
 static int check_if_done_playing();
 

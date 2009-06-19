@@ -10,7 +10,7 @@ PROC simple.surface(CHAN BYTE kyb?, scr!, err!)
   SEQ
     out.string("SDL SIMPLE_SURFACE: from occam*c*n", 0, scr!)
     out.string("(c) 2003 Christian L. Jacobsen*c*n*n", 0, scr!)
-    occ.SDL.Init(result, SDL.INIT.EVERYTHING)
+    occ.SDL.Init(SDL.INIT.EVERYTHING, result)
     IF
       result <> 0
         VAL INT max.str IS 100:
@@ -26,7 +26,7 @@ PROC simple.surface(CHAN BYTE kyb?, scr!, err!)
           VAL INT w IS 150:
           VAL INT h IS 200:
           VAL INT depth IS 32:
-          SDL.SetVideoMode(surface, w, h, depth, (SDL.SWSURFACE \/ SDL.ANYFORMAT))
+          SDL.SetVideoMode(w, h, depth, (SDL.SWSURFACE \/ SDL.ANYFORMAT), surface)
           IF
             surface = 0
               SEQ

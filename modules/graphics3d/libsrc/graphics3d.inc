@@ -67,11 +67,10 @@ DATA TYPE G3D.POINT3
     REAL32 x, y, z:
 :
 
---* Integer point in 2D space, retains original Z as a REAL32.
+--* Integer point in 2D space, original Z multiplied up.
 DATA TYPE G3D.POINT2.3
   RECORD
-    INT x, y:
-    REAL32 z:
+    INT x, y, z:
 :
 
 --* Integer point in 2D space.
@@ -81,15 +80,16 @@ DATA TYPE G3D.POINT2
 :
 --}}}
 --{{{  polygon types
---* General polygon in 2D space, retails original Z as REAL32s.
+--* General polygon in 2D space, orignal Z multiplied up.
 DATA TYPE G3D.POLY
   RECORD
     [G3D.MAX.POLY.POINTS]INT x:
     [G3D.MAX.POLY.POINTS]INT y:
-    [G3D.MAX.POLY.POINTS]REAL32 z:
+    [G3D.MAX.POLY.POINTS]INT z:
     INT npoints:
     INT norm:
     INT pixel:
+    INT polyid:
 :
 
 --* Scan-line converted polygon in 2D space.
@@ -97,19 +97,24 @@ DATA TYPE G3D.POLY.SCAN
   RECORD
     [G3D.MAX.SCAN.HEIGHT]INT start:
     [G3D.MAX.SCAN.HEIGHT]INT end:
+    [G3D.MAX.SCAN.HEIGHT]INT z.start:
+    [G3D.MAX.SCAN.HEIGHT]INT z.end:
     INT norm:
     INT scan.s, scan.e:
     INT pixel:
+    INT polyid:
 :
+
+--}}}
+--{{{  other data-types
+
+--* Z-buffer is a 2D array of integers, passed around with rasters.
+DATA TYPE ZBUFFER IS MOBILE [][]INT:
 
 --}}}
 --{{{  protocols and channel-types for controlling components
 
---* Generator trigger channel-type.
-CHAN TYPE G3D.TRIG
-  MOBILE RECORD
-    CHAN INT trig?:
-:
+CHAN TYPE G3D.GEN.LINK:
 
 --* Polygon points generator control.
 PROTOCOL G3D.GEN.CONTROL
@@ -119,7 +124,7 @@ PROTOCOL G3D.GEN.CONTROL
     set.scale; [3]REAL32            --* Absolutely set the scale.
     add.trans; [3]REAL32            --* Add to the current translation.
     set.trans; [3]REAL32            --* Absolutely set the translation.
-    set.trigger; BOOL; G3D.TRIG?    --* Set trigger control.
+    relink; G3D.GEN.LINK?           --* Reconnect I/O channels.
 :
 
 --* Points rotation control.
@@ -130,6 +135,20 @@ PROTOCOL G3D.ROT.CONTROL
     set.increment; REAL32     --* Absolutely set the increment.
     set.angle; REAL32         --* Absolutely set the angle of rotation.
     set.mode; INT             --* Set the rotation mode (see [@ref G3D.ROTATE.MODE]).
+:
+
+--* Points translation control.
+PROTOCOL G3D.TRN.CONTROL
+  CASE
+    reset                     --* Reset translation to default state (0, 0, 0).
+    set.3dshift; [3]REAL32    --* Set 3D translation.
+:
+
+--* Points scaler control.
+PROTOCOL G3D.SCL.CONTROL
+  CASE
+    reset                     --* Reset scale to default state (1, 1, 1)
+    set.3dscale; [3]REAL32    --* Set 3D scaling.
 :
 
 --* Polygon points 3D-to-2D projection control.
@@ -150,12 +169,14 @@ PROTOCOL G3D.PGN.CONTROL
     set.backfaces; BOOL                 --* Whether back faces of solid objects should be generated.
     set.face.colour; INT; INT           --* Set individual face colour.
     set.face.colours; MOBILE []INT      --* Set all face colours.
+    set.polyid; INT                     --* Set polygon ID (0-255).
 :
 
 --* Polygon scan-line generator control.
 PROTOCOL G3D.PSC.CONTROL
   CASE
     reset                     --* Resets scan-line generator to default state.
+    set.zcolour; BOOL         --* Whether the pixel colour used is adjusted for Z depth.
 :
 
 --* Polygon render (shader) control.
@@ -182,6 +203,15 @@ PROTOCOL G3D.TMR.CONTROL
 :
 
 --}}}
+--{{{  combined channel-types for component control
+CHAN TYPE G3D.GEN.LINK
+  MOBILE RECORD
+    CHAN INT trigger?:
+    CHAN MOBILE []G3D.POINT3 out!:
+    CHAN G3D.GEN.CONTROL ctrl?:
+:
+
+--}}}
 --{{{  render-engine channel-type and protocols
 
 CHAN TYPE G3D.RENDER.ENGINE:
@@ -189,7 +219,7 @@ CHAN TYPE G3D.RENDER.ENGINE:
 --* Graphics pipeline link protocol.
 PROTOCOL G3D.RENDER.ENGINE.LINK
   CASE
-    raster; RASTER                          --* Raster to render on and forward.
+    raster; RASTER; ZBUFFER                 --* Raster to render on and forward.
     set.next; INT; G3D.RENDER.ENGINE!       --* Set the next renderer in the pipeline.
                                             -- The integer passed is used to identify
                                             -- which particular 'next' to replace (counts down).
@@ -198,6 +228,55 @@ PROTOCOL G3D.RENDER.ENGINE.LINK
 CHAN TYPE G3D.RENDER.ENGINE
   MOBILE RECORD
     CHAN G3D.RENDER.ENGINE.LINK link?:      --* Link channel.
+:
+
+--}}}
+--{{{  scene transformation constants, channel-type and protocols
+
+--*{{{  G3D.SCENE.RO Scene rotation ordering.
+VAL INT G3D.SCENE.RO.NONE IS #0000:             --* No rotations applied
+VAL INT G3D.SCENE.RO.X IS #0001:                --* Rotate on X axis only.
+VAL INT G3D.SCENE.RO.Y IS #0002:                --* Rotate on Y axis only.
+VAL INT G3D.SCENE.RO.Z IS #0003:                --* Rotate on Z axis only.
+VAL INT G3D.SCENE.RO.YX IS #0012:               --* Rotate on Y then X.
+VAL INT G3D.SCENE.RO.ZX IS #0013:               --* Rotate on Z then X.
+VAL INT G3D.SCENE.RO.XY IS #0021:               --* Rotate on X then Y.
+VAL INT G3D.SCENE.RO.ZY IS #0023:               --* Rotate on Z then Y.
+VAL INT G3D.SCENE.RO.XZ IS #0031:               --* Rotate on X then Z.
+VAL INT G3D.SCENE.RO.YZ IS #0032:               --* Rotate on Y then Z.
+VAL INT G3D.SCENE.RO.ZYX IS #0123:              --* Rotate on Z then Y then X.
+VAL INT G3D.SCENE.RO.YZX IS #0132:              --* Rotate on Y then Z then X.
+VAL INT G3D.SCENE.RO.ZXY IS #0213:              --* Rotate on Z then X then Y.
+VAL INT G3D.SCENE.RO.XZY IS #0231:              --* Rotate on X then Z then Y.
+VAL INT G3D.SCENE.RO.YXZ IS #0312:              --* Rotate on Y then X then Z.
+VAL INT G3D.SCENE.RO.XYZ IS #0321:              --* Rotate on X then Y then Z.
+--*}}}
+
+-- Note: the general "scene" control connects into transform, rotate and
+-- 3D projection control.  In effect allows the "camera" to be moved and
+-- manipulated.
+
+CHAN TYPE G3D.SCENE.TRANS:
+
+--* Scene rotate pipeline link protocol.
+PROTOCOL G3D.SCENE.TRANS.LINK
+  CASE
+    reset                                   --* Reset to default settings.
+    set.pre.3dshift; [3]REAL32              --* Set 3D shift (before rotation, determines centre of scene).
+    set.rot.angles; [3]REAL32               --* Set rotations in X, Y and Z planes.
+    set.rot.order; INT                      --* Set rotation order (see [@ref G3D.SCENE.RO]).
+    set.rot.diffs; [3]REAL32                --* Set differences for continuous rotation.
+    set.post.3dshift; [3]REAL32             --* Set 3D shift (after rotation, determines camera position).
+    set.xyscale; [2]REAL32                  --* Set X-Y scaling (lens angle).
+
+    set.next; INT; G3D.SCENE.TRANS!         --* Set the next scene transformer in a pipeline.
+                                            -- The integer passed is used to identify which
+                                            -- particular 'next' to replace (counts down).
+:
+
+CHAN TYPE G3D.SCENE.TRANS
+  MOBILE RECORD
+    CHAN G3D.SCENE.TRANS.LINK link?:        --* Link channel.
 :
 
 --}}}

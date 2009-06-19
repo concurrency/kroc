@@ -38,7 +38,7 @@ dist_bin_SCRIPTS = \
 dist_man1_MANS = \
 	$(kroc_mans)
 
-xsltdir = $(prefix)/share/xslt
+xsltdir = $(KROC_KROCDIR)/xslt
 dist_xslt_DATA = \
 	cspx2cspm.xsl
 
@@ -52,6 +52,7 @@ edit = sed \
 	-e 's|@KROC_CANONICAL_TARGET[@]|$(KROC_CANONICAL_TARGET)|g' \
 	-e 's|@KROC_HOST_OS[@]|$(KROC_HOST_OS)|g' \
 	-e 's|@KROC_HOST_CPU[@]|$(KROC_HOST_CPU)|g' \
+	-e 's|@OCCBUILD_TOOLCHAIN[@]|$(OCCBUILD_TOOLCHAIN)|g' \
 	-e 's|@SED[@]|$(SED)|g' \
 	-e 's|@KROC_CCSP_CFLAGS[@]|$(KROC_CCSP_CFLAGS)|g' \
 	-e 's|@KROC_CCSP_CINCPATH[@]|$(KROC_CCSP_CINCPATH)|g' \

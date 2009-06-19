@@ -8,11 +8,13 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
+	groupops.occ \
 	traplatency.occ \
 	traptest.occ
 
 if BUILD_TRAP_EXAMPLES
 examples = \
+	groupops \
 	traplatency \
 	traptest
 endif

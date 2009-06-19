@@ -629,16 +629,16 @@ PROC event.handler (CHAN RASTER.EVENT events?, SHARED CHAN COMMANDS commands!, C
               control ! centre.ray
             'r'
               control ! rays
-            SDLK.LEFT
+            INT SDLK.LEFT
               CLAIM commands!
                 commands ! anti.clockwise
-            SDLK.RIGHT
+            INT SDLK.RIGHT
               CLAIM commands!
                 commands ! clockwise
-            SDLK.UP
+            INT SDLK.UP
               CLAIM commands!
                 commands ! faster
-            SDLK.DOWN
+            INT SDLK.DOWN
               CLAIM commands!
                 commands ! slower
             ELSE

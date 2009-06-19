@@ -77,10 +77,14 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
       keyboard.controller (kyb?, scr!, tmr.ctl!)
 
       CLAIM rre!
-        screen.cube.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+        SEQ
+          screen.cube.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+          glenz.cog.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 10, 2.0, 3.0, (PI / 36.0) * 5.0, (PI / 36.0) * 2.0)
 
       CLAIM rre!
-        glenz.network2.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+        SEQ
+          normal.network2.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+          zdepth.flatpoly.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 11, 2.0)
 
       TIMER tim:
       INT t:
@@ -88,7 +92,8 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
         tim ? t
         tim ? AFTER (t PLUS 5000000)
         CLAIM rre!
-          glenz.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+          SEQ
+            normal.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
 
       TIMER tim:
       INT t:
@@ -100,7 +105,7 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
             CLAIM rre!
               butterfly.network.spawn (SCR.WIDTH, SCR.HEIGHT, TRUE, rre!)
 
-            t := t PLUS 300000
+            t := t PLUS 30000
             tim ? AFTER t
 :
 --}}}

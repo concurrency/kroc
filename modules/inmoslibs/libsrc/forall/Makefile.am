@@ -163,7 +163,9 @@ forall_early_objs = \
 	r32eq.tce \
 	r32gt.tce \
 	r64eq.tce \
-	r64gt.tce
+	r64gt.tce \
+	roundsn.tce \
+	unpacksn.tce
 
 forall_late_objs = \
 	bitcount.tce \
@@ -279,10 +281,8 @@ forall_late_objs = \
 	rnotfnte.tce \
 	rmulby2.tce \
 	rnxtaftr.tce \
-	roundsn.tce \
 	rsqrt.tce \
-	rscaleb.tce \
-	unpacksn.tce
+	rscaleb.tce
 
 forall_lib_objs = \
 	$(forall_early_objs) \

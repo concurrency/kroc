@@ -48,6 +48,10 @@ REAL64 FUNCTION REAL64REMERR (VAL REAL64 X, Y)
     --{{{  #USE "occamutl.lib"
     #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
     #USE "occamutl.lib"  --  6-Apr-90
+    #IF DEFINED(COMPILER.TOCK)
+    #USE "rimul"
+    #USE "ridiv"
+    #ENDIF
     --}}}
     --{{{  IEEE Double length constants for 32 bit implementation
     VAL DRealExpSh  IS        20 :
