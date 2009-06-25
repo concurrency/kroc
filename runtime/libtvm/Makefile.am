@@ -49,7 +49,7 @@ libtvm_a_SOURCES = \
 	tencode.c
 
 if TVM_DISPATCH_SWITCH
-interpreter.c: $(top_builddir)/dispatch_ins.c
+$(top_srcdir)/interpreter.c: $(top_builddir)/dispatch_ins.c
 else
 libtvm_a_SOURCES += \
 	ins_alt.c \
