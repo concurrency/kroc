@@ -35,6 +35,7 @@
 # $Id$
 
 TARGET = $(notdir $(CURDIR))
+OCCAMPROG = nothing
 INSTALL_DIR = $(HOME)/src/arduino-0015
 PORT = /dev/ttyUSB0
 UPLOAD_RATE = 57600
@@ -182,7 +183,7 @@ extcoff: $(TARGET).elf
 	$(COFFCONVERT) -O coff-ext-avr applet/$(TARGET).elf $(TARGET).cof
 
 
-.SUFFIXES: .elf .hex .eep .lss .sym
+.SUFFIXES: .elf .hex .eep .lss .sym .occ .srv
 
 .elf.hex:
 	$(OBJCOPY) -O $(FORMAT) -R .eeprom $< $@
@@ -226,13 +227,12 @@ applet/core.a: $(OBJ)
 .S.o:
 	$(CC) -c $(ALL_ASFLAGS) $< -o $@
 
-
-
 # Target: clean project.
 clean:
 	$(REMOVE) applet/$(TARGET).hex applet/$(TARGET).eep applet/$(TARGET).cof applet/$(TARGET).elf \
 	applet/$(TARGET).map applet/$(TARGET).sym applet/$(TARGET).lss applet/core.a \
-	$(OBJ) $(LST) $(SRC:.c=.s) $(SRC:.c=.d) $(CXXSRC:.cpp=.s) $(CXXSRC:.cpp=.d)
+	$(OBJ) $(LST) $(SRC:.c=.s) $(SRC:.c=.d) $(CXXSRC:.cpp=.s) $(CXXSRC:.cpp=.d) \
+	$(OCCAMPROG).h $(OCCAMPROG).tce
 
 depend:
 	if grep '^# DO NOT DELETE' $(MAKEFILE) >/dev/null; \
@@ -246,3 +246,11 @@ depend:
 	$(CC) -M -mmcu=$(MCU) $(CDEFS) $(CINCS) $(SRC) $(ASRC) >> $(MAKEFILE)
 
 .PHONY:	all build elf hex eep lss sym program coff extcoff clean depend applet_files sizebefore sizeafter
+
+# Extra stuff for occam programs.
+
+$(TARGET).pde: $(OCCAMPROG).h
+
+.occ.h:
+	skroc -v --no-std-libs --c --target t2 --keep-temp-files -f $@ $<
+
