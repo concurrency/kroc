@@ -1,4 +1,5 @@
-VAL INT LED.PIN IS 13:
+VAL INT LED.1.PIN IS 13:
+VAL INT LED.2.PIN IS 8:
 VAL INT LOW IS #0:
 VAL INT HIGH IS #1:
 VAL INT INPUT IS #0:
@@ -25,13 +26,21 @@ PROC delay (VAL INT millis)
     tim ? AFTER t PLUS millis
 :
 
-PROC main ()
+PROC flash.pin (VAL INT pin, on, off)
   SEQ
-    pinMode (LED.PIN, OUTPUT)
+    pinMode (pin, OUTPUT)
     WHILE TRUE
       SEQ
-        digitalWrite (LED.PIN, HIGH)
-        delay (100)
-        digitalWrite (LED.PIN, LOW)
-        delay (500)
+        digitalWrite (pin, HIGH)
+        delay (on)
+        digitalWrite (pin, LOW)
+        delay (off)
+:
+
+PROC main ()
+  PAR
+    flash.pin (LED.1.PIN, 200, 500)
+    flash.pin (LED.2.PIN, 300, 200)
+    PAR i = 2 FOR 6
+      flash.pin (i, i * 100, i * 230)
 :
