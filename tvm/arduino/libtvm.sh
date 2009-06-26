@@ -5,6 +5,7 @@ TVMDIR="../../runtime/libtvm"
 
 CFLAGS="-Os -mmcu=atmega328p"
 
+rm -fr libtvm
 mkdir -p libtvm
 cd libtvm
 ../$TVMDIR/configure \

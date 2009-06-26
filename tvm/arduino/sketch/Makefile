@@ -154,7 +154,7 @@ sym: applet/$(TARGET).sym
 upload: applet/$(TARGET).hex
 	../reset-arduino $(PORT)
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH)
-
+	../read-arduino $(PORT)
 
 	# Display size of file.
 HEXSIZE = $(SIZE) --target=$(FORMAT) applet/$(TARGET).hex
