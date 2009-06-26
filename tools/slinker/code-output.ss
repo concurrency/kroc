@@ -1898,7 +1898,7 @@ typedef struct {
                  [(or (ujump? v) (fjump? v))
                   (let* ([distance (get-distance h k (ujump-value v))]
                          [distance
-                          (if (< (ujump-value v) k)
+                          (if (<= (ujump-value v) k)
                               (* -1 distance)
                               distance)]
                          ;; The length of the instruction varies with jumps,
@@ -2012,7 +2012,7 @@ typedef struct {
                     (pad (prefix (ujump-fn v) (get-dist k)) (fjump-len v))
                     ))]
                  [(ujump? v)
-		  ;;(if (< (ujump-value v) k) (printf "Should be negative: ~a~n" (get-dist k))
+		  ;;(if (<= (ujump-value v) k) (printf "Should be negative: ~a~n" (get-dist k))
 		  ;;  (printf "Should be positive: ~a~n" (get-dist k)))
                   (if (and (= (ujump-fn v) *J*) (= (get-inst-len k) 0))
                       ;; If we have a straight J and its instruction length
@@ -2136,7 +2136,7 @@ typedef struct {
                                                   (ujump-value v)))
                      (let* ([distance (get-distance h k (ujump-value v))]
                             [distance
-                             (if (< (ujump-value v) k)
+                             (if (<= (ujump-value v) k)
                                  ;;(* -1 (add1 (+ (* 2 *WORDSIZE*) distance)))
                                  (* -1 distance)
                                  distance)])
