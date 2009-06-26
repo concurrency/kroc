@@ -35,8 +35,8 @@
 # $Id$
 
 TARGET = $(notdir $(CURDIR))
-OCCAMPROG = nothing
-INSTALL_DIR = $(HOME)/src/arduino-0015
+OCCAMPROG = blink
+INSTALL_DIR = $(HOME)/src/arduino-0016
 PORT = /dev/ttyUSB0
 UPLOAD_RATE = 57600
 AVRDUDE_PROGRAMMER = stk500v1
@@ -53,7 +53,7 @@ ARDUINO = $(INSTALL_DIR)/hardware/cores/arduino
 AVR_TOOLS_PATH = $(INSTALL_DIR)/hardware/tools/avr/bin
 SRC =  $(ARDUINO)/pins_arduino.c $(ARDUINO)/wiring.c \
 $(ARDUINO)/wiring_analog.c $(ARDUINO)/wiring_digital.c \
-$(ARDUINO)/wiring_pulse.c $(ARDUINO)/wiring_serial.c \
+$(ARDUINO)/wiring_pulse.c \
 $(ARDUINO)/wiring_shift.c $(ARDUINO)/WInterrupts.c
 CXXSRC = $(ARDUINO)/HardwareSerial.cpp $(ARDUINO)/WMath.cpp \
 $(ARDUINO)/Print.cpp
