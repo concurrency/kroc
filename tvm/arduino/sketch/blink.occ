@@ -1,0 +1,37 @@
+VAL INT LED.PIN IS 13:
+VAL INT LOW IS #0:
+VAL INT HIGH IS #1:
+VAL INT INPUT IS #0:
+VAL INT OUTPUT IS #1:
+
+#PRAGMA EXTERNAL "PROC C.tvmspecial.0.digitalWrite (VAL INT pin, state) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.1.digitalRead (VAL INT pin, RESULT INT state) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.2.pinMode (VAL INT pin, mode) = 0"
+PROC digitalWrite (VAL INT pin, state)
+  C.tvmspecial.0.digitalWrite (pin, state)
+:
+PROC digitalRead (VAL INT pin, RESULT INT state)
+  C.tvmspecial.1.digitalRead (pin, state)
+:
+PROC pinMode (VAL INT pin, mode)
+  C.tvmspecial.2.pinMode (pin, mode)
+:
+
+PROC delay (VAL INT millis)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS millis
+:
+
+PROC main ()
+  SEQ
+    pinMode (LED.PIN, OUTPUT)
+    WHILE TRUE
+      SEQ
+        digitalWrite (LED.PIN, HIGH)
+        delay (100)
+        digitalWrite (LED.PIN, LOW)
+        delay (500)
+:
