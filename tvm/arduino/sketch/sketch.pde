@@ -18,8 +18,6 @@ static tvm_ectx_t context;
 #define MEM_WORDS 256
 static WORD memory[MEM_WORDS];
 
-int ledPin = 13;                 // LED connected to digital pin 13
-
 extern "C" {
 	// G++ requires this to be defined somewhere, as the behaviour for when
 	// you call a pure virtual method. arduino-0016 appears to need it if
