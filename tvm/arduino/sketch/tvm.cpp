@@ -32,7 +32,7 @@ static void terminate(const char *message, const int *status) {
 	if (status != NULL) {
 		Serial.print(*status, 0); // BYTE
 	}
-	Serial.println("");
+	Serial.println();
 
 	while (true) {}
 }
@@ -60,13 +60,13 @@ int main () {
 	int a;
 	Serial.print("stack pointer is (more or less) ");
 	hexprint((int) &a);
-	Serial.println("");
+	Serial.println();
 	Serial.print("memory is ");
 	hexprint((int) &memory[0]);
-	Serial.println("");
+	Serial.println();
 	Serial.print("code is ");
 	hexprint((int) transputercode);
-	Serial.println("");
+	Serial.println();
 #endif
 
 	WORDPTR ws, vs;
@@ -88,13 +88,13 @@ int main () {
 #ifdef DEBUG
 	Serial.print("ws is ");
 	hexprint((int) ws);
-	Serial.println("");
+	Serial.println();
 	Serial.print("wptr is ");
 	hexprint((int) context.wptr);
-	Serial.println("");
+	Serial.println();
 	Serial.print("iptr is ");
 	hexprint((int) context.iptr);
-	Serial.println("");
+	Serial.println();
 	delay(1000);
 	Serial.println("GO!");
 #endif
@@ -107,7 +107,7 @@ int main () {
 		hexprint((int) context.iptr);
 		Serial.print(" wptr=");
 		hexprint((int) context.wptr);
-		Serial.println("");
+		Serial.println();
 
 		int ret = tvm_run_count (&context, 1);
 
@@ -121,7 +121,7 @@ int main () {
 		hexprint((int) context.iptr);
 		Serial.print(" wptr=");
 		hexprint((int) context.wptr);
-		Serial.println("");
+		Serial.println();
 #else
 		int ret = tvm_run (&context);
 #endif
