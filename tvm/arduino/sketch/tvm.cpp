@@ -25,6 +25,18 @@ extern "C" {
 	}
 }
 
+static void terminate(const char *message, const int *status) {
+	// FIXME: offer other behaviours as options
+	Serial.print("tvm-arduino: ");
+	Serial.print(message);
+	if (status != NULL) {
+		Serial.print(*status, 0); // BYTE
+	}
+	Serial.println("");
+
+	while (true) {}
+}
+
 int main () {
 	// Set up the Arduino environment.
 	init ();
@@ -113,8 +125,30 @@ int main () {
 #else
 		int ret = tvm_run (&context);
 #endif
-		if (ret == ECTX_EMPTY || ret == ECTX_SLEEP) {
-			// tvm_sleep ();
+		switch (ret) {
+			case ECTX_PREEMPT:
+			case ECTX_TIME_SLICE: {
+				// Safe to continue.
+				break;
+			}
+			case ECTX_SLEEP: {
+				WORD now = millis();
+				WORD next = context.tnext;
+				if (TIME_AFTER (next, now)) {
+					delay(next - now);
+				}
+				break;
+			}
+			case ECTX_EMPTY: {
+				// FIXME: handle waiting on interrupts, etc.
+				terminate("deadlock", NULL);
+			}
+			case ECTX_SHUTDOWN: {
+				terminate("end of program", NULL);
+			}
+			default: {
+				terminate("error status ", &ret);
+			}
 		}
 	}
 
