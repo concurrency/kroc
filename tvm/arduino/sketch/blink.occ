@@ -1,30 +1,4 @@
-VAL INT LED.1.PIN IS 13:
-VAL INT LED.2.PIN IS 8:
-VAL INT LOW IS #0:
-VAL INT HIGH IS #1:
-VAL INT INPUT IS #0:
-VAL INT OUTPUT IS #1:
-
-#PRAGMA EXTERNAL "PROC C.tvmspecial.0.digitalWrite (VAL INT pin, state) = 0"
-#PRAGMA EXTERNAL "PROC C.tvmspecial.1.digitalRead (VAL INT pin, RESULT INT state) = 0"
-#PRAGMA EXTERNAL "PROC C.tvmspecial.2.pinMode (VAL INT pin, mode) = 0"
-PROC digitalWrite (VAL INT pin, state)
-  C.tvmspecial.0.digitalWrite (pin, state)
-:
-PROC digitalRead (VAL INT pin, RESULT INT state)
-  C.tvmspecial.1.digitalRead (pin, state)
-:
-PROC pinMode (VAL INT pin, mode)
-  C.tvmspecial.2.pinMode (pin, mode)
-:
-
-PROC delay (VAL INT millis)
-  TIMER tim:
-  INT t:
-  SEQ
-    tim ? t
-    tim ? AFTER t PLUS millis
-:
+#INCLUDE "wiring.module"
 
 PROC flash.pin (VAL INT pin, on, off)
   SEQ
@@ -38,9 +12,6 @@ PROC flash.pin (VAL INT pin, on, off)
 :
 
 PROC main ()
-  PAR
-    flash.pin (LED.1.PIN, 200, 500)
-    flash.pin (LED.2.PIN, 300, 200)
-    PAR i = 2 FOR 6
-      flash.pin (i, i * 100, i * 230)
+  PAR i = 2 FOR 11
+    flash.pin (i, i * 100, i * 230)
 :

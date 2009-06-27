@@ -1,0 +1,54 @@
+--** occam bindings for the Wiring API.
+-- @module wiring
+
+#IF NOT (DEFINED (WIRING.MODULE))
+#DEFINE WIRING.MODULE
+
+--{{{  constants
+VAL INT LOW IS #0:
+VAL INT HIGH IS #1:
+
+VAL INT INPUT IS #0:
+VAL INT OUTPUT IS #1:
+
+VAL INT SERIAL  IS #0:
+VAL INT DISPLAY IS #1:
+
+VAL INT LSBFIRST IS 0:
+VAL INT MSBFIRST IS 1:
+
+VAL INT CHANGE IS 1:
+VAL INT FALLING IS 2:
+VAL INT RISING IS 3:
+
+VAL INT INTERNAL IS 3:
+VAL INT DEFAULT IS 1:
+VAL INT EXTERNAL IS 0:
+--}}}
+
+--{{{  SFFI PROCs
+#PRAGMA EXTERNAL "PROC C.tvmspecial.0.digitalWrite (VAL INT pin, state) = 0"
+PROC digitalWrite (VAL INT pin, state)
+  C.tvmspecial.0.digitalWrite (pin, state)
+:
+#PRAGMA EXTERNAL "PROC C.tvmspecial.1.digitalRead (VAL INT pin, RESULT INT state) = 0"
+PROC digitalRead (VAL INT pin, RESULT INT state)
+  C.tvmspecial.1.digitalRead (pin, state)
+:
+#PRAGMA EXTERNAL "PROC C.tvmspecial.2.pinMode (VAL INT pin, mode) = 0"
+PROC pinMode (VAL INT pin, mode)
+  C.tvmspecial.2.pinMode (pin, mode)
+:
+--}}}
+
+--{{{  PROC delay
+PROC delay (VAL INT millis)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS millis
+:
+--}}}
+
+#ENDIF
