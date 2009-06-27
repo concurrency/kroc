@@ -34,7 +34,7 @@
 #
 # $Id$
 
-TARGET = $(notdir $(CURDIR))
+TARGET = sketch
 OCCAMPROG = blink
 INSTALL_DIR = $(HOME)/src/arduino-0016
 PORT = /dev/ttyUSB0
@@ -45,6 +45,10 @@ F_CPU = 16000000
 
 TVM_CFLAGS = -I../libtvm -I../../../runtime/libtvm
 TVM_LDFLAGS = -L../libtvm -ltvm
+TVM_SRCFILES = \
+	debug.cpp \
+	ffi.cpp \
+	tvm.cpp
 
 ############################################################################
 # Below here nothing should be changed...
@@ -78,18 +82,12 @@ CXXDEFS = -DF_CPU=$(F_CPU)
 CINCS = -I$(ARDUINO) $(TVM_CFLAGS)
 CXXINCS = -I$(ARDUINO) $(TVM_CFLAGS)
 
-# Compiler flag to set the C Standard level.
-# c89   - "ANSI" C
-# gnu89 - c89 plus GCC extensions
-# c99   - ISO C99 standard (not yet fully implemented)
-# gnu99 - c99 plus GCC extensions
-CSTANDARD = -std=gnu99
 CDEBUG = -g$(DEBUG)
-CWARN = -Wall -Wstrict-prototypes
+CWARN = -Wall
 CTUNING = -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 #CEXTRA = -Wa,-adhlns=$(<:.c=.lst)
 
-CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CSTANDARD) $(CEXTRA)
+CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CEXTRA)
 CXXFLAGS = $(CDEFS) $(CINCS) -O$(OPT)
 #ASFLAGS = -Wa,-adhlns=$(<:.S=.lst),-gstabs 
 LDFLAGS = -lm $(TVM_LDFLAGS)
@@ -128,22 +126,9 @@ ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
 # Default target.
-all: applet_files build sizeafter
+all: build sizeafter
 
 build: elf hex 
-
-applet_files: $(TARGET).pde
-	# Here is the "preprocessing".
-	# It creates a .cpp file based with the same name as the .pde file.
-	# On top of the new .cpp file comes the WProgram.h header.
-	# At the end there is a generic main() function attached.
-	# Then the .cpp file will be compiled. Errors during compile will
-	# refer to this new, automatically generated, file. 
-	# Not the original .pde file you actually edit...
-	test -d applet || mkdir applet
-	echo '#include "WProgram.h"' > applet/$(TARGET).cpp
-	cat $(TARGET).pde >> applet/$(TARGET).cpp
-	cat $(ARDUINO)/main.cxx >> applet/$(TARGET).cpp
 
 elf: applet/$(TARGET).elf
 hex: applet/$(TARGET).hex
@@ -183,7 +168,7 @@ extcoff: $(TARGET).elf
 	$(COFFCONVERT) -O coff-ext-avr applet/$(TARGET).elf $(TARGET).cof
 
 
-.SUFFIXES: .elf .hex .eep .lss .sym .occ .srv
+.SUFFIXES: .elf .hex .eep .lss .sym .occ
 
 .elf.hex:
 	$(OBJCOPY) -O $(FORMAT) -R .eeprom $< $@
@@ -201,8 +186,8 @@ extcoff: $(TARGET).elf
 	$(NM) -n $< > $@
 
 	# Link: create ELF output file from library.
-applet/$(TARGET).elf: $(TARGET).pde applet/core.a 
-	$(CC) $(ALL_CFLAGS) -o $@ applet/$(TARGET).cpp -L. applet/core.a $(LDFLAGS)
+applet/$(TARGET).elf: $(TVM_SRCFILES) applet/core.a
+	$(CC) $(ALL_CFLAGS) -o $@ $(TVM_SRCFILES) -L. applet/core.a $(LDFLAGS)
 
 applet/core.a: $(OBJ)
 	@for i in $(OBJ); do echo $(AR) rcs applet/core.a $$i; $(AR) rcs applet/core.a $$i; done
@@ -245,12 +230,12 @@ depend:
 		>> $(MAKEFILE); \
 	$(CC) -M -mmcu=$(MCU) $(CDEFS) $(CINCS) $(SRC) $(ASRC) >> $(MAKEFILE)
 
-.PHONY:	all build elf hex eep lss sym program coff extcoff clean depend applet_files sizebefore sizeafter
+.PHONY:	all build elf hex eep lss sym program coff extcoff clean depend sizebefore sizeafter
 
-# Extra stuff for occam programs.
-
-$(TARGET).pde: $(OCCAMPROG).h
-
-.occ.h:
+# Compile occam program.
+$(OCCAMPROG).h: $(OCCAMPROG).occ
 	skroc -v --no-std-libs --c --target t2 --keep-temp-files -f $@ $<
 
+# Dependencies.
+applet/$(TARGET).elf: $(OCCAMPROG).h
+applet/$(TARGET).elf: tvm-arduino.h
