@@ -15,7 +15,12 @@ static tvm_ectx_t context;
 #define MEM_WORDS 256
 static WORD memory[MEM_WORDS];
 
+// FIXME: We will need to do something along the following lines to put the
+// code into program memory -- but then we have to use pgm_read_byte to read it
+// too...
+//#define transputercode __attribute__ ((__progmem__)) transputercode
 #include "blink.h"
+//#undef transputercode
 
 extern "C" {
 	// Time is in milliseconds, since microseconds wrap round too fast in
