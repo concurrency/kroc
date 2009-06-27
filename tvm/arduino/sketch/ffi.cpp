@@ -28,10 +28,54 @@ extern "C" {
 		return SFFI_OK;
 	}
 
+	static int ffi_beginSerial (ECTX ectx, WORD args[]) {
+		int32_t *baud = (int32_t *) args[0];
+
+		Serial.begin (*baud);
+
+		return SFFI_OK;
+	}
+
+	static int ffi_serialWrite (ECTX ectx, WORD args[]) {
+		const uint8_t *string = (const uint8_t *) args[0];
+		int length = (int) args[1];
+
+		Serial.write (string, length);
+
+		return SFFI_OK;
+	}
+
+	static int ffi_serialAvailable (ECTX ectx, WORD args[]) {
+		WORD *result = (WORD *) args[0];
+
+		*result = Serial.available ();
+
+		return SFFI_OK;
+	}
+
+	static int ffi_serialRead (ECTX ectx, WORD args[]) {
+		WORD *result = (WORD *) args[0];
+
+		*result = Serial.read ();
+
+		return SFFI_OK;
+	}
+
+	static int ffi_serialFlush (ECTX ectx, WORD args[]) {
+		Serial.flush ();
+
+		return SFFI_OK;
+	}
+
 	SFFI_FUNCTION sffi_table[] = {
 		ffi_digitalWrite,
 		ffi_digitalRead,
-		ffi_pinMode
+		ffi_pinMode,
+		ffi_beginSerial,
+		ffi_serialWrite,
+		ffi_serialAvailable,
+		ffi_serialRead,
+		ffi_serialFlush
 	};
 	const int sffi_table_length = sizeof(sffi_table) / sizeof(SFFI_FUNCTION);
 }

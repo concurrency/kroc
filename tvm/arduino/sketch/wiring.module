@@ -39,6 +39,26 @@ PROC digitalRead (VAL INT pin, RESULT INT state)
 PROC pinMode (VAL INT pin, mode)
   C.tvmspecial.2.pinMode (pin, mode)
 :
+#PRAGMA EXTERNAL "PROC C.tvmspecial.3.beginSerial (VAL INT32 baud) = 0"
+PROC beginSerial (VAL INT32 baud)
+  C.tvmspecial.3.beginSerial (baud)
+:
+#PRAGMA EXTERNAL "PROC C.tvmspecial.4.serialWrite (VAL []BYTE string) = 0"
+PROC serialWrite (VAL []BYTE string)
+  C.tvmspecial.4.serialWrite (string)
+:
+#PRAGMA EXTERNAL "PROC C.tvmspecial.5.serialAvailable (RESULT INT available) = 0"
+PROC serialAvailable (RESULT INT available)
+  C.tvmspecial.5.serialAvailable (available)
+:
+#PRAGMA EXTERNAL "PROC C.tvmspecial.6.serialRead (RESULT INT char) = 0"
+PROC serialRead (RESULT INT char)
+  C.tvmspecial.6.serialRead (char)
+:
+#PRAGMA EXTERNAL "PROC C.tvmspecial.7.serialFlush () = 0"
+PROC serialFlush ()
+  C.tvmspecial.7.serialFlush ()
+:
 --}}}
 
 --{{{  PROC delay
