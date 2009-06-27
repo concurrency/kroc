@@ -7,4 +7,5 @@ import sys, serial
 ser = serial.Serial(sys.argv[1], baudrate = 57600)
 while True:
 	sys.stdout.write(ser.read(1))
+	sys.stdout.flush()
 
