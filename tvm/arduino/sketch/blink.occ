@@ -12,6 +12,6 @@ PROC flash.pin (VAL INT pin, on, off)
 :
 
 PROC main ()
-  PAR i = 2 FOR 11
+  PAR i = 2 FOR 12
     flash.pin (i, i * 100, i * 230)
 :
