@@ -18,7 +18,7 @@ static WORD memory[MEM_WORDS];
 // The transputer bytecode needs to go into program memory (since otherwise
 // it'll get copied into RAM, and we don't have very much of that).
 #define transputercode __attribute__ ((__progmem__)) transputercode
-#include "commstime.h"
+#include OCCAM_PROGRAM_HEADER
 #undef transputercode
 
 extern "C" {

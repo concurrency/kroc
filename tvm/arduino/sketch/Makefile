@@ -75,7 +75,7 @@ DEBUG = stabs
 OPT = s
 
 # Place -D or -U options here
-CDEFS = -DF_CPU=$(F_CPU)
+CDEFS = -DF_CPU=$(F_CPU) -DOCCAM_PROGRAM_HEADER=\"$(OCCAMPROG).h\"
 CXXDEFS = -DF_CPU=$(F_CPU)
 
 # Place -I options here
