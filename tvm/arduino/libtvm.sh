@@ -10,7 +10,6 @@ mkdir -p libtvm
 cd libtvm
 ../$TVMDIR/configure \
 	--host=avr \
-	--with-transputer=t2 \
 	--disable-occam-pi \
 	CFLAGS="$CFLAGS"
 make

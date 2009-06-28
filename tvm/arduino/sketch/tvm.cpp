@@ -15,12 +15,11 @@ static tvm_ectx_t context;
 #define MEM_WORDS 256
 static WORD memory[MEM_WORDS];
 
-// FIXME: We will need to do something along the following lines to put the
-// code into program memory -- but then we have to use pgm_read_byte to read it
-// too...
-//#define transputercode __attribute__ ((__progmem__)) transputercode
-#include "blink.h"
-//#undef transputercode
+// The transputer bytecode needs to go into program memory (since otherwise
+// it'll get copied into RAM, and we don't have very much of that).
+#define transputercode __attribute__ ((__progmem__)) transputercode
+#include "commstime.h"
+#undef transputercode
 
 extern "C" {
 	// Time is in milliseconds, since microseconds wrap round too fast in
@@ -71,6 +70,8 @@ int main () {
 	Serial.println();
 	Serial.print("code is ");
 	hexprint((int) transputercode);
+	Serial.print(" but really ");
+	hexprint((int) tvm_addr_from_progmem ((prog_void *) transputercode));
 	Serial.println();
 #endif
 
@@ -82,7 +83,7 @@ int main () {
 		&ws, &vs
 	);
 	int ret = tvm_ectx_install_tlp (
-		&context, (BYTEPTR) transputercode,
+		&context, tvm_addr_from_progmem ((prog_void *) transputercode),
 		ws, vs,
 		"", 0, NULL
 	);

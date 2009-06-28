@@ -44,6 +44,7 @@ tvminclude_HEADERS = \
 libtvm_a_SOURCES = \
 	interpreter.c \
 	mem_array.c \
+	mem_avr.c \
 	mem_bigendian.c \
 	scheduler.c \
 	tencode.c
