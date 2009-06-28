@@ -42,6 +42,7 @@ my $tcoff	= new Transputer::TCOFF ();
 my $tvm		= new Transterpreter::VM ();
 
 # Options
+my $bits	= 32;
 my $output;
 my $verbose;
 my @files;
@@ -60,6 +61,8 @@ while (my $arg = shift @args) {
 		$tvm->{'verbose'} 	= 1;
 	} elsif ($options && $arg eq '-o') {
 		$output 		= shift @args;
+	} elsif ($options && $arg eq '-s') {
+		$bits			= 16;
 	} else {
 		push (@files, $arg);
 	}
@@ -71,7 +74,18 @@ if (!$output) {
 }
 
 if (!$output || !@files) {
-	print "plinker.pl [-v] [-o <name>] <file> [<file> ...]\n";
+	print <<END;
+Usage:
+  plinker [-s] [-v] [-o <name>] <file> [<file> ...]
+    Link one or more ETC input files as a TEncode bytecode.
+
+Options:
+  -o <name>    Specific output file name
+  -s           Small 16-bit output (default is 32-bit)
+  -v           Verbose mode
+
+Report bugs to <kroc-bugs\@kent.ac.uk>.
+END
 	exit 1;
 }
 
@@ -274,7 +288,7 @@ $dbg->add ('lndB' => $lnd);
 my $fh;
 open ($fh, ">$output") || die $!;
 binmode ($fh);
-print $fh $tenc->encode ('TEnc');
+print $fh $tenc->encode ($bits == 32 ? 'TEnc' : 'tenc');
 close ($fh);
 
 # Debug labels
