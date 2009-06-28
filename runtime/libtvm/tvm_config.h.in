@@ -38,6 +38,9 @@
 /* define for little-endian TVM */
 #undef TVM_LITTLE_ENDIAN
 
+/* define to use the AVR memory interface */
+#undef TVM_MEM_INTF_AVR
+
 /* define to enable occam-pi support */
 #undef TVM_OCCAM_PI
 

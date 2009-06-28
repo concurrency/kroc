@@ -1,5 +1,18 @@
 #include "tvm-arduino.h"
 
+// Copy a block of memory from the Transterpreter's possibly-virtual memory
+// space into real memory.
+static void memcpy_from_tvm (BYTEPTR from, void *to, int size) {
+	uint8_t *real_to = (uint8_t *) to;
+
+	while (size > 0) {
+		*real_to = read_byte (from);
+		from = byteptr_plus (from, 1);
+		++real_to;
+		--size;
+	}
+}
+
 extern "C" {
 	static int ffi_digitalWrite (ECTX ectx, WORD args[]) {
 		WORD pin = args[0];
@@ -29,18 +42,24 @@ extern "C" {
 	}
 
 	static int ffi_beginSerial (ECTX ectx, WORD args[]) {
-		int32_t *baud = (int32_t *) args[0];
+		int32_t baud;
+		memcpy_from_tvm ((BYTEPTR) args[0], &baud, sizeof baud);
 
-		Serial.begin (*baud);
+		Serial.begin (baud);
 
 		return SFFI_OK;
 	}
 
 	static int ffi_serialWrite (ECTX ectx, WORD args[]) {
-		const uint8_t *string = (const uint8_t *) args[0];
+		BYTEPTR string = (BYTEPTR) args[0];
 		int length = (int) args[1];
 
-		Serial.write (string, length);
+		for (int i = 0; i < length; i++) {
+			uint8_t c;
+			memcpy_from_tvm (byteptr_plus (string, i), &c, 1);
+
+			Serial.write (&c, 1);
+		}
 
 		return SFFI_OK;
 	}
