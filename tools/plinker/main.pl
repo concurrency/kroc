@@ -294,7 +294,7 @@ $dbg->add ('fn L' => $fns);
 
 my $lnd;
 foreach my $entry (@$debug) {
-	$lnd .= pack ('NNN', 
+	$lnd .= pack (($bits == 32 ? 'NNN' : 'nnn'), 
 		$entry->{'pos'},
 		$files{$entry->{'file'}},
 		$entry->{'line'}
