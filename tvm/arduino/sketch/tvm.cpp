@@ -47,6 +47,10 @@ int main () {
 	Serial.println ("Arduino-TVM starting...");
 #endif
 
+	for (int i = 0; i < MEM_WORDS; i++) {
+		memory[i] = MIN_INT;
+	}
+
 	tvm_init (&tvm);
 	tvm_ectx_init (&tvm, &context);
 
@@ -55,9 +59,6 @@ int main () {
 	}
 
 	context.get_time = arduino_get_time;
-	for (int i = 0; i < MEM_WORDS; i++) {
-		memory[i] = MIN_INT;
-	}
 	context.sffi_table = sffi_table;
 	context.sffi_table_length = sffi_table_length;
 
