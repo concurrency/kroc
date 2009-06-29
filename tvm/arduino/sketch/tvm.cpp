@@ -72,9 +72,6 @@ int main () {
 #endif
 
 #ifdef DEBUG
-	Serial.print("ws is ");
-	hexprint((int) ws);
-	Serial.println();
 	Serial.print("wptr is ");
 	hexprint((int) context.wptr);
 	Serial.println();
