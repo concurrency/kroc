@@ -91,6 +91,8 @@ int main () {
 		hexprint((int) context.iptr);
 		Serial.print(" wptr=");
 		hexprint((int) context.wptr);
+		Serial.print(" instruction=");
+		hexprint((int) read_byte (context.iptr));
 		Serial.println();
 
 		int ret = tvm_run_count (&context, 1);
