@@ -44,6 +44,12 @@ my $tvm		= new Transterpreter::VM ();
 # Options
 my $bits	= 32;
 my $output;
+my %sections	= {
+	'debug'		=> 1,
+	'ffi'		=> 1,
+	'symbols'	=> 1,
+	'tlp'		=> 1
+};
 my $verbose;
 my @files;
 
@@ -63,6 +69,9 @@ while (my $arg = shift @args) {
 		$output 		= shift @args;
 	} elsif ($options && $arg eq '-s') {
 		$bits			= 16;
+	} elsif ($options && $arg =~ /^-[ed]$/) {
+		my $section		= shift @args;
+		$sections{$section}	= $arg eq '-e';
 	} else {
 		push (@files, $arg);
 	}
@@ -76,13 +85,21 @@ if (!$output) {
 if (!$output || !@files) {
 	print <<END;
 Usage:
-  plinker [-s] [-v] [-o <name>] <file> [<file> ...]
+  plinker [OPTIONS] <file> [<file> ...]
     Link one or more ETC input files as a TEncode bytecode.
 
 Options:
-  -o <name>    Specific output file name
-  -s           Small 16-bit output (default is 32-bit)
-  -v           Verbose mode
+  -d <section>   Disable output of a section
+  -e <section>   Enable output of a section
+  -o <name>      Specific output file name
+  -s             Small 16-bit output (default is 32-bit)
+  -v             Verbose mode
+
+Valid sections are:
+  debug          Line numbering information   (default: enabled)
+  ffi            Foreign Function Interface   (default: enabled)
+  symbols        Symbol information           (default: enabled)
+  tlp            Top Level Process descriptor (default: enabled)
 
 Report bugs to <kroc-bugs\@kent.ac.uk>.
 END
@@ -181,12 +198,13 @@ my $tbc			= new Transterpreter::TEncode (
 	'vs U'	=> $entry_point->{'vs'},
 	'padB'	=> "\0\0\0\0",
 	'ms U'	=> $entry_point->{'ms'},
-	'bc B'	=> join ('', @$bytecode),
-	'tlpL'	=> $tlp,
-	'ffiL'	=> $ffi,
-	'stbL'	=> $stb,
-	'dbgL'	=> $dbg
+	'bc B'	=> join ('', @$bytecode)
 );
+$tbc->add ('tlpL', $tlp) if $sections{'tlp'};
+$tbc->add ('ffiL', $ffi) if $sections{'ffi'};
+$tbc->add ('stbL', $stb) if $sections{'symbols'};
+$tbc->add ('dbgL', $dbg) if $sections{'debug'};
+
 my $tenc		= new Transterpreter::TEncode (
 	'tbcL'	=> $tbc
 );
