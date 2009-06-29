@@ -15,11 +15,8 @@ static tvm_ectx_t context;
 #define MEM_WORDS 256
 static WORD memory[MEM_WORDS];
 
-// The transputer bytecode needs to go into program memory (since otherwise
-// it'll get copied into RAM, and we don't have very much of that).
-#define transputercode __attribute__ ((__progmem__)) transputercode
-#include OCCAM_PROGRAM_HEADER
-#undef transputercode
+// The bytecode file, loaded into flash at a fixed address.
+static const prog_char *tbc_data = (prog_char *) OCCAM_PROGRAM_ADDR;
 
 extern "C" {
 	// Time is in milliseconds, since microseconds wrap round too fast in
@@ -53,6 +50,10 @@ int main () {
 	tvm_init (&tvm);
 	tvm_ectx_init (&tvm, &context);
 
+	if (init_context_from_tbc (&context, tbc_data, memory, MEM_WORDS) != 0) {
+		terminate ("program loading failed", NULL);
+	}
+
 	context.get_time = arduino_get_time;
 	for (int i = 0; i < MEM_WORDS; i++) {
 		memory[i] = MIN_INT;
@@ -68,28 +69,7 @@ int main () {
 	Serial.print("memory is ");
 	hexprint((int) &memory[0]);
 	Serial.println();
-	Serial.print("code is ");
-	hexprint((int) transputercode);
-	Serial.print(" but really ");
-	hexprint((int) tvm_addr_from_progmem ((prog_void *) transputercode));
-	Serial.println();
 #endif
-
-	WORDPTR ws, vs;
-	tvm_ectx_layout (
-		&context, memory,
-		"", 0,
-		ws_size, vs_size,
-		&ws, &vs
-	);
-	int ret = tvm_ectx_install_tlp (
-		&context, tvm_addr_from_progmem ((prog_void *) transputercode),
-		ws, vs,
-		"", 0, NULL
-	);
-	if (ret != 0) {
-		Serial.print("install_tlp failed");
-	}
 
 #ifdef DEBUG
 	Serial.print("ws is ");

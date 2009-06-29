@@ -36,6 +36,7 @@
 
 TARGET = sketch
 OCCAMPROG = blink
+OCCAMADDR = 0x5000
 INSTALL_DIR = $(HOME)/src/arduino-0016
 PORT = /dev/ttyUSB0
 UPLOAD_RATE = 57600
@@ -48,6 +49,7 @@ TVM_LDFLAGS = -L../libtvm -ltvm
 TVM_SRCFILES = \
 	debug.cpp \
 	ffi.cpp \
+	tbc.cpp \
 	tvm.cpp
 
 ############################################################################
@@ -75,8 +77,8 @@ DEBUG = stabs
 OPT = s
 
 # Place -D or -U options here
-CDEFS = -DF_CPU=$(F_CPU) -DOCCAM_PROGRAM_HEADER=\"$(OCCAMPROG).h\"
-CXXDEFS = -DF_CPU=$(F_CPU)
+CDEFS = -DF_CPU=$(F_CPU) -DOCCAM_PROGRAM_ADDR=$(OCCAMADDR)
+CXXDEFS = $(CDEFS)
 
 # Place -I options here
 CINCS = -I$(ARDUINO) $(TVM_CFLAGS)
@@ -217,7 +219,7 @@ clean:
 	$(REMOVE) applet/$(TARGET).hex applet/$(TARGET).eep applet/$(TARGET).cof applet/$(TARGET).elf \
 	applet/$(TARGET).map applet/$(TARGET).sym applet/$(TARGET).lss applet/core.a \
 	$(OBJ) $(LST) $(SRC:.c=.s) $(SRC:.c=.d) $(CXXSRC:.cpp=.s) $(CXXSRC:.cpp=.d) \
-	$(OCCAMPROG).h $(OCCAMPROG).tce
+	$(OCCAMPROG).tce $(OCCAMPROG).tbc $(OCCAMPROG).hex
 
 depend:
 	if grep '^# DO NOT DELETE' $(MAKEFILE) >/dev/null; \
@@ -233,9 +235,20 @@ depend:
 .PHONY:	all build elf hex eep lss sym program coff extcoff clean depend sizebefore sizeafter
 
 # Compile occam program.
-$(OCCAMPROG).h: $(OCCAMPROG).occ
-	skroc -v --no-std-libs --c --target t2 --keep-temp-files -f $@ $<
+$(OCCAMPROG).hex: $(OCCAMPROG).occ
+	# FIXME: fix occbuild
+	skroc -v --no-std-libs --c --target t2 --keep-temp-files -f $(OCCAMPROG).h $<
+	$(REMOVE) $(OCCAMPROG).h
+	plinker.pl -s $(OCCAMPROG).tce
+	# FIXME: check OCCAMADDR doesn't overlap the TVM
+	../binary-to-ihex $(OCCAMADDR) $(OCCAMPROG).tbc $@
+
+AVRDUDE_WRITE_OCCAM = -D -U flash:w:$(OCCAMPROG).hex
+
+upload-occam: $(OCCAMPROG).hex
+	../reset-arduino $(PORT)
+	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_OCCAM)
+	../read-arduino $(PORT)
 
 # Dependencies.
-applet/$(TARGET).elf: $(OCCAMPROG).h
 applet/$(TARGET).elf: tvm-arduino.h

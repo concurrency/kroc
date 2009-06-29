@@ -23,6 +23,9 @@ extern "C" {
 	extern const int sffi_table_length;
 }
 //}}}
+//{{{  tbc.cpp
+extern int init_context_from_tbc (ECTX context, const prog_char *data, WORDPTR memory, UWORD memory_size);
+//}}}
 //{{{  tvm.cpp
 extern int main (void);
 //}}}
