@@ -100,10 +100,11 @@ REAL32 FUNCTION REAL32OP (VAL REAL32 X, VAL INT Op, VAL REAL32 Y)
   REAL32 Result :
   VALOF
     #INCLUDE "nan16.inc"
-    --{{{  #USE "occamutl.lib"
+    --{{{  #USEs
     #PRAGMA TRANSLATE RealIMul "RealIMul%CHK"
     #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
-    #USE "occamutl.lib"  --  6-Apr-90
+    #USE "rimul"
+    #USE "ridiv"
     --}}}
     --{{{  IEEE Single length constants for 16 bit implementation
     VAL RealExpSh  IS     7 :

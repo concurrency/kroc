@@ -324,7 +324,7 @@ BOOL, INT32, REAL32 FUNCTION ARGUMENT.REDUCE (VAL REAL32 Y, Z, Z.err)
   REAL32 X :
   VALOF
     #INCLUDE "nan16.inc"
-    --{{{  #USE "occamutl.lib"
+    --{{{  #USEs
     #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
     #USE "ridiv"  --  27-Nov-07
     --}}}

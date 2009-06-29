@@ -29,11 +29,6 @@
 
 #INCLUDE "realvals.inc"
 
-#IF DEFINED(COMPILER.TOCK)
-#USE "roundsn"
-#USE "unpacksn"
-#ENDIF
-
 --{{{  
 REAL32 FUNCTION SQRT (VAL REAL32 X)
 
@@ -45,6 +40,8 @@ REAL32 FUNCTION SQRT (VAL REAL32 X)
 
   REAL32 Root :
   VALOF
+    #USE "roundsn"
+    #USE "unpacksn"
     #INCLUDE "nan32.inc"
     --{{{  definitions and variables
     VAL Sign      IS #80000000(INT) :
