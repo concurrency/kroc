@@ -131,9 +131,6 @@ static int load_str (BYTE **data, int *length, const char *id, char **dst)
 	*dst 	= element.data.str;
 	*data	= element.next;
 
-	/* Make sure the string is terminated */
-	(*dst)[element.length - 1] = '\0';
-
 	return 0;
 }
 
@@ -163,11 +160,13 @@ static tenc_str_t *decode_strs (BYTE *data, int length, const char *id)
 	return head;
 }
 
-static tbc_tlp_t *decode_tlp (BYTE *head, const tenc_element_t *tlp_element)
+static tbc_tlp_t *decode_tlp (BYTE *head, tbc_tlp_t *tlp, const tenc_element_t *tlp_element)
 {
-	tbc_tlp_t *tlp 	= (tbc_tlp_t *) head;
 	BYTE *data	= tlp_element->data.bytes;
 	int length 	= tlp_element->length;
+
+	if (tlp == NULL)
+		tlp = (tbc_tlp_t *) head;
 
 	if (load_str (&data, &length, "fmtS", &(tlp->fmt)) < 0)
 		return NULL;
@@ -307,15 +306,29 @@ static tbc_sym_t *decode_symbols (const tenc_element_t *stb_element)
 	return head;
 }
 
-
+/* tbc_decode:
+ * 	If ptr is NULL then this uses in place decoding, 
+ *	otherwise fills out the structure pointered to.
+ *	When not using in place decoding the structure should be
+ *	initialised with zeros.  tlp elements will be decoded if 
+ *	tbc->tlp is not NULL.
+ */
 int tbc_decode (BYTE *data, int length, tbc_t **ptr)
 {
 	tenc_element_t 	element;
-	tbc_t 		*tbc	= (tbc_t *) data;
+	tbc_t 		*tbc;
+	int		in_place;
 	int		ret;
 
-	/* Decode the required elements */
+	if (*ptr != NULL) {
+		tbc		= *ptr;
+		in_place 	= 0;
+	} else {
+		tbc		= (tbc_t *) data;
+		in_place	= 1;
+	}	
 
+	/* Decode the required elements */
 	if ((ret = load_uint (&data, &length, "endU", &(tbc->endian))) < 0)
 		return ret;
 	if ((ret = load_uint (&data, &length, "ws U", &(tbc->ws))) < 0)
@@ -331,10 +344,17 @@ int tbc_decode (BYTE *data, int length, tbc_t **ptr)
 	data			= element.next;
 
 	/* Decode optional elements */
-	tbc->tlp	= NULL;
-	tbc->symbols	= NULL;
-	tbc->ffi	= NULL;
-	tbc->debug	= NULL;
+	if (in_place) {
+		tbc->tlp	= NULL;
+		tbc->symbols	= NULL;
+		tbc->ffi	= NULL;
+		tbc->debug	= NULL;
+	} else {
+		if (tbc->tlp != NULL) {
+			tbc->tlp->fmt 		= NULL;
+			tbc->tlp->symbol 	= NULL;
+		}
+	}
 
 	/* Copy pointer */
 	*ptr 		= tbc;
@@ -344,12 +364,12 @@ int tbc_decode (BYTE *data, int length, tbc_t **ptr)
 			return 0; /* ignore errors */
 
 		if (ids_match (element.id, "tlpL")) {
-			tbc->tlp = decode_tlp (data, &element); 
-		} else if (ids_match (element.id, "ffiL")) {
+			tbc->tlp = decode_tlp (data, tbc->tlp, &element); 
+		} else if (in_place && ids_match (element.id, "ffiL")) {
 			tbc->ffi = decode_ffi (data, &element);
-		} else if (ids_match (element.id, "stbL")) {
+		} else if (in_place && ids_match (element.id, "stbL")) {
 			tbc->symbols = decode_symbols (&element);
-		} else if (ids_match (element.id, "dbgL")) {
+		} else if (in_place && ids_match (element.id, "dbgL")) {
 			tbc->debug = decode_debug (data, &element);
 		}
 
