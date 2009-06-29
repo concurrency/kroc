@@ -35,7 +35,7 @@ WORD tenc_decode_int (BYTE *src)
 	#endif
 }
 
-int tenc_decode_element (BYTE *src, int *length, tenc_element_t *element)
+int tenc_decode_element (BYTE *src, unsigned int *length, tenc_element_t *element)
 {
 	if (*length < (sizeof (WORD) + 4)) {
 		return -1;
@@ -43,7 +43,7 @@ int tenc_decode_element (BYTE *src, int *length, tenc_element_t *element)
 
 	memcpy (element->id, src, 4);
 	element->id[4] 	= '\0';
-	element->length = tenc_decode_int (src + 4);
+	element->length = (UWORD) tenc_decode_int (src + 4);
 	element->next	= src + (sizeof (WORD) + 4);
 	*length		-= (sizeof (WORD) + 4);
 
@@ -78,7 +78,7 @@ static int ids_match (const char *a, const char *b)
 	return 1;
 }
 
-int tenc_walk_to_element (BYTE *data, int *length, const char *id, tenc_element_t *element)
+int tenc_walk_to_element (BYTE *data, unsigned int *length, const char *id, tenc_element_t *element)
 {
 	while (*length > 0) {
 		int ret = tenc_decode_element (data, length, element);
@@ -97,7 +97,7 @@ int tenc_walk_to_element (BYTE *data, int *length, const char *id, tenc_element_
 	return -1;
 }
 
-static int load_uint (BYTE **data, int *length, const char *id, UWORD *dst)
+static int load_uint (BYTE **data, unsigned int *length, const char *id, UWORD *dst)
 {
 	tenc_element_t element;
 	int ret;
@@ -111,12 +111,12 @@ static int load_uint (BYTE **data, int *length, const char *id, UWORD *dst)
 	return 0;
 }
 
-static int load_int (BYTE **data, int *length, const char *id, WORD *dst)
+static int load_int (BYTE **data, unsigned int *length, const char *id, WORD *dst)
 {
 	return load_uint (data, length, id, (UWORD *) dst);
 }
 
-static int load_str (BYTE **data, int *length, const char *id, char **dst)
+static int load_str (BYTE **data, unsigned int *length, const char *id, char **dst)
 {
 	tenc_element_t element;
 	int ret;
@@ -134,7 +134,7 @@ static int load_str (BYTE **data, int *length, const char *id, char **dst)
 	return 0;
 }
 
-static tenc_str_t *decode_strs (BYTE *data, int length, const char *id)
+static tenc_str_t *decode_strs (BYTE *data, unsigned int length, const char *id)
 {
 	tenc_str_t	*head	= NULL;
 	tenc_str_t	*tail	= NULL;
@@ -162,8 +162,8 @@ static tenc_str_t *decode_strs (BYTE *data, int length, const char *id)
 
 static tbc_tlp_t *decode_tlp (BYTE *head, tbc_tlp_t *tlp, const tenc_element_t *tlp_element)
 {
-	BYTE *data	= tlp_element->data.bytes;
-	int length 	= tlp_element->length;
+	BYTE *data		= tlp_element->data.bytes;
+	unsigned int length 	= tlp_element->length;
 
 	if (tlp == NULL)
 		tlp = (tbc_tlp_t *) head;
@@ -183,7 +183,7 @@ static tbc_ffi_t *decode_ffi (BYTE *head, const tenc_element_t *ffi_element)
 	tenc_str_t	*sym;
 	tbc_ffi_t	*ffi	= (tbc_ffi_t *) head;
 	BYTE 		*data	= ffi_element->data.bytes;
-	int 		length	= ffi_element->length;
+	unsigned int 	length	= ffi_element->length;
 
 	if (tenc_walk_to_element (data, &length, "libL", &element) < 0)
 		return NULL;
@@ -229,7 +229,7 @@ static tbc_dbg_t *decode_debug (BYTE *head, const tenc_element_t *dbg_element)
 	tenc_element_t 	element;
 	tbc_dbg_t	*dbg	= (tbc_dbg_t *) head;
 	BYTE 		*data	= dbg_element->data.bytes;
-	int 		length	= dbg_element->length;
+	unsigned int 	length	= dbg_element->length;
 
 	if (tenc_walk_to_element (data, &length, "fn L", &element) < 0)
 		return NULL;
@@ -247,8 +247,8 @@ static tbc_dbg_t *decode_debug (BYTE *head, const tenc_element_t *dbg_element)
 	length		= element.length / (sizeof (int));
 
 	while (length > 0) {
-		*((int *) data) = tenc_decode_int (data);
-		data += sizeof (int);
+		*((unsigned int *) data) = (unsigned int) tenc_decode_int (data);
+		data += sizeof (unsigned int);
 		length--;
 	}
 
@@ -261,11 +261,11 @@ static tbc_sym_t *decode_symbols (const tenc_element_t *stb_element)
 	tbc_sym_t	*head	= NULL;
 	tbc_sym_t	*sym	= NULL;
 	BYTE 		*data	= stb_element->data.bytes;
-	int 		length	= stb_element->length;
+	unsigned int 	length	= stb_element->length;
 
 	while (length > 0) {
+		unsigned int	s_length;
 		BYTE 		*s_data;
-		int		s_length;
 
 		if (tenc_walk_to_element (data, &length, "symL", &element) < 0)
 			return NULL;
@@ -299,12 +299,68 @@ static tbc_sym_t *decode_symbols (const tenc_element_t *stb_element)
 				continue;
 			if (load_uint (&s_data, &s_length, "vs U", &(sym->vs)) < 0)
 				continue;
-
 		}
 	}
 
 	return head;
 }
+
+int tbc_debug_file_and_line (BYTE *data, unsigned int length, unsigned int offset, char **file, unsigned int *line)
+{
+	tenc_element_t 	element, files;
+	unsigned int	bc_off, file_off, line_off;
+	char		*str;
+	int		ret;
+
+	*file = NULL;
+	*line = 0;
+
+	if ((ret = tenc_walk_to_element (data, &length, "dbgL", &element)) < 0)
+		return ret;
+	
+	data 		= element.data.bytes;
+
+	if (tenc_walk_to_element (data, &length, "fn L", &files) < 0)
+		return -1;
+
+	data		= files.next;
+	
+	if (tenc_walk_to_element (data, &length, "lndB", &element) < 0)
+		return -1;
+
+	data		= element.data.bytes;
+	length		= element.length;
+
+	while (length >= (sizeof (unsigned int) * 3)) {
+		bc_off		= (unsigned int) tenc_decode_int (data);
+		data += sizeof (unsigned int);
+
+		if (bc_off > offset)
+			break;
+
+		file_off	= (unsigned int) tenc_decode_int (data);
+		data += sizeof (unsigned int);
+		line_off	= (unsigned int) tenc_decode_int (data);
+		data += sizeof (unsigned int);
+
+		length -= sizeof (unsigned int) * 3;
+	}
+
+	data		= files.data.bytes;
+	length		= files.length;
+
+	while (file_off >= 0) {
+		if ((ret = load_str (&data, &length, "fn S", &str)) < 0)
+			return ret;
+		file_off--;
+	}
+	
+	*file = str;
+	*line = line_off;
+
+	return 0;
+}
+
 
 /* tbc_decode:
  * 	If ptr is NULL then this uses in place decoding, 
@@ -313,7 +369,7 @@ static tbc_sym_t *decode_symbols (const tenc_element_t *stb_element)
  *	initialised with zeros.  tlp elements will be decoded if 
  *	tbc->tlp is not NULL.
  */
-int tbc_decode (BYTE *data, int length, tbc_t **ptr)
+int tbc_decode (BYTE *data, unsigned int length, tbc_t **ptr)
 {
 	tenc_element_t 	element;
 	tbc_t 		*tbc;
