@@ -241,10 +241,7 @@ depend:
 
 # Compile occam program.
 $(OCCAMPROG).hex: $(OCCAMPROG).occ
-	# FIXME: fix occbuild
-	skroc -v --no-std-libs --c --target t2 --keep-temp-files -f $(OCCAMPROG).h $<
-	$(REMOVE) $(OCCAMPROG).h
-	plinker.pl -s $(OCCAMPROG).tce
+	occbuild -v --program $<
 	# FIXME: check OCCAMADDR doesn't overlap the TVM
 	../binary-to-ihex $(OCCAMADDR) $(OCCAMPROG).tbc $@
 
