@@ -39,6 +39,7 @@ includes_after = []
 static_link = False
 prefix = None
 destdir = ""
+target_cpu = "@KROC_HOST_CPU@"
 target_os = "@KROC_HOST_OS@"
 patterns = None
 build_shared = True
@@ -497,17 +498,38 @@ class KRoCToolchain(Toolchain):
 		pass
 
 class TVMToolchain(Toolchain):
+	def get_transputer(self):
+		"""Return the transputer that this target architecture
+		corresponds to."""
+		# FIXME: there are more of these in libtvm's configure.ac
+		if target_cpu.startswith("avr"):
+			return "t2"
+		else:
+			return "t8"
+
 	def plinker_cmd(self):
-		# Might need to do something here if the system can execute perl directly.
-		return programs["plinker.pl"]
+		# Might need to do something here if the system can't execute
+		# Perl directly.
+		cmd = programs["plinker.pl"]
+		if self.get_transputer() == "t2":
+			# 16-bit word size; generate 16-bit TEncode file.
+			cmd += ["-s"]
+		return cmd
 
 	def occ21_cmd(self):
 		cmd = programs["occ21"][:]
+		transputer = self.get_transputer()
+		if transputer == "t2":
+			cmd += ["-t2", "-V"]
+		elif transputer == "t4":
+			cmd += ["-t4"]
+		else:
+			cmd += ["-t8", "-zqa"]
 		cmd += [
 			"-etc", "-w", "-y", "-znd", "-znec",
 			"-udo", "-zncc", "-init", "-xin",
 			"-mobiles", "-zrpe", "-zcxdiv", "-zcxrem",
-			"-zep", "-t8", "-zqa"
+			"-zep"
 			]
 		cmd += occ21_opts
 		cmd += ["-DEF", "OCCBUILD.TVM"]
@@ -849,7 +871,8 @@ Options for all modes:
   --help              Show usage
   --toolchain CHAIN   Use toolchain CHAIN (""" + "/".join(safe_sorted(toolchains.keys())) + """, default @OCCBUILD_TOOLCHAIN@)
   --search DIR        Add DIR to search path for include files and libraries
-  --target-os OS      Override OS target for binaries, e.g. Darwin or Linux
+  --target-cpu CPU    Override CPU target for binaries (default @KROC_HOST_CPU@)
+  --target-os OS      Override OS target for binaries (default @KROC_HOST_OS@)
 
 For each program prog of """ + ", ".join(safe_sorted(programs.keys())) + """:
   --prog PATH         Path to prog (or set PROG=PATH in the environment)
@@ -895,7 +918,7 @@ def main(args):
 		"in-tree=", "toolchain=", "search=",
 		"occ21-opts=", "need=", "include=", "include-after=",
 		"static", "output=",
-		"prefix=", "destdir=", "target-os="
+		"prefix=", "destdir=", "target-cpu=", "target-os="
 		]
 	for prog in programs.keys():
 		long_opts += [prog + "=", prog + "-opts="]
@@ -912,7 +935,7 @@ def main(args):
 	global std_libs, verbose, in_tree, search_path
 	global occ21_opts, tock_opts, linker_opts, needs
 	global includes_before, includes_after, static_link
-	global prefix, destdir, examples, target_os
+	global prefix, destdir, examples, target_cpu, target_os
 	for (o, a) in opts:
 		if o in ("--object", "--library", "--program", "--run",
 		         "--install", "--install-examples",
@@ -959,6 +982,8 @@ def main(args):
 			destdir = a
 		elif o == "--no-std-libs":
 			std_libs = False
+		elif o == "--target-cpu":
+			target_cpu = a
 		elif o == "--target-os":
 			target_os = a
 		else:
