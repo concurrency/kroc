@@ -369,11 +369,13 @@ BOOL, INT32, REAL64 FUNCTION DARGUMENT.REDUCE (VAL REAL64 Y, Z, Z.err)
   REAL64 X :
   VALOF
     #INCLUDE "nan16.inc"
-    --{{{  #USE "occamutl.lib"
+    --{{{  #USEs
     #PRAGMA TRANSLATE QRealIDiv "QRealIDiv%CHK"
     #PRAGMA TRANSLATE QUADNORMALISE "QUADNORMALISE%CHK"
     #PRAGMA TRANSLATE QUADSHIFTRIGHT "QUADSHIFTRIGHT%CHK"
-    #USE "occamutl.lib"  --  6-Apr-90
+    #USE "qnorm"
+    #USE "qridiv"
+    #USE "qshiftr"
     --}}}
     VAL INT Max.Diff IS 30 :
     INT exp1, exp2, frac :

@@ -470,10 +470,11 @@ BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,
     [2] INT Y :
     PLACE Y IN WORKSPACE :
     VAL INT Sign IS SignBit :
-    --{{{  #USE "occamutl.lib"
+    --{{{  #USEs
     #PRAGMA TRANSLATE RealIMul "RealIMul%CHK"
     #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
-    #USE "occamutl.lib"  --  6-Apr-90
+    #USE "rimul"
+    #USE "ridiv"
     --}}}
     SEQ
       --{{{  range check

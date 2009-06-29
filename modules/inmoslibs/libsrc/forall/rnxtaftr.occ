@@ -19,6 +19,8 @@
 
 --** @module forall
 
+#IF (TARGET.BITS.PER.WORD = 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libs, no vector space
 #COMMENT "T8 compiler library, V1.4 10/07/90"
@@ -107,6 +109,8 @@ REAL32 FUNCTION NEXTAFTER (VAL REAL32 Y, Z)
     RESULT X
 :
 --}}}
+
+#ENDIF
 
 
 #IF (TARGET.BITS.PER.WORD = 16)
