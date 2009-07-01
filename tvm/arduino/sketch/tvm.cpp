@@ -28,12 +28,11 @@ extern "C" {
 
 static void terminate(const char *message, const int *status) {
 	// FIXME: offer other behaviours as options
-	Serial.print("tvm-arduino: ");
-	Serial.print(message);
+	printf ("tvm-arduino: %s", message);
 	if (status != NULL) {
-		Serial.print(*status, 0); // BYTE
+		printf ("%c", *status);
 	}
-	Serial.println();
+	printf ("\n");
 
 	while (true) {}
 }
@@ -42,9 +41,10 @@ int main () {
 	// Set up the Arduino environment.
 	init ();
 
-	Serial.begin (57600);
+	serial_stdout_init (57600);
+
 #ifdef DEBUG
-	Serial.println ("Arduino-TVM starting...");
+	printf ("Arduino-TVM starting...\n");
 #endif
 
 	for (int i = 0; i < MEM_WORDS; i++) {
@@ -64,50 +64,21 @@ int main () {
 
 #ifdef DEBUG
 	int a;
-	Serial.print("stack pointer is (more or less) ");
-	hexprint((int) &a);
-	Serial.println();
-	Serial.print("memory is ");
-	hexprint((int) &memory[0]);
-	Serial.println();
-#endif
-
-#ifdef DEBUG
-	Serial.print("wptr is ");
-	hexprint((int) context.wptr);
-	Serial.println();
-	Serial.print("iptr is ");
-	hexprint((int) context.iptr);
-	Serial.println();
+	printf ("stack pointer is (more or less) %04x\n", (int) &a);
+	printf ("memory is %04x\n", (int) &memory[0]);
+	printf ("wptr is %04x\n", (int) context.wptr);
+	printf ("iptr is %04x\n", (int) context.iptr);
 	delay(1000);
-	Serial.println("GO!");
+	printf ("GO!\n");
 #endif
 
 	while (true) {
 #ifdef DEBUG
-		Serial.print("about to tvm_run with eflags=");
-		hexprint((int) context.eflags);
-		Serial.print(" iptr=");
-		hexprint((int) context.iptr);
-		Serial.print(" wptr=");
-		hexprint((int) context.wptr);
-		Serial.print(" instruction=");
-		hexprint((int) read_byte (context.iptr));
-		Serial.println();
+		printf ("before tvm_run: eflags=%04x iptr=%04x wptr=%04x inst=%02x\n", (int) context.eflags, (int) context.iptr, (int) context.wptr, (int) read_byte (context.iptr));
 
 		int ret = tvm_run_count (&context, 1);
 
-		Serial.print("tvm_run returned ");
-		Serial.print(ret, DEC);
-		Serial.print(" ");
-		Serial.print(ret, 0); // BYTE
-		Serial.print(" eflags=");
-		hexprint((int) context.eflags);
-		Serial.print(" iptr=");
-		hexprint((int) context.iptr);
-		Serial.print(" wptr=");
-		hexprint((int) context.wptr);
-		Serial.println();
+		printf ("after tvm_run = %d (%c): eflags=%04x iptr=%04x wptr=%04x inst=%02x\n", ret, ret, (int) context.eflags, (int) context.iptr, (int) context.wptr, (int) read_byte (context.iptr));
 #else
 		int ret = tvm_run (&context);
 #endif
