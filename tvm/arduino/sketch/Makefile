@@ -34,20 +34,9 @@
 #
 # $Id$
 
-TARGET = sketch
-OCCAMPROG = blink
-OCCAMADDR = 0x5000
-INSTALL_DIR = $(HOME)/src/arduino-0016
-PORT = /dev/ttyUSB0
-AVRDUDE_PROGRAMMER = stk500v1
-F_CPU = 16000000
+include ../config.mk
 
-# For Arduino Duemilanove
-UPLOAD_RATE = 57600
-MCU = atmega328p
-# For Sanguino
-#UPLOAD_RATE = 38400
-#MCU = atmega644p
+TARGET = sketch
 
 TVM_CFLAGS = -I../libtvm -I../../../runtime/libtvm
 TVM_LDFLAGS = -L../libtvm -ltvm
@@ -101,11 +90,7 @@ LDFLAGS = -lm $(TVM_LDFLAGS)
 
 
 # Programming support using avrdude. Settings and variables.
-AVRDUDE_PORT = $(PORT)
 AVRDUDE_WRITE_FLASH = -U flash:w:applet/$(TARGET).hex
-AVRDUDE_FLAGS = -V -F -C $(INSTALL_DIR)/hardware/tools/avrdude.conf \
--p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) \
--b $(UPLOAD_RATE)
 
 # Program settings
 CC = avr-gcc
@@ -115,7 +100,6 @@ OBJDUMP = avr-objdump
 AR  = avr-ar
 SIZE = avr-size
 NM = avr-nm
-AVRDUDE = avrdude
 REMOVE = rm -f
 MV = mv -f
 
@@ -223,8 +207,7 @@ applet/core.a: $(OBJ)
 clean:
 	$(REMOVE) applet/$(TARGET).hex applet/$(TARGET).eep applet/$(TARGET).cof applet/$(TARGET).elf \
 	applet/$(TARGET).map applet/$(TARGET).sym applet/$(TARGET).lss applet/core.a \
-	$(OBJ) $(LST) $(SRC:.c=.s) $(SRC:.c=.d) $(CXXSRC:.cpp=.s) $(CXXSRC:.cpp=.d) \
-	$(OCCAMPROG).tce $(OCCAMPROG).tbc $(OCCAMPROG).hex
+	$(OBJ) $(LST) $(SRC:.c=.s) $(SRC:.c=.d) $(CXXSRC:.cpp=.s) $(CXXSRC:.cpp=.d)
 
 depend:
 	if grep '^# DO NOT DELETE' $(MAKEFILE) >/dev/null; \
@@ -238,19 +221,6 @@ depend:
 	$(CC) -M -mmcu=$(MCU) $(CDEFS) $(CINCS) $(SRC) $(ASRC) >> $(MAKEFILE)
 
 .PHONY:	all build elf hex eep lss sym program coff extcoff clean depend sizebefore sizeafter
-
-# Compile occam program.
-$(OCCAMPROG).hex: $(OCCAMPROG).occ
-	occbuild -v --program $<
-	# FIXME: check OCCAMADDR doesn't overlap the TVM
-	../binary-to-ihex $(OCCAMADDR) $(OCCAMPROG).tbc $@
-
-AVRDUDE_WRITE_OCCAM = -D -U flash:w:$(OCCAMPROG).hex
-
-upload-occam: $(OCCAMPROG).hex
-	../reset-arduino $(PORT)
-	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_OCCAM)
-	../read-arduino $(PORT)
 
 # Dependencies.
 applet/$(TARGET).elf: tvm-arduino.h
