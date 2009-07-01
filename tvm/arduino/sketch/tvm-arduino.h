@@ -5,6 +5,7 @@
 // #define DEBUG
 
 #include <WProgram.h>
+#include <avr/io.h>
 
 // The Wiring stuff defines BYTE as 0, but the Transterpreter headers use it as
 // a type name.
@@ -14,14 +15,14 @@ extern "C" {
 	#include <tvm.h>
 }
 
-//{{{  debug.cpp
-extern void hexprint(int n);
-//}}}
 //{{{  ffi.cpp
 extern "C" {
 	extern SFFI_FUNCTION sffi_table[];
 	extern const int sffi_table_length;
 }
+//}}}
+//{{{  serial.cpp
+extern void serial_stdout_init(long speed);
 //}}}
 //{{{  tbc.cpp
 extern int init_context_from_tbc (ECTX context, const prog_char *data, WORDPTR memory, UWORD memory_size);

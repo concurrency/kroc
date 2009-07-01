@@ -52,8 +52,8 @@ MCU = atmega328p
 TVM_CFLAGS = -I../libtvm -I../../../runtime/libtvm
 TVM_LDFLAGS = -L../libtvm -ltvm
 TVM_SRCFILES = \
-	debug.cpp \
 	ffi.cpp \
+	serial.cpp \
 	tbc.cpp \
 	tvm.cpp
 
