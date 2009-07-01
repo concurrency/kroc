@@ -23,7 +23,7 @@ def write_line(bytes):
 	sum = 0
 	for b in bytes:
 		sum += b
-	bytes += [0x100 - (sum & 0xFF)]
+	bytes += [(0x100 - (sum & 0xFF)) & 0xFF]
 
 	f.write(":" + "".join(["%02x" % b for b in bytes]).upper() + "\r\n")
 
