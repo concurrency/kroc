@@ -4,7 +4,11 @@
 #IF NOT (DEFINED (WIRING.MODULE))
 #DEFINE WIRING.MODULE
 
+#INCLUDE "avr.module"
+
 --{{{  constants
+VAL INT32 F.CPU IS ##F.CPU:
+
 VAL INT LOW IS #0:
 VAL INT HIGH IS #1:
 
@@ -39,35 +43,63 @@ PROC digitalRead (VAL INT pin, RESULT INT state)
 PROC pinMode (VAL INT pin, mode)
   C.tvmspecial.2.pinMode (pin, mode)
 :
-#PRAGMA EXTERNAL "PROC C.tvmspecial.3.beginSerial (VAL INT32 baud) = 0"
-PROC beginSerial (VAL INT32 baud)
-  C.tvmspecial.3.beginSerial (baud)
-:
-#PRAGMA EXTERNAL "PROC C.tvmspecial.4.serialWrite (VAL []BYTE string) = 0"
-PROC serialWrite (VAL []BYTE string)
-  C.tvmspecial.4.serialWrite (string)
-:
-#PRAGMA EXTERNAL "PROC C.tvmspecial.5.serialAvailable (RESULT INT available) = 0"
-PROC serialAvailable (RESULT INT available)
-  C.tvmspecial.5.serialAvailable (available)
-:
-#PRAGMA EXTERNAL "PROC C.tvmspecial.6.serialRead (RESULT INT char) = 0"
-PROC serialRead (RESULT INT char)
-  C.tvmspecial.6.serialRead (char)
-:
-#PRAGMA EXTERNAL "PROC C.tvmspecial.7.serialFlush () = 0"
-PROC serialFlush ()
-  C.tvmspecial.7.serialFlush ()
-:
 --}}}
 
 --{{{  PROC delay
+--* Wait for a period of time.
+-- @param millis Time in wait, in milliseconds
 PROC delay (VAL INT millis)
   TIMER tim:
   INT t:
   SEQ
     tim ? t
     tim ? AFTER t PLUS millis
+:
+--}}}
+
+--{{{  PROC beginSerial
+--* Initialise the serial port.
+-- @param baud Baud rate
+PROC beginSerial (VAL INT32 baud)
+  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
+  VAL [4]BYTE factor.bytes RETYPES factor:
+
+  PLACED [MAX.PORT]BYTE ports 0:
+  SEQ
+    ports[UBRR0H] := factor.bytes[1]
+    ports[UBRR0L] := factor.bytes[0]
+
+    ports[UCSR0C] := 3 << UCSZ00
+    ports[UCSR0B] := BV (TXEN0)
+:
+--}}}
+--{{{  PROC serialWrite
+--* Write a string to the serial port.
+-- @param string Bytes to write
+PROC serialWrite (VAL []BYTE string)
+  SEQ i = 0 FOR SIZE string
+    PLACED [MAX.PORT]BYTE ports 0:
+    #PRAGMA DEFINED ports
+    SEQ
+      WHILE (ports[UCSR0A] /\ BV (UDRE0)) = 0
+        SKIP
+      ports[UDR0] := string[i]
+:
+--}}}
+--{{{  PROC serialWriteInt
+--* Write an [@code INT] to the serial port in hex.
+PROC serialWriteInt (VAL INT n)
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 3 FOR 4 STEP -1
+    serialWrite ([digits[(n >> (i * 4)) /\ #F]])
+:
+--}}}
+--{{{  PROC serialWriteInt32
+--* Write an [@code INT32] to the serial port in hex.
+PROC serialWriteInt32 (VAL INT32 n)
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 7 FOR 8 STEP -1
+    serialWrite ([digits[INT ((n >> (i * 4)) /\ #F)]])
 :
 --}}}
 

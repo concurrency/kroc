@@ -41,60 +41,10 @@ extern "C" {
 		return SFFI_OK;
 	}
 
-	static int ffi_beginSerial (ECTX ectx, WORD args[]) {
-		int32_t baud;
-		memcpy_from_tvm ((BYTEPTR) args[0], &baud, sizeof baud);
-
-		Serial.begin (baud);
-
-		return SFFI_OK;
-	}
-
-	static int ffi_serialWrite (ECTX ectx, WORD args[]) {
-		BYTEPTR string = (BYTEPTR) args[0];
-		int length = (int) args[1];
-
-		for (int i = 0; i < length; i++) {
-			uint8_t c;
-			memcpy_from_tvm (byteptr_plus (string, i), &c, 1);
-
-			Serial.write (&c, 1);
-		}
-
-		return SFFI_OK;
-	}
-
-	static int ffi_serialAvailable (ECTX ectx, WORD args[]) {
-		WORD *result = (WORD *) args[0];
-
-		*result = Serial.available ();
-
-		return SFFI_OK;
-	}
-
-	static int ffi_serialRead (ECTX ectx, WORD args[]) {
-		WORD *result = (WORD *) args[0];
-
-		*result = Serial.read ();
-
-		return SFFI_OK;
-	}
-
-	static int ffi_serialFlush (ECTX ectx, WORD args[]) {
-		Serial.flush ();
-
-		return SFFI_OK;
-	}
-
 	SFFI_FUNCTION sffi_table[] = {
 		ffi_digitalWrite,
 		ffi_digitalRead,
-		ffi_pinMode,
-		ffi_beginSerial,
-		ffi_serialWrite,
-		ffi_serialAvailable,
-		ffi_serialRead,
-		ffi_serialFlush
+		ffi_pinMode
 	};
 	const int sffi_table_length = sizeof(sffi_table) / sizeof(SFFI_FUNCTION);
 }
