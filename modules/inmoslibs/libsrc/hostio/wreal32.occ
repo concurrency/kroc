@@ -24,6 +24,7 @@
 #INCLUDE "hostio.inc"
 #USE "splib.lib"
 #USE "convert.lib"
+#IF TARGET.BITS.PER.WORD = 32
 --{{{  so.fwrite.real32
 --* Write a single precision real as decimal ASCII characters to a
 -- stream.
@@ -77,3 +78,4 @@ PROC so.write.real32 (CHAN OF SP fs, ts, VAL REAL32 r, VAL INT Ip, Dp)
   so.fwrite.real32 (fs, ts, spid.stdout, r, Ip, Dp, result)
 :
 --}}}so.write.real32
+#ENDIF

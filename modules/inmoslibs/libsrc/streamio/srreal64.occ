@@ -24,6 +24,7 @@
 #INCLUDE "streamio.inc"
 #USE "convert.lib"
 
+#IF TARGET.BITS.PER.WORD = 32
 --* Read a double precision real number from the given keystream.
 --
 -- A distinction must be made here between a character held in a byte
@@ -141,3 +142,4 @@ PROC ks.read.real64 (CHAN OF KS source, REAL64 number, INT char)
             TRUE
               SKIP
 :
+#ENDIF

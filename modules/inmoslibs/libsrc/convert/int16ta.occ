@@ -30,6 +30,7 @@
 -- and n contains low order bits when string overflows INT32 range; V1.2,
 -- 22-Nov-90 SRH
 --}}}
+#IF TARGET.BITS.PER.WORD = 32
 --{{{  STRINGTOINT16 TA
 --* Convert to an INT16 the value represented by string.
 --
@@ -73,3 +74,4 @@ PROC INT16TOSTRING (INT len, []BYTE string, VAL INT16 n)
   INTTOSTRING (len, string, INT n)
 :
 --}}}
+#ENDIF

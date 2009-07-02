@@ -25,6 +25,7 @@
 #USE "solib.lib"
 #USE "convert.lib"
 
+#IF TARGET.BITS.PER.WORD = 32
 --* Read a 32-bit integer in ( two's complement ) hexadecimal form from
 -- the keyboard, and to echo it to standard out.
 --
@@ -75,3 +76,4 @@ PROC so.read.echo.hex.int32 (CHAN OF SP fs, ts, INT32 n, BOOL error)
       TRUE
         error := TRUE
 :
+#ENDIF

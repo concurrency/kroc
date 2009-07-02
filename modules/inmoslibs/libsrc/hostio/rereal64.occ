@@ -25,6 +25,7 @@
 #USE "solib.lib"
 #USE "convert.lib"
 
+#IF TARGET.BITS.PER.WORD = 32
 --* Read a string containing a representation of a double precision
 -- real in occam syntax ( though a + or - is allowed as first character
 -- ) from the keyboard and to echo it to standard out.
@@ -58,3 +59,4 @@ PROC so.read.echo.real64 (CHAN OF SP fs, ts, REAL64 n, BOOL error)
       TRUE
         error := TRUE
 :
+#ENDIF
