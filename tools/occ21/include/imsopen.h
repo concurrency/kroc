@@ -35,7 +35,7 @@
 /*}}}*/
 
 /*{{{  DEC C specific macros */
-#ifdef TARGET_OS_IS_VMS
+#ifdef HOST_OS_IS_VMS
 /*{{{   */
 #define _FOPEN_ANSI
 /*}}}*/
@@ -51,7 +51,7 @@
 /*}}}*/
 
 /*{{{  UNIX specific macros */
-#ifdef TARGET_OS_IS_UNIX
+#ifdef HOST_OS_IS_UNIX
 /*{{{   */
 #define _FOPEN_UNIX
 /*}}}*/

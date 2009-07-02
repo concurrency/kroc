@@ -35,7 +35,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#if defined(TARGET_OS_IS_SERVER)
+#if defined(HOST_OS_IS_SERVER)
 #include <host.h>
 #endif
 /*}}}  */
@@ -60,11 +60,11 @@ static int to_lower (int c) {
 char arg_host_switch_char (void) {
 	char prefix_character;
 
-#if (defined(TARGET_OS_IS_MSDOS) || defined(TARGET_OS_IS_VMS))
+#if (defined(HOST_OS_IS_MSDOS) || defined(HOST_OS_IS_VMS))
 	prefix_character = '/';
-#elif (defined(TARGET_OS_IS_UNIX))
+#elif (defined(HOST_OS_IS_UNIX))
 	prefix_character = '-';
-#elif (defined(TARGET_OS_IS_SERVER))
+#elif (defined(HOST_OS_IS_SERVER))
 	{
 		int host, os, board;
 
@@ -92,7 +92,7 @@ char arg_host_switch_char (void) {
 /*{{{  arg_host_alternate_switch_char */
 char arg_host_alternate_switch_char (void) {
 	char prefix_character;
-#if (defined(TARGET_OS_IS_MSDOS) || defined(TARGET_OS_IS_VMS) || defined(TARGET_OS_IS_UNIX) || defined(TARGET_OS_IS_SERVER))
+#if (defined(HOST_OS_IS_MSDOS) || defined(HOST_OS_IS_VMS) || defined(HOST_OS_IS_UNIX) || defined(HOST_OS_IS_SERVER))
 	prefix_character = '-';
 #else
 #include <assert.h>

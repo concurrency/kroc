@@ -92,11 +92,11 @@
 /* no ansi realloc on vax or sun */
 /* I would like to use #ifdef STD_C but life is not like that */
 
-#if defined(TARGET_OS_IS_VMS) || !defined(HAVE_ANSI_REALLOC)
+#if defined(HOST_OS_IS_VMS) || !defined(HAVE_ANSI_REALLOC)
 #define NO_ANSI_REALLOC
 #endif
 
-#if defined(TARGET_OS_IS_MSDOS)
+#if defined(HOST_OS_IS_MSDOS)
 #define NO_STDERR_STREAM
 #endif
 
@@ -110,7 +110,7 @@
  */
 
 #ifndef _IMSSTDH
-#if defined(TARGET_OS_IS_VMS)
+#if defined(HOST_OS_IS_VMS)
 #include <ssdef.h>
 #define EXIT_FAILURE   SS$_ABORT
 #define EXIT_SUCCESS   SS$_NORMAL

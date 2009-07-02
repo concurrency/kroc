@@ -68,7 +68,7 @@
   #include "cfpub.h"
 #endif
 
-#if defined(TARGET_OS_IS_UNIX)
+#if defined(HOST_OS_IS_UNIX)
 #include <unistd.h>
 #endif
 
@@ -523,7 +523,7 @@ PRIVATE int errormodes_off_mask = 0;
   #define HOSTED HELP_ZED
 #endif
 
-#if defined(TARGET_OS_IS_UNIX) && !defined(WIN32)
+#if defined(HOST_OS_IS_UNIX) && !defined(WIN32)
 /* These are used to provide heap space usage statistics */
 PRIVATE void *original_sbrk;
 PRIVATE BOOL memstats        = FALSE;
@@ -576,7 +576,7 @@ arg2_help_page_info oc_help_info;
 /*{{{  PRIVATEPARAM void print_memstats*/
 PRIVATEPARAM void print_memstats(void)
 {
-	#if defined(TARGET_OS_IS_UNIX) && !defined(WIN32)
+	#if defined(HOST_OS_IS_UNIX) && !defined(WIN32)
 	if (memstats) {
 		fprintf(outfile, "Memory usage: (current tree %ld) (sbrk %d)\n", tablesize(), sbrk(0) - original_sbrk);
 	}
@@ -1511,7 +1511,7 @@ PRIVATE arg_control optzed ( const char *opt, const char *arg, void *data )
 		break;
 	/*}}}*/
 	/*{{{  ZMEM*/
-	#if defined(TARGET_OS_IS_UNIX) && !defined(WIN32)
+	#if defined(HOST_OS_IS_UNIX) && !defined(WIN32)
 	case 'M':
 		memstats = TRUE;
 		break;
@@ -2254,7 +2254,7 @@ const arg2_descriptor cloptions[] = {
 	/*}}}*/
 
 	/*{{{  zm - zo*/
-	#if defined(TARGET_OS_IS_UNIX) && !defined(WIN32)
+	#if defined(HOST_OS_IS_UNIX) && !defined(WIN32)
 	{"ZMEM",      arg2_single,    NULL,           optzed,             HELP_ZED, "display memory (sbrk) statistics"},
 	#endif
 	#ifdef MOBILES
@@ -2544,9 +2544,9 @@ PRIVATE void host_setup ( void )
 	}
 	(void)set_abort_action (ABORT_HALT);
 #else
-	#if defined(TARGET_OS_IS_MSDOS)
+	#if defined(HOST_OS_IS_MSDOS)
 		errfile = stdout;
-	#elif defined(TARGET_OS_IS_VMS)
+	#elif defined(HOST_OS_IS_VMS)
 		errfile = stderr;
 	#else
 		errfile = stderr;
@@ -2654,7 +2654,7 @@ PRIVATE BOOL setup_filenames (void)
 				}
 				(void)setvbuf (outfile, NULL, _IOLBF, BUFSIZ);
 			}
-			#if defined(COMPILER_IS_MSC) || defined(COMPILER_IS_WATCOM) || defined(TARGET_OS_IS_LLL)
+			#if defined(COMPILER_IS_MSC) || defined(COMPILER_IS_WATCOM) || defined(HOST_OS_IS_LLL)
 				errfile = stdout;
 			#else
 				errfile = stderr;
@@ -3136,7 +3136,7 @@ PUBLIC int main (const int argc, const char *argv[])
 {
 	/*{{{  initialise memstats*/
 
-	#if defined(TARGET_OS_IS_UNIX) && !defined(WIN32)
+	#if defined(HOST_OS_IS_UNIX) && !defined(WIN32)
 		original_sbrk = sbrk(0);
 	#endif
 

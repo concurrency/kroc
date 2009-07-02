@@ -21,9 +21,7 @@ AC_CHECK_TOOL(RANLIB,ranlib,:)
 AM_C_PROTOTYPES
 
 target_cpu_=target_cpu_`echo $target_cpu | tr -d _.`
-target_vendor_=target_vendor_`echo $target_vendor | tr -d _.`
-target_os_=target_os_`echo $target_os | tr -d _. | sed -e 's/-/_/g'`
-ARCH_DEFS="-D${target_cpu_} -D${target_vendor_} -D${target_os_}"
+ARCH_DEFS="-D${target_cpu_}"
 
 AC_DEFINE_UNQUOTED([TARGET_ALIAS],	"${target_alias}", [define target alias])
 AC_DEFINE_UNQUOTED([TARGET_CANONICAL],	"${target}", [define target])
@@ -106,11 +104,11 @@ if test "$default_accessaligned" = yes; then
 fi
 
 
-AC_DEFINE([TARGET_OS_IS_UNIX],1,[define if the target OS is UNIX])
-#AC_DEFINE([TARGET_OS_IS_VMS],0,[define if the target OS is VMS])
-#AC_DEFINE([TARGET_OS_IS_MSDOS],0,[define if the target OS is MS-DOS])
-#AC_DEFINE([TARGET_OS_IS_HELIOS],0,[define if the target OS is HELIOS])
-#AC_DEFINE([TARGET_OS_IS_SERVER],0,[define if the target OS is ISERVER])
+AC_DEFINE([HOST_OS_IS_UNIX],1,[define if the host OS is UNIX])
+#AC_DEFINE([HOST_OS_IS_VMS],0,[define if the host OS is VMS])
+#AC_DEFINE([HOST_OS_IS_MSDOS],0,[define if the host OS is MS-DOS])
+#AC_DEFINE([HOST_OS_IS_HELIOS],0,[define if the host OS is HELIOS])
+#AC_DEFINE([HOST_OS_IS_SERVER],0,[define if the host OS is ISERVER])
 
 if test "X$GCC" = Xyes ; then
   AC_DEFINE([COMPILER_IS_GCC],1,[define if using gcc])
