@@ -21,7 +21,7 @@
 
 
 /*{{{  VAX stuff */
-#if defined(TARGET_OS_IS_VMS)
+#if defined(HOST_OS_IS_VMS)
 #ifndef ANSI
 #ifndef DEC
 #define defined(P) P
@@ -36,7 +36,7 @@
    For an n-byte alignment, set the constant to n.
    The Vax needs no alignment, so set to 1. */
 #if 0
-  #if defined(COMPILER_IS_LLL) || defined(TARGET_OS_IS_HELIOS) || defined(IMS)
+  #if defined(COMPILER_IS_LLL) || defined(HOST_OS_IS_HELIOS) || defined(IMS)
     #define HOST_ALIGN_SIZE 4
   #else
     #define HOST_ALIGN_SIZE 1

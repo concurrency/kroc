@@ -50,7 +50,7 @@
 /*}}}  */
 
 /*{{{  DEC C specific macros*/
-#ifdef TARGET_OS_IS_VMS
+#ifdef HOST_OS_IS_VMS
 /*{{{  */
 #include <ssdef.h>
 #include <stdlib.h>
@@ -82,7 +82,7 @@
 /*}}}  */
 
 /*{{{  GNU C specific macros*/
-#ifdef TARGET_OS_IS_UNIX
+#ifdef HOST_OS_IS_UNIX
 /*{{{  */
 /*{{{  include <stdlib.h>*/
 #include <stdlib.h>
