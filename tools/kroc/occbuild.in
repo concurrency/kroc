@@ -1009,6 +1009,20 @@ def main(args):
 		programs["tce-dump.pl"] = [in_tree + "/tools/plinker/tce-dump.pl"] + programs["tce-dump.pl"][1:]
 		programs["tvm"] = [in_tree + "/tvm/posix/tvm"] + programs["tvm"][1:]
 
+	if mode == "object":
+		# If we're building a source file in another directory
+		# (e.g. ../../libsrc/foo.occ when configured into a separate
+		# object directory), then we need to add search paths relative
+		# to that directory too.
+		added_paths = []
+		for source in args:
+			sd = os.path.dirname(source)
+			if sd != ".":
+				added_paths.append(sd)
+				added_paths += [os.path.join(sd, dir)
+				                for dir in search_path]
+		search_path += added_paths
+
 	set_isearch(toolchain.isearch())
 	for dir in search_path:
 		programs["cc"] += ["-L" + dir]
