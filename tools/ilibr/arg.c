@@ -32,7 +32,7 @@
 #include "arg.h"
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"	/* will defined TARGET_OS_IS_UNIX or similar */
+#include "config.h"	/* will defined HOST_OS_IS_UNIX or similar */
 #endif
 
 #include <ctype.h>
@@ -52,11 +52,11 @@ static char host_switch_char (void)
 {
   char prefix_character;
 
-#if defined(TARGET_OS_IS_MSDOS) || defined(TARGET_OS_IS_VMS)
+#if defined(HOST_OS_IS_MSDOS) || defined(HOST_OS_IS_VMS)
   prefix_character = '/';
-#elif defined(TARGET_OS_IS_HELIOS) || defined(TARGET_OS_IS_UNIX)		/* SUN_OS evaporated */
+#elif defined(HOST_OS_IS_HELIOS) || defined(HOST_OS_IS_UNIX)		/* SUN_OS evaporated */
   prefix_character = '-';
-#elif defined(TARGET_OS_IS_SERVER)
+#elif defined(HOST_OS_IS_SERVER)
   {
     int host, os, board;
 
