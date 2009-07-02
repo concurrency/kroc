@@ -10,7 +10,7 @@ mkdir -p libtvm
 cd libtvm
 ../$TVMDIR/configure \
 	--host=avr \
-	--disable-occam-pi \
+	--with-memory-allocator=none \
 	CFLAGS="$CFLAGS"
 make
 size libtvm.a
