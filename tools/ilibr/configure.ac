@@ -23,7 +23,7 @@ AC_PROG_RANLIB
 
 AM_C_PROTOTYPES
 
-AC_DEFINE(TARGET_OS_IS_UNIX,1,[define if target OS is UNIX])
+AC_DEFINE(HOST_OS_IS_UNIX,1,[define if host OS is UNIX])
 
 dnl Checks for header files.
 AC_HEADER_STDC
