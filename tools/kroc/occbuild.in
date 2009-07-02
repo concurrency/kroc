@@ -39,8 +39,8 @@ includes_after = []
 static_link = False
 prefix = None
 destdir = ""
-target_cpu = "@KROC_HOST_CPU@"
-target_os = "@KROC_HOST_OS@"
+target_cpu = "@KROC_TARGET_CPU@"
+target_os = "@KROC_TARGET_OS@"
 patterns = None
 build_shared = True
 isearch = []
@@ -871,8 +871,8 @@ Options for all modes:
   --help              Show usage
   --toolchain CHAIN   Use toolchain CHAIN (""" + "/".join(safe_sorted(toolchains.keys())) + """, default @OCCBUILD_TOOLCHAIN@)
   --search DIR        Add DIR to search path for include files and libraries
-  --target-cpu CPU    Override CPU target for binaries (default @KROC_HOST_CPU@)
-  --target-os OS      Override OS target for binaries (default @KROC_HOST_OS@)
+  --target-cpu CPU    Override CPU target for binaries (default @KROC_TARGET_CPU@)
+  --target-os OS      Override OS target for binaries (default @KROC_TARGET_OS@)
 
 For each program prog of """ + ", ".join(safe_sorted(programs.keys())) + """:
   --prog PATH         Path to prog (or set PROG=PATH in the environment)

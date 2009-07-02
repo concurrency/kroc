@@ -69,9 +69,9 @@ ARCH_ASFLAGS="@KROC_CCSP_ASFLAGS@"
 
 package_version="@VERSION@"
 dversion='2.0'
-host_canonical="@KROC_CANONICAL_TARGET@"
-host_cpu="@KROC_HOST_CPU@"
-host_os="@KROC_HOST_OS@"
+target_canonical="@KROC_CANONICAL_TARGET@"
+target_cpu="@KROC_TARGET_CPU@"
+target_os="@KROC_TARGET_OS@"
 # -kc : cgr-mp CCSP interface
 octranopts="-kc @KROC_CCSP_TRANFLAGS@"
 ccopts="@KROC_CCSP_CFLAGS@"
@@ -81,7 +81,7 @@ ocrtslibs="-lm @KROC_CCSP_LIBS@"
 extcflags="@KROC_CCSP_CFLAGS@"
 dtraces=0
 
-case "$host_os" in
+case "$target_os" in
 	cygwin*)
 		octranopts="$octranopts -nsymops --cnpfx _"
 		;;
@@ -136,7 +136,7 @@ tsuffix='tce'
 occwopts=
 occopts="-etc -w -y -znd -znec -udo -zncc -init -xin -mobiles -mpt -zrpe @KROC_CCSP_OCCFLAGS@"
 
-case "$host_cpu" in
+case "$target_cpu" in
 	i386 | i486 | i586 | i686 | x86_64)
 		occopts="$occopts -zcxdiv -zcxrem -zzs"
 		;;
@@ -157,7 +157,7 @@ esac
 
 # necessary for dynamic procs (makes all synbols appear in the dynamic symbol table)
 
-case "$host_os" in
+case "$target_os" in
 	darwin*)
 		extraccopts=${EXTRACCOPTS:--read_only_relocs suppress}
 		;;
@@ -176,7 +176,7 @@ cc=${CC:-gcc}
 as=${AS:-as}
 asflags=""
 ld=${LD:-ld}
-case "$host_os" in
+case "$target_os" in
 	darwin*)
 		ldopts="-dynamiclib"
 		libext=".dylib"
@@ -943,7 +943,7 @@ fi
 if [ "X${fatal}" != "X" -o "X$srcs" = "X" -o "X$showversion" != "X" ]; then
 
 	exec 1>&2
-	printf 'KRoC version %s targeting %s (driver V%s)\n' "$package_version" "$host_canonical" "$dversion"
+	printf 'KRoC version %s targeting %s (driver V%s)\n' "$package_version" "$target_canonical" "$dversion"
 
 	if [ $verbose ]; then
 		showversion=yes
