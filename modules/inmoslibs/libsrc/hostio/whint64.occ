@@ -28,6 +28,7 @@
 -- Made it explicit that a negative field width was an error.  New version
 -- is 1.1; 13-June-90 SRH
 --}}}
+#IF TARGET.BITS.PER.WORD = 32
 --{{{  so.fwrite.hex.int64
 --* Write a 64-bit integer as hexadecimal ASCII characters preceded by
 -- the '#' character to a file.
@@ -131,3 +132,4 @@ PROC so.write.hex.int64 (CHAN OF SP fs, ts, VAL INT64 n, VAL INT width)
   so.fwrite.hex.int64 (fs, ts, spid.stdout, n, width, result)
 :
 --}}}so.write.hex.int64
+#ENDIF

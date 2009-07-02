@@ -25,6 +25,7 @@
 #USE "solib.lib"
 #USE "convert.lib"
 
+#IF TARGET.BITS.PER.WORD = 32
 --* Read a string containing a representation of a 32-bit decimal
 -- integer from the keyboard, and to echo it to standard out.
 --
@@ -52,3 +53,4 @@ PROC so.read.echo.int32 (CHAN OF SP fs, ts, INT32 n, BOOL error)
       TRUE
         error := TRUE
 :
+#ENDIF

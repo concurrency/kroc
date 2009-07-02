@@ -22,6 +22,7 @@
 #OPTION "E V" -- no compiler libraries, no vector space
 #COMMENT "Type conversion library V1.4 4/12/90"
 #COMMENT "(c) Copyright INMOS Limited 1988"
+#IF TARGET.BITS.PER.WORD = 32
 --* Converts BYTE array string into a REAL32 number X
 --
 -- If the value represented by string overflows the REAL32 range then
@@ -449,3 +450,4 @@ PROC STRINGTOREAL32 (BOOL Error, REAL32 X, VAL []BYTE string)
     Error := Error OR (chars.scanned <= (SIZE string))
     --}}}
 :
+#ENDIF

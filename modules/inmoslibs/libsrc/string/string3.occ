@@ -27,6 +27,7 @@
 -- V1.0 1-Jul-88
 -- V1.1 22-Mar-90 SRH
 --}}}
+#IF TARGET.BITS.PER.WORD = 32
 --{{{  append.real32
 --* Write an ASCII representation of a single precision real number
 -- into a given string.
@@ -79,3 +80,4 @@ PROC append.real64 (INT len, []BYTE str,
     len := len + addlen
 :
 --}}}
+#ENDIF
