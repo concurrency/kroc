@@ -22,10 +22,10 @@ fi
 
 KROC_CANONICAL_TARGET=$target
 AC_SUBST(KROC_CANONICAL_TARGET)
-KROC_HOST_OS=$host_os
-AC_SUBST(KROC_HOST_OS)
-KROC_HOST_CPU=$host_cpu
-AC_SUBST(KROC_HOST_CPU)
+KROC_TARGET_OS=$target_os
+AC_SUBST(KROC_TARGET_OS)
+KROC_TARGET_CPU=$target_cpu
+AC_SUBST(KROC_TARGET_CPU)
 
 dnl check for the dynamic linker (just so we can report it in KRoC really)
 AC_CHECK_TOOL(LD,ld)
