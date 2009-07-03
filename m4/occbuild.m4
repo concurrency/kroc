@@ -23,22 +23,9 @@ dnl Set KROC_BUILD_ROOT to the top of the tree if we are, and to
 dnl the empty string if we aren't.
 AC_DEFUN([OCCAM_IN_TREE],
 [dnl
-AC_ARG_VAR(KROC_BUILD_ROOT, [Top of KRoC source tree])
+AC_ARG_VAR(KROC_BUILD_ROOT, [Path to top of KRoC build tree])
 
-AC_MSG_CHECKING([whether we're building in the KRoC source tree])
-
-# Try to find the top-level configure.ac for KRoC.
-old_PWD=`pwd`
-KROC_BUILD_ROOT=""
-for try in 1 2 3 4 5 6; do
-	if test -f configure.ac && grep '^# KROC_IS_ROOT' configure.ac >/dev/null; then
-		KROC_BUILD_ROOT=`pwd`
-		break
-	fi
-	cd ..
-done
-cd $old_PWD
-
+AC_MSG_CHECKING([whether we're building as part of KRoC])
 if test "x$KROC_BUILD_ROOT" != "x"; then
   AC_MSG_RESULT([yes])
 else

@@ -122,6 +122,9 @@ if test "$no_recursion" != yes; then
     ac_sub_configure_args="--silent $ac_sub_configure_args"
   fi
 
+  # Pass KROC_BUILD_ROOT down to subdirs.
+  ac_sub_configure_args="$ac_sub_configure_args 'KROC_BUILD_ROOT=$KROC_BUILD_ROOT'"
+
   ac_popdir=`pwd`
   for ac_dir in : $occam_subdirs; do test "x$ac_dir" = x: && continue
 
