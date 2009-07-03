@@ -16,11 +16,13 @@ extern "C" {
 }
 
 enum {
-	TVM_INTR_TIMER = 1 << (SFLAG_USER_P + 0)
+	TVM_INTR_TIMER1 = 1 << (SFLAG_USER_P + 0),
+	TVM_INTR_TIMER2 = 1 << (SFLAG_USER_P + 1)
 };
 #define TVM_INTR_SFLAGS \
 	(SFLAG_INTR | \
-	TVM_INTR_TIMER)
+	TVM_INTR_TIMER1 | \
+	TVM_INTR_TIMER2)
 
 //{{{  ffi.cpp
 extern "C" {
