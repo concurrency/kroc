@@ -1,12 +1,11 @@
 # Top-level configure.ac for the KRoC tree.
-# KROC_IS_ROOT - m4/occbuild.m4 looks for this comment to find the top-level
-# directory; don't change it.
 
 AC_INIT([kroc], [1.5.0-pre5], [kroc-bugs@kent.ac.uk])
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 OCCAM_TOOLCHAIN
+KROC_BUILD_ROOT=`pwd`
 OCCAM_OCCBUILD
 
 if test "x$OCCBUILD_API_VERSION" != x2; then
