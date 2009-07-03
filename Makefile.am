@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = @subdirs@
+SUBDIRS = @subdirs@ @target_subdirs@
 
 EXTRA_DIST = \
 	.gitignore \
