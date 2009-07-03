@@ -31,13 +31,13 @@
 # call OCCAM_OUTPUT_SUBDIRS explicitly.
 AC_DEFUN([OCCAM_CONFIG_SUBDIRS_FOR],
 [AC_REQUIRE([AC_CONFIG_AUX_DIR_DEFAULT])dnl
-m4_foreach_w([_AC_Sub], [$2],
-	     [_AC_CONFIG_UNIQUE([SUBDIRS],
-				m4_bpatsubst(m4_defn([_AC_Sub]), [:.*]))])dnl
-m4_append([_AC_LIST_SUBDIRS], [$2], [
-])dnl
-AS_LITERAL_IF([$2], [],
-	      [AC_DIAGNOSE([syntax], [$0: you should use literals])])dnl
+
+# Call AC_CONFIG_SUBDIRS, but undo the effect it has on subdirs. This allows
+# autoreconf to detect that we're using subdirs.
+ac_pop_subdirs="$subdirs"
+AC_CONFIG_SUBDIRS([$2])
+subdirs="$ac_pop_subdirs"
+
 AC_SUBST([occam_subdirs], ["$occam_subdirs m4_normalize([$2])"])dnl
 occam_subdirs_$1="$occam_subdirs_$1 m4_normalize([$2])"
 ])

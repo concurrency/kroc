@@ -86,9 +86,7 @@ EOF
 }
 
 status "Generating build system"
-for dir in . `grep 'CONFIG.*SUBDIRS' configure.ac | sed -e 's,.*(,,' -e 's,).*,,'`; do
-	autoreconf --no-recursive -v -f -i "$dir" || fail
-done
+autoreconf -v -f -i "$dir" || fail
 
 if [ "$1" = "--autoreconf-only" ]; then
 	exit 0
