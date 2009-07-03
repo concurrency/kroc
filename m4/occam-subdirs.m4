@@ -20,40 +20,52 @@
 #	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #	02110-1301, USA.
 
-# OCCAM_CONFIG_TARGET_SUBDIRS(DIR ...)
+# OCCAM_CONFIG_SUBDIRS_FOR(SYSTEM, DIR ...)
 # --------------------------
-# Like AC_CONFIG_SUBDIRS, but for subdirs that should be built for the target
-# system -- i.e. with the host platform set to the current directory's target
-# platform.
-# We define two variables:
-# - _AC_LIST_SUBDIRS (also set by AC_CONFIG_SUBDIRS)
-#   A statically built list, should contain *all* the arguments of
-#   OCCAM_CONFIG_TARGET_SUBDIRS.  The final value is assigned to ac_subdirs_all in
-#   the `default' section, and used for --help=recursive.
-#   It is also used in _AC_CONFIG_UNIQUE.
-#   It makes no sense for arguments which are sh variables.
-# - target_subdirs
-#   Shell variable built at runtime, so some of these dirs might not be
-#   included, if for instance the user refused a part of the tree.
-#   This is used in OCCAM_OUTPUT_TARGET_SUBDIRS.
-AC_DEFUN([OCCAM_CONFIG_TARGET_SUBDIRS],
+# Configure subdirectories for a particular system (host, target; build not yet
+# supported).
+#
+# This is compatible with AC_CONFIG_SUBDIRS in that it defines
+# _AC_LIST_SUBDIRS (so --help=recursive will work), but it defines
+# occam_subdirs rather than just subdirs as a variable, and you will need to
+# call OCCAM_OUTPUT_SUBDIRS explicitly.
+AC_DEFUN([OCCAM_CONFIG_SUBDIRS_FOR],
 [AC_REQUIRE([AC_CONFIG_AUX_DIR_DEFAULT])dnl
-m4_foreach_w([_AC_Sub], [$1],
+m4_foreach_w([_AC_Sub], [$2],
 	     [_AC_CONFIG_UNIQUE([SUBDIRS],
 				m4_bpatsubst(m4_defn([_AC_Sub]), [:.*]))])dnl
-m4_append([_AC_LIST_SUBDIRS], [$1], [
+m4_append([_AC_LIST_SUBDIRS], [$2], [
 ])dnl
-AS_LITERAL_IF([$1], [],
+AS_LITERAL_IF([$2], [],
 	      [AC_DIAGNOSE([syntax], [$0: you should use literals])])dnl
-AC_SUBST([target_subdirs], ["$target_subdirs m4_normalize([$1])"])dnl
+AC_SUBST([occam_subdirs], ["$occam_subdirs m4_normalize([$2])"])dnl
+occam_subdirs_$1="$occam_subdirs_$1 m4_normalize([$2])"
 ])
 
 
-# OCCAM_OUTPUT_TARGET_SUBDIRS
+# OCCAM_CONFIG_SUBDIRS(DIR ...)
+# --------------------------
+# Equivalent to AC_CONFIG_SUBDIRS -- i.e. configure subdirs for the host
+# system.
+AC_DEFUN([OCCAM_CONFIG_SUBDIRS],
+[
+OCCAM_CONFIG_SUBDIRS_FOR([host], [$1])dnl
+])
+
+
+# OCCAM_CONFIG_TARGET_SUBDIRS(DIR ...)
+# --------------------------
+# Configure subdirs for the target system.
+AC_DEFUN([OCCAM_CONFIG_TARGET_SUBDIRS],
+[
+OCCAM_CONFIG_SUBDIRS_FOR([target], [$1])dnl
+])
+
+
+# OCCAM_OUTPUT_SUBDIRS
 # ------------------
-# This is a subroutine of AC_OUTPUT, but it does not go into
-# config.status, rather, it is called after running config.status.
-m4_define([OCCAM_OUTPUT_TARGET_SUBDIRS],
+# This should be called after AC_OUTPUT.
+m4_define([OCCAM_OUTPUT_SUBDIRS],
 [
 #
 # CONFIG_SUBDIRS section.
@@ -110,16 +122,21 @@ if test "$no_recursion" != yes; then
     ac_sub_configure_args="--silent $ac_sub_configure_args"
   fi
 
-  # This is where this differs from AC_CONFIG_SUBDIRS: use the current target
-  # as the host in the subdir.
-  ac_sub_configure_args="$ac_sub_configure_args '--host=$target_alias' 'host_alias=$target_alias'"
-
   ac_popdir=`pwd`
-  for ac_dir in : $target_subdirs; do test "x$ac_dir" = x: && continue
+  for ac_dir in : $occam_subdirs; do test "x$ac_dir" = x: && continue
 
     # Do not complain, so a configure script can configure whichever
     # parts of a large source tree are present.
     test -d "$srcdir/$ac_dir" || continue
+
+    ac_configure_for=""
+    for ac_subdir in : $occam_subdirs_target; do test "x$ac_subdir" = x: && continue
+      if test "x$ac_dir" = "x$ac_subdir"; then
+        # This is where this differs from AC_CONFIG_SUBDIRS: use the current
+        # target as the host in the subdir.
+        ac_configure_for="'--host=$target_alias' 'host_alias=$target_alias'"
+      fi
+    done
 
     ac_msg="=== configuring in $ac_dir (`pwd`/$ac_dir)"
     _AS_ECHO_LOG([$ac_msg])
@@ -151,9 +168,9 @@ if test "$no_recursion" != yes; then
 	ac_sub_cache_file=$ac_top_build_prefix$cache_file ;;
       esac
 
-      AC_MSG_NOTICE([running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir])
+      AC_MSG_NOTICE([running $SHELL $ac_sub_configure $ac_sub_configure_args $ac_configure_for --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir])
       # The eval makes quoting arguments work.
-      eval "\$SHELL \"\$ac_sub_configure\" $ac_sub_configure_args \
+      eval "\$SHELL \"\$ac_sub_configure\" $ac_sub_configure_args $ac_configure_for \
 	   --cache-file=\"\$ac_sub_cache_file\" --srcdir=\"\$ac_srcdir\"" ||
 	AC_MSG_ERROR([$ac_sub_configure failed for $ac_dir])
     fi
@@ -161,4 +178,4 @@ if test "$no_recursion" != yes; then
     cd "$ac_popdir"
   done
 fi
-])# OCCAM_OUTPUT_TARGET_SUBDIRS
+])# OCCAM_OUTPUT_SUBDIRS

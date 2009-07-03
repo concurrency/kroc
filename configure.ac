@@ -13,29 +13,29 @@ if test "x$OCCBUILD_API_VERSION" != x2; then
   AC_MSG_ERROR([this configure script has been built with an out-of-date version of `occbuild.m4'; try clearing your `ACLOCAL' environment variable.])
 fi
 
-AC_CONFIG_SUBDIRS(tools/ilibr)
-AC_CONFIG_SUBDIRS(tools/kroc)
-AC_CONFIG_SUBDIRS(tools/mkoccdeps)
+OCCAM_CONFIG_SUBDIRS(tools/ilibr)
+OCCAM_CONFIG_SUBDIRS(tools/kroc)
+OCCAM_CONFIG_SUBDIRS(tools/mkoccdeps)
 if test $OCCBUILD_TOOLCHAIN != tock; then
-  AC_CONFIG_SUBDIRS(tools/occ21)
+  OCCAM_CONFIG_SUBDIRS(tools/occ21)
 fi
-AC_CONFIG_SUBDIRS(tools/occamdoc)
+OCCAM_CONFIG_SUBDIRS(tools/occamdoc)
 
 if test $OCCBUILD_TOOLCHAIN = kroc -o $OCCBUILD_TOOLCHAIN = tock; then
   OCCAM_CONFIG_TARGET_SUBDIRS(runtime/ccsp)
 fi
 
 if test $OCCBUILD_TOOLCHAIN = kroc; then
-  AC_CONFIG_SUBDIRS(tools/tranx86)
+  OCCAM_CONFIG_SUBDIRS(tools/tranx86)
 
   OCCAM_CONFIG_TARGET_SUBDIRS(runtime/libkrocif)
 fi
 
 if test $OCCBUILD_TOOLCHAIN = tvm; then
-  AC_CONFIG_SUBDIRS(tools/plinker)
-  AC_CONFIG_SUBDIRS(tools/skroc)
-  AC_CONFIG_SUBDIRS(tools/slinker)
-  AC_CONFIG_SUBDIRS(tools/tinyswig)
+  OCCAM_CONFIG_SUBDIRS(tools/plinker)
+  OCCAM_CONFIG_SUBDIRS(tools/skroc)
+  OCCAM_CONFIG_SUBDIRS(tools/slinker)
+  OCCAM_CONFIG_SUBDIRS(tools/tinyswig)
 
   OCCAM_CONFIG_TARGET_SUBDIRS(runtime/libtvm)
   OCCAM_CONFIG_TARGET_SUBDIRS(tvm/posix)
@@ -99,8 +99,8 @@ OCCAM_CONFIG_TARGET_SUBDIRS(demos/ttygames)
 OCCAM_CONFIG_TARGET_SUBDIRS(tests/cgtests)
 OCCAM_CONFIG_TARGET_SUBDIRS(tests/hereticc)
 
-AC_CONFIG_SUBDIRS(doc)
+OCCAM_CONFIG_SUBDIRS(doc)
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
-OCCAM_OUTPUT_TARGET_SUBDIRS
+OCCAM_OUTPUT_SUBDIRS
