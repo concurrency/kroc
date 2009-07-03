@@ -47,6 +47,7 @@ int main () {
 	// Set up the Arduino environment.
 	init ();
 
+	init_interrupts ();
 	serial_stdout_init (57600);
 
 #ifdef DEBUG
@@ -71,8 +72,6 @@ int main () {
 
 	context.get_time = arduino_get_time;
 	context.modify_sync_flags = arduino_modify_sync_flags;
-	context.ext_chan_table = ext_chan_table;
-	context.ext_chan_table_length = ext_chan_table_length;
 	context.sffi_table = sffi_table;
 	context.sffi_table_length = sffi_table_length;
 

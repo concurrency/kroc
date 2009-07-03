@@ -44,7 +44,8 @@ extern "C" {
 	SFFI_FUNCTION sffi_table[] = {
 		ffi_digitalWrite,
 		ffi_digitalRead,
-		ffi_pinMode
+		ffi_pinMode,
+		ffi_wait_for_interrupt
 	};
 	const int sffi_table_length = sizeof(sffi_table) / sizeof(SFFI_FUNCTION);
 }
