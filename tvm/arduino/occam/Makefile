@@ -5,6 +5,7 @@ PROG = blink
 PROGS = \
 	blink \
 	commstime \
+	exttimer \
 	hello \
 	nothing \
 	rawblink \

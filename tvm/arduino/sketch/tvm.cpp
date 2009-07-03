@@ -10,7 +10,7 @@ extern "C" {
 }
 
 static tvm_t tvm;
-static tvm_ectx_t context;
+tvm_ectx_t context;
 
 #define MEM_WORDS 256
 static WORD memory[MEM_WORDS];
@@ -23,6 +23,12 @@ extern "C" {
 	// 16 bits to be useful.
 	static WORD arduino_get_time (ECTX ectx) {
 		return millis ();
+	}
+
+	static void arduino_modify_sync_flags (ECTX ectx, WORD set, WORD clear) {
+		cli ();
+		ectx->sflags = (ectx->sflags & (~clear)) | set;
+		sei ();
 	}
 }
 
@@ -47,6 +53,11 @@ int main () {
 	printf ("Arduino-TVM starting...\n");
 #endif
 
+	// Set up Timer 1 to give us periodic interrupts.
+	TCCR1B &= ~(7 << CS10);
+	TCCR1B |= 5 << CS10;
+	TIMSK1 |= _BV (TOIE1);
+
 	for (int i = 0; i < MEM_WORDS; i++) {
 		memory[i] = MIN_INT;
 	}
@@ -59,6 +70,9 @@ int main () {
 	}
 
 	context.get_time = arduino_get_time;
+	context.modify_sync_flags = arduino_modify_sync_flags;
+	context.ext_chan_table = ext_chan_table;
+	context.ext_chan_table_length = ext_chan_table_length;
 	context.sffi_table = sffi_table;
 	context.sffi_table_length = sffi_table_length;
 
@@ -66,6 +80,7 @@ int main () {
 	int a;
 	printf ("stack pointer is (more or less) %04x\n", (int) &a);
 	printf ("memory is %04x\n", (int) &memory[0]);
+	printf ("context is %04x\n", (int) &context);
 	printf ("wptr is %04x\n", (int) context.wptr);
 	printf ("iptr is %04x\n", (int) context.iptr);
 	delay(1000);
@@ -74,11 +89,11 @@ int main () {
 
 	while (true) {
 #ifdef DEBUG
-		printf ("before tvm_run: eflags=%04x iptr=%04x wptr=%04x inst=%02x\n", (int) context.eflags, (int) context.iptr, (int) context.wptr, (int) read_byte (context.iptr));
+		printf ("before tvm_run: sflags=%04x eflags=%04x iptr=%04x wptr=%04x inst=%02x\n", (int) context.sflags, (int) context.eflags, (int) context.iptr, (int) context.wptr, (int) read_byte (context.iptr));
 
 		int ret = tvm_run_count (&context, 1);
 
-		printf ("after tvm_run = %d (%c): eflags=%04x iptr=%04x wptr=%04x inst=%02x\n", ret, ret, (int) context.eflags, (int) context.iptr, (int) context.wptr, (int) read_byte (context.iptr));
+		printf ("after tvm_run = %d (%c): sflags=%04x eflags=%04x iptr=%04x wptr=%04x inst=%02x\n", ret, ret, (int) context.sflags, (int) context.eflags, (int) context.iptr, (int) context.wptr, (int) read_byte (context.iptr));
 #else
 		int ret = tvm_run (&context);
 #endif
@@ -96,9 +111,15 @@ int main () {
 				}
 				break;
 			}
+			case ECTX_INTERRUPT: {
+				clear_pending_interrupts ();
+				break;
+			}
 			case ECTX_EMPTY: {
-				// FIXME: handle waiting on interrupts, etc.
-				terminate("deadlock", NULL);
+				if (!waiting_on_interrupts ()) {
+					terminate("deadlock", NULL);
+				}
+				break;
 			}
 			case ECTX_SHUTDOWN: {
 				terminate("end of program", NULL);

@@ -1,0 +1,15 @@
+#INCLUDE "wiring.module"
+
+PROC main ()
+  CHAN INT timer:
+  PLACE timer AT 0:
+
+  SEQ
+    beginSerial (57600)
+    WHILE TRUE
+      INT t:
+      SEQ
+        timer ? t
+        serialWriteInt (t)
+        serialWrite ("*n")
+:
