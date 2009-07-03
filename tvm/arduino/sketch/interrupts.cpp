@@ -1,7 +1,6 @@
 #include "tvm-arduino.h"
 
 static WORDPTR timer_channel = (WORDPTR) NOT_PROCESS_P;
-static BYTEPTR timer_ptr = (BYTEPTR) NULL_P;
 static WORD timer_fired = MIN_INT;
 static bool timer_pending = false;
 
@@ -17,9 +16,10 @@ extern "C" {
 		ticks++;
 		if (ticks % 20 == 0) {
 			timer_fired = millis ();
-			if (timer_ptr != (BYTEPTR) NULL_P) {
-				write_word (timer_ptr, timer_fired);
-				timer_ptr = (BYTEPTR) NULL_P;
+			if (timer_channel != (WORDPTR) NOT_PROCESS_P) {
+				WORDPTR ptr = (WORDPTR) WORKSPACE_GET (timer_channel, WS_POINTER);
+				write_word (ptr, timer_fired);
+				WORKSPACE_SET (timer_channel, WS_POINTER, NULL_P);
 				raise_tvm_interrupt (TVM_INTR_TIMER);
 			} else {
 				timer_pending = true;
@@ -60,7 +60,7 @@ static int timer_in (ECTX ectx, WORD count, BYTEPTR pointer) {
 		reschedule = false;
 	} else {
 		timer_channel = ectx->wptr;
-		timer_ptr = pointer;
+		WORKSPACE_SET (timer_channel, WS_POINTER, (WORD) pointer);
 		reschedule = true;
 	}
 
