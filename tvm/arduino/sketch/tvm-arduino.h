@@ -31,12 +31,10 @@ extern "C" {
 }
 //}}}
 //{{{  interrupts.cpp
+extern void init_interrupts (void);
 extern void clear_pending_interrupts (void);
 extern bool waiting_on_interrupts (void);
-extern "C" {
-	extern EXT_CHAN_ENTRY ext_chan_table[];
-	extern const int ext_chan_table_length;
-}
+extern int ffi_wait_for_interrupt (ECTX ectx, WORD args[]);
 //}}}
 //{{{  serial.cpp
 extern void serial_stdout_init(long speed);
