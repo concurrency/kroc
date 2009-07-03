@@ -136,8 +136,10 @@ if test "$no_recursion" != yes; then
     for ac_subdir in : $occam_subdirs_target; do test "x$ac_subdir" = x: && continue
       if test "x$ac_dir" = "x$ac_subdir"; then
         # This is where this differs from AC_CONFIG_SUBDIRS: use the current
-        # target as the host in the subdir.
-        ac_configure_for="'--host=$target_alias' 'host_alias=$target_alias'"
+        # target as the host in the subdir, if one was specified.
+        if test "x$target_alias" != "x"; then
+          ac_configure_for="'--host=$target_alias' 'host_alias=$target_alias'"
+        fi
       fi
     done
 
