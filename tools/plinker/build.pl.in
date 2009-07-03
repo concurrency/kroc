@@ -2,9 +2,10 @@
 
 # Note: make sure you edit build.pl.in not build.pl.
 
-require '@srcdir@/PLinker.pm';
-require '@srcdir@/Instructions.pm';
-require '@srcdir@/TCOFF.pm';
+unshift @INC, '@srcdir@';
+require 'PLinker.pm';
+require 'Instructions.pm';
+require 'TCOFF.pm';
 
 package main;
 
@@ -64,6 +65,10 @@ sub include_file ($) {
 	return $data if exists $included{$file};
 
 	$included{$file}++;
+
+	unless (-e $file) {
+		$file = "$SRCDIR/$file";
+	}
 
 	my $fh;
 	open ($fh, $file) || die $!;
