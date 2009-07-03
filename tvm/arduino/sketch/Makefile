@@ -42,6 +42,7 @@ TVM_CFLAGS = -I../libtvm -I../../../runtime/libtvm
 TVM_LDFLAGS = -L../libtvm -ltvm
 TVM_SRCFILES = \
 	ffi.cpp \
+	interrupts.cpp \
 	serial.cpp \
 	tbc.cpp \
 	tvm.cpp
