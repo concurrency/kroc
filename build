@@ -86,7 +86,7 @@ EOF
 }
 
 status "Generating build system"
-autoreconf -v -f -i "$dir" || fail
+autoreconf -v -f -i || fail
 
 if [ "$1" = "--autoreconf-only" ]; then
 	exit 0
