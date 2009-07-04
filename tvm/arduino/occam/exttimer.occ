@@ -1,12 +1,24 @@
+--** Configure one of the timers to go off periodically, and wait for it.
+
 #INCLUDE "wiring.module"
 
 PROC main ()
+  PLACED [MAX.PORT]BYTE ports 0:
   SEQ
+    -- Set Timer 1 to give us interrupts as slowly as possible (which isn't
+    -- very slowly).
+    ports[TCCR1B] := ports[TCCR1B] /\ (~(7 << CS10))
+    ports[TCCR1B] := ports[TCCR1B] \/ (5 << CS10)
+    ports[TIMSK1] := ports[TIMSK1] \/ BV (TOIE1)
+
     beginSerial (57600)
     WHILE TRUE
       INT t:
       SEQ
-        wait.for.interrupt (0, t)
+        SEQ i = 0 FOR 20
+          SEQ
+            wait.for.interrupt (5, t)
+            serialWrite (".")
         serialWriteInt (t)
         serialWrite ("*n")
 :

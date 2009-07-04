@@ -54,11 +54,6 @@ int main () {
 	printf ("Arduino-TVM starting...\n");
 #endif
 
-	// Set up Timer 1 to give us periodic interrupts.
-	TCCR1B &= ~(7 << CS10);
-	TCCR1B |= 5 << CS10;
-	TIMSK1 |= _BV (TOIE1);
-
 	for (int i = 0; i < MEM_WORDS; i++) {
 		memory[i] = MIN_INT;
 	}

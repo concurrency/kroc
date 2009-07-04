@@ -90,14 +90,7 @@ extern "C" {
 	MAP_SIMPLE_INTERRUPT(PCINT0_vect, vintr_PCINT0)
 	MAP_SIMPLE_INTERRUPT(PCINT1_vect, vintr_PCINT1)
 	MAP_SIMPLE_INTERRUPT(PCINT2_vect, vintr_PCINT2)
-	ISR(TIMER1_OVF_vect) {
-		static int ticks = 0;
-
-		ticks++;
-		if (ticks % 20 == 0) {
-			handle_interrupt (&interrupts[vintr_TIMER1]);
-		}
-	}
+	MAP_SIMPLE_INTERRUPT(TIMER1_OVF_vect, vintr_TIMER1)
 	MAP_SIMPLE_INTERRUPT(TIMER2_OVF_vect, vintr_TIMER2)
 }
 
