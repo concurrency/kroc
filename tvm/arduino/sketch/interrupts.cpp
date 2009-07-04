@@ -2,7 +2,17 @@
 
 static int num_waiting = 0;
 
-#define NUM_INTERRUPTS 2
+enum {
+	vintr_INT0 = 0,
+	vintr_INT1,
+	vintr_PCINT0,
+	vintr_PCINT1,
+	vintr_PCINT2,
+	vintr_TIMER1,
+	vintr_TIMER2,
+	NUM_INTERRUPTS
+};
+
 typedef struct _vinterrupt {
 	WORDPTR wptr;
 	WORD pending;
@@ -70,18 +80,25 @@ static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
 	}
 }
 
+#define MAP_SIMPLE_INTERRUPT(vector, interrupt) \
+	ISR(vector) { \
+		handle_interrupt (&interrupts[interrupt]); \
+	}
 extern "C" {
+	MAP_SIMPLE_INTERRUPT(INT0_vect, vintr_INT0)
+	MAP_SIMPLE_INTERRUPT(INT1_vect, vintr_INT1)
+	MAP_SIMPLE_INTERRUPT(PCINT0_vect, vintr_PCINT0)
+	MAP_SIMPLE_INTERRUPT(PCINT1_vect, vintr_PCINT1)
+	MAP_SIMPLE_INTERRUPT(PCINT2_vect, vintr_PCINT2)
 	ISR(TIMER1_OVF_vect) {
 		static int ticks = 0;
 
 		ticks++;
 		if (ticks % 20 == 0) {
-			handle_interrupt (&interrupts[0]);
+			handle_interrupt (&interrupts[vintr_TIMER1]);
 		}
 	}
-	ISR(TIMER2_OVF_vect) {
-		handle_interrupt (&interrupts[1]);
-	}
+	MAP_SIMPLE_INTERRUPT(TIMER2_OVF_vect, vintr_TIMER2)
 }
 
 void clear_pending_interrupts () {
