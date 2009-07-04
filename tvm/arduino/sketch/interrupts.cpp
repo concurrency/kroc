@@ -21,25 +21,19 @@ static void raise_tvm_interrupt (WORD flag) {
 	context.sflags |= SFLAG_INTR | flag;
 }
 
-static void handle_interrupt (vinterrupt *intr, WORD flag) {
+static void handle_interrupt (vinterrupt *intr) {
 	WORD now = millis ();
 	if (intr->wptr != (WORDPTR) NOT_PROCESS_P) {
 		WORDPTR ptr = (WORDPTR) WORKSPACE_GET (intr->wptr, WS_POINTER);
 		write_word (ptr, now);
 		WORKSPACE_SET (intr->wptr, WS_POINTER, NULL_P);
-		raise_tvm_interrupt (flag);
+		raise_tvm_interrupt (TVM_INTR_VIRTUAL);
 	} else {
 		if (now == (WORD) MIN_INT) {
 			++now;
 		}
 		intr->pending = now;
 	}
-}
-
-static void clear_interrupt (vinterrupt *intr) {
-	context.add_to_queue (&context, intr->wptr);
-	intr->wptr = (WORDPTR) NOT_PROCESS_P;
-	--num_waiting;
 }
 
 static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
@@ -82,20 +76,23 @@ extern "C" {
 
 		ticks++;
 		if (ticks % 20 == 0) {
-			handle_interrupt (&interrupts[0], TVM_INTR_TIMER1);
+			handle_interrupt (&interrupts[0]);
 		}
 	}
 	ISR(TIMER2_OVF_vect) {
-		handle_interrupt (&interrupts[1], TVM_INTR_TIMER2);
+		handle_interrupt (&interrupts[1]);
 	}
 }
 
 void clear_pending_interrupts () {
-	if ((context.sflags & TVM_INTR_TIMER1) != 0) {
-		clear_interrupt (&interrupts[0]);
-	}
-	if ((context.sflags & TVM_INTR_TIMER2) != 0) {
-		clear_interrupt (&interrupts[1]);
+	for (int i = 0; i < NUM_INTERRUPTS; i++) {
+		vinterrupt *intr = &interrupts[i];
+		if (intr->wptr != (WORDPTR) NOT_PROCESS_P) {
+			// Reschedule the process.
+			context.add_to_queue (&context, intr->wptr);
+			intr->wptr = (WORDPTR) NOT_PROCESS_P;
+			--num_waiting;
+		}
 	}
 
 	cli ();
