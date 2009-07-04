@@ -10,6 +10,7 @@ enum {
 	vintr_PCINT2,
 	vintr_TIMER1,
 	vintr_TIMER2,
+	vintr_ADC,
 	NUM_INTERRUPTS
 };
 
@@ -92,6 +93,7 @@ extern "C" {
 	MAP_SIMPLE_INTERRUPT(PCINT2_vect, vintr_PCINT2)
 	MAP_SIMPLE_INTERRUPT(TIMER1_OVF_vect, vintr_TIMER1)
 	MAP_SIMPLE_INTERRUPT(TIMER2_OVF_vect, vintr_TIMER2)
+	MAP_SIMPLE_INTERRUPT(ADC_vect, vintr_ADC)
 }
 
 void clear_pending_interrupts () {

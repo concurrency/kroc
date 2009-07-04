@@ -1,0 +1,39 @@
+--* Read the ADC.
+
+#INCLUDE "wiring.module"
+
+PROC main ()
+  PLACED [MAX.PORT]BYTE ports 0:
+  VAL BYTE channel IS 0:
+  INT16 result:
+  SEQ
+    -- Reference voltage is Vcc; select channel
+    ports[ADMUX] := (1 << REFS0) \/ (channel << MUX0)
+    -- Enable ADC; enable interrupt; clock prescale 128
+    ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ (7 << ADPS0)
+    -- Disable digital inputs on all six ADC pins
+    ports[DIDR0] := #3F
+
+    beginSerial (57600)
+
+    WHILE TRUE
+      SEQ
+        serialWrite ("reading... ")
+
+        -- Start conversion
+        ports[ADCSRA] := ports[ADCSRA] \/ BV (ADSC)
+
+        -- Wait for conversion to complete
+        INT t:
+        wait.for.interrupt (7, t)
+
+        -- Read value
+        -- (We can't do this by retyping ports, since that does a 16-bit read)
+        [2]BYTE bytes RETYPES result:
+        bytes[0], bytes[1] := ports[ADCL], ports[ADCH]
+
+        serialWriteInt (INT result)
+        serialWrite ("*n")
+
+        delay (200)
+:
