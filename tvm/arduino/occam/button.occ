@@ -1,0 +1,45 @@
+--** Flash LEDs on port B when INT0 goes low.
+
+#INCLUDE "wiring.module"
+
+PROC main ()
+  PLACED [MAX.PORT]BYTE ports 0:
+  SEQ
+    -- Set PB* to all outputs, and turn off
+    ports[DDRB] := #FF
+    ports[PORTB] := #00
+
+    -- INT0 is also known as PD2
+    -- Set it to an input
+    ports[DDRD] := ports[DDRD] /\ (~BV (DDD2))
+
+    -- Enable the interrupt, falling-edge triggered
+    ports[EICRA] := 3 << ISC00
+    ports[EIMSK] := BV (INT0)
+
+    beginSerial (57600)
+
+    CHAN BOOL flash:
+    PAR
+      --{{{  wait for button presses
+      WHILE TRUE
+        INT t:
+        SEQ
+          wait.for.interrupt (0, t)
+          flash ! TRUE
+          serialWriteInt (t)
+          serialWrite ("*n")
+      --}}}
+      --{{{  blink LEDs
+      WHILE TRUE
+        SEQ
+          BOOL b:
+          flash ? b
+          SEQ i = 0 FOR 3
+            SEQ
+              ports[PORTB] := #FF
+              delay (100)
+              ports[PORTB] := #00
+              delay (100)
+      --}}}
+:
