@@ -165,7 +165,7 @@ my $jentry;
 my $last_texts	= $etc[@etc - 1];
 my $last_text	= $last_texts->[@$last_texts - 1]->{'etc'};
 foreach my $op (@$last_text) {
-	if ($op->{'name'} eq '.JUMPENTRY') {
+	if (!$jentry && ($op->{'name'} eq '.JUMPENTRY')) {
 		$jentry = $op->{'arg'};
 	}
 }
