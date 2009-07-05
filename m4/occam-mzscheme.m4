@@ -27,5 +27,5 @@ AC_PATH_TOOL([MZSCHEME], [mzscheme], [no])
 
 # FIXME: Test that the version is appropriate.
 
-AM_CONDITIONAL(HAVE_SCHEME_TOOLS, test "x$mzc" != "xno" -a "x$mzscheme" != "no")
+AM_CONDITIONAL(HAVE_SCHEME_TOOLS, test "x$MZC" != "xno" -a "x$MZSCHEME" != "xno")
 ])dnl
