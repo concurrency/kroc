@@ -22,6 +22,7 @@
 #OPTION "E V" -- no compiler libraries, no vector space
 #COMMENT "Type conversion library V1.5 10/12/90"
 #COMMENT "(c) Copyright INMOS Limited 1988, 1989"
+#IF TARGET.BITS.PER.WORD = 32
 #PRAGMA TRANSLATE RealIMul "RealIMul%CHK"
 #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
 #USE "rimul"  --  13-Sep-07
@@ -501,3 +502,4 @@ PROC STRINGTOREAL64 (BOOL Error, REAL64 X, VAL []BYTE string)
     Error := Error OR (chars.scanned <= (SIZE string))
     --}}}
 :
+#ENDIF

@@ -220,13 +220,24 @@ double fAREG, fBREG, fCREG;
 int fAREG_length, fBREG_length, fCREG_length;
 
 /*Pushes the new AREG onto the stack */
-#define PUSH_FPREG(X, Y)  fCREG = fBREG; fCREG_length = fBREG_length; \
-                               fBREG = fAREG; fBREG_length = fAREG_length; \
-                               fAREG = X; fAREG_length = Y
-/*NOTE: This may be risky, always assigning fBREG_length to fAREG_length here 
-  It might also be ok.*/
-#define POP_FPREG(X) fAREG = X; fAREG_length = fBREG_length; \
-                            fBREG = fCREG; fBREG_length = fCREG_length
+#define PUSH_FPREG(X, Y) \
+	do { 					\
+		fCREG 		= fBREG;	\
+		fCREG_length 	= fBREG_length;	\
+		fBREG 		= fAREG; 	\
+		fBREG_length	= fAREG_length; \
+		fAREG 		= (X);		\
+		fAREG_length 	= (Y);		\
+	} while (0)
+
+#define POP_FPREG(X, Y) \
+	do {					\
+		fAREG 		= X;		\
+		fAREG_length 	= Y;		\
+        	fBREG 		= fCREG;	\
+		fBREG_length 	= fCREG_length; \
+	} while (0)
+
 /**************************
 *  0x28 0xFx Starts here  *
 ***************************/
@@ -234,16 +245,9 @@ int fAREG_length, fBREG_length, fCREG_length;
 /* 0x82 - 0x28 0xF2 - fpldnldbi - floating load non-local indexed double */
 TVM_INSTRUCTION (ins_fpldnldbi)
 {
-	/*FIXME!  the * 2 of BREG here is very magical:
-	 * I think this has to do with the index being 64 bit (as in indexing into 64 bit words)
-	 * so the index needs to be multiplied by 2 to get the correct value.  This makes the cgtest
-	 * pass.  There is probably some better way to designate this though... DJD 24012007*/
+	/* BREG is double word index */
 	PUSH_FPREG(read_wordd(wordptr_plus(AREG, (BREG * 2))), DOUBLE);
-	//fCREG = fBREG;
-	//fBREG = fAREG;
-	//fAREG = read_wordd(wordptr_plus(AREG, (BREG * 2)));
-	//printf("AREG %x, BREG %x\n ", AREG, BREG);
-	STACK2(BREG, CREG, BREGt, CREGt);
+	STACK1(CREG, CREGt);
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
@@ -263,10 +267,7 @@ TVM_INSTRUCTION (ins_fpchkerr)
 TVM_INSTRUCTION (ins_fpstnldb)
 {
 	write_wordd(AREG, fAREG);
-	POP_FPREG(fBREG);
-	//fAREG = fBREG;
-	//fBREG = fCREG;
-	//fCREG = UNDEFINE
+	POP_FPREG(fBREG, fBREG_length);
 	STACK2_RET(BREG, CREG, BREGt, CREGt);
 }
 
@@ -274,10 +275,6 @@ TVM_INSTRUCTION (ins_fpstnldb)
 TVM_INSTRUCTION (ins_fpldnlsni)
 {
 	PUSH_FPREG(read_wordf(wordptr_plus(AREG, BREG)), SINGLE);
-	//fCREG = fBREG;
-	//fBREG = fAREG;
-	//fAREG = read_wordf(wordptr_plus(AREG, BREG));
-	//printf("AREG %x, BREG %x\n ", AREG, BREG);
 	STACK1(CREG, CREGt);
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
@@ -285,19 +282,13 @@ TVM_INSTRUCTION (ins_fpldnlsni)
 /* 0x87 - 0x28 0xF7 - fpadd - floating point add */
 TVM_INSTRUCTION (ins_fpadd)
 {
-	//fAREG.len = fBREG.len
-	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
-	{
-		POP_FPREG((float) ((float)fBREG) + ((float)fAREG));
+	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE)) {
+		POP_FPREG((float) ((float)fBREG) + ((float)fAREG), fAREG_length);
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
-		POP_FPREG((double) ((double)fBREG) + ((double)fAREG));
+		POP_FPREG((double) ((double)fBREG) + ((double)fAREG), fAREG_length);
 	} else {
 		SET_ERROR_FLAG(EFLAG_FP);
 	}
-	//fBREG = fCREG;
-	//fCREG = undefined
-	//fp_error flag can be set by the division
-	//round_mode = ToNearest
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
@@ -305,18 +296,9 @@ TVM_INSTRUCTION (ins_fpadd)
 TVM_INSTRUCTION (ins_fpstnlsn)
 {
 
-	// AREG /\ byteselectmask = 0
-	// fAREG.len = sn - means fAREG is a single, not a double.
 	write_wordf(AREG, (float)fAREG);
-	//printf("fAREG is %f, read_word is %f, AREG* is %i\n", fAREG, read_wordf(AREG), AREG);
-
 	STACK2(BREG, CREG, BREGt, CREGt);
-	POP_FPREG(fBREG);
-	//fAREG = fBREG;
-	//fBREG = fCREG;
-	//fCREG = undefined
-	//
-	//round_mode = ToNearest
+	POP_FPREG(fBREG, fBREG_length);
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 
 }
@@ -324,29 +306,19 @@ TVM_INSTRUCTION (ins_fpstnlsn)
 /* 0x89 - 0x28 0xF9 - fpsub - floating point subtract */
 TVM_INSTRUCTION (ins_fpsub)
 {
-	//fAREG.len = fBREG.len
-	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
-	{
-		POP_FPREG((float) ((float)fBREG) - ((float)fAREG));
+	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE)) {
+		POP_FPREG((float) ((float)fBREG) - ((float)fAREG), fAREG_length);
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
-		POP_FPREG((double) ((double)fBREG) - ((double)fAREG));
+		POP_FPREG((double) ((double)fBREG) - ((double)fAREG), fAREG_length);
 	} else {
 		SET_ERROR_FLAG(EFLAG_FP);
 	}
-	//fBREG = fCREG;
-	//fCREG = undefined
-	//fp_error flag can be set by the division
-	//round_mode = ToNearest
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x8A - 0x28 0xFA - fpldnldb - floating point load non-local double */
 TVM_INSTRUCTION (ins_fpldnldb)
 {
-	//fCREG = fBREG;
-	//fBREG = fAREG;
-	//read memory double in gotta see if this actually works.
-	//fAREG = read_wordd(AREG);  
 	PUSH_FPREG(read_wordd(AREG), DOUBLE);
 	STACK2_RET(BREG, CREG, BREGt, CREGt);
 }
@@ -354,19 +326,13 @@ TVM_INSTRUCTION (ins_fpldnldb)
 /* 0x8B - 0x28 0xFB - fpmul - floating point multiply */
 TVM_INSTRUCTION (ins_fpmul)
 {
-	//fAREG.len = fBREG.len
-	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
-	{
-		POP_FPREG((float) ((float)fBREG) * ((float)fAREG));
+	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE)) {
+		POP_FPREG((float) ((float)fBREG) * ((float)fAREG), fAREG_length);
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
-		POP_FPREG((double) ((double)fBREG) * ((double)fAREG));
+		POP_FPREG((double) ((double)fBREG) * ((double)fAREG), fAREG_length);
 	} else {
 		SET_ERROR_FLAG(EFLAG_FP);
 	}
-	//fBREG = fCREG;
-	//fCREG = undefined
-	//fp_error flag can be set by the division
-	//round_mode = ToNearest
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
@@ -375,9 +341,9 @@ TVM_INSTRUCTION (ins_fpdiv)
 {
 	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
 	{
-		POP_FPREG((float) ((float)fBREG) / ((float)fAREG));
+		POP_FPREG((float) ((float)fBREG) / ((float)fAREG), fAREG_length);
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
-		POP_FPREG((double) ((double)fBREG) / ((double)fAREG));
+		POP_FPREG((double) ((double)fBREG) / ((double)fAREG), fAREG_length);
 	} else {
 		SET_ERROR_FLAG(EFLAG_FP);
 	}
@@ -393,35 +359,8 @@ TVM_INSTRUCTION (ins_fpdiv)
 /* 0x8E - 0x28 0xFE - fpldnlsn - floating point load non local single */
 TVM_INSTRUCTION (ins_fpldnlsn) 
 {
-	// From graytransputer book Areg /\ byteselectmask = 0
-	// This is supposed to be word-aligned.
-	//if((AREG | byteselectmask) == 0)
-	//{
-
-	/* From graytransputer book CREG' = undefined */
-	// CREG = UNDEFINED;
-	// FIXME: whats the line above become?
-
-	/*Gray tvm book:
-	 * fAREG' = unpack.sn (RETYPE REAL32 Mem Areg)
-	 * fberg' = fAREG
-	 * fCREG' = fBREG */
-	/* Writing these 'in reverse' so we don't need temp variables. */
-	//fCREG = fBREG;
-	//fBREG = fAREG;
-
-	/* Since fAREG is a double, the unpack.sn (above) may happen automagically.. maybe... */
-	//fAREG = read_wordf( AREG ); 
 	PUSH_FPREG(read_wordf( AREG), SINGLE);
-	//	printf("fAREG is %f, read_word is %f, AREG* is %i\n", fAREG, read_wordf(AREG), AREG);
-
-	/* These come last since AREG gets modified, and the above needs it.*/
-	/* From graytransputer book AREG' = BREG */
-	/* From graytransputer book BREG' = CREG */
-
 	STACK2(BREG, CREG, BREGt, CREGt);
-	/*There's also the rounding mode...*/
-	//round_mode = ToNearest.. hmm.
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
@@ -431,60 +370,51 @@ TVM_INSTRUCTION (ins_fpldnlsn)
 /* 0x91 - 0x29 0xF1 - fpnan - floating point test for NaN */
 TVM_INSTRUCTION (ins_fpnan)
 {
-	//printf("fpnan \n");
-	AREG = isnan(fAREG);
-	STACK(AREG, AREG, BREG, STYPE_DATA, STYPE_DATA, BREGt);
+	WORD result = isnan(fAREG);
+	STACK(result, AREG, BREG, STYPE_DATA, STYPE_DATA, BREGt);
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x92 - 0x29 0xF2 - fpordered - floating point ordereability */
 TVM_INSTRUCTION (ins_fpordered)
 { 
-	//printf("fpordered \n");
-	STACK(AREG, AREG, BREG, AREGt, AREGt, BREGt);
-	/*This is possibly wrong.*/
-	if((isnan(fAREG)) ||  (isnan(fBREG))) {
-		AREG = 0;
+	WORD result;
+	if ((isnan(fAREG)) || (isnan(fBREG))) {
+		result = 0;
 	} else {
-		AREG = 1;
+		result = 1;
 	}
+	STACK(result, AREG, BREG, STYPE_DATA, AREGt, BREGt);
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x93 - 0x29 0xF3 - fpnotfinite - floating point test for not finite */
 TVM_INSTRUCTION (ins_fpnotfinite)
 {
-	//printf("fpnotfinite fAREG %f  %i  %i  %i\n", fAREG, AREG, BREG, CREG);
-	STACK(AREG, AREG, BREG, AREGt, AREGt, BREGt);
-	if(isinf(fAREG)) {
-		AREG = 1; 
+	WORD result;
+	if (isnan(fAREG) || isinf(fAREG)) {
+		result = 1; 
 	} else {
-		AREG = 0;
+		result = 0;
 	}
-	//printf("fpnotfinite fAREG %f  %i  %i  %i\n", fAREG, AREG, BREG, CREG);
-
+	STACK(result, AREG, BREG, STYPE_DATA, AREGt, BREGt);
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x94 - 0x29 0xF4 - fpgt - floating point equals */
 TVM_INSTRUCTION (ins_fpgt)
 {
-	//FIXME: fpgt and fpeq may want to take into account if something is a double or a float?  
-	//fAREG_length = fBREG_length 
-	STACK(AREG, AREG, BREG, AREGt, AREGt, BREGt);
+	WORD result = 0;
 	/* This one pops 2 floating regs off the stack so it does not use the pop macro*/
-	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
-	{
+	if (isnan(fAREG) || isnan(fBREG)) {
+		/* result = 0 */
+	} else if ((fAREG_length == fBREG_length) && (fAREG_length == SINGLE)) {
 		if((float)fBREG > (float)fAREG) {
-			AREG = 1;
-		} else {
-			AREG = 0;
+			result = 1;
 		}
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
 		if((double)fBREG > (double)fAREG) {
-			AREG = 1;
-		} else {
-			AREG = 0;
+			result = 1;
 		}
 	} else { 
 		SET_ERROR_FLAG(EFLAG_FP); 
@@ -495,26 +425,24 @@ TVM_INSTRUCTION (ins_fpgt)
 	//fBREG = undefined
 	//fCREG = undefined 
 	// Could set fp error flag here?  Fp.Error.flg = fp.error.flag |? (fareeg E Inf U NAN) \/ (fBREG E Inf U Nan)
+	STACK(result, AREG, BREG, STYPE_DATA, AREGt, BREGt);
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x95 - 0x29 0xF5 - fpeq - floating point equals */
 TVM_INSTRUCTION (ins_fpeq)
 {
-	//fAREG_length = fBREG_length 
-	STACK(AREG, AREG, BREG, AREGt, AREGt, BREGt);
-	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
-	{
+	WORD result = 0;
+	//fAREG_length = fBREG_length
+	if (isnan(fAREG) || isnan(fBREG)) {
+		/* result = 0; */
+	} else if ((fAREG_length == fBREG_length) && (fAREG_length == SINGLE)) {
 		if((float)fAREG == (float)fBREG) {
-			AREG = 1;
-		} else {
-			AREG = 0;
+			result = 1;
 		}
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
 		if((double)fAREG == (double)fBREG) {
-			AREG = 1;
-		} else {
-			AREG = 0;
+			result = 1;
 		}
 	} else { 
 		SET_ERROR_FLAG(EFLAG_FP);
@@ -524,40 +452,25 @@ TVM_INSTRUCTION (ins_fpeq)
 	//fBREG = undefined
 	//fCREG = undefined 
 	// Could set fp error flag here?  Fp.Error.flg = fp.error.flag |? (fareeg E Inf U NAN) \/ (fBREG E Inf U Nan)
+	STACK(result, AREG, BREG, STYPE_DATA, AREGt, BREGt);
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x96 - 0x29 0xF6 - fpi32tor32 - load int32 as real32 */
 TVM_INSTRUCTION (ins_fpi32tor32)
 {
-	/*push stack up and cast*/
-	//fCREG = fBREG;
-	//fBREG = fAREG;
 	/*Use read_word not read_wordf since the book says not to RETYPE*/
-	//fAREG = read_word(AREG);
 	PUSH_FPREG((float)read_word(AREG), SINGLE);
-	//printf("fpi32tor32 fAREG %f AREG %i\n", fAREG, AREG);
-
 	STACK2(BREG, CREG, BREGt, CREGt);
-	//CREG = undefined;
-	//round_mode = ToNearest
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x98 - 0x29 0xF8 - fpi32tor64 - load int32 as real64 */
 TVM_INSTRUCTION (ins_fpi32tor64)
 {
-	/*push stack up and cast*/
-	//fCREG = fBREG;
-	//fBREG = fAREG;
 	/*Use read_word not read_wordf since the book says not to RETYPE*/
-	//Not sure if this is correct... may need a (double) cast there
-	//fAREG = read_word(AREG);
 	PUSH_FPREG((double)read_word(AREG), DOUBLE);
-	//printf("fpi32tor64 fAREG %f AREG %i\n", fAREG, AREG);
-
 	STACK2(BREG, CREG, BREGt, CREGt);
-	//round_mode = ToNearest
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
@@ -565,7 +478,6 @@ TVM_INSTRUCTION (ins_fpi32tor64)
 /* 0x9A - 0x29 0xFA - fpb32tor64 - load unsigned word as real64 */
 TVM_INSTRUCTION (ins_fpb32tor64)
 {
-	// printf("fpb32tor64 %i \n", *(unsigned int*)AREG);
 	PUSH_FPREG(*(unsigned int *)AREG, DOUBLE);
 	STACK2(BREG, CREG, BREGt, CREGt);
 	SET_ROUNDMODE_RET(FE_TONEAREST);
@@ -574,10 +486,8 @@ TVM_INSTRUCTION (ins_fpb32tor64)
 /* 0x9D - 0x29 0xFD - fprtoi32 - real to int32 */
 TVM_INSTRUCTION (ins_fprtoi32)
 {
-	//fAREG,len = single
-	if(fAREG_length == SINGLE) { 
-		//printf("pre fprtoi32 fAREG %f\n", fAREG);
-
+	/* FIXME: verify fAREG < 2^31 and >= -2^31 */
+	if (fAREG_length == SINGLE) { 
 		/* This truncates any decimals... 
 		 * I think it should actually round since that seems
 		 * to be the default (need to check) */
@@ -585,18 +495,14 @@ TVM_INSTRUCTION (ins_fprtoi32)
 	} else {
 		fAREG = rint(fAREG);
 	}
-
-	//printf("post fprtoi32 fAREG %f\n", fAREG);
-	// Should check if value outside of minint > x < maxint range...
-	// round_mode = ToNearest
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x9E - 0x29 0xFE - fpstnli32 - store non local int32 */
 TVM_INSTRUCTION (ins_fpstnli32)
 {
-	// Should test to see if fAREG contains an value which fits 
-	// into an int...
+	/* FIXME: verify fAREG < 2^31 and >= -2^31 */
+	
 	/* IMPORTANT: This uses write_word instead of write_wordf
 	 * since we are storing the float as an int (casting)i.
 	 * The below line is supposed to correspond to:
@@ -604,25 +510,15 @@ TVM_INSTRUCTION (ins_fpstnli32)
 	 * where pack is either pack.sn or pack.db depending
 	 * on fAREG.len */
 	write_word(AREG, (int)fAREG);
-
 	STACK2(BREG, CREG, BREGt, CREGt);
-	POP_FPREG(fBREG);
-	//fAREG = fBREG;
-	//fBREG = fCREG;
-	//fCREG = undefined
-	//round_mode = ToNearest
+	POP_FPREG(fBREG, fBREG_length);
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
 /* 0x9F - 0x29 0xFF - fpldzerosn - floating load zero single */
 TVM_INSTRUCTION (ins_fpldzerosn)
 {
-	//Set that fBREG is single - (not done yet)
-	//fAREG_length = single
 	PUSH_FPREG((float) 0.0, SINGLE);
-	/*fCREG = fBREG;
-	  fBREG = fAREG;
-	  fAREG = (float) 0.0; */
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
@@ -632,12 +528,7 @@ TVM_INSTRUCTION (ins_fpldzerosn)
 /* 0xA0 - 0x2A 0xF0 - fpldzerodb - floating load zero double */
 TVM_INSTRUCTION (ins_fpldzerodb)
 {
-	//Set that fBREG is double - (not done yet)
-	//fAREG_length = double
 	PUSH_FPREG((double) 0.0, DOUBLE);
-	/*fCREG = fBREG;
-	  fBREG = fAREG;
-	  fAREG = (double) 0.0;*/
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
@@ -645,7 +536,6 @@ TVM_INSTRUCTION (ins_fpldzerodb)
 /* This rounds FAreg, wrt Round_Mode, to a floating point number of the same format iwth an integer value. - from Gray Book.*/
 TVM_INSTRUCTION (ins_fpint)
 {
-	/*So we round fAREG to the nearest int by casting it an int and then back to a float... hmm.*/
 	if(fAREG_length == SINGLE) {
 		fAREG = rintf(fAREG);
 	} else {
@@ -657,10 +547,7 @@ TVM_INSTRUCTION (ins_fpint)
 /* 0xA3 - 0x2A 0xF3 - fpdup - floating point duplicate */
 TVM_INSTRUCTION (ins_fpdup)
 {
-	//fAREG = fAREG;
 	PUSH_FPREG(fAREG, fAREG_length);
-	//fBREG = fAREG;
-	//fCREG = fBREG;
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
@@ -745,20 +632,13 @@ TVM_INSTRUCTION (ins_fpldnlmulsn)
  * which are fpremfirst and fpremstep respectivley */
 TVM_INSTRUCTION (ins_fprem)
 {
-	//fAREG_length = fBREG_length
-
-	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE))
-	{
+	if((fAREG_length == fBREG_length) && (fAREG_length == SINGLE)) {
 		fAREG = remainderf(fBREG, fAREG);
 	} else if ((fAREG_length == fBREG_length) && (fAREG_length == DOUBLE)) {
 		fAREG = remainder(fBREG, fAREG);
 	} else { 
 		SET_ERROR_FLAG(EFLAG_FP);
 	}
-	//FIXME:  Really, what we want here is a check for the size of the register, and do fmod or fmodf depending.
-	// fBREG unchanged?
-	// fCREG = undefined.
-	STACK2(BREG, CREG, BREGt, CREGt);
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 
 	/* From gray book: The value of fBREG' will be the quotient used to produce the remainder when (fBREG.exp - fAREG.exp)
@@ -800,11 +680,9 @@ break;
 /* 0xD1 - 0x2D 0xF1 - fpdivby2 - floating point divide by 2 */
 TVM_INSTRUCTION (ins_fpdivby2)
 {
-	// Again, checking for single or double should take place...
-	if(fAREG_length == SINGLE)
-	{ 
-		fAREG = (float)fAREG /(float) 2.0;
-	} else { //if ( fAREG_length && DOUBLE) {
+	if (fAREG_length == SINGLE) { 
+		fAREG = (float)fAREG / (float) 2.0;
+	} else {
 		fAREG = fAREG / 2.0;
 	}
 	//fp error can be set from fAREG * 2
@@ -814,9 +692,7 @@ TVM_INSTRUCTION (ins_fpdivby2)
 /* 0xD2 - 0x2D 0xF2 - fpmulby2 - floating point multiply by 2 */
 TVM_INSTRUCTION (ins_fpmulby2)
 {
-	// Again, checking for single or double should take place...
-	if(fAREG_length == SINGLE)
-	{
+	if (fAREG_length == SINGLE) {
 		fAREG = (float)fAREG * (float)2.0;
 	} else { //if ( fAREG_length && DOUBLE) {
 		fAREG = fAREG * 2.0;
@@ -833,17 +709,12 @@ TVM_INSTRUCTION (ins_fpsqrt)
 	 * single instruction.  The question is, is it safe to assume
 	 * that we have a math.h libary on every system, and does it 
 	 * compromise portability? (if fp is used, then yes, probably)*/
-	if(fAREG_length == SINGLE) 
-	{ 
+	if(fAREG_length == SINGLE) { 
 		fAREG = (float)sqrtf(fAREG);
 	} else { //if (fAREG_length == DOUBLE) {
 		fAREG = sqrt(fAREG);
 	} 
-	//fBREG = undefined
-	//fCREG = undefined
-	//
 	//fp_error_flag = can be set by error from SQRT-ieee FAREG
-	//Round_Mode = ToNearest
 	SET_ROUNDMODE_RET(FE_TONEAREST);
 }
 
@@ -852,7 +723,6 @@ TVM_INSTRUCTION (ins_fpsqrt)
  *   but was strange (0x44; 0x2A; 0xFB), and was renumbered in kroc.*/
 TVM_INSTRUCTION (ins_fprz)
 {
-	//printf("setting rounding to fprz\n");
 	SET_ROUNDMODE_RET(FE_TOWARDZERO);
 }
 
@@ -887,7 +757,7 @@ TVM_INSTRUCTION (ins_fpexpdec32)
 /* 0xDB - 0x2D 0xFB - fpabs - floating point absolute value */
 TVM_INSTRUCTION (ins_fpabs)
 {
-	if(fAREG_length == SINGLE) {
+	if (fAREG_length == SINGLE) {
 		fAREG = fabsf(fAREG);
 	} else {
 		fAREG = fabs(fAREG);

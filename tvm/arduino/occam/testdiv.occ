@@ -1,0 +1,15 @@
+#INCLUDE "wiring.module"
+
+PROC main ()
+  INT a:
+  INT32 b:
+  SEQ
+    serialWrite ("1*n")
+    a := 4
+    serialWrite ("2*n")
+    b := 2
+    serialWrite ("3*n")
+    b := b + 3
+    b := (INT32 a) / 2
+    serialWrite ("end*n")
+:

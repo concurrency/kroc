@@ -1,3 +1,8 @@
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- contributed by Adam Sampson <ats@offog.org>
+
 #INCLUDE "course.module"
 
 VAL INT N IS 2500000:
@@ -16,8 +21,8 @@ VAL []REAL64 hs.f IS [0.3029549426680, 0.1979883004921, 0.1975473066391, 0.30150
 
 PROTOCOL FASTA
   CASE
-    header ; MOBILE []BYTE ; MOBILE []BYTE
-    data ; BYTE
+    header; MOBILE []BYTE; MOBILE []BYTE
+    data; BYTE
     done
 :
 
@@ -32,7 +37,7 @@ PROC main (CHAN BYTE out!)
   PROC repeat (VAL []BYTE d, VAL INT n, CHAN FASTA out!)
     VAL INT sd IS SIZE d:
     SEQ i = 0 FOR n
-      out ! data ; d[i \ sd]
+      out ! data; d[i \ sd]
   :
 
   PROC random (VAL []BYTE bs, VAL []REAL64 fs, VAL INT n, CHAN FASTA out!)
@@ -52,7 +57,7 @@ PROC main (CHAN BYTE out!)
           gen.random (1.0, r)
           IF j = 0 FOR nb
             cfs[j + 1] > r
-              out ! data ; bs[j]
+              out ! data; bs[j]
   :
 
   PROC output (CHAN FASTA in?, CHAN BYTE out!)
@@ -61,7 +66,7 @@ PROC main (CHAN BYTE out!)
     WHILE running
       in ? CASE
         MOBILE []BYTE id, desc:
-        header ; id ; desc
+        header; id; desc
           SEQ
             IF
               count <> 0
@@ -75,7 +80,7 @@ PROC main (CHAN BYTE out!)
             out ! '*n'
             count := 0
         BYTE b:
-        data ; b
+        data; b
           SEQ
             out ! b
             count := (count + 1) \ 60
@@ -97,11 +102,11 @@ PROC main (CHAN BYTE out!)
   CHAN FASTA fasta:
   PAR
     SEQ
-      fasta ! header ; "ONE" ; "Homo sapiens alu"
+      fasta ! header; "ONE"; "Homo sapiens alu"
       repeat (ALU, N * 2, fasta!)
-      fasta ! header ; "TWO" ; "IUB ambiguity codes"
+      fasta ! header; "TWO"; "IUB ambiguity codes"
       random (iub.b, iub.f, N * 3, fasta!)
-      fasta ! header ; "THREE" ; "Homo sapiens frequency"
+      fasta ! header; "THREE"; "Homo sapiens frequency"
       random (hs.b, hs.f, N * 5, fasta!)
       fasta ! done
     output (fasta?, out!)

@@ -1,0 +1,150 @@
+--
+--	butterflies.occ -- plain butterflies demo
+--	Copyright (C) 2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "graphics3d.module"
+
+VAL INT N.BUTTERFLIES IS 200:
+
+--{{{  PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
+--* Implements a butterfly that crosses the screen, starts in a random location.
+-- @private
+PROC bfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)
+  SEQ
+
+    CHAN MOBILE []G3D.POINT3 gp1, gp2:
+    CHAN MOBILE []G3D.POINT2.3 gc1:
+    CHAN MOBILE []G3D.POLY pc1:
+    CHAN MOBILE []G3D.POLY.SCAN ps1:
+
+    CHAN G3D.GEN.CONTROL gen.ctl:
+    CHAN G3D.ROT.CONTROL rot.ctl:
+    CHAN G3D.PRJ.CONTROL prj.ctl:
+    CHAN G3D.PGN.CONTROL pgn.ctl:
+    CHAN G3D.PSC.CONTROL psc.ctl:
+    CHAN G3D.RDR.CONTROL rdr.ctl:
+    CHAN INT trigger1, trigger2:
+    PAR
+      fbypoints.generator (trigger1?, gp1!, gen.ctl?)
+      points3d.rotate (gp1?, gp2!, rot.ctl?)
+      points.3d.to.2d3 (gp2?, gc1!, prj.ctl?, width, height)
+      flutterby.points (gc1?, pc1!, pgn.ctl?)
+      -- poly.scanlines (pc1?, ps1!, psc.ctl?)
+      -- render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger2!)
+      render.polyframe.trigger (pc1?, rlink.in?, rdr.ctl?, trigger2!, width, height)
+
+
+      INT seed:
+      TIMER tim:
+      SEQ
+        rot.ctl ! set.mode; G3D.ROTATE.MODE.X \/ G3D.ROTATE.MODE.Y
+        rot.ctl ! set.angle; PI / 2.0
+
+        prj.ctl ! set.3dshift; [-12.0, 0.0, 0.0]
+
+        tim ? seed
+        seed := (seed >> 2) + 1
+
+        -- kick-start
+        -- trigger1 ! 0
+
+        WHILE TRUE
+          INT yoff, zoff, speed:
+          REAL32 xpos, ypos, zpos:
+          INT t:
+          INT val:
+          SEQ
+            --{{{  initialise random state
+            yoff, seed := random (120, seed)
+            yoff := yoff - 60
+            zoff, seed := random (200, seed)
+            zoff := zoff - 100
+            speed, seed := random (100, seed)
+            speed := speed + 10
+
+            xpos := -12.0
+            ypos := (REAL32 TRUNC yoff) / 10.0
+            zpos := (REAL32 TRUNC zoff) / 10.0
+
+            [4]BYTE pix RETYPES val:
+            SEQ v = 0 FOR 3
+              INT n:
+              SEQ
+                n, seed := random (127, seed)
+                pix[v] := BYTE ((n + 100) /\ #FF)
+            --}}}
+
+            pgn.ctl ! set.face.colour; 0; val
+            pgn.ctl ! set.backfaces; TRUE
+            pgn.ctl ! set.trimap; FALSE
+            rdr.ctl ! set.mode; G3D.RENDER.MODE.NONE
+
+            VAL REAL32 diff IS ((REAL32 TRUNC speed) / 70.0):
+            WHILE xpos < 24.0
+              SEQ
+                prj.ctl ! set.3dshift; [xpos, ypos, zpos]
+                xpos := xpos + diff
+
+                INT any:
+                SEQ
+                  trigger2 ? any
+                  trigger1 ! any
+
+:
+--}}}
+--{{{  PROC bfly.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)
+PROC bfly.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)
+  G3D.RENDER.ENGINE! rlink:
+  G3D.RENDER.ENGINE? rsvr:
+  SEQ
+    rsvr, rlink := MOBILE G3D.RENDER.ENGINE
+    FORK bfly.network (rsvr?, width, height)
+    new.link ! rlink
+
+:
+--}}}
+--{{{  PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
+--* Top-level process.
+--
+-- @param kyb Keyboard.
+-- @param scr Screen.
+-- @private
+--
+PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
+  VAL INT SCR.WIDTH IS G3D.DEFAULT.WIDTH:
+  VAL INT SCR.HEIGHT IS G3D.DEFAULT.HEIGHT:
+  SEQ
+
+    CHAN RASTER rc1, rc2, rc3:
+    CHAN G3D.RENDER.ENGINE! rre:
+    CHAN G3D.TMR.CONTROL tmr.ctl:
+    PAR
+      raster.timed.buffer (rc1?, rc2!, 40, tmr.ctl?)
+      raster.display.simple ("Inmos Butterflies", SCR.WIDTH, SCR.HEIGHT, 2, rc2?, rc3!)
+      raster.chain (rc3?, rc1!, rre?, FALSE)
+
+      SEQ
+        tmr.ctl ! set.fps; 5
+        SEQ i = 0 FOR N.BUTTERFLIES
+          bfly.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+        tmr.ctl ! set.fps; 60
+:
+--}}}
+

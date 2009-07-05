@@ -298,13 +298,6 @@ PROC socket.fullwrite.addr (SOCKET sock, VAL INT addr, size, INT result)
     B.sl.fullwrite.addr (sock, addr, size, result)
 :
 --}}}
---{{{  PROC socket.addr.of.buffer (SOCKET sock, VAL []BYTE buf, INT addr.result)
-PROC socket.addr.of.buffer (SOCKET sock, VAL []BYTE buf, INT addr.result)
-  ASM
-    LD ADDRESSOF buf
-    ST addr.result
-:
---}}}  
 --{{{  PROC socket.connect (SOCKET sock, INT result)
 --* Connect a socket.
 -- Attempt to make a connection to the remote port specified in [@code

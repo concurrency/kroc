@@ -1,0 +1,46 @@
+--** Translation into occam of the "simple.c" example from libplayerc.
+
+#INCLUDE "occplayer.module"
+#INCLUDE "useful.module"
+
+PROC main (CHAN BYTE out!)
+  playerc.client.t client:
+  playerc.position2d.t position2d:
+  INT result:
+  SEQ
+    -- Create a client and connect it to the server.
+    playerc.client.create (0, "localhost*#00", 6665, client)
+    playerc.client.connect (client, result)
+    ASSERT (result = 0)
+
+    -- Create and subscribe to a position2d device.
+    playerc.position2d.create (client, 0, position2d)
+    playerc.position2d.subscribe (position2d, PLAYER.OPEN.MODE, result)
+    ASSERT (result = 0)
+
+    -- Make the robot spin!
+    playerc.position2d.set.cmd.vel (position2d, 0.0, 0.0, REAL64 ROUND (deg.to.rad (40.0)), PLAYER.POSITION2D.CMD.VEL, result)
+    ASSERT (result = 0)
+
+    SEQ i = 0 FOR 200
+      SEQ
+        -- Wait for new data from server
+        playerc.client.read (client, result)
+
+        -- Print current robot pose
+        REAL64 px, py, pa:
+        SEQ
+          playerc.position2d.t.px.get (position2d, px)
+          playerc.position2d.t.py.get (position2d, py)
+          playerc.position2d.t.pa.get (position2d, pa)
+          print.srsr ("position2d : ", REAL32 ROUND px, " ", REAL32 ROUND py, out!)
+          print.srn (" ", REAL32 ROUND pa, out!)
+
+    -- Shutdown
+    playerc.position2d.unsubscribe (position2d, result)
+    ASSERT (result = 0)
+    playerc.position2d.destroy (position2d)
+    playerc.client.disconnect (client, result)
+    ASSERT (result = 0)
+    playerc.client.destroy (client)
+:

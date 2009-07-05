@@ -1,0 +1,42 @@
+# A simple Player/Stage world file.
+# World: one-pillar
+# Generated: Thursday, March 30th, 2006
+
+# defines Pioneer-like robots
+include "pioneer.inc"
+
+# defines 'map' object used for floorplans
+include "map.inc"
+
+# defines sick laser
+include "sick.inc"
+
+# size of the world in meters
+size [32 32]
+
+# set the resolution of the underlying raytrace model in meters
+resolution 0.02
+
+# configure the GUI window
+window
+( 
+  size [ 520.000 520.000 ] 
+  center [0 0] 
+  scale 0.070 
+)
+
+# load an environment bitmap
+map
+( 
+  bitmap "one-pillar.png"
+  size [32 32]
+)
+
+pioneer2dx
+(
+	name "Johnny0"
+	color "red"
+	pose [6.0 -4.0 317.0]
+	sick_laser( )
+)
+ 

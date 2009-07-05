@@ -56,12 +56,12 @@ gen_headers = \
 all-local: $(gen_headers)
 
 kitable.h: $(SCHED_SOURCE) $(MAKE_HEADER)
-	python $(MAKE_HEADER) --kitable kitable.h $(top_srcdir)/config.h $(SCHED_SOURCE)
+	python $(MAKE_HEADER) --kitable kitable.h $(top_builddir)/config.h $(SCHED_SOURCE)
 
 calltable.h: $(SCHED_SOURCE) $(MAKE_HEADER)
-	python $(MAKE_HEADER) --calltable calltable.h $(top_srcdir)/config.h $(SCHED_SOURCE)
+	python $(MAKE_HEADER) --calltable calltable.h $(top_builddir)/config.h $(SCHED_SOURCE)
 
 ccsp_cif_stubs.h: $(SCHED_SOURCE) $(MAKE_HEADER)
-	python $(MAKE_HEADER) --cif ccsp_cif_stubs.h $(top_srcdir)/config.h $(SCHED_SOURCE)
+	python $(MAKE_HEADER) --cif ccsp_cif_stubs.h $(top_builddir)/config.h $(SCHED_SOURCE)
 
 CLEANFILES = $(gen_headers)

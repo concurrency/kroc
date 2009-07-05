@@ -495,13 +495,13 @@ PROC Events (CHAN RASTER.EVENT events?, CHAN COMMANDS commands!)
                   WHILE any[type] <> RASTER.ET.KEYDOWN
                     events ? any
                 commands ! Freeze
-            SDLK.LEFT
+            INT SDLK.LEFT
               commands ! Anticlockwise
-            SDLK.RIGHT
+            INT SDLK.RIGHT
               commands ! Clockwise
-            SDLK.UP
+            INT SDLK.UP
               commands ! Faster
-            SDLK.DOWN
+            INT SDLK.DOWN
               commands ! Slower
             ELSE
               SKIP

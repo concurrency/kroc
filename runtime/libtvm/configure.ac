@@ -38,7 +38,9 @@ AC_ARG_ENABLE([type-shadow], AC_HELP_STRING([--enable-type-shadow], [enable shad
 #  Host Configuration
 #########################
 
+have_dword=no
 memory_ops=native
+memory_interface=native
 word_length=4
 x_fpu=no
 x_os=none
@@ -48,14 +50,20 @@ x_endian=little
 case "$host_cpu" in
   arm*)
     ;;
+  avr*)
+    word_length=2
+    memory_interface=avr
+    have_dword=yes
+    ;;
   bfin*)
     ;;
   h8300)
     x_endian=big
-    wordlength=2
+    word_length=2
     ;;
   i*86)
     x_fpu=yes
+    have_dword=yes
     ;;
   mips | mipsbe)
     x_endian=big
@@ -64,7 +72,7 @@ case "$host_cpu" in
     ;;
   msp430)
     x_endian=big
-    wordlength=2
+    word_length=2
     ;;
   ppc)
     x_endian=big
@@ -218,6 +226,15 @@ if test "$memory_allocator" != "none"; then
 fi
 AM_CONDITIONAL(TVM_TLSF, test "$memory_allocator" = "tlsf")
 
+# Memory interface
+case "$memory_interface" in
+  avr)
+    AC_DEFINE([TVM_MEM_INTF_AVR], 1, [define to use the AVR memory interface])
+    ;;
+  native)
+    ;;
+esac
+
 # Memory Operations
 case "$memory_ops" in
   custom)
@@ -293,17 +310,24 @@ fi
 # Word length
 AC_DEFINE_UNQUOTED([TVM_WORD_LENGTH], [$word_length], [define emulated word length])
 
+# DWORDs
+if test "$have_dword" = "yes"; then
+  AC_DEFINE([TVM_HAVE_DWORD], 1, [define if C compiler supports maths on double words])
+fi
+
 #########################
 #  Output
 #########################
 
 AC_MSG_NOTICE([----------------------------------------------------])
 AC_MSG_NOTICE([dispatch-switch : $dispatch_switch])
+AC_MSG_NOTICE([DWORD           : $have_dword])
 AC_MSG_NOTICE([endian          : $endian])
 AC_MSG_NOTICE([external bundles: $external_channel_bundles])
 AC_MSG_NOTICE([FPU             : $x_fpu])
 AC_MSG_NOTICE([memory allocator: $memory_allocator])
 AC_MSG_NOTICE([memory ops      : $memory_ops])
+AC_MSG_NOTICE([memory interface: $memory_interface])
 AC_MSG_NOTICE([occam-pi support: $enable_pi])
 AC_MSG_NOTICE([OS support      : $x_os])
 AC_MSG_NOTICE([profiling       : $profiling])

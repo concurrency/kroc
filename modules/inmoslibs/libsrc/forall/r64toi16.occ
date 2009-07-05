@@ -49,9 +49,9 @@ INT16 FUNCTION REAL64TOINT16 (VAL INT Mode, VAL REAL64 X)
 
   INT N :
   VALOF
-    --{{{  #USE "occamutl.lib"
+    --{{{  #USEs
     #PRAGMA TRANSLATE QUADSHIFTLEFT "QUADSHIFTLEFT%CHK"
-    #USE "occamutl.lib"  --  6-Apr-90
+    #USE "qshiftl"
     --}}}
     VAL [4]INT X RETYPES X :
     INT Dump, Guard, Xexp :

@@ -1,0 +1,26 @@
+--** occam definitions for AVR processors.
+-- @module avr
+
+#IF NOT (DEFINED (AVR.MODULE))
+#DEFINE AVR.MODULE
+
+#DEFINE AVR.ATMEGA328P
+
+#IF DEFINED (AVR.ATMEGA328P)
+#INCLUDE "iom328p.inc"
+#ENDIF
+
+BYTE INLINE FUNCTION BV (VAL INT bit) IS 1 << bit:
+
+--* A value that's guaranteed to be higher than the highest port value defined
+-- by this module.
+--
+-- This is for placing an array over all the ports:
+--
+-- [@code
+-- PLACED [MAX.PORT]BYTE ports 0:
+-- ports[PORTB] := 42
+-- ]
+VAL INT MAX.PORT IS #200:
+
+#ENDIF

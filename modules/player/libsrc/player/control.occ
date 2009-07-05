@@ -1,0 +1,485 @@
+--** @module player
+
+#INCLUDE "occplayer.module"
+
+#INCLUDE "player.inc"
+#USE "debug"
+
+-- laser.read : struct vint rint rint
+-- Queries the laser.t structure; returns the 
+-- distance and angle for a given sample number.
+PROC laser.read(VAL playerc.laser.t laser,
+                VAL INT sample,
+                RESULT INT dist,
+                RESULT INT angle)
+  #IF TRUE
+  -- FIXME: temporary hack until I add array accessors back to SWIG
+  INT ptr:
+  SEQ
+    playerc.laser.t.scan.get(laser, ptr)
+    PLACED [2]REAL64 data AT ptr + (sample * (BYTESIN (REAL64))):
+    SEQ
+      dist := (INT ROUND(100.0 * data[0]))
+      angle := (INT ROUND(data[1] * 57.3))
+  #ELSE
+  REAL64 result:
+  SEQ
+    playerc.laser.t.scan.get.at(laser, sample, 0, result)
+    dist := (INT ROUND(100.0 * result))
+    playerc.laser.t.scan.get.at(laser, sample, 1, result)
+    angle := (INT ROUND(result * 57.3))
+  #ENDIF
+:
+
+PROC sonar.read(VAL playerc.sonar.t sonar,
+                VAL INT sample,
+                RESULT INT dist)
+  #IF TRUE
+  -- FIXME: temporary hack until I add array accessors back to SWIG
+  INT ptr:
+  SEQ
+    playerc.sonar.t.scan.get(sonar, ptr)
+    PLACED [1]REAL64 data AT ptr + (sample * (BYTESIN (REAL64))):
+    dist := (INT ROUND(100.0 * data[0]))
+  #ELSE
+  REAL64 result:
+  SEQ
+    playerc.sonar.t.scan.get.at(sonar, sample, result)
+    dist := (INT ROUND(100.0 * result))
+  #ENDIF
+:
+
+PROC robot.delay(VAL INT time)
+  TIMER tim:
+  INT t:
+  SEQ
+    debug.string(debug.time, "Starting delay of ")
+    debug.int(debug.time, time)
+    debug.newline(debug.time)
+    tim ? t
+    tim ? AFTER t PLUS time
+    debug.string(debug.time, "End of delay.")
+    debug.newline(debug.time)
+:
+
+--* Read new data for a client.
+PROC client.refresh (VAL playerc.client.t client)
+  INT success:
+  playerc.client.read (client, success)
+:
+
+-- This process protects clients when reading data from player and also
+-- updates the data by doing a playerc.client.read
+--
+-- In the future we may want to provide a refresh process which only updates
+-- when it thinks its neccesary. Ie if two sensors are read within an extremly
+-- short time of each other, we may regard the data as not yet stale, and give
+-- them that instead of doing a whole new playerc.client.read.
+-- playerc.client.read is probably a reasonably expensive operation
+PROC refresh.process.moo(VAL playerc.client.t client, []CHAN BOOL clients)
+  WHILE TRUE
+    PRI ALT i = 0 FOR SIZE clients   -- Should be a FAIR ALT
+      BOOL dummy:
+      #IF FALSE
+      clients[i] ? dummy            -- Client requests entry to critical region
+        SEQ
+          client.refresh(client)       -- Data is refreshed, client can now enter region
+          clients[i] ? dummy           -- Client leaves critical region
+          clients[i] ? dummy           -- Client leaves critical region
+      #ELSE
+      clients[i] ?? dummy            -- Client requests entry to critical region
+        client.refresh(client)       -- Data is refreshed, client can now enter region
+        clients[i] ? dummy           -- Client leaves critical region
+      #ENDIF
+:
+
+PROC refresh.process(VAL playerc.client.t client, []CHAN BOOL clients)
+  TIMER tim:
+  INT last.read:
+  VAL INT min.read.delay IS 500000:
+  SEQ
+    client.refresh(client)       -- Data is refreshed
+    tim ? last.read              -- Record when we last read anything
+    WHILE TRUE
+      PRI ALT i = 0 FOR SIZE clients   -- Should be a FAIR ALT
+        BOOL dummy:
+        clients[i] ?? dummy            -- Client requests entry to critical region
+          INT t:
+          SEQ
+            tim ? t
+            IF
+              t AFTER (last.read PLUS min.read.delay)
+                SEQ
+                  client.refresh(client)       -- Data is refreshed, client can now enter region
+                  tim ? last.read              -- Record when we last read something
+              TRUE
+                SKIP
+          clients[i] ? dummy           -- Client leaves critical region
+:
+
+
+-- This code assumes that we are never going to set a updatefrequency which is
+-- so high that we are going to update so often that clients will never get a
+-- chance to read. I think this is an ok assumption.
+--
+-- This proc allows a process to stop the updates to the data sent to us by
+-- the various devices, so that updates do not happen while a process is
+-- reading that data.
+--
+-- A process should send a message to this process when they would like to
+-- start reading the data and when they are done.
+--
+-- Update frequency is specified in Hz, 1 = once a second, 10 Hz (updating 10
+-- times a second) would seem to be an ok value (on the real bot at least...)
+--
+-- Various improvements that could be made:
+--  - Allow several sensors to read data at the same time, though we have to be
+--    careful that we dont get overlapping reads such that the refresh process
+--    is never re-enabled (possibly allowing only one read each on a refresh)
+#IF FALSE
+PROC refresh.process.old(VAL playerc.client.t client, VAL INT Hz, []CHAN BOOL clients)
+  VAL INT delay IS second/Hz:
+  INITIAL BOOL enabled IS TRUE:
+  INITIAL INT  enabled.by IS -1:
+  INT t:
+  TIMER tim:
+  SEQ
+    tim ? t
+    t := t PLUS delay
+    WHILE TRUE
+      PRI ALT
+        -- If we are enabled and timed out, refresh the data
+        enabled & tim ? AFTER t
+          SEQ
+            robot.refresh(client)
+            t := t PLUS delay
+        -- If we are not enabled and timed out, do not refresh the data, but we
+        -- still would like to set the new timeout value
+        NOT enabled & tim ? AFTER t
+          t := t PLUS delay
+        -- Deal with clients who want to read data, and do not want the data
+        -- to be updated while they are reading it.
+        PRI ALT i = 0 FOR SIZE clients
+          BOOL dummy:
+          -- Only allow reads when the refresh process is NOT enabled, or
+          -- if the refresh process is enabled, only allow a read from the
+          -- channel which sent the first read.
+          (enabled OR ((NOT enabled) AND (i = enabled.by))) & clients[i] ? dummy
+            SEQ
+              enabled.by := i
+              enabled := NOT enabled
+:
+#ENDIF
+
+PROC laser.loop(VAL playerc.laser.t laser,
+                CHAN BOOL refresh.reading!, CHAN LASER sick!)
+  WHILE TRUE
+    LASER laser.data:
+    SEQ
+      -- Critical region
+      refresh.reading ! TRUE
+      SEQ i = 0 FOR num.laser.samples
+        INT angle:
+        -- Cludge around VAL INT problem
+        INITIAL INT notval.i IS i:
+        laser.read(laser, notval.i, laser.data[i], angle)
+      -- Critical region END
+      refresh.reading ! TRUE
+      sick ! laser.data
+:
+
+PROC sonar.loop(VAL playerc.sonar.t sonar,
+                CHAN BOOL refresh.reading!, CHAN SONAR devan!)
+  WHILE TRUE
+    SONAR sonar.data:
+    SEQ
+      -- Critical region
+      refresh.reading ! TRUE
+      SEQ i = 0 FOR num.sonar.samples
+        -- Cludge around VAL INT problem
+        INITIAL INT notval.i IS i:
+        sonar.read(sonar, notval.i, sonar.data[i])
+      -- Critical region END
+      refresh.reading ! TRUE
+      devan ! sonar.data
+:
+
+
+
+PROC check.success(VAL INT success, VAL []BYTE str)
+  IF 
+    success = 0 
+      SKIP
+    TRUE
+      SEQ
+        debug.string(debug.success.check, "Failed: ")
+        debug.string(debug.success.check, str)
+        debug.newline(debug.success.check)
+        STOP  
+:
+
+PROC robot.init(RESULT playerc.client.t client,
+                RESULT playerc.mclient.t mclient,
+                RESULT playerc.position2d.t position, 
+                RESULT playerc.laser.t laser,
+                RESULT playerc.sonar.t sonar,
+                VAL []BYTE player.host,
+                VAL INT player.port)
+  INITIAL INT index IS 0:
+  [MAX.HOST.NAME.LENGTH]BYTE host:
+  INT success:
+  SEQ
+    -- Sort out hostname
+    SEQ i = 0 FOR SIZE player.host
+      host[i] := player.host[i]
+    IF
+      (SIZE host) < (SIZE player.host)
+        host[SIZE player.host] := '*#00'
+      TRUE
+        host[(SIZE host) - 1] := '*#00'
+    -- Create a playerc client
+    -- Set the mclient structure to NULL
+    mclient := 0
+    playerc.client.create(mclient, host, player.port, client)
+    --check.success((INT client), "Failed to create client structure.")
+    playerc.client.connect(client, success)
+    check.success(success, "Failed to connect to Stage.") 
+    playerc.client.datamode(client, BYTE PLAYER.DATAMODE.PULL, success)
+    check.success(success, "Failed to set datamode.")
+    playerc.client.set.replace.rule(client, -1, -1, PLAYER.MSGTYPE.DATA, -1, 1, success)
+    check.success(success, "Failed to set replacement rule")
+    --playerc.client.datafreq(client, poll.freq.in.hz, success)
+    --check.success(success, "Failed to set data frequency")
+    
+    -- We want to be able to drive this robot around, so
+    -- we need to initialize the position proxy, as well as the
+    -- motors. (That's the 'enable' call.)
+    playerc.position2d.create(client, index, position)
+    playerc.position2d.subscribe(position, PLAYER.OPEN.MODE, success)
+    playerc.position2d.enable(position, 1, success)
+    -- WARNING: The success variable could be put to use here...
+    
+    -- Likewise, I want a laser sampler. I'll have
+    -- to look at setting up the ultrasound rangers as well
+    playerc.laser.create(client, index, laser)
+    playerc.laser.subscribe(laser, PLAYER.OPEN.MODE, success)
+    -- FIXME: I don't know if this is how the frequency works
+    playerc.laser.set.config(laser, (REAL64 (-(PI/2.0))), (REAL64 (PI/2.0)), 100.0, 1.0, 1, REAL64 ROUND poll.freq.in.hz, success)
+    -- WARNING: And again, checking for success might be nice.
+
+    playerc.sonar.create(client, index, sonar)
+    playerc.sonar.subscribe(sonar, PLAYER.OPEN.MODE, success)
+    -- WARNING: And again, checking for success might be nice.
+    
+    -- Refresh, to clear the pipes
+    SEQ i = 0 FOR 5
+      SEQ
+        --magic.int(i)
+        client.refresh(client)
+:
+
+PROC motor.loop.old (VAL playerc.position2d.t position, CHAN MOTORS moto?)
+  INT success:
+  TIMER tim:
+  INT t:
+  WHILE TRUE
+    SEQ
+      tim ? t
+      -- FIXME: We do not need the timeout here right, we can just
+      -- read and then loop... jah?
+
+      -- First things first; we need to keep up on the laser
+      -- data, but we also need to talk to the motors.
+      -- So, either we send data out to the motors,
+      -- or we timeout, and move on.
+      PRI ALT
+        INT x,y,a:
+        moto ? x ; y ; a
+          playerc.position2d.set.cmd.vel(position,
+            ((REAL64 ROUND x)/100.0),
+            ((REAL64 ROUND y)/100.0),
+            ((REAL64 ROUND a)/100.0),
+            1, success)
+        tim ? AFTER t PLUS 1000
+          SKIP
+:
+
+PROC motor.loop(VAL playerc.position2d.t position, CHAN MOTORS moto?)
+  INT success:
+  WHILE TRUE
+    INT x,y,a:
+    SEQ
+      moto ? x ; y ; a
+      playerc.position2d.set.cmd.vel(position,
+        ((REAL64 ROUND x)/100.0),
+        ((REAL64 ROUND y)/100.0),
+        ((REAL64 ROUND a)/100.0),
+        1, success)
+:
+
+
+-- This is the robot's main runloop; it reads in motor commands,
+-- and outputs laser data. I've removed the ability to gracefully
+-- kill this runloop for now.
+PROC brain.stem(CHAN MOTORS moto?, CHAN LASER sick!, CHAN SONAR devan!,
+                   VAL []BYTE player.host, VAL INT player.port)
+  -- Declare the variables that will hold the robot's state.
+  playerc.client.t client:
+  playerc.mclient.t mclient:
+  playerc.position2d.t position: 
+  playerc.laser.t laser:
+  playerc.sonar.t sonar:
+  SEQ
+    -- Initialize the bot
+    robot.init(client, mclient, position, laser, sonar, player.host, player.port)
+    -- We should now be in business
+    [2]CHAN BOOL refresh.sem:
+    PAR
+      -- Refresh server
+      refresh.process(client, refresh.sem?)
+      -- Motor
+      motor.loop(position, moto?)
+      -- Laser
+      laser.loop(laser, refresh.sem[0]!, sick!)
+      -- Sonar
+      sonar.loop(sonar, refresh.sem[1]!, devan!)
+      -- Power
+:
+
+
+PROC brain.stem.L(CHAN LASER sick!)
+  CHAN MOTORS motor.dummy:
+  CHAN SONAR devan.dummy:
+  brain.stem(motor.dummy?, sick!, devan.dummy!, 
+    default.player.host, default.player.port)
+:
+
+PROC brain.stem.ML(CHAN MOTORS motors?, CHAN LASER sick!)
+  CHAN SONAR devan.dummy:
+  brain.stem(motors?, sick!, devan.dummy!, 
+    default.player.host, default.player.port)
+:
+
+PROC brain.stem.MLP(CHAN MOTORS motors?, CHAN LASER sick!, VAL INT port)
+  CHAN SONAR devan.dummy:
+  brain.stem(motors?, sick!, devan.dummy!, default.player.host, port)
+:
+
+PROC brain.stem.S(CHAN SONAR devan!)
+  CHAN MOTORS motor.dummy:
+  CHAN LASER sick.dummy:
+  brain.stem(motor.dummy?, sick.dummy!, devan!, 
+    default.player.host, default.player.port)
+:
+
+PROC brain.stem.MS(CHAN MOTORS motors?, CHAN SONAR devan!)
+  CHAN LASER sick.dummy:
+  brain.stem(motors?, sick.dummy!, devan!,
+    default.player.host, default.player.port)
+:
+
+PROC brain.stem.MSP(CHAN MOTORS motors?, CHAN SONAR devan!, VAL INT port)
+  CHAN LASER sick.dummy:
+  brain.stem(motors?, sick.dummy!, devan!, default.player.host, port)
+:
+
+PROC brain.stem.MLS(CHAN MOTORS motors?, CHAN LASER sick!, CHAN SONAR devan!)
+  brain.stem(motors?, sick!, devan!, 
+    default.player.host, default.player.port)
+:
+  
+
+
+
+PROC simple.motor(CHAN INT simple.in?, CHAN MOTORS motors!)
+  -- We define these constants locally, as we also want students to define
+  -- these themselves in an assignment...
+  VAL INT s.fwd IS 1:
+  VAL INT s.stop IS 0:
+  VAL INT s.rev IS -1:
+  VAL INT s.fwd.l IS 2:
+  VAL INT s.fwd.r IS 3:
+  VAL INT s.rev.l IS -2:
+  VAL INT s.rev.r IS -3:
+  VAL INT s.l IS 4:
+  VAL INT s.r IS 5:
+  VAL INT turn.rate IS 40:
+  VAL INT speed IS 50:
+  WHILE TRUE
+    INT simple.command:
+    SEQ
+      simple.in ? simple.command
+      CASE simple.command
+        s.fwd 
+          motors ! speed ; 0 ; 0
+        s.stop 
+          motors ! 0 ; 0 ; 0
+        s.rev 
+          motors ! -speed ; 0 ; 0
+        s.fwd.l
+          motors ! speed ; 0 ; turn.rate
+        s.fwd.r
+          motors ! speed ; 0 ; -turn.rate
+        s.rev.l
+          motors ! -speed ; 0 ; -turn.rate
+        s.rev.r
+          motors ! -speed ; 0 ; turn.rate
+        s.l
+          motors ! 0 ; 0 ; -turn.rate
+        s.r
+          motors ! 0 ; 0 ; turn.rate
+        ELSE
+          STOP
+:
+
+PROC get.min.L(CHAN LASER sick.in?, CHAN INT min.out!)
+  WHILE TRUE
+    LASER data:
+    INITIAL INT min IS (MOSTPOS INT):
+    SEQ
+      sick.in ? data
+      SEQ i = 0 FOR SIZE data
+        IF
+          data[i] < min
+            min := data[i]
+          TRUE
+            SKIP
+      min.out ! min
+:
+
+
+PROC delta.L(CHAN LASER sick.in?, sick.out.1!, sick.out.2!)
+  WHILE TRUE
+    LASER data:
+    SEQ
+      sick.in ? data
+      PAR
+        sick.out.1 ! data
+        sick.out.2 ! data
+:
+
+PROC get.min.S(CHAN SONAR devan.in?, CHAN INT min.out!)
+  WHILE TRUE
+    SONAR data:
+    INITIAL INT min IS (MOSTPOS INT):
+    SEQ
+      devan.in ? data
+      SEQ i = 0 FOR SIZE data
+        IF
+          data[i] < min
+            min := data[i]
+          TRUE
+            SKIP
+      min.out ! min
+:
+
+
+PROC delta.S(CHAN SONAR devan.in?, devan.out.1!, devan.out.2!)
+  WHILE TRUE
+    SONAR data:
+    SEQ
+      devan.in ? data
+      PAR
+        devan.out.1 ! data
+        devan.out.2 ! data
+:

@@ -1693,7 +1693,7 @@ PROC cgtest56 (CHAN OF BYTE keyb, scr, err)
       REAL64 r64 :
       SEQ
         r32 := 16777216.0 + 1.0
-        r64 := 16777216.0 + 1.0
+        r64 := 16777216.0(REAL64) + 1.0(REAL64)
         check.REAL32(r32, 16777216.0(REAL32), "REAL00")
         check.REAL64(r64, 16777217.0(REAL64), "REAL01")
     :

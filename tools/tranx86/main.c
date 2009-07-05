@@ -689,7 +689,7 @@ int main (int argc, char **argv)
 		if (!i) {
 			i = strlen (input_filename);
 		}
-		options.etab_filename = (char *)smalloc (i+5);
+		options.etab_filename = (char *)smalloc (i+6);
 		memcpy (options.etab_filename, input_filename, i);
 		strcpy (options.etab_filename + i, ".etab");
 	} else if (options.etab_filename) {

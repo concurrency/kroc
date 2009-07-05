@@ -40,7 +40,7 @@ PROC printString(VAL []BYTE s, VAL INT fontOffset)
       tmp[i] := (INT (s[i]))
     glPushAttrib (GL.LIST.BIT)
     glListBase(fontOffset)
-    glCallLists(SIZE s, GL.UNSIGNED.INT, tmp)
+    glCallLists(SIZE s, GL.UNSIGNED.INT, ADDROF (tmp))
     glPopAttrib()
 :
 
@@ -61,7 +61,7 @@ PROC printStringi(VAL []BYTE s, VAL INT fontOffset, VAL INT length)
       tmp[i] := (INT (s[i]))
     glPushAttrib (GL.LIST.BIT)
     glListBase(fontOffset)
-    glCallLists(SIZE s, GL.UNSIGNED.INT, tmp)
+    glCallLists(SIZE s, GL.UNSIGNED.INT, ADDROF (tmp))
     glPopAttrib()
 :
 

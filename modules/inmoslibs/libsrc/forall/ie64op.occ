@@ -631,13 +631,17 @@ BOOL, REAL64 FUNCTION IEEE64OP (VAL REAL64 X, VAL INT RoundMode, Op,
     VAL DRealInf    IS #7FF0 :
     VAL BiggestFinite IS [#FFFF, #FFFF, #FFFF, #7FEF] :
     --}}}
-    --{{{  #USE "occamutl.lib"
+    --{{{  #USEs
     #PRAGMA TRANSLATE QRealIMul "QRealIMul%CHK"
     #PRAGMA TRANSLATE QRealIDiv "QRealIDiv%CHK"
     #PRAGMA TRANSLATE QUADNORMALISE "QUADNORMALISE%CHK"
     #PRAGMA TRANSLATE QUADSHIFTLEFT "QUADSHIFTLEFT%CHK"
     #PRAGMA TRANSLATE QUADSHIFTRIGHT "QUADSHIFTRIGHT%CHK"
-    #USE "occamutl.lib"  --  6-Apr-90
+    #USE "qrimul"
+    #USE "qridiv"
+    #USE "qnorm"
+    #USE "qshiftl"
+    #USE "qshiftr"
     --}}}
 
     [4]INT Result RETYPES Result :

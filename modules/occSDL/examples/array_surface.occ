@@ -6,10 +6,10 @@
 
 PROC set.rect (SDL.Rect rect, VAL INT x, y, w, h)
   SEQ
-    set.SDL.Rect.x (INT16 x, rect)
-    set.SDL.Rect.y (INT16 y, rect)
-    set.SDL.Rect.w (INT16 w, rect)
-    set.SDL.Rect.h (INT16 h, rect)
+    SDL.Rect.x.set (rect, INT16 x)
+    SDL.Rect.y.set (rect, INT16 y)
+    SDL.Rect.w.set (rect, INT16 w)
+    SDL.Rect.h.set (rect, INT16 h)
 :
 
 PROC blit (SDL.Surface from, VAL INT from.x, from.y, w, h,
@@ -17,11 +17,11 @@ PROC blit (SDL.Surface from, VAL INT from.x, from.y, w, h,
   INT result:
   SDL.Rect rect1, rect2:
   SEQ
-    create.SDL.Rect (rect1)
-    create.SDL.Rect (rect2)
+    new.SDL.Rect (rect1)
+    new.SDL.Rect (rect2)
     set.rect (rect1, from.x, from.y, w, h)
     set.rect (rect2, to.x, to.y, 0, 0)
-    SDL.BlitSurface (result, from, rect1, to, rect2)
+    SDL.BlitSurface (from, rect1, to, rect2, result)
     ASSERT (result = 0)
     delete.SDL.Rect (rect1)
     delete.SDL.Rect (rect2)
@@ -33,13 +33,13 @@ PROC array.surface ()
   TIMER tim:
   INT result, t:
   SEQ
-    occ.SDL.Init (result, SDL.INIT.VIDEO)
+    occ.SDL.Init (SDL.INIT.VIDEO, result)
     ASSERT (result = 0)
 
-    SDL.SetVideoMode (screen, 640, 480, 32, (SDL.HWSURFACE \/ SDL.DOUBLEBUF) \/ SDL.ANYFORMAT)
+    SDL.SetVideoMode (640, 480, 32, (SDL.HWSURFACE \/ SDL.DOUBLEBUF) \/ SDL.ANYFORMAT, screen)
     ASSERT (screen <> 0)
 
-    create.SDL.Event (event)
+    new.SDL.Event (event)
 
     tim ? t
 
@@ -62,7 +62,7 @@ PROC array.surface ()
 
           blit (box, 0, 0, 512, 256, screen, (640 - 512) / 2, (480 - 256) / 2)
 
-          SDL.Flip (result, screen)
+          SDL.Flip (screen, result)
           ASSERT (result = 0)
 
           SDL.FreeSurface (box)
@@ -74,12 +74,12 @@ PROC array.surface ()
           --}}}
 
           --{{{  check for quit events
-          SDL.PollEvent (result, event)
+          SDL.PollEvent (event, result)
           IF
             result > 0
               BYTE type:
               SEQ
-                get.SDL.Event.type (type, event)
+                SDL.Event.type.get (event, type)
                 CASE INT type
                   SDL.QUIT
                     running := FALSE

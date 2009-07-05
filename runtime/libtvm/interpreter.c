@@ -482,11 +482,7 @@ static TVM_INLINE BYTE decode_next (ECTX ectx)
 	BYTE instr;
 	
 	/* Read the instruction */
-	#if defined(MEMORY_INTF_BIGENDIAN)
-	instr = *IPTR; /* FIXME */
-	#else
 	instr = read_byte (IPTR);
-	#endif
 	
 	#if defined(DEBUG_INTERPRETER)
 	printf ("%p %02x ", IPTR, instr);

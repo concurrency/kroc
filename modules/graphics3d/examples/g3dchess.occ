@@ -1,0 +1,755 @@
+--
+--	g3dchess.occ -- simple chess test for graphics3d
+--	Copyright (C) 2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "graphics3d.module"
+#INCLUDE "proc.module"
+
+--{{{  local types/protocols
+--* Records information about a single piece.
+DATA TYPE PIECE.INFO
+  RECORD
+    INT piece:
+    INT colour:
+    INT x, y:
+    INT polyid:
+    BOOL selected:
+:
+
+--* Game control input protocol.
+PROTOCOL GAME.CTL.IN
+  CASE
+    click; INT                      --* Double-click on polygon ID.
+:
+
+--* Game control channel-type.
+CHAN TYPE CT.GAME.CTL
+  MOBILE RECORD
+    CHAN GAME.CTL.IN in?:           --* Commands.
+:
+
+--* Chess engine input protocol.
+PROTOCOL GAME.ENGINE.IN
+  CASE
+    try.move; [4]INT                --* Attempt to move something from [0,1] to [2,3].
+    reset                           --* Reset game engine.
+:
+
+--* Chess engine output protocol.
+PROTOCOL GAME.ENGINE.OUT
+  CASE
+    move.square; [4]INT             --* Do move.
+    illegal.move                    --* Illegal move.
+:
+
+--* Chess engine channel-type.
+CHAN TYPE CT.GAME.ENGINE
+  MOBILE RECORD
+    CHAN GAME.ENGINE.IN in?:        --* Commands.
+    CHAN GAME.ENGINE.OUT out!:      --* Responses.
+:
+
+BOOL FUNCTION "=" (VAL []BYTE s1, s2)
+  BOOL r:
+  VALOF
+    IF
+      (SIZE s1) <> (SIZE s2)
+        r := FALSE
+      IF i = 0 FOR SIZE s1
+        s1[i] <> s2[i]
+          r := FALSE
+      TRUE
+        r := TRUE
+    RESULT r
+:
+
+--}}}
+--{{{  PROC chess.engine (CT.GAME.ENGINE? svr, SHARED CHAN BYTE scr!)
+--* Deals with the chess engine (uses gnuchess if available).
+-- @private
+PROC chess.engine (CT.GAME.ENGINE? svr, SHARED CHAN BYTE scr!)
+  #IF DEFINED (GNUCHESS)
+  --{{{  very local protocols/types
+  PROTOCOL GNUCHESS.IN
+    CASE
+      move; [4]INT
+      white
+      black
+      go
+      quit
+  :
+
+  PROTOCOL GNUCHESS.OUT
+    CASE
+      message; MOBILE []BYTE
+      illegal; MOBILE []BYTE
+      move; [4]INT
+  :
+  --}}}
+
+  CHAN BYTE gnuc.stdin, gnuc.stdout, gnuc.stderr:
+  CHAN INT gnuc.done, term1, term2, term3, term4, term5:
+  CHAN MOBILE []BYTE gnuc.outlines, gnuc.outerrs:
+  CHAN GNUCHESS.IN to.chessprog:
+  CHAN GNUCHESS.OUT from.chessprog:
+  PAR
+    --{{{  run an instance of gnuchess (xboard mode)
+    [2][128]BYTE command:
+    INT clen:
+    INT result:
+    SEQ
+      SEQ i = 0 FOR SIZE command
+        SEQ j = 0 FOR SIZE command[i]
+          command[i][j] := #00
+
+      clen := SIZE ##GNUCHESS
+      [command[0] FOR clen] := ##GNUCHESS
+      [command[1] FOR 8] := "--xboard"
+      proc.wrapper ([], command, gnuc.stdin?, gnuc.stdout!, gnuc.stderr!, result)
+      gnuc.done ! result
+    --}}}
+    --{{{  collect screen and error into whole lines
+    PROC collectline (CHAN BYTE in?, CHAN INT term?, CHAN MOBILE []BYTE out!)
+      [128]BYTE linebuf:
+      INT len:
+      SEQ
+        len := 0
+
+        #PRAGMA DEFINED linebuf
+
+        INITIAL BOOL run IS TRUE:
+        WHILE run
+          PRI ALT
+            BYTE ch:
+            in ? ch
+              SEQ
+                #IF FALSE --{{{  debug
+                CLAIM scr!
+                  SEQ
+                    out.string ("byte from chess program: ", 0, scr!)
+                    out.byte (ch, 0, scr!)
+                    out.string ("*n", 0, scr!)
+                #ENDIF --}}}
+                IF
+                  (ch = '*n') OR (ch = '*c')
+                    SEQ
+                      -- end-of-line
+                      IF
+                        len = 0
+                          SKIP
+                        TRUE
+                          out ! [linebuf FOR len]
+                      len := 0
+                  len = (SIZE linebuf)
+                    SEQ
+                      -- full
+                      out ! [linebuf FOR len]
+                      len := 1
+                      linebuf[0] := ch
+                  TRUE
+                    SEQ
+                      -- regular
+                      linebuf[len] := ch
+                      len := len + 1
+            INT any:
+            term ? any
+              run := FALSE
+    :
+
+    PAR
+      collectline (gnuc.stdout?, term1?, gnuc.outlines!)
+      collectline (gnuc.stderr?, term2?, gnuc.outerrs!)
+    --}}}
+    --{{{  dump errors to screen
+    INITIAL BOOL run IS TRUE:
+    WHILE run
+      PRI ALT
+        MOBILE []BYTE line:
+        gnuc.outerrs ? line
+          SEQ
+            CLAIM scr!
+              SEQ
+                out.string ("gnuchess: ", 0, scr!)
+                out.string (line, 0, scr!)
+                out.string ("*n", 0, scr!)
+
+        INT any:
+        term3 ? any
+          run := FALSE
+    --}}}
+    --{{{  terminate multiplex
+    INT r:
+    SEQ
+      gnuc.done ? r
+      CLAIM scr!
+        SEQ
+          out.string ("gnuchess terminating with ", 0, scr!)
+          out.int (r, 0, scr!)
+          out.string ("*n", 0, scr!)
+      term1 ! r
+      term2 ! r
+      term3 ! r
+      term4 ! r
+      term5 ! r
+    --}}}
+    --{{{  commands to chess engine
+    INITIAL BOOL run IS TRUE:
+    WHILE run
+      PRI ALT
+        INT any:
+        term4 ? any
+          run := FALSE
+        to.chessprog ? CASE
+          [4]INT pos:
+          move; pos
+            [5]BYTE str:
+            VAL []BYTE cols IS "hgfedcba":
+            VAL []BYTE rows IS "87654321":
+            SEQ
+              str[0] := cols[pos[0]]
+              str[1] := rows[pos[1]]
+              str[2] := cols[pos[2]]
+              str[3] := rows[pos[3]]
+              str[4] := '*n'
+
+              out.string (str, 0, gnuc.stdin!)
+          white
+            out.string ("white*n", 0, gnuc.stdin!)
+          black
+            out.string ("black*n", 0, gnuc.stdin!)
+          go
+            out.string ("go*n", 0, gnuc.stdin!)
+          quit
+            out.string ("quit*n", 0, gnuc.stdin!)
+    --}}}
+    --{{{  response processing from chess engine
+    INITIAL BOOL run IS TRUE:
+    WHILE run
+      PRI ALT
+        INT any:
+        term5 ? any
+          run := FALSE
+        MOBILE []BYTE str:
+        gnuc.outlines ? str
+          INT slen, dstart:
+          BOOL decode:
+          SEQ
+            slen := SIZE str
+            decode := FALSE
+            dstart := 0
+
+            #IF TRUE --{{{  debug
+            CLAIM scr!
+              SEQ
+                out.string ("DEBUG: [", 0, scr!)
+                out.string (str, 0, scr!)
+                out.string ("]*n", 0, scr!)
+            #ENDIF --}}}
+
+            IF
+              (slen > 13) AND ([str FOR 13] = "Illegal move:")
+                from.chessprog ! illegal; [str FROM 15]
+              (slen > 11) AND ([str FOR 11] = "My move is:")
+                SEQ
+                  decode := TRUE
+                  dstart := 12
+              (slen < 4)
+                from.chessprog ! message; str
+              TRUE
+                BOOL is.move:
+                SEQ
+                  is.move := FALSE
+                  -- see if it's a "3. a5c5" type of thing
+                  INITIAL INT i IS 0:
+                  INITIAL BOOL r IS TRUE:
+                  WHILE r AND (i < (SIZE str))
+                    SEQ
+                      IF
+                        (str[i] = '.') AND (i > 0)
+                          SEQ
+                            is.move, r := TRUE, FALSE
+                            dstart := i + 2
+                        (str[i] >= '0') AND (str[i] <= '9')
+                          SKIP
+                        TRUE
+                          r := FALSE
+                      i := i + 1
+
+                  IF
+                    is.move
+                      SEQ
+                        IF
+                          (dstart + 4) > (SIZE str)
+                            is.move := FALSE
+                          [str FROM dstart FOR 3] = "..."
+                            is.move := FALSE
+                          TRUE
+                            SKIP
+                    TRUE
+                      SKIP
+
+                  IF
+                    is.move
+                      decode := TRUE
+                    TRUE
+                      from.chessprog ! message; str
+
+            IF
+              decode
+                [4]INT pos:
+                VAL []BYTE cols IS "hgfedcba":
+                VAL []BYTE rows IS "87654321":
+                BOOL bad:
+                SEQ
+                  bad := FALSE
+                  IF
+                    IF i = 0 FOR SIZE cols
+                      str[dstart] = cols[i]
+                        pos[0] := i
+                    TRUE
+                      bad := TRUE
+                  IF
+                    IF i = 0 FOR SIZE rows
+                      str[dstart+1] = rows[i]
+                        pos[1] := i
+                    TRUE
+                      bad := TRUE
+                  IF
+                    IF i = 0 FOR SIZE cols
+                      str[dstart+2] = cols[i]
+                        pos[2] := i
+                    TRUE
+                      bad := TRUE
+                  IF
+                    IF i = 0 FOR SIZE rows
+                      str[dstart+3] = rows[i]
+                        pos[3] := i
+                    TRUE
+                      bad := TRUE
+
+                  IF
+                    bad
+                      from.chessprog ! illegal; str         -- give back as illegal
+                    TRUE
+                      from.chessprog ! move; pos
+              TRUE
+                SKIP
+    --}}}
+    --{{{  local handling
+    INITIAL BOOL run IS TRUE:
+    WHILE run
+      PRI ALT
+        from.chessprog ? CASE
+          MOBILE []BYTE msg:
+          message; msg
+            --{{{  message from chess program
+            SEQ
+              CLAIM scr!
+                SEQ
+                  out.string ("from chess program: ", 0, scr!)
+                  out.string (msg, 0, scr!)
+                  out.string ("*n", 0, scr!)
+            --}}}
+          MOBILE []BYTE msg:
+          illegal; msg
+            --{{{  illegal move
+            SEQ
+              CLAIM scr!
+                SEQ
+                  out.string ("illegal move: ", 0, scr!)
+                  out.string (msg, 0, scr!)
+                  out.string ("*n", 0, scr!)
+            --}}}
+          [4]INT pos:
+          move; pos
+            --{{{  movement from chess program
+            SEQ
+              #IF TRUE --{{{  debug
+              CLAIM scr!
+                SEQ
+                  out.string ("DEBUG: move: ", 0, scr!)
+                  SEQ i = 0 FOR 4
+                    SEQ
+                      out.int (pos[i], 0, scr!)
+                      out.string ("  ", 0, scr!)
+                  out.string ("*n", 0, scr!)
+              #ENDIF --}}}
+              svr[out] ! move.square; pos
+            --}}}
+        svr[in] ? CASE
+          [4]INT pos:
+          try.move; pos
+            --{{{  try moving piece
+            SEQ
+              to.chessprog ! move; pos
+            --}}}
+          reset
+            --{{{  reset board
+            SKIP
+            --}}}
+    --}}}
+  #ELSE
+  SEQ
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        svr[in] ? CASE
+          [4]INT pos:
+          try.move; pos
+            --{{{  try moving piece (numb implementation)
+            svr[out] ! move.square; pos
+            --}}}
+          reset
+            --{{{  reset board
+            SKIP
+            --}}}
+  #ENDIF
+:
+--}}}
+--{{{  PROC chess.game (CHAN G3D.SCENE.TRANS! sclink!, VAL INT width, height, bdim, SHARED CHAN G3D.RENDER.ENGINE! rre!, CT.GAME.CTL? svr, CT.GAME.ENGINE! engine, SHARED CHAN BYTE scr!)
+--* Deals with chess-board layout and piece control.
+-- @private
+PROC chess.game (CHAN G3D.SCENE.TRANS! sclink!, VAL INT width, height, bdim, SHARED CHAN G3D.RENDER.ENGINE! rre!, CT.GAME.CTL? svr, CT.GAME.ENGINE! engine, SHARED CHAN BYTE scr!)
+  [32]PIECE.INFO pieces:
+  MOBILE []G3DC.PIECE.CTL! ctls:
+  INT sel.pid:
+  SEQ
+    --{{{  setup pieces
+    SEQ
+      -- colours (black then white)
+      SEQ i = 0 FOR 16
+        pieces[i][colour] := #00101010
+      SEQ i = 16 FOR 16
+        pieces[i][colour] := #00A0A0A0
+      SEQ i = 0 FOR 32
+        SEQ
+          pieces[i][polyid] := i+1
+          pieces[i][selected] := FALSE
+
+      -- positions
+      SEQ i = 0 FOR 8
+        SEQ
+          pieces[i+0][x] := i
+          pieces[i+0][y] := 0
+          pieces[i+8][x] := i
+          pieces[i+8][y] := 1
+          pieces[i+16][x] := i
+          pieces[i+16][y] := 6
+          pieces[i+24][x] := i
+          pieces[i+24][y] := 7
+
+      -- pieces
+      SEQ i = 0 FOR 8
+        SEQ
+          pieces[i+8][piece] := G3D.CP.PAWN
+          pieces[i+16][piece] := G3D.CP.PAWN
+
+      pieces[0][piece] := G3D.CP.ROOK
+      pieces[1][piece] := G3D.CP.KNIGHT
+      pieces[2][piece] := G3D.CP.BISHOP
+      pieces[3][piece] := G3D.CP.KING
+      pieces[4][piece] := G3D.CP.QUEEN
+      pieces[5][piece] := G3D.CP.BISHOP
+      pieces[6][piece] := G3D.CP.KNIGHT
+      pieces[7][piece] := G3D.CP.ROOK
+      pieces[24][piece] := G3D.CP.ROOK
+      pieces[25][piece] := G3D.CP.KNIGHT
+      pieces[26][piece] := G3D.CP.BISHOP
+      pieces[27][piece] := G3D.CP.KING
+      pieces[28][piece] := G3D.CP.QUEEN
+      pieces[29][piece] := G3D.CP.BISHOP
+      pieces[30][piece] := G3D.CP.KNIGHT
+      pieces[31][piece] := G3D.CP.ROOK
+    --}}}
+    --{{{  local init
+    ctls := MOBILE [32]G3DC.PIECE.CTL!
+    sel.pid := -1
+
+    --}}}
+    #PRAGMA DEFINED ctls
+
+    --{{{  create pieces
+    SEQ i = 0 FOR SIZE pieces
+      IF
+        pieces[i][piece] > 0
+          G3DC.PIECE.CTL! p.ctl:
+          G3D.SCENE.TRANS! sct:
+          SEQ
+            CLAIM rre!
+              chesspiece.network.spawn (width, height, rre!, pieces[i][piece], 6, 8, 1.2, 0.3, p.ctl, sct)
+            sclink ! sct
+            p.ctl[in] ! set.pos; pieces[i][x]; pieces[i][y]
+            p.ctl[pgn.ctl] ! set.face.colours; [#00000000,pieces[i][colour],#00000000]
+            p.ctl[pgn.ctl] ! set.polyid; pieces[i][polyid]
+
+            ctls[i] := p.ctl
+        TRUE
+          SKIP
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        svr[in] ? CASE
+          INT id:
+          click; id
+            --{{{  double-clicked something, select or move
+            INT pid:
+            INT bx, by:
+            SEQ
+              pid := -1
+              bx := -1
+              by := -1
+
+              IF
+                id = 0
+                  SKIP
+                id <= 32
+                  --{{{  clicking on a real piece
+                  SEQ
+                    pid := id - 1
+                    bx := pieces[pid][x]
+                    by := pieces[pid][y]
+                  --}}}
+                (id > 64) AND (id <= 128)
+                  --{{{  clicking on a board square
+                  SEQ
+                    by := bdim - (((id - 65) / bdim) + 1)
+                    bx := bdim - (((id - 65) \ bdim) + 1)
+
+                    -- see if the square is occupied
+                    IF
+                      IF i = 0 FOR 32
+                        (pieces[i][x] = bx) AND (pieces[i][y] = by)
+                          pid := i
+                      TRUE
+                        SEQ
+                          pid := -1
+
+                  --}}}
+                TRUE
+                  SKIP
+
+              #IF TRUE --{{{  debug
+              CLAIM scr!
+                SEQ
+                  out.string ("game: board click (", 0, scr!)
+                  out.int (bx, 0, scr!)
+                  out.string (",", 0, scr!)
+                  out.int (by, 0, scr!)
+                  out.string ("), piece ", 0, scr!)
+                  out.int (pid, 0, scr!)
+                  out.string ("*n", 0, scr!)
+              #ENDIF --}}}
+              IF
+                (((bx >= 0) AND (by >= 0)) AND ((pid >= 0) AND (sel.pid >= 0))) AND (pid <> sel.pid)
+                  --{{{  two different pieces involved, take?
+                  SEQ
+                    engine[in] ! try.move; [pieces[sel.pid][x], pieces[sel.pid][y], bx, by]
+                  --}}}
+                pid >= 0
+                  --{{{  select or unselect a piece
+                  SEQ
+                    IF
+                      pieces[pid][selected]
+                        SEQ
+                          -- unselect
+                          pieces[pid][selected] := FALSE
+                          ctls[pid][pgn.ctl] ! set.face.colours; [#00000000,pieces[pid][colour],#00000000]
+                          sel.pid := -1
+                      TRUE
+                        INT bw:
+                        SEQ
+                          IF
+                            pid < 16
+                              bw := 0
+                            TRUE
+                              bw := 1
+                          -- select
+                          pieces[pid][selected] := TRUE
+                          ctls[pid][pgn.ctl] ! set.face.colours; [#00000000,[#00900000,#00FF0000][bw],#00000000]
+                          sel.pid := pid
+                    SKIP
+                  --}}}
+                (bx >= 0) AND (by >= 0)
+                  IF
+                    sel.pid >= 0
+                      --{{{  try and move selected piece
+                      SEQ
+                        engine[in] ! try.move; [pieces[sel.pid][x], pieces[sel.pid][y], bx, by]
+                      --}}}
+                    TRUE
+                      SKIP
+
+            --}}}
+        engine[out] ? CASE
+          [4]INT pos:
+          move.square; pos
+            --{{{  move something on the board
+            INT pid, t.pid:
+            INT bx, by:
+            SEQ
+              -- find it (again maybe!)
+              bx := pos[0]
+              by := pos[1]
+
+              IF
+                IF i = 0 FOR 32
+                  (pieces[i][x] = bx) AND (pieces[i][y] = by)
+                    pid := i
+                TRUE
+                  SEQ
+                    pid := -1
+
+              IF
+                IF i = 0 FOR 32
+                  (pieces[i][x] = pos[2]) AND (pieces[i][y] = pos[3])
+                    t.pid := i
+                TRUE
+                  SEQ
+                    t.pid := -1
+              
+              IF
+                pid >= 0
+                  SEQ
+                    -- do move
+                    IF
+                      (t.pid >= 0) AND (pid <> t.pid)
+                        SEQ
+                          -- something at the target location, remove it from the game ;)
+                          #IF TRUE --{{{  debug
+                          CLAIM scr!
+                            SEQ
+                              out.string ("removing piece ID ", 0, scr!)
+                              out.int (t.pid, 0, scr!)
+                              out.string (" from board*n", 0, scr!)
+                          #ENDIF --}}}
+                          ctls[t.pid][in] ! hide; TRUE
+                      TRUE
+                        SKIP
+
+                    ctls[pid][in] ! move.pos; pos[2]; pos[3]
+
+                    pieces[pid][x] := pos[2]
+                    pieces[pid][y] := pos[3]
+
+                TRUE
+                  SKIP
+
+              IF
+                sel.pid >= 0
+                  SEQ
+                    -- unselect
+                    pieces[sel.pid][selected] := FALSE
+                    ctls[sel.pid][pgn.ctl] ! set.face.colours; [#00000000,pieces[sel.pid][colour],#00000000]
+                    sel.pid := -1
+                TRUE
+                  SKIP
+            --}}}
+          illegal.move
+            --{{{  illegal move
+            SEQ
+              CLAIM scr!
+                SEQ
+                  out.string ("engine: illegal move!*n", 0, scr!)
+              IF
+                sel.pid >= 0
+                  SEQ
+                    -- unselect
+                    pieces[sel.pid][selected] := FALSE
+                    ctls[sel.pid][pgn.ctl] ! set.face.colours; [#00000000,pieces[sel.pid][colour],#00000000]
+                    sel.pid := -1
+                TRUE
+                  SKIP
+            --}}}
+:
+--}}}
+
+
+--{{{  PROC main (...)
+--* Top-level process.
+--
+-- @param kyb Keyboard channel.
+-- @param scr Screen channel.
+-- @private
+--
+PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
+
+  PROC id.dump (CHAN INT in?, SHARED CT.GAME.CTL! gcli, SHARED CHAN BYTE out!) --{{{
+    WHILE TRUE
+      INT i:
+      SEQ
+        in ? i
+        CLAIM out!
+          SEQ
+            out.string ("poly.id click: ", 0, out!)
+            out.int (i, 0, out!)
+            out.string ("*n", 0, out!)
+        CLAIM gcli!
+          SEQ
+            gcli[in] ! click; i
+  :
+  --}}}
+
+  VAL INT SCR.WIDTH IS G3D.DEFAULT.WIDTH:
+  VAL INT SCR.HEIGHT IS G3D.DEFAULT.HEIGHT:
+  CT.GAME.CTL? g.svr:
+  SHARED CT.GAME.CTL! g.cli:
+  CT.GAME.ENGINE? e.svr:
+  CT.GAME.ENGINE! e.cli:
+  SEQ
+
+    g.cli, g.svr := MOBILE CT.GAME.CTL
+    e.cli, e.svr := MOBILE CT.GAME.ENGINE
+
+    CHAN RASTER rc1, rc2, rc3, rc4:
+    SHARED! CHAN G3D.RENDER.ENGINE! rre:
+    CHAN G3D.TMR.CONTROL tmr.ctl:
+    CHAN RASTER.EVENT events, events.in:
+    CHAN G3D.SCENE.TRANS! sclink:
+    CHAN INT poly.id:
+    PAR
+      raster.timed.buffer (rc1?, rc2!, 25, tmr.ctl?)
+      raster.display ("Chess test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!, events!)
+      raster.chain (rc3?, rc4!, rre?, FALSE)
+      raster.polyidclick (rc4?, rc1!, events?, events.in!, poly.id!, 250000)
+
+      id.dump (poly.id?, g.cli, scr!)
+
+      G3D.SCENE.TRANS! sc.ctl:
+      SEQ
+        g3d.scene.spawn (sc.ctl)
+        sc.ctl[link] ! set.pre.3dshift; [0.0, 3.5, 0.0]
+
+        g3d.scene.camera (events.in?, sclink?, sc.ctl!)
+
+      SEQ
+        G3D.SCENE.TRANS! sc.tmp:
+        SEQ
+          CLAIM rre!
+            chessboard.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 8, 256+64, 1.2, 0.3, sc.tmp)
+          sclink ! sc.tmp
+  
+        chess.game (sclink!, SCR.WIDTH, SCR.HEIGHT, 8, rre!, g.svr?, e.cli!, scr!)
+
+      chess.engine (e.svr?, scr!)
+:
+--}}}
+

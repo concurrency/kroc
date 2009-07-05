@@ -19,30 +19,21 @@
 #
 dnl
 dnl Determine whether we're building a package in the KRoC tree.
-dnl Set KROC_BUILD_ROOT to the top of the tree if we are, and to
-dnl the empty string if we aren't.
+dnl Set KROC_BUILD_ROOT to the top of the build tree and KROC_SRC_ROOT to the
+dnl top of the source tree if we are, and both to the empty string if we
+dnl aren't.
 AC_DEFUN([OCCAM_IN_TREE],
 [dnl
-AC_ARG_VAR(KROC_BUILD_ROOT, [Top of KRoC source tree])
+AC_ARG_VAR(KROC_BUILD_ROOT, [Path to top of KRoC build tree])
+AC_ARG_VAR(KROC_SRC_ROOT, [Path to top of KRoC source tree])
 
-AC_MSG_CHECKING([whether we're building in the KRoC source tree])
-
-# Try to find the top-level configure.ac for KRoC.
-old_PWD=`pwd`
-KROC_BUILD_ROOT=""
-for try in 1 2 3 4 5 6; do
-	if test -f configure.ac && grep '^# KROC_IS_ROOT' configure.ac >/dev/null; then
-		KROC_BUILD_ROOT=`pwd`
-		break
-	fi
-	cd ..
-done
-cd $old_PWD
-
-if test "x$KROC_BUILD_ROOT" != "x"; then
+AC_MSG_CHECKING([whether we're building as part of KRoC])
+if test "x$KROC_BUILD_ROOT" != "x" -a "x$KROC_SRC_ROOT" != "x"; then
   AC_MSG_RESULT([yes])
 else
   AC_MSG_RESULT([no])
+  KROC_BUILD_ROOT=""
+  KROC_SRC_ROOT=""
 fi
 ])dnl
 dnl
@@ -53,10 +44,11 @@ AC_DEFUN([OCCAM_TOOLCHAIN],
 OCCBUILD_TOOLCHAIN=kroc
 AC_ARG_WITH([toolchain],
             AS_HELP_STRING([--with-toolchain=ENV],
-                           [select occam toolchain to use (kroc, tvm; default kroc)]),
+                           [select occam toolchain to use (kroc, tvm, tock; default kroc)]),
             [OCCBUILD_TOOLCHAIN="$withval"])
 AM_CONDITIONAL(OCCBUILD_KROC, test "x$OCCBUILD_TOOLCHAIN" = "xkroc")
 AM_CONDITIONAL(OCCBUILD_TVM, test "x$OCCBUILD_TOOLCHAIN" = "xtvm")
+AM_CONDITIONAL(OCCBUILD_TOCK, test "x$OCCBUILD_TOOLCHAIN" = "xtock")
 ])dnl
 dnl
 dnl Find occbuild.
@@ -83,6 +75,11 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
     OCCBUILD_CFLAGS="-DOCCBUILD_KROC $KROC_CCSP_CFLAGS $KROC_CCSP_CINCPATH"
   elif test "x$OCCBUILD_TOOLCHAIN" = "xtvm"; then
     OCCBUILD_CFLAGS="-DOCCBUILD_TVM"
+  elif test "x$OCCBUILD_TOOLCHAIN" = "xtock"; then
+    AC_CHECK_PROG(TOCK, tock, tock,
+                  [AC_MSG_ERROR([configuring for tock toolchain, but tock was not found])])
+    KROC_CCSP_FLAGS
+    OCCBUILD_CFLAGS="-DOCCBUILD_TOCK $KROC_CCSP_CFLAGS $KROC_CCSP_CINCPATH"
   else
     AC_MSG_ERROR([don't know how to find OCCBUILD_CFLAGS in-tree for this toolchain])
   fi
@@ -93,7 +90,7 @@ else
 fi
 AC_SUBST(OCCBUILD_CFLAGS)
 
-OCCBUILD_API_VERSION=2
+OCCBUILD_API_VERSION=3
 AC_SUBST(OCCBUILD_API_VERSION)
 ])dnl
 dnl

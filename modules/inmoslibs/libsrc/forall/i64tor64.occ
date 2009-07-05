@@ -132,9 +132,9 @@ REAL64 FUNCTION INT64TOREAL64 (VAL INT Mode, VAL INT64 N)
 
   REAL64 X :
   VALOF
-    --{{{  #USE "occamutl.lib"
+    --{{{  #USEs
     #PRAGMA TRANSLATE QUADNORMALISE "QUADNORMALISE%CHK"
-    #USE "occamutl.lib"
+    #USE "qnorm"
     --}}}
     --{{{  IEEE Quad length constants for 16 bit implementation
     VAL DRealExpSh  IS     4 :

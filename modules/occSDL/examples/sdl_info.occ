@@ -6,7 +6,7 @@ PROC sdl.info(CHAN BYTE kyb?, scr!, err!)
   SEQ
     out.string("SDL INFO: from occam*c*n", 0, scr!)
     out.string("(c) 2003 Christian L. Jacobsen*c*n*n", 0, scr!)
-    SDL.Init(result, SDL.INIT.VIDEO)
+    SDL.Init(SDL.INIT.VIDEO, result)
     IF
       result <> 0
         [100]BYTE err.str:

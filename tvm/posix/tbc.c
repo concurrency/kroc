@@ -49,7 +49,7 @@ int read_tbc_file (const char *fn, BYTE **data_p, int *length_p)
 tbc_t *decode_tbc (BYTE *data, int length)
 {
 	tenc_element_t element;
-	tbc_t *tbc;
+	tbc_t *tbc = NULL;
 
 	/* CGR FIXME: this function should move to libtvm. */
 

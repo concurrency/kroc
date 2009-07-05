@@ -1049,7 +1049,7 @@ PUBLIC const char *chkmessagestring (const int n)
 	case CHK_EMPTY_FORKING:
 		return ("FORKING does not contain any FORKs");
 	case CHK_FORK_PARAM_NOT_SHARED:
-		return ("parameter %d must be explicitly #PRAGMA SHARED");
+		return ("parameter %d to FORKed process is not shared");
 	case CHK_FORK_PARAM_NOT_IMPLEMENTED:
 		return ("parameter %d type not implemented yet!");
 	case CHK_NO_INLINE_FORK:
@@ -1169,7 +1169,13 @@ PUBLIC const char *chkmessagestring (const int n)
 	case CHK_CALLAT_NOT_DYNAMIC:
 		return ("cannot call non-dynamic PROC %s at specified address");
 	case CHK_BAD_DYNCALL_TYPE:
+		return ("invalid type in DYNCALL pragma");
+	case CHK_BAD_DYNCALL_NAMEDTYPE:
 		return ("%s cannot be exported as a dynamic call");
+	case CHK_BAD_FMTYPES_TYPE:
+		return ("invalid type in FMTYPES pragma");
+	case CHK_BAD_FMTYPES_NAMEDTYPE:
+		return ("%s is not a valid type for FMTYPES pragma");
 		/*}}}*/
 		/*{{{  buffered channel errors*/
 	case CHK_BUFCHAN_NOTCONST:
@@ -1241,9 +1247,9 @@ PUBLIC const char *usemessagestring (const int n)
 	case USE_FORK_FREE_VAR_SCOPE:
 		return "free variable `%s' must be declared outside FORKING";
 	case USE_UNSHARED_FORK_FREE_VAR:
-		return "free variable `%s' must be explicitly #PRAGMA SHARED";
+		return "free variable `%s' in FORKed process is not shared";
 	case USE_UNSHARED_FORK_FREE_MVAR:
-		return "free MOBILE `%s' must be explicitly SHARED";
+		return "free mobile variable `%s' in FORKed process is not shared";
 	case USE_FORK_FREE_VARS:
 		return "process being FORKed uses free variable '%s', a FORKING block is required to enforce its scope";
 		/*}}} */

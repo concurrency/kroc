@@ -42,7 +42,7 @@
 #undef _HOST_SEEN
 
 /*{{{  UNIX macros */
-#ifdef TARGET_OS_IS_UNIX
+#ifdef HOST_OS_IS_UNIX
 #define _HOST_SEEN
 
 /* HMM */
@@ -50,11 +50,11 @@
 
 #define PRIVATEPARAM PRIVATE
 
-#endif /* TARGET_OS_IS_UNIX */
+#endif /* HOST_OS_IS_UNIX */
 /*}}}  */
 
 /*{{{  MS C specific macros */
-#if defined(TARGET_OS_IS_MSDOS) && defined(COMPILER_IS_MSC) && !defined(_HOST_SEEN)
+#if defined(HOST_OS_IS_MSDOS) && defined(COMPILER_IS_MSC) && !defined(_HOST_SEEN)
 #define _HOST_SEEN
 /*{{{   */
 #define ANSI /* ANSI C conformant compiler */
@@ -65,7 +65,7 @@
 /*}}}  */
 
 /*{{{  DEC C VAX specific macros */
-#if defined(TARGET_OS_IS_VMS) && !defined(_HOST_SEEN)
+#if defined(HOST_OS_IS_VMS) && !defined(_HOST_SEEN)
 #define _HOST_SEEN
 /*{{{   */
 #define ANSI /* ANSI C conformant compiler */
@@ -98,7 +98,7 @@
 /*}}}  */
 
 /*{{{  WATCOM C specific macros */
-#if defined(TARGET_OS_IS_MSDOS) && defined(COMPILER_IS_WATCOM) && !defined(_HOST_SEEN)
+#if defined(HOST_OS_IS_MSDOS) && defined(COMPILER_IS_WATCOM) && !defined(_HOST_SEEN)
 #define _HOST_SEEN
 /*{{{   */
 #define ANSI /* ANSI C conformant compiler */

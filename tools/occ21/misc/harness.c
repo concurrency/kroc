@@ -68,7 +68,7 @@
   #include "cfpub.h"
 #endif
 
-#if defined(TARGET_OS_IS_UNIX)
+#if defined(HOST_OS_IS_UNIX)
 #include <unistd.h>
 #endif
 
@@ -496,6 +496,10 @@ PRIVATE BOOL print_all_messages    = FALSE;
 PRIVATE BOOL setymode              = FALSE;
 PRIVATE BOOL t450a_workarounds_flag = TRUE;
 PRIVATE BOOL suppress_call_compatibility_check = FALSE;
+PRIVATE BOOL fm_toplevelonly       = FALSE; /* whether to consider the top-level only in formal-model generation (requires -zfm) */
+PRIVATE BOOL fm_nocr               = FALSE; /* whether to avoid generating separate claim/release events (as parameters/vars) for shared channel-ends */
+PRIVATE BOOL fm_inlinecr           = FALSE; /* whether to inline claim/release events into the channel-type */
+PRIVATE BOOL fm_comm               = FALSE; /* whether to include acquire/lose events for channel-ends */
 
 PRIVATE FILE *errfile;
 
@@ -519,7 +523,7 @@ PRIVATE int errormodes_off_mask = 0;
   #define HOSTED HELP_ZED
 #endif
 
-#if defined(TARGET_OS_IS_UNIX) && !defined(WIN32)
+#if defined(HOST_OS_IS_UNIX) && !defined(WIN32)
 /* These are used to provide heap space usage statistics */
 PRIVATE void *original_sbrk;
 PRIVATE BOOL memstats        = FALSE;
@@ -572,7 +576,7 @@ arg2_help_page_info oc_help_info;
 /*{{{  PRIVATEPARAM void print_memstats*/
 PRIVATEPARAM void print_memstats(void)
 {
-	#if defined(TARGET_OS_IS_UNIX) && !defined(WIN32)
+	#if defined(HOST_OS_IS_UNIX) && !defined(WIN32)
 	if (memstats) {
 		fprintf(outfile, "Memory usage: (current tree %ld) (sbrk %d)\n", tablesize(), sbrk(0) - original_sbrk);
 	}
@@ -1507,7 +1511,7 @@ PRIVATE arg_control optzed ( const char *opt, const char *arg, void *data )
 		break;
 	/*}}}*/
 	/*{{{  ZMEM*/
-	#if defined(TARGET_OS_IS_UNIX) && !defined(WIN32)
+	#if defined(HOST_OS_IS_UNIX) && !defined(WIN32)
 	case 'M':
 		memstats = TRUE;
 		break;
@@ -2218,6 +2222,10 @@ const arg2_descriptor cloptions[] = {
 	{"ZE",        arg2_single,    NULL,           optzed,             HELP_ZED, "visible compiler library names"},
 	#endif
 	{"ZFMCCT",    arg2_single,    &fm_collct,     set_flag,           HELP_ZED, "collapse channel-type protocols in formal model"},
+	{"ZFMCOM",    arg2_single,    &fm_comm,       set_flag,           HELP_ZED, "include acquire/lose events for mobile channel-ends"},
+	{"ZFMICR",    arg2_single,    &fm_inlinecr,   set_flag,           HELP_ZED, "inline claim/release for mobile channel-type ends"},
+	{"ZFMNCR",    arg2_single,    &fm_nocr,       set_flag,           HELP_ZED, "no separate claim/release infrastructure for channel-ends"},
+	{"ZFMTLO",    arg2_single,    &fm_toplevelonly,set_flag,          HELP_ZED, "do not generate formal models for #INCLUDEd material"},
 	{"ZFM",       arg2_single,    &formal_model,  set_flag,           HELP_ZED, "generate formal model"},
 	/*}}}*/
 
@@ -2246,7 +2254,7 @@ const arg2_descriptor cloptions[] = {
 	/*}}}*/
 
 	/*{{{  zm - zo*/
-	#if defined(TARGET_OS_IS_UNIX) && !defined(WIN32)
+	#if defined(HOST_OS_IS_UNIX) && !defined(WIN32)
 	{"ZMEM",      arg2_single,    NULL,           optzed,             HELP_ZED, "display memory (sbrk) statistics"},
 	#endif
 	#ifdef MOBILES
@@ -2536,9 +2544,9 @@ PRIVATE void host_setup ( void )
 	}
 	(void)set_abort_action (ABORT_HALT);
 #else
-	#if defined(TARGET_OS_IS_MSDOS)
+	#if defined(HOST_OS_IS_MSDOS)
 		errfile = stdout;
-	#elif defined(TARGET_OS_IS_VMS)
+	#elif defined(HOST_OS_IS_VMS)
 		errfile = stderr;
 	#else
 		errfile = stderr;
@@ -2646,7 +2654,7 @@ PRIVATE BOOL setup_filenames (void)
 				}
 				(void)setvbuf (outfile, NULL, _IOLBF, BUFSIZ);
 			}
-			#if defined(COMPILER_IS_MSC) || defined(COMPILER_IS_WATCOM) || defined(TARGET_OS_IS_LLL)
+			#if defined(COMPILER_IS_MSC) || defined(COMPILER_IS_WATCOM) || defined(HOST_OS_IS_LLL)
 				errfile = stdout;
 			#else
 				errfile = stderr;
@@ -2756,6 +2764,10 @@ PRIVATE treenode *call_occam_frontend(BOOL *const error_occurred)
 	parms.checkusage          = &checkusage;	/* may be modified by #OPTION */
 	parms.formalmodel         = &formal_model;	/* may be modified by #OPTION */
 	parms.fm_collct           = &fm_collct;		/* may be modified by #OPTION */
+	parms.fm_toplevelonly     = fm_toplevelonly;
+	parms.fm_nocr             = fm_nocr;
+	parms.fm_inlinecr         = fm_inlinecr;
+	parms.fm_comm             = fm_comm;
 	parms.error_occurred      = error_occurred;	/* is set if any error happens */
 	parms.process_option      = process_option;
 	parms.guyinserts          = &guyinserts;
@@ -3124,7 +3136,7 @@ PUBLIC int main (const int argc, const char *argv[])
 {
 	/*{{{  initialise memstats*/
 
-	#if defined(TARGET_OS_IS_UNIX) && !defined(WIN32)
+	#if defined(HOST_OS_IS_UNIX) && !defined(WIN32)
 		original_sbrk = sbrk(0);
 	#endif
 

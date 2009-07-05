@@ -24,6 +24,7 @@
 #COMMENT "Type conversion library V1.6 4/12/90"
 #COMMENT "(C) Copyright INMOS limited 1988, 1990"
 --}}}
+#IF TARGET.BITS.PER.WORD = 32
 --* Take a binary representation of a real number and convert it into a
 -- string of characters that is the decimal representation of that
 -- number, formatted according to given rules ( see Notes below ).
@@ -946,3 +947,4 @@ PROC REAL32TOSTRING (INT len, []BYTE string, VAL REAL32 X, VAL INT Ip, Dp)
         --}}}
   --}}}
 :
+#ENDIF

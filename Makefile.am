@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = @subdirs@
+SUBDIRS = @occam_subdirs@
 
 EXTRA_DIST = \
 	.gitignore \
@@ -30,6 +30,7 @@ dist_aclocal_DATA = \
 	m4/kroc.m4 \
 	m4/occam-mysql.m4 \
 	m4/occam-opengl.m4 \
+	m4/occam-pkg.m4 \
 	m4/occam-sdl.m4 \
 	m4/occbuild.m4 \
 	m4/tvm.m4

@@ -1,0 +1,17 @@
+#INCLUDE "wiring.module"
+
+PROC flash.pin (VAL INT pin, on, off)
+  SEQ
+    pinMode (pin, OUTPUT)
+    WHILE TRUE
+      SEQ
+        digitalWrite (pin, HIGH)
+        delay (on)
+        digitalWrite (pin, LOW)
+        delay (off)
+:
+
+PROC main ()
+  PAR i = 2 FOR 12
+    flash.pin (i, i * 100, i * 230)
+:

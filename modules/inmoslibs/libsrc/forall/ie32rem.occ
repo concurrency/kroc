@@ -250,7 +250,7 @@ BOOL, REAL32 FUNCTION IEEE32REM (VAL REAL32 X, Y)
     [2] INT Ans :
     PLACE Ans IN WORKSPACE :
     VAL INT Sign IS SignBit:
-    --{{{  #USE "occamutl.lib"
+    --{{{  #USEs
     #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
     #USE "ridiv"  --  27-Nov-07
     --}}}

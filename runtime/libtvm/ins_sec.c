@@ -242,7 +242,7 @@ TVM_INSTRUCTION (ins_norm)
 	return ECTX_CONTINUE;
 }
 
-#if TVM_WORD_LENGTH == 4
+#if !defined(TVM_HAVE_DWORD) && TVM_WORD_LENGTH == 4
 static TVM_INLINE int nlz(unsigned int x) {
 	int n;
 
@@ -257,11 +257,19 @@ static TVM_INLINE int nlz(unsigned int x) {
 }
 #endif
 
-#if TVM_WORD_LENGTH >= 4
+#if defined(TVM_HAVE_DWORD) || TVM_WORD_LENGTH == 4
 /* 0x1A - 0x21 0xFA LDIV - divides a double length value in the 
  * reg pair CB by a single length value in A */
 TVM_INSTRUCTION (ins_ldiv)
 {
+#ifdef TVM_HAVE_DWORD
+	UDWORD value = (((UDWORD) ((UWORD) CREG)) << WORD_BITS) | ((UWORD) BREG);
+
+	BREG = value % ((UWORD) AREG);
+	AREG = value / ((UWORD) AREG);
+
+	STACK2_RET(AREG, BREG, STYPE_DATA, STYPE_DATA);
+#else
 	/* 
 	 * The dividend is u1 and u0, with u1 being the most significant word.
 	 * The divisor is parameter v.
@@ -336,8 +344,9 @@ again2:
 	AREG = q1*b + q0;
 
 	STACK2_RET(AREG, BREG, STYPE_DATA, STYPE_DATA);
+#endif
 }
-#endif /* TVM_WORD_LENGTH >= 4 */
+#endif /* defined(TVM_HAVE_DWORD) || TVM_WORD_LENGTH == 4 */
 
 /* 0x1B - 0x21 0xFB - ldpi - load pointer to instruction */
 TVM_INSTRUCTION (ins_ldpi)
@@ -441,10 +450,18 @@ TVM_INSTRUCTION (ins_div)
  *              0x23 0xF_         0x23 0xF_         0x23 0xF_               *
  ****************************************************************************/
 
-#if TVM_WORD_LENGTH >= 4
+#if defined(TVM_HAVE_DWORD) || TVM_WORD_LENGTH == 4
 /* 0x31 - 0x23 F1 - lmul - long multiply */
 TVM_INSTRUCTION (ins_lmul)
 {
+#ifdef TVM_HAVE_DWORD
+	UDWORD value = (((UDWORD) ((UWORD) BREG)) * ((UWORD) AREG)) + ((UWORD) CREG);
+
+	AREG = value & LONG_LO_MASK;
+	BREG = value >> WORD_BITS;
+
+	STACK2_RET(AREG, BREG, STYPE_DATA, STYPE_DATA);
+#else
 	unsigned int u = BREG;
 	unsigned int v = AREG;
 
@@ -467,15 +484,8 @@ TVM_INSTRUCTION (ins_lmul)
 	t = u1*v0 + w2;
 	k = t >> 16;
 
-	/*
-	printf("t:  0x%08x, k:  0x%08x w1: 0x%08x w2: 0x%08x \n", t, k, w1, w2);
-	printf("w3: 0x%08x, u0: 0x%08x u1: 0x%08x v0: 0x%08x \n", w3, u0, u1, v0);
-	*/
-
 	BREG = u0*v0 + w1 + k;
 	AREG = (t << 16) + w3;       /* (*) */
-	/* w[1] = u*v;                  // Alternative. */
-	/*AREG = u*v; */
 
 	/* FIXME: This aint right, we need to do a 64 bit add no? 
 	 * ie [AREG,BREG]+[CREG] */
@@ -485,25 +495,9 @@ TVM_INSTRUCTION (ins_lmul)
 	BREG = BREG + carry;
 	
 	STACK2_RET(AREG, BREG, STYPE_DATA, STYPE_DATA);
-#if 0
-	/*FIXME: not tested...*/
-	/*FIXME: the hi calculation has a nasty warning that the thing we are sticking in it does not fit. */
-	/* Multiplies AREG * BREG and adds CREG (not sure why)
-	 * then gets the hi end of the multiplication and sticks it in hi
-	 * and gets the lo end of the result and stick it in lo.  lo goes 
-	 * in AREG and hi goes in BREG */
-	unsigned int hi, lo;
-	unsigned long long result, tmp;
-	result = BREG;
-	tmp = (unsigned int)AREG;
-	result = (result * tmp) + CREG;
-	tmp = (result >> WORD_BITS);
-	hi = (int) tmp;
-	lo = (result & LONG_LO_MASK );
-	STACK( lo, hi, UNDEFINE(CREG));
 #endif
 }
-#endif /* TVM_WORD_LENGTH >= 4 */
+#endif /* defined(TVM_HAVE_DWORD) || TVM_WORD_LENGTH == 4 */
 
 /* 0x32 - 0x23 F2 - not - bitwise complement */
 TVM_INSTRUCTION (ins_not)
@@ -517,13 +511,19 @@ TVM_INSTRUCTION (ins_xor)
 	STACK2_RET(AREG ^ BREG, CREG, STYPE_DATA, CREGt);
 }
 
-#if TVM_WORD_LENGTH >= 4
-/* my god the two below are ugly! */
-/* FIXME: Things like this can be implemented very efficiently (and easily!) in
-   assembler for little platforms like the AVR. */
+#if defined(TVM_HAVE_DWORD) || TVM_WORD_LENGTH == 4
 /* 0x35 - 0x23 F5 - lshr - long shift right */
 TVM_INSTRUCTION (ins_lshr)
 {
+#ifdef TVM_HAVE_DWORD
+	UDWORD value = (((UDWORD) ((UWORD) CREG)) << WORD_BITS) | ((UWORD) BREG);
+
+	value >>= ((UWORD) AREG);
+	AREG = value & LONG_LO_MASK;
+	BREG = value >> WORD_BITS;
+
+	STACK2_RET(AREG, BREG, STYPE_DATA, STYPE_DATA);
+#else
 	int loop, bit;
 
 	/* Reduce shift length to 64 if larger */
@@ -546,33 +546,23 @@ TVM_INSTRUCTION (ins_lshr)
 	}
 
 	STACK2_RET(BREG, CREG, STYPE_DATA, STYPE_DATA);
-#if 0
-	/*FIXME: not tested...*/
-	/* lo does not need to be long, bits rightshifted out of lo are supposed to 
-	* fall out into the void anyway */
-	unsigned int lo;  
-	unsigned long long hi;
-	if(AREG <= 2* WORD_BITS  && AREG >= 0 )
-        {
-                hi = (unsigned int) CREG;
-                hi = hi << (WORD_BITS - AREG); /*make hi really be the 'hi' and then shift it.*/
-                /* shift lo - done on seperage line coz shifting BREG directly buggered up
-		 * coz it's unsigned, I think.  Maybe not though.  This seems to work, and
-		 * shifting BREG directly didn't.  */
-                lo = BREG;
-                lo = lo >> ((UWORD) AREG);  
-                lo += hi;  /*add what 'overflowed' from lo to hi.*/
-                hi = hi >> WORD_BITS; /*set hi back to what it would have been in a real reg.*/
-                STACK((WORD)lo,(WORD) hi, 0);
-        }
 #endif
 }
-#endif /* TVM_WORD_LENGTH >= 4 */
+#endif /* defined(TVM_HAVE_DWORD) || TVM_WORD_LENGTH == 4 */
 
-#if TVM_WORD_LENGTH >= 4
+#if defined(TVM_HAVE_DWORD) || TVM_WORD_LENGTH == 4
 /* 0x36 - 0x23 F6 - lshl - long shift left */
 TVM_INSTRUCTION (ins_lshl)
 {
+#ifdef TVM_HAVE_DWORD
+	UDWORD value = (((UDWORD) ((UWORD) CREG)) << WORD_BITS) | ((UWORD) BREG);
+
+	value <<= ((UWORD) AREG);
+	AREG = value & LONG_LO_MASK;
+	BREG = value >> WORD_BITS;
+
+	STACK2_RET(AREG, BREG, STYPE_DATA, STYPE_DATA);
+#else
 	int loop, bit;
 
 	/* Reduce shift length to 64 if larger */
@@ -595,54 +585,9 @@ TVM_INSTRUCTION (ins_lshl)
 	}
 
 	STACK2_RET(BREG, CREG, STYPE_DATA, STYPE_DATA);
-#if 0
-	/* From: Hackers Delight
-	 * y1 = x1 << n | x0 >> (32 -n) | x0 << (n - 32)
-	 * y0 = x0 << n
-	 */
-	UWORD hi, lo;
-
-	/* 0 <= AREG <= 2 * wordlength */
-	/* I am assuming that shift by any value out of this range is going to result
-	 * in all zeros
-	 * FIXME: do we need to do this test, or is the line in the instruciton
-	 * breakdown in the compiler writers guide an assertion that AREG is always
-	 * going to be that value?
-	 */
-	if(((UWORD) AREG >= 2 * TVM_WORD_LENGTH))
-	{
-		STACK(0, 0, UNDEFINE(CREG));
-	}
-	else
-	{
-		hi = ((UWORD) BREG << (UWORD) AREG) | 
-			   ((UWORD) CREG >> (32 - (UWORD) AREG)) | 
-				 ((UWORD) CREG << ((UWORD) AREG - 32));
-		lo = (UWORD) CREG << AREG;
-		STACK(hi, lo, UNDEFINE(CREG));
-	}
-#endif
-#if 0
-	/*FIXME: not tested...*/
-	/* hi does not need to be long, bits leftshifted out of hi are supposed to 
-	* fall out into the void anyway */
-	unsigned int hi;  
-	unsigned long long lo;
-	if(AREG <= 2* WORD_BITS  && AREG >= 0 )
-	{
-		hi = ((unsigned int)CREG) << AREG; /*shift hi*/
-		/* shift lo - if BREG is shifted directly then you get the result of
-		 * a shifted int put in a long long.  Not what we want... shift the value
-		 * in the long long to get what we want (doesn't overflow).  Probably not
-		 * very efficient.*/
-		lo = BREG; 
-		lo = lo << AREG;  
-		hi += lo >> WORD_BITS;  /*add what 'overflowed' from lo to hi.*/
-		STACK((WORD)lo, (WORD)hi, UNDEFINE(CREG));
-	} 
 #endif
 }
-#endif /* TVM_WORD_LENGTH >= 4 */
+#endif /* defined(TVM_HAVE_DWORD) || TVM_WORD_LENGTH == 4 */
 
 /* 0x37 - 0x23 F7 - lsum - long sum - used in conjunction with ladd */
 TVM_INSTRUCTION (ins_lsum)

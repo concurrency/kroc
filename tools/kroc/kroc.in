@@ -69,9 +69,9 @@ ARCH_ASFLAGS="@KROC_CCSP_ASFLAGS@"
 
 package_version="@VERSION@"
 dversion='2.0'
-host_canonical="@KROC_CANONICAL_TARGET@"
-host_cpu="@KROC_HOST_CPU@"
-host_os="@KROC_HOST_OS@"
+target_canonical="@KROC_CANONICAL_TARGET@"
+target_cpu="@KROC_TARGET_CPU@"
+target_os="@KROC_TARGET_OS@"
 # -kc : cgr-mp CCSP interface
 octranopts="-kc @KROC_CCSP_TRANFLAGS@"
 ccopts="@KROC_CCSP_CFLAGS@"
@@ -81,7 +81,7 @@ ocrtslibs="-lm @KROC_CCSP_LIBS@"
 extcflags="@KROC_CCSP_CFLAGS@"
 dtraces=0
 
-case "$host_os" in
+case "$target_os" in
 	cygwin*)
 		octranopts="$octranopts -nsymops --cnpfx _"
 		;;
@@ -136,7 +136,7 @@ tsuffix='tce'
 occwopts=
 occopts="-etc -w -y -znd -znec -udo -zncc -init -xin -mobiles -mpt -zrpe @KROC_CCSP_OCCFLAGS@"
 
-case "$host_cpu" in
+case "$target_cpu" in
 	i386 | i486 | i586 | i686 | x86_64)
 		occopts="$occopts -zcxdiv -zcxrem -zzs"
 		;;
@@ -157,7 +157,7 @@ esac
 
 # necessary for dynamic procs (makes all synbols appear in the dynamic symbol table)
 
-case "$host_os" in
+case "$target_os" in
 	darwin*)
 		extraccopts=${EXTRACCOPTS:--read_only_relocs suppress}
 		;;
@@ -176,7 +176,7 @@ cc=${CC:-gcc}
 as=${AS:-as}
 asflags=""
 ld=${LD:-ld}
-case "$host_os" in
+case "$target_os" in
 	darwin*)
 		ldopts="-dynamiclib"
 		libext=".dylib"
@@ -225,6 +225,7 @@ showld=
 showas=
 showldflags=
 showasflags=
+showkrocpath=
 delete_temp=yes
 enable_udc=
 skip_link=
@@ -233,6 +234,7 @@ dumpxml=
 usenocc=
 nocc="@NOCCHOME@/nocc"
 noccopts="--specs-file @NOCCHOME@/nocc.specs.xml"
+linkstatic=0
 
 
 #}}}
@@ -710,6 +712,16 @@ do
 		usenocc=1
 		;;
 		#}}}
+		#{{{  --static  link to static binary
+	--static)
+		linkstatic=1
+		;;
+		#}}}
+		#{{{  --krocdir  show directory where KRoC data files are kept
+	--krocdir)
+		showkrocpath=1
+		;;
+		#}}}
 		#{{{  -z, --all-help  show all options
 	-z | --all-help)
 		showall=1
@@ -917,6 +929,10 @@ if [ $showasflags ]; then
 	printf '%s\n' "$ARCH_ASFLAGS"
 	exit 0
 fi
+if [ $showkrocpath ]; then
+	printf '%s\n' "$kroc_krocdir"
+	exit 0
+fi
 
 if [ $makelib ]; then
 	if [ "X$link" = "X" ]; then
@@ -929,7 +945,7 @@ fi
 if [ "X${fatal}" != "X" -o "X$srcs" = "X" -o "X$showversion" != "X" ]; then
 
 	exec 1>&2
-	printf 'KRoC version %s targeting %s (driver V%s)\n' "$package_version" "$host_canonical" "$dversion"
+	printf 'KRoC version %s targeting %s (driver V%s)\n' "$package_version" "$target_canonical" "$dversion"
 
 	if [ $verbose ]; then
 		showversion=yes
@@ -996,6 +1012,7 @@ Exclusive options:
   --ccincpath            Print path to occam include files in CC -I.. form
   --ld                   Print path to dynamic linker (for generating shared libraries)
   --ldflags              Print linker flags to be used when building shared libraries
+  --krocdir              Print path to kroc data files
 Additional options:
   -dm                    Enable dynamic memory debugging
   -ds                    Enable memory usage summary
@@ -1008,6 +1025,7 @@ Additional options:
   --xml                  Generate XML tree
   --nocc                 Use NOCC compiler (experimental)
   --linkcc <prog>        Use <prog> to link instead of $cc
+  --static               Link to static binary
 EOF
 	if [ $use_occ21_revalt -eq 1 ]; then
 		printf '       --no-revalt       Do not use reversed ALT disabling sequence (default enabled)\n'
@@ -1351,7 +1369,19 @@ elif [ $skip_link ]; then
 elif [ "X$rmoxlink" != "X" ]; then
 	cmd="$ld -o $efile -r $objs"
 else
-	cmd="$cc $ccopts $objs $oclibpath $cincludepath $ocllibs $ocrts $ocrtslibs $extraccopts -o $efile"
+	if [ $linkstatic -eq 1 ]; then
+		# need to add in pthread library if we're using that
+		USEPTHREAD=0
+		printf '%s\n' "$extcflags" | grep KROC_USES_PTHREADS > /dev/null && USEPTHREAD=1
+
+		if [ $USEPTHREAD -eq 1 ]; then
+			cmd="$cc $ccopts $objs $oclibpath $cincludepath $ocllibs $ocrts $ocrtslibs $extraccopts -static -o $efile -lpthread"
+		else
+			cmd="$cc $ccopts $objs $oclibpath $cincludepath $ocllibs $ocrts $ocrtslibs $extraccopts -static -o $efile"
+		fi
+	else
+		cmd="$cc $ccopts $objs $oclibpath $cincludepath $ocllibs $ocrts $ocrtslibs $extraccopts -o $efile"
+	fi
 fi
 if [ $verbose ]; then
 	printf '%s\n' "$cmd"  1>&2

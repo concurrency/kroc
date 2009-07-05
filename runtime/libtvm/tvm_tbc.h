@@ -102,9 +102,10 @@ typedef struct _tbc_t {
 
 /*{{{  TBC decoder interface */
 extern WORD tenc_decode_int (BYTE *src);
-extern int tenc_decode_element (BYTE *src, int *length, tenc_element_t *element);
-extern int tenc_walk_to_element (BYTE *data, int *length, const char *id, tenc_element_t *element);
-extern int tbc_decode (BYTE *data, int length, tbc_t **ptr);
+extern int tenc_decode_element (BYTE *src, unsigned int *length, tenc_element_t *element);
+extern int tenc_walk_to_element (BYTE *data, unsigned int *length, const char *id, tenc_element_t *element);
+extern int tbc_debug_file_and_line (BYTE *data, unsigned int length, unsigned int offset, char **file, unsigned int *line);
+extern int tbc_decode (BYTE *data, unsigned int length, tbc_t **ptr);
 /*}}}*/
 
 #endif /* TVM_TBC_H */

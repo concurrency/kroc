@@ -66,7 +66,7 @@ all-local: $(libs) $(includes)
 
 if HAVE_SWIG_OCCAM
 SDL_wrap.c SDL_wrap.h occSDL.inc: $(SWIG_SOURCE_FILES)
-	$(SWIG_OCCAM) -structpointers SDL.i
+	$(SWIG_OCCAM) SDL.i
 endif
 
 occSDL.lib: $(occSDL_lib_objs)
@@ -74,7 +74,7 @@ occSDL.lib: $(occSDL_lib_objs)
 
 if HAVE_SWIG_OCCAM
 SDL_sound_wrap.c SDL_sound_wrap.h occSDLsound.inc: $(SWIG_SOURCE_FILES)
-	$(SWIG_OCCAM) -structpointers SDL_sound.i
+	$(SWIG_OCCAM) SDL_sound.i
 endif
 
 occSDLsound.lib: $(occSDLsound_lib_objs)

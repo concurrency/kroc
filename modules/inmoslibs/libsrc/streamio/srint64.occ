@@ -25,6 +25,7 @@
 #INCLUDE "streamio.inc"
 #USE "convert.lib"
 
+#IF TARGET.BITS.PER.WORD = 32
 --* Read a 64-bit decimal or hexadecimal integer from the given
 -- keystream.
 --
@@ -133,3 +134,4 @@ PROC ks.read.int64 (CHAN OF KS source, INT64 number, INT char)
       TRUE
         char := ch
 :
+#ENDIF

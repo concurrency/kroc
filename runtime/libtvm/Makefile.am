@@ -44,12 +44,13 @@ tvminclude_HEADERS = \
 libtvm_a_SOURCES = \
 	interpreter.c \
 	mem_array.c \
+	mem_avr.c \
 	mem_bigendian.c \
 	scheduler.c \
 	tencode.c
 
 if TVM_DISPATCH_SWITCH
-interpreter.c: $(top_builddir)/dispatch_ins.c
+$(top_srcdir)/interpreter.c: $(top_builddir)/dispatch_ins.c
 else
 libtvm_a_SOURCES += \
 	ins_alt.c \

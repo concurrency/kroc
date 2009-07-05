@@ -29,6 +29,7 @@
 -- Put ValidDigit into an include file, renamed it ValidHexDigit, and
 -- converted it into an inline function.  TS/2044, V1.2, 18/01/93 SRH
 --}}}
+#IF TARGET.BITS.PER.WORD = 32
 --{{{  STRINGTOHEX64 TA
 PROC STRINGTOHEX64 (BOOL Error, INT64 n, VAL []BYTE string)
   --  Empty string behaviour corrected 19.2.88
@@ -74,3 +75,4 @@ PROC HEX64TOSTRING (INT len, []BYTE string, VAL INT64 n)
     len := 16
 :
 --}}}
+#ENDIF

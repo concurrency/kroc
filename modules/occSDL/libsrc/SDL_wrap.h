@@ -12,53 +12,14 @@
 #define SWIG_init    initoccSDL
 
 #define SWIG_name    "occSDL"
-#ifdef WIN32
-#define DLLPREFIX extern __declspec(dllexport)
-#else
-#define DLLPREFIX
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*  A set of basic macros for converting between occam types to C types.
- *  Taken from David C. Wood's paper Kroc - Calling C Functions from occam
- */
+#include <string.h>
+#include <stdlib.h>
 
 typedef int word;
-
-#define VAL_BYTE(w)     (*(char *)&(w))
-#define BYTE(w)         ((char *)(w))
-#define CAST_BYTE(w)    ((char)(w))
-
-#define VAL_BOOL(w)     (*(char *)(&(w))
-#define BOOL(w)         ((char *)(w))
-#define CAST_BOOL(w)    ((char)(w))
-
-#define VAL_INT16(w)    (*(short int *)&(w))
-#define INT16(w)        ((short int*)(w))
-#define CAST_INT16(w)   ((short int)(w))
-
-#define VAL_INT(w)      (w)
-#define INT(w)          ((int *)(w))
-#define CAST_INT(w)     ((int)(w))
-
-#define VAL_INT32(w)    (w)
-#define INT32(w)        ((int *)(w))
-#define CAST_INT32(w)   ((int)(w))
-
-#define VAL_INT64(w)    (*(long long int *)(w))
-#define INT64(w)        ((long long int *)(w))
-#define CAST_INT64(w)   ((long long int)(w))
-
-#define VAL_REAL32(w)   (*(float *)&(w))
-#define REAL32(w)       ((float *)(w))
-#define CAST_REAL32(w)  ((float)(w))
-
-#define VAL_REAL64(w)   (*(double *)(w))
-#define REAL64(w)       ((double *)(w))
-#define CAST_REAL64(w)  ((double)(w))
-
 
 
 #include <SDL.h>

@@ -29,6 +29,7 @@
 #USE "ridiv"  --  13-Sep-07
 --}}}
 
+#IF TARGET.BITS.PER.WORD = 32
 --* Take a binary representation of a real number and convert it into a
 -- string of characters that is the decimal representation of that
 -- number, formatted according to given rules ( see Notes below ).
@@ -1049,3 +1050,4 @@ PROC REAL64TOSTRING (INT len, []BYTE string, VAL REAL64 X, VAL INT Ip, Dp)
         --}}}
   --}}}
 :
+#ENDIF

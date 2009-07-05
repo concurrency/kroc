@@ -34,6 +34,7 @@
 -- with its definition better given as the number of bits in the integer
 -- divided by the number of bits in a nibble.  SRH
 --}}}
+#IF TARGET.BITS.PER.WORD = 32
 --{{{  append.int64
 --* Convert a 64-bit integer into its representation as ASCII decimal
 -- digits, with leading spaces if desired, and write this into a given
@@ -141,3 +142,4 @@ PROC append.hex.int64 (INT len, []BYTE str, VAL INT64 number, VAL INT width)
         len := len + (width + 1)
 :
 --}}}
+#ENDIF

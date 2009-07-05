@@ -156,16 +156,31 @@ extern  void  SDL_PauseAudio(int pause_on);
  * wave file cannot be opened, uses an unknown data format, or is 
  * corrupt.  Currently raw and MS-ADPCM WAVE files are supported.
  */
-//extern  SDL_AudioSpec *  SDL_LoadWAV_RW(SDL_RWops *src, int freesrc, SDL_AudioSpec *spec, Uint8 **audio_buf, Uint32 *audio_len);
+extern  SDL_AudioSpec *  SDL_LoadWAV_RW(SDL_RWops *src, int freesrc, SDL_AudioSpec *spec, Uint8 **audio_buf, Uint32 *audio_len);
 
 /* Compatibility convenience function -- loads a WAV from a file */
 %runtime %{
-SDL_AudioSpec * occ_SDL_LoadWAV(char file[], SDL_AudioSpec *spec, Uint8 audio_buf[], Uint32 audio_len[]) {
-	return SDL_LoadWAV_RW(SDL_RWFromFile(file, "rb"),1, spec,audio_buf,audio_len);
+void occ_SDL_LoadWAV(const char file[], SDL_AudioSpec *spec, Uint8 audio_buf[], Uint32 *audio_len) {
+        Uint8 *buf;
+        Uint32 len;
+        SDL_AudioSpec *rc = SDL_LoadWAV_RW(SDL_RWFromFile(file, "rb"), 1, spec, &buf, &len);
+        if (rc == NULL) {
+                *audio_len = -1;
+                return;
+        }
+
+        if (len <= *audio_len) {
+                memcpy(audio_buf, buf, len);
+                *audio_len = len;
+        } else {
+                *audio_len = -2;
+        }
+
+        SDL_FreeWAV(buf);
 }
 %}
+extern void occ_SDL_LoadWAV(const char file[], SDL_AudioSpec *spec, Uint8 audio_buf[], Uint32 *audio_len); 
 
-extern SDL_AudioSpec * occ_SDL_LoadWAV(char file[], SDL_AudioSpec *spec, Uint8 audio_buf[][], Uint32 audio_len[]); 
 /*
  * This function frees data previously allocated with SDL_LoadWAV_RW()
  */

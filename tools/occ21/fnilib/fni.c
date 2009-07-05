@@ -48,7 +48,7 @@
 
 #include <string.h>
 
-#if defined(TARGET_OS_IS_SERVER)
+#if defined(HOST_OS_IS_SERVER)
 #include <host.h>
 #endif
 
@@ -56,7 +56,7 @@
 #define semi_colon  ';'
 #define full_colon  ':'
 
-#if !defined(TARGET_OS_IS_VMS)
+#if !defined(HOST_OS_IS_VMS)
 typedef enum
 { false = 0, true = 1 } bool;
 #else
@@ -97,11 +97,11 @@ typedef enum
 	dir_root
 } dir_type;
 
-#if defined(TARGET_OS_IS_MSDOS)
+#if defined(HOST_OS_IS_MSDOS)
 #define default_style msdos_style
-#elif defined(TARGET_OS_IS_VMS)
+#elif defined(HOST_OS_IS_VMS)
 #define default_style vms_style
-#elif defined(TARGET_OS_IS_SERVER)
+#elif defined(HOST_OS_IS_SERVER)
 #define default_style host_style
 #else
 #define default_style unix_style
@@ -163,7 +163,7 @@ static void free_mem (fni_access access, void *v)
 
 static fni_style get_host_style (void)
 {
-#ifdef TARGET_OS_IS_SERVER
+#ifdef HOST_OS_IS_SERVER
 	static fni_style known_style = host_style;
 	int host, os, board;
 

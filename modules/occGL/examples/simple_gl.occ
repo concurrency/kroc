@@ -83,26 +83,26 @@ PROC keyevent(CHAN BYTE scr!, keyboard!)
   INT re:
   INITIAL BOOL quit IS FALSE:
   SEQ
-    create.SDL.Event(event)
+    new.SDL.Event(event)
     WHILE NOT quit
       SEQ 
         
         tim ? wait
         tim ? AFTER wait PLUS delay
         tim ? wait
-        SDL.PollEvent(re, event)
+        SDL.PollEvent(event, re)
         tim ? AFTER wait PLUS delay
         IF
           re > 0
             SEQ
-              get.SDL.Event.type(type, event)
+              SDL.Event.type.get(event, type)
               IF 
                 (INT type) = SDL.KEYDOWN
                   INT key:
                   SEQ
                     keyevent := (SDL.KeyboardEvent event)
-                    get.SDL.KeyboardEvent.keysym(keyinfo, keyevent)
-                    get.SDL.keysym.sym(key, keyinfo)
+                    SDL.KeyboardEvent.keysym.get(keyevent, keyinfo)
+                    SDL.keysym.sym.get(keyinfo, key)
                     scr ! (BYTE key)
                     keyboard ! (BYTE key)
                     IF
@@ -138,7 +138,7 @@ PROC simple.gl(CHAN BYTE kyb?, scr!, err!)
     out.string("SDL SIMPLE_GL: from occam*c*n", 0, scr!)
     out.string("(c) 2003 Christian L. Jacobsen*c*n", 0, scr!)
     out.string("(c) 2005 Damian Dimmich*c*n*n", 0, scr!)
-    occ.SDL.Init(result, SDL.INIT.VIDEO)
+    occ.SDL.Init(SDL.INIT.VIDEO, result)
     out.string("sdl init ok*c*n", 0, scr!)
     IF
       result <> 0
@@ -152,11 +152,11 @@ PROC simple.gl(CHAN BYTE kyb?, scr!, err!)
       TRUE
         INT re:
         SEQ
-          SDL.GL.SetAttribute(re, SDL.GL.RED.SIZE, 5)
-          SDL.GL.SetAttribute(re, SDL.GL.GREEN.SIZE, 5)
-          SDL.GL.SetAttribute(re, SDL.GL.BLUE.SIZE, 5)
-          SDL.GL.SetAttribute(re, SDL.GL.DOUBLEBUFFER, 1)
-          SDL.SetVideoMode(surface, width, height, 32, SDL.OPENGL)
+          SDL.GL.SetAttribute(SDL.GL.RED.SIZE, 5, re)
+          SDL.GL.SetAttribute(SDL.GL.GREEN.SIZE, 5, re)
+          SDL.GL.SetAttribute(SDL.GL.BLUE.SIZE, 5, re)
+          SDL.GL.SetAttribute(SDL.GL.DOUBLEBUFFER, 1, re)
+          SDL.SetVideoMode(width, height, 32, SDL.OPENGL, surface)
           IF
             (INT surface) = 0
               [100]BYTE err.str:
