@@ -19,17 +19,21 @@
 #
 dnl
 dnl Determine whether we're building a package in the KRoC tree.
-dnl Set KROC_BUILD_ROOT to the top of the tree if we are, and to
-dnl the empty string if we aren't.
+dnl Set KROC_BUILD_ROOT to the top of the build tree and KROC_SRC_ROOT to the
+dnl top of the source tree if we are, and both to the empty string if we
+dnl aren't.
 AC_DEFUN([OCCAM_IN_TREE],
 [dnl
 AC_ARG_VAR(KROC_BUILD_ROOT, [Path to top of KRoC build tree])
+AC_ARG_VAR(KROC_SRC_ROOT, [Path to top of KRoC source tree])
 
 AC_MSG_CHECKING([whether we're building as part of KRoC])
-if test "x$KROC_BUILD_ROOT" != "x"; then
+if test "x$KROC_BUILD_ROOT" != "x" -a "x$KROC_SRC_ROOT" != "x"; then
   AC_MSG_RESULT([yes])
 else
   AC_MSG_RESULT([no])
+  KROC_BUILD_ROOT=""
+  KROC_SRC_ROOT=""
 fi
 ])dnl
 dnl
@@ -86,7 +90,7 @@ else
 fi
 AC_SUBST(OCCBUILD_CFLAGS)
 
-OCCBUILD_API_VERSION=2
+OCCBUILD_API_VERSION=3
 AC_SUBST(OCCBUILD_API_VERSION)
 ])dnl
 dnl
