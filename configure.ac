@@ -5,10 +5,12 @@ AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 OCCAM_TOOLCHAIN
-KROC_BUILD_ROOT=`pwd`
+KROC_BUILD_ROOT="`pwd`"
+KROC_SRC_ROOT="`(cd $srcdir && pwd)`"
+echo "pwd='$ac_pwd' build='$KROC_BUILD_ROOT' src='$KROC_SRC_ROOT'"
 OCCAM_OCCBUILD
 
-if test "x$OCCBUILD_API_VERSION" != x2; then
+if test "x$OCCBUILD_API_VERSION" != x3; then
   AC_MSG_ERROR([this configure script has been built with an out-of-date version of `occbuild.m4'; try clearing your `ACLOCAL' environment variable.])
 fi
 

@@ -26,7 +26,7 @@ TVM_CFLAGS=""
 TVM_LIBS=""
 
 if test "x$KROC_BUILD_ROOT" != "x"; then
-  TVM_CFLAGS="-I$KROC_BUILD_ROOT/runtime/libtvm"
+  TVM_CFLAGS="-I$KROC_BUILD_ROOT/runtime/libtvm -I$KROC_SRC_ROOT/runtime/libtvm"
   TVM_LIBS="-L$KROC_BUILD_ROOT/runtime/libtvm -ltvm"
 else
   # We're not in the KRoC source tree, so we need to get the arguments...
