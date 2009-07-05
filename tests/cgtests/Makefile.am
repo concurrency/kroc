@@ -50,7 +50,7 @@ tests = \
 	cgtest75 cgtest76 cgtest77 cgtest78 cgtest79 \
 	cgtest80 cgtest81 cgtest82 cgtest83 cgtest84 \
 	cgtest85 cgtest86 cgtest87 cgtest88 cgtest89 \
-	cgtest90 cgtest91 cgtest92
+	cgtest90 cgtest91 # cgtest92
 
 TESTS_ENVIRONMENT = $(OCCBUILD) --run
 TESTS = $(tests)
