@@ -429,10 +429,10 @@ sub new ($$) {
 	$self->{'aliases'}	= {};
 	$self->{'constants'}	= {};
 	$self->{'globals'}	= {};
+	$self->{'header'}	= {};
 	$self->{'source_files'}	= {};
 	$self->{'source_file'}	= undef;
 	$self->{'source_line'} 	= 0;
-	$self->{'header'}	= {};
 	return $self;
 }
 
@@ -799,6 +799,7 @@ sub preprocess_etc ($$$) {
 			$labels{$label}		= $new;
 
 			$align			= 0;
+			$n_inst			= 0;
 		} elsif ($name eq '.FILENAME') {
 			$filename		= $arg;
 		} elsif ($name eq '.LINE') {
@@ -1271,6 +1272,20 @@ sub global_ptr_value ($$$) {
 	);
 }
 
+sub declare_proc ($$) {
+	my ($self, $name) = @_;
+	my $symbol = $name;
+
+	$symbol =~ s/^[@%]//;
+	$name 	= '@' . $name if $name !~ /^[@%]/;
+
+	$self->{'header'}->{$symbol} = [
+		sprintf ('declare fastcc void %s (%s, %s)', 
+			$name, $self->sched_type, $self->workspace_type
+		)
+	] if !exists ($self->{'header'}->{$symbol});
+}
+
 sub _gen_error ($$$$$) {
 	my ($self, $proc, $label, $inst, $type) = @_;
 	my ($source_reg, $source_asm) = $self->global_ptr_value ('i8*', $self->source_file);
@@ -1528,12 +1543,8 @@ sub gen_call ($$$$) {
 	} elsif ($name eq 'CALL') {
 		if (!$ffi) {
 			my $symbol = $self->symbol_to_proc_name ($symbol);
-
-			$self->{'header'}->{$symbol} = [
-				sprintf ('declare void @%s (%s, %s)', 
-					$symbol, $self->sched_type, $self->workspace_type
-				)
-			] if !exists ($self->{'header'}->{$symbol});
+			
+			$self->declare_proc ($symbol);
 			
 			push (@asm, sprintf ('tail call fastcc void @%s (%s %%sched, %s %%%s) noreturn',
 				$symbol,
@@ -1687,12 +1698,7 @@ sub gen_ldc ($$$$) {
 				$symbol = $proc->{'call_prefix'} . $name;
 			} elsif (($arg->{'proc'} eq $arg) || $arg->{'stub'}) {
 				$symbol = '@' . $self->symbol_to_proc_name ($arg->{'symbol'});
-				
-				$self->{'header'}->{$symbol} = [
-					sprintf ('declare void %s (%s, %s)', 
-						$symbol, $self->sched_type, $self->workspace_type
-					)
-				] if !exists ($self->{'header'}->{$symbol});
+				$self->declare_proc ($symbol);
 			} else {
 				$self->message (2, 
 					"attempting to reference a label in a different process..."
@@ -3723,7 +3729,9 @@ sub generate_proc ($$) {
 				push (@params, sprintf ('%s %%%s', $self->float_type, $label->{'fin'}->[$i]));
 			}
 			
-			$self->{'header'}->{$sym_name} = [
+			my $tmp_sym = $sym_name;
+			$tmp_sym =~ s/^[@%]//;
+			$self->{'header'}->{$tmp_sym} = [
 				sprintf ('declare fastcc void %s (%s)',
 					$sym_name,
 					join (', ', @types)
@@ -3884,18 +3892,25 @@ sub code_aliases ($) {
 	my @asm;
 
 	foreach my $alias (sort (keys (%$aliases))) {
-		my $target = $aliases->{$alias};
-		my $symbol = $self->symbol_to_proc_name ($target);
+		my $target 	= $aliases->{$alias};
+		my $alias	= $self->symbol_to_proc_name ($alias);
+		my $symbol 	= $self->symbol_to_proc_name ($target);
 
-		$self->{'header'}->{$symbol} = [
-			sprintf ('declare void @%s (%s, %s)', 
-				$symbol, $self->sched_type, $self->workspace_type
-			)
-		] if !exists ($self->{'header'}->{$symbol});
-		
-		push (@asm, sprintf ('@%s = alias %s @%s',
-			$self->symbol_to_proc_name ($alias),
-			$self->func_type . '*', $symbol
+		$self->declare_proc ($alias);
+		$self->declare_proc ($symbol);
+	
+		push (@asm, format_lines (
+			sprintf ('define fastcc void @%s (%s %%sched, %s %%wptr) {',
+				$alias,
+				$self->sched_type, $self->workspace_type
+			),
+			'entry:',
+			sprintf ('tail call fastcc void @%s (%s %%sched, %s %%wptr) noreturn',
+				$symbol,
+				$self->sched_type, $self->workspace_type
+			),
+			'ret void',
+			'}'
 		));
 	}
 
