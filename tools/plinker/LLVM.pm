@@ -4052,8 +4052,10 @@ sub entry_point ($$) {
 		));
 	}
 
-	push (@asm, sprintf ('@tlp_desc = internal constant [ %d x i8* ] [ %s, i8* null ]',
-		@tlp_elem + 1, join (', ', @tlp_elem) 
+	push (@asm, sprintf ('@tlp_desc = internal constant [ %d x i8* ] [ %s%si8* null ]',
+		@tlp_elem + 1, 
+		join (', ', @tlp_elem), 
+		(@tlp_elem ? ', ' : '')
 	));
 	push (@asm,
 		sprintf ('declare %s @occam_start (%s, i8**, i8*, i8**, i8*, %s, %s, %s)',
