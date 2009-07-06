@@ -21,19 +21,19 @@ if test $OCCBUILD_TOOLCHAIN != tock; then
   OCCAM_CONFIG_SUBDIRS(tools/occ21)
 fi
 OCCAM_CONFIG_SUBDIRS(tools/occamdoc)
+OCCAM_CONFIG_SUBDIRS(tools/plinker)
 
 if test $OCCBUILD_TOOLCHAIN = kroc -o $OCCBUILD_TOOLCHAIN = tock; then
   OCCAM_CONFIG_TARGET_SUBDIRS(runtime/ccsp)
 fi
 
 if test $OCCBUILD_TOOLCHAIN = kroc; then
-  OCCAM_CONFIG_SUBDIRS(tools/tranx86)
+  #OCCAM_CONFIG_SUBDIRS(tools/tranx86)
 
   OCCAM_CONFIG_TARGET_SUBDIRS(runtime/libkrocif)
 fi
 
 if test $OCCBUILD_TOOLCHAIN = tvm; then
-  OCCAM_CONFIG_SUBDIRS(tools/plinker)
   OCCAM_CONFIG_SUBDIRS(tools/skroc)
   OCCAM_CONFIG_SUBDIRS(tools/slinker)
   OCCAM_CONFIG_SUBDIRS(tools/tinyswig)
