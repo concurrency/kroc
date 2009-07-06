@@ -3883,12 +3883,19 @@ sub code_aliases ($) {
 	my $aliases = $self->{'aliases'};
 	my @asm;
 
-	foreach my $symbol (sort (keys (%$aliases))) {
-		my $target = $aliases->{$symbol};
+	foreach my $alias (sort (keys (%$aliases))) {
+		my $target = $aliases->{$alias};
+		my $symbol = $self->symbol_to_proc_name ($target);
+
+		$self->{'header'}->{$symbol} = [
+			sprintf ('declare void @%s (%s, %s)', 
+				$symbol, $self->sched_type, $self->workspace_type
+			)
+		] if !exists ($self->{'header'}->{$symbol});
+		
 		push (@asm, sprintf ('@%s = alias %s @%s',
-			$self->symbol_to_proc_name ($symbol),
-			$self->func_type . '*',
-			$self->symbol_to_proc_name ($target)
+			$self->symbol_to_proc_name ($alias),
+			$self->func_type . '*', $symbol
 		));
 	}
 
