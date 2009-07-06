@@ -1685,7 +1685,7 @@ sub gen_ldc ($$$$) {
 			
 			if ($arg->{'proc'} eq $proc) {
 				$symbol = $proc->{'call_prefix'} . $name;
-			} elsif ($arg->{'proc'} eq $arg) {
+			} elsif (($arg->{'proc'} eq $arg) || $arg->{'stub'}) {
 				$symbol = '@' . $self->symbol_to_proc_name ($arg->{'symbol'});
 				
 				$self->{'header'}->{$symbol} = [
@@ -1702,7 +1702,7 @@ sub gen_ldc ($$$$) {
 			$tmp_reg = $self->tmp_reg ();
 			@load = ( sprintf ('%%%s = bitcast %s %s to i8*',
 				$tmp_reg, 
-				$arg->{'type'} . '*',
+				($arg->{'type'} ? $arg->{'type'} : $self->func_type) . '*',
 				$symbol
 			));
 		}
