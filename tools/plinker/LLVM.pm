@@ -426,6 +426,7 @@ $GRAPH = {
 sub new ($$) {
 	my ($class) = @_;
 	my $self = bless {}, $class;
+	$self->{'aliases'}	= {};
 	$self->{'constants'}	= {};
 	$self->{'globals'}	= {};
 	$self->{'source_files'}	= {};
@@ -743,6 +744,8 @@ sub preprocess_etc ($$$) {
 	my $align	= 0;
 	my $filename	= undef;
 	my $line	= undef;
+	my $global	= undef; # present global
+	my $n_inst	= 0;     # "real" instructions in present/last global
 
 	# Initial operation translation
 	expand_etc_ops ($etc);
@@ -827,6 +830,8 @@ sub preprocess_etc ($$$) {
 					"\tOld symbol is from $c_fn($c_file), line $c_ln.";
 					"\tNew symbol is from $filename($file), line $line.";
 			}
+			$n_inst			= 0;
+			$global			= $arg;
 			$globals->{$arg}	= $current;
 			$current->{'global'}	= $arg;
 			$current->{'loci'}	= {
@@ -835,7 +840,14 @@ sub preprocess_etc ($$$) {
 				'line'		=> $line
 			};
 		} elsif ($name eq '.GLOBALEND') {
-			$globals->{$arg}->{'end'} = $current;
+			$globals->{$arg}->{'end'} 	= $current;
+			$global				= undef;
+		} elsif ($name eq '.JUMPENTRY') {
+			if ($global && !$n_inst) {
+				$self->{'aliases'}->{$global} = $arg;
+			}
+		} elsif ($name !~ /^\./) {
+			$n_inst++;
 		}
 		
 		push (@{$current->{'inst'}}, $op)
@@ -3866,6 +3878,23 @@ sub generate_proc ($$) {
 	return @asm;
 }
 
+sub code_aliases ($) {
+	my $self = shift;
+	my $aliases = $self->{'aliases'};
+	my @asm;
+
+	foreach my $symbol (sort (keys (%$aliases))) {
+		my $target = $aliases->{$symbol};
+		push (@asm, sprintf ('@%s = alias %s @%s',
+			$self->symbol_to_proc_name ($symbol),
+			$self->func_type . '*',
+			$self->symbol_to_proc_name ($target)
+		));
+	}
+
+	return @asm;
+}
+
 sub code_constants ($) {
 	my $self = shift;
 	my $constants = $self->{'constants'};
@@ -3949,12 +3978,13 @@ sub generate ($@) {
 	}
 	
 	my @header 	= $self->intrinsics;
+	my @alias_asm	= $self->code_aliases ();
 	my @const_asm 	= $self->code_constants ();
 	foreach my $elem (sort (keys (%{$self->{'header'}}))) {
 		push (@header, @{$self->{'header'}->{$elem}});
 	}
 
-	return (@header, @const_asm, @proc_asm);
+	return (@header, @alias_asm, @const_asm, @proc_asm);
 }
 
 sub build_tlp_desc {
