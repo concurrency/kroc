@@ -123,7 +123,7 @@ if ($standalone) {
 	my $last_text	= $etc[@etc - 1]->{'etc'};
 	my $jentry;
 	foreach my $op (@$last_text) {
-		if ($op->{'name'} eq '.JUMPENTRY') {
+		if (!$jentry && ($op->{'name'} eq '.JUMPENTRY')) {
 			$jentry = $op->{'arg'};
 		}
 	}
