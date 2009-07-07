@@ -53,8 +53,8 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-format-gen.occ: make-format.py
-	$(PYTHON) make-format.py
+format-gen.occ: $(srcdir)/make-format.py
+	$(PYTHON) $(srcdir)/make-format.py
 
 CLEANFILES = format-gen.occ
 
