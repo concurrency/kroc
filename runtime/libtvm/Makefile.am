@@ -95,6 +95,7 @@ DISPATCH_SOURCE_FILES = \
 DISPATCH_OUTPUT_FILES = \
 	$(top_builddir)/dispatch_ins.c \
 	$(top_builddir)/ins_names.h \
+	$(top_builddir)/instructions.inc \
 	$(top_builddir)/jumptbl_pri.c \
 	$(top_builddir)/jumptbl_sec.c \
 	$(top_builddir)/jumptbl_ex_sec.c
@@ -107,3 +108,4 @@ $(DISPATCH_OUTPUT_FILES): $(make_dispatch) $(DISPATCH_SOURCE_FILES)
 EXTRA_DIST = \
 	make-dispatch.py
 
+CLEANFILES = $(DISPATCH_OUTPUT_FILES)
