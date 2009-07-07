@@ -7,7 +7,6 @@ AM_INIT_AUTOMAKE([-Wall foreign])
 OCCAM_TOOLCHAIN
 KROC_BUILD_ROOT="`pwd`"
 KROC_SRC_ROOT="`(cd $srcdir && pwd)`"
-echo "pwd='$ac_pwd' build='$KROC_BUILD_ROOT' src='$KROC_SRC_ROOT'"
 OCCAM_OCCBUILD
 
 if test "x$OCCBUILD_API_VERSION" != x3; then
