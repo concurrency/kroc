@@ -201,7 +201,7 @@ static void set_user_process_signals (void)
 /*{{{  int user_process (bool is_a_tty)*/
 void user_process (bool is_a_tty,
      			char **tlp_desc,
-     			void *start_proc,
+     			void *start_proc, void *code_exit,
     			int ws, int vs, int ms)
 {
 	static int sigjmpcode;
@@ -220,7 +220,7 @@ void user_process (bool is_a_tty,
 	}
 	set_user_process_signals ();
 
-	occam_entry (tlp_desc, start_proc, ws, vs, ms);
+	occam_entry (tlp_desc, start_proc, code_exit, ws, vs, ms);
 
 	/* good exit */
 	userproc_exit (0, 0);

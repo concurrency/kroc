@@ -50,16 +50,6 @@
 #define __EXTERN_VARIABLE(X) X __WEAK = 0;
 #endif
 
-/* Things that will be defined by the program we're linked into. */
-
-__EXTERN_FUNCTION(void _occam_start (void))	/* occam entry point */
-
-__EXTERN_VARIABLE(word _wsbytes)		/* occam workspace size */
-__EXTERN_VARIABLE(word _vsbytes)		/* occam vectorspace size */
-__EXTERN_VARIABLE(word _msbytes)		/* occam mobilespace size */
-__EXTERN_VARIABLE(int _occam_tlp_iface)		/* translator added description of the top-level process */
-__EXTERN_VARIABLE(int _occam_errormode)		/* non-zero for STOP errormode */
-
 static byte *ws, *vs, *ms;
 
 static word kse_ptrs[3];	/* indirect top-level params for top-level SUSPEND */
@@ -108,7 +98,7 @@ int occam_uses_keyboard (void)
  *	called to initialise and run the occam program
  */
 void occam_entry (char **tlp_desc,
-		void *start_proc, 
+		void *start_proc, void *code_exit, 
 		int ws_words, int vs_words, int ms_words)
 {
 	word *Wptr, *Fptr, *Bptr;
@@ -169,6 +159,7 @@ void occam_entry (char **tlp_desc,
 
 	Wptr 		= Wptr + ws_words + (WS_SEP / 2);
 	Wptr[Iptr] 	= (word) start_proc;
+	Wptr[0]		= (word) code_exit;
 	wspptr 		= 1;
 
 	#if 0
@@ -184,7 +175,7 @@ void occam_entry (char **tlp_desc,
 	}
 	#endif
 	
-	do_print_memstats = (_occam_tlp_iface & TLP_PRINT_MEMSTATS);
+	/* do_print_memstats = (_occam_tlp_iface & TLP_PRINT_MEMSTATS); */
 	
 	for (i = 0; tlp_desc[i] != NULL; ++i) {
 		const char *name = (const char *) tlp_desc[i];

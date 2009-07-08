@@ -4073,7 +4073,7 @@ sub entry_point ($$) {
 		(@tlp_elem ? ', ' : '')
 	));
 	push (@asm,
-		sprintf ('declare %s @occam_start (%s, i8**, i8*, i8**, i8*, %s, %s, %s)',
+		sprintf ('declare %s @occam_start (%s, i8**, i8*, i8*, i8**, i8*, %s, %s, %s)',
 			$self->int_type, 
 			$self->int_type, 
 			$self->int_type, $self->int_type, $self->int_type
@@ -4105,16 +4105,6 @@ sub entry_point ($$) {
 			$self->int_type,
 			$self->func_type . '*'
 		),
-		sprintf ('%%ret_ptr = bitcast %s @code_exit to i8*',
-			$self->func_type . '*',
-		),
-		sprintf ('%%ret_val = ptrtoint i8* %%ret_ptr to %s',
-			$self->int_type
-		),
-		sprintf ('store %s %%ret_val, %s %%wptr',
-			$self->int_type,
-			$self->workspace_type
-		),
 		sprintf ('tail call fastcc void %%iptr (%s %%sched, %s %%wptr) noreturn',
 			$self->sched_type,
 			$self->workspace_type
@@ -4132,15 +4122,19 @@ sub entry_point ($$) {
 		sprintf ('%%code_entry = bitcast %s @code_entry to i8*',
 			$self->func_type . '*'
 		),
+		sprintf ('%%code_exit = bitcast %s @code_exit to i8*',
+			$self->func_type . '*'
+		),
 		sprintf ('%%start_proc = bitcast %s @%s to i8*',
 			$self->func_type . '*',
 			$self->symbol_to_proc_name ($name)
 		),
 		sprintf ('%%ret = call %s @occam_start (%s %%argc, i8** %%argv'
-			 	. ', i8* %%code_entry, i8** getelementptr ([ %d x i8* ]* @tlp_desc, i32 0, i32 0)'
+			 	. ', i8* %%code_entry, i8* %%code_exit'
+				. ', i8** getelementptr ([ %d x i8* ]* @tlp_desc, i32 0, i32 0)'
 				. ', i8* %%start_proc, %s %d, %s %d, %s %d)',
 			$self->int_type,
-			$self->int_type,
+			$self->int_type, 
 			@tlp_elem + 1,
 			$self->int_type, $ws,
 			$self->int_type, $vs,

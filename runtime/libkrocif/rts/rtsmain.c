@@ -90,7 +90,7 @@ static void exit_handler (int status, bool core)
  *	start here
  */
 int occam_start (int argc, char **argv, 
-			void *code_entry, 
+			void *code_entry, void *code_exit, 
 			char **tlp_desc,
 			void *start_proc, 
 			int ws, int vs, int ms)
@@ -125,7 +125,7 @@ int occam_start (int argc, char **argv,
 	}
 
 	init_kbdio (stdin_is_tty);
-	user_process (stdin_is_tty, tlp_desc, start_proc, ws, vs, ms);
+	user_process (stdin_is_tty, tlp_desc, start_proc, code_exit, ws, vs, ms);
 
 	return 0;
 }

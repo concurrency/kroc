@@ -93,7 +93,7 @@ extern int do_print_memstats;
 extern void occam_parse_tlp (char **tlp_desc);
 extern int occam_uses_keyboard (void);
 extern void occam_entry (char **tlp_desc,
-			void *start_proc, 
+			void *start_proc, void *code_exit, 
 			int ws, int vs, int ms);
 /*}}}*/
 
@@ -104,7 +104,7 @@ extern FILE *kroc_err;
 
 extern void user_process (bool is_a_tty,
 			char **tlp_desc,
-			void *start_proc, 
+			void *start_proc, void *code_exit, 
 			int ws, int vs, int ms);
 /*}}}*/
 
@@ -119,7 +119,7 @@ extern void user_bad_exit (void);
 extern void user_good_exit (void);
 
 extern int occam_start (int argc, char **argv, 
-			void *code_entry, 
+			void *code_entry, void *code_exit, 
 			char **tlp_desc,
 			void *start_proc, 
 			int ws, int vs, int ms);
