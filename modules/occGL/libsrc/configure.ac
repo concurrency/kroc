@@ -14,6 +14,10 @@ dnl Checks for libraries.
 OCCAM_HAVE_OPENGL
 CPPFLAGS="$CPPFLAGS $GL_CFLAGS"
 AC_CHECK_HEADERS([GL/gl.h GL/glu.h], , [build_occGL=no])
+old_LIBS="$LIBS"
+LIBS="$LIBS $GL_LIBS"
+AC_CHECK_FUNC(glBegin, , [build_occGL=no])
+LIBS="$old_LIBS"
 
 AC_MSG_CHECKING([whether to build occGL.module])
 AC_MSG_RESULT($build_occGL)
