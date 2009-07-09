@@ -7,7 +7,7 @@ tvm_ectx_t context;
 static WORD memory[MEM_WORDS];
 
 /* The bytecode file, loaded into flash at a fixed address. */
-static const prog_char *tbc_data = (prog_char *) OCCAM_PROGRAM_ADDR;
+static const prog_char *tbc_data = (prog_char *) BYTECODE_ADDR;
 
 /* Time is in milliseconds, since microseconds wrap round too fast in
    16 bits to be useful. */
