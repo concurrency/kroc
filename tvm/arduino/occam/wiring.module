@@ -7,8 +7,6 @@
 #INCLUDE "avr.module"
 
 --{{{  constants
-VAL INT32 F.CPU IS ##F.CPU:
-
 VAL INT LOW IS #0:
 VAL INT HIGH IS #1:
 
@@ -28,25 +26,6 @@ VAL INT RISING IS 3:
 VAL INT INTERNAL IS 3:
 VAL INT DEFAULT IS 1:
 VAL INT EXTERNAL IS 0:
---}}}
-
---{{{  SFFI PROCs
-#PRAGMA EXTERNAL "PROC C.tvmspecial.0.digitalWrite (VAL INT pin, state) = 0"
-PROC digitalWrite (VAL INT pin, state)
-  C.tvmspecial.0.digitalWrite (pin, state)
-:
-#PRAGMA EXTERNAL "PROC C.tvmspecial.1.digitalRead (VAL INT pin, RESULT INT state) = 0"
-PROC digitalRead (VAL INT pin, RESULT INT state)
-  C.tvmspecial.1.digitalRead (pin, state)
-:
-#PRAGMA EXTERNAL "PROC C.tvmspecial.2.pinMode (VAL INT pin, mode) = 0"
-PROC pinMode (VAL INT pin, mode)
-  C.tvmspecial.2.pinMode (pin, mode)
-:
-#PRAGMA EXTERNAL "PROC C.tvmspecial.3.wait.for.interrupt (VAL INT interrupt, INT time) = 0"
-PROC wait.for.interrupt (VAL INT interrupt, INT time)
-  C.tvmspecial.3.wait.for.interrupt (interrupt, time)
-:
 --}}}
 
 --{{{  PROC delay
