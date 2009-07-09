@@ -1991,63 +1991,6 @@ static word * REGPARM kernel_scheduler (sched_t *sched)
 	return Wptr;
 }
 /*}}}*/
-/*{{{  void kernel_Y_fastscheduler (void)*/
-/*
- *	fast scheduler entry point -- doesn't enqueue us, just runs next process
- *
- *	@SYMBOL:	Y_fastscheduler
- *	@INPUT:		0
- *	@OUTPUT: 	0
- *	@CALL: 		K_FASTSCHEDULER
- *	@PRIO:		50
- */
-K_CALL_DEFINE_Y_0_0 (fastscheduler)
-{
-	K_CALL_Y_HEADER;
-	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE0 (Y_fastscheduler);
-
-	Wptr = get_process_or_reschedule (sched); 
-
-	K_ZERO_OUT_JRET ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_occscheduler (void)*/
-/*
- *	@SYMBOL:	Y_occscheduler
- *	@INPUT:		0
- *	@OUTPUT: 	0
- *	@CALL: 		K_OCCSCHEDULER
- *	@PRIO:		50
- */
-K_CALL_DEFINE_Y_0_0 (occscheduler)
-{
-	K_CALL_Y_HEADER;
-	K_CALL_PARAMS_0 ();
-
-	Wptr = kernel_scheduler (sched);
-	
-	K_ZERO_OUT_JRET ();
-}
-/*}}}*/
-/*{{{  void kernel_Y_shutdown (void)*/
-/*
- *	@SYMBOL:	Y_shutdown
- *	@INPUT:		0
- *	@OUTPUT: 	0
- *	@CALL: 		K_SHUTDOWN
- *	@PRIO:		10
- */
-K_CALL_DEFINE_Y_0_0 (shutdown)
-{
-	K_CALL_Y_HEADER;
-	K_CALL_PARAMS_0 ();
-	ENTRY_TRACE (Y_shutdown, "");
-	att_set (&(ccsp_shutdown), true);
-	Wptr = kernel_scheduler (sched);
-	K_ZERO_OUT_JRET ();
-}
-/*}}}*/
 /*}}}*/
 /*{{{  error entry-points */
 /*{{{  static word *kernel_common_error (...) */
@@ -6421,5 +6364,10 @@ void ccsp_kernel_entry (word *Wptr, word *fptr)
 	}
 	
 	_ccsp.code_entry (sched, Wptr); 
+
+	/* if we spin out then we reached shutdown */
+	att_set (&(ccsp_shutdown), true);
+
+	ccsp_kernel_exit (0, 0);
 }
 /*}}}*/
