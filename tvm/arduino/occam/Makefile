@@ -27,10 +27,7 @@ upload: $(PROG).hex
 	../read-arduino $(PORT)
 
 clean:
-	rm -f \
-		$(addsuffix .tce,$(PROGS)) \
-		$(addsuffix .tbc,$(PROGS)) \
-		$(addsuffix .hex,$(PROGS))
+	rm -f $(PROGS) $(foreach suffix,.tce .tbc .hex,$(addsuffix $(suffix),$(PROGS)))
 
 #{{{ dependencies
 avr.module: iom328p.inc
