@@ -1,15 +1,7 @@
-dnl -*- shell-script -*-
-dnl
-dnl Process this file with autoconf to produce a configure script.
-dnl
-
-AC_REVISION($Revision: 1.1 $)
-AC_INIT(README)
-AC_PREREQ(2.12)
-
-dnl for automake 1.1 
+AC_INIT([bsclib], [1.0], [kroc-bugs@kent.ac.uk])
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(bsclib, 1.0)
+
+AM_INIT_AUTOMAKE
 
 dnl Checks for programs.
 AC_PROG_CC

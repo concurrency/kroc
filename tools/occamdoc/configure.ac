@@ -1,5 +1,3 @@
-dnl Process this file with autoconf to produce a configure script.
-
 AC_INIT([occamdoc], [4.0], [kroc-bugs@kent.ac.uk])
 AM_INIT_AUTOMAKE
 

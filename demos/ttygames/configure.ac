@@ -1,11 +1,7 @@
-dnl Process this file with autoconf to produce a configure script.
-
-AC_INIT(bomberman.occ)
-AC_PREREQ(2.12)
-
-dnl for automake 1.1 
+AC_INIT([ttygames], [0.1], [kroc-bugs@kent.ac.uk])
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(ttygames, 0.1)
+
+AM_INIT_AUTOMAKE
 
 dnl Checks for programs.
 OCCAM_OCCBUILD

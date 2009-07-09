@@ -1,11 +1,7 @@
-dnl Process this file with autoconf to produce a configure script.
-
-AC_INIT(README)
-AC_PREREQ(2.12)
-
-dnl for automake 1.1 
+AC_INIT([udc], [1.0], [kroc-bugs@kent.ac.uk])
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(udc, 0.1)
+
+AM_INIT_AUTOMAKE
 
 dnl Checks for programs.
 AC_PROG_CC

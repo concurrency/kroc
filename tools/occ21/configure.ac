@@ -1,12 +1,8 @@
-dnl Process this file with autoconf to produce a configure script.
-
-AC_REVISION($Revision: 1.10 $)
-AC_INIT(be/bind1.c)
+AC_INIT([occ21], [1.4.1], [kroc-bugs@kent.ac.uk])
 AM_CONFIG_HEADER(config.h)
-AC_PREREQ(2.12)
-
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE([occ21], [1.4.1])
+
+AM_INIT_AUTOMAKE
 
 dnl Checks for programs.
 AC_CHECK_TOOL(CC,gcc,:)

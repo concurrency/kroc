@@ -1,5 +1,4 @@
-AC_INIT([tvm-arduino], [1.0.0])
-AC_PREREQ(2.59)
+AC_INIT([tvm-arduino], [1.0.0], [kroc-bugs@kent.ac.uk])
 AC_CANONICAL_SYSTEM
 
 AM_INIT_AUTOMAKE
