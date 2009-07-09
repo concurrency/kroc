@@ -7,7 +7,18 @@ dnl Checks for programs.
 AC_PROG_CC
 OCCAM_OCCBUILD
 
+build_cspdrvlib=no
+build_filelib=yes
+build_socklib=yes
+
+AC_ARG_ENABLE([cspdrvlib],
+              AS_HELP_STRING([--enable-cspdrvlib],
+                             [enable cspdrvlib.module; requires kroc and udc.h]),
+              [build_cspdrvlib=yes])
+
 dnl Checks for headers
+AC_CHECK_HEADER(unistd.h, [], [build_filelib=no])
+AC_CHECK_HEADER(sys/socket.h, [], [build_socklib=no])
 AC_CHECK_HEADER(sys/sendfile.h, [have_sendfile_h=yes], [have_sendfile_h=no])
 if test "$have_sendfile_h" = yes; then
  AC_DEFINE(HAVE_SENDFILE_H)
@@ -29,18 +40,14 @@ fi
 dnl Checks for libraries
 OCCAM_SOCK_LIBS
 
-if test "x$OCCBUILD_TOOLCHAIN" = "xkroc"; then
- SAVED_CPPFLAGS="$CFLAGS"
- CPPFLAGS="$CPPFLAGS $OCCBUILD_CFLAGS"
- AC_CHECK_HEADER(udc.h, [have_udc_h=yes], [have_udc_h=no])
- CPPFLAGS="$SAVED_CPPFLAGS"
+if test "x$OCCBUILD_TOOLCHAIN" != "xkroc"; then
+  SAVED_CPPFLAGS="$CFLAGS"
+  CPPFLAGS="$CPPFLAGS $OCCBUILD_CFLAGS"
+  AC_CHECK_HEADER(udc.h, [], [build_cspdrvlib=no])
+  CPPFLAGS="$SAVED_CPPFLAGS"
 else
- have_udc_h=no
+  build_cspdrvlib=no
 fi
-AC_ARG_ENABLE([cspdrvlib], AS_HELP_STRING([--enable-cspdrvlib], [build cspdrvlib, requires kroc and UDC]), [cspdrvlib=yes], [cspdrvlib=$have_udc_h])
-AC_MSG_CHECKING(build cspdrvlib)
-AC_MSG_RESULT($cspdrvlib)
-AM_CONDITIONAL(BUILD_CSPDRVLIB, test "$cspdrvlib" = yes)
 
 AC_SUBST(OCCAM_DEFS)
 
@@ -48,12 +55,23 @@ if test "$host_os" = "cygwin"; then
  AC_DEFINE(HOSTOS_CYGWIN)
 fi
 
+AC_MSG_CHECKING([whether to build cspdrvlib.module])
+AC_MSG_RESULT($build_cspdrvlib)
+AM_CONDITIONAL(BUILD_CSPDRVLIB, [test $build_cspdrvlib = yes])
+
+AC_MSG_CHECKING([whether to build filelib.module])
+AC_MSG_RESULT($build_filelib)
+AM_CONDITIONAL(BUILD_FILELIB, [test $build_filelib = yes])
+
+AC_MSG_CHECKING([whether to build socklib.module])
+AC_MSG_RESULT($build_socklib)
+AM_CONDITIONAL(BUILD_SOCKLIB, [test $build_socklib = yes])
+
 dnl Checks for libraries.
-OCCAM_PROVIDE(cspdrv.module, cspdrvlib, none, [test $cspdrvlib = yes])
-OCCAM_PROVIDE(file.module, filelib, none)
-OCCAM_PROVIDE(http.module, httplib, file.module sock.module)
-OCCAM_PROVIDE(proc.module, proclib, file.module)
-OCCAM_PROVIDE(sock.module, socklib, none)
+OCCAM_PROVIDE(cspdrv.module, cspdrvlib, none, [test $build_cspdrvlib = yes])
+OCCAM_PROVIDE(file.module, filelib, none, [test $build_filelib = yes])
+OCCAM_PROVIDE(http.module, httplib, file.module sock.module, [test $build_socklib = yes])
+OCCAM_PROVIDE(proc.module, proclib, file.module, [test $build_filelib = yes])
+OCCAM_PROVIDE(sock.module, socklib, none, [test $build_socklib = yes])
 
 AC_OUTPUT([Makefile socklib/Makefile filelib/Makefile proclib/Makefile httplib/Makefile cspdrvlib/Makefile])
-
