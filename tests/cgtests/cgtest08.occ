@@ -4,7 +4,13 @@ PROC cgtest8 (CHAN OF BYTE keyb, scr, err)
 
   #INCLUDE "cgmain.occ"
 
-  VAL sec IS 1000000 : -- ticks per second
+  -- ticks per second
+  #IF (TARGET.BITS.PER.WORD = 16)
+  VAL sec IS 1000 :
+  #ELSE
+  VAL sec IS 1000000 :
+  #ENDIF
+
   -- T4 (rev A)      IS   625000
   -- T4 (rev B) (Hi) IS  1000000 (also T2 and T8)
   -- T4 (rev B) (Lo) IS    15625 (also T2 and T8)
