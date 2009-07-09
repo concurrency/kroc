@@ -22,8 +22,8 @@ dnl Look for mzc and mzscheme, and set MZC and MZSCHEME accordingly.
 dnl If both are found, define the conditional HAVE_SCHEME_TOOLS.
 AC_DEFUN([OCCAM_MZSCHEME],
 [dnl
-AC_PATH_TOOL([MZC], [mzc], [no])
-AC_PATH_TOOL([MZSCHEME], [mzscheme], [no])
+AC_CHECK_TOOL([MZC], [mzc], [no])
+AC_CHECK_TOOL([MZSCHEME], [mzscheme], [no])
 
 # FIXME: Test that the version is appropriate.
 
