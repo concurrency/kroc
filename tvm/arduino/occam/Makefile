@@ -1,4 +1,4 @@
-include ../sketch/config.mk
+include ../config.mk
 
 PROG = blink
 
@@ -25,7 +25,7 @@ AVRDUDE_WRITE_OCCAM = -D -U flash:w:$(PROG).hex
 
 upload: $(PROG).hex
 	../reset-arduino $(UPLOAD_PORT)
-	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_OCCAM)
+	$(AVRDUDE) -C ../avrdude.conf $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_OCCAM)
 	../read-arduino $(UPLOAD_PORT)
 
 clean:

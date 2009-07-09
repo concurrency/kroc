@@ -1,13 +1,13 @@
 AUTOMAKE_OPTIONS = foreign
-ACLOCAL_AMFLAGS = -I ../../../m4
+ACLOCAL_AMFLAGS = -I ../../m4
 
 CPPFLAGS = \
-	-I../libtvm \
-	-I../../../runtime/libtvm \
+	-Ilibtvm \
+	-I../../runtime/libtvm \
 	-DF_CPU=$(F_CPU) \
 	-DBYTECODE_ADDR=$(BYTECODE_ADDR) \
 	@CPPFLAGS@
-LDFLAGS = -L../libtvm @LDFLAGS@
+LDFLAGS = -Llibtvm @LDFLAGS@
 LIBS = -ltvm -lm @LIBS@
 
 noinst_PROGRAMS = tvm-arduino
@@ -25,8 +25,8 @@ tvm-arduino.hex: tvm-arduino
 	$(OBJCOPY) -O ihex -R .eeprom tvm-arduino tvm-arduino.hex
 
 upload: tvm-arduino.hex
-	../reset-arduino $(UPLOAD_PORT)
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:tvm-arduino.hex
-	../read-arduino $(UPLOAD_PORT)
+	./reset-arduino $(UPLOAD_PORT)
+	$(AVRDUDE) -C avrdude.conf $(AVRDUDE_FLAGS) -U flash:w:tvm-arduino.hex
+	./read-arduino $(UPLOAD_PORT)
 
 CLEANFILES = tvm-arduino.hex
