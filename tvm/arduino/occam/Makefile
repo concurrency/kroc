@@ -3,7 +3,9 @@ include ../sketch/config.mk
 PROG = blink
 
 PROGS = \
+	adc \
 	blink \
+	button \
 	commstime \
 	exttimer \
 	hello \
