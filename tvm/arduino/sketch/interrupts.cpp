@@ -33,7 +33,7 @@ static void raise_tvm_interrupt (WORD flag) {
 }
 
 static void handle_interrupt (vinterrupt *intr) {
-	WORD now = millis ();
+	WORD now = time_millis ();
 	if (intr->wptr != (WORDPTR) NOT_PROCESS_P) {
 		WORDPTR ptr = (WORDPTR) WORKSPACE_GET (intr->wptr, WS_POINTER);
 		write_word (ptr, now);

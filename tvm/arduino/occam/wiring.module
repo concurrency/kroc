@@ -40,6 +40,40 @@ PROC delay (VAL INT millis)
 :
 --}}}
 
+--{{{  FUNCTION pin.location
+--* Map an Arduino pin number to a DDR register, PORT register and bit number.
+-- @private
+INT, INT, INT FUNCTION pin.location (VAL INT pin)
+  INT ddr, port, bit:
+  VALOF
+    IF
+      pin < 8
+        ddr, port, bit := DDRD, PORTD, pin
+      TRUE
+        ddr, port, bit := DDRB, PORTB, pin - 8
+    RESULT ddr, port, bit
+:
+--}}}
+
+--{{{  PROC digitalWrite
+PROC digitalWrite (VAL INT pin, state)
+  INT ddr, port, bit:
+  PLACED [MAX.PORT]BYTE ports 0:
+  SEQ
+    ddr, port, bit := pin.location (pin)
+    ports[port] := (ports[port] /\ (~BV (bit))) \/ ((BYTE state) << bit)
+:
+--}}}
+--{{{  PROC pinMode
+PROC pinMode (VAL INT pin, mode)
+  INT ddr, port, bit:
+  PLACED [MAX.PORT]BYTE ports 0:
+  SEQ
+    ddr, port, bit := pin.location (pin)
+    ports[ddr] := (ports[ddr] /\ (~BV (bit))) \/ ((BYTE mode) << bit)
+:
+--}}}
+
 --{{{  PROC beginSerial
 --* Initialise the serial port.
 -- @param baud Baud rate
