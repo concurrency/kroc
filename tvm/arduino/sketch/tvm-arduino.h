@@ -41,6 +41,7 @@ extern void time_init (void);
 /*}}}*/
 /*{{{  tvm.cpp */
 extern tvm_ectx_t context;
+extern void terminate (const char *message, const int *status);
 extern int main (void);
 /*}}}*/
 
