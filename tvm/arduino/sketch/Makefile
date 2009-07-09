@@ -5,12 +5,12 @@ TARGET = sketch
 TVM_CFLAGS = -I../libtvm -I../../../runtime/libtvm
 TVM_LDFLAGS = -L../libtvm -ltvm
 TVM_SRCFILES = \
-	ffi.cpp \
-	interrupts.cpp \
-	serial.cpp \
-	tbc.cpp \
-	time.cpp \
-	tvm.cpp
+	ffi.c \
+	interrupts.c \
+	serial.c \
+	tbc.c \
+	time.c \
+	tvm.c
 
 ############################################################################
 # Below here nothing should be changed...
@@ -39,7 +39,7 @@ CDEBUG = -g$(DEBUG)
 CWARN = -Wall
 CTUNING = -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 
-CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CEXTRA)
+CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CEXTRA) -x c++
 CXXFLAGS = $(CDEFS) $(CINCS) -O$(OPT)
 LDFLAGS = -lm $(TVM_LDFLAGS)
 
