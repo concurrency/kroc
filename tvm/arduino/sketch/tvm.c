@@ -21,7 +21,7 @@ static void arduino_modify_sync_flags (ECTX ectx, WORD set, WORD clear) {
 	sei ();
 }
 
-static void terminate(const char *message, const int *status) {
+void terminate (const char *message, const int *status) {
 	/* FIXME: offer other behaviours as options */
 	printf ("tvm-arduino: %s", message);
 	if (status != NULL) {
@@ -66,7 +66,6 @@ int main () {
 	printf ("context is %04x\n", (int) &context);
 	printf ("wptr is %04x\n", (int) context.wptr);
 	printf ("iptr is %04x\n", (int) context.iptr);
-	delay(1000);
 	printf ("GO!\n");
 #endif
 
