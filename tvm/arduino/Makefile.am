@@ -29,4 +29,20 @@ upload: tvm-arduino.hex
 	$(AVRDUDE) -C avrdude.conf $(AVRDUDE_FLAGS) -U flash:w:tvm-arduino.hex
 	./read-arduino $(UPLOAD_PORT)
 
+# All the source files need libtvm to be built first.
+$(tvm_arduino_SOURCES): libtvm/libtvm.a
+
+# Rebuild libtvm if we've been reconfigured.
+libtvm/libtvm.a: config.status
+	rm -fr libtvm
+	mkdir libtvm
+	cd libtvm && ../../../runtime/libtvm/configure \
+		--host=avr \
+		--with-memory-allocator=none \
+		CFLAGS="@CFLAGS@"
+	$(MAKE) -C libtvm
+
 CLEANFILES = tvm-arduino.hex
+
+distclean-local:
+	rm -fr libtvm
