@@ -3,7 +3,7 @@
 static tvm_t tvm;
 tvm_ectx_t context;
 
-#define MEM_WORDS 256
+#define MEM_WORDS 512
 static WORD memory[MEM_WORDS];
 
 /* The bytecode file, loaded into flash at a fixed address. */
