@@ -179,16 +179,18 @@ WORD tvm_ectx_memory_size (ECTX ectx,
 	return frame_size + 1 + ws_size + vs_size + WS_PAD + VS_PAD;
 }
 
-void tvm_ectx_layout (ECTX ectx, WORDPTR base,
+int tvm_ectx_layout (ECTX ectx, WORDPTR base,
 		const char *tlp_fmt, const int tlp_argc,
 		WORD ws_size, WORD vs_size,
 		WORDPTR *ws, WORDPTR *vs)
 {
 	int frame_size = calc_frame_size (tlp_argc, vs_size, 1);
-	
+
 	/* The plus 1 in here is for the shutdown bytecode */
 	*ws = wordptr_plus (base, frame_size + ws_size + 1 + WS_PAD);
 	*vs = vs_size ? *ws : 0;
+
+	return wordptr_minus (*ws, base) + vs_size;
 }
 
 /*

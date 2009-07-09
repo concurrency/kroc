@@ -55,7 +55,7 @@ extern void tvm_ectx_init (tvm_t *tvm, ECTX ectx);
 extern WORD tvm_ectx_memory_size (ECTX ectx,
 				const char *tlp_fmt, const int tlp_argc,
 				WORD ws_size, WORD vs_size);
-extern void tvm_ectx_layout (ECTX ectx, WORDPTR base,
+extern int tvm_ectx_layout (ECTX ectx, WORDPTR base,
 				const char *tlp_fmt, const int tlp_argc,
 				WORD ws_size, WORD vs_size,
 				WORDPTR *ws, WORDPTR *vs);
