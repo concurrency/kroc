@@ -21,7 +21,9 @@ typedef struct _vinterrupt {
 static vinterrupt interrupts[NUM_INTERRUPTS];
 
 void init_interrupts () {
-	for (int i = 0; i < NUM_INTERRUPTS; i++) {
+	int i;
+
+	for (i = 0; i < NUM_INTERRUPTS; i++) {
 		interrupts[i].wptr = (WORDPTR) NOT_PROCESS_P;
 		interrupts[i].pending = MIN_INT;
 	}
@@ -48,14 +50,14 @@ static void handle_interrupt (vinterrupt *intr) {
 }
 
 static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
-	bool reschedule;
+	int reschedule;
 
 	cli ();
 
 	if (intr->pending != (WORD) MIN_INT) {
 		write_word (time_ptr, intr->pending);
 		intr->pending = MIN_INT;
-		reschedule = false;
+		reschedule = 0;
 	} else {
 		// Simulate a return -- since we want to be rescheduled
 		// *following* the FFI call.
@@ -69,7 +71,7 @@ static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
 		intr->wptr = ectx->wptr;
 
 		++num_waiting;
-		reschedule = true;
+		reschedule = 1;
 	}
 
 	sei ();
@@ -85,19 +87,19 @@ static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
 	ISR(vector) { \
 		handle_interrupt (&interrupts[interrupt]); \
 	}
-extern "C" {
-	MAP_SIMPLE_INTERRUPT(INT0_vect, vintr_INT0)
-	MAP_SIMPLE_INTERRUPT(INT1_vect, vintr_INT1)
-	MAP_SIMPLE_INTERRUPT(PCINT0_vect, vintr_PCINT0)
-	MAP_SIMPLE_INTERRUPT(PCINT1_vect, vintr_PCINT1)
-	MAP_SIMPLE_INTERRUPT(PCINT2_vect, vintr_PCINT2)
-	MAP_SIMPLE_INTERRUPT(TIMER1_OVF_vect, vintr_TIMER1)
-	MAP_SIMPLE_INTERRUPT(TIMER2_OVF_vect, vintr_TIMER2)
-	MAP_SIMPLE_INTERRUPT(ADC_vect, vintr_ADC)
-}
+MAP_SIMPLE_INTERRUPT(INT0_vect, vintr_INT0)
+MAP_SIMPLE_INTERRUPT(INT1_vect, vintr_INT1)
+MAP_SIMPLE_INTERRUPT(PCINT0_vect, vintr_PCINT0)
+MAP_SIMPLE_INTERRUPT(PCINT1_vect, vintr_PCINT1)
+MAP_SIMPLE_INTERRUPT(PCINT2_vect, vintr_PCINT2)
+MAP_SIMPLE_INTERRUPT(TIMER1_OVF_vect, vintr_TIMER1)
+MAP_SIMPLE_INTERRUPT(TIMER2_OVF_vect, vintr_TIMER2)
+MAP_SIMPLE_INTERRUPT(ADC_vect, vintr_ADC)
 
 void clear_pending_interrupts () {
-	for (int i = 0; i < NUM_INTERRUPTS; i++) {
+	int i;
+
+	for (i = 0; i < NUM_INTERRUPTS; i++) {
 		vinterrupt *intr = &interrupts[i];
 		if (intr->wptr != (WORDPTR) NOT_PROCESS_P) {
 			// Reschedule the process.
@@ -112,7 +114,7 @@ void clear_pending_interrupts () {
 	sei ();
 }
 
-bool waiting_on_interrupts () {
+int waiting_on_interrupts () {
 	return (num_waiting > 0);
 }
 

@@ -150,8 +150,8 @@ static int avr_tbc_decode (const prog_char *data, UWORD length, ECTX context, WO
 }
 /*}}}*/
 
-// Initialise a Transputer context from a TBC file in program memory.
-// Returns 0 on success, -1 on failure.
+/* Initialise a Transputer context from a TBC file in program memory.
+   Returns 0 on success, -1 on failure. */
 int init_context_from_tbc (ECTX context, const prog_char *data, WORDPTR memory, UWORD memory_size) {
 	avr_tenc_element_t element;
 	UWORD length;
@@ -161,7 +161,7 @@ int init_context_from_tbc (ECTX context, const prog_char *data, WORDPTR memory, 
 	}
 	length = avr_tenc_decode_int (data + 4);
 
-	// Skip over the first header.
+	/* Skip over the first header. */
 	data += 6;
 
 	if (avr_tenc_walk_to_element (data, &length, "tbcL", &element) < 0) {

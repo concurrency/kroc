@@ -10,6 +10,7 @@ static int serial_write(char c, FILE *f) {
 
 	return 0;
 }
+
 void serial_stdout_init (long speed) {
 	/* Set baud rate */
 	uint16_t factor = (F_CPU / 16 + speed / 2) / speed - 1;

@@ -39,7 +39,7 @@ CDEBUG = -g$(DEBUG)
 CWARN = -Wall
 CTUNING = -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 
-CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CEXTRA) -x c++
+CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CEXTRA)
 CXXFLAGS = $(CDEFS) $(CINCS) -O$(OPT)
 LDFLAGS = -lm $(TVM_LDFLAGS)
 
