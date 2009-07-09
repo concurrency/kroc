@@ -1,7 +1,9 @@
 # Top-level configure.ac for the KRoC tree.
 
 AC_INIT([kroc], [1.5.0-pre5], [kroc-bugs@kent.ac.uk])
+AC_PREREQ(2.59)
 AC_CANONICAL_SYSTEM
+
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 OCCAM_TOOLCHAIN

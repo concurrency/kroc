@@ -1,7 +1,6 @@
-AC_INIT([skroc.ss],[1.0.0],[])
-AC_PREREQ(2.12)
+AC_INIT([skroc], [1.0.0], [kroc-bugs@kent.ac.uk])
 
-AM_INIT_AUTOMAKE(skroc.ss,1.0.0)
+AM_INIT_AUTOMAKE
 
 AC_ARG_WITH([default-libs], AS_HELP_STRING([--with-default-libs=PATH], [specify default libraries (default: forall)]), [default_libs=$withval], [default_libs=forall])
 

@@ -1,12 +1,9 @@
+AC_INIT([plinker], [1.0.0], [kroc-bugs@kent.ac.uk])
 
-AC_INIT([main.pl],[1.0.0],[])
-AC_PREREQ(2.12)
-
-AM_INIT_AUTOMAKE(main.pl,1.0.0)
+AM_INIT_AUTOMAKE
 
 #######################
 #  Output
 #######################
 
 AC_OUTPUT([Makefile build.pl])
-

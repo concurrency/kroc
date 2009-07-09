@@ -1,7 +1,6 @@
-AC_INIT([slinker.sxml],[1.0.0],[])
-AC_PREREQ(2.12)
+AC_INIT([slinker], [1.0.0], [kroc-bugs@kent.ac.uk])
 
-AM_INIT_AUTOMAKE(slinker,1.0.0)
+AM_INIT_AUTOMAKE
 
 OCCAM_MZSCHEME
 

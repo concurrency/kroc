@@ -1,11 +1,8 @@
-
-AC_REVISION($Revision: 1.6.3$)
-AC_INIT(common/rtsmain.c)
+AC_INIT([ccsp], [1.6.3], [kroc-bugs@kent.ac.uk])
 AM_CONFIG_HEADER(config.h)
-AC_PREREQ(2.12)
-
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE([ccsp], [1.6.3])
+
+AM_INIT_AUTOMAKE
 
 m4_pattern_allow([^AS_DEFS$])
 

@@ -1,16 +1,8 @@
-dnl -*- shell-script -*-
-dnl
-dnl Process this file with autoconf to produce a configure script.
-dnl
-
-AC_REVISION($Revision: 1.2 $)
-AC_INIT([rts/rtsmain.c],[1.5],[kroc-bugs@kent.ac.uk])
+AC_INIT([libkrocif], [1.5], [kroc-bugs@kent.ac.uk])
 AM_CONFIG_HEADER(config.h)
-AC_PREREQ(2.12)
-
-dnl for automake 1.1 
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(libkrocif, 1.4)
+
+AM_INIT_AUTOMAKE
 
 dnl Checks for programs.
 AC_PROG_CC

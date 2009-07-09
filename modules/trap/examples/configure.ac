@@ -1,8 +1,6 @@
-dnl Process this file with autoconf to produce a configure script.
-
-AC_INIT([trap-examples], [0.1], [kroc-bugs@kent.ac.uk])
-
+AC_INIT([trap-examples], [1.0], [kroc-bugs@kent.ac.uk])
 AC_CANONICAL_SYSTEM
+
 AM_INIT_AUTOMAKE
 
 dnl Checks for programs.
