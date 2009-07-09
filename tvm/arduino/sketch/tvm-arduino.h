@@ -4,12 +4,10 @@
 // Define for lots of useful printed-out stuff.
 // #define DEBUG
 
-#include <WProgram.h>
+#include <stdio.h>
+#include <avr/delay.h>
 #include <avr/io.h>
-
-// The Wiring stuff defines BYTE as 0, but the Transterpreter headers use it as
-// a type name.
-#undef BYTE
+#include <avr/interrupt.h>
 
 extern "C" {
 	#include <tvm.h>
@@ -39,6 +37,11 @@ extern void serial_stdout_init(long speed);
 //}}}
 //{{{  tbc.cpp
 extern int init_context_from_tbc (ECTX context, const prog_char *data, WORDPTR memory, UWORD memory_size);
+//}}}
+//{{{  time.cpp
+extern unsigned long time_millis (void);
+extern unsigned long time_micros (void);
+extern void time_init (void);
 //}}}
 //{{{  tvm.cpp
 extern tvm_ectx_t context;

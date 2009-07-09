@@ -22,7 +22,7 @@ extern "C" {
 	// Time is in milliseconds, since microseconds wrap round too fast in
 	// 16 bits to be useful.
 	static WORD arduino_get_time (ECTX ectx) {
-		return millis ();
+		return time_millis ();
 	}
 
 	static void arduino_modify_sync_flags (ECTX ectx, WORD set, WORD clear) {
@@ -44,9 +44,7 @@ static void terminate(const char *message, const int *status) {
 }
 
 int main () {
-	// Set up the Arduino environment.
-	init ();
-
+	time_init ();
 	init_interrupts ();
 	serial_stdout_init (57600);
 
@@ -98,11 +96,12 @@ int main () {
 				break;
 			}
 			case ECTX_SLEEP: {
-				WORD now = millis();
 				WORD next = context.tnext;
-				if (TIME_AFTER (next, now)) {
-					delay(next - now);
-				}
+				WORD now;
+				do {
+					// FIXME: sleep, rather than busywaiting
+					now = time_millis ();
+				} while (TIME_AFTER (next, now));
 				break;
 			}
 			case ECTX_INTERRUPT: {

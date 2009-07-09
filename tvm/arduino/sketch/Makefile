@@ -1,39 +1,3 @@
-# Arduino 0011 Makefile
-# Arduino adaptation by mellis, eighthave, oli.keller
-#
-# This makefile allows you to build sketches from the command line
-# without the Arduino environment (or Java).
-#
-# Detailed instructions for using the makefile:
-#
-#  1. Copy this file into the folder with your sketch. There should be a
-#     file with the same name as the folder and with the extension .pde
-#     (e.g. foo.pde in the foo/ folder).
-#
-#  2. Modify the line containg "INSTALL_DIR" to point to the directory that
-#     contains the Arduino installation (for example, under Mac OS X, this
-#     might be /Applications/arduino-0012).
-#
-#  3. Modify the line containing "PORT" to refer to the filename
-#     representing the USB or serial connection to your Arduino board
-#     (e.g. PORT = /dev/tty.USB0).  If the exact name of this file
-#     changes, you can use * as a wildcard (e.g. PORT = /dev/tty.usb*).
-#
-#  4. Set the line containing "MCU" to match your board's processor. 
-#     Older one's are atmega8 based, newer ones like Arduino Mini, Bluetooth
-#     or Diecimila have the atmega168.  If you're using a LilyPad Arduino,
-#     change F_CPU to 8000000.
-#
-#  5. At the command line, change to the directory containing your
-#     program's file and the makefile.
-#
-#  6. Type "make" and press enter to compile/verify your program.
-#
-#  7. Type "make upload", reset your Arduino board, and press enter to
-#     upload your program to the Arduino board.
-#
-# $Id$
-
 include ../config.mk
 
 TARGET = sketch
@@ -45,21 +9,13 @@ TVM_SRCFILES = \
 	interrupts.cpp \
 	serial.cpp \
 	tbc.cpp \
+	time.cpp \
 	tvm.cpp
 
 ############################################################################
 # Below here nothing should be changed...
 
-ARDUINO = $(INSTALL_DIR)/hardware/cores/arduino
-AVR_TOOLS_PATH = $(INSTALL_DIR)/hardware/tools/avr/bin
-SRC =  $(ARDUINO)/pins_arduino.c $(ARDUINO)/wiring.c \
-$(ARDUINO)/wiring_analog.c $(ARDUINO)/wiring_digital.c \
-$(ARDUINO)/wiring_pulse.c \
-$(ARDUINO)/wiring_shift.c $(ARDUINO)/WInterrupts.c
-CXXSRC = $(ARDUINO)/HardwareSerial.cpp $(ARDUINO)/WMath.cpp \
-$(ARDUINO)/Print.cpp
 FORMAT = ihex
-
 
 # Name of this Makefile (used for "make depend").
 MAKEFILE = Makefile
@@ -76,17 +32,15 @@ CDEFS = -DF_CPU=$(F_CPU) -DOCCAM_PROGRAM_ADDR=$(OCCAMADDR)
 CXXDEFS = $(CDEFS)
 
 # Place -I options here
-CINCS = -I$(ARDUINO) $(TVM_CFLAGS)
-CXXINCS = -I$(ARDUINO) $(TVM_CFLAGS)
+CINCS = $(TVM_CFLAGS)
+CXXINCS = $(TVM_CFLAGS)
 
 CDEBUG = -g$(DEBUG)
 CWARN = -Wall
 CTUNING = -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-#CEXTRA = -Wa,-adhlns=$(<:.c=.lst)
 
 CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) $(CEXTRA)
 CXXFLAGS = $(CDEFS) $(CINCS) -O$(OPT)
-#ASFLAGS = -Wa,-adhlns=$(<:.S=.lst),-gstabs 
 LDFLAGS = -lm $(TVM_LDFLAGS)
 
 
@@ -103,12 +57,6 @@ SIZE = avr-size
 NM = avr-nm
 REMOVE = rm -f
 MV = mv -f
-
-# Define all object files.
-OBJ = $(SRC:.c=.o) $(CXXSRC:.cpp=.o) $(ASRC:.S=.o) 
-
-# Define all listing files.
-LST = $(ASRC:.S=.lst) $(CXXSRC:.cpp=.lst) $(SRC:.c=.lst)
 
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
@@ -178,11 +126,9 @@ extcoff: $(TARGET).elf
 	$(NM) -n $< > $@
 
 	# Link: create ELF output file from library.
-applet/$(TARGET).elf: $(TVM_SRCFILES) applet/core.a
-	$(CC) $(ALL_CFLAGS) -o $@ $(TVM_SRCFILES) -L. applet/core.a $(LDFLAGS)
-
-applet/core.a: $(OBJ)
-	@for i in $(OBJ); do echo $(AR) rcs applet/core.a $$i; $(AR) rcs applet/core.a $$i; done
+applet/$(TARGET).elf: $(TVM_SRCFILES)
+	mkdir -p applet
+	$(CC) $(ALL_CFLAGS) -o $@ $(TVM_SRCFILES) $(LDFLAGS)
 
 
 
@@ -207,8 +153,7 @@ applet/core.a: $(OBJ)
 # Target: clean project.
 clean:
 	$(REMOVE) applet/$(TARGET).hex applet/$(TARGET).eep applet/$(TARGET).cof applet/$(TARGET).elf \
-	applet/$(TARGET).map applet/$(TARGET).sym applet/$(TARGET).lss applet/core.a \
-	$(OBJ) $(LST) $(SRC:.c=.s) $(SRC:.c=.d) $(CXXSRC:.cpp=.s) $(CXXSRC:.cpp=.d)
+	applet/$(TARGET).map applet/$(TARGET).sym applet/$(TARGET).lss applet/core.a
 
 depend:
 	if grep '^# DO NOT DELETE' $(MAKEFILE) >/dev/null; \
