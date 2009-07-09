@@ -1,49 +1,40 @@
 #include "tvm-arduino.h"
 
-extern "C" {
-	// G++ requires this to be defined somewhere, as the behaviour for when
-	// you call a pure virtual method. arduino-0016 appears to need it if
-	// you're using the serial code, but defines it with the wrong
-	// extern-ness, hence this workaround.
-	void __cxa_pure_virtual() {
-	}
-}
-
 static tvm_t tvm;
 tvm_ectx_t context;
 
 #define MEM_WORDS 256
 static WORD memory[MEM_WORDS];
 
-// The bytecode file, loaded into flash at a fixed address.
+/* The bytecode file, loaded into flash at a fixed address. */
 static const prog_char *tbc_data = (prog_char *) OCCAM_PROGRAM_ADDR;
 
-extern "C" {
-	// Time is in milliseconds, since microseconds wrap round too fast in
-	// 16 bits to be useful.
-	static WORD arduino_get_time (ECTX ectx) {
-		return time_millis ();
-	}
+/* Time is in milliseconds, since microseconds wrap round too fast in
+   16 bits to be useful. */
+static WORD arduino_get_time (ECTX ectx) {
+	return time_millis ();
+}
 
-	static void arduino_modify_sync_flags (ECTX ectx, WORD set, WORD clear) {
-		cli ();
-		ectx->sflags = (ectx->sflags & (~clear)) | set;
-		sei ();
-	}
+static void arduino_modify_sync_flags (ECTX ectx, WORD set, WORD clear) {
+	cli ();
+	ectx->sflags = (ectx->sflags & (~clear)) | set;
+	sei ();
 }
 
 static void terminate(const char *message, const int *status) {
-	// FIXME: offer other behaviours as options
+	/* FIXME: offer other behaviours as options */
 	printf ("tvm-arduino: %s", message);
 	if (status != NULL) {
 		printf ("%c", *status);
 	}
 	printf ("\n");
 
-	while (true) {}
+	while (1) {}
 }
 
 int main () {
+	int i;
+
 	time_init ();
 	init_interrupts ();
 	serial_stdout_init (57600);
@@ -52,7 +43,7 @@ int main () {
 	printf ("Arduino-TVM starting...\n");
 #endif
 
-	for (int i = 0; i < MEM_WORDS; i++) {
+	for (i = 0; i < MEM_WORDS; i++) {
 		memory[i] = MIN_INT;
 	}
 
@@ -79,7 +70,7 @@ int main () {
 	printf ("GO!\n");
 #endif
 
-	while (true) {
+	while (1) {
 #ifdef DEBUG
 		printf ("before tvm_run: sflags=%04x eflags=%04x iptr=%04x wptr=%04x inst=%02x\n", (int) context.sflags, (int) context.eflags, (int) context.iptr, (int) context.wptr, (int) read_byte (context.iptr));
 
@@ -92,14 +83,14 @@ int main () {
 		switch (ret) {
 			case ECTX_PREEMPT:
 			case ECTX_TIME_SLICE: {
-				// Safe to continue.
+				/* Safe to continue. */
 				break;
 			}
 			case ECTX_SLEEP: {
 				WORD next = context.tnext;
 				WORD now;
 				do {
-					// FIXME: sleep, rather than busywaiting
+					/* FIXME: sleep, rather than busywaiting */
 					now = time_millis ();
 				} while (TIME_AFTER (next, now));
 				break;
@@ -123,6 +114,6 @@ int main () {
 		}
 	}
 
-	// NOTREACHED
+	/* NOTREACHED */
 	return 0;
 }

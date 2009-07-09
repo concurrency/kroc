@@ -1,7 +1,7 @@
 #include "tvm-arduino.h"
 
-// Copy a block of memory from the Transterpreter's possibly-virtual memory
-// space into real memory.
+/* Copy a block of memory from the Transterpreter's possibly-virtual memory
+   space into real memory. */
 static void memcpy_from_tvm (BYTEPTR from, void *to, int size) {
 	uint8_t *real_to = (uint8_t *) to;
 
@@ -13,9 +13,7 @@ static void memcpy_from_tvm (BYTEPTR from, void *to, int size) {
 	}
 }
 
-extern "C" {
-	SFFI_FUNCTION sffi_table[] = {
-		ffi_wait_for_interrupt
-	};
-	const int sffi_table_length = sizeof(sffi_table) / sizeof(SFFI_FUNCTION);
-}
+SFFI_FUNCTION sffi_table[] = {
+	ffi_wait_for_interrupt
+};
+const int sffi_table_length = sizeof(sffi_table) / sizeof(SFFI_FUNCTION);
