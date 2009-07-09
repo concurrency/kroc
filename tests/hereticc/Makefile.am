@@ -10,8 +10,10 @@ OCCBUILD = @OCCBUILD@ --occ21-opts '-NU'
 EXTRA_DIST = \
 	hereticc.occ
 
+if BUILD_HERETICC
 tests = \
 	hereticc
+endif
 
 TESTS_ENVIRONMENT = $(OCCBUILD) --run
 TESTS = $(tests)
