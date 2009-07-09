@@ -22,6 +22,7 @@ EXTRA_DIST = \
 	sockudpserv.occ \
 	test-getopt.sh
 
+if BUILD_BSCLIB_EXAMPLES
 examples = \
 	args \
 	getopt \
@@ -38,6 +39,7 @@ examples = \
 if OCCBUILD_KROC
 examples += \
 	pingdemo
+endif
 endif
 
 all-local: $(examples)

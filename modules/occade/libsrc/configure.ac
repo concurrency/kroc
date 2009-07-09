@@ -11,7 +11,6 @@ build_occade=yes
 dnl Checks for occam modules.
 OCCAM_INCLUDE([file.module course.module occSDL.module raster.module sdlraster.module rasterio.module], ,
               [build_occade=no])
-OCCAM_PROVIDE(occade.module)
 
 AC_MSG_CHECKING([whether to build occade.module])
 AC_MSG_RESULT($build_occade)
