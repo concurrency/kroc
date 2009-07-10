@@ -19,6 +19,8 @@
 
 --** @module course
 
+#IF (TARGET.BITS.PER.WORD = 32)
+
 --* Pseudorandom number generator.
 -- This is an implementation by David Morse of the "minimal standard"
 -- described in
@@ -67,3 +69,5 @@ INT, INT FUNCTION random (VAL INT upto, seed)
     --}}}
     RESULT int.result, new.seed
 :
+
+#ENDIF
