@@ -29,7 +29,7 @@ void init_interrupts () {
 	}
 }
 
-// This runs in interrupt context, so no need to cli()/sei().
+/* This runs in interrupt context, so no need to cli()/sei(). */
 static void raise_tvm_interrupt (WORD flag) {
 	context.sflags |= SFLAG_INTR | flag;
 }
@@ -61,9 +61,9 @@ static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
 		intr->pending = MIN_INT;
 		reschedule = 0;
 	} else {
-		// Simulate a return -- since we want to be rescheduled
-		// *following* the FFI call.
-		// FIXME This should be a macro (it's also used in srv1).
+		/* Simulate a return -- since we want to be rescheduled
+		   *following* the FFI call. */
+		/* FIXME This should be a macro (it's also used in srv1). */
 		WORD ret_addr = read_word (ectx->wptr);
 		ectx->wptr = wordptr_plus (ectx->wptr, 4);
 		WORKSPACE_SET (ectx->wptr, WS_IPTR, ret_addr);
@@ -104,7 +104,7 @@ void clear_pending_interrupts () {
 	for (i = 0; i < NUM_INTERRUPTS; i++) {
 		vinterrupt *intr = &interrupts[i];
 		if (intr->wptr != (WORDPTR) NOT_PROCESS_P) {
-			// Reschedule the process.
+			/* Reschedule the process. */
 			context.add_to_queue (&context, intr->wptr);
 			intr->wptr = (WORDPTR) NOT_PROCESS_P;
 			--num_waiting;
