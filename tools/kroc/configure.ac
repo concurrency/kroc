@@ -1,10 +1,5 @@
 AC_INIT([kroc], [1.5.0-pre5], [kroc-bugs@kent.ac.uk])
 
-dnl Checks for target tools.
-AC_CHECK_TARGET_TOOL([TARGET_AR], [ar], [no])
-AC_CHECK_TARGET_TOOLS([TARGET_CC], [gcc c89 cc], [no])
-AC_CHECK_TARGET_TOOL([TARGET_RANLIB], [ranlib], [:])
-
 AC_CANONICAL_SYSTEM
 
 AM_INIT_AUTOMAKE
@@ -12,6 +7,11 @@ AM_INIT_AUTOMAKE
 dnl Checks for programs.
 AC_PROG_CC
 AC_CHECK_PROGS(SED, gnused gsed sed)
+
+dnl Checks for target tools.
+OCCAM_CHECK_TARGET_TOOL([TARGET_AR], [ar], [no])
+OCCAM_CHECK_TARGET_TOOLS([TARGET_CC], [gcc c89 cc], [no])
+OCCAM_CHECK_TARGET_TOOL([TARGET_RANLIB], [ranlib], [:])
 
 OCCAM_TOOLCHAIN
 AC_SUBST(OCCBUILD_TOOLCHAIN)
