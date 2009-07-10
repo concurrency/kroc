@@ -931,8 +931,13 @@ Report bugs to <""" + CONTACT + """>."""
 
 def main(args):
 	# Get default program locations and arguments from the environment.
-	for prog in ("cc", "ar", "ranlib", "kroc", "ilibr", "install", "occ21", "plinker.pl", "tce-dump.pl", "tock", "tvm"):
-		programs[prog] = split_options(os.getenv(prog.upper(), prog))
+	def tool(prog, default):
+		programs[prog] = split_options(os.getenv(prog.upper(), default))
+	tool("cc", "@TARGET_CC@")
+	tool("ar", "@TARGET_AR@")
+	tool("ranlib", "@TARGET_RANLIB@")
+	for prog in ("kroc", "ilibr", "install", "occ21", "plinker.pl", "tce-dump.pl", "tock", "tvm"):
+		tool(prog, prog)
 
 	long_opts = [
 		"object", "library=", "program=", "run=",

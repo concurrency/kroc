@@ -48,6 +48,9 @@ edit = sed \
 	-e 's|@prefix[@]|$(prefix)|g' \
 	-e 's|@CC[@]|$(CC)|g' \
 	-e 's|@LD[@]|$(LD)|g' \
+	-e 's|@TARGET_CC[@]|$(TARGET_CC)|g' \
+	-e 's|@TARGET_AR[@]|$(TARGET_AR)|g' \
+	-e 's|@TARGET_RANLIB[@]|$(TARGET_RANLIB)|g' \
 	-e 's|@VERSION[@]|$(VERSION)|g' \
 	-e 's|@KROC_CANONICAL_TARGET[@]|$(KROC_CANONICAL_TARGET)|g' \
 	-e 's|@KROC_TARGET_OS[@]|$(KROC_TARGET_OS)|g' \
