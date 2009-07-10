@@ -38,6 +38,10 @@ int main () {
 
 	time_init ();
 	init_interrupts ();
+
+	/* Enable interrupts, now all the handlers are set up. */
+	sei ();
+
 	serial_stdout_init (57600);
 
 #ifdef DEBUG
