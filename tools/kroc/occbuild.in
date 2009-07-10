@@ -145,6 +145,15 @@ def capture(cmd):
 
 	return data
 
+def target_tool_name(tool):
+	"""Return the name of a tool (e.g. ilibr), appropriately mangled for
+	the target system this occbuild was configured for (e.g. avr-ilibr)."""
+	target = "@target_alias@"
+	if target == "":
+		return tool
+	else:
+		return target + "-" + tool
+
 def find_in_path(file, path):
 	"""Search for file in all the directories listed in path."""
 	for dir in path:
@@ -343,10 +352,10 @@ class Toolchain:
 		into a library, giving base.lib."""
 		pass
 
-	def program(self, occam_objs, native_objs, base, output = None):
-		"""Compile base.occ, and link it with occam object files (.tce)
+	def program(self, occam_objs, native_objs, source, output):
+		"""Compile source, and link it with occam object files (.tce)
 		and native object files (.o) into an executable, giving
-		output (or some default name if not specified)."""
+		output."""
 		pass
 
 	def run(self, program, args):
@@ -451,10 +460,8 @@ class KRoCToolchain(Toolchain):
 		else:
 			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
 
-	def program(self, occam_objs, native_objs, base, output = None):
-		if output is None:
-			output = base
-		run(self.kroc_cmd() + ["-o", output, base + ".occ"] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs)
+	def program(self, occam_objs, native_objs, source, output):
+		run(self.kroc_cmd() + ["-o", output, source] + [split_ext(o)[0] + ".o" for o in occam_objs] + native_objs)
 
 	def run(self, program, args):
 		if not "/" in program:
@@ -590,9 +597,7 @@ class TVMToolchain(Toolchain):
 		else:
 			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
 
-	def program(self, occam_objs, native_objs, base, output = None):
-		if output is None:
-			output = base
+	def program(self, occam_objs, native_objs, source, output):
 		if native_objs != []:
 			die("Native objects in a Transterpreter program are not yet supported; build a library instead")
 			# You can *almost* get there by building an FFI library
@@ -600,9 +605,10 @@ class TVMToolchain(Toolchain):
 			# the slinker currently won't do the right thing if you
 			# use a .tce file that you haven't actually #USEd.
 
-		self.object(base + ".occ")
-		occam_objs = [ base + ".tce" ] + occam_objs
-		
+		self.object(source)
+		(base, _) = split_ext(source)
+		occam_objs = [base + ".tce"] + occam_objs
+
 		libs = []
 		if std_libs:
 			libs.append("forall")
@@ -783,9 +789,7 @@ class TockToolchain:
 #		else:
 #			run(programs["ilibr"] + ["-o", base + ".lib"] + occam_objs)
 
-	def program(self, occam_objs, native_objs, base, output = None):
-		if output is None:
-			output = base
+	def program(self, occam_objs, native_objs, source, output):
 		need_mods = needs[:]
 		impl = []
 		if std_libs:
@@ -793,7 +797,7 @@ class TockToolchain:
 			impl.append("-u")
 			impl.append("forall.module")
 
-		run(self.tock_cmd(["--linker-flags", " ".join(native_objs)] + impl + ["-o", output]) + [base + ".occ"])
+		run(self.tock_cmd(["--linker-flags", " ".join(native_objs)] + impl + ["-o", output]) + [source])
 #" ".join([split_ext(o)[0] + ".tock.o" for o in occam_objs] +
 
 	def run(self, program, args):
@@ -938,7 +942,9 @@ def main(args):
 	tool("cc", "@TARGET_CC@")
 	tool("ar", "@TARGET_AR@")
 	tool("ranlib", "@TARGET_RANLIB@")
-	for prog in ("kroc", "ilibr", "install", "occ21", "plinker.pl", "tce-dump.pl", "tock", "tvm"):
+	for prog in ("kroc", "ilibr", "occ21", "plinker.pl", "tce-dump.pl", "tock", "tvm"):
+		tool(prog, target_tool_name(prog))
+	for prog in ("install",):
 		tool(prog, prog)
 
 	long_opts = [
@@ -1117,10 +1123,11 @@ def main(args):
 				native_objs.append(object)
 			else:
 				die("Object filename must end in .tce or .o: ", object)
-		(base, ext) = split_ext(target)
-		if ext != "occ":
+		if not target.endswith(".occ"):
 			die("Source filename must end in .occ: ", target)
-		toolchain.program(occam_objs, native_objs, base, output)
+		if output is None:
+			(output, _) = split_ext(target)
+		toolchain.program(occam_objs, native_objs, target, output)
 	elif mode == "run":
 		toolchain.run(target, args)
 	elif mode == "install":

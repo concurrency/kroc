@@ -17,7 +17,7 @@ all: $(addsuffix .hex,$(PROGS))
 
 # Compile occam program.
 %.hex: %.occ
-	occbuild -v -DF.CPU=$(F_CPU) --program $<
+	avr-occbuild -v -DF.CPU=$(F_CPU) --program $<
 	# FIXME: check address doesn't overlap the TVM
 	../binary-to-ihex $(BYTECODE_ADDR) $(basename $<).tbc $@
 
