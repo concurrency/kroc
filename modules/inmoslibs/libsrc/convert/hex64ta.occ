@@ -29,11 +29,11 @@
 -- Put ValidDigit into an include file, renamed it ValidHexDigit, and
 -- converted it into an inline function.  TS/2044, V1.2, 18/01/93 SRH
 --}}}
-#IF TARGET.BITS.PER.WORD = 32
 --{{{  STRINGTOHEX64 TA
 PROC STRINGTOHEX64 (BOOL Error, INT64 n, VAL []BYTE string)
   --  Empty string behaviour corrected 19.2.88
 
+  #IF TARGET.BITS.PER.WORD = 32
   []INT n RETYPES n:
   INT chars.scanned:
   INT carry, digit, dump:
@@ -63,16 +63,22 @@ PROC STRINGTOHEX64 (BOOL Error, INT64 n, VAL []BYTE string)
           Error := Error OR (carry <> 0)
       TRUE
         Error := TRUE
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :
 --}}}
 --{{{  HEX64TOSTRING TA
 PROC HEX64TOSTRING (INT len, []BYTE string, VAL INT64 n)
 
+  #IF TARGET.BITS.PER.WORD = 32
   VAL [2]INT n RETYPES n:
   SEQ
     HEXTOSTRING (len, string, n[1])
     HEXTOSTRING (len, [string FROM 8 FOR 8], n[0])
     len := 16
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :
 --}}}
-#ENDIF

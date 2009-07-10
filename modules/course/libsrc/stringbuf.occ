@@ -173,7 +173,6 @@ PROC buffer.set.bin8 ([]BYTE buf, INT len, VAL BYTE n)
         SKIP
 :
 --}}}
-#IF (TARGET.BITS.PER.WORD = 32)
 --{{{  PROC buffer.set.real32 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL32 n)
 --* Adds a REAL32 value to a string buffer.
 --
@@ -191,4 +190,3 @@ PROC buffer.set.real32 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL32 n)
     buffer.set.string (buf, len, [v.buf FOR v.len])
 :
 --}}}
-#ENDIF

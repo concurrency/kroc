@@ -24,7 +24,6 @@
 #COMMENT "(c) Copyright INMOS Limited, 1988"
 #INCLUDE "streamio.inc"
 #USE "convert.lib"
-#IF TARGET.BITS.PER.WORD = 32
 --* Format into ASCII characters and then write to the given screen
 -- stream a single precision real number.
 --
@@ -48,4 +47,3 @@ PROC ss.write.real32 (CHAN OF SS scrn, VAL REAL32 number, VAL INT Ip, Dp)
     REAL32TOSTRING (length, line, number, Ip, Dp)
     scrn ! st.out.string; INT32 length :: line
 :
-#ENDIF

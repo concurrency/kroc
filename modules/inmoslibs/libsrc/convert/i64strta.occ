@@ -22,7 +22,6 @@
 #OPTION "E V" -- no compiler libraries, no vector space
 #COMMENT "Type conversion library V1.1 22/03/90"
 #COMMENT "(c) Copyright INMOS Limited 1988"
-#IF TARGET.BITS.PER.WORD = 32
 PROC INT64TOSTRING (INT len, []BYTE string, VAL INT64 n)
 
   --{{{  history
@@ -30,6 +29,7 @@ PROC INT64TOSTRING (INT len, []BYTE string, VAL INT64 n)
   -- Added V to OPTIONs; V1.1, 22-Mar-90 SRH
   --}}}
 
+  #IF TARGET.BITS.PER.WORD = 32
   VAL [2]INT n RETYPES n:
   [2]INT W:
   INT L, R, carry:
@@ -76,5 +76,7 @@ PROC INT64TOSTRING (INT len, []BYTE string, VAL INT64 n)
         string[R] := b
         L := L + 1
         R := R - 1
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :
-#ENDIF
