@@ -15,6 +15,9 @@ enum {
 };
 
 typedef struct _vinterrupt {
+	/* Workspaces are always word-aligned, so we can use the least
+	   significant bit of wptr to indicate whether the interrupt has been
+	   triggered. */
 	WORDPTR wptr;
 	WORD pending;
 } vinterrupt;
@@ -36,31 +39,41 @@ static void raise_tvm_interrupt (WORD flag) {
 
 static void handle_interrupt (vinterrupt *intr) {
 	WORD now = time_millis ();
-	if (intr->wptr != (WORDPTR) NOT_PROCESS_P) {
+	if (intr->wptr == (WORDPTR) NOT_PROCESS_P) {
+		/* Nothing waiting; just record that the interrupt fired. */
+		if (now == (WORD) MIN_INT) {
+			++now;
+		}
+		intr->pending = now;
+	} else if (((WORD) intr->wptr) & 1 != 0) {
+		/* The interrupt has already been raised; nothing to do. */
+	} else {
+		/* Process waiting: raise the interrupt. */
 		WORDPTR ptr = (WORDPTR) WORKSPACE_GET (intr->wptr, WS_POINTER);
 		if (ptr != NULL_P) {
 			write_word (ptr, now);
 			WORKSPACE_SET (intr->wptr, WS_POINTER, NULL_P);
 		}
+		intr->wptr = (WORDPTR) (((WORD) intr->wptr) | 1);
 		raise_tvm_interrupt (TVM_INTR_VIRTUAL);
-	} else {
-		if (now == (WORD) MIN_INT) {
-			++now;
-		}
-		intr->pending = now;
 	}
 }
 
 static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
-	int reschedule;
+	int ret;
 
 	cli ();
 
 	if (intr->pending != (WORD) MIN_INT) {
+		/* The interrupt has already fired; just return. */
 		write_word (time_ptr, intr->pending);
 		intr->pending = MIN_INT;
-		reschedule = 0;
+
+		ret = SFFI_OK;
 	} else {
+		/* The interrupt hasn't fired, so park this process on it and
+		   schedule another one. */
+
 		/* Simulate a return -- since we want to be rescheduled
 		   *following* the FFI call. */
 		/* FIXME This should be a macro (it's also used in srv1). */
@@ -73,16 +86,13 @@ static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
 		intr->wptr = ectx->wptr;
 
 		++num_waiting;
-		reschedule = 1;
+
+		ret = SFFI_RESCHEDULE;
 	}
 
 	sei ();
 
-	if (reschedule) {
-		return SFFI_RESCHEDULE;
-	} else {
-		return SFFI_OK;
-	}
+	return ret;
 }
 
 #define MAP_SIMPLE_INTERRUPT(vector, interrupt) \
@@ -103,9 +113,9 @@ void clear_pending_interrupts () {
 
 	for (i = 0; i < NUM_INTERRUPTS; i++) {
 		vinterrupt *intr = &interrupts[i];
-		if (intr->wptr != (WORDPTR) NOT_PROCESS_P) {
-			/* Reschedule the process. */
-			context.add_to_queue (&context, intr->wptr);
+		if ((((WORD) intr->wptr) & 1) != 0) {
+			/* This interrupt has fired; reschedule the process. */
+			context.add_to_queue (&context, (WORDPTR) (((WORD) intr->wptr) & ~1));
 			intr->wptr = (WORDPTR) NOT_PROCESS_P;
 			--num_waiting;
 		}
