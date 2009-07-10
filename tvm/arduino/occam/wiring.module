@@ -57,42 +57,52 @@ PROC die (VAL []BYTE error)
 --* A request for a pin out of range will result in an unrecoverable error.
 -- @private
 
-INT, INT, INT FUNCTION pin.location (VAL INT pin)
-  INT ddr, port, bit:
+INT, INT, INT, INT FUNCTION pin.location (VAL INT pin)
+  INT r.ddr, r.port, r.pin, bit:
   VALOF
     IF
       -- Digital pins 0 - 7 on the Aruino
       pin < 8
-        ddr, port, bit := DDRD, PORTD, pin
+        r.ddr, r.port, r.pin, bit := DDRD, PORTD, PIND, pin
       -- Digital pins 8 - 13 on the Arduino
       pin < 14
-        ddr, port, bit := DDRB, PORTB, pin - 8
+        r.ddr, r.port, r.pin, bit := DDRB, PORTB, PINB, pin - 8
       -- Just keep counting up for the analog pins.
       -- Analog pins 0 - 5
       pin < 21
-        ddr, port, bit := DDRC, PORTC, pin - 14
+        r.ddr, r.port, r.pin, bit := DDRC, PORTC, PINC, pin - 14
       TRUE
         die ("No mapping for requested pin.") 
-    RESULT ddr, port, bit
+    RESULT r.ddr, r.port, r.pin, bit
 :
 --}}}
 
 --{{{  PROC digitalWrite
 PROC digitalWrite (VAL INT pin, state)
-  INT ddr, port, bit:
+  INT r.ddr, r.port, r.pin, bit:
   PLACED [MAX.PORT]BYTE ports 0:
   SEQ
-    ddr, port, bit := pin.location (pin)
-    ports[port] := (ports[port] /\ (~BV (bit))) \/ ((BYTE state) << bit)
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    ports[r.port] := (ports[r.port] /\ (~BV (bit))) \/ ((BYTE state) << bit)
 :
 --}}}
---{{{  PROC pinMode
-PROC pinMode (VAL INT pin, mode)
-  INT ddr, port, bit:
+--{{{  PROC digitalRead
+PROC digitalRead (VAL INT pin, RESULT INT state)
+  INT r.ddr, r.port, r.pin, bit:
   PLACED [MAX.PORT]BYTE ports 0:
   SEQ
-    ddr, port, bit := pin.location (pin)
-    ports[ddr] := (ports[ddr] /\ (~BV (bit))) \/ ((BYTE mode) << bit)
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    state := (INT ((ports[r.pin] /\ (BV (bit))) >> bit))
+:
+--}}}
+
+--{{{  PROC pinMode
+PROC pinMode (VAL INT pin, mode)
+  INT r.ddr, r.port, r.pin, bit:
+  PLACED [MAX.PORT]BYTE ports 0:
+  SEQ
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    ports[r.ddr] := (ports[r.ddr] /\ (~BV (bit))) \/ ((BYTE mode) << bit)
 :
 --}}}
 
