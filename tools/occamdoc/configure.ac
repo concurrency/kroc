@@ -1,4 +1,6 @@
 AC_INIT([occamdoc], [4.0], [kroc-bugs@kent.ac.uk])
+AC_CANONICAL_SYSTEM
+
 AM_INIT_AUTOMAKE
 
 AC_PROG_MAKE_SET

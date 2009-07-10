@@ -46,6 +46,7 @@ CLEANFILES = $(generated_scripts)
 
 edit = sed \
 	-e 's|@prefix[@]|$(prefix)|g' \
+	-e 's|@target_alias[@]|$(target_alias)|g' \
 	-e 's|@CC[@]|$(CC)|g' \
 	-e 's|@LD[@]|$(LD)|g' \
 	-e 's|@TARGET_CC[@]|$(TARGET_CC)|g' \
