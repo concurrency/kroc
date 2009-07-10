@@ -23,6 +23,7 @@
 #INCLUDE "maths.module"
 #INCLUDE "useful.inc"
 
+#IF (TARGET.BITS.PER.WORD = 32)
 --{{{  PROC out.vector2
 --* Print a [@ref VECTOR2].
 PROC out.vector2 (VAL VECTOR2 v, CHAN BYTE out!)
@@ -35,6 +36,7 @@ PROC out.vector2 (VAL VECTOR2 v, CHAN BYTE out!)
     out ! ')'
 :
 --}}}
+#ENDIF
 --{{{  FUNCTION normalise2
 --* Normalise a [@ref VECTOR2].
 -- @param v Input vector
@@ -42,6 +44,7 @@ PROC out.vector2 (VAL VECTOR2 v, CHAN BYTE out!)
 VECTOR2 FUNCTION normalise2 (VAL VECTOR2 v) IS v / SQRT (mag.squared2 (v)):
 --}}}
 
+#IF (TARGET.BITS.PER.WORD = 32)
 --{{{  PROC out.vector3
 --* Print a [@ref VECTOR3].
 PROC out.vector3 (VAL VECTOR3 v, CHAN BYTE out!)
@@ -57,6 +60,7 @@ PROC out.vector3 (VAL VECTOR3 v, CHAN BYTE out!)
     out ! ')'
 :
 --}}}
+#ENDIF
 --{{{  FUNCTION normalise3
 --* Normalise a [@ref VECTOR3].
 -- @param v Input vector
