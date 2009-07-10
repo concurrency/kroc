@@ -5,6 +5,7 @@ PROG = blink
 PROGS = \
 	adc \
 	blink \
+	blink-array \
 	button \
 	commstime \
 	exttimer \

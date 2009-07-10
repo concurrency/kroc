@@ -40,17 +40,39 @@ PROC delay (VAL INT millis)
 :
 --}}}
 
+--{{{ PROC die
+PROC die (VAL []BYTE error)
+  CAUSEERROR ()
+:
+--}}}
+
 --{{{  FUNCTION pin.location
 --* Map an Arduino pin number to a DDR register, PORT register and bit number.
+--* Digital pins 0-7 map to PORTD bits 0-7
+--* Digital pins 8-13 map to PORTB 8-13
+--* 
+--* There are no official mappins for the analog pins. 
+--* Analog pins 0-5 map to PORTC bits 0-5
+--* 
+--* A request for a pin out of range will result in an unrecoverable error.
 -- @private
+
 INT, INT, INT FUNCTION pin.location (VAL INT pin)
   INT ddr, port, bit:
   VALOF
     IF
+      -- Digital pins 0 - 7 on the Aruino
       pin < 8
         ddr, port, bit := DDRD, PORTD, pin
-      TRUE
+      -- Digital pins 8 - 13 on the Arduino
+      pin < 14
         ddr, port, bit := DDRB, PORTB, pin - 8
+      -- Just keep counting up for the analog pins.
+      -- Analog pins 0 - 5
+      pin < 21
+        ddr, port, bit := DDRC, PORTC, pin - 14
+      TRUE
+        die ("No mapping for requested pin.") 
     RESULT ddr, port, bit
 :
 --}}}
