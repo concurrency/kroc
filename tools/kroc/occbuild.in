@@ -581,6 +581,8 @@ class TVMToolchain(Toolchain):
 		make_module(base, custom)
 
 		if native_objs != []:
+			if not build_shared:
+				die("Cannot build FFI libraries for this platform")
 			make_shared(patterns["so"] % base, native_objs)
 
 		if occam_objs == []:
@@ -1076,6 +1078,8 @@ def main(args):
 		build_shared = False
 	elif target_os.startswith("darwin"):
 		patterns["so"] = "liboccam_%s.dylib"
+		build_shared = False
+	elif target_cpu.startswith("avr"):
 		build_shared = False
 
 	toolchain.update_patterns(patterns)
