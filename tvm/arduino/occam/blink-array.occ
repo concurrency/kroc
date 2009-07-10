@@ -1,0 +1,37 @@
+#INCLUDE "wiring.module"
+
+PROC flash.once (VAL INT pin, on, off)
+  SEQ
+    digitalWrite (pin, HIGH)
+    delay (on)
+    digitalWrite (pin, LOW)
+    delay (off)
+:
+
+PROC flash.pin (VAL INT pin, on, off)
+  WHILE TRUE
+    SEQ
+      digitalWrite (pin, HIGH)
+      delay (on)
+      digitalWrite (pin, LOW)
+      delay (off)
+:
+
+VAL INT start.pin IS 2:
+VAL INT pin.count IS 18:
+PROC main ()
+  SEQ
+    SEQ i = start.pin FOR pin.count
+      pinMode (i, OUTPUT)
+
+    SEQ i = 2 FOR 18
+      SEQ
+        serialWriteInt(i)
+        serialWrite("*n")
+        flash.once (i, i * 100, 100)
+
+    serialWrite("Done.*n")
+
+    PAR i = 2 FOR 18
+      flash.pin (i, i * 100, i * 230)
+:
