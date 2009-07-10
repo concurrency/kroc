@@ -4,7 +4,8 @@ static tvm_t tvm;
 tvm_ectx_t context;
 
 #define MEM_WORDS 512
-static WORD memory[MEM_WORDS];
+static WORD raw_memory[MEM_WORDS + 1];
+static WORDPTR memory;
 
 /* The bytecode file, loaded into flash at a fixed address. */
 static const prog_char *tbc_data = (prog_char *) BYTECODE_ADDR;
@@ -42,6 +43,9 @@ int main () {
 #ifdef DEBUG
 	printf ("Arduino-TVM starting...\n");
 #endif
+
+	/* The Transputer memory must be word-aligned. */
+	memory = (WORDPTR) (((int) (raw_memory + 1)) & ~1);
 
 	for (i = 0; i < MEM_WORDS; i++) {
 		memory[i] = MIN_INT;
