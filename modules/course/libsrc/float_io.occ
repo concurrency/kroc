@@ -25,6 +25,8 @@
 #COMMENT "(C) Copyright INMOS limited 1988, 1990"
 --}}}
 
+#IF (TARGET.BITS.PER.WORD = 32)
+
 --{{{  REAL32TOSTRING
 --* Format a [@code REAL32] number as a decimal string.
 --
@@ -2259,5 +2261,5 @@ PROC out.real64 (VAL REAL64 num, VAL INT ip, dp, CHAN BYTE out!)
 :
 --}}}  
 
-
+#ENDIF
 
