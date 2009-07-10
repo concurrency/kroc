@@ -22,10 +22,19 @@ dnl Look for mzc and mzscheme, and set MZC and MZSCHEME accordingly.
 dnl If both are found, define the conditional HAVE_SCHEME_TOOLS.
 AC_DEFUN([OCCAM_MZSCHEME],
 [dnl
+AC_REQUIRE([OCCAM_IN_TREE])
+
 AC_CHECK_TOOL([MZC], [mzc], [no])
 AC_CHECK_TOOL([MZSCHEME], [mzscheme], [no])
 
 # FIXME: Test that the version is appropriate.
 
-AM_CONDITIONAL(HAVE_SCHEME_TOOLS, test "x$MZC" != "xno" -a "x$MZSCHEME" != "xno")
+# Currently we can't do a separate-object-dir build of Scheme tools.
+if test "x$KROC_BUILD_ROOT" != "x$KROC_SRC_ROOT"; then
+  MZC=no
+  MZSCHEME=no
+fi
+
+AM_CONDITIONAL([HAVE_SCHEME_TOOLS],
+               [test "x$MZC" != "xno" && test "x$MZSCHEME" != "xno"])
 ])dnl
