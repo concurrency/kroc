@@ -2,11 +2,11 @@ AUTOMAKE_OPTIONS = foreign no-dependencies
 ACLOCAL_AMFLAGS = -I ../../../m4
 
 SUBDIRS =
-if BUILD_SOCKLIB
-SUBDIRS += socklib httplib
-endif
 if BUILD_FILELIB
 SUBDIRS += filelib proclib
+endif
+if BUILD_SOCKLIB
+SUBDIRS += socklib httplib
 endif
 if BUILD_CSPDRVLIB
 SUBDIRS += cspdrvlib

@@ -55,6 +55,10 @@ if test "$host_os" = "cygwin"; then
  AC_DEFINE(HOSTOS_CYGWIN)
 fi
 
+if test "$build_filelib" != "yes"; then
+  build_socklib=no
+fi
+
 AC_MSG_CHECKING([whether to build cspdrvlib.module])
 AC_MSG_RESULT($build_cspdrvlib)
 AM_CONDITIONAL(BUILD_CSPDRVLIB, [test $build_cspdrvlib = yes])
