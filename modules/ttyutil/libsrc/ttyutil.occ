@@ -22,6 +22,13 @@
 #INCLUDE "course.module"
 #INCLUDE "ttyutil.inc"
 
+--{{{  constants
+#IF TARGET.BITS.PER.WORD = 32
+VAL INT TIMEOUT IS 300000:
+#ELSE
+VAL INT TIMEOUT IS 300:
+#ENDIF
+--}}}
 --{{{  private protocols and channel-types.
 PROTOCOL TU.MENU.IN
   CASE
@@ -233,7 +240,7 @@ PROC ttyutil.keyhandler (CHAN BYTE in?, CHAN INT kill?, CHAN INT out!)
             SEQ
               tim ? t
               ALT
-                tim ? AFTER (t PLUS 300000)
+                tim ? AFTER (t PLUS TIMEOUT)
                   -- timeout, escape key
                   out ! #1B
                 in ? ch
