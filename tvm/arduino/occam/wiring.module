@@ -81,6 +81,7 @@ INT, INT, INT, INT FUNCTION pin.location (VAL INT pin)
 PROC digitalWrite (VAL INT pin, state)
   INT r.ddr, r.port, r.pin, bit:
   PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   SEQ
     r.ddr, r.port, r.pin, bit := pin.location (pin)
     ports[r.port] := (ports[r.port] /\ (~BV (bit))) \/ ((BYTE state) << bit)
@@ -100,6 +101,7 @@ PROC digitalRead (VAL INT pin, RESULT INT state)
 PROC pinMode (VAL INT pin, mode)
   INT r.ddr, r.port, r.pin, bit:
   PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   SEQ
     r.ddr, r.port, r.pin, bit := pin.location (pin)
     ports[r.ddr] := (ports[r.ddr] /\ (~BV (bit))) \/ ((BYTE mode) << bit)
