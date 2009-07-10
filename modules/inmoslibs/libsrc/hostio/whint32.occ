@@ -24,7 +24,6 @@
 #INCLUDE "hostio.inc"
 #USE "splib.lib"
 #USE "convert.lib"
-#IF TARGET.BITS.PER.WORD = 32
 --{{{  so.fwrite.hex.int32
 --* Write a 32-bit integer as hexadecimal ASCII characters preceded by
 -- the '#' character to a file.
@@ -121,4 +120,3 @@ PROC so.write.hex.int32 (CHAN OF SP fs, ts, VAL INT32 n, VAL INT width)
   so.fwrite.hex.int32 (fs, ts, spid.stdout, n, width, result)
 :
 --}}}so.write.hex.int32
-#ENDIF

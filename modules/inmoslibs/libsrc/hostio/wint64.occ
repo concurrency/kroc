@@ -24,7 +24,6 @@
 #INCLUDE "hostio.inc"
 #USE "splib.lib"
 #USE "convert.lib"
-#IF TARGET.BITS.PER.WORD = 32
 --{{{  so.fwrite.int64
 --* Write to the specified file stream a 64-bit integer as decimal
 -- ASCII digits, padded out with leading spaces and an optional sign to
@@ -98,4 +97,3 @@ PROC so.write.int64 (CHAN OF SP fs, ts, VAL INT64 n, VAL INT width)
   so.fwrite.int64 (fs, ts, spid.stdout, n, width, result)
 :
 --}}}so.write.int64
-#ENDIF

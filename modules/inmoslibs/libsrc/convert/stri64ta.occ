@@ -22,7 +22,6 @@
 #OPTION "E V" -- no compiler libraries, no vector space
 #COMMENT "Type conversion library V1.3 3/02/93"
 #COMMENT "(c) Copyright INMOS Limited 1988"
-#IF TARGET.BITS.PER.WORD = 32
 PROC STRINGTOINT64 (BOOL Error, INT64 n, VAL []BYTE string)
 
   --{{{  history
@@ -36,6 +35,7 @@ PROC STRINGTOINT64 (BOOL Error, INT64 n, VAL []BYTE string)
   -- number.  V1.3, 3/02/93 SRH
   --}}}
 
+  #IF TARGET.BITS.PER.WORD = 32
   [2]INT n RETYPES n:
   SEQ
     n[0] := 0
@@ -91,5 +91,7 @@ PROC STRINGTOINT64 (BOOL Error, INT64 n, VAL []BYTE string)
                   TRUE
                     SKIP
         --}}}
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :
-#ENDIF
