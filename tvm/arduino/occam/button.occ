@@ -18,6 +18,7 @@ PROC main ()
     ports[EIMSK] := BV (INT0)
 
     beginSerial (57600)
+    serialWrite ("starting*n")
 
     CHAN BOOL flash:
     PAR
