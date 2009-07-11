@@ -729,6 +729,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     --:
     --test.PORTs()
     --}}}
+    #IF (TARGET.BITS.PER.WORD = 32)
     --{{{  misc ASM
     PROC misc.ASM()
       INT x, y, z :
@@ -839,6 +840,7 @@ PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
     :
     misc.ASM()
     --}}}
+    #ENDIF
     --{{{  bug 594
     PROC bug.594()
       [10][10]INT array :

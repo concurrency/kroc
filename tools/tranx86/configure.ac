@@ -1,20 +1,9 @@
-dnl -*- shell-script -*-
-dnl
-dnl Process this file with autoconf to produce a configure script.
-dnl
-dnl $Source:$
-dnl
-dnl $Id:$
-dnl
-
-AC_REVISION($Revision: 1.1 $)
-AC_INIT([main.c],[1.4.1],[kroc-bugs@kent.ac.uk])
+AC_INIT([tranx86], [1.4.1], [kroc-bugs@kent.ac.uk])
 AC_CONFIG_SRCDIR([main.c])
 AM_CONFIG_HEADER(config.h)
-AC_PREREQ(2.53)
-
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE([tranx86], [1.4.1])
+
+AM_INIT_AUTOMAKE
 
 AC_DEFINE_UNQUOTED([TARGET_CANONICAL],"${target}",[define canonical target])
 

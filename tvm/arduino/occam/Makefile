@@ -3,7 +3,10 @@ include ../config.mk
 PROG = blink
 
 PROGS = \
+	adc \
 	blink \
+	blink-array \
+	button \
 	commstime \
 	exttimer \
 	hello \
@@ -15,22 +18,19 @@ all: $(addsuffix .hex,$(PROGS))
 
 # Compile occam program.
 %.hex: %.occ
-	occbuild -v -DF.CPU=$(F_CPU) --program $<
-	# FIXME: check OCCAMADDR doesn't overlap the TVM
-	../binary-to-ihex $(OCCAMADDR) $(basename $<).tbc $@
+	avr-occbuild -v -DF.CPU=$(F_CPU) --program $<
+	# FIXME: check address doesn't overlap the TVM
+	../binary-to-ihex $(BYTECODE_ADDR) $(basename $<).tbc $@
 
 AVRDUDE_WRITE_OCCAM = -D -U flash:w:$(PROG).hex
 
 upload: $(PROG).hex
-	../reset-arduino $(PORT)
-	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_OCCAM)
-	../read-arduino $(PORT)
+	../reset-arduino $(UPLOAD_PORT)
+	$(AVRDUDE) -C ../avrdude.conf $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_OCCAM)
+	../read-arduino $(UPLOAD_PORT)
 
 clean:
-	rm -f \
-		$(addsuffix .tce,$(PROGS)) \
-		$(addsuffix .tbc,$(PROGS)) \
-		$(addsuffix .hex,$(PROGS))
+	rm -f $(PROGS) $(foreach suffix,.tce .tbc .hex,$(addsuffix $(suffix),$(PROGS)))
 
 #{{{ dependencies
 avr.module: iom328p.inc

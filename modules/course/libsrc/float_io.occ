@@ -135,6 +135,7 @@ PROC course.REAL32TOSTRING (RESULT INT len, RESULT []BYTE string, VAL REAL32 X, 
   -- PhD thesis, 1984, University of California, Berkeley.
   --}}}
 
+  #IF (TARGET.BITS.PER.WORD = 32)
   VAL INT X RETYPES X :
 
   --{{{  Definitions
@@ -983,6 +984,9 @@ PROC course.REAL32TOSTRING (RESULT INT len, RESULT []BYTE string, VAL REAL32 X, 
             --}}}
         --}}}
   --}}}
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :
 --}}}
 
@@ -1097,6 +1101,7 @@ PROC course.REAL64TOSTRING (RESULT INT len, RESULT []BYTE string, VAL REAL64 X, 
   -- PhD thesis, 1984, University of California, Berkeley.
   --}}}
 
+  #IF (TARGET.BITS.PER.WORD = 32)
   VAL [2]INT X RETYPES X :
 
   --{{{  Definitions
@@ -2178,6 +2183,9 @@ PROC course.REAL64TOSTRING (RESULT INT len, RESULT []BYTE string, VAL REAL64 X, 
             --}}}
         --}}}
   --}}}
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :
 --}}}
 
@@ -2258,6 +2266,4 @@ PROC out.real64 (VAL REAL64 num, VAL INT ip, dp, CHAN BYTE out!)
       out ! buffer[i]
 :
 --}}}  
-
-
 

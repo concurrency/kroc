@@ -1,13 +1,14 @@
 # Top-level configure.ac for the KRoC tree.
 
 AC_INIT([kroc], [1.5.0-pre5], [kroc-bugs@kent.ac.uk])
+AC_PREREQ(2.59)
 AC_CANONICAL_SYSTEM
+
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 OCCAM_TOOLCHAIN
 KROC_BUILD_ROOT="`pwd`"
 KROC_SRC_ROOT="`(cd $srcdir && pwd)`"
-echo "pwd='$ac_pwd' build='$KROC_BUILD_ROOT' src='$KROC_SRC_ROOT'"
 OCCAM_OCCBUILD
 
 if test "x$OCCBUILD_API_VERSION" != x3; then
@@ -39,7 +40,14 @@ if test $OCCBUILD_TOOLCHAIN = tvm; then
   OCCAM_CONFIG_SUBDIRS(tools/tinyswig)
 
   OCCAM_CONFIG_TARGET_SUBDIRS(runtime/libtvm)
-  OCCAM_CONFIG_TARGET_SUBDIRS(tvm/posix)
+
+  AC_ARG_WITH([wrapper],
+              AC_HELP_STRING([--with-wrapper=...],
+                             [Transterpreter wrapper to use (posix, none)]),
+              [wrapper=$withval], [wrapper=posix])
+  if test "x$wrapper" = "xposix"; then
+    OCCAM_CONFIG_TARGET_SUBDIRS(tvm/posix)
+  fi
 fi
 
 # The modules must be built in dependency order.

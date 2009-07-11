@@ -2,12 +2,11 @@
 #  Autoconf script for POSIX tvm  #
 ###################################
 
-AC_INIT([tvm-posix], [1.0.0])
+AC_INIT([tvm-posix], [1.0.0], [kroc-bugs@kent.ac.uk])
 AM_CONFIG_HEADER(config.h)
-AC_PREREQ(2.59)
-
-AM_INIT_AUTOMAKE([tvm], [1.0.0])
 AC_CANONICAL_SYSTEM
+
+AM_INIT_AUTOMAKE
 
 AC_PROG_CC
 AC_PROG_RANLIB

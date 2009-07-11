@@ -84,13 +84,13 @@ PROC cgtest91 (CHAN OF BYTE keyb?, scr!, err!)
     CHAN TYPE MY.CT
       MOBILE RECORD
         CHAN BYTE b?:
-        CHAN INT i!:
+        CHAN INT32 i!:
     :
 
-    REC PROC various (VAL INT n, BYTE b, INT i, INT64 iw, VAL INT64 cw,
+    REC PROC various (VAL INT n, BYTE b, INT32 i, INT64 iw, VAL INT64 cw,
                       []BYTE s, VAL []BYTE vs,
                       MOBILE []BYTE ms1, VAL []BYTE ms2,
-                      CHAN INT c?, SHARED CHAN INT cs!,
+                      CHAN INT32 c?, SHARED CHAN INT32 cs!,
                       MY.CT! cli, SHARED MY.CT? svr,
                       BARRIER bar, MOBILE BARRIER mbar)
       IF
@@ -98,7 +98,7 @@ PROC cgtest91 (CHAN OF BYTE keyb?, scr!, err!)
           various (n + 1, b, i, iw, cw, s, vs, ms1, ms2, c, cs!, cli, svr, bar, mbar)
         TRUE
           BYTE vb:
-          INT v:
+          INT32 v:
           SEQ
             b := 42
             i := 12345678
@@ -110,7 +110,7 @@ PROC cgtest91 (CHAN OF BYTE keyb?, scr!, err!)
             ms1 := "put down your studies"
             check.string (ms2, "the law lies a-bleeding", "t1 MOBILE []BYTE arg as VAL []BYTE")
             c ? v
-            check.INT (v, 4231, "t1 CHAN INT arg")
+            check.INT32 (v, 4231, "t1 CHAN INT arg")
             CLAIM cs!
               cs ! 4321
             PAR
@@ -122,19 +122,19 @@ PROC cgtest91 (CHAN OF BYTE keyb?, scr!, err!)
                   svr[b] ? vb
                   svr[i] ! 250981
             check.BYTE (vb, 65, "t1 MY.CT CHAN BYTE arg")
-            check.INT (v, 250981, "t1 MY.CT CHAN INT arg")
+            check.INT32 (v, 250981, "t1 MY.CT CHAN INT arg")
             SYNC bar
             SYNC mbar
     :
 
     BYTE b:
-    INT i:
+    INT32 i:
     INT64 iw:
     [10]BYTE s:
     MOBILE []BYTE ms1, ms2:
-    CHAN INT c:
-    SHARED! CHAN INT cs:
-    INT cs.v:
+    CHAN INT32 c:
+    SHARED! CHAN INT32 cs:
+    INT32 cs.v:
     MY.CT! cli:
     SHARED MY.CT? svr:
     BARRIER bar:
@@ -150,11 +150,11 @@ PROC cgtest91 (CHAN OF BYTE keyb?, scr!, err!)
         c ! 4231
         cs ? cs.v
       check.BYTE (b, 42, "t1 BYTE arg")
-      check.INT (i, 12345678, "t1 INT arg")
+      check.INT32 (i, 12345678, "t1 INT arg")
       check.INT64 (iw, 123456789012, "t1 INT64 arg")
       check.string (s, "occamlives", "t1 []BYTE arg")
       check.string (ms1, "put down your studies", "t1 MOBILE BYTE arg out")
-      check.INT (cs.v, 4321, "t1 SHARED CHAN INT arg")
+      check.INT32 (cs.v, 4321, "t1 SHARED CHAN INT arg")
   :
   --}}}
   --{{{  test2 -- recursive PAR

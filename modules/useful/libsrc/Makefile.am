@@ -26,8 +26,10 @@ useful_lib_objs = \
 	random.tce \
 	string.tce \
 	time.tce \
-	useful-c.o \
 	vector.tce
+if TRACE_VIA_FFI
+useful_lib_objs += useful-c.o
+endif
 
 useful_libs = useful.lib
 useful_includes = useful.inc
@@ -53,8 +55,8 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-format-gen.occ: make-format.py
-	$(PYTHON) make-format.py
+format-gen.occ: $(srcdir)/make-format.py
+	$(PYTHON) $(srcdir)/make-format.py
 
 CLEANFILES = format-gen.occ
 

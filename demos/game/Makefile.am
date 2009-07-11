@@ -41,8 +41,10 @@ game_objs = \
 	ircplug.tce \
 	student-bots.tce
 
+if BUILD_GAME
 demos = \
 	game
+endif
 
 all-local: $(demos)
 

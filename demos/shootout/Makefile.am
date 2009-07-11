@@ -21,6 +21,7 @@ EXTRA_DIST = \
 	threads.occ \
 	threads-flow.occ
 
+if BUILD_SHOOTOUT
 examples = \
 	chameneos \
 	chameneos-redux \
@@ -36,6 +37,7 @@ examples = \
 	thread-ring \
 	threads \
 	threads-flow
+endif
 
 shootoutdir = $(prefix)/share/kroc/shootout
 dist_shootout_DATA = \

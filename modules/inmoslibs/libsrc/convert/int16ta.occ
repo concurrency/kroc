@@ -30,7 +30,6 @@
 -- and n contains low order bits when string overflows INT32 range; V1.2,
 -- 22-Nov-90 SRH
 --}}}
-#IF TARGET.BITS.PER.WORD = 32
 --{{{  STRINGTOINT16 TA
 --* Convert to an INT16 the value represented by string.
 --
@@ -55,6 +54,7 @@ PROC STRINGTOINT16 (BOOL Error, INT16 n, VAL []BYTE string)
   --           for a 32-bit processor.
   --}}}
 
+  #IF TARGET.BITS.PER.WORD = 32
   INT m :
   SEQ
     STRINGTOINT (Error, m, string)
@@ -67,6 +67,9 @@ PROC STRINGTOINT16 (BOOL Error, INT16 n, VAL []BYTE string)
         Error := TRUE
       TRUE
         SKIP
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :
 --}}}
 --{{{  INT16TOSTRING TA
@@ -74,4 +77,3 @@ PROC INT16TOSTRING (INT len, []BYTE string, VAL INT16 n)
   INTTOSTRING (len, string, INT n)
 :
 --}}}
-#ENDIF

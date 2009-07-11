@@ -22,7 +22,9 @@
 #INCLUDE "course.module"
 --}}}
 --{{{  externals
+#IF DEFINED (TRACE.VIA.FFI)
 #PRAGMA EXTERNAL "PROC C.format.print.stderr (VAL []BYTE s) = 0"
+#ENDIF
 --}}}
 
 --{{{  PROC format.print
@@ -37,7 +39,11 @@ PROC format.print (CHAN BYTE out!, VAL []BYTE s)
 --* Print a string directly to standard error.
 -- @private
 PROC format.trace (VAL []BYTE s)
+  #IF DEFINED (TRACE.VIA.FFI)
   C.format.print.stderr (s)
+  #ELSE
+  STOP
+  #ENDIF
 :
 --}}}
 --{{{  PROC format.int

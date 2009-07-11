@@ -7,8 +7,6 @@
 #INCLUDE "avr.module"
 
 --{{{  constants
-VAL INT32 F.CPU IS ##F.CPU:
-
 VAL INT LOW IS #0:
 VAL INT HIGH IS #1:
 
@@ -30,25 +28,6 @@ VAL INT DEFAULT IS 1:
 VAL INT EXTERNAL IS 0:
 --}}}
 
---{{{  SFFI PROCs
-#PRAGMA EXTERNAL "PROC C.tvmspecial.0.digitalWrite (VAL INT pin, state) = 0"
-PROC digitalWrite (VAL INT pin, state)
-  C.tvmspecial.0.digitalWrite (pin, state)
-:
-#PRAGMA EXTERNAL "PROC C.tvmspecial.1.digitalRead (VAL INT pin, RESULT INT state) = 0"
-PROC digitalRead (VAL INT pin, RESULT INT state)
-  C.tvmspecial.1.digitalRead (pin, state)
-:
-#PRAGMA EXTERNAL "PROC C.tvmspecial.2.pinMode (VAL INT pin, mode) = 0"
-PROC pinMode (VAL INT pin, mode)
-  C.tvmspecial.2.pinMode (pin, mode)
-:
-#PRAGMA EXTERNAL "PROC C.tvmspecial.3.wait.for.interrupt (VAL INT interrupt, INT time) = 0"
-PROC wait.for.interrupt (VAL INT interrupt, INT time)
-  C.tvmspecial.3.wait.for.interrupt (interrupt, time)
-:
---}}}
-
 --{{{  PROC delay
 --* Wait for a period of time.
 -- @param millis Time in wait, in milliseconds
@@ -58,6 +37,74 @@ PROC delay (VAL INT millis)
   SEQ
     tim ? t
     tim ? AFTER t PLUS millis
+:
+--}}}
+
+--{{{ PROC die
+PROC die (VAL []BYTE error)
+  CAUSEERROR ()
+:
+--}}}
+
+--{{{  FUNCTION pin.location
+--* Map an Arduino pin number to a DDR register, PORT register and bit number.
+--* Digital pins 0-7 map to PORTD bits 0-7
+--* Digital pins 8-13 map to PORTB 8-13
+--* 
+--* There are no official mappins for the analog pins. 
+--* Analog pins 0-5 map to PORTC bits 0-5
+--* 
+--* A request for a pin out of range will result in an unrecoverable error.
+-- @private
+
+INT, INT, INT, INT FUNCTION pin.location (VAL INT pin)
+  INT r.ddr, r.port, r.pin, bit:
+  VALOF
+    IF
+      -- Digital pins 0 - 7 on the Aruino
+      pin < 8
+        r.ddr, r.port, r.pin, bit := DDRD, PORTD, PIND, pin
+      -- Digital pins 8 - 13 on the Arduino
+      pin < 14
+        r.ddr, r.port, r.pin, bit := DDRB, PORTB, PINB, pin - 8
+      -- Just keep counting up for the analog pins.
+      -- Analog pins 0 - 5
+      pin < 21
+        r.ddr, r.port, r.pin, bit := DDRC, PORTC, PINC, pin - 14
+      TRUE
+        die ("No mapping for requested pin.") 
+    RESULT r.ddr, r.port, r.pin, bit
+:
+--}}}
+
+--{{{  PROC digitalWrite
+PROC digitalWrite (VAL INT pin, state)
+  INT r.ddr, r.port, r.pin, bit:
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    ports[r.port] := (ports[r.port] /\ (~BV (bit))) \/ ((BYTE state) << bit)
+:
+--}}}
+--{{{  PROC digitalRead
+PROC digitalRead (VAL INT pin, RESULT INT state)
+  INT r.ddr, r.port, r.pin, bit:
+  PLACED [MAX.PORT]BYTE ports 0:
+  SEQ
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    state := (INT ((ports[r.pin] /\ (BV (bit))) >> bit))
+:
+--}}}
+
+--{{{  PROC pinMode
+PROC pinMode (VAL INT pin, mode)
+  INT r.ddr, r.port, r.pin, bit:
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    ports[r.ddr] := (ports[r.ddr] /\ (~BV (bit))) \/ ((BYTE mode) << bit)
 :
 --}}}
 
