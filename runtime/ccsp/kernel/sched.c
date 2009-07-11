@@ -6368,6 +6368,11 @@ void ccsp_kernel_entry (word *Wptr, word *fptr)
 	/* if we spin out then we reached shutdown */
 	att_set (&(ccsp_shutdown), true);
 
+	/* make sure there are no more processes to run */
+	Wptr = kernel_scheduler (sched);
+	_ccsp.code_entry (sched, Wptr); 
+
+	/* exit kernel (if we get this far) */
 	ccsp_kernel_exit (0, 0);
 }
 /*}}}*/

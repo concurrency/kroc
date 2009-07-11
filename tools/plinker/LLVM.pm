@@ -4031,8 +4031,8 @@ sub build_tlp_desc {
 				($dir) = ($def =~ m/$name([\?!])/gs);
 				$dir = '.' if !$dir;
 			}
-			$name = 'keyboard?' 	if $name =~ /(kyb|key(board)?)/ && $dir =~ /[.?]/;
-			$name = 'screen!' 	if $name =~ /(scr(een)?)/ && $dir =~ /[.!]/;
+			$name = 'keyboard?' 	if $name =~ /(kyb|key(board)?|in(put)?)/ && $dir =~ /[.?]/;
+			$name = 'screen!' 	if $name =~ /(scr(een)?|out(put)?)/ && $dir =~ /[.!]/;
 			$name = 'error!' 	if $name =~ /(err(or)?)/ && $dir =~ /[.!]/;
 			push (@tlp, $name);
 		} else {
