@@ -12,6 +12,13 @@ AC_CHECK_TOOL(LD,ld)
 
 AM_C_PROTOTYPES
 
+dnl Check for LLVM.
+AC_CHECK_TOOL([LLVM_CONFIG], [llvm-config], [no])
+if test "x$LLVM_CONFIG" = "xno"; then
+  AC_MSG_ERROR([LLVM not found]) # FIXME: check version
+fi
+
+dnl Configure output name and flags. 
 case "$host_os" in
 cygwin*)
  LIBNAME="LLVMTailCallFix.dll"
@@ -25,9 +32,9 @@ cygwin*)
  ;;
 esac
 
-CXXFLAGS="`llvm-config --cxxflags` $CXXFLAGS"
-LDFLAGS="`llvm-config --ldflags` $LDFLAGS"
-LIBS="`llvm-config --libs core` $LIBS"
+CXXFLAGS="`$LLVM_CONFIG --cxxflags` $CXXFLAGS"
+LDFLAGS="`$LLVM_CONFIG --ldflags` $LDFLAGS"
+LIBS="`$LLVM_CONFIG --libs core` $LIBS"
 
 AC_SUBST(SLINKFLAGS)
 AC_SUBST(LIBNAME)
