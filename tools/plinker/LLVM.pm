@@ -2609,7 +2609,7 @@ sub gen_ldiffsum ($$$$) {
 		sprintf ('%%%s = extractvalue { %s, i1 } %%%s, 1',
 			$carry_2, $self->int_type, $res_2
 		),
-		sprintf ('%%%s = xor i1 %%%s, %%%s',
+		sprintf ('%%%s = or i1 %%%s, %%%s',
 			$carry, $carry_1, $carry_2
 		),
 		sprintf ('%%%s = zext i1 %%%s to %s',
@@ -3353,7 +3353,7 @@ sub gen_norm ($$$$) {
 			$b_shift_a_shift,
 			$self->int_type, $self->int_bits, $b_shift_tmp
 		),
-		sprintf ('%%%s = ashr %s %%%s, %%%s',
+		sprintf ('%%%s = lshr %s %%%s, %%%s',
 			$b_shift_b_tmp1,
 			$self->int_type, $a, $b_shift_a_shift
 		),
