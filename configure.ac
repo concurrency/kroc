@@ -23,6 +23,7 @@ if test $OCCBUILD_TOOLCHAIN != tock; then
 fi
 OCCAM_CONFIG_SUBDIRS(tools/occamdoc)
 OCCAM_CONFIG_SUBDIRS(tools/plinker)
+OCCAM_CONFIG_SUBDIRS(tools/LLVMTailCallFix)
 
 if test $OCCBUILD_TOOLCHAIN = kroc -o $OCCBUILD_TOOLCHAIN = tock; then
   OCCAM_CONFIG_TARGET_SUBDIRS(runtime/ccsp)

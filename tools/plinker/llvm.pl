@@ -41,6 +41,29 @@ my $tcoff	= new Transputer::TCOFF ();
 my $output;
 my $verbose;
 my @files;
+my @plugins;
+my @optimiser	= (
+	'-functionattrs',
+	'-constmerge',
+	'-constprop',
+	'-mergefunc', '-die', '-dce', 
+	'-memdep', '-basicaa',
+	'-scalar-evolution',
+	'-lcssa',
+	'-memcpyopt', '-mem2reg',
+	'-ipconstprop',
+	'-dse',
+	'-globalopt',
+	'-inline',
+	'-tailcallelim',
+	'-loop-deletion', '-loopsimplify',
+	'-break-crit-edges',
+	'-jump-threading',
+	'-libcall-aa',
+	'-simplify-libcalls',
+	'-inline', '-simplifycfg',
+	'-tailcallfix'
+);
 
 # Command Line Parsing
 my @args	= @ARGV;
@@ -57,6 +80,9 @@ while (my $arg = shift @args) {
 		$standalone		= 0;
 	} elsif ($options && $arg eq '-o') {
 		$output 		= shift @args;
+	} elsif ($options && $arg eq '-p') {
+		my $plugin = shift @args;
+		push (@plugins, $plugin);
 	} elsif ($options && $arg =~ /^-/) {
 		warnerr ("ignoring unknown option: $arg") if $verbose;
 		shift @args if $arg eq '--cnpfx';
@@ -171,14 +197,28 @@ if (system (@as_cmd)) {
 	unlink ($output . '.ll');
 }
 
+my $opt = $ENV{'OPT'} || 'opt';
+my @opt_cmd = ($opt);
+foreach my $plugin (@plugins) {
+	push (@opt_cmd, '-load', $plugin);
+}
+push (@opt_cmd, @optimiser, '-f', '-o='. $output .'.opt.bc', $output . '.bc');
+print "Running: ", join (' ', @opt_cmd), "\n" if $verbose;
+if (system (@opt_cmd)) {
+	warnerr ("bitcode optimisation failed");
+	exit 1;
+} elsif (!$verbose) {
+	unlink ($output . '.bc');
+}
+
 my $llc = $ENV{'LLC'} || 'llc';
-my @llc_cmd = ($llc, '-tailcallopt', '-f', $output . '.bc');
+my @llc_cmd = ($llc, '-tailcallopt', '-f', '-o=' . $output . '.s', $output . '.opt.bc');
 print "Running: ", join (' ', @llc_cmd), "\n" if $verbose;
 if (system (@llc_cmd)) {
 	warnerr ("bitcode to system assembly conversion failed");
 	exit 1;
 } elsif (!$verbose) {
-	unlink ($output . '.bc');
+	unlink ($output . '.opt.bc');
 }
 
 my $cc = $ENV{'CC'} || 'cc';

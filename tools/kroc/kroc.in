@@ -80,13 +80,16 @@ ocllibs=""
 ocrtslibs="-lm @KROC_CCSP_LIBS@"
 extcflags="@KROC_CCSP_CFLAGS@"
 dtraces=0
+llvmpluginext=".so"
 
 case "$target_os" in
 	cygwin*)
 		octranopts="$octranopts -nsymops --cnpfx _"
+		llvmpluginext=".dll"
 		;;
 	darwin*)
 		octranopts="$octranopts -nsymops --cnpfx _"
+		llvmpluginext=".dylib"
 		;;
 	solaris*)
 		# solaris stock assembler doesn't eat from stdin (go via tempfile)
@@ -792,6 +795,12 @@ if [ "$intree" = "" ]; then
 else
   oclibpath="@KROC_CCSP_LIBPATH@ -L$intree/modules/inmoslibs/libsrc/forall"
   cincludepath="@KROC_CCSP_CINCPATH@"
+fi
+
+if [ "$intree" = "" ]; then
+  octranopts="$octranopts -p libLLVMTailCallFix$llvmpluginext"
+else
+  octranopts="$octranopts -p $intree/tools/LLVMTailCallFix/libLLVMTailCallFix$llvmpluginext"
 fi
 
 #}}}
