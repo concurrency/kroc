@@ -27,16 +27,14 @@
 using namespace llvm;
 
 namespace {
-	struct TailFix : public FunctionPass {
+	struct TailCallFix : public FunctionPass {
 
 		static char ID;
-		TailFix() : FunctionPass(&ID) {}
+		TailCallFix() : FunctionPass(&ID) {}
 
 		virtual bool runOnFunction(Function &F) {
 			SmallVector<BasicBlock*, 16> fixUpBlocks;
 			bool modified = false;
-
-			llvm::cerr << "TailFix: " << F.getName() << "\n";
 
 			for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
 				/* Do we have a tail call? */
@@ -96,6 +94,6 @@ namespace {
 	};
 }
 
-char TailFix::ID = 0;
-static RegisterPass<TailFix> X("tailfix", "Tail Call Fixup Pass");
+char TailCallFix::ID = 0;
+static RegisterPass<TailCallFix> X("tailcallfix", "Tail Call Fixup Pass");
 
