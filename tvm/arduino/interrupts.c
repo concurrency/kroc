@@ -48,7 +48,7 @@ static void handle_interrupt (vinterrupt *intr) {
 			++data;
 		}
 		intr->pending = data;
-	} else if (((WORD) intr->wptr) & 1 != 0) {
+	} else if ((((WORD) intr->wptr) & 1) != 0) {
 		/* The interrupt has already been raised; nothing to do. */
 	} else {
 		/* Process waiting: raise the interrupt. */
