@@ -1,11 +1,12 @@
 --** Drive an 8x8 LED matrix.
 
 #INCLUDE "wiring.module"
+#INCLUDE "font8x8.inc"
 
 DATA TYPE SIGNAL IS BOOL:
 VAL SIGNAL SIGNAL.VALUE IS TRUE:
 
-VAL INT SCROLL.TIME IS 200:
+VAL INT SCROLL.TIME IS 100:
 
 -- PD2-PD7, PB0-PB1; set these high to turn the LEDs on
 VAL []INT COL.PINS IS [2, 3, 4, 5, 6, 7, 8, 9]:
@@ -13,6 +14,16 @@ VAL INT COLS IS SIZE COL.PINS:
 -- PB2-PB5, PC0-PC3; set these low to turn the LEDs on
 VAL []INT ROW.PINS IS [10, 11, 12, 13, 14, 15, 16, 17]:
 VAL INT ROWS IS SIZE ROW.PINS:
+
+--{{{  PROC reverse.byte
+--* Reverse the order of bits in a byte.
+PROC reverse.byte (BYTE b)
+  SEQ
+    b := ((b >> 1) /\ #55) \/ ((b /\ #55) << 1)
+    b := ((b >> 2) /\ #33) \/ ((b /\ #33) << 2)
+    b := ((b >> 4) /\ #0F) \/ ((b /\ #0F) << 4)
+:
+--}}}
 
 --{{{  PROC data.buffer
 PROC data.buffer (CHAN BYTE in?, thru!, out!)
@@ -52,9 +63,7 @@ PROC column (VAL INT col,
     WHILE TRUE
       PRI ALT
         data.in ? data
-          -- We need the data inverted, since the lines we're driving are
-          -- effectively active low.
-          data := ~data
+          SKIP
 
         SIGNAL dummy:
         strobe.in ? dummy
@@ -79,13 +88,33 @@ PROC black.hole.byte (CHAN BYTE in?)
 
 --{{{  PROC feed
 PROC feed (CHAN BYTE out!)
-  PROC send (VAL BYTE data)
+  PROC send (VAL BYTE value)
+    INITIAL BYTE data IS value:
     SEQ
+      -- We need the data inverted, since the column lines are
+      -- effectively active low.
+      data := ~data
+
+      -- We also need the order of the bits reversed.
+      reverse.byte (data)
+
       out ! data
       delay (SCROLL.TIME)
   :
+  PROC print (VAL []BYTE s)
+    SEQ i = 0 FOR SIZE s
+      IF
+        (s[i] >= 'A') AND (s[i] <= 'Z')
+          VAL INT char IS INT (s[i] - 'A'):
+          SEQ i = 0 FOR 8
+            send (FONT.8X8[(char * 8) + i])
+        TRUE
+          SEQ i = 0 FOR 5
+            send (#00)
+  :
   WHILE TRUE
     SEQ
+      print ("OCCAM LIVES")
       SEQ num = 1 FOR 7
         SEQ
           INITIAL BYTE val IS (1 << num) - 1:

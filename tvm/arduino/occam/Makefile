@@ -34,11 +34,16 @@ clean:
 	rm -f $(PROGS) $(foreach suffix,.tce .tbc .hex,$(addsuffix $(suffix),$(PROGS)))
 
 #{{{ dependencies
+adc.hex: wiring.module
 avr.module: iom328p.inc
+blink-array.hex: wiring.module
 blink.hex: wiring.module
+button.hex: wiring.module
 commstime.hex: wiring.module
+exttimer.hex: wiring.module
 hello.hex: wiring.module
-testdiv.hex: wiring.module
+ledmatrix.hex: wiring.module font8x8.inc
 rawblink.hex: wiring.module
+testdiv.hex: wiring.module
 wiring.module: avr.module
 #}}}
