@@ -17,7 +17,7 @@ PROC main ()
       SEQ
         SEQ i = 0 FOR 20
           SEQ
-            wait.for.interrupt (5, t)
+            wait.for.interrupt (VINTR.TIMER1, t)
             serialWrite (".")
         serialWriteInt (t)
         serialWrite ("*n")

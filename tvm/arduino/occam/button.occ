@@ -26,7 +26,7 @@ PROC main ()
       WHILE TRUE
         INT t:
         SEQ
-          wait.for.interrupt (0, t)
+          wait.for.interrupt (VINTR.INT0, t)
           flash ! TRUE
           serialWriteInt (t)
           serialWrite ("*n")
