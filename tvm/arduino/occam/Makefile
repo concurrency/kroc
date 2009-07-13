@@ -10,6 +10,7 @@ PROGS = \
 	commstime \
 	exttimer \
 	hello \
+	ledmatrix \
 	nothing \
 	rawblink \
 	testdiv
