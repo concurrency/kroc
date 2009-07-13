@@ -11,6 +11,9 @@ enum {
 	vintr_TIMER1,
 	vintr_TIMER2,
 	vintr_ADC,
+	vintr_USART_RX,
+	vintr_USART_UDRE,
+	vintr_USART_TX,
 	NUM_INTERRUPTS
 };
 
@@ -38,20 +41,20 @@ static void raise_tvm_interrupt (WORD flag) {
 }
 
 static void handle_interrupt (vinterrupt *intr) {
-	WORD now = time_millis ();
+	WORD data = time_millis ();
 	if (intr->wptr == (WORDPTR) NOT_PROCESS_P) {
 		/* Nothing waiting; just record that the interrupt fired. */
-		if (now == (WORD) MIN_INT) {
-			++now;
+		if (data == (WORD) MIN_INT) {
+			++data;
 		}
-		intr->pending = now;
+		intr->pending = data;
 	} else if (((WORD) intr->wptr) & 1 != 0) {
 		/* The interrupt has already been raised; nothing to do. */
 	} else {
 		/* Process waiting: raise the interrupt. */
 		WORDPTR ptr = (WORDPTR) WORKSPACE_GET (intr->wptr, WS_POINTER);
 		if (ptr != NULL_P) {
-			write_word (ptr, now);
+			write_word (ptr, data);
 			WORKSPACE_SET (intr->wptr, WS_POINTER, NULL_P);
 		}
 		intr->wptr = (WORDPTR) (((WORD) intr->wptr) | 1);
@@ -107,6 +110,19 @@ MAP_SIMPLE_INTERRUPT(PCINT2_vect, vintr_PCINT2)
 MAP_SIMPLE_INTERRUPT(TIMER1_OVF_vect, vintr_TIMER1)
 MAP_SIMPLE_INTERRUPT(TIMER2_OVF_vect, vintr_TIMER2)
 MAP_SIMPLE_INTERRUPT(ADC_vect, vintr_ADC)
+ISR(USART_RX_vect) {
+	/* Disable the interrupt to stop it firing again immediately. */
+	UCSR0B &= ~_BV (RXCIE0);
+
+	handle_interrupt (&interrupts[vintr_USART_RX]);
+}
+ISR(USART_UDRE_vect) {
+	/* Disable the interrupt to stop it firing again immediately. */
+	UCSR0B &= ~_BV (UDRIE0);
+
+	handle_interrupt (&interrupts[vintr_USART_UDRE]);
+}
+MAP_SIMPLE_INTERRUPT(USART_TX_vect, vintr_USART_TX)
 
 void clear_pending_interrupts () {
 	int i;
