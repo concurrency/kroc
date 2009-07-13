@@ -71,9 +71,17 @@ PROC column (VAL INT col,
           VAL BYTE portb.val IS portb.col \/ ((data /\ #0F) << 2):
           VAL BYTE portc.val IS (data /\ #F0) >> 4:
           SEQ
+            -- First, turn off any LEDs that are already on, so we don't
+            -- "smear" the previous column's pattern over to our column.
+            -- (Do port C first, since port B also has some column bits.)
+            ports[PORTC] := #FF
+            ports[PORTB] := #FF
+
+            -- Now turn on our pattern.
             ports[PORTD] := portd.val
             ports[PORTB] := portb.val
             ports[PORTC] := portc.val
+
             strobe.out ! SIGNAL.VALUE
 :
 --}}}
@@ -137,10 +145,10 @@ PROC main ()
       ports[DDRB] := #FF
       ports[DDRC] := #FF
 
-      -- Turn all the LEDs on
+      -- Turn all the LEDs off
       ports[PORTD] := #FC
-      ports[PORTB] := #03
-      ports[PORTC] := #00
+      ports[PORTB] := #FF
+      ports[PORTC] := #FF
     --}}}
 
     [COLS]CHAN SIGNAL strobe:
