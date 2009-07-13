@@ -18,7 +18,30 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
-import sys, os
+import sys, os, getopt
+
+first = 0
+last = 255
+include_size = True
+word_size = 32
+sideways = False
+
+def dump(data):
+	print data
+	for line in data:
+		print "".join([str((line >> (word_size - i)) & 1) for i in range(word_size)])
+
+def rotate(data, width, height):
+	if width != height:
+		print "Font is not square"
+		sys.exit(1)
+	out = []
+	for y in range(height):
+		val = 0
+		for x in range(width):
+			val |= ((data[x] >> (word_size - 1 - y)) & 1) << x
+		out.append(val)
+	return out
 
 def convert(fn, name):
 	width = None
@@ -63,10 +86,13 @@ def convert(fn, name):
 				elif cmd == "BITMAP":
 					# Bitmap data is MSB-aligned in a
 					# variable number of hex digits; we
-					# want it MSB-aligned in 32 bits.
+					# want it MSB-aligned in our word size.
 					lines = [f.readline().strip() for i in range(height)]
-					shift = 32 - (len(lines[0]) * 4)
+					shift = word_size - (len(lines[0]) * 4)
 					chars[code] = [int(line, 16) << shift for line in lines]
+
+					if sideways:
+						chars[code] = rotate(chars[code], width, height)
 				elif cmd == "ENDCHAR":
 					break
 
@@ -79,6 +105,8 @@ def convert(fn, name):
 	def format_num(n):
 		if n == 0:
 			return "0"
+		elif word_size == 8:
+			return "#%02X" % n
 		else:
 			return "#%08X" % n
 	def convert_char(code):
@@ -90,10 +118,19 @@ def convert(fn, name):
 	for l in comment_lines:
 		f.write("--   %s\n" % l)
 
-	f.write("VAL []INT %s IS\n" % name)
-	f.write("  [%d, %d,\n" % (width, height))
-	for char in range(256):
-		if char == 255:
+	if word_size == 8:
+		el_type = "BYTE"
+	else:
+		el_type = "INT"
+	f.write("VAL []%s %s IS\n" % (el_type, name))
+	if include_size:
+		f.write("  [%d, %d,\n" % (width, height))
+	for char in range(first, last + 1):
+		if char == first and not include_size:
+			prefix = "  ["
+		else:
+			prefix = "   "
+		if char == last:
 			suffix = "]:"
 		else:
 			suffix = ","
@@ -101,12 +138,63 @@ def convert(fn, name):
 			printable_char = chr(char)
 		else:
 			printable_char = " "
-		f.write("   %s%s -- %s %d\n"
-		        % (convert_char(char), suffix, printable_char, char))
+		f.write("%s%s%s -- %s %d\n"
+		        % (prefix, convert_char(char), suffix,
+		           printable_char, char))
 	f.write("\n")
 
+def usage(f):
+	print >>f, """convert-font
+Convert BDF fonts into occam constant definitions
+Usage: convert-font [OPTIONS] BDF-FILE VARIABLE-NAME
+
+Options:
+  --first CHAR        Start from character CHAR (default 0)
+  --last CHAR         End at character CHAR (default 255)
+  --no-size           Don't include the width and height as the first two
+                      elements of the array
+  --bytes             Output a VAL []BYTE rather than VAL []INT
+  --sideways          Rotate the characters anticlockwise 90 degrees
+
+  --led-array         Equivalent to:
+                        --first 65 --last 90 --no-size --bytes --sideways
+
+  --help              Show usage
+
+Report bugs to <kroc-bugs@kent.ac.uk>."""
+
 if __name__ == "__main__":
-	args = sys.argv[1:]
+	long_opts = [
+		"first=", "last=", "no-size", "bytes", "sideways",
+		"led-array",
+		"help"
+		]
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], "", long_opts)
+	except getopt.GetoptError:
+		usage(sys.stderr)
+		sys.exit(1)
+
+	for o, a in opts:
+		if o == "--help":
+			usage(sys.stdout)
+			sys.exit(0)
+		elif o == "--first":
+			first = int(a)
+		elif o == "--last":
+			last = int(a)
+		elif o == "--no-size":
+			include_size = False
+		elif o == "--bytes":
+			word_size = 8
+		elif o == "--sideways":
+			sideways = True
+		elif o == "--led-array":
+			first = 65
+			last = 90
+			include_size = False
+			word_size = 8
+			sideways = True
 
 	if len(args) != 2:
 		print "Usage: convert-font BDF-FILE NAME"
