@@ -1,0 +1,8 @@
+--* Test something that looks like a preprocessor line but is actually a
+-- continuation line.
+VAL []INT hex IS [#1234,
+                  #5678,
+                  #9ABC]:
+
+--* This shouldn't be eaten.
+VAL INT after.hex IS 42:

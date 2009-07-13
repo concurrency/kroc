@@ -126,7 +126,10 @@ def get_occam_line(f):
 	continuation_re = re.compile(r'.*(-|~|\+|-|\*|/|\\|/\\|\\/|><|=|<>|<|>|>=|<=|,|;|:=|<<|>>|(\s(MINUS|BITNOT|NOT|SIZE|REM|PLUS|MINUS|TIMES|BITAND|BITOR|AND|OR|AFTER|FROM|FOR|IS|RETYPES|RESHAPES)))\s*$')
 
 	only_comment_re = re.compile(r'^\s*--')
-	preprocessor_re = re.compile(r'^\s*#')
+
+	# Preprocessor directives. We can't just match ^# -- that would also
+	# catch a hex constant at the start of a continuation line.
+	preprocessor_re = re.compile(r'^\s*#(DEFINE|UNDEF|IF|ENDIF|ELIF|ELSE|INCLUDE|USE|PRAGMA|EXTERNAL|IMPORT|SC|COMMENT|RELAX|WARNING|ERROR|OPTION)')
 
 	lines = []
 	in_string = None
