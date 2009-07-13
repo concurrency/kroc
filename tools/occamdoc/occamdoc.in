@@ -129,7 +129,6 @@ def get_occam_line(f):
 	preprocessor_re = re.compile(r'^\s*#')
 
 	lines = []
-	level = 0
 	in_string = None
 	first_line = True
 	pos = None
@@ -172,15 +171,7 @@ def get_occam_line(f):
 				elif c == in_string:
 					in_string = None
 			else:
-				# While the occam syntax requires balanced
-				# brackets, the continuation line rules don't
-				# take them into account; this is likely to
-				# change in the future, though.
-				if c in "([":
-					level += 1
-				elif c in ")]":
-					level -= 1
-				elif c in "'\"":
+				if c in "'\"":
 					in_string = c
 				elif c == "-" and last == "-":
 					joined = joined[:-1].rstrip()
@@ -190,7 +181,6 @@ def get_occam_line(f):
 			last = c
 
 		if (continuation_re.match(joined) is None
-		    and level == 0
 		    and not in_string):
 			joined += rest
 			break
