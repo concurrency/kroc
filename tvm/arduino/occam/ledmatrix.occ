@@ -1,0 +1,115 @@
+--** Drive an 8x8 LED matrix.
+
+#INCLUDE "wiring.module"
+
+DATA TYPE SIGNAL IS BOOL:
+VAL SIGNAL SIGNAL.VALUE IS TRUE:
+
+VAL INT SCROLL.TIME IS 1000:
+VAL INT STROBE.TIME IS 10:
+
+VAL []INT COL.PINS IS [10, 11, 12, 13, 6, 7, 8, 9]:
+VAL INT COLS IS SIZE COL.PINS:
+VAL []INT ROW.PINS IS [2, 3, 4, 5, 17, 16, 15, 14]:
+VAL INT ROWS IS SIZE ROW.PINS:
+
+--{{{  PROC data.buffer
+PROC data.buffer (CHAN BYTE in?, thru!, out!)
+  WHILE TRUE
+    BYTE data:
+    SEQ
+      in ? data
+      thru ! data
+      delay (SCROLL.TIME)
+      out ! data
+:
+--}}}
+
+--{{{  PROC column
+PROC column (VAL INT col,
+              CHAN SIGNAL strobe.in?, strobe.out!,
+              CHAN BYTE data.in?,
+              CHAN BYTE to.rows!)
+  SEQ
+    --{{{  send initial strobe
+    IF
+      col = (COLS - 1)
+        strobe.out ! SIGNAL.VALUE
+      TRUE
+        SKIP
+    --}}}
+    VAL INT pin IS COL.PINS[col]:
+    INITIAL BYTE data IS 0:
+    WHILE TRUE
+      PRI ALT
+        SIGNAL dummy:
+        strobe.in ? dummy
+          SEQ
+            to.rows ! data
+            digitalWrite (pin, HIGH)
+            delay (STROBE.TIME)
+            digitalWrite (pin, LOW)
+            strobe.out ! SIGNAL.VALUE
+        data.in ? data
+          SKIP
+:
+--}}}
+
+--{{{  PROC rows
+PROC rows ([]CHAN BYTE in?)
+  WHILE TRUE
+    ALT i = 0 FOR SIZE in
+      BYTE data:
+      in[i] ? data
+        SEQ i = 0 FOR ROWS
+          digitalWrite (ROW.PINS[i], INT ((data >> i) /\ 1))
+:
+--}}}
+
+--{{{  PROC black.hole.byte
+PROC black.hole.byte (CHAN BYTE in?)
+  WHILE TRUE
+    BYTE dummy:
+    in ? dummy
+:
+--}}}
+
+--{{{  PROC feed
+PROC feed (CHAN BYTE out!)
+  WHILE TRUE
+    SEQ
+      out ! #FF
+      SEQ i = 0 FOR 3
+        out ! 0
+:
+--}}}
+
+PROC main ()
+  SEQ
+    --{{{  set up pins
+    SEQ i = 0 FOR COLS
+      SEQ
+        pinMode (COL.PINS[i], OUTPUT)
+        digitalWrite (COL.PINS[i], HIGH)
+    SEQ i = 0 FOR ROWS
+      SEQ
+        pinMode (ROW.PINS[i], OUTPUT)
+        digitalWrite (ROW.PINS[i], LOW)
+    --}}}
+
+    [COLS]CHAN SIGNAL strobe:
+    [COLS + 1]CHAN BYTE data:
+    [COLS]CHAN BYTE to.rows:
+    PAR
+      PAR i = 0 FOR COLS
+        CHAN BYTE data.thru:
+        PAR
+          --data.buffer (data[i]?, data[i + 1]!, data.thru!)
+          column (i,
+                  strobe[i]?, strobe[(i + 1) \ COLS]!,
+                  data.thru?,
+                  to.rows[i]!)
+      feed (data[0]!)
+      black.hole.byte (data[COLS]?)
+      rows (to.rows?)
+:
