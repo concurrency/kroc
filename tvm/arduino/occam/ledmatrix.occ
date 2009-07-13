@@ -5,32 +5,41 @@
 DATA TYPE SIGNAL IS BOOL:
 VAL SIGNAL SIGNAL.VALUE IS TRUE:
 
-VAL INT SCROLL.TIME IS 1000:
-VAL INT STROBE.TIME IS 10:
+VAL INT SCROLL.TIME IS 200:
 
-VAL []INT COL.PINS IS [10, 11, 12, 13, 6, 7, 8, 9]:
+-- PD2-PD7, PB0-PB1; set these high to turn the LEDs on
+VAL []INT COL.PINS IS [2, 3, 4, 5, 6, 7, 8, 9]:
 VAL INT COLS IS SIZE COL.PINS:
-VAL []INT ROW.PINS IS [2, 3, 4, 5, 17, 16, 15, 14]:
+-- PB2-PB5, PC0-PC3; set these low to turn the LEDs on
+VAL []INT ROW.PINS IS [10, 11, 12, 13, 14, 15, 16, 17]:
 VAL INT ROWS IS SIZE ROW.PINS:
 
 --{{{  PROC data.buffer
 PROC data.buffer (CHAN BYTE in?, thru!, out!)
+  INITIAL BYTE data IS 0:
   WHILE TRUE
-    BYTE data:
+    BYTE new:
     SEQ
-      in ? data
-      thru ! data
-      delay (SCROLL.TIME)
+      in ? new
+      thru ! new
       out ! data
+      data := new
 :
 --}}}
 
 --{{{  PROC column
 PROC column (VAL INT col,
               CHAN SIGNAL strobe.in?, strobe.out!,
-              CHAN BYTE data.in?,
-              CHAN BYTE to.rows!)
+              CHAN BYTE data.in?)
+  BYTE portd.col, portb.col:
   SEQ
+    --{{{  work out which bits to turn on for this column
+    IF
+      col < 6
+        portd.col, portb.col := 1 << (col + 2), #00
+      TRUE
+        portd.col, portb.col := #00, 1 << (col - 6)
+    --}}}
     --{{{  send initial strobe
     IF
       col = (COLS - 1)
@@ -38,31 +47,25 @@ PROC column (VAL INT col,
       TRUE
         SKIP
     --}}}
-    VAL INT pin IS COL.PINS[col]:
+    PLACED [MAX.PORT]BYTE ports 0:
     INITIAL BYTE data IS 0:
     WHILE TRUE
       PRI ALT
+        data.in ? data
+          -- We need the data inverted, since the lines we're driving are
+          -- effectively active low.
+          data := ~data
+
         SIGNAL dummy:
         strobe.in ? dummy
+          VAL BYTE portd.val IS portd.col:
+          VAL BYTE portb.val IS portb.col \/ ((data /\ #0F) << 2):
+          VAL BYTE portc.val IS (data /\ #F0) >> 4:
           SEQ
-            to.rows ! data
-            digitalWrite (pin, HIGH)
-            delay (STROBE.TIME)
-            digitalWrite (pin, LOW)
+            ports[PORTD] := portd.val
+            ports[PORTB] := portb.val
+            ports[PORTC] := portc.val
             strobe.out ! SIGNAL.VALUE
-        data.in ? data
-          SKIP
-:
---}}}
-
---{{{  PROC rows
-PROC rows ([]CHAN BYTE in?)
-  WHILE TRUE
-    ALT i = 0 FOR SIZE in
-      BYTE data:
-      in[i] ? data
-        SEQ i = 0 FOR ROWS
-          digitalWrite (ROW.PINS[i], INT ((data >> i) /\ 1))
 :
 --}}}
 
@@ -76,40 +79,51 @@ PROC black.hole.byte (CHAN BYTE in?)
 
 --{{{  PROC feed
 PROC feed (CHAN BYTE out!)
+  PROC send (VAL BYTE data)
+    SEQ
+      out ! data
+      delay (SCROLL.TIME)
+  :
   WHILE TRUE
     SEQ
-      out ! #FF
-      SEQ i = 0 FOR 3
-        out ! 0
+      SEQ num = 1 FOR 7
+        SEQ
+          INITIAL BYTE val IS (1 << num) - 1:
+          SEQ i = 0 FOR 9 - num
+            SEQ
+              send (val)
+              val := val << 1
+          SEQ i = 0 FOR 2
+            send (#00)
 :
 --}}}
 
 PROC main ()
   SEQ
     --{{{  set up pins
-    SEQ i = 0 FOR COLS
-      SEQ
-        pinMode (COL.PINS[i], OUTPUT)
-        digitalWrite (COL.PINS[i], HIGH)
-    SEQ i = 0 FOR ROWS
-      SEQ
-        pinMode (ROW.PINS[i], OUTPUT)
-        digitalWrite (ROW.PINS[i], LOW)
+    PLACED [MAX.PORT]BYTE ports 0:
+    SEQ
+      -- All outputs
+      ports[DDRD] := #FF
+      ports[DDRB] := #FF
+      ports[DDRC] := #FF
+
+      -- Turn all the LEDs on
+      ports[PORTD] := #FC
+      ports[PORTB] := #03
+      ports[PORTC] := #00
     --}}}
 
     [COLS]CHAN SIGNAL strobe:
     [COLS + 1]CHAN BYTE data:
-    [COLS]CHAN BYTE to.rows:
     PAR
       PAR i = 0 FOR COLS
         CHAN BYTE data.thru:
         PAR
-          --data.buffer (data[i]?, data[i + 1]!, data.thru!)
+          data.buffer (data[i]?, data.thru!, data[i + 1]!)
           column (i,
                   strobe[i]?, strobe[(i + 1) \ COLS]!,
-                  data.thru?,
-                  to.rows[i]!)
+                  data.thru?)
       feed (data[0]!)
       black.hole.byte (data[COLS]?)
-      rows (to.rows?)
 :
