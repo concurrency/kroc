@@ -26,6 +26,21 @@ VAL INT RISING IS 3:
 VAL INT INTERNAL IS 3:
 VAL INT DEFAULT IS 1:
 VAL INT EXTERNAL IS 0:
+
+
+-- Mappings for pin.location
+VAL []INT DDR.MAP IS
+  [DDRD, DDRD, DDRD, DDRD, DDRD, DDRD, DDRD, DDRD,
+   DDRB, DDRB, DDRB, DDRB, DDRB, DDRB,
+   DDRC, DDRC, DDRC, DDRC, DDRC, DDRC, DDRC]:
+VAL []INT PORT.MAP IS
+  [PORTD, PORTD, PORTD, PORTD, PORTD, PORTD, PORTD, PORTD,
+   PORTB, PORTB, PORTB, PORTB, PORTB, PORTB,
+   PORTC, PORTC, PORTC, PORTC, PORTC, PORTC, PORTC]:
+VAL []INT PIN.MAP IS
+  [PIND, PIND, PIND, PIND, PIND, PIND, PIND, PIND,
+   PINB, PINB, PINB, PINB, PINB, PINB, 
+   PINC, PINC, PINC, PINC, PINC, PINC, PINC]:
 --}}}
 
 --{{{  PROC delay
@@ -41,7 +56,7 @@ PROC delay (VAL INT millis)
 --}}}
 
 --{{{ PROC die
-PROC die (VAL []BYTE error)
+INLINE PROC die (VAL []BYTE error)
   CAUSEERROR ()
 :
 --}}}
@@ -56,24 +71,19 @@ PROC die (VAL []BYTE error)
 --* 
 --* A request for a pin out of range will result in an unrecoverable error.
 -- @private
-
-INT, INT, INT, INT FUNCTION pin.location (VAL INT pin)
-  INT r.ddr, r.port, r.pin, bit:
+INT, INT, INT, INT INLINE FUNCTION pin.location (VAL INT pin)
+  INT bit:
   VALOF
     IF
-      -- Digital pins 0 - 7 on the Aruino
-      pin < 8
-        r.ddr, r.port, r.pin, bit := DDRD, PORTD, PIND, pin
-      -- Digital pins 8 - 13 on the Arduino
-      pin < 14
-        r.ddr, r.port, r.pin, bit := DDRB, PORTB, PINB, pin - 8
-      -- Just keep counting up for the analog pins.
-      -- Analog pins 0 - 5
-      pin < 21
-        r.ddr, r.port, r.pin, bit := DDRC, PORTC, PINC, pin - 14
-      TRUE
+      (pin < 0) OR (pin >= 21)
         die ("No mapping for requested pin.") 
-    RESULT r.ddr, r.port, r.pin, bit
+      (pin < 8)
+        bit := pin
+      (pin < 14)
+        bit := pin - 8
+      TRUE
+        bit := pin - 14
+    RESULT DDR.MAP[pin], PORT.MAP[pin], PIN.MAP[pin], bit
 :
 --}}}
 
