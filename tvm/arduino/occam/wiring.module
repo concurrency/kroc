@@ -62,15 +62,23 @@ INLINE PROC die (VAL []BYTE error)
 --}}}
 
 --{{{  FUNCTION pin.location
---* Map an Arduino pin number to a DDR register, PORT register and bit number.
---* Digital pins 0-7 map to PORTD bits 0-7
---* Digital pins 8-13 map to PORTB 8-13
---* 
---* There are no official mappins for the analog pins. 
---* Analog pins 0-5 map to PORTC bits 0-5
---* 
---* A request for a pin out of range will result in an unrecoverable error.
--- @private
+--* Map an Arduino pin number to a DDR register, PORT register, PIN register
+-- and bit number.
+--
+-- On the Arduino NG, Diecimilia, Duemilanove and similar boards:
+--
+-- [@item] digital pins 0-7 map to [@ref PORTD] bits 0-7
+-- [@item] digital pins 8-13 map to [@ref PORTB] bits 0-5
+-- [@item] analog pins 0-5 are also known as digital pins 14-21, and map to
+--   [@ref PORTC] bits 0-5
+--
+-- A request for a pin out of range will result in an unrecoverable error.
+--
+-- @param pin Arduino pin number, as marked on the board
+-- @returns ddr.reg The [@text DDR] register
+-- @returns port.reg The [@text PORT] register
+-- @returns pin.reg The [@text PIN] register
+-- @returns bit The bit number in all the above registers
 INT, INT, INT, INT INLINE FUNCTION pin.location (VAL INT pin)
   INT bit:
   VALOF
