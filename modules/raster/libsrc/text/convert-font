@@ -35,6 +35,8 @@ def convert(fn, name):
 		l = l[:-1]
 
 		fs = l.split()
+		if fs == []:
+			continue
 		cmd = fs[0]
 		if cmd in ("FONT", "COMMENT", "COPYRIGHT"):
 			comment_lines.append(l)
