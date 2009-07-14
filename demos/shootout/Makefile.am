@@ -47,46 +47,46 @@ dist_shootout_DATA = \
 all-local: $(examples)
 
 chameneos: chameneos.occ
-	$(OCCBUILD) --program chameneos.occ
+	$(OCCBUILD) --program $(srcdir)/chameneos.occ
 
 chameneos-redux: chameneos-redux.occ
-	$(OCCBUILD) --program chameneos-redux.occ
+	$(OCCBUILD) --program $(srcdir)/chameneos-redux.occ
 
 cheap-concurrency: cheap-concurrency.occ
-	$(OCCBUILD) --program cheap-concurrency.occ
+	$(OCCBUILD) --program $(srcdir)/cheap-concurrency.occ
 
 fannkuch: fannkuch.occ
-	$(OCCBUILD) --program fannkuch.occ
+	$(OCCBUILD) --program $(srcdir)/fannkuch.occ
 
 fasta: fasta.occ
-	$(OCCBUILD) --program fasta.occ
+	$(OCCBUILD) --program $(srcdir)/fasta.occ
 
 mandelbrot: mandelbrot.occ
-	$(OCCBUILD) --program mandelbrot.occ
+	$(OCCBUILD) --program $(srcdir)/mandelbrot.occ
 
 pidigits: pidigits.occ
-	$(OCCBUILD) --program pidigits.occ
+	$(OCCBUILD) --program $(srcdir)/pidigits.occ
 
 random: random.occ
-	$(OCCBUILD) --program random.occ
+	$(OCCBUILD) --program $(srcdir)/random.occ
 
 reverse-complement: reverse-complement.occ
-	$(OCCBUILD) --program reverse-complement.occ
+	$(OCCBUILD) --program $(srcdir)/reverse-complement.occ
 
 spectralnorm: spectralnorm.occ
-	$(OCCBUILD) --program spectralnorm.occ
+	$(OCCBUILD) --program $(srcdir)/spectralnorm.occ
 
 startup: startup.occ
-	$(OCCBUILD) --program startup.occ
+	$(OCCBUILD) --program $(srcdir)/startup.occ
 
 thread-ring: thread-ring.occ
-	$(OCCBUILD) --program thread-ring.occ
+	$(OCCBUILD) --program $(srcdir)/thread-ring.occ
 
 threads: threads.occ
-	$(OCCBUILD) --program threads.occ
+	$(OCCBUILD) --program $(srcdir)/threads.occ
 
 threads-flow: threads-flow.occ
-	$(OCCBUILD) --program threads-flow.occ
+	$(OCCBUILD) --program $(srcdir)/threads-flow.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples shootout --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)

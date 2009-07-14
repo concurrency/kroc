@@ -44,7 +44,7 @@ trap.lib: $(trap_lib_objs)
 	$(OCCBUILD) --library trap.lib --need selector --need file --need sock --need useful --include trap.inc $(trap_lib_objs)
 
 trapns: trapns.occ trap.lib
-	$(OCCBUILD) --program trapns.occ
+	$(OCCBUILD) --program $(srcdir)/trapns.occ
 
 install-exec-local: $(libs) $(includes) $(tools)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes) $(tools)

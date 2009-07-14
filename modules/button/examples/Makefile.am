@@ -16,7 +16,7 @@ endif
 all-local: $(examples)
 
 button_sample: button_sample.occ
-	$(OCCBUILD) --program button_sample.occ
+	$(OCCBUILD) --program $(srcdir)/button_sample.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples button --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)

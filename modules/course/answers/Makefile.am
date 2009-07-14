@@ -67,49 +67,49 @@ endif
 all-local: $(examples)
 
 q1: q1.occ q1-1.o
-	$(OCCBUILD) --program q1.occ q1-1.o
+	$(OCCBUILD) --program $(srcdir)/q1.occ q1-1.o
 
 q2: q2.occ q2-1.o
-	$(OCCBUILD) --program q2.occ q2-1.o
+	$(OCCBUILD) --program $(srcdir)/q2.occ q2-1.o
 
 q3: q3.occ q3-1.o
-	$(OCCBUILD) --program q3.occ q3-1.o
+	$(OCCBUILD) --program $(srcdir)/q3.occ q3-1.o
 
 q4: q4.occ q4-1.o
-	$(OCCBUILD) --program q4.occ q4-1.o
+	$(OCCBUILD) --program $(srcdir)/q4.occ q4-1.o
 
 q5: q5.occ q5-1.o
-	$(OCCBUILD) --program q5.occ q5-1.o
+	$(OCCBUILD) --program $(srcdir)/q5.occ q5-1.o
 
 q6: q6.occ q6-1.o
-	$(OCCBUILD) --program q6.occ q6-1.o
+	$(OCCBUILD) --program $(srcdir)/q6.occ q6-1.o
 
 q6-sort: q6-sort.occ q6-sort-1.o
-	$(OCCBUILD) --program q6-sort.occ q6-sort-1.o
+	$(OCCBUILD) --program $(srcdir)/q6-sort.occ q6-sort-1.o
 
 q7: q7.occ q7-1.o
-	$(OCCBUILD) --program q7.occ q7-1.o
+	$(OCCBUILD) --program $(srcdir)/q7.occ q7-1.o
 
 q7-fred: q7-fred.occ q7-fred-1.o
-	$(OCCBUILD) --program q7-fred.occ q7-fred-1.o
+	$(OCCBUILD) --program $(srcdir)/q7-fred.occ q7-fred-1.o
 
 q7-nick: q7-nick.occ q7-nick-1.o q7-nick-2.o q7-nick-3.o
-	$(OCCBUILD) --program q7-nick.occ q7-nick-1.o q7-nick-2.o q7-nick-3.o
+	$(OCCBUILD) --program $(srcdir)/q7-nick.occ q7-nick-1.o q7-nick-2.o q7-nick-3.o
 
 q7-richard: q7-richard.occ q7-richard-1.o q7-richard-2.o
-	$(OCCBUILD) --program q7-richard.occ q7-richard-1.o q7-richard-2.o
+	$(OCCBUILD) --program $(srcdir)/q7-richard.occ q7-richard-1.o q7-richard-2.o
 
 q7-adam: q7-adam.occ q7-adam-1.o
-	$(OCCBUILD) --program q7-adam.occ q7-adam-1.o
+	$(OCCBUILD) --program $(srcdir)/q7-adam.occ q7-adam-1.o
 
 q7-eric: q7-eric.occ q7-eric-1.o
-	$(OCCBUILD) --program q7-eric.occ q7-eric-1.o
+	$(OCCBUILD) --program $(srcdir)/q7-eric.occ q7-eric-1.o
 
 q7-jonathan: q7-jonathan.occ q7-jonathan-1.o
-	$(OCCBUILD) --program q7-jonathan.occ q7-jonathan-1.o
+	$(OCCBUILD) --program $(srcdir)/q7-jonathan.occ q7-jonathan-1.o
 
 q7-jonathan2: q7-jonathan2.occ q7-jonathan2-1.o
-	$(OCCBUILD) --program q7-jonathan2.occ q7-jonathan2-1.o
+	$(OCCBUILD) --program $(srcdir)/q7-jonathan2.occ q7-jonathan2-1.o
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples course --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
