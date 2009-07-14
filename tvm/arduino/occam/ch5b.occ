@@ -1,0 +1,13 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  CHAN SIGNAL s:
+  CHAN LEVEL v, w:
+  PAR
+    button.press (2, s!)
+    toggle (LOW, s?, v!)
+    invert.level (v?, w!)
+    digital.output (13, w?)
+:
+
+#INCLUDE "plumbing.end"

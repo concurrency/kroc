@@ -1,0 +1,7 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  heartbeat ()
+:
+
+#INCLUDE "plumbing.end"

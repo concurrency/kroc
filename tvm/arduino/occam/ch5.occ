@@ -1,0 +1,14 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  CHAN SIGNAL s:
+  CHAN LEVEL v:
+  PAR
+    -- The button is attached to pin 2
+    button.press (2, s!)
+    -- Start with the built-in LED pin set LOW
+    toggle (LOW, s?, v!)
+    digital.output (13, v?)
+:
+
+#INCLUDE "plumbing.end"
