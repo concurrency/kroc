@@ -57,7 +57,12 @@ PROC delay (VAL INT millis)
 
 --{{{ PROC die
 INLINE PROC die (VAL []BYTE error)
-  CAUSEERROR ()
+  SEQ
+    --{{{  force error to be used
+    INT n:
+    n := SIZE error
+    --}}}
+    CAUSEERROR ()
 :
 --}}}
 
@@ -109,6 +114,7 @@ PROC digitalWrite (VAL INT pin, state)
 PROC digitalRead (VAL INT pin, RESULT INT state)
   INT r.ddr, r.port, r.pin, bit:
   PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   SEQ
     r.ddr, r.port, r.pin, bit := pin.location (pin)
     state := (INT ((ports[r.pin] /\ (BV (bit))) >> bit))
