@@ -1,0 +1,10 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  CHAN SIGNAL s:
+  PAR
+    button.press (2, s!)
+    pin.toggle (13, LOW, s?)
+:
+
+#INCLUDE "plumbing.end"

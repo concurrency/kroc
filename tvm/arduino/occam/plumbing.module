@@ -1,0 +1,156 @@
+--** The Plumbing library.
+--
+-- [@code PROC]s in this module generally have arguments in this order:
+--
+-- [@item] non-channels;
+-- [@item] input channels;
+-- [@item] output channels.
+--
+-- @module plumbing
+
+#IF NOT (DEFINED (PLUMBING.MODULE))
+#DEFINE PLUMBING.MODULE
+
+#INCLUDE "avr.module"
+#INCLUDE "wiring.module"
+
+VAL INT LED.PIN IS 13:
+
+DATA TYPE SIGNAL IS BOOL:
+VAL SIGNAL SIGNAL.VALUE IS TRUE:
+
+DATA TYPE LEVEL IS BOOL:
+VAL LEVEL HIGH IS TRUE:
+VAL LEVEL LOW IS FALSE:
+
+PROC digital.output (VAL INT pin, CHAN LEVEL in?)
+  LEVEL v:
+  SEQ
+    in ? v
+    pinMode (pin, OUTPUT)
+    WHILE TRUE
+      SEQ
+        digitalWrite (pin, INT v)
+        in ? v
+:
+
+PROC digital.input (VAL INT pin, CHAN LEVEL out!)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  INT wl:
+  INITIAL INT vintr IS (-1):
+  LEVEL level, last.level:
+  PROC read ()
+    SEQ
+      digitalRead (pin, wl)
+      level := LEVEL wl
+  :
+  SEQ
+    CASE pin
+      2
+        SEQ
+          vintr := VINTR.INT0
+          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC00))) \/ (1 << ISC00)
+          ports[EIMSK] := ports[EIMSK] \/ (BV (INT0))
+      3
+        SEQ
+          vintr := VINTR.INT1
+          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC10))) \/ (1 << ISC10)
+          ports[EIMSK] := ports[EIMSK] \/ (BV (INT1))
+      ELSE
+        die ("pin does not support interrupts")
+    read ()
+    last.level := level
+    WHILE TRUE
+      SEQ
+        IF
+          level <> last.level
+            out ! level
+          TRUE
+            SKIP
+        INT any:
+        wait.for.interrupt (vintr, any)
+        read ()
+:
+
+VAL INT DEBOUNCE.TIME IS 50:
+PROC debounce (CHAN LEVEL in?, out!)
+  LEVEL v:
+  WHILE TRUE
+    TIMER tim:
+    INT t:
+    SEQ
+      in ? v
+      tim ? t
+      t := t PLUS DEBOUNCE.TIME
+      INITIAL BOOL ignoring IS TRUE:
+      WHILE ignoring
+        ALT
+          LEVEL any:
+          in ? any
+            SKIP
+          tim ? AFTER t
+            ignoring := FALSE
+      out ! v
+:
+
+PROC level.to.signal (CHAN LEVEL in?, CHAN SIGNAL out!)
+  WHILE TRUE
+    SEQ
+      LEVEL any:
+      in ? any
+      out ! SIGNAL.VALUE
+:
+
+PROC invert.level (CHAN LEVEL in?, out!)
+  WHILE TRUE
+    LEVEL v:
+    SEQ
+      in ? v
+      out ! NOT v
+:
+
+PROC button.press (VAL INT pin, CHAN SIGNAL out!)
+  CHAN LEVEL a, b:
+  PAR
+    digital.input (pin, a!)
+    debounce (a?, b!)
+    level.to.signal (b?, out!)
+:
+
+PROC tick (VAL INT period, CHAN SIGNAL out!)
+  WHILE TRUE
+    SEQ
+      delay (period)
+      out ! SIGNAL.VALUE
+:
+
+PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
+  INITIAL LEVEL level IS initial.level:
+  WHILE TRUE
+    SEQ
+      out ! level
+      SIGNAL any:
+      in ? any
+      level := NOT level
+:
+
+PROC pin.toggle (VAL INT pin, VAL LEVEL initial.level, CHAN SIGNAL in?)
+  CHAN LEVEL v:
+  PAR
+    toggle (initial.level, in?, v!)
+    digital.output (pin, v?)
+:
+
+PROC blink (VAL INT pin, delay.time)
+  CHAN SIGNAL s:
+  PAR
+    tick (delay.time, s!)
+    pin.toggle (pin, LOW, s?)
+:
+
+PROC heartbeat ()
+  blink (LED.PIN, 500)
+:
+
+#ENDIF
