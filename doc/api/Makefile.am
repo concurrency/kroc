@@ -3,7 +3,9 @@
 @SET_MAKE@
 OCCAMDOC = @OCCAMDOC@
 
-docsrc = ../../modules/*/libsrc
+docsrc = \
+	$(KROC_SRC_ROOT)/modules/*/libsrc \
+	$(KROC_BUILD_ROOT)/modules/*/libsrc
 
 all-local: output.stamp
 
