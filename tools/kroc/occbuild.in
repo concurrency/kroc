@@ -1051,7 +1051,7 @@ def main(args):
 		# relative to that directory too.
 		added_paths = []
 		here = os.getcwd()
-		for source in args:
+		for source in [target] + args:
 			sd = os.path.dirname(source)
 			if sd != ".":
 				added_paths.append(sd)
@@ -1064,8 +1064,12 @@ def main(args):
 
 					# Follow the same relative path from
 					# the source directory.
-					added_paths.append(os.path.join(sd, rel))
-		search_path += added_paths
+					added_paths.append(os.path.normpath(os.path.join(sd, rel)))
+
+		# Add any paths that aren't in the search path already.
+		for dir in added_paths:
+			if not dir in search_path:
+				search_path.append(dir)
 
 	set_isearch(toolchain.isearch())
 	for dir in search_path:
