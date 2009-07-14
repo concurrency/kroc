@@ -100,7 +100,7 @@ AC_DEFUN([OCCAM_OCCAMDOC],
 AC_REQUIRE([OCCAM_IN_TREE])
 AC_ARG_VAR(OCCAMDOC, [Path to occamdoc])
 if test "x$KROC_BUILD_ROOT" != "x"; then
-  OCCAMDOC="$KROC_BUILD_ROOT/tools/occamdoc/occamdoc --in-tree $KROC_BUILD_ROOT"
+  OCCAMDOC="$KROC_BUILD_ROOT/tools/occamdoc/occamdoc --in-tree $KROC_SRC_ROOT"
 else
   AC_CHECK_PROG(OCCAMDOC, occamdoc, occamdoc, no)
   if test $OCCAMDOC = no; then
