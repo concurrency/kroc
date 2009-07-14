@@ -1004,7 +1004,8 @@ def do_xslt(input, output, xslt, params = {}):
 		input
 	]
 
-	if run_command(args) != 0:
+	rc = run_command(args)
+	if rc != 0:
 		raise OccamDocException("xsltproc failed, return code " + str(rc))
 
 def copy_file(filename, output_dir):
