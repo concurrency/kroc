@@ -18,13 +18,13 @@ examples = \
 all-local: $(examples)
 
 bomberman: bomberman.occ
-	$(OCCBUILD) --program bomberman.occ
+	$(OCCBUILD) --program $(srcdir)/bomberman.occ
 
 occman: occman.occ
-	$(OCCBUILD) --program occman.occ
+	$(OCCBUILD) --program $(srcdir)/occman.occ
 
 mandelbrot: mandelbrot.occ
-	$(OCCBUILD) --program mandelbrot.occ
+	$(OCCBUILD) --program $(srcdir)/mandelbrot.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples ttygames --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
