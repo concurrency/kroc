@@ -44,12 +44,12 @@ my $tvm		= new Transterpreter::VM ();
 # Options
 my $bits	= 32;
 my $output;
-my %sections	= {
+my %sections	= (
 	'debug'		=> 1,
 	'ffi'		=> 1,
 	'symbols'	=> 1,
 	'tlp'		=> 1
-};
+);
 my $verbose;
 my @files;
 
