@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #	define LONG_HI_MASK	0xFFFFFFFF00000000
 #	define LONG_LO_MASK	0x00000000FFFFFFFF
 #	define WORD_BITS	32
+#	define DWORD_BITS	64
 #	define WSH		2
 #elif TVM_WORD_LENGTH == 2
 #	define MIN_INT		0x8000
@@ -38,6 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #	define LONG_HI_MASK	0xFFFF0000
 #	define LONG_LO_MASK	0x0000FFFF
 #	define WORD_BITS	16
+#	define DWORD_BITS	32
 #	define WSH		1
 #else
 #	error Wordlength not supported
