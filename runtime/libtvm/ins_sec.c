@@ -518,9 +518,14 @@ TVM_INSTRUCTION (ins_lshr)
 #ifdef TVM_HAVE_DWORD
 	UDWORD value = (((UDWORD) ((UWORD) CREG)) << WORD_BITS) | ((UWORD) BREG);
 
-	value >>= ((UWORD) AREG);
-	AREG = value & LONG_LO_MASK;
-	BREG = value >> WORD_BITS;
+	if (((UWORD) AREG) < DWORD_BITS) {
+		value >>= ((UWORD) AREG);
+		AREG = value & LONG_LO_MASK;
+		BREG = value >> WORD_BITS;
+	} else {
+		AREG = 0;
+		BREG = 0;
+	}
 
 	STACK2_RET(AREG, BREG, STYPE_DATA, STYPE_DATA);
 #else
@@ -557,9 +562,14 @@ TVM_INSTRUCTION (ins_lshl)
 #ifdef TVM_HAVE_DWORD
 	UDWORD value = (((UDWORD) ((UWORD) CREG)) << WORD_BITS) | ((UWORD) BREG);
 
-	value <<= ((UWORD) AREG);
-	AREG = value & LONG_LO_MASK;
-	BREG = value >> WORD_BITS;
+	if (((UWORD) AREG) < DWORD_BITS) {
+		value <<= ((UWORD) AREG);
+		AREG = value & LONG_LO_MASK;
+		BREG = value >> WORD_BITS;
+	} else {
+		AREG = 0;
+		BREG = 0;
+	}
 
 	STACK2_RET(AREG, BREG, STYPE_DATA, STYPE_DATA);
 #else
