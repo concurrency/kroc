@@ -203,6 +203,8 @@ static int install_user_ctx (const char *fn)
 			} else {
 				valid = 0;
 			}
+		} else {
+			valid = 0;
 		}
 		if (!valid) {
 			error_out_no_errno ("unsupported top-level-process format: \"%s\"", tlp);
