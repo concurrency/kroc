@@ -262,11 +262,12 @@ static int install_user_ctx (const char *fn)
 		}
 	}
 
-	if ((user = allocate_ectx (us_bc, tlp, argv)) == NULL) {
+	user = allocate_ectx (us_bc, tlp, argv);
+	
+	if (argv != NULL)
+		free (argv);
+	if (user == NULL)
 		return -1;
-	}
-
-	free (argv);
 
 	user->ext_chan_table		= ext_chans;
 	user->ext_chan_table_length	= ext_chans_length;
