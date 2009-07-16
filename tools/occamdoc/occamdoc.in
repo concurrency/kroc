@@ -1077,7 +1077,12 @@ def main(args):
 	failed = False
 
 	decls = {}
+	scanned = {}
 	for file in args:
+		if file in scanned:
+			continue
+		scanned[file] = True
+
 		status("Scanning %s... " % file)
 		f = InputFile(file)
 		try:
