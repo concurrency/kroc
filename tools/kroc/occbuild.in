@@ -1088,7 +1088,7 @@ def main(args):
 		build_shared = False
 	elif target_os.startswith("darwin"):
 		patterns["so"] = "liboccam_%s.dylib"
-		build_shared = False
+		build_shared = (toolchain.__class__ == toolchains["tvm"])
 	elif target_cpu.startswith("avr"):
 		build_shared = False
 
