@@ -20,8 +20,19 @@ static bytecode_t	*fw_bc, *us_bc;
 /*}}}*/
 
 /*{{{  Firmware */
-static WORD		kyb_channel, scr_channel, err_channel;
-static WORD 		tlp_argv[] = { (WORD) &kyb_channel, (WORD) &scr_channel, (WORD) &err_channel };
+#if defined(TVM_DYNAMIC_OCCAM_PI)
+#define MT_DEFINES      1
+#define MT_TVM          1
+#include <mobile_types.h>
+#define TLP_MT_CB_TYPE	(MT_SIMPLE |\
+			MT_MAKE_TYPE (MT_CB) |\
+			MT_CB_SHARED |\
+			(1 << MT_CB_CHANNELS_SHIFT))
+#endif /* TVM_DYNAMIC_OCCAM_PI */ 
+static WORD		kyb_channel = NOT_PROCESS_P;
+static WORD		scr_channel = NOT_PROCESS_P;
+static WORD 		err_channel = NOT_PROCESS_P;
+static WORD 		tlp_argv[3];
 /*}}}*/
 
 /*{{{  tvm_sleep */
@@ -165,8 +176,11 @@ static const int ext_chans_length = sizeof (ext_chans) / sizeof (EXT_CHAN_ENTRY)
 static int install_user_ctx (const char *fn)
 {
 	const char *const tlp_fmt = "?!!";
+	int kyb_p = -1, scr_p = -1, err_p = -1, valid_tlp = 1;
 	tbc_t *tbc;
+	WORD *argv;
 	char *tlp;
+	int i, tlp_len;
 
 	if ((us_bc = load_bytecode (fn)) == NULL) {
 		fprintf (stderr, 
@@ -179,44 +193,80 @@ static int install_user_ctx (const char *fn)
 	tbc = us_bc->tbc;
 
 	if (tbc->tlp != NULL) {
-		int valid = 1;
-
 		tlp = tbc->tlp->fmt;
-		
-		if (tlp == NULL) {
-			tlp = (char *) tlp_fmt;
-		} else if (strcmp (tlp, "") == 0) {
-			/* OK */
-		} else if (strlen (tlp) == 3 || strlen (tlp) == 4) {
-			if (tlp[0] == '?' || tlp[0] == '.') {
-				/* OK */
-			} else if (tlp[1] == '!' || tlp[1] == '.') {
-				/* OK */
-			} else if (tlp[2] == '!' || tlp[2] == '.') {
-				/* OK */
-			} else if (strlen (tlp) == 4) {
-				if (tlp[3] == 'F') {
-					/* OK */
-				} else {
-					valid = 0;
-				}
-			} else {
-				valid = 0;
-			}
-		} else {
-			valid = 0;
-		}
-		if (!valid) {
-			error_out_no_errno ("unsupported top-level-process format: \"%s\"", tlp);
-			return -1;
-		}
 	} else {
 		tlp = (char *) tlp_fmt;
 	}
 
-	if ((user = allocate_ectx (us_bc, tlp, tlp_argv)) == NULL) {
+	tlp_argv[0] = (WORD) &kyb_channel;
+	tlp_argv[1] = (WORD) &scr_channel;
+	tlp_argv[2] = (WORD) &err_channel;
+
+	for (tlp_len = 0; valid_tlp && (tlp[tlp_len] != '\0'); ++tlp_len) {
+		char arg = tlp[tlp_len];
+		if (arg == '.' || arg == 'F') {
+			/* OK */
+		} else if (kyb_p < 0 && (arg == '?' || arg == 'S')) {
+			kyb_p = tlp_len;
+			if (arg == 'S')
+				kyb_p |= 0x100;
+		} else if (scr_p < 0 && (arg == '!' || arg == 'C')) {
+			scr_p = tlp_len;
+			if (arg == 'C')
+				scr_p |= 0x100;
+		} else if (err_p < 0 && (arg == '!' || arg == 'C')) {
+			err_p = tlp_len;
+			if (arg == 'C')
+				err_p |= 0x100;
+		} else {
+			valid_tlp = 0;
+		}	
+	}
+	
+	if (tlp_len > TVM_ECTX_TLP_ARGS)
+		valid_tlp = 0;
+
+	#if !defined(TVM_DYNAMIC_OCCAM_PI)
+	if ((kyb_p | scr_p | err_p) & 0x100)
+		valid_tlp = 0;
+	#endif
+
+	if (!valid_tlp) {
+		error_out_no_errno ("unsupported top-level-process format: \"%s\"", tlp);
 		return -1;
 	}
+
+	#if defined(TVM_DYNAMIC_OCCAM_PI)
+	if (kyb_p & 0x100)
+		tlp_argv[0] = (WORD) tvm_mt_alloc (NULL, TLP_MT_CB_TYPE, 1);
+	if (scr_p & 0x100)
+		tlp_argv[1] = (WORD) tvm_mt_alloc (NULL, TLP_MT_CB_TYPE, 1);
+	if (err_p & 0x100)
+		tlp_argv[2] = (WORD) tvm_mt_alloc (NULL, TLP_MT_CB_TYPE, 1);
+	kyb_p &= 0xff;
+	scr_p &= 0xff;
+	err_p &= 0xff;
+	#endif /* TVM_DYNAMIC_OCCAM_PI */
+
+	argv = (WORD *) malloc (sizeof (WORD) * tlp_len);
+
+	for (i = 0; i < tlp_len; ++i) {
+		if (i == kyb_p) {
+			argv[i] = tlp_argv[0];
+		} else if (i == scr_p) {
+			argv[i] = tlp_argv[1];
+		} else if (i == err_p) {
+			argv[i] = tlp_argv[2];
+		} else {
+			argv[i] = (WORD) MIN_INT;
+		}
+	}
+
+	if ((user = allocate_ectx (us_bc, tlp, argv)) == NULL) {
+		return -1;
+	}
+
+	free (argv);
 
 	user->ext_chan_table		= ext_chans;
 	user->ext_chan_table_length	= ext_chans_length;
@@ -325,12 +375,12 @@ int main (int argc, char *argv[])
 
 	init_vm ();
 
-	if (install_firmware_ctx () < 0) {
-		error_out_no_errno ("failed to install firmware");
-		return 1;
-	}
 	if (install_user_ctx (fn) < 0) {
 		error_out_no_errno ("failed to load user bytecode");
+		return 1;
+	}
+	if (install_firmware_ctx () < 0) {
+		error_out_no_errno ("failed to install firmware");
 		return 1;
 	}
 
