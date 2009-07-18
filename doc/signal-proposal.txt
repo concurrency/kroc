@@ -1,0 +1,335 @@
+SIGNAL: A VALUELESS SIMPLE CHANNEL PROTOCOL
+---------------------------------------------------------
+
+Authors:  Christian L. Jacobsen, Matthew C. Jadud
+Authored: July 18, 2009
+
+In this document we propose SIGNAL, a simple channel protocol that carries no value.
+
+---------------------------------------------------------
+1. MOTIVATION
+---------------------------------------------------------
+Our goal is to provide the simplest possible syntactic and semantic mechanism for synchronizing two processes. It should be suitable for introducing to novice programmers early in their experience of the occam-pi programming language. "Suitable" in this context means that an absolute minimum of language constructs should be necessary to achieve synchronization between two processes.
+
+-------------------------------------------
+1.1 EXAMPLE
+-------------------------------------------
+
+CHAN SIGNAL s:
+PAR
+  s ! SIGNAL
+  s ? SIGNAL
+  
+---------------------------------------------------------
+2. SOME PROBLEMS WITH A VALUE-LADEN RENDEZVOUS
+---------------------------------------------------------
+Channels provide explicit synchronization points between parallel processes in occam-pi. A common idiom is to use a channel with a simple protocol (BOOL, for example) to "signal" between two processes. For example:
+
+CHAN BOOL s:
+PAR
+  s ! TRUE
+  BOOL any:
+  s ? any
+
+The intention in this context is to signal, not to communicate a value. Despite this, we must choose a protocol for the channel that carries data. At the sending end of the rendezvous, we must choose a value that we will communicate; at the receiving end, we must declare a variable and read into that variable, despite having no desire to use the value that was communicated. In this instance, we have chosen TRUE. The choice of TRUE is arbitrary, and implies meaning where there is none. (One could reasonably ask why FALSE was not chosen, for example.)
+
+We can take steps within the current language to improve this situation:
+
+DATATYPE SIGNAL IS BOOL:
+VAL SIGNAL SIGNAL.VALUE IS TRUE:
+...
+CHAN SIGNAL s:
+PAR
+  s ! SIGNAL.VALUE
+  SIGNAL any:
+  s ? any
+  
+This is a mild improvement, as we are explicitly communicating a value that is named "SIGNAL.VALUE"---it is clearer to the reader that a signaling value is being used. There are still problems with this approach:
+
+  1. A signal should not carry a value: the intention is to enable the rendezvous between two processes, nothing more. 
+  
+  2. The programmer must choose a variable name to read the SIGNAL.VALUE into. Again, meaning is implied to the reader where no meaning exists. In this case, "any" implies far more than intended---we cannot communicate *anything* across this channel. Likewise, names like "dummy", "garbage", "ignore", and a host of other names all communicate meaning where none should exist.
+  
+  3. The value communicated can be cast, allowing the programmer to use the value communicated. This is a semantic mismatch between the intention (a rendezvous between processes) and the implementation (the communication of a value). No, this shouldn't happen in well designed software, but the fact remains that it is possible.
+
+Ultimately, these solutions conflate channel protocols with the value types. It is possible, using tagged protocols, to escape this:
+
+PROTOCOL SIGNAL
+  CASE
+    signal
+:
+...
+CHAN SIGNAL s:
+PAR
+  s ! signal
+  s ? CASE signal
+
+While this does eliminate some of our problems with types, it introduces a keyword ("CASE") and a PROTOCOL. This is significant syntactic baggage simply to achiev e a channel rendezvous. 
+
+Ultimately, our goal is to introduce the simplest form of channel rendezvous to users of occam-pi who are not only unfamiliar with the language, but unfamiliar with programming in general. With this novice programmer in mind, we could hide the PROTOCOL in a library, but "CASE" becomes machinery that either must be explained (not pedagogically sound during a programmer's first experiences with a language) or waived away until later (not pedagogically sound during a programmer's first experiences with a language).
+
+Put simply, it is not possible to propose a solution to this problem (in the current language) that does not introduce additional (unnecessary) syntax, or otherwise conflate the channel's protocol with the type of the data being communicated.
+ 
+--------------------------------------------------------- 
+3. A SOLUTION
+---------------------------------------------------------
+
+We propose a new simple channel protocol. We have called this protocol "SIGNAL".
+
+A typical usage might look like:
+
+CHAN SIGNAL s:
+PAR
+  s ! SIGNAL
+  s ? SIGNAL
+  
+A signal channel does not, and cannot, carry a value. The protocol only provides a mechanism for rendezvous between two communicating processes. One process communicates a SIGNAL, and the other process blocks and waits to receive a SIGNAL. 
+
+To an occam-pi programmer, the most jarring visual element in this code is the repetition of the word SIGNAL throughout the program. Its appearance in the channel type declaration is not particularly surprising---it appears to be no different than CHAN INT, CHAN BOOL, or any other simple protocol. The appearance of "SIGNAL" on the right-hand side of both the channel output and channel input is new, and we argue it is truer to the semantics of sending and receiving a SIGNAL---it is the simplest possible rendezvous that an occam-pi programmer can write.
+
+-------------------------------------------
+3.1 s ! SIGNAL
+-------------------------------------------
+In the case of channel output, we wish to send a signal to another process. We do not want to send the value TRUE (or FALSE, or 42, or...), nor do we wish to send a BOOL dressed up as a SIGNAL.VALUE. We wish to signal another process by sending it a SIGNAL. Our intention as programmers (and the intention we wish to communicate to the readers of our program) is that synchronization should take place as a result of this channel communication and nothing more.
+
+-------------------------------------------
+3.2 s ? SIGNAL
+-------------------------------------------
+In the case of channel input, we wish to wait for a signal from another process. We do not want to receive a BOOLean, nor do we wish to receive a value of type SIGNAL. We do not want to have to come up with a variable name that is temporary and has no life outside of the scope of the channel read. We most certainly do not want anyone to be tempted to use that value in their program logic. The generation of temporary variables that have no semantic meaning should be the province of compilers, not programmers. 
+
+The syntax
+
+s ? SIGNAL
+
+is intended to be symmetrical with the equivalent sending operation. The process waiting on a channel with the protocol SIGNAL is not waiting for a value---it is waiting for a SIGNAL. It can not (and therefore will not) do anything with that value. Thus, our intention as process-oriented programmers is clearly communicated: this channel communication exists only to synchronize between two processes.
+
+--------------------------------------------------------- 
+4. IMPLEMENTATION
+--------------------------------------------------------- 
+An incomplete implementation of the SIGNAL protocol has been committed to a branch in the KRoC repository. The code can be checked out and experimented with.
+
+-------------------------------------------
+4.1 SUPPORTED LANGUAGE FEATURES
+-------------------------------------------
+Our draft implementation supports the following communication contexts in occam-pi:
+
+----------------------------------
+4.1.1 SIMPLE COMMUNICATION
+----------------------------------
+
+CHAN SIGNAL s:
+PAR
+  s ! SIGNAL
+  s ? SIGNAL
+
+----------------------------------
+4.1.2 ALTERNATION
+----------------------------------
+There is nothing special about SIGNALs in an ALT.
+
+CHAN SIGNAL s:
+ALT
+  s ? SIGNAL
+    SKIP
+
+----------------------------------
+4.1.3 PROTOCOLS
+----------------------------------
+Naming a protocol as a SIGNAL protocol guarantees additional safety. The following works: 
+
+PROTOCOL YELLOW.SIGNAL IS SIGNAL:
+PROTOCOL PURPLE.SIGNAL IS SIGNAL:
+PROC helper (CHAN PURPLE.SIGNAL p?)
+  p ? SIGNAL
+:
+
+PROC main ()
+  CHAN PURPLE.SIGNAL p:
+  PAR
+    p ! SIGNAL
+    helper (p?)
+:
+  
+The following does not:
+
+PROTOCOL YELLOW.SIGNAL IS SIGNAL:
+PROTOCOL PURPLE.SIGNAL IS SIGNAL:
+PROC helper (CHAN PURPLE.SIGNAL p?)
+  p ? SIGNAL
+:
+
+PROC main ()
+  CHAN YELLOW.SIGNAL y:
+  PAR
+    y ! SIGNAL
+    helper (y?)
+:
+ 
+This is not meant to be surprising. The important point here is that we can distinguish the "colour" of SIGNAL channels if we so desire. This way, all signal channels are not equal to each-other, but it is still clear to the reader of the program that the channel in question does nothing more than provide a mechanism for rendezvous between two processes. 
+
+This use of SIGNAL as a PROTOCOL is the basis of an extended example at the end of this document.
+
+----------------------------------
+4.1.4 SEQUENTIAL AND CASE PROTOCOLS
+----------------------------------
+We have no good use case for this, but it does not break the semantics of the language.
+
+PROTOCOL HM.OP IS INT ; SIGNAL:
+...
+CHAN HM.OP ho:
+PAR
+  ho ! 42 ; SIGNAL
+  INT n:
+  ho ? n ; SIGNAL
+
+Likewise, CASE protocols make little sense to us at this time, but they work.
+
+-------------------------------------------
+4.2 UNSUPPORTED LANGUAGE FEATURES
+-------------------------------------------
+There are some places that SIGNAL should not work, and some places that it should but does not.
+  
+----------------------------------
+4.2.1 REPLICATION
+----------------------------------
+SIGNAL channels cannot be replicated at this time. See the discussion of our draft implementation later in this document.
+
+----------------------------------
+4.2.2 VARIABLE DECLARATION
+----------------------------------
+It is not permissible to declare a variable of type SIGNAL.
+
+SIGNAL s:
+SKIP
+
+should fail a syntax check. SIGNALs are proposed as a new simple protocol ONLY, and do not introduce a new value type to the language. Therefore, any use of SIGNAL in a value context should (and we believe does) fail.
+
+----------------------------------
+4.2.3 ASSIGNMENT, etc.
+----------------------------------
+Assignment to SIGNALs is not possible, because it should be impossible to declare them. Casting values as a SIGNAL currently fails, as it should. 
+
+Examples of code that does not pass a syntax check:
+
+VAL INT SIGNAL IS 42:
+VAL INT wiggle IS SIGNAL:
+
+SIGNAL := 42
+
+SIGNAL v:
+v := 42 -- Impossible to get here, considering declaration on prev. line
+
+SIGNAL v:
+v := SIGNAL -- Also impossible
+
+CHAN SIGNAL s:
+PAR
+  s ! (SIGNAL 42) -- Cannot cast anything to type SIGNAL in a value context
+  s ? SIGNAL
+
+We have 32 syntax checks at this time; this is not exhaustive, but have strived to make sure SIGNAL is disjoint from value types in the language, and cannot be used successfully in an expression context.
+
+----------------------------------
+4.2.4 COUNTED ARRAY PROTOCOLS
+----------------------------------
+SIGNAL cannot be used in counted array protocols. Neither
+
+PROTOCOL WACKY IS SIGNAL::[]INT:
+PROTOCOL TAFFY IS INT::[]SIGNAL:
+
+works. Nor do we think either should.
+
+-------------------------------------------
+4.3 IMPLEMENTATION DISCUSSION
+-------------------------------------------
+Our implementation does the following:
+
+1. Introduces minimal changes to the front-end of the compiler to support the successful parsing of SIGNAL in protocol contexts but not value contexts.
+
+2. The folding of SIGNAL to a constant value (0) in the context of a channel send.
+
+3. The introduction of a unique, invisible, temporary variable in the context of a read on channels with the protocol SIGNAL.
+
+It is this last step that we are confident is implemented in the wrong part of the compiler.
+
+Our syntactic work is not horrific, but know it fails for replicated processes. We chose not to pursue this problem until further discussion of this new language feature could take place. We introduce a new variable declaration when we encounter a SIGNAL on the RHS of a channel read; we believe this is not ideal/the incorrect place to introduce this temporary. The particular change (that we think could be better placed elsewhere) can be found at:
+
+http://projects.cs.kent.ac.uk/projects/kroc/trac/browser/kroc/branches/chan-signal/tools/occ21/fe/syn2.c?rev=6036#L789
+
+Our back-end work is probably not reasonable; we almost certainly introduce our workspace allocation for the channel read at the wrong point in the compilation process. There are members of the group with more knowledge of the compiler who might provide some insight as to where/how better to introduce this change. Again, discussion of the language feature seemed prudent before exploring further. 
+
+The changes we are most concerned with can be found in r6036: http://projects.cs.kent.ac.uk/projects/kroc/trac/changeset/6036/kroc/branches/chan-signal/tools/occ21/be/bind1.c. In particular:
+
+http://projects.cs.kent.ac.uk/projects/kroc/trac/browser/kroc/branches/chan-signal/tools/occ21/be/bind1.c?rev=6036#L1400
+http://projects.cs.kent.ac.uk/projects/kroc/trac/browser/kroc/branches/chan-signal/tools/occ21/be/bind1.c?rev=6036#L1598
+http://projects.cs.kent.ac.uk/projects/kroc/trac/browser/kroc/branches/chan-signal/tools/occ21/be/bind1.c?rev=6036#L1607
+
+From our initial exploration, it became clear that a new instruction (OUT0, IN0) supporting this feature would allow runtimes to rendezvous without setting up for data communication, thus providing a faster mechanism for synchronization between processes. Again, we chose not to explore this idea in code until discussion of the new language feature could take place.
+
+Our goal was a proof-of-concept to ascertain whether a new SIGNAL protocol was (relatively) straight-forward to implement in occ21. We believe it should be. 
+
+Our modified occ21 currently passes all CG tests. 
+
+-------------------------------------------
+4.4 LEGACY CODE
+-------------------------------------------
+We acknowledge that there exists legacy code that uses SIGNAL. For example, the RCX port of the Transterpreter uses it for rendezvous between processes. We argue that any breakage that might occur due to this change is simple to fix (renaming SIGNAL to A.SIGNAL in the RCX code would fix the problem). The better fix would be to change the code to support the new, valueless SIGNALing mechanism that our changes introduce.
+
+A search of the KRoC trunk shows that the only occurrences of SIGNAL appear in the new "arduino" wrapper. This wrapper supports running occam-pi on the AVR family of processors produced by the Atmel Corporation. The use of SIGNAL in the library supporting this port was the motivator for our exploration, and therefore converting it is our explicit intention. Put simply, this language addition is to clean up/improve the documentation being written to support novice programmers using occam-pi on the Arduino platform.
+
+Ultimately, we cannot speak to how much existing code uses the word SIGNAL in a context that might conflict with this change. We believe any such conflicts can be easily repaired (eg. through search-and-replace), or the code in question improved to use the new language feature.
+
+4.5 NAMING
+---
+There are other possible names for this new protocol besides SIGNAL. For example, we might use ANY:
+
+CHAN ANY s:
+PAR
+  s ! ANY
+  s ? ANY
+  
+Because this is already a reserved word, any use of ANY would likely be far more problematic than the use of SIGNAL. Further, this word conveys the wrong semantics to the reader: we are not sending "ANY" over a channel, nor can we read any value from this channel. Symbols like MSG, PING, BEEP, HIGH.FIVE, PARROT, ><>, and (o_O) may be unique in the language, but again fail to convey the point that we are signaling from one process to another. (We are not adverse to using another symbol, but it must be arguably a semantic improvement over SIGNAL.)
+
+--------------------------------------------------------- 
+5. AN EXTENDED EXAMPLE
+--------------------------------------------------------- 
+We have modified "q7.occ", or "the dining philosopher's problem," in the kroc tree to use channels with the SIGNAL protocol. Specifically, we introduced two new PROTOCOLs into the code:
+
+PROTOCOL FORK.SIGNAL IS SIGNAL:
+PROTOCOL SECURITY.SIGNAL IS SIGNAL:
+
+These changes can be found in a modified version of q7.occ:
+
+http://projects.cs.kent.ac.uk/projects/kroc/trac/browser/kroc/branches/chan-signal/modules/course/exercises/q7.occ?rev=6038
+
+In the trunk version of q7.occ, signaling between processes is currently carried out using BOOLean values. Philosophers send TRUE values to each-other, and read those values using the idiom
+
+BOOL any:
+right ? any
+
+This is exactly the idiom we eliminate through the introduction of a SIGNAL. By naming the protocols FORK.SIGNAL and SECURITY.SIGNAL, we make clear that the channels "right" and "left" (which are declared as having the protocol FORK.SIGNAL) are distinct from the channels "up" and "down" (which are declared as having the protocol SECURITY.SIGNAL). In the code, however, the idiom becomes:
+
+right ? SIGNAL
+
+or 
+
+up ! SIGNAL
+
+But, because we have named the protocols on these channels, it is impossible for an "up" channel to read the value from a "left" channel, and so forth. We could eliminate the PROTOCOL naming, which would serve to reduce the safety of the code. However, that "reduction" in safety would merely take us back to the same level of safety currently exhibited by q7.occ. In short, we do not mean to imply that SIGNAL is somehow "unsafe."
+
+Ultimately, we feel our changes make it clear to the reader that the processes in q7.occ are signaling each-other, and not actually communicating values. The rendezvous between these processes remains explicit. We eliminate questions regarding why we communicate TRUE (vs. FALSE, or 42, or any other value), as well as why we must declare a variable of type BOOL called "any." 
+
+The introduction of SIGNAL allows us to say that the processes in the dining philosopher's problem SIGNALs another. We can then introduce the notion of protocol naming to provide increased safety. This is an interesting change, because it means that we convert code like:
+
+CHAN SIGNAL right:
+  right ? SIGNAL
+  right ! SIGNAL
+  
+to 
+
+PROTOCOL FORK.SIGNAL IS SIGNAL:
+CHAN FORK.SIGNAL s:
+  right ? SIGNAL
+  right ! SIGNAL
+  
+In short, the channel communication stays the same (we are still signaling), but the name of the protocol changes (providing increased type safety in our program). 
