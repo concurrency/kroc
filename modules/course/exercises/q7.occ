@@ -52,6 +52,8 @@ VAL INT max.think.time IS 15*second:        --* for a philosopher
 VAL INT min.eat.time IS 4*second:           --* for a philosopher
 VAL INT max.eat.time IS 20*second:          --* for a philosopher
 
+PROTOCOL FORK.SIG     IS SIGNAL:
+PROTOCOL SECURITY.SIG IS SIGNAL:
 
 --* The philospher process.
 --
@@ -63,7 +65,7 @@ VAL INT max.eat.time IS 20*second:          --* for a philosopher
 -- @param down Get permission to sit down
 -- @param up Get permission to stand up
 --
-PROC philosopher (CHAN BOOL left!, right!, down!, up!)
+PROC philosopher (CHAN FORK.SIG left!, right!, CHAN SECURITY.SIG down!, up!)
   --{{{  
   -- some local constants may be needed (e.g. thinking/eating time spans)
   SEQ
@@ -71,15 +73,15 @@ PROC philosopher (CHAN BOOL left!, right!, down!, up!)
     WHILE TRUE
       SEQ
         SKIP              -- thinking : change to a random time delay
-        down ! TRUE       -- get permission to sit down
+        down ! SIGNAL       -- get permission to sit down
         PAR
-          left ! TRUE     -- pick up the forks
-          right ! TRUE
+          left ! SIGNAL     -- pick up the forks
+          right ! SIGNAL
         SKIP              -- eating : change to a random time delay
         PAR
-          left ! TRUE     -- put down the forks
-          right ! TRUE
-        up ! TRUE         -- notify security you have finished
+          left ! SIGNAL     -- put down the forks
+          right ! SIGNAL
+        up ! SIGNAL         -- notify security you have finished
   --}}}
 :
 
@@ -91,16 +93,14 @@ PROC philosopher (CHAN BOOL left!, right!, down!, up!)
 -- @param right Pick up / Put down by the philosopher on the right
 -- @param left Pick up / Put down by the philosopher on the left
 --
-PROC fork (CHAN BOOL right?, left?)
+PROC fork (CHAN FORK.SIG right?, left?)
   --{{{  
   WHILE TRUE
     ALT
-      BOOL any:
-      right ? any       -- philosopher right picks up fork
-        right ? any     -- philosopher right puts down fork
-      BOOL any:
-      left ? any        -- philosopher left picks up fork
-        left ? any      -- philosopher left puts down fork
+      right ? SIGNAL       -- philosopher right picks up fork
+        right ? SIGNAL     -- philosopher right puts down fork
+      left ? SIGNAL        -- philosopher left picks up fork
+        left ? SIGNAL      -- philosopher left puts down fork
   --}}}
 :
 
@@ -110,7 +110,7 @@ PROC fork (CHAN BOOL right?, left?)
 -- @param down Request to sit down channels
 -- @param up Request to stand up channels
 --
-PROC security ([n.philosophers]CHAN BOOL down?, up?)
+PROC security ([n.philosophers]CHAN SECURITY.SIG down?, up?)
   --{{{  
   VAL INT max IS n.philosophers - 1:
   INITIAL INT n.sat.down IS 0:
@@ -118,13 +118,11 @@ PROC security ([n.philosophers]CHAN BOOL down?, up?)
     ALT i = 0 FOR n.philosophers
       ALT
         --{{{  philosopher wanting to sit down
-        BOOL any:
-        (n.sat.down < max) & down[i] ? any    -- only allow up to max at a time
+        (n.sat.down < max) & down[i] ? SIGNAL    -- only allow up to max at a time
           n.sat.down := n.sat.down + 1
         --}}}
         --{{{  philosopher wanting to stand up
-        BOOL any:
-        up[i] ? any                           -- always allow this
+        up[i] ? SIGNAL
           n.sat.down := n.sat.down - 1
         --}}}
   --}}}
@@ -135,7 +133,8 @@ PROC security ([n.philosophers]CHAN BOOL down?, up?)
 --
 PROC secure.college ()
   --{{{  
-  [n.philosophers]CHAN BOOL left, right, up, down:
+  [n.philosophers]CHAN FORK.SIG left, right:
+  [n.philosophers]CHAN SECURITY.SIG up, down:
   PAR
     security (down?, up?)
     PAR i = 0 FOR n.philosophers
