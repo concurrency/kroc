@@ -1,0 +1,4 @@
+-- TEST:  Fail
+PROC main (VAL SIGNAL s)
+  SKIP
+:

@@ -1,0 +1,5 @@
+-- TEST:  Fail
+-- ERROR: 4, "invalid process"
+PROC main()
+  SIGNAL := 1
+:

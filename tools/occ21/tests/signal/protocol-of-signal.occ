@@ -1,0 +1,7 @@
+PROTOCOL P IS SIGNAL:
+PROC main ()
+  CHAN P s:
+  PAR
+    s ! SIGNAL
+    s ? SIGNAL
+:

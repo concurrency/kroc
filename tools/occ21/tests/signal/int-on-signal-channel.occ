@@ -1,0 +1,8 @@
+-- TEST:  Fail
+-- ERROR: 6, "type mismatch" 
+PROC main ()
+  CHAN SIGNAL s:
+  PAR
+    s ! 42
+    s ? SIGNAL
+:

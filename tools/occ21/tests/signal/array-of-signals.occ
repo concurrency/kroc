@@ -1,0 +1,6 @@
+PROC main ()
+  [1]CHAN SIGNAL s:
+  PAR
+    s[0] ! SIGNAL
+    s[0] ? SIGNAL
+:

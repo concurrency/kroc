@@ -1,0 +1,8 @@
+-- TEST:  Fail
+-- ERROR: 7, "Cannot cast values to SIGNAL."
+PROC main ()
+  INT i:
+  SEQ
+    i := 42
+    i := (SIGNAL i)
+:

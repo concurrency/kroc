@@ -1,0 +1,5 @@
+PROC main()
+  CHAN SIGNAL sig:
+  [10]CHAN SIGNAL sig:
+  SKIP
+:

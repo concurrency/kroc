@@ -1,0 +1,6 @@
+-- TEST:  Fail
+-- ERROR: 5, "Cannot assign SIGNAL to a variable."
+PROC main ()
+  INT i:
+  i := SIGNAL
+:

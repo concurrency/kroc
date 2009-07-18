@@ -1,0 +1,8 @@
+-- SIGNAL cannot be part of a protocol.
+PROTOCOL PP IS SIGNAL; SIGNAL:
+PROC main ()
+  CHAN PP s:
+  PAR
+    s ! SIGNAL ; SIGNAL
+    s ? SIGNAL ; SIGNAL
+:

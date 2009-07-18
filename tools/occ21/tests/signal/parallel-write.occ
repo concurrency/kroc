@@ -1,0 +1,8 @@
+-- TEST:  Fail
+-- ERROR: 4, "parallel outputs on channel `s'"
+PROC main ()
+  CHAN SIGNAL s:
+  PAR
+    s ! SIGNAL
+    s ! SIGNAL
+:

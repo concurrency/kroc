@@ -1,0 +1,19 @@
+PROTOCOL P IS SIGNAL:
+PROTOCOL Q IS SIGNAL:
+PROC main ()
+  [2]CHAN P p:
+  [2]CHAN Q q:
+  PAR
+    PAR
+      p[0] ! SIGNAL
+      q[0] ! SIGNAL
+    PAR
+      p[1] ! SIGNAL
+      q[1] ! SIGNAL
+    PAR
+      p[0] ? SIGNAL
+      q[0] ? SIGNAL
+    PAR
+      p[1] ? SIGNAL
+      q[1] ? SIGNAL
+:

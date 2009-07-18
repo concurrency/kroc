@@ -1,0 +1,12 @@
+PROTOCOL Q 
+  CASE
+    a ; SIGNAL
+:
+PROC main ()
+  CHAN Q s:
+  PAR
+    s ! a ; SIGNAL
+    ALT
+      s ? CASE a ; SIGNAL
+        SKIP
+:

@@ -1,0 +1,15 @@
+-- TEST:  Fail
+-- ERROR: 3, "cannot input from channel marked as output"
+-- ERROR: 10, "incompatible channel direction specifier on `x'"
+
+PROC helper (CHAN SIGNAL x!)
+  SEQ
+    x ? SIGNAL
+:
+
+PROC main ()
+  CHAN SIGNAL x:
+  PAR
+    x ! SIGNAL
+    helper (x?)
+:

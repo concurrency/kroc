@@ -1,0 +1,17 @@
+-- TEST:  Fail
+-- ERROR: 16, "type mismatch for parameter 1 in call of breaker"
+PROTOCOL P IS SIGNAL:
+PROTOCOL Q IS SIGNAL:
+
+PROC breaker (CHAN P p?)
+  ALT
+    p ? SIGNAL
+      SKIP
+:
+
+PROC main ()
+  CHAN Q q:
+  PAR
+    q ! SIGNAL
+    breaker (q?)
+:

@@ -1,0 +1,9 @@
+-- TEST: Fail
+-- ERROR: 7, 'expected name, found "::"'
+
+-- Should not be able to have a counted array
+-- protocol containing SIGNALs.
+PROC main ()
+  CHAN OF SIGNAL::[]BYTE s:
+  SKIP
+:

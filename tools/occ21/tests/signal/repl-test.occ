@@ -1,0 +1,15 @@
+VAL INT count IS 10:
+PROC main ()
+  [count]CHAN SIGNAL p:
+  [count]CHAN SIGNAL q:
+  PAR
+    PAR i = 0 FOR count
+      PAR
+        p[i] ! SIGNAL
+        q[i] ! SIGNAL
+    PAR i = 0 FOR count
+      PAR
+        p[i] ? SIGNAL
+        q[i] ? SIGNAL
+:
+

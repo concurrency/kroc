@@ -1,0 +1,4 @@
+-- TEST: Fail
+-- ERROR: 4, "cannot declare variables of type SIGNAL"
+
+SIGNAL x:

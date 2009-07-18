@@ -225,3 +225,4 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(strspn strstr strtol strrchr)
 
 AC_OUTPUT([Makefile])
+AC_OUTPUT([tests/Makefile tests/signal/Makefile])

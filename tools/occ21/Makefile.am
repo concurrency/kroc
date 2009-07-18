@@ -9,6 +9,8 @@ INCLUDES = -I. -I@srcdir@/include
 DEFS = @DEFS@ @ARCH_DEFS@ -Wall
 EXTRALDFLAGS = @EXTRA_LDFLAGS@
 
+SUBDIRS = tests
+
 bin_PROGRAMS = occ21
 
 dist_man1_MANS = occ21.1

@@ -1,0 +1,6 @@
+-- TEST:  Fail
+-- ERROR: 4, "expected name, found SIGNAL"
+PROC main()
+  VAL INT SIGNAL IS 42:
+  SKIP
+:

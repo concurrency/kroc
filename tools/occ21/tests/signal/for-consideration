@@ -1,0 +1,45 @@
+Basic channel communications:
+-----
+These currently work. 
+  c ! SIGNAL
+  c ? SIGNAL
+
+Extended Rendevous
+-----
+  c ?? SIGNAL
+
+
+ c[i] ? SIGNAL
+ c[i] ! SIGNAL
+ PROTOCOL P IS SIGNAL:
+ p ! SIGNAL
+ (etc. as above)
+ PROTOCOL PP IS SIGNAL; SIGNAL:
+ pp ! SIGNAL; SIGNAL
+ pp ? SIGNAL; SIGNAL
+ PROTOCOL Q
+   CASE
+     tag; SIGNAL
+ :
+ q ! tag; SIGNAL
+ q ? CASE tag; SIGNAL
+ q ? CASE
+   tag; SIGNAL
+
+and ALT versions of all the above.
+
+And then, since it's a data type, there are various other things you
+should either be able to do with it or get sensible error messages for:
+
+ SIGNAL v:
+ INT i:
+ v := SIGNAL
+ v := SIGNAL i    -- careful with this one -- SIGNAL as a type name in
+                  -- a value context; bet it misparses as the above or
+                  -- vica versa
+ i := INT SIGNAL
+ w IS v:
+ SIGNAL w IS v:
+ VAL SIGNAL vw IS v:
+ PROC p (VAL SIGNAL a) ...
+ CASE v ...

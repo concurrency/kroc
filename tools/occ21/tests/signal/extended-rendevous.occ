@@ -1,0 +1,8 @@
+PROC main ()
+  CHAN SIGNAL s:
+  PAR
+    s ! SIGNAL
+    s ?? SIGNAL
+      SKIP
+      SKIP
+:

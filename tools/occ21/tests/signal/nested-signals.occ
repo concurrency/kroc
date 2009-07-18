@@ -1,0 +1,43 @@
+-- Should print '1'
+
+PROC delay.signal (VAL INT d, CHAN SIGNAL s!)
+  TIMER tim:
+  INT now:
+  SEQ
+    tim ? now
+    tim ? AFTER now PLUS d
+    s ! SIGNAL
+:
+
+PROC consume(CHAN SIGNAL s1?, s2?, CHAN BYTE scr!)
+  CHAN SIGNAL s3:
+  PAR
+    ALT
+      s1 ? SIGNAL
+        CHAN SIGNAL inner:
+        PAR
+          CHAN SIGNAL inner2:
+          PAR
+            inner2 ! SIGNAL
+            inner2 ? SIGNAL
+            inner ! SIGNAL
+          inner ? SIGNAL
+          s3 ! SIGNAL
+      s2 ? SIGNAL
+        s3 ! SIGNAL
+    SEQ
+      SEQ
+        s3 ? SIGNAL
+        scr ! '**'
+        scr ! '*n'
+:
+
+PROC main (CHAN BYTE kyb?, scr!, err!)
+  CHAN SIGNAL s1, s2, s3:
+  PAR
+    delay.signal (5000, s1!)
+    delay.signal (15000, s2!)
+    SEQ
+      consume(s1?, s2?, scr!)
+      consume(s1?, s2?, scr!)
+:

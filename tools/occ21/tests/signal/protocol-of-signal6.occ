@@ -1,0 +1,9 @@
+-- SIGNAL cannot be part of a protocol.
+PROTOCOL PP IS INT; SIGNAL:
+PROC main ()
+  CHAN PP s:
+  PAR
+    s ! 42 ; SIGNAL
+    INT i:
+    s ? i ; SIGNAL
+:

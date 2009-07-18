@@ -1,0 +1,9 @@
+-- TEST:  Fail
+-- ERROR: 8, "I/O list item 1 does not match protocol"
+-- ERROR: 9, "I/O list item 1 does not match protocol"
+PROC main ()
+  CHAN INT x:
+  PAR
+    x ! SIGNAL
+    x ? SIGNAL
+:

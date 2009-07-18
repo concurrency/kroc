@@ -1,0 +1,7 @@
+-- TEST: Fail
+-- ERROR: 5, "expected primitive type, found SIGNAL"
+
+PROC main()
+  CHAN [10]SIGNAL sig:
+  SKIP
+:

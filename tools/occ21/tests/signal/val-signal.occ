@@ -1,0 +1,6 @@
+-- TEST:  Fail
+-- ERROR: 3, "SIGNAL cannot be used as a value type."
+VAL SIGNAL s IS SIGNAL:
+PROC main ()
+  SKIP
+:

@@ -1,0 +1,15 @@
+-- TEST:  Fail
+-- ERROR: 3, "SIGNAL cannot be used with DATATYPE."
+DATATYPE P IS SIGNAL:
+DATATYPE Q IS SIGNAL:
+
+PROC breaker (CHAN P p?)
+  p ? SIGNAL
+:
+
+PROC main ()
+  CHAN Q q:
+  PAR
+    q ! SIGNAL
+    breaker (q?)
+:

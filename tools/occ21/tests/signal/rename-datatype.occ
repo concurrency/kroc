@@ -1,0 +1,12 @@
+-- TEST:  Fail
+-- ERROR: 5, "expected operand, found SIGNAL"
+-- ERROR: 7, "UBERSIGNAL is not declared"
+-- ERROR: 10, "I/O list item 1 does not match protocol"
+DATATYPE UBERSIGNAL IS SIGNAL:
+PROC main ()
+  CHAN UBERSIGNAL u:
+  CHAN SIGNAL s:
+  PAR
+    u ! SIGNAL 
+    s ? SIGNAL
+:

@@ -1,0 +1,14 @@
+-- TEST: Fail
+-- ERROR: 4, "parallel inputs on channel `s'"
+PROC helper (CHAN SIGNAL s?)
+  PAR
+    s ? SIGNAL
+    s ? SIGNAL 
+:
+
+PROC main ()
+  CHAN SIGNAL s:
+  PAR
+    s ! SIGNAL
+    helper (s?)
+:
