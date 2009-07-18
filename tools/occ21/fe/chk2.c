@@ -1254,6 +1254,9 @@ PUBLIC void checkelement (treenode * const tptr, treenode * type, const int para
 	} else if (TagOf (tptr) == S_NULLARRAY) {
 		/* these are valid elements -- of zero size */
 		return;
+	} else if (TagOf (tptr) == S_SIGNAL) {
+		/* Signals are valid elements. */
+		return;
 	} else if (iselement (tptr, TRUE)) {
 		if (TagOf (type) == S_PORT) {
 			check_port (tptr);	/* bug TS/1985 17/02/93 */

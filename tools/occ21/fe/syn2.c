@@ -746,6 +746,7 @@ printtreenl (stderr, 4, exp);
 	return rcptr;
 }
 /*}}}*/
+
 /*{{{  PUBLIC treenode *rsubscript (treenode *a)*/
 /* The element built up so far */
 /* may return NULL */
@@ -778,12 +779,29 @@ PUBLIC treenode *rsubscript (treenode *a)
 /* may return NULL if error found */
 PUBLIC treenode *relement (void)
 {
+	static int sigtmp_counter = 0;
 	SOURCEPOSN locn = flocn;
 	treenode *a;
 
 	DEBUG_MSG (("relement... "));
 	if (symb == S_NAME)
 		a = (treenode *) rname ();	/* name or subscripted element */
+	else if (symb == S_SIGNAL)
+	{
+		char buffer[30];
+		int siglen;
+		
+		siglen = snprintf(buffer, 30, "$SIGTMP.%08x", sigtmp_counter);
+		++sigtmp_counter;
+
+		wordnode *tmpname = lookupword (buffer, siglen);
+		treenode *vdecl = newdeclnode (S_DECL, locn, NULL, NULL, NULL);
+
+		a = (treenode *) declname (N_DECL, locn, tmpname, newleafnode (S_SIGNAL, locn), vdecl);
+		SetDName (vdecl, a);
+
+		nextsymb ();
+	}
 	else if (symb == S_LBOX)
 		/*{{{  segment */
 	{
@@ -1992,6 +2010,16 @@ printtreenl (stderr, 4, op);
 		}
 #endif
 		/*}}} */
+		/*{{{  case S_SIGNAL */
+	case S_SIGNAL:
+		{
+			treenode *op;
+
+			op = newleafnode (S_SIGNAL, locn);
+			nextsymb ();
+			return op;
+		}
+		/*}}}*/
 	default:
 		synerr_e (SYN_E_EXPR, locn, symb);
 		return NULL;
@@ -3246,6 +3274,7 @@ PRIVATEPARAM treenode *rsimpleprotocol (void)
 	case S_REAL32:
 	case S_REAL64:
 	case S_BOOL:
+	case S_SIGNAL:
 #ifndef MOBILES
 	case S_ANY:		/* bug 1395 Added 30/09/91 by CON */
 #else

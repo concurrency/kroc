@@ -600,6 +600,7 @@ PRIVATE const vti_keyword_t vti_keyword_table[] =
 
 	, {S_DYNCALL, "DYNCALL", NULL, NULL, NULL, NONODE, CC}
 	, {S_TYPEHASHCHECK, "TYPEHASHCHECK", NULL, NULL, NULL, DOPNODE, CC}
+	, {S_SIGNAL, "SIGNAL", NULL, NULL, NULL, LEAFNODE, A}
 };
 
 #define MAX_TAG ((int)(sizeof(vti_keyword_table)/sizeof(vti_keyword_table[0])))

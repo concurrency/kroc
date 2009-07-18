@@ -1839,6 +1839,11 @@ PUBLIC void foldconstexp (treenode * tptr, BIT32 * reshi, BIT32 * reslo, const i
 		*reslo = 0;
 		break;
 		/*}}}  */
+		/*{{{ case S_SIGNAL */
+	case S_SIGNAL:
+		*reslo = 0;
+		break;
+		/*}}} */
 		/*{{{  case S_UINTLIT, S_UBYTELIT */
 	case S_UINTLIT:
 	case S_UBYTELIT:
@@ -2388,6 +2393,7 @@ PUBLIC BOOL isconst (treenode * tptr)
 #endif
 		case S_TRUE:
 		case S_FALSE:
+		case S_SIGNAL:
 		case S_STRING:
 		case S_CONSTEXP:
 		case S_CONSTCONSTRUCTOR:
@@ -2660,6 +2666,7 @@ PUBLIC treenode *foldexp (treenode * tptr)
 	case S_FALSE:
 	case S_MOSTPOS:
 	case S_MOSTNEG:
+	case S_SIGNAL:
 		tptr = newconstexp (tptr);
 		break;
 		/*}}}  */

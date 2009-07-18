@@ -78,7 +78,7 @@ PRIVATE wordnode *udo_wordnodeptr;	/* added by Jim for user defined operators te
 
 PRIVATE treenode *bytenodeptr, *int16nodeptr, *int32nodeptr, *int64nodeptr,
 	*uint16nodeptr, *uint32nodeptr, *uint64nodeptr,
-	*real32nodeptr, *real64nodeptr;
+	*real32nodeptr, *real64nodeptr, *signalnodeptr;
 PRIVATE treenode *controlportnodeptr;
 PRIVATE treenode *routenodeptr;
 
@@ -125,6 +125,8 @@ PUBLIC void chkinit (void)
 		unknownnodeptr = newleafnode (S_UNKNOWN, NOPOSN);
 		channodeptr = newtypenode (S_CHAN, NOPOSN, NULL, newleafnode (S_ANY, NOPOSN));
 		chanboolnodeptr = newtypenode (S_CHAN, NOPOSN, NULL, newleafnode (S_BOOL, NOPOSN));
+
+		signalnodeptr = newleafnode(S_SIGNAL, NOPOSN);
 
 		undeclaredp = newleafnode (S_UNDECLARED, NOPOSN);
 	}
@@ -190,6 +192,8 @@ PRIVATE treenode *typenodeptr (int t)
 	case S_MOBILE:
 		return mobilenodeptr;
 #endif
+	case S_SIGNAL:
+		return signalnodeptr;
 	default:
 		return NULL;
 	}
@@ -360,6 +364,7 @@ fflush (stdout);
 		case S_REAL32:
 		case S_REAL64:
 		case S_FULLBARRIER:
+		case S_SIGNAL:
 			return TRUE;
 #ifdef MOBILES
 		case S_MOBILE:
@@ -460,6 +465,7 @@ printtreenl (stderr, 4, ftype);
 			case S_UREALLIT:
 			case S_TIMER:
 			case S_FULLBARRIER:
+			case S_SIGNAL:
 			CASE_CONFIG_TYPE
 				return (TRUE);
 				/*}}} */
@@ -3195,6 +3201,8 @@ printtreenl (stderr, 4, *orig);
 		return intnodeptr;
 	case S_CONSTEXP:
 		return typecheck_main (CExpOf (tptr), default_type);
+	case S_SIGNAL:
+		return signalnodeptr;
 	/*{{{  S_STRING */
 	case S_STRING:
 	{
@@ -4626,6 +4634,8 @@ PUBLIC treenode *chk_gettype_main (treenode *tptr, BOOL orig_type)
 	case S_TRUE:
 	case S_FALSE:
 		return bytenodeptr;
+	case S_SIGNAL:
+		return intnodeptr;
 	case S_UBYTELIT:
 	case S_UINTLIT:
 	case S_UREALLIT:
@@ -5033,6 +5043,8 @@ PUBLIC int chk_typeof (treenode * tptr)
 		case S_TRUE:
 		case S_FALSE:
 			return (S_BOOL);
+		case S_SIGNAL:
+			return (S_SIGNAL);
 		case S_ASMNAME:
 			return (S_INT);
 		case S_UBYTELIT:
@@ -6201,6 +6213,7 @@ printtreenl (stderr, 4, typeptr);
 		case S_UINT64:
 		case S_REAL32:
 		case S_REAL64:
+		case S_SIGNAL:
 		case S_TIMER:
 		case S_UNDECLARED:
 		case S_BARRIER:
@@ -6496,6 +6509,7 @@ printtreenl (stderr, 4, pptr);
 				case S_ANYPROCTYPE:
 				case S_ANYMOBILETYPE:
 #endif
+				case S_SIGNAL:
 					return (tptr);
 #ifdef MOBILES
 				case N_PROCTYPEDECL:

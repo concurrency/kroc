@@ -400,6 +400,8 @@ PUBLIC int bytesinscalar (const int tag)
 		/*case S_PORT:   chkreport_i(CHK_UNKNOWN_TYPE, chklocn, t); return(-1); */
 	case S_TIMER:
 		return 0;	/* Added 23/4/90 by CO'N for bug 287 */
+	case S_SIGNAL:
+		return 4;
 	case S_BARRIER:
 	case S_FULLBARRIER:
 		return (1 << WSH);

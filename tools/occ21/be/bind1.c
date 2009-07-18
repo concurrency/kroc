@@ -1396,6 +1396,30 @@ PRIVATE void mappresubscripts (treenode * tptr)
 		}
 }
 
+/*{{{ PRIVATE void allocate_signal(tptr)*/
+PRIVATE void allocate_signal_workspace (treenode *tptr)
+{
+			/* Look ahead for SIGNAL. Only in the case of an INPUT */
+			/* MCJ 20090717 - No idea if this should go somewhere else.
+				In fact, we probably have to fix how the temporary is declared
+				so this can go away completely. */
+			if ((TagOf (tptr) == S_INPUT) || (TagOf (tptr) == S_X_INPUT)) {
+				treenode *myt = RHSOf (tptr);
+				
+			  DEBUG_MSG (("mappreprocess RHS: %s\n", itagstring (TagOf (myt))));
+
+				/* If *myt is not an empty list, the first element is an N_DECL,
+					 and it is of type S_SIGNAL, then we should create some space
+					 in the workspace for the channel communication to take place.
+					*/
+				if (!EndOfList(myt)
+					 	&& (TagOf(ThisItem(myt)) == N_DECL)
+						&& (TagOf(NTypeOf(ThisItem(myt))) == S_SIGNAL)) {
+					create_var(ThisItem(myt));
+				}	
+			}
+}
+
 /*}}}*/
 /*{{{  PUBLIC void mappreprocess(tptr)*/
 /*{{{  comment*/
@@ -1568,18 +1592,27 @@ PUBLIC void mappreprocess (treenode * tptr)
 		case S_OUTPUT:
 		case S_INPUT:
 		case S_TAGGED_INPUT:
+		{
 			mappreprocess (LHSOf (tptr));
+			/* FIXME: This should be handled elsewhere in the compiler. */
+			allocate_signal_workspace(tptr);
+			
 			mappreprocesslist (RHSOf (tptr));
 			return;
+		}
 		case S_X_INPUT:
 		case S_X_TAGGED_INPUT:
 			mappreprocess (LHSOf (tptr));
+			/* FIXME: This should be handled elsewhere in the compiler. */
+			allocate_signal_workspace(tptr);
+
 			mappreprocesslist (RHSOf (tptr));
 			mappreprocess (ActionDuringOf (tptr));
 			mappreprocess (ActionAfterOf (tptr));
 			return;
 		case S_X_INPUT_OUTPUT:
 			mappreprocess (LHSOf (tptr));
+			
 			if (RHSOf (tptr)) {
 				mappreprocess (RHSOf (tptr));
 			}
