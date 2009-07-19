@@ -121,4 +121,4 @@ clean-local:
 SUFFIXES = .occ .tce
 
 .tce.o:
-	$(TRANPC) $<
+	$(TRANPC) -o $@ $<
