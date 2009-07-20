@@ -9,5 +9,3 @@ PROC main ()
     invert.level (v?, w!)
     digital.output (13, w?)
 :
-
-#INCLUDE "plumbing.end"

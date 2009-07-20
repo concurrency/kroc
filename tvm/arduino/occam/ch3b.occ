@@ -5,5 +5,3 @@ PROC main ()
     heartbeat ()
     blink (12, 500)
 :
-
-#INCLUDE "plumbing.end"
