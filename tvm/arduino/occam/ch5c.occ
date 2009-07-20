@@ -8,5 +8,3 @@ PROC main ()
     toggle (LOW, s?, v!)
     digital.output (13, v?)
 :
-
-#INCLUDE "plumbing.end"

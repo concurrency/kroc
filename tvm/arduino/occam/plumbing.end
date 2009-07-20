@@ -1,7 +1,0 @@
--- Temporary workaround for a plinker bug.
-
-PROC real.main ()
-  SEQ
-    SKIP
-    main ()
-:
