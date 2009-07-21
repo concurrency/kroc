@@ -1,6 +1,6 @@
 --
 --	Time utilities
---	Copyright (C) 2008 Adam Sampson <ats@offog.org>
+--	Copyright (C) 2008, 2009 Adam Sampson <ats@offog.org>
 --
 --	This library is free software; you can redistribute it and/or
 --	modify it under the terms of the GNU Lesser General Public
@@ -17,14 +17,16 @@
 --	<http://www.gnu.org/licenses/>.
 --
 
---** @module useful
+--** @module time
+
+#INCLUDE "time.inc"
 
 --{{{  PROC delay
 --* Wait for a period of time.
--- @param us The delay in microseconds
-PROC delay (VAL INT us)
+-- @param ticks The delay in timer ticks
+PROC delay (VAL INT ticks)
   IF
-    us < 0
+    ticks < 0
       --{{{  don't bother waiting
       SKIP
       --}}}
@@ -33,6 +35,13 @@ PROC delay (VAL INT us)
       INT t:
       SEQ
         tim ? t
-        tim ? AFTER t PLUS us
+        tim ? AFTER t PLUS ticks
+:
+--}}}
+--{{{  PROC delay.ms
+--* Wait for a period of time.
+-- @param ms The delay in milliseconds
+PROC delay.ms (VAL INT ms)
+  delay (milliseconds (ms))
 :
 --}}}
