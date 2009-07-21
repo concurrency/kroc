@@ -13,7 +13,6 @@ EXTRA_DIST = \
 	matrix.occ \
 	random.occ \
 	string.occ \
-	time.occ \
 	useful.inc \
 	useful-c.c \
 	vector.occ
@@ -25,7 +24,6 @@ useful_lib_objs = \
 	matrix.tce \
 	random.tce \
 	string.tce \
-	time.tce \
 	vector.tce
 if TRACE_VIA_FFI
 useful_lib_objs += useful-c.o
@@ -39,7 +37,7 @@ includes = $(useful_includes)
 all-local: $(libs)
 
 useful.lib: $(useful_lib_objs)
-	$(OCCBUILD) --library useful.lib --include useful.inc --need course --need maths $(useful_lib_objs)
+	$(OCCBUILD) --library useful.lib --include useful.inc --need course --need maths --need time $(useful_lib_objs)
 
 install-exec-local: $(libs)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
