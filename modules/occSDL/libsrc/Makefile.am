@@ -48,7 +48,10 @@ occSDL_lib_objs = \
 	occSDLjoy.tce
 
 occSDL_libs = occSDL.lib
-occSDL_includes = occSDL.inc occSDLhelpers.inc occSDLjoy.inc
+occSDL_includes = \
+	$(srcdir)/occSDL.inc \
+	$(srcdir)/occSDLhelpers.inc \
+	$(srcdir)/occSDLjoy.inc
 endif
 
 if BUILD_OCCSDLSOUND
@@ -56,7 +59,7 @@ occSDLsound_lib_objs = \
 	SDL_sound_wrap.o
 
 occSDLsound_libs = occSDLsound.lib
-occSDLsound_includes = occSDLsound.inc
+occSDLsound_includes = $(srcdir)/occSDLsound.inc
 endif
 
 libs = $(occSDL_libs) $(occSDLsound_libs)

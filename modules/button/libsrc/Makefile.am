@@ -16,7 +16,7 @@ button_lib_objs = \
 	button.tce
 
 button_libs = button.lib
-button_includes = button.inc
+button_includes = $(srcdir)/button.inc
 endif
 
 libs = $(button_libs)

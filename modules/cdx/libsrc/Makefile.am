@@ -24,7 +24,7 @@ cdx_lib_objs = \
 	cdxoccam.o
 
 cdx_libs = cdx.lib
-cdx_includes = cdxclient.h
+cdx_includes = $(srcdir)/cdxclient.h
 cdx_programs = cdxview
 cdxview_LDADD = @SDL_LIBS@ @SOCK_LIBS@
 
@@ -32,7 +32,7 @@ netbar_lib_objs = \
 	netbar.tce
 
 netbar_libs = netbar.lib
-netbar_includes = netbar.inc
+netbar_includes = $(srcdir)/netbar.inc
 netbar_programs = netbard
 netbard_LDADD = @SOCK_LIBS@
 endif

@@ -19,7 +19,7 @@ moa_lib_objs = \
 	mysql_connector.o
 
 moa_libs = moa.lib
-moa_includes = moa.inc
+moa_includes = $(srcdir)/moa.inc
 endif
 
 libs = $(moa_libs)

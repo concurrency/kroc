@@ -30,7 +30,7 @@ useful_lib_objs += useful-c.o
 endif
 
 useful_libs = useful.lib
-useful_includes = useful.inc
+useful_includes = $(srcdir)/useful.inc
 libs = $(useful_libs)
 includes = $(useful_includes)
 

@@ -19,8 +19,8 @@ rastertext_lib_objs = \
 
 rastertext_libs = rastertext.lib
 rastertext_includes = \
-	font10x20.inc \
-	font6x13.inc
+	$(srcdir)/font10x20.inc \
+	$(srcdir)/font6x13.inc
 libs = $(rastertext_libs)
 includes = $(rastertext_includes)
 

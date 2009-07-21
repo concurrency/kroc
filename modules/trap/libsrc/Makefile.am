@@ -26,8 +26,8 @@ trap_lib_objs = \
 
 trap_libs = selector.lib trap.lib
 trap_includes = \
-	selector.inc \
-	trap.inc
+	$(srcdir)/selector.inc \
+	$(srcdir)/trap.inc
 trap_tools = trapns
 endif
 
@@ -61,7 +61,7 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 #{{{ dependencies
-selector.tce: selector.inc
+selector.tce: $(srcdir)/selector.inc
 trap.tce: selector.lib
-trap.tce: trap.inc
+trap.tce: $(srcdir)/trap.inc
 #}}}

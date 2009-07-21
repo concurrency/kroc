@@ -22,8 +22,8 @@ all-local: sock.lib
 sock.lib: $(sock_lib_objs)
 	$(OCCBUILD) --library sock.lib --include socklib.inc @SOCK_LIBS@ $(sock_lib_objs)
 
-install-exec-local: sock.lib socklib.inc
-	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" sock.lib socklib.inc
+install-exec-local: sock.lib $(srcdir)/socklib.inc
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" sock.lib $(srcdir)/socklib.inc
 
 clean-local:
 	$(OCCBUILD) --clean sock.lib $(sock_lib_objs)

@@ -24,8 +24,8 @@ all-local: cspdrv.lib
 cspdrv.lib: $(cspdrv_lib_objs)
 	$(OCCBUILD) --library cspdrv.lib --include cspdrvlib.inc $(cspdrv_lib_objs)
 
-install-exec-local: cspdrv.lib cspdrvlib.inc
-	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" cspdrv.lib cspdrvlib.inc
+install-exec-local: cspdrv.lib $(srcdir)/cspdrvlib.inc
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" cspdrv.lib $(srcdir)/cspdrvlib.inc
 
 clean-local:
 	$(OCCBUILD) --clean cspdrv.lib $(cspdrv_lib_objs)

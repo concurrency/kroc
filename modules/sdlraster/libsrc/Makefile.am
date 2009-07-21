@@ -22,7 +22,7 @@ sdlraster_lib_objs = \
 	sdlrcompat-c.o
 
 sdlraster_libs = sdlraster.lib miniraster.lib
-sdlraster_includes = sdlraster.inc sdlrcompat.inc
+sdlraster_includes = $(srcdir)/sdlraster.inc $(srcdir)/sdlrcompat.inc
 endif
 
 libs = $(sdlraster_libs) $(miniraster_libs)
