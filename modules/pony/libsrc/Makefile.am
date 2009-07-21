@@ -49,11 +49,11 @@ ponyanstcpip_objs = \
 
 pony_libs = pony.lib
 pony_includes = \
-	ponyint.inc \
-	ponyintcif.inc \
-	ponyinttcpip.inc \
-	ponylib.inc \
-	ponylibtcpip.inc
+	$(srcdir)/ponyint.inc \
+	$(srcdir)/ponyintcif.inc \
+	$(srcdir)/ponyinttcpip.inc \
+	$(srcdir)/ponylib.inc \
+	$(srcdir)/ponylibtcpip.inc
 pony_tools = ponyanstcpip
 endif
 

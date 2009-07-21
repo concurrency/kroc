@@ -16,7 +16,7 @@ ttyutil_lib_objs = \
 	ttyutil.tce
 
 libs = ttyutil.lib
-includes = ttyutil.inc
+includes = $(srcdir)/ttyutil.inc
 endif
 
 all-local: $(libs)

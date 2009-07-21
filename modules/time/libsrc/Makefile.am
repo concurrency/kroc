@@ -14,7 +14,7 @@ time_lib_objs = \
 	time.tce
 
 time_libs = time.lib
-time_includes = time.inc
+time_includes = $(srcdir)/time.inc
 libs = $(time_libs)
 includes = $(time_includes)
 

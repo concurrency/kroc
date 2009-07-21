@@ -22,8 +22,8 @@ all-local: file.lib
 file.lib: $(file_lib_objs)
 	$(OCCBUILD) --library file.lib --include filelib.inc $(file_lib_objs)
 
-install-exec-local: file.lib filelib.inc
-	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" file.lib filelib.inc
+install-exec-local: file.lib $(srcdir)/filelib.inc
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" file.lib $(srcdir)/filelib.inc
 
 clean-local:
 	$(OCCBUILD) --clean file.lib $(file_lib_objs)

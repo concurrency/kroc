@@ -20,8 +20,8 @@ all-local: http.lib
 http.lib: $(http_lib_objs)
 	$(OCCBUILD) --library http.lib --need sock --need file --include httplib.inc $(http_lib_objs)
 
-install-exec-local: http.lib httplib.inc
-	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" http.lib httplib.inc
+install-exec-local: http.lib $(srcdir)/httplib.inc
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" http.lib $(srcdir)/httplib.inc
 
 clean-local:
 	$(OCCBUILD) --clean http.lib $(http_lib_objs)

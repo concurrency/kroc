@@ -21,7 +21,7 @@ video_lib_objs = \
 	video-v4l.o
 
 video_libs = video.lib
-video_includes = video.inc
+video_includes = $(srcdir)/video.inc
 endif
 
 libs = $(video_libs)

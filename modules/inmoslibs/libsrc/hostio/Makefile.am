@@ -8,8 +8,8 @@ libs = \
 	solib.lib \
 	splib.lib
 includes = \
-	hostio.inc \
-	unixerrs.inc
+	$(srcdir)/hostio.inc \
+	$(srcdir)/unixerrs.inc
 
 EXTRA_DIST = \
 	ask.occ \

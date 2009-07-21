@@ -23,7 +23,7 @@ player_lib_objs = \
 	vehicles.tce
 
 player_libs = player.lib
-player_includes = player.inc
+player_includes = $(srcdir)/player.inc
 endif
 
 libs = $(player_libs)

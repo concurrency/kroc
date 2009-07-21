@@ -23,7 +23,7 @@ occGL_lib_objs = \
 	opengl_wrap.o
 
 occGL_libs = occGL.lib
-occGL_includes = occGL.inc
+occGL_includes = $(srcdir)/occGL.inc
 endif
 
 libs = $(occGL_libs)

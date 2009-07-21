@@ -49,8 +49,8 @@ shared_screen.lib: $(shared_screen_lib_objs)
 ss.lib: $(shared_screen_lib_objs)
 	$(OCCBUILD) --library ss.lib --need course --include shared_screen.inc $(shared_screen_lib_objs)
 
-install-exec-local: course.lib consts.inc shared_screen.lib ss.lib shared_screen.inc
-	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" course.lib consts.inc shared_screen.lib ss.lib shared_screen.inc
+install-exec-local: course.lib $(srcdir)/consts.inc shared_screen.lib ss.lib $(srcdir)/shared_screen.inc
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" course.lib $(srcdir)/consts.inc shared_screen.lib ss.lib $(srcdir)/shared_screen.inc
 
 clean-local:
 	$(OCCBUILD) --clean course.lib $(course_lib_objs) shared_screen.lib ss.lib $(shared_screen_lib_objs)
