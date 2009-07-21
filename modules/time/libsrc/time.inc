@@ -47,7 +47,7 @@ INT INLINE FUNCTION seconds (VAL INT s)
 --}}}
 --{{{  FUNCTION milliseconds
 --* Convert milliseconds to timer ticks.
--- @param s Time in milliseconds
+-- @param ms Time in milliseconds
 -- @return Time in timer ticks
 INT INLINE FUNCTION milliseconds (VAL INT ms)
   INT ticks:
@@ -62,7 +62,7 @@ INT INLINE FUNCTION milliseconds (VAL INT ms)
 --}}}
 --{{{  FUNCTION microseconds
 --* Convert microseconds to timer ticks.
--- @param s Time in microseconds
+-- @param us Time in microseconds
 -- @return Time in timer ticks
 INT INLINE FUNCTION microseconds (VAL INT us)
   INT ticks:
