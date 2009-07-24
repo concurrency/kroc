@@ -32,15 +32,15 @@ VAL INT EXTERNAL IS 0:
 VAL []INT DDR.MAP IS
   [DDRD, DDRD, DDRD, DDRD, DDRD, DDRD, DDRD, DDRD,
    DDRB, DDRB, DDRB, DDRB, DDRB, DDRB,
-   DDRC, DDRC, DDRC, DDRC, DDRC, DDRC, DDRC]:
+   DDRC, DDRC, DDRC, DDRC, DDRC, DDRC]:
 VAL []INT PORT.MAP IS
   [PORTD, PORTD, PORTD, PORTD, PORTD, PORTD, PORTD, PORTD,
    PORTB, PORTB, PORTB, PORTB, PORTB, PORTB,
-   PORTC, PORTC, PORTC, PORTC, PORTC, PORTC, PORTC]:
+   PORTC, PORTC, PORTC, PORTC, PORTC, PORTC]:
 VAL []INT PIN.MAP IS
   [PIND, PIND, PIND, PIND, PIND, PIND, PIND, PIND,
-   PINB, PINB, PINB, PINB, PINB, PINB, 
-   PINC, PINC, PINC, PINC, PINC, PINC, PINC]:
+   PINB, PINB, PINB, PINB, PINB, PINB,
+   PINC, PINC, PINC, PINC, PINC, PINC]:
 --}}}
 
 --{{{  PROC delay
@@ -74,7 +74,7 @@ INLINE PROC die (VAL []BYTE error)
 --
 -- [@item] digital pins 0-7 map to [@ref PORTD] bits 0-7
 -- [@item] digital pins 8-13 map to [@ref PORTB] bits 0-5
--- [@item] analog pins 0-5 are also known as digital pins 14-21, and map to
+-- [@item] analog pins 0-5 are also known as digital pins 14-19, and map to
 --   [@ref PORTC] bits 0-5
 --
 -- A request for a pin out of range will result in an unrecoverable error.
@@ -88,11 +88,11 @@ INT, INT, INT, INT INLINE FUNCTION pin.location (VAL INT pin)
   INT bit:
   VALOF
     IF
-      (pin < 0) OR (pin >= 21)
-        die ("No mapping for requested pin.") 
-      (pin < 8)
+      (pin < 0) OR (pin > 19)
+        die ("requested pin number is not valid (must be between 0 and 19)")
+      pin < 8
         bit := pin
-      (pin < 14)
+      pin < 14
         bit := pin - 8
       TRUE
         bit := pin - 14
