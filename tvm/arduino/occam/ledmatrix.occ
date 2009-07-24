@@ -103,8 +103,8 @@ PROC serial.rx (CHAN BYTE out!)
 --}}}
 --}}}
 
---{{{  PROC data.buffer
-PROC data.buffer (CHAN BYTE in?, thru!, out!)
+--{{{  PROC buffer
+PROC buffer (CHAN BYTE in?, thru!, out!)
   INITIAL BYTE data IS 0:
   WHILE TRUE
     BYTE new:
@@ -172,8 +172,8 @@ PROC black.hole.byte (CHAN BYTE in?)
 :
 --}}}
 
---{{{  PROC feed
-PROC feed (CHAN BYTE out!)
+--{{{  PROC source
+PROC source (CHAN BYTE out!)
   PROC send (VAL BYTE value)
     INITIAL BYTE data IS value:
     SEQ
@@ -236,15 +236,14 @@ PROC main ()
       PAR i = 0 FOR COLS
         CHAN BYTE data.thru:
         PAR
-          data.buffer (data[i]?, data.thru!, data[i + 1]!)
+          buffer (data[i]?, data.thru!, data[i + 1]!)
           column (i,
                   strobe[i]?, strobe[(i + 1) \ COLS]!,
                   data.thru?)
       #IF DEFINED (MASTER)
-      feed (data[0]!)
+      source (data[0]!)
       #ELSE
       serial.rx (data[0]!)
       #ENDIF
-      --black.hole.byte (data[COLS]?)
       serial.tx (data[COLS]?)
 :
