@@ -3,7 +3,7 @@
 static tvm_t tvm;
 tvm_ectx_t context;
 
-#define MEM_WORDS 790
+#define MEM_WORDS 700
 static WORD raw_memory[MEM_WORDS + 1];
 static WORDPTR memory;
 
