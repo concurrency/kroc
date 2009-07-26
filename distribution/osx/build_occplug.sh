@@ -1,0 +1,27 @@
+ROOT=$PWD
+
+if ! [ -d build/jedit ] ; then
+  mkdir -p build/jedit
+  cd build
+  curl -O \
+    http://voxel.dl.sourceforge.net/sourceforge/jedit/jedit42install.jar \
+    || exit 1
+  cd jedit
+  jar -xvf ../jedit42install.jar
+  mkdir -p jedit-program
+  cd jedit-program
+  tar -xvjf ../installer/jedit-program.tar.bz2
+  cd $ROOT/build/
+  curl -O \
+    http://voxel.dl.sourceforge.net/sourceforge/jedit-plugins/ErrorList-1.5-bin.zip \
+    || exit 1
+  mkdir -p jedit/jedit-program/jars
+  cd jedit/jedit-program/jars
+  unzip ../../../ErrorList-1.5-bin.zip
+fi
+
+cd $ROOT
+
+cd ../../tools/occplug
+
+ant -Djedit.install.dir=$ROOT/build/jedit/jedit-program/

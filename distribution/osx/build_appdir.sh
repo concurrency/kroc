@@ -7,20 +7,37 @@ source version.sh
 
 outputDir="output/"
 rezDir="Transterpreter.app/Contents/Resources"
+sysFrameworks="/System/Library/Frameworks"
+javaDir=$rezDir
+binaryFiles="ilibr kmakef kroc mkoccdeps occ21 netbard occbuild plinker.pl tce-dump.pl tranx86 trapns tvm"
 
 # Make the App dir
 makedir "$outputDir"
 # Various Transterpreter stuff (Platform dependent)
-copydir "files/Transterpreter.app" "$outputDir/Transterpreter.app"
+copydir "skel/Transterpreter.app" "$outputDir/Transterpreter.app"
+copyfile \
+  "$sysFrameworks/JavaVM.framework/Resources/MacOS/JavaApplicationStub"\
+  "$outputDir/Transterpreter.app/Contents/MacOS/"
+# Includes
+copydir "install/include/tvm" "$outputDir/$rezDir/include/tvm"
+copydir "install/include/kroc" "$outputDir/$rezDir/include/kroc"
 # Precompiled libraries
-copydir "common-files/lib" "$outputDir/$rezDir/lib"
+copydir "install/share/tvm" "$outputDir/$rezDir/share/tvm"
+copydir "install/share/kroc" "$outputDir/$rezDir/share/kroc"
+# Binary bits
+mkdir -p "$outputDir/$rezDir/bin/"
+for f in $binaryFiles; do
+  copyfile "install/bin/$f" "$outputDir/$rezDir/bin/"
+done
 # jEdit things
-copydir "common-files/jEdit" "$outputDir/$rezDir/jEdit/"
-copyfile "common-files/jEdit-plugin/OccPlug.jar" "$outputDir/$rezDir/jEdit/jars/"
+copydir "build/jedit/jedit-program/" "$outputDir/$javaDir/jEdit/"
+copyfile "../../tools/occplug/install/OccPlug.jar" \
+  "$outputDir/$javaDir/jEdit/jars/"
 #copyfile "common-files/jEdit-plugin/OccPlug.props" "$outputDir/$rezDir/jEdit/properties/"
-copyfile "common-files/jEdit-plugin/catalog" "$outputDir/$rezDir/jEdit/modes/"
-copyfile "common-files/jEdit-plugin/occam.xml" "$outputDir/$rezDir/jEdit/modes/"
-copydir "common-files/jEdit-plugin/dependencies" "$outputDir/$rezDir/jEdit/jars"
+copyfile "../common/jEdit-plugin/catalog" "$outputDir/$javaDir/jEdit/modes/"
+copyfile "../common/jEdit-plugin/occam.xml" "$outputDir/$javaDir/jEdit/modes/"
+copydir "../common/jEdit-plugin/dependencies" "$outputDir/$javaDir/jEdit/jars"
+exit 0
 # Licenses
 copydir "common-files/licenses" "$outputDir/$rezDir/licenses"
 
@@ -32,7 +49,7 @@ copydir_addexcludes common-files/course "$outputDir/course" \
 copydir "common-files/examples" "$outputDir/course/examples"
 
 # Readme file
-copyfile "files/README.rtf" "$outputDir/"
+copyfile "skel/README.rtf" "$outputDir/"
 
 #Move those to somewhere sensible
 copyfile "$outputDir/$rezDir/bin/occOPENGL.inc" "$outputDir/$rezDir/lib"
