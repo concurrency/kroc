@@ -1134,6 +1134,12 @@ public class OccPlug extends JPanel implements EBComponent
           OccPlugUtil.pathify(OccPlugUtil.getTvmCmd()))),
         "share/tvm/firmware/tvm-posix.tbc");
 		runEnv.add("TVM_FIRMWARE_FILE=" + fw_p);
+		String lib_p = MiscUtilities.constructPath(
+        MiscUtilities.getParentOfPath(
+        MiscUtilities.getParentOfPath(
+          OccPlugUtil.pathify(OccPlugUtil.getTvmCmd()))),
+        "lib");
+    runEnv.add("DYLD_LIBRARY_PATH=" + lib_p);
 
 		tvmCommand.add(OccPlugUtil.pathify(OccPlugUtil.getTvmCmd()));
 		tvmCommand.add(filename);
