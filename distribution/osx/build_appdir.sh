@@ -10,6 +10,7 @@ rezDir="Transterpreter.app/Contents/Resources"
 sysFrameworks="/System/Library/Frameworks"
 javaDir=$rezDir
 binaryFiles="ilibr kmakef kroc mkoccdeps occ21 netbard occbuild plinker.pl tce-dump.pl tranx86 trapns tvm"
+libFiles="libSDL*.dylib libplayer*.dylib"
 
 # Make the App dir
 makedir "$outputDir"
@@ -28,6 +29,11 @@ copydir "install/share/kroc" "$outputDir/$rezDir/share/kroc"
 mkdir -p "$outputDir/$rezDir/bin/"
 for f in $binaryFiles; do
   copyfile "install/bin/$f" "$outputDir/$rezDir/bin/"
+done
+# Library bits
+mkdir -p "$outputDir/$rezDir/lib/"
+for f in $libFiles; do
+  copyfile "install/lib/$f" "$outputDir/$rezDir/lib/"
 done
 # jEdit things
 copydir "build/jedit/jedit-program/" "$outputDir/$javaDir/jEdit/"

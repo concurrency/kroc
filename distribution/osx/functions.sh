@@ -102,6 +102,6 @@ copydir()
 copyfile()
 {
 	echo -n "Copy:       "
-	cp -f -v "$1" "$2" || ( echo "Error while copying $1" ; exit 1 )
+	cp -f -v `echo "$1"` "$2" || ( echo "Error while copying $1" ; exit 1 )
 }
 
