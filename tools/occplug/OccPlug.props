@@ -71,7 +71,7 @@ occPlug.help.label=View help
 
 # Settings, these should probably be overidden depending on installation
 # path, and platform
-options.occPlug.skrocCmd=skroc
+options.occPlug.occbuildCmd=occbuild
 options.occPlug.tvmCmd=tvm
 options.occPlug.tvmArgs=
 options.occPlug.dllCmd=firmdl3

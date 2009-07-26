@@ -51,9 +51,9 @@ public class OccPlugUtil
 
 	private final static String pfix = OccPlugPlugin.OPTION_PREFIX;
 
-	public static String getSkrocCmd()
+	public static String getOccBuildCmd()
 	{
-		return jEdit.getProperty(pfix + "skrocCmd", "");
+		return jEdit.getProperty(pfix + "occbuildCmd", "");
 	}
 
 	public static String getTvmCmd()
