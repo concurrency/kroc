@@ -43,20 +43,20 @@ copyfile "../../tools/occplug/install/OccPlug.jar" \
 copyfile "../common/jEdit-plugin/catalog" "$outputDir/$javaDir/jEdit/modes/"
 copyfile "../common/jEdit-plugin/occam.xml" "$outputDir/$javaDir/jEdit/modes/"
 copydir "../common/jEdit-plugin/dependencies" "$outputDir/$javaDir/jEdit/jars"
-exit 0
+
 # Licenses
-copydir "common-files/licenses" "$outputDir/$rezDir/licenses"
+#copydir "common-files/licenses" "$outputDir/$rezDir/licenses"
 
 # Examples etc (ie course dir)
-copydir_addexcludes common-files/course "$outputDir/course" \
-  "Makefile\.am;\.deps"
+copydir_addexcludes "../../modules/course" "$outputDir/course" \
+  "Makefile\.in;Makefile\.am;\.deps;SConscript"
 
 # Non-course examples
-copydir "common-files/examples" "$outputDir/course/examples"
+#copydir "../..//examples" "$outputDir/course/examples"
 
 # Readme file
 copyfile "skel/README.rtf" "$outputDir/"
 
 #Move those to somewhere sensible
-copyfile "$outputDir/$rezDir/bin/occOPENGL.inc" "$outputDir/$rezDir/lib"
-copyfile "$outputDir/$rezDir/bin/occSDL.inc" "$outputDir/$rezDir/lib"
+#copyfile "$outputDir/$rezDir/bin/occOPENGL.inc" "$outputDir/$rezDir/lib"
+#copyfile "$outputDir/$rezDir/bin/occSDL.inc" "$outputDir/$rezDir/lib"
