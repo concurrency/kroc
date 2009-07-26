@@ -28,6 +28,9 @@ if [ "$?" == "1" ] ; then
   curl -O http://www.libsdl.org/release/$SDL.tar.gz || exit 1
   tar -xvzf $SDL.tar.gz
   cd $SDL
+  # Compiling with newer zquartz (xquartz.macosforge.org)
+  # does not work w/o this patch
+  patch -p0 < ../../patch-SDL_x11gl_c.h.diff
   ./configure --prefix=$INSTALL
   make install
   cd ../..
