@@ -45,7 +45,7 @@ if [ "$?" == "1" ] ; then
     || exit 1
   tar -xvjf $PLAYER.tar.bz2
   cd $PLAYER
-  ./configure --prefix=$INSTALL
+  ./configure --prefix=$INSTALL --disable-jplayer
   make install
   cd ../..
 fi
