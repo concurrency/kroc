@@ -69,7 +69,7 @@ public class ExecWorker extends Thread implements Killable
 			{
 				p = r.exec(cmd, envp, dir);
 			}
-			catch(IOException e)
+			catch(Exception e)
 			{
 				helper.cannotExec(e);
 				helper.finalizer();

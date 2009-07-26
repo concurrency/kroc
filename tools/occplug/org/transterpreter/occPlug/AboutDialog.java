@@ -56,7 +56,7 @@ public class AboutDialog extends EnhancedDialog implements ActionListener
 	
 	private JLabel occPlugVersion;
 	private JLabel transterpreterVersion;
-	private JLabel skrocVersion;
+	private JLabel occbuildVersion;
 	private JLabel slinkerVersion;
 	private JLabel library2Version;
 	private JLabel occ21Version;
@@ -96,10 +96,11 @@ public class AboutDialog extends EnhancedDialog implements ActionListener
 		versions.add(new JLabel("Transterpreter package:"));
 		transterpreterVersion = new JLabel(jEdit.getProperty("occPlug.TransterpreterVersion"));
 		versions.add(transterpreterVersion);
+		/*
 		// skroc
-		versions.add(new JLabel("skroc:"));
-		skrocVersion = new JLabel("getting version information...");
-		versions.add(skrocVersion);
+		versions.add(new JLabel("occbuild:"));
+		occbuildVersion = new JLabel("getting version information...");
+		versions.add(occbuildVersion);
 		// slinker
 		versions.add(new JLabel("slinker:"));
 		slinkerVersion = new JLabel("getting version information...");
@@ -120,6 +121,7 @@ public class AboutDialog extends EnhancedDialog implements ActionListener
 		versions.add(new JLabel("tranx86:"));
 		tranx86Version = new JLabel("getting version information...");
 		versions.add(tranx86Version);
+		*/
 		// tvm
 		versions.add(new JLabel("tvm:"));
 		tvmVersion = new JLabel("getting version information...");
@@ -136,14 +138,8 @@ public class AboutDialog extends EnhancedDialog implements ActionListener
 		//setVisible(true);
 
 		/* Start getting version numbers */
-		Thread threads[] = new Thread[7];
+		Thread threads[] = new Thread[1];
 		int counter = 0;
-		threads[counter++] = getSkrocVersion();
-		threads[counter++] = getSlinkerVersion();
-		threads[counter++] = getLibrary2Version();
-		threads[counter++] = getOcc21Version();
-		threads[counter++] = getIlibrVersion();
-		threads[counter++] = getTranx86Version();
 		threads[counter++] = getTvmVersion();
 		
 		/* Wait for all the threads */
@@ -219,232 +215,6 @@ public class AboutDialog extends EnhancedDialog implements ActionListener
 		{
 			label.setText("Could not execute command");
 		}		
-	}
-	//}}}
-	
-	//{{{ private Thread getSkrocVersion()
-	private Thread getSkrocVersion()
-	{
-		/* $ skroc --version
-		 * skroc version 0.5 (Revision: 756)
-		 * Copyright 2005 M. C. Jadud, C. L. Jacobsen - www.transterpreter.org
-		 */
-		ArrayList skrocCommand = new ArrayList();
-		ArrayList skrocEnv = new ArrayList();
-		skrocCommand.add(OccPlugUtil.pathify(OccPlugUtil.getSkrocCmd()));
-		skrocEnv.add("SKROCPATH=" + MiscUtilities.getParentOfPath((String) skrocCommand.get(0)));
-		
-		/* Add the --version flag */
-		skrocCommand.add("--version");
-
-		CaptureExecWorkerHelper worker = new CaptureExecWorkerHelper(skrocVersion)
-		{
-			public void cmdExited(int exitCode)
-			{
-				label.setText((String) stdOutText.get(0));
-			}
-		};
-		execWorker = new ExecWorker(
-			(String []) skrocCommand.toArray(new String[1]),
-			(String []) skrocEnv.toArray(new String[1]),
-			(File) null,
-			worker);
-		
-		execWorker.start();
-		
-		return execWorker;
-	}
-	//}}}
-	
-	//{{{ private Thread getSlinkerVersion()
-	private Thread getSlinkerVersion()
-	{
-		/*
-		 * $ skroc --slinker-version
-		 * Path to slinker: /Users/clj3/bin/slinker   <-- stderr
-		 * slinker/library2 version 0.5 (Revision: 2162)
-		 * Copyright 2006 M. C. Jadud, C. L. Jacobsen - www.transterpreter.org
-		 * ... gpl disclamer ...
-		 */
-		ArrayList skrocCommand = new ArrayList();
-		ArrayList skrocEnv = new ArrayList();
-		skrocCommand.add(OccPlugUtil.pathify(OccPlugUtil.getSkrocCmd()));
-		skrocEnv.add("SKROCPATH=" + MiscUtilities.getParentOfPath((String) skrocCommand.get(0)));
-		
-		/* Add the --version flag */
-		skrocCommand.add("--slinker-version");
-
-		CaptureExecWorkerHelper worker = new CaptureExecWorkerHelper(slinkerVersion)
-		{
-			public void cmdExited(int exitCode)
-			{
-				label.setText((String) stdOutText.get(0));
-			}
-		};
-		execWorker = new ExecWorker(
-			(String []) skrocCommand.toArray(new String[1]),
-			(String []) skrocEnv.toArray(new String[1]),
-			(File) null,
-			worker);
-		
-		execWorker.start();
-		
-		return execWorker;
-	}
-	//}}}
-	
-	//{{{ private Thread getLibrary2Version()
-	private Thread getLibrary2Version()
-	{
-		/*
-		 * $ skroc --library2-version
-		 * Path to slinker: /Users/clj3/bin/slinker   <-- stderr
-		 * slinker/library2 version 0.5 (Revision: 2162)
-		 * Copyright 2006 M. C. Jadud, C. L. Jacobsen - www.transterpreter.org
-		 * ... gpl disclamer ...
-		 */
-		ArrayList skrocCommand = new ArrayList();
-		ArrayList skrocEnv = new ArrayList();
-		skrocCommand.add(OccPlugUtil.pathify(OccPlugUtil.getSkrocCmd()));
-		skrocEnv.add("SKROCPATH=" + MiscUtilities.getParentOfPath((String) skrocCommand.get(0)));
-		
-		/* Add the --version flag */
-		skrocCommand.add("--library2-version");
-
-		CaptureExecWorkerHelper worker = new CaptureExecWorkerHelper(library2Version)
-		{
-			public void cmdExited(int exitCode)
-			{
-				label.setText((String) stdOutText.get(0));
-			}
-		};
-		execWorker = new ExecWorker(
-			(String []) skrocCommand.toArray(new String[1]),
-			(String []) skrocEnv.toArray(new String[1]),
-			(File) null,
-			worker);
-		
-		execWorker.start();
-		
-		return execWorker;
-	}
-	//}}}
-	
-	//{{{ private Thread getIlibrVersion()
-	private Thread getIlibrVersion()
-	{
-		/* $ skroc --ilibr-version
-		 * Path to ilibr: /Users/clj3/bin/ilibr  <-- stderr
-		 * ilibr : INMOS toolset librarian tool
-		 * PC Version 2.01.03, (Jan 28 2005)
-		 * Compiled from SGS-THOMSON sources with permission
-		 * (c) Copyright INMOS Limited 1990, 1991, 1992, 1993.
-		 *
-		 * Usage: ilibr {option} filename
-		 * ...
-		 */
-		ArrayList skrocCommand = new ArrayList();
-		ArrayList skrocEnv = new ArrayList();
-		skrocCommand.add(OccPlugUtil.pathify(OccPlugUtil.getSkrocCmd()));
-		skrocEnv.add("SKROCPATH=" + MiscUtilities.getParentOfPath((String) skrocCommand.get(0)));
-		
-		/* Add the --version flag */
-		skrocCommand.add("--ilibr-version");
-
-		CaptureExecWorkerHelper worker = new CaptureExecWorkerHelper(ilibrVersion)
-		{
-			public void cmdExited(int exitCode)
-			{
-				label.setText((String) stdOutText.get(1));
-			}
-		};
-		execWorker = new ExecWorker(
-			(String []) skrocCommand.toArray(new String[1]),
-			(String []) skrocEnv.toArray(new String[1]),
-			(File) null,
-			worker);
-		
-		execWorker.start();
-		
-		return execWorker;
-	}
-	//}}}
-
-	//{{{ private Thread getOcc21Version()
-	private Thread getOcc21Version()
-	{
-		/*
-		 * $ skroc --occ21-version
-		 * Path to occ21: /Users/clj3/bin/occ21  <-- stderr
-		 * occ21 : occam 2.1 compiler
-		 * occam 2.1 compiler Version OFA 1.3.3K (Jan 28 2005) (powerpc-apple-darwin7.7.0)
-		 * (c) Copyright SGS-THOMSON Microelectronics Limited 1995,1996,1997
-		 * Modifications (c) Copyright 1998, 1999, 2000, 2001 (see AUTHORS)
-		 * 
-		 * Usage: occ21 filename { -option }
-		 * 
-		 * Options include:
-		 * ...
-		 */
-		ArrayList skrocCommand = new ArrayList();
-		ArrayList skrocEnv = new ArrayList();
-		skrocCommand.add(OccPlugUtil.pathify(OccPlugUtil.getSkrocCmd()));
-		skrocEnv.add("SKROCPATH=" + MiscUtilities.getParentOfPath((String) skrocCommand.get(0)));
-		
-		/* Add the --version flag */
-		skrocCommand.add("--occ21-version");
-
-		CaptureExecWorkerHelper worker = new CaptureExecWorkerHelper(occ21Version)
-		{
-			public void cmdExited(int exitCode)
-			{
-				label.setText((String) stdOutText.get(1));
-			}
-		};
-		execWorker = new ExecWorker(
-			(String []) skrocCommand.toArray(new String[1]),
-			(String []) skrocEnv.toArray(new String[1]),
-			(File) null,
-			worker);
-		
-		execWorker.start();
-		
-		return execWorker;
-	}
-	//}}}
-	
-	//{{{ private Thread getTranx86Version()
-	private Thread getTranx86Version()
-	{
-		/*
-		 * skroc --tranx86-version
-		 * Path to tranx86: /Users/clj3/bin/tranx86 <-- stderr
-		 * tranx86 version 0.9.8-10
-		 */
-		ArrayList skrocCommand = new ArrayList();
-		ArrayList skrocEnv = new ArrayList();
-		skrocCommand.add(OccPlugUtil.pathify(OccPlugUtil.getSkrocCmd()));
-		skrocEnv.add("SKROCPATH=" + MiscUtilities.getParentOfPath((String) skrocCommand.get(0)));
-		
-		/* Add the --version flag */
-		skrocCommand.add("--tranx86-version");
-
-		CaptureExecWorkerHelper worker = new CaptureExecWorkerHelper(tranx86Version)
-		{
-			public void cmdExited(int exitCode)
-			{
-				label.setText((String) stdOutText.get(0));
-			}
-		};
-		execWorker = new ExecWorker(
-			(String []) skrocCommand.toArray(new String[1]),
-			(String []) skrocEnv.toArray(new String[1]),
-			(File) null,
-			worker);
-		
-		execWorker.start();
-		
-		return execWorker;
 	}
 	//}}}
 	

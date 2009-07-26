@@ -700,26 +700,27 @@ public class OccPlug extends JPanel implements EBComponent
 			/* 
 			 * Start of skroc command
 			 */
-			ArrayList skrocCommand = new ArrayList();
-			ArrayList skrocEnv = new ArrayList();
+			ArrayList occbuildCommand = new ArrayList();
+			ArrayList occbuildEnv = new ArrayList();
 			/* We need to set the SKROCPATH environment variable, or skroc is not
 			 * going to be able to find any of its binaries
 			 */
-			final String skrocPath;
+			final String occbuildPath;
 			/* If this is an absolute path, dont touch it, otherwise try to
 			   put in the path we think this should be */
-			if(!MiscUtilities.isAbsolutePath(OccPlugUtil.getSkrocCmd()))
+			if(!MiscUtilities.isAbsolutePath(OccPlugUtil.getOccBuildCmd()))
 			{
-				final String skrocCmdWithPath = MiscUtilities.constructPath(
-					MiscUtilities.constructPath(MiscUtilities.getParentOfPath(jEdit.getJEditHome()), "bin"), OccPlugUtil.getSkrocCmd());
-				skrocCommand.add(skrocCmdWithPath);
-				skrocPath = MiscUtilities.getParentOfPath(skrocCmdWithPath);
+				final String occbuildCmdWithPath = MiscUtilities.constructPath(
+					MiscUtilities.constructPath(MiscUtilities.getParentOfPath(jEdit.getJEditHome()), "bin"), OccPlugUtil.getOccBuildCmd());
+				occbuildCommand.add(occbuildCmdWithPath);
+				occbuildPath = MiscUtilities.getParentOfPath(occbuildCmdWithPath);
 			}
 			else
 			{
-				skrocCommand.add(OccPlugUtil.getSkrocCmd());
-				skrocPath = MiscUtilities.getParentOfPath(OccPlugUtil.getSkrocCmd());
+				occbuildCommand.add(OccPlugUtil.getOccBuildCmd());
+				occbuildPath = MiscUtilities.getParentOfPath(OccPlugUtil.getOccBuildCmd());
 			}
+			/*
 			skrocEnv.add("SKROCPATH=" + skrocPath);
       skrocEnv.add("SKROC_TVM_CONFIG_H=" + 
           MiscUtilities.constructPath(
@@ -733,23 +734,28 @@ public class OccPlug extends JPanel implements EBComponent
 				// is this a safe thing to do?
 				skrocEnv.add("DYLD_FRAMEWORK_PATH=" + skrocPath);
 			} /* if OperatingSystem.isMacOS() */
+	    		occbuildEnv.add("OCC21=" + MiscUtilities.constructPath(occbuildPath, "occ21"));
+			occbuildEnv.add("TCE-DUMP.PL=" + MiscUtilities.constructPath(occbuildPath, "tce-dump.pl"));
+			occbuildEnv.add("PLINKER.PL=" + MiscUtilities.constructPath(occbuildPath, "plinker.pl"));
 			/* Make error messages brief */
-			skrocCommand.add("--brief");
+			occbuildCommand.add("--occ21-opts");
+			occbuildCommand.add("-b");
+			occbuildCommand.add("--prefix=" + MiscUtilities.getParentOfPath(occbuildPath));
 			// Verbose SKRoC if we are verbose
 			if(OccPlugUtil.getVerbose())
 			{
-				skrocCommand.add("-v");
+				occbuildCommand.add("-v");
 			}
 			// Set up the master library path to the one contained within
 			// the Transterpreter if none is specified
-			skrocCommand.add("-L");
+			occbuildCommand.add("--search");
 			if(OccPlugUtil.getMasterLibraryPath().equals(""))
 			{
-				skrocCommand.add(MiscUtilities.constructPath(MiscUtilities.getParentOfPath(jEdit.getJEditHome()), "lib"));
+				occbuildCommand.add(MiscUtilities.constructPath(MiscUtilities.getParentOfPath(jEdit.getJEditHome()), "lib"));
 			}
 			else
 			{
-				skrocCommand.add(OccPlugUtil.getMasterLibraryPath());
+				occbuildCommand.add(OccPlugUtil.getMasterLibraryPath());
 			}
       
 			/* Libraries */
@@ -775,51 +781,53 @@ public class OccPlug extends JPanel implements EBComponent
 			{
 				//skrocCommand.add("--slinker-opts");
 				//skrocCommand.add("--tlp-types " + cm + "\"(CHAN BYTE IN, CHAN BYTE OUT, CHAN P.LASER@#105438A5 OUT, CHAN P.LED@#BDCB1BE5 OUT, CHAN P.MOTOR@#779CE8A5 OUT)" + cm + "\"");
-				skrocCommand.add("--blackfin");
-        skrocCommand.add("--no-std-libs");
-				skrocCommand.add("-f");
-				skrocCommand.add(srvFile);
+				occbuildCommand.add("--blackfin");
+				occbuildCommand.add("--no-std-libs");
+				occbuildCommand.add("-f");
+				occbuildCommand.add(srvFile);
 			}
-      else if(type.equals("Mindstorms RCX"))
+			else if(type.equals("Mindstorms RCX"))
 			{
-				skrocCommand.add("--slinker-opts");
-				skrocCommand.add("--tlp-types " + cm + "\"()" + cm + "\"");
-				skrocCommand.add("--target");
-				skrocCommand.add("t2");
-				skrocCommand.add("--srec");
-				skrocCommand.add("-f");
-				skrocCommand.add(srecFile);
+				//occbuildCommand.add("--slinker-opts");
+				//occbuildCommand.add("--tlp-types " + cm + "\"()" + cm + "\"");
+				occbuildCommand.add("--target");
+				occbuildCommand.add("t2");
+				occbuildCommand.add("--srec");
+				occbuildCommand.add("-f");
+				occbuildCommand.add(srecFile);
 			}
 			else if(type.equals("Desktop"))
 			{
-				skrocCommand.add("--slinker-opts");
-				skrocCommand.add("--tlp-types " + cm + "\"(CHAN BYTE IN, CHAN BYTE OUT, CHAN BYTE OUT)" + cm + "\"");
-				skrocCommand.add("--target");
-				skrocCommand.add("t8");
-				skrocCommand.add("--bytecode");
-				skrocCommand.add("-f");
-				skrocCommand.add(tbcFile);
+				//occbuildCommand.add("--slinker-opts");
+				//occbuildCommand.add("--tlp-types " + cm + "\"(CHAN BYTE IN, CHAN BYTE OUT, CHAN BYTE OUT)" + cm + "\"");
+				//occbuildCommand.add("--target");
+				//occbuildCommand.add("t8");
+				//occbuildCommand.add("--bytecode");
+				//occbuildCommand.add("-f");
+				//occbuildCommand.add(tbcFile);
+				occbuildCommand.add("--toolchain=tvm");
+				occbuildCommand.add("--program");
 			} else {
 				compileConsoleDoc.writeError("Error: I don't understand '" + type + "' as a platform type!\n");
 				return 0;
 			}
-			skrocCommand.add(occFile);
+			occbuildCommand.add(occFile);
 
 			// Say what we are doing
 			compileConsoleDoc.writeRegular("Compiling: " + occFile + "\n");
 			//compileConsoleDoc.writeRegular(skrocCommand + "\n");			
-			writeVerbose(skrocCommand + "\n", compileConsoleDoc);
+			writeVerbose(occbuildCommand + "\n", compileConsoleDoc);
 			
 			// Set up the environment
-			String[] env = (String[]) skrocEnv.toArray(new String[1]);
+			String[] env = (String[]) occbuildEnv.toArray(new String[1]);
 			//compileConsoleDoc.writeRegular(skrocEnv + "\n");
-			writeVerbose(skrocEnv + "\n", compileConsoleDoc);
-			
+			writeVerbose(occbuildEnv + "\n", compileConsoleDoc);
+						
 			execWorker = new ExecWorker(
-				(String []) skrocCommand.toArray(new String[1]),
-				(String []) skrocEnv.toArray(new String[1]),
+				(String []) occbuildCommand.toArray(new String[1]),
+				(String []) occbuildEnv.toArray(new String[1]),
 				new File(directory),
-				new NonInteractiveExecWorkerHelper("skroc", buffer.getDirectory())
+				new NonInteractiveExecWorkerHelper("occbuild", buffer.getDirectory())
 				{
 					public Thread stdoutHandlerSetup(InputStream stdout)
 					{
