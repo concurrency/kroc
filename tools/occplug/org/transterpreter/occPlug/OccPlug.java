@@ -1125,6 +1125,15 @@ public class OccPlug extends JPanel implements EBComponent
 	public void tvmrun(final String filename, final String workingDir) throws IOException
 	{
 		ArrayList tvmCommand = new ArrayList();
+		ArrayList runEnv = new ArrayList();
+
+
+		String fw_p = MiscUtilities.constructPath(
+        MiscUtilities.getParentOfPath(
+        MiscUtilities.getParentOfPath(
+          OccPlugUtil.pathify(OccPlugUtil.getTvmCmd()))),
+        "share/tvm/firmware/tvm-posix.tbc");
+		runEnv.add("TVM_FIRMWARE_FILE=" + fw_p);
 
 		tvmCommand.add(OccPlugUtil.pathify(OccPlugUtil.getTvmCmd()));
 		tvmCommand.add(filename);
@@ -1137,10 +1146,15 @@ public class OccPlug extends JPanel implements EBComponent
 
 		terminal.reset(); /* This does not clear the terminal, which is ok */
 		terminal.putString("Running: " + filename + "\r\n");
-			
+
+		String[] env = (String[]) runEnv.toArray(new String[1]);
+		if(runEnv.size() == 0)
+		{
+			env = null;
+		}
 		execWorker = new ExecWorker(
 			(String []) tvmCommand.toArray(new String[1]),
-			(String []) null,
+			(String []) env,
 			new File(workingDir),
 			new TerminalExecWorkerHelper(filename));
 		
