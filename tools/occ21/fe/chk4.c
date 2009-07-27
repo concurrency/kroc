@@ -3447,6 +3447,20 @@ printtreenl (stderr, 4, newlhs);
 				}
 				/*}}}*/
 #endif
+				/*{{{  fix CASE-less variant input */
+				/* We must do this after we've scoped the LHS, but before we scope the RHS */
+				if ((TagOf (t) == S_INPUT) || (TagOf (t) == S_X_INPUT)) {
+					treenode *const lhstype = typecheck (LHSOf (t), unknownnodeptr);
+					if ((TagOf (lhstype) == S_CHAN) || (TagOf (lhstype) == S_PORT)) {
+						treenode *protocol = ProtocolOf (lhstype);
+						if (TagOf (protocol) == N_TPROTDEF) {
+							/* This is a plain input on a channel/port that carries a tagged protocol;
+							   turn it into the equivalent tagged (? CASE foo) input */
+							SetTag (t, (TagOf (t) == S_INPUT) ? S_TAGGED_INPUT : S_X_TAGGED_INPUT);
+						}
+					}
+				}
+				/*}}}*/
 				/*{{{  check for special scope rules */
 #ifdef OCCAM2_5
 				switch (TagOf (t)) {
