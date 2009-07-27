@@ -43,7 +43,6 @@ target_cpu = "@KROC_TARGET_CPU@"
 target_os = "@KROC_TARGET_OS@"
 patterns = None
 build_shared = True
-isearch = []
 
 def warn(*s):
 	print >>sys.stderr, "occbuild: " + "".join(map(str, s))
@@ -107,7 +106,10 @@ def make_relative_path(source, dest):
 		output.append(os.path.pardir)
 	output += dest_split
 
-	return reduce(os.path.join, output)
+	if output == []:
+		return "."
+	else:
+		return reduce(os.path.join, output)
 
 def run(cmd):
 	"""Run a command, and check that it succeeded."""
@@ -188,29 +190,30 @@ def set_ld_path():
 		path += ":" + old_path
 	os.putenv(var, path)
 
-def build_isearch(tc_isearch):
-	dirs = search_path
+def build_default_search_path(tc_search_path):
+	"""Build the default search path, based on environment variables and
+	the directories the toolchain thinks should be in it."""
+
+	global search_path
+
 	if in_tree is not None:
 		# forall and the TVM specials are not included explicitly in
 		# the search path, so we must add them. Other modules should
 		# have been listed as dependencies.
-		dirs += [
+		search_path += [
 			in_tree + "/modules/inmoslibs/libsrc/forall",
 			in_tree + "/tvm/posix",
 			]
 	else:
-		dirs += tc_isearch
-	path = [os.path.join(os.getcwd(), dir) for dir in dirs]
+		search_path += tc_search_path
+
 	old_path = os.getenv("ISEARCH")
 	if old_path is not None:
-		path += old_path.split(':')
-	global isearch
-	isearch = path
+		search_path += old_path.split(':')
 
-def set_isearch(tc_isearch):
+def set_isearch():
 	"""Set ISEARCH using search path.  This is for the benefit of occ21."""
-	build_isearch(tc_isearch)
-	path = ":".join(isearch)
+	path = ":".join(search_path)
 	os.putenv("ISEARCH", path)
 
 def make_static(library, objs):
@@ -321,7 +324,7 @@ def get_uselibs(etc_file):
 def resolve_library(lib):
 	if os.path.exists(lib + ".lib"):
 		return lib + ".lib"
-	for dir in isearch:
+	for dir in search_path:
 		path = os.path.join(dir, lib + ".lib")
 		if os.path.exists(path):
 			return path
@@ -386,9 +389,9 @@ class Toolchain:
 		-DOCCBUILD_nameoftoolchain."""
 		pass
 
-	def isearch(self):
+	def search_path(self):
 		"""Return a list of directories that should be included in
-		ISEARCH."""
+		search_path when compiling outside the KRoC tree."""
 		pass
 
 	def update_patterns(self, patterns):
@@ -520,7 +523,7 @@ class KRoCToolchain(Toolchain):
 		cflags += " " + capture(programs["kroc"] + ["--ccincpath"])
 		print tidy_spaces(cflags)
 	
-	def isearch(self):
+	def search_path(self):
 		krocdir = get_install_dir("@KROC_KROCDIR@", "/share/kroc")
 		return [krocdir + "/vtlib", krocdir + "/vtinclude"]
 	
@@ -682,7 +685,7 @@ class TVMToolchain(Toolchain):
 		print "-DOCCBUILD_TVM"
 		# FIXME: what cflags?
 	
-	def isearch(self):
+	def search_path(self):
 		tvmdir = get_install_dir("@TVM_TVMDIR@", "/share/tvm")
 		return [tvmdir + "/vtlib", tvmdir + "/vtinclude"]
 	
@@ -853,7 +856,7 @@ class TockToolchain:
 	def cflags(self):
 		cflags = "-DOCCBUILD_KROC"
 		print tidy_spaces(cflags)
-	def isearch(self):
+	def search_path(self):
 		return capture(programs["tock"] + ["--module-path"]).strip().split(":") + capture(programs["tock"] + ["--include-path"]).strip().split(":") + capture(programs["tock"] + ["--lib-path"]).strip().split(":")
 
 	def update_patterns(self,patterns):
@@ -1045,16 +1048,22 @@ def main(args):
 		programs["tce-dump.pl"] = [in_tree + "/tools/plinker/tce-dump.pl"] + programs["tce-dump.pl"][1:]
 		programs["tvm"] = [in_tree + "/tvm/posix/tvm"] + programs["tvm"][1:]
 
+	build_default_search_path(toolchain.search_path())
+
 	if mode in ("object", "program"):
 		# If we're building a source file in another directory
 		# (e.g. ../../libsrc/foo.occ), then we need to add search paths
-		# relative to that directory too.
-		added_paths = []
+		# relative to that directory too. This handles the case when
+		# we're building with a separate object directory (even for
+		# modules in the whole KRoC tree).
 		here = os.getcwd()
 		for source in [target] + args:
+			if source is None or source == "":
+				continue
+
 			sd = os.path.dirname(source)
 			if sd != ".":
-				added_paths.append(sd)
+				added_paths = [sd]
 
 				for dir in search_path:
 					# Work out the relative path from the
@@ -1066,12 +1075,20 @@ def main(args):
 					# the source directory.
 					added_paths.append(os.path.normpath(os.path.join(sd, rel)))
 
-		# Add any paths that aren't in the search path already.
-		for dir in added_paths:
-			if not dir in search_path:
-				search_path.append(dir)
+				search_path += added_paths
 
-	set_isearch(toolchain.isearch())
+	# Tidy up the search path, now we've added everything to it.
+	tidy_search_path = []
+	for dir in search_path:
+		# Make the paths absolute, and normalise them.
+		dir = os.path.normpath(os.path.abspath(dir))
+
+		# Remove duplicate paths.
+		if not dir in tidy_search_path:
+			tidy_search_path.append(dir)
+	search_path = tidy_search_path
+
+	set_isearch()
 	for dir in search_path:
 		programs["cc"] += ["-L" + dir]
 		programs["kroc"] += ["-I" + dir, "-L" + dir]
