@@ -16,9 +16,6 @@
 
 VAL INT LED.PIN IS 13:
 
-DATA TYPE SIGNAL IS BOOL:
-VAL SIGNAL SIGNAL.VALUE IS TRUE:
-
 DATA TYPE LEVEL IS BOOL:
 VAL LEVEL HIGH IS TRUE:
 VAL LEVEL LOW IS FALSE:
@@ -99,7 +96,7 @@ PROC level.to.signal (CHAN LEVEL in?, CHAN SIGNAL out!)
     SEQ
       LEVEL any:
       in ? any
-      out ! SIGNAL.VALUE
+      out ! SIGNAL
 :
 
 PROC invert.level (CHAN LEVEL in?, out!)
@@ -122,7 +119,7 @@ PROC tick (VAL INT period, CHAN SIGNAL out!)
   WHILE TRUE
     SEQ
       delay (period)
-      out ! SIGNAL.VALUE
+      out ! SIGNAL
 :
 
 PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
@@ -130,8 +127,7 @@ PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
   WHILE TRUE
     SEQ
       out ! level
-      SIGNAL any:
-      in ? any
+      in ? SIGNAL
       level := NOT level
 :
 
