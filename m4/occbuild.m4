@@ -59,7 +59,7 @@ AC_REQUIRE([OCCAM_TOOLCHAIN])
 
 AC_ARG_VAR(OCCBUILD, [Path to occbuild])
 if test "x$KROC_BUILD_ROOT" != "x"; then
-  OCCBUILD="$KROC_BUILD_ROOT/tools/kroc/occbuild --in-tree $KROC_BUILD_ROOT"
+  OCCBUILD="$KROC_BUILD_ROOT/tools/kroc/occbuild --in-tree $KROC_BUILD_ROOT --src-tree $KROC_SRC_ROOT"
 else
   AC_CHECK_PROG(OCCBUILD, occbuild, occbuild, no)
   if test $OCCBUILD = no; then
@@ -133,9 +133,9 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
     checked_already="$checked_already $want_file"
     AC_MSG_CHECKING([for in-tree include file $want_file])
     found_this=no
-    while read file path deps; do
+    while read file path src_path deps; do
       if test "$file" = "$want_file" && test "$path" != "-"; then
-        OCCBUILD="$OCCBUILD --search $path"
+        OCCBUILD="$OCCBUILD --search $path --search $src_path"
         found_this=yes
         found_deps="$deps"
         break
@@ -199,6 +199,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   else
     dir=`pwd`/$2
   fi
+  src_dir=$KROC_SRC_ROOT${dir##$KROC_BUILD_ROOT}
   if test "x$3" = "x"; then
     deps="$OCCAM_INCLUDED"
   elif test "x$3" = "xnone"; then
@@ -213,7 +214,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   fi
   touch $KROC_BUILD_ROOT/in-tree-modules
   for file in $1; do
-    (grep -v "^$file " $KROC_BUILD_ROOT/in-tree-modules; if $condition; then echo "$file $dir $deps"; else echo "$file -"; fi) | sort >$KROC_BUILD_ROOT/in-tree-modules.new
+    (grep -v "^$file " $KROC_BUILD_ROOT/in-tree-modules; if $condition; then echo "$file $dir $src_dir $deps"; else echo "$file -"; fi) | sort >$KROC_BUILD_ROOT/in-tree-modules.new
     mv -f $KROC_BUILD_ROOT/in-tree-modules.new $KROC_BUILD_ROOT/in-tree-modules
   done
 fi
