@@ -4,6 +4,7 @@ PLAYER=player-2.1.2
 STAGE=stage-2.1.1
 
 INSTALL=$PWD/install
+BUILD=$PWD/build
 
 PATH=$PATH:$PWD/install/bin
 export PATH
@@ -68,15 +69,19 @@ cd ../../
 
 autoreconf -v -f -i
 
-make distclean
+cd $BUILD
+mkdir kroc-ccsp
+cd kroc-ccsp
 
-./configure --with-toolchain=kroc --prefix=$INSTALL
+../../../../configure --with-toolchain=kroc --prefix=$INSTALL
 make
 make install
 
-make distclean
+cd $BUILD
+mkdir kroc-tvm
+cd kroc-tvm
 
-./configure --with-toolchain=tvm --prefix=$INSTALL
+../../../../configure --with-toolchain=tvm --prefix=$INSTALL
 make
 make install
 
