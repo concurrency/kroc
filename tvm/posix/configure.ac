@@ -28,6 +28,8 @@ OCCAM_OCCBUILD
 #  Host Configuration
 #########################
 
+OCCAM_TARGET_PREFIX
+
 # OS configuration
 case "$host_os" in
   cygwin*)
@@ -65,8 +67,8 @@ TVM_LIBTVM
 
 CFLAGS="-Wall $TVM_CFLAGS $CFLAGS"
 LIBS="-lm $TVM_LIBS $LIBS"
-TVM_FIRMWARE_PATH="$datadir/tvm/firmware/"
-TVM_LIBRARY_PATH="$libdir/tvm/"
+TVM_FIRMWARE_PATH="$datadir/tvm/${KROC_TARGET_PREFIX}firmware/"
+TVM_LIBRARY_PATH="$libdir/${KROC_TARGET_PREFIX}tvm/"
 
 # OS
 case "$x_os" in

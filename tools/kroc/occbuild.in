@@ -43,6 +43,7 @@ destdir = ""
 target_alias = "@target_alias@"
 target_cpu = "@KROC_TARGET_CPU@"
 target_os = "@KROC_TARGET_OS@"
+target_prefix = "@KROC_TARGET_PREFIX@"
 patterns = None
 build_shared = True
 #}}}
@@ -151,14 +152,6 @@ def capture(cmd):
 		die("Command failed: ", " ".join(cmd))
 
 	return data
-
-def target_tool_name(tool):
-	"""Return the name of a tool (e.g. ilibr), appropriately mangled for
-	the target system this occbuild was configured for (e.g. avr-ilibr)."""
-	if target_alias == "":
-		return tool
-	else:
-		return target_alias + "-" + tool
 
 def find_in_path(file, path):
 	"""Search for file in all the directories listed in path."""
@@ -489,8 +482,8 @@ class KRoCToolchain(Toolchain):
 		libdir = get_install_dir("@KROC_ARCHLIBDIR@", "/lib")
 		includedir = get_install_dir("@KROC_ARCHINCDIR@", "/include/kroc")
 		krocdir = get_install_dir("@KROC_KROCDIR@", "/share/kroc")
-		vtlibdir = krocdir + "/vtlib"
-		vtincludedir = krocdir + "/vtinclude"
+		vtlibdir = krocdir + "/" + target_prefix + "vtlib"
+		vtincludedir = krocdir + "/" + target_prefix + "vtinclude"
 
 		(base, ext) = split_ext(file)
 		if ext == "lib":
@@ -508,7 +501,7 @@ class KRoCToolchain(Toolchain):
 			install(file, bindir, True)
 
 	def install_examples(self, package, file):
-		examplesdir = "%s/%s" % (get_install_dir("@KROC_EXAMPLESDIR@", "/lib/kroc/examples"), package)
+		examplesdir = "%s/%s" % (get_install_dir("@KROC_EXAMPLESDIR@", "/lib/kroc/" + target_prefix + "examples"), package)
 
 		(base, ext) = split_ext(file)
 		if ext == "":
@@ -537,7 +530,10 @@ class KRoCToolchain(Toolchain):
 	
 	def search_path(self):
 		krocdir = get_install_dir("@KROC_KROCDIR@", "/share/kroc")
-		return [krocdir + "/vtlib", krocdir + "/vtinclude"]
+		return [
+			krocdir + "/" + target_prefix + "vtlib",
+			krocdir + "/" + target_prefix + "vtinclude",
+			]
 	
 	def update_patterns(self, patterns):
 		pass
@@ -652,10 +648,10 @@ class TVMToolchain(Toolchain):
 	def install(self, file):
 		bindir = get_install_dir("@TVM_BINDIR@", "/bin")
 		includedir = get_install_dir("@TVM_ARCHINCDIR@", "/include/tvm")
-		libdir = get_install_dir("@TVM_LIBDIR@", "/lib/tvm")
+		libdir = get_install_dir("@TVM_LIBDIR@", "/lib/" + target_prefix + "tvm")
 		tvmdir = get_install_dir("@TVM_TVMDIR@", "/share/tvm")
-		vtlibdir = tvmdir + "/vtlib"
-		vtincludedir = tvmdir + "/vtinclude"
+		vtlibdir = tvmdir + "/" + target_prefix + "vtlib"
+		vtincludedir = tvmdir + "/" + target_prefix + "vtinclude"
 
 		(base, ext) = split_ext(file)
 		if ext == "lib":
@@ -672,7 +668,7 @@ class TVMToolchain(Toolchain):
 			install(base + ".tbc", bindir, False)
 
 	def install_examples(self, package, file):
-		examplesdir = "%s/%s" % (get_install_dir("@TVM_EXAMPLESDIR@", "/lib/tvm/examples"), package)
+		examplesdir = "%s/%s" % (get_install_dir("@TVM_EXAMPLESDIR@", "/lib/tvm/" + target_prefix + "examples"), package)
 
 		(base, ext) = split_ext(file)
 		if ext == "":
@@ -700,7 +696,10 @@ class TVMToolchain(Toolchain):
 	
 	def search_path(self):
 		tvmdir = get_install_dir("@TVM_TVMDIR@", "/share/tvm")
-		return [tvmdir + "/vtlib", tvmdir + "/vtinclude"]
+		return [
+			tvmdir + "/" + target_prefix + "vtlib",
+			tvmdir + "/" + target_prefix + "vtinclude",
+			]
 	
 	def update_patterns(self, patterns):
 		for key in patterns.keys():
@@ -962,7 +961,7 @@ def main(args):
 	tool("ar", "@TARGET_AR@")
 	tool("ranlib", "@TARGET_RANLIB@")
 	for prog in ("kroc", "ilibr", "occ21", "plinker.pl", "tce-dump.pl", "tock", "tvm"):
-		tool(prog, target_tool_name(prog))
+		tool(prog, target_prefix + prog)
 	for prog in ("install",):
 		tool(prog, prog)
 	#}}}

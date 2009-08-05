@@ -775,7 +775,7 @@ fi
 #}}}
 #{{{  build colon-separated search path for libraries
 if [ "$intree" = "" ]; then
-  ocspath="$kroc_krocdir/vtlib:$kroc_krocdir/vtinclude"
+  ocspath="$kroc_krocdir/@KROC_TARGET_PREFIX@vtlib:$kroc_krocdir/@KROC_TARGET_PREFIX@vtinclude"
 else
   ocspath="$intree/modules/inmoslibs/libsrc/forall"
 fi
