@@ -40,6 +40,7 @@ includes_after = []
 static_link = False
 prefix = None
 destdir = ""
+target_alias = "@target_alias@"
 target_cpu = "@KROC_TARGET_CPU@"
 target_os = "@KROC_TARGET_OS@"
 patterns = None
@@ -154,11 +155,10 @@ def capture(cmd):
 def target_tool_name(tool):
 	"""Return the name of a tool (e.g. ilibr), appropriately mangled for
 	the target system this occbuild was configured for (e.g. avr-ilibr)."""
-	target = "@target_alias@"
-	if target == "":
+	if target_alias == "":
 		return tool
 	else:
-		return target + "-" + tool
+		return target_alias + "-" + tool
 
 def find_in_path(file, path):
 	"""Search for file in all the directories listed in path."""
@@ -887,7 +887,7 @@ toolchains = {
 
 #{{{  usage
 def usage(f):
-	print >>f, """occbuild, version """ + VERSION + """
+	print >>f, """occbuild version """ + VERSION + """, for """ + target_cpu + """ """ + target_os + """
 Compile occam-pi libraries and programs
 Usage:
 
@@ -920,8 +920,6 @@ Options for all modes:
   --help              Show usage
   --toolchain CHAIN   Use toolchain CHAIN (""" + "/".join(safe_sorted(toolchains.keys())) + """, default @OCCBUILD_TOOLCHAIN@)
   --search DIR        Add DIR to search path for include files and libraries
-  --target-cpu CPU    Override CPU target for binaries (default @KROC_TARGET_CPU@)
-  --target-os OS      Override OS target for binaries (default @KROC_TARGET_OS@)
 
 For each program prog of """ + ", ".join(safe_sorted(programs.keys())) + """:
   --prog PATH         Path to prog (or set PROG=PATH in the environment)
@@ -994,7 +992,7 @@ def main(args):
 	global std_libs, verbose, in_tree, search_path
 	global occ21_opts, tock_opts, linker_opts, needs
 	global includes_before, includes_after, static_link
-	global prefix, destdir, examples, target_cpu, target_os
+	global prefix, destdir, examples
 	for (o, a) in opts:
 		if o in ("--object", "--library", "--program", "--run",
 		         "--install", "--install-examples",
@@ -1041,10 +1039,6 @@ def main(args):
 			destdir = a
 		elif o == "--no-std-libs":
 			std_libs = False
-		elif o == "--target-cpu":
-			target_cpu = a
-		elif o == "--target-os":
-			target_os = a
 		else:
 			for prog in programs.keys():
 				if o == "--" + prog:
