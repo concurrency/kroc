@@ -975,7 +975,7 @@ def main(args):
 		"in-tree=", "toolchain=", "search=",
 		"occ21-opts=", "need=", "include=", "include-after=",
 		"static", "output=",
-		"prefix=", "destdir=", "target-cpu=", "target-os="
+		"prefix=", "destdir=",
 		]
 	for prog in programs.keys():
 		long_opts += [prog + "=", prog + "-opts="]
