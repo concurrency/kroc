@@ -242,3 +242,24 @@ fi
 AM_CONDITIONAL(HAVE_SWIG_OCCAM, test "x$HAVE_SWIG_OCCAM" = "xyes")
 rm -f conftest.i
 ])dnl
+dnl
+dnl Set KROC_TARGET_PREFIX to the string that's prepended to tool and directory
+dnl names when cross-building.
+AC_DEFUN([OCCAM_TARGET_PREFIX],
+[dnl
+AC_REQUIRE([AC_CANONICAL_TARGET])
+AC_REQUIRE([AC_ARG_PROGRAM])
+
+# Check that the user isn't trying to do a transformation other than a prefix.
+case `echo xyz | sed "$program_transform_name"`
+in
+	*xyz)
+		;;
+	*)
+		AC_MSG_ERROR([program name transformations for KRoC may only be simple prefixes])
+		;;
+esac
+
+KROC_TARGET_PREFIX=`echo "" | sed "$program_transform_name"`
+AC_SUBST(KROC_TARGET_PREFIX)
+])dnl
