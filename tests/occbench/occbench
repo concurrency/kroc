@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+#
+#	Harness for Performance Regression Testing in occam-pi
+#	Copyright (C) 2009  Carl Ritson <cgr@kent.ac.uk>
+#
+#	This program is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; either version 2 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program; if not, write to the Free Software
+#	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+import sys, os, getopt
+
+VERSION = ""
+CONTACT = "kroc-bugs@kent.ac.uk"
+
+def warn(*s):
+	print >>sys.stderr, "occbench: " + "".join(map(str, s))
+
+def die(*s):
+	warn(*s)
+	sys.exit(1)
+
+def run_command(cmd):
+	"""Run a program with arguments and return the exit code.
+	Equivalent to subprocess.call, but works on Python 2.3 when os.spawnvp
+	is available."""
+	try:
+		import subprocess
+		return subprocess.call(cmd)
+	except ImportError:
+		return os.spawnvp(os.P_WAIT, cmd[0], cmd)
+
+def usage(f):
+	print >>f, """occbench, version """ + VERSION + """
+Run occam-pi benchmark tests 
+Usage:
+
+  FIXME
+
+Report bugs to <""" + CONTACT + """>."""
+
+def main(args):
+	die("Not implemented")
+
+if __name__ == "__main__":
+	main(sys.argv[1:])
+
