@@ -18,10 +18,14 @@
 #	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-import sys, os, getopt
+import sys, os, getopt, re
 
-VERSION = ""
+VERSION = "$Rev$"[11:-2]
 CONTACT = "kroc-bugs@kent.ac.uk"
+
+name_re = re.compile(r"^--\s*OCCBENCH\s+NAME\s*:\s*(.*)\s*$", re.MULTILINE)
+type_re = re.compile(r"^--\s*OCCBENCH\s+TYPE\s*:\s*(.*)\s*$", re.MULTILINE)
+source_re = re.compile(r".occ$", re.IGNORECASE)
 
 def warn(*s):
 	print >>sys.stderr, "occbench: " + "".join(map(str, s))
@@ -40,17 +44,74 @@ def run_command(cmd):
 	except ImportError:
 		return os.spawnvp(os.P_WAIT, cmd[0], cmd)
 
+def parse_file(path):
+	f = open(path)
+	if not f:
+		warn("unable to open " + path)
+		return
+
+	data = f.read()
+	f.close()
+
+	test_name = name_re.search(data)
+	test_type = type_re.search(data)
+	if test_name and test_type:
+		test = { 
+			'path' : path,
+			'name' : test_name.group(1),
+			'type' : test_type.group(1)
+		}
+		return test
+
+def parse_dir(path):
+	files = os.listdir(path)
+	tests = {}
+	for fn in files:
+		if source_re.search(fn):
+			fpath = os.path.join(path, fn)
+			data = parse_file(fpath)
+			if data:
+				tests[fpath] = data
+	return tests
+
 def usage(f):
 	print >>f, """occbench, version """ + VERSION + """
 Run occam-pi benchmark tests 
 Usage:
 
-  FIXME
+  occbench [OPTIONS] DIRECTORY
+    Run tests contained in DIRECTORY
+
+Options:
+  --append FILE    Append test log to FILE
+  --output FILE    Output test log to FILE
 
 Report bugs to <""" + CONTACT + """>."""
 
 def main(args):
-	die("Not implemented")
+	long_opts = [ "append=", "output=" ]
+
+	try:
+		opts, args = getopt.getopt(args, "", long_opts)
+	except getopt.GetoptError:
+		usage(sys.stderr)
+		sys.exit(1)
+	
+	append_logs = []
+	output_logs = []
+
+	for (o, a) in opts:
+		if o is "--append":
+			append_logs.append(a)
+		elif o is "--output":
+			output_logs.append(a)
+	
+	if args == []:
+		die("No test directory specified")
+	
+
+	tests = parse_dir(args[0])
+	print tests
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
