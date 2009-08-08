@@ -4,6 +4,7 @@
 --	COMPLEX64 code Copyright (C) 1997 D.C. Wood <D.C.Wood@ukc.ac.uk>
 --      (distributed version, client)
 --	Modifications (C) 2001, 2007 Fred Barnes
+--      Modified for use as benchmark (C) 2009 Carl Ritson
 --
 --	This program is free software; you can redistribute it and/or modify
 --	it under the terms of the GNU General Public License as published by
@@ -34,17 +35,13 @@ DATA TYPE COMPLEX64
 :
 
 VAL INT IMAGE.WIDTH IS 100:
-VAL INT IMAGE.HEIGHT IS 50:
+VAL INT IMAGE.HEIGHT IS 100:
 
 VAL INT N.WORKERS IS 32:
-VAL INT N.ITERS IS 850:
+VAL INT N.ITERS IS 128:
 VAL INT MAX.FRAMES IS 8:
 
-VAL INT FRAME.SPEED IS 40000:
-
 VAL INT LINES.PER.WORKER IS (IMAGE.HEIGHT / N.WORKERS):
-
-VAL [][5]BYTE ansicolours IS ["*#1B[31m", "*#1B[32m", "*#1B[33m", "*#1B[36m", "*#1B[35m", "*#1B[34m"]:
 
 PROTOCOL P.JOB.IN IS INT; INT; [4]REAL64:
 PROTOCOL P.JOB.OUT IS INT; INT; [IMAGE.WIDTH * 2]BYTE:
@@ -161,18 +158,12 @@ PROC farmer (CT.WORK.IN? link.in, CHAN INT tick!, tock?, kill!)
     kill ! 0
 :
 
-PROC harvester (CT.WORK.OUT? link.out, CHAN INT tick?, tock!, kill?, CHAN BYTE scr!)
+PROC harvester (CT.WORK.OUT? link.out, CHAN INT tick?, tock!, kill?)
   [MAX.FRAMES][IMAGE.HEIGHT][IMAGE.WIDTH * 2]BYTE framebuffer:
   [MAX.FRAMES]INT fcount:
-  TIMER tim:
-  INT t:
-  VAL INT frame.speed IS FRAME.SPEED:
   SEQ
     SEQ i = 0 FOR SIZE fcount
       fcount[i] := IMAGE.HEIGHT
-
-    tim ? t
-    t := t PLUS frame.speed
 
     INITIAL INT lframe IS 0:
     INITIAL INT hframe IS 0:
@@ -188,35 +179,8 @@ PROC harvester (CT.WORK.OUT? link.out, CHAN INT tick?, tock!, kill?, CHAN BYTE s
                 -- got all results for the lowest frame
                 INITIAL INT lbuf IS (lframe \ MAX.FRAMES):
                 SEQ
-                  tim ? AFTER t
-
                   fcount[lbuf] := IMAGE.HEIGHT
-                  --{{{  dump framebuffer[lbuf]
-                  cursor.x.y (1, 1, scr!)
-
-                  INITIAL BYTE cpix IS #FF:
-                  SEQ j = 0 FOR IMAGE.HEIGHT
-                    SEQ
-                      SEQ i = 0 FOR IMAGE.WIDTH
-                        BYTE v:
-                        SEQ
-                          v := framebuffer[lbuf][j][i*2]
-                          IF
-                            cpix <> v
-                              SEQ
-                                cpix := v
-                                out.string (ansicolours[INT cpix], 0, scr!)
-                            TRUE
-                              SKIP
-                          scr ! framebuffer[lbuf][j][(i*2)+1]
-                      scr ! '*n'
-                  -- normalise colour
-                  out.string ("*#1B[0m", 0, scr!)
-                  flush (scr!)
-                  --}}}
                   lframe := lframe + 1
-
-                  t := t PLUS frame.speed
               TRUE
                 SKIP
         (hframe <= (lframe + 4)) & tick ? hframe
@@ -236,17 +200,12 @@ PROC mandelbrot (CHAN BYTE kyb?, scr!, err!)
     mwsvr.in, mwcli.in := MOBILE CT.WORK.IN
     mwsvr.out, mwcli.out := MOBILE CT.WORK.OUT
 
-    cursor.invisible (scr!)
-    erase.screen (scr!)
-
     CHAN INT tick, tock, kill:
     PAR
       farmer (mwsvr.in, tick!, tock?, kill!)
-      harvester (mwsvr.out, tick?, tock!, kill?, scr!)
+      harvester (mwsvr.out, tick?, tock!, kill?)
       PAR i = 0 FOR N.WORKERS
         worker (mwcli.in, mwcli.out)
-
-    cursor.visible (scr!)
 :
 
 
