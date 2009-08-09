@@ -3,6 +3,10 @@
 #	Harness for Performance Regression Testing in occam-pi
 #	Copyright (C) 2009  Carl Ritson <cgr@kent.ac.uk>
 #
+#	Parts modified from occbuild:
+#	Copyright (C) 2007  University of Kent
+#	Copyright (C) 2008, 2009  Adam Sampan <ats@offog.org>
+#
 #	This program is free software; you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
 #	the Free Software Foundation; either version 2 of the License, or
@@ -18,7 +22,7 @@
 #	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-import sys, os, getopt, re, time
+import sys, os, getopt, re, time, platform
 
 VERSION = "$Rev$"[6:-2]
 CONTACT = "kroc-bugs@kent.ac.uk"
@@ -28,7 +32,7 @@ type_re = re.compile(r"^--\s*OCCBENCH\s+TYPE\s*:\s*(.*)\s*$", re.MULTILINE)
 prog_re = re.compile(r"(.*)\.occ$", re.IGNORECASE)
 source_re = re.compile(r"\.occ$", re.IGNORECASE)
 
-occbuild = "occbuild"
+occbuild = [ "occbuild" ]
 startup_runs = 1
 test_runs = 3
 
@@ -39,6 +43,11 @@ def die(*s):
 	warn(*s)
 	sys.exit(1)
 
+def split_options(opts):
+	"""Split an argument we've been given into a list of arguments to pass
+	to another program."""
+	return shlex.split(opts)
+
 def run_command(cmd):
 	"""Run a program with arguments and return the exit code.
 	Equivalent to subprocess.call, but works on Python 2.3 when os.spawnvp
@@ -48,8 +57,34 @@ def run_command(cmd):
 		return subprocess.call(cmd)
 	except ImportError:
 		return os.spawnvp(os.P_WAIT, cmd[0], cmd)
+def capture(cmd):
+	"""Run a command, checking that it succeeded, and return its output."""
+	
+	(pr, pw) = os.pipe()
+	pid = os.fork()
+	if pid == 0:
+		os.close(pr)
+		os.dup2(pw, 1)
+		os.execvp(cmd[0], cmd)
+		os._exit(1)
+
+	os.close(pw)
+	data = ""
+	while 1:
+		s = os.read(pr, 4096)
+		if s == "":
+			break
+		data += s
+	os.close(pr)
+
+	(pid, status) = os.waitpid(pid, 0)
+	if status != 0:
+		die("Command failed: ", " ".join(cmd))
+
+	return data
 
 def time_command(cmd):
+	"""Execution a command and return the wall clock time elapsed."""
 	t1 = time.time()
 	rc = run_command(cmd)
 	t2 = time.time()
@@ -90,15 +125,59 @@ def parse_dir(path):
 				tests[fpath] = data
 	return tests
 
+def cpu_count():
+	try:
+		import multiprocessing
+		return multiprocessing.cpu_count()
+	except ImportError:
+		if os.name is 'mac':
+			data = capture('sysctl', 'hw.ncpu')
+			match = re.search(r":\s*(\d+)")
+			if match:
+				cpus = match.group(1)
+		elif os.name is 'nt':
+			cpus = os.environ['NUMBER_OF_PROCESSORS']
+		else:
+			cpus = os.sysconf('SC_NPROCESSORS_ONLN')
+
+		if cpus:
+			return cpus
+		else:
+			return 1
+
+def set_cpus(cpus):
+	os.environ['CCSP_RUNTIME_THREADS'] = "%d" % (cpus)
+
+def write_logs(logs, message):
+	for log in logs:
+		log.write(message)
+		log.write("\n")
+
 def run_test(test, params, logs):
-	path = test['path']
-	type = test['type']
-	
-	# FIXME: something like...
-	for i in range(startup_runs + test_runs):
-		time = time_command([occbuild, "--run", path])
-		if i >= startup_runs:
-			pass # FIXME
+	name, path, type = test['name'], test['path'], test['type']
+
+	if type is 'scaling':
+		cpu_range = range(1, params['max_cpus'] + 1)
+	else:
+		cpu_range = [ 1 ]
+
+	write_logs(logs, "# " + name)
+
+	for cpus in cpu_range:
+		set_cpus(cpus)
+		
+		sum = 0.0
+		for i in range(startup_runs + test_runs):
+			time = time_command(occbuild + [ "--run", path ])
+			if i >= startup_runs:
+				sum += time 
+
+		avg = sum / test_runs
+		result = "%-20s %-8s %-16s %-8s % 2d %.6f" % (
+			params['host'], params['rev'], 
+			name, type, cpus, avg
+		)
+		write_logs(logs, result)
 
 def usage(f):
 	print >>f, """occbench, version """ + VERSION + """
@@ -109,10 +188,11 @@ Usage:
     Run tests contained in DIRECTORY
 
 Options:
-  --append FILE    Append test log to FILE
-  --occbuild PATH  Set path for occbuild to PATH
-  --output FILE    Output test log to FILE
-  --quiet          Do not log to STDOUT
+  --append FILE          Append test log to FILE
+  --occbuild PATH        Set path for occbuild to PATH
+  --occbuild-opts OPTS   Additional options for occbuild
+  --output FILE          Output test log to FILE
+  --quiet                Do not log to STDOUT
 
 Report bugs to <""" + CONTACT + """>."""
 
@@ -122,11 +202,18 @@ def main(args):
 	append_logs	= []
 	logs		= [ sys.stdout ]
 	output_logs	= []
-	params		= {}
+	params		= {
+		'host'		: platform.node(),
+		'max_cpus' 	: cpu_count(), 
+		'rev'		: 'unknown' 
+	}
 	tests		= {}
 
 	# Parse the command line
-	long_opts = [ "append=", "occbuild=", "output=", "quiet" ]
+	long_opts = [ 
+		"append=", "occbuild=", "occbuild-opts=", 
+		"output=", "quiet"
+	]
 	
 	try:
 		opts, args = getopt.getopt(args, "", long_opts)
@@ -138,7 +225,9 @@ def main(args):
 		if o is "--append":
 			append_logs.append(a)
 		elif o is "--occbuild":
-			occbuild = a
+			occbuild[0] = a
+		elif o is "--occbuild-opts":
+			occbuild += split_options(a)
 		elif o is "--output":
 			output_logs.append(a)
 		elif o is "--quiet":
@@ -164,14 +253,13 @@ def main(args):
 			logs.append(f)
 		else:
 			die("Unable to open output log " + fn)
-
-	# 
+	
+	# FIXME: determine the source version
 
 	# Run tests
 	order = tests.keys()
 	order.sort()
 	for key in order:
-		print tests[key]
 		run_test(tests[key], params, logs)
 
 if __name__ == "__main__":
