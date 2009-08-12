@@ -57,6 +57,7 @@ def run_command(cmd):
 		return subprocess.call(cmd)
 	except ImportError:
 		return os.spawnvp(os.P_WAIT, cmd[0], cmd)
+
 def capture(cmd):
 	"""Run a command, checking that it succeeded, and return its output."""
 	
@@ -130,12 +131,12 @@ def cpu_count():
 		import multiprocessing
 		return multiprocessing.cpu_count()
 	except ImportError:
-		if os.name is 'mac':
+		if os.name == 'mac':
 			data = capture('sysctl', 'hw.ncpu')
 			match = re.search(r":\s*(\d+)")
 			if match:
 				cpus = match.group(1)
-		elif os.name is 'nt':
+		elif os.name == 'nt':
 			cpus = os.environ['NUMBER_OF_PROCESSORS']
 		else:
 			cpus = os.sysconf('SC_NPROCESSORS_ONLN')
@@ -156,7 +157,7 @@ def write_logs(logs, message):
 def run_test(test, params, logs):
 	name, path, type = test['name'], test['path'], test['type']
 
-	if type is 'scaling':
+	if type == 'scaling':
 		cpu_range = range(1, params['max_cpus'] + 1)
 	else:
 		cpu_range = [ 1 ]
@@ -166,15 +167,16 @@ def run_test(test, params, logs):
 	for cpus in cpu_range:
 		set_cpus(cpus)
 		
+		start = time.time()
 		sum = 0.0
 		for i in range(startup_runs + test_runs):
-			time = time_command(occbuild + [ "--run", path ])
+			elapsed = time_command(occbuild + [ "--run", path ])
 			if i >= startup_runs:
-				sum += time 
+				sum += elapsed
 
 		avg = sum / test_runs
-		result = "%-20s %-8s %-16s %-8s % 2d %.6f" % (
-			params['host'], params['rev'], 
+		result = "%-20s  %-6s  %10.0f  %-16s  %-8s  % 2d  %.6f" % (
+			params['host'], params['version'], start, 
 			name, type, cpus, avg
 		)
 		write_logs(logs, result)
@@ -193,6 +195,7 @@ Options:
   --occbuild-opts OPTS   Additional options for occbuild
   --output FILE          Output test log to FILE
   --quiet                Do not log to STDOUT
+  --tag	VERSION          Set the version being tested (appears in output)
 
 Report bugs to <""" + CONTACT + """>."""
 
@@ -205,14 +208,14 @@ def main(args):
 	params		= {
 		'host'		: platform.node(),
 		'max_cpus' 	: cpu_count(), 
-		'rev'		: 'unknown' 
+		'version'	: 'unknown' 
 	}
 	tests		= {}
 
 	# Parse the command line
 	long_opts = [ 
 		"append=", "occbuild=", "occbuild-opts=", 
-		"output=", "quiet"
+		"output=", "quiet", "tag="
 	]
 	
 	try:
@@ -222,16 +225,18 @@ def main(args):
 		sys.exit(1)
 	
 	for (o, a) in opts:
-		if o is "--append":
+		if o == "--append":
 			append_logs.append(a)
-		elif o is "--occbuild":
+		elif o == "--occbuild":
 			occbuild[0] = a
-		elif o is "--occbuild-opts":
+		elif o == "--occbuild-opts":
 			occbuild += split_options(a)
-		elif o is "--output":
+		elif o == "--output":
 			output_logs.append(a)
-		elif o is "--quiet":
+		elif o == "--quiet":
 			logs = []
+		elif o == "--tag":
+			params['version'] = a
 	
 	if args == []:
 		die("No test directories specified")
@@ -254,8 +259,6 @@ def main(args):
 		else:
 			die("Unable to open output log " + fn)
 	
-	# FIXME: determine the source version
-
 	# Run tests
 	order = tests.keys()
 	order.sort()
