@@ -1,0 +1,8 @@
+This directory contains a series of programs that I have created to learn occam-pi. They may be of use to others who try to learn it also. 
+
+
+The intention for me was to create a simple problem, and solve it by adding more and more complexity to the program. I was essentially just trying out the features of occam-pi. 
+
+The programs are numbered; with every addition of complexity/functionality I created a new file. So by following the various versions you can find ever more complicated features. For me, this will be a useful reference guide for how the syntax and operation of occam-pi's functions works. Hopefully it will be the same for you. 
+
+At the top of each file I have detailed what the program does, and the functions that have been added over the previous version. If you like, you can read that and try your own implementation, referring only to the code that I have written when you get stuck/are curious. I realise that the specifications of what the program does gets a bit wordy, but it is intended to be accurate and complete enough that a program can be written from it. 
