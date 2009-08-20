@@ -9,8 +9,10 @@ OCCBUILD = @OCCBUILD@ --occ21-opts '-NU'
 EXTRA_DIST = \
 	mandelbrot.occ
 
+if BUILD_BENCHMARKS
 benchmarks = \
 	mandelbrot
+endif
 
 all-local: $(benchmarks)
 
