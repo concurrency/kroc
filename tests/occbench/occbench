@@ -22,7 +22,7 @@
 #	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-import sys, os, getopt, re, time, platform
+import sys, os, getopt, re, time, platform, shlex
 
 VERSION = "$Rev$"[6:-2]
 CONTACT = "kroc-bugs@kent.ac.uk"
@@ -94,7 +94,7 @@ def time_command(cmd):
 	else:
 		return (t2 - t1)
 
-def parse_file(path):
+def parse_file(path, exe_path):
 	f = open(path)
 	if not f:
 		warn("unable to open " + path)
@@ -107,21 +107,22 @@ def parse_file(path):
 	test_type = type_re.search(data)
 	test_path = prog_re.search(path)
 	if test_name and test_type:
+		(_, test_prog) = os.path.split(test_path.group(1))
 		test = { 
-			'path'		: test_path.group(1),
+			'path'		: os.path.join(exe_path, test_prog),
 			'source'	: path,
 			'name'		: test_name.group(1),
 			'type'		: test_type.group(1)
 		}
 		return test
 
-def parse_dir(path):
+def parse_dir(path,exe_path):
 	files = os.listdir(path)
 	tests = {}
 	for fn in files:
 		if source_re.search(fn):
 			fpath = os.path.join(path, fn)
-			data = parse_file(fpath)
+			data = parse_file(fpath, exe_path)
 			if data:
 				tests[fpath] = data
 	return tests
@@ -191,6 +192,7 @@ Usage:
 
 Options:
   --append FILE          Append test log to FILE
+  --bin-dir PATH         Binary directory from which to execute tests
   --occbuild PATH        Set path for occbuild to PATH
   --occbuild-opts OPTS   Additional options for occbuild
   --output FILE          Output test log to FILE
@@ -214,8 +216,9 @@ def main(args):
 
 	# Parse the command line
 	long_opts = [ 
-		"append=", "occbuild=", "occbuild-opts=", 
-		"output=", "quiet", "tag="
+		"append=", "bin-dir=",
+		"occbuild=", "occbuild-opts=", "output=", 
+		"quiet", "tag="
 	]
 	
 	try:
@@ -224,11 +227,15 @@ def main(args):
 		usage(sys.stderr)
 		sys.exit(1)
 	
+	bin_dirs = []
+
 	for (o, a) in opts:
 		if o == "--append":
 			append_logs.append(a)
+		elif o == "--bin-dir":
+			bin_dirs.append(a)
 		elif o == "--occbuild":
-			occbuild[0] = a
+			occbuild = split_options(a)
 		elif o == "--occbuild-opts":
 			occbuild += split_options(a)
 		elif o == "--output":
@@ -240,10 +247,12 @@ def main(args):
 	
 	if args == []:
 		die("No test directories specified")
+	elif bin_dirs == []:
+		bin_dirs = args
 	
 	# Find and parse all the tests
-	for dir in args:
-		tests.update(parse_dir(dir))
+	for (src, bin) in zip(args, bin_dirs):
+		tests.update(parse_dir(src, bin))
 	
 	# Open all the log files appropriately
 	for fn in append_logs:
