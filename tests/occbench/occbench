@@ -116,7 +116,9 @@ def parse_file(path, exe_path):
 		}
 		return test
 
-def parse_dir(path,exe_path):
+def parse_dir(path, exe_path):
+	if not os.path.exists(path):
+		die("No directory " + path)
 	files = os.listdir(path)
 	tests = {}
 	for fn in files:
@@ -252,7 +254,7 @@ def main(args):
 	
 	# Find and parse all the tests
 	for (src, bin) in zip(args, bin_dirs):
-		tests.update(parse_dir(src, bin))
+		tests.update(parse_dir(os.path.normpath(src), os.path.normpath(bin)))
 	
 	# Open all the log files appropriately
 	for fn in append_logs:

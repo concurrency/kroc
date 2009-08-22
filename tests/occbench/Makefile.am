@@ -11,9 +11,9 @@ EXTRA_DIST = \
 SUBDIRS = benchmarks 
 
 TESTS_ENVIRONMENT = \
-	$(PYTHON) $(srcdir)/occbench \
+	$(PYTHON) $(top_srcdir)/occbench \
 		--occbuild "$(OCCBUILD)" \
-		--bin-dir benchmarks \
+		--bin-dir "$(top_builddir)/benchmarks" \
 		--tag "$(TAG)"
-TESTS = $(srcdir)/benchmarks
+TESTS = $(top_srcdir)/benchmarks
 
