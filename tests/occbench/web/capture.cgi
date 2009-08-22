@@ -23,7 +23,7 @@ while (my $line = <$fh>) {
 close ($fh);
 
 if (!exists ($allowed{$ENV{'REMOTE_ADDR'}})) {
-	print "Denied: ", $ENV{'REMOTE_ADDR'};
+	print "Denied: ", $ENV{'REMOTE_ADDR'}, "\n";
 	exit 0;
 }
 
@@ -39,7 +39,7 @@ my $dbh = DBI->connect (
 	{ RaiseError => 0, AutoCommit => 0 }
 );
 if (!$dbh) {
-	print "No DB";
+	print "No DB\n";
 	exit 0;
 }
 
@@ -55,9 +55,13 @@ my $avg		= $page->param ('avg');
 my $sth = $dbh->prepare (
 	'INSERT INTO result (host, rev, start, name, type, cpus, avg) VALUES (?, ?, ?, ?, ?, ?, ?)'
 );
-$sth->execute ($host, $rev, $start, $name, $type, $cpus, $avg);
+my $rv = $sth->execute ($host, $rev, $start, $name, $type, $cpus, $avg);
 
-print "OK\n";
+if ($rv) {
+	print "OK\n";
+} else {
+	print "ERROR\n";
+}
 
 $dbh->disconnect ();
 
