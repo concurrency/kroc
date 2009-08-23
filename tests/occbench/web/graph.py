@@ -11,6 +11,10 @@ cgitb.enable()
 form = cgi.FieldStorage()
 host = form.getfirst('host', '')
 name = form.getfirst('name', '')
+dpi = int(form.getfirst('dpi', 100))
+width = int(form.getfirst('width', 8))
+height = int(form.getfirst('height', 4))
+history = int(form.getfirst('history', 0))
 simple = form.getfirst('simple', False)
 
 db = MySQLdb.connect(user = 'occbench', passwd = 'p3rf0rmANCE', db = 'occbench')
@@ -91,38 +95,38 @@ else:
 			rev_base.append(data_set['y'][0] / rev_worst_y0)
 
 		fig = plt.figure()
+		fig.set_dpi(dpi)
+		fig.set_size_inches(width, height)
 
 		# Plot revision time line
-		ax = fig.add_subplot(211)
-		ax.plot(revs, rev_scaling)
-		ax.plot(revs, rev_base)
+		ax = fig.add_subplot(history + 1, 1, 1)
+		ax.plot(revs, rev_scaling, 'o-')
+		ax.plot(revs, rev_base, 'o-')
 		ax.legend(('scaling', 'baseline'), 'upper right')
 		ax.set_title(name)
-		#ax.set_xticks(revs)
+		ax.set_xticks(revs)
 		ax.set_xticklabels(rev_labels)
 		ax.set_ybound(lower=0.0, upper=2.0)
 
 		# Plot full revision history
-		if not simple:
-			cnt = 1
-			for rev in sorted(results.iterkeys(), reverse=True):
-				data_set = results[rev]
+		cnt = 0
+		for rev in sorted(results.iterkeys(), reverse=True)[0:history]:
+			data_set = results[rev]
+			cnt += 1
 
-				ax = fig.add_subplot(211 + cnt)
-				ax.plot(data_set['x'], data_set['y'])
-				ax.plot(data_set['x'], data_set['opt_y'])
-				ax.legend((host, 'ideal'), 'upper right')
-				ax.set_title(name + ' r' + str(rev))
-				
-				ax.set_xlabel('CPUs')
-				ax.set_xscale('log', basex=2)
-				ax.set_xticks(data_set['x'])
-				ax.set_xticklabels(data_set['x'])
-				
-				ax.set_ylabel('Time (s)')
-				ax.set_ybound(lower=0.0)
-
-				cnt = cnt + 1
+			ax = fig.add_subplot(history + 1, 1, cnt + 1)
+			ax.plot(data_set['x'], data_set['y'])
+			ax.plot(data_set['x'], data_set['opt_y'])
+			ax.legend((host, 'ideal'), 'upper right')
+			ax.set_title(name + ' r' + str(rev))
+			
+			ax.set_xlabel('CPUs')
+			ax.set_xscale('log', basex=2)
+			ax.set_xticks(data_set['x'])
+			ax.set_xticklabels(data_set['x'])
+			
+			ax.set_ylabel('Time (s)')
+			ax.set_ybound(lower=0.0)
 		
 		fig.savefig(sys.stdout)
 	
