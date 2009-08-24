@@ -94,6 +94,10 @@ else:
 			data_set = results[rev]
 			rev_base.append(data_set['y'][0] / rev_worst_y0)
 
+		font_def = matplotlib.font_manager.FontProperties()
+		font_small = font_def.copy()
+		font_small.set_size('small')
+
 		fig = plt.figure()
 		fig.set_dpi(dpi)
 		fig.set_size_inches(width, height)
@@ -117,10 +121,10 @@ else:
 			ax = fig.add_subplot(history + 1, 1, cnt + 1)
 			ax.plot(data_set['x'], data_set['y'])
 			ax.plot(data_set['x'], data_set['opt_y'])
-			ax.legend((host, 'ideal'), 'upper right')
-			ax.set_title(name + ' r' + str(rev))
+			ax.legend((host + ' r' + str(rev), 'ideal'), 'upper right', prop=font_small)
 			
-			ax.set_xlabel('CPUs')
+			if cnt == history:
+				ax.set_xlabel('CPUs')
 			ax.set_xscale('log', basex=2)
 			ax.set_xticks(data_set['x'])
 			ax.set_xticklabels(data_set['x'])
