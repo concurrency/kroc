@@ -15,5 +15,5 @@ TESTS_ENVIRONMENT = \
 		--occbuild "$(OCCBUILD)" \
 		--bin-dir "$(top_builddir)/benchmarks" \
 		--tag "$(TAG)"
-TESTS = $(top_srcdir)/benchmarks
+TESTS = benchmarks
 
