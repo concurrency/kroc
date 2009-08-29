@@ -8,12 +8,15 @@ OCCBUILD = @OCCBUILD@ --occ21-opts '-NU'
 
 EXTRA_DIST = \
 	fft2.occ \
+	fft2-nosched.occ \
+	fft2-base.occ \
 	fft3.occ \
 	mandelbrot.occ
 
 if BUILD_BENCHMARKS
 benchmarks = \
 	fft2 \
+	fft2-noresched \
 	fft3 \
 	mandelbrot
 endif
