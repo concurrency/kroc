@@ -21,8 +21,17 @@
 
 #INCLUDE "course.module"
 
+-- occbench test specification
+-- OCCBENCH NAME: fft3
+-- OCCBENCH TYPE: scaling
+
+-- Benchmark Size Parameters
+VAL INT FFT.SIZE        IS 128:    -- work unit size
+VAL INT CYCLES          IS 10000:  -- overall benchmark work
+
+-- Constants
 VAL REAL32 PI       IS 3.141592654: 
-VAL INT FFT.MAX     IS 64:
+VAL INT FFT.MAX     IS 128:
 
 DATA TYPE CX
   PACKED RECORD
@@ -42,8 +51,9 @@ INT FUNCTION log2 (VAL INT n)
     RESULT count
 :
 
-PROC butterfly (VAL REAL32 w.re, w.im, CHAN CX in?, out!)
-  WHILE TRUE
+PROC butterfly (VAL INT cycles, VAL REAL32 w.re, w.im, CHAN CX in?, out!)
+  INITIAL INT cycles IS cycles:
+  WHILE cycles > 0
     REAL32 wt.re, wt.im:
     CX u, t:
     SEQ
@@ -54,32 +64,37 @@ PROC butterfly (VAL REAL32 w.re, w.im, CHAN CX in?, out!)
       t[re], t[im], u[re], u[im] := u[re] - wt.re, u[im] - wt.im, u[re] + wt.re, u[im] + wt.im
       out ! u
       out ! t
+      cycles := cycles - 2
 :
 
-PROC butterfly.group (VAL REAL32 w.re, w.im, VAL INT n.b.flies, CHAN CX in?, out!)
+PROC butterfly.group (VAL INT cycles, VAL REAL32 w.re, w.im, VAL INT n.b.flies, CHAN CX in?, out!)
   [FFT.MAX]CHAN CX b.in, b.out:
   PAR
     INITIAL INT active IS 0:
-    WHILE TRUE
+    INITIAL INT cycles IS cycles:
+    WHILE cycles > 0
       CX c:
       SEQ
         in ? c
         b.in[active] ! c
         active := (active + 1) \ n.b.flies
+        cycles := cycles - 1
 
     INITIAL INT active IS 0:
-    WHILE TRUE
+    INITIAL INT cycles IS cycles:
+    WHILE cycles > 0
       CX c:
       SEQ
         b.out[active] ? c
         out ! c
         active := (active + 1) \ n.b.flies
+        cycles := cycles - 1
 
     PAR i = 0 FOR n.b.flies
-      butterfly (w.re, w.im, b.in[i]?, b.out[i]!)
+      butterfly (cycles / n.b.flies, w.re, w.im, b.in[i]?, b.out[i]!)
 :
 
-PROC compute.stage (VAL INT d, n, VAL BOOL last, VAL []REAL32 w.re, w.im, CHAN CX in?, out!)
+PROC compute.stage (VAL INT cycles, VAL INT d, n, VAL BOOL last, VAL []REAL32 w.re, w.im, CHAN CX in?, out!)
   VAL INT grp.len IS d + d:
   VAL INT n.grps IS n / grp.len:
   VAL INT n.b.flies IS d:
@@ -88,7 +103,8 @@ PROC compute.stage (VAL INT d, n, VAL BOOL last, VAL []REAL32 w.re, w.im, CHAN C
   
   PAR
     INITIAL INT active IS 0:
-    WHILE TRUE
+    INITIAL INT cycles IS cycles:
+    WHILE cycles > 0
       CX c:
       SEQ
         SEQ i = 0 FOR grp.len
@@ -96,9 +112,11 @@ PROC compute.stage (VAL INT d, n, VAL BOOL last, VAL []REAL32 w.re, w.im, CHAN C
             in ? c
             b.in[active] ! c
         active := (active + 1) \ n.grps
+        cycles := cycles - grp.len
 
     INITIAL INT active IS 0:
-    WHILE TRUE
+    INITIAL INT cycles IS cycles:
+    WHILE cycles > 0
       CX c:
       SEQ
         SEQ i = 0 FOR grp.len
@@ -106,13 +124,14 @@ PROC compute.stage (VAL INT d, n, VAL BOOL last, VAL []REAL32 w.re, w.im, CHAN C
             b.out[active] ? c
             out ! c
         active := (active + 1) \ n.grps
+        cycles := cycles - grp.len
    
     PAR g = 0 FOR n.grps
       IF
         last
-          butterfly (w.re[g], w.im[g], b.in[g]?, b.out[g]!)
+          butterfly (cycles / n.grps, w.re[g], w.im[g], b.in[g]?, b.out[g]!)
         TRUE
-          butterfly.group (w.re[g], w.im[g], n.b.flies, b.in[g]?, b.out[g]!)
+          butterfly.group (cycles / n.grps, w.re[g], w.im[g], n.b.flies, b.in[g]?, b.out[g]!)
 :
 
 INT FUNCTION bit.rev (VAL INT in, num.bits)
@@ -128,18 +147,20 @@ INT FUNCTION bit.rev (VAL INT in, num.bits)
     RESULT result
 :
 
-PROC bit.reverse (VAL INT n, log.n, CHAN CX in?, out!)
+PROC bit.reverse (VAL INT cycles, n, log.n, CHAN CX in?, out!)
+  INITIAL INT cycles IS cycles:
   [FFT.MAX * 2]CX buffer:
-  WHILE TRUE
+  WHILE cycles > 0
     SEQ
       SEQ i = 0 FOR n
         in ? buffer[i]
       SEQ i = 0 FOR n
         VAL INT br IS bit.rev (i, log.n):
         out ! buffer[br]
+      cycles := cycles - n
 :
 
-PROC fft.kernel.3 (VAL INT n, log.n, VAL []REAL32 w.re, w.im, CHAN CX in?, out!)
+PROC fft.kernel.3 (VAL INT cycles, n, log.n, VAL []REAL32 w.re, w.im, CHAN CX in?, out!)
   INITIAL INT n.stages IS 0:
   [FFT.MAX]INT stages:
   [FFT.MAX]CHAN CX s:
@@ -151,14 +172,14 @@ PROC fft.kernel.3 (VAL INT n, log.n, VAL []REAL32 w.re, w.im, CHAN CX in?, out!)
         stages[n.stages] := i
         i, n.stages := i / 2, n.stages + 1
     PAR
-      butterfly.group (w.re[0], w.im[0], n / 2, in?, s[0]!)
+      butterfly.group (cycles, w.re[0], w.im[0], n / 2, in?, s[0]!)
       PAR i = 0 FOR n.stages
-        compute.stage (stages[i], n, FALSE, w.re, w.im, s[i]?, s[i+1]!)
-      compute.stage (1, n, TRUE, w.re, w.im, s[n.stages]?, final!)
-      bit.reverse (n, log.n, final?, out!)
+        compute.stage (cycles, stages[i], n, FALSE, w.re, w.im, s[i]?, s[i+1]!)
+      compute.stage (cycles, 1, n, TRUE, w.re, w.im, s[n.stages]?, final!)
+      bit.reverse (cycles, n, log.n, final?, out!)
 :
 
-PROC test.source (VAL INT n, CHAN CX out!)
+PROC test.source (VAL INT cycles, n, CHAN CX out!)
   [FFT.MAX * 2]CX buffer:
   SEQ
     SEQ i = 0 FOR n
@@ -166,25 +187,22 @@ PROC test.source (VAL INT n, CHAN CX out!)
         buffer[i][re] := 0.0
         buffer[i][im] := 0.0
     buffer[1][re] := 1.0
-    WHILE TRUE
+    SEQ c = 0 FOR (cycles / n)
       SEQ i = 0 FOR n
         out ! buffer[i]
 :
 
-PROC float.printer (CHAN CX in?, CHAN BYTE scr!)
-  SEQ i = 0 FOR 10000 * 64
+PROC float.printer (VAL INT cycles, CHAN CX in?, CHAN BYTE scr!)
+  SEQ i = 0 FOR cycles
     CX data:
     SEQ
       in ? data
-      --out.real32 (data[re], 1, 6, scr!)
-      --scr ! '*n'
-      --out.real32 (data[im], 1, 6, scr!)
-      --scr ! '*n'
 :
 
 PROC main (CHAN BYTE kyb?, scr!, err!)
-  VAL INT n IS 32:
-  VAL INT log.n IS 5:
+  VAL INT n       IS FFT.SIZE:
+  VAL INT log.n   IS log2 (n):
+  VAL INT cycles  IS n * CYCLES:
  
   MOBILE []REAL32 w.re, w.im:
 
@@ -199,7 +217,7 @@ PROC main (CHAN BYTE kyb?, scr!, err!)
 
     CHAN CX data, result:
     PAR
-      test.source (n, data!)
-      fft.kernel.3 (n, log.n, w.re, w.im, data?, result!)
-      float.printer (result?, scr!)
+      test.source (cycles, n, data!)
+      fft.kernel.3 (cycles, n, log.n, w.re, w.im, data?, result!)
+      float.printer (cycles, result?, scr!)
 :
