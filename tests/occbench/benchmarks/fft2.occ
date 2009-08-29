@@ -25,9 +25,15 @@
 
 #INCLUDE "course.module"
 
-VAL []INT L2.SEQ    IS [ 1, 2, 4, 8, 16, 32, 64 ]:
-VAL INT L2.FFT.MAX  IS 6:
-VAL INT FFT.MAX     IS 64:
+-- Benchmark Size Parameters
+VAL INT FFT.SIZE        IS 128:   -- work unit size
+VAL INT CYCLES          IS 50000: -- overall benchmark work
+VAL INT SPLIT.ELEMENTS  IS 8:     -- pipeline parallelism 
+
+-- Constants
+VAL []INT L2.SEQ    IS [ 1, 2, 4, 8, 16, 32, 64, 128, 256 ]:
+VAL INT L2.FFT.MAX  IS 8:
+VAL INT FFT.MAX     IS 128:
 
 INT FUNCTION log2 (VAL INT n)
   INT count:
@@ -58,56 +64,66 @@ PROC combine.dft (VAL INT n, CHAN MOBILE []REAL32 in?, out!)
         w[i+1]  := imag
         real, imag := (real * wn.r) - (imag * wn.i), (real * wn.i) + (imag * wn.r)
 
-    WHILE TRUE
+    INITIAL BOOL running IS TRUE:
+    WHILE running
       MOBILE []REAL32 data, result:
       SEQ
         in ? data
         result := MOBILE [SIZE data]REAL32
-        SEQ offset = 0 FOR ((SIZE data) / (2 * n)) STEP (2 * n)
-          SEQ
-            VAL []REAL32  data    IS [ data   FROM offset FOR (2 * n) ]:
-            []REAL32      result  IS [ result FROM offset FOR (2 * n) ]:
-            SEQ i = 0 FOR (n / 2) STEP 2
-              VAL INT     i.plus.1    IS i + 1:
-              VAL REAL32  y0.r        IS data[i]:
-              VAL REAL32  y0.i        IS data[i.plus.1]:
-              VAL REAL32  y1.r        IS data[n + i]:
-              VAL REAL32  y1.i        IS data[n + i.plus.1]:
-              VAL REAL32  weight.real IS w[i]:
-              VAL REAL32  weight.imag IS w[i.plus.1]:
-              VAL REAL32  y1w.r       IS (y1.r * weight.real) - (y1.i * weight.imag):
-              VAL REAL32  y1w.i       IS (y1.r * weight.imag) + (y1.i * weight.real):
+        IF
+          (SIZE data) = 0
+            running := FALSE
+          TRUE
+            SEQ offset = 0 FOR ((SIZE data) / (2 * n)) STEP (2 * n)
               SEQ
-                result[i]           := y0.r + y1w.r
-                result[i.plus.1]    := y0.i + y1w.i
-                result[n+i]         := y0.r - y1w.r
-                result[n+i.plus.1]  := y0.i - y1w.i
-            --RESCHEDULE ()
+                VAL []REAL32  data    IS [ data   FROM offset FOR (2 * n) ]:
+                []REAL32      result  IS [ result FROM offset FOR (2 * n) ]:
+                SEQ i = 0 FOR (n / 2) STEP 2
+                  VAL INT     i.plus.1    IS i + 1:
+                  VAL REAL32  y0.r        IS data[i]:
+                  VAL REAL32  y0.i        IS data[i.plus.1]:
+                  VAL REAL32  y1.r        IS data[n + i]:
+                  VAL REAL32  y1.i        IS data[n + i.plus.1]:
+                  VAL REAL32  weight.real IS w[i]:
+                  VAL REAL32  weight.imag IS w[i.plus.1]:
+                  VAL REAL32  y1w.r       IS (y1.r * weight.real) - (y1.i * weight.imag):
+                  VAL REAL32  y1w.i       IS (y1.r * weight.imag) + (y1.i * weight.real):
+                  SEQ
+                    result[i]           := y0.r + y1w.r
+                    result[i.plus.1]    := y0.i + y1w.i
+                    result[n+i]         := y0.r - y1w.r
+                    result[n+i.plus.1]  := y0.i - y1w.i
+                RESCHEDULE ()
         out ! result
 :
 
 PROC fft.reorder.simple (VAL INT n, CHAN MOBILE []REAL32 in?, out!)
-  WHILE TRUE
+  INITIAL BOOL running IS TRUE:
+  WHILE running
     MOBILE []REAL32 data, result:
     SEQ
       in ? data
       result := MOBILE [SIZE data]REAL32
-      SEQ offset = 0 FOR ((SIZE data) / (2 * n)) STEP (2 * n)
-        VAL []REAL32  data    IS [ data   FROM offset FOR (2 * n) ]:
-        []REAL32      result  IS [ result FROM offset FOR (2 * n) ]:
-        INITIAL INT pos IS 0:
-        SEQ
-          SEQ i = 0 FOR ((SIZE data) / 4) STEP 4
+      IF
+        (SIZE data) = 0
+          running := FALSE
+        TRUE 
+          SEQ offset = 0 FOR ((SIZE data) / (2 * n)) STEP (2 * n)
+            VAL []REAL32  data    IS [ data   FROM offset FOR (2 * n) ]:
+            []REAL32      result  IS [ result FROM offset FOR (2 * n) ]:
+            INITIAL INT pos IS 0:
             SEQ
-              result[pos]   := data[i]
-              result[pos+1] := data[i+1]
-              pos           := pos + 2
-          SEQ i = 2 FOR ((SIZE data) / 4) STEP 4
-            SEQ
-              result[pos]   := data[i]
-              result[pos+1] := data[i+1]
-              pos           := pos + 2
-          --RESCHEDULE ()
+              SEQ i = 0 FOR ((SIZE data) / 4) STEP 4
+                SEQ
+                  result[pos]   := data[i]
+                  result[pos+1] := data[i+1]
+                  pos           := pos + 2
+              SEQ i = 2 FOR ((SIZE data) / 4) STEP 4
+                SEQ
+                  result[pos]   := data[i]
+                  result[pos+1] := data[i+1]
+                  pos           := pos + 2
+              RESCHEDULE ()
       out ! result
 :
 
@@ -127,28 +143,41 @@ PROC fft.reorder (VAL INT n, CHAN MOBILE []REAL32 in?, out!)
 
 PROC fft.kernel.2 (VAL INT n, CHAN MOBILE []REAL32 in?, out!)
   VAL INT log2.n  IS log2 (n):
-  VAL INT split   IS 2:
+  VAL INT split   IS SPLIT.ELEMENTS:
   
   [split]CHAN MOBILE []REAL32 p.in, p.out:
   
   PAR
     INITIAL INT   active  IS 0:
-    INITIAL BOOL  done    IS FALSE:
-    WHILE NOT done
-      MOBILE []REAL32 data:
-      SEQ
-        in ? data
-        p.in[active] ! data
-        active := (active + 1) \ split
+    INITIAL BOOL  running IS TRUE:
+    SEQ
+      WHILE running
+        MOBILE []REAL32 data:
+        SEQ
+          in ? data
+          IF
+            (SIZE data) = 0
+              running := FALSE
+            TRUE
+              p.in[active] ! data
+          active := (active + 1) \ split
+      PAR i = 0 FOR split
+        p.in[i] ! MOBILE [0]REAL32
 
     INITIAL INT   active  IS 0:
-    INITIAL BOOL  done    IS FALSE:
-    WHILE NOT done
-      MOBILE []REAL32 data:
-      SEQ
-        p.out[active] ? data
-        out ! data
-        active := (active + 1) \ split
+    INITIAL INT   running IS split:
+    SEQ
+      WHILE running > 0
+        MOBILE []REAL32 data:
+        SEQ
+          p.out[active] ? data
+          IF
+            (SIZE data) = 0
+              running := running - 1
+            TRUE
+              out ! data
+          active := (active + 1) \ split
+      out ! MOBILE [0]REAL32
 
     PAR i = 0 FOR split
       [L2.FFT.MAX]CHAN MOBILE []REAL32 trans:
@@ -163,35 +192,33 @@ PROC fft.kernel.2 (VAL INT n, CHAN MOBILE []REAL32 in?, out!)
               combine.dft (n, trans[j], p.out[i])
 :
 
-PROC test.source (VAL INT n, CHAN MOBILE []REAL32 out!)
-  WHILE TRUE
-    MOBILE []REAL32 data:
-    SEQ
-      data := MOBILE [2 * n]REAL32
-      SEQ i = 0 FOR SIZE data
-        data[i] := 0.0
-      data[2] := 1.0
-      out ! data
-:
-
-PROC float.printer (CHAN MOBILE []REAL32 in?, CHAN BYTE scr!)
+PROC test.source (VAL INT count, n, CHAN MOBILE []REAL32 out!)
   SEQ
-    SEQ i = 0 FOR 10000
+    SEQ i = 0 FOR count
       MOBILE []REAL32 data:
       SEQ
-        in ? data
+        data := MOBILE [2 * n]REAL32
         SEQ i = 0 FOR SIZE data
-          SEQ
-            out.real32 (data[i], 1, 6, scr!)
-            scr ! '*n'
-    STOP
+          data[i] := 0.0
+        data[2] := 1.0
+        out ! data
+    out ! MOBILE [0]REAL32
+:
+
+PROC sink (CHAN MOBILE []REAL32 in?, CHAN BYTE scr!)
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    MOBILE []REAL32 data:
+    SEQ
+      in ? data
+      running := (SIZE data) > 0
 :
 
 PROC main (CHAN BYTE kyb?, scr!, err!)
   CHAN MOBILE []REAL32 data, result:
-  VAL INT n IS 64:
+  VAL INT n IS FFT.SIZE:
   PAR
-    test.source (n, data!)
+    test.source (CYCLES, n, data!)
     fft.kernel.2 (n, data?, result!)
-    float.printer (result?, scr!)
+    sink (result?, scr!)
 :
