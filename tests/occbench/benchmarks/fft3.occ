@@ -20,6 +20,7 @@
 --
 
 #INCLUDE "course.module"
+#INCLUDE "maths.module"
 
 -- occbench test specification
 -- OCCBENCH NAME: fft3
