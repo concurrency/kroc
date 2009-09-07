@@ -20,6 +20,7 @@
 --
 
 #INCLUDE "course.module"
+#INCLUDE "maths.module"
 
 -- Constants
 VAL []INT L2.SEQ    IS [ 1, 2, 4, 8, 16, 32, 64, 128, 256 ]:
