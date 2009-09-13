@@ -4,6 +4,7 @@ ACLOCAL_AMFLAGS = -I ../../m4
 CPPFLAGS = \
 	-Ilibtvm \
 	-I../../runtime/libtvm \
+	-I$(top_srcdir)/../../runtime/libtvm \
 	-DF_CPU=$(F_CPU) \
 	-DBYTECODE_ADDR=$(BYTECODE_ADDR) \
 	@CPPFLAGS@
@@ -36,7 +37,7 @@ $(tvm_arduino_SOURCES): libtvm/libtvm.a
 libtvm/libtvm.a: config.status
 	rm -fr libtvm
 	mkdir libtvm
-	cd libtvm && ../../../runtime/libtvm/configure \
+	cd libtvm && ../$(top_srcdir)/../../runtime/libtvm/configure \
 		--host=avr \
 		--with-memory-allocator=none \
 		CFLAGS="@CFLAGS@"
