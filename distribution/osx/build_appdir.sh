@@ -35,6 +35,10 @@ mkdir -p "$outputDir/$rezDir/lib/"
 for f in $libFiles; do
   copyfile "install/lib/$f" "$outputDir/$rezDir/lib/"
 done
+copyfile "build/kroc-tvm-avr-wrapper/tvm-arduino.hex" "$outputDir/$rezDir/lib/"
+copyfile "../../tvm/arduino/binary-to_ihex" "$outputDir/$rezDir/bin/"
+copyfile "../../tvm/arduino/read-arduino" "$outputDir/$rezDir/bin/"
+copyfile "../../tvm/arduino/reset-arduino" "$outputDir/$rezDir/bin/"
 # jEdit things
 copydir "build/jedit/jedit-program/" "$outputDir/$javaDir/jEdit/"
 copyfile "../../tools/occplug/install/OccPlug.jar" \

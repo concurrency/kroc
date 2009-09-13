@@ -2,6 +2,13 @@ PKG_CONFIG=pkg-config-0.23
 SDL=SDL-1.2.13
 PLAYER=player-2.1.2
 STAGE=stage-2.1.1
+# Arduino package could perhaps be replaced with a avr-gcc package?
+# FIXME: 0017 is out, perhaps upgrade
+ARDUINO=arduino-0016
+
+#FIXME: Possibly do SDL_sound
+#http://icculus.org/SDL_sound/
+
 
 INSTALL=$PWD/install
 BUILD=$PWD/build
@@ -65,6 +72,17 @@ fi
 #  cd ../..
 #fi
 
+if ! [ -d $BUILD/$ARDUINO ] ; then
+  mkdir -p build
+  cd build
+  curl -O \
+    http://arduino.googlecode.com/files/$ARDUINO-mac.zip \
+    || exit 1
+  unzip $ARDUINO-mac.zip
+  cd $ARDUINO
+fi
+
+
 cd ../../
 
 autoreconf -v -f -i
@@ -78,10 +96,23 @@ make
 make install
 
 cd $BUILD
-mkdir kroc-tvm
-cd kroc-tvm
+mkdir kroc-tvm-posix
+cd kroc-tvm-posix
 
 ../../../../configure --with-toolchain=tvm --prefix=$INSTALL
 make
 make install
 
+OLD_PATH=$PATH
+PATH=$PATH:$BUILD/$ARDUINO/hardware/tools/avr/bin
+cd $BUILD
+cd ../../../tvm/arduino
+unset ACLOCAL
+autoreconf -v -f -i
+cd $BUILD
+mkdir -p kroc-tvm-avr-wrapper
+cd kroc-tvm-avr-wrapper
+../../../../tvm/arduino/configure --host=avr --with-toolchain=tvm --prefix=$INSTALL --libdir=${INSTALL}/lib/avr
+make
+make tvm-arduino.hex
+PATH=$OLD_PATH
