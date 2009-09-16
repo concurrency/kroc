@@ -36,11 +36,18 @@ import org.gjt.sp.jedit.jEdit;
  */
 public class OccPlugUtil
 {
+	private final static String pfix = OccPlugPlugin.OPTION_PREFIX;
 
 	public static String pathify(String cmd)
 	{
 		if (!MiscUtilities.isAbsolutePath(cmd))
 		{
+			String pathifyOverride = jEdit.getProperty(pfix + "pathifyOverride");
+			if(pathifyOverride != null)
+			{
+				return MiscUtilities.constructPath(MiscUtilities.constructPath(
+					pathifyOverride, "bin"), cmd);
+			}
 			return MiscUtilities.constructPath(MiscUtilities.constructPath(
 					MiscUtilities.getParentOfPath(jEdit.getJEditHome()), "bin"), cmd);
 		} else
@@ -49,8 +56,22 @@ public class OccPlugUtil
 		}
 	}
 
-	private final static String pfix = OccPlugPlugin.OPTION_PREFIX;
-
+	public static String pathifyXXX(String cmd)
+	{
+		if (!MiscUtilities.isAbsolutePath(cmd))
+		{
+			String pathifyOverride = jEdit.getProperty(pfix + "pathifyOverride");
+			if(pathifyOverride != null)
+			{
+				return MiscUtilities.constructPath(pathifyOverride, cmd);
+			}
+			return MiscUtilities.constructPath(MiscUtilities.getParentOfPath(jEdit.getJEditHome()), cmd);
+		} else
+		{
+			return new String(cmd);
+		}
+	}
+	
 	public static String getOccBuildCmd()
 	{
 		return jEdit.getProperty(pfix + "occbuildCmd", "");
