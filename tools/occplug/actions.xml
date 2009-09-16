@@ -50,4 +50,11 @@
 					jEdit.getProperty(org.transterpreter.occPlug.OccPlugPlugin.OPTION_PREFIX + "helpIndex"));
       </CODE>
     </ACTION>
+    <ACTION NAME="occPlug.firmware">
+    	<CODE>
+		view.getDockableWindowManager().addDockableWindow("occPlug");
+		view.getDockableWindowManager().getDockable(
+			org.transterpreter.occPlug.OccPlugPlugin.NAME).showFirmwareDownload();
+	</CODE>
+    </ACTION>
 </ACTIONS>

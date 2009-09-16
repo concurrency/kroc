@@ -71,6 +71,8 @@ public class OccPlug extends JPanel implements EBComponent
 	private org.gjt.sp.jedit.View view;
 	private boolean floating;
 	private OccPlugToolPanel toolPanel;
+	private OccPlugFirmwareToolPanel firmwareToolPanel;
+	private JPanel toolPanelCardContainer;
 	/* BUG:
 	 * There seems to be a problem with this component, ie when adding a very
 	 * long line to it, it can make the application hang, I am not sure if this
@@ -199,7 +201,11 @@ public class OccPlug extends JPanel implements EBComponent
 		}
 		
 		this.toolPanel = new OccPlugToolPanel(this);
-		add(BorderLayout.NORTH, this.toolPanel);
+		this.firmwareToolPanel = new OccPlugFirmwareToolPanel(this);
+		this.toolPanelCardContainer = new JPanel(new CardLayout());
+		this.toolPanelCardContainer.add(toolPanel, "compileAndRun");
+		this.toolPanelCardContainer.add(firmwareToolPanel, "firmwareDownload");
+		add(BorderLayout.NORTH, this.toolPanelCardContainer);
 
 		if(floating)
 			this.setPreferredSize(new Dimension(500, 250));
@@ -575,7 +581,8 @@ public class OccPlug extends JPanel implements EBComponent
 		
 		return null;
 	}
-				
+	
+	// FIXME: This ought to be static, and probably not in here...
 	public void writeVerbose(String str, DocumentWriter doc)
 	{
 		if(OccPlugUtil.getVerbose())
@@ -933,8 +940,8 @@ public class OccPlug extends JPanel implements EBComponent
 	//}}}
 	
 	
-	//{{{ private class NonInteractiveExecWorkerHelper
-	private class NonInteractiveExecWorkerHelper extends ExecWorkerHelper
+	//{{{ class NonInteractiveExecWorkerHelper
+	class NonInteractiveExecWorkerHelper extends ExecWorkerHelper
 	{
 		protected final DocumentWriter compileConsoleDoc = new DocumentWriter(textArea.getStyledDocument());
 		protected final String cmdName;
@@ -1120,6 +1127,8 @@ public class OccPlug extends JPanel implements EBComponent
 	{
 		CardLayout cl = (CardLayout)(displayPanel.getLayout());
 		cl.show(displayPanel, s);
+		cl = (CardLayout)(toolPanelCardContainer.getLayout());
+		cl.show(toolPanelCardContainer, "compileAndRun");
 	}
 	
 	public void tvmrun(final String filename, final String workingDir) throws IOException
@@ -1607,4 +1616,27 @@ public class OccPlug extends JPanel implements EBComponent
 		}
 	}
 	//}}}
+	
+	/********************************
+	 * Firmware related GUI methods *
+	 ********************************/
+	public void showFirmwareDownload()
+	{
+		CardLayout cl = (CardLayout)(displayPanel.getLayout());
+		cl.show(displayPanel, "console");
+		cl = (CardLayout)(toolPanelCardContainer.getLayout());
+		cl.show(toolPanelCardContainer, "firmwareDownload");
+		final DocumentWriter compileConsoleDoc = new DocumentWriter(textArea.getStyledDocument());
+		compileConsoleDoc.clear();
+	}
+	
+	public void hideFirmwareDownload()
+	{
+		CardLayout cl = (CardLayout)(displayPanel.getLayout());
+		cl.show(displayPanel, "console");
+		cl = (CardLayout)(toolPanelCardContainer.getLayout());
+		cl.show(toolPanelCardContainer, "compileAndRun");
+		final DocumentWriter compileConsoleDoc = new DocumentWriter(textArea.getStyledDocument());
+		compileConsoleDoc.clear();
+	}
 }
