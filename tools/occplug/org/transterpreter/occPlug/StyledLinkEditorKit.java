@@ -1,4 +1,5 @@
 package org.transterpreter.occPlug;
+
 /*
  * StyledLinkEditorKit.java
  * part of the occPlug plugin for the jEdit text editor
@@ -31,46 +32,39 @@ import javax.swing.text.Position;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.StyledEditorKit;
 
-
 /**
  * A StyledEditorKit which supports hyperlinks.
- *
+ * 
  * Adapted from Christian Kaufhold's code found on:
  * http://www.codecomments.com/archive250-2004-8-261138.html
  */
-class StyledLinkEditorKit extends StyledEditorKit
-{
+class StyledLinkEditorKit extends StyledEditorKit {
 	// attribute on inline elements; if value is URL, will be used for the
 	// HyperlinkEvent
-	public static final Object LINK = new StringBuffer("link");
+	public static final Object		LINK		= new StringBuffer("link");
 
 	// can be static because it picks up the editor from the MouseEvent
-	private static MouseListener linkHandler = new LinkHandler();
+	private static MouseListener	linkHandler	= new LinkHandler();
 
-	public StyledLinkEditorKit()
-	{
+	public StyledLinkEditorKit() {
 	}
 
-	public void install(JEditorPane p)
-	{
+	public void install(JEditorPane p) {
 		super.install(p);
 
 		p.addMouseListener(linkHandler);
 	}
 
-	public void deinstall(JEditorPane p)
-	{
+	public void deinstall(JEditorPane p) {
 		p.removeMouseListener(linkHandler);
 
 		super.deinstall(p);
 	}
 
-	private static class LinkHandler extends MouseAdapter
-	{
-		private Element activeElement;
+	private static class LinkHandler extends MouseAdapter {
+		private Element	activeElement;
 
-		private Element characterElementAt(MouseEvent e)
-		{
+		private Element characterElementAt(MouseEvent e) {
 			JEditorPane p = (JEditorPane) e.getComponent();
 
 			Position.Bias[] bias = new Position.Bias[1];
@@ -87,78 +81,69 @@ class StyledLinkEditorKit extends StyledEditorKit
 		}
 
 		/*
-		public void mousePressed(MouseEvent e)
-		{
-			if (!SwingUtilities.isLeftMouseButton(e)) return;
+		 * public void mousePressed(MouseEvent e) { if
+		 * (!SwingUtilities.isLeftMouseButton(e)) return;
+		 * 
+		 * JEditorPane p = (JEditorPane) e.getComponent();
+		 * 
+		 * if (p.isEditable()) return;
+		 * 
+		 * Element c = characterElementAt(e);
+		 * 
+		 * if (c != null && c.getAttributes().getAttribute(LINK) != null)
+		 * activeElement = c; }
+		 * 
+		 * public void mouseReleased(MouseEvent e) { if
+		 * (!SwingUtilities.isLeftMouseButton(e) || activeElement == null)
+		 * return;
+		 * 
+		 * JEditorPane p = (JEditorPane) e.getComponent();
+		 * 
+		 * Element c = characterElementAt(e);
+		 * 
+		 * if (!p.isEditable() && c == activeElement) // too restrictive, should
+		 * // find attribute run { activeElement = null;
+		 * 
+		 * Object target = c.getAttributes().getAttribute(LINK);
+		 * 
+		 * if (!(target instanceof URL)) target = null;
+		 * 
+		 * p.fireHyperlinkUpdate(new HyperlinkEvent(p,
+		 * HyperlinkEvent.EventType.ACTIVATED, (URL) target, null, c)); } }
+		 */
 
-			JEditorPane p = (JEditorPane) e.getComponent();
-
-			if (p.isEditable()) return;
-
-			Element c = characterElementAt(e);
-
-			if (c != null && c.getAttributes().getAttribute(LINK) != null)
-				activeElement = c;
-		}
-
-		public void mouseReleased(MouseEvent e)
-		{
-			if (!SwingUtilities.isLeftMouseButton(e) || activeElement == null)
-				return;
-
-			JEditorPane p = (JEditorPane) e.getComponent();
-
-			Element c = characterElementAt(e);
-
-			if (!p.isEditable() && c == activeElement) // too restrictive, should
-																									// find attribute run
-			{
-				activeElement = null;
-
-				Object target = c.getAttributes().getAttribute(LINK);
-
-				if (!(target instanceof URL)) target = null;
-
-				p.fireHyperlinkUpdate(new HyperlinkEvent(p,
-						HyperlinkEvent.EventType.ACTIVATED, (URL) target, null, c));
-			}
-		}*/
-		
-		public void mouseClicked(MouseEvent e)
-		{
+		public void mouseClicked(MouseEvent e) {
 			/* Get the editor pane */
 			JEditorPane p = (JEditorPane) e.getComponent();
-						
-			/* If the pane is editable, or its not the left mouse btn
-			 * let other mouse handlers do their thing 
+
+			/*
+			 * If the pane is editable, or its not the left mouse btn let other
+			 * mouse handlers do their thing
 			 */
-			if(p.isEditable() || !SwingUtilities.isLeftMouseButton(e))
-			{
+			if (p.isEditable() || !SwingUtilities.isLeftMouseButton(e)) {
 				super.mouseClicked(e);
 				return;
 			}
 
 			/* Find the element that was clicked on */
 			Element c = characterElementAt(e);
-			
+
 			/* Was there anything where we clicked? */
-			if(c == null)
-			{
+			if (c == null) {
 				super.mouseClicked(e);
 				return;
 			}
-			
+
 			/* See if it has the link attribute */
 			Object target = c.getAttributes().getAttribute(LINK);
-			if(target == null)
-			{
+			if (target == null) {
 				super.mouseClicked(e);
 				return;
 			}
 
 			p.fireHyperlinkUpdate(new HyperlinkEvent(p,
-				HyperlinkEvent.EventType.ACTIVATED, null, null, c));
-						
+					HyperlinkEvent.EventType.ACTIVATED, null, null, c));
+
 		}
 	}
 }

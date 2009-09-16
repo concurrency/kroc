@@ -1,4 +1,5 @@
 package org.transterpreter.occPlug;
+
 /*
  * BlinkableSwingTerminal.java
  * part of the occPlug plugin for the jEdit text editor
@@ -24,68 +25,64 @@ import java.awt.Font;
 
 import de.mud.terminal.*;
 
-class BlinkableSwingTerminal extends SwingTerminal
-{
-	
+class BlinkableSwingTerminal extends SwingTerminal {
+
 	/* These are private in swingterminal, how stupid */
 	/* definitions of standards for the display unit */
-  private final static int COLOR_FG_STD = 7;
-  private final static int COLOR_BG_STD = 0;
-	
-  /**
-   * Create a new video display unit with the passed width and height in
-   * characters using a special font and font size. These features can
-   * be set independently using the appropriate properties.
-   * @param buffer a VDU buffer to be associated with the display
-   * @param font the font to be used (usually Monospaced)
-   */
-  public BlinkableSwingTerminal(VDUBuffer buffer, Font font)
-	{
-		super(buffer, font);
-  }
+	private final static int	COLOR_FG_STD	= 7;
+	private final static int	COLOR_BG_STD	= 0;
 
-  /**
-   * Create a display unit with size 80x24 and Font "Monospaced", size 12.
-   */
-  public BlinkableSwingTerminal(VDUBuffer buffer)
-	{
-    super(buffer);
-  }	
-	
+	/**
+	 * Create a new video display unit with the passed width and height in
+	 * characters using a special font and font size. These features can be set
+	 * independently using the appropriate properties.
+	 * 
+	 * @param buffer
+	 *            a VDU buffer to be associated with the display
+	 * @param font
+	 *            the font to be used (usually Monospaced)
+	 */
+	public BlinkableSwingTerminal(VDUBuffer buffer, Font font) {
+		super(buffer, font);
+	}
+
+	/**
+	 * Create a display unit with size 80x24 and Font "Monospaced", size 12.
+	 */
+	public BlinkableSwingTerminal(VDUBuffer buffer) {
+		super(buffer);
+	}
+
 	/* This clearly did not work like I thought it would */
-	public void blink()
-	{
+	public void blink() {
 		Color[] original = getColorSet();
 		Color fg = original[COLOR_FG_STD];
 		Color bg = original[COLOR_BG_STD];
-		
-		//Color[] invert = new Color[original.length];
-		//System.arraycopy(original, 0, invert, 0, original.length);
-		
-		//invert[COLOR_FG_STD] = bg;
-		//invert[COLOR_BG_STD] = fg;
-		
+
+		// Color[] invert = new Color[original.length];
+		// System.arraycopy(original, 0, invert, 0, original.length);
+
+		// invert[COLOR_FG_STD] = bg;
+		// invert[COLOR_BG_STD] = fg;
+
 		/* Invert the colours */
 		setForeground(bg);
 		setBackground(fg);
-		//setColorSet(invert);
+		// setColorSet(invert);
 		getVDUBuffer().update[0] = true;
 		redraw();
-		
+
 		/* Sleep for a bit */
-		try
-		{
+		try {
 			Thread.sleep(100);
-		}
-		catch(InterruptedException e)
-		{
+		} catch (InterruptedException e) {
 			/* We dont care... */
 		}
 
 		/* Set the colours back to normal */
 		setForeground(fg);
 		setBackground(bg);
-		//setColorSet(original);
+		// setColorSet(original);
 		getVDUBuffer().update[0] = true;
 		redraw();
 	}

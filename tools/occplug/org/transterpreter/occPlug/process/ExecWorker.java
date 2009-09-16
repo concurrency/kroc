@@ -1,4 +1,5 @@
 package org.transterpreter.occPlug.process;
+
 /*
  * ExecWorker.java
  * part of the occPlug plugin for the jEdit text editor
@@ -22,145 +23,112 @@ package org.transterpreter.occPlug.process;
 import java.io.File;
 import java.io.IOException;
 
-
-
 //}}}
 
 /**
- * A class defining a worker which will run an external process. It will take 
+ * A class defining a worker which will run an external process. It will take
  * care of any output and input if desired
- *
- * There used to be some text like this where I had the first iteration of
- * this code:
- * 	// Check JCompiler line 558 or thereabouts for insipation
- *	// Also possibly just use console tools, but not its window
+ * 
+ * There used to be some text like this where I had the first iteration of this
+ * code: // Check JCompiler line 558 or thereabouts for insipation // Also
+ * possibly just use console tools, but not its window
  */
-//{{{ class ExecWorker
-public class ExecWorker extends Thread implements Killable
-{
-	private Process p;
-	private final Runtime r = java.lang.Runtime.getRuntime();
-	private boolean killed = false;
-	
-	private final ExecWorkerHelper helper;
-	
-	private final String[] cmd;
-	private final String[] envp;
-	private final File dir;
-	
+// {{{ class ExecWorker
+public class ExecWorker extends Thread implements Killable {
+	private Process					p;
+	private final Runtime			r		= java.lang.Runtime.getRuntime();
+	private boolean					killed	= false;
+
+	private final ExecWorkerHelper	helper;
+
+	private final String[]			cmd;
+	private final String[]			envp;
+	private final File				dir;
+
 	public ExecWorker(String[] cmd, String[] envp, File dir,
-	  ExecWorkerHelper helper)
-	{
+			ExecWorkerHelper helper) {
 		this.cmd = cmd;
 		this.envp = envp;
 		this.dir = dir;
-		
+
 		this.helper = helper;
 	}
-	
-	public void run()
-	{
-			Thread stdin  = null;
-			Thread stdout = null;
-			Thread stderr = null;		
-			
-			/* Execute the command */
-			try
-			{
-				p = r.exec(cmd, envp, dir);
-			}
-			catch(Exception e)
-			{
-				helper.cannotExec(e);
-				helper.finalizer();
-			}
-			
-			/* Set up all the helpers for dealing with IO */
-			try
-			{
-				// STDIN 
-				if(helper.stdinUsed())
-				{
-					stdin = helper.stdinHandlerSetup(p.getOutputStream());
-					if(stdin != null)
-					{
-						stdin.start();
-					}
-				}
-				else
-				{
-					p.getOutputStream().close();
-				}
-				// STDOUT
-				if(helper.stdoutUsed())
-				{
-					stdout = helper.stdoutHandlerSetup(p.getInputStream());
-					if(stdout != null)
-					{
-						stdout.start();
-					}
-				}
-				else
-				{
-					p.getInputStream().close();
-				}
-				// STDERR
-				if(helper.stderrUsed())
-				{
-					stderr = helper.stderrHandlerSetup(p.getErrorStream());
-					if(stderr != null)
-					{
-						stderr.start();
-					}
-				}
-				else
-				{
-					p.getErrorStream().close();
-				}
-			}
-			catch(IOException e)
-			{
-				helper.ioHandlerExceptionHandler(e);
-			}
-			
-			/* Wait for the execution of the external command to finish */
-			try
-			{
-				p.waitFor();
-				if(stdin != null)
-				{
-					stdin.join();
-				}
-				if(stdout != null)
-				{
-					stdout.join();
-				}
-				if(stderr != null)
-				{
-					stderr.join();
-				}
-			}
-			catch(InterruptedException e)
-			{
-				helper.interruptedExceptionHandler(e);
-			}
-			
-			/* We're done */ 
-			helper.cmdExited(p.exitValue());
+
+	public void run() {
+		Thread stdin = null;
+		Thread stdout = null;
+		Thread stderr = null;
+
+		/* Execute the command */
+		try {
+			p = r.exec(cmd, envp, dir);
+		} catch (Exception e) {
+			helper.cannotExec(e);
 			helper.finalizer();
+		}
+
+		/* Set up all the helpers for dealing with IO */
+		try {
+			// STDIN
+			if (helper.stdinUsed()) {
+				stdin = helper.stdinHandlerSetup(p.getOutputStream());
+				if (stdin != null) {
+					stdin.start();
+				}
+			} else {
+				p.getOutputStream().close();
+			}
+			// STDOUT
+			if (helper.stdoutUsed()) {
+				stdout = helper.stdoutHandlerSetup(p.getInputStream());
+				if (stdout != null) {
+					stdout.start();
+				}
+			} else {
+				p.getInputStream().close();
+			}
+			// STDERR
+			if (helper.stderrUsed()) {
+				stderr = helper.stderrHandlerSetup(p.getErrorStream());
+				if (stderr != null) {
+					stderr.start();
+				}
+			} else {
+				p.getErrorStream().close();
+			}
+		} catch (IOException e) {
+			helper.ioHandlerExceptionHandler(e);
+		}
+
+		/* Wait for the execution of the external command to finish */
+		try {
+			p.waitFor();
+			if (stdin != null) {
+				stdin.join();
+			}
+			if (stdout != null) {
+				stdout.join();
+			}
+			if (stderr != null) {
+				stderr.join();
+			}
+		} catch (InterruptedException e) {
+			helper.interruptedExceptionHandler(e);
+		}
+
+		/* We're done */
+		helper.cmdExited(p.exitValue());
+		helper.finalizer();
 	}
-	
-	public synchronized void kill()
-	{
-		if(!killed)
-		{
+
+	public synchronized void kill() {
+		if (!killed) {
 			p.destroy();
 			killed = true;
 		}
 	}
-	
-	public synchronized boolean wasKilled()
-	{
+
+	public synchronized boolean wasKilled() {
 		return killed;
 	}
 }

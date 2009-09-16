@@ -1,4 +1,5 @@
 package org.transterpreter.occPlug.process;
+
 /*
  * Killable.java
  * part of the occPlug plugin for the jEdit text editor
@@ -19,8 +20,8 @@ package org.transterpreter.occPlug.process;
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-public interface Killable
-{
+public interface Killable {
 	public void kill();
+
 	public boolean wasKilled();
 }

@@ -1,4 +1,5 @@
 package org.transterpreter.occPlug.process;
+
 /*
  * ReaderConduitTest2.java
  * part of the occPlug plugin for the jEdit text editor
@@ -22,57 +23,45 @@ package org.transterpreter.occPlug.process;
 import java.io.IOException;
 import java.io.InputStream;
 
-
-
 //}}}
 
 //{{{ Class: ReaderConduitTest2
 /**
- * This class is a thread which when given a BufferedReader (probably
- * obtained from say a Process.getErrorStream() call) and a SimpleWriter
- * which is for example using a DocumentWriter object, and is started will
- * take all input from the BufferedReader untill it closes, and write it
- * using the SimpleWriter
+ * This class is a thread which when given a BufferedReader (probably obtained
+ * from say a Process.getErrorStream() call) and a SimpleWriter which is for
+ * example using a DocumentWriter object, and is started will take all input
+ * from the BufferedReader untill it closes, and write it using the SimpleWriter
  */
-public class ReaderConduitTest2 extends Thread
-{
-	private SimpleWriter outgoing;
-	private InputStream incomming;
-	public Exception e = null;
-	
-	public ReaderConduitTest2(InputStream incomming, SimpleWriter outgoing)
-	{
+public class ReaderConduitTest2 extends Thread {
+	private SimpleWriter	outgoing;
+	private InputStream		incomming;
+	public Exception		e	= null;
+
+	public ReaderConduitTest2(InputStream incomming, SimpleWriter outgoing) {
 		this.incomming = incomming;
 		this.outgoing = outgoing;
 	}
-	
-	public void run()
-	{
+
+	public void run() {
 		final byte[] buf = new byte[256];
 		int result;
-		
-		try
-		{
+
+		try {
 			result = incomming.read(buf);
-			while(result != -1)
-			{
-				//Log.log(Log.DEBUG, this, (new Date().toString()) + " " + incomming.available());
+			while (result != -1) {
+				// Log.log(Log.DEBUG, this, (new Date().toString()) + " " +
+				// incomming.available());
 				outgoing.write(new String(buf, 0, result));
 				result = incomming.read(buf);
 			}
-		}
-		catch(IOException e)
-		{
+		} catch (IOException e) {
 			this.e = e;
 		}
-		
-		try
-		{
+
+		try {
 			incomming.close();
-		}
-		catch(IOException e)
-		{
+		} catch (IOException e) {
 			this.e = e;
-		}			
+		}
 	}
 }

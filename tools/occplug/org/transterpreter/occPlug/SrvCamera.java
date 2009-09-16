@@ -1,4 +1,5 @@
 package org.transterpreter.occPlug;
+
 /*
  * SrvCamera.java
  * part of the occPlug plugin for the jEdit text editor
@@ -18,7 +19,6 @@ package org.transterpreter.occPlug;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 
 import java.awt.*;
 import java.awt.event.*;
@@ -41,22 +41,19 @@ import org.gjt.sp.jedit.io.VFSManager;
 import org.gjt.sp.jedit.textarea.JEditTextArea;
 import org.gjt.sp.util.Log;
 
-public class SrvCamera extends JPanel implements EBComponent
-{	
-	private org.gjt.sp.jedit.View view;
-	private boolean floating;
+public class SrvCamera extends JPanel implements EBComponent {
+	private org.gjt.sp.jedit.View	view;
+	private boolean					floating;
 
-	private JLabel imageLabel;
+	private JLabel					imageLabel;
 
-	public SrvCamera(final org.gjt.sp.jedit.View view, final String position)
-	{
-		super(new BorderLayout());      
+	public SrvCamera(final org.gjt.sp.jedit.View view, final String position) {
+		super(new BorderLayout());
 
 		this.view = view;
 		this.floating = position.equals(DockableWindowManager.FLOATING);
 
-		if(floating)
-			this.setPreferredSize(new Dimension(320, 256));
+		if (floating) this.setPreferredSize(new Dimension(320, 256));
 
 		imageLabel = new JLabel();
 		imageLabel.setHorizontalAlignment(JLabel.CENTER);
@@ -64,14 +61,14 @@ public class SrvCamera extends JPanel implements EBComponent
 		add(BorderLayout.CENTER, imageLabel);
 	}
 
-	private class Update implements Runnable
-	{
-		private final byte[] data;
+	private class Update implements Runnable {
+		private final byte[]	data;
 
-		public Update(byte[] data) { this.data = data; }
+		public Update(byte[] data) {
+			this.data = data;
+		}
 
-		public void run()
-		{
+		public void run() {
 			ImageIcon img = new ImageIcon(data);
 			int width = img.getIconWidth();
 			int height = img.getIconHeight();
@@ -79,7 +76,7 @@ public class SrvCamera extends JPanel implements EBComponent
 			setPreferredSize(new Dimension(width + 10, height + 10));
 			if (floating) {
 				Container c = getParent();
-				while(!JFrame.class.isInstance(c)) {
+				while (!JFrame.class.isInstance(c)) {
 					c = c.getParent();
 				}
 				c.setSize(width + 50, height + 50);
@@ -88,14 +85,10 @@ public class SrvCamera extends JPanel implements EBComponent
 		}
 	}
 
-	public void setImage(byte[] data)
-	{
+	public void setImage(byte[] data) {
 		SwingUtilities.invokeLater(new Update(data));
 	}
 
-
-	public void handleMessage(EBMessage message)
-	{
+	public void handleMessage(EBMessage message) {
 	}
 }
-
