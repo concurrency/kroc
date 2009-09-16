@@ -24,4 +24,5 @@ cd $ROOT
 
 cd ../../tools/occplug
 
-ant -Djedit.install.dir=$ROOT/build/jedit/jedit-program/
+ant -Djedit.install.dir=$ROOT/build/jedit/jedit-program/ \
+    -Dinstall.dir=$ROOT/build/occPlug
