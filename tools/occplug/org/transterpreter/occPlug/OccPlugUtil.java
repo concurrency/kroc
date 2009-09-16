@@ -30,6 +30,7 @@ import java.net.URL;
 import org.gjt.sp.jedit.MiscUtilities;
 import org.gjt.sp.jedit.OperatingSystem;
 import org.gjt.sp.jedit.jEdit;
+import org.transterpreter.occPlug.OccPlug.DocumentWriter;
 
 /**
  * @author clj3
@@ -241,5 +242,12 @@ public class OccPlugUtil {
 			 */
 		}
 		return true;
+	}
+	
+	// FIXME: This ought to be static, and probably not in here...
+	public static void writeVerbose(String str, DocumentWriter doc) {
+		if (OccPlugUtil.getVerbose()) {
+			doc.writeRegular(str);
+		}
 	}
 }
