@@ -155,10 +155,10 @@ public class OccPlug extends JPanel implements EBComponent {
 				ErrorKey realOther = (ErrorKey) other;
 				if (lineNo != realOther.lineNo) return false;
 				return fileName.equals(realOther.fileName);
-			} else
-				return false;
+			}
+			return false;
 		}
-	};
+	}
 
 	private class Error {
 		public int			type;
@@ -183,7 +183,7 @@ public class OccPlug extends JPanel implements EBComponent {
 			setType(type);
 			msgs.add(msg);
 		}
-	};
+	}
 
 	private class NullOutputStream extends OutputStream {
 		public void write(int b) {
@@ -651,7 +651,7 @@ public class OccPlug extends JPanel implements EBComponent {
 			}
 
 			/* Update buttons on the toolpanel */
-			toolPanel.setState(toolPanel.RUNNING);
+			toolPanel.setState(OccPlugToolPanel.RUNNING);
 
 			/*
 			 * Start of skroc command
@@ -861,7 +861,7 @@ public class OccPlug extends JPanel implements EBComponent {
 		ArrayList dllCommand = new ArrayList();
 
 		/* Update buttons on the toolpanel */
-		toolPanel.setState(toolPanel.RUNNING);
+		toolPanel.setState(OccPlugToolPanel.RUNNING);
 
 		dllCommand.add(OccPlugUtil.pathify(OccPlugUtil.getDllCmd()));
 		for (int i = 0; i < OccPlugUtil.getDllArgs().length; i++) {
@@ -1024,7 +1024,7 @@ public class OccPlug extends JPanel implements EBComponent {
 
 		public void finalizer() {
 			/* Update buttons on the toolpanel */
-			toolPanel.setState(toolPanel.NORMAL);
+			toolPanel.setState(OccPlugToolPanel.NORMAL);
 			execWorker = null;
 			setKeyboardOutputStream(new NullOutputStream());
 		}
@@ -1085,7 +1085,7 @@ public class OccPlug extends JPanel implements EBComponent {
 		tvmCommand.add(filename);
 
 		/* Update buttons on the toolpanel */
-		toolPanel.setState(toolPanel.RUNNING);
+		toolPanel.setState(OccPlugToolPanel.RUNNING);
 		/*
 		 * Set the focus to the command window, as we want keystrokes to get
 		 * there
@@ -1101,7 +1101,7 @@ public class OccPlug extends JPanel implements EBComponent {
 			env = null;
 		}
 		execWorker = new ExecWorker((String[]) tvmCommand
-				.toArray(new String[1]), (String[]) env, new File(workingDir),
+				.toArray(new String[1]), env, new File(workingDir),
 				new TerminalExecWorkerHelper(filename));
 
 		execWorker.start();
@@ -1177,7 +1177,7 @@ public class OccPlug extends JPanel implements EBComponent {
 			final String host = srv.getHost();
 			final String port = "" + srv.getPort();
 
-			toolPanel.setState(toolPanel.RUNNING);
+			toolPanel.setState(OccPlugToolPanel.RUNNING);
 			compileConsole.writeRegular("Connecting...\n");
 			if (srv != null && srv.connect()) {
 				compileConsole.writeRegular("Upload...\n");
@@ -1188,7 +1188,9 @@ public class OccPlug extends JPanel implements EBComponent {
 					try {
 						runConsole();
 					} catch (IOException e) {
+						// Do nothing
 					} catch (NullPointerException e) {
+						// Do nothing
 					}
 
 					compileConsole.writeOK("Disconnected\n");
@@ -1201,7 +1203,7 @@ public class OccPlug extends JPanel implements EBComponent {
 				compileConsole.writeError("Unable to connect to Surveyor at "
 						+ host + ":" + port + "\n");
 			}
-			toolPanel.setState(toolPanel.NORMAL);
+			toolPanel.setState(OccPlugToolPanel.NORMAL);
 		}
 	}
 
@@ -1359,7 +1361,7 @@ public class OccPlug extends JPanel implements EBComponent {
 				.getStyledDocument());
 
 		/* Update buttons on the toolpanel */
-		toolPanel.setState(toolPanel.RUNNING);
+		toolPanel.setState(OccPlugToolPanel.RUNNING);
 
 		firmdlCommand.add(OccPlugUtil.pathify(OccPlugUtil.getFirmdlCmd()));
 		/*

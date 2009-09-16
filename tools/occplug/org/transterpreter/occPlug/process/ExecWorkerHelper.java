@@ -52,18 +52,23 @@ public class ExecWorkerHelper {
 	}
 
 	public void finalizer() {
+		// Should be overridden by user
 	}
 
 	public void cannotExec(Exception e) {
+		// Should be overridden by user
 	}
 
 	public void cmdExited(int status) {
+		// Should be overridden by user
 	}
 
 	public void interruptedExceptionHandler(Exception e) {
+		// Should be overridden by user
 	}
 
-	public void ioHandlerExceptionHandler(Exception e) {
+	public void ioHandlerExceptionHandler(Exception e) {	
+		// Should be overridden by user
 	}
 
 	public Thread stdoutHandlerSetup(InputStream r) {

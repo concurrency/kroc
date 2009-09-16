@@ -120,6 +120,7 @@ public class OccPlugToolPanel extends JPanel {
 		/* SRV-1 Console Options */
 		FocusListener srvFocus = new FocusListener() {
 			public void focusGained(FocusEvent e) {
+				// Not used
 			}
 
 			public void focusLost(FocusEvent e) {

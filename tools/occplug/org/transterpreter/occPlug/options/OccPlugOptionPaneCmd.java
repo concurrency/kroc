@@ -40,12 +40,10 @@ import org.transterpreter.occPlug.OccPlugPlugin;
 public class OccPlugOptionPaneCmd extends AbstractOptionPane {
 	// private JCheckBox showPath;
 	private JTextField	skrocCmdName;
-	private JTextField	slinkerCmdName;
 	private JTextField	tvmCmdName;
 	private JTextField	firmdlCmdName;
 	private JTextField	dllCmdName;
 	private JTextField	libPath;
-	private JCheckBox	slinkerOptimalPrefix;
 	private JComboBox	legoTowerPort;
 	private JCheckBox	saveOnCompile;
 

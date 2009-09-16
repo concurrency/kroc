@@ -54,14 +54,14 @@ public class ReaderConduitTest2 extends Thread {
 				outgoing.write(new String(buf, 0, result));
 				result = incomming.read(buf);
 			}
-		} catch (IOException e) {
-			this.e = e;
+		} catch (IOException ex) {
+			this.e = ex;
 		}
 
 		try {
 			incomming.close();
-		} catch (IOException e) {
-			this.e = e;
+		} catch (IOException ex) {
+			this.e = ex;
 		}
 	}
 }

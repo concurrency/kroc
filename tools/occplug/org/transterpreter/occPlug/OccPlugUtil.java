@@ -49,9 +49,8 @@ public class OccPlugUtil {
 			return MiscUtilities
 					.constructPath(MiscUtilities.constructPath(MiscUtilities
 							.getParentOfPath(jEdit.getJEditHome()), "bin"), cmd);
-		} else {
-			return new String(cmd);
 		}
+		return new String(cmd);
 	}
 
 	public static String pathifyXXX(String cmd) {
@@ -63,9 +62,8 @@ public class OccPlugUtil {
 			}
 			return MiscUtilities.constructPath(MiscUtilities
 					.getParentOfPath(jEdit.getJEditHome()), cmd);
-		} else {
-			return new String(cmd);
 		}
+		return new String(cmd);
 	}
 
 	public static String getOccBuildCmd() {

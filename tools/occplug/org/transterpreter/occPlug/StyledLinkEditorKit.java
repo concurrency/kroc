@@ -47,6 +47,7 @@ class StyledLinkEditorKit extends StyledEditorKit {
 	private static MouseListener	linkHandler	= new LinkHandler();
 
 	public StyledLinkEditorKit() {
+		// Do nothing
 	}
 
 	public void install(JEditorPane p) {
@@ -62,8 +63,6 @@ class StyledLinkEditorKit extends StyledEditorKit {
 	}
 
 	private static class LinkHandler extends MouseAdapter {
-		private Element	activeElement;
-
 		private Element characterElementAt(MouseEvent e) {
 			JEditorPane p = (JEditorPane) e.getComponent();
 

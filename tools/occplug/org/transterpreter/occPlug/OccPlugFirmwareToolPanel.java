@@ -85,6 +85,7 @@ public class OccPlugFirmwareToolPanel extends JPanel {
 		/* Focus Listener for option saving */
 		final FocusListener saveOptionsFocusListener = new FocusListener() {
 			public void focusGained(FocusEvent e) {
+				// Not used
 			}
 
 			public void focusLost(FocusEvent e) {
@@ -135,9 +136,11 @@ public class OccPlugFirmwareToolPanel extends JPanel {
 		arduinoPort.setEditable(true);
 		PopupMenuListener arduinoPortPopupListener = new PopupMenuListener() {
 			public void popupMenuCanceled(PopupMenuEvent e) {
+				// Not used
 			}
 
 			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+				// Not used
 			}
 
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -211,7 +214,7 @@ public class OccPlugFirmwareToolPanel extends JPanel {
 		firmdlCommand.add("-V");
 		firmdlCommand.add("-F");
 		firmdlCommand.add("-P");
-		firmdlCommand.add((String) arduinoPort.getSelectedItem());
+		firmdlCommand.add(arduinoPort.getSelectedItem());
 		// FIXME: Need a sensible way of setting these
 		firmdlCommand.add("-c");
 		firmdlCommand.add("stk500v1");

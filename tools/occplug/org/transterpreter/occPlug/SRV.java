@@ -185,9 +185,8 @@ public class SRV {
 				} while (c != '\n' && c != (-1));
 
 				return new Response(RES_EXTENDED, str.toString());
-			} else {
-				return null;
 			}
+			return null;
 		} catch (IOException e) {
 			System.out.println(e.toString());
 			return null;
@@ -206,10 +205,9 @@ public class SRV {
 		if (r != null) {
 			System.out.println("Got response: " + r);
 			return r.data;
-		} else {
-			System.out.println("Fail to get response.");
-			return null;
 		}
+		System.out.println("Fail to get response.");
+		return null;
 	}
 
 	private boolean waitForResponse(String beginning, int timeout)
