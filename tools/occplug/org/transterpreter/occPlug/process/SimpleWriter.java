@@ -1,4 +1,5 @@
 package org.transterpreter.occPlug.process;
+
 /*
  * SimpleWriter.java
  * part of the occPlug plugin for the jEdit text editor
@@ -19,8 +20,6 @@ package org.transterpreter.occPlug.process;
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-
-public interface SimpleWriter
-{
+public interface SimpleWriter {
 	public void write(String string);
 }

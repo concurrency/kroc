@@ -1,4 +1,5 @@
 package org.transterpreter.occPlug;
+
 /*
  * OccPlugPlugin.java
  * part of the occPlug plugin for the jEdit text editor
@@ -18,26 +19,23 @@ package org.transterpreter.occPlug;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
- 
+
 import org.gjt.sp.jedit.EditPlugin;
 
 /**
  * The occam Plugin
- *
+ * 
  * @author Christian L. Jacobsen
  */
-public class OccPlugPlugin extends EditPlugin 
-{
-	public static final String NAME            = "occPlug";
-	public static final String MENU            = "occPlug.menu";
-	public static final String PROPERTY_PREFIX = "plugin.OccPlugPlugin.";
-	public static final String OPTION_PREFIX   = "options.occPlug.";
+public class OccPlugPlugin extends EditPlugin {
+	public static final String	NAME			= "occPlug";
+	public static final String	MENU			= "occPlug.menu";
+	public static final String	PROPERTY_PREFIX	= "plugin.OccPlugPlugin.";
+	public static final String	OPTION_PREFIX	= "options.occPlug.";
 
-	public void start()
-	{
+	public void start() {
 	}
 
-	public void stop()
-	{
+	public void stop() {
 	}
 }

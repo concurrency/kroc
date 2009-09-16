@@ -1,4 +1,5 @@
 package org.transterpreter.occPlug.process;
+
 /*
  * ExecWorkerHelper.java
  * part of the occPlug plugin for the jEdit text editor
@@ -22,74 +23,58 @@ package org.transterpreter.occPlug.process;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-
-
 //{{{ class ExecWorkerHelper
-public class ExecWorkerHelper
-{
-	private final boolean stdin;
-	private final boolean stdout;
-	private final boolean stderr;
-	
-	public ExecWorkerHelper(boolean stdin, boolean stdout, boolean stderr)
-	{
+public class ExecWorkerHelper {
+	private final boolean	stdin;
+	private final boolean	stdout;
+	private final boolean	stderr;
+
+	public ExecWorkerHelper(boolean stdin, boolean stdout, boolean stderr) {
 		this.stdin = stdin;
 		this.stdout = stdout;
 		this.stderr = stderr;
 	}
-	
-	public ExecWorkerHelper()
-	{
+
+	public ExecWorkerHelper() {
 		this(false, false, false);
 	}
-	
-	public boolean stdinUsed()
-	{
+
+	public boolean stdinUsed() {
 		return stdin;
 	}
 
-	public boolean stdoutUsed()
-	{
+	public boolean stdoutUsed() {
 		return stdout;
 	}
 
-	public boolean stderrUsed()
-	{
+	public boolean stderrUsed() {
 		return stderr;
 	}
-	
-	public void finalizer()
-	{
+
+	public void finalizer() {
 	}
-	
-	public void cannotExec(Exception e)
-	{
+
+	public void cannotExec(Exception e) {
 	}
-	
-	public void cmdExited(int status)
-	{
+
+	public void cmdExited(int status) {
 	}
-	
-	public void interruptedExceptionHandler(Exception e)
-	{
+
+	public void interruptedExceptionHandler(Exception e) {
 	}
-	
-	public void ioHandlerExceptionHandler(Exception e)
-	{
+
+	public void ioHandlerExceptionHandler(Exception e) {
 	}
-	
-	public Thread stdoutHandlerSetup(InputStream r)
-	{
+
+	public Thread stdoutHandlerSetup(InputStream r) {
 		return null;
 	}
-	
-	public Thread stderrHandlerSetup(InputStream r)
-	{
+
+	public Thread stderrHandlerSetup(InputStream r) {
 		return null;
 	}
-	
-	public Thread stdinHandlerSetup(OutputStream r)
-	{
+
+	public Thread stdinHandlerSetup(OutputStream r) {
 		return null;
 	}
 }

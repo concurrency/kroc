@@ -1,4 +1,5 @@
 package org.transterpreter.occPlug.process;
+
 /*
  * ReaderConduit.java
  * part of the occPlug plugin for the jEdit text editor
@@ -22,53 +23,40 @@ package org.transterpreter.occPlug.process;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-
-
 //}}}
 
 //{{{ Class: ReaderConduit
 /**
- * This class is a thread which when given a BufferedReader (probably
- * obtained from say a Process.getErrorStream() call) and a SimpleWriter
- * which is for example using a DocumentWriter object, and is started will
- * take all input from the BufferedReader untill it closes, and write it
- * using the SimpleWriter
+ * This class is a thread which when given a BufferedReader (probably obtained
+ * from say a Process.getErrorStream() call) and a SimpleWriter which is for
+ * example using a DocumentWriter object, and is started will take all input
+ * from the BufferedReader untill it closes, and write it using the SimpleWriter
  */
-public class ReaderConduit extends Thread
-{
-	private SimpleWriter outgoing;
-	private BufferedReader incomming;
-	public Exception e = null;
-	
-	public ReaderConduit(BufferedReader incomming, SimpleWriter outgoing)
-	{
+public class ReaderConduit extends Thread {
+	private SimpleWriter	outgoing;
+	private BufferedReader	incomming;
+	public Exception		e	= null;
+
+	public ReaderConduit(BufferedReader incomming, SimpleWriter outgoing) {
 		this.incomming = incomming;
 		this.outgoing = outgoing;
 	}
-	
-	public void run()
-	{
+
+	public void run() {
 		String string;
-		
-		try
-		{
-			while((string = incomming.readLine()) != null)
-			{
-				outgoing.write(string + "\n");	
+
+		try {
+			while ((string = incomming.readLine()) != null) {
+				outgoing.write(string + "\n");
 			}
-		}
-		catch(IOException e)
-		{
+		} catch (IOException e) {
 			this.e = e;
 		}
-		
-		try
-		{
+
+		try {
 			incomming.close();
-		}
-		catch(IOException e)
-		{
+		} catch (IOException e) {
 			this.e = e;
-		}			
+		}
 	}
 }

@@ -1,4 +1,5 @@
 package org.transterpreter.occPlug;
+
 /*
  * MySaveDialog.java
  * part of the occPlug plugin for the jEdit text editor
@@ -21,22 +22,18 @@ package org.transterpreter.occPlug;
 
 import org.gjt.sp.jedit.gui.EnhancedDialog;
 
-class MySaveDialog extends EnhancedDialog
-{
-	public boolean save = false;
+class MySaveDialog extends EnhancedDialog {
+	public boolean	save	= false;
 
-	public MySaveDialog(org.gjt.sp.jedit.View view)
-	{
+	public MySaveDialog(org.gjt.sp.jedit.View view) {
 		super(view, "File not saved, save now?", true);
 	}
 
-	public void ok()
-	{
+	public void ok() {
 		save = true;
 	}
 
-	public void cancel()
-	{
+	public void cancel() {
 		save = false;
 	}
 }
