@@ -528,13 +528,6 @@ public class OccPlug extends JPanel implements EBComponent {
 		return null;
 	}
 
-	// FIXME: This ought to be static, and probably not in here...
-	public void writeVerbose(String str, DocumentWriter doc) {
-		if (OccPlugUtil.getVerbose()) {
-			doc.writeRegular(str);
-		}
-	}
-
 	public void clearTextArea() {
 		/* FIXME: ??? not sure, could be ok */
 		textArea.setText("");
@@ -680,32 +673,28 @@ public class OccPlug extends JPanel implements EBComponent {
 				occbuildPath = MiscUtilities.getParentOfPath(OccPlugUtil
 						.getOccBuildCmd());
 			}
-			/*
-			 * skrocEnv.add("SKROCPATH=" + skrocPath);
-			 * skrocEnv.add("SKROC_TVM_CONFIG_H=" + MiscUtilities.constructPath(
-			 * MiscUtilities.constructPath(
-			 * MiscUtilities.getParentOfPath(jEdit.getJEditHome()), "include"),
-			 * "tvm_config.h")); // Mac OS X Specific things
-			 * if(OperatingSystem.isMacOS()) { // If on OSX set up the
-			 * DYLD_FRAMEWORK_PATH so scheme works... // is this a safe thing to
-			 * do? skrocEnv.add("DYLD_FRAMEWORK_PATH=" + skrocPath); } /* if
-			 * OperatingSystem.isMacOS()
-			 */
+
+			/* Tell occbuild where to find important bits */
 			occbuildEnv.add("OCC21="
 					+ MiscUtilities.constructPath(occbuildPath, "occ21"));
 			occbuildEnv.add("TCE-DUMP.PL="
 					+ MiscUtilities.constructPath(occbuildPath, "tce-dump.pl"));
 			occbuildEnv.add("PLINKER.PL="
 					+ MiscUtilities.constructPath(occbuildPath, "plinker.pl"));
+			
 			/* Make error messages brief */
 			occbuildCommand.add("--occ21-opts");
 			occbuildCommand.add("-b");
+			
 			occbuildCommand.add("--prefix="
 					+ MiscUtilities.getParentOfPath(occbuildPath));
-			// Verbose SKRoC if we are verbose
+			
+			// Verbose compile if we are verbose
 			if (OccPlugUtil.getVerbose()) {
 				occbuildCommand.add("-v");
 			}
+			
+			// FIXME: Is this (masterLibraryPath) still used??? 
 			// Set up the master library path to the one contained within
 			// the Transterpreter if none is specified
 			occbuildCommand.add("--search");
@@ -716,48 +705,20 @@ public class OccPlug extends JPanel implements EBComponent {
 				occbuildCommand.add(OccPlugUtil.getMasterLibraryPath());
 			}
 
-			/* Libraries */
-			/*
-			 * if(!slinkerLibs.trim().equals("")) { String[] libsAsArgs =
-			 * slinkerLibs.trim().split(" "); for(int i = 0; i <
-			 * libsAsArgs.length; i++) { if(!libsAsArgs[i].equals("")) {
-			 * skrocCommand.add(libsAsArgs[i]); } } }
-			 */
-			/*
-			 * FIXME: This is a horrible way of doing this flag, it should not
-			 * test the type thing like this, rather the type should have the
-			 * wordlength embedded or something
-			 */
-			String cm = (System.getProperty("os.name").startsWith("Windows") ? "\\"
-					: "");
+			/* FIXME: Test and enable RCX and SRV-1
 			if (type.equals("Surveyor SRV-1")) {
-				// skrocCommand.add("--slinker-opts");
-				// skrocCommand.add("--tlp-types " + cm +
-				// "\"(CHAN BYTE IN, CHAN BYTE OUT, CHAN P.LASER@#105438A5 OUT, CHAN P.LED@#BDCB1BE5 OUT, CHAN P.MOTOR@#779CE8A5 OUT)"
-				// + cm + "\"");
 				occbuildCommand.add("--blackfin");
 				occbuildCommand.add("--no-std-libs");
 				occbuildCommand.add("-f");
 				occbuildCommand.add(srvFile);
+			
 			} else if (type.equals("Mindstorms RCX")) {
-				// occbuildCommand.add("--slinker-opts");
-				// occbuildCommand.add("--tlp-types " + cm + "\"()" + cm +
-				// "\"");
 				occbuildCommand.add("--target");
 				occbuildCommand.add("t2");
 				occbuildCommand.add("--srec");
 				occbuildCommand.add("-f");
 				occbuildCommand.add(srecFile);
-			} else if (type.equals("Desktop")) {
-				// occbuildCommand.add("--slinker-opts");
-				// occbuildCommand.add("--tlp-types " + cm +
-				// "\"(CHAN BYTE IN, CHAN BYTE OUT, CHAN BYTE OUT)" + cm +
-				// "\"");
-				// occbuildCommand.add("--target");
-				// occbuildCommand.add("t8");
-				// occbuildCommand.add("--bytecode");
-				// occbuildCommand.add("-f");
-				// occbuildCommand.add(tbcFile);
+			} else*/ if (type.equals("Desktop")) {
 				occbuildCommand.add("--toolchain=tvm");
 				occbuildCommand.add("--program");
 			} else {
@@ -769,17 +730,15 @@ public class OccPlug extends JPanel implements EBComponent {
 
 			// Say what we are doing
 			compileConsoleDoc.writeRegular("Compiling: " + occFile + "\n");
-			// compileConsoleDoc.writeRegular(skrocCommand + "\n");
-			writeVerbose(occbuildCommand + "\n", compileConsoleDoc);
+			OccPlugUtil.writeVerbose(occbuildCommand + "\n", compileConsoleDoc);
 
 			// Set up the environment
 			String[] env = (String[]) occbuildEnv.toArray(new String[1]);
-			// compileConsoleDoc.writeRegular(skrocEnv + "\n");
-			writeVerbose(occbuildEnv + "\n", compileConsoleDoc);
+			OccPlugUtil.writeVerbose(occbuildEnv + "\n", compileConsoleDoc);
 
 			execWorker = new ExecWorker((String[]) occbuildCommand
-					.toArray(new String[1]), (String[]) occbuildEnv
-					.toArray(new String[1]), new File(directory),
+					.toArray(new String[1]), env,
+					new File(directory),
 					new NonInteractiveExecWorkerHelper("occbuild", buffer
 							.getDirectory()) {
 						public Thread stdoutHandlerSetup(InputStream stdout) {
@@ -833,8 +792,6 @@ public class OccPlug extends JPanel implements EBComponent {
 					});
 
 			execWorker.start();
-
-			// compileConsoleDoc.writeOK("Success!!!\n");
 		} else {
 			compileConsoleDoc
 					.writeError("Error: Only occam (.occ) source files can be compiled.\n");
@@ -1382,8 +1339,8 @@ public class OccPlug extends JPanel implements EBComponent {
 		compileConsoleDoc.clear();
 		compileConsoleDoc.writeRegular("Downloading brickOS firmware\n");
 		// compileConsoleDoc.writeRegular(firmdlCommand + " \n");
-		writeVerbose(firmdlCommand + " \n", compileConsoleDoc);
-		writeVerbose(firmdlEnv + " \n", compileConsoleDoc);
+		OccPlugUtil.writeVerbose(firmdlCommand + " \n", compileConsoleDoc);
+		OccPlugUtil.writeVerbose(firmdlEnv + " \n", compileConsoleDoc);
 		/*
 		 * Ha! Java sucks, so you cannot pass an empty array (for the
 		 * environment to the exec function, or it dies with a null pointer
@@ -1441,7 +1398,7 @@ public class OccPlug extends JPanel implements EBComponent {
 	 * instance of this class, in order to be able to safely write to the same
 	 * styled document.
 	 */
-	/*
+	public /*
 	 * FIXME: I am not quite sure about SWING and threads... I am not being
 	 * careful about what I am doing to SWING components here, ie using
 	 * invokeLater(). Is this right, or redundant? And if I am doing this
