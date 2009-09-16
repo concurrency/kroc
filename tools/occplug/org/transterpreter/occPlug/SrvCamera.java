@@ -20,26 +20,19 @@ package org.transterpreter.occPlug;
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import javax.swing.*;
-import javax.swing.event.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Dimension;
 
-import org.gjt.sp.jedit.Buffer;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
 import org.gjt.sp.jedit.EBComponent;
 import org.gjt.sp.jedit.EBMessage;
-import org.gjt.sp.jedit.EditBus;
-import org.gjt.sp.jedit.GUIUtilities;
-import org.gjt.sp.jedit.MiscUtilities;
-import org.gjt.sp.jedit.OperatingSystem;
-import org.gjt.sp.jedit.jEdit;
 import org.gjt.sp.jedit.gui.DockableWindowManager;
-import org.gjt.sp.jedit.io.VFSManager;
-import org.gjt.sp.jedit.textarea.JEditTextArea;
-import org.gjt.sp.util.Log;
 
 public class SrvCamera extends JPanel implements EBComponent {
 	private org.gjt.sp.jedit.View	view;
