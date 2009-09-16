@@ -29,10 +29,13 @@ plugin.org.transterpreter.occPlug.OccPlugPlugin.activate=defer
 
 # application menu items
 #plugin.OccPlugPlugin.menu=occPlug - occPlug.occdoc occPlug.occdocview - occPlug.firmdl occPlug.firmdlfast - occPlug.tvmdl - occPlug.versions
+#plugin.org.transterpreter.occPlug.OccPlugPlugin.menu=\
+#  occPlug - occPlug.occdoc occPlug.occdocview - \
+#  occPlug.firmdl occPlug.firmdlfast - \
+#  occPlug.help occPlug.versions
+#20090912 CLJ: I've taken a bunch of things that don't work out of the menu
 plugin.org.transterpreter.occPlug.OccPlugPlugin.menu=\
-  occPlug - occPlug.occdoc occPlug.occdocview - \
-  occPlug.firmdl occPlug.firmdlfast - \
-  occPlug.help occPlug.versions
+  occPlug - occPlug.firmware - occPlug.versions
 
 # plugin option pane
 plugin.org.transterpreter.occPlug.OccPlugPlugin.option-group=occPlugCmds
@@ -68,6 +71,7 @@ occPlug.clearTextArea.icon=Clear.png
 occPlug.versions.label=Versions...
 occPlug.TransterpreterVersion=Not Applicable
 occPlug.help.label=View help
+occPlug.firmware.label = Download Firmware...
 
 # Settings, these should probably be overidden depending on installation
 # path, and platform
