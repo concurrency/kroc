@@ -23,7 +23,8 @@ package org.transterpreter.occPlug;
 import java.awt.Color;
 import java.awt.Font;
 
-import de.mud.terminal.*;
+import de.mud.terminal.SwingTerminal;
+import de.mud.terminal.VDUBuffer;
 
 class BlinkableSwingTerminal extends SwingTerminal {
 

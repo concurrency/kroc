@@ -20,53 +20,36 @@ package org.transterpreter.occPlug;
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.BufferedReader;
-
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusListener;
-import java.awt.event.ItemListener;
-import java.awt.Dimension;
-import java.awt.Component;
-
-import javax.swing.AbstractButton;
-import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
-import javax.swing.ComboBoxModel;
-import javax.swing.JSeparator;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.JToolBar;
-import javax.swing.SwingUtilities;
-
-import javax.swing.event.PopupMenuListener;
 import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 
-import org.gjt.sp.jedit.GUIUtilities;
 import org.gjt.sp.jedit.jEdit;
-import org.gjt.sp.jedit.gui.RolloverButton;
-
 import org.transterpreter.occPlug.process.ExecWorker;
 import org.transterpreter.occPlug.process.ExecWorkerHelper;
-import org.transterpreter.occPlug.process.ReaderConduit;
 import org.transterpreter.occPlug.process.ReaderConduitTest;
-import org.transterpreter.occPlug.process.ReaderConduitTest2;
 import org.transterpreter.occPlug.process.SimpleWriter;
 
 public class OccPlugFirmwareToolPanel extends JPanel {
