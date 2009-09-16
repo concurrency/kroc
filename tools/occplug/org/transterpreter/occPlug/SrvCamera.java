@@ -28,6 +28,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import org.gjt.sp.jedit.EBComponent;
@@ -49,8 +50,8 @@ public class SrvCamera extends JPanel implements EBComponent {
 		if (floating) this.setPreferredSize(new Dimension(320, 256));
 
 		imageLabel = new JLabel();
-		imageLabel.setHorizontalAlignment(JLabel.CENTER);
-		imageLabel.setVerticalAlignment(JLabel.CENTER);
+		imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		imageLabel.setVerticalAlignment(SwingConstants.CENTER);
 		add(BorderLayout.CENTER, imageLabel);
 	}
 
@@ -83,5 +84,6 @@ public class SrvCamera extends JPanel implements EBComponent {
 	}
 
 	public void handleMessage(EBMessage message) {
+		// Not used
 	}
 }

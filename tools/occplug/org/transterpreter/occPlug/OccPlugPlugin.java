@@ -34,8 +34,10 @@ public class OccPlugPlugin extends EditPlugin {
 	public static final String	OPTION_PREFIX	= "options.occPlug.";
 
 	public void start() {
+		// Not used
 	}
 
 	public void stop() {
+		// Not used
 	}
 }

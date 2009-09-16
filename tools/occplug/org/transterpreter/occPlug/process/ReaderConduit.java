@@ -49,14 +49,14 @@ public class ReaderConduit extends Thread {
 			while ((string = incomming.readLine()) != null) {
 				outgoing.write(string + "\n");
 			}
-		} catch (IOException e) {
-			this.e = e;
+		} catch (IOException ex) {
+			this.e = ex;
 		}
 
 		try {
 			incomming.close();
-		} catch (IOException e) {
-			this.e = e;
+		} catch (IOException ex) {
+			this.e = ex;
 		}
 	}
 }
