@@ -48,8 +48,8 @@ pkg-config playerc
 if [ "$?" == "1" ] ; then
   mkdir -p build
   cd build
-  curl -O \
-    http://kent.dl.sourceforge.net/sourceforge/playerstage/$PLAYER.tar.bz2 \
+  curl -L -O \
+    http://prdownloads.sourceforge.net/playerstage/$PLAYER.tar.bz2 \
     || exit 1
   tar -xvjf $PLAYER.tar.bz2
   cd $PLAYER
@@ -62,8 +62,8 @@ fi
 #if [ "$?" == "1" ] ; then
 #  mkdir -p build
 #  cd build
-#  curl -O \
-#    http://kent.dl.sourceforge.net/sourceforge/playerstage/$STAGE.tar.bz2 \
+#  curl -L -O \
+#    http://prdownloads.sourceforge.net/playerstage/$STAGE.tar.bz2 \
 #    || exit 1
 #  tar -xvjf $STAGE.tar.bz2
 #  cd $STAGE
