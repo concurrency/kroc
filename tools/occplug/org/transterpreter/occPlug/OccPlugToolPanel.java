@@ -21,7 +21,6 @@ package org.transterpreter.occPlug;
  */
 
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -31,20 +30,26 @@ import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
+import org.gjt.sp.jedit.Buffer;
 import org.gjt.sp.jedit.GUIUtilities;
+import org.gjt.sp.jedit.View;
 import org.gjt.sp.jedit.jEdit;
 import org.gjt.sp.jedit.gui.RolloverButton;
+import org.gjt.sp.jedit.io.VFSManager;
+import org.transterpreter.occPlug.OccPlug.DocumentWriter;
+import org.transterpreter.occPlug.targets.Targets;
+import org.transterpreter.occPlug.targets.support.CompileTarget;
 
 public class OccPlugToolPanel extends JPanel {
 	private OccPlug				theOccPlug;
-	private JComboBox			compileTarget;
-	/* For the SRV-1 */
-	private JTextField			host, port;
+	private JComboBox			target;
+
+	final JPanel		options				= new JPanel();
 
 	private AbstractButton		compileBtn, runBtn, stopBtn, clearBtn;
 
@@ -53,22 +58,28 @@ public class OccPlugToolPanel extends JPanel {
 	public static final int		ALLON				= 3;
 	public static final int		ALLOFF				= 4;
 
-	public static final String	compileTargets[]	= { "Surveyor SRV-1",
-			"Desktop", "Mindstorms RCX"			};
-	public static final int		SRV_IDX				= 0;
-	public static final int		DESKTOP_IDX			= 1;
-	public static final int		RCX_IDX				= 2;
-
 	public OccPlugToolPanel(OccPlug thePlug) {
+		/* FIXME: Move into occplug or somewhere central */
+		final Targets targets = new Targets();
+		
 		theOccPlug = thePlug;
 		final JToolBar toolBar = new JToolBar();
 		toolBar.setFloatable(false);
-		final JPanel options = new JPanel(new CardLayout());
 
+		/* Save options focus listener*/
+		FocusListener saveOptionsFocusListener = new FocusListener() {
+			public void focusGained(FocusEvent e) {
+				// Not used
+			}
+
+			public void focusLost(FocusEvent e) {
+				savePreferences();
+			}
+		};
+		
 		compileBtn = makeCustomButton("occPlug.compile", new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				OccPlugToolPanel.this.theOccPlug.compile((String) compileTarget
-						.getSelectedItem());
+				compile((CompileTarget) target.getSelectedItem());
 			}
 		});
 		toolBar.add(compileBtn);
@@ -76,15 +87,14 @@ public class OccPlugToolPanel extends JPanel {
 		runBtn = makeCustomButton("occPlug.run", new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				savePreferences();
-				OccPlugToolPanel.this.theOccPlug.run((String) compileTarget
-						.getSelectedItem());
+				run((CompileTarget) target.getSelectedItem());
 			}
 		});
 		toolBar.add(runBtn);
 
 		stopBtn = makeCustomButton("occPlug.stop", new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				OccPlugToolPanel.this.theOccPlug.stopRunningProcess();
+				stop((CompileTarget) target.getSelectedItem());
 			}
 		});
 		toolBar.add(stopBtn);
@@ -100,73 +110,110 @@ public class OccPlugToolPanel extends JPanel {
 		JLabel compileTargetLabel = new JLabel("Platform: ");
 		toolBar.add(compileTargetLabel);
 
-		/* libraries = new JComboBox(new LibrariesComboBoxModel()); */
-
-		compileTarget = new JComboBox(compileTargets);
-		compileTarget.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				String selected = (String) compileTarget.getSelectedItem();
-				// Save the currently selected platform target
-				jEdit.setProperty(OccPlugPlugin.OPTION_PREFIX
-						+ "lastPlatformTarget", selected);
-				// Switch to the options for that target
-				CardLayout cl = (CardLayout) (options.getLayout());
-				cl.show(options, selected);
+		target = new JComboBox(targets.getAllCompileTargets());
+		target.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				updateOptionPane();
 			}
 		});
-
-		toolBar.add(compileTarget);
-
-		/* SRV-1 Console Options */
-		FocusListener srvFocus = new FocusListener() {
-			public void focusGained(FocusEvent e) {
-				// Not used
+		target.addFocusListener(saveOptionsFocusListener);
+		String lastSelected = jEdit.getProperty(OccPlugPlugin.OPTION_PREFIX
+				+ "compile.target");
+		if (lastSelected != null) {
+			CompileTarget[] allTargets = targets.getAllCompileTargets();
+			for (int i = 0; i < allTargets.length; i++) {
+				if (lastSelected.equals(allTargets[i].name)) {
+					target.setSelectedItem(allTargets[i]);
+					break;
+				}
 			}
-
-			public void focusLost(FocusEvent e) {
-				savePreferences();
-			}
-		};
-
-		// Setup SRV options
-		JPanel srvOptions = new JPanel();
-		srvOptions.add(new JLabel(" Host: "));
-		host = new JTextField(16);
-		host.addFocusListener(srvFocus);
-		host
-				.setText(jEdit.getProperty(OccPlugPlugin.OPTION_PREFIX
-						+ "srvHost"));
-		srvOptions.add(host);
-		srvOptions.add(new JLabel(" Port: "));
-		port = new JTextField(6);
-		port.addFocusListener(srvFocus);
-		port
-				.setText(jEdit.getProperty(OccPlugPlugin.OPTION_PREFIX
-						+ "srvPort"));
-		srvOptions.add(port);
-
-		// Set up the cards in the options panel
-		options.add(srvOptions, compileTargets[SRV_IDX]);
-		options.add(new JPanel(), compileTargets[DESKTOP_IDX]);
-		options.add(new JPanel(), compileTargets[RCX_IDX]);
+		}
+		updateOptionPane();
+		toolBar.add(target);
 
 		toolBar.add(options);
-
-		// Set the selected target and update the options panel
-		// FIXME: Check that the last selected target is valid otherwise set it
-		// to
-		// the default or something
-		String lastSelected = jEdit.getProperty(OccPlugPlugin.OPTION_PREFIX
-				+ "lastPlatformTarget", compileTargets[DESKTOP_IDX]);
-		compileTarget.setSelectedItem(lastSelected);
-		CardLayout cl = (CardLayout) (options.getLayout());
-		cl.show(options, lastSelected);
-
+		
 		this.setLayout(new BorderLayout(10, 0));
 		this.add(BorderLayout.WEST, toolBar);
 		this.setBorder(BorderFactory.createEmptyBorder(0, 0, 3, 10));
 
 		setState(NORMAL);
+	}
+
+	protected void stop(CompileTarget selectedItem) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	protected void run(final CompileTarget theTarget) {
+		View view = theOccPlug.getView();
+		Buffer buffer = view.getBuffer();
+		
+		final DocumentWriter output = theOccPlug.new DocumentWriter(theOccPlug
+				.getConsoleDoc());
+		output.clear();
+		
+		theTarget.handler.runProgram(theTarget, buffer, output, new Runnable() {
+			public void run() {
+				// FIXME: Reenable buttons and stuff
+			}
+		});
+	}
+
+	protected void compile(final CompileTarget theTarget) {
+		
+		View view = theOccPlug.getView();
+		Buffer buffer = view.getBuffer();
+		
+		final DocumentWriter output = theOccPlug.new DocumentWriter(theOccPlug
+				.getConsoleDoc());
+		output.clear();
+		
+		/*
+		 * There's now an option to save automatically on compile, which is
+		 * enabled by default. if disabled, the user is prompted
+		 */
+		if (buffer.isDirty() && OccPlugUtil.getSaveOnCompile()) {
+			// Save the file, and let the user know we saved the file for
+			// them..
+			output.writeWarning("Warning: Changed source file saved.\n");
+
+			buffer.save(view, null);
+			VFSManager.waitForRequests();
+		} else if (buffer.isDirty() && !OccPlugUtil.getSaveOnCompile()) {
+			int answer = JOptionPane.showConfirmDialog(view, "Save file?",
+					"Save file?", JOptionPane.YES_NO_CANCEL_OPTION);
+
+			if (answer == JOptionPane.CANCEL_OPTION) {
+				// Dont complete the compile
+				output.writeError("Compilation canceled\n");
+				return;
+			}
+
+			if (answer == JOptionPane.YES_OPTION) {
+				// Save the file, keeping the file name the same
+				buffer.save(view, null);
+			} else {
+				output.writeWarning("WARNING: SOURCE FILE NOT SAVED!!!\n");
+			}
+		}
+		
+		theTarget.handler.compileProgram(theTarget, buffer, output, new Runnable() {
+			public void run() {
+				// FIXME:
+				//setToolBarEnabled(true);
+				//theTarget.handler.setEnabledForFirmwareOptions(true);
+			}
+		});
+		
+	}
+
+	protected void updateOptionPane() {
+		CompileTarget t = (CompileTarget) target.getSelectedItem();
+		JPanel o = t.handler.getCompileOptions(t);
+		options.removeAll();
+		if (o != null) options.add(o);
+		options.revalidate();
 	}
 
 	private AbstractButton makeCustomButton(String name, ActionListener listener) {
@@ -184,10 +231,8 @@ public class OccPlugToolPanel extends JPanel {
 	}
 
 	private void savePreferences() {
-		jEdit.setProperty(OccPlugPlugin.OPTION_PREFIX + "srvHost", host
-				.getText());
-		jEdit.setProperty(OccPlugPlugin.OPTION_PREFIX + "srvPort", port
-				.getText());
+		jEdit.setProperty(OccPlugPlugin.OPTION_PREFIX + "compile.target",
+				((CompileTarget) target.getSelectedItem()).name);
 	}
 
 	public void setState(final int state) {
@@ -200,16 +245,16 @@ public class OccPlugToolPanel extends JPanel {
 						runBtn.setEnabled(true);
 						stopBtn.setEnabled(false);
 						clearBtn.setEnabled(true);
-						host.setEnabled(true);
-						port.setEnabled(true);
+//						host.setEnabled(true);
+//						port.setEnabled(true);
 						break;
 					case RUNNING:
 						compileBtn.setEnabled(false);
 						runBtn.setEnabled(false);
 						stopBtn.setEnabled(true);
 						clearBtn.setEnabled(true);
-						host.setEnabled(false);
-						port.setEnabled(false);
+//						host.setEnabled(false);
+//						port.setEnabled(false);
 						break;
 					case ALLON:
 						compileBtn.setEnabled(true);

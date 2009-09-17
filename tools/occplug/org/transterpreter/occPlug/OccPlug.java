@@ -602,108 +602,13 @@ public class OccPlug extends JPanel implements EBComponent {
 			errorSource.clear();
 			unregisterErrorSource();
 
-			/*
-			 * FIXME: This needs to be done better... ie some options of what to
-			 * do when the file is dirty, ie save, ask, or dont ask...
-			 */
-			/*
-			 * Check if the file is dirty, and ask if user wants to save if it
-			 * is
-			 */
 
-			/*
-			 * There's now an option to save automatically on compile, which is
-			 * enabled by default. if disabled, the user is prompted
-			 */
-
-			if (buffer.isDirty() && OccPlugUtil.getSaveOnCompile()) {
-				// Save the file, and let the user know we saved the file for
-				// them..
-				compileConsoleDoc
-						.writeWarning("Warning: Changed source file saved.\n");
-
-				buffer.save(view, null);
-				VFSManager.waitForRequests();
-			} else if (buffer.isDirty() && !OccPlugUtil.getSaveOnCompile()) {
-				int answer = JOptionPane.showConfirmDialog(view, "Save file?",
-						"Save file?", JOptionPane.YES_NO_CANCEL_OPTION);
-
-				if (answer == JOptionPane.CANCEL_OPTION) {
-					// Dont complete the compile
-					compileConsoleDoc.writeError("Compilation canceled\n");
-					return 1;
-				}
-
-				if (answer == JOptionPane.YES_OPTION) {
-					// Save the file, keeping the file name the same
-					buffer.save(view, null);
-				} else {
-					compileConsoleDoc
-							.writeWarning("WARNING: SOURCE FILE NOT SAVED!!!\n");
-				}
-			}
 
 			/* Update buttons on the toolpanel */
 			toolPanel.setState(OccPlugToolPanel.RUNNING);
 
-			/*
-			 * Start of skroc command
-			 */
-			ArrayList occbuildCommand = new ArrayList();
-			ArrayList occbuildEnv = new ArrayList();
-			/*
-			 * We need to set the SKROCPATH environment variable, or skroc is
-			 * not going to be able to find any of its binaries
-			 */
-			final String occbuildPath;
-			/*
-			 * If this is an absolute path, dont touch it, otherwise try to put
-			 * in the path we think this should be
-			 */
-			if (!MiscUtilities.isAbsolutePath(OccPlugUtil.getOccBuildCmd())) {
-				final String occbuildCmdWithPath = MiscUtilities.constructPath(
-						MiscUtilities.constructPath(MiscUtilities
-								.getParentOfPath(jEdit.getJEditHome()), "bin"),
-						OccPlugUtil.getOccBuildCmd());
-				occbuildCommand.add(occbuildCmdWithPath);
-				occbuildPath = MiscUtilities
-						.getParentOfPath(occbuildCmdWithPath);
-			} else {
-				occbuildCommand.add(OccPlugUtil.getOccBuildCmd());
-				occbuildPath = MiscUtilities.getParentOfPath(OccPlugUtil
-						.getOccBuildCmd());
-			}
 
-			/* Tell occbuild where to find important bits */
-			occbuildEnv.add("OCC21="
-					+ MiscUtilities.constructPath(occbuildPath, "occ21"));
-			occbuildEnv.add("TCE-DUMP.PL="
-					+ MiscUtilities.constructPath(occbuildPath, "tce-dump.pl"));
-			occbuildEnv.add("PLINKER.PL="
-					+ MiscUtilities.constructPath(occbuildPath, "plinker.pl"));
-			
-			/* Make error messages brief */
-			occbuildCommand.add("--occ21-opts");
-			occbuildCommand.add("-b");
-			
-			occbuildCommand.add("--prefix="
-					+ MiscUtilities.getParentOfPath(occbuildPath));
-			
-			// Verbose compile if we are verbose
-			if (OccPlugUtil.getVerbose()) {
-				occbuildCommand.add("-v");
-			}
-			
-			// FIXME: Is this (masterLibraryPath) still used??? 
-			// Set up the master library path to the one contained within
-			// the Transterpreter if none is specified
-			occbuildCommand.add("--search");
-			if (OccPlugUtil.getMasterLibraryPath().equals("")) {
-				occbuildCommand.add(MiscUtilities.constructPath(MiscUtilities
-						.getParentOfPath(jEdit.getJEditHome()), "lib"));
-			} else {
-				occbuildCommand.add(OccPlugUtil.getMasterLibraryPath());
-			}
+
 
 			/* FIXME: Test and enable RCX and SRV-1
 			if (type.equals("Surveyor SRV-1")) {
@@ -718,87 +623,79 @@ public class OccPlug extends JPanel implements EBComponent {
 				occbuildCommand.add("--srec");
 				occbuildCommand.add("-f");
 				occbuildCommand.add(srecFile);
-			} else*/ if (type.equals("Desktop")) {
+			} else*/ /*if (type.equals("Desktop")) {
 				occbuildCommand.add("--toolchain=tvm");
 				occbuildCommand.add("--program");
 			} else {
 				compileConsoleDoc.writeError("Error: I don't understand '"
 						+ type + "' as a platform type!\n");
 				return 0;
-			}
-			occbuildCommand.add(occFile);
+			}*/
 
-			// Say what we are doing
-			compileConsoleDoc.writeRegular("Compiling: " + occFile + "\n");
-			OccPlugUtil.writeVerbose(occbuildCommand + "\n", compileConsoleDoc);
 
-			// Set up the environment
-			String[] env = (String[]) occbuildEnv.toArray(new String[1]);
-			OccPlugUtil.writeVerbose(occbuildEnv + "\n", compileConsoleDoc);
-
-			execWorker = new ExecWorker((String[]) occbuildCommand
-					.toArray(new String[1]), env,
-					new File(directory),
-					new NonInteractiveExecWorkerHelper("occbuild", buffer
-							.getDirectory()) {
-						public Thread stdoutHandlerSetup(InputStream stdout) {
-							return new ReaderConduit(new BufferedReader(
-									new InputStreamReader(stdout)),
-									new SimpleWriter() {
-										public void write(String str) {
-											/*
-											 * Returns the style in errStatus
-											 * which should be used for
-											 * displaying the error message
-											 */
-											ErrorSet errStatus = checkForErrors(
-													str, directory);
-											String style = "regular";
-											/*
-											 * Check if it was an error (ie
-											 * something other than regular was
-											 * returned
-											 */
-											MutableAttributeSet a = null;
-											/*
-											 * errstatus is null if there was no
-											 * error
-											 */
-											if (errStatus != null) {
-												switch (errStatus.error.type) {
-													case ErrorSource.ERROR:
-														a = new SimpleAttributeSet();
-														a
-																.addAttribute(
-																		StyledLinkEditorKit.LINK,
-																		errStatus);
-														style = "error";
-														break;
-													case ErrorSource.WARNING:
-														a = new SimpleAttributeSet();
-														a
-																.addAttribute(
-																		StyledLinkEditorKit.LINK,
-																		errStatus);
-														style = "warning";
-														break;
-												}
-											}
-											compileConsoleDoc.write(str, style,
-													a);
-										}
-									});
-						}
-					});
-
-			execWorker.start();
-		} else {
-			compileConsoleDoc
-					.writeError("Error: Only occam (.occ) source files can be compiled.\n");
-			compileConsoleDoc
-					.writeError("       The current buffer does not contain a .occ file!\n");
+//			execWorker = new ExecWorker((String[]) occbuildCommand
+//					.toArray(new String[1]), env,
+//					new File(directory),
+//					new NonInteractiveExecWorkerHelper("occbuild", buffer
+//							.getDirectory()) {
+//						public Thread stdoutHandlerSetup(InputStream stdout) {
+//							return new ReaderConduit(new BufferedReader(
+//									new InputStreamReader(stdout)),
+//									new SimpleWriter() {
+//										public void write(String str) {
+//											/*
+//											 * Returns the style in errStatus
+//											 * which should be used for
+//											 * displaying the error message
+//											 */
+//											ErrorSet errStatus = checkForErrors(
+//													str, directory);
+//											String style = "regular";
+//											/*
+//											 * Check if it was an error (ie
+//											 * something other than regular was
+//											 * returned
+//											 */
+//											MutableAttributeSet a = null;
+//											/*
+//											 * errstatus is null if there was no
+//											 * error
+//											 */
+//											if (errStatus != null) {
+//												switch (errStatus.error.type) {
+//													case ErrorSource.ERROR:
+//														a = new SimpleAttributeSet();
+//														a
+//																.addAttribute(
+//																		StyledLinkEditorKit.LINK,
+//																		errStatus);
+//														style = "error";
+//														break;
+//													case ErrorSource.WARNING:
+//														a = new SimpleAttributeSet();
+//														a
+//																.addAttribute(
+//																		StyledLinkEditorKit.LINK,
+//																		errStatus);
+//														style = "warning";
+//														break;
+//												}
+//											}
+//											compileConsoleDoc.write(str, style,
+//													a);
+//										}
+//									});
+//						}
+//					});
+//
+//			execWorker.start();
+//		} else {
+//			compileConsoleDoc
+//					.writeError("Error: Only occam (.occ) source files can be compiled.\n");
+//			compileConsoleDoc
+//					.writeError("       The current buffer does not contain a .occ file!\n");
+//		}
 		}
-
 		return 0;
 	}
 
@@ -1086,7 +983,7 @@ public class OccPlug extends JPanel implements EBComponent {
 
 		private void handleImage() throws IOException {
 			byte[] img = srv.readImage();
-			DockableWindowManager dwm = view.getDockableWindowManager();
+			DockableWindowManager dwm = getView().getDockableWindowManager();
 			JComponent dockable = dwm.getDockableWindow("srvCamera");
 			SrvCamera cam;
 			if (dockable == null) {
@@ -1493,5 +1390,9 @@ public class OccPlug extends JPanel implements EBComponent {
 		final DocumentWriter compileConsoleDoc = new DocumentWriter(textArea
 				.getStyledDocument());
 		compileConsoleDoc.clear();
+	}
+
+	public org.gjt.sp.jedit.View getView() {
+		return view;
 	}
 }

@@ -21,8 +21,10 @@ package org.transterpreter.occPlug.targets.support;
  */
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 
 import org.transterpreter.occPlug.OccPlug;
 import org.transterpreter.occPlug.OccPlug.DocumentWriter;
@@ -63,17 +65,22 @@ public class TargetExecWorkerHelper extends ExecWorkerHelper {
 	}
 
 	public void interruptedExceptionHandler(Exception e) {
-		output.writeError("Unexpected error: " + e + "\n");
-		throw new RuntimeException(e);
+		ioHandlerExceptionHandler(e);
 	}
 
 	public void ioHandlerExceptionHandler(Exception e) {
 		output.writeError("Unexpected error: " + e + "\n");
+		ByteArrayOutputStream b = new ByteArrayOutputStream();
+		e.printStackTrace(new PrintStream(b));
+		output.writeError(b.toString());
 		throw new RuntimeException(e);
 	}
 
 	public void cannotExec(Exception e) {
-		output.writeError("Error while running " + cmdName + ": " + e);
+		output.writeError("Error while running " + cmdName + ": " + e + "\n");
+		ByteArrayOutputStream b = new ByteArrayOutputStream();
+		e.printStackTrace(new PrintStream(b));
+		output.writeError(b.toString());
 	}
 
 	public void cmdExited(int status) {

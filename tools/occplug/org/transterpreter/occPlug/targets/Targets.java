@@ -25,17 +25,22 @@ import java.util.Arrays;
 
 import org.transterpreter.occPlug.targets.support.BaseTarget;
 import org.transterpreter.occPlug.targets.support.CompileAbility;
+import org.transterpreter.occPlug.targets.support.CompileTarget;
 import org.transterpreter.occPlug.targets.support.FirmwareAbility;
 import org.transterpreter.occPlug.targets.support.FirmwareTarget;
 
 public class Targets {
 
 	/* Add new targets to this list */
-	private static final BaseTarget[]	allTargets	= { new Arduino() };
+	private static final BaseTarget[]	allTargets	= { 
+		new Arduino(),
+		new Desktop(),
+		new Surveyor()};
 
-	/*************************************************
-	 * Nothing below this should need to be altered * to add a new target *
-	 *************************************************/
+	/************************************************
+	 * Nothing below this should need to be altered *
+	 * to add a new target                          *
+	 ************************************************/
 
 	private final FirmwareAbility[]		firmwareTargets;
 	private final CompileAbility[]		compileTargets;
@@ -48,8 +53,8 @@ public class Targets {
 			if (t instanceof FirmwareAbility) f.add(t);
 			if (t instanceof CompileAbility) c.add(t);
 		}
-		firmwareTargets = (FirmwareAbility[]) f.toArray(new FirmwareAbility[1]);
-		compileTargets = (CompileAbility[]) f.toArray(new CompileAbility[1]);
+		firmwareTargets = (FirmwareAbility[]) f.toArray(new FirmwareAbility[0]);
+		compileTargets = (CompileAbility[]) c.toArray(new CompileAbility[0]);
 	}
 
 	public BaseTarget[] allTargets() {
@@ -71,6 +76,16 @@ public class Targets {
 			l.addAll(Arrays.asList(t.getFirmwareTargets()));
 		}
 
-		return (FirmwareTarget[]) l.toArray(new FirmwareTarget[1]);
+		return (FirmwareTarget[]) l.toArray(new FirmwareTarget[0]);
+	}
+
+	public CompileTarget[] getAllCompileTargets() {
+		ArrayList l = new ArrayList();
+		for (int i = 0; i < compileTargets.length; i++) {
+			CompileAbility t = compileTargets[i];
+			l.addAll(Arrays.asList(t.getCompileTargets()));
+		}
+
+		return (CompileTarget[]) l.toArray(new CompileTarget[0]);
 	}
 }
