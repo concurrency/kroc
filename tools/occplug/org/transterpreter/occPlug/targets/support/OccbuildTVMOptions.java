@@ -1,12 +1,7 @@
 package org.transterpreter.occPlug.targets.support;
 
-import javax.swing.JPanel;
-
-import org.gjt.sp.jedit.Buffer;
-import org.transterpreter.occPlug.OccPlug.DocumentWriter;
-
 /*
- * CompileAbility.java
+ * OccbuildTVMOptions.java
  * part of the occPlug plugin for the jEdit text editor
  * Copyright (C) 2009 Christian L. Jacobsen
  *
@@ -25,11 +20,14 @@ import org.transterpreter.occPlug.OccPlug.DocumentWriter;
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-public interface CompileAbility {
-	public CompileTarget[] getCompileTargets();
-	public JPanel getCompileOptions(final CompileTarget target);
-	public void compileProgram(final CompileTarget target, final org.gjt.sp.jedit.Buffer buffer, final DocumentWriter output,
-			final Runnable finished);
-	public void runProgram(final CompileTarget theTarget, final Buffer buffer,
-			final DocumentWriter output, final Runnable finished);
+import org.transterpreter.occPlug.OccPlugUtil;
+
+public class OccbuildTVMOptions extends OccbuildOptions
+{
+	public OccbuildTVMOptions()
+	{
+		toolchain = "tvm";
+		systemSearch = new String[] {OccPlugUtil.pathifyXXX("share/tvm/vtinclude"), OccPlugUtil.pathifyXXX("share/tvm/vtilib")};
+
+	}
 }

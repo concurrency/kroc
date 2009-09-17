@@ -29,6 +29,7 @@ import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -39,6 +40,8 @@ import javax.swing.JPanel;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
+import org.gjt.sp.jedit.Buffer;
+import org.gjt.sp.jedit.MiscUtilities;
 import org.gjt.sp.jedit.jEdit;
 import org.transterpreter.occPlug.OccPlugPlugin;
 import org.transterpreter.occPlug.OccPlugUtil;
@@ -46,8 +49,12 @@ import org.transterpreter.occPlug.OccPlug.DocumentWriter;
 import org.transterpreter.occPlug.process.ExecWorker;
 import org.transterpreter.occPlug.targets.support.BaseTarget;
 import org.transterpreter.occPlug.targets.support.CompileAbility;
+import org.transterpreter.occPlug.targets.support.CompileTarget;
 import org.transterpreter.occPlug.targets.support.FirmwareAbility;
 import org.transterpreter.occPlug.targets.support.FirmwareTarget;
+import org.transterpreter.occPlug.targets.support.OccbuildHelper;
+import org.transterpreter.occPlug.targets.support.OccbuildOptions;
+import org.transterpreter.occPlug.targets.support.OccbuildTVMOptions;
 import org.transterpreter.occPlug.targets.support.TargetExecWorkerHelper;
 
 /**
@@ -59,6 +66,8 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 
 	private final FirmwareTarget[]	firmwareTargets		= {
 			new FirmwareTarget("Arduino (and compatible)", this)};
+	private final CompileTarget[]	compileTargets		= {
+			new CompileTarget("Arduino (and compatible)", this)};
 	private JComboBox				arduinoPort;
 	private JPanel					arduinoOptions		= null;
 	private ArrayList				disableOnDownload	= new ArrayList();
@@ -146,13 +155,13 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 
 		final String[] firmdlCommand = { OccPlugUtil.pathifyXXX("bin/avrdude"),
 				"-C", OccPlugUtil.pathifyXXX("lib/avrdude.conf"), "-U",
-				"flash:w:" + OccPlugUtil.pathifyXXX("lib/tvm-arduino.hex"),
-				"-V", "-F", "-P", (String) arduinoPort.getSelectedItem(),
+				"flash:w:" + OccPlugUtil.pathifyXXX("share/tvm-arduino/firmware/tvm-arduino.hex"),
+				"-F", "-P", (String) arduinoPort.getSelectedItem(),
 				// FIXME: Need a sensible way of setting these
 				("-c"), "stk500v1", "-p", "atmega328p", "-b", "57600", };
 
 		output.writeRegular("Downloading Plumbing firmware\n");
-		OccPlugUtil.writeVerbose(firmdlCommand + " \n", output);
+		OccPlugUtil.writeVerbose("Command: " + Arrays.asList(firmdlCommand) + " \n", output);
 
 		final Runnable[] finalisers = { finished };
 		ExecWorker execWorker = new ExecWorker(firmdlCommand, null, null, // new
@@ -169,5 +178,96 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 			Component item = (Component) i.next();
 			item.setEnabled(enabled);
 		}
+	}
+
+	public void compileProgram(CompileTarget target, Buffer buffer,
+			DocumentWriter output, Runnable finished) {
+		final String occFile = buffer.getName();
+		
+		if (!occFile.toLowerCase().endsWith(".occ")) {
+			output.writeError("Error: Only occam (.occ) source files can be compiled.\n");
+			output.writeError("       The current buffer does not contain a .occ file!\n");
+			finished.run();
+			return;
+		}
+	
+		OccbuildOptions options = new OccbuildTVMOptions();
+		options.target_cpu = "avr";
+		options.systemSearch = new String[] {
+				OccPlugUtil.pathifyXXX("share/tvm-arduino/plumbing-include"),
+				OccPlugUtil.pathifyXXX("share/tvm-arduino/vtlib"),
+				OccPlugUtil.pathifyXXX("share/tvm-arduino/vtinclude")};
+		// FIXME: Needs to be settable somewhere
+		options.defines.put("F.CPU", "16000000"); 
+		String[] occbuildCommand = OccbuildHelper.makeOccbuildProgramCommand(options, occFile);
+		
+		// Say what we are doing
+		output.writeRegular("Compiling: " + occFile + "\n");
+		OccPlugUtil.writeVerbose("Command: " + Arrays.asList(occbuildCommand) + "\n", output);
+
+		final String[] env = OccbuildHelper.makeOccbuildEnvironment();
+		OccPlugUtil.writeVerbose("Environment: " + Arrays.asList(env) + "\n", output);
+		
+		final Runnable[] finalisers = { finished };
+		ExecWorker execWorker = new ExecWorker(occbuildCommand, 
+				env, 
+				new File(buffer.getDirectory()),
+				new TargetExecWorkerHelper("compile", output,
+						finalisers));
+
+		execWorker.start();		
+		
+	}
+
+	public JPanel getCompileOptions(CompileTarget target) {
+		return getFirmwareOptions(null);
+	}
+
+	public CompileTarget[] getCompileTargets() {
+		return compileTargets;
+	}
+
+	public void runProgram(final CompileTarget theTarget, final Buffer buffer,
+			final DocumentWriter output, final Runnable finished) {
+		final String fileBase = MiscUtilities.getFileNameNoExtension(buffer.getName());
+		final String tbcFile = fileBase + ".tbc";
+		final String ihexFile = fileBase + ".ihex";
+		final File curDir = new File(buffer.getDirectory());
+		final String [] ihexCommand = {
+				OccPlugUtil.pathifyXXX("bin/binary-to-ihex"),
+				// FIXME: This needs to come from elsewhere
+				"0x5000",
+				tbcFile,
+				ihexFile
+		};
+
+		final String[] runCommand = { OccPlugUtil.pathifyXXX("bin/avrdude"),
+				"-C", OccPlugUtil.pathifyXXX("lib/avrdude.conf"), 
+				"-V", "-F", "-P", (String) arduinoPort.getSelectedItem(),
+				"-D",
+				// FIXME: Need a sensible way of setting these
+				("-c"), "stk500v1", "-p", "atmega328p", "-b", "57600", 
+				"-U", "flash:w:" + ihexFile};
+		final Runnable[] finalisers = { finished };
+		
+		final Runnable[] intermediaryFinalisers =
+		{
+				new Runnable() {
+					public void run() {
+						ExecWorker execWorker = new ExecWorker(runCommand, 
+								null, 
+								curDir,
+								new TargetExecWorkerHelper("run", output,
+										finalisers));
+						execWorker.start();
+					}
+				}
+		};
+		ExecWorker execWorker = new ExecWorker(ihexCommand, 
+				null, 
+				curDir,
+				new TargetExecWorkerHelper("run", output,
+						intermediaryFinalisers));
+		execWorker.start();
 	}
 }
