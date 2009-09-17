@@ -36,12 +36,21 @@ for f in $libFiles; do
   copyfile "install/lib/$f" "$outputDir/$rezDir/lib/"
 done
 # Arduino bits
-copyfile "build/kroc-tvm-avr-wrapper/tvm-arduino.hex" "$outputDir/$rezDir/lib/"
+mkdir -p "$outputDir/$rezDir/share/tvm-arduino/firmware"
+mkdir -p "$outputDir/$rezDir/share/tvm-arduino/plumbing-include"
+copydir "install-avr/share/tvm" "$outputDir/$rezDir/share/tvm-arduino"
+copyfile "build/kroc-tvm-avr-wrapper/tvm-arduino.hex" "$outputDir/$rezDir/share/tvm-arduino/firmware"
 copyfile "../../tvm/arduino/avrdude.conf" "$outputDir/$rezDir/lib/"
-copyfile "../../tvm/arduino/binary-to_ihex" "$outputDir/$rezDir/bin/"
+copyfile "../../tvm/arduino/binary-to-ihex" "$outputDir/$rezDir/bin/"
 copyfile "../../tvm/arduino/read-arduino" "$outputDir/$rezDir/bin/"
 copyfile "../../tvm/arduino/reset-arduino" "$outputDir/$rezDir/bin/"
 copyfile "build/arduino-0016/hardware/tools/avr/bin/avrdude" "$outputDir/$rezDir/bin/"
+copyfile "../../tvm/arduino/occam/plumbing.module" "$outputDir/$rezDir/share/tvm-arduino/plumbing-include"
+copyfile "../../tvm/arduino/occam/wiring.module" "$outputDir/$rezDir/share/tvm-arduino/plumbing-include"
+copyfile "../../tvm/arduino/occam/avr.module" "$outputDir/$rezDir/share/tvm-arduino/plumbing-include"
+copyfile "../../tvm/arduino/occam/iom328p.inc" "$outputDir/$rezDir/share/tvm-arduino/plumbing-include"
+mkdir "$outputDir/plumbing"
+copyfile "../../tvm/arduino/occam/ch*.occ" "$outputDir/plumbing"
 # jEdit things
 copydir "build/jedit/jedit-program/" "$outputDir/$javaDir/jEdit/"
 copyfile "build/occPlug/OccPlug.jar" \

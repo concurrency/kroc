@@ -103,6 +103,18 @@ cd kroc-tvm-posix
 make
 make install
 
+cd $BUILD
+mkdir kroc-tvm-avr
+cd kroc-tvm-avr
+
+../../../../configure --target=avr --with-toolchain=tvm --prefix=$INSTALL-avr
+make
+make install
+cd $BUILD/kroc-tvm-avr/modules/inmoslibs/libsrc
+make
+make install
+
+
 OLD_PATH=$PATH
 PATH=$PATH:$BUILD/$ARDUINO/hardware/tools/avr/bin
 cd $BUILD
