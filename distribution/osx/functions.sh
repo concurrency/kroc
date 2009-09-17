@@ -18,7 +18,7 @@ process()
 
 makedir()
 {
-	OLDIFS=$IFS
+	oldifs=$IFS
 	IFS="/"
 
 	directory="$1"
@@ -34,7 +34,7 @@ makedir()
 		slash="/"
 	done
 
-	IFS=$OLDIFS
+	IFS=$oldifs
 }
 
 copydir_exclude()
