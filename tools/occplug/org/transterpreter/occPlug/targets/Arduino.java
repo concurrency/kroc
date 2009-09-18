@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -64,22 +65,30 @@ import org.transterpreter.occPlug.targets.support.TargetExecWorkerHelper;
 public class Arduino extends BaseTarget implements FirmwareAbility,
 		CompileAbility {
 
-	private final FirmwareTarget[]	firmwareTargets		= {
-			new FirmwareTarget("Arduino (and compatible)", this)};
-	private final CompileTarget[]	compileTargets		= {
-			new CompileTarget("Arduino (and compatible)", this)};
-	private JComboBox				arduinoPort;
-	private JPanel					arduinoOptions		= null;
-	private ArrayList				disableOnDownload	= new ArrayList();
+	private final FirmwareTarget[]		firmwareTargets			= { 
+			new FirmwareTarget("Arduino (and compatible)", this) };
+	private final CompileTarget[]		compileTargets			= { 
+			new CompileTarget("Arduino (and compatible)", this) };
+	private final DefaultComboBoxModel	arduinoPort				= new DefaultComboBoxModel();
+	private final SortedSet				arduinoPortItems		= new TreeSet();
+	private final JPanel				arduinoFirmwareOptions;
+	private final JPanel				arduinoCompileOptions;
+	private final ArrayList				disableOnDownload		= new ArrayList();
 
+	public Arduino()
+	{
+		super();
+		
+		arduinoFirmwareOptions = makeOptionsPanel();
+		arduinoCompileOptions = makeOptionsPanel();
+	}
+	
 	public FirmwareTarget[] getFirmwareTargets() {
 		return firmwareTargets;
 	}
 
-	public JPanel getFirmwareOptions(FirmwareTarget target) {
-		/* Only make the options once */
-		if (arduinoOptions != null) return arduinoOptions;
-
+	protected JPanel makeOptionsPanel()
+	{
 		/* Focus Listener for option saving */
 		final FocusListener saveFirmwareOptionsFocusListener = new FocusListener() {
 			public void focusGained(FocusEvent e) {
@@ -87,17 +96,16 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 			}
 
 			public void focusLost(FocusEvent e) {
-				saveFirmwareOptions();
+				saveOptions();
 			}
 		};
 
 		/* Arduino options */
-		arduinoOptions = new JPanel();
-		arduinoOptions.add(new JLabel("Port: "));
-		final SortedSet arduinoPortItems = new TreeSet();
-		arduinoPort = new JComboBox();
-		arduinoPort.setEditable(true);
-		PopupMenuListener arduinoPortPopupListener = new PopupMenuListener() {
+		JPanel options = new JPanel();
+		options.add(new JLabel("Port: "));
+		JComboBox port = new JComboBox(arduinoPort);
+		port.setEditable(true);
+		PopupMenuListener portPopupListener = new PopupMenuListener() {
 			public void popupMenuCanceled(PopupMenuEvent e) {
 				// Not used
 			}
@@ -119,28 +127,36 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 
 				for (int i = 0; i < devices.length; i++) {
 					if (arduinoPortItems.add("/dev/" + devices[i])) {
-						arduinoPort.addItem("/dev/" + devices[i]);
+						arduinoPort.addElement("/dev/" + devices[i]);
 					}
 				}
 			}
 		};
-		arduinoPortPopupListener.popupMenuWillBecomeVisible(null);
-		arduinoPort.addFocusListener(saveFirmwareOptionsFocusListener);
-		arduinoPort.getEditor().getEditorComponent().addFocusListener(
+		portPopupListener.popupMenuWillBecomeVisible(null);
+		port.addFocusListener(saveFirmwareOptionsFocusListener);
+		port.getEditor().getEditorComponent().addFocusListener(
 				saveFirmwareOptionsFocusListener);
-		arduinoPort.addPopupMenuListener(arduinoPortPopupListener);
-		arduinoPort.setSelectedItem(jEdit
+		port.addPopupMenuListener(portPopupListener);
+		port.setSelectedItem(jEdit
 				.getProperty(OccPlugPlugin.OPTION_PREFIX
-						+ "firmware.targets.arduino.port"));
-		disableOnDownload.add(arduinoPort);
-		arduinoOptions.add(arduinoPort);
+						+ "targets.arduino.port"));
+		disableOnDownload.add(port);
+		options.add(port);
 
-		return arduinoOptions;
+		return options;		
 	}
-
-	protected void saveFirmwareOptions() {
+	
+	public JPanel getFirmwareOptions(FirmwareTarget target) {
+		return arduinoFirmwareOptions;
+	}
+	
+	public JPanel getCompileOptions(CompileTarget target) {
+		return arduinoCompileOptions;
+	}
+	
+	protected void saveOptions() {
 		jEdit.setProperty(OccPlugPlugin.OPTION_PREFIX
-				+ "firmware.targets.arduino.port", (String) arduinoPort
+				+ "targets.arduino.port", (String) arduinoPort
 				.getSelectedItem());
 	}
 
@@ -153,12 +169,16 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 			return;
 		}
 
-		final String[] firmdlCommand = { OccPlugUtil.pathifyXXX("bin/avrdude"),
-				"-C", OccPlugUtil.pathifyXXX("lib/avrdude.conf"), "-U",
-				"flash:w:" + OccPlugUtil.pathifyXXX("share/tvm-arduino/firmware/tvm-arduino.hex"),
-				"-F", "-P", (String) arduinoPort.getSelectedItem(),
+		final String[] firmdlCommand = { 
+				OccPlugUtil.pathifyXXX("bin/avrdude"),
+				"-C", OccPlugUtil.pathifyXXX("lib/avrdude.conf"), 
+				"-U", "flash:w:" + OccPlugUtil.pathifyXXX("share/tvm-arduino/firmware/tvm-arduino.hex"),
+				"-F", 
+				"-P", (String) arduinoPort.getSelectedItem(),
 				// FIXME: Need a sensible way of setting these
-				("-c"), "stk500v1", "-p", "atmega328p", "-b", "57600", };
+				("-c"), "stk500v1", 
+				"-p", "atmega328p", 
+				"-b", "57600", };
 
 		output.writeRegular("Downloading Plumbing firmware\n");
 		OccPlugUtil.writeVerbose("Command: " + Arrays.asList(firmdlCommand) + " \n", output);
@@ -220,9 +240,6 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		
 	}
 
-	public JPanel getCompileOptions(CompileTarget target) {
-		return getFirmwareOptions(null);
-	}
 
 	public CompileTarget[] getCompileTargets() {
 		return compileTargets;
@@ -250,12 +267,17 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				ihexFile
 		};
 
-		final String[] runCommand = { OccPlugUtil.pathifyXXX("bin/avrdude"),
+		final String[] runCommand = { 
+				OccPlugUtil.pathifyXXX("bin/avrdude"),
 				"-C", OccPlugUtil.pathifyXXX("lib/avrdude.conf"), 
-				"-V", "-F", "-P", (String) arduinoPort.getSelectedItem(),
+				"-V", 
+				"-F", 
+				"-P", (String) arduinoPort.getSelectedItem(),
 				"-D",
 				// FIXME: Need a sensible way of setting these
-				("-c"), "stk500v1", "-p", "atmega328p", "-b", "57600", 
+				("-c"), "stk500v1", 
+				"-p", "atmega328p", 
+				"-b", "57600", 
 				"-U", "flash:w:" + ihexFile};
 		final Runnable[] finalisers = { finished };
 		
