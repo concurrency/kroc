@@ -39,6 +39,7 @@ done
 mkdir -p "$outputDir/$rezDir/share/tvm-arduino/firmware"
 mkdir -p "$outputDir/$rezDir/share/tvm-arduino/plumbing-include"
 copydir "install-avr/share/tvm" "$outputDir/$rezDir/share/tvm-arduino"
+copyfile "install-avr/bin/avr-occbuild" "$outputDir/$rezDir/bin"
 copyfile "build/kroc-tvm-avr-wrapper/tvm-arduino.hex" "$outputDir/$rezDir/share/tvm-arduino/firmware"
 copyfile "../../tvm/arduino/avrdude.conf" "$outputDir/$rezDir/lib/"
 copyfile "../../tvm/arduino/binary-to-ihex" "$outputDir/$rezDir/bin/"
