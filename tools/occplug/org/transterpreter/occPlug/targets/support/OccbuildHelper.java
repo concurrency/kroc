@@ -97,7 +97,7 @@ public class OccbuildHelper {
 	public static String[] makeOccbuildCommand(final OccbuildOptions options, final String command, final String fileName)
 	{
 		ArrayList occbuildCommand = new ArrayList();
-		occbuildCommand.add(OccbuildHelper.getOccbuildPath());
+		occbuildCommand.add(OccbuildHelper.getOccbuildPath(options));
 		occbuildCommand.addAll(Arrays.asList(options.generateOptions()));
 		occbuildCommand.add(command);
 		occbuildCommand.add(fileName);
@@ -108,6 +108,11 @@ public class OccbuildHelper {
 	public static String getOccbuildPath()
 	{
 		return MiscUtilities.constructPath(getBinPath(), "occbuild");
+	}
+	
+	public static String getOccbuildPath(final OccbuildOptions options)
+	{
+		return MiscUtilities.constructPath(getBinPath(), options.occbuildName);
 	}
 	
 	public static String getBinPath()
