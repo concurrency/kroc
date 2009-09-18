@@ -19,6 +19,7 @@ if test $OCCBUILD_TOOLCHAIN = kroc; then
   KROC_CCSP_FLAGS
 fi
 
+OCCAM_TARGET_PREFIX
 KROC_CANONICAL_TARGET=$target
 AC_SUBST(KROC_CANONICAL_TARGET)
 KROC_TARGET_OS=$target_os
@@ -115,12 +116,12 @@ KROC_ARCHINCDIR="$includedir/kroc"
 KROC_MANDIR="$mandir"
 KROC_KROCDIR="$datadir/kroc"
 KROC_CONFIGDIR="$sysconfdir/kroc"
-KROC_EXAMPLESDIR="$libdir/kroc/examples"
+KROC_EXAMPLESDIR="$libdir/kroc/${KROC_TARGET_PREFIX}examples"
 TVM_ARCHINCDIR="$includedir/tvm"
 TVM_BINDIR="$bindir"
-TVM_LIBDIR="$libdir/tvm"
+TVM_LIBDIR="$libdir/${KROC_TARGET_PREFIX}tvm"
 TVM_TVMDIR="$datadir/tvm"
-TVM_EXAMPLESDIR="$TVM_LIBDIR/examples"
+TVM_EXAMPLESDIR="$TVM_LIBDIR/${KROC_TARGET_PREFIX}examples"
 ACLOCALDIR="${prefix}/share/aclocal"
 
 AC_SUBST(KROC_ARCHBINDIR)

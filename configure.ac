@@ -115,6 +115,7 @@ fi
 
 # The cgtests should build for all targets.
 OCCAM_CONFIG_TARGET_SUBDIRS(tests/cgtests)
+OCCAM_CONFIG_TARGET_SUBDIRS(tests/occbench)
 
 OCCAM_CONFIG_SUBDIRS(doc)
 

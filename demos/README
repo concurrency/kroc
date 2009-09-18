@@ -7,6 +7,11 @@ This directory contains the following sub-directories
     the "better-bar" simulation.  An animated ALT demonstrator,
     with added extras.
 
+  complexity/
+
+    Several example occam-pi programs written by Mark Read, showing how
+    to do the same things in a variety of different ways.
+
   game/
 
     an interactive multi-user text based adventure game.
