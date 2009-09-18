@@ -63,6 +63,10 @@ public abstract class OccbuildOptions
 		
 		if(verbose) options.add("-v");
 		
+		if(toolchain != null)
+		{
+			options.add("--toolchain=" + toolchain);
+		}
 		
 		for(i = 0; i < systemSearch.length; i++)
 		{
