@@ -192,7 +192,8 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		}
 	
 		OccbuildOptions options = new OccbuildTVMOptions();
-		options.target_cpu = "avr";
+		//options.target_cpu = "avr";
+		options.occbuildName = "avr-occbuild";
 		options.systemSearch = new String[] {
 				OccPlugUtil.pathifyXXX("share/tvm-arduino/plumbing-include"),
 				OccPlugUtil.pathifyXXX("share/tvm-arduino/vtlib"),
@@ -229,6 +230,14 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 
 	public void runProgram(final CompileTarget theTarget, final Buffer buffer,
 			final DocumentWriter output, final Runnable finished) {
+		
+		String port = (String) arduinoPort.getSelectedItem();
+		if (port == null || port.trim().equals("")) {
+			output.writeError("Please specify a port");
+			finished.run();
+			return;
+		}
+		
 		final String fileBase = MiscUtilities.getFileNameNoExtension(buffer.getName());
 		final String tbcFile = fileBase + ".tbc";
 		final String ihexFile = fileBase + ".ihex";

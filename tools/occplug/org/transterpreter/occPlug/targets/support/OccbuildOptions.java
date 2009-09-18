@@ -28,8 +28,9 @@ import org.transterpreter.occPlug.OccPlugUtil;
 
 public abstract class OccbuildOptions
 {
+	public String occbuildName         = "occbuild";
 	public boolean long_error_messages = false;
-	public String target_cpu           = null;
+	//public String target_cpu           = null;
 	public boolean verbose             = OccPlugUtil.getVerbose();
 	public String toolchain;
 	public String[] search             = null;
@@ -52,11 +53,13 @@ public abstract class OccbuildOptions
 			options.add("-b");
 		}
 		
+		/*
 		if(target_cpu != null)
 		{
 			options.add("--target-cpu");
 			options.add(target_cpu);				
 		}
+		*/
 		
 		if(verbose) options.add("-v");
 		
