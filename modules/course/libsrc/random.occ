@@ -19,11 +19,9 @@
 
 --** @module course
 
-#IF (TARGET.BITS.PER.WORD = 32)
-
 --* Pseudorandom number generator.
--- This is an implementation by David Morse of the "minimal standard"
--- described in
+-- On 32-bit platforms, this is an implementation by David Morse of the
+-- "minimal standard" described in
 -- "[@link http://portal.acm.org/citation.cfm?id=63042 Random number
 -- generators:  Good ones are hard to find]",
 -- Park, K.P. & Miller, K.W. (1988), Comm. ACM, 31(10), 1192-1201.
@@ -38,23 +36,26 @@
 -- The random number is full period, with a period of 2 ** 31,
 -- that is 2 147 483 647.
 --
+-- On 16-bit platforms, this is a much less impressive LFSR, with a
+-- period of (2 ** 16) - 1.
+--
 -- @param upto The upper bound (exclusive) of the output value
 -- @param seed The input seed
 -- @return The output value
 -- @return The output seed
 INT, INT FUNCTION random (VAL INT upto, seed)
-
-  --{{{  miscellaneous constants
-  VAL INT magic IS 16807:
-  VAL INT period IS 2147483647:
-  VAL INT quotient IS period / magic:
-  VAL INT remainder IS period \ magic:
-  --}}}
-
   INT int.result, new.seed:
 
   VALOF
-    --{{{
+#IF (TARGET.BITS.PER.WORD = 32)
+    --{{{  32-bit PRNG
+    --{{{  miscellaneous constants
+    VAL INT magic IS 16807:
+    VAL INT period IS 2147483647:
+    VAL INT quotient IS period / magic:
+    VAL INT remainder IS period \ magic:
+    --}}}
+
     INT lo, hi, test:
     SEQ
       hi := seed / quotient
@@ -67,7 +68,19 @@ INT, INT FUNCTION random (VAL INT upto, seed)
           new.seed := test PLUS period
       int.result := new.seed \ upto
     --}}}
+#ELSE
+    --{{{  16-bit PRNG
+    INT new:
+    SEQ
+      new := (((seed >> 15) >< (seed >> 13)) >< (seed >> 12)) >< (seed >> 10)
+      new.seed := (seed << 1) \/ (new >< 1)
+
+      IF
+        new.seed < 0
+          int.result := (-new.seed) \ upto
+        TRUE
+          int.result := new.seed \ upto
+    --}}}
+#ENDIF
     RESULT int.result, new.seed
 :
-
-#ENDIF

@@ -21,8 +21,8 @@ endif
 
 all-local: tvm-posix.tbc
 
-tvmvtincludedir = $(datadir)/tvm/vtinclude
-tvmfirmwaredir = $(datadir)/tvm/firmware
+tvmvtincludedir = $(datadir)/tvm/$(KROC_TARGET_PREFIX)vtinclude
+tvmfirmwaredir = $(datadir)/tvm/$(KROC_TARGET_PREFIX)firmware
 
 tvmvtinclude_HEADERS = \
 	introspect.inc \

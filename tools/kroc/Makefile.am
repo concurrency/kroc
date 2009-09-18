@@ -53,6 +53,7 @@ edit = sed \
 	-e 's|@TARGET_AR[@]|$(TARGET_AR)|g' \
 	-e 's|@TARGET_RANLIB[@]|$(TARGET_RANLIB)|g' \
 	-e 's|@VERSION[@]|$(VERSION)|g' \
+	-e 's|@KROC_TARGET_PREFIX[@]|$(KROC_TARGET_PREFIX)|g' \
 	-e 's|@KROC_CANONICAL_TARGET[@]|$(KROC_CANONICAL_TARGET)|g' \
 	-e 's|@KROC_TARGET_OS[@]|$(KROC_TARGET_OS)|g' \
 	-e 's|@KROC_TARGET_CPU[@]|$(KROC_TARGET_CPU)|g' \

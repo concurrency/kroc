@@ -1,0 +1,122 @@
+-- ==================================================================================
+--  WHAT using_raster_2.occ DOES
+--
+--  On top of the previous version, this version attempts to use a timer to counter the flickering of the background colour in the raster.
+--  These modifications are made in 'display.terminator'
+--
+--  This program is my initial investigation into using a raster display. Rasters (arrays of [][]INT, representing the x and y axis, with an 
+--  INT representing the colour of a pixel in the format #AARRGGBB : alpha, red, green, blue) are generated from raster.display.simple, which
+--  passes them around a 'ring' of other processes that draw on the raster. At present only the process 'display' draws on it, setting the 
+--  background to a colour. The colour is incremented with every passing raster. The third process in the raster ring is 'display.terminate'. This
+--  process does nothing to the raster, unless a key is pressed in the terminal, in which case raster.shutdown is called, which replaces the 
+--  incomming raster with a signal for raster.display.simple to terminate, and awaits the signals return having visited everyone in the ring before
+--  itself terminating.
+--
+--  The tricky part in all of this is setting up a ring. Channels of type RASTER are created for communicating rasters along members of the ring.
+--  The processes that comprise the ring receive the ends of the channels which are then used for communication with eachother. The main process
+--  body itself does not every directly handle a raster. It simply creates and passes the channels such that the various members of the ring
+--  can pass rasters directly between themselves.   
+--
+--  This program should be compiled with "kroc -d -di using_raster_2.occ"
+--  and then run with ./using_raster_2
+-- ==================================================================================
+
+
+
+#INCLUDE "course.module"
+#INCLUDE "rastergraphics.module"
+#INCLUDE "sdlraster.module"
+
+
+PROC main (CHAN BYTE in?, SHARED CHAN BYTE out!, CHAN BYTE err!)
+
+
+  --{{{ PROC display
+  --  process forms one part of a raster-ring. Receives a raster, and sets the background colour. Colour is represented internally as a variable
+  --  that is incremented with each receipt of a raster, so backgrounds will increment through available colours. 
+  --  Uses familiar pattern with termination.barrier and its PAR monitor to terminate the process.
+  PROC display(CHAN RASTER r.in?, r.out!, BARRIER termination.barrier)
+    INITIAL INT col IS #00000000 :            -- hold the background colour
+    INITIAL BOOL terminate IS FALSE : 
+    CHAN BOOL termination.ch :     
+    RASTER r:                                 -- temporarily hold a raster received from the ring.   
+
+    PAR
+      SEQ                                     -- monitor for termination signal (through termination.barrier)
+        SYNC termination.barrier
+        termination.ch ! TRUE
+      WHILE NOT terminate                     -- perform function until termination signal sent through client syncing on barrier
+        PRI ALT                               -- ring will continue indefinitely, so give priority to termination. 
+          termination.ch ? terminate              
+            SKIP
+          r.in ? r                            -- receive raster from other process in ring
+            SEQ
+              CLAIM out!                      -- spit out the present colour
+                --{{{
+                SEQ                  
+                  out.string("colour is : ", 0, out!)
+                  out.int   (col, 0, out!)
+                  out.string("*n", 0, out!)
+                --}}}
+              raster.clear(r, col)            -- set raster background colour
+              r.out ! r                       -- pass on raster to next in the ring
+              IF                              -- increment col
+                col >= #FFFFFF                -- end of colours, go back to start
+                  col := 0
+                TRUE
+                  col := col + 1            -- cycle through colours more quickly
+  :
+  --}}}
+
+
+  --{{{ PROC display.terminator
+  --  process passes received rasters on to next recipient in ring unchanged, unless key is pressed in terminal window,
+  --  in which case the raster.shutdown process is called to terminate the ring (and the raster.display.simple process).
+  PROC display.terminator (CHAN RASTER r.in?, r.out!, BARRIER termination.barrier)
+    BYTE temp :                             -- throw away variable for reading char from keyboard.
+    RASTER r :                              -- temporarily hold raster 
+    INITIAL BOOL terminate IS FALSE:
+
+    TIMER timer :
+    INT next.frame.time :
+    INT time.now :
+    INITIAL INT time.between.frames IS 5000 :
+
+    WHILE NOT terminate
+
+      PRI ALT
+        in ? temp                           -- priority, read keypress in terminal
+          SEQ
+            raster.shutdown (r.in?, r.out!) -- this process will not terminate until it has send AND RECEIVED the shutdown raster. 
+            SYNC termination.barrier        -- inform other processes in the ring that they may terminate.    
+            terminate := TRUE
+
+        r.in ? r                            -- just pass the raster along
+          SEQ
+            r.out ! r                         -- just pass the raster along
+            timer ? time.now
+            next.frame.time := time.now + time.between.frames
+            timer ? AFTER next.frame.time         -- slow down framerate
+  :
+  --}}}
+
+  --{{{ main body of the program 
+  BARRIER termination.barrier :
+  CHAN RASTER raster.to.display, raster.to.terminator, raster.to.display.simple :     -- channels that comprise the ring 
+  PAR
+    --{{{ raster.display.simple
+    --  raster display process that does not handle events.
+    --  appear to be passing the relevent ends of the RASTER channels into the process call. 
+    raster.display.simple ("The Title", 700, 700, 1, raster.to.display.simple?, raster.to.terminator!)
+    --}}}    
+    PAR ENROLL termination.barrier
+      -- handle termination of program (when key is pressed in terminal)
+      display.terminator (raster.to.terminator?, raster.to.display!, termination.barrier)
+  
+      -- manipulate the raster.
+      display(raster.to.display?, raster.to.display.simple!, termination.barrier)    
+  --}}}
+:
+
+
+

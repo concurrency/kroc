@@ -3061,6 +3061,29 @@ PRIVATE void parse_option_directives (void)
 }
 
 /*}}}*/
+/*{{{  PRIVATE treenode *define_builtins */
+/* Wrap synthetic definitions around the AST for built-in protocols, etc. */
+PRIVATE treenode *define_builtins (treenode *around)
+{
+	const SOURCEPOSN locn = NOPOSN;
+	const char *signal_str = "SIGNAL";
+	wordnode *signal_name;
+	treenode *signal_tag, *signal_tags, *signal_decl;
+
+	/* PROTOCOL SIGNAL
+	     CASE
+	       SIGNAL = 0
+	   : */
+	signal_name = lookupword (signal_str, strlen (signal_str));
+	signal_tag = declname (N_TAGDEF, locn, signal_name, NULL, NULL);
+	SetNTValue (signal_tag, 0);
+	signal_tags = newlistnode (S_LIST, locn, signal_tag, NULL);
+	signal_decl = declare (S_TPROTDEF, locn, signal_tags, signal_name, NULL);
+	SetDBody (signal_decl, around);
+
+	return signal_decl;
+}
+/*}}}*/
 /*{{{  PUBLIC treenode *rscunit ()*/
 PUBLIC treenode *rscunit (void)
 {
@@ -3077,6 +3100,7 @@ PUBLIC treenode *rscunit (void)
 
 	base_lexlevel = syn_lexlevel;
 	tptr = rprocess ();
+	tptr = define_builtins (tptr);
 	t = tptr;
 	while (t != NULL && TagOf (t) != S_END) {
 		switch (TagOf (t)) {
