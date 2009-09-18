@@ -216,8 +216,8 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		options.occbuildName = "avr-occbuild";
 		options.systemSearch = new String[] {
 				OccPlugUtil.pathifyXXX("share/tvm-arduino/plumbing-include"),
-				OccPlugUtil.pathifyXXX("share/tvm-arduino/vtlib"),
-				OccPlugUtil.pathifyXXX("share/tvm-arduino/vtinclude")};
+				OccPlugUtil.pathifyXXX("share/tvm-arduino/avr-vtlib"),
+				OccPlugUtil.pathifyXXX("share/tvm-arduino/avr-vtinclude")};
 		// FIXME: Needs to be settable somewhere
 		options.defines.put("F.CPU", "16000000"); 
 		String[] occbuildCommand = OccbuildHelper.makeOccbuildProgramCommand(options, occFile);
