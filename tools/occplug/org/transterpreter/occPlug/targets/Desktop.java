@@ -22,6 +22,7 @@ package org.transterpreter.occPlug.targets;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.swing.JPanel;
 
@@ -73,11 +74,11 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		
 		// Say what we are doing
 		output.writeRegular("Compiling: " + occFile + "\n");
-		OccPlugUtil.writeVerbose(occbuildCommand + "\n", output);
+		OccPlugUtil.writeVerbose(Arrays.asList(occbuildCommand) + "\n", output);
 
 		// Set up the environment
 		String[] env = OccbuildHelper.makeOccbuildEnvironment();
-		OccPlugUtil.writeVerbose(env + "\n", output);
+		OccPlugUtil.writeVerbose(Arrays.asList(env) + "\n", output);
 
 		final Runnable[] finalisers = { finished };
 		ExecWorker execWorker = new ExecWorker(occbuildCommand, env, 
