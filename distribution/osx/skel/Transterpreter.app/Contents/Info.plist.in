@@ -8,10 +8,16 @@
 	<string>Transterpreter</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
+	<key>CFBundleVersion</key>
 	<string>$version</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$shortversion</string>
 	<key>CFBundleSignature</key>
 	<string>tptr</string>
+	<key>SUFeedURL</key>
+	<string>$sparkle_feed</string>
+	<key>SUEnableSystemProfiling</key>
+	<true/>
   <key>NSAppleScriptEnabled</key>
   <string>No</string>
   <key>CFBundleAllowMixedLocalizations</key>

@@ -3,10 +3,31 @@
 # around.
 
 source functions.sh
-source version.sh
+#source version.sh
+# FIXME: Temporary for dev versions
+version=`date -u +"%Y%m%d.%H%M"`
+shortversion="Development version: $version (`svnversion -nc ../../`)"
+
+
+BUILD=build
+SPARKLE="Sparkle 1.5b6"
+SPARKLE_URL_BIT=${SPARKLE// /%20}
+
+if ! [ -d "$BUILD/$SPARKLE" ] ; then
+  mkdir -p build
+  cd build
+  curl -o "$SPARKLE.zip" \
+  "http://sparkle.andymatuschak.org/files/$SPARKLE_URL_BIT.zip" \
+    || exit 1
+  unzip -d "$SPARKLE" "$SPARKLE.zip"
+fi
+
+
+sparkle_feed=http://download.transterpreter.org/appcast/mac-dev.xml
 
 outputDir="output/"
 rezDir="Transterpreter.app/Contents/Resources"
+
 sysFrameworks="/System/Library/Frameworks"
 javaDir=$rezDir
 binaryFiles="ilibr kmakef kroc mkoccdeps occ21 netbard occbuild plinker.pl tce-dump.pl tranx86 trapns tvm"
@@ -50,11 +71,13 @@ copyfile "../../tvm/arduino/occam/plumbing.module" "$outputDir/$rezDir/share/tvm
 copyfile "../../tvm/arduino/occam/wiring.module" "$outputDir/$rezDir/share/tvm-arduino/plumbing-include"
 copyfile "../../tvm/arduino/occam/avr.module" "$outputDir/$rezDir/share/tvm-arduino/plumbing-include"
 copyfile "../../tvm/arduino/occam/iom328p.inc" "$outputDir/$rezDir/share/tvm-arduino/plumbing-include"
-mkdir "$outputDir/plumbing"
+mkdir -p "$outputDir/plumbing"
 copyfile "../../tvm/arduino/occam/ch*.occ" "$outputDir/plumbing"
 # jEdit things
 copydir "build/jedit/jedit-program/" "$outputDir/$javaDir/jEdit/"
 copyfile "build/occPlug/OccPlug.jar" \
+  "$outputDir/$javaDir/jEdit/jars/"
+copyfile "build/macupdater/JEditSparklePlugin.jar" \
   "$outputDir/$javaDir/jEdit/jars/"
 #copyfile "common-files/jEdit-plugin/OccPlug.props" "$outputDir/$rezDir/jEdit/properties/"
 copyfile "../common/jEdit-plugin/catalog" "$outputDir/$javaDir/jEdit/modes/"
@@ -63,6 +86,9 @@ copydir "../common/jEdit-plugin/dependencies" "$outputDir/$javaDir/jEdit/jars"
 
 # Licenses
 #copydir "common-files/licenses" "$outputDir/$rezDir/licenses"
+
+# Sparkle
+copydir "build/$SPARKLE/Sparkle.framework" "$outputDir/$rezDir/../Frameworks/Sparkle.framework"
 
 # Examples etc (ie course dir)
 copydir_addexcludes "../../modules/course" "$outputDir/course" \
@@ -77,3 +103,6 @@ copyfile "skel/README.rtf" "$outputDir/"
 #Move those to somewhere sensible
 #copyfile "$outputDir/$rezDir/bin/occOPENGL.inc" "$outputDir/$rezDir/lib"
 #copyfile "$outputDir/$rezDir/bin/occSDL.inc" "$outputDir/$rezDir/lib"
+
+
+echo "Built bundle version: $version ('$shortversion')"
