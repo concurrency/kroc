@@ -21,7 +21,6 @@ if ! [ -d build/jedit ] ; then
 fi
 
 cd $ROOT
-
 cd ../../tools/occplug
 
 ant -Djedit.install.dir=$ROOT/build/jedit/jedit-program/ \
