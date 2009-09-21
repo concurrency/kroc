@@ -60,13 +60,13 @@ copydir_exclude()
 
 	for file in $files ; do
 		dest=`echo "$file" | sed -e "s!$path_remove!$2/! ; s/\/\/*/\//g"`
-		if [ -d "$file" ] ; then
+		if [ -L "$file" ] ; then
+			echo -n "Symlink:  " 
+			ln -v -f -h -s `readlink "$file"` "$dest"
+		elif [ -d "$file" ] ; then
 			if ! [ -d "$dest" ] ; then
 				makedir "$dest"
 			fi
-		elif [ -L "$file" ] ; then
-			echo -n "Symlink:  " 
-			ln -v -f -h -s `readlink "$file"` "$dest"
 		else
 			hasin=`expr "$file" : '.*\(\.in\)$'`
 			if ! [ "Z$hasin" = "Z" ] ; then
