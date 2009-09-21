@@ -18,6 +18,8 @@
 	<string>$sparkle_feed</string>
 	<key>SUEnableSystemProfiling</key>
 	<true/>
+	<key>SUPublicDSAKeyFile</key>
+	<string>org.transterpreter.transterpreter.pem</string>
   <key>NSAppleScriptEnabled</key>
   <string>No</string>
   <key>CFBundleAllowMixedLocalizations</key>
