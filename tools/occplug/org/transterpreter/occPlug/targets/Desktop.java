@@ -39,9 +39,11 @@ import org.transterpreter.occPlug.targets.support.TargetExecWorkerHelper;
 
 public class Desktop extends BaseTarget implements CompileAbility {
 
-	private final CompileTarget[]	compileTargets		= {
-			new CompileTarget("Desktop (TVM)", this),
-			new CompileTarget("Desktop (KRoC)", this),
+	private final CompileTarget   target_kroc    = new CompileTarget("Desktop (KRoC)", this);
+	private final CompileTarget   target_tvm     = new CompileTarget("Desktop (TVM)", this);
+	private final CompileTarget[] compileTargets = {
+			target_tvm,
+			target_kroc,
 			};
 
 	public CompileTarget[] getCompileTargets() {
@@ -67,10 +69,12 @@ public class Desktop extends BaseTarget implements CompileAbility {
 	
 
 		String[] occbuildCommand;
-		if(target == compileTargets[0])
+		if(target == target_tvm)
 			occbuildCommand = OccbuildHelper.makeOccbuildProgramCommand("tvm", occFile);
-		else
+		else if(target == target_kroc)
 			occbuildCommand = OccbuildHelper.makeOccbuildProgramCommand("kroc", occFile);
+		else
+			throw new RuntimeException("Invalid target passed to compileProgram");
 		
 		// Say what we are doing
 		output.writeRegular("Compiling: " + occFile + "\n");
@@ -91,30 +95,42 @@ public class Desktop extends BaseTarget implements CompileAbility {
 
 	public void runProgram(CompileTarget theTarget, Buffer buffer,
 			DocumentWriter output, Runnable finished) {
-		
-		String filename = MiscUtilities.getFileNameNoExtension(buffer.getName()) + ".tbc";
-		
-		ArrayList tvmCommand = new ArrayList();
+		ArrayList runCommand = new ArrayList();
 		ArrayList runEnv = new ArrayList();
+		
+		final String filename;
+		if(theTarget == target_tvm)
+		{
+			filename = MiscUtilities.getFileNameNoExtension(buffer.getName()) + ".tbc";
+			
+			String fw_p = MiscUtilities.constructPath(MiscUtilities
+					.getParentOfPath(MiscUtilities.getParentOfPath(OccPlugUtil
+							.pathify(OccPlugUtil.getTvmCmd()))),
+					"share/tvm/firmware/tvm-posix.tbc");
+			runEnv.add("TVM_FIRMWARE_FILE=" + fw_p);
+			String lib_p = MiscUtilities.constructPath(MiscUtilities
+					.getParentOfPath(MiscUtilities.getParentOfPath(OccPlugUtil
+							.pathify(OccPlugUtil.getTvmCmd()))), "lib");
+			runEnv.add("DYLD_LIBRARY_PATH=" + lib_p);
+	
+			runCommand.add(OccPlugUtil.pathifyXXX("bin/tvm"));
+		}
+		else if(theTarget == target_kroc)
+		{
+			filename = MiscUtilities.constructPath(
+					buffer.getDirectory(),
+					MiscUtilities.getFileNameNoExtension(buffer.getName()));
+		}
+		else
+			throw new RuntimeException("invalid target passed to runProgram");
 
-		String fw_p = MiscUtilities.constructPath(MiscUtilities
-				.getParentOfPath(MiscUtilities.getParentOfPath(OccPlugUtil
-						.pathify(OccPlugUtil.getTvmCmd()))),
-				"share/tvm/firmware/tvm-posix.tbc");
-		runEnv.add("TVM_FIRMWARE_FILE=" + fw_p);
-		String lib_p = MiscUtilities.constructPath(MiscUtilities
-				.getParentOfPath(MiscUtilities.getParentOfPath(OccPlugUtil
-						.pathify(OccPlugUtil.getTvmCmd()))), "lib");
-		runEnv.add("DYLD_LIBRARY_PATH=" + lib_p);
-
-		tvmCommand.add(OccPlugUtil.pathifyXXX("bin/tvm"));
-		tvmCommand.add(filename);
-
+		runCommand.add(filename);
+		
 		final Runnable[] finalisers = { finished };
-		ExecWorker execWorker = new ExecWorker((String[]) tvmCommand.toArray(new String[0]), 
+		ExecWorker execWorker = new ExecWorker((String[]) runCommand.toArray(new String[0]), 
 				(String[]) runEnv.toArray(new String[0]), 
 				new File(buffer.getDirectory()),
-				new TargetExecWorkerHelper("compile", output,
+				new TargetExecWorkerHelper("run", output,
 						finalisers));
 
 		execWorker.start();	
