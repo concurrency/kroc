@@ -121,7 +121,7 @@ public class OccPlugToolPanel extends JPanel {
 				+ "compile.target");
 		if(lastSelected == null)
 		{
-			lastSelected = targets.defaultTargetName;
+			lastSelected = Targets.defaultTargetName;
 		}	
 		CompileTarget[] allTargets = targets.getAllCompileTargets();
 		for (int i = 0; i < allTargets.length; i++) {
