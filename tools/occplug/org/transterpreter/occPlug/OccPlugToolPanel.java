@@ -119,13 +119,15 @@ public class OccPlugToolPanel extends JPanel {
 		target.addFocusListener(saveOptionsFocusListener);
 		String lastSelected = jEdit.getProperty(OccPlugPlugin.OPTION_PREFIX
 				+ "compile.target");
-		if (lastSelected != null) {
-			CompileTarget[] allTargets = targets.getAllCompileTargets();
-			for (int i = 0; i < allTargets.length; i++) {
-				if (lastSelected.equals(allTargets[i].name)) {
-					target.setSelectedItem(allTargets[i]);
-					break;
-				}
+		if(lastSelected == null)
+		{
+			lastSelected = targets.defaultTargetName;
+		}	
+		CompileTarget[] allTargets = targets.getAllCompileTargets();
+		for (int i = 0; i < allTargets.length; i++) {
+			if (lastSelected.equals(allTargets[i].name)) {
+				target.setSelectedItem(allTargets[i]);
+				break;
 			}
 		}
 		updateOptionPane();

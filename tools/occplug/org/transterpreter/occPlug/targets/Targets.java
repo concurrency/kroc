@@ -36,6 +36,8 @@ public class Targets {
 		new Arduino(),
 		new Desktop(),
 		new Surveyor()};
+	/* FIXME: A better way of setting the default, perhaps this is ok? */
+	public static final String defaultTargetName = "Desktop (TVM)";
 
 	/************************************************
 	 * Nothing below this should need to be altered *
