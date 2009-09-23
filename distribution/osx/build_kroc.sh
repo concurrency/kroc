@@ -83,7 +83,8 @@ if ! [ -d $BUILD/$ARDUINO ] ; then
 fi
 
 
-cd ../../
+cd $BUILD
+cd ../../../
 
 autoreconf -v -f -i
 
