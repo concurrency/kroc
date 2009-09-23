@@ -13,6 +13,7 @@ shortversion="Development version: $version (`svnversion -nc ../../`)"
 BUILD=build
 SPARKLE="Sparkle 1.5b6"
 SPARKLE_URL_BIT=${SPARKLE// /%20}
+MACOSX_PLUGIN=MacOSX.jar
 
 if ! [ -d "$BUILD/$SPARKLE" ] ; then
   mkdir -p build
@@ -24,6 +25,15 @@ if ! [ -d "$BUILD/$SPARKLE" ] ; then
   cd ..
 fi
 
+# FIXME: Perhaps we should include this in the repos as it is more obscure than
+# the other things we depend on and therefore more likely to go away
+# from: http://www.seph.dk/uncategorized/new-mac-os-x-plugin-for-jedit/
+if ! [ -f $BUILD/$MACOSX_PLUGIN ] ; then
+  mkdir -p build
+  cd build
+  curl -O http://www.seph.dk/download/$MACOSX_PLUGIN
+  cd ..
+fi
 
 sparkle_feed=http://download.transterpreter.org/appcast/mac-dev.xml
 
@@ -86,6 +96,7 @@ copyfile "build/macupdater/JEditSparklePlugin.jar" \
 #copyfile "../common/jEdit-plugin/catalog" "$outputDir/$javaDir/jEdit/modes/"
 #copyfile "../common/jEdit-plugin/occam.xml" "$outputDir/$javaDir/jEdit/modes/"
 #copydir "../common/jEdit-plugin/dependencies" "$outputDir/$javaDir/jEdit/jars"
+copyfile "build/$MACOSX_PLUGIN" "$outputDir/$javaDir/jEdit/jars"
 
 # Licenses
 #copydir "common-files/licenses" "$outputDir/$rezDir/licenses"
