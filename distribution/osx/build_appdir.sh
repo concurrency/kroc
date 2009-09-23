@@ -20,6 +20,7 @@ if ! [ -d "$BUILD/$SPARKLE" ] ; then
   "http://sparkle.andymatuschak.org/files/$SPARKLE_URL_BIT.zip" \
     || exit 1
   unzip -d "$SPARKLE" "$SPARKLE.zip"
+  cd ..
 fi
 
 
