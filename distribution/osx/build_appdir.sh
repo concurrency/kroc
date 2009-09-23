@@ -1,6 +1,7 @@
 # This is rather crude at the moment, needs to be a better script, prefereably
 # using some preexisting mechanjism for specifying how files should be copied
 # around.
+set -o errexit
 
 source functions.sh
 #source version.sh
@@ -31,7 +32,7 @@ rezDir="Transterpreter.app/Contents/Resources"
 
 sysFrameworks="/System/Library/Frameworks"
 javaDir=$rezDir
-binaryFiles="ilibr kmakef kroc mkoccdeps occ21 netbard occbuild plinker.pl tce-dump.pl tranx86 trapns tvm"
+binaryFiles="ilibr kmakef kroc mkoccdeps occ21 occbuild plinker.pl tce-dump.pl tranx86 tvm"
 libFiles="libSDL*.dylib libplayer*.dylib"
 
 # Make the App dir
@@ -81,9 +82,9 @@ copyfile "build/occPlug/OccPlug.jar" \
 copyfile "build/macupdater/JEditSparklePlugin.jar" \
   "$outputDir/$javaDir/jEdit/jars/"
 #copyfile "common-files/jEdit-plugin/OccPlug.props" "$outputDir/$rezDir/jEdit/properties/"
-copyfile "../common/jEdit-plugin/catalog" "$outputDir/$javaDir/jEdit/modes/"
-copyfile "../common/jEdit-plugin/occam.xml" "$outputDir/$javaDir/jEdit/modes/"
-copydir "../common/jEdit-plugin/dependencies" "$outputDir/$javaDir/jEdit/jars"
+#copyfile "../common/jEdit-plugin/catalog" "$outputDir/$javaDir/jEdit/modes/"
+#copyfile "../common/jEdit-plugin/occam.xml" "$outputDir/$javaDir/jEdit/modes/"
+#copydir "../common/jEdit-plugin/dependencies" "$outputDir/$javaDir/jEdit/jars"
 
 # Licenses
 #copydir "common-files/licenses" "$outputDir/$rezDir/licenses"
