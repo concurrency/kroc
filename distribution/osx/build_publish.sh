@@ -42,13 +42,14 @@ cat >build/feed.xml <<EOF
 			<title>Transterpreter - Development Version $VERSION</title>
 			<description><![CDATA[
 			    <h2>Development version</h2>
-			    <p>You are using a development version of the
+			    <p>Please note that you are using a development version of the
 			    Transterpreter, which may break, blow up,
 			    dissintigrate, or otherwise harm itself at any
-			    point. If you meant to run something less prone to
+			    point. <!--If you meant to run something less prone to
 			    breakage, please go to
-			    <a href="http://www.transterpreter.org/"> and download one of
-			    the official releases.</p>
+			    <a href="http://www.transterpreter.org/">http://www.transterpreter.org/</a>
+			    and download one of
+			    the official releases.--></p>
 			]]></description>
 			<pubDate>$PUBDATE</pubDate>
 			<enclosure
