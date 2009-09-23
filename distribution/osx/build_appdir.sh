@@ -76,7 +76,8 @@ copyfile "../../tvm/arduino/occam/iom328p.inc" "$outputDir/$rezDir/share/tvm-ard
 mkdir -p "$outputDir/plumbing"
 copyfile "../../tvm/arduino/occam/ch*.occ" "$outputDir/plumbing"
 # jEdit things
-copydir "build/jedit/jedit-program/" "$outputDir/$javaDir/jEdit/"
+copydir_addexcludes "build/jedit/jedit-program/" "$outputDir/$javaDir/jEdit/" \
+  "LatestVersion.jar"
 copyfile "build/occPlug/OccPlug.jar" \
   "$outputDir/$javaDir/jEdit/jars/"
 copyfile "build/macupdater/JEditSparklePlugin.jar" \
