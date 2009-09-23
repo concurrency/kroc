@@ -68,7 +68,7 @@ copydir_exclude()
 				makedir "$dest"
 			fi
 		else
-			hasin=`expr "$file" : '.*\(\.in\)$'`
+			hasin=`expr "$file" : '.*\(\.in\)$' || echo""`
 			if ! [ "Z$hasin" = "Z" ] ; then
 				process "$file" "${dest%%.in}"
 			else
