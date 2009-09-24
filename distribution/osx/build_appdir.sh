@@ -93,8 +93,8 @@ copyfile "build/occPlug/OccPlug.jar" \
 copyfile "build/macupdater/JEditSparklePlugin.jar" \
   "$outputDir/$javaDir/jEdit/jars/"
 #copyfile "common-files/jEdit-plugin/OccPlug.props" "$outputDir/$rezDir/jEdit/properties/"
-#copyfile "../common/jEdit-plugin/catalog" "$outputDir/$javaDir/jEdit/modes/"
-#copyfile "../common/jEdit-plugin/occam.xml" "$outputDir/$javaDir/jEdit/modes/"
+patch "$outputDir/$javaDir/jEdit/modes/catalog" < "../common/jEdit/catalog.patch" 
+copyfile "../common/jEdit/occam.xml" "$outputDir/$javaDir/jEdit/modes/"
 #copydir "../common/jEdit-plugin/dependencies" "$outputDir/$javaDir/jEdit/jars"
 copyfile "build/$MACOSX_PLUGIN" "$outputDir/$javaDir/jEdit/jars"
 
