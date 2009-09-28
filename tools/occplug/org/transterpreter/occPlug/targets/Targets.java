@@ -35,7 +35,8 @@ public class Targets {
 	private static final BaseTarget[]	allTargets	= { 
 		new Arduino(),
 		new Desktop(),
-		new Surveyor()};
+		//new Surveyor()
+		};
 	/* FIXME: A better way of setting the default, perhaps this is ok? */
 	public static final String defaultTargetName = "Desktop (TVM)";
 
