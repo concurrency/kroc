@@ -27,7 +27,7 @@ public class OccbuildTVMOptions extends OccbuildOptions
 	public OccbuildTVMOptions()
 	{
 		toolchain = "tvm";
-		systemSearch = new String[] {OccPlugUtil.pathifyXXX("share/tvm/vtinclude"), OccPlugUtil.pathifyXXX("share/tvm/vtilib")};
+		systemSearch = new String[] {OccPlugUtil.pathifyXXX("share/tvm/vtinclude"), OccPlugUtil.pathifyXXX("share/tvm/vtlib")};
 
 	}
 }
