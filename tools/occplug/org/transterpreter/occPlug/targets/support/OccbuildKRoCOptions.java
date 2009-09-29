@@ -27,6 +27,6 @@ public class OccbuildKRoCOptions extends OccbuildOptions
 	public OccbuildKRoCOptions()
 	{
 		toolchain = "kroc";
-		systemSearch = new String[] {OccPlugUtil.pathifyXXX("share/kroc/vtinclude"), OccPlugUtil.pathifyXXX("share/kroc/vtilib")};
+		systemSearch = new String[] {OccPlugUtil.pathifyXXX("share/kroc/vtinclude"), OccPlugUtil.pathifyXXX("share/kroc/vtlib")};
 	}
 }
