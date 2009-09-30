@@ -1,4 +1,4 @@
-package org.transterpreter.occPlug;
+	package org.transterpreter.occPlug;
 
 /*
  * occPlug.java
@@ -131,6 +131,8 @@ public class OccPlug extends JPanel implements EBComponent {
 
 	private JTextField					commandText;
 	private JButton						sendBtn;
+	
+	private static OccPlug              theOccPlug              = null;
 
 	private class ErrorSet {
 		public ErrorKey	key;
@@ -199,6 +201,12 @@ public class OccPlug extends JPanel implements EBComponent {
 	public OccPlug(final org.gjt.sp.jedit.View view, final String position) {
 		super(new BorderLayout());
 
+		if (theOccPlug != null)
+		{
+			throw new RuntimeException("Cannot have multiple instance of OccPlug");
+		}
+		theOccPlug = this;
+		
 		this.view = view;
 		this.floating = position.equals(DockableWindowManager.FLOATING);
 
@@ -276,7 +284,7 @@ public class OccPlug extends JPanel implements EBComponent {
 				/* Audiable bell */
 				Toolkit.getDefaultToolkit().beep();
 				/* Visual Bell */
-				terminalArea.blink();
+				getTerminalArea().blink();
 			}
 
 			public void write(byte[] b) {
@@ -305,7 +313,7 @@ public class OccPlug extends JPanel implements EBComponent {
 		 */
 		displayPanel = new JPanel(new CardLayout());
 		displayPanel.add(textAreaPane, "console");
-		displayPanel.add(terminalArea, "terminal");
+		displayPanel.add(getTerminalArea(), "terminal");
 		add(BorderLayout.CENTER, displayPanel);
 
 		/* Command field & send button */
@@ -351,7 +359,8 @@ public class OccPlug extends JPanel implements EBComponent {
 		c.add(commandText);
 		c.add(sendBtn);
 
-		add(BorderLayout.SOUTH, c);
+		// FIXME: Disabled, this is SRV specific and should go into the Surveyor target
+		//add(BorderLayout.SOUTH, c);
 
 		// Patterns for finding errors and warnings in occ21 output
 		errorPattern = Pattern
@@ -540,6 +549,59 @@ public class OccPlug extends JPanel implements EBComponent {
 		terminal.putString(zero);
 	}
 
+	/**
+	 * Start a new worker. The worker must not already be running and 
+	 * there must not already be a worker running.
+	 * 
+	 * @param worker
+	 */
+	public void startWorker(ExecWorker worker)
+	{
+		if (execWorker != null && execWorker.isAlive())
+		{
+			throw new RuntimeException(
+				"Cannot start already running worker!");
+		}
+		
+		if (execWorker == null || execWorker.isAlive() == false) {
+			execWorker = worker;
+			execWorker.start();
+		} else {
+			throw new RuntimeException(
+					"Tried to start a worker, but there is already a worker running!");
+		}		
+	}
+	
+	/**
+	 * Kill an executing worker if any is present
+	 */
+	public void stopWorker()
+	{
+		if (execWorker != null) {
+			execWorker.kill();
+			execWorker = null;
+		} else {
+			throw new RuntimeException(
+					"Tried to stop a running woker, but there are no workers running!");
+		}
+	}
+	
+	/**
+	 * Test if a worker is currently running.
+	 * 
+	 * @return true if a worker is currently running, false otherwise.
+	 */
+	public boolean workerIsRunning()
+	{
+		if (execWorker == null)
+		{
+			return false;
+		}
+	
+		return execWorker.isAlive();
+	}
+	
+	/* FIXME: Remove target specific code to target specific class */
 	public void stopRunningProcess() {
 		if (execWorker != null) {
 			execWorker.kill();
@@ -854,7 +916,7 @@ public class OccPlug extends JPanel implements EBComponent {
 
 	// }}}
 
-	private class TerminalExecWorkerHelper extends ExecWorkerHelper {
+	public class TerminalExecWorkerHelper extends ExecWorkerHelper {
 		String	cmdName;
 
 		public TerminalExecWorkerHelper(String cmdName) {
@@ -913,7 +975,7 @@ public class OccPlug extends JPanel implements EBComponent {
 		}
 	}
 
-	private void setVisibleDisplayArea(String s) {
+	public void setVisibleDisplayArea(String s) {
 		CardLayout cl = (CardLayout) (displayPanel.getLayout());
 		cl.show(displayPanel, s);
 		cl = (CardLayout) (toolPanelCardContainer.getLayout());
@@ -945,7 +1007,7 @@ public class OccPlug extends JPanel implements EBComponent {
 		 * there
 		 */
 		setVisibleDisplayArea("terminal");
-		terminalArea.requestFocus();
+		getTerminalArea().requestFocus();
 
 		terminal.reset(); /* This does not clear the terminal, which is ok */
 		terminal.putString("Running: " + filename + "\r\n");
@@ -1394,5 +1456,23 @@ public class OccPlug extends JPanel implements EBComponent {
 
 	public org.gjt.sp.jedit.View getView() {
 		return view;
+	}
+	
+	public static OccPlug getOccPlugInstance()
+	{
+		if(theOccPlug == null)
+		{
+			throw new RuntimeException("OccPlug has not yet been instantiated");
+		}
+		
+		return theOccPlug;
+	}
+
+	public vt320 getTerminal() {
+		return terminal;
+	}
+
+	public BlinkableSwingTerminal getTerminalArea() {
+		return terminalArea;
 	}
 }

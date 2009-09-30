@@ -1,5 +1,7 @@
 package org.transterpreter.occPlug.targets.support;
 
+import javax.swing.JPanel;
+
 /*
  * BaseTarget.java
  * part of the occPlug plugin for the jEdit text editor
@@ -22,7 +24,29 @@ package org.transterpreter.occPlug.targets.support;
 
 public class BaseTarget {
 
+	protected final TargetSupport targetSupport = new TargetSupport();
+	
 	public BaseTarget() {
 		super();
+	}
+	
+	public Object getOutput()
+	{
+		return targetSupport.getDefaultOutput();
+	}
+	
+	public JPanel getCustomCompileView()
+	{
+		return null;
+	}
+
+	public JPanel getCustomFirmwareView()
+	{
+		return null;
+	}
+	
+	public boolean useVT220ForRunning()
+	{
+		return true;
 	}
 }

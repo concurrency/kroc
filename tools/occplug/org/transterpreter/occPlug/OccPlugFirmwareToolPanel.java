@@ -143,7 +143,7 @@ public class OccPlugFirmwareToolPanel extends JPanel {
 				.getConsoleDoc());
 		output.clear();
 
-		theTarget.handler.uploadFirmware(theTarget, output, new Runnable() {
+		theTarget.handler.uploadFirmware(theTarget, new Runnable() {
 			public void run() {
 				setToolBarEnabled(true);
 				theTarget.handler.setEnabledForFirmwareOptions(true);
