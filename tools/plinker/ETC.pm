@@ -53,7 +53,7 @@ sub decode_fn_opd ($$$) {
 		if ($fn == $PFIX) {
 			$opd <<= 4;
 		} elsif ($fn == $NFIX) {
-			$opd = (~$opd) << 4;
+			$opd = ((~$opd) << 4) & 0xffffffff;
 		} else {
 			return ($fn, $opd, $pos);
 		}
