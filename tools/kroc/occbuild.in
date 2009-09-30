@@ -211,6 +211,8 @@ def build_default_search_path(tc_search_path):
 def set_isearch():
 	"""Set ISEARCH using search path.  This is for the benefit of occ21."""
 	path = ":".join(search_path)
+	if verbose:
+		warn("Setting ISEARCH to: ", path)
 	os.putenv("ISEARCH", path)
 
 def make_static(library, objs):
