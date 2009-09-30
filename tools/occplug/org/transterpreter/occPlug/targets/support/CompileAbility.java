@@ -2,9 +2,6 @@ package org.transterpreter.occPlug.targets.support;
 
 import javax.swing.JPanel;
 
-import org.gjt.sp.jedit.Buffer;
-import org.transterpreter.occPlug.OccPlug.DocumentWriter;
-
 /*
  * CompileAbility.java
  * part of the occPlug plugin for the jEdit text editor
@@ -28,8 +25,6 @@ import org.transterpreter.occPlug.OccPlug.DocumentWriter;
 public interface CompileAbility {
 	public CompileTarget[] getCompileTargets();
 	public JPanel getCompileOptions(final CompileTarget target);
-	public void compileProgram(final CompileTarget target, final org.gjt.sp.jedit.Buffer buffer, final DocumentWriter output,
-			final Runnable finished);
-	public void runProgram(final CompileTarget theTarget, final Buffer buffer,
-			final DocumentWriter output, final Runnable finished);
+	public void compileProgram(final CompileTarget target, final Runnable finished);
+	public void runProgram(final CompileTarget theTarget, final Runnable finished);
 }

@@ -48,7 +48,7 @@ import org.transterpreter.occPlug.targets.support.CompileTarget;
 public class OccPlugToolPanel extends JPanel {
 	private OccPlug				theOccPlug;
 	private JComboBox			target;
-
+	
 	final JPanel		options				= new JPanel();
 
 	private AbstractButton		compileBtn, runBtn, stopBtn, clearBtn;
@@ -147,15 +147,22 @@ public class OccPlugToolPanel extends JPanel {
 		
 	}
 
-	protected void run(final CompileTarget theTarget) {
-		View view = theOccPlug.getView();
-		Buffer buffer = view.getBuffer();
+	protected void run(final CompileTarget theTarget) {	
+
 		
-		final DocumentWriter output = theOccPlug.new DocumentWriter(theOccPlug
-				.getConsoleDoc());
-		output.clear();
+//		String filename = "CHANGEME";
+//		
+//		theOccPlug.setVisibleDisplayArea("terminal");
+//		theOccPlug.terminalArea.requestFocus();
+//
+//		theOccPlug.terminal.reset(); /* This does not clear the terminal, which is ok */
+//		theOccPlug.terminal.putString("Running: " + filename + "\r\n");
+//		
+//		final DocumentWriter output = theOccPlug.new DocumentWriter(theOccPlug
+//				.getConsoleDoc());
+//		output.clear();
 		
-		theTarget.handler.runProgram(theTarget, buffer, output, new Runnable() {
+		theTarget.handler.runProgram(theTarget, new Runnable() {
 			public void run() {
 				// FIXME: Reenable buttons and stuff
 			}
@@ -163,6 +170,8 @@ public class OccPlugToolPanel extends JPanel {
 	}
 
 	protected void compile(final CompileTarget theTarget) {
+		
+		theOccPlug.setVisibleDisplayArea("console");
 		
 		View view = theOccPlug.getView();
 		Buffer buffer = view.getBuffer();
@@ -200,7 +209,7 @@ public class OccPlugToolPanel extends JPanel {
 			}
 		}
 		
-		theTarget.handler.compileProgram(theTarget, buffer, output, new Runnable() {
+		theTarget.handler.compileProgram(theTarget, new Runnable() {
 			public void run() {
 				// FIXME:
 				//setToolBarEnabled(true);

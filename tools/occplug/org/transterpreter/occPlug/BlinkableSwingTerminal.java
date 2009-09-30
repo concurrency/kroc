@@ -26,7 +26,7 @@ import java.awt.Font;
 import de.mud.terminal.SwingTerminal;
 import de.mud.terminal.VDUBuffer;
 
-class BlinkableSwingTerminal extends SwingTerminal {
+public class BlinkableSwingTerminal extends SwingTerminal {
 
 	/* These are private in swingterminal, how stupid */
 	/* definitions of standards for the display unit */

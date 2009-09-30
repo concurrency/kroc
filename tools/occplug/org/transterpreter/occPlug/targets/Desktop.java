@@ -26,16 +26,19 @@ import java.util.Arrays;
 
 import javax.swing.JPanel;
 
-import org.gjt.sp.jedit.Buffer;
 import org.gjt.sp.jedit.MiscUtilities;
+import org.transterpreter.occPlug.OccPlug;
 import org.transterpreter.occPlug.OccPlugUtil;
 import org.transterpreter.occPlug.OccPlug.DocumentWriter;
 import org.transterpreter.occPlug.process.ExecWorker;
+import org.transterpreter.occPlug.process.helpers.TerminalExecWorkerHelper;
 import org.transterpreter.occPlug.targets.support.BaseTarget;
 import org.transterpreter.occPlug.targets.support.CompileAbility;
 import org.transterpreter.occPlug.targets.support.CompileTarget;
 import org.transterpreter.occPlug.targets.support.OccbuildHelper;
 import org.transterpreter.occPlug.targets.support.TargetExecWorkerHelper;
+
+import de.mud.terminal.vt320;
 
 public class Desktop extends BaseTarget implements CompileAbility {
 
@@ -55,10 +58,10 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		return null;
 	}
 
-	public void compileProgram(CompileTarget target, Buffer buffer, DocumentWriter output,
-			Runnable finished) {
+	public void compileProgram(CompileTarget target, Runnable finished) {
 
-		final String occFile = buffer.getName();
+		final DocumentWriter output = targetSupport.getDefaultOutput();
+		final String occFile        = targetSupport.getActiveFileName();
 		
 		if (!occFile.toLowerCase().endsWith(".occ")) {
 			output.writeError("Error: Only occam (.occ) source files can be compiled.\n");
@@ -85,23 +88,28 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		OccPlugUtil.writeVerbose(Arrays.asList(env) + "\n", output);
 
 		final Runnable[] finalisers = { finished };
-		ExecWorker execWorker = new ExecWorker(occbuildCommand, env, 
-				new File(buffer.getDirectory()),
+		ExecWorker worker = new ExecWorker(occbuildCommand, env, 
+				new File(targetSupport.getActiveDirectory()),
 				new TargetExecWorkerHelper("compile", output,
 						finalisers));
-
-		execWorker.start();		
+		targetSupport.startWorker(worker);	
 	}
 
-	public void runProgram(CompileTarget theTarget, Buffer buffer,
-			DocumentWriter output, Runnable finished) {
+	public void runProgram(CompileTarget theTarget, Runnable finished) {
+		
+		targetSupport.setVisibleDisplayArea("terminal");
+		vt320 terminal = targetSupport.getTerminal();
+		
+		terminal.reset();
+		targetSupport.focusTerminal();
+		
 		ArrayList runCommand = new ArrayList();
 		ArrayList runEnv = new ArrayList();
 		
 		final String filename;
 		if(theTarget == target_tvm)
 		{
-			filename = MiscUtilities.getFileNameNoExtension(buffer.getName()) + ".tbc";
+			filename = MiscUtilities.getFileNameNoExtension(targetSupport.getActiveFileName()) + ".tbc";
 			
 			String fw_p = MiscUtilities.constructPath(MiscUtilities
 					.getParentOfPath(MiscUtilities.getParentOfPath(OccPlugUtil
@@ -118,22 +126,31 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		else if(theTarget == target_kroc)
 		{
 			filename = MiscUtilities.constructPath(
-					buffer.getDirectory(),
-					MiscUtilities.getFileNameNoExtension(buffer.getName()));
+					targetSupport.getActiveDirectory(),
+					MiscUtilities.getFileNameNoExtension(targetSupport.getActiveFileName()));
 		}
 		else
 			throw new RuntimeException("invalid target passed to runProgram");
 
 		runCommand.add(filename);
 		
+		terminal.putString("Running: " + filename + "\r\n");
+		
+		
 		final Runnable[] finalisers = { finished };
-		ExecWorker execWorker = new ExecWorker((String[]) runCommand.toArray(new String[0]), 
+		/*
+		ExecWorker worker = new ExecWorker((String[]) runCommand.toArray(new String[0]), 
 				(String[]) runEnv.toArray(new String[0]), 
-				new File(buffer.getDirectory()),
+				new File(targetSupport.getActiveFileName()),
 				new TargetExecWorkerHelper("run", output,
 						finalisers));
-
-		execWorker.start();	
+						*/
+		ExecWorker worker = new ExecWorker(
+				(String[]) runCommand.toArray(new String[0]),
+				(String[]) runEnv.toArray(new String[0]), 
+				new File(targetSupport.getActiveDirectory()),
+				new TerminalExecWorkerHelper(filename, terminal, finalisers));
+		targetSupport.startWorker(worker);
 		/* Update buttons on the toolpanel */
 		//toolPanel.setState(OccPlugToolPanel.RUNNING);
 		/*

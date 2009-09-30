@@ -27,13 +27,21 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import org.gjt.sp.jedit.Buffer;
 import org.gjt.sp.jedit.jEdit;
 import org.transterpreter.occPlug.OccPlugPlugin;
-import org.transterpreter.occPlug.OccPlug.DocumentWriter;
 import org.transterpreter.occPlug.targets.support.BaseTarget;
 import org.transterpreter.occPlug.targets.support.CompileAbility;
 import org.transterpreter.occPlug.targets.support.CompileTarget;
+
+/* FIXME: This this target is incomplete. The compile options used 
+ * in the old occPlug for the surveyor was these:
+ * 				occbuildCommand.add("--blackfin");
+ *				occbuildCommand.add("--no-std-libs");
+ *				occbuildCommand.add("-f");
+ *				occbuildCommand.add(srvFile);
+ * However, they may not work with the newer occbuild based build 
+ * system...
+ */
 
 public class Surveyor extends BaseTarget implements CompileAbility {
 
@@ -84,14 +92,12 @@ public class Surveyor extends BaseTarget implements CompileAbility {
 		jEdit.setProperty(OccPlugPlugin.OPTION_PREFIX + "compile.targets.surveyor.port", port.getText());
 	}
 
-	public void compileProgram(CompileTarget target, Buffer buffer, DocumentWriter output,
-			Runnable finished) {
+	public void compileProgram(CompileTarget target, Runnable finished) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	public void runProgram(CompileTarget theTarget, Buffer buffer,
-			DocumentWriter output, Runnable runnable) {
+	public void runProgram(CompileTarget theTarget, Runnable runnable) {
 		// TODO Auto-generated method stub
 		
 	}

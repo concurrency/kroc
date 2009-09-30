@@ -41,7 +41,6 @@ import javax.swing.JPanel;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
-import org.gjt.sp.jedit.Buffer;
 import org.gjt.sp.jedit.MiscUtilities;
 import org.gjt.sp.jedit.jEdit;
 import org.transterpreter.occPlug.OccPlugPlugin;
@@ -81,6 +80,11 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		
 		arduinoFirmwareOptions = makeOptionsPanel();
 		arduinoCompileOptions = makeOptionsPanel();
+	}
+	
+	public boolean useVT220ForRunning()
+	{
+		return false;
 	}
 	
 	public FirmwareTarget[] getFirmwareTargets() {
@@ -160,8 +164,9 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				.getSelectedItem());
 	}
 
-	public void uploadFirmware(FirmwareTarget target, DocumentWriter output,
-			Runnable finished) {
+	public void uploadFirmware(FirmwareTarget target, Runnable finished) {
+		final DocumentWriter output = targetSupport.getDefaultOutput();
+		
 		String port = (String) arduinoPort.getSelectedItem();
 		if (port == null || port.trim().equals("")) {
 			output.writeError("Please specify a port");
@@ -184,12 +189,11 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		OccPlugUtil.writeVerbose("Command: " + Arrays.asList(firmdlCommand) + " \n", output);
 
 		final Runnable[] finalisers = { finished };
-		ExecWorker execWorker = new ExecWorker(firmdlCommand, null, null, // new
+		ExecWorker worker = new ExecWorker(firmdlCommand, null, null, // new
 																			// File(workingDir),
 				new TargetExecWorkerHelper("firmware download", output,
 						finalisers));
-
-		execWorker.start();
+		targetSupport.startWorker(worker);
 	}
 
 	public void setEnabledForFirmwareOptions(boolean enabled) {
@@ -200,9 +204,11 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		}
 	}
 
-	public void compileProgram(CompileTarget target, Buffer buffer,
-			DocumentWriter output, Runnable finished) {
-		final String occFile = buffer.getName();
+	public void compileProgram(CompileTarget target, Runnable finished) {
+		
+		final DocumentWriter output = targetSupport.getDefaultOutput();
+
+		final String occFile = targetSupport.getActiveFileName();
 		
 		if (!occFile.toLowerCase().endsWith(".occ")) {
 			output.writeError("Error: Only occam (.occ) source files can be compiled.\n");
@@ -230,14 +236,12 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		OccPlugUtil.writeVerbose("Environment: " + Arrays.asList(env) + "\n", output);
 		
 		final Runnable[] finalisers = { finished };
-		ExecWorker execWorker = new ExecWorker(occbuildCommand, 
+		ExecWorker worker = new ExecWorker(occbuildCommand, 
 				env, 
-				new File(buffer.getDirectory()),
+				new File(targetSupport.getActiveDirectory()),
 				new TargetExecWorkerHelper("compile", output,
 						finalisers));
-
-		execWorker.start();		
-		
+		targetSupport.startWorker(worker);		
 	}
 
 
@@ -245,8 +249,9 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		return compileTargets;
 	}
 
-	public void runProgram(final CompileTarget theTarget, final Buffer buffer,
-			final DocumentWriter output, final Runnable finished) {
+	public void runProgram(final CompileTarget theTarget, Runnable finished) {
+	
+		final DocumentWriter output = targetSupport.getDefaultOutput();
 		
 		String port = (String) arduinoPort.getSelectedItem();
 		if (port == null || port.trim().equals("")) {
@@ -255,10 +260,10 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 			return;
 		}
 		
-		final String fileBase = MiscUtilities.getFileNameNoExtension(buffer.getName());
+		final String fileBase = MiscUtilities.getFileNameNoExtension(targetSupport.getActiveFileName());
 		final String tbcFile = fileBase + ".tbc";
 		final String ihexFile = fileBase + ".ihex";
-		final File curDir = new File(buffer.getDirectory());
+		final File curDir = new File(targetSupport.getActiveDirectory());
 		final String [] ihexCommand = {
 				OccPlugUtil.pathifyXXX("bin/binary-to-ihex"),
 				// FIXME: This needs to come from elsewhere
@@ -294,11 +299,11 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 					}
 				}
 		};
-		ExecWorker execWorker = new ExecWorker(ihexCommand, 
+		ExecWorker worker = new ExecWorker(ihexCommand, 
 				null, 
 				curDir,
 				new TargetExecWorkerHelper("run", output,
 						intermediaryFinalisers));
-		execWorker.start();
+		targetSupport.startWorker(worker);
 	}
 }
