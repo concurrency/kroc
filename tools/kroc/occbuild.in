@@ -94,8 +94,10 @@ def split_ext(file):
 def make_relative_path(source, dest):
 	"""Given two directories, find the relative path from the first to the
 	second."""
-	source = os.path.normpath(os.path.abspath(source))
-	dest = os.path.normpath(os.path.abspath(dest))
+	def norm(path):
+		return os.path.realpath(os.path.normpath(os.path.abspath(path)))
+	source = norm(source)
+	dest = norm(dest)
 	source_split = source.split(os.path.sep)
 	dest_split = dest.split(os.path.sep)
 
