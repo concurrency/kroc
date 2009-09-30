@@ -53,6 +53,7 @@ public class OccbuildHelper {
 		occbuildEnv.put("TCE-DUMP.PL", MiscUtilities.constructPath(getBinPath(), "tce-dump.pl"));
 		occbuildEnv.put("PLINKER.PL", MiscUtilities.constructPath(getBinPath(), "plinker.pl"));
 		occbuildEnv.put("KROC", MiscUtilities.constructPath(getBinPath(), "kroc"));
+		occbuildEnv.put("OCTRAN", MiscUtilities.constructPath(getBinPath(), "tranx86"));
 		
 		if(additional != null)
 		{
