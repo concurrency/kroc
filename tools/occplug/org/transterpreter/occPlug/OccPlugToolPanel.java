@@ -143,8 +143,13 @@ public class OccPlugToolPanel extends JPanel {
 	}
 
 	protected void stop(CompileTarget selectedItem) {
-		// TODO Auto-generated method stub
-		
+		// FIXME: Potential race here, workIsRunning may return true, 
+		// but worker may stop, before stopWorker is called resulting 
+		// in an exception...
+		if(theOccPlug.workerIsRunning())
+		{
+			theOccPlug.stopWorker();
+		}
 	}
 
 	protected void run(final CompileTarget theTarget) {	
@@ -254,7 +259,8 @@ public class OccPlugToolPanel extends JPanel {
 					case NORMAL:
 						compileBtn.setEnabled(true);
 						runBtn.setEnabled(true);
-						stopBtn.setEnabled(false);
+						//stopBtn.setEnabled(false);
+						stopBtn.setEnabled(true);
 						clearBtn.setEnabled(true);
 //						host.setEnabled(true);
 //						port.setEnabled(true);
