@@ -105,6 +105,21 @@ make
 make install
 
 cd $BUILD
+mkdir kroc-tvm-posix-ppc
+cd kroc-tvm-posix-ppc
+CFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk \
+  -I/usr/lib/gcc/powerpc-apple-darwin9/4.2.1/include/ \
+  -mmacosx-version-min=10.4" \
+  CC=powerpc-apple-darwin9-gcc-4.2.1 \
+  ../../../../configure --host=powerpc-apple-darwin9 \
+  --build=powerpc --with-toolchain=tvm \
+  --prefix=$INSTALL-tvm-ppc
+# FIXME: Both of these fail at the moment, though they get far enough to be
+# useful, which incidentally is up to, but not including, the useful library.
+make
+make install
+
+cd $BUILD
 mkdir kroc-tvm-avr
 cd kroc-tvm-avr
 

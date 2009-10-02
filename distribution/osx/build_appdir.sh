@@ -42,7 +42,7 @@ rezDir="Transterpreter.app/Contents/Resources"
 
 sysFrameworks="/System/Library/Frameworks"
 javaDir=$rezDir
-binaryFiles="ilibr kmakef kroc mkoccdeps occ21 occbuild plinker.pl tce-dump.pl tranx86 tvm"
+binaryFiles="ilibr kmakef kroc mkoccdeps occbuild plinker.pl tce-dump.pl tranx86"
 libFiles="libSDL*.dylib libplayer*.dylib liboccam_*.a libkrocif.a libccsp.a"
 
 # Make the App dir
@@ -58,11 +58,16 @@ copydir "install/include/kroc" "$outputDir/$rezDir/include/kroc"
 # Precompiled libraries
 copydir "install/share/tvm" "$outputDir/$rezDir/share/tvm"
 copydir "install/share/kroc" "$outputDir/$rezDir/share/kroc"
+copydir "install-tvm-ppc/share/tvm" "$outputDir/$rezDir/share/tvm-ppc"
 # Binary bits
 mkdir -p "$outputDir/$rezDir/bin/"
 for f in $binaryFiles; do
   copyfile "install/bin/$f" "$outputDir/$rezDir/bin/"
 done
+lipo -create "install/bin/occ21" "install-tvm-ppc/bin/occ21" \
+  -output "$outputDir/$rezDir/bin/occ21"
+lipo -create "install/bin/tvm" "install-tvm-ppc/bin/tvm" \
+  -output "$outputDir/$rezDir/bin/tvm"
 # Library bits
 mkdir -p "$outputDir/$rezDir/lib/"
 for f in $libFiles; do

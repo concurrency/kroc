@@ -226,6 +226,8 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				OccPlugUtil.pathifyXXX("share/tvm-arduino/avr-vtinclude")};
 		// FIXME: Needs to be settable somewhere
 		options.defines.put("F.CPU", "16000000"); 
+		// FIXME: occbuild for avr builds should always set -TLE? otherwise builds fail on BE machines
+		options.extra_options.add(new String[] { "--occ21-opts", "-tle"});
 		String[] occbuildCommand = OccbuildHelper.makeOccbuildProgramCommand(options, occFile);
 		
 		// Say what we are doing

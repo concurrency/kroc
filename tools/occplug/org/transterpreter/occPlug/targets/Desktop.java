@@ -44,11 +44,31 @@ public class Desktop extends BaseTarget implements CompileAbility {
 
 	private final CompileTarget   target_kroc    = new CompileTarget("Desktop (KRoC)", this);
 	private final CompileTarget   target_tvm     = new CompileTarget("Desktop (TVM)", this);
-	private final CompileTarget[] compileTargets = {
-			target_tvm,
-			target_kroc,
-			};
+	private final CompileTarget[] compileTargets;
 
+	public Desktop()
+	{
+		super();
+	
+		boolean include_kroc = true;
+		if(System.getProperty("os.name").equals("Mac OS X") && 
+				System.getProperty("os.arch").equals("ppc")) include_kroc = false;
+		
+		if(include_kroc)
+		{
+			compileTargets = new CompileTarget[] {
+				target_tvm,
+				target_kroc,
+				};
+		}
+		else
+		{
+			compileTargets = new CompileTarget[] {
+					target_tvm
+					};		
+		}
+	}
+	
 	public CompileTarget[] getCompileTargets() {
 		return compileTargets;
 	}
@@ -111,14 +131,17 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		{
 			filename = MiscUtilities.getFileNameNoExtension(targetSupport.getActiveFileName()) + ".tbc";
 			
-			String fw_p = MiscUtilities.constructPath(MiscUtilities
-					.getParentOfPath(MiscUtilities.getParentOfPath(OccPlugUtil
-							.pathify(OccPlugUtil.getTvmCmd()))),
-					"share/tvm/firmware/tvm-posix.tbc");
+			final String fw_p;
+			if(System.getProperty("os.arch").equals("ppc"))
+			{		
+				fw_p = OccPlugUtil.pathifyXXX("share/tvm-ppc/firmware/tvm-posix.tbc");
+			}
+			else
+			{
+				fw_p = OccPlugUtil.pathifyXXX("share/tvm/firmware/tvm-posix.tbc");
+			}
 			runEnv.add("TVM_FIRMWARE_FILE=" + fw_p);
-			String lib_p = MiscUtilities.constructPath(MiscUtilities
-					.getParentOfPath(MiscUtilities.getParentOfPath(OccPlugUtil
-							.pathify(OccPlugUtil.getTvmCmd()))), "lib");
+			String lib_p = OccPlugUtil.pathifyXXX("lib");
 			runEnv.add("DYLD_LIBRARY_PATH=" + lib_p);
 	
 			runCommand.add(OccPlugUtil.pathifyXXX("bin/tvm"));
@@ -133,7 +156,11 @@ public class Desktop extends BaseTarget implements CompileAbility {
 			throw new RuntimeException("invalid target passed to runProgram");
 
 		runCommand.add(filename);
-		
+		if(OccPlugUtil.getVerbose())
+		{
+			terminal.putString("Env: " + runEnv + "\n");
+			terminal.putString("Cmd: " + runCommand + "\n");
+		}
 		terminal.putString("Running: " + filename + "\r\n");
 		
 		
