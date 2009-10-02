@@ -23,19 +23,21 @@ package org.transterpreter.occPlug.targets.support;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 
 import org.transterpreter.occPlug.OccPlugUtil;
 
 public abstract class OccbuildOptions
 {
-	public String occbuildName         = "occbuild";
-	public boolean long_error_messages = false;
-	//public String target_cpu           = null;
-	public boolean verbose             = OccPlugUtil.getVerbose();
+	public String occbuildName           = "occbuild";
+	public boolean long_error_messages   = false;
+	//public String target_cpu             = null;
+	public boolean verbose               = OccPlugUtil.getVerbose();
 	public String toolchain;
-	public String[] search             = null;
+	public String[] search               = null;
 	public String[] systemSearch;
-	public final Hashtable defines     = new Hashtable();
+	public final Hashtable defines       = new Hashtable();
+	public final ArrayList extra_options = new ArrayList();
 	
 	
 	/* Options that I previously used, but don't know if I still should, check what they do:
@@ -51,6 +53,29 @@ public abstract class OccbuildOptions
 		{
 			options.add("--occ21-opts");
 			options.add("-b");
+		}
+		
+		if(!extra_options.isEmpty())
+		{
+			for (Iterator it= extra_options.iterator() ; it.hasNext() ;) {
+				Object n = it.next();
+				if(n instanceof String)
+				{
+					options.add(n);
+				} 
+				else if (n instanceof String[])
+				{
+					String[] nsa = (String[]) n;
+					
+					for(int j = 0; j < nsa.length; j++)
+					{
+						options.add(nsa[j]);
+					}
+				}
+				else
+					throw new RuntimeException("Can only pass String or String[] to extra_options");
+			}
+
 		}
 		
 		/*
