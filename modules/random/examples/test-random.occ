@@ -1,0 +1,31 @@
+#INCLUDE "random.module"
+#INCLUDE "useful.module"
+
+PROC main (SHARED CHAN BYTE out!)
+  RANDOM.STATE rand, rand2:
+  SEQ
+    random.init.from.time (rand)
+    trace.sn ("Random ints from time:")
+    SEQ i = 0 FOR 10
+      INT n:
+      SEQ
+        n, rand := random.int (1000, rand)
+        trace.sin ("  ", n)
+
+    trace.sn ("Random ints from seed:")
+    rand := random.init (42)
+    SEQ i = 0 FOR 10
+      INT n:
+      SEQ
+        n, rand := random.int (1000, rand)
+        trace.sin ("  ", n)
+
+    trace.sn ("Random ints from split generator:")
+    rand, rand2 := random.split (rand)
+    SEQ i = 0 FOR 10
+      INT n, n2:
+      SEQ
+        n, rand := random.int (1000, rand)
+        n2, rand2 := random.int (1000, rand2)
+        trace.sisin ("  ", n, " ", n2)
+:
