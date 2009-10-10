@@ -20,6 +20,8 @@
 
 --** @module random
 
+#INCLUDE "maths.module"
+
 #INCLUDE "random.inc"
 
 --{{{  primitive operations
@@ -83,15 +85,95 @@ RANDOM.STATE, RANDOM.STATE FUNCTION random.split (VAL RANDOM.STATE state)
 --}}}
 --{{{  generators
 --{{{  FUNCTION random.int
+--* Generate a random [@code INT].
+--
+-- @param max Upper limit
+-- @param state Current RNG state
+-- @return Output value, uniformly distributed in the range [0, [@code max]).
+-- @return New RNG state
 INT, RANDOM.STATE FUNCTION random.int (VAL INT max, VAL RANDOM.STATE state)
-  INT new.int:
+  INT value:
   RANDOM.STATE new.state:
   VALOF
     INT32 data:
     SEQ
       data, new.state := random.get (state)
-      new.int := INT (data \ (INT32 max))
-    RESULT new.int, new.state
+      value := INT (data \ (INT32 max))
+    RESULT value, new.state
+:
+--}}}
+--{{{  FUNCTION random.real32
+--* Generate a random [@code REAL32].
+--
+-- @param max Upper limit
+-- @param state Current RNG state
+-- @return Output value, uniformly distributed in the range [0, [@code max]).
+-- @return New RNG state
+REAL32, RANDOM.STATE FUNCTION random.real32 (VAL REAL32 max, VAL RANDOM.STATE state)
+  REAL32 value:
+  RANDOM.STATE new.state:
+  VALOF
+    INT32 data:
+    SEQ
+      data, new.state := random.get (state)
+      value := (max * (REAL32 ROUND data)) / (REAL32 ROUND (MOSTPOS INT32))
+    RESULT value, new.state
+:
+--}}}
+--{{{  FUNCTION random.gaussian.real32s
+--* Generate two random [@code REAL32]s from a Gaussian distribution.
+--
+-- @param state Current RNG state
+-- @returns value1, value2 Two output values from a Gaussian distribution with
+--   mean 0.0 and standard deviation 1.0
+-- @returns new.state New RNG state
+REAL32, REAL32, RANDOM.STATE FUNCTION random.gaussian.real32s (VAL RANDOM.STATE state)
+  REAL32 value1, value2:
+  RANDOM.STATE new.state:
+  VALOF
+    REAL32 w, x1, x2:
+    SEQ
+      new.state := state
+      --{{{  Box-Muller transform
+      --
+      -- This is based on Everett Carter's description:
+      --   http://www.taygeta.com/random/gaussian.html
+      -- but I've added the "w = 0.0" test to the loop to prevent a possible
+      -- division by zero.
+      --
+      -- It'd probably be better to use the Ziggurat algorithm.
+
+      w := 2.0
+      WHILE (w >= 1.0) OR (w = 0.0)
+        SEQ
+          x1, new.state := random.real32 (2.0, new.state)
+          x1 := x1 - 1.0
+          x2, new.state := random.real32 (2.0, new.state)
+          x2 := x2 - 1.0
+          w := (x1 * x1) + (x2 * x2)
+      w := SQRT ((-2.0) * ALOG (w)) / w
+      value1 := x1 * w
+      value2 := x2 * w
+      --}}}
+    RESULT value1, value2, new.state
+:
+--}}}
+--{{{  FUNCTION random.gaussian.real32
+--* Generate a random [@code REAL32] from a Gaussian distribution.
+--
+-- @param state Current RNG state
+-- @returns value Output value from a Gaussian distribution with mean 0.0 and
+--   standard deviation 1.0
+-- @returns new.state New RNG state
+REAL32, RANDOM.STATE FUNCTION random.gaussian.real32 (VAL RANDOM.STATE state)
+  REAL32 value:
+  RANDOM.STATE new.state:
+  VALOF
+    --{{{  compute two and throw one away
+    REAL32 dummy:
+    value, dummy, new.state := random.gaussian.real32s (state)
+    --}}}
+    RESULT value, new.state
 :
 --}}}
 --}}}

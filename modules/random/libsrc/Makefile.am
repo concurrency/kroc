@@ -21,7 +21,7 @@ includes = $(random_includes)
 all-local: $(libs)
 
 random.lib: $(random_lib_objs)
-	$(OCCBUILD) --library random.lib --include random.inc $(random_lib_objs)
+	$(OCCBUILD) --library random.lib --need maths --include random.inc $(random_lib_objs)
 
 install-exec-local: $(libs)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)
