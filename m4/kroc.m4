@@ -23,6 +23,9 @@ AC_DEFUN([KROC_CCSP_FLAGS],
 AC_REQUIRE([AC_CANONICAL_SYSTEM])
 AC_REQUIRE([OCCAM_IN_TREE])
 
+# If you add new variables here, make sure you update tools/kroc/Makefile.am
+# and tools/kroc/kroc.in too.
+
 KROC_CCSP_CFLAGS=""
 KROC_CCSP_CINCPATH=""
 KROC_CCSP_ASFLAGS=""
@@ -179,7 +182,8 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
 else
   # We're not in the KRoC source tree, so we can just call kroc to get the
   # arguments.
-  AC_MSG_ERROR(FIXME: builds outside source tree not implemented)
+  AC_REQUIRE([KROC_PROG_KROC])
+  eval `$KROC --autovars`
 fi
 
 AC_SUBST(KROC_CCSP_CFLAGS)
@@ -190,6 +194,12 @@ AC_SUBST(KROC_CCSP_ASFLAGS)
 AC_SUBST(KROC_CCSP_LDFLAGS)
 AC_SUBST(KROC_CCSP_LIBPATH)
 AC_SUBST(KROC_CCSP_LIBS)
+
+AC_SUBST(KROC_CCSP_ENABLE_PTHREADS)
+AC_SUBST(KROC_CCSP_ENABLE_MP)
+AC_SUBST(KROC_CCSP_ENABLE_CTTD)
+AC_SUBST(KROC_CCSP_ENABLE_PONY)
+AC_SUBST(KROC_CCSP_ENABLE_DYNPROC)
 ])dnl
 dnl
 dnl Find the "kroc" script, and define KROC.

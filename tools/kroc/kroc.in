@@ -226,6 +226,7 @@ showas=
 showldflags=
 showasflags=
 showkrocpath=
+showautovars=
 delete_temp=yes
 enable_udc=
 skip_link=
@@ -722,6 +723,11 @@ do
 		showkrocpath=1
 		;;
 		#}}}
+		#{{{  --autovars  show variables autoconf needs
+	--autovars)
+		showautovars=1
+		;;
+		#}}}
 		#{{{  -z, --all-help  show all options
 	-z | --all-help)
 		showall=1
@@ -931,6 +937,24 @@ if [ $showkrocpath ]; then
 	printf '%s\n' "$kroc_krocdir"
 	exit 0
 fi
+if [ $showautovars ]; then
+	printf 'KROC_CCSP_CFLAGS="%s";\n' "@KROC_CCSP_CFLAGS@"
+	printf 'KROC_CCSP_CINCPATH="%s";\n' "@KROC_CCSP_CINCPATH@"
+	printf 'KROC_CCSP_OCCFLAGS="%s";\n' "@KROC_CCSP_OCCFLAGS@"
+	printf 'KROC_CCSP_TRANFLAGS="%s";\n' "@KROC_CCSP_TRANFLAGS@"
+	printf 'KROC_CCSP_ASFLAGS="%s";\n' "@KROC_CCSP_ASFLAGS@"
+	printf 'KROC_CCSP_LDFLAGS="%s";\n' "@KROC_CCSP_LDFLAGS@"
+	printf 'KROC_CCSP_LIBPATH="%s";\n' "@KROC_CCSP_LIBPATH@"
+	printf 'KROC_CCSP_LIBS="%s";\n' "@KROC_CCSP_LIBS@"
+
+	printf 'KROC_CCSP_ENABLE_PTHREADS="%s";\n' "@KROC_CCSP_ENABLE_PTHREADS@"
+	printf 'KROC_CCSP_ENABLE_MP="%s";\n' "@KROC_CCSP_ENABLE_MP@"
+	printf 'KROC_CCSP_ENABLE_CTTD="%s";\n' "@KROC_CCSP_ENABLE_CTTD@"
+	printf 'KROC_CCSP_ENABLE_PONY="%s";\n' "@KROC_CCSP_ENABLE_PONY@"
+	printf 'KROC_CCSP_ENABLE_DYNPROC="%s";\n' "@KROC_CCSP_ENABLE_DYNPROC@"
+
+	exit 0
+fi
 
 if [ $makelib ]; then
 	if [ "X$link" = "X" ]; then
@@ -1011,6 +1035,7 @@ Exclusive options:
   --ld                   Print path to dynamic linker (for generating shared libraries)
   --ldflags              Print linker flags to be used when building shared libraries
   --krocdir              Print path to kroc data files
+  --autovars             Print variables for autoconf
 Additional options:
   -dm                    Enable dynamic memory debugging
   -ds                    Enable memory usage summary
