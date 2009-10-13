@@ -201,10 +201,12 @@ public class OccPlug extends JPanel implements EBComponent {
 	public OccPlug(final org.gjt.sp.jedit.View view, final String position) {
 		super(new BorderLayout());
 
+		/*
 		if (theOccPlug != null)
 		{
 			throw new RuntimeException("Cannot have multiple instance of OccPlug");
 		}
+		*/
 		theOccPlug = this;
 		
 		this.view = view;
