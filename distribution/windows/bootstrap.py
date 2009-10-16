@@ -118,36 +118,3 @@ makedir(paths['msys'])
 
 extract(msys_files, paths['msys'])
 extract(mingw_files, paths['mingw'])
-
-#makedir(paths['mingw'])
-#for f in mingw_files:
-#    if f.startswith('#'): continue
-#    if len(f) == 0: continue
-#    sys.stdout.write('extracting: %s\n' %(f, ))
-#    a = tarfile.open(f, 'r')
-    # FIXME: check that no files will be written outside dest
-#    a.extractall(paths['mingw'])
-#    a.close()
-
-#makedir(paths['msys'])
-#for f in msys_files:
-#    if f.startswith('#'): continue
-#    if len(f) == 0: continue
-#    sys.stdout.write('extracting: %s\n' %(f, ))
-#    if f.endswith('.lzma'):
-#        lzma = subprocess.Popen([os.path.join(paths['msys'], 'bin', 'lzma'), '-d', '-c', '-q', f], stdout=subprocess.PIPE)
-#        a = tarfile.open(fileobj=lzma.stdout, mode='r|')
-        # FIXME: check that no files will be written outside dest
-#        a.extractall(os.path.join(paths['msys'], 'usr'))
-#        a.close()
-#        r = lzma.wait()
-#        if r != 0:
-#            sys.stdout.write('lzma failed with error code: %d %s\n' %(r, f))
-
-#    else:
-#        a = tarfile.open(f, 'r')
-        # FIXME: check that no files will be written outside dest
-#        a.extractall(paths['msys'])
-#        a.close()
-
-# C:/tvm/distribution/distribution/windows/mingw
