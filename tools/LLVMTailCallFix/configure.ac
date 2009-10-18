@@ -24,6 +24,7 @@ cygwin*)
  LIBNAME="LLVMTailCallFix.dll"
  ;;
 *Darwin* | *darwin*)
+ SLINKFLAGS="-shared"
  LIBNAME="libLLVMTailCallFix.dylib"
  ;;
 *)

@@ -5,9 +5,6 @@
 AUTOMAKE_OPTIONS=foreign no-dependencies
 ACLOCAL_AMFLAGS = -I ../../m4
 
-#CPPFLAGS = @CPPFLAGS@
-#CXXFLAGS = @CXXFLAGS@
-
 EXTRA_LIBRARIES = libLLVMTailCallFix.a
 shared_libs = @LIBNAME@
 
@@ -18,7 +15,7 @@ libLLVMTailCallFix_a_LIBADD = \
 all-local: libLLVMTailCallFix.a $(shared_libs)
 
 @LIBNAME@: libLLVMTailCallFix.a
-	$(CXX) $(SLINKFLAGS) $(CXXFLAGS) $(LDFLAGS) -o @LIBNAME@ $(libLLVMTailCallFix_a_LIBADD)
+	$(CXX) $(SLINKFLAGS) $(CXXFLAGS) $(LDFLAGS) $(LIBS) -o @LIBNAME@ $(libLLVMTailCallFix_a_LIBADD)
 
 install-exec-local: libLLVMTailCallFix.a $(shared_libs)
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)"

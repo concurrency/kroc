@@ -84,7 +84,7 @@ namespace {
 				BasicBlock *BB = *I;
 
 				BB->getInstList().pop_back();
-				ReturnInst::Create(NULL, BB);
+				ReturnInst::Create(BB->getContext(), BB);
 				
 				modified = true;
 			}
