@@ -194,7 +194,7 @@ dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(string.h stdlib.h string.h strings.h limits.h malloc.h sys/types.h stdarg.h)
+AC_CHECK_HEADERS(string.h stdlib.h string.h strings.h limits.h malloc.h sys/types.h sys/stat.h stdarg.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
