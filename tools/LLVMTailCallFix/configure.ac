@@ -24,7 +24,7 @@ cygwin*)
  LIBNAME="LLVMTailCallFix.dll"
  ;;
 *Darwin* | *darwin*)
- SLINKFLAGS="-shared"
+ SLINKFLAGS="-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -dynamiclib"
  LIBNAME="libLLVMTailCallFix.dylib"
  ;;
 *)
