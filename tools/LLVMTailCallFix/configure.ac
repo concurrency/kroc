@@ -37,6 +37,14 @@ CXXFLAGS="`$LLVM_CONFIG --cxxflags` $CXXFLAGS"
 LDFLAGS="`$LLVM_CONFIG --ldflags` $LDFLAGS"
 LIBS="`$LLVM_CONFIG --libs core` $LIBS"
 
+dnl Make sure binary matches LLVM's host target.
+LLVM_TARGET="`$LLVM_CONFIG --host-target`"
+case "$LLVM_TARGET" in
+ i*86-*)
+  CXXFLAGS="-m32 $CXXFLAGS"
+  ;;
+esac
+
 AC_SUBST(SLINKFLAGS)
 AC_SUBST(LIBNAME)
 
