@@ -6107,6 +6107,7 @@ PUBLIC BOOL rfile (void)
 		memcpy (litbuf, literalv, litlen);
 		litbuf[litlen] = '\0';
 
+		lex_save_state ();
 		nextsymb ();
 		while (symb == S_STRING) {
 			/* absorb next literal, add to string */
@@ -6120,8 +6121,12 @@ PUBLIC BOOL rfile (void)
 				litlen += blen;
 				litbuf[litlen] = '\0';
 			}
+			lex_restore_state ();
+			nextsymb ();
+			lex_save_state ();
 			nextsymb ();
 		}
+		lex_restore_state ();
 
 		switch (s) {
 		case S_INCLUDE:
@@ -6146,7 +6151,7 @@ PUBLIC BOOL rfile (void)
 			if (current_fe_data->fe_information) {
 				fprintf (current_fe_data->fe_outfile, "%s \"%s\"\n", tagstring (s), litbuf);
 			}
-			// nextsymb ();
+			nextsymb ();
 			while (symb == S_NEWLINE) {	/* Throw away leading blank lines */
 				nextsymb ();
 			}
