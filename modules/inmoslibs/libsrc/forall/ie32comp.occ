@@ -20,9 +20,11 @@
 --** @module forall
 
 --{{{  #options and #comments
+#IF (FILESTACK = 0)
 #OPTION "V"  -- no vector space
 #COMMENT "TA compiler library, V1.1 21/02/89"
 #COMMENT "(c) Copyright INMOS Limited 1988"
+#ENDIF
 --}}}
 
 #PRAGMA TRANSLATE IEEECOMPARE "IEEECOMPARE%O"
