@@ -1998,6 +1998,14 @@ PRIVATE BOOL preproc_is_defined (wordnode *name)
 {
 	pp_dlist_t *dltmp;
 
+	if (pp_xfile && (pp_xfile->name == name)) {
+		return TRUE;
+	} else if (pp_xline && (pp_xline->name == name)) {
+		return TRUE;
+	} else if (pp_xfilestack && (pp_xfilestack->name == name)) {
+		return TRUE;
+	}
+
 	for (dltmp = pp_dlist; dltmp; dltmp = dltmp->next) {
 		if (dltmp->name == name) {
 			return TRUE;
@@ -2010,6 +2018,14 @@ PRIVATE BOOL preproc_is_defined (wordnode *name)
 PRIVATE pp_dlist_t *preproc_find_define (wordnode *name)
 {
 	pp_dlist_t *dltmp;
+
+	if (pp_xfile && (pp_xfile->name == name)) {
+		return pp_xfile;
+	} else if (pp_xline && (pp_xline->name == name)) {
+		return pp_xline;
+	} else if (pp_xfilestack && (pp_xfilestack->name == name)) {
+		return pp_xfilestack;
+	}
 
 	for (dltmp = pp_dlist; dltmp; dltmp = dltmp->next) {
 		if (dltmp->name == name) {
@@ -2809,7 +2825,7 @@ PRIVATE void preproc_builtin (void)
 	pp_xfilestack = (pp_dlist_t *)memalloc (sizeof (pp_dlist_t));
 	tw = lookupword ("FILESTACK", 9);
 	pp_xfilestack->name = tw;
-	pp_xfilestack->namelen = 4;
+	pp_xfilestack->namelen = 9;
 	pp_xfilestack->next = pp_dlist;
 	pp_xfilestack->valtype = PP_VAL_NONE;
 	pp_xfilestack->valdata = NULL;
