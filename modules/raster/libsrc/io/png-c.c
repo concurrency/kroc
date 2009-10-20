@@ -21,9 +21,10 @@
 #include <stdlib.h>
 #include <png.h>
 
-/* FIXME: This code doesn't really use CIF; it's just that there isn't a
- * portable header that provides the mobile type allocation stuff. */
-#include <cif.h>
+/* FIXME: This code shouldn't be CCSP specific. */
+#include <ccsp.h>
+/* FIXME: etc_error_null from libkrocif */
+extern void etc_error_null (void *sched, word *Wptr, char *file, int line);
 
 /*{{{  terminate*/
 static char *terminate (const char *s, int len)
@@ -31,7 +32,7 @@ static char *terminate (const char *s, int len)
 	char *buf = malloc (len + 1);
 
 	if (buf == NULL)
-		SetErr ();
+		etc_error_null (NULL, NULL, __FILE__, __LINE__);
 
 	memcpy (buf, s, len);
 	buf[len] = '\0';

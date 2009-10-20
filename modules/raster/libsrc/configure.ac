@@ -22,7 +22,6 @@ if ! test $OCCBUILD_TOOLCHAIN = kroc; then
 		have_libpng=no
 	fi
 fi
-have_libpng=no # FIXME: LLVM specific hack
 AM_CONDITIONAL(HAVE_LIBPNG, [test $have_libpng = yes])
 
 dnl Checks for occam modules.
