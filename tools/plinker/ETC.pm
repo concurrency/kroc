@@ -154,6 +154,15 @@ sub decode ($$) {
 	return @text;
 }
 
+sub decode_str ($$) {
+	my ($self, $data) = @_;
+	my ($code, $str_len);
+	$code = substr ($data, 0, 2);
+	$data = substr ($data, 2);
+	($str_len, $data) = Transputer::TCOFF::decode_int ($data);
+	return substr ($data, 0, $str_len);
+}
+
 sub decode_load_text ($$) {
 	my ($self, $data) = @_;
 	my $code_len;
