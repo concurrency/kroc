@@ -27,6 +27,7 @@ package main;
 
 use strict;
 use Data::Dumper;
+use POSIX qw(uname);
 
 # ETC Decoder
 my $etc		= new Transputer::ETC ();
@@ -40,8 +41,14 @@ my $tcoff	= new Transputer::TCOFF ();
 # Options
 my $output;
 my $verbose;
+
 my @files;
 my @plugins;
+
+my $machine;
+my @cc_flags;
+my @llc_flags;
+
 my @optimiser	= (
 	'-functionattrs',
 	'-constmerge',
@@ -73,14 +80,21 @@ while (my $arg = shift @args) {
 	if ($options && $arg eq '--') {
 		$options 		= 0;
 	} elsif ($options && $arg eq '-v') {
+		# -v Verbose
 		$verbose		= 1;
 		$etc->{'verbose'} 	= 1;
 		$tcoff->{'verbose'}	= 1;
 	} elsif ($options && $arg eq '-c') {
+		# -c Compile as object not executable
 		$standalone		= 0;
+	} elsif ($options && $arg eq '-m') {
+		# -m Set machine architecture
+		$machine		= shift @args;
 	} elsif ($options && $arg eq '-o') {
+		# -o Set output file
 		$output 		= shift @args;
 	} elsif ($options && $arg eq '-p') {
+		# -p Add plugin
 		my $plugin = shift @args;
 		push (@plugins, $plugin);
 	} elsif ($options && $arg =~ /^-/) {
@@ -97,9 +111,21 @@ if (!$output) {
 }
 
 if (!$output || !@files) {
-	print "lletc.pl [-v] [-s] [-o <name>] <file>\n";
+	print "lletc.pl [-v] [-c] [-m <arch>] [-o <name>] <file>\n";
 	exit 1;
 }
+
+if (!$machine) {
+	my ($os, undef, $ver, undef, $arch) = uname ();
+	if ($arch =~ /^i.86/ || ($os eq 'Darwin' && $ver =~ /^10\./)) {
+		$machine = 'x86';
+	} else {
+		$machine = $arch;
+	}
+}
+push (@llc_flags, "-march=$machine");
+push (@cc_flags, '-m32') 		if $machine eq 'x86';
+push (@cc_flags, $ENV{'CFLAGS'}) 	if exists($ENV{'CFLAGS'});
 
 # Load ETC
 my $last_file;
@@ -212,7 +238,7 @@ if (system (@opt_cmd)) {
 }
 
 my $llc = $ENV{'LLC'} || 'llc';
-my @llc_cmd = ($llc, '-tailcallopt', '-f', '-o=' . $output . '.s', $output . '.opt.bc');
+my @llc_cmd = ($llc, @llc_flags, '-tailcallopt', '-f', '-o=' . $output . '.s', $output . '.opt.bc');
 print "Running: ", join (' ', @llc_cmd), "\n" if $verbose;
 if (system (@llc_cmd)) {
 	warnerr ("bitcode to system assembly conversion failed");
@@ -222,7 +248,7 @@ if (system (@llc_cmd)) {
 }
 
 my $cc = $ENV{'CC'} || 'cc';
-my @cc_cmd = ($cc, '-O', '-c', $output . '.s');
+my @cc_cmd = ($cc, @cc_flags, '-O', '-c', $output . '.s');
 print "Running: ", join (' ', @cc_cmd), "\n" if $verbose;
 if (system (@cc_cmd)) {
 	warnerr ("system assembly to object file failed");
