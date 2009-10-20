@@ -107,7 +107,7 @@ sub print_op ($$) {
 		print "\n" if $name eq '.SECTIONLAB';
 		print ".L$arg:\n";
 	} elsif ($name =~ /\..*BYTES$/) {
-		my $bytes	= unpack ('h*', $arg);
+		my $bytes	= unpack ('H*', $arg);
 		my @bytes	= ($bytes =~ /(..)/g);
 		my $text	= join (' ', @bytes) . ' ';
 		my @lines	= ($text =~ /(.{0,48})/g);
