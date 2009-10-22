@@ -93,6 +93,7 @@ while (my $arg = shift @args) {
 	} elsif ($options && $arg eq '-o') {
 		# -o Set output file
 		$output 		= shift @args;
+		$output 		=~ s/\.o$//;
 	} elsif ($options && $arg eq '-p') {
 		# -p Add plugin
 		my $plugin = shift @args;
