@@ -45,8 +45,8 @@ rastergraphics_lib_objs = \
 
 rastergraphics_libs = rastergraphics.lib
 rastergraphics_includes = \
-	angle.inc \
-	graphics.inc
+	$(srcdir)/angle.inc \
+	$(srcdir)/graphics.inc
 libs = $(rastergraphics_libs)
 includes = $(rastergraphics_includes)
 

@@ -46,7 +46,7 @@ clean-local:
 	$(OCCBUILD) --clean $(examples) mandelbauer-c.o
 
 mandelbauer: mandelbauer.occ mandelbauer-c.o
-	$(OCCBUILD) --program mandelbauer.occ mandelbauer-c.o
+	$(OCCBUILD) --program $(srcdir)/mandelbauer.occ mandelbauer-c.o
 
 SUFFIXES = .occ .tce
 

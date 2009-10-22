@@ -1,0 +1,11 @@
+PROTOCOL P
+  CASE
+    tag
+:
+
+PROC main ()
+  -- This is invalid; it should give a "cannot declare variables of a PROTOCOL
+  -- type" error message.
+  [42]P var:
+  SKIP
+:

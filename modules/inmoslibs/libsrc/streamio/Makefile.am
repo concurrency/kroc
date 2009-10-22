@@ -6,7 +6,7 @@ OCCBUILD = @OCCBUILD@ --search ../forall --search ../convert --search ../hostio
 libs = \
 	stream.lib
 includes = \
-	streamio.inc
+	$(srcdir)/streamio.inc
 
 EXTRA_DIST = \
 	keyscr.occ \

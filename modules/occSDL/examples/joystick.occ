@@ -86,7 +86,7 @@ PROC stickprinter(CHAN STICK stick?, CHAN BYTE scr!)
           out.string("axes are ", 0, scr!) 
           SEQ i = 0 FOR SIZE(axis.values)
             SEQ
-              out.int((INT axis.values[i]), 0, scr!)
+              out.int((INT axis.values[i]), 6, scr!)
               out.string(", ",0,scr!) 
       buttons; button.values
         SEQ

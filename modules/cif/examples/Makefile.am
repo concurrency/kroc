@@ -61,58 +61,58 @@ clean-local:
 SUFFIXES = .occ
 
 cif-commstime: cif-commstime.occ cif-commstime-c.o ciftutils.o
-	$(OCCBUILD) --program cif-commstime.occ cif-commstime-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cif-commstime.occ cif-commstime-c.o ciftutils.o
 
 cift1: cift1.occ cift1-c.o ciftutils.o
-	$(OCCBUILD) --program cift1.occ cift1-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift1.occ cift1-c.o ciftutils.o
 
 cift2: cift2.occ cift2-c.o ciftutils.o
-	$(OCCBUILD) --program cift2.occ cift2-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift2.occ cift2-c.o ciftutils.o
 
 cift3: cift3.occ cift3-c.o ciftutils.o
-	$(OCCBUILD) --program cift3.occ cift3-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift3.occ cift3-c.o ciftutils.o
 
 cift4: cift4.occ cift4-c.o ciftutils.o
-	$(OCCBUILD) --program cift4.occ cift4-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift4.occ cift4-c.o ciftutils.o
 
 cift5: cift5.occ cift5-c.o ciftutils.o
-	$(OCCBUILD) --program cift5.occ cift5-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift5.occ cift5-c.o ciftutils.o
 
 cift6: cift6.occ cift6-c.o ciftutils.o
-	$(OCCBUILD) --program cift6.occ cift6-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift6.occ cift6-c.o ciftutils.o
 
 cift7: cift7.occ cift7-c.o ciftutils.o
-	$(OCCBUILD) --program cift7.occ cift7-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift7.occ cift7-c.o ciftutils.o
 
 cift8: cift8.occ cift8-c.o ciftutils.o
-	$(OCCBUILD) --program cift8.occ cift8-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift8.occ cift8-c.o ciftutils.o
 
 cift9: cift9.occ cift9-c.o ciftutils.o
-	$(OCCBUILD) --program cift9.occ cift9-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift9.occ cift9-c.o ciftutils.o
 
 cift10: cift10.occ cift10-c.o ciftutils.o
-	$(OCCBUILD) --program cift10.occ cift10-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift10.occ cift10-c.o ciftutils.o
 
 cift11: cift11.occ cift11-c.o ciftutils.o
-	$(OCCBUILD) --program cift11.occ cift11-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift11.occ cift11-c.o ciftutils.o
 
 cift12: cift12.occ cift12-c.o ciftutils.o
-	$(OCCBUILD) --program cift12.occ cift12-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift12.occ cift12-c.o ciftutils.o
 
 cift13: cift13.occ cift13-c.o ciftutils.o
-	$(OCCBUILD) --program cift13.occ cift13-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift13.occ cift13-c.o ciftutils.o
 
 cift14: cift14.occ cift14-c.o ciftutils.o
-	$(OCCBUILD) --program cift14.occ cift14-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift14.occ cift14-c.o ciftutils.o
 
 cift15: cift15.o ciftutils.o
 	$(CC) -o cift15 cift15.o ciftutils.o @KROC_CCSP_LDFLAGS@ @KROC_CCSP_LIBPATH@ -lccsp -lpthread @KROC_CCSP_LIBS@
 
 cift16: cift16.occ cift16-c.o ciftutils.o
-	$(OCCBUILD) --program cift16.occ cift16-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift16.occ cift16-c.o ciftutils.o
 
 cift17: cift17.occ cift17-c.o ciftutils.o
-	$(OCCBUILD) --program cift17.occ cift17-c.o ciftutils.o
+	$(OCCBUILD) --program $(srcdir)/cift17.occ cift17-c.o ciftutils.o
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<

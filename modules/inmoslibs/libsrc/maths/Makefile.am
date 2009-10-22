@@ -8,8 +8,8 @@ libs = \
 	dblmath.lib \
 	maths.lib
 includes = \
-	mathhdr.inc \
-	mathvals.inc
+	$(srcdir)/mathhdr.inc \
+	$(srcdir)/mathvals.inc
 
 EXTRA_DIST = \
 	acosfl.occ \

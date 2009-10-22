@@ -1,0 +1,10 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  CHAN SIGNAL s:
+  CHAN LEVEL v:
+  PAR
+    tick (1000, s!)
+    toggle (LOW, s?, v!)
+    digital.output (13, v?)
+:

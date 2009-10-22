@@ -23,7 +23,7 @@ player_lib_objs = \
 	vehicles.tce
 
 player_libs = player.lib
-player_includes = player.inc
+player_includes = $(srcdir)/player.inc
 endif
 
 libs = $(player_libs)
@@ -48,8 +48,8 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-points.inc: gen-arcs.py
-	$(PYTHON) gen-arcs.py >points.inc
+points.inc: $(srcdir)/gen-arcs.py
+	$(PYTHON) $(srcdir)/gen-arcs.py >points.inc
 
 CLEANFILES = points.inc
 
@@ -58,7 +58,7 @@ control.tce: $(srcdir)/player.inc
 control.tce: debug.tce
 debug.tce: $(srcdir)/player.inc
 hud.tce: $(srcdir)/player.inc
-hud.tce: $(srcdir)/points.inc
+hud.tce: points.inc
 hud.tce: control.tce
 hud.tce: debug.tce
 sensors.tce: $(srcdir)/player.inc

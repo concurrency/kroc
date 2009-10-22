@@ -1,6 +1,6 @@
 --
---	Time utilities
---	Copyright (C) 2008 Adam Sampson <ats@offog.org>
+--	Definitions for the random module
+--	Copyright (C) 2009 Adam Sampson <ats@offog.org>
 --
 --	This library is free software; you can redistribute it and/or
 --	modify it under the terms of the GNU Lesser General Public
@@ -17,22 +17,12 @@
 --	<http://www.gnu.org/licenses/>.
 --
 
---** @module useful
+--** Random number generation.
+--
+-- @module random
 
---{{{  PROC delay
---* Wait for a period of time.
--- @param us The delay in microseconds
-PROC delay (VAL INT us)
-  IF
-    us < 0
-      --{{{  don't bother waiting
-      SKIP
-      --}}}
-    TRUE
-      TIMER tim:
-      INT t:
-      SEQ
-        tim ? t
-        tim ? AFTER t PLUS us
+--* The internal state of the random number generator.
+DATA TYPE RANDOM.STATE
+  RECORD
+    INT32 seed:
 :
---}}}

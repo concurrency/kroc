@@ -25,7 +25,7 @@ graphics3d_lib_objs = \
 	rasterutil.tce
 
 libs = graphics3d.lib
-includes = graphics3d.inc
+includes = $(srcdir)/graphics3d.inc
 endif
 
 all-local: $(libs)

@@ -100,7 +100,7 @@ AC_DEFUN([OCCAM_OCCAMDOC],
 AC_REQUIRE([OCCAM_IN_TREE])
 AC_ARG_VAR(OCCAMDOC, [Path to occamdoc])
 if test "x$KROC_BUILD_ROOT" != "x"; then
-  OCCAMDOC="$KROC_BUILD_ROOT/tools/occamdoc/occamdoc --in-tree $KROC_BUILD_ROOT"
+  OCCAMDOC="$KROC_BUILD_ROOT/tools/occamdoc/occamdoc --in-tree $KROC_SRC_ROOT"
 else
   AC_CHECK_PROG(OCCAMDOC, occamdoc, occamdoc, no)
   if test $OCCAMDOC = no; then
@@ -241,4 +241,25 @@ if test $SWIG != no; then
 fi
 AM_CONDITIONAL(HAVE_SWIG_OCCAM, test "x$HAVE_SWIG_OCCAM" = "xyes")
 rm -f conftest.i
+])dnl
+dnl
+dnl Set KROC_TARGET_PREFIX to the string that's prepended to tool and directory
+dnl names when cross-building.
+AC_DEFUN([OCCAM_TARGET_PREFIX],
+[dnl
+AC_REQUIRE([AC_CANONICAL_TARGET])
+AC_REQUIRE([AC_ARG_PROGRAM])
+
+# Check that the user isn't trying to do a transformation other than a prefix.
+case `echo xyz | sed "$program_transform_name"`
+in
+	*xyz)
+		;;
+	*)
+		AC_MSG_ERROR([program name transformations for KRoC may only be simple prefixes])
+		;;
+esac
+
+KROC_TARGET_PREFIX=`echo "" | sed "$program_transform_name"`
+AC_SUBST(KROC_TARGET_PREFIX)
 ])dnl

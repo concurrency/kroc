@@ -13,13 +13,13 @@ EXTRA_DIST = \
 raster_lib_objs =
 
 raster_libs = raster.lib
-raster_includes = raster.inc
+raster_includes = $(srcdir)/raster.inc
 libs = $(raster_libs)
 includes = $(raster_includes)
 
 all-local: $(libs) $(includes)
 
-raster.lib: $(raster_lib_objs)  
+raster.lib: $(raster_lib_objs)
 	$(OCCBUILD) --library raster.lib --include raster.inc $(raster_lib_objs)
 
 install-exec-local: $(libs) $(includes)
@@ -35,4 +35,3 @@ SUFFIXES = .occ .tce .lib
 
 .occ.tce:
 	$(OCCBUILD) --object $<
-

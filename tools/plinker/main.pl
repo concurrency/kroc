@@ -44,12 +44,12 @@ my $tvm		= new Transterpreter::VM ();
 # Options
 my $bits	= 32;
 my $output;
-my %sections	= {
+my %sections	= (
 	'debug'		=> 1,
 	'ffi'		=> 1,
 	'symbols'	=> 1,
 	'tlp'		=> 1
-};
+);
 my $verbose;
 my @files;
 
@@ -333,6 +333,9 @@ sub build_format_string {
 	my @fmt;
 
 	foreach my $param (@params) {
+		$param =~ s/^\s*//s;
+		$param =~ s/\s*$//s;
+
 		if ($param =~ /^FIXED/) {
 			if ($param =~ /\?/) {
 				push (@fmt, 'S');
@@ -341,7 +344,7 @@ sub build_format_string {
 			} else {
 				die;
 			}
-		} elsif ($param =~ m/^CHAN OF (\S+)\s+(\S+)/) {
+		} elsif ($param =~ m/^CHAN\s+OF\s+(\S+)\s+(\S+)/s) {
 			my ($type, $name)	= ($1, $2);
 			my ($dir)		= ($name =~ m/([\?!])$/);
 			if (!$dir) {
@@ -356,7 +359,7 @@ sub build_format_string {
 		}
 	}
 
-	push (@fmt, 'F') if $def =~ /PROC.*\(.*\).*FORK/;
+	push (@fmt, 'F') if $def =~ m/PROC.*\(.*\).*FORK/s;
 
 	return join ('', @fmt);
 }

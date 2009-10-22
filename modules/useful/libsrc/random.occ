@@ -29,7 +29,6 @@ PROC seed.from.timer (TIMER tim, RESULT INT seed)
     seed := (seed >> 2) + 1
 :
 --}}}
-#IF (TARGET.BITS.PER.WORD = 32)
 --{{{  FUNCTION random.real32
 --* Generate a random [@code REAL32].
 -- The resulting value will be selected from the range [@code 0.0 .. range].
@@ -43,4 +42,3 @@ REAL32, INT FUNCTION random.real32 (VAL REAL32 range, VAL INT seed)
     RESULT result, newseed
 :
 --}}}
-#ENDIF

@@ -1,0 +1,65 @@
+--==========================================================================================
+--
+--  This program does not work. It is an illustration of a channel architecture I tried to produce,
+--  wherein mobile channel ends contain other mobile channel ends. I'm hoping Adam can show me the
+--  light regarding how to get around this problem :)
+--
+--==========================================================================================
+
+#INCLUDE "course.module"
+
+PROC main (CHAN BYTE in?, out!, err!)
+
+  CHAN TYPE INNER
+    MOBILE RECORD
+      CHAN INT req? :
+      CHAN INT resp! :
+  :
+
+  CHAN TYPE OUTER
+    MOBILE RECORD
+      CHAN INNER? inner1? :
+      CHAN INNER? inner2? :
+  :
+
+  PROC server (OUTER? outer)    
+    PROC sender (INNER? inner)
+      INITIAL INT x IS 0 :
+      INT temp :
+      WHILE TRUE
+        SEQ
+          inner[req] ? temp
+          inner[resp] ! x
+          x := x + 1          
+    :
+
+    PAR    
+      sender (outer[inner1])
+      sender (outer[inner2])
+  :
+
+  PROC client (OUTER! outer)
+    PROC receiver (INNER! inner)
+      INT temp : 
+      WHILE TRUE
+        SEQ
+          inner[req] ! 9
+          inner[resp] ? temp
+          out.int (temp)
+          out.string("*n", 0, out!)
+    :
+     
+    PAR
+      receiver (outer[inner1])
+      receiver (outer[inner2])
+  :
+
+  OUTER? outer.s :
+  OUTER! outer.c :
+  SEQ
+    outer.s, outer.c := MOBILE OUTER
+    PAR
+      server (outer.s)
+      client (outer.c)
+
+:

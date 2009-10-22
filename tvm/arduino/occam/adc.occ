@@ -25,7 +25,7 @@ PROC main ()
 
         -- Wait for conversion to complete
         INT t:
-        wait.for.interrupt (7, t)
+        wait.for.interrupt (VINTR.ADC, t)
 
         -- Read value
         -- (We can't do this by retyping ports, since that does a 16-bit read)

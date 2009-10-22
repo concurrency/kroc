@@ -27,7 +27,7 @@ AC_SUBST(OCCAM_DEFS)
 AM_CONDITIONAL([TRACE_VIA_FFI], [test $trace_mechanism = ffi])
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([course.module maths.module], ,
+OCCAM_INCLUDE([course.module maths.module time.module], ,
               [AC_MSG_ERROR(Required modules not found)])
 OCCAM_PROVIDE(useful.module)
 

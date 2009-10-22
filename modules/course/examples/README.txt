@@ -34,7 +34,7 @@ be run with the command:
   % ./bar
 
 [Note: compiling and running under the Transterpreter is rather different!
-Please check out <http://transterpreter.org/docs/quickstart.html>.]
+Please check out <http://transterpreter.org/docs/get_started>.]
 
 
 Main processes
@@ -168,7 +168,7 @@ which produces an executable called sort_inside.  Run this - i.e.
 and you are in business!
 
 [Note: compiling and running under the Transterpreter is rather different!
-Please check out <http://transterpreter.org/docs/quickstart.html>.]
+Please check out <http://transterpreter.org/docs/get_started>.]
 
 
 Peter Welch.

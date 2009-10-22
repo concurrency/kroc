@@ -16,7 +16,7 @@ endif
 all-local: $(examples)
 
 menutest: menutest.occ
-	$(OCCBUILD) --program menutest.occ
+	$(OCCBUILD) --program $(srcdir)/menutest.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples ttyutil --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)

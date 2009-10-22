@@ -26,8 +26,8 @@ trap_lib_objs = \
 
 trap_libs = selector.lib trap.lib
 trap_includes = \
-	selector.inc \
-	trap.inc
+	$(srcdir)/selector.inc \
+	$(srcdir)/trap.inc
 trap_tools = trapns
 endif
 
@@ -44,7 +44,7 @@ trap.lib: $(trap_lib_objs)
 	$(OCCBUILD) --library trap.lib --need selector --need file --need sock --need useful --include trap.inc $(trap_lib_objs)
 
 trapns: trapns.occ trap.lib
-	$(OCCBUILD) --program trapns.occ
+	$(OCCBUILD) --program $(srcdir)/trapns.occ
 
 install-exec-local: $(libs) $(includes) $(tools)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes) $(tools)
@@ -61,7 +61,7 @@ SUFFIXES = .occ .tce .lib
 	$(OCCBUILD) --object $<
 
 #{{{ dependencies
-selector.tce: selector.inc
+selector.tce: $(srcdir)/selector.inc
 trap.tce: selector.lib
-trap.tce: trap.inc
+trap.tce: $(srcdir)/trap.inc
 #}}}

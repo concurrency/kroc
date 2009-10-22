@@ -13,6 +13,6 @@ PROC flash.pin (VAL INT pin, on, off)
 
 PROC main ()
   -- Configures all digital and analog pins as output
-  PAR i = 2 FOR 18
+  PAR i = 2 FOR 17
     flash.pin (i, i * 100, i * 230)
 :

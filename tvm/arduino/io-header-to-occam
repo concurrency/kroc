@@ -11,7 +11,16 @@ def warn(*args):
 fi = open(sys.argv[1], "r")
 fo = open(sys.argv[2], "w")
 
-fo.write("-- Converted automatically from %s\n\n" % sys.argv[1])
+prev_line = None
+def write(s):
+	"""Print a line to the output file, discarding duplicate blank
+	lines."""
+	global prev_line
+	if not (prev_line == "\n" and s == "\n"):
+		fo.write(s)
+	prev_line = s
+
+write("-- Converted automatically from %s\n\n" % sys.argv[1])
 
 def convert_value(value):
 	"""Parse a C constant value in decimal or hex.
@@ -68,13 +77,13 @@ def convert_define(name, value):
 		if conv is None:
 			warn("Unhandled macro argument: ", arg)
 			return
-		fo.write("VAL INT %s IS %d:\n" % (name, func(conv)))
+		write("VAL INT %s IS %d:\n" % (name, func(conv)))
 		return
 
 	# Defined to a value directly.
 	conv = convert_value(value)
 	if conv is not None:
-		fo.write("VAL INT %s IS %d:\n" % (name, conv))
+		write("VAL INT %s IS %d:\n" % (name, conv))
 		return
 
 	warn("Unhandled definition: ", value)
@@ -96,8 +105,8 @@ while True:
 			if l == "" or l.find("*/") != -1:
 				break
 		for l in lines:
-			fo.write("-- %s\n" % l.strip())
-		fo.write("\n")
+			write("-- %s\n" % l.strip())
+		write("\n")
 		continue
 
 	l = re.sub(r'/\*.*\*/', '', l)
@@ -105,7 +114,7 @@ while True:
 	l = l.strip()
 
 	if l == "":
-		fo.write("\n")
+		write("\n")
 
 	m = re.match(r'^#define (\S+) (.*)$', l)
 	if m is not None:

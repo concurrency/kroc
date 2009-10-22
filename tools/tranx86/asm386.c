@@ -1085,6 +1085,11 @@ int dump_asm386_stream (rtl_chain *rtl_code, FILE *stream)
 			break;
 		}
 	}
+	/*{{{  emit .note.GNU-stack section */
+#ifdef HOST_OS_IS_LINUX
+	fprintf (stream, ".section .note.GNU-stack,\"\",%%progbits\n");
+#endif
+	/*}}}*/
 	return errored;
 }
 /*}}}*/

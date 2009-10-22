@@ -15,7 +15,9 @@ occade_lib_objs = \
 	occade.tce
 
 libs = occade.lib
-includes = occade.inc overwriting-buffer.inc
+includes = \
+	$(srcdir)/occade.inc \
+	$(srcdir)/overwriting-buffer.inc
 endif
 
 all-local: $(libs)

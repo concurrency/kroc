@@ -1,0 +1,211 @@
+--
+--	mandelbrot.occ -- text example of a mandelbrot set in occam
+--	Copyright (C) 1997 Jim Moores
+--	COMPLEX64 code Copyright (C) 1997 D.C. Wood <D.C.Wood@ukc.ac.uk>
+--      (distributed version, client)
+--	Modifications (C) 2001, 2007 Fred Barnes
+--      Modified for use as benchmark (C) 2009 Carl Ritson
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+-- occbench test specification
+-- OCCBENCH NAME: mandelbrot
+-- OCCBENCH TYPE: scaling
+
+
+#INCLUDE "course.module"
+
+
+DATA TYPE COMPLEX64
+  RECORD
+    REAL64 real, imag:
+:
+
+VAL INT IMAGE.WIDTH IS 100:
+VAL INT IMAGE.HEIGHT IS 100:
+
+VAL INT N.WORKERS IS 32:
+VAL INT N.ITERS IS 128:
+VAL INT MAX.FRAMES IS 8:
+
+VAL INT LINES.PER.WORKER IS (IMAGE.HEIGHT / N.WORKERS):
+
+PROTOCOL P.JOB.IN IS INT; INT; [4]REAL64:
+PROTOCOL P.JOB.OUT IS INT; INT; [IMAGE.WIDTH * 2]BYTE:
+
+CHAN TYPE CT.WORK.IN
+  MOBILE RECORD
+    CHAN INT notify?:
+    CHAN P.JOB.IN in!:
+:
+
+CHAN TYPE CT.WORK.OUT
+  MOBILE RECORD
+    CHAN P.JOB.OUT out?:
+:
+
+REAL64 INLINE FUNCTION COMPLEX64ABSSQ (VAL COMPLEX64 x) IS
+  (x[real]*x[real]) + (x[imag]*x[imag]):
+
+COMPLEX64 INLINE FUNCTION "+" (VAL COMPLEX64 x, y) IS
+  [x[real] + y[real], x[imag] + y[imag]]:
+
+COMPLEX64 INLINE FUNCTION "**" (VAL COMPLEX64 x, y) IS
+  [(x[real]*y[real]) - (x[imag]*y[imag]),
+   (x[imag]*y[real]) + (x[real]*y[imag])]:
+
+
+INT FUNCTION calc (VAL COMPLEX64 a)
+  INT count:
+  VALOF
+    INITIAL COMPLEX64 iter IS [0.0, 0.0]:
+    SEQ
+      count := 0
+      WHILE ((COMPLEX64ABSSQ (iter) < 32.0) AND (count < 240))
+        SEQ
+          iter := (iter * iter) + a
+          count := count + 1
+    RESULT count
+:
+
+PROC worker (SHARED CT.WORK.IN! link.in, SHARED CT.WORK.OUT! link.out)
+  VAL []BYTE table IS [' ','.',',','*'','~','*"','^',':',';','|','&','[','$','%','@','#']:
+  BOOL running:
+  SEQ
+    running := TRUE
+    WHILE running
+      [4]REAL64 job:
+      [IMAGE.WIDTH * 2]BYTE output:
+      INT jobid, frame:
+      SEQ
+        CLAIM link.in
+          link.in[in] ? frame; jobid; job
+
+        IF
+          (jobid = (-1)) OR (frame = (-1))
+            running := FALSE
+          TRUE
+            SEQ
+              VAL REAL64 y IS (job[0] / job[1]) - job[2]:
+              SEQ i = 0 FOR IMAGE.WIDTH
+                VAL REAL64 x IS ((REAL64 TRUNC (i - (IMAGE.WIDTH / 2))) / (job[1] * 2.0)) - job[3]:
+                INT val:
+                SEQ
+                  val := calc ([x,y](COMPLEX64)) \ 16
+                  output[i*2] := BYTE (val \ 6)
+                  output[(i*2)+1] := table[val]
+                  RESCHEDULE ()
+
+              CLAIM link.out
+                link.out[out] ! frame; jobid; output
+:
+
+PROC farmer (CT.WORK.IN? link.in, CHAN INT tick!, tock?, kill!)
+  INITIAL REAL64 zoom IS 16.0:
+  INITIAL REAL64 x.drift IS 0.0:
+  INITIAL REAL64 y.drift IS 0.0:
+  VAL REAL64 x.target IS  1.16000014859:
+  VAL REAL64 y.target IS -0.27140215303:
+  SEQ
+    SEQ n = 0 FOR N.ITERS
+      SEQ
+        --{{{  generate jobs
+        SEQ
+          tick ! n
+          INT any:
+          tock ? any
+
+          SEQ j = 0 FOR IMAGE.HEIGHT
+            -- give out jobs
+            SEQ
+              [4]REAL64 wpacket:
+              SEQ
+                wpacket[0] := REAL64 TRUNC (j - (IMAGE.HEIGHT / 2))
+                wpacket[1] := zoom
+                wpacket[2] := y.drift
+                wpacket[3] := x.drift
+
+                link.in[in] ! n; j; wpacket
+        --}}}
+
+        zoom := zoom + (zoom / 32.0)
+
+        INITIAL REAL64 diff.x IS (x.target - x.drift):
+        INITIAL REAL64 diff.y IS (y.target - y.drift):
+        SEQ
+          x.drift := x.drift + (diff.x / 16.0)
+          y.drift := y.drift + (diff.y / 16.0)
+
+    --{{{  gracefully shut-down workers
+    SEQ n = 0 FOR N.WORKERS
+      INITIAL [4]REAL64 wpacket IS [i = 0 FOR 4 | 0.0]:
+      link.in[in] ! -1; -1; wpacket
+    --}}}
+
+    kill ! 0
+:
+
+PROC harvester (CT.WORK.OUT? link.out, CHAN INT tick?, tock!, kill?)
+  [MAX.FRAMES][IMAGE.HEIGHT][IMAGE.WIDTH * 2]BYTE framebuffer:
+  [MAX.FRAMES]INT fcount:
+  SEQ
+    SEQ i = 0 FOR SIZE fcount
+      fcount[i] := IMAGE.HEIGHT
+
+    INITIAL INT lframe IS 0:
+    INITIAL INT hframe IS 0:
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      ALT
+        INT id, frame:
+        link.out[out] ? frame; id; framebuffer[frame \ MAX.FRAMES][id]
+          SEQ
+            fcount[frame \ MAX.FRAMES] := fcount[frame \ MAX.FRAMES] - 1
+            IF
+              fcount[lframe \ MAX.FRAMES] = 0
+                -- got all results for the lowest frame
+                INITIAL INT lbuf IS (lframe \ MAX.FRAMES):
+                SEQ
+                  fcount[lbuf] := IMAGE.HEIGHT
+                  lframe := lframe + 1
+              TRUE
+                SKIP
+        (hframe <= (lframe + 4)) & tick ? hframe
+          tock ! hframe
+        INT any:
+        kill ? any
+          running := FALSE
+:
+
+
+PROC mandelbrot (CHAN BYTE kyb?, scr!, err!)
+  CT.WORK.IN? mwsvr.in:
+  CT.WORK.OUT? mwsvr.out:
+  SHARED CT.WORK.IN! mwcli.in:
+  SHARED CT.WORK.OUT! mwcli.out:
+  SEQ
+    mwsvr.in, mwcli.in := MOBILE CT.WORK.IN
+    mwsvr.out, mwcli.out := MOBILE CT.WORK.OUT
+
+    CHAN INT tick, tock, kill:
+    PAR
+      farmer (mwsvr.in, tick!, tock?, kill!)
+      harvester (mwsvr.out, tick?, tock!, kill?)
+      PAR i = 0 FOR N.WORKERS
+        worker (mwcli.in, mwcli.out)
+:
+
+

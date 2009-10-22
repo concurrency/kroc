@@ -24,7 +24,7 @@ udc_lib_objs = \
 	udc_softchan.o
 
 udc_libs = udc.lib
-udc_includes = udc.inc
+udc_includes = $(srcdir)/udc.inc
 endif
 
 libs = $(udc_libs)
