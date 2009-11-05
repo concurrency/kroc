@@ -2184,6 +2184,14 @@ printtreenl (stderr, 4, traces);
 			treenode *const field_base = basetype_tree (field_type);
 
 			list[i].fld_nptr = field_nptr;
+
+			if ((TagOf (field_type) == N_DECL) || (TagOf (field_type) == S_UNDECLARED)) {
+				/* should have been resolved, if still name or undeclared, broken */
+				list[i].fld_bytes = 1;
+				list[i].fld_element = 1;
+				continue;
+			}
+
 			list[i].fld_bytes = (int) bytesin (field_type);
 			list[i].fld_element = (int) bytesin (field_base);
 
