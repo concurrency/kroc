@@ -1,14 +1,32 @@
 
-import org.jcsp.lang.*;
+import java.util.concurrent.*;
 
 public class Ring {
 	private static int ELEMENTS = 256;
 
-	private static class Element implements CSProcess {
-		private final ChannelInputInt curr;
-		private final ChannelOutputInt next;
+	private static int readOrDie (BlockingQueue<Integer> q)
+	{
+		try {
+			return q.take ();
+		} catch (Exception e) {
+			throw new Error (e);
+		}
+	}
 
-		public Element (ChannelInputInt curr, ChannelOutputInt next)
+	private static void writeOrDie (BlockingQueue<Integer> q, int i)
+	{
+		try {
+			q.put (i);
+		} catch (Exception e) {
+			throw new Error (e);
+		}
+	}
+
+	private static class Element implements Runnable {
+		private final BlockingQueue<Integer> curr;
+		private final BlockingQueue<Integer> next;
+
+		public Element (BlockingQueue<Integer> curr, BlockingQueue<Integer> next)
 		{
 			this.curr = curr;
 			this.next = next;
@@ -17,29 +35,29 @@ public class Ring {
 		public void run ()
 		{
 			for (;;) {
-				int token = curr.read ();
+				int token = readOrDie (curr);
 				if (token > 0) {
-					next.write (token + 1);
+					writeOrDie (next, token + 1);
 				} else {
-					next.write (token);
+					writeOrDie (next, token);
 					return;
 				}
 			}
 		}
 	}
 
-	private static void root (int cycles, ChannelInputInt curr, ChannelOutputInt next)
+	private static void root (int cycles, BlockingQueue<Integer> curr, BlockingQueue<Integer> next)
 	{
 		int token;
 
-		next.write (1);
-		token = curr.read ();
+		writeOrDie (next, 1);
+		token = readOrDie (curr);
 
 		System.out.println ("start");
 		System.out.flush ();
 		while (cycles > 0) {
-			next.write (token + 1);
-			token = curr.read ();
+			writeOrDie (next, token + 1);
+			token = readOrDie (curr);
 			cycles--;
 		}
 		System.out.println ("end");
@@ -47,8 +65,8 @@ public class Ring {
 
 		System.out.println ("" + token);
 
-		next.write (0);
-		token = curr.read ();
+		writeOrDie (next, 0);
+		token = readOrDie (curr);
 	}
 
 	public static void main (String[] args)
@@ -58,16 +76,18 @@ public class Ring {
 		if (args.length > 0)
 			cycles = Integer.parseInt (args[0]);
 
-		One2OneChannelInt head = Channel.one2oneInt();
-		One2OneChannelInt curr = head;
+		BlockingQueue<Integer> head = new SynchronousQueue<Integer> ();
+		BlockingQueue<Integer> curr = head;
 
 		for (int i = 0; i < ELEMENTS - 1; ++i)
 		{
-			One2OneChannelInt next = Channel.one2oneInt();
-			(new ProcessManager (new Element (curr.in (), next.out ()))).start();
+			BlockingQueue<Integer> next = new SynchronousQueue<Integer> ();
+			(Executors.defaultThreadFactory ().newThread (
+				new Element (curr, next)
+			)).start ();
 			curr = next;
 		}
 
-		root(cycles, curr.in (), head.out ());
+		root (cycles, curr, head);
 	}
 }
