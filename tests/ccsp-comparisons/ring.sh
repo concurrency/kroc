@@ -1,12 +1,17 @@
 #!/bin/bash
 
-CORES=2
-if [ -f /proc/cpuinfo ]; then
-  CORES=`cat /proc/cpuinfo | grep processor | wc -l`
+if [ -z "$CORES" ]; then
+  CORES=2
+  if [ -f /proc/cpuinfo ]; then
+    CORES=`cat /proc/cpuinfo | grep processor | wc -l`
+  fi
 fi
 
 LOOPS=$1
 CYCLES=$2
+
+export CCSP_RUNTIME_THREADS=$CORES
+export THREADS=$CORES
 
 run_cmd ()
 {
@@ -28,4 +33,7 @@ run_cmd "JCSP" "java -classpath jcsp/jcsp.jar:jcsp/. Ring $CYCLES"
 run_cmd "pthread C" "./ring.pthread $CYCLES"
 #run_cmd "PyCSP" "python pycsp/ring.py $CYCLES"
 #run_cmd "Stackless Python" "$SPYTHON stackless/ring.py $CYCLES"
+
+unset CCSP_RUNTIME_THREADS
+unset THREADS
 

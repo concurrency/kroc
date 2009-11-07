@@ -2,14 +2,19 @@
 
 TIMEOUT=90
 
-CORES=2
-if [ -f /proc/cpuinfo ]; then
-  CORES=`cat /proc/cpuinfo | grep processor | wc -l`
+if [ -z "$CORES" ]; then
+  CORES=2
+  if [ -f /proc/cpuinfo ]; then
+    CORES=`cat /proc/cpuinfo | grep processor | wc -l`
+  fi
 fi
 
 LOOPS=$1
 CYCLES=$2
 TOKENS=$3
+
+export CCSP_RUNTIME_THREADS=$CORES
+export THREADS=$CORES
 
 run_cmd ()
 {
@@ -34,4 +39,7 @@ run_cmd "JCSP" "java -classpath jcsp/jcsp.jar:jcsp/. MTRing $CYCLES $TOKENS"
 run_cmd "pthread C" "./mtring.pthread $CYCLES $TOKENS"
 #run_cmd "PyCSP" "python pycsp/mtring.py $CYCLES $TOKENS"
 #run_cmd "Stackless Python" "$SPYTHON stackless/mtring.py $CYCLES $TOKENS"
+
+unset CCSP_RUNTIME_THREADS
+unset THREADS
 
