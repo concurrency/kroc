@@ -1,14 +1,32 @@
 
-import org.jcsp.lang.*;
+import java.util.concurrent.*;
 
 public class MTRing {
 	private static int ELEMENTS = 256;
 
-	private static class Element implements CSProcess {
-		private final ChannelInputInt curr;
-		private final ChannelOutputInt next;
+	private static int readOrDie (BlockingQueue<Integer> q)
+	{
+		try {
+			return q.take ();
+		} catch (Exception e) {
+			throw new Error (e);
+		}
+	}
 
-		public Element (ChannelInputInt curr, ChannelOutputInt next)
+	private static void writeOrDie (BlockingQueue<Integer> q, int i)
+	{
+		try {
+			q.put (i);
+		} catch (Exception e) {
+			throw new Error (e);
+		}
+	}
+
+	private static class Element implements Runnable {
+		private final BlockingQueue<Integer> curr;
+		private final BlockingQueue<Integer> next;
+
+		public Element (BlockingQueue<Integer> curr, BlockingQueue<Integer> next)
 		{
 			this.curr = curr;
 			this.next = next;
@@ -17,49 +35,49 @@ public class MTRing {
 		public void run ()
 		{
 			for (;;) {
-				int token = curr.read ();
+				int token = readOrDie (curr);
 				if (token > 0) {
-					next.write (token + 1);
+					writeOrDie (next, token + 1);
 				} else {
-					next.write (token);
+					writeOrDie (next, token);
 					return;
 				}
 			}
 		}
 	}
 
-	private static void root (int cycles, int tokens, ChannelInputInt curr, ChannelOutputInt next)
+	private static void root (int cycles, int tokens, BlockingQueue<Integer> curr, BlockingQueue<Integer> next)
 	{
 		int token;
 
-		next.write (1);
-		token = curr.read ();
+		writeOrDie (next, 1);
+		token = readOrDie (curr);
 
 		System.out.println ("start");
 		System.out.flush ();
 		
 		for (int i = 1; i <= tokens; ++i)
-			next.write (i);
+			writeOrDie (next, i);
 
 		while (cycles > 0) {
 			for (int i = 0; i < tokens; ++i) {
-				token = curr.read ();
-				next.write (token + 1);
+				token = readOrDie (curr);
+				writeOrDie (next, token + 1);
 			}
 			cycles--;
 		}
 
 		int sum = 0;
 		for (int i = 0; i < tokens; ++i)
-			sum += curr.read ();
+			sum += readOrDie (curr);
 
 		System.out.println ("end");
 		System.out.flush ();
 
 		System.out.println ("" + sum);
 
-		next.write (0);
-		token = curr.read ();
+		writeOrDie (next, 0);
+		token = readOrDie (curr);
 	}
 
 	public static void main (String[] args)
@@ -71,16 +89,18 @@ public class MTRing {
 		if (args.length > 1)
 			tokens = Integer.parseInt (args[1]);
 
-		One2OneChannelInt head = Channel.one2oneInt();
-		One2OneChannelInt curr = head;
+		BlockingQueue<Integer> head = new SynchronousQueue<Integer> ();
+		BlockingQueue<Integer> curr = head;
 
 		for (int i = 0; i < ELEMENTS - 1; ++i)
 		{
-			One2OneChannelInt next = Channel.one2oneInt();
-			(new ProcessManager (new Element (curr.in (), next.out ()))).start();
+			BlockingQueue<Integer> next = new SynchronousQueue<Integer> ();
+			(Executors.defaultThreadFactory ().newThread (
+				new Element (curr, next)
+			)).start ();
 			curr = next;
 		}
 
-		root(cycles, tokens, curr.in (), head.out ());
+		root (cycles, tokens, curr, head);
 	}
 }
