@@ -45,7 +45,7 @@ ts:	ts.c
 	$(ERLC) +native +"{hipe, [o3]}" $<
 
 %.ccsp:		ccsp/%.c
-	$(CC) $(CC_INC) -O2 -Wall $< -o $@ $(CC_LIB) -lccsp -lpthread
+	$(CC) $(CFLAGS) $(CC_INC) -O2 -Wall $< -o $@ $(CC_LIB) -lccsp -lpthread
 
 %.chp:		chp/%.hs
 	$(GHC) --make -O2 -fglasgow-exts -threaded $< -o $@
