@@ -3,8 +3,10 @@ CC = gcc
 GHC = ghc
 ERLC = erlc
 JAVAC = javac
+CC_FLAGS := $(shell $(KROC) --cflags)
 CC_INC := $(shell $(KROC) --ccincpath)
 CC_LIB := $(shell $(KROC) --cclibpath)
+CFLAGS := $(CFLAGS) $(CC_FLAGS)
 
 targets = \
 	ts \
@@ -37,7 +39,7 @@ targets = \
 all: $(targets)
 
 ts:	ts.c
-	$(CC) -O2 -Wall $< -o $@
+	$(CC) $(CFLAGS) -O2 -Wall $< -o $@
 
 %.beam:		erlang/%.erl
 	$(ERLC) +native +"{hipe, [o3]}" $<
@@ -58,10 +60,10 @@ ts:	ts.c
 	$(KROC) -v -o $@ $<
 
 %.pthread:	pthread/%.c
-	$(CC) -O2 -Wall $< -o $@ -lpthread
+	$(CC) $(CFLAGS) -O2 -Wall $< -o $@ -lpthread
 
 %.serial:	serial/%.c
-	$(CC) -O2 -Wall $< -o $@
+	$(CC) $(CFLAGS) -O2 -Wall $< -o $@
 
 clean:
 	rm -f $(targets) 
