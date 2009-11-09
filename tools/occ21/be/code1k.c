@@ -206,10 +206,26 @@ PRIVATE seginfo_t *seginfo;
 PRIVATE BYTE *codebuff = NULL;	/* Buffer to hold code */
 PRIVATE int ctop;
 
+PRIVATE int max_code_size = COMPILING_CODE_SIZE * 4;
+
+
 
 /*{{{  add_code*/
 PRIVATE void add_code (BYTE byteval)
 {
+	if ((ctop + 1) >= max_code_size) {
+		/* make buffer larger */
+		int newcodesize = max_code_size * 2;
+		BYTE *newcodebuff = memalloc (newcodesize);
+
+		memset (newcodebuff, '\0', newcodesize);
+		memcpy (newcodebuff, codebuff, ctop);
+
+		memfree (codebuff);
+		codebuff = newcodebuff;
+		max_code_size = newcodesize;
+	}
+
 	codebuff[ctop++] = byteval;
 }
 
@@ -3672,8 +3688,6 @@ PUBLIC FILE *open_object_file (const char *const filename)
  **************************************************************************/
 PUBLIC void initcode (void)
 {
-	int max_code_size = COMPILING_CODE_SIZE * 4;
-
 	etcfile = outfile;
 	if (etc_output) {
 		gencomment0 ("extended transputer code asm output\n");
@@ -3719,3 +3733,4 @@ PUBLIC void freecode (void)
 }
 
 /*}}}*/
+
