@@ -37,6 +37,7 @@ PROC main (CHAN BYTE err!)
       out.string ("-b                           array bounds range check*n", 0, err!)
       out.string ("-i                           INT64-to-INT32 conversion range check*n", 0, err!)
       out.string ("-h                           shift range check*n", 0, err!)
+      out.string ("-d                           deadlock*n", 0, err!)
       err ! '*n'
       out.string ("Report bugs to <kroc-bugs@kent.ac.uk>.*n*n", 0, err!)
       CAUSEERROR ()
@@ -48,7 +49,7 @@ PROC main (CHAN BYTE err!)
     --{{{  parse command-line options
     CHAN GETOPT opts:
     PAR
-      file.get.options ("scOUzZbih", opts!)
+      file.get.options ("scOUzZbihd", opts!)
       INITIAL BOOL running IS TRUE:
       WHILE running
         BYTE o:
@@ -124,6 +125,11 @@ PROC main (CHAN BYTE err!)
           n := 42
           n := n << (INT n)
         --}}}
+      'd'
+        --{{{  deadlock
+        CHAN BOOL c:
+        c ! TRUE
+        --}} }
     --}}}
     --{{{  no error detected
     out.string ("Error: a runtime error should have been raised by now*n", 0, err!)
