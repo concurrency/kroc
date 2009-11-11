@@ -23,7 +23,7 @@ occplayer_lib_objs = \
 	player_wrap.o
 
 occplayer_libs = occplayer.lib
-occplayer_includes = occplayer.inc
+occplayer_includes = $(srcdir)/occplayer.inc
 endif
 
 libs = $(occplayer_libs)

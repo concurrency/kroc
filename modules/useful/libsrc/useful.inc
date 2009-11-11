@@ -26,6 +26,44 @@
 -- program), but where there isn't an existing module that it should obviously
 -- go into.
 --
+-- This module includes a large number of [@code PROC]s for formatted output
+-- that aren't individually documented. These take varying numbers of
+-- arguments, and have names that end with a "format string" indicating the
+-- types of the arguments they support. Several families of [@code PROC]s are
+-- provided for different purposes:
+--
+-- [@item] [@code print.*] write to a [@code CHAN BYTE];
+-- [@item] [@code prints.*] write to a [@code SHARED CHAN BYTE], claiming it
+-- first;
+-- [@item] [@code format.*] return a string as a [@code RESULT MOBILE []BYTE];
+-- [@item] [@code trace.*] write directly to standard error, taking no
+-- additional parameters.
+--
+-- The output channel or variable always appears at the end of the argument
+-- list.
+--
+-- The formatting characters supported are:
+--
+-- [@item] [@code s] for a string as a [@code VAL []BYTE];
+-- [@item] [@code i] for a decimal integer as a [@code VAL INT];
+-- [@item] [@code r] for a decimal floating-point value as a [@code VAL REAL32];
+-- [@item] [@code b] for a boolean value as a [@code VAL BOOL];
+-- [@item] [@code n] for a newline (taking no parameter).
+--
+-- For example, if you wanted to print a string and an integer followed by a
+-- newline to a channel, you could use [@code PROC print.sin (VAL []BYTE s, VAL
+-- INT i, CHAN BYTE out!)] as follows:
+--
+-- [@code
+-- print.sin ("Number of interrupts: ", count, out!)
+-- ]
+--
+-- [@code PROC]s are provided for all valid combinations of up to 5 formatting
+-- characters, with the restrictions that [@code n] is only permitted at the
+-- end of a format string, and [@code i], [@code r] and [@code b] cannot occur
+-- next to each other. (For example, [@code trace.sisin] is provided, but
+-- [@code trace.siin] and [@code trace.sinin] are not.)
+--
 -- @module useful
 
 --{{{  DATA TYPE VECTOR2

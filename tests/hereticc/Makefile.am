@@ -10,8 +10,10 @@ OCCBUILD = @OCCBUILD@ --occ21-opts '-NU'
 EXTRA_DIST = \
 	hereticc.occ
 
+if BUILD_HERETICC
 tests = \
 	hereticc
+endif
 
 TESTS_ENVIRONMENT = $(OCCBUILD) --run
 TESTS = $(tests)
@@ -19,7 +21,7 @@ TESTS = $(tests)
 all-local: $(tests)
 
 hereticc: hereticc.occ
-	$(OCCBUILD) --program hereticc.occ
+	$(OCCBUILD) --program $(srcdir)/hereticc.occ
 
 install-exec-local: $(tests)
 	$(OCCBUILD) --install-examples hereticc --prefix "$(prefix)" --destdir "$(DESTDIR)" $(tests)

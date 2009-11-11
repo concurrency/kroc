@@ -53,8 +53,7 @@ foreach my $file (@files) {
 
 	if ($comments) {
 		foreach my $comment (@{$data->{'COMMENT'}}) {
-			my $data = $comment->{'data'};
-			$data =~ s/\p{IsCntrl}//gs;
+			my $data = $etc->decode_str ($comment->{'data'});
 			print "$data\n";
 		}
 	} else {
@@ -107,7 +106,7 @@ sub print_op ($$) {
 		print "\n" if $name eq '.SECTIONLAB';
 		print ".L$arg:\n";
 	} elsif ($name =~ /\..*BYTES$/) {
-		my $bytes	= unpack ('h*', $arg);
+		my $bytes	= unpack ('H*', $arg);
 		my @bytes	= ($bytes =~ /(..)/g);
 		my $text	= join (' ', @bytes) . ' ';
 		my @lines	= ($text =~ /(.{0,48})/g);

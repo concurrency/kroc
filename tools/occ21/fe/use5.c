@@ -1791,10 +1791,10 @@ printtreenl (stderr, 1, proto);
 			esnode->u.fmevent.name = str;
 			esnode->u.fmevent.node = var;
 
-	#if 0
-	fprintf (stderr, "fmt_createeventfromvar(): mobile channel-type vtype:");
-	printtreenl (stderr, 1, vtype);
-	#endif
+#if 0
+fprintf (stderr, "fmt_createeventfromvar(): mobile channel-type vtype:");
+printtreenl (stderr, 1, vtype);
+#endif
 			if (TagOf (vtype) == N_TYPEDECL) {
 				/* should be a mobile channel-type */
 				treenode *orgtype = vtype;
@@ -1802,9 +1802,9 @@ printtreenl (stderr, 1, proto);
 
 				is_shared = NTypeAttrOf (vtype) & TypeAttr_shared;
 
-	#if 0
-	fprintf (stderr, "fmt_createeventfromvar(): is_shared on TYPEDECL = %d\n", is_shared);
-	#endif
+#if 0
+fprintf (stderr, "fmt_createeventfromvar(): is_shared on TYPEDECL = %d\n", is_shared);
+#endif
 				if (!ref) {
 					/* may have been obscured by replaced names, try again */
 					treenode *decl = NDeclOf (vtype);
@@ -1825,12 +1825,12 @@ printtreenl (stderr, 1, proto);
 								
 								ref = fmt_getfmcheck (proto);
 								anonct = 1;
-	#if 0
-	fprintf (stderr, "fmt_createeventfromvar(): null decl, chan protocol (tattr=0x%8.8x, is_shared=%d) =", tattr, is_shared);
-	printtreenl (stderr, 4, proto);
-	fprintf (stderr, "fmt_createeventfromvar(): ref =\n");
-	fmt_dumpnode (ref, 1, stderr);
-	#endif
+#if 0
+fprintf (stderr, "fmt_createeventfromvar(): null decl, chan protocol (tattr=0x%8.8x, is_shared=%d) =", tattr, is_shared);
+printtreenl (stderr, 4, proto);
+fprintf (stderr, "fmt_createeventfromvar(): ref =\n");
+fmt_dumpnode (ref, 1, stderr);
+#endif
 								if (!ref) {
 									/* means that this has a simple type */
 									notype = 1;
@@ -1854,10 +1854,10 @@ printtreenl (stderr, 1, proto);
 					fmt_error_internal (NOPOSN, "fmt_createeventfromvar(): referenced node not TAGSET!");
 				} else {
 					/* this is a TAGSET */
-	#if 0
-	fprintf (stderr, "fmt_createeventfromvar(): mobile channel-type, ref = 0x%8.8x\n", (unsigned int)ref);
-	fmt_dumpnode (ref, 1, stderr);
-	#endif
+#if 0
+fprintf (stderr, "fmt_createeventfromvar(): mobile channel-type, ref = 0x%8.8x\n", (unsigned int)ref);
+fmt_dumpnode (ref, 1, stderr);
+#endif
 					esnode->u.fmevent.typename = string_dup (ref->u.fmtset.name);
 					esnode->u.fmevent.nodetype = vtype;
 				}
@@ -1880,10 +1880,10 @@ printtreenl (stderr, 1, proto);
 					fmt_addtonodelist (esnode, crln);
 				}
 			}
-	#if 0
-	fprintf (stderr, "fmt_createeventfromvar(): created stuff:\n");
-	fmt_dumpnode (esnode, 1, stderr);
-	#endif
+#if 0
+fprintf (stderr, "fmt_createeventfromvar(): created stuff:\n");
+fmt_dumpnode (esnode, 1, stderr);
+#endif
 
 			return esnode;
 			/*}}}*/
@@ -1903,10 +1903,10 @@ printtreenl (stderr, 1, proto);
 			}
 			esnode->u.fmevset.name = str;
 			esnode->u.fmevset.node = var;
-	#if 0
-	fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type vtype:");
-	printtreenl (stderr, 1, vtype);
-	#endif
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type vtype:");
+printtreenl (stderr, 1, vtype);
+#endif
 			if (TagOf (vtype) == N_TYPEDECL) {
 				/*{{{  should be a mobile channel-type*/
 				treenode *mtype = NTypeOf (vtype);
@@ -1920,10 +1920,10 @@ printtreenl (stderr, 1, proto);
 
 				is_shared = NTypeAttrOf (vtype) & TypeAttr_shared;
 
-	#if 0
-	fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type, is_shared=%d, mtype =\n", (unsigned int)NTypeAttrOf (vtype));
-	printtreenl (stderr, 1, mtype);
-	#endif
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type, is_shared=%d, mtype =\n", (unsigned int)NTypeAttrOf (vtype));
+printtreenl (stderr, 1, mtype);
+#endif
 				/* actual type should be the mobile record of channels */
 				if ((TagOf (mtype) == S_MOBILE) && (TagOf (ARTypeOf (type)) == S_RECORD)) {
 					treenode *items = ARTypeOf (ARTypeOf (type));
@@ -1940,10 +1940,10 @@ printtreenl (stderr, 1, proto);
 							char *itemname = (char *)WNameOf (NNameOf (dname));
 							char *str = (char *)memalloc (strlen (varname) + strlen (itemname) + 16);
 							int slen = 0;
-	#if 0
-	fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type item name:");
-	printtreenl (stderr, 1, dname);
-	#endif
+#if 0
+fprintf (stderr, "do_formalmodelcheck_tree(): mobile channel-type item name:");
+printtreenl (stderr, 1, dname);
+#endif
 
 							fmt_copyvarname (str, varname);
 							slen = strlen (str);
@@ -4781,8 +4781,15 @@ fprintf (stderr, "do_formalmodegen(): CASE_INPUT, variant item after specs is [%
 						}
 						/*}}}*/
 					}
-					fmstate->target = &input->u.fmio.rhs;
-					prewalktree (CondGuardOf (var), do_formalmodelgen_ioexpr, (void *)fmstate);
+
+					if (!input->u.fmio.lhs) {
+						/* no left-hand side, so do a Skip guard for this */
+						fmt_freenode (input, 2);
+						input = fmt_newnode (FM_SKIP, chan);
+					} else {
+						fmstate->target = &input->u.fmio.rhs;
+						prewalktree (CondGuardOf (var), do_formalmodelgen_ioexpr, (void *)fmstate);
+					}
 #if 0
 fprintf (stderr, "do_formalmodelgen(): walked CASEINPUT:\n");
 fmt_dumpnode (input, 1, stderr);

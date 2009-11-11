@@ -1,0 +1,224 @@
+--
+--	fft3.occ -- FFT stream benchmark in occam-pi
+--	Copyright (C) 2009  Carl Ritson
+--
+--      Adapted from the StreamIT FFT3 benchmark.
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#INCLUDE "course.module"
+#INCLUDE "maths.module"
+
+-- occbench test specification
+-- OCCBENCH NAME: fft3
+-- OCCBENCH TYPE: scaling
+
+-- Benchmark Size Parameters
+VAL INT FFT.SIZE        IS 128:    -- work unit size
+VAL INT CYCLES          IS 10000:  -- overall benchmark work
+
+-- Constants
+VAL REAL32 PI       IS 3.141592654: 
+VAL INT FFT.MAX     IS 128:
+
+DATA TYPE CX
+  PACKED RECORD
+    REAL32 re:
+    REAL32 im:
+:
+
+INT FUNCTION log2 (VAL INT n)
+  INT count:
+  VALOF
+    INT val:
+    SEQ
+      count := 0
+      val   := n
+      WHILE (((val \ 2) = 0)) AND (val > 1)
+        count, val := count + 1, val / 2
+    RESULT count
+:
+
+PROC butterfly (VAL INT cycles, VAL REAL32 w.re, w.im, CHAN CX in?, out!)
+  INITIAL INT cycles IS cycles:
+  WHILE cycles > 0
+    REAL32 wt.re, wt.im:
+    CX u, t:
+    SEQ
+      in ? u
+      in ? t
+      wt.re := (w.re * t[re]) - (w.im * t[im])
+      wt.im := (w.re * t[im]) + (w.im * t[re])
+      t[re], t[im], u[re], u[im] := u[re] - wt.re, u[im] - wt.im, u[re] + wt.re, u[im] + wt.im
+      out ! u
+      out ! t
+      cycles := cycles - 2
+:
+
+PROC butterfly.group (VAL INT cycles, VAL REAL32 w.re, w.im, VAL INT n.b.flies, CHAN CX in?, out!)
+  [FFT.MAX]CHAN CX b.in, b.out:
+  PAR
+    INITIAL INT active IS 0:
+    INITIAL INT cycles IS cycles:
+    WHILE cycles > 0
+      CX c:
+      SEQ
+        in ? c
+        b.in[active] ! c
+        active := (active + 1) \ n.b.flies
+        cycles := cycles - 1
+
+    INITIAL INT active IS 0:
+    INITIAL INT cycles IS cycles:
+    WHILE cycles > 0
+      CX c:
+      SEQ
+        b.out[active] ? c
+        out ! c
+        active := (active + 1) \ n.b.flies
+        cycles := cycles - 1
+
+    PAR i = 0 FOR n.b.flies
+      butterfly (cycles / n.b.flies, w.re, w.im, b.in[i]?, b.out[i]!)
+:
+
+PROC compute.stage (VAL INT cycles, VAL INT d, n, VAL BOOL last, VAL []REAL32 w.re, w.im, CHAN CX in?, out!)
+  VAL INT grp.len IS d + d:
+  VAL INT n.grps IS n / grp.len:
+  VAL INT n.b.flies IS d:
+
+  [FFT.MAX]CHAN CX b.in, b.out:
+  
+  PAR
+    INITIAL INT active IS 0:
+    INITIAL INT cycles IS cycles:
+    WHILE cycles > 0
+      CX c:
+      SEQ
+        SEQ i = 0 FOR grp.len
+          SEQ
+            in ? c
+            b.in[active] ! c
+        active := (active + 1) \ n.grps
+        cycles := cycles - grp.len
+
+    INITIAL INT active IS 0:
+    INITIAL INT cycles IS cycles:
+    WHILE cycles > 0
+      CX c:
+      SEQ
+        SEQ i = 0 FOR grp.len
+          SEQ
+            b.out[active] ? c
+            out ! c
+        active := (active + 1) \ n.grps
+        cycles := cycles - grp.len
+   
+    PAR g = 0 FOR n.grps
+      IF
+        last
+          butterfly (cycles / n.grps, w.re[g], w.im[g], b.in[g]?, b.out[g]!)
+        TRUE
+          butterfly.group (cycles / n.grps, w.re[g], w.im[g], n.b.flies, b.in[g]?, b.out[g]!)
+:
+
+INT FUNCTION bit.rev (VAL INT in, num.bits)
+  INT result:
+  VALOF
+    INITIAL INT in IS in:
+    SEQ
+      result := 0
+      SEQ i = 0 FOR num.bits
+        SEQ
+          result  := (result * 2) \/ (in /\ 1)
+          in      := in / 2
+    RESULT result
+:
+
+PROC bit.reverse (VAL INT cycles, n, log.n, CHAN CX in?, out!)
+  INITIAL INT cycles IS cycles:
+  [FFT.MAX * 2]CX buffer:
+  WHILE cycles > 0
+    SEQ
+      SEQ i = 0 FOR n
+        in ? buffer[i]
+      SEQ i = 0 FOR n
+        VAL INT br IS bit.rev (i, log.n):
+        out ! buffer[br]
+      cycles := cycles - n
+:
+
+PROC fft.kernel.3 (VAL INT cycles, n, log.n, VAL []REAL32 w.re, w.im, CHAN CX in?, out!)
+  INITIAL INT n.stages IS 0:
+  [FFT.MAX]INT stages:
+  [FFT.MAX]CHAN CX s:
+  CHAN CX final:
+  SEQ
+    INITIAL INT i IS n / 4:
+    WHILE i > 1
+      SEQ
+        stages[n.stages] := i
+        i, n.stages := i / 2, n.stages + 1
+    PAR
+      butterfly.group (cycles, w.re[0], w.im[0], n / 2, in?, s[0]!)
+      PAR i = 0 FOR n.stages
+        compute.stage (cycles, stages[i], n, FALSE, w.re, w.im, s[i]?, s[i+1]!)
+      compute.stage (cycles, 1, n, TRUE, w.re, w.im, s[n.stages]?, final!)
+      bit.reverse (cycles, n, log.n, final?, out!)
+:
+
+PROC test.source (VAL INT cycles, n, CHAN CX out!)
+  [FFT.MAX * 2]CX buffer:
+  SEQ
+    SEQ i = 0 FOR n
+      SEQ
+        buffer[i][re] := 0.0
+        buffer[i][im] := 0.0
+    buffer[1][re] := 1.0
+    SEQ c = 0 FOR (cycles / n)
+      SEQ i = 0 FOR n
+        out ! buffer[i]
+:
+
+PROC float.printer (VAL INT cycles, CHAN CX in?, CHAN BYTE scr!)
+  SEQ i = 0 FOR cycles
+    CX data:
+    SEQ
+      in ? data
+:
+
+PROC main (CHAN BYTE kyb?, scr!, err!)
+  VAL INT n       IS FFT.SIZE:
+  VAL INT log.n   IS log2 (n):
+  VAL INT cycles  IS n * CYCLES:
+ 
+  MOBILE []REAL32 w.re, w.im:
+
+  SEQ
+    w.re := MOBILE [n/2]REAL32
+    w.im := MOBILE [n/2]REAL32
+    SEQ i = 0 FOR n/2
+      VAL INT br IS bit.rev (i, log.n - 1):
+      SEQ
+        w.re[br] := COS ((2.0 * ((REAL32 TRUNC i) * PI)) / (REAL32 TRUNC n))
+        w.im[br] := SIN ((2.0 * ((REAL32 TRUNC i) * PI)) / (REAL32 TRUNC n))
+
+    CHAN CX data, result:
+    PAR
+      test.source (cycles, n, data!)
+      fft.kernel.3 (cycles, n, log.n, w.re, w.im, data?, result!)
+      float.printer (cycles, result?, scr!)
+:

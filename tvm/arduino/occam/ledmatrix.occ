@@ -1,0 +1,253 @@
+--** Drive an 8x8 LED matrix.
+
+-- Define this only on the first matrix in the chain.
+#DEFINE MASTER
+
+#INCLUDE "wiring.module"
+#INCLUDE "font8x8.inc"
+
+DATA TYPE SIGNAL IS BOOL:
+VAL SIGNAL SIGNAL.VALUE IS TRUE:
+
+VAL INT SCROLL.TIME IS 100:
+
+-- PD2-PD7, PB0-PB1; set these high to turn the LEDs on
+VAL []INT COL.PINS IS [2, 3, 4, 5, 6, 7, 8, 9]:
+VAL INT COLS IS SIZE COL.PINS:
+-- PB2-PB5, PC0-PC3; set these low to turn the LEDs on
+VAL []INT ROW.PINS IS [10, 11, 12, 13, 14, 15, 16, 17]:
+VAL INT ROWS IS SIZE ROW.PINS:
+
+--{{{  PROC reverse.byte
+--* Reverse the order of bits in a byte.
+PROC reverse.byte (BYTE b)
+  SEQ
+    b := ((b >> 1) /\ #55) \/ ((b /\ #55) << 1)
+    b := ((b >> 2) /\ #33) \/ ((b /\ #33) << 2)
+    b := ((b >> 4) /\ #0F) \/ ((b /\ #0F) << 4)
+:
+--}}}
+
+--{{{  interrupt-driven serial IO
+--{{{  PROC serial.setup
+PROC serial.setup (VAL INT32 baud)
+  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
+  VAL [4]BYTE factor.bytes RETYPES factor:
+
+  PLACED [MAX.PORT]BYTE ports 0:
+  SEQ
+    ports[UBRR0H] := factor.bytes[1]
+    ports[UBRR0L] := factor.bytes[0]
+
+    ports[UCSR0C] := 3 << UCSZ00
+    ports[UCSR0B] := BV (TXEN0) \/ BV (RXEN0)
+:
+--}}}
+--{{{  PROC serial.write
+PROC serial.write (VAL BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    IF
+      (ports[UCSR0A] /\ BV (UDRE0)) = 0
+        --{{{  transmit buffer full; wait for it to empty
+        SEQ
+          -- Enable the interrupt; UDRIE0 will be cleared by the (C-side)
+          -- interrupt handler.
+          ports[UCSR0B] := ports[UCSR0B] \/ BV (UDRIE0)
+          INT dummy:
+          wait.for.interrupt (VINTR.USART.UDRE, dummy)
+        --}}}
+      TRUE
+        SKIP
+    ports[UDR0] := b
+:
+--}}}
+--{{{  PROC serial.read
+PROC serial.read (RESULT BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    IF
+      (ports[UCSR0A] /\ BV (RXC0)) = 0
+        --{{{  receive buffer empty; wait for something to come in
+        SEQ
+          -- Enable the interrupt; RXCIE0 will be cleared by the (C-side)
+          -- interrupt handler.
+          ports[UCSR0B] := ports[UCSR0B] \/ BV (RXCIE0)
+          INT dummy:
+          wait.for.interrupt (VINTR.USART.RX, dummy)
+        --}}}
+      TRUE
+        SKIP
+    b := ports[UDR0]
+:
+--}}}
+--{{{  PROC serial.tx
+PROC serial.tx (CHAN BYTE in?)
+  WHILE TRUE
+    BYTE b:
+    SEQ
+      in ? b
+      serial.write (b)
+:
+--}}}
+--{{{  PROC serial.rx
+PROC serial.rx (CHAN BYTE out!)
+  WHILE TRUE
+    BYTE b:
+    SEQ
+      serial.read (b)
+      out ! b
+:
+--}}}
+--}}}
+
+--{{{  PROC buffer
+PROC buffer (CHAN BYTE in?, thru!, out!)
+  INITIAL BYTE data IS 0:
+  WHILE TRUE
+    BYTE new:
+    SEQ
+      in ? new
+      thru ! new
+      out ! data
+      data := new
+:
+--}}}
+
+--{{{  PROC column
+PROC column (VAL INT col,
+              CHAN SIGNAL strobe.in?, strobe.out!,
+              CHAN BYTE data.in?)
+  BYTE portd.col, portb.col:
+  SEQ
+    --{{{  work out which bits to turn on for this column
+    IF
+      col < 6
+        portd.col, portb.col := 1 << (col + 2), #00
+      TRUE
+        portd.col, portb.col := #00, 1 << (col - 6)
+    --}}}
+    --{{{  send initial strobe
+    IF
+      col = (COLS - 1)
+        strobe.out ! SIGNAL.VALUE
+      TRUE
+        SKIP
+    --}}}
+    PLACED [MAX.PORT]BYTE ports 0:
+    INITIAL BYTE data IS 0:
+    WHILE TRUE
+      PRI ALT
+        data.in ? data
+          SKIP
+
+        SIGNAL dummy:
+        strobe.in ? dummy
+          VAL BYTE portd.val IS portd.col:
+          VAL BYTE portb.val IS portb.col \/ ((data /\ #0F) << 2):
+          VAL BYTE portc.val IS (data /\ #F0) >> 4:
+          SEQ
+            -- First, turn off any LEDs that are already on, so we don't
+            -- "smear" the previous column's pattern over to our column.
+            -- (Do port C first, since port B also has some column bits.)
+            ports[PORTC] := #FF
+            ports[PORTB] := #FF
+
+            -- Now turn on our pattern.
+            ports[PORTD] := portd.val
+            ports[PORTB] := portb.val
+            ports[PORTC] := portc.val
+
+            strobe.out ! SIGNAL.VALUE
+:
+--}}}
+
+--{{{  PROC black.hole.byte
+PROC black.hole.byte (CHAN BYTE in?)
+  WHILE TRUE
+    BYTE dummy:
+    in ? dummy
+:
+--}}}
+
+--{{{  PROC source
+PROC source (CHAN BYTE out!)
+  PROC send (VAL BYTE value)
+    INITIAL BYTE data IS value:
+    SEQ
+      -- We need the data inverted, since the column lines are
+      -- effectively active low.
+      data := ~data
+
+      -- We also need the order of the bits reversed.
+      reverse.byte (data)
+
+      out ! data
+      delay (SCROLL.TIME)
+  :
+  PROC print (VAL []BYTE s)
+    SEQ i = 0 FOR SIZE s
+      IF
+        (s[i] >= 'A') AND (s[i] <= 'Z')
+          VAL INT char IS INT (s[i] - 'A'):
+          SEQ i = 0 FOR 8
+            send (FONT.8X8[(char * 8) + i])
+        (s[i] >= '0') AND (s[i] <= '9')
+          VAL INT char IS INT (s[i] - '0'):
+          SEQ i = 0 FOR 8
+            send (FONT.8X8[((char + 26) * 8) + i])
+        TRUE
+          SEQ i = 0 FOR 5
+            send (#00)
+  :
+  WHILE TRUE
+    SEQ
+      print ("OCCAM LIVES")
+      SEQ num = 1 FOR 7
+        SEQ
+          INITIAL BYTE val IS (1 << num) - 1:
+          SEQ i = 0 FOR 9 - num
+            SEQ
+              send (val)
+              val := val << 1
+          SEQ i = 0 FOR 2
+            send (#00)
+:
+--}}}
+
+PROC main ()
+  SEQ
+    serial.setup (57600)
+    --{{{  set up pins
+    PLACED [MAX.PORT]BYTE ports 0:
+    SEQ
+      -- All outputs
+      ports[DDRD] := #FF
+      ports[DDRB] := #FF
+      ports[DDRC] := #FF
+
+      -- Turn all the LEDs off
+      ports[PORTD] := #FC
+      ports[PORTB] := #FF
+      ports[PORTC] := #FF
+    --}}}
+
+    [COLS]CHAN SIGNAL strobe:
+    [COLS + 1]CHAN BYTE data:
+    PAR
+      PAR i = 0 FOR COLS
+        CHAN BYTE data.thru:
+        PAR
+          buffer (data[i]?, data.thru!, data[i + 1]!)
+          column (i,
+                  strobe[i]?, strobe[(i + 1) \ COLS]!,
+                  data.thru?)
+      #IF DEFINED (MASTER)
+      source (data[0]!)
+      #ELSE
+      serial.rx (data[0]!)
+      #ENDIF
+      serial.tx (data[COLS]?)
+:

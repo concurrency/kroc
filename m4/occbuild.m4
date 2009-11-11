@@ -19,30 +19,21 @@
 #
 dnl
 dnl Determine whether we're building a package in the KRoC tree.
-dnl Set KROC_BUILD_ROOT to the top of the tree if we are, and to
-dnl the empty string if we aren't.
+dnl Set KROC_BUILD_ROOT to the top of the build tree and KROC_SRC_ROOT to the
+dnl top of the source tree if we are, and both to the empty string if we
+dnl aren't.
 AC_DEFUN([OCCAM_IN_TREE],
 [dnl
-AC_ARG_VAR(KROC_BUILD_ROOT, [Top of KRoC source tree])
+AC_ARG_VAR(KROC_BUILD_ROOT, [Path to top of KRoC build tree])
+AC_ARG_VAR(KROC_SRC_ROOT, [Path to top of KRoC source tree])
 
-AC_MSG_CHECKING([whether we're building in the KRoC source tree])
-
-# Try to find the top-level configure.ac for KRoC.
-old_PWD=`pwd`
-KROC_BUILD_ROOT=""
-for try in 1 2 3 4 5 6; do
-	if test -f configure.ac && grep '^# KROC_IS_ROOT' configure.ac >/dev/null; then
-		KROC_BUILD_ROOT=`pwd`
-		break
-	fi
-	cd ..
-done
-cd $old_PWD
-
-if test "x$KROC_BUILD_ROOT" != "x"; then
+AC_MSG_CHECKING([whether we're building as part of KRoC])
+if test "x$KROC_BUILD_ROOT" != "x" -a "x$KROC_SRC_ROOT" != "x"; then
   AC_MSG_RESULT([yes])
 else
   AC_MSG_RESULT([no])
+  KROC_BUILD_ROOT=""
+  KROC_SRC_ROOT=""
 fi
 ])dnl
 dnl
@@ -99,7 +90,7 @@ else
 fi
 AC_SUBST(OCCBUILD_CFLAGS)
 
-OCCBUILD_API_VERSION=2
+OCCBUILD_API_VERSION=3
 AC_SUBST(OCCBUILD_API_VERSION)
 ])dnl
 dnl
@@ -109,7 +100,7 @@ AC_DEFUN([OCCAM_OCCAMDOC],
 AC_REQUIRE([OCCAM_IN_TREE])
 AC_ARG_VAR(OCCAMDOC, [Path to occamdoc])
 if test "x$KROC_BUILD_ROOT" != "x"; then
-  OCCAMDOC="$KROC_BUILD_ROOT/tools/occamdoc/occamdoc --in-tree $KROC_BUILD_ROOT"
+  OCCAMDOC="$KROC_BUILD_ROOT/tools/occamdoc/occamdoc --in-tree $KROC_SRC_ROOT"
 else
   AC_CHECK_PROG(OCCAMDOC, occamdoc, occamdoc, no)
   if test $OCCAMDOC = no; then
@@ -250,4 +241,25 @@ if test $SWIG != no; then
 fi
 AM_CONDITIONAL(HAVE_SWIG_OCCAM, test "x$HAVE_SWIG_OCCAM" = "xyes")
 rm -f conftest.i
+])dnl
+dnl
+dnl Set KROC_TARGET_PREFIX to the string that's prepended to tool and directory
+dnl names when cross-building.
+AC_DEFUN([OCCAM_TARGET_PREFIX],
+[dnl
+AC_REQUIRE([AC_CANONICAL_TARGET])
+AC_REQUIRE([AC_ARG_PROGRAM])
+
+# Check that the user isn't trying to do a transformation other than a prefix.
+case `echo xyz | sed "$program_transform_name"`
+in
+	*xyz)
+		;;
+	*)
+		AC_MSG_ERROR([program name transformations for KRoC may only be simple prefixes])
+		;;
+esac
+
+KROC_TARGET_PREFIX=`echo "" | sed "$program_transform_name"`
+AC_SUBST(KROC_TARGET_PREFIX)
 ])dnl

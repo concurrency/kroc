@@ -46,12 +46,17 @@ CLEANFILES = $(generated_scripts)
 
 edit = sed \
 	-e 's|@prefix[@]|$(prefix)|g' \
+	-e 's|@target_alias[@]|$(target_alias)|g' \
 	-e 's|@CC[@]|$(CC)|g' \
 	-e 's|@LD[@]|$(LD)|g' \
+	-e 's|@TARGET_CC[@]|$(TARGET_CC)|g' \
+	-e 's|@TARGET_AR[@]|$(TARGET_AR)|g' \
+	-e 's|@TARGET_RANLIB[@]|$(TARGET_RANLIB)|g' \
 	-e 's|@VERSION[@]|$(VERSION)|g' \
+	-e 's|@KROC_TARGET_PREFIX[@]|$(KROC_TARGET_PREFIX)|g' \
 	-e 's|@KROC_CANONICAL_TARGET[@]|$(KROC_CANONICAL_TARGET)|g' \
-	-e 's|@KROC_HOST_OS[@]|$(KROC_HOST_OS)|g' \
-	-e 's|@KROC_HOST_CPU[@]|$(KROC_HOST_CPU)|g' \
+	-e 's|@KROC_TARGET_OS[@]|$(KROC_TARGET_OS)|g' \
+	-e 's|@KROC_TARGET_CPU[@]|$(KROC_TARGET_CPU)|g' \
 	-e 's|@OCCBUILD_TOOLCHAIN[@]|$(OCCBUILD_TOOLCHAIN)|g' \
 	-e 's|@SED[@]|$(SED)|g' \
 	-e 's|@KROC_CCSP_CFLAGS[@]|$(KROC_CCSP_CFLAGS)|g' \
@@ -62,6 +67,11 @@ edit = sed \
 	-e 's|@KROC_CCSP_LDFLAGS[@]|$(KROC_CCSP_LDFLAGS)|g' \
 	-e 's|@KROC_CCSP_LIBPATH[@]|$(KROC_CCSP_LIBPATH)|g' \
 	-e 's|@KROC_CCSP_LIBS[@]|$(KROC_CCSP_LIBS)|g' \
+	-e 's|@KROC_CCSP_ENABLE_PTHREADS[@]|$(KROC_CCSP_ENABLE_PTHREADS)|g' \
+	-e 's|@KROC_CCSP_ENABLE_MP[@]|$(KROC_CCSP_ENABLE_MP)|g' \
+	-e 's|@KROC_CCSP_ENABLE_CTTD[@]|$(KROC_CCSP_ENABLE_CTTD)|g' \
+	-e 's|@KROC_CCSP_ENABLE_PONY[@]|$(KROC_CCSP_ENABLE_PONY)|g' \
+	-e 's|@KROC_CCSP_ENABLE_DYNPROC[@]|$(KROC_CCSP_ENABLE_DYNPROC)|g' \
 	-e 's|@NOCCHOME[@]|$(NOCCHOME)|g' \
 	-e 's|@KROC_ARCHBINDIR[@]|$(KROC_ARCHBINDIR)|g' \
 	-e 's|@KROC_ARCHLIBDIR[@]|$(KROC_ARCHLIBDIR)|g' \

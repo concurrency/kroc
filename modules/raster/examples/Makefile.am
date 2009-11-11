@@ -10,10 +10,12 @@ EXTRA_DIST = \
 	imagetool.occ \
 	justraster.occ
 
+if BUILD_RASTER_EXAMPLES
 examples = \
 	drawstuff \
 	imagetool \
 	justraster
+endif
 
 all-local: $(examples)
 

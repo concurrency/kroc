@@ -70,6 +70,7 @@ PROC STRINGTOREAL64 (BOOL Error, REAL64 X, VAL []BYTE string)
   -- V1.5 10-Dec-90 SRH
   --}}}
 
+  #IF TARGET.BITS.PER.WORD = 32
   VAL hi IS 1:
   VAL lo IS 0:
   [ 2 ]INT X RETYPES X:
@@ -500,4 +501,7 @@ PROC STRINGTOREAL64 (BOOL Error, REAL64 X, VAL []BYTE string)
     -- Error returned if not all of string has been scanned
     Error := Error OR (chars.scanned <= (SIZE string))
     --}}}
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :

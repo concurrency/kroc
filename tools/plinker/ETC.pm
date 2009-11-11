@@ -53,7 +53,7 @@ sub decode_fn_opd ($$$) {
 		if ($fn == $PFIX) {
 			$opd <<= 4;
 		} elsif ($fn == $NFIX) {
-			$opd = (~$opd) << 4;
+			$opd = ((~$opd) << 4) & 0xffffffff;
 		} else {
 			return ($fn, $opd, $pos);
 		}
@@ -152,6 +152,15 @@ sub decode ($$) {
 	}
 
 	return @text;
+}
+
+sub decode_str ($$) {
+	my ($self, $data) = @_;
+	my ($code, $str_len);
+	$code = substr ($data, 0, 2);
+	$data = substr ($data, 2);
+	($str_len, $data) = Transputer::TCOFF::decode_int ($data);
+	return substr ($data, 0, $str_len);
 }
 
 sub decode_load_text ($$) {

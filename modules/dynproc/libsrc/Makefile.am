@@ -7,7 +7,7 @@ OCCBUILD = @OCCBUILD@
 
 if BUILD_DYNPROC
 libs = dynproc.lib
-includes = dynproc.inc
+includes = $(srcdir)/dynproc.inc
 endif
 
 EXTRA_DIST = \

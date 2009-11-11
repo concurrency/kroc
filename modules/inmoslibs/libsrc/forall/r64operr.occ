@@ -45,14 +45,11 @@ REAL64 FUNCTION REAL64OPERR (VAL REAL64 X, VAL INT Op, VAL REAL64 Yp)
   REAL64 Result:
   VALOF
     #INCLUDE "nan32.inc"
-    --{{{  #USE "occamutl.lib"
+    --{{{  #USEs
     #PRAGMA TRANSLATE RealIMul "RealIMul%CHK"
     #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
-    #USE "occamutl.lib"  --  6-Apr-90
-    #IF DEFINED(COMPILER.TOCK)
     #USE "rimul"
     #USE "ridiv"
-    #ENDIF
     --}}}
     --{{{  IEEE Double length constants for 32 bit implementation
     VAL DRealExpSh  IS        20 :
@@ -581,13 +578,17 @@ REAL64 FUNCTION REAL64OPERR (VAL REAL64 X, VAL INT Op, VAL REAL64 Yp)
   REAL64 Result :
   VALOF
     #INCLUDE "nan16.inc"
-    --{{{  #USE "occamutl.lib"
+    --{{{  #USEs
     #PRAGMA TRANSLATE QRealIMul "QRealIMul%CHK"
     #PRAGMA TRANSLATE QRealIDiv "QRealIDiv%CHK"
     #PRAGMA TRANSLATE QUADNORMALISE "QUADNORMALISE%CHK"
     #PRAGMA TRANSLATE QUADSHIFTLEFT "QUADSHIFTLEFT%CHK"
     #PRAGMA TRANSLATE QUADSHIFTRIGHT "QUADSHIFTRIGHT%CHK"
-    #USE "occamutl.lib"  --  6-Apr-90
+    #USE "qrimul"
+    #USE "qridiv"
+    #USE "qnorm"
+    #USE "qshiftl"
+    #USE "qshiftr"
     --}}}
     --{{{  IEEE Quad length constants for 16 bit implementation
     VAL DRealExpSh  IS    4 :

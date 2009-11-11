@@ -196,6 +196,11 @@ sub link ($$@) {
 		return;
 	}
 	
+	# The entry point might just be a jump entry
+	while (exists ($globals{$entry_point}->{'jump_entry'})) {
+		$entry_point = $globals{$entry_point}->{'jump_entry'};
+	}
+	
 	# Code from entry point down through dependencies
 	my @coding_order;
 	build_coding_order ($globals{$entry_point}, \@coding_order);

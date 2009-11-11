@@ -56,12 +56,21 @@ You will need your own copies of all the `.occ' files in this directory.
     These present the classic Santa-Claus concurrency problem and
     invites various solutions in occam-pi.  There is no starter file!
 
-  robots-sei.occ
+  cylons.doc/.pdf
 
-    This is a starter file for the robots exercise.  Your task is to
-    program a better brain ('brain.2').  Your robots must keep moving,
-    cover as much ground as possible (don't just run round in circles
-    like 'brain.1') and avoid obstacles (walls and other robots).
+    This is a simple exercise in robotics.  Your task is to program
+    a better brain ('brain.1') for the green robots.  They must keep
+    moving, cover as much ground as possible (don't just wander
+    around in circles like the red robots ('brain.0') and avoid
+    obstacles (walls and other robots).  There is some neat graphics,
+    all programmed in occam-pi, but which need not be understood
+    to complete the given exercise.  The exercise can be expanded
+    in many ways.  Hundreds of autonomous robots can be exercised
+    using KRoC compiled code - tens of robots with the Transterpreter.
+
+  cylons.occ
+
+    This is the starter file for the robots (Cylons) exercise.
 
   bugs.occ
 

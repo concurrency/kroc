@@ -1,9 +1,5 @@
-
 AUTOMAKE_OPTIONS = foreign no-dependencies
 ACLOCAL_AMFLAGS = -I ../../m4
-
-MZSCHEME=@MZSCHEME@
-MZC=@MZC@
 
 COMMON_SRC = \
 	cmdline.ss \
@@ -19,7 +15,9 @@ COMMON_SRC = \
 	types.ss \
 	version.ss
 
+if HAVE_SCHEME_TOOLS
 bin_PROGRAMS = slinker library2
+endif
 
 CLEANFILES = slinker.ss library2.ss
 

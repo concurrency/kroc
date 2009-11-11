@@ -664,8 +664,10 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
         check.REAL32(MINUSX(j32),  1.1(REAL32), "F1012")
         check.REAL32(MINUSX( 1.1(REAL32)), -1.1(REAL32), "F1011a")
         check.REAL32(MINUSX(-1.1(REAL32)),  1.1(REAL32), "F1012a")
+        #IF (TARGET.BITS.PER.WORD = 32)
         check.REAL32(COPYSIGN(i32, j32), -1.1(REAL32), "F1013")
         check.REAL32(COPYSIGN(j32, i32),  1.1(REAL32), "F1014")
+        #ENDIF
         VAL REAL32 ans RETYPES #3F8CCCCC(INT32) :
         check.REAL32(NEXTAFTER(i32, j32), ans, "F1015")
         VAL REAL32 ans RETYPES #BF8CCCCC(INT32) :
@@ -794,6 +796,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
         check.fmul (-1, 1, "F03")
         check.fmul (1, -1, "F04")
         check.fmul (-1, -1, "F05")
+        #IF (TARGET.BITS.PER.WORD = 32)
         -- These all overflow on a T212:
         -- Commented in again (DCW)
         check.fmul (65536, 65536, "F06")
@@ -804,6 +807,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
         check.fmul (#12345678, #87654321, "F11")
         check.fmul (#87654321, #87654321, "F12")
         check.fmul (#87654321, #12345678, "F13")
+        #ENDIF
     :
     f ()
     --}}}  
@@ -891,6 +895,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
             frac, exp, type := UNPACKSN(INT (Nan \/ mask))
             check(type, 3, "SN3")
 
+            #IF (TARGET.BITS.PER.WORD = 32)
             -- Sample values given in the Inmos documentation
             frac, exp, type := UNPACKSN (#40490FDB)
             check (frac, #C90FDB00, "SNI0frac")
@@ -916,6 +921,7 @@ PROC cgtest19 (CHAN OF BYTE keyb, scr, err)
             check (a.int, #40490FDB, "SNI6")
             a.int := ROUNDSN (#00000001, #00000100, #00000000)
             check (a.int, #00000001, "SNI7")
+            #ENDIF
             #ENDIF
         TRUE
           SKIP

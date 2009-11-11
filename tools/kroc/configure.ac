@@ -1,18 +1,17 @@
-dnl -*- shell-script -*-
-dnl
-dnl Process this file with autoconf to produce a configure script.
-dnl
-
-AC_REVISION($Revision: 1.1 $)
-AC_INIT([kroc.in],[1.5.0-pre5],[kroc-bugs@kent.ac.uk])
-AC_PREREQ(2.12)
+AC_INIT([kroc], [1.5.0-pre5], [kroc-bugs@kent.ac.uk])
 
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(kroc,1.5.0-pre5)
+
+AM_INIT_AUTOMAKE
 
 dnl Checks for programs.
 AC_PROG_CC
 AC_CHECK_PROGS(SED, gnused gsed sed)
+
+dnl Checks for target tools.
+OCCAM_CHECK_TARGET_TOOL([TARGET_AR], [ar], [no])
+OCCAM_CHECK_TARGET_TOOLS([TARGET_CC], [gcc c89 cc], [no])
+OCCAM_CHECK_TARGET_TOOL([TARGET_RANLIB], [ranlib], [:])
 
 OCCAM_TOOLCHAIN
 AC_SUBST(OCCBUILD_TOOLCHAIN)
@@ -20,12 +19,13 @@ if test $OCCBUILD_TOOLCHAIN = kroc; then
   KROC_CCSP_FLAGS
 fi
 
+OCCAM_TARGET_PREFIX
 KROC_CANONICAL_TARGET=$target
 AC_SUBST(KROC_CANONICAL_TARGET)
-KROC_HOST_OS=$host_os
-AC_SUBST(KROC_HOST_OS)
-KROC_HOST_CPU=$host_cpu
-AC_SUBST(KROC_HOST_CPU)
+KROC_TARGET_OS=$target_os
+AC_SUBST(KROC_TARGET_OS)
+KROC_TARGET_CPU=$target_cpu
+AC_SUBST(KROC_TARGET_CPU)
 
 dnl check for the dynamic linker (just so we can report it in KRoC really)
 AC_CHECK_TOOL(LD,ld)
@@ -116,12 +116,12 @@ KROC_ARCHINCDIR="$includedir/kroc"
 KROC_MANDIR="$mandir"
 KROC_KROCDIR="$datadir/kroc"
 KROC_CONFIGDIR="$sysconfdir/kroc"
-KROC_EXAMPLESDIR="$libdir/kroc/examples"
+KROC_EXAMPLESDIR="$libdir/kroc/${KROC_TARGET_PREFIX}examples"
 TVM_ARCHINCDIR="$includedir/tvm"
 TVM_BINDIR="$bindir"
-TVM_LIBDIR="$libdir/tvm"
+TVM_LIBDIR="$libdir/${KROC_TARGET_PREFIX}tvm"
 TVM_TVMDIR="$datadir/tvm"
-TVM_EXAMPLESDIR="$TVM_LIBDIR/examples"
+TVM_EXAMPLESDIR="$TVM_LIBDIR/${KROC_TARGET_PREFIX}examples"
 ACLOCALDIR="${prefix}/share/aclocal"
 
 AC_SUBST(KROC_ARCHBINDIR)

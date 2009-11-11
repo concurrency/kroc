@@ -49,11 +49,11 @@ ponyanstcpip_objs = \
 
 pony_libs = pony.lib
 pony_includes = \
-	ponyint.inc \
-	ponyintcif.inc \
-	ponyinttcpip.inc \
-	ponylib.inc \
-	ponylibtcpip.inc
+	$(srcdir)/ponyint.inc \
+	$(srcdir)/ponyintcif.inc \
+	$(srcdir)/ponyinttcpip.inc \
+	$(srcdir)/ponylib.inc \
+	$(srcdir)/ponylibtcpip.inc
 pony_tools = ponyanstcpip
 endif
 
@@ -67,7 +67,7 @@ pony.lib: $(pony_lib_objs)
 	$(OCCBUILD) --library pony.lib --need sock --need file --need proc --need cif --include ponylib.inc --include ponylibtcpip.inc --include ponyint.inc --include ponyinttcpip.inc $(pony_lib_objs)
 
 ponyanstcpip: ponyanstcpip.occ $(ponyanstcpip_objs)
-	$(OCCBUILD) --program ponyanstcpip.occ $(ponyanstcpip_objs)
+	$(OCCBUILD) --program $(srcdir)/ponyanstcpip.occ $(ponyanstcpip_objs)
 
 install-exec-local: $(libs) $(includes) $(tools)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes) $(tools)

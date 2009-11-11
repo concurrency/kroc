@@ -19,6 +19,8 @@
 
 --** @module forall
 
+#IF (TARGET.BITS.PER.WORD = 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libraries, no vector space
 #COMMENT "T8 compiler library, V1.1 21/02/89"
@@ -73,6 +75,8 @@ REAL64 FUNCTION DSCALEB (VAL REAL64 Y, VAL INT n)
     RESULT X
 :
 --}}}
+
+#ENDIF
 
 
 #IF (TARGET.BITS.PER.WORD = 16)

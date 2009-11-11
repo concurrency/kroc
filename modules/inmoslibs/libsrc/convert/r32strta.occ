@@ -113,6 +113,7 @@ PROC REAL32TOSTRING (INT len, []BYTE string, VAL REAL32 X, VAL INT Ip, Dp)
   -- PhD thesis, 1984, University of California, Berkeley.
   --}}}
 
+  #IF TARGET.BITS.PER.WORD = 32
   VAL INT X RETYPES X :
 
   --{{{  Definitions
@@ -945,4 +946,7 @@ PROC REAL32TOSTRING (INT len, []BYTE string, VAL REAL32 X, VAL INT Ip, Dp)
             --}}}
         --}}}
   --}}}
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :

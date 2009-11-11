@@ -290,6 +290,9 @@ PROC raster.display (VAL []BYTE title, VAL INT width, height, num.rasters,
     ASSERT (num.rasters >= 1)
     ASSERT (num.rasters <= MAX.RASTERS)
 
+    #IF TARGET.VENDOR = "apple"
+    SETAFF (#1) -- force all SDL updates to same thread
+    #ENDIF
     occ.SDL.Init (SDL.INIT.VIDEO, result)
     ASSERT (result = 0)
 

@@ -19,6 +19,8 @@
 
 --** @module forall
 
+#IF (TARGET.BITS.PER.WORD = 32)
+
 --{{{  #options and #comments
 #OPTION "E V"  -- no compiler libraries, no vector space
 #COMMENT "TA compiler library, V1.3 07/12/92"
@@ -90,6 +92,8 @@ INT, REAL64 FUNCTION DFLOATING.UNPACK (VAL REAL64 Y)
     RESULT n, X
 :
 --}}}
+
+#ENDIF
 
 
 #IF (TARGET.BITS.PER.WORD = 16)

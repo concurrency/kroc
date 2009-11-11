@@ -114,6 +114,7 @@ PROC REAL64TOSTRING (INT len, []BYTE string, VAL REAL64 X, VAL INT Ip, Dp)
   -- PhD thesis, 1984, University of California, Berkeley.
   --}}}
 
+  #IF TARGET.BITS.PER.WORD = 32
   VAL hi IS 1:
   VAL lo IS 0:
   VAL [2]INT X RETYPES X :
@@ -1048,4 +1049,7 @@ PROC REAL64TOSTRING (INT len, []BYTE string, VAL REAL64 X, VAL INT Ip, Dp)
             --}}}
         --}}}
   --}}}
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :

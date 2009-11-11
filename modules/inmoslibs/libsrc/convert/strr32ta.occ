@@ -61,6 +61,7 @@ PROC STRINGTOREAL32 (BOOL Error, REAL32 X, VAL []BYTE string)
   -- careful with Carry; V1.4 4-Dec-90 SRH
   --}}}
 
+  #IF TARGET.BITS.PER.WORD = 32
   INT X RETYPES X :
 
   --{{{  Definitions
@@ -448,4 +449,7 @@ PROC STRINGTOREAL32 (BOOL Error, REAL32 X, VAL []BYTE string)
         SKIP
     Error := Error OR (chars.scanned <= (SIZE string))
     --}}}
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :

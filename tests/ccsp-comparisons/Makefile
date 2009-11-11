@@ -3,8 +3,10 @@ CC = gcc
 GHC = ghc
 ERLC = erlc
 JAVAC = javac
+CC_FLAGS := $(shell $(KROC) --cflags)
 CC_INC := $(shell $(KROC) --ccincpath)
 CC_LIB := $(shell $(KROC) --cclibpath)
+CFLAGS := $(CFLAGS) $(CC_FLAGS)
 
 targets = \
 	ts \
@@ -13,12 +15,14 @@ targets = \
 	ring.haskell \
 	ring.occam \
 	ring.pthread \
+	java6/Ring.class \
 	jcsp/Ring.class \
 	mtring.beam \
 	mtring.ccsp \
 	mtring.haskell \
 	mtring.occam \
 	mtring.pthread \
+	java6/MTRing.class \
 	jcsp/MTRing.class \
 	agents.beam \
 	agents.ccsp \
@@ -27,6 +31,7 @@ targets = \
 	agents.pthread \
 	agents-dp.pthread \
 	agents.serial \
+	java6/Agents.class \
 	jcsp/Agents.class \
 	blur.ccsp \
 	blur.pthread
@@ -34,13 +39,13 @@ targets = \
 all: $(targets)
 
 ts:	ts.c
-	$(CC) -O2 -Wall $< -o $@
+	$(CC) $(CFLAGS) -O2 -Wall $< -o $@
 
 %.beam:		erlang/%.erl
 	$(ERLC) +native +"{hipe, [o3]}" $<
 
 %.ccsp:		ccsp/%.c
-	$(CC) $(CC_INC) -O2 -Wall $< -o $@ $(CC_LIB) -lccsp -lpthread
+	$(CC) $(CFLAGS) $(CC_INC) -O2 -Wall $< -o $@ $(CC_LIB) -lccsp -lpthread
 
 %.chp:		chp/%.hs
 	$(GHC) --make -O2 -fglasgow-exts -threaded $< -o $@
@@ -55,10 +60,10 @@ ts:	ts.c
 	$(KROC) -v -o $@ $<
 
 %.pthread:	pthread/%.c
-	$(CC) -O2 -Wall $< -o $@ -lpthread
+	$(CC) $(CFLAGS) -O2 -Wall $< -o $@ -lpthread
 
 %.serial:	serial/%.c
-	$(CC) -O2 -Wall $< -o $@
+	$(CC) $(CFLAGS) -O2 -Wall $< -o $@
 
 clean:
 	rm -f $(targets) 

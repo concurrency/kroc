@@ -22,12 +22,17 @@ AC_ARG_WITH(sdl-exec-prefix,[  --with-sdl-exec-prefix=PFX Exec prefix where SDL 
 AC_ARG_ENABLE(sdltest, [  --disable-sdltest       Do not try to compile and run a test SDL program],
 		    , enable_sdltest=yes)
 
+  no_sdl=""
   case "$target_os" in
     darwin*)
       # Don't try to run an SDL test program on MacOS -- it'll hang if there's
       # no display.
       enable_sdltest=no
       ;; 
+    none)
+      # No OS? Can't be any SDL either, then.
+      no_sdl="yes"
+      ;;
   esac
 
   if test x$sdl_exec_prefix != x ; then
@@ -49,7 +54,6 @@ AC_ARG_ENABLE(sdltest, [  --disable-sdltest       Do not try to compile and run 
   AC_PATH_PROG(SDL_CONFIG, sdl-config, no, [$PATH])
   min_sdl_version=ifelse([$1], ,0.11.0,$1)
   AC_MSG_CHECKING(for SDL - version >= $min_sdl_version)
-  no_sdl=""
   if test "$SDL_CONFIG" = "no" ; then
     no_sdl=yes
   else

@@ -1,12 +1,8 @@
-dnl Process this file with autoconf to produce a configure script.
-
-AC_REVISION($Revision: 1.10 $)
-AC_INIT(be/bind1.c)
+AC_INIT([occ21], [1.4.1], [kroc-bugs@kent.ac.uk])
 AM_CONFIG_HEADER(config.h)
-AC_PREREQ(2.12)
-
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE([occ21], [1.4.1])
+
+AM_INIT_AUTOMAKE
 
 dnl Checks for programs.
 AC_CHECK_TOOL(CC,gcc,:)
@@ -21,9 +17,7 @@ AC_CHECK_TOOL(RANLIB,ranlib,:)
 AM_C_PROTOTYPES
 
 target_cpu_=target_cpu_`echo $target_cpu | tr -d _.`
-target_vendor_=target_vendor_`echo $target_vendor | tr -d _.`
-target_os_=target_os_`echo $target_os | tr -d _. | sed -e 's/-/_/g'`
-ARCH_DEFS="-D${target_cpu_} -D${target_vendor_} -D${target_os_}"
+ARCH_DEFS="-D${target_cpu_}"
 
 AC_DEFINE_UNQUOTED([TARGET_ALIAS],	"${target_alias}", [define target alias])
 AC_DEFINE_UNQUOTED([TARGET_CANONICAL],	"${target}", [define target])
@@ -106,11 +100,11 @@ if test "$default_accessaligned" = yes; then
 fi
 
 
-AC_DEFINE([TARGET_OS_IS_UNIX],1,[define if the target OS is UNIX])
-#AC_DEFINE([TARGET_OS_IS_VMS],0,[define if the target OS is VMS])
-#AC_DEFINE([TARGET_OS_IS_MSDOS],0,[define if the target OS is MS-DOS])
-#AC_DEFINE([TARGET_OS_IS_HELIOS],0,[define if the target OS is HELIOS])
-#AC_DEFINE([TARGET_OS_IS_SERVER],0,[define if the target OS is ISERVER])
+AC_DEFINE([HOST_OS_IS_UNIX],1,[define if the host OS is UNIX])
+#AC_DEFINE([HOST_OS_IS_VMS],0,[define if the host OS is VMS])
+#AC_DEFINE([HOST_OS_IS_MSDOS],0,[define if the host OS is MS-DOS])
+#AC_DEFINE([HOST_OS_IS_HELIOS],0,[define if the host OS is HELIOS])
+#AC_DEFINE([HOST_OS_IS_SERVER],0,[define if the host OS is ISERVER])
 
 if test "X$GCC" = Xyes ; then
   AC_DEFINE([COMPILER_IS_GCC],1,[define if using gcc])
@@ -200,7 +194,7 @@ dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(string.h stdlib.h string.h strings.h limits.h malloc.h sys/types.h stdarg.h)
+AC_CHECK_HEADERS(string.h stdlib.h string.h strings.h limits.h malloc.h sys/types.h sys/stat.h stdarg.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

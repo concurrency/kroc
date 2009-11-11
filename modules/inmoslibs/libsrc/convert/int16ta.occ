@@ -54,6 +54,7 @@ PROC STRINGTOINT16 (BOOL Error, INT16 n, VAL []BYTE string)
   --           for a 32-bit processor.
   --}}}
 
+  #IF TARGET.BITS.PER.WORD = 32
   INT m :
   SEQ
     STRINGTOINT (Error, m, string)
@@ -66,6 +67,9 @@ PROC STRINGTOINT16 (BOOL Error, INT16 n, VAL []BYTE string)
         Error := TRUE
       TRUE
         SKIP
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :
 --}}}
 --{{{  INT16TOSTRING TA

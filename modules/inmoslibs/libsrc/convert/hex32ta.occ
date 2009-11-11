@@ -29,12 +29,20 @@
 --}}}
 --{{{  STRINGTOHEX32 TA
 PROC STRINGTOHEX32 (BOOL Error, INT32 n, VAL []BYTE string)
+  #IF TARGET.BITS.PER.WORD = 32
   INT n RETYPES n:
   STRINGTOHEX (Error, n, string)
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :
 --}}}
 --{{{  HEX32TOSTRING TA
 PROC HEX32TOSTRING (INT len, []BYTE string, VAL INT32 n)
+  #IF TARGET.BITS.PER.WORD = 32
   HEXTOSTRING (len, string, INT n)
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
 :
 --}}}

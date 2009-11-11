@@ -89,6 +89,12 @@ PRIVATE int wsmap_max = 0;
 
 /*}}}*/
 
+
+#if 0
+PRIVATE int stretchdebug = 0;
+#endif
+
+
 #ifdef MOBILES
 /*{{{  constants/private vars for mobile-space mapping*/
 /* added May 2001 */
@@ -900,8 +906,25 @@ printtreenl (stderr, 4, nptr);
 #define WORDSHIFT 5		/* such that 2^WORDSHIFT = (MAXVAR/VARROW) */
 #define BYTEMASK  ((1 << WORDSHIFT) - 1)	/* (2^WORDSHIFT) - 1 */
 
-#define wordnum(n) ((n) >> WORDSHIFT)
-#define bitnum(n)  ((n) &  BYTEMASK)
+// #define wordnum(n) ((n) >> WORDSHIFT)
+// #define bitnum(n)  ((n) &  BYTEMASK)
+
+/*{{{  PRIVATE int wordnum (unsigned long long bit)*/
+PRIVATE int wordnum (unsigned long long bit)
+{
+	int w = (int)(bit >> WORDSHIFT);
+
+	return w;
+}
+/*}}}*/
+/*{{{  PRIVATE int bitnum (unsigned long long bit)*/
+PRIVATE int bitnum (unsigned long long bit)
+{
+	int b = (int)(bit & BYTEMASK);
+
+	return b;
+}
+/*}}}*/
 
 #define setbit(array,n)   ((array)[wordnum(n)] |=  (1 << (bitnum(n))))
 #define clearbit(array,n) ((array)[wordnum(n)] &= ~(1 << (bitnum(n))))
@@ -913,42 +936,47 @@ printtreenl (stderr, 4, nptr);
  * This macro is used to map a row number to its position in a linear array
  */
 
-#define startofrow(n)    ((((n)+1)*(n)) >> 1)	/* 1/2 n(n+1) */
+// #define startofrow(n)    ((int)((((long long)(n)+1)*(long long)(n)) >> 1))	/* 1/2 n(n+1) */
+/*{{{  PRIVATE unsigned long long startofrow (int n)*/
+/*
+ *	this version of startofrow() computes things as unsigned long long.
+ */
+PRIVATE unsigned long long startofrow (int n)
+{
+	unsigned long long v = (unsigned long long)n + 1;
+
+	v *= (unsigned long long)n;
+	v >>= 1;
+
+	return v;
+}
+/*}}}*/
+
 /*}}}*/
 
 /*{{{  PRIVATE void setbitmap (map, i, j)*/
 PRIVATE void setbitmap (int *map, int i, int j)
 {
-	int bitpsn;
-	if (i > j)
-		bitpsn = startofrow (i) + j;
-	else
-		bitpsn = startofrow (j) + i;
+	unsigned long long bitpsn;
+
+	if (i > j) {
+		bitpsn = startofrow (i) + (unsigned long long)j;
+	} else {
+		bitpsn = startofrow (j) + (unsigned long long)i;
+	}
 	setbit (map, bitpsn);
 }
 
 /*}}}*/
-/*{{{  PRIVATE void clearbitmap (map, i, j)*/
-#if 0				/* clearbitmap is never used */
-PRIVATE void clearbitmap (int *map, int i, int j)
-{
-	int bitpsn;
-	if (i > j)
-		bitpsn = startofrow (i) + j;
-	else
-		bitpsn = startofrow (j) + i;
-	clearbit (map, bitpsn);
-}
-#endif /* 0 */
-/*}}}*/
 /*{{{  PRIVATE int testbitmap (map, i, j)*/
 PRIVATE int testbitmap (int *map, int i, int j)
 {
-	int bitpsn;
+	unsigned long long bitpsn;
+
 	if (i > j) {
-		bitpsn = startofrow (i) + j;
+		bitpsn = startofrow (i) + (unsigned long long)j;
 	} else {
-		bitpsn = startofrow (j) + i;
+		bitpsn = startofrow (j) + (unsigned long long)i;
 	}
 	return (testbit (map, bitpsn) != 0);
 }
@@ -1145,11 +1173,19 @@ PRIVATE void initrow (int *row)
 /*{{{  PRIVATE int numwords_of()*/
 PRIVATE int numwords_of (const int n)
 {
-	const int i = startofrow (n);
+	const unsigned long long i = startofrow (n);
 	int numwords = wordnum (i);
+
 	if (bitnum (i) > 0) {
 		numwords++;
 	}
+
+#if 0
+	if (stretchdebug) {
+		fprintf (stderr, "numwords_of (%d) = %d: startofrow() = %Lu, wordnum() = %d, bitnum() = %d\n", n, numwords, i, wordnum(i), bitnum(i));
+	}
+#endif
+
 	return numwords;
 }
 
@@ -1198,7 +1234,13 @@ PRIVATE int nextvarnum (void)
 		varrow *= 2;
 		maxvar *= 2;
 		DEBUG_MSG (("nextvarnum: stretching maxvar from %d to %d\n", old_maxvar, maxvar));
-		/*printf("nextvarnum: stretching maxvar from %d to %d\n", old_maxvar, maxvar); */
+#if 0
+		stretchdebug = 1;
+fprintf (stderr, "nextvarnum: stretching maxvar from %d to %d, bytes %d to %d\n", old_maxvar, maxvar, numwords_of (old_maxvar) * sizeof (*var_map),
+		numwords_of (maxvar) * sizeof (*var_map));
+		stretchdebug = 0;
+#endif
+
 		{
 			int *const new_var_map = alloc_var_map ();
 

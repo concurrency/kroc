@@ -41,13 +41,15 @@ game_objs = \
 	ircplug.tce \
 	student-bots.tce
 
+if BUILD_GAME
 demos = \
 	game
+endif
 
 all-local: $(demos)
 
 game: game.occ $(game_objs)
-	$(OCCBUILD) --program game.occ $(game_objs)
+	$(OCCBUILD) --program $(srcdir)/game.occ $(game_objs)
 
 install-exec-local: $(demos)
 	$(OCCBUILD) --install-examples game --prefix "$(prefix)" --destdir "$(DESTDIR)" $(demos)

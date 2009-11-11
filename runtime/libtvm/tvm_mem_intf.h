@@ -64,6 +64,45 @@ extern void write_wordd(WORDPTR ptr, double val);
 
 extern int *wordptr_real_address(WORDPTR ptr);
 /*}}}*/
+#elif defined(TVM_MEM_INTF_AVR)
+/*{{{  AVR memory interface */
+#include <avr/io.h>
+#include <avr/pgmspace.h>
+
+/* Map an AVR program memory address to a Transterpreter address. */
+extern BYTEPTR tvm_addr_from_progmem(prog_void *ptr);
+
+extern WORD read_word(WORDPTR ptr);
+#define write_word(LOC,VAL)		( *((WORDPTR)(LOC)) ) = (VAL)
+#define wordptr_minus(PTR,LOC)		( ((WORDPTR)PTR) - (LOC) )
+#define wordptr_plus(PTR,LOC)		( ((WORDPTR)PTR) + (LOC) )
+
+extern INT16 read_int16(INT16PTR ptr);
+#define write_int16(LOC,VAL)		( *((INT16PTR)(LOC)) ) = (VAL)
+#define int16ptr_minus(PTR,LOC)		( ((INT16PTR)PTR) - (LOC) )
+#define int16ptr_plus(PTR,LOC)		( ((INT16PTR)PTR) + (LOC) )
+
+extern BYTE read_byte(BYTEPTR ptr);
+#define write_byte(LOC,VAL)		( *((BYTEPTR)(LOC)) ) = (VAL)
+#define byteptr_minus(PTR,LOC)		( ((BYTEPTR)PTR) - (LOC) )
+#define byteptr_plus(PTR,LOC)		( ((BYTEPTR)PTR) + (LOC) )
+
+extern float read_wordf(WORDPTR ptr);
+#define write_wordf(LOC,VAL)		( *((float *)(LOC)) ) = (VAL)
+
+extern double read_wordd(WORDPTR ptr);
+#define write_wordd(LOC,VAL)		( *((double *)(LOC)) ) = (VAL)
+
+#define wordptr_real_address(LOC)	( LOC )
+
+#ifdef TVM_TYPE_SHADOW
+#error Type shadowing not supported with AVR memory interface
+#else
+#define read_type(CTX,LOC)
+#define write_type(CTX,LOC,VAL)
+#endif
+
+/*}}}*/
 #elif defined(TVM_MEM_INTF_BIGENDIAN)
 /*{{{  (deprecated) Big-endian memory interface */
 extern WORD read_word(WORDPTR ptr);

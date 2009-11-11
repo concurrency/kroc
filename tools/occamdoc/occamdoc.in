@@ -2,7 +2,7 @@
 # occamdoc: extract OccamDoc documentation from occam-pi source files.
 #
 # Copyright (C) 2006, 2007 University of Kent, Canterbury, UK
-# Copyright (C) 2008 Adam Sampson <ats@offog.org>
+# Copyright (C) 2008, 2009 Adam Sampson <ats@offog.org>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -126,10 +126,12 @@ def get_occam_line(f):
 	continuation_re = re.compile(r'.*(-|~|\+|-|\*|/|\\|/\\|\\/|><|=|<>|<|>|>=|<=|,|;|:=|<<|>>|(\s(MINUS|BITNOT|NOT|SIZE|REM|PLUS|MINUS|TIMES|BITAND|BITOR|AND|OR|AFTER|FROM|FOR|IS|RETYPES|RESHAPES)))\s*$')
 
 	only_comment_re = re.compile(r'^\s*--')
-	preprocessor_re = re.compile(r'^\s*#')
+
+	# Preprocessor directives. We can't just match ^# -- that would also
+	# catch a hex constant at the start of a continuation line.
+	preprocessor_re = re.compile(r'^\s*#(DEFINE|UNDEF|IF|ENDIF|ELIF|ELSE|INCLUDE|USE|PRAGMA|EXTERNAL|IMPORT|SC|COMMENT|RELAX|WARNING|ERROR|OPTION)')
 
 	lines = []
-	level = 0
 	in_string = None
 	first_line = True
 	pos = None
@@ -172,15 +174,7 @@ def get_occam_line(f):
 				elif c == in_string:
 					in_string = None
 			else:
-				# While the occam syntax requires balanced
-				# brackets, the continuation line rules don't
-				# take them into account; this is likely to
-				# change in the future, though.
-				if c in "([":
-					level += 1
-				elif c in ")]":
-					level -= 1
-				elif c in "'\"":
+				if c in "'\"":
 					in_string = c
 				elif c == "-" and last == "-":
 					joined = joined[:-1].rstrip()
@@ -190,7 +184,6 @@ def get_occam_line(f):
 			last = c
 
 		if (continuation_re.match(joined) is None
-		    and level == 0
 		    and not in_string):
 			joined += rest
 			break
@@ -1011,7 +1004,8 @@ def do_xslt(input, output, xslt, params = {}):
 		input
 	]
 
-	if run_command(args) != 0:
+	rc = run_command(args)
+	if rc != 0:
 		raise OccamDocException("xsltproc failed, return code " + str(rc))
 
 def copy_file(filename, output_dir):
@@ -1033,6 +1027,7 @@ Read occam-pi source files and extract documentation.
                              (default "doc")
 -f FORMAT                    Write output in format FORMAT
                              (xml, html; default html)
+--stdout                     Write XML output to stdout; don't write files
 -p                           Include declarations tagged @private
 -a                           Try to include undocumented declarations
                              (this won't find all declarations)
@@ -1043,7 +1038,7 @@ Report bugs to <""" + CONTACT + """>."""
 
 def main(args):
 	try:
-		opts, args = getopt.getopt(args, 'd:f:pav', ["help", "in-tree="])
+		opts, args = getopt.getopt(args, 'd:f:pav', ["help", "in-tree=", "stdout"])
 	except getopt.GetoptError:
 		usage()
 		return 1
@@ -1070,10 +1065,14 @@ def main(args):
 		elif o == "--in-tree":
 			global DATADIR
 			DATADIR = a + "/tools/occamdoc"
+		elif o == "--stdout":
+			output_dir = None
 
 	if args == [] or not (output_format in ("xml", "html")):
 		usage()
 		return 1
+	if output_dir is None:
+		output_format = "xml"
 
 	def status(s):
 		if verbose:
@@ -1083,7 +1082,12 @@ def main(args):
 	failed = False
 
 	decls = {}
+	scanned = {}
 	for file in args:
+		if file in scanned:
+			continue
+		scanned[file] = True
+
 		status("Scanning %s... " % file)
 		f = InputFile(file)
 		try:
@@ -1114,20 +1118,28 @@ def main(args):
 		f.close()
 
 	try:
-		os.makedirs(output_dir)
+		if output_dir is not None:
+			os.makedirs(output_dir)
 	except OSError:
 		# The directory probably already exists; if something
 		# else went wrong, it'll cause an error in the next
 		# stanza.
 		pass
 
-	xml_file = output_dir + "/docs.xml"
+	if output_dir is None:
+		xml_file = "stdout"
+	else:
+		xml_file = output_dir + "/docs.xml"
 	status("Writing XML to %s... " % xml_file)
 	errors = []
 	try:
-		f = open(xml_file, "w")
+		if output_dir is None:
+			f = sys.stdout
+		else:
+			f = open(xml_file, "w")
 		write_xml(decls.values(), f, errors)
-		f.close()
+		if output_dir is not None:
+			f.close()
 		status("done\n")
 	except OccamDocException, e:
 		status("failed\n")
@@ -1143,8 +1155,8 @@ def main(args):
 		failed = True
 
 	try:
-		status("Writing output to %s... " % output_dir)
 		if output_format == "html":
+			status("Writing output to %s... " % output_dir)
 			html_file = output_dir + "/index.html"
 			do_xslt(xml_file, html_file, "to-html.xsl",
 			        {"mode": "index"})

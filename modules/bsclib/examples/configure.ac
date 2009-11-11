@@ -1,22 +1,20 @@
-dnl -*- shell-script -*-
-dnl
-dnl Process this file with autoconf to produce a configure script.
-dnl
-
-AC_REVISION($Revision: 1.1 $)
-AC_INIT(README)
-AC_PREREQ(2.12)
-
-dnl for automake 1.1 
+AC_INIT([bsclib-examples], [1.0], [kroc-bugs@kent.ac.uk])
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(bsclib-examples, 1.0)
+
+AM_INIT_AUTOMAKE
 
 dnl Checks for programs.
 AC_PROG_MAKE_SET
-
 OCCAM_OCCBUILD
+
+build_bsclib_examples=yes
+
 dnl Checks for occam modules.
 OCCAM_INCLUDE([course.module file.module proc.module sock.module], ,
-              [AC_MSG_ERROR(Required modules not found)])
+              [build_bsclib_examples=no])
+
+AC_MSG_CHECKING([whether to build bsclib examples])
+AC_MSG_RESULT($build_bsclib_examples)
+AM_CONDITIONAL([BUILD_BSCLIB_EXAMPLES], [test $build_bsclib_examples = yes])
 
 AC_OUTPUT([Makefile])

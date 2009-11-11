@@ -190,4 +190,3 @@ PROC buffer.set.real32 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL32 n)
     buffer.set.string (buf, len, [v.buf FOR v.len])
 :
 --}}}
-

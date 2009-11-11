@@ -22,8 +22,8 @@ all-local: proc.lib
 proc.lib: $(proc_lib_objs)
 	$(OCCBUILD) --library proc.lib --need file --include proclib.inc $(proc_lib_objs)
 
-install-exec-local: proc.lib proclib.inc
-	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" proc.lib proclib.inc
+install-exec-local: proc.lib $(srcdir)/proclib.inc
+	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" proc.lib $(srcdir)/proclib.inc
 
 clean-local:
 	$(OCCBUILD) --clean proc.lib $(proc_lib_objs)

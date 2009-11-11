@@ -262,9 +262,9 @@ REAL32 FUNCTION REAL32REMERR (VAL REAL32 X, Y)
   REAL32 Result :
   VALOF
     #INCLUDE "nan16.inc"
-    --{{{  #USE "occamutl.lib"
+    --{{{  #USEs
     #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
-    #USE "occamutl.lib"  --  6-Apr-90
+    #USE "ridiv"
     --}}}  
     --{{{  IEEE Single length constants for 16 bit implementation
     VAL RealExpSh  IS     7 :

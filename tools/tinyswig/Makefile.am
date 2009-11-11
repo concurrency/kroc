@@ -1,11 +1,9 @@
-
 AUTOMAKE_OPTIONS = foreign no-dependencies
 ACLOCAL_AMFLAGS = -I ../../m4
 
-MZSCHEME=@MZSCHEME@
-MZC=@MZC@
-
+if HAVE_SCHEME_TOOLS
 bin_PROGRAMS = tinyswig
+endif
 
 tinyswig_SOURCES = tinyswig.scm
 

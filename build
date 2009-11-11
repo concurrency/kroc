@@ -88,6 +88,10 @@ EOF
 status "Generating build system"
 autoreconf -v -f -i || fail
 
+if [ "$1" = "--autoreconf-only" ]; then
+	exit 0
+fi
+
 status "Configuring with arguments: $*"
 ./configure "$@" || fail
 

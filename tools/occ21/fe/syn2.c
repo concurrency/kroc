@@ -6078,11 +6078,16 @@ fprintf (stderr, "syn2: rfunctiondef(): UDO: modified code gave namelength = %d,
 
 /*}}}*/
 /*{{{  PUBLIC BOOL rfile ()*/
+/*
+ *	this is called to handle #INCLUDE, #USE directives.
+ *	Expecting a string as the next symbol.
+ */
 PUBLIC BOOL rfile (void)
 {
 	BOOL entered = FALSE;
 	const int s = symb;
 	const int indent = lineindent;
+
 	nextsymb ();
 	if (symb != S_STRING) {
 		synerr (SYN_MISSING_FILENAME, flocn);
@@ -6090,10 +6095,42 @@ PUBLIC BOOL rfile (void)
 		synerr_s (SYN_SC_IS_OBSOLETE, flocn, literalv);
 	} else {
 		/*{{{  try and open the file */
+		char litbuf[MAXSTRING_SIZE];
+		int litlen = 0;
 		int mode;
+		const SOURCEPOSN litlocn = flocn;
+
+		litlen = strlen (literalv);
+		if (litlen >= MAXSTRING_SIZE) {
+			litlen = MAXSTRING_SIZE - 1;
+		}
+		memcpy (litbuf, literalv, litlen);
+		litbuf[litlen] = '\0';
+
+		lex_save_state ();
+		nextsymb ();
+		while (symb == S_STRING) {
+			/* absorb next literal, add to string */
+			int blen = strlen (literalv);
+
+			if ((litlen + blen) >= MAXSTRING_SIZE) {
+				blen = (MAXSTRING_SIZE - 1) - litlen;
+			}
+			if (blen > 0) {
+				memcpy (litbuf + litlen, literalv, blen);
+				litlen += blen;
+				litbuf[litlen] = '\0';
+			}
+			lex_restore_state ();
+			nextsymb ();
+			lex_save_state ();
+			nextsymb ();
+		}
+		lex_restore_state ();
+
 		switch (s) {
 		case S_INCLUDE:
-			if (strstr (literalv, ".co") == (literalv + (strlen(literalv) - 3))) {
+			if (strstr (litbuf, ".co") == (litbuf + (litlen - 3))) {
 				mode = LEX_CSOURCE;
 			} else {
 				mode = LEX_SOURCE;	/* #INCLUDE MUST specify the extension */
@@ -6102,15 +6139,17 @@ PUBLIC BOOL rfile (void)
 		default:
 			/* S_SC, S_IMPORT or S_USE, all are descriptor files */
 			mode = ((s == S_SC) ? LEX_SC : LEX_LIB);
-			current_fe_data->fe_process_filename_fn (literalv, MAXSTRING_SIZE);
+			current_fe_data->fe_process_filename_fn (litbuf, MAXSTRING_SIZE);
 			break;
 		}
-		entered = open_file (literalv, mode, indent);
+
+		entered = open_file (litbuf, mode, indent);
+
 		if (!entered) {
-			synerr_s (SYN_FILE_OPEN_ERROR, flocn, literalv);
+			synerr_s (SYN_FILE_OPEN_ERROR, litlocn, litbuf);
 		} else {
 			if (current_fe_data->fe_information) {
-				fprintf (current_fe_data->fe_outfile, "%s \"%s\"\n", tagstring (s), literalv);
+				fprintf (current_fe_data->fe_outfile, "%s \"%s\"\n", tagstring (s), litbuf);
 			}
 			nextsymb ();
 			while (symb == S_NEWLINE) {	/* Throw away leading blank lines */

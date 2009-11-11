@@ -185,7 +185,7 @@ typedef unsigned int       BIT32;
 /*}}}  */
 
 /*{{{  MS C specific macros */
-#if defined(TARGET_OS_IS_MSDOS) && defined(COMPILER_IS_MSC) && !defined(_HOSTTYPE)
+#if defined(HOST_OS_IS_MSDOS) && defined(COMPILER_IS_MSC) && !defined(_HOSTTYPE)
 /*{{{   */
 #define _HOSTTYPE /* Set host type flag */
 
@@ -214,7 +214,7 @@ typedef unsigned long int  BIT32;
 /*}}}  */
 
 /*{{{  DEC VAX C specific macros */
-#if defined(TARGET_OS_IS_VMS) && !defined(_HOSTTYPE)
+#if defined(HOST_OS_IS_VMS) && !defined(_HOSTTYPE)
 /*{{{   */
 #define _HOSTTYPE /* Set host type flag */
 
@@ -272,7 +272,7 @@ typedef unsigned long int  BIT32;
 /*}}}  */
 
 /*{{{  UNIX specific macros */
-#if defined(TARGET_OS_IS_UNIX) && !defined(_HOSTTYPE)
+#if defined(HOST_OS_IS_UNIX) && !defined(_HOSTTYPE)
 /*{{{   */
 #define _HOSTTYPE /* Set host type flag */
 
@@ -338,7 +338,7 @@ typedef unsigned long int  BIT32;
 /*}}}  */
 
 /*{{{  WATCOM C specific macros */
-#if defined(TARGET_OS_IS_MSDOS) && defined(COMPILER_IS_WATCOM) && !defined(_HOSTTYPE)
+#if defined(HOST_OS_IS_MSDOS) && defined(COMPILER_IS_WATCOM) && !defined(_HOSTTYPE)
 /*{{{   */
 #define _HOSTTYPE /* Set host type flag */
 

@@ -1,0 +1,42 @@
+#!/usr/bin/python
+# Convert a binary file to Intel HEX.
+# Usage: binary-to-ihex STARTING-ADDRESS INPUT-FILE OUTPUT-FILE
+
+import sys
+
+addr = int(sys.argv[1].replace("0x", ""), 16)
+line_len = 16
+
+# Record types in output file.
+DATA_RECORD = 0x00
+END_OF_FILE = 0x01
+
+f = open(sys.argv[2], "rb")
+data = f.read()
+f.close()
+
+f = open(sys.argv[3], "w")
+
+def write_line(bytes):
+	# Compute checksum: twos-complement sum of all fields (except the
+	# checksum).
+	sum = 0
+	for b in bytes:
+		sum += b
+	bytes += [(0x100 - (sum & 0xFF)) & 0xFF]
+
+	f.write(":" + "".join(["%02x" % b for b in bytes]).upper() + "\r\n")
+
+while len(data) > 0:
+	line_data = data[:line_len]
+	data = data[line_len:]
+
+	bytes = [len(line_data), addr >> 8, addr & 0xFF, DATA_RECORD]
+	bytes += map(ord, line_data)
+	write_line(bytes)
+
+	addr += len(line_data)
+
+write_line([0x00, 0x00, 0x00, END_OF_FILE])
+
+f.close()

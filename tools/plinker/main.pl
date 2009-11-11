@@ -42,7 +42,14 @@ my $tcoff	= new Transputer::TCOFF ();
 my $tvm		= new Transterpreter::VM ();
 
 # Options
+my $bits	= 32;
 my $output;
+my %sections	= (
+	'debug'		=> 1,
+	'ffi'		=> 1,
+	'symbols'	=> 1,
+	'tlp'		=> 1
+);
 my $verbose;
 my @files;
 
@@ -60,6 +67,11 @@ while (my $arg = shift @args) {
 		$tvm->{'verbose'} 	= 1;
 	} elsif ($options && $arg eq '-o') {
 		$output 		= shift @args;
+	} elsif ($options && $arg eq '-s') {
+		$bits			= 16;
+	} elsif ($options && $arg =~ /^-[ed]$/) {
+		my $section		= shift @args;
+		$sections{$section}	= $arg eq '-e';
 	} else {
 		push (@files, $arg);
 	}
@@ -71,7 +83,26 @@ if (!$output) {
 }
 
 if (!$output || !@files) {
-	print "plinker.pl [-v] [-o <name>] <file> [<file> ...]\n";
+	print <<END;
+Usage:
+  plinker [OPTIONS] <file> [<file> ...]
+    Link one or more ETC input files as a TEncode bytecode.
+
+Options:
+  -d <section>   Disable output of a section
+  -e <section>   Enable output of a section
+  -o <name>      Specific output file name
+  -s             Small 16-bit output (default is 32-bit)
+  -v             Verbose mode
+
+Valid sections are:
+  debug          Line numbering information   (default: enabled)
+  ffi            Foreign Function Interface   (default: enabled)
+  symbols        Symbol information           (default: enabled)
+  tlp            Top Level Process descriptor (default: enabled)
+
+Report bugs to <kroc-bugs\@kent.ac.uk>.
+END
 	exit 1;
 }
 
@@ -134,7 +165,7 @@ my $jentry;
 my $last_texts	= $etc[@etc - 1];
 my $last_text	= $last_texts->[@$last_texts - 1]->{'etc'};
 foreach my $op (@$last_text) {
-	if ($op->{'name'} eq '.JUMPENTRY') {
+	if (!$jentry && ($op->{'name'} eq '.JUMPENTRY')) {
 		$jentry = $op->{'arg'};
 	}
 }
@@ -167,12 +198,13 @@ my $tbc			= new Transterpreter::TEncode (
 	'vs U'	=> $entry_point->{'vs'},
 	'padB'	=> "\0\0\0\0",
 	'ms U'	=> $entry_point->{'ms'},
-	'bc B'	=> join ('', @$bytecode),
-	'tlpL'	=> $tlp,
-	'ffiL'	=> $ffi,
-	'stbL'	=> $stb,
-	'dbgL'	=> $dbg
+	'bc B'	=> join ('', @$bytecode)
 );
+$tbc->add ('tlpL', $tlp) if $sections{'tlp'};
+$tbc->add ('ffiL', $ffi) if $sections{'ffi'};
+$tbc->add ('stbL', $stb) if $sections{'symbols'};
+$tbc->add ('dbgL', $dbg) if $sections{'debug'};
+
 my $tenc		= new Transterpreter::TEncode (
 	'tbcL'	=> $tbc
 );
@@ -262,7 +294,7 @@ $dbg->add ('fn L' => $fns);
 
 my $lnd;
 foreach my $entry (@$debug) {
-	$lnd .= pack ('NNN', 
+	$lnd .= pack (($bits == 32 ? 'NNN' : 'nnn'), 
 		$entry->{'pos'},
 		$files{$entry->{'file'}},
 		$entry->{'line'}
@@ -274,7 +306,7 @@ $dbg->add ('lndB' => $lnd);
 my $fh;
 open ($fh, ">$output") || die $!;
 binmode ($fh);
-print $fh $tenc->encode ('TEnc');
+print $fh $tenc->encode ($bits == 32 ? 'TEnc' : 'tenc');
 close ($fh);
 
 # Debug labels
@@ -301,6 +333,9 @@ sub build_format_string {
 	my @fmt;
 
 	foreach my $param (@params) {
+		$param =~ s/^\s*//s;
+		$param =~ s/\s*$//s;
+
 		if ($param =~ /^FIXED/) {
 			if ($param =~ /\?/) {
 				push (@fmt, 'S');
@@ -309,7 +344,7 @@ sub build_format_string {
 			} else {
 				die;
 			}
-		} elsif ($param =~ m/^CHAN OF (\S+)\s+(\S+)/) {
+		} elsif ($param =~ m/^CHAN\s+OF\s+(\S+)\s+(\S+)/s) {
 			my ($type, $name)	= ($1, $2);
 			my ($dir)		= ($name =~ m/([\?!])$/);
 			if (!$dir) {
@@ -324,7 +359,7 @@ sub build_format_string {
 		}
 	}
 
-	push (@fmt, 'F') if $def =~ /PROC.*\(.*\).*FORK/;
+	push (@fmt, 'F') if $def =~ m/PROC.*\(.*\).*FORK/s;
 
 	return join ('', @fmt);
 }
