@@ -3,6 +3,9 @@ CC = gcc
 GHC = ghc
 ERLC = erlc
 JAVAC = javac
+6G = 6g
+6L = 6l
+
 CC_FLAGS := $(shell $(KROC) --cflags)
 CC_INC := $(shell $(KROC) --ccincpath)
 CC_LIB := $(shell $(KROC) --cclibpath)
@@ -26,6 +29,7 @@ targets = \
 	jcsp/MTRing.class \
 	agents.beam \
 	agents.ccsp \
+	agents.go-exe \
 	agents.haskell \
 	agents.occam \
 	agents.pthread \
@@ -52,6 +56,10 @@ ts:	ts.c
 
 %.class:	%.java
 	$(JAVAC) -Xlint:unchecked -classpath jcsp/jcsp.jar $<
+
+%.go-exe:	go/%.go
+	$(6G) -o go/$*.6 $< 
+	$(6L) -o $@ go/$*.6
 
 %.haskell:	haskell/%.hs
 	$(GHC) --make -O2 -fglasgow-exts -threaded $< -o $@
