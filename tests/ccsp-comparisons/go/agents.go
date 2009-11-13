@@ -185,9 +185,9 @@ func agent(cycle int, info AgentInfo, loc chan *LocationReq, bar BarrierEnd, log
 	for cycle < N_CYCLES {
 		persona = (persona & 65535) * info.pos.x;
 		persona = (persona & 65535) * info.pos.y;
-		persona = (persona & 65535) * info.id;
+		persona = (persona & 65535) * info.loc;
 
-		agent_at (log, cycle, &info);
+		// agent_at (log, cycle, &info);
 
 		cycle = cycle + 1;
 
@@ -234,7 +234,6 @@ func agent(cycle int, info AgentInfo, loc chan *LocationReq, bar BarrierEnd, log
 			}
 		}
 
-		agents = nil;
 		bar.sync();
 
 		loc <- &LocationReq{LOC_MOVE, &force, &info, loc_resp};
@@ -375,8 +374,9 @@ func wrap(n, max int) int {
 }
 
 func agents(world_size, loc_agents int, screen chan string) {
-	world_area := world_size * world_size;
-	world := make([]chan *LocationReq, world_area);
+	world_area	:= world_size * world_size;
+	world		:= make([]chan *LocationReq, world_area);
+
 	for loc := 0; loc < world_area; loc = loc + 1 {
 		world[loc] = make(chan *LocationReq, 16)
 	}
@@ -393,6 +393,7 @@ func agents(world_size, loc_agents int, screen chan string) {
 		neighbours[NEIGHBOURS] = this_loc;
 		go location(loc, this_loc, neighbours);
 	}
+
 	b := new_barrier((loc_agents * world_area) + 1);
 
 	id := 1;
