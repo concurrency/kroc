@@ -136,23 +136,18 @@ func barrier_runner(b Barrier, count int) {
 }
 
 func new_barrier(count int) Barrier {
-	b := make(Barrier);
+	b := make(Barrier, count / 16);
 	go barrier_runner(b, count);
 	return b;
 }
 
-func new_barrier_end(b Barrier) BarrierEnd	{ return BarrierEnd{b, make(BarrierReq)} }
+func new_barrier_end(b Barrier) BarrierEnd {
+	return BarrierEnd{b, make(BarrierReq)}
+}
 
 func (b *BarrierEnd) sync() {
 	b.barrier <- b.resp;
 	<-b.resp;
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b;
 }
 
 func abs(x int) int {
@@ -162,20 +157,22 @@ func abs(x int) int {
 	return x;
 }
 
-func agent_start(cycle int, info *AgentInfo)	{ fmt.Printf("%d %d start\n", cycle, info.id) }
-func agent_at(cycle int, info *AgentInfo) {
-	fmt.Printf("%d %d at %d %d %d\n", cycle, info.id, info.loc, info.pos.x, info.pos.y)
+func agent_start(log chan string, cycle int, info *AgentInfo) {
+	log <- fmt.Sprintf("%d %d start\n", cycle, info.id)
 }
-func agent_end(cycle, persona int, info *AgentInfo) {
-	fmt.Printf("%d %d end %d\n", cycle, info.id, persona)
+func agent_at(log chan string, cycle int, info *AgentInfo) {
+	log <- fmt.Sprintf("%d %d at %d:%d,%d\n", cycle, info.id, info.loc, info.pos.x, info.pos.y)
+}
+func agent_end(log chan string, cycle, persona int, info *AgentInfo) {
+	log <- fmt.Sprintf("%d %d end %d\n", cycle, info.id, persona)
 }
 
-func agent(cycle int, info AgentInfo, loc chan *LocationReq, bar BarrierEnd) {
+func agent(cycle int, info AgentInfo, loc chan *LocationReq, bar BarrierEnd, log chan string) {
 	persona := info.id * 37;
 	loc_resp := make(chan *LocationResp);
 	view_resp := make(chan *AgentList);
 
-	agent_start(cycle, &info);
+	agent_start(log, cycle, &info);
 
 	bar.sync();
 
@@ -186,13 +183,11 @@ func agent(cycle int, info AgentInfo, loc chan *LocationReq, bar BarrierEnd) {
 	bar.sync();
 
 	for cycle < N_CYCLES {
-		force := &Vector{0, 0};
-
 		persona = (persona & 65535) * info.pos.x;
 		persona = (persona & 65535) * info.pos.y;
 		persona = (persona & 65535) * info.id;
 
-		// agent_at (cycle, &info);
+		agent_at (log, cycle, &info);
 
 		cycle = cycle + 1;
 
@@ -200,8 +195,9 @@ func agent(cycle int, info AgentInfo, loc chan *LocationReq, bar BarrierEnd) {
 		agents := <-view_resp;
 
 		persona = persona + len(*agents);
-		px := persona & 0xff;
-		py := (persona >> 8) & 0xff;
+		px	:= persona & 0xff;
+		py	:= (persona >> 8) & 0xff;
+		force	:= Vector{0, 0};
 
 		for _, oa := range *agents {
 			if oa.id == info.id {
@@ -215,7 +211,10 @@ func agent(cycle int, info AgentInfo, loc chan *LocationReq, bar BarrierEnd) {
 			dx2 := d.x * d.x;
 			dy2 := d.y * d.y;
 			r2 := dx2 + dy2;
-			f := min(LOC_SIZE, (3*(LOC_SIZE*LOC_SIZE))/(r2+1));
+			f := (3*(LOC_SIZE*LOC_SIZE)) / (r2+1);
+			if f > LOC_SIZE {
+				f = LOC_SIZE;
+			}
 
 			r := 1;
 			if dx2 > dy2 {
@@ -235,29 +234,28 @@ func agent(cycle int, info AgentInfo, loc chan *LocationReq, bar BarrierEnd) {
 			}
 		}
 
+		agents = nil;
 		bar.sync();
 
-		loc <- &LocationReq{LOC_MOVE, force, &info, loc_resp};
+		loc <- &LocationReq{LOC_MOVE, &force, &info, loc_resp};
 		msg := <-loc_resp;
 
-		moving := false;
 		switch msg.cmd {
 		case LOC_STAY_HERE:
 			/* nop */
 		case LOC_GO_THERE:
 			loc = msg.loc;
-			moving = true;
-		}
-		for moving {
-			loc <- &LocationReq{LOC_ENTER, nil, &info, loc_resp};
-			msg := <-loc_resp;
+			for moving := true; moving; {
+				loc <- &LocationReq{LOC_ENTER, nil, &info, loc_resp};
+				msg := <-loc_resp;
 
-			switch msg.cmd {
-			case LOC_STAY_HERE:
-				view_req = msg.view;
-				moving = false;
-			case LOC_GO_THERE:
-				loc = msg.loc
+				switch msg.cmd {
+				case LOC_STAY_HERE:
+					view_req = msg.view;
+					moving = false;
+				case LOC_GO_THERE:
+					loc = msg.loc
+				}
 			}
 		}
 
@@ -266,8 +264,10 @@ func agent(cycle int, info AgentInfo, loc chan *LocationReq, bar BarrierEnd) {
 
 	bar.sync();
 
-	agent_at(cycle, &info);
-	agent_end(cycle, persona, &info);
+	agent_at(log, cycle, &info);
+	agent_end(log, cycle, persona, &info);
+
+	bar.sync();
 }
 
 func viewer(req chan *ViewReq, fov []chan *LocationReq) {
@@ -280,25 +280,29 @@ func viewer(req chan *ViewReq, fov []chan *LocationReq) {
 		msg := <-req;
 		if msg.cycle >= 0 {
 			if msg.cycle != cycle {
-				view = make(AgentList, 0, cap(view));
-				for _, loc := range (fov) {
+				view = view[0:0];
+				for dir, loc := range (fov) {
+					offset := Vector{LOC_SIZE * offsets[dir].x, LOC_SIZE * offsets[dir].y};
 					loc <- &LocationReq{LOC_BORROW_INFO, nil, nil, loc_resp};
 					msg := <-loc_resp;
 					if len(view)+len(*msg.agents) > cap(view) {
-						new_view := make(AgentList, 0, (len(view)+len(*msg.agents))*2);
+						new_view := make(AgentList, len(view), (len(view)+len(*msg.agents))*2);
 						for i, a := range view {
-							view[i] = a
+							new_view[i] = a
 						}
 						view = new_view;
 					}
 					view_len := len(view);
-					view = view[0:(len(view) + len(*msg.agents))];
+					view = view[0:(view_len + len(*msg.agents))];
 					for _, a := range *msg.agents {
-						view[view_len] = a;
+						agent := *a;
+						agent.pos.vector_add(&offset);
+						view[view_len] = &agent;
 						view_len = view_len + 1;
 					}
 					loc_resp <- msg;
 				}
+				cycle = msg.cycle;
 			}
 			msg.resp <- &view;
 		} else {
@@ -313,8 +317,8 @@ func (info *AgentInfo) handle_update() (bool, int) {
 	if (dx != 0) || (dy != 0) {
 		for d, v := range offsets {
 			if (dx == v.x) && (dy == v.y) {
-				info.pos.x = info.pos.x - v.x*LOC_SIZE;
-				info.pos.y = info.pos.y - v.y*LOC_SIZE;
+				info.pos.x = info.pos.x - (v.x * LOC_SIZE);
+				info.pos.y = info.pos.y - (v.y * LOC_SIZE);
 				return true, d;
 			}
 		}
@@ -323,7 +327,7 @@ func (info *AgentInfo) handle_update() (bool, int) {
 }
 
 func location(loc int, req chan *LocationReq, neighbours []chan *LocationReq) {
-	view := make(chan *ViewReq);
+	view := make(chan *ViewReq, 16);
 	go viewer(view, neighbours);
 
 	agents := make(AgentMap, 16);
@@ -339,10 +343,9 @@ func location(loc int, req chan *LocationReq, neighbours []chan *LocationReq) {
 			} else {
 				info := msg.info;
 				info.loc = loc;
-				agents[info.id] = msg.info;
+				agents[info.id] = info;
 				msg.resp <- &LocationResp{LOC_STAY_HERE, nil, view, nil};
 			}
-			continue;
 		case LOC_MOVE:
 			info := msg.info;
 			info.pos.vector_add(msg.v);
@@ -371,22 +374,24 @@ func wrap(n, max int) int {
 	return n % max;
 }
 
-func agents(world_size, loc_agents int) {
+func agents(world_size, loc_agents int, screen chan string) {
 	world_area := world_size * world_size;
 	world := make([]chan *LocationReq, world_area);
 	for loc := 0; loc < world_area; loc = loc + 1 {
-		world[loc] = make(chan *LocationReq)
+		world[loc] = make(chan *LocationReq, 16)
 	}
 	for loc := 0; loc < world_area; loc = loc + 1 {
-		neighbours := make([]chan *LocationReq, NEIGHBOURS);
-		x := loc % world_size;
-		y := loc / world_size;
+		this_loc	:= world[loc];
+		x		:= loc % world_size;
+		y		:= loc / world_size;
+		neighbours	:= make([]chan *LocationReq, NEIGHBOURS + 1);
 		for i := 0; i < NEIGHBOURS; i = i + 1 {
 			n_x := wrap(x+offsets[i].x, world_size);
 			n_y := wrap(y+offsets[i].y, world_size);
 			neighbours[i] = world[(n_y*world_size)+n_x];
 		}
-		go location(loc, world[(y*world_size)+x], neighbours);
+		neighbours[NEIGHBOURS] = this_loc;
+		go location(loc, this_loc, neighbours);
 	}
 	b := new_barrier((loc_agents * world_area) + 1);
 
@@ -396,7 +401,7 @@ func agents(world_size, loc_agents int) {
 			x := LOC_MIN + ((LOC_SIZE / (loc_agents + 4)) * (p + 2));
 			y := LOC_MIN + ((LOC_SIZE / (loc_agents + 4)) * (p + 2));
 			info := AgentInfo{id, loc, Vector{x, y}};
-			go agent(0, info, world[loc], new_barrier_end(b));
+			go agent(0, info, world[loc], new_barrier_end(b), screen);
 			id = id + 1;
 		}
 	}
@@ -407,10 +412,21 @@ func agents(world_size, loc_agents int) {
 		be.sync();
 	}
 	be.sync();
+	be.sync();
 	b <- nil;
 
 	for loc := 0; loc < world_area; loc = loc + 1 {
 		world[loc] <- &LocationReq{LOC_SHUTDOWN, nil, nil, nil}
+	}
+}
+
+func screen_writer(in chan string) {
+	for {
+		str := <-in;
+		if len(str) == 0 {
+			return
+		}
+		os.Stdout.WriteString(str)
 	}
 }
 
@@ -432,5 +448,8 @@ func main() {
 		loc_agents, _ = strconv.Atoi(flag.Arg(1))
 	}
 
-	agents(world_size, loc_agents);
+	screen := make(chan string, 16);
+	go screen_writer(screen);
+	agents(world_size, loc_agents, screen);
+	screen <- ""
 }
