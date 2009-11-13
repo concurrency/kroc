@@ -3,8 +3,8 @@ CC = gcc
 GHC = ghc
 ERLC = erlc
 JAVAC = javac
-6G = 6g
-6L = 6l
+6G := $(shell which 6g 8g | head -n 1)
+6L := $(shell which 6l 8l | head -n 1)
 
 CC_FLAGS := $(shell $(KROC) --cflags)
 CC_INC := $(shell $(KROC) --ccincpath)
@@ -58,8 +58,8 @@ ts:	ts.c
 	$(JAVAC) -Xlint:unchecked -classpath jcsp/jcsp.jar $<
 
 %.go-exe:	go/%.go
-	$(6G) -o go/$*.6 $< 
-	$(6L) -o $@ go/$*.6
+	$(6G) -o go/$*.68 $< 
+	$(6L) -o $@ go/$*.68
 
 %.haskell:	haskell/%.hs
 	$(GHC) --make -O2 -fglasgow-exts -threaded $< -o $@
