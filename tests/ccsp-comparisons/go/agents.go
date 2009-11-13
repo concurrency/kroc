@@ -3,6 +3,9 @@ package main
 import (
 	"fmt";
 	"flag";
+	"os";
+	"runtime";
+	"strconv";
 )
 
 const (
@@ -71,9 +74,6 @@ var offsets [9]Vector = [9]Vector{
 	Vector {  1,  1 },
 	Vector {  0,  0 }
 }
-
-var world_size = flag.Int ("world_size", WORLD_SIZE, "size of world")
-var loc_agents = flag.Int ("loc_agents", LOC_AGENTS, "agents per unit")
 
 func (v *Vector) vector_add (a *Vector) {
         v.x = v.x + a.x;
@@ -364,10 +364,7 @@ func wrap (n, max int) int {
 	return n % max
 }
 
-func agents() {
-	loc_agents := *loc_agents;
-	world_size := *world_size;
-
+func agents(world_size, loc_agents int) {
 	world_area := world_size * world_size;
 	world := make([]chan LocationReq, world_area);
 	for loc := 0; loc < world_area; loc = loc + 1 {
@@ -412,5 +409,21 @@ func agents() {
 
 func main() {
 	flag.Parse();
-	agents()
+
+	threads, _ := strconv.Atoi(os.Getenv("CORES"));
+	if threads < 1 {
+		threads = 1;
+	}
+	runtime.GOMAXPROCS(threads);
+
+	world_size := WORLD_SIZE;
+	if flag.NArg() >= 1 {
+		world_size, _ = strconv.Atoi(flag.Arg(0))
+	}
+	loc_agents := LOC_AGENTS;
+	if flag.NArg() >= 2 {
+		loc_agents, _ = strconv.Atoi(flag.Arg(1))
+	}
+	
+	agents(world_size, loc_agents)
 }
