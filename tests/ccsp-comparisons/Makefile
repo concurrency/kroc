@@ -40,7 +40,8 @@ targets = \
 	java6/Agents.class \
 	jcsp/Agents.class \
 	blur.ccsp \
-	blur.pthread
+	blur.pthread \
+	mandelbrot.occam
 
 all: $(targets)
 
