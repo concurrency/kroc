@@ -15,6 +15,7 @@ targets = \
 	ts \
 	ring.beam \
 	ring.ccsp \
+	ring.go-exe \
 	ring.haskell \
 	ring.occam \
 	ring.pthread \
@@ -23,6 +24,7 @@ targets = \
 	mtring.beam \
 	mtring.ccsp \
 	mtring.haskell \
+	mtring.go-exe \
 	mtring.occam \
 	mtring.pthread \
 	java6/MTRing.class \

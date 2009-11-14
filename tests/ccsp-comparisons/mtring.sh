@@ -33,6 +33,7 @@ run_cmd ()
 run_cmd "CCSP C" "./mtring.ccsp $CYCLES $TOKENS"
 run_cmd "CCSP occam-pi" "./mtring.occam $CYCLES $TOKENS"
 run_cmd "Erlang" "erl -noshell -run mtring main $CYCLES $TOKENS"
+run_cmd "Go" "./mtring.go-exe $CYCLES $TOKENS"
 run_cmd "Haskell" "./mtring.haskell $CYCLES $TOKENS +RTS -N$CORES -RTS"
 run_cmd "Java" "java -Xss128k -classpath java6/. MTRing $CYCLES $TOKENS"
 run_cmd "JCSP" "java -Xss128k -classpath jcsp/jcsp.jar:jcsp/. MTRing $CYCLES $TOKENS"
