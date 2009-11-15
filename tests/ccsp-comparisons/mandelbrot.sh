@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TIMEOUT=300
+TIMEOUT=900
 
 if [ -z "$CORES" ]; then
   CORES=2
