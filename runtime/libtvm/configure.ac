@@ -73,7 +73,7 @@ case "$host_cpu" in
     x_endian=big
     word_length=2
     ;;
-  ppc)
+  powerpc | ppc)
     x_endian=big
     x_fpu=yes
     ;;
