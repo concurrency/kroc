@@ -3,7 +3,10 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 
 SUBDIRS =
 if BUILD_FILELIB
-SUBDIRS += filelib proclib
+SUBDIRS += filelib
+endif
+if BUILD_PROCLIB
+SUBDIRS += proclib
 endif
 if BUILD_SOCKLIB
 SUBDIRS += socklib httplib
