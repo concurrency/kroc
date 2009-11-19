@@ -31,9 +31,9 @@ typedef signed short	INT16;
 typedef signed short	HWORD;
 typedef signed int	WORD;
 typedef unsigned int	UWORD;
-#ifdef TVM_HAVE_DWORD
-typedef signed long long int DWORD;
-typedef unsigned long long int UDWORD;
+#ifdef TVM_HAVE_TWOWORD
+typedef signed long long int TWOWORD;
+typedef unsigned long long int UTWOWORD;
 #endif
 
 #else /* HAVE_INTTYPES_H */
@@ -48,17 +48,17 @@ typedef int16_t		INT16;
 typedef int16_t		HWORD;
 typedef int32_t		WORD;
 typedef uint32_t	UWORD;
-#ifdef TVM_HAVE_DWORD
-typedef int64_t		DWORD;
-typedef uint64_t	UDWORD;
+#ifdef TVM_HAVE_TWOWORD
+typedef int64_t		TWOWORD;
+typedef uint64_t	UTWOWORD;
 #endif
 #elif TVM_WORD_LENGTH == 2
 typedef int8_t		HWORD;
 typedef int16_t		WORD;
 typedef uint16_t	UWORD;
-#ifdef TVM_HAVE_DWORD
-typedef int32_t		DWORD;
-typedef uint32_t	UDWORD;
+#ifdef TVM_HAVE_TWOWORD
+typedef int32_t		TWOWORD;
+typedef uint32_t	UTWOWORD;
 #endif
 #else
 #error "Word length not supported (1)"
