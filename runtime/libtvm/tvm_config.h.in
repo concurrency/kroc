@@ -36,7 +36,7 @@
 #undef TVM_EXTERNAL_CHANNEL_BUNDLES
 
 /* define if C compiler supports maths on double words */
-#undef TVM_HAVE_DWORD
+#undef TVM_HAVE_TWOWORD
 
 /* define for little-endian TVM */
 #undef TVM_LITTLE_ENDIAN
