@@ -85,8 +85,8 @@ case "$x_os" in
     LIBS="$LIBS -ldl -lrt -lm9x -lsunmath"
     ;;
   windows)
-    TVM_FIRMWARE_PATH="$datadir\\tvm\\firmware\\"
-    TVM_LIBRARY_PATH="$libdir\\tvm\\"
+    TVM_FIRMWARE_PATH="$datadir/tvm/firmware/"
+    TVM_LIBRARY_PATH="$libdir/tvm/"
     ;;
 esac
 
