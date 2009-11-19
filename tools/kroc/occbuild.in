@@ -1126,6 +1126,8 @@ def main(args):
 		}
 	if target_os.startswith("cygwin"):
 		build_shared = False
+	elif target_os.startswith("mingw32"):
+		patterns["so"] = "occam_%s.dll"
 	elif target_os.startswith("darwin"):
 		patterns["so"] = "liboccam_%s.dylib"
 		build_shared = (toolchain.__class__ == toolchains["tvm"])
