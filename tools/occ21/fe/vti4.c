@@ -430,7 +430,9 @@ PUBLIC BOOL check_array_overflow (const SOURCEPOSN locn, const BIT32 elemsize, c
 	const BIT32 max_array_size = (current_fe_data->fe_txlib->bpw != 2) ? MAX_32BIT_ARRAY_SIZE :
 		(in_RETYPE) ? MAX_16BIT_RETYPE_SIZE : MAX_32BIT_ARRAY_SIZE;
 
-	if (elemsize > (max_array_size / nelements)) {
+	if (nelements == 0) {
+		return FALSE;
+	} else if (elemsize > (max_array_size / nelements)) {
 		vtiabort (VTI_ARRAY_SIZE_OVERFLOW, locn);
 		return TRUE;
 	}
