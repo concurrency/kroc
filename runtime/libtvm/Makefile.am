@@ -104,8 +104,11 @@ DISPATCH_OUTPUT_FILES = \
 
 make_dispatch = $(top_srcdir)/make-dispatch.py
 
-$(DISPATCH_OUTPUT_FILES): $(make_dispatch) $(DISPATCH_SOURCE_FILES)
+dispatch-cookie: $(make_dispatch) $(DISPATCH_SOURCE_FILES)
 	$(PYTHON) $(make_dispatch) $(DISPATCH_SOURCE_FILES)
+	touch dispatch-cookie
+
+$(DISPATCH_OUTPUT_FILES): dispatch-cookie
 
 BUILT_SOURCES = \
 	$(DISPATCH_OUTPUT_FILES)
@@ -113,4 +116,4 @@ BUILT_SOURCES = \
 EXTRA_DIST = \
 	make-dispatch.py
 
-CLEANFILES = $(DISPATCH_OUTPUT_FILES)
+CLEANFILES = $(DISPATCH_OUTPUT_FILES) dispatch-cookie
