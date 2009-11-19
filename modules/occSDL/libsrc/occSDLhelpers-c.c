@@ -1,6 +1,6 @@
 /*
 	occSDLhelpers-c.c: helper code for occSDL wrapper
-	Copyright (C) 2007  University of Kent
+	Copyright (C) 2007, 2009  University of Kent
 
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,29 @@
 #include <stdio.h>
 #include "SDL_wrap.h"
 
+/*{{{  PUBLIC */
+/* FIXME: This should be in a shared header, since any library with C functions
+   used on Windows will need it. */
+/* This is based on the SWIGEXPORT macro that SWIG generates. */
+#ifndef PUBLIC
+# if defined(_WIN32) || defined(__WIN32__) || defined(__CYGWIN__)
+#   if defined(STATIC_LINKED)
+#     define PUBLIC
+#   else
+#     define PUBLIC __declspec(dllexport)
+#   endif
+# else
+#   if defined(__GNUC__) && defined(GCC_HASCLASSVISIBILITY)
+#     define PUBLIC __attribute__ ((visibility("default")))
+#   else
+#     define PUBLIC
+#   endif
+# endif
+#endif
+/*}}}*/
+
 /* C.occ.SDL.make.surface (VAL [][]INT pixels, RESULT SDL.Surface surface) */
-void _occ_SDL_make_surface (int w[])
+PUBLIC void _occ_SDL_make_surface (int w[])
 {
 	int *pixels = (int *) w[0];
 	int height = w[1], width = w[2];
