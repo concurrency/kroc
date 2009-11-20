@@ -22,7 +22,7 @@ package org.transterpreter.occPlug.process;
 
 import java.io.File;
 import java.io.IOException;
-
+import java.io.OutputStream;
 //}}}
 
 /**
@@ -44,6 +44,10 @@ public class ExecWorker extends Thread implements Killable {
 	private final String[]			cmd;
 	private final String[]			envp;
 	private final File				dir;
+	
+	private OutputStream 			stdin	= null;
+	private Thread 					stdout	= null;
+	private Thread 					stderr	= null;
 
 	public ExecWorker(String[] cmd, String[] envp, File dir,
 			ExecWorkerHelper helper) {
@@ -55,9 +59,7 @@ public class ExecWorker extends Thread implements Killable {
 	}
 
 	public void run() {
-		Thread stdin = null;
-		Thread stdout = null;
-		Thread stderr = null;
+
 
 		/* Execute the command */
 		try {
@@ -72,9 +74,6 @@ public class ExecWorker extends Thread implements Killable {
 			// STDIN
 			if (helper.stdinUsed()) {
 				stdin = helper.stdinHandlerSetup(p.getOutputStream());
-				if (stdin != null) {
-					stdin.start();
-				}
 			} else {
 				p.getOutputStream().close();
 			}
@@ -103,9 +102,6 @@ public class ExecWorker extends Thread implements Killable {
 		/* Wait for the execution of the external command to finish */
 		try {
 			p.waitFor();
-			if (stdin != null) {
-				stdin.join();
-			}
 			if (stdout != null) {
 				stdout.join();
 			}
@@ -130,5 +126,13 @@ public class ExecWorker extends Thread implements Killable {
 
 	public synchronized boolean wasKilled() {
 		return killed;
+	}
+	
+	public synchronized OutputStream getStdin() {
+		if (!killed) {
+			return stdin;
+		} else {
+			return null;
+		}
 	}
 }

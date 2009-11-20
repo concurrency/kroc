@@ -79,7 +79,7 @@ public class ExecWorkerHelper {
 		return null;
 	}
 
-	public Thread stdinHandlerSetup(OutputStream r) {
+	public OutputStream stdinHandlerSetup(OutputStream r) {
 		return null;
 	}
 }
