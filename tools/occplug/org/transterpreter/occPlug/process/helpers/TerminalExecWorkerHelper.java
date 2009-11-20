@@ -68,8 +68,7 @@ public class TerminalExecWorkerHelper extends ExecWorkerHelper {
 		}
 	}
 
-	public Thread stdinHandlerSetup(OutputStream stdin) {
-		//setKeyboardOutputStream(new BufferedOutputStream(stdin));
-		return null;
+	public OutputStream stdinHandlerSetup(OutputStream stdin) {
+		return new BufferedOutputStream(stdin);
 	}
 }

@@ -86,6 +86,7 @@ import org.transterpreter.occPlug.process.ReaderConduit;
 import org.transterpreter.occPlug.process.ReaderConduitTest;
 import org.transterpreter.occPlug.process.ReaderConduitTest2;
 import org.transterpreter.occPlug.process.SimpleWriter;
+import org.transterpreter.occPlug.process.helpers.NullOutputStream;
 
 import de.mud.terminal.vt320;
 import errorlist.DefaultErrorSource;
@@ -122,8 +123,6 @@ public class OccPlug extends JPanel implements EBComponent {
 	private Pattern						libaryPathPattern;
 
 	private HashMap						provisionalErrorList	= new HashMap();
-
-	private OutputStream				keyboardOutputStream;
 
 	private ExecWorker					execWorker				= null;
 
@@ -275,7 +274,6 @@ public class OccPlug extends JPanel implements EBComponent {
 						+ " Hyperlink: " + err);
 			}
 		});
-		setKeyboardOutputStream(new NullOutputStream());
 		/* Add styles to the document */
 		addStylesToDocument(textArea.getStyledDocument());
 		/* Add the text area to a scrollpane */
@@ -382,15 +380,12 @@ public class OccPlug extends JPanel implements EBComponent {
 
 	// }}}
 
+	
 	public OutputStream getKeyboardOutputStream() {
-		synchronized (keyboardOutputStream) {
-			return keyboardOutputStream;
-		}
-	}
-
-	public void setKeyboardOutputStream(OutputStream keyboardOutputStream) {
-		synchronized (keyboardOutputStream) {
-			this.keyboardOutputStream = keyboardOutputStream;
+		if (execWorker != null) {
+			return execWorker.getStdin();
+		} else {
+			return new NullOutputStream();
 		}
 	}
 
@@ -769,49 +764,6 @@ public class OccPlug extends JPanel implements EBComponent {
 
 	// }}}
 
-	// {{{ public void legodl(String filename, String workingDir, int prognum)
-	// throws IOException
-	public void legodl(String filename, String workingDir, int prognum)
-			throws IOException {
-		final DocumentWriter compileConsoleDoc = new DocumentWriter(textArea
-				.getStyledDocument());
-
-		ArrayList dllCommand = new ArrayList();
-
-		/* Update buttons on the toolpanel */
-		toolPanel.setState(OccPlugToolPanel.RUNNING);
-
-		dllCommand.add(OccPlugUtil.pathify(OccPlugUtil.getDllCmd()));
-		for (int i = 0; i < OccPlugUtil.getDllArgs().length; i++) {
-			dllCommand.add(OccPlugUtil.getDllArgs()[i]);
-		}
-		if (prognum != -1) {
-			dllCommand.add("-p" + prognum);
-		}
-		if (!OccPlugUtil.getLegoTowerPort().equals("DEFAULT")) {
-			dllCommand.add("--tty=" + OccPlugUtil.getLegoTowerPort());
-		}
-		dllCommand.add(filename);
-
-		compileConsoleDoc.clear();
-		compileConsoleDoc.writeRegular("Uploading: " + filename + " \n");
-		compileConsoleDoc.writeRegular(dllCommand + " \n");
-
-		/* FIXME: Why do we do this???? */
-		File wDir = null;
-		if (workingDir != null) {
-			wDir = new File(workingDir);
-		}
-
-		execWorker = new ExecWorker((String[]) dllCommand
-				.toArray(new String[1]), (String[]) null, wDir,
-				new InteractiveExecWorkerHelper("dll"));
-
-		execWorker.start();
-	}
-
-	// }}}
-
 	// {{{ class NonInteractiveExecWorkerHelper
 	class NonInteractiveExecWorkerHelper extends ExecWorkerHelper {
 		protected final DocumentWriter	compileConsoleDoc	= new DocumentWriter(
@@ -845,7 +797,6 @@ public class OccPlug extends JPanel implements EBComponent {
 			/* Update buttons on the toolpanel */
 			toolPanel.setState(toolPanel.NORMAL);
 			execWorker = null;
-			setKeyboardOutputStream(new NullOutputStream());
 
 			if (path != null) {
 				updateErrorSource(path);
@@ -892,137 +843,14 @@ public class OccPlug extends JPanel implements EBComponent {
 
 	// }}}
 
-	// {{{ private class InteractiveExecWorkerHelper
-	private class InteractiveExecWorkerHelper extends
-			NonInteractiveExecWorkerHelper {
-		public InteractiveExecWorkerHelper(String s) {
-			super(s, null);
-		}
-
-		public Thread stdoutHandlerSetup(InputStream stdout) {
-			// return new ReaderConduitTest(new BufferedReader(new
-			// InputStreamReader(stdout)), new SimpleWriter()
-			return new ReaderConduit(new BufferedReader(new InputStreamReader(
-					stdout)), new SimpleWriter() {
-				public void write(String str) {
-					compileConsoleDoc.writeRegular(str);
-				}
-			});
-		}
-
-		public Thread stdinHandlerSetup(OutputStream stdin) {
-			setKeyboardOutputStream(new BufferedOutputStream(stdin));
-			return null;
-		}
-	}
-
+	
 	// }}}
-
-	public class TerminalExecWorkerHelper extends ExecWorkerHelper {
-		String	cmdName;
-
-		public TerminalExecWorkerHelper(String cmdName) {
-			super(true, true, true);
-			this.cmdName = cmdName;
-		}
-
-		public Thread stdoutHandlerSetup(InputStream stdout) {
-			return new ReaderConduitTest2(stdout, new SimpleWriter()
-			// return new ReaderConduit(stdout, new SimpleWriter()
-					{
-						public void write(String str) {
-							terminal.putString(str);
-						}
-					});
-		}
-
-		public Thread stderrHandlerSetup(InputStream stderr) {
-			return stdoutHandlerSetup(stderr);
-		}
-
-		public void finalizer() {
-			/* Update buttons on the toolpanel */
-			toolPanel.setState(OccPlugToolPanel.NORMAL);
-			execWorker = null;
-			setKeyboardOutputStream(new NullOutputStream());
-		}
-
-		public void interruptedExceptionHandler(Exception e) {
-			/* FIXME: Ehh? */
-			terminal.putString("FIXME: I should deal better with this: " + e
-					+ "\r\n");
-			throw new RuntimeException(e);
-		}
-
-		public void ioHandlerExceptionHandler(Exception e) {
-			interruptedExceptionHandler(e);
-		}
-
-		public void cannotExec(Exception e) {
-			terminal.putString("Error while running " + cmdName + ": " + e);
-		}
-
-		public void cmdExited(int status) {
-			if (status != 0) {
-				terminal.putString(cmdName + " exited with error code: "
-						+ status + "\r\n");
-			} else {
-				terminal.putString(cmdName + " completed sucessfully\r\n");
-			}
-		}
-
-		public Thread stdinHandlerSetup(OutputStream stdin) {
-			setKeyboardOutputStream(new BufferedOutputStream(stdin));
-			return null;
-		}
-	}
 
 	public void setVisibleDisplayArea(String s) {
 		CardLayout cl = (CardLayout) (displayPanel.getLayout());
 		cl.show(displayPanel, s);
 		cl = (CardLayout) (toolPanelCardContainer.getLayout());
 		cl.show(toolPanelCardContainer, "compileAndRun");
-	}
-
-	public void tvmrun(final String filename, final String workingDir)
-			throws IOException {
-		ArrayList tvmCommand = new ArrayList();
-		ArrayList runEnv = new ArrayList();
-
-		String fw_p = MiscUtilities.constructPath(MiscUtilities
-				.getParentOfPath(MiscUtilities.getParentOfPath(OccPlugUtil
-						.pathify(OccPlugUtil.getTvmCmd()))),
-				"share/tvm/firmware/tvm-posix.tbc");
-		runEnv.add("TVM_FIRMWARE_FILE=" + fw_p);
-		String lib_p = MiscUtilities.constructPath(MiscUtilities
-				.getParentOfPath(MiscUtilities.getParentOfPath(OccPlugUtil
-						.pathify(OccPlugUtil.getTvmCmd()))), "lib");
-		runEnv.add("DYLD_LIBRARY_PATH=" + lib_p);
-
-		tvmCommand.add(OccPlugUtil.pathify(OccPlugUtil.getTvmCmd()));
-		tvmCommand.add(filename);
-
-		/* Update buttons on the toolpanel */
-		toolPanel.setState(OccPlugToolPanel.RUNNING);
-		/*
-		 * Set the focus to the command window, as we want keystrokes to get
-		 * there
-		 */
-		setVisibleDisplayArea("terminal");
-		getTerminalArea().requestFocus();
-
-		terminal.reset(); /* This does not clear the terminal, which is ok */
-		terminal.putString("Running: " + filename + "\r\n");
-
-		String[] env = (String[]) runEnv.toArray(new String[1]);
-		if (runEnv.size() == 0) {
-			env = null;
-		}
-		execWorker = new ExecWorker((String[]) tvmCommand
-				.toArray(new String[1]), env, new File(workingDir),
-				new TerminalExecWorkerHelper(filename));
-
-		execWorker.start();
 	}
 
 	private void setCommandBarEnabled(boolean b) {
@@ -1148,71 +976,8 @@ public class OccPlug extends JPanel implements EBComponent {
 		(new Thread(new SRVConsole(compileConsole, bytecode))).start();
 	}
 
-	public void run(String type) {
-		this.run(type, this.view, this.view.getBuffer());
-	}
+	
 
-	public void run(String type, org.gjt.sp.jedit.View view, Buffer buffer) {
-		Process p;
-		Runtime r = java.lang.Runtime.getRuntime();
-
-		BufferedReader stdout, stderr;
-		BufferedWriter stdin;
-
-		final DocumentWriter compileConsoleDoc = new DocumentWriter(textArea
-				.getStyledDocument());
-
-		final String occFile = buffer.getName();
-		final String baseFile = MiscUtilities.getFileNameNoExtension(occFile);
-		final String tceFile = baseFile + ".tce";
-		final String tbcFile = baseFile + ".tbc";
-		final String srecFile = baseFile + ".srec";
-		final String srvFile = baseFile + ".srv";
-
-		/* Check if the buffer contains something which looks valid... */
-		if (!occFile.toLowerCase().endsWith(".occ")) {
-			/*
-			 * FIXME: This is slightly wrong, as it is actually .tbc files which
-			 * are executed....... does this matter????
-			 */
-			compileConsoleDoc
-					.writeError("Error: Only occam (.occ) programs can be executed.\n");
-			compileConsoleDoc
-					.writeError("       The current buffer does not contain a .occ file!\n");
-
-			return;
-		}
-
-		/*
-		 * FIXME: Could add some checks too see if the tbc file is out of date
-		 * here
-		 */
-		/* FIXME: And if the file has not been saved? */
-
-		try {
-			if (type.equals("Surveyor SRV-1")) {
-				srvrun(srvFile, buffer.getDirectory());
-			} else if (type.equals("Desktop")) {
-				tvmrun(tbcFile, buffer.getDirectory());
-			} else if (type.equals("Mindstorms RCX")) {
-				legodl(srecFile, buffer.getDirectory(), -1);
-			} else if (type.equals("robosim")) {
-				compileConsoleDoc
-						.writeError("I don't know how to run/compile this type of target yet ("
-								+ type + ")\n");
-			} else if (type.equals("tvm-dbg")) {
-				compileConsoleDoc
-						.writeError("I don't know how to run/compile this type of target yet ("
-								+ type + ")\n");
-			} else {
-				compileConsoleDoc.writeRegular("Unknown target (" + type
-						+ ")\n");
-			}
-		} catch (Exception e) {
-			compileConsoleDoc.writeError("Error while running program: " + e);
-			return;
-		}
-	}
 
 	public void occdoc() {
 		try {
