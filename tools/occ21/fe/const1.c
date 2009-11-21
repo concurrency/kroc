@@ -2609,6 +2609,11 @@ PUBLIC BOOL isconst (treenode * tptr)
 		case S_OVERLAPCHECK:
 			return overlaps_are_const;
 			/*}}}  */
+			/*{{{  things that are effectively errors (captured elsewhere)*/
+		case S_ASOUTPUT:
+		case S_ASINPUT:
+			return FALSE;
+			/*}}}*/
 		default:
 			badtag (LocnOf (tptr), TagOf (tptr), "isconst");
 		}
