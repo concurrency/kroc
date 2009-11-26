@@ -4013,6 +4013,7 @@ sub build_tlp_desc {
 	my ($self, $symbol)	= @_;
 	my $def			= $symbol->{'definition'};
 	my ($params)		= ($def =~ m/PROC\s+\S+\(([^\)]+)\)/s);
+	$params			=~ s/\r?\n//gs;
 	my @params		= split (/,/, $params);
 	my @tlp;
 
