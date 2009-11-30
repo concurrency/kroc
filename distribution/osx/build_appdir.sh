@@ -43,7 +43,7 @@ rezDir="Transterpreter.app/Contents/Resources"
 sysFrameworks="/System/Library/Frameworks"
 javaDir=$rezDir
 binaryFiles="ilibr kmakef kroc mkoccdeps occbuild plinker.pl tce-dump.pl tranx86"
-libFiles="libSDL*.dylib libplayer*.dylib liboccam_*.a libkrocif.a libccsp.a"
+libFiles="libSDL*.dylib libplayer*.dylib liboccam_*.a tvm/liboccam_tvm_*.dylib libkrocif.a libccsp.a"
 
 # Make the App dir
 makedir "$outputDir"
