@@ -2170,7 +2170,11 @@ sub gen_shift ($$$$) {
 
 sub gen_boolinvert ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
-	return $self->_gen_bitop ($inst, 'xor', @{$inst->{'in'}}, 1);
+	my $tmp = $self->tmp_reg ();
+	return (
+		$self->_gen_bitop ({ 'out' => [ $tmp ] }, 'and', @{$inst->{'in'}}, 1),
+		$self->_gen_bitop ($inst, 'xor', $tmp, 1)
+	);
 }
 
 sub gen_nop ($$$$) { 
