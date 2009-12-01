@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#ifdef HAVE_UIO_H
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
 

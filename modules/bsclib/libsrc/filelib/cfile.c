@@ -21,14 +21,18 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef HAVE_SENDFILE_H
+#ifdef HAVE_SYS_SENDFILE_H
 #include <sys/sendfile.h>
 #endif
 #include <sys/time.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#if defined(HAVE_STDINT_H)
 #include <stdint.h>
+#elif defined(HAVE_INTTYPES_H)
+#include <inttypes.h>
+#endif
 
 #include <dirent.h>
 
@@ -427,7 +431,7 @@ static __inline__ void r_sendfile (int src_fd, int dst_fd, int count, int *offse
 {
 	int ires;
 
-#ifdef HAVE_SENDFILE_H
+#ifdef HAVE_SYS_SENDFILE_H
 	ires = (int)sendfile (dst_fd, src_fd, (off_t *)offset, count);
 	if (ires == -1) {
 		*result = -errno;
