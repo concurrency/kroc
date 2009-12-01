@@ -284,7 +284,7 @@ static char *find_include_file (char *fname)
 static int process_file (dfile_t *file)
 {
 	if (file->skip) {
-		return;
+		return 0;
 	}
 	if (options.verbose) {
 		fprintf (stderr, "processing %s...\n", file->name);
