@@ -16,6 +16,8 @@ AC_CHECK_HEADERS([stdlib.h stdio.h stdarg.h string.h])
 AC_CHECK_HEADERS([dlfcn.h errno.h inttypes.h limits.h math.h])
 AC_CHECK_HEADERS([search.h signal.h termios.h time.h unistd.h])
 AC_CHECK_HEADERS([sys/ioctl.h sys/time.h sys/timeb.h sys/types.h])
+AC_SEARCH_LIBS([dlopen], [dl])
+AC_SEARCH_LIBS([nanosleep], [rt])
 AC_CHECK_FUNCS([ftime gettimeofday nanosleep setitimer Sleep])
 
 #########################
@@ -77,12 +79,11 @@ case "$x_os" in
   freebsd)
     ;;
   linux)
-    LIBS="$LIBS -ldl"
     ;;
   solaris)
     CFLAGS="$CFLAGS -I/opt/SUNWspro/prod/include/cc/"
     LDFLAGS="$LDFLAGS -L/opt/SUNWspro/lib"
-    LIBS="$LIBS -ldl -lrt -lm9x -lsunmath"
+    LIBS="$LIBS -lm9x -lsunmath"
     ;;
   windows)
     TVM_FIRMWARE_PATH="$datadir/tvm/firmware/"
