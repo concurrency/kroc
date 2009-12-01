@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define TVM_UNUSED_OK	__attribute__ ((unused))
 #else
 #define TVM_PACK
-#define TMV_UNUSED_OK
+#define TVM_UNUSED_OK
 #endif
 
 #endif /* !TVM_COMPILER_H */
