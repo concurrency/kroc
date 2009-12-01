@@ -179,7 +179,6 @@ typedef int (*SFFI_FUNCTION)(ECTX ectx, WORD w[]);
 /*{{{  Transputer registers, etc that make up the execution context */
 #define TVM_ECTX_TLP_ARGS 8
 
-TVM_PACK
 struct _tvm_ectx_t {
 	/* Machine state */
 	BYTEPTR		iptr;	/* Instruction pointer */
@@ -288,7 +287,7 @@ struct _tvm_ectx_t {
 
 	/* Private data */
 	tvm_ectx_priv_t	priv;
-};
+} TVM_PACK;
 /*}}}*/
 
 /*{{{  Execution context returns */
