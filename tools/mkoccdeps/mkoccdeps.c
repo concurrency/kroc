@@ -61,11 +61,11 @@ static struct {
 	int localonly;
 	DYNARRAY(char *, ipath);
 } options = {
-	follow: FOLLOW_NONE,
-	verbose: 0,
-	outfile: NULL,
-	allobjs: 0,
-	localonly: 0
+	.follow = FOLLOW_NONE,
+	.verbose = 0,
+	.outfile = NULL,
+	.allobjs = 0,
+	.localonly = 0
 };
 
 #define FTYPE_UNKNOWN 0
