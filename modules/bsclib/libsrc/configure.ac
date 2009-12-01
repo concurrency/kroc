@@ -20,14 +20,7 @@ AC_ARG_ENABLE([cspdrvlib],
 dnl Checks for headers
 AC_CHECK_HEADER(unistd.h, [], [build_filelib=no])
 AC_CHECK_HEADER(sys/socket.h, [], [build_socklib=no])
-AC_CHECK_HEADER(sys/sendfile.h, [have_sendfile_h=yes], [have_sendfile_h=no])
-if test "$have_sendfile_h" = yes; then
- AC_DEFINE(HAVE_SENDFILE_H)
-fi
-AC_CHECK_HEADER(sys/uio.h, [have_uio_h=yes], [have_uio_h=no])
-if test "$have_uio_h" = yes; then
- AC_DEFINE(HAVE_UIO_H)
-fi
+AC_CHECK_HEADERS([sys/sendfile.h sys/uio.h inttypes.h stdint.h])
 OCCAM_DEFS=""
 AC_CHECK_FUNC(readv, [have_readv=yes], [have_readv=no])
 AC_CHECK_FUNC(writev, [have_writev=yes], [have_writev=no])
