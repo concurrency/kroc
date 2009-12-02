@@ -216,6 +216,7 @@ AC_MSG_RESULT($can_use_inline)
 if test $can_use_inline = yes ; then
   AC_DEFINE([CAN_USE_INLINE],1,[define if can inline])
 fi
+OCCAM_CHECK_CFLAGS([-Wall], [CFLAGS="$CFLAGS -Wall"])
 
 AC_TYPE_SIZE_T
 

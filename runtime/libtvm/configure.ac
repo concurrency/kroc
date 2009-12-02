@@ -182,7 +182,8 @@ esac
 #  Defines
 #########################
 
-TVM_CFLAGS="-Wall -DTVM_INTERNALS"
+TVM_CFLAGS="-DTVM_INTERNALS"
+OCCAM_CHECK_CFLAGS([-Wall], [TVM_CFLAGS="$TVM_CFLAGS -Wall"])
 
 # Dispatch switch
 if test "x$dispatch_switch" = "xyes"; then
