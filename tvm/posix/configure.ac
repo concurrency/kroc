@@ -67,7 +67,8 @@ TVM_LIBTVM
 #  Defines
 #########################
 
-CFLAGS="-Wall $TVM_CFLAGS $CFLAGS"
+CFLAGS="$TVM_CFLAGS $CFLAGS"
+OCCAM_CHECK_CFLAGS([-Wall], [CFLAGS="$CFLAGS -Wall"])
 LIBS="-lm $TVM_LIBS $LIBS"
 TVM_FIRMWARE_PATH="$datadir/tvm/${KROC_TARGET_PREFIX}firmware/"
 TVM_LIBRARY_PATH="$libdir/${KROC_TARGET_PREFIX}tvm/"
