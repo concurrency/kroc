@@ -83,7 +83,7 @@ case "$x_os" in
   solaris)
     CFLAGS="$CFLAGS -I/opt/SUNWspro/prod/include/cc/"
     LDFLAGS="$LDFLAGS -L/opt/SUNWspro/lib"
-    LIBS="$LIBS -lm9x -lsunmath"
+    AC_SEARCH_LIBS([fesetround], [m9x], [LIBS="$LIBS -lm9x -lsunmath"], [], [-lsunmath])
     ;;
   windows)
     TVM_FIRMWARE_PATH="$datadir/tvm/firmware/"
