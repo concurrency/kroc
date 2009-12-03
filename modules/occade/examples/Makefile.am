@@ -11,6 +11,7 @@ EXTRA_DIST = \
 	bounce.occ \
 	breakout.occ \
 	collision-test.occ \
+	flipbook.occ \
 	parrot_attack.occ \
 	scrollytext.occ \
 	shutdown.inc \
@@ -21,6 +22,7 @@ examples = \
 	bounce \
 	breakout \
 	collision-test \
+	flipbook \
 	parrot_attack \
 	scrollytext
 endif
@@ -35,6 +37,9 @@ breakout: breakout.occ shutdown.tce
 
 collision-test: collision-test.occ
 	$(OCCBUILD) --program $(srcdir)/collision-test.occ
+
+flipbook: flipbook.occ
+	$(OCCBUILD) --program $(srcdir)/flipbook.occ
 
 parrot_attack: parrot_attack.occ shutdown.tce
 	$(OCCBUILD) --program $(srcdir)/parrot_attack.occ shutdown.tce

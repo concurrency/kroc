@@ -19,6 +19,7 @@ dist_image_DATA = \
 	lifeno.png \
 	lifeyes.png \
 	missile.png \
+	numbers.png \
 	orange-ball.png \
 	parrot1.png \
 	parrot2.png \
