@@ -12,6 +12,7 @@ EXTRA_DIST = \
 	breakout.occ \
 	collision-test.occ \
 	parrot_attack.occ \
+	scrollytext.occ \
 	shutdown.inc \
 	shutdown.occ
 
@@ -20,7 +21,8 @@ examples = \
 	bounce \
 	breakout \
 	collision-test \
-	parrot_attack
+	parrot_attack \
+	scrollytext
 endif
 
 all-local: $(examples)
@@ -36,6 +38,9 @@ collision-test: collision-test.occ
 
 parrot_attack: parrot_attack.occ shutdown.tce
 	$(OCCBUILD) --program $(srcdir)/parrot_attack.occ shutdown.tce
+
+scrollytext: scrollytext.occ
+	$(OCCBUILD) --program $(srcdir)/scrollytext.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples occade --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
