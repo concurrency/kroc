@@ -324,7 +324,7 @@ PRIVATE void print_section_header(map_handle_t *const handle,
           {
             fprintf(fptr, "\nBranch %d of PAR in %s at line %d of %s\n",
                     section->sub, section->name, section->line, section->filename);
-            fprintf(fptr, "Branch is at offset %ld %s\n",
+            fprintf(fptr, "Branch is at offset %d %s\n",
                     section->offset, unitsof(section));
             print_varlist_header(fptr, section);
           }
@@ -336,7 +336,7 @@ PRIVATE void print_section_header(map_handle_t *const handle,
           {
             fprintf(fptr, "\nBody of replicated PAR in %s at line %d of %s\n",
                     section->name, section->line, section->filename);
-            fprintf(fptr, "Each branch is %ld %s, %d copies, first is at offset %ld %s\n",
+            fprintf(fptr, "Each branch is %d %s, %d copies, first is at offset %d %s\n",
                     section->span, unitsof(section),
                     section->sub, section->offset, unitsof(section));
             print_varlist_header(fptr, section);
@@ -345,7 +345,7 @@ PRIVATE void print_section_header(map_handle_t *const handle,
       /*}}}*/
       /*{{{  text */
       case map_sectiontype_text:
-        fprintf(fptr, "\nSection map\n-----------\nSection name : %s : size = %ld %s\n",
+        fprintf(fptr, "\nSection map\n-----------\nSection name : %s : size = %d %s\n",
                 section->name, section->size0, unitsof(section));
         fprintf(fptr, "%-32.32s %-12.12s %s (%s)\n",
                 "Name","Type","Offset", unitsof(section));
@@ -362,10 +362,10 @@ PRIVATE void print_section_footer(map_handle_t *const handle,
   switch(section->type)
     {
       case map_sectiontype_formal:
-        fprintf(fptr, "\nWorkspace size = %ld word%s",
+        fprintf(fptr, "\nWorkspace size = %d word%s",
                 section->size0, (section->size0 == 1) ? "" : "s");
         if (section->size1 != 0)
-          fprintf(fptr, ", Vectorspace size = %ld word%s",
+          fprintf(fptr, ", Vectorspace size = %d word%s",
                   section->size1, (section->size1 == 1) ? "" : "s");
         fputc('\n', fptr);
         break;
@@ -423,11 +423,11 @@ PRIVATE void print_entry(map_handle_t *const handle,
       case map_sectiontype_par:
       case map_sectiontype_repl:
         print_name_and_spaces(handle, entry->name);
-        fprintf(fptr, "%10ld", entry->offset);
+        fprintf(fptr, "%10d", entry->offset);
         break;
       case map_sectiontype_text:
         print_name_and_spaces(handle, entry->name);
-        fprintf(fptr, "%-12.12s %10ld", entry->type, entry->offset);
+        fprintf(fptr, "%-12.12s %10d", entry->type, entry->offset);
         break;
     }
   if (entry->comment != NULL)

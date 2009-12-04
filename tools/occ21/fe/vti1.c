@@ -854,7 +854,7 @@ PUBLIC treenode *newintconstant (const BIT32 n, const int type)
 {
 	char num[30];		/* plenty big enough for a 32-bit integer */
 	wordnode *literal;
-	sprintf (num, "%ld", n);
+	sprintf (num, "%d", n);
 	literal = lookupword (num, strlen (num));
 
 	return newconstexpnode (S_CONSTEXP, NOPOSN, newlitnode (S_UINTLIT, NOPOSN, (treenode *) literal, newleafnode (type, NOPOSN)), 0, n);
