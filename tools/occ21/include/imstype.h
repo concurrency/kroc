@@ -289,18 +289,18 @@ typedef unsigned char      BYTE;
 typedef int                INT;
 typedef char               INT8;
 typedef short int          INT16;
-typedef long int           INT32;
+typedef int                INT32;
 #else
 typedef signed int         INT;
 typedef signed char        INT8;
 typedef signed short int   INT16;
-typedef signed long int    INT32;
+typedef signed int         INT32;
 #endif
 
 typedef unsigned int       BIT;
 typedef unsigned char      BIT8;
 typedef unsigned short int BIT16;
-typedef unsigned long int  BIT32;
+typedef unsigned int       BIT32;
 
 #define VOID void /* Cannot typedef void */
 /*}}}  */
