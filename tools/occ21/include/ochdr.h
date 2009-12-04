@@ -30,26 +30,6 @@
 #endif
 /*}}}  */
 
-/*{{{  HOST_ALIGN_SIZE */
-/* This constant is host dependent: if structures must be aligned on a
-   4-byte boundary (as the t4 requires) it should be set to 4.
-   For an n-byte alignment, set the constant to n.
-   The Vax needs no alignment, so set to 1. */
-#if 0
-  #if defined(COMPILER_IS_LLL) || defined(HOST_OS_IS_HELIOS) || defined(IMS)
-    #define HOST_ALIGN_SIZE 4
-  #else
-    #define HOST_ALIGN_SIZE 1
-  #endif
-#endif
-
-#ifdef target_cpu_alpha
-  #define HOST_ALIGN_SIZE 8 /* always align to 8 byte boundary */
-#else
-  #define HOST_ALIGN_SIZE 4 /* always align to 4 byte boundary */
-#endif
-/*}}}  */
-
 /*{{{  OC, or CONFIG */
 #if defined(OC) || defined(CONFIG2) || defined(CONFIG3)
 #else
