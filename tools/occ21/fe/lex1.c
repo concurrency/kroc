@@ -2528,10 +2528,6 @@ PRIVATE void preproc_if (void)
 			if (istack->indent < pp_ifstack->indent) {
 				lexwarn (LEX_PP_NESTED_IF_OUTDENTS, flocn);
 			}
-			/* skipinput is inherited */
-			if (pp_ifstack->skipinput) {
-				istack->skipinput = TRUE;
-			}
 		}
 		istack->next = pp_ifstack;
 		pp_ifstack = istack;
@@ -3612,6 +3608,9 @@ PUBLIC void nextsymb (void)
 		return;
 	}
 	while (TRUE) {
+		pp_ifstack_t *ifp;
+		BOOL skipping;
+
 		/*{{{  find the next symbol */
 		if (sentend) {
 			lexfatal (LEX_EOF, flocn);
@@ -3634,12 +3633,22 @@ fprintf (stderr, "nextsymb (newlineflag): lineindent set to %d\n", lineindent);
 		symbindent = currentindent;
 		SetFileLine (flocn, linecount);
 
+		/*{{{  are any of the #IFs we're currently in false? */
+		skipping = FALSE;
+		for (ifp = pp_ifstack; ifp != NULL; ifp = ifp->next) {
+			if (ifp->skipinput) {
+				skipping = TRUE;
+				break;
+			}
+		}
+		/*}}}*/
+
 		if (stringcontinuation) {
 			/*{{{  read the continuing string */
 			symb = readstringliteral ();
 			return;
 			/*}}} */
-		} else if (pp_ifstack && ((pp_ifstack->skipinput) || (pp_ifstack->next && (pp_ifstack->next->skipinput)))) {
+		} else if (skipping) {
 			/*{{{  skip over input searching for more pre-processor directives -- still need to process nested #IF,#ELSE,#ELIF,#ENDIF */
 			if (ch == '#') {
 				literalv[0] = '#';
