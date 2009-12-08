@@ -408,6 +408,9 @@ PUBLIC int bytesinscalar (const int tag)
 	case S_ARRAY:
 	case S_UNDECLARED:
 		return -1;
+	case N_DECL:
+		/* this happens in various error conditions */
+		return 0;
 	default:
 		badtag (0, tag, "bytesinscalar");
 		return (-1);
