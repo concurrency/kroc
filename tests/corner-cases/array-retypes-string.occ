@@ -1,0 +1,4 @@
+PROC p ()
+  VAL []BYTE foo RETYPES "":
+  SKIP
+:

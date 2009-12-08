@@ -33,3 +33,8 @@ case "$TESTS" in
     ;;
 esac
 
+case "$TESTS" in
+  *mandelbrot*)
+     ./mandelbrot.sh 6 2>&1 | tee -a results/mandelbrot.$TAG
+     ;;
+esac

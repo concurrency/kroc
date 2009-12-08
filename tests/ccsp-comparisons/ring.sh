@@ -27,6 +27,7 @@ run_cmd ()
 run_cmd "CCSP C" "./ring.ccsp $CYCLES"
 run_cmd "CCSP occam-pi" "./ring.occam $CYCLES"
 run_cmd "Erlang" "erl -noshell -run ring main $CYCLES"
+run_cmd "Go" "./ring.go-exe $CYCLES"
 run_cmd "Haskell" "./ring.haskell $CYCLES +RTS -N$CORES -RTS"
 run_cmd "Java" "java -Xss128k -classpath java6/. Ring $CYCLES"
 run_cmd "JCSP" "java -Xss128k -classpath jcsp/jcsp.jar:jcsp/. Ring $CYCLES"

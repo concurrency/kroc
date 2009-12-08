@@ -1702,7 +1702,7 @@ printtreenl (stderr, 4, type);
 			/* loading a nested MOBILE */
 			if (isdynamicmobilechantype (type)) {
 				/* always indexed by WSUB -- may not have a sensible expression, so use index */
-				treenode *asexp = ASExpOf (var) ?: ASIndexOf (var);
+				treenode *asexp = ASExpOf (var) ? ASExpOf (var) : ASIndexOf (var);
 
 				if (!ASExpOf (var)) {
 					/* this is a bad sign.. */

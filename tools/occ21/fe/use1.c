@@ -141,7 +141,7 @@ PRIVATE void printsublist (FILE * fptr, subscrlist * slist, const char *const na
 			if ((SLFirstOf (slist) == 0) && (SLLastOf (slist) == MAXINDEX))
 				fprintf (fptr, "all ");
 			else
-				fprintf (fptr, "%ld-%ld ", SLFirstOf (slist), SLLastOf (slist));
+				fprintf (fptr, "%d-%d ", SLFirstOf (slist), SLLastOf (slist));
 	}
 }
 

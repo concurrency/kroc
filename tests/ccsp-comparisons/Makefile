@@ -3,6 +3,9 @@ CC = gcc
 GHC = ghc
 ERLC = erlc
 JAVAC = javac
+6G := $(shell which 6g 8g | head -n 1)
+6L := $(shell which 6l 8l | head -n 1)
+
 CC_FLAGS := $(shell $(KROC) --cflags)
 CC_INC := $(shell $(KROC) --ccincpath)
 CC_LIB := $(shell $(KROC) --cclibpath)
@@ -12,6 +15,7 @@ targets = \
 	ts \
 	ring.beam \
 	ring.ccsp \
+	ring.go-exe \
 	ring.haskell \
 	ring.occam \
 	ring.pthread \
@@ -20,12 +24,14 @@ targets = \
 	mtring.beam \
 	mtring.ccsp \
 	mtring.haskell \
+	mtring.go-exe \
 	mtring.occam \
 	mtring.pthread \
 	java6/MTRing.class \
 	jcsp/MTRing.class \
 	agents.beam \
 	agents.ccsp \
+	agents.go-exe \
 	agents.haskell \
 	agents.occam \
 	agents.pthread \
@@ -34,7 +40,8 @@ targets = \
 	java6/Agents.class \
 	jcsp/Agents.class \
 	blur.ccsp \
-	blur.pthread
+	blur.pthread \
+	mandelbrot.occam
 
 all: $(targets)
 
@@ -52,6 +59,10 @@ ts:	ts.c
 
 %.class:	%.java
 	$(JAVAC) -Xlint:unchecked -classpath jcsp/jcsp.jar $<
+
+%.go-exe:	go/%.go
+	$(6G) -o go/$*.68 $< 
+	$(6L) -o $@ go/$*.68
 
 %.haskell:	haskell/%.hs
 	$(GHC) --make -O2 -fglasgow-exts -threaded $< -o $@

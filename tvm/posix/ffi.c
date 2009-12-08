@@ -16,10 +16,12 @@
 #define BYTE WIN_BYTE
 #define WORD WIN_WORD
 #define UWORD WIN_UWORD
+#define interface WIN_interface
 #	include <windows.h>
 #undef BYTE
 #undef WORD
-#undef UWORD 
+#undef UWORD
+#undef interface
 #	include <io.h>
 #else
 #include <dlfcn.h>

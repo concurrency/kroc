@@ -33,6 +33,7 @@ run_cmd ()
 run_cmd "CCSP C" "./agents.ccsp $GRID $AGENTS"
 run_cmd "CCSP occam-pi" "./agents.occam $GRID $AGENTS"
 run_cmd "Erlang" "erl -noshell -run agents main $GRID $AGENTS"
+run_cmd "Go" "./agents.go-exe $GRID $AGENTS"
 run_cmd "Haskell" "./agents.haskell $GRID $AGENTS +RTS -N$CORES -RTS"
 run_cmd "Java" "java -Xss128k -classpath java6/. Agents $GRID $AGENTS"
 run_cmd "JCSP" "java -Xss128k -classpath jcsp/jcsp.jar:jcsp/. Agents $GRID $AGENTS"

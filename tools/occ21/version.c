@@ -37,14 +37,14 @@
 
 
 arg2_help_page_info oc_help_info = {
-	tool_name: TOOL,
-	toolset_description: TOOL_TOOLSET,
-	tool_description: TOOL_LONG,
-	version: TOOL_VERSION,
-	build_time: TOOL_DATE,
-	copyright_years: TOOL_COPYRIGHT,
-	usage_line: TOOL_USAGE,
-	env_var: TOOL_OPTENV
+	.tool_name = TOOL,
+	.toolset_description = TOOL_TOOLSET,
+	.tool_description = TOOL_LONG,
+	.version = TOOL_VERSION,
+	.build_time = TOOL_DATE,
+	.copyright_years = TOOL_COPYRIGHT,
+	.usage_line = TOOL_USAGE,
+	.env_var = TOOL_OPTENV
 };
 #if 0
 /*{{{  PUBLIC void check_licence_manager */

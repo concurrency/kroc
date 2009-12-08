@@ -1430,9 +1430,9 @@ PRIVATE void printbitmap (int sorted_var[])
 		const int varnum = sorted_var[i];
 		treenode *nptr = var_list[varnum];
 		if (NVOffsetOf (nptr) == NO_SLOT) {
-			fprintf (outfile, "%-3d:NONE %3ld %5ld : ", i, numslots (nptr), NVUseCountOf (nptr));
+			fprintf (outfile, "%-3d:NONE %3d %5d : ", i, numslots (nptr), NVUseCountOf (nptr));
 		} else {
-			fprintf (outfile, "%-3d:%4ld %3ld %5ld : ", i, NVOffsetOf (nptr), numslots (nptr), NVUseCountOf (nptr));
+			fprintf (outfile, "%-3d:%4d %3d %5d : ", i, NVOffsetOf (nptr), numslots (nptr), NVUseCountOf (nptr));
 		}
 		printname (nptr);
 		for (j = var_base; j < num_var; j++) {
@@ -1748,13 +1748,13 @@ PRIVATE void printdiagnostic (treenode * const var, const BOOL show_ws, const BO
 {
 	printname (var);
 	if (show_ws) {
-		fprintf (outfile, " at workspace offset %ld", NVOffsetOf (var));
+		fprintf (outfile, " at workspace offset %d", NVOffsetOf (var));
 	} else if (mapped_onto_vsptr) {
 		fputs (" mapped onto vsptr", outfile);
 	}
 	if (isinvectorspace (var)) {
 		INT32 vsoffset = NVVSOffsetOf (var);
-		fprintf (outfile, "  vector space [%ld..%ld]", vsoffset, vsoffset + allocsize (var) - 1);
+		fprintf (outfile, "  vector space [%d..%d]", vsoffset, vsoffset + allocsize (var) - 1);
 	}
 	fputc ('\n', outfile);
 }
@@ -2560,7 +2560,7 @@ PUBLIC INT32 allocvars (const int first_var, const int free_paramslots, const BO
 						if (diagnostics) {
 							/*{{{  print some diagnostics */
 							printname (var);
-							fprintf (outfile, " moved to param slot, ws offset = %ld\n", NVOffsetOf (var));
+							fprintf (outfile, " moved to param slot, ws offset = %d\n", NVOffsetOf (var));
 							/*}}} */
 						}
 						/*}}} */
@@ -2575,7 +2575,7 @@ PUBLIC INT32 allocvars (const int first_var, const int free_paramslots, const BO
 									fputs (" + ", outfile);
 									printname (nextvar);
 									if (old_diff != 0) {
-										fprintf (outfile, " moved to overlay, ws offset = %ld", NVOffsetOf (nextvar));
+										fprintf (outfile, " moved to overlay, ws offset = %d", NVOffsetOf (nextvar));
 									}
 									fputc ('\n', outfile);
 									/*}}} */
@@ -2926,7 +2926,7 @@ PUBLIC void allocparams (treenode * nptr)
 					/*{{{  allocate the parameter */
 					SetNVOffset (thisfparam, paramposn);
 					if (diagnostics) {
-						fprintf (outfile, "Parameter %s at workspace offset %ld, use count = %ld\n",
+						fprintf (outfile, "Parameter %s at workspace offset %d, use count = %d\n",
 							 WNameOf (NNameOf (thisfparam)), NVOffsetOf (thisfparam), NVUseCountOf (thisfparam));
 					}
 					allocate_overlays (NVNextOf (thisfparam), paramposn);
@@ -2948,14 +2948,14 @@ PUBLIC void allocparams (treenode * nptr)
 				/* added for more readability of assembly output: */
 				SetNVVarNum (HExpOf (thisfparam), hiddentempno--);	/* 14/3/91 */
 				if (diagnostics) {
-					fprintf (outfile, "Hidden param at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Hidden param at workspace offset %d\n", paramposn);
 				}
 				break;
 				/*}}} */
 				/*{{{  static link */
 			case S_PARAM_STATICLINK:
 				if (diagnostics) {
-					fprintf (outfile, "Static link at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Static link at workspace offset %d\n", paramposn);
 				}
 				if (need_wsmap) {
 					wsmap_new_entry (paramposn, thisfparam, WSMAP_STATICLINK, 1, NULL);
@@ -2974,7 +2974,7 @@ PUBLIC void allocparams (treenode * nptr)
 						allocate_overlays (NVNextOf (vptr), paramposn);
 					}
 					if (diagnostics) {
-						fprintf (outfile, "Vectorspace pointer at workspace offset %ld\n", paramposn);
+						fprintf (outfile, "Vectorspace pointer at workspace offset %d\n", paramposn);
 					}
 					if (need_wsmap) {
 						wsmap_new_entry (paramposn, thisfparam, WSMAP_VSPTR, 1, NULL);
@@ -2985,7 +2985,7 @@ PUBLIC void allocparams (treenode * nptr)
 				/*{{{  fork-barrier pointer*/
 			case S_PARAM_FB:
 				if (diagnostics) {
-					fprintf (outfile, "Fork barrier at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Fork barrier at workspace offset %d\n", paramposn);
 				}
 				if (need_wsmap) {
 					wsmap_new_entry (paramposn, thisfparam, WSMAP_FB, 1, NULL);
@@ -2995,14 +2995,14 @@ PUBLIC void allocparams (treenode * nptr)
 				/*{{{  workspace size*/
 			case S_PARAM_WS:
 				if (diagnostics) {
-					fprintf (outfile, "Workspace size at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Workspace size at workspace offset %d\n", paramposn);
 				}
 				/*}}}*/
 #ifdef MOBILES
 				/*{{{  mobile-space pointer*/
 			case S_PARAM_MSP:
 				if (diagnostics) {
-					fprintf (outfile, "Mobilespace pointer at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Mobilespace pointer at workspace offset %d\n", paramposn);
 				}
 				if (need_wsmap) {
 					wsmap_new_entry (paramposn, thisfparam, WSMAP_MSPTR, 1, NULL);
@@ -3012,7 +3012,7 @@ PUBLIC void allocparams (treenode * nptr)
 				/*{{{  mobile-process pointer*/
 			case S_PARAM_MPP:
 				if (diagnostics) {
-					fprintf (outfile, "Mobile process pointer at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Mobile process pointer at workspace offset %d\n", paramposn);
 				}
 				if (need_wsmap) {
 					wsmap_new_entry (paramposn, thisfparam, WSMAP_MPP, 1, NULL);
@@ -3022,7 +3022,7 @@ PUBLIC void allocparams (treenode * nptr)
 				/*{{{  hidden type node*/
 			case S_HIDDEN_TYPE:
 				if (diagnostics) {
-					fprintf (outfile, "Hidden type at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Hidden type at workspace offset %d\n", paramposn);
 				}
 				break;
 				/*}}}*/
