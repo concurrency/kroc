@@ -49,21 +49,17 @@ AC_ARG_ENABLE([mmap], AS_HELP_STRING([--disable-mmap],[disable mmap() based allo
 AC_ARG_ENABLE([tls], AS_HELP_STRING([--enable-tls],[use thread-local-storage for scheduler pointer]), [enable_tls=$enableval], [enable_tls=yes])
 dnl AC_ARG_ENABLE([sse2], AS_HELP_STRING([--disable-sse2],[do not use SSE2 even if supported on build system]), [enable_sse2=$enableval], [enable_sse2=yes])
 AC_ARG_ENABLE([tuning], AS_HELP_STRING([--enable-tuning=...],[set tuning for speed or size (default speed)]), [tuning=$enableval], [tuning=default])
-dnl AC_ARG_WITH([rmox], AS_HELP_STRING([--with-rmox=...],[location of RMoX source tree to build the RMoX version of CCSP for]), [rmox=$withval], [rmox=])
 AC_ARG_WITH([alloc], AS_HELP_STRING([--with-alloc=...],[allocator to use (malloc,block,sblock)]), [alloc=$withval], [alloc=])
 
 #}}}
 
 #{{{  import shared config
 
-if test "$KROC_RMOX" != "none"; then
-  KROC_CCSP_ENABLE_RMOX=yes
+if test "x$KROC_RMOX" != "x"; then
   # other settings because we configure this out-of-tree
   KROC_CCSP_ENABLE_MP=yes
   KROC_CCSP_ENABLE_PTHREADS=no
   KROC_CCSP_ENABLE_DYNPROC=no
-else
-  KROC_CCSP_ENABLE_RMOX=no
 fi
 
 EXTRA_CFLAGS="$EXTRA_CFLAGS $KROC_CCSP_CFLAGS"
@@ -462,7 +458,7 @@ fi
 #{{{  setup RMoX build
 
 AC_MSG_CHECKING(whether to build the special RMoX version of CCSP)
-if test "$KROC_RMOX" = "none"; then
+if test "x$KROC_RMOX" = "x"; then
  AC_MSG_RESULT(no)
  RMOX_RTLIB=
  RMOX_CFLAGS=
@@ -507,7 +503,7 @@ fi
 #{{{  check for thread-local storage 
 
 AC_MSG_CHECKING(whether to use thread-local-storage)
-if test "$enable_tls" = no || test "$KROC_CCSP_ENABLE_MP" = no || test "$KROC_RMOX" != "none"; then
+if test "$enable_tls" = no || test "$KROC_CCSP_ENABLE_MP" = no || test "x$KROC_RMOX" != "x"; then
  AC_MSG_RESULT(no)
 else
  AC_TRY_RUN([
