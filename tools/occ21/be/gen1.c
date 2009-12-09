@@ -5258,6 +5258,8 @@ printtreenl (stderr, 4, plist);
 						case N_PROCDEF:
 						case N_LFUNCDEF:
 						case N_SFUNCDEF:
+						case N_LIBPROCDEF:
+						case N_LIBFUNCDEF:
 							{
 								wordnode *nameptr = translate_from_internal (NNameOf (vv));
 								const char *desc_buffer;
