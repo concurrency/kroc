@@ -11,6 +11,7 @@ endif
 
 EXTRA_DIST = \
 	butterflies.occ \
+	g3dboard.occ \
 	g3dchess.occ \
 	g3dcog2.occ \
 	g3dcogs.occ \
@@ -21,6 +22,7 @@ EXTRA_DIST = \
 if BUILD_GRAPHICS3D_EXAMPLES
 examples = \
 	butterflies \
+	g3dboard \
 	g3dchess \
 	g3dcog2 \
 	g3dcogs \
@@ -33,6 +35,9 @@ all-local: $(examples)
 
 butterflies: butterflies.occ
 	$(OCCBUILD) --program $(srcdir)/butterflies.occ
+
+g3dboard: g3dboard.occ
+	$(OCCBUILD) --program $(srcdir)/g3dboard.occ
 
 g3dchess: g3dchess.occ
 	$(OCCBUILD) --program $(srcdir)/g3dchess.occ
