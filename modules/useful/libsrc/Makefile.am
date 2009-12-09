@@ -11,7 +11,6 @@ EXTRA_DIST = \
 	format.occ \
 	math.occ \
 	matrix.occ \
-	random.occ \
 	string.occ \
 	useful.inc \
 	useful-c.c \
@@ -22,7 +21,6 @@ useful_lib_objs = \
 	format-gen.tce \
 	math.tce \
 	matrix.tce \
-	random.tce \
 	string.tce \
 	vector.tce
 if TRACE_VIA_FFI
