@@ -1176,6 +1176,8 @@ PUBLIC const char *chkmessagestring (const int n)
 		return ("invalid type in FMTYPES pragma");
 	case CHK_BAD_FMTYPES_NAMEDTYPE:
 		return ("%s is not a valid type for FMTYPES pragma");
+	case CHK_BAD_CASE_INCLUSION:
+		return ("cannot include tags, not a tagged protocol");
 		/*}}}*/
 		/*{{{  buffered channel errors*/
 	case CHK_BUFCHAN_NOTCONST:
