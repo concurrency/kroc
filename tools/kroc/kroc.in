@@ -952,6 +952,10 @@ if [ $showautovars ]; then
 	printf 'KROC_CCSP_ENABLE_CTTD="%s";\n' "@KROC_CCSP_ENABLE_CTTD@"
 	printf 'KROC_CCSP_ENABLE_PONY="%s";\n' "@KROC_CCSP_ENABLE_PONY@"
 	printf 'KROC_CCSP_ENABLE_DYNPROC="%s";\n' "@KROC_CCSP_ENABLE_DYNPROC@"
+	printf 'KROC_CCSP_ENABLE_SSE2="%s";\n' "@KROC_CCSP_ENABLE_SSE2@"
+	printf 'KROC_CCSP_ENABLE_CPUTIMERS="%s";\n' "@KROC_CCSP_ENABLE_CPUTIMERS@"
+
+	printf 'KROC_RMOX="%s";\n' "@KROC_RMOX@"
 
 	exit 0
 fi
