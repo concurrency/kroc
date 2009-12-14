@@ -68,7 +68,12 @@ ARCH_ASFLAGS="@KROC_CCSP_ASFLAGS@"
 #PATH=$KROC/bin:$PATH
 
 package_version="@VERSION@"
-dversion='2.0'
+
+if [ "x@KROC_RMOX@" = "x" ]; then
+  dversion='2.0'
+else
+  dversion='2.0 (RMoX)'
+fi
 target_canonical="@KROC_CANONICAL_TARGET@"
 target_cpu="@KROC_TARGET_CPU@"
 target_os="@KROC_TARGET_OS@"
