@@ -22,6 +22,7 @@ AC_DEFUN([KROC_CCSP_FLAGS],
 [dnl
 AC_REQUIRE([AC_CANONICAL_SYSTEM])
 AC_REQUIRE([OCCAM_IN_TREE])
+AC_REQUIRE([KROC_RMOX_BUILD])
 
 # If you add new variables here, make sure you update tools/kroc/Makefile.am
 # and tools/kroc/kroc.in too.
@@ -42,7 +43,6 @@ KROC_CCSP_ENABLE_PONY=""
 KROC_CCSP_ENABLE_DYNPROC=""
 KROC_CCSP_ENABLE_SSE2=""
 KROC_CCSP_ENABLE_CPUTIMERS=""
-KROC_RMOX=""
 
 if test "x$KROC_BUILD_ROOT" != "x"; then
   # We're configuring inside the KRoC source tree; we need to figure out the
@@ -83,11 +83,6 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
                                [enable CPU timers (default disabled)]),
                 KROC_CCSP_ENABLE_CPUTIMERS=$enableval,
                 KROC_CCSP_ENABLE_CPUTIMERS=no)
-  AC_ARG_WITH([rmox],
-              AS_HELP_STRING([--with-rmox=...],
-                             [location of RMoX source tree (building for RMoX only)]),
-              KROC_RMOX="$withval",
-              KROC_RMOX="")
 
   KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -fomit-frame-pointer -fno-defer-pop"
 
@@ -219,7 +214,6 @@ AC_SUBST(KROC_CCSP_ENABLE_CTTD)
 AC_SUBST(KROC_CCSP_ENABLE_PONY)
 AC_SUBST(KROC_CCSP_ENABLE_DYNPROC)
 AC_SUBST(KROC_CCSP_ENABLE_SSE2)
-AC_SUBST(KROC_RMOX)
 
 ])dnl
 dnl
@@ -236,4 +230,26 @@ else
     AC_MSG_ERROR([kroc not found; set \$KROC or \$PATH appropriately])
   fi
 fi
+])dnl
+dnl
+dnl Settings for the RMoX specific build of KRoC
+AC_DEFUN([KROC_RMOX_BUILD],
+[dnl
+AC_REQUIRE([OCCAM_IN_TREE])
+
+KROC_RMOX=""
+
+if test "x$KROC_BUILD_ROOT" != "x"; then
+  # We're configuring inside the KRoC source tree; we need to figure out the
+  # flags based on the target and configure options.
+
+  AC_ARG_WITH([rmox],
+              AS_HELP_STRING([--with-rmox=...],
+                             [location of RMoX source tree (building for RMoX only)]),
+              KROC_RMOX="$withval",
+              KROC_RMOX="")
+fi
+
+AC_SUBST(KROC_RMOX)
+
 ])dnl

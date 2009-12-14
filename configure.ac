@@ -64,6 +64,7 @@ if test "x$KROC_RMOX" = "x"; then
 fi
 OCCAM_CONFIG_TARGET_SUBDIRS(modules/random/libsrc)
 OCCAM_CONFIG_TARGET_SUBDIRS(modules/time/libsrc)
+OCCAM_CONFIG_TARGET_SUBDIRS(modules/raster/libsrc)
 if test "x$KROC_RMOX" = "x"; then
   OCCAM_CONFIG_TARGET_SUBDIRS(modules/useful/libsrc)
   OCCAM_CONFIG_TARGET_SUBDIRS(modules/fmtoutlib/libsrc)
@@ -71,7 +72,6 @@ if test "x$KROC_RMOX" = "x"; then
   OCCAM_CONFIG_TARGET_SUBDIRS(modules/trap/libsrc)
   OCCAM_CONFIG_TARGET_SUBDIRS(modules/ttyutil/libsrc)
   OCCAM_CONFIG_TARGET_SUBDIRS(modules/moa/libsrc)
-  OCCAM_CONFIG_TARGET_SUBDIRS(modules/raster/libsrc)
   OCCAM_CONFIG_TARGET_SUBDIRS(modules/occSDL/libsrc)
   OCCAM_CONFIG_TARGET_SUBDIRS(modules/sdlraster/libsrc)
   OCCAM_CONFIG_TARGET_SUBDIRS(modules/occade/libsrc)
