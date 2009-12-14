@@ -5271,8 +5271,6 @@ printtreenl (stderr, 4, plist);
 
 								desc_buffer = create_descriptor_string (be_get_fe_handle (), vv, nameptr, 1, 0, 1);
 								/* the descriptor may be split over several lines; count until we reach a closing parenthesis */
-#if 1
-#endif
 								for (lclen=0; (desc_buffer[lclen] != '\0') && (desc_buffer[lclen] != '('); lclen++);
 								if (desc_buffer[lclen] == '(') {
 									/* start of parameter list */

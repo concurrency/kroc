@@ -517,6 +517,10 @@ printtreenl (stderr, 4, DNameOf(ARTypeOf (MTypeOf (NTypeOf (tptr)))));
 PRIVATE void write_desctypelist (treenode *tptr, int *const line_len)
 {
 	int count;
+#if 0
+fprintf (stderr, "objlib: write_desctypelist(): tptr = ");
+printtreenl (stderr, 4, tptr);
+#endif
 	for (count = 0; !EndOfList (tptr); tptr = NextItem (tptr), count++) {
 		if (count != 0) {
 			write_descstring (",", line_len);
@@ -622,7 +626,7 @@ PRIVATE void write_descheader (treenode *const nptr, const wordnode *const namep
 {
 	int line_len = 0;
 
-	if (TagOf (nptr) == N_PROCDEF) {	/* Write a PROC header */
+	if ((TagOf (nptr) == N_PROCDEF) || (TagOf (nptr) == N_LIBPROCDEF)) {	/* Write a PROC header */
 		write_descstring ("PROC ", &line_len);
 	} else if (TagOf (nptr) == N_MPROCDECL) {	/* MOBILE PROC header */
 		write_descstring ("MOBILE PROC ", &line_len);
