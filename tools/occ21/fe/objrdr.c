@@ -166,23 +166,10 @@ PRIVATE char *getbytes_from_tcoff (FILE *fs, const int len)
 /*{{{  PRIVATE void        throw_bytes_from_tcoff (fs, len) */
 PRIVATE void throw_bytes_from_tcoff (FILE *fs, const long int l)
 {
-#if 1
 	const int res = fseek (fs, l, SEEK_CUR);
-	if (res != 0)
+	if (res != 0) {
 		lexfatal (LEX_EOF, /*NOPOSN*/ flocn);
-#else
-	long int i;
-	if (l >= BUFSIZ) {
-		const int res = fseek (fs, l, SEEK_CUR);
-		if (res != 0)
-			lexfatal (LEX_EOF, /*NOPOSN*/ flocn);
-	} else
-		for (i = 0; i < l; i++) {
-			const int c = fgetc (fs);
-			if (feof (fs))
-				lexfatal (LEX_EOF, /*NOPOSN*/ flocn);	/* bug 1362 13/8/91 */
-		}
-#endif
+	}
 }
 
 /*}}}  */
@@ -280,6 +267,7 @@ PRIVATE BOOL process_externalname (wordnode *name,
 	/* (was SINGLE_PROCDEF) */
 	if (((current_fe_data->fe_lang & FE_LANG_OCCAM) == 0) || ((libentry->l_procdefs == NULL) && compatible)) {
 		procdef = (procdef_t *) newvec (sizeof (procdef_t));
+
 		procdef->p_ws = ws;
 		procdef->p_vs = vs;
 #ifdef MOBILES
@@ -893,10 +881,9 @@ PRIVATE int extern_status;
 #define DEFAULT_EXTERNAL_VS 0
 #define DEFAULT_EXTERNAL_MS 0
 
-/*{{{  PRIVATE get_optional_num  */
-/*  return negative if error */
-PRIVATE const char *get_optional_num (const char *ptr, INT32 *res, char c)
+PRIVATE const char *get_optional_num (const char *ptr, INT32 *res, char c) /*{{{*/
 {
+	/*  return negative if error */
 	INT32 n = 0;
 	while (*ptr == ' ') {
 		ptr++;
@@ -923,10 +910,23 @@ PRIVATE const char *get_optional_num (const char *ptr, INT32 *res, char c)
 
 	return (ptr);
 }
-
-/*}}}  */
-/*{{{  PUBLIC BOOL init_external  */
-PUBLIC BOOL init_external (const char *string, const int dynext)
+/*}}}*/
+PRIVATE const char *get_optional_string (const char *ptr, const char *sptr, int *res) /*{{{*/
+{
+	/* if found, sets 'res' to non-zero, else zero */
+	while (*ptr == ' ') {
+		ptr++;
+	}
+	for (; (*sptr != '\0') && (*sptr == *ptr); sptr++, ptr++);
+	if ((*sptr == '\0') && ((*ptr == ' ') || (*ptr == '\t') || (*ptr == '\n') || (*ptr == '\0'))) {
+		*res = 1;
+	} else {
+		*res = 0;
+	}
+	return (ptr);
+}
+/*}}}*/
+PUBLIC BOOL init_external (const char *string, const int dynext) /*{{{*/
 {
 	wordnode *name = NULL;
 	const char *ptr;
@@ -936,13 +936,24 @@ PUBLIC BOOL init_external (const char *string, const int dynext)
 	INT32 ms = DEFAULT_EXTERNAL_MS;
 #endif
 	int dummy;
+	int does_fork = 0;
 
 	/* PARSE: "PROC P () = 1", or "PROC P () = 1 , 10" */
 	/* for mobiles, parse an extra one */
 
-	while ((len > 0) && string[len] != ')') {
-		len--;
+	for (len = strlen (string); (len > 0) && (string[len] != ')'); len--);
+
+	/* look for 'FORK' */
+	if (string[len] == ')') {
+		int i = len + 1;
+
+		for (; (string[i] == ' ') || (string[i] == '\t'); i++);
+		if (!strncmp (string + i, "FORK", 4)) {
+			does_fork = 1;
+			len = i+3;
+		}
 	}
+
 	extern_buf = memalloc (len + 3);
 	memcpy (extern_buf, string, len + 1);
 
@@ -951,6 +962,10 @@ PUBLIC BOOL init_external (const char *string, const int dynext)
 	extern_buf_len = len + 2;
 	extern_status = 0;
 
+#if 0
+fprintf (stderr, "init_external(): string is [%s]\n", string);
+fprintf (stderr, "init_external(): line   is [%s]\n", extern_buf);
+#endif
 	DEBUG_MSG (("init_external: string is \"%s\"\n", string));
 	DEBUG_MSG (("init_external: line   is \"%s\"\n", extern_buf));
 
@@ -1021,7 +1036,7 @@ fprintf (stderr, "init_external: found bsyscall.  name is %*s, ws=%d, vs=%d, ms=
 }
 
 /*}}}  */
-/*{{{  PUBLIC const char *readexternalline () for the lexer */
+/*{{{  PUBLIC const char *readexternalline (int *const line_len)*/
 /*{{{  comment */
 /*****************************************************************************
  *

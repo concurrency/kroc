@@ -5268,9 +5268,15 @@ printtreenl (stderr, 4, plist);
 								treenode *plist = NParamListOf (vv);
 								INT32 ws, vs, thash;
 								int pcount = 0;
+								int p_doesfork = 0;
+								int extra = 0;
 
 								desc_buffer = create_descriptor_string (be_get_fe_handle (), vv, nameptr, 1, 0, 1);
-								/* the descriptor may be split over several lines; count until we reach a closing parenthesis */
+#if 0
+fprintf (stderr, "gen1: pragma_name_export: desc_buffer = [%s]\n", desc_buffer);
+#endif
+								/* the descriptor may be split over several lines; count until we
+								 * reach a closing parenthesis */
 								for (lclen=0; (desc_buffer[lclen] != '\0') && (desc_buffer[lclen] != '('); lclen++);
 								if (desc_buffer[lclen] == '(') {
 									/* start of parameter list */
@@ -5296,7 +5302,23 @@ printtreenl (stderr, 4, plist);
 									return;
 								}
 
-								lcbuf = memalloc (lclen + 2);
+								switch (TagOf (vv)) {
+								case N_PROCDEF:
+								case N_LIBPROCDEF:
+									if (NPForksOf (vv)) {
+										/* needs a FORK barrier */
+										p_doesfork = 1;
+									}
+									break;
+								default:
+									break;
+								}
+								
+								if (p_doesfork) {
+									extra = 6;
+								}
+
+								lcbuf = memalloc (lclen + 2 + extra);
 								memcpy (lcbuf, desc_buffer, lclen);
 								/* go through and turn newlines into spaces */
 								for (i=0; i < lclen; i++) {
@@ -5305,6 +5327,12 @@ printtreenl (stderr, 4, plist);
 									}
 								}
 								lcbuf[lclen] = '\0';
+
+								if (p_doesfork) {
+									memcpy (lcbuf + lclen, " FORK", 5);
+									lclen += 5;
+									lcbuf[lclen] = '\0';
+								}
 #if 0
 fprintf (stderr, "tnestedroutines(): EXPORT for [%s], lcbuf=[%s]\n", WNameOf (NNameOf (vv)), lcbuf);
 #endif
