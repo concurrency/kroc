@@ -83,7 +83,7 @@ def execute(cmd, args=[], env={}):
     line = fp.readline()
     fp.close()
     if line.startswith('#!'):
-       args.insert(0, cmd_abs)
+       args.insert(0, cmd_abs.replace('\\', '/'))
        cmd = line[2:].strip()
        cmd = cmd.split()
        cmd[0] = os.path.basename(cmd[0])
@@ -91,8 +91,11 @@ def execute(cmd, args=[], env={}):
        cmd = [cmd]
     if verbose:
         print cmd, args, env
+    # This might not always be the right thing to do! maybe check for a drive letter
+    # to be more sure that it is a path we are changing...
+    args = [a.replace('\\', '/') for a in args]
     if not dry_run:
-        ret = subprocess.call(cmd + args, env=env, shell=True)
+        ret = subprocess.call(cmd + args, env=env, shell=False)
         # ret = os.spawnvpe(os.P_WAIT, cmd, [os.path.basename(cmd)] + args, env)
         if ret != 0: raise ExecuteException(cmd, args, env, ret)
     return # Dry-run commands always succeed
