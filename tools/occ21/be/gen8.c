@@ -1954,7 +1954,7 @@ fprintf (stderr, "tinstance: calling augmentparams()\n");
 		
 		if (savep_vsp) {
 			save_vsp = *savep_vsp;
-			*savep_vsp = NULL;
+			*savep_vsp = NextItem (save_vsp);
 		}
 		thash = typehash (nplist);
 		if (savep_vsp) {

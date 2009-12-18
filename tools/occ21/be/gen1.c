@@ -5337,10 +5337,15 @@ fprintf (stderr, "gen1: pragma_name_export: desc_buffer = [%s]\n", desc_buffer);
 fprintf (stderr, "tnestedroutines(): EXPORT for [%s], lcbuf=[%s]\n", WNameOf (NNameOf (vv)), lcbuf);
 #endif
 
+								getprocwsandvs (vv, &ws, &vs);
+
+								if (p_doesfork && (vs <= 0)) {
+									generr_s (GEN_FORKED_EXPORT_NO_VS, WNameOf (NNameOf (vv)));
+									geninternal_is (GEN_ERROR_IN_ROUTINE, 1, "tnestedroutines: FORKing externals must have vectorspace");
+								}
+
 								gencommentv (".MAGIC EXPORT %s", lcbuf);
 								memfree (lcbuf);
-
-								getprocwsandvs (vv, &ws, &vs);
 
 								/* remember to carve off any VS parameter before hashing */
 								{
@@ -5361,13 +5366,21 @@ fprintf (stderr, "tnestedroutines(): EXPORT for [%s], lcbuf=[%s]\n", WNameOf (NN
 									
 									if (savep_vsp) {
 										save_vsp = *savep_vsp;
-										*savep_vsp = NULL;
+										*savep_vsp = NextItem (save_vsp);
 									}
+#if 0
+fprintf (stderr, "tnestedroutines(): calling EXPORT for [%s], typehash tree is:", WNameOf (NNameOf (vv)));
+printtreenl (stderr, 4, plist);
+#endif
 									thash = typehash (plist);
 									if (savep_vsp) {
 										*savep_vsp = save_vsp;
 									}
 								}
+#if 0
+fprintf (stderr, "tnestedroutines(): EXPORT for [%s], thash = 0x%8.8x, raw typehash tree is:", WNameOf (NNameOf (vv)), thash);
+printtreenl (stderr, 4, plist);
+#endif
 								gencommentv (".MAGIC DYNCALL %s %d %d %8.8X", WNameOf (NNameOf (vv)), ws, vs, thash);
 							}
 							break;
