@@ -7,6 +7,9 @@ import subprocess
 import tarfile
 import urllib
 import urllib2
+import fnmatch
+import shutil
+import re
 
 paths = dict(
   downloads = 'downloads',
@@ -118,3 +121,25 @@ makedir(paths['msys'])
 
 extract(msys_files, paths['msys'])
 extract(mingw_files, paths['mingw'])
+
+print 'creating fstab'
+tvmdir = os.path.abspath(os.path.join(os.getcwd(), '../../')).replace('\\', '/')
+msysdir = os.path.abspath(paths['mingw']).replace('\\', '/')
+fp = open('msys/etc/fstab', 'w')
+fp.write('%s\t%s\n' % (tvmdir, '/tvm'))
+fp.write('%s\t%s\n' % (msysdir, '/mingw'))
+fp.close()
+
+print 'renaming autotools'
+r = re.compile('(aclocal|auto.*?)-.*')
+bindir = os.path.join(paths['mingw'], 'bin')
+autotools = os.listdir(bindir)
+autotools = [at for at in autotools if r.match(at)]
+tools = [t[:t.index('-')] for t in autotools]
+print autotools
+print tools
+for tool in tools:
+    versions = fnmatch.filter(autotools, tool + '-*')
+    versions.sort()
+    shutil.copy(os.path.join(bindir, versions[0]),
+                os.path.join(bindir, tool))
