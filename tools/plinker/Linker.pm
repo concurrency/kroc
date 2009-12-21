@@ -1127,7 +1127,7 @@ sub build_ffi_call ($$) {
 	my $stub		= $label->{'stub'};
 	my $idx			= $$ffi_idx;
 	
-	if ($stub =~ /^C\.tvmspecial\.(\d)/) {
+	if ($stub =~ /^C\.tvmspecial\.(\d+)/) {
 		$idx = -($1 + 1);
 	} else {
 		my ($name) = ($stub =~ /^.*?\.(.*)$/);
