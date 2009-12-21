@@ -4,14 +4,22 @@
 #include "config.h"
 #endif
 
+/*
+ * The windows header files define the same constants used by the TVM. Also
+ * problematic is that 'interface' is defined as '_COM_interface' which in 
+ * turn is defined as 'struct'. This is a big problem...
+ */
 #ifdef WIN32
 #define BYTE WIN_BYTE
 #define WORD WIN_WORD
 #define UWORD WIN_UWORD
+#define DWORD WIN_DWORD
 #include <windows.h>
 #undef BYTE
 #undef WORD
 #undef UWORD 
+#undef DWORD 
+#undef interface
 #endif
 
 #include <stdlib.h>
