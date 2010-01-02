@@ -381,7 +381,7 @@ do
 		fs | filesystem)
 			octranopts="$octranopts -kr --rmoxmode fs"
 			occopts="$occopts -zdme"
-			rmoxlink=fs
+			rmoxlink=fsm
 			;;
 		net | network)
 			octranopts="$octranopts -kr --rmoxmode net"
