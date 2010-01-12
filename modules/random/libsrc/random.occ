@@ -154,7 +154,7 @@ REAL32, REAL32, RANDOM.STATE FUNCTION random.gaussian.real32s (VAL RANDOM.STATE 
           x2, new.state := random.real32 (2.0, new.state)
           x2 := x2 - 1.0
           w := (x1 * x1) + (x2 * x2)
-      w := SQRT ((-2.0) * ALOG (w)) / w
+      w := SQRT (((-2.0) * ALOG (w)) / w)
       value1 := x1 * w
       value2 := x2 * w
       --}}}
