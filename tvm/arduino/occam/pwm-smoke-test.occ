@@ -30,13 +30,46 @@ PROC oscilate(VAL INT step, CHAN INT level!, CHAN SIGNAL stop.pwm!, CHAN SIGNAL 
           run := TRUE
           
 :
-
+VAL []INT PINS IS [6, 5, 9, 10, 3, 11]:
 PROC main()
-  CHAN INT level:
-  CHAN SIGNAL stop.all:
-  CHAN SIGNAL stop.pwm:
-  PAR
-    run(10000, stop.all!)
-    oscilate(0, level!, stop.pwm!, stop.all?)
-    pwm(stop.pwm?, level?)
+  SEQ
+    beginSerial(57600)
+    PAR i = 0 FOR 6
+      CHAN INT level:
+      CHAN SIGNAL stop.all:
+      CHAN SIGNAL stop.pwm:
+      PAR
+        run(3000, stop.all!)
+        oscilate(0, level!, stop.pwm!, stop.all?)
+        pwm(PINS[i], stop.pwm?, level?)
+:
+
+PROC just.three ()
+  SEQ
+    beginSerial(57600)
+    CHAN INT level:
+    CHAN SIGNAL stop.all:
+    CHAN SIGNAL stop.pwm:
+    WHILE TRUE
+      PAR
+        run(10000, stop.all!)
+        oscilate(0, level!, stop.pwm!, stop.all?)
+        pwm(3, stop.pwm?, level?)
+:
+
+VAL []INT try IS [11, 6, 5, 3]:
+PROC wonky()
+  SEQ
+    beginSerial(57600)
+    SEQ i = 0 FOR (SIZE try)
+      SEQ
+        beginAnalog(try[i])
+        analogLevel(try[i], 128)
+        delay(1000)
+:
+
+PROC choose ()
+  -- just.three()
+  --main()
+  wonky()
 :
