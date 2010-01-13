@@ -132,6 +132,40 @@ PROC pinMode (VAL INT pin, mode)
 :
 --}}}
 
+
+--{{{  PROC beginAnalog
+PROC beginAnalog ()
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    ports[TCCR2A] := BV (COM2A1) \/ BV (WGM20)
+    ports[TCCR2B] := BV (CS22)
+    ports[OCR2A] := 0
+:
+--}}}
+
+
+--{{{  PROC analogLevel
+PROC analogLevel (VAL BYTE level)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    ports[OCR2A] := level
+:
+--}}}
+
+
+--{{{  PROC endAnalog
+PROC endAnalog ()
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    ports[TCCR2A] := 0
+    ports[TCCR2B] := 0
+    ports[OCR2A] := 30
+:
+--}}}
+
 --{{{  PROC beginSerial
 --* Initialise the serial port.
 -- @param baud Baud rate

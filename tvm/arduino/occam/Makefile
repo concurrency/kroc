@@ -5,6 +5,7 @@ PROG = blink
 PROGS = \
 	adc \
 	blink \
+	bblink \
 	blink-array \
 	button \
 	ch1 \
@@ -22,6 +23,7 @@ PROGS = \
 	hello \
 	ledmatrix \
 	nothing \
+	pwm-smoke-test \
 	rawblink \
 	testdiv
 
@@ -48,6 +50,7 @@ adc.hex: wiring.module
 avr.module: iom328p.inc
 blink-array.hex: wiring.module
 blink.hex: wiring.module
+bblink.hex: plumbing.module
 button.hex: wiring.module
 ch1.hex: plumbing.module
 ch2.hex: plumbing.module
@@ -64,6 +67,7 @@ exttimer.hex: wiring.module
 hello.hex: wiring.module
 ledmatrix.hex: wiring.module font8x8.inc
 plumbing.module: avr.module wiring.module
+pwm-smoke-test.hex: wiring.module plumbing.module
 rawblink.hex: wiring.module
 testdiv.hex: wiring.module
 wiring.module: avr.module
