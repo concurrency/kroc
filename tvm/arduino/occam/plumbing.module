@@ -149,29 +149,27 @@ PROC heartbeat ()
   blink (LED.PIN, 500)
 :
 
-PROC pwm (CHAN SIGNAL stop?, CHAN INT level?)
-  VAL INT PIN IS 11:
+PROC pwm (VAL INT pin, CHAN SIGNAL stop?, CHAN INT level?)
   INITIAL BOOL run IS TRUE:
   INITIAL BYTE dc IS 0:
   INITIAL INT lvl IS 0:
   SEQ
-    pinMode(PIN, OUTPUT)
-    beginAnalog()
+    beginAnalog(pin)
     WHILE run
       ALT
         level ? lvl
           SEQ
             IF
-              lvl > 255
-                dc := 255
+              lvl > 128 
+                dc := 128
               lvl < 0
                 dc := 0
               TRUE
                 dc := (BYTE lvl)
-            analogLevel(dc)
+            analogLevel(pin, dc)
         stop ? SIGNAL
           run := FALSE
-    endAnalog()
+    endAnalog(pin)
 :
 
 #ENDIF

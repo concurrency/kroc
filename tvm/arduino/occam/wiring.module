@@ -132,40 +132,6 @@ PROC pinMode (VAL INT pin, mode)
 :
 --}}}
 
-
---{{{  PROC beginAnalog
-PROC beginAnalog ()
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  SEQ
-    ports[TCCR2A] := BV (COM2A1) \/ BV (WGM20)
-    ports[TCCR2B] := BV (CS22)
-    ports[OCR2A] := 0
-:
---}}}
-
-
---{{{  PROC analogLevel
-PROC analogLevel (VAL BYTE level)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  SEQ
-    ports[OCR2A] := level
-:
---}}}
-
-
---{{{  PROC endAnalog
-PROC endAnalog ()
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  SEQ
-    ports[TCCR2A] := 0
-    ports[TCCR2B] := 0
-    ports[OCR2A] := 30
-:
---}}}
-
 --{{{  PROC beginSerial
 --* Initialise the serial port.
 -- @param baud Baud rate
@@ -209,6 +175,53 @@ PROC serialWriteInt32 (VAL INT32 n)
   VAL []BYTE digits IS "0123456789abcdef":
   SEQ i = 7 FOR 8 STEP -1
     serialWrite ([digits[INT ((n >> (i * 4)) /\ #F)]])
+:
+--}}}
+
+VAL INT NO.MAP IS (- 1):
+VAL []INT ARDUINO.PIN.MAP IS [5, NO.MAP, 1, 0, NO.MAP, NO.MAP, 2, 3, 4]:
+VAL []INT TCR.MODE IS [TCCR0A, TCCR0A, TCCR1A, TCCR1A, TCCR2A, TCCR2A]:
+VAL []INT TCR.PRESCALE IS [TCCR0B, TCCR0B, TCCR1B, TCCR1B, TCCR2B, TCCR2B]:
+VAL []INT CS1 IS [CS01, CS01, CS11, CS11, CS22, CS22]:
+VAL []INT CS0 IS [CS00, CS00, CS10, CS10, CS22, CS22]:
+VAL []INT COM IS [COM0A1, COM0B1, COM1A1, COM1B1, COM2A1, COM2B1]:
+VAL []INT WGM IS [WGM00, WGM01, WGM10, WGM11, WGM20, WGM21]:
+VAL []INT OCR IS [OCR0A, OCR0B, OCR1A, OCR1B, OCR2A, OCR2B]:
+
+--{{{  PROC beginAnalog
+PROC beginAnalog (VAL INT pin)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  INITIAL INT index IS ARDUINO.PIN.MAP[pin - 3]:
+  SEQ
+    pinMode(pin, OUTPUT) 
+    ports[TCR.MODE[index]] := ports[TCR.MODE[index]] \/ (BV (COM[index]) \/ BV (WGM[index]))
+    -- Set prescale to 64... don't change that. The VM is using that
+    -- for TCCR2, and we'll (for the moment) use the same everywhere.
+    ports[TCR.PRESCALE[index]] := BV(CS1[index]) \/ BV(CS0[index])
+    ports[OCR[index]] := 0
+:
+--}}}
+
+
+--{{{  PROC analogLevel
+PROC analogLevel (VAL INT pin, VAL BYTE level)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  INITIAL INT index IS ARDUINO.PIN.MAP[pin - 3]:
+  SEQ
+    ports[OCR[index]] := level
+:
+--}}}
+
+
+--{{{  PROC endAnalog
+PROC endAnalog (VAL INT pin)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  INITIAL INT index IS ARDUINO.PIN.MAP[pin - 3]:
+  SEQ
+    ports[TCR.MODE[index]] := ports[TCR.MODE[index]] /\ ( ~(BV (COM[index]) \/ BV (WGM[index])))
 :
 --}}}
 
