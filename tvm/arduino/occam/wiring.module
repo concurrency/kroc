@@ -179,20 +179,21 @@ PROC serialWriteInt32 (VAL INT32 n)
 --}}}
 
 VAL INT NO.MAP IS (- 1):
+VAL INT INDEX.OFFSET IS 3:
 VAL []INT ARDUINO.PIN.MAP IS [5, NO.MAP, 1, 0, NO.MAP, NO.MAP, 2, 3, 4]:
 VAL []INT TCR.MODE IS [TCCR0A, TCCR0A, TCCR1A, TCCR1A, TCCR2A, TCCR2A]:
 VAL []INT TCR.PRESCALE IS [TCCR0B, TCCR0B, TCCR1B, TCCR1B, TCCR2B, TCCR2B]:
 VAL []INT CS1 IS [CS01, CS01, CS11, CS11, CS22, CS22]:
 VAL []INT CS0 IS [CS00, CS00, CS10, CS10, CS22, CS22]:
 VAL []INT COM IS [COM0A1, COM0B1, COM1A1, COM1B1, COM2A1, COM2B1]:
-VAL []INT WGM IS [WGM00, WGM01, WGM10, WGM11, WGM20, WGM21]:
+VAL []INT WGM IS [WGM00, WGM00, WGM10, WGM10, WGM20, WGM20]:
 VAL []INT OCR IS [OCR0A, OCR0B, OCR1A, OCR1B, OCR2A, OCR2B]:
 
 --{{{  PROC beginAnalog
 PROC beginAnalog (VAL INT pin)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
-  INITIAL INT index IS ARDUINO.PIN.MAP[pin - 3]:
+  INITIAL INT index IS ARDUINO.PIN.MAP[pin - INDEX.OFFSET]:
   SEQ
     pinMode(pin, OUTPUT) 
     ports[TCR.MODE[index]] := ports[TCR.MODE[index]] \/ (BV (COM[index]) \/ BV (WGM[index]))
@@ -208,7 +209,7 @@ PROC beginAnalog (VAL INT pin)
 PROC analogLevel (VAL INT pin, VAL BYTE level)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
-  INITIAL INT index IS ARDUINO.PIN.MAP[pin - 3]:
+  INITIAL INT index IS ARDUINO.PIN.MAP[pin - INDEX.OFFSET]:
   SEQ
     ports[OCR[index]] := level
 :
@@ -219,9 +220,9 @@ PROC analogLevel (VAL INT pin, VAL BYTE level)
 PROC endAnalog (VAL INT pin)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
-  INITIAL INT index IS ARDUINO.PIN.MAP[pin - 3]:
+  INITIAL INT index IS ARDUINO.PIN.MAP[pin - INDEX.OFFSET]:
   SEQ
-    ports[TCR.MODE[index]] := ports[TCR.MODE[index]] /\ ( ~(BV (COM[index]) \/ BV (WGM[index])))
+    ports[TCR.MODE[index]] := ports[TCR.MODE[index]] /\ (~ BV(COM[index]))
 :
 --}}}
 

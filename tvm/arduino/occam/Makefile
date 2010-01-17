@@ -23,7 +23,7 @@ PROGS = \
 	hello \
 	ledmatrix \
 	nothing \
-	pwm-smoke-test \
+	pwm-tests \
 	rawblink \
 	testdiv
 
@@ -67,7 +67,7 @@ exttimer.hex: wiring.module
 hello.hex: wiring.module
 ledmatrix.hex: wiring.module font8x8.inc
 plumbing.module: avr.module wiring.module
-pwm-smoke-test.hex: wiring.module plumbing.module
+pwm-tests.hex: wiring.module plumbing.module
 rawblink.hex: wiring.module
 testdiv.hex: wiring.module
 wiring.module: avr.module
