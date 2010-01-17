@@ -160,8 +160,8 @@ PROC pwm (VAL INT pin, CHAN SIGNAL stop?, CHAN INT level?)
         level ? lvl
           SEQ
             IF
-              lvl > 128 
-                dc := 128
+              lvl > 255 
+                dc := 255
               lvl < 0
                 dc := 0
               TRUE
