@@ -3170,8 +3170,10 @@ PUBLIC treenode *foldexp (treenode * tptr)
 	case S_ASOUTPUT:
 		break;
 		/*}}}*/
-		/*{{{  LIST -- bug, but can happen in error cases*/
+		/*{{{  LIST, N_TPROTDEF, N_SPROTDEF -- bug, but can happen in error cases*/
 	case S_LIST:
+	case N_TPROTDEF:
+	case N_SPROTDEF:
 		break;
 		/*}}}*/
 	default:
