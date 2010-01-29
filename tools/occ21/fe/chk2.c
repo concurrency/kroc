@@ -266,6 +266,16 @@ PRIVATEPARAM void checktag (treenode *const tagptr, void *const voidptr)
 	treenode **tagpp = (treenode **)voidptr;
 	treenode *taglist = *tagpp;
 
+#if 0
+fprintf (stderr, "checktag: tagptr = ");
+printtreenl (stderr, 4, tagptr);
+#endif
+	/* leading sanity check: must be NULL, LIST or N_TPROTDEF as type on tag */
+	if (NTypeOf (tagptr) && (TagOf (NTypeOf (tagptr)) != S_LIST) && (TagOf (NTypeOf (tagptr)) != N_TPROTDEF)) {
+		/* means we have cases 'FROM X' where X isn't sensible! */
+		chkreport (CHK_BAD_CASE_INCLUSION, LocnOf (tagptr));
+	}
+
 	if (NTypeOf (tagptr) && (TagOf (NTypeOf (tagptr)) == N_TPROTDEF)) {
 		/* this could get a bit messy.. */
 		treenode *tlist;
@@ -2184,6 +2194,14 @@ printtreenl (stderr, 4, traces);
 			treenode *const field_base = basetype_tree (field_type);
 
 			list[i].fld_nptr = field_nptr;
+
+			if ((TagOf (field_type) == N_DECL) || (TagOf (field_type) == S_UNDECLARED)) {
+				/* should have been resolved, if still name or undeclared, broken */
+				list[i].fld_bytes = 1;
+				list[i].fld_element = 1;
+				continue;
+			}
+
 			list[i].fld_bytes = (int) bytesin (field_type);
 			list[i].fld_element = (int) bytesin (field_base);
 
@@ -2718,6 +2736,23 @@ PRIVATE void cprotocolinherit (treenode *thistag, treenode **ancestors)
 	} else {
 		treenode *t;
 
+		/*{{{  check that ancestors are really tagged protocols*/
+		for (t = *ancestors; !EndOfList (t); t = NextItem (t)) {
+			treenode *s = ThisItem (t);
+
+#if 0
+fprintf (stderr, "cprotocolinherit(): checking ancestor:");
+printtreenl (stderr, 4, s);
+#endif
+			switch (TagOf (s)) {
+			case N_TPROTDEF:
+				break;
+			default:
+				chkreport (CHK_BAD_EXTENDS, chklocn);
+				return;
+			}	
+		}
+		/*}}}*/
 		/*{{{  remove common ancestors*/
 		for (t = *ancestors; !EndOfList (t); t = NextItem (t)) {
 			treenode *s, *prev_s, *next_s;
@@ -3689,7 +3724,7 @@ fprintf (stderr, "cdeclaration: found %s of type CHAN, NTypeAttrOf (ProtocolOf (
 				treenode **tagpp = NTypeAddr (DNameOf (tptr));
 				treenode *taglist = *tagpp;
 
-				walklist ((void *) checktag, taglist, (void *)tagpp);
+				walklist ((void *)checktag, taglist, (void *)tagpp);
 				/*{{{  give each tag a value */
 				if (DExtraOf (tptr)) {
 					/* inheriting from another PROTOCOL(s) */

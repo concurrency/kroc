@@ -21,13 +21,18 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef HAVE_SENDFILE_H
+#ifdef HAVE_SYS_SENDFILE_H
 #include <sys/sendfile.h>
 #endif
 #include <sys/time.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#if defined(HAVE_STDINT_H)
+#include <stdint.h>
+#elif defined(HAVE_INTTYPES_H)
+#include <inttypes.h>
+#endif
 
 #include <dirent.h>
 
@@ -77,16 +82,18 @@ static int r_encode_open_flags (int flags)
 		ret |= O_CREAT;
 	if (flags & OCC_O_EXCL)
 		ret |= O_EXCL;
-	if (flags & OCC_O_NOCTTY)
-		ret |= O_NOCTTY;
 	if (flags & OCC_O_TRUNC)
 		ret |= O_TRUNC;
 	if (flags & OCC_O_APPEND)
 		ret |= O_APPEND;
+#ifndef HOSTOS_MINGW
+	if (flags & OCC_O_NOCTTY)
+		ret |= O_NOCTTY;
 	if (flags & OCC_O_NONBLOCK)
 		ret |= O_NONBLOCK;
 	if (flags & OCC_O_SYNC)
 		ret |= O_SYNC;
+#endif
 	
 	return ret;
 }
@@ -94,8 +101,11 @@ static int r_encode_open_flags (int flags)
 static int r_decode_open_flags (int flags)
 {
 	const int mask = O_RDWR | O_WRONLY | O_RDONLY
-		| O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC
-		| O_APPEND | O_NONBLOCK | O_SYNC;
+		| O_CREAT | O_EXCL | O_TRUNC | O_APPEND
+#ifndef HOSTOS_MINGW
+		| O_NOCTTY | O_NONBLOCK | O_SYNC
+#endif
+		;
 	int ret = (flags & (~mask));
 
 	if ((flags & O_RDWR) == O_RDWR)
@@ -109,20 +119,23 @@ static int r_decode_open_flags (int flags)
 		ret |= OCC_O_CREAT;
 	if ((flags & O_EXCL) == O_EXCL)
 		ret |= OCC_O_EXCL;
-	if ((flags & O_NOCTTY) == O_NOCTTY)
-		ret |= OCC_O_NOCTTY;
 	if ((flags & O_TRUNC) == O_TRUNC)
 		ret |= OCC_O_TRUNC;
 	if ((flags & O_APPEND) == O_APPEND)
 		ret |= OCC_O_APPEND;
+#ifndef HOSTOS_MINGW
+	if ((flags & O_NOCTTY) == O_NOCTTY)
+		ret |= OCC_O_NOCTTY;
 	if ((flags & O_NONBLOCK) == O_NONBLOCK)
 		ret |= OCC_O_NONBLOCK;
 	if ((flags & O_SYNC) == O_SYNC)
 		ret |= OCC_O_SYNC;
+#endif
 
 	return ret;
 }
 
+#ifndef HOSTOS_MINGW
 static int r_fcntl_cmd (int cmd)
 {
 	switch (cmd) {
@@ -139,6 +152,7 @@ static int r_fcntl_cmd (int cmd)
 	}
 	return cmd;
 }
+#endif
 /*}}}*/
 
 /*{{{  static __inline__ void r_check_access (char *fname, int flen, int what, int *result)*/
@@ -234,6 +248,9 @@ static __inline__ void r_open3 (char *fname, int flen, int mode, int perm, int *
  */
 static __inline__ void r_pipe (int *fd_0, int *fd_1, int *result)
 {
+#ifdef HOSTOS_MINGW
+	*result = -1;
+#else
 	int p[2];
 
 	*result = pipe (p);
@@ -241,6 +258,7 @@ static __inline__ void r_pipe (int *fd_0, int *fd_1, int *result)
 		*fd_0 = p[0];
 		*fd_1 = p[1];
 	}
+#endif
 }
 /*}}}*/
 /*{{{  static __inline__ void r_dup2 (int old_fd, int new_fd, int *result)*/
@@ -313,7 +331,11 @@ static __inline__ void r_mkdir (char *path, int path_len, int perm, int *result)
 	}
 	memcpy (fname, path, path_len);
 	fname[path_len] = '\0';
+#ifdef HOSTOS_MINGW
+	*result = mkdir (fname);
+#else
 	*result = mkdir (fname, perm);
+#endif
 }
 /*}}}*/
 /*{{{  static __inline__ void r_rmdir (char *path, int path_len, int *result)*/
@@ -409,7 +431,7 @@ static __inline__ void r_sendfile (int src_fd, int dst_fd, int count, int *offse
 {
 	int ires;
 
-#ifdef HAVE_SENDFILE_H
+#ifdef HAVE_SYS_SENDFILE_H
 	ires = (int)sendfile (dst_fd, src_fd, (off_t *)offset, count);
 	if (ires == -1) {
 		*result = -errno;
@@ -427,18 +449,24 @@ static __inline__ void r_sendfile (int src_fd, int dst_fd, int count, int *offse
 /*{{{  PROC C.fl.fcntl0 (VAL INT fd, cmd, RESULT INT result) */
 static __inline__ void r_fcntl0 (int fd, int cmd, int *result)
 {
+#ifdef HOSTOS_MINGW
+	*result = -1;
+#else
 	if (fd < 0) {
 		*result = -1;
 	} else {
 		*result = fcntl (fd, r_fcntl_cmd (cmd));
 	}
-	return;
+#endif
 }
 void _fl_fcntl0 (int *ws) { r_fcntl0 ((int)(ws[0]), (int)(ws[1]), (int *)(ws[2])); }
 /*}}}*/
 /*{{{  PROC C.fl.fcntl1 (VAL INT fd, cmd, arg, RESULT INT result) */
 static __inline__ void r_fcntl1 (int fd, int cmd, int arg, int *result)
 {
+#ifdef HOSTOS_MINGW
+	*result = -1;
+#else
 	if (fd < 0) {
 		*result = -1;
 	} else {
@@ -448,7 +476,7 @@ static __inline__ void r_fcntl1 (int fd, int cmd, int arg, int *result)
 		if (cmd == OCC_F_GETFL)
 			*result = r_decode_open_flags (*result);
 	}
-	return;
+#endif
 }
 void _fl_fcntl1 (int *ws) { r_fcntl1 ((int)(ws[0]), (int)(ws[1]), (int)(ws[2]), (int *)(ws[3])); }
 /*}}}*/
@@ -456,6 +484,9 @@ void _fl_fcntl1 (int *ws) { r_fcntl1 ((int)(ws[0]), (int)(ws[1]), (int)(ws[2]), 
 static __inline__ void r_select (int *rs, int n_rs, int *ws, int n_ws, int *es, int n_es, int high_fd,
 		int timeout, int *result)
 {
+#ifdef HOSTOS_MINGW
+	*result = -1;
+#else
 	struct timeval tv;
 	fd_set read_set, write_set, except_set;
 	int use_timeout = 0;
@@ -508,7 +539,7 @@ static __inline__ void r_select (int *rs, int n_rs, int *ws, int n_ws, int *es, 
 			}
 		}
 	}
-	return;
+#endif
 }
 void _fl_select (int *ws) { r_select ((int *)(ws[0]), (int)(ws[1]), (int *)(ws[2]), (int)(ws[3]), (int *)(ws[4]), (int)(ws[5]), (int)(ws[6]), (int)(ws[7]), (int *)(ws[8])); }
 /*}}}*/
@@ -610,8 +641,10 @@ static __inline__ void unpack_stat (struct occam_stat *dest, const struct stat *
 	dest->gid = st->st_gid;
 	dest->rdev = st->st_rdev;
 	dest->size = st->st_size;
+#ifndef HOSTOS_MINGW
 	dest->blksize = st->st_blksize;
 	dest->blocks = st->st_blocks;
+#endif
 	dest->atime = st->st_atime;
 	dest->mtime = st->st_mtime;
 	dest->ctime = st->st_ctime;
@@ -640,6 +673,9 @@ static __inline__ void r_stat (char *fname, int flen, struct occam_stat *stat_st
 /*{{{  static __inline__ void r_lstat (char *fname, int flen, struct occam_stat *stat_struct, int *res) */
 static __inline__ void r_lstat (char *fname, int flen, struct occam_stat *stat_struct, int *res)
 {
+#ifdef HOSTOS_MINGW
+	*res = -1;
+#else
 	struct stat sbuf;
 	char pbuffer[FILENAME_MAX];
 	int x;
@@ -655,6 +691,7 @@ static __inline__ void r_lstat (char *fname, int flen, struct occam_stat *stat_s
 	*res = lstat(pbuffer, &sbuf);
 	
 	unpack_stat(stat_struct, &sbuf);
+#endif
 }
 /*}}}*/
 /*{{{  static __inline__ void r_fstat (int fd, struct occam_stat *stat_struct, int *res) */
@@ -728,7 +765,11 @@ static __inline__ void r_chmod (char *fname, int flen, int mode, int *result)
 /*{{{  static __inline__ void r_fsync (int fd, int *result) */
 static __inline__ void r_fsync (int fd, int *result)
 {
+#ifdef HOSTOS_MINGW
+	*result = -1;
+#else
 	*result = fsync(fd);
+#endif
 }
 /*}}}*/
 

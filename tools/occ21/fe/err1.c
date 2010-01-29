@@ -27,6 +27,12 @@
 #endif
 #include <stdio.h>
 
+#if defined(HAVE_SYS_STAT_H) && defined(HAVE_SYS_TYPES_H)
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
+
+
 #include "popen_re.h"		/* IMPORTED */
 
 #include "midinc.h"
@@ -72,42 +78,63 @@ PRIVATE messagestring_fn_t msgstring_fn[MAX_MODULES];	/* init to NULL */
 /*}}}  */
 
 /*{{{  PRIVATE void printbuf (file, locn, indent, lines) */
-PRIVATE void printbuf (FILE * const file, const SOURCEPOSN locn, const int indent)
+PRIVATE void printbuf (FILE *const file, const SOURCEPOSN locn, const int indent)
 {
 	int filenum = FileNumOf (locn);
 	int fileline = FileLineOf (locn);
+	const char *fe_fname = fe_lookupfilename (current_fe_handle, filenum);
 
 	char line[ERR_LINEMAX];
-	FILE *const fptr = popen_relative (fe_lookupfilename (current_fe_handle, filenum),
-					   current_fe_data->fe_pathname,
+	FILE *const fptr = popen_relative (fe_fname, current_fe_data->fe_pathname,
 					   NULL, "r", NULL,
 					   memalloc, memfree, NULL);
+
 	if (fptr != NULL) {
 		int i, j;
-		for (i = 0; i < fileline - 5; i++)
+
+#if defined(HAVE_SYS_STAT_H) && defined(HAVE_SYS_TYPES_H)
+		struct stat st_buf;
+
+		if (fstat (fileno (fptr), &st_buf)) {
+			fprintf (file, "    *** failed to stat path \"%s\", internal error.\n", fe_fname);
+			fprintf (file, "%s", FATAL_INTERNAL_BANNER);
+			current_fe_data->fe_abort_fn (current_fe_handle);
+			return;
+		} else if (!S_ISREG (st_buf.st_mode)) {
+			fprintf (file, "    *** not a regular file \"%s\", cannot display.\n", fe_fname);
+			return;
+		}
+#if 0
+fprintf (stderr, "printbuf(): filename is [%s]", fe_fname);
+#endif
+#endif
+
+		for (i = 0; i < fileline - 5; i++) {
 			fgets (line, ERR_LINEMAX, fptr);
+		}
 		j = (fileline < 5) ? fileline : 5;
-		for (i = 1; i <= 9 && !feof (fptr); i++)
+
+		for (i = 1; i <= 9 && !feof (fptr); i++) {
 			/*{{{  print a line */
-		{
+			line[0] = '\0';
 			fgets (line, ERR_LINEMAX, fptr);
 			if (!feof (fptr)) {
 				char *s = line;
 				int column = 0;
 				int nomoretabs = FALSE;
 				fprintf (file, (i == j) ? "%4d:" : "    :", fileline);
-				if (strchr (line, '\t') == NULL)
+				if (strchr (line, '\t') == NULL) {
 					fputs (line, file);
-				else
+				} else {
 					while (*s != '\0') {
-						if (*s == ' ')
+						if (*s == ' ') {
 							fputc (' ', file);
-						else if (*s != '\t') {
+						} else if (*s != '\t') {
 							fputc (*s, file);
 							nomoretabs = TRUE;
-						} else if (nomoretabs)
+						} else if (nomoretabs) {
 							fputc (' ', file);
-						else {
+						} else {
 							int extra = (TABSIZE - (column % TABSIZE));
 							column += (extra - 1);
 							while (extra > 0) {
@@ -118,26 +145,30 @@ PRIVATE void printbuf (FILE * const file, const SOURCEPOSN locn, const int inden
 						column++;
 						s++;
 					}
+				}
 				/* the following added for bug 1020 18/10/90 */
 				if (strchr (line, '\n') == NULL) {	/* it was a very long line; keep going! */
 					int c;
-					while ((c = fgetc (fptr)) != EOF && c != '\n')
+
+					while ((c = fgetc (fptr)) != EOF && c != '\n') {
 						fputc (c, file);
+					}
 					fputc ('\n', file);
 				}
 
-				if ((i == j) && (indent >= 0))
+				if ((i == j) && (indent >= 0)) {
 					/*{{{  print pointer to lexeme giving error */
-				{
 					int k;
-					for (k = 0; k < indent + 5; ++k)
+
+					for (k = 0; k < indent + 5; ++k) {
 						fputc ('-', file);
+					}
 					fputs ("^\n", file);
+					/*}}}  */
 				}
-				/*}}}  */
 			}
+			/*}}}  */
 		}
-		/*}}}  */
 		fclose (fptr);
 	}
 }
@@ -180,8 +211,9 @@ PRIVATE const char *get_msg (const err_module_t module, const int n)
 		s = vtimessagestring (n);
 		break;
 	default:
-		if (msgstring_fn[module] == NULL)
+		if (msgstring_fn[module] == NULL) {
 			abort ();
+		}
 		s = msgstring_fn[module] (n);
 		break;
 	}
@@ -253,11 +285,13 @@ PRIVATE void process_msg (err_severity_t severity, const err_module_t module, SO
 	/*}}}  */
 
 	/*{{{  Finish off  */
-	if (current_fe_data->fe_crasherrors && (severity >= SEV_ERR))
+	if (current_fe_data->fe_crasherrors && (severity >= SEV_ERR)) {
 		severity = SEV_INTERNAL;	/* do a core dump (for debugging) */
+	}
 
-	if (severity <= SEV_ERR);	/* skip */
-	else if (severity <= SEV_SERIOUS) {
+	if (severity <= SEV_ERR) {
+		/* skip */
+	} else if (severity <= SEV_SERIOUS) {
 		(void) switch_to_real_workspace ();
 		longjmp (env, TRUE);
 	} else if (severity < SEV_INTERNAL) {
@@ -265,6 +299,7 @@ PRIVATE void process_msg (err_severity_t severity, const err_module_t module, SO
 		current_fe_data->fe_abort_fn (current_fe_handle);
 	} else {
 		current_fe_data->fe_error_msg_fn (current_fe_handle, SEV_INTERNAL_BANNER, FATAL_INTERNAL_BANNER, NULL, 0);
+
 		if (current_fe_data->fe_outfile != NULL)
 			fclose (current_fe_data->fe_outfile);	/* Flush any diagnostics */
 		current_fe_data->fe_abort_fn (current_fe_handle);
@@ -448,8 +483,9 @@ PUBLIC void err_install_messages (fe_handle_t * const fe_handle, const err_modul
 	/* cast 'class' to int here, to prevent a gcc warning about comparison
 	   of unsigned enum type < 0
 	 */
-	if (((int) class < 0) || (class >= MAX_MODULES))
+	if (((int) class < 0) || (class >= MAX_MODULES)) {
 		abort ();
+	}
 
 	msgstring_fn[class] = fn;
 }

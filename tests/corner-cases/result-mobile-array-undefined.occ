@@ -1,0 +1,12 @@
+-- occ21 warns that fill's argument is undefined.
+-- Remove the RESULT, and the warning goes away (!).
+
+PROC fill (RESULT []INT foo)
+  SEQ i = 0 FOR SIZE foo
+    foo[i] := i
+:
+
+PROC main ()
+  INITIAL MOBILE []INT m IS MOBILE [10]INT:
+  fill (m)  -- This should not complain that m is undefined
+:

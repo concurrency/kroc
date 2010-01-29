@@ -53,8 +53,7 @@ foreach my $file (@files) {
 
 	if ($comments) {
 		foreach my $comment (@{$data->{'COMMENT'}}) {
-			my $data = $comment->{'data'};
-			$data =~ s/\p{IsCntrl}//gs;
+			my $data = $etc->decode_str ($comment->{'data'});
 			print "$data\n";
 		}
 	} else {

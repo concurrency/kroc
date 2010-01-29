@@ -87,6 +87,9 @@
 #define GEN_ADDROF_BAD_TYPE		65	/* ADDROF/HWADDROF unsupported type */
 
 /*}}}*/
+/*{{{  more errors (frmb)*/
+#define GEN_FORKED_EXPORT_NO_VS		66	/* exported PROC that FORKs must have VS */
+/*}}}*/
 
 /*{{{  error macros */
 #define genwarn(N)         msg_out  (SEV_WARN, GEN, (N), genlocn)

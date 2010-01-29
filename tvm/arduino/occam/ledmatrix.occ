@@ -194,6 +194,10 @@ PROC source (CHAN BYTE out!)
           VAL INT char IS INT (s[i] - 'A'):
           SEQ i = 0 FOR 8
             send (FONT.8X8[(char * 8) + i])
+        (s[i] >= '0') AND (s[i] <= '9')
+          VAL INT char IS INT (s[i] - '0'):
+          SEQ i = 0 FOR 8
+            send (FONT.8X8[((char + 26) * 8) + i])
         TRUE
           SEQ i = 0 FOR 5
             send (#00)

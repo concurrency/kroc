@@ -22,9 +22,13 @@
 #IF (TARGET.BITS.PER.WORD = 32)
 
 --{{{  #options and #comments
+#IF (FILESTACK = 0)
+
 #OPTION "V"  -- no vector space
 #COMMENT "TA compiler library, V1.0 29/01/90"
 #COMMENT "(c) Copyright INMOS Limited 1990"
+
+#ENDIF
 --}}}
 
 #PRAGMA TRANSLATE REAL32OP "REAL32OP%O"
@@ -40,7 +44,9 @@
 --
 --}}}
 
+#IF (FILESTACK = 0)
 #INCLUDE "realvals.inc"
+#ENDIF
 
 --{{{  
 REAL32 FUNCTION REAL32OP (VAL REAL32 X, VAL INT Op, VAL REAL32 Y)
@@ -62,9 +68,13 @@ REAL32 FUNCTION REAL32OP (VAL REAL32 X, VAL INT Op, VAL REAL32 Y)
 #IF (TARGET.BITS.PER.WORD = 16)
 
 --{{{  #options and #comments
+#IF (FILESTACK = 0)
+
 #OPTION "E V"  -- no compiler libs, no vector space
 #COMMENT "T2 compiler library, V1.3 27/06/90"
 #COMMENT "(c) Copyright INMOS Limited 1989"
+
+#ENDIF
 --}}}
 
 --{{{  #PRAGMA TRANSLATE
@@ -84,7 +94,9 @@ REAL32 FUNCTION REAL32OP (VAL REAL32 X, VAL INT Op, VAL REAL32 Y)
 --
 --}}}
 
+#IF (FILESTACK = 0)
 #INCLUDE "realvals.inc"
+#ENDIF
 
 --{{{  
 REAL32 FUNCTION REAL32OP (VAL REAL32 X, VAL INT Op, VAL REAL32 Y)

@@ -11,6 +11,9 @@ EXTRA_DIST = \
 examples = \
 	test-format
 
+TESTS_ENVIRONMENT = $(OCCBUILD) --run
+TESTS = $(examples)
+
 all-local: $(examples)
 
 install-exec-local: $(examples)

@@ -22,15 +22,19 @@
 #IF (TARGET.BITS.PER.WORD > 16)
 
 --{{{  #options and #comments
+#IF (FILESTACK = 0)
 #OPTION "E V"  -- no compiler libs, no vector space
 #COMMENT "TA compiler library, V1.3 06/04/90"
 #PRAGMA LINKAGE  -- prioritised text section
 #COMMENT "(c) Copyright INMOS Limited 1988"
+#ENDIF
 --}}}
 
 #PRAGMA TRANSLATE IEEE32OP "IEEE32OP%O"
 
+#IF (FILESTACK = 0)
 #INCLUDE "realvals.inc"
+#ENDIF
 
 --{{{  IEEE32OP   -- TA
 BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,
@@ -47,7 +51,9 @@ BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,
   BOOL   Error :
   REAL32 Result:
   VALOF
+    #IF (FILESTACK = 0)
     #INCLUDE "nan32.inc"
+    #ENDIF
     --{{{  
     INT Result RETYPES Result :
     VAL INT X RETYPES X :
@@ -424,16 +430,20 @@ BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,
 #IF (TARGET.BITS.PER.WORD = 16)
 
 --{{{  #OPTION and #COMMENT
+#IF (FILESTACK = 0)
 #OPTION "E V"  -- no compiler libs, no vector space
 #COMMENT "T2 compiler library, V1.2 06/04/90"
 #COMMENT "(c) Copyright INMOS Limited 1988"
+#ENDIF
 --}}}
 
 --{{{  #PRAGMA TRANSLATE
 #PRAGMA TRANSLATE IEEE32OP "IEEE32OP%O"
 --}}}
 
+#IF (FILESTACK = 0)
 #INCLUDE "realvals.inc"
+#ENDIF
 
 --{{{  IEEE32OP   -- T2
 BOOL, REAL32 FUNCTION IEEE32OP (VAL REAL32 X, VAL INT RoundMode, Op,

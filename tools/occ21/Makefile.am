@@ -6,7 +6,7 @@ ACLOCAL_AMFLAGS = -I ../../m4
 srcdir = @srcdir@
 VPATH = @srcdir@
 INCLUDES = -I. -I@srcdir@/include
-DEFS = @DEFS@ @ARCH_DEFS@ -Wall
+DEFS = @DEFS@ @ARCH_DEFS@
 EXTRALDFLAGS = @EXTRA_LDFLAGS@
 
 bin_PROGRAMS = occ21

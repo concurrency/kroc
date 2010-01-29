@@ -1,6 +1,7 @@
 --
 --	Mathematical utilities
---	Copyright (C) 2008 Adam Sampson <ats@offog.org>
+--	Copyright (C) 2008, 2009 Adam Sampson <ats@offog.org>
+--	Copyright (C) 2009 Teodor Ghetiu
 --
 --	This library is free software; you can redistribute it and/or
 --	modify it under the terms of the GNU Lesser General Public
@@ -63,6 +64,21 @@ INT FUNCTION max.int (VAL INT a, b)
         result := a
       TRUE
         result := b
+    RESULT result
+:
+--}}}
+--{{{  FUNCTION abs.real32
+--* Remove the sign from a real.
+-- @param n Input value
+-- @return [@code -n] if [@code n] is negative, else [@code n]
+REAL32 FUNCTION abs.real32 (VAL REAL32 n)
+  REAL32 result:
+  VALOF
+    IF
+      n < 0.0
+        result := -n
+      TRUE
+        result := n
     RESULT result
 :
 --}}}
