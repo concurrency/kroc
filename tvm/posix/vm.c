@@ -127,7 +127,15 @@ void init_vm (void)
 	tvm_init (&tvm);
 	
 	#if defined(SIGALRM) && defined(HAVE_SET_ALARM)
-	signal (SIGALRM, sigalrm_handler);
+	{
+		struct sigaction sa;
+
+		sa.sa_handler	= sigalrm_handler;
+		sa.sa_flags	= 0;
+		sigemptyset (&sa.sa_mask);
+
+		sigaction (SIGALRM, &sa, NULL);
+	}
 	#endif
 }
 

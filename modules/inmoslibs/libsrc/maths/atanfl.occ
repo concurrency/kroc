@@ -19,10 +19,14 @@
 
 --** @module maths
 
+#IF (FILESTACK = 0)
+
 #OPTION "V"  -- no vector space
 #COMMENT "Floating point maths library, V1.2 10/04/91"
 #COMMENT "(c) Copyright INMOS Limited 1988"
 #INCLUDE "mathhdr.inc"
+
+#ENDIF
 
 --{{{  history
 -- V1.0 1-Jul-88

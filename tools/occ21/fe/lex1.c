@@ -313,9 +313,10 @@ struct TAG_pp_ifstack {
 };
 typedef struct TAG_pp_ifstack pp_ifstack_t;
 
-/* these two are separately handled -- never placed in the list directly */
-static pp_dlist_t *pp_xfile = NULL;	/* current filename */
-static pp_dlist_t *pp_xline = NULL;	/* current line-number */
+/* these three are separately handled -- never placed in the list directly */
+static pp_dlist_t *pp_xfile = NULL;		/* current filename */
+static pp_dlist_t *pp_xline = NULL;		/* current line-number */
+static pp_dlist_t *pp_xfilestack = NULL;	/* current file-stack depth (top-level unit is 0) */
 
 static pp_dlist_t *pp_dlist = NULL;	/* nothing defined to start with */
 static pp_ifstack_t *pp_ifstack = NULL;
@@ -1021,6 +1022,7 @@ PRIVATE void readline (void)
 		/*}}} */
 		eof |= endoffile;
 		linecount++;
+
 		if ((lexmode == LEX_SOURCE) || (lexmode == LEX_CSOURCE)) {
 			if (pp_xline) {
 				pp_xline->valdata = (void *)linecount;
@@ -1106,6 +1108,13 @@ PRIVATE void suspend_file (const char *const name, const int mode, FILE * const 
 		filestack = fptr;
 		filestackptr++;
 		DEBUG_MSG (("suspend_file: new filestackptr is %d, name is %s, saved baseindent is %d\n", filestackptr, name, baseindent));
+
+#if 0
+fprintf (stderr, "suspend_file(): filestackptr is %d\n", filestackptr);
+#endif
+		if (pp_xfilestack) {
+			pp_xfilestack->valdata = (void *)filestackptr;
+		}
 	}
 	if ((mode != LEX_EXTERNAL) && (mode != LEX_DEXTERNAL)) {
 		infile = new_fptr;
@@ -1175,6 +1184,13 @@ PRIVATE void resume_file (void)
 			memfree (filestack);	/* freeup the top of the stack */
 			filestack = fnext;
 			filestackptr--;
+
+#if 0
+fprintf (stderr, "resume_file(): filestackptr is %d\n", filestackptr);
+#endif
+			if (pp_xfilestack) {
+				pp_xfilestack->valdata = (void *)filestackptr;
+			}
 		}
 	}
 	/*}}} */
@@ -1789,6 +1805,9 @@ PUBLIC void preproc_dump_defines (FILE *fptr)
 	if (pp_xline) {
 		preproc_dump_sdefine (pp_xline, fptr);
 	}
+	if (pp_xfilestack) {
+		preproc_dump_sdefine (pp_xfilestack, fptr);
+	}
 	for (dltmp = pp_dlist; dltmp; dltmp = dltmp->next) {
 		preproc_dump_sdefine (dltmp, fptr);
 	}
@@ -1811,6 +1830,9 @@ PRIVATE void preproc_add_define (wordnode *name, int len, int vtype, void *vptr)
 	} else if (pp_xline && (pp_xline->name == name)) {
 		dltmp = pp_xline;
 		ord_flag = 2;
+	} else if (pp_xfilestack && (pp_xfilestack->name == name)) {
+		dltmp = pp_xfilestack;
+		ord_flag = 3;
 	} else {
 		/* just make sure it's not here already */
 		for (dltmp = pp_dlist; dltmp; dltmp = dltmp->next) {
@@ -1855,6 +1877,8 @@ PRIVATE int preproc_get_define (wordnode *name)
 		dltmp = pp_xfile;
 	} else if (pp_xline && (pp_xline->name == name)) {
 		dltmp = pp_xline;
+	} else if (pp_xfilestack && (pp_xfilestack->name == name)) {
+		dltmp = pp_xfilestack;
 	} else {
 		for (dltmp = pp_dlist; dltmp && (dltmp->name != name); dltmp = dltmp->next);
 	}
@@ -1974,6 +1998,14 @@ PRIVATE BOOL preproc_is_defined (wordnode *name)
 {
 	pp_dlist_t *dltmp;
 
+	if (pp_xfile && (pp_xfile->name == name)) {
+		return TRUE;
+	} else if (pp_xline && (pp_xline->name == name)) {
+		return TRUE;
+	} else if (pp_xfilestack && (pp_xfilestack->name == name)) {
+		return TRUE;
+	}
+
 	for (dltmp = pp_dlist; dltmp; dltmp = dltmp->next) {
 		if (dltmp->name == name) {
 			return TRUE;
@@ -1986,6 +2018,14 @@ PRIVATE BOOL preproc_is_defined (wordnode *name)
 PRIVATE pp_dlist_t *preproc_find_define (wordnode *name)
 {
 	pp_dlist_t *dltmp;
+
+	if (pp_xfile && (pp_xfile->name == name)) {
+		return pp_xfile;
+	} else if (pp_xline && (pp_xline->name == name)) {
+		return pp_xline;
+	} else if (pp_xfilestack && (pp_xfilestack->name == name)) {
+		return pp_xfilestack;
+	}
 
 	for (dltmp = pp_dlist; dltmp; dltmp = dltmp->next) {
 		if (dltmp->name == name) {
@@ -2488,10 +2528,6 @@ PRIVATE void preproc_if (void)
 			if (istack->indent < pp_ifstack->indent) {
 				lexwarn (LEX_PP_NESTED_IF_OUTDENTS, flocn);
 			}
-			/* skipinput is inherited */
-			if (pp_ifstack->skipinput) {
-				istack->skipinput = TRUE;
-			}
 		}
 		istack->next = pp_ifstack;
 		pp_ifstack = istack;
@@ -2777,7 +2813,19 @@ PRIVATE void preproc_builtin (void)
 	pp_xline->next = pp_dlist;
 	pp_xline->valtype = PP_VAL_NONE;
 	pp_xline->valdata = NULL;
-	preproc_add_define (tw, 4, PP_VAL_INT, 0);
+	preproc_add_define (tw, 4, PP_VAL_INT, (void *)0);
+
+	if (pp_xfilestack) {
+		memfree (pp_xfilestack);
+	}
+	pp_xfilestack = (pp_dlist_t *)memalloc (sizeof (pp_dlist_t));
+	tw = lookupword ("FILESTACK", 9);
+	pp_xfilestack->name = tw;
+	pp_xfilestack->namelen = 9;
+	pp_xfilestack->next = pp_dlist;
+	pp_xfilestack->valtype = PP_VAL_NONE;
+	pp_xfilestack->valdata = NULL;
+	preproc_add_define (tw, 9, PP_VAL_INT, (void *)filestackptr);
 
 #ifdef PROCESS_PRIORITY
 	/* the number of available process priorities */
@@ -3560,6 +3608,9 @@ PUBLIC void nextsymb (void)
 		return;
 	}
 	while (TRUE) {
+		pp_ifstack_t *ifp;
+		BOOL skipping;
+
 		/*{{{  find the next symbol */
 		if (sentend) {
 			lexfatal (LEX_EOF, flocn);
@@ -3582,12 +3633,22 @@ fprintf (stderr, "nextsymb (newlineflag): lineindent set to %d\n", lineindent);
 		symbindent = currentindent;
 		SetFileLine (flocn, linecount);
 
+		/*{{{  are any of the #IFs we're currently in false? */
+		skipping = FALSE;
+		for (ifp = pp_ifstack; ifp != NULL; ifp = ifp->next) {
+			if (ifp->skipinput) {
+				skipping = TRUE;
+				break;
+			}
+		}
+		/*}}}*/
+
 		if (stringcontinuation) {
 			/*{{{  read the continuing string */
 			symb = readstringliteral ();
 			return;
 			/*}}} */
-		} else if (pp_ifstack && ((pp_ifstack->skipinput) || (pp_ifstack->next && (pp_ifstack->next->skipinput)))) {
+		} else if (skipping) {
 			/*{{{  skip over input searching for more pre-processor directives -- still need to process nested #IF,#ELSE,#ELIF,#ENDIF */
 			if (ch == '#') {
 				literalv[0] = '#';

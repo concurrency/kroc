@@ -18,18 +18,9 @@ case "$TESTS" in
 esac
 
 case "$TESTS" in
-  *agent-grid*)
+  *agents*)
     for ((i = 4; i <= 22; i = i + 1)); do
       ./agents.sh 6 $i 12 2>&1 | tee -a results/agents.$TAG
-    done
-    ;;
-esac
-
-case "$TESTS" in
-  *agent-density*)
-    for ((i = 2; i <= 32; i = i + 2)); do
-      ./agents.sh 6 5 $i 2>&1 | tee -a results/agents.$TAG
-      ./agents.sh 6 10 $i 2>&1 | tee -a results/agents.$TAG
     done
     ;;
 esac
@@ -42,3 +33,8 @@ case "$TESTS" in
     ;;
 esac
 
+case "$TESTS" in
+  *mandelbrot*)
+     ./mandelbrot.sh 6 2>&1 | tee -a results/mandelbrot.$TAG
+     ;;
+esac

@@ -13,7 +13,7 @@ EXTRA_DIST = \
 if BUILD_CIF
 libs = cif.lib
 includes = $(srcdir)/cif.inc
-cincludes = cif.h
+cincludes = $(srcdir)/cif.h
 endif
 
 all-local: $(libs) $(includes)

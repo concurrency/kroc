@@ -107,9 +107,11 @@ PRIVATE procdef_t *lookup_procdef (treenode *const nptr)
 	libentry_t *const libentry = NLExternalOf (nptr);
 	procdef_t *procdef = libentry->l_procdefs;
 	/*#ifndef SINGLE_PROCDEF */
-	if ((current_fe_data->fe_lang & FE_LANG_OCCAM) == 0)
-		while ((procdef != NULL) && !compatible_call (procdef->p_module->m_instr, procdef->p_module->m_attr))
+	if ((current_fe_data->fe_lang & FE_LANG_OCCAM) == 0) {
+		while ((procdef != NULL) && !compatible_call (procdef->p_module->m_instr, procdef->p_module->m_attr)) {
 			procdef = procdef->p_next;
+		}
+	}
 	/*#endif */
 	return procdef;
 }
@@ -517,6 +519,10 @@ printtreenl (stderr, 4, DNameOf(ARTypeOf (MTypeOf (NTypeOf (tptr)))));
 PRIVATE void write_desctypelist (treenode *tptr, int *const line_len)
 {
 	int count;
+#if 0
+fprintf (stderr, "objlib: write_desctypelist(): tptr = ");
+printtreenl (stderr, 4, tptr);
+#endif
 	for (count = 0; !EndOfList (tptr); tptr = NextItem (tptr), count++) {
 		if (count != 0) {
 			write_descstring (",", line_len);
@@ -560,13 +566,7 @@ printtreenl (stderr, 4, nptr);
 #endif
 	if (!sametypeparam (old_nptr, nptr)) {
 		if (TagOf (nptr) == N_VALPARAM) {
-#if 1				/* bug TS/1863 09/09/92 */
 			write_descstring ("VAL ", line_len);
-#else
-			write_descstring ("VAL", line_len);
-			if (TagOf (NTypeOf (nptr)) != S_ARRAY)
-				write_descstring (" ", line_len);
-#endif
 		} else if (TagOf (nptr) == N_RESULTPARAM) {
 			write_descstring ("RESULT ", line_len);
 		} else if (NTypeAttrOf (nptr) & TypeAttr_undefined) {
@@ -622,7 +622,13 @@ PRIVATE void write_descheader (treenode *const nptr, const wordnode *const namep
 {
 	int line_len = 0;
 
-	if (TagOf (nptr) == N_PROCDEF) {	/* Write a PROC header */
+#if 0
+fprintf (stderr, "objlib: write_descheader(): nptr = ");
+printtreenl (stderr, 4, nptr);
+fprintf (stderr, "objlib: write_descheader(): NTypeOf (nptr) = ");
+printtreenl (stderr, 4, NTypeOf (nptr));
+#endif
+	if ((TagOf (nptr) == N_PROCDEF) || (TagOf (nptr) == N_LIBPROCDEF)) {	/* Write a PROC header */
 		write_descstring ("PROC ", &line_len);
 	} else if (TagOf (nptr) == N_MPROCDECL) {	/* MOBILE PROC header */
 		write_descstring ("MOBILE PROC ", &line_len);
@@ -656,6 +662,7 @@ PRIVATE void write_descheader (treenode *const nptr, const wordnode *const namep
 		{
 			/*{{{  write this parameter, move to next */
 			treenode *thisparam = ThisItem (params);
+
 			if (isnamedformal (thisparam)) {
 				int old_len;
 				paramno++;
@@ -731,7 +738,7 @@ PRIVATE void write_paramusage (fe_handle_t *const fe_handle, treenode *const npt
 }
 
 /*}}}*/
-/*{{{  PRIVATE void write_desc_attr*/
+/*{{{  PRIVATE void write_desc_attr (const BOOL attribute, const int tag, BOOL *const first, int *const line_len)*/
 PRIVATE void write_desc_attr (const BOOL attribute, const int tag, BOOL *const first, int *const line_len)
 {
 	if (attribute) {
