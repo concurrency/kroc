@@ -19,7 +19,7 @@
 #	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-import sys, os, getopt, re, shlex, subprocess
+import sys, os, getopt, re, shlex, subprocess, platform
 
 #{{{  globals
 VERSION = "$Revision$"[11:-2]
@@ -79,7 +79,6 @@ def find_file(name, path, ext=''):
 
 
 def adjust_for_windows(cmd):
-       import platform
        if platform.system() != "Windows":
                return cmd
        cmd[0] = find_file(cmd[0], os.environ['PATH'], '.exe')
@@ -226,7 +225,11 @@ def build_default_search_path(tc_search_path):
 
 def set_isearch():
 	"""Set ISEARCH using search path.  This is for the benefit of occ21."""
-	path = ":".join(search_path)
+	if platform.system() == "Windows":
+		sep = ";"
+	else:
+		sep = ":"
+	path = sep.join(search_path)
 	if verbose:
 		warn("Setting ISEARCH to: ", path)
 	os.putenv("ISEARCH", path)
