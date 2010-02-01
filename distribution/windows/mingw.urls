@@ -9,6 +9,8 @@ http://prdownloads.sourceforge.net/mingw/gcc-core-4.4.0-mingw32-dll.tar.gz
 http://prdownloads.sourceforge.net/mingw/gmp-4.2.4-mingw32-dll.tar.gz
 http://prdownloads.sourceforge.net/mingw/pthreads-w32-2.8.0-mingw32-dll.tar.gz
 http://prdownloads.sourceforge.net/mingw/mpfr-2.4.1-mingw32-dll.tar.gz
+http://prdownloads.sourceforge.net/mingw/gcc-c++-4.4.0-mingw32-dll.tar.gz
+http://prdownloads.sourceforge.net/mingw/gcc-c++-4.4.0-mingw32-bin.tar.gz
 ### iconv, required by GCC ###
 http://prdownloads.sourceforge.net/mingw/libiconv-1.13.1-1-mingw32-bin.tar.lzma
 http://prdownloads.sourceforge.net/mingw/libiconv-1.13.1-1-mingw32-dll-2.tar.lzma
