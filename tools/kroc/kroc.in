@@ -769,8 +769,9 @@ kroc_krocdir="@KROC_KROCDIR@"
 #{{{  path-dependant options
 
 if [ "$intree" = "" ]; then
-	occ21="$kroc_archbindir/occ21"
-	octran="$kroc_archbindir/tranx86"
+	# Pull paths from env in preference of hardcoded path
+	occ21=${OCC21:-"$kroc_archbindir/occ21"}
+	octran=${OCTRAN:-"$kroc_archbindir/tranx86"}
 else
 	occ21="$intree/tools/occ21/occ21"
 	octran="$intree/tools/tranx86/tranx86"
