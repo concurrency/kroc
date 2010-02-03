@@ -18,7 +18,22 @@ paths = dict(
   msys      = 'msys',
   tmp       = 'tmp',
 )
-  
+
+class UrlMapping(dict):
+    def url_list(self):
+        return self.values()
+    def file_list(self):
+        values = self.values()
+        return [os.path.join(paths['downloads'], v.split('/')[-1]) for v in values]
+    def url_dict(self):
+        return dict(self.items())
+    def file_dict(self):
+        items = self.items()
+        d = dict()
+        for k, v in items:
+            d[k] = os.path.join(paths['downloads'], v.split('/')[-1])
+        return d
+   
 # Check that there are no spaces in the name of the current path, that would
 # be bad...
 if os.getcwd().count(' ') > 0:
@@ -119,7 +134,7 @@ def read_urls(file_name, mapping=False):
     lines = process_lines(fp.readlines())
     fp.close()
     if mapping:
-        mapping = {}
+        mapping = UrlMapping()
         for line in lines:
             k, v = line.split(':', 1)
             mapping[k.strip()] = v.strip()
@@ -135,16 +150,13 @@ perl_urls = read_urls('perl.urls', mapping=True)
 
 mingw_files = []
 msys_files = []
-perl_files = {}
 for url in mingw_urls:
     mingw_files.append(os.path.join(paths['downloads'], url.split('/')[-1]))
 for url in msys_urls:
     msys_files.append(os.path.join(paths['downloads'], url.split('/')[-1]))
-for pkg in perl_urls:
-    perl_files[pkg] = os.path.join(paths['downloads'], perl_urls[pkg].split('/')[-1])
 
-urls  = mingw_urls + msys_urls + perl_urls.values()
-files = mingw_files + msys_files
+urls  = mingw_urls + msys_urls + perl_urls.url_list()
+files = mingw_files + msys_files + perl_urls.file_list()
 
 #urls  = msys_urls; files = msys_files
 #urls = []
@@ -162,7 +174,7 @@ makedir(paths['tmp'])
 
 extract(msys_files, paths['msys'])
 extract(mingw_files, paths['mingw'])
-extract(perl_files.values(), paths['tmp'])
+extract(perl_urls.file_list(), paths['tmp'])
 
 print 'creating fstab'
 tvmdir = os.path.abspath(os.path.join(os.getcwd(), '../../')).replace('\\', '/')
@@ -201,7 +213,7 @@ for tool in tools:
 
 build_dir   = os.path.join(
                   paths['tmp'], 
-                  perl_files['perl'][len('downloads/'):-len('.tar.bz2')],
+                  perl_urls.file_dict()['perl'][len('downloads/'):-len('.tar.bz2')],
                   'win32')
 dmake_dir   = os.path.join(os.getcwd(), paths['tmp'], 'dmake')
 mingw_dir   = os.path.join(os.getcwd(), paths['mingw'])
