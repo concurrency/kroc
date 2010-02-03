@@ -172,6 +172,21 @@ fp.write('%s\t%s\n' % (tvmdir, '/tvm'))
 fp.write('%s\t%s\n' % (msysdir, '/mingw'))
 fp.close()
 
+print 'setting extra msys config'
+cfg_dir     = os.path.join(paths['msys'], 'etc', 'profile.d')
+cfg_file    = os.path.join(cfg_dir, 'tvm_config.sh')
+perl_dir    = '/perl/bin'
+install_dir = '/tvm/distribution/windows/install/bin'
+path_var    = [perl_dir, install_dir]
+if not os.path.exists(cfg_dir):
+	os.makedirs(cfg_dir)
+fp = open(cfg_file, 'w')
+fp.write('# tvm related config options for the msys shell\n')
+fp.write('# created automagically by bootstrap.py\n')
+fp.write('export PATH=.:%s:$PATH\n' % ':'.join(path_var))
+fp.write('export EDITOR=vim\n')
+fp.close()
+
 print 'renaming autotools'
 r = re.compile('(aclocal|auto.*?)-.*')
 bindir = os.path.join(paths['mingw'], 'bin')
@@ -195,18 +210,18 @@ mingw_bin   = os.path.join(mingw_dir, 'bin')
 env         = dict(os.environ)
 env['PATH'] = ';'.join([env['PATH'], dmake_dir, mingw_dir, mingw_bin])
 dmake       = find_file('dmake', env['PATH'], '.exe')
+inst_dir    = os.path.join(msys_dir, 'perl')
 
 print 'patching perl makefile'
 re1 = re.compile(r'^\s*INST_DRV\s+\*=.*', re.MULTILINE)
 re2 = re.compile(r'^\s*INST_TOP\s+\*=.*', re.MULTILINE)
 re3 = re.compile(r'^\s*CCHOME\s+\*=.*', re.MULTILINE)
-drive, path = os.path.splitdrive(mingw_dir)
-print mingw_dir, drive, path
+drive, path = os.path.splitdrive(inst_dir)
 fp = open(os.path.join(build_dir, 'makefile.mk'), 'r+')
 text = fp.read()
 text = re1.sub('INST_DRV *= ' + drive, text)
 text = re2.sub('INST_TOP *= $(INST_DRV)' + path.replace('\\', '\\\\'), text)
-text = re3.sub('CCHOME *= ' + msys_dir.replace('\\', '\\\\'), text)
+text = re3.sub('CCHOME *= ' + mingw_dir.replace('\\', '\\\\'), text)
 fp.seek(0)
 fp.truncate()
 fp.write(text)
