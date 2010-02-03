@@ -3,6 +3,7 @@
 @SET_MAKE@
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
+ACLOCAL_AMFLAGS = -I ../../m4
 
 EXTRA_DIST = \
 	occamdoc.in \
@@ -24,8 +25,10 @@ EXTRA_DIST = \
 	tests/tabs.occ \
 	tests/vars.occ
 
+if OCCAMDOC_ENABLED
 bin_SCRIPTS = \
 	occamdoc
+endif
 
 occamdocdir = $(datadir)/kroc/occamdoc
 dist_occamdoc_DATA = \
@@ -35,7 +38,9 @@ dist_occamdoc_DATA = \
 
 dist_man1_MANS = occamdoc.1
 
+if OCCAMDOC_ENABLED
 all-local: occamdoc
+endif
 
 edit = sed \
 	-e 's,@OCCAMDOCDATA\@,$(occamdocdir),g' \
