@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #
 #  Perl code for linking and assembling bytecode for the TVM
 #  Copyright (C) 2008, 2009 Carl Ritson <cgr@kent.ac.uk>
