@@ -11,8 +11,10 @@ http://prdownloads.sourceforge.net/mingw/vim-7.2-1-msys-1.0.11-bin.tar.lzma
 http://prdownloads.sourceforge.net/mingw/vim-7.2-1-msys-1.0.11-lang.tar.lzma
 ### Termcap for vim ###
 http://prdownloads.sourceforge.net/mingw/termcap-0.20050421_1-1-msys-1.0.11-bin.tar.lzma
+### Perl ###
+# WARNING: The msys perl (5.6) is too old and cannot be used with the plinker
+#          it is however needed to run autoconf/automake related bits...
+http://prdownloads.sourceforge.net/mingw/perl-5.6.1_2-1-msys-1.0.11-bin.tar.lzma
 
 # WARNING: Do not use msys autotools or libtool. They are not meant
 # for compiling standalone Windows binaries, but for compiling msys itself
-# WARNING: The msys perl is too old and cannot be used with the plinker
-# http://prdownloads.sourceforge.net/mingw/perl-5.6.1_2-1-msys-1.0.11-bin.tar.lzma
