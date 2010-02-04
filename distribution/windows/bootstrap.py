@@ -144,9 +144,18 @@ def read_urls(file_name, mapping=False):
 def process_lines(lines):
     return [x for x in [x.strip() for x in lines] if not (x.startswith('#') or len(x) == 0)]
 
+def filename2dirname(path):
+    ext = '-bin.tar.bz2 .tar.bz2 .tar.lzma .tar.gz .zip'.split()
+    if '\\' in path or '/' in path:
+        path = path.replace('\\', '/').split('/')[-1]
+    for e in ext:
+        if e in path:
+            path = path[:-len(e)]
+    return path
+    
 mingw_urls = read_urls('mingw.urls')
 msys_urls = read_urls('msys.urls')
-perl_urls = read_urls('perl.urls', mapping=True)
+other_urls = read_urls('other.urls', mapping=True)
 
 mingw_files = []
 msys_files = []
@@ -155,8 +164,8 @@ for url in mingw_urls:
 for url in msys_urls:
     msys_files.append(os.path.join(paths['downloads'], url.split('/')[-1]))
 
-urls  = mingw_urls + msys_urls + perl_urls.url_list()
-files = mingw_files + msys_files + perl_urls.file_list()
+urls  = mingw_urls + msys_urls + other_urls.url_list()
+files = mingw_files + msys_files + other_urls.file_list()
 
 #urls  = msys_urls; files = msys_files
 #urls = []
@@ -174,7 +183,15 @@ makedir(paths['tmp'])
 
 extract(msys_files, paths['msys'])
 extract(mingw_files, paths['mingw'])
-extract(perl_urls.file_list(), paths['tmp'])
+extract(other_urls.file_list(), paths['tmp'])
+
+print 'moving tools'
+tools = [(other_urls['curl'], 'curl'), (other_urls['ant'], 'ant')]
+for tool_src, tool_dir in tools:
+    tool_path = os.path.abspath(os.path.join(paths['msys'], tool_dir))
+    if os.path.exists(tool_path):
+        shutil.rmtree(tool_path)
+    shutil.move(os.path.join(paths['tmp'], filename2dirname(tool_src)), tool_path)
 
 print 'creating fstab'
 tvmdir = os.path.abspath(os.path.join(os.getcwd(), '../../')).replace('\\', '/')
@@ -187,16 +204,24 @@ fp.close()
 print 'setting extra msys config'
 cfg_dir     = os.path.join(paths['msys'], 'etc', 'profile.d')
 cfg_file    = os.path.join(cfg_dir, 'tvm_config.sh')
-perl_dir    = '/perl/bin'
-install_dir = '/tvm/distribution/windows/install/bin'
-path_var    = [perl_dir, install_dir]
+perl_bin    = '/perl/bin'
+install_bin = '/tvm/distribution/windows/install/bin'
+curl_bin    = '/curl'
+ant_bin     = '/ant/bin'
+ant_home    = '/ant'
+path_var    = [perl_bin, install_bin, curl_bin, ant_bin]
 if not os.path.exists(cfg_dir):
-	os.makedirs(cfg_dir)
+    os.makedirs(cfg_dir)
 fp = open(cfg_file, 'w')
-fp.write('# tvm related config options for the msys shell\n')
-fp.write('# created automagically by bootstrap.py\n')
-fp.write('export PATH=.:%s:$PATH\n' % ':'.join(path_var))
-fp.write('export EDITOR=vim\n')
+fp.write(
+"""
+# tvm related config options for the msys shell
+# created automagically by bootstrap.py
+
+export PATH=.:%(path)s:$PATH
+export EDITOR=vim
+export ANT_HOME=%(ant_home)s
+""" % dict(path=':'.join(path_var), ant_home=ant_home))
 fp.close()
 
 print 'setting up java path script'
@@ -208,22 +233,22 @@ JDK_REG_ROOT="HKLM\\SOFTWARE\\JavaSoft\\Java Development Kit"
 javac=`which javac 2>/dev/null`
 
 if test "x$javac" != x ; then
-	echo "Javac found in $javac, not altering path"
-	return
+    echo "Javac found in $javac, not altering path"
+    return
 fi
 
 version=`reg query "$JDK_REG_ROOT" //v CurrentVersion 2>/dev/null | grep CurrentVersion | gawk "{print \\$3}"`
 home=`reg query "$JDK_REG_ROOT\\\\$version" //v JavaHome 2>/dev/null | grep JavaHome | gawk "{ print substr(\\$0, index(\\$0, \\$3)) }"`
 
 if test "x$home" != x ; then
-	echo "JDK version $version found, in $home"
-	path=`echo $home | sed -e "s/:// ; s|\\\\\|/|g"`
-	path="/$path/bin"
-	echo "Setting path to include $path"
-	export PATH="$PATH":"$path"
-	echo "Setting JAVA_HOME to include $home"
-	export JAVA_HOME="$home"
-	return
+    echo "JDK version $version found, in $home"
+    path=`echo $home | sed -e "s/:// ; s|\\\\\|/|g"`
+    path="/$path/bin"
+    echo "Setting path to include $path"
+    export PATH="$PATH":"$path"
+    echo "Setting JAVA_HOME to include $home"
+    export JAVA_HOME="$home"
+    return
 fi
 
 echo "Javac not found and could not find a JDK through the registry"
@@ -245,7 +270,7 @@ for tool in tools:
 
 build_dir   = os.path.join(
                   paths['tmp'], 
-                  perl_urls.file_dict()['perl'][len('downloads/'):-len('.tar.bz2')],
+                  other_urls.file_dict()['perl'][len('downloads/'):-len('.tar.bz2')],
                   'win32')
 dmake_dir   = os.path.join(os.getcwd(), paths['tmp'], 'dmake')
 mingw_dir   = os.path.join(os.getcwd(), paths['mingw'])
