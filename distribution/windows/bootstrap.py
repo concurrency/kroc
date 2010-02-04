@@ -199,6 +199,38 @@ fp.write('export PATH=.:%s:$PATH\n' % ':'.join(path_var))
 fp.write('export EDITOR=vim\n')
 fp.close()
 
+print 'setting up java path script'
+cfg_file    = os.path.join(cfg_dir, 'java_path.sh')
+fp = open(cfg_file, 'w')
+fp.write(r"""
+JDK_REG_ROOT="HKLM\\SOFTWARE\\JavaSoft\\Java Development Kit"
+
+javac=`which javac 2>/dev/null`
+
+if test "x$javac" != x ; then
+	echo "Javac found in $javac, not altering path"
+	return
+fi
+
+version=`reg query "$JDK_REG_ROOT" //v CurrentVersion 2>/dev/null | grep CurrentVersion | gawk "{print \\$3}"`
+home=`reg query "$JDK_REG_ROOT\\\\$version" //v JavaHome 2>/dev/null | grep JavaHome | gawk "{ print substr(\\$0, index(\\$0, \\$3)) }"`
+
+if test "x$home" != x ; then
+	echo "JDK version $version found, in $home"
+	path=`echo $home | sed -e "s/:// ; s|\\\\\|/|g"`
+	path="/$path/bin"
+	echo "Setting path to include $path"
+	export PATH="$PATH":"$path"
+	echo "Setting JAVA_HOME to include $home"
+	export JAVA_HOME="$home"
+	return
+fi
+
+echo "Javac not found and could not find a JDK through the registry"
+echo "Please make sure you have an appropritate java version installed"
+""")
+fp.close()
+
 print 'renaming autotools'
 r = re.compile('(aclocal|auto.*?)-.*')
 bindir = os.path.join(paths['mingw'], 'bin')
