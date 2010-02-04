@@ -73,7 +73,7 @@ var offsets [9]Vector = [9]Vector{
 	Vector{-1,  1},
 	Vector{ 0,  1},
 	Vector{ 1,  1},
-	Vector{ 0,  0}
+	Vector{ 0,  0},
 }
 
 func (v *Vector) vector_add(a *Vector) {
