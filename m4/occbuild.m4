@@ -24,9 +24,6 @@ dnl top of the source tree if we are, and both to the empty string if we
 dnl aren't.
 AC_DEFUN([OCCAM_IN_TREE],
 [dnl
-AC_ARG_VAR(KROC_BUILD_ROOT, [Path to top of KRoC build tree])
-AC_ARG_VAR(KROC_SRC_ROOT, [Path to top of KRoC source tree])
-
 AC_MSG_CHECKING([whether we're building as part of KRoC])
 if test "x$KROC_BUILD_ROOT" != "x" -a "x$KROC_SRC_ROOT" != "x"; then
   AC_MSG_RESULT([yes])
@@ -35,6 +32,8 @@ else
   KROC_BUILD_ROOT=""
   KROC_SRC_ROOT=""
 fi
+AC_SUBST(KROC_BUILD_ROOT)
+AC_SUBST(KROC_SRC_ROOT)
 ])dnl
 dnl
 dnl Determine the toolchain we're using (based on configure arguments), and set
