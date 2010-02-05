@@ -101,6 +101,15 @@ def makedir(dir):
     else:
         os.makedirs(dir)
 
+def is_naughty_archive(names):
+    """Check if there is more than one file/dir in the root of the archive"""
+    name = names[0].split('/', 1)[0]
+    for n in names:
+        n = n.split('/', 1)[0]
+        if n != name:
+            return True
+    return False
+
 def extract(files, dest):
     for f in files:
         sys.stdout.write('extracting: %s\n' %(f, ))
@@ -115,13 +124,18 @@ def extract(files, dest):
                 sys.stdout.write('lzma failed with error code: %d %s\n' %(r, f))
         elif f.endswith('.zip'):
             a = zipfile.ZipFile(f, 'r')
+            if is_naughty_archive(a.namelist()):
+                d = os.path.join(dest, filename2dirname(f))
+            else:
+                d = dest
             # extractall is broken for zipfile...
             names = a.namelist()
             for name in names:
                 if name[-1] == '/':
                     pass
                 else:
-                    a.extract(name, dest)
+                    # FIXME: check that no files will be written outside dest
+                    a.extract(name, d)
             a.close()
         else:
             a = tarfile.open(f, 'r')
@@ -144,8 +158,8 @@ def read_urls(file_name, mapping=False):
 def process_lines(lines):
     return [x for x in [x.strip() for x in lines] if not (x.startswith('#') or len(x) == 0)]
 
-def filename2dirname(path):
-    ext = '-bin.tar.bz2 .tar.bz2 .tar.lzma .tar.gz .zip'.split()
+def filename2dirname(path, add_ext=''):
+    ext = (add_ext + ' .tar.bz2 .tar.lzma .tar.gz .zip').split()
     if '\\' in path or '/' in path:
         path = path.replace('\\', '/').split('/')[-1]
     for e in ext:
@@ -186,12 +200,19 @@ extract(mingw_files, paths['mingw'])
 extract(other_urls.file_list(), paths['tmp'])
 
 print 'moving tools'
-tools = [(other_urls['curl'], 'curl'), (other_urls['ant'], 'ant')]
+tools = [(other_urls['curl'], 'curl'), 
+         (other_urls['ant'], 'ant'),
+         (other_urls['unzip'], 'unzip')]
 for tool_src, tool_dir in tools:
     tool_path = os.path.abspath(os.path.join(paths['msys'], tool_dir))
     if os.path.exists(tool_path):
         shutil.rmtree(tool_path)
-    shutil.move(os.path.join(paths['tmp'], filename2dirname(tool_src)), tool_path)
+    if tool_dir == 'ant':
+        # morons:
+        dirname = filename2dirname(tool_src, add_ext='-bin.tar.bz2')
+    else:
+        dirname = filename2dirname(tool_src)
+    shutil.move(os.path.join(paths['tmp'], dirname), tool_path)
 
 print 'creating fstab'
 tvmdir = os.path.abspath(os.path.join(os.getcwd(), '../../')).replace('\\', '/')
@@ -209,7 +230,8 @@ install_bin = '/tvm/distribution/windows/install/bin'
 curl_bin    = '/curl'
 ant_bin     = '/ant/bin'
 ant_home    = '/ant'
-path_var    = [perl_bin, install_bin, curl_bin, ant_bin]
+unzip_bin   = '/unzip/bin'
+path_var    = [perl_bin, install_bin, curl_bin, ant_bin, unzip_bin]
 if not os.path.exists(cfg_dir):
     os.makedirs(cfg_dir)
 fp = open(cfg_file, 'w')
