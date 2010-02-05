@@ -170,16 +170,20 @@ def filename2dirname(path, add_ext=''):
 mingw_urls = read_urls('mingw.urls')
 msys_urls = read_urls('msys.urls')
 other_urls = read_urls('other.urls', mapping=True)
+python_urls = read_urls('python.urls')
 
 mingw_files = []
 msys_files = []
+python_files = []
 for url in mingw_urls:
     mingw_files.append(os.path.join(paths['downloads'], url.split('/')[-1]))
 for url in msys_urls:
     msys_files.append(os.path.join(paths['downloads'], url.split('/')[-1]))
+for url in python_urls:
+    python_files.append(os.path.join(paths['downloads'], url.split('/')[-1]))
 
-urls  = mingw_urls + msys_urls + other_urls.url_list()
-files = mingw_files + msys_files + other_urls.file_list()
+urls  = mingw_urls + msys_urls + other_urls.url_list() + python_urls
+files = mingw_files + msys_files + other_urls.file_list() + python_files
 
 #urls  = msys_urls; files = msys_files
 #urls = []
@@ -194,10 +198,12 @@ for url, dest in zip(urls, files):
 makedir(paths['mingw'])
 makedir(paths['msys'])
 makedir(paths['tmp'])
+makedir(os.path.join(paths['tmp'], 'python'))
 
 extract(msys_files, paths['msys'])
 extract(mingw_files, paths['mingw'])
 extract(other_urls.file_list(), paths['tmp'])
+extract(python_files, os.path.join(paths['tmp'], 'python'))
 
 print 'moving tools'
 tools = [(other_urls['curl'], 'curl'), 
@@ -214,6 +220,7 @@ for tool_src, tool_dir in tools:
         dirname = filename2dirname(tool_src)
     shutil.move(os.path.join(paths['tmp'], dirname), tool_path)
 
+
 print 'creating fstab'
 tvmdir = os.path.abspath(os.path.join(os.getcwd(), '../../')).replace('\\', '/')
 msysdir = os.path.abspath(paths['mingw']).replace('\\', '/')
@@ -221,6 +228,7 @@ fp = open('msys/etc/fstab', 'w')
 fp.write('%s\t%s\n' % (tvmdir, '/tvm'))
 fp.write('%s\t%s\n' % (msysdir, '/mingw'))
 fp.close()
+
 
 print 'setting extra msys config'
 cfg_dir     = os.path.join(paths['msys'], 'etc', 'profile.d')
@@ -245,6 +253,7 @@ export EDITOR=vim
 export ANT_HOME=%(ant_home)s
 """ % dict(path=':'.join(path_var), ant_home=ant_home))
 fp.close()
+
 
 print 'setting up java path script'
 cfg_file    = os.path.join(cfg_dir, 'java_path.sh')
@@ -278,6 +287,20 @@ echo "Please make sure you have an appropritate java version installed"
 """)
 fp.close()
 
+
+print 'setting up python settings script'
+msys_dir    = os.path.join(os.getcwd(), paths['msys'])
+cfg_file    = os.path.join(cfg_dir, 'python.sh')
+python_inst = os.path.abspath(os.path.join(msys_dir, 'python'))
+python_path = os.path.abspath(os.path.join(msys_dir, 'python', 'Lib', 'site-packages'))
+fp = open(cfg_file, 'w')
+fp.write(r"""
+export PYTHONPATH=%s
+export PATH=$PATH:/python/Scripts
+""" % python_path.replace('\\', '\\\\'))
+fp.close()
+
+
 print 'renaming autotools'
 r = re.compile('(aclocal|auto.*?)-.*')
 bindir = os.path.join(paths['mingw'], 'bin')
@@ -303,6 +326,7 @@ env['PATH'] = ';'.join([env['PATH'], dmake_dir, mingw_dir, mingw_bin])
 dmake       = find_file('dmake', env['PATH'], '.exe')
 inst_dir    = os.path.join(msys_dir, 'perl')
 
+
 print 'patching perl makefile'
 re1 = re.compile(r'^\s*INST_DRV\s+\*=.*', re.MULTILINE)
 re2 = re.compile(r'^\s*INST_TOP\s+\*=.*', re.MULTILINE)
@@ -317,6 +341,20 @@ fp.seek(0)
 fp.truncate()
 fp.write(text)
 fp.close()
+
+
+print 'installing python packages'
+for p in python_files:
+    setup_path = os.path.join(paths['tmp'], 'python', filename2dirname(p))
+    try:
+        retcode = subprocess.call(['python', 'setup.py', 'install', '--prefix=' + python_inst], cwd=setup_path, env=env)
+        if retcode < 0:
+            print >>sys.stderr, "Child was terminated by signal", -retcode
+        elif retcode != 0:
+            print >>sys.stderr, "Child returned", retcode
+    except OSError, e:
+        print >>sys.stderr, "Execution failed:", e
+    
 
 print 'compiling perl'
 try:
