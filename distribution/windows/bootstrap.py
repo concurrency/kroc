@@ -301,6 +301,18 @@ export PATH=$PATH:/python/Scripts
 fp.close()
 
 
+print 'adding pkg-config proxy script'
+pkg_config_file = os.path.abspath(os.path.join(
+    msys_dir, 'python', 'Scripts', 'pkg-config'))
+fp = open(pkg_config_file, 'w')
+fp.write(
+r"""#!/bin/bash
+pykg-config.py "$@"
+""")
+fp.close()
+
+
+
 print 'renaming autotools'
 r = re.compile('(aclocal|auto.*?)-.*')
 bindir = os.path.join(paths['mingw'], 'bin')
