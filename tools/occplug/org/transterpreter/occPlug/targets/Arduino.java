@@ -128,6 +128,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				};
 				File dir = new File("/dev");
 				String[] devices = dir.list(filter);
+				if (devices == null) return;
 
 				for (int i = 0; i < devices.length; i++) {
 					if (arduinoPortItems.add("/dev/" + devices[i])) {
