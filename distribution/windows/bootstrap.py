@@ -262,17 +262,31 @@ fp.write(r"""
 JDK_REG_ROOT="HKLM\\SOFTWARE\\JavaSoft\\Java Development Kit"
 
 javac=`which javac 2>/dev/null`
+reg64=
+is64bit=
 
 if test "x$javac" != x ; then
     echo "Javac found in $javac, not altering path"
     return
 fi
 
-version=`reg query "$JDK_REG_ROOT" //v CurrentVersion 2>/dev/null | grep CurrentVersion | gawk "{print \\$3}"`
-home=`reg query "$JDK_REG_ROOT\\\\$version" //v JavaHome 2>/dev/null | grep JavaHome | gawk "{ print substr(\\$0, index(\\$0, \\$3)) }"`
+version=`reg query "$JDK_REG_ROOT" //v CurrentVersion 2>/dev/null`
+if [ "x$version" == "x" ] ; then
+
+  # If a 64 bit java is installed on a 64 bit OS, we won't find it as 
+  # MinGW is a 32 bit app and Windows will do a registry redirect so we 
+  # look at the 32 bit reg which does not contain a key for java. Force 
+  # reg.exe to look in the 64 bit registry:
+  version=`reg query "$JDK_REG_ROOT" /reg:64 //v CurrentVersion 2>/dev/null`
+  reg64="/reg:64"
+  is64bit=" (64 bit)"
+fi
+version=`echo "$version" | grep CurrentVersion | gawk "{print \\$3}"`
+
+home=`reg query "$JDK_REG_ROOT\\\\$version" //v JavaHome $reg64 2>/dev/null | grep JavaHome | gawk "{ print substr(\\$0, index(\\$0, \\$3)) }"`
 
 if test "x$home" != x ; then
-    echo "JDK version $version found, in $home"
+    echo "JDK version $version$is64bit found, in $home"
     path=`echo $home | sed -e "s/:// ; s|\\\\\|/|g"`
     path="/$path/bin"
     echo "Setting path to include $path"
