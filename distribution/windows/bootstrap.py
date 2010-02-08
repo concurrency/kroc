@@ -293,18 +293,27 @@ msys_dir    = os.path.join(os.getcwd(), paths['msys'])
 cfg_file    = os.path.join(cfg_dir, 'python.sh')
 python_inst = os.path.abspath(os.path.join(msys_dir, 'python'))
 python_path = os.path.abspath(os.path.join(msys_dir, 'python', 'Lib', 'site-packages'))
+python_bin  = '/' + os.path.dirname(sys.executable).replace('\\', '/').replace(':', '/')
 fp = open(cfg_file, 'w')
 fp.write(r"""
 export PYTHONPATH=%s
 export PATH=$PATH:/python/Scripts
-""" % python_path.replace('\\', '\\\\'))
+
+python --version > /dev/null 2>&1
+if [ "$?" == "127" ]; then
+  echo "Did not find a python executable in the PATH"
+  echo "Setting path to include the python used for bootstrapping"
+  export PATH=$PATH:%s
+fi
+""" % (python_path.replace('\\', '\\\\'), python_bin))
 fp.close()
 
 
 print 'adding pkg-config proxy script'
 pkg_config_file = os.path.abspath(os.path.join(
     msys_dir, 'python', 'Scripts', 'pkg-config'))
-os.makedirs(os.path.dirname(pkg_config_file))
+if not os.path.exists(os.path.dirname(pkg_config_file)):
+    os.makedirs(os.path.dirname(pkg_config_file))
 fp = open(pkg_config_file, 'w')
 fp.write(
 r"""#!/bin/bash
