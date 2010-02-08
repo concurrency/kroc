@@ -304,6 +304,7 @@ fp.close()
 print 'adding pkg-config proxy script'
 pkg_config_file = os.path.abspath(os.path.join(
     msys_dir, 'python', 'Scripts', 'pkg-config'))
+os.makedirs(os.path.dirname(pkg_config_file))
 fp = open(pkg_config_file, 'w')
 fp.write(
 r"""#!/bin/bash
