@@ -60,21 +60,9 @@ On x86-64 Debian systems, you will also need the packages that allow
 Installation
 ------------
 
-To install the source distribution, unpack the tar archive, cd to the
-directory that unpacking it produced, and run the "./build" script.
-The script will configure, compile and install all the parts of the KRoC
-distribution. Calling the script with the "--help" option will bring up a
-list of available options.
+For installation instructions, please see:
 
-We recommend that you install KRoC into a directory outside the source
-directory. This can be specified using the "--prefix <directory>" option
-to the build script. The first time the script is run, it will prompt
-for this (with a directory inside the source-tree as the default
-installation directory); to enter the interactive configuration mode
-again, use "./build --reconf".
-
-Once you have installed KRoC, you can clean out the source tree using
-"./build clean", or even remove it entirely.
+  http://projects.cs.kent.ac.uk/projects/kroc/trac/wiki/Installation
 
 
 Configuration
