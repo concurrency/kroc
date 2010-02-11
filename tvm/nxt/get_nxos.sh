@@ -9,3 +9,8 @@ if [ -e nxos ]; then
 	scons
 	popd
 fi
+
+if [ -e nxos/nxos/libnxos.a ]; then
+	cp nxos/nxos/libnxos.a libnxos.a
+fi
+
