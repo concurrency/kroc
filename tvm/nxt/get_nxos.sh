@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ ! -e nxos ]; then
 	git clone http://github.com/perlfu/nxos.git nxos
