@@ -7,7 +7,7 @@ import struct
 import time
 
 nxt_path = os.path.join(
-    os.path.split(os.path.abspath(__file__))[0], '..', 'pynxt')
+    os.path.split(os.path.abspath(__file__))[0], 'nxos', 'pynxt')
 sys.path = [nxt_path]+sys.path
 
 NXOS_INTERFACE = 0
