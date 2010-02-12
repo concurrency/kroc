@@ -35,13 +35,13 @@ PROC main ()
   SEQ
 --    nx.display.clear ()
     nx.i2c.memory.init (#0, RADAR.I2C.ADDRESS, TRUE)
-    --nx.sensors.analog.init(#1)
-  
+    nx.sensors.analog.init(#1)
+    nx.display.string("In occam")
     INITIAL INT i IS 0:
     WHILE TRUE
       SEQ
         
-        nx.i2c.memory.read (#0, RADAR.SENSOR.TYPE, [ buffer FOR 8 ], result)
-        --nx.sensors.analog.get(#1,i)
+        nx.sensors.analog.get(#1,i)
         delay.ms(500)
+        nx.display.int(i)
 :
