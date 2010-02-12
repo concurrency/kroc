@@ -33,47 +33,15 @@ PROC main ()
   [8]BYTE buffer:
   INT interval, result:
   SEQ
-    nx.display.clear ()
+--    nx.display.clear ()
     nx.i2c.memory.init (#0, RADAR.I2C.ADDRESS, TRUE)
+    --nx.sensors.analog.init(#1)
   
     INITIAL INT i IS 0:
-    #IF FALSE
     WHILE TRUE
       SEQ
-        nx.display.set.pos (0, 0)
-        --display.hex (i /\ #FFFF)
-        i := i + 1
-
-        INITIAL BOOL ready IS FALSE:
-        WHILE NOT ready
-          SEQ
-            SEQ i = 0 FOR SIZE buffer
-              buffer[i] := #00
-            nx.i2c.memory.read (#0, RADAR.SENSOR.TYPE, [ buffer FOR 8 ], result)
-            IF
-              result = I2C.ERR.OK
-                SEQ
-                  nx.display.set.pos (0, 1)
-                  nx.display.string ([ buffer FOR 8 ])
-                  ready := (buffer[0] = 'S') AND (buffer[1] = 'o') AND (buffer[2] = 'n') AND (buffer[3] = 'a') AND (buffer[4] = 'r')
-              TRUE
-                SKIP
-            delay.ms (20)
         
-        nx.i2c.memory.read (#0, RADAR.INTERVAL, [ buffer FOR 1 ], result)
-        nx.display.set.pos (0, 2)
-        display.hex (INT buffer[0])
-        ASSERT (result = I2C.ERR.OK)
-        delay.ms (20)
-
-        SEQ
-          nx.i2c.memory.read (#0, RADAR.R0, [ buffer FOR 1 ], result)
-          nx.display.set.pos (0, 3)
-          IF
-            result = I2C.ERR.OK
-              display.hex (INT buffer[0])
-            TRUE
-              nx.display.string ("E*n")
-          
-        #ENDIF    
+        nx.i2c.memory.read (#0, RADAR.SENSOR.TYPE, [ buffer FOR 8 ], result)
+        --nx.sensors.analog.get(#1,i)
+        delay.ms(500)
 :

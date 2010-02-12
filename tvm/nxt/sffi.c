@@ -9,6 +9,7 @@
 #include <base/display.h>
 #include <base/drivers/i2c_memory.h>
 #include <base/drivers/motors.h>
+#include <base/drivers/sensors.h>
 
 /* PROC nx.display.clear () */
 int _nx_display_clear (ECTX ectx, WORD args[]) {
@@ -109,6 +110,49 @@ int _nx_i2c_memory_write (ECTX ectx, WORD args[]) {
 	return SFFI_OK;
 }
 
+
+/* PROC nx.sensors.analog.init (VAL INT sensor) */
+int _nx_sensors_analog_init (ECTX ectx, WORD args[])
+{
+	nx_sensors_analog_enable(args[0]);
+	//TODO: Check if these lines are required
+        nx_sensors_analog_digi_set(args[0] ,DIGI0);
+        nx_sensors_analog_digi_clear(args[0] ,DIGI0);	
+	return SFFI_OK;
+}
+
+
+/* PROC nx.sensors.analog.get (VAL INT sensor, RESULT INT result) */
+int _nx_sensors_analog_get (ECTX ectx, WORD args[])
+{
+        S32 result = nx_sensors_analog_get(args[0]);
+	write_word ((WORDPTR) args[1], (WORD) result);
+        return SFFI_OK;
+}
+
+/* PROC nx.display.int () */
+int _nx_display_int (ECTX ectx, WORD args[]) {
+        nx_display_int (args[0]);
+        return SFFI_OK;
+}
+
+/* PROC nx.sound () */
+int _nx_sound(ECTX ectx, WORD args[])
+{
+        nx_sound_freq_async(args[0], args[1]);
+        return SFFI_OK;
+}
+
+/* PROC nx.button () */
+int _nx_button(ECTX ectx, WORD args[])
+{
+        S32 result = nx_avr_get_button();
+        write_word ((WORDPTR) args[1], (WORD) result);
+        return SFFI_OK;
+}
+
+
+
 SFFI_FUNCTION sffi_table[] = {
 	_nx_display_clear,
 	_nx_display_cursor_set_pos,
@@ -121,6 +165,12 @@ SFFI_FUNCTION sffi_table[] = {
 	_nx_i2c_memory_init,
 	_nx_i2c_memory_close,
 	_nx_i2c_memory_read,
-	_nx_i2c_memory_write
+	_nx_i2c_memory_write,
+	_nx_sensors_analog_init,
+	_nx_sensors_analog_get,
+	_nx_display_int,
+	_nx_sound,
+	_nx_button
+
 };
 const int sffi_table_length = sizeof(sffi_table) / sizeof(SFFI_FUNCTION);
