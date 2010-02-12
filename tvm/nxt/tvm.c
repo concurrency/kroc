@@ -134,9 +134,9 @@ void main (void) {
 		}
 
 		nx_display_string ("Running...");
-		nx_display_end_line ();
+		//nx_display_end_line ();
 		nx_systick_wait_ms (1000);
-		nx_display_clear ();
+		//nx_display_clear ();
 		
 		while (running) {
 			int ret = tvm_run (&context);

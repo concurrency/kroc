@@ -11,6 +11,11 @@
 #PRAGMA EXTERNAL "PROC C.tvmspecial.9.nx.i2c.memory.close (VAL INT sensor) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.10.nx.i2c.memory.read (VAL INT sensor, VAL BYTE address, []BYTE buffer, RESULT INT result) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.11.nx.i2c.memory.write (VAL INT sensor, VAL BYTE address, VAL []BYTE buffer, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.12.nx.sensors.analog.init (VAL INT sensor) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.13.nx.sensors.analog.get (VAL INT sensor, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.14.nx.display.int (VAL INT value) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.15.nx.sound (VAL INT freq, VAL INT len) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.16.nx.button (RESULT INT but) = 0"
 
 INLINE PROC nx.display.clear ()
   C.tvmspecial.0.nx.display.clear ()
@@ -59,6 +64,27 @@ INLINE PROC nx.i2c.memory.read (VAL INT sensor, VAL BYTE address, []BYTE buffer,
 INLINE PROC nx.i2c.memory.write (VAL INT sensor, VAL BYTE address, VAL []BYTE buffer, RESULT INT result)
   C.tvmspecial.11.nx.i2c.memory.write (sensor, address, buffer, result)
 :
+
+INLINE PROC nx.sensors.analog.init (VAL INT sensor)
+  C.tvmspecial.12.nx.sensors.analog.init(sensor)
+:
+
+INLINE PROC nx.sensors.analog.get (VAL INT sensor, RESULT INT result)
+  C.tvmspecial.13.nx.sensors.analog.get(sensor, result)
+:
+
+INLINE PROC nx.display.int (VAL INT value)
+  C.tvmspecial.14.nx.display.int(value)
+:
+
+INLINE PROC nx.sound (VAL INT freq, VAL INT len)
+  C.tvmspecial.15.nx.sound(freq, len)
+:
+
+INLINE PROC nx.button (RESULT INT but)
+  C.tvmspecial.16.nx.button(but)
+:
+
 
 VAL INT I2C.ERR.OK              IS 0:
 VAL INT I2C.ERR.UNKNOWN.SENSOR  IS 1:
