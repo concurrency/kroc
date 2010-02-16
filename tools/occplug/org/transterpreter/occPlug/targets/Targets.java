@@ -32,7 +32,7 @@ import org.transterpreter.occPlug.targets.support.FirmwareTarget;
 public class Targets {
 
 	/* Add new targets to this list */
-	private static final BaseTarget[]	allTargets	= { 
+	private final BaseTarget[]	allTargets	= { 
 		new Arduino(),
 		new Desktop(),
 		//new Surveyor()
