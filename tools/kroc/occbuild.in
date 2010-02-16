@@ -19,7 +19,7 @@
 #	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-import sys, os, getopt, re, shlex
+import sys, os, getopt, re, shlex, subprocess, platform
 
 #{{{  globals
 VERSION = "$Revision$"[11:-2]
@@ -56,15 +56,41 @@ def die(*s):
 	warn(*s)
 	sys.exit(1)
 
+def find_file(name, path, ext=''):
+       """Given a pathsep-delimited path string, find name,.
+       Returns path to name, if found, otherwise None.
+       Also allows for files with implicit extensions (eg, .exe), but
+       always returning name, as was provided.
+       >>> find_file('ls', '/usr/bin:/bin', ext='.exe')
+       '/bin/ls'
+       """
+       if os.path.isfile(name):
+               return name
+       if      ext and os.path.isfile(name + ext):
+               # Already absolute path.
+               return name + ext
+       for p in path.split(os.pathsep):
+               candidate = os.path.join(p, name)
+               if (os.path.isfile(candidate)):
+                       return candidate
+               if ext and os.path.isfile(candidate + ext):
+                       return candidate + ext
+       return None
+
+
+def adjust_for_windows(cmd):
+       if platform.system() != "Windows":
+               return cmd
+       cmd[0] = find_file(cmd[0], os.environ['PATH'], '.exe')
+       if not cmd[0]:
+               die('Could not find command: %s', cmd[0])
+       cmd.insert(0, 'env')
+       return cmd
+
 def run_command(cmd):
-	"""Run a program with arguments and return the exit code.
-	Equivalent to subprocess.call, but works on Python 2.3 when os.spawnvp
-	is available."""
-	try:
-		import subprocess
-		return subprocess.call(cmd)
-	except ImportError:
-		return os.spawnvp(os.P_WAIT, cmd[0], cmd)
+	"""Run a program with arguments and return the exit code."""
+	cmd = adjust_for_windows(cmd)
+	return subprocess.call(cmd)
 
 def safe_sorted(l):
 	"""Like sorted(), but returns a mutable list."""
@@ -132,25 +158,12 @@ def capture(cmd):
 	if verbose:
 		warn("Running command: ", " ".join(cmd))
 
-	(pr, pw) = os.pipe()
-	pid = os.fork()
-	if pid == 0:
-		os.close(pr)
-		os.dup2(pw, 1)
-		os.execvp(cmd[0], cmd)
-		os._exit(1)
+	cmd = adjust_for_windows(cmd)
 
-	os.close(pw)
-	data = ""
-	while 1:
-		s = os.read(pr, 4096)
-		if s == "":
-			break
-		data += s
-	os.close(pr)
+	p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+	data = p.communicate()[0]
 
-	(pid, status) = os.waitpid(pid, 0)
-	if status != 0:
+	if p.wait() != 0:
 		die("Command failed: ", " ".join(cmd))
 
 	return data
@@ -212,7 +225,11 @@ def build_default_search_path(tc_search_path):
 
 def set_isearch():
 	"""Set ISEARCH using search path.  This is for the benefit of occ21."""
-	path = ":".join(search_path)
+	if platform.system() == "Windows":
+		sep = ";"
+	else:
+		sep = ":"
+	path = sep.join(search_path)
 	if verbose:
 		warn("Setting ISEARCH to: ", path)
 	os.putenv("ISEARCH", path)
@@ -319,7 +336,7 @@ def get_install_dir(default, default_suffix):
 def get_uselibs(etc_file):
 	"""Extract all the USELIB comments from a .etc file."""
 	comments = capture(programs["tce-dump.pl"] + ["-C", etc_file])
-	uselibs = re.findall("\.USELIB\s+(.*)\n", comments)
+	uselibs = re.findall("\.USELIB\s+(.*?)\s*\n", comments)
 	return uselibs
 
 def resolve_library(lib):

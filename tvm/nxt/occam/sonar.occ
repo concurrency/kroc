@@ -1,0 +1,79 @@
+
+#INCLUDE "nxt.inc"
+
+VAL BYTE RADAR.I2C.ADDRESS             IS #01:
+
+VAL BYTE RADAR.VERSION                 IS #00:
+VAL BYTE RADAR.PRODUCT.ID              IS #08:
+VAL BYTE RADAR.SENSOR.TYPE             IS #10:
+VAL BYTE RADAR.FACTORY.ZERO            IS #11:
+VAL BYTE RADAR.FACTORY.SCALE.FACTOR    IS #12:
+VAL BYTE RADAR.FACTORY.SCALE.DIVISOR   IS #13:
+VAL BYTE RADAR.MEASUREMENT.UNITS       IS #14:
+VAL BYTE RADAR.INTERVAL                IS #40:
+VAL BYTE RADAR.OP.MODE                 IS #41:
+VAL BYTE RADAR.R0                      IS #42:
+VAL BYTE RADAR.R1                      IS #43:
+VAL BYTE RADAR.R2                      IS #44:
+VAL BYTE RADAR.R3                      IS #45:
+VAL BYTE RADAR.R4                      IS #46:
+VAL BYTE RADAR.R5                      IS #47:
+VAL BYTE RADAR.R6                      IS #48:
+VAL BYTE RADAR.R7                      IS #49:
+VAL BYTE RADAR.CURRENT.ZERO            IS #50:
+VAL BYTE RADAR.CURRENT.SCALE.FACTOR    IS #51:
+VAL BYTE RADAR.CURRENT.SCALE.DIVISOR   IS #52:
+
+VAL BYTE RADAR.MODE.OFF               IS #00:
+VAL BYTE RADAR.MODE.SINGLE.SHOT       IS #01:
+VAL BYTE RADAR.MODE.CONTINUOUS        IS #02:
+VAL BYTE RADAR.MODE.RESET             IS #04:
+
+PROC main ()
+  [8]BYTE buffer:
+  INT interval, result:
+  SEQ
+    nx.display.clear ()
+    nx.i2c.memory.init (#0, RADAR.I2C.ADDRESS, TRUE)
+  
+    INITIAL INT i IS 0:
+    #IF FALSE
+    WHILE TRUE
+      SEQ
+        nx.display.set.pos (0, 0)
+        --display.hex (i /\ #FFFF)
+        i := i + 1
+
+        INITIAL BOOL ready IS FALSE:
+        WHILE NOT ready
+          SEQ
+            SEQ i = 0 FOR SIZE buffer
+              buffer[i] := #00
+            nx.i2c.memory.read (#0, RADAR.SENSOR.TYPE, [ buffer FOR 8 ], result)
+            IF
+              result = I2C.ERR.OK
+                SEQ
+                  nx.display.set.pos (0, 1)
+                  nx.display.string ([ buffer FOR 8 ])
+                  ready := (buffer[0] = 'S') AND (buffer[1] = 'o') AND (buffer[2] = 'n') AND (buffer[3] = 'a') AND (buffer[4] = 'r')
+              TRUE
+                SKIP
+            delay.ms (20)
+        
+        nx.i2c.memory.read (#0, RADAR.INTERVAL, [ buffer FOR 1 ], result)
+        nx.display.set.pos (0, 2)
+        display.hex (INT buffer[0])
+        ASSERT (result = I2C.ERR.OK)
+        delay.ms (20)
+
+        SEQ
+          nx.i2c.memory.read (#0, RADAR.R0, [ buffer FOR 1 ], result)
+          nx.display.set.pos (0, 3)
+          IF
+            result = I2C.ERR.OK
+              display.hex (INT buffer[0])
+            TRUE
+              nx.display.string ("E*n")
+          
+        #ENDIF    
+:

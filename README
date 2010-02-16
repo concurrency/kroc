@@ -14,52 +14,55 @@ installed on your machine:
  - the GNU toolchain -- i.e. GCC 2.95.2 or later, binutils 2.0 or later,
    GNU awk, GNU make
 
+ - pkg-config
+
  - the C development headers
 
- - Python 2.2 or later
+ - Python 2.4 or later
 
  - xsltproc
 
-Some occam-pi modules can optionally make use of other libraries if
-available, such as SDL and OpenGL.
+Some occam-pi modules can optionally make use of other native libraries
+if available:
+
+ - libpng
+
+ - SDL and SDL_Sound
+
+ - OpenGL
+
+ - MySQL
+
+ - Player
 
 To check out and update KRoC from the Subversion repository, you will
 also need:
 
  - Subversion
 
- - automake 1.8 or later, autoconf 2.52 or later
+ - automake 1.8 or later, autoconf 2.52 or later (but not autoconf 2.64,
+   which is buggy)
 
 On Debian-based systems, we suggest installing the following packages:
 
   bash gcc binutils gawk make automake autoconf pkg-config
-  python xsltproc subversion
   libc6-dev libsdl1.2-dev libsdl-sound1.2-dev libgl1-mesa-dev
-  libmysqlclient15-dev libpng12-dev libxmu-dev
+  libmysqlclient15-dev libpng12-dev libxmu-dev libxi-dev
+  libplayercore2-dev libplayerc2-dev libltdl3-dev
+  perl python xsltproc subversion
 
-On x86-64 Debian systems, you will also need these packages:
+On x86-64 Debian systems, you will also need the packages that allow
+32-bit binaries to be compiled:
 
-  libc6-dev-i386 lib32gcc1
+  libc6-dev-i386 lib32gcc1 gcc-multilib
 
 
 Installation
 ------------
 
-To install the source distribution, unpack the tar archive, cd to the
-directory that unpacking it produced, and run the "./build" script.
-The script will configure, compile and install all the parts of the KRoC
-distribution. Calling the script with the "--help" option will bring up a
-list of available options.
+For installation instructions, please see:
 
-We recommend that you install KRoC into a directory outside the source
-directory. This can be specified using the "--prefix <directory>" option
-to the build script. The first time the script is run, it will prompt
-for this (with a directory inside the source-tree as the default
-installation directory); to enter the interactive configuration mode
-again, use "./build --reconf".
-
-Once you have installed KRoC, you can clean out the source tree using
-"./build clean", or even remove it entirely.
+  http://projects.cs.kent.ac.uk/projects/kroc/trac/wiki/Installation
 
 
 Configuration

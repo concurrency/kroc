@@ -7,7 +7,9 @@ docsrc = \
 	$(KROC_SRC_ROOT)/modules/*/libsrc \
 	$(KROC_BUILD_ROOT)/modules/*/libsrc
 
+if OCCAMDOC_ENABLED
 all-local: output.stamp
+endif
 
 output.stamp:
 	$(OCCAMDOC) -v -f html -d output `find $(docsrc) -name '*.occ' -or -name '*.inc'`

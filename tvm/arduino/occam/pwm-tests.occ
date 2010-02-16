@@ -1,0 +1,77 @@
+#INCLUDE "plumbing.module"
+
+PROC run(VAL INT ms, CHAN SIGNAL stop.all!)
+  SEQ
+    delay(ms)
+    stop.all ! SIGNAL
+:
+
+PROC oscilate(VAL INT step, CHAN INT level!, CHAN SIGNAL stop.pwm!, CHAN SIGNAL stop.all?)
+  INITIAL INT count IS 0:
+  INITIAL BOOL run IS TRUE:
+  WHILE run
+    SEQ
+      WHILE count < 255
+        SEQ
+          level ! count
+          count := count + 1
+          delay(step)
+      WHILE count > 0
+        SEQ
+          level ! count
+          count := count - 1
+          delay(step)
+      ALT
+        stop.all ? SIGNAL
+          SEQ
+            run := FALSE
+            stop.pwm ! SIGNAL
+        SKIP
+          run := TRUE
+          
+:
+
+-- { Verifies that PWM works on all pins simultaneously. }
+PROC all.in.par()
+  VAL []INT PINS IS [3, 11, 9, 10, 5, 6]:
+  PAR i = 0 FOR 6
+    CHAN INT level:
+    CHAN SIGNAL stop.all:
+    CHAN SIGNAL stop.pwm:
+    PAR
+      run((PINS[i] * 1000), stop.all!)
+      oscilate(0, level!, stop.pwm!, stop.all?)
+      pwm(PINS[i], stop.pwm?, level?)
+:
+
+-- { Verifies that PWM works on all pins sequentially more or less in random. }
+-- { I. E. PWM is being turned off correcly.  }
+PROC all.in.seq()
+  VAL []INT PINS IS [3, 11, 9, 10, 5, 6, 11, 3, 10, 9, 6, 5]:
+  SEQ i = 0 FOR 12
+    CHAN INT level:
+    CHAN SIGNAL stop.all:
+    CHAN SIGNAL stop.pwm:
+    PAR
+      run(3000, stop.all!)
+      oscilate(0, level!, stop.pwm!, stop.all?)
+      pwm(PINS[i], stop.pwm?, level?)
+:
+
+-- { Verifies that PWM works on the specified pin. }
+PROC just.one (VAL INT pin)
+  SEQ
+    CHAN INT level:
+    CHAN SIGNAL stop.all:
+    CHAN SIGNAL stop.pwm:
+    PAR
+      run(10000, stop.all!)
+      oscilate(0, level!, stop.pwm!, stop.all?)
+      pwm(pin, stop.pwm?, level?)
+:
+
+PROC choose ()
+  -- just.one(3)
+  -- all.in.seq()
+  all.in.par()
+:
