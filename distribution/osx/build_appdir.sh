@@ -111,7 +111,7 @@ copydir "build/$SPARKLE/Sparkle.framework" "$outputDir/$rezDir/../Frameworks/Spa
 
 # Examples etc (ie course dir)
 copydir_addexcludes "../../modules/course" "$outputDir/course" \
-  "Makefile\.in;Makefile\.am;\.deps;SConscript"
+  "Makefile\.in;Makefile\.am;\.deps;SConscript;aclocal.m4;autom4te\.cache;config\.sub;config\.guess;configure;configure.ac;install-sh;missing"
 
 # Non-course examples
 #copydir "../..//examples" "$outputDir/course/examples"
