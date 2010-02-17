@@ -509,9 +509,9 @@ class KRoCToolchain(Toolchain):
 		if ext == "lib":
 			if not is_stub(file):
 				install(file, vtlibdir, False)
-			install(patterns["a"] % base, libdir, True)
+			install(patterns["a"] % base, libdir, False)
 			if build_shared:
-				install(patterns["so"] % base, libdir, True)
+				install(patterns["so"] % base, libdir, False)
 			install(base + ".module", vtincludedir, False)
 		elif ext == "inc":
 			install(file, vtincludedir, False)
@@ -677,7 +677,7 @@ class TVMToolchain(Toolchain):
 		if ext == "lib":
 			if not is_stub(file):
 				install(file, vtlibdir, False)
-			install(patterns["so"] % base, libdir, True)
+			install(patterns["so"] % base, libdir, False)
 			install(base + ".module", vtincludedir, False)
 		elif ext == "inc":
 			install(file, vtincludedir, False)
@@ -852,9 +852,9 @@ class TockToolchain:
 		if ext == "lib":
 			if not is_stub(file):
 				install(file, libdir, False)
-			install(patterns["a"] % base, libdir, True)
+			install(patterns["a"] % base, libdir, False)
 			if build_shared:
-				install(patterns["so"] % base, libdir, True)
+				install(patterns["so"] % base, libdir, False)
 			install(base + ".module", moduledir, False)
 		elif ext == "inc":
 			install(file, includedir, False)
