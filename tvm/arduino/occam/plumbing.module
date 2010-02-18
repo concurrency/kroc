@@ -149,27 +149,65 @@ PROC heartbeat ()
   blink (LED.PIN, 500)
 :
 
-PROC pwm (VAL INT pin, CHAN SIGNAL stop?, CHAN INT level?)
-  INITIAL BOOL run IS TRUE:
-  INITIAL BYTE dc IS 0:
+PROC clamp (VAL INT low, high, CHAN INT in?, out!)
+  INT v:
+  WHILE TRUE
+    SEQ
+      in ? v
+      IF
+        v < low
+          v := low
+        v > high
+          v := high
+        TRUE
+          SKIP
+      out ! v
+:
+  
+PROC pwm (VAL INT pin, CHAN INT level?)
   INITIAL INT lvl IS 0:
   SEQ
-    beginAnalog(pin)
-    WHILE run
-      ALT
-        level ? lvl
-          SEQ
-            IF
-              lvl > 255 
-                dc := 255
-              lvl < 0
-                dc := 0
-              TRUE
-                dc := (BYTE lvl)
-            analogLevel(pin, dc)
-        stop ? SIGNAL
-          run := FALSE
-    endAnalog(pin)
+    beginAnalog (pin)
+    CHAN INT clamped:
+    PAR
+      clamp (0, 255, level?, clamped!)
+      WHILE TRUE
+        SEQ
+          clamped ? lvl
+          analogWrite (pin, (BYTE lvl))
+:
+
+-- This is pulled (mostly) directly from Adam's quick adc.occ.
+-- That said, this is not parallel-safe: we can't read from
+-- multiple pins using this PROC. I think I might set this as a 
+-- challenge for the CMPSC220 students next week.
+PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
+  PLACED [MAX.PORT]BYTE ports 0:
+  INT16 result:   
+  SEQ
+    -- Reference voltage is Vcc; select channel
+    ports[ADMUX] := (1 << REFS0) \/ (BYTE pin)
+    -- Enable ADC; enable interrupt; clock prescale 128
+    ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ (7 << ADPS0)
+    -- Disable digital inputs on all six ADC pins
+    ports[DIDR0] := #3F
+    WHILE TRUE
+      SEQ
+        req ? SIGNAL
+        -- Start conversion
+        ports[ADCSRA] := ports[ADCSRA] \/ BV (ADSC)
+
+        -- Wait for conversion to complete
+        INT t:
+        wait.for.interrupt (VINTR.ADC, t)
+
+        -- Read value
+        -- (We can't do this by retyping ports, since that does a 16-bit read)
+        [2]BYTE bytes RETYPES result:
+        bytes[0], bytes[1] := ports[ADCL], ports[ADCH]
+
+        
+        val ! (INT result)
 :
 
 #ENDIF
