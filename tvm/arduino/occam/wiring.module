@@ -205,8 +205,8 @@ PROC beginAnalog (VAL INT pin)
 --}}}
 
 
---{{{  PROC analogLevel
-PROC analogLevel (VAL INT pin, VAL BYTE level)
+--{{{  PROC analogWrite
+PROC analogWrite (VAL INT pin, VAL BYTE level)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   INITIAL INT index IS ARDUINO.PIN.MAP[pin - INDEX.OFFSET]:
