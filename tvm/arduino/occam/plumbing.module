@@ -20,6 +20,13 @@ DATA TYPE LEVEL IS BOOL:
 VAL LEVEL HIGH IS TRUE:
 VAL LEVEL LOW IS FALSE:
 
+--* Set digital levels on a pin.
+-- Reads LEVEL values (LOW or HIGH) on the input 
+-- channel, and sets the value of the specified pin 
+-- accordingly.
+--
+-- @param pin The Arduino pin number
+-- @param in Pin levels (LOW or HIGH)
 PROC digital.output (VAL INT pin, CHAN LEVEL in?)
   LEVEL v:
   SEQ
@@ -31,6 +38,13 @@ PROC digital.output (VAL INT pin, CHAN LEVEL in?)
         in ? v
 :
 
+--* Read digital levels on pin 2 or 3.
+-- For only pin 2 or pin 3 on the Arduino, this procedure
+-- will output a LEVEL (either LOW or HIGH) whenever the
+-- pin changes value.
+--
+-- @param pin The Arduino pin number (2 or 3 only)
+-- @param out The LEVEL, output when the pin changes level.
 PROC digital.input (VAL INT pin, CHAN LEVEL out!)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -70,7 +84,16 @@ PROC digital.input (VAL INT pin, CHAN LEVEL out!)
         read ()
 :
 
+
 VAL INT DEBOUNCE.TIME IS 50:
+
+--* Debounce a channel.
+-- Debounces a channel of LEVELs. Specifically, if 
+-- multiple values come in within the DEBOUNCE.TIME 
+-- (currently 50ms), only the first value is passed through.
+--
+-- @param in The incoming LEVEL values
+-- @param out The outgoing LEVEL values, debounced
 PROC debounce (CHAN LEVEL in?, out!)
   LEVEL v:
   WHILE TRUE
@@ -91,6 +114,13 @@ PROC debounce (CHAN LEVEL in?, out!)
       out ! v
 :
 
+--* Convert a LEVEL to a SIGNAL.
+-- Consumes a stream of LEVEL values, and emits a SIGNAL
+-- for each LEVEL received, regardless of whether it is
+-- LOW or HIGH.
+--
+-- @param in Input LEVEL values.
+-- @param out Output SIGNALs.
 PROC level.to.signal (CHAN LEVEL in?, CHAN SIGNAL out!)
   WHILE TRUE
     SEQ
@@ -99,6 +129,12 @@ PROC level.to.signal (CHAN LEVEL in?, CHAN SIGNAL out!)
       out ! SIGNAL
 :
 
+--* Invert LEVELs.
+-- Reads in LEVEL values, and outputs the opposite.
+-- Upon receiving a LOW, sends a HIGH, and visa versa.
+--
+-- @param in Incoming LEVEL values.
+-- @param out Outgoing LEVEL values, inverted.
 PROC invert.level (CHAN LEVEL in?, out!)
   WHILE TRUE
     LEVEL v:
@@ -107,6 +143,13 @@ PROC invert.level (CHAN LEVEL in?, out!)
       out ! NOT v
 :
 
+--* Watches for button presses on pin 2 or 3.
+-- When a button is pressed (must be attached to pin 2 or 3)
+-- a SIGNAL is generated. Uses digital.input, debounce, and 
+-- level.to.signal.
+--
+-- @param pin The pin the button is connected to (must be 2 or 3)
+-- @param out SIGNALs generated when the button is pressed.
 PROC button.press (VAL INT pin, CHAN SIGNAL out!)
   CHAN LEVEL a, b:
   PAR
@@ -115,6 +158,11 @@ PROC button.press (VAL INT pin, CHAN SIGNAL out!)
     level.to.signal (b?, out!)
 :
 
+--* Generates a consistent stream of SIGNALs.
+-- Every [@code period] milliseconds, a SIGNAL is generated.
+--
+-- @param period A delay time in milliseconds.
+-- @param out SIGNALs generated after the given delay.
 PROC tick (VAL INT period, CHAN SIGNAL out!)
   WHILE TRUE
     SEQ
@@ -122,6 +170,14 @@ PROC tick (VAL INT period, CHAN SIGNAL out!)
       out ! SIGNAL
 :
 
+--* Outputs an alternating stream of LEVEL values.
+-- Starting with an initial level (either LOW or HIGH), this 
+-- process outputs a stream of alternating LEVEL values upon 
+-- request. On receiving a SIGNAL, the next LEVEL is emitted
+--
+-- @param initial.level Either LOW or HIGH to start.
+-- @param in The request line.
+-- @param out The alternating stream of LEVEL values.
 PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
   INITIAL LEVEL level IS initial.level:
   WHILE TRUE
@@ -131,6 +187,12 @@ PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
       level := NOT level
 :
 
+--* Drives a pin alternately LOW and HIGH.
+-- Upon request, alternates the level of a pin from LOW to HIGH.
+-- 
+-- @param pin The (digital) Arduino pin we want to drive.
+-- @param initial.level Either LOW or HIGH.
+-- @param in The request line.
 PROC pin.toggle (VAL INT pin, VAL LEVEL initial.level, CHAN SIGNAL in?)
   CHAN LEVEL v:
   PAR
@@ -138,6 +200,11 @@ PROC pin.toggle (VAL INT pin, VAL LEVEL initial.level, CHAN SIGNAL in?)
     digital.output (pin, v?)
 :
 
+--* Drives a pin alternately LOW and HIGH on a fixed cycle.
+-- Every [@code delay.time] milliseconds, toggles a pin.
+-- 
+-- @param pin The Arduino pin.
+-- @param delay.time The number of milliseconds between toggles.
 PROC blink (VAL INT pin, delay.time)
   CHAN SIGNAL s:
   PAR
@@ -145,10 +212,21 @@ PROC blink (VAL INT pin, delay.time)
     pin.toggle (pin, LOW, s?)
 :
 
+--* A parallel health monitor.
+-- Blinks the LED.PIN (or pin 13) on the Arduino every 500 ms.
 PROC heartbeat ()
   blink (LED.PIN, 500)
 :
 
+--* Limits the range of values in a stream.
+-- Takes a low and high limit, and any integers read in that
+-- are below the 'low' value are clamped to low, and likewise
+-- with the 'high' value. 
+--
+-- @param low The lower limit for valid numbers.
+-- @param high The upper limit for valid numbers.
+-- @param in The input stream of INTs.
+-- @param out The output stream of INTs.
 PROC clamp (VAL INT low, high, CHAN INT in?, out!)
   INT v:
   WHILE TRUE
@@ -163,7 +241,14 @@ PROC clamp (VAL INT low, high, CHAN INT in?, out!)
           SKIP
       out ! v
 :
-  
+
+--* Writes an analog value to a pin.
+-- For a given (analog) pin, sets the level to a value between
+-- 0 and 255. Negative values are treated as 0, and values greater
+-- than 255 are treated as 255.
+--
+-- @param pin The Arduino pin number
+-- @param level The input level.
 PROC pwm (VAL INT pin, CHAN INT level?)
   INITIAL INT lvl IS 0:
   SEQ
@@ -181,6 +266,14 @@ PROC pwm (VAL INT pin, CHAN INT level?)
 -- That said, this is not parallel-safe: we can't read from
 -- multiple pins using this PROC. I think I might set this as a 
 -- challenge for the CMPSC220 students next week.
+
+--* Read an analog value.
+-- For the given pin, will do an analog read of that pin
+-- and emit the value upon request. Currently not parallel safe.
+--
+-- @param pin The Arduino pin number
+-- @param req The request line.
+-- @param val The current analog reading, 0 - 1023
 PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
   PLACED [MAX.PORT]BYTE ports 0:
   INT16 result:   
