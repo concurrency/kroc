@@ -1,15 +1,12 @@
 #INCLUDE "plumbing.module"
 
-VAL INT PWM.MAX IS 250:
 PROC pwm.cycle (VAL INT pin, millis)
   SEQ
-    -- Up...
-    SEQ i = 0 FOR PWM.MAX 
+    SEQ i = 0 FOR 255
       SEQ
         analogWrite(pin, (BYTE i))
         delay(millis)
-    -- .. and down.
-    SEQ i = PWM.MAX FOR PWM.MAX STEP (- 1)
+    SEQ i = 255 FOR 255 STEP (- 1)
       SEQ
         analogWrite(pin, (BYTE i))
         delay(millis)
