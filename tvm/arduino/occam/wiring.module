@@ -7,7 +7,9 @@
 #INCLUDE "avr.module"
 
 --{{{  constants
+--* Symbolic constant for digital LOW on an Arduino pin.
 VAL INT LOW IS #0:
+--* Symbolic constant for digital HIGH on an Arduino pin.
 VAL INT HIGH IS #1:
 
 VAL INT INPUT IS #0:
@@ -56,6 +58,8 @@ PROC delay (VAL INT millis)
 --}}}
 
 --{{{ PROC die
+--* Kills everything and reports an error back to the user.
+-- @param error A string containing the error message.
 INLINE PROC die (VAL []BYTE error)
   SEQ
     --{{{  force error to be used
@@ -101,6 +105,9 @@ INT, INT, INT, INT INLINE FUNCTION pin.location (VAL INT pin)
 --}}}
 
 --{{{  PROC digitalWrite
+--* Sets the state of a pin to either HIGH or LOW.
+-- @param pin The Arduino pin number.
+-- @param state Either HIGH or LOW.
 PROC digitalWrite (VAL INT pin, state)
   INT r.ddr, r.port, r.pin, bit:
   PLACED [MAX.PORT]BYTE ports 0:
@@ -111,6 +118,9 @@ PROC digitalWrite (VAL INT pin, state)
 :
 --}}}
 --{{{  PROC digitalRead
+--* Read the value of a digital pin. Either HIGH or LOW.
+-- @param pin The Arduino pin number.
+-- @param state The state of the pin will be stored in this variable.
 PROC digitalRead (VAL INT pin, RESULT INT state)
   INT r.ddr, r.port, r.pin, bit:
   PLACED [MAX.PORT]BYTE ports 0:
@@ -120,6 +130,7 @@ PROC digitalRead (VAL INT pin, RESULT INT state)
     state := (INT ((ports[r.pin] /\ (BV (bit))) >> bit))
 :
 --}}}
+
 
 --{{{  PROC pinMode
 PROC pinMode (VAL INT pin, mode)
@@ -163,6 +174,7 @@ PROC serialWrite (VAL []BYTE string)
 --}}}
 --{{{  PROC serialWriteInt
 --* Write an [@code INT] to the serial port in hex.
+-- @param n The integer to write.
 PROC serialWriteInt (VAL INT n)
   VAL []BYTE digits IS "0123456789abcdef":
   SEQ i = 3 FOR 4 STEP -1
@@ -171,6 +183,7 @@ PROC serialWriteInt (VAL INT n)
 --}}}
 --{{{  PROC serialWriteInt32
 --* Write an [@code INT32] to the serial port in hex.
+-- @param n The long integer ([@code INT32]) to write.
 PROC serialWriteInt32 (VAL INT32 n)
   VAL []BYTE digits IS "0123456789abcdef":
   SEQ i = 7 FOR 8 STEP -1
@@ -190,6 +203,9 @@ VAL []INT WGM IS [WGM00, WGM00, WGM10, WGM10, WGM20, WGM20]:
 VAL []INT OCR IS [OCR0A, OCR0B, OCR1A, OCR1B, OCR2A, OCR2B]:
 
 --{{{  PROC beginAnalog
+--* Initialize analog input.
+-- Only works on PWM pins. 
+-- @param pin The Arduino pin number.
 PROC beginAnalog (VAL INT pin)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -206,6 +222,9 @@ PROC beginAnalog (VAL INT pin)
 
 
 --{{{  PROC analogWrite
+--* Write an analog value to a pin.
+-- @param pin The Arduino pin number.
+-- @param level A [@code BYTE] representing the analog level (0 -> 255)
 PROC analogWrite (VAL INT pin, VAL BYTE level)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -217,6 +236,9 @@ PROC analogWrite (VAL INT pin, VAL BYTE level)
 
 
 --{{{  PROC endAnalog
+--* Disable analog output on Arduino.
+-- Only works on PWM pins.
+-- @param pin The Arduino pin number.
 PROC endAnalog (VAL INT pin)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
