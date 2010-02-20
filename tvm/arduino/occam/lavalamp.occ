@@ -14,7 +14,6 @@ PROC pwm.cycle (VAL INT pin, millis)
 
 
 PROC fader (VAL INT pin, CHAN SIGNAL req!, CHAN INT adc?)
-  INITIAL INT step IS 1:
   SEQ
     beginAnalog(pin)
     WHILE TRUE
@@ -26,33 +25,15 @@ PROC fader (VAL INT pin, CHAN SIGNAL req!, CHAN INT adc?)
         adc ? reading
         -- Calculate the delay
         millis := (reading / 200) + pin
-        -- Fade with a delay of 0 - 5ms + (pin)ms
+        -- Fade up and down with a delay of ((0 -> 5) + pin) ms
         pwm.cycle(pin, millis)
 :
 
-PROC router ([3]CHAN SIGNAL ses?, [3]CHAN INT readings!, 
-             CHAN SIGNAL s, CHAN INT v)
-  WHILE TRUE
-    ALT i = 0 FOR 3
-      INT reading:
-      ses[i] ? SIGNAL
-        SEQ
-          s ! SIGNAL
-          v ? reading
-          readings[i] ! reading
-:
-      
-
-VAL []INT PINS IS [3, 6, 11]:
 PROC main ()
   CHAN SIGNAL s:
-  CHAN INT v:
-  [3]CHAN SIGNAL ses:
-  [3]CHAN INT readings:
+  CHAN INT reading:
   PAR
-    adc(2, s?, v!)
-    router(ses?, readings!, s!, v?)
-    PAR i = 0 FOR 3
-      fader(PINS[i], ses[i]!, readings[i]?)
+    adc (2, s?, reading!)
+    fader (3, s!, reading?)
 :
         
