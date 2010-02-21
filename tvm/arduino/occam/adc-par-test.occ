@@ -1,0 +1,23 @@
+#INCLUDE "plumbing.module"
+
+PROC show (VAL INT i, CHAN SIGNAL s!, CHAN INT in?)
+  INT n:
+  WHILE TRUE
+    SEQ
+      s ! SIGNAL
+      in ? n
+      serialWriteInt(i)
+      serialWrite(" : ")
+      serialWriteInt(n)
+      serialWrite("*n")
+:
+
+PROC main ()
+  [6]CHAN SIGNAL s:
+  [6]CHAN INT v:
+  PAR i = 0 FOR 6
+    PAR
+      adc(i, s[i]?, v[i]!)
+      show(i, s[i]!, v[i]?)
+:
+
