@@ -262,11 +262,6 @@ PROC pwm (VAL INT pin, CHAN INT level?)
           analogWrite (pin, (BYTE lvl))
 :
 
--- This is pulled (mostly) directly from Adam's quick adc.occ.
--- That said, this is not parallel-safe: we can't read from
--- multiple pins using this PROC. I think I might set this as a 
--- challenge for the CMPSC220 students next week.
-
 --* Read an analog value.
 -- For the given pin, will do an analog read of that pin
 -- and emit the value upon request. Currently not parallel safe.
@@ -274,6 +269,42 @@ PROC pwm (VAL INT pin, CHAN INT level?)
 -- @param pin The Arduino pin number
 -- @param req The request line.
 -- @param val The current analog reading, 0 - 1023
+PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
+  PLACED [MAX.PORT]BYTE ports 0:
+  INT16 result:
+  SEQ
+    -- Enable ADC; enable interrupt; clock prescale 128
+    ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ (7 << ADPS0)
+    -- Disable digital inputs on all six ADC pins
+    ports[DIDR0] := #3F
+    WHILE TRUE
+      SEQ
+        req ? SIGNAL
+        
+        -- Select the channel
+        ports[ADMUX] := (1 << REFS0) \/ (BYTE pin)
+        
+        -- Start conversion
+        ports[ADCSRA] := ports[ADCSRA] \/ BV (ADSC)
+        WHILE ((ports[ADCSRA] /\ BV(ADSC)) = BV (ADSC))
+          SKIP
+
+        -- Read value
+        -- (We can't do this by retyping ports, since that does a 16-bit read)
+        [2]BYTE bytes RETYPES result:
+        bytes[0], bytes[1] := ports[ADCL], ports[ADCH]
+
+        val ! (INT result)
+:
+
+#IF FALSE
+-- While this is a nice interrupt-driven approach to ADC,
+-- it is not parallel-safe. Because we deschedule when doing a reading,
+-- someone else can come in and start another. I have replaced this 
+-- with a busywait version until I can come up with a better solution.
+--
+-- The busywait obviously blocks our runtime until a reading finishes.
+-- However, it eliminates the critical section.
 PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
   PLACED [MAX.PORT]BYTE ports 0:
   INT16 result:   
@@ -290,6 +321,7 @@ PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
         -- Start conversion
         ports[ADCSRA] := ports[ADCSRA] \/ BV (ADSC)
 
+        -- serialWrite("Waiting for conversion...")
         -- Wait for conversion to complete
         INT t:
         wait.for.interrupt (VINTR.ADC, t)
@@ -302,5 +334,7 @@ PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
         
         val ! (INT result)
 :
+#ENDIF
+
 
 #ENDIF
