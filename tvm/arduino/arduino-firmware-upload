@@ -1,0 +1,20 @@
+#!/bin/bash
+ROOT=/opt/occam/arduino
+CONF=$ROOT/avrdude.conf
+FLAGS="-V -F -p atmega328p"
+HEX=$ROOT/tvm-arduino.hex
+
+if test -n "$1"
+then
+	echo "Uploading Transterpreter Virtual Machine"
+	avrdude -C $CONF $FLAGS -P $1 -b 57600 -c stk500v1 -U flash:w:$HEX
+	echo
+	echo "Upload done"
+else
+	echo "Usage:"
+	echo
+	echo " upload-firmware PORT"
+	echo
+	echo "where PORT may be '/dev/ttyUSB0' or similar"
+	echo
+fi
