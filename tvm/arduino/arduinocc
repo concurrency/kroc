@@ -16,7 +16,7 @@ fi
 
 if [ -f $BASE.occ ]; then  
   echo "Compiling..."
-  avr-occbuild -L /opt/occam/arduino/lib -DF.CPU=16000000 --program $BASE.occ
+  avr-occbuild --search /opt/occam/arduino/lib -DF.CPU=16000000 --program $BASE.occ
 else 
   echo
   echo "No upload port or file. Usage:"
