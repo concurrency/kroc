@@ -1,12 +1,43 @@
 #!/bin/bash 
-BYTECODE_ADDR=0x5000
-F_CPU=16000000
-MCU="atmega328p"
-UPLOAD_RATE=57600
-BASE=`basename $2 .occ`
-UPLOAD_PORT=$1
 
-AVRDUDE_FLAGS="-V -F -p $MCU -P $UPLOAD_PORT -b $UPLOAD_RATE -c stk500v1"
+# Source in everything we need--both the KRoC env and 
+# variables for Arduino compilation and upload.
+
+source avr-kroc-setup.sh
+source arduinocc-environment.sh
+
+# Sanity check
+if [ "$1" == "" ]; then
+  # Print reasonable documentation for the students
+  echo "Wrong."
+  exit
+fi
+
+if [ "$1" == "firmware" ]; then
+  echo "Uploading Transterpreter Virtual Machine"
+  avrdude -C $TVM_AVRDUDE_CONF \
+     $TVM_AVRDUDE_FIRMWARE_FLAGS \
+    -P $2 -b $TVM_UPLOAD_RATE -c stk500v1 \
+    -U flash:w:$TVM_ARDUINO_FIRMWARE
+  exit
+fi
+
+if [ "$2" == "" ]; then
+  # Print that they need the filename
+  echo "Also wrong."
+  exit
+fi
+
+BASE=`basename $2 .occ`
+
+# Another sanity check
+if [ ! -f $BASE.occ ]; then
+  echo "No occam file."
+  exit
+fi
+
+UPLOAD_PORT=$1
+AVRDUDE_FLAGS="$TVM_AVRDUDE_CODE_FLAGS -P $UPLOAD_PORT"
 AVRDUDE_WRITE_OCCAM="-D -U flash:w:$BASE.hex"
 
 if [ -f $BASE.tbc ]; then
@@ -14,17 +45,13 @@ if [ -f $BASE.tbc ]; then
   rm $BASE.tbc
 fi
 
-if [ -f $BASE.occ ]; then  
-  echo "Compiling..."
-  avr-occbuild --no-std-libs --search /opt/occam/arduino/lib -DF.CPU=16000000 --program $BASE.occ
-else 
-  echo
-  echo "No upload port or file. Usage:"
-  echo
-  echo "  arduinocc <port> <file.occ>"
-  echo
-  exit
-fi
+
+echo "Compiling..."
+avr-occbuild \
+  --search /opt/occam/share/tvm/avr-vtinclude \
+  --search /opt/occam/share/tvm/avr-vtlib \
+  --search /opt/occam/lib \
+  -DF.CPU=$TVM_F_CPU --program $BASE.occ
 
 if [ $? -eq 0 ]; then
 
@@ -35,14 +62,14 @@ if [ $? -eq 0 ]; then
 
   if [ $? -eq 0 ]; then
     echo "Converting to .hex..."
-    binary-to-ihex $BYTECODE_ADDR $BASE.tbc $BASE.hex
+    binary-to-ihex $TVM_BYTECODE_ADDR $BASE.tbc $BASE.hex
   fi
 
 
   if [ $? -eq 0 ]; then
     echo "Uploading..."
     reset-arduino $UPLOAD_PORT
-    avrdude -C /opt/occam/arduino/avrdude.conf $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
+    avrdude -C $TVM_AVRDUDE_CONF $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
   fi
 
   if [ $? -eq 0 ]; then
