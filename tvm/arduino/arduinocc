@@ -61,10 +61,12 @@ fi
 
 
 echo "Compiling..."
+
+# These values come in from arduiniocc-enironment.sh
 avr-occbuild \
-  --search /opt/occam/share/tvm/avr-vtinclude \
-  --search /opt/occam/share/tvm/avr-vtlib \
-  --search /opt/occam/lib \
+  --search $TVM_INST_ROOT/share/tvm/avr-vtinclude \
+  --search $TVM_INST_ROOT/share/tvm/avr-vtlib \
+  --search $TVM_INST_ROOT/lib \
   -DF.CPU=$TVM_F_CPU --program $2
 
 if [ $? -eq 0 ]; then
