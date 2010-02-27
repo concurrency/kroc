@@ -9,40 +9,54 @@ source arduinocc-environment.sh
 # Sanity check
 if [ "$1" == "" ]; then
   # Print reasonable documentation for the students
-  echo "Wrong."
+  echo
+  echo "No port provided. On Ubuntu Linux, this is probably '/dev/ttyUSB0'."
+  echo
   exit
 fi
 
-if [ "$1" == "firmware" ]; then
+if [ "$2" == "firmware" ]; then
   echo "Uploading Transterpreter Virtual Machine"
   avrdude -C $TVM_AVRDUDE_CONF \
      $TVM_AVRDUDE_FIRMWARE_FLAGS \
-    -P $2 -b $TVM_UPLOAD_RATE -c stk500v1 \
+    -P $1 -b $TVM_UPLOAD_RATE -c stk500v1 \
     -U flash:w:$TVM_ARDUINO_FIRMWARE
   exit
 fi
 
 if [ "$2" == "" ]; then
   # Print that they need the filename
-  echo "Also wrong."
+  echo
+  echo "You need to provide an occam program after the port."
+  echo "For example:"
+  echo
+  echo "  arduinocc /dev/ttyUSB0 blink.occ"
+  echo
+  echo "occam programs always end with a .occ extension."
+  echo
   exit
 fi
 
-BASE=`basename $2 .occ`
+PROGBASE=`basename $2 .occ`
+PROGDIR=`dirname $2`
+OCC="$PROGDIR/$PROGBASE.occ"
+TBC="$PROGBASE.tbc"
+HEX="$PROGBASE.hex"
 
 # Another sanity check
-if [ ! -f $BASE.occ ]; then
-  echo "No occam file."
+if [ ! -f $OCC ]; then
+  echo "Given: $OCC"
+  echo "You did not provide an occam file for us to work with."
   exit
 fi
 
 UPLOAD_PORT=$1
 AVRDUDE_FLAGS="$TVM_AVRDUDE_CODE_FLAGS -P $UPLOAD_PORT"
-AVRDUDE_WRITE_OCCAM="-D -U flash:w:$BASE.hex"
+AVRDUDE_WRITE_OCCAM="-D -U flash:w:$HEX"
 
-if [ -f $BASE.tbc ]; then
+if [ -f $TBC ]; then
   echo "Removing old TBC file..."
-  rm $BASE.tbc
+  rm $TBC
 fi
 
 
@@ -51,25 +65,35 @@ avr-occbuild \
   --search /opt/occam/share/tvm/avr-vtinclude \
   --search /opt/occam/share/tvm/avr-vtlib \
   --search /opt/occam/lib \
-  -DF.CPU=$TVM_F_CPU --program $BASE.occ
+  -DF.CPU=$TVM_F_CPU --program $2
 
 if [ $? -eq 0 ]; then
 
-  if [ -f $BASE.hex ]; then
+  if [ -f $HEX ]; then
     echo "Removing old HEX file..."
-    rm $BASE.hex
+    rm $HEX
   fi
 
   if [ $? -eq 0 ]; then
-    echo "Converting to .hex..."
-    binary-to-ihex $TVM_BYTECODE_ADDR $BASE.tbc $BASE.hex
+    if [ -f $TBC ]; then
+      echo "Converting to .hex..."
+      binary-to-ihex $TVM_BYTECODE_ADDR $TBC $HEX
+    else
+      echo ".tbc file not generated or not found."
+      exit
+    fi
   fi
 
 
   if [ $? -eq 0 ]; then
-    echo "Uploading..."
-    reset-arduino $UPLOAD_PORT
-    avrdude -C $TVM_AVRDUDE_CONF $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
+    if [ -f $HEX ]; then
+      echo "Uploading..."
+      reset-arduino $UPLOAD_PORT
+      avrdude -C $TVM_AVRDUDE_CONF $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
+    else
+      echo ".hex file not generated or not found."
+      exit
+    fi
   fi
 
   if [ $? -eq 0 ]; then
