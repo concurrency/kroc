@@ -237,5 +237,17 @@ if [ "$1" = "all" ]; then
   fi 
 fi  
 
+if [ "$1" = "" ]; then
+  header "Build options"
+  echo " [ build       ]  Checkout source and build."
+  echo " [ copy        ]  Copy Arduino scripts into binary path."
+  echo " [ writeconfig ]  Generate Arduino support config."
+  echo " [ bundle      ]  Generate tarball."
+  echo " [ all         ]  From source checkout to tarballing. "
+  echo " [ all <uname> ]  Upload after completion."
+  echo
+  exit
+fi
+
 exit
 
