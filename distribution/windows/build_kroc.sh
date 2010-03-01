@@ -73,7 +73,7 @@ fi
 cd $BUILD
 cd ../../../
 
-#autoreconf -v -f -i
+autoreconf -v -f -i
 
 #cd $BUILD
 #mkdir kroc-ccsp
