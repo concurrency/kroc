@@ -19,7 +19,7 @@
 #	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-import sys, os, getopt, re, shlex, subprocess, platform
+import sys, os, getopt, re, shlex, platform
 
 #{{{  globals
 VERSION = "$Revision$"[11:-2]
@@ -90,7 +90,11 @@ def adjust_for_windows(cmd):
 def run_command(cmd):
 	"""Run a program with arguments and return the exit code."""
 	cmd = adjust_for_windows(cmd)
-	return subprocess.call(cmd)
+	try:
+		import subprocess
+		return subprocess.call(cmd)
+	except ImportError:
+		return os.spawnvp(os.P_WAIT, cmd[0], cmd)
 
 def safe_sorted(l):
 	"""Like sorted(), but returns a mutable list."""
@@ -160,10 +164,32 @@ def capture(cmd):
 
 	cmd = adjust_for_windows(cmd)
 
-	p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-	data = p.communicate()[0]
+	try:
+		import subprocess
+		p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+		data = p.communicate()[0]
+		status = p.wait()
+	except ImportError:
+		(pr, pw) = os.pipe()
+		pid = os.fork()
+		if pid == 0:
+			os.close(pr)
+			os.dup2(pw, 1)
+			os.execvp(cmd[0], cmd)
+			os._exit(1)
 
-	if p.wait() != 0:
+		os.close(pw)
+		data = ""
+		while 1:
+			s = os.read(pr, 4096)
+			if s == "":
+				break
+			data += s
+		os.close(pr)
+
+		(pid, status) = os.waitpid(pid, 0)
+
+	if status != 0:
 		die("Command failed: ", " ".join(cmd))
 
 	return data
