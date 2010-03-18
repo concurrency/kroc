@@ -4033,6 +4033,96 @@ SWIGEXPORT void _glGetTexLevelParameteriv (word occ_args[]) {
 
 
 /*}}}*/
+/*{{{  function glTexImage1D */
+SWIGEXPORT void _glTexImage1D (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  GLsizei arg4 ;
+  GLint arg5 ;
+  GLenum arg6 ;
+  GLenum arg7 ;
+  GLvoid *arg8 = (GLvoid *) 0 ;
+  
+  {
+    arg1 = * ((GLenum *) &occ_args[0]); 
+  }{
+    arg2 = * ((GLint *) &occ_args[1]); 
+  }{
+    arg3 = * ((GLint *) &occ_args[2]); 
+  }{
+    arg4 = * ((GLsizei *) &occ_args[3]); 
+  }{
+    arg5 = * ((GLint *) &occ_args[4]); 
+  }{
+    arg6 = * ((GLenum *) &occ_args[5]); 
+  }{
+    arg7 = * ((GLenum *) &occ_args[6]); 
+  }{
+    arg8 = * ((GLvoid * *) &occ_args[7]); 
+  }glTexImage1D(arg1,arg2,arg3,arg4,arg5,arg6,arg7,(void const *)arg8);
+}
+
+
+/*}}}*/
+/*{{{  function glTexImage2D */
+SWIGEXPORT void _glTexImage2D (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLint arg3 ;
+  GLsizei arg4 ;
+  GLsizei arg5 ;
+  GLint arg6 ;
+  GLenum arg7 ;
+  GLenum arg8 ;
+  GLvoid *arg9 = (GLvoid *) 0 ;
+  
+  {
+    arg1 = * ((GLenum *) &occ_args[0]); 
+  }{
+    arg2 = * ((GLint *) &occ_args[1]); 
+  }{
+    arg3 = * ((GLint *) &occ_args[2]); 
+  }{
+    arg4 = * ((GLsizei *) &occ_args[3]); 
+  }{
+    arg5 = * ((GLsizei *) &occ_args[4]); 
+  }{
+    arg6 = * ((GLint *) &occ_args[5]); 
+  }{
+    arg7 = * ((GLenum *) &occ_args[6]); 
+  }{
+    arg8 = * ((GLenum *) &occ_args[7]); 
+  }{
+    arg9 = * ((GLvoid * *) &occ_args[8]); 
+  }glTexImage2D(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,(void const *)arg9);
+}
+
+
+/*}}}*/
+/*{{{  function glGetTexImage */
+SWIGEXPORT void _glGetTexImage (word occ_args[]) {
+  GLenum arg1 ;
+  GLint arg2 ;
+  GLenum arg3 ;
+  GLenum arg4 ;
+  GLvoid *arg5 = (GLvoid *) 0 ;
+  
+  {
+    arg1 = * ((GLenum *) &occ_args[0]); 
+  }{
+    arg2 = * ((GLint *) &occ_args[1]); 
+  }{
+    arg3 = * ((GLenum *) &occ_args[2]); 
+  }{
+    arg4 = * ((GLenum *) &occ_args[3]); 
+  }{
+    arg5 = * ((GLvoid * *) &occ_args[4]); 
+  }glGetTexImage(arg1,arg2,arg3,arg4,arg5);
+}
+
+
+/*}}}*/
 /*{{{  function glGenTextures */
 SWIGEXPORT void _glGenTextures (word occ_args[]) {
   GLsizei arg1 ;
