@@ -17,7 +17,7 @@ noinst_HEADERS = \
 brickload_SOURCES = \
 	brickload.c \
 	nxt.c \
-	rxt.c \
+	rcx.c \
 	mac.c \
 	nix.c \
 	win.c

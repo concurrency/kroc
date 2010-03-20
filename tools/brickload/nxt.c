@@ -1,5 +1,5 @@
 /* 
- *  nxt.c -- part of brickload NXT/RXT firmware and bytecode tool
+ *  nxt.c -- part of brickload NXT/RCX firmware and bytecode tool
  *  Copyright (C) 2010  Carl Ritson <cgr@kent.ac.uk>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,3 +17,4 @@
  */
 
 #include "brickload.h"
+
