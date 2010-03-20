@@ -41,7 +41,10 @@ struct _brick_t {
 };
 
 void *init_usb (void);
-brick_t *find_usb_devices (void *usb, int32_t vendor, int32_t product, brick_type_t type);
+brick_t *find_usb_devices (void *usb, 
+	int32_t vendor, int32_t product,
+	int32_t configuration, int32_t interface,
+	brick_type_t type);
 void free_usb (void *usb);
 
 

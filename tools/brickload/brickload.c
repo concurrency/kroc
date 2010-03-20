@@ -28,7 +28,7 @@ static void do_list (void) {
 	}
 
 	/* Find NXTs */
-	list = find_usb_devices (usb, 0x0694, 0x0002, LEGO_NXT);
+	list = find_usb_devices (usb, 0x0694, 0x0002, 0x1, 0x0, LEGO_NXT);
 	if (list != NULL) {
 		fprintf (stdout, "-- NXT Bricks --\n");
 		for (i = 0; list[i].type == LEGO_NXT; ++i) {
