@@ -13,7 +13,7 @@ AM_C_PROTOTYPES
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(stdlib.h string.h strings.h)
+AC_CHECK_HEADERS(stdlib.h string.h assert.h errno.h)
 AC_CHECK_HEADERS(stdint.h unistd.h sys/ioctl.h time.h)
 
 dnl Check for libraries.
@@ -23,6 +23,7 @@ dnl OS related defines.
 case "$host_os" in
   *Darwin* | *darwin*)
     AC_DEFINE([OS_MAC], 1, [define for Mac OS X/Darwin])
+    LDFLAGS="$LDFLAGS -framework CoreFoundation -framework IOKit"
     ;;
   cygwin* | mingw32*)
     AC_DEFINE([OS_WIN], 1, [define for Windows])
