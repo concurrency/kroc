@@ -18,7 +18,7 @@
 
 #include "brickload.h"
 
-static brick_t *merge_brick_lists (brick_t *a, brick_t *b) {
+brick_t *merge_brick_lists (brick_t *a, brick_t *b) {
 	if (a == NULL && b == NULL) {
 		return NULL;
 	} else if (a == NULL && b != NULL) {
@@ -46,6 +46,18 @@ static brick_t *merge_brick_lists (brick_t *a, brick_t *b) {
 	}
 }
 
+void free_brick_list (brick_t *list) {
+	if (list != NULL) {
+		int i;
+
+		for (i = 0; list[i].type != NULL_BRICK; ++i) {
+			list[i].release (&(list[i]));
+		}
+
+		free (list);
+	}
+}
+
 static void do_list (void) {
 	brick_t *list 	= NULL;
 	void *usb 	= init_usb ();
@@ -55,9 +67,11 @@ static void do_list (void) {
 		return;
 	}
 
-	/* Find NXTs */
+	/* Give RCX towers a kick, so we can find their interfaces */
+	configure_rcx_towers (usb);
+
 	list = merge_brick_lists (list,
-		find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_TOWER, 0x0, 0x0, LEGO_RCX)
+		find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_TOWER, 0x1, 0x0, LEGO_RCX)
 	);
 	list = merge_brick_lists (list,
 		find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_NXT, 0x1, 0x0, LEGO_NXT)
@@ -91,9 +105,8 @@ static void do_list (void) {
 			if (flags & SAMBA_BRICK)
 				fprintf (stdout, " SAMBA");
 			fprintf (stdout, "\n");
-			list[i].release (&(list[i]));
 		}
-		free (list);
+		free_brick_list (list);
 	} else {
 		fprintf (stdout, "No bricks found.\n");
 	}
