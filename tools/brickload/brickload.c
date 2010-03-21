@@ -58,13 +58,13 @@ void free_brick_list (brick_t *list) {
 	}
 }
 
-static void do_list (void) {
+static int do_list (void) {
 	brick_t *list 	= NULL;
 	void *usb 	= init_usb ();
 	int i;
 	
 	if (usb == NULL) {
-		return;
+		return -1;
 	}
 
 	/* Give RCX towers a kick, so we can find their interfaces */
@@ -99,7 +99,7 @@ static void do_list (void) {
 					fprintf (stdout, "UNKNOWN  ");
 					break;
 			}
-			fprintf (stdout, " %p", list[i].handle);
+			fprintf (stdout, " @%08x", list[i].id);
 			if (flags & NXOS_BRICK)
 				fprintf (stdout, " NXOS");
 			if (flags & SAMBA_BRICK)
@@ -112,6 +112,61 @@ static void do_list (void) {
 	}
 
 	free_usb (usb);
+
+	return 0;
+}
+
+static int do_sambaNXT (void) {
+	brick_t *list 	= NULL;
+	void *usb 	= init_usb ();
+	int ret		= -1;
+	
+	if (usb == NULL) {
+		return -1;
+	}
+	
+	/* Get SAMBAing NXTs */
+	list = merge_brick_lists (list,
+		find_usb_devices (usb, ATMEL_VENDOR_ID, ATMEL_PRODUCT_SAMBA, 0x1, 0x1, LEGO_NXT | SAMBA_BRICK)
+	);
+	
+	if (list != NULL) {
+		brick_t *b = &(list[0]); /* XXX: take first brick for now */
+		int r;
+
+		fprintf (stdout, "Trying to SAMBA NXT @%08x\n", b->id);
+		r = b->open (b);
+		if (!r) {
+			uint8_t buf[2];
+
+			buf[0] = 'N';
+			buf[1] = '#';
+
+			r = b->write (b, buf, 2, 0);
+			if (r == 2) {
+				r = b->read (b, buf, 2, 0);
+				if (r == 2) {
+					fprintf (stdout, "Got handshake bytes %02x %02x.\n", buf[0], buf[1]);
+				} else {
+					fprintf (stdout, "Error reading handshake response.\n");
+				}
+			} else {
+				fprintf (stdout, "Error writing handshake.\n");
+			}
+			
+			b->close (b);
+		} else {
+			fprintf (stdout, "Unable to open brick.\n");
+		}
+
+		free_brick_list (list);
+	} else {
+		fprintf (stdout, "No SAMBAing NXT bricks found.\n");
+	}
+	
+	free_usb (usb);
+
+	return ret;
 }
 
 static void usage (const char *prog_name) {
@@ -140,10 +195,12 @@ int main (int argc, char *argv[]) {
 		return 1;
 	} else {
 		const char *verb = argv[1];
+		int ret = 1;
+
 		if (strcmp (verb, "list") == 0) {
-			do_list ();
+			ret = do_list ();
 		} else if (strcmp (verb, "sambaNXT") == 0) {
-			not_implemented ();
+			ret = do_sambaNXT ();
 		} else if (strcmp (verb, "sambaRXT") == 0) {
 			not_implemented ();
 		} else if (strcmp (verb, "loadNXT") == 0) {
@@ -152,8 +209,9 @@ int main (int argc, char *argv[]) {
 			not_implemented ();
 		} else {
 			usage (prog_name);
-			return 1;
 		}
+
+		return ret;
 	}
 	return 0;
 }

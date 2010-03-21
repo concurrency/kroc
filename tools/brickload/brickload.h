@@ -41,8 +41,10 @@ typedef enum {
 typedef struct _brick_t brick_t;
 struct _brick_t {
 	brick_type_t	type;
-	int		id;
+	uint32_t	id;
+
 	void		*handle;
+	void		*state;
 
 	int		(*get_config)(brick_t *);
 	int		(*set_config)(brick_t *, int configuration);
@@ -50,8 +52,8 @@ struct _brick_t {
 	int		(*open)(brick_t *);
 	int		(*close)(brick_t *);
 	
-	int		(*read)(brick_t *, uint8_t ep, uint8_t *data, size_t len, int timeout);
-	int		(*write)(brick_t *, uint8_t ep, uint8_t *data, size_t len, int timeout);
+	int		(*read)(brick_t *, uint8_t *data, size_t len, int timeout);
+	int		(*write)(brick_t *, uint8_t *data, size_t len, int timeout);
 
 	void		(*release)(brick_t *);
 };

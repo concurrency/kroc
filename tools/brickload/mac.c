@@ -27,9 +27,13 @@
 #include <IOKit/IOCFPlugIn.h>
 #include <IOKit/usb/IOUSBLib.h>
 
+#include <mach/mach.h>
+
+
 typedef struct _usb_handle_t {
 	mach_port_t	port;
 } usb_handle_t;
+
 
 void *init_usb (void) {
 	usb_handle_t *h = (usb_handle_t *) malloc (sizeof (usb_handle_t));
@@ -81,15 +85,124 @@ static int set_dev_config (brick_t *brick, int configuration) {
 	return 0;
 }
 
-static void release_intf_brick (brick_t *brick) {
+static IOUSBDeviceInterface **dev_from_intf (IOUSBInterfaceInterface **intf) {
+	IOUSBDeviceInterface	**dev 			= NULL;
+	IOCFPlugInInterface	**plugInInterface 	= NULL;
+	io_service_t		device;
+	kern_return_t		kr;
+	HRESULT			result;
+	SInt32			score;
+
+	kr = (*intf)->GetDevice (intf, &device);
+
+	if (kr || !device) {
+		return NULL;
+	}
+
+	kr = IOCreatePlugInInterfaceForService (
+		device, kIOUSBDeviceUserClientTypeID, kIOCFPlugInInterfaceID,
+		&plugInInterface, &score
+	);
+	
+	if (kr || !plugInInterface) {
+		return NULL;
+	}
+
+	result = (*plugInInterface)->QueryInterface (
+			plugInInterface,
+			CFUUIDGetUUIDBytes (kIOUSBDeviceInterfaceID),
+			(LPVOID *) &dev
+	);
+	(*plugInInterface)->Release (plugInInterface);
+
+	if (!result) {
+		return dev;
+	} else {
+		return NULL;
+	}
+}
+
+static int open_intf (brick_t *brick) {
 	IOUSBInterfaceInterface	**intf = (IOUSBInterfaceInterface **) brick->handle;
+	IOReturn r;
+
+	assert (intf != NULL);
+
+	r = (*intf)->USBInterfaceOpen (intf);
+	if (!r) {
+		return 0;
+	} else {
+		fprintf (stderr, "intf error = %08x\n", r);
+		return -1;
+	}
+}
+
+static int close_intf (brick_t *brick) {
+	IOUSBInterfaceInterface	**intf = (IOUSBInterfaceInterface **) brick->handle;
+	IOReturn r;
+	
+	assert (intf != NULL);
+	
+	r = (*intf)->USBInterfaceClose (intf);
+	if (r) {
+		fprintf (stderr, "intf error = %08x\n", r);
+		return -1;
+	} else {
+		return 0;
+	}
+}
+
+static int read_intf (brick_t *brick, uint8_t *data, size_t len, int timeout) {
+	IOUSBInterfaceInterface	**intf 	= (IOUSBInterfaceInterface **) brick->handle;
+	UInt32 			size	= len;
+	IOReturn 		r;
+
+	assert (intf != NULL);
+
+	/* FIXME: piperef always 2 ? */
+	/* FIXME: timeout */
+	r = (*intf)->ReadPipe (intf, 2, data, &size);
+
+	if (r) {
+		fprintf (stderr, "read error = %08x\n", r);
+		return -1;
+	} else {
+		return (int) size;
+	}
+}
+
+static int write_intf (brick_t *brick, uint8_t *data, size_t len, int timeout) {
+	IOUSBInterfaceInterface	**intf = (IOUSBInterfaceInterface **) brick->handle;
+	IOReturn r;
+
+	assert (intf != NULL);
+
+	/* FIXME: piperef always 1 ? */
+	/* FIXME: timeout */
+	r = (*intf)->WritePipe (intf, 1, data, len);
+
+	if (r) {
+		fprintf (stderr, "write error = %08x\n", r);
+		return -1;
+	} else {
+		return len;
+	}
+}
+
+static void release_intf (brick_t *brick) {
+	IOUSBInterfaceInterface	**intf = (IOUSBInterfaceInterface **) brick->handle;
+	IOUSBDeviceInterface **dev = (IOUSBDeviceInterface **) brick->state;
 	if (intf != NULL) {
 		(*intf)->Release (intf);
 		brick->handle = NULL;
 	}
+	if (dev != NULL) {
+		(*dev)->Release (dev);
+		brick->state = NULL;
+	}
 }
 
-static void release_dev_brick (brick_t *brick) {
+static void release_dev (brick_t *brick) {
 	IOUSBDeviceInterface **dev = (IOUSBDeviceInterface **) brick->handle;
 	if (dev != NULL) {
 		(*dev)->Release (dev);
@@ -157,6 +270,7 @@ brick_t *find_usb_devices (
 			IOUSBInterfaceInterface	**intf 			= NULL;
 			IOUSBDeviceInterface	**dev 			= NULL;
 			IOCFPlugInInterface	**plugInInterface 	= NULL;
+			brick_t			*b			= &(bricks[i]);
 			HRESULT			result;
 			SInt32			score;
 
@@ -196,17 +310,25 @@ brick_t *find_usb_devices (
 				continue;
 			}
 
-			bricks[i].type			= type;
+			b->type			= type;
 			if (configuration) {
-				bricks[i].handle	= intf;
-				bricks[i].release 	= release_intf_brick;
+				b->handle	= intf;
+				b->open		= open_intf;
+				b->close	= close_intf;
+				b->read		= read_intf;
+				b->write	= write_intf;
+				b->release 	= release_intf;
+
+				(*intf)->GetLocationID (intf, &(b->id));
 			} else {
-				bricks[i].handle	= dev;
-				bricks[i].get_config	= get_dev_config;
-				bricks[i].set_config	= set_dev_config;
-				bricks[i].release 	= release_dev_brick;
+				b->handle	= dev;
+				b->get_config	= get_dev_config;
+				b->set_config	= set_dev_config;
+				b->release 	= release_dev;
+				
+				(*dev)->GetLocationID (dev, &(b->id));
 			}	
-			i				= i + 1;
+			i			= i + 1;
 		}
 		bricks[i].type = NULL_BRICK;
 	}
