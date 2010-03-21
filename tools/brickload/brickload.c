@@ -18,9 +18,37 @@
 
 #include "brickload.h"
 
+static brick_t *merge_brick_lists (brick_t *a, brick_t *b) {
+	if (a == NULL && b == NULL) {
+		return NULL;
+	} else if (a == NULL && b != NULL) {
+		return b;
+	} else if (a != NULL && b == NULL) {
+		return a;
+	} else {
+		brick_t *n_list;
+		int a_count = 0, b_count = 0;
+
+		while (a[a_count].type != NULL_BRICK)
+			a_count++;
+		while (b[b_count].type != NULL_BRICK)
+			b_count++;
+		
+		n_list = (brick_t *) malloc (sizeof (brick_t) * (a_count + b_count + 1));
+		memcpy (&(n_list[0]), &(a[0]), sizeof (brick_t) * a_count);
+		memcpy (&(n_list[a_count]), &(b[0]), sizeof (brick_t) * b_count);
+		n_list[a_count + b_count].type = NULL_BRICK;
+
+		free (a);
+		free (b);
+
+		return n_list;
+	}
+}
+
 static void do_list (void) {
-	brick_t *list;
-	void *usb = init_usb ();
+	brick_t *list 	= NULL;
+	void *usb 	= init_usb ();
 	int i;
 	
 	if (usb == NULL) {
@@ -28,11 +56,41 @@ static void do_list (void) {
 	}
 
 	/* Find NXTs */
-	list = find_usb_devices (usb, 0x0694, 0x0002, 0x1, 0x0, LEGO_NXT);
+	list = merge_brick_lists (list,
+		find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_TOWER, 0x0, 0x0, LEGO_RCX)
+	);
+	list = merge_brick_lists (list,
+		find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_NXT, 0x1, 0x0, LEGO_NXT)
+	);
+	list = merge_brick_lists (list,
+		find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_NXOS, 0x1, 0x0, LEGO_NXT | NXOS_BRICK)
+	);
+	list = merge_brick_lists (list,
+		find_usb_devices (usb, ATMEL_VENDOR_ID, ATMEL_PRODUCT_SAMBA, 0x1, 0x1, LEGO_NXT | SAMBA_BRICK)
+	);
+
 	if (list != NULL) {
-		fprintf (stdout, "-- NXT Bricks --\n");
+		fprintf (stdout, "-- Bricks --\n");
 		for (i = 0; list[i].type != NULL_BRICK; ++i) {
-			fprintf (stderr, "NXT %p\n", list[i].handle);
+			int type 	= list[i].type & BRICK_TYPE_MASK;
+			int flags 	= list[i].type & BRICK_FLAG_MASK;
+			switch (type) {
+				case LEGO_RCX:
+					fprintf (stdout, "RCX TOWER");
+					break;
+				case LEGO_NXT:
+					fprintf (stdout, "NXT      ");
+					break;
+				default:
+					fprintf (stdout, "UNKNOWN  ");
+					break;
+			}
+			fprintf (stdout, " %p", list[i].handle);
+			if (flags & NXOS_BRICK)
+				fprintf (stdout, " NXOS");
+			if (flags & SAMBA_BRICK)
+				fprintf (stdout, " SAMBA");
+			fprintf (stdout, "\n");
 			list[i].release (&(list[i]));
 		}
 		free (list);
