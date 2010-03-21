@@ -45,8 +45,16 @@ void *init_usb (void) {
 	return h;
 }
 
-static void release_brick (brick_t *brick) {
-	IOUSBInterfaceInterface	**dev = (IOUSBInterfaceInterface **) brick->handle;
+static void release_intf_brick (brick_t *brick) {
+	IOUSBInterfaceInterface	**intf = (IOUSBInterfaceInterface **) brick->handle;
+	if (intf != NULL) {
+		(*intf)->Release (intf);
+		brick->handle = NULL;
+	}
+}
+
+static void release_dev_brick (brick_t *brick) {
+	IOUSBDeviceInterface **dev = (IOUSBDeviceInterface **) brick->handle;
 	if (dev != NULL) {
 		(*dev)->Release (dev);
 		brick->handle = NULL;
@@ -66,23 +74,30 @@ brick_t *find_usb_devices (
 	brick_t				*bricks 	= NULL;
 	int				count;
 
-	matching = IOServiceMatching (kIOUSBInterfaceClassName);
+	if (configuration) {
+		matching = IOServiceMatching (kIOUSBInterfaceClassName);
+	} else {
+		matching = IOServiceMatching (kIOUSBDeviceClassName);
+	}
+	
 	if (!matching) {
 		return NULL;
 	}
 
-	CFDictionarySetValue (matching, CFSTR (kUSBVendorName),
+	CFDictionarySetValue (matching, CFSTR (kUSBVendorID),
 				CFNumberCreate (kCFAllocatorDefault, 
 					kCFNumberSInt32Type, &vendor));
-	CFDictionarySetValue (matching, CFSTR (kUSBProductName),
+	CFDictionarySetValue (matching, CFSTR (kUSBProductID),
 				CFNumberCreate (kCFAllocatorDefault, 
 					kCFNumberSInt32Type, &product));
-	CFDictionarySetValue (matching, CFSTR (kUSBConfigurationValue),
-				CFNumberCreate (kCFAllocatorDefault, 
-					kCFNumberSInt32Type, &configuration));
-	CFDictionarySetValue (matching, CFSTR (kUSBInterfaceNumber),
-				CFNumberCreate (kCFAllocatorDefault, 
-					kCFNumberSInt32Type, &interface));
+	if (configuration) {
+		CFDictionarySetValue (matching, CFSTR (kUSBConfigurationValue),
+					CFNumberCreate (kCFAllocatorDefault, 
+						kCFNumberSInt32Type, &configuration));
+		CFDictionarySetValue (matching, CFSTR (kUSBInterfaceNumber),
+					CFNumberCreate (kCFAllocatorDefault, 
+						kCFNumberSInt32Type, &interface));
+	}
 	
 	kr = IOServiceGetMatchingServices (h->port, matching, &devices);
 
@@ -103,34 +118,56 @@ brick_t *find_usb_devices (
 		bricks = malloc ((sizeof (brick_t)) * (count + 1));
 		memset ((void *) bricks, 0, (sizeof (brick_t )) * (count + 1));
 		while (device = IOIteratorNext (devices)) {
+			IOUSBInterfaceInterface	**intf 			= NULL;
+			IOUSBDeviceInterface	**dev 			= NULL;
 			IOCFPlugInInterface	**plugInInterface 	= NULL;
-			IOUSBInterfaceInterface	**dev 			= NULL;
 			HRESULT			result;
 			SInt32			score;
 
-			kr = IOCreatePlugInInterfaceForService (
-				device, kIOUSBInterfaceUserClientTypeID, kIOCFPlugInInterfaceID,
-				&plugInInterface, &score
-			);
+			if (configuration) {
+				kr = IOCreatePlugInInterfaceForService (
+					device, kIOUSBInterfaceUserClientTypeID, kIOCFPlugInInterfaceID,
+					&plugInInterface, &score
+				);
+			} else {
+				kr = IOCreatePlugInInterfaceForService (
+					device, kIOUSBDeviceUserClientTypeID, kIOCFPlugInInterfaceID,
+					&plugInInterface, &score
+				);
+			}
 
 			if (kr || !plugInInterface) {
 				continue;
 			}
 
-			result = (*plugInInterface)->QueryInterface (
-					plugInInterface,
-					CFUUIDGetUUIDBytes (kIOUSBInterfaceInterfaceID),
-					(LPVOID *) &dev
-			);
+			if (configuration) {
+				result = (*plugInInterface)->QueryInterface (
+						plugInInterface,
+						CFUUIDGetUUIDBytes (kIOUSBInterfaceInterfaceID),
+						(LPVOID *) &intf
+				);
+			} else {
+				result = (*plugInInterface)->QueryInterface (
+						plugInInterface,
+						CFUUIDGetUUIDBytes (kIOUSBDeviceInterfaceID),
+						(LPVOID *) &dev
+				);
+			}
+				
 			(*plugInInterface)->Release (plugInInterface);
 			
-			if (result || !dev) {
+			if (result || !(dev || intf)) {
 				continue;
 			}
 
 			bricks[i].type			= type;
-			bricks[i].handle		= dev;
-			bricks[i].release 		= release_brick;
+			if (configuration) {
+				bricks[i].handle	= intf;
+				bricks[i].release 	= release_intf_brick;
+			} else {
+				bricks[i].handle	= dev;
+				bricks[i].release 	= release_dev_brick;
+			}	
 			i				= i + 1;
 		}
 		bricks[i].type = NULL_BRICK;
