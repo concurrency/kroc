@@ -36,6 +36,5 @@ void configure_rcx_towers (void *usb) {
 
 		free_brick_list (list);
 	}
-
-
 }
+
