@@ -34,9 +34,11 @@ typedef enum {
 typedef struct _brick_t brick_t;
 struct _brick_t {
 	brick_type_t	type;
-	uint16_t	vendor;
-	uint16_t	product;
 	void		*handle;
+	int		(*open)(brick_t *);
+	int		(*close)(brick_t *);
+	int		(*read)(brick_t *, uint8_t ep, uint8_t *data, size_t len);
+	int		(*write)(brick_t *, uint8_t ep, uint8_t *data, size_t len);
 	void		(*release)(brick_t *);
 };
 

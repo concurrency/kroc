@@ -101,6 +101,7 @@ brick_t *find_usb_devices (
 		IOIteratorReset (devices);
 
 		bricks = malloc ((sizeof (brick_t)) * (count + 1));
+		memset ((void *) bricks, 0, (sizeof (brick_t )) * (count + 1));
 		while (device = IOIteratorNext (devices)) {
 			IOCFPlugInInterface	**plugInInterface 	= NULL;
 			IOUSBInterfaceInterface	**dev 			= NULL;
@@ -131,9 +132,6 @@ brick_t *find_usb_devices (
 			bricks[i].handle		= dev;
 			bricks[i].release 		= release_brick;
 			i				= i + 1;
-
-			(*dev)->GetDeviceVendor (dev, &(bricks[i].vendor));
-			(*dev)->GetDeviceProduct (dev, &(bricks[i].product));
 		}
 		bricks[i].type = NULL_BRICK;
 	}

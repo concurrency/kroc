@@ -31,12 +31,8 @@ static void do_list (void) {
 	list = find_usb_devices (usb, 0x0694, 0x0002, 0x1, 0x0, LEGO_NXT);
 	if (list != NULL) {
 		fprintf (stdout, "-- NXT Bricks --\n");
-		for (i = 0; list[i].type == LEGO_NXT; ++i) {
-			fprintf (stderr, "NXT %p %04x %04x\n", 
-				list[i].handle,
-				list[i].vendor,
-				list[i].product
-			);
+		for (i = 0; list[i].type != NULL_BRICK; ++i) {
+			fprintf (stderr, "NXT %p\n", list[i].handle);
 			list[i].release (&(list[i]));
 		}
 		free (list);
