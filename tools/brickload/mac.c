@@ -45,6 +45,42 @@ void *init_usb (void) {
 	return h;
 }
 
+static int get_dev_config (brick_t *brick) {
+	IOUSBDeviceInterface **dev = (IOUSBDeviceInterface **) brick->handle;
+	IOReturn r;
+	UInt8 config;
+
+	assert (dev != NULL);
+	
+	r = (*dev)->GetConfiguration (dev, &config);
+	if (r) {
+		return -1;
+	} else {
+		return (int) config;
+	}
+}
+
+static int set_dev_config (brick_t *brick, int configuration) {
+	IOUSBDeviceInterface **dev = (IOUSBDeviceInterface **) brick->handle;
+	IOReturn r;
+	
+	assert (dev != NULL);
+
+	r = (*dev)->USBDeviceOpen (dev);
+	if (!r) {
+		r = (*dev)->SetConfiguration (dev, (UInt8) configuration);
+		(*dev)->USBDeviceClose (dev);
+		
+		if (!r) {
+			return -2;
+		}
+	} else {
+		return -1;
+	}
+
+	return 0;
+}
+
 static void release_intf_brick (brick_t *brick) {
 	IOUSBInterfaceInterface	**intf = (IOUSBInterfaceInterface **) brick->handle;
 	if (intf != NULL) {
@@ -107,7 +143,7 @@ brick_t *find_usb_devices (
 	}
 	
 	count = 0;
-	while (device = IOIteratorNext (devices))
+	while ((device = IOIteratorNext (devices)))
 		count++;
 	
 	if (count > 0) {
@@ -117,7 +153,7 @@ brick_t *find_usb_devices (
 
 		bricks = malloc ((sizeof (brick_t)) * (count + 1));
 		memset ((void *) bricks, 0, (sizeof (brick_t )) * (count + 1));
-		while (device = IOIteratorNext (devices)) {
+		while ((device = IOIteratorNext (devices))) {
 			IOUSBInterfaceInterface	**intf 			= NULL;
 			IOUSBDeviceInterface	**dev 			= NULL;
 			IOCFPlugInInterface	**plugInInterface 	= NULL;
@@ -166,6 +202,8 @@ brick_t *find_usb_devices (
 				bricks[i].release 	= release_intf_brick;
 			} else {
 				bricks[i].handle	= dev;
+				bricks[i].get_config	= get_dev_config;
+				bricks[i].set_config	= set_dev_config;
 				bricks[i].release 	= release_dev_brick;
 			}	
 			i				= i + 1;

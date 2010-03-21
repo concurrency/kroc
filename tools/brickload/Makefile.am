@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -I ../../m4
 srcdir = @srcdir@
 VPATH = @srcdir@
 
-DEFS = @DEFS@
+DEFS = @DEFS@ -Wall
 #INCLUDES = -I.
 
 SUBDIRS =

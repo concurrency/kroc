@@ -18,3 +18,24 @@
 
 #include "brickload.h"
 
+void configure_rcx_towers (void *usb) {
+	brick_t *list = find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_TOWER, 0x0, 0x0, LEGO_RCX);
+
+	if (list != NULL) {
+		int i;
+		
+		for (i = 0; list[i].type != NULL_BRICK; ++i) {
+			brick_t *b = &(list[i]);
+			int config = b->get_config (b);
+
+			if (config >= 0 && config != 1) {
+				b->set_config (b, 1);
+				/* FIXME: check return value and report? */
+			}
+		}
+
+		free_brick_list (list);
+	}
+
+
+}

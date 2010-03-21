@@ -41,13 +41,27 @@ typedef enum {
 typedef struct _brick_t brick_t;
 struct _brick_t {
 	brick_type_t	type;
+	int		id;
 	void		*handle;
+
+	int		(*get_config)(brick_t *);
+	int		(*set_config)(brick_t *, int configuration);
+
 	int		(*open)(brick_t *);
 	int		(*close)(brick_t *);
+	
 	int		(*read)(brick_t *, uint8_t ep, uint8_t *data, size_t len, int timeout);
 	int		(*write)(brick_t *, uint8_t ep, uint8_t *data, size_t len, int timeout);
+
 	void		(*release)(brick_t *);
 };
+
+
+/* Brick Lists */
+
+brick_t *merge_brick_lists (brick_t *a, brick_t *b);
+void free_brick_list (brick_t *list);
+
 
 /* USB defines */
 #define	LEGO_VENDOR_ID 		0x0694
@@ -58,6 +72,7 @@ struct _brick_t {
 #define ATMEL_PRODUCT_SAMBA	0x6124
 #define SAMBA_INTERFACE		0x1
 
+
 /* USB functions */
 void *init_usb (void);
 brick_t *find_usb_devices (void *usb, 
@@ -67,3 +82,5 @@ brick_t *find_usb_devices (void *usb,
 void free_usb (void *usb);
 
 
+/* RCX functions */
+void configure_rcx_towers (void *usb);
