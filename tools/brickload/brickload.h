@@ -45,6 +45,8 @@ struct _brick_t {
 
 	void		*handle;
 	void		*state;
+	int		in_ep;
+	int		out_ep;
 
 	int		(*get_config)(brick_t *);
 	int		(*set_config)(brick_t *, int configuration);
@@ -86,3 +88,8 @@ void free_usb (void *usb);
 
 /* RCX functions */
 void configure_rcx_towers (void *usb);
+
+
+/* NXT functions */
+int boot_nxt (brick_t *b, uint8_t *firmware, size_t len);
+
