@@ -18,4 +18,35 @@
 
 #include "brickload.h"
 
+int boot_nxt (brick_t *b, uint8_t *firmware, size_t len) {
+	int ret = -1;
+	int r;
 
+	fprintf (stdout, "Trying to SAMBA NXT @%08x\n", b->id);
+
+	r = b->open (b);
+	if (!r) {
+		uint8_t buf[2];
+
+		buf[0] = 'N';
+		buf[1] = '#';
+
+		r = b->write (b, buf, 2, 0);
+		if (r == 2) {
+			r = b->read (b, buf, 2, 0);
+			if (r == 2) {
+				fprintf (stdout, "Got handshake bytes %02x %02x.\n", buf[0], buf[1]);
+			} else {
+				fprintf (stdout, "Error reading handshake response.\n");
+			}
+		} else {
+			fprintf (stdout, "Error writing handshake.\n");
+		}
+		
+		b->close (b);
+	} else {
+		fprintf (stdout, "Unable to open brick.\n");
+	}
+
+	return ret;
+}

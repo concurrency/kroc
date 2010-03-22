@@ -18,6 +18,8 @@
 
 #include "brickload.h"
 
+static const char *prog_name = "brickload";
+
 brick_t *merge_brick_lists (brick_t *a, brick_t *b) {
 	if (a == NULL && b == NULL) {
 		return NULL;
@@ -56,6 +58,11 @@ void free_brick_list (brick_t *list) {
 
 		free (list);
 	}
+}
+
+static brick_t *find_brick_by_id (brick_t *list, const char *id) {
+	/* FIXME: implement */
+	return NULL;
 }
 
 static int do_list (void) {
@@ -116,60 +123,55 @@ static int do_list (void) {
 	return 0;
 }
 
-static int do_sambaNXT (void) {
-	brick_t *list 	= NULL;
-	void *usb 	= init_usb ();
-	int ret		= -1;
-	
-	if (usb == NULL) {
-		return -1;
-	}
-	
-	/* Get SAMBAing NXTs */
-	list = merge_brick_lists (list,
-		find_usb_devices (usb, ATMEL_VENDOR_ID, ATMEL_PRODUCT_SAMBA, 0x1, 0x1, LEGO_NXT | SAMBA_BRICK)
-	);
-	
-	if (list != NULL) {
-		brick_t *b = &(list[0]); /* XXX: take first brick for now */
-		int r;
+static int do_sambaNXT (int argc, char *argv[]) {
+	int ret	= -1;
 
-		fprintf (stdout, "Trying to SAMBA NXT @%08x\n", b->id);
-		r = b->open (b);
-		if (!r) {
-			uint8_t buf[2];
-
-			buf[0] = 'N';
-			buf[1] = '#';
-
-			r = b->write (b, buf, 2, 0);
-			if (r == 2) {
-				r = b->read (b, buf, 2, 0);
-				if (r == 2) {
-					fprintf (stdout, "Got handshake bytes %02x %02x.\n", buf[0], buf[1]);
-				} else {
-					fprintf (stdout, "Error reading handshake response.\n");
-				}
-			} else {
-				fprintf (stdout, "Error writing handshake.\n");
-			}
-			
-			b->close (b);
-		} else {
-			fprintf (stdout, "Unable to open brick.\n");
+	if (argc == 0) {
+		fprintf (stderr, "Usage: %s sambaNXT <firmware> [<brick-id>]\n", prog_name);
+		fprintf (stderr, "Boot NXT using firmware via SAMBA.\n");
+		fprintf (stderr, "    e.g. %s sambaNXT tvm-nxt.bin @00000001\n", prog_name);
+	} else {
+		brick_t *list 	= NULL;
+		brick_t *b	= NULL;
+		void *usb 	= init_usb ();
+		
+		if (usb == NULL) {
+			return -1;
 		}
 
-		free_brick_list (list);
-	} else {
-		fprintf (stdout, "No SAMBAing NXT bricks found.\n");
-	}
-	
-	free_usb (usb);
+		/* Get SAMBAing NXTs */
+		list = merge_brick_lists (list,
+			find_usb_devices (usb, ATMEL_VENDOR_ID, ATMEL_PRODUCT_SAMBA, 0x1, 0x1, LEGO_NXT | SAMBA_BRICK)
+		);
+		
+		if (list != NULL) {
+			if (argc >= 2) {
+				b = find_brick_by_id (list, argv[1]); 
+			} else {
+				b = &(list[0]);
+			}
 
+			if (b != NULL) {
+				/* load firmware */
+				if (boot_nxt (b, NULL, 0) == 0) {
+					ret = 0;
+				}
+			} else if (argc >= 2) {
+				fprintf (stderr, "NXT %s not found (check SAMBA mode?)\n", argv[1]);
+			}
+
+			free_brick_list (list);
+		} else {
+			fprintf (stderr, "No SAMBAing NXT bricks found.\n");
+		}
+		
+		free_usb (usb);
+
+	}
 	return ret;
 }
 
-static void usage (const char *prog_name) {
+static void usage (void) {
 	fprintf (stderr, "NXT/RCX Firmware and Bytecode Loading Tool\n\n");
 	fprintf (stderr, "Usage: %s <verb> <options>, where <verb> is one of:\n\n",
 		prog_name);
@@ -183,15 +185,14 @@ static void usage (const char *prog_name) {
 		prog_name);
 }
 
-static void not_implemented (void) {
+static int not_implemented (void) {
 	fprintf (stderr, "Sorry, this feature is not yet implemented.\n");
-	exit (1);
+	return 1;
 }
 
 int main (int argc, char *argv[]) {
-	const char *prog_name = "brickload";
 	if (argc < 2) {
-		usage (prog_name);
+		usage ();
 		return 1;
 	} else {
 		const char *verb = argv[1];
@@ -200,18 +201,18 @@ int main (int argc, char *argv[]) {
 		if (strcmp (verb, "list") == 0) {
 			ret = do_list ();
 		} else if (strcmp (verb, "sambaNXT") == 0) {
-			ret = do_sambaNXT ();
+			ret = do_sambaNXT (argc - 2, &(argv[2]));
 		} else if (strcmp (verb, "sambaRXT") == 0) {
-			not_implemented ();
+			ret = not_implemented ();
 		} else if (strcmp (verb, "loadNXT") == 0) {
-			not_implemented ();
+			ret = not_implemented ();
 		} else if (strcmp (verb, "loadRXT") == 0) {
-			not_implemented ();
+			ret = not_implemented ();
 		} else {
-			usage (prog_name);
+			usage ();
 		}
 
-		return ret;
+		return (ret < 0 ? -ret : ret);
 	}
 	return 0;
 }

@@ -130,6 +130,43 @@ static int open_intf (brick_t *brick) {
 
 	r = (*intf)->USBInterfaceOpen (intf);
 	if (!r) {
+		UInt8 n_endpoints = 0;
+		int i;
+		
+		brick->in_ep	= -1;
+		brick->out_ep	= -1;
+
+		(*intf)->GetNumEndpoints (intf, &n_endpoints);
+		for (i = 0; i < n_endpoints; ++i) {
+			UInt16 	maxPacketSize;
+			UInt8 	direction, number, transferType, interval;
+
+			(*intf)->GetPipeProperties (
+				intf,
+				(UInt8) i,
+				&direction, &number, &transferType,
+				&maxPacketSize,
+				&interval
+			);
+
+			switch (direction) {
+				case kUSBIn:
+					if (brick->in_ep < 0)
+						brick->in_ep = i;
+					break;
+				case kUSBOut:
+					if (brick->out_ep < 0)
+						brick->out_ep = i;
+					break;
+			}
+		}
+
+		/* defaults */
+		if (brick->in_ep < 0)
+			brick->in_ep = 2;
+		if (brick->out_ep < 0)
+			brick->out_ep = 1;
+
 		return 0;
 	} else {
 		fprintf (stderr, "intf error = %08x\n", r);
@@ -159,9 +196,8 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, int timeout) {
 
 	assert (intf != NULL);
 
-	/* FIXME: piperef always 2 ? */
 	/* FIXME: timeout */
-	r = (*intf)->ReadPipe (intf, 2, data, &size);
+	r = (*intf)->ReadPipe (intf, brick->in_ep, data, &size);
 
 	if (r) {
 		fprintf (stderr, "read error = %08x\n", r);
@@ -177,9 +213,8 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, int timeout) {
 
 	assert (intf != NULL);
 
-	/* FIXME: piperef always 1 ? */
 	/* FIXME: timeout */
-	r = (*intf)->WritePipe (intf, 1, data, len);
+	r = (*intf)->WritePipe (intf, brick->out_ep, data, len);
 
 	if (r) {
 		fprintf (stderr, "write error = %08x\n", r);
