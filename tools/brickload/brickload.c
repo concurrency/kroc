@@ -60,6 +60,10 @@ void free_brick_list (brick_t *list) {
 	}
 }
 
+tbc_t *load_tbc (const char *fn) {
+	return NULL;
+}
+
 static brick_t *find_brick_by_id (brick_t *list, const char *id) {
 	/* FIXME: implement */
 	return NULL;
@@ -123,13 +127,13 @@ static int do_list (void) {
 	return 0;
 }
 
-static int do_sambaNXT (int argc, char *argv[]) {
+static int do_bootNXT (int argc, char *argv[]) {
 	int ret	= -1;
 
 	if (argc == 0) {
-		fprintf (stderr, "Usage: %s sambaNXT <firmware> [<brick-id>]\n", prog_name);
+		fprintf (stderr, "Usage: %s bootNXT <firmware> [<brick-id>]\n", prog_name);
 		fprintf (stderr, "Boot NXT using firmware via SAMBA.\n");
-		fprintf (stderr, "    e.g. %s sambaNXT tvm-nxt.bin @00000001\n", prog_name);
+		fprintf (stderr, "    e.g. %s bootNXT tvm-nxt.bin @00000001\n", prog_name);
 	} else {
 		brick_t *list 	= NULL;
 		brick_t *b	= NULL;
@@ -174,15 +178,60 @@ static int do_sambaNXT (int argc, char *argv[]) {
 	return ret;
 }
 
+static int do_loadNXT (int argc, char *argv[]) {
+	int ret	= -1;
+
+	if (argc == 0) {
+		fprintf (stderr, "Usage: %s loadNXT <tbc> [<brick-id>]\n", prog_name);
+		fprintf (stderr, "Load bytecode to NXT running TVM.\n");
+		fprintf (stderr, "    e.g. %s loadNXT bump-and-wander.tbc @00000001\n", prog_name);
+	} else {
+		brick_t *list 	= NULL;
+		brick_t *b	= NULL;
+		void *usb 	= init_usb ();
+		
+		if (usb == NULL) {
+			return -1;
+		}
+
+		/* Get TVM NXTs */
+		list = merge_brick_lists (list,
+			find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_NXOS, 0x1, 0x1, LEGO_NXT | NXOS_BRICK)
+		);
+		
+		if (list != NULL) {
+			if (argc >= 2) {
+				b = find_brick_by_id (list, argv[1]); 
+			} else {
+				b = &(list[0]);
+			}
+
+			if (b != NULL) {
+				/* FIXME: do stuff! */
+			} else if (argc >= 2) {
+				fprintf (stderr, "NXT %s not found (check TVM running?)\n", argv[1]);
+			}
+
+			free_brick_list (list);
+		} else {
+			fprintf (stderr, "No TVM NXT bricks found.\n");
+		}
+		
+		free_usb (usb);
+
+	}
+	return ret;
+}
+
 static void usage (void) {
 	fprintf (stderr, "NXT/RCX Firmware and Bytecode Loading Tool\n\n");
 	fprintf (stderr, "Usage: %s <verb> <options>, where <verb> is one of:\n\n",
 		prog_name);
 	fprintf (stderr, "    list          (List available bricks)\n");
-	fprintf (stderr, "    sambaNXT      (Load NXT firmware by SAMBA)\n");
-	fprintf (stderr, "    sambaRXT      (Load RXT firmware by SAMBA)\n");
+	fprintf (stderr, "    bootNXT       (Boot NXT firmware by SAMBA)\n");
+	fprintf (stderr, "    sambaRCX      (Load RCX firmware by SAMBA)\n");
 	fprintf (stderr, "    loadNXT       (Load bytecode to NXT)\n");
-	fprintf (stderr, "    loadRXT       (Load bytecode to RXT)\n");
+	fprintf (stderr, "    loadRCX       (Load bytecode to RCX)\n");
 	fprintf (stderr, "\n");
 	fprintf (stderr, "%s <verb> with no options gives help on the verb\n\n",
 		prog_name);
@@ -203,12 +252,12 @@ int main (int argc, char *argv[]) {
 
 		if (strcmp (verb, "list") == 0) {
 			ret = do_list ();
-		} else if (strcmp (verb, "sambaNXT") == 0) {
-			ret = do_sambaNXT (argc - 2, &(argv[2]));
+		} else if (strcmp (verb, "bootNXT") == 0) {
+			ret = do_bootNXT (argc - 2, &(argv[2]));
 		} else if (strcmp (verb, "sambaRXT") == 0) {
 			ret = not_implemented ();
 		} else if (strcmp (verb, "loadNXT") == 0) {
-			ret = not_implemented ();
+			ret = do_loadNXT (argc - 2, &(argv[2]));
 		} else if (strcmp (verb, "loadRXT") == 0) {
 			ret = not_implemented ();
 		} else {
