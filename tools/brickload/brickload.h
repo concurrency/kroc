@@ -26,7 +26,7 @@ static void assert (int b) {
 
 
 /* brick_t */
-typedef enum {
+typedef enum _brick_type_t {
 	NULL_BRICK	= 0x0000,
 	LEGO_NXT	= 0x0001,
 	LEGO_RCX	= 0x0002,
@@ -62,7 +62,6 @@ struct _brick_t {
 
 
 /* Brick Lists */
-
 brick_t *merge_brick_lists (brick_t *a, brick_t *b);
 void free_brick_list (brick_t *list);
 
@@ -86,6 +85,24 @@ brick_t *find_usb_devices (void *usb,
 void free_usb (void *usb);
 
 
+/* TBC defines */
+typedef enum _tbc_type_t {
+	TBC_UNKNOWN	= 0,
+	TBC_16BIT	= 1,
+	TBC_32BIT	= 2
+} tbc_type_t;
+typedef struct _tbc_t tbc_t;
+struct _tbc_t {
+	tbc_type_t	type;
+	uint8_t 	*data;
+	size_t		len;
+};
+
+
+/* TBC functions */
+tbc_t *load_tbc (const char *fn);
+
+
 /* RCX functions */
 void configure_rcx_towers (void *usb);
 
@@ -97,8 +114,8 @@ struct _nxt_firmware_t {
 	uint32_t	in_rom;
 	uint32_t	write_addr;
 	uint32_t	boot_addr;
-	size_t		len;
 	uint8_t		*data;
+	size_t		len;
 };
 
 
