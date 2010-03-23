@@ -90,6 +90,19 @@ void free_usb (void *usb);
 void configure_rcx_towers (void *usb);
 
 
+/* NXT defines */
+typedef struct _nxt_firmware_t nxt_firmware_t;
+struct _nxt_firmware_t {
+	uint32_t	in_ram;
+	uint32_t	in_rom;
+	uint32_t	write_addr;
+	uint32_t	boot_addr;
+	size_t		len;
+	uint8_t		*data;
+};
+
+
 /* NXT functions */
-int boot_nxt (brick_t *b, uint8_t *firmware, size_t len);
+nxt_firmware_t *load_nxt_firmware (const char *fn);
+int boot_nxt (brick_t *b, nxt_firmware_t *fw);
 
