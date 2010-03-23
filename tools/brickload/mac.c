@@ -189,15 +189,26 @@ static int close_intf (brick_t *brick) {
 	}
 }
 
-static int read_intf (brick_t *brick, uint8_t *data, size_t len, int timeout) {
+static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
 	IOUSBInterfaceInterface	**intf 	= (IOUSBInterfaceInterface **) brick->handle;
 	UInt32 			size	= len;
 	IOReturn 		r;
 
 	assert (intf != NULL);
 
-	/* FIXME: timeout */
-	r = (*intf)->ReadPipe (intf, brick->in_ep, data, &size);
+	if (timeout) {
+		IOUSBInterfaceInterface182 **intf182 = (IOUSBInterfaceInterface182 **) intf;
+		r = (*intf182)->ReadPipeTO (intf182, brick->in_ep, data, &size,
+			timeout, /* no data timeout */
+			timeout + ((timeout * (len / 1024)) / 1024) /* completion timeout related to data size */
+		);
+		/* Fallback for interrupt based pipes */
+		if (r == kIOReturnBadArgument) {
+			r = (*intf)->ReadPipe (intf, brick->in_ep, data, &size);
+		}
+	} else {
+		r = (*intf)->ReadPipe (intf, brick->in_ep, data, &size);
+	}
 
 	if (r) {
 		fprintf (stderr, "read error = %08x\n", r);
@@ -207,14 +218,25 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, int timeout) {
 	}
 }
 
-static int write_intf (brick_t *brick, uint8_t *data, size_t len, int timeout) {
+static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
 	IOUSBInterfaceInterface	**intf = (IOUSBInterfaceInterface **) brick->handle;
 	IOReturn r;
 
 	assert (intf != NULL);
 
-	/* FIXME: timeout */
-	r = (*intf)->WritePipe (intf, brick->out_ep, data, len);
+	if (timeout) {
+		IOUSBInterfaceInterface182 **intf182 = (IOUSBInterfaceInterface182 **) intf;
+		r = (*intf182)->WritePipeTO (intf182, brick->in_ep, data, len,
+			timeout, /* no data timeout */
+			timeout + ((timeout * (len / 1024)) / 1024) /* completion timeout related to data size */
+		);
+		/* Fallback for interrupt based pipes */
+		if (r == kIOReturnBadArgument) {
+			r = (*intf)->WritePipe (intf, brick->in_ep, data, len);
+		}
+	} else {
+		r = (*intf)->WritePipe (intf, brick->out_ep, data, len);
+	}
 
 	if (r) {
 		fprintf (stderr, "write error = %08x\n", r);
