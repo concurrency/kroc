@@ -96,9 +96,9 @@ errout:
 
 /** SAMBA notes
  * 'N#' 	=> '\n\r'	Handshake
- * 'S%08x,%08x'	=> ()		Send buffer to $address for $length
- * 'R%08x,%08x' => ()		Read buffer from $address for $length
- * 'G%08x'	=> ()		Jump to $address
+ * 'S%08x,%08x#'=> ()		Send buffer to $address for $length
+ * 'R%08x,%08x#'=> data		Read buffer from $address for $length
+ * 'G%08x#'	=> ()		Jump to $address
  */
 
 static int samba_handshake (brick_t *b) {
@@ -112,30 +112,71 @@ static int samba_handshake (brick_t *b) {
 	if (r == 2) {
 		r = b->read (b, buf, 2, 0);
 		if (r != 2) {
-			fprintf (stderr, "Error reading handshake response\n");
+			fprintf (stderr, "Error reading SAMBA handshake response\n");
 		} else if ((buf[0] != '\n') || (buf[1] != '\r')) {
-			fprintf (stderr, "Error bad handshake response: %02x %02x\n",
+			fprintf (stderr, "Error; bad SAMBA handshake response: %02x %02x\n",
 				buf[0], buf[1]);
 		} else {
 			/* OK */
 			return 0;
 		}
 	} else {
-		fprintf (stderr, "Error writing handshake\n");
+		fprintf (stderr, "Error writing SAMBA handshake\n");
 	}
 
 	return -1;
 }
 
 static int samba_write_buffer (brick_t *b, uint32_t addr, uint32_t len, uint8_t *data) {
+	char cmd_buf[24];
+	int cmd_len, r;
+
+	cmd_len = sprintf (cmd_buf, "S%08x,%08x#", addr, len);
+
+	if ((r = b->write (b, (uint8_t *) cmd_buf, cmd_len, 0)) == cmd_len) {
+		if ((r = b->write (b, data, len, 0)) == len) {
+			return 0;
+		} else {
+			fprintf (stderr, "Error writing SAMBA data: %d\n", r);
+		}
+	} else {
+		fprintf (stderr, "Error writing SAMBA command: %d\n", r);
+	}
+	
 	return -1;
 }
 
 static int samba_read_buffer (brick_t *b, uint32_t addr, uint32_t len, uint8_t *data) {
+	char cmd_buf[24];
+	int cmd_len, r;
+
+	cmd_len = sprintf (cmd_buf, "R%08x,%08x#", addr, len);
+
+	if ((r = b->write (b, (uint8_t *) cmd_buf, cmd_len, 0)) == cmd_len) {
+		if ((r = b->read (b, data, len, 0)) == len) {
+			return 0;
+		} else {
+			fprintf (stderr, "Error reading SAMBA data: %d\n", r);
+		}
+	} else {
+		fprintf (stderr, "Error writing SAMBA command: %d\n", r);
+	}
+	
 	return -1;
 }
 
-static int samba_jump (brick_t *b, uint32_t jump) {
+static int samba_jump (brick_t *b, uint32_t addr) {
+	char cmd_buf[24];
+	int cmd_len, r;
+
+	cmd_len = sprintf (cmd_buf, "G%08x#", addr);
+
+	if ((r = b->write (b, (uint8_t *) cmd_buf, cmd_len, 0)) == cmd_len) {
+		return 0;
+	} else {
+		fprintf (stderr, "Error writing SAMBA command: %d\n", r);
+	}
+	
 	return -1;
 }
 
@@ -155,8 +196,9 @@ int boot_nxt (brick_t *b, nxt_firmware_t *fw) {
 				fprintf (stdout, "Firmware loaded to NXT; verifying...\n");
 				r = samba_read_buffer (b, fw->write_addr, fw->len, buf);
 				if ((r == 0) && (memcmp (buf, fw->data, fw->len) == 0)) {
-					fprintf (stdout, "Firmware verified; jumping to bootstrap\n");
+					fprintf (stdout, "Firmware verified; jumping to bootstrap...\n");
 					if (samba_jump (b, fw->boot_addr) == 0) {
+						fprintf (stdout, "Booted firmware on NXT\n");
 						ret = 0;
 					}
 				}
