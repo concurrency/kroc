@@ -153,8 +153,11 @@ static int do_sambaNXT (int argc, char *argv[]) {
 
 			if (b != NULL) {
 				/* load firmware */
-				if (boot_nxt (b, NULL, 0) == 0) {
-					ret = 0;
+				nxt_firmware_t *fw = load_nxt_firmware (argv[0]);
+				if (fw != NULL) {
+					if (boot_nxt (b, fw) == 0) {
+						ret = 0;
+					}
 				}
 			} else if (argc >= 2) {
 				fprintf (stderr, "NXT %s not found (check SAMBA mode?)\n", argv[1]);
