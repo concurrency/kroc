@@ -122,4 +122,5 @@ struct _nxt_firmware_t {
 /* NXT functions */
 nxt_firmware_t *load_nxt_firmware (const char *fn);
 int boot_nxt (brick_t *b, nxt_firmware_t *fw);
+int send_tbc_to_nxt (brick_t *b, tbc_t *tbc);
 

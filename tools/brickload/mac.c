@@ -85,7 +85,7 @@ static int set_dev_config (brick_t *brick, int configuration) {
 	return 0;
 }
 
-static IOUSBDeviceInterface **dev_from_intf (IOUSBInterfaceInterface **intf) {
+static IOUSBDeviceInterface **dev_from_intf (IOUSBInterfaceInterface182 **intf) {
 	IOUSBDeviceInterface	**dev 			= NULL;
 	IOCFPlugInInterface	**plugInInterface 	= NULL;
 	io_service_t		device;
@@ -123,7 +123,7 @@ static IOUSBDeviceInterface **dev_from_intf (IOUSBInterfaceInterface **intf) {
 }
 
 static int open_intf (brick_t *brick) {
-	IOUSBInterfaceInterface	**intf = (IOUSBInterfaceInterface **) brick->handle;
+	IOUSBInterfaceInterface182 **intf = (IOUSBInterfaceInterface182 **) brick->handle;
 	IOReturn r;
 
 	assert (intf != NULL);
@@ -175,7 +175,7 @@ static int open_intf (brick_t *brick) {
 }
 
 static int close_intf (brick_t *brick) {
-	IOUSBInterfaceInterface	**intf = (IOUSBInterfaceInterface **) brick->handle;
+	IOUSBInterfaceInterface182 **intf = (IOUSBInterfaceInterface182 **) brick->handle;
 	IOReturn r;
 	
 	assert (intf != NULL);
@@ -190,21 +190,22 @@ static int close_intf (brick_t *brick) {
 }
 
 static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
-	IOUSBInterfaceInterface	**intf 	= (IOUSBInterfaceInterface **) brick->handle;
-	UInt32 			size	= len;
-	IOReturn 		r;
+	IOUSBInterfaceInterface182	**intf 	= (IOUSBInterfaceInterface182 **) brick->handle;
+	UInt32 				size	= len;
+	IOReturn 			r;
 
 	assert (intf != NULL);
 
 	if (timeout) {
-		IOUSBInterfaceInterface182 **intf182 = (IOUSBInterfaceInterface182 **) intf;
-		r = (*intf182)->ReadPipeTO (intf182, brick->in_ep, data, &size,
+		r = (*intf)->ReadPipeTO (intf, brick->in_ep, data, &size,
 			timeout, /* no data timeout */
 			timeout + ((timeout * (len / 1024)) / 1024) /* completion timeout related to data size */
 		);
 		/* Fallback for interrupt based pipes */
 		if (r == kIOReturnBadArgument) {
 			r = (*intf)->ReadPipe (intf, brick->in_ep, data, &size);
+		} else if (r != kIOReturnSuccess) {
+			(*intf)->ClearPipeStall (intf, brick->in_ep);
 		}
 	} else {
 		r = (*intf)->ReadPipe (intf, brick->in_ep, data, &size);
@@ -219,20 +220,21 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeou
 }
 
 static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
-	IOUSBInterfaceInterface	**intf = (IOUSBInterfaceInterface **) brick->handle;
+	IOUSBInterfaceInterface182	**intf = (IOUSBInterfaceInterface182 **) brick->handle;
 	IOReturn r;
 
 	assert (intf != NULL);
 
 	if (timeout) {
-		IOUSBInterfaceInterface182 **intf182 = (IOUSBInterfaceInterface182 **) intf;
-		r = (*intf182)->WritePipeTO (intf182, brick->in_ep, data, len,
+		r = (*intf)->WritePipeTO (intf, brick->out_ep, data, len,
 			timeout, /* no data timeout */
 			timeout + ((timeout * (len / 1024)) / 1024) /* completion timeout related to data size */
 		);
 		/* Fallback for interrupt based pipes */
 		if (r == kIOReturnBadArgument) {
-			r = (*intf)->WritePipe (intf, brick->in_ep, data, len);
+			r = (*intf)->WritePipe (intf, brick->out_ep, data, len);
+		} else if (r != kIOReturnSuccess) {
+			(*intf)->ClearPipeStall (intf, brick->out_ep);
 		}
 	} else {
 		r = (*intf)->WritePipe (intf, brick->out_ep, data, len);
@@ -247,8 +249,8 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeo
 }
 
 static void release_intf (brick_t *brick) {
-	IOUSBInterfaceInterface	**intf = (IOUSBInterfaceInterface **) brick->handle;
-	IOUSBDeviceInterface **dev = (IOUSBDeviceInterface **) brick->state;
+	IOUSBInterfaceInterface182	**intf	= (IOUSBInterfaceInterface182 **) brick->handle;
+	IOUSBDeviceInterface 		**dev	= (IOUSBDeviceInterface **) brick->state;
 	if (intf != NULL) {
 		(*intf)->Release (intf);
 		brick->handle = NULL;
@@ -324,12 +326,12 @@ brick_t *find_usb_devices (
 		bricks = malloc ((sizeof (brick_t)) * (count + 1));
 		memset ((void *) bricks, 0, (sizeof (brick_t )) * (count + 1));
 		while ((device = IOIteratorNext (devices))) {
-			IOUSBInterfaceInterface	**intf 			= NULL;
-			IOUSBDeviceInterface	**dev 			= NULL;
-			IOCFPlugInInterface	**plugInInterface 	= NULL;
-			brick_t			*b			= &(bricks[i]);
-			HRESULT			result;
-			SInt32			score;
+			IOUSBInterfaceInterface182	**intf 			= NULL;
+			IOUSBDeviceInterface		**dev 			= NULL;
+			IOCFPlugInInterface		**plugInInterface 	= NULL;
+			brick_t				*b			= &(bricks[i]);
+			HRESULT				result;
+			SInt32				score;
 
 			if (configuration) {
 				kr = IOCreatePlugInInterfaceForService (
@@ -350,7 +352,7 @@ brick_t *find_usb_devices (
 			if (configuration) {
 				result = (*plugInInterface)->QueryInterface (
 						plugInInterface,
-						CFUUIDGetUUIDBytes (kIOUSBInterfaceInterfaceID),
+						CFUUIDGetUUIDBytes (kIOUSBInterfaceInterfaceID182),
 						(LPVOID *) &intf
 				);
 			} else {

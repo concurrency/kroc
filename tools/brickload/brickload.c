@@ -207,7 +207,12 @@ static int do_loadNXT (int argc, char *argv[]) {
 			}
 
 			if (b != NULL) {
-				/* FIXME: do stuff! */
+				tbc_t *tbc = load_tbc (argv[0]); 
+				if (tbc != NULL) {
+					if (send_tbc_to_nxt (b, tbc) == 0) {
+						ret = 0;
+					}
+				}
 			} else if (argc >= 2) {
 				fprintf (stderr, "NXT %s not found (check TVM running?)\n", argv[1]);
 			}

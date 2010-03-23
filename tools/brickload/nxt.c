@@ -213,3 +213,7 @@ int boot_nxt (brick_t *b, nxt_firmware_t *fw) {
 
 	return ret;
 }
+
+int send_tbc_to_nxt (brick_t *b, tbc_t *tbc) {
+	return -1;
+}
