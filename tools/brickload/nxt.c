@@ -108,9 +108,9 @@ static int samba_handshake (brick_t *b) {
 	buf[0] = 'N';
 	buf[1] = '#';
 
-	r = b->write (b, buf, 2, 0);
+	r = b->write (b, buf, 2, 1000);
 	if (r == 2) {
-		r = b->read (b, buf, 2, 0);
+		r = b->read (b, buf, 2, 1000);
 		if (r != 2) {
 			fprintf (stderr, "Error reading SAMBA handshake response\n");
 		} else if ((buf[0] != '\n') || (buf[1] != '\r')) {
@@ -133,8 +133,8 @@ static int samba_write_buffer (brick_t *b, uint32_t addr, uint32_t len, uint8_t 
 
 	cmd_len = sprintf (cmd_buf, "S%08x,%08x#", addr, len);
 
-	if ((r = b->write (b, (uint8_t *) cmd_buf, cmd_len, 0)) == cmd_len) {
-		if ((r = b->write (b, data, len, 0)) == len) {
+	if ((r = b->write (b, (uint8_t *) cmd_buf, cmd_len, 1000)) == cmd_len) {
+		if ((r = b->write (b, data, len, 1000)) == len) {
 			return 0;
 		} else {
 			fprintf (stderr, "Error writing SAMBA data: %d\n", r);
@@ -152,8 +152,8 @@ static int samba_read_buffer (brick_t *b, uint32_t addr, uint32_t len, uint8_t *
 
 	cmd_len = sprintf (cmd_buf, "R%08x,%08x#", addr, len);
 
-	if ((r = b->write (b, (uint8_t *) cmd_buf, cmd_len, 0)) == cmd_len) {
-		if ((r = b->read (b, data, len, 0)) == len) {
+	if ((r = b->write (b, (uint8_t *) cmd_buf, cmd_len, 1000)) == cmd_len) {
+		if ((r = b->read (b, data, len, 1000)) == len) {
 			return 0;
 		} else {
 			fprintf (stderr, "Error reading SAMBA data: %d\n", r);
@@ -171,7 +171,7 @@ static int samba_jump (brick_t *b, uint32_t addr) {
 
 	cmd_len = sprintf (cmd_buf, "G%08x#", addr);
 
-	if ((r = b->write (b, (uint8_t *) cmd_buf, cmd_len, 0)) == cmd_len) {
+	if ((r = b->write (b, (uint8_t *) cmd_buf, cmd_len, 1000)) == cmd_len) {
 		return 0;
 	} else {
 		fprintf (stderr, "Error writing SAMBA command: %d\n", r);
