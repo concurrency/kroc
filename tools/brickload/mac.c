@@ -250,14 +250,9 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeo
 
 static void release_intf (brick_t *brick) {
 	IOUSBInterfaceInterface182	**intf	= (IOUSBInterfaceInterface182 **) brick->handle;
-	IOUSBDeviceInterface 		**dev	= (IOUSBDeviceInterface **) brick->state;
 	if (intf != NULL) {
 		(*intf)->Release (intf);
 		brick->handle = NULL;
-	}
-	if (dev != NULL) {
-		(*dev)->Release (dev);
-		brick->state = NULL;
 	}
 }
 
