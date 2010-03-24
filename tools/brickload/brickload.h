@@ -24,6 +24,9 @@ static void assert (int b) {
 #include <errno.h>
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 /* brick_t */
 typedef enum _brick_type_t {

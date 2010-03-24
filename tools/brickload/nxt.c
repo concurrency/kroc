@@ -196,7 +196,7 @@ int boot_nxt (brick_t *b, nxt_firmware_t *fw) {
 				if ((r == 0) && (memcmp (buf, fw->data, fw->len) == 0)) {
 					fprintf (stdout, "Firmware verified; jumping to bootstrap...\n");
 					if (samba_jump (b, fw->boot_addr) == 0) {
-						fprintf (stdout, "Booted firmware on NXT\n");
+						fprintf (stdout, "Booted firmware on NXT.\n");
 						ret = 0;
 					}
 				}
@@ -213,5 +213,49 @@ int boot_nxt (brick_t *b, nxt_firmware_t *fw) {
 }
 
 int send_tbc_to_nxt (brick_t *b, tbc_t *tbc) {
-	return -1;
+	const unsigned int pkt_size = 64;
+	int ret = -1;
+	int r;
+
+	fprintf (stdout, "Trying to send TBC to NXT @%08x...\n", b->id);
+	
+	r = b->open (b);
+	if (!r) {
+		unsigned int pos = 0;
+		uint8_t buf[4];
+
+		fprintf (stdout, "Sending bytecode\n");
+		while (pos < tbc->len) {
+			unsigned int pkt = (tbc->len - pos) > pkt_size ? pkt_size : tbc->len - pos;
+
+			/* Send a packet */
+			if ((r = b->write (b, tbc->data + pos, pkt, 1000)) == pkt) {
+				fprintf (stdout, ".");
+				fflush (stdout);
+
+				/* Wait for ACK */
+				if ((r = b->read (b, buf, 4, 1000)) == 4) {
+					fprintf (stdout, "+");
+					fflush (stdout);
+					pos += pkt;
+				} else {
+					break;
+				}
+			} else {
+				break;
+			}
+		}
+
+		if (pos == tbc->len) {
+			fprintf (stdout, "\n");
+			fprintf (stdout, "Bytecode sent to NXT.\n");
+		} else {
+			fprintf (stderr, "Error sending bytecode at position %d: %d\n", pos, r);
+		}
+		b->close (b);
+	} else {
+		fprintf (stderr, "Error; unable to open brick.\n");
+	}
+	
+	return ret;
 }

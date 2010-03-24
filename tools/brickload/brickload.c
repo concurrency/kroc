@@ -102,7 +102,11 @@ tbc_t *load_tbc (const char *fn) {
 	} else if (memcmp (tbc->data, "TEnc", 4) == 0) {
 		tbc->type = TBC_32BIT;
 	} else {
-		tbc->type = TBC_UNKNOWN;
+		fprintf (stderr, "Error; TBC header invalid: %02x%02x%02x%02x\n",
+			tbc->data[0], tbc->data[1], tbc->data[2], tbc->data[3]
+		);
+		free (tbc);
+		tbc = NULL;
 	}
 
 out:
@@ -237,14 +241,14 @@ static int do_bootNXT (int argc, char *argv[]) {
 	return ret;
 }
 
-static int do_sendBytecode (int argc, char *argv[]) {
+static int do_sendTBC (int argc, char *argv[]) {
 	int ret	= -1;
 
 	if (argc == 0) {
-		fprintf (stderr, "Usage: %s sendBytecode <file> [<NXT | RCX | brick-id>]\n", prog_name);
+		fprintf (stderr, "Usage: %s sendTBC <file> [<NXT | RCX | brick-id>]\n", prog_name);
 		fprintf (stderr, "Send bytecode to NXT/RCX running TVM.\n");
-		fprintf (stderr, "    e.g. %s sendBytecode bump-and-wander.tbc @00000001\n", prog_name);
-		fprintf (stderr, "    e.g. %s sendBytecode sonar-test.tbc NXT\n", prog_name);
+		fprintf (stderr, "    e.g. %s sendTBC bump-and-wander.tbc @00000001\n", prog_name);
+		fprintf (stderr, "    e.g. %s sendTBC sonar-test.tbc NXT\n", prog_name);
 	} else {
 		brick_t *list 	= NULL;
 		brick_t *b	= NULL;
@@ -278,13 +282,21 @@ static int do_sendBytecode (int argc, char *argv[]) {
 			if (tbc != NULL) {
 				switch (b->type & BRICK_TYPE_MASK) {
 					case LEGO_NXT:
-						if (send_tbc_to_nxt (b, tbc) == 0) {
-							ret = 0;
+						if (tbc->type == TBC_32BIT) { 
+							if (send_tbc_to_nxt (b, tbc) == 0) {
+								ret = 0;
+							}
+						} else {
+							fprintf (stderr, "Error; NXT needs 32bit bytecode\n");
 						}
 						break;
 					case LEGO_RCX:
-						if (send_tbc_to_rcx (b, tbc) == 0) {
-							ret = 0;
+						if (tbc->type == TBC_16BIT) { 
+							if (send_tbc_to_rcx (b, tbc) == 0) {
+								ret = 0;
+							}
+						} else {
+							fprintf (stderr, "Error; RCX needs 16bit bytecode\n");
 						}
 						break;
 				}
@@ -309,7 +321,7 @@ static void usage (void) {
 	fprintf (stderr, "    list          (List available bricks)\n");
 	fprintf (stderr, "    bootNXT       (Boot NXT firmware by SAMBA)\n");
 	fprintf (stderr, "    bootRCX       (Boot RCX firmware by IR Tower)\n");
-	fprintf (stderr, "    sendBytecode  (Send bytecode to brick)\n");
+	fprintf (stderr, "    sendTBC       (Send bytecode to brick)\n");
 	fprintf (stderr, "\n");
 	fprintf (stderr, "%s <verb> with no options gives help on the verb\n\n",
 		prog_name);
@@ -334,8 +346,8 @@ int main (int argc, char *argv[]) {
 			ret = do_bootNXT (argc - 2, &(argv[2]));
 		} else if (strcmp (verb, "bootRCX") == 0) {
 			ret = not_implemented ();
-		} else if (strcmp (verb, "sendBytecode") == 0) {
-			ret = do_sendBytecode (argc - 2, &(argv[2]));
+		} else if (strcmp (verb, "sendTBC") == 0) {
+			ret = do_sendTBC (argc - 2, &(argv[2]));
 		} else {
 			usage ();
 		}
