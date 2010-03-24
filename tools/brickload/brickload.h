@@ -47,7 +47,6 @@ struct _brick_t {
 	uint32_t	id;
 
 	void		*handle;
-	void		*state;
 	int		in_ep;
 	int		out_ep;
 

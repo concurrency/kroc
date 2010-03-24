@@ -24,13 +24,33 @@
 #include <usb.h>
 #endif
 
+typedef struct _usb_intf_t {
+	struct usb_device 	*dev;
+	int 			configuration;
+	int			interface;
+} usb_intf_t;
+
+static int init_count = 0;
+
 void *init_usb (void) {
-	fprintf (stderr, "USB initialisation error: not yet implemented.\n");
-	return NULL;
+	if (init_count == 0) {
+		usb_init ();
+		usb_find_busses ();
+		usb_find_devices ();
+	}
+	init_count++;
+	return &init_count;
 }
 
 void free_usb (void *usb) {
 	return;
+}
+
+static void release_intf (brick_t *b) {
+	if (b->handle != NULL) {
+		free (b->handle);
+		b->handle = NULL;
+	}
 }
 
 brick_t *find_usb_devices (
@@ -38,7 +58,79 @@ brick_t *find_usb_devices (
 		int32_t vendor, 	int32_t product,
 		int32_t configuration, 	int32_t interface,
 		brick_type_t type) {
-	return NULL;
+	struct usb_bus *busses 	= usb_get_busses ();
+	struct usb_bus *bp;
+	brick_t *list;
+	int count;
+
+	count = 0;
+	for (bp = busses; bp != NULL; bp = bp->next) {
+		struct usb_device *dp;
+		for (dp = bp->devices; dp != NULL; dp = dp->next) {
+			if (dp->descriptor.idVendor == vendor && dp->descriptor.idProduct == product) {
+				if (configuration == 0) {
+					count++;
+				} else {
+					int c;
+					for (c = 0; c < dp->descriptor.bNumConfigurations; ++c) {
+						if (dp->config[c].bConfigurationValue == configuration
+								&& interface >= 0 
+								&& interface <= dp->config[c].bNumInterfaces) {
+							count++;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (count == 0) {
+		return NULL;
+	}
+
+	list = malloc (sizeof (brick_t) * (count + 1));
+	memset (list, 0, sizeof (brick_t) * (count + 1));
+	
+	count = 0;
+	for (bp = busses; bp != NULL; bp = bp->next) {
+		struct usb_device *dp;
+		for (dp = bp->devices; dp != NULL; dp = dp->next) {
+			if (dp->descriptor.idVendor == vendor && dp->descriptor.idProduct == product) {
+				usb_intf_t *h 	= NULL;
+				brick_t *b 	= &(list[count]);
+				int found	= 0;
+
+				if (configuration == 0) {
+					found = 1;
+				} else {
+					int c;
+					for (c = 0; c < dp->descriptor.bNumConfigurations; ++c) {
+						if (dp->config[c].bConfigurationValue == configuration
+								&& interface >= 0 
+								&& interface <= dp->config[c].bNumInterfaces) {
+							found = 1;
+						}
+					}
+				}
+
+				if (found) {
+					h 			= (usb_intf_t *) malloc (sizeof (usb_intf_t));
+					h->dev			= dp;
+					h->configuration	= configuration;
+					h->interface		= interface;
+
+					b->type			= type;
+					b->handle		= h;
+					b->release		= release_intf;
+					
+					count++;
+				}
+			}
+		}
+	}
+
+	return list;
 }
 
 #endif /* OS_NIX */
