@@ -61,7 +61,53 @@ void free_brick_list (brick_t *list) {
 }
 
 tbc_t *load_tbc (const char *fn) {
-	return NULL;
+	tbc_t	*tbc = NULL;
+	long	eof;
+	FILE	*fh;
+
+	if ((fh = fopen (fn, "rb")) == NULL) {
+		fprintf (stderr, "Error; unable to open %s: %s (%d)\n", fn, strerror (errno), errno);
+		return NULL;
+	}
+	
+	/* Get file length */
+	fseek (fh, 0L, SEEK_END);
+	eof = ftell (fh);
+	fseek (fh, 0L, SEEK_SET);
+
+	/* Sanity check */
+	if (eof < 32L) {
+		fprintf (stderr, "Error; bytecode file seems too small: %s\n", fn);
+		goto out;
+	}
+	if (eof > (1024L * 1024L)) {
+		fprintf (stderr, "Error; bytecode file seems too big: %s\n", fn);
+		goto out;
+	}
+	
+	tbc = (tbc_t *) malloc (sizeof (tbc_t) + eof);
+	tbc->data = ((uint8_t *) tbc) + sizeof (tbc_t);
+	tbc->len = eof;
+
+	if (fread (tbc->data, 1, tbc->len, fh) < tbc->len) {
+		fprintf (stderr, "Error; unable to read bytecode from %s: %s (%d)\n", 
+			fn, strerror (errno), errno);
+		free (tbc);
+		tbc = NULL; 
+		goto out;
+	}
+
+	if (memcmp (tbc->data, "tenc", 4) == 0) {
+		tbc->type = TBC_16BIT;
+	} else if (memcmp (tbc->data, "TEnc", 4) == 0) {
+		tbc->type = TBC_32BIT;
+	} else {
+		tbc->type = TBC_UNKNOWN;
+	}
+
+out:
+	fclose (fh);
+	return tbc;
 }
 
 static brick_t *find_brick_by_id (brick_t *list, const char *id) {
@@ -69,14 +115,19 @@ static brick_t *find_brick_by_id (brick_t *list, const char *id) {
 	return NULL;
 }
 
-static int do_list (void) {
-	brick_t *list 	= NULL;
-	void *usb 	= init_usb ();
+static brick_t *find_brick_by_type (brick_t *list, const int type) {
 	int i;
-	
-	if (usb == NULL) {
-		return -1;
+
+	for (i = 0; list[i].type != NULL_BRICK; ++i) {
+		if (list[i].type == type)
+			return &(list[i]);
 	}
+	
+	return NULL;
+}
+
+static brick_t *list_bricks (void *usb) {
+	brick_t *list = NULL;
 
 	/* Give RCX towers a kick, so we can find their interfaces */
 	configure_rcx_towers (usb);
@@ -93,6 +144,20 @@ static int do_list (void) {
 	list = merge_brick_lists (list,
 		find_usb_devices (usb, ATMEL_VENDOR_ID, ATMEL_PRODUCT_SAMBA, 0x1, 0x1, LEGO_NXT | SAMBA_BRICK)
 	);
+
+	return list;
+}
+
+static int do_list (void) {
+	brick_t *list 	= NULL;
+	void *usb 	= init_usb ();
+	int i;
+	
+	if (usb == NULL) {
+		return -1;
+	}
+
+	list = list_bricks (usb);
 
 	if (list != NULL) {
 		fprintf (stdout, "-- Bricks --\n");
@@ -143,85 +208,94 @@ static int do_bootNXT (int argc, char *argv[]) {
 			return -1;
 		}
 
-		/* Get SAMBAing NXTs */
-		list = merge_brick_lists (list,
-			find_usb_devices (usb, ATMEL_VENDOR_ID, ATMEL_PRODUCT_SAMBA, 0x1, 0x1, LEGO_NXT | SAMBA_BRICK)
-		);
+		list = list_bricks (usb); 
 		
-		if (list != NULL) {
-			if (argc >= 2) {
-				b = find_brick_by_id (list, argv[1]); 
-			} else {
-				b = &(list[0]);
-			}
-
-			if (b != NULL) {
-				/* load firmware */
-				nxt_firmware_t *fw = load_nxt_firmware (argv[0]);
-				if (fw != NULL) {
-					if (boot_nxt (b, fw) == 0) {
-						ret = 0;
-					}
-				}
-			} else if (argc >= 2) {
-				fprintf (stderr, "NXT %s not found (check SAMBA mode?)\n", argv[1]);
-			}
-
-			free_brick_list (list);
+		if (argc >= 2) {
+			b = find_brick_by_id (list, argv[1]); 
 		} else {
-			fprintf (stderr, "No SAMBAing NXT bricks found.\n");
+			b = find_brick_by_type (list, LEGO_NXT | SAMBA_BRICK);
 		}
-		
+
+		if (b != NULL) {
+			nxt_firmware_t *fw = load_nxt_firmware (argv[0]);
+			
+			if (fw != NULL) {
+				if (boot_nxt (b, fw) == 0) {
+					ret = 0;
+				}
+			}
+		} else if (argc >= 2) {
+			fprintf (stderr, "NXT %s not found (check SAMBA mode?)\n", argv[1]);
+		} else {
+			fprintf (stderr, "Suitable NXT brick not found (check SAMBA mode?)\n");
+		}
+
+		free_brick_list (list);
 		free_usb (usb);
 
 	}
 	return ret;
 }
 
-static int do_loadNXT (int argc, char *argv[]) {
+static int do_sendBytecode (int argc, char *argv[]) {
 	int ret	= -1;
 
 	if (argc == 0) {
-		fprintf (stderr, "Usage: %s loadNXT <tbc> [<brick-id>]\n", prog_name);
-		fprintf (stderr, "Load bytecode to NXT running TVM.\n");
-		fprintf (stderr, "    e.g. %s loadNXT bump-and-wander.tbc @00000001\n", prog_name);
+		fprintf (stderr, "Usage: %s sendBytecode <file> [<NXT | RCX | brick-id>]\n", prog_name);
+		fprintf (stderr, "Send bytecode to NXT/RCX running TVM.\n");
+		fprintf (stderr, "    e.g. %s sendBytecode bump-and-wander.tbc @00000001\n", prog_name);
+		fprintf (stderr, "    e.g. %s sendBytecode sonar-test.tbc NXT\n", prog_name);
 	} else {
 		brick_t *list 	= NULL;
 		brick_t *b	= NULL;
 		void *usb 	= init_usb ();
+		int search_type	= NULL_BRICK;	
 		
 		if (usb == NULL) {
 			return -1;
 		}
 
-		/* Get TVM NXTs */
-		list = merge_brick_lists (list,
-			find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_NXOS, 0x1, 0x1, LEGO_NXT | NXOS_BRICK)
-		);
-		
-		if (list != NULL) {
-			if (argc >= 2) {
-				b = find_brick_by_id (list, argv[1]); 
+		list = list_bricks (usb);
+	
+		if (argc >= 2) {
+			if (strcasecmp (argv[1], "NXT") == 0) {
+				search_type = LEGO_NXT | NXOS_BRICK;
+			} else if (strcasecmp (argv[1], "RCX") == 0) {
+				search_type = LEGO_RCX;
 			} else {
-				b = &(list[0]);
+				b = find_brick_by_id (list, argv[1]);
 			}
+		}
 
-			if (b != NULL) {
-				tbc_t *tbc = load_tbc (argv[0]); 
-				if (tbc != NULL) {
-					if (send_tbc_to_nxt (b, tbc) == 0) {
-						ret = 0;
-					}
+		if (search_type != NULL_BRICK) {
+			b = find_brick_by_type (list, search_type);
+		} else if (list != NULL) {
+			b = &(list[0]);
+		}
+
+		if (b != NULL) {
+			tbc_t *tbc = load_tbc (argv[0]); 
+			if (tbc != NULL) {
+				switch (b->type & BRICK_TYPE_MASK) {
+					case LEGO_NXT:
+						if (send_tbc_to_nxt (b, tbc) == 0) {
+							ret = 0;
+						}
+						break;
+					case LEGO_RCX:
+						if (send_tbc_to_rcx (b, tbc) == 0) {
+							ret = 0;
+						}
+						break;
 				}
-			} else if (argc >= 2) {
-				fprintf (stderr, "NXT %s not found (check TVM running?)\n", argv[1]);
 			}
-
-			free_brick_list (list);
+		} else if (argc >= 2) {
+			fprintf (stderr, "%s not found (check TVM running?)\n", argv[1]);
 		} else {
-			fprintf (stderr, "No TVM NXT bricks found.\n");
+			fprintf (stderr, "No suitable bricks found.\n");
 		}
 		
+		free_brick_list (list);
 		free_usb (usb);
 
 	}
@@ -234,9 +308,8 @@ static void usage (void) {
 		prog_name);
 	fprintf (stderr, "    list          (List available bricks)\n");
 	fprintf (stderr, "    bootNXT       (Boot NXT firmware by SAMBA)\n");
-	fprintf (stderr, "    sambaRCX      (Load RCX firmware by SAMBA)\n");
-	fprintf (stderr, "    loadNXT       (Load bytecode to NXT)\n");
-	fprintf (stderr, "    loadRCX       (Load bytecode to RCX)\n");
+	fprintf (stderr, "    bootRCX       (Boot RCX firmware by IR Tower)\n");
+	fprintf (stderr, "    sendBytecode  (Send bytecode to brick)\n");
 	fprintf (stderr, "\n");
 	fprintf (stderr, "%s <verb> with no options gives help on the verb\n\n",
 		prog_name);
@@ -259,12 +332,10 @@ int main (int argc, char *argv[]) {
 			ret = do_list ();
 		} else if (strcmp (verb, "bootNXT") == 0) {
 			ret = do_bootNXT (argc - 2, &(argv[2]));
-		} else if (strcmp (verb, "sambaRXT") == 0) {
+		} else if (strcmp (verb, "bootRCX") == 0) {
 			ret = not_implemented ();
-		} else if (strcmp (verb, "loadNXT") == 0) {
-			ret = do_loadNXT (argc - 2, &(argv[2]));
-		} else if (strcmp (verb, "loadRXT") == 0) {
-			ret = not_implemented ();
+		} else if (strcmp (verb, "sendBytecode") == 0) {
+			ret = do_sendBytecode (argc - 2, &(argv[2]));
 		} else {
 			usage ();
 		}

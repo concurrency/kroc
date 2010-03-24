@@ -42,8 +42,7 @@ nxt_firmware_t *load_nxt_firmware (const char *fn) {
 	FILE 		*fh;
 
 	if ((fh = fopen (fn, "rb")) == NULL) {
-		/* FIXME: textual error number? (cross platform?) */
-		fprintf (stderr, "Error; unable to open %s: %d\n", fn, errno);
+		fprintf (stderr, "Error; unable to open %s: %s (%d)\n", fn, strerror (errno), errno);
 		return NULL;
 	}
 	
@@ -52,20 +51,19 @@ nxt_firmware_t *load_nxt_firmware (const char *fn) {
 	eof = ftell (fh);
 
 	if (fread (buf, 1, bin_footer_len, fh) < bin_footer_len) {
-		/* FIXME: textual error number? (cross platform?) */
-		fprintf (stderr, "Error; unable to read firmware footer from %s: %d\n", fn, errno);
+		fprintf (stderr, "Error; unable to read firmware footer from %s: %s (%d)\n", 
+			fn, strerror (errno), errno);
 		goto errout;
 	}
 
 	tmp = le32_to_uint32 (&(buf[0]));
 	if (tmp != 0xDEADBEEF) {
-		/* FIXME: textual error number? (cross platform?) */
 		fprintf (stderr, "Error; firmware magic does not match for %s: %08x\n", fn, tmp);
 		goto errout;
 	}
 
 	/* Sanity check */
-	if ((eof < 0L) || eof > (1024L * 1024L)) {
+	if ((eof < 0L) || (eof > (1024L * 1024L))) {
 		fprintf (stderr, "Error; firmware file seems too big: %s\n", fn);
 		goto errout;
 	}
@@ -80,8 +78,8 @@ nxt_firmware_t *load_nxt_firmware (const char *fn) {
 	
 	fseek (fh, 0L, SEEK_SET);
 	if (fread (fw->data, fw->len, 1, fh) != 1) {
-		/* FIXME: textual error number? (cross platform?) */
-		fprintf (stderr, "Error; unable to read firmware data from %s: %d\n", fn, errno);
+		fprintf (stderr, "Error; unable to read firmware data from %s: %s (%d)\n", 
+			fn, strerror (errno), errno);
 		goto errout;
 	}
 	fclose (fh);

@@ -38,3 +38,7 @@ void configure_rcx_towers (void *usb) {
 	}
 }
 
+int send_tbc_to_rcx (brick_t *b, tbc_t *tbc) {
+	return -1;
+}
+
