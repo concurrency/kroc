@@ -20,13 +20,21 @@
 
 #ifdef OS_WIN
 
-void *init_brick_usb (void) {
+void *init_usb (void) {
 	fprintf (stderr, "USB initialisation error: not yet implemented.\n");
 	return NULL;
 }
 
-void free_brick_usb (void *usb) {
+void free_usb (void *usb) {
 	return;
+}
+
+brick_t *find_usb_devices (
+		void *usb, 
+		int32_t vendor, 	int32_t product,
+		int32_t configuration, 	int32_t interface,
+		brick_type_t type) {
+	return NULL;
 }
 
 #endif /* OS_WIN */
