@@ -92,9 +92,13 @@ void main (void) {
 			nx_display_end_line ();
 		}
 
+		if (usb > 0) {
+			nx_usb_write ((U8 *) &pos, 4);
+		}
+
 		while (usb > 0) {
 			U32 tmp;
-
+			
 			if (usb >= NX_USB_PACKET_SIZE) {
 				nx_usb_read (&(tbc_data[pos]), NX_USB_PACKET_SIZE);
 			} else {
@@ -110,6 +114,8 @@ void main (void) {
 			nx_display_cursor_set_pos (0, 2);
 			nx_display_uint (usb);
 			nx_display_string ("      ");
+			
+			nx_usb_write ((U8 *) &pos, 4);
 		}
 		
 		nx_display_cursor_set_pos (0, 2);
