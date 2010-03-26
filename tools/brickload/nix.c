@@ -28,6 +28,7 @@ typedef struct _usb_intf_t {
 	struct usb_device 	*dev;
 	int 			configuration;
 	int			interface;
+	int			ep_type;
 } usb_intf_t;
 
 static int init_count = 0;
@@ -44,6 +45,30 @@ void *init_usb (void) {
 
 void free_usb (void *usb) {
 	return;
+}
+
+static int get_dev_config (brick_t *brick) {
+	return -1;
+}
+
+static int set_dev_config (brick_t *brick, int configuration) {
+	return -1;
+}
+
+static int open_intf (brick_t *brick) {
+	return -1;
+}
+
+static int close_intf (brick_t *brick) {
+	return -1;
+}
+
+static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
+	return -1;
+}
+
+static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
+	return -1;
 }
 
 static void release_intf (brick_t *b) {
@@ -97,6 +122,7 @@ brick_t *find_usb_devices (
 		struct usb_device *dp;
 		for (dp = bp->devices; dp != NULL; dp = dp->next) {
 			if (dp->descriptor.idVendor == vendor && dp->descriptor.idProduct == product) {
+				struct usb_endpoint_descriptor *in_ep = NULL, *out_ep = NULL;
 				usb_intf_t *h 	= NULL;
 				brick_t *b 	= &(list[count]);
 				int found	= 0;
@@ -109,6 +135,18 @@ brick_t *find_usb_devices (
 						if (dp->config[c].bConfigurationValue == configuration
 								&& interface >= 0 
 								&& interface <= dp->config[c].bNumInterfaces) {
+							struct usb_interface_descriptor *intf = 
+								dp->config[c].interface->altsetting;
+							int i;
+							for (i = 0; i < intf->bNumEndpoints; ++i) {
+								if (intf->endpoint[i].bEndpointAddress & USB_ENDPOINT_DIR_MASK) {
+									if (out_ep == NULL)
+										out_ep = &(intf->endpoint[i]);
+								} else {
+									if (in_ep == NULL)
+										in_ep = &(intf->endpoint[i]);
+								}
+							}
 							found = 1;
 						}
 					}
@@ -119,9 +157,22 @@ brick_t *find_usb_devices (
 					h->dev			= dp;
 					h->configuration	= configuration;
 					h->interface		= interface;
+					if (in_ep != NULL)
+						h->ep_type	= in_ep->bmAttributes & USB_ENDPOINT_TYPE_MASK;
 
+					b->id			= (count + 1); /* FIXME: do something better */
 					b->type			= type;
+					if (in_ep != NULL)
+						b->in_ep	= in_ep->bEndpointAddress;
+					if (out_ep != NULL)
+						b->out_ep	= out_ep->bEndpointAddress;
 					b->handle		= h;
+					b->get_config		= get_dev_config;
+					b->set_config		= set_dev_config;
+					b->open			= open_intf;
+					b->close		= close_intf;
+					b->read			= read_intf;
+					b->write		= write_intf;
 					b->release		= release_intf;
 					
 					count++;
