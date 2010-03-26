@@ -26,6 +26,7 @@
 
 typedef struct _usb_intf_t {
 	struct usb_device 	*dev;
+	usb_dev_handle		*dev_h;
 	int 			configuration;
 	int			interface;
 	int			ep_type;
@@ -48,19 +49,68 @@ void free_usb (void *usb) {
 }
 
 static int get_dev_config (brick_t *brick) {
-	return -1;
+	usb_intf_t 	*intf	= (usb_intf_t *) brick->handle;
+	usb_dev_handle 	*dev 	= usb_open (intf->dev);
+	if (dev != NULL) {
+		uint8_t buf[2];
+		int ret;
+
+		ret = usb_control_msg (dev, 
+			USB_TYPE_STANDARD | USB_RECIP_DEVICE | USB_ENDPOINT_IN,
+			USB_REQ_GET_CONFIGURATION,
+			0,
+			0,
+			(char *) buf,
+			1,
+			0
+		);
+
+		if (ret == 1) {
+			ret = buf[0];
+		} else {
+			ret = -1;
+		}
+
+		usb_close (dev);
+		return ret;
+	} else {
+		return -1;
+	}
 }
 
 static int set_dev_config (brick_t *brick, int configuration) {
-	return -1;
+	usb_intf_t 	*intf	= (usb_intf_t *) brick->handle;
+	usb_dev_handle 	*dev 	= usb_open (intf->dev);
+	if (dev != NULL) {
+		int ret = usb_set_configuration (dev, configuration);
+		usb_close (dev);
+		return ret;
+	} else {
+		return -1;
+	}
 }
 
 static int open_intf (brick_t *brick) {
-	return -1;
+	usb_intf_t 	*intf	= (usb_intf_t *) brick->handle;
+	if (intf->dev_h == NULL) {
+		intf->dev_h = usb_open (intf->dev);
+	}
+	if (intf->dev_h != NULL) {
+		return 0;
+	} else {
+		return -1;
+	}
 }
 
 static int close_intf (brick_t *brick) {
-	return -1;
+	usb_intf_t 	*intf	= (usb_intf_t *) brick->handle;
+	if (intf->dev_h != NULL) {
+		usb_close (intf->dev_h);
+		intf->dev_h = NULL;
+		return 0;
+	} else {
+		return -1;
+	}
 }
 
 static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
@@ -139,7 +189,7 @@ brick_t *find_usb_devices (
 								dp->config[c].interface->altsetting;
 							int i;
 							for (i = 0; i < intf->bNumEndpoints; ++i) {
-								if (intf->endpoint[i].bEndpointAddress & USB_ENDPOINT_DIR_MASK) {
+								if ((intf->endpoint[i].bEndpointAddress & USB_ENDPOINT_DIR_MASK) == USB_ENDPOINT_IN) {
 									if (out_ep == NULL)
 										out_ep = &(intf->endpoint[i]);
 								} else {
@@ -155,6 +205,7 @@ brick_t *find_usb_devices (
 				if (found) {
 					h 			= (usb_intf_t *) malloc (sizeof (usb_intf_t));
 					h->dev			= dp;
+					h->dev_h		= NULL;
 					h->configuration	= configuration;
 					h->interface		= interface;
 					if (in_ep != NULL)
