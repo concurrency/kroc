@@ -17,10 +17,11 @@ AC_CHECK_HEADERS(stdlib.h string.h assert.h errno.h)
 AC_CHECK_HEADERS(stdint.h unistd.h sys/ioctl.h time.h)
 
 dnl Check for USB library.
-AC_CHECK_HEADERS(usb.h)
+AC_CHECK_HEADERS(usb.h libusb.h libusb/libusb.h libusb-1.0/libusb.h)
 AC_CHECK_PROG(LIBUSB_CONFIG, libusb-config, libusb-config, no)
-AC_CHECK_LIB(usb, usb_init, [have_libusb0=yes])    # 0.1 API
-AC_CHECK_LIB(usb, libusb_init, [have_libusb1=yes]) # 1.0 API
+AC_CHECK_LIB(usb, usb_init, [have_libusb0=yes])        # 0.1 API
+AC_CHECK_LIB(usb, libusb_init, [have_libusb1=yes])     # 1.0 API
+AC_CHECK_LIB(usb-1.0, libusb_init, [have_libusb1=yes]) # 1.0 API 
 
 dnl OS related defines.
 case "$host_os" in
@@ -34,20 +35,23 @@ case "$host_os" in
   *)
     AC_DEFINE([OS_NIX], 1, [define for *nix])
     AC_MSG_CHECKING([libusb API version])
-    if test "$have_libusb0" == "yes"; then
-      AC_DEFINE([USB_API_0_1], 1, [define for libusb 0.1])
-      AC_MSG_RESULT(0.1)
+
+    if test "$have_libusb1" == "yes"; then
+      AC_DEFINE([USB_API_1_0], 1, [define for libusb 1.0])
+      AC_MSG_RESULT(1.0)
+      USB_LDFLAGS="-lusb-1.0"
     else 
-      if test "$have_libusb1" == "yes"; then
-        AC_DEFINE([USB_API_1_0], 1, [define for libusb 1.0])
-	AC_MSG_RESULT(1.0)
+      if test "$have_libusb0" == "yes"; then
+        AC_DEFINE([USB_API_0_1], 1, [define for libusb 0.1])
+        AC_MSG_RESULT(0.1)
+        USB_CFLAGS=`$LIBUSB_CONFIG --cflags`
+        USB_LDFLAGS=`$LIBUSB_CONFIG --libs`
       else
         AC_MSG_RESULT(none)
 	AC_MSG_ERROR([libusb not found])
       fi
     fi
-    USB_CFLAGS=`$LIBUSB_CONFIG --cflags`
-    USB_LDFLAGS=`$LIBUSB_CONFIG --libs`
+    
     CFLAGS="$LDFLAGS $USB_CFLAGS"
     LDFLAGS="$LDFLAGS $USB_LDFLAGS"
     ;;

@@ -20,8 +20,181 @@
 
 #ifdef OS_NIX
 
+#ifdef USB_API_1_0
+
+#if defined(HAVE_LIBUSB_H) 
+#include <libusb.h>
+#elif defined(HAVE_LIBUSB_LIBUSB_H) 
+#include <libusb/libusb.h>
+#elif defined(HAVE_LIBUSB_1_0_LIBUSB_H) 
+#include <libusb-1.0/libusb.h>
+#else
+#error "No libusb.h available."
+#endif
+
+typedef struct _usb_intf_t {
+	libusb_device 		*dev;
+	libusb_device_handle	*dev_h;
+	int 			configuration;
+	int			interface;
+	int			ep_type;
+} usb_intf_t;
+
+void *init_usb (void) {
+	libusb_context *usb_c = NULL;
+	if (libusb_init (&usb_c) == 0) {
+		return usb_c;
+	} else {
+		return NULL;
+	}
+}
+
+void free_usb (void *usb) {
+	libusb_exit ((libusb_context *) usb);
+}
+
+static int get_dev_config (brick_t *brick) {
+	return -1;
+}
+
+static int set_dev_config (brick_t *brick, int configuration) {
+	usb_intf_t 	*intf	= (usb_intf_t *) brick->handle;
+	return -1;
+}
+
+static void release_intf (brick_t *b) {
+	if (b->handle != NULL) {
+		usb_intf_t *intf = (usb_intf_t *) b->handle;
+		
+		libusb_unref_device (intf->dev);
+		if (intf->dev_h != NULL)
+			libusb_close (intf->dev_h);
+		free (intf);
+
+		b->handle = NULL;
+	}
+}
+
+brick_t *find_usb_devices (
+		void *usb, 
+		int32_t vendor, 	int32_t product,
+		int32_t configuration, 	int32_t interface,
+		brick_type_t type) {
+	libusb_context 	*usb_c		= (libusb_context *) usb;
+	libusb_device 	**devices	= NULL;
+	brick_t 	*list;
+	int i, count, n_devices;
+	
+	n_devices = libusb_get_device_list (usb_c, &devices);
+	
+	count = 0;
+	for (i = 0; i < n_devices; ++i) {
+		struct libusb_device_descriptor desc;
+
+		libusb_get_device_descriptor (devices[i], &desc);
+
+		if (desc.idVendor == vendor && desc.idProduct == product) {
+			if (configuration == 0) {
+				count++;
+			} else {
+				struct libusb_config_descriptor *cfg_desc;
+				
+				if (libusb_get_config_descriptor_by_value (devices[i], configuration, &cfg_desc) == 0) {
+					if (interface >= 0 && interface <= cfg_desc->bNumInterfaces) {
+						count++;
+					}
+					libusb_free_config_descriptor (cfg_desc);
+				}
+			}
+		}
+	}
+	
+	if (count == 0) {
+		return NULL;
+	}
+
+	list = malloc (sizeof (brick_t) * (count + 1));
+	memset (list, 0, sizeof (brick_t) * (count + 1));
+	
+	count = 0;
+	for (i = 0; i < n_devices; ++i) {
+		struct libusb_device_descriptor desc;
+		brick_t *b = &(list[count]);
+		int ep_type = -1, in_ep = -1, out_ep = -1;
+		int found = 0;
+		
+		libusb_get_device_descriptor (devices[i], &desc);
+		
+		if (desc.idVendor == vendor && desc.idProduct == product) {
+			if (configuration == 0) {
+				found = 1;
+			} else {
+				struct libusb_config_descriptor *cfg_desc;
+				
+				if (libusb_get_config_descriptor_by_value (devices[i], configuration, &cfg_desc) == 0) {
+					if (interface >= 0 && interface <= cfg_desc->bNumInterfaces) {
+						const struct libusb_interface_descriptor *intf = 
+							cfg_desc->interface[interface].altsetting;
+						int j;
+
+						for (j = 0; j < intf->bNumEndpoints; ++j) {
+							if ((intf->endpoint[j].bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN) {
+								if (in_ep < 0) {
+									in_ep = intf->endpoint[j].bEndpointAddress;
+									ep_type = intf->endpoint[j].bmAttributes & LIBUSB_TRANSFER_TYPE_MASK;
+								}
+							} else {
+								if (out_ep < 0) {
+									out_ep = intf->endpoint[j].bEndpointAddress;
+									ep_type = intf->endpoint[j].bmAttributes & LIBUSB_TRANSFER_TYPE_MASK;
+								}
+							}
+						}
+						
+						found = 1;
+					}
+					
+					libusb_free_config_descriptor (cfg_desc);
+				}
+			}
+		}
+
+		if (found) {
+			usb_intf_t *h 		= (usb_intf_t *) malloc (sizeof (usb_intf_t));
+
+			h->dev			= libusb_ref_device (devices[i]);
+			h->dev_h		= NULL;
+			h->configuration	= configuration;
+			h->interface		= interface;
+			h->ep_type		= ep_type;
+
+			b->id			= (count + 1); /* FIXME: do something better */
+			b->type			= type;
+			b->in_ep		= in_ep;
+			b->out_ep		= out_ep;
+			b->handle		= h;
+			b->get_config		= get_dev_config;
+			b->set_config		= set_dev_config;
+			//b->open			= open_intf;
+			//b->close		= close_intf;
+			//b->read			= read_intf;
+			//b->write		= write_intf;
+			b->release		= release_intf;
+			
+			count++;
+		}
+	}
+	list[count].type = NULL_BRICK;
+
+	return list;
+}
+
+#else /* USB_API_0_1 */
+
 #ifdef HAVE_USB_H 
 #include <usb.h>
+#else
+#error "No usb.h available."
 #endif
 
 typedef struct _usb_intf_t {
@@ -179,7 +352,12 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeo
 
 static void release_intf (brick_t *b) {
 	if (b->handle != NULL) {
-		free (b->handle);
+		usb_intf_t *intf = (usb_intf_t *) b->handle;
+
+		if (intf->dev_h != NULL)
+			usb_close (intf->dev_h);
+		free (intf);
+
 		b->handle = NULL;
 	}
 }
@@ -287,8 +465,11 @@ brick_t *find_usb_devices (
 			}
 		}
 	}
+	list[count].type = NULL_BRICK;
 
 	return list;
 }
+
+#endif /* USB_API_0_1 */
 
 #endif /* OS_NIX */
