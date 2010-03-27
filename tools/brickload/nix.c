@@ -128,6 +128,21 @@ static int close_intf (brick_t *brick) {
 	}
 }
 
+static int control_msg (brick_t *brick, int req_type, int req, int value, int index, uint8_t *data, size_t len, uint32_t timeout) {
+	usb_intf_t *intf = (usb_intf_t *) brick->handle;
+	int ret;
+	
+	if (intf->dev_h == NULL)
+		return -1;
+	
+	if ((ret = libusb_control_transfer (intf->dev_h, req_type, req, value, index, (unsigned char *) data, len, timeout)) >= 0) {
+		return ret;
+	} else {
+		fprintf (stderr, "control error = %d\n", ret);
+		return -1;
+	}
+}
+
 static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
 	usb_intf_t *intf = (usb_intf_t *) brick->handle;
 	int ret = LIBUSB_ERROR_PIPE, transferred = 0;
@@ -181,7 +196,7 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeo
 	}
 	
 	if (ret < 0) {
-		fprintf (stderr, "read error = %d\n", ret);
+		fprintf (stderr, "write error = %d\n", ret);
 		return -1;
 	} else {
 		return transferred;
@@ -236,6 +251,7 @@ brick_t *find_usb_devices (
 	}
 	
 	if (count == 0) {
+		libusb_free_device_list (devices, 1);
 		return NULL;
 	}
 
@@ -303,6 +319,7 @@ brick_t *find_usb_devices (
 			b->set_config		= set_dev_config;
 			b->open			= open_intf;
 			b->close		= close_intf;
+			b->control		= control_msg;
 			b->read			= read_intf;
 			b->write		= write_intf;
 			b->release		= release_intf;
@@ -311,6 +328,7 @@ brick_t *find_usb_devices (
 		}
 	}
 	list[count].type = NULL_BRICK;
+	libusb_free_device_list (devices, 1);
 
 	return list;
 }
@@ -420,6 +438,21 @@ static int close_intf (brick_t *brick) {
 		intf->dev_h = NULL;
 		return 0;
 	} else {
+		return -1;
+	}
+}
+
+static int control_msg (brick_t *brick, int req_type, int req, int value, int index, uint8_t *data, size_t len, uint32_t timeout) {
+	usb_intf_t *intf = (usb_intf_t *) brick->handle;
+	int ret;
+	
+	if (intf->dev_h == NULL)
+		return -1;
+	
+	if ((ret = usb_control_msg (intf->dev_h, req_type, req, value, index, (char *) data, len, timeout)) >= 0) {
+		return ret;
+	} else {
+		fprintf (stderr, "control error = %d (%s)\n", errno, strerrno (errno));
 		return -1;
 	}
 }
@@ -590,6 +623,7 @@ brick_t *find_usb_devices (
 					b->set_config		= set_dev_config;
 					b->open			= open_intf;
 					b->close		= close_intf;
+					b->control		= control_msg;
 					b->read			= read_intf;
 					b->write		= write_intf;
 					b->release		= release_intf;

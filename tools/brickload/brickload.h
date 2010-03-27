@@ -56,6 +56,7 @@ struct _brick_t {
 	int		(*open)(brick_t *);
 	int		(*close)(brick_t *);
 	
+	int		(*control)(brick_t *, int req_type, int req, int value, int index, uint8_t *data, size_t len, uint32_t timeout_ms);
 	int		(*read)(brick_t *, uint8_t *data, size_t len, uint32_t timeout_ms);
 	int		(*write)(brick_t *, uint8_t *data, size_t len, uint32_t timeout_ms);
 
