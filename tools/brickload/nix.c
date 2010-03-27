@@ -54,12 +54,138 @@ void free_usb (void *usb) {
 }
 
 static int get_dev_config (brick_t *brick) {
+	usb_intf_t *intf = (usb_intf_t *) brick->handle;
+	int ret = -1;
+
+	if ((ret = libusb_open (intf->dev, &(intf->dev_h))) == 0) {
+		int configuration;
+		
+		ret = libusb_get_configuration (intf->dev_h, &configuration);
+		
+		libusb_close (intf->dev_h);
+		intf->dev_h = NULL;
+
+		if (ret == 0) {
+			return configuration;
+		}
+	}
+
+	fprintf (stderr, "intf error = %d\n", ret);
+
 	return -1;
 }
 
 static int set_dev_config (brick_t *brick, int configuration) {
-	usb_intf_t 	*intf	= (usb_intf_t *) brick->handle;
+	usb_intf_t *intf = (usb_intf_t *) brick->handle;
+	int ret;
+
+	if ((ret = libusb_open (intf->dev, &(intf->dev_h))) == 0) {
+		ret = libusb_set_configuration (intf->dev_h, configuration);
+		
+		libusb_close (intf->dev_h);
+		intf->dev_h = NULL;
+		
+		if (ret == 0) {
+			return 0;
+		}
+	}
+	
+	fprintf (stderr, "intf error = %d\n", ret);
+
 	return -1;
+}
+
+static int open_intf (brick_t *brick) {
+	usb_intf_t *intf = (usb_intf_t *) brick->handle;
+	int ret;
+
+	/* can't open interface on device */
+	if (intf->configuration == 0)
+		return -1;
+
+	if ((ret = libusb_open (intf->dev, &(intf->dev_h))) == 0) {
+		if ((ret = libusb_claim_interface (intf->dev_h, intf->interface)) == 0) {
+			return 0;
+		}
+		libusb_close (intf->dev_h);
+		intf->dev_h = NULL;
+	}
+	
+	fprintf (stderr, "intf error = %d\n", ret);
+	return -1;
+}
+
+static int close_intf (brick_t *brick) {
+	usb_intf_t *intf = (usb_intf_t *) brick->handle;
+	
+	if (intf->dev_h != NULL) {
+		libusb_release_interface (intf->dev_h, intf->interface);
+		libusb_close (intf->dev_h);
+		intf->dev_h = NULL;
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
+	usb_intf_t *intf = (usb_intf_t *) brick->handle;
+	int ret = LIBUSB_ERROR_PIPE, transferred = 0;
+	
+	if (intf->dev_h == NULL)
+		return -1;
+
+	switch (intf->ep_type) {
+		case LIBUSB_TRANSFER_TYPE_BULK:
+			ret = libusb_bulk_transfer (intf->dev_h, brick->in_ep, (unsigned char *) data, len, &transferred, timeout); 
+			if (ret == LIBUSB_ERROR_TIMEOUT || ret == LIBUSB_ERROR_PIPE)
+				libusb_clear_halt (intf->dev_h, brick->in_ep);
+			break;
+		
+		case LIBUSB_TRANSFER_TYPE_INTERRUPT:
+			ret = libusb_interrupt_transfer (intf->dev_h, brick->in_ep, (unsigned char *) data, len, &transferred, timeout); 
+			break;
+		
+		default:
+			break;
+	}
+	
+	if (ret < 0) {
+		fprintf (stderr, "read error = %d\n", ret);
+		return -1;
+	} else {
+		return transferred;
+	}
+}
+
+static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
+	usb_intf_t *intf = (usb_intf_t *) brick->handle;
+	int ret = LIBUSB_ERROR_PIPE, transferred = 0;
+	
+	if (intf->dev_h == NULL)
+		return -1;
+
+	switch (intf->ep_type) {
+		case LIBUSB_TRANSFER_TYPE_BULK:
+			ret = libusb_bulk_transfer (intf->dev_h, brick->out_ep, (unsigned char *) data, len, &transferred, timeout); 
+			if (ret == LIBUSB_ERROR_TIMEOUT || ret == LIBUSB_ERROR_PIPE)
+				libusb_clear_halt (intf->dev_h, brick->out_ep);
+			break;
+		
+		case LIBUSB_TRANSFER_TYPE_INTERRUPT:
+			ret = libusb_interrupt_transfer (intf->dev_h, brick->out_ep, (unsigned char *) data, len, &transferred, timeout); 
+			break;
+		
+		default:
+			break;
+	}
+	
+	if (ret < 0) {
+		fprintf (stderr, "read error = %d\n", ret);
+		return -1;
+	} else {
+		return transferred;
+	}
 }
 
 static void release_intf (brick_t *b) {
@@ -175,10 +301,10 @@ brick_t *find_usb_devices (
 			b->handle		= h;
 			b->get_config		= get_dev_config;
 			b->set_config		= set_dev_config;
-			//b->open			= open_intf;
-			//b->close		= close_intf;
-			//b->read			= read_intf;
-			//b->write		= write_intf;
+			b->open			= open_intf;
+			b->close		= close_intf;
+			b->read			= read_intf;
+			b->write		= write_intf;
 			b->release		= release_intf;
 			
 			count++;
@@ -270,6 +396,10 @@ static int set_dev_config (brick_t *brick, int configuration) {
 static int open_intf (brick_t *brick) {
 	usb_intf_t *intf = (usb_intf_t *) brick->handle;
 
+	/* can't open interface on device */
+	if (intf->configuration == 0)
+		return -1;
+
 	if (intf->dev_h == NULL) {
 		intf->dev_h = usb_open (intf->dev);
 	}
@@ -304,6 +434,8 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeou
 	switch (intf->ep_type) {
 		case USB_ENDPOINT_TYPE_BULK:
 			ret = usb_bulk_read (intf->dev_h, brick->in_ep, (char *) data, len, timeout); 
+			if (ret == (-ETIMEDOUT)) 
+				usb_clear_halt (intf->dev_h, brick->out_ep);
 			break;
 		
 		case USB_ENDPOINT_TYPE_INTERRUPT:
@@ -331,7 +463,9 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeo
 
 	switch (intf->ep_type) {
 		case USB_ENDPOINT_TYPE_BULK:
-			ret = usb_bulk_write (intf->dev_h, brick->out_ep, (char *) data, len, timeout); 
+			ret = usb_bulk_write (intf->dev_h, brick->out_ep, (char *) data, len, timeout);
+			if (ret == (-ETIMEDOUT)) 
+				usb_clear_halt (intf->dev_h, brick->out_ep);
 			break;
 		
 		case USB_ENDPOINT_TYPE_INTERRUPT:
