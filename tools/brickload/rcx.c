@@ -18,6 +18,9 @@
 
 #include "brickload.h"
 
+#define TOWER_REQUEST_RESET		0x04
+#define TOWER_REQUEST_GET_VERSION	0xfd
+
 void configure_rcx_towers (void *usb) {
 	brick_t *list = find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_TOWER, 0x0, 0x0, LEGO_RCX);
 
