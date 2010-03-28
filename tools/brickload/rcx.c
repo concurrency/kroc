@@ -21,6 +21,10 @@
 #define TOWER_REQUEST_RESET		0x04
 #define TOWER_REQUEST_GET_VERSION	0xfd
 
+#define USB_TYPE_VENDOR			(0x02 << 5)
+#define USB_DIR_IN			0x80
+#define USB_RECIP_DEVICE		0x00
+
 void configure_rcx_towers (void *usb) {
 	brick_t *list = find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_TOWER, 0x0, 0x0, LEGO_RCX);
 
@@ -43,5 +47,36 @@ void configure_rcx_towers (void *usb) {
 
 int send_tbc_to_rcx (brick_t *b, tbc_t *tbc) {
 	return -1;
+}
+
+int get_rcx_version_str (brick_t *b, char *str) {
+	int ret;
+	
+	if ((ret = b->open (b)) == 0) {
+		uint8_t buf[8];
+		
+		ret = b->control (b, 
+			USB_TYPE_VENDOR | USB_DIR_IN | USB_RECIP_DEVICE,
+			TOWER_REQUEST_GET_VERSION,
+			0,
+			0,
+			buf, 8,
+			1000
+		); 
+
+		if (ret == 8) {
+			sprintf (str, 
+				"version %d.%d (build %d)",
+				buf[4], buf[5], (buf[6] << 8) | buf[7]
+			);
+			ret = 0;
+		} else {
+			ret = -1;
+		}
+
+		b->close (b);
+	}
+	
+	return ret;
 }
 
