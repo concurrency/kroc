@@ -184,6 +184,11 @@ static int do_list (void) {
 				fprintf (stdout, " NXOS");
 			if (flags & SAMBA_BRICK)
 				fprintf (stdout, " SAMBA");
+			if (type == LEGO_RCX) {
+				char buf[32];
+				if (get_rcx_version_str (&(list[i]), buf) == 0)
+					fprintf (stdout, " - %s", buf);
+			}
 			fprintf (stdout, "\n");
 		}
 		free_brick_list (list);
