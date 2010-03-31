@@ -25,6 +25,8 @@
 #define USB_DIR_IN			0x80
 #define USB_RECIP_DEVICE		0x00
 
+#define PKT_SIZE			8
+
 void configure_rcx_towers (void *usb) {
 	brick_t *list = find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_TOWER, 0x0, 0x0, LEGO_RCX);
 
@@ -78,5 +80,72 @@ int get_rcx_version_str (brick_t *b, char *str) {
 	}
 	
 	return ret;
+}
+
+/* precondition: brick is open */
+static int reset_rcx (brick_t *b) {
+	uint8_t buf[4];
+	
+	return b->control (b, 
+		USB_TYPE_VENDOR | USB_DIR_IN | USB_RECIP_DEVICE,
+		TOWER_REQUEST_RESET,
+		0,
+		0,
+		buf, 8,
+		1000
+	); 
+}
+
+static int send_to_rcx (brick_t *b, uint8_t *data, size_t len) {
+	uint8_t buf_bytes[PKT_SIZE * 8];
+	uint8_t *buf 	= &(buf_bytes[0]);
+	uint8_t *m_buf 	= NULL;
+	int pos		= 0;
+	int sum		= 0;
+	int ret		= 0;
+
+	if (((len * 2) + 5) > sizeof (buf_bytes))
+		m_buf = buf = (uint8_t *) malloc ((len * 2) + 5);
+
+	buf[pos++] = 0x55;
+	buf[pos++] = 0xff;
+	buf[pos++] = 0x00;
+	while (len--) {
+		uint8_t byte = *(data++);
+		buf[pos++] = byte;
+		buf[pos++] = ~byte;
+		sum += byte;
+	}
+	buf[pos++] = (uint8_t) sum;
+	buf[pos++] = (uint8_t) (~sum);
+
+	len = pos;
+	pos = 0;
+	while (len > 0) {
+		int bytes = len > PKT_SIZE ? PKT_SIZE : len;
+
+		ret = b->write (b, buf + pos, bytes, 0);
+
+		if (ret > 0) {
+			len -= ret;
+			pos += ret;
+		} else {
+			break;
+		}
+	}
+
+
+	if (m_buf != NULL)
+		free (m_buf);
+
+	return ret;
+}
+
+static int recv_from_rcx (brick_t *b, uint8_t *data, size_t len) {
+	uint8_t header[PKT_SIZE], buffer[PKT_SIZE];
+}
+
+static void ping_rcx (brick_t *b) {
+	
 }
 
