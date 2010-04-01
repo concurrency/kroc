@@ -2684,7 +2684,7 @@ fprintf (stderr, "syn3: well, looks like a chan-type declaration!\n");
 						} else {
 							nextsymb ();
 
-							/* SOmething did used to be here ;) -- hence raction_symb(), but I removed it.. */
+							/* Something did used to be here ;) -- hence raction_symb(), but I removed it.. */
 							*procptr = raction_symb (a, csymb, locn, indent);
 							if ((*procptr) == NULL) {
 								goto error2;
@@ -2846,6 +2846,7 @@ fprintf (stderr, "syn3: well, looks like a chan-type declaration!\n");
 				{
 					const int saved_indent = symbindent;
 					treenode *name, *p;
+					int csymb = S_UNDEFINED;
 
 					nextsymb ();
 					if ((name = rexp ()) == NULL) {
@@ -2854,17 +2855,56 @@ fprintf (stderr, "syn3: well, looks like a chan-type declaration!\n");
 					}
 					/* we may have a direction specifier here, if we're dealing with an anonymous channel-type */
 					if (symb == S_OUTPUT) {
+						csymb = symb;
 						name = newmopnode (S_ASOUTPUT, locn, name, S_CHAN);
 						nextsymb ();
 					} else if (symb == S_INPUT) {
+						csymb = symb;
 						name = newmopnode (S_ASINPUT, locn, name, S_CHAN);
 						nextsymb ();
 					}
-					/* might actually have a subscript expression here or something.. */
-					if (checknlindent (saved_indent + 2)) {
-						goto error2;
+
+					if (symb == S_COMMENT) {
+						/* skip comment here if we have one */
+						nextsymb ();
 					}
-					p = newcnode (S_CLAIM, locn, newlistnode (S_LIST, NOPOSN, rprocess (), NULL));
+
+					if (symb != S_NEWLINE) {
+						/* might have a single input or output process (RHS) here */
+						SOURCEPOSN claimlocn = locn;
+						treenode *namecopy;
+						treenode *pr;
+						
+						if (csymb == S_UNDEFINED) {
+							/* attempt to extract INPUT/OUTPUT from name before copy */
+							if (TagOf (name) == S_ASINPUT) {
+								csymb = S_INPUT;
+							} else if (TagOf (name) == S_ASOUTPUT) {	
+								csymb = S_OUTPUT;
+							} else {
+								goto error2;
+							}
+							namecopy = copytree (OpOf (name), syn_lexlevel);
+						} else {
+							namecopy = copytree (name, syn_lexlevel);
+						}
+#if 0
+fprintf (stderr, "rprocess(): in CLAIM, name =");
+printtreenl (stderr, 4, name);
+#endif
+						pr = raction_symb (namecopy, csymb, locn, indent);
+
+						if (!pr) {
+							goto error2;
+						}
+						p = newcnode (S_CLAIM, claimlocn, newlistnode (S_LIST, NOPOSN, pr, NULL));
+					} else {
+						/* might actually have a subscript expression here or something.. */
+						if (checknlindent (saved_indent + 2)) {
+							goto error2;
+						}
+						p = newcnode (S_CLAIM, locn, newlistnode (S_LIST, NOPOSN, rprocess (), NULL));
+					}
 					*procptr = p;
 					SetCTemp (p, name);
 					return (procroot);
