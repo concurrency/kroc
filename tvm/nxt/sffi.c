@@ -130,24 +130,137 @@ int _nx_sensors_analog_get (ECTX ectx, WORD args[])
         return SFFI_OK;
 }
 
-/* PROC nx.display.int () */
+/* PROC nx.display.int (VAL INT display) */
 int _nx_display_int (ECTX ectx, WORD args[]) {
         nx_display_int (args[0]);
         return SFFI_OK;
 }
 
-/* PROC nx.sound () */
+/* PROC nx.sound (VAL INT freq, VAL INT len) */
 int _nx_sound(ECTX ectx, WORD args[])
 {
         nx_sound_freq_async(args[0], args[1]);
         return SFFI_OK;
 }
 
-/* PROC nx.button () */
+/* PROC nx.button (RESULT INT button) */
 int _nx_button(ECTX ectx, WORD args[])
 {
         S32 result = nx_avr_get_button();
+        write_word ((WORDPTR) args[0], (WORD) result);
+        return SFFI_OK;
+}
+
+/* PROC nx.bt.init() */
+int _nx_bt_init(ECTX ectx, WORD args[])
+{	
+        nx_bt_init();
+        return SFFI_OK;
+}
+
+/* PROC nx.bt.set.discoverable(VAL BOOL set) */
+int _nx_bt_set_discoverable(ECTX ectx, WORD args[])
+{
+        S32 result = nx_bt_set_discoverable(args[0]);
+        return SFFI_OK;
+}
+
+
+/* PROC nx.bt.open.port(VAL RESULT handle) */
+int _nx_bt_open_port(ECTX ectx, WORD args[])
+{
+        S32 result = nx_bt_open_port();
+        write_word ((WORDPTR) args[0], (WORD) result);
+        return SFFI_OK;
+}
+
+/* PROC nx.bt.close.port(VAL INT handle, VAL RESULT return) */
+int _nx_bt_close_port(ECTX ectx, WORD args[])
+{
+        S32 result = nx_bt_close_port(args[0]);
         write_word ((WORDPTR) args[1], (WORD) result);
+        return SFFI_OK;
+}
+
+/* PROC nx.bt.connection.pending(VAL RESULT return) */
+int _nx_bt_connection_pending(ECTX ectx, WORD args[])
+{
+        S32 result = nx_bt_connection_pending();
+        write_word ((WORDPTR) args[0], (WORD) result);
+        return SFFI_OK;
+}
+
+
+/* PROC nx.bt.accept.connection(VAL BOOL accept) */
+int _nx_bt_accept_connection(ECTX ectx, WORD args[])
+{       
+	if(args[0] == TRUE)
+	{
+		nx_display_string("ACCEPT TRUE");
+	}
+        S32 result = nx_bt_accept_connection(TRUE);
+        return SFFI_OK;
+}
+
+
+/* PROC nx.bt.connection.established(VAL RETURN handle) */
+int _nx_bt_connection_established(ECTX ectx, WORD args[])
+{       
+        S32 result = nx_bt_connection_established();
+        write_word ((WORDPTR) args[0], (WORD) result);
+        return SFFI_OK;
+}
+
+
+/* PROC nx.bt.stream.open(VAL INT handle) */
+int _nx_bt_stream_open(ECTX ectx, WORD args[])
+{
+        S32 result = nx_bt_stream_open(args[0]);
+        return SFFI_OK;
+}
+
+/* PROC nx.bt.stream.write(VAL []BYTE str, VAL INT len) */
+int  _nx_bt_stream_write(ECTX ectx, WORD args[])
+{
+        S32 result = nx_bt_stream_write(args[0], args[1]);
+        return SFFI_OK;
+}
+
+/* PROC nx.bt.stream.data.written(RESULT BOOL written) */
+int  _nx_bt_stream_data_written(ECTX ectx, WORD args[])
+{
+        S32 result = nx_bt_stream_data_written();
+        write_word ((WORDPTR) args[0], (WORD) result);
+        return SFFI_OK;
+}
+
+/* PROC nx.bt.stream.opened(RESULT BOOL open) */
+int  _nx_bt_stream_opened(ECTX ectx, WORD args[])
+{
+        S32 result = nx_bt_stream_opened();
+        write_word ((WORDPTR) args[0], (WORD) result);
+        return SFFI_OK;
+}
+
+/* PROC nx.bt.stream.read(VAL []BYTE str, VAL INT len) */
+int  _nx_bt_stream_read(ECTX ectx, WORD args[])
+{
+        S32 result = nx_bt_stream_read(args[0], args[1]);
+        return SFFI_OK;
+}
+
+/* PROC nx.bt.stream.data.read(RESULT INT len) */
+int  _nx_bt_stream_data_read(ECTX ectx, WORD args[])
+{       
+        S32 result = nx_bt_stream_data_read();
+        write_word ((WORDPTR) args[0], (WORD) result);
+        return SFFI_OK;
+}
+
+/* PROC nx.bt.stream.close() */
+int  _nx_bt_stream_close(ECTX ectx, WORD args[])
+{       
+        S32 result = nx_bt_stream_close();
         return SFFI_OK;
 }
 
@@ -170,7 +283,20 @@ SFFI_FUNCTION sffi_table[] = {
 	_nx_sensors_analog_get,
 	_nx_display_int,
 	_nx_sound,
-	_nx_button
-
+	_nx_button,
+	_nx_bt_init,
+	_nx_bt_set_discoverable,
+	_nx_bt_open_port,
+        _nx_bt_close_port,
+        _nx_bt_connection_pending,
+        _nx_bt_accept_connection, 
+        _nx_bt_connection_established,
+	_nx_bt_stream_open,
+        _nx_bt_stream_write,
+        _nx_bt_stream_data_written,
+        _nx_bt_stream_opened,
+	_nx_bt_stream_read,
+        _nx_bt_stream_data_read,
+	_nx_bt_stream_close
 };
 const int sffi_table_length = sizeof(sffi_table) / sizeof(SFFI_FUNCTION);
