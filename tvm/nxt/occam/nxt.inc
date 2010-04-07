@@ -16,6 +16,20 @@
 #PRAGMA EXTERNAL "PROC C.tvmspecial.14.nx.display.int (VAL INT value) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.15.nx.sound (VAL INT freq, VAL INT len) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.16.nx.button (RESULT INT but) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.17.nx.bt.init () = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.18.nx.bt.set.discoverable(VAL BOOL set) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.19.nx.bt.open.port(RESULT INT handle) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.20.nx.bt.close.port(VAL INT handle, RESULT INT return) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.21.nx.bt.connection.pending(RESULT INT return) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.22.nx.bt.accept.connection(VAL BOOL accept) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.23.nx.bt.connection.established(RESULT INT value) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.24.nx.bt.stream.open(VAL INT handle) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.25.nx.bt.stream.write(VAL []BYTE str, VAL INT len) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.26.nx.bt.stream.data.written(RESULT BOOL written) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.27.nx.bt.stream.opened(RESULT BOOL open) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.28.nx.bt.stream.read(VAL []BYTE str, VAL INT len) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.29.nx.bt.stream.data.read(RESULT INT len) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.30.nx.bt.stream.close() = 0"
 
 INLINE PROC nx.display.clear ()
   C.tvmspecial.0.nx.display.clear ()
@@ -83,6 +97,62 @@ INLINE PROC nx.sound (VAL INT freq, VAL INT len)
 
 INLINE PROC nx.button (RESULT INT but)
   C.tvmspecial.16.nx.button(but)
+:
+
+INLINE PROC nx.bt.init()
+  C.tvmspecial.17.nx.bt.init()
+:
+
+INLINE PROC nx.bt.set.discoverable(VAL BOOL set)
+  C.tvmspecial.18.nx.bt.set.discoverable(set)
+:
+
+INLINE PROC nx.bt.open.port(RESULT INT handle)
+  C.tvmspecial.19.nx.bt.open.port(handle)
+:
+
+INLINE PROC nx.bt.close.port(VAL INT handle, RESULT INT return)
+  C.tvmspecial.20.nx.bt.close.port(handle, return)
+:
+
+INLINE PROC nx.bt.connection.pending(RESULT INT return)
+  C.tvmspecial.21.nx.bt.connection.pending(return)
+:
+
+INLINE PROC nx.bt.accept.connection(VAL BOOL accept)
+  C.tvmspecial.22.nx.bt.accept.connection(accept)
+:
+
+INLINE PROC nx.bt.connection.established(RESULT INT value)
+  C.tvmspecial.23.nx.bt.connection.established(value)
+:
+
+INLINE PROC nx.bt.stream.open(VAL INT handle)
+  C.tvmspecial.24.nx.bt.stream.open(handle)
+:
+
+INLINE PROC nx.bt.stream.write(VAL []BYTE str, VAL INT len)
+  C.tvmspecial.25.nx.bt.stream.write(str, len)
+:
+
+INLINE PROC nx.bt.stream.data.written(RESULT BOOL written)
+  C.tvmspecial.26.nx.bt.stream.data.written(written)
+:
+
+INLINE PROC nx.bt.stream.opened(RESULT BOOL open)
+  C.tvmspecial.27.nx.bt.stream.opened(open)
+:
+
+INLINE PROC nx.bt.stream.read(VAL []BYTE str, VAL INT len)
+  C.tvmspecial.28.nx.bt.stream.read(str, len)
+:
+
+INLINE PROC nx.bt.stream.data.read(RESULT INT len)
+  C.tvmspecial.29.nx.bt.stream.data.read(len)
+:
+
+INLINE PROC nx.bt.stream.close()
+  C.tvmspecial.30.nx.bt.stream.close()
 :
 
 
