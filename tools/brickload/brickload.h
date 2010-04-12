@@ -110,6 +110,7 @@ tbc_t *load_tbc (const char *fn);
 void configure_rcx_towers (void *usb);
 int send_tbc_to_rcx (brick_t *b, tbc_t *tbc);
 int get_rcx_version_str (brick_t *b, char *str);
+void ping_rcx (brick_t *b);
 
 
 /* NXT defines */

@@ -236,7 +236,7 @@ static int do_bootNXT (int argc, char *argv[]) {
 		} else if (argc >= 2) {
 			fprintf (stderr, "NXT %s not found (check SAMBA mode?)\n", argv[1]);
 		} else {
-			fprintf (stderr, "Suitable NXT brick not found (check SAMBA mode?)\n");
+			fprintf (stderr, "No suitable NXT bricks found (check SAMBA mode?)\n");
 		}
 
 		free_brick_list (list);
@@ -319,6 +319,45 @@ static int do_sendTBC (int argc, char *argv[]) {
 	return ret;
 }
 
+static int do_bootRCX (int argc, char *argv[]) {
+	int ret	= -1;
+
+	if (argc == 0) {
+		fprintf (stderr, "Usage: %s bootRCX <firmware> [<brick-id>]\n", prog_name);
+		fprintf (stderr, "Boot RCX using firmware via IR Tower.\n");
+		fprintf (stderr, "    e.g. %s bootRCX tvm-rcx.bin @00000001\n", prog_name);
+	} else {
+		brick_t *list 	= NULL;
+		brick_t *b	= NULL;
+		void *usb 	= init_usb ();
+		
+		if (usb == NULL) {
+			return -1;
+		}
+
+		list = list_bricks (usb); 
+		
+		if (argc >= 2) {
+			b = find_brick_by_id (list, argv[1]); 
+		} else {
+			b = find_brick_by_type (list, LEGO_RCX);
+		}
+
+		if (b != NULL) {
+			ping_rcx (b);
+		} else if (argc >= 2) {
+			fprintf (stderr, "RCX %s not found\n", argv[1]);
+		} else {
+			fprintf (stderr, "No RCX towers found\n");
+		}
+
+		free_brick_list (list);
+		free_usb (usb);
+
+	}
+	return ret;
+}
+
 static void usage (void) {
 	fprintf (stderr, "NXT/RCX Firmware and Bytecode Loading Tool\n\n");
 	fprintf (stderr, "Usage: %s <verb> <options>, where <verb> is one of:\n\n",
@@ -350,7 +389,7 @@ int main (int argc, char *argv[]) {
 		} else if (strcmp (verb, "bootNXT") == 0) {
 			ret = do_bootNXT (argc - 2, &(argv[2]));
 		} else if (strcmp (verb, "bootRCX") == 0) {
-			ret = not_implemented ();
+			ret = do_bootRCX (argc - 2, &(argv[2]));
 		} else if (strcmp (verb, "sendTBC") == 0) {
 			ret = do_sendTBC (argc - 2, &(argv[2]));
 		} else {
