@@ -159,6 +159,8 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeou
 		
 		case LIBUSB_TRANSFER_TYPE_INTERRUPT:
 			ret = libusb_interrupt_transfer (intf->dev_h, brick->in_ep, (unsigned char *) data, len, &transferred, timeout); 
+			if (ret == LIBUSB_ERROR_TIMEOUT || ret == LIBUSB_ERROR_PIPE)
+				libusb_clear_halt (intf->dev_h, brick->in_ep);
 			break;
 		
 		default:
@@ -468,11 +470,13 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeou
 		case USB_ENDPOINT_TYPE_BULK:
 			ret = usb_bulk_read (intf->dev_h, brick->in_ep, (char *) data, len, timeout); 
 			if (ret == (-ETIMEDOUT)) 
-				usb_clear_halt (intf->dev_h, brick->out_ep);
+				usb_clear_halt (intf->dev_h, brick->in_ep);
 			break;
 		
 		case USB_ENDPOINT_TYPE_INTERRUPT:
 			ret = usb_interrupt_read (intf->dev_h, brick->in_ep, (char *) data, len, timeout); 
+			if (ret == (-ETIMEDOUT)) 
+				usb_clear_halt (intf->dev_h, brick->in_ep);
 			break;
 		
 		default:

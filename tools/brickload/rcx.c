@@ -83,7 +83,7 @@ int get_rcx_version_str (brick_t *b, char *str) {
 }
 
 /* precondition: brick is open */
-static int reset_rcx (brick_t *b) {
+static int reset_tower (brick_t *b) {
 	uint8_t buf[4];
 	
 	return b->control (b, 
@@ -126,6 +126,8 @@ static int send_to_rcx (brick_t *b, uint8_t *data, size_t len) {
 
 		ret = b->write (b, buf + pos, bytes, 0);
 
+		fprintf (stderr, "ret = %d\n", ret);
+
 		if (ret > 0) {
 			len -= ret;
 			pos += ret;
@@ -134,7 +136,6 @@ static int send_to_rcx (brick_t *b, uint8_t *data, size_t len) {
 		}
 	}
 
-
 	if (m_buf != NULL)
 		free (m_buf);
 
@@ -142,10 +143,95 @@ static int send_to_rcx (brick_t *b, uint8_t *data, size_t len) {
 }
 
 static int recv_from_rcx (brick_t *b, uint8_t *data, size_t len) {
-	uint8_t header[PKT_SIZE], buffer[PKT_SIZE];
+	uint8_t buf_bytes[PKT_SIZE * 8];
+	uint8_t *buf 	= &(buf_bytes[0]);
+	uint8_t *m_buf 	= NULL;
+	int pos 	= 0;
+	int i, ret;
+
+	if (((len * 2) + 5) > sizeof (buf_bytes))
+		m_buf = buf = (uint8_t *) malloc ((len * 2) + 5);
+
+	len = (len * 2) + 5;
+
+	while (pos < len) {
+		ret = b->read (b, buf + pos, 
+			(len - pos) > PKT_SIZE ? PKT_SIZE : (len - pos), 
+			1000
+		);
+		
+		if (ret < 0)
+			break;
+
+		for (i = 0; i < ret; ++i)
+			fprintf (stderr, "byte %i = %02x\n", pos + i, buf[pos + i]);
+		
+		pos += ret;
+
+		/* do header search */
+		while (pos >= 3) {
+			if (buf[0] != 0x55 || buf[1] != 0xff || buf[2] != 0x00) {
+				memmove (buf, buf + 1, pos - 1);
+				pos--;
+			} else {
+				break;
+			}
+		}
+	}
+
+	if (ret >= 0) {
+		if (pos < 5) {
+			/* short message */
+			ret = -2;
+		} else {
+			int dlen 	= 0;
+			int sum		= 0;
+
+			for (i = 3; i < pos - 2; i += 2) {
+				data[dlen++] = buf[i];
+			}
+
+			/* Regular message */
+			for (i = 0; i < dlen; ++i) {
+				sum += data[i];
+			}
+			if (buf[pos - 2] == (sum & 0xff)) {
+				/* message OK */
+				ret = dlen;
+			} else {
+				ret = -1;
+			}
+		}
+	}
+
+	if (m_buf != NULL)
+		free (m_buf);
+
+	return ret;
 }
 
-static void ping_rcx (brick_t *b) {
-	
+void ping_rcx (brick_t *b) {
+	int ret;
+
+	if ((ret = b->open (b)) == 0) {
+		uint8_t buf[8];
+		
+		fprintf (stderr, "brick open\n");
+		ret = reset_tower (b);
+		fprintf (stderr, "tower reset = %d\n", ret);
+
+		fprintf (stderr, "sending ping...\n");
+		buf[0] = 0x10;
+		ret = send_to_rcx (b, buf, 1);
+		fprintf (stderr, "sent ping = %d\n", ret);
+		
+		fprintf (stderr, "receive response...\n");
+		ret = recv_from_rcx (b, buf, 1);
+		fprintf (stderr, "recv = %d\n", ret);
+
+		b->close (b);
+	} else {
+		fprintf (stderr, "brick open failed = %d\n", ret);
+	}
 }
 
