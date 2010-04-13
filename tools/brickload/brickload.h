@@ -12,6 +12,10 @@
 #include <string.h>
 #endif /* HAVE_STRING_H */
 
+#ifdef HAVE_CTYPE_H
+#include <ctype.h>
+#endif /* HAVE_CTYPE_H */
+
 #ifdef HAVE_ASSERT_H
 #include <assert.h>
 #else /* !HAVE_ASSERT_H */
@@ -106,11 +110,22 @@ struct _tbc_t {
 tbc_t *load_tbc (const char *fn);
 
 
+/* RCX defines */
+typedef struct _rcx_firmware_t rcx_firmware_t;
+struct _rcx_firmware_t {
+	uint32_t	addr;
+	uint32_t	start_addr;
+	uint8_t		*data;
+	size_t		len;
+};
+
+
 /* RCX functions */
 void configure_rcx_towers (void *usb);
 int send_tbc_to_rcx (brick_t *b, tbc_t *tbc);
 int get_rcx_version_str (brick_t *b, char *str);
 void ping_rcx (brick_t *b);
+rcx_firmware_t *load_rcx_firmware (const char *fn);
 
 
 /* NXT defines */

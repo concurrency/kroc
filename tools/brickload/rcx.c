@@ -210,6 +210,110 @@ static int recv_from_rcx (brick_t *b, uint8_t *data, size_t len) {
 	return ret;
 }
 
+static int awake_up_rcx (brick_t *b) {
+	return 0;
+}
+
+typedef struct _srec_t srec_t;
+struct _srec_t {
+	int 		type;
+	uint32_t 	addr;
+	int		len;
+	uint8_t 	data[256];
+	uint8_t		sum;
+	srec_t		*next;
+};
+
+static int digit_to_int (char digit) {
+	if (isdigit (digit))
+		return digit - '0';
+	else
+		return 0;
+}
+
+static int hexdigit_to_int (char digit) {
+	if (isdigit (digit)) {
+		return digit - '0';
+	} else {
+		switch (tolower (digit)) {
+			case 'a': return 10;
+			case 'b': return 11;
+			case 'c': return 12;
+			case 'd': return 13;
+			case 'e': return 14;
+			case 'f': return 15;
+			default:
+				return 0;
+		}
+	}
+}
+
+static srec_t *load_srec (const char *line, const int len) {
+	srec_t 	*r	= NULL;
+	int	sum	= 0;
+	int i, p;
+
+	if (len < 5) {
+		goto errout; /* too short */
+	}
+	if (line[0] != 'S') {
+		goto errout; /* invalid header */
+	}
+	if (!isdigit (line[1])) {
+		goto errout; /* invalid type */
+	}
+	
+	r 	= (srec_t *) malloc (sizeof (srec_t));
+	r->type	= digit_to_int (line[1]);
+	r->len	= (hexdigit_to_int (line[2]) << 4) | (hexdigit_to_int (line[3]));
+	if ((r->len + 4) > len) {
+		goto errout; /* data longer than line */
+	}
+	
+	sum = r->len;
+	for (i = 0, p = 4; i < r->len - 1; i += 1, p += 2) {
+		char digit_h = line[p];
+		char digit_l = line[p + 1];
+		/* FIXME: valid digits */
+		r->data[i] = (hexdigit_to_int (digit_h) << 4) | (hexdigit_to_int (digit_l));
+		sum += r->data[i];
+	}
+	r->sum	= (hexdigit_to_int (line[p]) << 4) | (hexdigit_to_int (line[p + 1]));
+	r->len -= 1;
+
+	if (((sum + r->sum) & 0xff) != 0xff) {
+		goto errout; /* invalid checksum */
+	}
+
+	switch (r->type) {
+		case 0: case 1: case 5: case 9:
+			i = 2;
+			break;
+		case 2: case 8:
+			i = 3;
+			break;
+		case 3: case 7:
+			i = 4;
+			break;
+		default:
+			i = 0;
+			break;
+	}
+
+	r->addr = 0;
+	r->len -= i;
+	for (p = 0; p < i; ++p)
+		r->addr = (r->addr << 8) | r->data[p];
+	memmove (r->data, r->data + i, r->len);
+
+	r->next = NULL;
+	return r;
+errout:
+	if (r != NULL)
+		free (r);
+	return NULL;
+}
+
 void ping_rcx (brick_t *b) {
 	int ret;
 
@@ -233,5 +337,90 @@ void ping_rcx (brick_t *b) {
 	} else {
 		fprintf (stderr, "brick open failed = %d\n", ret);
 	}
+}
+
+rcx_firmware_t *load_rcx_firmware (const char *fn) {
+	rcx_firmware_t 	*fw		= NULL;
+	unsigned int	u_addr		= 0;
+	unsigned int	l_addr		= -1;
+	unsigned int	s_addr		= 0;
+	srec_t		*sr		= NULL;
+	srec_t		 *lr		= NULL;
+	int		ln		= 0;
+	char	 	buf[512];	/* must be big enough for a line */
+	FILE 		*fh;
+
+	if ((fh = fopen (fn, "r")) == NULL) {
+		fprintf (stderr, "Error; unable to open %s: %s (%d)\n", fn, strerror (errno), errno);
+		return NULL;
+	}
+
+	while (!feof (fh)) {
+		srec_t *r	= NULL;
+		int 	p 	= 0;
+		
+		while ((buf[p] = fgetc (fh)) != EOF) {
+			if (buf[p] == '\n') {
+				ln++;
+				break;
+			}
+			p++;
+			if (p >= (sizeof (buf)))
+				break;
+		}
+
+		r = load_srec (buf, p);
+		
+		if (r != NULL) {
+			if (sr == NULL) {
+				sr = lr = r;
+			} else {
+				lr->next = r;
+				lr = r;
+			}
+
+			if (r->type == 1) {
+				if (r->addr < l_addr)
+					l_addr = r->addr;
+				if ((r->addr + r->len) > u_addr)
+					u_addr = r->addr + r->len;
+			} else if (r->type == 9) {
+				s_addr = r->addr;
+			}
+		} else if (p > 0) {
+			fprintf (stderr, "Warning; unable to parse %s, line %d\n", fn, ln);
+		}
+	}
+	
+	fclose (fh);
+
+	if (sr == NULL) {
+		fprintf (stderr, "Error; no SREC data found in %s\n", fn);
+		return NULL;
+	} else if ((u_addr - l_addr) > 0x7000) {
+		fprintf (stderr, "Error; SREC image too large in %s\n", fn);
+		return NULL;
+	}
+
+	fw 		= (rcx_firmware_t *) malloc (sizeof (rcx_firmware_t) + (u_addr - l_addr));
+	fw->addr	= l_addr;
+	fw->start_addr	= s_addr;
+	fw->data 	= ((uint8_t *)fw) + (sizeof (rcx_firmware_t));
+	fw->len		= u_addr - l_addr;
+
+	memset (fw->data, 0, fw->len);
+	lr = sr;
+	while (lr != NULL) {
+		srec_t *nr = lr->next;
+
+		if (lr->type == 1) {
+			memcpy (fw->data + (lr->addr - fw->addr), lr->data, lr->len);
+		}
+		
+		free (lr);
+		lr = nr;
+	}
+
+	return fw;
 }
 
