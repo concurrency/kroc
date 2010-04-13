@@ -26,6 +26,7 @@
 #define USB_RECIP_DEVICE		0x00
 
 #define PKT_SIZE			8
+#define IR_BLOCK_SIZE			200
 
 void configure_rcx_towers (void *usb) {
 	brick_t *list = find_usb_devices (usb, LEGO_VENDOR_ID, LEGO_PRODUCT_TOWER, 0x0, 0x0, LEGO_RCX);
@@ -126,8 +127,6 @@ static int send_to_rcx (brick_t *b, uint8_t *data, size_t len) {
 
 		ret = b->write (b, buf + pos, bytes, 0);
 
-		fprintf (stderr, "ret = %d\n", ret);
-
 		if (ret > 0) {
 			len -= ret;
 			pos += ret;
@@ -163,8 +162,8 @@ static int recv_from_rcx (brick_t *b, uint8_t *data, size_t len) {
 		if (ret < 0)
 			break;
 
-		for (i = 0; i < ret; ++i)
-			fprintf (stderr, "byte %i = %02x\n", pos + i, buf[pos + i]);
+		//for (i = 0; i < ret; ++i)
+		//	fprintf (stderr, "byte %i = %02x\n", pos + i, buf[pos + i]);
 		
 		pos += ret;
 
@@ -208,10 +207,6 @@ static int recv_from_rcx (brick_t *b, uint8_t *data, size_t len) {
 		free (m_buf);
 
 	return ret;
-}
-
-static int awake_up_rcx (brick_t *b) {
-	return 0;
 }
 
 typedef struct _srec_t srec_t;
@@ -314,31 +309,6 @@ errout:
 	return NULL;
 }
 
-void ping_rcx (brick_t *b) {
-	int ret;
-
-	if ((ret = b->open (b)) == 0) {
-		uint8_t buf[8];
-		
-		fprintf (stderr, "brick open\n");
-		ret = reset_tower (b);
-		fprintf (stderr, "tower reset = %d\n", ret);
-
-		fprintf (stderr, "sending ping...\n");
-		buf[0] = 0x10;
-		ret = send_to_rcx (b, buf, 1);
-		fprintf (stderr, "sent ping = %d\n", ret);
-		
-		fprintf (stderr, "receive response...\n");
-		ret = recv_from_rcx (b, buf, 1);
-		fprintf (stderr, "recv = %d\n", ret);
-
-		b->close (b);
-	} else {
-		fprintf (stderr, "brick open failed = %d\n", ret);
-	}
-}
-
 rcx_firmware_t *load_rcx_firmware (const char *fn) {
 	rcx_firmware_t 	*fw		= NULL;
 	unsigned int	u_addr		= 0;
@@ -424,3 +394,204 @@ rcx_firmware_t *load_rcx_firmware (const char *fn) {
 	return fw;
 }
 
+static int awake_up_rcx (brick_t *b) {
+	int 		retries = 5;
+	uint8_t 	buf[8];
+	int		ret;
+
+	while (retries--) {
+		fprintf (stdout, "Wake up brick...");
+		fflush (stdout);
+
+		buf[0] = retries & 1 ? 0x10 : 0x18;
+		if ((ret = send_to_rcx (b, buf, 1)) < 0)
+			return ret;
+		if ((ret = recv_from_rcx (b, buf, 1)) == 1) {
+			fprintf (stdout, " OK.\n");
+			return 0;
+		}
+
+		fprintf (stdout, " no response.\n");
+	}
+
+	return ret;
+}
+
+static int delete_firmware (brick_t *b) {
+	int 		retries = 5;
+	uint8_t 	buf[8];
+	int		ret;
+
+	while (retries--) {
+		fprintf (stdout, "Delete firmware...");
+		fflush (stdout);
+
+		buf[0] = 0x65;
+		buf[1] = 1;
+		buf[2] = 3;
+		buf[3] = 5;
+		buf[4] = 7;
+		buf[5] = 11;
+
+		if ((ret = send_to_rcx (b, buf, 6)) < 0)
+			return ret;
+		if ((ret = recv_from_rcx (b, buf, 1)) == 1) {
+			fprintf (stdout, " OK.\n");
+			return 0;
+		}
+
+		fprintf (stdout, " no response.\n");
+	}
+
+	return ret;
+}
+
+static int upload_firmware (brick_t *b, rcx_firmware_t *fw) {
+	int retries = 5;
+	uint8_t buf[IR_BLOCK_SIZE + 8];
+	int addr, block, pos;
+	int i, ret, sum;
+
+	ret = ((fw->start_addr + fw->len) < 0xcc00) ? fw->len : 0xcc00 - fw->start_addr;
+	for (i = 0; i < ret; ++i) {
+		sum += fw->data[i];
+	}
+
+	while (retries--) { 
+		fprintf (stdout, "Upload firmware header...");
+		fflush (stdout);
+
+		buf[0] = 0x75;
+		buf[1] = (fw->start_addr >> 0) 	& 0xff;
+		buf[2] = (fw->start_addr >> 8) 	& 0xff;
+		buf[3] = (sum >> 0)		& 0xff;
+		buf[4] = (sum >> 8)		& 0xff;
+		buf[5] = 0;
+
+		if ((ret = send_to_rcx (b, buf, 6)) < 0)
+			return ret;
+		if ((ret = recv_from_rcx (b, buf, 2)) == 2) {
+			fprintf (stdout, " OK.\n");
+			break;
+		}
+
+		fprintf (stdout, " no response.\n");
+		ret = ret >= 0 ? -1 : ret;
+	}
+
+	if (ret < 0)
+		return ret;
+
+	fprintf (stdout, "Sending firmware to RCX...\n");
+	addr	= fw->addr;
+	block	= 1;
+	pos	= 0;
+	while (pos < fw->len) {
+		uint8_t rbuf[8];
+		int pkt = (fw->len - pos) > IR_BLOCK_SIZE ? IR_BLOCK_SIZE : fw->len - pos;
+
+		fprintf (stdout, "% 4d for % 3d (block % 3d) - % 3d%%", pos, pkt, block, pos / fw->len);
+		fflush (stdout);
+
+		i = 0;
+		buf[i++] = 0x45 | ((block & 1) << 3);
+		if ((fw->len - pos) > pkt) {
+			buf[i++] = (block >> 0) & 0xff;
+			buf[i++] = (block >> 8) & 0xff;
+			block++;
+		} else {
+			buf[i++] = 0;
+			buf[i++] = 0;
+		}
+		buf[i++] = (pkt >> 0) & 0xff;
+		buf[i++] = (pkt >> 8) & 0xff; /* always 0 if IR_BLOCK_SIZE < 256 */
+
+		sum = 0;
+		while (pkt--) {
+			sum += fw->data[pos];
+			buf[i++] = fw->data[pos++];
+		}
+		buf[i++] = sum & 0xff;
+
+		retries = 10;
+		while (retries--) {
+			if ((ret = send_to_rcx (b, buf, i)) < 0)
+				return ret;
+			if ((ret = recv_from_rcx (b, rbuf, 2)) == 2) {
+				fprintf (stdout, " OK\n");
+				break;
+			}
+		}
+		
+		if (ret < 0) {
+			fprintf (stdout, " error\n");
+			break;
+		}
+	}
+
+	return ret < 0 ? ret : 0;
+}
+
+static int unlock_firmware (brick_t *b) {
+	int 		retries = 3;
+	uint8_t 	buf[8];
+	int		ret;
+
+	while (retries--) {
+		int retries = 3;
+		
+		fprintf (stdout, "Unlock firmware...\n");
+
+		buf[0] = 0xa5;
+		buf[1] = 76;
+		buf[2] = 69;
+		buf[3] = 71;
+		buf[4] = 79;
+		buf[5] = 174;
+
+		if ((ret = send_to_rcx (b, buf, 6)) < 0)
+			return ret;
+
+		while (retries--) {
+			if ((ret = recv_from_rcx (b, buf, 1)) == 1) {
+				fprintf (stdout, "Firmware unlocked.\n");
+				return 0;
+			}
+		}
+		
+		fprintf (stdout, "No response.\n");
+	}
+
+	return ret;
+}
+
+int boot_rcx (brick_t *b, rcx_firmware_t *fw) {
+	int ret;
+
+	fprintf (stdout, "Trying to upload firmware to RCX @%08x...\n", b->id);
+	
+	if ((ret = b->open (b)) == 0) {
+		reset_tower (b);
+
+		if ((ret = awake_up_rcx (b)) == 0) {
+			fprintf (stdout, "RCX awake; deleting firmware...\n");
+			if ((ret = delete_firmware (b)) == 0) {
+				fprintf (stdout, "Firmware deleted; uploading firmware...\n");
+				if ((ret = upload_firmware (b, fw)) == 0) {
+					fprintf (stdout, "Firmware uploaded; unlocking firmware...\n");
+					if ((ret = unlock_firmware (b) == 0)) {
+						fprintf (stderr, "Booted firmware on RCX.\n");
+					}
+				}
+			}
+		} else {
+			fprintf (stderr, "Error; RCX not responding (%d).\n", ret);
+		}
+
+		b->close (b);
+	} else {
+		fprintf (stderr, "Error; unable to open brick (%d).\n", ret);
+	}
+
+	return ret;
+}

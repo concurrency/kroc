@@ -124,9 +124,8 @@ struct _rcx_firmware_t {
 void configure_rcx_towers (void *usb);
 int send_tbc_to_rcx (brick_t *b, tbc_t *tbc);
 int get_rcx_version_str (brick_t *b, char *str);
-void ping_rcx (brick_t *b);
 rcx_firmware_t *load_rcx_firmware (const char *fn);
-
+int boot_rcx (brick_t *b, rcx_firmware_t *fw);
 
 /* NXT defines */
 typedef struct _nxt_firmware_t nxt_firmware_t;

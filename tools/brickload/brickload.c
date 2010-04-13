@@ -349,10 +349,9 @@ static int do_bootRCX (int argc, char *argv[]) {
 			if (fw != NULL) {
 				fprintf (stdout, "Firmware loaded, base %04x, start %04x, length %d.\n",
 					fw->addr, fw->start_addr, fw->len);
-				ping_rcx (b);
-				//if (boot_rcx (b, fw) == 0) {
-				//	ret = 0;
-				//}
+				if (boot_rcx (b, fw) == 0) {
+					ret = 0;
+				}
 			}
 		} else if (argc >= 2) {
 			fprintf (stderr, "RCX %s not found\n", argv[1]);
