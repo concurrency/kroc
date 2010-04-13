@@ -15,6 +15,7 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(stdlib.h string.h assert.h errno.h)
 AC_CHECK_HEADERS(stdint.h unistd.h sys/ioctl.h time.h)
+AC_CHECK_HEADERS(ctype.h)
 
 dnl Check for USB library.
 AC_CHECK_HEADERS(usb.h libusb.h libusb/libusb.h libusb-1.0/libusb.h)
