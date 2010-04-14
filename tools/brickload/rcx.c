@@ -406,7 +406,7 @@ static int awake_up_rcx (brick_t *b) {
 		buf[0] = retries & 1 ? 0x10 : 0x18;
 		if ((ret = send_to_rcx (b, buf, 1)) < 0)
 			return ret;
-		if ((ret = recv_from_rcx (b, buf, 1)) == 1) {
+		if ((ret = recv_from_rcx (b, buf, 1)) > 0) {
 			fprintf (stdout, " OK.\n");
 			return 0;
 		}
@@ -435,7 +435,7 @@ static int delete_firmware (brick_t *b) {
 
 		if ((ret = send_to_rcx (b, buf, 6)) < 0)
 			return ret;
-		if ((ret = recv_from_rcx (b, buf, 1)) == 1) {
+		if ((ret = recv_from_rcx (b, buf, 1)) > 0) {
 			fprintf (stdout, " OK.\n");
 			return 0;
 		}
@@ -453,7 +453,7 @@ static int upload_firmware (brick_t *b, rcx_firmware_t *fw) {
 	int i, ret, sum;
 
 	ret = ((fw->start_addr + fw->len) < 0xcc00) ? fw->len : 0xcc00 - fw->start_addr;
-	for (i = 0; i < ret; ++i) {
+	for (i = 0, sum = 0; i < ret; ++i) {
 		sum += fw->data[i];
 	}
 
@@ -470,7 +470,7 @@ static int upload_firmware (brick_t *b, rcx_firmware_t *fw) {
 
 		if ((ret = send_to_rcx (b, buf, 6)) < 0)
 			return ret;
-		if ((ret = recv_from_rcx (b, buf, 2)) == 2) {
+		if ((ret = recv_from_rcx (b, buf, 2)) > 0) {
 			fprintf (stdout, " OK.\n");
 			break;
 		}
@@ -490,7 +490,7 @@ static int upload_firmware (brick_t *b, rcx_firmware_t *fw) {
 		uint8_t rbuf[8];
 		int pkt = (fw->len - pos) > IR_BLOCK_SIZE ? IR_BLOCK_SIZE : fw->len - pos;
 
-		fprintf (stdout, "% 4d for % 3d (block % 3d) - % 3d%%", pos, pkt, block, pos / fw->len);
+		fprintf (stdout, "@% 5d for % 3d (block % 3d) - % 3d%%", pos, pkt, block, (pos * 100) / fw->len);
 		fflush (stdout);
 
 		i = 0;
@@ -517,7 +517,7 @@ static int upload_firmware (brick_t *b, rcx_firmware_t *fw) {
 		while (retries--) {
 			if ((ret = send_to_rcx (b, buf, i)) < 0)
 				return ret;
-			if ((ret = recv_from_rcx (b, rbuf, 2)) == 2) {
+			if ((ret = recv_from_rcx (b, rbuf, 2)) > 0) {
 				fprintf (stdout, " OK\n");
 				break;
 			}
@@ -534,7 +534,7 @@ static int upload_firmware (brick_t *b, rcx_firmware_t *fw) {
 
 static int unlock_firmware (brick_t *b) {
 	int 		retries = 3;
-	uint8_t 	buf[8];
+	uint8_t 	buf[32];
 	int		ret;
 
 	while (retries--) {
@@ -553,7 +553,7 @@ static int unlock_firmware (brick_t *b) {
 			return ret;
 
 		while (retries--) {
-			if ((ret = recv_from_rcx (b, buf, 1)) == 1) {
+			if ((ret = recv_from_rcx (b, buf, 26)) > 0) {
 				fprintf (stdout, "Firmware unlocked.\n");
 				return 0;
 			}
