@@ -135,9 +135,10 @@ static int open_intf (brick_t *brick) {
 		
 		brick->in_ep	= -1;
 		brick->out_ep	= -1;
+		brick->ep_type	= kUSBBulk;
 
 		(*intf)->GetNumEndpoints (intf, &n_endpoints);
-		for (i = 0; i < n_endpoints; ++i) {
+		for (i = 1; i <= n_endpoints; ++i) {
 			UInt16 	maxPacketSize;
 			UInt8 	direction, number, transferType, interval;
 
@@ -151,12 +152,16 @@ static int open_intf (brick_t *brick) {
 
 			switch (direction) {
 				case kUSBIn:
-					if (brick->in_ep < 0)
+					if (brick->in_ep < 0) {
 						brick->in_ep = i;
+						brick->ep_type = transferType;
+					}
 					break;
 				case kUSBOut:
-					if (brick->out_ep < 0)
+					if (brick->out_ep < 0) {
 						brick->out_ep = i;
+						brick->ep_type = transferType;
+					}
 					break;
 			}
 		}
@@ -166,6 +171,17 @@ static int open_intf (brick_t *brick) {
 			brick->in_ep = 2;
 		if (brick->out_ep < 0)
 			brick->out_ep = 1;
+
+		if (brick->ep_type == kUSBInterrupt) {
+			CFRunLoopSourceRef runLoop;
+
+			r = (*intf)->CreateInterfaceAsyncEventSource (intf, &runLoop);
+			if (r == kIOReturnSuccess) {
+				CFRunLoopAddSource (CFRunLoopGetCurrent(), runLoop, kCFRunLoopDefaultMode);
+			} else {
+				fprintf (stderr, "Warning; unable to create asynchronous event source (%08x)\n", r); 
+			}
+		}
 
 		return 0;
 	} else {
@@ -189,6 +205,55 @@ static int close_intf (brick_t *brick) {
 	}
 }
 
+static int control_msg (brick_t *brick, int req_type, int req, int value, int index, uint8_t *data, size_t len, uint32_t timeout) {
+	IOUSBInterfaceInterface182 **intf = (IOUSBInterfaceInterface182 **) brick->handle;
+	IOUSBDevRequestTO dreq;
+	IOReturn r;
+	
+	assert (intf != NULL);
+	
+	memset (&dreq, 0, sizeof (dreq));
+	dreq.bmRequestType 	= req_type;
+	dreq.bRequest 		= req;
+	dreq.wValue 		= value;
+	dreq.wIndex 		= index;
+	dreq.wLength 		= len;
+	dreq.pData 		= data;
+	dreq.noDataTimeout	= timeout;
+	dreq.completionTimeout	= timeout + ((timeout * (len / 1024)) / 1024);
+
+	if (timeout) {
+		r = (*intf)->ControlRequestTO (intf, 0, &dreq);
+	} else {
+		r = (*intf)->ControlRequest (intf, 0, (IOUSBDevRequest *) &dreq);
+	}
+	
+	if (r) {
+		fprintf (stderr, "control error = %08x\n", r);
+		return -1;
+	} else {
+		return (int) dreq.wLenDone;
+	}
+}
+
+typedef struct _async_desc_t {
+	int		complete;
+	IOReturn	result;
+	size_t		bytes;
+} async_desc_t;
+
+static void async_callback (void *refCon, IOReturn result, void *arg0) {
+	async_desc_t			*desc	= (async_desc_t *) refCon;
+	size_t                      	len	= (size_t) arg0;
+
+	if (result == kIOReturnAborted)
+		return;
+
+	desc->bytes	= len;
+	desc->result	= result;
+	desc->complete 	= 1;
+}
+
 static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
 	IOUSBInterfaceInterface182	**intf 	= (IOUSBInterfaceInterface182 **) brick->handle;
 	UInt32 				size	= len;
@@ -197,22 +262,44 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeou
 	assert (intf != NULL);
 
 	if (timeout) {
-		r = (*intf)->ReadPipeTO (intf, brick->in_ep, data, &size,
-			timeout, /* no data timeout */
-			timeout + ((timeout * (len / 1024)) / 1024) /* completion timeout related to data size */
-		);
-		/* Fallback for interrupt based pipes */
-		if (r == kIOReturnBadArgument) {
-			r = (*intf)->ReadPipe (intf, brick->in_ep, data, &size);
-		} else if (r != kIOReturnSuccess) {
-			(*intf)->ClearPipeStall (intf, brick->in_ep);
+		if (brick->ep_type == kUSBInterrupt) {
+			async_desc_t desc;
+
+			desc.complete 	= 0;
+			desc.result	= 0;
+			desc.bytes	= 0;
+
+			r = (*intf)->ReadPipeAsync (intf, brick->in_ep, data, size, async_callback, &desc);
+
+			if (r == kIOReturnSuccess) {
+				SInt32 rlr = CFRunLoopRunInMode (kCFRunLoopDefaultMode, timeout / 1000.0, true);
+				if (rlr == kCFRunLoopRunTimedOut) {
+					(*intf)->AbortPipe (intf, brick->in_ep);
+					r 	= kIOReturnTimeout;
+				} else if (desc.complete) {
+					r 	= desc.result;
+					size 	= desc.bytes;
+				} else {
+					r	= kIOReturnError;
+					size	= 0;
+				}
+			}
+		} else {
+			r = (*intf)->ReadPipeTO (intf, brick->in_ep, data, &size,
+				timeout, /* no data timeout */
+				timeout + ((timeout * (len / 1024)) / 1024) /* completion timeout related to data size */
+			);
+			if (r != kIOReturnSuccess) {
+				(*intf)->ClearPipeStall (intf, brick->in_ep);
+			}
 		}
 	} else {
 		r = (*intf)->ReadPipe (intf, brick->in_ep, data, &size);
 	}
 
 	if (r) {
-		fprintf (stderr, "read error = %08x\n", r);
+		if (r != kIOReturnTimeout)
+			fprintf (stderr, "read error = %08x\n", r);
 		return -1;
 	} else {
 		return (int) size;
@@ -226,22 +313,43 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeo
 	assert (intf != NULL);
 
 	if (timeout) {
-		r = (*intf)->WritePipeTO (intf, brick->out_ep, data, len,
-			timeout, /* no data timeout */
-			timeout + ((timeout * (len / 1024)) / 1024) /* completion timeout related to data size */
-		);
-		/* Fallback for interrupt based pipes */
-		if (r == kIOReturnBadArgument) {
-			r = (*intf)->WritePipe (intf, brick->out_ep, data, len);
-		} else if (r != kIOReturnSuccess) {
-			(*intf)->ClearPipeStall (intf, brick->out_ep);
+		if (brick->ep_type == kUSBInterrupt) {
+			async_desc_t desc;
+
+			desc.complete 	= 0;
+			desc.result	= 0;
+			desc.bytes	= 0;
+
+			r = (*intf)->WritePipeAsync (intf, brick->out_ep, data, len, async_callback, &desc);
+			if (r == kIOReturnSuccess) {
+				SInt32 rlr = CFRunLoopRunInMode (kCFRunLoopDefaultMode, timeout / 1000.0, true);
+				if (rlr == kCFRunLoopRunTimedOut) {
+					(*intf)->AbortPipe (intf, brick->out_ep);
+					r 	= kIOReturnTimeout;
+				} else if (desc.complete) {
+					r 	= desc.result;
+					len 	= desc.bytes;
+				} else {
+					r	= kIOReturnError;
+					len	= 0;
+				}
+			}
+		} else {
+			r = (*intf)->WritePipeTO (intf, brick->out_ep, data, len,
+				timeout, /* no data timeout */
+				timeout + ((timeout * (len / 1024)) / 1024) /* completion timeout related to data size */
+			);
+			if (r != kIOReturnSuccess) {
+				(*intf)->ClearPipeStall (intf, brick->out_ep);
+			}
 		}
 	} else {
 		r = (*intf)->WritePipe (intf, brick->out_ep, data, len);
 	}
 
 	if (r) {
-		fprintf (stderr, "write error = %08x\n", r);
+		if (r != kIOReturnTimeout)
+			fprintf (stderr, "write error = %08x\n", r);
 		return -1;
 	} else {
 		return len;
@@ -369,6 +477,7 @@ brick_t *find_usb_devices (
 				b->handle	= intf;
 				b->open		= open_intf;
 				b->close	= close_intf;
+				b->control	= control_msg;
 				b->read		= read_intf;
 				b->write	= write_intf;
 				b->release 	= release_intf;

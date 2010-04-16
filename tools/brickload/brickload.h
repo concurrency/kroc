@@ -53,6 +53,7 @@ struct _brick_t {
 	void		*handle;
 	int		in_ep;
 	int		out_ep;
+	int		ep_type;
 
 	int		(*get_config)(brick_t *);
 	int		(*set_config)(brick_t *, int configuration);

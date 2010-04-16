@@ -37,7 +37,6 @@ typedef struct _usb_intf_t {
 	libusb_device_handle	*dev_h;
 	int 			configuration;
 	int			interface;
-	int			ep_type;
 } usb_intf_t;
 
 void *init_usb (void) {
@@ -150,7 +149,7 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeou
 	if (intf->dev_h == NULL)
 		return -1;
 
-	switch (intf->ep_type) {
+	switch (brick->ep_type) {
 		case LIBUSB_TRANSFER_TYPE_BULK:
 			ret = libusb_bulk_transfer (intf->dev_h, brick->in_ep, (unsigned char *) data, len, &transferred, timeout); 
 			if (ret == LIBUSB_ERROR_TIMEOUT || ret == LIBUSB_ERROR_PIPE)
@@ -182,7 +181,7 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeo
 	if (intf->dev_h == NULL)
 		return -1;
 
-	switch (intf->ep_type) {
+	switch (brick->ep_type) {
 		case LIBUSB_TRANSFER_TYPE_BULK:
 			ret = libusb_bulk_transfer (intf->dev_h, brick->out_ep, (unsigned char *) data, len, &transferred, timeout); 
 			if (ret == LIBUSB_ERROR_TIMEOUT || ret == LIBUSB_ERROR_PIPE)
@@ -310,12 +309,12 @@ brick_t *find_usb_devices (
 			h->dev_h		= NULL;
 			h->configuration	= configuration;
 			h->interface		= interface;
-			h->ep_type		= ep_type;
 
 			b->id			= (count + 1); /* FIXME: do something better */
 			b->type			= type;
 			b->in_ep		= in_ep;
 			b->out_ep		= out_ep;
+			b->ep_type		= ep_type;
 			b->handle		= h;
 			b->get_config		= get_dev_config;
 			b->set_config		= set_dev_config;
@@ -348,7 +347,6 @@ typedef struct _usb_intf_t {
 	usb_dev_handle		*dev_h;
 	int 			configuration;
 	int			interface;
-	int			ep_type;
 } usb_intf_t;
 
 static int init_count = 0;
@@ -466,7 +464,7 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeou
 	if (intf->dev_h == NULL)
 		return -1;
 
-	switch (intf->ep_type) {
+	switch (brick->ep_type) {
 		case USB_ENDPOINT_TYPE_BULK:
 			ret = usb_bulk_read (intf->dev_h, brick->in_ep, (char *) data, len, timeout); 
 			if (ret == (-ETIMEDOUT)) 
@@ -498,7 +496,7 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeo
 	if (intf->dev_h == NULL)
 		return -1;
 
-	switch (intf->ep_type) {
+	switch (brick->ep_type) {
 		case USB_ENDPOINT_TYPE_BULK:
 			ret = usb_bulk_write (intf->dev_h, brick->out_ep, (char *) data, len, timeout);
 			if (ret == (-ETIMEDOUT)) 
@@ -614,7 +612,9 @@ brick_t *find_usb_devices (
 					h->configuration	= configuration;
 					h->interface		= interface;
 					if (in_ep != NULL)
-						h->ep_type	= in_ep->bmAttributes & USB_ENDPOINT_TYPE_MASK;
+						b->ep_type	= in_ep->bmAttributes & USB_ENDPOINT_TYPE_MASK;
+					else
+						b->ep_type	= USB_ENDPOINT_TYPE_BULK; 
 
 					b->id			= (count + 1); /* FIXME: do something better */
 					b->type			= type;
