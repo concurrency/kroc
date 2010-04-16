@@ -146,7 +146,8 @@ static int recv_from_rcx (brick_t *b, uint8_t *data, size_t len) {
 	uint8_t *buf 	= &(buf_bytes[0]);
 	uint8_t *m_buf 	= NULL;
 	int pos 	= 0;
-	int i, ret;
+	int ret		= -1;
+	int i;
 
 	if (((len * 2) + 5) > sizeof (buf_bytes))
 		m_buf = buf = (uint8_t *) malloc ((len * 2) + 5);
@@ -490,7 +491,7 @@ static int upload_firmware (brick_t *b, rcx_firmware_t *fw) {
 		uint8_t rbuf[8];
 		int pkt = (fw->len - pos) > IR_BLOCK_SIZE ? IR_BLOCK_SIZE : fw->len - pos;
 
-		fprintf (stdout, "@% 5d for % 3d (block % 3d) - % 3d%%", pos, pkt, block, (pos * 100) / fw->len);
+		fprintf (stdout, "@% 5d for % 3d (block % 3d) - % 3d%%", pos, pkt, block, (int) ((pos * 100) / fw->len));
 		fflush (stdout);
 
 		i = 0;
