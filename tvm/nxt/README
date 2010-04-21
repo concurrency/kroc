@@ -24,4 +24,7 @@ KRoC (Built with TVM toolchain)
 occbuild --no-std-libs --toolchain=tvm file.occ
 ./send_tbc file.tbc
 
+-- Bluetooth --
+
+At the linux commandline, running 'hcitool scan' will allow you to get the MAC address of NXT's in the area (assuming their bluetooth is enabled)
 
