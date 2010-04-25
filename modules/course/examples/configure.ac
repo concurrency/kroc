@@ -8,7 +8,7 @@ AC_PROG_MAKE_SET
 OCCAM_OCCBUILD
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([course.module], ,
+OCCAM_INCLUDE([course.module time.module], ,
               [AC_MSG_ERROR(Required modules not found)])
 
 AC_OUTPUT([Makefile])
