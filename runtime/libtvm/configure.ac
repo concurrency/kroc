@@ -46,6 +46,8 @@ x_os=none
 x_endian=little
 
 # CPU configuration
+# If you add a new CPU to this list, please also update OCCAM_WORD_SIZE in
+# m4/occbuild.m4.
 case "$host_cpu" in
   arm*)
     ;;
