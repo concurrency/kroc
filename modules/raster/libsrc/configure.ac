@@ -19,6 +19,14 @@ AC_CHECK_FUNC(png_init_io, , [have_libpng=no])
 LIBS="$old_LIBS"
 AM_CONDITIONAL(HAVE_LIBPNG, [test $have_libpng = yes])
 
+dnl Disable raster on platforms with 2-byte words (where INT isn't big enough
+dnl to hold a pixel).
+case "$host_cpu" in
+  avr*)
+    build_raster=no
+    ;;
+esac
+
 build_rasterio=$build_raster
 
 dnl Checks for occam modules (only required by rasterio library)
