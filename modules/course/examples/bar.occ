@@ -20,6 +20,7 @@
 --
 
 #INCLUDE "course.module"
+#INCLUDE "time.module"
 
 --{{{  O.REQ protocol
 PROTOCOL O.REQ
@@ -63,15 +64,6 @@ VAL [][]BYTE punter.sad IS [":-(", "%-[", "X-|"]:
 VAL []BYTE barkeep.blank IS "    ":
 VAL []BYTE barkeep.happy IS "=:-]":
 
-VAL INT microsecond IS 1:
-VAL INT millisecond IS 1000*microsecond:
-VAL INT second IS 1000*millisecond:
-
-VAL INT time.const IS 500000:
-VAL INT speed.const IS 20*millisecond:
-VAL INT bar.delay IS 20*millisecond:
-VAL INT bar.anim.delay IS 20*millisecond:
-
 --}}}
 
 --{{{  PROC draw.bar (SHARED CHAN O.REQ out!)
@@ -96,6 +88,8 @@ PROC draw.bar (SHARED CHAN O.REQ out!)
 
 --{{{  PROC punter (VAL INT me, seed,  CHAN BYTE request!, response?, SHARED CHAN O.REQ out!)
 PROC punter (VAL INT me, seed, CHAN INT request!, response?, SHARED CHAN O.REQ out!)
+  VAL INT speed.const IS milliseconds (20):
+
   BYTE my.x, my.y:
   INT num.pints:
   VAL INT FINE IS 0:
@@ -129,7 +123,7 @@ PROC punter (VAL INT me, seed, CHAN INT request!, response?, SHARED CHAN O.REQ o
             SEQ
               out ! movecursor; my.x; my.y
               out ! happy; state
-          tdelay, my.seed := random (2*second, my.seed)
+          tdelay, my.seed := random (seconds (2), my.seed)
           tim ? t
           tim ? AFTER (t PLUS tdelay)
         --}}}
@@ -320,6 +314,8 @@ PROC bar.brain ([]CHAN INT in?, CHAN INT out!,
 --{{{  PROC bar.body (CHAN BYTE in?, []CHAN BYTE responses!, SHARED CHAN O.REQ out!, CHAN BOOL terminate?)
 PROC bar.body (CHAN INT in?, []CHAN INT responses!, SHARED CHAN O.REQ out!,
                CHAN BOOL terminate?)
+  VAL INT bar.delay IS milliseconds (20):
+  VAL INT bar.anim.delay IS milliseconds (20):
 
   PROC barkeep.from.to (VAL BYTE start.y, end.y)
     TIMER tim:
