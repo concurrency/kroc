@@ -10,10 +10,12 @@ EXTRA_DIST = \
 	occman.occ \
 	mandelbrot.occ
 
+if BUILD_TTYGAMES
 examples = \
 	bomberman \
 	occman \
 	mandelbrot
+endif
 
 all-local: $(examples)
 

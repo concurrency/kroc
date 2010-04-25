@@ -8,8 +8,10 @@ OCCBUILD = @OCCBUILD@
 EXTRA_DIST = \
 	bb.occ
 
+if BUILD_BAR
 examples = \
 	bb
+endif
 
 all-local: $(examples)
 
