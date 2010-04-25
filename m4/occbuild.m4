@@ -178,6 +178,33 @@ AC_RUN_LOG([$OCCBUILD --clean conftest.tce])
 rm -f conftest.occ
 ])dnl
 dnl
+dnl Check the occam target platform's word size.
+dnl TEST should be a "test" numeric condition, such as "-ge 4".
+dnl OCCAM_WORD_SIZE(TEST, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
+AC_DEFUN([OCCAM_WORD_SIZE],
+[dnl
+AC_MSG_CHECKING([target word size])
+# If you add a new CPU to this list, please also update the CPU configuration
+# section in runtime/libtvm/configure.ac.
+case "$host_cpu" in
+  avr*|h8300|msp430)
+    word_size=2
+    ;;
+  *)
+    word_size=4
+    ;;
+esac
+AC_MSG_RESULT([$word_size])
+
+if test $word_size $1; then
+  :
+  $2
+else
+  :
+  $3
+fi
+])dnl
+dnl
 dnl Record that this package provides some modules (or other include files).
 dnl If the module is in a subdirectory, pass that as SUBDIRECTORY.
 dnl By default, the dependencies of FILES will be recorded as any files you've
