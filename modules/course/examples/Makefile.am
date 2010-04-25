@@ -23,6 +23,7 @@ EXTRA_DIST = \
 	sort_pump.occ \
 	test_utils.occ
 
+if BUILD_COURSE_EXAMPLES
 examples = \
 	bar \
 	cast \
@@ -37,6 +38,7 @@ examples = \
 	sort_inside \
 	sort_pump \
 	test_utils
+endif
 
 all-local: $(examples)
 
