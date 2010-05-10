@@ -96,6 +96,7 @@ static TVM_INLINE void swap_data_word (ECTX ectx, WORDPTR a_ptr, WORDPTR b_ptr)
 	write_type (ectx, b_ptr, a_data);
 	write_type (ectx, a_ptr, b_data);
 	#endif /* TVM_TYPE_SHADOW */
+	(void) ectx;
 }
 /*}}}*/
 
