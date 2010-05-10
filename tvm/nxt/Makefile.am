@@ -44,6 +44,7 @@ libtvm/libtvm.a: config.status
 		--host=arm-elf \
 		--with-memory-allocator=tlsf \
 		--enable-custom-memory-ops \
+		--disable-packed-ectx \
 		CFLAGS="@CFLAGS@"
 	$(MAKE) -C libtvm
 
