@@ -287,7 +287,11 @@ struct _tvm_ectx_t {
 
 	/* Private data */
 	tvm_ectx_priv_t	priv;
-} TVM_PACK;
+}
+#if defined (TVM_PACKED_ECTX)
+TVM_PACK
+#endif
+;
 /*}}}*/
 
 /*{{{  Execution context returns */
