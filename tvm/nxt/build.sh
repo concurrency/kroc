@@ -13,6 +13,5 @@ autoreconf -vfi
 
 ./configure \
 	--host=arm-elf \
-	--disable-packed-ectx \
 	"$@"
 make
