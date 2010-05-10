@@ -32,6 +32,10 @@
 #PRAGMA EXTERNAL "PROC C.tvmspecial.30.nx.bt.stream.close () = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.31.nx.bt.set.friendly.name (VAL []BYTE name) = 0"
 #PRAGMA EXTERNAL "PROC C.tvmspecial.32.nx.bt.add.known.device (VAL [6]BYTE addr, VAL []BYTE name, VAL [4]BYTE class, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.33.nx.bt.remove.known.device (VAL [6]BYTE addr, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.34.nx.bt.has.dev.waiting.for.pin (RESULT BOOL result) = 0"
+#PRAGMA EXTERNAL "PROC C.tvmspecial.35.nx.bt.send.pin (VAL []BYTE pin) = 0"
+
 
 INLINE PROC nx.display.clear ()
   C.tvmspecial.0.nx.display.clear ()
@@ -163,6 +167,18 @@ INLINE PROC nx.bt.set.friendly.name (VAL []BYTE name)
 
 INLINE PROC nx.bt.add.known.device (VAL [6]BYTE addr, VAL []BYTE name, VAL [4]BYTE class, RESULT INT result)
   C.tvmspecial.32.nx.bt.add.known.device (addr, name, class, result)
+:
+
+INLINE PROC nx.bt.remove.known.device (VAL [6]BYTE addr, RESULT INT result)
+  C.tvmspecial.33.nx.bt.remove.known.device (addr, result)
+:
+
+INLINE PROC nx.bt.has.dev.waiting.for.pin (RESULT BOOL result) 
+  C.tvmspecial.34.nx.bt.dev.waiting.for.pin (result)
+:
+
+INLINE PROC nx.bt.send.pin (VAL []BYTE pin)
+  C.tvmspecial.35.nx.bt.send.pin (pin)
 :
 
 

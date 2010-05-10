@@ -324,6 +324,50 @@ int _nx_bt_add_known_device (ECTX UNUSED(ectx), WORD args[])
 	return SFFI_OK;
 }
 
+/* PROC nx.bt.remove.known.device (VAL [6]BYTE addr, RESULT INT result) */
+int _nx_bt_remove_known_device (ECTX UNUSED(ectx), WORD args[])
+{
+	BYTEPTR addr = (BYTEPTR) args[1];
+	U8 buffer[BT_ADDR_SIZE];
+	int i;
+
+	for (i = 0; i < 6; ++i) {
+		buffer[i] = read_byte (byteptr_plus (addr, i));
+	}
+	buffer[6] = '\0'; /* FIXME: verify this */	
+
+	i = nx_bt_remove_known_device (buffer);
+	write_word ((WORDPTR) args[1], (WORD) i);
+
+	return SFFI_OK;
+}
+
+/* PROC nx.bt.has.dev.waiting.for.pin (RESULT BOOL result) */
+int _nx_bt_has_dev_waiting_for_pin (ECTX UNUSED(ectx), WORD args[])
+{
+	write_word ((WORDPTR) args[0], (WORD) nx_bt_has_dev_waiting_for_pin ());
+	return SFFI_OK;
+}
+
+/* PROC nx.bt.send.pin (VAL []BYTE pin) */
+int _nx_bt_send_pin (ECTX UNUSED(ectx), WORD args[])
+{
+	BYTEPTR pin 	= (BYTEPTR) args[0];
+	WORD pin_len	= args[1];
+	char buffer[BT_PIN_MAX_LNG + 1];
+	int i;
+
+	for (i = 0; i < pin_len && i < BT_PIN_MAX_LNG; ++i) {
+		buffer[i] = read_byte (byteptr_plus (pin, i));
+	}
+	buffer[i] = '\0';
+
+	nx_bt_send_pin (buffer);
+
+	return SFFI_OK;
+}
+
+
 SFFI_FUNCTION sffi_table[] = {
 	_nx_display_clear,
 	_nx_display_cursor_set_pos,
@@ -357,6 +401,9 @@ SFFI_FUNCTION sffi_table[] = {
         _nx_bt_stream_data_read,
 	_nx_bt_stream_close,
 	_nx_bt_set_friendly_name,
-	_nx_bt_add_known_device
+	_nx_bt_add_known_device,
+	_nx_bt_remove_known_device,
+	_nx_bt_has_dev_waiting_for_pin,
+	_nx_bt_send_pin
 };
 const int sffi_table_length = sizeof(sffi_table) / sizeof(SFFI_FUNCTION);
