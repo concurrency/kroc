@@ -174,7 +174,7 @@ INLINE PROC nx.bt.remove.known.device (VAL [6]BYTE addr, RESULT INT result)
 :
 
 INLINE PROC nx.bt.has.dev.waiting.for.pin (RESULT BOOL result) 
-  C.tvmspecial.34.nx.bt.dev.waiting.for.pin (result)
+  C.tvmspecial.34.nx.bt.has.dev.waiting.for.pin (result)
 :
 
 INLINE PROC nx.bt.send.pin (VAL []BYTE pin)
