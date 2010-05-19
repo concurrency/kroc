@@ -115,16 +115,34 @@ out:
 }
 
 static brick_t *find_brick_by_id (brick_t *list, const char *id) {
-	/* FIXME: implement */
+	uint32_t n_id = 0;
+
+	if (id[0] == '@') {
+		n_id = strtol (&(id[1]), NULL, 16); 
+	} else {
+		n_id = strtol (id, NULL, 16); 
+	}
+
+	if (list != NULL) {
+		int i;
+		
+		for (i = 0; list[i].type != NULL_BRICK; ++i) {
+			if (list[i].id == n_id)
+				return &(list[i]);
+		}
+	}
+	
 	return NULL;
 }
 
 static brick_t *find_brick_by_type (brick_t *list, const int type) {
-	int i;
-
-	for (i = 0; list[i].type != NULL_BRICK; ++i) {
-		if (list[i].type == type)
-			return &(list[i]);
+	if (list != NULL) {
+		int i;
+		
+		for (i = 0; list[i].type != NULL_BRICK; ++i) {
+			if (list[i].type == type)
+				return &(list[i]);
+		}
 	}
 	
 	return NULL;
@@ -348,7 +366,7 @@ static int do_bootRCX (int argc, char *argv[]) {
 			
 			if (fw != NULL) {
 				fprintf (stdout, "Firmware loaded, base %04x, start %04x, length %d.\n",
-					fw->addr, fw->start_addr, fw->len);
+					fw->addr, fw->start_addr, (int) fw->len);
 				if (boot_rcx (b, fw) == 0) {
 					ret = 0;
 				}
