@@ -3,6 +3,7 @@
 #include <base/drivers/_avr.h>
 #include <base/drivers/_sensors.h>
 #include <base/drivers/_usb.h>
+#include <base/drivers/bt.h>
 #include <base/drivers/motors.h>
 #include <base/drivers/sensors.h>
 
@@ -30,6 +31,8 @@ void main (void) {
 	nx__avr_init ();
 	nx_systick_wait_ms (1000);
 	
+	nx_bt_init ();
+
 	tvm_init (&tvm);
 
 	for (;;) {
