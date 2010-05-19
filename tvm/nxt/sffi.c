@@ -6,6 +6,7 @@
  */
 
 #include "tvm-nxt.h"
+#include <base/at91sam7s256.h>
 #include <base/display.h>
 #include <base/drivers/avr.h>
 #include <base/drivers/bt.h>
@@ -164,7 +165,73 @@ int _nx_button (ECTX UNUSED(ectx), WORD args[])
 /* PROC nx.bt.init () */
 int _nx_bt_init (ECTX UNUSED(ectx), WORD UNUSED(args[]))
 {	
-        nx_bt_init ();
+	nx_bt_reset ();
+
+	#if 0
+	{
+		char buffer[20];
+		int i;
+
+		nx_display_clear ();
+		nx_display_string ("bt_init");
+		nx_display_end_line ();
+		
+		if (nx_bt_get_local_addr ((U8*) buffer)) {
+			for (i = 0; i < BT_ADDR_SIZE; ++i) {
+				nx_display_hex ((U8) buffer[i]);
+				nx_display_string (":");
+			}
+		} else {
+			nx_display_string ("local addr: FAIL");
+		}
+		nx_display_end_line ();
+		
+		nx_bt_get_friendly_name (buffer);
+		nx_display_string (buffer);
+		nx_display_end_line ();
+
+		nx_bt_begin_known_devices_dumping ();
+		while (nx_bt_get_state() == BT_STATE_KNOWN_DEVICES_DUMPING) {
+			if (nx_bt_has_known_device ()) {
+				bt_device_t dev;
+				nx_bt_get_known_device (&dev);
+				for (i = 0; i < BT_ADDR_SIZE; ++i) {
+					nx_display_hex ((U8) dev.addr[i]);
+					nx_display_string (":");
+				}
+				nx_display_end_line ();
+			}
+		}
+		
+		nx_bt_get_version ();
+		
+		if (nx_bt_get_brick_status_byte ((U8 *) buffer)) {
+			nx_display_string ("status: ");
+			nx_display_hex ((U8) buffer[0]);
+			nx_display_string (" ");
+			nx_display_hex ((U8) buffer[1]);
+		} else {
+			nx_display_string ("status: FAILED");
+		}
+		nx_display_end_line ();
+
+		if (nx_bt_set_brick_status_byte (1, 0)) {
+			nx_display_string ("set status: OK");
+		} else {
+			nx_display_string ("set status: FAIL");
+		}	
+		nx_display_end_line ();
+		
+		if (nx_bt_get_discoverable ()) {
+			nx_display_string ("discoverable");
+		} else {
+			nx_display_string ("hidden");
+		}
+		nx_display_end_line ();
+		nx_systick_wait_ms (10000);
+	}
+	#endif
+
         return SFFI_OK;
 }
 
