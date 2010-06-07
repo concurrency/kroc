@@ -5,6 +5,11 @@
 #DEFINE TWI.MODULE
 
 -- Constants
+-- Not an official constant; used in this library
+-- to indicate that the init code has completed.
+VAL BYTE TWI.INIT                  IS #42:
+VAL BYTE TWI.STOPPED               IS #43:
+
 VAL BYTE TWI.START                 IS #08:
 VAL BYTE TWI.REP.START             IS #10:
 
@@ -96,16 +101,17 @@ PROTOCOL TWI.REQ
   CASE
     init          = 0
     start         = 1
-    tx.addr       = 2 ; BYTE
-    rx.addr       = 3 ; BYTE
-    data          = 4 ; BYTE
-    stop          = 5
-    read          = 6
+    rep.start     = 2
+    tx.addr       = 3 ; BYTE
+    rx.addr       = 4 ; BYTE
+    data          = 5 ; BYTE
+    stop          = 6
+    read          = 7
 :
 
 PROTOCOL TWI.RSP
   CASE
-    ok            = 0
+    ok            = 0 ; BYTE
     data          = 1 ; BYTE
     error         = 2 ; BYTE
 :
@@ -152,7 +158,7 @@ BOOL FUNCTION is.twi.error (VAL BYTE status)
 VAL BOOL ACK  IS TRUE:
 VAL BOOL NACK IS FALSE:
 
-PROC twi.tx (VAL BOOL ack, VAL BYTE data, CHAN TWI.RSP rsp!)
+PROC twi.tx (VAL BYTE data, CHAN TWI.RSP rsp!)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
@@ -160,11 +166,7 @@ PROC twi.tx (VAL BOOL ack, VAL BYTE data, CHAN TWI.RSP rsp!)
     ports[TWDR] := data
 
     -- Start transmission
-    IF 
-      ack = ACK
-        set.bits(TWCR, [TWEN, TWIE, TWINT, TWEA])
-      ack = NACK
-        set.bits(TWCR, [TWEN, TWIE, TWINT])
+    set.bits(TWCR, [TWEN, TWIE, TWINT])
     
     -- Wait for response  
     INT any:
@@ -175,7 +177,7 @@ PROC twi.tx (VAL BOOL ack, VAL BYTE data, CHAN TWI.RSP rsp!)
       get.twi.status(status)
       IF
         is.twi.ok(status)
-          rsp ! ok
+          rsp ! ok ; status
         -- FIXME
         -- Should handle errors better.
         is.twi.error(status)
@@ -204,19 +206,33 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
           ports[TWDR] := #FF
           -- Enable TWI, release pins, disable interrupt, no reqs
           set.bits(TWCR, [TWEN])
-          rsp ! ok
+          rsp ! ok ; TWI.INIT
 
       start
         BYTE status:
         SEQ
-          -- Send START condition for TWI
+          -- Set START condition on TWI bus
           set.bits(TWCR, [TWEN, TWIE, TWINT, TWSTA])  
           INT any:
           wait.for.interrupt (VINTR.TWI, any)
           get.twi.status(status)
           IF
             status = TWI.START
-              rsp ! ok
+              rsp ! ok ; status
+            TRUE
+              -- I don't think we can get here.
+              die("Failed to start TWI bus.")
+      rep.start
+        BYTE status:
+        SEQ
+          -- Set START condition on TWI bus
+          set.bits(TWCR, [TWEN, TWIE, TWINT, TWSTA])  
+          INT any:
+          wait.for.interrupt (VINTR.TWI, any)
+          get.twi.status(status)
+          IF
+            status = TWI.REP.START
+              rsp ! ok ; status
             TRUE
               -- I don't think we can get here.
               die("Failed to start TWI bus.")
@@ -225,24 +241,27 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
       tx.addr ; addr
         SEQ
           -- Load the destination address 
-          addr := (addr << 1) \/ TWI.WRITE 
-          twi.tx(ACK, addr, rsp!)
+          -- WARNING: Perhaps this is device specific?
+          -- addr := (addr << 1) \/ TWI.WRITE 
+          twi.tx(addr, rsp!)
           
       BYTE addr:
       rx.addr ; addr 
         SEQ
           -- Load the destination address 
-          addr := (addr << 1) \/ TWI.READ 
-          twi.tx(ACK, addr, rsp!)
+          -- addr := (addr << 1) \/ TWI.READ 
+          addr := addr \/ TWI.READ
+          twi.tx(addr, rsp!)
 
+      -- When done sending, 
       BYTE nibble:
       data ; nibble
-        twi.tx(ACK, nibble, rsp!)
+        twi.tx(nibble, rsp!)
       
       stop
         SEQ
           set.bits(TWCR, [TWINT, TWEN, TWSTO])
-          rsp ! ok
+          rsp ! ok ; TWI.STOPPED
       
       read
         BYTE v:

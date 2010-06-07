@@ -5,8 +5,11 @@ PROC handle.response (CHAN TWI.RSP rsp?, BYTE code)
   SEQ
     code := #42
     rsp ? CASE
-      ok
-        serialWrite(" => OK*n")
+      ok ; code
+        SEQ
+          serialWrite(" => OK ")
+          serialWriteInt(INT code)
+          serialWrite("*n")
       
       data ; code
         SKIP
@@ -36,53 +39,53 @@ PROC write.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
     serialWrite("REQ: init*n")
     req ! init
     handle.response (rsp?, code)
-    
-    serialWrite("REQ: start*n")
-    req ! start
-    handle.response (rsp?, code)
 
-    serialWrite("REQ: set.addr*n")
-    req ! tx.addr ; #50
-    handle.response(rsp?, code)
-   
-    -- Write something to zero 
-    serialWrite("REQ: send data*n")
-    INT eeprom.addr:
-    SEQ
-      eeprom.addr := 0
+    SEQ eeprom.addr = 0 FOR 2
+      SEQ
+        serialWrite("START WRITE*n")
+        req ! start
+        handle.response (rsp?, code)
 
-      -- MSB of addr
-      req ! data ; (BYTE (eeprom.addr >> 8))
-      handle.response(rsp?, code)
+        serialWrite("SET DEVICE ADDRESS*n")
+        req ! tx.addr ; (#50 << 1) -- 10100000
+        handle.response(rsp?, code)
+       
+        -- Write something to zero 
+        serialWrite("SEND DATA*n")
 
-      -- LSB of addr
-      req ! data ; (BYTE (eeprom.addr /\ #FF))
-      handle.response(rsp?, code)
+        -- MSB of addr
+        req ! data ; (BYTE (eeprom.addr >> 8))
+        handle.response(rsp?, code)
 
-      -- Write data
-      req ! data ; #AA
-      handle.response(rsp?, code)
+        -- LSB of addr
+        req ! data ; (BYTE (eeprom.addr /\ #FF))
+        handle.response(rsp?, code)
 
-    -- Stop the transaction
-    serialWrite("REQ: stop*n")
-    req ! stop
-    handle.response(rsp?, code)
+        -- Write data
+        req ! data ; (BYTE (65 + eeprom.addr)) -- #41 ... #46 
+        handle.response(rsp?, code)
+
+        -- A stop must be generated to make the EEPROM write.
+        -- Stop the transaction
+        serialWrite("STOP WRITE*n")
+        req ! stop
+        handle.response(rsp?, code)
 :
 
 PROC read.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
   BYTE code:
   SEQ
     
-    serialWrite("REQ: start*n")
+    serialWrite("READ START*n")
     req ! start
     handle.response (rsp?, code)
 
-    serialWrite("REQ: set.addr*n")
-    req ! rx.addr ; #50
+    serialWrite("SET DEVICE ADDRESS*n")
+    req ! tx.addr ; ((#50 << 1) \/ 0) -- 10100000
     handle.response(rsp?, code)
    
     -- Read something from zero 
-    serialWrite("REQ: read data*n")
+    serialWrite("SEND READ ADDRESS*n")
     INT eeprom.addr:
     SEQ
       eeprom.addr := 0
@@ -92,8 +95,19 @@ PROC read.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
       -- LSB of addr
       req ! data ; (BYTE (eeprom.addr /\ #FF))
       handle.response(rsp?, code)
+    
+    -- Send another start
+    serialWrite("START AGAIN*n")
+    req ! start
+    handle.response(rsp?, code)
+    
+    -- CONTROL BYTE
+    serialWrite("DEV ADDR AGAIN*n")
+    req ! rx.addr ; ((#50 << 1) \/ 1) -- 10100001
+    handle.response(rsp?, code)
 
     -- Stop things
+    serialWrite("SEND STOP*n")
     req ! stop
     handle.response(rsp?, code)
 
