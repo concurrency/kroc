@@ -14,6 +14,7 @@ enum {
 	vintr_USART_RX,
 	vintr_USART_UDRE,
 	vintr_USART_TX,
+	vintr_TWI,
 	NUM_INTERRUPTS
 };
 
@@ -102,6 +103,7 @@ static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
 	ISR(vector) { \
 		handle_interrupt (&interrupts[interrupt]); \
 	}
+
 MAP_SIMPLE_INTERRUPT(INT0_vect, vintr_INT0)
 MAP_SIMPLE_INTERRUPT(INT1_vect, vintr_INT1)
 MAP_SIMPLE_INTERRUPT(PCINT0_vect, vintr_PCINT0)
@@ -123,6 +125,7 @@ ISR(USART_UDRE_vect) {
 	handle_interrupt (&interrupts[vintr_USART_UDRE]);
 }
 MAP_SIMPLE_INTERRUPT(USART_TX_vect, vintr_USART_TX)
+MAP_SIMPLE_INTERRUPT(TWI_vect, vintr_TWI)
 
 void clear_pending_interrupts () {
 	int i;
