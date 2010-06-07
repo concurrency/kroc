@@ -1,0 +1,123 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "twi.module"
+
+PROC handle.response (CHAN TWI.RSP rsp?, BYTE code)
+  SEQ
+    code := #42
+    rsp ? CASE
+      ok
+        serialWrite(" => OK*n")
+      
+      data ; code
+        SKIP
+   
+      error ; code
+        SEQ
+          IF
+            code = TWI.REP.START
+              serialWrite(" => REP START*n")
+            code = TWI.MT.SLA.NACK
+              serialWrite(" => TX SLA NACK*n")
+            code = TWI.MR.SLA.NACK
+              serialWrite(" => RX SLA NACK*n")
+            code = TWI.MR.DATA.NACK
+              serialWrite(" => RX DATA NACK*n")
+            TRUE
+              SEQ
+                serialWrite(" => ERROR: ")
+                serialWriteInt(INT code)
+                serialWrite("*n")
+                STOP
+:
+
+PROC write.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
+  BYTE code:
+  SEQ
+    serialWrite("REQ: init*n")
+    req ! init
+    handle.response (rsp?, code)
+    
+    serialWrite("REQ: start*n")
+    req ! start
+    handle.response (rsp?, code)
+
+    serialWrite("REQ: set.addr*n")
+    req ! tx.addr ; #50
+    handle.response(rsp?, code)
+   
+    -- Write something to zero 
+    serialWrite("REQ: send data*n")
+    INT eeprom.addr:
+    SEQ
+      eeprom.addr := 0
+
+      -- MSB of addr
+      req ! data ; (BYTE (eeprom.addr >> 8))
+      handle.response(rsp?, code)
+
+      -- LSB of addr
+      req ! data ; (BYTE (eeprom.addr /\ #FF))
+      handle.response(rsp?, code)
+
+      -- Write data
+      req ! data ; #AA
+      handle.response(rsp?, code)
+
+    -- Stop the transaction
+    serialWrite("REQ: stop*n")
+    req ! stop
+    handle.response(rsp?, code)
+:
+
+PROC read.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
+  BYTE code:
+  SEQ
+    
+    serialWrite("REQ: start*n")
+    req ! start
+    handle.response (rsp?, code)
+
+    serialWrite("REQ: set.addr*n")
+    req ! rx.addr ; #50
+    handle.response(rsp?, code)
+   
+    -- Read something from zero 
+    serialWrite("REQ: read data*n")
+    INT eeprom.addr:
+    SEQ
+      eeprom.addr := 0
+      -- MSB of addr
+      req ! data ; (BYTE (eeprom.addr >> 8))
+      handle.response(rsp?, code)
+      -- LSB of addr
+      req ! data ; (BYTE (eeprom.addr /\ #FF))
+      handle.response(rsp?, code)
+
+    -- Stop things
+    req ! stop
+    handle.response(rsp?, code)
+
+    BYTE data:
+    SEQ
+      req ! read
+      handle.response(rsp?, data)
+      serialWrite("READ: ")
+      serialWriteInt(INT data)
+      serialWrite("*n")
+
+: 
+
+PROC drive (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
+  SEQ
+    write.byte(req!, rsp?)
+    read.byte(req!, rsp?)
+:
+
+PROC main ()
+  CHAN TWI.REQ req:
+  CHAN TWI.RSP rsp:
+  PAR
+    -- heartbeat()
+    twi(req?, rsp!)
+    drive(req!, rsp?)
+:
