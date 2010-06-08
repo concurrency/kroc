@@ -63,7 +63,7 @@ PROC write.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
         handle.response (rsp?, code)
 
         serialWrite("SET DEVICE ADDRESS*n")
-        req ! tx.addr ; (#50 << 1) -- 10100000
+        req ! addr ; TWI.WRITE ; (#50 << 1) -- 10100000
         handle.response(rsp?, code)
        
         -- Write something to zero 
@@ -99,7 +99,7 @@ PROC read.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
         handle.response (rsp?, code)
 
         serialWrite("SET DEVICE ADDRESS*n")
-        req ! tx.addr ; ((#50 << 1) \/ 0) -- 10100000
+        req ! addr ; TWI.WRITE ; ((#50 << 1) \/ 0) -- 10100000
         handle.response(rsp?, code)
    
         serialWrite("READ SEND ADDR*n")
@@ -117,7 +117,7 @@ PROC read.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
         
         -- CONTROL BYTE
         serialWrite("DEV ADDR AGAIN*n")
-        req ! rx.addr ; ((#50 << 1) \/ 1) -- 10100001
+        req ! addr ; TWI.READ ; ((#50 << 1) \/ 1) -- 10100001
         handle.response(rsp?, code)
 
         -- Stop things
@@ -127,7 +127,7 @@ PROC read.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
 
         BYTE data:
         SEQ
-          req ! read ; NACK
+          req ! read ; TWI.NACK
           handle.response(rsp?, data)
           serialWrite("READ: ")
           serialWriteInt(INT data)

@@ -47,11 +47,10 @@ VAL BYTE TWI.BUS.ERROR             IS #00:
 VAL BYTE TWI.READ                  IS #01:
 VAL BYTE TWI.WRITE                 IS #00:
 
+VAL BYTE TWI.ACK                   IS #00:
+VAL BYTE TWI.NACK                  IS #01:
+
 VAL BYTE TWI.STATUS.MASK IS ((((BV(TWS7) \/ BV(TWS6)) \/ BV(TWS5)) \/ BV(TWS4)) \/ BV(TWS3)):
-
-
-VAL BOOL ACK  IS TRUE:
-VAL BOOL NACK IS FALSE:
 
 -- I2C EXPLORATION
 --  My exploration used an Arduino Duemilanove / Atmega328
@@ -105,11 +104,10 @@ PROTOCOL TWI.REQ
     init          = 0
     start         = 1
     rep.start     = 2
-    tx.addr       = 3 ; BYTE
-    rx.addr       = 4 ; BYTE
-    data          = 5 ; BYTE
-    stop          = 6
-    read          = 7 ; BOOL
+    addr          = 3 ; BYTE ; BYTE
+    data          = 4 ; BYTE
+    stop          = 5
+    read          = 6 ; BYTE
 :
 
 PROTOCOL TWI.RSP
@@ -188,6 +186,21 @@ PROC twi.tx (VAL BYTE data, CHAN TWI.RSP rsp!)
           rsp ! error ; status
 :
 
+PROC twi.tx.fast (VAL BYTE data)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    -- Load byte into data register
+    ports[TWDR] := data
+
+    -- Start transmission
+    set.bits(TWCR, [TWEN, TWIE, TWINT])
+    
+    -- Wait for response  
+    INT any:
+    wait.for.interrupt (VINTR.TWI, any)
+:
+
 PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!) 
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -237,21 +250,17 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
               -- I don't think we can get here.
               rsp ! ok ; status
 
-      BYTE addr:
-      tx.addr ; addr
+      BYTE dir, addr:
+      addr ; dir ; addr
         SEQ
           -- Load the destination address 
           -- WARNING: Perhaps this is device specific?
           -- addr := (addr << 1) \/ TWI.WRITE 
-          addr := addr \/ TWI.WRITE
-          twi.tx(addr, rsp!)
-          
-      BYTE addr:
-      rx.addr ; addr 
-        SEQ
-          -- Load the destination address 
-          -- addr := (addr << 1) \/ TWI.READ 
-          addr := addr \/ TWI.READ
+          IF
+            dir = TWI.READ
+              addr := addr \/ TWI.READ
+            dir = TWI.WRITE
+              addr := addr \/ TWI.WRITE
           twi.tx(addr, rsp!)
 
       -- When done sending, 
@@ -264,13 +273,13 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
           set.bits(TWCR, [TWINT, TWEN, TWSTO])
           rsp ! ok ; TWI.STOPPED
       
-      BOOL ack:
+      BYTE ack:
       read ; ack
         SEQ
           IF
-            NOT ack
+            ack = TWI.NACK
               set.bits(TWCR, [TWINT, TWEN, TWIE])
-            ack
+            ack = TWI.ACK
               set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
           
 
@@ -280,4 +289,60 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
           rsp ! data ; ports[TWDR]
 :
 
+PROC twi.fast (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!) 
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  WHILE TRUE
+    req ? CASE
+      init
+        SEQ
+          -- Activate internal pullup resistors
+          sbi(PORTC, 4)
+          sbi(PORTC, 5)
+          -- No prescaler
+          ports[TWSR] := #00
+          -- Set the bitrate
+          ports[TWBR] := (BYTE (((INT ((F.CPU / TWI.FREQ))) - 16) / 2))
+          -- Default content, SDA released
+          ports[TWDR] := #FF
+          -- Enable TWI, release pins, disable interrupt, no reqs
+          set.bits(TWCR, [TWEN])
+      start
+        SEQ
+          -- Set START condition on TWI bus
+          set.bits(TWCR, [TWEN, TWIE, TWINT, TWSTA])  
+          INT any:
+          wait.for.interrupt (VINTR.TWI, any)
+      rep.start
+        SEQ
+          -- Set START condition on TWI bus
+          set.bits(TWCR, [TWEN, TWIE, TWINT, TWSTA])  
+          INT any:
+          wait.for.interrupt (VINTR.TWI, any)
+      BYTE dir, addr:
+      addr ; dir ; addr
+        SEQ
+          IF
+            dir = TWI.READ
+              addr := addr \/ TWI.READ
+            dir = TWI.WRITE
+              addr := addr \/ TWI.WRITE
+          twi.tx.fast(addr)
+      BYTE nibble:
+      data ; nibble
+        twi.tx.fast(nibble)
+      stop
+        set.bits(TWCR, [TWINT, TWEN, TWSTO])
+      BYTE ack:
+      read ; ack
+        SEQ
+          IF
+            ack = TWI.NACK
+              set.bits(TWCR, [TWINT, TWEN, TWIE])
+            ack = TWI.ACK
+              set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
+          INT any:
+          wait.for.interrupt (VINTR.TWI, any)
+          rsp ! data ; ports[TWDR]
+:
 #ENDIF
