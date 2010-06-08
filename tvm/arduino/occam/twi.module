@@ -50,6 +50,9 @@ VAL BYTE TWI.WRITE                 IS #00:
 VAL BYTE TWI.STATUS.MASK IS ((((BV(TWS7) \/ BV(TWS6)) \/ BV(TWS5)) \/ BV(TWS4)) \/ BV(TWS3)):
 
 
+VAL BOOL ACK  IS TRUE:
+VAL BOOL NACK IS FALSE:
+
 -- I2C EXPLORATION
 --  My exploration used an Arduino Duemilanove / Atmega328
 --  and an 23LC256 EEPROM.
@@ -106,7 +109,7 @@ PROTOCOL TWI.REQ
     rx.addr       = 4 ; BYTE
     data          = 5 ; BYTE
     stop          = 6
-    read          = 7
+    read          = 7 ; BOOL
 :
 
 PROTOCOL TWI.RSP
@@ -154,9 +157,6 @@ BOOL FUNCTION is.twi.error (VAL BYTE status)
     RESULT res
 :
 
-
-VAL BOOL ACK  IS TRUE:
-VAL BOOL NACK IS FALSE:
 
 PROC twi.tx (VAL BYTE data, CHAN TWI.RSP rsp!)
   PLACED [MAX.PORT]BYTE ports 0:
@@ -220,8 +220,8 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
             status = TWI.START
               rsp ! ok ; status
             TRUE
-              -- I don't think we can get here.
-              die("Failed to start TWI bus.")
+              -- Shouldn't get here... ?
+              rsp ! error ; status
       rep.start
         BYTE status:
         SEQ
@@ -235,7 +235,7 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
               rsp ! ok ; status
             TRUE
               -- I don't think we can get here.
-              die("Failed to start TWI bus.")
+              rsp ! ok ; status
 
       BYTE addr:
       tx.addr ; addr
@@ -243,6 +243,7 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
           -- Load the destination address 
           -- WARNING: Perhaps this is device specific?
           -- addr := (addr << 1) \/ TWI.WRITE 
+          addr := addr \/ TWI.WRITE
           twi.tx(addr, rsp!)
           
       BYTE addr:
@@ -263,14 +264,20 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
           set.bits(TWCR, [TWINT, TWEN, TWSTO])
           rsp ! ok ; TWI.STOPPED
       
-      read
-        BYTE v:
+      BOOL ack:
+      read ; ack
         SEQ
-          v := ports[TWDR]
-          set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
+          IF
+            NOT ack
+              set.bits(TWCR, [TWINT, TWEN, TWIE])
+            ack
+              set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
+          
+
           INT any:
           wait.for.interrupt (VINTR.TWI, any)
-          rsp ! data ; v
+          -- v := ports[TWDR]
+          rsp ! data ; ports[TWDR]
 :
 
 #ENDIF
