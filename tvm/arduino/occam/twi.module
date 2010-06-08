@@ -103,11 +103,11 @@ PROTOCOL TWI.REQ
   CASE
     init          = 0
     start         = 1
-    rep.start     = 2
-    addr          = 3 ; BYTE ; BYTE
-    data          = 4 ; BYTE
-    stop          = 5
-    read          = 6 ; BYTE
+    tx.addr       = 2 ; BYTE
+    rx.addr       = 3 ; BYTE
+    tx            = 4 ; BYTE
+    rx            = 5 ; BYTE
+    stop          = 6
 :
 
 PROTOCOL TWI.RSP
@@ -119,7 +119,8 @@ PROTOCOL TWI.RSP
 
 VAL INT32 TWI.FREQ IS 100000:
 
-VAL []BYTE TWI.STATUS.OK IS [TWI.MT.SLA.ACK, 
+VAL []BYTE TWI.STATUS.OK IS [TWI.START,
+                             TWI.MT.SLA.ACK, 
                              TWI.MT.DATA.ACK,
                              TWI.MR.SLA.ACK,
                              TWI.MR.DATA.ACK]:
@@ -155,48 +156,80 @@ BOOL FUNCTION is.twi.error (VAL BYTE status)
     RESULT res
 :
 
+PROC twi.status(CHAN TWI.RSP rsp!)  
+  BYTE status:
+  SEQ
+    get.twi.status(status)
+    IF
+      is.twi.ok(status)
+        rsp ! ok ; status
+      -- FIXME
+      -- Should handle errors better.
+      is.twi.error(status)
+        SEQ
+          set.bits(TWCR, [TWEN])
+          rsp ! error ; status
+      TRUE
+        rsp ! error ; status
+:
 
-PROC twi.tx (VAL BYTE data, CHAN TWI.RSP rsp!)
+PROC twi.tx (VAL BYTE data)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
     -- Load byte into data register
     ports[TWDR] := data
-
     -- Start transmission
     set.bits(TWCR, [TWEN, TWIE, TWINT])
-    
     -- Wait for response  
     INT any:
     wait.for.interrupt (VINTR.TWI, any)
-  
-    BYTE status:
-    SEQ
-      get.twi.status(status)
-      IF
-        is.twi.ok(status)
-          rsp ! ok ; status
-        -- FIXME
-        -- Should handle errors better.
-        is.twi.error(status)
-          SEQ
-            set.bits(TWCR, [TWEN])
-            rsp ! error ; status
-        TRUE
-          rsp ! error ; status
 :
 
-PROC twi.tx.fast (VAL BYTE data)
+PROC twi.init ()
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
-    -- Load byte into data register
-    ports[TWDR] := data
+    -- Activate internal pullup resistors
+    sbi(PORTC, 4)
+    sbi(PORTC, 5)
+    -- No prescaler
+    ports[TWSR] := #00
+    -- Set the bitrate
+    ports[TWBR] := (BYTE (((INT ((F.CPU / TWI.FREQ))) - 16) / 2))
+    -- Default content, SDA released
+    ports[TWDR] := #FF
+    -- Enable TWI, release pins, disable interrupt, no reqs
+    ports[TWCR] := BV(TWEN)
+:
 
-    -- Start transmission
-    set.bits(TWCR, [TWEN, TWIE, TWINT])
-    
-    -- Wait for response  
+PROC twi.start ()
+  SEQ
+    -- Set START condition on TWI bus
+    set.bits(TWCR, [TWEN, TWIE, TWINT, TWSTA])  
+    INT any:
+    wait.for.interrupt (VINTR.TWI, any)
+:
+
+INLINE PROC twi.set.tx.addr (VAL BYTE addr)
+  twi.tx(addr \/ TWI.WRITE)
+:
+
+INLINE PROC twi.set.rx.addr (VAL BYTE addr)
+  twi.tx(addr \/ TWI.READ)
+:
+
+INLINE PROC twi.stop ()
+  set.bits(TWCR, [TWINT, TWEN, TWSTO])
+:
+
+PROC twi.read (VAL BYTE ack)
+  SEQ
+    IF
+      ack = TWI.NACK
+        set.bits(TWCR, [TWINT, TWEN, TWIE])
+      ack = TWI.ACK
+        set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
     INT any:
     wait.for.interrupt (VINTR.TWI, any)
 :
@@ -208,141 +241,43 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
     req ? CASE
       init
         SEQ
-          -- Activate internal pullup resistors
-          sbi(PORTC, 4)
-          sbi(PORTC, 5)
-          -- No prescaler
-          ports[TWSR] := #00
-          -- Set the bitrate
-          ports[TWBR] := (BYTE (((INT ((F.CPU / TWI.FREQ))) - 16) / 2))
-          -- Default content, SDA released
-          ports[TWDR] := #FF
-          -- Enable TWI, release pins, disable interrupt, no reqs
-          set.bits(TWCR, [TWEN])
+          twi.init()
           rsp ! ok ; TWI.INIT
 
       start
         BYTE status:
         SEQ
-          -- Set START condition on TWI bus
-          set.bits(TWCR, [TWEN, TWIE, TWINT, TWSTA])  
-          INT any:
-          wait.for.interrupt (VINTR.TWI, any)
-          get.twi.status(status)
-          IF
-            status = TWI.START
-              rsp ! ok ; status
-            TRUE
-              -- Shouldn't get here... ?
-              rsp ! error ; status
-      rep.start
-        BYTE status:
+          twi.start()
+          twi.status(rsp!)
+      BYTE addr:
+      tx.addr ; addr
         SEQ
-          -- Set START condition on TWI bus
-          set.bits(TWCR, [TWEN, TWIE, TWINT, TWSTA])  
-          INT any:
-          wait.for.interrupt (VINTR.TWI, any)
-          get.twi.status(status)
-          IF
-            status = TWI.REP.START
-              rsp ! ok ; status
-            TRUE
-              -- I don't think we can get here.
-              rsp ! ok ; status
-
-      BYTE dir, addr:
-      addr ; dir ; addr
+          twi.set.tx.addr(addr)
+          twi.status(rsp!)
+      BYTE addr:
+      rx.addr ; addr
         SEQ
-          -- Load the destination address 
-          -- WARNING: Perhaps this is device specific?
-          -- addr := (addr << 1) \/ TWI.WRITE 
-          IF
-            dir = TWI.READ
-              addr := addr \/ TWI.READ
-            dir = TWI.WRITE
-              addr := addr \/ TWI.WRITE
-          twi.tx(addr, rsp!)
-
-      -- When done sending, 
+          twi.set.rx.addr(addr)
+          twi.status(rsp!)
       BYTE nibble:
-      data ; nibble
-        twi.tx(nibble, rsp!)
-      
+      tx ; nibble
+        SEQ
+          twi.tx(nibble)
+          twi.status(rsp!)
+      BYTE ack:
+      rx ; ack
+        SEQ
+          IF
+            ack = TWI.NACK
+              set.bits(TWCR, [TWINT, TWEN, TWIE])
+            ack = TWI.ACK
+              set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
+          INT any:
+          wait.for.interrupt(VINTR.TWI, any)
+          rsp ! data ; ports[TWDR]
       stop
         SEQ
           set.bits(TWCR, [TWINT, TWEN, TWSTO])
           rsp ! ok ; TWI.STOPPED
-      
-      BYTE ack:
-      read ; ack
-        SEQ
-          IF
-            ack = TWI.NACK
-              set.bits(TWCR, [TWINT, TWEN, TWIE])
-            ack = TWI.ACK
-              set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
-          
-
-          INT any:
-          wait.for.interrupt (VINTR.TWI, any)
-          -- v := ports[TWDR]
-          rsp ! data ; ports[TWDR]
-:
-
-PROC twi.fast (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!) 
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  WHILE TRUE
-    req ? CASE
-      init
-        SEQ
-          -- Activate internal pullup resistors
-          sbi(PORTC, 4)
-          sbi(PORTC, 5)
-          -- No prescaler
-          ports[TWSR] := #00
-          -- Set the bitrate
-          ports[TWBR] := (BYTE (((INT ((F.CPU / TWI.FREQ))) - 16) / 2))
-          -- Default content, SDA released
-          ports[TWDR] := #FF
-          -- Enable TWI, release pins, disable interrupt, no reqs
-          set.bits(TWCR, [TWEN])
-      start
-        SEQ
-          -- Set START condition on TWI bus
-          set.bits(TWCR, [TWEN, TWIE, TWINT, TWSTA])  
-          INT any:
-          wait.for.interrupt (VINTR.TWI, any)
-      rep.start
-        SEQ
-          -- Set START condition on TWI bus
-          set.bits(TWCR, [TWEN, TWIE, TWINT, TWSTA])  
-          INT any:
-          wait.for.interrupt (VINTR.TWI, any)
-      BYTE dir, addr:
-      addr ; dir ; addr
-        SEQ
-          IF
-            dir = TWI.READ
-              addr := addr \/ TWI.READ
-            dir = TWI.WRITE
-              addr := addr \/ TWI.WRITE
-          twi.tx.fast(addr)
-      BYTE nibble:
-      data ; nibble
-        twi.tx.fast(nibble)
-      stop
-        set.bits(TWCR, [TWINT, TWEN, TWSTO])
-      BYTE ack:
-      read ; ack
-        SEQ
-          IF
-            ack = TWI.NACK
-              set.bits(TWCR, [TWINT, TWEN, TWIE])
-            ack = TWI.ACK
-              set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
-          INT any:
-          wait.for.interrupt (VINTR.TWI, any)
-          rsp ! data ; ports[TWDR]
 :
 #ENDIF

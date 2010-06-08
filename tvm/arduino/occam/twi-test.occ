@@ -63,22 +63,22 @@ PROC write.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
         handle.response (rsp?, code)
 
         serialWrite("SET DEVICE ADDRESS*n")
-        req ! addr ; TWI.WRITE ; (#50 << 1) -- 10100000
+        req ! tx.addr ; (#50 << 1) -- 10100000
         handle.response(rsp?, code)
        
         -- Write something to zero 
         serialWrite("SEND DATA*n")
 
         -- MSB of addr
-        req ! data ; MSB(eeprom.addr)
+        req ! tx ; MSB(eeprom.addr)
         handle.response(rsp?, code)
 
         -- LSB of addr
-        req ! data ; LSB(eeprom.addr)
+        req ! tx ; LSB(eeprom.addr)
         handle.response(rsp?, code)
 
         -- Write data
-        req ! data ; (BYTE (65 + eeprom.addr)) -- #41 ... #46 
+        req ! tx ; (BYTE (65 + eeprom.addr)) -- #41 ... #46 
         handle.response(rsp?, code)
 
         -- A stop must be generated to make the EEPROM write.
@@ -99,25 +99,25 @@ PROC read.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
         handle.response (rsp?, code)
 
         serialWrite("SET DEVICE ADDRESS*n")
-        req ! addr ; TWI.WRITE ; ((#50 << 1) \/ 0) -- 10100000
+        req ! tx.addr ; ((#50 << 1) \/ 0) -- 10100000
         handle.response(rsp?, code)
    
         serialWrite("READ SEND ADDR*n")
         -- MSB of addr
-        req ! data ; MSB(eeprom.addr)
+        req ! tx ; MSB(eeprom.addr)
         handle.response(rsp?, code)
         -- LSB of addr
-        req ! data ; LSB(eeprom.addr)
+        req ! tx ; LSB(eeprom.addr)
         handle.response(rsp?, code)
         
         -- Send another start
         serialWrite("START AGAIN*n")
-        req ! rep.start
+        req ! start
         handle.response(rsp?, code)
         
         -- CONTROL BYTE
         serialWrite("DEV ADDR AGAIN*n")
-        req ! addr ; TWI.READ ; ((#50 << 1) \/ 1) -- 10100001
+        req ! rx.addr ; ((#50 << 1) \/ 1) -- 10100001
         handle.response(rsp?, code)
 
         -- Stop things
@@ -127,7 +127,7 @@ PROC read.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
 
         BYTE data:
         SEQ
-          req ! read ; TWI.NACK
+          req ! rx ; TWI.NACK
           handle.response(rsp?, data)
           serialWrite("READ: ")
           serialWriteInt(INT data)
