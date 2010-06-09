@@ -1,0 +1,21 @@
+#INCLUDE "wiring.module"
+
+PROC main ()
+  REAL32 r:
+  SEQ
+    serialWrite ("start*n")
+    r := 1.0
+    serialWrite ("add*n")
+    r := r + 2.0
+    serialWrite ("sub*n")
+    r := r - 0.5
+    serialWrite ("mul*n")
+    r := r * 3.0
+    serialWrite ("div*n")
+    r := r / 2.0
+    serialWrite ("round*n")
+    VAL INT n IS INT ROUND r:
+    SEQ i = 0 FOR n
+      serialWrite ("bip*n")
+    serialWrite ("end*n")
+:
