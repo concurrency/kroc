@@ -127,7 +127,7 @@ static int avr_tbc_debug_file_and_line (const prog_char *data, UWORD length, UWO
 		return ret;
 
 	data = element.data.bytes;
-	length = element.length; /* XXX - not in original code - bug? */
+	length = element.length;
 
 	if (avr_tenc_walk_to_element (data, &length, "fn L", &files) < 0)
 		return -1;
