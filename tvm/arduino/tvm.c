@@ -52,8 +52,7 @@ static void dump_machine_state () {
 	printf_P (PSTR ("\n"));
 }
 
-/* The message must be in program memory. */
-void terminate (const char *message, const int *status) {
+void terminate (const prog_char *message, const int *status) {
 	/* FIXME: offer other behaviours as options */
 	printf_P (PSTR ("tvm-arduino: %S"), message);
 	if (status != NULL) {
