@@ -26,6 +26,13 @@ static void arduino_modify_sync_flags (ECTX ectx, WORD set, WORD clear) {
 static void dump_machine_state () {
 	WORDPTR wp;
 	BYTEPTR bp;
+	const prog_char *file;
+	UWORD line;
+	const UWORD iptr_offset = (UWORD) (context.iptr - initial_iptr);
+
+	if (tbc_file_and_line (tbc_data, iptr_offset, &file, &line) == 0) {
+		printf_P (PSTR ("\nfile=%S line=%d"), file, (int) line);
+	}
 
 	printf_P (PSTR ("\nwptr=%04x (rel=%04x)  iptr=%04x (rel=%04x)  "
 	                "eflags=%04x sflags=%04x\n"
