@@ -1,0 +1,90 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "twi2.module"
+
+
+BYTE FUNCTION MSB (VAL INT i)
+  BYTE b:
+  VALOF
+    SEQ
+      b := (BYTE (i >> 8))
+    RESULT b
+:
+
+BYTE FUNCTION LSB (VAL INT i)
+  BYTE b:
+  VALOF
+    SEQ
+      b := (BYTE (i /\ #00FF))
+    RESULT b
+:
+
+PROC status ()
+  BYTE status:
+  SEQ
+    get.twi.status(status)
+    serialWrite("[s] ")
+    serialWriteInt(INT status)
+    serialWrite("*n")
+:
+
+PROC write.byte (VAL BYTE dev, VAL INT addr, VAL BYTE b)
+  SEQ
+    --serialWrite("-> ")
+    --serialWriteInt(INT addr)
+    --serialWrite("*n") 
+    
+    twi.start()
+    --status()
+    twi.set.tx.addr((dev << 1))
+    --status()
+    twi.tx(MSB(addr))
+    --status()
+    twi.tx(LSB(addr))
+    --status()
+    twi.tx(b)
+    --status()
+    twi.stop()
+:    
+
+PROC read.byte (VAL BYTE dev, VAL INT addr, BYTE b)
+  SEQ
+    --serialWrite("<- ")
+    --serialWriteInt(INT addr)
+    --serialWrite("*n") 
+
+    twi.start()
+    --status()
+    twi.set.tx.addr((dev << 1))
+    --status()
+    twi.tx(MSB(addr))
+    --status()
+    twi.tx(LSB(addr))
+    --status()
+    --serialWrite("RESTART*n")
+    twi.start()
+    --status()
+    --serialWrite("RX ADDR*n")
+    twi.set.rx.addr((dev << 1) \/ 1)
+    --status()
+    --serialWrite("READ BYTE*n")
+    twi.read.byte(TWI.NACK, b)
+    --status()
+:
+    
+
+PROC main ()
+  [5]BYTE data:
+  SEQ
+    twi.init()
+
+    SEQ i = 0 FOR (SIZE data)
+      write.byte (#50, i, (BYTE (i + 65)))
+
+    SEQ addr = 0 FOR (SIZE data)
+      SEQ
+        read.byte (#50, addr, data[addr])
+        serialWrite("[R ")
+        serialWriteInt(INT data[addr])
+        serialWrite("]*n")
+    STOP
+:

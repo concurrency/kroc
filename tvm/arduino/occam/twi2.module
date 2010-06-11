@@ -99,24 +99,6 @@ PROC get.twi.status (BYTE status)
   status := ports[TWSR] /\ TWI.STATUS.MASK
 :
 
-PROTOCOL TWI.REQ 
-  CASE
-    init          = 0
-    start         = 1
-    tx.addr       = 2 ; BYTE
-    rx.addr       = 3 ; BYTE
-    tx            = 4 ; BYTE
-    rx            = 5 ; BYTE
-    stop          = 6
-:
-
-PROTOCOL TWI.RSP
-  CASE
-    ok            = 0 ; BYTE
-    data          = 1 ; BYTE
-    error         = 2 ; BYTE
-:
-
 VAL INT32 TWI.FREQ IS 100000:
 
 VAL []BYTE TWI.STATUS.OK IS [TWI.START,
@@ -154,23 +136,6 @@ BOOL FUNCTION is.twi.error (VAL BYTE status)
           TRUE
             SKIP
     RESULT res
-:
-
-PROC twi.status(CHAN TWI.RSP rsp!)  
-  BYTE status:
-  SEQ
-    get.twi.status(status)
-    IF
-      is.twi.ok(status)
-        rsp ! ok ; status
-      -- FIXME
-      -- Should handle errors better.
-      is.twi.error(status)
-        SEQ
-          set.bits(TWCR, [TWEN])
-          rsp ! error ; status
-      TRUE
-        rsp ! error ; status
 :
 
 PROC twi.tx (VAL BYTE data)
@@ -223,7 +188,9 @@ INLINE PROC twi.stop ()
   set.bits(TWCR, [TWINT, TWEN, TWSTO])
 :
 
-PROC twi.read (VAL BYTE ack)
+PROC twi.read.byte (VAL BYTE ack, BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0: 
+  #PRAGMA DEFINED ports
   SEQ
     IF
       ack = TWI.NACK
@@ -232,55 +199,8 @@ PROC twi.read (VAL BYTE ack)
         set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
     INT any:
     wait.for.interrupt (VINTR.TWI, any)
+    b := ports[TWDR]
 :
 
-PROC twi.read.arr([]BYTE data)
 
-
-PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!) 
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  WHILE TRUE
-    req ? CASE
-      init
-        SEQ
-          twi.init()
-          rsp ! ok ; TWI.INIT
-
-      start
-        BYTE status:
-        SEQ
-          twi.start()
-          twi.status(rsp!)
-      BYTE addr:
-      tx.addr ; addr
-        SEQ
-          twi.set.tx.addr(addr)
-          twi.status(rsp!)
-      BYTE addr:
-      rx.addr ; addr
-        SEQ
-          twi.set.rx.addr(addr)
-          twi.status(rsp!)
-      BYTE nibble:
-      tx ; nibble
-        SEQ
-          twi.tx(nibble)
-          twi.status(rsp!)
-      BYTE ack:
-      rx ; ack
-        SEQ
-          IF
-            ack = TWI.NACK
-              set.bits(TWCR, [TWINT, TWEN, TWIE])
-            ack = TWI.ACK
-              set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
-          INT any:
-          wait.for.interrupt(VINTR.TWI, any)
-          rsp ! data ; ports[TWDR]
-      stop
-        SEQ
-          set.bits(TWCR, [TWINT, TWEN, TWSTO])
-          rsp ! ok ; TWI.STOPPED
-:
 #ENDIF
