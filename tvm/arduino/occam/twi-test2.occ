@@ -32,7 +32,7 @@ PROC write.byte (VAL BYTE dev, VAL INT addr, VAL BYTE b)
     --serialWrite("-> ")
     --serialWriteInt(INT addr)
     --serialWrite("*n") 
-    
+    twi.init() 
     twi.start()
     --status()
     twi.set.tx.addr((dev << 1))
@@ -51,7 +51,7 @@ PROC read.byte (VAL BYTE dev, VAL INT addr, BYTE b)
     --serialWrite("<- ")
     --serialWriteInt(INT addr)
     --serialWrite("*n") 
-
+    twi.init()
     twi.start()
     --status()
     twi.set.tx.addr((dev << 1))
@@ -69,22 +69,30 @@ PROC read.byte (VAL BYTE dev, VAL INT addr, BYTE b)
     --serialWrite("READ BYTE*n")
     twi.read.byte(TWI.NACK, b)
     --status()
+    twi.stop()
 :
     
 
 PROC main ()
-  [5]BYTE data:
+  BYTE b:
+  VAL INT MAX IS 10:
+  INT addr:
   SEQ
-    twi.init()
-
-    SEQ i = 0 FOR (SIZE data)
-      write.byte (#50, i, (BYTE (i + 65)))
-
-    SEQ addr = 0 FOR (SIZE data)
-      SEQ
-        read.byte (#50, addr, data[addr])
-        serialWrite("[R ")
-        serialWriteInt(INT data[addr])
-        serialWrite("]*n")
+    SEQ OFFSET = 0 FOR 100 STEP 10
+      SEQ 
+        SEQ ADDR = 0 FOR MAX
+          SEQ
+            addr := ADDR + OFFSET
+            serialWrite("[W ")
+            serialWriteInt((addr + 65))
+            serialWrite("]*n")
+            write.byte (#50, addr, (BYTE (addr + 65)))
+        SEQ ADDR = 0 FOR MAX
+          SEQ
+            addr := ADDR + OFFSET
+            read.byte (#50, addr, b)
+            serialWrite("[R ")
+            serialWriteInt(INT b)
+            serialWrite("]*n")
     STOP
 :

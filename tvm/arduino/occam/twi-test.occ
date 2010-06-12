@@ -49,6 +49,9 @@ BYTE FUNCTION LSB (VAL INT i)
     RESULT b
 :
 
+VAL INT START IS 20:
+VAL INT COUNT IS 10:
+
 PROC write.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
   BYTE code:
   SEQ
@@ -56,9 +59,11 @@ PROC write.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
     req ! init
     handle.response (rsp?, code)
 
-    SEQ eeprom.addr = 0 FOR 2
+    SEQ eeprom.addr = 0 FOR COUNT
       SEQ
-        serialWrite("START WRITE*n")
+        serialWrite("START WRITE: ")
+        serialWriteInt(COUNT)
+        serialWrite("*n")
         req ! start
         handle.response (rsp?, code)
 
@@ -78,7 +83,7 @@ PROC write.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
         handle.response(rsp?, code)
 
         -- Write data
-        req ! tx ; (BYTE (65 + eeprom.addr)) -- #41 ... #46 
+        req ! tx ; (BYTE (START + eeprom.addr)) -- #41 ... #46 
         handle.response(rsp?, code)
 
         -- A stop must be generated to make the EEPROM write.
@@ -92,9 +97,11 @@ PROC read.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
   BYTE code:
   SEQ
     
-    SEQ eeprom.addr = 0 FOR 2
+    SEQ eeprom.addr = 0 FOR COUNT
       SEQ
-        serialWrite("READ START*n")
+        serialWrite("READ START: ")
+        serialWriteInt(COUNT)
+        serialWrite("*n")
         req ! start
         handle.response (rsp?, code)
 
@@ -135,17 +142,80 @@ PROC read.byte (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
 
 : 
 
+PROC write.byte.fast (CHAN TWI.REQ req!)
+  SEQ
+    serialWrite("WRITING*n")
+    req ! init
+    SEQ eeprom.addr = 0 FOR COUNT
+      SEQ
+        req ! start
+        req ! tx.addr ; (#50 << 1) -- 10100000
+        -- MSB of addr
+        req ! tx ; MSB(eeprom.addr)
+        -- LSB of addr
+        req ! tx ; LSB(eeprom.addr)
+        -- Write data
+        req ! tx ; (BYTE (START + eeprom.addr)) -- #41 ... #46 
+        -- A stop must be generated to make the EEPROM write.
+        -- Stop the transaction
+        req ! stop
+:
+
+PROC read.byte.fast (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
+  SEQ
+    serialWrite("READING*n")
+    SEQ eeprom.addr = 0 FOR COUNT
+      SEQ
+        req ! start
+        req ! tx.addr ; ((#50 << 1) \/ 0) -- 10100000
+        -- MSB of addr
+        req ! tx ; MSB(eeprom.addr)
+        -- LSB of addr
+        req ! tx ; LSB(eeprom.addr)
+        -- Send another start
+        req ! start
+        -- CONTROL BYTE
+        req ! rx.addr ; ((#50 << 1) \/ 1) -- 10100001
+
+        BYTE b:
+        SEQ
+          req ! rx ; TWI.NACK
+          rsp ? data ; b
+          serialWrite("READ: ")
+          serialWriteInt(INT b)
+          serialWrite("*n")
+
+: 
+
 PROC drive (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
   SEQ
     write.byte(req!, rsp?)
     read.byte(req!, rsp?)
 :
 
+PROC drive.fast (CHAN TWI.REQ req!, CHAN TWI.RSP rsp?)
+  SEQ
+    write.byte.fast(req!)
+    read.byte.fast(req!, rsp?)
+:
+
+VAL BOOL FAST IS FALSE:
 PROC main ()
   CHAN TWI.REQ req:
   CHAN TWI.RSP rsp:
-  PAR
-    -- heartbeat()
-    twi(req?, rsp!)
-    drive(req!, rsp?)
+  IF
+    FAST
+      PAR
+        -- heartbeat()
+        twi.fast(req?, rsp!)
+        SEQ
+          drive.fast(req!, rsp?)
+          heartbeat()
+    NOT FAST
+      PAR
+        twi(req?, rsp!)
+        SEQ
+          drive(req!, rsp?)
+          heartbeat()
 :
+  

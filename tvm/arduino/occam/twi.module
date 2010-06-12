@@ -248,7 +248,6 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
           rsp ! ok ; TWI.INIT
 
       start
-        BYTE status:
         SEQ
           twi.start()
           twi.status(rsp!)
@@ -283,4 +282,44 @@ PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!)
           set.bits(TWCR, [TWINT, TWEN, TWSTO])
           rsp ! ok ; TWI.STOPPED
 :
+
+PROC twi.fast (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!) 
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  WHILE TRUE
+    req ? CASE
+      init
+        SEQ
+          twi.init()
+      start
+        SEQ
+          twi.start()
+      BYTE addr:
+      tx.addr ; addr
+        SEQ
+          twi.set.tx.addr(addr)
+      BYTE addr:
+      rx.addr ; addr
+        SEQ
+          twi.set.rx.addr(addr)
+      BYTE nibble:
+      tx ; nibble
+        SEQ
+          twi.tx(nibble)
+      BYTE ack:
+      rx ; ack
+        SEQ
+          IF
+            ack = TWI.NACK
+              set.bits(TWCR, [TWINT, TWEN, TWIE])
+            ack = TWI.ACK
+              set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
+          INT any:
+          wait.for.interrupt(VINTR.TWI, any)
+          rsp ! data ; ports[TWDR]
+      stop
+        SEQ
+          set.bits(TWCR, [TWINT, TWEN, TWSTO])
+:
+
 #ENDIF
