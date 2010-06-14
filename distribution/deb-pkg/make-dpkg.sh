@@ -174,20 +174,22 @@ if [ "$1" = "writeconfig" ]; then
   popd
 fi
 
+DEBIANIN="DEBIAN.in"
+
 if [ "$1" = "bundle" ]; then
   #######
   header "Packaging"
   #######
 	pushd $DSTDIR
-		if [ -d DEBIANraw ]; then
-			rm -rf DEBIANraw
+		if [ -d DEBIAN ]; then
+			rm -rf DEBIAN
 		fi
 
 		mkdir DEBIAN
 
-		for f in `ls $SVNDEBPKG/DEBIANraw` ; do
+		for f in `ls $SVNDEBPKG/$DEBIANIN` ; do
 
-			cp "$SVNDEBPKG/DEBIANraw/$f" DEBIAN/
+			cp "$SVNDEBPKG/$DEBIANIN/$f" DEBIAN/
 			
 		done
 
