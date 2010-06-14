@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo ""
+echo "************************************************************"
+echo "Please add @DSTBIN@ to your path."
+echo "For example, add the following to your .bashrc:"
+echo
+echo "  export PATH=@DSTBIN@:\$PATH"
+echo ""
+echo "************************************************************"
