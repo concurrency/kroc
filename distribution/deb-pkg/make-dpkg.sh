@@ -20,6 +20,7 @@ header ()
 }
 
 PACKAGENAME="concurrency-$YMD"
+OUTPUTPACKAGENAME="concurrency-avr_"$YMD"_all.deb"
 
 # Source-tree variables
 SVNCHECKOUT="$HOME/svn/deb-avr-$YMD"
@@ -225,7 +226,7 @@ DOWNLOADURL="http://www.transterpreter.org/downloads/lin"
 
 if [ "$1" = "upload" ]; then
   ####### 
-  header "Uploading compressed bundle"
+  header "Uploading Debian package"
   #######
   if [ "$2" = "" ]; then
     echo
@@ -233,17 +234,18 @@ if [ "$1" = "upload" ]; then
     echo " ./make... upload <username>"
     echo
     exit
-  fi
+  fi 
+ 
+  pushd $TEMPORARY
 
-  pushd $DSTOPT
-
-    if [ -f $TARBALL.gz ]; then
-      scp $TARBALL.gz $2@$SCPHOST:$SCPPATH
+    if [ -f $OUTPUTPACKAGENAME ]; then
+      scp $OUTPUTPACKAGENAME $2@$SCPHOST:$SCPPATH
 
  			echo  
       echo "FILE DOWNLOAD FROM:"
       echo
-      echo "$DOWNLOADURL/$TARBALL.gz"
+      echo "$DOWNLOADURL/$OUTPUTPACKAGENAME"
+      echo 
     fi
 fi  
 
