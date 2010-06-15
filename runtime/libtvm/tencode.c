@@ -319,6 +319,7 @@ int tbc_debug_file_and_line (BYTE *data, unsigned int length, unsigned int offse
 		return ret;
 	
 	data 		= element.data.bytes;
+	length		= element.length;
 
 	if (tenc_walk_to_element (data, &length, "fn L", &files) < 0)
 		return -1;

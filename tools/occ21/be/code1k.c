@@ -2134,6 +2134,9 @@ PUBLIC void add_const_block (const int l, const BYTE * const p, treenode * type_
 	BYTE cbuff[256];
 	BYTE *pb;
 
+#if 0
+fprintf (stderr, "add_const_block(): l = %d\n", l);
+#endif
 	if (bytesperword == 2) {
 		bytes_to_do = (l + 1) & (~1);	/* round up to a multiple of 2 */
 	} else {
@@ -2343,15 +2346,40 @@ printtreenl (stderr, 4, tptr);
 		h = HiValOf (tptr);
 	}
 
-	for (i = 0; i < bytesperword; i++) {
-		v[i] = (BYTE) (l & 0xff);
-		l >>= 8;
+	if (bytesperword == sizeof (BIT32)) {
+		/* generating for host word-size */
+		for (i = 0; i < bytesperword; i++) {
+			v[i] = (BYTE) (l & 0xff);
+			l >>= 8;
+		}
+
+		for (i = bytesperword; i < (bytesperword * 2); i++) {
+			v[i] = (BYTE) (h & 0xff);
+			h >>= 8;
+		}
+	} else {
+		/* generating for target-size != host-size */
+		/* in practice this is probably going to be generating 16-bit code on a 32-bit platform */
+		int bc;
+		BIT32 tval;
+
+		for (bc = 0; bc < (w * bytesperword); bc++) {
+			if (bc == 0) {
+				tval = l;
+			} else if (bc == 4) {
+				tval = h;
+			}
+
+			v[bc] = (BYTE)(tval & 0xff);
+			tval >>= 8;
+		}
 	}
 
-	for (i = bytesperword; i < (bytesperword * 2); i++) {
-		v[i] = (BYTE) (h & 0xff);
-		h >>= 8;
-	}
+#if 0
+fprintf (stderr, "genconstant: v = [");
+{int j; for (j=0; j<(w * bytesperword); j++) { fprintf (stderr, "%2.2X ", v[j]); }}
+fprintf (stderr, "]\n");
+#endif
 
 	if (isreal (TagOf (ty)) && has_fpu_core) {
 		swap = TagOf (ty);

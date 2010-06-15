@@ -1,0 +1,8 @@
+Package: concurrency-avr
+Version: @PACKAGEVERSION@
+Section: base
+Priority: optional
+Architecture: all
+Depends: bash
+Maintainer: matt@concurrency.cc
+Description: occam-pi for the AVR/Arduino

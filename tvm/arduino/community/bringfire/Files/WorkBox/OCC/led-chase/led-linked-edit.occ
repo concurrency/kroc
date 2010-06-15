@@ -1,0 +1,86 @@
+#INCLUDE "plumbing.module"
+
+-- Blank lines were added for readability here.
+-- There were more SEQ blocks than strictly necessary.
+-- A "nested SEQ" becomes the same as a SEQ
+-- Eg.
+-- SEQ
+--   SEQ
+--     ...
+-- is the same as
+-- SEQ
+--   ...
+--
+-- Also, header broken across two lines to be more readable.
+PROC led.fade (VAL INT pin, millisFadeIn, millisFadeOut, 
+               CHAN SIGNAL in?,CHAN SIGNAL out!)
+  WHILE TRUE
+    SEQ
+      in ? SIGNAL
+      
+      SEQ i = 0 FOR 100 
+        SEQ
+          analogWrite(pin, (BYTE i))
+          delay(millisFadeIn)
+      
+      out ! SIGNAL
+      
+      SEQ i = 100 FOR 100 STEP (- 1)
+        SEQ
+          analogWrite(pin, (BYTE i))
+          delay(millisFadeOut)
+      
+      analogWrite(pin, 0)
+:
+
+-- Here, I replaced your multipin call with 
+-- a constant array and a loop. Doesn't 
+-- really make a difference, but you can see it
+-- is a bit more concise.
+VAL INT PINS IS [3, 5, 6, 9, 10, 11]:
+PROC beginAnalog.multiPin()
+  SEQ i = 0 FOR (SIZE PINS)
+    beginAnalog(PINS[i])
+:
+
+-- Strictly speaking, a single element PROC
+-- is neither PAR nor SEQ. That is... it's just one thing.
+-- But, it looks like you're just poking around here...
+PROC endListen (CHAN SIGNAL in?)
+  in ? SIGNAL
+:  
+
+
+-- Constants
+VAL INT FADE.IN  IS 7:
+VAL INT FADE.OUT IS 10:
+
+-- This is nice. I like how you've chained the communication
+-- to create a sequence. I'm going to show you how you 
+-- can use an array of channels to achieve a similar effect.
+PROC main()
+  -- CHAN SIGNAL start,f.5,f.6,f.9,f.10,f.11,end:
+  -- We can declare an array of channels called 'comms'
+  [(SIZE PINS) + 1]CHAN SIGNAL comms:
+  WHILE TRUE
+    PAR
+      beginAnalog.multiPin()
+      button.press(2, start!)
+      -- Here, we'll replicate in PARallel
+      -- We stop one short so we can have our 
+      -- "black.hole" at the end of the comms chain.
+      PAR i = 0 FOR ((SIZE PINS) - 1)
+        led.fade(PINS[i], FADE.IN, FADE.OUT, comms[i], comms[i+1])
+      -- We call this a "black hole." It consumes data
+      -- and does nothing with it. "endListen" works, too.
+      -- Because it is just a SIGNAL, we can do it right here.
+      --endListen(end?)
+      -- Note how I did this relative to the number of pins in your
+      -- constant array. (SIZE PINS) is too many 
+      comms[(SIZE PINS)] ? SIGNAL
+      -- And remember... even though the array is of size 7,
+      -- we started counting at 0, so position 6 is the end
+      -- of the array. But, you know that. (I always
+      -- manage to find an "off by one" error in my own 
+      -- explorations, so I mention it here.)
+:

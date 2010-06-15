@@ -25,7 +25,8 @@ PROGS = \
 	nothing \
 	pwm-tests \
 	rawblink \
-	testdiv
+	testdiv \
+	testfloat
 
 all: $(addsuffix .hex,$(PROGS))
 

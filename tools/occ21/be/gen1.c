@@ -3243,6 +3243,9 @@ PRIVATE void tconsttable (treenode * tptr, treenode * type_tptr, const char *typ
 	int swap = targetintsize;
 	
 	DEBUG_MSG (("tconsttable\n"));
+#if 0
+fprintf (stderr, "tconsttable(): ..\n");
+#endif
 	
 	memset (dst, 0, length);
 
