@@ -9,7 +9,7 @@ AC_CHECK_PROG([AVRDUDE], [avrdude], [avrdude], [no])
 
 AC_CHECK_HEADERS([stdio.h stdint.h])
 
-BYTECODE_ADDR=0x5000
+BYTECODE_ADDR=0x5200
 F_CPU=16000000
 MCU=atmega328p
 UPLOAD_PORT=/dev/ttyUSB0

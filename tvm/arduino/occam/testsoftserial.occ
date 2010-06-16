@@ -1,0 +1,145 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "softserial.module"
+
+--{{{  interrupt-driven serial IO
+--{{{  PROC serial.setup
+PROC serial.setup (VAL INT32 baud)
+  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
+  VAL [4]BYTE factor.bytes RETYPES factor:
+
+  PLACED [MAX.PORT]BYTE ports 0:
+  SEQ
+    ports[UBRR0H] := factor.bytes[1]
+    ports[UBRR0L] := factor.bytes[0]
+
+    ports[UCSR0C] := 3 << UCSZ00
+    ports[UCSR0B] := BV (TXEN0) \/ BV (RXEN0)
+:
+--}}}
+--{{{  PROC serial.write
+PROC serial.write (VAL BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    IF
+      (ports[UCSR0A] /\ BV (UDRE0)) = 0
+        --{{{  transmit buffer full; wait for it to empty
+        SEQ
+          -- Enable the interrupt; UDRIE0 will be cleared by the (C-side)
+          -- interrupt handler.
+          ports[UCSR0B] := ports[UCSR0B] \/ BV (UDRIE0)
+          INT dummy:
+          wait.for.interrupt (VINTR.USART.UDRE, dummy)
+        --}}}
+      TRUE
+        SKIP
+    ports[UDR0] := b
+:
+--}}}
+--{{{  PROC serial.read
+PROC serial.read (RESULT BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    IF
+      (ports[UCSR0A] /\ BV (RXC0)) = 0
+        --{{{  receive buffer empty; wait for something to come in
+        SEQ
+          -- Enable the interrupt; RXCIE0 will be cleared by the (C-side)
+          -- interrupt handler.
+          ports[UCSR0B] := ports[UCSR0B] \/ BV (RXCIE0)
+          INT dummy:
+          wait.for.interrupt (VINTR.USART.RX, dummy)
+        --}}}
+      TRUE
+        SKIP
+    b := ports[UDR0]
+:
+--}}}
+--{{{  PROC serial.tx
+PROC serial.tx (CHAN BYTE in?)
+  WHILE TRUE
+    BYTE b:
+    SEQ
+      in ? b
+      serial.write (b)
+:
+--}}}
+--{{{  PROC serial.rx
+PROC serial.rx (CHAN BYTE out!)
+  WHILE TRUE
+    BYTE b:
+    SEQ
+      serial.read (b)
+      out ! b
+:
+--}}}
+--}}}
+
+PROC generate (CHAN BYTE b!)
+  WHILE TRUE
+    SEQ
+      b ! #42
+      delay(500)
+:
+
+PROC show (CHAN BYTE in?, out!)
+  BYTE b:
+  WHILE TRUE
+    SEQ
+      in ? b
+      serialWriteInt(INT b)
+      serialWrite("*n")
+      out ! b
+:
+
+PROC main ()
+  SEQ
+    -- Set up the software serial.
+    -- Only pins 2 - 7 on the Arduino
+    -- can be used this way at the moment.
+    serial.setup(9600)
+    softserial.setup(3)
+    CHAN BYTE soft, sh, real:
+    PAR
+      heartbeat()
+      -- Generate characters, output them.
+      generate(soft!) 
+      -- Then, read them into our soft tx process
+      softserial.tx(3, soft?)
+      -- The soft process sends them over a physical
+      -- wire, which we receive...
+      serial.rx(real!)
+      show(real?, sh!)
+      -- And after receiving them, we send them
+      -- to the tx process, to be sent back to the PC
+      serial.tx(sh?)
+:
+
+
+PROC print (CHAN BYTE in?)
+  WHILE TRUE
+    BYTE b:
+    SEQ
+      in ? b
+      serialWrite([b])
+:
+
+PROC testtx ()
+  SEQ
+    serial.setup(9600)
+    CHAN BYTE b:
+    PAR
+      generate(b!)
+      serial.tx(b?)
+:
+
+PROC testrx ()
+  SEQ
+    serial.setup(9600)
+    CHAN BYTE b:
+    PAR
+      print(b?)
+      serial.rx(b!)
+:
+

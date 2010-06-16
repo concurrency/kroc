@@ -35,6 +35,10 @@ BYTE INLINE FUNCTION BV (VAL INT bit) IS 1 << bit:
 INLINE PROC wait.for.interrupt (VAL INT interrupt, INT time)
   C.tvmspecial.0.wait.for.interrupt (interrupt, time)
 :
+#PRAGMA EXTERNAL "PROC C.tvmspecial.1.softserial.write (VAL INT tx.pin, VAL BYTE byte) = 0"
+INLINE PROC softserial.write (VAL INT tx.pin, VAL BYTE byte)
+  C.tvmspecial.1.softserial.write (tx.pin, byte)
+:
 --}}}
 
 --{{{  interrupt numbers
